@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.27 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.28 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -46,7 +46,7 @@ PostgreSQL documentation
    <application>createlang</application> because it performs a number
    of checks and is much easier to use. See
    <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
-   for more.
+   for additional information.
   </para>
  </refsect1>
 
@@ -55,7 +55,7 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
-    <application>createlang</application> accepts the following command line arguments:
+    <application>createlang</application> accepts the following command-line arguments:
     
     <variablelist>
      <varlistentry>
@@ -69,8 +69,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-d <replaceable class="parameter">dbname</replaceable></></term>
-      <term><option>--dbname <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option><optional>-d</> <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
 	Specifies to which database the language should be added.
@@ -117,7 +117,7 @@ PostgreSQL documentation
 
    <para>
     <application>createlang</application> also accepts 
-    the following command line arguments for connection parameters:
+    the following command-line arguments for connection parameters:
     
     <variablelist>
      <varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.26 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.27 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -75,12 +75,12 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
-    <application>vacuumdb</application> accepts the following command line arguments:
+    <application>vacuumdb</application> accepts the following command-line arguments:
     
     <variablelist>
      <varlistentry>
-      <term><option>-d <replaceable class="parameter">dbname</replaceable></option></term>
-      <term><option>--dbname <replaceable class="parameter">dbname</replaceable></option></term>
+      <term><option><optional>-d</> <replaceable class="parameter">dbname</replaceable></option></term>
+      <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the name of the database to be cleaned or analyzed.
@@ -103,6 +103,18 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+
+     <varlistentry>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
+      <listitem>
+       <para>
+        Echo the commands that <application>vacuumdb</application> generates
+	and sends to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><option>-f</option></term>
       <term><option>--full</option></term>
@@ -114,21 +126,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-v</option></term>
-      <term><option>--verbose</option></term>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
       <listitem>
        <para>
-	Print detailed information during processing.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-z</option></term>
-      <term><option>--analyze</option></term>
-      <listitem>
-       <para>
-	Calculate statistics for use by the optimizer.
+        Do not display a response.
        </para>
       </listitem>
      </varlistentry>
@@ -151,12 +153,31 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
+      <listitem>
+       <para>
+	Print detailed information during processing.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-z</option></term>
+      <term><option>--analyze</option></term>
+      <listitem>
+       <para>
+	Calculate statistics for use by the optimizer.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 
    <para>
     <application>vacuumdb</application> also accepts 
-    the following command line arguments for connection parameters:
+    the following command-line arguments for connection parameters:
     
     <variablelist>
      <varlistentry>
@@ -200,27 +221,6 @@ PostgreSQL documentation
       <listitem>
        <para>
         Force password prompt.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-e</></term>
-      <term><option>--echo</></term>
-      <listitem>
-       <para>
-        Echo the commands that <application>vacuumdb</application> generates
-	and sends to the server.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
-      <listitem>
-       <para>
-        Do not display a response.
        </para>
       </listitem>
      </varlistentry>

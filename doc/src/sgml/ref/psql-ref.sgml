@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.77 2002/09/22 20:44:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.78 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -42,12 +42,6 @@ PostgreSQL documentation
 
  <refsect1 id="R1-APP-PSQL-3">
   <title>Options</title>
-
-  <para>
-   If so configured, <application>psql</application> understands both
-   standard Unix short options, and <acronym>GNU</acronym>-style long
-   options. The latter are not available on all systems.
-  </para>
 
   <variablelist>
     <varlistentry>
@@ -452,6 +446,10 @@ PostgreSQL documentation
       </listitem>
     </varlistentry>
   </variablelist>
+
+  <para>
+   Long options are not available on all platforms.
+  </para>
  </refsect1>
 
 

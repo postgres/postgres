@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.21 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.22 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -54,7 +54,59 @@ PostgreSQL documentation
  <refsect1>
   <title>Options</title>
 
+  <para>
+   <application>dropuser</application> accepts the following command-line arguments:
+
     <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">username</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the name of the <productname>PostgreSQL</productname> user to be removed. 
+	This name must exist in the <productname>PostgreSQL</productname> installation.
+	You will be prompted for a name if none is specified on the command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
+      <listitem>
+       <para>
+        Echo the queries that <application>dropuser</application> generates
+	and sends to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-i</></term>
+      <term><option>--interactive</></term>
+      <listitem>
+       <para>
+        Prompt for confirmation before actually removing the user.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
+      <listitem>
+       <para>
+        Do not display a response.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+  </para>
+
+  <para>
+   <application>createuser</application> also accepts the following
+   command-line arguments for connection parameters:
+    
+   <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
@@ -81,54 +133,27 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-e</></term>
-      <term><option>--echo</></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
-        Echo the queries that <application>dropuser</application> generates
-	and sends to the server.
+        User name to connect as (not the user name to drop)
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
+      <term><option>-W</></term>
+      <term><option>--password</></term>
       <listitem>
        <para>
-        Do not display a response.
+        Force password prompt (to connect to the server, not for the
+        password of the user to be dropped).
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><option>-i</></term>
-      <term><option>--interactive</></term>
-      <listitem>
-       <para>
-        Prompt for confirmation before actually removing the user.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">username</replaceable></term>
-      <listitem>
-       <para>
-	Specifies the name of the <productname>PostgreSQL</productname> user to be removed. 
-	This name must exist in the <productname>PostgreSQL</productname> installation.
-	You will be prompted for a name if none is specified on the command line.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    <para>
-    The options <literal>-h</literal>, <literal>-p</literal>, and <literal>-e</literal>,
-    are passed on literally to <xref linkend="APP-PSQL">. The
-    <application>psql</application> options <literal>-U</literal> and <literal>-W</literal>
-    are available as well, but they can be confusing in this context.
-   </para>
+   </variablelist>
+  </para>
  </refsect1>
 
 

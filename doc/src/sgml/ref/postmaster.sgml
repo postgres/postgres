@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.32 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.33 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -72,9 +72,11 @@ PostgreSQL documentation
    communication ports (see below).  A data area is created with <xref
    linkend="app-initdb">.
   </para>
+ </refsect1>
 
-  <refsect2 id="app-postmaster-options">
-   <title>Options</title>
+ <refsect1 id="app-postmaster-options">
+  <title>Options</title>
+
    <para>
     <application>postmaster</application> accepts the following
     command line arguments.  For a detailed discussion of the options
@@ -336,7 +338,6 @@ PostgreSQL documentation
      </varlistentry>
     </variablelist>
    </para>
-  </refsect2>
 
  </refsect1>
 
@@ -579,6 +580,15 @@ StreamServerPort: cannot bind to port
    to set a parameter.
   </para>
   </tip>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <para>
+   <xref linkend="app-initdb">,
+   <xref linkend="app-pg-ctl">
+  </para>
  </refsect1>
 </refentry>
 

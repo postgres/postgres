@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.29 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.30 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -59,6 +59,109 @@ PostgreSQL documentation
  <refsect1>
   <title>Options</title>
 
+  <para>
+   <application>createdb</application> accepts the following command-line arguments:
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">dbname</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the name of the database to be created.  The name must be
+	unique among all <productname>PostgreSQL</productname> databases in this installation.
+        The default is to create a database with the same name as the
+        current system user.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">description</replaceable></term>
+      <listitem>
+       <para>
+        This optionally specifies a comment to be associated with the newly created
+	database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-D <replaceable class="parameter">location</replaceable></></term>
+      <term><option>--location <replaceable class="parameter">location</replaceable></></term>
+      <listitem>
+       <para>
+	Specifies the alternative location for the database.  See also <xref
+	linkend="app-initlocation">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
+      <listitem>
+       <para>
+        Echo the queries that <application>createdb</application> generates
+	and sends to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-E <replaceable class="parameter">encoding</replaceable></></term>
+      <term><option>--encoding <replaceable class="parameter">encoding</replaceable></></term>
+      <listitem>
+       <para>
+        Specifies the character encoding scheme to be used in this database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-O <replaceable class="parameter">owner</replaceable></></term>
+      <term><option>--owner <replaceable class="parameter">owner</replaceable></></term>
+      <listitem>
+       <para>
+	Specifies the database user who will own the new database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
+      <listitem>
+       <para>
+        Do not display a response.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-T <replaceable class="parameter">template</replaceable></></term>
+      <term><option>--template <replaceable class="parameter">template</replaceable></></term>
+      <listitem>
+       <para>
+        Specifies the template database from which to build this database.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    The options <option>-D</option>, <option>-E</option>,
+    <option>-O</option>, and
+    <option>-T</option> correspond to options of the underlying
+    SQL command <xref linkend="SQL-CREATEDATABASE"
+    endterm="SQL-CREATEDATABASE-title">; see there for more information
+    about them.
+   </para>
+
+   <para>
+    <application>createdb</application> also accepts the following
+    command-line arguments for connection parameters:
+
     <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
@@ -102,105 +205,9 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><option>-e</></term>
-      <term><option>--echo</></term>
-      <listitem>
-       <para>
-        Echo the queries that <application>createdb</application> generates
-	and sends to the server.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
-      <listitem>
-       <para>
-        Do not display a response.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-O <replaceable class="parameter">owner</replaceable></></term>
-      <term><option>--owner <replaceable class="parameter">owner</replaceable></></term>
-      <listitem>
-       <para>
-	Specifies the database user who will own the new database.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-D <replaceable class="parameter">datadir</replaceable></></term>
-      <term><option>--location <replaceable class="parameter">datadir</replaceable></></term>
-      <listitem>
-       <para>
-	Specifies the alternative location for the database.  See also <xref
-	linkend="app-initlocation">.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-T <replaceable class="parameter">template</replaceable></></term>
-      <term><option>--template <replaceable class="parameter">template</replaceable></></term>
-      <listitem>
-       <para>
-        Specifies the template database from which to build this database.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-E <replaceable class="parameter">encoding</replaceable></></term>
-      <term><option>--encoding <replaceable class="parameter">encoding</replaceable></></term>
-      <listitem>
-       <para>
-        Specifies the character encoding scheme to be used in this database.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">dbname</replaceable></term>
-      <listitem>
-       <para>
-	Specifies the name of the database to be created.  The name must be
-	unique among all <productname>PostgreSQL</productname> databases in this installation.
-        The default is to create a database with the same name as the
-        current system user.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">description</replaceable></term>
-      <listitem>
-       <para>
-        This optionally specifies a comment to be associated with the newly created
-	database.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
-
-   <para>
-    The options <option>-h</option>, <option>-p</option>, <option>-U</option>,
-    <option>-W</option>, and <option>-e</option> are passed on literally to
-    <xref linkend="app-psql">.
-
-    The options <option>-O</option>, <option>-D</option>,
-    <option>-T</option>, and
-    <option>-E</option> are converted into options for the underlying
-    SQL command <xref linkend="SQL-CREATEDATABASE"
-    endterm="SQL-CREATEDATABASE-title">; see there for more information
-    about them.
    </para>
+
  </refsect1>
 
 

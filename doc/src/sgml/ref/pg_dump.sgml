@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.51 2002/09/07 16:14:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.52 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,27 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_dump</command>
-   <group> <arg>-a</arg> <arg>-s</arg> </group>
-   <arg>-b</arg>
-   <arg>-c</arg>
-   <arg>-C</arg>
-   <group> <arg>-d</arg> <arg>-D</arg> </group>
-   <arg>-f <replaceable>file</replaceable></arg> 
-   <arg>-F <replaceable>format</replaceable></arg>
-   <arg>-i</arg>
-   <arg>-o</arg>
-   <arg>-O</arg>
-   <arg>-R</arg>
-   <arg>-S</arg>
-   <arg>-t <replaceable>table</replaceable></arg>
-   <arg>-v</arg>
-   <arg>-x</arg>
-   <arg>-X <replaceable>keyword</replaceable></arg>
-   <arg>-Z <replaceable>0...9</replaceable></arg>
-   <arg>-h <replaceable>host</replaceable></arg>
-   <arg>-p <replaceable>port</replaceable></arg>
-   <arg>-U <replaceable>username</replaceable></arg>
-   <arg>-W</arg>
+   <arg rep="repeat"><replaceable>options</replaceable></arg>
    <arg><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -53,24 +33,29 @@ PostgreSQL documentation
   </title>
 
   <para>
-   <command>pg_dump</command> is a utility for saving a
+   <application>pg_dump</application> is a utility for saving a
    <productname>PostgreSQL</productname> database into a script or an
    archive file.  The script files are in plain-text format and
    contain the SQL commands required to reconstruct the database to
-   the state it was in at the time it was saved.  They can be used to
+   the state it was in at the time it was saved.  To restore these
+   scripts, use <xref linkend="app-psql">.  They can be used to
    reconstruct the database even on other machines and other
-   architectures, with some modifications even on other RDBMS
-   products.  Furthermore, there are alternative archive file formats that
-   are meant to be
-   used with <xref linkend="app-pgrestore"> to rebuild the database,
-   and they also allow <command>pg_restore</command> to be selective
-   about what is restored, or even to reorder the items prior to being
-   restored. The archive files are also designed to be portable across
+   architectures, with some modifications even on other SQL database
+   products.
+  </para>
+
+  <para>
+   Furthermore, there are alternative archive file formats
+   that are meant to be used with <xref linkend="app-pgrestore"> to
+   rebuild the database, and they also allow
+   <application>pg_restore</application> to be selective about what is
+   restored, or even to reorder the items prior to being restored. The
+   archive files are also designed to be portable across
    architectures.
   </para>
 
   <para>
-   <command>pg_dump</command> will save the information necessary to
+   <application>pg_dump</application> will save the information necessary to
    re-generate all user-defined types, functions, tables, indexes,
    aggregates, and operators.  In addition, all the data is copied out
    in text format so that it can be readily copied in again, as well
@@ -78,17 +63,11 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <command>pg_dump</command> 
-   is useful for dumping out the contents of a database to move from one
-   <productname>PostgreSQL</productname> installation to another.
-  </para>
-
-  <para>
    When used with one of the archive file formats and combined with
-   <xref linkend="app-pgrestore">, <command>pg_dump</command> provides a
+   <application>pg_restore</application>, <application>pg_dump</application> provides a
    flexible archival and 
-   transfer mechanism. <command>pg_dump</command> can be used to
-   backup an entire database, then <command>pg_restore</command> can
+   transfer mechanism. <application>pg_dump</application> can be used to
+   backup an entire database, then <application>pg_restore</application> can
    be used to examine the archive and/or select which parts of the
    database are to be restored.
    The most flexible output file format is the <quote>custom</quote>
@@ -107,8 +86,8 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <command>pg_dump</command> makes consistent backups even if the
-   database is being used concurrently.  <command>pg_dump</command>
+   <application>pg_dump</application> makes consistent backups even if the
+   database is being used concurrently.  <application>pg_dump</application>
    does not block other users accessing the database (readers or
    writers).
   </para>
@@ -202,7 +181,7 @@ PostgreSQL documentation
        <para>
 	Dump data as <command>INSERT</command> commands (rather
 	than <command>COPY</command>). This will make restoration very
-	slow, but it makes the archives more portable to other RDBMS
+	slow, but it makes the archives more portable to other SQL database
 	packages.
        </para>
       </listitem>
@@ -258,7 +237,7 @@ PostgreSQL documentation
          <listitem>
           <para>
          Output a <filename>tar</filename> archive suitable for input into 
-         <command>pg_restore</command>. Using this archive format 
+         <application>pg_restore</application>. Using this archive format 
          allows reordering and/or exclusion of schema elements 
          at the time the database is restored. It is also possible to limit 
          which data is reloaded at restore time.
@@ -271,7 +250,7 @@ PostgreSQL documentation
          <listitem>
           <para>
          Output a custom archive suitable for input into 
-         <command>pg_restore</command>. This is the most flexible 
+         <application>pg_restore</application>. This is the most flexible 
          format in that it allows reordering of data load as well 
          as schema elements. This format is also compressed by default.
           </para>
@@ -324,8 +303,8 @@ PostgreSQL documentation
        <para>
         Do not output commands to set the
 	object ownership to match the original database.  Typically,
-	<command>pg_dump</command> issues
-	(<command>psql</command>-specific) <command>\connect</command>
+	<application>pg_dump</application> issues
+	(<application>psql</application>-specific) <command>\connect</command>
 	statements to set ownership of schema elements.  See also
 	under <option>-R</option> and <option>-X
 	use-set-session-authorization</option>.  Note that
@@ -347,13 +326,13 @@ PostgreSQL documentation
       <term><option>--no-reconnect</option></term>
       <listitem>
        <para>
-	Prohibit <command>pg_dump</command>
+	Prohibit <application>pg_dump</application>
         from outputting a script that would require reconnections to
         the database while being restored.  An average restoration
         script usually has to reconnect several times as different
         users to set the original ownerships of the objects.  This
         option is a rather blunt instrument because it makes
-        <command>pg_dump</command> lose this ownership information,
+        <application>pg_dump</application> lose this ownership information,
         <emphasis>unless</emphasis> you use the <option>-X
         use-set-session-authorization</option> option.
        </para>
@@ -435,13 +414,13 @@ PostgreSQL documentation
       <listitem>
        <para>
         Normally, if a (plain-text mode) script generated by
-        <command>pg_dump</command> must alter the current database
+        <application>pg_dump</application> must alter the current database
         user (e.g., to set correct object ownerships), it uses the
-        <xref linkend="app-psql"> <command>\connect</command> command.
+        <application>psql</application> <command>\connect</command> command.
         This command actually opens a new connection, which might
         require manual interaction (e.g., passwords).  If you use the
         <option>-X use-set-session-authorization</option> option, then
-        <command>pg_dump</command> will instead output <xref
+        <application>pg_dump</application> will instead output <xref
         linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title"> commands.  This has
         the same effect, but it requires that the user restoring the
         database from the generated script be a database superuser.
@@ -452,7 +431,7 @@ PostgreSQL documentation
        <para>
         Since <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title"> is a
         standard SQL command, whereas <command>\connect</command> only
-        works in <xref linkend="app-psql">, this option also enhances
+        works in <application>psql</application>, this option also enhances
         the theoretical portability of the output script.
        </para>
 
@@ -470,7 +449,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option is only relevant when creating a data-only dump.
-	It instructs <command>pg_dump</command> to include commands
+	It instructs <application>pg_dump</application> to include commands
 	to temporarily disable triggers on the target tables while
 	the data is reloaded.  Use this if you have referential
 	integrity checks or other triggers on the tables that you
@@ -591,22 +570,21 @@ PostgreSQL documentation
     <msg>
      <msgmain>
       <msgtext>
-<screen><computeroutput>
+<screen>
 Connection to database 'template1' failed.
 connectDBStart() -- connect() failed: No such file or directory
         Is the postmaster running locally
         and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
-</computeroutput></screen>
+</screen>
       </msgtext>
      </msgmain> 
     </msg>
 
     <msgexplan>
        <para>
-	<command>pg_dump</command> could not attach to the 
-	<command>postmaster</command> 
-	process on the specified host and port.  If you see this message,
-	ensure that the <command>postmaster</command> 
+	<application>pg_dump</application> could not attach to the 
+	PostgreSQL server on the specified host and port.  If you see this message,
+	ensure that the server
 	is running on the proper host and that you have specified the proper
 	port.
        </para>
@@ -617,9 +595,9 @@ connectDBStart() -- connect() failed: No such file or directory
 
    <note>
     <para>
-     <command>pg_dump</command> internally executes
+     <application>pg_dump</application> internally executes
      <command>SELECT</command> statements. If you have problems running
-     <command>pg_dump</command>,
+     <application>pg_dump</application>,
      make sure you are able to select information from the database using, for
      example, <xref linkend="app-psql">.
     </para>
@@ -632,23 +610,23 @@ connectDBStart() -- connect() failed: No such file or directory
 
   <para>
    If your installation has any local additions to the template1 database,
-   be careful to restore the output of <command>pg_dump</command> into a
+   be careful to restore the output of <application>pg_dump</application> into a
    truly empty database; otherwise you are likely to get errors due to
    duplicate definitions of the added objects.  To make an empty database
    without any local additions, copy from template0 not template1,
    for example:
 <programlisting>
-CREATE DATABASE foo WITH TEMPLATE = template0;
+CREATE DATABASE foo WITH TEMPLATE template0;
 </programlisting>
   </para>
 
   <para>
-   <command>pg_dump</command> has a few limitations:
+   <application>pg_dump</application> has a few limitations:
 
    <itemizedlist>
     <listitem>
      <para>
-      When dumping a single table or as plain text, <command>pg_dump</command> 
+      When dumping a single table or as plain text, <application>pg_dump</application> 
       does not handle large objects. Large objects must be dumped in their
       entirety using one of the binary archive formats.
      </para>
@@ -656,7 +634,7 @@ CREATE DATABASE foo WITH TEMPLATE = template0;
 
     <listitem>
      <para>
-      When doing a data only dump, <command>pg_dump</command> emits queries
+      When doing a data only dump, <application>pg_dump</application> emits queries
       to disable triggers on user tables before inserting the data and queries to
       re-enable them after the data has been inserted.  If the restore is stopped
       in the middle, the system catalogs may be left in the wrong state.
@@ -717,7 +695,7 @@ CREATE DATABASE foo WITH TEMPLATE = template0;
   <title>History</title>
 
   <para>
-   The <command>pg_dump</command> utility first appeared in
+   The <application>pg_dump</application> utility first appeared in
    <application>Postgres95</application> release <literal>0.02</literal>.  The
    non-plain-text output formats were introduced in
    <application>PostgreSQL</application> release <literal>7.1</literal>.

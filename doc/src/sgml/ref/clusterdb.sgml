@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.4 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.5 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -33,8 +33,8 @@ PostgreSQL documentation
   <title>Description</title>
 
   <para>
-   <application>clusterdb</application> is a utility for re-clustering tables
-   in a <productname>PostgreSQL</productname> database.  It finds table(s)
+   <application>clusterdb</application> is a utility for reclustering tables
+   in a <productname>PostgreSQL</productname> database.  It finds tables
    that have previously been clustered, and clusters them again on the same
    index that was last used.  Tables that have never been clustered are not
    touched.
@@ -67,12 +67,22 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
-    <application>clusterdb</application> accepts the following command line arguments:
+    <application>clusterdb</application> accepts the following command-line arguments:
     
     <variablelist>
      <varlistentry>
-      <term><option>-d <replaceable class="parameter">dbname</replaceable></></term>
-      <term><option>--dbname <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option>-a</></term>
+      <term><option>--all</></term>
+      <listitem>
+       <para>
+	Cluster all databases.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option><optional>-d</> <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
 	Specifies the name of the database to be clustered.
@@ -86,11 +96,22 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-a</></term>
-      <term><option>--all</></term>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
       <listitem>
        <para>
-	Cluster all databases.
+        Echo the commands that <application>clusterdb</application> generates
+	and sends to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
+      <listitem>
+       <para>
+        Do not display a response.
        </para>
       </listitem>
      </varlistentry>
@@ -110,8 +131,8 @@ PostgreSQL documentation
 
    <para>
     <application>clusterdb</application> also accepts 
-    the following command line arguments for connection parameters:
-    
+    the following command-line arguments for connection parameters:
+
     <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
@@ -154,27 +175,6 @@ PostgreSQL documentation
       <listitem>
        <para>
         Force password prompt.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-e</></term>
-      <term><option>--echo</></term>
-      <listitem>
-       <para>
-        Echo the commands that <application>clusterdb</application> generates
-	and sends to the server.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
-      <listitem>
-       <para>
-        Do not display a response.
        </para>
       </listitem>
      </varlistentry>
@@ -250,7 +250,7 @@ PostgreSQL documentation
     <literal>foo</literal> in a database named
     <literal>xyzzy</literal>:
 <screen>
-<prompt>$ </prompt><userinput>clusterdb --verbose --table foo xyzzy</userinput>
+<prompt>$ </prompt><userinput>clusterdb --table foo xyzzy</userinput>
 </screen>
    </para>
 

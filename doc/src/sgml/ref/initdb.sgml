@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.22 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.23 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,32 +18,12 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>initdb</command>
-    <group choice="plain">
-     <arg>--pgdata </arg>
-     <arg>-D </arg>
-     <replaceable>directory</replaceable>
-    </group>
-    <group>
-     <arg>--username </arg>
-     <arg>-U </arg>
-     <replaceable>username</replaceable>
-    </group>
-    <group><arg>--pwprompt</arg><arg>-W</arg></group>
-    <group>
-     <arg>--encoding </arg>
-     <arg>-E </arg>
-     <replaceable>encoding</replaceable>
-    </group>
-    <arg>--locale <replaceable>locale</replaceable></arg>
-    <arg>--lc-collate <replaceable>locale</replaceable></arg>
-    <arg>--lc-ctype <replaceable>locale</replaceable></arg>
-    <arg>--lc-messages <replaceable>locale</replaceable></arg>
-    <arg>--lc-monetary <replaceable>locale</replaceable></arg>
-    <arg>--lc-numeric <replaceable>locale</replaceable></arg>
-    <arg>--lc-time <replaceable>locale</replaceable></arg>
-    <arg>-L <replaceable>directory</replaceable></arg>
-    <group><arg>--noclean</arg><arg>-n</arg></group>
-    <group><arg>--debug</arg><arg>-d</arg></group>
+   <arg rep="repeat">options</arg>
+   <group choice="plain">
+    <arg>--pgdata </arg>
+    <arg>-D </arg>
+    <replaceable>directory</replaceable>
+   </group>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -107,15 +87,16 @@ PostgreSQL documentation
    <command>su</command> to become the database user, and
    finally run <command>initdb</command> as the database user.
   </para>
+ </refsect1>
 
-  <refsect2>
-   <title>Options</title>
+ <refsect1>
+  <title>Options</title>
 
    <para>
     <variablelist>
      <varlistentry>
-      <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
       <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
         This option specifies the directory where the database system
@@ -130,37 +111,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
-      <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
-      <listitem>
-       <para>
-        Selects the user name of the database superuser. This defaults
-        to the name of the effective user running
-        <command>initdb</command>. It is really not important what the
-        superuser's name is, but one might choose to keep the
-        customary name <systemitem>postgres</systemitem>, even if the operating
-        system user's name is different.
-       </para>
-      </listitem>
-     </varlistentry>
- 
-     <varlistentry>
-      <term><option>--pwprompt</option></term>
-      <term><option>-W</option></term>
-      <listitem>
-       <para>
-        Makes <command>initdb</command> prompt for a password
-        to give the database superuser. If you don't plan on using password
-        authentication, this is not important.  Otherwise you won't be
-        able to use password authentication until you have a password
-        set up.
-       </para>
-      </listitem>
-     </varlistentry>
- 
-     <varlistentry>
-      <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
       <term><option>-E <replaceable class="parameter">encoding</replaceable></option></term>
+      <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
       <listitem>
        <para>
         Selects the encoding of the template database. This will also
@@ -198,13 +150,56 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-   </variablelist>
+
+     <varlistentry>
+      <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
+      <listitem>
+       <para>
+        Selects the user name of the database superuser. This defaults
+        to the name of the effective user running
+        <command>initdb</command>. It is really not important what the
+        superuser's name is, but one might choose to keep the
+        customary name <systemitem>postgres</systemitem>, even if the operating
+        system user's name is different.
+       </para>
+      </listitem>
+     </varlistentry>
+ 
+     <varlistentry>
+      <term><option>-W</option></term>
+      <term><option>--pwprompt</option></term>
+      <listitem>
+       <para>
+        Makes <command>initdb</command> prompt for a password
+        to give the database superuser. If you don't plan on using password
+        authentication, this is not important.  Otherwise you won't be
+        able to use password authentication until you have a password
+        set up.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
 
    <para>
     Other, less commonly used, parameters are also available:
 
     <variablelist>
+     <varlistentry>
+      <term><option>-d</option></term>
+      <term><option>--debug</option></term>
+      <listitem>
+       <para>
+	Print debugging output from the bootstrap backend and a few other
+        messages of lesser interest for the general public.
+	The bootstrap backend is the program <command>initdb</command>
+	uses to create the catalog tables.  This option generates a tremendous
+	amount of extremely boring output.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><option>-L <replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
@@ -230,25 +225,9 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><option>-d</option></term>
-      <term><option>--debug</option></term>
-      <listitem>
-       <para>
-	Print debugging output from the bootstrap backend and a few other
-        messages of lesser interest for the general public.
-	The bootstrap backend is the program <command>initdb</command>
-	uses to create the catalog tables.  This option generates a tremendous
-	amount of extremely boring output.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
    </para>
 
-  </refsect2>
  </refsect1>
 
  <refsect1>

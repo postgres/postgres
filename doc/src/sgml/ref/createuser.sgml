@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.28 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.29 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -33,7 +33,7 @@ PostgreSQL documentation
    the <literal>pg_shadow</literal> table) can create 
    new <productname>PostgreSQL</productname> users,
    so <application>createuser</application> must be
-   invoked by someone who is a <productname>PostgreSQL</productname>
+   invoked by someone who can connect as a <productname>PostgreSQL</productname>
    superuser.
   </para>
 
@@ -62,7 +62,141 @@ PostgreSQL documentation
  <refsect1>
   <title>Options</title>
 
+  <para>
+   <application>createuser</> accepts the following command-line arguments:
+
     <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">username</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the name of the <productname>PostgreSQL</productname> user to be created. 
+	This name must be unique among all <productname>PostgreSQL</productname> users.
+       </para>
+      </listitem>
+     </varlistentry>  
+
+     <varlistentry>
+      <term><option>-a</></term>
+      <term><option>--adduser</></term>
+      <listitem>
+       <para>
+	The new user is allowed to create other users.
+	(Note: Actually, this makes the new user a <firstterm>superuser</>.
+	The option is poorly named.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-A</></term>
+      <term><option>--no-adduser</></term>
+      <listitem>
+       <para>
+	The new user is not allowed to create other users (i.e.,
+	the new user is a regular user, not a superuser).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-d</></term>
+      <term><option>--createdb</></term>
+      <listitem>
+       <para>
+	The new user is allowed to create databases.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-D</></term>
+      <term><option>--no-createdb</></term>
+      <listitem>
+       <para>
+	The new user is not allowed to create databases.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
+      <listitem>
+       <para>
+        Echo the queries that <application>createuser</application> generates
+	and sends to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-E</></term>
+      <term><option>--encrypted</></term>
+      <listitem>
+       <para>
+	Encrypts the user's password stored in the database. If not
+	specified, the default is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-i <replaceable class="parameter">uid</replaceable></></term>
+      <term><option>--sysid <replaceable class="parameter">uid</replaceable></></term>
+      <listitem>
+       <para>
+       Allows you to pick a non-default user ID for the new user. This is not
+       necessary, but some people like it.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-N</></term>
+      <term><option>--unencrypted</></term>
+      <listitem>
+       <para>
+	Does not encrypt the user's password stored in the database. If
+	not specified, the default is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-P</></term>
+      <term><option>--pwprompt</></term>
+      <listitem>
+       <para>
+       If given, <application>createuser</application> will issue a prompt for
+       the password of the new user. This is not necessary if you do not plan
+       on using password authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
+      <listitem>
+       <para>
+        Do not display a response.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+  </para>
+
+  <para>
+   You will be prompted for a name and other missing information if it
+   is not specified on the command line.
+  </para>
+
+  <para>
+   <application>createuser</application> also accepts the following
+   command-line arguments for connection parameters:
+    
+   <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
@@ -89,136 +223,27 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-e</></term>
-      <term><option>--echo</></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
-        Echo the queries that <application>createuser</application> generates
-	and sends to the server.
+        User name to connect as (not the user name to create)
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
+      <term><option>-W</></term>
+      <term><option>--password</></term>
       <listitem>
        <para>
-        Do not display a response.
+        Force password prompt (to connect to the server, not for the
+        password of the new user).
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><option>-d</></term>
-      <term><option>--createdb</></term>
-      <listitem>
-       <para>
-	The new user is allowed to create databases.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-D</></term>
-      <term><option>--no-createdb</></term>
-      <listitem>
-       <para>
-	The new user is not allowed to create databases.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-a</></term>
-      <term><option>--adduser</></term>
-      <listitem>
-       <para>
-	The new user is allowed to create other users.
-	(Note: Actually, this makes the new user a <firstterm>superuser</>.
-	The option is poorly named.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-A</></term>
-      <term><option>--no-adduser</></term>
-      <listitem>
-       <para>
-	The new user is not allowed to create other users (i.e.,
-	the new user is a regular user not a superuser).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-P</></term>
-      <term><option>--pwprompt</></term>
-      <listitem>
-       <para>
-       If given, <application>createuser</application> will issue a prompt for
-       the password of the new user. This is not necessary if you do not plan
-       on using password authentication.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-i <replaceable class="parameter">uid</replaceable></></term>
-      <term><option>--sysid <replaceable class="parameter">uid</replaceable></></term>
-      <listitem>
-       <para>
-       Allows you to pick a non-default user id for the new user. This is not
-       necessary, but some people like it.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-E</></term>
-      <term><option>--encrypted</></term>
-      <listitem>
-       <para>
-	Encrypts the user's password stored in the database. If not
-	specified, the default is used.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-N</></term>
-      <term><option>--unencrypted</></term>
-      <listitem>
-       <para>
-	Does not encrypt the user's password stored in the database. If
-	not specified, the default is used.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">username</replaceable></term>
-      <listitem>
-       <para>
-	Specifies the name of the <productname>PostgreSQL</productname> user to be created. 
-	This name must be unique among all <productname>PostgreSQL</productname> users.
-       </para>
-      </listitem>
-     </varlistentry>  
-    </variablelist>
-
-   <para>
-    You will be prompted for a name and other missing information if it is not
-    specified on the command line.
-    </para>
-
-    <para>
-    The options <literal>-h</literal>, <literal>-p</literal>, and <literal>-e</literal>,
-    are passed on literally to <xref linkend="APP-PSQL">. The
-    <application>psql</application> options <literal>-U</literal> and <literal>-W</literal>
-    are available as well, but their use can be confusing in this context.
-   </para>
+   </variablelist>
+  </para>
  </refsect1>
 
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.27 2002/07/28 15:22:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.28 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -101,15 +101,16 @@ PostgreSQL documentation
 
   <para>
    When running a stand-alone backend, the session user will be set to
-   the user with id 1.  This user does not actually have to exist, so
+   the user with ID 1.  This user does not actually have to exist, so
    a stand-alone backend can be used to manually recover from certain
    kinds of accidental damage to the system catalogs.  Implicit
-   superuser powers are granted to the user with id 1 in stand-alone
+   superuser powers are granted to the user with ID 1 in stand-alone
    mode.
   </para>
+ </refsect1>
 
-  <refsect2>
-   <title>Options</title>
+ <refsect1>
+  <title>Options</title>
 
    <para>
     When <application>postgres</application> is started by a <xref
@@ -131,7 +132,7 @@ PostgreSQL documentation
     <application>postgres</application> command-line options.
    </para>
 
-   <refsect3>
+   <refsect2>
     <title>General Purpose</title>
 
     <para>
@@ -210,9 +211,9 @@ PostgreSQL documentation
      </varlistentry>
 
     </variablelist>
-   </refsect3>
+   </refsect2>
 
-   <refsect3>
+   <refsect2>
     <title>Options for stand-alone mode</title>
 
     <variablelist>
@@ -244,9 +245,9 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
     </variablelist>
-   </refsect3>
+   </refsect2>
 
-   <refsect3>
+   <refsect2>
     <title>Semi-internal Options</title>
 
     <para>
@@ -345,8 +346,7 @@ PostgreSQL documentation
      </varlistentry>
 
     </variablelist>
-   </refsect3>
-  </refsect2>
+   </refsect2>
  </refsect1>
 
  <refsect1>

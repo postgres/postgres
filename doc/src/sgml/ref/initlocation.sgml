@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.16 2002/07/28 15:22:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.17 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -41,7 +41,6 @@ PostgreSQL documentation
  <refsect1 id="R1-APP-INITLOCATION-2">
   <title>Examples</title>
 
-  <informalexample>
    <para>
     To create a database in an alternate location, using an
     environment variable:
@@ -56,9 +55,7 @@ PostgreSQL documentation
 <prompt>$</prompt> <userinput>createdb -D PGDATA2 testdb</userinput>
 </screen>
    </para>
-  </informalexample>
 
-  <informalexample>
    <para>
     Alternatively, if you allow absolute paths you could write:
 <screen>
@@ -66,7 +63,6 @@ PostgreSQL documentation
 <prompt>$</prompt> <userinput>createdb -D /opt/postgres/data/testdb testdb</userinput>
 </screen>
    </para>
-  </informalexample>
  </refsect1>
 
  <refsect1>

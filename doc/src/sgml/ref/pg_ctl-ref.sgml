@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.16 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.17 2002/10/11 23:03:48 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -125,10 +125,12 @@ PostgreSQL documentation
    and if so displays the <acronym>PID</acronym> and the command line
    options that were used to invoke it.
   </para>
+ </refsect1>
 
-  <refsect2 id="app-pg-ctl-options">
-   <title>Options</title>
-   <para>
+ <refsect1 id="app-pg-ctl-options">
+  <title>Options</title>
+
+  <para>
 
     <variablelist>
      <varlistentry>
@@ -224,7 +226,6 @@ PostgreSQL documentation
      </varlistentry>
     </variablelist>
    </para>
-  </refsect2>
  </refsect1>
 
 
