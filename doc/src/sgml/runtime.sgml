@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.205 2003/09/11 17:27:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.206 2003/09/11 18:30:39 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -630,7 +630,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
      
      <varlistentry>
-      <term><varname>TCPIP_SOCKET</varname> (<type>boolean</type>)</term>
+      <term><varname>tcpip_socket</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         If this is true, then the server will accept TCP/IP connections.<indexterm><primary>TCP/IP</></>
@@ -642,7 +642,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
   
      <varlistentry>
-      <term><varname>MAX_CONNECTIONS</varname> (<type>integer</type>)</term>
+      <term><varname>max_connections</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Determines the maximum number of concurrent connections to the
@@ -663,29 +663,29 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>SUPERUSER_RESERVED_CONNECTIONS</varname>
+      <term><varname>superuser_reserved_connections</varname>
       (<type>integer</type>)</term>
       <listitem>
        <para>
         Determines the number of <quote>connection slots</quote> that
         are reserved for connections by <productname>PostgreSQL</>
-        superusers.  At most <varname>MAX_CONNECTIONS</> connections can
+        superusers.  At most <varname>max_connections</> connections can
         ever be active simultaneously.  Whenever the number of active
-        concurrent connections is at least <varname>MAX_CONNECTIONS</> minus
-        <varname>SUPERUSER_RESERVED_CONNECTIONS</varname>, new connections
+        concurrent connections is at least <varname>max_connections</> minus
+        <varname>superuser_reserved_connections</varname>, new connections
         will be accepted only for superusers.
        </para>
 
        <para>
         The default value is 2. The value must be less than the value of
-        <varname>MAX_CONNECTIONS</varname>. This parameter can only be
+        <varname>max_connections</varname>. This parameter can only be
         set at server start.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>PORT</varname> (<type>integer</type>)</term>
+      <term><varname>port</varname> (<type>integer</type>)</term>
       <indexterm><primary>port</></>
       <listitem>
        <para>
@@ -697,7 +697,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
 
      <varlistentry>
-      <term><varname>UNIX_SOCKET_DIRECTORY</varname> (<type>string</type>)</term>
+      <term><varname>unix_socket_directory</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Specifies the directory of the Unix-domain socket on which the
@@ -709,13 +709,13 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>UNIX_SOCKET_GROUP</varname> (<type>string</type>)</term>
+      <term><varname>unix_socket_group</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Sets the group owner of the Unix domain socket.  (The owning
         user of the socket is always the user that starts the
         server.)  In combination with the option
-        <varname>UNIX_SOCKET_PERMISSIONS</varname> this can be used as
+        <varname>unix_socket_permissions</varname> this can be used as
         an additional access control mechanism for this socket type.
         By default this is the empty string, which uses the default
         group for the current user.  This option can only be set at
@@ -725,7 +725,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>UNIX_SOCKET_PERMISSIONS</varname> (<type>integer</type>)</term>
+      <term><varname>unix_socket_permissions</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Sets the access permissions of the Unix domain socket.  Unix
@@ -741,7 +741,7 @@ SET ENABLE_SEQSCAN TO OFF;
         The default permissions are <literal>0777</literal>, meaning
         anyone can connect. Reasonable alternatives are
         <literal>0770</literal> (only user and group, see also under
-        <varname>UNIX_SOCKET_GROUP</varname>) and <literal>0700</literal>
+        <varname>unix_socket_group</varname>) and <literal>0700</literal>
         (only user). (Note that actually for a Unix domain socket, only write
         permission matters and there is no point in setting or revoking
         read or execute permissions.)
@@ -759,7 +759,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>VIRTUAL_HOST</varname> (<type>string</type>)</term>
+      <term><varname>virtual_host</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Specifies the host name or IP address on which the server is
@@ -771,7 +771,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>RENDEZVOUS_NAME</varname> (<type>string</type>)</term>
+      <term><varname>rendezvous_name</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Specifies the Rendezvous broadcast name.  By default, the
@@ -787,7 +787,7 @@ SET ENABLE_SEQSCAN TO OFF;
      
      <variablelist>
      <varlistentry>
-      <term><varname>AUTHENTICATION_TIMEOUT</varname> (<type>integer</type>)</term>
+      <term><varname>authentication_timeout</varname> (<type>integer</type>)</term>
       <indexterm><primary>timeout</><secondary>client authentication</></indexterm>
       <indexterm><primary>client authentication</><secondary>timeout during</></indexterm>
       <listitem>
@@ -807,7 +807,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <primary>SSL</primary>
       </indexterm>
 
-      <term><varname>SSL</varname> (<type>boolean</type>)</term>
+      <term><varname>ssl</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables <acronym>SSL</> connections. Please read
@@ -818,7 +818,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>PASSWORD_ENCRYPTION</varname> (<type>boolean</type>)</term>
+      <term><varname>password_encryption</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         When a password is specified in <command>CREATE USER</> or
@@ -830,7 +830,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>KRB_SERVER_KEYFILE</varname> (<type>string</type>)</term>
+      <term><varname>krb_server_keyfile</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Sets the location of the Kerberos server key file. See
@@ -840,7 +840,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>DB_USER_NAMESPACE</varname> (<type>boolean</type>)</term>
+      <term><varname>db_user_namespace</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         This allows per-database user names.  It is off by default.
@@ -885,7 +885,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
      <varlistentry>
-      <term><varname>SHARED_BUFFERS</varname> (<type>integer</type>)</term>
+      <term><varname>shared_buffers</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Sets the number of shared memory buffers used by the database
@@ -894,7 +894,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <application>initdb</>).  Each buffer is 8192 bytes, unless a
         different value of <literal>BLCKSZ</> was chosen when building
         the server.  This setting must be at least 16, as well as at
-        least twice the value of <varname>MAX_CONNECTIONS</varname>;
+        least twice the value of <varname>max_connections</varname>;
         however, settings significantly higher than the minimum are
         usually needed for good performance.  Values of a few thousand
         are recommended for production installations.  This option can
@@ -912,7 +912,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>SORT_MEM</varname> (<type>integer</type>)</term>
+      <term><varname>sort_mem</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Specifies the amount of memory to be used by internal sort operations and
@@ -923,7 +923,7 @@ SET ENABLE_SEQSCAN TO OFF;
         as this value specifies before it starts to put data into temporary
         files. Also, several running sessions could be doing
         sort operations simultaneously.  So the total memory used could be many
-        times the value of <varname>SORT_MEM</varname>. Sort operations are used
+        times the value of <varname>sort_mem</varname>. Sort operations are used
         by <literal>ORDER BY</>, merge joins, and <command>CREATE INDEX</>.
         Hash tables are used in hash joins, hash-based aggregation, and
         hash-based processing of <literal>IN</> subqueries.  Because 
@@ -934,7 +934,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>VACUUM_MEM</varname> (<type>integer</type>)</term>
+      <term><varname>vacuum_mem</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Specifies the maximum amount of memory to be used by
@@ -953,20 +953,20 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
      <varlistentry>
-      <term><varname>MAX_FSM_PAGES</varname> (<type>integer</type>)</term>
+      <term><varname>max_fsm_pages</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Sets the maximum number of disk pages for which free space will
         be tracked in the shared free-space map.  Six bytes of shared memory
         are consumed for each page slot.  This setting must be more than
-        16 * <varname>MAX_FSM_RELATIONS</varname>.  The default is 20000.
+        16 * <varname>max_fsm_relations</varname>.  The default is 20000.
         This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>MAX_FSM_RELATIONS</varname> (<type>integer</type>)</term>
+      <term><varname>max_fsm_relations</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Sets the maximum number of relations (tables and indexes) for which
@@ -985,7 +985,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>MAX_FILES_PER_PROCESS</varname> (<type>integer</type>)</term>
+      <term><varname>max_files_per_process</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Sets the maximum number of simultaneously open files allowed to each
@@ -1007,7 +1007,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>PRELOAD_LIBRARIES</varname> (<type>string</type>)</term>
+      <term><varname>preload_libraries</varname> (<type>string</type>)</term>
       <indexterm><primary>preload_libraries</></>
       <listitem>
        <para>
@@ -1066,7 +1066,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <primary>fsync</primary>
       </indexterm>
 
-      <term><varname>FSYNC</varname> (<type>boolean</type>)</term>
+      <term><varname>fsync</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         If this option is on, the <productname>PostgreSQL</> server
@@ -1083,7 +1083,7 @@ SET ENABLE_SEQSCAN TO OFF;
         performance penalty: when a transaction is committed,
         <productname>PostgreSQL</productname> must wait for the
         operating system to flush the write-ahead log to disk.  When
-        <varname>FSYNC</varname> is disabled, the operating system is
+        <varname>fsync</varname> is disabled, the operating system is
         allowed to do its best in buffering, ordering, and delaying
         writes. This can result in significantly improved performance.
         However, if the system crashes, the results of the last few
@@ -1093,15 +1093,15 @@ SET ENABLE_SEQSCAN TO OFF;
 
        <para>
         Due to the risks involved, there is no universally correct
-        setting for <varname>FSYNC</varname>. Some administrators
-        always disable <varname>FSYNC</varname>, while others only
+        setting for <varname>fsync</varname>. Some administrators
+        always disable <varname>fsync</varname>, while others only
         turn it off for bulk loads, where there is a clear restart
         point if something goes wrong, whereas some administrators
-        always leave <varname>FSYNC</varname> enabled. The default is
-        to enable <varname>FSYNC</varname>, for maximum reliability.
+        always leave <varname>fsync</varname> enabled. The default is
+        to enable <varname>fsync</varname>, for maximum reliability.
         If you trust your operating system, your hardware, and your
         utility company (or your battery backup), you can consider
-        disabling <varname>FSYNC</varname>.
+        disabling <varname>fsync</varname>.
        </para>
 
        <para>
@@ -1112,15 +1112,15 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>WAL_SYNC_METHOD</varname> (<type>string</type>)</term>
+      <term><varname>wal_sync_method</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Method used for forcing WAL updates out to disk.  Possible
         values are
-        <literal>FSYNC</> (call <function>fsync()</> at each commit),
-        <literal>FDATASYNC</> (call <function>fdatasync()</> at each commit),
-        <literal>OPEN_SYNC</> (write WAL files with <function>open()</> option <symbol>O_SYNC</>), and
-        <literal>OPEN_DATASYNC</> (write WAL files with <function>open()</> option <symbol>O_DSYNC</>).
+        <literal>fsync</> (call <function>fsync()</> at each commit),
+        <literal>fdatasync</> (call <function>fdatasync()</> at each commit),
+        <literal>open_sync</> (write WAL files with <function>open()</> option <symbol>O_SYNC</>), and
+        <literal>open_datasync</> (write WAL files with <function>open()</> option <symbol>O_DSYNC</>).
         Not all of these choices are available on all platforms.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
@@ -1129,7 +1129,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>WAL_BUFFERS</varname> (<type>integer</type>)</term>
+      <term><varname>wal_buffers</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Number of disk-page buffers in shared memory for WAL
@@ -1146,7 +1146,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
     <variablelist>
      <varlistentry>
-      <term><varname>CHECKPOINT_SEGMENTS</varname> (<type>integer</type>)</term>
+      <term><varname>checkpoint_segments</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Maximum distance between automatic WAL checkpoints, in log
@@ -1158,7 +1158,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>CHECKPOINT_TIMEOUT</varname> (<type>integer</type>)</term>
+      <term><varname>checkpoint_timeout</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Maximum time between automatic WAL checkpoints, in
@@ -1170,7 +1170,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>CHECKPOINT_WARNING</varname> (<type>integer</type>)</term>
+      <term><varname>checkpoint_warning</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Write a message to the server logs if checkpoints caused by
@@ -1183,7 +1183,7 @@ SET ENABLE_SEQSCAN TO OFF;
         	
         	
      <varlistentry>
-      <term><varname>COMMIT_DELAY</varname> (<type>integer</type>)</term>
+      <term><varname>commit_delay</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Time delay between writing a commit record to the WAL buffer
@@ -1194,7 +1194,7 @@ SET ENABLE_SEQSCAN TO OFF;
         ready to commit within the given interval. But the delay is
         just wasted if no other transactions become ready to
         commit. Therefore, the delay is only performed if at least
-        <varname>COMMIT_SIBLINGS</varname> other transactions are
+        <varname>commit_siblings</varname> other transactions are
         active at the instant that a server process has written its
         commit record. The default is zero (no delay).
        </para>
@@ -1202,11 +1202,11 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>COMMIT_SIBLINGS</varname> (<type>integer</type>)</term>
+      <term><varname>commit_siblings</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Minimum number of concurrent open transactions to require
-        before performing the <varname>COMMIT_DELAY</> delay. A larger
+        before performing the <varname>commit_delay</> delay. A larger
         value makes it more probable that at least one other
         transaction will become ready to commit during the delay
         interval. The default is five.
@@ -1243,7 +1243,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
      <varlistentry>
-      <term><varname>ENABLE_HASHAGG</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_hashagg</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables the query planner's use of hashed
@@ -1254,7 +1254,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>ENABLE_HASHJOIN</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_hashjoin</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables the query planner's use of hash-join plan
@@ -1269,7 +1269,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <primary>index scan</primary>
       </indexterm>
 
-      <term><varname>ENABLE_INDEXSCAN</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_indexscan</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables the query planner's use of index-scan plan
@@ -1280,7 +1280,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>ENABLE_MERGEJOIN</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_mergejoin</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables the query planner's use of merge-join plan
@@ -1291,7 +1291,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>ENABLE_NESTLOOP</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_nestloop</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables the query planner's use of nested-loop join
@@ -1308,7 +1308,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <primary>sequential scan</primary>
       </indexterm>
 
-      <term><varname>ENABLE_SEQSCAN</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_seqscan</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables the query planner's use of sequential scan
@@ -1321,7 +1321,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>ENABLE_SORT</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_sort</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables the query planner's use of explicit sort
@@ -1334,7 +1334,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>ENABLE_TIDSCAN</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_tidscan</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables the query planner's use of <acronym>TID</>
@@ -1363,7 +1363,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
      
      <varlistentry>
-      <term><varname>EFFECTIVE_CACHE_SIZE</varname> (<type>floating point</type>)</term>
+      <term><varname>effective_cache_size</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
         Sets the planner's assumption about the effective size of the
@@ -1376,7 +1376,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>RANDOM_PAGE_COST</varname> (<type>floating point</type>)</term>
+      <term><varname>random_page_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
         Sets the query planner's estimate of the cost of a
@@ -1389,7 +1389,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>CPU_TUPLE_COST</varname> (<type>floating point</type>)</term>
+      <term><varname>cpu_tuple_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
         Sets the query planner's estimate of the cost of processing
@@ -1400,7 +1400,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>CPU_INDEX_TUPLE_COST</varname> (<type>floating point</type>)</term>
+      <term><varname>cpu_index_tuple_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
         Sets the query planner's estimate of the cost of processing
@@ -1411,7 +1411,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
     
      <varlistentry>
-      <term><varname>CPU_OPERATOR_COST</varname> (<type>floating point</type>)</term>
+      <term><varname>cpu_operator_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
         Sets the planner's estimate of the cost of processing each
@@ -1437,19 +1437,19 @@ SET ENABLE_SEQSCAN TO OFF;
        <primary>GEQO</primary>
        <see>genetic query optimization</see>
       </indexterm>
-      <term><varname>GEQO</varname> (<type>boolean</type>)</term>
+      <term><varname>geqo</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables or disables genetic query optimization, which is an
         algorithm that attempts to do query planning without exhaustive
         searching. This is on by default. See also the various other
-        <varname>GEQO_</varname> settings.
+        <varname>geqo_</varname> settings.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>GEQO_THRESHOLD</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_threshold</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Use genetic query optimization to plan queries with at least
@@ -1463,10 +1463,10 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>GEQO_EFFORT</varname> (<type>integer</type>)</term>
-      <term><varname>GEQO_GENERATIONS</varname> (<type>integer</type>)</term>
-      <term><varname>GEQO_POOL_SIZE</varname> (<type>integer</type>)</term>
-      <term><varname>GEQO_SELECTION_BIAS</varname> (<type>floating point</type>)</term>
+      <term><varname>geqo_effort</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_generations</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_pool_size</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_selection_bias</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
         Various tuning parameters for the genetic query optimization
@@ -1495,7 +1495,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>DEFAULT_STATISTICS_TARGET</varname> (<type>integer</type>)</term>
+      <term><varname>default_statistics_target</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Sets the default statistics target for table columns that have not
@@ -1508,26 +1508,26 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>FROM_COLLAPSE_LIMIT</varname> (<type>integer</type>)</term>
+      <term><varname>from_collapse_limit</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         The planner will merge sub-queries into upper queries if the resulting
         FROM list would have no more than this many items.  Smaller values
         reduce planning time but may yield inferior query plans.
         The default is 8.  It is usually wise to keep this less than
-        <literal>GEQO_THRESHOLD</>.
+        <varname>geqo_threshold</varname>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>JOIN_COLLAPSE_LIMIT</varname> (<type>integer</type>)</term>
+      <term><varname>join_collapse_limit</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         The planner will flatten explicit inner <literal>JOIN</> constructs
         into lists of <literal>FROM</> items whenever a list of no more than
         this many items would result.  Usually this is set the same as
-        <literal>FROM_COLLAPSE_LIMIT</>.  Setting it to 1 prevents any
+        <varname>from_collapse_limit</>.  Setting it to 1 prevents any
         flattening of inner <literal>JOIN</>s, allowing explicit
         <literal>JOIN</> syntax to be used to control the join order.
         Intermediate values might be useful to trade off planning time
@@ -1557,7 +1557,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>SYSLOG</varname> (<type>integer</type>)</term>
+      <term><varname>syslog</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         <productname>PostgreSQL</productname> allows the use of
@@ -1573,7 +1573,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>SYSLOG_FACILITY</varname> (<type>string</type>)</term>
+      <term><varname>syslog_facility</varname> (<type>string</type>)</term>
        <listitem>
         <para>
           This option determines the <application>syslog</application>
@@ -1590,7 +1590,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>SYSLOG_IDENT</varname> (<type>string</type>)</term>
+      <term><varname>syslog_ident</varname> (<type>string</type>)</term>
        <listitem>
         <para>
          If logging to <application>syslog</> is enabled, this option
@@ -1610,7 +1610,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>CLIENT_MIN_MESSAGES</varname> (<type>string</type>)</term>
+      <term><varname>client_min_messages</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Controls which message levels are sent to the client.
@@ -1621,13 +1621,13 @@ SET ENABLE_SEQSCAN TO OFF;
         includes all the levels that follow it.  The later the level,
         the fewer messages are sent.  The default is
         <literal>NOTICE</>.  Note that <literal>LOG</> has a different
-        rank here than in <literal>LOG_MIN_MESSAGES</>.
+        rank here than in <varname>log_min_messages</>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LOG_MIN_MESSAGES</varname> (<type>string</type>)</term>
+      <term><varname>log_min_messages</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Controls which message levels are written to the server log.
@@ -1639,26 +1639,26 @@ SET ENABLE_SEQSCAN TO OFF;
         follow it.  The later the level, the fewer messages are sent
         to the log.  The default is <literal>NOTICE</>.  Note that
         <literal>LOG</> has a different rank here than in
-        <literal>CLIENT_MIN_MESSAGES</>.
+        <varname>client_min_messages</>.
         Only superusers can increase this option.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LOG_ERROR_VERBOSITY</varname> (<type>string</type>)</term>
+      <term><varname>log_error_verbosity</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Controls the amount of detail written in the server log for each
-	message that is logged.  Valid values are <literal>TERSE</>,
-	<literal>DEFAULT</>, and <literal>VERBOSE</>, each adding more
+	message that is logged.  Valid values are <literal>terse</>,
+	<literal>default</>, and <literal>verbose</>, each adding more
 	fields to displayed messages.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LOG_MIN_ERROR_STATEMENT</varname> (<type>string</type>)</term>
+      <term><varname>log_min_error_statement</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Controls whether or not the SQL statement that causes an error
@@ -1682,7 +1682,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>LOG_MIN_DURATION_STATEMENT</varname> (<type>integer</type>)</term>
+      <term><varname>log_min_duration_statement</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
          Sets a minimum statement execution time (in milliseconds)
@@ -1701,7 +1701,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </varlistentry>
 
      <varlistentry>
-      <term><varname>SILENT_MODE</varname> (<type>boolean</type>)</term>
+      <term><varname>silent_mode</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Runs the server silently. If this option is set, the server
@@ -1807,10 +1807,10 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
      
      <varlistentry>
-      <term><varname>DEBUG_PRINT_PARSE</varname> (<type>boolean</type>)</term>
-      <term><varname>DEBUG_PRINT_REWRITTEN</varname> (<type>boolean</type>)</term>
-      <term><varname>DEBUG_PRINT_PLAN</varname> (<type>boolean</type>)</term>
-      <term><varname>DEBUG_PRETTY_PRINT</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_print_parse</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_print_rewritten</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_print_plan</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_pretty_print</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         These options enable various debugging output to be sent to the
@@ -1826,7 +1826,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LOG_CONNECTIONS</varname> (<type>boolean</type>)</term>
+      <term><varname>log_connections</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         This outputs a line to the server logs detailing each successful
@@ -1839,12 +1839,12 @@ SET ENABLE_SEQSCAN TO OFF;
 
 
      <varlistentry>
-      <term><varname>LOG_DURATION</varname> (<type>boolean</type>)</term>
+      <term><varname>log_duration</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Causes the duration of every completed statement to be logged.
-        To use this option, enable <varname>LOG_STATEMENT</> and
-        <varname>LOG_PID</> so you can link the statement to the
+        To use this option, enable <varname>log_statement</> and
+        <varname>log_pid</> so you can link the statement to the
         duration using the process ID.
         Only superusers can turn off this option if it is enabled by
         the administrator.
@@ -1853,7 +1853,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>LOG_PID</varname> (<type>boolean</type>)</term>
+      <term><varname>log_pid</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Prefixes each message in the server log file with the process ID of
@@ -1866,7 +1866,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LOG_STATEMENT</varname> (<type>boolean</type>)</term>
+      <term><varname>log_statement</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Causes each SQL statement to be logged.
@@ -1877,7 +1877,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LOG_TIMESTAMP</varname> (<type>boolean</type>)</term>
+      <term><varname>log_timestamp</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Prefixes each server log message with a time stamp. The default
@@ -1887,7 +1887,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LOG_HOSTNAME</varname> (<type>boolean</type>)</term>
+      <term><varname>log_hostname</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         By default, connection logs only show the IP address of the
@@ -1900,7 +1900,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LOG_SOURCE_PORT</varname> (<type>boolean</type>)</term>
+      <term><varname>log_source_port</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Shows the outgoing port number of the connecting host in the
@@ -1924,10 +1924,10 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>LOG_STATEMENT_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>LOG_PARSER_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>LOG_PLANNER_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>LOG_EXECUTOR_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>log_statement_stats</varname> (<type>boolean</type>)</term>
+      <term><varname>log_parser_stats</varname> (<type>boolean</type>)</term>
+      <term><varname>log_planner_stats</varname> (<type>boolean</type>)</term>
+      <term><varname>log_executor_stats</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         For each query, write performance statistics of the respective
@@ -1947,7 +1947,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>STATS_START_COLLECTOR</varname> (<type>boolean</type>)</term>
+      <term><varname>stats_start_collector</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Controls whether the server should start the
@@ -1960,7 +1960,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>STATS_COMMAND_STRING</varname> (<type>boolean</type>)</term>
+      <term><varname>stats_command_string</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Enables the collection of statistics on the currently
@@ -1977,8 +1977,8 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>STATS_BLOCK_LEVEL</varname> (<type>boolean</type>)</term>
-      <term><varname>STATS_ROW_LEVEL</varname> (<type>boolean</type>)</term>
+      <term><varname>stats_block_level</varname> (<type>boolean</type>)</term>
+      <term><varname>stats_row_level</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         These enable the collection of block-level and row-level statistics
@@ -1992,7 +1992,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>STATS_RESET_ON_SERVER_START</varname> (<type>boolean</type>)</term>
+      <term><varname>stats_reset_on_server_start</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         If on, collected statistics are zeroed out whenever the server
@@ -2015,7 +2015,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>SEARCH_PATH</varname> (<type>string</type>)</term>
+      <term><varname>search_path</varname> (<type>string</type>)</term>
       <indexterm><primary>search_path</></>
       <indexterm><primary>path</><secondary>for schemas</></>
       <listitem>
@@ -2030,7 +2030,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        The value for <varname>SEARCH_PATH</varname> has to be a comma-separated
+        The value for <varname>search_path</varname> has to be a comma-separated
         list of schema names.  If one of the list items is
         the special value <literal>$user</literal>, then the schema
         having the name returned by <function>SESSION_USER</> is substituted, if there
@@ -2070,9 +2070,9 @@ SET ENABLE_SEQSCAN TO OFF;
         The current effective value of the search path can be examined
         via the <acronym>SQL</acronym> function
         <function>current_schemas()</>.  This is not quite the same as
-        examining the value of <varname>SEARCH_PATH</varname>, since
+        examining the value of <varname>search_path</varname>, since
         <function>current_schemas()</> shows how the requests
-        appearing in <varname>SEARCH_PATH</varname> were resolved.
+        appearing in <varname>search_path</varname> were resolved.
        </para>
 
        <para>
@@ -2087,7 +2087,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <primary>transaction isolation level</primary>
       </indexterm>
 
-      <term><varname>DEFAULT_TRANSACTION_ISOLATION</varname> (<type>string</type>)</term>
+      <term><varname>default_transaction_isolation</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Each SQL transaction has an isolation level, which can be either
@@ -2108,7 +2108,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <primary>read-only transaction</primary>
       </indexterm>
 
-      <term><varname>DEFAULT_TRANSACTION_READ_ONLY</varname> (<type>boolean</type>)</term>
+      <term><varname>default_transaction_read_only</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         A read-only SQL transaction cannot alter non-temporary tables.
@@ -2123,7 +2123,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry>
-      <term><varname>STATEMENT_TIMEOUT</varname> (<type>integer</type>)</term>
+      <term><varname>statement_timeout</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Aborts any statement that takes over the specified number of
@@ -2140,7 +2140,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>DATESTYLE</varname> (<type>string</type>)</term>
+      <term><varname>datestyle</varname> (<type>string</type>)</term>
       <indexterm><primary>date style</></>
       <listitem>
        <para>
@@ -2161,7 +2161,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>TIMEZONE</varname> (<type>string</type>)</term>
+      <term><varname>timezone</varname> (<type>string</type>)</term>
       <indexterm><primary>time zone</></>
       <listitem>
        <para>
@@ -2174,7 +2174,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>AUSTRALIAN_TIMEZONES</varname> (<type>boolean</type>)</term>
+      <term><varname>australian_timezones</varname> (<type>boolean</type>)</term>
       <indexterm><primary>time zone</><secondary>Australian</></>
       <listitem>
        <para>
@@ -2196,7 +2196,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <secondary>display</secondary>
       </indexterm>
 
-      <term><varname>EXTRA_FLOAT_DIGITS</varname> (<type>integer</type>)</term>
+      <term><varname>extra_float_digits</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         This parameter adjusts the number of digits displayed for
@@ -2212,7 +2212,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>CLIENT_ENCODING</varname> (<type>string</type>)</term>
+      <term><varname>client_encoding</varname> (<type>string</type>)</term>
       <indexterm><primary>character set</></>
       <listitem>
        <para>
@@ -2223,7 +2223,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LC_MESSAGES</varname> (<type>string</type>)</term>
+      <term><varname>lc_messages</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Sets the language in which messages are displayed.  Acceptable
@@ -2244,7 +2244,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LC_MONETARY</varname> (<type>string</type>)</term>
+      <term><varname>lc_monetary</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Sets the locale to use for formatting monetary amounts, for
@@ -2259,7 +2259,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LC_NUMERIC</varname> (<type>string</type>)</term>
+      <term><varname>lc_numeric</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Sets the locale to use for formatting numbers, for example
@@ -2274,7 +2274,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>LC_TIME</varname> (<type>string</type>)</term>
+      <term><varname>lc_time</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Sets the locale to use for formatting date and time values.
@@ -2297,7 +2297,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>EXPLAIN_PRETTY_PRINT</varname> (<type>boolean</type>)</term>
+      <term><varname>explain_pretty_print</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Determines whether <command>EXPLAIN VERBOSE</> uses the indented
@@ -2307,7 +2307,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>DYNAMIC_LIBRARY_PATH</varname> (<type>string</type>)</term>
+      <term><varname>dynamic_library_path</varname> (<type>string</type>)</term>
       <indexterm><primary>dynamic_library_path</></>
       <indexterm><primary>dynamic loading</></>
       <listitem>
@@ -2321,7 +2321,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        The value for <varname>DYNAMIC_LIBRARY_PATH</varname> has to be a colon-separated
+        The value for <varname>dynamic_library_path</varname> has to be a colon-separated
         list of absolute directory names. If a directory name starts
         with the special value <literal>$libdir</literal>, the
         compiled-in <productname>PostgreSQL</productname> package
@@ -2353,7 +2353,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>MAX_EXPR_DEPTH</varname> (<type>integer</type>)</term>
+      <term><varname>max_expr_depth</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Sets the maximum expression nesting depth of the parser. The
@@ -2383,7 +2383,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <secondary>deadlock</secondary>
       </indexterm>
 
-      <term><varname>DEADLOCK_TIMEOUT</varname> (<type>integer</type>)</term>
+      <term><varname>deadlock_timeout</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         This is the amount of time, in milliseconds, to wait on a lock
@@ -2405,12 +2405,12 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>MAX_LOCKS_PER_TRANSACTION</varname> (<type>integer</type>)</term>
+      <term><varname>max_locks_per_transaction</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         The shared lock table is sized on the assumption that at most
-        <varname>MAX_LOCKS_PER_TRANSACTION</> *
-        <varname>MAX_CONNECTIONS</varname> distinct objects will need to
+        <varname>max_locks_per_transaction</> *
+        <varname>max_connections</varname> distinct objects will need to
         be locked at any one time. The default, 64, has historically
         proven sufficient, but you might need to raise this value if you
         have clients that touch many different tables in a single
@@ -2430,7 +2430,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      <variablelist>
 
      <varlistentry>
-      <term><varname>ADD_MISSING_FROM</varname> (<type>boolean</type>)</term>
+      <term><varname>add_missing_from</varname> (<type>boolean</type>)</term>
       <indexterm><primary>FROM</><secondary>missing</></>
       <listitem>
        <para>
@@ -2447,7 +2447,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>REGEX_FLAVOR</varname> (<type>string</type>)</term>
+      <term><varname>regex_flavor</varname> (<type>string</type>)</term>
       <indexterm><primary>regular expressions</></>
       <listitem>
        <para>
@@ -2461,7 +2461,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>SQL_INHERITANCE</varname> (<type>boolean</type>)</term>
+      <term><varname>sql_inheritance</varname> (<type>boolean</type>)</term>
       <indexterm><primary>inheritance</></>
       <listitem>
        <para>
@@ -2483,7 +2483,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      <variablelist>
 
      <varlistentry>
-      <term><varname>TRANSFORM_NULL_EQUALS</varname> (<type>boolean</type>)</term>
+      <term><varname>transform_null_equals</varname> (<type>boolean</type>)</term>
       <indexterm><primary>IS NULL</></>
       <listitem>
        <para>
@@ -2544,7 +2544,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
     <variablelist>
      <varlistentry>
-      <term><varname>DEBUG_ASSERTIONS</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_assertions</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Turns on various assertion checks. This is a debugging aid. If
@@ -2562,7 +2562,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>PRE_AUTH_DELAY</varname> (<type>integer</type>)</term>
+      <term><varname>pre_auth_delay</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         If nonzero, a delay of this many seconds occurs just after a new
@@ -2575,7 +2575,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>TRACE_NOTIFY</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_notify</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Generates a great amount of debugging output for the
@@ -2589,13 +2589,13 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>TRACE_LOCKS</varname> (<type>boolean</type>)</term>
-      <term><varname>TRACE_LWLOCKS</varname> (<type>boolean</type>)</term>
-      <term><varname>TRACE_USERLOCKS</varname> (<type>boolean</type>)</term>
-      <term><varname>TRACE_LOCK_OIDMIN</varname> (<type>boolean</type>)</term>
-      <term><varname>TRACE_LOCK_TABLE</varname> (<type>boolean</type>)</term>
-      <term><varname>DEBUG_DEADLOCKS</varname> (<type>boolean</type>)</term>
-      <term><varname>LOG_BTREE_BUILD_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_locks</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_lwlocks</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_userlocks</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_lock_oidmin</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_lock_table</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_deadlocks</varname> (<type>boolean</type>)</term>
+      <term><varname>log_btree_build_stats</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Various other code tracing and debugging options.
@@ -2604,7 +2604,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>WAL_DEBUG</varname> (<type>integer</type>)</term>
+      <term><varname>wal_debug</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         If nonzero, turn on WAL-related debugging output.
@@ -2613,12 +2613,12 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
     <varlistentry>
-      <term><varname>ZERO_DAMAGED_PAGES</varname> (<type>boolean</type>)</term>
+      <term><varname>zero_damaged_pages</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Detection of a damaged page header normally causes
         <productname>PostgreSQL</> to report an error, aborting the current
-        transaction.  Setting <varname>ZERO_DAMAGED_PAGES</> to true causes
+        transaction.  Setting <varname>zero_damaged_pages</> to true causes
         the system to instead report a warning, zero out the damaged page,
         and continue processing.  This behavior <emphasis>will destroy data</>,
         namely all the rows on the damaged page.  But it allows you to get
@@ -2814,7 +2814,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>250 kB + 8.2 kB * <varname>SHARED_BUFFERS</> + 14.2 kB * <varname>MAX_CONNECTIONS</> up to infinity</entry>
+       <entry>250 kB + 8.2 kB * <varname>shared_buffers</> + 14.2 kB * <varname>max_connections</> up to infinity</entry>
       </row>
 
       <row>
@@ -3359,7 +3359,7 @@ default:\
     processes do so then the system-wide limit can easily be exceeded.
     If you find this happening, and you do not want to alter the system-wide
     limit, you can set <productname>PostgreSQL</productname>'s
-    <varname>MAX_FILES_PER_PROCESS</varname> configuration parameter to
+    <varname>max_files_per_process</varname> configuration parameter to
     limit the consumption of open files.
    </para>
   </sect2>
@@ -3468,7 +3468,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    With <acronym>SSL</> support compiled in, the
    <productname>PostgreSQL</> server can be started with
    <acronym>SSL</> enabled by setting the parameter
-   <varname>SSL</varname> to on in <filename>postgresql.conf</>. When
+   <varname>ssl</varname> to on in <filename>postgresql.conf</>. When
    starting in <acronym>SSL</> mode, the server will look for the
    files <filename>server.key</> and <filename>server.crt</> in the
    data directory, which should contain the server private key

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.171 2003/09/11 17:26:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.172 2003/09/11 18:30:38 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -3435,7 +3435,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
    <para>
     Normally the flavor of RE being used is determined by
-    <varname>REGEX_FLAVOR</>.
+    <varname>regex_flavor</>.
     However, this can be overridden by a <firstterm>director</> prefix.
     If an RE of any flavor begins with <literal>***:</>,
     the rest of the RE is taken as an ARE.
@@ -3762,7 +3762,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
     While these differences are unlikely to create a problem for most
     applications, you can avoid them if necessary by
-    setting <varname>REGEX_FLAVOR</> to <literal>extended</>.
+    setting <varname>regex_flavor</> to <literal>extended</>.
    </para>
    </sect3>
 

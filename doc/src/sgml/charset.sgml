@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.38 2003/08/31 17:32:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.39 2003/09/11 18:30:38 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -769,7 +769,7 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
 
       <listitem>
        <para>
-	Using <command>SET CLIENT_ENCODING TO</command>.
+	Using <command>SET client_encoding TO</command>.
 
 	Setting the client encoding can be done with this SQL command:
 
@@ -786,13 +786,13 @@ SET NAMES '<replaceable>value</>';
 	To query the current client encoding:
 
 <programlisting>
-SHOW CLIENT_ENCODING;
+SHOW client_encoding;
 </programlisting>
 
 	To return to the default encoding:
 
 <programlisting>
-RESET CLIENT_ENCODING;
+RESET client_encoding;
 </programlisting>
        </para>
       </listitem>

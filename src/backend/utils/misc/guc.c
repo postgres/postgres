@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.156 2003/09/07 15:26:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.157 2003/09/11 18:30:39 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1311,7 +1311,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_error_verbosity", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Controls verbosity of logged messages"),
-			gettext_noop("Valid values are TERSE, DEFAULT, and VERBOSE")
+			gettext_noop("Valid values are 'terse', 'default', and 'verbose'")
 		},
 		&log_error_verbosity_str,
 		"default", assign_log_error_verbosity, NULL

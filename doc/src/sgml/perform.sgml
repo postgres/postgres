@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.32 2003/09/11 17:31:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.33 2003/09/11 18:30:38 momjian Exp $
 -->
 
  <chapter id="performance-tips">
@@ -603,7 +603,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
    <productname>PostgreSQL</productname> planner will switch from exhaustive
    search to a <firstterm>genetic</firstterm> probabilistic search
    through a limited number of possibilities.  (The switch-over threshold is
-   set by the <varname>GEQO_THRESHOLD</varname> run-time
+   set by the <varname>geqo_threshold</varname> run-time
    parameter.)
    The genetic search takes less time, but it won't
    necessarily find the best possible plan.
