@@ -506,7 +506,8 @@ makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 	char		got_dsn = (ci->dsn[0] != '\0');
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
 	UWORD		hlen;
-	BOOL		abbrev = (len <= 400);
+	/*BOOL		abbrev = (len <= 400);*/
+	BOOL		abbrev = (len < 1024);
 
 	/* fundamental info */
 	sprintf(connect_string, "%s=%s;DATABASE=%s;SERVER=%s;PORT=%s;UID=%s;PWD=%s",
