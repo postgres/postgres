@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.2 1996/10/23 07:40:45 scrappy Exp $
+ * $Id: port-protos.h,v 1.3 1996/10/31 11:09:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 #include <sys/types.h>
 #include <nlist.h>
 #include <link.h>
+
+#include "postgres.h"
 
 #include "fmgr.h"			/* for func_ptr */
 #include "utils/dynamic_loader.h"

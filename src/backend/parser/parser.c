@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.2 1996/07/19 07:24:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.3 1996/10/31 11:09:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #endif /*WIN32 */
 #include <sys/param.h>		/* for MAXPATHLEN */
 
-#include "utils/elog.h"
+#include "postgres.h"
 #include "parser/catalog_utils.h"
 #include "nodes/pg_list.h"
 #include "utils/exc.h"
