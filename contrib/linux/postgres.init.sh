@@ -124,7 +124,7 @@ case "$1" in
     if [ ${USE_SYSLOG} = "yes" ]; then
         su - ${PGACCOUNT} -c "(${POSTMASTER} ${PGOPTS} 2>&1 | logger -p ${FACILITY}.notice) &" > /dev/null 2>&1 &
     else
-        su - ${PGACCOUNT} -c "${POSTMASTER} ${PGOPTS} 2>>&1 ${PGLOGFILE} &" > /dev/null 2>&1 &
+        su - ${PGACCOUNT} -c "${POSTMASTER} ${PGOPTS} >> ${PGLOGFILE} 2>&1 &" > /dev/null 2>&1 &
     fi
     sleep 5
     pid=`pidof ${POSTMASTER}`
