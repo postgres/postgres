@@ -363,8 +363,8 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
     the dynamic loader loads the function's object code into memory,
     and links the function with the running
     <productname>Postgres</productname> executable.  The SQL syntax
-    for the <xref linkend="sql-createfunction-title"
-    endterm="sql-createfunction-title"> command links the SQL function
+    for <command>CREATE FUNCTION</command>
+    links the SQL function
     to the C source function in one of two ways. If the SQL function
     has the same name as the C source function the first form of the
     statement is used. The string argument in the AS clause is the
@@ -377,9 +377,13 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
     for. This link symbol is just the function name in the C source
     code.
 
-	After it is used for the first time, a dynamically loaded, user
-	function is retained in memory, and future calls to the function
-	only incur the small overhead of a symbol table lookup.
+    <note>
+     <para>
+      After it is used for the first time, a dynamically loaded, user
+      function is retained in memory, and future calls to the function
+      only incur the small overhead of a symbol table lookup.
+     </para>
+    </note>
    </para>
 
    <para>
@@ -979,12 +983,11 @@ memmove(destination-&gt;data, buffer, 40);
 
     <para>
      As of <productname>Postgres</productname> v6.6, the alternative
-	 form of the AS clause for the SQL <command>CREATE
-	 FUNCTION</command> command described in <xref
-	 linkend="sql-createfunction-title" endterm="sql-createfunction-title">
-	 decouples the SQL function name from the function name in the C
-	 source code. This is now the preferred technique to accomplish
-	 function overloading.
+     form of the AS clause for the SQL
+     <command>CREATE FUNCTION</command> command
+     decouples the SQL function name from the function name in the C
+     source code. This is now the preferred technique to accomplish
+     function overloading.
     </para>
 
     <sect3>
