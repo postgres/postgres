@@ -289,7 +289,7 @@ void tsearch2_end_parse() {
 
 /* start parse from string */
 void tsearch2_start_parse_str(char* str, int limit) {
-	if (buf) end_parse();
+	if (buf) tsearch2_end_parse();
 	buf = tsearch2_yy_scan_bytes( str, limit );
 	tsearch2_yy_switch_to_buffer( buf );
 	BEGIN INITIAL;
