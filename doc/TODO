@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat May 24 23:20:03 EDT 2003
+Last updated:		Sun May 25 00:44:38 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -242,8 +242,6 @@ Clients
 * Allow psql to do table completion for SELECT * FROM schema_part and
   table completion for SELECT * FROM schema_name.
 * Add XML capability to pg_dump and COPY, when backend XML capability
-* Update clients to use data types, typmod, schema.table.column names of
-  result sets using new query protocol
 
 
 * JDBC
@@ -451,6 +449,8 @@ Source Code
 	o Add decoded type, length, precision
 	o Compression?
 	o Report server version number, database encoding, client encoding
+	o Update clients to use data types, typmod, schema.table.column names of
+	  result sets using new query protocol
 
 
 ---------------------------------------------------------------------------
