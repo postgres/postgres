@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/lib/dllist.c,v 1.30 2004/12/31 21:59:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/lib/dllist.c,v 1.31 2005/01/18 22:59:32 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,8 @@ DLNewList(void)
 				 errmsg("out of memory")));
 #endif
 	}
-	l->dll_head = 0;
-	l->dll_tail = 0;
+	l->dll_head = NULL;
+	l->dll_tail = NULL;
 
 	return l;
 }
@@ -52,8 +52,8 @@ DLNewList(void)
 void
 DLInitList(Dllist *list)
 {
-	list->dll_head = 0;
-	list->dll_tail = 0;
+	list->dll_head = NULL;
+	list->dll_tail = NULL;
 }
 
 /*
@@ -65,7 +65,7 @@ DLFreeList(Dllist *list)
 {
 	Dlelem	   *curr;
 
-	while ((curr = DLRemHead(list)) != 0)
+	while ((curr = DLRemHead(list)) != NULL)
 		free(curr);
 
 	free(list);
@@ -88,20 +88,20 @@ DLNewElem(void *val)
 				 errmsg("out of memory")));
 #endif
 	}
-	e->dle_next = 0;
-	e->dle_prev = 0;
+	e->dle_next = NULL;
+	e->dle_prev = NULL;
 	e->dle_val = val;
-	e->dle_list = 0;
+	e->dle_list = NULL;
 	return e;
 }
 
 void
 DLInitElem(Dlelem *e, void *val)
 {
-	e->dle_next = 0;
-	e->dle_prev = 0;
+	e->dle_next = NULL;
+	e->dle_prev = NULL;
 	e->dle_val = val;
-	e->dle_list = 0;
+	e->dle_list = NULL;
 }
 
 void
@@ -132,9 +132,9 @@ DLRemove(Dlelem *e)
 		l->dll_tail = e->dle_prev;
 	}
 
-	e->dle_next = 0;
-	e->dle_prev = 0;
-	e->dle_list = 0;
+	e->dle_next = NULL;
+	e->dle_prev = NULL;
+	e->dle_list = NULL;
 }
 
 void
@@ -145,10 +145,10 @@ DLAddHead(Dllist *l, Dlelem *e)
 	if (l->dll_head)
 		l->dll_head->dle_prev = e;
 	e->dle_next = l->dll_head;
-	e->dle_prev = 0;
+	e->dle_prev = NULL;
 	l->dll_head = e;
 
-	if (l->dll_tail == 0)		/* if this is first element added */
+	if (l->dll_tail == NULL)		/* if this is first element added */
 		l->dll_tail = e;
 }
 
@@ -160,10 +160,10 @@ DLAddTail(Dllist *l, Dlelem *e)
 	if (l->dll_tail)
 		l->dll_tail->dle_next = e;
 	e->dle_prev = l->dll_tail;
-	e->dle_next = 0;
+	e->dle_next = NULL;
 	l->dll_tail = e;
 
-	if (l->dll_head == 0)		/* if this is first element added */
+	if (l->dll_head == NULL)		/* if this is first element added */
 		l->dll_head = e;
 }
 
@@ -173,19 +173,19 @@ DLRemHead(Dllist *l)
 	/* remove and return the head */
 	Dlelem	   *result = l->dll_head;
 
-	if (result == 0)
+	if (result == NULL)
 		return result;
 
 	if (result->dle_next)
-		result->dle_next->dle_prev = 0;
+		result->dle_next->dle_prev = NULL;
 
 	l->dll_head = result->dle_next;
 
 	if (result == l->dll_tail)	/* if the head is also the tail */
-		l->dll_tail = 0;
+		l->dll_tail = NULL;
 
-	result->dle_next = 0;
-	result->dle_list = 0;
+	result->dle_next = NULL;
+	result->dle_list = NULL;
 
 	return result;
 }
@@ -196,19 +196,19 @@ DLRemTail(Dllist *l)
 	/* remove and return the tail */
 	Dlelem	   *result = l->dll_tail;
 
-	if (result == 0)
+	if (result == NULL)
 		return result;
 
 	if (result->dle_prev)
-		result->dle_prev->dle_next = 0;
+		result->dle_prev->dle_next = NULL;
 
 	l->dll_tail = result->dle_prev;
 
 	if (result == l->dll_head)	/* if the tail is also the head */
-		l->dll_head = 0;
+		l->dll_head = NULL;
 
-	result->dle_prev = 0;
-	result->dle_list = 0;
+	result->dle_prev = NULL;
+	result->dle_list = NULL;
 
 	return result;
 }
@@ -222,7 +222,7 @@ DLMoveToFront(Dlelem *e)
 	if (l->dll_head == e)
 		return;					/* Fast path if already at front */
 
-	Assert(e->dle_prev != 0);	/* since it's not the head */
+	Assert(e->dle_prev != NULL);	/* since it's not the head */
 	e->dle_prev->dle_next = e->dle_next;
 
 	if (e->dle_next)
@@ -236,7 +236,7 @@ DLMoveToFront(Dlelem *e)
 
 	l->dll_head->dle_prev = e;
 	e->dle_next = l->dll_head;
-	e->dle_prev = 0;
+	e->dle_prev = NULL;
 	l->dll_head = e;
 	/* We need not check dll_tail, since there must have been > 1 entry */
 }
