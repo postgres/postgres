@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.139.4.1 2005/03/18 05:24:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.139.4.2 2005/03/18 16:16:20 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -478,6 +478,7 @@ ShutdownPostgres(int code, Datum arg)
 	 */
 	LWLockReleaseAll();
 	AtProcExit_Buffers();
+	AtProcExit_LocalBuffers();
 
 	/*
 	 * In case a transaction is open, delete any files it created.	This
