@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.58 2000/08/08 15:42:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.59 2000/08/12 04:04:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -107,6 +107,7 @@ static void get_func_expr(Expr *expr, deparse_context *context);
 static void get_tle_expr(TargetEntry *tle, deparse_context *context);
 static void get_const_expr(Const *constval, deparse_context *context);
 static void get_sublink_expr(Node *node, deparse_context *context);
+static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
 static char *get_relation_name(Oid relid);
 static char *get_attribute_name(Oid relid, int2 attnum);
@@ -1186,8 +1187,14 @@ get_update_query_def(Query *query, deparse_context *context)
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
-		appendStringInfo(buf, "%s = ",
-						 quote_identifier(tle->resdom->resname));
+		/*
+		 * If the update expression is an array assignment, we mustn't
+		 * put out "attname =" here; it will come out of the display
+		 * of the ArrayRef node instead.
+		 */
+		if (! tleIsArrayAssign(tle))
+			appendStringInfo(buf, "%s = ",
+							 quote_identifier(tle->resdom->resname));
 		get_tle_expr(tle, context);
 	}
 
@@ -1409,10 +1416,20 @@ get_rule_expr(Node *node, deparse_context *context)
 		case T_ArrayRef:
 			{
 				ArrayRef   *aref = (ArrayRef *) node;
+				bool		savevarprefix = context->varprefix;
 				List	   *lowlist;
 				List	   *uplist;
 
+				/*
+				 * If we are doing UPDATE array[n] = expr, we need to
+				 * suppress any prefix on the array name.  Currently,
+				 * that is the only context in which we will see a non-null
+				 * refassgnexpr --- but someday a smarter test may be needed.
+				 */
+				if (aref->refassgnexpr)
+					context->varprefix = false;
 				get_rule_expr(aref->refexpr, context);
+				context->varprefix = savevarprefix;
 				lowlist = aref->reflowerindexpr;
 				foreach(uplist, aref->refupperindexpr)
 				{
@@ -1426,7 +1443,11 @@ get_rule_expr(Node *node, deparse_context *context)
 					get_rule_expr((Node *) lfirst(uplist), context);
 					appendStringInfo(buf, "]");
 				}
-				/* XXX need to do anything with refassgnexpr? */
+				if (aref->refassgnexpr)
+				{
+					appendStringInfo(buf, " = ");
+					get_rule_expr(aref->refassgnexpr, context);
+				}
 			}
 			break;
 
@@ -1840,6 +1861,31 @@ get_sublink_expr(Node *node, deparse_context *context)
 		appendStringInfo(buf, "))");
 	else
 		appendStringInfoChar(buf, ')');
+}
+
+/* ----------
+ * tleIsArrayAssign			- check for array assignment
+ * ----------
+ */
+static bool
+tleIsArrayAssign(TargetEntry *tle)
+{
+	ArrayRef   *aref;
+
+	if (tle->expr == NULL || !IsA(tle->expr, ArrayRef))
+		return false;
+	aref = (ArrayRef *) tle->expr;
+	if (aref->refassgnexpr == NULL)
+		return false;
+	/*
+	 * Currently, it should only be possible to see non-null refassgnexpr
+	 * if we are indeed looking at an "UPDATE array[n] = expr" situation.
+	 * So aref->refexpr ought to match the tle's target.
+	 */
+	if (aref->refexpr == NULL || !IsA(aref->refexpr, Var) ||
+		((Var *) aref->refexpr)->varno != tle->resdom->resno)
+		elog(NOTICE, "tleIsArrayAssign: I'm confused ...");
+	return true;
 }
 
 /* ----------
