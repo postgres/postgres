@@ -5,11 +5,13 @@
 <title>Key Words</title>
 
 <para>
-<acronym>SQL92</acronym> defines <firstterm>key words</firstterm> for the language
+<acronym>SQL92</acronym> defines <firstterm>key words</firstterm> 
+for the language
 which have specific meaning. Some key words are
 <firstterm>reserved</firstterm>, which indicates that they are
 restricted to appear in only certain contexts. Other key words are
-<firstterm>not restricted</firstterm>, which indicates that in certain contexts they
+<firstterm>not restricted</firstterm>, which indicates that in certain 
+contexts they
 have a specific meaning but are not otherwise constrained.
 
 <para>
@@ -41,7 +43,7 @@ they are allowed to be column labels (i.e. in AS clauses).
 Any string can be specified as an identifier if surrounded by
 double quotes (<quote>like this!</quote>). Some care is required since
 such an identifier will be case sensitive
-and will retain embedded whitespace.
+and will retain embedded whitespace other special characters.
 </tip>
 
 <para>
@@ -102,7 +104,7 @@ ON OR OUTER
 PARTIAL PRIMARY PRIVILEGES PROCEDURE PUBLIC
 REFERENCES REVOKE RIGHT ROLLBACK
 SELECT SET SUBSTRING
-TIMESTAMP TO TRAILING TRIM 
+TO TRAILING TRIM 
 UNION UNIQUE UPDATE USER USING
 VALUES VARCHAR VARYING VIEW
 WHERE WITH WORK 
@@ -222,7 +224,7 @@ OF ONLY OPTION
 PRIOR PRIVILEGES 
 READ RELATIVE 
 SCROLL SECOND
-TIME TIMEZONE_HOUR TIMEZONE_MINUTE TRIGGER 
+TIME TIMESTAMP TIMEZONE_HOUR TIMEZONE_MINUTE TRIGGER 
 YEAR
 ZONE
 </programlisting>
