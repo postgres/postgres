@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.98 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.99 2005/02/21 06:12:14 neilc Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1642,7 +1642,7 @@ add_one(PG_FUNCTION_ARGS)
     PG_RETURN_INT32(arg + 1);
 }
 
-/* b reference, fixed length */
+/* by reference, fixed length */
 
 PG_FUNCTION_INFO_V1(add_one_float8);
 
@@ -1939,7 +1939,7 @@ include $(PGXS)
       <term><varname>MODULES</varname></term>
       <listitem>
        <para>
-        list of shared objects to be build from source file with same
+        list of shared objects to be built from source file with same
         stem (do not include suffix in this list)
        </para>
       </listitem>
