@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.37 2003/09/17 05:07:37 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.38 2003/09/18 04:14:27 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -893,6 +893,9 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			case Types.TIMESTAMP:
 				l_pgType = PG_TIMESTAMPTZ;
 				break;
+			case Types.BIT:
+				l_pgType = PG_BOOLEAN;
+				break;
 			case Types.BINARY:
 			case Types.VARBINARY:
 			case Types.LONGVARBINARY:
@@ -930,7 +933,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public void setByte(int parameterIndex, byte x) throws SQLException
 	{
-		bind(parameterIndex, Integer.toString(x), PG_TEXT);
+		bind(parameterIndex, Integer.toString(x), PG_INT2);
 	}
 
 	/*
@@ -1457,6 +1460,21 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		}
 	}
 
+	// Helper method that extracts numeric values from an arbitary Object.
+	private String numericValueOf(Object x)
+	{
+		if (x instanceof Boolean)
+			return ((Boolean)x).booleanValue() ? "1" :"0";
+		else if (x instanceof Integer || x instanceof Long || 
+				 x instanceof Double || x instanceof Short ||
+				 x instanceof Number || x instanceof Float)
+			return x.toString();
+		else
+			//ensure the value is a valid numeric value to avoid
+			//sql injection attacks
+			return new BigDecimal(x.toString()).toString();
+	}		
+
 	/*
 	 * Set the value of a parameter using an object; use the java.lang
 	 * equivalent objects for integral values.
@@ -1486,35 +1504,25 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		switch (targetSqlType)
 		{
 			case Types.INTEGER:
-				if (x instanceof Boolean)
-					bind(parameterIndex,((Boolean)x).booleanValue() ? "1" :"0", PG_BOOLEAN);
-				else if (x instanceof Integer || x instanceof Long || 
-					x instanceof Double || x instanceof Short ||
-					x instanceof Number || x instanceof Float )
-					bind(parameterIndex, x.toString(), PG_INTEGER);
-				else
-					//ensure the value is a valid numeric value to avoid
-					//sql injection attacks
-					bind(parameterIndex, new BigDecimal(x.toString()).toString(), PG_INTEGER);
+				bind(parameterIndex, numericValueOf(x), PG_INTEGER);
 				break;
 			case Types.TINYINT:
 			case Types.SMALLINT:
+				bind(parameterIndex, numericValueOf(x), PG_INT2);
+				break;
 			case Types.BIGINT:
+				bind(parameterIndex, numericValueOf(x), PG_INT8);
+				break;
 			case Types.REAL:
 			case Types.FLOAT:
+				bind(parameterIndex, numericValueOf(x), PG_FLOAT);
+				break;
 			case Types.DOUBLE:
+				bind(parameterIndex, numericValueOf(x), PG_DOUBLE);
+				break;
 			case Types.DECIMAL:
 			case Types.NUMERIC:
-				if (x instanceof Boolean)
-					bind(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0", PG_BOOLEAN);
-				else if (x instanceof Integer || x instanceof Long || 
-					x instanceof Double || x instanceof Short ||
-					x instanceof Number || x instanceof Float )
-					bind(parameterIndex, x.toString(), PG_NUMERIC);
-				else
-					//ensure the value is a valid numeric value to avoid
-					//sql injection attacks
-					bind(parameterIndex, new BigDecimal(x.toString()).toString(), PG_NUMERIC);
+				bind(parameterIndex, numericValueOf(x), PG_NUMERIC);
 				break;
 			case Types.CHAR:
 			case Types.VARCHAR:
@@ -1559,7 +1567,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				}
 				else if (x instanceof Number)
 				{
-					bind(parameterIndex, ((Number)x).intValue()==1 ? "'1'" : "'0'", PG_BOOLEAN);
+					bind(parameterIndex, ((Number)x).intValue()!=0 ? "'1'" : "'0'", PG_BOOLEAN);
 				}
 				else
 				{
@@ -1572,7 +1580,10 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				setObject(parameterIndex, x);
 				break;
 			case Types.OTHER:
-				setString(parameterIndex, ((PGobject)x).getValue(), PG_TEXT);
+				if (x instanceof PGobject)
+					setString(parameterIndex, ((PGobject)x).getValue(), ((PGobject)x).getType());
+				else
+					throw new PSQLException("postgresql.prep.type", PSQLState.INVALID_PARAMETER_TYPE);
 				break;
 			default:
 				throw new PSQLException("postgresql.prep.type", PSQLState.INVALID_PARAMETER_TYPE);

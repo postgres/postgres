@@ -26,14 +26,14 @@ public class ServerPreparedStmtTest extends TestCase
 		con = TestUtil.openDB();
 		Statement stmt = con.createStatement();
 
-		TestUtil.createTable(con, "testsps", "id integer");
+		TestUtil.createTable(con, "testsps", "id integer, value boolean");
 
-		stmt.executeUpdate("INSERT INTO testsps VALUES (1)");
-		stmt.executeUpdate("INSERT INTO testsps VALUES (2)");
-		stmt.executeUpdate("INSERT INTO testsps VALUES (3)");
-		stmt.executeUpdate("INSERT INTO testsps VALUES (4)");
-		stmt.executeUpdate("INSERT INTO testsps VALUES (6)");
-		stmt.executeUpdate("INSERT INTO testsps VALUES (9)");
+		stmt.executeUpdate("INSERT INTO testsps VALUES (1,'t')");
+		stmt.executeUpdate("INSERT INTO testsps VALUES (2,'t')");
+		stmt.executeUpdate("INSERT INTO testsps VALUES (3,'t')");
+		stmt.executeUpdate("INSERT INTO testsps VALUES (4,'t')");
+		stmt.executeUpdate("INSERT INTO testsps VALUES (6,'t')");
+		stmt.executeUpdate("INSERT INTO testsps VALUES (9,'f')");
 
 		stmt.close();
 	}
@@ -123,6 +123,60 @@ public class ServerPreparedStmtTest extends TestCase
         rs.close();
 
 		pstmt.close();
+	}
+
+	// Verify we can bind booleans-as-objects ok.
+	public void testBooleanObjectBind() throws Exception
+	{
+		PreparedStatement pstmt = con.prepareStatement("SELECT * FROM testsps WHERE value = ?");
+        ((PGStatement)pstmt).setUseServerPrepare(true);
+        if (TestUtil.haveMinimumServerVersion(con,"7.3")) {
+			assertTrue(((PGStatement)pstmt).isUseServerPrepare());
+		} else {
+			assertTrue(!((PGStatement)pstmt).isUseServerPrepare());
+		}
+
+        pstmt.setObject(1, new Boolean(false), java.sql.Types.BIT);
+		ResultSet rs = pstmt.executeQuery();
+		assertTrue(rs.next());
+        assertEquals(9, rs.getInt(1));
+        rs.close();
+	}
+
+	// Verify we can bind booleans-as-integers ok.
+	public void testBooleanIntegerBind() throws Exception
+	{
+		PreparedStatement pstmt = con.prepareStatement("SELECT * FROM testsps WHERE id = ?");
+        ((PGStatement)pstmt).setUseServerPrepare(true);
+        if (TestUtil.haveMinimumServerVersion(con,"7.3")) {
+			assertTrue(((PGStatement)pstmt).isUseServerPrepare());
+		} else {
+			assertTrue(!((PGStatement)pstmt).isUseServerPrepare());
+		}
+
+        pstmt.setObject(1, new Boolean(true), java.sql.Types.INTEGER);
+		ResultSet rs = pstmt.executeQuery();
+		assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        rs.close();
+	}
+
+	// Verify we can bind booleans-as-native-types ok.
+	public void testBooleanBind() throws Exception
+	{
+		PreparedStatement pstmt = con.prepareStatement("SELECT * FROM testsps WHERE value = ?");
+        ((PGStatement)pstmt).setUseServerPrepare(true);
+        if (TestUtil.haveMinimumServerVersion(con,"7.3")) {
+			assertTrue(((PGStatement)pstmt).isUseServerPrepare());
+		} else {
+			assertTrue(!((PGStatement)pstmt).isUseServerPrepare());
+		}
+
+        pstmt.setBoolean(1, false);
+		ResultSet rs = pstmt.executeQuery();
+		assertTrue(rs.next());
+        assertEquals(9, rs.getInt(1));
+        rs.close();
 	}
 
 	public void testPreparedStatementsWithBinds() throws Exception
