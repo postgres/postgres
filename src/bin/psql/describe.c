@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.90 2003/12/01 22:21:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.91 2003/12/23 23:13:14 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1626,14 +1626,15 @@ listSchemas(const char *pattern)
 
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
-					  "SELECT n.nspname AS \"%s\",\n"
-					  "       u.usename AS \"%s\"\n"
+		"SELECT n.nspname AS \"%s\",\n"
+		"       u.usename AS \"%s\"\n"
 		"FROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
-					  "       ON n.nspowner=u.usesysid\n",
+		"       ON n.nspowner=u.usesysid\n"
+		"WHERE	(n.nspname NOT LIKE 'pg\\\\_temp\\\\_%%' OR\n"
+		"		 n.nspname = (pg_catalog.current_schemas(true))[1])\n",	/* temp schema is first */
 					  _("Name"),
 					  _("Owner"));
-
-	processNamePattern(&buf, pattern, false, false,
+	processNamePattern(&buf, pattern, true, false,
 					   NULL, "n.nspname", NULL,
 					   NULL);
 

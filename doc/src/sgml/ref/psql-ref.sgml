@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.101 2003/12/01 22:21:54 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.102 2003/12/23 23:13:14 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -957,6 +957,7 @@ testdb=>
         Lists all available schemas (namespaces). If <replaceable
         class="parameter">pattern</replaceable> (a regular expression)
         is specified, only schemas whose names match the pattern are listed.
+        Non-local temporary schemas are suppressed.
         </para>
         </listitem>
       </varlistentry>
