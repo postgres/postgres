@@ -110,9 +110,13 @@ xqcat			{quote}{space}*\n{space}*{quote}
 dquote			\"
 xdstart			{dquote}
 xdstop			{dquote}
-xdcqdq			\\\"
 xdinside		[^"]*
-xdcinside		({xdinside}|{xdcqdq})*
+
+/* special stuff for C strings */
+xdcqq			\\\\
+xdcqdq			\\\"
+xdcother		[^"]
+xdcinside		({xdcqq}|{xdcqdq}|{xdcother})
 
 /* Comments
  * Ignored by the scanner and parser.
@@ -133,7 +137,7 @@ identifier		{letter}{letter_or_digit}*
 typecast		"::"
 
 self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
-op_and_self		[\~\!\@\#\^\&\|\?\$\:\+\-\*\/\%\<\>\=]
+op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
 operator		{op_and_self}+
 
 xmstop			-
@@ -287,7 +291,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
-
 <xm>{space}*	{ /* ignore */ }
 <xm>{xmstop}	{
 					BEGIN(SQL);

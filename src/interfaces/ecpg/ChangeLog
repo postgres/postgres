@@ -631,3 +631,10 @@ Tue Sep 14 22:26:40 CEST 1999
 	- Return OID in sqlca.sqlerrd[1] if possible.
 	- Set ecpg version to 2.6.3
 	- Set library version to 3.0.2
+
+Fri Sep 17 07:43:55 CEST 1999
+
+	- Fixed bug in parsing C strings.
+	- Fixed bug in parsing operators.
+	- Set ecpg version to 2.6.4
+
