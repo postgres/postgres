@@ -390,8 +390,9 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 	| cpp_line			{ fprintf(yyout, "%s", $1); free($1); }
 	| blockstart			{ fputs($1, yyout); free($1); }
 	| blockend			{ fputs($1, yyout); free($1); }
+	;
 
-opt_at:	SQL_AT connection_target	{ connection = $2; }
+opt_at:	SQL_AT connection_target	{ connection = $2; };
 
 stmt:  AlterTableStmt			{ output_statement($1, 0, NULL, connection); }
 		| AlterGroupStmt	{ output_statement($1, 0, NULL, connection); }
@@ -781,12 +782,20 @@ opt_level:  READ COMMITTED      { $$ = make_str("read committed"); }
 
 
 var_value:  Sconst			{ $$ = $1; }
-		| DEFAULT			{ $$ = make_str("default"); }
+		| FCONST		{ $$ = make_name(); }
+		| Iconst		{ $$ = $1; }
+		| name_list		{ 
+					  if (strlen($1) == 0)
+						mmerror(ET_ERROR, "SET must have at least one argument.");
+
+					  $$ = $1;
+					}
+		| DEFAULT		{ $$ = make_str("default"); }
 		;
 
 zone_value:  Sconst			{ $$ = $1; }
-		| DEFAULT			{ $$ = make_str("default"); }
-		| LOCAL				{ $$ = make_str("local"); }
+		| DEFAULT		{ $$ = make_str("default"); }
+		| LOCAL			{ $$ = make_str("local"); }
 		;
 
 opt_encoding:	Sconst	 	{ $$ = $1; }
@@ -4066,6 +4075,7 @@ opt_options: Op ColId
 			$$ = make2_str(make_str("?"), $2);
 		}
 	| /* empty */ { $$ = EMPTY; }
+	;
 
 /*
  * Declare a prepared cursor. The syntax is different from the standard
@@ -4114,7 +4124,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
  * the exec sql deallocate prepare command to deallocate a previously
  * prepared statement
  */
-ECPGDeallocate:	SQL_DEALLOCATE SQL_PREPARE ident	{ $$ = cat_str(3, make_str("ECPGdeallocate(__LINE__, \""), $3, make_str("\");")); }
+ECPGDeallocate:	SQL_DEALLOCATE SQL_PREPARE ident	{ $$ = cat_str(3, make_str("ECPGdeallocate(__LINE__, \""), $3, make_str("\");")); };
 
 /*
  * variable declaration inside the exec sql declare block
@@ -4128,17 +4138,19 @@ ECPGDeclaration: sql_startdeclare
 		fprintf(yyout, "%s/* exec sql end declare section */", $3);
 		free($3);
 		output_line_number();
-	}
+	};
 
-sql_startdeclare : ecpgstart BEGIN_TRANS DECLARE SQL_SECTION ';' {}
+sql_startdeclare: ecpgstart BEGIN_TRANS DECLARE SQL_SECTION ';' {};
 
-sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {}
+sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {};
 
 variable_declarations:  /* empty */ { $$ = EMPTY; }
 			| declarations { $$ = $1; }
+			;
 
 declarations:  declaration { $$ = $1; }
 			| declarations declaration { $$ = cat2_str($1, $2); }
+			;
 
 declaration: storage_clause storage_modifier
 	{
@@ -4162,17 +4174,19 @@ declaration: storage_clause storage_modifier
 	variable_list ';'
 	{
  		$$ = cat_str(6, actual_startline[struct_level], $1, $2, $4.type_str, $6, make_str(";\n"));
-	}
+	};
 
 storage_clause : S_EXTERN	{ $$ = make_str("extern"); }
-       | S_STATIC		{ $$ = make_str("static"); }
-       | S_REGISTER		{ $$ = make_str("register"); }
-       | S_AUTO			{ $$ = make_str("auto"); }
-       | /* empty */		{ $$ = EMPTY; }
+        | S_STATIC		{ $$ = make_str("static"); }
+        | S_REGISTER		{ $$ = make_str("register"); }
+        | S_AUTO		{ $$ = make_str("auto"); }
+        | /* empty */		{ $$ = EMPTY; }
+	;
 
-storage_modifier : S_CONST      { $$ = make_str("const"); }
-       | S_VOLATILE             { $$ = make_str("volatile"); }
-       | /* empty */            { $$ = EMPTY; }
+storage_modifier : S_CONST       { $$ = make_str("const"); }
+        | S_VOLATILE             { $$ = make_str("volatile"); }
+        | /* empty */            { $$ = EMPTY; }
+	;
 
 type: simple_type
 		{
@@ -4220,6 +4234,7 @@ type: simple_type
   			$$.type_index = this->type->type_index;
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
+	;
 
 enum_type: SQL_ENUM opt_symbol enum_definition
 	{
@@ -4229,22 +4244,23 @@ enum_type: SQL_ENUM opt_symbol enum_definition
 	{
 		$$ = cat2_str(make_str("enum"), $2);
 	}
+	;
 
-enum_definition: '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }
+enum_definition: '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); };
 
 struct_type: s_struct '{' variable_declarations '}'
 	{
 	    ECPGfree_struct_member(struct_member_list[struct_level]);
 	    free(actual_storage[struct_level--]);
 	    $$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
-	}
+	};
 
 union_type: s_union '{' variable_declarations '}'
 	{
 	    ECPGfree_struct_member(struct_member_list[struct_level]);
 	    free(actual_storage[struct_level--]);
 	    $$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
-	}
+	};
 
 s_struct: SQL_STRUCT opt_symbol
         {
@@ -4257,7 +4273,7 @@ s_struct: SQL_STRUCT opt_symbol
 	    initializer = 0;
 
 	    $$ = cat2_str(make_str("struct"), $2);
-	}
+	};
 
 s_union: UNION opt_symbol
         {
@@ -4270,7 +4286,7 @@ s_union: UNION opt_symbol
 	    initializer = 0;
 
 	    $$ = cat2_str(make_str("union"), $2);
-	}
+	};
 
 simple_type: unsigned_type		{ $$=$1; }
 	|	opt_signed signed_type	{ $$=$2; }
@@ -4300,7 +4316,7 @@ opt_signed:	SQL_SIGNED
 	|	/* EMPTY */
 	;
 
-varchar_type:  VARCHAR		{ $$ = ECPGt_varchar; }
+varchar_type:  VARCHAR		{ $$ = ECPGt_varchar; };
 
 variable_list: variable 
 	{
@@ -4310,6 +4326,7 @@ variable_list: variable
 	{
 		$$ = cat_str(3, $1, make_str(","), $3);
 	}
+	;
 
 variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 		{
@@ -4384,16 +4401,18 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]));
 
 			free($2);
-		}
+		};
 
 opt_initializer: /* empty */		{ $$ = EMPTY; }
 	| '=' c_term			{ 
 						initializer = 1;
 						$$ = cat2_str(make_str("="), $2);
 					}
+	;
 
 opt_pointer: /* empty */	{ $$ = EMPTY; }
 	| '*'			{ $$ = make_str("*"); }
+	;
 
 /*
  * As long as the prepare statement is not supported by the backend, we will
@@ -4403,7 +4422,7 @@ ECPGDeclare: DECLARE STATEMENT ident
 	{
 		/* this is only supported for compatibility */
 		$$ = cat_str(3, make_str("/* declare statement"), $3, make_str("*/"));
-	}
+	};
 /*
  * the exec sql disconnect statement: disconnect from the given database 
  */
@@ -4413,9 +4432,11 @@ dis_name: connection_object	{ $$ = $1; }
 	| CURRENT	{ $$ = make_str("\"CURRENT\""); }
 	| ALL		{ $$ = make_str("\"ALL\""); }
 	| /* empty */	{ $$ = make_str("\"CURRENT\""); }
+	;
 
 connection_object: connection_target { $$ = $1; }
 	| DEFAULT	{ $$ = make_str("\"DEFAULT\""); }
+	;
 
 /*
  * execute a given string as sql command
@@ -4448,30 +4469,31 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 	{
 		$$ = make_str("?");
 	}
+	;
 
-execstring: char_variable |
-	CSTRING	 { $$ = make3_str(make_str("\""), $1, make_str("\"")); };
+execstring:	char_variable	{ $$ = $1; }
+	| 	CSTRING		{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+	;
 
 /*
  * the exec sql free command to deallocate a previously
  * prepared statement
  */
-ECPGFree:	SQL_FREE ident	{ $$ = $2; }
+ECPGFree:	SQL_FREE ident	{ $$ = $2; };
 
 /*
  * open is an open cursor, at the moment this has to be removed
  */
-ECPGOpen: SQL_OPEN name ecpg_using {
-		$$ = $2;
-};
+ECPGOpen: SQL_OPEN name ecpg_using { $$ = $2; };
 
 ecpg_using: /* empty */		{ $$ = EMPTY; }
 	| USING variablelist	{
 					/* mmerror ("open cursor with variables not implemented yet"); */
 					$$ = EMPTY;
 				}
+	;
 
-variablelist: cinputvariable | cinputvariable ',' variablelist
+variablelist: cinputvariable | cinputvariable ',' variablelist;
 
 /*
  * As long as the prepare statement is not supported by the backend, we will
@@ -4480,7 +4502,7 @@ variablelist: cinputvariable | cinputvariable ',' variablelist
 ECPGPrepare: SQL_PREPARE ident FROM execstring
 	{
 		$$ = cat2_str(make3_str(make_str("\""), $2, make_str("\",")), $4);
-	}
+	};
 
 /*
  * dynamic SQL: descriptor based access
@@ -4491,31 +4513,29 @@ ECPGPrepare: SQL_PREPARE ident FROM execstring
  * deallocate a descriptor
  */
 ECPGDeallocateDescr:	SQL_DEALLOCATE SQL_DESCRIPTOR ident	
-{	drop_descriptor($3,connection);
-	$$ = $3;
-}
+		{
+			drop_descriptor($3,connection);
+			$$ = $3;
+		};
 
 /*
  * allocate a descriptor
  */
 ECPGAllocateDescr:	SQL_ALLOCATE SQL_DESCRIPTOR ident	
-{   add_descriptor($3,connection);
-	$$ = $3;
-}
+		{
+			add_descriptor($3,connection);
+			$$ = $3;
+		};
 
 /*
  * read from descriptor
  */
 
-ECPGGetDescHeaderItem: cvariable '=' desc_header_item  {
-		push_assignment($1, $3);
-}
+ECPGGetDescHeaderItem: cvariable '=' desc_header_item  { push_assignment($1, $3); };
 
-desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
+desc_header_item:	SQL_COUNT		{ $$ = ECPGd_count; };
 
-ECPGGetDescItem: cvariable '=' descriptor_item  {
-		push_assignment($1, $3);
-}
+ECPGGetDescItem: cvariable '=' descriptor_item  { push_assignment($1, $3); };
 
 descriptor_item:	SQL_DATA			{ $$ = ECPGd_data; }
 		|	SQL_DATETIME_INTERVAL_CODE	{ $$ = ECPGd_di_code; }
@@ -4534,18 +4554,21 @@ descriptor_item:	SQL_DATA			{ $$ = ECPGd_data; }
 		;
 
 ECPGGetDescHeaderItems: ECPGGetDescHeaderItem
-	| ECPGGetDescHeaderItems ',' ECPGGetDescHeaderItem;
+	| ECPGGetDescHeaderItems ',' ECPGGetDescHeaderItem
+	;
  
 ECPGGetDescItems: ECPGGetDescItem
-	| ECPGGetDescItems ',' ECPGGetDescItem;
+	| ECPGGetDescItems ',' ECPGGetDescItem
+	;
  
 ECPGGetDescriptorHeader:	SQL_GET SQL_DESCRIPTOR ident ECPGGetDescHeaderItems
-		{  $$ = $3; }
+		{  $$ = $3; };
 
 ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE cvariable ECPGGetDescItems
 		{  $$.str = $5; $$.name = $3; }
 	|	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE Iconst ECPGGetDescItems
 		{  $$.str = $5; $$.name = $3; }
+	;
 
 /*****************************************************************************
  *
@@ -4602,7 +4625,7 @@ ECPGRelease: TransactionStmt SQL_RELEASE
 		fprintf(yyout, "ECPGdisconnect(__LINE__, \"\");"); 
 		whenever_action(0);
 		free($1);
-	}
+	};
 
 /* 
  * set/reset the automatic transaction mode, this needs a differnet handling
@@ -4611,10 +4634,11 @@ ECPGRelease: TransactionStmt SQL_RELEASE
 ECPGSetAutocommit:  SET SQL_AUTOCOMMIT to_equal on_off
            		{
 				$$ = $4;
-                        }
+                        };
 
 on_off:	ON		{ $$ = make_str("on"); }
 	| SQL_OFF	{ $$ = make_str("off"); }
+	;
 
 to_equal:	TO | '=';
 
@@ -4625,7 +4649,7 @@ to_equal:	TO | '=';
 ECPGSetConnection:  SET SQL_CONNECTION to_equal connection_object
            		{
 				$$ = $4;
-                        }
+                        };
 
 /*
  * define a new type for embedded SQL
@@ -4676,7 +4700,7 @@ ECPGTypedef: TYPE_P ECPGColLabel IS type opt_type_array_bounds opt_reference
         	types = this;
 
 		$$ = cat_str(7, make_str("/* exec sql type"), mm_strdup($2), make_str("is"), mm_strdup($4.type_str), mm_strdup($5.str), $6, make_str("*/"));
-	}
+	};
 
 opt_type_array_bounds:  '[' ']' opt_type_array_bounds
 			{
@@ -4718,6 +4742,7 @@ opt_type_array_bounds:  '[' ']' opt_type_array_bounds
 
 opt_reference: SQL_REFERENCE { $$ = make_str("reference"); }
 	| /* empty */ 	     { $$ = EMPTY; }
+	;
 
 /*
  * define the type of one variable for embedded SQL
@@ -4776,68 +4801,81 @@ ECPGVar: SQL_VAR ECPGColLabel IS type opt_type_array_bounds opt_reference
 		p->type = type;
 
 		$$ = cat_str(7, make_str("/* exec sql var"), mm_strdup($2), make_str("is"), mm_strdup($4.type_str), mm_strdup($5.str), $6, make_str("*/"));
-	}
+	};
 
 /*
  * whenever statement: decide what to do in case of error/no data found
  * according to SQL standards we lack: SQLSTATE, CONSTRAINT and SQLEXCEPTION
  */
-ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action {
-	when_error.code = $<action>3.code;
-	when_error.command = $<action>3.command;
-	$$ = cat_str(3, make_str("/* exec sql whenever sqlerror "), $3.str, make_str("; */\n"));
-}
-	| SQL_WHENEVER NOT SQL_FOUND action {
-	when_nf.code = $<action>4.code;
-	when_nf.command = $<action>4.command;
-	$$ = cat_str(3, make_str("/* exec sql whenever not found "), $4.str, make_str("; */\n"));
-}
-	| SQL_WHENEVER SQL_SQLWARNING action {
-	when_warn.code = $<action>3.code;
-	when_warn.command = $<action>3.command;
-	$$ = cat_str(3, make_str("/* exec sql whenever sql_warning "), $3.str, make_str("; */\n"));
-}
+ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action
+	{
+		when_error.code = $<action>3.code;
+		when_error.command = $<action>3.command;
+		$$ = cat_str(3, make_str("/* exec sql whenever sqlerror "), $3.str, make_str("; */\n"));
+	}
+	| SQL_WHENEVER NOT SQL_FOUND action
+	{
+		when_nf.code = $<action>4.code;
+		when_nf.command = $<action>4.command;
+		$$ = cat_str(3, make_str("/* exec sql whenever not found "), $4.str, make_str("; */\n"));
+	}
+	| SQL_WHENEVER SQL_SQLWARNING action
+	{
+		when_warn.code = $<action>3.code;
+		when_warn.command = $<action>3.command;
+		$$ = cat_str(3, make_str("/* exec sql whenever sql_warning "), $3.str, make_str("; */\n"));
+	}
+	;
 
-action : SQL_CONTINUE {
-	$<action>$.code = W_NOTHING;
-	$<action>$.command = NULL;
-	$<action>$.str = make_str("continue");
-}
-       | SQL_SQLPRINT {
-	$<action>$.code = W_SQLPRINT;
-	$<action>$.command = NULL;
-	$<action>$.str = make_str("sqlprint");
-}
-       | SQL_STOP {
-	$<action>$.code = W_STOP;
-	$<action>$.command = NULL;
-	$<action>$.str = make_str("stop");
-}
-       | SQL_GOTO name {
-        $<action>$.code = W_GOTO;
-        $<action>$.command = strdup($2);
-	$<action>$.str = cat2_str(make_str("goto "), $2);
-}
-       | SQL_GO TO name {
-        $<action>$.code = W_GOTO;
-        $<action>$.command = strdup($3);
-	$<action>$.str = cat2_str(make_str("goto "), $3);
-}
-       | DO name '(' c_args ')' {
-	$<action>$.code = W_DO;
-	$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
-	$<action>$.str = cat2_str(make_str("do"), mm_strdup($<action>$.command));
-}
-       | DO SQL_BREAK {
-        $<action>$.code = W_BREAK;
-        $<action>$.command = NULL;
-        $<action>$.str = make_str("break");
-}
-       | SQL_CALL name '(' c_args ')' {
-	$<action>$.code = W_DO;
-	$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
-	$<action>$.str = cat2_str(make_str("call"), mm_strdup($<action>$.command));
-}
+action : SQL_CONTINUE
+	{
+		$<action>$.code = W_NOTHING;
+		$<action>$.command = NULL;
+		$<action>$.str = make_str("continue");
+	}
+       | SQL_SQLPRINT
+	{
+		$<action>$.code = W_SQLPRINT;
+		$<action>$.command = NULL;
+		$<action>$.str = make_str("sqlprint");
+	}
+       | SQL_STOP
+	{
+		$<action>$.code = W_STOP;
+		$<action>$.command = NULL;
+		$<action>$.str = make_str("stop");
+	}
+       | SQL_GOTO name
+	{
+        	$<action>$.code = W_GOTO;
+	        $<action>$.command = strdup($2);
+		$<action>$.str = cat2_str(make_str("goto "), $2);
+	}
+       | SQL_GO TO name
+	{
+        	$<action>$.code = W_GOTO;
+	        $<action>$.command = strdup($3);
+		$<action>$.str = cat2_str(make_str("goto "), $3);
+	}
+       | DO name '(' c_args ')'
+	{
+		$<action>$.code = W_DO;
+		$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
+		$<action>$.str = cat2_str(make_str("do"), mm_strdup($<action>$.command));
+	}
+       | DO SQL_BREAK
+	{
+        	$<action>$.code = W_BREAK;
+	        $<action>$.command = NULL;
+        	$<action>$.str = make_str("break");
+	}
+       | SQL_CALL name '(' c_args ')'
+	{
+		$<action>$.code = W_DO;
+		$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
+		$<action>$.str = cat2_str(make_str("call"), mm_strdup($<action>$.command));
+	}
+	;
 
 /* some other stuff for ecpg */
 
@@ -4889,9 +4927,11 @@ ECPGTypeName:	  SQL_BOOL		{ $$ = make_str("bool"); }
 		| DOUBLE		{ $$ = make_str("double"); }
 		;
 
+/* not needed at the moment
+ * 			| UNION		{ $$ = make_str("union"); }
+ */
 ECPGLabelTypeName:	  CHAR			{ $$ = make_str("char"); }
 			| FLOAT		{ $$ = make_str("float"); }
-			| UNION		{ $$ = make_str("union"); }
 			| VARCHAR	{ $$ = make_str("varchar"); }
 			| ECPGTypeName	{ $$ = $1; }
 		;
@@ -4900,8 +4940,18 @@ opt_symbol:	symbol		{ $$ = $1; }
 		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
-symbol:		ColLabel	{ $$ = $1; }
+symbol:		ColLabel	{ $$ = $1; };
 
+/* These show up as operators, and will screw up the parsing if
+ * allowed as identifiers or labels.
+ * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
+	| BETWEEN			{ $$ = make_str("between"); }
+	| IN				{ $$ = make_str("in"); }
+	| IS				{ $$ = make_str("is"); }
+	| ISNULL			{ $$ = make_str("isnull"); }
+	| NOTNULL			{ $$ = make_str("notnull"); }
+	| OVERLAPS			{ $$ = make_str("overlaps"); }
+ */
 ECPGColId:  /* to be used instead of ColId */
 	 ECPGKeywords			{ $$ = $1; }
 	| ident				{ $$ = $1; }
@@ -4916,7 +4966,6 @@ ECPGColId:  /* to be used instead of ColId */
 	| BACKWARD			{ $$ = make_str("backward"); }
 	| BEFORE			{ $$ = make_str("before"); }
 	| BEGIN_TRANS			{ $$ = make_str("begin"); }
-	| BETWEEN			{ $$ = make_str("between"); }
 	| CACHE				{ $$ = make_str("cache"); }
 	| CASCADE			{ $$ = make_str("cascade"); }
 	| CLOSE				{ $$ = make_str("close"); }
@@ -4944,7 +4993,6 @@ ECPGColId:  /* to be used instead of ColId */
 	| GRANT				{ $$ = make_str("grant"); }
 	| HANDLER			{ $$ = make_str("handler"); }
 	| IMMEDIATE			{ $$ = make_str("immediate"); }
-	| IN				{ $$ = make_str("in"); }
 	| INCREMENT			{ $$ = make_str("increment"); }
 	| INDEX				{ $$ = make_str("index"); }
 	| INHERITS			{ $$ = make_str("inherits"); }
@@ -4952,8 +5000,6 @@ ECPGColId:  /* to be used instead of ColId */
 	| INSERT			{ $$ = make_str("insert"); }
 	| INSTEAD			{ $$ = make_str("instead"); }
 	| INTERVAL			{ $$ = make_str("interval"); }
-	| IS				{ $$ = make_str("is"); }
-	| ISNULL			{ $$ = make_str("isnull"); }
 	| ISOLATION			{ $$ = make_str("isolation"); }
 	| KEY				{ $$ = make_str("key"); }
 	| LANGUAGE			{ $$ = make_str("language"); }
@@ -4972,13 +5018,11 @@ ECPGColId:  /* to be used instead of ColId */
 	| NOCREATEUSER			{ $$ = make_str("nocreateuser"); }
 	| NOTHING			{ $$ = make_str("nothing"); }
 	| NOTIFY			{ $$ = make_str("notify"); }
-	| NOTNULL			{ $$ = make_str("notnull"); }
 	| OF				{ $$ = make_str("of"); }
 	| OIDS				{ $$ = make_str("oids"); }
 	| ONLY				{ $$ = make_str("only"); }
 	| OPERATOR			{ $$ = make_str("operator"); }
 	| OPTION			{ $$ = make_str("option"); }
-	| OVERLAPS			{ $$ = make_str("overlaps"); }
 	| PARTIAL			{ $$ = make_str("partial"); }
 	| PASSWORD			{ $$ = make_str("password"); }
 	| PENDANT			{ $$ = make_str("pendant"); }
@@ -5029,11 +5073,22 @@ ECPGColId:  /* to be used instead of ColId */
 	| ZONE				{ $$ = make_str("zone"); }
 	;
 
+/* These show up as operators, and will screw up the parsing if
+ * allowed as identifiers or labels.
+ * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
+		| ALL			{ $$ = make_str("all"); }
+		| ANY			{ $$ = make_str("any"); }
+		| EXCEPT		{ $$ = make_str("except"); }
+		| INTERSECT		{ $$ = make_str("intersect"); }
+		| LIKE			{ $$ = make_str("like"); }
+		| NOT			{ $$ = make_str("not"); }
+		| NULLIF                { $$ = make_str("nullif"); }
+		| NULL_P		{ $$ = make_str("null"); }
+		| OR			{ $$ = make_str("or"); }
+ */
 ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| ABORT_TRANS           { $$ = make_str("abort"); }
-		| ALL			{ $$ = make_str("all"); }
 		| ANALYZE               { $$ = make_str("analyze"); }
-		| ANY			{ $$ = make_str("any"); }
 		| ASC			{ $$ = make_str("asc"); }
 		| BINARY                { $$ = make_str("binary"); }
 		| BIT	                { $$ = make_str("bit"); }
@@ -5063,7 +5118,6 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| DO			{ $$ = make_str("do"); }
 		| ELSE                  { $$ = make_str("else"); }
 		| END_TRANS             { $$ = make_str("end"); }
-		| EXCEPT		{ $$ = make_str("except"); }
 		| EXISTS		{ $$ = make_str("exists"); }
 		| EXPLAIN		{ $$ = make_str("explain"); }
 		| EXTEND		{ $$ = make_str("extend"); }
@@ -5078,12 +5132,10 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| HAVING		{ $$ = make_str("having"); }
 		| INITIALLY		{ $$ = make_str("initially"); }
 		| INNER_P		{ $$ = make_str("inner"); }
-		| INTERSECT		{ $$ = make_str("intersect"); }
 		| INTO			{ $$ = make_str("into"); }
 		| JOIN			{ $$ = make_str("join"); }
 		| LEADING		{ $$ = make_str("leading"); }
 		| LEFT			{ $$ = make_str("left"); }
-		| LIKE			{ $$ = make_str("like"); }
 		| LISTEN		{ $$ = make_str("listen"); }
 		| LOAD			{ $$ = make_str("load"); }
 		| LOCK_P		{ $$ = make_str("lock"); }
@@ -5092,13 +5144,9 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| NCHAR			{ $$ = make_str("nchar"); }
 		| NEW			{ $$ = make_str("new"); }
 		| NONE			{ $$ = make_str("none"); }
-		| NOT			{ $$ = make_str("not"); }
-		| NULLIF                { $$ = make_str("nullif"); }
-		| NULL_P		{ $$ = make_str("null"); }
 		| NUMERIC               { $$ = make_str("numeric"); }
 		| OFFSET		{ $$ = make_str("offset"); }
 		| ON			{ $$ = make_str("on"); }
-		| OR			{ $$ = make_str("or"); }
 		| ORDER			{ $$ = make_str("order"); }
 		| OUTER_P		{ $$ = make_str("outer"); }
 		| POSITION		{ $$ = make_str("position"); }
@@ -5131,42 +5179,48 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 
 into_list : coutputvariable | into_list ',' coutputvariable;
 
-ecpgstart: SQL_START { reset_variables();}
+ecpgstart: SQL_START { reset_variables(); };
 
 c_args: /* empty */		{ $$ = EMPTY; }
 	| c_list		{ $$ = $1; }
+	;
 
-coutputvariable : cvariable indicator {
+coutputvariable : cvariable indicator
+	{
 		add_variable(&argsresult, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
-}
+	};
 
-cinputvariable : cvariable indicator {
+cinputvariable : cvariable indicator
+	{
 		if ($2 != NULL && (find_variable($2))->type->typ == ECPGt_array)
 			mmerror(ET_ERROR, "arrays of indicators are not allowed on input");
 
 		add_variable(&argsinsert, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
-}
+	};
 
-civariableonly : cvariable {
+civariableonly : cvariable
+	{
 		add_variable(&argsinsert, find_variable($1), &no_indicator); 
 		$$ = make_str("?");
-}
+	};
 
-cvariable: CVARIABLE			{ $$ = $1; }
+cvariable: CVARIABLE			{ $$ = $1; };
 
 indicator: /* empty */			{ $$ = NULL; }
 	| cvariable		 	{ check_indicator((find_variable($1))->type); $$ = $1; }
 	| SQL_INDICATOR cvariable 	{ check_indicator((find_variable($2))->type); $$ = $2; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
+	;
 
 ident: IDENT		{ $$ = $1; }
-	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); };
+	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+	;
 
 /*
  * C stuff
  */
 
-cpp_line: CPP_LINE	{ $$ = $1; }
+cpp_line: CPP_LINE	{ $$ = $1; };
 
 c_stuff: c_anything 	{ $$ = $1; }
 	| c_stuff c_anything
@@ -5177,18 +5231,22 @@ c_stuff: c_anything 	{ $$ = $1; }
 			{
 				$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
 			}
+	;
 
 c_list: c_term			{ $$ = $1; }
 	| c_list ',' c_term	{ $$ = cat_str(3, $1, make_str(","), $3); }
+	;
 
 c_term:  c_stuff 		{ $$ = $1; }
 	| '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }
+	;
 
 c_thing:	c_anything	{ $$ = $1; }
 	|	'('		{ $$ = make_str("("); }
 	|	')'		{ $$ = make_str(")"); }
 	|	','		{ $$ = make_str(","); }
 	|	';'		{ $$ = make_str(";"); }
+	;
 
 c_anything:  IDENT 	{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
@@ -5222,16 +5280,19 @@ c_anything:  IDENT 	{ $$ = $1; }
         | '['		{ $$ = make_str("["); }
 	| ']'		{ $$ = make_str("]"); }
 	| '='		{ $$ = make_str("="); }
+	;
 
-blockstart : '{' {
-    braces_open++;
-    $$ = make_str("{");
-}
+blockstart : '{'
+	{
+	    braces_open++;
+	    $$ = make_str("{");
+	};
 
-blockend : '}' {
-    remove_variables(braces_open--);
-    $$ = make_str("}");
-}
+blockend : '}'
+	{
+	    remove_variables(braces_open--);
+	    $$ = make_str("}");
+	};
 
 %%
 
