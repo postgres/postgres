@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.48 2000/04/12 17:16:15 momjian Exp $
+ * $Id: pg_dump.h,v 1.49 2000/07/04 14:25:28 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -25,6 +25,7 @@
 
 #include "pqexpbuffer.h"
 #include "catalog/pg_index.h"
+#include "pg_backup.h"
 
 /* The data structures used to store system catalog information */
 
@@ -64,6 +65,15 @@ typedef struct _funcInfo
 	int			dumped;			/* 1 if already dumped */
 } FuncInfo;
 
+typedef struct _trigInfo
+{
+	char	   *oid;
+	char	   *tgname;
+	char	   *tgsrc;
+	char	   *tgdel;
+	char	   *tgcomment;
+} TrigInfo;
+
 typedef struct _tableInfo
 {
 	char	   *oid;
@@ -94,9 +104,7 @@ typedef struct _tableInfo
 	int			ncheck;			/* # of CHECK expressions */
 	char	  **check_expr;		/* [CONSTRAINT name] CHECK expressions */
 	int			ntrig;			/* # of triggers */
-	char	  **triggers;		/* CREATE TRIGGER ... */
-	char	  **trcomments;		/* COMMENT ON TRIGGER ... */
-	char	  **troids;			/* TRIGGER oids */
+	TrigInfo	*triggers;		/* Triggers on the table */
 	char	   *primary_key;	/* PRIMARY KEY of the table, if any */
 } TableInfo;
 
@@ -162,7 +170,7 @@ typedef struct _oprInfo
 extern bool g_force_quotes;		/* double-quotes for identifiers flag */
 extern bool g_verbose;			/* verbose flag */
 extern int	g_last_builtin_oid; /* value of the last builtin oid */
-extern FILE *g_fout;			/* the script file */
+extern Archive *g_fout;			/* the script file */
 
 /* placeholders for comment starting and ending delimiters */
 extern char g_comment_start[10];
@@ -179,11 +187,14 @@ extern char g_opaque_type[10];	/* name for the opaque type */
  *	common utility functions
 */
 
-extern TableInfo *dumpSchema(FILE *fout,
+extern TableInfo *dumpSchema(Archive *fout,
 		   int *numTablesPtr,
 		   const char *tablename,
-		   const bool acls);
-extern void dumpSchemaIdx(FILE *fout,
+		   const bool acls,
+		   const bool oids,
+		   const bool schemaOnly,
+		   const bool dataOnly);
+extern void dumpSchemaIdx(Archive *fout,
 			  const char *tablename,
 			  TableInfo *tblinfo,
 			  int numTables);
@@ -215,22 +226,23 @@ extern TableInfo *getTables(int *numTables, FuncInfo *finfo, int numFuncs);
 extern InhInfo *getInherits(int *numInherits);
 extern void getTableAttrs(TableInfo *tbinfo, int numTables);
 extern IndInfo *getIndices(int *numIndices);
-extern void dumpDBComment(FILE *outfile);
-extern void dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
+extern void dumpDBComment(Archive *outfile);
+extern void dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
-extern void dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
+extern void dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs,
 			  TypeInfo *tinfo, int numTypes);
-extern void dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
+extern void dumpFuncs(Archive *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
-extern void dumpAggs(FILE *fout, AggInfo *agginfo, int numAggregates,
+extern void dumpAggs(Archive *fout, AggInfo *agginfo, int numAggregates,
 		 TypeInfo *tinfo, int numTypes);
-extern void dumpOprs(FILE *fout, OprInfo *agginfo, int numOperators,
+extern void dumpOprs(Archive *fout, OprInfo *agginfo, int numOperators,
 		 TypeInfo *tinfo, int numTypes);
-extern void dumpTables(FILE *fout, TableInfo *tbinfo, int numTables,
+extern void dumpTables(Archive *fout, TableInfo *tbinfo, int numTables,
 		   InhInfo *inhinfo, int numInherits,
 		   TypeInfo *tinfo, int numTypes, const char *tablename,
-		   const bool acls);
-extern void dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
+		   const bool acls, const bool oids,
+		   const bool schemaOnly, const bool dataOnly);
+extern void dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			TableInfo *tbinfo, int numTables, const char *tablename);
 extern const char *fmtId(const char *identifier, bool force_quotes);
 

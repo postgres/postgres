@@ -1,0 +1,60 @@
+Notes on pg_dump
+================
+
+pg_dump, by default, still outputs text files.
+
+pg_dumpall forces all pg_dump output to be text, since it also outputs text into the same output stream.
+
+The plain text output format can not be used as input into pg_restore.
+
+
+To dump a database into the next custom format, type:
+
+    pg_dump <db-name> -Fc > <backup-file>
+
+To restore, try
+ 
+   To list contents:
+
+       pg_restore -l <backup-file> | less
+
+   or to list tables:
+
+       pg_restore <backup-file> --table | less
+
+   or to list in a differnet orderL
+
+       pg_restore <backup-file> -l --oid --rearrange | less
+
+Once you are happy with the list, just remove the '-l', and an SQL script will be output.
+
+
+You can also dump a listing:
+
+       pg_restore -l <backup-file> > toc.lis
+  or
+       pg_restore -l <backup-file> -f toc.lis
+
+edit it, and rearrange the lines (or delete some):
+
+    vi toc.lis
+
+then use it to restore selected items:
+
+    pg_restore <backup-file> --use=toc.lis -l | less
+
+When you like the list, type
+
+    pg_restore backup.bck --use=toc.lis > script.sql
+
+or, simply:
+
+    createdb newdbname
+    pg_restore backup.bck --use=toc.lis | psql newdbname
+
+
+Philip Warner, 3-Jul-2000
+pjw@rhyme.com.au
+
+
+

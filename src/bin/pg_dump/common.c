@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.43 2000/06/14 18:17:50 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.44 2000/07/04 14:25:27 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -232,10 +232,13 @@ strInArray(const char *pattern, char **arr, int arr_size)
  */
 
 TableInfo  *
-dumpSchema(FILE *fout,
-		   int *numTablesPtr,
-		   const char *tablename,
-		   const bool aclsSkip)
+dumpSchema(Archive  *fout,
+		    int *numTablesPtr,
+		    const char *tablename,
+		    const bool aclsSkip,
+		    const bool oids,
+		    const bool schemaOnly,
+		    const bool dataOnly)
 {
 	int			numTypes;
 	int			numFuncs;
@@ -290,7 +293,7 @@ dumpSchema(FILE *fout,
 				g_comment_start, g_comment_end);
 	flagInhAttrs(tblinfo, numTables, inhinfo, numInherits);
 
-	if (!tablename && fout)
+	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
 			fprintf(stderr, "%s dumping out database comment %s\n",
@@ -306,16 +309,13 @@ dumpSchema(FILE *fout,
 		dumpTypes(fout, finfo, numFuncs, tinfo, numTypes);
 	}
 
-	if (fout)
-	{
-		if (g_verbose)
-			fprintf(stderr, "%s dumping out tables %s\n",
-					g_comment_start, g_comment_end);
-		dumpTables(fout, tblinfo, numTables, inhinfo, numInherits,
-				   tinfo, numTypes, tablename, aclsSkip);
-	}
+	if (g_verbose)
+		fprintf(stderr, "%s dumping out tables %s\n",
+				g_comment_start, g_comment_end);
+	dumpTables(fout, tblinfo, numTables, inhinfo, numInherits,
+			   tinfo, numTypes, tablename, aclsSkip, oids, schemaOnly, dataOnly);
 
-	if (!tablename && fout)
+	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
 			fprintf(stderr, "%s dumping out user-defined procedural languages %s\n",
@@ -323,7 +323,7 @@ dumpSchema(FILE *fout,
 		dumpProcLangs(fout, finfo, numFuncs, tinfo, numTypes);
 	}
 
-	if (!tablename && fout)
+	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
 			fprintf(stderr, "%s dumping out user-defined functions %s\n",
@@ -331,7 +331,7 @@ dumpSchema(FILE *fout,
 		dumpFuncs(fout, finfo, numFuncs, tinfo, numTypes);
 	}
 
-	if (!tablename && fout)
+	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
 			fprintf(stderr, "%s dumping out user-defined aggregates %s\n",
@@ -339,7 +339,7 @@ dumpSchema(FILE *fout,
 		dumpAggs(fout, agginfo, numAggregates, tinfo, numTypes);
 	}
 
-	if (!tablename && fout)
+	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
 			fprintf(stderr, "%s dumping out user-defined operators %s\n",
@@ -363,7 +363,7 @@ dumpSchema(FILE *fout,
  */
 
 extern void
-dumpSchemaIdx(FILE *fout, const char *tablename,
+dumpSchemaIdx(Archive *fout, const char *tablename,
 			  TableInfo *tblinfo, int numTables)
 {
 	int			numIndices;

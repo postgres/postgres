@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.1 2000/07/03 16:35:39 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.2 2000/07/04 14:25:28 momjian Exp $
 
 CMDNAME=`basename $0`
 
@@ -135,7 +135,7 @@ fi
 
 
 PSQL="${PGPATH}/psql $connectopts"
-PGDUMP="${PGPATH}/pg_dump $connectopts $pgdumpextraopts"
+PGDUMP="${PGPATH}/pg_dump $connectopts $pgdumpextraopts -Fp"
 
 
 echo "--"
