@@ -1910,6 +1910,7 @@ Wed Feb  9 12:24:03 CET 2005
 Thu Feb 10 09:03:56 CET 2005
 
 	- Fixed more parsing bugs in other CREATE statements. Thanks to TANIDA
- 	  Yutaka <tanida@sra.co.jp> for pointing out all these problems.
+	  Yutaka <tanida@sra.co.jp> and Atsushi Mitani <mitani@sraw.co.jp> for
+	  pointing out all these problems.
 	- Set ecpg version to 3.2.1.
 
