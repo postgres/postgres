@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.163 2004/06/18 06:14:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.164 2004/08/01 17:32:20 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -308,6 +308,7 @@ extern void BaseInit(void);
 extern void IgnoreSystemIndexes(bool mode);
 extern bool IsIgnoringSystemIndexes(void);
 extern void SetReindexProcessing(Oid heapOid, Oid indexOid);
+extern void ResetReindexProcessing(void);
 extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);
 extern void CreateDataDirLockFile(const char *datadir, bool amPostmaster);

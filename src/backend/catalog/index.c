@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.234 2004/06/18 06:13:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.235 2004/08/01 17:32:14 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1646,7 +1646,6 @@ reindex_index(Oid indexId)
 {
 	Relation	iRel,
 				heapRelation;
-	IndexInfo  *indexInfo;
 	Oid			heapId;
 	bool		inplace;
 
@@ -1671,8 +1670,6 @@ reindex_index(Oid indexId)
 	/* Open and lock the parent heap relation */
 	heapRelation = heap_open(heapId, AccessExclusiveLock);
 
-	SetReindexProcessing(heapId, indexId);
-
 	/*
 	 * If it's a shared index, we must do inplace processing (because we
 	 * have no way to update relfilenode in other databases).  Otherwise
@@ -1690,36 +1687,51 @@ reindex_index(Oid indexId)
 				 errmsg("shared index \"%s\" can only be reindexed in stand-alone mode",
 						RelationGetRelationName(iRel))));
 
-	/* Fetch info needed for index_build */
-	indexInfo = BuildIndexInfo(iRel);
-
-	if (inplace)
+	PG_TRY();
 	{
-		/*
-		 * Release any buffers associated with this index.	If they're
-		 * dirty, they're just dropped without bothering to flush to disk.
-		 */
-		DropRelationBuffers(iRel);
+		IndexInfo  *indexInfo;
 
-		/* Now truncate the actual data */
-		RelationTruncate(iRel, 0);
+		/* Suppress use of the target index while rebuilding it */
+		SetReindexProcessing(heapId, indexId);
+
+		/* Fetch info needed for index_build */
+		indexInfo = BuildIndexInfo(iRel);
+
+		if (inplace)
+		{
+			/*
+			 * Release any buffers associated with this index.	If they're
+			 * dirty, they're just dropped without bothering to flush to disk.
+			 */
+			DropRelationBuffers(iRel);
+
+			/* Now truncate the actual data */
+			RelationTruncate(iRel, 0);
+		}
+		else
+		{
+			/*
+			 * We'll build a new physical relation for the index.
+			 */
+			setNewRelfilenode(iRel);
+		}
+
+		/* Initialize the index and rebuild */
+		index_build(heapRelation, iRel, indexInfo);
+
+		/*
+		 * index_build will close both the heap and index relations (but not
+		 * give up the locks we hold on them).	So we're done.
+		 */
 	}
-	else
+	PG_CATCH();
 	{
-		/*
-		 * We'll build a new physical relation for the index.
-		 */
-		setNewRelfilenode(iRel);
+		/* Make sure flag gets cleared on error exit */
+		ResetReindexProcessing();
+		PG_RE_THROW();
 	}
-
-	/* Initialize the index and rebuild */
-	index_build(heapRelation, iRel, indexInfo);
-
-	/*
-	 * index_build will close both the heap and index relations (but not
-	 * give up the locks we hold on them).	So we're done.
-	 */
-	SetReindexProcessing(InvalidOid, InvalidOid);
+	PG_END_TRY();
+	ResetReindexProcessing();
 }
 
 /*

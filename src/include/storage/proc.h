@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.71 2004/07/21 20:34:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.72 2004/08/01 17:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,25 @@
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
 
+
+/*
+ * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
+ * for non-aborted subtransactions of its current top transaction.  These
+ * have to be treated as running XIDs by other backends.
+ *
+ * We also keep track of whether the cache overflowed (ie, the transaction has
+ * generated at least one subtransaction that didn't fit in the cache).
+ * If none of the caches have overflowed, we can assume that an XID that's not
+ * listed anywhere in the PGPROC array is not a running transaction.  Else we
+ * have to look at pg_subtrans.
+ */
+#define PGPROC_MAX_CACHED_SUBXIDS 64		/* XXX guessed-at value */
+
+struct XidCache {
+	bool			overflowed;
+	int				nxids;
+	TransactionId	xids[PGPROC_MAX_CACHED_SUBXIDS];
+};
 
 /*
  * Each backend has a PGPROC struct in shared memory.  There is also a list of
@@ -68,6 +87,8 @@ struct PGPROC
 
 	SHM_QUEUE	procHolders;	/* list of PROCLOCK objects for locks held
 								 * or awaited by this backend */
+
+	struct XidCache	subxids;	/* cache for subtransaction XIDs */
 };
 
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */

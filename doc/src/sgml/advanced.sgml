@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.41 2004/03/31 16:20:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.42 2004/08/01 17:32:11 tgl Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -257,6 +257,64 @@ COMMIT;
      you are using.
     </para>
    </note>
+
+   <para>
+    It's possible to control the statements in a transaction in a more
+    granular fashion through the use of <firstterm>savepoints</>.  Savepoints
+    allow you to selectively discard parts of the transaction, while
+    committing the rest.  After defining a savepoint with
+    <command>SAVEPOINT</>, you can if needed roll back to the savepoint
+    with <command>ROLLBACK TO</>.  All the transaction's database changes
+    between defining the savepoint and rolling back to it are discarded, but
+    changes earlier than the savepoint are kept.
+   </para> 
+
+   <para>
+    After rolling back to a savepoint, it continues to be defined, so you can
+    roll back to it several times.  Conversely, if you are sure you won't need
+    to roll back to a particular savepoint again, it can be released, so the
+    system can free some resources.  Keep in mind that either releasing or
+    rolling back to a savepoint
+    will automatically release all savepoints that were defined after it.
+   </para> 
+
+   <para>
+    All this is happening within the transaction block, so none of it
+    is visible to other database sessions.  When and if you commit the
+    transaction block, the committed actions become visible as a unit
+    to other sessions, while the rolled-back actions never become visible
+    at all.
+   </para> 
+
+   <para>
+    Remembering the bank database, suppose we debit $100.00 from Alice's
+    account, and credit Bob's account, only to find later that we should
+    have credited Wally's account.  We could do it using savepoints like
+
+<programlisting>
+BEGIN;
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+SAVEPOINT my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Bob';
+-- oops ... forget that and use Wally's account
+ROLLBACK TO my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Wally';
+COMMIT;
+</programlisting>
+   </para>
+
+   <para>
+    This example is, of course, oversimplified, but there's a lot of control
+    to be had over a transaction block through the use of savepoints.
+    Moreover, <command>ROLLBACK TO</> is the only way to regain control of a
+    transaction block that was put in aborted state by the
+    system due to an error, short of rolling it back completely and starting
+    again.
+   </para>
+
   </sect1>
 
 

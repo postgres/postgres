@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.111 2004/07/31 23:04:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.112 2004/08/01 17:32:21 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -4216,26 +4216,44 @@ exec_set_found(PLpgSQL_execstate * estate, bool state)
  * structs that are using it as no longer active.
  */
 void
-plpgsql_eoxact(bool isCommit, void *arg)
+plpgsql_xact_cb(XactEvent event, TransactionId parentXid, void *arg)
 {
 	PLpgSQL_expr *expr;
 	PLpgSQL_expr *enext;
 
-	/* Mark all active exprs as inactive */
-	for (expr = active_simple_exprs; expr; expr = enext)
+	switch (event)
 	{
-		enext = expr->expr_simple_next;
-		expr->expr_simple_state = NULL;
-		expr->expr_simple_next = NULL;
+			/*
+			 * Nothing to do at subtransaction events
+			 *
+			 * XXX really?  Maybe subtransactions need to have their own
+			 * simple_eval_estate?  It would get a lot messier, so for now
+			 * let's assume we don't need that.
+			 */
+		case XACT_EVENT_START_SUB:
+		case XACT_EVENT_ABORT_SUB:
+		case XACT_EVENT_COMMIT_SUB:
+			break;
+
+		case XACT_EVENT_ABORT:
+		case XACT_EVENT_COMMIT:
+			/* Mark all active exprs as inactive */
+			for (expr = active_simple_exprs; expr; expr = enext)
+			{
+				enext = expr->expr_simple_next;
+				expr->expr_simple_state = NULL;
+				expr->expr_simple_next = NULL;
+			}
+			active_simple_exprs = NULL;
+			/*
+			 * If we are doing a clean transaction shutdown, free the EState
+			 * (so that any remaining resources will be released correctly).
+			 * In an abort, we expect the regular abort recovery procedures to
+			 * release everything of interest.
+			 */
+			if (event == XACT_EVENT_COMMIT && simple_eval_estate)
+				FreeExecutorState(simple_eval_estate);
+			simple_eval_estate = NULL;
+			break;
 	}
-	active_simple_exprs = NULL;
-	/*
-	 * If we are doing a clean transaction shutdown, free the EState
-	 * (so that any remaining resources will be released correctly).
-	 * In an abort, we expect the regular abort recovery procedures to
-	 * release everything of interest.
-	 */
-	if (isCommit && simple_eval_estate)
-		FreeExecutorState(simple_eval_estate);
-	simple_eval_estate = NULL;
 }

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.49 2004/07/31 23:04:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.50 2004/08/01 17:32:22 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -702,7 +702,7 @@ extern Datum plpgsql_exec_function(PLpgSQL_function * func,
 					  FunctionCallInfo fcinfo);
 extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function * func,
 					 TriggerData *trigdata);
-extern void plpgsql_eoxact(bool isCommit, void *arg);
+extern void plpgsql_xact_cb(XactEvent event, TransactionId parentXid, void *arg);
 
 /* ----------
  * Functions for the dynamic string handling in pl_funcs.c

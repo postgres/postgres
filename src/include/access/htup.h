@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.67 2004/07/11 18:01:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.68 2004/08/01 17:32:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,34 +68,17 @@
  *			object ID (if HEAP_HASOID is set in t_infomask)
  *			user data fields
  *
- * We store five "virtual" fields Xmin, Cmin, Xmax, Cmax, and Xvac
- * in just three physical fields.  Xmin is always really stored, but
- * Cmin and Xmax share a field, as do Cmax and Xvac.  This works because
- * we know that there are only a limited number of states that a tuple can
- * be in, and that Cmin and Cmax are only interesting for the lifetime of
- * the inserting and deleting transactions respectively.  We have the
- * following possible states of a tuple:
+ * We store five "virtual" fields Xmin, Cmin, Xmax, Cmax, and Xvac in four
+ * physical fields.  Xmin, Cmin and Xmax are always really stored, but
+ * Cmax and Xvac share a field.  This works because we know that there are
+ * only a limited number of states that a tuple can be in, and that Cmax
+ * is only interesting for the lifetime of the deleting transaction.
+ * This assumes that VACUUM FULL never tries to move a tuple whose Cmax
+ * is still interesting (ie, delete-in-progress).
  *
- *		XMIN		CMIN		XMAX		CMAX		XVAC
- *
- * NEW (never deleted, not moved by vacuum):
- *		valid		valid		invalid		invalid		invalid
- *
- * DELETED BY CREATING XACT:
- *		valid		valid		= XMIN		valid		invalid
- *
- * DELETED BY OTHER XACT:
- *		valid		unneeded	valid		valid		invalid
- *
- * MOVED BY VACUUM FULL:
- *		valid		unneeded	maybe-valid unneeded	valid
- *
- * This assumes that VACUUM FULL never tries to move a tuple whose Cmin or
- * Cmax is still interesting (ie, insert-in-progress or delete-in-progress).
- *
- * This table shows that if we use an infomask bit to handle the case
- * XMAX=XMIN specially, we never need to store Cmin and Xmax at the same
- * time.  Nor do we need to store Cmax and Xvac at the same time.
+ * Note that in 7.3 and 7.4 a similar idea was applied to Xmax and Cmin.
+ * However, with the advent of subtransactions, a tuple may need both Xmax
+ * and Cmin simultaneously, so this is no longer possible.
  *
  * Following the fixed header fields, the nulls bitmap is stored (beginning
  * at t_bits).	The bitmap is *not* stored if t_infomask shows that there
@@ -416,7 +399,7 @@ typedef HeapTupleData *HeapTuple;
  * WAL record definitions for heapam.c's WAL operations
  *
  * XLOG allows to store some information in high 4 bits of log
- * record xl_info field
+ * record xl_info field.  We use 3 for opcode and one for init bit.
  */
 #define XLOG_HEAP_INSERT	0x00
 #define XLOG_HEAP_DELETE	0x10

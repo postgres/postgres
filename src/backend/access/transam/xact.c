@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.174 2004/07/31 07:39:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.175 2004/08/01 17:32:13 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -168,7 +168,6 @@
 #include "pgstat.h"
 
 
-
 /*
  *	transaction states - transaction state from server perspective
  */
@@ -230,6 +229,14 @@ typedef struct TransactionStateData
 
 typedef TransactionStateData *TransactionState;
 
+/*
+ * childXids is currently implemented as an integer List, relying on the
+ * assumption that TransactionIds are no wider than int.  We use these
+ * macros to provide some isolation in case that changes in the future.
+ */
+#define lfirst_xid(lc)				((TransactionId) lfirst_int(lc))
+#define lappend_xid(list, datum)	lappend_int(list, (int) (datum))
+
 
 static void AbortTransaction(void);
 static void AtAbort_Memory(void);
@@ -239,7 +246,7 @@ static void AtCommit_Memory(void);
 static void AtStart_Cache(void);
 static void AtStart_Memory(void);
 static void AtStart_ResourceOwner(void);
-static void CallEOXactCallbacks(bool isCommit);
+static void CallXactCallbacks(XactEvent event, TransactionId parentXid);
 static void CleanupTransaction(void);
 static void CommitTransaction(void);
 static void RecordTransactionAbort(void);
@@ -315,16 +322,16 @@ int			CommitSiblings = 5; /* number of concurrent xacts needed to
 
 
 /*
- * List of add-on end-of-xact callbacks
+ * List of add-on start- and end-of-xact callbacks
  */
-typedef struct EOXactCallbackItem
+typedef struct XactCallbackItem
 {
-	struct EOXactCallbackItem *next;
-	EOXactCallback callback;
+	struct XactCallbackItem *next;
+	XactCallback callback;
 	void	   *arg;
-} EOXactCallbackItem;
+} XactCallbackItem;
 
-static EOXactCallbackItem *EOXact_callbacks = NULL;
+static XactCallbackItem *Xact_callbacks = NULL;
 
 static void (*_RollbackFunc) (void *) = NULL;
 static void *_RollbackData = NULL;
@@ -490,7 +497,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 			return true;
 		foreach(cell, s->childXids)
 		{
-			if (TransactionIdEquals(xid, lfirst_int(cell)))
+			if (TransactionIdEquals(xid, lfirst_xid(cell)))
 				return true;
 		}
 
@@ -877,11 +884,11 @@ AtSubCommit_childXids(void)
 
 	old_cxt = MemoryContextSwitchTo(s->parent->curTransactionContext);
 
+	s->parent->childXids = lappend_xid(s->parent->childXids,
+									   s->transactionIdData);
+
 	s->parent->childXids = list_concat(s->parent->childXids, s->childXids);
 	s->childXids = NIL;			/* ensure list not doubly referenced */
-
-	s->parent->childXids = lappend_int(s->parent->childXids,
-									   s->transactionIdData);
 
 	MemoryContextSwitchTo(old_cxt);
 }
@@ -1083,6 +1090,7 @@ RecordSubTransactionAbort(void)
 {
 	int			nrels;
 	RelFileNode *rptr;
+	TransactionId	xid = GetCurrentTransactionId();
 	int 			nchildren;
 	TransactionId  *children;
 
@@ -1104,8 +1112,6 @@ RecordSubTransactionAbort(void)
 	 */
 	if (MyLastRecPtr.xrecoff != 0 || MyXactMadeTempRelUpdate || nrels > 0)
 	{
-		TransactionId	xid = GetCurrentTransactionId();
-
 		START_CRIT_SECTION();
 
 		/*
@@ -1161,6 +1167,15 @@ RecordSubTransactionAbort(void)
 
 		END_CRIT_SECTION();
 	}
+
+	/*
+	 * We can immediately remove failed XIDs from PGPROC's cache of
+	 * running child XIDs. It's easiest to do it here while we have the
+	 * child XID array at hand, even though in the main-transaction
+	 * case the equivalent work happens just after return from
+	 * RecordTransactionAbort.
+	 */
+	XidCacheRemoveRunningXids(xid, nchildren, children);
 
 	/* And clean up local data */
 	if (rptr)
@@ -1389,6 +1404,11 @@ CommitTransaction(void)
 		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
+
+		/* Clear the subtransaction-XID cache too while holding the lock */
+		MyProc->subxids.nxids = 0;
+		MyProc->subxids.overflowed = false;
+
 		LWLockRelease(SInvalLock);
 	}
 
@@ -1411,6 +1431,8 @@ CommitTransaction(void)
 	smgrDoPendingDeletes(true);
 	/* smgrcommit already done */
 
+	CallXactCallbacks(XACT_EVENT_COMMIT, InvalidTransactionId);
+
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, true);
@@ -1431,7 +1453,6 @@ CommitTransaction(void)
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, true);
 
-	CallEOXactCallbacks(true);
 	AtEOXact_GUC(true, false);
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true, s->transactionIdData);
@@ -1540,6 +1561,11 @@ AbortTransaction(void)
 		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
+
+		/* Clear the subtransaction-XID cache too while holding the lock */
+		MyProc->subxids.nxids = 0;
+		MyProc->subxids.overflowed = false;
+
 		LWLockRelease(SInvalLock);
 	}
 
@@ -1550,6 +1576,8 @@ AbortTransaction(void)
 
 	smgrDoPendingDeletes(false);
 	smgrabort();
+
+	CallXactCallbacks(XACT_EVENT_ABORT, InvalidTransactionId);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
@@ -1562,13 +1590,11 @@ AbortTransaction(void)
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 false, true);
 
-	CallEOXactCallbacks(false);
 	AtEOXact_GUC(false, false);
 	AtEOXact_SPI(false);
 	AtEOXact_on_commit_actions(false, s->transactionIdData);
 	AtEOXact_Namespace(false);
 	AtEOXact_Files();
-	SetReindexProcessing(InvalidOid, InvalidOid);
 	pgstat_count_xact_rollback();
 
 	/*
@@ -2158,43 +2184,46 @@ IsInTransactionChain(void *stmtNode)
 
 
 /*
- * Register or deregister callback functions for end-of-xact cleanup
+ * Register or deregister callback functions for start- and end-of-xact
+ * operations.
  *
  * These functions are intended for use by dynamically loaded modules.
  * For built-in modules we generally just hardwire the appropriate calls
  * (mainly because it's easier to control the order that way, where needed).
  *
- * Note that the callback occurs post-commit or post-abort, so the callback
- * functions can only do noncritical cleanup.
+ * At transaction end, the callback occurs post-commit or post-abort, so the
+ * callback functions can only do noncritical cleanup.  At subtransaction
+ * start, the callback is called when the subtransaction has finished 
+ * initializing.
  */
 void
-RegisterEOXactCallback(EOXactCallback callback, void *arg)
+RegisterXactCallback(XactCallback callback, void *arg)
 {
-	EOXactCallbackItem *item;
+	XactCallbackItem *item;
 
-	item = (EOXactCallbackItem *)
-		MemoryContextAlloc(TopMemoryContext, sizeof(EOXactCallbackItem));
+	item = (XactCallbackItem *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(XactCallbackItem));
 	item->callback = callback;
 	item->arg = arg;
-	item->next = EOXact_callbacks;
-	EOXact_callbacks = item;
+	item->next = Xact_callbacks;
+	Xact_callbacks = item;
 }
 
 void
-UnregisterEOXactCallback(EOXactCallback callback, void *arg)
+UnregisterXactCallback(XactCallback callback, void *arg)
 {
-	EOXactCallbackItem *item;
-	EOXactCallbackItem *prev;
+	XactCallbackItem *item;
+	XactCallbackItem *prev;
 
 	prev = NULL;
-	for (item = EOXact_callbacks; item; prev = item, item = item->next)
+	for (item = Xact_callbacks; item; prev = item, item = item->next)
 	{
 		if (item->callback == callback && item->arg == arg)
 		{
 			if (prev)
 				prev->next = item->next;
 			else
-				EOXact_callbacks = item->next;
+				Xact_callbacks = item->next;
 			pfree(item);
 			break;
 		}
@@ -2202,13 +2231,13 @@ UnregisterEOXactCallback(EOXactCallback callback, void *arg)
 }
 
 static void
-CallEOXactCallbacks(bool isCommit)
+CallXactCallbacks(XactEvent event, TransactionId parentXid)
 {
-	EOXactCallbackItem *item;
+	XactCallbackItem *item;
 
-	for (item = EOXact_callbacks; item; item = item->next)
+	for (item = Xact_callbacks; item; item = item->next)
 	{
-		(*item->callback) (isCommit, item->arg);
+		(*item->callback) (event, parentXid, item->arg);
 	}
 }
 
@@ -2948,32 +2977,11 @@ bool
 IsSubTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
-	
-	switch (s->blockState)
-	{
-		case TBLOCK_DEFAULT:
-		case TBLOCK_STARTED:
-		case TBLOCK_BEGIN:
-		case TBLOCK_INPROGRESS:
-		case TBLOCK_END:
-		case TBLOCK_ABORT:
-		case TBLOCK_ENDABORT:
-			return false;
-		case TBLOCK_SUBBEGIN:
-		case TBLOCK_SUBINPROGRESS:
-		case TBLOCK_SUBABORT:
-		case TBLOCK_SUBEND:
-		case TBLOCK_SUBENDABORT_ALL:
-		case TBLOCK_SUBENDABORT:
-		case TBLOCK_SUBABORT_PENDING:
-		case TBLOCK_SUBENDABORT_RELEASE:
-			return true;
-	}
 
-	/* should never get here */
-	elog(FATAL, "invalid transaction block state: %s",
-		 BlockStateAsString(s->blockState));
-	return false;				/* keep compiler quiet */
+	if (s->nestingLevel >= 2)
+		return true;
+
+	return false;
 }
 
 /*
@@ -2997,7 +3005,10 @@ StartSubTransaction(void)
 	AtSubStart_ResourceOwner();
 
 	/*
-	 * Generate a new Xid and record it in pg_subtrans.
+	 * Generate a new Xid and record it in pg_subtrans.  NB: we must make
+	 * the subtrans entry BEFORE the Xid appears anywhere in shared storage,
+	 * such as in the lock table; because until it's made the Xid may not
+	 * appear to be "running" to other backends. See GetNewTransactionId.
 	 */
 	s->transactionIdData = GetNewTransactionId(true);
 
@@ -3020,6 +3031,11 @@ StartSubTransaction(void)
 
 	s->state = TRANS_INPROGRESS;
 
+	/*
+	 * Call start-of-subxact callbacks 
+	 */
+	CallXactCallbacks(XACT_EVENT_START_SUB, s->parent->transactionIdData);
+
 	ShowTransactionState("StartSubTransaction");
 }
 
@@ -3037,10 +3053,7 @@ CommitSubTransaction(void)
 		elog(WARNING, "CommitSubTransaction while in %s state",
 			 TransStateAsString(s->state));
 
-	/* Pre-commit processing */
-	AtSubCommit_Portals(s->parent->transactionIdData,
-						s->parent->curTransactionOwner);
-	DeferredTriggerEndSubXact(true);
+	/* Pre-commit processing goes here -- nothing to do at the moment */
 
 	s->state = TRANS_COMMIT;
 
@@ -3050,19 +3063,17 @@ CommitSubTransaction(void)
 	AtSubCommit_childXids();
 
 	/* Post-commit cleanup */
-	AtSubCommit_smgr();
-
-	AtEOSubXact_Inval(true);
-	AtEOSubXact_SPI(true, s->transactionIdData);
-
+	DeferredTriggerEndSubXact(true);
+	AtSubCommit_Portals(s->parent->transactionIdData,
+						s->parent->curTransactionOwner);
 	AtEOSubXact_LargeObject(true, s->transactionIdData,
 							s->parent->transactionIdData);
+	AtSubCommit_Notify();
 	AtEOSubXact_UpdatePasswordFile(true, s->transactionIdData,
 								   s->parent->transactionIdData);
-	AtEOSubXact_Files(true, s->transactionIdData,
-					  s->parent->transactionIdData);
-	AtEOSubXact_Namespace(true, s->transactionIdData,
-						  s->parent->transactionIdData);
+	AtSubCommit_smgr();
+
+	CallXactCallbacks(XACT_EVENT_COMMIT_SUB, s->parent->transactionIdData);
 
 	/*
 	 * Note that we just release the resource owner's resources and don't
@@ -3074,15 +3085,20 @@ CommitSubTransaction(void)
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, false);
+	AtEOSubXact_Inval(true);
 	/* we can skip the LOCKS phase */
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, false);
 
-	AtSubCommit_Notify();
 	AtEOXact_GUC(true, true);
+	AtEOSubXact_SPI(true, s->transactionIdData);
 	AtEOSubXact_on_commit_actions(true, s->transactionIdData,
 								  s->parent->transactionIdData);
+	AtEOSubXact_Namespace(true, s->transactionIdData,
+						  s->parent->transactionIdData);
+	AtEOSubXact_Files(true, s->transactionIdData,
+					  s->parent->transactionIdData);
 
 	/*
 	 * We need to restore the upper transaction's read-only state,
@@ -3134,35 +3150,32 @@ AbortSubTransaction(void)
 
 	LockWaitCancel();
 
-	AtSubAbort_Memory();
-
 	/*
 	 * do abort processing
 	 */
+	AtSubAbort_Memory();
 
+	DeferredTriggerEndSubXact(false);
+	AtSubAbort_Portals(s->parent->transactionIdData,
+					   s->parent->curTransactionOwner);
+	AtEOSubXact_LargeObject(false, s->transactionIdData,
+							s->parent->transactionIdData);
+	AtSubAbort_Notify();
+	AtEOSubXact_UpdatePasswordFile(false, s->transactionIdData,
+								   s->parent->transactionIdData);
+
+	/* Advertise the fact that we aborted in pg_clog. */
 	RecordSubTransactionAbort();
 
 	/* Post-abort cleanup */
 	AtSubAbort_smgr();
 
-	DeferredTriggerEndSubXact(false);
-	AtEOSubXact_SPI(false, s->transactionIdData);
-	AtSubAbort_Portals(s->parent->transactionIdData,
-					   s->parent->curTransactionOwner);
-	AtEOSubXact_Inval(false);
-
-	AtEOSubXact_LargeObject(false, s->transactionIdData,
-							s->parent->transactionIdData);
-	AtEOSubXact_UpdatePasswordFile(false, s->transactionIdData,
-								   s->parent->transactionIdData);
-	AtEOSubXact_Files(false, s->transactionIdData,
-					  s->parent->transactionIdData);
-	AtEOSubXact_Namespace(false, s->transactionIdData,
-						  s->parent->transactionIdData);
+	CallXactCallbacks(XACT_EVENT_ABORT_SUB, s->parent->transactionIdData);
 
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 false, false);
+	AtEOSubXact_Inval(false);
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 false, false);
@@ -3170,10 +3183,14 @@ AbortSubTransaction(void)
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 false, false);
 
-	AtSubAbort_Notify();
 	AtEOXact_GUC(false, true);
+	AtEOSubXact_SPI(false, s->transactionIdData);
 	AtEOSubXact_on_commit_actions(false, s->transactionIdData,
 								  s->parent->transactionIdData);
+	AtEOSubXact_Namespace(false, s->transactionIdData,
+						  s->parent->transactionIdData);
+	AtEOSubXact_Files(false, s->transactionIdData,
+					  s->parent->transactionIdData);
 
 	/*
 	 * Reset user id which might have been changed transiently.  Here we
@@ -3195,8 +3212,6 @@ AbortSubTransaction(void)
 	 * consistency with the commit case.
 	 */
 	XactReadOnly = s->prevXactReadOnly;
-
-	CommandCounterIncrement();
 
 	RESUME_INTERRUPTS();
 }
@@ -3481,7 +3496,7 @@ xactGetCommittedChildren(TransactionId **ptr)
 
 	foreach(p, s->childXids)
 	{
-		TransactionId child = lfirst_int(p);
+		TransactionId child = lfirst_xid(p);
 
 		*children++ = child;
 	}

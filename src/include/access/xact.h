@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.68 2004/07/31 07:39:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.69 2004/08/01 17:32:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,18 @@ extern bool DefaultXactReadOnly;
 extern bool XactReadOnly;
 
 /*
- *	end-of-transaction cleanup callbacks for dynamically loaded modules
+ *	start- and end-of-transaction callbacks for dynamically loaded modules
  */
-typedef void (*EOXactCallback) (bool isCommit, void *arg);
+typedef enum
+{
+	XACT_EVENT_ABORT,
+	XACT_EVENT_COMMIT,
+	XACT_EVENT_START_SUB,
+	XACT_EVENT_ABORT_SUB,
+	XACT_EVENT_COMMIT_SUB
+} XactEvent;
+
+typedef void (*XactCallback) (XactEvent event, TransactionId parentXid, void *arg);
 
 
 /* ----------------
@@ -118,8 +127,8 @@ extern void AbortOutOfAnyTransaction(void);
 extern void PreventTransactionChain(void *stmtNode, const char *stmtType);
 extern void RequireTransactionChain(void *stmtNode, const char *stmtType);
 extern bool IsInTransactionChain(void *stmtNode);
-extern void RegisterEOXactCallback(EOXactCallback callback, void *arg);
-extern void UnregisterEOXactCallback(EOXactCallback callback, void *arg);
+extern void RegisterXactCallback(XactCallback callback, void *arg);
+extern void UnregisterXactCallback(XactCallback callback, void *arg);
 
 extern void RecordTransactionCommit(void);
 

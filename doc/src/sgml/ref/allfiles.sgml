@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.59 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.60 2004/08/01 17:32:13 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -88,9 +88,12 @@ Complete list of usable sgml source files in this directory.
 <!entity notify             system "notify.sgml">
 <!entity prepare            system "prepare.sgml">
 <!entity reindex            system "reindex.sgml">
+<!entity releaseSavepoint   system "release.sgml">
 <!entity reset              system "reset.sgml">
 <!entity revoke             system "revoke.sgml">
 <!entity rollback           system "rollback.sgml">
+<!entity rollbackTo         system "rollback_to.sgml">
+<!entity savepoint          system "savepoint.sgml">
 <!entity select             system "select.sgml">
 <!entity selectInto         system "select_into.sgml">
 <!entity set                system "set.sgml">

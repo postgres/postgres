@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.30 2004/01/11 09:24:17 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.31 2004/08/01 17:32:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,7 +31,7 @@ BEGIN [ WORK | TRANSACTION ]
 
   <para>
    <command>BEGIN</command> initiates a transaction block, that is,
-   all statements after <command>BEGIN</command> command will be
+   all statements after a <command>BEGIN</command> command will be
    executed in a single transaction until an explicit <xref
    linkend="sql-commit" endterm="sql-commit-title"> or <xref
    linkend="sql-rollback" endterm="sql-rollback-title"> is given.
@@ -145,6 +145,7 @@ BEGIN;
    <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
    <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
    <member><xref linkend="sql-start-transaction" endterm="sql-start-transaction-title"></member>
+   <member><xref linkend="sql-savepoint" endterm="sql-savepoint-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

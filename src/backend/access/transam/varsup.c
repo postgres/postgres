@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.56 2004/07/01 00:49:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.57 2004/08/01 17:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,10 +68,10 @@ GetNewTransactionId(bool isSubXact)
 	TransactionIdAdvance(ShmemVariableCache->nextXid);
 
 	/*
-	 * Must set MyProc->xid before releasing XidGenLock.  This ensures
-	 * that when GetSnapshotData calls ReadNewTransactionId, all active
-	 * XIDs before the returned value of nextXid are already present in
-	 * the shared PGPROC array.  Else we have a race condition.
+	 * We must store the new XID into the shared PGPROC array before releasing
+	 * XidGenLock.  This ensures that when GetSnapshotData calls
+	 * ReadNewTransactionId, all active XIDs before the returned value of
+	 * nextXid are already present in PGPROC.  Else we have a race condition.
 	 *
 	 * XXX by storing xid into MyProc without acquiring SInvalLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
@@ -82,16 +82,41 @@ GetNewTransactionId(bool isSubXact)
 	 * the value only once, rather than assume they can read it multiple
 	 * times and get the same answer each time.
 	 *
-	 * A solution to the atomic-store problem would be to give each PGPROC
-	 * its own spinlock used only for fetching/storing that PGPROC's xid.
-	 * (SInvalLock would then mean primarily that PGPROCs couldn't be added/
-	 * removed while holding the lock.)
+	 * The same comments apply to the subxact xid count and overflow fields.
 	 *
-	 * We don't want a subtransaction to update the stored Xid; we'll check
-	 * if a transaction Xid is a running subxact by checking pg_subtrans.
+	 * A solution to the atomic-store problem would be to give each PGPROC
+	 * its own spinlock used only for fetching/storing that PGPROC's xid
+	 * and related fields.  (SInvalLock would then mean primarily that
+	 * PGPROCs couldn't be added/removed while holding the lock.)
+	 *
+	 * If there's no room to fit a subtransaction XID into PGPROC, set the
+	 * cache-overflowed flag instead.  This forces readers to look in
+	 * pg_subtrans to map subtransaction XIDs up to top-level XIDs.
+	 * There is a race-condition window, in that the new XID will not
+	 * appear as running until its parent link has been placed into
+	 * pg_subtrans.  However, that will happen before anyone could possibly
+	 * have a reason to inquire about the status of the XID, so it seems
+	 * OK.  (Snapshots taken during this window *will* include the parent
+	 * XID, so they will deliver the correct answer later on when someone
+	 * does have a reason to inquire.)
 	 */
-	if (MyProc != NULL && !isSubXact)
-		MyProc->xid = xid;
+	if (MyProc != NULL)
+	{
+		if (!isSubXact)
+			MyProc->xid = xid;
+		else
+		{
+			if (MyProc->subxids.nxids < PGPROC_MAX_CACHED_SUBXIDS)
+			{
+				MyProc->subxids.xids[MyProc->subxids.nxids] = xid;
+				MyProc->subxids.nxids++;
+			}
+			else
+			{
+				MyProc->subxids.overflowed = true;
+			}
+		}
+	}
 
 	LWLockRelease(XidGenLock);
 

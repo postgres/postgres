@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.66 2004/07/01 03:13:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.67 2004/08/01 17:32:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,30 @@
 #include "utils/tqual.h"
 #include "miscadmin.h"
 
+
+#ifdef XIDCACHE_DEBUG
+
+/* counters for XidCache measurement */
+static long xc_by_recent_xmin = 0;
+static long xc_by_main_xid = 0;
+static long xc_by_child_xid = 0;
+static long xc_slow_answer = 0;
+
+#define xc_by_recent_xmin_inc()		(xc_by_recent_xmin++)
+#define xc_by_main_xid_inc()		(xc_by_main_xid++)
+#define xc_by_child_xid_inc()		(xc_by_child_xid++)
+#define xc_slow_answer_inc()		(xc_slow_answer++)
+
+static void DisplayXidCache(int code, Datum arg);
+
+#else /* !XIDCACHE_DEBUG */
+
+#define xc_by_recent_xmin_inc()		((void) 0)
+#define xc_by_main_xid_inc()		((void) 0)
+#define xc_by_child_xid_inc()		((void) 0)
+#define xc_slow_answer_inc()		((void) 0)
+
+#endif /* XIDCACHE_DEBUG */
 
 /*
  * Because backends sitting idle will not be reading sinval events, we
@@ -80,6 +104,10 @@ InitBackendSharedInvalidationState(void)
 		ereport(FATAL,
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 				 errmsg("sorry, too many clients already")));
+
+#ifdef XIDCACHE_DEBUG
+	on_proc_exit(DisplayXidCache, (Datum) 0);
+#endif /* XIDCACHE_DEBUG */
 }
 
 /*
@@ -393,7 +421,6 @@ ProcessCatchupEvent(void)
  * to the doomed database, so additional interlocking is needed during
  * backend startup.
  */
-
 bool
 DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 {
@@ -429,123 +456,6 @@ DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 }
 
 /*
- * TransactionIdIsInProgress -- is given transaction running by some backend
- *
- * There are three possibilities for finding a running transaction:
- *
- * 1. the given Xid is a main transaction Id.  We will find this out cheaply
- * by looking at the PGPROC struct for each backend.
- *
- * 2. the given Xid is one of the cached subxact Xids in the PGPROC array.
- * We can find this out cheaply too.
- *
- * 3. Search the SubTrans tree.  This is the slowest, but sadly it has to be
- * done always if the other two failed.
- *
- * SInvalLock has to be held while we do 1 and 2.  If we save all the Xids
- * while doing 1, we can release the SInvalLock while we do 3.  This buys back
- * some concurrency (we can't retrieve the main Xids from PGPROC again anyway,
- * see GetNewTransactionId)
- */
-bool
-TransactionIdIsInProgress(TransactionId xid)
-{
-	bool			result = false;
-	SISeg		   *segP = shmInvalBuffer;
-	ProcState	   *stateP = segP->procState;
-	int				i;
-	int				nxids = 0;
-	TransactionId  *xids;
-
-	xids = (TransactionId *)palloc(sizeof(TransactionId) * segP->maxBackends);
-
-	LWLockAcquire(SInvalLock, LW_SHARED);
-
-	for (i = 0; i < segP->lastBackend; i++)
-	{
-		SHMEM_OFFSET pOffset = stateP[i].procStruct;
-
-		if (pOffset != INVALID_OFFSET)
-		{
-			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
-
-			/* Fetch xid just once - see GetNewTransactionId */
-			TransactionId pxid = proc->xid;
-
-			/*
-			 * check the main Xid (step 1 above)
-			 */
-			if (TransactionIdEquals(pxid, xid))
-			{
-				result = true;
-				break;
-			}
-
-			/*
-			 * save the main Xid for step 3.
-			 */
-			xids[nxids++] = pxid;
-
-#ifdef NOT_USED
-			FIXME -- waiting to save the Xids in PGPROC ...
-
-			/*
-			 * check the saved Xids array (step 2)
-			 */
-			for (j = 0; j < PGPROC_MAX_SAVED_XIDS; j++)
-			{
-				pxid = proc->savedxids[j];
-
-				if (!TransactionIdIsValid(pxids))
-					break;
-
-				if (TransactionIdEquals(pxid, xid))
-				{
-					result = true;
-					break;
-				}
-			}
-#endif
-
-			if (result)
-				break;
-		}
-	}
-
-	LWLockRelease(SInvalLock);
-
-	/*
-	 * Step 3: have to check pg_subtrans.  Use the saved Xids.
-	 *
-	 * XXX Could save the cached Xids too for further improvement.
-	 */
-	if (!result)
-	{
-		/* this is a potentially expensive call. */
-		xid = SubTransGetTopmostTransaction(xid);
-		
-		Assert(TransactionIdIsValid(xid));
-
-		/*
-		 * We don't care if it aborted, because if it did, we won't find
-		 * it in the array.
-		 */
-		for (i = 0; i < nxids; i++)
-		{
-			if (TransactionIdEquals(xids[i], xid))
-			{
-				result = true;
-				break;
-			}
-		}
-	}
-
-	pfree(xids);
-
-	return result;
-}
-
-/*
  * IsBackendPid -- is a given pid a running backend
  */
 bool
@@ -575,6 +485,166 @@ IsBackendPid(int pid)
 	}
 
 	LWLockRelease(SInvalLock);
+
+	return result;
+}
+
+/*
+ * TransactionIdIsInProgress -- is given transaction running in some backend
+ *
+ * There are three possibilities for finding a running transaction:
+ *
+ * 1. the given Xid is a main transaction Id.  We will find this out cheaply
+ * by looking at the PGPROC struct for each backend.
+ *
+ * 2. the given Xid is one of the cached subxact Xids in the PGPROC array.
+ * We can find this out cheaply too.
+ *
+ * 3. Search the SubTrans tree to find the Xid's topmost parent, and then
+ * see if that is running according to PGPROC.  This is the slowest, but
+ * sadly it has to be done always if the other two failed, unless we see
+ * that the cached subxact sets are complete (none have overflowed).
+ *
+ * SInvalLock has to be held while we do 1 and 2.  If we save the top Xids
+ * while doing 1, we can release the SInvalLock while we do 3.  This buys back
+ * some concurrency (we can't retrieve the main Xids from PGPROC again anyway;
+ * see GetNewTransactionId).
+ */
+bool
+TransactionIdIsInProgress(TransactionId xid)
+{
+	bool			result = false;
+	SISeg		   *segP = shmInvalBuffer;
+	ProcState	   *stateP = segP->procState;
+	int				i,
+					j;
+	int				nxids = 0;
+	TransactionId  *xids;
+	TransactionId	topxid;
+	bool			locked;
+
+	/*
+	 * Don't bother checking a very old transaction.
+	 */
+	if (TransactionIdPrecedes(xid, RecentGlobalXmin))
+	{
+		xc_by_recent_xmin_inc();
+		return false;
+	}
+
+	/* Get workspace to remember main XIDs in */
+	xids = (TransactionId *) palloc(sizeof(TransactionId) * segP->maxBackends);
+
+	LWLockAcquire(SInvalLock, LW_SHARED);
+	locked = true;
+
+	for (i = 0; i < segP->lastBackend; i++)
+	{
+		SHMEM_OFFSET pOffset = stateP[i].procStruct;
+
+		if (pOffset != INVALID_OFFSET)
+		{
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
+
+			/* Fetch xid just once - see GetNewTransactionId */
+			TransactionId pxid = proc->xid;
+
+			if (!TransactionIdIsValid(pxid))
+				continue;
+
+			/*
+			 * Step 1: check the main Xid
+			 */
+			if (TransactionIdEquals(pxid, xid))
+			{
+				xc_by_main_xid_inc();
+				result = true;
+				goto result_known;
+			}
+
+			/*
+			 * We can ignore main Xids that are younger than the target Xid,
+			 * since the target could not possibly be their child.
+			 */
+			if (TransactionIdPrecedes(xid, pxid))
+				continue;
+
+			/*
+			 * Step 2: check the cached child-Xids arrays
+			 */
+			for (j = proc->subxids.nxids - 1; j >= 0; j--)
+			{
+				/* Fetch xid just once - see GetNewTransactionId */
+				TransactionId cxid = proc->subxids.xids[j];
+
+				if (TransactionIdEquals(cxid, xid))
+				{
+					xc_by_child_xid_inc();
+					result = true;
+					goto result_known;
+				}
+			}
+
+			/*
+			 * Save the main Xid for step 3.  We only need to remember main
+			 * Xids that have uncached children.  (Note: there is no race
+			 * condition here because the overflowed flag cannot be cleared,
+			 * only set, while we hold SInvalLock.  So we can't miss an Xid
+			 * that we need to worry about.)
+			 */
+			if (proc->subxids.overflowed)
+				xids[nxids++] = pxid;
+		}
+	}
+
+	LWLockRelease(SInvalLock);
+	locked = false;
+
+	/*
+	 * If none of the relevant caches overflowed, we know the Xid is
+	 * not running without looking at pg_subtrans.
+	 */
+	if (nxids == 0)
+		goto result_known;
+
+	/*
+	 * Step 3: have to check pg_subtrans.
+	 *
+	 * At this point, we know it's either a subtransaction of one of the
+	 * Xids in xids[], or it's not running.  If it's an already-failed
+	 * subtransaction, we want to say "not running" even though its parent may
+	 * still be running.  So first, check pg_clog to see if it's been aborted.
+	 */
+	xc_slow_answer_inc();
+
+	if (TransactionIdDidAbort(xid))
+		goto result_known;
+
+	/*
+	 * It isn't aborted, so check whether the transaction tree it
+	 * belongs to is still running (or, more precisely, whether it
+	 * was running when this routine started -- note that we already
+	 * released SInvalLock).
+	 */
+	topxid = SubTransGetTopmostTransaction(xid);
+	Assert(TransactionIdIsValid(topxid));
+	if (!TransactionIdEquals(topxid, xid))
+	{
+		for (i = 0; i < nxids; i++)
+		{
+			if (TransactionIdEquals(xids[i], topxid))
+			{
+				result = true;
+				break;
+			}
+		}
+	}
+
+result_known:
+	if (locked)
+		LWLockRelease(SInvalLock);
+
+	pfree(xids);
 
 	return result;
 }
@@ -928,3 +998,85 @@ CountEmptyBackendSlots(void)
 
 	return count;
 }
+
+#define XidCacheRemove(i) \
+	do { \
+		MyProc->subxids.xids[i] = MyProc->subxids.xids[MyProc->subxids.nxids - 1]; \
+		MyProc->subxids.nxids--; \
+	} while (0)
+
+/*
+ * XidCacheRemoveRunningXids
+ *
+ * Remove a bunch of TransactionIds from the list of known-running
+ * subtransactions for my backend.  Both the specified xid and those in
+ * the xids[] array (of length nxids) are removed from the subxids cache.
+ */
+void
+XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
+{
+	int		i, j;
+
+	Assert(!TransactionIdEquals(xid, InvalidTransactionId));
+
+	/*
+	 * We must hold SInvalLock exclusively in order to remove transactions
+	 * from the PGPROC array.  (See notes in GetSnapshotData.)  It's
+	 * possible this could be relaxed since we know this routine is only
+	 * used to abort subtransactions, but pending closer analysis we'd
+	 * best be conservative.
+	 */
+	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
+
+	/*
+	 * Under normal circumstances xid and xids[] will be in increasing order,
+	 * as will be the entries in subxids.  Scan backwards to avoid O(N^2)
+	 * behavior when removing a lot of xids.
+	 */
+	for (i = nxids - 1; i >= 0; i--)
+	{
+		TransactionId	anxid = xids[i];
+
+		for (j = MyProc->subxids.nxids - 1; j >= 0; j--)
+		{
+			if (TransactionIdEquals(MyProc->subxids.xids[j], anxid))
+			{
+				XidCacheRemove(j);
+				break;
+			}
+		}
+		/* We should have found it, unless the cache has overflowed */
+		Assert(j >= 0 || MyProc->subxids.overflowed);
+	}
+
+	for (j = MyProc->subxids.nxids - 1; j >= 0; j--)
+	{
+		if (TransactionIdEquals(MyProc->subxids.xids[j], xid))
+		{
+			XidCacheRemove(j);
+			break;
+		}
+	}
+	/* We should have found it, unless the cache has overflowed */
+	Assert(j >= 0 || MyProc->subxids.overflowed);
+
+	LWLockRelease(SInvalLock);
+}
+
+#ifdef XIDCACHE_DEBUG
+
+/*
+ * on_proc_exit hook to print stats about effectiveness of XID cache
+ */
+static void
+DisplayXidCache(int code, Datum arg)
+{
+	fprintf(stderr,
+			"XidCache: xmin: %ld, mainxid: %ld, childxid: %ld, slow: %ld\n",
+			xc_by_recent_xmin,
+			xc_by_main_xid,
+			xc_by_child_xid,
+			xc_slow_answer);
+}
+
+#endif /* XIDCACHE_DEBUG */

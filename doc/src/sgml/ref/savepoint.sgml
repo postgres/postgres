@@ -1,0 +1,152 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.1 2004/08/01 17:32:13 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-SAVEPOINT">
+ <refmeta>
+  <refentrytitle id="SQL-SAVEPOINT-TITLE">SAVEPOINT</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SAVEPOINT</refname>
+  <refpurpose>define a new savepoint within the current transaction</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-savepoint">
+  <primary>SAVEPOINT</primary>
+ </indexterm>
+
+ <indexterm zone="sql-savepoint">
+  <primary>savepoints</primary>
+  <secondary>defining</secondary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+SAVEPOINT <replaceable>savepoint_name</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+  
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>SAVEPOINT</command> establishes a new savepoint within
+   the current transaction.
+  </para>
+
+  <para>
+   A savepoint is a special mark inside a transaction that allows all commands
+   that are executed after it was established to be rolled back, restoring
+   the transaction state to what it was at the time of the savepoint.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable>savepoint_name</replaceable></term>
+    <listitem>
+     <para>
+      The name to give to the new savepoint.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Use <xref linkend="SQL-ROLLBACK-TO" endterm="SQL-ROLLBACK-TO-TITLE"> to
+   rollback to a savepoint.  Use <xref linkend="SQL-RELEASE"
+   endterm="SQL-RELEASE-TITLE"> to destroy a savepoint, keeping
+   the effects of commands executed after it was established.
+  </para>
+
+  <para>
+   Savepoints can only be established when inside a transaction block.
+   There can be multiple savepoints defined within a transaction.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To establish a savepoint and later undo the effects of all commands executed
+   after it was established:
+<programlisting>
+BEGIN;
+    INSERT INTO table VALUES (1);
+    SAVEPOINT my_savepoint;
+    INSERT INTO table VALUES (2);
+    ROLLBACK TO my_savepoint;
+    INSERT INTO table VALUES (3);
+COMMIT;
+</programlisting>
+   The above transaction will insert the values 1 and 3, but not 2.
+  </para>
+
+  <para>
+   To establish and later destroy a savepoint:
+<programlisting>
+BEGIN;
+    INSERT INTO table VALUES (3);
+    SAVEPOINT my_savepoint;
+    INSERT INTO table VALUES (4);
+    RELEASE my_savepoint;
+COMMIT;
+</programlisting>
+   The above transaction will insert both 3 and 4.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+  
+  <para>
+   SQL requires a savepoint to be destroyed automatically when another
+   savepoint with the same name is established.  In
+   <productname>PostgreSQL</>, the old savepoint is kept, though only the more
+   recent one will be used when rolling back or releasing.  (Releasing the
+   newer savepoint will cause the older one to again become accessible to
+   <command>ROLLBACK TO</> and <command>RELEASE</>.)
+   Other than that, <command>SAVEPOINT</command> is fully SQL conforming.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
+   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+   <member><xref linkend="sql-rollback-to" endterm="sql-rollback-to-title"></member>
+   <member><xref linkend="sql-release" endterm="sql-release-title"></member>
+   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
