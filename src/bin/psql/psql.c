@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.85 1997/08/22 00:17:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.86 1997/08/22 04:13:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ slashUsage(PsqlSettings * ps)
     char *pagerenv;
     FILE *fout;
 
-    if 	(settings.notty == 0 &&
+    if 	(ps->notty == 0 &&
 	(pagerenv = getenv("PAGER")) &&
 	(pagerenv[0] != '\0') &&
 	(fout = popen(pagerenv, "w")))
@@ -1008,7 +1008,7 @@ do_edit(const char *filename_arg, char *query, int *status_p)
 
 
 static void
-do_help(const char *topic)
+do_help(PsqlSettings * ps, const char *topic)
 {
 
     if (!topic) {
@@ -1049,7 +1049,7 @@ do_help(const char *topic)
 	FILE *fout;
 
 	if (strcmp(topic, "*") == 0 &&
-	    (settings.notty == 0) &&
+	    (ps->notty == 0) &&
 	    (pagerenv = getenv("PAGER")) &&
 	    (pagerenv[0] != '\0') &&
 	    (fout = popen(pagerenv, "w")))
@@ -1310,7 +1310,7 @@ HandleSlashCmds(PsqlSettings * settings,
 	break;
     case 'h':			/* help */
 	{
-	    do_help(optarg);
+	    do_help(settings, optarg);
 	    break;
 	}
     case 'i':			/* \i is include file */
