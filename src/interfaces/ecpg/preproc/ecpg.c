@@ -4,9 +4,7 @@
 
 #include "postgres.h"
 
-#if HAVE_GETOPT_H
 #include <getopt.h>
-#else
 #include <unistd.h>
 extern int	optind;
 extern char *optarg;

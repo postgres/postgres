@@ -77,9 +77,6 @@
 /* Set to 1 if you have <fp_class.h> */
 #undef HAVE_FP_CLASS_H
 
-/* Set to 1 if you have <getopt.h> */
-#undef HAVE_GETOPT_H
-
 /* Set to 1 if you have <history.h> */
 #undef HAVE_HISTORY_H
 
@@ -91,9 +88,6 @@
 
 /* Set to 1 if you have <netdb.h> */
 #undef HAVE_NETDB_H
-
-/* Set to 1 if you have <netinet/in.h> */
-#undef HAVE_NETINET_IN_H
 
 /* Set to 1 if you have <readline.h> */
 #undef HAVE_READLINE_H
