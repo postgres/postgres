@@ -1,116 +1,124 @@
-QUERY: SELECT 'name string'::name = 'name string'::name AS "True";
-True
-----
-t   
+--
+-- NAME
+-- all inputs are silently truncated at NAMEDATALEN (32) characters
+--
+-- fixed-length by reference
+SELECT name 'name string' = name 'name string' AS "True";
+ True 
+------
+ t
 (1 row)
 
-QUERY: SELECT 'name string'::name = 'name string '::name AS "False";
-False
------
-f    
+SELECT name 'name string' = name 'name string ' AS "False";
+ False 
+-------
+ f
 (1 row)
 
-QUERY: CREATE TABLE NAME_TBL(f1 name);
-QUERY: INSERT INTO NAME_TBL(f1) VALUES ('ABCDEFGHIJKLMNOP');
-QUERY: INSERT INTO NAME_TBL(f1) VALUES ('abcdefghijklmnop');
-QUERY: INSERT INTO NAME_TBL(f1) VALUES ('asdfghjkl;');
-QUERY: INSERT INTO NAME_TBL(f1) VALUES ('343f%2a');
-QUERY: INSERT INTO NAME_TBL(f1) VALUES ('d34aaasdf');
-QUERY: INSERT INTO NAME_TBL(f1) VALUES ('');
-QUERY: INSERT INTO NAME_TBL(f1) VALUES ('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-QUERY: SELECT '' AS seven, NAME_TBL.*;
-seven|f1                             
------+-------------------------------
-     |ABCDEFGHIJKLMNOP               
-     |abcdefghijklmnop               
-     |asdfghjkl;                     
-     |343f%2a                        
-     |d34aaasdf                      
-     |                               
-     |1234567890ABCDEFGHIJKLMNOPQRSTU
+--
+--
+--
+CREATE TABLE NAME_TBL(f1 name);
+INSERT INTO NAME_TBL(f1) VALUES ('ABCDEFGHIJKLMNOP');
+INSERT INTO NAME_TBL(f1) VALUES ('abcdefghijklmnop');
+INSERT INTO NAME_TBL(f1) VALUES ('asdfghjkl;');
+INSERT INTO NAME_TBL(f1) VALUES ('343f%2a');
+INSERT INTO NAME_TBL(f1) VALUES ('d34aaasdf');
+INSERT INTO NAME_TBL(f1) VALUES ('');
+INSERT INTO NAME_TBL(f1) VALUES ('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+SELECT '' AS seven, NAME_TBL.*;
+ seven |               f1                
+-------+---------------------------------
+       | ABCDEFGHIJKLMNOP
+       | abcdefghijklmnop
+       | asdfghjkl;
+       | 343f%2a
+       | d34aaasdf
+       | 
+       | 1234567890ABCDEFGHIJKLMNOPQRSTU
 (7 rows)
 
-QUERY: SELECT '' AS six, c.f1 FROM NAME_TBL c WHERE c.f1 <> 'ABCDEFGHIJKLMNOP';
-six|f1                             
----+-------------------------------
-   |abcdefghijklmnop               
-   |asdfghjkl;                     
-   |343f%2a                        
-   |d34aaasdf                      
-   |                               
-   |1234567890ABCDEFGHIJKLMNOPQRSTU
+SELECT '' AS six, c.f1 FROM NAME_TBL c WHERE c.f1 <> 'ABCDEFGHIJKLMNOP';
+ six |               f1                
+-----+---------------------------------
+     | abcdefghijklmnop
+     | asdfghjkl;
+     | 343f%2a
+     | d34aaasdf
+     | 
+     | 1234567890ABCDEFGHIJKLMNOPQRSTU
 (6 rows)
 
-QUERY: SELECT '' AS one, c.f1 FROM NAME_TBL c WHERE c.f1 = 'ABCDEFGHIJKLMNOP';
-one|f1              
----+----------------
-   |ABCDEFGHIJKLMNOP
+SELECT '' AS one, c.f1 FROM NAME_TBL c WHERE c.f1 = 'ABCDEFGHIJKLMNOP';
+ one |        f1        
+-----+------------------
+     | ABCDEFGHIJKLMNOP
 (1 row)
 
-QUERY: SELECT '' AS three, c.f1 FROM NAME_TBL c WHERE c.f1 < 'ABCDEFGHIJKLMNOP';
-three|f1                             
------+-------------------------------
-     |343f%2a                        
-     |                               
-     |1234567890ABCDEFGHIJKLMNOPQRSTU
+SELECT '' AS three, c.f1 FROM NAME_TBL c WHERE c.f1 < 'ABCDEFGHIJKLMNOP';
+ three |               f1                
+-------+---------------------------------
+       | 343f%2a
+       | 
+       | 1234567890ABCDEFGHIJKLMNOPQRSTU
 (3 rows)
 
-QUERY: SELECT '' AS four, c.f1 FROM NAME_TBL c WHERE c.f1 <= 'ABCDEFGHIJKLMNOP';
-four|f1                             
-----+-------------------------------
-    |ABCDEFGHIJKLMNOP               
-    |343f%2a                        
-    |                               
-    |1234567890ABCDEFGHIJKLMNOPQRSTU
+SELECT '' AS four, c.f1 FROM NAME_TBL c WHERE c.f1 <= 'ABCDEFGHIJKLMNOP';
+ four |               f1                
+------+---------------------------------
+      | ABCDEFGHIJKLMNOP
+      | 343f%2a
+      | 
+      | 1234567890ABCDEFGHIJKLMNOPQRSTU
 (4 rows)
 
-QUERY: SELECT '' AS three, c.f1 FROM NAME_TBL c WHERE c.f1 > 'ABCDEFGHIJKLMNOP';
-three|f1              
------+----------------
-     |abcdefghijklmnop
-     |asdfghjkl;      
-     |d34aaasdf       
+SELECT '' AS three, c.f1 FROM NAME_TBL c WHERE c.f1 > 'ABCDEFGHIJKLMNOP';
+ three |        f1        
+-------+------------------
+       | abcdefghijklmnop
+       | asdfghjkl;
+       | d34aaasdf
 (3 rows)
 
-QUERY: SELECT '' AS four, c.f1 FROM NAME_TBL c WHERE c.f1 >= 'ABCDEFGHIJKLMNOP';
-four|f1              
-----+----------------
-    |ABCDEFGHIJKLMNOP
-    |abcdefghijklmnop
-    |asdfghjkl;      
-    |d34aaasdf       
+SELECT '' AS four, c.f1 FROM NAME_TBL c WHERE c.f1 >= 'ABCDEFGHIJKLMNOP';
+ four |        f1        
+------+------------------
+      | ABCDEFGHIJKLMNOP
+      | abcdefghijklmnop
+      | asdfghjkl;
+      | d34aaasdf
 (4 rows)
 
-QUERY: SELECT '' AS seven, c.f1 FROM NAME_TBL c WHERE c.f1 ~ '.*';
-seven|f1                             
------+-------------------------------
-     |ABCDEFGHIJKLMNOP               
-     |abcdefghijklmnop               
-     |asdfghjkl;                     
-     |343f%2a                        
-     |d34aaasdf                      
-     |                               
-     |1234567890ABCDEFGHIJKLMNOPQRSTU
+SELECT '' AS seven, c.f1 FROM NAME_TBL c WHERE c.f1 ~ '.*';
+ seven |               f1                
+-------+---------------------------------
+       | ABCDEFGHIJKLMNOP
+       | abcdefghijklmnop
+       | asdfghjkl;
+       | 343f%2a
+       | d34aaasdf
+       | 
+       | 1234567890ABCDEFGHIJKLMNOPQRSTU
 (7 rows)
 
-QUERY: SELECT '' AS zero, c.f1 FROM NAME_TBL c WHERE c.f1 !~ '.*';
-zero|f1
-----+--
+SELECT '' AS zero, c.f1 FROM NAME_TBL c WHERE c.f1 !~ '.*';
+ zero | f1 
+------+----
 (0 rows)
 
-QUERY: SELECT '' AS three, c.f1 FROM NAME_TBL c WHERE c.f1 ~ '[0-9]';
-three|f1                             
------+-------------------------------
-     |343f%2a                        
-     |d34aaasdf                      
-     |1234567890ABCDEFGHIJKLMNOPQRSTU
+SELECT '' AS three, c.f1 FROM NAME_TBL c WHERE c.f1 ~ '[0-9]';
+ three |               f1                
+-------+---------------------------------
+       | 343f%2a
+       | d34aaasdf
+       | 1234567890ABCDEFGHIJKLMNOPQRSTU
 (3 rows)
 
-QUERY: SELECT '' AS two, c.f1 FROM NAME_TBL c WHERE c.f1 ~ '.*asdf.*';
-two|f1        
----+----------
-   |asdfghjkl;
-   |d34aaasdf 
+SELECT '' AS two, c.f1 FROM NAME_TBL c WHERE c.f1 ~ '.*asdf.*';
+ two |     f1     
+-----+------------
+     | asdfghjkl;
+     | d34aaasdf
 (2 rows)
 
-QUERY: DROP TABLE NAME_TBL;
+DROP TABLE NAME_TBL;

@@ -1,98 +1,107 @@
-QUERY: CREATE TABLE VARCHAR_TBL(f1 varchar(1));
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('A');
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('1');
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES (2);
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('3');
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('');
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('cd');
-QUERY: SELECT '' AS seven, VARCHAR_TBL.*;
-seven|f1
------+--
-     |a 
-     |A 
-     |1 
-     |2 
-     |3 
-     |  
-     |c 
+--
+-- VARCHAR
+--
+CREATE TABLE VARCHAR_TBL(f1 varchar(1));
+INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
+INSERT INTO VARCHAR_TBL (f1) VALUES ('A');
+-- any of the following three input formats are acceptable 
+INSERT INTO VARCHAR_TBL (f1) VALUES ('1');
+INSERT INTO VARCHAR_TBL (f1) VALUES (2);
+INSERT INTO VARCHAR_TBL (f1) VALUES ('3');
+-- zero-length char 
+INSERT INTO VARCHAR_TBL (f1) VALUES ('');
+-- try varchar's of greater than 1 length 
+INSERT INTO VARCHAR_TBL (f1) VALUES ('cd');
+SELECT '' AS seven, VARCHAR_TBL.*;
+ seven | f1 
+-------+----
+       | a
+       | A
+       | 1
+       | 2
+       | 3
+       | 
+       | c
 (7 rows)
 
-QUERY: SELECT '' AS six, c.*
+SELECT '' AS six, c.*
    FROM VARCHAR_TBL c
    WHERE c.f1 <> 'a';
-six|f1
----+--
-   |A 
-   |1 
-   |2 
-   |3 
-   |  
-   |c 
+ six | f1 
+-----+----
+     | A
+     | 1
+     | 2
+     | 3
+     | 
+     | c
 (6 rows)
 
-QUERY: SELECT '' AS one, c.*
+SELECT '' AS one, c.*
    FROM VARCHAR_TBL c
    WHERE c.f1 = 'a';
-one|f1
----+--
-   |a 
+ one | f1 
+-----+----
+     | a
 (1 row)
 
-QUERY: SELECT '' AS five, c.*
+SELECT '' AS five, c.*
    FROM VARCHAR_TBL c
    WHERE c.f1 < 'a';
-five|f1
-----+--
-    |A 
-    |1 
-    |2 
-    |3 
-    |  
+ five | f1 
+------+----
+      | A
+      | 1
+      | 2
+      | 3
+      | 
 (5 rows)
 
-QUERY: SELECT '' AS six, c.*
+SELECT '' AS six, c.*
    FROM VARCHAR_TBL c
    WHERE c.f1 <= 'a';
-six|f1
----+--
-   |a 
-   |A 
-   |1 
-   |2 
-   |3 
-   |  
+ six | f1 
+-----+----
+     | a
+     | A
+     | 1
+     | 2
+     | 3
+     | 
 (6 rows)
 
-QUERY: SELECT '' AS one, c.*
+SELECT '' AS one, c.*
    FROM VARCHAR_TBL c
    WHERE c.f1 > 'a';
-one|f1
----+--
-   |c 
+ one | f1 
+-----+----
+     | c
 (1 row)
 
-QUERY: SELECT '' AS two, c.*
+SELECT '' AS two, c.*
    FROM VARCHAR_TBL c
    WHERE c.f1 >= 'a';
-two|f1
----+--
-   |a 
-   |c 
+ two | f1 
+-----+----
+     | a
+     | c
 (2 rows)
 
-QUERY: DROP TABLE VARCHAR_TBL;
-QUERY: CREATE TABLE VARCHAR_TBL(f1 varchar(4));
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('ab');
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('abcd');
-QUERY: INSERT INTO VARCHAR_TBL (f1) VALUES ('abcde');
-QUERY: SELECT '' AS four, VARCHAR_TBL.*;
-four|f1  
-----+----
-    |a   
-    |ab  
-    |abcd
-    |abcd
+DROP TABLE VARCHAR_TBL;
+--
+-- Now test longer arrays of char
+--
+CREATE TABLE VARCHAR_TBL(f1 varchar(4));
+INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
+INSERT INTO VARCHAR_TBL (f1) VALUES ('ab');
+INSERT INTO VARCHAR_TBL (f1) VALUES ('abcd');
+INSERT INTO VARCHAR_TBL (f1) VALUES ('abcde');
+SELECT '' AS four, VARCHAR_TBL.*;
+ four |  f1  
+------+------
+      | a
+      | ab
+      | abcd
+      | abcd
 (4 rows)
 

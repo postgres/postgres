@@ -1,22 +1,25 @@
-QUERY: SELECT 'this is a text string'::text = 'this is a text string'::text AS true;
-true
-----
-t   
+--
+-- TEXT
+--
+SELECT text 'this is a text string' = text 'this is a text string' AS true;
+ true 
+------
+ t
 (1 row)
 
-QUERY: SELECT 'this is a text string'::text = 'this is a text strin'::text AS false;
-false
------
-f    
+SELECT text 'this is a text string' = text 'this is a text strin' AS false;
+ false 
+-------
+ f
 (1 row)
 
-QUERY: CREATE TABLE TEXT_TBL (f1 text);
-QUERY: INSERT INTO TEXT_TBL VALUES ('doh!');
-QUERY: INSERT INTO TEXT_TBL VALUES ('hi de ho neighbor');
-QUERY: SELECT '' AS two, * FROM TEXT_TBL;
-two|f1               
----+-----------------
-   |doh!             
-   |hi de ho neighbor
+CREATE TABLE TEXT_TBL (f1 text);
+INSERT INTO TEXT_TBL VALUES ('doh!');
+INSERT INTO TEXT_TBL VALUES ('hi de ho neighbor');
+SELECT '' AS two, * FROM TEXT_TBL;
+ two |        f1         
+-----+-------------------
+     | doh!
+     | hi de ho neighbor
 (2 rows)
 

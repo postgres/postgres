@@ -1,144 +1,150 @@
-QUERY: CREATE TABLE FLOAT4_TBL (f1  float4);
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('0.0');
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('1004.30');
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('-34.84');
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e+20');
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('10e40');
+--
+-- FLOAT4
+--
+CREATE TABLE FLOAT4_TBL (f1  float4);
+INSERT INTO FLOAT4_TBL(f1) VALUES ('0.0');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('1004.30');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-34.84');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e+20');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
+-- test for over and under flow 
+INSERT INTO FLOAT4_TBL(f1) VALUES ('10e40');
 ERROR:  Bad float4 input format -- overflow
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e40');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e40');
 ERROR:  Bad float4 input format -- overflow
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-40');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-40');
 ERROR:  Bad float4 input format -- underflow
-QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-40');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-40');
 ERROR:  Bad float4 input format -- underflow
-QUERY: SELECT '' AS five, FLOAT4_TBL.*;
-five|f1         
-----+-----------
-    |0          
-    |1004.3     
-    |-34.84     
-    |1.23457e+20
-    |1.23457e-20
+SELECT '' AS five, FLOAT4_TBL.*;
+ five |     f1      
+------+-------------
+      |           0
+      |      1004.3
+      |      -34.84
+      | 1.23457e+20
+      | 1.23457e-20
 (5 rows)
 
-QUERY: SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
-four|f1         
-----+-----------
-    |0          
-    |-34.84     
-    |1.23457e+20
-    |1.23457e-20
+SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
+ four |     f1      
+------+-------------
+      |           0
+      |      -34.84
+      | 1.23457e+20
+      | 1.23457e-20
 (4 rows)
 
-QUERY: SELECT '' AS one, f.* FROM FLOAT4_TBL f WHERE f.f1 = '1004.3';
-one|    f1
----+------
-   |1004.3
+SELECT '' AS one, f.* FROM FLOAT4_TBL f WHERE f.f1 = '1004.3';
+ one |   f1   
+-----+--------
+     | 1004.3
 (1 row)
 
-QUERY: SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE '1004.3' > f.f1;
-three|         f1
------+-----------
-     |          0
-     |     -34.84
-     |1.23457e-20
+SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE '1004.3' > f.f1;
+ three |     f1      
+-------+-------------
+       |           0
+       |      -34.84
+       | 1.23457e-20
 (3 rows)
 
-QUERY: SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE  f.f1 < '1004.3';
-three|         f1
------+-----------
-     |          0
-     |     -34.84
-     |1.23457e-20
+SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE  f.f1 < '1004.3';
+ three |     f1      
+-------+-------------
+       |           0
+       |      -34.84
+       | 1.23457e-20
 (3 rows)
 
-QUERY: SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE '1004.3' >= f.f1;
-four|         f1
-----+-----------
-    |          0
-    |     1004.3
-    |     -34.84
-    |1.23457e-20
+SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE '1004.3' >= f.f1;
+ four |     f1      
+------+-------------
+      |           0
+      |      1004.3
+      |      -34.84
+      | 1.23457e-20
 (4 rows)
 
-QUERY: SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE  f.f1 <= '1004.3';
-four|         f1
-----+-----------
-    |          0
-    |     1004.3
-    |     -34.84
-    |1.23457e-20
+SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE  f.f1 <= '1004.3';
+ four |     f1      
+------+-------------
+      |           0
+      |      1004.3
+      |      -34.84
+      | 1.23457e-20
 (4 rows)
 
-QUERY: SELECT '' AS three, f.f1, f.f1 * '-10' AS x FROM FLOAT4_TBL f
+SELECT '' AS three, f.f1, f.f1 * '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
-three|f1         |x           
------+-----------+------------
-     |1004.3     |-10043      
-     |1.23457e+20|-1.23457e+21
-     |1.23457e-20|-1.23457e-19
+ three |     f1      |      x       
+-------+-------------+--------------
+       |      1004.3 |       -10043
+       | 1.23457e+20 | -1.23457e+21
+       | 1.23457e-20 | -1.23457e-19
 (3 rows)
 
-QUERY: SELECT '' AS three, f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
+SELECT '' AS three, f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
-three|f1         |x          
------+-----------+-----------
-     |1004.3     |994.3      
-     |1.23457e+20|1.23457e+20
-     |1.23457e-20|-10        
+ three |     f1      |      x      
+-------+-------------+-------------
+       |      1004.3 |       994.3
+       | 1.23457e+20 | 1.23457e+20
+       | 1.23457e-20 |         -10
 (3 rows)
 
-QUERY: SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
+SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
-three|f1         |x           
------+-----------+------------
-     |1004.3     |-100.43     
-     |1.23457e+20|-1.23457e+19
-     |1.23457e-20|-1.23457e-21
+ three |     f1      |      x       
+-------+-------------+--------------
+       |      1004.3 |      -100.43
+       | 1.23457e+20 | -1.23457e+19
+       | 1.23457e-20 | -1.23457e-21
 (3 rows)
 
-QUERY: SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
+SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
-three|f1         |x          
------+-----------+-----------
-     |1004.3     |1014.3     
-     |1.23457e+20|1.23457e+20
-     |1.23457e-20|10         
+ three |     f1      |      x      
+-------+-------------+-------------
+       |      1004.3 |      1014.3
+       | 1.23457e+20 | 1.23457e+20
+       | 1.23457e-20 |          10
 (3 rows)
 
-QUERY: SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
+-- test divide by zero
+SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
 ERROR:  float4div: divide by zero error
-QUERY: SELECT '' AS five, FLOAT4_TBL.*;
-five|f1         
-----+-----------
-    |0          
-    |1004.3     
-    |-34.84     
-    |1.23457e+20
-    |1.23457e-20
+SELECT '' AS five, FLOAT4_TBL.*;
+ five |     f1      
+------+-------------
+      |           0
+      |      1004.3
+      |      -34.84
+      | 1.23457e+20
+      | 1.23457e-20
 (5 rows)
 
-QUERY: SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
-five|f1         |abs_f1     
-----+-----------+-----------
-    |0          |0          
-    |1004.3     |1004.3     
-    |-34.84     |34.84      
-    |1.23457e+20|1.23457e+20
-    |1.23457e-20|1.23457e-20
+-- test the unary float4abs operator 
+SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
+ five |     f1      |   abs_f1    
+------+-------------+-------------
+      |           0 |           0
+      |      1004.3 |      1004.3
+      |      -34.84 |       34.84
+      | 1.23457e+20 | 1.23457e+20
+      | 1.23457e-20 | 1.23457e-20
 (5 rows)
 
-QUERY: UPDATE FLOAT4_TBL
+UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
-QUERY: SELECT '' AS five, FLOAT4_TBL.*;
-five|f1          
-----+------------
-    |0           
-    |-34.84      
-    |-1004.3     
-    |-1.23457e+20
-    |-1.23457e-20
+SELECT '' AS five, FLOAT4_TBL.*;
+ five |      f1      
+------+--------------
+      |            0
+      |       -34.84
+      |      -1004.3
+      | -1.23457e+20
+      | -1.23457e-20
 (5 rows)
 
