@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.2 1996/07/31 18:46:47 scrappy Exp $
+ *    $Id: nbtsort.c,v 1.3 1996/10/18 05:21:20 scrappy Exp $
  *
  * NOTES
  *
@@ -58,10 +58,6 @@
 #include "utils/rel.h"
 #include "utils/palloc.h"
 #include "utils/elog.h"
-
-/*#define FASTBUILD_DEBUG*/ /* turn on debugging output */
-
-#define FASTBUILD
 
 #ifdef FASTBUILD
 

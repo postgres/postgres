@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.2 1996/08/26 06:29:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.3 1996/10/18 05:21:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -905,7 +905,6 @@ static void initRtstate(RTSTATE *rtstate, Relation index)
     return;
 }
 
-#define RTDEBUG
 #ifdef RTDEBUG
 #include "utils/geo-decls.h"
 
