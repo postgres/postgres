@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.12 1998/02/24 03:47:26 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.13 1998/06/09 19:20:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 #include <sys/file.h>
+#include <time.h>
 #include "postgres.h"
 #include "utils/datum.h"
 #include "catalog/pg_type.h"
@@ -60,6 +61,9 @@ nonnullvalue(Datum value, bool *isNull)
  * will return about 1/10 of the tuples in TEMP
  *
  */
+
+static bool random_initialized = false;
+
 bool
 oidrand(Oid o, int32 X)
 {
@@ -67,6 +71,17 @@ oidrand(Oid o, int32 X)
 
 	if (X == 0)
 		return true;
+
+	/*
+	 *	We do this because the cancel key is actually a random, so we don't
+	 *	want them to be able to request random numbers using our postmaster
+	 *	seeded value.
+	 */
+	if (!random_initialized)
+	{
+		srandom((unsigned int)time(NULL));
+		random_initialized = true;
+	}
 
 	result = (random() % X == 0);
 	return result;
@@ -81,6 +96,7 @@ bool
 oidsrand(int32 X)
 {
 	srand(X);
+	random_initialized = true;
 	return true;
 }
 
