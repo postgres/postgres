@@ -1200,6 +1200,67 @@ drop rule foorule;
 drop table foo;
 drop table foo2;
 --
+-- Test rules containing INSERT ... SELECT, which is a very ugly special
+-- case as of 7.1.  Example is based on bug report from Joel Burton.
+--
+create table pparent (pid int, txt text);
+insert into pparent values (1,'parent1');
+insert into pparent values (2,'parent2');
+create table cchild (pid int, descrip text);
+insert into cchild values (1,'descrip1');
+create view vview as
+  select pparent.pid, txt, descrip from
+    pparent left join cchild using (pid);
+create rule rrule as
+  on update to vview do instead
+(
+  insert into cchild (pid, descrip)
+    select old.pid, new.descrip where old.descrip isnull; 
+  update cchild set descrip = new.descrip where cchild.pid = old.pid;
+);
+select * from vview;
+ pid |   txt   | descrip  
+-----+---------+----------
+   1 | parent1 | descrip1
+   2 | parent2 | 
+(2 rows)
+
+update vview set descrip='test1' where pid=1;
+select * from vview;
+ pid |   txt   | descrip 
+-----+---------+---------
+   1 | parent1 | test1
+   2 | parent2 | 
+(2 rows)
+
+update vview set descrip='test2' where pid=2;
+select * from vview;
+ pid |   txt   | descrip 
+-----+---------+---------
+   1 | parent1 | test1
+   2 | parent2 | test2
+(2 rows)
+
+update vview set descrip='test3' where pid=3;
+select * from vview;
+ pid |   txt   | descrip 
+-----+---------+---------
+   1 | parent1 | test1
+   2 | parent2 | test2
+(2 rows)
+
+select * from cchild;
+ pid | descrip 
+-----+---------
+   1 | test1
+   2 | test2
+(2 rows)
+
+drop rule rrule;
+drop view vview;
+drop table pparent;
+drop table cchild;
+--
 -- Check that ruleutils are working
 --
 SELECT viewname, definition FROM pg_views ORDER BY viewname;
