@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.241 2004/02/17 07:36:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.242 2004/02/23 20:45:58 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -932,19 +932,14 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the maximum number of simultaneously open files allowed to each
-        server subprocess. The default is 1000. The limit actually used
-        by the code is the smaller of this setting and the result of
-        <literal>sysconf(_SC_OPEN_MAX)</literal>. Therefore, on systems
-        where <function>sysconf</> returns a reasonable limit, you don't
-        need to worry about this setting. But on some platforms
-        (notably, most BSD systems), <function>sysconf</> returns a
-        value that is much larger than the system can really support
-        when a large number of processes all try to open that many
-        files. If you find yourself seeing <quote>Too many open files</>
-        failures, try reducing this setting. This option can only be set
-        at server start or in the <filename>postgresql.conf</filename>
-        configuration file; if changed in the configuration file, it
-        only affects subsequently-started server subprocesses.
+        server subprocess. The default is 1000. If the kernel is enforcing
+        a safe per-process limit, you don't need to worry about this setting.
+        But on some platforms (notably, most BSD systems), the kernel will
+        allow individual processes to open many more files than the system
+        can really support when a large number of processes all try to open
+        that many files. If you find yourself seeing <quote>Too many open
+        files</> failures, try reducing this setting.
+        This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>

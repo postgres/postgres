@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.106 2004/01/26 22:35:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.107 2004/02/23 20:45:59 tgl Exp $
  *
  * NOTES:
  *
@@ -54,40 +54,49 @@
 
 
 /*
- * Problem: Postgres does a system(ld...) to do dynamic loading.
- * This will open several extra files in addition to those used by
- * Postgres.  We need to guarantee that there are file descriptors free
- * for ld to use.
+ * We must leave some file descriptors free for system(), the dynamic loader,
+ * and other code that tries to open files without consulting fd.c.  This
+ * is the number left free.  (While we can be pretty sure we won't get
+ * EMFILE, there's never any guarantee that we won't get ENFILE due to
+ * other processes chewing up FDs.  So it's a bad idea to try to open files
+ * without consulting fd.c.  Nonetheless we cannot control all code.)
  *
- * The current solution is to limit the number of file descriptors
- * that this code will allocate at one time: it leaves RESERVE_FOR_LD free.
- *
- * (Even though most dynamic loaders now use dlopen(3) or the
- * equivalent, the OS must still open several files to perform the
- * dynamic loading.  And stdin/stdout/stderr count too.  Keep this here.)
+ * Because this is just a fixed setting, we are effectively assuming that
+ * no such code will leave FDs open over the long term; otherwise the slop
+ * is likely to be insufficient.  Note in particular that we expect that
+ * loading a shared library does not result in any permanent increase in
+ * the number of open files.  (This appears to be true on most if not
+ * all platforms as of Feb 2004.)
  */
-#ifndef RESERVE_FOR_LD
-#define RESERVE_FOR_LD	10
-#endif
+#define NUM_RESERVED_FDS		10
 
 /*
- * We need to ensure that we have at least some file descriptors
- * available to postgreSQL after we've reserved the ones for LD,
- * so we set that value here.
- *
- * I think 10 is an appropriate value so that's what it'll be
- * for now.
+ * If we have fewer than this many usable FDs after allowing for the reserved
+ * ones, choke.
  */
-#ifndef FD_MINFREE
-#define FD_MINFREE 10
-#endif
+#define FD_MINFREE				10
+
 
 /*
- * A number of platforms return values for sysconf(_SC_OPEN_MAX) that are
- * far beyond what they can really support.  This GUC parameter limits what
- * we will believe.
+ * A number of platforms allow individual processes to open many more files
+ * than they can really support when *many* processes do the same thing.
+ * This GUC parameter lets the DBA limit max_safe_fds to something less than
+ * what the postmaster's initial probe suggests will work.
  */
 int			max_files_per_process = 1000;
+
+/*
+ * Maximum number of file descriptors to open for either VFD entries or
+ * AllocateFile files.  This is initialized to a conservative value, and
+ * remains that way indefinitely in bootstrap or standalone-backend cases.
+ * In normal postmaster operation, the postmaster calls set_max_safe_fds()
+ * late in initialization to update the value, and that value is then
+ * inherited by forked subprocesses.
+ *
+ * Note: the value of max_files_per_process is taken into account while
+ * setting this variable, and so need not be tested separately.
+ */
+static int	max_safe_fds = 32;			/* default if not changed */
 
 
 /* Debugging.... */
@@ -199,7 +208,6 @@ static void FreeVfd(File file);
 static int	FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(const char *filename);
-static long pg_nofile(void);
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
 
@@ -234,6 +242,105 @@ pg_fdatasync(int fd)
 	}
 	else
 		return 0;
+}
+
+/*
+ * count_usable_fds --- count how many FDs the system will let us open,
+ *		and estimate how many are already open.
+ *
+ * We assume stdin (FD 0) is available for dup'ing
+ */
+static void
+count_usable_fds(int *usable_fds, int *already_open)
+{
+	int		   *fd;
+	int			size;
+	int			used = 0;
+	int			highestfd = 0;
+	int			j;
+
+	size = 1024;
+	fd = (int *) palloc(size * sizeof(int));
+
+	/* dup until failure ... */
+	for (;;)
+	{
+		int		thisfd;
+
+		thisfd = dup(0);
+		if (thisfd < 0)
+		{
+			/* Expect EMFILE or ENFILE, else it's fishy */
+			if (errno != EMFILE && errno != ENFILE)
+				elog(WARNING, "dup(0) failed after %d successes: %m", used);
+			break;
+		}
+
+		if (used >= size)
+		{
+			size *= 2;
+			fd = (int *) repalloc(fd, size * sizeof(int));
+		}
+		fd[used++] = thisfd;
+
+		if (highestfd < thisfd)
+			highestfd = thisfd;
+	}
+
+	/* release the files we opened */
+	for (j = 0; j < used; j++)
+		close(fd[j]);
+
+	pfree(fd);
+
+	/*
+	 * Return results.  usable_fds is just the number of successful dups.
+	 * We assume that the system limit is highestfd+1 (remember 0 is a legal
+	 * FD number) and so already_open is highestfd+1 - usable_fds.
+	 */
+	*usable_fds = used;
+	*already_open = highestfd+1 - used;
+}
+
+/*
+ * set_max_safe_fds
+ *		Determine number of filedescriptors that fd.c is allowed to use
+ */
+void
+set_max_safe_fds(void)
+{
+	int			usable_fds;
+	int			already_open;
+
+	/*
+	 * We want to set max_safe_fds to
+	 *			MIN(usable_fds, max_files_per_process - already_open)
+	 * less the slop factor for files that are opened without consulting
+	 * fd.c.  This ensures that we won't exceed either max_files_per_process
+	 * or the experimentally-determined EMFILE limit.
+	 */
+	count_usable_fds(&usable_fds, &already_open);
+
+	max_safe_fds = Min(usable_fds, max_files_per_process - already_open);
+
+	/*
+	 * Take off the FDs reserved for system() etc.
+	 */
+	max_safe_fds -= NUM_RESERVED_FDS;
+
+	/*
+	 * Make sure we still have enough to get by.
+	 */
+	if (max_safe_fds < FD_MINFREE)
+		ereport(FATAL,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+				 errmsg("insufficient file descriptors available to start server process"),
+				 errdetail("System allows %d, we need at least %d.",
+						   max_safe_fds + NUM_RESERVED_FDS,
+						   FD_MINFREE + NUM_RESERVED_FDS)));
+
+	elog(DEBUG2, "max_safe_fds = %d, usable_fds = %d, already_open = %d",
+		 max_safe_fds, usable_fds, already_open);
 }
 
 /*
@@ -277,63 +384,6 @@ tryAgain:
 	}
 
 	return -1;					/* failure */
-}
-
-/*
- * pg_nofile: determine number of filedescriptors that fd.c is allowed to use
- */
-static long
-pg_nofile(void)
-{
-	static long no_files = 0;
-
-	/* need do this calculation only once */
-	if (no_files == 0)
-	{
-		/*
-		 * Ask the system what its files-per-process limit is.
-		 */
-#ifdef HAVE_SYSCONF
-		no_files = sysconf(_SC_OPEN_MAX);
-		if (no_files <= 0)
-		{
-#ifdef NOFILE
-			no_files = (long) NOFILE;
-#else
-			no_files = (long) max_files_per_process;
-#endif
-			elog(LOG, "sysconf(_SC_OPEN_MAX) failed; using %ld",
-				 no_files);
-		}
-#else							/* !HAVE_SYSCONF */
-#ifdef NOFILE
-		no_files = (long) NOFILE;
-#else
-		no_files = (long) max_files_per_process;
-#endif
-#endif   /* HAVE_SYSCONF */
-
-		/*
-		 * Some platforms return hopelessly optimistic values.	Apply a
-		 * configurable upper limit.
-		 */
-		if (no_files > (long) max_files_per_process)
-			no_files = (long) max_files_per_process;
-
-		/*
-		 * Make sure we have enough to get by after reserving some for LD.
-		 */
-		if ((no_files - RESERVE_FOR_LD) < FD_MINFREE)
-			ereport(FATAL,
-					(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-					 errmsg("insufficient file descriptors available to start server process"),
-					 errdetail("System allows %ld, we need at least %d.",
-							   no_files, RESERVE_FOR_LD + FD_MINFREE)));
-
-		no_files -= RESERVE_FOR_LD;
-	}
-
-	return no_files;
 }
 
 #if defined(FDDEBUG)
@@ -439,7 +489,7 @@ LruInsert(File file)
 
 	if (FileIsNotOpen(file))
 	{
-		while (nfile + numAllocatedFiles >= pg_nofile())
+		while (nfile + numAllocatedFiles >= max_safe_fds)
 		{
 			if (!ReleaseLruFile())
 				break;
@@ -698,7 +748,7 @@ fileNameOpenFile(FileName fileName,
 	file = AllocateVfd();
 	vfdP = &VfdCache[file];
 
-	while (nfile + numAllocatedFiles >= pg_nofile())
+	while (nfile + numAllocatedFiles >= max_safe_fds)
 	{
 		if (!ReleaseLruFile())
 			break;
@@ -1042,7 +1092,14 @@ AllocateFile(char *name, char *mode)
 
 	DO_DB(elog(LOG, "AllocateFile: Allocated %d", numAllocatedFiles));
 
-	if (numAllocatedFiles >= MAX_ALLOCATED_FILES)
+	/*
+	 * The test against MAX_ALLOCATED_FILES prevents us from overflowing
+	 * allocatedFiles[]; the test against max_safe_fds prevents AllocateFile
+	 * from hogging every one of the available FDs, which'd lead to infinite
+	 * looping.
+	 */
+	if (numAllocatedFiles >= MAX_ALLOCATED_FILES ||
+		numAllocatedFiles >= max_safe_fds - 1)
 		elog(ERROR, "too many private FDs demanded");
 
 TryAgain:
