@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.12 1999/02/13 23:21:35 momjian Exp $
+ * $Id: hba.h,v 1.13 1999/05/10 15:17:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #define CONF_FILE "pg_hba.conf"
  /* Name of the config file  */
 
-#define MAP_FILE "pg_ident.conf"
+#define USERMAP_FILE "pg_ident.conf"
  /* Name of the usermap file */
 
 #define OLD_CONF_FILE "pg_hba"

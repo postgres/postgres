@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *  $Id: hba.c,v 1.41 1999/05/09 00:54:30 tgl Exp $
+ *  $Id: hba.c,v 1.42 1999/05/10 15:17:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -785,9 +785,9 @@ verify_against_usermap(const char *pguser,
 		int		bufsize;
 
 		/* put together the full pathname to the map file */
-		bufsize = (strlen(DataDir) + strlen(MAP_FILE) + 2) * sizeof(char);
+		bufsize = (strlen(DataDir) + strlen(USERMAP_FILE) + 2) * sizeof(char);
 		map_file = (char *) palloc(bufsize);
-		snprintf(map_file, bufsize, "%s/%s", DataDir, MAP_FILE);
+		snprintf(map_file, bufsize, "%s/%s", DataDir, USERMAP_FILE);
 
 #ifndef __CYGWIN32__
 		file = AllocateFile(map_file, "r");
