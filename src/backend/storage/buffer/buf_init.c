@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.24 1999/06/12 22:17:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.25 1999/06/26 15:58:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,6 +235,8 @@ InitBufferPool(IPCKey key)
 #ifndef HAS_TEST_AND_SET
 	{
 		int			status;
+		extern IpcSemaphoreId WaitIOSemId;
+		extern IpcSemaphoreId WaitCLSemId;
 
 		WaitIOSemId = IpcSemaphoreCreate(IPCKeyGetWaitIOSemaphoreKey(key),
 										 1, IPCProtection, 0, 1, &status);
