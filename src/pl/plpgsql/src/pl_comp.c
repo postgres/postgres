@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.61 2003/07/26 23:58:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.62 2003/07/27 18:38:26 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -720,7 +720,7 @@ static void
 plpgsql_compile_error_callback(void *arg)
 {
 	if (plpgsql_error_funcname)
-		errcontext("compile of PL/pgSQL function %s near line %d",
+		errcontext("compile of PL/pgSQL function \"%s\" near line %d",
 				   plpgsql_error_funcname, plpgsql_error_lineno);
 }
 

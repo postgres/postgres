@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.88 2003/07/25 23:37:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.89 2003/07/27 18:38:26 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -190,7 +190,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	/*
 	 * Make local execution copies of all the datums
 	 */
-	estate.err_text = "while initialization of execution state";
+	estate.err_text = gettext_noop("during initialization of execution state");
 	for (i = 0; i < func->ndatums; i++)
 	{
 		switch (func->datums[i]->dtype)
@@ -217,9 +217,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	}
 
 	/*
-	 * Put the actual call argument values into the variables
+	 * Store the actual call argument values into the variables
 	 */
-	estate.err_text = "while putting call arguments to local variables";
+	estate.err_text = gettext_noop("while storing call arguments into local variables");
 	for (i = 0; i < func->fn_nargs; i++)
 	{
 		int			n = func->fn_argvarnos[i];
@@ -259,7 +259,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	 * Initialize the other variables to NULL values for now. The default
 	 * values are set when the blocks are entered.
 	 */
-	estate.err_text = "while initializing local variables to NULL";
+	estate.err_text = gettext_noop("while initializing local variables to NULL");
 	for (i = estate.found_varno; i < estate.ndatums; i++)
 	{
 		switch (estate.datums[i]->dtype)
@@ -298,7 +298,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	if (exec_stmt_block(&estate, func->action) != PLPGSQL_RC_RETURN)
 	{
 		estate.err_stmt = NULL;
-		estate.err_text = "at END of toplevel PL block";
+		estate.err_text = NULL;
 		ereport(ERROR,
 				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
 				 errmsg("control reached end of function without RETURN")));
@@ -308,7 +308,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	 * We got a return value - process it
 	 */
 	estate.err_stmt = NULL;
-	estate.err_text = "while casting return value to function's return type";
+	estate.err_text = gettext_noop("while casting return value to function's return type");
 
 	fcinfo->isnull = estate.retisnull;
 
@@ -425,7 +425,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	/*
 	 * Make local execution copies of all the datums
 	 */
-	estate.err_text = "while initialization of execution state";
+	estate.err_text = gettext_noop("during initialization of execution state");
 	for (i = 0; i < func->ndatums; i++)
 	{
 		switch (func->datums[i]->dtype)
@@ -556,10 +556,10 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	var->value = Int16GetDatum(trigdata->tg_trigger->tgnargs);
 
 	/*
-	 * Put the actual call argument values into the special execution
+	 * Store the actual call argument values into the special execution
 	 * state variables
 	 */
-	estate.err_text = "while putting call arguments to local variables";
+	estate.err_text = gettext_noop("while storing call arguments into local variables");
 	estate.trig_nargs = trigdata->tg_trigger->tgnargs;
 	if (estate.trig_nargs == 0)
 		estate.trig_argv = NULL;
@@ -575,7 +575,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	 * Initialize the other variables to NULL values for now. The default
 	 * values are set when the blocks are entered.
 	 */
-	estate.err_text = "while initializing local variables to NULL";
+	estate.err_text = gettext_noop("while initializing local variables to NULL");
 	for (i = estate.found_varno; i < estate.ndatums; i++)
 	{
 		switch (estate.datums[i]->dtype)
@@ -615,7 +615,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	if (exec_stmt_block(&estate, func->action) != PLPGSQL_RC_RETURN)
 	{
 		estate.err_stmt = NULL;
-		estate.err_text = "at END of toplevel PL block";
+		estate.err_text = NULL;
 		ereport(ERROR,
 				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
 				 errmsg("control reached end of trigger procedure without RETURN")));
@@ -681,16 +681,28 @@ plpgsql_exec_error_callback(void *arg)
 		return;
 
 	if (estate->err_stmt != NULL)
-		errcontext("PL/pgSQL function %s line %d at %s",
+	{
+		/* translator: last %s is a plpgsql statement type name */
+		errcontext("PL/pgSQL function \"%s\" line %d at %s",
 				   estate->err_func->fn_name,
 				   estate->err_stmt->lineno,
 				   plpgsql_stmt_typename(estate->err_stmt));
+	}
 	else if (estate->err_text != NULL)
-		errcontext("PL/pgSQL function %s %s",
+	{
+		/*
+		 * We don't expend the cycles to run gettext() on err_text unless
+		 * we actually need it.  Therefore, places that set up err_text should
+		 * use gettext_noop() to ensure the strings get recorded in the
+		 * message dictionary.
+		 */
+		/* translator: last %s is a phrase such as "while storing call arguments into local variables" */
+		errcontext("PL/pgSQL function \"%s\" %s",
 				   estate->err_func->fn_name,
-				   estate->err_text);
+				   gettext(estate->err_text));
+	}
 	else
-		errcontext("PL/pgSQL function %s",
+		errcontext("PL/pgSQL function \"%s\"",
 				   estate->err_func->fn_name);
 }
 
