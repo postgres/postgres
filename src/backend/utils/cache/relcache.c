@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.87 2000/01/26 05:57:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.88 2000/01/29 19:51:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1406,7 +1406,18 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
 	 */
 	if (PointerIsValid(relation) && !relation->rd_myxactonly)
 	{
-
+#if 1
+		/*
+		 * Seems safest just to NEVER flush rels with positive refcounts.
+		 * I think the code only had that proviso as a rather lame method of
+		 * cleaning up unused relcache entries that had dangling refcounts
+		 * (following elog(ERROR) with an open rel).  Now we rely on
+		 * RelationCacheAbort to clean up dangling refcounts, so there's no
+		 * good reason to ever risk flushing a rel with positive refcount.
+		 * IMHO anyway --- tgl 1/29/00.
+		 */
+		RelationFlushRelation(&relation, true);
+#else
 		/*
 		 * The boolean onlyFlushReferenceCountZero in RelationFlushReln()
 		 * should be set to true when we are incrementing the command
@@ -1414,6 +1425,7 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
 		 * can be determined by checking the current xaction status.
 		 */
 		RelationFlushRelation(&relation, CurrentXactInProgress());
+#endif
 	}
 }
 
@@ -1436,7 +1448,7 @@ RelationFlushIndexes(Relation *r,
 	if (relation->rd_rel->relkind == RELKIND_INDEX &&	/* XXX style */
 		(!OidIsValid(accessMethodId) ||
 		 relation->rd_rel->relam == accessMethodId))
-		RelationFlushRelation(&relation, false);
+		RelationFlushRelation(&relation, true);
 }
 
 #endif
@@ -1469,9 +1481,14 @@ RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)
  *	 Will blow away either all the cached relation descriptors or
  *	 those that have a zero reference count.
  *
+ *	 CAUTION: this is only called with onlyFlushReferenceCountZero=true
+ *	 at present, so that relation descriptors with positive refcounts
+ *	 are rebuilt rather than clobbered.  It would only be safe to use a
+ *	 "false" parameter in a totally idle backend with no open relations.
+ *
  *	 This is currently used only to recover from SI message buffer overflow,
- *	 so onlyFlushReferenceCountZero is always false.  We do not blow away
- *	 transaction-local relations, since they cannot be targets of SI updates.
+ *	 so we do not blow away transaction-local relations; they cannot be
+ *	 targets of SI updates.
  */
 void
 RelationCacheInvalidate(bool onlyFlushReferenceCountZero)

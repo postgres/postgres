@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.32 2000/01/26 05:57:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.33 2000/01/29 19:51:59 tgl Exp $
  *
  * Note - this code is real crufty...
  *
@@ -548,15 +548,16 @@ CacheIdInvalidate(Index cacheId,
 /* --------------------------------
  *		ResetSystemCaches
  *
- *		this blows away all tuples in the system catalog caches and
- *		all the cached relation descriptors (and closes the files too).
+ *		This blows away all tuples in the system catalog caches and
+ *		all the cached relation descriptors (and closes their files too).
+ *		Relation descriptors that have positive refcounts are then rebuilt.
  * --------------------------------
  */
 static void
 ResetSystemCaches()
 {
 	ResetSystemCache();
-	RelationCacheInvalidate(false);
+	RelationCacheInvalidate(true);
 }
 
 /* --------------------------------
