@@ -7,13 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.4 1996/11/08 05:58:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.5 1997/01/08 08:32:03 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include <sys/types.h>
-#include <sys/ipc.h>
 
 #include "postgres.h"
 
