@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.46 1999/07/16 04:58:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.47 1999/08/08 20:12:52 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -144,9 +144,11 @@
  */
 #include "postgres.h"
 
+#include "access/nbtree.h"
 #include "catalog/heap.h"
 #include "commands/async.h"
 #include "commands/sequence.h"
+#include "commands/vacuum.h"
 #include "libpq/be-fsstubs.h"
 #include "storage/proc.h"
 #include "utils/inval.h"
@@ -952,6 +954,7 @@ CommitTransaction()
 	}
 
 	RelationPurgeLocalRelation(true);
+	AtEOXact_nbtree();
 	AtCommit_Cache();
 	AtCommit_Locks();
 	AtCommit_Memory();
@@ -1013,9 +1016,12 @@ AbortTransaction()
 	AtAbort_Notify();
 	CloseSequences();
 	AtEOXact_portals();
+	if (VacuumRunning)
+		vc_abort();
 	RecordTransactionAbort();
 	RelationPurgeLocalRelation(false);
 	DestroyNoNameRels();
+	AtEOXact_nbtree();
 	AtAbort_Cache();
 	AtAbort_Locks();
 	AtAbort_Memory();

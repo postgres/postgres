@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.30 1999/07/17 20:16:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.31 1999/08/08 20:12:50 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -42,7 +42,6 @@ typedef struct BTMetaPageData
 #define BTPageGetMeta(p) \
 	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])
 
-extern bool BuildingBtree;
 
 /*
  *	We use high-concurrency locking on btrees.	There are two cases in

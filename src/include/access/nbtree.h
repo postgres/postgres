@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.30 1999/07/16 17:07:27 momjian Exp $
+ * $Id: nbtree.h,v 1.31 1999/08/08 20:12:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,6 +250,7 @@ extern void btdelete(Relation rel, ItemPointer tid);
 extern void _bt_regscan(IndexScanDesc scan);
 extern void _bt_dropscan(IndexScanDesc scan);
 extern void _bt_adjscans(Relation rel, ItemPointer tid);
+extern void AtEOXact_nbtree(void);
 
 /*
  * prototypes for functions in nbtsearch.c
