@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Nov  4 11:49:35 EST 2004
+Last updated:		Thu Nov  4 11:53:38 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -274,6 +274,8 @@ Indexes
   several hash buckets could be stored on a single page and greater
   granularity used for the hash algorithm.
 
+* Allow accurate statistics to be collected on indexes with more than
+  one column
 
 Commands
 ========
