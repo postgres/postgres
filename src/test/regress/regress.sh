@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.23 1999/01/23 21:36:00 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.24 1999/04/14 14:02:00 scrappy Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -33,7 +33,7 @@ PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 #FRONTEND=monitor
 FRONTEND="psql $HOST -n -e -q"
 
-SYSTEM=`uname -s`
+SYSTEM=`../../config.guess awk -F\- '{ split($3,a,/[0-9]/); printf"%s-%s", $1, a[1] }'`
 
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
