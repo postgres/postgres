@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 29 23:44:48 EST 2005
+   Last updated: Sun Jan 30 20:25:19 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -98,34 +98,18 @@
                                       
     1.1) What is PostgreSQL? How is it pronounced?
     
-   PostgreSQL is pronounced Post-Gres-Q-L.
+   PostgreSQL is pronounced Post-Gres-Q-L, also called just Postgres.
    
-   PostgreSQL is an enhancement of the POSTGRES database management
-   system (and is still sometimes reffered to as simply "Postgres"), a
-   next-generation DBMS research prototype. While PostgreSQL retains the
-   powerful data model and rich data types of POSTGRES, it replaces the
-   PostQuel query language with an extended subset of SQL. PostgreSQL is
-   free and the complete source is available.
+   PostgreSQL is an object-relational database system that has the
+   features of traditional commercial database systems with enhancements
+   to be found in next-generation DBMS systems. PostgreSQL is free and
+   the complete source code is available.
    
-   PostgreSQL development is performed by a team of developers who all
-   subscribe to the PostgreSQL development mailing list. The current
-   coordinator is Marc G. Fournier (scrappy@PostgreSQL.org). (See section
-   1.6 on how to join). This team is now responsible for all development
-   of PostgreSQL. It is a community project and is not controlled by any
+   PostgreSQL development is performed by a team of mostly volunteer
+   developers spread throughout the world and communicating via the
+   Internet. It is a community project and is not controlled by any
    company. To get involved, see the developer's FAQ at
    http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html
-   
-   The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
-   others have contributed to the porting, testing, debugging, and
-   enhancement of the code. The original Postgres code, from which
-   PostgreSQL is derived, was the effort of many graduate students,
-   undergraduate students, and staff programmers working under the
-   direction of Professor Michael Stonebraker at the University of
-   California, Berkeley.
-   
-   The original name of the software at Berkeley was Postgres. When SQL
-   functionality was added in 1995, its name was changed to Postgres95.
-   The name was changed at the end of 1996 to PostgreSQL.
    
     1.2) What is the copyright on PostgreSQL?
     
