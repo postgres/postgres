@@ -8,17 +8,27 @@
 
 #define BLCKSZ	8192
 
-#if defined(sequent) || \
-    defined(PORTNAME_aix) || \
-    defined(PORTNAME_alpha) || \
-    defined(PORTNAME_bsdi) || \
-    defined(PORTNAME_hpux) || \
-    defined(PORTNAME_dgux) || \
-    defined(PORTNAME_i386_solaris) || \
-    defined(PORTNAME_sparc_solaris) || \
-    defined(PORTNAME_ultrix4) || \
-    defined(PORTNAME_svr4)
-#define NEED_UNION_SEMUN 
+#if defined(sequent) 
+#  define NEED_UNION_SEMUN 
+#endif
+
+#if defined(alpha)
+#  define USE_POSIX_TIME 
+#  define DISABLE_XOPEN_NLS 
+#  define NEED_ISINF 
+#  define HAS_LONG_LONG
+#  define NEED_UNION_SEMUN 
+#endif
+
+#if defined(dgux)
+#  define LINUX_ELF
+#  define NEED_UNION_SEMUN 
+#endif
+
+#if defined(ultrix4)
+#  define NEED_ISINF 
+#  define USE_POSIX_TIME
+#  define NEED_UNION_SEMUN 
 #endif
 
 #if defined(linux)
@@ -30,18 +40,39 @@
 #  define HAVE_TZSET
 #  define NEED_CBRT
 #  define NEED_RINT
+#  define NEED_UNION_SEMUN 
 #endif
 
 #if defined(i386_solaris) 
+#  define USE_POSIX_TIME 
+#  define NEED_ISINF 
+#  define NEED_RUSAGE 
+#  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
+#  define NEED_UNION_SEMUN 
+#endif
+
+#if defined(sparc)
+#  define USE_POSIX_TIME
 #endif
 
 #if defined(sparc_solaris)
+#  define USE_POSIX_TIME 
+#  define NEED_ISINF 
+#  define NEED_RUSAGE 
+#  define NO_EMPTY_STMTS
+#  define USE_POSIX_TIME
 #  define HAVE_TZSET
+#  define NEED_UNION_SEMUN 
 #endif
 
 #if defined(svr4) 
+#  define USE_POSIX_TIME 
+#  define NEED_ISINF 
+#  define NEED_RUSAGE 
+#  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
+#  define NEED_UNION_SEMUN 
 #endif
 
 #if defined(win32)
@@ -56,19 +87,32 @@
 #endif /* WIN32 */
 
 #if defined(BSD44_derived) || \
-    defined(bsdi) || \
     defined(bsdi_2_1)
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
 #endif
 
+#if defined(bsdi)
+#  define NEED_UNION_SEMUN 
+#  define USE_LIMITS_H
+#  define USE_POSIX_TIME
+#  define NEED_CBRT
+#endif
+
 #if defined(aix)
+#  define CLASS_CONFLICT 
+#  define DISABLE_XOPEN_NLS 
+#  define NEED_ISINF
+#  define NEED_UNION_SEMUN 
 #  define NEED_SYS_SELECT_H
 #  define HAVE_TZSET
 #endif
 
 #if defined(irix5)
+#  define USE_POSIX_TIME 
+#  define NEED_ISINF 
+#  define NO_EMPTY_STMTS
 #  define NO_VFORK
 #  define HAVE_TZSET
 #endif
@@ -83,7 +127,7 @@
  */ 
 
 #ifndef       SIGNAL_ARGS
-#define SIGNAL_ARGS int postgres_signal_arg
+#  define SIGNAL_ARGS int postgres_signal_arg
 #endif
 
 /* NAMEDATALEN is the max length for system identifiers (e.g. table names,
