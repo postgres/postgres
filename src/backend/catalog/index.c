@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.200 2002/09/23 00:42:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.201 2002/09/27 15:05:23 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -420,56 +420,44 @@ UpdateIndexRelation(Oid indexoid,
 					Oid *classOids,
 					bool primary)
 {
-	Form_pg_index indexForm;
-	char	   *predString;
-	text	   *predText;
-	int			predLen,
-				itupLen;
+	int16		indkey[INDEX_MAX_KEYS];
+	Oid			indclass[INDEX_MAX_KEYS];
+	Datum		predDatum;
+	Datum		values[Natts_pg_index];
+	char		nulls[Natts_pg_index];
 	Relation	pg_index;
 	HeapTuple	tuple;
 	int			i;
 
 	/*
-	 * allocate a Form_pg_index big enough to hold the index-predicate (if
-	 * any) in string form
+	 * Copy the index key and opclass info into zero-filled vectors
+	 *
+	 * (zero filling is essential 'cause we don't store the number of
+	 * index columns explicitly in pg_index, which is pretty grotty...)
+	 */
+	MemSet(indkey, 0, sizeof(indkey));
+	for (i = 0; i < indexInfo->ii_NumKeyAttrs; i++)
+		indkey[i] = indexInfo->ii_KeyAttrNumbers[i];
+
+	MemSet(indclass, 0, sizeof(indclass));
+	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		indclass[i] = classOids[i];
+
+	/*
+	 * Convert the index-predicate (if any) to a text datum
 	 */
 	if (indexInfo->ii_Predicate != NIL)
 	{
+		char	   *predString;
+
 		predString = nodeToString(indexInfo->ii_Predicate);
-		predText = DatumGetTextP(DirectFunctionCall1(textin,
-										   CStringGetDatum(predString)));
+		predDatum = DirectFunctionCall1(textin,
+										CStringGetDatum(predString));
 		pfree(predString);
 	}
 	else
-		predText = DatumGetTextP(DirectFunctionCall1(textin,
-												   CStringGetDatum("")));
-
-	predLen = VARSIZE(predText);
-	itupLen = predLen + sizeof(FormData_pg_index);
-	indexForm = (Form_pg_index) palloc(itupLen);
-	MemSet(indexForm, 0, sizeof(FormData_pg_index));
-
-	/*
-	 * store information into the index tuple form
-	 */
-	indexForm->indexrelid = indexoid;
-	indexForm->indrelid = heapoid;
-	indexForm->indproc = indexInfo->ii_FuncOid;
-	indexForm->indisclustered = false;	/* not clustered, yet */
-	indexForm->indisunique = indexInfo->ii_Unique;
-	indexForm->indisprimary = primary;
-	memcpy((char *) &indexForm->indpred, (char *) predText, predLen);
-
-	/*
-	 * copy index key and op class information
-	 *
-	 * We zeroed the extra slots (if any) above --- that's essential.
-	 */
-	for (i = 0; i < indexInfo->ii_NumKeyAttrs; i++)
-		indexForm->indkey[i] = indexInfo->ii_KeyAttrNumbers[i];
-
-	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
-		indexForm->indclass[i] = classOids[i];
+		predDatum = DirectFunctionCall1(textin,
+										CStringGetDatum(""));
 
 	/*
 	 * open the system catalog index relation
@@ -477,12 +465,22 @@ UpdateIndexRelation(Oid indexoid,
 	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
 
 	/*
-	 * form a tuple to insert into pg_index
+	 * Build a pg_index tuple
 	 */
-	tuple = heap_addheader(Natts_pg_index,
-						   false,
-						   itupLen,
-						   (void *) indexForm);
+	MemSet(nulls, ' ', sizeof(nulls));
+
+	values[Anum_pg_index_indexrelid - 1] = ObjectIdGetDatum(indexoid);
+	values[Anum_pg_index_indrelid - 1] = ObjectIdGetDatum(heapoid);
+	values[Anum_pg_index_indproc - 1] = ObjectIdGetDatum(indexInfo->ii_FuncOid);
+	values[Anum_pg_index_indkey - 1] = PointerGetDatum(indkey);
+	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
+	values[Anum_pg_index_indisclustered - 1] = BoolGetDatum(false);
+	values[Anum_pg_index_indisunique - 1] = BoolGetDatum(indexInfo->ii_Unique);
+	values[Anum_pg_index_indisprimary - 1] = BoolGetDatum(primary);
+	values[Anum_pg_index_indreference - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_index_indpred - 1] = predDatum;
+
+	tuple = heap_formtuple(RelationGetDescr(pg_index), values, nulls);
 
 	/*
 	 * insert the tuple into the pg_index catalog
@@ -496,8 +494,6 @@ UpdateIndexRelation(Oid indexoid,
 	 * close the relation and free the tuple
 	 */
 	heap_close(pg_index, RowExclusiveLock);
-	pfree(predText);
-	pfree(indexForm);
 	heap_freetuple(tuple);
 }
 
