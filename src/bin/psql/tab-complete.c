@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.116 2004/09/22 04:25:16 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.117 2004/11/02 16:10:05 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -488,7 +488,8 @@ psql_completion(char *text, int start, int end)
 	char	   *prev_wd,
 			   *prev2_wd,
 			   *prev3_wd,
-			   *prev4_wd;
+			   *prev4_wd,
+			   *prev5_wd;
 
 	static const char *const sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER", "COMMENT",
@@ -637,6 +638,7 @@ psql_completion(char *text, int start, int end)
 	prev2_wd = previous_word(start, 1);
 	prev3_wd = previous_word(start, 2);
 	prev4_wd = previous_word(start, 3);
+	prev5_wd = previous_word(start, 4);
 
 	/* If a backslash command was started, continue */
 	if (text[0] == '\\')
@@ -766,14 +768,14 @@ psql_completion(char *text, int start, int end)
 	{
 			static const char *const list_ALTERSCHEMA2[] =
 			{"MINVALUE", "MAXVALUE", "CYCLE", NULL};
-			
+
 			COMPLETE_WITH_LIST(list_ALTERSCHEMA2);
 	}
 	/* ALTER TRIGGER <name>, add ON */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "TRIGGER") == 0)
 		COMPLETE_WITH_CONST("ON");
-	
+
 	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev3_wd, "TRIGGER") == 0)
 	{
@@ -1004,7 +1006,7 @@ psql_completion(char *text, int start, int end)
 		{
 			static const char *const list_FROMTO[] =
 			{"FROM", "TO", NULL};
-			
+
 			COMPLETE_WITH_LIST(list_FROMTO);
 		}
 	/* If we have COPY|BINARY <sth> FROM|TO, complete with filename */
@@ -1111,6 +1113,23 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev2_wd, "CREATE") == 0 &&
 			 pg_strcasecmp(prev_wd, "TEMP") == 0)
 		COMPLETE_WITH_CONST("TABLE");
+
+/* CREATE TABLESPACE */
+	else if (pg_strcasecmp(prev3_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "TABLESPACE") == 0)
+	{
+		static const char *const list_CREATETABLESPACE[] =
+		{"OWNER", "LOCATION", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATETABLESPACE);
+	}
+	/* Complete CREATE TABLESPACE name OWNER name with "LOCATION" */
+	else if (pg_strcasecmp(prev5_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TABLESPACE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "OWNER") == 0)
+	{
+		COMPLETE_WITH_CONST("LOCATION");
+	}
 
 /* CREATE TRIGGER */
 	/* is on the agenda . . . */
