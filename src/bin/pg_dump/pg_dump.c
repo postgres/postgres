@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.168 2000/09/18 06:47:46 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.169 2000/10/10 13:55:28 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -86,6 +86,15 @@
  *		Dump views as views (using 'create view').
  *		Remove 'isViewRule' since we check the relkind when getting tables.
  *		Now uses temp table 'pgdump_oid' rather than 'pg_dump_oid' (errors otherwise).
+ *
+ * Modifications - 02-Oct-2000 - pjw@rhyme.com.au
+ *
+ *	  - Be more paranoid when getting views: call get_viewdef in separate statement
+ *		so we can be more informative in error messages.
+ *	  - Support for 'isstrict' procedure attribute. 
+ *	  - Disable --blobs and --table since (a) it's a pain to get ONLY the blobs for the 
+ *		table with the currently implementation, and (b) it's not clear how to restore
+ *		a partial BLOB backup (given the current OID-based BLOB implementation).
  *
  *-------------------------------------------------------------------------
  */
@@ -702,6 +711,7 @@ main(int argc, char **argv)
 			case 'a':			/* Dump data only */
 				dataOnly = true;
 				break;
+
 			case 'b':			/* Dump blobs */
 				outputBlobs = true;
 				break;
@@ -719,48 +729,63 @@ main(int argc, char **argv)
 			case 'd':			/* dump data as proper insert strings */
 				dumpData = true;
 				break;
+
 			case 'D':			/* dump data as proper insert strings with
 								 * attr names */
 				dumpData = true;
 				attrNames = true;
 				break;
+
 			case 'f':
 				filename = optarg;
 				break;
+
 			case 'F':
 				format = optarg;
 				break;
+
 			case 'h':			/* server host */
 				pghost = optarg;
 				break;
+
 			case 'i':			/* ignore database version mismatch */
 				ignore_version = true;
 				break;
+
 			case 'n':			/* Do not force double-quotes on
 								 * identifiers */
 				force_quotes = false;
 				break;
+
 			case 'N':			/* Force double-quotes on identifiers */
 				force_quotes = true;
 				break;
+
 			case 'o':			/* Dump oids */
 				oids = true;
 				break;
+
+
 			case 'O':			/* Don't reconnect to match owner */
 				outputNoOwner = 1;
 				break;
+
 			case 'p':			/* server port */
 				pgport = optarg;
 				break;
+
 			case 'R':			/* No reconnect */
 				outputNoReconnect = 1;
 				break;
+
 			case 's':			/* dump schema only */
 				schemaOnly = true;
 				break;
+
 			case 'S':			/* Username for superuser in plain text output */
 				outputSuperuser = strdup(optarg);
 				break;
+
 			case 't':			/* Dump data for this table only */
 				{
 					int			i;
@@ -787,22 +812,28 @@ main(int argc, char **argv)
 					}
 				}
 				break;
+
 			case 'u':
 				use_password = true;
 				break;
+
 			case 'v':			/* verbose */
 				g_verbose = true;
 				break;
+
 			case 'x':			/* skip ACL dump */
 				aclsSkip = true;
 				break;
+
 			case 'Z':			/* Compression Level */
 				compressLevel = atoi(optarg);
 				break;
+
 			case 'V':
 				version();
 				exit(0);
 				break;
+
 			case '?':
 
 				/*
@@ -837,6 +868,14 @@ main(int argc, char **argv)
 	{
 		fprintf(stderr,
 				"%s: 'Schema Only' and 'Data Only' are incompatible options.\n",
+				progname);
+		exit(1);
+	}
+
+	if (outputBlobs && (tablename != NULL) )
+	{
+		fprintf(stderr,
+				"%s: BLOB output is not supported for a single table. Use a full dump instead.\n",
 				progname);
 		exit(1);
 	}
@@ -1713,6 +1752,7 @@ getFuncs(int *numFuncs)
 	int			i_prosrc;
 	int			i_probin;
 	int			i_iscachable;
+	int			i_isstrict;
 	int			i_usename;
 
 	/* find all user-defined funcs */
@@ -1721,7 +1761,7 @@ getFuncs(int *numFuncs)
 		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
 					  "proretset, proargtypes, prosrc, probin, "
 					  "(select usename from pg_user where proowner = usesysid) as usename, "
-					  "proiscachable "
+					  "proiscachable, proisstrict "
 					  "from pg_proc "
 				 "where pg_proc.oid > '%u'::oid",
 					  g_last_builtin_oid);
@@ -1753,6 +1793,7 @@ getFuncs(int *numFuncs)
 	i_prosrc = PQfnumber(res, "prosrc");
 	i_probin = PQfnumber(res, "probin");
 	i_iscachable = PQfnumber(res, "proiscachable");
+	i_isstrict = PQfnumber(res, "proisstrict");
 	i_usename = PQfnumber(res, "usename");
 
 	for (i = 0; i < ntups; i++)
@@ -1769,6 +1810,7 @@ getFuncs(int *numFuncs)
 		finfo[i].lang = atoi(PQgetvalue(res, i, i_prolang));
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		finfo[i].iscachable = (strcmp(PQgetvalue(res, i, i_iscachable),"t") == 0);
+		finfo[i].isstrict = (strcmp(PQgetvalue(res, i, i_isstrict),"t") == 0);
 
 		if (strlen(finfo[i].usename) == 0)
 			fprintf(stderr, "WARNING: owner of function '%s' appears to be invalid\n",
@@ -1819,7 +1861,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	int			i_relchecks;
 	int			i_reltriggers;
 	int			i_relhasindex;
-	int			i_viewdef;
 
 	char		relkindview[2];
 
@@ -1839,9 +1880,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	appendPQExpBuffer(query,
 			   "SELECT pg_class.oid, relname, relkind, relacl, "
 					  "(select usename from pg_user where relowner = usesysid) as usename, "
-					  "relchecks, reltriggers, relhasindex, "
-					  "Case When relkind = '%c' then pg_get_viewdef(relname) "
-					  "Else NULL End as viewdef "
+					  "relchecks, reltriggers, relhasindex "
 					  "from pg_class "
 					  "where relname !~ '^pg_' "
 					  "and relkind in ('%c', '%c', '%c') "
@@ -1872,7 +1911,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	i_relchecks = PQfnumber(res, "relchecks");
 	i_reltriggers = PQfnumber(res, "reltriggers");
 	i_relhasindex = PQfnumber(res, "relhasindex");
-	i_viewdef = PQfnumber(res, "viewdef");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -1883,15 +1921,51 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		tblinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		tblinfo[i].ntrig = atoi(PQgetvalue(res, i, i_reltriggers));
-		if (strcmp(PQgetvalue(res, i, i_relkind), relkindview) == 0) {
-			tblinfo[i].viewdef = strdup(PQgetvalue(res, i, i_viewdef));
-		} else {
-			tblinfo[i].viewdef = NULL;
-		}
 
 		if (strlen(tblinfo[i].usename) == 0)
 			fprintf(stderr, "WARNING: owner of table '%s' appears to be invalid\n",
 						tblinfo[i].relname);
+
+		/* Get view definition */
+		if (strcmp(PQgetvalue(res, i, i_relkind), relkindview) == 0)
+		{
+			PGresult   *res2;
+
+			resetPQExpBuffer(query);
+			appendPQExpBuffer(query, "SELECT pg_get_viewdef('%s') as viewdef ", tblinfo[i].relname);
+			res2 = PQexec(g_conn, query->data);
+			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
+			{
+				fprintf(stderr, "getTables(): SELECT (for VIEW DEFINITION) failed.  "
+							"Explanation from backend: %s",
+							PQerrorMessage(g_conn));
+				exit_nicely(g_conn);
+			}
+
+			if (PQntuples(res2) != 1) 
+			{
+				if (PQntuples(res2) < 1)
+				{
+					fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned no definitions",
+								tblinfo[i].relname);
+				} else {
+					fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned more than 1 definition",
+								tblinfo[i].relname);
+				}
+				exit_nicely(g_conn);
+			}
+
+			tblinfo[i].viewdef = strdup(PQgetvalue(res2, 0, 0));
+
+			if (strlen(tblinfo[i].viewdef) == 0) 
+			{
+				fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned empty definition",
+							tblinfo[i].relname);
+				exit_nicely(g_conn);
+			}
+		}
+		else
+			tblinfo[i].viewdef = NULL;
 
 		/*
 		 * Exclude inherited CHECKs from CHECK constraints total. If a
@@ -2888,6 +2962,10 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	int			i_lanname;
 	char		query[256];
 
+	char		*listSep;
+	char		*listSepComma = ",";
+	char		*listSepNone = "";
+
 	if (finfo[i].dumped)
 		return;
 	else
@@ -2961,9 +3039,21 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 					  findTypeByOid(tinfo, numTypes, finfo[i].prorettype, zeroAsOpaque),
 					  asPart->data, func_lang);
 
-	if (finfo[i].iscachable) /* OR in new attrs here */
+	if (finfo[i].iscachable || finfo[i].isstrict) /* OR in new attrs here */
 	{
-		appendPQExpBuffer(q, " WITH (iscachable)");
+		appendPQExpBuffer(q, " WITH (");
+		listSep = listSepNone;
+
+		if (finfo[i].iscachable) {
+			appendPQExpBuffer(q, "%s iscachable", listSep);
+			listSep = listSepComma;
+		}
+
+		if (finfo[i].isstrict) {
+			appendPQExpBuffer(q, "%s isstrict", listSep);
+			listSep = listSepComma;
+		}
+		appendPQExpBuffer(q, " )");
 	}
 
 	appendPQExpBuffer(q, ";\n");
