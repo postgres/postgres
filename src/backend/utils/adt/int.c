@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.20 1999/02/13 23:19:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.21 1999/07/09 15:09:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_LIMITS
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
 
