@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.25 2000/12/08 00:03:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.26 2001/02/09 03:26:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -46,19 +46,19 @@
 #include "plpgsql.h"
 #include "pl.tab.h"
 
-#include "executor/spi.h"
-#include "commands/trigger.h"
-#include "utils/builtins.h"
-#include "fmgr.h"
 #include "access/heapam.h"
-
-#include "utils/syscache.h"
 #include "catalog/catname.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_attrdef.h"
+#include "commands/trigger.h"
+#include "executor/spi.h"
+#include "fmgr.h"
+#include "parser/gramparse.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 
 /* ----------
@@ -83,13 +83,6 @@ char	   *plpgsql_error_funcname;
 int			plpgsql_DumpExecTree = 0;
 
 PLpgSQL_function *plpgsql_curr_compile;
-
-
-/* ----------
- * Local function declarations
- * ----------
- */
-static char *xlateSqlType(char *name);
 
 
 /* ----------
@@ -1386,34 +1379,3 @@ plpgsql_yyerror(const char *s)
 	plpgsql_comperrinfo();
 	elog(ERROR, "%s at or near \"%s\"", s, plpgsql_yytext);
 }
-
-
-/* ----------
- * xlateSqlType()
- * Convert alternate type names to internal Postgres types.
- *
- * Stolen from backend's main parser
- * ----------
- */
-static char *
-xlateSqlType(char *name)
-{
-	if ((strcmp(name,"int") == 0)
-		|| (strcmp(name,"integer") == 0))
-		return "int4";
-	else if (strcmp(name, "smallint") == 0)
-		return "int2";
-	else if ((strcmp(name, "real") == 0)
-			 || (strcmp(name, "float") == 0))
-		return "float8";
-	else if (strcmp(name, "decimal") == 0)
-		return "numeric";
-	else if (strcmp(name, "datetime") == 0)
-		return "timestamp";
-	else if (strcmp(name, "timespan") == 0)
-		return "interval";
-	else if (strcmp(name, "boolean") == 0)
-		return "bool";
-	else
-		return name;
-} /* xlateSqlType() */

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.219 2001/01/24 19:43:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.220 2001/02/09 03:26:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -81,8 +81,6 @@ static int	pfunc_num_args;
  */
 /*#define __YYSCLASS*/
 
-static char *xlateSqlFunc(char *);
-static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
@@ -5879,7 +5877,7 @@ makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
  * is a temporary expedient for pre-7.0 to 7.0 compatibility;
  * these should go away for v7.1.
  */
-static char *
+char *
 xlateSqlFunc(char *name)
 {
 	if (strcmp(name,"character_length") == 0)
@@ -5906,7 +5904,7 @@ xlateSqlFunc(char *name)
  * the undocumented "lztext" type in 7.0.  This can go away in 7.2 or later
  * - tgl 2000-07-30
  */
-static char *
+char *
 xlateSqlType(char *name)
 {
 	if ((strcmp(name,"int") == 0)
