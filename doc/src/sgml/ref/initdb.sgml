@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.14 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.15 2001/01/20 22:09:24 tgl Exp $
 Postgres documentation
 -->
 
@@ -41,7 +41,6 @@ Postgres documentation
     <arg>-L <replaceable>directory</replaceable></arg>
     <group><arg>--noclean</arg><arg>-n</arg></group>
     <group><arg>--debug</arg><arg>-d</arg></group>
-    <group><arg>--template</arg><arg>-t</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -58,8 +57,8 @@ Postgres documentation
   <para>
    Creating a database system consists of creating the directories in which
    the database data will live, generating the shared catalog tables 
-   (tables that do not belong to any particular database), and
-   creating the <literal>template1</literal>
+   (tables that belong to the whole cluster rather than to any particular
+   database), and creating the <literal>template1</literal>
    database.  When you create a new database, everything in the
    <literal>template1</literal> database is copied.
    It contains catalog tables filled in for things like the
@@ -67,8 +66,9 @@ Postgres documentation
   </para>
 
   <para>
-   You must not execute <application>initdb</application> as root. This is
-   because you cannot run the database server as root either, but the
+   You must not execute <application>initdb</application> as root; it must
+   be run by the Unix user account that will run the database server.
+   This is because you cannot run the database server as root either, but the
    server needs to have access to the files <application>initdb</application>
    creates. Furthermore, during the initialization phase, when there are no
    users and no access controls installed, <productname>Postgres</productname>
@@ -78,10 +78,14 @@ Postgres documentation
   </para>
 
   <para>
-   Although <application>initdb</application> will attempt to create the respective
-   data directory, chances are that it won't have the permission to do so. Thus
-   it is a good idea to create the data directory before running <application>initdb</application>
-   <emphasis>and</emphasis> to hand over the ownership of it to the database superuser.
+   Although <application>initdb</application> will attempt to create the
+   specified data directory, often it won't have permission to do so,
+   since the parent of the desired data directory is often a root-owned
+   directory.  To set up an arrangement like this, create an empty data
+   directory as root, then use <application>chown</application> to hand over
+   ownership of that directory to the database user account, then
+   <application>su</application> to become the database user, and
+   finally run <application>initdb</application> as the database user.
   </para>
 
   <refsect2>
@@ -96,7 +100,7 @@ Postgres documentation
        <para>
         This option specifies where in the file system the database
         should be stored. This is the only information required by
-        <application>initdb</application>, but you can avoid it by
+        <application>initdb</application>, but you can avoid writing it by
         setting the <envar>PGDATA</envar> environment variable, which
         can be convenient since the database server
         (<filename>postmaster</filename>) can find the database
@@ -125,7 +129,7 @@ Postgres documentation
       <listitem>
        <para>
         Makes <application>initdb</application> prompt for a password
-        of the database superuser. If you don't plan on using password
+        to give the database superuser. If you don't plan on using password
         authentication, this is not important.  Otherwise you won't be
         able to use password authentication until you have a password
         set up.
@@ -167,36 +171,14 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--template</term>
-      <term>-t</term>
-      <listitem>
-       <para>
-	Replace the <literal>template1</literal>
-	database in an existing database system, and don't touch anything else.
-	This is useful when you need to upgrade your <literal>template1</literal>
-	database using <application>initdb</application>
-	from a newer release of <productname>Postgres</productname>, 
-	or when your <literal>template1</literal>
-	database has become corrupted by some system problem.  Normally the
-	contents of <literal>template1</literal>
-	remain constant throughout the life of the database system.  You can't
-	destroy anything by running <application>initdb</application>
-	with the 
-	<option>--template</option>
-	option.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term>--noclean</term>
       <term>-n</term>
       <listitem>
        <para>
 	By default, when <application>initdb</application>
 	determines that an error prevented it from completely creating the database
-	system, it removes any files it may have created before determining
-	that it can't finish the job. This option inhibits any tidying-up and is
+	system, it removes any files it may have created before discovering
+	that it can't finish the job. This option inhibits tidying-up and is
 	thus useful for debugging.
        </para>
       </listitem>
@@ -211,7 +193,7 @@ Postgres documentation
         messages of lesser interest for the general public.
 	The bootstrap backend is the program <application>initdb</application>
 	uses to create the catalog tables.  This option generates a tremendous
-	amount of output.
+	amount of extremely boring output.
        </para>
       </listitem>
      </varlistentry>

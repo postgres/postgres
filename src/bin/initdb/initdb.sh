@@ -15,16 +15,14 @@
 # changed to add site-local standard data.  Either one can be copied
 # to produce a new database.
 #
-# Optionally, we can skip creating the complete database cluster and
-# just create (or replace) the template databases.
-#
-# To create all those things, we run the postgres (backend) program and
-# feed it data from the bki files that were installed.
+# To create template1, we run the postgres (backend) program and
+# feed it data from the bki files that were installed.  template0 is
+# made just by copying the completed template1.
 #
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.119 2001/01/04 17:25:09 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.120 2001/01/20 22:09:24 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -38,7 +36,7 @@ exit_nicely(){
     echo 1>&2
     echo "$CMDNAME failed." 1>&2
     if [ "$noclean" != yes ]; then
-        if [ "$template_only" != yes ] && [ "$made_new_pgdata" = yes ]; then
+        if [ "$made_new_pgdata" = yes ]; then
             echo "Removing $PGDATA." 1>&2
             rm -rf "$PGDATA" || echo "Failed." 1>&2
         fi
@@ -169,7 +167,6 @@ MULTIBYTEID=0
 # Set defaults:
 debug=
 noclean=
-template_only=
 show_setting=
 
 # Note: There is a single compelling reason that the name of the database
@@ -202,10 +199,6 @@ do
                 noclean=yes
                 echo "Running with noclean mode on. Mistakes will not be cleaned up."
                 ;;
-        --template|-t)
-                template_only=yes
-                echo "Updating template0 and template1 databases only."
-                ;;
 # The sysid of the database superuser. Can be freely changed.
         --sysid|-i)
                 POSTGRES_SUPERUSERID="$2"
@@ -232,7 +225,7 @@ do
         -D*)
                 PGDATA=`echo $1 | sed 's/^-D//'`
                 ;;
-# The directory where the database templates are stored. Normally
+# The directory where the .bki input files are stored. Normally
 # they are in PREFIX/share and this option should be unnecessary.
         -L)
                 datadir="$2"
@@ -278,7 +271,6 @@ if [ "$usage" ]; then
     echo "  -i, --sysid SYSID           Database sysid for the superuser"
     echo "Less commonly used options: "
     echo "  -L DIRECTORY                Where to find the input files"
-    echo "  -t, --template              Re-initialize template databases only"
     echo "  -d, --debug                 Generate lots of debugging output"
     echo "  -n, --noclean               Do not clean up after errors"
     echo
@@ -400,16 +392,13 @@ umask 077
 pgdata_contents=`ls -A "$PGDATA" 2>/dev/null`
 if [ x"$pgdata_contents" != x ]
 then
-    if [ "$template_only" != yes ]
-    then
-      (
-        echo "$CMDNAME: The directory $PGDATA exists but is not empty."
-        echo "If you want to create a new database system, either remove or empty"
-        echo "the directory $PGDATA or run initdb with an argument"
-        echo "other than $PGDATA."
-      ) 1>&2
-        exit 1
-    fi
+    (
+      echo "$CMDNAME: The directory $PGDATA exists but is not empty."
+      echo "If you want to create a new database system, either remove or empty"
+      echo "the directory $PGDATA or run initdb with"
+      echo "an argument other than $PGDATA."
+    ) 1>&2
+    exit 1
 else
     if [ ! -d "$PGDATA" ]; then
         echo "Creating directory $PGDATA"
@@ -470,31 +459,25 @@ echo $short_version > "$PGDATA"/base/1/PG_VERSION || exit_nicely
 #
 # CREATE GLOBAL TABLES
 #
-# XXX --- I do not believe the "template_only" option can actually work.
-# With this coding, it'll fail to make entries for pg_shadow etc. in
-# template1 ... tgl 11/2000
 
-if [ "$template_only" != yes ]
-then
-    echo "Creating global relations in $PGDATA/global"
-    [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1"
+echo "Creating global relations in $PGDATA/global"
 
-    cat "$GLOBAL_BKI" \
-    | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
-          -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
-          -e "s/ENCODING/$MULTIBYTEID/g" \
-    | "$PGPATH"/postgres $BACKENDARGS template1 \
-    || exit_nicely
+[ "$debug" = yes ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1"
 
-    echo $short_version > "$PGDATA/PG_VERSION" || exit_nicely
+cat "$GLOBAL_BKI" \
+| sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
+      -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
+      -e "s/ENCODING/$MULTIBYTEID/g" \
+| "$PGPATH"/postgres $BACKENDARGS template1 \
+|| exit_nicely
 
-    cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf              || exit_nicely
-    cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
-    cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
-    chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
+echo $short_version > "$PGDATA/PG_VERSION" || exit_nicely
+
+cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf              || exit_nicely
+cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
+cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
+chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 	"$PGDATA"/postgresql.conf
-
-fi
 
 
 ##########################################################################
