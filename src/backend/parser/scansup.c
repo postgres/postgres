@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.16 1999/07/17 20:17:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.17 1999/09/11 22:26:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,23 +25,25 @@
  * if the string passed in has escaped codes, map the escape codes to actual
  * chars
  *
- * the string returned is a pointer to static storage and should NOT
- * be freed by the caller.
+ * the string returned is palloc'd and should eventually be pfree'd by the
+ * caller!
  * ----------------
  */
 
 char *
 scanstr(char *s)
 {
-	static char newStr[MAX_PARSE_BUFFER];
+	char	   *newStr;
 	int			len,
 				i,
 				j;
 
 	if (s == NULL || s[0] == '\0')
-		return s;
+		return pstrdup("");
 
 	len = strlen(s);
+
+	newStr = palloc(len+1);		/* string cannot get longer */
 
 	for (i = 0, j = 0; i < len; i++)
 	{

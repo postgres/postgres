@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.53 1999/09/07 00:13:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.54 1999/09/11 22:26:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ other			.
 				}
 <xq>{xqstop}	{
 					BEGIN(INITIAL);
-					yylval.str = pstrdup(scanstr(literal));
+					yylval.str = scanstr(literal);
 					return SCONST;
 				}
 <xq>{xqdouble}	|

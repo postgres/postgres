@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.14 1999/07/17 20:16:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.15 1999/09/11 22:26:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,12 +98,17 @@ insert			{ return(INSERT_TUPLE); }
 					return(ID);
 				}
 {id}			{
-					yylval.ival = EnterString(scanstr((char*)yytext));
+					char   *newid = scanstr((char*)yytext);
+					yylval.ival = EnterString(newid);
+					pfree(newid);
 					return(ID);
 				}
 {sid}			{
+					char   *newid;
 					yytext[strlen(yytext)-1] = '\0'; /* strip off quotes */
-					yylval.ival = EnterString(scanstr((char*)yytext+1));
+					newid = scanstr((char*)yytext+1);
+					yylval.ival = EnterString(newid);
+					pfree(newid);
 					yytext[strlen(yytext)] = '"'; /* restore quotes */
 					return(ID);
 				}
