@@ -12,17 +12,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.71 2001/01/14 05:08:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.72 2001/01/22 17:05:50 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
-
 #include <ctype.h>
 #include <sys/types.h>
 #include <limits.h>
 #include <errno.h>
 
+#include "postgres.h"
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"

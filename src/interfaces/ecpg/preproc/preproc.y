@@ -294,7 +294,7 @@ make_name(void)
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_action
 %type  <str>	trim_list in_expr substr_for attr attrs drop_behavior
-%type  <str>	Typename SimpleTypename GenericType Numeric opt_float opt_numeric
+%type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate datetime opt_timezone opt_interval table_ref
 %type  <str>	row_expr row_descriptor row_list ConstDatetime opt_chain
@@ -313,7 +313,7 @@ make_name(void)
 %type  <str>    index_list func_index index_elem opt_class access_method_clause
 %type  <str>    index_opt_unique IndexStmt func_return ConstInterval
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
-%type  <str>    def_elem def_list definition DefineStmt
+%type  <str>    def_elem def_list definition DefineStmt select_with_parens
 %type  <str>    opt_instead event event_object RuleActionList opt_using
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes sysid_clause
@@ -2066,16 +2066,7 @@ RuleActionMulti:  RuleActionMulti ';' RuleActionStmtOrEmpty
 				{ $$ = cat2_str($1, make_str(";")); }
 		;
 
-/*
- * Allowing RuleActionStmt to be a SelectStmt creates an ambiguity:
- * is the RuleActionList "((SELECT foo))" a standalone RuleActionStmt,
- * or a one-entry RuleActionMulti list?  We don't really care, but yacc
- * wants to know.  We use operator precedence to resolve the ambiguity:
- * giving this rule a higher precedence than ')' will force a reduce
- * rather than shift decision, causing the one-entry-list interpretation
- * to be chosen.
- */    
-RuleActionStmt:   SelectStmt %prec TYPECAST      
+RuleActionStmt:   SelectStmt
 		| InsertStmt
                 | UpdateStmt
                 | DeleteStmt
@@ -2491,11 +2482,17 @@ opt_cursor:  BINARY             	{ $$ = make_str("binary"); }
  *
  *****************************************************************************/
 
-SelectStmt: select_no_parens                    %prec TYPECAST
+SelectStmt: select_no_parens                    %prec UMINUS
+		{ $$ = $1; }
+	|	select_with_parens		%prec UMINUS
+		{ $$ = $1; }
+	;
+
+select_with_parens: '(' select_no_parens ')' 
                         {
-                                $$ = $1;
+                                $$ = cat_str(3, make_str("("), $2, make_str(")"));
                         }
-                | '(' SelectStmt ')'
+                | '(' select_with_parens ')'
                         {
                                 $$ = cat_str(3, make_str("("), $2, make_str(")"));
                         }
@@ -2524,9 +2521,9 @@ select_clause: simple_select
                                 $$ = $1;
 
                         }
-                | '(' SelectStmt ')' 
+                | select_with_parens 
                         {
-				$$ = cat_str(3, make_str("("), $2, make_str(")")); 
+				$$ = $1; 
                         }
 		;
 
@@ -2745,10 +2742,6 @@ from_list:  from_list ',' table_ref	{ $$ = cat_str(3, $1, make_str(","), $3); }
  * between table_ref := '(' joined_table ')' alias_clause
  * and joined_table := '(' joined_table ')'.  So, we must have the
  * redundant-looking productions here instead.
- *
- * Note that the SQL spec does not permit a subselect (<derived_table>)
- * without an alias clause, so we don't either.  This avoids the problem
- * of needing to invent a refname for an unlabeled subselect.
  */        
 table_ref:  relation_expr 
                 {
@@ -2758,9 +2751,13 @@ table_ref:  relation_expr
 		{
 			$$= cat2_str($1, $2);
 		}
-	| '(' SelectStmt ')' alias_clause 
+	| select_with_parens
 		{
-			$$=cat_str(4, make_str("("), $2, make_str(")"), $4);
+			mmerror(ET_ERROR, "sub-SELECT in FROM must have an alias");	
+		}
+	| select_with_parens alias_clause 
+		{
+			$$=cat2_str($1, $2);
 		}
 	| joined_table  
 		{
@@ -2856,12 +2853,12 @@ relation_expr:	relation_name
 					/* normal relations */
 					$$ = $1;
 				}
-		| relation_name '*'				  %prec '='
+		| relation_name '*'
 				{
 					/* inheritance query */
 					$$ = cat2_str($1, make_str("*"));
 				}
-		| ONLY relation_name 				  %prec '='
+		| ONLY relation_name
 				{
 					/* inheritance query */
             			        $$ = cat2_str(make_str("ONLY "), $2);
@@ -2928,7 +2925,7 @@ SimpleTypename:  ConstTypename	{ $$ = $1; }
                | ConstInterval	{ $$ = $1; }
                ;  
 
-ConstTypename:  GenericType	{ $$ = $1; }
+ConstTypename:  Generic	{ $$ = $1; }
 		| ConstDatetime	{ $$ = $1; }
 		| Numeric	{ $$ = $1; }
 		| Geometric	{ $$ = $1; }
@@ -2936,7 +2933,14 @@ ConstTypename:  GenericType	{ $$ = $1; }
 		| Character	{ $$ = $1; }
 		;
 
-GenericType:  ident				{ $$ = $1; }
+Generic:  generic
+				{
+					$$ = $1;
+				}
+		;
+
+generic:  ident					{ $$ = $1; }
+		| TYPE_P			{ $$ = make_str("type"); }
 		| ECPGKeywords			{ $$ = $1; }
 		| ECPGTypeName			{ $$ = $1; }
 		;
@@ -3170,21 +3174,21 @@ opt_interval:  datetime					{ $$ = $1; }
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
  */
-row_expr: '(' row_descriptor ')' IN '(' SelectStmt ')'
+row_expr: '(' row_descriptor ')' IN select_with_parens
 				{
-					$$ = cat_str(5, make_str("("), $2, make_str(") in ("), $6, make_str(")"));
+					$$ = cat_str(4, make_str("("), $2, make_str(") in "), $5);
 				}
-		| '(' row_descriptor ')' NOT IN '(' SelectStmt ')'
+		| '(' row_descriptor ')' NOT IN select_with_parens
 				{
-					$$ = cat_str(5, make_str("("), $2, make_str(") not in ("), $7, make_str(")"));
+					$$ = cat_str(4, make_str("("), $2, make_str(") not in "), $6);
 				}
-		| '(' row_descriptor ')' all_Op sub_type  '(' SelectStmt ')'
+		| '(' row_descriptor ')' all_Op sub_type select_with_parens
 				{
-					$$ = cat_str(8, make_str("("), $2, make_str(")"), $4, $5, make_str("("), $7, make_str(")"));
+					$$ = cat_str(6, make_str("("), $2, make_str(")"), $4, $5, $6);
 				}
-		| '(' row_descriptor ')' all_Op '(' SelectStmt ')'
+		| '(' row_descriptor ')' all_Op select_with_parens
 				{
-					$$ = cat_str(7, make_str("("), $2, make_str(")"), $4, make_str("("), $6, make_str(")"));
+					$$ = cat_str(5, make_str("("), $2, make_str(")"), $4, $5);
 				}
 		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
 				{
@@ -3349,17 +3353,17 @@ a_expr:  c_expr
 				{
 					$$ = cat_str(5, $1, make_str("not between"), $4, make_str("and"), $6); 
 				}
-		| a_expr IN '(' in_expr ')'
+		| a_expr IN in_expr 
 				{
-					$$ = cat_str(4, $1, make_str(" in ("), $4, make_str(")")); 
+					$$ = cat_str(3, $1, make_str(" in"), $3); 
 				}
-		| a_expr NOT IN '(' in_expr ')'
+		| a_expr NOT IN in_expr
 				{
-					$$ = cat_str(4, $1, make_str(" not in ("), $5, make_str(")")); 
+					$$ = cat_str(3, $1, make_str(" not in "), $4); 
 				}
-		| a_expr all_Op sub_type '(' SelectStmt ')'
+		| a_expr all_Op sub_type select_with_parens
 				{
-					$$ = cat_str(6, $1, $2, $3, make_str("("), $5, make_str(")")); 
+					$$ = cat_str(4, $1, $2, $3, $4); 
 				}
 		| row_expr
 				{       $$ = $1; }
@@ -3494,10 +3498,10 @@ c_expr:  attr
 				{	$$ = cat_str(3, make_str("trim(trailing"), $4, make_str(")")); }
 		| TRIM '(' trim_list ')'
 				{	$$ = cat_str(3, make_str("trim("), $3, make_str(")")); }
-		| '(' select_no_parens ')'
-				{	$$ = cat_str(3, make_str("("), $2, make_str(")")); }
-		| EXISTS '(' SelectStmt ')'
-				{	$$ = cat_str(3, make_str("exists("), $3, make_str(")")); }
+		| select_with_parens	%prec UMINUS 
+				{	$$ = $1; }
+		| EXISTS select_with_parens
+				{	$$ = cat2_str(make_str("exists"), $2); }
 		;
 /* 
  * This used to use ecpg_expr, but since there is no shift/reduce conflict
@@ -3583,12 +3587,12 @@ trim_list:  a_expr FROM expr_list
 				{ $$ = $1; }
 		;
 
-in_expr:  SelectStmt
+in_expr:  select_with_parens
 				{
 					$$ = $1;
 				}
-		| in_expr_nodes
-				{	$$ = $1; }
+		| '(' in_expr_nodes ')'
+				{	$$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		;
 
 in_expr_nodes:  a_expr
@@ -5069,7 +5073,6 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| TRIGGER			{ $$ = make_str("trigger"); }
 	| TRUNCATE			{ $$ = make_str("truncate"); }
 	| TRUSTED			{ $$ = make_str("trusted"); }
-	| TYPE_P			{ $$ = make_str("type"); }
 	| UNLISTEN			{ $$ = make_str("unlisten"); }
 	| UNTIL				{ $$ = make_str("until"); }
 	| UPDATE			{ $$ = make_str("update"); }
@@ -5103,7 +5106,6 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
 		| ANALYSE       { $$ = make_str("analyse"); }
 		| ANALYZE       { $$ = make_str("analyze"); }
-		| AND		{ $$ = make_str("and"); }
 		| ANY		{ $$ = make_str("any"); }
 		| ASC		{ $$ = make_str("asc"); }
 	    	| BETWEEN       { $$ = make_str("between"); }
@@ -5198,7 +5200,6 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| TABLE		{ $$ = make_str("table"); }
 		| THEN          { $$ = make_str("then"); }
 		| TO		{ $$ = make_str("to"); }
-		| TRAILING	{ $$ = make_str("trailing"); }
 		| TRANSACTION	{ $$ = make_str("transaction"); }
 		| TRIM		{ $$ = make_str("trim"); }
 		| TRUE_P	{ $$ = make_str("true"); }
