@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.34 2002/07/30 16:40:34 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.35 2002/08/17 04:06:48 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -24,10 +24,8 @@ WANTED_DIRS = \
 		miscutil	\
 		noupdate	\
 		oid2name	\
-		pg_controldata	\
 		pg_dumplo	\
 		pg_logger	\
-		pg_resetxlog	\
 		pgbench		\
 		pgcrypto	\
 		pgstattuple	\

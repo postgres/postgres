@@ -128,10 +128,6 @@ oracle -
 	Converts Oracle database schema to PostgreSQL
 	by Gilles Darold <gilles@darold.net>
 
-pg_controldata -
-	Dump contents of pg_control (database master file)
-	by Oliver Elphick <olly@lfix.co.uk>
-
 pg_dumplo -
 	Dump large objects
 	by Karel Zak <zakkr@zf.jcu.cz>
@@ -139,10 +135,6 @@ pg_dumplo -
 pg_logger -
 	Stdin-to-syslog gateway for PostgreSQL
 	by Nathan Myers <ncm@nospam.cantrip.org>
-
-pg_resetxlog -
-	Reset the WAL log (pg_xlog) to recover from crash or format change
-	by Tom Lane <tgl@sss.pgh.pa.us>
 
 pg_upgrade -
 	Upgrade from previous PostgreSQL version without pg_dump/reload
