@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include <postgres.h>
+#include <miscadmin.h>
 
 #include <storage/bufmgr.h>
 #include <storage/bufpage.h>
@@ -18,6 +19,7 @@
 #include <commands/creatinh.h>
 #include <commands/sequence.h>
 #include <utils/builtins.h>
+#include <utils/acl.h>
 
 #define SEQ_MAGIC	  0x1717
 
@@ -309,6 +311,52 @@ currval(struct varlena * seqin)
 
 	return (result);
 
+}
+
+int4
+setval(struct varlena * seqin, int4 next)
+{
+	char	*seqname = textout(seqin);
+	SeqTable	elm;
+	Buffer	buf;
+	SequenceTupleForm seq;
+	ItemPointerData iptr;
+
+#ifndef NO_SECURITY
+	if (pg_aclcheck(seqname, getpgusername(), ACL_WR) != ACLCHECK_OK)
+		elog(ERROR, "%s.setval: you don't have permissions to set sequence %s",
+			 seqname, seqname);
+#endif
+
+	/* open and WIntentLock sequence */
+	elm = init_sequence ("setval", seqname);
+	seq = read_info ("setval", elm, &buf);	/* lock page and read tuple */
+
+	if ( seq->cache_value != 1 ) {
+		elog (ERROR, "%s.setval: can't set value of sequence %s, cache != 1",
+			  seqname, seqname);
+	}
+
+	if ((next < seq->min_value) || (next > seq->max_value)) {
+		elog (ERROR, "%s.setval: value %d is of of bounds (%d,%d)",
+			  seqname, next, seq->min_value, seq->max_value);
+	}
+
+	/* save info in local cache */
+	elm->last = next;			/* last returned number */
+	elm->cached = next;			/* last cached number */
+
+	/* save info in sequence relation */
+	seq->last_value = next;		/* last fetched number */
+	seq->is_called = 't';
+
+	if ( WriteBuffer (buf) == STATUS_ERROR )
+		elog (ERROR, "%s.settval: WriteBuffer failed", seqname);
+
+	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
+	RelationUnsetSingleWLockPage (elm->rel, &iptr);
+
+	return (next);
 }
 
 static SequenceTupleForm
