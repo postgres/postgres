@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.74 2001/09/16 16:11:10 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.75 2001/11/20 00:27:13 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -103,7 +103,7 @@ utils/fmgroids.h: utils/Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc
 $(top_builddir)/src/include/parser/parse.h: $(srcdir)/parser/parse.h
 	prereqdir=`cd $(dir $<) >/dev/null && pwd` && \
 	  cd $(dir $@) && rm -f $(notdir $@) && \
-	  $(LN_S) $$prereqdir/$(notdir $<) .
+	  $(LN_S) "$$prereqdir/$(notdir $<)" .
 
 $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 	cd $(dir $@) && rm -f $(notdir $@) && \
