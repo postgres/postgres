@@ -282,7 +282,7 @@ listAllDbs(bool desc)
 		   "       pg_user.usename as \"Owner\"");
 #ifdef MULTIBYTE
 	strcat(buf,
-		   ",\n       pg_database.encoding as \"Encoding\"");
+		   ",\n       pg_encoding_to_char(pg_database.encoding) as \"Encoding\"");
 #endif
 	if (desc)
 		strcat(buf, ",\n       obj_description(pg_database.oid) as \"Description\"\n");
@@ -297,7 +297,7 @@ listAllDbs(bool desc)
 		   "       NULL as \"Owner\"");
 #ifdef MULTIBYTE
 	strcat(buf,
-		   ",\n       pg_database.encoding as \"Encoding\"");
+		   ",\n       pg_encoding_to_char(pg_database.encoding) as \"Encoding\"");
 #endif
 	if (desc)
 		strcat(buf, ",\n       obj_description(pg_database.oid) as \"Description\"\n");
