@@ -1,4 +1,5 @@
 AROPT = cr
+AWK= awk
  
 DLSUFFIX = .so
 CFLAGS_SL = -bundle -undefined suppress

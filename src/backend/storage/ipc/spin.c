@@ -14,14 +14,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.26 2000/11/28 23:27:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.27 2000/12/11 00:49:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <errno.h>
-#ifndef HAS_TEST_AND_SET
+#if !defined(HAS_TEST_AND_SET) && defined(HAVE_SYS_SEM_H)
 #include <sys/sem.h>
 #endif
 

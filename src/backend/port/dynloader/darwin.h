@@ -1,8 +1,8 @@
-/* $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.h,v 1.2 2000/11/09 19:00:50 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.h,v 1.3 2000/12/11 00:49:54 tgl Exp $ */
 
 #include "fmgr.h"
 
-void	   *pg_dlopen(const char *filename);
-PGFunction	pg_dlsym(void *handle, const char *funcname);
+void*		pg_dlopen(char *filename);
+PGFunction	pg_dlsym(void *handle, char *funcname);
 void		pg_dlclose(void *handle);
-const char *pg_dlerror(void);
+char*		pg_dlerror(void);

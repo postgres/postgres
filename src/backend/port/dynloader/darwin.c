@@ -3,14 +3,14 @@
  * available with a PostgreSQL-compatible license.  Kudos Wilfredo
  * Sánchez <wsanchez@apple.com>.
  *
- * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.3 2000/11/14 21:26:21 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.4 2000/12/11 00:49:54 tgl Exp $
  */
 
 #include "postgres.h"
 #include <mach-o/dyld.h>
 #include "dynloader.h"
 
-void *pg_dlopen(const char *filename)
+void *pg_dlopen(char *filename)
 {
 	NSObjectFileImage image;
 
@@ -26,18 +26,26 @@ void pg_dlclose(void *handle)
 	return;
 }
 
-PGFunction pg_dlsym(void *handle, const char *funcname)
+PGFunction pg_dlsym(void *handle, char *funcname)
 {
 	NSSymbol symbol;
 	char *symname = (char*)malloc(strlen(funcname)+2);
 
 	sprintf(symname, "_%s", funcname);
-	symbol = NSLookupAndBindSymbol(symname);
-	free(symname);
-	return (PGFunction) NSAddressOfSymbol(symbol);
+	if (NSIsSymbolNameDefined(symname))
+	{
+		symbol = NSLookupAndBindSymbol(symname);
+		free(symname);
+		return (PGFunction) NSAddressOfSymbol(symbol);
+	}
+	else
+	{
+		free(symname);
+		return (PGFunction)NULL;
+	}
 }
 
-const char *pg_dlerror(void)
+char *pg_dlerror(void)
 {
 	return "no error message available";
 }

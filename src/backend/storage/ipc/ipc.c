@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.56 2000/12/03 17:18:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.57 2000/12/11 00:49:52 tgl Exp $
  *
  * NOTES
  *
@@ -45,13 +45,18 @@
 #ifdef HAVE_KERNEL_OS_H
 #include <kernel/OS.h>
 #endif
-#include "miscadmin.h"
-#include "utils/memutils.h"
-#include "libpq/libpq.h"
 
 #if defined(solaris_sparc)
 #include <sys/ipc.h>
 #endif
+
+#if defined(__darwin__)
+#include "port/darwin/sem.h"
+#endif
+
+#include "miscadmin.h"
+#include "utils/memutils.h"
+#include "libpq/libpq.h"
 
 
 /*

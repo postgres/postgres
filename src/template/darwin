@@ -1,4 +1,3 @@
-# regular cpp is broken in current development releases
+# -traditional-cpp means "don't use apple's cpp-precomp" on darwin
+# this should change to -no-cpp-precomp when that flag is implemented
 CC="$CC -traditional-cpp"
-# be on safe side while they sort out their compiler
-CFLAGS=-O0

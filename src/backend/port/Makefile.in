@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.27 2000/10/20 21:03:45 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.28 2000/12/11 00:49:54 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,6 +30,10 @@ endif
 ifeq ($(PORTNAME), beos)
 OBJS += beos/SUBSYS.o
 endif
+ifeq ($(PORTNAME), darwin)
+OBJS += darwin/SUBSYS.o
+endif
+
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
@@ -45,11 +49,19 @@ beos/SUBSYS.o: beos.dir
 beos.dir:
 	$(MAKE) -C beos all
 
+darwin/SUBSYS.o: darwin.dir
+
+darwin.dir:
+	$(MAKE) -C darwin all
+
 tas.o: tas.s
 	$(CC) $(CFLAGS) -c $<
 
 distclean clean:
 	rm -f SUBSYS.o $(OBJS)
+	$(MAKE) -C beos clean
+	$(MAKE) -C darwin clean
+	$(MAKE) -C qnx4 clean
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.84 2000/11/28 23:27:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.85 2000/12/11 00:49:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.84 2000/11/28 23:27:56 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.85 2000/12/11 00:49:52 tgl Exp $
  */
 #include "postgres.h"
 
@@ -61,6 +61,10 @@
 #include <sys/sem.h>
 #endif
 
+#if defined(__darwin__)
+#include "port/darwin/sem.h"
+#endif
+
 #include "miscadmin.h"
 
 
@@ -70,6 +74,7 @@
 #endif
 
 #include "storage/proc.h"
+
 
 void		HandleDeadLock(SIGNAL_ARGS);
 static void ProcFreeAllSemaphores(void);
