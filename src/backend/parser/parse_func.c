@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.78 2000/04/12 17:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.79 2000/05/26 03:56:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,6 +271,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	Node	   *retval;
 	bool		retset;
 	bool		must_be_agg = agg_star || agg_distinct;
+	bool		could_be_agg;
 	bool		attisset = false;
 	Oid			toid = InvalidOid;
 	Expr	   *expr;
@@ -291,7 +292,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	if (nargs == 1 && !must_be_agg)
 	{
 		/* Is it a plain Relation name from the parser? */
-		if (IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel)
+		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
 		{
 			Ident	   *ident = (Ident *) first_arg;
 			RangeTblEntry *rte;
@@ -413,28 +414,31 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		}
 	}
 
-	if (nargs == 1 || must_be_agg)
+	/*
+	 * See if it's an aggregate.
+	 */
+	if (must_be_agg)
 	{
-
-		/*
-		 * See if it's an aggregate.
-		 */
-		Oid			basetype;
-		int			ncandidates;
-		CandidateList candidates;
-
 		/* We don't presently cope with, eg, foo(DISTINCT x,y) */
 		if (nargs != 1)
 			elog(ERROR, "Aggregate functions may only have one parameter");
+		/* Agg's argument can't be a relation name, either */
+		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
+			elog(ERROR, "Aggregate functions cannot be applied to relation names");
+		could_be_agg = true;
+	}
+	else
+	{
+		/* Try to parse as an aggregate if above-mentioned checks are OK */
+		could_be_agg = (nargs == 1) &&
+			!(IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel);
+	}
 
-		/*
-		 * the aggregate COUNT is a special case, ignore its base type.
-		 * Treat it as zero.   XXX mighty ugly --- FIXME
-		 */
-		if (strcmp(funcname, "count") == 0)
-			basetype = 0;
-		else
-			basetype = exprType(lfirst(fargs));
+	if (could_be_agg)
+	{
+		Oid			basetype = exprType(lfirst(fargs));
+		int			ncandidates;
+		CandidateList candidates;
 
 		/* try for exact match first... */
 		if (SearchSysCacheTuple(AGGNAME,
@@ -445,9 +449,18 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 									 fargs, agg_star, agg_distinct,
 									 precedence);
 
+		/* check for aggregate-that-accepts-any-type (eg, COUNT) */
+		if (SearchSysCacheTuple(AGGNAME,
+								PointerGetDatum(funcname),
+								ObjectIdGetDatum(0),
+								0, 0))
+			return (Node *) ParseAgg(pstate, funcname, 0,
+									 fargs, agg_star, agg_distinct,
+									 precedence);
+
 		/*
 		 * No exact match yet, so see if there is another entry in the
-		 * aggregate table which is compatible. - thomas 1998-12-05
+		 * aggregate table that is compatible. - thomas 1998-12-05
 		 */
 		ncandidates = agg_get_candidates(funcname, basetype, &candidates);
 		if (ncandidates > 0)
@@ -497,7 +510,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		Node	   *arg = lfirst(i);
 
-		if (IsA(arg, Ident) &&((Ident *) arg)->isRel)
+		if (IsA(arg, Ident) && ((Ident *) arg)->isRel)
 		{
 			RangeTblEntry *rte;
 			int			vnum;
