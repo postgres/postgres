@@ -6,13 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.2 1996/10/19 04:06:48 scrappy Exp $
+ * $Id: rel.h,v 1.3 1996/10/19 04:31:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	REL_H
 #define REL_H
 
+#include "access/tupdesc.h"
 #include "storage/fd.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
