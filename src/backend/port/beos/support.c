@@ -265,7 +265,7 @@ beos_startup(int argc, char **argv)
 
 
 
-/* The behavior of fork is borken on beos regarding shared memory. In fact
+/* The behavior of fork is broken on beos regarding shared memory. In fact
 all shared memory areas are clones in copy on write mode in the new process.
 
 We need to do a remapping of these areas. Just afer the fork we performe the

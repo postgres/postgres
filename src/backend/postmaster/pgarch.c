@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.14 2004/12/31 22:00:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.15 2005/03/10 07:14:03 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "postmaster/fork_process.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
 #include "storage/fd.h"
@@ -141,25 +142,13 @@ pgarch_start(void)
 		return 0;
 	last_pgarch_start_time = curtime;
 
-	fflush(stdout);
-	fflush(stderr);
-
-#ifdef __BEOS__
-	/* Specific beos actions before backend startup */
-	beos_before_backend_startup();
-#endif
-
 #ifdef EXEC_BACKEND
 	switch ((pgArchPid = pgarch_forkexec()))
 #else
-	switch ((pgArchPid = fork()))
+	switch ((pgArchPid = fork_process()))
 #endif
 	{
 		case -1:
-#ifdef __BEOS__
-			/* Specific beos actions */
-			beos_backend_startup_failed();
-#endif
 			ereport(LOG,
 					(errmsg("could not fork archiver: %m")));
 			return 0;
@@ -167,10 +156,6 @@ pgarch_start(void)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
-#ifdef __BEOS__
-			/* Specific beos actions after backend startup */
-			beos_backend_startup();
-#endif
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.445 2005/02/22 04:36:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.446 2005/03/10 07:14:03 neilc Exp $
  *
  * NOTES
  *
@@ -92,6 +92,8 @@
 #include <DNSServiceDiscovery/DNSServiceDiscovery.h>
 #endif
 
+#include "access/xlog.h"
+#include "bootstrap/bootstrap.h"
 #include "catalog/pg_control.h"
 #include "catalog/pg_database.h"
 #include "commands/async.h"
@@ -103,23 +105,22 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/nodes.h"
-#include "postmaster/postmaster.h"
+#include "pgstat.h"
+#include "postmaster/fork_process.h"
 #include "postmaster/pgarch.h"
+#include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
+#include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
-#include "storage/bufmgr.h"
-#include "access/xlog.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-#include "bootstrap/bootstrap.h"
-#include "pgstat.h"
 
 #ifdef EXEC_BACKEND
 #include "storage/spin.h"
@@ -1008,16 +1009,7 @@ pmdaemonize(void)
 	int			i;
 	pid_t		pid;
 
-#ifdef LINUX_PROFILE
-	struct itimerval prof_itimer;
-#endif
-
-#ifdef LINUX_PROFILE
-	/* see comments in BackendStartup */
-	getitimer(ITIMER_PROF, &prof_itimer);
-#endif
-
-	pid = fork();
+	pid = fork_process();
 	if (pid == (pid_t) -1)
 	{
 		write_stderr("%s: could not fork background process: %s\n",
@@ -1029,10 +1021,6 @@ pmdaemonize(void)
 		/* Parent should just exit, without doing any atexit cleanup */
 		_exit(0);
 	}
-
-#ifdef LINUX_PROFILE
-	setitimer(ITIMER_PROF, &prof_itimer, NULL);
-#endif
 
 	MyProcPid = PostmasterPid = getpid();		/* reset PID vars to child */
 
@@ -2382,10 +2370,6 @@ BackendStartup(Port *port)
 	Backend    *bn;				/* for backend cleanup */
 	pid_t		pid;
 
-#ifdef LINUX_PROFILE
-	struct itimerval prof_itimer;
-#endif
-
 	/*
 	 * Compute the cancel key that will be assigned to this backend. The
 	 * backend will have its own copy in the forked-off process' value of
@@ -2409,54 +2393,13 @@ BackendStartup(Port *port)
 	/* Pass down canAcceptConnections state (kluge for EXEC_BACKEND case) */
 	port->canAcceptConnections = canAcceptConnections();
 
-	/*
-	 * Flush stdio channels just before fork, to avoid double-output
-	 * problems. Ideally we'd use fflush(NULL) here, but there are still a
-	 * few non-ANSI stdio libraries out there (like SunOS 4.1.x) that
-	 * coredump if we do. Presently stdout and stderr are the only stdio
-	 * output channels used by the postmaster, so fflush'ing them should
-	 * be sufficient.
-	 */
-	fflush(stdout);
-	fflush(stderr);
-
 #ifdef EXEC_BACKEND
-
 	pid = backend_forkexec(port);
-
 #else							/* !EXEC_BACKEND */
-
-#ifdef LINUX_PROFILE
-
-	/*
-	 * Linux's fork() resets the profiling timer in the child process. If
-	 * we want to profile child processes then we need to save and restore
-	 * the timer setting.  This is a waste of time if not profiling,
-	 * however, so only do it if commanded by specific -DLINUX_PROFILE
-	 * switch.
-	 */
-	getitimer(ITIMER_PROF, &prof_itimer);
-#endif
-
-#ifdef __BEOS__
-	/* Specific beos actions before backend startup */
-	beos_before_backend_startup();
-#endif
-
-	pid = fork();
-
+	pid = fork_process();
 	if (pid == 0)				/* child */
 	{
-#ifdef LINUX_PROFILE
-		setitimer(ITIMER_PROF, &prof_itimer, NULL);
-#endif
-
-#ifdef __BEOS__
-		/* Specific beos backend startup actions */
-		beos_backend_startup();
-#endif
 		free(bn);
-
 		proc_exit(BackendRun(port));
 	}
 #endif   /* EXEC_BACKEND */
@@ -2466,10 +2409,6 @@ BackendStartup(Port *port)
 		/* in parent, fork failed */
 		int			save_errno = errno;
 
-#ifdef __BEOS__
-		/* Specific beos backend startup actions */
-		beos_backend_startup_failed();
-#endif
 		free(bn);
 		errno = save_errno;
 		ereport(LOG,
@@ -2945,7 +2884,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	argv[2] = tmpfilename;
 
 	/* Fire off execv in child */
-	if ((pid = fork()) == 0)
+	if ((pid = fork_process()) == 0)
 	{
 		if (execv(postgres_exec_path, argv) < 0)
 		{
@@ -3465,10 +3404,6 @@ StartChildProcess(int xlop)
 	int			ac = 0;
 	char		xlbuf[32];
 
-#ifdef LINUX_PROFILE
-	struct itimerval prof_itimer;
-#endif
-
 	/*
 	 * Set up command-line arguments for subprocess
 	 */
@@ -3488,41 +3423,13 @@ StartChildProcess(int xlop)
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));
 
-	/*
-	 * Flush stdio channels (see comments in BackendStartup)
-	 */
-	fflush(stdout);
-	fflush(stderr);
-
 #ifdef EXEC_BACKEND
-
 	pid = postmaster_forkexec(ac, av);
-
 #else							/* !EXEC_BACKEND */
-
-#ifdef LINUX_PROFILE
-	/* see comments in BackendStartup */
-	getitimer(ITIMER_PROF, &prof_itimer);
-#endif
-
-#ifdef __BEOS__
-	/* Specific beos actions before backend startup */
-	beos_before_backend_startup();
-#endif
-
-	pid = fork();
+	pid = fork_process();
 
 	if (pid == 0)				/* child */
 	{
-#ifdef LINUX_PROFILE
-		setitimer(ITIMER_PROF, &prof_itimer, NULL);
-#endif
-
-#ifdef __BEOS__
-		/* Specific beos actions after backend startup */
-		beos_backend_startup();
-#endif
-
 		IsUnderPostmaster = true;		/* we are a postmaster subprocess
 										 * now */
 
@@ -3546,11 +3453,6 @@ StartChildProcess(int xlop)
 	{
 		/* in parent, fork failed */
 		int			save_errno = errno;
-
-#ifdef __BEOS__
-		/* Specific beos actions before backend startup */
-		beos_backend_startup_failed();
-#endif
 		errno = save_errno;
 		switch (xlop)
 		{
