@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $PostgreSQL: pgsql/config/c-library.m4,v 1.30 2005/02/22 03:55:50 momjian Exp $
+# $PostgreSQL: pgsql/config/c-library.m4,v 1.31 2005/02/24 01:34:45 tgl Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -273,25 +273,23 @@ esac])# PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT
 # Determine if printf supports %1$ argument selection, e.g. %5$ selects
 # the fifth argument after the printf print string.
 # This is not in the C99 standard, but in the Single Unix Specification (SUS).
-# It is used in our langauge translation strings.
+# It is used in our language translation strings.
 #
 AC_DEFUN([PGAC_FUNC_PRINTF_ARG_CONTROL],
-[AC_MSG_CHECKING([printf supports argument control])
+[AC_MSG_CHECKING([whether printf supports argument control])
 AC_CACHE_VAL(pgac_cv_printf_arg_control,
 [AC_TRY_RUN([#include <stdio.h>
+#include <string.h>
 
-int does_printf_have_arg_control()
+int main()
 {
   char buf[100];
 
   /* can it swap arguments? */
-  snprintf(buf, 100, "%2$d|%1$d", 3, 4);
-  if (strcmp(buf, "4|3") != 0)
-    return 0;
-  return 1;
-}
-main() {
-  exit(! does_printf_have_arg_control());
+  snprintf(buf, 100, "%2\$d %1\$d", 3, 4);
+  if (strcmp(buf, "4 3") != 0)
+    return 1;
+  return 0;
 }],
 [pgac_cv_printf_arg_control=yes],
 [pgac_cv_printf_arg_control=no],

@@ -12162,8 +12162,8 @@ fi
 done
 
 
-echo "$as_me:$LINENO: checking printf supports argument control" >&5
-echo $ECHO_N "checking printf supports argument control... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking whether printf supports argument control" >&5
+echo $ECHO_N "checking whether printf supports argument control... $ECHO_C" >&6
 if test "${pgac_cv_printf_arg_control+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -12174,19 +12174,17 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <stdio.h>
+#include <string.h>
 
-int does_printf_have_arg_control()
+int main()
 {
   char buf[100];
 
   /* can it swap arguments? */
-  snprintf(buf, 100, "%2$d|%1$d", 3, 4);
-  if (strcmp(buf, "4|3") != 0)
-    return 0;
-  return 1;
-}
-main() {
-  exit(! does_printf_have_arg_control());
+  snprintf(buf, 100, "%2\$d %1\$d", 3, 4);
+  if (strcmp(buf, "4 3") != 0)
+    return 1;
+  return 0;
 }
 _ACEOF
 rm -f conftest$ac_exeext
