@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.137 2003/09/20 20:12:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.138 2003/10/03 18:26:14 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1972,10 +1972,13 @@ size_t PQescapeString (char *to, const char *from, size_t length);
 
 <para>
 The parameter <parameter>from</> points to the first character of the string
-that 
-is to be escaped, and the <parameter>length</> parameter gives the
-number of characters in this string.  (A terminating zero byte is
-neither necessary nor counted.)  <parameter>to</> shall point to a
+that is to be escaped, and the <parameter>length</> parameter gives the
+number of characters in this string.  A terminating zero byte is not
+required, and should not be counted in <parameter>length</>.  (If
+a terminating zero byte is found before <parameter>length</> bytes are
+processed, <function>PQescapeString</> stops at the zero; the behavior
+is thus rather like <function>strncpy</>.)
+<parameter>to</> shall point to a
 buffer that is able to hold at least one more character than twice
 the value of <parameter>length</>, otherwise the behavior is
 undefined.  A call to <function>PQescapeString</> writes an escaped

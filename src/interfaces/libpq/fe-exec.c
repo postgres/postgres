@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.149 2003/10/02 14:47:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.150 2003/10/03 18:26:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2143,47 +2143,47 @@ PQfreeNotify(PGnotify *notify)
 }
 
 
-/* ---------------
- * Escaping arbitrary strings to get valid SQL strings/identifiers.
+/*
+ * Escaping arbitrary strings to get valid SQL literal strings.
  *
  * Replaces "\\" with "\\\\" and "'" with "''".
- * length is the length of the buffer pointed to by
- * from.  The buffer at to must be at least 2*length + 1 characters
- * long.  A terminating NUL character is written.
- * ---------------
+ *
+ * length is the length of the source string.  (Note: if a terminating NUL
+ * is encountered sooner, PQescapeString stops short of "length"; the behavior
+ * is thus rather like strncpy.)
+ *
+ * For safety the buffer at "to" must be at least 2*length + 1 bytes long.
+ * A terminating NUL character is added to the output string, whether the
+ * input is NUL-terminated or not.
+ *
+ * Returns the actual length of the output (not counting the terminating NUL).
  */
-
 size_t
 PQescapeString(char *to, const char *from, size_t length)
 {
 	const char *source = from;
 	char	   *target = to;
-	unsigned int remaining = length;
+	size_t		remaining = length;
 
-	while (remaining > 0)
+	while (remaining > 0 && *source != '\0')
 	{
 		switch (*source)
 		{
 			case '\\':
-				*target = '\\';
-				target++;
-				*target = '\\';
-				/* target and remaining are updated below. */
+				*target++ = '\\';
+				*target++ = '\\';
 				break;
 
 			case '\'':
-				*target = '\'';
-				target++;
-				*target = '\'';
-				/* target and remaining are updated below. */
+				*target++ = '\'';
+				*target++ = '\'';
 				break;
 
 			default:
-				*target = *source;
-				/* target and remaining are updated below. */
+				*target++ = *source;
+				break;
 		}
 		source++;
-		target++;
 		remaining--;
 	}
 
