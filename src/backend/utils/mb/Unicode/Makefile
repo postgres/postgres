@@ -4,7 +4,7 @@
 #
 # Copyright 2001 by PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.1 2000/10/30 10:40:29 ishii Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.2 2001/04/29 07:27:38 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,11 @@ ISO8859MAPS=iso8859_2_to_utf8.map iso8859_3_to_utf8.map \
 	utf8_to_iso8859_2.map utf8_to_iso8859_3.map \
 	utf8_to_iso8859_4.map utf8_to_iso8859_5.map 
 
-MAPS= $(ISO8859MAPS) \
+
+CYRILLICMAPS=KOI8_to_utf8.map WIN_to_utf8.map ALT_to_utf8.map\
+             utf8_to_KOI8.map  utf8_to_WIN.map utf8_to_ALT.map
+
+MAPS= $(ISO8859MAPS) $(CYRILLICMAPS)\
 	big5_to_utf8.map euc_cn_to_utf8.map euc_jp_to_utf8.map \
 	euc_kr_to_utf8.map euc_tw_to_utf8.map sjis_to_utf8.map \
 	utf8_to_big5.map utf8_to_euc_cn.map utf8_to_euc_jp.map \
@@ -25,8 +29,9 @@ MAPS= $(ISO8859MAPS) \
 	utf8_to_sjis.map
 
 ISO8859TEXTS= 8859-2.TXT 8859-3.TXT 8859-4.TXT 8859-5.TXT
+CYRILLICTEXTS=cp866.txt cp1251.txt koi8-r.txt
 
-TEXTS=$(ISO8859TEXTS) \
+TEXTS=$(ISO8859TEXTS) $(CYRILLICTEXTS) \
 	BIG5.TXT CNS11643.TXT GB2312.TXT \
 	JIS0201.TXT JIS0208.TXT JIS0212.TXT \
 	OLD5601.TXT SHIFTJIS.TXT
@@ -35,6 +40,8 @@ all: $(MAPS)
 
 $(ISO8859MAPS) : $(ISO8859TEXTS)
 	./UCS_to_8859.pl
+$(CYRILLICMAPS) : $(CYRILLICTEXTS)
+	./UCS_to_cyrillic.pl
 
 euc_jp_to_utf8.map utf8_to_euc_jp.map : JIS0201.TXT JIS0208.TXT JIS0212.TXT
 	./UCS_to_EUC_JP.pl

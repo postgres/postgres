@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.24 2001/03/22 04:00:01 momjian Exp $
+ * $Id: conv.c,v 1.25 2001/04/29 07:27:38 ishii Exp $
  *
  *
  */
@@ -38,6 +38,14 @@
 #include "Unicode/sjis_to_utf8.map"
 #include "Unicode/utf8_to_big5.map"
 #include "Unicode/big5_to_utf8.map"
+/* Cyrillic charset conversion */
+#include "Unicode/ALT_to_utf8.map"
+#include "Unicode/KOI8_to_utf8.map"
+#include "Unicode/WIN_to_utf8.map"
+#include "Unicode/utf8_to_ALT.map"
+#include "Unicode/utf8_to_KOI8.map"
+#include "Unicode/utf8_to_WIN.map"
+
 
 #endif	 /* UNICODE_CONVERSION */
 
@@ -1330,6 +1338,39 @@ utf_to_latin5(unsigned char *utf, unsigned char *iso, int len)
 {
 	utf_to_local(utf, iso, ULmapISO8859_5, sizeof(ULmapISO8859_5) / sizeof(pg_utf_to_local), len);
 }
+/*
+ * Cyrillic charsets
+ */
+
+/*
+ * UTF-8 --->KOI8 
+ */
+static void
+utf_to_KOI8(unsigned char *utf, unsigned char *iso, int len)
+
+{
+	utf_to_local(utf, iso, ULmap_KOI8, sizeof(ULmap_KOI8) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * UTF-8 --->WIN 
+ */
+static void
+utf_to_WIN(unsigned char *utf, unsigned char *iso, int len)
+
+{
+	utf_to_local(utf, iso, ULmap_WIN, sizeof(ULmap_WIN) / sizeof(pg_utf_to_local), len);
+}
+
+/*
+ * UTF-8 --->ALT 
+ */
+static void
+utf_to_ALT(unsigned char *utf, unsigned char *iso, int len)
+
+{
+	utf_to_local(utf, iso, ULmap_ALT, sizeof(ULmap_ALT) / sizeof(pg_utf_to_local), len);
+}
 
 /*
  * local code ---> UTF-8
@@ -1434,6 +1475,32 @@ latin5_to_utf(unsigned char *iso, unsigned char *utf, int len)
 	local_to_utf(iso, utf, LUmapISO8859_5, sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf), LATIN5, len);
 }
 
+/*
+ * KOI8 ---> UTF-8
+ */
+static void
+KOI8_to_utf(unsigned char *iso, unsigned char *utf, int len)
+{
+	local_to_utf(iso, utf, LUmapKOI8, sizeof(LUmapKOI8) / sizeof(pg_local_to_utf), KOI8, len);
+}
+
+/*
+ * WIN ---> UTF-8
+ */
+static void
+WIN_to_utf(unsigned char *iso, unsigned char *utf, int len)
+{
+	local_to_utf(iso, utf, LUmapWIN, sizeof(LUmapWIN) / sizeof(pg_local_to_utf), WIN, len);
+}
+
+/*
+ * ALT ---> UTF-8
+ */
+static void
+ALT_to_utf(unsigned char *iso, unsigned char *utf, int len)
+{
+	local_to_utf(iso, utf, LUmapALT, sizeof(LUmapALT) / sizeof(pg_local_to_utf), ALT, len);
+}
 /*
  * UTF-8 ---> EUC_JP
  */
@@ -1586,11 +1653,11 @@ pg_encoding_conv_tbl pg_conv_tbl[] = {
 	{LATIN5, "LATIN5", 0, iso2mic, mic2iso,
 	latin5_to_utf, utf_to_latin5},		/* ISO 8859 Latin 5 */
 	{KOI8, "KOI8", 0, koi2mic, mic2koi,
-	0, 0},						/* KOI8-R */
+	KOI8_to_utf, utf_to_KOI8},						/* KOI8-R */
 	{WIN, "WIN", 0, win2mic, mic2win,
-	0, 0},						/* CP1251 */
+	WIN_to_utf , utf_to_WIN},						/* CP1251 */
 	{ALT, "ALT", 0, alt2mic, mic2alt,
-	0, 0},						/* CP866 */
+	ALT_to_utf, utf_to_ALT},						/* CP866 */
 	{SJIS, "SJIS", 1, sjis2mic, mic2sjis,
 	sjis_to_utf, utf_to_sjis},	/* SJIS */
 	{BIG5, "BIG5", 1, big52mic, mic2big5,
