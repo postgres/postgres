@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.25 2002/04/30 01:26:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.26 2002/05/14 18:47:58 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -83,7 +83,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
       <para>
        Allows <xref linkend="sql-select" endterm="sql-select-title"> from any column of the
        specified table, view, or sequence.  Also allows the use of
-       <xref linkend="sql-copy" endterm="sql-copy-title"> FROM.
+       <xref linkend="sql-copy" endterm="sql-copy-title"> TO.
       </para>
      </listitem>
     </varlistentry>
@@ -93,7 +93,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
      <listitem>
       <para>
        Allows <xref linkend="sql-insert" endterm="sql-insert-title"> of a new row into the
-       specified table.  Also allows <xref linkend="sql-copy" endterm="sql-copy-title"> TO.
+       specified table.  Also allows <xref linkend="sql-copy" endterm="sql-copy-title"> FROM.
       </para>
      </listitem>
     </varlistentry>

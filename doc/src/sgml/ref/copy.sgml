@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.30 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.31 2002/05/14 18:47:58 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -175,8 +175,10 @@ ERROR: <replaceable>reason</replaceable>
    <productname>PostgreSQL</productname> tables and
    standard file-system files.
 
-   <command>COPY TO</command> copies the entire contents of a table to
-   a file, while <command>COPY FROM</command> copies data from a file to a
+   <command>COPY TO</command> copies the entire contents of a table
+   <emphasis>to</>
+   a file, while <command>COPY FROM</command> copies data <emphasis>from</> a
+   file to a
    table (appending the data to whatever is in the table already).
   </para>
 
@@ -230,26 +232,26 @@ ERROR: <replaceable>reason</replaceable>
    </para>
    
    <para>
-    You must have <firstterm>select access</firstterm> on any table
+    You must have <firstterm>select privilege</firstterm> on any table
     whose values are read by
-    <command>COPY</command>, and either
-    <firstterm>insert</firstterm> or <firstterm>update access</firstterm> to a
-    table into which values are being inserted by <command>COPY</command>.
+    <command>COPY TO</command>, and
+    <firstterm>insert privilege</firstterm> on a
+    table into which values are being inserted by <command>COPY FROM</command>.
     The backend also needs appropriate Unix permissions for any file read
     or written by <command>COPY</command>.
    </para>
 
    <para>
-    <command>COPY TO</command> neither invokes rules nor acts on column
+    <command>COPY FROM</command> neither invokes rules nor acts on column
     defaults.  It does invoke triggers and check constraints.
    </para>
 
    <para>
     <command>COPY</command> stops operation at the first error.  This
     should not lead to problems in the event of
-    a <command>COPY FROM</command>, but the
+    a <command>COPY TO</command>, but the
     target relation will already have received earlier rows in a
-    <command>COPY TO</command>.  These rows will not be visible or
+    <command>COPY FROM</command>.  These rows will not be visible or
     accessible, but they still occupy disk space.  This may amount to a
     considerable amount
     of wasted disk space if the failure happened well into a large copy
