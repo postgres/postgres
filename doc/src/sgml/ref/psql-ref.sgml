@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.58 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.59 2001/09/11 05:11:59 ishii Exp $
 Postgres documentation
 -->
 
@@ -1961,7 +1961,7 @@ testdb=> <userinput>INSERT INTO my_table VALUES (:content);</userinput>
     they don't cause a syntax error when the third line is processed. This
     could be done with the program <application>sed</application>:
 <programlisting>
-testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinput>
+testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\''</userinput>
 </programlisting>
     Observe the correct number of backslashes (6)! You can resolve it this way: After
     <application>psql</application> has parsed this line, it passes
