@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.1 2001/01/22 23:34:33 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.2 2001/02/01 19:13:47 momjian Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -531,7 +531,7 @@ SELECT pid    AS "Products",
        p.name AS "Over 5000",
        (sum(s.units) * (p.price - p.cost)) AS "Past Month Profit"
   FROM products p LEFT JOIN sales s USING ( pid )
-  WHERE p.date > CURRENT_DATE - INTERVAL '4 weeks'
+  WHERE s.date > CURRENT_DATE - INTERVAL '4 weeks'
   GROUP BY pid, p.name, p.price, p.cost
     HAVING p.price > 5000;
 </programlisting>
