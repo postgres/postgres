@@ -1,7 +1,7 @@
 # translation of postgres-fr.po to FR_fr
 # French message translation file for postgres
 #
-# $Header: /cvsroot/pgsql/src/backend/po/fr.po,v 1.1.2.3 2004/09/20 08:07:15 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/fr.po,v 1.1.2.4 2004/12/03 19:52:10 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2003, 2004.
@@ -1091,7 +1091,7 @@ msgstr "La colonne «%s» a le type composite %s"
 #: catalog/heap.c:734 catalog/index.c:522 commands/tablecmds.c:1292
 #, c-format
 msgid "relation \"%s\" already exists"
-msgstr "La relation «%s» n'existe pas"
+msgstr "La relation «%s» existe déjà"
 
 #: catalog/heap.c:1556 commands/tablecmds.c:2812 commands/tablecmds.c:2854
 #, c-format
@@ -1605,7 +1605,7 @@ msgstr "Impossible d'utiliser un emplacement différent pour cette plateforme"
 #: commands/dbcommands.c:653
 #, c-format
 msgid "database \"%s\" already exists"
-msgstr "La base de données «%s» n'existe pas"
+msgstr "La base de données «%s» existe déjà"
 
 #: commands/dbcommands.c:231
 #, c-format
