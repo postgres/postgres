@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun  7 16:05:45 EDT 2001
+Last updated:		Sat Jun  9 21:24:52 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -94,8 +94,8 @@ INDEXES
   fails index can't store constant parameters
 * Add FILLFACTOR to index creation
 * Re-enable partial indexes
-* Allow inherited tables to inherit index, UNIQUE constraint, and primary key
-  [inheritance]
+* Allow inherited tables to inherit index, UNIQUE constraint, and primary
+  key, foreign key  [inheritance]
 * UNIQUE INDEX on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance]
