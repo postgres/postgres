@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.52 2002/08/27 20:29:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.53 2002/08/27 20:54:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,19 +42,29 @@
 #define SCHAR_MIN (-SCHAR_MAX-1)
 #endif
 
+
+/*
+ * pg_atoi: convert string to integer
+ *
+ * size is the sizeof() the desired integral result (1, 2, or 4 bytes).
+ *
+ * c, if not 0, is the terminator character that may appear after the
+ * integer.  If 0, the string must end after the integer.
+ *
+ * Unlike plain atoi(), this will throw elog() upon bad input format or
+ * overflow.
+ */
 int32
 pg_atoi(char *s, int size, int c)
 {
 	long		l = 0;
 	char	   *badp = NULL;
 
-	Assert(s);
-
 	errno = 0;
 
 	/*
-	 * Some versions of strtol treat the empty string as an error.	This
-	 * code will explicitly return 0 for an empty string.
+	 * Some versions of strtol treat the empty string as an error, but some
+	 * seem not to.  Make an explicit test to be sure we catch it.
 	 */
 
 	if (s == (char *) NULL)
