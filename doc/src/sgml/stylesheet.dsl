@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.24 2003/09/08 23:02:28 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.24.2.1 2003/12/15 23:58:33 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -55,6 +55,7 @@
 (element command ($mono-seq$))
 (element envar ($mono-seq$))
 (element lineannotation ($italic-seq$))
+(element literal ($mono-seq$))
 (element structfield ($mono-seq$))
 (element structname ($mono-seq$))
 (element symbol ($mono-seq$))
