@@ -7,14 +7,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.15 1999/05/25 22:42:34 momjian Exp $
+ * $Id: strat.h,v 1.15.2.1 1999/07/30 18:26:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef STRAT_H
 #define STRAT_H
 
-#include <access/skey.h>
+#include "access/skey.h"
 
 typedef uint16 StrategyNumber;
 

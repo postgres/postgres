@@ -6,16 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtscan.h,v 1.6 1999/02/13 23:20:58 momjian Exp $
+ * $Id: rtscan.h,v 1.6.2.1 1999/07/30 18:26:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RTSCAN_H
 #define RTSCAN_H
 
-#include <utils/rel.h>
-#include <storage/block.h>
-#include <storage/off.h>
+#include "storage/block.h"
+#include "storage/off.h"
+#include "utils/rel.h"
 
 void		rtadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum);
 

@@ -6,16 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.22 1999/05/25 22:42:36 momjian Exp $
+ * $Id: tupdesc.h,v 1.22.2.1 1999/07/30 18:27:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TUPDESC_H
 #define TUPDESC_H
 
-#include <nodes/pg_list.h>
-#include <access/attnum.h>
-#include <catalog/pg_attribute.h>
+#include "access/attnum.h"
+#include "catalog/pg_attribute.h"
+#include "nodes/pg_list.h"
 
 
 typedef struct attrDefault

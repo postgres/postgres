@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.58 1999/07/01 19:47:25 momjian Exp $
+ * $Id: c.h,v 1.58.2.1 1999/07/30 18:26:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,13 @@
    on some platforms, and we only want our definitions used if stdlib.h doesn't
    have its own.  The same goes for stddef and stdarg if present.
 */
+
+#include "config.h"
+
+
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef STDC_HEADERS
 #include <stddef.h>
 #include <stdarg.h>
@@ -101,12 +107,6 @@ typedef bool *BoolPtr;
  *				type prefixes: const, signed, volatile, inline
  *				cpp magic macros
  * ----------------------------------------------------------------
- */
-
-/*
- * We used to define const, signed, volatile, and inline as empty
- * if __STDC__ wasn't defined.  Now we let configure test whether
- * those keywords work; config.h defines them as empty if not.
  */
 
 /*
@@ -759,7 +759,7 @@ extern char *vararg_format(const char *fmt,...);
 #endif	 /* hpux */
 #endif
 
-#if defined(sun) && defined(sparc) && !defined(__SVR4)
+#if defined(sun) && defined(__sparc__) && !defined(__SVR4)
 #define memmove(d, s, l)		bcopy(s, d, l)
 #include <unistd.h>
 #include <varargs.h>
@@ -791,12 +791,14 @@ extern char *vararg_format(const char *fmt,...);
 
 #ifndef HAVE_SNPRINTF
 extern int	snprintf(char *str, size_t count, const char *fmt,...);
-
 #endif
 
 #ifndef HAVE_VSNPRINTF
 extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+#endif
 
+#ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #endif
 
 /* ----------------

@@ -6,20 +6,20 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.43 1999/07/10 22:06:26 tgl Exp $
+ * $Id: heapam.h,v 1.43.2.1 1999/07/30 18:26:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HEAPAM_H
 #define HEAPAM_H
 
-#include "access/tupmacs.h"
+#include <time.h>
 #include "access/htup.h"
 #include "access/relscan.h"
+#include "access/tupmacs.h"
 #include "storage/block.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
-#include <time.h>
 
 /* ----------------------------------------------------------------
  *				heap access method statistics

@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.10 1999/05/25 16:13:36 momjian Exp $
+ * $Id: tupmacs.h,v 1.10.2.1 1999/07/30 18:27:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TUPMACS_H
 #define TUPMACS_H
+
+#include "utils/memutils.h"
 
 /*
  * check to see if the ATT'th bit of an array of 8-bit bytes is set.
