@@ -553,7 +553,8 @@ AC_SUBST([odbcinst_ini_dir])
 # Assume system is ELF if it predefines __ELF__ as 1,
 # otherwise believe host_os based default.
 case $host_os in
-  freebsd1*|freebsd2*) elf=yes;;
+    freebsd1*|freebsd2*) elf=no;;
+    freebsd3*|freebsd4*) elf=yes;;
 esac
 
 AC_EGREP_CPP(yes,
