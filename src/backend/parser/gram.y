@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.63 1999/03/18 21:39:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.64 1999/03/18 22:01:56 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -316,7 +316,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		MAXVALUE, MINVALUE, MOVE,
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
-		RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
+		RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
@@ -3715,7 +3715,7 @@ a_expr:  attr opt_indirection
 		/* We allow this for standards-broken SQL products, like MS stuff */
   		| a_expr '=' NULL_P
   				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
-  		| NULL_P '=' %prec '-' a_expr
+  		| NULL_P '=' a_expr /* we need to fix the shift/reduce */
   				{	$$ = makeA_Expr(ISNULL, NULL, $3, NULL); }
 
 		| a_expr '=' a_expr
