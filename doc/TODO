@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul 11 17:41:07 EDT 2002
+Last updated:		Fri Jul 12 22:20:55 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -231,7 +231,7 @@ Commands
 
 * SHOW/SET
 	o Add SHOW command to display locks
-	o Add SET or BEGIN timeout parameter to cancel query
+	o -Add SET or BEGIN timeout parameter to cancel query
 	o Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
 	o Remove SET KSQO option now that OR processing is improved (Tom)
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
@@ -319,7 +319,7 @@ Referential Integrity
 Dependency Checking
 ===================
 
-* Add pg_depend table for dependency recording; use sysrelid, oid,
+* -Add pg_depend table for dependency recording; use sysrelid, oid,
   depend_sysrelid, depend_oid, name
 * Auto-destroy sequence on DROP of table with SERIAL; perhaps a separate
   SERIAL type
