@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.13 2000/07/19 11:53:02 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.14 2000/08/20 11:56:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ if [ "$usage" ]; then
 	echo "  -U, --username=USERNAME         Username to connect as"
 	echo "  -W, --password                  Prompt for password"
 	echo "  -d, --dbname=DBNAME             Database to install language in"
-	echo "  -L, --pglib=PGLIB               Find language interpreter in directory PGLIB"
+	echo "  -L, --pglib=DIRECTORY           Find language interpreter file in DIRECTORY"
 	echo "  -l, --list                      Show a list of currently installed languages"
         echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
@@ -160,11 +160,7 @@ fi
 # Check that we have PGLIB
 # ----------
 if [ -z "$PGLIB" ]; then
-	echo "$CMDNAME: missing required argument PGLIB directory"
-        echo "(This is the directory where the interpreter for the procedural"
-        echo "language is stored. Traditionally, these are installed in whatever"
-        echo "'lib' directory was specified at configure time.)"
-	exit 1
+	PGLIB='__libdir__'
 fi
 
 # ----------
