@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.36 2000/02/27 02:48:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.37 2000/03/11 23:17:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ binary_oper_get_candidates(char *opname,
  *
  * This routine is new code, replacing binary_oper_select_candidate()
  * which dates from v4.2/v1.0.x days. It tries very hard to match up
- * operators with types, including allowing type coersions if necessary.
+ * operators with types, including allowing type coercions if necessary.
  * The important thing is that the code do as much as possible,
  * while _never_ doing the wrong thing, where "the wrong thing" would
  * be returning an operator when other better choices are available,
@@ -185,7 +185,7 @@ oper_select_candidate(int nargs,
 
 /*
  * Run through all candidates and keep those with the most matches
- *	on explicit types. Keep all candidates if none match.
+ *	on exact types. Keep all candidates if none match.
  */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -236,7 +236,7 @@ oper_select_candidate(int nargs,
 
 /*
  * Still too many candidates?
- * Now look for candidates which allow coersion and are preferred types.
+ * Now look for candidates which allow coercion and are preferred types.
  * Keep all candidates if none match.
  */
 	ncandidates = 0;
@@ -292,6 +292,13 @@ oper_select_candidate(int nargs,
 /*
  * Still too many candidates?
  * Try assigning types for the unknown columns.
+ *
+ * First try: if we have an unknown and a non-unknown input, see whether
+ * there is a candidate all of whose input types are the same as the known
+ * input type (there can be at most one such candidate).  If so, use that
+ * candidate.  NOTE that this is cool only because operators can't
+ * have more than 2 args, so taking the last non-unknown as current_type
+ * can yield only one possibility if there is also an unknown.
  */
 	unknownOids = FALSE;
 	current_type = UNKNOWNOID;
@@ -314,53 +321,82 @@ oper_select_candidate(int nargs,
 			nmatch = 0;
 			for (i = 0; i < nargs; i++)
 			{
-				if (current_type == current_typeids[i] ||
-					IS_BINARY_COMPATIBLE(current_type, current_typeids[i]))
+				if (current_type == current_typeids[i])
 					nmatch++;
 			}
 			if (nmatch == nargs)
-				return candidates->args;
+			{
+				/* coercion check here is probably redundant, but be safe */
+				if (can_coerce_type(nargs, input_typeids, current_typeids))
+					return current_typeids;
+			}
 		}
 	}
 
+/*
+ * Second try: examine each unknown argument position to see if all the
+ * candidates agree on the type category of that slot.  If so, and if some
+ * candidates accept the preferred type in that category, eliminate the
+ * candidates with other input types.  If we are down to one candidate
+ * at the end, we win.
+ *
+ * XXX It's kinda bogus to do this left-to-right, isn't it?  If we eliminate
+ * some candidates because they are non-preferred at the first slot, we won't
+ * notice that they didn't have the same type category for a later slot.
+ */
 	for (i = 0; i < nargs; i++)
 	{
 		if (input_typeids[i] == UNKNOWNOID)
 		{
 			slot_category = INVALID_TYPE;
 			slot_type = InvalidOid;
+			last_candidate = NULL;
 			for (current_candidate = candidates;
 				 current_candidate != NULL;
 				 current_candidate = current_candidate->next)
 			{
 				current_typeids = current_candidate->args;
 				current_type = current_typeids[i];
-				current_category = TypeCategory(current_typeids[i]);
-				if (slot_category == InvalidOid)
+				current_category = TypeCategory(current_type);
+				if (slot_category == INVALID_TYPE)
 				{
 					slot_category = current_category;
 					slot_type = current_type;
+					last_candidate = current_candidate;
 				}
 				else if (current_category != slot_category)
+				{
+					/* punt if more than one category for this slot */
 					return NULL;
+				}
 				else if (current_type != slot_type)
 				{
 					if (IsPreferredType(slot_category, current_type))
 					{
 						slot_type = current_type;
+						/* forget all previous candidates */
 						candidates = current_candidate;
+						last_candidate = current_candidate;
+					}
+					else if (IsPreferredType(slot_category, slot_type))
+					{
+						/* forget this candidate */
+						if (last_candidate)
+							last_candidate->next = current_candidate->next;
+						else
+							candidates = current_candidate->next;
 					}
 					else
-					{
-					}
+						last_candidate = current_candidate;
+				}
+				else
+				{
+					/* keep this candidate */
+					last_candidate = current_candidate;
 				}
 			}
-
-			if (slot_type != InvalidOid)
-				input_typeids[i] = slot_type;
-		}
-		else
-		{
+			if (last_candidate)			/* terminate rebuilt list */
+				last_candidate->next = NULL;
 		}
 	}
 

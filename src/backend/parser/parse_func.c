@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.72 2000/02/20 23:04:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.73 2000/03/11 23:17:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -854,11 +854,6 @@ match_argtypes(int nargs,
  * for the function argtype array, attempt to resolve the conflict.
  * returns the selected argtype array if the conflict can be resolved,
  * otherwise returns NULL.
- *
- * If all input Oids are UNKNOWNOID, then try matching with TEXTOID.
- * Otherwise, could return first function arguments on list of candidates.
- * But for now, return NULL and make the user give a better hint.
- * - thomas 1998-03-17
  */
 static Oid *
 func_select_candidate(int nargs,
@@ -869,12 +864,10 @@ func_select_candidate(int nargs,
 	CandidateList last_candidate;
 	Oid		   *current_typeids;
 	int			i;
-
 	int			ncandidates;
 	int			nbestMatch,
 				nmatch,
-				nident;
-
+				ncompat;
 	CATEGORY	slot_category,
 				current_category;
 	Oid			slot_type,
@@ -893,18 +886,28 @@ func_select_candidate(int nargs,
 	{
 		current_typeids = current_candidate->args;
 		nmatch = 0;
-		nident = 0;
+		ncompat = 0;
 		for (i = 0; i < nargs; i++)
 		{
-			if ((input_typeids[i] != UNKNOWNOID)
-				&& (current_typeids[i] == input_typeids[i]))
-				nmatch++;
-			else if (IS_BINARY_COMPATIBLE(current_typeids[i], input_typeids[i]))
-				nident++;
+			if (input_typeids[i] != UNKNOWNOID)
+			{
+				if (current_typeids[i] == input_typeids[i])
+					nmatch++;
+				else if (IS_BINARY_COMPATIBLE(current_typeids[i],
+											  input_typeids[i]))
+					ncompat++;
+			}
 		}
 
-		if ((nmatch + nident) == nargs)
+		/*
+		 * If we find an exact match at all arg positions, we're done;
+		 * there can be only one such candidate.
+		 */
+		if (nmatch == nargs)
 			return current_candidate->args;
+
+		/* Otherwise, use match+compat as the score. */
+		nmatch += ncompat;
 
 		/* take this one as the best choice so far? */
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
@@ -933,6 +936,16 @@ func_select_candidate(int nargs,
 /*
  * Still too many candidates?
  * Try assigning types for the unknown columns.
+ *
+ * We do this by examining each unknown argument position to see if all the
+ * candidates agree on the type category of that slot.  If so, and if some
+ * candidates accept the preferred type in that category, eliminate the
+ * candidates with other input types.  If we are down to one candidate
+ * at the end, we win.
+ *
+ * XXX It's kinda bogus to do this left-to-right, isn't it?  If we eliminate
+ * some candidates because they are non-preferred at the first slot, we won't
+ * notice that they didn't have the same type category for a later slot.
  */
 	for (i = 0; i < nargs; i++)
 	{
@@ -947,12 +960,12 @@ func_select_candidate(int nargs,
 			{
 				current_typeids = current_candidate->args;
 				current_type = current_typeids[i];
-				current_category = TypeCategory(current_typeids[i]);
-
-				if (slot_category == InvalidOid)
+				current_category = TypeCategory(current_type);
+				if (slot_category == INVALID_TYPE)
 				{
 					slot_category = current_category;
 					slot_type = current_type;
+					last_candidate = current_candidate;
 				}
 				else if (current_category != slot_category)
 				{
