@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.20 1998/01/27 04:08:28 momjian Exp $
+ * $Id: pqcomm.h,v 1.21 1998/01/27 15:35:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,12 @@ typedef union SockAddr {
 
 #define	UNIXSOCK_PATH(sun,port) \
 	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)) + \
-		sizeof ((sun).sun_len) + sizeof ((sun).sun_family))
-
+		+ 1 + sizeof ((sun).sun_family))
+/*
+ *		+ 1 is for BSD-specific sizeof((sun).sun_len)
+ *		We never actually set sun_len, and I can't think of a
+ *		platform-safe way of doing it, but the code still works. bjm
+ */
 
 /*
  * These manipulate the frontend/backend protocol version number.

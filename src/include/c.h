@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.29 1998/01/26 01:41:49 scrappy Exp $
+ * $Id: c.h,v 1.30 1998/01/27 15:35:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,17 @@ typedef char *Pointer;
 #endif							/* !HAVE_ANSI_CPP */
 
 #ifndef __GNUC__				/* GNU cc */
+#endif
+
+#ifndef __GNUC__				/* GNU cc */
 #define inline
+/*
+ * dummyret is used to set return values in macros that use ?: to make
+ * assignments.  gcc wants these to be void, other compilers like char
+ */
+#define dummyret	char
+#else
+#define dummyret	void
 #endif
 
 #if defined(NEED_STD_HDRS)
@@ -693,7 +703,7 @@ typedef struct Exception
  */
 /* we do this so if the macro is used in an if action, it will work */
 #define StrNCpy(dst,src,len)	\
-	(strncpy((dst),(src),(len)),(len > 0) ? *((dst)+(len)-1)='\0' : (void)NULL,(void)(dst))
+	(strncpy((dst),(src),(len)),(len > 0) ? *((dst)+(len)-1)='\0' : (dummyret)NULL,(void)(dst))
 
 /* Get a bit mask of the bits set in non-int32 aligned addresses */
 #define INT_ALIGN_MASK (sizeof(int32) - 1)

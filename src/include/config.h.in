@@ -216,8 +216,6 @@ extern void srandom(int seed);
  * number of seconds.
  * We don't check for deadlocks just before sleeping because a deadlock is
  * a rare event, and checking is an expensive operation.
- * We only detect deadlocks between two processes, not three or more, but
- * these are the most common.
  */
 #define DEADLOCK_CHECK_TIMER 60
 

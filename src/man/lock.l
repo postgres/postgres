@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.1 1998/01/23 06:01:36 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.2 1998/01/27 15:35:30 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 lock - exclusive lock a table
@@ -17,6 +17,12 @@ inside a transaction.  If you don't exclusive lock the table before the
 and do their own \fBupdate\fP, causing a deadlock while you both wait
 for the other to release the \fBselect\fP-induced shared lock so you can
 get an exclusive lock to do the \fBupdate.\fP
+.PP
+Another example of deadlock is where one user locks one table, and
+another user locks a second table.  While both keep their existing
+locks, the first user tries to lock the second user's table, and the
+second user tries to lock the first user's table. Both users deadlock
+waiting for the tables to become available.
 .SH EXAMPLES
 .nf
 --

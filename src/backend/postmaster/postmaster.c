@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.71 1998/01/27 03:11:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.72 1998/01/27 15:34:43 momjian Exp $
  *
  * NOTES
  *
@@ -473,7 +473,7 @@ pmdaemonize(void)
 	int			i;
 
 	if (fork())
-		exit(0);
+		_exit(0);
 /* GH: If there's no setsid(), we hopefully don't need silent mode.
  * Until there's a better solution.
  */

@@ -7,12 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.22 1998/01/27 03:00:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.23 1998/01/27 15:34:49 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
  *	  locks.  A lock table is a shared memory hash table.  When
- *	  a process tries to acquire a lock of a type that conflicts
+ *	  a process tries to acquire a lock of a type that conflictRs
  *	  with existing locks, it is put to sleep using the routines
  *	  in storage/lmgr/proc.c.
  *
@@ -39,6 +39,7 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "storage/shmem.h"
+#include "storage/sinvaladt.h"
 #include "storage/spin.h"
 #include "storage/proc.h"
 #include "storage/lock.h"
@@ -1415,7 +1416,8 @@ LockingDisabled()
  *
  * This code takes a list of locks a process holds, and the lock that
  * the process is sleeping on, and tries to find if any of the processes
- * waiting on its locks hold the lock it is waiting for.
+ * waiting on its locks hold the lock it is waiting for.  If no deadlock
+ * is found, it goes on to look at all the processes waiting on their locks.
  *
  * We have already locked the master lock before being called.
  */
@@ -1427,7 +1429,16 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 	XIDLookupEnt *tmp = NULL;
 	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
 	LOCK	   *lock;
+	static PROC*	checked_procs[MaxBackendId];
+	static int	nprocs;
 
+	if (skip_check)
+	{
+		/* initialize at start of recursion */
+		checked_procs[0] = MyProc;
+		nprocs = 1;
+	}
+	
 	if (SHMQueueEmpty(lockQueue))
 		return false;
 
@@ -1457,18 +1468,29 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 		 */
 		if (lock == findlock && !skip_check)
 			return true;
-		else if (lock != findlock || !skip_check)
+
+		/*
+		 *	No sense in looking at the wait queue of the lock we are
+		 *	looking for as it is MyProc's lock entry.
+		 *  If lock == findlock, and I got here, skip_check must be true.
+		 */
+		if (lock != findlock)
 		{
 			PROC_QUEUE  *waitQueue = &(lock->waitProcs);
 			PROC		*proc;
 			int			i;
+			int			j;
 			
 			proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 			for (i = 0; i < waitQueue->size; i++)
 			{
-				/* prevent endless loops */
-				if (proc != MyProc && skip_check)
+				for (j = 0; j < nprocs; j++)
+					if (checked_procs[j] == proc)
+						break;
+				if (j >= nprocs)
 				{
+					checked_procs[nprocs++] = proc;
+					Assert(nprocs <= MaxBackendId);
 					/* If we found a deadlock, we can stop right now */
 					if (DeadLockCheck(&(proc->lockQueue), findlock, false))
 						return true;
