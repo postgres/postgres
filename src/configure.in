@@ -325,6 +325,7 @@ AC_ARG_ENABLE(
 )
 
 dnl Check for C support (allow override if needed)
+dnl Note: actually, setting CC environment variable works just as well.
 AC_ARG_WITH(CC,
     [  --with-CC=compiler      use specific C compiler],
     [
@@ -334,11 +335,14 @@ AC_ARG_WITH(CC,
 	  ;;
 	esac
 	CC="$withval"
-    ],
-    [
-	AC_PROG_CC
-	AC_PROG_GCC_TRADITIONAL
-])
+    ])
+
+dnl Find a compiler if CC is not already set.
+AC_PROG_CC
+dnl Find CPP, then check traditional.
+dnl Caution: these macros must be called in this order...
+AC_PROG_CPP
+AC_PROG_GCC_TRADITIONAL
 
 if test "$CC" = "gcc"
 then
@@ -353,9 +357,6 @@ echo "- setting CPPFLAGS=$CPPFLAGS"
 
 LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
 echo "- setting LDFLAGS=$LDFLAGS"
-
-dnl Checks for programs.
-AC_PROG_CPP
 
 AC_SUBST(PORTNAME)
 AC_SUBST(SRCDIR)
