@@ -14,10 +14,6 @@ bit -
 	Bit type
 	by Adriaan Joubert <a.joubert@albourne.com>
 
-dateformat -
-	Date Formatting to/from character strings
-	by Karel Zak - Zakkr <zakkr@zf.jcu.cz>
-
 datetime -
 	Date & time functions
 	by Massimo Dal Zotto <dz@cs.unitn.it>

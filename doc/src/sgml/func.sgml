@@ -420,6 +420,547 @@
    </para>
   </sect1>
 
+  
+  <sect1>
+
+   <title id="formatting-funcs"> Formatting Functions </title>
+
+   <note>
+    <title>Author</title>
+    <para>
+     Written by 
+     <ulink url="mailto:zakkr@zf.jcu.cz">Karel Zak</ulink>
+     on 2000-01-24.
+    </para>
+   </note>
+
+   <para>
+    Formatting functions provide a powerful set of tools for converting 
+    various datetypes (date/time, int, float, numeric) to formatted strings 
+    and reverse convert from formatted strings to original datetypes. 
+   </para>
+
+   <para>
+    <table tocentry="1">
+     <title>Formatting Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> to_char(datetime, text) </entry>
+	<entry> text </entry>
+	<entry> convert datetime to string </entry>
+	<entry> to_char('now'::datetime, 'HH12:MI:SS') </entry>
+       </row>
+       <row>
+	<entry> to_char(timestamp, text) </entry>
+	<entry> text </entry>
+	<entry> convert timestamp to string </entry>
+	<entry> to_char( now(), 'HH12:MI:SS') </entry>
+       </row>
+       <row>
+	<entry> to_char(int, text) </entry>
+	<entry> text </entry>
+	<entry> convert int4/int8 to string </entry>
+	<entry> to_char(125, '999') </entry>
+       </row>
+       <row>
+	<entry> to_char(float, text) </entry>
+	<entry> text </entry>
+	<entry> convert float4/float8 to string </entry>
+	<entry> to_char(125.8, '999D9') </entry>
+       </row>
+       <row>
+	<entry> to_char(numeric, text) </entry>
+	<entry> text </entry>
+	<entry> convert numeric to string </entry>
+	<entry> to_char(-125.8, '999D99S') </entry>
+       </row>       
+       <row>
+	<entry> to_datetime(text, text) </entry>
+	<entry> datetime </entry>
+	<entry> convert string to datetime </entry>
+	<entry> to_datetime('05 Dec 2000 13', 'DD Mon YYYY HH') </entry>
+       </row>
+       <row>
+	<entry> to_date(text, text) </entry>
+	<entry> date </entry>
+	<entry> convert string to date </entry>
+	<entry> to_date('05 Dec 2000', 'DD Mon YYYY') </entry>
+       </row>
+       <row>
+	<entry> to_timestamp(text, text) </entry>
+	<entry> date </entry>
+	<entry> convert string to timestamp </entry>
+	<entry> to_timestamp('05 Dec 2000', 'DD Mon YYYY') </entry>
+       </row>
+       <row>
+	<entry> to_number(text, text) </entry>
+	<entry> numeric </entry>
+	<entry> convert string to numeric </entry>
+	<entry> to_number('12,454.8-', '99G999D9S') </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    For all formatting functions is second argument format-picture. 
+   </para>
+
+   <para>
+    <table tocentry="1">
+     <title>Format-pictures for datetime to_char() version.</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>Format-picture</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> HH </entry>
+	<entry> hour of day (01-12) </entry>
+       </row>
+       <row>
+	<entry> HH12 </entry>
+	<entry> hour of day (01-12) </entry>
+       </row>       
+       <row>
+	<entry> MI </entry>
+	<entry> minute (00-59) </entry>
+       </row>   
+       <row>
+	<entry> SS </entry>
+	<entry> socond (00-59) </entry>
+       </row>
+       <row>
+	<entry> SSSS </entry>
+	<entry> seconds past midnight (0-86399) </entry>
+       </row>
+       <row>
+	<entry> Y,YYY </entry>
+	<entry> year (4 and more digits) with comma </entry>
+       </row>
+       <row>
+	<entry> YYYY </entry>
+	<entry> year (4 and more digits) </entry>
+       </row>
+       <row>
+	<entry> YYY </entry>
+	<entry> last 3 digits of year </entry>
+       </row>
+       <row>
+	<entry> YY </entry>
+	<entry> last 2 digits of year </entry>
+       </row>
+       <row>
+	<entry> Y </entry>
+	<entry> last digit of year </entry>
+       </row>
+       <row>
+	<entry> MONTH </entry>
+	<entry> full month name (9-letters) - all characters is upper  </entry>
+       </row>
+       <row>
+	<entry> Month </entry>
+	<entry> full month name (9-letters) - first character is upper  </entry>
+       </row>
+       <row>
+	<entry> month </entry>
+	<entry> full month name (9-letters) - all characters is lower </entry>
+       </row>
+       <row>
+	<entry> MON </entry>
+	<entry> abbreviated month name (3-letters) - all characters is upper </entry>
+       </row>
+       <row>
+	<entry> Mon </entry>
+	<entry> abbreviated month name (3-letters) - first character is upper </entry>
+       </row>
+       <row>
+	<entry> mon </entry>
+	<entry> abbreviated month name (3-letters) - all characters is lower </entry>
+       </row>
+       <row>
+	<entry> MM </entry>
+	<entry> month (01-12) </entry>
+       </row>
+       <row>
+	<entry> DAY </entry>
+	<entry> full day name (9-letters) - all characters is upper </entry>
+       </row>
+       <row>
+	<entry> Day </entry>
+	<entry> full day name (9-letters) - first character is upper </entry>
+       </row>
+       <row>
+	<entry> day </entry>
+	<entry> full day name (9-letters) - all characters is lower </entry>
+       </row>
+       <row>
+	<entry> DY </entry>
+	<entry> abbreviated day name (3-letters) - all characters is upper </entry>
+       </row>
+       <row>
+	<entry> Dy </entry>
+	<entry> abbreviated day name (3-letters) - first character is upper </entry>
+       </row>
+       <row>
+	<entry> dy </entry>
+	<entry> abbreviated day name (3-letters) - all characters is upper </entry>
+       </row>
+       <row>
+	<entry> DDD </entry>
+	<entry> day of year (001-366) </entry>
+       </row>
+       <row>
+	<entry> DD </entry>
+	<entry> day of month (01-31) </entry>
+       </row>
+       <row>
+	<entry> D </entry>
+	<entry> day of week (1-7; SUN=1) </entry>
+       </row>
+       <row>
+	<entry> W </entry>
+	<entry> week of month </entry>
+       </row> 
+       <row>
+	<entry> WW </entry>
+	<entry> week number of year </entry>
+       </row>
+       <row>
+	<entry> CC </entry>
+	<entry> century (2-digits) </entry>
+       </row>
+       <row>
+	<entry> J </entry>
+	<entry> julian day (days since January 1, 4712 BC) </entry>
+       </row>
+       <row>
+	<entry> Q </entry>
+	<entry> quarter </entry>
+       </row>
+       <row>
+	<entry> RM </entry>
+	<entry> month in roman numeral (I-XII; I=JAN) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    All format-pictures	allow use suffixes (postfix / prefix). The suffix is 
+    always valid for near format-picture. The 'FX' is global prefix only.      
+   </para>
+
+   <para>
+    <table tocentry="1">
+     <title>Suffixes for format-pictures for datetime to_char() version.</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+	<entry>Suffix</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> FM </entry>
+	<entry> fill mode - prefix </entry>
+	<entry> FMMonth </entry>
+       </row>
+       <row>
+	<entry> TH </entry>
+	<entry> upper ordinal number - postfix </entry>
+	<entry> DDTH </entry>
+       </row>	
+       <row>
+	<entry> th </entry>
+	<entry> lower ordinal number - postfix </entry>
+	<entry> DDTH </entry>
+       </row>
+       <row>
+	<entry> FX </entry>
+	<entry> FX - (Fixed format) global format-picture switch. 
+	 the TO_DATETIME / TO_DATA skip blank space if this option is
+	 not use. Must by used as first item in formt-picture. </entry>
+	<entry> FX Month DD Day </entry>
+       </row>	
+       <row>
+	<entry> SP </entry>
+	<entry> spell mode (not implement now)</entry>
+	<entry> DDSP </entry>
+       </row>       
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+     '\' - must be use as double \\, example '\\HH\\MI\\SS' 
+   </para>
+   <para>
+     '"' - string between a quotation marks is skipen and not is parsed. 
+     If you want write '"' to output you must use \\", exapmle '\\"YYYY Month\\"'.
+   </para>
+   <para>
+     text - the PostgreSQL's to_char() support text without '"', but string 
+     between a quotation marks is fastly and you have guarantee, that a text 
+     not will interpreted as a keyword (format-picture), exapmle '"Hello Year: "YYYY'.  
+   </para>
+   
+   <para>
+    <table tocentry="1">
+     <title>Format-pictures for number (int/float/numeric) to_char() version.</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>Format-picture</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> 9 </entry>
+	<entry> return value with the specified number of digits, and if digit is
+	 not available use blank space </entry>
+       </row>
+       <row>
+	<entry> 0 </entry>
+	<entry> as 9, but instead blank space use zero </entry>
+       </row>
+       <row>
+	<entry> . (period) </entry>
+	<entry> decimal point </entry>
+       </row>       
+       <row>
+	<entry> , (comma) </entry>
+	<entry> group (thousand) separator </entry>
+       </row>
+       <row>
+	<entry> PR </entry>
+	<entry> return negative value in angle brackets </entry>
+       </row>
+       <row>
+	<entry> S </entry>
+	<entry> return negatice value with minus sign (use locales) </entry>
+       </row>
+       <row>
+	<entry> L </entry>
+	<entry> currency symbol (use locales) </entry>
+       </row>
+       <row>
+	<entry> D </entry>
+	<entry> decimal point (use locales) </entry>
+       </row>
+       <row>
+	<entry> G </entry>
+	<entry> group separator (use locales) </entry>
+       </row>
+       <row>
+	<entry> MI </entry>
+	<entry> return minus sign on specified position (if number < 0) </entry>
+       </row>
+       <row>
+	<entry> PL </entry>
+	<entry> return plus sign on specified position (if number > 0) </entry>
+       </row>
+       <row>
+	<entry> RN </entry>
+	<entry> return number as roman number (number must be between 1 and 3999) </entry>
+       </row>
+       <row>
+	<entry> TH or th </entry>
+	<entry> convert number to ordinal number (not convert numbers under zero and decimal numbers) </entry>
+       </row>
+       <row>
+	<entry> V </entry>
+	<entry> arg1 * (10 ^ n); - return a value multiplied by 10^n (where 'n' is number of '9's after the 'V'). 
+	        The to_char() not support use 'V' and decimal poin together, example "99.9V99".   </entry>
+       </row>
+       <row>
+	<entry> EEEE </entry>
+	<entry> science numbers. Now not supported. </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    The PostgreSQL to_char() not support absurd to_char(0.1, '99.99') 
+    --> <ProgramListing> '   .10' </ProgramListing> format. 
+   </para>
+
+   <para>
+    <table tocentry="1">
+     <title> The to_char() examples. </title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>Input</entry>
+	<entry>Output</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry> to_char(now(), 'Day, HH12:MI:SS') </entry>
+        <entry><ProgramListing> 'Tuesday  , 05:39:18' </ProgramListing></entry>
+       </row>   
+       <row>
+        <entry> to_char(now(), 'FMDay, HH12:MI:SS') </entry>
+        <entry><ProgramListing> 'Tuesday, 05:39:18' </ProgramListing></entry>
+       </row>          
+       <row>
+        <entry> to_char( 0.1, '99.99') </entry>
+        <entry><ProgramListing> '  0.10' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 0.1, '0.9') </entry>
+        <entry><ProgramListing> ' 0.1' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 0.1, '090.9') </entry>
+        <entry><ProgramListing> ' 000.1' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 485, '999') </entry>
+        <entry><ProgramListing> ' 485' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( -485, '999') </entry>
+        <entry><ProgramListing> '-485' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 485, '09999') </entry>
+        <entry><ProgramListing> ' 00485' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 485, 'FM09999') </entry>
+        <entry><ProgramListing> '00485' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 485, 'FM999') </entry>
+        <entry><ProgramListing> '485' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 485, '9 9 9') </entry>
+        <entry><ProgramListing> ' 4 8 5' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 1485,	'9,999') </entry>	
+        <entry><ProgramListing> ' 1,485' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 1485,	'9G999') </entry>
+        <entry><ProgramListing> ' 1 485' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 148.5, '999.999') </entry>
+        <entry><ProgramListing> ' 148.500' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 148.5, '999D999') </entry>
+        <entry><ProgramListing> ' 148,500' </ProgramListing></entry>	 
+       </row>
+       <row>
+        <entry> to_char( 3148.5,'9G999D999') </entry>
+        <entry><ProgramListing> ' 3 148,500' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( -485,	'999S') </entry>
+        <entry><ProgramListing> '485-'	</ProgramListing></entry>
+       </row>
+       <row>		
+        <entry> to_char( -485,	'999MI') </entry>
+        <entry><ProgramListing> '485-'	</ProgramListing></entry>	
+       </row>
+       <row>
+        <entry> to_char( 485,	'999MI') </entry>
+        <entry><ProgramListing> '485' </ProgramListing></entry>		
+       </row>
+       <row>
+        <entry> to_char( 485,	'PL999') </entry>
+        <entry><ProgramListing> '+485'	</ProgramListing></entry>	
+       </row>
+       <row>		
+        <entry> to_char( 485,	'SG999') </entry>
+        <entry><ProgramListing> '+485'	</ProgramListing></entry>	
+       </row>
+       <row>
+        <entry> to_char( -485,	'SG999') </entry>
+        <entry><ProgramListing> '-485'	</ProgramListing></entry>	
+       </row>
+       <row>
+        <entry> to_char( -485,	'9SG99') </entry>
+        <entry><ProgramListing> '4-85'	</ProgramListing></entry>	
+       </row>
+       <row>
+        <entry> to_char( -485,	'999PR') </entry>
+        <entry><ProgramListing> '<485>' </ProgramListing></entry>		
+       </row>
+       <row>
+        <entry> to_char( 485,	'L999')	</entry>
+        <entry><ProgramListing> 'DM 485' </ProgramListing></entry>	 
+       </row>
+       <row>
+        <entry> to_char( 485,	'RN') </entry>		
+        <entry><ProgramListing> '        CDLXXXV' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 485,	'FMRN')	</entry>	
+        <entry><ProgramListing> 'CDLXXXV' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 5.2,	'FMRN')	</entry>
+        <entry><ProgramListing> 'V' </ProgramListing></entry>		
+       </row>
+       <row>
+        <entry> to_char( 482,	'999th') </entry>
+        <entry><ProgramListing> ' 482nd' </ProgramListing></entry>				
+       </row>
+       <row>
+        <entry> to_char( 485,	'"Good number:"999') </entry>
+        <entry><ProgramListing> 'Good number: 485' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 485.8, '"Pre-decimal:"999" Post-decimal:" .999') </entry>
+        <entry><ProgramListing> 'Pre-decimal: 485 Post-decimal: .800' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 12, '99V999') </entry>		
+        <entry><ProgramListing> ' 12000' </ProgramListing></entry>
+       </row>
+       <row>
+        <entry> to_char( 12.4, '99V999') </entry>
+        <entry><ProgramListing> ' 12400' </ProgramListing></entry>
+       </row>
+       <row>		
+        <entry> to_char( 12.45, '99V9') </entry>
+        <entry><ProgramListing> ' 125' </ProgramListing></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+  </sect1>
+
+
+
   <sect1>
    <title>Geometric Functions</title>
 

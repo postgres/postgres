@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.116 2000/01/24 07:16:52 tgl Exp $
+ * $Id: pg_proc.h,v 1.117 2000/01/25 23:53:52 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2342,6 +2342,30 @@ DATA(insert OID = 1767 ( numeric_larger			PGUID 11 f t t 2 f 1700 "1700 1700" 10
 DESCR("larger of two numbers");
 DATA(insert OID = 1769 ( numeric_cmp			PGUID 11 f t t 2 f 23 "1700 1700" 100 0 0 100  numeric_cmp - ));
 DESCR("compare two numbers");
+
+/* formatting */
+DATA(insert OID = 1770 ( to_char			PGUID 11 f t f 2 f  25 "1184 25" 100 0 0 100  datetime_to_char - ));
+DESCR("convert / formatting datetime to text");
+DATA(insert OID = 1771 ( to_char			PGUID 11 f t f 2 f  25 "1296 25" 100 0 0 100  timestamp_to_char - ));
+DESCR("convert / formatting timestamp to text");
+DATA(insert OID = 1772 ( to_char			PGUID 11 f t f 2 f  25 "1700 25" 100 0 0 100  numeric_to_char - ));
+DESCR("convert / formatting numeric to text");
+DATA(insert OID = 1773 ( to_char			PGUID 11 f t f 2 f  25 "23 25" 100 0 0 100  int4_to_char - ));
+DESCR("convert / formatting int4 to text");
+DATA(insert OID = 1774 ( to_char			PGUID 11 f t f 2 f  25 "20 25" 100 0 0 100  int8_to_char - ));
+DESCR("convert / formatting int8 to text");
+DATA(insert OID = 1775 ( to_char			PGUID 11 f t f 2 f  25 "700 25" 100 0 0 100  float4_to_char - ));
+DESCR("convert / formatting float4 to text");
+DATA(insert OID = 1776 ( to_char			PGUID 11 f t f 2 f  25 "701 25" 100 0 0 100  float8_to_char - ));
+DESCR("convert / formatting float8 to text");
+DATA(insert OID = 1777 ( to_number			PGUID 11 f t f 2 f  1700 "25 25" 100 0 0 100  numeric_to_number - ));
+DESCR("convert text to numeric");
+DATA(insert OID = 1778 ( to_datetime			PGUID 11 f t f 2 f  1184 "25 25" 100 0 0 100  to_datetime - ));
+DESCR("convert text to datetime");
+DATA(insert OID = 1779 ( to_timestamp			PGUID 11 f t f 2 f  1296 "25 25" 100 0 0 100  to_timestamp - ));
+DESCR("convert text to datetime");
+DATA(insert OID = 1780 ( to_date			PGUID 11 f t f 2 f  1082 "25 25" 100 0 0 100  to_date - ));
+DESCR("convert text to date");
 
 
 /*
