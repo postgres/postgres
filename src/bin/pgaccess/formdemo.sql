@@ -1,13 +1,13 @@
-CREATE TABLE pga_queries (queryname varchar(64), querytype char(1), querycommand text);
-CREATE TABLE pga_forms (formname varchar(64), formsource text);
-CREATE TABLE pga_scripts (scriptname varchar(64), scriptsource text);
-CREATE TABLE pga_reports (reportname varchar(64), reportsource text, reportbody text, reportprocs text, reportoptions text);
-CREATE TABLE phonebook (name varchar(32), phone_nr varchar(16), city varchar(32), company bool, continent char16);
-CREATE TABLE pga_layout (tablename varchar(64), nrcols int2, colnames text, colwidth text);
-COPY pga_queries FROM stdin;
+CREATE TABLE "pga_queries" ("queryname" varchar(64), "querytype" char(1), "querycommand" "text");
+CREATE TABLE "pga_forms" ("formname" varchar(64), "formsource" "text");
+CREATE TABLE "pga_scripts" ("scriptname" varchar(64), "scriptsource" "text");
+CREATE TABLE "pga_reports" ("reportname" varchar(64), "reportsource" "text", "reportbody" "text", "reportprocs" "text", "reportoptions" "text");
+CREATE TABLE "phonebook" ("name" varchar(32), "phone_nr" varchar(16), "city" varchar(32), "company" "bool", "continent" char(16));
+CREATE TABLE "pga_layout" ("tablename" varchar(64), "nrcols" "int2", "colnames" "text", "colwidth" "text");
+COPY "pga_queries" FROM stdin;
 Query that can be saved as view	S	select * from phonebook where continent='usa'    
 \.
-COPY pga_forms FROM stdin;
+COPY "pga_forms" FROM stdin;
 A simple demo form	asdf 14 {1 2 3 4 5 6 7 8 9 10 11 12 13 14} 377x315+170+155 {label label1 {15 36 99 57} {} {Selected color} {}} {entry entry2 {111 36 225 54} {} entry2 color} {radio red {249 21 342 36} {} {Red as cherry} color} {radio green {249 45 342 60} {} {Green as a melon} color} {radio blue {249 69 342 84} {} {Blue as the sky} color} {button button6 {45 69 198 99} {set color spooky} {Set a weird color} {}} {label label7 {24 129 138 147} {} {The checkbox's value} {}} {entry entry8 {162 129 172 147} {} entry8 cbvalue} {checkbox checkbox9 {180 126 279 150} {} {Check me :-)} cbvalue} {button button10 {219 273 366 303} {destroy .asdf} {Close that simple form} {}} {button button11 {219 237 366 267} {open_form "Phone book"} {Open my phone book} {}} {listbox lb {12 192 162 267} {} listbox12 {}} {button button13 {12 156 162 186} {.asdf.lb insert end red green blue cyan white navy black purple maroon violet} {Add some information} {}} {button button14 {12 273 162 303} {.asdf.lb delete 0 end} {Clear this listbox} {}}
 Phone book	pb 26 {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26} 444x310+284+246 {label label1 {33 12 63 30} {} Name {}} {entry name_entry {87 9 217 30} {} entry2 pbqs(name)} {label label3 {33 39 73 54} {} Phone {}} {entry entry4 {87 36 195 57} {} entry4 pbqs(phone_nr)} {label label5 {33 66 78 84} {} City {}} {entry entry6 {87 63 195 84} {} entry6 pbqs(city)} {query qs {3 6 33 33} {} query7 {}} {button button8 {126 177 198 203} {.pb.qs:setsql "select oid,* from phonebook where name ~* '$what' order by name"\
 .pb.qs:open\
@@ -56,32 +56,32 @@ tk_messageBox -title Information -message "A new record has been added!"\
 set pbqs(company) f\
 focus .pb.name_entry} New {}} {listbox allnames {246 12 432 240} {} listbox26 {}}
 \.
-COPY pga_scripts FROM stdin;
+COPY "pga_scripts" FROM stdin;
 How are forms keeped inside ?	open_table pga_forms\
 \
 
 \.
-COPY pga_reports FROM stdin;
+COPY "pga_reports" FROM stdin;
 \.
-COPY phonebook FROM stdin;
-IBM	623346234	\N	t	usa
-John Doe	+44 35 2993825	Washington	f	usa
-Bill Clinton	+44 35 9283845	New York	f	usa
-Monica Levintchi	+44 38 5234526	Dallas	f	usa
-Bill Gates	+42 64 4523454	Los Angeles	f	usa
-COMPAQ	623462345	\N	t	usa
-SUN	784563253	\N	t	usa
-DIGITAL	922644516	\N	t	usa
-FIAT	623463445	\N	t	europe
-MUGADUMBU	+92 534662634	\N	t	africa
-Frank Zappa	6734567	Montreal	f	usa
-Jimmy Page	66323452		f	europe
-Constantin Teodorescu	+40 39 611820	Braila	f	europe
-Ngbendu Wazabanga	34577345		f	africa
-Victor Ciorbea	634567	Bucuresti	f	europe
-Mugabe Kandalam	7635745		f	africa
+COPY "phonebook" FROM stdin;
+IBM	623346234	\N	t	usa             
+John Doe	+44 35 2993825	Washington	f	usa             
+Bill Clinton	+44 35 9283845	New York	f	usa             
+Monica Levintchi	+44 38 5234526	Dallas	f	usa             
+Bill Gates	+42 64 4523454	Los Angeles	f	usa             
+COMPAQ	623462345	\N	t	usa             
+SUN	784563253	\N	t	usa             
+DIGITAL	922644516	\N	t	usa             
+FIAT	623463445	\N	t	europe          
+MUGADUMBU	+92 534662634	\N	t	africa          
+Frank Zappa	6734567	Montreal	f	usa             
+Jimmy Page	66323452		f	europe          
+Constantin Teodorescu	+40 39 611820	Braila	f	europe          
+Ngbendu Wazabanga	34577345		f	africa          
+Victor Ciorbea	634567	Bucuresti	f	europe          
+Mugabe Kandalam	7635745		f	africa          
 \.
-COPY pga_layout FROM stdin;
+COPY "pga_layout" FROM stdin;
 pga_forms	2	formname formsource	82 713
 phonebook	5	name phone_nr city company continent	150 105 80 66 85
 Usaisti	5	name phone_nr city company continent	150 150 150 150 150
