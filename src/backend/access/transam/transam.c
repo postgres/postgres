@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.26 1999/05/25 16:07:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.27 1999/06/10 14:17:06 vadim Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -172,8 +172,14 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 
 	if (!fail)
 	{
-		TransactionIdStore(transactionId, &cachedTestXid);
-		cachedTestXidStatus = xidstatus;
+		/*
+		 * DO NOT cache status for transactions in unknown state !!!
+		 */
+		if (xidstatus == XID_COMMIT || xidstatus == XID_ABORT)
+		{
+			TransactionIdStore(transactionId, &cachedTestXid);
+			cachedTestXidStatus = xidstatus;
+		}
 		return (bool) (status == xidstatus);
 	}
 
@@ -575,13 +581,4 @@ TransactionIdAbort(TransactionId transactionId)
 		return;
 
 	TransactionLogUpdate(transactionId, XID_ABORT);
-}
-
-void
-TransactionIdFlushCache()
-{
-
-	TransactionIdStore(AmiTransactionId, &cachedTestXid);
-	cachedTestXidStatus = XID_COMMIT;
-
 }

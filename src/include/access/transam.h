@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.21 1999/05/25 22:42:35 momjian Exp $
+ * $Id: transam.h,v 1.22 1999/06/10 14:17:12 vadim Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -145,7 +145,6 @@ extern bool TransactionIdDidCommit(TransactionId transactionId);
 extern bool TransactionIdDidAbort(TransactionId transactionId);
 extern void TransactionIdCommit(TransactionId transactionId);
 extern void TransactionIdAbort(TransactionId transactionId);
-extern void TransactionIdFlushCache(void);
 
 /* in transam/transsup.c */
 extern void AmiTransactionOverride(bool flag);

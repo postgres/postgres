@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.53 1999/05/29 03:58:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.54 1999/06/10 14:17:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2007,7 +2007,8 @@ LockBuffer(Buffer buffer, int mode)
 		else if (BufferLocks[buffer - 1] & BL_W_LOCK)
 		{
 			Assert(buf->w_lock);
-			Assert(buf->r_locks == 0 && !buf->ri_lock);
+			Assert(buf->r_locks == 0);
+			Assert(!buf->ri_lock);
 			Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_RI_LOCK)))
 				buf->w_lock = false;
 			BufferLocks[buffer - 1] &= ~BL_W_LOCK;

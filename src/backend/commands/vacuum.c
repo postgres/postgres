@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.107 1999/06/06 20:19:34 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.108 1999/06/10 14:17:07 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1351,6 +1351,8 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						if (!ItemIdIsUsed(Pitemid))
 							elog(ERROR, "Parent itemid marked as unused");
 						Ptp.t_data = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
+						Assert(ItemPointerEquals(&(vtld.new_tid),
+												&(Ptp.t_data->t_ctid)));
 						Assert(Ptp.t_data->t_xmax == tp.t_data->t_xmin);
 
 #ifdef NOT_USED			/* I'm not sure that this will wotk properly... */
