@@ -510,3 +510,71 @@ official PostgreSQL and if you spending time on relevant things (IMHO).
 
 
 
+From pgsql-hackers-owner+M4304@postgresql.org Tue Feb  6 10:24:21 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA22027
+	for <pgman@candle.pha.pa.us>; Tue, 6 Feb 2001 10:24:20 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f16FOBx97182;
+	Tue, 6 Feb 2001 10:24:11 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4304@postgresql.org)
+Received: from goldengate.kojoworldwide.com. ([216.133.4.130])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f16FLWx96814
+	for <pgsql-hackers@postgresql.org>; Tue, 6 Feb 2001 10:21:33 -0500 (EST)
+	(envelope-from mscott@sacadia.com)
+Received: from localhost (localhost [127.0.0.1])
+	by goldengate.kojoworldwide.com. (8.9.1b+Sun/8.9.2) with ESMTP id HAA04170;
+	Tue, 6 Feb 2001 07:05:04 -0800 (PST)
+Date: Tue, 6 Feb 2001 07:05:04 -0800 (PST)
+From: Myron Scott <mscott@sacadia.com>
+X-Sender: mscott@goldengate.kojoworldwide.com.
+To: Karel Zak <zakkr@zf.jcu.cz>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Using Threads
+In-Reply-To: <Pine.LNX.3.96.1010206101030.20355B-100000@ara.zf.jcu.cz>
+Message-ID: <Pine.GSO.4.10.10102060650250.4153-100000@goldengate.kojoworldwide.com.>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+> 
+>  Sorry I haven't time to see and test your experiment,
+> but I have a question. How you solve memory management?
+> The current mmgr is based on global variable 
+> CurrentMemoryContext that is very often changed and used.
+>  Use you for this locks? If yes it is probably problematic
+> point for perfomance.
+> 
+> 			Karel
+> 
+
+There are many many globals I had to work around including all the memory
+management stuff.  I basically threw everything into and "environment"
+variable which I stored in a thread specific using thr_setspecific.
+
+Performance is acually very good for what I am doing.  I was able to batch
+commit transactions which cuts down on fsync calls, use prepared
+statements from my client using CORBA, and the various locking calls for
+the threads (cond_wait,mutex_lock, and sema_wait) seem pretty fast.  I did
+some performance tests for inserts 
+
+20 clients, 900 inserts per client, 1 insert per transaction, 4 different
+tables.
+
+7.0.2    About    10:52 average completion
+multi-threaded    2:42 average completion
+7.1beta3          1:13 average completion
+
+If I increased the number of inserts per transaction, multi-threaded got
+closer to 7.1 for inserts.  I haven't tested other other types of
+commands
+yet.
+
+
+Myron Scott
+mkscott@sacadia.com
+
+
