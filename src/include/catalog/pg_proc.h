@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.22 1997/05/14 04:34:19 thomas Exp $
+ * $Id: pg_proc.h,v 1.23 1997/06/03 14:11:28 thomas Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -665,6 +665,12 @@ DATA(insert OID = 926 (  oidint4gt	   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 10
 DATA(insert OID = 927 (  oidint4ne	   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100  foo bar));
 DATA(insert OID = 928 (  oidint4cmp	   PGUID 11 f t f 2 f 23 "910 910" 100 0 0 100  foo bar));
 DATA(insert OID = 929 (  mkoidint4	   PGUID 11 f t f 2 f 910 "26 23" 100 0 0 100  foo bar));
+
+/* isoldpath, upgradepath, upgradepoly, revertpoly are used to update pre-v6.1 to v6.1 - tgl 97/06/03 */
+DATA(insert OID = 936 (  isoldpath         PGUID 11 f t f 1 f  16 "602" 100 0 0 100  foo bar ));
+DATA(insert OID = 937 (  upgradepath       PGUID 11 f t f 1 f 602 "602" 100 0 0 100  foo bar ));
+DATA(insert OID = 938 (  upgradepoly       PGUID 11 f t f 1 f 604 "604" 100 0 0 100  foo bar ));
+DATA(insert OID = 939 (  revertpoly        PGUID 11 f t f 1 f 604 "604" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 940 (  oidnamein	   PGUID 11 f t f 1 f 911 "0" 100 0 0 100  foo bar));
 DATA(insert OID = 941 (  oidnameout	   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar));

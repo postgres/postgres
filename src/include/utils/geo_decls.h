@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.4 1997/05/06 07:24:42 thomas Exp $
+ * $Id: geo_decls.h,v 1.5 1997/06/03 14:10:32 thomas Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -196,9 +196,6 @@ extern bool path_inter(PATH *p1, PATH *p2);
 extern double *path_distance(PATH *p1, PATH *p2);
 extern double *path_length(PATH *path);
 
-/* private routines */
-extern double path_ln(PATH *path);
-
 extern bool path_isclosed(PATH *path);
 extern bool path_isopen(PATH *path);
 extern int4 path_npoints(PATH *path);
@@ -212,7 +209,13 @@ extern PATH *path_mul_pt(PATH *path, Point *point);
 extern PATH *path_div_pt(PATH *path, Point *point);
 
 extern POLYGON *path_poly(PATH *path);
+extern PATH *upgradepath(PATH *path);
+extern bool isoldpath(PATH *path);
 
+/* private routines */
+extern double path_ln(PATH *path);
+
+/* public point routines */
 extern Point *point_in(char *str);
 extern char *point_out(Point *pt);
 extern Point *point_construct(double x, double y);
@@ -238,6 +241,7 @@ extern Point *point_sub(Point *p1, Point *p2);
 extern Point *point_mul(Point *p1, Point *p2);
 extern Point *point_div(Point *p1, Point *p2);
 
+/* public lseg routines */
 extern LSEG *lseg_in(char *str);
 extern char *lseg_out(LSEG *ls);
 extern bool lseg_intersect(LSEG *l1, LSEG *l2);
@@ -278,6 +282,7 @@ extern void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern double lseg_dt(LSEG *l1, LSEG *l2);
 extern void make_bound_box(POLYGON *poly);
 
+/* public polygon routines */
 extern POLYGON *poly_in(char *s);
 extern char *poly_out(POLYGON *poly);
 extern bool poly_left(POLYGON *polya, POLYGON *polyb);
@@ -293,7 +298,10 @@ extern int4 poly_npoints(POLYGON *poly);
 extern BOX *poly_box(POLYGON *poly);
 extern PATH *poly_path(POLYGON *poly);
 extern POLYGON *box_poly(BOX *box);
+extern POLYGON *upgradepoly(POLYGON *poly);
+extern POLYGON *revertpoly(POLYGON *poly);
 
+/* public circle routines */
 extern CIRCLE *circle_in(char *str);
 extern char *circle_out(CIRCLE *circle);
 extern bool circle_same(CIRCLE *circle1, CIRCLE *circle2);
