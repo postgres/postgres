@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.2 2002/09/04 20:31:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.3 2002/09/07 16:14:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,4 +130,25 @@ appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll)
 			appendPQExpBufferChar(buf, ch);
 	}
 	appendPQExpBufferChar(buf, '\'');
+}
+
+
+
+int
+parse_version(const char *versionString)
+{
+	int			cnt;
+	int			vmaj,
+				vmin,
+				vrev;
+
+	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
+
+	if (cnt < 2)
+		return -1;
+
+	if (cnt == 2)
+		vrev = 0;
+
+	return (100 * vmaj + vmin) * 100 + vrev;
 }

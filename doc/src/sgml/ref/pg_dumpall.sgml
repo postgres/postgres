@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.33 2002/09/05 22:05:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.34 2002/09/07 16:14:33 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -79,13 +79,12 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term>-c, --clean</term>
+      <term><option>-c</option></term>
+      <term><option>--clean</option></term>
       <listitem>
        <para>
-	Include SQL commands to clean (drop) database objects before
-	recreating them.  (This option is fairly useless, since the
-	output script expects to create the databases themselves;
-	they would always be empty upon creation.)
+	Include SQL commands to clean (drop) the databases before
+	recreating them.
        </para>
       </listitem>
      </varlistentry>
@@ -120,10 +119,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-g, --globals-only</term>
+      <term><option>-g</option></term>
+      <term><option>--globals-only</option></term>
       <listitem>
        <para>
-	Only dump global objects (users and groups), no databases.
+	Dump only global objects (users and groups), no databases.
        </para>
       </listitem>
      </varlistentry>
@@ -135,11 +135,13 @@ PostgreSQL documentation
        <para>
         Ignore version mismatch between
         <application>pg_dumpall</application> and the database server.
-        Since <application>pg_dumpall</application> knows a great deal
-        about system catalogs, any given version of
-        <application>pg_dumpall</application> is only intended to work
-        with the corresponding release of the database server.  Use
-        this option if you need to override the version check (and if
+       </para>
+
+       <para>
+        <application>pg_dumpall</application> can handle databases
+        from previous releases of PostgreSQL, but very old versions
+        are not supported anymore (currently prior to 7.0).  Use this
+        option if you need to override the version check (and if
         <application>pg_dumpall</application> then fails, don't say
         you weren't warned).
        </para>

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.297 2002/09/04 20:31:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.298 2002/09/07 16:14:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ typedef struct _dumpContext
 } DumpContext;
 
 static void help(const char *progname);
-static int	parse_version(const char *versionString);
 static NamespaceInfo *findNamespace(const char *nsoid, const char *objoid);
 static void dumpClasses(const TableInfo *tblinfo, const int numTables,
 			Archive *fout, const bool oids);
@@ -535,12 +534,18 @@ main(int argc, char **argv)
 	/* Let the archiver know how noisy to be */
 	g_fout->verbose = g_verbose;
 
+	g_fout->minRemoteVersion = 70000;	/* we can handle back to 7.0 */
+	g_fout->maxRemoteVersion = parse_version(PG_VERSION);
+	if (g_fout->maxRemoteVersion < 0)
+	{
+		write_msg(NULL, "unable to parse version string \"%s\"\n", PG_VERSION);
+		exit(1);
+	}
+
 	/*
 	 * Open the database using the Archiver, so it knows about it. Errors
 	 * mean death.
 	 */
-	g_fout->minRemoteVersion = 70000;	/* we can handle back to 7.0 */
-	g_fout->maxRemoteVersion = parse_version(PG_VERSION);
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, username, force_password, ignore_version);
 
 	/*
@@ -724,28 +729,6 @@ help(const char *progname)
 	printf(_("\nIf no database name is not supplied, then the PGDATABASE environment\n"
 			 "variable value is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
-}
-
-static int
-parse_version(const char *versionString)
-{
-	int			cnt;
-	int			vmaj,
-				vmin,
-				vrev;
-
-	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
-
-	if (cnt < 2)
-	{
-		write_msg(NULL, "unable to parse version string \"%s\"\n", versionString);
-		exit(1);
-	}
-
-	if (cnt == 2)
-		vrev = 0;
-
-	return (100 * vmaj + vmin) * 100 + vrev;
 }
 
 void

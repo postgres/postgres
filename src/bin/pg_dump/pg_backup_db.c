@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.40 2002/09/04 20:31:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.41 2002/09/07 16:14:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,20 +41,13 @@ static char *_sendCopyLine(ArchiveHandle *AH, char *qry, char *eos);
 static int
 _parse_version(ArchiveHandle *AH, const char *versionString)
 {
-	int			cnt;
-	int			vmaj,
-				vmin,
-				vrev;
+	int			v;
 
-	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
-
-	if (cnt < 2)
+	v = parse_version(versionString);
+	if (v < 0)
 		die_horribly(AH, modulename, "unable to parse version string \"%s\"\n", versionString);
 
-	if (cnt == 2)
-		vrev = 0;
-
-	return (100 * vmaj + vmin) * 100 + vrev;
+	return v;
 }
 
 static void

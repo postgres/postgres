@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.6 2002/09/04 20:31:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.7 2002/09/07 16:14:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,7 @@ char	   *pgdumploc;
 PQExpBuffer pgdumpopts;
 bool		output_clean = false;
 bool		verbose = false;
+int			server_version;
 
 
 
@@ -127,7 +128,6 @@ main(int argc, char *argv[])
 		{
 			case 'c':
 				output_clean = true;
-				appendPQExpBuffer(pgdumpopts, " -c");
 				break;
 
 			case 'd':
@@ -217,10 +217,10 @@ help(void)
 
 	printf(_("Options:\n"));
 #ifdef HAVE_GETOPT_LONG
-	printf(_("  -c, --clean              clean (drop) schema prior to create\n"));
+	printf(_("  -c, --clean              clean (drop) databases prior to create\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
-	printf(_("  -g, --globals-only       only dump global objects, no databases\n"));
+	printf(_("  -g, --globals-only       dump only global objects, no databases\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
@@ -230,10 +230,10 @@ help(void)
 	printf(_("  -v, --verbose            verbose mode\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
 #else							/* not HAVE_GETOPT_LONG */
-	printf(_("  -c                       clean (drop) schema prior to create\n"));
+	printf(_("  -c                       clean (drop) databases prior to create\n"));
 	printf(_("  -d                       dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D                       dump data as INSERT commands with column names\n"));
-	printf(_("  -g                       only dump global objects, no databases\n"));
+	printf(_("  -g                       dump only global objects, no databases\n"));
 	printf(_("  -h HOSTNAME              database server host name\n"));
 	printf(_("  -i                       proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
@@ -301,7 +301,8 @@ dumpUsers(PGconn *conn)
 		printf("%s", buf->data);
 		destroyPQExpBuffer(buf);
 
-		dumpUserConfig(conn, username);
+		if (server_version >= 70300)
+			dumpUserConfig(conn, username);
 	}
 
 	PQclear(res);
@@ -431,7 +432,8 @@ dumpCreateDB(PGconn *conn)
 		printf("%s", buf->data);
 		destroyPQExpBuffer(buf);
 
-		dumpDatabaseConfig(conn, dbname);
+		if (server_version >= 70300)
+			dumpDatabaseConfig(conn, dbname);
 	}
 
 	PQclear(res);
@@ -609,6 +611,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	PGconn	   *conn;
 	char	   *password = NULL;
 	bool		need_pass = false;
+	PGresult   *res;
 
 	if (require_password)
 		password = simple_prompt("Password: ", 100, false);
@@ -626,7 +629,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		{
 			fprintf(stderr, _("%s: could not connect to database %s\n"),
 					progname, dbname);
-			exit(0);
+			exit(1);
 		}
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
@@ -649,7 +652,24 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	{
 		fprintf(stderr, _("%s: could not connect to database %s: %s\n"),
 				progname, dbname, PQerrorMessage(conn));
-		exit(0);
+		exit(1);
+	}
+
+	res = executeQuery(conn, "SELECT version();");
+	if (PQntuples(res) != 1)
+	{
+		fprintf(stderr, _("%s: could not get server version\n"), progname);
+		exit(1);
+	}
+	else
+	{
+		char *val = PQgetvalue(res, 0, 0);
+		server_version = parse_version(val + strcspn(val, "0123456789"));
+		if (server_version < 0)
+		{
+			fprintf(stderr, _("%s: could not parse server version \"%s\"\n"), progname, val);
+			exit(1);
+		}
 	}
 
 	return conn;
