@@ -1,8 +1,8 @@
-DBMirror - Postgres Database Mirroring
+DBMirror - PostgreSQL Database Mirroring
 ===================================================
 
 
-DBMirror is a database mirroring system developed for the Postgres
+DBMirror is a database mirroring system developed for the PostgreSQL
 database Written and maintained by Steven Singer(ssinger@navtechinc.com)
 
 
@@ -54,6 +54,13 @@ If the transaction has been sent to all know slave hosts (All entries
 in the MirrorHost table) then all records of it are purged from the
 Pending tables.
 
+Requirments:
+---------------------------------
+-PostgreSQL-7.4 (Older versions are no longer supported)
+-Perl 5.6(Other versions might work)
+-PgPerl (http://gborg.postgresql.org/project/pgperl/projdisplay.php)
+
+
 Installation Instructions
 ------------------------------------------------------------------------
 
@@ -66,32 +73,10 @@ time a row inside of a table being mirrored changes.
 
 To build the trigger run  make on the "Makefile" in the DBMirror directory.
 
-Postgres-7.3 & 7.4  Make Instructions:
+PostgreSQL-7.4  Make Instructions:
 
   If you have already run "configure" in the pgsql-server directory 
   then run "make" in the dbmirror directory to compile the trigger.
-
-Postgres-7.1 & Postgres-7.2 Make Instructions:
-
-  The included Makefile is not compatible with postgres 7.1 and 7.2
-  The trigger will need to be built by hand.
-
-  Run the following commands
-
-  gcc -fpic -I/usr/local/pgsql/include/server -c pending.c -DNOSCHEMAS -DNODROPCOLUMN
-  ld -shared -o pending.so pending.o
-
-  Assuming the postgres include files are in /usr/local/pgsql/include/server.  
-
-Postgres-7.1.x installations should change this to
-/usr/local/pgsql/include  (The server part is for 7.2+)
-
-If you have installed the postgres include files to another location then
-  modify the include path to reflect this.
-
-  Compiling the trigger by hand requires that all postgres headers be installed
-  ,this is accomplished in postgresql(7.1 or 7.2) by running 
-  "make install-all-headers" in the postgres source directory.
 
 
 You should now have a file named pending.so that contains the trigger.
@@ -109,7 +94,7 @@ choose to install the trigger elsewhere.
 This file contains SQL commands to setup the Mirroring environment.  
 This includes
 
--Telling Postgres about the "recordchange" trigger function.
+-Telling PostgreSQL about the "recordchange" trigger function.
 -Creating the Pending,PendingData, MirrorHost, MirroredTransaction tables
 
 
@@ -119,15 +104,6 @@ To execute the script use psql as follows
 
 where MyDatabaseName is the name of the database you wish to install mirroring
 on(Your master).
-
-Postgres-7.1 and 7.2 Notes:
-  -The syntax for creating a trigger function changed in Postgres-7.3. 
-  Change the line in MirrorSetup.sql from 
-
-  CREATE FUNCTION "recordchange" () RETURNS trigger AS
-
-  to 
-  CREATE FUNCTION "recordchange" () RETURNS OPAQUE AS
 
 
 3) Create slaveDatabase.conf files.
@@ -185,8 +161,7 @@ INSERT INTO "MirrorHost" ("HostName") VALUES ('mySlaveMachine.mycompany.com');
 
 DBMirror.pl is the perl script that handles the mirroring.  
 
-It requires the Perl library Pg(See src/interfaces/perl5 in the postgres 
-source distribution).
+It requires the Perl library Pg(See http://gborg.postgresql.org/project/pgperl/projdisplay.php)
 
 It takes its configuration file as an argument(The one from step 3)
 One instance of DBMirror.pl runs for each slave machine that is receiving
@@ -222,22 +197,6 @@ TODO(Current Limitations)
 -Support for conflict resolution.
 -Batching SQL commands in DBMirror for better performance over WAN's.
 -Better support for dealing with Schema changes.
-
-Tested Platforms:
-------------------
-
-DBMirror has been tested on the following configurations but should
-work on any platform with Postgres >= 7.1 and Perl 5.6. 
-
-RedHat Linux 7.1 & 6.2
- -Postgres 7.1.2
- -Perl 5.6
-
-Mandrake Linux 8.0(Limited Testing)
- -Postgres 7.2
- -Postgres 7.3
- -Postgres 7.4
- -Perl 5.6
 
 
 Steven Singer
