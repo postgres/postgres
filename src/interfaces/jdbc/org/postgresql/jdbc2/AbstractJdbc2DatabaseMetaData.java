@@ -49,9 +49,9 @@ public abstract class AbstractJdbc2DatabaseMetaData extends org.postgresql.jdbc1
 		if (type == java.sql.ResultSet.TYPE_SCROLL_SENSITIVE)
 			return false;
 
-		// We don't yet support Updateable ResultSets
+		// We do support Updateable ResultSets
 		if (concurrency == java.sql.ResultSet.CONCUR_UPDATABLE)
-			return false;
+			return true;
 
 		// Everything else we do
 		return true;
@@ -61,17 +61,18 @@ public abstract class AbstractJdbc2DatabaseMetaData extends org.postgresql.jdbc1
 	/* lots of unsupported stuff... */
 	public boolean ownUpdatesAreVisible(int type) throws SQLException
 	{
-		return false;
+          return true;
 	}
 
 	public boolean ownDeletesAreVisible(int type) throws SQLException
 	{
-		return false;
+          return true;
 	}
 
 	public boolean ownInsertsAreVisible(int type) throws SQLException
 	{
-		return false;
+          // indicates that
+          return true;
 	}
 
 	public boolean othersUpdatesAreVisible(int type) throws SQLException
