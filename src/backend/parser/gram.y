@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.438 2003/11/21 22:32:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.439 2003/11/24 16:54:07 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1926,11 +1926,11 @@ OptSeqElem: CACHE NumericOnly
 				}
 			| CYCLE
 				{
-					$$ = makeDefElem("cycle", (Node *)true);
+					$$ = makeDefElem("cycle", (Node *)makeInteger(TRUE));
 				}
 			| NO CYCLE
 				{
-					$$ = makeDefElem("cycle", (Node *)false);
+					$$ = makeDefElem("cycle", (Node *)makeInteger(FALSE));
 				}
 			| INCREMENT opt_by NumericOnly
 				{
