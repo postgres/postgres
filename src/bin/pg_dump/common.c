@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.38 2000/01/18 07:29:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.39 2000/01/18 18:09:02 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -288,6 +288,14 @@ dumpSchema(FILE *fout,
 		fprintf(stderr, "%s flagging inherited attributes in subtables %s\n",
 				g_comment_start, g_comment_end);
 	flagInhAttrs(tblinfo, numTables, inhinfo, numInherits);
+
+	if (!tablename && fout)
+	{
+		if (g_verbose)
+			fprintf(stderr, "%s dumping out database comment %s\n",
+					g_comment_start, g_comment_end);
+		dumpDBComment(fout);
+	}
 
 	if (!tablename && fout)
 	{

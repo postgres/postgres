@@ -19,6 +19,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_shadow.h"
@@ -658,6 +659,7 @@ void CommentProc(char *function, List *arguments, char *comment)
 
 void CommentOperator(char *opername, List *arguments, char *comment) {
 
+  Form_pg_operator data;
   HeapTuple optuple;
   Oid oid, leftoid = InvalidOid, rightoid = InvalidOid;
   bool defined;
@@ -719,6 +721,14 @@ void CommentOperator(char *opername, List *arguments, char *comment) {
   }
   #endif
 
+  /*** Get the procedure associated with the operator ***/
+
+  data = (Form_pg_operator) GETSTRUCT(optuple);
+  oid = regproctooid(data->oprcode);
+  if (oid == InvalidOid) {
+	  elog(ERROR, "operator '%s' does not have an underlying function", opername);
+  }
+  
   /*** Call CreateComments() to create/drop the comments ***/
 
   CreateComments(oid, comment);

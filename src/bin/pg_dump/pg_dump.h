@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.45 2000/01/16 03:54:58 tgl Exp $
+ * $Id: pg_dump.h,v 1.46 2000/01/18 18:09:02 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -74,6 +74,7 @@ typedef struct _tableInfo
 								 * attribute if the value is 1, then this
 								 * attribute is an inherited attribute */
 	char	  **attnames;		/* the attribute names */
+	char      **attoids;        /* oids of the various attributes */
 	char	  **typnames;		/* fill out attributes */
 	bool	   *notnull;		/* Not null constraints of an attribute */
 	char	  **adef_expr;		/* DEFAULT expressions */
@@ -93,6 +94,8 @@ typedef struct _tableInfo
 	char	  **check_expr;		/* [CONSTRAINT name] CHECK expressions */
 	int			ntrig;			/* # of triggers */
 	char	  **triggers;		/* CREATE TRIGGER ... */
+	char      **trcomments;     /* COMMENT ON TRIGGER ... */
+	char      **troids;         /* TRIGGER oids */
     char       *primary_key;    /* PRIMARY KEY of the table, if any */
 } TableInfo;
 
@@ -104,6 +107,7 @@ typedef struct _inhInfo
 
 typedef struct _indInfo
 {
+	char       *indoid;         /* oid of the pg_class entry for the index */
 	char	   *indexrelname;	/* name of the secondary index class */
 	char	   *indrelname;		/* name of the indexed heap class */
 	char	   *indamname;		/* name of the access method (e.g. btree,
@@ -210,6 +214,7 @@ extern TableInfo *getTables(int *numTables, FuncInfo *finfo, int numFuncs);
 extern InhInfo *getInherits(int *numInherits);
 extern void getTableAttrs(TableInfo *tbinfo, int numTables);
 extern IndInfo *getIndices(int *numIndices);
+extern void dumpDBComment(FILE *outfile);
 extern void dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
 extern void dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
