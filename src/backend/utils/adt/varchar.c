@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.70 2000/11/21 21:16:02 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.71 2000/11/26 11:35:23 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,17 @@ bpcharin(PG_FUNCTION_ARGS)
 		atttypmod = len + VARHDRSZ;
 	}
 	else
+#ifdef MULTIBYTE
+	{
+		/*
+		 * truncate multi-byte string preserving multi-byte
+		 * boundary
+		 */
+		len = pg_mbcliplen(s, atttypmod - VARHDRSZ, atttypmod - VARHDRSZ);
+	}
+#else
 		len = atttypmod - VARHDRSZ;
+#endif
 
 	result = (BpChar *) palloc(atttypmod);
 	VARATT_SIZEP(result) = atttypmod;
@@ -96,7 +106,11 @@ bpcharin(PG_FUNCTION_ARGS)
 #endif
 
 	/* blank pad the string if necessary */
+#ifdef MULTIBYTE
+	for (; i < atttypmod - VARHDRSZ; i++)
+#else
 	for (; i < len; i++)
+#endif
 		*r++ = ' ';
 
 	PG_RETURN_BPCHAR_P(result);
@@ -329,7 +343,11 @@ varcharin(PG_FUNCTION_ARGS)
 
 	len = strlen(s) + VARHDRSZ;
 	if (atttypmod >= (int32) VARHDRSZ && len > atttypmod)
+#ifdef MULTIBYTE
+ 		len = pg_mbcliplen(s, len - VARHDRSZ, atttypmod - VARHDRSZ) + VARHDRSZ;
+#else
 		len = atttypmod;		/* clip the string at max length */
+#endif
 
 	result = (VarChar *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -383,7 +401,7 @@ varchar(PG_FUNCTION_ARGS)
 #ifdef MULTIBYTE
 
 	/*
-	 * truncate multi-byte string in a way not to break multi-byte
+	 * truncate multi-byte string preserving multi-byte
 	 * boundary
 	 */
 	len = pg_mbcliplen(VARDATA(s), slen - VARHDRSZ, slen - VARHDRSZ);
