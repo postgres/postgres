@@ -6,13 +6,14 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.7 2004/12/31 22:03:53 pgsql Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.8 2005/02/27 00:53:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifdef WIN32
 
+#include <postgres.h>
 #include <windows.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -62,7 +63,7 @@ win32_open(const char *fileName, int fileFlags,...)
 	/* Check that we can handle the request */
 	assert((fileFlags & ((O_RDONLY | O_WRONLY | O_RDWR) | O_APPEND |
 						 (O_RANDOM | O_SEQUENTIAL | O_TEMPORARY) |
-						 _O_SHORT_LIVED |
+						 _O_SHORT_LIVED | O_SYNC |
 	  (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
 
 	sa.nLength = sizeof(sa);
@@ -81,7 +82,8 @@ win32_open(const char *fileName, int fileFlags,...)
 				 ((fileFlags & O_RANDOM) ? FILE_FLAG_RANDOM_ACCESS : 0) |
 		   ((fileFlags & O_SEQUENTIAL) ? FILE_FLAG_SEQUENTIAL_SCAN : 0) |
 		  ((fileFlags & _O_SHORT_LIVED) ? FILE_ATTRIBUTE_TEMPORARY : 0) |
-			 ((fileFlags & O_TEMPORARY) ? FILE_FLAG_DELETE_ON_CLOSE : 0),
+			 ((fileFlags & O_TEMPORARY) ? FILE_FLAG_DELETE_ON_CLOSE : 0)|
+					((fileFlags & O_SYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
 						NULL)) == INVALID_HANDLE_VALUE)
 	{
 		switch (GetLastError())
