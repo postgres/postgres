@@ -1,0 +1,278 @@
+From tgl@sss.pgh.pa.us Wed Nov 21 22:51:02 2001
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAM3p2v12831
+	for <pgman@candle.pha.pa.us>; Wed, 21 Nov 2001 22:51:02 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fAM3p4c27978;
+	Wed, 21 Nov 2001 22:51:04 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+   PostgreSQL Development <pgsql-hackers@postgresql.org>,
+   stiening@cannon.astro.umass.edu, pgsql-bugs@postgresql.org
+Subject: Re: [BUGS] Bug #513: union all changes char(3) column definition 
+In-Reply-To: <200111220310.fAM3A2V08766@candle.pha.pa.us> 
+References: <200111220310.fAM3A2V08766@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Wed, 21 Nov 2001 22:10:02 -0500"
+Date: Wed, 21 Nov 2001 22:51:04 -0500
+Message-ID: <27975.1006401064@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Added to TODO:
+> 	* CREATE TABLE AS can not determine column lengths from expressions
+> Seems it should be documented.  Do we throw an error in these cases?
+
+No.  What we do right now is to generate non-length-constrained column
+types for the created table.
+
+Your TODO item is too pessimistic: we *do* determine the column length
+in simple cases.  For example:
+
+regression=# create table foo (f1 char(3));
+CREATE
+regression=# create table bar as select * from foo;
+SELECT
+regression=# \d bar
+            Table "bar"
+ Column |     Type     | Modifiers
+--------+--------------+-----------
+ f1     | character(3) |
+
+However, in more complex cases we don't know the column length:
+
+regression=# create table baz as select f1 || 'z' as f1 from foo;
+SELECT
+regression=# \d baz
+         Table "baz"
+ Column |  Type  | Modifiers
+--------+--------+-----------
+ f1     | bpchar |
+
+The argument here is about how much intelligence it's reasonable to
+expect the system to have.  It's very clearly not feasible to derive
+a length limit automagically in every case.  How hard should we try?
+
+			regards, tom lane
+
+From pgsql-bugs-owner+M2695=candle.pha.pa.us=pgman@postgresql.org Wed Nov 21 23:16:19 2001
+Return-path: <pgsql-bugs-owner+M2695=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAM4GJv15505
+	for <pgman@candle.pha.pa.us>; Wed, 21 Nov 2001 23:16:19 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAM4CxN38340
+	for <pgman@candle.pha.pa.us>; Wed, 21 Nov 2001 22:12:59 -0600 (CST)
+	(envelope-from pgsql-bugs-owner+M2695=candle.pha.pa.us=pgman@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAM48em84313;
+	Wed, 21 Nov 2001 23:08:40 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fAM48bc28082;
+	Wed, 21 Nov 2001 23:08:37 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+   PostgreSQL Development <pgsql-hackers@postgresql.org>,
+   stiening@cannon.astro.umass.edu, pgsql-bugs@postgresql.org
+Subject: Re: [BUGS] Bug #513: union all changes char(3) column definition 
+In-Reply-To: <200111220353.fAM3rRg12994@candle.pha.pa.us> 
+References: <200111220353.fAM3rRg12994@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Wed, 21 Nov 2001 22:53:27 -0500"
+Date: Wed, 21 Nov 2001 23:08:37 -0500
+Message-ID: <28079.1006402117@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> However, I don't think creating a bpchar
+> with no length is a proper solution.  Should we just punt to text in
+> these cases?
+
+How many special cases like that do you want to put into the allegedly
+datatype-independent CREATE TABLE code?
+
+If I thought this were the only case then I'd not object ... but it
+looks like a slippery slope from here.
+
+And --- it's not like replacing "bpchar" with "text" actually buys us
+any useful new functionality.  AFAICS it's just a cosmetic thing.
+
+			regards, tom lane
+
+PS: On the other hand, we might consider attacking the problem from
+the reverse direction, ie *removing* code.  For example, if there
+weren't redundant || operators for char and varchar, then every ||
+operation would yield text, and the example we're looking at would
+work the way you want for free.  I've thought for awhile that we
+could use a pass through pg_proc and pg_operator to remove some
+entries we don't really need.
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From tgl@sss.pgh.pa.us Wed Nov 21 23:08:36 2001
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAM48av14412
+	for <pgman@candle.pha.pa.us>; Wed, 21 Nov 2001 23:08:36 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fAM48bc28082;
+	Wed, 21 Nov 2001 23:08:37 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+   PostgreSQL Development <pgsql-hackers@postgresql.org>,
+   stiening@cannon.astro.umass.edu, pgsql-bugs@postgresql.org
+Subject: Re: [BUGS] Bug #513: union all changes char(3) column definition 
+In-Reply-To: <200111220353.fAM3rRg12994@candle.pha.pa.us> 
+References: <200111220353.fAM3rRg12994@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Wed, 21 Nov 2001 22:53:27 -0500"
+Date: Wed, 21 Nov 2001 23:08:37 -0500
+Message-ID: <28079.1006402117@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> However, I don't think creating a bpchar
+> with no length is a proper solution.  Should we just punt to text in
+> these cases?
+
+How many special cases like that do you want to put into the allegedly
+datatype-independent CREATE TABLE code?
+
+If I thought this were the only case then I'd not object ... but it
+looks like a slippery slope from here.
+
+And --- it's not like replacing "bpchar" with "text" actually buys us
+any useful new functionality.  AFAICS it's just a cosmetic thing.
+
+			regards, tom lane
+
+PS: On the other hand, we might consider attacking the problem from
+the reverse direction, ie *removing* code.  For example, if there
+weren't redundant || operators for char and varchar, then every ||
+operation would yield text, and the example we're looking at would
+work the way you want for free.  I've thought for awhile that we
+could use a pass through pg_proc and pg_operator to remove some
+entries we don't really need.
+
+From pgsql-bugs-owner+M2696=candle.pha.pa.us=pgman@postgresql.org Wed Nov 21 23:26:07 2001
+Return-path: <pgsql-bugs-owner+M2696=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAM4Q6v16612
+	for <pgman@candle.pha.pa.us>; Wed, 21 Nov 2001 23:26:06 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAM4MwN38618
+	for <pgman@candle.pha.pa.us>; Wed, 21 Nov 2001 22:22:58 -0600 (CST)
+	(envelope-from pgsql-bugs-owner+M2696=candle.pha.pa.us=pgman@postgresql.org)
+Received: from candle.pha.pa.us (candle.navpoint.com [162.33.245.46])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAM4DUm84443;
+	Wed, 21 Nov 2001 23:13:30 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id fAM4DSH15042;
+	Wed, 21 Nov 2001 23:13:28 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200111220413.fAM4DSH15042@candle.pha.pa.us>
+Subject: Re: [BUGS] Bug #513: union all changes char(3) column definition
+In-Reply-To: <28079.1006402117@sss.pgh.pa.us> "from Tom Lane at Nov 21, 2001
+	11:08:37 pm"
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Wed, 21 Nov 2001 23:13:28 -0500 (EST)
+cc: Peter Eisentraut <peter_e@gmx.net>,
+   PostgreSQL Development <pgsql-hackers@postgresql.org>,
+   stiening@cannon.astro.umass.edu, pgsql-bugs@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+Status: OR
+
+> How many special cases like that do you want to put into the allegedly
+> datatype-independent CREATE TABLE code?
+> 
+> If I thought this were the only case then I'd not object ... but it
+> looks like a slippery slope from here.
+> 
+> And --- it's not like replacing "bpchar" with "text" actually buys us
+> any useful new functionality.  AFAICS it's just a cosmetic thing.
+> 
+> 			regards, tom lane
+> 
+> PS: On the other hand, we might consider attacking the problem from
+> the reverse direction, ie *removing* code.  For example, if there
+> weren't redundant || operators for char and varchar, then every ||
+> operation would yield text, and the example we're looking at would
+> work the way you want for free.  I've thought for awhile that we
+> could use a pass through pg_proc and pg_operator to remove some
+> entries we don't really need.
+
+Can we convert bpchar to text in create table if no typmod is supplied?
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From peter_e@gmx.net Thu Nov 22 12:14:01 2001
+Return-path: <peter_e@gmx.net>
+Received: from mout02.kundenserver.de (mout02.kundenserver.de [195.20.224.133])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAMHE0v13505
+	for <pgman@candle.pha.pa.us>; Thu, 22 Nov 2001 12:14:00 -0500 (EST)
+Received: from [195.20.224.204] (helo=mrvdom00.schlund.de)
+	by mout02.kundenserver.de with esmtp (Exim 2.12 #2)
+	id 166xQB-0005p4-00; Thu, 22 Nov 2001 18:13:55 +0100
+Received: from p3e9e70dc.dip0.t-ipconnect.de ([62.158.112.220])
+	by mrvdom00.schlund.de with esmtp (Exim 2.12 #2)
+	id 166xQ9-00065m-00; Thu, 22 Nov 2001 18:13:53 +0100
+Date: Thu, 22 Nov 2001 18:21:17 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+X-Sender: <peter@peter.localdomain>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [BUGS] Bug #513: union all changes char(3) column definition 
+In-Reply-To: <27975.1006401064@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.30.0111221803230.766-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+Tom Lane writes:
+
+> The argument here is about how much intelligence it's reasonable to
+> expect the system to have.  It's very clearly not feasible to derive
+> a length limit automagically in every case.  How hard should we try?
+
+I would like to know what Proprietary database #1 does with
+
+CREATE TABLE one ( a bit(6) );
+INSERT INTO one VALUES ( b'101101' );
+CREATE TABLE two ( b bit(4) );
+INSERT INTO two VALUES ( b'0110' );
+CREATE TABLE three AS SELECT a FROM one UNION SELECT b FROM two;
+
+According to SQL92, clause 9.3, the result type of the union is bit(6).
+However, it's not possible to store a bit(4) value into a bit(6) field.
+Our current solution, "bit(<nothing>)" is even worse because it has no
+real semantics at all (but you can store bit(<anything>) in it,
+interestingly).
+
+-- 
+Peter Eisentraut   peter_e@gmx.net
+
+
