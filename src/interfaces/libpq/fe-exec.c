@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.21 1996/12/15 09:05:53 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.22 1996/12/20 20:34:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,16 +362,13 @@ PGresult*
 PQexec(PGconn* conn, const char* query)
 {
   PGresult *result;
-  int id, clear, error;
+  int id;
   char buffer[MAX_MESSAGE_LEN];
   char cmdStatus[MAX_MESSAGE_LEN];
   char pname[MAX_MESSAGE_LEN]; /* portal name */
   PGnotify *newNotify;
   FILE *pfin, *pfout, *pfdebug;
-
-#ifdef PQ_NOTIFY_PATCH
-  int isCommand = 0;                    /* DZ - 31-8-1996 */
-#endif
+  int emptiesSent = 0;
 
   pname[0]='\0';
 
@@ -412,7 +409,7 @@ PQexec(PGconn* conn, const char* query)
                      "-- fprintf to Pfout failed: errno=%d\n%s\n",
                      query, errno,strerror(errno));
       return NULL;
-    }
+  }
 
   /* loop forever because multiple messages, especially NOTICES,
      can come back from the backend
@@ -458,38 +455,12 @@ PQexec(PGconn* conn, const char* query)
         // send an empty query down, and keep reading out of the pipe
         // until an 'I' is received.
         */
-        clear = 0;
-        error = 0;
-
         pqPuts("Q ",pfout,pfdebug); /* send an empty query */
-#ifdef PQ_NOTIFY_PATCH
         /*
-         * Set a flag and process messages in the usual way because
+         * Increment a flag and process messages in the usual way because
          * there may be async notifications pending.  DZ - 31-8-1996
          */
-        isCommand = 1;
-#else
-        while (!clear)
-          {
-            if (pqGets(buffer,ERROR_MSG_LENGTH,pfin,pfdebug) == 1)
-              clear = 1;
-            /*
-            // Rules can create error messages while we are waiting
-            // for the 'I'.
-            */
-            if (buffer[0] == 'E') {
-                strcpy(conn->errorMessage, &buffer[1]);
-                error++;
-            }
-            clear = (buffer[0] == 'I');
-          }
-        if (error) {
-            return (PGresult*)NULL;
-        }
-        result = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
-        strncpy(result->cmdStatus,cmdStatus, CMDSTATUS_LEN-1);
-        return result;
-#endif
+        emptiesSent++;
       }
       break;
     case 'E': /* error return */
@@ -507,17 +478,21 @@ PQexec(PGconn* conn, const char* query)
         if ((c = pqGetc(pfin,pfdebug)) != '\0') {
           fprintf(stderr,"error!, unexpected character %c following 'I'\n", c);
         }
-        if (isCommand) {
-            /*
-             * If this is the result of a portal query command set the
-             * command status and message accordingly.  DZ - 31-8-1996
-             */
-            result = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
-            strncpy(result->cmdStatus,cmdStatus, CMDSTATUS_LEN-1);
+        if (emptiesSent) {
+	    if (--emptiesSent == 0) { /* is this the last one? */
+            	/*
+             	 * If this is the result of a portal query command set the
+             	 * command status and message accordingly.  DZ - 31-8-1996
+             	*/
+            	result = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
+            	strncpy(result->cmdStatus,cmdStatus, CMDSTATUS_LEN-1);
+            	return result;
+            }
+        }
+        else {
+	    result = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
             return result;
         }
-        result = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
-        return result;
       }
       break;
     case 'N': /* notices from the backend */
@@ -548,8 +523,7 @@ PQexec(PGconn* conn, const char* query)
               id);
       return (PGresult*)NULL;
     } /* switch */
-} /* while (1)*/
-
+  } /* while (1)*/
 }
 
 /*
