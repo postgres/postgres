@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Aug 23 10:41:58 EDT 2001
+Last updated:		Tue Sep  4 12:27:12 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -362,5 +362,5 @@ Developers who have claimed items are:
 * Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
 * Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
 * Tom is Tom Lane <tgl@sss.pgh.pa.us>
-* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
+* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.no>
 * Vadim is Vadim B. Mikheev <vadim4o@email.com>
