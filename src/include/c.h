@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.20 1997/09/18 14:20:40 momjian Exp $
+ * $Id: c.h,v 1.21 1997/09/18 17:06:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -698,10 +698,18 @@ typedef struct Exception
 /* This function gets call too often, so we inline it if we can */
 #define MemSet(start, val, len)	do \
 								{   /* are we aligned for int32? */ \
-									if (((start) & INT_ALIGN_MASK) == 0 && \
+									/* We have to cast the pointer to int \
+									   so we can do the AND */ \
+									if (((int)(start) & INT_ALIGN_MASK) == 0 && \
 										((len) & INT_ALIGN_MASK) == 0 && \
 										(val) == 0 && \
-										(len) <= 256) \
+									/* \
+									 * We got this number by testing this \
+									 * against the stock memset() on \
+									 * bsd/os 3.0.  Larger values were \
+									 * slower. \
+									 */ \
+										(len) <= 64) \
 									{ \
 										int32 *i = (int32 *)(start); \
 										int32 *stop = (int32 *)((char *)(start) + (len)); \
@@ -711,7 +719,7 @@ typedef struct Exception
 									} \
 									else \
 										memset((start), (val), (len)); \
-								}
+								} while (0)
 
 /* ----------------------------------------------------------------
  *				Section 9: externs
