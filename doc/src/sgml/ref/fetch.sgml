@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.24 2003/02/03 14:04:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.25 2003/02/04 11:23:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -209,13 +209,13 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
 
   <para>
    The cursor position can be before the first row of the query result, or on
-   any particular row of the result.
+   any particular row of the result, or after the last row of the result.
    When created, a cursor is positioned before the first row.  After fetching
    some rows, the cursor is positioned on the last row retrieved.  A new
    <command>FETCH</command> always steps one row in the specified direction
    (if possible) before beginning to return rows.  If the
    <command>FETCH</command> requests more rows than available, the cursor is
-   left positioned on the last row of the query result (or on the first
+   left positioned after the last row of the query result (or before the first
    row, in the case of a backward fetch).  This will always be the case after
    <command>FETCH ALL</>.
   </para>
@@ -225,7 +225,7 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
      A zero row count requests fetching the current row without moving the
      cursor --- that is, re-fetching the most recently fetched row.
      This will succeed unless the cursor is positioned before the
-     first row; in which case, no row is returned.
+     first row or after the last row; in which case, no row is returned.
     </para>
    </tip>
 

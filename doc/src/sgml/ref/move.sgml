@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.17 2003/02/03 14:04:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.18 2003/02/04 11:23:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -35,7 +35,7 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable c
   <para>
    <command>MOVE</command> allows the user to move the cursor position a 
    specified number of rows, or to the beginning or end of the cursor.
-   <command>MOVE ALL</command> moves to the last row of the cursor.
+   <command>MOVE ALL</command> moves to the end of the cursor.
    <command>MOVE</command> works exactly like the <command>FETCH</command>
    command, except it only repositions the cursor and does not return rows.
   </para>
