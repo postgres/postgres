@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.17 1998/10/16 04:37:37 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.18 1998/10/16 15:31:04 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,8 +16,6 @@ include $(SRCDIR)/Makefile.global
 
 
 PERL_CLEAN := DO_NOTHING
-install: PERL_CLEAN := clean
-
 
 .DEFAULT all install clean dep depend distclean:
 	$(MAKE) -C libpq $@
