@@ -1,5 +1,6 @@
 #include <kernel/OS.h>
-#include "kernel/image.h"
+#include <kernel/image.h>
+#include <sys/ioctl.h>
 
 #define HAS_TEST_AND_SET
 
@@ -68,6 +69,9 @@ void		beos_startup(int argc, char **argv);
 
 /* Load a shared library */
 image_id	beos_dl_open(char *filename);
+
+/* Find symbol */
+void 		beos_dl_sym(image_id im,char* symname,void** fptr);
 
 /* UnLoad a shared library */
 status_t	beos_dl_close(image_id im);
