@@ -30,12 +30,9 @@
 
 #include "misc_utils.h"
 
-#undef MIN
-#define MIN(x,y)	((x)<=(y) ? (x) : (y))
-
 
 int
-backend_pid()
+backend_pid(void)
 {
 	return getpid();
 }
@@ -48,15 +45,15 @@ unlisten(char *relname)
 }
 
 int
-max(int x, int y)
+int4max(int x, int y)
 {
-	return ((x > y) ? x : y);
+	return Max(x, y);
 }
 
 int
-min(int x, int y)
+int4min(int x, int y)
 {
-	return ((x < y) ? x : y);
+	return Min(x, y);
 }
 
 /*
@@ -84,7 +81,7 @@ active_listeners(text *relname)
 	if (relname && (VARSIZE(relname) > VARHDRSZ))
 	{
 		MemSet(listen_name, 0, NAMEDATALEN);
-		len = MIN(VARSIZE(relname) - VARHDRSZ, NAMEDATALEN - 1);
+		len = Min(VARSIZE(relname) - VARHDRSZ, NAMEDATALEN - 1);
 		memcpy(listen_name, VARDATA(relname), len);
 		ScanKeyEntryInitialize(&key, 0,
 							   Anum_pg_listener_relname,
@@ -99,7 +96,7 @@ active_listeners(text *relname)
 	{
 		d = heap_getattr(lTuple, Anum_pg_listener_pid, tdesc, &isnull);
 		pid = DatumGetInt32(d);
-		if ((pid == ourpid) || (kill(pid, SIGTSTP) == 0))
+		if ((pid == ourpid) || (kill(pid, 0) == 0))
 			count++;
 	}
 	heap_endscan(sRel);

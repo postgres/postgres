@@ -15,74 +15,74 @@ SET search_path = public;
 CREATE OR REPLACE FUNCTION user_lock(int4,int4,int4)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_unlock(group,id,mode);
 --
 CREATE OR REPLACE FUNCTION user_unlock(int4,int4,int4)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_write_lock(group,id);
 --
 CREATE OR REPLACE FUNCTION user_write_lock(int4,int4)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_write_unlock(group,id);
 --
 CREATE OR REPLACE FUNCTION user_write_unlock(int4,int4)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_write_lock(group,oid);
 --
 CREATE OR REPLACE FUNCTION user_write_lock(int4,oid)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_write_unlock(group,oid);
 --
 CREATE OR REPLACE FUNCTION user_write_unlock(int4,oid)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_write_lock_oid(oid);
 --
 CREATE OR REPLACE FUNCTION user_write_lock_oid(oid)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_write_unlock_oid(oid);
 --
 CREATE OR REPLACE FUNCTION user_write_unlock_oid(oid)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_write_lock_oid(int4);
 --
 CREATE OR REPLACE FUNCTION user_write_lock_oid(int4)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_write_unlock_oid(int4);
 --
 CREATE OR REPLACE FUNCTION user_write_unlock_oid(int4)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 -- SELECT user_unlock_all();
 --
 CREATE OR REPLACE FUNCTION user_unlock_all()
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
