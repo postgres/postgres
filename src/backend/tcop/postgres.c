@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.92 1998/10/13 19:51:50 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.93 1998/10/13 20:05:44 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1005,7 +1005,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	/*
 	 * Read default pg_options from file $DATADIR/pg_options.
 	 */
-	read_pg_options(0);
+	if(DataDir) {
+		read_pg_options(0);
+	}
 
 	optind = 1;					/* reset after postmaster usage */
 
@@ -1512,7 +1514,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.92 $ $Date: 1998/10/13 19:51:50 $\n");
+		puts("$Revision: 1.93 $ $Date: 1998/10/13 20:05:44 $\n");
 	}
 
 	/* ----------------
