@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Nov  4 12:09:41 EST 2004
+Last updated:		Thu Nov  4 22:03:07 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -131,7 +131,8 @@ Data Types
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values
 * Allow INET subnet tests with non-constants to be indexed
-* Add transaction_timestamp(), statement_timestamp(), clock_timestamp() functionality
+* Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
+  functionality
 
   Current CURRENT_TIMESTAMP returns the start time of the current
   transaction, and gettimeofday() returns the wallclock time. This will
@@ -275,7 +276,7 @@ Indexes
   granularity used for the hash algorithm.
 
 * Allow accurate statistics to be collected on indexes with more than
-  one column
+  one column or expression indexes, perhaps using per=index statistics
 
 * Add fillfactor to control reserved free space during index creation
 
@@ -844,6 +845,7 @@ Source Code
 * Allow binaries to be statically linked so they are more easily relocated
 * Move some /contrib modules out to their own project sites
 * Remove Win32 rename/unlink looping if unnecessary
+* Remove kerberos4 from source tree?
 
 * Win32
 	o Remove per-backend parameter file and move into shared memory?
