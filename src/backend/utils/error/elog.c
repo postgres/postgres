@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.132 2004/04/05 03:02:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.133 2004/04/11 00:54:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,8 @@ ErrorContextCallback *error_context_stack = NULL;
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
 char       *Log_line_prefix = NULL; /* format for extra log line info */
 unsigned int Log_destination;
+
+bool in_fatal_exit = false;
 
 #ifdef HAVE_SYSLOG
 char	   *Syslog_facility;	/* openlog() parameters */
@@ -442,7 +444,12 @@ errfinish(int dummy,...)
 			 */
 			fflush(stdout);
 			fflush(stderr);
-			proc_exit(proc_exit_inprogress || !IsUnderPostmaster);
+
+			if (in_fatal_exit)
+				ereport(PANIC, (errmsg("fatal error during fatal exit, giving up")));
+
+			/* We will exit the backend by simulating a client EOF */
+			in_fatal_exit = true;
 		}
 
 		/*
