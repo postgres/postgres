@@ -1,4 +1,4 @@
-This directory contains three SQL scripts that control use of some new
+This directory contains two SQL scripts that control use of some new
 code for planning/optimizing queries containing LIKE and
 regular-expression operators.  This code was added to Postgres 7.0 late in
 beta test, and it hasn't gotten enough testing to warrant turning it on by
@@ -11,7 +11,7 @@ queries involving LIKE or regexps in WHERE clauses.
 HOW TO USE THE SCRIPTS
 ----------------------
 
-All three scripts must be run as the Postgres superuser.  The easiest
+Both scripts must be run as the Postgres superuser.  The easiest
 way to run an SQL script is
 	psql -f scriptfile databasename
 or you can start psql interactively and enter
@@ -24,13 +24,6 @@ databases will use the new code by default.
 disablelike.sql reverts to the old planning code for LIKE, in the database
 in which it is run.  If you run it in template1, all subsequently-created
 databases will use the old code by default.
-
-If your database was initdb'd with release 7.0beta5, you need to run
-updatepgproc.sql before you can run enablelike.sql.  Databases initdb'd
-with 7.0RC1 or later already have pg_proc entries for the new code, so
-updatepgproc.sql is unnecessary for them.  If enablelike.sql produces
-errors like "No procedure with name regexeqsel", then you need to run
-updatepgproc.sql.
 
 
 WHAT IT DOES

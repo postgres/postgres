@@ -2,10 +2,6 @@
 -- functions, which are a little too new to be enabled by default in 7.0.
 -- You can disable them again by running disablelike.sql.
 
--- If your database was initdb'd with 7.0beta5, you need to run
--- updatepgproc.sql first.  You can tell that is necessary if this
--- script produces errors like "No procedure with name regexeqsel".
-
 -- Use of the functions will be enabled only in those databases you
 -- run this script in.  If you run it in template1,
 -- all subsequently-created databases will use the functions.
