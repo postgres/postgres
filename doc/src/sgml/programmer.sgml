@@ -1,66 +1,18 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.24 2000/03/30 22:34:29 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.25 2000/03/31 03:26:21 thomas Exp $
 
 Postgres Programmer's Guide.
-
-$Log: programmer.sgml,v $
-Revision 1.24  2000/03/30 22:34:29  thomas
-Remove PL/perl language chapter, since it shows up in the User's Guide.
-
-Revision 1.23  2000/03/30 22:22:41  thomas
-Accumulated fixups.
-Add some chapters on new topics.
-Change to referencing OASIS/Docbook v3.1 rather than Davenport/Docbook v3.0
-Grepped for and fixed apparent tag mangling from emacs
- "Normalize" operation. Should be the last of those.
-
-Revision 1.22  2000/03/28 14:16:06  thomas
-Update SGML catalog references to DocBook 3.1 on FreeBSD.
-Matches postgresql.org/hub.org environment.
-
-Revision 1.21  2000/02/02 16:25:04  thomas
-Add short chapter in developer's guide on formatting source code.
-
-Revision 1.20  1999/12/06 16:37:11  thomas
-Remove references to PostgreSQL as "public-domain" since that has a
- specific meaning wrt copyright (or lack thereof).
-
-Revision 1.19  1999/07/22 15:11:04  thomas
-Complete merge of all old man page information.
-lisp.sgml is a placeholder for Eric Marsden's upcoming contribution.
-catalogs.sgml is not yet marked up or integrated.
- It should perhaps become an appendix.
-
-Revision 1.18  1999/06/23 06:21:19  thomas
-Remove User's Guide entities since they were not being used.
-
-Revision 1.16  1999/05/26 17:30:30  thomas
-Add chapters on CVS access, MVCC, SQL theory to the docs.
-Add an appendix with more details on date/time attributes and handling.
-Update most references to Postgres version numbers to 6.5,
- *except* for the porting list which will require a report
- from a successful installation to be updated.
-
-Revision 1.12  1999/02/13 03:54:51  thomas
-Re-enable arch-dev.sgml now that it has new information from Stefan's
- Master's Thesis.
-
-Revision 1.10  1998/10/31 09:36:36  thomas
-Cleanup for v6.4 release.
-Make new file current.sgml to hold release info for the current release.
- Should be moved to release.sgml before filling with next release info.
-
 -->
 
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
-<!entity about    SYSTEM "about.sgml">
-<!entity history  SYSTEM "history.sgml">
-<!entity info     SYSTEM "info.sgml">
-<!entity legal    SYSTEM "legal.sgml">
-<!entity notation SYSTEM "notation.sgml">
-<!entity problems SYSTEM "problems.sgml">
-<!entity y2k      SYSTEM "y2k.sgml">
+<!entity about      SYSTEM "about.sgml">
+<!entity history    SYSTEM "history.sgml">
+<!entity info       SYSTEM "info.sgml">
+<!entity legal      SYSTEM "legal.sgml">
+<!entity notation   SYSTEM "notation.sgml">
+<!entity problems   SYSTEM "problems.sgml">
+<!entity y2k        SYSTEM "y2k.sgml">
 
 <!entity arch-pg    SYSTEM "arch-pg.sgml">
 <!entity dfunc      SYSTEM "dfunc.sgml">
@@ -71,6 +23,7 @@ Make new file current.sgml to hold release info for the current release.
 <!entity intro-pg   SYSTEM "intro-pg.sgml">
 <!entity indexcost  SYSTEM "indexcost.sgml">
 <!entity jdbc       SYSTEM "jdbc.sgml">
+<!entity libpgeasy  SYSTEM "libpgeasy.sgml">
 <!entity libpq      SYSTEM "libpq.sgml">
 <!entity libpqpp    SYSTEM "libpq++.sgml">
 <!entity libpgtcl   SYSTEM "libpgtcl.sgml">
@@ -201,6 +154,7 @@ Disable it until we put in some info.
   &libpq;
   &libpqpp;
   &libpgtcl;
+  &libpgeasy;
   &ecpg;
   &odbc;
   &jdbc;
@@ -246,7 +200,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

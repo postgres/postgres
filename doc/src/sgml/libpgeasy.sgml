@@ -1,0 +1,155 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.1 2000/03/31 03:26:21 thomas Exp $
+-->
+
+ <chapter id="pgeasy-chapter">
+  <title id="pgeasy">libpgeasy - Simplified C Binding Library</title>
+
+  <note>
+   <title>Author</title>
+
+   <para>
+    Written by Bruce Momjian
+    (<ulink url="mailto:root@candle.pha.pa.us">root@candle.pha.pa.us</ulink>)
+    and last updated 2000-03-30.
+   </para>
+  </note>
+
+  <para>
+   <productname>pgeasy</productname> allows you to cleanly interface
+   to the <productname>libpq</productname> library,
+   more like a 4GL SQL interface.
+  </para>
+
+  <para>
+   It consists of set of simplified C functions that encapsulate the
+   functionality of libpq.
+   The functions are:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+PGresult   *doquery(char *query);
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+PGconn     *connectdb();
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+void        disconnectdb();
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+int         fetch(void *param,...);
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+int         fetchwithnulls(void *param,...);
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+void        reset_fetch();
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+void        on_error_continue();
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+void        on_error_stop();
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+PGresult   *get_result();
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+void        set_result(PGresult *newres);
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+void        unset_result(PGresult *oldres);
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   Many functions return a structure or value, so you can do more work
+   with the result if required.
+  </para>
+
+  <para>
+   You basically connect to the database with <function>connectdb</function>,
+   issue your query with <function>doquery</function>,
+   fetch the results with <function>fetch</function>,
+   and finish with <function>disconnectdb</function>.
+  </para>
+
+  <para>
+   For <literal>select</literal> queries, <function>fetch</function>
+   allows you to pass pointers as parameters, and on return the variables
+   are filled with data from the binary cursor you opened.  These binary
+   cursors can not be used if you are running the
+   <productname>pgeasy</productname>
+   client on a system with a different architecture than the database
+   server.  If you pass a NULL pointer parameter, the column is skipped.
+   <function>fetchwithnulls</function> allows you to retrieve the NULL
+   status of the field by passing an <literal>int*</literal>
+   after each result pointer, which returns true or false if the field is null.
+   You can always use libpq functions on the PGresult pointer returned
+   by <function>doquery</function>.
+   <function>reset_fetch</function> starts the fetch back at the beginning.
+  </para>
+
+  <para>
+   <function>get_result</function>,
+   <function>set_result</function>,
+   and
+   <function>unset_result</function>
+   allow you to handle multiple result sets at the same time.
+  </para>
+
+  <para>
+   There are a variety of demonstration programs in the
+   source directory.
+  </para>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+-->

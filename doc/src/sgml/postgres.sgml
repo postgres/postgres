@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.35 2000/03/31 03:26:21 thomas Exp $
+-->
+
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
 <!entity about      SYSTEM "about.sgml">
@@ -68,6 +72,7 @@
 <!entity intro-pg   SYSTEM "intro-pg.sgml">
 <!entity indexcost  SYSTEM "indexcost.sgml">
 <!entity jdbc       SYSTEM "jdbc.sgml">
+<!entity libpgeasy  SYSTEM "libpgeasy.sgml">
 <!entity libpq      SYSTEM "libpq.sgml">
 <!entity libpqpp    SYSTEM "libpq++.sgml">
 <!entity libpgtcl   SYSTEM "libpgtcl.sgml">
@@ -269,6 +274,7 @@ Your name here...
    &libpq;
    &libpqpp;
    &libpgtcl;
+   &libpgeasy;
    &odbc;
    &jdbc;
    &lisp;
@@ -345,7 +351,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->
