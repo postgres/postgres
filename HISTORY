@@ -36,7 +36,6 @@ Migration to v7.0
    can use pg_upgrade to upgrade to this release.
    
 Detailed Change List
-
 Bug Fixes
 ---------
 Prevent function calls with more than maximum number of arguments (Tom)
@@ -55,7 +54,7 @@ Improve communication of user table modifications to other running backends (Tom
 Fix handling of temp tables in complex situations (Bruce, Tom)
 Allow table locking when tables opened, improving concurrent reliability (Tom)
 Properly quote sequence names in pg_dump (Ross J. Reedstrom)
-Prevent DESTROY DATABASE while others accessing
+Prevent DROP DATABASE while others accessing
 Prevent any rows from being returned by GROUP BY if no rows processed (Tom)
 Fix SELECT COUNT(1) FROM table WHERE ...' if no rows matching WHERE (Tom)
 Fix pg_upgrade so it works for MVCC(Tom)
@@ -99,6 +98,20 @@ Fixes to CHAR
 Fix log() on numeric type (Tom)
 Deprecate ':' and ';' operators
 Allow vacuum of temporary tables
+Disallow inherited columns with the same name as new columns
+Recover or force failure when disk space is exhausted(Hiroshi)
+Fix INSERT INTO ... SELECT with AS columns matching result columns
+Fix INSERT ... SELECT ... GROUP BY groups by target columns not source columns(Tom)
+Fix CREATE TABLE test (a char(5) DEFAULT text '', b int4) with INSERT(Tom)
+Fix UNION with LIMIT
+Fix CREATE TABLE x AS SELECT 1 UNION SELECT 2
+Fix CREATE TABLE test(col char(2) DEFAULT user)
+Fix mismatched types in CREATE TABLE ... DEFAULT
+Fix SELECT * FROM pg_class where oid in (0,-1)
+Fix SELECT COUNT('asdf') FROM pg_class WHERE oid=12
+Prevent user who can create databases can modifying pg_database table(Peter E)
+Fix btree to give a useful elog when key > 1/2 (page - overhead)(Tom)
+Fix INSERT of 0.0 into DECIMAL(4,4) field(Tom)
 
 Enhancements
 ------------
@@ -192,7 +205,7 @@ Enable backward sequential scan even after reaching EOF (Hiroshi)
 Add btree indexing of boolean values, &gt;= and &lt;= (Don Baccus)
 Print current line number when COPY FROM fails (Massimo)
 Recognize special case of POSIX time zone: "GMT+8" and "GMT-8" (Thomas)
-Add DEC as synonym for "DECIMAL (Thomas)
+Add DEC as synonym for "DECIMAL" (Thomas)
 Add SESSION_USER as SQL92 keyword, same as CURRENT_USER (Thomas)
 Implement column aliases (aka correlation names) and join syntax (Thomas)
 Allow queries like SELECT a FROM t1 tx (a) (Thomas)
@@ -220,6 +233,10 @@ Update pgaccess to 0.98.5
 New SET SEED command
 New pg_options.sample file
 New SET FSYNC command (Massimo)
+Allow pg_descriptions when creating tables
+Allow pg_descriptions when creating types, columns, and functions
+Allow psql \copy to allow delimiters(Peter E)
+Allow psql to print nulls as distinct from "" [null](Peter E)
 
 Types
 -----
@@ -263,6 +280,8 @@ Allow X=-Y operators  (Tom)
 Add exp() and ln() as NUMERIC types
 Allow SELECT float8(COUNT(*)) / (SELECT COUNT(*) FROM int4_tbl) FROM int4_tbl
 	GROUP BY f1; (Tom)
+Allow LOCALE to use indexes in regular expression searches(Tom)
+Allow creation of functional indexes to use default types
 
 Performance
 -----------
@@ -304,6 +323,9 @@ Reduce optimizer internal housekeeping of join paths for speedup (Tom)
 Major subquery speedup (Tom)
 Fewer fsync writes when fsync is not disabled(Tom)
 Improved LIKE optimizer estimates(Tom)
+Prevent fsync in SELECT-only queries(Vadim)
+Make index creation use psort code, because it is now faster(Tom)
+Allow creation of sort temp tables > 1 Gig
 
 Source Tree Changes
 -------------------

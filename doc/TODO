@@ -16,66 +16,32 @@ the directory pgsql/doc/TODO.detail/ under that name.
 RELIABILITY
 -----------
 
-RESOURCES
-
-* -Disallow inherited columns with the same name as new columns
-* -Elog() does not free all its memory
-* -spinlock stuck problem when elog(FATAL) and elog(ERROR) inside bufmgr
-* -Recover or force failure when disk space is exhausted(Hiroshi)
-
 PARSER
 
-* -INSERT INTO ... SELECT with AS columns matching result columns problem
 * SELECT pg_class FROM pg_class generates strange error
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
-* -Select a[1] FROM test fails, it needs test.a[1](Tom)
-* -Array index references without table name cause problems [array](Tom)
 * Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
-* -INSERT ... SELECT ... GROUP BY groups by target columns not source columns(Tom)
-* -CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT(Tom)
-* -UNION with LIMIT fails
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inherit] 
-* -CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
-* -CREATE TABLE test(col char(2) DEFAULT user) fails in length restriction
-* -mismatched types in CREATE TABLE ... DEFAULT causes problems [default]
-* -SELECT ... UNION ... ORDER BY fails when sort expr not in result
-  list, ORDER BY is applied only to the first SELECT
-
 * Be smarter about promoting types when UNION merges different data types
 * redesign INSERT ... SELECT to have two levels of target list
-* -select * from pg_class where oid in (0,-1)
 * have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
-* -prevent primary key that exceeds max index columns [primary]
-* -SELECT COUNT('asdf') FROM pg_class WHERE oid=12 crashes
 * SELECT DISTINCT ON col1 col1 col2 FROM tab1 is broken [distinct]
-* -require SELECT DISTINCT target list to have all ORDER BY columns
-* -When using aggregates + GROUP BY, no rows in should yield no rows out(Tom)
-* -Allow HAVING to use comparisons that have no aggregates(Tom)
-* -Allow COUNT(DISTINCT col))(TOm)
 * SELECT 'x'::varchar(10) INTO newtable; fails
 * SELECT col::DECIMAL(12,10); fails
 
 VIEWS
 
 * Views containing aggregates sometimes fail(Jan)
-* -Views with spaces in view name fail when referenced
 * Creating view and inheriting the view causes view* to show
   duplicates(inherit) 
 * Disallow LOCK on view
 
 MISC
 
-* -User who can create databases can modify pg_database table(Peter E)
 * Plpgsql does not handle quoted mixed-case identifiers
-* -Fix btree to give a useful elog when key > 1/2 (page - overhead)(Tom)
-* -pg_dump should preserve primary key information(Peter E)
-* -plpgsql regression tests fails on BSD/OS
-* -database names with spaces fail
-* -insert of 0.0 into DECIMAL(4,4) field fails(Tom)
-* -* Interlock to prevent DROP DATABASE on a database with running backendsInterlock to prevent DROP DATABASE on a database with running backends
 * Buffer reference counting bugfixes
 * Fix libpq bug that causes it to drop backend error message sent
   just before connection closure (ie, any FATAL error message)
@@ -91,30 +57,24 @@ ENHANCEMENTS
 
 URGENT
 
-* -Add referential integrity(Jan)[primary]
 * Add MATCH PARTIAL referential integrity
 * Foreign key does not check that columns referenced form a primary key
   or constrained by UNIQUE 
 * Add OUTER joins, left and right[outer](Thomas, Bruce)
 * Allow long tuples by chaining or auto-storing outside db (TOAST)(Jan)
-* -Eliminate limits on query length
 * Fix memory leak for expressions[memory](Tom?) 
-* -Fix memory leak for aggregates(Tom)
 
 ADMIN
 
-* -Better interface for adding to pg_group(Peter E)
 * More access control over who can create tables and access the database
 * Test syslog functionality
 * Allow elog() to return error codes, not just messages
 * Allow international error message support and add error codes
-* -Generate postmaster pid file and remove flock/fcntl lock code[flock](Tatsuo)
 * Add ability to specifiy location of lock/socket files [flock]
 * Unify configuration into one configuration file
 
 TYPES
 
-* -Add BIT, BIT VARYING
 * Nchar (as distinguished from ordinary varchar),
 * Domain capability
 * Add STDDEV/VARIANCE() function for standard deviation computation/variance
@@ -124,23 +84,16 @@ TYPES
 	o Not to stuff everything as files in a single directory, hash dirs
 	o Allow large object vacuuming
 	o Tables that start with xinv confused to be large objects
-* -Allow pg_descriptions when creating tables
-* -Allow pg_descriptions when creating types, columns, and functions
 * Add IPv6 capability to INET/CIDR types
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
 * Add support for & operator
 * Allow LOCALE on a per-column basis, default to ASCII
-* -Allow LOCALE to use indexes in regular expression searches(Tom)
-* -Allow array on int8[](Thomas)
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
-* -Add index on NUMERIC/DECIMAL type(Jan)
-* -Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
-  (Peter E)
 * Functions returning sets don't really work right[function]
 * Make type equivalency apply to aggregates(Peter E.)
 
@@ -154,17 +107,13 @@ INDEXES
 
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
-* -Allow creation of functional indexes to use default types
-* -Permissions on indexes, prevent them(Peter E)
 * Allow SQL function indexes
 * Add FILLFACTOR to index creation
-* -Allow indexing of LIKE with localle character sets
-* -Allow indexing of more than eight columns
 
 COMMANDS
 
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
-* -Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E)
+* Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E)
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table[cluster]
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
@@ -174,7 +123,6 @@ COMMANDS
 * Allow ESCAPE '\' at the end of LIKE for ANSI compliance [like]
 * Rewrite the LIKE handling by rewriting the user string with the 
   supplied ESCAPE [like]
-* -Move LIKE index optimization handling to the optimizer(Tom)
 * Allow RULE recompilation
 * Support UNION/INTERSECT/EXCEPT in sub-selects
 * Allow DELETE and UPDATE to use inheritance using tablename*
@@ -184,12 +132,7 @@ CLIENTS
 
 * Make NULL's come out at the beginning or end depending on the 
   ORDER BY direction
-* -Allow flag to control COPY input/output of NULLs(Peter E)
 * Update reltuples from COPY command
-* -Allow psql \copy to allow delimiters(Peter E)
-* -Add a function to return the last inserted oid, for use in psql
-	scripts (Peter E)
-* -Allow psql to print nulls as distinct from "" [null](Peter E)
 * fix array handling for ECPG
 * add pg_dump option to dump type names as standard ANSI types
 * allow psql \d to show primary and foreign keys
@@ -212,26 +155,18 @@ MISC
 * Certain indexes will not shrink, i.e. oid indexes with many inserts(Vadim)
 * Restore unused oid's on backend exit if no one else has gotten oids
 * Have UPDATE/DELETE clean out indexes
-* -Allow WHERE restriction on ctid(Hiroshi)
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow DELETE WHERE CURRENT OF cursor
-* -Allow PQrequestCancel() to terminate when in waiting-for-lock state
 * Transaction log, so re-do log can be on a separate disk by
   with after-row images(Vadim) [logging](Vadim)(in-progress)
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
-* -Allow subqueries in target list(Tom)
 * Put sort files, large objects in their own directory
 * Do autocommit so always in a transaction block(?)
 * Show location of syntax error in query [yacc]
 * Redesign the function call interface to handle NULLs better[function](Tom)
-* -Document/trigger/rule so changes to pg_shadow recreate pg_pwd
-  [pg_shadow](Peter E.)
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
-* -Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
-* -Add PL/Perl(Mark Hollomon)
-* -Add option for postgres user have a password by default(Peter E)
 * Add configure test to check for C++ need for *.h and namespaces
 * Allow BLCKSZ <= 64k, not <= 32k
 * redesign UNION structures to have separarate target lists
@@ -243,34 +178,22 @@ PERFORMANCE
 FSYNC
 
 * Allow transaction commits with rollback with no-fsync performance [fsync](Vadim)
-* -Prevent fsync in SELECT-only queries(Vadim)
 
 INDEXES
 
 * Use indexes in ORDER BY for min(), max()
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
-* -Convert function(constant) into a constant for index use(Bernard Frankpitt)
 * Improve LIMIT processing by using index to limit rows processed [limit]
 * Have optimizer take LIMIT into account when considering index scans [limit]
-* -Make index creation use psort code, because it is now faster(Tom)
-* -Allow creation of sort temp tables > 1 Gig
-* -Create more system table indexes for faster cache lookups
-* -fix indexscan() so it does leak memory by not requiring caller to
-free(Tom)
-* -Improve _bt_binsrch() to handle equal keys better, remove _bt_firsteq()(Tom)
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,
   float4, numeric/decimal too [optimizer]
-* -Allow optimizer to prefer plans that match ORDER BY(Tom)
 * Include heap CTID in btree index keys, remove equal-key cruft from btree
 
 CACHE
 
 * Cache most recent query plan(s) [prepare]
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
-* -elog() flushes cache, try invalidating just entries from current xact,
-  perhaps using invalidation cache
-
 
 MISC
 
@@ -278,11 +201,9 @@ MISC
 * Allow char() not to use variable-sized header to reduce disk size
 * Allow char1 data type that takes one byte of storage
 * Do async I/O to do better read-ahead of data
-* -Fix memory exhaustion when using many OR's [cnfify](Tom)
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?)
-* -Process const = const parts of OR clause in separate pass(Bernard Frankpitt)
 * Make oid use oidin/oidout not int4in/int4out in pg_type.h
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
@@ -291,10 +212,7 @@ MISC
   places, like GROUP BY, UNIQUE, index processing, etc.
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation [memory]
-* -fix memory leak in cache code when non-existant table is referenced
 * In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
-* -pass atttypmod through parser in more cases [atttypmod]
-* -remove duplicate type in/out functions for disk and net
 * Allow persistent backends [persistent]
 * others [performance]
 * prevent labels from being output for stored rules (Tom)
@@ -304,11 +222,8 @@ SOURCE CODE
 -----------
 * Add use of 'const' for variables in source tree
 * Fix C optimizer problem where fmgr_ptr calls return different types [alpha]
-* -Add needed includes and removed unneeded include files(Bruce)
-* -Make configure --enable-debug add -g on compile line(Peter E)
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option if OR processing is improved(Tom)
-* -Pre-generate lex and yacc output so not required for install(Peter E)
 * Use macros to define NT open() file parameters, remove NT-specific defines
 * Change CURRENT to OLD internally for rules
 
