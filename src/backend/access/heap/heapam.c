@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.136 2002/05/24 18:57:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.137 2002/05/24 19:52:43 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -873,15 +873,24 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
  * the tuple, fill in the remaining fields of *tuple, and check the tuple
  * against the specified snapshot.
  *
- * If successful (tuple passes snapshot time qual), then *userbuf is set to
- * the buffer holding the tuple and TRUE is returned.  The caller must
- * unpin the buffer when done with the tuple.
+ * If successful (tuple found and passes snapshot time qual), then *userbuf
+ * is set to the buffer holding the tuple and TRUE is returned.  The caller
+ * must unpin the buffer when done with the tuple.
  *
- * If the tuple fails the time qual check, then FALSE will be returned.
- * When the caller specifies keep_buf = true, we retain the pin on the
- * buffer and return it in *userbuf (so the caller can still access the
- * tuple); when keep_buf = false, the pin is released and *userbuf is set
+ * If the tuple is not found, then tuple->t_data is set to NULL, *userbuf
+ * is set to InvalidBuffer, and FALSE is returned.
+ *
+ * If the tuple is found but fails the time qual check, then FALSE will be
+ * returned. When the caller specifies keep_buf = true, we retain the pin
+ * on the buffer and return it in *userbuf (so the caller can still access
+ * the tuple); when keep_buf = false, the pin is released and *userbuf is set
  * to InvalidBuffer.
+ *
+ * It is somewhat inconsistent that we elog() on invalid block number but
+ * return false on invalid item number.  This is historical.  The only
+ * justification I can see is that the caller can relatively easily check the
+ * block number for validity, but cannot check the item number without reading
+ * the page himself.
  */
 bool
 heap_fetch(Relation relation,
@@ -928,17 +937,18 @@ heap_fetch(Relation relation,
 	lp = PageGetItemId(dp, offnum);
 
 	/*
-	 * more sanity checks
+	 * must check for deleted tuple (see for example analyze.c, which is
+	 * careful to pass an offnum in range, but doesn't know if the offnum
+	 * actually corresponds to an undeleted tuple).
 	 */
 	if (!ItemIdIsUsed(lp))
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
-
-		elog(ERROR, "heap_fetch: invalid tuple id (%s, %lu, %u)",
-			 RelationGetRelationName(relation),
-			 (unsigned long) ItemPointerGetBlockNumber(tid),
-			 offnum);
+		*userbuf = InvalidBuffer;
+		tuple->t_datamcxt = NULL;
+		tuple->t_data = NULL;
+		return false;
 	}
 
 	/*

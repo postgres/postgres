@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.91 2002/05/24 18:57:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.92 2002/05/24 19:52:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 					elog(ERROR, "Cannot insert a duplicate key into unique index %s",
 						 RelationGetRelationName(rel));
 				}
-				else
+				else if (htup.t_data != NULL)
 				{
 					/*
 					 * Hmm, if we can't see the tuple, maybe it can be

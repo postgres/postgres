@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.59 2002/05/24 18:57:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.60 2002/05/24 19:52:43 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -443,6 +443,10 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 					   heapTuple, &scan->xs_cbuf, true,
 					   &scan->xs_pgstat_info))
 			break;
+
+		/* Skip if no tuple at this location */
+		if (heapTuple->t_data == NULL)
+			continue;			/* should we raise an error instead? */
 
 		/*
 		 * If we can't see it, maybe no one else can either.  Check to see
