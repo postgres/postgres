@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.25 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.26 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -95,6 +95,7 @@ DROP TYPE box;
 
   <simplelist type="inline">
    <member><xref linkend="sql-createtype" endterm="sql-createtype-title"></member>
+   <member><xref linkend="sql-altertype" endterm="sql-altertype-title"></member>
   </simplelist>
  </refsect1>
 

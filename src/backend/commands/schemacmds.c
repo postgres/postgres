@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.19 2004/06/18 06:13:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.20 2004/06/25 21:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,6 +303,51 @@ RenameSchema(const char *oldname, const char *newname)
 	namestrcpy(&(((Form_pg_namespace) GETSTRUCT(tup))->nspname), newname);
 	simple_heap_update(rel, &tup->t_self, tup);
 	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+}
+
+/*
+ * Change schema owner
+ */
+void
+AlterSchemaOwner(const char *name, AclId newOwnerSysId)
+{
+	HeapTuple	tup;
+	Relation	rel;
+	Form_pg_namespace	nspForm;
+
+	rel = heap_openr(NamespaceRelationName, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(NAMESPACENAME,
+							 CStringGetDatum(name),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", name)));
+	nspForm = (Form_pg_namespace) GETSTRUCT(tup);
+
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (nspForm->nspowner != newOwnerSysId)
+	{
+		/* Otherwise, must be superuser to change object ownership */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
+
+		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		nspForm->nspowner = newOwnerSysId;
+
+		simple_heap_update(rel, &tup->t_self, tup);
+
+		CatalogUpdateIndexes(rel, tup);
+	}
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);

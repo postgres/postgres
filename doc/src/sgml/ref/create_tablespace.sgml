@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.1 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.2 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -56,7 +56,9 @@ CREATE TABLESPACE <replaceable class="parameter">tablespacename</replaceable> [ 
       <term><replaceable class="parameter">tablespacename</replaceable></term>
       <listitem>
        <para>
-        The name of a tablespace to be created.
+        The name of a tablespace to be created.  The name cannot
+        begin with <literal>pg_</literal>, as such names
+        are reserved for system tablespaces.
        </para>
       </listitem>
      </varlistentry>
@@ -133,6 +135,7 @@ CREATE TABLESPACE indexspace OWNER genevieve LOCATION '/data/indexes';
    <member><xref linkend="sql-createindex" endterm="sql-createindex-title"></member>
    <member><xref linkend="sql-createsequence" endterm="sql-createsequence-title"></member>
    <member><xref linkend="sql-droptablespace" endterm="sql-droptablespace-title"></member>
+   <member><xref linkend="sql-altertablespace" endterm="sql-altertablespace-title"></member>
   </simplelist>
  </refsect1>
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.48 2004/06/16 01:26:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.49 2004/06/25 21:55:53 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -722,6 +722,60 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 }
+
+/*
+ * Change function owner
+ */
+void
+AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
+{
+	Oid			procOid;
+	HeapTuple	tup;
+	Form_pg_proc procForm;
+	Relation	rel;
+
+	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	procOid = LookupFuncNameTypeNames(name, argtypes, false);
+
+	tup = SearchSysCacheCopy(PROCOID,
+							 ObjectIdGetDatum(procOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for function %u", procOid);
+	procForm = (Form_pg_proc) GETSTRUCT(tup);
+
+	if (procForm->proisagg)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an aggregate function",
+						NameListToString(name)),
+		 errhint("Use ALTER AGGREGATE to change owner of aggregate functions.")));
+
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (procForm->proowner != newOwnerSysId)
+	{
+		/* Otherwise, must be superuser to change object ownership */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
+
+		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		procForm->proowner = newOwnerSysId;
+
+		simple_heap_update(rel, &tup->t_self, tup);
+
+		CatalogUpdateIndexes(rel, tup);
+	}
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+}
+
 
 
 /*

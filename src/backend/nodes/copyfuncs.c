@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.286 2004/06/18 06:13:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.287 2004/06/25 21:55:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1937,6 +1937,21 @@ _copyRenameStmt(RenameStmt *from)
 	return newnode;
 }
 
+static AlterOwnerStmt *
+_copyAlterOwnerStmt(AlterOwnerStmt *from)
+{
+	AlterOwnerStmt *newnode = makeNode(AlterOwnerStmt);
+
+	COPY_NODE_FIELD(relation);
+	COPY_NODE_FIELD(object);
+	COPY_NODE_FIELD(objarg);
+	COPY_STRING_FIELD(addname);
+	COPY_STRING_FIELD(newowner);
+	COPY_SCALAR_FIELD(objectType);
+
+	return newnode;
+}
+
 static RuleStmt *
 _copyRuleStmt(RuleStmt *from)
 {
@@ -2076,17 +2091,6 @@ _copyCreatedbStmt(CreatedbStmt *from)
 
 	COPY_STRING_FIELD(dbname);
 	COPY_NODE_FIELD(options);
-
-	return newnode;
-}
-
-static AlterDbOwnerStmt *
-_copyAlterDbOwnerStmt(AlterDbOwnerStmt *from)
-{
-	AlterDbOwnerStmt *newnode = makeNode(AlterDbOwnerStmt);
-
-	COPY_STRING_FIELD(dbname);
-	COPY_STRING_FIELD(uname);
 
 	return newnode;
 }
@@ -2874,6 +2878,9 @@ copyObject(void *from)
 		case T_RenameStmt:
 			retval = _copyRenameStmt(from);
 			break;
+		case T_AlterOwnerStmt:
+			retval = _copyAlterOwnerStmt(from);
+			break;
 		case T_RuleStmt:
 			retval = _copyRuleStmt(from);
 			break;
@@ -2909,9 +2916,6 @@ copyObject(void *from)
 			break;
 		case T_CreatedbStmt:
 			retval = _copyCreatedbStmt(from);
-			break;
-		case T_AlterDbOwnerStmt:
-			retval = _copyAlterDbOwnerStmt(from);
 			break;
 		case T_AlterDatabaseSetStmt:
 			retval = _copyAlterDatabaseSetStmt(from);

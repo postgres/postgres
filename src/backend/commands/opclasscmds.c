@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.25 2004/05/26 04:41:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.26 2004/06/25 21:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -867,6 +867,95 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 	namestrcpy(&(((Form_pg_opclass) GETSTRUCT(tup))->opcname), newname);
 	simple_heap_update(rel, &tup->t_self, tup);
 	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+}
+
+/*
+ * Change opclass owner
+ */
+void
+AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId)
+{
+	Oid			opcOid;
+	Oid			amOid;
+	Oid			namespaceOid;
+	char	   *schemaname;
+	char	   *opcname;
+	HeapTuple	tup;
+	Relation	rel;
+	Form_pg_opclass	opcForm;
+
+	amOid = GetSysCacheOid(AMNAME,
+						   CStringGetDatum(access_method),
+						   0, 0, 0);
+	if (!OidIsValid(amOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist",
+						access_method)));
+
+	rel = heap_openr(OperatorClassRelationName, RowExclusiveLock);
+
+	/*
+	 * Look up the opclass
+	 */
+	DeconstructQualifiedName(name, &schemaname, &opcname);
+
+	if (schemaname)
+	{
+		namespaceOid = LookupExplicitNamespace(schemaname);
+
+		tup = SearchSysCacheCopy(CLAAMNAMENSP,
+								 ObjectIdGetDatum(amOid),
+								 PointerGetDatum(opcname),
+								 ObjectIdGetDatum(namespaceOid),
+								 0);
+		if (!HeapTupleIsValid(tup))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							opcname, access_method)));
+
+	}
+	else
+	{
+		opcOid = OpclassnameGetOpcid(amOid, opcname);
+		if (!OidIsValid(opcOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							opcname, access_method)));
+
+		tup = SearchSysCacheCopy(CLAOID,
+								 ObjectIdGetDatum(opcOid),
+								 0, 0, 0);
+		if (!HeapTupleIsValid(tup))		/* should not happen */
+			elog(ERROR, "cache lookup failed for opclass %u", opcOid);
+		namespaceOid = ((Form_pg_opclass) GETSTRUCT(tup))->opcnamespace;
+	}
+	opcForm = (Form_pg_opclass) GETSTRUCT(tup);
+
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (opcForm->opcowner != newOwnerSysId)
+	{
+		/* Otherwise, must be superuser to change object ownership */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
+
+		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		opcForm->opcowner = newOwnerSysId;
+
+		simple_heap_update(rel, &tup->t_self, tup);
+
+		CatalogUpdateIndexes(rel, tup);
+	}
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);

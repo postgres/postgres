@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.4 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.5 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,6 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) RENAME TO <replaceable>newname</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) OWNER TO <replaceable>newowner</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -29,8 +30,7 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
 
   <para>
    <command>ALTER AGGREGATE</command> changes the definition of an
-   aggregate function.  The only currently available functionality is to
-   rename the aggregate function.
+   aggregate function.
   </para>
  </refsect1>
   
@@ -65,6 +65,16 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newowner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the aggregate function.
+      You must be a superuser to change an aggregate's owner.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -76,6 +86,14 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
    <type>integer</type> to <literal>my_average</literal>:
 <programlisting>
 ALTER AGGREGATE myavg(integer) RENAME TO my_average;
+</programlisting>
+  </para>
+
+  <para>
+   To change the owner of the aggregate function <literal>myavg</literal> for type
+   <type>integer</type> to <literal>joe</literal>:
+<programlisting>
+ALTER AGGREGATE myavg(integer) OWNER TO joe;
 </programlisting>
   </para>
  </refsect1>

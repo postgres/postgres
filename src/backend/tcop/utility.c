@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.219 2004/06/18 06:13:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.220 2004/06/25 21:55:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,14 +236,14 @@ check_xact_readonly(Node *parsetree)
 	switch (nodeTag(parsetree))
 	{
 		case T_AlterDatabaseSetStmt:
-		case T_AlterDbOwnerStmt:
 		case T_AlterDomainStmt:
 		case T_AlterGroupStmt:
+		case T_AlterOwnerStmt:
 		case T_AlterSeqStmt:
 		case T_AlterTableStmt:
-		case T_RenameStmt:
 		case T_AlterUserStmt:
 		case T_AlterUserSetStmt:
+		case T_RenameStmt:
 		case T_CommentStmt:
 		case T_DefineStmt:
 		case T_CreateCastStmt:
@@ -527,6 +527,10 @@ ProcessUtility(Node *parsetree,
 			ExecRenameStmt((RenameStmt *) parsetree);
 			break;
 
+		case T_AlterOwnerStmt:
+			ExecAlterOwnerStmt((AlterOwnerStmt *) parsetree);
+			break;
+
 		case T_AlterTableStmt:
 			AlterTable((AlterTableStmt *) parsetree);
 			break;
@@ -566,16 +570,6 @@ ProcessUtility(Node *parsetree,
 						AlterDomainDropConstraint(stmt->typename,
 												  stmt->name,
 												  stmt->behavior);
-						break;
-					case 'U':	/* OWNER TO */
-						/* check that we are the superuser */
-						if (!superuser())
-							ereport(ERROR,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							errmsg("must be superuser to alter owner")));
-						/* get_usesysid raises an error if no such user */
-						AlterTypeOwner(stmt->typename,
-									   get_usesysid(stmt->name));
 						break;
 					default:	/* oops */
 						elog(ERROR, "unrecognized alter domain type: %d",
@@ -687,13 +681,6 @@ ProcessUtility(Node *parsetree,
 
 		case T_CreatedbStmt:
 			createdb((CreatedbStmt *) parsetree);
-			break;
-
-		case T_AlterDbOwnerStmt:
-			{
-				AlterDbOwnerStmt *stmt = (AlterDbOwnerStmt *) parsetree;
-				AlterDatabaseOwner(stmt->dbname, stmt->uname);
-			}
 			break;
 
 		case T_AlterDatabaseSetStmt:
@@ -1258,6 +1245,44 @@ CreateCommandTag(Node *parsetree)
 			}
 			break;
 
+		case T_AlterOwnerStmt:
+			switch (((AlterOwnerStmt *) parsetree)->objectType)
+			{
+				case OBJECT_AGGREGATE:
+					tag = "ALTER AGGREGATE";
+					break;
+				case OBJECT_CONVERSION:
+					tag = "ALTER CONVERSION";
+					break;
+				case OBJECT_DATABASE:
+					tag = "ALTER DATABASE";
+					break;
+				case OBJECT_DOMAIN:
+					tag = "ALTER DOMAIN";
+					break;
+				case OBJECT_FUNCTION:
+					tag = "ALTER FUNCTION";
+					break;
+				case OBJECT_OPERATOR:
+					tag = "ALTER OPERATOR";
+					break;
+				case OBJECT_OPCLASS:
+					tag = "ALTER OPERATOR CLASS";
+					break;
+				case OBJECT_SCHEMA:
+					tag = "ALTER SCHEMA";
+					break;
+				case OBJECT_TABLESPACE:
+					tag = "ALTER TABLESPACE";
+					break;
+				case OBJECT_TYPE:
+					tag = "ALTER TYPE";
+					break;
+				default:
+					tag = "ALTER TABLE";
+			}
+			break;
+
 		case T_AlterTableStmt:
 			tag = "ALTER TABLE";
 			break;
@@ -1333,10 +1358,6 @@ CreateCommandTag(Node *parsetree)
 
 		case T_CreatedbStmt:
 			tag = "CREATE DATABASE";
-			break;
-
-		case T_AlterDbOwnerStmt:
-			tag = "ALTER DATABASE";
 			break;
 
 		case T_AlterDatabaseSetStmt:

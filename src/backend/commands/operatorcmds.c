@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.16 2004/05/26 04:41:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.17 2004/06/25 21:55:53 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -37,6 +37,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
 #include "commands/defrem.h"
@@ -263,3 +264,55 @@ RemoveOperatorById(Oid operOid)
 
 	heap_close(relation, RowExclusiveLock);
 }
+
+/*
+ * change operator owner
+ */
+void
+AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
+				   AclId newOwnerSysId)
+{
+	Oid			operOid;
+	HeapTuple	tup;
+	Relation	rel;
+	Form_pg_operator	oprForm;
+
+	rel = heap_openr(OperatorRelationName, RowExclusiveLock);
+
+	operOid = LookupOperNameTypeNames(name, typeName1, typeName2,
+									  false);
+
+	tup = SearchSysCacheCopy(OPEROID,
+						 ObjectIdGetDatum(operOid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for operator %u", operOid);
+
+	oprForm = (Form_pg_operator) GETSTRUCT(tup);
+
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (oprForm->oprowner != newOwnerSysId)
+	{
+		/* Otherwise, must be superuser to change object ownership */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
+
+		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		oprForm->oprowner = newOwnerSysId;
+
+		simple_heap_update(rel, &tup->t_self, tup);
+
+		CatalogUpdateIndexes(rel, tup);
+	}
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+
+}
+
+

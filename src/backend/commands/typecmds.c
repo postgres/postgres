@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.60 2004/06/18 06:13:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.61 2004/06/25 21:55:53 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -2042,14 +2042,7 @@ GetDomainConstraints(Oid typeOid)
 }
 
 /*
- * ALTER DOMAIN .. OWNER TO
- *
- * Eventually this should allow changing ownership of other kinds of types,
- * but some thought must be given to handling complex types.  (A table's
- * rowtype probably shouldn't be allowed as target, but what of a standalone
- * composite type?)
- *
- * Assumes that permission checks have been completed earlier.
+ * Change the owner of a type.
  */
 void
 AlterTypeOwner(List *names, AclId newOwnerSysId)
@@ -2084,19 +2077,36 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 		elog(ERROR, "cache lookup failed for type %u", typeOid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
-	/* Check that this is actually a domain */
-	if (typTup->typtype != 'd')
+	/*
+	 * If it's a composite type, we need to check that it really is a 
+ 	 * free-standing composite type, and not a table's underlying type.
+	 * We want people to use ALTER TABLE not ALTER TYPE for that case.
+	 */
+	if (typTup->typtype == 'c' && get_rel_relkind(typTup->typrelid) != 'c')
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a domain",
+				 errmsg("\"%s\" is a table's row type",
 						TypeNameToString(typename))));
 
-	/* Modify the owner --- okay to scribble on typTup because it's a copy */
-	typTup->typowner = newOwnerSysId;
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (typTup->typowner != newOwnerSysId)
+	{
+		/* Otherwise, must be superuser to change object ownership */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
 
-	simple_heap_update(rel, &tup->t_self, tup);
+		/* Modify the owner --- okay to scribble on typTup because it's a copy */
+		typTup->typowner = newOwnerSysId;
 
-	CatalogUpdateIndexes(rel, tup);
+		simple_heap_update(rel, &tup->t_self, tup);
+
+		CatalogUpdateIndexes(rel, tup);
+	}
 
 	/* Clean up */
 	heap_close(rel, RowExclusiveLock);

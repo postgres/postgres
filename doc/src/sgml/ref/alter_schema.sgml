@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.6 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.7 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,6 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER SCHEMA <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER SCHEMA <replaceable>name</replaceable> OWNER TO <replaceable>newowner</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -29,9 +30,9 @@ ALTER SCHEMA <replaceable>name</replaceable> RENAME TO <replaceable>newname</rep
 
   <para>
    <command>ALTER SCHEMA</command> changes the definition of a schema.
-   The only functionality is to rename the schema.  To rename a schema
-   you must own the schema and have the privilege
-   <literal>CREATE</literal> for the database.
+   To rename a schema you must own the schema and have the privilege
+   <literal>CREATE</literal> for the database.  To change the owner
+   of a schema, you must be a superuser.
   </para>
  </refsect1>
 
@@ -43,7 +44,7 @@ ALTER SCHEMA <replaceable>name</replaceable> RENAME TO <replaceable>newname</rep
     <term><replaceable>name</replaceable></term>
     <listitem>
      <para>
-      Name of a schema
+      The name of an existing schema.
      </para>
     </listitem>
    </varlistentry>
@@ -52,7 +53,18 @@ ALTER SCHEMA <replaceable>name</replaceable> RENAME TO <replaceable>newname</rep
     <term><replaceable>newname</replaceable></term>
     <listitem>
      <para>
-      The new name of the schema
+      The new name of the schema.  The new name cannot
+      begin with <literal>pg_</literal>, as such names
+      are reserved for system schemas.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newowner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the schema.
      </para>
     </listitem>
    </varlistentry>

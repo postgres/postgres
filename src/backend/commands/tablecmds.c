@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.116 2004/06/18 06:13:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.117 2004/06/25 21:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1921,11 +1921,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
-			/* check that we are the superuser */
-			if (!superuser())
-				ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to alter owner")));
 			/* This command never recurses */
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
@@ -5097,42 +5092,55 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 							NameStr(tuple_class->relname))));
 	}
 
-	/*
-	 * Okay, this is a valid tuple: change its ownership and write to the
-	 * heap.
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	tuple_class->relowner = newOwnerSysId;
-	simple_heap_update(class_rel, &tuple->t_self, tuple);
-
-	/* Keep the catalog indexes up to date */
-	CatalogUpdateIndexes(class_rel, tuple);
-
-	/*
-	 * If we are operating on a table, also change the ownership of any
-	 * indexes that belong to the table, as well as the table's toast
-	 * table (if it has one)
-	 */
-	if (tuple_class->relkind == RELKIND_RELATION ||
-		tuple_class->relkind == RELKIND_TOASTVALUE)
+	if (tuple_class->relowner != newOwnerSysId)
 	{
-		List	   *index_oid_list;
-		ListCell   *i;
+		/* Otherwise, check that we are the superuser */
+		if (!superuser())
+			ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			errmsg("must be superuser to change owner")));
 
-		/* Find all the indexes belonging to this relation */
-		index_oid_list = RelationGetIndexList(target_rel);
+		/*
+		 * Okay, this is a valid tuple: change its ownership and write to the
+		 * heap.
+		 */
+		tuple_class->relowner = newOwnerSysId;
+		simple_heap_update(class_rel, &tuple->t_self, tuple);
 
-		/* For each index, recursively change its ownership */
-		foreach(i, index_oid_list)
-			ATExecChangeOwner(lfirst_oid(i), newOwnerSysId);
+		/* Keep the catalog indexes up to date */
+		CatalogUpdateIndexes(class_rel, tuple);
 
-		list_free(index_oid_list);
-	}
+		/*
+		 * If we are operating on a table, also change the ownership of any
+		 * indexes that belong to the table, as well as the table's toast
+		 * table (if it has one)
+		 */
+		if (tuple_class->relkind == RELKIND_RELATION ||
+			tuple_class->relkind == RELKIND_TOASTVALUE)
+		{
+			List	   *index_oid_list;
+			ListCell   *i;
 
-	if (tuple_class->relkind == RELKIND_RELATION)
-	{
-		/* If it has a toast table, recurse to change its ownership */
-		if (tuple_class->reltoastrelid != InvalidOid)
-			ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerSysId);
+			/* Find all the indexes belonging to this relation */
+			index_oid_list = RelationGetIndexList(target_rel);
+
+			/* For each index, recursively change its ownership */
+			foreach(i, index_oid_list)
+				ATExecChangeOwner(lfirst_oid(i), newOwnerSysId);
+
+			list_free(index_oid_list);
+		}
+
+		if (tuple_class->relkind == RELKIND_RELATION)
+		{
+			/* If it has a toast table, recurse to change its ownership */
+			if (tuple_class->reltoastrelid != InvalidOid)
+				ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerSysId);
+		}
 	}
 
 	heap_freetuple(tuple);

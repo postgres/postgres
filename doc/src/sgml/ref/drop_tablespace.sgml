@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.1 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.2 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -80,6 +80,7 @@ DROP TABLESPACE mystuff;
 
   <simplelist type="inline">
    <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
+   <member><xref linkend="sql-altertablespace" endterm="sql-altertablespace-title"></member>
   </simplelist>
  </refsect1>
 

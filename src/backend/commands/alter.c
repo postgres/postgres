@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.7 2004/05/26 04:41:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.8 2004/06/25 21:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,9 @@
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "commands/trigger.h"
+#include "commands/typecmds.h"
 #include "commands/user.h"
 #include "miscadmin.h"
 #include "parser/parse_clause.h"
@@ -35,6 +37,10 @@
 #include "utils/syscache.h"
 
 
+/*
+ * Executes an ALTER OBJECT / RENAME TO statement.  Based on the object
+ * type, the function appropriate to that type is executed.
+ */
 void
 ExecRenameStmt(RenameStmt *stmt)
 {
@@ -72,6 +78,10 @@ ExecRenameStmt(RenameStmt *stmt)
 
 		case OBJECT_SCHEMA:
 			RenameSchema(stmt->subname, stmt->newname);
+			break;
+
+		case OBJECT_TABLESPACE:
+			RenameTableSpace(stmt->subname, stmt->newname);
 			break;
 
 		case OBJECT_USER:
@@ -131,5 +141,64 @@ ExecRenameStmt(RenameStmt *stmt)
 		default:
 			elog(ERROR, "unrecognized rename stmt type: %d",
 				 (int) stmt->renameType);
+	}
+}
+
+/*
+ * Executes an ALTER OBJECT / OWNER TO statement.  Based on the object
+ * type, the function appropriate to that type is executed.
+ */
+void
+ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
+{
+	AclId	newowner = get_usesysid(stmt->newowner);
+
+	switch (stmt->objectType)
+	{
+		case OBJECT_AGGREGATE:
+			AlterAggregateOwner(stmt->object,
+								(TypeName *) linitial(stmt->objarg),
+								newowner);
+			break;
+
+		case OBJECT_CONVERSION:
+			AlterConversionOwner(stmt->object, newowner);
+			break;
+
+		case OBJECT_DATABASE:
+			AlterDatabaseOwner((char *) linitial(stmt->object), newowner);
+			break;
+
+		case OBJECT_FUNCTION:
+			AlterFunctionOwner(stmt->object, stmt->objarg, newowner);
+			break;
+
+		case OBJECT_OPERATOR:
+			AlterOperatorOwner(stmt->object,
+							   (TypeName *) linitial(stmt->objarg),
+							   (TypeName *) lsecond(stmt->objarg),
+							   newowner);
+			break;
+
+		case OBJECT_OPCLASS:
+			AlterOpClassOwner(stmt->object, stmt->addname, newowner);
+			break;
+
+		case OBJECT_SCHEMA:
+			AlterSchemaOwner((char *) linitial(stmt->object), newowner);
+			break;
+
+		case OBJECT_TABLESPACE:
+			AlterTableSpaceOwner((char *) linitial(stmt->object), newowner);
+			break;
+
+		case OBJECT_TYPE:
+		case OBJECT_DOMAIN:		/* same as TYPE */
+			AlterTypeOwner(stmt->object, newowner);
+			break;
+
+		default:
+			elog(ERROR, "unrecognized AlterOwnerStmt type: %d",
+				 (int) stmt->objectType);
 	}
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.259 2004/06/18 06:14:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.260 2004/06/25 21:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,12 +838,10 @@ typedef struct AlterDomainStmt
 								 *	O = alter column set not null
 								 *	C = add constraint
 								 *	X = drop constraint
-								 *	U = change owner
 								 *------------
 								 */
 	List	   *typename;		/* domain to work on */
-	char	   *name;			/* column or constraint name to act on, or
-								 * new owner */
+	char	   *name;			/* column or constraint name to act on */
 	Node	   *def;			/* definition of default or constraint */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 } AlterDomainStmt;
@@ -1446,6 +1444,22 @@ typedef struct RenameStmt
 } RenameStmt;
 
 /* ----------------------
+ *		Alter Object Owner Statement 
+ * ----------------------
+ */
+typedef struct AlterOwnerStmt
+{
+	NodeTag		type;
+	RangeVar   *relation;		/* in case it's a table */
+	List	   *object;			/* in case it's some other object */
+	List	   *objarg;			/* argument types, if applicable */
+	char	   *addname;		/* additional name if needed */
+	char	   *newowner;		/* the new owner */
+	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
+} AlterOwnerStmt;
+
+
+/* ----------------------
  *		Create Rule Statement
  * ----------------------
  */
@@ -1560,13 +1574,6 @@ typedef struct CreatedbStmt
  *	Alter Database
  * ----------------------
  */
-typedef struct AlterDbOwnerStmt
-{
-	NodeTag		type;
-	char	   *dbname;
-	char	   *uname;
-} AlterDbOwnerStmt;
-
 typedef struct AlterDatabaseSetStmt
 {
 	NodeTag		type;

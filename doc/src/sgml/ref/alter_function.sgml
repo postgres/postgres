@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.4 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.5 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,6 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER FUNCTION <replaceable>name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] ) RENAME TO <replaceable>newname</replaceable>
+ALTER FUNCTION <replaceable>name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] ) OWNER TO <replaceable>newowner</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -29,7 +30,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ <replaceable class="parameter
 
   <para>
    <command>ALTER FUNCTION</command> changes the definition of a
-   function.  The only functionality is to rename the function.
+   function.
   </para>
  </refsect1>
   
@@ -63,6 +64,19 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ <replaceable class="parameter
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newowner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the function.
+      To change the owner of a function, you must be a superuser.
+      Note that if the function is marked
+      <literal>SECURITY DEFINER</literal>,
+      it will subsequently execute as the new owner.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -76,6 +90,14 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ <replaceable class="parameter
 ALTER FUNCTION sqrt(integer) RENAME TO square_root;
 </programlisting>
   </para>
+
+  <para>
+   To change the owner of the function <literal>sqrt</literal> for type
+   <type>integer</type> to <literal>joe</literal>:
+<programlisting>
+ALTER FUNCTION sqrt(integer) OWNER TO joe;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>
@@ -84,7 +106,7 @@ ALTER FUNCTION sqrt(integer) RENAME TO square_root;
   <para>
    There is an <command>ALTER FUNCTION</command> statement in the SQL
    standard, but it does not provide the option to rename the
-   function.
+   function or change the owner.
   </para>
  </refsect1>
 

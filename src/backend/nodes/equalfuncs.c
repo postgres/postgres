@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.225 2004/06/18 06:13:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.226 2004/06/25 21:55:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -992,6 +992,19 @@ _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 }
 
 static bool
+_equalAlterOwnerStmt(AlterOwnerStmt *a, AlterOwnerStmt *b)
+{
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(object);
+	COMPARE_NODE_FIELD(objarg);
+	COMPARE_STRING_FIELD(addname);
+	COMPARE_STRING_FIELD(newowner);
+	COMPARE_SCALAR_FIELD(objectType);
+
+	return true;
+}
+
+static bool
 _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 {
 	COMPARE_NODE_FIELD(relation);
@@ -1106,15 +1119,6 @@ _equalCreatedbStmt(CreatedbStmt *a, CreatedbStmt *b)
 {
 	COMPARE_STRING_FIELD(dbname);
 	COMPARE_NODE_FIELD(options);
-
-	return true;
-}
-
-static bool
-_equalAlterDbOwnerStmt(AlterDbOwnerStmt *a, AlterDbOwnerStmt *b)
-{
-	COMPARE_STRING_FIELD(dbname);
-	COMPARE_STRING_FIELD(uname);
 
 	return true;
 }
@@ -2008,6 +2012,9 @@ equal(void *a, void *b)
 		case T_RenameStmt:
 			retval = _equalRenameStmt(a, b);
 			break;
+		case T_AlterOwnerStmt:
+			retval = _equalAlterOwnerStmt(a, b);
+			break;
 		case T_RuleStmt:
 			retval = _equalRuleStmt(a, b);
 			break;
@@ -2043,9 +2050,6 @@ equal(void *a, void *b)
 			break;
 		case T_CreatedbStmt:
 			retval = _equalCreatedbStmt(a, b);
-			break;
-		case T_AlterDbOwnerStmt:
-			retval = _equalAlterDbOwnerStmt(a, b);
 			break;
 		case T_AlterDatabaseSetStmt:
 			retval = _equalAlterDatabaseSetStmt(a, b);

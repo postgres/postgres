@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.41 2003/12/11 20:13:53 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.42 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -109,13 +109,13 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name of the operator to be defined. See above for allowable
-	characters.  The name may be schema-qualified, for example
-	<literal>CREATE OPERATOR myschema.+ (...)</>.  If not, then
-	the operator is created in the current schema.  Two operators
-	in the same schema can have the same name if they operate on
-	different data types.  This is called
-	<firstterm>overloading</>.
+        The name of the operator to be defined. See above for allowable
+        characters.  The name may be schema-qualified, for example
+        <literal>CREATE OPERATOR myschema.+ (...)</>.  If not, then
+        the operator is created in the current schema.  Two operators
+        in the same schema can have the same name if they operate on
+        different data types.  This is called
+        <firstterm>overloading</>.
        </para>
       </listitem>
      </varlistentry>
@@ -124,7 +124,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">funcname</replaceable></term>
       <listitem>
        <para>
-	The function used to implement this operator.
+        The function used to implement this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -133,8 +133,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">lefttype</replaceable></term>
       <listitem>
        <para>
-	The data type of the operator's left operand, if any.
-	This option would be omitted for a left-unary operator.
+        The data type of the operator's left operand, if any.
+        This option would be omitted for a left-unary operator.
        </para>
       </listitem>
      </varlistentry>
@@ -143,8 +143,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">righttype</replaceable></term>
       <listitem>
        <para>
-	The data type of the operator's right operand, if any.
-	This option would be omitted for a right-unary operator.
+        The data type of the operator's right operand, if any.
+        This option would be omitted for a right-unary operator.
        </para>
       </listitem>
      </varlistentry>
@@ -153,7 +153,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">com_op</replaceable></term>
       <listitem>
        <para>
-	The commutator of this operator.
+        The commutator of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -162,7 +162,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">neg_op</replaceable></term>
       <listitem>
        <para>
-	The negator of this operator.
+        The negator of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -171,7 +171,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">res_proc</replaceable></term>
       <listitem>
        <para>
-	The restriction selectivity estimator function for this operator.
+        The restriction selectivity estimator function for this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -180,7 +180,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">join_proc</replaceable></term>
       <listitem>
        <para>
-	The join selectivity estimator function for this operator.
+        The join selectivity estimator function for this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -207,8 +207,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">left_sort_op</replaceable></term>
       <listitem>
        <para>
-	If this operator can support a merge join, the less-than
-	operator that sorts the left-hand data type of this operator.
+        If this operator can support a merge join, the less-than
+        operator that sorts the left-hand data type of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -217,8 +217,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">right_sort_op</replaceable></term>
       <listitem>
        <para>
-	If this operator can support a merge join, the less-than
-	operator that sorts the right-hand data type of this operator.
+        If this operator can support a merge join, the less-than
+        operator that sorts the right-hand data type of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -227,8 +227,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">less_than_op</replaceable></term>
       <listitem>
        <para>
-	If this operator can support a merge join, the less-than
-	operator that compares the input data types of this operator.
+        If this operator can support a merge join, the less-than
+        operator that compares the input data types of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -237,8 +237,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">greater_than_op</replaceable></term>
       <listitem>
        <para>
-	If this operator can support a merge join, the greater-than
-	operator that compares the input data types of this operator.
+        If this operator can support a merge join, the greater-than
+        operator that compares the input data types of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -263,7 +263,8 @@ COMMUTATOR = OPERATOR(myschema.===) ,
 
   <para>
    Use <command>DROP OPERATOR</command> to delete user-defined
-   operators from a database.
+   operators from a database.  Use <command>ALTER OPERATOR</command>
+   to modify operators in a database.
   </para>
  </refsect1>
   

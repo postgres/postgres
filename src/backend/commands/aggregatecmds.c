@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.18 2004/05/26 04:41:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.19 2004/06/25 21:55:53 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -223,10 +223,9 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 
 	/*
 	 * if a basetype is passed in, then attempt to find an aggregate for
-	 * that specific type.
-	 *
-	 * else attempt to find an aggregate with a basetype of ANYOID. This
-	 * means that the aggregate is to apply to all basetypes (eg, COUNT).
+	 * that specific type; else attempt to find an aggregate with a basetype
+	 * of ANYOID. This means that the aggregate applies to all basetypes
+	 * (eg, COUNT).
 	 */
 	if (basetype)
 		basetypeOid = typenameTypeId(basetype);
@@ -284,6 +283,63 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 	namestrcpy(&(((Form_pg_proc) GETSTRUCT(tup))->proname), newname);
 	simple_heap_update(rel, &tup->t_self, tup);
 	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+}
+
+/*
+ * Change aggregate owner
+ */
+void
+AlterAggregateOwner(List *name, TypeName *basetype, AclId newOwnerSysId)
+{
+	Oid			basetypeOid;
+	Oid			procOid;
+	HeapTuple	tup;
+	Form_pg_proc procForm;
+	Relation	rel;
+
+	/*
+	 * if a basetype is passed in, then attempt to find an aggregate for
+	 * that specific type; else attempt to find an aggregate with a basetype
+	 * of ANYOID. This means that the aggregate applies to all basetypes
+	 * (eg, COUNT).
+	 */
+	if (basetype)
+		basetypeOid = typenameTypeId(basetype);
+	else
+		basetypeOid = ANYOID;
+
+	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	procOid = find_aggregate_func(name, basetypeOid, false);
+
+	tup = SearchSysCacheCopy(PROCOID,
+							 ObjectIdGetDatum(procOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for function %u", procOid);
+	procForm = (Form_pg_proc) GETSTRUCT(tup);
+
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (procForm->proowner != newOwnerSysId)
+	{
+		/* Otherwise, must be superuser to change object ownership */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
+
+		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		procForm->proowner = newOwnerSysId;
+
+		simple_heap_update(rel, &tup->t_self, tup);
+		CatalogUpdateIndexes(rel, tup);
+	}
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);

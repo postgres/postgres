@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.12 2004/06/18 06:13:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.13 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -64,7 +64,9 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
       <listitem>
        <para>
         The name of a schema to be created.  If this is omitted, the user name
-        is used as the schema name.
+        is used as the schema name.  The name cannot
+        begin with <literal>pg_</literal>, as such names
+        are reserved for system schemas.
        </para>
       </listitem>
      </varlistentry>

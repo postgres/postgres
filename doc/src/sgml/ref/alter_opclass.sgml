@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.4 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.5 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,6 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> OWNER TO <replaceable>newowner</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -29,8 +30,7 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
 
   <para>
    <command>ALTER OPERATOR CLASS</command> changes the definition of
-   an operator class.  The only functionality is to rename the
-   operator class.
+   an operator class.
   </para>
  </refsect1>
   
@@ -65,7 +65,17 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
      </para>
     </listitem>
    </varlistentry>
-  </variablelist>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newowner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the operator class.
+      You must be a superuser to change the owner of an operator class.
+     </para>
+    </listitem>
+   </varlistentry>
+ </variablelist>
  </refsect1>
 
  <refsect1>

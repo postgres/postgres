@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.12 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.13 2004/06/25 21:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,58 @@ RenameConversion(List *name, const char *newname)
 	namestrcpy(&(((Form_pg_conversion) GETSTRUCT(tup))->conname), newname);
 	simple_heap_update(rel, &tup->t_self, tup);
 	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+}
+
+/*
+ * Change conversion owner
+ */
+void
+AlterConversionOwner(List *name, AclId newOwnerSysId)
+{
+	Oid			conversionOid;
+	HeapTuple	tup;
+	Relation	rel;
+	Form_pg_conversion	convForm;
+
+	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
+
+	conversionOid = FindConversionByName(name);
+	if (!OidIsValid(conversionOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("conversion \"%s\" does not exist",
+						NameListToString(name))));
+
+	tup = SearchSysCacheCopy(CONOID,
+							 ObjectIdGetDatum(conversionOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for conversion %u", conversionOid);
+
+	convForm = (Form_pg_conversion) GETSTRUCT(tup);
+
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (convForm->conowner != newOwnerSysId)
+	{
+		/* Otherwise, must be superuser to change object ownership */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
+
+		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		convForm->conowner = newOwnerSysId;
+
+		simple_heap_update(rel, &tup->t_self, tup);
+
+		CatalogUpdateIndexes(rel, tup);
+	}
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);

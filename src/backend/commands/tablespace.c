@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.3 2004/06/21 04:06:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.4 2004/06/25 21:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -668,4 +668,124 @@ get_tablespace_name(Oid spc_oid)
     heap_close(rel, AccessShareLock);
 
 	return result;
+}
+
+/*
+ * Rename a tablespace
+ */
+void
+RenameTableSpace(const char *oldname, const char *newname)
+{
+	Relation rel;
+	ScanKeyData	entry[1];
+	HeapScanDesc scan;
+	HeapTuple	tup;
+	HeapTuple	newtuple;
+	Form_pg_tablespace newform;
+
+	/* Search pg_tablespace */
+	rel = heap_openr(TableSpaceRelationName, RowExclusiveLock);
+
+	ScanKeyInit(&entry[0],
+				Anum_pg_tablespace_spcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(oldname));
+	scan = heap_beginscan(rel, SnapshotNow, 1, entry);
+	tup = heap_getnext(scan, ForwardScanDirection);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace \"%s\" does not exist",
+						oldname)));
+
+	newtuple = heap_copytuple(tup);
+	newform = (Form_pg_tablespace) GETSTRUCT(newtuple);
+
+	heap_endscan(scan);
+
+	/* Must be owner or superuser */
+	if (newform->spcowner != GetUserId() && !superuser())
+		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE, oldname);
+
+	/* Validate new name */
+	if (!allowSystemTableMods && IsReservedName(newname))
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("unacceptable tablespace name \"%s\"", newname),
+		errdetail("The prefix \"pg_\" is reserved for system tablespaces.")));
+
+	/* Make sure the new name doesn't exist */
+	ScanKeyInit(&entry[0],
+				Anum_pg_tablespace_spcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(newname));
+	scan = heap_beginscan(rel, SnapshotNow, 1, entry);
+	tup = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("tablespace \"%s\" already exists",
+						newname)));
+	
+	heap_endscan(scan);
+
+	/* OK, update the entry */
+	namestrcpy(&(newform->spcname), newname);
+
+	simple_heap_update(rel, &newtuple->t_self, newtuple);
+	CatalogUpdateIndexes(rel, newtuple);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * Change tablespace owner
+ */
+void
+AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
+{
+	Relation rel;
+	ScanKeyData	entry[1];
+	HeapScanDesc scandesc;
+	Form_pg_tablespace spcForm;
+	HeapTuple	tup;
+	HeapTuple	newtuple;
+
+	/* Search pg_tablespace */
+	rel = heap_openr(TableSpaceRelationName, RowExclusiveLock);
+
+	ScanKeyInit(&entry[0],
+				Anum_pg_tablespace_spcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(name));
+	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
+	tup = heap_getnext(scandesc, ForwardScanDirection);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace \"%s\" does not exist", name)));
+
+	newtuple = heap_copytuple(tup);
+	spcForm = (Form_pg_tablespace) GETSTRUCT(newtuple);
+
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (spcForm->spcowner != newOwnerSysId)
+	{
+		/* Otherwise, must be superuser to change object ownership */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
+
+		/* Modify the owner */
+		spcForm->spcowner = newOwnerSysId;
+		simple_heap_update(rel, &newtuple->t_self, newtuple);
+		CatalogUpdateIndexes(rel, newtuple);
+	}
+
+	heap_endscan(scandesc);
+	heap_close(rel, NoLock);
 }

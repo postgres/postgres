@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.136 2004/06/18 06:13:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.137 2004/06/25 21:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -666,7 +666,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	/* rename */
 	newtup = heap_copytuple(tup);
 	namestrcpy(&(((Form_pg_database) GETSTRUCT(newtup))->datname), newname);
-	simple_heap_update(rel, &tup->t_self, newtup);
+	simple_heap_update(rel, &newtup->t_self, newtup);
 	CatalogUpdateIndexes(rel, newtup);
 
 	systable_endscan(scan);
@@ -758,7 +758,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	CatalogUpdateIndexes(rel, newtuple);
 
 	systable_endscan(scan);
-	heap_close(rel, RowExclusiveLock);
+	heap_close(rel, NoLock);
 }
 
 
@@ -766,14 +766,14 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
  * ALTER DATABASE name OWNER TO newowner
  */
 void
-AlterDatabaseOwner(const char *dbname, const char *newowner)
+AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 {
-	AclId		newdatdba;
 	HeapTuple	tuple,
 				newtuple;
 	Relation	rel;
 	ScanKeyData scankey;
 	SysScanDesc scan;
+	Form_pg_database	datForm;
 
 	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
 	ScanKeyInit(&scankey,
@@ -788,21 +788,27 @@ AlterDatabaseOwner(const char *dbname, const char *newowner)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
 
-	/* obtain sysid of proposed owner */
-	newdatdba = get_usesysid(newowner); /* will ereport if no such user */
-
-	/* changing owner's database for someone else: must be superuser */
-	/* note that the someone else need not have any permissions */
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to change owner's database for another user")));
-
-	/* change owner */
 	newtuple = heap_copytuple(tuple);
-	((Form_pg_database) GETSTRUCT(newtuple))->datdba = newdatdba;
-	simple_heap_update(rel, &tuple->t_self, newtuple);
-	CatalogUpdateIndexes(rel, newtuple);
+	datForm = (Form_pg_database) GETSTRUCT(newtuple);
+
+	/* 
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is to be consistent with other objects.
+	 */
+	if (datForm->datdba != newOwnerSysId)
+	{
+		/* changing owner's database for someone else: must be superuser */
+		/* note that the someone else need not have any permissions */
+		if (!superuser())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser to change owner")));
+
+		/* change owner */
+		datForm->datdba = newOwnerSysId;
+		simple_heap_update(rel, &newtuple->t_self, newtuple);
+		CatalogUpdateIndexes(rel, newtuple);
+	}
 
 	systable_endscan(scan);
 	heap_close(rel, NoLock);

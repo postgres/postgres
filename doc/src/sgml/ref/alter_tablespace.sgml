@@ -1,27 +1,27 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.5 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tablespace.sgml,v 1.1 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERCONVERSION">
+<refentry id="SQL-ALTERTABLESPACE">
  <refmeta>
-  <refentrytitle id="SQL-ALTERCONVERSION-TITLE">ALTER CONVERSION</refentrytitle>
+  <refentrytitle id="SQL-ALTERTABLESPACE-TITLE">ALTER TABLESPACE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>ALTER CONVERSION</refname>
-  <refpurpose>change the definition of a conversion</refpurpose>
+  <refname>ALTER TABLESPACE</refname>
+  <refpurpose>change the definition of a tablespace</refpurpose>
  </refnamediv>  
   
- <indexterm zone="sql-alterconversion">
-  <primary>ALTER CONVERSION</primary>
+ <indexterm zone="sql-altertablespace">
+  <primary>ALTER TABLESPACE</primary>
  </indexterm>
 
  <refsynopsisdiv>
 <synopsis>
-ALTER CONVERSION <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
-ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner</replaceable>
+ALTER TABLESPACE <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER TABLESPACE <replaceable>name</replaceable> OWNER TO <replaceable>newowner</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -29,8 +29,8 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
   <title>Description</title>
 
   <para>
-   <command>ALTER CONVERSION</command> changes the definition of a
-   conversion.
+   <command>ALTER TABLESPACE</command> changes the definition of
+   a tablespace.
   </para>
  </refsect1>
   
@@ -42,7 +42,7 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of an existing conversion.
+      The name of an existing tablespace.
      </para>
     </listitem>
    </varlistentry>
@@ -51,7 +51,9 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
     <term><replaceable class="parameter">newname</replaceable></term>
     <listitem>
      <para>
-      The new name of the conversion.
+      The new name of the tablespace.  The new name cannot
+      begin with <literal>pg_</literal>, as such names
+      are reserved for system tablespaces.
      </para>
     </listitem>
    </varlistentry>
@@ -60,8 +62,8 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
     <term><replaceable class="parameter">newowner</replaceable></term>
     <listitem>
      <para>
-      The new owner of the conversion. To change the owner of a conversion,
-      you must be a superuser.
+      The new owner of the tablespace.
+      You must be a superuser to change the owner of a tablespace.
      </para>
     </listitem>
    </varlistentry>
@@ -72,28 +74,26 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
   <title>Examples</title>
 
   <para>
-   To rename the conversion <literal>iso_8859_1_to_utf_8</literal> to
-   <literal>latin1_to_unicode</literal>:
+   Rename tablespace <literal>index_space</literal> to <literal>fast_raid</literal>:
 <programlisting>
-ALTER CONVERSION iso_8859_1_to_utf_8 RENAME TO latin1_to_unicode;
+ALTER TABLESPACE index_space RENAME TO fast_raid;
 </programlisting>
   </para>
 
   <para>
-   To change the owner of the conversion <literal>iso_8859_1_to_utf_8</literal> to
-   <literal>joe</literal>:
+   Change the owner of tablespace <literal>index_space</literal>:
 <programlisting>
-ALTER CONVERSION iso_8859_1_to_utf_8 OWNER TO joe;
+ALTER TABLESPACE index_space OWNER TO mary;
 </programlisting>
   </para>
  </refsect1>
-
+ 
  <refsect1>
   <title>Compatibility</title>
 
   <para>
-   There is no <command>ALTER CONVERSION</command> statement in the SQL
-   standard.
+   There is no <command>ALTER TABLESPACE</command> statement in
+   the SQL standard.
   </para>
  </refsect1>
 
@@ -101,8 +101,8 @@ ALTER CONVERSION iso_8859_1_to_utf_8 OWNER TO joe;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createconversion" endterm="sql-createconversion-title"></member>
-   <member><xref linkend="sql-dropconversion" endterm="sql-dropconversion-title"></member>
+   <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
+   <member><xref linkend="sql-droptablespace" endterm="sql-droptablespace-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,36 +1,36 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.25 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_operator.sgml,v 1.1 2004/06/25 21:55:50 tgl Exp $
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPOPERATOR">
+<refentry id="SQL-ALTEROPERATOR">
  <refmeta>
-  <refentrytitle id="SQL-DROPOPERATOR-TITLE">DROP OPERATOR</refentrytitle>
+  <refentrytitle id="SQL-ALTEROPERATOR-TITLE">ALTER OPERATOR</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>DROP OPERATOR</refname>
-  <refpurpose>remove an operator</refpurpose>
- </refnamediv>
+  <refname>ALTER OPERATOR</refname>
+  <refpurpose>change the definition of an operator</refpurpose>
+ </refnamediv>  
   
- <indexterm zone="sql-dropoperator">
-  <primary>DROP OPERATOR</primary>
+ <indexterm zone="sql-alteroperator">
+  <primary>ALTER OPERATOR</primary>
  </indexterm>
 
  <refsynopsisdiv>
 <synopsis>
-DROP OPERATOR <replaceable class="PARAMETER">name</replaceable> ( { <replaceable class="PARAMETER">lefttype</replaceable> | NONE } , { <replaceable class="PARAMETER">righttype</replaceable> | NONE } ) [ CASCADE | RESTRICT ]
+ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>lefttype</replaceable> | NONE } , { <replaceable>righttype</replaceable> | NONE } ) OWNER TO <replaceable>newowner</replaceable>
 </synopsis>
  </refsynopsisdiv>
-
+  
  <refsect1>
   <title>Description</title>
 
   <para>
-   <command>DROP OPERATOR</command> drops an existing operator from
-   the database system.  To execute this command you must be the owner
-   of the operator.
+   <command>ALTER OPERATOR</command> changes the definition of
+   an operator.  The only currently available functionality is to change the
+   owner of the operator.
   </para>
  </refsect1>
   
@@ -68,20 +68,11 @@ DROP OPERATOR <replaceable class="PARAMETER">name</replaceable> ( { <replaceable
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CASCADE</literal></term>
+    <term><replaceable class="parameter">newowner</replaceable></term>
     <listitem>
      <para>
-      Automatically drop objects that depend on the operator.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>RESTRICT</literal></term>
-    <listitem>
-     <para>
-      Refuse to drop the operator if any objects depend on it.  This
-      is the default.
+      The new owner of the operator.
+      You must be a superuser to change the owner of an operator.
      </para>
     </listitem>
    </varlistentry>
@@ -92,25 +83,9 @@ DROP OPERATOR <replaceable class="PARAMETER">name</replaceable> ( { <replaceable
   <title>Examples</title>
 
   <para>
-   Remove the power operator <literal>a^b</literal> for type <type>integer</type>:
+   Change the owner of a custom operator <literal>a @@ b</literal> for type <type>text</type>:
 <programlisting>
-DROP OPERATOR ^ (integer, integer);
-</programlisting>
-  </para>
-
-  <para>
-   Remove the left unary bitwise complement operator
-   <literal>~b</literal> for type <type>bit</type>:
-<programlisting>
-DROP OPERATOR ~ (none, bit);
-</programlisting>
-  </para>
-
-  <para>
-   Remove the right unary factorial operator <literal>x!</literal>
-   for type <type>bigint</type>:
-<programlisting>
-DROP OPERATOR ! (bigint, none);
+ALTER OPERATOR @@ (text, text) OWNER TO joe;
 </programlisting>
   </para>
  </refsect1>
@@ -119,7 +94,8 @@ DROP OPERATOR ! (bigint, none);
   <title>Compatibility</title>
 
   <para>
-   There is no <command>DROP OPERATOR</command> statement in the SQL standard.
+   There is no <command>ALTER OPERATOR</command> statement in
+   the SQL standard.
   </para>
  </refsect1>
 
@@ -128,10 +104,9 @@ DROP OPERATOR ! (bigint, none);
 
   <simplelist type="inline">
    <member><xref linkend="sql-createoperator" endterm="sql-createoperator-title"></member>
-   <member><xref linkend="sql-alteroperator" endterm="sql-alteroperator-title"></member>
+   <member><xref linkend="sql-dropoperator" endterm="sql-dropoperator-title"></member>
   </simplelist>
  </refsect1>
-
 </refentry>
 
 <!-- Keep this comment at the end of the file

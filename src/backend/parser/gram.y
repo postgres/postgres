@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.462 2004/06/18 06:13:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.463 2004/06/25 21:55:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -131,7 +131,7 @@ static void doNegateFloat(Value *v);
 }
 
 %type <node>	stmt schema_stmt
-		AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt
+		AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt AlterOwnerStmt
 		AlterSeqStmt AlterTableStmt AlterUserStmt AlterUserSetStmt
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
@@ -152,7 +152,6 @@ static void doNegateFloat(Value *v);
 		VariableResetStmt VariableSetStmt VariableShowStmt
 		ViewStmt CheckPointStmt CreateConversionStmt
 		DeallocateStmt PrepareStmt ExecuteStmt
-		AlterDbOwnerStmt
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select
@@ -487,10 +486,10 @@ stmtmulti:	stmtmulti ';' stmt
 		;
 
 stmt :
-			AlterDbOwnerStmt
-			| AlterDatabaseSetStmt
+			AlterDatabaseSetStmt
 			| AlterDomainStmt
 			| AlterGroupStmt
+			| AlterOwnerStmt
 			| AlterSeqStmt
 			| AlterTableStmt
 			| AlterUserSetStmt
@@ -3670,10 +3669,111 @@ RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
+			| ALTER TABLESPACE name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TABLESPACE;
+					n->subname = $3;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
 		;
 
 opt_column: COLUMN									{ $$ = COLUMN; }
 			| /*EMPTY*/								{ $$ = 0; }
+		;
+
+
+/*****************************************************************************
+ *
+ * ALTER THING name OWNER TO newname.  
+ *
+ *****************************************************************************/
+
+AlterOwnerStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_AGGREGATE;
+					n->object = $3;
+					n->objarg = list_make1($5);
+					n->newowner = $9;
+					$$ = (Node *)n;
+				}
+			| ALTER CONVERSION_P any_name OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_CONVERSION;
+					n->object = $3;
+					n->newowner = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER DATABASE database_name OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_DATABASE;
+					n->object = list_make1($3);
+					n->newowner = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER DOMAIN_P any_name OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_DOMAIN;
+					n->object = $3;
+					n->newowner = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER FUNCTION func_name func_args OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_FUNCTION;
+					n->object = $3;
+					n->objarg = extractArgTypes($4);
+					n->newowner = $7;
+					$$ = (Node *)n;
+				}
+			| ALTER OPERATOR any_operator '(' oper_argtypes ')' OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_OPERATOR;
+					n->object = $3;
+					n->objarg = $5;
+					n->newowner = $9;
+					$$ = (Node *)n;
+				}
+			| ALTER OPERATOR CLASS any_name USING access_method OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_OPCLASS;
+					n->object = $4;
+					n->addname = $6;
+					n->newowner = $9;
+					$$ = (Node *)n;
+				}
+			| ALTER SCHEMA name OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_SCHEMA;
+					n->object = list_make1($3);
+					n->newowner = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TYPE_P any_name OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_TYPE;
+					n->object = $3;
+					n->newowner = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name OWNER TO UserId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_TABLESPACE;
+					n->object = list_make1($3);
+					n->newowner = $6;
+					$$ = (Node *)n;
+				}
 		;
 
 
@@ -4019,15 +4119,6 @@ opt_equal:	'='										{}
  *
  *****************************************************************************/
 
-AlterDbOwnerStmt: ALTER DATABASE database_name OWNER TO UserId
-				{
-					AlterDbOwnerStmt *n = makeNode(AlterDbOwnerStmt);
-					n->dbname = $3;
-					n->uname = $6;
-					$$ = (Node *)n;
-				}
-		;
-
 AlterDatabaseSetStmt:
 			ALTER DATABASE database_name SET set_rest
 				{
@@ -4124,15 +4215,6 @@ AlterDomainStmt:
 					n->typename = $3;
 					n->name = $6;
 					n->behavior = $7;
-					$$ = (Node *)n;
-				}
-			/* ALTER DOMAIN <domain> OWNER TO UserId */
-			| ALTER DOMAIN_P any_name OWNER TO UserId
-				{
-					AlterDomainStmt *n = makeNode(AlterDomainStmt);
-					n->subtype = 'U';
-					n->typename = $3;
-					n->name = $6;
 					$$ = (Node *)n;
 				}
 			;
