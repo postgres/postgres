@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.36 2003/09/12 22:17:18 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.37 2003/09/30 03:22:32 tgl Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -123,8 +123,8 @@ INSERT INTO weather VALUES ('Berkeley', 45, 53, 0.0, '1994-11-28');
 </programlisting>
 
 <screen>
-ERROR:  insert or update on "weather" violates foreign key constraint "$1"
-DETAIL:  Key (city)=(Berkeley) is not present in "cities".
+ERROR:  insert or update on table "weather" violates foreign key constraint "$1"
+DETAIL:  Key (city)=(Berkeley) is not present in table "cities".
 </screen>
    </para>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.44 2003/09/11 21:42:19 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.45 2003/09/30 03:22:33 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -722,9 +722,11 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
    Although indexes in <productname>PostgreSQL</> do not need
    maintenance and tuning, it is still important to check
    which indexes are actually used by the real-life query workload.
-   Examining index usage is done with the <command>EXPLAIN</> command;
-   its application for this purpose is illustrated in <xref
-   linkend="using-explain">.
+   Examining index usage for an individual query is done with the
+   <command>EXPLAIN</> command; its application for this purpose is
+   illustrated in <xref linkend="using-explain">.
+   It is also possible to gather overall statistics about index usage
+   in a running server, as described in <xref linkend="monitoring-stats">.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.175 2003/09/20 20:12:04 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.176 2003/09/30 03:22:33 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6422,7 +6422,7 @@ SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
   </indexterm>
 
 <synopsis>
-<function>coalesce</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
+<function>COALESCE</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
 </synopsis>
 
   <para>
@@ -7610,7 +7610,7 @@ SELECT min(col) FROM sometable;
     Fortunately, there is a simple workaround for
     <function>min()</function> and <function>max()</function>. The
     query shown below is equivalent to the query above, except that it
-    can take advantage of a B+-Tree index if there is one present on
+    can take advantage of a B-tree index if there is one present on
     the column in question.
 <programlisting>
 SELECT col FROM sometable ORDER BY col ASC LIMIT 1;
