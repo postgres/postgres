@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.8 1997/09/08 21:48:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.9 1997/11/17 16:59:22 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -591,7 +591,7 @@ SetRefreshWhenInvalidate(bool on)
  */
 #ifdef	INVALIDDEBUG
 #define RelationInvalidateHeapTuple_DEBUG1 \
-elog(DEBUG, "RelationInvalidateHeapTuple(%.16s, [%d,%d])", \
+elog(DEBUG, "RelationInvalidateHeapTuple(%s, [%d,%d])", \
 	 RelationGetRelationName(relation), \
 	 ItemPointerGetBlockNumber(&tuple->t_ctid), \
 	 ItemPointerGetOffsetNumber(&tuple->t_ctid))

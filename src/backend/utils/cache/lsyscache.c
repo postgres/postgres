@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.6 1997/09/08 21:48:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.7 1997/11/17 16:59:23 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -148,7 +148,7 @@ get_attisset(Oid relid, char *attname)
 							   PointerGetDatum(attname),
 							   0, 0);
 	if (!HeapTupleIsValid(htup))
-		elog(WARN, "get_attisset: no attribute %.16s in relation %d",
+		elog(WARN, "get_attisset: no attribute %s in relation %d",
 			 attname, relid);
 	if (heap_attisnull(htup, attno))
 		return (false);

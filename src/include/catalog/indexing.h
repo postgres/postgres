@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.11 1997/11/15 20:57:38 momjian Exp $
+ * $Id: indexing.h,v 1.12 1997/11/17 16:59:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,26 +27,26 @@
 #define Num_pg_attrdef_indices	1
 #define Num_pg_relcheck_indices 1
 #define Num_pg_trigger_indices	1
-#define Num_pg_objoid_indices	1
+#define Num_pg_description_indices	1
 
 
 /*
  * Names of indices on system catalogs
  */
-#define AttributeNameIndex "pg_attnameind"
-#define AttributeNumIndex  "pg_attnumind"
-#define AttributeRelidIndex "pg_attrelidind"
-#define ProcedureNameIndex "pg_procnameind"
-#define ProcedureOidIndex  "pg_procidind"
-#define ProcedureSrcIndex  "pg_procsrcind"
-#define TypeNameIndex	   "pg_typenameind"
-#define TypeOidIndex	   "pg_typeidind"
-#define ClassNameIndex	   "pg_classnameind"
-#define ClassOidIndex	   "pg_classoidind"
-#define AttrDefaultIndex   "pg_attrdefind"
-#define RelCheckIndex	   "pg_relcheckind"
-#define TriggerRelidIndex  "pg_trigrelidind"
-#define DescriptionObjIndex "pg_descrobjind"
+#define AttributeNameIndex "pg_attribute_mkoidname_index"
+#define AttributeNumIndex  "pg_attribute_mkoidint2_index"
+#define AttributeRelidIndex "pg_attribute_attrelid_index"
+#define ProcedureOidIndex  "pg_proc_oid_index"
+#define ProcedureNameIndex "pg_proc_proname_index"
+#define ProcedureSrcIndex  "pg_proc_prosrc_index"
+#define TypeOidIndex	   "pg_type_oid_index"
+#define TypeNameIndex	   "pg_type_typname_index"
+#define ClassOidIndex	   "pg_class_oid_index"
+#define ClassNameIndex	   "pg_class_relname_index"
+#define AttrDefaultIndex   "pg_attrdef_adrelid_index"
+#define RelCheckIndex	   "pg_relcheck_rcrelid_index"
+#define TriggerRelidIndex  "pg_trigger_tgrelid_index"
+#define DescriptionObjIndex "pg_description_objoid_index"
 
 extern char *Name_pg_attr_indices[];
 extern char *Name_pg_proc_indices[];
@@ -55,7 +55,7 @@ extern char *Name_pg_class_indices[];
 extern char *Name_pg_attrdef_indices[];
 extern char *Name_pg_relcheck_indices[];
 extern char *Name_pg_trigger_indices[];
-extern char *Name_pg_objoid_indices[];
+extern char *Name_pg_description_indices[];
 
 extern char *IndexedCatalogNames[];
 
@@ -100,26 +100,27 @@ extern HeapTuple ClassOidIndexScan(Relation heapRelation, Oid relId);
  * The keyword is DECLARE_INDEX every thing after that is just like in a
  * normal specification of the 'define index' POSTQUEL command.
  */
-DECLARE_INDEX(pg_attnameind on pg_attribute using btree(mkoidname(attrelid, attname) oidname_ops));
-DECLARE_INDEX(pg_attnumind on pg_attribute using btree(mkoidint2(attrelid, attnum) oidint2_ops));
-DECLARE_INDEX(pg_attrelidind on pg_attribute using btree(attrelid oid_ops));
+DECLARE_INDEX(pg_attribute_mkoidname_index on pg_attribute using btree(mkoidname(attrelid, attname) oidname_ops));
+DECLARE_INDEX(pg_attribute_mkoidint2_index on pg_attribute using btree(mkoidint2(attrelid, attnum) oidint2_ops));
+DECLARE_INDEX(pg_attribute_attrelid_index on pg_attribute using btree(attrelid oid_ops));
 
-DECLARE_INDEX(pg_procidind on pg_proc using btree(Oid oid_ops));
-DECLARE_INDEX(pg_procnameind on pg_proc using btree(proname name_ops));
-DECLARE_INDEX(pg_procsrcind on pg_proc using btree(prosrc text_ops));
+DECLARE_INDEX(pg_proc_oid_index on pg_proc using btree(oid oid_ops));
+DECLARE_INDEX(pg_proc_proname_index on pg_proc using btree(proname name_ops));
+DECLARE_INDEX(pg_proc_prosrc_index on pg_proc using btree(prosrc text_ops));
 
-DECLARE_INDEX(pg_typeidind on pg_type using btree(Oid oid_ops));
-DECLARE_INDEX(pg_typenameind on pg_type using btree(typname name_ops));
+DECLARE_INDEX(pg_type_oid_index on pg_type using btree(oid oid_ops));
+DECLARE_INDEX(pg_type_typname_index on pg_type using btree(typname name_ops));
 
-DECLARE_INDEX(pg_classnameind on pg_class using btree(relname name_ops));
-DECLARE_INDEX(pg_classoidind on pg_class using btree(Oid oid_ops));
+DECLARE_INDEX(pg_class_oid_index on pg_class using btree(oid oid_ops));
+DECLARE_INDEX(pg_class_relname_index on pg_class using btree(relname name_ops));
 
-DECLARE_INDEX(pg_attrdefind on pg_attrdef using btree(adrelid oid_ops));
-DECLARE_INDEX(pg_relcheckind on pg_relcheck using btree(rcrelid oid_ops));
+DECLARE_INDEX(pg_attrdef_adrelid_index on pg_attrdef using btree(adrelid oid_ops));
 
-DECLARE_INDEX(pg_trigrelidind on pg_trigger using btree(tgrelid oid_ops));
+DECLARE_INDEX(pg_relcheck_rcrelid_index on pg_relcheck using btree(rcrelid oid_ops));
 
-DECLARE_INDEX(pg_descrobjind on pg_description using btree(objoid oid_ops));
+DECLARE_INDEX(pg_trigger_tgrelid_index on pg_trigger using btree(tgrelid oid_ops));
+
+DECLARE_INDEX(pg_description_objoid_index on pg_description using btree(objoid oid_ops));
 
 /* now build indices in the initialization scripts */
 BUILD_INDICES

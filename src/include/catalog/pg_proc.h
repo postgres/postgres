@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.36 1997/11/15 16:32:09 momjian Exp $
+ * $Id: pg_proc.h,v 1.37 1997/11/17 16:59:36 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -878,7 +878,6 @@ DATA(insert OID = 484 (  char2ge		   PGUID 11 f t f 2 f 16 "409 409" 100 0 0 100
 DESCR("");
 DATA(insert OID = 1275 (  char16eq		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
 DESCR("");
-#define Character16EqualRegProcedure	1275
 DATA(insert OID = 1276 (  char16lt		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
 DESCR("");
 DATA(insert OID = 1277 (  char16le		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));

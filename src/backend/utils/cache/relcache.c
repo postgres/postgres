@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.27 1997/11/02 15:26:06 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.28 1997/11/17 16:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,7 +366,7 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 		case INFO_RELNAME:
 			ScanKeyEntryInitialize(&key, 0,
 								   Anum_pg_class_relname,
-								   Character16EqualRegProcedure,
+								   NameEqualRegProcedure,
 								   NameGetDatum(buildinfo.i.info_name));
 			break;
 

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.26 1997/09/18 20:20:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.27 1997/11/17 16:58:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,8 +480,8 @@ boot_openrel(char *relname)
 	HeapScanDesc sdesc;
 	HeapTuple	tup;
 
-	if (strlen(relname) > 15)
-		relname[15] = '\000';
+	if (strlen(relname) >= NAMEDATALEN-1)
+		relname[NAMEDATALEN-1] = '\0';
 
 	if (Typ == (struct typmap **) NULL)
 	{

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.26 1997/09/12 04:08:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.27 1997/11/17 16:59:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,7 +216,7 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
 	Const	   *adt;
 	Datum		lcp;
 	Type		tp;
-	char		type_string[16];
+	char		type_string[NAMEDATALEN];
 	int32		len;
 	char	   *cp = NULL;
 	char	   *const_string = NULL;
