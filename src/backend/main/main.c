@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.82 2004/05/25 01:00:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.83 2004/05/27 15:07:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#if defined(__alpha) && defined(__osf__)	/* no __alpha__ ? */
+#if defined(__alpha) && defined(__osf__)		/* no __alpha__ ? */
 #include <sys/sysinfo.h>
 #include "machine/hal_sysinfo.h"
 #define ASSEMBLER
@@ -50,6 +50,7 @@ int
 main(int argc, char *argv[])
 {
 	int			len;
+
 #ifndef WIN32
 	struct passwd *pw;
 #endif
@@ -67,7 +68,7 @@ main(int argc, char *argv[])
 	 * without help.  Avoid adding more here, if you can.
 	 */
 
-#if defined(__alpha)	/* no __alpha__ ? */
+#if defined(__alpha)			/* no __alpha__ ? */
 #ifdef NOFIXADE
 	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
 #endif   /* NOFIXADE */
@@ -77,7 +78,7 @@ main(int argc, char *argv[])
 #endif   /* __alpha */
 
 #ifdef WIN32
-	char *env_locale;
+	char	   *env_locale;
 #endif
 
 #if defined(NOFIXADE) || defined(NOPRINTADE)
@@ -86,7 +87,7 @@ main(int argc, char *argv[])
 	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
 #endif
 
-#if defined(__alpha)	/* no __alpha__ ? */
+#if defined(__alpha)			/* no __alpha__ ? */
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
 				   (unsigned long) NULL) < 0)
 		fprintf(stderr, gettext("%s: setsysinfo failed: %s\n"),
@@ -96,15 +97,15 @@ main(int argc, char *argv[])
 
 #if defined(WIN32)
 	{
-		WSADATA wsaData;
-		int err;
+		WSADATA		wsaData;
+		int			err;
 
 		/* Make output streams unbuffered by default */
-		setvbuf(stdout,NULL,_IONBF,0);
-		setvbuf(stderr,NULL,_IONBF,0);
+		setvbuf(stdout, NULL, _IONBF, 0);
+		setvbuf(stderr, NULL, _IONBF, 0);
 
 		/* Prepare Winsock */
-		err = WSAStartup(MAKEWORD(2,2), &wsaData);
+		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (err != 0)
 		{
 			fprintf(stderr, "%s: WSAStartup failed: %d\n",
@@ -129,15 +130,15 @@ main(int argc, char *argv[])
 
 	/*
 	 * Remember the physical location of the initially given argv[] array
-	 * for possible use by ps display.  On some platforms, the argv[]
-	 * storage must be overwritten in order to set the process title for ps.
-	 * In such cases save_ps_display_args makes and returns a new copy of
-	 * the argv[] array.
+	 * for possible use by ps display.	On some platforms, the argv[]
+	 * storage must be overwritten in order to set the process title for
+	 * ps. In such cases save_ps_display_args makes and returns a new copy
+	 * of the argv[] array.
 	 *
 	 * save_ps_display_args may also move the environment strings to make
-	 * extra room. Therefore this should be done as early as possible during
-	 * startup, to avoid entanglements with code that might save a getenv()
-	 * result pointer.
+	 * extra room. Therefore this should be done as early as possible
+	 * during startup, to avoid entanglements with code that might save a
+	 * getenv() result pointer.
 	 */
 	argv = save_ps_display_args(argc, argv);
 
@@ -145,31 +146,32 @@ main(int argc, char *argv[])
 	 * Set up locale information from environment.	Note that LC_CTYPE and
 	 * LC_COLLATE will be overridden later from pg_control if we are in an
 	 * already-initialized database.  We set them here so that they will
-	 * be available to fill pg_control during initdb.  LC_MESSAGES will get
-	 * set later during GUC option processing, but we set it here to allow
-	 * startup error messages to be localized.
+	 * be available to fill pg_control during initdb.  LC_MESSAGES will
+	 * get set later during GUC option processing, but we set it here to
+	 * allow startup error messages to be localized.
 	 */
 
 	set_pglocale(argv[0], "postgres");
 
 #ifdef WIN32
-	/* 
-	 * Windows uses codepages rather than the environment, so we work around
-	 * that by querying the environment explicitly first for LC_COLLATE
-	 * and LC_CTYPE. We have to do this because initdb passes those values
-	 * in the environment. If there is nothing there we fall back on the
-	 * codepage.
+
+	/*
+	 * Windows uses codepages rather than the environment, so we work
+	 * around that by querying the environment explicitly first for
+	 * LC_COLLATE and LC_CTYPE. We have to do this because initdb passes
+	 * those values in the environment. If there is nothing there we fall
+	 * back on the codepage.
 	 */
 
 	if ((env_locale = getenv("LC_COLLATE")) != NULL)
-	    setlocale(LC_COLLATE,env_locale);
+		setlocale(LC_COLLATE, env_locale);
 	else
-	  setlocale(LC_COLLATE, "");
+		setlocale(LC_COLLATE, "");
 
 	if ((env_locale = getenv("LC_CTYPE")) != NULL)
-	    setlocale(LC_CTYPE,env_locale);
+		setlocale(LC_CTYPE, env_locale);
 	else
-	  setlocale(LC_CTYPE, "");
+		setlocale(LC_CTYPE, "");
 #else
 	setlocale(LC_COLLATE, "");
 	setlocale(LC_CTYPE, "");
@@ -213,7 +215,7 @@ main(int argc, char *argv[])
 					gettext("\"root\" execution of the PostgreSQL server is not permitted.\n"
 							"The server must be started under an unprivileged user ID to prevent\n"
 							"possible system security compromise.  See the documentation for\n"
-							"more information on how to properly start the server.\n"
+				"more information on how to properly start the server.\n"
 							));
 			exit(1);
 		}
@@ -241,14 +243,14 @@ main(int argc, char *argv[])
 	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain,
 	 * SubPostmasterMain, pgstat_main, pgstat_mainChild or BootstrapMain
-	 * depending on the program name (and possibly first argument) we
-	 * were called with. The lack of consistency here is historical.
+	 * depending on the program name (and possibly first argument) we were
+	 * called with. The lack of consistency here is historical.
 	 */
 	len = strlen(argv[0]);
 
 	if ((len >= 10 && strcmp(argv[0] + len - 10, "postmaster") == 0)
 #ifdef WIN32
-		|| (len >= 14 && strcmp(argv[0] + len - 14, "postmaster.exe") == 0)
+	  || (len >= 14 && strcmp(argv[0] + len - 14, "postmaster.exe") == 0)
 #endif
 		)
 	{
@@ -264,9 +266,11 @@ main(int argc, char *argv[])
 		exit(BootstrapMain(argc - 1, argv + 1));
 
 #ifdef EXEC_BACKEND
+
 	/*
-	 * If the first argument is "-forkexec", then invoke SubPostmasterMain. Note
-	 * we remove "-forkexec" from the arguments passed on to SubPostmasterMain.
+	 * If the first argument is "-forkexec", then invoke
+	 * SubPostmasterMain. Note we remove "-forkexec" from the arguments
+	 * passed on to SubPostmasterMain.
 	 */
 	if (argc > 1 && strcmp(argv[1], "-forkexec") == 0)
 	{
@@ -275,16 +279,16 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * If the first argument is "-statBuf", then invoke pgstat_main. 
+	 * If the first argument is "-statBuf", then invoke pgstat_main.
 	 */
 	if (argc > 1 && strcmp(argv[1], "-statBuf") == 0)
 	{
-		pgstat_main(argc , argv);
+		pgstat_main(argc, argv);
 		exit(0);
 	}
 
 	/*
-	 * If the first argument is "-statCol", then invoke pgstat_mainChild. 
+	 * If the first argument is "-statCol", then invoke pgstat_mainChild.
 	 */
 	if (argc > 1 && strcmp(argv[1], "-statCol") == 0)
 	{
