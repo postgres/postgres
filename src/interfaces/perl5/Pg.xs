@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.10 1998/12/13 02:50:20 momjian Exp $
+ * $Id: Pg.xs,v 1.11 1999/02/11 23:25:16 tgl Exp $
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -14,7 +14,6 @@
 #include <fcntl.h>
 
 #include "libpq-fe.h"
-#include "libpq-int.h" /* need this for sizeof(PGresult) */
 
 typedef struct pg_conn *PG_conn;
 typedef struct pg_result *PG_result;
@@ -352,7 +351,7 @@ PQexec(conn, query)
 	CODE:
 		RETVAL = PQexec(conn, query);
 		if (! RETVAL) {
-			RETVAL = (PGresult *)calloc(1, sizeof(PGresult));
+			RETVAL = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 		}
 	OUTPUT:
 		RETVAL
@@ -384,7 +383,7 @@ PQgetResult(conn)
 	CODE:
 		RETVAL = PQgetResult(conn);
 		if (! RETVAL) {
-			RETVAL = (PGresult *)calloc(1, sizeof(PGresult));
+			RETVAL = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 		}
 	OUTPUT:
 		RETVAL
@@ -893,7 +892,7 @@ PQexec(conn, query)
 		if (RETVAL) {
 			RETVAL->result = PQexec((PGconn *)conn, query);
 			if (!RETVAL->result) {
-				RETVAL->result = (PG_result)calloc(1, sizeof(PGresult));
+				RETVAL->result = PQmakeEmptyPGresult((PGconn *)conn, PGRES_FATAL_ERROR);
 			}
 		}
 	OUTPUT:
@@ -928,7 +927,7 @@ PQgetResult(conn)
 		if (RETVAL) {
 			RETVAL->result = PQgetResult((PGconn *)conn);
 			if (!RETVAL->result) {
-				RETVAL->result = (PG_result)calloc(1, sizeof(PGresult));
+				RETVAL->result = PQmakeEmptyPGresult((PGconn *)conn, PGRES_FATAL_ERROR);
 			}
 		}
 	OUTPUT:
@@ -994,9 +993,6 @@ PQmakeEmptyPGresult(conn, status)
 		RETVAL = (PG_results)calloc(1, sizeof(PGresults));
 		if (RETVAL) {
 			RETVAL->result = PQmakeEmptyPGresult((PGconn *)conn, status);
-			if (!RETVAL->result) {
-				RETVAL->result = (PG_result)calloc(1, sizeof(PGresult));
-			}
 		}
 	OUTPUT:
 		RETVAL
