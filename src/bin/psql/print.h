@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.8 2000/04/12 17:16:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.9 2001/05/12 19:44:46 petere Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -64,6 +64,7 @@ typedef struct _printQueryOpt
 	char	   *title;			/* override title */
 	char	  **footers;		/* override footer (default is "(xx
 								 * rows)") */
+	bool		default_footer;	/* print default footer if footers==NULL */
 } printQueryOpt;
 
 /*
@@ -72,7 +73,7 @@ typedef struct _printQueryOpt
  * It calls the printTable above with all the things set straight.
  */
 void
-			printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout);
+printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout);
 
 
 #endif	 /* PRINT_H */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.53 2001/05/12 17:37:15 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.54 2001/05/12 19:44:46 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1796,6 +1796,18 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		}
 	}
 
+	/* disable "(x rows)" footer */
+	else if (strcmp(param, "footer") == 0)
+	{
+		popt->default_footer = !popt->default_footer;
+		if (!quiet)
+		{
+			if (popt->default_footer)
+				puts("Default footer is on.");
+			else
+				puts("Default footer is off.");
+		}
+	}
 
 	else
 	{

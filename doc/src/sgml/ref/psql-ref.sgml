@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.51 2001/05/09 17:29:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.52 2001/05/12 19:44:45 petere Exp $
 Postgres documentation
 -->
 
@@ -894,6 +894,15 @@ lo_import 152801
 	  programs might prefer. To set a tab as field separator, type
 	  <literal>\pset fieldsep '\t'</literal>. The default field separator is
 	  <literal>'|'</literal> (a <quote>pipe</quote> symbol).
+	  </para>
+	  </listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	  <term><literal>footer</literal></term>
+	  <listitem>
+	  <para>
+	  Toggles the display of the default footer <literal>(x rows)</literal>.
 	  </para>
 	  </listitem>
 	  </varlistentry>

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.18 2001/03/22 04:00:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.19 2001/05/12 19:44:46 petere Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -1058,7 +1058,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 
 	if (opt->footers)
 		footers = opt->footers;
-	else if (!opt->topt.expanded)
+	else if (!opt->topt.expanded && opt->default_footer)
 	{
 		footers = calloc(2, sizeof(*footers));
 		if (!footers)
