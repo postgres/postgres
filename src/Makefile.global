@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.83 1997/01/06 10:09:04 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.84 1997/01/08 08:30:21 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -706,7 +706,7 @@ endif
 # This goes here so that customization in Makefile.custom is effective
 ##############################################################################
 
-ifeq($(CUSTOM_INSTALL),)
+ifneq ($(CUSTOM_INSTALL),)
 INSTALL= $(CUSTOM_INSTALL)
 endif
 
