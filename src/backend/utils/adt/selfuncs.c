@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.135 2003/04/15 05:18:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.136 2003/04/16 04:37:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1610,8 +1610,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			 * side? It seems that if we assume equal distribution for the
 			 * other side, we end up with the same answer anyway.
 			 */
-			double		nullfrac1 = stats1->stanullfrac;
-			double		nullfrac2 = stats2->stanullfrac;
+			double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
+			double		nullfrac2 = stats2 ? stats2->stanullfrac : 0.0;
 
 			selec = (1.0 - nullfrac1) * (1.0 - nullfrac2);
 			if (nd1 > nd2)
