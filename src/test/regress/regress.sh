@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.27 1999/05/07 02:31:43 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.28 1999/05/20 16:50:08 wieck Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -60,6 +60,13 @@ fi
 createdb $ENCODINGOPT $HOST regression
 if [ $? -ne 0 ]; then
      echo createdb failed
+     exit 1
+fi
+
+echo "=============== installing PL/pgSQL...                ================="
+createlang $HOST plpgsql regression
+if [ $? -ne 0 ]; then
+     echo createlang failed
      exit 1
 fi
 

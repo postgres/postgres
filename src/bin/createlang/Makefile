@@ -1,29 +1,29 @@
 #-------------------------------------------------------------------------
 #
 # Makefile.inc--
-#    Makefile for bin/initdb
+#    Makefile for bin/createlang
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.13 1999/05/20 16:50:05 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createlang/Attic/Makefile,v 1.1 1999/05/20 16:50:00 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-all: initdb
+all: createlang
 
-initdb: initdb.sh
-	sed -e 's/__MULTIBYTE__/$(MULTIBYTE)/' 			\
-			initdb.sh > initdb
+createlang: createlang.sh
+	sed -e 's/__DLSUFFIX__/$(DLSUFFIX)/'			\
+			createlang.sh > createlang
 
-install: initdb
+install: createlang
 	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
 
 clean:
-	rm -f initdb
+	rm -f createlang
 
 dep depend:

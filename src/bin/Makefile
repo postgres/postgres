@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.17 1998/12/18 17:53:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.18 1999/05/20 16:49:59 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,8 @@ SRCDIR= ..
 include ../Makefile.global
 
 DIRS = pg_id pg_version psql pg_dump pg_passwd cleardbdir createdb \
-	createuser destroydb destroyuser initdb vacuumdb initlocation ipcclean
+	createlang createuser destroydb destroylang destroyuser initdb \
+	vacuumdb initlocation ipcclean
 
 ifdef MULTIBYTE
 DIRS += pg_encoding

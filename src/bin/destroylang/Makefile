@@ -1,29 +1,28 @@
 #-------------------------------------------------------------------------
 #
 # Makefile.inc--
-#    Makefile for bin/initdb
+#    Makefile for bin/destroylang
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.13 1999/05/20 16:50:05 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroylang/Attic/Makefile,v 1.1 1999/05/20 16:50:02 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-all: initdb
+all: destroylang
 
-initdb: initdb.sh
-	sed -e 's/__MULTIBYTE__/$(MULTIBYTE)/' 			\
-			initdb.sh > initdb
+destroylang: destroylang.sh
+	cp destroylang.sh destroylang
 
-install: initdb
+install: destroylang
 	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
 
 clean:
-	rm -f initdb
+	rm -f destroylang
 
 dep depend:
