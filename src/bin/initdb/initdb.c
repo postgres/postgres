@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.69 2004/11/29 01:14:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.70 2004/11/29 03:05:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,7 @@ bool		found_existing_pgdata = false;
 char		infoversion[100];
 bool		caught_signal = false;
 bool		output_failed = false;
+int			output_errno = 0;
 
 /* defaults */
 int			n_connections = 10;
@@ -152,6 +153,7 @@ static char **filter_lines_with_token(char **lines, char *token);
 #endif
 static char **readfile(char *path);
 static void writefile(char *path, char **lines);
+static FILE *popen_check(const char *command, const char *mode);
 static int	mkdir_p(char *path, mode_t omode);
 static void exit_nicely(void);
 static char *get_id(void);
@@ -190,28 +192,37 @@ static void usage(const char *progname);
 /*
  * macros for running pipes to postgres
  */
-#define PG_CMD_DECL		char cmd[MAXPGPATH]; char ** line ; FILE * pg
-#define PG_CMD_DECL_NOLINE		   char cmd[MAXPGPATH]; FILE * pg
+#define PG_CMD_DECL		char cmd[MAXPGPATH]; FILE *cmdfd
 
 #define PG_CMD_OPEN \
 do { \
-	fflush(stdout); \
-	fflush(stderr); \
-	pg = popen(cmd, "w"); \
-	if (pg == NULL) \
-		exit_nicely(); \
+	cmdfd = popen_check(cmd, "w"); \
+	if (cmdfd == NULL) \
+		exit_nicely(); /* message already printed by popen_check */ \
 } while (0)
 
 #define PG_CMD_CLOSE \
 do { \
-	if (pclose_check(pg)) \
-		exit_nicely(); \
+	if (pclose_check(cmdfd)) \
+		exit_nicely(); /* message already printed by pclose_check */ \
 } while (0)
 
-#define PG_CMD_PUTLINE \
+#define PG_CMD_PUTS(line) \
 do { \
-	if (fputs(*line, pg) < 0 || fflush(pg) < 0) \
-		output_failed = true; \
+	if (fputs(line, cmdfd) < 0 || fflush(cmdfd) < 0) \
+		output_failed = true, output_errno = errno; \
+} while (0)
+
+#define PG_CMD_PRINTF1(fmt, arg1) \
+do { \
+	if (fprintf(cmdfd, fmt, arg1) < 0 || fflush(cmdfd) < 0) \
+		output_failed = true, output_errno = errno; \
+} while (0)
+
+#define PG_CMD_PRINTF2(fmt, arg1, arg2) \
+do { \
+	if (fprintf(cmdfd, fmt, arg1, arg2) < 0 || fflush(cmdfd) < 0) \
+		output_failed = true, output_errno = errno; \
 } while (0)
 
 #ifndef WIN32
@@ -428,11 +439,37 @@ writefile(char *path, char **lines)
 	for (line = lines; *line != NULL; line++)
 	{
 		if (fputs(*line, out_file) < 0)
+		{
+			fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
+					progname, path, strerror(errno));
 			exit_nicely();
+		}
 		free(*line);
 	}
 	if (fclose(out_file))
+	{
+		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
+				progname, path, strerror(errno));
 		exit_nicely();
+	}
+}
+
+/*
+ * Open a subcommand with suitable error messaging
+ */
+static FILE *
+popen_check(const char *command, const char *mode)
+{
+	FILE   *cmdfd;
+
+	fflush(stdout);
+	fflush(stderr);
+	errno = 0;
+	cmdfd = popen(command, mode);
+	if (cmdfd == NULL)
+		fprintf(stderr, _("%s: could not execute command \"%s\": %s\n"),
+				progname, command, strerror(errno));
+	return cmdfd;
 }
 
 /* source stolen from FreeBSD /src/bin/mkdir/mkdir.c and adapted */
@@ -549,8 +586,6 @@ mkdir_p(char *path, mode_t omode)
 static void
 exit_nicely(void)
 {
-	fprintf(stderr, _("%s: failed\n"), progname);
-
 	if (!noclean)
 	{
 		if (made_new_pgdata)
@@ -558,7 +593,8 @@ exit_nicely(void)
 			fprintf(stderr, _("%s: removing data directory \"%s\"\n"),
 					progname, pg_data);
 			if (!rmtree(pg_data, true))
-				fprintf(stderr, _("%s: failed\n"), progname);
+				fprintf(stderr, _("%s: failed to remove data directory\n"),
+						progname);
 		}
 		else if (found_existing_pgdata)
 		{
@@ -566,7 +602,8 @@ exit_nicely(void)
 					_("%s: removing contents of data directory \"%s\"\n"),
 					progname, pg_data);
 			if (!rmtree(pg_data, false))
-				fprintf(stderr, _("%s: failed\n"), progname);
+				fprintf(stderr, _("%s: failed to remove contents of data directory\n"),
+						progname);
 		}
 		/* otherwise died during startup, do nothing! */
 	}
@@ -933,7 +970,13 @@ mkdatadir(const char *subdir)
 	else
 		strcpy(path, pg_data);
 
-	return (mkdir_p(path, 0700) == 0);
+	if (mkdir_p(path, 0700) == 0)
+		return true;
+
+	fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+			progname, path, strerror(errno));
+
+	return false;
 }
 
 
@@ -964,7 +1007,6 @@ check_input(char *path)
 				progname, path);
 		exit(1);
 	}
-
 }
 
 /*
@@ -989,10 +1031,18 @@ set_short_version(char *short_version, char *extrapath)
 	}
 	version_file = fopen(path, PG_BINARY_W);
 	if (version_file == NULL)
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
+				progname, path, strerror(errno));
 		exit_nicely();
-	fprintf(version_file, "%s\n", short_version);
-	if (fclose(version_file))
+	}
+	if (fprintf(version_file, "%s\n", short_version) < 0 ||
+		fclose(version_file))
+	{
+		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
+				progname, path, strerror(errno));
 		exit_nicely();
+	}
 }
 
 /*
@@ -1007,8 +1057,18 @@ set_null_conf(void)
 	path = xmalloc(strlen(pg_data) + 17);
 	sprintf(path, "%s/postgresql.conf", pg_data);
 	conf_file = fopen(path, PG_BINARY_W);
-	if (conf_file == NULL || fclose(conf_file))
+	if (conf_file == NULL)
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
+				progname, path, strerror(errno));
 		exit_nicely();
+	}
+	if (fclose(conf_file))
+	{
+		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
+				progname, path, strerror(errno));
+		exit_nicely();
+	}
 }
 
 /*
@@ -1182,11 +1242,11 @@ setup_config(void)
 static void
 bootstrap_template1(char *short_version)
 {
+	PG_CMD_DECL;
+	char	  **line;
 	char	   *talkargs = "";
 	char	  **bki_lines;
 	char		headerline[MAXPGPATH];
-
-	PG_CMD_DECL;
 
 	printf(_("creating template1 database in %s/base/1 ... "), pg_data);
 	fflush(stdout);
@@ -1209,7 +1269,6 @@ bootstrap_template1(char *short_version)
 			   "using the option -L.\n"),
 				progname, bki_file, PG_VERSION);
 		exit_nicely();
-
 	}
 
 	bki_lines = replace_token(bki_lines, "POSTGRES", effective_user);
@@ -1241,7 +1300,7 @@ bootstrap_template1(char *short_version)
 
 	for (line = bki_lines; *line != NULL; line++)
 	{
-		PG_CMD_PUTLINE;
+		PG_CMD_PUTS(*line);
 		free(*line);
 	}
 
@@ -1258,7 +1317,9 @@ bootstrap_template1(char *short_version)
 static void
 setup_shadow(void)
 {
-	char	   *pg_shadow_setup[] = {
+	PG_CMD_DECL;
+	char	  **line;
+	static char *pg_shadow_setup[] = {
 		/*
 		 * Create a trigger so that direct updates to pg_shadow will be
 		 * written to the flat password/group files pg_pwd and pg_group
@@ -1278,8 +1339,6 @@ setup_shadow(void)
 		NULL
 	};
 
-	PG_CMD_DECL;
-
 	fputs(_("initializing pg_shadow ... "), stdout);
 	fflush(stdout);
 
@@ -1291,7 +1350,7 @@ setup_shadow(void)
 	PG_CMD_OPEN;
 
 	for (line = pg_shadow_setup; *line != NULL; line++)
-		PG_CMD_PUTLINE;
+		PG_CMD_PUTS(*line);
 
 	PG_CMD_CLOSE;
 
@@ -1304,7 +1363,7 @@ setup_shadow(void)
 static void
 get_set_pwd(void)
 {
-	PG_CMD_DECL_NOLINE;
+	PG_CMD_DECL;
 
 	char	   *pwd1,
 			   *pwd2;
@@ -1370,15 +1429,12 @@ get_set_pwd(void)
 
 	PG_CMD_OPEN;
 
-	if (fprintf(pg,
-	"ALTER USER \"%s\" WITH PASSWORD '%s';\n", effective_user, pwd1) < 0)
-	{
-		/* write failure */
-		exit_nicely();
-	}
-	fflush(pg);
+	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD '%s';\n",
+				   effective_user, pwd1);
 
 	PG_CMD_CLOSE;
+
+	check_ok();
 
 	snprintf(pwdpath, sizeof(pwdpath), "%s/global/pg_pwd", pg_data);
 	if (stat(pwdpath, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
@@ -1389,8 +1445,6 @@ get_set_pwd(void)
 				progname);
 		exit_nicely();
 	}
-
-	check_ok();
 }
 
 /*
@@ -1399,7 +1453,9 @@ get_set_pwd(void)
 static void
 unlimit_systables(void)
 {
-	char	   *systables_setup[] = {
+	PG_CMD_DECL;
+	char	  **line;
+	static char *systables_setup[] = {
 		"ALTER TABLE pg_attrdef CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_constraint CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_database CREATE TOAST TABLE;\n",
@@ -1412,8 +1468,6 @@ unlimit_systables(void)
 		NULL
 	};
 
-	PG_CMD_DECL;
-
 	fputs(_("enabling unlimited row size for system tables ... "), stdout);
 	fflush(stdout);
 
@@ -1425,7 +1479,7 @@ unlimit_systables(void)
 	PG_CMD_OPEN;
 
 	for (line = systables_setup; *line != NULL; line++)
-		PG_CMD_PUTLINE;
+		PG_CMD_PUTS(*line);
 
 	PG_CMD_CLOSE;
 
@@ -1438,7 +1492,9 @@ unlimit_systables(void)
 static void
 setup_depend(void)
 {
-	char	   *pg_depend_setup[] = {
+	PG_CMD_DECL;
+	char	  **line;
+	static char *pg_depend_setup[] = {
 		/*
 		 * Make PIN entries in pg_depend for all objects made so far in
 		 * the tables that the dependency code handles.  This is overkill
@@ -1485,8 +1541,6 @@ setup_depend(void)
 		NULL
 	};
 
-	PG_CMD_DECL;
-
 	fputs(_("initializing pg_depend ... "), stdout);
 	fflush(stdout);
 
@@ -1498,7 +1552,7 @@ setup_depend(void)
 	PG_CMD_OPEN;
 
 	for (line = pg_depend_setup; *line != NULL; line++)
-		PG_CMD_PUTLINE;
+		PG_CMD_PUTS(*line);
 
 	PG_CMD_CLOSE;
 
@@ -1512,7 +1566,7 @@ static void
 setup_sysviews(void)
 {
 	PG_CMD_DECL;
-
+	char	  **line;
 	char	  **sysviews_setup;
 
 	fputs(_("creating system views ... "), stdout);
@@ -1532,7 +1586,7 @@ setup_sysviews(void)
 
 	for (line = sysviews_setup; *line != NULL; line++)
 	{
-		PG_CMD_PUTLINE;
+		PG_CMD_PUTS(*line);
 		free(*line);
 	}
 
@@ -1549,8 +1603,7 @@ setup_sysviews(void)
 static void
 setup_description(void)
 {
-	PG_CMD_DECL_NOLINE;
-	int			fres;
+	PG_CMD_DECL;
 
 	fputs(_("loading pg_description ... "), stdout);
 	fflush(stdout);
@@ -1562,28 +1615,19 @@ setup_description(void)
 
 	PG_CMD_OPEN;
 
-	fres = fprintf(pg,
-				   "CREATE TEMP TABLE tmp_pg_description ( "
-				   "	objoid oid, "
-				   "	classname name, "
-				   "	objsubid int4, "
-				   "	description text) WITHOUT OIDS;\n");
-	if (fres < 0)
-		exit_nicely();
+	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_description ( "
+				"	objoid oid, "
+				"	classname name, "
+				"	objsubid int4, "
+				"	description text) WITHOUT OIDS;\n");
 
-	fres = fprintf(pg,
-				   "COPY tmp_pg_description FROM '%s';\n",
+	PG_CMD_PRINTF1("COPY tmp_pg_description FROM '%s';\n",
 				   desc_file);
-	if (fres < 0)
-		exit_nicely();
 
-	fres = fprintf(pg,
-				   "INSERT INTO pg_description "
-				   " SELECT t.objoid, c.oid, t.objsubid, t.description "
-				   "  FROM tmp_pg_description t, pg_class c "
-				   "    WHERE c.relname = t.classname;\n");
-	if (fres < 0)
-		exit_nicely();
+	PG_CMD_PUTS("INSERT INTO pg_description "
+				" SELECT t.objoid, c.oid, t.objsubid, t.description "
+				"  FROM tmp_pg_description t, pg_class c "
+				"    WHERE c.relname = t.classname;\n");
 
 	PG_CMD_CLOSE;
 
@@ -1597,7 +1641,7 @@ static void
 setup_conversion(void)
 {
 	PG_CMD_DECL;
-
+	char	  **line;
 	char	  **conv_lines;
 
 	fputs(_("creating conversions ... "), stdout);
@@ -1614,8 +1658,7 @@ setup_conversion(void)
 	for (line = conv_lines; *line != NULL; line++)
 	{
 		if (strstr(*line, "DROP CONVERSION") != *line)
-			PG_CMD_PUTLINE;
-
+			PG_CMD_PUTS(*line);
 		free(*line);
 	}
 
@@ -1637,7 +1680,10 @@ setup_conversion(void)
 static void
 setup_privileges(void)
 {
-	char	   *privileges_setup[] = {
+	PG_CMD_DECL;
+	char	  **line;
+	char	  **priv_lines;
+	static char *privileges_setup[] = {
 		"UPDATE pg_class "
 		"  SET relacl = '{\"=r/\\\\\"$POSTGRES_SUPERUSERNAME\\\\\"\"}' "
 		"  WHERE relkind IN ('r', 'v', 'S') AND relacl IS NULL;\n",
@@ -1652,10 +1698,6 @@ setup_privileges(void)
 		NULL
 	};
 
-	PG_CMD_DECL;
-
-	char	  **priv_lines;
-
 	fputs(_("setting privileges on built-in objects ... "), stdout);
 	fflush(stdout);
 
@@ -1669,7 +1711,7 @@ setup_privileges(void)
 	priv_lines = replace_token(privileges_setup,
 							   "$POSTGRES_SUPERUSERNAME", effective_user);
 	for (line = priv_lines; *line != NULL; line++)
-		PG_CMD_PUTLINE;
+		PG_CMD_PUTS(*line);
 
 	PG_CMD_CLOSE;
 
@@ -1711,8 +1753,8 @@ static void
 setup_schema(void)
 {
 	PG_CMD_DECL;
+	char	  **line;
 	char	  **lines;
-	int			fres;
 
 	fputs(_("creating information schema ... "), stdout);
 	fflush(stdout);
@@ -1732,7 +1774,7 @@ setup_schema(void)
 
 	for (line = lines; *line != NULL; line++)
 	{
-		PG_CMD_PUTLINE;
+		PG_CMD_PUTS(*line);
 		free(*line);
 	}
 
@@ -1747,22 +1789,16 @@ setup_schema(void)
 
 	PG_CMD_OPEN;
 
-	fres = fprintf(pg,
-				   "UPDATE information_schema.sql_implementation_info "
+	PG_CMD_PRINTF1("UPDATE information_schema.sql_implementation_info "
 				   "  SET character_value = '%s' "
 				   "  WHERE implementation_info_name = 'DBMS VERSION';\n",
 				   infoversion);
-	if (fres < 0)
-		exit_nicely();
 
-	fres = fprintf(pg,
-				   "COPY information_schema.sql_features "
+	PG_CMD_PRINTF1("COPY information_schema.sql_features "
 				   "  (feature_id, feature_name, sub_feature_id, "
 				   "  sub_feature_name, is_supported, comments) "
 				   " FROM '%s';\n",
 				   features_file);
-	if (fres < 0)
-		exit_nicely();
 
 	PG_CMD_CLOSE;
 
@@ -1775,7 +1811,7 @@ setup_schema(void)
 static void
 vacuum_db(void)
 {
-	PG_CMD_DECL_NOLINE;
+	PG_CMD_DECL;
 
 	fputs(_("vacuuming database template1 ... "), stdout);
 	fflush(stdout);
@@ -1787,9 +1823,7 @@ vacuum_db(void)
 
 	PG_CMD_OPEN;
 
-	if (fputs("ANALYZE;\nVACUUM FULL FREEZE;\n", pg) < 0)
-		exit_nicely();
-	fflush(pg);
+	PG_CMD_PUTS("ANALYZE;\nVACUUM FULL;\nVACUUM FREEZE;\n");
 
 	PG_CMD_CLOSE;
 
@@ -1802,7 +1836,9 @@ vacuum_db(void)
 static void
 make_template0(void)
 {
-	char	   *template0_setup[] = {
+	PG_CMD_DECL;
+	char	  **line;
+	static char *template0_setup[] = {
 		"CREATE DATABASE template0;\n",
 		"UPDATE pg_database SET "
 		"	datistemplate = 't', "
@@ -1831,8 +1867,6 @@ make_template0(void)
 		NULL
 	};
 
-	PG_CMD_DECL;
-
 	fputs(_("copying template1 to template0 ... "), stdout);
 	fflush(stdout);
 
@@ -1844,7 +1878,7 @@ make_template0(void)
 	PG_CMD_OPEN;
 
 	for (line = template0_setup; *line; line++)
-		PG_CMD_PUTLINE;
+		PG_CMD_PUTS(*line);
 
 	PG_CMD_CLOSE;
 
@@ -1891,17 +1925,21 @@ check_ok(void)
 	if (caught_signal)
 	{
 		printf(_("caught signal\n"));
+		fflush(stdout);
 		exit_nicely();
 	}
 	else if (output_failed)
 	{
-		printf(_("could not write to child process\n"));
+		printf(_("could not write to child process: %s\n"),
+			   strerror(output_errno));
+		fflush(stdout);
 		exit_nicely();
 	}
 	else
 	{
 		/* all seems well */
 		printf(_("ok\n"));
+		fflush(stdout);
 	}
 }
 
@@ -2174,6 +2212,7 @@ main(int argc, char *argv[])
 				show_setting = true;
 				break;
 			default:
+				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 						progname);
 				exit(1);
@@ -2227,7 +2266,8 @@ main(int argc, char *argv[])
 		 * local connections and are rejected in hba.c
 		 */
 	{
-		fprintf(stderr, _("%s: unrecognized authentication method \"%s\"\n"), progname, authmethod);
+		fprintf(stderr, _("%s: unrecognized authentication method \"%s\"\n"),
+				progname, authmethod);
 		exit(1);
 	}
 
