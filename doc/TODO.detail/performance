@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.15 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.16 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.15 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.16 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -1006,7 +1006,7 @@ From pgsql-general-owner+M2497@hub.org Fri Jun 16 18:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04165
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:31:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.15 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.16 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5GLDaM14477;
 	Fri, 16 Jun 2000 17:13:36 -0400 (EDT)
@@ -3161,4 +3161,106 @@ cjs
 Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
     Don't you know, in this new Dark Age, we're all light.  --XTC
 
+
+From kaf@nwlink.com Fri Apr 26 14:22:39 2002
+Return-path: <kaf@nwlink.com>
+Received: from doppelbock.patentinvestor.com (ip146.usw5.rb1.bel.nwlink.com [209.20.249.146])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3QIMc400783
+	for <pgman@candle.pha.pa.us>; Fri, 26 Apr 2002 14:22:38 -0400 (EDT)
+Received: (from kaf@localhost)
+	by doppelbock.patentinvestor.com (8.11.6/8.11.2) id g3QII0l16824;
+	Fri, 26 Apr 2002 11:18:00 -0700
+From: Kyle <kaf@nwlink.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15561.39384.296503.501888@doppelbock.patentinvestor.com>
+Date: Fri, 26 Apr 2002 11:18:00 -0700
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead
+In-Reply-To: <200204261444.g3QEiFh11090@candle.pha.pa.us>
+References: <15561.26116.817541.950416@doppelbock.patentinvestor.com>
+	<200204261444.g3QEiFh11090@candle.pha.pa.us>
+X-Mailer: VM 6.95 under 21.1 (patch 14) "Cuyahoga Valley" XEmacs Lucid
+Status: ORr
+
+Hey Bruce,
+
+I'll forward this to the list if you think they'd benefit from it.
+I'm not sure it says anything about read-ahead, I think this is more a
+kernel caching issue.  But I've been known to be wrong in the past.
+Anyway...
+
+
+the test:
+
+foreach i (5 15 20 25 30 )
+  echo $i
+  time dd bs=8k if=big_file1 of=/dev/null &
+  sleep $i
+  time dd bs=8k if=big_file1 of=/dev/null &
+  wait
+end
+
+I did a couple more runs in the low range since their is a drastic
+jump in elapsed (wall clock) time after doing a 6 second sleep:
+
+            first process                second process
+sleep    user    kernel   elapsed     user    kernel   elapsed
+0 sec    0.200   7.980    1:26.57     0.240   7.720    1:26.56
+3 sec    0.260   7.600    1:25.71     0.260   8.100    1:22.60
+5 sec    0.160   7.890    1:26.04     0.220   8.180    1:21.04
+6 sec    0.220   8.070    1:19.59     0.230   7.620    1:25.69
+7 sec    0.210   9.270    1:57.92     0.100   8.750    1:50.76
+8 sec    0.240   8.060    4:47.47     0.300   7.800    4:40.40
+15 sec   0.200   8.500    4:51.11     0.180   7.280    4:44.36
+20 sec   0.160   8.040    4:40.72     0.240   7.790    4:37.24
+25 sec   0.170   8.150    4:37.58     0.140   8.200    4:33.08
+30 sec   0.200   7.390    4:37.01     0.230   8.220    4:31.83
+
+
+
+with a sleep of > 6 seconds, either the second process isn't getting
+cached data or readahead is being turned off.  I'd guess the former, I
+don't see why read-ahead would be turned off since they're both doing
+sequential operations.
+
+Although with 512mb of memory and the disk reading at about 22 mb/sec,
+maybe we're not hitting the cache.  I'd guess at least ~400 megs of
+kernel cache is being used for buffering this 2 gig file.  free(1)
+reports:
+
+% free
+             total       used       free     shared    buffers     cached
+Mem:        512924     508576       4348          0       2640     477960
+-/+ buffers/cache:      27976     484948
+Swap:       527152      15864     511288
+
+so shouldn't we be getting cached data even with a sleep of up to
+about (400/22) 18 seconds...?  Maybe I'm just in the dark on what's
+really happening.  I should point out that this is linux 2.4.18.
+
+
+
+
+Bruce Momjian wrote:
+> 
+> I am trying to illustrate how kernel read-ahead could be turned off in
+> certain cases.
+> 
+> ---------------------------------------------------------------------------
+> 
+> Kyle wrote:
+> > What are you trying to test, the kernel's cache vs disk speed?
+> > 
+> > 
+> > Bruce Momjian wrote:
+> > > 
+> > > Nice test.  Would you test simultaneous 'dd' on the same file, perhaps
+> > > with a slight delay between to the two so they don't read each other's
+> > > blocks?
+> > > 
+> > > seek() in the file will turn off read-ahead in most OS's.  I am not
+> > > saying this is a major issue for PostgreSQL but the numbers would be
+> > > interesting.
 
