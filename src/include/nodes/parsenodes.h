@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.64 1998/12/21 12:50:29 wieck Exp $
+ * $Id: parsenodes.h,v 1.65 1999/01/05 15:45:49 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -653,6 +653,7 @@ typedef struct SelectStmt
 	bool		unionall;		/* union without unique sort */
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
+	List	   *forUpdate;		/* FOR UPDATE clause */
 } SelectStmt;
 
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.41 1998/12/30 19:56:28 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.42 1999/01/05 15:46:25 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -174,7 +174,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <boolean>	TriggerForOpt, TriggerForType
 
-%type <list>	union_clause, select_list
+%type <list>	union_clause, select_list, for_update_clause
 %type <list>	join_list
 %type <joinusing>
 				join_using
@@ -2215,6 +2215,8 @@ ViewStmt:  CREATE VIEW name AS SelectStmt
 						elog(ERROR,"Order by and Distinct on views is not implemented.");
 					if (((SelectStmt *)n->query)->unionClause != NULL)
 						elog(ERROR,"Views on unions not implemented.");
+					if (((SelectStmt *)n->query)->forUpdate != NULL)
+						elog(ERROR, "SELECT FOR UPDATE is not allowed in CREATE VIEW");
 					$$ = (Node *)n;
 				}
 		;
@@ -2677,7 +2679,7 @@ opt_of:  OF columnList
 SelectStmt:  SELECT opt_unique res_target_list2
 			 result from_clause where_clause
 			 group_clause having_clause
-			 union_clause sort_clause
+			 union_clause sort_clause for_update_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = $2;
@@ -2689,7 +2691,20 @@ SelectStmt:  SELECT opt_unique res_target_list2
 					n->havingClause = $8;
 					n->unionClause = $9;
 					n->sortClause = $10;
-					$$ = (Node *)n;
+					n->forUpdate = $11;
+					if (n->forUpdate != NULL)
+					{
+						if (n->unionClause != NULL)
+							elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION clause");
+						if (n->unique != NULL)
+							elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
+						if (n->groupClause != NULL)
+							elog(ERROR, "SELECT FOR UPDATE is not allowed with GROUP BY clause");
+						if (n->havingClause != NULL)
+							elog(ERROR, "SELECT FOR UPDATE is not allowed with HAVING clause");
+					}
+					else
+						$$ = (Node *)n;
 				}
 		;
 
@@ -2818,6 +2833,20 @@ having_clause:  HAVING a_expr
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
+for_update_clause:
+			FOR UPDATE
+			{
+				$$ = lcons(NULL, NULL);
+			}
+		|	FOR UPDATE OF va_list
+			{
+				$$ = $4;
+			}
+		| /* EMPTY */
+			{
+				$$ = NULL;
+			}
+		;
 
 /*****************************************************************************
  *
