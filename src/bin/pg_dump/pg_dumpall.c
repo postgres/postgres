@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.42 2004/06/18 06:14:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.43 2004/06/21 13:36:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -426,14 +426,14 @@ dumpTablespaces(PGconn *conn)
 	printf("--\n-- Tablespaces\n--\n\n");
 
 	/*
-	 * Get all tablespaces except for the system default and global
-	 * tablespaces
+	 * Get all tablespaces except built-in ones (which we assume are named
+	 * pg_xxx)
 	 */
 	res = executeQuery(conn, "SELECT spcname, "
 					   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 					   "spclocation, spcacl "
 					   "FROM pg_catalog.pg_tablespace "
-					   "WHERE spcname NOT IN ('default', 'global')");
+					   "WHERE spcname NOT LIKE 'pg\\_%'");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -511,7 +511,7 @@ dumpCreateDB(PGconn *conn)
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "datistemplate, datacl, "
-						   "'default' AS dattablespace "
+						   "'pg_default' AS dattablespace "
 		"FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
 	else if (server_version >= 70100)
@@ -522,7 +522,7 @@ dumpCreateDB(PGconn *conn)
 						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "datistemplate, '' as datacl, "
-						   "'default' AS dattablespace "
+						   "'pg_default' AS dattablespace "
 						   "FROM pg_database d "
 						   "WHERE datallowconn ORDER BY 1");
 	else
@@ -537,7 +537,7 @@ dumpCreateDB(PGconn *conn)
 						   "pg_encoding_to_char(d.encoding), "
 						   "'f' as datistemplate, "
 						   "'' as datacl, "
-						   "'default' AS dattablespace "
+						   "'pg_default' AS dattablespace "
 						   "FROM pg_database d "
 						   "ORDER BY 1");
 	}
@@ -576,7 +576,7 @@ dumpCreateDB(PGconn *conn)
 		appendStringLiteral(buf, dbencoding, true);
 
 		/* Output tablespace if it isn't default */
-		if (strcmp(dbtablespace, "default") != 0)
+		if (strcmp(dbtablespace, "pg_default") != 0)
 			appendPQExpBuffer(buf, " TABLESPACE = %s",
 							  fmtId(dbtablespace));
 
