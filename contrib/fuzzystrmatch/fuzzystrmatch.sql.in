@@ -8,4 +8,4 @@ CREATE FUNCTION soundex(text) RETURNS text
   AS 'MODULE_PATHNAME', 'soundex' LANGUAGE 'c' with (iscachable, isstrict);
 
 CREATE FUNCTION text_soundex(text) RETURNS text
-  AS 'MODULE_PATHNAME', 'soundex' LANGUAGE 'c';
+  AS 'MODULE_PATHNAME', 'soundex' LANGUAGE 'c' with (iscachable, isstrict);
