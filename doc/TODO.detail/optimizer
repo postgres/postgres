@@ -2,7 +2,7 @@ From owner-pgsql-hackers@hub.org Mon Mar 22 18:43:41 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA23978
 	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 18:43:39 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id SAA06472 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 18:36:44 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id SAA06472 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 18:36:44 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id SAA92604;
 	Mon, 22 Mar 1999 18:34:23 -0500 (EST)
@@ -228,7 +228,7 @@ From owner-pgsql-hackers@hub.org Mon Mar 22 20:31:11 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA00802
 	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 20:31:09 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id UAA13231 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 20:15:20 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id UAA13231 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 20:15:20 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id UAA01981;
 	Mon, 22 Mar 1999 20:14:04 -0500 (EST)
@@ -335,7 +335,7 @@ From owner-pgsql-hackers@hub.org Mon Mar 22 23:31:00 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA03384
 	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 23:30:58 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id XAA25586 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 23:18:25 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id XAA25586 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 23:18:25 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id XAA17955;
 	Mon, 22 Mar 1999 23:17:24 -0500 (EST)
@@ -725,7 +725,7 @@ From owner-pgsql-hackers@hub.org Tue Mar 23 12:31:05 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17491
 	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:04 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id MAA08839 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:08:14 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id MAA08839 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:08:14 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id MAA93649;
 	Tue, 23 Mar 1999 12:04:57 -0500 (EST)
@@ -881,7 +881,7 @@ From tgl@sss.pgh.pa.us Tue Mar 23 12:31:02 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17484
 	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:01 -0500 (EST)
-Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id MAA09042 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:10:55 -0500 (EST)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id MAA09042 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:10:55 -0500 (EST)
 Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
 	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id MAA24474;
 	Tue, 23 Mar 1999 12:09:52 -0500 (EST)
@@ -927,7 +927,7 @@ From owner-pgsql-hackers@hub.org Tue Mar 23 12:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17488
 	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:02 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id MAA09987 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:21:34 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id MAA09987 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:21:34 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id MAA95155;
 	Tue, 23 Mar 1999 12:18:33 -0500 (EST)

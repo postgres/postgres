@@ -2,7 +2,7 @@ From selkovjr@mcs.anl.gov Sat Jul 25 05:31:05 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id FAA16564
 	for <maillist@candle.pha.pa.us>; Sat, 25 Jul 1998 05:31:03 -0400 (EDT)
-Received: from antares.mcs.anl.gov (mcs.anl.gov [140.221.9.6]) by renoir.op.net (o1/$Revision: 1.11 $) with SMTP id FAA01775 for <maillist@candle.pha.pa.us>; Sat, 25 Jul 1998 05:28:22 -0400 (EDT)
+Received: from antares.mcs.anl.gov (mcs.anl.gov [140.221.9.6]) by renoir.op.net (o1/$ Revision: 1.18 $) with SMTP id FAA01775 for <maillist@candle.pha.pa.us>; Sat, 25 Jul 1998 05:28:22 -0400 (EDT)
 Received: from mcs.anl.gov (wit.mcs.anl.gov [140.221.5.148]) by antares.mcs.anl.gov (8.6.10/8.6.10)  with ESMTP
 	id EAA28698 for <maillist@candle.pha.pa.us>; Sat, 25 Jul 1998 04:27:05 -0500
 Sender: selkovjr@mcs.anl.gov

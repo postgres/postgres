@@ -2,7 +2,7 @@ From owner-pgsql-hackers@hub.org Tue Jun  1 22:31:18 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA09988
 	for <maillist@candle.pha.pa.us>; Tue, 1 Jun 1999 22:31:17 -0400 (EDT)
-Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id WAA18944 for <maillist@candle.pha.pa.us>; Tue, 1 Jun 1999 22:08:09 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id WAA18944 for <maillist@candle.pha.pa.us>; Tue, 1 Jun 1999 22:08:09 -0400 (EDT)
 Received: from hub.org (hub.org [209.167.229.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id WAA75604;
 	Tue, 1 Jun 1999 22:01:31 -0400 (EDT)
@@ -68,7 +68,7 @@ From owner-pgsql-general@hub.org Fri Jul  9 04:01:16 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id EAA22565
 	for <maillist@candle.pha.pa.us>; Fri, 9 Jul 1999 04:01:15 -0400 (EDT)
-Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id DAA10238 for <maillist@candle.pha.pa.us>; Fri, 9 Jul 1999 03:56:46 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id DAA10238 for <maillist@candle.pha.pa.us>; Fri, 9 Jul 1999 03:56:46 -0400 (EDT)
 Received: from hub.org (hub.org [209.167.229.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id DAA79895;
 	Fri, 9 Jul 1999 03:53:13 -0400 (EDT)

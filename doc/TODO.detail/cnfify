@@ -364,7 +364,7 @@ From andreas.zeugswetter@telecom.at Mon Aug 31 06:31:13 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id GAA14231
 	for <maillist@candle.pha.pa.us>; Mon, 31 Aug 1998 06:31:12 -0400 (EDT)
-Received: from gandalf.telecom.at (gandalf.telecom.at [194.118.26.84]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id GAA21099 for <maillist@candle.pha.pa.us>; Mon, 31 Aug 1998 06:23:41 -0400 (EDT)
+Received: from gandalf.telecom.at (gandalf.telecom.at [194.118.26.84]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id GAA21099 for <maillist@candle.pha.pa.us>; Mon, 31 Aug 1998 06:23:41 -0400 (EDT)
 Received: from zeugswettera.user.lan.at (zeugswettera.user.lan.at [10.4.123.227]) by gandalf.telecom.at (A.B.C.Delta4/8.8.8) with SMTP id MAA38132; Mon, 31 Aug 1998 12:22:07 +0200
 Received: by zeugswettera.user.lan.at with Microsoft Mail
 	id <01BDD4DA.C7F5B690@zeugswettera.user.lan.at>; Mon, 31 Aug 1998 12:27:55 +0200
@@ -864,7 +864,7 @@ From bga@mug.org Tue Sep  8 03:39:37 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA06237
 	for <maillist@candle.pha.pa.us>; Tue, 8 Sep 1998 03:39:36 -0400 (EDT)
-Received: from bgalli.mug.org (bajor.mug.org [207.158.132.1]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id DAA03648 for <maillist@candle.pha.pa.us>; Tue, 8 Sep 1998 03:38:52 -0400 (EDT)
+Received: from bgalli.mug.org (bajor.mug.org [207.158.132.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id DAA03648 for <maillist@candle.pha.pa.us>; Tue, 8 Sep 1998 03:38:52 -0400 (EDT)
 Received: from localhost (bga@localhost) by bgalli.mug.org (8.8.7/SCO5) with SMTP id DAA02895 for <maillist@candle.pha.pa.us>; Tue, 8 Sep 1998 03:31:26 -0400 (EDT)
 Message-Id: <199809080731.DAA02895@bgalli.mug.org>
 X-Authentication-Warning: bgalli.mug.org: bga@localhost didn't use HELO protocol
@@ -930,7 +930,7 @@ From owner-pgsql-general@hub.org Thu Oct  1 14:00:57 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA12443
 	for <maillist@candle.pha.pa.us>; Thu, 1 Oct 1998 14:00:56 -0400 (EDT)
-Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id NAA07930 for <maillist@candle.pha.pa.us>; Thu, 1 Oct 1998 13:57:47 -0400 (EDT)
+Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id NAA07930 for <maillist@candle.pha.pa.us>; Thu, 1 Oct 1998 13:57:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.8.8/8.8.8) with SMTP id NAA26913;
 	Thu, 1 Oct 1998 13:56:29 -0400 (EDT)
@@ -1189,7 +1189,7 @@ From owner-pgsql-hackers@hub.org Fri Oct  2 19:28:09 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA23341
 	for <maillist@candle.pha.pa.us>; Fri, 2 Oct 1998 19:28:08 -0400 (EDT)
-Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id SAA18003 for <maillist@candle.pha.pa.us>; Fri, 2 Oct 1998 18:21:37 -0400 (EDT)
+Received: from hub.org (majordom@hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id SAA18003 for <maillist@candle.pha.pa.us>; Fri, 2 Oct 1998 18:21:37 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.8.8/8.8.8) with SMTP id SAA01250;
 	Fri, 2 Oct 1998 18:08:02 -0400 (EDT)
@@ -1249,7 +1249,7 @@ From owner-pgsql-hackers@hub.org Sat Oct  3 23:32:35 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA06644
 	for <maillist@candle.pha.pa.us>; Sat, 3 Oct 1998 23:31:13 -0400 (EDT)
-Received: from hub.org (root@hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id XAA26912 for <maillist@candle.pha.pa.us>; Sat, 3 Oct 1998 23:14:01 -0400 (EDT)
+Received: from hub.org (root@hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id XAA26912 for <maillist@candle.pha.pa.us>; Sat, 3 Oct 1998 23:14:01 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.8.8/8.8.8) with SMTP id WAA04407;
 	Sat, 3 Oct 1998 22:07:05 -0400 (EDT)
@@ -1337,7 +1337,7 @@ From taral@mail.utexas.edu Sat Oct  3 22:43:41 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA05961
 	for <maillist@candle.pha.pa.us>; Sat, 3 Oct 1998 22:42:18 -0400 (EDT)
-Received: from mail.utexas.edu (wb2-a.mail.utexas.edu [128.83.126.136]) by renoir.op.net (o1/$Revision: 1.12 $) with SMTP id WAA25111 for <maillist@candle.pha.pa.us>; Sat, 3 Oct 1998 22:27:34 -0400 (EDT)
+Received: from mail.utexas.edu (wb2-a.mail.utexas.edu [128.83.126.136]) by renoir.op.net (o1/$ Revision: 1.18 $) with SMTP id WAA25111 for <maillist@candle.pha.pa.us>; Sat, 3 Oct 1998 22:27:34 -0400 (EDT)
 Received: (qmail 25622 invoked by uid 0); 4 Oct 1998 02:26:21 -0000
 Received: from dial-42-9.ots.utexas.edu (HELO taral) (128.83.111.217)
   by umbs-smtp-2 with SMTP; 4 Oct 1998 02:26:21 -0000
@@ -1387,7 +1387,7 @@ From daveh@insightdist.com Mon Nov  9 13:31:07 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA00997
 	for <maillist@candle.pha.pa.us>; Mon, 9 Nov 1998 13:31:00 -0500 (EST)
-Received: from u1.abs.net (root@u1.abs.net [207.114.0.131]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id NAA26657 for <maillist@candle.pha.pa.us>; Mon, 9 Nov 1998 13:10:14 -0500 (EST)
+Received: from u1.abs.net (root@u1.abs.net [207.114.0.131]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id NAA26657 for <maillist@candle.pha.pa.us>; Mon, 9 Nov 1998 13:10:14 -0500 (EST)
 Received: from insightdist.com (nobody@localhost)
 	by u1.abs.net (8.9.0/8.9.0) with UUCP id MAA17710
 	for maillist@candle.pha.pa.us; Mon, 9 Nov 1998 12:52:05 -0500 (EST)
