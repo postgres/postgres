@@ -17,10 +17,10 @@
 <body bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
 
 <h1>PostgreSQL için Sýkça Sorulan Sorular (SSS)</h1>
-<p>Son güncelleme : 09 Kasým 2004 Salý - 12:02:27</p>
+<p>Son güncelleme : 15 Kasým 2004 Pazartesi - 15:03:23</p>
 <p>Current maintainer: Bruce Momjian
 (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br></p>
-<p>Çevirenler : Devrim Gündüz (<a href="mailto:devrim@tdmsoft.com">devrim@tdmsoft.com</a>)<br>Nicholas Morris Tufar 
+<p>Çevirenler : Devrim Gündüz (<a href="mailto:devrim@tdmsoft.com">devrim@tdmsoft.com</a>)<br>Nicolai Tufar 
 (<a href="mailto:ntufar@tdmsoft.com">ntufar@tdmsoft.com</a>)<BR>Volkan YAZICI (<a href="mailto:volkany@phreaker.net">volkany@phreaker.net</a>)</p>
 <p>Bu belgenin en güncel hali, <a href="http://www.postgresql.org/docs/faqs/FAQ_turkish.html">http://www.PostgreSQL.org/docs/faqs/FAQ_turkish.html</a> 
 ve <a href="http://www.gunduz.org/seminer/pg/FAQ_turkish.html">http://www.gunduz.org/seminer/pg/FAQ_turkish.html</a> 
@@ -121,8 +121,7 @@ adreslerinde görülebilir.</p>
 	<a href="#4.25">4.25</a>) Bir fonksiyondan nasýl çoklu satýr ya da kolon döndürebilirim?<br>
 	<a href="#4.26">4.26</a>) Neden Pl/PgSQL fonksiyonlarý içinden güvenli
 	bir þekilde tablo yaratma/kaldýrma iþlemlerini yapamýyoruz?<br>
-	<a href="#4.27">4.27</a>) Hangi replikasyon seçenekleri bulunmaktadýr?<br>
-	<a href="#4.28">4.28</a>) Hangi þifreleme seçenekleri bulunmaktadýr?<br>
+	<a href="#4.27">4.27</a>) Hangi þifreleme seçenekleri bulunmaktadýr?<br>
 	
 
 <h2 align="center">PostgreSQL Özelliklerini Geniþletmek</h2>
@@ -977,16 +976,7 @@ ORDER BY col1
 		<code>EXECUTE</code> kullanmaktýr. Bu, sorgunun her seferinde yeniden iþlenmesini
 		saðlayacaktýr.</p>
 		
-		<h4><a name="4.27">4.27</a>) Hangi replikasyon seçenekleri bulunmaktadýr?</h4>
-		<p>Çeþitli master/slave replikasyon seçenekleri bulunmaktadýr. Bunlar master
-		veritabanýnýn veritabaný deðiþikliklerini yaparken, slave sunucunun sadece
-		veritabanýnda okuma yapmasýna izin verir. 
-		<i><a href="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</a></i>
-		sayfasýnýn altýnda bunlarýn listesini bulabilirsiniz.
-		<i><a href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a></i>
-		adresinde, çoklu-master replikasyon çözümü üzerinde çalýþýlýyor.</p>
-		
-		<h4><a name="4.28">4.28</a>) 4.28) Hangi þifreleme seçenekleri bulunmaktadýr?</h4>
+		<h4><a name="4.27">4.27</a>) 4.28) Hangi þifreleme seçenekleri bulunmaktadýr?</h4>
 		<ul><li>contrib/pgcrypto SQL sorgularýnda kullanýlabilmesi için
 		þifreleme fonksiyonlarý içermektedir.</li>
 		<li> Ýstemciden sunucuya iletiþimi þifrelemek için, sunucuda ssl seçeneði postgresql.conf içinde 

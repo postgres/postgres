@@ -1,11 +1,11 @@
 PostgreSQL için Sýkça Sorulan Sorular (SSS)
 
-Son güncelleme : 09 Kasým 2004 Salý - 12:02:27
+Son güncelleme : 15 Kasým 2004 Pazartesi - 14:47:20
 
 Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
 
 Çevirenler : Devrim Gündüz (devrim@tdmsoft.com)
-Nicholas Morris Tufar (ntufar@tdmsoft.com)
+Nicolai Tufar (ntufar@tdmsoft.com)
 Volkan YAZICI (volkany@phreaker.net)
 
 Bu belgenin en güncel hali, http://www.PostgreSQL.org/docs/faqs/FAQ_turkish.html ve 
@@ -77,8 +77,7 @@ kolonumdaki sayýlarda atlamalar oluyor?
 4.24) Ayný anda birden fazla veritabanýnda nasýl iþlem yapabilirim?
 4.25) Bir fonksiyondan nasýl çoklu satýr ya da kolon döndürebilirim?
 4.26) Neden Pl/PgSQL fonksiyonlarý içinden güvenli bir þekilde tablo yaratma/kaldýrma iþlemlerini yapamýyoruz?
-4.27) Hangi replikasyon seçenekleri bulunmaktadýr?
-4.28) Hangi þifreleme seçenekleri bulunmaktadýr?
+4.27) Hangi þifreleme seçenekleri bulunmaktadýr?
 PostgreSQL Özelliklerini Geniþletmek
 5.1) Kullanýcý-tanýmlý bir fonksiyon yazdým. psql'de çalýþtýrdýðým zaman neden core dump ediyor?
 5.2) PostgreSQL'e nasýl yeni veri tipleri/fonksiyonlar ekleyebilirim?
@@ -737,6 +736,7 @@ iletmedi ve bu sýnýrý kimse bu sýnýra ulaþmadan kaldýracaðýz.
 
 TIDler, belirli fiziksel satýrlar block ve offset deðerleri ile belirtmekte kullanýlýr. TIDler, satýrlar deðiþtiðinde 
 ya da yeniden yüklendiðinde deðiþirler. Index girdileri tarafýndan fiziksel satýrlarý göstermek için kullanýlýrlar.
+
 4.17) PostgreSQL'de kullanýlan bazý terimlerin anlamlarý nelerdir?
 
 Kaynak kodun bir kýsmý ve eski belgeler, daha geniþ kullaným alaný olan terimleri kullanýrlar. Bunlarýn bazýlarý:
@@ -849,24 +849,20 @@ davranacaðýný kestirmek zordur.
 
 contrib/dblink fonksiyon çaðrýlarýný kullanarak cross-database sorgulara izin verir. Tabii ki, bir istemci deðiþik 
 veritabanlarýna ayný anda eriþim saðlayabilir ve bilgiyi bu þekilde birleþtirebilir.
+
 4.25) Bir fonksiyondan nasýl çoklu satýr ya da kolon döndürebilirim?
 
 7.3 sürümünde, bir fonksiyondan kolaylýkla çoklu satýr ya da sütun döndürebilirsiniz. 
 (http://techdocs.postgresql.org/guides/SetReturningFunctions)
+
 4.26) Neden Pl/PgSQL fonksiyonlarý içinden güvenli bir þekilde tablo yaratma/kaldýrma iþlemlerini yapamýyoruz?
 
 PL/PgSQL fonksiyon içerikleri cache'ler. Bunun istenmeyen bir tarafý, eðer bir PL/PgSQL fonksiyonu geçici bir tabloya 
 eriþiyorsa ve bu tablo ileride kaldýrýlýp yeniden oluþturulduktan sonra fonksiyon yeniden çaðrýlýrsa, fonksiyon 
 çalýþmayacaktýr; çünkü cache'lenmiþ fonksiyon hala eski geçici tabloyu gösteriyor olacaktýr. Çözüm, geçici tablo 
 eriþimleri için PL/PgSQL'de EXECUTE kullanmaktýr. Bu, sorgunun her seferinde yeniden iþlenmesini saðlayacaktýr.
-4.27) Hangi replikasyon seçenekleri bulunmaktadýr?
 
-Çeþitli master/slave replikasyon seçenekleri bulunmaktadýr. Bunlar master veritabanýnýn veritabaný deðiþikliklerini 
-yaparken, slave sunucunun sadece veritabanýnda okuma yapmasýna izin verir. 
-http://gborg.PostgreSQL.org/genpage?replication_research sayfasýnýn altýnda bunlarýn listesini bulabilirsiniz. 
-http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php adresinde, çoklu-master replikasyon çözümü üzerinde 
-çalýþýlýyor.
-4.28) 4.28) Hangi þifreleme seçenekleri bulunmaktadýr?
+4.27) Hangi þifreleme seçenekleri bulunmaktadýr?
 
     * contrib/pgcrypto SQL sorgularýnda kullanýlabilmesi için þifreleme fonksiyonlarý içermektedir.
     * Ýstemciden sunucuya iletiþimi þifrelemek için, sunucuda ssl seçeneði postgresql.conf içinde açýk olmalýdýr. 
@@ -877,18 +873,22 @@ postgresql.conf içindeki PASSWORD_ENCRYPTION seçeneðini aktif hale getirmeniz ge
     * Sunucunun kendisini þifreli dosya sistemi üzerinde çalýþtýrabilirsiniz.
 
 PostgreSQL Özelliklerini Geniþletmek
+
 5.1) Kullanýcý-tanýmlý bir fonksiyon yazdým. psql'de çalýþtýrdýðým zaman neden core dump ediyor?
 
 Sorunun nedeni birden fazla þey olabilir. Kullanýcý-tanýmlý fonksiyonunuzu stand-alone bir programda çalýþtýrmayý 
 deneyiniz.
+
 5.2) PostgreSQL'e nasýl yeni tipler/fonksiyonlar ekleyebilirim?
 
 Çalýþmalarýnýzý pgsql-hackers e-posta listesine gönderiniz. Kodunuz incelendikten sonra /contrib dizinine konacaktýr.
+
 5.3) Bir tuple dondürmek icin bir C fonksiyonunu nasil yazarým?
 
 PostgreSQL 7.3 sürümü ile birlikte, C, PL/PgSQL ve SQL kullanýlarak tablo-döndüren fonksiyonlar tamamen 
 desteklenmektedir. Ayrýntýlý bilgi için PostgreSQL 7.3.2 Kullanýcý Rehberi'ne bakabilrisiniz. Bir örneði 
 contrib/tablefunc içinde bulabilirsiniz.
+
 5.4) Bir kaynak dosyasýnda deðiþiklik yaptým. Yeniden derlememe raðmen deðiþiklik geçerli olmuyor. Neden?
 
 Makefile'lar include dosyalarý için tam bir baðýmlýlýk içermezler. Öncelikle make clean, ardýndan da baska bir make 
