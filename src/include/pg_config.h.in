@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.15 2001/12/03 17:44:52 tgl Exp $
+ * $Id: pg_config.h.in,v 1.16 2002/01/22 19:02:40 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -721,9 +721,18 @@ extern int fdatasync(int fildes);
 #include "pg_config_os.h"
 
 /*
+ * Provide default definitions for things that port-specific pg_config_os.h
+ * files can set, but typically don't.
+ */
+
+#ifndef DLLIMPORT
+#define DLLIMPORT				/* no special DLL markers on most ports */
+#endif
+
+/*
  * The following is used as the arg list for signal handlers.  Any ports
  * that take something other than an int argument should override this in
- * the port-specific pg_config_os.h file.  Note that variable names are required
+ * their pg_config_os.h file.  Note that variable names are required
  * because it is used in both the prototypes as well as the definitions.
  * Note also the long name.  We expect that this won't collide with
  * other names causing compiler warnings.
