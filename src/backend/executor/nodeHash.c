@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.16 1998/01/13 04:03:53 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.17 1998/01/25 05:13:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include <unistd.h>
 
 #include "postgres.h"
-
+#include "miscadmin.h"
 #include "executor/execdebug.h"
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
@@ -887,6 +887,6 @@ static int	hjtmpcnt = 0;
 static void
 mk_hj_temp(char *tempname)
 {
-	sprintf(tempname, "HJ%d.%d", (int) getpid(), hjtmpcnt);
+	sprintf(tempname, "HJ%d.%d", (int) MyProcPid, hjtmpcnt);
 	hjtmpcnt = (hjtmpcnt + 1) % 1000;
 }

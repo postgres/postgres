@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.36 1998/01/05 18:43:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.37 1998/01/25 05:14:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,7 +589,7 @@ ProcessUtility(Node * parsetree,
 				commandTag = "LISTEN";
 				CHECK_IF_ABORTED();
 
-				Async_Listen(stmt->relname, MasterPid);
+				Async_Listen(stmt->relname, MyProcPid);
 			}
 			break;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.27 1998/01/23 22:16:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.28 1998/01/25 05:14:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.27 1998/01/23 22:16:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.28 1998/01/25 05:14:09 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -127,7 +127,6 @@ InitProcGlobal(IPCKey key)
 	{
 		int			i;
 
-		ProcGlobal->numProcs = 0;
 		ProcGlobal->freeProcs = INVALID_OFFSET;
 		ProcGlobal->currKey = IPCGetProcessSemaphoreInitKey(key);
 		for (i = 0; i < MAX_PROC_SEMS / PROC_NSEMS_PER_SET; i++)
@@ -144,7 +143,6 @@ void
 InitProcess(IPCKey key)
 {
 	bool		found = false;
-	int			pid;
 	int			semstat;
 	unsigned long location,
 				myOffset;
@@ -201,8 +199,6 @@ InitProcess(IPCKey key)
 
 		/* this cannot be initialized until after the buffer pool */
 		SHMQueueInit(&(MyProc->lockQueue));
-		MyProc->procId = ProcGlobal->numProcs;
-		ProcGlobal->numProcs++;
 	}
 
 	/*
@@ -253,11 +249,8 @@ InitProcess(IPCKey key)
 	 */
 	SpinRelease(ProcStructLock);
 
-	MyProc->pid = 0;
+	MyProc->pid = MyProcPid;
 	MyProc->xid = InvalidTransactionId;
-#if 0
-	MyProc->pid = MyPid;
-#endif
 
 	/* ----------------
 	 * Start keeping spin lock stats from here on.	Any botch before
@@ -273,9 +266,8 @@ InitProcess(IPCKey key)
 	 * exit.
 	 * -------------------------
 	 */
-	pid = getpid();
 	location = MAKE_OFFSET(MyProc);
-	if ((!ShmemPIDLookup(pid, &location)) || (location != MAKE_OFFSET(MyProc)))
+	if ((!ShmemPIDLookup(MyProcPid, &location)) || (location != MAKE_OFFSET(MyProc)))
 	{
 		elog(FATAL, "InitProc: ShmemPID table broken");
 	}
@@ -283,7 +275,7 @@ InitProcess(IPCKey key)
 	MyProc->errType = NO_ERROR;
 	SHMQueueElemInit(&(MyProc->links));
 
-	on_exitpg(ProcKill, (caddr_t) pid);
+	on_exitpg(ProcKill, (caddr_t) MyProcPid);
 
 	ProcInitialized = TRUE;
 }
@@ -352,12 +344,7 @@ ProcKill(int exitStatus, int pid)
 	if (exitStatus != 0)
 		return;
 
-	if (!pid)
-	{
-		pid = getpid();
-	}
-
-	ShmemPIDLookup(pid, &location);
+	ShmemPIDLookup(MyProcPid, &location);
 	if (location == INVALID_OFFSET)
 		return;
 
@@ -365,7 +352,7 @@ ProcKill(int exitStatus, int pid)
 
 	if (proc != MyProc)
 	{
-		Assert(pid != getpid());
+		Assert(pid != MyProcPid);
 	}
 	else
 		MyProc = NULL;
@@ -478,7 +465,7 @@ ProcSleep(PROC_QUEUE *queue,
 	MyProc->prio = prio;
 	MyProc->token = token;
 	MyProc->waitLock = lock;
-
+	
 	/* -------------------
 	 * currently, we only need this for the ProcWakeup routines
 	 * -------------------
@@ -572,19 +559,6 @@ ProcWakeup(PROC *proc, int errType)
 	return retProc;
 }
 
-
-/*
- * ProcGetId --
- */
-#ifdef NOT_USED
-int
-ProcGetId()
-{
-	return (MyProc->procId);
-}
-
-#endif
-
 /*
  * ProcLockWakeup -- routine for waking up processes when a lock is
  *		released.
@@ -652,8 +626,7 @@ ProcAddLock(SHM_QUEUE *elem)
 static void
 HandleDeadLock(int sig)
 {
-	LOCK	   *lock;
-	int			size;
+	LOCK	   *mywaitlock;
 
 	LockLockTable();
 
@@ -692,8 +665,7 @@ HandleDeadLock(int sig)
 		return;
 	}
 
-	lock = MyProc->waitLock;
-	size = lock->waitProcs.size;/* so we can look at this in the core */
+	mywaitlock = MyProc->waitLock;
 
 #ifdef DEADLOCK_DEBUG
 	DumpLocks();
@@ -703,8 +675,8 @@ HandleDeadLock(int sig)
 	 * Get this process off the lock's wait queue
 	 * ------------------------
 	 */
-	Assert(lock->waitProcs.size > 0);
-	--lock->waitProcs.size;
+	Assert(mywaitlock->waitProcs.size > 0);
+	--mywaitlock->waitProcs.size;
 	SHMQueueDelete(&(MyProc->links));
 	SHMQueueElemInit(&(MyProc->links));
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.24 1998/01/07 21:06:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.25 1998/01/25 05:14:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ elog(int lev, const char *fmt,...)
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (!InError)
 		{
-			kill(getpid(), 1);	/* abort to traffic cop */
+			kill(MyProcPid, 1);	/* abort to traffic cop */
 			pause();
 		}
 
@@ -257,7 +257,7 @@ DebugFileOpen(void)
 	if (fcntl(fd, F_GETFD, 0) < 0)
 	{
 		sprintf(OutputFileName, "%s/pg.errors.%d",
-				DataDir, (int) getpid());
+				DataDir, (int) MyProcPid);
 		fd = open(OutputFileName, O_CREAT | O_APPEND | O_WRONLY, 0666);
 	}
 	if (fd < 0)

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.68 1997/12/19 02:06:37 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.69 1998/01/25 05:13:35 momjian Exp $
  *
  * NOTES
  *
@@ -1337,7 +1337,7 @@ DoExec(StartupInfo *packet, int portFd)
 	if (DebugLvl > 1)
 	{
 		fprintf(stderr, "%s child[%ld]: execv(",
-				progname, (long) getpid());
+				progname, (long) MyProcPid);
 		for (i = 0; i < ac; ++i)
 			fprintf(stderr, "%s, ", av[i]);
 		fprintf(stderr, ")\n");

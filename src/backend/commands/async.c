@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.26 1997/12/17 04:44:49 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.27 1998/01/25 05:12:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@
 
 #include <postgres.h>
 
+#include <miscadmin.h>
 #include <utils/syscache.h>
 #include <access/relscan.h>
 #include <access/xact.h>
@@ -264,7 +265,6 @@ Async_NotifyAtCommit()
 	TupleDesc	tdesc;
 	ScanKeyData key;
 	Datum		d;
-	int			ourpid;
 	bool		isnull;
 	Buffer		b;
 	extern TransactionState CurrentTransactionState;
@@ -291,7 +291,6 @@ Async_NotifyAtCommit()
 			RelationSetLockForWrite(lRel);
 			sRel = heap_beginscan(lRel, 0, false, 1, &key);
 			tdesc = RelationGetTupleDescriptor(lRel);
-			ourpid = getpid();
 
 			while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0, &b)))
 			{
@@ -303,7 +302,7 @@ Async_NotifyAtCommit()
 					d = heap_getattr(lTuple, b, Anum_pg_listener_pid,
 									 tdesc, &isnull);
 
-					if (ourpid == DatumGetInt32(d))
+					if (MyProcPid == DatumGetInt32(d))
 					{
 #ifdef ASYNC_DEBUG
 						elog(DEBUG, "Notifying self, setting notifyFronEndPending to 1");
@@ -420,7 +419,6 @@ Async_Listen(char *relname, int pid)
 	int			i;
 	bool		isnull;
 	int			alreadyListener = 0;
-	int			ourPid = getpid();
 	char	   *relnamei;
 	TupleDesc	tupDesc;
 
@@ -453,7 +451,7 @@ Async_Listen(char *relname, int pid)
 		{
 			d = heap_getattr(htup, b, Anum_pg_listener_pid, tdesc, &isnull);
 			pid = DatumGetInt32(d);
-			if (pid == ourPid)
+			if (pid == MyProcPid)
 			{
 				alreadyListener = 1;
 			}
@@ -537,7 +535,7 @@ static void
 Async_UnlistenOnExit(int code,	/* from exitpg */
 					 char *relname)
 {
-	Async_Unlisten((char *) relname, getpid());
+	Async_Unlisten((char *) relname, MyProcPid);
 }
 
 /*
@@ -579,7 +577,6 @@ Async_NotifyFrontEnd()
 	char		repl[3],
 				nulls[3];
 	Buffer		b;
-	int			ourpid;
 	bool		isnull;
 
 	notifyFrontEndPending = 0;
@@ -589,7 +586,6 @@ Async_NotifyFrontEnd()
 #endif
 
 	StartTransactionCommand();
-	ourpid = getpid();
 	ScanKeyEntryInitialize(&key[0], 0,
 						   Anum_pg_listener_notify,
 						   Integer32EqualRegProcedure,
@@ -597,7 +593,7 @@ Async_NotifyFrontEnd()
 	ScanKeyEntryInitialize(&key[1], 0,
 						   Anum_pg_listener_pid,
 						   Integer32EqualRegProcedure,
-						   Int32GetDatum(ourpid));
+						   Int32GetDatum(MyProcPid));
 	lRel = heap_openr(ListenerRelationName);
 	RelationSetLockForWrite(lRel);
 	tdesc = RelationGetTupleDescriptor(lRel);
@@ -621,7 +617,7 @@ Async_NotifyFrontEnd()
 		if (whereToSendOutput == Remote)
 		{
 			pq_putnchar("A", 1);
-			pq_putint(ourpid, sizeof(ourpid));
+			pq_putint((int32)MyProcPid, sizeof(int32));
 			pq_putstr(DatumGetName(d)->data);
 			pq_flush();
 		}

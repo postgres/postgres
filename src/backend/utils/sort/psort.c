@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.32 1998/01/15 19:46:10 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.33 1998/01/25 05:14:49 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -988,7 +988,7 @@ gettape()
 
 	tp = (struct tapelst *) palloc((unsigned) sizeof(struct tapelst));
 
-	sprintf(uniqueName, "%spg_psort.%d.%d", TEMPDIR, (int) getpid(), uniqueFileId);
+	sprintf(uniqueName, "%spg_psort.%d.%d", TEMPDIR, (int) MyProcPid, uniqueFileId);
 	uniqueFileId++;
 
 	tapeinit = 1;

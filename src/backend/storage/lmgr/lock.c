@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.20 1998/01/23 22:16:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.21 1998/01/25 05:14:02 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -37,6 +37,7 @@
 #include <unistd.h>
 
 #include "postgres.h"
+#include "miscadmin.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "storage/proc.h"
@@ -77,7 +78,7 @@ static char *lock_types[] = {
 	if ((lockDebug >= 1) && (tag->relId >= lock_debug_oid_min)) \
 		elog(DEBUG, \
 			 "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) type (%s)",where, \
-			 getpid(),\
+			 MyProcPid,\
 			 tag->relId, tag->dbId, \
 			 ((tag->tupleId.ip_blkid.bi_hi<<16)+\
 			  tag->tupleId.ip_blkid.bi_lo),\
@@ -92,7 +93,7 @@ static char *lock_types[] = {
 		elog(DEBUG, \
 			 "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) nHolding (%d) "\
 			 "holders (%d,%d,%d,%d,%d) type (%s)",where, \
-			 getpid(),\
+			 MyProcPid,\
 			 lock->tag.relId, lock->tag.dbId, \
 			 ((lock->tag.tupleId.ip_blkid.bi_hi<<16)+\
 			  lock->tag.tupleId.ip_blkid.bi_lo),\
@@ -113,7 +114,7 @@ static char *lock_types[] = {
 			 "%s: pid (%d) xid (%d) pid (%d) lock (%x) nHolding (%d) "\
 			 "holders (%d,%d,%d,%d,%d)",\
 			 where,\
-			 getpid(),\
+			 MyProcPid,\
 			 xidentP->tag.xid,\
 			 xidentP->tag.pid,\
 			 xidentP->tag.lock,\
@@ -550,7 +551,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 #ifdef USER_LOCKS
 	if (is_user_lock)
 	{
-		item.tag.pid = getpid();
+		item.tag.pid = MyProcPid;
 		item.tag.xid = myXid = 0;
 #ifdef USER_LOCKS_DEBUG
 		elog(NOTICE, "LockAcquire: user lock xid [%d,%d,%d]",
@@ -975,7 +976,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 #ifdef USER_LOCKS
 	if (is_user_lock)
 	{
-		item.tag.pid = getpid();
+		item.tag.pid = MyProcPid;
 		item.tag.xid = 0;
 #ifdef USER_LOCKS_DEBUG
 		elog(NOTICE, "LockRelease: user lock xid [%d,%d,%d]",
@@ -1153,14 +1154,12 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 
 #ifdef USER_LOCKS
 	int			is_user_lock_table,
-				my_pid,
 				count,
 				nskip;
 
 	is_user_lock_table = (tableId == 0);
-	my_pid = getpid();
 #ifdef USER_LOCKS_DEBUG
-	elog(NOTICE, "LockReleaseAll: tableId=%d, pid=%d", tableId, my_pid);
+	elog(NOTICE, "LockReleaseAll: tableId=%d, pid=%d", tableId, MyProcPid);
 #endif
 	if (is_user_lock_table)
 	{
@@ -1226,7 +1225,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 				nskip++;
 				goto next_item;
 			}
-			if (xidLook->tag.pid != my_pid)
+			if (xidLook->tag.pid != MyProcPid)
 			{
 				/* This should never happen */
 #ifdef USER_LOCKS_DEBUG
@@ -1433,13 +1432,11 @@ DumpLocks()
 	SPINLOCK	masterLock;
 	int			nLockTypes;
 	LOCK	   *lock;
-	int			pid,
 				count;
 	int			tableId = 1;
 	LOCKTAB    *ltable;
 
-	pid = getpid();
-	ShmemPIDLookup(pid, &location);
+	ShmemPIDLookup(MyProcPid, &location);
 	if (location == INVALID_OFFSET)
 		return;
 	proc = (PROC *) MAKE_PTR(location);

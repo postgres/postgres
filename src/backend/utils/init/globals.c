@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.17 1997/11/24 05:09:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.18 1998/01/25 05:14:42 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -39,7 +39,8 @@ int			Portfd = -1;
 int			Noversion = 0;
 int			Quiet = 1;
 
-int			MasterPid;
+int			MyProcPid;
+
 char	   *DataDir;
 
  /*

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.32 1998/01/07 21:02:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.33 1998/01/25 05:12:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,7 +322,7 @@ BootstrapMain(int argc, char *argv[])
 	 * -------------------
 	 */
 
-	MasterPid = getpid();
+	MyProcPid = getpid();
 
 	/* ----------------
 	 *	process command arguments

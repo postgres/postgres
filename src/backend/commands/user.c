@@ -51,7 +51,7 @@ void UpdatePgPwdFile(char* sql) {
    */
   filename = crypt_getpwdfilename();
   tempname = (char*)malloc(strlen(filename) + 12);
-  sprintf(tempname, "%s.%d", filename, getpid());
+  sprintf(tempname, "%s.%d", filename, MyProcPid);
 
   /* Copy the contents of pg_user to the pg_pwd ASCII file using a the SEPCHAR
    * character as the delimiter between fields.  Then rename the file to its
