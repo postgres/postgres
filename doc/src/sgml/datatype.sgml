@@ -1,16 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.46 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.47 2001/01/13 18:34:51 petere Exp $
 -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
-
-  <abstract>
-   <para>
-    Describes the built-in data types available in 
-    <productname>Postgres</productname>.
-   </para>
-  </abstract>
 
   <para>
    <productname>Postgres</productname> has a rich set of native data 
@@ -20,229 +13,229 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.46 2000/12/22 18:57:49 pe
   </para>
 
   <para>
-   In the context of data types, the following sections will discuss 
-   <acronym>SQL</acronym> standards compliance, porting issues, and usage.
-
-   Some <productname>Postgres</productname> types correspond directly to 
-   <acronym>SQL92</acronym>-compatible types. In other
-   cases, data types defined by <acronym>SQL92</acronym> syntax are mapped directly
-   into native <productname>Postgres</productname> types. 
-
-   Many of the built-in types have obvious external formats. However, several
-   types are either unique to <productname>Postgres</productname>, 
-   such as open and closed paths, or have
-   several possibilities for formats, such as the date and time types.
+   <xref linkend="datatype-table"> shows all general-purpose data types
+   available to users.  Most of the alternative names listed in the
+   <quote>Aliases</quote> column are the names used internally by
+   <productname>Postgres</productname> for historical reasons.  In
+   addition, some internally used or deprecated types are available,
+   but they are not documented here.  Many of the built-in types have
+   obvious external formats. However, several types are either unique
+   to <productname>Postgres</productname>, such as open and closed
+   paths, or have several possibilities for formats, such as the date
+   and time types.
   </para>
 
   <para>
-   <table tocentry="1">
+   <table id="datatype-table">
     <title><productname>Postgres</productname> Data Types</title>
     <titleabbrev>Data Types</titleabbrev>
     <tgroup cols="3">
      <thead>
       <row>
-       <entry><productname>Postgres</productname> Type</entry>
-       <entry><acronym>SQL92</acronym> or <acronym>SQL99</acronym> Type</entry>
+       <entry>Type Name</entry>
+       <entry>Aliases</entry>
        <entry>Description</entry>
       </row>
      </thead>
+
      <tbody>
       <row>
-       <entry>bool</entry>
-       <entry>boolean</entry>
+       <entry><type>bigint</type></entry>
+       <entry><type>int8</type></entry>
+       <entry>signed eight-byte integer</entry>
+      </row>
+
+      <row>
+       <entry><type>bit</type></entry>
+       <entry></entry>
+       <entry>fixed-length bit string</entry>
+      </row>
+
+      <row>
+       <entry><type>bit varying(<replaceable>n</replaceable>)</type></entry>
+       <entry><type>varbit(<replaceable>n</replaceable>)</type></entry>
+       <entry>variable-length bit string</entry>
+      </row>
+
+      <row>
+       <entry><type>boolean</type></entry>
+       <entry><type>bool</type></entry>
        <entry>logical boolean (true/false)</entry>
       </row>
+
       <row>
-       <entry>box</entry>
+       <entry><type>box</type></entry>
        <entry></entry>
        <entry>rectangular box in 2D plane</entry>
       </row>
+
       <row>
-       <entry>char(n)</entry>
-       <entry>character(n)</entry>
+       <entry><type>character(<replaceable>n</replaceable>)</type></entry>
+       <entry><type>char(<replaceable>n</replaceable>)</type></entry>
        <entry>fixed-length character string</entry>
       </row>
+
       <row>
-       <entry>cidr</entry>
+       <entry><type>character varying(<replaceable>n</replaceable>)</type></entry>
+       <entry><type>varchar(<replaceable>n</replaceable>)</type></entry>
+       <entry>variable-length character string</entry>
+      </row>
+
+      <row>
+       <entry><type>cidr</type></entry>
        <entry></entry>
        <entry>IP network address</entry>
       </row>
+
       <row>
-       <entry>circle</entry>
+       <entry><type>circle</type></entry>
        <entry></entry>
        <entry>circle in 2D plane</entry>
       </row>
+
       <row>
-       <entry>date</entry>
-       <entry>date</entry>
-       <entry>calendar date without time of day</entry>
-      </row>
-      <row>
-       <entry>decimal</entry>
-       <entry>decimal(p,s)</entry>
-       <entry>exact numeric with selectable precision</entry>
-      </row>
-      <row>
-       <entry>float4</entry>
-       <entry>float(<replaceable>p</replaceable>), <replaceable>p</replaceable> < 7</entry>
-       <entry>floating-point number with precision <replaceable>p</replaceable></entry>
-      </row>
-      <row>
-       <entry>float8</entry>
-       <entry>float(<replaceable>p</replaceable>), 7 <= <replaceable>p</replaceable> < 16</entry>
-       <entry>floating-point number with precision <replaceable>p</replaceable></entry>
-      </row>
-      <row>
-       <entry>inet</entry>
+       <entry><type>date</type></entry>
        <entry></entry>
-       <entry>IP network or host address</entry>
+       <entry>calendar date (year, month, day)</entry>
       </row>
+
       <row>
-       <entry>int2</entry>
-       <entry>smallint</entry>
-       <entry>signed two-byte integer</entry>
+       <entry><type>double precision</type></entry>
+       <entry><type>float8</type></entry>
+       <entry>double precision floating-point number</entry>
       </row>
+
       <row>
-       <entry>int4</entry>
-       <entry>int, integer</entry>
-       <entry>signed 4-byte integer</entry>
-      </row>
-      <row>
-       <entry>int8</entry>
+       <entry><type>inet</type></entry>
        <entry></entry>
-       <entry>signed 8-byte integer</entry>
+       <entry>IP host address</entry>
       </row>
+
       <row>
-       <entry>interval</entry>
-       <entry>interval</entry>
+       <entry><type>integer</type></entry>
+       <entry><type>int</type>, <type>int4</type></entry>
+       <entry>signed four-byte integer</entry>
+      </row>
+
+      <row>
+       <entry><type>interval</type></entry>
+       <entry></entry>
        <entry>general-use time span</entry>
       </row>
+
       <row>
-       <entry>line</entry>
+       <entry><type>line</type></entry>
        <entry></entry>
        <entry>infinite line in 2D plane</entry>
       </row>
+
       <row>
-       <entry>lseg</entry>
+       <entry><type>lseg</type></entry>
        <entry></entry>
        <entry>line segment in 2D plane</entry>
       </row>
+
       <row>
-       <entry>money</entry>
-       <entry>decimal(9,2)</entry>
+       <entry><type>macaddr</type></entry>
+       <entry></entry>
+       <entry>MAC address</entry>
+      </row>
+
+      <row>
+       <entry><type>money</type></entry>
+       <entry></entry>
        <entry>US-style currency</entry>
       </row>
+
       <row>
-       <entry>numeric</entry>
-       <entry>numeric(p,s)</entry>
+       <entry><type>numeric(<replaceable>p</replaceable>, <replaceable>s</replaceable>)</type></entry>
+       <entry><type>decimal(<replaceable>p</replaceable>, <replaceable>s</replaceable>)</type></entry>
        <entry>exact numeric with selectable precision</entry>
       </row>
+
       <row>
-       <entry>path</entry>
+       <entry><type>oid</type></entry>
+       <entry></entry>
+       <entry>object identifier</entry>
+      </row>
+
+      <row>
+       <entry><type>path</type></entry>
        <entry></entry>
        <entry>open and closed geometric path in 2D plane</entry>
       </row>
+
       <row>
-       <entry>point</entry>
+       <entry><type>point</type></entry>
        <entry></entry>
        <entry>geometric point in 2D plane</entry>
       </row>
+
       <row>
-       <entry>polygon</entry>
+       <entry><type>polygon</type></entry>
        <entry></entry>
        <entry>closed geometric path in 2D plane</entry>
       </row>
+
       <row>
-       <entry>serial</entry>
-       <entry></entry>
-       <entry>unique id for indexing and cross-reference</entry>
+       <entry><type>real</type></entry>
+       <entry><type>float4</type></entry>
+       <entry>single precision floating-point number</entry>
       </row>
+
       <row>
-       <entry>text</entry>
+       <entry><type>smallint</type></entry>
+       <entry><type>int2</type></entry>
+       <entry>signed two-byte integer</entry>
+      </row>
+
+      <row>
+       <entry><type>serial</type></entry>
+       <entry></entry>
+       <entry>autoincrementing four-byte integer</entry>
+      </row>
+
+      <row>
+       <entry><type>text</type></entry>
        <entry></entry>
        <entry>variable-length character string</entry>
       </row>
+
       <row>
-       <entry>time</entry>
-       <entry>time [ without time zone ]</entry>
+       <entry><type>time [ without time zone ]</type></entry>
+       <entry></entry>
        <entry>time of day</entry>
       </row>
+
       <row>
-       <entry>timetz</entry>
-       <entry>time with time zone</entry>
+       <entry><type>time with time zone</type></entry>
+       <entry></entry>
        <entry>time of day, including time zone</entry>
       </row>
+
       <row>
-       <entry>timestamp</entry>
-       <entry>timestamp [ with time zone ]</entry>
-       <entry>date/time</entry>
-      </row>
-      <row>
-       <entry>varchar(n)</entry>
-       <entry>character varying(n)</entry>
-       <entry>variable-length character string</entry>
+       <entry><type>timestamp [ with time zone ]</type></entry>
+       <entry></entry>
+       <entry>date and time</entry>
       </row>
      </tbody>
     </tgroup>
    </table>
   </para>
 
-  <para>
-   <note>
-    <para>
-     The <type>cidr</type> and <type>inet</type> types are designed to handle any IP type 
-     but only ipv4 is handled in the current implementation.  
-     Everything here that talks about ipv4 will apply to ipv6 in a
-     future release.
-    </para>
-   </note>
-  </para>
-
-  <para>
-   <table tocentry="1">
-    <title><productname>Postgres</productname> Function Constants</title>
-    <titleabbrev>Constants</titleabbrev>
-    <tgroup cols="3">
-     <thead>
-      <row>
-       <entry><productname>Postgres</productname> Function</entry>
-       <entry><acronym>SQL92</acronym> Constant</entry>
-       <entry>Description</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>date('now')</entry>
-       <entry>current_date</entry>
-       <entry>date of current transaction</entry>
-      </row>
-      <row>
-       <entry>time('now')</entry>
-       <entry>current_time</entry>
-       <entry>time of current transaction</entry>
-      </row>
-      <row>
-       <entry>timestamp('now')</entry>
-       <entry>current_timestamp</entry>
-       <entry>date and time of current transaction</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
-  </para>
-
-  <para>
-   <productname>Postgres</productname> has features at the forefront of 
-   <acronym>ORDBMS</acronym> development. In addition to
-   <acronym>SQL99</acronym> conformance, substantial portions 
-   of <acronym>SQL92</acronym> are also supported.
-   Although we strive for <acronym>SQL92</acronym> compliance, 
-   there are some aspects of the standard
-   that are ill considered and which should not live through subsequent standards.
-   <productname>Postgres</productname> will not make great efforts to 
-   conform to these features; however, these tend to apply in little-used 
-   or obsure cases, and a typical user is not likely to run into them.
-  </para>
+  <note>
+   <title>Compatibility</title>
+   <para>
+    The following types (or spellings thereof) are specified by SQL:
+    <type>bit</type>, <type>bit varying</type>, <type>boolean</type>,
+    <type>char</type>, <type>character</type>, <type>character
+    varying</type>, <type>varchar</type>, <type>date</type>,
+    <type>double precision</type>, <type>integer</type>,
+    <type>interval</type>, <type>numeric</type>, <type>decimal</type>,
+    <type>real</type>, <type>smallint</type>, <type>time</type>,
+    <type>timestamp</type> (both with or without time zone).
+   </para>
+  </note>
 
   <para>
    Most of the input and output functions corresponding to the
@@ -259,19 +252,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.46 2000/12/22 18:57:49 pe
    Some of the input and output functions are not invertible.  That is,
    the result of an output function may lose precision when compared to
    the original input.
-
-   <note>
-    <para>
-     Floating point numbers are allowed to retain
-     most of the intrinsic precision of the type (typically 15 digits for doubles, 
-     6 digits for 4-byte floats). 
-     Other types with underlying floating point fields (e.g. geometric
-     types) carry similar precision.
-    </para>
-   </note>
   </para>
 
-  <sect1 id="numeric-types">
+  <sect1 id="datatype-numeric">
    <title>Numeric Types</title>
 
    <para>
@@ -293,7 +276,27 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.46 2000/12/22 18:57:49 pe
 	<entry>Range</entry>
        </row>
       </thead>
+
       <tbody>
+       <row>
+	<entry>smallint</entry>
+	<entry>2 bytes</entry>
+	<entry>Fixed-precision</entry>
+	<entry>-32768 to +32767</entry>
+       </row>
+       <row>
+	<entry>integer</entry>
+	<entry>4 bytes</entry>
+	<entry>Usual choice for fixed-precision</entry>
+	<entry>-2147483648 to +2147483647</entry>
+       </row>
+       <row>
+	<entry>bigint</entry>
+	<entry>8 bytes</entry>
+	<entry>Very large range fixed-precision</entry>
+	<entry>about 18 decimal places</entry>
+       </row>
+
        <row>
 	<entry>decimal</entry>
 	<entry>variable</entry>
@@ -301,41 +304,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.46 2000/12/22 18:57:49 pe
 	<entry>no limit</entry>
        </row>
        <row>
-	<entry>float4</entry>
-	<entry>4 bytes</entry>
-	<entry>Variable-precision</entry>
-	<entry>6 decimal places</entry>
-       </row>
-       <row>
-	<entry>float8</entry>
-	<entry>8 bytes</entry>
-	<entry>Variable-precision</entry>
-	<entry>15 decimal places</entry>
-       </row>
-       <row>
-	<entry>int2</entry>
-	<entry>2 bytes</entry>
-	<entry>Fixed-precision</entry>
-	<entry>-32768 to +32767</entry>
-       </row>
-       <row>
-	<entry>int4</entry>
-	<entry>4 bytes</entry>
-	<entry>Usual choice for fixed-precision</entry>
-	<entry>-2147483648 to +2147483647</entry>
-       </row>
-       <row>
-	<entry>int8</entry>
-	<entry>8 bytes</entry>
-	<entry>Very large range fixed-precision</entry>
-	<entry>~18 decimal places</entry>
-       </row>
-       <row>
 	<entry>numeric</entry>
 	<entry>variable</entry>
 	<entry>User-specified precision</entry>
 	<entry>no limit</entry>
        </row>
+
+       <row>
+	<entry>real</entry>
+	<entry>4 bytes</entry>
+	<entry>Variable-precision</entry>
+	<entry>6 decimal places</entry>
+       </row>
+       <row>
+	<entry>double precision</entry>
+	<entry>8 bytes</entry>
+	<entry>Variable-precision</entry>
+	<entry>15 decimal places</entry>
+       </row>
+
        <row>
 	<entry>serial</entry>
 	<entry>4 bytes</entry>
@@ -353,11 +340,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.46 2000/12/22 18:57:49 pe
    </para>
 
    <para>
-    The <type>int8</type> type may not be available on all platforms since
+    The <type>bigint</type> type may not be available on all platforms since
     it relies on compiler support for eight-byte integers.
    </para>
 
-   <sect2>
+   <sect2 id="datatype-serial">
     <title>The Serial Type</title>
 
     <para>
@@ -403,7 +390,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </sect2>
   </sect1>
 
-  <sect1 id="monetary-types">
+  <sect1 id="datatype-money">
    <title>Monetary Type</title>
 
    <note>
@@ -455,15 +442,15 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
   </sect1>
 
-  <sect1 id="character-types">
+  <sect1 id="datatype-character">
    <title>Character Types</title>
 
    <para>
-    <acronym>SQL92</acronym> defines two primary character types:
-    <type>char</type> and <type>varchar</type>. 
+    <acronym>SQL</acronym> defines two primary character types:
+    <type>character</type> and <type>character varying</type>. 
     <productname>Postgres</productname> supports these types, in
     addition to the more general <type>text</type> type, 
-    which unlike <type>varchar</type>
+    which unlike <type>character varying</type>
     does not require an explicit declared upper
     limit on the size of the field.
    </para>
@@ -483,16 +470,16 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       </thead>
       <tbody>
        <row>
-	<entry>"char"</entry>
-	<entry>1 byte</entry>
-	<entry><acronym>SQL92</acronym>-compatible</entry>
-	<entry>Single character</entry>
+	<entry>character(n), char(n)</entry>
+	<entry>(4+n) bytes</entry>
+	<entry><acronym>SQL</acronym>-compatible</entry>
+	<entry>Fixed-length blank padded</entry>
        </row>
        <row>
-	<entry>char(n)</entry>
+	<entry>character varying(n), varchar(n)</entry>
 	<entry>(4+n) bytes</entry>
-	<entry><acronym>SQL92</acronym>-compatible</entry>
-	<entry>Fixed-length blank padded</entry>
+	<entry><acronym>SQL</acronym>-compatible</entry>
+	<entry>Variable-length with limit</entry>
        </row>
        <row>
 	<entry>text</entry>
@@ -500,26 +487,32 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 	<entry>Most flexible</entry>
 	<entry>Variable unlimited length</entry>
        </row>
-       <row>
-	<entry>varchar(n)</entry>
-	<entry>(4+n) bytes</entry>
-	<entry><acronym>SQL92</acronym>-compatible</entry>
-	<entry>Variable-length with limit</entry>
-       </row>
       </tbody>
      </tgroup>
     </table>
+
+    <note>
+     <para>
+      Although the type <type>text</type> is not SQL-compliant, many
+      other RDBMS packages have it as well.
+     </para>
+    </note>
    </para>
 
    <para>
-    There is one other fixed-length character type in <productname>Postgres</productname>.
-    The <type>name</type> type exists <emphasis>only</emphasis> for
-    storage of internal catalog names and
-    is not intended for use by the general user.
-    Its length is currently defined as 32 bytes (31 characters plus terminator) 
-    but should be reference using NAMEDATALEN.
-    The length is set at compile time (and is therefore adjustable for
-    special uses); the default maximum length may change in a future release.
+    There are two other fixed-length character types in
+    <productname>Postgres</productname>.  The <type>name</type> type
+    exists <emphasis>only</emphasis> for storage of internal catalog
+    names and is not intended for use by the general user.  Its length
+    is currently defined as 32 bytes (31 characters plus terminator)
+    but should be referenced using the macro
+    <symbol>NAMEDATALEN</symbol>.  The length is set at compile time
+    (and is therefore adjustable for special uses); the default
+    maximum length may change in a future release.  The type
+    <type>"char"</type> (note the quotes) is different from
+    <type>char(1)</type> in that it only uses one byte of storage.  It
+    is internally used in the system catalogs as a poor-man's
+    enumeration type.
    </para>
 
    <para>
@@ -536,6 +529,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       </thead>
       <tbody>
        <row>
+	<entry>"char"</entry>
+	<entry>1 byte</entry>
+	<entry>Single character internal type</entry>
+       </row>
+       <row>
 	<entry>name</entry>
 	<entry>32 bytes</entry>
 	<entry>Thirty-one character internal type</entry>
@@ -547,7 +545,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
   </sect1>
 
-  <sect1 id="datetime-types">
+  <sect1 id="datatype-datetime">
    <title>Date/Time Types</title>
 
    <para>
@@ -641,7 +639,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </para>
 
 
-   <sect2>
+   <sect2 id="datatype-datetime-input">
     <title>Date/Time Input</title>
 
     <para>
@@ -658,7 +656,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     </para>
 
     <para>
-     See <xref endterm="datetime-appendix-title" linkend="datetime-appendix-title">
+     See <xref linkend="datetime-appendix">
      for the exact parsing rules of date/time input and for the recognized time zones.
     </para>
 
@@ -956,7 +954,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     </para>
 
      <para>
-      Refer to <xref endterm="timezone-title" linkend="timezone"> for
+      Refer to <xref linkend="datatype-timezone-table"> for
       more examples of time zones.
      </para>
     </sect3>
@@ -984,8 +982,8 @@ January 8 04:05:06 1999 PST
      </para>
 
      <para>
-      <table tocentry="1" id="timezone">
-       <title id="timezone-title"><productname>Postgres</productname> Time Zone Input</title>
+      <table tocentry="1" id="datatype-timezone-table">
+       <title><productname>Postgres</productname> Time Zone Input</title>
        <titleabbrev>Time Zone Inputs</titleabbrev>
        <tgroup cols="2">
 	<thead>
@@ -1112,7 +1110,7 @@ January 8 04:05:06 1999 PST
    </sect2>
 
 
-   <sect2>
+   <sect2 id="datatype-datetime-output">
     <title>Date/Time Output</title>
 
     <para>
@@ -1231,7 +1229,7 @@ January 8 04:05:06 1999 PST
 
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-timezones">
     <title>Time Zones</title>
 
     <para>
@@ -1351,7 +1349,7 @@ January 8 04:05:06 1999 PST
 
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-datetime-internals">
     <title>Internals</title>
 
     <para>
@@ -1370,22 +1368,21 @@ January 8 04:05:06 1999 PST
 
   </sect1>
 
-  <sect1 id="boolean-type">
+  <sect1 id="datatype-boolean">
    <title>Boolean Type</title>
 
    <para>
-    <productname>Postgres</productname> supports <type>bool</type> as
-    the <acronym>SQL99</acronym> boolean type.
-    <type>bool</type> can have one of only two states: 'true' or 'false'. 
-    A third state, 'unknown', is not
-    implemented and is not suggested in <acronym>SQL99</acronym>; 
-    <acronym>NULL</acronym> is an
-    effective substitute. <type>bool</type> can be used in any boolean expression, 
-    and boolean expressions
-    always evaluate to a result compatible with this type.</para>
+    <productname>Postgres</productname> supports the
+    <acronym>SQL99</acronym> <type>boolean</type> type.
+    <type>boolean</type> can have one of only two states: 'true' or
+    'false'.  A third state, 'unknown', is represented by the SQL NULL
+    state. <type>boolean</type> can be used in any boolean expression,
+    and boolean expressions always evaluate to a result compatible
+    with this type.
+   </para>
 
    <para>
-    <type>bool</type> uses 1 byte of storage.
+    <type>boolean</type> uses 1 byte of storage.
    </para>
 
    <para>
@@ -1417,7 +1414,7 @@ January 8 04:05:06 1999 PST
    </para>
   </sect1>
 
-  <sect1 id="geometric-types">
+  <sect1 id="datatype-geometric">
    <title>Geometric Types</title>
 
    <para>
@@ -1746,7 +1743,7 @@ January 8 04:05:06 1999 PST
 
   </sect1>
 
-  <sect1 id="net-types">
+  <sect1 id="datatype-net-types">
    <title>Network Address Data Types</title>
 
    <para>
@@ -1755,7 +1752,7 @@ January 8 04:05:06 1999 PST
     types, because these types offer input error checking and several
     specialized operators and functions.
 
-    <table tocentry="1" id="net-types-table">
+    <table tocentry="1" id="datatype-net-types-table">
      <title>Network Address Data Types</title>
      <tgroup cols="4">
       <thead>
@@ -1799,7 +1796,7 @@ January 8 04:05:06 1999 PST
    </para>
 
 
-   <sect2 id="inet-type">
+   <sect2 id="datatype-inet">
     <title><type>inet</type></title>
 
     <para>
@@ -1825,7 +1822,7 @@ January 8 04:05:06 1999 PST
     </para>
    </sect2>
 
-   <sect2 id="cidr-type">
+   <sect2 id="datatype-cidr">
     <title><type>cidr</></title>
 
     <para>
@@ -1918,7 +1915,7 @@ January 8 04:05:06 1999 PST
     </para>
    </sect2>
 
-   <sect2 id="inet-vs-cidr">
+   <sect2 id="datatype-inet-vs-cidr">
     <title><type>inet</type> vs <type>cidr</type></title>
 
     <para>
@@ -1936,7 +1933,7 @@ January 8 04:05:06 1999 PST
     </para>
    </sect2>
 
-   <sect2 id="macaddr-type">
+   <sect2 id="datatype-macaddr">
     <title><type>macaddr</></>
 
     <para>
@@ -1952,6 +1949,40 @@ January 8 04:05:06 1999 PST
      latter of the given forms.
     </para>
    </sect2>
+
+  </sect1>
+
+  <sect1 id="datatype-bit">
+   <title>Bit String Types</title>
+
+   <para>
+    Bit strings are strings of 1's and 0's.  They can be used to store
+    or visualize bit masks.  There are two SQL bit types:
+    <type>BIT(<replaceable>x</replaceable>)</type> and <type>BIT
+    VARYING(<replaceable>x</replaceable>)</type>; the
+    <replaceable>x</replaceable> specifies the maximum length.
+    <type>BIT</type> type data is automatically padded with 0's on the
+    right to the maximum length, <type>BIT VARYING</type> is of
+    variable length.  <type>BIT</type> without length is requivalent
+    to <literal>BIT(1)</literal>, <type>BIT VARYING</type> means
+    unlimited length.  Input data that is longer than the allowed
+    length will be truncated.  Refer to <xref
+    linkend="sql-syntax-bit-strings"> for information about the syntax
+    of bit string constants.  Bit-logical operators and string
+    manipulation functions are available; see <xref
+    linkend="functions">.
+   </para>
+
+   <informalexample>
+    <para>
+     Some examples:
+<programlisting>
+CREATE TABLE test (a BIT(3), b BIT VARYING(5));
+INSERT INTO test VALUES (B'101', B'00');
+SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
+</programlisting>
+    </para>
+   </informalexample>
 
   </sect1>
 

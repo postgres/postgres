@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.33 2001/01/08 22:07:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.34 2001/01/13 18:34:51 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -232,7 +232,7 @@ SELECT 'foo'      'bar';
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="sql-syntax-bit-strings">
     <title>Bit String Constants</title>
 
     <para>

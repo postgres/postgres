@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.46 2000/12/22 18:00:24 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.47 2001/01/13 18:34:51 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -184,42 +184,102 @@
       <entry>@ -5.0</entry>
       <entry>5.0</entry>
      </row>
+
+     <row>
+      <entry> <literal>&amp;</literal> </entry>
+      <entry>Binary AND</entry>
+      <entry>91 & 15</entry>
+      <entry>11</entry>
+     </row>
+
+     <row>
+      <entry> <literal>|</literal> </entry>
+      <entry>Binary OR</entry>
+      <entry>32 | 3</entry>
+      <entry>35</entry>
+     </row>
+
+     <row>
+      <entry> <literal>#</literal> </entry>
+      <entry>Binary XOR</entry>
+      <entry>17 # 5</entry>
+      <entry>20</entry>
+     </row>
+
+     <row>
+      <entry> <literal>~</literal> </entry>
+      <entry>Binary NOT</entry>
+      <entry>~1</entry>
+      <entry>-2</entry>
+     </row>
+
+     <row>
+      <entry> &lt;&lt; </entry>
+      <entry>Binary shift left</entry>
+      <entry>1 &lt;&lt; 4</entry>
+      <entry>16</entry>
+     </row>
+
+     <row>
+      <entry> &gt;&gt; </entry>
+      <entry>Binary shift right</entry>
+      <entry>8 &gt;&gt; 2</entry>
+      <entry>2</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
 
-<!--
-       <ROW>
-	<ENTRY> & </ENTRY>
-	<ENTRY>Binary AND</ENTRY>
-	<ENTRY>91 & 15</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> | </ENTRY>
-	<ENTRY>Binary OR</ENTRY>
-	<ENTRY>32 | 3</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> # </ENTRY>
-	<ENTRY>Binary XOR</ENTRY>
-	<ENTRY>15 # 4</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> ~ </ENTRY>
-	<ENTRY>Binary NOT</ENTRY>
-	<ENTRY>~1</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &lt;&lt; </ENTRY>
-	<ENTRY>Binary shift left</ENTRY>
-	<ENTRY>1 &lt;&lt; 4</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &gt;&gt; </ENTRY>
-	<ENTRY>Binary shift right</ENTRY>
-	<ENTRY>8 &gt;&gt; 2</ENTRY>
-       </ROW>
--->
+  <para>
+   The <quote>binary</quote> operators are also available for the bit
+   string types <type>BIT</type> and <type>BIT VARYING</type>.
+
+   <table>
+    <title>Bit String Binary Operators</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Example</entry>
+       <entry>Result</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>B'10001' & B'01101'</entry>
+       <entry>00001</entry>
+      </row>
+      <row>
+       <entry>B'10001' | B'01101'</entry>
+       <entry>11101</entry>
+      </row>
+      <row>
+       <entry>B'10001' # B'01101'</entry>
+       <entry>11110</entry>
+      </row>
+      <row>
+       <entry>~ B'10001'</entry>
+       <entry>01110</entry>
+      </row>
+      <row>
+       <entry>B'10001' << 3</entry>
+       <entry>01000</entry>
+      </row>
+      <row>
+       <entry>B'10001' >> 2</entry>
+       <entry>00100</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   Bit string arguments to <literal>&</literal>, <literal>|</literal>,
+   and <literal>#</literal> must be of equal length.  When bit
+   shifting, the original length of the string is preserved, as shown
+   here.
+  </para>
 
   <table tocentry="1">
    <title>Mathematical Functions</title>
@@ -484,7 +544,8 @@
    wary of potential effects of the automatic padding when using the
    <type>CHARACTER</type> type.  Generally the functions described
    here also work on data of non-string types by converting that data
-   to a string representation first.
+   to a string representation first.  Some functions also exist
+   natively for bit string types.
   </para>
 
   <para>
