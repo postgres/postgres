@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.40 2000/01/18 05:10:29 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.41 2000/01/18 13:46:10 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ const char *pg_encoding_to_char(int encoding)
 int	pg_char_to_encoding(const char *encoding_string)
 {
 	elog(ERROR, "MultiByte support must be enabled to use this function");
-	return ("");
+	return (0);
 }
 
 #endif
