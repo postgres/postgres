@@ -181,11 +181,10 @@ SQLFreeStmt(HSTMT hstmt,
 		SC_Destructor(stmt);
 	}
 	else if (fOption == SQL_UNBIND)
-	{
 		SC_unbind_cols(stmt);
-	}
 	else if (fOption == SQL_CLOSE)
 	{
+
 		/*
 		 * this should discard all the results, but leave the statement
 		 * itself in place (it can be executed again)
@@ -198,9 +197,7 @@ SQLFreeStmt(HSTMT hstmt,
 		}
 	}
 	else if (fOption == SQL_RESET_PARAMS)
-	{
 		SC_free_params(stmt, STMT_FREE_PARAMS_ALL);
-	}
 	else
 	{
 		stmt->errormsg = "Invalid option passed to SQLFreeStmt.";
@@ -321,8 +318,8 @@ SC_Destructor(StatementClass *self)
 
 	/*
 	 * the memory pointed to by the bindings is not deallocated by the
-	 * driver but by the application that uses that driver, so we don't have to
-	 * care
+	 * driver but by the application that uses that driver, so we don't
+	 * have to care
 	 */
 	/* about that here. */
 	if (self->bindings)
@@ -534,8 +531,8 @@ SC_recycle_statement(StatementClass *self)
 
 	/*
 	 * Free any data at exec params before the statement is executed
-	 * again.  If not, then there will be a memory leak when
-	 * the next SQLParamData/SQLPutData is called.
+	 * again.  If not, then there will be a memory leak when the next
+	 * SQLParamData/SQLPutData is called.
 	 */
 	SC_free_params(self, STMT_FREE_PARAMS_DATA_AT_EXEC_ONLY);
 
@@ -555,7 +552,8 @@ SC_pre_execute(StatementClass *self)
 
 		if (self->statement_type == STMT_TYPE_SELECT)
 		{
-			char old_pre_executing = self->pre_executing;
+			char		old_pre_executing = self->pre_executing;
+
 			self->pre_executing = TRUE;
 			self->inaccurate_result = FALSE;
 
@@ -657,7 +655,7 @@ SC_get_error(StatementClass *self, int *number, char **message)
 {
 	char		rv;
 
-	/*	Create a very informative errormsg if it hasn't been done yet. */
+	/* Create a very informative errormsg if it hasn't been done yet. */
 	if (!self->errormsg_created)
 	{
 		self->errormsg = SC_create_errormsg(self);
@@ -715,6 +713,7 @@ SC_fetch(StatementClass *self)
 		if (self->currTuple >= QR_get_num_tuples(res) - 1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1))
 		{
+
 			/*
 			 * if at the end of the tuples, return "no data found" and set
 			 * the cursor past the end of the result set
@@ -824,13 +823,13 @@ SC_fetch(StatementClass *self)
 					result = SQL_SUCCESS_WITH_INFO;
 					break;
 
-				/* error msg already filled in */
+					/* error msg already filled in */
 				case COPY_GENERAL_ERROR:
 					SC_log_error(func, "", self);
 					result = SQL_ERROR;
 					break;
 
-				/* This would not be meaningful in SQLFetch. */
+					/* This would not be meaningful in SQLFetch. */
 				case COPY_NO_DATA_FOUND:
 					break;
 

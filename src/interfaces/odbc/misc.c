@@ -85,6 +85,7 @@ mylog(char *fmt,...)
 		va_end(args);
 	}
 }
+
 #endif
 
 
@@ -114,6 +115,7 @@ qlog(char *fmt,...)
 		va_end(args);
 	}
 }
+
 #endif
 
 /*	Undefine these because windows.h will redefine and cause a warning */

@@ -110,18 +110,18 @@ multibyte_char_check(unsigned char s)
 			break;
 
 			/* Chinese Big5(CP950) Support. */
-			case BIG5:
-				{
-					if (multibyte_status < 2 && s > 0xA0)
-						multibyte_status = 2;
-					else if (multibyte_status == 2)
-						multibyte_status = 1;
-					else
-						multibyte_status = 0;
-				}
-				break;
-			default:
-				multibyte_status = 0;
+		case BIG5:
+			{
+				if (multibyte_status < 2 && s > 0xA0)
+					multibyte_status = 2;
+				else if (multibyte_status == 2)
+					multibyte_status = 1;
+				else
+					multibyte_status = 0;
+			}
+			break;
+		default:
+			multibyte_status = 0;
 	}
 #ifdef _DEBUG
 	qlog("multibyte_client_encoding = %d   s = 0x%02X   multibyte_stat = %d\n", multibyte_client_encoding, s, multibyte_status);

@@ -153,8 +153,8 @@ SQLExecDirect(
 		free(stmt->statement);
 
 	/*
-	 * keep a copy of the un-parametrized statement, in case
-	 * they try to execute this statement again
+	 * keep a copy of the un-parametrized statement, in case they try to
+	 * execute this statement again
 	 */
 	stmt->statement = make_string(szSqlStr, cbSqlStr, NULL);
 	if (!stmt->statement)
@@ -170,9 +170,9 @@ SQLExecDirect(
 	stmt->prepare = FALSE;
 
 	/*
-	 * If an SQLPrepare was performed prior to this, but was left in
-	 * the premature state because an error occurred prior to SQLExecute
-	 * then set the statement to finished so it can be recycled.
+	 * If an SQLPrepare was performed prior to this, but was left in the
+	 * premature state because an error occurred prior to SQLExecute then
+	 * set the statement to finished so it can be recycled.
 	 */
 	if (stmt->status == STMT_PREMATURE)
 		stmt->status = STMT_FINISHED;
@@ -288,18 +288,23 @@ SQLExecute(
 		return SQL_ERROR;
 	}
 
-	/* Check if statement has any data-at-execute parameters when it is not in SC_pre_execute. */
+	/*
+	 * Check if statement has any data-at-execute parameters when it is
+	 * not in SC_pre_execute.
+	 */
 	if (!stmt->pre_executing)
 	{
 
 		/*
 		 * The bound parameters could have possibly changed since the last
-		 * execute of this statement?  Therefore check for params and re-copy.
+		 * execute of this statement?  Therefore check for params and
+		 * re-copy.
 		 */
 		stmt->data_at_exec = -1;
 		for (i = 0; i < stmt->parameters_allocated; i++)
 		{
-			Int4 *pcVal = stmt->parameters[i].used;
+			Int4	   *pcVal = stmt->parameters[i].used;
+
 			if (pcVal && (*pcVal == SQL_DATA_AT_EXEC || *pcVal <= SQL_LEN_DATA_AT_EXEC_OFFSET))
 				stmt->parameters[i].data_at_exec = TRUE;
 			else
@@ -313,11 +318,15 @@ SQLExecute(
 					stmt->data_at_exec++;
 			}
 		}
-		/* If there are some data at execution parameters, return need data */
 
 		/*
-		 * SQLParamData and SQLPutData will be used to send params and execute
-		 * the statement.
+		 * If there are some data at execution parameters, return need
+		 * data
+		 */
+
+		/*
+		 * SQLParamData and SQLPutData will be used to send params and
+		 * execute the statement.
 		 */
 		if (stmt->data_at_exec > 0)
 			return SQL_NEED_DATA;
@@ -449,6 +458,7 @@ SQLCancel(
 	 */
 	if (stmt->data_at_exec < 0)
 	{
+
 		/*
 		 * MAJOR HACK for Windows to reset the driver manager's cursor
 		 * state: Because of what seems like a bug in the Odbc driver
@@ -753,8 +763,8 @@ SQLPutData(
 			}
 
 			/*
-			 * major hack -- to allow convert to see somethings there
-			 * have to modify convert to handle this better
+			 * major hack -- to allow convert to see somethings there have
+			 * to modify convert to handle this better
 			 */
 			current_param->EXEC_buffer = (char *) &current_param->lobj_oid;
 
@@ -787,7 +797,8 @@ SQLPutData(
 			}
 			else
 			{
-				Int2 ctype = current_param->CType;
+				Int2		ctype = current_param->CType;
+
 				if (ctype == SQL_C_DEFAULT)
 					ctype = sqltype_to_default_ctype(current_param->SQLType);
 				if (ctype == SQL_C_CHAR || ctype == SQL_C_BINARY)
@@ -805,7 +816,8 @@ SQLPutData(
 				}
 				else
 				{
-					Int4 used = ctype_length(ctype);
+					Int4		used = ctype_length(ctype);
+
 					current_param->EXEC_buffer = malloc(used);
 					if (!current_param->EXEC_buffer)
 					{

@@ -212,8 +212,8 @@ SQLDescribeCol(
 	SC_clear_error(stmt);
 
 	/*
-	 *	Dont check for bookmark column.	This is the responsibility of the
-	 *	driver manager.
+	 * Dont check for bookmark column. This is the responsibility of the
+	 * driver manager.
 	 */
 
 	icol--;						/* use zero based column numbers */
@@ -251,9 +251,9 @@ SQLDescribeCol(
 	}
 
 	/*
-	 *	If couldn't parse it OR the field being described was not parsed
-	 *	(i.e., because it was a function or expression, etc, then do it the
-	 *	old fashioned way.
+	 * If couldn't parse it OR the field being described was not parsed
+	 * (i.e., because it was a function or expression, etc, then do it the
+	 * old fashioned way.
 	 */
 	if (!parse_ok)
 	{
@@ -285,7 +285,7 @@ SQLDescribeCol(
 
 		/* atoi(ci->unknown_sizes) */
 		precision = pgtype_precision(stmt, fieldtype, icol, globals.unknown_sizes);
- 	}
+	}
 
 	mylog("describeCol: col %d fieldname = '%s'\n", icol, col_name);
 	mylog("describeCol: col %d fieldtype = %d\n", icol, fieldtype);
@@ -407,10 +407,10 @@ SQLColAttributes(
 	icol--;
 
 	/* atoi(ci->unknown_sizes); */
-	unknown_sizes = globals.unknown_sizes;		
+	unknown_sizes = globals.unknown_sizes;
 
 	/* not appropriate for SQLColAttributes() */
-	if (unknown_sizes == UNKNOWNS_AS_DONTKNOW)	
+	if (unknown_sizes == UNKNOWNS_AS_DONTKNOW)
 		unknown_sizes = UNKNOWNS_AS_MAX;
 
 	parse_ok = FALSE;
@@ -505,11 +505,11 @@ SQLColAttributes(
 			value = pgtype_case_sensitive(stmt, field_type);
 			break;
 
-		/*
-		 * This special case is handled above.
-		 *
-		 * case SQL_COLUMN_COUNT:
-		 */
+			/*
+			 * This special case is handled above.
+			 *
+			 * case SQL_COLUMN_COUNT:
+			 */
 		case SQL_COLUMN_DISPLAY_SIZE:
 			value = (parse_ok) ? stmt->fi[icol]->display_size : pgtype_display_size(stmt, field_type, icol, unknown_sizes);
 
@@ -592,6 +592,7 @@ SQLColAttributes(
 			break;
 
 		case SQL_COLUMN_UPDATABLE:
+
 			/*
 			 * Neither Access or Borland care about this.
 			 *
@@ -992,6 +993,7 @@ SQLExtendedFetch(
 	switch (fFetchType)
 	{
 		case SQL_FETCH_NEXT:
+
 			/*
 			 * From the odbc spec... If positioned before the start of the
 			 * RESULT SET, then this should be equivalent to
@@ -1009,6 +1011,7 @@ SQLExtendedFetch(
 
 		case SQL_FETCH_PRIOR:
 			mylog("SQL_FETCH_PRIOR: num_tuples=%d, currtuple=%d\n", num_tuples, stmt->currTuple);
+
 			/*
 			 * From the odbc spec... If positioned after the end of the
 			 * RESULT SET, then this should be equivalent to
@@ -1054,6 +1057,7 @@ SQLExtendedFetch(
 			break;
 
 		case SQL_FETCH_RELATIVE:
+
 			/*
 			 * Refresh the current rowset -- not currently implemented,
 			 * but lie anyway

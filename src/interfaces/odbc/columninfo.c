@@ -61,7 +61,8 @@ CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 	Oid			new_adtid;
 	Int2		new_adtsize;
 	Int4		new_atttypmod = -1;
-	/* MAX_COLUMN_LEN may be sufficient but for safety */ 
+
+	/* MAX_COLUMN_LEN may be sufficient but for safety */
 	char		new_field_name[2 * MAX_COLUMN_LEN + 1];
 	SocketClass *sock;
 	ConnInfo   *ci;
@@ -152,7 +153,7 @@ CI_set_num_fields(ColumnInfoClass *self, int new_num_fields)
 	self->num_fields = new_num_fields;
 
 	self->name = (char **) malloc(sizeof(char *) * self->num_fields);
-	memset(self->name, 0,  sizeof(char *) * self->num_fields);
+	memset(self->name, 0, sizeof(char *) * self->num_fields);
 	self->adtid = (Oid *) malloc(sizeof(Oid) * self->num_fields);
 	self->adtsize = (Int2 *) malloc(sizeof(Int2) * self->num_fields);
 	self->display_size = (Int2 *) malloc(sizeof(Int2) * self->num_fields);

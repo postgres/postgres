@@ -112,9 +112,9 @@ SQLDriverConnect(
 	dconn_get_connect_attributes(connStrIn, ci);
 
 	/*
-	 * If the ConnInfo in the hdbc is missing anything,
-	 * this function will fill them in from the registry (assuming
-	 * of course there is a DSN given -- if not, it does nothing!)
+	 * If the ConnInfo in the hdbc is missing anything, this function will
+	 * fill them in from the registry (assuming of course there is a DSN
+	 * given -- if not, it does nothing!)
 	 */
 	getDSNinfo(ci, CONN_DONT_OVERWRITE);
 
@@ -175,7 +175,7 @@ dialog:
 		ci->database[0] == '\0' ||
 		ci->port[0] == '\0')
 	{
-	/*	(password_required && ci->password[0] == '\0')) */
+		/* (password_required && ci->password[0] == '\0')) */
 
 		return SQL_NO_DATA_FOUND;
 	}
@@ -217,6 +217,7 @@ dialog:
 
 	if (szConnStrOut)
 	{
+
 		/*
 		 * Return the completed string to the caller. The correct method
 		 * is to only construct the connect string if a dialog was put up,

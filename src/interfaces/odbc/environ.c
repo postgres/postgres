@@ -308,6 +308,7 @@ SQLError(
 						break;
 					case CONN_TRANSACT_IN_PROGRES:
 						strcpy(szSqlState, "S1010");
+
 						/*
 						 * when the user tries to switch commit mode in a
 						 * transaction
@@ -441,8 +442,8 @@ EN_Destructor(EnvironmentClass *self)
 	mylog("in EN_Destructor, self=%u\n", self);
 
 	/*
-	 * the error messages are static strings distributed throughout
-	 * the source--they should not be freed
+	 * the error messages are static strings distributed throughout the
+	 * source--they should not be freed
 	 */
 
 	/* Free any connections belonging to this environment */

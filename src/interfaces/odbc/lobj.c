@@ -41,7 +41,7 @@ lo_open(ConnectionClass *conn, int lobjId, int mode)
 	int			fd;
 	int			result_len;
 	LO_ARG		argv[2];
- 
+
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = lobjId;

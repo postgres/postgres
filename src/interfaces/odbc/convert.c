@@ -69,7 +69,7 @@ extern GLOBAL_VALUES globals;
  *	How to map ODBC scalar functions {fn func(args)} to Postgres.
  *	This is just a simple substitution.  List augmented from:
  *	http://www.merant.com/datadirect/download/docs/odbc16/Odbcref/rappc.htm
- * 	- thomas 2000-04-03
+ *	- thomas 2000-04-03
  */
 char	   *mapFuncs[][2] = {
 /*	{ "ASCII",		 "ascii"	  }, */
@@ -199,9 +199,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	 */
 
 	if (bind_size > 0)
-	{
 		pcbValueOffset = rgbValueOffset = (bind_size * bind_row);
-	}
 	else
 	{
 		pcbValueOffset = bind_row * sizeof(SDWORD);
@@ -221,9 +219,10 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 	if (!value)
 	{
+
 		/*
-		 * handle a null just by returning SQL_NULL_DATA in pcbValue,
-		 * and doing nothing to the buffer.
+		 * handle a null just by returning SQL_NULL_DATA in pcbValue, and
+		 * doing nothing to the buffer.
 		 */
 		if (pcbValue)
 			*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = SQL_NULL_DATA;
@@ -242,18 +241,18 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	}
 
 	/*
-	 *	First convert any specific postgres types into more
-	 *	useable data.
+	 * First convert any specific postgres types into more useable data.
 	 *
-	 *	NOTE: Conversions from PG char/varchar of a date/time/timestamp
-	 *	value to SQL_C_DATE,SQL_C_TIME, SQL_C_TIMESTAMP not supported
+	 * NOTE: Conversions from PG char/varchar of a date/time/timestamp value
+	 * to SQL_C_DATE,SQL_C_TIME, SQL_C_TIMESTAMP not supported
 	 */
 	switch (field_type)
 	{
-		/*
-		 * $$$ need to add parsing for date/time/timestamp strings in
-		 * PG_TYPE_CHAR,VARCHAR $$$
-		 */
+
+			/*
+			 * $$$ need to add parsing for date/time/timestamp strings in
+			 * PG_TYPE_CHAR,VARCHAR $$$
+			 */
 		case PG_TYPE_DATE:
 			sscanf(value, "%4d-%2d-%2d", &st.y, &st.m, &st.d);
 			break;
@@ -269,9 +268,10 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);
 			else
 			{
+
 				/*
-				 * The timestamp is invalid so set
-				 * something conspicuous, like the epoch
+				 * The timestamp is invalid so set something conspicuous,
+				 * like the epoch
 				 */
 				t = 0;
 				tim = localtime(&t);
@@ -295,7 +295,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			}
 			break;
 
-		/* This is for internal use by SQLStatistics() */
+			/* This is for internal use by SQLStatistics() */
 		case PG_TYPE_INT2VECTOR:
 			{
 				int			nval,
@@ -379,6 +379,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	if (fCType == SQL_C_CHAR)
 	{
 		/* Special character formatting as required */
+
 		/*
 		 * These really should return error if cbValueMax is not big
 		 * enough.
@@ -483,6 +484,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	}
 	else
 	{
+
 		/*
 		 * for SQL_C_CHAR, it's probably ok to leave currency symbols in.
 		 * But to convert to numeric types, it is necessary to get rid of
@@ -780,8 +782,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 #ifdef MULTIBYTE
 			char	   *end = multibyte_strchr(begin, '}');
+
 #else
 			char	   *end = strchr(begin, '}');
+
 #endif
 
 			if (!end)
@@ -806,6 +810,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 			*end = '}';
 			continue;
 		}
+
 		/*
 		 * Can you have parameter markers inside of quotes?  I dont think
 		 * so. All the queries I've seen expect the driver to put quotes
@@ -1101,9 +1106,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 			case SQL_LONGVARBINARY:
 
 				if (stmt->parameters[param_number].data_at_exec)
-				{
 					lobj_oid = stmt->parameters[param_number].lobj_oid;
-				}
 				else
 				{
 					/* begin transaction if needed */
@@ -1308,7 +1311,8 @@ convert_escape(char *value)
 
 	if ((strcmp(key, "d") == 0) ||
 		(strcmp(key, "t") == 0) ||
-		(strcmp(key, "oj") == 0) || /* {oj syntax support for 7.1 servers */
+		(strcmp(key, "oj") == 0) ||		/* {oj syntax support for 7.1
+										 * servers */
 		(strcmp(key, "ts") == 0))
 	{
 		/* Literal; return the escape part as-is */
@@ -1316,6 +1320,7 @@ convert_escape(char *value)
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
+
 		/*
 		 * Function invocation Separate off the func name, skipping
 		 * trailing whitespace.
@@ -1722,7 +1727,7 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 	BindInfoClass *bindInfo = NULL;
 
 
-	/*	If using SQLGetData, then current_col will be set */
+	/* If using SQLGetData, then current_col will be set */
 	if (stmt->current_col >= 0)
 	{
 		bindInfo = &stmt->bindings[stmt->current_col];

@@ -4,7 +4,7 @@
  * Description:		This module contains functions related to
  *					managing result information (i.e, fetching rows
  *					from the backend, managing the tuple cache, etc.)
- *					and retrieving it.  Depending on the situation, a
+ *					and retrieving it.	Depending on the situation, a
  *					QResultClass will hold either data from the backend
  *					or a manually built result (see "qresult.h" to
  *					see which functions/macros are for manual or backend
@@ -138,8 +138,8 @@ QR_Destructor(QResultClass *self)
 		TL_Destructor(self->manual_tuples);
 
 	/*
-	 * If conn is defined, then we may have used "backend_tuples",
-	 * so in case we need to, free it up.  Also, close the cursor.
+	 * If conn is defined, then we may have used "backend_tuples", so in
+	 * case we need to, free it up.  Also, close the cursor.
 	 */
 	if (self->conn && self->conn->sock && CC_is_in_trans(self->conn))
 		QR_close(self);			/* close the cursor if there is one */
@@ -232,11 +232,10 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 	int			tuple_size;
 
 	/*
-	 * If called from send_query the first time (conn != NULL),
-	 * then set the inTuples state,
-	 * and read the tuples.  If conn is NULL,
-	 * it implies that we are being called from next_tuple(),
-	 * like to get more rows so don't call next_tuple again!
+	 * If called from send_query the first time (conn != NULL), then set
+	 * the inTuples state, and read the tuples.  If conn is NULL, it
+	 * implies that we are being called from next_tuple(), like to get
+	 * more rows so don't call next_tuple again!
 	 */
 	if (conn != NULL)
 	{
@@ -303,9 +302,10 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 	}
 	else
 	{
+
 		/*
-		 * Always have to read the field attributes.
-		 * But we dont have to reallocate memory for them!
+		 * Always have to read the field attributes. But we dont have to
+		 * reallocate memory for them!
 		 */
 
 		if (!CI_read_fields(NULL, self->conn))
@@ -390,8 +390,10 @@ QR_next_tuple(QResultClass *self)
 	int			end_tuple = self->rowset_size + self->base;
 	char		corrected = FALSE;
 	TupleField *the_tuples = self->backend_tuples;
+
 	/* ERROR_MSG_LENGTH is sufficient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
+
 	/* QR_set_command() dups this string so doesn't need static */
 	char		cmdbuffer[ERROR_MSG_LENGTH + 1];
 	char		fetch[128];
@@ -413,10 +415,11 @@ QR_next_tuple(QResultClass *self)
 		self->tupleField = NULL;
 		self->status = PGRES_END_TUPLES;
 		/* end of tuples */
-		return -1;				
+		return -1;
 	}
 	else
 	{
+
 		/*
 		 * See if we need to fetch another group of rows. We may be being
 		 * called from send_query(), and if so, don't send another fetch,
@@ -513,7 +516,7 @@ QR_next_tuple(QResultClass *self)
 
 		switch (id)
 		{
-			
+
 			case 'T':			/* Tuples within tuples cannot be handled */
 				self->status = PGRES_BAD_RESPONSE;
 				QR_set_message(self, "Tuples within tuples cannot be handled");
@@ -646,6 +649,7 @@ QR_read_tuple(QResultClass *self, char binary)
 		}
 		else
 		{
+
 			/*
 			 * NO, the field is not null. so get at first the length of
 			 * the field (four bytes)

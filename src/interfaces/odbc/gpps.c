@@ -48,7 +48,7 @@
 
 DWORD
 GetPrivateProfileString(char *theSection,		/* section name */
-						char *theKey,			/* search key name */
+						char *theKey,	/* search key name */
 						char *theDefault,		/* default value if not
 												 * found */
 						char *theReturnBuffer,	/* return value stored
@@ -281,7 +281,7 @@ GetPrivateProfileString(char *theSection,		/* section name */
 
 DWORD
 WritePrivateProfileString(char *theSection,		/* section name */
-						  char *theKey, 		/* write key name */
+						  char *theKey, /* write key name */
 						  char *theBuffer,		/* input buffer */
 						  char *theIniFileName) /* pathname of ini file to
 												 * write */
@@ -298,7 +298,7 @@ WritePrivateProfileString(char *theSection,		/* section name */
  */
 DWORD
 WritePrivateProfileString(char *theSection,		/* section name */
-						  char *theKey, 		/* write key name */
+						  char *theKey, /* write key name */
 						  char *theBuffer,		/* input buffer */
 						  char *theIniFileName) /* pathname of ini file to
 												 * write */
@@ -342,9 +342,8 @@ WritePrivateProfileString(char *theSection,		/* section name */
 
 	/*
 	 * This doesn't make it so we find an ini file but allows normal
-	 * processing to continue further on down. The likelihood is that
-	 * the file won't be found and thus the default value will be
-	 * returned.
+	 * processing to continue further on down. The likelihood is that the
+	 * file won't be found and thus the default value will be returned.
 	 */
 	if (MAXPGPATH - 1 < strlen(ptr) + j)
 	{
@@ -357,8 +356,8 @@ WritePrivateProfileString(char *theSection,		/* section name */
 	sprintf(buf, "%s/%s", ptr, theIniFileName);
 
 	/*
-	 * This code makes it so that a file in the users home dir
-	 * overrides a the "default" file as passed in
+	 * This code makes it so that a file in the users home dir overrides a
+	 * the "default" file as passed in
 	 */
 	aFile = (FILE *) (buf ? fopen(buf, "r+") : NULL);
 	if (!aFile)
@@ -372,9 +371,9 @@ WritePrivateProfileString(char *theSection,		/* section name */
 	aLength = strlen(theBuffer);
 
 	/*
-	 * We have to search for theKey, because if it already
-	 * exists we have to overwrite it. If it doesn't exist
-	 * we just write a new line to the file.
+	 * We have to search for theKey, because if it already exists we have
+	 * to overwrite it. If it doesn't exist we just write a new line to
+	 * the file.
 	 */
 	while (fgets(aLine, sizeof(aLine), aFile) != NULL)
 	{

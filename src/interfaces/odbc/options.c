@@ -67,6 +67,7 @@ set_statement_option(ConnectionClass *conn,
 			break;
 
 		case SQL_CONCURRENCY:
+
 			/*
 			 * positioned update isn't supported so cursor concurrency is
 			 * read-only
@@ -81,18 +82,18 @@ set_statement_option(ConnectionClass *conn,
 			 * if (globals.lie)
 			 * {
 			 *		if (conn)
-			 * 			conn->stmtOptions.scroll_concurrency = vParam;
+			 *			conn->stmtOptions.scroll_concurrency = vParam;
 			 *		if (stmt)
-			 * 			stmt->options.scroll_concurrency = vParam;
+			 *			stmt->options.scroll_concurrency = vParam;
 			 *		} else {
-			 * 			if (conn)
+			 *			if (conn)
 			 *				conn->stmtOptions.scroll_concurrency =
-			 * 					SQL_CONCUR_READ_ONLY;
+			 *					SQL_CONCUR_READ_ONLY;
 			 *			if (stmt)
-			 * 				stmt->options.scroll_concurrency =
+			 *				stmt->options.scroll_concurrency =
 			 *					SQL_CONCUR_READ_ONLY;
 			 *
-			 * 			if (vParam != SQL_CONCUR_READ_ONLY)
+			 *			if (vParam != SQL_CONCUR_READ_ONLY)
 			 *				changed = TRUE;
 			 *		}
 			 *		break;
@@ -101,6 +102,7 @@ set_statement_option(ConnectionClass *conn,
 			 */
 
 		case SQL_CURSOR_TYPE:
+
 			/*
 			 * if declare/fetch, then type can only be forward. otherwise,
 			 * it can only be forward or static.
@@ -171,7 +173,7 @@ set_statement_option(ConnectionClass *conn,
 			 *-------
 			 */
 
-		case SQL_MAX_LENGTH:		/* ignored, but saved */
+		case SQL_MAX_LENGTH:	/* ignored, but saved */
 			mylog("SetStmtOption(): SQL_MAX_LENGTH, vParam = %d\n", vParam);
 			if (conn)
 				conn->stmtOptions.maxLength = vParam;
@@ -179,7 +181,7 @@ set_statement_option(ConnectionClass *conn,
 				stmt->options.maxLength = vParam;
 			break;
 
-		case SQL_MAX_ROWS:			/* ignored, but saved */
+		case SQL_MAX_ROWS:		/* ignored, but saved */
 			mylog("SetStmtOption(): SQL_MAX_ROWS, vParam = %d\n", vParam);
 			if (conn)
 				conn->stmtOptions.maxRows = vParam;
@@ -187,16 +189,16 @@ set_statement_option(ConnectionClass *conn,
 				stmt->options.maxRows = vParam;
 			break;
 
-		case SQL_NOSCAN:			/* ignored */
+		case SQL_NOSCAN:		/* ignored */
 			mylog("SetStmtOption: SQL_NOSCAN, vParam = %d\n", vParam);
 			break;
 
-		case SQL_QUERY_TIMEOUT:		/* ignored */
+		case SQL_QUERY_TIMEOUT:/* ignored */
 			mylog("SetStmtOption: SQL_QUERY_TIMEOUT, vParam = %d\n", vParam);
 			/* "0" returned in SQLGetStmtOption */
 			break;
 
-		case SQL_RETRIEVE_DATA:		/* ignored, but saved */
+		case SQL_RETRIEVE_DATA:/* ignored, but saved */
 			mylog("SetStmtOption(): SQL_RETRIEVE_DATA, vParam = %d\n", vParam);
 			if (conn)
 				conn->stmtOptions.retrieve_data = vParam;
@@ -315,10 +317,11 @@ SQLSetConnectOption(
 
 	switch (fOption)
 	{
-		/*
-		 * Statement Options (apply to all stmts on the connection and
-		 * become defaults for new stmts)
-		 */
+
+			/*
+			 * Statement Options (apply to all stmts on the connection and
+			 * become defaults for new stmts)
+			 */
 		case SQL_ASYNC_ENABLE:
 		case SQL_BIND_TYPE:
 		case SQL_CONCURRENCY:
@@ -353,9 +356,9 @@ SQLSetConnectOption(
 
 			break;
 
-		/*
-		 *	Connection Options
-		 */
+			/*
+			 * Connection Options
+			 */
 
 		case SQL_ACCESS_MODE:	/* ignored */
 			break;
@@ -392,7 +395,7 @@ SQLSetConnectOption(
 		case SQL_CURRENT_QUALIFIER:		/* ignored */
 			break;
 
-		case SQL_LOGIN_TIMEOUT:	/* ignored */
+		case SQL_LOGIN_TIMEOUT:/* ignored */
 			break;
 
 		case SQL_PACKET_SIZE:	/* ignored */
@@ -401,10 +404,10 @@ SQLSetConnectOption(
 		case SQL_QUIET_MODE:	/* ignored */
 			break;
 
-		case SQL_TXN_ISOLATION:	/* ignored */
+		case SQL_TXN_ISOLATION:/* ignored */
 			break;
 
-		/* These options should be handled by driver manager */
+			/* These options should be handled by driver manager */
 		case SQL_ODBC_CURSORS:
 		case SQL_OPT_TRACE:
 		case SQL_OPT_TRACEFILE:
@@ -456,7 +459,7 @@ SQLGetConnectOption(
 
 	switch (fOption)
 	{
-		case SQL_ACCESS_MODE:		/* NOT SUPPORTED */
+		case SQL_ACCESS_MODE:	/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = SQL_MODE_READ_WRITE;
 			break;
 
@@ -471,23 +474,23 @@ SQLGetConnectOption(
 
 			break;
 
-		case SQL_LOGIN_TIMEOUT:		/* NOT SUPPORTED */
+		case SQL_LOGIN_TIMEOUT:/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = 0;
 			break;
 
-		case SQL_PACKET_SIZE:		/* NOT SUPPORTED */
+		case SQL_PACKET_SIZE:	/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = globals.socket_buffersize;
 			break;
 
-		case SQL_QUIET_MODE:		/* NOT SUPPORTED */
+		case SQL_QUIET_MODE:	/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = (UDWORD) NULL;
 			break;
 
-		case SQL_TXN_ISOLATION:		/* NOT SUPPORTED */
+		case SQL_TXN_ISOLATION:/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = SQL_TXN_SERIALIZABLE;
 			break;
 
-		/* These options should be handled by driver manager */
+			/* These options should be handled by driver manager */
 		case SQL_ODBC_CURSORS:
 		case SQL_OPT_TRACE:
 		case SQL_OPT_TRACEFILE:
@@ -525,9 +528,9 @@ SQLSetStmtOption(
 	mylog("%s: entering...\n", func);
 
 	/*
-	 *	Though we could fake Access out by just returning SQL_SUCCESS
-	 * 	all the time, but it tries to set a huge value for SQL_MAX_LENGTH
-	 * 	and expects the driver to reduce it to the real value.
+	 * Though we could fake Access out by just returning SQL_SUCCESS all
+	 * the time, but it tries to set a huge value for SQL_MAX_LENGTH and
+	 * expects the driver to reduce it to the real value.
 	 */
 	if (!stmt)
 	{
@@ -552,9 +555,9 @@ SQLGetStmtOption(
 	mylog("%s: entering...\n", func);
 
 	/*
-	 * thought we could fake Access out by just returning SQL_SUCCESS
-	 * all the time, but it tries to set a huge value for SQL_MAX_LENGTH
-	 * and expects the driver to reduce it to the real value
+	 * thought we could fake Access out by just returning SQL_SUCCESS all
+	 * the time, but it tries to set a huge value for SQL_MAX_LENGTH and
+	 * expects the driver to reduce it to the real value
 	 */
 	if (!stmt)
 	{

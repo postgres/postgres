@@ -762,7 +762,7 @@ CC_connect(ConnectionClass *self, char do_password)
 	CC_set_translation(self);
 
 	/*
-	 *	Send any initial settings
+	 * Send any initial settings
 	 */
 
 	/*
@@ -915,8 +915,10 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 	char		swallow;
 	int			id;
 	SocketClass *sock = self->sock;
+
 	/* ERROR_MSG_LENGTH is suffcient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
+
 	/* QR_set_command() dups this string so doesn't need static */
 	char		cmdbuffer[ERROR_MSG_LENGTH + 1];
 
@@ -1210,6 +1212,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 				c,
 				done;
 	SocketClass *sock = self->sock;
+
 	/* ERROR_MSG_LENGTH is sufficient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
 	int			i;
@@ -1590,8 +1593,8 @@ CC_lookup_pg_version(ConnectionClass *self)
 	}
 
 	/*
-	 *	Extract the Major and Minor numbers from the string.
-	 * 	This assumes the string starts 'Postgresql X.X'
+	 * Extract the Major and Minor numbers from the string. This assumes
+	 * the string starts 'Postgresql X.X'
 	 */
 	strcpy(szVersion, "0.0");
 	if (sscanf(self->pg_version, "%*s %d.%d", &major, &minor) >= 2)

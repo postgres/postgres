@@ -145,7 +145,7 @@ SQLBindParameter(
 
 	/* Data at exec macro only valid for C char/binary data */
 	if (pcbValue && (*pcbValue == SQL_DATA_AT_EXEC ||
-			*pcbValue <= SQL_LEN_DATA_AT_EXEC_OFFSET))
+					 *pcbValue <= SQL_LEN_DATA_AT_EXEC_OFFSET))
 		stmt->parameters[ipar].data_at_exec = TRUE;
 	else
 		stmt->parameters[ipar].data_at_exec = FALSE;
@@ -160,7 +160,7 @@ SQLBindParameter(
 }
 
 
-/*  Associate a user-supplied buffer with a database column. */
+/*	Associate a user-supplied buffer with a database column. */
 RETCODE SQL_API
 SQLBindCol(
 		   HSTMT hstmt,
@@ -220,10 +220,9 @@ SQLBindCol(
 	}
 
 	/*
-	 * Allocate enough bindings if not already done.
-	 * Most likely, execution of a statement would have setup the
-	 * necessary bindings. But some apps call BindCol before any
-	 * statement is executed.
+	 * Allocate enough bindings if not already done. Most likely,
+	 * execution of a statement would have setup the necessary bindings.
+	 * But some apps call BindCol before any statement is executed.
 	 */
 	if (icol > stmt->bindings_allocated)
 		extend_bindings(stmt, icol);
@@ -467,10 +466,11 @@ extend_bindings(StatementClass *stmt, int num_columns)
 		stmt->bindings = new_bindings;
 		stmt->bindings_allocated = num_columns;
 	}
+
 	/*
-	 * There is no reason to zero out extra bindings if there are
-	 * more than needed.  If an app has allocated extra bindings,
-	 * let it worry about it by unbinding those columns.
+	 * There is no reason to zero out extra bindings if there are more
+	 * than needed.  If an app has allocated extra bindings, let it worry
+	 * about it by unbinding those columns.
 	 */
 
 	/* SQLBindCol(1..) ... SQLBindCol(10...)   # got 10 bindings */

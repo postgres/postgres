@@ -227,27 +227,27 @@ SOCK_get_int(SocketClass *self, short len)
 {
 	switch (len)
 	{
-		case 2:
-		{
-			unsigned short	buf;
+			case 2:
+			{
+				unsigned short buf;
 
-			SOCK_get_n_char(self, (char *) &buf, len);
-			if (self->reverse)
-				return buf;
-			else
-				return ntohs(buf);
-		}
+				SOCK_get_n_char(self, (char *) &buf, len);
+				if (self->reverse)
+					return buf;
+				else
+					return ntohs(buf);
+			}
 
 		case 4:
-		{
-			unsigned int	buf;
+			{
+				unsigned int buf;
 
-			SOCK_get_n_char(self, (char *) &buf, len);
-			if (self->reverse)
-				return buf;
-			else
-				return ntohl(buf);
-		}
+				SOCK_get_n_char(self, (char *) &buf, len);
+				if (self->reverse)
+					return buf;
+				else
+					return ntohl(buf);
+			}
 
 		default:
 			self->errornumber = SOCKET_GET_INT_WRONG_LENGTH;
@@ -302,9 +302,9 @@ SOCK_get_next_byte(SocketClass *self)
 {
 	if (self->buffer_read_in >= self->buffer_filled_in)
 	{
+
 		/*
-		 * there are no more bytes left in the buffer so
-		 * reload the buffer
+		 * there are no more bytes left in the buffer so reload the buffer
 		 */
 		self->buffer_read_in = 0;
 		self->buffer_filled_in = recv(self->socket, (char *) self->buffer_in, globals.socket_buffersize, 0);

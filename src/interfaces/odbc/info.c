@@ -153,6 +153,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_CORRELATION_NAME:		/* ODBC 1.0 */
+
 			/*
 			 * Saying no correlation name makes Query not work right.
 			 * value = SQL_CN_NONE;
@@ -180,6 +181,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_DATABASE_NAME:/* Support for old ODBC 1.0 Apps */
+
 			/*
 			 * Returning the database name causes problems in MS Query. It
 			 * generates query like: "SELECT DISTINCT a FROM byronnbad3
@@ -195,6 +197,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_DBMS_VER:		/* ODBC 1.0 */
+
 			/*
 			 * The ODBC spec wants ##.##.#### ...whatever... so prepend
 			 * the driver
@@ -252,6 +255,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_IDENTIFIER_CASE:		/* ODBC 1.0 */
+
 			/*
 			 * are identifiers case-sensitive (yes, but only when quoted.
 			 * If not quoted, they default to lowercase)
@@ -270,6 +274,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_LIKE_ESCAPE_CLAUSE:	/* ODBC 2.0 */
+
 			/*
 			 * is there a character that escapes '%' and '_' in a LIKE
 			 * clause? not as far as I can tell
@@ -362,6 +367,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_MAX_ROW_SIZE_INCLUDES_LONG:	/* ODBC 2.0 */
+
 			/*
 			 * does the preceding value include LONGVARCHAR and
 			 * LONGVARBINARY fields?   Well, it does include longvarchar,
@@ -377,7 +383,7 @@ SQLGetInfo(
 			if (PG_VERSION_GE(conn, 7.0))
 				value = MAX_STATEMENT_LEN;
 			/* Prior to 7.0 we used 2*BLCKSZ */
-			else if (PG_VERSION_GE(conn, 6.5))	
+			else if (PG_VERSION_GE(conn, 6.5))
 				value = (2 * BLCKSZ);
 			else
 				/* Prior to 6.5 we used BLCKSZ */
@@ -410,6 +416,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_NEED_LONG_DATA_LEN:	/* ODBC 2.0 */
+
 			/*
 			 * Don't need the length, SQLPutData can handle any size and
 			 * multiple calls
@@ -537,6 +544,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_ROW_UPDATES:	/* ODBC 1.0 */
+
 			/*
 			 * Driver doesn't support keyset-driven or mixed cursors, so
 			 * not much point in saying row updates are supported
@@ -624,6 +632,7 @@ SQLGetInfo(
 			break;
 
 		case SQL_TXN_CAPABLE:	/* ODBC 1.0 */
+
 			/*
 			 * Postgres can deal with create or drop table statements in a
 			 * transaction
@@ -1297,6 +1306,7 @@ SQLTables(
 	result = SQLFetch(htbl_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
+
 		/*
 		 * Determine if this table name is a system table. If treating
 		 * system tables as regular tables, then no need to do this test.
@@ -1351,9 +1361,9 @@ SQLTables(
 
 			/*
 			 * I have to hide the table owner from Access, otherwise it
-			 * insists on referring to the table as 'owner.table'.
-			 * (this is valid according to the ODBC SQL grammar, but
-			 * Postgres won't support it.)
+			 * insists on referring to the table as 'owner.table'. (this
+			 * is valid according to the ODBC SQL grammar, but Postgres
+			 * won't support it.)
 			 *
 			 * set_tuplefield_string(&row->tuple[1], table_owner);
 			 */
@@ -1379,8 +1389,8 @@ SQLTables(
 	}
 
 	/*
-	 * also, things need to think that this statement is finished so
-	 * the results can be retrieved.
+	 * also, things need to think that this statement is finished so the
+	 * results can be retrieved.
 	 */
 	stmt->status = STMT_FINISHED;
 
@@ -1463,8 +1473,8 @@ SQLColumns(
 	my_strcat(columns_query, " and a.attname like '%.*s'", szColumnName, cbColumnName);
 
 	/*
-	 * give the output in the order the columns were defined
-	 * when the table was created
+	 * give the output in the order the columns were defined when the
+	 * table was created
 	 */
 	strcat(columns_query, " order by attnum");
 
@@ -1787,8 +1797,8 @@ SQLColumns(
 	}
 
 	/*
-	 * Put the row version column at the end so it might not be
-	 * mistaken for a key field.
+	 * Put the row version column at the end so it might not be mistaken
+	 * for a key field.
 	 */
 	if (relhasrules[0] != '1' && !stmt->internal && atoi(ci->row_versioning))
 	{
@@ -1817,8 +1827,8 @@ SQLColumns(
 	}
 
 	/*
-	 * also, things need to think that this statement is finished so
-	 * the results can be retrieved.
+	 * also, things need to think that this statement is finished so the
+	 * results can be retrieved.
 	 */
 	stmt->status = STMT_FINISHED;
 
@@ -2064,8 +2074,8 @@ SQLStatistics(
 	QR_set_field_info(stmt->result, 12, "FILTER_CONDITION", PG_TYPE_TEXT, MAX_INFO_STRING);
 
 	/*
-	 * only use the table name... the owner should be redundant, and
-	 * we never use qualifiers.
+	 * only use the table name... the owner should be redundant, and we
+	 * never use qualifiers.
 	 */
 	table_name = make_string(szTableName, cbTableName, NULL);
 	if (!table_name)
@@ -2077,8 +2087,8 @@ SQLStatistics(
 	}
 
 	/*
-	 * we need to get a list of the field names first,
-	 * so we can return them later.
+	 * we need to get a list of the field names first, so we can return
+	 * them later.
 	 */
 	result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -2168,12 +2178,13 @@ SQLStatistics(
 	result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
+
 		/*
-		 *	"Couldn't execute index query (w/SQLExecDirect) in
-		 *	SQLStatistics.";
+		 * "Couldn't execute index query (w/SQLExecDirect) in
+		 * SQLStatistics.";
 		 */
 		stmt->errormsg = SC_create_errormsg(hindx_stmt);
-		
+
 		stmt->errornumber = indx_stmt->errornumber;
 		SQLFreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
@@ -2343,7 +2354,7 @@ SQLStatistics(
 	if (result != SQL_NO_DATA_FOUND)
 	{
 		/* "SQLFetch failed in SQLStatistics."; */
-		stmt->errormsg = SC_create_errormsg(hindx_stmt);		
+		stmt->errormsg = SC_create_errormsg(hindx_stmt);
 		stmt->errornumber = indx_stmt->errornumber;
 		SQLFreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
@@ -2352,8 +2363,8 @@ SQLStatistics(
 	SQLFreeStmt(hindx_stmt, SQL_DROP);
 
 	/*
-	 * also, things need to think that this statement is finished so
-	 * the results can be retrieved.
+	 * also, things need to think that this statement is finished so the
+	 * results can be retrieved.
 	 */
 	stmt->status = STMT_FINISHED;
 
@@ -2399,7 +2410,7 @@ SQLColumnPrivileges(
 
 	mylog("%s: entering...\n", func);
 
-	/*	Neither Access or Borland care about this. */
+	/* Neither Access or Borland care about this. */
 
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
@@ -2575,8 +2586,8 @@ SQLPrimaryKeys(
 
 
 	/*
-	 * also, things need to think that this statement is finished so
-	 * the results can be retrieved.
+	 * also, things need to think that this statement is finished so the
+	 * results can be retrieved.
 	 */
 	stmt->status = STMT_FINISHED;
 
@@ -2636,11 +2647,12 @@ SQLForeignKeys(
 
 #if (ODBCVER >= 0x0300)
 	SWORD		defer_type;
+
 #endif
 	char		pkey[MAX_INFO_STRING];
 	Int2		result_cols;
 
- 	mylog("%s: entering...stmt=%u\n", func, stmt);
+	mylog("%s: entering...stmt=%u\n", func, stmt);
 
 	if (!stmt)
 	{
@@ -2690,8 +2702,8 @@ SQLForeignKeys(
 #endif	 /* ODBCVER >= 0x0300 */
 
 	/*
-	 * also, things need to think that this statement is finished so
-	 * the results can be retrieved.
+	 * also, things need to think that this statement is finished so the
+	 * results can be retrieved.
 	 */
 	stmt->status = STMT_FINISHED;
 

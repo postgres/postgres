@@ -233,8 +233,9 @@ getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
 char
 searchColInfo(COL_INFO *col_info, FIELD_INFO *fi)
 {
-	int		k, cmp;
-	char		*col;
+	int			k,
+				cmp;
+	char	   *col;
 
 	for (k = 0; k < QR_get_num_tuples(col_info->result); k++)
 	{
@@ -575,7 +576,8 @@ parse_statement(StatementClass *stmt)
 				strcpy(ti[stmt->ntab]->name, token);
 				if (!dquote)
 				{
-					char *ptr;
+					char	   *ptr;
+
 					/* lower case table name */
 					for (ptr = ti[stmt->ntab]->name; *ptr; ptr++)
 						*ptr = tolower((unsigned char) *ptr);

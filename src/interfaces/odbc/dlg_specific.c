@@ -56,6 +56,7 @@ extern GLOBAL_VALUES globals;
 void
 SetDlgStuff(HWND hdlg, ConnInfo *ci)
 {
+
 	/*
 	 * If driver attribute NOT present, then set the datasource name and
 	 * description
@@ -269,7 +270,7 @@ ds_optionsProc(HWND hdlg,
 			else
 				/* latest */
 				CheckDlgButton(hdlg, DS_PG64, 1);
-				
+
 			CheckDlgButton(hdlg, DS_SHOWOIDCOLUMN, atoi(ci->show_oid_column));
 			CheckDlgButton(hdlg, DS_FAKEOIDINDEX, atoi(ci->fake_oid_index));
 			CheckDlgButton(hdlg, DS_ROWVERSIONING, atoi(ci->row_versioning));
@@ -791,6 +792,7 @@ getGlobalDefaults(char *section, char *filename, char override)
 	/* Dont allow override of an override! */
 	if (!override)
 	{
+
 		/*
 		 * ConnSettings is stored in the driver section and per datasource
 		 * for override

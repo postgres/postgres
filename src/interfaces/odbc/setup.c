@@ -66,14 +66,14 @@ BOOL INTFUNC SetDSNAttributes(HWND hwnd, LPSETUPDLG lpsetupdlg);
 /*--------
  *	ConfigDSN
  *
- *  Description:	ODBC Setup entry point
+ *	Description:	ODBC Setup entry point
  *				This entry point is called by the ODBC Installer
  *				(see file header for more details)
- *  Input	 :	hwnd ----------- Parent window handle
+ *	Input	 :	hwnd ----------- Parent window handle
  *				fRequest ------- Request type (i.e., add, config, or remove)
  *				lpszDriver ----- Driver name
  *				lpszAttributes - data source attribute string
- *  Output	 :	TRUE success, FALSE otherwise
+ *	Output	 :	TRUE success, FALSE otherwise
  *--------
  */
 BOOL		CALLBACK
@@ -204,12 +204,12 @@ CenterDialog(HWND hdlg)
 
 /*-------
  * ConfigDlgProc
- *  Description:	Manage add data source name dialog
- *  Input	 :	hdlg --- Dialog window handle
+ *	Description:	Manage add data source name dialog
+ *	Input	 :	hdlg --- Dialog window handle
  *				wMsg --- Message
  *				wParam - Message parameter
  *				lParam - Message parameter
- *  Output	 :	TRUE if message processed, FALSE otherwise
+ *	Output	 :	TRUE if message processed, FALSE otherwise
  *-------
  */
 int			CALLBACK
@@ -261,10 +261,11 @@ ConfigDlgProc(HWND hdlg,
 				return TRUE;	/* Focus was not set */
 			}
 
-		/* Process buttons */
+			/* Process buttons */
 		case WM_COMMAND:
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
+
 					/*
 					 * Ensure the OK button is enabled only when a data
 					 * source name
@@ -283,7 +284,7 @@ ConfigDlgProc(HWND hdlg,
 					}
 					break;
 
-				/* Accept results */
+					/* Accept results */
 				case IDOK:
 					{
 						LPSETUPDLG	lpsetupdlg;
@@ -301,7 +302,7 @@ ConfigDlgProc(HWND hdlg,
 						SetDSNAttributes(hdlg, lpsetupdlg);
 					}
 
-				/* Return to caller */
+					/* Return to caller */
 				case IDCANCEL:
 					EndDialog(hdlg, wParam);
 					return TRUE;
@@ -335,9 +336,9 @@ ConfigDlgProc(HWND hdlg,
 /*-------
  * ParseAttributes
  *
- *  Description:	Parse attribute string moving values into the aAttr array
- *  Input	 :	lpszAttributes - Pointer to attribute string
- *  Output	 :	None (global aAttr normally updated)
+ *	Description:	Parse attribute string moving values into the aAttr array
+ *	Input	 :	lpszAttributes - Pointer to attribute string
+ *	Output	 :	None (global aAttr normally updated)
  *-------
  */
 void		INTFUNC
@@ -353,7 +354,11 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 
 	for (lpsz = lpszAttributes; *lpsz; lpsz++)
 	{
-		/* Extract key name (e.g., DSN), it must be terminated by an equals */
+
+		/*
+		 * Extract key name (e.g., DSN), it must be terminated by an
+		 * equals
+		 */
 		lpszStart = lpsz;
 		for (;; lpsz++)
 		{
@@ -390,9 +395,9 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 /*--------
  * SetDSNAttributes
  *
- *  Description:	Write data source attributes to ODBC.INI
- *  Input	 :	hwnd - Parent window handle (plus globals)
- *  Output	 :	TRUE if successful, FALSE otherwise
+ *	Description:	Write data source attributes to ODBC.INI
+ *	Input	 :	hwnd - Parent window handle (plus globals)
+ *	Output	 :	TRUE if successful, FALSE otherwise
  *--------
  */
 BOOL		INTFUNC
