@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.54 2002/09/18 21:35:22 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.55 2002/10/02 19:21:26 tgl Exp $
  *
  * ----------
  */
@@ -88,7 +88,7 @@ typedef struct NumericVar
  * Local data
  * ----------
  */
-static int	global_rscale = NUMERIC_MIN_RESULT_SCALE;
+static int	global_rscale = 0;
 
 /* ----------
  * Some preinitialized variables we need often
@@ -105,6 +105,18 @@ static NumericVar const_one =
 static NumericDigit const_two_data[1] = {2};
 static NumericVar const_two =
 {1, 0, 0, 0, NUMERIC_POS, NULL, const_two_data};
+
+static NumericDigit const_zero_point_one_data[1] = {1};
+static NumericVar const_zero_point_one =
+{1, -1, 1, 1, NUMERIC_POS, NULL, const_zero_point_one_data};
+
+static NumericDigit const_zero_point_nine_data[1] = {9};
+static NumericVar const_zero_point_nine =
+{1, -1, 1, 1, NUMERIC_POS, NULL, const_zero_point_nine_data};
+
+static NumericDigit const_one_point_one_data[2] = {1, 1};
+static NumericVar const_one_point_one =
+{2, 0, 1, 1, NUMERIC_POS, NULL, const_one_point_one_data};
 
 static NumericVar const_nan =
 {0, 0, 0, 0, NUMERIC_NAN, NULL, NULL};
@@ -145,6 +157,9 @@ static char *get_str_from_var(NumericVar *var, int dscale);
 static Numeric make_result(NumericVar *var);
 
 static void apply_typmod(NumericVar *var, int32 typmod);
+
+static double numeric_to_double_no_overflow(Numeric num);
+static double numericvar_to_double_no_overflow(NumericVar *var);
 
 static int	cmp_numerics(Numeric num1, Numeric num2);
 static int	cmp_var(NumericVar *var1, NumericVar *var2);
@@ -477,8 +492,8 @@ numeric_round(PG_FUNCTION_ARGS)
 	 * Limit the scale value to avoid possible overflow in calculations
 	 * below.
 	 */
-	scale = Min(NUMERIC_MAX_RESULT_SCALE,
-				Max(-NUMERIC_MAX_RESULT_SCALE, scale));
+	scale = Max(scale, -NUMERIC_MAX_RESULT_SCALE);
+	scale = Min(scale, NUMERIC_MAX_RESULT_SCALE);
 
 	/*
 	 * Unpack the argument and round it at the proper digit position
@@ -563,8 +578,8 @@ numeric_trunc(PG_FUNCTION_ARGS)
 	 * Limit the scale value to avoid possible overflow in calculations
 	 * below.
 	 */
-	scale = Min(NUMERIC_MAX_RESULT_SCALE,
-				Max(-NUMERIC_MAX_RESULT_SCALE, scale));
+	scale = Max(scale, -NUMERIC_MAX_RESULT_SCALE);
+	scale = Min(scale, NUMERIC_MAX_RESULT_SCALE);
 
 	/*
 	 * Unpack the argument and truncate it at the proper digit position
@@ -1190,6 +1205,7 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 	Numeric		res;
 	NumericVar	arg;
 	NumericVar	result;
+	int			sweight;
 	int			res_dscale;
 
 	/*
@@ -1199,20 +1215,28 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
-	 * Unpack the argument, determine the scales like for divide, let
-	 * sqrt_var() do the calculation and return the result.
+	 * Unpack the argument and determine the scales.  We choose a display
+	 * scale to give at least NUMERIC_MIN_SIG_DIGITS significant digits;
+	 * but in any case not less than the input's dscale.
 	 */
 	init_var(&arg);
 	init_var(&result);
 
 	set_var_from_num(num, &arg);
 
-	res_dscale = Max(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = Max(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = Max(global_rscale, res_dscale + 4);
-	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	/* Assume the input was normalized, so arg.weight is accurate */
+	sweight = (arg.weight / 2) - 1;
 
+	res_dscale = NUMERIC_MIN_SIG_DIGITS - sweight;
+	res_dscale = Max(res_dscale, arg.dscale);
+	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+
+	global_rscale = res_dscale + 8;
+
+	/*
+	 * Let sqrt_var() do the calculation and return the result.
+	 */
 	sqrt_var(&arg, &result);
 
 	result.dscale = res_dscale;
@@ -1240,6 +1264,7 @@ numeric_exp(PG_FUNCTION_ARGS)
 	NumericVar	arg;
 	NumericVar	result;
 	int			res_dscale;
+	double		val;
 
 	/*
 	 * Handle NaN
@@ -1248,18 +1273,35 @@ numeric_exp(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
-	 * Same procedure like for sqrt().
+	 * Unpack the argument and determine the scales.  We choose a display
+	 * scale to give at least NUMERIC_MIN_SIG_DIGITS significant digits;
+	 * but in any case not less than the input's dscale.
 	 */
 	init_var(&arg);
 	init_var(&result);
+
 	set_var_from_num(num, &arg);
 
-	res_dscale = Max(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = Max(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = Max(global_rscale, res_dscale + 4);
-	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	/* convert input to float8, ignoring overflow */
+	val = numeric_to_double_no_overflow(num);
 
+	/* log10(result) = num * log10(e), so this is approximately the weight: */
+	val *= 0.434294481903252;
+
+	/* limit to something that won't cause integer overflow */
+	val = Max(val, -NUMERIC_MAX_RESULT_SCALE);
+	val = Min(val, NUMERIC_MAX_RESULT_SCALE);
+
+	res_dscale = NUMERIC_MIN_SIG_DIGITS - (int) val;
+	res_dscale = Max(res_dscale, arg.dscale);
+	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+
+	global_rscale = res_dscale + NUMERIC_EXTRA_DIGITS;
+
+	/*
+	 * Let exp_var() do the calculation and return the result.
+	 */
 	exp_var(&arg, &result);
 
 	result.dscale = res_dscale;
@@ -1294,18 +1336,23 @@ numeric_ln(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/*
-	 * Same procedure like for sqrt()
-	 */
 	init_var(&arg);
 	init_var(&result);
+
 	set_var_from_num(num, &arg);
 
-	res_dscale = Max(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	if (arg.weight > 0)
+		res_dscale = NUMERIC_MIN_SIG_DIGITS - (int) log10(arg.weight);
+	else if (arg.weight < 0)
+		res_dscale = NUMERIC_MIN_SIG_DIGITS - (int) log10(- arg.weight);
+	else
+		res_dscale = NUMERIC_MIN_SIG_DIGITS;
+
+	res_dscale = Max(res_dscale, arg.dscale);
+	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
 	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = Max(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = Max(global_rscale, res_dscale + 4);
-	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+
+	global_rscale = res_dscale + NUMERIC_EXTRA_DIGITS;
 
 	ln_var(&arg, &result);
 
@@ -1335,7 +1382,6 @@ numeric_log(PG_FUNCTION_ARGS)
 	NumericVar	arg1;
 	NumericVar	arg2;
 	NumericVar	result;
-	int			res_dscale;
 
 	/*
 	 * Handle NaN
@@ -1344,26 +1390,20 @@ numeric_log(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
-	 * Initialize things and calculate scales
+	 * Initialize things
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
 	init_var(&result);
+
 	set_var_from_num(num1, &arg1);
 	set_var_from_num(num2, &arg2);
 
-	res_dscale = Max(arg1.dscale + arg2.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = Max(arg1.rscale + arg2.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = Max(global_rscale, res_dscale + 4);
-	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
-
 	/*
-	 * Call log_var() to compute and return the result
+	 * Call log_var() to compute and return the result; note it handles
+	 * rscale/dscale itself.
 	 */
 	log_var(&arg1, &arg2, &result);
-
-	result.dscale = res_dscale;
 
 	res = make_result(&result);
 
@@ -1378,7 +1418,7 @@ numeric_log(PG_FUNCTION_ARGS)
 /* ----------
  * numeric_power() -
  *
- *	Raise m to the power of x
+ *	Raise b to the power of x
  * ----------
  */
 Datum
@@ -1390,7 +1430,6 @@ numeric_power(PG_FUNCTION_ARGS)
 	NumericVar	arg1;
 	NumericVar	arg2;
 	NumericVar	result;
-	int			res_dscale;
 
 	/*
 	 * Handle NaN
@@ -1399,26 +1438,20 @@ numeric_power(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
-	 * Initialize things and calculate scales
+	 * Initialize things
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
 	init_var(&result);
+
 	set_var_from_num(num1, &arg1);
 	set_var_from_num(num2, &arg2);
 
-	res_dscale = Max(arg1.dscale + arg2.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = Max(arg1.rscale + arg2.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = Max(global_rscale, res_dscale + 4);
-	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
-
 	/*
-	 * Call log_var() to compute and return the result
+	 * Call power_var() to compute and return the result; note it handles
+	 * rscale/dscale itself.
 	 */
 	power_var(&arg1, &arg2, &result);
-
-	result.dscale = res_dscale;
 
 	res = make_result(&result);
 
@@ -1640,29 +1673,15 @@ Datum
 numeric_float8_no_overflow(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
-	char	   *tmp;
 	double		val;
-	char	   *endptr;
 
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_FLOAT8(NAN);
 
-	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
-											  NumericGetDatum(num)));
-
-	/* unlike float8in, we ignore ERANGE from strtod */
-	val = strtod(tmp, &endptr);
-	if (*endptr != '\0')
-	{
-		/* shouldn't happen ... */
-		elog(ERROR, "Bad float8 input format '%s'", tmp);
-	}
-
-	pfree(tmp);
+	val = numeric_to_double_no_overflow(num);
 
 	PG_RETURN_FLOAT8(val);
 }
-
 
 Datum
 float4_numeric(PG_FUNCTION_ARGS)
@@ -1939,6 +1958,9 @@ numeric_variance(PG_FUNCTION_ARGS)
 	init_var(&vsumX2);
 	set_var_from_num(sumX2, &vsumX2);
 
+	/* set rscale for mul_var calls */
+	global_rscale = vsumX.rscale * 2;
+
 	mul_var(&vsumX, &vsumX, &vsumX);	/* now vsumX contains sumX * sumX */
 	mul_var(&vN, &vsumX2, &vsumX2);		/* now vsumX2 contains N * sumX2 */
 	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
@@ -2017,6 +2039,9 @@ numeric_stddev(PG_FUNCTION_ARGS)
 	set_var_from_num(sumX, &vsumX);
 	init_var(&vsumX2);
 	set_var_from_num(sumX2, &vsumX2);
+
+	/* set rscale for mul_var calls */
+	global_rscale = vsumX.rscale * 2;
 
 	mul_var(&vsumX, &vsumX, &vsumX);	/* now vsumX contains sumX * sumX */
 	mul_var(&vN, &vsumX2, &vsumX2);		/* now vsumX2 contains N * sumX2 */
@@ -2785,6 +2810,54 @@ apply_typmod(NumericVar *var, int32 typmod)
 	var->dscale = scale;
 }
 
+/* Convert numeric to float8; if out of range, return +/- HUGE_VAL */
+/* Caller should have eliminated the possibility of NAN */
+static double
+numeric_to_double_no_overflow(Numeric num)
+{
+	char	   *tmp;
+	double		val;
+	char	   *endptr;
+
+	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
+											  NumericGetDatum(num)));
+
+	/* unlike float8in, we ignore ERANGE from strtod */
+	val = strtod(tmp, &endptr);
+	if (*endptr != '\0')
+	{
+		/* shouldn't happen ... */
+		elog(ERROR, "Bad float8 input format '%s'", tmp);
+	}
+
+	pfree(tmp);
+
+	return val;
+}
+
+/* As above, but work from a NumericVar */
+static double
+numericvar_to_double_no_overflow(NumericVar *var)
+{
+	char	   *tmp;
+	double		val;
+	char	   *endptr;
+
+	tmp = get_str_from_var(var, var->dscale);
+
+	/* unlike float8in, we ignore ERANGE from strtod */
+	val = strtod(tmp, &endptr);
+	if (*endptr != '\0')
+	{
+		/* shouldn't happen ... */
+		elog(ERROR, "Bad float8 input format '%s'", tmp);
+	}
+
+	pfree(tmp);
+
+	return val;
+}
+
 
 /* ----------
  * cmp_var() -
@@ -3073,7 +3146,7 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
  * mul_var() -
  *
  *	Multiplication on variable level. Product of var1 * var2 is stored
- *	in result.
+ *	in result.  Accuracy of result is determined by global_rscale.
  * ----------
  */
 static void
@@ -3158,7 +3231,8 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 /* ----------
  * div_var() -
  *
- *	Division on variable level.
+ *	Division on variable level.  Accuracy of result is determined by
+ *	global_rscale.
  * ----------
  */
 static void
@@ -3370,33 +3444,69 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 static int
 select_div_scale(NumericVar *var1, NumericVar *var2)
 {
+	int			weight1,
+				weight2,
+				qweight,
+				i;
+	NumericDigit firstdigit1,
+				firstdigit2;
 	int			res_dscale;
 	int			res_rscale;
 
-	/* ----------
-	 * The result scale of a division isn't specified in any
-	 * SQL standard. For Postgres it is the following (where
-	 * SR, DR are the result- and display-scales of the returned
-	 * value, S1, D1, S2 and D2 are the scales of the two arguments,
-	 * The minimum and maximum scales are compile time options from
-	 * numeric.h):
+	/*
+	 * The result scale of a division isn't specified in any SQL standard.
+	 * For PostgreSQL we select a display scale that will give at least
+	 * NUMERIC_MIN_SIG_DIGITS significant digits, so that numeric gives a
+	 * result no less accurate than float8; but use a scale not less than
+	 * either input's display scale.
 	 *
-	 *	DR = Min(Max(D1 + D2, MIN_DISPLAY_SCALE), MAX_DISPLAY_SCALE)
-	 *	SR = Min(Max(Max(S1 + S2, DR + 4), MIN_RESULT_SCALE), MAX_RESULT_SCALE)
-	 *
-	 * By default, any result is computed with a minimum of 34 digits
-	 * after the decimal point or at least with 4 digits more than
-	 * displayed.
-	 * ----------
+	 * The result scale is NUMERIC_EXTRA_DIGITS more than the display scale,
+	 * to provide some guard digits in the calculation.
 	 */
-	res_dscale = var1->dscale + var2->dscale;
+
+	/* Get the actual (normalized) weight and first digit of each input */
+
+	weight1 = 0;				/* values to use if var1 is zero */
+	firstdigit1 = 0;
+	for (i = 0; i < var1->ndigits; i++)
+	{
+		firstdigit1 = var1->digits[i];
+		if (firstdigit1 != 0)
+		{
+			weight1 = var1->weight - i;
+			break;
+		}
+	}
+
+	weight2 = 0;				/* values to use if var2 is zero */
+	firstdigit2 = 0;
+	for (i = 0; i < var2->ndigits; i++)
+	{
+		firstdigit2 = var2->digits[i];
+		if (firstdigit2 != 0)
+		{
+			weight2 = var2->weight - i;
+			break;
+		}
+	}
+
+	/*
+	 * Estimate weight of quotient.  If the two first digits are equal,
+	 * we can't be sure, but assume that var1 is less than var2.
+	 */
+	qweight = weight1 - weight2;
+	if (firstdigit1 <= firstdigit2)
+		qweight--;
+
+	/* Select display scale */
+	res_dscale = NUMERIC_MIN_SIG_DIGITS - qweight;
+	res_dscale = Max(res_dscale, var1->dscale);
+	res_dscale = Max(res_dscale, var2->dscale);
 	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
 	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
 
-	res_rscale = var1->rscale + var2->rscale;
-	res_rscale = Max(res_rscale, res_dscale + 4);
-	res_rscale = Max(res_rscale, NUMERIC_MIN_RESULT_SCALE);
-	res_rscale = Min(res_rscale, NUMERIC_MAX_RESULT_SCALE);
+	/* Select result scale */
+	res_rscale = res_dscale + NUMERIC_EXTRA_DIGITS;
 	global_rscale = res_rscale;
 
 	return res_dscale;
@@ -3503,7 +3613,7 @@ floor_var(NumericVar *var, NumericVar *result)
 /* ----------
  * sqrt_var() -
  *
- *	Compute the square root of x using Newtons algorithm
+ *	Compute the square root of x using Newton's algorithm
  * ----------
  */
 static void
@@ -3526,6 +3636,7 @@ sqrt_var(NumericVar *arg, NumericVar *result)
 		set_var_from_var(&const_zero, result);
 		result->rscale = res_rscale;
 		result->sign = NUMERIC_POS;
+		global_rscale = save_global_rscale;
 		return;
 	}
 
@@ -3536,8 +3647,8 @@ sqrt_var(NumericVar *arg, NumericVar *result)
 	init_var(&tmp_val);
 	init_var(&last_val);
 
+	/* Copy arg in case it is the same var as result */
 	set_var_from_var(arg, &tmp_arg);
-	set_var_from_var(result, &last_val);
 
 	/*
 	 * Initialize the result to the first guess
@@ -3552,6 +3663,8 @@ sqrt_var(NumericVar *arg, NumericVar *result)
 	result->weight = tmp_arg.weight / 2;
 	result->rscale = res_rscale;
 	result->sign = NUMERIC_POS;
+
+	set_var_from_var(result, &last_val);
 
 	for (;;)
 	{
@@ -3590,6 +3703,7 @@ exp_var(NumericVar *arg, NumericVar *result)
 	NumericVar	ni;
 	int			d;
 	int			i;
+	int			xintval;
 	int			ndiv2 = 0;
 	bool		xneg = FALSE;
 	int			save_global_rscale;
@@ -3608,32 +3722,42 @@ exp_var(NumericVar *arg, NumericVar *result)
 		x.sign = NUMERIC_POS;
 	}
 
-	save_global_rscale = global_rscale;
-	global_rscale = 0;
+	/* Select an appropriate scale for internal calculation */
+	xintval = 0;
 	for (i = x.weight, d = 0; i >= 0; i--, d++)
 	{
-		global_rscale *= 10;
+		xintval *= 10;
 		if (d < x.ndigits)
-			global_rscale += x.digits[d];
-		if (global_rscale >= 1000)
+			xintval += x.digits[d];
+		if (xintval >= NUMERIC_MAX_RESULT_SCALE)
 			elog(ERROR, "argument for EXP() too big");
 	}
 
-	global_rscale = global_rscale / 2 + save_global_rscale + 8;
+	save_global_rscale = global_rscale;
+	global_rscale += xintval / 2 + 8;
 
-	while (cmp_var(&x, &const_one) > 0)
+	/* Reduce input into range 0 <= x <= 0.1 */
+	while (cmp_var(&x, &const_zero_point_one) > 0)
 	{
 		ndiv2++;
 		global_rscale++;
 		div_var(&x, &const_two, &x);
 	}
 
+	/*
+	 * Use the Taylor series
+	 *
+	 *		exp(x) = 1 + x + x^2/2! + x^3/3! + ...
+	 *
+	 * Given the limited range of x, this should converge reasonably quickly.
+	 * We run the series until the terms fall below the global_rscale limit.
+	 */
 	add_var(&const_one, &x, result);
 	set_var_from_var(&x, &xpow);
 	set_var_from_var(&const_one, &ifac);
 	set_var_from_var(&const_one, &ni);
 
-	for (i = 2;; i++)
+	for (;;)
 	{
 		add_var(&ni, &const_one, &ni);
 		mul_var(&xpow, &x, &xpow);
@@ -3646,10 +3770,13 @@ exp_var(NumericVar *arg, NumericVar *result)
 		add_var(result, &elem, result);
 	}
 
+	/* Compensate for argument range reduction */
 	while (ndiv2-- > 0)
 		mul_var(result, result, result);
 
+	/* Compensate for input sign, and round to caller's global_rscale */
 	global_rscale = save_global_rscale;
+
 	if (xneg)
 		div_var(&const_one, result, result);
 	else
@@ -3679,7 +3806,6 @@ ln_var(NumericVar *arg, NumericVar *result)
 	NumericVar	ni;
 	NumericVar	elem;
 	NumericVar	fact;
-	int			i;
 	int			save_global_rscale;
 
 	if (cmp_var(arg, &const_zero) <= 0)
@@ -3697,18 +3823,31 @@ ln_var(NumericVar *arg, NumericVar *result)
 	set_var_from_var(&const_two, &fact);
 	set_var_from_var(arg, &x);
 
-	while (cmp_var(&x, &const_two) >= 0)
+	/* Reduce input into range 0.9 < x < 1.1 */
+	while (cmp_var(&x, &const_zero_point_nine) <= 0)
 	{
+		global_rscale++;
 		sqrt_var(&x, &x);
 		mul_var(&fact, &const_two, &fact);
 	}
-	set_var_from_str("0.5", &elem);
-	while (cmp_var(&x, &elem) <= 0)
+	while (cmp_var(&x, &const_one_point_one) >= 0)
 	{
+		global_rscale++;
 		sqrt_var(&x, &x);
 		mul_var(&fact, &const_two, &fact);
 	}
 
+	/*
+	 * We use the Taylor series for 0.5 * ln((1+z)/(1-z)),
+	 *
+	 *		z + z^3/3 + z^5/5 + ...
+	 *
+	 * where z = (x-1)/(x+1) is in the range (approximately) -0.053 .. 0.048
+	 * due to the above range-reduction of x.
+	 *
+	 * The convergence of this is not as fast as one would like, but is
+	 * tolerable given that z is small.
+	 */
 	sub_var(&x, &const_one, result);
 	add_var(&x, &const_one, &elem);
 	div_var(result, &elem, result);
@@ -3717,19 +3856,21 @@ ln_var(NumericVar *arg, NumericVar *result)
 
 	set_var_from_var(&const_one, &ni);
 
-	for (i = 2;; i++)
+	for (;;)
 	{
 		add_var(&ni, &const_two, &ni);
 		mul_var(&xx, &x, &xx);
 		div_var(&xx, &ni, &elem);
 
-		if (cmp_var(&elem, &const_zero) == 0)
+		if (elem.ndigits == 0)
 			break;
 
 		add_var(result, &elem, result);
 	}
 
+	/* Compensate for argument range reduction, round to caller's rscale */
 	global_rscale = save_global_rscale;
+
 	mul_var(result, &fact, result);
 
 	free_var(&x);
@@ -3743,7 +3884,9 @@ ln_var(NumericVar *arg, NumericVar *result)
 /* ----------
  * log_var() -
  *
- *	Compute the logarithm of x in a given base
+ *	Compute the logarithm of num in a given base.
+ *
+ *	Note: this routine chooses rscale and dscale of the result.
  * ----------
  */
 static void
@@ -3751,18 +3894,42 @@ log_var(NumericVar *base, NumericVar *num, NumericVar *result)
 {
 	NumericVar	ln_base;
 	NumericVar	ln_num;
-
-	global_rscale += 8;
+	int			save_global_rscale = global_rscale;
+	int			res_dscale;
 
 	init_var(&ln_base);
 	init_var(&ln_num);
 
+	/* Set scale for ln() calculations */
+	if (num->weight > 0)
+		res_dscale = NUMERIC_MIN_SIG_DIGITS - (int) log10(num->weight);
+	else if (num->weight < 0)
+		res_dscale = NUMERIC_MIN_SIG_DIGITS - (int) log10(- num->weight);
+	else
+		res_dscale = NUMERIC_MIN_SIG_DIGITS;
+
+	res_dscale = Max(res_dscale, base->dscale);
+	res_dscale = Max(res_dscale, num->dscale);
+	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+
+	global_rscale = res_dscale + 8;
+
+	/* Form natural logarithms */
 	ln_var(base, &ln_base);
 	ln_var(num, &ln_num);
 
-	global_rscale -= 8;
+	ln_base.dscale = res_dscale;
+	ln_num.dscale = res_dscale;
+
+	/* Select scale for division result */
+	res_dscale = select_div_scale(&ln_num, &ln_base);
 
 	div_var(&ln_num, &ln_base, result);
+
+	result->dscale = res_dscale;
+
+	global_rscale = save_global_rscale;
 
 	free_var(&ln_num);
 	free_var(&ln_base);
@@ -3773,6 +3940,8 @@ log_var(NumericVar *base, NumericVar *num, NumericVar *result)
  * power_var() -
  *
  *	Raise base to the power of exp
+ *
+ *	Note: this routine chooses rscale and dscale of the result.
  * ----------
  */
 static void
@@ -3780,24 +3949,64 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 {
 	NumericVar	ln_base;
 	NumericVar	ln_num;
-	int			save_global_rscale;
-
-	save_global_rscale = global_rscale;
-	global_rscale += global_rscale / 3 + 8;
+	int			save_global_rscale = global_rscale;
+	int			res_dscale;
+	double		val;
 
 	init_var(&ln_base);
 	init_var(&ln_num);
 
+	/* Set scale for ln() calculation --- need extra accuracy here */
+	if (base->weight > 0)
+		res_dscale = NUMERIC_MIN_SIG_DIGITS*2 - (int) log10(base->weight);
+	else if (base->weight < 0)
+		res_dscale = NUMERIC_MIN_SIG_DIGITS*2 - (int) log10(- base->weight);
+	else
+		res_dscale = NUMERIC_MIN_SIG_DIGITS*2;
+
+	res_dscale = Max(res_dscale, base->dscale * 2);
+	res_dscale = Max(res_dscale, exp->dscale * 2);
+	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+
+	global_rscale = res_dscale + 8;
+
 	ln_var(base, &ln_base);
+
+	ln_base.dscale = res_dscale;
+
 	mul_var(&ln_base, exp, &ln_num);
 
-	global_rscale = save_global_rscale;
+	ln_num.dscale = res_dscale;
+
+	/* Set scale for exp() */
+
+	/* convert input to float8, ignoring overflow */
+	val = numericvar_to_double_no_overflow(&ln_num);
+
+	/* log10(result) = num * log10(e), so this is approximately the weight: */
+	val *= 0.434294481903252;
+
+	/* limit to something that won't cause integer overflow */
+	val = Max(val, -NUMERIC_MAX_RESULT_SCALE);
+	val = Min(val, NUMERIC_MAX_RESULT_SCALE);
+
+	res_dscale = NUMERIC_MIN_SIG_DIGITS - (int) val;
+	res_dscale = Max(res_dscale, base->dscale);
+	res_dscale = Max(res_dscale, exp->dscale);
+	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+
+	global_rscale = res_dscale + 8;
 
 	exp_var(&ln_num, result);
 
+	result->dscale = res_dscale;
+
+	global_rscale = save_global_rscale;
+
 	free_var(&ln_num);
 	free_var(&ln_base);
-
 }
 
 

@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.15 2001/11/05 17:46:36 momjian Exp $
+ * $Id: numeric.h,v 1.16 2002/10/02 19:21:26 tgl Exp $
  *
  * ----------
  */
@@ -13,29 +13,36 @@
 #ifndef _PG_NUMERIC_H_
 #define _PG_NUMERIC_H_
 
-/* ----------
- * The hardcoded limits and defaults of the numeric data type
- * ----------
+/*
+ * Hardcoded precision limit - arbitrary, but must be small enough that
+ * dscale values will fit in 14 bits.
  */
 #define NUMERIC_MAX_PRECISION		1000
-#define NUMERIC_DEFAULT_PRECISION	30
-#define NUMERIC_DEFAULT_SCALE		6
 
-
-/* ----------
+/*
  * Internal limits on the scales chosen for calculation results
- * ----------
  */
 #define NUMERIC_MAX_DISPLAY_SCALE	NUMERIC_MAX_PRECISION
-#define NUMERIC_MIN_DISPLAY_SCALE	(NUMERIC_DEFAULT_SCALE + 4)
+#define NUMERIC_MIN_DISPLAY_SCALE	0
 
 #define NUMERIC_MAX_RESULT_SCALE	(NUMERIC_MAX_PRECISION * 2)
-#define NUMERIC_MIN_RESULT_SCALE	(NUMERIC_DEFAULT_PRECISION + 4)
+
+/*
+ * For inherently inexact calculations such as division and square root,
+ * we try to get at least this many significant digits; the idea is to
+ * deliver a result no worse than float8 would.
+ */
+#define NUMERIC_MIN_SIG_DIGITS		16
+
+/*
+ * Standard number of extra digits carried internally while doing
+ * inexact calculations.
+ */
+#define NUMERIC_EXTRA_DIGITS		4
 
 
-/* ----------
+/*
  * Sign values and macros to deal with packing/unpacking n_sign_dscale
- * ----------
  */
 #define NUMERIC_SIGN_MASK	0xC000
 #define NUMERIC_POS			0x0000
@@ -48,7 +55,7 @@
 								NUMERIC_SIGN(n) != NUMERIC_NEG)
 
 
-/* ----------
+/*
  * The Numeric data type stored in the database
  *
  * NOTE: by convention, values in the packed form have been stripped of
@@ -56,7 +63,6 @@
  * in the last byte, if the number of digits is odd).  In particular,
  * if the value is zero, there will be no digits at all!  The weight is
  * arbitrary in that case, but we normally set it to zero.
- * ----------
  */
 typedef struct NumericData
 {
