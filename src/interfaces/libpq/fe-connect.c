@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.104 1999/10/26 04:49:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.105 1999/11/05 06:43:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -854,50 +854,41 @@ void
 PQsetenv(PGconn *conn)
 {
 	struct EnvironmentOptions *eo;
-	char		setQuery[80];	/* mjl: size okay? XXX */
-
+	char		setQuery[100];	/* note length limits in sprintf's below */
+	const char *val;
+	PGresult   *res;
 #ifdef MULTIBYTE
 	char	   *envname = "PGCLIENTENCODING";
-	static char envbuf[64];		/* big enough? */
-	char	   *env;
-	char	   *encoding = 0;
-	PGresult   *rtn;
 
-#endif
-
-#ifdef MULTIBYTE
-	/* query server encoding */
-	env = getenv(envname);
-	if (!env || *env == '\0')
+	/* Set env. variable PGCLIENTENCODING if it's not set already */
+	val = getenv(envname);
+	if (!val || *val == '\0')
 	{
-		rtn = PQexec(conn, "select getdatabaseencoding()");
-		if (rtn && PQresultStatus(rtn) == PGRES_TUPLES_OK)
+		const char *encoding = NULL;
+
+		/* query server encoding */
+		res = PQexec(conn, "select getdatabaseencoding()");
+		if (res && PQresultStatus(res) == PGRES_TUPLES_OK)
+			encoding = PQgetvalue(res, 0, 0);
+		if (!encoding)			/* this should not happen */
+			encoding = pg_encoding_to_char(MULTIBYTE);
+		if (encoding)
 		{
-			encoding = PQgetvalue(rtn, 0, 0);
-			if (encoding)
-			{
-				/* set client encoding */
-				sprintf(envbuf, "%s=%s", envname, encoding);
-				putenv(envbuf);
-			}
-		}
-		PQclear(rtn);
-		if (!encoding)
-		{						/* this should not happen */
-			sprintf(envbuf, "%s=%s", envname, pg_encoding_to_char(MULTIBYTE));
+			/* set client encoding via environment variable */
+			char	   *envbuf;
+
+			envbuf = (char *) malloc(strlen(envname) + strlen(encoding) + 2);
+			sprintf(envbuf, "%s=%s", envname, encoding);
 			putenv(envbuf);
 		}
+		PQclear(res);
 	}
 #endif
 
 	for (eo = EnvironmentOptions; eo->envName; eo++)
 	{
-		const char *val;
-
 		if ((val = getenv(eo->envName)))
 		{
-			PGresult   *res;
-
 			if (strcasecmp(val, "default") == 0)
 				sprintf(setQuery, "SET %s = %.60s", eo->pgName, val);
 			else
