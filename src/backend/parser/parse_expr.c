@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.160 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.161 2003/08/17 23:43:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -748,7 +748,6 @@ transformExpr(ParseState *pstate, Node *expr)
 				List	   *element;
 				Oid			array_type;
 				Oid			element_type;
-				int			ndims;
 
 				/* Transform the element expressions */
 				foreach(element, a->elements)
@@ -781,11 +780,13 @@ transformExpr(ParseState *pstate, Node *expr)
 				if (array_type != InvalidOid)
 				{
 					/* Elements are presumably of scalar type */
-					ndims = 1;
+					newa->multidims = false;
 				}
 				else
 				{
 					/* Must be nested array expressions */
+					newa->multidims = true;
+
 					array_type = element_type;
 					element_type = get_element_type(array_type);
 					if (!OidIsValid(element_type))
@@ -793,47 +794,11 @@ transformExpr(ParseState *pstate, Node *expr)
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
 								 errmsg("could not find array type for datatype %s",
 										format_type_be(array_type))));
-
-					/*
-					 * make sure the element expressions all have the same
-					 * number of dimensions
-					 */
-					ndims = 0;
-					foreach(element, newcoercedelems)
-					{
-						ArrayExpr  *e = (ArrayExpr *) lfirst(element);
-
-						if (!IsA(e, ArrayExpr))
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("multidimensional ARRAY[] must be built from nested array expressions")));
-						if (ndims == 0)
-							ndims = e->ndims;
-						else if (e->ndims != ndims)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("nested array expressions must have common number of dimensions")));
-						if (e->element_typeid != element_type)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("nested array expressions must have common element type")));
-
-					}
-					/* increment the number of dimensions */
-					ndims++;
-
-					/* make sure we don't have too many dimensions now */
-					if (ndims > MAXDIM)
-						ereport(ERROR,
-								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-								 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-										MAXDIM)));
 				}
 
 				newa->array_typeid = array_type;
 				newa->element_typeid = element_type;
 				newa->elements = newcoercedelems;
-				newa->ndims = ndims;
 
 				result = (Node *) newa;
 				break;

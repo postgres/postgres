@@ -132,7 +132,7 @@ SELECT ARRAY(select f2 from arrtest_f order by f2) AS "ARRAY";
 -- functions
 SELECT array_append(array[42], 6) AS "{42,6}";
 SELECT array_prepend(6, array[42]) AS "{6,42}";
-SELECT array_cat(ARRAY[1,2], ARRAY[3,4]) AS "{{1,2},{3,4}}";
+SELECT array_cat(ARRAY[1,2], ARRAY[3,4]) AS "{1,2,3,4}";
 SELECT array_cat(ARRAY[1,2], ARRAY[[3,4],[5,6]]) AS "{{1,2},{3,4},{5,6}}";
 SELECT array_cat(ARRAY[[3,4],[5,6]], ARRAY[1,2]) AS "{{3,4},{5,6},{1,2}}";
 
@@ -141,10 +141,10 @@ SELECT a FROM arrtest WHERE b = ARRAY[[[113,142],[1,147]]];
 SELECT NOT ARRAY[1.1,1.2,1.3] = ARRAY[1.1,1.2,1.3] AS "FALSE";
 SELECT ARRAY[1,2] || 3 AS "{1,2,3}";
 SELECT 0 || ARRAY[1,2] AS "{0,1,2}";
-SELECT ARRAY[1,2] || ARRAY[3,4] AS "{{1,2},{3,4}}";
+SELECT ARRAY[1,2] || ARRAY[3,4] AS "{1,2,3,4}";
 SELECT ARRAY[[['hello','world']]] || ARRAY[[['happy','birthday']]] AS "ARRAY";
 SELECT ARRAY[[1,2],[3,4]] || ARRAY[5,6] AS "{{1,2},{3,4},{5,6}}";
-SELECT ARRAY[0,0] || ARRAY[1,1] || ARRAY[2,2] AS "{{0,0},{1,1},{2,2}}";
+SELECT ARRAY[0,0] || ARRAY[1,1] || ARRAY[2,2] AS "{0,0,1,1,2,2}";
 SELECT 0 || ARRAY[1,2] || 3 AS "{0,1,2,3}";
 
 -- array casts

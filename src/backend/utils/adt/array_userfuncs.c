@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.7 2003/08/04 00:43:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.8 2003/08/17 23:43:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ array_push(PG_FUNCTION_ARGS)
 
 /*-----------------------------------------------------------------------------
  * array_cat :
- *		concatenate two nD arrays to form an (n+1)D array, or
+ *		concatenate two nD arrays to form an nD array, or
  *		push an (n-1)D array onto the end of an nD array
  *----------------------------------------------------------------------------
  */
@@ -154,6 +154,7 @@ array_cat(PG_FUNCTION_ARGS)
 			   *lbs2,
 				ndims2,
 				ndatabytes2;
+	int			i;
 	char	   *dat1,
 			   *dat2;
 	Oid			element_type;
@@ -164,11 +165,14 @@ array_cat(PG_FUNCTION_ARGS)
 	v1 = PG_GETARG_ARRAYTYPE_P(0);
 	v2 = PG_GETARG_ARRAYTYPE_P(1);
 
-	/*
-	 * We must have one of the following combinations of inputs: 1) one
-	 * empty array, and one non-empty array 2) both arrays empty 3) two
-	 * arrays with ndims1 == ndims2 4) ndims1 == ndims2 - 1 5) ndims1 ==
-	 * ndims2 + 1
+	/*----------
+	 * We must have one of the following combinations of inputs:
+	 * 1) one empty array, and one non-empty array
+	 * 2) both arrays empty
+	 * 3) two arrays with ndims1 == ndims2
+	 * 4) ndims1 == ndims2 - 1
+	 * 5) ndims1 == ndims2 + 1
+	 *----------
 	 */
 	ndims1 = ARR_NDIM(v1);
 	ndims2 = ARR_NDIM(v2);
@@ -185,8 +189,10 @@ array_cat(PG_FUNCTION_ARGS)
 	if (ndims2 == 0)
 		PG_RETURN_ARRAYTYPE_P(v1);
 
-	/* the rest fall into combo 2, 3, or 4 */
-	if (ndims1 != ndims2 && ndims1 != ndims2 - 1 && ndims1 != ndims2 + 1)
+	/* the rest fall under rule 3, 4, or 5 */
+	if (ndims1 != ndims2 &&
+		ndims1 != ndims2 - 1 &&
+		ndims1 != ndims2 + 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("cannot concatenate incompatible arrays"),
@@ -197,7 +203,7 @@ array_cat(PG_FUNCTION_ARGS)
 	element_type1 = ARR_ELEMTYPE(v1);
 	element_type2 = ARR_ELEMTYPE(v2);
 
-	/* Do we have a matching element types */
+	/* Check we have matching element types */
 	if (element_type1 != element_type2)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -223,29 +229,27 @@ array_cat(PG_FUNCTION_ARGS)
 	if (ndims1 == ndims2)
 	{
 		/*
-		 * resulting array has two element outer array made up of input
-		 * argument arrays
+		 * resulting array is made up of the elements (possibly arrays
+		 * themselves) of the input argument arrays
 		 */
-		int			i;
-
-		ndims = ndims1 + 1;
+		ndims = ndims1;
 		dims = (int *) palloc(ndims * sizeof(int));
 		lbs = (int *) palloc(ndims * sizeof(int));
 
-		dims[0] = 2;			/* outer array made up of two input arrays */
-		lbs[0] = 1;				/* start lower bound at 1 */
+		dims[0] = dims1[0] + dims2[0];
+		lbs[0] = lbs1[0];
 
-		for (i = 0; i < ndims1; i++)
+		for (i = 1; i < ndims; i++)
 		{
 			if (dims1[i] != dims2[i] || lbs1[i] != lbs2[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("cannot concatenate incompatible arrays"),
-					errdetail("Arrays with differing dimensions are not "
-							  "compatible for concatenation.")));
+					errdetail("Arrays with differing element dimensions are "
+							  "not compatible for concatenation.")));
 
-			dims[i + 1] = dims1[i];
-			lbs[i + 1] = lbs1[i];
+			dims[i] = dims1[i];
+			lbs[i] = lbs1[i];
 		}
 	}
 	else if (ndims1 == ndims2 - 1)
@@ -255,14 +259,17 @@ array_cat(PG_FUNCTION_ARGS)
 		 * with the first argument appended to the front of the outer
 		 * dimension
 		 */
-		int			i;
-
 		ndims = ndims2;
-		dims = dims2;
-		lbs = lbs2;
+		dims = (int *) palloc(ndims * sizeof(int));
+		lbs = (int *) palloc(ndims * sizeof(int));
+		memcpy(dims, dims2, ndims * sizeof(int));
+		memcpy(lbs, lbs2, ndims * sizeof(int));
 
 		/* increment number of elements in outer array */
 		dims[0] += 1;
+
+		/* decrement outer array lower bound */
+		lbs[0] -= 1;
 
 		/* make sure the added element matches our existing elements */
 		for (i = 0; i < ndims1; i++)
@@ -276,17 +283,18 @@ array_cat(PG_FUNCTION_ARGS)
 		}
 	}
 	else
-/* (ndims1 == ndims2 + 1) */
 	{
 		/*
+		 * (ndims1 == ndims2 + 1)
+		 *
 		 * resulting array has the first argument as the outer array, with
 		 * the second argument appended to the end of the outer dimension
 		 */
-		int			i;
-
 		ndims = ndims1;
-		dims = dims1;
-		lbs = lbs1;
+		dims = (int *) palloc(ndims * sizeof(int));
+		lbs = (int *) palloc(ndims * sizeof(int));
+		memcpy(dims, dims1, ndims * sizeof(int));
+		memcpy(lbs, lbs1, ndims * sizeof(int));
 
 		/* increment number of elements in outer array */
 		dims[0] += 1;

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.208 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.209 2003/08/17 23:43:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,7 +409,7 @@ _equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
 	COMPARE_SCALAR_FIELD(array_typeid);
 	COMPARE_SCALAR_FIELD(element_typeid);
 	COMPARE_NODE_FIELD(elements);
-	COMPARE_SCALAR_FIELD(ndims);
+	COMPARE_SCALAR_FIELD(multidims);
 
 	return true;
 }

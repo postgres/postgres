@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.141 2003/08/08 21:41:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.142 2003/08/17 23:43:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1620,16 +1620,18 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 	ArrayType  *result;
 	List	   *element;
 	Oid			element_type = arrayExpr->element_typeid;
-	int			ndims = arrayExpr->ndims;
+	int			ndims = 0;
 	int			dims[MAXDIM];
 	int			lbs[MAXDIM];
 
-	if (ndims == 1)
+	if (!arrayExpr->multidims)
 	{
+		/* Elements are presumably of scalar type */
 		int			nelems;
 		Datum	   *dvalues;
 		int			i = 0;
 
+		ndims = 1;
 		nelems = length(astate->elements);
 
 		/* Shouldn't happen here, but if length is 0, return NULL */
@@ -1667,6 +1669,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 	}
 	else
 	{
+		/* Must be nested array expressions */
 		char	   *dat = NULL;
 		Size		ndatabytes = 0;
 		int			nbytes;
@@ -1676,12 +1679,6 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		int		   *elem_lbs = NULL;
 		bool		firstone = true;
 		int			i;
-
-		if (ndims <= 0 || ndims > MAXDIM)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-							MAXDIM)));
 
 		/* loop through and get data area from each element */
 		foreach(element, astate->elements)
@@ -1701,14 +1698,32 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 
 			array = DatumGetArrayTypeP(arraydatum);
 
+			/* run-time double-check on element type */
+			if (element_type != ARR_ELEMTYPE(array))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("cannot merge incompatible arrays"),
+						 errdetail("Array with element type %s cannot be "
+								   "included in ARRAY construct with element type %s.",
+								   format_type_be(ARR_ELEMTYPE(array)),
+								   format_type_be(element_type))));
+
 			if (firstone)
 			{
 				/* Get sub-array details from first member */
 				elem_ndims = ARR_NDIM(array);
+				ndims = elem_ndims + 1;
+				if (ndims <= 0 || ndims > MAXDIM)
+					ereport(ERROR,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							 errmsg("number of array dimensions exceeds " \
+									"the maximum allowed, %d", MAXDIM)));
+
 				elem_dims = (int *) palloc(elem_ndims * sizeof(int));
 				memcpy(elem_dims, ARR_DIMS(array), elem_ndims * sizeof(int));
 				elem_lbs = (int *) palloc(elem_ndims * sizeof(int));
 				memcpy(elem_lbs, ARR_LBOUND(array), elem_ndims * sizeof(int));
+
 				firstone = false;
 			}
 			else
