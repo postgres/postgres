@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.96 2001/08/13 18:45:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.97 2001/09/14 17:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2989,6 +2989,11 @@ string_lessthan(const char *str1, const char *str2, Oid datatype)
 
 		case NAMEOID:
 			result = DatumGetBool(DirectFunctionCall2(namelt,
+													  datum1, datum2));
+			break;
+
+		case BYTEAOID:
+			result = DatumGetBool(DirectFunctionCall2(bytealt,
 													  datum1, datum2));
 			break;
 

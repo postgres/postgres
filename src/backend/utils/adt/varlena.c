@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.72 2001/09/11 05:18:59 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.73 2001/09/14 17:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,14 +53,28 @@ byteain(PG_FUNCTION_ARGS)
 
 	for (byte = 0, tp = inputText; *tp != '\0'; byte++)
 	{
-		if (*tp++ == '\\')
+		if (tp[0] != '\\')
 		{
-			if (*tp == '\\')
-				tp++;
-			else if (!isdigit((unsigned char) *tp++) ||
-					 !isdigit((unsigned char) *tp++) ||
-					 !isdigit((unsigned char) *tp++))
-				elog(ERROR, "Bad input string for type bytea");
+			tp++;
+		}
+		else if	( (tp[0] == '\\') &&
+					(tp[1] >= '0' && tp[1] <= '3') &&
+					(tp[2] >= '0' && tp[2] <= '7') &&
+					(tp[3] >= '0' && tp[3] <= '7') )
+		{
+			tp += 4;
+		}
+		else if ( (tp[0] == '\\') &&
+				(tp[1] == '\\') )
+		{
+			tp += 2;
+		}
+		else
+		{
+			/*
+			 * one backslash, not followed by 0 or ### valid octal
+			 */
+			elog(ERROR, "Bad input string for type bytea");
 		}
 	}
 
@@ -72,15 +86,35 @@ byteain(PG_FUNCTION_ARGS)
 	rp = result->vl_dat;
 	while (*tp != '\0')
 	{
-		if (*tp != '\\' || *++tp == '\\')
+		if (tp[0] != '\\')
+		{
 			*rp++ = *tp++;
+		}
+		else if	( (tp[0] == '\\') &&
+					(tp[1] >= '0' && tp[1] <= '3') &&
+					(tp[2] >= '0' && tp[2] <= '7') &&
+					(tp[3] >= '0' && tp[3] <= '7') )
+		{
+			byte = VAL(tp[1]);
+			byte <<= 3;
+			byte += VAL(tp[2]);
+			byte <<= 3;
+			*rp++ = byte + VAL(tp[3]);
+			tp += 4;
+		}
+		else if ( (tp[0] == '\\') &&
+				(tp[1] == '\\') )
+		{
+			*rp++ = '\\';
+			tp += 2;
+		}
 		else
 		{
-			byte = VAL(*tp++);
-			byte <<= 3;
-			byte += VAL(*tp++);
-			byte <<= 3;
-			*rp++ = byte + VAL(*tp++);
+			/*
+			 * We should never get here. The first pass should
+			 * not allow it.
+			 */
+			elog(ERROR, "Bad input string for type bytea");
 		}
 	}
 
@@ -669,6 +703,147 @@ byteaoctetlen(PG_FUNCTION_ARGS)
 	bytea	   *v = PG_GETARG_BYTEA_P(0);
 
 	PG_RETURN_INT32(VARSIZE(v) - VARHDRSZ);
+}
+
+/*
+ * byteacat -
+ *	  takes two bytea* and returns a bytea* that is the concatenation of
+ *	  the two.
+ *
+ * Cloned from textcat and modified as required.
+ */
+Datum
+byteacat(PG_FUNCTION_ARGS)
+{
+	bytea	   *t1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *t2 = PG_GETARG_BYTEA_P(1);
+	int			len1,
+				len2,
+				len;
+	bytea	   *result;
+	char	   *ptr;
+
+	len1 = (VARSIZE(t1) - VARHDRSZ);
+	if (len1 < 0)
+		len1 = 0;
+
+	len2 = (VARSIZE(t2) - VARHDRSZ);
+	if (len2 < 0)
+		len2 = 0;
+
+	len = len1 + len2 + VARHDRSZ;
+	result = (bytea *) palloc(len);
+
+	/* Set size of result string... */
+	VARATT_SIZEP(result) = len;
+
+	/* Fill data field of result string... */
+	ptr = VARDATA(result);
+	if (len1 > 0)
+		memcpy(ptr, VARDATA(t1), len1);
+	if (len2 > 0)
+		memcpy(ptr + len1, VARDATA(t2), len2);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+/*
+ * bytea_substr()
+ * Return a substring starting at the specified position.
+ * Cloned from text_substr and modified as required.
+ *
+ * Input:
+ *	- string
+ *	- starting position (is one-based)
+ *	- string length
+ *
+ * If the starting position is zero or less, then return from the start of the string
+ * adjusting the length to be consistant with the "negative start" per SQL92.
+ * If the length is less than zero, return the remaining string.
+ *
+ */
+Datum
+bytea_substr(PG_FUNCTION_ARGS)
+{
+	bytea	   *string = PG_GETARG_BYTEA_P(0);
+	int32		m = PG_GETARG_INT32(1);
+	int32		n = PG_GETARG_INT32(2);
+	bytea	   *ret;
+	int			len;
+
+	len = VARSIZE(string) - VARHDRSZ;
+
+	/* starting position after the end of the string? */
+	if (m > len)
+	{
+		m = 1;
+		n = 0;
+	}
+
+	/*
+	 * starting position before the start of the string? then offset into
+	 * the string per SQL92 spec...
+	 */
+	else if (m < 1)
+	{
+		n += (m - 1);
+		m = 1;
+	}
+
+	/* m will now become a zero-based starting position */
+	m--;
+	if (((m + n) > len) || (n < 0))
+		n = (len - m);
+
+	ret = (bytea *) palloc(VARHDRSZ + n);
+	VARATT_SIZEP(ret) = VARHDRSZ + n;
+
+	memcpy(VARDATA(ret), VARDATA(string) + m, n);
+
+	PG_RETURN_BYTEA_P(ret);
+}
+
+/*
+ * byteapos -
+ *	  Return the position of the specified substring.
+ *	  Implements the SQL92 POSITION() function.
+ * Cloned from textpos and modified as required.
+ */
+Datum
+byteapos(PG_FUNCTION_ARGS)
+{
+	bytea	   *t1 = PG_GETARG_BYTEA_P(0);
+	bytea	   *t2 = PG_GETARG_BYTEA_P(1);
+	int			pos;
+	int			px,
+				p;
+	int			len1,
+				len2;
+	char		*p1,
+				*p2;
+
+	if (VARSIZE(t2) <= VARHDRSZ)
+		PG_RETURN_INT32(1);		/* result for empty pattern */
+
+	len1 = (VARSIZE(t1) - VARHDRSZ);
+	len2 = (VARSIZE(t2) - VARHDRSZ);
+
+	p1 = VARDATA(t1);
+	p2 = VARDATA(t2);
+
+	pos = 0;
+	px = (len1 - len2);
+	for (p = 0; p <= px; p++)
+	{
+		if ((*p2 == *p1) && (memcmp(p1, p2, len2) == 0))
+		{
+			pos = p + 1;
+			break;
+		};
+		p1++;
+	};
+
+	PG_RETURN_INT32(pos);
 }
 
 /*-------------------------------------------------------------

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.163 2001/09/06 04:57:29 ishii Exp $
+ * $Id: builtins.h,v 1.164 2001/09/14 17:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -421,6 +421,9 @@ extern Datum byteale(PG_FUNCTION_ARGS);
 extern Datum byteagt(PG_FUNCTION_ARGS);
 extern Datum byteage(PG_FUNCTION_ARGS);
 extern Datum byteacmp(PG_FUNCTION_ARGS);
+extern Datum byteacat(PG_FUNCTION_ARGS);
+extern Datum byteapos(PG_FUNCTION_ARGS);
+extern Datum bytea_substr(PG_FUNCTION_ARGS);
 
 /* version.c */
 extern Datum pgsql_version(PG_FUNCTION_ARGS);
@@ -434,7 +437,10 @@ extern Datum textlike(PG_FUNCTION_ARGS);
 extern Datum textnlike(PG_FUNCTION_ARGS);
 extern Datum texticlike(PG_FUNCTION_ARGS);
 extern Datum texticnlike(PG_FUNCTION_ARGS);
+extern Datum bytealike(PG_FUNCTION_ARGS);
+extern Datum byteanlike(PG_FUNCTION_ARGS);
 extern Datum like_escape(PG_FUNCTION_ARGS);
+extern Datum like_escape_bytea(PG_FUNCTION_ARGS);
 
 /* oracle_compat.c */
 extern Datum lower(PG_FUNCTION_ARGS);
@@ -443,6 +449,7 @@ extern Datum initcap(PG_FUNCTION_ARGS);
 extern Datum lpad(PG_FUNCTION_ARGS);
 extern Datum rpad(PG_FUNCTION_ARGS);
 extern Datum btrim(PG_FUNCTION_ARGS);
+extern Datum byteatrim(PG_FUNCTION_ARGS);
 extern Datum ltrim(PG_FUNCTION_ARGS);
 extern Datum rtrim(PG_FUNCTION_ARGS);
 extern Datum translate(PG_FUNCTION_ARGS);

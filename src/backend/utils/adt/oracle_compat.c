@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.31 2001/03/22 03:59:52 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.32 2001/09/14 17:46:40 momjian Exp $
  *
  */
 
@@ -349,6 +349,78 @@ btrim(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(ret);
 }
 
+/********************************************************************
+ *
+ * byteatrim
+ *
+ * Syntax:
+ *
+ *	 bytea byteatrim(byta string, bytea set)
+ *
+ * Purpose:
+ *
+ *	 Returns string with characters removed from the front and back
+ *	 up to the first character not in set.
+ *
+ * Cloned from btrim and modified as required.
+ ********************************************************************/
+
+Datum
+byteatrim(PG_FUNCTION_ARGS)
+{
+	bytea	   *string = PG_GETARG_BYTEA_P(0);
+	bytea	   *set = PG_GETARG_BYTEA_P(1);
+	bytea	   *ret;
+	char	   *ptr,
+			   *end,
+			   *ptr2,
+			   *end2;
+	int			m;
+
+	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
+		(VARSIZE(set) - VARHDRSZ) <= 0)
+		PG_RETURN_BYTEA_P(string);
+
+	ptr = VARDATA(string);
+	end = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
+	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
+
+	while (m > 0)
+	{
+		ptr2 = VARDATA(set);
+		while (ptr2 <= end2)
+		{
+			if (*ptr == *ptr2)
+				break;
+			++ptr2;
+		}
+		if (ptr2 > end2)
+			break;
+		ptr++;
+		m--;
+	}
+
+	while (m > 0)
+	{
+		ptr2 = VARDATA(set);
+		while (ptr2 <= end2)
+		{
+			if (*end == *ptr2)
+				break;
+			++ptr2;
+		}
+		if (ptr2 > end2)
+			break;
+		end--;
+		m--;
+	}
+
+	ret = (bytea *) palloc(VARHDRSZ + m);
+	VARATT_SIZEP(ret) = VARHDRSZ + m;
+	memcpy(VARDATA(ret), ptr, m);
+
+	PG_RETURN_BYTEA_P(ret);
+}
 
 /********************************************************************
  *

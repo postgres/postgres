@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.111 2001/09/13 17:00:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.112 2001/09/14 17:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,79 @@ PQescapeString (char *to, const char *from, size_t length)
 	return target - to;
 }
 
+/*
+ *		PQescapeBytea	- converts from binary string to the
+ *		minimal encoding necessary to include the string in an SQL
+ *		INSERT statement with a bytea type column as the target.
+ *
+ *		The following transformations are applied
+ *		'\0' == ASCII  0 == \\000
+ *		'\'' == ASCII 39 == \'
+ *		'\\' == ASCII 92 == \\\\
+ */
+unsigned char *
+PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
+{
+	unsigned char	   *vp;
+	unsigned char	   *rp;
+	unsigned char	   *result;
+	size_t				i;
+	size_t				len;
 
+	/*
+	 * empty string has 1 char ('\0')
+	 */
+	len = 1;
+
+	vp = bintext;
+	for (i = binlen; i != 0; i--, vp++)
+	{
+		if (*vp == 0)
+			len += 5;
+		else if (*vp == 39)
+			len += 2;
+		else if (*vp == 92)
+			len += 4;
+		else
+			len++;
+	}
+
+	rp = result = (unsigned char *) malloc(len);
+	vp = bintext;
+	*bytealen = len;
+
+	for (i = binlen; i != 0; i--, vp++)
+	{
+		if (*vp == 0)
+		{
+			rp[0] = '\\';
+			rp[1] = '\\';
+			rp[2] = '0';
+			rp[3] = '0';
+			rp[4] = '0';
+			rp += 5;
+		}
+		else if (*vp == 39)
+		{
+			rp[0] = '\\';
+			rp[1] = '\'';
+			rp += 2;
+		}
+		else if (*vp == 92)
+		{
+			rp[0] = '\\';
+			rp[1] = '\\';
+			rp[2] = '\\';
+			rp[3] = '\\';
+			rp += 4;
+		}
+		else
+			*rp++ = *vp;
+	}
+	*rp = '\0';
+
+	return result;
+}
 
 /* ----------------
  * Space management for PGresult.

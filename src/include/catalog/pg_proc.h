@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.210 2001/09/08 01:10:20 tgl Exp $
+ * $Id: pg_proc.h,v 1.211 2001/09/14 17:46:40 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2740,6 +2740,28 @@ DESCR("larger of two");
 DATA(insert OID = 1966 (  oidsmaller	   PGUID 12 f t t t 2 f 26 "26 26" 100 0 0 100	oidsmaller - ));
 DESCR("smaller of two");
 
+DATA(insert OID = 2005 (  bytealike		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100 bytealike - ));
+DESCR("matches LIKE expression");
+DATA(insert OID = 2006 (  byteanlike	   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100 byteanlike - ));
+DESCR("does not match LIKE expression");
+DATA(insert OID = 2007 (  like			   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100  bytealike - ));
+DESCR("matches LIKE expression");
+DATA(insert OID = 2008 (  notlike		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100  byteanlike - ));
+DESCR("does not match LIKE expression");
+DATA(insert OID = 2009 (  like_escape	   PGUID 12 f t t t 2 f 17 "17 17" 100 0 0 100 like_escape_bytea - ));
+DESCR("convert match pattern to use backslash escapes");
+DATA(insert OID = 2010 (  length		   PGUID 12 f t t t 1 f 23 "17" 100 0 0 100  byteaoctetlen - ));
+DESCR("octet length");
+DATA(insert OID = 2011 (  byteacat		   PGUID 12 f t t t 2 f 17 "17 17" 100 0 0 100	byteacat - ));
+DESCR("concatenate");
+DATA(insert OID = 2012 (  substring		   PGUID 12 f t t t 3 f 17 "17 23 23" 100 0 0 100  bytea_substr - ));
+DESCR("return portion of string");
+DATA(insert OID = 2013 (  substring		   PGUID 14 f t t t 2 f 17 "17 23" 100 0 0 100	"select substring($1, $2, -1)" - ));
+DESCR("return portion of string");
+DATA(insert OID = 2014 (  position		   PGUID 12 f t t t 2 f 23 "17 17" 100 0 0 100	byteapos - ));
+DESCR("return position of substring");
+DATA(insert OID = 2015 (  btrim			   PGUID 12 f t t t 2 f 17 "17 17" 100 0 0 100	byteatrim - ));
+DESCR("trim both ends of string");
  
 /*
  * prototypes for functions pg_proc.c

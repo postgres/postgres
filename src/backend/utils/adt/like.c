@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.45 2001/03/22 03:59:51 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.46 2001/09/14 17:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,8 @@ static int MatchText(unsigned char *t, int tlen,
 		  unsigned char *p, int plen);
 static int MatchTextIC(unsigned char *t, int tlen,
 			unsigned char *p, int plen);
+static int MatchBytea(unsigned char *t, int tlen,
+		  unsigned char *p, int plen);
 
 
 #ifdef MULTIBYTE
@@ -120,6 +122,9 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 #define CopyAdvChar(dst, src, srclen) (*(dst)++ = *(src)++, (srclen)--)
 #endif
 
+#define BYTEA_CHAREQ(p1, p2) (*(p1) == *(p2))
+#define BYTEA_NextChar(p, plen) ((p)++, (plen)--)
+#define BYTEA_CopyAdvChar(dst, src, srclen) (*(dst)++ = *(src)++, (srclen)--)
 
 /*
  *	interface routines called by the function manager
@@ -205,6 +210,48 @@ textnlike(PG_FUNCTION_ARGS)
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
 	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+bytealike(PG_FUNCTION_ARGS)
+{
+	bytea	   *str = PG_GETARG_BYTEA_P(0);
+	bytea	   *pat = PG_GETARG_BYTEA_P(1);
+	bool		result;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
+
+	s = VARDATA(str);
+	slen = (VARSIZE(str) - VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat) - VARHDRSZ);
+
+	result = (MatchBytea(s, slen, p, plen) == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+byteanlike(PG_FUNCTION_ARGS)
+{
+	bytea	   *str = PG_GETARG_BYTEA_P(0);
+	bytea	   *pat = PG_GETARG_BYTEA_P(1);
+	bool		result;
+	unsigned char *s,
+			   *p;
+	int			slen,
+				plen;
+
+	s = VARDATA(str);
+	slen = (VARSIZE(str) - VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat) - VARHDRSZ);
+
+	result = (MatchBytea(s, slen, p, plen) != LIKE_TRUE);
 
 	PG_RETURN_BOOL(result);
 }
@@ -395,6 +442,103 @@ like_escape(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(result);
 }
 
+/*
+ * like_escape_bytea() --- given a pattern and an ESCAPE string,
+ * convert the pattern to use Postgres' standard backslash escape convention.
+ */
+Datum
+like_escape_bytea(PG_FUNCTION_ARGS)
+{
+	bytea	   *pat = PG_GETARG_BYTEA_P(0);
+	bytea	   *esc = PG_GETARG_BYTEA_P(1);
+	bytea	   *result;
+	unsigned char *p,
+			   *e,
+			   *r;
+	int			plen,
+				elen;
+	bool		afterescape;
+
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat) - VARHDRSZ);
+	e = VARDATA(esc);
+	elen = (VARSIZE(esc) - VARHDRSZ);
+
+	/*
+	 * Worst-case pattern growth is 2x --- unlikely, but it's hardly worth
+	 * trying to calculate the size more accurately than that.
+	 */
+	result = (text *) palloc(plen * 2 + VARHDRSZ);
+	r = VARDATA(result);
+
+	if (elen == 0)
+	{
+
+		/*
+		 * No escape character is wanted.  Double any backslashes in the
+		 * pattern to make them act like ordinary characters.
+		 */
+		while (plen > 0)
+		{
+			if (*p == '\\')
+				*r++ = '\\';
+			BYTEA_CopyAdvChar(r, p, plen);
+		}
+	}
+	else
+	{
+
+		/*
+		 * The specified escape must be only a single character.
+		 */
+		BYTEA_NextChar(e, elen);
+		if (elen != 0)
+			elog(ERROR, "ESCAPE string must be empty or one character");
+		e = VARDATA(esc);
+
+		/*
+		 * If specified escape is '\', just copy the pattern as-is.
+		 */
+		if (*e == '\\')
+		{
+			memcpy(result, pat, VARSIZE(pat));
+			PG_RETURN_BYTEA_P(result);
+		}
+
+		/*
+		 * Otherwise, convert occurrences of the specified escape
+		 * character to '\', and double occurrences of '\' --- unless they
+		 * immediately follow an escape character!
+		 */
+		afterescape = false;
+		while (plen > 0)
+		{
+			if (BYTEA_CHAREQ(p, e) && !afterescape)
+			{
+				*r++ = '\\';
+				BYTEA_NextChar(p, plen);
+				afterescape = true;
+			}
+			else if (*p == '\\')
+			{
+				*r++ = '\\';
+				if (!afterescape)
+					*r++ = '\\';
+				BYTEA_NextChar(p, plen);
+				afterescape = false;
+			}
+			else
+			{
+				BYTEA_CopyAdvChar(r, p, plen);
+				afterescape = false;
+			}
+		}
+	}
+
+	VARATT_SIZEP(result) = r - ((unsigned char *) result);
+
+	PG_RETURN_BYTEA_P(result);
+}
 
 /*
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -614,3 +758,91 @@ MatchTextIC(unsigned char *t, int tlen, unsigned char *p, int plen)
 	 */
 	return LIKE_ABORT;
 }	/* MatchTextIC() */
+
+/*
+ * Same as above, but specifically for bytea (binary) datatype
+ */
+static int
+MatchBytea(unsigned char *t, int tlen, unsigned char *p, int plen)
+{
+	/* Fast path for match-everything pattern */
+	if ((plen == 1) && (*p == '%'))
+		return LIKE_TRUE;
+
+	while ((tlen > 0) && (plen > 0))
+	{
+		if (*p == '\\')
+		{
+			/* Next pattern char must match literally, whatever it is */
+			BYTEA_NextChar(p, plen);
+			if ((plen <= 0) || !BYTEA_CHAREQ(t, p))
+				return LIKE_FALSE;
+		}
+		else if (*p == '%')
+		{
+			/* %% is the same as % according to the SQL standard */
+			/* Advance past all %'s */
+			while ((plen > 0) && (*p == '%'))
+				BYTEA_NextChar(p, plen);
+			/* Trailing percent matches everything. */
+			if (plen <= 0)
+				return LIKE_TRUE;
+
+			/*
+			 * Otherwise, scan for a text position at which we can match
+			 * the rest of the pattern.
+			 */
+			while (tlen > 0)
+			{
+
+				/*
+				 * Optimization to prevent most recursion: don't recurse
+				 * unless first pattern char might match this text char.
+				 */
+				if (BYTEA_CHAREQ(t, p) || (*p == '\\') || (*p == '_'))
+				{
+					int			matched = MatchBytea(t, tlen, p, plen);
+
+					if (matched != LIKE_FALSE)
+						return matched; /* TRUE or ABORT */
+				}
+
+				BYTEA_NextChar(t, tlen);
+			}
+
+			/*
+			 * End of text with no match, so no point in trying later
+			 * places to start matching this pattern.
+			 */
+			return LIKE_ABORT;
+		}
+		else if ((*p != '_') && !BYTEA_CHAREQ(t, p))
+		{
+
+			/*
+			 * Not the single-character wildcard and no explicit match?
+			 * Then time to quit...
+			 */
+			return LIKE_FALSE;
+		}
+
+		BYTEA_NextChar(t, tlen);
+		BYTEA_NextChar(p, plen);
+	}
+
+	if (tlen > 0)
+		return LIKE_FALSE;		/* end of pattern, but not of text */
+
+	/* End of input string.  Do we have matching pattern remaining? */
+	while ((plen > 0) && (*p == '%'))	/* allow multiple %'s at end of
+										 * pattern */
+		BYTEA_NextChar(p, plen);
+	if (plen <= 0)
+		return LIKE_TRUE;
+
+	/*
+	 * End of text with no match, so no point in trying later places to
+	 * start matching this pattern.
+	 */
+	return LIKE_ABORT;
+}	/* MatchBytea() */

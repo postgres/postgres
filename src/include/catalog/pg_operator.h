@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.92 2001/08/13 18:45:36 tgl Exp $
+ * $Id: pg_operator.h,v 1.93 2001/09/14 17:46:40 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -811,11 +811,15 @@ DATA(insert OID = 1921 (  "+"	   PGUID 0 l t f   0 1700 1700  0   0	0	0 numeric_
 
 /* bytea operators */
 DATA(insert OID = 1955 ( "="	   PGUID 0 b t t 17 17	16 1955 1956 1957 1957 byteaeq eqsel eqjoinsel ));
-DATA(insert OID = 1956 ( "<>"	   PGUID 0 b t f 17 17	16 1956 1955  0 0 byteane neqsel neqjoinsel ));
-DATA(insert OID = 1957 ( "<"	   PGUID 0 b t f 17 17	16 1959 1960  0 0 bytealt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1958 ( "<="	   PGUID 0 b t f 17 17	16 1960 1959  0 0 byteale scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1959 ( ">"	   PGUID 0 b t f 17 17	16 1957 1958  0 0 byteagt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1960 ( ">="	   PGUID 0 b t f 17 17	16 1958 1957  0 0 byteage scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1956 ( "<>"	   PGUID 0 b t f 17 17	16 1956 1955 0    0 byteane neqsel neqjoinsel ));
+DATA(insert OID = 1957 ( "<"	   PGUID 0 b t f 17 17	16 1959 1960 0    0 bytealt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1958 ( "<="	   PGUID 0 b t f 17 17	16 1960 1959 0    0 byteale scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1959 ( ">"	   PGUID 0 b t f 17 17	16 1957 1958 0    0 byteagt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1960 ( ">="	   PGUID 0 b t f 17 17	16 1958 1957 0    0 byteage scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2016 (  "~~"	   PGUID 0 b t f 17 17  16 0    2017 0    0 bytealike likesel likejoinsel ));
+#define OID_BYTEA_LIKE_OP		2016
+DATA(insert OID = 2017 (  "!~~"	   PGUID 0 b t f 17 17  16 0    2016 0    0 byteanlike nlikesel nlikejoinsel ));
+DATA(insert OID = 2018 (  "||"	   PGUID 0 b t f 17 17  17 0    0	 0    0 byteacat - - ));
 
 /*
  * function prototypes
