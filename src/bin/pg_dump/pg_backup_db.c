@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.18 2001/04/25 07:03:19 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.19 2001/05/17 21:12:48 petere Exp $
  *
  * NOTES
  *
@@ -40,18 +40,28 @@
 
 static const char *progname = "Archiver(db)";
 
-static void _prompt_for_password(char *username, char *password);
 static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, char *newUser);
 static int	_executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc);
 
 
-static void
-_prompt_for_password(char *username, char *password)
+/*
+ * simple_prompt
+ *
+ * Generalized function especially intended for reading in usernames and
+ * password interactively. Reads from stdin.
+ *
+ * prompt:		The prompt to print
+ * maxlen:		How many characters to accept
+ * echo:		Set to false if you want to hide what is entered (for passwords)
+ *
+ * Returns a malloc()'ed string with the input (w/o trailing newline).
+ */
+char *
+simple_prompt(const char *prompt, int maxlen, bool echo)
 {
-	char		buf[512];
 	int			length;
-	int			buflen;
+	char	   *destination;
 
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
@@ -59,48 +69,40 @@ _prompt_for_password(char *username, char *password)
 
 #endif
 
-	/*
-	 * Allow for forcing a specific username
-	 */
-	if (strlen(username) == 0)
+	destination = (char *) malloc(maxlen + 2);
+	if (!destination)
+		return NULL;
+	if (prompt)
+		fputs(prompt, stderr);
+
+#ifdef HAVE_TERMIOS_H
+	if (!echo)
 	{
-		fprintf(stderr, "Username: ");
-		fflush(stderr);
-		if (fgets(username, 100, stdin) == NULL)
-			username[0] = '\0';
-		length = strlen(username);
-		if (length > 0 && username[length - 1] != '\n')
-		{
-			/* eat rest of the line */
-			do
-			{
-				if (fgets(buf, sizeof(buf), stdin) == NULL)
-					break;
-				buflen = strlen(buf);
-			} while (buflen > 0 && buf[buflen - 1] != '\n');
-		}
-		if (length > 0 && username[length - 1] == '\n')
-			username[length - 1] = '\0';
+		tcgetattr(0, &t);
+		t_orig = t;
+		t.c_lflag &= ~ECHO;
+		tcsetattr(0, TCSADRAIN, &t);
 	}
-
-#ifdef HAVE_TERMIOS_H
-	tcgetattr(0, &t);
-	t_orig = t;
-	t.c_lflag &= ~ECHO;
-	tcsetattr(0, TCSADRAIN, &t);
-#endif
-	fprintf(stderr, "Password: ");
-	fflush(stderr);
-	if (fgets(password, 100, stdin) == NULL)
-		password[0] = '\0';
-#ifdef HAVE_TERMIOS_H
-	tcsetattr(0, TCSADRAIN, &t_orig);
 #endif
 
-	length = strlen(password);
-	if (length > 0 && password[length - 1] != '\n')
+	if (fgets(destination, maxlen, stdin) == NULL)
+		destination[0] = '\0';
+
+#ifdef HAVE_TERMIOS_H
+	if (!echo)
+	{
+		tcsetattr(0, TCSADRAIN, &t_orig);
+		fputs("\n", stderr);
+	}
+#endif
+
+	length = strlen(destination);
+	if (length > 0 && destination[length - 1] != '\n')
 	{
 		/* eat rest of the line */
+		char		buf[128];
+		int			buflen;
+
 		do
 		{
 			if (fgets(buf, sizeof(buf), stdin) == NULL)
@@ -108,11 +110,13 @@ _prompt_for_password(char *username, char *password)
 			buflen = strlen(buf);
 		} while (buflen > 0 && buf[buflen - 1] != '\n');
 	}
-	if (length > 0 && password[length - 1] == '\n')
-		password[length - 1] = '\0';
+	if (length > 0 && destination[length - 1] == '\n')
+		/* remove trailing newline */
+		destination[length - 1] = '\0';
 
-	fprintf(stderr, "\n\n");
+	return destination;
 }
+
 
 static int
 _parse_version(ArchiveHandle *AH, const char* versionString)
@@ -244,7 +248,8 @@ ReconnectDatabase(ArchiveHandle *AH, const char *newdbname, char *newUser)
 
 	PQfinish(AH->connection);
 	AH->connection = newConn;
-	strcpy(AH->username, newUser);
+	free(AH->username);
+	AH->username = strdup(newUser);
 
 	return 1;
 }
@@ -257,8 +262,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 {
 	int			need_pass;
 	PGconn	   *newConn;
-	char		password[100];
-	char	   *pwparam = NULL;
+	char	   *password = NULL;
 	int			badPwd = 0;
 	int			noPwd = 0;
 	char	   *newdb;
@@ -276,20 +280,28 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 
 	ahlog(AH, 1, "Connecting to %s as %s\n", newdb, newuser);
 
+	if (AH->requirePassword)
+	{
+		password = simple_prompt("Password: ", 100, false);
+		if (password == NULL)
+			die_horribly(AH, "out of memory");
+	}
+
 	do
 	{
 		need_pass = false;
 		newConn = PQsetdbLogin(PQhost(AH->connection), PQport(AH->connection),
 							   NULL, NULL, newdb,
-							   newuser, pwparam);
+							   newuser, password);
 		if (!newConn)
 			die_horribly(AH, "%s: Failed to reconnect (PQsetdbLogin failed).\n", progname);
 
 		if (PQstatus(newConn) == CONNECTION_BAD)
 		{
-			noPwd = (strcmp(PQerrorMessage(newConn), "fe_sendauth: no password supplied\n") == 0);
-			badPwd = (strncmp(PQerrorMessage(newConn), "Password authentication failed for user", 39)
-					  == 0);
+			noPwd = (strcmp(PQerrorMessage(newConn),
+							"fe_sendauth: no password supplied\n") == 0);
+			badPwd = (strncmp(PQerrorMessage(newConn),
+							  "Password authentication failed for user", 39) == 0);
 
 			if (noPwd || badPwd)
 			{
@@ -297,34 +309,45 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 				if (badPwd)
 					fprintf(stderr, "Password incorrect\n");
 
-				fprintf(stderr, "Connecting to %s as %s\n", PQdb(AH->connection), newuser);
+				fprintf(stderr, "Connecting to %s as %s\n",
+						PQdb(AH->connection), newuser);
 
 				need_pass = true;
-				_prompt_for_password(newuser, password);
-				pwparam = password;
+				if (password)
+					free(password);
+				password = simple_prompt("Password: ", 100, false);
 			}
 			else
-				die_horribly(AH, "%s: Could not reconnect. %s\n", progname, PQerrorMessage(newConn));
+				die_horribly(AH, "%s: Could not reconnect. %s\n",
+							 progname, PQerrorMessage(newConn));
 		}
 
 	} while (need_pass);
+
+	if (password)
+		free(password);
 
 	return newConn;
 }
 
 
+/*
+ * Make a database connection with the given parameters.  The
+ * connection handle is returned, the parameters are stored in AHX.
+ * An interactive password prompt is automatically issued if required.
+ */
 PGconn *
 ConnectDatabase(Archive *AHX,
 				const char *dbname,
 				const char *pghost,
 				const char *pgport,
+				const char *username,
 				const int reqPwd,
 				const int ignoreVersion)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	char		connect_string[512] = "";
-	char		tmp_string[128];
-	char		password[100];
+	char	   *password = NULL;
+	bool		need_pass = false;
 
 	if (AH->connection)
 		die_horribly(AH, "%s: already connected to database\n", progname);
@@ -335,40 +358,58 @@ ConnectDatabase(Archive *AHX,
 	AH->dbname = strdup(dbname);
 
 	if (pghost != NULL)
-	{
 		AH->pghost = strdup(pghost);
-		sprintf(tmp_string, "host=%s ", AH->pghost);
-		strcat(connect_string, tmp_string);
-	}
 	else
 		AH->pghost = NULL;
 
 	if (pgport != NULL)
-	{
 		AH->pgport = strdup(pgport);
-		sprintf(tmp_string, "port=%s ", AH->pgport);
-		strcat(connect_string, tmp_string);
-	}
 	else
 		AH->pgport = NULL;
 
-	sprintf(tmp_string, "dbname=%s ", AH->dbname);
-	strcat(connect_string, tmp_string);
+	if (username != NULL)
+		AH->username = strdup(username);
+	else
+		AH->username = NULL;
 
 	if (reqPwd)
 	{
-		AH->username[0] = '\0';
-		_prompt_for_password(AH->username, password);
-		strcat(connect_string, "authtype=password ");
-		sprintf(tmp_string, "user=%s ", AH->username);
-		strcat(connect_string, tmp_string);
-		sprintf(tmp_string, "password=%s ", password);
-		strcat(connect_string, tmp_string);
-		MemSet(tmp_string, 0, sizeof(tmp_string));
-		MemSet(password, 0, sizeof(password));
+		password = simple_prompt("Password: ", 100, false);
+		if (password == NULL)
+			die_horribly(AH, "out of memory");
+		AH->requirePassword = true;
 	}
-	AH->connection = PQconnectdb(connect_string);
-	MemSet(connect_string, 0, sizeof(connect_string));
+	else
+		AH->requirePassword = false;
+
+	/*
+	 * Start the connection.  Loop until we have a password if
+	 * requested by backend.
+	 */
+	do
+	{
+		need_pass = false;
+		AH->connection = PQsetdbLogin(AH->pghost, AH->pgport, NULL, NULL,
+									  AH->dbname, AH->username, password);
+
+		if (!AH->connection)
+			die_horribly(AH, "%s: Failed to connect (PQsetdbLogin failed).\n",
+						 progname);
+
+		if (PQstatus(AH->connection) == CONNECTION_BAD &&
+			strcmp(PQerrorMessage(AH->connection), "fe_sendauth: no password supplied\n") == 0 &&
+			!feof(stdin))
+		{
+			PQfinish(AH->connection);
+			need_pass = true;
+			free(password);
+			password = NULL;
+			password = simple_prompt("Password: ", 100, false);
+		}
+	} while (need_pass);
+
+	if (password)
+		free(password);
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)

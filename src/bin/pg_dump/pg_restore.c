@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.19 2001/03/22 04:00:15 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.20 2001/05/17 21:12:49 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -98,13 +98,14 @@ struct option cmdopts[] = {
 	{"port", 1, NULL, 'p'},
 	{"oid-order", 0, NULL, 'o'},
 	{"orig-order", 0, NULL, 'N'},
-	{"password", 0, NULL, 'u'},
+	{"password", 0, NULL, 'W'},
 	{"rearrange", 0, NULL, 'r'},
 	{"schema-only", 0, NULL, 's'},
 	{"superuser", 1, NULL, 'S'},
 	{"table", 2, NULL, 't'},
 	{"trigger", 2, NULL, 'T'},
 	{"use-list", 1, NULL, 'L'},
+	{"username", 1, NULL, 'U'},
 	{"verbose", 0, NULL, 'v'},
 	{NULL, 0, NULL, 0}
 };
@@ -141,9 +142,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uvx", cmdopts, NULL)) != EOF)
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWx", cmdopts, NULL)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uvx")) != -1)
+	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWx")) != -1)
 #endif
 	{
 		switch (c)
@@ -236,12 +237,22 @@ main(int argc, char **argv)
 				break;
 
 			case 'u':
-				opts->requirePassword = 1;
+				opts->requirePassword = true;
+				opts->username = simple_prompt("Username: ", 100, true);
+				break;
+
+			case 'U':
+				opts->username = optarg;
 				break;
 
 			case 'v':			/* verbose */
 				opts->verbose = 1;
 				break;
+
+			case 'W':
+				opts->requirePassword = true;
+				break;
+
 			case 'x':			/* skip ACL dump */
 				opts->aclsSkip = 1;
 				break;
@@ -354,8 +365,9 @@ usage(const char *progname)
 		 "                           disabling triggers\n"
 		 "  -t, --table[=TABLE]      restore this table only\n"
 		 "  -T, --trigger[=NAME]     restore triggers or named trigger\n"
-		 "  -u, --password           use password authentication\n"
+		 "  -U, --username=NAME      connect as specified database user\n"
 		 "  -v, --verbose            verbose\n"
+		 "  -W, --password           force password prompt (should happen automatically)\n"
 	 "  -x, --no-acl             skip dumping of ACLs (grant/revoke)\n");
 
 #else							/* not HAVE_GETOPT_LONG */
@@ -385,8 +397,9 @@ usage(const char *progname)
 		 "                           disabling triggers\n"
 		 "  -t NAME                  restore this table only\n"
 		 "  -T NAME                  restore triggers or named trigger\n"
-		 "  -u                       use password authentication\n"
+		 "  -U NAME                  connect as specified database user\n"
 		 "  -v                       verbose\n"
+		 "  -W                       force password prompt (should happen automatically)\n"
 	 "  -x                       skip dumping of ACLs (grant/revoke)\n");
 #endif
 	puts("If [file] is not supplied, then standard input is used.\n");

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.26 2001/05/12 01:03:59 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.27 2001/05/17 21:12:48 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -180,7 +180,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		AHX->minRemoteVersion = 070100;
 		AHX->maxRemoteVersion = 999999;
 
-		ConnectDatabase(AHX, ropt->dbname, ropt->pghost, ropt->pgport,
+		ConnectDatabase(AHX, ropt->dbname, ropt->pghost, ropt->pgport, ropt->username,
 						ropt->requirePassword, ropt->ignoreVersion);
 
 		/*

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.31 2001/03/17 16:27:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.32 2001/05/17 21:12:48 petere Exp $
 Postgres documentation
 -->
 
@@ -46,7 +46,8 @@ Postgres documentation
    <arg>-Z <replaceable>0...9</replaceable></arg>
    <arg>-h <replaceable>host</replaceable></arg>
    <arg>-p <replaceable>port</replaceable></arg>
-   <arg>-u</arg>
+   <arg>-U <replaceable>username</replaceable></arg>
+   <arg>-W</arg>
    <arg choice="plain"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -412,13 +413,20 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-u</term>
+      <term>-U <replaceable>username</replaceable></term>
       <listitem>
        <para>
-	Use password authentication. 
-	Prompts for
-	<replaceable class="parameter">username</replaceable>
-	and <replaceable class="parameter">password</replaceable>.
+        Connect as the given user.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-W</term>
+      <listitem>
+       <para>
+        Force a password prompt.  This should happen automatically if
+        the server requires password authentication.
        </para>
       </listitem>
      </varlistentry>

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.207 2001/05/12 23:36:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.208 2001/05/17 21:12:48 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -267,8 +267,9 @@ help(const char *progname)
 		 "  -S, --superuser=NAME     specify the superuser user name to use in plain\n"
 		 "                           text format\n"
 	  "  -t, --table=TABLE        dump for this table only (* for all)\n"
-		 "  -u, --password           use password authentication\n"
+		 "  -U, --username=NAME      connect as specified database user\n"
 		 "  -v, --verbose            verbose\n"
+		 "  -W, --password           force password prompt (should happen automatically)\n"
 		 "  -x, --no-acl             do not dump ACL's (grant/revoke)\n"
 		 "  -Z, --compress {0-9}     compression level for compressed formats\n"
 		);
@@ -296,8 +297,9 @@ help(const char *progname)
 		 "  -S NAME                  specify the superuser user name to use in plain\n"
 		 "                           text format\n"
 	  "  -t TABLE                 dump for this table only (* for all)\n"
-		 "  -u                       use password authentication\n"
+		 "  -U NAME                  connect as specified database user\n"
 		 "  -v                       verbose\n"
+		 "  -W                       force password prompt (should happen automatically)\n"
 		 "  -x                       do not dump ACL's (grant/revoke)\n"
 		 "  -Z {0-9}                 compression level for compressed formats\n"
 		);
@@ -711,11 +713,12 @@ main(int argc, char **argv)
 	const char *dbname = NULL;
 	const char *pghost = NULL;
 	const char *pgport = NULL;
+	const char *username = NULL;
 	char	   *tablename = NULL;
 	bool		oids = false;
 	TableInfo  *tblinfo;
 	int			numTables;
-	bool		use_password = false;
+	bool		force_password = false;
 	int			compressLevel = -1;
 	bool		ignore_version = false;
 	int			plainText = 0;
@@ -749,7 +752,8 @@ main(int argc, char **argv)
 		{"schema-only", no_argument, NULL, 's'},
 		{"superuser", required_argument, NULL, 'S'},
 		{"table", required_argument, NULL, 't'},
-		{"password", no_argument, NULL, 'u'},
+		{"password", no_argument, NULL, 'W'},
+		{"username", required_argument, NULL, 'U'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"no-acl", no_argument, NULL, 'x'},
 		{"compress", required_argument, NULL, 'Z'},
@@ -796,9 +800,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uvxzZ:V?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uU:vWxzZ:V?", long_options, &optindex)) != -1)
 #else
-	while ((c = getopt(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uvxzZ:V?-")) != -1)
+	while ((c = getopt(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uU:vWxzZ:V?-")) != -1)
 #endif
 
 	{
@@ -918,11 +922,20 @@ main(int argc, char **argv)
 				break;
 
 			case 'u':
-				use_password = true;
+				force_password = true;
+				username = simple_prompt("Username: ", 100, true);
+				break;
+
+			case 'U':
+				username = optarg;
 				break;
 
 			case 'v':			/* verbose */
 				g_verbose = true;
+				break;
+
+			case 'W':
+				force_password = true;
 				break;
 
 			case 'x':			/* skip ACL dump */
@@ -1053,7 +1066,7 @@ main(int argc, char **argv)
 	 */
 	g_fout->minRemoteVersion = 70000;
 	g_fout->maxRemoteVersion = 70199;
-	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, use_password, ignore_version);
+	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, username, force_password, ignore_version);
 
 	/*
 	 * Start serializable transaction to dump consistent data

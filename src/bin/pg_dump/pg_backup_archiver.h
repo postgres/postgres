@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.33 2001/05/12 01:03:59 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.34 2001/05/17 21:12:48 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *	-	Initial version.
@@ -203,11 +203,12 @@ typedef struct _archiveHandle
 	CustomOutPtr CustomOutPtr;	/* Alternate script output routine */
 
 	/* Stuff for direct DB connection */
-	char		username[100];
+	char	   *username;
 	char	   *dbname;			/* Name of db for connection */
 	char	   *archdbname;		/* DB name *read* from archive */
 	char	   *pghost;
 	char	   *pgport;
+	bool		requirePassword;
 	PGconn	   *connection;
 	PGconn	   *blobConnection; /* Connection for BLOB xref */
 	int			txActive;		/* Flag set if TX active on connection */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.21 2001/03/05 18:42:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.22 2001/05/17 21:12:48 petere Exp $
 Postgres documentation
 -->
 
@@ -23,9 +23,11 @@ Postgres documentation
   <cmdsynopsis>
    <command>pg_dumpall</command>
    <group><arg>-c</arg><arg>--clean</arg></group>
+   <group><arg>-g</arg><arg>--globals-only</arg></group>
    <arg>-h <replaceable>host</replaceable></arg>
    <arg>-p <replaceable>port</replaceable></arg>
-   <group><arg>-g</arg><arg>--globals-only</arg></group>
+   <arg>-U <replaceable>username</replaceable></arg>
+   <arg>-W</arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -82,6 +84,15 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
+      <term>-g, --globals-only</term>
+      <listitem>
+       <para>
+	Only dump global objects (users and groups), no databases.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-h <replaceable>host</replaceable></term>
       <listitem>
        <para>
@@ -106,14 +117,23 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-g, --globals-only</term>
+      <term>-U <replaceable>username</replaceable></term>
       <listitem>
        <para>
-	Only dump global objects (users and groups), no databases.
+        Connect as the given user.
        </para>
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term>-W</term>
+      <listitem>
+       <para>
+        Force a password prompt.  This should happen automatically if
+        the server requires password authentication.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 
@@ -128,8 +148,8 @@ Postgres documentation
   </refsect2>
  </refsect1>
 
- <refsect1 id="app-pg-dumpall-usage">
-  <title>Usage</title>
+ <refsect1 id="app-pg-dumpall-ex">
+  <title>Examples</title>
   <para>
    To dump all databases:
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.7 2001/03/19 16:19:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.8 2001/05/17 21:12:48 petere Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -61,11 +61,10 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    As any other <productname>Postgres</> client application,
    <application>pg_dump</> will by default connect with the database
    user name that is equal to the current Unix user name. To override
-   this, either specify the <option>-u</option> option to force a prompt for
-   the user name, or set the environment variable
-   <envar>PGUSER</envar>. Remember that <application>pg_dump</>
-   connections are subject to the normal client authentication
-   mechanisms (which are described in <xref
+   this, either specify the <option>-U</option> option or set the
+   environment variable <envar>PGUSER</envar>. Remember that
+   <application>pg_dump</> connections are subject to the normal
+   client authentication mechanisms (which are described in <xref
    linkend="client-authentication">).
   </para>
 
@@ -162,20 +161,6 @@ pg_dumpall &gt; <replaceable>outfile</>
     described above. But in this case it is definitely necessary that
     you have database superuser access, as that is required to restore
     the user and group information.
-   </para>
-
-   <para>
-    <application>pg_dumpall</application> has one little flaw: It is
-    not prepared for interactively authenticating to each database it
-    dumps. If you are using password authentication then you need to
-    set it the environment variable <envar>PGPASSWORD</envar> to
-    communicate the password the the underlying calls to
-    <application>pg_dump</>. More severely, if you have different
-    passwords set up for each database, then
-    <application>pg_dumpall</> will fail. You can either choose a
-    different authentication mechanism for the purposes of backup or
-    adjust the <filename>pg_dumpall</filename> shell script to your
-    needs.
    </para>
   </sect2>
 
