@@ -112,7 +112,7 @@ msgstr "無效的主機位址: %s\n"
 #: fe-connect.c:842
 #, c-format
 msgid "unknown host name: %s\n"
-msgstr "未知的主機名稱: %s\n"
+msgstr "不明的主機名稱: %s\n"
 
 #: fe-connect.c:884
 #, c-format
@@ -127,7 +127,7 @@ msgstr "無法傳送 SSL 握手封包: %s\n"
 #: fe-connect.c:955
 #, c-format
 msgid "could not receive server response to SSL negotiation packet: %s\n"
-msgstr "無法收到伺服器對 SSL 握手封包的回應: %s\n"
+msgstr "收不到伺服器對 SSL 握手封包的回應: %s\n"
 
 #: fe-connect.c:969
 #, c-format
@@ -142,7 +142,7 @@ msgstr "無法建立 SSL 連接: %s\n"
 #: fe-connect.c:997
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
-msgstr "收到對 SSL 握手的無效回應: %c\n"
+msgstr "收到無效的 SSL 握手回應: %c\n"
 
 #: fe-connect.c:1006
 msgid "server does not support SSL, but SSL was required\n"
@@ -170,7 +170,7 @@ msgstr "無法傳送啟動封包: %s\n"
 #: fe-connect.c:1320
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
-msgstr "期待來自伺服器的認證請求, 卻收到 %c\n"
+msgstr "期待來自伺服器的認證請求，但是收到 %c\n"
 
 #: fe-connect.c:1433
 msgid "unexpected message from server during startup\n"
@@ -179,17 +179,17 @@ msgstr "啟動過程中收到來自伺服器的非預期訊息\n"
 #: fe-connect.c:1492
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
-msgstr "無效的連接狀態 %c, 可能是記憶體中的資料被破壞\n"
+msgstr "無效的連接狀態 %c，可能是記憶體中的資料被破壞\n"
 
 #: fe-connect.c:1592
 #, c-format
 msgid "invalid setenv state %c, probably indicative of memory corruption\n"
-msgstr "無效的 setenv 狀態  %c, 可能是記憶體中的資料被破壞\n"
+msgstr "無效的 setenv 狀態  %c，可能是記憶體中的資料被破壞\n"
 
 #: fe-connect.c:1633
 #, c-format
 msgid "invalid encoding name in PGCLIENTENCODING: %s\n"
-msgstr "在 PGCLIENTENCODING 中的非法編碼名稱: %s\n"
+msgstr "PGCLIENTENCODING 設定的編碼名稱不正確: %s\n"
 
 #: fe-connect.c:1758
 #, c-format
@@ -224,7 +224,7 @@ msgstr "命令字串是一個空指標\n"
 
 #: fe-exec.c:578
 msgid "no connection to the server\n"
-msgstr "沒有到伺服器的連接\n"
+msgstr "沒有連接到伺服器\n"
 
 #: fe-exec.c:585
 msgid "another command is already in progress\n"
@@ -233,7 +233,7 @@ msgstr "已經有另外一條命令在處理\n"
 #: fe-exec.c:788
 #, c-format
 msgid "message type 0x%02x arrived from server while idle\n"
-msgstr "空閒時從伺服器傳回了型別為 0x%02x 的訊息\n"
+msgstr "閒置時從伺服器傳回了型別為 0x%02x 的訊息\n"
 
 #: fe-exec.c:831
 #, c-format
@@ -304,11 +304,11 @@ msgstr "行號 %d 超出了範圍 0..%d\n"
 #: fe-exec.c:2163
 #, c-format
 msgid "could not interpret result from server: %s\n"
-msgstr "無法解釋來自伺服器的結果: %s\n"
+msgstr "無法解讀來自伺服器的結果: %s\n"
 
 #: fe-exec.c:2179
 msgid "no row count available\n"
-msgstr "沒有可獲得的行數\n"
+msgstr "無法取得資料筆數\n"
 
 #: fe-lobj.c:398 fe-lobj.c:477
 #, c-format
@@ -328,12 +328,12 @@ msgstr "無法開啟大型物件 %u\n"
 #: fe-lobj.c:433
 #, c-format
 msgid "error while reading file \"%s\"\n"
-msgstr "讀取檔案 \"%s\" 時出錯\n"
+msgstr "讀取檔案 \"%s\" 時發生錯誤\n"
 
 #: fe-lobj.c:491
 #, c-format
 msgid "error while writing to file \"%s\"\n"
-msgstr "寫入檔案 \"%s\" 時出錯\n"
+msgstr "寫入檔案 \"%s\" 時發生錯誤\n"
 
 #: fe-lobj.c:555
 msgid "query to initialize large object functions did not return data\n"
@@ -393,7 +393,7 @@ msgstr "select() 失敗: %s\n"
 
 #: fe-misc.c:416 fe-misc.c:616 fe-misc.c:757
 msgid "connection not open\n"
-msgstr "連接未打開\n"
+msgstr "連接未開啟\n"
 
 #: fe-misc.c:487 fe-misc.c:573
 #, c-format
@@ -406,9 +406,9 @@ msgid ""
 "\tThis probably means the server terminated abnormally\n"
 "\tbefore or while processing the request.\n"
 msgstr ""
-"伺服器意外地關閉了連接\n"
+"伺服器意外地中斷了連接\n"
 "\t這種現象通常意味著伺服器在處理請求之前\n"
-"\t或者正在處理請求的時候意外中止\n"
+"\t或者正在處理請求的時候不正常中止\n"
 
 #: fe-misc.c:691
 #, c-format
