@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.43 2000/06/01 05:58:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.44 2000/06/05 10:57:57 momjian Exp $
 -->
 
  <chapter id="install">
@@ -8,7 +8,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.43 2000/06/01 05:58:
   <abstract>
    <para>
     Installation instructions for 
-    <productname>PostgreSQL</productname> 7.0.1.
+    <productname>PostgreSQL</productname> 7.0.2.
    </para>
   </abstract>
 
@@ -18,9 +18,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.43 2000/06/01 05:58:
    then unpack it:
 
    <programlisting>
-&gt; gunzip postgresql-7.0.1.tar.gz
-&gt; tar -xf postgresql-7.0.1.tar
-&gt; mv postgresql-7.0.1 /usr/src
+&gt; gunzip postgresql-7.0.2.tar.gz
+&gt; tar -xf postgresql-7.0.2.tar
+&gt; mv postgresql-7.0.2 /usr/src
    </programlisting>
   </para>
 
@@ -241,16 +241,16 @@ All of PostgreSQL is successfully made. Ready to install.
 
     <step performance="required">
      <para>
-      If you are not upgrading an existing system then skip to 
+      If you are not upgrading an existing system, skip to 
       <xref linkend="continue">.
      </para>
      <para>
-     If you are running 7.0 or later, skip to
+     If you are running 7.*, skip to step
      <xref linkend="nodump">.
       </para>
      <para>
       You now need to back up your existing database.
-      To dump your fairly recent post-6.0 database installation, type
+      To dump your database installation, type:
       <programlisting>
 &gt; pg_dumpall > db.out
       </programlisting>
@@ -264,18 +264,8 @@ All of PostgreSQL is successfully made. Ready to install.
      <para>
       Make sure to use the <application>pg_dumpall</application>
       command from the version you are currently running.
-      7.0.1's <application>pg_dumpall</application> will not work on older databases.
-      However, if you are still using 6.0, do not use the
-      <application>pg_dumpall</application> script from 6.0 or everything will be
-      owned by the <productname>PostgreSQL</productname> superuser after you
-      reload. In that case
-      you should grab <application>pg_dumpall</application> from a later
-      6.x.x release.
-      If you are upgrading from a version prior to
-      <productname>Postgres95</productname> v1.09 then you must back
-      up your database,
-      install <productname>Postgres95</productname> v1.09, restore your database,
-      then back it up again.
+      7.0.2's <application>pg_dumpall</application> should not
+      be used on older databases.
      </para>
 
      <caution>
@@ -295,7 +285,7 @@ All of PostgreSQL is successfully made. Ready to install.
 
     <step performance="required" id="nodump">
      <para>
-      If you are upgrading an existing system then kill the database
+      If you are upgrading an existing system, kill the database
       server now. Type
       <programlisting>
 &gt; ps ax | grep postmaster
@@ -460,7 +450,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
    <para>
     This concludes the installation proper. To make your life more
     productive and enjoyable
-    you should look at the following optional steps and suggestions.
+    you should look at the following optional steps and suggestions:
    </para>
 
    <itemizedlist>
@@ -493,7 +483,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
       You probably want to install the <application>man</application> and
       <acronym>HTML</acronym> documentation. Type
       <programlisting>
-&gt; cd /usr/src/pgsql/postgresql-7.0.1/doc
+&gt; cd /usr/src/pgsql/postgresql-7.0.2/doc
 &gt; gmake install
       </programlisting>
       This will install files under <filename>/usr/local/pgsql/doc</filename>
