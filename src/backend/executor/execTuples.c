@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.53 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.54 2002/07/18 04:40:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -759,6 +759,7 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	natts = tupdesc->natts;
 
 	dvalues = (Datum *) palloc(natts * sizeof(Datum));
+	nulls = (char *) palloc(natts * sizeof(char));
 
 	/* Call the "in" function for each attribute */
 	for (i = 0; i < natts; i++)
@@ -772,22 +773,18 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 			dvalues[i] = FunctionCall3(&attinfuncinfo, CStringGetDatum(values[i]),
 										ObjectIdGetDatum(attelem),
 										Int32GetDatum(atttypmod));
+			nulls[i] = ' ';
 		}
 		else
+		{
 			dvalues[i] = PointerGetDatum(NULL);
+			nulls[i] = 'n';
+		}
 	}
 
 	/*
 	 * Form a tuple
 	 */
-	nulls = (char *) palloc(natts * sizeof(char));
-	for (i = 0; i < natts; i++)
-	{
-		if (DatumGetPointer(dvalues[i]) != NULL)
-			nulls[i] = ' ';
-		else
-			nulls[i] = 'n';
-	}
 	tuple = heap_formtuple(tupdesc, dvalues, nulls);
 
 	return tuple;

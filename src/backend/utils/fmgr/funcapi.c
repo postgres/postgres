@@ -52,7 +52,7 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		retval->call_cntr = 0;
 		retval->max_calls = 0;
 		retval->slot = NULL;
-		retval->fctx = NULL;
+		retval->user_fctx = NULL;
 		retval->attinmeta = NULL;
 		retval->fmctx = fcinfo->flinfo->fn_mcxt;
 
@@ -71,6 +71,23 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		/* never reached, but keep compiler happy */
 		retval = NULL;
 	}
+
+	return retval;
+}
+
+/*
+ * per_MultiFuncCall
+ * 
+ * Do Multi-function per-call setup
+ */
+FuncCallContext *
+per_MultiFuncCall(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *retval = (FuncCallContext *) fcinfo->flinfo->fn_extra;
+
+	/* make sure we start with a fresh slot */
+	if(retval->slot != NULL)
+		ExecClearTuple(retval->slot);
 
 	return retval;
 }

@@ -65,22 +65,57 @@ typedef struct
  */
 typedef struct
 {
-	/* Number of times we've been called before */
+	/*
+	 * Number of times we've been called before.
+	 * 
+	 * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
+	 * incremented for you every time SRF_RETURN_NEXT() is called.
+	 */
 	uint32			call_cntr;
 
-	/* Maximum number of calls */
+	/*
+	 * OPTIONAL maximum number of calls
+	 *
+	 * max_calls is here for convenience ONLY and setting it is OPTIONAL.
+	 * If not set, you must provide alternative means to know when the
+	 * function is done.
+	 */
 	uint32			max_calls;
 
-	/* pointer to result slot */
+	/*
+	 * OPTIONAL pointer to result slot
+	 * 
+	 * slot is for use when returning tuples (i.e. composite data types)
+	 * and is not needed when returning base (i.e. scalar) data types.
+	 */
 	TupleTableSlot *slot;
 
-	/* pointer to misc context info */
-	void		   *fctx;
+	/*
+	 * OPTIONAL pointer to misc user provided context info
+	 * 
+	 * user_fctx is for use as a pointer to your own struct to retain
+	 * arbitrary context information between calls for your function.
+	 */
+	void		   *user_fctx;
 
-	/* pointer to struct containing arrays of attribute type input metainfo */
+	/*
+	 * OPTIONAL pointer to struct containing arrays of attribute type input
+	 * metainfo
+	 * 
+	 * attinmeta is for use when returning tuples (i.e. composite data types)
+	 * and is not needed when returning base (i.e. scalar) data types. It
+	 * is ONLY needed if you intend to use BuildTupleFromCStrings() to create
+	 * the return tuple.
+	 */
 	AttInMetadata	   *attinmeta;
 
-	/* memory context used to initialize structure */
+	/*
+	 * memory context used to initialize structure
+	 *
+	 * fmctx is set by SRF_FIRSTCALL_INIT() for you, and used by
+	 * SRF_RETURN_DONE() for cleanup. It is primarily for internal use
+	 * by the API.
+	 */
 	MemoryContext	fmctx;
 
 }	FuncCallContext;
@@ -137,7 +172,7 @@ extern void get_type_metadata(Oid typeid, Oid *attinfuncid, Oid *attelem);
  * 	Datum				result;
  * 	<user defined declarations>
  * 
- * 	if(SRF_IS_FIRSTPASS())
+ * 	if(SRF_IS_FIRSTCALL())
  * 	{
  * 		<user defined code>
  * 		funcctx = SRF_FIRSTCALL_INIT();
@@ -148,7 +183,7 @@ extern void get_type_metadata(Oid typeid, Oid *attinfuncid, Oid *attelem);
  * 		<user defined code>
  *  }
  * 	<user defined code>
- * 	funcctx = SRF_PERCALL_SETUP(funcctx);
+ * 	funcctx = SRF_PERCALL_SETUP();
  * 	<user defined code>
  * 
  * 	if (funcctx->call_cntr < funcctx->max_calls)
@@ -167,14 +202,12 @@ extern void get_type_metadata(Oid typeid, Oid *attinfuncid, Oid *attelem);
 
 /* from funcapi.c */
 extern FuncCallContext *init_MultiFuncCall(PG_FUNCTION_ARGS);
+extern FuncCallContext *per_MultiFuncCall(PG_FUNCTION_ARGS);
 extern void end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx);
 
-#define SRF_IS_FIRSTPASS() (fcinfo->flinfo->fn_extra == NULL)
+#define SRF_IS_FIRSTCALL() (fcinfo->flinfo->fn_extra == NULL)
 #define SRF_FIRSTCALL_INIT() init_MultiFuncCall(fcinfo)
-#define SRF_PERCALL_SETUP(_funcctx) \
-	fcinfo->flinfo->fn_extra; \
-	if(_funcctx->slot != NULL) \
-		ExecClearTuple(_funcctx->slot)
+#define SRF_PERCALL_SETUP() per_MultiFuncCall(fcinfo)
 #define SRF_RETURN_NEXT(_funcctx, _result) \
 	do { \
 		ReturnSetInfo	   *rsi; \
