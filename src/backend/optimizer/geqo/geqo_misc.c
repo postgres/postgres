@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.28 2000/02/15 20:49:14 tgl Exp $
+ * $Id: geqo_misc.c,v 1.29 2000/11/21 21:16:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,6 @@ void
 geqo_print_joinclauses(Query *root, List *clauses)
 {
 	List	   *l;
-	extern void print_expr(Node *expr, List *rtable);	/* in print.c */
 
 	foreach(l, clauses)
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.46 2000/10/21 15:43:33 vadim Exp $
+ * $Id: nbtree.h,v 1.47 2000/11/21 21:16:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
+#include "access/xlogutils.h"
 
 /*
  *	BTPageOpaqueData -- At the end of every page, we store a pointer
@@ -331,6 +332,10 @@ extern Datum btendscan(PG_FUNCTION_ARGS);
 extern Datum btmarkpos(PG_FUNCTION_ARGS);
 extern Datum btrestrpos(PG_FUNCTION_ARGS);
 extern Datum btdelete(PG_FUNCTION_ARGS);
+
+extern void btree_redo(XLogRecPtr lsn, XLogRecord *record);
+extern void btree_undo(XLogRecPtr lsn, XLogRecord *record);
+extern void btree_desc(char *buf, uint8 xl_info, char* rec);
 
 /*
  * prototypes for functions in nbtinsert.c

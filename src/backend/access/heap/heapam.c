@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.95 2000/11/20 21:14:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.96 2000/11/21 21:15:54 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -88,10 +88,6 @@
 
 #ifdef XLOG
 #include "access/xlogutils.h"
-
-void heap_redo(XLogRecPtr lsn, XLogRecord *record);
-void heap_undo(XLogRecPtr lsn, XLogRecord *record);
-void heap_desc(char *buf, uint8 xl_info, char* rec);
 
 XLogRecPtr	log_heap_move(Relation reln, ItemPointerData from, HeapTuple newtup);
 

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.65 2000/11/16 22:30:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.66 2000/11/21 21:15:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,6 @@
 
 #ifdef XLOG
 #include "access/xlogutils.h"
-void gist_redo(XLogRecPtr lsn, XLogRecord *record);
-void gist_undo(XLogRecPtr lsn, XLogRecord *record);
-void gist_desc(char *buf, uint8 xl_info, char* rec);
 #endif
 
 /* non-export function prototypes */

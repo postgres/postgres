@@ -1,6 +1,7 @@
 
 #ifndef XLOG_UTILS_H
 
+#include "access/rmgr.h"
 #include "utils/rel.h"
 
 extern int XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr, 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.55 2000/11/08 22:09:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.56 2000/11/21 21:15:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,6 @@
 
 #ifdef XLOG
 #include "access/xlogutils.h"
-void rtree_redo(XLogRecPtr lsn, XLogRecord *record);
-void rtree_undo(XLogRecPtr lsn, XLogRecord *record);
-void rtree_desc(char *buf, uint8 xl_info, char* rec);
 #endif
 
 typedef struct SPLITVEC

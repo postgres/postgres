@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.71 2000/11/16 22:30:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.72 2000/11/21 21:15:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "tcop/dest.h"
+#include "tcop/tcopprot.h"
 #include "utils/fmgroids.h"
 #include "utils/ps_status.h"
 #include "utils/syscache.h"

@@ -11,11 +11,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.20 2000/11/08 22:10:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.21 2000/11/21 21:16:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "miscadmin.h"
 
 #ifdef STABLE_MEMORY_STORAGE
 
@@ -71,7 +72,6 @@ typedef struct MMRelHashEntry
 #define MMNRELATIONS	2
 
 SPINLOCK	MMCacheLock;
-extern Oid	MyDatabaseId;
 
 static int *MMCurTop;
 static int *MMCurRelno;

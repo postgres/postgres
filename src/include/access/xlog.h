@@ -1,9 +1,9 @@
 /*
- *
  * xlog.h
  *
- * Postgres transaction log manager
+ * PostgreSQL transaction log manager
  *
+ * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.10 2000/11/21 21:16:05 petere Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -11,6 +11,7 @@
 #include "access/rmgr.h"
 #include "access/transam.h"
 #include "access/xlogdefs.h"
+#include "access/xlogutils.h"
 
 typedef struct XLogRecord
 {
@@ -98,5 +99,21 @@ extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info,
 extern void XLogFlush(XLogRecPtr RecPtr);
 
 extern void CreateCheckPoint(bool shutdown);
+
+extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
+extern void xlog_undo(XLogRecPtr lsn, XLogRecord *record);
+extern void xlog_desc(char *buf, uint8 xl_info, char* rec);
+
+extern void UpdateControlFile(void);
+extern int XLOGShmemSize(void);
+extern void XLOGShmemInit(void);
+extern void BootStrapXLOG(void);
+extern void StartupXLOG(void);
+extern void ShutdownXLOG(void);
+extern void CreateCheckPoint(bool shutdown);
+extern void SetThisStartUpID(void);
+
+extern char XLogDir[];
+extern char ControlFilePath[];
 
 #endif	 /* XLOG_H */

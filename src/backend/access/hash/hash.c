@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.44 2000/11/08 22:09:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.45 2000/11/21 21:15:54 petere Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -29,9 +29,6 @@ bool		BuildingHash = false;
 
 #ifdef XLOG
 #include "access/xlogutils.h"
-void hash_redo(XLogRecPtr lsn, XLogRecord *record);
-void hash_undo(XLogRecPtr lsn, XLogRecord *record);
-void hash_desc(char *buf, uint8 xl_info, char* rec);
 #endif
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.35 2000/07/14 22:17:53 tgl Exp $
+ * $Id: hash.h,v 1.36 2000/11/21 21:16:05 petere Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -20,6 +20,7 @@
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
+#include "access/xlog.h"
 #include "fmgr.h"
 
 /*
@@ -329,5 +330,11 @@ extern HashItem _hash_formitem(IndexTuple itup);
 extern Bucket _hash_call(Relation rel, HashMetaPage metap, Datum key);
 extern uint32 _hash_log2(uint32 num);
 extern void _hash_checkpage(Page page, int flags);
+
+
+/* hash.c */
+extern void hash_redo(XLogRecPtr lsn, XLogRecord *record);
+extern void hash_undo(XLogRecPtr lsn, XLogRecord *record);
+extern void hash_desc(char *buf, uint8 xl_info, char* rec);
 
 #endif	 /* HASH_H */

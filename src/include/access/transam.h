@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.26 2000/11/03 11:39:36 vadim Exp $
+ * $Id: transam.h,v 1.27 2000/11/21 21:16:05 petere Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -200,5 +200,6 @@ extern bool AMI_OVERRIDE;
 
 /* in varsup.c */
 extern int	OidGenLockId;
+extern VariableCache ShmemVariableCache;
 
 #endif	 /* TRAMSAM_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.69 2000/07/29 03:26:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.70 2000/11/21 21:16:02 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,12 +23,6 @@
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
-
-
-#ifdef CYR_RECODE
-/* XXX no points for style --- this is actually in utils/init/miscinit.c */
-extern char *convertstr(char *, int, int);
 #endif
 
 

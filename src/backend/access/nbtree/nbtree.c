@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.70 2000/11/08 22:09:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.71 2000/11/21 21:15:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,6 @@ bool		FastBuild = true;	/* use sort/build instead of insertion
 #ifdef XLOG
 #include "access/xlogutils.h"
 
-void btree_redo(XLogRecPtr lsn, XLogRecord *record);
-void btree_undo(XLogRecPtr lsn, XLogRecord *record);
-void btree_desc(char *buf, uint8 xl_info, char* rec);
 #endif
 
 static void _bt_restscan(IndexScanDesc scan);

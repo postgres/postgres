@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.18 2000/05/31 00:28:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.19 2000/11/21 21:16:03 petere Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
@@ -29,9 +29,6 @@ ExceptionalCondition(char *conditionName,
 					 char *fileName,
 					 int lineNumber)
 {
-	extern char *ExcFileName;	/* XXX */
-	extern Index ExcLineNumber; /* XXX */
-
 	ExcFileName = fileName;
 	ExcLineNumber = lineNumber;
 

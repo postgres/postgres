@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.99 2000/11/21 09:39:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.100 2000/11/21 21:15:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/xlog.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
@@ -39,16 +40,11 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/relcache.h"
 
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
-extern void StartupXLOG(void);
-extern void ShutdownXLOG(void);
-extern void BootStrapXLOG(void);
-
-extern char XLogDir[];
-extern char ControlFilePath[];
 
 extern int	Int_yyparse(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
@@ -223,10 +219,6 @@ BootstrapMain(int argc, char *argv[])
 	int			xlogop = BS_XLOG_NOP;
 	char       *potential_DataDir = NULL;
 
-	extern int	optind;
-	extern char *optarg;
-
-
 	/* --------------------
 	 *	initialize globals
 	 * -------------------
@@ -355,7 +347,6 @@ BootstrapMain(int argc, char *argv[])
 	{
 		if (xlogop == BS_XLOG_CHECKPOINT)
 		{
-			extern void CreateDummyCaches(void);
 			CreateDummyCaches();
 			CreateCheckPoint(false);
 		}

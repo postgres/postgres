@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.33 2000/04/12 17:15:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.34 2000/11/21 21:16:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
+#include "access/xlog.h"
 #include "storage/bufmgr.h"
 #include "storage/sinval.h"
 
@@ -55,8 +56,6 @@ void
 CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 {
 	int			size;
-	extern int	XLOGShmemSize(void);
-	extern void XLOGShmemInit(void);
 
 #ifdef HAS_TEST_AND_SET
 

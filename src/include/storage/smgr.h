@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.24 2000/11/08 22:10:02 tgl Exp $
+ * $Id: smgr.h,v 1.25 2000/11/21 21:16:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SMGR_H
 #define SMGR_H
 
+#include "access/xlog.h"
 #include "storage/relfilenode.h"
 #include "storage/block.h"
 #include "storage/spin.h"
@@ -49,6 +50,10 @@ extern int	smgrabort(void);
 
 #ifdef XLOG
 extern int	smgrsync(void);
+
+extern void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
+extern void smgr_undo(XLogRecPtr lsn, XLogRecord *record);
+extern void smgr_desc(char *buf, uint8 xl_info, char* rec);
 #endif
 
 

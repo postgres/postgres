@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.36 2000/11/03 11:39:35 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.37 2000/11/21 21:15:57 petere Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -20,7 +20,9 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/transam.h"
 #include "catalog/catname.h"
+#include "miscadmin.h"
 
 static int	RecoveryCheckingEnabled(void);
 static void TransRecover(Relation logRelation);
@@ -76,17 +78,6 @@ TransactionId FirstTransactionId = (TransactionId) 514;
  * ----------------
  */
 int			RecoveryCheckingEnableState = 0;
-
-/* ------------------
- *		spinlock for oid generation
- * -----------------
- */
-extern int	OidGenLockId;
-
-#ifdef XLOG
-#include "miscadmin.h"
-extern VariableCache ShmemVariableCache;
-#endif
 
 /* ----------------
  *		recovery checking accessors

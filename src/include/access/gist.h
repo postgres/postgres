@@ -15,6 +15,7 @@
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
+#include "access/xlog.h"
 
 /*
 ** You can have as many strategies as you please in GiSTs, as
@@ -190,6 +191,10 @@ extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);
 extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber, RegProcedure);
+
+extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
+extern void gist_undo(XLogRecPtr lsn, XLogRecord *record);
+extern void gist_desc(char *buf, uint8 xl_info, char* rec);
 
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.188 2000/11/14 18:11:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.189 2000/11/21 21:16:02 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -37,6 +37,7 @@
 #include <getopt.h>
 #endif
 
+#include "access/xlog.h"
 #include "commands/async.h"
 #include "commands/trigger.h"
 #include "commands/variable.h"
@@ -71,8 +72,11 @@
  * ----------------
  */
 
+extern int optind;
+extern char *optarg;
+
 /*
- * XXX For ps display. That stuff needs to be cleaned up.
+ * for ps display
  */
 bool HostnameLookup;
 bool ShowPortNumber;
@@ -82,13 +86,7 @@ bool Log_connections = false;
 CommandDest whereToSendOutput = Debug;
 
 
-extern void StartupXLOG(void);
-extern void ShutdownXLOG(void);
-
 extern void HandleDeadLock(SIGNAL_ARGS);
-
-extern char XLogDir[];
-extern char ControlFilePath[];
 
 static bool	dontExecute = false;
 
@@ -1064,10 +1062,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 	char       *potential_DataDir = NULL;
 
-	extern int	optind;
-	extern char *optarg;
-	extern int	DebugLvl;
-
 	/*
 	 * Fire up essential subsystems: error and memory management
 	 *
@@ -1649,7 +1643,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.188 $ $Date: 2000/11/14 18:11:32 $\n");
+		puts("$Revision: 1.189 $ $Date: 2000/11/21 21:16:02 $\n");
 	}
 
 	/*

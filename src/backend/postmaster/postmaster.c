@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.188 2000/11/15 18:36:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.189 2000/11/21 21:16:00 petere Exp $
  *
  * NOTES
  *
@@ -215,10 +215,6 @@ static unsigned int random_seed = 0;
 extern char *optarg;
 extern int	optind,
 			opterr;
-
-extern char XLogDir[];
-extern char ControlFilePath[];
-extern void SetThisStartUpID(void);
 
 /*
  * postmaster.c - function prototypes

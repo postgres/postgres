@@ -23,6 +23,7 @@
 #include "access/xlogutils.h"
 #include "catalog/pg_database.h"
 #include "lib/hasht.h"
+#include "utils/relcache.h"
 
 /*
  * ---------------------------------------------------------------
@@ -313,8 +314,6 @@ _xl_new_reldesc(void)
 	return(res);
 }
 
-extern void CreateDummyCaches(void);
-extern void DestroyDummyCaches(void);
 
 void
 XLogInitRelationCache(void)

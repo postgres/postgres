@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.32 2000/07/14 22:17:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.33 2000/11/21 21:15:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "access/tupdesc.h"
 #include "access/xact.h"
 #include "bootstrap/bootstrap.h"
+#include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_attribute.h"
@@ -288,7 +289,7 @@ boot_type_thing:
 
 optoideq:
 			OBJ_ID EQUALS boot_ident { $$ = atol(LexIDStr($3));				}
-		|						{ extern Oid newoid(); $$ = newoid();	}
+		|						{ $$ = newoid();	}
 		;
 
 boot_tuplelist:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.52 2000/10/07 14:39:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.53 2000/11/21 21:16:01 petere Exp $
  *
  * NOTES
  *
@@ -416,7 +416,6 @@ static int	IpcSemaphoreLock_return;
 void
 IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
 {
-	extern int	errno;
 	int			errStatus;
 	struct sembuf sops;
 
@@ -460,7 +459,6 @@ static int	IpcSemaphoreUnlock_return;
 void
 IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
 {
-	extern int	errno;
 	int			errStatus;
 	struct sembuf sops;
 

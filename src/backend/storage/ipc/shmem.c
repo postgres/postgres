@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.53 2000/07/25 20:17:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.54 2000/11/21 21:16:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@
  */
 
 #include "postgres.h"
+#include "access/transam.h"
 #include "utils/tqual.h"
 
 /* shared memory global variables */
@@ -67,8 +68,6 @@
 unsigned long ShmemBase = 0;	/* start and end address of shared memory */
 static unsigned long ShmemEnd = 0;
 static unsigned long ShmemSize = 0;		/* current size (and default) */
-
-extern VariableCache ShmemVariableCache;		/* varsup.c */
 
 SPINLOCK	ShmemLock;			/* lock for shared memory allocation */
 

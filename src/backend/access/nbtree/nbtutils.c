@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.40 2000/07/25 04:47:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.41 2000/11/21 21:15:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/genam.h"
 #include "access/istrat.h"
 #include "access/nbtree.h"
+#include "catalog/catalog.h"
 #include "executor/execdebug.h"
 
 
@@ -133,7 +134,6 @@ _bt_formitem(IndexTuple itup)
 	int			nbytes_btitem;
 	BTItem		btitem;
 	Size		tuplen;
-	extern Oid	newoid();
 
 	/* make a copy of the index tuple with room for extra stuff */
 	tuplen = IndexTupleSize(itup);

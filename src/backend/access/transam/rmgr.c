@@ -1,38 +1,14 @@
 #include "postgres.h"
+#include "access/gist.h"
+#include "access/hash.h"
+#include "access/heapam.h"
+#include "access/nbtree.h"
+#include "access/rtree.h"
+#include "access/xact.h"
 #include "access/xlog.h"
+#include "storage/smgr.h"
 
 #ifdef XLOG
-extern void xlog_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void xlog_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void xlog_desc(char *buf, uint8 xl_info, char* rec);
-
-extern void xact_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void xact_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void xact_desc(char *buf, uint8 xl_info, char* rec);
-
-extern void smgr_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void smgr_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void smgr_desc(char *buf, uint8 xl_info, char* rec);
-
-extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_desc(char *buf, uint8 xl_info, char* rec);
-
-extern void btree_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void btree_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void btree_desc(char *buf, uint8 xl_info, char* rec);
-
-extern void hash_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void hash_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void hash_desc(char *buf, uint8 xl_info, char* rec);
-
-extern void rtree_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void rtree_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void rtree_desc(char *buf, uint8 xl_info, char* rec);
-
-extern void gist_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void gist_undo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void gist_desc(char *buf, uint8 xl_info, char* rec);
 
 RmgrData   RmgrTable[] = {
 {"XLOG", xlog_redo, xlog_undo, xlog_desc},

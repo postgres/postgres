@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.22 2000/10/23 04:10:24 vadim Exp $
+ * $Id: relcache.h,v 1.23 2000/11/21 21:16:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,10 @@ extern void RelationRegisterRelation(Relation relation);
 extern void RelationPurgeLocalRelation(bool xactComitted);
 
 extern void RelationCacheAbort(void);
+
+
+extern void CreateDummyCaches(void);
+extern void DestroyDummyCaches(void);
 
 /*
  * both vacuum.c and relcache.c need to know the name of the relcache init file
