@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.69 2004/06/24 21:03:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.70 2004/07/06 19:51:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,10 @@
 #define NOTICE		18			/* Helpful messages to users about query
 								 * operation;  sent to client and server
 								 * log by default. */
-#define WARNING		19			/* Warnings */
+#define WARNING		19			/* Warnings.  NOTICE is for expected messages
+								 * like implicit sequence creation by SERIAL.
+								 * WARNING is for unexpected messages.
+								 */
 #define ERROR		20			/* user error - abort transaction; return
 								 * to known state */
 /* Save ERROR value in PGERROR so it can be restored when Win32 includes
