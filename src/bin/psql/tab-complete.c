@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.88 2003/10/16 23:45:29 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.89 2003/10/17 11:52:06 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -232,7 +232,7 @@ initialize_readline(void)
 "   FROM pg_catalog.pg_namespace "\
 "  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
 "        UNION "\
-" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname) || '()' "\
+" SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname) "\
 "   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n "\
 "  WHERE substring(pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname),1,%d)='%s' "\
 "    AND pronamespace = n.oid "\
