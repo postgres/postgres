@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.12 2001/10/21 03:25:35 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.13 2001/10/22 19:41:38 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1185,9 +1185,6 @@ pgstat_main(void)
 
 	/*
 	 * Identify myself via ps
-	 *
-	 * WARNING: On some platforms the environment will be moved around to
-	 * make room for the ps display string.
 	 */
 	init_ps_display("stats collector process", "", "");
 	set_ps_display("");
@@ -1470,9 +1467,6 @@ pgstat_recvbuffer(void)
 
 	/*
 	 * Identify myself via ps
-	 *
-	 * WARNING: On some platforms the environment will be moved around to
-	 * make room for the ps display string.
 	 */
 	init_ps_display("stats buffer process", "", "");
 	set_ps_display("");

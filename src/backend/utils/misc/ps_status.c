@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.6 2001/10/21 03:25:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.7 2001/10/22 19:41:38 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -95,14 +95,66 @@ static char **save_argv;
 
 /*
  * Call this early in startup to save the original argc/argv values.
+ *
  * argv[] will not be overwritten by this routine, but may be overwritten
- * during init_ps_display.
+ * during init_ps_display.  Also, the physical location of the environment
+ * strings may be moved, so this should be called before any code that
+ * might try to hang onto a getenv() result.
  */
 void
 save_ps_display_args(int argc, char *argv[])
 {
 	save_argc = argc;
 	save_argv = argv;
+
+#ifdef PS_USE_CLOBBER_ARGV
+	/*
+	 * If we're going to overwrite the argv area, count the available
+	 * space.  Also move the environment to make additional room.
+	 */
+	{
+		char	   *end_of_area = NULL;
+		char	  **new_environ;
+		int			i;
+
+		/*
+		 * check for contiguous argv strings
+		 */
+		for (i = 0; i < argc; i++)
+		{
+			if (i == 0 || end_of_area + 1 == argv[i])
+				end_of_area = argv[i] + strlen(argv[i]);
+		}
+
+		if (end_of_area == NULL) /* probably can't happen? */
+		{
+			ps_buffer = NULL;
+			ps_buffer_size = 0;
+			return;
+		}
+
+		/*
+		 * check for contiguous environ strings following argv
+		 */
+		for (i = 0; environ[i] != NULL; i++)
+		{
+			if (end_of_area + 1 == environ[i])
+				end_of_area = environ[i] + strlen(environ[i]);
+		}
+
+		ps_buffer = argv[0];
+		ps_buffer_size = end_of_area - argv[0] - 1;
+
+		/*
+		 * move the environment out of the way
+		 */
+		new_environ = malloc(sizeof(char *) * (i + 1));
+		for (i = 0; environ[i] != NULL; i++)
+			new_environ[i] = strdup(environ[i]);
+		new_environ[i] = NULL;
+		environ = new_environ;
+	}
+#endif	 /* PS_USE_CLOBBER_ARGV */
 }
 
 /*
@@ -113,10 +165,11 @@ void
 init_ps_display(const char *username, const char *dbname,
 				const char *host_info)
 {
-#ifndef PS_USE_NONE
 	Assert(username);
 	Assert(dbname);
+	Assert(host_info);
 
+#ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
 	if (!IsUnderPostmaster)
 		return;
@@ -124,6 +177,15 @@ init_ps_display(const char *username, const char *dbname,
 	/* no ps display if you didn't call save_ps_display_args() */
 	if (!save_argv)
 		return;
+#ifdef PS_USE_CLOBBER_ARGV
+	/* If ps_buffer is a pointer, it might still be null */
+	if (!ps_buffer)
+		return;
+#endif
+
+	/*
+	 * Overwrite argv[] to point at appropriate space, if needed
+	 */
 
 #ifdef PS_USE_CHANGE_ARGV
 	save_argv[0] = ps_buffer;
@@ -131,60 +193,14 @@ init_ps_display(const char *username, const char *dbname,
 #endif	 /* PS_USE_CHANGE_ARGV */
 
 #ifdef PS_USE_CLOBBER_ARGV
-
-	/*
-	 * If we're going to overwrite the argv area, count the space.
-	 */
-	{
-		char	   *end_of_area = NULL;
-		char	  **new_environ;
-		int			i;
-
-		/*
-		 * check for contiguous argv strings
-		 */
-		for (i = 0; i < save_argc; i++)
-			if (i == 0 || end_of_area + 1 == save_argv[i])
-				end_of_area = save_argv[i] + strlen(save_argv[i]);
-
-		/*
-		 * check for contiguous environ strings following argv
-		 */
-		for (i = 0; end_of_area != NULL && environ[i] != NULL; i++)
-			if (end_of_area + 1 == environ[i])
-				end_of_area = environ[i] + strlen(environ[i]);
-
-		if (end_of_area == NULL)
-		{
-			ps_buffer = NULL;
-			ps_buffer_size = 0;
-			return;
-		}
-		else
-		{
-			ps_buffer = save_argv[0];
-			ps_buffer_size = end_of_area - save_argv[0] - 1;
-		}
-		save_argv[1] = NULL;
-
-		/*
-		 * move the environment out of the way
-		 */
-		for (i = 0; environ[i] != NULL; i++)
-			;
-		new_environ = malloc(sizeof(char *) * (i + 1));
-		for (i = 0; environ[i] != NULL; i++)
-			new_environ[i] = strdup(environ[i]);
-		new_environ[i] = NULL;
-		environ = new_environ;
-	}
+	save_argv[1] = NULL;
 #endif	 /* PS_USE_CLOBBER_ARGV */
 
 	/*
-	 * Make fixed prefix
+	 * Make fixed prefix of ps display.
 	 */
-#ifdef PS_USE_SETPROCTITLE
 
+#ifdef PS_USE_SETPROCTITLE
 	/*
 	 * apparently setproctitle() already adds a `progname:' prefix to the
 	 * ps line

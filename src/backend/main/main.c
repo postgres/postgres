@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.46 2001/10/21 03:25:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.47 2001/10/22 19:41:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,32 @@ main(int argc, char *argv[])
 	 * best to minimize these.
 	 */
 
+	/*
+	 * Remember the physical location of the initially given argv[] array,
+	 * since on some platforms that storage must be overwritten in order
+	 * to set the process title for ps.  Then make a copy of the argv[]
+	 * array for subsequent use, so that argument parsing doesn't get
+	 * affected if init_ps_display overwrites the original argv[].
+	 *
+	 * (NB: do NOT think to remove the copying of argv[], even though
+	 * postmaster.c finishes looking at argv[] long before we ever consider
+	 * changing the ps display.  On some platforms, getopt() keeps pointers
+	 * into the argv array, and will get horribly confused when it is
+	 * re-called to analyze a subprocess' argument string if the argv storage
+	 * has been clobbered meanwhile.)
+	 *
+	 * On some platforms, save_ps_display_args moves the environment strings
+	 * to make extra room.  Therefore this should be done as early as
+	 * possible during startup, to avoid entanglements with code that might
+	 * save a getenv() result pointer.
+	 */
+	save_ps_display_args(argc, argv);
+
+	new_argv = (char **) malloc((argc + 1) * sizeof(char *));
+	for (i = 0; i < argc; i++)
+		new_argv[i] = strdup(argv[i]);
+	new_argv[argc] = NULL;
+
 	/* Initialize NLS settings so we can give localized error messages */
 #ifdef ENABLE_NLS
 #ifdef LC_MESSAGES
@@ -167,27 +193,6 @@ main(int argc, char *argv[])
 	setlocale(LC_COLLATE, "");
 	setlocale(LC_MONETARY, "");
 #endif
-
-	/*
-	 * Remember the physical location of the initially given argv[] array,
-	 * since on some platforms that storage must be overwritten in order
-	 * to set the process title for ps.  Then make a copy of the argv[]
-	 * array for subsequent use, so that argument parsing doesn't get
-	 * affected if init_ps_display overwrites the original argv[].
-	 *
-	 * (NB: do NOT think to remove this copying, even though postmaster.c
-	 * finishes looking at argv[] long before we ever consider changing
-	 * the ps display.  On some platforms, getopt(3) keeps pointers into
-	 * the argv array, and will get horribly confused when it is re-called
-	 * to analyze a subprocess' argument string if the argv storage has
-	 * been clobbered meanwhile.)
-	 */
-	save_ps_display_args(argc, argv);
-
-	new_argv = (char **) malloc((argc + 1) * sizeof(char *));
-	for (i = 0; i < argc; i++)
-		new_argv[i] = strdup(argv[i]);
-	new_argv[argc] = NULL;
 
 	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, or

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.250 2001/10/21 03:25:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.251 2001/10/22 19:41:38 tgl Exp $
  *
  * NOTES
  *
@@ -2090,12 +2090,7 @@ DoBackend(Port *port)
 	}
 
 	/*
-	 * Set process parameters for ps
-	 *
-	 * WARNING: On some platforms the environment will be moved around to
-	 * make room for the ps display string. So any references to
-	 * optarg or getenv() from above will be invalid after this call.
-	 * Better use strdup or something similar.
+	 * Set process parameters for ps display.
 	 */
 	init_ps_display(port->user, port->database, remote_host);
 	set_ps_display("authentication");
@@ -2443,9 +2438,6 @@ SSDataBase(int xlop)
 
 		/*
 		 * Identify myself via ps
-		 *
-		 * WARNING: On some platforms the environment will be moved around to
-		 * make room for the ps display string.
 		 */
 		switch (xlop)
 		{
