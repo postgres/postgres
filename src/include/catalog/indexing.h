@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.24 1999/09/29 16:06:14 wieck Exp $
+ * $Id: indexing.h,v 1.25 1999/09/30 10:31:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
  * Some definitions for indices on pg_attribute
  */
 #define Num_pg_attr_indices		3
-#define Num_pg_proc_indices		3
+#define Num_pg_proc_indices		2
 #define Num_pg_type_indices		2
 #define Num_pg_class_indices	2
 #define Num_pg_attrdef_indices	1
@@ -37,7 +37,6 @@
 #define AttributeRelidIndex		"pg_attribute_attrelid_index"
 #define ProcedureOidIndex		"pg_proc_oid_index"
 #define ProcedureNameIndex		"pg_proc_proname_narg_type_index"
-#define ProcedureSrcIndex		"pg_proc_prosrc_index"
 #define TypeOidIndex			"pg_type_oid_index"
 #define TypeNameIndex			"pg_type_typname_index"
 #define ClassOidIndex			"pg_class_oid_index"
@@ -83,7 +82,6 @@ extern HeapTuple AttributeNumIndexScan(Relation heapRelation,
 extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Oid procId);
 extern HeapTuple ProcedureNameIndexScan(Relation heapRelation,
 					   char *procName, int2 nargs, Oid *argTypes);
-extern HeapTuple ProcedureSrcIndexScan(Relation heapRelation, text *procSrc);
 extern HeapTuple TypeOidIndexScan(Relation heapRelation, Oid typeId);
 extern HeapTuple TypeNameIndexScan(Relation heapRelation, char *typeName);
 extern HeapTuple ClassNameIndexScan(Relation heapRelation, char *relName);
@@ -103,7 +101,6 @@ DECLARE_INDEX(pg_attribute_attrelid_index on pg_attribute using btree(attrelid o
 
 DECLARE_INDEX(pg_proc_oid_index on pg_proc using btree(oid oid_ops));
 DECLARE_INDEX(pg_proc_proname_narg_type_index on pg_proc using btree(proname name_ops, pronargs int2_ops, proargtypes oid8_ops));
-DECLARE_INDEX(pg_proc_prosrc_index on pg_proc using btree(prosrc text_ops));
 
 DECLARE_INDEX(pg_type_oid_index on pg_type using btree(oid oid_ops));
 DECLARE_INDEX(pg_type_typname_index on pg_type using btree(typname name_ops));

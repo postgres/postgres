@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.46 1999/09/29 16:05:56 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.47 1999/09/30 10:31:42 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,7 @@ char	   *Name_pg_attr_indices[Num_pg_attr_indices] = {AttributeNameIndex,
 	AttributeNumIndex,
 AttributeRelidIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] = {ProcedureNameIndex,
-	ProcedureOidIndex,
-ProcedureSrcIndex};
+	ProcedureOidIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] = {TypeNameIndex,
 TypeOidIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] = {ClassNameIndex,
@@ -371,28 +370,6 @@ ProcedureNameIndexScan(Relation heapRelation,
 
 	idesc = index_openr(ProcedureNameIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 3);
-
-	index_close(idesc);
-
-	return tuple;
-}
-
-
-HeapTuple
-ProcedureSrcIndexScan(Relation heapRelation, text *procSrc)
-{
-	Relation	idesc;
-	ScanKeyData skey[1];
-	HeapTuple	tuple;
-
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_TEXTEQ,
-						   PointerGetDatum(procSrc));
-
-	idesc = index_openr(ProcedureSrcIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
 
 	index_close(idesc);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.36 1999/09/18 19:07:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.37 1999/09/30 10:31:43 wieck Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -336,17 +336,6 @@ static struct cachedesc cacheinfo[] = {
 		offsetof(FormData_pg_rewrite, ev_qual),
 		NULL,
 	(ScanFunc) NULL},
-	{ProcedureRelationName,		/* PROSRC */
-		1,
-		{
-			Anum_pg_proc_prosrc,
-			0,
-			0,
-			0
-		},
-		offsetof(FormData_pg_proc, prosrc),
-		ProcedureSrcIndex,
-	(ScanFunc) ProcedureSrcIndexScan},
 	{OperatorClassRelationName, /* CLADEFTYPE */
 		1,
 		{

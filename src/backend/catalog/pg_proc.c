@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.34 1999/09/18 19:06:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.35 1999/09/30 10:31:42 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,6 @@ ProcedureCreate(char *procedureName,
 	Oid			typev[8];
 	Oid			relid;
 	Oid			toid;
-	text	   *prosrctext;
 	NameData	procname;
 	TupleDesc	tupDesc;
 
@@ -131,6 +130,20 @@ ProcedureCreate(char *procedureName,
 		 */
 		if (!strcmp(procedureName, GENERICSETNAME))
 		{
+#ifdef SETS_FIXED
+			/* ----------
+			 * The code below doesn't work any more because the
+			 * PROSRC system cache and the pg_proc_prosrc_index
+			 * have been removed. Instead a sequential heap scan
+			 * or something better must get implemented. The reason
+			 * for removing is that nbtree index crashes if sources
+			 * exceed 2K what's likely for procedural languages.
+			 *
+			 * 1999/09/30 Jan
+			 * ----------
+			 */
+			text	   *prosrctext;
+
 			prosrctext = textin(prosrc);
 			tup = SearchSysCacheTuple(PROSRC,
 									  PointerGetDatum(prosrctext),
@@ -138,6 +151,9 @@ ProcedureCreate(char *procedureName,
 			pfree(prosrctext);
 			if (HeapTupleIsValid(tup))
 				return tup->t_data->t_oid;
+#else
+			elog(ERROR, "lookup for procedure by source needs fix (Jan)");
+#endif /* SETS_FIXED */
 		}
 	}
 
