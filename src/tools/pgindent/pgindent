@@ -34,6 +34,7 @@ do
 # We get the list of typedef's from /src/tools/find_typedef
 	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l75 \
 		-lp -nip -npro $EXTRA_OPTS \
+-TACL \
 -TA_Const \
 -TA_Expr \
 -TA_Indices \
@@ -44,7 +45,6 @@ do
 -TAclItem \
 -TAclMode \
 -TAddAttrStmt \
--TAddr \
 -TAgg \
 -TAggFuncInfo \
 -TAggInfo \
@@ -56,12 +56,10 @@ do
 -TAllocPointer \
 -TAllocSet \
 -TAllocSetData \
+-TAlterUserStmt \
 -TAnyInvalidation \
 -TAppend \
 -TAppendState \
--TAppendStmt \
--TArchType \
--TArchiveMode \
 -TArray \
 -TArrayRef \
 -TArrayType \
@@ -70,6 +68,8 @@ do
 -TAttrNumber \
 -TAttributeSize \
 -TAttributeTupleForm \
+-TAuthRequest \
+-TAuthRequestPacket \
 -TBOX \
 -TBTItem \
 -TBTItemData \
@@ -135,14 +135,15 @@ do
 -TConst \
 -TConstrCheck \
 -TConstrType \
--TConstraintDef \
+-TConstraint \
 -TCopyStmt \
 -TCost \
+-TCreatePLangStmt \
 -TCreateSeqStmt \
 -TCreateStmt \
 -TCreateTrigStmt \
+-TCreateUserStmt \
 -TCreatedbStmt \
--TCursorStmt \
 -TDateADT \
 -TDateTime \
 -TDatum \
@@ -154,11 +155,14 @@ do
 -TDestroydbStmt \
 -TDlelem \
 -TDllist \
+-TDropPLangStmt \
 -TDropTrigStmt \
+-TDropUserStmt \
 -TDynamicFileList \
 -TELEMENT \
 -TEState \
 -TEdge \
+-TErrorMessagePacket \
 -TExcContext \
 -TExcData \
 -TExcDetail \
@@ -169,7 +173,6 @@ do
 -TException \
 -TExecStatus \
 -TExecStatusType \
--TExistential \
 -TExitStatus \
 -TExplainState \
 -TExplainStmt \
@@ -187,6 +190,7 @@ do
 -TFixedStackData \
 -TFjoin \
 -TFmgrCall \
+-TFmgrInfo \
 -TFmgrValues \
 -TFormData_pg_aggregate \
 -TFormData_pg_am \
@@ -210,7 +214,6 @@ do
 -TFormData_pg_rewrite \
 -TFormData_pg_sequence \
 -TFormData_pg_statistic \
--TFormData_pg_time \
 -TFormData_pg_trigger \
 -TFormData_pg_user \
 -TFormData_pg_variable \
@@ -231,11 +234,9 @@ do
 -TForm_pg_relcheck \
 -TForm_pg_rewrite \
 -TForm_pg_statistic \
--TForm_pg_time \
 -TForm_pg_trigger \
 -TForm_pg_user \
 -TForm_pg_variable \
--TFrontEnd \
 -TFunc \
 -TFuncCall \
 -TFuncIndexInfo \
@@ -325,10 +326,10 @@ do
 -TInheritsTupleForm \
 -TInsertIndexResult \
 -TInsertIndexResultData \
+-TInsertStmt \
 -TIntArray \
 -TInt_yy_size_t \
 -TInt_yy_state_type \
--TInternalTimeQual \
 -TInvalidationEntry \
 -TInvalidationEntryData \
 -TInvalidationMessage \
@@ -363,7 +364,6 @@ do
 -TLOCKT \
 -TLOCKTAB \
 -TLOCKTAG \
--TLOCK_LEVEL \
 -TLOCK_TYPE \
 -TLRelId \
 -TLSEG \
@@ -394,7 +394,6 @@ do
 -TMergeJoinState \
 -TMergeOrder \
 -TMergePath \
--TMoveStmt \
 -TMsgType \
 -TName \
 -TNameData \
@@ -429,6 +428,7 @@ do
 -TOverflowTuple \
 -TOverflowTupleData \
 -TPATH \
+-TPG_LOCK_LEVEL \
 -TPGconn \
 -TPGlobjfuncs \
 -TPGnotify \
@@ -443,19 +443,23 @@ do
 -TPROC \
 -TPROC_HDR \
 -TPROC_QUEUE \
--TPacketBuf \
+-TPacket \
 -TPacketLen \
+-TPacketState \
 -TPage \
 -TPageHeader \
 -TPageHeaderData \
 -TPageManagerMode \
 -TPageOffset \
 -TParam \
+-TParamExecData \
 -TParamListInfo \
 -TParamListInfoData \
 -TParamNo \
 -TParamString \
 -TParseState \
+-TPasswordPacket \
+-TPasswordPacketV0 \
 -TPath \
 -TPathOrder \
 -TPlan \
@@ -479,9 +483,9 @@ do
 -TProcedureStmt \
 -TProcessingMode \
 -TProjectionInfo \
+-TProtocolVersion \
 -TPsortstate \
 -TPsqlSettings \
--TPurgeStmt \
 -TQuery \
 -TQueryDesc \
 -TQueryTreeList \
@@ -517,14 +521,12 @@ do
 -TRemoveOperStmt \
 -TRemoveStmt \
 -TRenameStmt \
--TReplaceStmt \
 -TResTarget \
 -TResdom \
 -TResult \
 -TResultState \
 -TRetrieveIndexResult \
 -TRetrieveIndexResultData \
--TRetrieveStmt \
 -TRewriteInfo \
 -TRewriteRule \
 -TRuleLock \
@@ -547,6 +549,7 @@ do
 -TScanKey \
 -TScanKeyData \
 -TScanKeyword \
+-TSelectStmt \
 -TSeqScan \
 -TSeqTable \
 -TSeqTableData \
@@ -554,12 +557,13 @@ do
 -TSharedInvalid \
 -TSharedInvalidData \
 -TSize \
+-TSockAddr \
 -TSort \
 -TSortClause \
 -TSortGroupBy \
 -TSortState \
 -TSplitNumber \
--TStartupInfo \
+-TStartupPacket \
 -TStrategyEvaluation \
 -TStrategyEvaluationData \
 -TStrategyExpression \
@@ -577,7 +581,9 @@ do
 -TStreamPtr \
 -TStringInfo \
 -TStringInfoData \
--TSubSelect \
+-TSubLink \
+-TSubLinkType \
+-TSubPlan \
 -TSuperQE \
 -TSystemPortAddress \
 -TTUPLE \
@@ -592,13 +598,6 @@ do
 -TTimeADT \
 -TTimeInterval \
 -TTimeIntervalData \
--TTimeQual \
--TTimeQualData \
--TTimeQualMode \
--TTimeQualSpace \
--TTimeRange \
--TTimeRelationContents \
--TTimeRelationContentsData \
 -TTimeSpan \
 -TTransactionId \
 -TTransactionState \
@@ -621,9 +620,10 @@ do
 -TTypeTupleForm \
 -TTypeTupleFormData \
 -TUNDO_LIST \
--TUnionFlag \
 -TUnique \
 -TUniqueState \
+-TUpdateStmt \
+-TUserAuth \
 -TVAttList \
 -TVAttListData \
 -TVFunction \
@@ -795,8 +795,11 @@ do
 	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
 	sed 's;/\*---X_X;/* ---;g' |
 	sed 's;^static[ 	][ 	]*;static ;g' | # workaround indent bug
+	sed 's;^}[ 	][ 	]*/\*;}   /*;' |
 	detab -t8 -qc |
-	entab -t4 -qc >/tmp/$$ && cat /tmp/$$ >$FILE
+	entab -t4 -qc |
+	sed 's;^\([A-Za-z_][^	]*\)[ 	][ 	]*\*$;\1 *;' | # move trailing * in function return type
+	cat >/tmp/$$ && cat /tmp/$$ >$FILE
 done
 
 # The 'for' loop makes these backup files useless
