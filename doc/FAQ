@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Feb 2 08:40:42 EST 2005
+   Last updated: Wed Feb 2 12:44:03 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -61,10 +61,10 @@
    case-insensitive searches?
    4.9) In a query, how do I detect if a field is NULL?
    4.10) What is the difference between the various character types?
-   4.11.0) How do I create a serial/auto-incrementing field?
-   4.11.1) How do I get the value of a SERIAL insert?
-   4.11.2) Doesn't currval() lead to a race condition with other users?
-   4.11.3) Why aren't my sequence numbers reused on transaction abort?
+   4.11.1) How do I create a serial/auto-incrementing field?
+   4.11.2) How do I get the value of a SERIAL insert?
+   4.11.3) Doesn't currval() lead to a race condition with other users?
+   4.11.4) Why aren't my sequence numbers reused on transaction abort?
    Why are there gaps in the numbering of my sequence/SERIAL column?
    4.12) What is an OID? What is a TID?
    4.13) Why do I get the error "ERROR: Memory exhausted in
