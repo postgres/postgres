@@ -3,17 +3,15 @@
 
 <Abstract>
 <Para>
-Complete installation instructions for <ProductName>Postgres</ProductName> v6.3.
+Complete installation instructions for <ProductName>Postgres</ProductName>
+v6.4.
 </Para>
 </Abstract>
 
 <Para>
-  This procedure is
-This is based on the installation instructions 
-for <ProductName>Postgres</ProductName> v6.3
-found in <FileName>&dollar;PGROOT/INSTALL</FileName>.
-  Up to date information on <ProductName>Postgres</ProductName> may be found at
-<ULink url="http://www.postgresql.org">www.postgresql.org</ULink>.
+Before installing <ProductName>Postgres</ProductName>, you may wish to visit
+<ULink url="http://www.postgresql.org">www.postgresql.org</ULink>
+for up to date information, patches, etc.
 </Para>
 
 <Para>
@@ -54,19 +52,19 @@ platform. <Emphasis>Use common sense</Emphasis> before typing in these commands.
 </Para>
 
 <Para>
-Our Makefiles require GNU <Application>make</Application> (called <Quote>gmake</Quote> in this document) and
-also assume that <Application>install</Application> accepts BSD options. The INSTALL
-variable in the Makefiles is set to the BSD-compatible version of
-<Application>install</Application>. On some systems, you will have to find a BSD-compatible
-<Application>install</Application> (eg. <Application>bsdinst</Application>, which comes with the MIT X Window System
-distribution).
+Our Makefiles require GNU <Application>make</Application> (called
+<Quote>gmake</Quote> in this document).  They will <Emphasis>not</Emphasis>
+work with non-GNU <Application>make</Application> programs.  If you
+have GNU <Application>make</Application> installed under the name 
+<Quote>make</Quote> instead of <Quote>gmake</Quote>, that's OK, but
+you need to have it.
 </Para>
 
 <Sect1>
 <Title>Requirements to Run <ProductName>Postgres</ProductName></Title>
 
 <Para>
-Information on supported platforms is another chapter. In general, most Unix-compatible
+Information on supported platforms is in another chapter. In general, most Unix-compatible
 platforms with modern libraries should be able to run <ProductName>Postgres</ProductName>.
 
 <Para>
@@ -155,7 +153,7 @@ Check that you have sufficient disk space.  You will need about
 
 <Step Performance="required">
 <Para>
-Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.3.tar.gz from the
+Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.4.tar.gz from the
      Internet.  Store it in your home directory.
 </Para>
 </Step>
@@ -217,7 +215,7 @@ If you are upgrading an existing system then back up your database.
      and the following line typed as one line):
 <ProgramListing>
     cd
-    gunzip -c postgresql-v6.3.tar.gz |
+    gunzip -c postgresql-v6.4.tar.gz |
     tar xvf - src/bin/pg_dump/pg_dumpall
     chmod a+x src/bin/pg_dump/pg_dumpall
     src/bin/pg_dump/pg_dumpall > db.out
@@ -316,7 +314,7 @@ If you are upgrading an existing system then move the old directories
  Unzip and untar the new source file.  Type
 <ProgramListing>
     cd /usr/src/pgsql
-    gunzip -c ~/postgresql-v6.3.tar.gz | tar xvf -
+    gunzip -c ~/postgresql-v6.4.tar.gz | tar xvf -
 </ProgramListing>
 </Para>
 </Step>
@@ -324,35 +322,52 @@ If you are upgrading an existing system then move the old directories
 <Step Performance="required">
 <Para>
  Configure the source code for your system.  It is this step at which
-     you can specify your actual source path and installation paths for
+     you can specify your actual installation path for
      the build process (see the --prefix option below).  Type
 <ProgramListing>
     cd /usr/src/pgsql/src
-    ./configure
+    ./configure  [ options as described below ]
 </ProgramListing>
 </Para>
 
 <Para>
-     The configure program will list the template files available and
-     ask you to choose one.  A lot of times, an appropriate template
-     file is chosen for you, and you can just press Enter to accept the
-     default.  If the default is not appropriate, then type in the
-     appropriate template file and press Enter.  (If you do this, then
+     Among other chores, the configure script selects a system-specific
+     "template" file from the files provided in the template subdirectory.
+     If it cannot guess which one to use for your system, it will say so and
+     exit.  In that case you'll need to figure out which one to use and run
+     configure again, this time giving the --with-template=TEMPLATE option to
+     make the right file be chosen.  (If you have to do this, please
      send email to scrappy@hub.org stating the output of the program
      './config.guess' and what the template file should be.)
 </Para>
 
 <Para>
-     Once you have entered the template file, you will be asked a
-     number of questions about your particular configuration.  These
-     can be skipped by adding parameters to the configure command above.
-     The following parameters can be tagged onto the end of the configure
-     command:
-
+     The configure script accepts many additional options that you can use
+     if you don't like the default configuration.  To see them all, type
+<ProgramListing>
+     ./configure --help
+</ProgramListing>
+     Some of the more commonly used ones are:
 <ProgramListing>
        --prefix=BASEDIR   Selects a different base directory for the
                           installation of the <ProductName>Postgres</ProductName> configuration.
                           The default is /usr/local/pgsql.
+
+       --with-template=TEMPLATE
+                          Use template file TEMPLATE - the template
+                          files are assumed to be in the directory
+                          src/template, so look there for proper values.
+
+       --with-pgport=PORT Sets the port that the postmaster process
+                          listens for incoming connections on.  The
+                          default is port 5432.
+
+       --with-tcl         Build interface libraries and programs requiring
+                          Tcl/Tk, including libpgtcl, pgtclsh, and pgtksh.
+
+       --with-perl        Build the Perl interface library.
+
+       --with-odbc        Build the ODBC driver package.
 
        --enable-hba       Enables Host Based Authentication (DEFAULT)
 
@@ -360,23 +375,18 @@ If you are upgrading an existing system then move the old directories
 
        --enable-locale    Enables USE_LOCALE
 
-       --disable-locale   Disables USE_LOCALE (DEFAULT)
-
        --enable-cassert   Enables ASSERT_CHECKING
 
-       --disable-cassert  Disables ASSERT_CHECKING (DEFAULT)
+       --with-CC=compiler
+                          Use a specific C compiler that the configure
+                          script cannot find.
 
-       --with-template=TEMPLATE
-                          Use template file TEMPLATE - the template
-                          files are assumed to be in the directory
-                          src/template, so look there for proper values.
-                          (If the configure script cannot find the
-                          specified template file, it will ask you for
-                          one).
-
-       --with-pgport=PORT Sets the port that the postmaster process
-                          listens for incoming connections on.  The
-                          default for this is port 5432.
+       --with-CXX=compiler
+       --without-CXX
+                          Use a specific C++ compiler that the configure
+                          script cannot find, or exclude C++ compilation
+                          altogether.   (This only affects libpq++ at
+			  present.)
 </ProgramListing>
 </Para>
 
@@ -547,121 +557,11 @@ Compile the program.  Type
      included in the file.  (If your database is not located in the
      default location, i.e. if PGDATA is set to point elsewhere, then the
      location of this file will change accordingly.)  This file should be
-     made read only again once you are finsihed.
+     made read only again once you are finished.
 
-     If you are upgrading from v6.0 you can copy file pg_hba.conf from
+     If you are upgrading from v6.0 or later you can copy file pg_hba.conf from
      your old database on top of the one in your new database, rather than
-     redoing this from scratch.
-</Para>
-</Step>
-
-<Step Performance="required">
-<Para>
-You may wish to skip the regression tests.
-     However, we think skipping the tests is a BAD idea!
-</Para>
-
-<Para>
-     The file /usr/src/pgsql/src/test/regress/README has detailed
-     instructions for running and interpreting the regression tests.
-     A short version follows here:
-</Para>
-
-<Para>
-     Start the postmaster daemon running in the background by typing
-<ProgramListing>
-    cd
-    nohup postmaster > regress.log 2>&1 &
-</ProgramListing>
-</Para>
-
-<Para>
-     Run postmaster from your <ProductName>Postgres</ProductName> super user account (typically
-     account postgres).  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
-</Para>
-</Step>
-
-<Step Performance="required">
-<Para>
-
- Run the regression tests.  Type
-
-<ProgramListing>
-    cd
-    cd /usr/src/pgsql/src/test/regress
-    gmake clean
-    gmake all runtest
-</ProgramListing>
-</Para>
-
-<Para>
-
-     You do not need to type "gmake clean" if this is the first time you
-     are running the tests.
-</Para>
-
-<Para>
-
-     You should get on the screen (and also written to file ./regress.out)
-     a series of statements stating which tests passed and which tests
-     failed.  Please note that it can be normal for some of the tests to
-     "fail".  For the failed tests, use diff to compare the files in
-     directories ./results and ./expected.  If float8 failed, type
-     something like:
-<ProgramListing>
-    cd /usr/src/pgsql/src/test/regress
-    diff -w expected/float8.out results
-</ProgramListing>
-</Para>
-
-<Para>
-
-    "Failed" tests may have failed due to slightly different error messages,
-     output formatting, failure to set the timezone correctly for your
-     platform, etc.  "Failures" of this type do not indicate a problem with
-     <ProductName>Postgres</ProductName>.
-</Para>
-
-<Para>
-
-     For a i686/Linux-ELF platform, no tests failed since this is the
-     v6.3 regression testing reference platform.
-</Para>
-
-<Para>
-     For the SPARC/Linux-ELF platform, using the 970525 beta version of
-     <ProductName>Postgres</ProductName> v6.2 the following tests "failed":
-     float8 and geometry "failed" due to minor precision differences in
-     floating point numbers.  select_views produces massively different output,
-     but the differences are due to minor floating point differences.
-</Para>
-
-<Para>
-     Conclusion?  If you do see failures, try to understand the nature of
-     the differences and then decide if those differences will affect your
-     intended use of <ProductName>Postgres</ProductName>.  However, keep in mind that this is likely
-     to be the most solid release of <ProductName>Postgres</ProductName> to date, incorporating many
-     bug fixes from v6.2.1, and that previous versions of <ProductName>Postgres</ProductName> have been
-     in use successfully for some time now.
-</Para>
-
-<Para>
-     After running the tests, type
-<ProgramListing>
-    destroydb regression
-    cd /usr/src/pgsql/src/test/regress
-    gmake clean
-</ProgramListing>
-</Para>
-</Step>
-
-<Step Performance="required">
-<Para>
-
- Stop the postmaster as described in step 7.  Then restore the
-     timezone to it's normal setting.  If you changed the timezone by
-     modifying environment variable TZ then one way to do this is to
-     log out of, then back into, account postgres.
+     redoing the file from scratch.
 </Para>
 </Step>
 
@@ -675,6 +575,93 @@ You may wish to skip the regression tests.
 </ProgramListing>
      Run postmaster from your <ProductName>Postgres</ProductName> super user account (typically
      account postgres).  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+     Run the regression tests.
+     (You can skip this step if you wish, but
+     we think skipping the tests is a BAD idea!)
+</Para>
+
+<Para>
+     The file /usr/src/pgsql/src/test/regress/README has detailed
+     instructions for running and interpreting the regression tests.
+     A short version follows here:
+</Para>
+
+<Step Performance="required">
+<Para>
+    Type
+<ProgramListing>
+    cd /usr/src/pgsql/src/test/regress
+    gmake clean
+    gmake all runtest
+</ProgramListing>
+</Para>
+
+<Para>
+     You do not need to type "gmake clean" if this is the first time you
+     are running the tests.
+</Para>
+
+<Para>
+     You should get on the screen (and also written to file ./regress.out)
+     a series of statements stating which tests passed and which tests
+     failed.  Please note that it can be normal for some of the tests to
+     "fail".  The script says a test has failed if there is any difference
+     at all between the actual output of the test and the expected output.
+     Thus, tests may "fail" due to minor differences in wording of error
+     messages, small differences in floating-point roundoff, etc, between
+     your system and the regression test reference platform.
+     "Failures" of this type do not indicate a problem with
+     <ProductName>Postgres</ProductName>.
+     The file ./regression.diffs contains the textual differences between
+     the actual test output on your machine and the "expected" output
+     (which is simply what the reference system produced).  You should
+     carefully examine each difference listed to see whether it appears to
+     be a significant issue.
+</Para>
+
+<Para>
+     For a i686/Linux-ELF platform, no tests failed since this is the
+     v6.4 regression testing reference platform.
+</Para>
+
+<Para>
+     For the SPARC/Linux-ELF platform, using the 970525 beta version of
+     <ProductName>Postgres</ProductName> v6.2 the following tests "failed":
+     float8 and geometry "failed" due to minor precision differences in
+     floating point numbers.  select_views produces massively different output,
+     but the differences are due to minor floating point differences.
+</Para>
+
+<Para>
+     Even if a test result clearly indicates a real failure, it may be a
+     localized problem that will not affect you.  An example is that the
+     int8 test will fail, producing obviously incorrect output, if your
+     machine and C compiler do not provide a 64-bit integer data type
+     (or if they do but configure didn't discover it).  This is not
+     something to worry about unless you need to store 64-bit integers.
+</Para>
+
+<Para>
+     Conclusion?  If you do see failures, try to understand the nature of
+     the differences and then decide if those differences will affect your
+     intended use of <ProductName>Postgres</ProductName>.  The regression
+     tests are a helpful tool, but they require some study to be useful.
+</Para>
+
+<Para>
+     After running the regression tests, type
+<ProgramListing>
+    destroydb regression
+    cd /usr/src/pgsql/src/test/regress
+    gmake clean
+</ProgramListing>
+    to recover the disk space used for the tests.  (You may want to save
+    the regression.diffs file in another place before doing this.)
 </Para>
 </Step>
 
@@ -715,11 +702,11 @@ You may wish to skip the regression tests.
           the postmaster process so the parent is init.  Note:  Unlike most
           other examples, this one has been tested.
 
-       c) In RedHat v4.0 Linux edit file /etc/inittab to contain the
+       c) In RedHat v4.0 Linux edit file /etc/inittab to add the
           following single line:
              pg:2345:respawn:/bin/su - postgres -c
                      "/usr/local/pgsql/bin/postmaster -D/usr/local/pgsql/data
-                     >> /usr/local/pgsql/server.log 2>&1" /dev/null
+                     >> /usr/local/pgsql/server.log 2>&1 </dev/null"
           (The author of this example says this example will revive the
           postmaster if it dies, but he doesn't know if there are other side
           effects.)
@@ -750,7 +737,7 @@ You may wish to skip the regression tests.
 
 <Step Performance="required">
 <Para>
- If you are upgrading an existing system then install your old database.
+ If you are upgrading an existing system then reinstall your old database.
      Type
 <ProgramListing>
     cd
