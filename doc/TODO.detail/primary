@@ -2,7 +2,7 @@ From owner-pgsql-hackers@hub.org Fri Sep  4 00:47:06 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id AAA01047
 	for <maillist@candle.pha.pa.us>; Fri, 4 Sep 1998 00:47:05 -0400 (EDT)
-Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id XAA02044 for <maillist@candle.pha.pa.us>; Thu, 3 Sep 1998 23:11:07 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id XAA02044 for <maillist@candle.pha.pa.us>; Thu, 3 Sep 1998 23:11:07 -0400 (EDT)
 Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id XAA27418; Thu, 3 Sep 1998 23:06:16 -0400 (EDT)
 Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 03 Sep 1998 23:04:11 +0000 (EDT)
 Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id XAA27185 for pgsql-hackers-outgoing; Thu, 3 Sep 1998 23:04:09 -0400 (EDT)
@@ -84,7 +84,7 @@ From owner-pgsql-hackers@hub.org Sat Sep  5 02:01:13 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id CAA14437
 	for <maillist@candle.pha.pa.us>; Sat, 5 Sep 1998 02:01:11 -0400 (EDT)
-Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id BAA09928 for <maillist@candle.pha.pa.us>; Sat, 5 Sep 1998 01:48:32 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id BAA09928 for <maillist@candle.pha.pa.us>; Sat, 5 Sep 1998 01:48:32 -0400 (EDT)
 Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id BAA18282; Sat, 5 Sep 1998 01:43:16 -0400 (EDT)
 Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 05 Sep 1998 01:41:40 +0000 (EDT)
 Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id BAA18241 for pgsql-hackers-outgoing; Sat, 5 Sep 1998 01:41:38 -0400 (EDT)
@@ -161,7 +161,7 @@ From owner-pgsql-hackers@hub.org Tue Sep 21 05:31:11 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id FAA07543
 	for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 05:31:09 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id FAA19587 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 05:12:03 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id FAA19587 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 05:12:03 -0400 (EDT)
 Received: from hub.org (hub.org [216.126.84.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id EAA55119;
 	Tue, 21 Sep 1999 04:48:48 -0400 (EDT)
@@ -325,7 +325,7 @@ From owner-pgsql-hackers@hub.org Tue Sep 21 08:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id IAA09071
 	for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 08:31:02 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id IAA25991 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 08:04:59 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id IAA25991 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 08:04:59 -0400 (EDT)
 Received: from hub.org (hub.org [216.126.84.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id HAA82019;
 	Tue, 21 Sep 1999 07:48:14 -0400 (EDT)
@@ -610,7 +610,7 @@ From owner-pgsql-hackers@hub.org Tue Sep 21 15:30:29 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA14590
 	for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 15:30:28 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id PAA09192 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 15:06:09 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id PAA09192 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 15:06:09 -0400 (EDT)
 Received: from hub.org (hub.org [216.126.84.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id OAA73126;
 	Tue, 21 Sep 1999 14:56:15 -0400 (EDT)
@@ -703,5 +703,103 @@ Jan
 
 
 ************
+
+
+From owner-pgsql-hackers@hub.org Tue Jul 13 22:30:50 1999
+Received: from hub.org (hub.org [209.167.229.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA08452
+	for <maillist@candle.pha.pa.us>; Tue, 13 Jul 1999 22:30:49 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id WAA31614;
+	Tue, 13 Jul 1999 22:25:04 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 13 Jul 1999 22:22:59 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id WAA31285
+	for pgsql-hackers-outgoing; Tue, 13 Jul 1999 22:22:58 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-hackers@postgreSQL.org using -f
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.9.3/8.9.3) with ESMTP id WAA31259
+	for <pgsql-hackers@postgreSQL.org>; Tue, 13 Jul 1999 22:22:47 -0400 (EDT)
+	(envelope-from Inoue@tpf.co.jp)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id LAA04296 for <pgsql-hackers@postgreSQL.org>; Wed, 14 Jul 1999 11:22:46 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
+Subject: [HACKERS] 9-key index ?
+Date: Wed, 14 Jul 1999 11:25:09 +0900
+Message-ID: <000401becda0$17deee60$2801007e@cadzone.tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-2022-jp"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V4.72.2106.4
+Importance: Normal
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Hi all,
+
+I could create a 9-key index.
+
+create table ix9 (
+i1 int4,
+i2 int4,
+i3 int4,
+i4 int4,
+i5 int4,
+i6 int4,
+i7 int4,
+i8 int4,
+i9 int4,
+primary key (i1,i2,i3,i4,i5,i6,i7,i8,i9)
+);
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'ix9_pkey'
+for table 'ix9'
+CREATE
+
+\d ix9_pkey
+
+Table    = ix9_pkey
++----------------------------------+----------------------------------+-----
+--+
+|              Field               |              Type                |
+Length|
++----------------------------------+----------------------------------+-----
+--+
+| i1                               | int4                             |
+4 |
+| i2                               | int4                             |
+4 |
+| i3                               | int4                             |
+4 |
+| i4                               | int4                             |
+4 |
+| i5                               | int4                             |
+4 |
+| i6                               | int4                             |
+4 |
+| i7                               | int4                             |
+4 |
+| i8                               | int4                             |
+4 |
+| i9                               | int4                             |
+4 |
++----------------------------------+----------------------------------+-----
+--+
+
+Is it right ?
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
 
 
