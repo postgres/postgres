@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.248 2002/07/31 01:49:13 momjian Exp $
+ * $Id: pg_proc.h,v 1.249 2002/08/04 06:33:54 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2236,9 +2236,9 @@ DATA(insert OID = 1681 (  length			PGNSP PGUID 12 f f t f i 1 23 "1560"	bitlengt
 DESCR("bitstring length");
 DATA(insert OID = 1682 (  octet_length		PGNSP PGUID 12 f f t f i 1 23 "1560"	bitoctetlength - _null_ ));
 DESCR("octet length");
-DATA(insert OID = 1683 (  bitfromint4		PGNSP PGUID 12 f f t f i 1 1560 "23"	bitfromint4 - _null_ ));
+DATA(insert OID = 1683 (  bit				PGNSP PGUID 12 f f t f i 1 1560 "23"	bitfromint4 - _null_ ));
 DESCR("int4 to bitstring");
-DATA(insert OID = 1684 (  bittoint4			PGNSP PGUID 12 f f t f i 1 23 "1560"	bittoint4 - _null_ ));
+DATA(insert OID = 1684 (  int4				PGNSP PGUID 12 f f t f i 1 23 "1560"	bittoint4 - _null_ ));
 DESCR("bitstring to int4");
 
 DATA(insert OID = 1685 (  bit			   PGNSP PGUID 12 f f t f i 2 1560 "1560 23"	bit - _null_ ));
@@ -2872,6 +2872,11 @@ DATA(insert OID = 2073 (  substring			PGNSP PGUID 12 f f t f i 2 25 "25 25"	text
 DESCR("substitutes regular expression");
 DATA(insert OID = 2074 (  substring			PGNSP PGUID 14 f f t f i 3 25 "25 25 25"	"select substring($1, like_escape($2, $3))" - _null_ ));
 DESCR("substitutes regular expression with escape argument");
+
+DATA(insert OID = 2075 (  bit				PGNSP PGUID 12 f f t f i 1 1560 "20"	bitfromint8 - _null_ ));
+DESCR("int8 to bitstring");
+DATA(insert OID = 2076 (  int8				PGNSP PGUID 12 f f t f i 1 20 "1560"	bittoint8 - _null_ ));
+DESCR("bitstring to int8");
 
 DATA(insert OID = 2090 (  current_setting	PGNSP PGUID 12 f f t f s 1 25 "25" show_config_by_name - _null_ ));
 DESCR("SHOW X as a function");

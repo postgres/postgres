@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.22 2002/06/20 20:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.23 2002/08/04 06:33:48 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,8 +98,8 @@ bit_in(PG_FUNCTION_ARGS)
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
 	else if (bitlen != atttypmod)
-		elog(ERROR, "bit string length does not match type bit(%d)",
-			 atttypmod);
+		elog(ERROR, "Bit string length %d does not match type BIT(%d)",
+			 bitlen, atttypmod);
 
 	len = VARBITTOTALLEN(atttypmod);
 	result = (VarBit *) palloc(len);
@@ -119,7 +119,7 @@ bit_in(PG_FUNCTION_ARGS)
 			if (*sp == '1')
 				*r |= x;
 			else if (*sp != '0')
-				elog(ERROR, "cannot parse %c as a binary digit", *sp);
+				elog(ERROR, "Cannot parse '%c' as a binary digit", *sp);
 			x >>= 1;
 			if (x == 0)
 			{
@@ -140,7 +140,7 @@ bit_in(PG_FUNCTION_ARGS)
 			else if (*sp >= 'a' && *sp <= 'f')
 				x = (bits8) (*sp - 'a') + 10;
 			else
-				elog(ERROR, "cannot parse %c as a hex digit", *sp);
+				elog(ERROR, "Cannot parse '%c' as a hex digit", *sp);
 			if (bc)
 			{
 				*r++ |= x;
@@ -214,8 +214,8 @@ bit(PG_FUNCTION_ARGS)
 	if (len <= 0 || len == VARBITLEN(arg))
 		PG_RETURN_VARBIT_P(arg);
 	else
-		elog(ERROR, "bit string length does not match type bit(%d)",
-			 len);
+		elog(ERROR, "Bit string length %d does not match type BIT(%d)",
+			 VARBITLEN(arg), len);
 	return 0;					/* quiet compiler */
 }
 
@@ -305,7 +305,7 @@ varbit_in(PG_FUNCTION_ARGS)
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
 	else if (bitlen > atttypmod)
-		elog(ERROR, "bit string too long for type bit varying(%d)",
+		elog(ERROR, "Bit string too long for type BIT VARYING(%d)",
 			 atttypmod);
 
 	len = VARBITTOTALLEN(bitlen);
@@ -326,7 +326,7 @@ varbit_in(PG_FUNCTION_ARGS)
 			if (*sp == '1')
 				*r |= x;
 			else if (*sp != '0')
-				elog(ERROR, "cannot parse %c as a binary digit", *sp);
+				elog(ERROR, "Cannot parse '%c' as a binary digit", *sp);
 			x >>= 1;
 			if (x == 0)
 			{
@@ -347,7 +347,7 @@ varbit_in(PG_FUNCTION_ARGS)
 			else if (*sp >= 'a' && *sp <= 'f')
 				x = (bits8) (*sp - 'a') + 10;
 			else
-				elog(ERROR, "cannot parse %c as a hex digit", *sp);
+				elog(ERROR, "Cannot parse '%c' as a hex digit", *sp);
 			if (bc)
 			{
 				*r++ |= x;
@@ -420,7 +420,7 @@ varbit(PG_FUNCTION_ARGS)
 		PG_RETURN_VARBIT_P(arg);
 
 	if (len < VARBITLEN(arg))
-		elog(ERROR, "bit string too long for type bit varying(%d)", len);
+		elog(ERROR, "Bit string too long for type BIT VARYING(%d)", len);
 
 	rlen = VARBITTOTALLEN(len);
 	result = (VarBit *) palloc(rlen);
@@ -812,7 +812,7 @@ bitand(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "cannot AND bit strings of different sizes");
+		elog(ERROR, "Cannot AND bit strings of different sizes");
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -850,7 +850,7 @@ bitor(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "cannot OR bit strings of different sizes");
+		elog(ERROR, "Cannot OR bit strings of different sizes");
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -894,7 +894,7 @@ bitxor(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "cannot XOR bit strings of different sizes");
+		elog(ERROR, "Cannot XOR bit strings of different sizes");
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -1109,7 +1109,7 @@ bittoint4(PG_FUNCTION_ARGS)
 
 	/* Check that the bit string is not too long */
 	if (VARBITLEN(arg) > sizeof(int4) * BITS_PER_BYTE)
-		elog(ERROR, "bit string is too large to fit in type integer");
+		elog(ERROR, "Bit string is too large to fit in type integer");
 	result = 0;
 	for (r = VARBITS(arg); r < VARBITEND(arg); r++)
 	{
@@ -1122,51 +1122,114 @@ bittoint4(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
+Datum
+bitfromint8(PG_FUNCTION_ARGS)
+{
+#ifndef INT64_IS_BUSTED
+	int64		a = PG_GETARG_INT64(0);
+	VarBit	   *result;
+	bits8	   *r;
+	int			len;
+
+	/* allocate enough space for the bits in an int64 */
+	len = VARBITTOTALLEN(sizeof(a) * BITS_PER_BYTE);
+	result = (VarBit *) palloc(len);
+	VARATT_SIZEP(result) = len;
+	VARBITLEN(result) = sizeof(a) * BITS_PER_BYTE;
+
+	/*
+	 * masks and shifts here are just too painful and we know that an int64
+	 * has got 8 bytes
+	 */
+	r = VARBITS(result);
+	r[0] = (bits8) ((a >> (7 * BITS_PER_BYTE)) & BITMASK);
+	r[1] = (bits8) ((a >> (6 * BITS_PER_BYTE)) & BITMASK);
+	r[2] = (bits8) ((a >> (5 * BITS_PER_BYTE)) & BITMASK);
+	r[3] = (bits8) ((a >> (4 * BITS_PER_BYTE)) & BITMASK);
+	r[4] = (bits8) ((a >> (3 * BITS_PER_BYTE)) & BITMASK);
+	r[5] = (bits8) ((a >> (2 * BITS_PER_BYTE)) & BITMASK);
+	r[6] = (bits8) ((a >> (1 * BITS_PER_BYTE)) & BITMASK);
+	r[7] = (bits8) (a & BITMASK);
+
+	PG_RETURN_VARBIT_P(result);
+#else
+	elog(ERROR, "INT64 is not supported on this platform");
+	PG_RETURN_NULL();
+#endif
+}
+
+Datum
+bittoint8(PG_FUNCTION_ARGS)
+{
+#ifndef INT64_IS_BUSTED
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	uint64		result;
+	bits8	   *r;
+
+	/* Check that the bit string is not too long */
+	if (VARBITLEN(arg) > sizeof(result) * BITS_PER_BYTE)
+		elog(ERROR, "Bit string is too large to fit in type int64");
+	result = 0;
+	for (r = VARBITS(arg); r < VARBITEND(arg); r++)
+	{
+		result <<= BITS_PER_BYTE;
+		result |= *r;
+	}
+	/* Now shift the result to take account of the padding at the end */
+	result >>= VARBITPAD(arg);
+
+	PG_RETURN_INT64(result);
+#else
+	elog(ERROR, "INT64 is not supported on this platform");
+	PG_RETURN_NULL();
+#endif
+}
 
 
 /* Determines the position of S2 in the bitstring S1 (1-based string).
  * If S2 does not appear in S1 this function returns 0.
  * If S2 is of length 0 this function returns 1.
+ * Compatible in usage with POSITION() functions for other data types.
  */
 Datum
 bitposition(PG_FUNCTION_ARGS)
 {
+	VarBit	   *str = PG_GETARG_VARBIT_P(0);
 	VarBit	   *substr = PG_GETARG_VARBIT_P(1);
-	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
 	int			substr_length,
-				arg_length,
+				str_length,
 				i,
 				is;
 	bits8	   *s,				/* pointer into substring */
-			   *p;				/* pointer into arg */
+			   *p;				/* pointer into str */
 	bits8		cmp,			/* shifted substring byte to compare */
 				mask1,			/* mask for substring byte shifted right */
 				mask2,			/* mask for substring byte shifted left */
 				end_mask,		/* pad mask for last substring byte */
-				arg_mask;		/* pad mask for last argument byte */
+				str_mask;		/* pad mask for last string byte */
 	bool		is_match;
 
 	/* Get the substring length */
 	substr_length = VARBITLEN(substr);
-	arg_length = VARBITLEN(arg);
+	str_length = VARBITLEN(str);
 
-	/* Argument has 0 length or substring longer than argument, return 0 */
-	if (arg_length == 0 || substr_length > arg_length)
+	/* String has zero length or substring longer than string, return 0 */
+	if ((str_length == 0) || (substr_length > str_length))
 		PG_RETURN_INT32(0);
 
-	/* 0-length means return 1 */
+	/* zero-length substring means return 1 */
 	if (substr_length == 0)
 		PG_RETURN_INT32(1);
 
 	/* Initialise the padding masks */
 	end_mask = BITMASK << VARBITPAD(substr);
-	arg_mask = BITMASK << VARBITPAD(arg);
-	for (i = 0; i < VARBITBYTES(arg) - VARBITBYTES(substr) + 1; i++)
+	str_mask = BITMASK << VARBITPAD(str);
+	for (i = 0; i < VARBITBYTES(str) - VARBITBYTES(substr) + 1; i++)
 	{
 		for (is = 0; is < BITS_PER_BYTE; is++)
 		{
 			is_match = true;
-			p = VARBITS(arg) + i;
+			p = VARBITS(str) + i;
 			mask1 = BITMASK >> is;
 			mask2 = ~mask1;
 			for (s = VARBITS(substr);
@@ -1176,15 +1239,15 @@ bitposition(PG_FUNCTION_ARGS)
 				if (s == VARBITEND(substr) - 1)
 				{
 					mask1 &= end_mask >> is;
-					if (p == VARBITEND(arg) - 1)
+					if (p == VARBITEND(str) - 1)
 					{
-						/* Check that there is enough of arg left */
-						if (mask1 & ~arg_mask)
+						/* Check that there is enough of str left */
+						if (mask1 & ~str_mask)
 						{
 							is_match = false;
 							break;
 						}
-						mask1 &= arg_mask;
+						mask1 &= str_mask;
 					}
 				}
 				is_match = ((cmp ^ *p) & mask1) == 0;
@@ -1192,7 +1255,7 @@ bitposition(PG_FUNCTION_ARGS)
 					break;
 				/* Move on to the next byte */
 				p++;
-				if (p == VARBITEND(arg))
+				if (p == VARBITEND(str))
 				{
 					mask2 = end_mask << (BITS_PER_BYTE - is);
 					is_match = mask2 == 0;
@@ -1206,19 +1269,19 @@ bitposition(PG_FUNCTION_ARGS)
 				if (s == VARBITEND(substr) - 1)
 				{
 					mask2 &= end_mask << (BITS_PER_BYTE - is);
-					if (p == VARBITEND(arg) - 1)
+					if (p == VARBITEND(str) - 1)
 					{
-						if (mask2 & ~arg_mask)
+						if (mask2 & ~str_mask)
 						{
 							is_match = false;
 							break;
 						}
-						mask2 &= arg_mask;
+						mask2 &= str_mask;
 					}
 				}
 				is_match = ((cmp ^ *p) & mask2) == 0;
 			}
-			/* Have we found a match */
+			/* Have we found a match? */
 			if (is_match)
 				PG_RETURN_INT32(i * BITS_PER_BYTE + is + 1);
 		}
