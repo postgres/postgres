@@ -327,7 +327,7 @@ make_name(void)
 %type  <str>	createdb_opt_list opt_encoding OptInherit Geometric
 %type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt Bit bit
 %type  <str>	GrantStmt privileges operation_commalist operation PosAllConst
-%type  <str>	opt_cursor ConstraintsSetStmt AllConst
+%type  <str>	opt_with_grant opt_cursor ConstraintsSetStmt AllConst
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
 %type  <str>    select_offset_value ReindexStmt join_type opt_boolean
