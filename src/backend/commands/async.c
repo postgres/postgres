@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.112 2004/05/26 04:41:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.113 2004/07/01 00:50:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,10 +97,16 @@
  * State for outbound notifies consists of a list of all relnames NOTIFYed
  * in the current transaction.	We do not actually perform a NOTIFY until
  * and unless the transaction commits.	pendingNotifies is NIL if no
- * NOTIFYs have been done in the current transaction.  The List nodes and
- * referenced strings are all palloc'd in TopTransactionContext.
+ * NOTIFYs have been done in the current transaction.
+ *
+ * The list is kept in CurTransactionContext.  In subtransactions, each
+ * subtransaction has its own list in its own CurTransactionContext, but
+ * successful subtransactions attach their lists to their parent's list.
+ * Failed subtransactions simply discard their lists.
  */
 static List *pendingNotifies = NIL;
+
+static List *upperPendingNotifies = NIL; /* list of upper-xact lists */
 
 /*
  * State for inbound notifies consists of two flags: one saying whether
@@ -155,11 +161,11 @@ Async_Notify(char *relname)
 	{
 		/*
 		 * The name list needs to live until end of transaction, so store
-		 * it in the top transaction context.
+		 * it in the transaction context.
 		 */
 		MemoryContext oldcontext;
 
-		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+		oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
 		pendingNotifies = lcons(pstrdup(relname), pendingNotifies);
 
@@ -607,6 +613,60 @@ AtAbort_Notify(void)
 }
 
 /*
+ * AtSubStart_Notify() --- Take care of subtransaction start.
+ *
+ * Push empty state for the new subtransaction.
+ */
+void
+AtSubStart_Notify(void)
+{
+	MemoryContext	old_cxt;
+
+	/* Keep the list-of-lists in TopTransactionContext for simplicity */
+	old_cxt = MemoryContextSwitchTo(TopTransactionContext);
+
+	upperPendingNotifies = lcons(pendingNotifies, upperPendingNotifies);
+
+	pendingNotifies = NIL;
+
+	MemoryContextSwitchTo(old_cxt);
+}
+
+/*
+ * AtSubCommit_Notify() --- Take care of subtransaction commit.
+ *
+ * Reassign all items in the pending notifies list to the parent transaction.
+ */
+void
+AtSubCommit_Notify(void)
+{
+	List	*parentPendingNotifies;
+
+	parentPendingNotifies = (List *) linitial(upperPendingNotifies);
+	upperPendingNotifies = list_delete_first(upperPendingNotifies);
+
+	/*
+	 * We could try to eliminate duplicates here, but it seems not worthwhile.
+	 */
+	pendingNotifies = list_concat(parentPendingNotifies, pendingNotifies);
+}
+
+/*
+ * AtSubAbort_Notify() --- Take care of subtransaction abort.
+ */
+void
+AtSubAbort_Notify(void)
+{
+	/*
+	 * All we have to do is pop the stack --- the notifies made in this
+	 * subxact are no longer interesting, and the space will be freed when
+	 * CurTransactionContext is recycled.
+	 */
+	pendingNotifies = (List *) linitial(upperPendingNotifies);
+	upperPendingNotifies = list_delete_first(upperPendingNotifies);
+}
+
+/*
  *--------------------------------------------------------------
  * NotifyInterruptHandler
  *
@@ -951,7 +1011,7 @@ ClearPendingNotifies(void)
 	/*
 	 * We used to have to explicitly deallocate the list members and
 	 * nodes, because they were malloc'd.  Now, since we know they are
-	 * palloc'd in TopTransactionContext, we need not do that --- they'll
+	 * palloc'd in CurTransactionContext, we need not do that --- they'll
 	 * go away automatically at transaction exit.  We need only reset the
 	 * list head pointer.
 	 */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.33 2004/01/07 18:56:23 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.34 2004/07/01 00:49:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 typedef struct HashScanListData
 {
 	IndexScanDesc hashsl_scan;
+	TransactionId hashsl_creatingXid;
 	struct HashScanListData *hashsl_next;
 } HashScanListData;
 
@@ -51,6 +52,46 @@ AtEOXact_hash(void)
 }
 
 /*
+ * AtEOSubXact_hash() --- clean up hash subsystem at subxact abort or commit.
+ *
+ * This is here because it needs to touch this module's static var HashScans.
+ */
+void
+AtEOSubXact_hash(TransactionId childXid)
+{
+	HashScanList l;
+	HashScanList prev;
+	HashScanList next;
+
+	/*
+	 * Note: these actions should only be necessary during xact abort; but
+	 * they can't hurt during a commit.
+	 */
+
+	/*
+	 * Forget active scans that were started in this subtransaction.
+	 */
+	prev = NULL;
+
+	for (l = HashScans; l != NULL; l = next)
+	{
+		next = l->hashsl_next;
+		if (l->hashsl_creatingXid == childXid)
+		{
+			if (prev == NULL)
+				HashScans = next;
+			else
+				prev->hashsl_next = next;
+
+			pfree(l);
+			/* prev does not change */
+		}
+		else
+			prev = l;
+	}
+}
+
+/*
  *	_Hash_regscan() -- register a new scan.
  */
 void
@@ -60,6 +101,7 @@ _hash_regscan(IndexScanDesc scan)
 
 	new_el = (HashScanList) palloc(sizeof(HashScanListData));
 	new_el->hashsl_scan = scan;
+	new_el->hashsl_creatingXid = GetCurrentTransactionId();
 	new_el->hashsl_next = HashScans;
 	HashScans = new_el;
 }

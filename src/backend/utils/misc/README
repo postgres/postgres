@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.4 2004/01/19 19:04:40 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.5 2004/07/01 00:51:24 tgl Exp $
 
 
 GUC IMPLEMENTATION NOTES
@@ -68,49 +68,66 @@ SET on transaction abort, and rollback of SET LOCAL at transaction end
 would be effective had there never been any SET commands in the current
 session.
 
-To handle these cases we must keep track of as many as four distinct
-values for each variable.  They are:
+To handle these cases we must keep track of many distinct values for each
+variable.  The primary values are:
 
 * actual variable contents	always the current effective value
 
 * reset_value			the value to use for RESET
 
-* session_value			the "committed" setting for the session
-
 * tentative_value		the uncommitted result of SET
 
-During initialization we set the first three of these (actual, reset_value,
-and session_value) based on whichever non-interactive source has the
-highest priority.  All three will have the same value.
+The reason we need a tentative_value separate from the actual value is
+that when a transaction does SET followed by SET LOCAL, the actual value
+will now be the LOCAL value, but we want to remember the prior SET so that
+that value is restored at transaction commit.
+
+In addition, for each level of transaction (possibly nested) we have to
+remember the transaction-entry-time actual and tentative values, in case
+we need to restore them at transaction end.  (The RESET value is essentially
+non-transactional, so it doesn't have to be stacked.)  For efficiency these
+stack entries are not constructed until/unless the variable is actually SET
+within a particular transaction.
+
+During initialization we set the actual value and reset_value based on
+whichever non-interactive source has the highest priority.  They will
+have the same value.  The tentative_value is not meaningful at this point.
+
+A SET command starts by stacking the existing actual and tentative values
+if this hasn't already been done within the current transaction.  Then:
 
 A SET LOCAL command sets the actual variable (and nothing else).  At
-transaction end, the session_value is used to restore the actual variable
-to its pre-transaction value.
+transaction end, the stacked values are used to restore the GUC entry
+to its pre-transaction state.
 
 A SET (or SET SESSION) command sets the actual variable, and if no error,
 then sets the tentative_value.  If the transaction commits, the
-tentative_value is assigned to the session_value and the actual variable
-(which could by now be different, if the SET was followed by SET LOCAL).
-If the transaction aborts, the tentative_value is discarded and the
-actual variable is restored from the session_value.
+tentative_value is assigned again to the actual variable (which could by
+now be different, if the SET was followed by SET LOCAL).  If the
+transaction aborts, the stacked values are used to restore the GUC entry
+to its pre-transaction state.
+
+In the case of SET within nested subtransactions, at each commit the
+tentative_value propagates out to the next transaction level.  It will
+be thrown away at abort of any level, or after exiting the top transaction.
 
 RESET is executed like a SET, but using the reset_value as the desired new
 value.  (We do not provide a RESET LOCAL command, but SET LOCAL TO DEFAULT
 has the same behavior that RESET LOCAL would.)  The source associated with
-the reset_value also becomes associated with the actual and session values.
+the reset_value also becomes associated with the actual and tentative values.
 
 If SIGHUP is received, the GUC code rereads the postgresql.conf
 configuration file (this does not happen in the signal handler, but at
 next return to main loop; note that it can be executed while within a
 transaction).  New values from postgresql.conf are assigned to actual
-variable, reset_value, and session_value, but only if each of these has a
-current source priority <= PGC_S_FILE.  (It is thus possible for
-reset_value to track the config-file setting even if there is currently
-a different interactive value of the actual variable.)
+variable, reset_value, and stacked actual values, but only if each of
+these has a current source priority <= PGC_S_FILE.  (It is thus possible
+for reset_value to track the config-file setting even if there is
+currently a different interactive value of the actual variable.)
 
 Note that tentative_value is unused and undefined except between a SET
 command and the end of the transaction.  Also notice that we must track
-the source associated with each of the four values.
+the source associated with each one of the values.
 
 The assign_hook and show_hook routines work only with the actual variable,
 and are not directly aware of the additional values maintained by GUC.
@@ -129,9 +146,9 @@ pstrdup/palloc mechanisms.  We would need to keep them in a permanent
 context anyway, and strdup gives us more control over handling
 out-of-memory failures.
 
-We allow a variable's actual value, reset_val, session_val, and
-tentative_val to point at the same storage.  This makes it slightly harder
-to free space (must test that the value to be freed isn't equal to any of
-the other three pointers).  The main advantage is that we never need to
-strdup during transaction commit/abort, so cannot cause an out-of-memory
-failure there.
+We allow a string variable's actual value, reset_val, tentative_val, and
+stacked copies of same to point at the same storage.  This makes it
+slightly harder to free space (must test whether a value to be freed isn't
+equal to any of the other pointers in the GUC entry or associated stack
+items).  The main advantage is that we never need to strdup during
+transaction commit/abort, so cannot cause an out-of-memory failure there.

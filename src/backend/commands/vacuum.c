@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.281 2004/06/08 13:59:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.282 2004/07/01 00:50:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "access/clog.h"
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/subtrans.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
@@ -798,8 +799,9 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 		return;
 	}
 
-	/* Truncate CLOG to the oldest vacuumxid */
+	/* Truncate CLOG and SUBTRANS to the oldest vacuumxid */
 	TruncateCLOG(vacuumXID);
+	TruncateSUBTRANS(vacuumXID);
 
 	/* Give warning about impending wraparound problems */
 	if (frozenAlreadyWrapped)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.205 2004/06/18 06:13:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.206 2004/07/01 00:51:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,8 @@ static void IndexSupportInitialize(Form_pg_index iform,
 static OpClassCacheEnt *LookupOpclassInfo(Oid operatorClassOid,
 				  StrategyNumber numStrats,
 				  StrategyNumber numSupport);
+static inline void RelationPushReferenceCount(Relation rel);
+static inline void RelationPopReferenceCount(Relation rel);
 
 
 /*
@@ -1678,6 +1680,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 	list_free(relation->rd_indexlist);
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
+	if (relation->rd_prevrefcnt)
+		pfree(relation->rd_prevrefcnt);
 
 	/*
 	 * If we're really done with the relcache entry, blow it away. But if
@@ -1968,7 +1972,7 @@ RelationCacheInvalidate(void)
  * we must reset refcnts before handling pending invalidations.
  */
 void
-AtEOXact_RelationCache(bool commit)
+AtEOXact_RelationCache(bool isCommit)
 {
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
@@ -1993,7 +1997,7 @@ AtEOXact_RelationCache(bool commit)
 		 */
 		if (relation->rd_isnew)
 		{
-			if (commit)
+			if (isCommit)
 				relation->rd_isnew = false;
 			else
 			{
@@ -2019,7 +2023,7 @@ AtEOXact_RelationCache(bool commit)
 		 */
 		expected_refcnt = relation->rd_isnailed ? 1 : 0;
 
-		if (commit)
+		if (isCommit)
 		{
 			if (relation->rd_refcnt != expected_refcnt &&
 				!IsBootstrapProcessingMode())
@@ -2037,6 +2041,12 @@ AtEOXact_RelationCache(bool commit)
 		}
 
 		/*
+		 * Reset the refcount stack.  Just drop the item count; don't deallocate
+		 * the stack itself so it can be reused by future subtransactions.
+		 */
+		relation->rd_numpushed = 0;
+
+		/*
 		 * Flush any temporary index list.
 		 */
 		if (relation->rd_indexvalid == 2)
@@ -2045,6 +2055,131 @@ AtEOXact_RelationCache(bool commit)
 			relation->rd_indexlist = NIL;
 			relation->rd_indexvalid = 0;
 		}
+	}
+}
+
+/*
+ * RelationPushReferenceCount
+ *
+ * Push the current reference count into the stack.  Don't modify the
+ * reference count itself.
+ */
+static inline void
+RelationPushReferenceCount(Relation rel)
+{
+	/* Enlarge the stack if we run out of space. */
+	if (rel->rd_numpushed == rel->rd_numalloc)
+	{
+		MemoryContext	old_cxt = MemoryContextSwitchTo(CacheMemoryContext);
+
+		if (rel->rd_numalloc == 0)
+		{
+			rel->rd_numalloc = 8;
+			rel->rd_prevrefcnt = palloc(rel->rd_numalloc * sizeof(int));
+		}
+		else
+		{
+			rel->rd_numalloc *= 2;
+			rel->rd_prevrefcnt = repalloc(rel->rd_prevrefcnt, rel->rd_numalloc * sizeof(int));
+		}
+
+		MemoryContextSwitchTo(old_cxt);
+	}
+
+	rel->rd_prevrefcnt[rel->rd_numpushed++] = rel->rd_refcnt;
+}
+
+/*
+ * RelationPopReferenceCount
+ *
+ * Pop the latest stored reference count.  If there is none, drop it
+ * to zero; the entry was created in the current subtransaction.
+ */
+static inline void
+RelationPopReferenceCount(Relation rel)
+{
+	if (rel->rd_numpushed == 0)
+	{
+		rel->rd_refcnt = rel->rd_isnailed ? 1 : 0;
+		return;
+	}
+
+	rel->rd_refcnt = rel->rd_prevrefcnt[--rel->rd_numpushed];
+}
+
+/*
+ * AtEOSubXact_RelationCache
+ */
+void
+AtEOSubXact_RelationCache(bool isCommit)
+{
+	HASH_SEQ_STATUS status;
+	RelIdCacheEnt *idhentry;
+
+	/* We'd better not be bootstrapping. */
+	Assert(!IsBootstrapProcessingMode());
+
+	hash_seq_init(&status, RelationIdCache);
+
+	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Relation	relation = idhentry->reldesc;
+
+		/*
+		 * During subtransaction commit, we first check whether the
+		 * current refcount is correct: if there is no item in the stack,
+		 * the relcache entry was created during this subtransaction, it should
+		 * be 0 (or 1 for nailed relations).  If the stack has at least one
+		 * item, the expected count is whatever that item is.
+		 */
+		if (isCommit)
+		{
+			int expected_refcnt;
+
+			if (relation->rd_numpushed == 0)
+				expected_refcnt = relation->rd_isnailed ? 1 : 0;
+			else
+				expected_refcnt = relation->rd_prevrefcnt[relation->rd_numpushed - 1];
+
+			if (relation->rd_refcnt != expected_refcnt)
+			{
+				elog(WARNING, "relcache reference leak: relation \"%s\" has refcnt %d instead of %d",
+						RelationGetRelationName(relation),
+						relation->rd_refcnt, expected_refcnt);
+			}
+		}
+
+		/*
+		 * On commit, the expected count is stored so there's no harm in
+		 * popping it (and we may need to fix if there was a leak); and during
+		 * abort, the correct refcount has to be restored.
+		 */
+		RelationPopReferenceCount(relation);
+	}
+}
+
+/*
+ * AtSubStart_RelationCache
+ *
+ * At subtransaction start, we push the current reference count into
+ * the refcount stack, so it can be restored if the subtransaction aborts.
+ */
+void
+AtSubStart_RelationCache(void)
+{
+	HASH_SEQ_STATUS status;
+	RelIdCacheEnt *idhentry;
+
+	/* We'd better not be bootstrapping. */
+	Assert(!IsBootstrapProcessingMode());
+
+	hash_seq_init(&status, RelationIdCache);
+
+	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Relation	relation = idhentry->reldesc;
+
+		RelationPushReferenceCount(relation);
 	}
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.118 2004/06/11 01:08:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.119 2004/07/01 00:50:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ int			SPI_result;
 
 static _SPI_connection *_SPI_stack = NULL;
 static _SPI_connection *_SPI_current = NULL;
+static int	_SPI_stack_depth = 0; /* allocated size of _SPI_stack */
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
@@ -59,7 +60,7 @@ static bool _SPI_checktuples(void);
 int
 SPI_connect(void)
 {
-	_SPI_connection *new_SPI_stack;
+	int		newdepth;
 
 	/*
 	 * When procedure called by Executor _SPI_curid expected to be equal
@@ -70,39 +71,46 @@ SPI_connect(void)
 
 	if (_SPI_stack == NULL)
 	{
-		if (_SPI_connected != -1)
+		if (_SPI_connected != -1 || _SPI_stack_depth != 0)
 			elog(ERROR, "SPI stack corrupted");
-		new_SPI_stack = (_SPI_connection *) malloc(sizeof(_SPI_connection));
+		newdepth = 16;
+		_SPI_stack = (_SPI_connection *)
+			MemoryContextAlloc(TopTransactionContext,
+							   newdepth * sizeof(_SPI_connection));
+		_SPI_stack_depth = newdepth;
 	}
 	else
 	{
-		if (_SPI_connected < 0)
+		if (_SPI_stack_depth <= 0 || _SPI_stack_depth <= _SPI_connected)
 			elog(ERROR, "SPI stack corrupted");
-		new_SPI_stack = (_SPI_connection *) realloc(_SPI_stack,
-						 (_SPI_connected + 2) * sizeof(_SPI_connection));
+		if (_SPI_stack_depth == _SPI_connected + 1)
+		{
+			newdepth = _SPI_stack_depth * 2;
+			_SPI_stack = (_SPI_connection *)
+				repalloc(_SPI_stack,
+						 newdepth * sizeof(_SPI_connection));
+			_SPI_stack_depth = newdepth;
+		}
 	}
 
-	if (new_SPI_stack == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-
 	/*
-	 * We' returning to procedure where _SPI_curid == _SPI_connected - 1
+	 * We're entering procedure where _SPI_curid == _SPI_connected - 1
 	 */
-	_SPI_stack = new_SPI_stack;
 	_SPI_connected++;
+	Assert(_SPI_connected >= 0 && _SPI_connected < _SPI_stack_depth);
 
 	_SPI_current = &(_SPI_stack[_SPI_connected]);
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
+	_SPI_current->connectXid = GetCurrentTransactionId();
 
 	/*
 	 * Create memory contexts for this procedure
 	 *
-	 * XXX it would be better to use PortalContext as the parent context, but
-	 * we may not be inside a portal (consider deferred-trigger
-	 * execution).
+	 * XXX it would be better to use PortalContext as the parent context,
+	 * but we may not be inside a portal (consider deferred-trigger
+	 * execution).  Perhaps CurTransactionContext would do?  For now it
+	 * doesn't matter because we clean up explicitly in AtEOSubXact_SPI().
 	 */
 	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
 												  "SPI Proc",
@@ -152,28 +160,11 @@ SPI_finish(void)
 	_SPI_connected--;
 	_SPI_curid--;
 	if (_SPI_connected == -1)
-	{
-		free(_SPI_stack);
-		_SPI_stack = NULL;
 		_SPI_current = NULL;
-	}
 	else
-	{
-		_SPI_connection *new_SPI_stack;
-
-		new_SPI_stack = (_SPI_connection *) realloc(_SPI_stack,
-						 (_SPI_connected + 1) * sizeof(_SPI_connection));
-		/* This could only fail with a pretty stupid malloc package ... */
-		if (new_SPI_stack == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-		_SPI_stack = new_SPI_stack;
 		_SPI_current = &(_SPI_stack[_SPI_connected]);
-	}
 
 	return SPI_OK_FINISH;
-
 }
 
 /*
@@ -187,22 +178,53 @@ AtEOXact_SPI(bool isCommit)
 	 * freed automatically, so we can ignore them here.  We just need to
 	 * restore our static variables to initial state.
 	 */
-	if (_SPI_stack != NULL)
-	{
-		free(_SPI_stack);
-		if (isCommit)
-			ereport(WARNING,
-					(errcode(ERRCODE_WARNING),
-					 errmsg("freeing non-empty SPI stack"),
-					 errhint("Check for missing \"SPI_finish\" calls")));
-	}
+	if (isCommit && _SPI_connected != -1)
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING),
+				 errmsg("transaction left non-empty SPI stack"),
+				 errhint("Check for missing \"SPI_finish\" calls")));
 
 	_SPI_current = _SPI_stack = NULL;
+	_SPI_stack_depth = 0;
 	_SPI_connected = _SPI_curid = -1;
 	SPI_processed = 0;
 	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 }
+
+/*
+ * Clean up SPI state at subtransaction commit or abort.
+ *
+ * During commit, there shouldn't be any unclosed entries remaining from
+ * the current transaction; we throw them away if found.
+ */
+void
+AtEOSubXact_SPI(bool isCommit, TransactionId childXid)
+{
+	bool	found = false;
+
+	while (_SPI_connected >= 0)
+	{
+		_SPI_connection *connection = &(_SPI_stack[_SPI_connected]);
+		int		res;
+
+		if (connection->connectXid != childXid)
+			break;				/* couldn't be any underneath it either */
+
+		found = true;
+
+		_SPI_curid = _SPI_connected - 1; /* avoid begin_call error */
+		res = SPI_finish();
+		Assert(res == SPI_OK_FINISH);
+	}
+
+	if (found && isCommit)
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING),
+				 errmsg("subtransaction left non-empty SPI stack"),
+				 errhint("Check for missing \"SPI_finish\" calls")));
+}
+
 
 /* Pushes SPI stack to allow recursive SPI calls */
 void
@@ -1148,16 +1170,18 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 					res = SPI_ERROR_CURSOR;
 					goto fail;
 				}
-				else if (IsA(queryTree->utilityStmt, TransactionStmt))
-				{
-					res = SPI_ERROR_TRANSACTION;
-					goto fail;
-				}
 				res = SPI_OK_UTILITY;
 				if (plan == NULL)
 				{
 					ProcessUtility(queryTree->utilityStmt, dest, NULL);
-					CommandCounterIncrement();
+
+					if (IsA(queryTree->utilityStmt, TransactionStmt))
+					{
+						CommitTransactionCommand();
+						StartTransactionCommand();
+					}
+					else
+						CommandCounterIncrement();
 				}
 			}
 			else if (plan == NULL)
@@ -1273,7 +1297,14 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 			{
 				ProcessUtility(queryTree->utilityStmt, dest, NULL);
 				res = SPI_OK_UTILITY;
-				CommandCounterIncrement();
+
+				if (IsA(queryTree->utilityStmt, TransactionStmt))
+				{
+					CommitTransactionCommand();
+					StartTransactionCommand();
+				}
+				else
+					CommandCounterIncrement();
 			}
 			else
 			{

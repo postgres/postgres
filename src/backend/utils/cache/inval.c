@@ -33,6 +33,10 @@
  *	to record the transaction commit before sending SI messages, otherwise
  *	the other backends won't see our updated tuples as good.
  *
+ *	When a subtransaction aborts, we can process and discard any events
+ *	it has queued.  When a subtransaction commits, we just add its events
+ *	to the pending lists of the parent transaction.
+ *
  *	In short, we need to remember until xact end every insert or delete
  *	of a tuple that might be in the system caches.	Updates are treated as
  *	two events, delete + insert, for simplicity.  (There are cases where
@@ -66,15 +70,17 @@
  *	manipulating the init file is in relcache.c, but we keep track of the
  *	need for it here.
  *
- *	All the request lists are kept in TopTransactionContext memory, since
- *	they need not live beyond the end of the current transaction.
+ *	The request lists proper are kept in CurTransactionContext of their
+ *	creating (sub)transaction, since they can be forgotten on abort of that
+ *	transaction but must be kept till top-level commit otherwise.  For
+ *	simplicity we keep the controlling list-of-lists in TopTransactionContext.
  *
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.62 2004/06/18 06:13:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.63 2004/07/01 00:51:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +101,7 @@
  * To minimize palloc traffic, we keep pending requests in successively-
  * larger chunks (a slightly more sophisticated version of an expansible
  * array).	All request types can be stored as SharedInvalidationMessage
- * records.
+ * records.  The ordering of requests within a list is never significant.
  */
 typedef struct InvalidationChunk
 {
@@ -112,12 +118,15 @@ typedef struct InvalidationListHeader
 } InvalidationListHeader;
 
 /*----------------
- *	Invalidation info is divided into two lists:
+ * Invalidation info is divided into two lists:
  *	1) events so far in current command, not yet reflected to caches.
  *	2) events in previous commands of current transaction; these have
  *	   been reflected to local caches, and must be either broadcast to
  *	   other backends or rolled back from local cache when we commit
  *	   or abort the transaction.
+ * Actually, we need two such lists for each level of nested transaction,
+ * so that we can discard events from an aborted subtransaction.  When
+ * a subtransaction commits, we append its lists to the parent's lists.
  *
  * The relcache-file-invalidated flag can just be a simple boolean,
  * since we only act on it at transaction commit; we don't care which
@@ -125,13 +134,22 @@ typedef struct InvalidationListHeader
  *----------------
  */
 
-/* head of current-command event list */
-static InvalidationListHeader CurrentCmdInvalidMsgs;
+typedef struct TransInvalidationInfo
+{
+	/* Back link to parent transaction's info */
+	struct TransInvalidationInfo *parent;
 
-/* head of previous-commands event list */
-static InvalidationListHeader PriorCmdInvalidMsgs;
+	/* head of current-command event list */
+	InvalidationListHeader CurrentCmdInvalidMsgs;
 
-static bool RelcacheInitFileInval;		/* init file must be invalidated? */
+	/* head of previous-commands event list */
+	InvalidationListHeader PriorCmdInvalidMsgs;
+
+	/* init file must be invalidated? */
+	bool RelcacheInitFileInval;
+} TransInvalidationInfo;
+
+static TransInvalidationInfo *transInvalInfo = NULL;
 
 /*
  * Dynamically-registered callback functions.  Current implementation
@@ -176,7 +194,7 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 		/* First time through; create initial chunk */
 #define FIRSTCHUNKSIZE 16
 		chunk = (InvalidationChunk *)
-			MemoryContextAlloc(TopTransactionContext,
+			MemoryContextAlloc(CurTransactionContext,
 							   sizeof(InvalidationChunk) +
 				(FIRSTCHUNKSIZE - 1) *sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
@@ -190,7 +208,7 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 		int			chunksize = 2 * chunk->maxitems;
 
 		chunk = (InvalidationChunk *)
-			MemoryContextAlloc(TopTransactionContext,
+			MemoryContextAlloc(CurTransactionContext,
 							   sizeof(InvalidationChunk) +
 					 (chunksize - 1) *sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
@@ -201,29 +219,6 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 	/* Okay, add message to current chunk */
 	chunk->msgs[chunk->nitems] = *msg;
 	chunk->nitems++;
-}
-
-/*
- * Free a list of inval message chunks.
- *
- * NOTE: when we are about to commit or abort a transaction, it's
- * not really necessary to pfree the lists explicitly, since they will
- * go away anyway when TopTransactionContext is destroyed.
- */
-static void
-FreeInvalidationMessageList(InvalidationChunk **listHdr)
-{
-	InvalidationChunk *chunk = *listHdr;
-
-	*listHdr = NULL;
-
-	while (chunk != NULL)
-	{
-		InvalidationChunk *nextchunk = chunk->next;
-
-		pfree(chunk);
-		chunk = nextchunk;
-	}
 }
 
 /*
@@ -332,31 +327,6 @@ AppendInvalidationMessages(InvalidationListHeader *dest,
 }
 
 /*
- * Reset an invalidation list to empty
- *
- * physicalFree may be set false if caller knows transaction is ending
- */
-static void
-DiscardInvalidationMessages(InvalidationListHeader *hdr, bool physicalFree)
-{
-	if (physicalFree)
-	{
-		/* Physically pfree the list data */
-		FreeInvalidationMessageList(&hdr->cclist);
-		FreeInvalidationMessageList(&hdr->rclist);
-	}
-	else
-	{
-		/*
-		 * Assume the storage will go away at xact end, just reset
-		 * pointers
-		 */
-		hdr->cclist = NULL;
-		hdr->rclist = NULL;
-	}
-}
-
-/*
  * Execute the given function for all the messages in an invalidation list.
  * The list is not altered.
  *
@@ -386,7 +356,7 @@ RegisterCatcacheInvalidation(int cacheId,
 							 ItemPointer tuplePtr,
 							 Oid dbId)
 {
-	AddCatcacheInvalidationMessage(&CurrentCmdInvalidMsgs,
+	AddCatcacheInvalidationMessage(&transInvalInfo->CurrentCmdInvalidMsgs,
 								   cacheId, hashValue, tuplePtr, dbId);
 }
 
@@ -398,7 +368,7 @@ RegisterCatcacheInvalidation(int cacheId,
 static void
 RegisterRelcacheInvalidation(Oid dbId, Oid relId, RelFileNode physId)
 {
-	AddRelcacheInvalidationMessage(&CurrentCmdInvalidMsgs,
+	AddRelcacheInvalidationMessage(&transInvalInfo->CurrentCmdInvalidMsgs,
 								   dbId, relId, physId);
 
 	/*
@@ -406,7 +376,7 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId, RelFileNode physId)
 	 * relcache init file, mark that we need to zap that file at commit.
 	 */
 	if (RelationIdIsInInitFile(relId))
-		RelcacheInitFileInval = true;
+		transInvalInfo->RelcacheInitFileInval = true;
 }
 
 /*
@@ -619,8 +589,38 @@ AcceptInvalidationMessages(void)
 }
 
 /*
- * AtEOXactInvalidationMessages
- *		Process queued-up invalidation messages at end of transaction.
+ * AtStart_Inval
+ *		Initialize inval lists at start of a main transaction.
+ */
+void
+AtStart_Inval(void)
+{
+	Assert(transInvalInfo == NULL);
+	transInvalInfo = (TransInvalidationInfo *)
+		MemoryContextAllocZero(TopTransactionContext,
+							   sizeof(TransInvalidationInfo));
+}
+
+/*
+ * AtSubStart_Inval
+ *		Initialize inval lists at start of a subtransaction.
+ */
+void
+AtSubStart_Inval(void)
+{
+	TransInvalidationInfo *myInfo;
+
+	Assert(transInvalInfo != NULL);
+	myInfo = (TransInvalidationInfo *)
+		MemoryContextAllocZero(TopTransactionContext,
+							   sizeof(TransInvalidationInfo));
+	myInfo->parent = transInvalInfo;
+	transInvalInfo = myInfo;
+}
+
+/*
+ * AtEOXact_Inval
+ *		Process queued-up invalidation messages at end of main transaction.
  *
  * If isCommit, we must send out the messages in our PriorCmdInvalidMsgs list
  * to the shared invalidation message queue.  Note that these will be read
@@ -643,8 +643,11 @@ AcceptInvalidationMessages(void)
  *		This should be called as the last step in processing a transaction.
  */
 void
-AtEOXactInvalidationMessages(bool isCommit)
+AtEOXact_Inval(bool isCommit)
 {
+	/* Must be at top of stack */
+	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
+
 	if (isCommit)
 	{
 		/*
@@ -652,28 +655,77 @@ AtEOXactInvalidationMessages(bool isCommit)
 		 * and after we send the SI messages.  However, we need not do
 		 * anything unless we committed.
 		 */
-		if (RelcacheInitFileInval)
+		if (transInvalInfo->RelcacheInitFileInval)
 			RelationCacheInitFileInvalidate(true);
 
-		AppendInvalidationMessages(&PriorCmdInvalidMsgs,
-								   &CurrentCmdInvalidMsgs);
+		AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
+								   &transInvalInfo->CurrentCmdInvalidMsgs);
 
-		ProcessInvalidationMessages(&PriorCmdInvalidMsgs,
+		ProcessInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 									SendSharedInvalidMessage);
 
-		if (RelcacheInitFileInval)
+		if (transInvalInfo->RelcacheInitFileInval)
 			RelationCacheInitFileInvalidate(false);
 	}
 	else
 	{
-		ProcessInvalidationMessages(&PriorCmdInvalidMsgs,
+		ProcessInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 									LocalExecuteInvalidationMessage);
 	}
 
-	RelcacheInitFileInval = false;
+	/* Need not free anything explicitly */
+	transInvalInfo = NULL;
+}
 
-	DiscardInvalidationMessages(&PriorCmdInvalidMsgs, false);
-	DiscardInvalidationMessages(&CurrentCmdInvalidMsgs, false);
+/*
+ * AtSubEOXact_Inval
+ *		Process queued-up invalidation messages at end of subtransaction.
+ *
+ * If isCommit, process CurrentCmdInvalidMsgs if any (there probably aren't),
+ * and then attach both CurrentCmdInvalidMsgs and PriorCmdInvalidMsgs to the
+ * parent's PriorCmdInvalidMsgs list.
+ *
+ * If not isCommit, we are aborting, and must locally process the messages
+ * in PriorCmdInvalidMsgs.	No messages need be sent to other backends.
+ * We can forget about CurrentCmdInvalidMsgs too, since those changes haven't
+ * touched the caches yet.
+ *
+ * In any case, pop the transaction stack.  We need not physically free memory
+ * here, since CurTransactionContext is about to be emptied anyway
+ * (if aborting).
+ */
+void
+AtSubEOXact_Inval(bool isCommit)
+{
+	TransInvalidationInfo *myInfo = transInvalInfo;
+
+	/* Must be at non-top of stack */
+	Assert(myInfo != NULL && myInfo->parent != NULL);
+
+	if (isCommit)
+	{
+		/* If CurrentCmdInvalidMsgs still has anything, fix it */
+		CommandEndInvalidationMessages();
+
+		/* Pass up my inval messages to parent */
+		AppendInvalidationMessages(&myInfo->parent->PriorCmdInvalidMsgs,
+								   &myInfo->PriorCmdInvalidMsgs);
+
+		/* Pending relcache inval becomes parent's problem too */
+		if (myInfo->RelcacheInitFileInval)
+			myInfo->parent->RelcacheInitFileInval = true;
+	}
+	else
+	{
+		ProcessInvalidationMessages(&myInfo->PriorCmdInvalidMsgs,
+									LocalExecuteInvalidationMessage);
+	}
+
+	/* Pop the transaction state stack */
+	transInvalInfo = myInfo->parent;
+
+	/* Need not free anything else explicitly */
+	pfree(myInfo);
 }
 
 /*
@@ -687,27 +739,25 @@ AtEOXactInvalidationMessages(bool isCommit)
  * current command.  We then move the current-cmd list over to become part
  * of the prior-cmds list.
  *
- * The isCommit = false case is not currently used, but may someday be
- * needed to support rollback to a savepoint within a transaction.
- *
  * Note:
  *		This should be called during CommandCounterIncrement(),
  *		after we have advanced the command ID.
  */
 void
-CommandEndInvalidationMessages(bool isCommit)
+CommandEndInvalidationMessages(void)
 {
-	if (isCommit)
-	{
-		ProcessInvalidationMessages(&CurrentCmdInvalidMsgs,
-									LocalExecuteInvalidationMessage);
-		AppendInvalidationMessages(&PriorCmdInvalidMsgs,
-								   &CurrentCmdInvalidMsgs);
-	}
-	else
-	{
-		/* XXX what needs to be done here? */
-	}
+	/*
+	 * You might think this shouldn't be called outside any transaction,
+	 * but bootstrap does it, and also ABORT issued when not in a transaction.
+	 * So just quietly return if no state to work on.
+	 */
+	if (transInvalInfo == NULL)
+		return;
+
+	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
+								LocalExecuteInvalidationMessage);
+	AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
+							   &transInvalInfo->CurrentCmdInvalidMsgs);
 }
 
 /*

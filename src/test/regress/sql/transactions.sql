@@ -54,3 +54,48 @@ CREATE TABLE test AS SELECT * FROM writetest; -- fail
 START TRANSACTION READ WRITE;
 DROP TABLE writetest; -- ok
 COMMIT;
+
+-- Subtransactions, basic tests
+-- create & drop tables
+SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE;
+CREATE TABLE foobar (a int);
+BEGIN;
+	CREATE TABLE foo (a int);
+	BEGIN;
+		DROP TABLE foo;
+		CREATE TABLE bar (a int);
+	ROLLBACK;
+	BEGIN;
+		CREATE TABLE baz (a int);
+	COMMIT;
+	drop TABLE foobar;
+	CREATE TABLE barbaz (a int);
+COMMIT;
+-- should exist: barbaz, baz, foo
+SELECT * FROM foo;		-- should be empty
+SELECT * FROM bar;		-- shouldn't exist
+SELECT * FROM barbaz;	-- should be empty
+SELECT * FROM baz;		-- should be empty
+
+-- inserts
+BEGIN;
+	INSERT INTO foo VALUES (1);
+	BEGIN;
+		INSERT into bar VALUES (1);
+	ROLLBACK;
+	BEGIN;
+		INSERT into barbaz VALUES (1);
+	COMMIT;
+	BEGIN;
+		BEGIN;
+			INSERT INTO foo VALUES (2);
+		COMMIT;
+	ROLLBACK;
+	INSERT INTO foo VALUES (3);
+COMMIT;
+SELECT * FROM foo;		-- should have 1 and 3
+SELECT * FROM barbaz;	-- should have 1
+
+DROP TABLE foo;
+DROP TABLE baz;
+DROP TABLE barbaz;

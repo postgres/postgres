@@ -16,13 +16,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.72 2003/11/29 19:52:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.73 2004/07/01 00:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/subtrans.h"
 #include "storage/sinval.h"
 #include "utils/tqual.h"
 
@@ -113,6 +114,10 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple)))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
+				return true;
+
+			/* deleting subtransaction aborted */
+			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
 				return true;
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
@@ -259,6 +264,10 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 				return false;	/* inserted after scan started */
 
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
+				return true;
+
+			/* deleting subtransaction aborted */
+			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
 				return true;
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
@@ -441,6 +450,10 @@ HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid)
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return HeapTupleMayBeUpdated;
 
+			/* deleting subtransaction aborted */
+			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+				return HeapTupleMayBeUpdated;
+
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
 			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
@@ -573,6 +586,10 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple)))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
+				return true;
+
+			/* deleting subtransaction aborted */
+			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
 				return true;
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
@@ -712,6 +729,11 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return true;
 
+			/* deleting subtransaction aborted */
+			/* FIXME -- is this correct w.r.t. the cmax of the tuple? */
+			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+				return true;
+
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
 			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
@@ -747,7 +769,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 
 		for (i = 0; i < snapshot->xcnt; i++)
 		{
-			if (TransactionIdEquals(HeapTupleHeaderGetXmin(tuple),
+			if (SubTransXidsHaveCommonAncestor(HeapTupleHeaderGetXmin(tuple),
 									snapshot->xip[i]))
 				return false;
 		}
@@ -792,7 +814,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 			return true;
 		for (i = 0; i < snapshot->xcnt; i++)
 		{
-			if (TransactionIdEquals(HeapTupleHeaderGetXmax(tuple), snapshot->xip[i]))
+			if (SubTransXidsHaveCommonAncestor(HeapTupleHeaderGetXmax(tuple), snapshot->xip[i]))
 				return true;
 		}
 	}
@@ -868,8 +890,8 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
-			Assert(HeapTupleHeaderGetXmin(tuple) ==
-				   HeapTupleHeaderGetXmax(tuple));
+			Assert(SubTransXidsHaveCommonAncestor(HeapTupleHeaderGetXmin(tuple),
+						HeapTupleHeaderGetXmax(tuple)));
 			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
 			/* inserted and then deleted by same xact */
@@ -943,7 +965,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 	 * Deleter committed, but check special cases.
 	 */
 
-	if (TransactionIdEquals(HeapTupleHeaderGetXmin(tuple),
+	if (SubTransXidsHaveCommonAncestor(HeapTupleHeaderGetXmin(tuple),
 							HeapTupleHeaderGetXmax(tuple)))
 	{
 		/*

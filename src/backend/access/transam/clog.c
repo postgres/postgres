@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.20 2004/05/31 03:47:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.21 2004/07/01 00:49:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,14 +21,13 @@
 
 #include <fcntl.h>
 #include <dirent.h>
-#include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "access/clog.h"
 #include "access/slru.h"
-#include "storage/lwlock.h"
 #include "miscadmin.h"
+#include "storage/lwlock.h"
 
 
 /*
@@ -65,7 +64,7 @@
  * is guaranteed flushed through the XLOG commit record before we are called
  * to log a commit, so the WAL rule "write xlog before data" is satisfied
  * automatically for commits, and we don't really care for aborts.  Therefore,
- * we don't need to mark XLOG pages with LSN information; we have enough
+ * we don't need to mark CLOG pages with LSN information; we have enough
  * synchronization already.
  *----------
  */
@@ -95,20 +94,22 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status)
 	char	   *byteptr;
 
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||
-		   status == TRANSACTION_STATUS_ABORTED);
+		   status == TRANSACTION_STATUS_ABORTED ||
+		   status == TRANSACTION_STATUS_SUB_COMMITTED);
 
 	LWLockAcquire(ClogCtl->ControlLock, LW_EXCLUSIVE);
 
 	byteptr = SimpleLruReadPage(ClogCtl, pageno, xid, true);
 	byteptr += byteno;
 
-	/* Current state should be 0 or target state */
+	/* Current state should be 0, subcommitted or target state */
 	Assert(((*byteptr >> bshift) & CLOG_XACT_BITMASK) == 0 ||
+		   ((*byteptr >> bshift) & CLOG_XACT_BITMASK) == TRANSACTION_STATUS_SUB_COMMITTED ||
 		   ((*byteptr >> bshift) & CLOG_XACT_BITMASK) == status);
 
 	*byteptr |= (status << bshift);
 
-	/* ...->page_status[slotno] = CLOG_PAGE_DIRTY; already done */
+	/* ...->page_status[slotno] = SLRU_PAGE_DIRTY; already done */
 
 	LWLockRelease(ClogCtl->ControlLock);
 }
@@ -117,7 +118,7 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status)
  * Interrogate the state of a transaction in the commit log.
  *
  * NB: this is a low-level routine and is NOT the preferred entry point
- * for most uses; TransactionLogTest() in transam.c is the intended caller.
+ * for most uses; TransactionLogFetch() in transam.c is the intended caller.
  */
 XidStatus
 TransactionIdGetStatus(TransactionId xid)
@@ -176,7 +177,7 @@ BootStrapCLOG(void)
 
 	/* Make sure it's written out */
 	SimpleLruWritePage(ClogCtl, slotno, NULL);
-	/* Assert(ClogCtl->page_status[slotno] == CLOG_PAGE_CLEAN); */
+	/* Assert(ClogCtl->page_status[slotno] == SLRU_PAGE_CLEAN); */
 
 	LWLockRelease(ClogCtl->ControlLock);
 }
@@ -211,7 +212,8 @@ StartupCLOG(void)
 	/*
 	 * Initialize our idea of the latest page number.
 	 */
-	SimpleLruSetLatestPage(ClogCtl, TransactionIdToPage(ShmemVariableCache->nextXid));
+	SimpleLruSetLatestPage(ClogCtl,
+						   TransactionIdToPage(ShmemVariableCache->nextXid));
 }
 
 /*
@@ -333,51 +335,20 @@ WriteZeroPageXlogRec(int pageno)
 	rdata.data = (char *) (&pageno);
 	rdata.len = sizeof(int);
 	rdata.next = NULL;
-	(void) XLogInsert(RM_CLOG_ID, CLOG_ZEROPAGE | XLOG_NO_TRAN, &rdata);
+	(void) XLogInsert(RM_SLRU_ID, CLOG_ZEROPAGE | XLOG_NO_TRAN, &rdata);
 }
 
-/*
- * CLOG resource manager's routines
- */
+/* Redo a ZEROPAGE action during WAL replay */
 void
-clog_redo(XLogRecPtr lsn, XLogRecord *record)
+clog_zeropage_redo(int pageno)
 {
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	int			slotno;
 
-	if (info == CLOG_ZEROPAGE)
-	{
-		int			pageno;
-		int			slotno;
+	LWLockAcquire(ClogCtl->ControlLock, LW_EXCLUSIVE);
 
-		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
+	slotno = ZeroCLOGPage(pageno, false);
+	SimpleLruWritePage(ClogCtl, slotno, NULL);
+	/* Assert(ClogCtl->page_status[slotno] == SLRU_PAGE_CLEAN); */
 
-		LWLockAcquire(ClogCtl->ControlLock, LW_EXCLUSIVE);
-
-		slotno = ZeroCLOGPage(pageno, false);
-		SimpleLruWritePage(ClogCtl, slotno, NULL);
-		/* Assert(ClogCtl->page_status[slotno] == SLRU_PAGE_CLEAN); */
-
-		LWLockRelease(ClogCtl->ControlLock);
-	}
-}
-
-void
-clog_undo(XLogRecPtr lsn, XLogRecord *record)
-{
-}
-
-void
-clog_desc(char *buf, uint8 xl_info, char *rec)
-{
-	uint8		info = xl_info & ~XLR_INFO_MASK;
-
-	if (info == CLOG_ZEROPAGE)
-	{
-		int			pageno;
-
-		memcpy(&pageno, rec, sizeof(int));
-		sprintf(buf + strlen(buf), "zeropage: %d", pageno);
-	}
-	else
-		strcat(buf, "UNKNOWN");
+	LWLockRelease(ClogCtl->ControlLock);
 }

@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.40 2004/06/24 19:26:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.41 2004/07/01 00:51:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1828,7 +1828,7 @@ main(int argc, char *argv[])
 	char	   *pgdenv;			/* PGDATA value got from sent to
 								 * environment */
 	char	   *subdirs[] =
-	{"global", "pg_xlog", "pg_clog", "base", "base/1", "pg_tblspc"};
+	{"global", "pg_xlog", "pg_clog", "pg_subtrans", "base", "base/1", "pg_tblspc"};
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], "initdb");

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/memutils.h,v 1.55 2004/06/05 19:48:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/memutils.h,v 1.56 2004/07/01 00:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ extern DLLIMPORT MemoryContext PostmasterContext;
 extern DLLIMPORT MemoryContext CacheMemoryContext;
 extern DLLIMPORT MemoryContext MessageContext;
 extern DLLIMPORT MemoryContext TopTransactionContext;
+extern DLLIMPORT MemoryContext CurTransactionContext;
 
 /* These two are transient links to contexts owned by other objects: */
 extern DLLIMPORT MemoryContext QueryContext;

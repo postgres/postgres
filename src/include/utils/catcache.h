@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.48 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.49 2004/07/01 00:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,9 @@ typedef struct catctup
 	 * and negative entries is identical.
 	 */
 	int			refcount;		/* number of active references */
+	int		   *prev_refcount;	/* refcounts for upper subtransactions */
+	int			numpushes;		/* number of used refcounts in the array */
+	int			numalloc;		/* allocated size of array */
 	bool		dead;			/* dead but not yet removed? */
 	bool		negative;		/* negative cache entry? */
 	uint32		hash_value;		/* hash value for this tuple's keys */
@@ -139,6 +142,9 @@ typedef struct catclist
 	 */
 	Dlelem		cache_elem;		/* list member of per-catcache list */
 	int			refcount;		/* number of active references */
+	int		   *prev_refcount;	/* refcounts for upper subtransactions */
+	int			numpushes;		/* number of used refcounts in the array */
+	int			numalloc;		/* allocated size of array */
 	bool		dead;			/* dead but not yet removed? */
 	bool		ordered;		/* members listed in index order? */
 	short		nkeys;			/* number of lookup keys specified */
@@ -163,6 +169,8 @@ extern DLLIMPORT MemoryContext CacheMemoryContext;
 
 extern void CreateCacheMemoryContext(void);
 extern void AtEOXact_CatCache(bool isCommit);
+extern void AtSubStart_CatCache(void);
+extern void AtEOSubXact_CatCache(bool isCommit);
 
 extern CatCache *InitCatCache(int id, const char *relname, const char *indname,
 			 int reloidattr,

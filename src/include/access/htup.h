@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.65 2004/04/01 21:28:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.66 2004/07/01 00:51:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,18 +109,14 @@
 typedef struct HeapTupleFields
 {
 	TransactionId t_xmin;		/* inserting xact ID */
-
-	union
-	{
-		CommandId	t_cmin;		/* inserting command ID */
-		TransactionId t_xmax;	/* deleting xact ID */
-	}			t_field2;
+	CommandId	t_cmin;			/* inserting command ID */
+	TransactionId t_xmax;		/* deleting xact ID */
 
 	union
 	{
 		CommandId	t_cmax;		/* deleting command ID */
 		TransactionId t_xvac;	/* VACUUM FULL xact ID */
-	}			t_field3;
+	}			t_field4;
 } HeapTupleFields;
 
 typedef struct DatumTupleFields
@@ -172,9 +168,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 										 * attribute(s) */
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 #define HEAP_HASOID				0x0010	/* has an object-id field */
-/* bit 0x0020 is presently unused */
-#define HEAP_XMAX_IS_XMIN		0x0040	/* created and deleted in the same
-										 * transaction */
+/* 0x0020 and 0x0040 are unused */
 #define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update
 										 * without logging */
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
@@ -211,62 +205,47 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 
 #define HeapTupleHeaderGetXmax(tup) \
 ( \
-	((tup)->t_infomask & HEAP_XMAX_IS_XMIN) ? \
-		(tup)->t_choice.t_heap.t_xmin \
-	: \
-		(tup)->t_choice.t_heap.t_field2.t_xmax \
+	(tup)->t_choice.t_heap.t_xmax \
 )
 
 #define HeapTupleHeaderSetXmax(tup, xid) \
-do { \
-	TransactionId	_newxid = (xid); \
-	if (TransactionIdEquals((tup)->t_choice.t_heap.t_xmin, _newxid)) \
-		(tup)->t_infomask |= HEAP_XMAX_IS_XMIN; \
-	else \
-	{ \
-		(tup)->t_infomask &= ~HEAP_XMAX_IS_XMIN; \
-		TransactionIdStore(_newxid, &(tup)->t_choice.t_heap.t_field2.t_xmax); \
-	} \
-} while (0)
+( \
+	TransactionIdStore((xid), &(tup)->t_choice.t_heap.t_xmax) \
+)
+
+#define HeapTupleHeaderGetCmin(tup) \
+( \
+	(tup)->t_choice.t_heap.t_cmin \
+)
+
+#define HeapTupleHeaderSetCmin(tup, cid) \
+( \
+	(tup)->t_choice.t_heap.t_cmin = (cid) \
+)
 
 /*
- * Note: GetCmin will produce wrong answers after SetXmax has been executed
+ * Note: GetCmax will produce wrong answers after SetXvac has been executed
  * by a transaction other than the inserting one.  We could check
  * HEAP_XMAX_INVALID and return FirstCommandId if it's clear, but since that
  * bit will be set again if the deleting transaction aborts, there'd be no
  * real gain in safety from the extra test.  So, just rely on the caller not
  * to trust the value unless it's meaningful.
  */
-#define HeapTupleHeaderGetCmin(tup) \
-( \
-	(tup)->t_choice.t_heap.t_field2.t_cmin \
-)
-
-#define HeapTupleHeaderSetCmin(tup, cid) \
-do { \
-	Assert((tup)->t_infomask & HEAP_XMAX_INVALID); \
-	(tup)->t_choice.t_heap.t_field2.t_cmin = (cid); \
-} while (0)
-
-/*
- * As with GetCmin, we can't completely ensure that GetCmax can detect whether
- * a valid command ID is available, and there's little point in a partial test.
- */
 #define HeapTupleHeaderGetCmax(tup) \
 ( \
-	(tup)->t_choice.t_heap.t_field3.t_cmax \
+	(tup)->t_choice.t_heap.t_field4.t_cmax \
 )
 
 #define HeapTupleHeaderSetCmax(tup, cid) \
 do { \
 	Assert(!((tup)->t_infomask & HEAP_MOVED)); \
-	(tup)->t_choice.t_heap.t_field3.t_cmax = (cid); \
+	(tup)->t_choice.t_heap.t_field4.t_cmax = (cid); \
 } while (0)
 
 #define HeapTupleHeaderGetXvac(tup) \
 ( \
 	((tup)->t_infomask & HEAP_MOVED) ? \
-		(tup)->t_choice.t_heap.t_field3.t_xvac \
+		(tup)->t_choice.t_heap.t_field4.t_xvac \
 	: \
 		InvalidTransactionId \
 )
@@ -274,7 +253,7 @@ do { \
 #define HeapTupleHeaderSetXvac(tup, xid) \
 do { \
 	Assert((tup)->t_infomask & HEAP_MOVED); \
-	TransactionIdStore((xid), &(tup)->t_choice.t_heap.t_field3.t_xvac); \
+	TransactionIdStore((xid), &(tup)->t_choice.t_heap.t_field4.t_xvac); \
 } while (0)
 
 #define HeapTupleHeaderGetDatumLength(tup) \

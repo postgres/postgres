@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.64 2004/06/02 21:29:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.65 2004/07/01 00:50:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 
 #include <signal.h>
 
+#include "access/subtrans.h"
+#include "access/transam.h"
 #include "commands/async.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -428,20 +430,40 @@ DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 
 /*
  * TransactionIdIsInProgress -- is given transaction running by some backend
+ *
+ * There are three possibilities for finding a running transaction:
+ *
+ * 1. the given Xid is a main transaction Id.  We will find this out cheaply
+ * by looking at the PGPROC struct for each backend.
+ *
+ * 2. the given Xid is one of the cached subxact Xids in the PGPROC array.
+ * We can find this out cheaply too.
+ *
+ * 3. Search the SubTrans tree.  This is the slowest, but sadly it has to be
+ * done always if the other two failed.
+ *
+ * SInvalLock has to be held while we do 1 and 2.  If we save all the Xids
+ * while doing 1, we can release the SInvalLock while we do 3.  This buys back
+ * some concurrency (we can't retrieve the main Xids from PGPROC again anyway,
+ * see GetNewTransactionId)
  */
 bool
 TransactionIdIsInProgress(TransactionId xid)
 {
-	bool		result = false;
-	SISeg	   *segP = shmInvalBuffer;
-	ProcState  *stateP = segP->procState;
-	int			index;
+	bool			result = false;
+	SISeg		   *segP = shmInvalBuffer;
+	ProcState	   *stateP = segP->procState;
+	int				i;
+	int				nxids = 0;
+	TransactionId  *xids;
+
+	xids = (TransactionId *)palloc(sizeof(TransactionId) * segP->maxBackends);
 
 	LWLockAcquire(SInvalLock, LW_SHARED);
 
-	for (index = 0; index < segP->lastBackend; index++)
+	for (i = 0; i < segP->lastBackend; i++)
 	{
-		SHMEM_OFFSET pOffset = stateP[index].procStruct;
+		SHMEM_OFFSET pOffset = stateP[i].procStruct;
 
 		if (pOffset != INVALID_OFFSET)
 		{
@@ -450,15 +472,70 @@ TransactionIdIsInProgress(TransactionId xid)
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId pxid = proc->xid;
 
+			/*
+			 * check the main Xid (step 1 above)
+			 */
 			if (TransactionIdEquals(pxid, xid))
 			{
 				result = true;
 				break;
 			}
+
+			/*
+			 * save the main Xid for step 3.
+			 */
+			xids[nxids++] = pxid;
+
+#ifdef NOT_USED
+			FIXME -- waiting to save the Xids in PGPROC ...
+
+			/*
+			 * check the saved Xids array (step 2)
+			 */
+			for (j = 0; j < PGPROC_MAX_SAVED_XIDS; j++)
+			{
+				pxid = proc->savedxids[j];
+
+				if (!TransactionIdIsValid(pxids))
+					break;
+
+				if (TransactionIdEquals(pxid, xid))
+				{
+					result = true;
+					break;
+				}
+			}
+#endif
+
+			if (result)
+				break;
+
 		}
 	}
 
 	LWLockRelease(SInvalLock);
+
+	/*
+	 * Step 3: have to check pg_subtrans.  Use the saved Xids.
+	 *
+	 * XXX Could save the cached Xids too for further improvement.
+	 */
+	if (!result)
+	{
+		/* this is a potentially expensive call. */
+		xid = SubTransGetTopmostTransaction(xid);
+		
+		Assert(TransactionIdIsValid(xid));
+
+		/*
+		 * We don't care if it aborted, because if it did, we won't find
+		 * it in the array.
+		 */
+
+		for (i = 0; i < nxids; i++)
+			if (TransactionIdEquals(xids[i], xid))
+				return true;
+	}
 
 	return result;
 }
@@ -596,7 +673,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	 * This does open a possibility for avoiding repeated malloc/free:
 	 * since MaxBackends does not change at runtime, we can simply reuse
 	 * the previous xip array if any.  (This relies on the fact that all
-	 * calls pass static SnapshotData structs.)
+	 * callers pass static SnapshotData structs.)
 	 */
 	if (snapshot->xip == NULL)
 	{

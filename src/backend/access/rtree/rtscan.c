@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.51 2004/01/07 18:56:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.52 2004/07/01 00:49:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
 typedef struct RTScanListData
 {
 	IndexScanDesc rtsl_scan;
+	TransactionId rtsl_creatingXid;
 	struct RTScanListData *rtsl_next;
 } RTScanListData;
 
@@ -240,6 +241,7 @@ rtregscan(IndexScanDesc s)
 
 	l = (RTScanList) palloc(sizeof(RTScanListData));
 	l->rtsl_scan = s;
+	l->rtsl_creatingXid = GetCurrentTransactionId();
 	l->rtsl_next = RTScans;
 	RTScans = l;
 }
@@ -288,6 +290,46 @@ AtEOXact_rtree(void)
 	 * at end of transaction anyway.
 	 */
 	RTScans = NULL;
+}
+
+/*
+ * AtEOSubXact_rtree() --- clean up rtree subsystem at subxact abort or commit.
+ *
+ * This is here because it needs to touch this module's static var RTScans.
+ */
+void
+AtEOSubXact_rtree(TransactionId childXid)
+{
+	RTScanList l;
+	RTScanList prev;
+	RTScanList next;
+
+	/*
+	 * Note: these actions should only be necessary during xact abort; but
+	 * they can't hurt during a commit.
+	 */
+
+	/*
+	 * Forget active scans that were started in this subtransaction.
+	 */
+	prev = NULL;
+
+	for (l = RTScans; l != NULL; l = next)
+	{
+		next = l->rtsl_next;
+		if (l->rtsl_creatingXid == childXid)
+		{
+			if (prev == NULL)
+				RTScans = next;
+			else
+				prev->rtsl_next = next;
+
+			pfree(l);
+			/* prev does not change */
+		}
+		else
+			prev = l;
+	}
 }
 
 void

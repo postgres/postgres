@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.117 2004/06/25 21:55:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.118 2004/07/01 00:50:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,8 @@ typedef struct OnCommitItem
 	 * entries in the list until commit so that we can roll back if
 	 * needed.
 	 */
-	bool		created_in_cur_xact;
-	bool		deleted_in_cur_xact;
+	TransactionId	creating_xid;
+	TransactionId	deleting_xid;
 } OnCommitItem;
 
 static List *on_commits = NIL;
@@ -5483,8 +5483,8 @@ register_on_commit_action(Oid relid, OnCommitAction action)
 	oc = (OnCommitItem *) palloc(sizeof(OnCommitItem));
 	oc->relid = relid;
 	oc->oncommit = action;
-	oc->created_in_cur_xact = true;
-	oc->deleted_in_cur_xact = false;
+	oc->creating_xid = GetCurrentTransactionId();
+	oc->deleting_xid = InvalidTransactionId;
 
 	on_commits = lcons(oc, on_commits);
 
@@ -5507,7 +5507,7 @@ remove_on_commit_action(Oid relid)
 
 		if (oc->relid == relid)
 		{
-			oc->deleted_in_cur_xact = true;
+			oc->deleting_xid = GetCurrentTransactionId();
 			break;
 		}
 	}
@@ -5522,6 +5522,7 @@ remove_on_commit_action(Oid relid)
 void
 PreCommit_on_commit_actions(void)
 {
+	TransactionId xid = GetCurrentTransactionId();
 	ListCell   *l;
 
 	foreach(l, on_commits)
@@ -5529,7 +5530,7 @@ PreCommit_on_commit_actions(void)
 		OnCommitItem *oc = (OnCommitItem *) lfirst(l);
 
 		/* Ignore entry if already dropped in this xact */
-		if (oc->deleted_in_cur_xact)
+		if (oc->deleting_xid == xid)
 			continue;
 
 		switch (oc->oncommit)
@@ -5556,7 +5557,7 @@ PreCommit_on_commit_actions(void)
 					 * remove_on_commit_action, so the entry should get
 					 * marked as deleted.
 					 */
-					Assert(oc->deleted_in_cur_xact);
+					Assert(oc->deleting_xid == xid);
 					break;
 				}
 		}
@@ -5572,7 +5573,7 @@ PreCommit_on_commit_actions(void)
  * during abort, remove those created during this transaction.
  */
 void
-AtEOXact_on_commit_actions(bool isCommit)
+AtEOXact_on_commit_actions(bool isCommit, TransactionId xid)
 {
 	ListCell *cur_item;
 	ListCell *prev_item;
@@ -5584,8 +5585,8 @@ AtEOXact_on_commit_actions(bool isCommit)
 	{
 		OnCommitItem *oc = (OnCommitItem *) lfirst(cur_item);
 
-		if (isCommit ? oc->deleted_in_cur_xact :
-			oc->created_in_cur_xact)
+		if (isCommit ? TransactionIdEquals(oc->deleting_xid, xid) :
+			TransactionIdEquals(oc->creating_xid, xid))
 		{
 			/* cur_item must be removed */
 			on_commits = list_delete_cell(on_commits, cur_item, prev_item);
@@ -5598,8 +5599,52 @@ AtEOXact_on_commit_actions(bool isCommit)
 		else
 		{
 			/* cur_item must be preserved */
-			oc->deleted_in_cur_xact = false;
-			oc->created_in_cur_xact = false;
+			oc->creating_xid = InvalidTransactionId;
+			oc->deleting_xid = InvalidTransactionId;
+			prev_item = cur_item;
+			cur_item = lnext(prev_item);
+		}
+	}
+}
+
+/*
+ * Post-subcommit or post-subabort cleanup for ON COMMIT management.
+ *
+ * During subabort, we can immediately remove entries created during this
+ * subtransaction.  During subcommit, just relabel entries marked during
+ * this subtransaction as being the parent's responsibility.
+ */
+void
+AtEOSubXact_on_commit_actions(bool isCommit, TransactionId childXid,
+							  TransactionId parentXid)
+{
+	ListCell *cur_item;
+	ListCell *prev_item;
+
+	prev_item = NULL;
+	cur_item = list_head(on_commits);
+
+	while (cur_item != NULL)
+	{
+		OnCommitItem *oc = (OnCommitItem *) lfirst(cur_item);
+
+		if (!isCommit && TransactionIdEquals(oc->creating_xid, childXid))
+		{
+			/* cur_item must be removed */
+			on_commits = list_delete_cell(on_commits, cur_item, prev_item);
+			pfree(oc);
+			if (prev_item)
+				cur_item = lnext(prev_item);
+			else
+				cur_item = list_head(on_commits);
+		}
+		else
+		{
+			/* cur_item must be preserved */
+			if (TransactionIdEquals(oc->creating_xid, childXid))
+				oc->creating_xid = parentXid;
+			if (TransactionIdEquals(oc->deleting_xid, childXid))
+				oc->deleting_xid = isCommit ? parentXid : InvalidTransactionId;
 			prev_item = cur_item;
 			cur_item = lnext(prev_item);
 		}

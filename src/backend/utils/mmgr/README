@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.6 2004/06/05 19:48:09 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.7 2004/07/01 00:51:29 tgl Exp $
 
 Notes about memory allocation redesign
 --------------------------------------
@@ -90,7 +90,7 @@ context managers as discussed below.
 We could even consider getting rid of CurrentMemoryContext entirely,
 instead requiring the target memory context for allocation to be specified
 explicitly.  But I think that would be too much notational overhead ---
-we'd have to pass an apppropriate memory context to called routines in
+we'd have to pass an appropriate memory context to called routines in
 many places.  For example, the copyObject routines would need to be passed
 a context, as would function execution routines that return a
 pass-by-reference datatype.  And what of routines that temporarily
@@ -176,15 +176,30 @@ is kept separate from per-transaction and per-portal contexts because a
 query string might need to live either a longer or shorter time than any
 single transaction or portal.
 
-TopTransactionContext --- this holds everything that lives until end of
-transaction (longer than one statement within a transaction!).  An example
-of what has to be here is the list of pending NOTIFY messages to be sent
-at xact commit.  This context will be reset, and all its children deleted,
-at conclusion of each transaction cycle.  Note: this context is NOT
-cleared immediately upon error; its contents will survive until the
-transaction block is exited by COMMIT/ROLLBACK.
-(If we ever implement nested transactions, TopTransactionContext may need
-to be split into a true "top" pointer and a "current transaction" pointer.)
+TopTransactionContext --- this holds everything that lives until end of the
+top-level transaction.  This context will be reset, and all its children
+deleted, at conclusion of each top-level transaction cycle.  In most cases
+you don't want to allocate stuff directly here, but in CurTransactionContext;
+what does belong here is control information that exists explicitly to manage
+status across multiple subtransactions.  Note: this context is NOT cleared
+immediately upon error; its contents will survive until the transaction block
+is exited by COMMIT/ROLLBACK.
+
+CurTransactionContext --- this holds data that has to survive until the end
+of the current transaction, and in particular will be needed at top-level
+transaction commit.  When we are in a top-level transaction this is the same
+as TopTransactionContext, but in subtransactions it points to a child context.
+It is important to understand that if a subtransaction aborts, its
+CurTransactionContext is thrown away after finishing the abort processing;
+but a committed subtransaction's CurTransactionContext is kept until top-level
+commit (unless of course one of the intermediate levels of subtransaction
+aborts).  This ensures that we do not keep data from a failed subtransaction
+longer than necessary.  Because of this behavior, you must be careful to clean
+up properly during subtransaction abort --- the subtransaction's state must be
+delinked from any pointers or lists kept in upper transactions, or you will
+have dangling pointers leading to a crash at top-level commit.  An example of
+data kept here is pending NOTIFY messages, which are sent at top-level commit,
+but only if the generating subtransaction did not abort.
 
 QueryContext --- this is not actually a separate context, but a global
 variable pointing to the context that holds the current command's parse

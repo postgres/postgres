@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.146 2004/06/03 02:08:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.147 2004/07/01 00:49:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include <sys/time.h>
 
 #include "access/clog.h"
+#include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog.h"
@@ -2755,6 +2756,7 @@ BootStrapXLOG(void)
 
 	/* Bootstrap the commit log, too */
 	BootStrapCLOG();
+	BootStrapSUBTRANS();
 }
 
 static char *
@@ -3154,6 +3156,7 @@ StartupXLOG(void)
 
 	/* Start up the commit log, too */
 	StartupCLOG();
+	StartupSUBTRANS();
 
 	ereport(LOG,
 			(errmsg("database system is ready")));
@@ -3292,6 +3295,7 @@ ShutdownXLOG(int code, Datum arg)
 	CritSectionCount++;
 	CreateCheckPoint(true, true);
 	ShutdownCLOG();
+	ShutdownSUBTRANS();
 	CritSectionCount--;
 
 	ereport(LOG,
@@ -3467,6 +3471,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	END_CRIT_SECTION();
 
 	CheckPointCLOG();
+	CheckPointSUBTRANS();
 	FlushBufferPool();
 
 	START_CRIT_SECTION();

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.421 2004/06/24 21:03:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.422 2004/07/01 00:51:11 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -841,6 +841,7 @@ exec_simple_query(const char *query_string)
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
 				if (stmt->kind == TRANS_STMT_COMMIT ||
+					stmt->kind == TRANS_STMT_BEGIN ||
 					stmt->kind == TRANS_STMT_ROLLBACK)
 					allowit = true;
 			}
@@ -1161,6 +1162,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
 				if (stmt->kind == TRANS_STMT_COMMIT ||
+					stmt->kind == TRANS_STMT_BEGIN ||
 					stmt->kind == TRANS_STMT_ROLLBACK)
 					allowit = true;
 			}
@@ -1623,6 +1625,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 			is_trans_stmt = true;
 			if (stmt->kind == TRANS_STMT_COMMIT ||
+				stmt->kind == TRANS_STMT_BEGIN ||
 				stmt->kind == TRANS_STMT_ROLLBACK)
 				is_trans_exit = true;
 		}

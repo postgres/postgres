@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.148 2004/05/29 22:48:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.149 2004/07/01 00:50:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,26 +380,34 @@ LockWaitCancel(void)
 
 /*
  * ProcReleaseLocks() -- release locks associated with current transaction
- *			at transaction commit or abort
+ *			at main transaction and subtransaction commit or abort
  *
- * At commit, we release only locks tagged with the current transaction's XID,
- * leaving those marked with XID 0 (ie, session locks) undisturbed.  At abort,
- * we release all locks including XID 0, because we need to clean up after
- * a failure.  This logic will need extension if we ever support nested
- * transactions.
+ * The options for which locks to release are the same as for the underlying
+ * LockReleaseAll() function.
  *
- * Note that user locks are not released in either case.
+ * Notes:
+ *
+ * At main transaction commit, we release all locks except session locks.
+ * At main transaction abort, we release all locks including session locks;
+ * this lets us clean up after a VACUUM FULL failure.
+ *
+ * At subtransaction commit, we don't release any locks (so this func is not
+ * called at all); we will defer the releasing to the parent transaction.
+ * At subtransaction abort, we release all locks held by the subtransaction;
+ * this is implemented by passing in the Xids of the failed subxact and its
+ * children in the xids[] array.
+ *
+ * Note that user locks are not released in any case.
  */
 void
-ProcReleaseLocks(bool isCommit)
+ProcReleaseLocks(LockReleaseWhich which, int nxids, TransactionId *xids)
 {
 	if (!MyProc)
 		return;
 	/* If waiting, get off wait queue (should only be needed after error) */
 	LockWaitCancel();
 	/* Release locks */
-	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc,
-				   !isCommit, GetCurrentTransactionId());
+	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc, which, nxids, xids);
 }
 
 
@@ -432,11 +440,11 @@ ProcKill(int code, Datum arg)
 	LockWaitCancel();
 
 	/* Remove from the standard lock table */
-	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc, true, InvalidTransactionId);
+	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc, ReleaseAll, 0, NULL);
 
 #ifdef USER_LOCKS
 	/* Remove from the user lock table */
-	LockReleaseAll(USER_LOCKMETHOD, MyProc, true, InvalidTransactionId);
+	LockReleaseAll(USER_LOCKMETHOD, MyProc, ReleaseAll, 0, NULL);
 #endif
 
 	SpinLockAcquire(ProcStructLock);

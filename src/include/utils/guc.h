@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.47 2004/05/28 05:13:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.48 2004/07/01 00:51:44 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -175,14 +175,14 @@ extern void DefineCustomStringVariable(
 	GucStringAssignHook assign_hook,
 	GucShowHook show_hook);
 
-extern void EmittWarningsOnPlaceholders(const char* className);
+extern void EmitWarningsOnPlaceholders(const char* className);
 
 extern const char *GetConfigOption(const char *name);
 extern const char *GetConfigOptionResetString(const char *name);
 extern void ProcessConfigFile(GucContext context);
 extern void InitializeGUCOptions(void);
 extern void ResetAllOptions(void);
-extern void AtEOXact_GUC(bool isCommit);
+extern void AtEOXact_GUC(bool isCommit, bool isSubXact);
 extern void BeginReportingGUCOptions(void);
 extern void ParseLongOption(const char *string, char **name, char **value);
 extern bool set_config_option(const char *name, const char *value,

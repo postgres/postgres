@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.56 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.57 2004/07/01 00:49:42 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/clog.h"
+#include "access/subtrans.h"
 #include "access/transam.h"
 
 
@@ -35,44 +36,40 @@
 bool		AMI_OVERRIDE = false;
 
 
-static bool TransactionLogTest(TransactionId transactionId, XidStatus status);
+static XidStatus TransactionLogFetch(TransactionId transactionId);
 static void TransactionLogUpdate(TransactionId transactionId,
 					 XidStatus status);
 
 /* ----------------
- *		Single-item cache for results of TransactionLogTest.
+ *		Single-item cache for results of TransactionLogFetch.
  * ----------------
  */
-static TransactionId cachedTestXid = InvalidTransactionId;
-static XidStatus cachedTestXidStatus;
+static TransactionId cachedFetchXid = InvalidTransactionId;
+static XidStatus cachedFetchXidStatus;
 
 
 /* ----------------------------------------------------------------
  *		postgres log access method interface
  *
- *		TransactionLogTest
+ *		TransactionLogFetch
  *		TransactionLogUpdate
  * ----------------------------------------------------------------
  */
 
-/* --------------------------------
- *		TransactionLogTest
- * --------------------------------
+/*
+ * TransactionLogFetch --- fetch commit status of specified transaction id
  */
-
-static bool						/* true/false: does transaction id have
-								 * specified status? */
-TransactionLogTest(TransactionId transactionId, /* transaction id to test */
-				   XidStatus status)	/* transaction status */
+static XidStatus
+TransactionLogFetch(TransactionId transactionId)
 {
-	XidStatus	xidstatus;		/* recorded status of xid */
+	XidStatus	xidstatus;
 
 	/*
 	 * Before going to the commit log manager, check our single item cache
 	 * to see if we didn't just check the transaction status a moment ago.
 	 */
-	if (TransactionIdEquals(transactionId, cachedTestXid))
-		return (status == cachedTestXidStatus);
+	if (TransactionIdEquals(transactionId, cachedFetchXid))
+		return cachedFetchXidStatus;
 
 	/*
 	 * Also, check to see if the transaction ID is a permanent one.
@@ -80,10 +77,10 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 	if (!TransactionIdIsNormal(transactionId))
 	{
 		if (TransactionIdEquals(transactionId, BootstrapTransactionId))
-			return (status == TRANSACTION_STATUS_COMMITTED);
+			return TRANSACTION_STATUS_COMMITTED;
 		if (TransactionIdEquals(transactionId, FrozenTransactionId))
-			return (status == TRANSACTION_STATUS_COMMITTED);
-		return (status == TRANSACTION_STATUS_ABORTED);
+			return TRANSACTION_STATUS_COMMITTED;
+		return TRANSACTION_STATUS_ABORTED;
 	}
 
 	/*
@@ -92,15 +89,17 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 	xidstatus = TransactionIdGetStatus(transactionId);
 
 	/*
-	 * DO NOT cache status for unfinished transactions!
+	 * DO NOT cache status for unfinished or sub-committed transactions!
+	 * We only cache status that is guaranteed not to change.
 	 */
-	if (xidstatus != TRANSACTION_STATUS_IN_PROGRESS)
+	if (xidstatus != TRANSACTION_STATUS_IN_PROGRESS &&
+		xidstatus != TRANSACTION_STATUS_SUB_COMMITTED)
 	{
-		TransactionIdStore(transactionId, &cachedTestXid);
-		cachedTestXidStatus = xidstatus;
+		TransactionIdStore(transactionId, &cachedFetchXid);
+		cachedFetchXidStatus = xidstatus;
 	}
 
-	return (status == xidstatus);
+	return xidstatus;
 }
 
 /* --------------------------------
@@ -115,12 +114,23 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 	 * update the commit log
 	 */
 	TransactionIdSetStatus(transactionId, status);
+}
 
-	/*
-	 * update (invalidate) our single item TransactionLogTest cache.
-	 */
-	TransactionIdStore(transactionId, &cachedTestXid);
-	cachedTestXidStatus = status;
+/*
+ * TransactionLogMultiUpdate
+ *
+ * Update multiple transaction identifiers to a given status.
+ * Don't depend on this being atomic; it's not.
+ */
+static void
+TransactionLogMultiUpdate(int nxids, TransactionId *xids, XidStatus status)
+{
+	int i;
+
+	Assert(nxids != 0);
+
+	for (i = 0; i < nxids; i++)
+		TransactionIdSetStatus(xids[i], status);
 }
 
 /* --------------------------------
@@ -171,13 +181,38 @@ AmiTransactionOverride(bool flag)
 bool							/* true if given transaction committed */
 TransactionIdDidCommit(TransactionId transactionId)
 {
+	XidStatus	xidstatus;
+
 	if (AMI_OVERRIDE)
 	{
 		Assert(transactionId == BootstrapTransactionId);
 		return true;
 	}
 
-	return TransactionLogTest(transactionId, TRANSACTION_STATUS_COMMITTED);
+	xidstatus = TransactionLogFetch(transactionId);
+
+	/*
+	 * If it's marked committed, it's committed.
+	 */
+	if (xidstatus == TRANSACTION_STATUS_COMMITTED)
+		return true;
+
+	/*
+	 * If it's marked subcommitted, we have to check the parent recursively.
+	 */
+	if (xidstatus == TRANSACTION_STATUS_SUB_COMMITTED)
+	{
+		TransactionId parentXid;
+	   
+		parentXid = SubTransGetParent(transactionId);
+		Assert(TransactionIdIsValid(parentXid));
+		return TransactionIdDidCommit(parentXid);
+	}
+
+	/* 
+	 * It's not committed.
+	 */
+	return false;
 }
 
 /*
@@ -190,35 +225,49 @@ TransactionIdDidCommit(TransactionId transactionId)
 bool							/* true if given transaction aborted */
 TransactionIdDidAbort(TransactionId transactionId)
 {
+	XidStatus	xidstatus;
+
 	if (AMI_OVERRIDE)
 	{
 		Assert(transactionId == BootstrapTransactionId);
 		return false;
 	}
 
-	return TransactionLogTest(transactionId, TRANSACTION_STATUS_ABORTED);
-}
+	xidstatus = TransactionLogFetch(transactionId);
 
-/*
- * Now this func in shmem.c and gives quality answer by scanning
- * PGPROC structures of all running backend. - vadim 11/26/96
- *
- * Old comments:
- * true if given transaction has neither committed nor aborted
- */
-#ifdef NOT_USED
-bool
-TransactionIdIsInProgress(TransactionId transactionId)
-{
-	if (AMI_OVERRIDE)
+	/*
+	 * If it's marked aborted, it's aborted.
+	 */
+	if (xidstatus == TRANSACTION_STATUS_ABORTED)
+		return true;
+
+	/*
+	 * If it's marked subcommitted, we have to check the parent recursively.
+	 * 
+	 * If we detect that the parent has aborted, update pg_clog to show the
+	 * subtransaction as aborted.  This is only needed when the parent
+	 * crashed before either committing or aborting.  We want to clean up
+	 * pg_clog so future visitors don't need to make this check again.
+	 */
+	if (xidstatus == TRANSACTION_STATUS_SUB_COMMITTED)
 	{
-		Assert(transactionId == BootstrapTransactionId);
-		return false;
+		TransactionId parentXid;
+		bool parentAborted;
+	   
+		parentXid = SubTransGetParent(transactionId);
+		parentAborted = TransactionIdDidAbort(parentXid);
+
+		if (parentAborted)
+			TransactionIdAbort(transactionId);
+
+		return parentAborted;
 	}
 
-	return TransactionLogTest(transactionId, TRANSACTION_STATUS_IN_PROGRESS);
+	/*
+	 * It's not aborted.
+	 */
+	return false;
 }
-#endif   /* NOT_USED */
 
 /* --------------------------------
  *		TransactionId Commit
@@ -252,6 +301,46 @@ TransactionIdAbort(TransactionId transactionId)
 	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_ABORTED);
 }
 
+/*
+ * TransactionIdSubCommit
+ *		Marks the subtransaction associated with the identifier as
+ *		sub-committed.
+ */
+void
+TransactionIdSubCommit(TransactionId transactionId)
+{
+	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_SUB_COMMITTED);
+}
+
+/*
+ * TransactionIdCommitTree
+ *		Marks all the given transaction ids as committed.
+ *
+ * The caller has to be sure that this is used only to mark subcommitted
+ * subtransactions as committed, and only *after* marking the toplevel
+ * parent as committed.  Otherwise there is a race condition against
+ * TransactionIdDidCommit.
+ */
+void
+TransactionIdCommitTree(int nxids, TransactionId *xids)
+{
+	if (nxids > 0)
+		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_COMMITTED);
+}
+
+/*
+ * TransactionIdAbortTree
+ *		Marks all the given transaction ids as aborted.
+ *
+ * We don't need to worry about the non-atomic behavior, since any onlookers
+ * will consider all the xacts as not-yet-committed anyway.
+ */
+void
+TransactionIdAbortTree(int nxids, TransactionId *xids)
+{
+	if (nxids > 0)
+		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_ABORTED);
+}
 
 /*
  * TransactionIdPrecedes --- is id1 logically < id2?

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.58 2004/06/05 17:42:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.59 2004/07/01 00:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,10 +126,11 @@ typedef struct PageHeaderData
 typedef PageHeaderData *PageHeader;
 
 /*
- * Page layout version number 0 is for pre-7.3 Postgres releases.  The
- * current version number is 1, denoting a new HeapTupleHeader layout.
+ * Page layout version number 0 is for pre-7.3 Postgres releases.
+ * Releases 7.3 and 7.4 use 1, denoting a new HeapTupleHeader layout.
+ * Release 7.5 changed the HeapTupleHeader layout again.
  */
-#define PG_PAGE_LAYOUT_VERSION		1
+#define PG_PAGE_LAYOUT_VERSION		2
 
 
 /* ----------------------------------------------------------------

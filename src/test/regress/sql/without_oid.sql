@@ -2,8 +2,19 @@
 -- WITHOUT OID
 --
 
-CREATE TABLE wi (i INT) WITH OIDS;
-CREATE TABLE wo (i INT) WITHOUT OIDS;
+--
+-- This test tries to verify that WITHOUT OIDS actually saves space.
+-- On machines where MAXALIGN is 8, WITHOUT OIDS may or may not save any
+-- space, depending on the size of the tuple header + null bitmap.
+-- As of 7.5 we need a 9-bit null bitmap to force the difference to appear.
+--
+CREATE TABLE wi (i INT,
+                 n1 int, n2 int, n3 int, n4 int,
+                 n5 int, n6 int, n7 int, n8 int) WITH OIDS;
+CREATE TABLE wo (i INT,
+                 n1 int, n2 int, n3 int, n4 int,
+                 n5 int, n6 int, n7 int, n8 int) WITHOUT OIDS;
+
 INSERT INTO wi VALUES (1);  -- 1
 INSERT INTO wo SELECT i FROM wi;  -- 1
 INSERT INTO wo SELECT i+1 FROM wi;  -- 1+1=2
@@ -25,8 +36,14 @@ INSERT INTO wo SELECT i+896 FROM wi;  -- 896+2448=3344
 INSERT INTO wo SELECT i+3344 FROM wo;  -- 3344+3344=6688
 INSERT INTO wi SELECT i+2448 FROM wo;  -- 2448+6688=9136
 INSERT INTO wo SELECT i+6688 FROM wi WHERE i<=2448;  -- 6688+2448=9136
+
+SELECT count(oid) FROM wi;
+-- should fail
+SELECT count(oid) FROM wo;
+
 VACUUM ANALYZE wi;
 VACUUM ANALYZE wo;
+
 SELECT min(relpages) < max(relpages), min(reltuples) - max(reltuples)
   FROM pg_class
  WHERE relname IN ('wi', 'wo');

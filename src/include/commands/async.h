@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/async.h,v 1.24 2004/05/23 03:50:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/async.h,v 1.25 2004/07/01 00:51:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,9 @@ extern void Async_Unlisten(char *relname, int pid);
 /* perform (or cancel) outbound notify processing at transaction commit */
 extern void AtCommit_Notify(void);
 extern void AtAbort_Notify(void);
+extern void AtSubStart_Notify(void);
+extern void AtSubCommit_Notify(void);
+extern void AtSubAbort_Notify(void);
 
 /* signal handler for inbound notifies (SIGUSR2) */
 extern void NotifyInterruptHandler(SIGNAL_ARGS);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.63 2004/05/22 23:14:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.64 2004/07/01 00:51:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,15 @@ typedef enum TBlockState
 	TBLOCK_INPROGRESS,
 	TBLOCK_END,
 	TBLOCK_ABORT,
-	TBLOCK_ENDABORT
+	TBLOCK_ENDABORT,
+
+	TBLOCK_SUBBEGIN,
+	TBLOCK_SUBBEGINABORT,
+	TBLOCK_SUBINPROGRESS,
+	TBLOCK_SUBEND,
+	TBLOCK_SUBABORT,
+	TBLOCK_SUBENDABORT_OK,
+	TBLOCK_SUBENDABORT_ERROR
 } TBlockState;
 
 /*
@@ -76,12 +84,15 @@ typedef void (*EOXactCallback) (bool isCommit, void *arg);
  */
 typedef struct TransactionStateData
 {
-	TransactionId	transactionIdData;
-	CommandId		commandId;
-	AbsoluteTime	startTime;
-	int				startTimeUsec;
-	TransState		state;
-	TBlockState		blockState;
+	TransactionId	transactionIdData;		/* my XID */
+	CommandId		commandId;				/* current CID */
+	TransState		state;					/* low-level state */
+	TBlockState		blockState;				/* high-level state */
+	int				nestingLevel;			/* nest depth */
+	MemoryContext	curTransactionContext;	/* my xact-lifetime context */
+	List		   *childXids;				/* subcommitted child XIDs */
+	AclId			currentUser;			/* subxact start current_user */
+	struct TransactionStateData *parent;	/* back link to parent */
 } TransactionStateData;
 
 typedef TransactionStateData *TransactionState;
@@ -102,9 +113,11 @@ typedef TransactionStateData *TransactionState;
 typedef struct xl_xact_commit
 {
 	time_t		xtime;
+	int			nrels;			/* number of RelFileNodes */
+	int			nsubxacts;		/* number of subtransaction XIDs */
 	/* Array of RelFileNode(s) to drop at commit */
-	/* The XLOG record length determines how many there are */
 	RelFileNode	xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_commit;
 
 #define MinSizeOfXactCommit	offsetof(xl_xact_commit, xnodes)
@@ -112,9 +125,11 @@ typedef struct xl_xact_commit
 typedef struct xl_xact_abort
 {
 	time_t		xtime;
+	int			nrels;			/* number of RelFileNodes */
+	int			nsubxacts;		/* number of subtransaction XIDs */
 	/* Array of RelFileNode(s) to drop at abort */
-	/* The XLOG record length determines how many there are */
 	RelFileNode	xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_abort;
 
 #define MinSizeOfXactAbort offsetof(xl_xact_abort, xnodes)
@@ -126,18 +141,20 @@ typedef struct xl_xact_abort
  */
 extern bool IsTransactionState(void);
 extern bool IsAbortedTransactionBlockState(void);
+extern TransactionId GetTopTransactionId(void);
 extern TransactionId GetCurrentTransactionId(void);
 extern CommandId GetCurrentCommandId(void);
 extern AbsoluteTime GetCurrentTransactionStartTime(void);
 extern AbsoluteTime GetCurrentTransactionStartTimeUsec(int *usec);
+extern int	GetCurrentTransactionNestLevel(void);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
-extern bool CommandIdIsCurrentCommandId(CommandId cid);
 extern void CommandCounterIncrement(void);
 extern void StartTransactionCommand(void);
 extern void CommitTransactionCommand(void);
 extern void AbortCurrentTransaction(void);
 extern void BeginTransactionBlock(void);
 extern void EndTransactionBlock(void);
+extern bool IsSubTransaction(void);
 extern bool IsTransactionBlock(void);
 extern bool IsTransactionOrTransactionBlock(void);
 extern char TransactionBlockStatusCode(void);
@@ -150,6 +167,8 @@ extern void RegisterEOXactCallback(EOXactCallback callback, void *arg);
 extern void UnregisterEOXactCallback(EOXactCallback callback, void *arg);
 
 extern void RecordTransactionCommit(void);
+
+extern int	xactGetCommittedChildren(TransactionId **ptr, bool metoo);
 
 extern void XactPushRollback(void (*func) (void *), void *data);
 extern void XactPopRollback(void);

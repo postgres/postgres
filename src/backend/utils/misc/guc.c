@@ -10,17 +10,16 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.211 2004/06/11 03:54:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.212 2004/07/01 00:51:24 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
+#include <ctype.h>
 #include <float.h>
 #include <limits.h>
 #include <unistd.h>
-#include <ctype.h>
 
 #include "utils/guc.h"
 #include "utils/guc_tables.h"
@@ -54,6 +53,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "pgstat.h"
 
@@ -105,6 +105,7 @@ static const char *assign_custom_variable_classes(const char *newval, bool doit,
 						   GucSource source);
 static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
+static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
 
 
 /*
@@ -173,45 +174,6 @@ static int	max_index_keys;
 static int	max_identifier_length;
 static int	block_size;
 static bool integer_datetimes;
-
-/* Macros for freeing malloc'd pointers only if appropriate to do so */
-/* Some of these tests are probably redundant, but be safe ... */
-#define SET_STRING_VARIABLE(rec, newval) \
-	do { \
-		if (*(rec)->variable && \
-			*(rec)->variable != (rec)->reset_val && \
-			*(rec)->variable != (rec)->session_val && \
-			*(rec)->variable != (rec)->tentative_val) \
-			free(*(rec)->variable); \
-		*(rec)->variable = (newval); \
-	} while (0)
-#define SET_STRING_RESET_VAL(rec, newval) \
-	do { \
-		if ((rec)->reset_val && \
-			(rec)->reset_val != *(rec)->variable && \
-			(rec)->reset_val != (rec)->session_val && \
-			(rec)->reset_val != (rec)->tentative_val) \
-			free((rec)->reset_val); \
-		(rec)->reset_val = (newval); \
-	} while (0)
-#define SET_STRING_SESSION_VAL(rec, newval) \
-	do { \
-		if ((rec)->session_val && \
-			(rec)->session_val != *(rec)->variable && \
-			(rec)->session_val != (rec)->reset_val && \
-			(rec)->session_val != (rec)->tentative_val) \
-			free((rec)->session_val); \
-		(rec)->session_val = (newval); \
-	} while (0)
-#define SET_STRING_TENTATIVE_VAL(rec, newval) \
-	do { \
-		if ((rec)->tentative_val && \
-			(rec)->tentative_val != *(rec)->variable && \
-			(rec)->tentative_val != (rec)->reset_val && \
-			(rec)->tentative_val != (rec)->session_val) \
-			free((rec)->tentative_val); \
-		(rec)->tentative_val = (newval); \
-	} while (0)
 
 
 /*
@@ -801,7 +763,7 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&XactReadOnly,
-		false, NULL, NULL
+		false, assign_transaction_read_only, NULL
 	},
 	{
 		{"add_missing_from", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
@@ -1766,13 +1728,12 @@ static const char * const map_old_guc_names[] = {
  */
 static struct config_generic **guc_variables;
 
-/* Current number of variables contained in the vector
- */
+/* Current number of variables contained in the vector */
 static int num_guc_variables;
 
-/* Vector capacity
- */
+/* Vector capacity */
 static int size_guc_variables;
+
 
 static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
@@ -1783,13 +1744,70 @@ static char *guc_string_workspace;		/* for avoiding memory leaks */
 
 static int	guc_var_compare(const void *a, const void *b);
 static int	guc_name_compare(const char *namea, const char *nameb);
+static void push_old_value(struct config_generic *gconf);
 static void ReportGUCOption(struct config_generic * record);
 static char *_ShowOption(struct config_generic * record);
 
-struct config_generic** get_guc_variables()
+
+/*
+ * Support for assigning to a field of a string GUC item.  Free the prior
+ * value if it's not referenced anywhere else in the item (including stacked
+ * states).
+ */
+static void
+set_string_field(struct config_string *conf, char **field, char *newval)
+{
+	char	*oldval = *field;
+	GucStack *stack;
+
+	/* Do the assignment */
+	*field = newval;
+
+	/* Exit if any duplicate references, or if old value was NULL anyway */
+	if (oldval == NULL ||
+		oldval == *(conf->variable) ||
+		oldval == conf->reset_val ||
+		oldval == conf->tentative_val)
+		return;
+	for (stack = conf->gen.stack; stack; stack = stack->prev)
+	{
+		if (oldval == stack->tentative_val.stringval ||
+			oldval == stack->value.stringval)
+			return;
+	}
+
+	/* Not used anymore, so free it */
+	free(oldval);
+}
+
+/*
+ * Detect whether strval is referenced anywhere in a GUC string item
+ */
+static bool
+string_field_used(struct config_string *conf, char *strval)
+{
+	GucStack *stack;
+
+	if (strval == *(conf->variable) ||
+		strval == conf->reset_val ||
+		strval == conf->tentative_val)
+		return true;
+	for (stack = conf->gen.stack; stack; stack = stack->prev)
+	{
+		if (strval == stack->tentative_val.stringval ||
+			strval == stack->value.stringval)
+			return true;
+	}
+	return false;
+}
+
+
+struct config_generic **
+get_guc_variables(void)
 {
 	return guc_variables;
 }
+
 
 /*
  * Build the sorted array.	This is split out so that it could be
@@ -2001,14 +2019,13 @@ find_option(const char *name)
 			return find_option(map_old_guc_names[i+1]);
 	}
 
-	/* Check if the name is qualified, and if so, check if the qualifier
+	/*
+	 * Check if the name is qualified, and if so, check if the qualifier
 	 * maps to a custom variable class.
 	 */
 	dot = strchr(name, GUC_QUALIFIER_SEPARATOR);
 	if(dot != NULL && is_custom_class(name, dot - name))
-		/*
-		 * Add a placeholder variable for this name
-		 */
+		/* Add a placeholder variable for this name */
 		return (struct config_generic*)add_placeholder_variable(name);
 
 	/* Unknown name */
@@ -2081,9 +2098,9 @@ InitializeGUCOptions(void)
 
 		gconf->status = 0;
 		gconf->reset_source = PGC_S_DEFAULT;
-		gconf->session_source = PGC_S_DEFAULT;
 		gconf->tentative_source = PGC_S_DEFAULT;
 		gconf->source = PGC_S_DEFAULT;
+		gconf->stack = NULL;
 
 		switch (gconf->vartype)
 		{
@@ -2097,7 +2114,6 @@ InitializeGUCOptions(void)
 							elog(FATAL, "failed to initialize %s to %d",
 								 conf->gen.name, (int) conf->reset_val);
 					*conf->variable = conf->reset_val;
-					conf->session_val = conf->reset_val;
 					break;
 				}
 			case PGC_INT:
@@ -2119,7 +2135,6 @@ InitializeGUCOptions(void)
 							elog(FATAL, "failed to initialize %s to %d",
 								 conf->gen.name, conf->reset_val);
 					*conf->variable = conf->reset_val;
-					conf->session_val = conf->reset_val;
 					break;
 				}
 			case PGC_REAL:
@@ -2135,7 +2150,6 @@ InitializeGUCOptions(void)
 							elog(FATAL, "failed to initialize %s to %g",
 								 conf->gen.name, conf->reset_val);
 					*conf->variable = conf->reset_val;
-					conf->session_val = conf->reset_val;
 					break;
 				}
 			case PGC_STRING:
@@ -2150,7 +2164,6 @@ InitializeGUCOptions(void)
 						   conf->assign_hook == assign_log_statement);
 					*conf->variable = NULL;
 					conf->reset_val = NULL;
-					conf->session_val = NULL;
 					conf->tentative_val = NULL;
 
 					if (conf->boot_val == NULL)
@@ -2190,7 +2203,6 @@ InitializeGUCOptions(void)
 						}
 					}
 					*conf->variable = str;
-					conf->session_val = str;
 					break;
 				}
 		}
@@ -2253,6 +2265,9 @@ ResetAllOptions(void)
 		/* No need to reset if wasn't SET */
 		if (gconf->source <= PGC_S_OVERRIDE)
 			continue;
+
+		/* Save old value to support transaction abort */
+		push_old_value(gconf);
 
 		switch (gconf->vartype)
 		{
@@ -2336,8 +2351,8 @@ ResetAllOptions(void)
 						}
 					}
 
-					SET_STRING_VARIABLE(conf, str);
-					SET_STRING_TENTATIVE_VAL(conf, str);
+					set_string_field(conf, conf->variable, str);
+					set_string_field(conf, &conf->tentative_val, str);
 					conf->gen.source = conf->gen.reset_source;
 					conf->gen.tentative_source = conf->gen.reset_source;
 					conf->gen.status |= GUC_HAVE_TENTATIVE;
@@ -2353,11 +2368,93 @@ ResetAllOptions(void)
 
 
 /*
- * Do GUC processing at transaction commit or abort.
+ * push_old_value
+ *		Push previous state during first assignment to a GUC variable
+ *		within a particular transaction.
+ *
+ * We have to be willing to "back-fill" the state stack if the first
+ * assignment occurs within a subtransaction nested several levels deep.
+ * This ensures that if an intermediate transaction aborts, it will have
+ * the proper value available to restore the setting to.
+ */
+static void
+push_old_value(struct config_generic *gconf)
+{
+	int			my_level = GetCurrentTransactionNestLevel();
+	GucStack   *stack;
+
+	/* If we're not inside a transaction, do nothing */
+	if (my_level == 0)
+		return;
+
+	for (;;)
+	{
+		/* Done if we already pushed it at this nesting depth */
+		if (gconf->stack && gconf->stack->nest_level >= my_level)
+			return;
+
+		/*
+		 * We keep all the stack entries in TopTransactionContext so as to
+		 * avoid allocation problems when a subtransaction back-fills stack
+		 * entries for upper transaction levels.
+		 */
+		stack = (GucStack *) MemoryContextAlloc(TopTransactionContext,
+												sizeof(GucStack));
+
+		stack->prev = gconf->stack;
+		stack->nest_level = stack->prev ? stack->prev->nest_level + 1 : 1;
+		stack->status = gconf->status;
+		stack->tentative_source = gconf->tentative_source;
+		stack->source = gconf->source;
+
+		switch (gconf->vartype)
+		{
+			case PGC_BOOL:
+				stack->tentative_val.boolval =
+					((struct config_bool *) gconf)->tentative_val;
+				stack->value.boolval =
+					*((struct config_bool *) gconf)->variable;
+				break;
+
+			case PGC_INT:
+				stack->tentative_val.intval =
+					((struct config_int *) gconf)->tentative_val;
+				stack->value.intval =
+					*((struct config_int *) gconf)->variable;
+				break;
+
+			case PGC_REAL:
+				stack->tentative_val.realval =
+					((struct config_real *) gconf)->tentative_val;
+				stack->value.realval =
+					*((struct config_real *) gconf)->variable;
+				break;
+
+			case PGC_STRING:
+				stack->tentative_val.stringval =
+					((struct config_string *) gconf)->tentative_val;
+				stack->value.stringval =
+					*((struct config_string *) gconf)->variable;
+				break;
+		}
+
+		gconf->stack = stack;
+
+		/* Set state to indicate nothing happened yet within this level */
+		gconf->status = GUC_HAVE_STACK;
+
+		/* Ensure we remember to pop at end of xact */
+		guc_dirty = true;
+	}
+}
+
+/*
+ * Do GUC processing at transaction or subtransaction commit or abort.
  */
 void
-AtEOXact_GUC(bool isCommit)
+AtEOXact_GUC(bool isCommit, bool isSubXact)
 {
+	int			my_level;
 	int			i;
 
 	/* Quick exit if nothing's changed in this transaction */
@@ -2371,15 +2468,56 @@ AtEOXact_GUC(bool isCommit)
 		guc_string_workspace = NULL;
 	}
 
+	my_level = GetCurrentTransactionNestLevel();
+	Assert(isSubXact ? (my_level > 1) : (my_level == 1));
+
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
+		int			my_status = gconf->status;
+		GucStack   *stack = gconf->stack;
+		bool		useTentative;
 		bool		changed;
 
-		/* Skip if nothing's happened to this var in this transaction */
-		if (gconf->status == 0)
+		/*
+		 * Skip if nothing's happened to this var in this transaction
+		 */
+		if (my_status == 0)
+		{
+			Assert(stack == NULL);
 			continue;
+		}
+		/* Assert that we stacked old value before changing it */
+		Assert(stack != NULL && (my_status & GUC_HAVE_STACK));
+		/* However, the last change may have been at an outer xact level */
+		if (stack->nest_level < my_level)
+			continue;
+		Assert(stack->nest_level == my_level);
 
+		/*
+		 * We will pop the stack entry.  Start by restoring outer xact status
+		 * (since we may want to modify it below).  Be careful to use
+		 * my_status to reference the inner xact status below this point...
+		 */
+		gconf->status = stack->status;
+
+		/*
+		 * We have two cases:
+		 *
+		 * If commit and HAVE_TENTATIVE, set actual value to tentative
+		 * (this is to override a SET LOCAL if one occurred later than SET).
+		 * We keep the tentative value and propagate HAVE_TENTATIVE to
+		 * the parent status, allowing the SET's effect to percolate up.
+		 * (But if we're exiting the outermost transaction, we'll drop the
+		 * HAVE_TENTATIVE bit below.)
+		 *
+		 * Otherwise, we have a transaction that aborted or executed only
+		 * SET LOCAL (or no SET at all).  In either case it should have no
+		 * further effect, so restore both tentative and actual values from
+		 * the stack entry.
+		 */
+
+		useTentative = isCommit && (my_status & GUC_HAVE_TENTATIVE) != 0;
 		changed = false;
 
 		switch (gconf->vartype)
@@ -2387,126 +2525,190 @@ AtEOXact_GUC(bool isCommit)
 			case PGC_BOOL:
 				{
 					struct config_bool *conf = (struct config_bool *) gconf;
+					bool		newval;
+					GucSource	newsource;
 
-					if (isCommit && (conf->gen.status & GUC_HAVE_TENTATIVE))
+					if (useTentative)
 					{
-						conf->session_val = conf->tentative_val;
-						conf->gen.session_source = conf->gen.tentative_source;
+						newval = conf->tentative_val;
+						newsource = conf->gen.tentative_source;
+						conf->gen.status |= GUC_HAVE_TENTATIVE;
+					}
+					else
+					{
+						newval = stack->value.boolval;
+						newsource = stack->source;
+						conf->tentative_val = stack->tentative_val.boolval;
+						conf->gen.tentative_source = stack->tentative_source;
 					}
 
-					if (*conf->variable != conf->session_val)
+					if (*conf->variable != newval)
 					{
 						if (conf->assign_hook)
-							if (!(*conf->assign_hook) (conf->session_val,
+							if (!(*conf->assign_hook) (newval,
 													   true, PGC_S_OVERRIDE))
 								elog(LOG, "failed to commit %s",
 									 conf->gen.name);
-						*conf->variable = conf->session_val;
+						*conf->variable = newval;
 						changed = true;
 					}
-					conf->gen.source = conf->gen.session_source;
-					conf->gen.status = 0;
+					conf->gen.source = newsource;
 					break;
 				}
 			case PGC_INT:
 				{
 					struct config_int *conf = (struct config_int *) gconf;
+					int			newval;
+					GucSource	newsource;
 
-					if (isCommit && (conf->gen.status & GUC_HAVE_TENTATIVE))
+					if (useTentative)
 					{
-						conf->session_val = conf->tentative_val;
-						conf->gen.session_source = conf->gen.tentative_source;
+						newval = conf->tentative_val;
+						newsource = conf->gen.tentative_source;
+						conf->gen.status |= GUC_HAVE_TENTATIVE;
+					}
+					else
+					{
+						newval = stack->value.intval;
+						newsource = stack->source;
+						conf->tentative_val = stack->tentative_val.intval;
+						conf->gen.tentative_source = stack->tentative_source;
 					}
 
-					if (*conf->variable != conf->session_val)
+					if (*conf->variable != newval)
 					{
 						if (conf->assign_hook)
-							if (!(*conf->assign_hook) (conf->session_val,
+							if (!(*conf->assign_hook) (newval,
 													   true, PGC_S_OVERRIDE))
 								elog(LOG, "failed to commit %s",
 									 conf->gen.name);
-						*conf->variable = conf->session_val;
+						*conf->variable = newval;
 						changed = true;
 					}
-					conf->gen.source = conf->gen.session_source;
-					conf->gen.status = 0;
+					conf->gen.source = newsource;
 					break;
 				}
 			case PGC_REAL:
 				{
 					struct config_real *conf = (struct config_real *) gconf;
+					double		newval;
+					GucSource	newsource;
 
-					if (isCommit && (conf->gen.status & GUC_HAVE_TENTATIVE))
+					if (useTentative)
 					{
-						conf->session_val = conf->tentative_val;
-						conf->gen.session_source = conf->gen.tentative_source;
+						newval = conf->tentative_val;
+						newsource = conf->gen.tentative_source;
+						conf->gen.status |= GUC_HAVE_TENTATIVE;
+					}
+					else
+					{
+						newval = stack->value.realval;
+						newsource = stack->source;
+						conf->tentative_val = stack->tentative_val.realval;
+						conf->gen.tentative_source = stack->tentative_source;
 					}
 
-					if (*conf->variable != conf->session_val)
+					if (*conf->variable != newval)
 					{
 						if (conf->assign_hook)
-							if (!(*conf->assign_hook) (conf->session_val,
+							if (!(*conf->assign_hook) (newval,
 													   true, PGC_S_OVERRIDE))
 								elog(LOG, "failed to commit %s",
 									 conf->gen.name);
-						*conf->variable = conf->session_val;
+						*conf->variable = newval;
 						changed = true;
 					}
-					conf->gen.source = conf->gen.session_source;
-					conf->gen.status = 0;
+					conf->gen.source = newsource;
 					break;
 				}
 			case PGC_STRING:
 				{
 					struct config_string *conf = (struct config_string *) gconf;
+					char	   *newval;
+					GucSource	newsource;
 
-					if (isCommit && (conf->gen.status & GUC_HAVE_TENTATIVE))
+					if (useTentative)
 					{
-						SET_STRING_SESSION_VAL(conf, conf->tentative_val);
-						conf->gen.session_source = conf->gen.tentative_source;
-						conf->tentative_val = NULL;		/* transfer ownership */
+						newval = conf->tentative_val;
+						newsource = conf->gen.tentative_source;
+						conf->gen.status |= GUC_HAVE_TENTATIVE;
 					}
 					else
-						SET_STRING_TENTATIVE_VAL(conf, NULL);
-
-					if (*conf->variable != conf->session_val)
 					{
-						char	   *str = conf->session_val;
+						newval = stack->value.stringval;
+						newsource = stack->source;
+						set_string_field(conf, &conf->tentative_val,
+										 stack->tentative_val.stringval);
+						conf->gen.tentative_source = stack->tentative_source;
+					}
 
+					if (*conf->variable != newval)
+					{
 						if (conf->assign_hook)
 						{
 							const char *newstr;
 
-							newstr = (*conf->assign_hook) (str, true,
+							newstr = (*conf->assign_hook) (newval, true,
 														   PGC_S_OVERRIDE);
 							if (newstr == NULL)
 								elog(LOG, "failed to commit %s",
 									 conf->gen.name);
-							else if (newstr != str)
+							else if (newstr != newval)
 							{
 								/*
+								 * If newval should now be freed, it'll be
+								 * taken care of below.
+								 *
 								 * See notes in set_config_option about
 								 * casting
 								 */
-								str = (char *) newstr;
-								SET_STRING_SESSION_VAL(conf, str);
+								newval = (char *) newstr;
 							}
 						}
 
-						SET_STRING_VARIABLE(conf, str);
+						set_string_field(conf, conf->variable, newval);
 						changed = true;
 					}
-					conf->gen.source = conf->gen.session_source;
-					conf->gen.status = 0;
+					conf->gen.source = newsource;
+					/* Release stacked values if not used anymore */
+					set_string_field(conf, &stack->value.stringval,
+									 NULL);
+					set_string_field(conf, &stack->tentative_val.stringval,
+									 NULL);
+					/* Don't store tentative value separately after commit */
+					if (!isSubXact)
+						set_string_field(conf, &conf->tentative_val, NULL);
 					break;
 				}
 		}
 
+		/* Finish popping the state stack */
+		gconf->stack = stack->prev;
+		pfree(stack);
+
+		/*
+		 * If we're now out of all xact levels, forget TENTATIVE status bit;
+		 * there's nothing tentative about the value anymore.
+		 */
+		if (!isSubXact)
+		{
+			Assert(gconf->stack == NULL);
+			gconf->status = 0;
+		}
+
+		/* Report new value if we changed it */
 		if (changed && (gconf->flags & GUC_REPORT))
 			ReportGUCOption(gconf);
 	}
 
-	guc_dirty = false;
+	/*
+	 * If we're now out of all xact levels, we can clear guc_dirty.
+	 * (Note: we cannot reset guc_dirty when exiting a subtransaction,
+	 * because we know that all outer transaction levels will have stacked
+	 * values to deal with.)
+	 */
+	if (!isSubXact)
+		guc_dirty = false;
 }
 
 
@@ -2810,7 +3012,7 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
-	 * Should we set reset/session values?	(If so, the behavior is not
+	 * Should we set reset/stacked values?	(If so, the behavior is not
 	 * transactional.)
 	 */
 	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) && (value != NULL);
@@ -2820,7 +3022,7 @@ set_config_option(const char *name, const char *value,
 	 * However, if changeVal is false then plow ahead anyway since we are
 	 * trying to find out if the value is potentially good, not actually
 	 * use it. Also keep going if makeDefault is true, since we may want
-	 * to set the reset/session values even if we can't set the variable
+	 * to set the reset/stacked values even if we can't set the variable
 	 * itself.
 	 */
 	if (record->source > source)
@@ -2901,6 +3103,9 @@ set_config_option(const char *name, const char *value,
 
 				if (changeVal || makeDefault)
 				{
+					/* Save old value to support transaction abort */
+					if (!makeDefault)
+						push_old_value(&conf->gen);
 					if (changeVal)
 					{
 						*conf->variable = newval;
@@ -2908,15 +3113,20 @@ set_config_option(const char *name, const char *value,
 					}
 					if (makeDefault)
 					{
+						GucStack *stack;
+
 						if (conf->gen.reset_source <= source)
 						{
 							conf->reset_val = newval;
 							conf->gen.reset_source = source;
 						}
-						if (conf->gen.session_source <= source)
+						for (stack = conf->gen.stack; stack; stack = stack->prev)
 						{
-							conf->session_val = newval;
-							conf->gen.session_source = source;
+							if (stack->source <= source)
+							{
+								stack->value.boolval = newval;
+								stack->source = source;
+							}
 						}
 					}
 					else if (isLocal)
@@ -3006,6 +3216,9 @@ set_config_option(const char *name, const char *value,
 
 				if (changeVal || makeDefault)
 				{
+					/* Save old value to support transaction abort */
+					if (!makeDefault)
+						push_old_value(&conf->gen);
 					if (changeVal)
 					{
 						*conf->variable = newval;
@@ -3013,15 +3226,20 @@ set_config_option(const char *name, const char *value,
 					}
 					if (makeDefault)
 					{
+						GucStack *stack;
+
 						if (conf->gen.reset_source <= source)
 						{
 							conf->reset_val = newval;
 							conf->gen.reset_source = source;
 						}
-						if (conf->gen.session_source <= source)
+						for (stack = conf->gen.stack; stack; stack = stack->prev)
 						{
-							conf->session_val = newval;
-							conf->gen.session_source = source;
+							if (stack->source <= source)
+							{
+								stack->value.intval = newval;
+								stack->source = source;
+							}
 						}
 					}
 					else if (isLocal)
@@ -3101,6 +3319,9 @@ set_config_option(const char *name, const char *value,
 
 				if (changeVal || makeDefault)
 				{
+					/* Save old value to support transaction abort */
+					if (!makeDefault)
+						push_old_value(&conf->gen);
 					if (changeVal)
 					{
 						*conf->variable = newval;
@@ -3108,15 +3329,20 @@ set_config_option(const char *name, const char *value,
 					}
 					if (makeDefault)
 					{
+						GucStack *stack;
+
 						if (conf->gen.reset_source <= source)
 						{
 							conf->reset_val = newval;
 							conf->gen.reset_source = source;
 						}
-						if (conf->gen.session_source <= source)
+						for (stack = conf->gen.stack; stack; stack = stack->prev)
 						{
-							conf->session_val = newval;
-							conf->gen.session_source = source;
+							if (stack->source <= source)
+							{
+								stack->value.realval = newval;
+								stack->source = source;
+							}
 						}
 					}
 					else if (isLocal)
@@ -3261,27 +3487,34 @@ set_config_option(const char *name, const char *value,
 
 				if (changeVal || makeDefault)
 				{
+					/* Save old value to support transaction abort */
+					if (!makeDefault)
+						push_old_value(&conf->gen);
 					if (changeVal)
 					{
-						SET_STRING_VARIABLE(conf, newval);
+						set_string_field(conf, conf->variable, newval);
 						conf->gen.source = source;
 					}
 					if (makeDefault)
 					{
+						GucStack *stack;
+
 						if (conf->gen.reset_source <= source)
 						{
-							SET_STRING_RESET_VAL(conf, newval);
+							set_string_field(conf, &conf->reset_val, newval);
 							conf->gen.reset_source = source;
 						}
-						if (conf->gen.session_source <= source)
+						for (stack = conf->gen.stack; stack; stack = stack->prev)
 						{
-							SET_STRING_SESSION_VAL(conf, newval);
-							conf->gen.session_source = source;
+							if (stack->source <= source)
+							{
+								set_string_field(conf, &stack->value.stringval,
+												 newval);
+								stack->source = source;
+							}
 						}
 						/* Perhaps we didn't install newval anywhere */
-						if (newval != *conf->variable &&
-							newval != conf->session_val &&
-							newval != conf->reset_val)
+						if (!string_field_used(conf, newval))
 							free(newval);
 					}
 					else if (isLocal)
@@ -3291,7 +3524,7 @@ set_config_option(const char *name, const char *value,
 					}
 					else
 					{
-						SET_STRING_TENTATIVE_VAL(conf, newval);
+						set_string_field(conf, &conf->tentative_val, newval);
 						conf->gen.tentative_source = source;
 						conf->gen.status |= GUC_HAVE_TENTATIVE;
 						guc_dirty = true;
@@ -3608,44 +3841,36 @@ define_custom_variable(struct config_generic* variable)
 	/* This better be a placeholder
 	 */
 	if(((*res)->flags & GUC_CUSTOM_PLACEHOLDER) == 0)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("attempt to redefine parameter \"%s\"", name)));
-	}
-	pHolder = (struct config_string*)*res;
+
+	Assert((*res)->vartype == PGC_STRING);
+	pHolder = (struct config_string*) *res;
 	
-	/* We have the same name, no sorting is necessary.
-	 */
+	/* We have the same name, no sorting is necessary */
 	*res = variable;
 
 	value = *pHolder->variable;
 
-	/* Assign the variable stored in the placeholder to the real
-	 * variable.
+	/*
+	 * Assign the string value stored in the placeholder to the real variable.
+	 *
+	 * XXX this is not really good enough --- it should be a nontransactional
+	 * assignment, since we don't want it to roll back if the current xact
+	 * fails later.
 	 */
 	set_config_option(name, value,
 				  pHolder->gen.context, pHolder->gen.source,
 				  false, true);
 
-	/* Free up stuff occupied by the placeholder variable
+	/*
+	 * Free up as much as we conveniently can of the placeholder structure
+	 * (this neglects any stack items...)
 	 */
-	if(value != NULL)
-		free((void*)value);
-
-	if(pHolder->reset_val != NULL && pHolder->reset_val != value)
-		free(pHolder->reset_val);
-
-	if(pHolder->session_val != NULL
-	&& pHolder->session_val != value
-	&& pHolder->session_val != pHolder->reset_val)
-		free(pHolder->session_val);
-
-	if(pHolder->tentative_val != NULL
-	&& pHolder->tentative_val != value
-	&& pHolder->tentative_val != pHolder->reset_val
-	&& pHolder->tentative_val != pHolder->session_val)
-		free(pHolder->tentative_val);
+	set_string_field(pHolder, pHolder->variable, NULL);
+	set_string_field(pHolder, &pHolder->reset_val, NULL);
+	set_string_field(pHolder, &pHolder->tentative_val, NULL);
 
 	free(pHolder);
 }
@@ -3754,7 +3979,7 @@ void DefineCustomStringVariable(
 	define_custom_variable(&var->gen);
 }
 
-extern void EmittWarningsOnPlaceholders(const char* className)
+extern void EmitWarningsOnPlaceholders(const char* className)
 {
 	struct config_generic** vars = guc_variables;
 	struct config_generic** last = vars + num_guc_variables;
@@ -5133,5 +5358,14 @@ assign_log_stats(bool newval, bool doit, GucSource source)
 	return true;
 }
 
+static bool
+assign_transaction_read_only(bool newval, bool doit, GucSource source)
+{
+	if (doit && source >= PGC_S_INTERACTIVE && IsSubTransaction())
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot set transaction read only mode inside a subtransaction")));
+	return true;
+}
 
 #include "guc-file.c"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.133 2004/06/05 19:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.134 2004/07/01 00:50:59 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -23,7 +23,7 @@
  *	Interface:
  *
  *	LockAcquire(), LockRelease(), LockMethodTableInit(),
- *	LockMethodTableRename(), LockReleaseAll,
+ *	LockMethodTableRename(), LockReleaseAll(),
  *	LockCheckConflicts(), GrantLock()
  *
  *-------------------------------------------------------------------------
@@ -1129,19 +1129,25 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 }
 
 /*
- * LockReleaseAll -- Release all locks in a process's lock list.
+ * LockReleaseAll -- Release all locks of the specified lock method that
+ *		are held by the specified process.
  *
- * Well, not really *all* locks.
+ * Well, not necessarily *all* locks.  The available behaviors are:
  *
- * If 'allxids' is TRUE, all locks of the specified lock method are
- * released, regardless of transaction affiliation.
+ * which == ReleaseAll: release all locks regardless of transaction
+ * affiliation.
  *
- * If 'allxids' is FALSE, all locks of the specified lock method and
- * specified XID are released.
+ * which == ReleaseAllExceptSession: release all locks with Xid != 0
+ * (zero is the Xid used for "session" locks).
+ *
+ * which == ReleaseGivenXids: release only locks whose Xids appear in
+ * the xids[] array (of length nxids).
+ *
+ * xids/nxids are ignored when which != ReleaseGivenXids.
  */
 bool
 LockReleaseAll(LOCKMETHODID lockmethodid, PGPROC *proc,
-			   bool allxids, TransactionId xid)
+			   LockReleaseWhich which, int nxids, TransactionId *xids)
 {
 	SHM_QUEUE  *procHolders = &(proc->procHolders);
 	PROCLOCK   *proclock;
@@ -1190,8 +1196,25 @@ LockReleaseAll(LOCKMETHODID lockmethodid, PGPROC *proc,
 		if (LOCK_LOCKMETHOD(*lock) != lockmethodid)
 			goto next_item;
 
-		/* If not allxids, ignore items that are of the wrong xid */
-		if (!allxids && !TransactionIdEquals(xid, proclock->tag.xid))
+		if (which == ReleaseGivenXids)
+		{
+			/* Ignore locks with an Xid not in the list */
+			bool release = false;
+
+			for (i = 0; i < nxids; i++)
+			{
+				if (TransactionIdEquals(proclock->tag.xid, xids[i]))
+				{
+					release = true;
+					break;
+				}
+			}
+			if (!release)
+				goto next_item;
+		}
+		/* Ignore locks with Xid=0 unless we are asked to release All locks */
+		else if (TransactionIdEquals(proclock->tag.xid, InvalidTransactionId)
+				 && which != ReleaseAll)
 			goto next_item;
 
 		PROCLOCK_PRINT("LockReleaseAll", proclock);

@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.55 2004/01/26 19:15:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.56 2004/07/01 00:49:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/clog.h"
+#include "access/subtrans.h"
 #include "access/transam.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -30,7 +31,7 @@ VariableCache ShmemVariableCache = NULL;
  * Allocate the next XID for my new transaction.
  */
 TransactionId
-GetNewTransactionId(void)
+GetNewTransactionId(bool isSubXact)
 {
 	TransactionId xid;
 
@@ -52,8 +53,11 @@ GetNewTransactionId(void)
 	 * commit a later XID before we zero the page.	Fortunately, a page of
 	 * the commit log holds 32K or more transactions, so we don't have to
 	 * do this very often.
+	 *
+	 * Extend pg_subtrans too.
 	 */
 	ExtendCLOG(xid);
+	ExtendSUBTRANS(xid);
 
 	/*
 	 * Now advance the nextXid counter.  This must not happen until after
@@ -82,8 +86,11 @@ GetNewTransactionId(void)
 	 * its own spinlock used only for fetching/storing that PGPROC's xid.
 	 * (SInvalLock would then mean primarily that PGPROCs couldn't be added/
 	 * removed while holding the lock.)
+	 *
+	 * We don't want a subtransaction to update the stored Xid; we'll check
+	 * if a transaction Xid is a running subxact by checking pg_subtrans.
 	 */
-	if (MyProc != NULL)
+	if (MyProc != NULL && !isSubXact)
 		MyProc->xid = xid;
 
 	LWLockRelease(XidGenLock);

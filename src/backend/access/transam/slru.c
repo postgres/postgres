@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.16 2004/05/31 03:47:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.17 2004/07/01 00:49:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/clog.h"
 #include "access/slru.h"
-#include "access/clog.h"		/* only for NUM_CLOG_BUFFERS */
+#include "access/subtrans.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
 #include "storage/lwlock.h"
@@ -1024,4 +1025,56 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 	FreeDir(cldir);
 
 	return found;
+}
+
+/*
+ * SLRU resource manager's routines
+ */
+void
+slru_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	int			pageno;
+
+	memcpy(&pageno, XLogRecGetData(record), sizeof(int));
+
+	switch (info)
+	{
+		case CLOG_ZEROPAGE:
+			clog_zeropage_redo(pageno);
+			break;
+		case SUBTRANS_ZEROPAGE:
+			subtrans_zeropage_redo(pageno);
+			break;
+		default:
+			elog(PANIC, "slru_redo: unknown op code %u", info);
+	}
+}
+
+void
+slru_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+}
+
+void
+slru_desc(char *buf, uint8 xl_info, char *rec)
+{
+	uint8		info = xl_info & ~XLR_INFO_MASK;
+
+	if (info == CLOG_ZEROPAGE)
+	{
+		int			pageno;
+
+		memcpy(&pageno, rec, sizeof(int));
+		sprintf(buf + strlen(buf), "clog zeropage: %d", pageno);
+	}
+	else if (info == SUBTRANS_ZEROPAGE)
+	{
+		int			pageno;
+
+		memcpy(&pageno, rec, sizeof(int));
+		sprintf(buf + strlen(buf), "subtrans zeropage: %d", pageno);
+	}
+	else
+		strcat(buf, "UNKNOWN");
 }

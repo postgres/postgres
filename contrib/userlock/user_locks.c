@@ -75,8 +75,7 @@ user_write_unlock_oid(Oid oid)
 int
 user_unlock_all(void)
 {
-	return LockReleaseAll(USER_LOCKMETHOD, MyProc, false,
-						  InvalidTransactionId);
+	return LockReleaseAll(USER_LOCKMETHOD, MyProc, ReleaseAll, 0, NULL);
 }
 
 /* end of file */

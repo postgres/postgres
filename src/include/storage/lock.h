@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.77 2004/05/28 05:13:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.78 2004/07/01 00:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,14 @@ typedef struct PROC_QUEUE
 	SHM_QUEUE	links;			/* head of list of PGPROC objects */
 	int			size;			/* number of entries in list */
 } PROC_QUEUE;
+
+/* Release options for LockReleaseAll */
+typedef enum
+{
+	ReleaseAll,					/* All my locks */
+	ReleaseAllExceptSession,	/* All except session locks (Xid = 0) */
+	ReleaseGivenXids			/* Only locks with Xids in given array */
+} LockReleaseWhich;
 
 /* struct PGPROC is declared in storage/proc.h, but must forward-reference it */
 typedef struct PGPROC PGPROC;
@@ -165,11 +173,12 @@ typedef struct LOCK
  *
  * There are two possible kinds of proclock tags: a transaction (identified
  * both by the PGPROC of the backend running it, and the xact's own ID) and
- * a session (identified by backend PGPROC, with xid = InvalidTransactionId).
+ * a session (identified by backend PGPROC, with XID = InvalidTransactionId).
  *
  * Currently, session proclocks are used for user locks and for cross-xact
- * locks obtained for VACUUM.  We assume that a session lock never conflicts
- * with per-transaction locks obtained by the same backend.
+ * locks obtained for VACUUM.  Note that a single backend can hold locks
+ * under several different XIDs at once (including session locks).  We treat
+ * such locks as never conflicting (a backend can never block itself).
  *
  * The holding[] array counts the granted locks (of each type) represented
  * by this proclock. Note that there will be a proclock object, possibly with
@@ -177,11 +186,11 @@ typedef struct LOCK
  * Otherwise, proclock objects whose counts have gone to zero are recycled
  * as soon as convenient.
  *
- * Each PROCLOCK object is linked into lists for both the associated LOCK object
- * and the owning PGPROC object.	Note that the PROCLOCK is entered into these
- * lists as soon as it is created, even if no lock has yet been granted.
- * A PGPROC that is waiting for a lock to be granted will also be linked into
- * the lock's waitProcs queue.
+ * Each PROCLOCK object is linked into lists for both the associated LOCK
+ * object and the owning PGPROC object.  Note that the PROCLOCK is entered
+ * into these lists as soon as it is created, even if no lock has yet been
+ * granted.  A PGPROC that is waiting for a lock to be granted will also be
+ * linked into the lock's waitProcs queue.
  */
 typedef struct PROCLOCKTAG
 {
@@ -239,7 +248,7 @@ extern bool LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 extern bool LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode);
 extern bool LockReleaseAll(LOCKMETHODID lockmethodid, PGPROC *proc,
-			   bool allxids, TransactionId xid);
+			   LockReleaseWhich which, int nxids, TransactionId *xids);
 extern int LockCheckConflicts(LockMethod lockMethodTable,
 				   LOCKMODE lockmode,
 				   LOCK *lock, PROCLOCK *proclock, PGPROC *proc,

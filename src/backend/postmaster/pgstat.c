@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.76 2004/06/26 16:32:02 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.77 2004/07/01 00:50:36 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -167,6 +167,7 @@ static void pgstat_write_statsfile(void);
 static void pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 					  PgStat_StatBeEntry **betab,
 					  int *numbackends);
+static void backend_read_statsfile(void);
 
 static void pgstat_setheader(PgStat_MsgHdr *hdr, int mtype);
 static void pgstat_send(void *msg, int len);
@@ -786,12 +787,7 @@ pgstat_vacuum_tabstat(void)
 	 * If not done for this transaction, read the statistics collector
 	 * stats file into some hash tables.
 	 */
-	if (!TransactionIdEquals(pgStatDBHashXact, GetCurrentTransactionId()))
-	{
-		pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
-							  &pgStatBeTable, &pgStatNumBackends);
-		pgStatDBHashXact = GetCurrentTransactionId();
-	}
+	backend_read_statsfile();
 
 	/*
 	 * Lookup our own database entry
@@ -1210,15 +1206,9 @@ pgstat_fetch_stat_dbentry(Oid dbid)
 
 	/*
 	 * If not done for this transaction, read the statistics collector
-	 * stats file into some hash tables. Be careful with the
-	 * read_statsfile() call below!
+	 * stats file into some hash tables.
 	 */
-	if (!TransactionIdEquals(pgStatDBHashXact, GetCurrentTransactionId()))
-	{
-		pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
-							  &pgStatBeTable, &pgStatNumBackends);
-		pgStatDBHashXact = GetCurrentTransactionId();
-	}
+	backend_read_statsfile();
 
 	/*
 	 * Lookup the requested database
@@ -1250,15 +1240,9 @@ pgstat_fetch_stat_tabentry(Oid relid)
 
 	/*
 	 * If not done for this transaction, read the statistics collector
-	 * stats file into some hash tables. Be careful with the
-	 * read_statsfile() call below!
+	 * stats file into some hash tables.
 	 */
-	if (!TransactionIdEquals(pgStatDBHashXact, GetCurrentTransactionId()))
-	{
-		pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
-							  &pgStatBeTable, &pgStatNumBackends);
-		pgStatDBHashXact = GetCurrentTransactionId();
-	}
+	backend_read_statsfile();
 
 	/*
 	 * Lookup our database.
@@ -1296,12 +1280,7 @@ pgstat_fetch_stat_tabentry(Oid relid)
 PgStat_StatBeEntry *
 pgstat_fetch_stat_beentry(int beid)
 {
-	if (!TransactionIdEquals(pgStatDBHashXact, GetCurrentTransactionId()))
-	{
-		pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
-							  &pgStatBeTable, &pgStatNumBackends);
-		pgStatDBHashXact = GetCurrentTransactionId();
-	}
+	backend_read_statsfile();
 
 	if (beid < 1 || beid > pgStatNumBackends)
 		return NULL;
@@ -1320,12 +1299,7 @@ pgstat_fetch_stat_beentry(int beid)
 int
 pgstat_fetch_stat_numbackends(void)
 {
-	if (!TransactionIdEquals(pgStatDBHashXact, GetCurrentTransactionId()))
-	{
-		pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
-							  &pgStatBeTable, &pgStatNumBackends);
-		pgStatDBHashXact = GetCurrentTransactionId();
-	}
+	backend_read_statsfile();
 
 	return pgStatNumBackends;
 }
@@ -2759,11 +2733,32 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	fclose(fpin);
 }
 
+/*
+ * If not done for this transaction, read the statistics collector
+ * stats file into some hash tables.
+ *
+ * Because we store the hash tables in TopTransactionContext, the result
+ * is good for the entire current main transaction.
+ */
+static void
+backend_read_statsfile(void)
+{
+	TransactionId	topXid = GetTopTransactionId();
+
+	if (!TransactionIdEquals(pgStatDBHashXact, topXid))
+	{
+		Assert(!pgStatRunningInCollector);
+		pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
+							  &pgStatBeTable, &pgStatNumBackends);
+		pgStatDBHashXact = topXid;
+	}
+}
+
 
 /* ----------
  * pgstat_recv_bestart() -
  *
- *	Process a backend starup message.
+ *	Process a backend startup message.
  * ----------
  */
 static void

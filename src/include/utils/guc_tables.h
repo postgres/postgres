@@ -7,12 +7,31 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.11 2004/05/26 15:07:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.12 2004/07/01 00:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef GUC_TABLES
-#define GUC_TABLES 1
+#ifndef GUC_TABLES_H
+#define GUC_TABLES_H 1
+
+/*
+ * GUC supports these types of variables:
+ */
+enum config_type
+{
+	PGC_BOOL,
+	PGC_INT,
+	PGC_REAL,
+	PGC_STRING
+};
+
+union config_var_value
+{
+	bool		boolval;
+	int			intval;
+	double		realval;
+	char	   *stringval;
+};
 
 /*
  * Groupings to help organize all the run-time options for display
@@ -56,15 +75,19 @@ enum config_group
 };
 
 /*
- * GUC supports these types of variables:
+ * Stack entry for saving the state of a variable prior to the current
+ * transaction
  */
-enum config_type
+typedef struct guc_stack
 {
-	PGC_BOOL,
-	PGC_INT,
-	PGC_REAL,
-	PGC_STRING
-};
+	struct guc_stack *prev;		/* previous stack item, if any */
+	int			nest_level;		/* nesting depth of cur transaction */
+	int			status;			/* previous status bits, see below */
+	GucSource	tentative_source;		/* source of the tentative_value */
+	GucSource	source;			/* source of the actual value */
+	union config_var_value tentative_val;	/* previous tentative val */
+	union config_var_value value;			/* previous actual value */
+} GucStack;
 
 /*
  * Generic fields applicable to all types of variables
@@ -86,9 +109,9 @@ struct config_generic
 	enum config_type vartype;	/* type of variable (set only at startup) */
 	int			status;			/* status bits, see below */
 	GucSource	reset_source;	/* source of the reset_value */
-	GucSource	session_source; /* source of the session_value */
 	GucSource	tentative_source;		/* source of the tentative_value */
 	GucSource	source;			/* source of the current actual value */
+	GucStack   *stack;			/* stacked outside-of-transaction states */
 };
 
 /* bit values in flags field */
@@ -104,6 +127,7 @@ struct config_generic
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
 #define GUC_HAVE_LOCAL		0x0002		/* a SET LOCAL has been executed */
+#define GUC_HAVE_STACK		0x0004		/* we have stacked prior value(s) */
 
 
 /* GUC records for specific variable types */
@@ -118,7 +142,6 @@ struct config_bool
 	GucBoolAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
-	bool		session_val;
 	bool		tentative_val;
 };
 
@@ -134,7 +157,6 @@ struct config_int
 	GucIntAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
-	int			session_val;
 	int			tentative_val;
 };
 
@@ -150,7 +172,6 @@ struct config_real
 	GucRealAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
-	double		session_val;
 	double		tentative_val;
 };
 
@@ -165,7 +186,6 @@ struct config_string
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	char	   *reset_val;
-	char	   *session_val;
 	char	   *tentative_val;
 };
 
@@ -180,4 +200,4 @@ extern struct config_generic **get_guc_variables(void);
 
 extern void build_guc_variables(void);
 
-#endif
+#endif /* GUC_TABLES_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.171 2004/06/18 06:13:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.172 2004/07/01 00:50:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "storage/bufpage.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
+#include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "pgstat.h"
 
@@ -64,9 +65,13 @@ long		NDirectFileRead;	/* some I/O's are direct file access.
 								 * bypass bufmgr */
 long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin. */
 
+/* List of upper-level-transaction buffer refcount arrays */
+static List *upperRefCounts = NIL;
+
 
 static void PinBuffer(BufferDesc *buf);
 static void UnpinBuffer(BufferDesc *buf);
+static void BufferFixLeak(Buffer bufnum, int32 shouldBe, bool emitWarning);
 static void WaitIO(BufferDesc *buf);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(BufferDesc *buf, int err_flag);
@@ -826,28 +831,102 @@ AtEOXact_Buffers(bool isCommit)
 	for (i = 0; i < NBuffers; i++)
 	{
 		if (PrivateRefCount[i] != 0)
-		{
-			BufferDesc *buf = &(BufferDescriptors[i]);
-
-			if (isCommit)
-				elog(WARNING,
-					 "buffer refcount leak: [%03d] "
-					 "(rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
-					 i,
-					 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-					 buf->tag.rnode.relNode,
-					 buf->tag.blockNum, buf->flags,
-					 buf->refcount, PrivateRefCount[i]);
-
-			PrivateRefCount[i] = 1;		/* make sure we release shared pin */
-			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-			UnpinBuffer(buf);
-			LWLockRelease(BufMgrLock);
-			Assert(PrivateRefCount[i] == 0);
-		}
+			BufferFixLeak(i, 0, isCommit);
 	}
 
 	AtEOXact_LocalBuffers(isCommit);
+}
+
+/*
+ * During subtransaction start, save buffer reference counts.
+ */
+void
+AtSubStart_Buffers(void)
+{
+	int32		   *copyRefCounts;
+	Size			rcSize;
+	MemoryContext	old_cxt;
+
+	/* this is probably the active context already, but be safe */
+	old_cxt = MemoryContextSwitchTo(CurTransactionContext);
+
+	/*
+	 * We need to copy the current state of PrivateRefCount[].  In the typical
+	 * scenario, few if any of the entries will be nonzero, and we could save
+	 * space by storing only the nonzero ones.  However, copying the whole
+	 * thing is lots simpler and faster both here and in AtEOSubXact_Buffers,
+	 * so it seems best to waste the space.
+	 */
+	rcSize = NBuffers * sizeof(int32);
+	copyRefCounts = (int32 *) palloc(rcSize);
+	memcpy(copyRefCounts, PrivateRefCount, rcSize);
+
+	/* Attach to list */
+	upperRefCounts = lcons(copyRefCounts, upperRefCounts);
+
+	MemoryContextSwitchTo(old_cxt);
+}
+
+/*
+ * AtEOSubXact_Buffers
+ *
+ * At subtransaction end, we restore the saved counts.  If committing, we
+ * complain if the refcounts don't match; if aborting, just restore silently.
+ */
+void
+AtEOSubXact_Buffers(bool isCommit)
+{
+	int32	   *oldRefCounts;
+	int			i;
+
+	oldRefCounts = (int32 *) linitial(upperRefCounts);
+	upperRefCounts = list_delete_first(upperRefCounts);
+
+	for (i = 0; i < NBuffers; i++)
+	{
+		if (PrivateRefCount[i] != oldRefCounts[i])
+			BufferFixLeak(i, oldRefCounts[i], isCommit);
+	}
+
+	pfree(oldRefCounts);
+}
+
+/*
+ * Fix a buffer refcount leak.
+ *
+ * The caller does not hold the BufMgrLock.
+ */
+static void
+BufferFixLeak(Buffer bufnum, int32 shouldBe, bool emitWarning)
+{
+	BufferDesc	*buf = &(BufferDescriptors[bufnum]);
+
+	if (emitWarning)
+		elog(WARNING,
+			 "buffer refcount leak: [%03d] (rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d, should be=%d)",
+			 bufnum,
+			 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+			 buf->tag.rnode.relNode,
+			 buf->tag.blockNum, buf->flags,
+			 buf->refcount, PrivateRefCount[bufnum], shouldBe);
+
+	/* If it's less, we're in a heap o' trouble */
+	if (PrivateRefCount[bufnum] <= shouldBe)
+		elog(FATAL, "buffer refcount was decreased by subtransaction");
+
+	if (shouldBe > 0)
+	{
+		/* We still keep the shared-memory pin */
+		PrivateRefCount[bufnum] = shouldBe;
+	}
+	else
+	{
+		PrivateRefCount[bufnum] = 1; /* make sure we release shared pin */
+		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+		UnpinBuffer(buf);
+		LWLockRelease(BufMgrLock);
+		Assert(PrivateRefCount[bufnum] == 0);
+	}
 }
 
 /*
