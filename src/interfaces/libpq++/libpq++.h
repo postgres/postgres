@@ -30,7 +30,7 @@ extern "C" {
 #include "libpq-fe.h"
 }
 
-static char rcsid[] = "$Id: libpq++.h,v 1.3 1999/12/03 17:35:05 momjian Exp $";
+static char rcsid[] = "$Id: libpq++.h,v 1.4 1999/12/05 19:29:37 momjian Exp $";
 
 
 // ****************************************************************
@@ -113,6 +113,11 @@ public:
 //
 // ****************************************************************
 class PgLargeObject : public PgConnection {
+private:
+  int pgFd;
+  Oid pgObject;
+  string loStatus;
+
 public:
   PgLargeObject(const char* conninfo = 0);   // use reasonable defaults and create large object
   PgLargeObject(Oid lobjId, const char* conninfo = 0); // use reasonable defaults and open large object
