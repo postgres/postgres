@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug 17 23:19:44 EDT 2004
+Last updated:		Tue Aug 17 23:51:40 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -818,6 +818,7 @@ Source Code
 * Promote debug_query_string into a server-side function current_query()
 * Allow the identifier length to be increased via a configure option
 * Allow binaries to be statically linked so they are more easily relocated
+* Move some /contrib modules out to their own project sites
 
 
 * Wire Protocol Changes
