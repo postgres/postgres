@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.180 2001/11/05 17:46:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.181 2001/11/11 02:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,6 +186,9 @@ static char *conninfo_getval(PQconninfoOption *connOptions,
 static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
+#ifdef USE_SSL
+static const char *SSLerrmessage(void);
+#endif
 
 
 /*
@@ -961,7 +964,7 @@ connectDBStart(PGconn *conn)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 					 libpq_gettext("could not create SSL context: %s\n"),
-							   ERR_reason_error_string(ERR_get_error()));
+									  SSLerrmessage());
 					goto connect_errReturn;
 				}
 			}
@@ -971,7 +974,7 @@ connectDBStart(PGconn *conn)
 			{
 				printfPQExpBuffer(&conn->errorMessage,
 				libpq_gettext("could not establish SSL connection: %s\n"),
-							   ERR_reason_error_string(ERR_get_error()));
+								  SSLerrmessage());
 				goto connect_errReturn;
 			}
 			/* SSL connection finished. Continue to send startup packet */
@@ -981,7 +984,12 @@ connectDBStart(PGconn *conn)
 			/* Received error - probably protocol mismatch */
 			if (conn->Pfdebug)
 				fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-7.0.\n");
+#ifdef WIN32
+			closesocket(conn->sock);
+#else
 			close(conn->sock);
+#endif
+			conn->sock = -1;
 			conn->allow_ssl_try = FALSE;
 			return connectDBStart(conn);
 		}
@@ -2609,6 +2617,36 @@ PQconninfoFree(PQconninfoOption *connOptions)
 	}
 	free(connOptions);
 }
+
+
+#ifdef USE_SSL
+
+/*
+ * Obtain reason string for last SSL error
+ *
+ * Some caution is needed here since ERR_reason_error_string will
+ * return NULL if it doesn't recognize the error code.  We don't
+ * want to return NULL ever.
+ */
+static const char *
+SSLerrmessage(void)
+{
+	unsigned long	errcode;
+	const char	   *errreason;
+	static char		errbuf[32];
+
+	errcode = ERR_get_error();
+	if (errcode == 0)
+		return "No SSL error reported";
+	errreason = ERR_reason_error_string(errcode);
+	if (errreason != NULL)
+		return errreason;
+	snprintf(errbuf, sizeof(errbuf), "SSL error code %lu", errcode);
+	return errbuf;
+}
+
+#endif /* USE_SSL */
+
 
 /* =========== accessor functions for PGconn ========= */
 char *

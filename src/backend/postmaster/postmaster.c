@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.259 2001/11/10 23:06:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.260 2001/11/11 02:09:05 tgl Exp $
  *
  * NOTES
  *
@@ -271,6 +271,7 @@ __attribute__((format(printf, 1, 2)));
 
 #ifdef USE_SSL
 static void InitSSL(void);
+static const char *SSLerrmessage(void);
 #endif
 
 
@@ -1108,8 +1109,8 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 				!SSL_set_fd(port->ssl, port->sock) ||
 				SSL_accept(port->ssl) <= 0)
 			{
-				elog(DEBUG, "failed to initialize SSL connection: %s (%s)",
-					 ERR_reason_error_string(ERR_get_error()), strerror(errno));
+				elog(DEBUG, "failed to initialize SSL connection: %s (%m)",
+					 SSLerrmessage());
 				return STATUS_ERROR;
 			}
 		}
@@ -2379,6 +2380,7 @@ CountChildren(void)
 }
 
 #ifdef USE_SSL
+
 /*
  * Initialize SSL library and structures
  */
@@ -2393,31 +2395,56 @@ InitSSL(void)
 	if (!SSL_context)
 	{
 		postmaster_error("failed to create SSL context: %s",
-						 ERR_reason_error_string(ERR_get_error()));
+						 SSLerrmessage());
 		ExitPostmaster(1);
 	}
 	snprintf(fnbuf, sizeof(fnbuf), "%s/server.crt", DataDir);
 	if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
 	{
 		postmaster_error("failed to load server certificate (%s): %s",
-						 fnbuf, ERR_reason_error_string(ERR_get_error()));
+						 fnbuf, SSLerrmessage());
 		ExitPostmaster(1);
 	}
 	snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
 	if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
 	{
 		postmaster_error("failed to load private key file (%s): %s",
-						 fnbuf, ERR_reason_error_string(ERR_get_error()));
+						 fnbuf, SSLerrmessage());
 		ExitPostmaster(1);
 	}
 	if (!SSL_CTX_check_private_key(SSL_context))
 	{
 		postmaster_error("check of private key failed: %s",
-						 ERR_reason_error_string(ERR_get_error()));
+						 SSLerrmessage());
 		ExitPostmaster(1);
 	}
 }
-#endif
+
+/*
+ * Obtain reason string for last SSL error
+ *
+ * Some caution is needed here since ERR_reason_error_string will
+ * return NULL if it doesn't recognize the error code.  We don't
+ * want to return NULL ever.
+ */
+static const char *
+SSLerrmessage(void)
+{
+	unsigned long	errcode;
+	const char	   *errreason;
+	static char		errbuf[32];
+
+	errcode = ERR_get_error();
+	if (errcode == 0)
+		return "No SSL error reported";
+	errreason = ERR_reason_error_string(errcode);
+	if (errreason != NULL)
+		return errreason;
+	snprintf(errbuf, sizeof(errbuf), "SSL error code %lu", errcode);
+	return errbuf;
+}
+
+#endif /* USE_SSL */
 
 /*
  * Fire off a subprocess for startup/shutdown/checkpoint.
