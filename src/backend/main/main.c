@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.78 2004/05/18 20:18:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.79 2004/05/18 20:27:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,6 +249,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	
+	get_pkglib_path(my_exec_path, pkglib_path);
+
 	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain,
 	 * SubPostmasterMain, pgstat_main, pgstat_mainChild or BootstrapMain

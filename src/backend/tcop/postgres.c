@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.408 2004/05/18 20:18:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.409 2004/05/18 20:27:25 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2549,9 +2549,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 	Assert(DataDir);
 
-	if (strlen(pkglib_path) == 0)
-		get_pkglib_path(my_exec_path, pkglib_path);
-			
 	/* Acquire configuration parameters */
 	if (IsUnderPostmaster)
 	{

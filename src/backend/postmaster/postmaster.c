@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.389 2004/05/18 20:18:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.390 2004/05/18 20:27:25 momjian Exp $
  *
  * NOTES
  *
@@ -687,9 +687,6 @@ PostmasterMain(int argc, char *argv[])
 		ereport(DEBUG3,
 				(errmsg_internal("-----------------------------------------")));
 	}
-
-	if (strlen(pkglib_path) == 0)
-		get_pkglib_path(my_exec_path, pkglib_path);
 
 #ifdef EXEC_BACKEND
 	if (find_other_exec(argv[0], "postgres", PG_VERSIONSTR, postgres_exec_path) < 0)
