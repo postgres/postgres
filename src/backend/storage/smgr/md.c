@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.68 2000/05/25 23:30:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.68.2.1 2000/09/23 22:11:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ mdcreate(Relation reln)
 	char	   *path;
 
 	Assert(reln->rd_unlinked && reln->rd_fd < 0);
+
 	path = relpath(RelationGetPhysicalRelationName(reln));
 #ifndef __CYGWIN32__
 	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
@@ -138,19 +139,21 @@ mdcreate(Relation reln)
 #endif
 
 	/*
+	 * For cataloged relations, pg_class is guaranteed to have a unique
+	 * record with the same relname by the unique index. So we are able to
+	 * reuse existent files for new cataloged relations. Currently we reuse
+	 * them in the following cases. 1. they are empty. 2. they are used
+	 * for Index relations and their size == BLCKSZ * 2.
+	 *
 	 * During bootstrap processing, we skip that check, because pg_time,
 	 * pg_variable, and pg_log get created before their .bki file entries
 	 * are processed.
-	 *
-	 * For cataloged relations,pg_class is guaranteed to have an unique
-	 * record with the same relname by the unique index. So we are able to
-	 * reuse existent files for new catloged relations. Currently we reuse
-	 * them in the following cases. 1. they are empty. 2. they are used
-	 * for Index relations and their size == BLCKSZ * 2.
 	 */
 
 	if (fd < 0)
 	{
+		int		save_errno = errno;
+
 		if (!IsBootstrapProcessingMode() &&
 			reln->rd_rel->relkind == RELKIND_UNCATALOGED)
 			return -1;
@@ -161,11 +164,15 @@ mdcreate(Relation reln)
 		fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);
 #endif
 		if (fd < 0)
+		{
+			/* be sure to return the error reported by create, not open */
+			errno = save_errno;
 			return -1;
+		}
 		if (!IsBootstrapProcessingMode())
 		{
 			bool		reuse = false;
-			int			len = FileSeek(fd, 0L, SEEK_END);
+			long		len = FileSeek(fd, 0L, SEEK_END);
 
 			if (len == 0)
 				reuse = true;
@@ -175,9 +182,12 @@ mdcreate(Relation reln)
 			if (!reuse)
 			{
 				FileClose(fd);
+				/* be sure to return the error reported by create */
+				errno = save_errno;
 				return -1;
 			}
 		}
+		errno = 0;
 	}
 	reln->rd_unlinked = false;
 
@@ -733,9 +743,16 @@ mdnblocks(Relation reln)
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
 			{
+				/*
+				 * Because we pass O_CREAT, we will create the next segment
+				 * (with zero length) immediately, if the last segment is of
+				 * length REL_SEGSIZE.  This is unnecessary but harmless, and
+				 * testing for the case would take more cycles than it seems
+				 * worth.
+				 */
 				v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 				if (v->mdfd_chain == (MdfdVec *) NULL)
-					elog(ERROR, "cannot count blocks for %s -- open failed",
+					elog(ERROR, "cannot count blocks for %s -- open failed: %m",
 						 RelationGetRelationName(reln));
 			}
 
@@ -1075,11 +1092,20 @@ _mdfd_getseg(Relation reln, int blkno)
 
 		if (v->mdfd_chain == (MdfdVec *) NULL)
 		{
-			v->mdfd_chain = _mdfd_openseg(reln, i, O_CREAT);
+			/*
+			 * We will create the next segment only if the target block
+			 * is within it.  This prevents Sorcerer's Apprentice syndrome
+			 * if a bug at higher levels causes us to be handed a ridiculously
+			 * large blkno --- otherwise we could create many thousands of
+			 * empty segment files before reaching the "target" block.  We
+			 * should never need to create more than one new segment per call,
+			 * so this restriction seems reasonable.
+			 */
+			v->mdfd_chain = _mdfd_openseg(reln, i, (segno == 1) ? O_CREAT : 0);
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
-				elog(ERROR, "cannot open segment %d of relation %s",
-					 i, RelationGetRelationName(reln));
+				elog(ERROR, "cannot open segment %d of relation %s (target block %d): %m",
+					 i, RelationGetRelationName(reln), blkno);
 		}
 		v = v->mdfd_chain;
 	}
@@ -1097,8 +1123,10 @@ _mdfd_getseg(Relation reln, int blkno)
  * "blind" with no Relation struct.  We assume that we are not likely to
  * touch the same relation again soon, so we do not create an FD entry for
  * the relation --- we just open a kernel file descriptor which will be
- * used and promptly closed.  The return value is the kernel descriptor,
- * or -1 on failure.
+ * used and promptly closed.  We also assume that the target block already
+ * exists, ie, we need not extend the relation.
+ *
+ * The return value is the kernel descriptor, or -1 on failure.
  */
 
 static int
