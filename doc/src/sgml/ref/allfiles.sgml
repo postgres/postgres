@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.13 1999/12/04 04:53:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.14 1999/12/05 20:02:42 momjian Exp $
 Postgres documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -100,9 +100,11 @@ Complete list of usable sgml source files in this directory.
 
 <!-- these are in the "utilities" reference chapter -->
 <!entity createdb           system "createdb.sgml">
+<!entity createlang         system "createlang.sgml">
 <!entity createuser         system "createuser.sgml">
-<!entity dropdb		    system "dropdb.sgml">
-<!entity dropuser	    system "dropuser.sgml">
+<!entity dropdb             system "dropdb.sgml">
+<!entity droplang           system "droplang.sgml">
+<!entity dropuser           system "dropuser.sgml">
 <!entity ecpgRef            system "ecpg-ref.sgml">
 <!entity initdb             system "initdb.sgml">
 <!entity initlocation       system "initlocation.sgml">

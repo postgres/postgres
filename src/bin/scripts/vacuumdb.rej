@@ -1,0 +1,17 @@
+***************
+*** 80,86 ****
+                  dbname=`echo $1 | sed 's/^--dbname=//'`
+                  ;;
+          --database=*)
+!                 dbname=`echo $1 | sed 's/^-database=//'`
+                  ;;
+  # options converted into SQL command
+  	--analyze|-z)
+--- 80,86 ----
+                  dbname=`echo $1 | sed 's/^--dbname=//'`
+                  ;;
+          --database=*)
+!                 dbname=`echo $1 | sed 's/^--database=//'`
+                  ;;
+  # options converted into SQL command
+  	--analyze|-z)

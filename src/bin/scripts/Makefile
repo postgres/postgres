@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.1 1999/12/04 04:53:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.2 1999/12/05 20:02:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@
 SRCDIR=../..
 include ../../Makefile.global
 
-SCRIPTS=createdb dropdb createuser dropuser vacuumdb
+SCRIPTS=createdb dropdb createuser dropuser createlang droplang vacuumdb
 
 all: $(SCRIPTS)
 
@@ -24,10 +24,17 @@ createdb:
 dropdb:
 createuser:
 dropuser:
+
+createlang: createlang.sh
+	sed -e 's/__DLSUFFIX__/$(DLSUFFIX)/' createlang.sh > createlang
+droplang:
+
 vacuumdb:
 
 install: $(SCRIPTS)
 	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$(X)$<
 
 clean:
+	rm -f createlang
+
 dep depend:

@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.1 1999/12/04 04:53:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.2 1999/12/05 20:02:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,9 +48,15 @@ do
 	--quiet|-q)
 		PSQLOPT="$PSQLOPT -o /dev/null"
 		;;
-	--dbname|--database|-d)
-		dbname="$2"
-		shift;;
+        -d*)
+                dbname=`echo $1 | sed 's/^-d//'`
+                ;;
+        --dbname=*)
+                dbname=`echo $1 | sed 's/^--dbname=//'`
+                ;;
+        --database=*)
+                dbname=`echo $1 | sed 's/^--database=//'`
+                ;;
 # options converted into SQL command
 	--analyze|-z)
 		analyze="analyze"
