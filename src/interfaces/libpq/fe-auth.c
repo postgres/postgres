@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.72 2002/12/03 22:09:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.73 2003/01/29 01:18:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,7 +686,14 @@ MsgType
 fe_getauthsvc(char *PQerrormsg)
 {
 	if (pg_authsvc < 0 || pg_authsvc >= n_authsvcs)
+	{
 		fe_setauthsvc(DEFAULT_CLIENT_AUTHSVC, PQerrormsg);
+		if (pg_authsvc < 0 || pg_authsvc >= n_authsvcs)
+		{
+			/* Can only get here if DEFAULT_CLIENT_AUTHSVC is misdefined */
+			return 0;
+		}
+	}
 	return authsvcs[pg_authsvc].msgtype;
 }
 
@@ -703,6 +710,10 @@ fe_getauthname(char *PQerrormsg)
 	MsgType		authsvc;
 
 	authsvc = fe_getauthsvc(PQerrormsg);
+
+	/* this just guards against broken DEFAULT_CLIENT_AUTHSVC, see above */
+	if (authsvc == 0)
+		return NULL;			/* leave original error message in place */
 
 #ifdef KRB4
 	if (authsvc == STARTUP_KRB4_MSG)
