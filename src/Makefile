@@ -10,3 +10,7 @@
 all install clean dep depend distclean:
 	@echo "You must use GNU make to use Postgres.  It may be installed"
 	@echo "on your system with the name 'gmake'."
+	@echo
+	@echo "NOTE:  If you are sure that you are using GNU make and you are"
+	@echo "       still getting this message, you may simply need to run"
+	@echo "       the configure program."
