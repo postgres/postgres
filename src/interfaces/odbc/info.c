@@ -2252,11 +2252,15 @@ HSTMT htbl_stmt, hpkey_stmt;
 StatementClass *tbl_stmt;
 RETCODE result, keyresult;
 char tables_query[MAX_STATEMENT_LEN];
-char args[1024], tgname[MAX_INFO_STRING];
-char pktab[MAX_TABLE_LEN + 1], fktab[MAX_TABLE_LEN + 1];
-char *ptr, *pkey_ptr, *pkptr, *fkptr, *frel, *prel;
-int i, k, pkeys, seq, ntabs;
-SWORD nargs, rule_type, action;
+char trig_deferrable[2];
+char trig_initdeferred[2];
+char trig_args[1024];
+char upd_rule[MAX_NAME_LEN], del_rule[MAX_NAME_LEN];
+char pk_table_needed[MAX_TABLE_LEN + 1];
+char fk_table_needed[MAX_TABLE_LEN + 1];
+char *pkey_ptr, *fkey_ptr, *pk_table, *fk_table;
+int i, j, k, num_keys;
+SWORD trig_nargs, upd_rule_type, del_rule_type, defer_type;
 char pkey[MAX_INFO_STRING];
 Int2 result_cols;
 
@@ -2268,6 +2272,7 @@ Int2 result_cols;
 		SC_log_error(func, "", NULL);
         return SQL_INVALID_HANDLE;
     }
+	
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
@@ -2301,6 +2306,9 @@ Int2 result_cols;
     QR_set_field_info(stmt->result, 11, "FK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
     QR_set_field_info(stmt->result, 12, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
     QR_set_field_info(stmt->result, 13, "TRIGGER_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+#if (ODBCVER >= 0x0300)
+	QR_set_field_info(stmt->result, 14, "DEFERRABILITY", PG_TYPE_INT2, 2);
+#endif /* ODBCVER >= 0x0300 */
 
     /* also, things need to think that this statement is finished so */
     /* the results can be retrieved. */
@@ -2322,25 +2330,46 @@ Int2 result_cols;
 
 	tbl_stmt = (StatementClass *) htbl_stmt;
 
-	pktab[0] = '\0';
-	fktab[0] = '\0';
+	pk_table_needed[0] = '\0';
+	fk_table_needed[0] = '\0';
 
-	make_string(szPkTableName, cbPkTableName, pktab);
-	make_string(szFkTableName, cbFkTableName, fktab);
-
+	make_string(szPkTableName, cbPkTableName, pk_table_needed);
+	make_string(szFkTableName, cbFkTableName, fk_table_needed);
 
 	/*	Case #2 -- Get the foreign keys in the specified table (fktab) that 
 		refer to the primary keys of other table(s).
 	*/
-	if (fktab[0] != '\0') {
-
-		sprintf(tables_query, "select pg_trigger.tgargs, pg_trigger.tgnargs, pg_trigger.tgname"
-				" from pg_proc, pg_trigger, pg_class"
-				" where pg_proc.oid = pg_trigger.tgfoid and pg_trigger.tgrelid = pg_class.oid"
-				" AND pg_proc.proname = 'check_primary_key' AND pg_class.relname = '%s'",
-				fktab);
+	if (fk_table_needed[0] != '\0') {
+		mylog("%s: entering Foreign Key Case #2", func);
+		sprintf(tables_query, "SELECT	pt.tgargs, "
+								"		pt.tgnargs, "
+								"		pt.tgdeferrable, "
+								"		pt.tginitdeferred, "
+								"		pg_proc.proname, "
+								"		pg_proc_1.proname "
+								"FROM	pg_class pc, "
+								"		pg_proc pg_proc, "
+								"		pg_proc pg_proc_1, "
+								"		pg_trigger pg_trigger, "
+								"		pg_trigger pg_trigger_1, "
+								"		pg_proc pp, "
+								"		pg_trigger pt "
+								"WHERE	pt.tgrelid = pc.oid "
+								"AND pp.oid = pt.tgfoid "
+								"AND pg_trigger.tgconstrrelid = pc.oid "
+								"AND pg_proc.oid = pg_trigger.tgfoid "
+								"AND pg_trigger_1.tgfoid = pg_proc_1.oid "
+								"AND pg_trigger_1.tgconstrrelid = pc.oid "
+								"AND ((pc.relname='%s') "
+								"AND (pp.proname LIKE '%%ins') "
+								"AND (pg_proc.proname LIKE '%%upd') "
+								"AND (pg_proc_1.proname LIKE '%%del') "
+								"AND (pg_trigger.tgrelid=pt.tgconstrrelid) "
+								"AND (pg_trigger_1.tgrelid = pt.tgconstrrelid))", 
+				fk_table_needed);		
 
 		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
+
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 			stmt->errormsg = SC_create_errormsg(htbl_stmt);
 			stmt->errornumber = tbl_stmt->errornumber;
@@ -2350,7 +2379,7 @@ Int2 result_cols;
 		}
 
 		result = SQLBindCol(htbl_stmt, 1, SQL_C_BINARY,
-							args, MAX_INFO_STRING, NULL);
+							trig_args, sizeof(trig_args), NULL);
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
@@ -2360,7 +2389,7 @@ Int2 result_cols;
 		}
 
 		result = SQLBindCol(htbl_stmt, 2, SQL_C_SHORT,
-							&nargs, 0, NULL);
+							&trig_nargs, 0, NULL);
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
@@ -2370,7 +2399,37 @@ Int2 result_cols;
 		}
 
 		result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
-							tgname, sizeof(tgname), NULL);
+							trig_deferrable, sizeof(trig_deferrable), NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 4, SQL_C_CHAR,
+							trig_initdeferred, sizeof(trig_initdeferred), NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 5, SQL_C_CHAR,
+							upd_rule, sizeof(upd_rule), NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 6, SQL_C_CHAR,
+							del_rule, sizeof(del_rule), NULL);
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
@@ -2412,31 +2471,27 @@ Int2 result_cols;
 		while (result == SQL_SUCCESS) {
 
 			/*	Compute the number of keyparts.	*/
-			pkeys = nargs / 2;
+			num_keys = (trig_nargs - 4) / 2;
 
-			mylog("Foreign Key Case#2: nargs = %d, pkeys = %d\n", nargs, pkeys);
+			mylog("Foreign Key Case#2: trig_nargs = %d, num_keys = %d\n", trig_nargs, num_keys);
 
-			ptr = args;
+			pk_table = trig_args;
 
 			/*	Get to the PK Table Name */
-			for (k = 0; k < pkeys; k++)
-				ptr += strlen(ptr) + 1;
-
-			prel = ptr;
-
-			mylog("prel = '%s'\n", prel);
+			for (k = 0; k < 2; k++)
+				pk_table += strlen(pk_table) + 1;
 
 			/*	If there is a pk table specified, then check it. */
-			if (pktab[0] != '\0') {
+			if (pk_table_needed[0] != '\0') {
 
 				/*	If it doesn't match, then continue */
-				if ( strcmp(prel, pktab)) {	
+				if ( strcmp(pk_table, pk_table_needed)) {	
 					result = SQLFetch(htbl_stmt);
 					continue;
 				}
 			}
 
-			keyresult = SQLPrimaryKeys(hpkey_stmt, NULL, 0, NULL, 0, prel, SQL_NTS);
+			keyresult = SQLPrimaryKeys(hpkey_stmt, NULL, 0, NULL, 0, pk_table, SQL_NTS);
 			if (keyresult != SQL_SUCCESS) {
 				stmt->errornumber = STMT_NO_MEMORY_ERROR;
 				stmt->errormsg = "Couldn't get primary keys for SQLForeignKeys result.";
@@ -2448,76 +2503,147 @@ Int2 result_cols;
 
 			/*	Check that the key listed is the primary key */
 			keyresult = SQLFetch(hpkey_stmt);
-			for (k = 0; k < pkeys; k++) {
 
-				ptr += strlen(ptr) + 1;
-				if ( keyresult != SQL_SUCCESS || strcmp(ptr, pkey)) {
-					pkeys = 0;
+			/*	Get to first primary key */
+			pkey_ptr = trig_args;
+			for (i = 0; i < 5; i++)
+				pkey_ptr += strlen(pkey_ptr) + 1;
+
+			for (k = 0; k < num_keys; k++) {
+				mylog("%s: pkey_ptr='%s', pkey='%s'\n", func, pkey_ptr, pkey);
+				if ( keyresult != SQL_SUCCESS || strcmp(pkey_ptr, pkey)) {
+					num_keys = 0;
 					break;
 				}
+
+				/*	Get to next primary key */
+				for (k = 0; k < 2; k++)
+					pkey_ptr += strlen(pkey_ptr) + 1;
+
 				keyresult = SQLFetch(hpkey_stmt);
 			}
-			ptr = prel;
-
-
 
 			/*	Set to first fk column */
-			fkptr = args;
-			seq = 0;
+			fkey_ptr = trig_args;
+			for (k = 0; k < 4; k++)
+				fkey_ptr += strlen(fkey_ptr) + 1;
 
-			for (k = 0; k < pkeys; k++) {
+			/* Set update and delete actions for foreign keys */
+			if (!strcmp(upd_rule, "RI_FKey_cascade_upd")) {
+				upd_rule_type = SQL_CASCADE;
+			} else if (!strcmp(upd_rule, "RI_FKey_noaction_upd")) {
+				upd_rule_type = SQL_NO_ACTION;
+			} else if (!strcmp(upd_rule, "RI_FKey_restrict_upd")) {
+				upd_rule_type = SQL_NO_ACTION;
+			} else if (!strcmp(upd_rule, "RI_FKey_setdefault_upd")) {
+				upd_rule_type = SQL_SET_DEFAULT;
+			} else if (!strcmp(upd_rule, "RI_FKey_setnull_upd")) {
+				upd_rule_type = SQL_SET_NULL;
+			}
+			
+			if (!strcmp(upd_rule, "RI_FKey_cascade_del")) {
+				del_rule_type = SQL_CASCADE;
+			} else if (!strcmp(upd_rule, "RI_FKey_noaction_del")) {
+				del_rule_type = SQL_NO_ACTION;
+			} else if (!strcmp(upd_rule, "RI_FKey_restrict_del")) {
+				del_rule_type = SQL_NO_ACTION;
+			} else if (!strcmp(upd_rule, "RI_FKey_setdefault_del")) {
+				del_rule_type = SQL_SET_DEFAULT;
+			} else if (!strcmp(upd_rule, "RI_FKey_setnull_del")) {
+				del_rule_type = SQL_SET_NULL;
+			}
+
+#if (ODBCVER >= 0x0300)
+			/* Set deferrability type */
+			if (!strcmp(trig_initdeferred, "y")) {
+				defer_type = SQL_INITIALLY_DEFERRED;
+			} else if (!strcmp(trig_deferrable, "y")) {
+				defer_type = SQL_INITIALLY_IMMEDIATE;
+			} else {
+				defer_type = SQL_NOT_DEFERRABLE;
+			}
+#endif /* ODBCVER >= 0x0300 */
+
+			/*	Get to first primary key */
+			pkey_ptr = trig_args;
+			for (i = 0; i < 5; i++)
+				pkey_ptr += strlen(pkey_ptr) + 1;
+
+			for (k = 0; k < num_keys; k++) {
 
 				row = (TupleNode *)malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
 
+				mylog("%s: pk_table = '%s', pkey_ptr = '%s'\n", func, pk_table, pkey_ptr);
 				set_tuplefield_null(&row->tuple[0]);
 				set_tuplefield_string(&row->tuple[1], "");
+				set_tuplefield_string(&row->tuple[2], pk_table);
+				set_tuplefield_string(&row->tuple[3], pkey_ptr);
 
-				set_tuplefield_string(&row->tuple[2], prel);
-
-				/*	Get to the primary key */
-				ptr += strlen(ptr) + 1;
-
-				mylog("prel = '%s', ptr = '%s'\n", prel, ptr);
-
-				set_tuplefield_string(&row->tuple[3], ptr);
+				mylog("%s: fk_table_needed = '%s', fkey_ptr = '%s'\n", func, fk_table_needed, fkey_ptr);
 				set_tuplefield_null(&row->tuple[4]);
 				set_tuplefield_string(&row->tuple[5], "");
+				set_tuplefield_string(&row->tuple[6], fk_table_needed);
+				set_tuplefield_string(&row->tuple[7], fkey_ptr);
 
-				set_tuplefield_string(&row->tuple[6], fktab);
-				set_tuplefield_string(&row->tuple[7], fkptr);
-
-				mylog("fktab = '%s', fkptr = '%s'\n", fktab, fkptr);
-
-				set_tuplefield_int2(&row->tuple[8], (Int2) (++seq));
-				set_tuplefield_null(&row->tuple[9]);
-				set_tuplefield_null(&row->tuple[10]);
+				mylog("%s: upd_rule_type = '%i', del_rule_type = '%i'\n, trig_name = '%s'", func, upd_rule_type, del_rule_type, trig_args);
+				set_tuplefield_int2(&row->tuple[8], (Int2) (k + 1));
+				set_tuplefield_int2(&row->tuple[9], (Int2) upd_rule_type);
+				set_tuplefield_int2(&row->tuple[10], (Int2) del_rule_type);
 				set_tuplefield_null(&row->tuple[11]);
 				set_tuplefield_null(&row->tuple[12]);
-
-				set_tuplefield_string(&row->tuple[13], tgname);
+				set_tuplefield_string(&row->tuple[13], trig_args);
+#if (ODBCVER >= 0x0300)
+				set_tuplefield_int2(&row->tuple[14], defer_type);
+#endif /* ODBCVER >= 0x0300 */
 
 				QR_add_tuple(stmt->result, row);
 
-				/*	next foreign key */
-				fkptr += strlen(fkptr) + 1;
-
+				/* next primary/foreign key */
+				for (i = 0; i < 2; i++) {
+					fkey_ptr += strlen(fkey_ptr) + 1;
+					pkey_ptr += strlen(pkey_ptr) + 1;
+				}
 			}
 
 			result = SQLFetch(htbl_stmt);
 		}
+		SQLFreeStmt(hpkey_stmt, SQL_DROP);
 	}
 
 	/*	Case #1 -- Get the foreign keys in other tables that refer to the primary key
 		in the specified table (pktab).  i.e., Who points to me?
 	*/
-    else if (pktab[0] != '\0') {
+    else if (pk_table_needed[0] != '\0') {
 
-		sprintf(tables_query, "select pg_trigger.tgargs, pg_trigger.tgnargs"
-				", pg_trigger.tgtype, pg_trigger.tgname"
-				" from pg_proc, pg_trigger, pg_class"
-				" where pg_proc.oid = pg_trigger.tgfoid and pg_trigger.tgrelid = pg_class.oid"
-				" AND pg_proc.proname = 'check_foreign_key' AND pg_class.relname = '%s'",
-				pktab);
+		sprintf(tables_query, "SELECT	pg_trigger.tgargs, "
+								"		pg_trigger.tgnargs, "
+								"		pg_trigger.tgdeferrable, "
+								"		pg_trigger.tginitdeferred, "
+								"		pg_proc.proname, "
+								"		pg_proc_1.proname "
+								"FROM	pg_class pg_class, "
+								"		pg_class pg_class_1, "
+								"		pg_class pg_class_2, "
+								"		pg_proc pg_proc, "
+								"		pg_proc pg_proc_1, "
+								"		pg_trigger pg_trigger, "
+								"		pg_trigger pg_trigger_1, "
+								"		pg_trigger pg_trigger_2 "
+								"WHERE	pg_trigger.tgconstrrelid = pg_class.oid "
+								"	AND pg_trigger.tgrelid = pg_class_1.oid "
+								"	AND pg_trigger_1.tgfoid = pg_proc_1.oid "
+								"	AND pg_trigger_1.tgconstrrelid = pg_class_1.oid "
+								"	AND pg_trigger_2.tgconstrrelid = pg_class_2.oid "
+								"	AND pg_trigger_2.tgfoid = pg_proc.oid "
+								"	AND pg_class_2.oid = pg_trigger.tgrelid "
+								"	AND ("
+								"		 (pg_class.relname='%s') "
+								"	AND  (pg_proc.proname Like '%%upd') "
+								"	AND  (pg_proc_1.proname Like '%%del')"
+								"	AND	 (pg_trigger_1.tgrelid = pg_trigger.tgconstrrelid) "
+								"	AND	 (pg_trigger_2.tgrelid = pg_trigger.tgconstrrelid) "
+								"		)",
+				pk_table_needed);
 
 		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
@@ -2529,7 +2655,7 @@ Int2 result_cols;
 		}
 
 		result = SQLBindCol(htbl_stmt, 1, SQL_C_BINARY,
-							args, sizeof(args), NULL);
+							trig_args, sizeof(trig_args), NULL);
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
@@ -2539,7 +2665,7 @@ Int2 result_cols;
 		}
 
 		result = SQLBindCol(htbl_stmt, 2, SQL_C_SHORT,
-							&nargs, 0, NULL);
+							&trig_nargs, 0, NULL);
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
@@ -2548,8 +2674,8 @@ Int2 result_cols;
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 3, SQL_C_SHORT,
-							&rule_type, 0, NULL);
+		result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
+							trig_deferrable, sizeof(trig_deferrable), NULL);
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
@@ -2559,7 +2685,27 @@ Int2 result_cols;
 		}
 
 		result = SQLBindCol(htbl_stmt, 4, SQL_C_CHAR,
-							tgname, sizeof(tgname), NULL);
+							trig_initdeferred, sizeof(trig_initdeferred), NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 5, SQL_C_CHAR,
+							upd_rule, sizeof(upd_rule), NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 6, SQL_C_CHAR,
+							del_rule, sizeof(del_rule), NULL);
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
@@ -2580,135 +2726,105 @@ Int2 result_cols;
 			return SQL_ERROR;
 		}
 
-		keyresult = SQLAllocStmt( stmt->hdbc, &hpkey_stmt);
-		if((keyresult != SQL_SUCCESS) && (keyresult != SQL_SUCCESS_WITH_INFO)) {
-			stmt->errornumber = STMT_NO_MEMORY_ERROR;
-			stmt->errormsg = "Couldn't allocate statement for SQLForeignKeys (pkeys) result.";
-			SC_log_error(func, "", stmt);
-			return SQL_ERROR;
-		}
-
-		keyresult = SQLPrimaryKeys(hpkey_stmt, NULL, 0, NULL, 0, pktab, SQL_NTS);
-		if (keyresult != SQL_SUCCESS) {
-			stmt->errornumber = STMT_NO_MEMORY_ERROR;
-			stmt->errormsg = "Couldn't get primary keys for SQLForeignKeys result.";
-			SC_log_error(func, "", stmt);
-			SQLFreeStmt(hpkey_stmt, SQL_DROP);
-			return SQL_ERROR;
-		}
-
-		keyresult = SQLBindCol(hpkey_stmt, 4, SQL_C_CHAR,
-								pkey, sizeof(pkey), NULL);
-		if (keyresult != SQL_SUCCESS) {
-			stmt->errornumber = STMT_NO_MEMORY_ERROR;
-			stmt->errormsg = "Couldn't bindcol for primary keys for SQLForeignKeys result.";
-			SC_log_error(func, "", stmt);
-			SQLFreeStmt(hpkey_stmt, SQL_DROP);
-			return SQL_ERROR;
-		}
-
 		while (result == SQL_SUCCESS) {
-		  /*	Get the number of tables */
-			ptr = args;
-			ntabs = atoi(args);
-			ptr += strlen(ptr) + 1;
-
-
-			/*	Handle action (i.e., 'cascade', 'restrict', 'setnull') */
-			switch(tolower((unsigned char) ptr[0])) {
-			case 'c':	
-				action = SQL_CASCADE;
-				break;
-			case 'r':
-				action = SQL_RESTRICT;
-				break;
-			case 's':
-				action = SQL_SET_NULL;
-				break;
-			default:
-				action = -1;
-				break;
-			}
-
-			rule_type >>= TRIGGER_SHIFT;
-			ptr += strlen(ptr) + 1;
 
 			/*	Calculate the number of key parts */
-			pkeys = (nargs - ( 2 + ntabs)) / (ntabs + 1);
-			pkey_ptr = ptr;
+			num_keys = (trig_nargs - 4) / 2;;
 
-
-			keyresult = SQLExtendedFetch(hpkey_stmt, SQL_FETCH_FIRST, -1, NULL, NULL);
-			if ( keyresult != SQL_SUCCESS || strcmp(pkey, ptr)) {
-				ntabs = 0;
+			/*	Handle action (i.e., 'cascade', 'restrict', 'setnull') */
+			if (!strcmp(upd_rule, "RI_FKey_cascade_upd")) {
+				upd_rule_type = SQL_CASCADE;
+			} else if (!strcmp(upd_rule, "RI_FKey_noaction_upd")) {
+				upd_rule_type = SQL_NO_ACTION;
+			} else if (!strcmp(upd_rule, "RI_FKey_restrict_upd")) {
+				upd_rule_type = SQL_NO_ACTION;
+			} else if (!strcmp(upd_rule, "RI_FKey_setdefault_upd")) {
+				upd_rule_type = SQL_SET_DEFAULT;
+			} else if (!strcmp(upd_rule, "RI_FKey_setnull_upd")) {
+				upd_rule_type = SQL_SET_NULL;
 			}
+			
+			if (!strcmp(upd_rule, "RI_FKey_cascade_del")) {
+				del_rule_type = SQL_CASCADE;
+			} else if (!strcmp(upd_rule, "RI_FKey_noaction_del")) {
+				del_rule_type = SQL_NO_ACTION;
+			} else if (!strcmp(upd_rule, "RI_FKey_restrict_del")) {
+				del_rule_type = SQL_NO_ACTION;
+			} else if (!strcmp(upd_rule, "RI_FKey_setdefault_del")) {
+				del_rule_type = SQL_SET_DEFAULT;
+			} else if (!strcmp(upd_rule, "RI_FKey_setnull_del")) {
+				del_rule_type = SQL_SET_NULL;
+			}			
 
-			/*	Get to the last primary keypart */
-			for (i = 1; i < pkeys; i++) {
-
-				/*	If keypart doesnt match, skip this entry */
-				if ( keyresult != SQL_SUCCESS || strcmp(pkey, ptr)) {
-					ntabs = 0;
-					break;
-				}
-				ptr += strlen(ptr) + 1;
-
-				keyresult = SQLExtendedFetch(hpkey_stmt, SQL_FETCH_NEXT, -1, NULL, NULL);
+#if (ODBCVER >= 0x0300)
+			/* Set deferrability type */
+			if (!strcmp(trig_initdeferred, "y")) {
+				defer_type = SQL_INITIALLY_DEFERRED;
+			} else if (!strcmp(trig_deferrable, "y")) {
+				defer_type = SQL_INITIALLY_IMMEDIATE;
+			} else {
+				defer_type = SQL_NOT_DEFERRABLE;
 			}
-				
-			mylog("Foreign Key Case#1: nargs = %d, ntabs = %d, pkeys = %d\n", nargs, ntabs, pkeys);
+#endif /* ODBCVER >= 0x0300 */
+
+			mylog("Foreign Key Case#1: trig_nargs = %d, num_keys = %d\n", trig_nargs, num_keys);
+
+			/*	Get to first primary key */
+			pkey_ptr = trig_args;
+			for (i = 0; i < 5; i++)
+				pkey_ptr += strlen(pkey_ptr) + 1;
 
 
-			/*	Get Foreign Key Tables */
-			for (i = 0; i < ntabs; i++) {
+			/*	Get to first foreign table */
+			fk_table = trig_args;
+			fk_table += strlen(fk_table) + 1;
 
-				seq = 0;
-				pkptr = pkey_ptr;
+			/* Get to first foreign key */
+			fkey_ptr = trig_args;
+			for (k = 0; k < 4; k++) 
+				fkey_ptr += strlen(fkey_ptr) + 1;
 
-				ptr += strlen(ptr) + 1;
-				frel = ptr;
+			for (k = 0; k < num_keys; k++) {
 
-				for (k = 0; k < pkeys; k++) {
+				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_ptr, fk_table, fkey_ptr);
 
 					row = (TupleNode *)malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
 
+				mylog("pk_table_needed = '%s', pkey_ptr = '%s'\n", pk_table_needed, pkey_ptr);
 					set_tuplefield_null(&row->tuple[0]);
 					set_tuplefield_string(&row->tuple[1], "");
+				set_tuplefield_string(&row->tuple[2], pk_table_needed);
+				set_tuplefield_string(&row->tuple[3], pkey_ptr);
 
-					set_tuplefield_string(&row->tuple[2], pktab);
-					set_tuplefield_string(&row->tuple[3], pkptr);
-
-					mylog("pktab = '%s', pkptr = '%s'\n", pktab, pkptr);
-
+				mylog("fk_table = '%s', fkey_ptr = '%s'\n", fk_table, fkey_ptr);
 					set_tuplefield_null(&row->tuple[4]);
 					set_tuplefield_string(&row->tuple[5], "");
-					set_tuplefield_string(&row->tuple[6], frel);
+				set_tuplefield_string(&row->tuple[6], fk_table);
+				set_tuplefield_string(&row->tuple[7], fkey_ptr);
 
-					/*	Get to the foreign key */
-					ptr += strlen(ptr) + 1;
+				set_tuplefield_int2(&row->tuple[8], (Int2) (k + 1));
 
-					set_tuplefield_string(&row->tuple[7], ptr);
-
-					mylog("frel = '%s', ptr = '%s'\n", frel, ptr);
-					mylog("rule_type = %d, action = %d\n", rule_type, action);
-
-					set_tuplefield_int2(&row->tuple[8], (Int2) (++seq));
-
-					set_nullfield_int2(&row->tuple[9], (Int2) ((rule_type & TRIGGER_UPDATE) ? action : -1));
-					set_nullfield_int2(&row->tuple[10], (Int2) ((rule_type & TRIGGER_DELETE) ? action : -1));
+				mylog("upd_rule = %d, del_rule= %d", upd_rule_type, del_rule_type);
+				set_nullfield_int2(&row->tuple[9], (Int2) upd_rule_type);
+				set_nullfield_int2(&row->tuple[10], (Int2) del_rule_type);
 
 					set_tuplefield_null(&row->tuple[11]);
 					set_tuplefield_null(&row->tuple[12]);
 
-					set_tuplefield_string(&row->tuple[13], tgname);
+				set_tuplefield_string(&row->tuple[13], trig_args);
 
-					QR_add_tuple(stmt->result, row);
+#if (ODBCVER >= 0x0300)
+				mylog("defer_type = '%s', defer_type);
+				set_tuplefield_int2(&row->tuple[14], defer_type);
+#endif /* ODBCVER >= 0x0300 */
 
-					/*	next primary key */
-					pkptr += strlen(pkptr) + 1;
+				QR_add_tuple(stmt->result, row);
 
+				/*	next primary/foreign key */
+				for (j = 0; j < 2; j++) {
+					pkey_ptr += strlen(pkey_ptr) + 1;
+					fkey_ptr += strlen(fkey_ptr) + 1;
 				}
-
 			}
 
 			result = SQLFetch(htbl_stmt);
@@ -2723,7 +2839,6 @@ Int2 result_cols;
 	}
 
 	SQLFreeStmt(htbl_stmt, SQL_DROP);
-	SQLFreeStmt(hpkey_stmt, SQL_DROP);
 
 	mylog("SQLForeignKeys(): EXIT, stmt=%u\n", stmt);
     return SQL_SUCCESS;
