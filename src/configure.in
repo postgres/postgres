@@ -92,6 +92,10 @@ AC_ARG_WITH(template,
                               see template directory],
     [  TEMPLATE=$withval ],
     [
+
+# lowercase $host
+host="`echo $host | tr '[A-Z]' '[a-z]'`"
+
 # First, try for a template exactly matching $host
 if test -f "template/$host"
 then TEMPLATE="$host"
