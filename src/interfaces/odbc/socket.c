@@ -286,7 +286,7 @@ SOCK_get_next_byte(SocketClass *self)
 {
 	if (self->buffer_read_in >= self->buffer_filled_in)
 	{
-		/* there are no more bytes left in the buffer -> */
+		/* there are no more bytes left in the buffer, so */
 		/* reload the buffer */
 
 		self->buffer_read_in = 0;
@@ -296,17 +296,19 @@ SOCK_get_next_byte(SocketClass *self)
 		mylog("read %d, global_socket_buffersize=%d\n",
 			  self->buffer_filled_in, globals.socket_buffersize);
 
-		if (self->buffer_filled_in == -1)
+		if (self->buffer_filled_in < 0)
 		{
 			self->errornumber = SOCKET_READ_ERROR;
 			self->errormsg = "Error while reading from the socket.";
 			self->buffer_filled_in = 0;
+			return 0;
 		}
 		if (self->buffer_filled_in == 0)
 		{
 			self->errornumber = SOCKET_CLOSED;
 			self->errormsg = "Socket has been closed.";
 			self->buffer_filled_in = 0;
+			return 0;
 		}
 	}
 	return self->buffer_in[self->buffer_read_in++];
