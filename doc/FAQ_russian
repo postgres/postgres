@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Subbota 7 fevralya 22:16:21 EDT 2004
+   Data poslednego obnovleniya: Voskresenie 11 aprelya 23:28:03 EDT 2004
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -114,7 +114,7 @@
                           Rasshireniya PostgreSQL
                                       
    5.1) YA napisal funkciyu opredelyaemuyu pol'zovatelem. Kogda ya
-   zapuskayu ee v psql, pochemu ya poluchayu dump core?
+   zapuskayu ee v psql, pochemu ya poluchayu core dump?
    5.2) Kak ya mogu vnesti nekotorye klassnye novye tipy i funkcii v
    PostgreSQL?
    5.3) Kak mne napisat' C funkciyu, vozvraschayuschuyu zapis'?
@@ -138,7 +138,7 @@
    
    Razrabotku PostgreSQL vypolnyaet komanda razrabotchikov, vse
    uchastniki kotoroj podpisany na spisok rassylki razrabotchikov. V
-   nastoyaschee vremya, ih koordinatorom yavlyaetsya Mark Fornaj (Marc G.
+   nastoyaschee vremya, ih koordinatorom yavlyaetsya Mark Furn'e (Marc G.
    Fournier) (scrappy@PostgreSQL.org). (Sm. sekciyu 1.6 o tom, kak
    podklyuchit'sya k razrabotke). `Eta komanda teper' otvechaet za vsyu
    razrabotku PostgreSQL. Dannyj proekt yavlyaetsya obschestvennym i ne
@@ -286,7 +286,7 @@
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.4.1
+   Poslednij vypusk PostgreSQL - `eto versiya 7.4.2
    
    My planiruem vypuskat' novye versii kazhdye 6-8 mesyacev.
    
@@ -370,18 +370,17 @@
    Vozmozhnosti
           PostgreSQL imeet bol'shinstvo vozmozhnostej predstavlennyh v
           bol'shih kommercheskih SUBD, takie kak: tranzakcii, podzaprosy,
-          triggery, obzory (views), vneshnij klyuch ssylochnoj
-          celostnosti i raznye blokirovki. U nas est' nekotorye
-          vozmozhnosti, kotoryh net u nih: tipy, opredelyaemye
-          pol'zovatelem, mehanizm nasledovaniya, pravila i konkuretnoe
-          mnogoversionnoe upravlenie dlya raboty s soderzhimym
-          blokirovok.
+          triggery, predstavleniya, ssylochnoj celostnosti vtorichnogo
+          klyucha i raznye blokirovki. U nas est' nekotorye vozmozhnosti,
+          kotoryh net u nih: tipy, opredelyaemye pol'zovatelem, mehanizm
+          nasledovaniya, pravila i konkuretnoe mnogoversionnoe upravlenie
+          dlya raboty s soderzhimym blokirovok.
           
    Proizvoditel'nost'
           PostgreSQL imeet proizvoditel'nost' shozhuyu s drugimi
           kommercheskimi SUBD i s SUBD s otkrytym ishodnym kodom, v
           kakih-to aspektah rabotaya bystree chem oni, v kakih-to
-          medlenee. V sravnenii s MySQL ili linejnymi SUBD, my bystree,
+          medlenee. V sravnenii s MySQL ili obydennee SUBD, my bystree,
           kogda pol'zovatelej mnogo, a takzhe na kompleksnyh zaprosah i
           chtenii/zapisi zagruzki zaprosa. MySQL bystree dlya prostyh
           SELECT zaprosov, vypolnyaemyh nebol'shim kolichestvom
@@ -432,7 +431,7 @@
     
    PostgreSQL imeet odnorangovuyu infrastrukturu s togo samogo vremeni
    kak my nachali razrabotku v 1996 godu. My dolzhny blagodarit' za `eto
-   Marka Fonaya (Marc Fournier), kotoryj sozdal `etu infrastrukturu i
+   Marka Furn'e (Marc Fournier), kotoryj sozdal `etu infrastrukturu i
    upravlyaet ej na protyazhenii `etih let.
    
    Kachestvennaya infrastruktura ochen' vazhna dlya proektov s otkrytym
@@ -749,7 +748,7 @@
    chtoby `eta programma vydavala zaprosy, kotorye ona ispol'zuet dlya
    vypolneniya zadannyh vami komand.
    
-    4.4) Kak udalit' kolonku iz tablicy ili izmenit' ioio tip dannyh?
+    4.4) Kak udalit' kolonku iz tablicy ili izmenit' eio tip dannyh?
     
    DROP COLUMN funkcional'nost' byla dobavlena v vypusk 7.3 s operatorom
    ALTER TABLE DROP COLUMN. V rannih versiyah, mozhno sdelat' tak:
@@ -773,15 +772,15 @@ dalit'
     4.5) Kakovy maksimal'nye razmery dlya zapisej, tablic i bazy dannyh?
     
    Suschestvuyut sleduyuschie ogranicheniya:
-    Maksimal'nyj razmer bazy?              neogranichen (suschestvuyut bazy na
-32 TB)
-    Maksimal'nyj razmer tablicy?           32 TB
-    Maksimal'nyj razmer zapisi?            1.6 TB
-    Maksimal'nyj razmer polya?              1 GB
-    Maksimal'noe kolichestvo zapisej v tablice?      neogranicheno
-    Maksimal'noe kolichestvo kolonok v tablice?    250-1600 v zavisimosti ot ti
-pa
-    Maksimal'noe kolichestvo indeksov v tablice?   neogranicheno
+    Maksimal'nyj razmer bazy?                    neogranichen (suschestvuyut ba
+zy na 32 TB)
+    Maksimal'nyj razmer tablicy?                 32 TB
+    Maksimal'nyj razmer zapisi?                  1.6 TB
+    Maksimal'nyj razmer polya?                    1 GB
+    Maksimal'noe kolichestvo zapisej v tablice?   neogranicheno
+    Maksimal'noe kolichestvo kolonok v tablice?   250-1600 v zavisimosti ot tip
+a
+    Maksimal'noe kolichestvo indeksov v tablice?  neogranicheno
 
    Razumeetsya, ponyatie "neogranicheno" na samom dele ogranichivaetsya
    dostupnym diskovym prostranistvom i razmerami pamyati/svoppinga. Kogda
@@ -810,26 +809,26 @@ pa
    priblizitel'no 6.4 MB iz kotoryh:
     36 bajt: na kazhdyj zagolovok zapisi (priblizitel'no)
   + 24 bajta: odno pole s celochislennym tipom i odno tekstovoe pole
-   + 4 bajta: ukazatel' na stranice dlya vsej zapisi
+  +  4 bajta: ukazatel' na stranice dlya vsej zapisi
    ----------------------------------------
     64 bajt na zapis'
 
    Razmer stranicy dannyh v PostgreSQL sostavlyaet 8192 bajt (8 KB), tak chto:
 
    8192 bajt na stranicu
-   -------------------   =  128 zapisej na stranicu BD (s okrugleniem)
-     64 bajt na zapis'
+   ---------------------   =  128 zapisej na stranicu BD (s okrugleniem)
+     64 bajta na zapis'
 
-   100000 strok dannyh
-   --------------------  =  782 stranicy v BD
-  128 zapisej na stranicu
+     100000 strok dannyh
+   ----------------------- =  782 stranicy v BD
+   128 zapisej na stranicu
 
-782 stranicy BD * 8192 bajt na stranicu  =  6,406,144 bajt (6.4 MB)
+   782 stranicy BD * 8192 bajt na stranicu = 6,406,144 bajt (6.4 MB)
 
    Indeksy ne trebuyut tak mnogo, no poskol'ku oni sozdayutsya dlya
    bol'shogo kolichestva dannyh, oni takzhe mogut byt' veliki.
    
-   Znacheniya NULL hranyatsya kak bitovae karty i po`etomu oni zanimayut
+   Znacheniya NULL hranyatsya kak bitovye karty i po`etomu oni zanimayut
    ochen' malo mesta.
    
     4.7) Kak mne ubedit'sya, chto suschestvuyut nuzhnye mne tablicy, indeksy,
@@ -879,7 +878,7 @@ pa
     ORDER BY col [ DESC ]
     LIMIT 1;
 
-   Esli vam kazhetsya, chto optimizator nekorretno vybiraet
+   Esli vam kazhetsya, chto optimizator nekorrektno vybiraet
    posledovatel'nyj perebor, ispol'zujte SET enable_seqscan TO 'off' i
    zapustite testy, chtoby uvidet', ne stalo-li skanirovanie indeksov
    bystree.
@@ -918,7 +917,7 @@ pa
    Searching." Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of
    Data, 45-57.
    
-   Vy mozhete najti `etot dokument v knige Stonebraker'a "Readings in
+   Vy mozhete najti `etot dokument v knige Stounbrejkera "Readings in
    Database Systems".
    
    Vstroennnye R-tree mogut upravlyat' poligonami i boksami. V teorii,
@@ -1281,7 +1280,7 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
                           Rasshireniya PostgreSQL
                                       
     5.1) YA napisal funkciyu opredelyaemuyu pol'zovatelem. Kogda ya zapuskayu
-    ee v psql, pochemu ya poluchayu dump core?
+    ee v psql, pochemu ya poluchayu core dump?
     
    Problema mozhet zaklyuchat'sya v neskol'kih veschah. Popytajtes'
    sperva protestirovat' vashu funkciyu v otdel'noj samostoyatel'noj
