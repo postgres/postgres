@@ -1,11 +1,11 @@
 How to install PostgreSQL on Windows NT or Windows 2000
 =======================================================
-$Date: 2001/05/11 22:27:12 $
+$Date: 2001/10/25 16:20:51 $
 
 1.  Install the Cygwin package.
 
     The Cygwin package provides a UNIX-like API on top of the Win32
-    API.  It is available at <http://sources.redhat.com/cygwin/>.  At
+    API.  It is available at http://sources.redhat.com/cygwin/.  At
     the time of this writing, it is recommended to use either version
     1.1.7, a snapshot built after 2001/02/05 12:36:41, or the 1.3.x series
     (when available).  Version 1.1.8 contains a bug that will prevent the
@@ -13,7 +13,7 @@ $Date: 2001/05/11 22:27:12 $
     extra efforts.
 
 2.  Install the cygipc package, available at
-    <http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/>.
+    http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/.
     Do not use versions prior to 1.04, they will not work.
 
 3.  The Cygwin bin directory has to be placed in the path before the
@@ -36,4 +36,4 @@ NOTE:  The following are known issues with PostgreSQL on Windows:
     overflowing the listen() backlog queue which causes connection
     refused errors.
 
-Problem reports can be sent to <pgsql-cygwin@postgresql.org>.
+Problem reports can be sent to pgsql-cygwin@postgresql.org.
