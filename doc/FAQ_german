@@ -5,18 +5,17 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 14.02.2003,
+   Letzte Aktualisierung der deutschen Übersetzung: So., den 08.03.2003,
    22:30 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
-     * http://www.ca.PostgreSQL.org/docs/faq-english.html (engl.)
-     * http://www.ca.PostgreSQL.org/docs/faq-german.html (dt.)
+     * http://www.PostgreSQL.org/docs/faqs/FAQ.html (engl.)
+     * http://www.PostgreSQL.org/docs/faqs/FAQ_german.html (dt.)
        
    Übersetzungen dieses Dokuments in andere Sprachen sowie plattform-
    spezifische FAQs können unter
-   http://www.ca.PostgreSQL.org/users-lounge/docs/faq.html eingesehen
-   werden.
+   http://www.PostgreSQL.org/docs/index.html#faqs eingesehen werden.
      _________________________________________________________________
    
                              Allgemeine Fragen
@@ -222,10 +221,14 @@
    (Unix/NT-Portierungsbibliotheken) auf Windows NT/2000 zum Laufen
    gebracht werden. Hierzu bitte lesen Sie die in der Distribution
    enthaltene Datei pgsql/doc/FAQ_MSWIN oder die MS-Windows-FAQ unter
-   http://www.ca.PostgreSQL.org/docs/faq-mswin.html.
+   http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
    
    Eine eigenständige Portierung auf MS Win NT/2000/XP befindet sich in
-   Vorbereitung.
+   der Vorbereitung.
+   
+   Weitere Informationen zum Status von PostgreSQL auf der
+   Microsoft-Plattform befinden sich unter
+   http://techdocs.postgresql.org/guides/Windows (en.).
    
     1.5) Woher bekomme ich PostgreSQL?
     
@@ -264,6 +267,10 @@
     subscribe
     end
 
+   Eine deutschsprachige Mailing-Liste gibt es bei Yahoo Groups:
+   http://de.groups.yahoo.com/group/postgres/; die Liste kann mit einer
+   leeren E-Mail an postgres-subscribe@yahoogroups.de abonniert werden.
+   
    Weitere Mailinglisten und Informationen zu PostgreSQL befinden sich
    auf der PostgreSQL-Homepage:
    
@@ -288,8 +295,8 @@
     
    Einige Handbücher, Man-Pages und einige kleine Testprogramme sind in
    der Distribution enthalten. Siehe das /doc-Verzeichnis. Ausserdem sind
-   alle Handbücher online unter
-   http://www.PostgreSQL.org/users-lounge/docs/ verfügbar.
+   alle Handbücher online unter http://www.PostgreSQL.org/docs/
+   verfügbar.
    
    Zwei Bücher zu PostgreSQL sind online verfügbar unter
    http://www.PostgreSQL.org/docs/awbook.html und
@@ -518,8 +525,9 @@
    voreingestellten Werten für Puffer und Prozesse benötigen Sie bei den
    meisten Systemen ein Minimum von ca. 1 MB. Der "PostgreSQL
    Administrator's Guide"
-   (http://www.PostgreSQL.org/idocs/index.php?kernel-resources.html)
-   enthält weitere Informationen zu Shared Memory und Semaphores.
+   (http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=k
+   ernel-resources.html) enthält weitere Informationen zu Shared Memory
+   und Semaphores.
    
     3.4) Wenn ich versuche, den postmaster zu starten, bekomme ich
     "IpcSemaphoreCreate"-Fehlermeldungen. Warum?
@@ -1203,8 +1211,8 @@ BYTEA         bytea           Bytearray mit variabler Länge
     
    "Result sets" können mittels refcursors von PL/PgSQL-Funktionen
    zurückgegeben werden. Vgl.:
-   http://www.postgresql.org/idocs/index.php?plpgsql-cursors.html
-   (Abschnitt 23.7.3.3).
+   http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=pl
+   pgsql-cursors.html (Abschnitt 23.7.3.3).
    
     4.26) Warum kann ich temporäre Tabellen in PL/PgSQL-Funktionen nicht
     zuverlässig erstellen bzw. löschen?
