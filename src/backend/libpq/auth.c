@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.47 2000/05/27 04:13:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.48 2000/07/04 16:31:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,9 +52,6 @@ static void auth_failed(Port *port);
 
 
 #ifdef KRB4
-/* This has to be ifdef'd out because krb.h does exist.  This needs
-   to be fixed.
-*/
 /*----------------------------------------------------------------
  * MIT Kerberos authentication system - protocol version 4
  *----------------------------------------------------------------
@@ -141,9 +138,6 @@ pg_krb4_recvauth(Port *port)
 
 
 #ifdef KRB5
-/* This needs to be ifdef'd out because krb5.h doesn't exist.  This needs
-   to be fixed.
-*/
 /*----------------------------------------------------------------
  * MIT Kerberos authentication system - protocol version 5
  *----------------------------------------------------------------
@@ -692,16 +686,14 @@ readPasswordPacket(void *arg, PacketLen len, void *pkt)
 
 
 /*
- * Use the local flat password file if clear passwords are used and the file is
- * specified.  Otherwise use the password in the pg_shadow table, encrypted or
- * not.
+ * Handle `password' and `crypt' records. If an auth argument was
+ * specified, use the respective file. Else use pg_shadow passwords.
  */
-
 static int
 checkPassword(Port *port, char *user, char *password)
 {
-	if (port->auth_method == uaPassword && port->auth_arg[0] != '\0')
-		return verify_password(port->auth_arg, user, password);
+	if (port->auth_arg[0] != '\0')
+		return verify_password(port, user, password);
 
 	return crypt_verify(port, user, password);
 }

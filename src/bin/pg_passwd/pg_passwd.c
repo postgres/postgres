@@ -105,13 +105,9 @@ try_again:
 
 		/* get user name */
 		p = line;
-		if ((q = strchr(p, ':')) == NULL)
-		{
-			fprintf(stderr, "%s: line %d: illegal format.\n",
-					filename, npwds + 1);
-			exit(1);
-		}
-		*(q++) = '\0';
+		if ((q = strchr(p, ':')) != NULL)
+			*q = '\0';
+
 		if (strlen(p) == 0)
 		{
 			fprintf(stderr, "%s: line %d: null user name.\n",
@@ -131,23 +127,23 @@ try_again:
 		}
 
 		/* get password field */
-		p = q;
-		q = strchr(p, ':');
-
-		/*
-		 * --- don't care ----- if ((q = strchr(p, ':')) == NULL) {
-		 * fprintf(stderr, "%s: line %d: illegal format.\n", filename,
-		 * npwds + 1); exit(1); }
-		 */
-
-		if (q != NULL)
-			*(q++) = '\0';
-		if (strlen(p) != 13)
+		if (q)
 		{
-			fprintf(stderr, "WARNING: %s: line %d: illegal password length.\n",
-					filename, npwds + 1);
+			p = q + 1;
+			q = strchr(p, ':');
+
+			if (q != NULL)
+				*(q++) = '\0';
+
+			if (strlen(p) != 13 && strcmp(p, "+")!=0)
+			{
+				fprintf(stderr, "WARNING: %s: line %d: invalid password length.\n",
+						filename, npwds + 1);
+			}
+			pwds[npwds].pwd = strdup(p);
 		}
-		pwds[npwds].pwd = strdup(p);
+		else
+			pwds[npwds].pwd = NULL;
 
 		/* rest of the line is treated as is */
 		if (q == NULL)
@@ -193,9 +189,12 @@ link_again:
 	/* write file */
 	for (i = 0; i < npwds; ++i)
 	{
-		fprintf(fp, "%s:%s%s%s\n", pwds[i].uname, pwds[i].pwd,
-				pwds[i].rest ? ":" : "",
-				pwds[i].rest ? pwds[i].rest : "");
+		fprintf(fp, "%s", pwds[i].uname);
+		if (pwds[i].pwd)
+			fprintf(fp, ":%s", pwds[i].pwd);
+		if (pwds[i].rest)
+			fprintf(fp, ":%s", pwds[i].rest);
+		fprintf(fp, "\n");
 	}
 
 	fclose(fp);

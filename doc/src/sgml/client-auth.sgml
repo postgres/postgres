@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.1 2000/06/18 21:24:51 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.2 2000/07/04 16:31:51 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -202,15 +202,15 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
      <term>password</term>
      <listitem>
       <para>
-       The client is required to supply a password for the connection
+       The client is required to supply a password with the connection
        attempt which is required to match the password that was set up
-       for the user. (These passwords are separate from any operating
-       sytem password.)
+       for the user.
       </para>
       <para>
-       An optional password file may be specified after the
-       <literal>password</literal> keyword to obtain the password from
-       that file rather than the pg_shadow system catalog.
+       An optional file name may be specified after the
+       <literal>password</literal> keyword. This file is expected to
+       contain a list of users that this record pertains to, and
+       optionally alternative passwords.
       </para>
       <para>
        The password is sent over the wire in clear text. For better
@@ -225,11 +225,11 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
       <para>
        Like the <literal>password</literal> method, but the password
        is sent over the wire encrypted using a simple
-       challenge-response protocol. Note that this is still not
+       challenge-response protocol. This is still not
        cryptographically secure but it protects against incidental
-       wire-sniffing. Interestingly enough, the
-       <literal>crypt</literal> does not support secondary password
-       files.
+       wire-sniffing. The name of a file may follow the
+       <literal>crypt</literal> keyword that contains a list of users
+       that this record pertains to.
       </para>
      </listitem>
     </varlistentry>
@@ -276,24 +276,36 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
   <sect2>
    <title>Password authentication</title>
    <para>
-    Ordinarily, the password for each database user is stored in the
-    pg_shadow system catalog table. Passwords can be managed with the
-    query language commands <command>CREATE USER</command> and
-    <command>ALTER USER</command>, e.g., <userinput>CREATE USER foo
-    WITH PASSWORD 'secret';</userinput>. By default, that is, if no
-    password has explicitly been set up, the stored password is
-    <quote>NULL</quote> and password authentication will always fail
-    for that user.
+    <productname>Postgres</> database passwords are separate from any
+    operating system user passwords. Ordinarily, the password for each
+    database user is stored in the pg_shadow system catalog table.
+    Passwords can be managed with the query language commands
+    <command>CREATE USER</command> and <command>ALTER USER</command>,
+    e.g., <userinput>CREATE USER foo WITH PASSWORD
+    'secret';</userinput>. By default, that is, if no password has
+    explicitly been set up, the stored password is <quote>NULL</quote>
+    and password authentication will always fail for that user.
    </para>
 
    <para>
-    Secondary password files can be used if a given set of passwords
-    should only apply to a particular database or set thereof.
-    Secondary password files have a format similar to the standard
-    Unix password file <filename>/etc/passwd</filename>, that is,
-    <synopsis>
+    To restrict the set of users that are allowed to connect to
+    certain databases, list the set of users in a separate file (one
+    user name per line) in the same directory that
+    <filename>pg_hba.conf</> is in, and mention the (base) name of the
+    file after the <literal>password</> or <literal>crypt</> keyword,
+    respectively, in <filename>pg_hba.conf</>. If you do not use this
+    feature, then any user that is known to the database system can
+    connect (as long as he passes password authentication, of course).
+   </para>
+
+   <para>
+    These files can also be used a apply a different set of passwords
+    to a particular database or set thereof. In that case, the files
+    have a format similar to the standard Unix password file
+    <filename>/etc/passwd</filename>, that is,
+<synopsis>
 <replaceable>username</replaceable>:<replaceable>password</replaceable>
-    </synopsis>
+</synopsis>
     Any extra colon separated fields following the password are
     ignored. The password is expected to be encrypted using the
     system's <function>crypt()</function> function. The utility
@@ -303,20 +315,29 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
    </para>
 
    <para>
-    Secondary password files can also be used to restrict certain
-    users from connecting to certain databases at all. This is
-    currently not possible to achieve using the normal password
-    mechanism (because users and passwords are global across all
-    databases). If a user is not listed in the applicable password
-    file the connection will be refused.
+    Lines with and without passwords can be mixed in secondary
+    password files. Lines without password indicate use the main
+    password in <literal>pg_shadow</> that is managed by
+    <command>CREATE USER</> and <command>ALTER USER</>. Lines with
+    passwords will cause that password to be used. A password entry of
+    <quote>+</quote> also means using the pg_shadow password.
    </para>
 
    <para>
-    Note that using secondary password files means that one can no
-    longer use <command>ALTER USER</command> to change one's password.
-    It will still appear to work but the password one is actually
-    changing is not the password that the system will end up using.
+    Alternative passwords cannot be used when using the
+    <literal>crypt</> method. The file will still be evaluated as
+    usual but the password field will simply be ignored and the
+    <literal>pg_shadow</> password will be used.
    </para>
+
+   <para>
+    Note that using alternative passwords like this means that one can
+    no longer use <command>ALTER USER</command> to change one's
+    password. It will still appear to work but the password one is
+    actually changing is not the password that the system will end up
+    using.
+   </para>
+
   </sect2>
 
   <sect2>
@@ -361,14 +382,15 @@ integrated here. -->
     The <quote>Identification Protocol</quote> is described in
     <citetitle>RFC 1413</citetitle>. Virtually every Unix-like
     operating systems ships with an ident server that listens on TCP
-    port 113 by default. The basic functionality of the ident server
+    port 113 by default. The basic functionality of an ident server
     is to answer questions like <quote>What user initiated the
     connection that goes out of your port <replaceable>X</replaceable>
     and connects to my port <replaceable>Y</replaceable>?</quote>.
-    Since both <replaceable>X</replaceable> and
-    <replaceable>Y</replaceable> are known,
-    <productname>Postgres</productname> could theoretically determine
-    the operating system user for any given connection this way.
+    Since <productname>Postgres</> knows both <replaceable>X</> and
+    <replaceable>Y</> when a physical connection is established, it
+    can interrogate the ident server on the host of the connecting
+    client and could theoretically determine the operating system user
+    for any given connection this way.
    </para>
 
    <para>

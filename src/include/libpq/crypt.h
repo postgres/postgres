@@ -26,6 +26,6 @@ extern char *crypt_getpwdreloadfilename(void);
 extern MsgType crypt_salt(const char *user);
 
 #endif
-extern int	crypt_verify(Port *port, const char *user, const char *pgpass);
+extern int	crypt_verify(const Port *port, const char *user, const char *pgpass);
 
 #endif

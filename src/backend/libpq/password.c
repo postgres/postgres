@@ -2,7 +2,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.29 2000/06/02 15:57:21 momjian Exp $
+ * $Id: password.c,v 1.30 2000/07/04 16:31:53 petere Exp $
  *
  */
 
@@ -15,18 +15,19 @@
 
 #include "libpq/libpq.h"
 #include "libpq/password.h"
+#include "libpq/crypt.h"
 #include "miscadmin.h"
 
 int
-verify_password(char *auth_arg, char *user, char *password)
+verify_password(const Port *port, const char *user, const char *password)
 {
 	char	   *pw_file_fullname;
 	FILE	   *pw_file;
 
-	pw_file_fullname = (char *) palloc(strlen(DataDir) + strlen(auth_arg) + 2);
+	pw_file_fullname = (char *) palloc(strlen(DataDir) + strlen(port->auth_arg) + 2);
 	strcpy(pw_file_fullname, DataDir);
 	strcat(pw_file_fullname, "/");
-	strcat(pw_file_fullname, auth_arg);
+	strcat(pw_file_fullname, port->auth_arg);
 
 	pw_file = AllocateFile(pw_file_fullname, PG_BINARY_R);
 	if (!pw_file)
@@ -52,22 +53,31 @@ verify_password(char *auth_arg, char *user, char *password)
 				   *test_pw;
 
 		fgets(pw_file_line, sizeof(pw_file_line), pw_file);
+		/* kill the newline */
+		if (pw_file_line[strlen(pw_file_line) - 1] == '\n')
+			pw_file_line[strlen(pw_file_line) - 1] = '\0';
+
 		p = pw_file_line;
 
 		test_user = strtok(p, ":");
 		test_pw = strtok(NULL, ":");
-		if (!test_user || !test_pw ||
-			test_user[0] == '\0' || test_pw[0] == '\0')
+		if (!test_user || test_user[0] == '\0')
 			continue;
-
-		/* kill the newline */
-		if (test_pw[strlen(test_pw) - 1] == '\n')
-			test_pw[strlen(test_pw) - 1] = '\0';
 
 		if (strcmp(user, test_user) == 0)
 		{
 			/* we're outta here one way or the other, so close file */
 			FreeFile(pw_file);
+
+			/*
+			 * If the password is empty of "+" then we use the regular
+			 * pg_shadow passwords. If we use crypt then we have to
+			 * use pg_shadow passwords no matter what.
+			 */
+			if (port->auth_method == uaCrypt
+				|| test_pw == NULL || test_pw[0] == '\0'
+				|| strcmp(test_pw, "+")==0)
+				return crypt_verify(port, user, password);
 
 			if (strcmp(crypt(password, test_pw), test_pw) == 0)
 			{

@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.26 2000/07/03 20:48:30 petere Exp $
+ * $Id: crypt.c,v 1.27 2000/07/04 16:31:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 /*-------------------------------------------------------------------------*/
 
 int
-crypt_verify(Port *port, const char *user, const char *pgpass)
+crypt_verify(const Port *port, const char *user, const char *pgpass)
 {
 
 	char	   *passwd,
