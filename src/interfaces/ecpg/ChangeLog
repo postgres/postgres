@@ -1612,6 +1612,16 @@ Tue Aug 26 18:06:45 CEST 2003
 Mon Sep  1 14:33:10 CEST 2003
 
 	- Fixed two bugs in numeric library.
+
+Tue Sep  9 12:13:51 CEST 2003
+
+	- Added Dave patch for Informix handling of numeric/int conversion.
+	- Changed all new datatypes to lowercase.
+	- Fixed rounding bug in numerical types.
+	
+Wed Sep 10 20:01:49 CEST 2003
+
+	- Some files still had uppercase typenames
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

@@ -426,7 +426,7 @@ dectolong(decimal * np, long *lngp)
 
 /* Now the date functions */
 int
-rdatestr(Date d, char *str)
+rdatestr(date d, char *str)
 {
 	char	   *tmp = PGTYPESdate_to_asc(d);
 
@@ -441,9 +441,9 @@ rdatestr(Date d, char *str)
 }
 
 int
-rstrdate(char *str, Date * d)
+rstrdate(char *str, date * d)
 {
-	Date		dat = PGTYPESdate_from_asc(str, NULL);
+	date		dat = PGTYPESdate_from_asc(str, NULL);
 
 	if (errno != PGTYPES_DATE_BAD_DATE && dat == 0)
 		return -1218;
@@ -453,14 +453,14 @@ rstrdate(char *str, Date * d)
 }
 
 void
-rtoday(Date * d)
+rtoday(date * d)
 {
 	PGTYPESdate_today(d);
 	return;
 }
 
 int
-rjulmdy(Date d, short mdy[3])
+rjulmdy(date d, short mdy[3])
 {
 	int			mdy_int[3];
 
@@ -472,7 +472,7 @@ rjulmdy(Date d, short mdy[3])
 }
 
 int
-rdefmtdate(Date * d, char *fmt, char *str)
+rdefmtdate(date * d, char *fmt, char *str)
 {
 	/* TODO: take care of DBCENTURY environment variable */
 	/* PGSQL functions allow all centuries */
@@ -497,7 +497,7 @@ rdefmtdate(Date * d, char *fmt, char *str)
 }
 
 int
-rfmtdate(Date d, char *fmt, char *str)
+rfmtdate(date d, char *fmt, char *str)
 {
 	if (PGTYPESdate_fmt_asc(d, fmt, str) == 0)
 		return 0;
@@ -509,7 +509,7 @@ rfmtdate(Date d, char *fmt, char *str)
 }
 
 int
-rmdyjul(short mdy[3], Date * d)
+rmdyjul(short mdy[3], date * d)
 {
 	int			mdy_int[3];
 
@@ -521,7 +521,7 @@ rmdyjul(short mdy[3], Date * d)
 }
 
 int
-rdayofweek(Date d)
+rdayofweek(date d)
 {
 	return (PGTYPESdate_dayofweek(d));
 }
