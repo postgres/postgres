@@ -1,0 +1,609 @@
+2001-05-04 22:57  momjian
+
+	* HISTORY, register.txt, doc/src/sgml/release.sgml: UPdate for
+	release tomorrow.
+
+2001-05-04 19:11  tgl
+
+	* doc/src/sgml/runtime.sgml: COMMIT_DELAY and COMMIT_SIBLINGS were
+	missing from the list of WAL configuration parameters in chapter 3.
+
+2001-05-04 18:01  tgl
+
+	* src/backend/parser/Makefile: Makefile should have automatic
+	dependency for parser.o too, if it's going to have any at all.
+
+2001-05-04 14:39  tgl
+
+	* src/backend/access/transam/xact.c: Seems like we should not hold
+	off cancel/die interrupts while we are running deferred triggers. 
+	They are really part of the regular transaction, and they could
+	take awhile.
+
+2001-05-03 22:54  momjian
+
+	* doc/src/sgml/runtime.sgml: Add missing tag.
+
+2001-05-03 18:53  tgl
+
+	* src/: backend/utils/adt/datetime.c,
+	backend/utils/adt/formatting.c, backend/utils/adt/timestamp.c,
+	include/utils/datetime.h: Consolidate several near-identical uses
+	of mktime() into a single routine DetermineLocalTimeZone().  In
+	that routine, be more wary of broken mktime() implementations than
+	the original code was: don't allow mktime to change the already-set
+	y/m/d/h/m/s information, and don't use tm_gmtoff if mktime failed. 
+	Possibly this will resolve some of the complaints we've been
+	hearing from users of Middle Eastern timezones on RedHat.
+
+2001-05-03 17:38  momjian
+
+	* doc/src/sgml/charset.sgml,
+	src/backend/utils/mb/Unicode/KOI8_to_utf8.map,
+	src/backend/utils/mb/Unicode/utf8_to_KOI8.map,
+	src/include/mb/pg_wchar.h, src/interfaces/odbc/multibyte.h: BTW it
+	does not add encodign it just patches existing one (KOI8) to
+	support two - KOI8-R and KOI8-U (latter is superset of the former
+	if not to take to the account pseudographics)
+	
+	Andy Rysin
+
+2001-05-03 17:16  tgl
+
+	* src/backend/rewrite/rewriteDefine.c: Permission checking wasn't
+	quite right for insert/update/delete rules, either :-(.
+
+2001-05-03 16:39  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: pg_dump can dump 7.0
+	databases.
+
+2001-05-03 15:20  momjian
+
+	* src/test/locale/test-ctype.c: apply a little patch:
+	
+	Oleg Bartunov
+
+2001-05-03 15:00  tgl
+
+	* src/: backend/access/nbtree/nbtcompare.c,
+	backend/utils/adt/date.c, backend/utils/adt/float.c,
+	backend/utils/adt/nabstime.c, backend/utils/adt/numeric.c,
+	backend/utils/adt/timestamp.c, backend/utils/adt/varbit.c,
+	backend/utils/adt/varchar.c, backend/utils/adt/varlena.c,
+	include/utils/nabstime.h,
+	test/regress/expected/abstime-solaris-1947.out,
+	test/regress/expected/abstime.out,
+	test/regress/expected/timestamp.out: Ensure that btree sort
+	ordering functions and boolean comparison operators give consistent
+	results for all datatypes.  Types float4, float8, and numeric were
+	broken for NaN values; abstime, timestamp, and interval were broken
+	for INVALID values; timetz was just plain broken (some possible
+	pairs of values were neither < nor = nor >).  Also clean up text,
+	bpchar, varchar, and bit/varbit to eliminate duplicate code and
+	thereby reduce the probability of similar inconsistencies arising
+	in the future.
+
+2001-05-03 13:50  tgl
+
+	* doc/src/sgml/ref/create_table.sgml: Describe handling of
+	multiply-inherited fields correctly.
+
+2001-05-03 13:47  tgl
+
+	* src/backend/rewrite/rewriteHandler.c: Permissions were not
+	checked correctly when one view invokes another.  Per bug report
+	from Lieven Van Acker, 5/2/01.
+
+2001-05-03 13:28  momjian
+
+	* doc/src/sgml/runtime.sgml: Update shared memory docs.
+
+2001-05-03 13:20  momjian
+
+	* src/tools/RELEASE_CHANGES: Improve list.
+
+2001-05-03 13:17  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Final stamp for 7.1.1.  All
+	done.
+
+2001-05-03 12:47  momjian
+
+	* src/: include/config.h.win32, interfaces/libpq/libpq.rc,
+	tools/RELEASE_CHANGES: Updates for 7.1.1.  Not done yet.
+
+2001-05-03 12:43  momjian
+
+	* configure: autoconf
+
+2001-05-03 12:26  momjian
+
+	* HISTORY, README, configure.in, register.txt, doc/bug.template,
+	doc/src/sgml/release.sgml: Some updates for 7.1.1.
+
+2001-05-03 12:18  tgl
+
+	* src/include/catalog/pg_type.h: Correct pg_description entry for
+	type macaddr.
+
+2001-05-03 12:07  tgl
+
+	* src/: interfaces/ecpg/include/sqlca.h,
+	interfaces/ecpg/test/Makefile, makefiles/Makefile.win: Fixes to
+	make ecpg work on Cygwin, from Jason Tishler
+	<Jason.Tishler@dothill.com>.
+
+2001-05-03 08:32  darcy
+
+	* contrib/chkpass/: Makefile, README.chkpass, chkpass.c,
+	chkpass.sql: Initial checkin of a contributed type that handles
+	passwords efficiently.
+
+2001-05-02 16:35  momjian
+
+	* doc/src/sgml/ref/drop_aggregate.sgml: In the outputs section the
+	NOTICE reads: aggregate 'agg' for 'type' does not exist.
+	
+	Mismatch with synopsis, agg must be name here.
+	
+	Frank Wegmann
+
+2001-05-02 13:04  momjian
+
+	* doc/src/sgml/runtime.sgml: Added mention of SHMALL and removed
+	BSD/OS-specific table.
+
+2001-05-02 10:46  momjian
+
+	* doc/src/sgml/ref/createuser.sgml: description of the command line
+	option echo should read:
+	
+	Echo the queries that createuser generates and sends to the
+	backend.			^^^^^^^^^^
+	
+	Frank Wegmann
+
+2001-05-02 10:23  tgl
+
+	* src/interfaces/odbc/win32.mak: Previous commit mistakenly
+	converted all newlines to DOS style (CR/LF).  Convert back to Unix
+	style --- it seems some versions of nmake insist on this.
+
+2001-05-02 07:21  darcy
+
+	* src/interfaces/python/README: Add note explaining why inserts
+	take longer as tables grow.  Also suggest the way to handle this.
+
+2001-05-02 07:17  darcy
+
+	* src/interfaces/python/pgmodule.c: Change "|zzlzzzz" argument
+	specification to "|zzizzzz" so that the code works properly on 64
+	bit systems.
+	
+	Change submitted by Marc Poinot (Marc.Poinot@onera.fr)
+
+2001-05-01 06:50  petere
+
+	* doc/src/sgml/version.sgml: Bump version to 7.1.1.  Now run over
+	to hub to rebuild documentation before release...
+
+2001-05-01 06:48  petere
+
+	* doc/src/sgml/: libpq++.sgml, libpq.sgml: More markup fixes
+
+2001-04-30 23:00  tgl
+
+	* doc/src/sgml/runtime.sgml: Fix slightly confused description of
+	debug options.
+
+2001-04-30 22:33  tgl
+
+	* src/interfaces/ecpg/preproc/preproc.y: Synced gram.y and
+	preproc.y.
+
+2001-04-30 21:36  thomas
+
+	* src/backend/parser/gram.y: Allow a string argument to the
+	EXTRACT() function.   This is an extension to the SQL9x standard,
+	but is consistant with usage   of the underlying date_part()
+	function used to implement it.	 Example: EXTRACT('YEAR',...)  No
+	impact on regression tests.
+
+2001-04-30 20:47  inoue
+
+	* src/interfaces/odbc/: parse.c, psqlodbc.h, psqlodbc.rc,
+	qresult.c: 1) fix bugs reported by Andrea Aime.  2) fix a bug
+	reported by Jan Wieck.	psqlodbc is 7.01.0005 now.
+
+2001-04-30 19:55  tgl
+
+	* doc/FAQ_HPUX: Update FAQ_HPUX now that we have reports of
+	out-of-the-box build on HPUX 11.
+
+2001-04-30 18:22  tgl
+
+	* doc/src/sgml/pltcl.sgml: Document pltcl's return_null command.
+
+2001-04-30 18:21  tgl
+
+	* doc/src/sgml/: libpq++.sgml, libpq.sgml: Repair freshly-broken
+	markup.
+
+2001-04-30 16:05  tgl
+
+	* src/pl/plpgsql/src/pl_exec.c: exec_move_row() should be more
+	forgiving of tuples with a different number of columns than it was
+	expecting, for reasons that are now documented in the code...
+
+2001-04-30 15:24  tgl
+
+	* src/backend/optimizer/plan/planner.c: Suppress pull-up of
+	subqueries that are in the nullable side of an outer join.  This is
+	needed to avoid improper evaluation of expressions that should be
+	nulled out, as in Victor Wagner's bug report of 4/27/01.  Pretty
+	ugly solution, but no time to do anything better for 7.1.1.
+
+2001-04-30 13:38  momjian
+
+	* doc/src/sgml/: libpq++.sgml, libpq.sgml: Break up PQexec() result
+	functions into subsections to be clearer.  Both libpq and libpq++
+	reorganized.
+
+2001-04-30 00:26  momjian
+
+	* doc/src/sgml/: libpgtcl.sgml, libpq++.sgml: Add mention of
+	libpgtcl's options to manual, libpq++ markup fixes.
+
+2001-04-29 03:27  ishii
+
+	* src/backend/utils/mb/: conv.c, Unicode/ALT_to_utf8.map,
+	Unicode/KOI8_to_utf8.map, Unicode/Makefile,
+	Unicode/UCS_to_cyrillic.pl, Unicode/WIN_to_utf8.map,
+	Unicode/utf8_to_ALT.map, Unicode/utf8_to_KOI8.map,
+	Unicode/utf8_to_WIN.map: Add missing Unicode support for Cyrillic
+	encodings.  Patches contributed by Victor Wagner.
+
+2001-04-28 09:59  momjian
+
+	* doc/src/sgml/ref/: create_function.sgml, drop_function.sgml: In
+	create_function there is a remark concerning SQL/PSM not being
+	ratified as yet. This is certainly no longer true, it wasn't even
+	true in Q2/1998 when I did a little research for Date's book. 
+	SQL/PSM had been published on 1996-12-15 as ISO/IEC 9075:4. So you
+	might want to update that section.
+	
+	Frank Wegmann
+
+2001-04-26 21:31  momjian
+
+	* doc/src/sgml/ref/pg_ctl-ref.sgml: A small patch for a small
+	option (for rel. 7.1).
+	
+	Jimmy Olgeni
+
+2001-04-26 20:55  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-04-26 20:21  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html, FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-04-26 17:52  tgl
+
+	* src/backend/utils/adt/nabstime.c: Remove bogus Assert from
+	AbsoluteTimeIsBefore().  (If you don't think it's bogus, try
+	building a btree index on the regress tests' abstime_tbl.)
+
+2001-04-25 18:04  tgl
+
+	* src/backend/optimizer/path/costsize.c: Tweak nestloop costing to
+	weight restart cost of inner path more heavily.  Without this, it
+	was making some pretty silly decisions about whether an expensive
+	sub-SELECT should be the inner or outer side of a join...
+
+2001-04-25 03:03  pjw
+
+	* src/bin/pg_dump/: pg_backup.h, pg_backup_archiver.c,
+	pg_backup_archiver.h, pg_backup_custom.c, pg_backup_db.c,
+	pg_backup_tar.c, pg_dump.c, pg_dump.h: - Fixed CONSTRAINT TRIGGER
+	dump to record tgconstrelid properly - pgsql v7.0 compatbility
+
+2001-04-24 16:05  petere
+
+	* doc/FAQ_MSWIN: typological errors
+
+2001-04-23 20:08  tgl
+
+	* src/include/nodes/nodes.h: Undo pgindent brain damage, so that
+	node type numbers can once again be counted off by lines ...
+
+2001-04-23 19:36  tgl
+
+	* src/bin/pg_dump/pg_dump.c: Behave sanely when database name is
+	omitted from command line.
+
+2001-04-23 16:27  petere
+
+	* src/backend/Makefile: Send 'cd' output to /dev/null.
+
+2001-04-23 11:14  tgl
+
+	* configure, configure.in: Defend against ancient versions of zlib
+	by checking that zlib.h defines z_streamp.
+
+2001-04-23 00:32  tgl
+
+	* src/backend/parser/parse_oper.c: compatible_oper needs to do
+	ReleaseSysCache in one path to avoid complaints about 'Cache
+	reference leak'.  Per report from Don Baccus.
+
+2001-04-22 21:41  inoue
+
+	* src/interfaces/odbc/: columninfo.c, connection.c, convert.c,
+	execute.c, qresult.c: 1) Decrease the size of needlessly large
+	buffers. For example, it    resolved the stack over flow errors
+	reported by Johann Zuschlag.  2) Support {oj syntax for 71.
+	servers.
+
+2001-04-22 21:00  inoue
+
+	* src/interfaces/odbc/: bind.c, convert.c, execute.c, pgtypes.c,
+	pgtypes.h, statement.c, statement.h: A patch to fix the following
+	bugs.  1) [ODBC] Psqlodbc and Centura: here it is a patch	 
+	posted by Matteo Cavalleli 2) [ODBC] pgsqODBC binding parameters II
+		posted by Ludek Finstrle 3) Invalid Page Fault in
+	PSQLODBC.DLL	     personal mail from Johann Zuschlag
+	
+	   Hiroki Kataoka   kataoka@interwiz.koganei.tokyo.jp
+
+2001-04-22 17:34  tgl
+
+	* src/bin/pg_dump/pg_dump.c: Don't bomb out on indexes on system
+	attributes other than 'oid'.  (Not sure such an index is actually
+	useful, but just because it's useless doesn't mean pg_dump should
+	coredump.)
+
+2001-04-21 14:29  tgl
+
+	* src/backend/: main/main.c, utils/init/findbe.c,
+	utils/init/postinit.c: Remove useless setuid() call, instead add a
+	check that real and effective userids are the same.  Per today's
+	pghackers discussion.
+
+2001-04-21 07:23  petere
+
+	* src/bin/pg_ctl/pg_ctl.sh: Make sure that the postmaster options
+	(from postmaster.opts[.default] or -o option) are properly
+	dequoted.  Also, always pass an explicit -D option to postmaster,
+	don't rely on it being set in postmaster.opts.
+
+2001-04-20 11:52  thomas
+
+	* doc/src/sgml/: Makefile, biblio.sgml, catalogs.sgml,
+	charset.sgml, docguide.sgml, func.sgml, geqo.sgml, libpgeasy.sgml,
+	mvcc.sgml, user-manag.sgml: Final markup for 7.1 hardcopy release.
+	Mostly typo and table-fitting  adjustments. Note that many tables
+	are being abused with *really* long  description columns. Should
+	probably shrink those columns to be more  concise, and move some of
+	the info to follow-on reference notes.
+
+2001-04-20 11:50  thomas
+
+	* doc/src/sgml/fixrtf: Add option --refentry to change \keepn (keep
+	with next paragraph) to  \keep (keep current paragraph together).
+	This fixes most troubles with  reference pages marked up with
+	<refentry> tags.  Use on reference.rtf, generated by "make
+	reference.rtf".
+
+2001-04-19 16:27  petere
+
+	* configure, configure.in: Remove libsfio check.
+
+2001-04-19 15:17  petere
+
+	* contrib/start-scripts/: freebsd, linux: Pass -D option to pg_ctl
+	because export PGDATA won't be preserved across 'su -l'.
+	
+	Reported by <VASQUEZ_JASON@LILLY.COM>.
+
+2001-04-19 15:09  petere
+
+	* src/backend/postmaster/postmaster.c: Add extern int optreset
+	declaration, per bug report from <info@decc.nl>.
+
+2001-04-19 15:01  petere
+
+	* src/backend/utils/adt/varchar.c: Fix "off by VARHDRSZ" bug in
+	(Cyrillic) recode support.
+
+2001-04-19 00:29  tgl
+
+	* src/backend/executor/execQual.c: Kluge solution for Alex
+	Pilosov's report of problems with whole-tuple function arguments in
+	join queries: copy the tuples into TransactionCommandContext so
+	they don't get recycled too soon.  This is horrid, but not any
+	worse than 7.0 or before, which also leaked such tuples until end
+	of query.  A proper fix will require allowing tuple datums to be
+	physically stored inside larger tuple datums, which opens up a
+	bunch of issues that can't realistically be solved for 7.1.1.
+
+2001-04-18 22:34  ishii
+
+	* src/backend/utils/mb/wchar.c: Add a crash gurard to
+	pg_encoding_mblen in case of an invalid encoding given.
+
+2001-04-18 18:25  tgl
+
+	* src/backend/parser/parse_func.c: Further tweaking of error
+	messages for cases involving attributes & functions of join or
+	subselect aliases.  It'd be awfully nice if this code knew for sure
+	whether it was dealing with 'x.f' or 'f(x)' syntax; maybe we can
+	fix that in a future cycle.
+
+2001-04-18 16:53  petere
+
+	* src/bin/psql/command.c: Repair misbehavior of \! with immediately
+	following argument that contains spaces (e.g., '\!ls -l').  Also
+	correct a comment.
+
+2001-04-18 16:42  tgl
+
+	* src/: backend/optimizer/plan/planner.c,
+	backend/optimizer/util/var.c, backend/rewrite/rewriteManip.c,
+	include/optimizer/var.h, pl/plpgsql/src/gram.y,
+	pl/plpgsql/src/pl_comp.c, pl/plpgsql/src/scan.l: Make the world
+	safe for passing whole rows of views to functions.  This already
+	worked fine for whole rows of tables, but not so well for views...
+
+2001-04-18 13:04  tgl
+
+	* src/backend/: parser/parse_relation.c, utils/adt/ruleutils.c:
+	Make rule lister do the right thing with Vars representing whole
+	tuples.
+
+2001-04-17 03:30  inoue
+
+	* src/interfaces/odbc/readme.txt: The renewal of README thanks to
+	Dave Page.
+
+2001-04-16 20:32  tgl
+
+	* src/backend/rewrite/rewriteHandler.c: Add some defenses to guard
+	against case where a rule refers to a table or view that's been
+	dropped and then recreated with the same name (but, perhaps,
+	different columns).  Eventually we'd like to support this but for
+	now all we can do is fail cleanly, rather than possibly coredumping
+	if we proceed using the obsolete rule.
+
+2001-04-16 15:44  tgl
+
+	* src/backend/optimizer/plan/initsplan.c: Avoid reversing
+	user-given order of WHERE clauses while attaching clauses to
+	specific base or join RelOptInfo nodes during planning.  This
+	preserves the more-intuitive behavior of 7.0.* --- if you write an
+	expensive clause (such as a sub-select) last, it should get
+	evaluated last.  Someday we ought to try to have some intelligence
+	about the order of evaluation of WHERE clauses, but for now we
+	should not override what the user wrote.
+
+2001-04-16 02:10  ishii
+
+	* src/backend/utils/mb/Unicode/: UCS_to_BIG5.pl, UCS_to_EUC_CN.pl,
+	UCS_to_EUC_JP.pl, UCS_to_EUC_KR.pl, UCS_to_EUC_TW.pl,
+	UCS_to_SJIS.pl, big5_to_utf8.map, euc_cn_to_utf8.map,
+	euc_jp_to_utf8.map, euc_kr_to_utf8.map, euc_tw_to_utf8.map,
+	sjis_to_utf8.map, utf8_to_big5.map, utf8_to_euc_cn.map,
+	utf8_to_euc_jp.map, utf8_to_euc_kr.map, utf8_to_euc_tw.map,
+	utf8_to_sjis.map: Correction for mathematical properties in Unicode
+	converison maps.  Patches contributed by Eiji Tokuya
+	(e-tokuya@sankyo-unyu.co.jp)
+
+2001-04-16 00:20  momjian
+
+	* doc/: FAQ_japanese, src/FAQ/FAQ_japanese.html: Update Japanese
+	FAQ's.
+
+2001-04-15 22:42  tgl
+
+	* src/backend/utils/: init/miscinit.c, mb/common.c, mb/mbutils.c:
+	getdatabaseencoding() and PG_encoding_to_char() were being sloppy
+	about converting char* strings to type 'name'.	Imagine my surprise
+	when 7.1 release coredumped upon start when compiled
+	--enable-multibyte ...
+
+2001-04-15 21:46  tgl
+
+	* src/backend/libpq/pqformat.c: Remove error report from
+	pq_endmessage when pq_putmessage fails.  The only possible failure
+	is in pq_flush, which will log a (better!) report anyway --- so
+	pq_endmessage is just cluttering the log with a redundant entry. 
+	This matters when a client crashes partway through a large query,
+	since we will emit many broken-pipe reports before finishing the
+	query and exiting.
+
+2001-04-14 23:25  tgl
+
+	* src/Makefile.shlib: Add LDFLAGS_SL to AIX shlib building command,
+	per report from Rocco Altier <roccoa@routescape.com>.
+
+2001-04-14 23:14  tgl
+
+	* src/backend/utils/adt/ruleutils.c: Constant expressions that
+	appear in ORDER BY, GROUP BY, DISTINCT ON lists should be
+	reverse-compiled into targetlist index numbers, because that's the
+	only interpretation the parser allows for a constant in these
+	clauses.  (Ergo, the only way they could have gotten into the list
+	in the first place is to have come from the targetlist; so this
+	should always work.)  Per problem report from Peter E.
+
+2001-04-14 20:48  tgl
+
+	* src/backend/optimizer/path/joinpath.c: Prevent generation of
+	invalid plans for RIGHT or FULL joins with multiple join clauses. 
+	The mergejoin executor wants all the join clauses to appear as
+	merge quals, not as extra joinquals, for these kinds of joins.	But
+	the planner would consider plans in which partially-sorted input
+	paths were used, leading to only some of the join clauses becoming
+	merge quals.  This is fine for inner/left joins, not fine for
+	right/full joins.
+
+2001-04-14 20:43  petere
+
+	* src/bin/psql/common.c: If the password prompt goes to stderr,
+	then the trailing newline should also go there.
+
+2001-04-14 18:55  petere
+
+	* configure, configure.in, src/bin/psql/tab-complete.c,
+	src/include/config.h.in: Work with Readline 4.2.
+
+2001-04-14 15:11  momjian
+
+	* src/backend/tcop/postgres.c: Add debug_query_string global
+	variable for pgmonitor and debugging use.
+
+2001-04-14 09:11  pjw
+
+	* src/bin/pg_dump/: pg_backup_archiver.c, pg_backup_archiver.h,
+	pg_backup_tar.c, pg_dump.c, pg_dump.h: - Get view OID based on rule
+	OID not base table OID - Fix crash due to null string pointer in
+	some tar files with some libs
+
+2001-04-13 22:10  tgl
+
+	* src/backend/utils/adt/numeric.c: Another try at making numeric
+	MODULO operator produce the right answer.  Although it was now
+	using the right equation, it was making bogus choices of the
+	precision to compute intermediate results to.  I'm not sure this is
+	really right even yet, but it's better than before ...
+
+2001-04-13 19:32  tgl
+
+	* src/include/storage/s_lock.h: Suppress compiler warnings in Vax
+	and NS32K assembly code: 'register foo' is not a complete
+	declaration.
+
+2001-04-13 17:21  scrappy
+
+	* configure, configure.in, ChangeLogs/ChangeLog-7.1rc4-7.1: 
+	tag the source tree as REL7_1, renaming the old tag REL7_1_BETA
+	like it should have been done
+	
+	generate a new Changelog from rc4, which is nice and short ... one
+	python interface change
+	
+	tag configure as 7.1, for generating the packages ...
+	
+	This is it folks ... Release 7.1 is officially here ...
+
+2001-04-13 14:38  momjian
+
+	* HISTORY: Remove as-of from HISTORY file.
+
+2001-04-12 05:49  darcy
+
+	* src/interfaces/python/pgdb.py: I just noticed the beta comment. 
+	That's not actually true any more so I removed it.
+
