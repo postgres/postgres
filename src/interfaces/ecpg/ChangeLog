@@ -995,5 +995,9 @@ Son Oct 29 11:26:06 CET 2000
 	- Removed multibyte stuff since client does not know about encoding
 	  in the backend.
 	- Fixed quoting bug reported by Sascha Demetrio (sd@b-comp.de).
+
+Mon Oct 30 15:27:12 CET 2000
+
+	- Synced gram.y and preproc.y. 
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

@@ -271,7 +271,6 @@ make_name(void)
 %left		'+' '-'
 %left		'*' '/' '%'
 %left		'^'
-%left		'|'	
 /* Unary Operators */
 %right		UMINUS
 %left		'.'
@@ -3235,7 +3234,6 @@ MathOp:	'+'				{ $$ = make_str("+"); }
 		| '*'			{ $$ = make_str("*"); }
 		| '%'			{ $$ = make_str("%"); }
                 | '^'                   { $$ = make_str("^"); }
-                | '|'                   { $$ = make_str("|"); }
 		| '/'			{ $$ = make_str("/"); }
 		| '<'			{ $$ = make_str("<"); }
 		| '>'			{ $$ = make_str(">"); }
@@ -3279,14 +3277,10 @@ a_expr:  c_expr
 				{       $$ = cat2_str(make_str("%"), $2); }
 		| '^' a_expr
 				{       $$ = cat2_str(make_str("^"), $2); }
-		| '|' a_expr
-				{       $$ = cat2_str(make_str("|"), $2); }
 		| a_expr '%'
 				{       $$ = cat2_str($1, make_str("%")); }
 		| a_expr '^'
 				{       $$ = cat2_str($1, make_str("^")); }
-		| a_expr '|'
-				{       $$ = cat2_str($1, make_str("|")); }
 		| a_expr '+' a_expr
 				{	$$ = cat_str(3, $1, make_str("+"), $3); }
 		| a_expr '-' a_expr
@@ -3299,8 +3293,6 @@ a_expr:  c_expr
 				{	$$ = cat_str(3, $1, make_str("%"), $3); }
 		| a_expr '^' a_expr
 				{	$$ = cat_str(3, $1, make_str("^"), $3); }
-		| a_expr '|' a_expr
-				{	$$ = cat_str(3, $1, make_str("|"), $3); }
 		| a_expr '<' a_expr
 				{	$$ = cat_str(3, $1, make_str("<"), $3); }
 		| a_expr '>' a_expr
@@ -3402,14 +3394,10 @@ b_expr:  c_expr
 				{       $$ = cat2_str(make_str("%"), $2); }
 		| '^' b_expr
 				{       $$ = cat2_str(make_str("^"), $2); }
-		| '|' b_expr
-				{       $$ = cat2_str(make_str("|"), $2); }
 		| b_expr '%'
 				{       $$ = cat2_str($1, make_str("%")); }
 		| b_expr '^'
 				{       $$ = cat2_str($1, make_str("^")); }
-		| b_expr '|'
-				{       $$ = cat2_str($1, make_str("|")); }
 		| b_expr '+' b_expr
 				{	$$ = cat_str(3, $1, make_str("+"), $3); }
 		| b_expr '-' b_expr
@@ -3422,8 +3410,6 @@ b_expr:  c_expr
 				{	$$ = cat_str(3, $1, make_str("%"), $3); }
 		| b_expr '^' b_expr
 				{	$$ = cat_str(3, $1, make_str("^"), $3); }
-		| b_expr '|' b_expr
-				{	$$ = cat_str(3, $1, make_str("|"), $3); }
 		| b_expr '<' b_expr
 				{	$$ = cat_str(3, $1, make_str("<"), $3); }
 		| b_expr '>' b_expr
