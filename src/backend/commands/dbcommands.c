@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.81 2001/10/25 05:49:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.82 2002/02/23 20:55:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,9 +164,20 @@ createdb(const char *dbname, const char *dbpath,
 	 * Compute nominal location (where we will try to access the
 	 * database), and resolve alternate physical location if one is
 	 * specified.
+	 *
+	 * If an alternate location is specified but is the same as the
+	 * normal path, just drop the alternate-location spec (this seems
+	 * friendlier than erroring out).  We must test this case to avoid
+	 * creating a circular symlink below.
 	 */
 	nominal_loc = GetDatabasePath(dboid);
 	alt_loc = resolve_alt_dbpath(dbpath, dboid);
+
+	if (alt_loc && strcmp(alt_loc, nominal_loc) == 0)
+	{
+		alt_loc = NULL;
+		dbpath = NULL;
+	}
 
 	if (strchr(nominal_loc, '\''))
 		elog(ERROR, "database path may not contain single quotes");
@@ -198,7 +209,9 @@ createdb(const char *dbname, const char *dbpath,
 	if (mkdir(target_dir, S_IRWXU) != 0)
 		elog(ERROR, "CREATE DATABASE: unable to create database directory '%s': %m",
 			 target_dir);
-	rmdir(target_dir);
+	if (rmdir(target_dir) != 0)
+		elog(ERROR, "CREATE DATABASE: unable to remove temp directory '%s': %m",
+			 target_dir);
 
 	/* Make the symlink, if needed */
 	if (alt_loc)
@@ -548,6 +561,9 @@ resolve_alt_dbpath(const char *dbpath, Oid dboid)
 	}
 
 	len = strlen(prefix) + 6 + sizeof(Oid) * 8 + 1;
+	if (len >= MAXPGPATH - 100)
+		elog(ERROR, "Alternate path is too long");
+
 	ret = palloc(len);
 	snprintf(ret, len, "%s/base/%u", prefix, dboid);
 
