@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.10 1999/05/10 00:46:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.11 1999/05/20 09:30:36 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 	printf("importing file \"%s\" ...\n", in_filename);
 /*	  lobjOid = importFile(conn, in_filename); */
 	lobjOid = lo_import(conn, in_filename);
-/*
+
 	printf("\tas large object %u.\n", lobjOid);
 
 	printf("picking out bytes 1000-2000 of the large object\n");
@@ -238,7 +238,6 @@ main(int argc, char **argv)
 
 	printf("overwriting bytes 1000-2000 of the large object with X's\n");
 	overwrite(conn, lobjOid, 1000, 1000);
-*/
 
 	printf("exporting large object to file \"%s\" ...\n", out_filename);
 /*	  exportFile(conn, lobjOid, out_filename); */
