@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.21 1997/10/25 01:08:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.22 1997/10/30 05:07:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,7 +642,7 @@ AsyncExistsPendingNotify(char *relname)
 		 p = DLGetSucc(p))
 	{
 		/* Use NAMEDATALEN for relname comparison.	  DZ - 26-08-1996 */
-		if (!strncmp(DLE_VAL(p), relname, NAMEDATALEN))
+		if (!strncmp((const char *) DLE_VAL(p), relname, NAMEDATALEN))
 			return 1;
 	}
 
