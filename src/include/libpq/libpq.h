@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.30 1999/05/25 22:42:50 momjian Exp $
+ * $Id: libpq.h,v 1.31 1999/07/07 17:17:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,7 @@ extern int32 pqtest(struct varlena * vlena);
 /*
  * prototypes for functions in pqcomm.c
  */
-extern int	StreamServerPort(char *hostName, short portName, int *fdP);
+extern int	StreamServerPort(char *hostName, unsigned short portName, int *fdP);
 extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
 extern void pq_init(void);

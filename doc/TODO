@@ -30,6 +30,7 @@ PARSER
 * Array index references without table name cause problems
 * Update table SET table.value = 3 fails
 * Creating index of timestamp fails
+* SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
 
 VIEWS
 
@@ -207,8 +208,8 @@ MISC
   places, like GROUP BY, UNIQUE, index processing, etc.
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation
-* add pooled memory allocation where allocations are freed only as a group
-
+* fix indexscan() so it does leak memory by not requiring caller to free
+* fix memory leak in cache code when non-existant table is refer
 
 SOURCE CODE
 -----------

@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.72 1999/05/25 16:09:02 momjian Exp $
+ *	$Id: pqcomm.c,v 1.73 1999/07/07 17:17:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ StreamDoUnlink()
  */
 
 int
-StreamServerPort(char *hostName, short portName, int *fdP)
+StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 {
 	SockAddr	saddr;
 	int			fd,

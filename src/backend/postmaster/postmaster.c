@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.107 1999/07/02 18:09:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.108 1999/07/07 17:17:48 momjian Exp $
  *
  * NOTES
  *
@@ -130,7 +130,7 @@ static Dllist *BackendList;
 /* list of ports associated with still open, but incomplete connections */
 static Dllist *PortList;
 
-static short PostPortName = -1;
+static unsigned short PostPortName = 0;
 static short ActiveBackends = FALSE;
 
  /*
@@ -240,7 +240,7 @@ extern int	optind,
  */
 static void pmdaemonize(void);
 static Port *ConnCreate(int serverFd);
-static void reset_shared(short port);
+static void reset_shared(unsigned short port);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void dumpstatus(SIGNAL_ARGS);
@@ -502,7 +502,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'p':
 				/* Set PGPORT by hand. */
-				PostPortName = (short) atoi(optarg);
+				PostPortName = (unsigned short) atoi(optarg);
 				break;
 			case 'S':
 
@@ -534,8 +534,8 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Select default values for switches where needed
 	 */
-	if (PostPortName == -1)
-		PostPortName = pq_getport();
+	if (PostPortName == 0)
+		PostPortName = (unsigned short)pq_getport();
 
 	/*
 	 * Check for invalid combinations of switches
@@ -1050,7 +1050,7 @@ ConnCreate(int serverFd)
  * reset_shared -- reset shared memory and semaphores
  */
 static void
-reset_shared(short port)
+reset_shared(unsigned short port)
 {
 	ipc_key = port * 1000 + shmem_seq * 100;
 	CreateSharedMemoryAndSemaphores(ipc_key, MaxBackends);
