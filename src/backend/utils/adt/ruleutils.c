@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.27 1999/10/03 23:55:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.28 1999/10/04 04:37:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -47,6 +47,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
@@ -104,6 +105,7 @@ static void get_func_expr(Expr *expr, deparse_context *context);
 static void get_tle_expr(TargetEntry *tle, deparse_context *context);
 static void get_const_expr(Const *constval, deparse_context *context);
 static void get_sublink_expr(Node *node, deparse_context *context);
+static char *quote_identifier(char *ident);
 static char *get_relation_name(Oid relid);
 static char *get_attribute_name(Oid relid, int2 attnum);
 static bool check_if_rte_used(Node *node, Index rt_index, int levelsup);
@@ -404,9 +406,11 @@ pg_get_indexdef(Oid indexrelid)
 	spi_nulls[1] = '\0';
 	spirc = SPI_execp(plan_getam, spi_args, spi_nulls, 1);
 	if (spirc != SPI_OK_SELECT)
-		elog(ERROR, "failed to get pg_am tuple for index %s", nameout(&(idxrelrec->relname)));
+		elog(ERROR, "failed to get pg_am tuple for index %s",
+			 nameout(&(idxrelrec->relname)));
 	if (SPI_processed != 1)
-		elog(ERROR, "failed to get pg_am tuple for index %s", nameout(&(idxrelrec->relname)));
+		elog(ERROR, "failed to get pg_am tuple for index %s",
+			 nameout(&(idxrelrec->relname)));
 	spi_tup = SPI_tuptable->vals[0];
 	spi_ttc = SPI_tuptable->tupdesc;
 	spi_fno = SPI_fnumber(spi_ttc, "amname");
@@ -416,11 +420,12 @@ pg_get_indexdef(Oid indexrelid)
 	 * ----------
 	 */
 	initStringInfo(&buf);
-	appendStringInfo(&buf, "CREATE %sINDEX \"%s\" ON \"%s\" USING %s (",
+	appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
 					 idxrec->indisunique ? "UNIQUE " : "",
-					 nameout(&(idxrelrec->relname)),
-					 nameout(&(indrelrec->relname)),
-					 SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+					 quote_identifier(nameout(&(idxrelrec->relname))),
+					 quote_identifier(nameout(&(indrelrec->relname))),
+					 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
+												   spi_fno)));
 
 	/* ----------
 	 * Collect the indexed attributes
@@ -440,12 +445,9 @@ pg_get_indexdef(Oid indexrelid)
 		 * Add the indexed field name
 		 * ----------
 		 */
-		if (idxrec->indkey[keyno] == ObjectIdAttributeNumber - 1)
-			appendStringInfo(&keybuf, "\"oid\"");
-		else
-			appendStringInfo(&keybuf, "\"%s\"",
-							 get_attribute_name(idxrec->indrelid,
-												idxrec->indkey[keyno]));
+		appendStringInfo(&keybuf, "%s",
+				quote_identifier(get_attribute_name(idxrec->indrelid,
+													idxrec->indkey[keyno])));
 
 		/* ----------
 		 * If not a functional index, add the operator class name
@@ -464,8 +466,9 @@ pg_get_indexdef(Oid indexrelid)
 			spi_tup = SPI_tuptable->vals[0];
 			spi_ttc = SPI_tuptable->tupdesc;
 			spi_fno = SPI_fnumber(spi_ttc, "opcname");
-			appendStringInfo(&keybuf, " \"%s\"",
-							 SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+			appendStringInfo(&keybuf, " %s",
+							 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
+														   spi_fno)));
 		}
 	}
 
@@ -484,8 +487,8 @@ pg_get_indexdef(Oid indexrelid)
 			elog(ERROR, "cache lookup for proc %u failed", idxrec->indproc);
 
 		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-		appendStringInfo(&buf, "\"%s\" (%s) ",
-						 nameout(&(procStruct->proname)),
+		appendStringInfo(&buf, "%s(%s) ",
+						 quote_identifier(nameout(&(procStruct->proname))),
 						 keybuf.data);
 
 		spi_args[0] = ObjectIdGetDatum(idxrec->indclass[0]);
@@ -499,8 +502,9 @@ pg_get_indexdef(Oid indexrelid)
 		spi_tup = SPI_tuptable->vals[0];
 		spi_ttc = SPI_tuptable->tupdesc;
 		spi_fno = SPI_fnumber(spi_ttc, "opcname");
-		appendStringInfo(&buf, "\"%s\"",
-						 SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+		appendStringInfo(&buf, "%s",
+						 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
+													   spi_fno)));
 	}
 	else
 		/* ----------
@@ -658,7 +662,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	 * Build the rules definition text
 	 * ----------
 	 */
-	appendStringInfo(buf, "CREATE RULE \"%s\" AS ON ", rulename);
+	appendStringInfo(buf, "CREATE RULE %s AS ON ",
+					 quote_identifier(rulename));
 
 	/* The event the rule is fired for */
 	switch (ev_type)
@@ -686,10 +691,12 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	}
 
 	/* The relation the rule is fired on */
-	appendStringInfo(buf, " TO \"%s\"", get_relation_name(ev_class));
+	appendStringInfo(buf, " TO %s",
+					 quote_identifier(get_relation_name(ev_class)));
 	if (ev_attr > 0)
-		appendStringInfo(buf, ".\"%s\"",
-						 get_attribute_name(ev_class, ev_attr));
+		appendStringInfo(buf, ".%s",
+						 quote_identifier(get_attribute_name(ev_class,
+															 ev_attr)));
 
 	/* If the rule has an event qualification, add it */
 	if (ev_qual == NULL)
@@ -954,7 +961,8 @@ get_select_query_def(Query *query, deparse_context *context)
 
 		/* and do if so */
 		if (tell_as)
-			appendStringInfo(buf, " AS \"%s\"", tle->resdom->resname);
+			appendStringInfo(buf, " AS %s",
+							 quote_identifier(tle->resdom->resname));
 	}
 
 	/* If we need other tables that *NEW* or *CURRENT* add the FROM clause */
@@ -978,9 +986,11 @@ get_select_query_def(Query *query, deparse_context *context)
 
 				appendStringInfo(buf, sep);
 				sep = ", ";
-				appendStringInfo(buf, "\"%s\"", rte->relname);
+				appendStringInfo(buf, "%s",
+								 quote_identifier(rte->relname));
 				if (strcmp(rte->relname, rte->refname) != 0)
-					appendStringInfo(buf, " \"%s\"", rte->refname);
+					appendStringInfo(buf, " %s",
+									 quote_identifier(rte->refname));
 			}
 		}
 	}
@@ -1072,7 +1082,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 	 * ----------
 	 */
 	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	appendStringInfo(buf, "INSERT INTO \"%s\"", rte->relname);
+	appendStringInfo(buf, "INSERT INTO %s",
+					 quote_identifier(rte->relname));
 
 	/* Add the target list */
 	sep = " (";
@@ -1082,7 +1093,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
-		appendStringInfo(buf, "\"%s\"", tle->resdom->resname);
+		appendStringInfo(buf, "%s", quote_identifier(tle->resdom->resname));
 	}
 	appendStringInfo(buf, ") ");
 
@@ -1124,7 +1135,8 @@ get_update_query_def(Query *query, deparse_context *context)
 	 * ----------
 	 */
 	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	appendStringInfo(buf, "UPDATE \"%s\" SET ", rte->relname);
+	appendStringInfo(buf, "UPDATE %s SET ",
+					 quote_identifier(rte->relname));
 
 	/* Add the comma separated list of 'attname = value' */
 	sep = "";
@@ -1134,7 +1146,8 @@ get_update_query_def(Query *query, deparse_context *context)
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
-		appendStringInfo(buf, "\"%s\" = ", tle->resdom->resname);
+		appendStringInfo(buf, "%s = ",
+						 quote_identifier(tle->resdom->resname));
 		get_tle_expr(tle, context);
 	}
 
@@ -1162,7 +1175,8 @@ get_delete_query_def(Query *query, deparse_context *context)
 	 * ----------
 	 */
 	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	appendStringInfo(buf, "DELETE FROM \"%s\"", rte->relname);
+	appendStringInfo(buf, "DELETE FROM %s",
+					 quote_identifier(rte->relname));
 
 	/* Add a WHERE clause if given */
 	if (query->qual != NULL)
@@ -1227,11 +1241,12 @@ get_rule_expr(Node *node, deparse_context *context)
 					else if (!strcmp(rte->refname, "*CURRENT*"))
 						appendStringInfo(buf, "old.");
 					else
-						appendStringInfo(buf, "\"%s\".", rte->refname);
+						appendStringInfo(buf, "%s.",
+										 quote_identifier(rte->refname));
 				}
-				appendStringInfo(buf, "\"%s\"",
-								 get_attribute_name(rte->relid,
-													var->varattno));
+				appendStringInfo(buf, "%s",
+						quote_identifier(get_attribute_name(rte->relid,
+															var->varattno)));
 			}
 			break;
 
@@ -1332,7 +1347,8 @@ get_rule_expr(Node *node, deparse_context *context)
 			{
 				Aggref	   *aggref = (Aggref *) node;
 
-				appendStringInfo(buf, "\"%s\"(", aggref->aggname);
+				appendStringInfo(buf, "%s(",
+								 quote_identifier(aggref->aggname));
 				get_rule_expr(aggref->target, context);
 				appendStringInfo(buf, ")");
 			}
@@ -1453,7 +1469,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 	 * Build a string of proname(args)
 	 * ----------
 	 */
-	appendStringInfo(buf, "\"%s\"(", proname);
+	appendStringInfo(buf, "%s(", quote_identifier(proname));
 	sep = "";
 	foreach(l, expr->args)
 	{
@@ -1566,7 +1582,7 @@ get_tle_expr(TargetEntry *tle, deparse_context *context)
 /* ----------
  * get_const_expr
  *
- *	Make a string representation with the type cast out of a Const
+ *	Make a string representation of a Const
  * ----------
  */
 static void
@@ -1598,34 +1614,55 @@ get_const_expr(Const *constval, deparse_context *context)
 	extval = (char *) (*fmgr_faddr(&finfo_output)) (constval->constvalue,
 													&isnull, -1);
 
-	/*
-	 * We must quote any funny characters in the constant's representation.
-	 * XXX Any MULTIBYTE considerations here?
-	 */
-	appendStringInfoChar(buf, '\'');
-	for (valptr = extval; *valptr; valptr++)
+	switch (constval->consttype)
 	{
-		char	ch = *valptr;
-		if (ch == '\'' || ch == '\\')
-		{
-			appendStringInfoChar(buf, '\\');
-			appendStringInfoChar(buf, ch);
-		}
-		else if (ch >= 0 && ch < ' ')
-		{
-			appendStringInfo(buf, "\\%03o", ch);
-		}
-		else
-			appendStringInfoChar(buf, ch);
+		case INT2OID:
+		case INT4OID:
+		case OIDOID:			/* int types */
+		case FLOAT4OID:
+		case FLOAT8OID:			/* float types */
+			/* These types are printed without quotes */
+			appendStringInfo(buf, extval);
+			break;
+		default:
+			/*
+			 * We must quote any funny characters in the constant's
+			 * representation.
+			 * XXX Any MULTIBYTE considerations here?
+			 */
+			appendStringInfoChar(buf, '\'');
+			for (valptr = extval; *valptr; valptr++)
+			{
+				char	ch = *valptr;
+				if (ch == '\'' || ch == '\\')
+				{
+					appendStringInfoChar(buf, '\\');
+					appendStringInfoChar(buf, ch);
+				}
+				else if (ch >= 0 && ch < ' ')
+					appendStringInfo(buf, "\\%03o", (int) ch);
+				else
+					appendStringInfoChar(buf, ch);
+			}
+			appendStringInfoChar(buf, '\'');
+			break;
 	}
-	appendStringInfoChar(buf, '\'');
+
 	pfree(extval);
 
-	extval = (char *) nameout(&(typeStruct->typname));
-	/* probably would be better to recognize UNKNOWN by OID... */
-	if (strcmp(extval, "unknown") != 0)
-		appendStringInfo(buf, "::\"%s\"", extval);
-	pfree(extval);
+	switch (constval->consttype)
+	{
+		case INT4OID:
+		case FLOAT8OID:
+		case UNKNOWNOID:
+			/* These types can be left unlabeled */
+			break;
+		default:
+			extval = (char *) nameout(&(typeStruct->typname));
+			appendStringInfo(buf, "::%s", quote_identifier(extval));
+			pfree(extval);
+			break;
+	}
 }
 
 
@@ -1696,6 +1733,52 @@ get_sublink_expr(Node *node, deparse_context *context)
 	appendStringInfo(buf, "))");
 }
 
+/* ----------
+ * quote_identifier			- Quote an identifier only if needed
+ *
+ * When quotes are needed, we palloc the required space; slightly
+ * space-wasteful but well worth it for notational simplicity.
+ * ----------
+ */
+static char *
+quote_identifier(char *ident)
+{
+	/*
+	 * Can avoid quoting if ident starts with a lowercase letter and
+	 * contains only lowercase letters, digits, and underscores.
+	 * Otherwise, supply quotes.
+	 */
+	bool		safe;
+	char	   *result;
+
+	/*
+	 * would like to use <ctype.h> macros here, but they might yield
+	 * unwanted locale-specific results...
+	 */
+	safe = (ident[0] >= 'a' && ident[0] <= 'z');
+	if (safe)
+	{
+		char	   *ptr;
+
+		for (ptr = ident+1; *ptr; ptr++)
+		{
+			char	ch = *ptr;
+
+			safe = ((ch >= 'a' && ch <= 'z') ||
+					(ch >= '0' && ch <= '9') ||
+					(ch == '_'));
+			if (! safe)
+				break;
+		}
+	}
+
+	if (safe)
+		return ident;			/* no change needed */
+
+	result = (char *) palloc(strlen(ident) + 2 + 1);
+	sprintf(result, "\"%s\"", ident);
+	return result;
+}
 
 /* ----------
  * get_relation_name			- Get a relation name by Oid
@@ -1729,7 +1812,8 @@ get_attribute_name(Oid relid, int2 attnum)
 	Form_pg_attribute attStruct;
 
 	atttup = SearchSysCacheTuple(ATTNUM,
-						  ObjectIdGetDatum(relid), (Datum) attnum, 0, 0);
+								 ObjectIdGetDatum(relid), (Datum) attnum,
+								 0, 0);
 	if (!HeapTupleIsValid(atttup))
 		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 			 attnum, relid);
