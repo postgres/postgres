@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/dynamic.c,v 1.3 2000/02/18 14:34:05 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/dynamic.c,v 1.4 2000/02/18 16:02:49 meskes Exp $
  */
 
 /* I borrowed the include files from ecpglib.c, maybe we don't need all of them */
@@ -10,7 +10,8 @@
 #include <sql3types.h>
 
 static struct descriptor
-{	char *name;
+{
+	char *name;
 	PGresult *result;
 	struct descriptor *next;
 } *all_descriptors=NULL;
@@ -18,7 +19,8 @@ static struct descriptor
 PGconn *ECPG_internal_get_connection(char *name);
 
 unsigned int ECPGDynamicType(Oid type)
-{	switch(type)
+{
+	switch(type)
 	{	case 16:	return SQL3_BOOLEAN;	/* bool */
 		case 21:	return SQL3_SMALLINT;	/* int2 */
 		case 23:	return SQL3_INTEGER;	/* int4 */
@@ -204,7 +206,7 @@ bool ECPGdo_descriptor(int line,const char *connection,
 			return (status);
 	    }
 	}
-	ECPGraise(line,ECPG_UNKNOWN_DESCRIPTOR);
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, NULL);
 	return false;
 }
 							
@@ -217,7 +219,7 @@ PGresult *ECPGresultByDescriptor(int line,const char *name)
 		if (!strcmp(name, i->name)) return i->result;
 	}
 	
-	ECPGraise(line,ECPG_UNKNOWN_DESCRIPTOR);
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, NULL);
 	
 	return NULL;
 } 
@@ -236,7 +238,7 @@ bool ECPGdeallocate_desc(int line,const char *name)
 			return true;
 		}
 	}
-	ECPGraise(line,ECPG_UNKNOWN_DESCRIPTOR);
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, NULL);
 	return false;
 } 
 
@@ -252,30 +254,69 @@ bool ECPGallocate_desc(int line,const char *name)
 	return true;
 }
 
-void ECPGraise(int line, int code)
+void
+ECPGraise(int line, int code, const char *str)
 {
+	struct auto_mem *am;
+	       
 	sqlca.sqlcode=code;
 	switch (code)
 	{ 
 		case ECPG_NOT_FOUND: 
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
-				"No data found line %d.",line);
+				"No data found line %d.", line);
 			break;
+			
+		case ECPG_OUT_OF_MEMORY: 
+			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+				"Out of memory in line %d.", line);
+			break;
+			
+		case ECPG_UNSUPPORTED: 
+			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+				"Unsupported type %s in line %d.", str, line);
+			break;
+			
+		case ECPG_TOO_MANY_ARGUMENTS: 
+			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+				"Too many arguments in line %d.", line);
+			break;
+		
+		case ECPG_TOO_FEW_ARGUMENTS: 
+			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+				"Too few arguments in line %d.", line);
+			break;
+			
 		case ECPG_MISSING_INDICATOR: 
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
-				"NULL value without indicator, line %d.",line);
+				"NULL value without indicator, line %d.", line);
 			break;
+			
 		case ECPG_UNKNOWN_DESCRIPTOR: 
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
-				"descriptor not found, line %d.",line);
+				"descriptor not found, line %d.", line);
 			break;
+			
 		case ECPG_INVALID_DESCRIPTOR_INDEX: 
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
-				"descriptor index out of range, line %d.",line);
+				"descriptor index out of range, line %d.", line);
 			break;
+			
 	    default:
 		    	snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
-				"SQL error #%d, line %d.",code,line);
+				"SQL error #%d, line %d.",code, line);
 			break;
 	}
+	
+        /* free all memory we have allocated for the user */
+        for (am = auto_allocs; am;)
+        {
+        	struct auto_mem *act = am;
+	        
+	        am = am->next;
+	        free(act->pointer);
+	        free(act);
+	}
+
+        auto_allocs = NULL;
 }
