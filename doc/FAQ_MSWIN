@@ -1,6 +1,6 @@
 How to install PostgreSQL on Windows
 ====================================
-$Date: 2002/11/11 19:59:56 $
+$Date: 2002/11/16 02:34:22 $
 
 1.  Install the latest Cygwin package, available at http://cygwin.com/.
     The Cygwin package provides a UNIX-like API on top of the Win32

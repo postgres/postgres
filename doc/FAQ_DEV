@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Nov 2 23:02:16 EST 2002
+   Last updated: Tue Nov 5 16:52:46 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -19,8 +19,8 @@
    1.6) What books are good for developers?
    1.7) What is configure all about?
    1.8) How do I add a new port?
-   1.9) Why don't you use threads/raw devices/async-I/O, &insert your
-   favorite wizz-bang feature here&?
+   1.9) Why don't you use threads/raw devices/async-I/O, <insert your
+   favorite wizz-bang feature here>?
    1.10) How are RPM's packaged?
    1.11) How are CVS branches handled?
    1.12) Where can I get a copy of the SQL standards?
@@ -317,15 +317,15 @@
    src/makefiles directory for port-specific Makefile handling. There is
    a backend/port directory if you need special files for your OS.
    
-  1.9) Why don't you use threads/raw devices/async-I/O, &insert your favorite
-  wizz-bang feature here&?
+  1.9) Why don't you use threads/raw devices/async-I/O, <insert your favorite
+  wizz-bang feature here>?
   
    There is always a temptation to use the newest operating system
    features as soon as they arrive. We resist that temptation.
    
    First, we support 15+ operating systems, so any new feature has to be
    well established before we will consider it. Second, most new
-   wizz-bang features don't provide dramatic improvements. Third, the
+   wizz-bang features don't provide dramatic improvements. Third, they
    usually have some downside, such as decreased reliability or
    additional code required. Therefore, we don't rush to use new features
    but rather wait for the feature to be established, then ask for
@@ -339,10 +339,9 @@
        remaining backend startup time.
      * The backend code would be more complex.
        
-   So, we are not "asleep at the switch" as they say with regard to new
-   features, it is just that we are cautious about their adoption. The
-   TODO list often contains links to discussions showing our reasoning in
-   these areas.
+   So, we are not ignorant of new features. It is just that we are
+   cautious about their adoption. The TODO list often contains links to
+   discussions showing our reasoning in these areas.
    
   1.10) How are RPM's packaged?
   
