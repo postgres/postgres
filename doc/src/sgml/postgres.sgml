@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.26 1999/06/01 17:26:18 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.27 1999/06/03 04:21:49 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.27  1999/06/03 04:21:49  thomas
+Markup changes for v6.5 release.
+Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
+
 Revision 1.26  1999/06/01 17:26:18  thomas
 Make sure that only one intro is included in the integrated doc.
 Multiple intros cause trouble since they have some section elements
@@ -102,10 +106,11 @@ Move SQL reference pages up into the User's Guide.
 <!entity y2k      SYSTEM "y2k.sgml">
 
 <!-- tutorial -->
-<!entity intro    SYSTEM "intro.sgml">
 <!entity arch     SYSTEM "arch.sgml">
-<!entity start    SYSTEM "start.sgml">
+<!entity intro    SYSTEM "intro.sgml">
 <!entity query    SYSTEM "query.sgml">
+<!entity sql      SYSTEM "sql.sgml">
+<!entity start    SYSTEM "start.sgml">
 
 <!-- user's guide -->
 <!entity advanced SYSTEM "advanced.sgml">
@@ -121,7 +126,6 @@ Move SQL reference pages up into the User's Guide.
 <!entity oper     SYSTEM "oper.sgml">
 <!entity pgaccess SYSTEM "pgaccess.sgml">
 <!entity psql     SYSTEM "psql.sgml">
-<!entity sql      SYSTEM "sql.sgml">
 <!entity query-ug SYSTEM "query-ug.sgml">
 <!entity storage  SYSTEM "storage.sgml">
 <!entity syntax   SYSTEM "syntax.sgml">
@@ -219,7 +223,7 @@ Move SQL reference pages up into the User's Guide.
 
   <LegalNotice>
    <Para>
-    <ProductName>PostgreSQL</ProductName> is &copy; 1998-9 
+    <ProductName>PostgreSQL</ProductName> is Copyright &copy; 1996-9 
     by the Postgres Global Development Group.
    </Para>
   </LegalNotice>
@@ -254,20 +258,6 @@ Your name here...
   </Para>
  </Preface>
 
- <part Id="part-tutorial">
-  <Title>Tutorial</Title>
-  <PartIntro>
-   <Para>
-    Introduction for new users.
-   </Para>
-  </PartIntro>
-   &intro;
-   &arch;
-   &start;
-   &query;
-   &advanced;
- </Part>
-
  <part Id="part-user">
   <Title>User's Guide</Title>
   <PartIntro>
@@ -276,7 +266,6 @@ Your name here...
    </Para>
   </PartIntro>
 
-  &sql;
   &syntax;
   &datatype;
   &oper;
@@ -383,6 +372,21 @@ Your name here...
    &page;
  </Part>
  
+ <part Id="part-tutorial">
+  <Title>Tutorial</Title>
+  <PartIntro>
+   <Para>
+    Introduction for new users.
+   </Para>
+  </PartIntro>
+   &intro;
+   &sql;
+   &arch;
+   &start;
+   &query;
+   &advanced;
+ </Part>
+
  <part Id="part-appendix">
   <Title>Appendices</Title>
   <PartIntro>

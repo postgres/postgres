@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.11 1999/05/26 17:30:30 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.12 1999/06/03 04:21:51 thomas Exp $
 
 Postgres User's Manual.
 Derived from postgres.sgml.
 thomas 1998-02-24
 
 $Log: user.sgml,v $
+Revision 1.12  1999/06/03 04:21:51  thomas
+Markup changes for v6.5 release.
+Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
+
 Revision 1.11  1999/05/26 17:30:30  thomas
 Add chapters on CVS access, MVCC, SQL theory to the docs.
 Add an appendix with more details on date/time attributes and handling.
@@ -69,7 +73,6 @@ Move SQL reference pages up into the User's Guide.
 <!entity manage   SYSTEM "manage.sgml">
 <!entity mvcc     SYSTEM "mvcc.sgml">
 <!entity oper     SYSTEM "oper.sgml">
-<!entity sql      SYSTEM "sql.sgml">
 <!entity storage  SYSTEM "storage.sgml">
 <!entity syntax   SYSTEM "syntax.sgml">
 <!entity typeconv SYSTEM "typeconv.sgml">
@@ -113,7 +116,7 @@ Move SQL reference pages up into the User's Guide.
 
   <LegalNotice>
    <Para>
-    <ProductName>PostgreSQL</ProductName> is &copy; 1998-9
+    <ProductName>PostgreSQL</ProductName> is Copyright &copy; 1996-9
     by the Postgres Global Development Group.
    </Para>
   </LegalNotice>
@@ -149,7 +152,6 @@ Your name here...
  </Preface>
 
  &intro;
- &sql;
  &syntax;
  &datatype;
  &oper;

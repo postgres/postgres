@@ -2,41 +2,44 @@
   <title>libpq C++ Binding</title>
   
   <para>
-    <filename>libpq++</filename> is the C++ API to 
-    <productname>Postgres</productname>.
-    <filename>libpq++</filename>  is a set of classes which allow
-    client programs to connect to the 
-    <productname>Postgres</productname> backend server. These connections
-    come in two forms: a Database Class and a Large Object class.
+   <filename>libpq++</filename> is the C++ API to 
+   <productname>Postgres</productname>.
+   <filename>libpq++</filename>  is a set of classes which allow
+   client programs to connect to the 
+   <productname>Postgres</productname> backend server. These connections
+   come in two forms: a Database Class and a Large Object class.
   </para>
+
   <para>
-    The Database Class is intended for manipulating a database. You can
-    send all sorts of SQL queries to the <productname>Postgres</productname> 
-    backend server and retrieve the responses of the server.
+   The Database Class is intended for manipulating a database. You can
+   send all sorts of SQL queries to the <productname>Postgres</productname> 
+   backend server and retrieve the responses of the server.
   </para>
+
   <para>
-    The Large Object Class is intended for manipulating a large object
-    in a database. Although a Large Object instance can send normal
-    queries to the <productname>Postgres</productname> backend server 
-    it is only intended for simple
-    queries that do not return any data. A large object should be seen
-    as a file stream. In the future it should behave much like the C++ file
-    streams
-    <literal>cin</literal>,
-    <literal>cout</literal>
-    and
-    <literal>cerr</literal>.
+   The Large Object Class is intended for manipulating a large object
+   in a database. Although a Large Object instance can send normal
+   queries to the <productname>Postgres</productname> backend server 
+   it is only intended for simple
+   queries that do not return any data. A large object should be seen
+   as a file stream. In the future it should behave much like the C++ file
+   streams
+   <literal>cin</literal>,
+   <literal>cout</literal>
+   and
+   <literal>cerr</literal>.
   </para>
+
   <para>
-    This chapter is based on the documentation
-    for the <filename>libpq</filename> C library.  Three
-    short programs are listed at the end of this section as examples of
-    <filename>libpq++</filename> programming 
-    (though not necessarily of good programming).
-    There are several examples of <filename>libpq++</filename> 
-    applications in
-    <filename>src/libpq++/examples</filename>, including the source
-    code for the three examples in this chapter.
+   This chapter is based on the documentation
+   for the <filename>libpq</filename> C library.  Three
+   short programs are listed at the end of this section as examples of
+   <filename>libpq++</filename> programming 
+   (though not necessarily of good programming).
+   There are several examples of <filename>libpq++</filename> 
+   applications in
+   <filename>src/libpq++/examples</filename>, including the source
+   code for the three examples in this chapter.
   </para>
 
   <sect1>
@@ -44,713 +47,721 @@
     
    <sect2>
     <title>Environment Variables</title>
-	
-	<para>
-	  The following environment variables can be used to set up default
-	  values for an environment and to avoid hard-coding database names into
-	  an application program:
-	  <note>
-	    <para>
-	      Refer to the <xref endterm="libpq" linkend="libpq-envars"> for a complete
-		list of available connection options.
-	    </para>
-	  </note>
-	</para>
-	<para>
-	  The following environment variables can be used to select default
-	  connection parameter values, which will be used by PQconnectdb or
-	  PQsetdbLogin if no value is directly specified by the calling code.
-	  These are useful to avoid hard-coding database names into simple
-	  application programs.
-          <note>
-            <para>
-              <filename>libpq++</filename> uses only environment variables or PQconnectdb
-	      conninfo style strings.
-            </para>
-          </note>
-	  
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		<envar>PGHOST</envar> sets the default server name.
-		If a non-zero-length string is specified, TCP/IP communication is used.
-		Without a host name, libpq will connect using a local Unix domain socket.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGPORT</envar>  sets the default port or local Unix domain socket
-		file extension for communicating with the <productname>Postgres</productname>
-		backend.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGDATABASE</envar>  sets the default 
-		<productname>Postgres</productname> database name.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGUSER</envar>
-		sets the username used to connect to the database and for authentication.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGPASSWORD</envar>
-		sets the password used if the backend demands password authentication.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGREALM</envar> sets the Kerberos realm to  use  with  
-		<productname>Postgres</productname>,
-		if  it is different from the local realm.  If
-		<envar>PGREALM</envar> is set, <productname>Postgres</productname> 
-		applications  will  attempt
-		authentication  with  servers for this realm and use
-		separate ticket files to avoid conflicts with  local
-		ticket  files.   This  environment  variable is only
-		used if Kerberos authentication is selected by the backend.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGOPTIONS</envar> sets additional runtime  options  for  
-		the <productname>Postgres</productname> backend.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGTTY</envar> sets the file or tty on which  debugging  
-		messages from the backend server are displayed.
-	      </para>
-	    </listitem>
-	  </itemizedlist>
-	</para>
-	
-	<para>
-	  The following environment variables can be used to specify user-level default
-	  behavior for every Postgres session:
-	  
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		<envar>PGDATESTYLE</envar>
-		sets the default style of date/time representation.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGTZ</envar>
-		sets the default time zone.
-	      </para>
-	    </listitem>
-	  </itemizedlist>
-	</para>
-	
-	<para>
-	  The following environment variables can be used to specify default internal
-	  behavior for every Postgres session:
-	  
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		<envar>PGGEQO</envar>
-		sets the default mode for the genetic optimizer.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGRPLANS</envar>
-		sets the default mode to allow or disable right-sided plans in the optimizer.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGCOSTHEAP</envar>
-		sets the default cost for heap searches for the optimizer.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGCOSTINDEX</envar>
-		sets the default cost for indexed searches for the optimizer.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<envar>PGQUERY_LIMIT</envar>
-		sets the maximum number of rows returned by a query.
-	      </para>
-	    </listitem>
-	  </itemizedlist>
-	</para>
-	
-	<para>
-	  Refer to the <command>SET</command> <acronym>SQL</acronym> command
-	  for information on correct values for these environment variables.
-	</para>
-      </sect2>
-  </sect1>
-  <sect1>
-    <title>libpq++ Classes</title>
-    <para></para>
-      <sect2>
-	<title>Connection Class: <classname>PgConnection</classname></title>
-	<para>
-	  The connection class makes the actual connection to the database and is inherited
-	  by all of the access classes.
-	</para>
-      </sect2>
-      <sect2>
-	<title>Database Class: <classname>PgDatabase</classname></title>
-	<para>
-	  The database class provides C++ objects that have a connection
-	  to a backend server. To create such an object one first needs
-	  the apropriate environment for the backend to access.
-	  The following constructors deal with making a connection to a backend
-	  server from a C++ program.
-	</para>
-      </sect2>
-  </sect1>
-  <sect1>
-    <title>Database Connection Functions</title>
     <para>
-      <itemizedlist>
-	<listitem>
-	  <para>
-	    <function>PgConnection</function>
-	    makes a new connection to a backend database server.
-	    <synopsis>
-	      PgConnection::PgConnection(const char *conninfo)
-	    </synopsis>
-	    Although typically called from one of the access classes, a connection to
-	    a backend server is possible by creating a PgConnection object.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>ConnectionBad</function>
-	    returns whether or not the connection to the backend server succeeded or
-	    failed.  
-	    <synopsis>
-	      int PgConnection::ConnectionBad()
-	    </synopsis>
-	    Returns TRUE if the connection failed.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>Status</function>
-	    returns the status of the connection to the backend server.
-	    <synopsis>
-	      ConnStatusType PgConnection::Status()
-	    </synopsis>
-	    Returns either CONNECTION_OK or CONNECTION_BAD depending on the state
-	    of the connection.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>PgDatabase</function>
-	    makes a new connection to a backend database server.
-	    <synopsis>
-	      PgDatabase(const char *conninfo)
-	    </synopsis>
-	    After a PgDatabase has been created it should be checked to make sure
-	    the connection to the database succeded before sending
-	    queries to the object. This can easily be done by
-	    retrieving the current status of the PgDatabase object with the
-	    <function>Status</function> or <function>ConnectionBad</function> methods.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>DBName</function>
-	    Returns the name of the current database.
-	    <synopsis>
-	      const char *PgConnection::DBName()
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>Notifies</function>
-	    Returns the next notification from a list of unhandled notification messages 
-	    received from the backend.
-	    <synopsis>
-	      PGnotify* PgConnection::Notifies()
-	    </synopsis>
-	    See PQnotifies() for details.
-	  </para>
-	</listitem>
-      </itemizedlist>
+     The following environment variables can be used to set up default
+     values for an environment and to avoid hard-coding database names into
+     an application program:
+     <note>
+      <para>
+       Refer to the <xref endterm="libpq" linkend="libpq-envars"> for a complete
+       list of available connection options.
+      </para>
+     </note>
     </para>
-  </sect1>
-  <sect1>
-    <title>Query Execution Functions</title>
-    <para>  
-      <itemizedlist>
-	<listitem>
-	  <para>
-	    <function>Exec</function>
-	    Sends a query to the backend server.  It's probably more desirable to
-	    use one of the next two functions.
-	    <synopsis>
-	      ExecStatusType PgConnection::Exec(const char* query)
-	    </synopsis>
-	    Returns the result of the query. The following status results can be expected:
-	    
-	    <simplelist>
-	      <member>
-		PGRES_EMPTY_QUERY
-	      </member>
-	      <member>
-		PGRES_COMMAND_OK, if the query was a command
-	      </member>
-	      <member>
-		PGRES_TUPLES_OK, if the query successfully returned tuples
-	      </member>
-	      <member>
-		PGRES_COPY_OUT
-	      </member>
-	      <member>
-		PGRES_COPY_IN
-	      </member>
-	      <member>
-		PGRES_BAD_RESPONSE, if an unexpected response was received
-	      </member>
-	      <member>
-		PGRES_NONFATAL_ERROR
-	      </member>
-	      <member>
-		PGRES_FATAL_ERROR
-	      </member>
-	    </simplelist>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>ExecCommandOk</function>
-	    Sends a command query to the backend server.
-	    <synopsis>
-	      int PgConnection::ExecCommandOk(const char *query)
-	    </synopsis>
-	    Returns TRUE if the command query succeeds.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>ExecTuplesOk</function>
-	    Sends a command query to the backend server.
-	    <synopsis>
-	      int PgConnection::ExecTuplesOk(const char *query)
-	    </synopsis>
-	    Returns TRUE if the command query succeeds and there are tuples to be retrieved.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>ErrorMessage</function>
-	    Returns the last error message text.
-	    <synopsis>
-	      const char *PgConnection::ErrorMessage()
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>Tuples</function>
-	    Returns the number of tuples (instances) in the query result. 
-	    <synopsis>
-	      int PgDatabase::Tuples()
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>Fields</function>
-	    Returns the number of fields (attributes) in each tuple of the query result. 
-	    <synopsis>
-	      int PgDatabase::Fields()
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>FieldName</function>
-	    Returns the field (attribute) name associated with the given field index. 
-	    Field indices start at 0. 
-	    <synopsis>
-	      const char *PgDatabase::FieldName(int field_num)
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>FieldNum</function>
-	    PQfnumber Returns the field (attribute) index associated with 
-	    the given field name. 
-	    <synopsis>
-	      int PgDatabase::FieldNum(const char* field_name)
-	    </synopsis>
-	    -1 is returned if the given name does not match any field.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>FieldType</function>
-	    Returns the field type associated with the given field index. The 
-	    integer returned is an internal coding of the type. Field indices
-	    start at 0. 
-	    <synopsis>
-	      Oid PgDatabase::FieldType(int field_num)
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>FieldType</function>
-	    Returns the field type associated with the given field name. The 
-	    integer returned is an internal coding of the type. Field indices
-	    start at 0. 
-	    <synopsis>
-	      Oid PgDatabase::FieldType(const char* field_name)
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>FieldSize</function>
-	    Returns the size in bytes of the field associated with the given 
-	    field index. Field indices start at 0. 
-	    <synopsis>
-	      short PgDatabase::FieldSize(int field_num)
-	    </synopsis>
-	    Returns the space allocated for this field in a database tuple given
-	    the field number. In other words the size of the server's binary 
-	    representation of the data type. -1 is returned if the field is 
-	    variable size.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>FieldSize</function>
-	    Returns the size in bytes of the field associated with the given 
-	    field index. Field indices start at 0. 
-	    <synopsis>
-	      short PgDatabase::FieldSize(const char *field_name)
-	    </synopsis>
-	    Returns the space allocated for this field in a database tuple given
-	    the field name. In other words the size of the server's binary 
-	    representation of the data type. -1 is returned if the field is 
-	    variable size.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>GetValue</function>
-	    Returns a single field (attribute) value of one tuple of a PGresult. 
-	    Tuple and field indices start at 0. 
-	    <synopsis>
-	      const char *PgDatabase::GetValue(int tup_num, int field_num)
-	    </synopsis>
-	    For most queries, the value returned by GetValue is a null-terminated 
-	    ASCII string representation of the attribute value. But if BinaryTuples() 
-	    is TRUE, the value returned by GetValue is the binary representation 
-	    of the type in the internal format of the backend server (but not including 
-	    the size word, if the field is variable-length). It is then the programmer's 
-	    responsibility to cast and convert the data to the correct C type. The 
-	    pointer returned by GetValue points to storage that is part of the 
-	    PGresult structure. One should not modify it, and one must explicitly 
-	    copy the value into other storage if it is to be used past the lifetime 
-	    of the PGresult structure itself.  BinaryTuples() is not yet implemented.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>GetValue</function>
-	    Returns a single field (attribute) value of one tuple of a PGresult. 
-	    Tuple and field indices start at 0. 
-	    <synopsis>
-	      const char *PgDatabase::GetValue(int tup_num, const char *field_name)
-	    </synopsis>
-	    For most queries, the value returned by GetValue is a null-terminated 
-	    ASCII string representation of the attribute value. But if BinaryTuples() 
-	    is TRUE, the value returned by GetValue is the binary representation 
-	    of the type in the internal format of the backend server (but not including 
-	    the size word, if the field is variable-length). It is then the programmer's 
-	    responsibility to cast and convert the data to the correct C type. The 
-	    pointer returned by GetValue points to storage that is part of the 
-	    PGresult structure. One should not modify it, and one must explicitly 
-	    copy the value into other storage if it is to be used past the lifetime 
-	    of the PGresult structure itself.  BinaryTuples() is not yet implemented.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>GetLength</function>
-	    Returns the length of a field (attribute) in bytes. Tuple and field 
-	    indices start at 0. 
-	    <synopsis>
-	      int PgDatabase::GetLength(int tup_num, int field_num)
-	    </synopsis>
-	    This is the actual data length for the particular data value, that 
-	    is the size of the object pointed to by GetValue. Note that for
-	    ASCII-represented values, this size has little to do with the binary 
-	    size reported by PQfsize.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>GetLength</function>
-	    Returns the length of a field (attribute) in bytes. Tuple and field 
-	    indices start at 0. 
-	    <synopsis>
-	      int PgDatabase::GetLength(int tup_num, const char* field_name)
-	    </synopsis>
-	    This is the actual data length for the particular data value, that 
-	    is the size of the object pointed to by GetValue. Note that for
-	    ASCII-represented values, this size has little to do with the binary 
-	    size reported by PQfsize.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>DisplayTuples</function>
-	    Prints out all the tuples and, optionally, the attribute names to the 
-	    specified output stream. 
-	    <synopsis>
-	      void PgDatabase::DisplayTuples(FILE *out = 0, int fillAlign = 1, 
-	      const char* fieldSep = "|",int printHeader = 1, int quiet = 0)
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>PrintTuples</function>
-	    Prints out all the tuples and, optionally, the attribute names to the 
-	    specified output stream. 
-	    <synopsis>
-	      void PgDatabase::PrintTuples(FILE *out = 0, int printAttName = 1, 
-	      int terseOutput = 0, int width = 0) 
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>GetLine</function>
-	    <synopsis>
-	      int PgDatabase::GetLine(char* string, int length)
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>PutLine</function>
-	    <synopsis>
-	      void PgDatabase::PutLine(const char* string)
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>OidStatus</function>
-	    <synopsis>
-	      const char *PgDatabase::OidStatus()
-	    </synopsis>
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>EndCopy</function>
-	    <synopsis>
-	      int PgDatabase::EndCopy()
-	    </synopsis>
-	  </para>
-	</listitem>
-      </itemizedlist>
+
+    <para>
+     The following environment variables can be used to select default
+     connection parameter values, which will be used by PQconnectdb or
+     PQsetdbLogin if no value is directly specified by the calling code.
+     These are useful to avoid hard-coding database names into simple
+     application programs.
+     <note>
+      <para>
+       <filename>libpq++</filename> uses only environment variables or PQconnectdb
+       conninfo style strings.
+      </para>
+     </note>
+	  
+     <itemizedlist>
+      <listitem>
+       <para>
+	<envar>PGHOST</envar> sets the default server name.
+	If a non-zero-length string is specified, TCP/IP communication is used.
+	Without a host name, libpq will connect using a local Unix domain socket.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGPORT</envar>  sets the default port or local Unix domain socket
+	file extension for communicating with the <productname>Postgres</productname>
+	backend.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGDATABASE</envar>  sets the default 
+	<productname>Postgres</productname> database name.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGUSER</envar>
+	sets the username used to connect to the database and for authentication.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGPASSWORD</envar>
+	sets the password used if the backend demands password authentication.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGREALM</envar> sets the Kerberos realm to  use  with  
+	<productname>Postgres</productname>,
+	if  it is different from the local realm.  If
+	<envar>PGREALM</envar> is set, <productname>Postgres</productname> 
+	applications  will  attempt
+	authentication  with  servers for this realm and use
+	separate ticket files to avoid conflicts with  local
+	ticket  files.   This  environment  variable is only
+	used if Kerberos authentication is selected by the backend.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGOPTIONS</envar> sets additional runtime  options  for  
+	the <productname>Postgres</productname> backend.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGTTY</envar> sets the file or tty on which  debugging  
+	messages from the backend server are displayed.
+       </para>
+      </listitem>
+     </itemizedlist>
     </para>
-  </sect1>
-  <sect1>
-    <title>Asynchronous Notification</title>
+	
+    <para>
+     The following environment variables can be used to specify user-level default
+     behavior for every Postgres session:
+	  
+     <itemizedlist>
+      <listitem>
+       <para>
+	<envar>PGDATESTYLE</envar>
+	sets the default style of date/time representation.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGTZ</envar>
+	sets the default time zone.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
     
     <para>
-      <productname>Postgres</productname> supports asynchronous notification 
-      via the <command>LISTEN</command> and <command>NOTIFY</command>
-      commands.  A backend registers its interest in a particular semaphore
-      with the <command>LISTEN</command> command.
-      All backends that are listening on a
-      particular named semaphore will be notified asynchronously when 
-      a <command>NOTIFY</command> of
-      that name is executed by another backend.   No additional
-      information is passed from the notifier to the listener.  Thus,
-      typically, any actual data that needs to be communicated is transferred
-      through the relation.
-      
-      <note>
-	<para>
-	  In the past, the documentation has associated the names used for asyncronous
-	  notification with relations or classes. However, there is in fact no
-	  direct linkage of the two concepts in the implementation, and the
-	  named semaphore in fact does not need to have a corresponding relation
-	  previously defined.
-	</para>
-      </note>
+     The following environment variables can be used to specify default internal
+     behavior for every Postgres session:
+     
+     <itemizedlist>
+      <listitem>
+       <para>
+	<envar>PGGEQO</envar>
+	sets the default mode for the genetic optimizer.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGRPLANS</envar>
+	sets the default mode to allow or disable right-sided plans in the optimizer.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGCOSTHEAP</envar>
+	sets the default cost for heap searches for the optimizer.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGCOSTINDEX</envar>
+	sets the default cost for indexed searches for the optimizer.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGQUERY_LIMIT</envar>
+	sets the maximum number of rows returned by a query.
+       </para>
+      </listitem>
+     </itemizedlist>
     </para>
+	
     <para>
-      <filename>libpq++</filename> applications are notified whenever a 
-      connected backend has
-      received an asynchronous notification.  However, the communication from
-      the backend to the frontend is not asynchronous.  
-      The <filename>libpq++</filename> application
-      must poll the backend to see if there is any pending notification
-      information.  After the execution of a query, a frontend may call 
-      <function>PgDatabase::Notifies</function>
-      to see if any notification data is currently available from the backend. 
-      <function>PgDatabase::Notifies</function>
-      returns the notification from a list of unhandled notifications from the
-      backend. The function eturns NULL if there is no pending notifications from the
-      backend.   
-      <function>PgDatabase::Notifies</function>
-      behaves like the popping of a stack.  Once a notification is returned
-      from <function>PgDatabase::Notifies</function>,
-      it is considered handled and will be removed from the list of
-      notifications.
-      
-      <itemizedlist>
-	<listitem>
-	  <para>
-	    <function>PgDatabase::Notifies</function>
-	    retrieves pending notifications from the server.
-	    
-	    <synopsis>
-	      PGnotify* PgDatabase::Notifies()
-	    </synopsis>
-	  </para>
-	</listitem>
-      </itemizedlist>
+     Refer to the <command>SET</command> <acronym>SQL</acronym> command
+     for information on correct values for these environment variables.
     </para>
-    <para>
-      The second sample program gives an example of the use of asynchronous
-      notification.
-    </para>
+   </sect2>
   </sect1>
+
   <sect1>
-    <title>Functions Associated with the COPY Command</title>
-    
+   <title>libpq++ Classes</title>
+
+   <sect2>
+    <title>Connection Class: <classname>PgConnection</classname></title>
+
     <para>
-      The <command>copy</command> command in <productname>Postgres</productname> 
-      has options to read from or write to the network
-      connection used by <filename>libpq++</filename>.  
-      Therefore, functions are necessary to
-      access this network connection directly so applications may take full
-      advantage of this capability.
-      
-      <itemizedlist>
-	<listitem>
-	  <para>
-	    <function>PgDatabase::GetLine</function>
-	    reads a newline-terminated line of characters (transmitted by the
-	    backend server) into a buffer 
-	    <replaceable class="parameter">string</replaceable>
-	    of size <replaceable class="parameter">length</replaceable>.
-	    <synopsis>
-	      int PgDatabase::GetLine(char* string, int length)
-	    </synopsis>
-	  </para>
-	  <para>
-	    Like the Unix system routine
-	    <function>fgets (3)</function>,
-	    this routine copies up to 
-	    <literal><replaceable class="parameter">length</replaceable>-1</literal>
-	    characters into 
-	    <replaceable class="parameter">string</replaceable>.
-	    It is like 
-	    <function>gets (3)</function>,
-	    however, in that it converts the terminating newline into a null
-	    character.
-	  </para>
-	  <para>
-	    <function>PgDatabase::GetLine</function>
-	    returns EOF at end of file, 0 if the entire line has been read, and 1 if the
-	    buffer is full but the terminating newline has not yet been read.
-	  </para>
-	  <para>
-	    Notice that the application must check to see if a new line consists
-	    of a single period ("."), which indicates that the backend
-	    server has finished sending the results of the 
-	    <command>copy</command>.
-	    Therefore, if the application ever expects to receive lines
-	    that are more than
-	    <literal><replaceable class="parameter">length</replaceable>-1</literal>
-	    characters long, the application must be sure to check the return
-	    value of <function>PgDatabase::GetLine</function> very carefully.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>PgDatabase::PutLine</function>
-	    Sends a null-terminated <replaceable class="parameter">string</replaceable>
-	    to the backend server.
-	    <synopsis>
-	      void PgDatabase::PutLine(char* string)
-	    </synopsis>
-	  </para>
-	  <para>
-	    The application must explicitly send a single period character (".")
-	    to indicate to the backend that it has finished sending its data.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <function>PgDatabase::EndCopy</function>
-	    syncs with the backend.
-	    <synopsis>
-	      int PgDatabase::EndCopy()
-	    </synopsis>
-	    This function waits until the backend has
-	    finished processing the <command>copy</command>.
-	    It should either be issued when the
-	    last string has been sent to the backend using
-	    <function>PgDatabase::PutLine</function>
-	    or when the last string has been received from the backend using
-	    <function>PgDatabase::GetLine</function>.
-	    It must be issued or the backend may get <quote>out of sync</quote> with
-	    the frontend.  Upon return from this function, the backend is ready to
-	    receive the next query.
-	  </para>	    
-	  <para>
-	    The return value is 0 on successful completion, nonzero otherwise.
-	  </para>
-	</listitem>
-      </itemizedlist>
+     The connection class makes the actual connection to the database and is inherited
+     by all of the access classes.
     </para>
+   </sect2>
+
+   <sect2>
+    <title>Database Class: <classname>PgDatabase</classname></title>
+
     <para>
-      As an example:
-      
-      <programlisting>
+     The database class provides C++ objects that have a connection
+     to a backend server. To create such an object one first needs
+     the apropriate environment for the backend to access.
+     The following constructors deal with making a connection to a backend
+     server from a C++ program.
+    </para>
+   </sect2>
+  </sect1>
+
+  <sect1>
+   <title>Database Connection Functions</title>
+   <para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       <function>PgConnection</function>
+       makes a new connection to a backend database server.
+       <synopsis>
+	PgConnection::PgConnection(const char *conninfo)
+       </synopsis>
+       Although typically called from one of the access classes, a connection to
+       a backend server is possible by creating a PgConnection object.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>ConnectionBad</function>
+       returns whether or not the connection to the backend server succeeded or
+       failed.  
+       <synopsis>
+	int PgConnection::ConnectionBad()
+       </synopsis>
+       Returns TRUE if the connection failed.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>Status</function>
+       returns the status of the connection to the backend server.
+       <synopsis>
+	ConnStatusType PgConnection::Status()
+       </synopsis>
+       Returns either CONNECTION_OK or CONNECTION_BAD depending on the state
+       of the connection.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>PgDatabase</function>
+       makes a new connection to a backend database server.
+       <synopsis>
+	PgDatabase(const char *conninfo)
+       </synopsis>
+       After a PgDatabase has been created it should be checked to make sure
+       the connection to the database succeded before sending
+       queries to the object. This can easily be done by
+       retrieving the current status of the PgDatabase object with the
+       <function>Status</function> or <function>ConnectionBad</function> methods.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>DBName</function>
+       Returns the name of the current database.
+       <synopsis>
+	const char *PgConnection::DBName()
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>Notifies</function>
+       Returns the next notification from a list of unhandled notification messages 
+       received from the backend.
+       <synopsis>
+	PGnotify* PgConnection::Notifies()
+       </synopsis>
+       See PQnotifies() for details.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Query Execution Functions</title>
+   <para>  
+    <itemizedlist>
+     <listitem>
+      <para>
+       <function>Exec</function>
+       Sends a query to the backend server.  It's probably more desirable to
+       use one of the next two functions.
+       <synopsis>
+	ExecStatusType PgConnection::Exec(const char* query)
+       </synopsis>
+       Returns the result of the query. The following status results can be expected:
+       
+       <simplelist>
+	<member>
+	 PGRES_EMPTY_QUERY
+	</member>
+	<member>
+	 PGRES_COMMAND_OK, if the query was a command
+	</member>
+	<member>
+	 PGRES_TUPLES_OK, if the query successfully returned tuples
+	</member>
+	<member>
+	 PGRES_COPY_OUT
+	</member>
+	<member>
+	 PGRES_COPY_IN
+	</member>
+	<member>
+	 PGRES_BAD_RESPONSE, if an unexpected response was received
+	</member>
+	<member>
+	 PGRES_NONFATAL_ERROR
+	</member>
+	<member>
+	 PGRES_FATAL_ERROR
+	</member>
+       </simplelist>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>ExecCommandOk</function>
+       Sends a command query to the backend server.
+       <synopsis>
+	int PgConnection::ExecCommandOk(const char *query)
+       </synopsis>
+       Returns TRUE if the command query succeeds.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>ExecTuplesOk</function>
+       Sends a command query to the backend server.
+       <synopsis>
+	int PgConnection::ExecTuplesOk(const char *query)
+       </synopsis>
+       Returns TRUE if the command query succeeds and there are tuples to be retrieved.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>ErrorMessage</function>
+       Returns the last error message text.
+       <synopsis>
+	const char *PgConnection::ErrorMessage()
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>Tuples</function>
+       Returns the number of tuples (instances) in the query result. 
+       <synopsis>
+	int PgDatabase::Tuples()
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>Fields</function>
+       Returns the number of fields (attributes) in each tuple of the query result. 
+       <synopsis>
+	int PgDatabase::Fields()
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>FieldName</function>
+       Returns the field (attribute) name associated with the given field index. 
+       Field indices start at 0. 
+       <synopsis>
+	const char *PgDatabase::FieldName(int field_num)
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>FieldNum</function>
+       PQfnumber Returns the field (attribute) index associated with 
+       the given field name. 
+       <synopsis>
+	int PgDatabase::FieldNum(const char* field_name)
+       </synopsis>
+       -1 is returned if the given name does not match any field.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>FieldType</function>
+       Returns the field type associated with the given field index. The 
+       integer returned is an internal coding of the type. Field indices
+       start at 0. 
+       <synopsis>
+	Oid PgDatabase::FieldType(int field_num)
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>FieldType</function>
+       Returns the field type associated with the given field name. The 
+       integer returned is an internal coding of the type. Field indices
+       start at 0. 
+       <synopsis>
+	Oid PgDatabase::FieldType(const char* field_name)
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>FieldSize</function>
+       Returns the size in bytes of the field associated with the given 
+       field index. Field indices start at 0. 
+       <synopsis>
+	short PgDatabase::FieldSize(int field_num)
+       </synopsis>
+       Returns the space allocated for this field in a database tuple given
+       the field number. In other words the size of the server's binary 
+       representation of the data type. -1 is returned if the field is 
+       variable size.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>FieldSize</function>
+       Returns the size in bytes of the field associated with the given 
+       field index. Field indices start at 0. 
+       <synopsis>
+	short PgDatabase::FieldSize(const char *field_name)
+       </synopsis>
+       Returns the space allocated for this field in a database tuple given
+       the field name. In other words the size of the server's binary 
+       representation of the data type. -1 is returned if the field is 
+       variable size.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>GetValue</function>
+       Returns a single field (attribute) value of one tuple of a PGresult. 
+       Tuple and field indices start at 0. 
+       <synopsis>
+	const char *PgDatabase::GetValue(int tup_num, int field_num)
+       </synopsis>
+       For most queries, the value returned by GetValue is a null-terminated 
+       ASCII string representation of the attribute value. But if BinaryTuples() 
+       is TRUE, the value returned by GetValue is the binary representation 
+       of the type in the internal format of the backend server (but not including 
+       the size word, if the field is variable-length). It is then the programmer's 
+       responsibility to cast and convert the data to the correct C type. The 
+       pointer returned by GetValue points to storage that is part of the 
+       PGresult structure. One should not modify it, and one must explicitly 
+       copy the value into other storage if it is to be used past the lifetime 
+       of the PGresult structure itself.  BinaryTuples() is not yet implemented.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>GetValue</function>
+       Returns a single field (attribute) value of one tuple of a PGresult. 
+       Tuple and field indices start at 0. 
+       <synopsis>
+	const char *PgDatabase::GetValue(int tup_num, const char *field_name)
+       </synopsis>
+       For most queries, the value returned by GetValue is a null-terminated 
+       ASCII string representation of the attribute value. But if BinaryTuples() 
+       is TRUE, the value returned by GetValue is the binary representation 
+       of the type in the internal format of the backend server (but not including 
+       the size word, if the field is variable-length). It is then the programmer's 
+       responsibility to cast and convert the data to the correct C type. The 
+       pointer returned by GetValue points to storage that is part of the 
+       PGresult structure. One should not modify it, and one must explicitly 
+       copy the value into other storage if it is to be used past the lifetime 
+       of the PGresult structure itself.  BinaryTuples() is not yet implemented.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>GetLength</function>
+       Returns the length of a field (attribute) in bytes. Tuple and field 
+       indices start at 0. 
+       <synopsis>
+	int PgDatabase::GetLength(int tup_num, int field_num)
+       </synopsis>
+       This is the actual data length for the particular data value, that 
+       is the size of the object pointed to by GetValue. Note that for
+       ASCII-represented values, this size has little to do with the binary 
+       size reported by PQfsize.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>GetLength</function>
+       Returns the length of a field (attribute) in bytes. Tuple and field 
+       indices start at 0. 
+       <synopsis>
+	int PgDatabase::GetLength(int tup_num, const char* field_name)
+       </synopsis>
+       This is the actual data length for the particular data value, that 
+       is the size of the object pointed to by GetValue. Note that for
+       ASCII-represented values, this size has little to do with the binary 
+       size reported by PQfsize.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>DisplayTuples</function>
+       Prints out all the tuples and, optionally, the attribute names to the 
+       specified output stream. 
+       <synopsis>
+	void PgDatabase::DisplayTuples(FILE *out = 0, int fillAlign = 1, 
+	const char* fieldSep = "|",int printHeader = 1, int quiet = 0)
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>PrintTuples</function>
+       Prints out all the tuples and, optionally, the attribute names to the 
+       specified output stream. 
+       <synopsis>
+	void PgDatabase::PrintTuples(FILE *out = 0, int printAttName = 1, 
+	int terseOutput = 0, int width = 0) 
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>GetLine</function>
+       <synopsis>
+	int PgDatabase::GetLine(char* string, int length)
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>PutLine</function>
+       <synopsis>
+	void PgDatabase::PutLine(const char* string)
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>OidStatus</function>
+       <synopsis>
+	const char *PgDatabase::OidStatus()
+       </synopsis>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>EndCopy</function>
+       <synopsis>
+	int PgDatabase::EndCopy()
+       </synopsis>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Asynchronous Notification</title>
+    
+   <para>
+    <productname>Postgres</productname> supports asynchronous notification 
+    via the <command>LISTEN</command> and <command>NOTIFY</command>
+    commands.  A backend registers its interest in a particular semaphore
+    with the <command>LISTEN</command> command.
+    All backends that are listening on a
+    particular named semaphore will be notified asynchronously when 
+    a <command>NOTIFY</command> of
+    that name is executed by another backend.   No additional
+    information is passed from the notifier to the listener.  Thus,
+    typically, any actual data that needs to be communicated is transferred
+    through the relation.
+    
+    <note>
+     <para>
+      In the past, the documentation has associated the names used for asyncronous
+      notification with relations or classes. However, there is in fact no
+      direct linkage of the two concepts in the implementation, and the
+      named semaphore in fact does not need to have a corresponding relation
+      previously defined.
+     </para>
+    </note>
+   </para>
+   <para>
+    <filename>libpq++</filename> applications are notified whenever a 
+    connected backend has
+    received an asynchronous notification.  However, the communication from
+    the backend to the frontend is not asynchronous.  
+    The <filename>libpq++</filename> application
+    must poll the backend to see if there is any pending notification
+    information.  After the execution of a query, a frontend may call 
+    <function>PgDatabase::Notifies</function>
+    to see if any notification data is currently available from the backend. 
+    <function>PgDatabase::Notifies</function>
+    returns the notification from a list of unhandled notifications from the
+    backend. The function eturns NULL if there is no pending notifications from the
+    backend.   
+    <function>PgDatabase::Notifies</function>
+    behaves like the popping of a stack.  Once a notification is returned
+    from <function>PgDatabase::Notifies</function>,
+    it is considered handled and will be removed from the list of
+    notifications.
+    
+    <itemizedlist>
+     <listitem>
+      <para>
+       <function>PgDatabase::Notifies</function>
+       retrieves pending notifications from the server.
+       
+       <synopsis>
+	PGnotify* PgDatabase::Notifies()
+       </synopsis>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+   <para>
+    The second sample program gives an example of the use of asynchronous
+    notification.
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Functions Associated with the COPY Command</title>
+   
+   <para>
+    The <command>copy</command> command in <productname>Postgres</productname> 
+    has options to read from or write to the network
+    connection used by <filename>libpq++</filename>.  
+    Therefore, functions are necessary to
+    access this network connection directly so applications may take full
+    advantage of this capability.
+    
+    <itemizedlist>
+     <listitem>
+      <para>
+       <function>PgDatabase::GetLine</function>
+       reads a newline-terminated line of characters (transmitted by the
+       backend server) into a buffer 
+       <replaceable class="parameter">string</replaceable>
+       of size <replaceable class="parameter">length</replaceable>.
+       <synopsis>
+	int PgDatabase::GetLine(char* string, int length)
+       </synopsis>
+      </para>
+      <para>
+       Like the Unix system routine
+       <function>fgets (3)</function>,
+       this routine copies up to 
+       <literal><replaceable class="parameter">length</replaceable>-1</literal>
+       characters into 
+       <replaceable class="parameter">string</replaceable>.
+       It is like 
+       <function>gets (3)</function>,
+       however, in that it converts the terminating newline into a null
+       character.
+      </para>
+      <para>
+       <function>PgDatabase::GetLine</function>
+       returns EOF at end of file, 0 if the entire line has been read, and 1 if the
+       buffer is full but the terminating newline has not yet been read.
+      </para>
+      <para>
+       Notice that the application must check to see if a new line consists
+       of a single period ("."), which indicates that the backend
+       server has finished sending the results of the 
+       <command>copy</command>.
+       Therefore, if the application ever expects to receive lines
+       that are more than
+       <literal><replaceable class="parameter">length</replaceable>-1</literal>
+       characters long, the application must be sure to check the return
+       value of <function>PgDatabase::GetLine</function> very carefully.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>PgDatabase::PutLine</function>
+       Sends a null-terminated <replaceable class="parameter">string</replaceable>
+       to the backend server.
+       <synopsis>
+	void PgDatabase::PutLine(char* string)
+       </synopsis>
+      </para>
+      <para>
+       The application must explicitly send a single period character (".")
+       to indicate to the backend that it has finished sending its data.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>PgDatabase::EndCopy</function>
+       syncs with the backend.
+       <synopsis>
+	int PgDatabase::EndCopy()
+       </synopsis>
+       This function waits until the backend has
+       finished processing the <command>copy</command>.
+       It should either be issued when the
+       last string has been sent to the backend using
+       <function>PgDatabase::PutLine</function>
+       or when the last string has been received from the backend using
+       <function>PgDatabase::GetLine</function>.
+       It must be issued or the backend may get <quote>out of sync</quote> with
+       the frontend.  Upon return from this function, the backend is ready to
+       receive the next query.
+      </para>	    
+      <para>
+       The return value is 0 on successful completion, nonzero otherwise.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+   <para>
+    As an example:
+    
+    <programlisting>
 	PgDatabase data;
 	data.exec("create table foo (a int4, b char16, d float8)");
 	data.exec("copy foo from stdin");
 	data.putline("3\etHello World\et4.5\en");
 	data.putline("4\etGoodbye World\et7.11\en");
-	\&...
+	&amp;...
 	data.putline(".\en");
 	data.endcopy();
-	
-      </programlisting>
-    </para>
+    </programlisting>
+   </para>
   </sect1>
+
   <sect1>
-    <title>Caveats</title>
+   <title>Caveats</title>
     
-    <para>
-      The query buffer is 8192 bytes long, and queries over that length will
-      be silently truncated.
-    </para>
+   <para>
+    The query buffer is 8192 bytes long, and queries over that length will
+    be silently truncated.
+   </para>
   </sect1>
  </chapter>
 

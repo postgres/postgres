@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.14 1999/05/26 17:30:27 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.15 1999/06/03 04:21:47 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
 - thomas 1998-10-27
 
 $Log: admin.sgml,v $
+Revision 1.15  1999/06/03 04:21:47  thomas
+Markup changes for v6.5 release.
+Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
+
 Revision 1.14  1999/05/26 17:30:27  thomas
 Add chapters on CVS access, MVCC, SQL theory to the docs.
 Add an appendix with more details on date/time attributes and handling.
@@ -108,7 +112,7 @@ Bigger updates to the installation instructions (install and config).
 
   <LegalNotice>
    <Para>
-    <ProductName>PostgreSQL</ProductName> is &copy; 1998-9
+    <ProductName>PostgreSQL</ProductName> is Copyright &copy; 1996-9
     by the Postgres Global Development Group.
    </Para>
   </LegalNotice>

@@ -1,8 +1,8 @@
-<Chapter Id="release">
-<Title>Release Notes</Title>
+ <chapter>
+  <title>Release Notes</title>
 
-<Sect1>
-<Title>Release 6.5</Title>
+  <sect1>
+   <title>Release 6.5</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -15,84 +15,130 @@
 </docinfo>
 -->
 
-<para>
-This release marks the development team's final mastery of the source
-code we inherited from Berkeley.  You will see we are now easily adding
-major features, thanks to the increasing size and experience of our
-world-wide development team:  Here is a brief, incomplete summary:
+   <para>
+    This release marks a major step in the development team's mastery of the source
+    code we inherited from Berkeley.  You will see we are now easily adding
+    major features, thanks to the increasing size and experience of our
+    world-wide development team.
+   </para>
 
-<itemizedlist spacing="compact">
-<listitem>
-<para>
-Multi-version concurrency control(MVCC):  This removes our old
-table-level locking, and replaces it with a locking system that is
-superior to most commercial database systems.  In a traditional system,
-each row that is modified is locked until committed, preventing reads by
-other users.  MVCC uses the natural multi-version nature of PostgreSQL
-to allow readers to continue reading consistent data during writer
-activity.  Writers continue to use the compact pg_log transaction
-system.  This is all preformed without having to allocate a lock for
-every row like traditional database systems.  So, basically, we no
-longer have table-level locking, we have something better than row-level
-locking.
-</para>
-</listitem>
-<listitem>
-<para>
-Numeric data type:  We now have a true numeric data type, with
-user-specified precision.
-</para>
-</listitem>
+   <para>
+    Here is a brief summary of some of the more noticable changes:
 
-<listitem>
-<para>
-Temporary tables:  Temporary tables are guaranteed to have unique names
-within a database session, and are destroyed on session exit.
-</para>
-</listitem>
+    <variablelist>
+     <varlistentry>
+      <term>
+       Multi-version concurrency control(MVCC)
+      </term>
+      <listitem>
+       <para>
+	This removes our old
+	table-level locking, and replaces it with a locking system that is
+	superior to most commercial database systems.  In a traditional system,
+	each row that is modified is locked until committed, preventing reads by
+	other users.  MVCC uses the natural multi-version nature of PostgreSQL
+	to allow readers to continue reading consistent data during writer
+	activity.  Writers continue to use the compact pg_log transaction
+	system.  This is all preformed without having to allocate a lock for
+	every row like traditional database systems.  So, basically, we no
+	longer have table-level locking, we have something better than row-level
+	locking.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<listitem>
-<para>
-New SQL features:  We now have CASE, INTERSECT, and EXCEPT statement
-support.  We have new LIMIT/OFFSET, SET TRANSACTION ISOLATION LEVEL,
-SELECT ... FOR UPDATE, and an improved LOCK command.
-</para>
-</listitem>
+     <varlistentry>
+      <term>
+       Numeric data type
+      </term>
+      <listitem>
+       <para>
+	We now have a true numeric data type, with
+	user-specified precision.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<listitem>
-<para>
-Speedups:  We continue to speed up PostgreSQL, thanks to the variety of
-talents within our team.  We have sped up memory allocation,
-optimization, table joins, and row transfers routines.
-</para>
-</listitem>
+     <varlistentry>
+      <term>
+       Temporary tables
+      </term>
+      <listitem>
+       <para>
+	Temporary tables are guaranteed to have unique names
+	within a database session, and are destroyed on session exit.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<listitem>
-<para>
-Other:  We continue to expand our port list, this time including
-Win32/NT.  Most interfaces have new versions, and existing functionality
-has been improved.
-</para>
-</listitem>
+     <varlistentry>
+      <term>
+       New SQL features
+      </term>
+      <listitem>
+       <para>
+	We now have CASE, INTERSECT, and EXCEPT statement
+	support.  We have new LIMIT/OFFSET, SET TRANSACTION ISOLATION LEVEL,
+	SELECT ... FOR UPDATE, and an improved LOCK command.
+       </para>
+      </listitem>
+     </varlistentry>
 
-</itemizedlist>
-</para>
+     <varlistentry>
+      <term>
+       Speedups
+      </term>
+      <listitem>
+       <para>
+	We continue to speed up PostgreSQL, thanks to the variety of
+	talents within our team.  We have sped up memory allocation,
+	optimization, table joins, and row transfer routines.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<sect2>
-<title>Migration to v6.5</title>
+     <varlistentry>
+      <term>
+       Ports
+      </term>
+      <listitem>
+       <para>
+	We continue to expand our port list, this time including
+	WinNT/ix86 and NetBSD/arm32.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<para>
-A dump/restore using <application>pg_dump</application> 
-or <application>pg_dumpall</application>
-is required for those wishing to migrate data from any
-previous release of <productname>Postgres</productname>.
-</para>
-</sect2>
-<sect2>
-<title>Detailed Change List</title>
+     <varlistentry>
+      <term>
+       Interfaces
+      </term>
+      <listitem>
+       <para>
+	Most interfaces have new versions, and existing functionality
+	has been improved.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
 
-<para>
-<programlisting>
+   <sect2>
+    <title>Migration to v6.5</title>
+
+    <para>
+     A dump/restore using <application>pg_dump</application> 
+     or <application>pg_dumpall</application>
+     is required for those wishing to migrate data from any
+     previous release of <productname>Postgres</productname>.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Detailed Change List</title>
+
+    <para>
+     <programlisting>
 Bug Fixes
 ---------
 Fix text<->float8 and text<->float4 conversion functions(Thomas)
@@ -237,14 +283,14 @@ Add ARM32 support(Andrew McMurry)
 Better support for HPUX 11 and Unixware
 Improve file handling to be more uniform, prevent file descriptor leak(Tom)
 New install commands for plpgsql(Jan)
-</programlisting>
-</Para>
-</sect2>
-</Sect1>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
 
-<Sect1>
-<Title>Release 6.4.2</Title>
+<sect1>
+<title>Release 6.4.2</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -278,14 +324,14 @@ A dump/restore is <emphasis>not</emphasis> required for those running
 <programlisting>
 Fix for datetime constant problem on some platforms(Thomas)
 </programlisting>
-</Para>
+</para>
 </sect2>
-</Sect1>
+</sect1>
 
 
 
-<Sect1>
-<Title>Release 6.4.1</Title>
+<sect1>
+<title>Release 6.4.1</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -348,14 +394,14 @@ Add routines to help with single-byte (internal) character type(Thomas)
 Compilation of libpq for Win32 fixes(Magnus)
 Upgrade to PyGreSQL 2.2(D'Arcy)
 </programlisting>
-</Para>
+</para>
 </sect2>
-</Sect1>
+</sect1>
 
 
 
-<Sect1>
-<Title>Release 6.4</Title>
+<sect1>
+<title>Release 6.4</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -374,7 +420,7 @@ Thanks to our developers and maintainers, nearly every aspect of the system
 has received some attention since the previous release.
 Here is a brief, incomplete summary:
 
-<itemizedlist spacing="compact">
+<itemizedlist>
 <listitem>
 <para>
 Views and rules are now functional thanks to extensive new code in the 
@@ -652,12 +698,12 @@ smarter perl configuration(Brook)
 configure uses supplied install-sh if no install script found(Tom)
 new Makefile.shlib for shared library configuration(Tom)
 </programlisting>
-</Para>
+</para>
 </sect2>
-</Sect1>
+</sect1>
 
-<Sect1>
-<Title>Release 6.3.2</Title>
+<sect1>
+<title>Release 6.3.2</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -677,7 +723,7 @@ Refer to the release notes for v6.3 for a more complete summary of new features.
 <para>
 Summary:
 
-<itemizedlist spacing="compact">
+<itemizedlist>
 <listitem>
 <para>
 Repairs automatic configuration support for some platforms, including Linux,
@@ -693,7 +739,7 @@ Correctly handles function calls on the left side of BETWEEN and LIKE clauses.
 
 </itemizedlist>
 </para>
-<Para>
+<para>
 A dump/restore is NOT required for those running 6.3 or 6.3.1.  A 
 'make distclean', 'make', and 'make install' is all that is required.
 This last step should be performed while the postmaster is not running.
@@ -733,8 +779,8 @@ ASSERT fixes(Bruce)
 </para>
 </sect2>
 </sect1>
-<Sect1>
-<Title>Release 6.3.1</Title>
+<sect1>
+<title>Release 6.3.1</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -752,7 +798,7 @@ Mon Mar 23 10:21:52 EST 1998
 <para>
 Summary:
 
-<itemizedlist spacing="compact">
+<itemizedlist>
 <listitem>
 <para>
 Additional support for multi-byte character sets.
@@ -779,7 +825,7 @@ Improvements to the configuration autodetection for installation.
 
 </itemizedlist>
 </para>
-<Para>
+<para>
 A dump/restore is NOT required for those running 6.3.  A 
 'make distclean', 'make', and 'make install' is all that is required.
 This last step should be performed while the postmaster is not running.
@@ -828,8 +874,8 @@ Better identify tcl and tk libs and includes(Bruce)
 </para>
 </sect2>
 </sect1>
-<Sect1>
-<Title>Release 6.3</Title>
+<sect1>
+<title>Release 6.3</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -848,7 +894,7 @@ Sun Mar  1 14:57:30 EST 1998
 There are <emphasis>many</emphasis> new features and improvements in this release.
 Here is a brief, incomplete summary:
 
-<itemizedlist spacing="compact">
+<itemizedlist>
 <listitem>
 <para>
 Many new SQL features, including
@@ -1143,12 +1189,12 @@ Add string functions to regression suite(Thomas)
 Expand a few function names formerly truncated to 16 characters(Thomas)
 Remove un-needed malloc() calls and replace with palloc()(Bruce)
 </programlisting>
-</Para>
+</para>
 </sect2>
-</Sect1>
+</sect1>
 
-<Sect1>
-<Title>Release 6.2.1</Title>
+<sect1>
+<title>Release 6.2.1</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -1169,7 +1215,7 @@ v6.2.1 is a bug-fix and usability release on v6.2.
 <para>
 Summary:
 
-<itemizedlist spacing="compact">
+<itemizedlist>
 <listitem>
 <para>
 Allow strings to span lines, per <acronym>SQL92</acronym>.
@@ -1236,10 +1282,10 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 </programlisting>
 </para>
 </sect2>
-</Sect1>
+</sect1>
 
-<Sect1>
-<Title>Release 6.2</Title>
+<sect1>
+<title>Release 6.2</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -1399,8 +1445,8 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 </sect2>
 </sect1>
 
-<Sect1>
-<Title>Release 6.1.1</Title>
+<sect1>
+<title>Release 6.1.1</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -1455,8 +1501,8 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 </sect2>
 </sect1>
 
-<Sect1>
-<Title>Release 6.1</Title>
+<sect1>
+<title>Release 6.1</title>
 <!--
 <docinfo>
 <authorgroup>
@@ -1471,21 +1517,22 @@ Sun Jun  8 14:41:13 EDT 1997
 </docinfo>
 -->
 
-<Para>
+<para>
   The regression tests have been adapted and extensively modified for the
   v6.1 release of <productname>Postgres</productname>.
-</Para>
+</para>
 
-<Para>
+<para>
   Three new data types (datetime, timespan, and circle) have been added to
   the native set of <productname>Postgres</productname> types. Points, boxes, paths, and polygons
   have had their output formats made consistant across the data types.
   The polygon output in misc.out has only been spot-checked for correctness
   relative to the original regression output.
-</Para>
+</para>
 
-<Para>
-  <productname>Postgres</productname> v6.1 introduces a new, alternate optimizer which uses <FirstTerm>genetic</FirstTerm>
+<para>
+  <productname>Postgres</productname> v6.1 introduces a new, alternate
+optimizer which uses <firstterm>genetic</firstterm>
   algorithms. These algorithms introduce a random behavior in the ordering
   of query results when the query contains multiple qualifiers or multiple
   tables (giving the optimizer a choice on order of evaluation). Several
@@ -1493,28 +1540,28 @@ Sun Jun  8 14:41:13 EDT 1997
   hence are insensitive to optimizer choices. A few regression tests are
   for data types which are inherently unordered (e.g. points and time
   intervals) and tests involving those types are explicitly bracketed with
-  <Command>set geqo to 'off'</Command> and <Command>reset geqo</Command>.
-</Para>
+  <command>set geqo to 'off'</command> and <command>reset geqo</command>.
+</para>
 
-<Para>
+<para>
   The interpretation of array specifiers (the curly braces around atomic
   values) appears to have changed sometime after the original regression
-  tests were generated. The current <FileName>./expected/*.out</FileName> files reflect this
+  tests were generated. The current <filename>./expected/*.out</filename> files reflect this
   new interpretation, which may not be correct!
-</Para>
+</para>
 
-<Para>
+<para>
   The float8 regression test fails on at least some platforms. This is due
   to differences in implementations of pow() and exp() and the signaling
   mechanisms used for overflow and underflow conditions.
-</Para>
+</para>
 
-<Para>
+<para>
   The "random" results in the random test should cause the "random" test
   to be "failed", since the regression tests are evaluated using a simple
   diff. However, "random" does not seem to produce random results on my 
   test machine (Linux/gcc/i686).
-</Para>
+</para>
 
 <sect2>
 <title>Migration to v6.1</title>
@@ -2440,40 +2487,40 @@ Initial release.
 </para>
 </sect1>
 
-<Sect1>
-<Title>Timing Results</Title>
+<sect1>
+<title>Timing Results</title>
 
-<Para>
+<para>
 These timing results are from running the regression test with the commands
 
-<ProgramListing>
+<programlisting>
 % cd src/test/regress
 % make all
 % time make runtest
-</ProgramListing>
+</programlisting>
 </para>
-<Para>
+<para>
   Timing under Linux 2.0.27 seems to have a roughly 5% variation from run
   to run, presumably due to the scheduling vagaries of multitasking systems.
 </para>
-<Sect2>
-<Title>v6.4beta</Title>
+<sect2>
+<title>v6.4beta</title>
 
 <para>
 The times for this release are not directly comparable to those for previous releases
 since some additional regression tests have been included.
 In general, however, v6.4 should be slightly faster than the previous release (thanks, Bruce!).
 </para>
-<Para>
-<ProgramListing>
+<para>
+<programlisting>
   Time   System
   02:26  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
-</ProgramListing>
+</programlisting>
 </para>
 </sect2>
 
-<Sect2>
-<Title>v6.3</Title>
+<sect2>
+<title>v6.3</title>
 
 <para>
 The times for this release are not directly comparable to those for previous releases
@@ -2481,26 +2528,43 @@ since some additional regression tests have been included and some obsolete test
 time travel have been removed.
 In general, however, v6.3 is substantially faster than previous releases (thanks, Bruce!).
 </para>
-<Para>
-<ProgramListing>
+<para>
+<programlisting>
   Time   System
   02:30  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
   04:12  Dual Pentium Pro 180, 96MB, EIDE, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
-</ProgramListing>
+</programlisting>
 </para>
 </sect2>
 
-<Sect2>
-<Title>v6.1</Title>
+<sect2>
+<title>v6.1</title>
 
-<Para>
-<ProgramListing>
+<para>
+<programlisting>
   Time   System
   06:12  Pentium Pro 180, 32MB, EIDE, Linux 2.0.30, gcc 2.7.2 -O2 -m486
   12:06  P-100, 48MB, Linux 2.0.29, gcc
   39:58  Sparc IPC 32MB, Solaris 2.5, gcc 2.7.2.1 -O -g
-</ProgramListing>
+</programlisting>
 </para>
 </sect2>
 </sect1>
-</Chapter>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

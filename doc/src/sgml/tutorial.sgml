@@ -13,12 +13,13 @@
 <!entity notation SYSTEM "notation.sgml">
 <!entity y2k      SYSTEM "y2k.sgml">
 
-<!entity intro    SYSTEM "intro.sgml">
-<!entity arch     SYSTEM "arch.sgml">
-<!entity start    SYSTEM "start.sgml">
-<!entity query    SYSTEM "query.sgml">
 <!entity advanced SYSTEM "advanced.sgml">
+<!entity arch     SYSTEM "arch.sgml">
 <!entity biblio   SYSTEM "biblio.sgml">
+<!entity intro    SYSTEM "intro.sgml">
+<!entity query    SYSTEM "query.sgml">
+<!entity sql      SYSTEM "sql.sgml">
+<!entity start    SYSTEM "start.sgml">
 ]>
 <Book Id="tutorial">
 
@@ -54,7 +55,7 @@
 
   <LegalNotice>
    <Para>
-    <ProductName>PostgreSQL</ProductName> is copyright (&copy;) 1998-9
+    <ProductName>PostgreSQL</ProductName> is Copyright &copy; 1996-9
     by the Postgres Global Development Group.
    </Para>
   </LegalNotice>
@@ -90,6 +91,7 @@ Your name here...
  </Preface>
 
   &intro;
+  &sql;
   &arch;
   &start;
   &query;
