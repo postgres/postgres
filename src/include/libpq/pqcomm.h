@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.73 2003/01/06 03:18:27 momjian Exp $
+ * $Id: pqcomm.h,v 1.74 2003/01/06 05:33:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #endif
 #else							/* not WIN32 */
 #include <sys/socket.h>
+#include <netdb.h>
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
