@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.471 2004/08/12 21:00:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.472 2004/08/20 04:29:32 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -156,8 +156,8 @@ static void doNegateFloat(Value *v);
 %type <node>	alter_column_default opclass_item alter_using
 %type <ival>	add_drop
 
-%type <node>	alter_table_cmd
-%type <list>	alter_table_cmds
+%type <node>	alter_table_cmd alter_rel_cmd
+%type <list>	alter_table_cmds alter_rel_cmds
 
 %type <dbehavior>	opt_drop_behavior
 
@@ -1138,7 +1138,7 @@ CheckPointStmt:
 
 /*****************************************************************************
  *
- *	ALTER TABLE variations
+ *	ALTER [ TABLE | INDEX ] variations
  *
  *****************************************************************************/
 
@@ -1148,6 +1148,15 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = $3;
 					n->cmds = $4;
+					n->relkind = OBJECT_TABLE; 
+					$$ = (Node *)n;
+				}
+		|	ALTER INDEX relation_expr alter_rel_cmds
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $3;
+					n->cmds = $4;
+					n->relkind = OBJECT_INDEX;
 					$$ = (Node *)n;
 				}
 		;
@@ -1262,14 +1271,6 @@ alter_table_cmd:
 					n->subtype = AT_ToastTable;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> OWNER TO UserId */
-			|  OWNER TO UserId
-				{
-					AlterTableCmd *n = makeNode(AlterTableCmd);
-					n->subtype = AT_ChangeOwner;
-					n->name = $3;
-					$$ = (Node *)n;
-				}
 			/* ALTER TABLE <name> CLUSTER ON <indexname> */
 			| CLUSTER ON name
 				{
@@ -1286,7 +1287,27 @@ alter_table_cmd:
 					n->name = NULL;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> SET TABLESPACE <tablespacename> */
+			| alter_rel_cmd
+				{
+					$$ = $1;
+				}
+		;
+
+alter_rel_cmds: alter_rel_cmd                         { $$ = list_make1($1); }
+            | alter_rel_cmds ',' alter_rel_cmd  { $$ = lappend($1, $3); }
+        ;
+
+
+alter_rel_cmd:
+			/* ALTER [ TABLE | INDEX ] <name> OWNER TO UserId */
+			OWNER TO UserId
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ChangeOwner;
+					n->name = $3;
+					$$ = (Node *)n;
+				}
+			/* ALTER [ TABLE | INDEX ] <name> SET TABLESPACE <tablespacename> */
 			| SET TABLESPACE name
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1318,6 +1339,8 @@ alter_using:
 			USING a_expr				{ $$ = $2; }
 			| /* EMPTY */				{ $$ = NULL; }
 		;
+
+
 
 /*****************************************************************************
  *
@@ -3655,6 +3678,15 @@ RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TABLE;
+					n->relation = $3;
+					n->subname = NULL;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER INDEX relation_expr RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_INDEX;
 					n->relation = $3;
 					n->subname = NULL;
 					n->newname = $6;
