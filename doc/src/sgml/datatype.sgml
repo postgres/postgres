@@ -541,509 +541,106 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    <title>Date/Time Types</title>
 
    <para>
-    There are two fundamental kinds of date and time measurements
-    provided by <productname>Postgres</productname>:
-    absolute clock times and relative time intervals.
-    Both kinds of time measurements should demonstrate both
-    continuity and smoothness.
-   </para>
-
-   <para>
-    <productname>Postgres</productname> supplies two primary user-oriented 
-    date and time types,
-    <type>datetime</type> and <type>timespan</type>, as well as 
-    the related <acronym>SQL92</acronym> types <type>timestamp</type>,
-    <type>interval</type>,
-    <type>date</type> and <type>time</type>.
-   </para>
-
-   <para>
-    In a future release, <type>datetime</type> and <type>timespan</type> are likely
-    to merge with the <acronym>SQL92</acronym> types <type>timestamp</type>,
-    <type>interval</type>.
-    Other date and time types are also available, mostly
-    for historical reasons.
+    <productname>PostgreSQL</productname> supports the full set of
+    <acronym>SQL</acronym> date and time types.
    </para>
 
    <para>
     <table tocentry="1">
-     <title><productname>Postgres</productname> Date/Time Types</title>
+     <title><productname>PostgreSQL</productname> Date/Time Types</title>
      <titleabbrev>Date/Time</titleabbrev>
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Date/Time Type</entry>
+	<entry>Type</entry>
+        <entry>Description</entry>
 	<entry>Storage</entry>
-	<entry>Recommendation</entry>
-	<entry>Description</entry>
+        <entry>Earliest</entry>
+        <entry>Latest</entry>
+        <entry>Resolution</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>abstime</entry>
-	<entry>4 bytes</entry>
-	<entry>original date and time</entry>
-	<entry>limited range</entry>
+        <entry><type>timestamp</type></entry>
+        <entry>for data containing both date and time</entry>
+        <entry>8 bytes</entry>
+        <entry>4713 BC</entry>
+        <entry>AD 1465001</entry>
+        <entry>1 microsec / 14 digits</entry>
        </row>
        <row>
-	<entry>date</entry>
-	<entry>4 bytes</entry>
-	<entry><acronym>SQL92</acronym> type</entry>
-	<entry>wide range</entry>
+        <entry><type>interval</type></entry>
+        <entry>for time intervals</entry>
+        <entry>12 bytes</entry>
+        <entry>-178000000 years</entry>
+        <entry>178000000 years</entry>
+        <entry>1 mircosecond</entry>
        </row>
        <row>
-	<entry>datetime</entry>
-	<entry>8 bytes</entry>
-	<entry>best general date and time</entry>
-	<entry>wide range, high precision</entry>
+        <entry><type>date</type></entry>
+        <entry>for data containing only dates</entry>
+        <entry>4 bytes</entry>
+        <entry>4713 BC</entry>
+        <entry>32767 AD</entry>
+        <entry>1 day</entry>
        </row>
        <row>
-	<entry>interval</entry>
-	<entry>12 bytes</entry>
-	<entry><acronym>SQL92</acronym> type</entry>
-	<entry>equivalent to timespan</entry>
-       </row>
-       <row>
-	<entry>reltime</entry>
-	<entry>4 bytes</entry>
-	<entry>original time interval</entry>
-	<entry>limited range, low precision</entry>
-       </row>
-       <row>
-	<entry>time</entry>
-	<entry>4 bytes</entry>
-	<entry><acronym>SQL92</acronym> type</entry>
-	<entry>wide range</entry>
-       </row>
-       <row>
-	<entry>timespan</entry>
-	<entry>12 bytes</entry>
-	<entry>best general time interval</entry>
-	<entry>wide range, high precision</entry>
-       </row>
-       <row>
-	<entry>timestamp</entry>
-	<entry>4 bytes</entry>
-	<entry><acronym>SQL92</acronym> type</entry>
-	<entry>limited range</entry>
+        <entry><type>time</type></entry>
+        <entry>for data containing only times of the day</entry>
+        <entry>4 bytes</entry>
+        <entry>00:00:00.00</entry>
+        <entry>23:59:59.99</entry>
+        <entry>1 microsecond</entry>
        </row>
       </tbody>
      </tgroup>
     </table>
 
-    <type>timestamp</type> is currently implemented separately from
-    <type>datetime</type>, although they share input and output routines.
+    <note>
+     <para>
+      To ensure compatibility to earlier versions of <productname>PostgreSQL</productname>
+      we also continue to provide <type>datetime</type> (equivalent to <type>timestamp</type>) and
+      <type>timespan</type> (equivalent to <type>interval</type>). The types <type>abstime</type>
+      and <type>reltime</type> are lower precision types which are used internally.
+      You are discouraged from using any of these types in new applications and move any old
+      ones over when appropriate. Any or all of these type might disappear in a future release.
+     </para>
+    </note>
    </para>
 
-   <para>
-    <table tocentry="1">
-     <title><productname>Postgres</productname> Date/Time Ranges</title>
-     <titleabbrev>Ranges</titleabbrev>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Date/Time Type</entry>
-	<entry>Earliest</entry>
-	<entry>Latest</entry>
-	<entry>Resolution</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>abstime</entry>
-	<entry>1901-12-14</entry>
-	<entry>2038-01-19</entry>
-	<entry>1 sec</entry>
-       </row>
-       <row>
-	<entry>date</entry>
-	<entry>4713 BC</entry>
-	<entry>32767 AD</entry>
-	<entry>1 day</entry>
-       </row>
-       <row>
-	<entry>datetime</entry>
-	<entry>4713 BC</entry>
-	<entry>1465001 AD</entry>
-	<entry>1 microsec to 14 digits</entry>
-       </row>
-       <row>
-	<entry>interval</entry>
-	<entry>-178000000 years</entry>
-	<entry>178000000 years</entry>
-	<entry>1 microsec</entry>
-       </row>
-       <row>
-	<entry>reltime</entry>
-	<entry>-68 years</entry>
-	<entry>+68 years</entry>
-	<entry>1 sec</entry>
-       </row>
-       <row>
-	<entry>time</entry>
-	<entry>00:00:00.00</entry>
-	<entry>23:59:59.99</entry>
-	<entry>1 microsec</entry>
-       </row>
-       <row>
-	<entry>timespan</entry>
-	<entry>-178000000 years</entry>
-	<entry>178000000 years</entry>
-	<entry>1 microsec (14 digits)</entry>
-       </row>
-       <row>
-	<entry>timestamp</entry>
-	<entry>1901-12-14</entry>
-	<entry>2038-01-19</entry>
-	<entry>1 sec</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
-   </para>
-
-   <sect2>
-    <title>SQL92 Conventions</title>
-
-    <para>
-     <productname>Postgres</productname> endeavors to be compatible with
-     <acronym>SQL92</acronym> definitions for typical usage.
-     However, the <acronym>SQL92</acronym> standard has an odd mix of date and
-     time types and capabilities. Two obvious problems are:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-	Although the <type>date</type> type 
-	does not have an associated time zone, the
-	<type>time</type> type can or does.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	The default time zone is specified as a constant integer offset 
-	from GMT/UTC.
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-     Time zones in the real world can have no meaning unless 
-     associated with a date as well as a time
-     since the offset may vary through the year with daylight savings
-     time boundaries.
-    </para>
-
-    <para>
-     To address these difficulties, <productname>Postgres</productname> 
-     associates time zones only with date and time
-     types which contain both date and time,
-     and assumes local time for any type containing only
-     date or time. Further, time zone support is derived from 
-     the underlying operating system
-     time zone capabilities, and hence can handle daylight savings time 
-     and other expected behavior.
-    </para>
-
-    <para>
-     In future releases, the number of date/time types will decrease, 
-     with the current implementation of 
-     <type>datetime</type> becoming <type>timestamp</type>, 
-     <type>timespan</type> becoming <type>interval</type>,
-     and (possibly) <type>abstime</type> and <type>reltime</type> 
-     being deprecated in favor of <type>timestamp</type> and <type>interval</type>.
-     The more arcane features of the date/time definitions from 
-     the <acronym>SQL92</acronym> standard are not likely to be pursued.
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>Date/Time Styles</title>
-
-    <para>
-     Output formats can be set to one of four styles: 
-     ISO-8601, <acronym>SQL</acronym> (Ingres), traditional
-     Postgres, and German.
-
-     <table tocentry="1">
-      <title><productname>Postgres</productname> Date Styles</title>
-      <titleabbrev>Styles</titleabbrev>
-      <tgroup cols="3">
-       <thead>
-	<row>
-	 <entry>Style Specification</entry>
-	 <entry>Description</entry>
-	 <entry>Example</entry>
-	</row>
-       </thead>
-       <tbody>
-	<row>
-	 <entry>ISO</entry>
-	 <entry>ISO-8601 standard</entry>
-	 <entry>1997-12-17 07:37:16-08</entry>
-	</row>
-	<row>
-	 <entry><acronym>SQL</acronym></entry>
-	 <entry>Traditional style</entry>
-	 <entry>12/17/1997 07:37:16.00 PST</entry>
-	</row>
-	<row>
-	 <entry>Postgres</entry>
-	 <entry>Original style</entry>
-	 <entry>Wed Dec 17 07:37:16 1997 PST</entry>
-	</row>
-	<row>
-	 <entry>German</entry>
-	 <entry>Regional style</entry>
-	 <entry>17.12.1997 07:37:16.00 PST</entry>
-	</row>
-       </tbody>
-      </tgroup>
-     </table>
-    </para>
-
-    <para>
-     The <acronym>SQL</acronym> style has European and non-European (US) variants, 
-     which determines whether month follows day or vica versa.
-
-     <table tocentry="1">
-      <title><productname>Postgres</productname> Date Order Conventions</title>
-      <titleabbrev>Order</titleabbrev>
-      <tgroup cols="3">
-       <thead>
-	<row>
-	 <entry>Style Specification</entry>
-	 <entry>Description</entry>
-	 <entry>Example</entry>
-	</row>
-       </thead>
-       <tbody>
-	<row>
-	 <entry>European</entry>
-	 <entry>Regional convention</entry>
-	 <entry>17/12/1997 15:37:16.00 MET</entry>
-	</row>
-	<row>
-	 <entry>NonEuropean</entry>
-	 <entry>Regional convention</entry>
-	 <entry>12/17/1997 07:37:16.00 PST</entry>
-	</row>
-	<row>
-	 <entry>US</entry>
-	 <entry>Regional convention</entry>
-	 <entry>12/17/1997 07:37:16.00 PST</entry>
-	</row>
-       </tbody>
-      </tgroup>
-     </table>
-    </para>
-
-    <para>
-     There are several ways to affect the appearance of date/time types:
-
-     <itemizedlist spacing="compact" mark="bullet">
-      <listitem>
-       <para>
-	The <envar>PGDATESTYLE</envar> environment variable used by the backend directly 
-	on postmaster startup.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	The <envar>PGDATESTYLE</envar> environment variable used by the frontend libpq 
-	on session startup.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	<command>SET DATESTYLE</command> <acronym>SQL</acronym> command.
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-
-    <para>
-     For <productname>Postgres</productname> v6.5 (and earlier) 
-     the default date/time style is
-     "non-European traditional Postgres". 
-     In future releases, the default may become "ISO" (compatible with ISO-8601),
-     which alleviates date specification ambiguities and Y2K collation problems.
-    </para>
-
-   </sect2>
-
-   <sect2>
-    <title>Calendar</title>
-
-    <para>
-     <productname>Postgres</productname> uses Julian dates
-     for all date/time calculations. They have the nice property of correctly
-     predicting/calculating any date more recent than 4713BC
-     to far into the future, using the assumption that the length of the
-     year is 365.2425 days.
-    </para>
-
-    <para>
-     Date conventions before the 19th century make for interesting reading,
-     but are not consistant enough to warrant coding into a date/time handler.
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>Time Zones</title>
-
-    <para>
-     <productname>Postgres</productname> obtains time zone support 
-     from the underlying operating system for dates between 1902 and
-     2038 (near the typical date limits for Unix-style
-     systems). Outside of this range, all dates are assumed to be
-     specified and used in Universal Coordinated Time (UTC).
-    </para>
-
-    <para>
-     All dates and times are stored internally in Universal UTC,
-     alternately known as Greenwich Mean Time (GMT). 
-     Times are converted to local time on the database server before being
-     sent to the client frontend, hence by default are in the server
-     time zone.
-    </para>
-
-    <para>
-     There are several ways to affect the time zone behavior:
-
-     <itemizedlist spacing="compact" mark="bullet">
-      <listitem>
-       <para>
-	The TZ environment variable used by the backend directly
-	on postmaster startup as the default time zone.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	The PGTZ environment variable set at the client used by libpq 
-	to send time zone information to the backend upon connection.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
-	sets the time zone for the session.
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-
-    <para>
-     If an invalid time zone is specified,
-     the time zone becomes GMT (on most systems anyway).
-    </para>
-   </sect2>
 
    <sect2>
     <title>Date/Time Input</title>
 
     <para>
-     General-use date and time is input using a wide range of
-     styles, including ISO-compatible, <acronym>SQL</acronym>-compatible, 
-     traditional <productname>Postgres</productname> 
-     and other permutations of date and time. In cases where interpretation
-     can be ambiguous (quite possible with many traditional styles of date 
-     specification) <productname>Postgres</productname> uses a style setting 
-     to resolve the ambiguity.
+     Date and time input is accepted in almost any reasonable format, including
+     <acronym>ISO</acronym>-compatible, <acronym>SQL</acronym>-compatible, 
+     traditional <productname>Postgres</productname>, and others.
+     The ordering of month and day in date input can be ambiguous, therefore a setting
+     exists, to specify how it should be interpreted. The command
+     <literal>SET DateStyle TO 'US'</literal> or <literal>SET DateStyle TO 'NonEuropean'</literal>
+     specifies the variant <quote>month before day</quote>, the command
+     <literal>SET DateStyle TO 'European'</literal> sets the variant
+     <quote>day before month</quote>. The former is the default.
     </para>
 
     <para>
-     Most date and time types share code for data input. For those types
-     the input can have any of a wide variety of styles. For numeric date 
-     representations,
-     European and US conventions can differ, and the proper interpretation 
-     is obtained by using the <command>SET DATESTYLE</command>
-     command before entering data.
-     Note that the style setting does not preclude use of various styles for input;
-     it is used primarily to determine the output style and to resolve ambiguities.
+     See <xref linkend="datetime-appendix-title" endterm="datetime-appendix-title">
+     for the exact parsing rules of date/time input and for the recognized time zones.
     </para>
 
     <para>
-     The special values <literal>current</literal>,
-     <literal>infinity</literal> and <literal>-infinity</literal> are provided.
-     <literal>infinity</literal> specifies a time later than any other valid time, and
-     <literal>-infinity</literal> specifies a time earlier than any other valid time.
-     <literal>current</literal> indicates that the current time should be
-     substituted whenever this value appears in a computation.
+     Remember that any date or time input needs to be enclosed into single quotes,
+     like text strings.
     </para>
 
+    <sect3>
+    <title>date</title>
     <para>
-     The strings
-     <literal>now</literal>,
-     <literal>today</literal>,
-     <literal>yesterday</literal>,
-     <literal>tomorrow</literal>,
-     and <literal>epoch</literal>
-     can be used to specify time values.
-     <literal>now</literal>
-     means the current transaction time, and differs from
-     <literal>current</literal>
-     in that the current time is immediately substituted for it.
-     <literal>epoch</literal> means <literal>Jan 1 00:00:00 1970 GMT</literal>.
-    </para>
-
-    <para>
+     The following are possible inputs for the <type>date</type> type.
      <table tocentry="1">
-      <title><productname>Postgres</productname> Date/Time Special Constants</title>
-      <titleabbrev>Constants</titleabbrev>
-      <tgroup cols="2">
-       <thead>
-	<row>
-	 <entry>Constant</entry>
-	 <entry>Description</entry>
-	</row>
-       </thead>
-       <tbody>
-	<row>
-	 <entry>current</entry>
-	 <entry>Current transaction time, deferred</entry>
-	</row>
-	<row>
-	 <entry>epoch</entry>
-	 <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
-	</row>
-	<row>
-	 <entry>infinity</entry>
-	 <entry>Later than other valid times</entry>
-	</row>
-	<row>
-	 <entry>-infinity</entry>
-	 <entry>Earlier than other valid times</entry>
-	</row>
-	<row>
-	 <entry>invalid</entry>
-	 <entry>Illegal entry</entry>
-	</row>
-	<row>
-	 <entry>now</entry>
-	 <entry>Current transaction time</entry>
-	</row>
-	<row>
-	 <entry>today</entry>
-	 <entry>Midnight today</entry>
-	</row>
-	<row>
-	 <entry>tomorrow</entry>
-	 <entry>Midnight tomorrow</entry>
-	</row>
-	<row>
-	 <entry>yesterday</entry>
-	 <entry>Midnight yesterday</entry>
-	</row>
-       </tbody>
-      </tgroup>
-     </table>
-    </para>
-
-    <para>
-     <table tocentry="1">
-      <title><productname>Postgres</productname> Date Input</title>
+      <title><productname>PostgreSQL</productname> Date Input</title>
       <titleabbrev>Date Inputs</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -1055,11 +652,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        <tbody>
 	<row>
 	 <entry>January 8, 1999</entry>
-	 <entry>Unambiguous text month</entry>
+	 <entry>Unambiguous</entry>
 	</row>
 	<row>
 	 <entry>1999-01-08</entry>
-	 <entry>ISO-8601</entry>
+	 <entry>ISO-8601 format, preferred</entry>
 	</row>
 	<row>
 	 <entry>1/8/1999</entry>
@@ -1095,7 +692,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 	</row>
 	<row>
 	 <entry>January 8, 99 BC</entry>
-	 <entry>Year 99 before the Christian Era</entry>
+	 <entry>Year 99 before the common era</entry>
 	</row>
        </tbody>
       </tgroup>
@@ -1104,7 +701,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <para>
      <table tocentry="1">
-      <title><productname>Postgres</productname> Month Abbreviations</title>
+      <title><productname>PostgreSQL</productname> Month Abbreviations</title>
       <titleabbrev>Month Abbreviations</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -1171,7 +768,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <para>
      <table tocentry="1">
-      <title><productname>Postgres</productname> Day of Week Abbreviations</title>
+      <title><productname>PostgreSQL</productname> Day of Week Abbreviations</title>
       <titleabbrev>Day of Week Abbreviations</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -1213,10 +810,14 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       </tgroup>
      </table>
     </para>
+    </sect3>
 
+    <sect3>
+    <title>time</title>
     <para>
+     The following are valid <type>time</type> inputs.
      <table tocentry="1">
-      <title><productname>Postgres</productname> Time Input</title>
+      <title><productname>PostgreSQL</productname> Time Input</title>
       <titleabbrev>Time Inputs</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -1228,7 +829,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        <tbody>
 	<row>
 	 <entry>04:05:06.789</entry>
-	 <entry>ISO-8601, with all time fields</entry>
+	 <entry>ISO-8601</entry>
 	</row>
 	<row>
 	 <entry>04:05:06</entry>
@@ -1266,10 +867,29 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       </tgroup>
      </table>
     </para>
+    </sect3>
+
+    <sect3>
+    <title>timestamp</title>
+    <para>
+     Valid input for the <type>timestamp</type> type consists of a concatenation
+     of a date and a time, followed by an optional <literal>AD</literal> or
+     <literal>BC</literal>, followed by an optional time zone. (See below.)
+     Thus
+<programlisting>
+1999-01-08 04:05:06 -8:00
+</programlisting>
+     is a valid <type>timestamp</type> value, which is <acronym>ISO</acronym>-compliant.
+     In addition, the wide-spread format
+<programlisting>
+January 8 04:05:06 1999 PST
+</programlisting>
+     is supported.
+    </para>
 
     <para>
      <table tocentry="1">
-      <title><productname>Postgres</productname> Time Zone Input</title>
+      <title><productname>PostgreSQL</productname> Time Zone Input</title>
       <titleabbrev>Time Zone Inputs</titleabbrev>
       <tgroup cols="2">
        <thead>
@@ -1299,10 +919,305 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       </tgroup>
      </table>
     </para>
+    </sect3>
+
+    <sect3>
+     <title>interval</title>
+      <para>
+       <type>interval</type>s can be specified with the following syntax:
+<programlisting>
+  Quantity Unit [Quantity Unit...] [Direction]
+@ Quantity Unit [Direction]
+</programlisting>
+       where: <literal>Quantity</literal> is ..., <literal>-1</literal>,
+       <literal>0</literal>, <literal>1</literal>, <literal>2</literal>, ...;
+       <literal>Unit</literal> is <literal>second</literal>,
+       <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
+       <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
+       <literal>decade</literal>, <literal>century</literal>, <literal>millenium</literal>,
+       or abbreviations or plurals of these units;
+       <literal>Direction</literal> can be <literal>ago</literal> or
+       empty.
+      </para>
+     </sect3>
+
+    <sect3>
+    <title>Special values</title>
+    <para>
+     The following <acronym>SQL</acronym>-compatible functions can be used as date or time
+     input for the corresponding datatype: <literal>CURRENT_DATE</literal>,
+     <literal>CURRENT_TIME</literal>, <literal>CURRENT_TIMESTAMP</literal>.
+    </para>
+    <para>
+     <productname>PostgreSQL</productname> also supports several special constants for
+     convenience.
+
+     <table tocentry="1">
+      <title><productname>PostgresSQL</productname> Special Date/Time Constants</title>
+      <titleabbrev>Constants</titleabbrev>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Constant</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>current</entry>
+	 <entry>Current transaction time, deferred</entry>
+	</row>
+	<row>
+	 <entry>epoch</entry>
+	 <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
+	</row>
+	<row>
+	 <entry>infinity</entry>
+	 <entry>Later than other valid times</entry>
+	</row>
+	<row>
+	 <entry>-infinity</entry>
+	 <entry>Earlier than other valid times</entry>
+	</row>
+	<row>
+	 <entry>invalid</entry>
+	 <entry>Illegal entry</entry>
+	</row>
+	<row>
+	 <entry>now</entry>
+	 <entry>Current transaction time</entry>
+	</row>
+	<row>
+	 <entry>today</entry>
+	 <entry>Midnight today</entry>
+	</row>
+	<row>
+	 <entry>tomorrow</entry>
+	 <entry>Midnight tomorrow</entry>
+        </row>
+	<row>
+	 <entry>yesterday</entry>
+	 <entry>Midnight yesterday</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+     <literal>'now'</literal> is resolved when the value is inserted, <literal>'current'</literal>
+     is resolved everytime the value is retrieved. So you probably want to use <literal>'now'</literal>
+     in most applications. (Of course you <emphasis>really</emphasis> want to use
+     <literal>CURRENT_TIMESTAMP</literal>, which is equivalent to <literal>'now'</literal>.)
+    </para>
+    </sect3>
+
+   </sect2>
+
+
+   <sect2>
+    <title>Date/Time Output</title>
 
     <para>
-     See <xref linkend="datetime-appendix-title" endterm="datetime-appendix-title">
-     for details on time zones recognized by <productname>Postgres</productname>.
+     Output formats can be set to one of the four styles
+     ISO-8601, <acronym>SQL</acronym> (Ingres), traditional
+     Postgres, and German, using the <command>SET DateStyle</command>.
+     The default is the <acronym>ISO</acronym> format.
+
+     <table tocentry="1">
+      <title><productname>PostgreSQL</productname> Date/Time Output Styles</title>
+      <titleabbrev>Styles</titleabbrev>
+      <tgroup cols="3">
+       <thead>
+	<row>
+	 <entry>Style Specification</entry>
+	 <entry>Description</entry>
+	 <entry>Example</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>'ISO'</entry>
+	 <entry>ISO-8601 standard</entry>
+	 <entry>1997-12-17 07:37:16-08</entry>
+	</row>
+	<row>
+	 <entry>'SQL'</entry>
+	 <entry>Traditional style</entry>
+	 <entry>12/17/1997 07:37:16.00 PST</entry>
+	</row>
+	<row>
+	 <entry>'Postgres'</entry>
+	 <entry>Original style</entry>
+	 <entry>Wed Dec 17 07:37:16 1997 PST</entry>
+	</row>
+	<row>
+	 <entry>'German'</entry>
+	 <entry>Regional style</entry>
+	 <entry>17.12.1997 07:37:16.00 PST</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+     The output of the <type>date</type> and <type>time</type> styles is of course
+     only the date or time part in accordance with the above examples
+    </para>
+
+    <para>
+     The <acronym>SQL</acronym> style has European and non-European (US) variants, 
+     which determines whether month follows day or vica versa. (See also above
+     at Date/Time Input, how this setting affects interpretation of input values.)
+
+     <table tocentry="1">
+      <title><productname>PostgreSQL</productname> Date Order Conventions</title>
+      <titleabbrev>Order</titleabbrev>
+      <tgroup cols="3">
+       <thead>
+	<row>
+	 <entry>Style Specification</entry>
+	 <entry>Example</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>European</entry>
+	 <entry>17/12/1997 15:37:16.00 MET</entry>
+	</row>
+	<row>
+	 <entry>US</entry>
+	 <entry>12/17/1997 07:37:16.00 PST</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+    <type>interval</type> output looks like the input format, expect that units like
+    <literal>week</literal> or <literal>century</literal> are converted to years and days.
+    In ISO mode the output looks like
+<programlisting>
+[ Quantity Units [ ... ] ] [ Days ] Hours:Minutes [ ago ]
+</programlisting>
+    </para>
+
+    <para>
+     There are several ways to affect the appearance of date/time types:
+
+     <itemizedlist spacing="compact" mark="bullet">
+      <listitem>
+       <para>
+	The <envar>PGDATESTYLE</envar> environment variable used by the backend directly 
+	on postmaster startup.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	The <envar>PGDATESTYLE</envar> environment variable used by the frontend libpq 
+	on session startup.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<command>SET DATESTYLE</command> <acronym>SQL</acronym> command.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Time Zones</title>
+
+    <para>
+     <productname>PostgreSQL</productname> endeavors to be compatible with
+     <acronym>SQL92</acronym> definitions for typical usage.
+     However, the <acronym>SQL92</acronym> standard has an odd mix of date and
+     time types and capabilities. Two obvious problems are:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	Although the <type>date</type> type 
+	does not have an associated time zone, the
+	<type>time</type> type can or does.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	The default time zone is specified as a constant integer offset 
+	from GMT/UTC.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+     Time zones in the real world can have no meaning unless 
+     associated with a date as well as a time
+     since the offset may vary through the year with daylight savings
+     time boundaries.
+    </para>
+
+    <para>
+     To address these difficulties, <productname>PostgreSQL</productname> 
+     associates time zones only with date and time
+     types which contain both date and time,
+     and assumes local time for any type containing only
+     date or time. Further, time zone support is derived from 
+     the underlying operating system
+     time zone capabilities, and hence can handle daylight savings time 
+     and other expected behavior.
+    </para>
+
+    <para>
+     <productname>PostgreSQL</productname> obtains time zone support 
+     from the underlying operating system for dates between 1902 and
+     2038 (near the typical date limits for Unix-style
+     systems). Outside of this range, all dates are assumed to be
+     specified and used in Universal Coordinated Time (UTC).
+    </para>
+
+    <para>
+     All dates and times are stored internally in Universal UTC,
+     alternately known as Greenwich Mean Time (GMT). 
+     Times are converted to local time on the database server before being
+     sent to the client frontend, hence by default are in the server
+     time zone.
+    </para>
+
+    <para>
+     There are several ways to affect the time zone behavior:
+
+     <itemizedlist spacing="compact" mark="bullet">
+      <listitem>
+       <para>
+	The TZ environment variable used by the backend directly
+	on postmaster startup as the default time zone.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	The PGTZ environment variable set at the client used by libpq 
+	to send time zone information to the backend upon connection.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
+	sets the time zone for the session.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+    <para>
+     If an invalid time zone is specified,
+     the time zone becomes GMT (on most systems anyway).
+    </para>
+
+    <para>
 
      <note>
       <para>
@@ -1313,201 +1228,22 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      </note>
     </para>
 
-    <para>
-     Australian time zones and their naming variants
-     account for fully one quarter of all time zones in the 
-     <productname>Postgres</productname> time zone lookup table.
-    </para>
-
    </sect2>
 
    <sect2>
-    <title><type>datetime</type></title>
+    <title>Internals</title>
 
     <para>
-     General-use date and time is input using a wide range of
-     styles, including ISO-compatible, <acronym>SQL</acronym>-compatible, traditional
-     <productname>Postgres</productname> (see section on "absolute time")
-     and other permutations of date and time. Output styles can be ISO-compatible,
-     <acronym>SQL</acronym>-compatible, or traditional 
-     <productname>Postgres</productname>, with the default set to be compatible
-     with <productname>Postgres</productname> v6.0.
+     <productname>PostgreSQL</productname> uses Julian dates
+     for all date/time calculations. They have the nice property of correctly
+     predicting/calculating any date more recent than 4713BC
+     to far into the future, using the assumption that the length of the
+     year is 365.2425 days.
     </para>
 
     <para>
-     <type>datetime</type> is specified using the following syntax:
-
-     <programlisting>
-Year-Month-Day [ Hour : Minute : Second ]      [AD,BC] [ Timezone ]
-  YearMonthDay [ Hour : Minute : Second ]      [AD,BC] [ Timezone ]
-     Month Day [ Hour : Minute : Second ] Year [AD,BC] [ Timezone ]
-where	
-    Year is 4013 BC, ..., very large
-    Month is Jan, Feb, ..., Dec or 1, 2, ..., 12
-    Day is 1, 2, ..., 31
-    Hour is 00, 02, ..., 23
-    Minute is 00, 01, ..., 59
-    Second is 00, 01, ..., 59 (60 for leap second)
-    Timezone is 3 characters or ISO offset to GMT
-     </programlisting>
-    </para>
-
-    <para>
-     Valid dates are from Nov 13 00:00:00 4013 BC GMT to far into the future.
-     Timezones are either three characters (e.g. "GMT" or "PST") or ISO-compatible
-     offsets to GMT (e.g. "-08" or "-08:00" when in Pacific Standard Time).
-     Dates are stored internally in Greenwich Mean Time. Input and output routines 
-     translate time to the local time zone of the server.
-    </para>
-   </sect2>
-
-   <sect2>
-    <title><type>timespan</type></title>
-
-    <para>
-     General-use time span is input using a wide range of
-     syntaxes, including ISO-compatible, <acronym>SQL</acronym>-compatible, 
-     traditional
-     <productname>Postgres</productname> (see section on "relative time")
-     and other permutations of time span. Output formats can be ISO-compatible,
-     <acronym>SQL</acronym>-compatible, or traditional 
-     <productname>Postgres</productname>, 
-     with the default set to be <productname>Postgres</productname>-compatible.
-     Months and years are a "qualitative" time interval, and are stored separately
-     from the other "quantitative" time intervals such as day or hour. 
-     For date arithmetic,
-     the qualitative time units are instantiated in the context of the 
-     relevant date or time.
-    </para>
-
-    <para>
-     Time span is specified with the following syntax:
-
-     <programlisting>
-  Quantity Unit [Quantity Unit...] [Direction]
-@ Quantity Unit [Direction]
-where 	
-    Quantity is ..., <literal>-1</literal>, <literal>0</literal>, <literal>1</literal>, <literal>2</literal>, ...
-    Unit is <literal>second</literal>, <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>, <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
-      <literal>decade</literal>, <literal>century</literal>, <literal>millenium</literal>, or abbreviations or plurals of these units.
-    Direction is <literal>ago</literal>.
-     </programlisting>
-    </para>
-   </sect2>
-
-   <sect2>
-    <title><type>abstime</type></title>
-
-    <para>
-     Absolute time (<type>abstime</type>) is a limited-range (+/- 68 years) and 
-     limited-precision (1 sec)
-     date data type. <type>datetime</type> may be preferred, since it
-     covers a larger range with greater precision.
-    </para>
-
-    <para>
-     Absolute time is specified using the following syntax:
-
-     <programlisting>
-Month  Day [ Hour : Minute : Second ]  Year [ Timezone ]
-where	
-    Month is Jan, Feb, ..., Dec
-    Day is 1, 2, ..., 31
-    Hour is 01, 02, ..., 24
-    Minute is 00, 01, ..., 59
-    Second is 00, 01, ..., 59
-    Year is 1901, 1902, ..., 2038
-     </programlisting>
-    </para>
-
-    <para>
-     Valid dates are from <literal>Dec 13 20:45:53 1901 GMT</literal>
-     to <literal>Jan 19 03:14:04 2038 GMT</literal>. 
-
-     <note>
-      <title>Historical Note</title>
-      <para>
-       As of Version 3.0, times are no longer read and written
-       using Greenwich Mean Time; the input and output routines default to
-       the local time zone.</para>
-     </note>
-
-     All special values allowed for <type>datetime</type> are also 
-     allowed for "absolute time".
-    </para>
-
-   </sect2>
-
-   <sect2>
-    <title><type>reltime</type></title>
-
-    <para>
-     Relative time <type>reltime</type> is a limited-range (+/- 68 years)
-     and limited-precision (1 sec) time span data type.
-     <type>timespan</type> should be preferred, since it
-     covers a larger range with greater precision and, more importantly, 
-     can distinguish between
-     relative units (months and years) and quantitative units (days, hours, etc). 
-     Instead, reltime
-     must force months to be exactly 30 days, so time arithmetic does not 
-     always work as expected.
-     For example, adding one reltime <literal>year</literal> to
-     abstime <literal>today</literal> does not 
-     produce today's date one year from
-     now, but rather a date 360 days from today.
-    </para>
-
-    <para>
-     <type>reltime</type> shares input and output routines with the other 
-     time span types.
-     The section on <type>timespan</type> covers this in more detail.
-    </para>
-
-   </sect2>
-
-   <sect2>
-    <title><type>timestamp</type></title>
-
-    <para>
-     This is currently a limited-range absolute time which closely resembles the
-     abstime
-     data type. It shares the general input parser with the other date/time types.
-     In future releases this type will absorb the capabilities of the 
-     <type>datetime</type> type
-     and will move toward <acronym>SQL92</acronym> compliance.
-    </para>
-
-    <para>
-     <type>timestamp</type> is specified using the same syntax as for 
-     <type>datetime</type>.
-    </para>
-   </sect2>
-
-   <sect2>
-    <title><type>interval</type></title>
-
-    <para>
-     <type>interval</type> is an <acronym>SQL92</acronym> data type which is
-     currently mapped to the <type>timespan</type> 
-     <productname>Postgres</productname> data type.
-    </para>
-   </sect2>
-
-   <sect2>
-    <title><type>tinterval</type></title>
-
-    <para>
-     Time ranges are specified as:
-
-     <programlisting>
-[ 'abstime' 'abstime']
-where
-    abstime is a time in the absolute time format.
-     </programlisting>
-
-     Special abstime values such as 
-     <literal>current</literal>, <literal>infinity</literal> and
-     <literal>-infinity</literal> can be used.
+     Date conventions before the 19th century make for interesting reading,
+     but are not consistant enough to warrant coding into a date/time handler.
     </para>
    </sect2>
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.14 2000/01/22 14:20:51 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.15 2000/01/23 01:27:37 petere Exp $
  */
 #include <c.h>
 #include "command.h"
@@ -1198,6 +1198,7 @@ process_file(char *filename)
 {
 	FILE	   *fd;
 	int			result;
+    char       *oldfilename;
 
 	if (!filename)
 		return false;
@@ -1214,10 +1215,11 @@ process_file(char *filename)
 		return false;
 	}
 
+    oldfilename = pset.inputfile;
     pset.inputfile = filename;
 	result = MainLoop(fd);
 	fclose(fd);
-	pset.inputfile = NULL;
+	pset.inputfile = oldfilename;
 	return (result == EXIT_SUCCESS);
 }
 

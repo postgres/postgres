@@ -1,9 +1,3 @@
-Chapter 0. Installation
-
-Table of Contents
-Before you start
-Installation Procedure
-
      Installation instructions for PostgreSQL 7.0.
 
 Commands were tested on RedHat Linux version 5.2 using the bash shell.
@@ -58,7 +52,6 @@ Considering today's prices for hard disks, getting a large and fast hard
 disk should probably be in your plans before putting a database into
 production use.
 
----------------------------------------------------------------------------
 
 Installation Procedure
 
@@ -79,7 +72,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      (although you can). You will be told when you need to login as the
      database superuser.
 
-  2. If you are not upgrading an existing system then skip to .
+  2. If you are not upgrading an existing system then skip to step 4.
 
      You now need to back up your existing database. To dump your fairly
      recent post-6.0 database installation, type
@@ -103,6 +96,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
       backup. If necessary, bring down postmaster, edit the permissions in file
       /usr/local/pgsql/data/pg_hba.conf to allow only you on, then bring
       postmaster back up.
+
   3. If you are upgrading an existing system then kill the database server
      now. Type
 
@@ -140,11 +134,13 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      make choices about what gets installed. Change into the src
      subdirectory and type:
 
-     $ ./configure [ options ]
+     $ ./configure
 
-     For a complete list of options, type:
+     followed by any options you might want to give it. For a first
+     installation you should be able to do fine without any. For a complete
+     list of options, type:
 
-          ./configure --help
+     ./configure --help
 
      Some of the more commonly used ones are:
 
@@ -231,12 +227,15 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      The -D option specifies the location where the data will be stored. You
      can use any path you want, it does not have to be under the
      installation directory. Just make sure that the superuser account can
-     write to it (or create it) before starting initdb.
+     write to the directory (or create it) before starting initdb. (If you
+     have already been doing the installation up to now as the PostgreSQL
+     superuser, you may have to log in as root temporarily to create the
+     data directory.)
 
   9. The previous step should have told you how to start up the database
      server. Do so now.
 
-     $ /usr/local/pgsql/initdb/postmaster -D /usr/local/pgsql/data
+     $ /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
 
      This will start the server in the foreground. To make it detach to the
      background, use the -S.
@@ -270,7 +269,12 @@ suggestions.
      $ cd /usr/src/pgsql/postgresql-7.0/doc
      $ gmake install
 
-     This will install files under /usr/local/pgsql/doc.
+     This will install files under /usr/local/pgsql/doc and
+     /usr/local/pgsql/man. To enable your system to find the man
+     documentation, you need to add a line like the following to a shell
+     startup file:
+
+     MANPATH=$MANPATH:/usr/local/pgsql/man
 
      The documentation is also available in Postscript format. If you have a
      Postscript printer, or have your machine already set up to accept

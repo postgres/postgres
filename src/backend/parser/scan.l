@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.61 2000/01/20 05:26:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.62 2000/01/23 01:27:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,8 +338,11 @@ other			.
 							isupper(yytext[i]))
 							yytext[i] = tolower(yytext[i]);
 					if (i >= NAMEDATALEN)
+                    {
+                        elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
+                             yytext, NAMEDATALEN-1, yytext);
 						yytext[NAMEDATALEN-1] = '\0';
-
+                    }
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
 						return keyword->value;

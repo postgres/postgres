@@ -209,11 +209,13 @@ you can specify your actual installation path for the build process
 and make choices about what gets installed. Change into the <filename>src</filename>
 subdirectory and type:
 <ProgramListing>
-$ ./configure [ <replaceable>options</replaceable> ]
+$ ./configure
 </ProgramListing>
+followed by any options you might want to give it. For a first installation
+you should be able to do fine without any.
 For a complete list of options, type:
 <ProgramListing>
-     ./configure --help
+./configure --help
 </ProgramListing>
      Some of the more commonly used ones are:
 <VariableList>
@@ -359,7 +361,9 @@ $ /usr/local/pgsql/initdb -D /usr/local/pgsql/data
 The <option>-D</option> option specifies the location where the data will be
 stored. You can use any path you want, it does not have to be under
 the installation directory. Just make sure that the superuser account
-can write to it (or create it) before starting <command>initdb</command>.
+can write to the directory (or create it) before starting <command>initdb</command>.
+(If you have already been doing the installation up to now as the <productname>PostgreSQL</productname>
+superuser, you may have to log in as root temporarily to create the data directory.)
 </Para>
 </Step>
 
@@ -368,7 +372,7 @@ can write to it (or create it) before starting <command>initdb</command>.
 The previous step should have told you how to start up the database server.
 Do so now.
 <programlisting>
-$ /usr/local/pgsql/initdb/postmaster -D /usr/local/pgsql/data
+$ /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
 </programlisting>
 This will start the server in the foreground. To make it detach to
 the background, use the <option>-S</option>.
@@ -420,7 +424,13 @@ You probably want to install the <application>man</application> and
 $ cd /usr/src/pgsql/postgresql-7.0/doc
 $ gmake install
 </ProgramListing>
-This will install files under <filename>/usr/local/pgsql/doc</filename>.
+This will install files under <filename>/usr/local/pgsql/doc</filename>
+and <filename>/usr/local/pgsql/man</filename>. To enable your system
+to find the <application>man</application> documentation, you need to
+add a line like the following to a shell startup file:
+<ProgramListing>
+MANPATH=$MANPATH:/usr/local/pgsql/man
+</ProgramListing>
 </para>
 
 <para>
