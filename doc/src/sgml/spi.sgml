@@ -2691,7 +2691,7 @@ are invisible to the query scan.  For example, in query
 
    INSERT INTO a SELECT * FROM a
 
-   tuples inserted are invisible for SELECT' scan.  In effect, this
+   tuples inserted are invisible for SELECT's scan.  In effect, this
 duplicates the database table within itself (subject to unique index
 rules, of course) without recursing.
 </Para>
@@ -2708,7 +2708,7 @@ of Q) or after Q is done.
 
 <Para>
    This example of SPI usage demonstrates the visibility rule.
-   There are more complex examples in in src/test/regress/regress.c and
+   There are more complex examples in src/test/regress/regress.c and
 in contrib/spi.
 </Para>
 
@@ -2719,47 +2719,54 @@ query using SPI_exec and returns the number of tuples for which the query
 executed:
 
 <ProgramListing>
-#include "executor/spi.h"	/* this is what you need to work with SPI */
+#include "executor/spi.h"   /* this is what you need to work with SPI */
 
 int execq(text *sql, int cnt);
 
 int
 execq(text *sql, int cnt)
 {
-	int ret;
-	int proc = 0;
-	
-	SPI_connect();
-	
-	ret = SPI_exec(textout(sql), cnt);
-	
-	proc = SPI_processed;
-	/*
-	 * If this is SELECT and some tuple(s) fetched -
-	 * returns tuples to the caller via elog (NOTICE).
-	 */
-	if ( ret == SPI_OK_SELECT && SPI_processed > 0 )
-	{
-		TupleDesc tupdesc = SPI_tuptable->tupdesc;
-		SPITupleTable *tuptable = SPI_tuptable;
-		char buf[8192];
-		int i;
-		
-		for (ret = 0; ret < proc; ret++)
-		{
-			HeapTuple tuple = tuptable->vals[ret];
-			
-			for (i = 1, buf[0] = 0; i <= tupdesc->natts; i++)
-				sprintf(buf + strlen (buf), " %s%s",
-					SPI_getvalue(tuple, tupdesc, i),
-					(i == tupdesc->natts) ? " " : " |");
-			elog (NOTICE, "EXECQ: %s", buf);
-		}
-	}
+    char *query;
+    int ret;
+    int proc;
 
-	SPI_finish();
+    /* Convert given TEXT object to a C string */
+    query = DatumGetCString(DirectFunctionCall1(textout,
+                                                PointerGetDatum(sql)));
 
-	return (proc);
+    SPI_connect();
+    
+    ret = SPI_exec(query, cnt);
+    
+    proc = SPI_processed;
+    /*
+     * If this is SELECT and some tuple(s) fetched -
+     * returns tuples to the caller via elog (NOTICE).
+     */
+    if ( ret == SPI_OK_SELECT && SPI_processed > 0 )
+    {
+        TupleDesc tupdesc = SPI_tuptable->tupdesc;
+        SPITupleTable *tuptable = SPI_tuptable;
+        char buf[8192];
+        int i,j;
+        
+        for (j = 0; j < proc; j++)
+        {
+            HeapTuple tuple = tuptable->vals[j];
+            
+            for (i = 1, buf[0] = 0; i <= tupdesc->natts; i++)
+                sprintf(buf + strlen (buf), " %s%s",
+                        SPI_getvalue(tuple, tupdesc, i),
+                        (i == tupdesc->natts) ? " " : " |");
+            elog (NOTICE, "EXECQ: %s", buf);
+        }
+    }
+
+    SPI_finish();
+
+    pfree(query);
+
+    return (proc);
 }
 </ProgramListing>
 </Para>
