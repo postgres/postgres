@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/ipc/README,v 1.1.1.1 1996/07/09 06:21:54 scrappy Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/ipc/README,v 1.2 2002/09/20 03:53:55 momjian Exp $
 Mon Jul 18 11:09:22 PDT 1988  W.KLAS
 
 Cache invalidation synchronization routines:
@@ -25,7 +25,7 @@ for this special 'relation' are database id = 0 and relation id = 0.
 The current implementation prints regular (e)log information
 when a message has been removed from the buffer because the buffer 
 is full, and a backend has to reset its cache state. The elog level
-is NOTICE. This can be used to improve teh behavior of backends
-when invalidating or reseting their cache state.
+is NOTICE. This can be used to improve the behavior of backends
+when invalidating or resetting their cache state.
 
 
