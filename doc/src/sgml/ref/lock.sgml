@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.42 2004/03/12 00:52:23 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.43 2004/10/01 16:39:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
    if necessary for any conflicting locks to be released.  If
    <literal>NOWAIT</literal> is specified, <command>LOCK
    TABLE</command> does not wait to acquire the desired lock: if it
-   cannot be immediately acquired, the transaction is aborted and an
+   cannot be acquired immediately, the command is aborted and an
    error is emitted.  Once obtained, the lock is held for the
    remainder of the current transaction.  (There is no <command>UNLOCK
    TABLE</command> command; locks are always released at transaction

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.176 2004/09/17 18:09:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.177 2004/10/01 16:39:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -465,6 +465,13 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	return r;
 }
 
+/* ----------------
+ *		conditional_relation_open - open with option not to wait
+ *
+ *		As above, but if nowait is true, then throw an error rather than
+ *		waiting when the lock is not immediately obtainable.
+ * ----------------
+ */
 Relation
 conditional_relation_open(Oid relationId, LOCKMODE lockmode, bool nowait)
 {
@@ -483,7 +490,10 @@ conditional_relation_open(Oid relationId, LOCKMODE lockmode, bool nowait)
 		if (nowait)
 		{
 			if (!ConditionalLockRelation(r, lockmode))
-				elog(ERROR, "could not acquire relation lock");
+				ereport(ERROR,
+						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+						 errmsg("could not obtain lock on \"%s\"",
+								RelationGetRelationName(r))));
 		}
 		else
 			LockRelation(r, lockmode);

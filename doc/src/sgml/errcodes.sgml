@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.8 2004/08/24 00:06:50 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.9 2004/10/01 16:39:46 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -1097,6 +1097,11 @@
 <row>
 <entry><literal>55P02</literal></entry>
 <entry>CANT CHANGE RUNTIME PARAM</entry>
+</row>
+
+<row>
+<entry><literal>55P03</literal></entry>
+<entry>LOCK NOT AVAILABLE</entry>
 </row>
 
 

@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.15 2004/08/29 05:06:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.16 2004/10/01 16:40:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,6 +308,7 @@
 #define ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE	MAKE_SQLSTATE('5','5', '0','0','0')
 #define ERRCODE_OBJECT_IN_USE				MAKE_SQLSTATE('5','5', '0','0','6')
 #define ERRCODE_CANT_CHANGE_RUNTIME_PARAM	MAKE_SQLSTATE('5','5', 'P','0','2')
+#define ERRCODE_LOCK_NOT_AVAILABLE			MAKE_SQLSTATE('5','5', 'P','0','3')
 
 /* Class 57 - Operator Intervention (class borrowed from DB2) */
 #define ERRCODE_OPERATOR_INTERVENTION		MAKE_SQLSTATE('5','7', '0','0','0')
