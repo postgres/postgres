@@ -21,11 +21,13 @@ create function gbox_union(bytea, opaque) returns box as 'MODULE_PATHNAME' langu
 
 create function gbox_same(box, box, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
--- add a new opclass (non-default)
-INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
+-- add a new opclass
+INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
     VALUES (
         (SELECT oid FROM pg_am WHERE amname = 'gist'),
         'gist_box_ops',
+        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
+        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
         (SELECT oid FROM pg_type WHERE typname = 'box'),
         true,
         0);
@@ -183,11 +185,13 @@ create function gpoly_consistent(opaque,polygon,int4) returns bool as 'MODULE_PA
 
 create function gpoly_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
--- add a new opclass (non-default)
-INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
+-- add a new opclass
+INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
     VALUES (
         (SELECT oid FROM pg_am WHERE amname = 'gist'),
         'gist_poly_ops',
+        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
+        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
         (SELECT oid FROM pg_type WHERE typname = 'polygon'),
         true,
         (SELECT oid FROM pg_type WHERE typname = 'box'));

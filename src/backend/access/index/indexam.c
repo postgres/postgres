@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.56 2002/03/26 19:15:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.57 2002/04/17 20:57:56 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -498,10 +498,23 @@ index_getprocinfo(Relation irel,
 	if (locinfo->fn_oid == InvalidOid)
 	{
 		RegProcedure *loc = irel->rd_support;
+		RegProcedure procId;
 
 		Assert(loc != NULL);
 
-		fmgr_info_cxt(loc[procindex], locinfo, irel->rd_indexcxt);
+		procId = loc[procindex];
+
+		/*
+		 * Complain if function was not found during IndexSupportInitialize.
+		 * This should not happen unless the system tables contain bogus
+		 * entries for the index opclass.  (If an AM wants to allow a
+		 * support function to be optional, it can use index_getprocid.)
+		 */
+		if (!RegProcedureIsValid(procId))
+			elog(ERROR, "Missing support function %d for attribute %d of index %s",
+				 procnum, attnum, RelationGetRelationName(irel));
+
+		fmgr_info_cxt(procId, locinfo, irel->rd_indexcxt);
 	}
 
 	return locinfo;

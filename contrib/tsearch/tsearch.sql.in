@@ -155,10 +155,12 @@ CREATE FUNCTION gtxtidx_union(bytea, opaque) RETURNS _int4
 CREATE FUNCTION gtxtidx_same(gtxtidx, gtxtidx, opaque) RETURNS opaque
         AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
-INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
+INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
     VALUES (
         (SELECT oid FROM pg_am WHERE amname = 'gist'),
         'gist_txtidx_ops',
+        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
+        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
         (SELECT oid FROM pg_type WHERE typname = 'txtidx'),
         true,
         (SELECT oid FROM pg_type WHERE typname = 'gtxtidx'));

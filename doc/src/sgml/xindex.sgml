@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.23 2002/03/27 19:19:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.24 2002/04/17 20:57:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -280,10 +280,12 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    <classname>pg_opclass</classname>:
 
 <programlisting>
-INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
+INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
     VALUES (
         (SELECT oid FROM pg_am WHERE amname = 'btree'),
         'complex_abs_ops',
+        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
+        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
         (SELECT oid FROM pg_type WHERE typname = 'complex'),
         true,
         0);
@@ -292,9 +294,9 @@ SELECT oid, *
     FROM pg_opclass
     WHERE opcname = 'complex_abs_ops';
 
-  oid   | opcamid |     opcname     | opcintype | opcdefault | opckeytype
---------+---------+-----------------+-----------+------------+------------
- 277975 |     403 | complex_abs_ops |    277946 | t          |          0
+  oid   | opcamid |     opcname     | opcnamespace | opcowner | opcintype | opcdefault | opckeytype
+--------+---------+-----------------+--------------+----------+-----------+------------+------------
+ 277975 |     403 | complex_abs_ops |           11 |        1 |    277946 | t          |          0
 (1 row)
 </programlisting>
 

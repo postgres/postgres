@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.77 2002/04/16 23:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.78 2002/04/17 20:57:56 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -173,14 +173,14 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{OperatorClassRelationName, /* CLAAMNAME */
-		OpclassAmNameIndex,
+	{OperatorClassRelationName, /* CLAAMNAMENSP */
+		OpclassAmNameNspIndex,
 		0,
-		2,
+		3,
 		{
 			Anum_pg_opclass_opcamid,
 			Anum_pg_opclass_opcname,
-			0,
+			Anum_pg_opclass_opcnamespace,
 			0
 	}},
 	{OperatorClassRelationName, /* CLAOID */

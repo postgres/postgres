@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.155 2002/04/16 23:08:10 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.156 2002/04/17 20:57:56 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -217,8 +217,8 @@ _outIndexElem(StringInfo str, IndexElem *node)
 	_outNode(str, node->funcname);
 	appendStringInfo(str, " :args ");
 	_outNode(str, node->args);
-	appendStringInfo(str, " :class ");
-	_outToken(str, node->class);
+	appendStringInfo(str, " :opclass ");
+	_outNode(str, node->opclass);
 }
 
 static void

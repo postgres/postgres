@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.178 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.179 2002/04/17 20:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1714,8 +1714,7 @@ _copyIndexElem(IndexElem *from)
 		newnode->name = pstrdup(from->name);
 	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, args);
-	if (from->class)
-		newnode->class = pstrdup(from->class);
+	Node_Copy(from, newnode, opclass);
 
 	return newnode;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.8 2002/04/16 23:08:11 tgl Exp $
+ * $Id: namespace.h,v 1.9 2002/04/17 20:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,21 @@ typedef struct _FuncCandidateList
 	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
 } *FuncCandidateList;			/* VARIABLE LENGTH STRUCT */
 
+/*
+ *	This structure holds a list of opclass candidates found by namespace
+ *	lookup.
+ */
+typedef struct _OpclassCandidateList
+{
+	struct _OpclassCandidateList *next;
+	char	   *opcname_tmp;	/* for internal use of namespace lookup */
+	int			pathpos;		/* for internal use of namespace lookup */
+	Oid			oid;			/* the opclass's OID */
+	Oid			opcintype;		/* type of input data for opclass */
+	bool		opcdefault;		/* T if opclass is default for opcintype */
+	Oid			opckeytype;		/* type of index data, or InvalidOid */
+} *OpclassCandidateList;
+
 
 extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
 
@@ -41,9 +56,13 @@ extern Oid	RelnameGetRelid(const char *relname);
 
 extern Oid	TypenameGetTypid(const char *typname);
 
+extern Oid	OpclassnameGetOpcid(Oid amid, const char *opcname);
+
 extern FuncCandidateList FuncnameGetCandidates(List *names, int nargs);
 
 extern FuncCandidateList OpernameGetCandidates(List *names, char oprkind);
+
+extern OpclassCandidateList OpclassGetCandidates(Oid amid);
 
 extern Oid	QualifiedNameGetCreationNamespace(List *names, char **objname_p);
 

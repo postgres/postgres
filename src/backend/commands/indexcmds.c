@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.70 2002/04/12 20:38:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.71 2002/04/17 20:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -390,11 +389,14 @@ static Oid
 GetAttrOpClass(IndexElem *attribute, Oid attrType,
 			   char *accessMethodName, Oid accessMethodId)
 {
+	char	   *catalogname;
+	char	   *schemaname = NULL;
+	char	   *opcname = NULL;
 	HeapTuple	tuple;
 	Oid			opClassId,
 				opInputType;
 
-	if (attribute->class == NULL)
+	if (attribute->opclass == NIL)
 	{
 		/* no operator class specified, so find the default */
 		opClassId = GetDefaultOpClass(attrType, accessMethodId);
@@ -407,23 +409,79 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	}
 
 	/*
-	 * Find the index operator class and verify that it accepts this
-	 * datatype.  Note we will accept binary compatibility.
+	 * Specific opclass name given, so look up the opclass.
 	 */
-	tuple = SearchSysCache(CLAAMNAME,
-						   ObjectIdGetDatum(accessMethodId),
-						   PointerGetDatum(attribute->class),
-						   0, 0);
+
+	/* deconstruct the name list */
+	switch (length(attribute->opclass))
+	{
+		case 1:
+			opcname = strVal(lfirst(attribute->opclass));
+			break;
+		case 2:
+			schemaname = strVal(lfirst(attribute->opclass));
+			opcname = strVal(lsecond(attribute->opclass));
+			break;
+		case 3:
+			catalogname = strVal(lfirst(attribute->opclass));
+			schemaname = strVal(lsecond(attribute->opclass));
+			opcname = strVal(lfirst(lnext(lnext(attribute->opclass))));
+			/*
+			 * We check the catalog name and then ignore it.
+			 */
+			if (strcmp(catalogname, DatabaseName) != 0)
+				elog(ERROR, "Cross-database references are not implemented");
+			break;
+		default:
+			elog(ERROR, "Improper opclass name (too many dotted names)");
+			break;
+	}
+
+	if (schemaname)
+	{
+		/* Look in specific schema only */
+		Oid		namespaceId;
+
+		namespaceId = GetSysCacheOid(NAMESPACENAME,
+									 CStringGetDatum(schemaname),
+									 0, 0, 0);
+		if (!OidIsValid(namespaceId))
+			elog(ERROR, "Namespace \"%s\" does not exist",
+				 schemaname);
+		tuple = SearchSysCache(CLAAMNAMENSP,
+							   ObjectIdGetDatum(accessMethodId),
+							   PointerGetDatum(opcname),
+							   ObjectIdGetDatum(namespaceId),
+							   0);
+	}
+	else
+	{
+		/* Unqualified opclass name, so search the search path */
+		opClassId = OpclassnameGetOpcid(accessMethodId, opcname);
+		if (!OidIsValid(opClassId))
+			elog(ERROR, "DefineIndex: operator class \"%s\" not supported by access method \"%s\"",
+				 opcname, accessMethodName);
+		tuple = SearchSysCache(CLAOID,
+							   ObjectIdGetDatum(opClassId),
+							   0, 0, 0);
+	}
+
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DefineIndex: operator class \"%s\" not supported by access method \"%s\"",
-			 attribute->class, accessMethodName);
+			 NameListToString(attribute->opclass), accessMethodName);
+
+	/*
+	 * Verify that the index operator class accepts this
+	 * datatype.  Note we will accept binary compatibility.
+	 */
 	opClassId = tuple->t_data->t_oid;
 	opInputType = ((Form_pg_opclass) GETSTRUCT(tuple))->opcintype;
-	ReleaseSysCache(tuple);
 
 	if (!IsBinaryCompatible(attrType, opInputType))
 		elog(ERROR, "operator class \"%s\" does not accept data type %s",
-			 attribute->class, format_type_be(attrType));
+			 NameListToString(attribute->opclass), format_type_be(attrType));
+
+	ReleaseSysCache(tuple);
 
 	return opClassId;
 }
@@ -431,10 +489,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 static Oid
 GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 {
-	Relation	relation;
-	ScanKeyData entry[1];
-	HeapScanDesc scan;
-	HeapTuple	tuple;
+	OpclassCandidateList opclass;
 	int			nexact = 0;
 	int			ncompatible = 0;
 	Oid			exactOid = InvalidOid;
@@ -449,44 +504,32 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	 * require the user to specify which one he wants.	If we find more
 	 * than one exact match, then someone put bogus entries in pg_opclass.
 	 *
-	 * We could use an indexscan here, but since pg_opclass is small and a
-	 * scan on opcamid won't be very selective, the indexscan would
-	 * probably actually be slower than heapscan.
+	 * The initial search is done by namespace.c so that we only consider
+	 * opclasses visible in the current namespace search path.
 	 */
-	ScanKeyEntryInitialize(&entry[0], 0x0,
-						   Anum_pg_opclass_opcamid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(accessMethodId));
-
-	relation = heap_openr(OperatorClassRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
-
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	for (opclass = OpclassGetCandidates(accessMethodId);
+		 opclass != NULL;
+		 opclass = opclass->next)
 	{
-		Form_pg_opclass opclass = (Form_pg_opclass) GETSTRUCT(tuple);
-
 		if (opclass->opcdefault)
 		{
 			if (opclass->opcintype == attrType)
 			{
 				nexact++;
-				exactOid = tuple->t_data->t_oid;
+				exactOid = opclass->oid;
 			}
 			else if (IsBinaryCompatible(opclass->opcintype, attrType))
 			{
 				ncompatible++;
-				compatibleOid = tuple->t_data->t_oid;
+				compatibleOid = opclass->oid;
 			}
 		}
 	}
 
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
-
 	if (nexact == 1)
 		return exactOid;
 	if (nexact != 0)
-		elog(ERROR, "pg_opclass contains multiple default opclasses for data tyype %s",
+		elog(ERROR, "pg_opclass contains multiple default opclasses for data type %s",
 			 format_type_be(attrType));
 	if (ncompatible == 1)
 		return compatibleOid;

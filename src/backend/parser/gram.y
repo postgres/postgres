@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.302 2002/04/16 23:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.303 2002/04/17 20:57:56 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -174,15 +174,15 @@ static bool set_name_needs_quotes(const char *name);
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, copy_null,
 		database_name, access_method_clause, access_method, attr_name,
-		class, index_name, name, function_name, file_name
+		index_name, name, function_name, file_name
 
-%type <list>	func_name, handler_name, qual_Op, qual_all_Op, OptUseOp
+%type <list>	func_name, handler_name, qual_Op, qual_all_Op, OptUseOp,
+		opt_class
 
 %type <range>	qualified_name, OptConstrFromTable
 
 %type <str>		opt_id,
-		all_Op, MathOp, opt_name,
-		opt_class, SpecialRuleRelation
+		all_Op, MathOp, opt_name, SpecialRuleRelation
 
 %type <str>		opt_level, opt_encoding
 %type <node>	grantee
@@ -2614,7 +2614,7 @@ func_index:  func_name '(' name_list ')' opt_class
 					$$->name = NULL;
 					$$->funcname = $1;
 					$$->args = $3;
-					$$->class = $5;
+					$$->opclass = $5;
 				}
 		  ;
 
@@ -2624,11 +2624,11 @@ index_elem:  attr_name opt_class
 					$$->name = $1;
 					$$->funcname = NIL;
 					$$->args = NIL;
-					$$->class = $2;
+					$$->opclass = $2;
 				}
 		;
 
-opt_class:  class
+opt_class:  any_name
 				{
 					/*
 					 * Release 7.0 removed network_ops, timespan_ops, and
@@ -2643,17 +2643,24 @@ opt_class:  class
 					 * so suppress that too for awhile.  I'm starting to
 					 * think we need a better approach.  tgl 2000/10/01
 					 */
-					if (strcmp($1, "network_ops") != 0 &&
-						strcmp($1, "timespan_ops") != 0 &&
-						strcmp($1, "datetime_ops") != 0 &&
-						strcmp($1, "lztext_ops") != 0 &&
-						strcmp($1, "timestamp_ops") != 0)
-						$$ = $1;
+					if (length($1) == 1)
+					{
+						char   *claname = strVal(lfirst($1));
+
+						if (strcmp(claname, "network_ops") != 0 &&
+							strcmp(claname, "timespan_ops") != 0 &&
+							strcmp(claname, "datetime_ops") != 0 &&
+							strcmp(claname, "lztext_ops") != 0 &&
+							strcmp(claname, "timestamp_ops") != 0)
+							$$ = $1;
+						else
+							$$ = NIL;
+					}
 					else
-						$$ = NULL;
+						$$ = $1;
 				}
-		| USING class							{ $$ = $2; }
-		| /*EMPTY*/								{ $$ = NULL; }
+		| USING any_name						{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 /*****************************************************************************
@@ -5782,7 +5789,6 @@ name:					ColId			{ $$ = $1; };
 database_name:			ColId			{ $$ = $1; };
 access_method:			ColId			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
-class:					ColId			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 file_name:				Sconst			{ $$ = $1; };
 

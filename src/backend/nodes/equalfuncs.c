@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.126 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.127 2002/04/17 20:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1599,7 +1599,7 @@ _equalIndexElem(IndexElem *a, IndexElem *b)
 		return false;
 	if (!equal(a->args, b->args))
 		return false;
-	if (!equalstr(a->class, b->class))
+	if (!equal(a->opclass, b->opclass))
 		return false;
 
 	return true;

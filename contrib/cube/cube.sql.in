@@ -212,10 +212,12 @@ CREATE FUNCTION g_cube_same(cube, cube, opaque) RETURNS opaque
 
 
 -- register the default opclass for indexing
-INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
+INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
     VALUES (
         (SELECT oid FROM pg_am WHERE amname = 'gist'),
         'gist_cube_ops',
+        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
+        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
         (SELECT oid FROM pg_type WHERE typname = 'cube'),
         true,
         0);

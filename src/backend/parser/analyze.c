@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.230 2002/04/16 23:08:11 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.231 2002/04/17 20:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1209,7 +1209,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			iparam->name = pstrdup(key->name);
 			iparam->funcname = NIL;
 			iparam->args = NIL;
-			iparam->class = NULL;
+			iparam->opclass = NIL;
 			index->indexParams = lappend(index->indexParams, iparam);
 		}
 

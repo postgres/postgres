@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.170 2002/04/16 23:08:12 tgl Exp $
+ * $Id: parsenodes.h,v 1.171 2002/04/17 20:57:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,7 +401,7 @@ typedef struct IndexElem
 	char	   *name;			/* name of attribute to index, or NULL */
 	List	   *funcname;		/* qualified name of function */
 	List	   *args;			/* list of names of function arguments */
-	char	   *class;			/* name of desired opclass; NULL = default */
+	List	   *opclass;		/* name of desired opclass; NIL = default */
 } IndexElem;
 
 /*

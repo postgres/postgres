@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.63 2002/04/16 23:08:11 tgl Exp $
+ * $Id: indexing.h,v 1.64 2002/04/17 20:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@
 #define LargeObjectLOidPNIndex		"pg_largeobject_loid_pn_index"
 #define NamespaceNameIndex			"pg_namespace_nspname_index"
 #define NamespaceOidIndex			"pg_namespace_oid_index"
-#define OpclassAmNameIndex			"pg_opclass_am_name_index"
+#define OpclassAmNameNspIndex		"pg_opclass_am_name_nsp_index"
 #define OpclassOidIndex				"pg_opclass_oid_index"
 #define OperatorNameNspIndex		"pg_operator_oprname_l_r_n_index"
 #define OperatorOidIndex			"pg_operator_oid_index"
@@ -169,7 +169,7 @@ DECLARE_UNIQUE_INDEX(pg_language_oid_index on pg_language using btree(oid oid_op
 DECLARE_UNIQUE_INDEX(pg_largeobject_loid_pn_index on pg_largeobject using btree(loid oid_ops, pageno int4_ops));
 DECLARE_UNIQUE_INDEX(pg_namespace_nspname_index on pg_namespace using btree(nspname name_ops));
 DECLARE_UNIQUE_INDEX(pg_namespace_oid_index on pg_namespace using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_opclass_am_name_index on pg_opclass using btree(opcamid oid_ops, opcname name_ops));
+DECLARE_UNIQUE_INDEX(pg_opclass_am_name_nsp_index on pg_opclass using btree(opcamid oid_ops, opcname name_ops, opcnamespace oid_ops));
 DECLARE_UNIQUE_INDEX(pg_opclass_oid_index on pg_opclass using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_operator_oid_index on pg_operator using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_operator_oprname_l_r_n_index on pg_operator using btree(oprname name_ops, oprleft oid_ops, oprright oid_ops, oprnamespace oid_ops));

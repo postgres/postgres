@@ -41,12 +41,15 @@ create function gint4_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' lan
 create function gint4_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
 -- add a new opclass
-INSERT INTO pg_opclass (opcamid, opcname, opcintype, opckeytype, opcdefault)
-   SELECT pg_am.oid, 'gist_int4_ops', pg_type.oid, pg_key.oid, true 
-   FROM pg_type, pg_am, pg_type pg_key
-   WHERE pg_type.typname = 'int4' and
-   pg_key.typname = 'int4key' and
-   pg_am.amname='gist';
+INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
+    VALUES (
+        (SELECT oid FROM pg_am WHERE amname = 'gist'),
+        'gist_int4_ops',
+        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
+        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
+        (SELECT oid FROM pg_type WHERE typname = 'int4'),
+        true,
+        (SELECT oid FROM pg_type WHERE typname = 'int4key'));
 
 
 SELECT o.oid AS opoid, o.oprname
@@ -170,12 +173,16 @@ create function gts_union(bytea, opaque) returns int4 as 'MODULE_PATHNAME' langu
 
 create function gts_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
-INSERT INTO pg_opclass (opcamid, opcname, opcintype, opckeytype, opcdefault)
-   SELECT pg_am.oid, 'gist_timestamp_ops', pg_type.oid, pg_key.oid, true
-   FROM pg_type, pg_am, pg_type pg_key
-   WHERE pg_type.typname = 'timestamp' and
-   pg_key.typname = 'tskey' and
-   pg_am.amname='gist';
+-- add a new opclass
+INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
+    VALUES (
+        (SELECT oid FROM pg_am WHERE amname = 'gist'),
+        'gist_timestamp_ops',
+        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
+        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
+        (SELECT oid FROM pg_type WHERE typname = 'timestamp'),
+        true,
+        (SELECT oid FROM pg_type WHERE typname = 'tskey'));
 
 SELECT o.oid AS opoid, o.oprname
 INTO TABLE timestamp_ops_tmp

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.45 2002/04/16 23:08:12 tgl Exp $
+ * $Id: syscache.h,v 1.46 2002/04/17 20:57:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 #define AMPROCNUM		5
 #define ATTNAME			6
 #define ATTNUM			7
-#define CLAAMNAME		8
+#define CLAAMNAMENSP	8
 #define CLAOID			9
 #define GRONAME			10
 #define GROSYSID		11
