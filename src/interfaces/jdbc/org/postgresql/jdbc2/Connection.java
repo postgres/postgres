@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /*
- * $Id: Connection.java,v 1.15 2001/11/19 22:33:38 momjian Exp $
+ * $Id: Connection.java,v 1.16 2001/11/25 23:26:59 barry Exp $
  *
  * A Connection represents a session with a specific database.	Within the
  * context of a Connection, SQL statements are executed and results are
@@ -207,7 +207,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 	 * This overides the method in org.postgresql.Connection and returns a
 	 * ResultSet.
 	 */
-	public java.sql.ResultSet getResultSet(org.postgresql.Connection conn, java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount, int insertOID, boolean binaryCursor) throws SQLException
+	public java.sql.ResultSet getResultSet(org.postgresql.Connection conn, java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
 	{
 		// In 7.1 we now test concurrency to see which class to return. If we are not working with a
 		// Statement then default to a normal ResultSet object.

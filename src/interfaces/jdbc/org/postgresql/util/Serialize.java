@@ -269,6 +269,17 @@ public class Serialize
 
 	/*
 	 * This stores an object into a table, returning it's OID.<p>
+         * This method was deprecated in 7.2 because the value of an OID
+         * can be larger than a java signed int.
+	 * @deprecated Replaced by storeObject() in 7.2
+	 */
+	public int store(Object o) throws SQLException
+	{
+	    return (int) storeObject(o);
+	}
+
+	/*
+	 * This stores an object into a table, returning it's OID.<p>
 	 *
 	 * If the object has an int called OID, and it is > 0, then
 	 * that value is used for the OID, and the table will be updated.
@@ -284,8 +295,9 @@ public class Serialize
 	 * @param o Object to store (must implement Serializable)
 	 * @return oid of stored object
 	 * @exception SQLException on error
+         * @since 7.2
 	 */
-	public int store(Object o) throws SQLException
+	public long storeObject(Object o) throws SQLException
 	{
 		try
 		{
@@ -390,11 +402,11 @@ public class Serialize
 			else
 			{
 				// new record inserted has new oid; rs should be not null
-				int newOID = ((org.postgresql.ResultSet)rs).getInsertedOID();
+				long newOID = ((org.postgresql.ResultSet)rs).getLastOID();
 				rs.close();
 				// update the java object's oid field if it has the oid field
 				if (hasOID)
-					f[oidFIELD].setInt(o, newOID);
+					f[oidFIELD].setLong(o, newOID);
 				// new object stored, return newly inserted oid
 				return newOID;
 			}

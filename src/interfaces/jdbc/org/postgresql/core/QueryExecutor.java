@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.5 2001/11/19 23:16:45 momjian Exp $
+ * $Id: QueryExecutor.java,v 1.6 2001/11/25 23:26:56 barry Exp $
  */
 
 public class QueryExecutor
@@ -46,7 +46,7 @@ public class QueryExecutor
 	private boolean binaryCursor = false;
 	private String status = null;
 	private int update_count = 1;
-	private int insert_oid = 0;
+	private long insert_oid = 0;
 	private int maxRows;
 
 	/*
@@ -173,7 +173,7 @@ public class QueryExecutor
 			}
 			if (status.startsWith("INSERT"))
 			{
-				insert_oid = Integer.parseInt(status.substring(1 + status.indexOf(' '),
+				insert_oid = Long.parseLong(status.substring(1 + status.indexOf(' '),
 											  status.lastIndexOf(' ')));
 			}
 		}

@@ -4,7 +4,7 @@ package org.postgresql.util;
  * MD5-based utility function to obfuscate passwords before network transmission
  *
  * @author Jeremy Wohl
- *
+ * $Id: MD5Digest.java,v 1.3 2001/11/25 23:26:59 barry Exp $
  */
 
 import java.security.*;
@@ -23,7 +23,7 @@ public class MD5Digest
 	 * @param password	The connecting user's password.
 	 * @param salt		A four-character string sent by the server.
 	 *
-	 * @return	A 35-byte array, comprising the string "md5", followed by an MD5 digest.
+	 * @return	A 35-byte array, comprising the string "md5" and an MD5 digest.
 	 */
 	public static byte[] encode(String user, String password, String salt)
 	{

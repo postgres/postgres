@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.38 2001/11/19 23:19:20 momjian Exp $
+ * $Id: Connection.java,v 1.39 2001/11/25 23:26:56 barry Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -595,13 +595,25 @@ public abstract class Connection
 	}
 
 	/*
+	 * This stores an object into the database.  This method was
+         * deprecated in 7.2 bacause an OID can be larger than the java signed
+         * int returned by this method.
+	 * @deprecated Replaced by storeObject() in 7.2
+	 */
+	public int putObject(Object o) throws SQLException
+	{
+	    return (int) storeObject(o);
+	}
+
+	/*
 	 * This stores an object into the database.
 	 * @param o Object to store
 	 * @return OID of the new rectord
 	 * @exception SQLException if value is not correct for this type
 	 * @see org.postgresql.util.Serialize
+         * @since 7.2
 	 */
-	public int putObject(Object o) throws SQLException
+	public long storeObject(Object o) throws SQLException
 	{
 		try
 		{
@@ -615,13 +627,13 @@ public abstract class Connection
 			{
 				Serialize ser = new Serialize(this, type);
 				objectTypes.put(type, ser);
-				return ser.store(o);
+				return ser.storeObject(o);
 			}
 
 			// If it's an object, it should be an instance of our Serialize class
 			// If so, then call it's fetch method.
 			if (x instanceof Serialize)
-				return ((Serialize)x).store(o);
+				return ((Serialize)x).storeObject(o);
 
 			// Thow an exception because the type is unknown
 			throw new PSQLException("postgresql.con.strobj");
@@ -697,7 +709,7 @@ public abstract class Connection
 	 * This returns a resultset. It must be overridden, so that the correct
 	 * version (from jdbc1 or jdbc2) are returned.
 	 */
-	public abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount, int insertOID, boolean binaryCursor) throws SQLException;
+	public abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
 
 	/*
 	 * In some cases, it is desirable to immediately release a Connection's

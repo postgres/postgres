@@ -74,7 +74,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 * @param updateCount the number of rows affected by the operation
 	 * @param cursor the positioned update/delete cursor name
 	 */
-	public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount, int insertOID, boolean binaryCursor)
+	public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
 	{
 		super(conn, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}

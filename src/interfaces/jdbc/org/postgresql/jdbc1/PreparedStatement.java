@@ -712,7 +712,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		else if (x instanceof PGobject)
 			setString(parameterIndex, ((PGobject)x).getValue());
 		else
-			setLong(parameterIndex, connection.putObject(x));
+			setLong(parameterIndex, connection.storeObject(x));
 	}
 
 	/*

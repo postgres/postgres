@@ -748,7 +748,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			setString(parameterIndex, ((PGobject)x).getValue());
 		else
 			// Try to store java object in database
-			setSerialize(parameterIndex, connection.putObject(x), x.getClass().getName() );
+			setSerialize(parameterIndex, connection.storeObject(x), x.getClass().getName() );
 	}
 
 	/*

@@ -8,19 +8,6 @@ import org.postgresql.util.PSQLException;
  * org.postgresql.jdbc1.Statement and org.postgresql.jdbc2.Statement that are
  * unique to PostgreSQL's JDBC driver.
  *
- * <p>They are defined so that client code can cast to org.postgresql.Statement
- * without having to predetermine the jdbc driver type.
- *
- * <p>ie: Before this class existed, you had to use:
- *
- * <p>((org.postgresql.jdbc2.Statement)stat).getInsertedOID();
- *
- * <p>now you use:
- *
- * <p>((org.postgresql.Statement)stat).getInsertedOID();
- *
- * <p>As you can see, this is independent of JDBC1.2, JDBC2.0 or the upcoming
- * JDBC3.
  */
 
 public abstract class Statement
@@ -196,16 +183,27 @@ public abstract class Statement
 	}
 
 	/*
-	 * New in 7.1: Returns the Last inserted oid. This should be used, rather
-	 * than the old method using getResultSet, which for executeUpdate returns
-	 * null.
-	 * @return OID of last insert
+	 * Returns the Last inserted/updated oid.  Deprecated in 7.2 because
+         * range of OID values is greater than a java signed int.
+	 * @deprecated Replaced by getLastOID in 7.2
 	 */
 	public int getInsertedOID() throws SQLException
 	{
 		if (result == null)
 			return 0;
-		return ((org.postgresql.ResultSet) result).getInsertedOID();
+		return (int)((org.postgresql.ResultSet) result).getLastOID();
+	}
+
+	/*
+	 * Returns the Last inserted/updated oid. 
+	 * @return OID of last insert
+         * @since 7.2
+	 */
+	public long getLastOID() throws SQLException
+	{
+		if (result == null)
+			return 0;
+		return ((org.postgresql.ResultSet) result).getLastOID();
 	}
 
 	/*

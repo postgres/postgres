@@ -20,7 +20,7 @@ public abstract class ResultSet
 	protected String status;		// Status of the result
 	protected boolean binaryCursor = false; // is the data binary or Strings
 	protected int updateCount;		// How many rows did we get back?
-	protected int insertOID;		// The oid of an inserted row
+	protected long insertOID;		// The oid of an inserted row
 	protected int current_row;		// Our pointer to where we are at
 	protected byte[][] this_row;		// the current row result
 	protected Connection connection;	// the connection which we returned from
@@ -42,7 +42,7 @@ public abstract class ResultSet
 	 * @param updateCount the number of rows affected by the operation
 	 * @param cursor the positioned update/delete cursor name
 	 */
-	public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount, int insertOID, boolean binaryCursor)
+	public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
 	{
 		this.connection = conn;
 		this.fields = fields;
@@ -170,9 +170,21 @@ public abstract class ResultSet
 	}
 
 	/*
-	 * returns the OID of the last inserted row
+	 * returns the OID of the last inserted row.  Deprecated in 7.2 because
+         * range for OID values is greater than java signed int.
+	 * @deprecated Replaced by getLastOID() in 7.2
 	 */
 	public int getInsertedOID()
+	{
+	    return (int) getLastOID();
+	}
+
+
+	/*
+	 * returns the OID of the last inserted row
+         * @since 7.2
+	 */
+	public long getLastOID()
 	{
 		return insertOID;
 	}
