@@ -3,11 +3,8 @@
 
 <Para>
 pgtcl is a tcl package for front-end programs to interface with <ProductName>Postgres</ProductName>
-backends.    pgtcl does not use the libpq library but communicates to
-the backend directly via the frontend-backend protocol.  Thus, it is
-more efficient than previous postgres->tcl bindings which are layered
-on top of libpq.  In addition, pgtcl can handle multiple backend
-connections from a single frontend application.
+backends.  It makes most of the functionality of libpq available to
+tcl scripts.
 </Para>
 
 <Para>
@@ -43,16 +40,24 @@ the standard Unix file system interface.
     <ENTRY>closes a connection</ENTRY>
   </ROW>
   <ROW>
+    <ENTRY>pg_conndefaults</ENTRY>
+    <ENTRY>get connection options and their defaults</ENTRY>
+  </ROW>
+  <ROW>
     <ENTRY>pg_exec</ENTRY>
     <ENTRY>send a query to the backend</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>pg_result</ENTRY>
+    <ENTRY>manipulate the results of a query</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>pg_select</ENTRY>
     <ENTRY>loop over the result of a select statement</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>pg_result</ENTRY>
-    <ENTRY>manipulate the results of a query</ENTRY>
+    <ENTRY>pg_listen</ENTRY>
+    <ENTRY>establish a callback for NOTIFY messages</ENTRY>
   </ROW>
 
   <ROW>
@@ -101,8 +106,7 @@ the standard Unix file system interface.
 </Para>
 
 <Para>
-Some commands equivalent to libpq commands are provided for connection
-and query operations.
+These commands are described further on subsequent pages.
 </Para>
 
 <Para>
@@ -142,7 +146,7 @@ proc getDBs { {host "localhost"} {port "5432"} } {
 </Sect1>
 
 <Sect1>
-<Title>Reference Information</Title>
+<Title>pgtcl Command Reference Information</Title>
 
 <REFENTRY ID="PGTCL-PGCONNECT-1">
 <REFMETA>
@@ -235,7 +239,7 @@ pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <
 <LISTITEM>
 <PARA>
 The return result is either an error message or a handle for a database
-   connection.  Handles start with the prefix "pgp"
+   connection.  Handles start with the prefix "pgsql"
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -414,7 +418,114 @@ pg_exec <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS
 </TITLE>
 <PARA>
 <FUNCTION>pg_exec</FUNCTION> submits a query to the <ProductName>Postgres</ProductName> backend and returns a result.
-  Handles start with the prefix "pgp".
+
+Query result handles start with the connection handle and add a period
+and a result number.
+</PARA>
+</REFSECT1>
+
+<REFENTRY ID="PGTCL-PGLISTEN-1">
+<REFMETA>
+<REFENTRYTITLE>pg_listen</REFENTRYTITLE>
+<REFMISCINFO>PGTCL - Asynchronous Notify</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>pg_listen
+</REFNAME>
+<REFPURPOSE>sets or changes a callback for asynchronous NOTIFY messages
+</REFPURPOSE>
+<INDEXTERM ID="IX-PGTCL-PGLISTEN-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>notify</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-PGTCL-PGLISTEN-2"><PRIMARY>notify</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-5-22</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+pg_listen <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">notifyName</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-PGTCL-PGLISTEN-1">
+<REFSECT2INFO>
+<DATE>1998-5-22</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>Specifies a valid database handle.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">notifyName</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>Specifies the notification name to start or stop listening to.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>If present and not empty, provides the command string to execute
+when a matching notification arrives.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-PGTCL-PGLISTEN-2">
+<REFSECT2INFO>
+<DATE>1998-5-22</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  None
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-PGTCL-PGLISTEN-1">
+<REFSECT1INFO>
+<DATE>1998-5-22</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA><FUNCTION>pg_listen</FUNCTION> creates, changes, or cancels a request
+to listen for asynchronous NOTIFY messages from the
+<ProductName>Postgres</ProductName> backend.  With a callbackCommand
+parameter, the request is established, or the command string of an already
+existing request is replaced.  With no callbackCommand parameter, a prior
+request is canceled.
+</PARA>
+After a <PARA><FUNCTION>pg_listen</FUNCTION> request is established,
+the specified command string is executed whenever a NOTIFY message bearing
+the given name arrives from the backend.  This occurs when any
+<ProductName>Postgres</ProductName> client application issues a NOTIFY command
+referencing that name.  (Note that the name can be, but does not have to be,
+that of an existing relation in the database.)
+The command string is executed from the Tcl idle loop.  That is the normal
+idle state of an application written with Tk.  In non-Tk Tcl shells, you can
+execute <FUNCTION>update</FUNCTION> or <FUNCTION>vwait</FUNCTION> to cause
+the idle loop to be entered.
 </PARA>
 </REFSECT1>
 

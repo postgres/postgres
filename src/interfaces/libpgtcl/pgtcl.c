@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.10 1998/03/15 08:02:57 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.11 1998/06/16 04:10:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ Pgtcl_Init (Tcl_Interp *interp)
    * to guess where it might be by position in the struct.  This is needed
    * for Tcl7.6 and beyond, which have the getfileproc.
    */
-#if (TCL_MAJOR_VERSION == 7 && TCL_MINOR_VERSION == 6)
+#if HAVE_TCL_GETFILEPROC
   Pg_ConnType.getFileProc = PgGetFileProc;
 #endif
 
@@ -126,12 +126,7 @@ Pgtcl_Init (Tcl_Interp *interp)
 		    Pg_listen,
 		    (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
 
-  Tcl_CreateCommand(interp,
-		    "pg_notifies",
-		    Pg_notifies,
-		    (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
-
-  Tcl_PkgProvide(interp, "Pgtcl", "1.1");
+  Tcl_PkgProvide(interp, "Pgtcl", "1.2");
 
   return TCL_OK;
 }

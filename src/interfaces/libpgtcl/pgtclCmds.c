@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.24 1998/06/15 19:30:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.25 1998/06/16 04:10:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <tcl.h>
 
 #include "postgres.h"
@@ -415,7 +416,6 @@ Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], &connid);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
 
@@ -426,6 +426,10 @@ Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     connStatus = conn->status;
     result = PQexec(conn, argv[2]);
+
+    /* Transfer any notify events from libpq to Tcl event queue. */
+    PgNotifyTransferEvents(connid);
+
     if (result) {
 	int rId = PgSetResultId(interp, argv[1], result);
 	if (result->resultStatus == PGRES_COPY_IN ||
@@ -439,9 +443,11 @@ Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	/* error occurred during the query */
 	Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
 	if (connStatus == CONNECTION_OK) {
+	    /* Is this REALLY a good idea?  I don't think so! */
 	    PQreset(conn);
 	    if (conn->status == CONNECTION_OK) {
 		result = PQexec(conn, argv[2]);
+		PgNotifyTransferEvents(connid);
 		if (result) {
 		    int rId = PgSetResultId(interp, argv[1], result);
 		    if (result->resultStatus == PGRES_COPY_IN ||
@@ -699,7 +705,6 @@ Pg_lo_open(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
   
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -766,7 +771,6 @@ Pg_lo_close(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -804,7 +808,6 @@ Pg_lo_read(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -854,7 +857,6 @@ Pg_lo_write(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -900,7 +902,6 @@ Pg_lo_lseek(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -952,7 +953,6 @@ Pg_lo_creat(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -1008,7 +1008,6 @@ Pg_lo_tell(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -1043,7 +1042,6 @@ Pg_lo_unlink(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -1085,7 +1083,6 @@ Pg_lo_import(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -1125,7 +1122,6 @@ Pg_lo_export(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 
     conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
 	return TCL_ERROR;
     }
   
@@ -1164,6 +1160,7 @@ Pg_lo_export(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 int
 Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 {
+    Pg_ConnectionId *connid;
 	PGconn *conn;
    	PGresult *result;
     int r;
@@ -1182,7 +1179,7 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    conn = PgGetConnectionId(interp, argv[1], &connid);
     if (conn == (PGconn *)NULL) {
 	return TCL_ERROR;
     }
@@ -1193,6 +1190,9 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
 		return TCL_ERROR;
     }
+
+    /* Transfer any notify events from libpq to Tcl event queue. */
+    PgNotifyTransferEvents(connid);
 
 	if ((info = (struct info_s *)ckalloc(sizeof(*info) * (ncols =  PQnfields(result)))) == NULL)
 	{
@@ -1248,145 +1248,139 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
+/***********************************
+Pg_listen
+    create or remove a callback request for notifies on a given name
+
+ syntax:
+   pg_listen conn notifyname ?callbackcommand?
+
+   With a fourth arg, creates or changes the callback command for
+   notifies on the given name; without, cancels the callback request.
+
+   Callbacks can occur whenever Tcl is executing its event loop.
+   This is the normal idle loop in Tk; in plain tclsh applications,
+   vwait or update can be used to enter the Tcl event loop.
+***********************************/
 int
 Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-    int new;
-    char *relname;
-    char *callback = NULL;
+    char *origrelname;
+    char *caserelname;
+	char *callback = NULL;
+	Pg_TclNotifies *notifies;
     Tcl_HashEntry *entry;
     Pg_ConnectionId *connid;
     PGconn *conn;
     PGresult *result;
+    int new;
 
-    if ((argc < 3) || (argc > 4)) {
-	Tcl_AppendResult(interp, "wrong # args, should be \"",
-			 argv[0], " connection relname ?callback?\"", 0);
-	return TCL_ERROR;
+    if (argc < 3 || argc > 4) {
+		Tcl_AppendResult(interp, "wrong # args, should be \"",
+						 argv[0], " connection relname ?callback?\"", 0);
+		return TCL_ERROR;
     }
 
     /*
-     * Get the command arguments. Note that relname will copied by
-     * Tcl_CreateHashEntry while callback must be allocated.
+     * Get the command arguments. Note that the relation name will be copied
+     * by Tcl_CreateHashEntry while the callback string must be allocated.
      */
     conn = PgGetConnectionId(interp, argv[1], &connid);
     if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-	return TCL_ERROR;
-    }
-    relname = argv[2];
-    if ((argc > 3) && *argv[3]) {
-	callback = (char *) ckalloc((unsigned) (strlen(argv[3])+1));
-	strcpy(callback, argv[3]);
+		return TCL_ERROR;
     }
 
+	/*
+	 * LISTEN/NOTIFY do not preserve case unless the relation name is
+	 * quoted.  We have to do the same thing to ensure that we will find
+	 * the desired pg_listen item.
+	 */
+	origrelname = argv[2];
+	caserelname = (char *) ckalloc((unsigned) (strlen(origrelname) + 1));
+	if (*origrelname == '"') {
+		/* Copy a quoted string without downcasing */
+		strcpy(caserelname, origrelname + 1);
+		caserelname[strlen(caserelname) - 1] = '\0';
+	} else {
+		/* Downcase it */
+		char *rels = origrelname;
+		char *reld = caserelname;
+		while (*rels) {
+			*reld++ = tolower(*rels++);
+		}
+		*reld = '\0';
+	}
+
+    if ((argc > 3) && *argv[3]) {
+		callback = (char *) ckalloc((unsigned) (strlen(argv[3]) + 1));
+		strcpy(callback, argv[3]);
+    }
+
+	/* Find or make a Pg_TclNotifies struct for this interp and connection */
+
+	for (notifies = connid->notify_list; notifies; notifies = notifies->next) {
+		if (notifies->interp == interp)
+			break;
+	}
+	if (notifies == NULL) {
+		notifies = (Pg_TclNotifies *) ckalloc(sizeof(Pg_TclNotifies));
+		notifies->interp = interp;
+		Tcl_InitHashTable(&notifies->notify_hash, TCL_STRING_KEYS);
+		notifies->next = connid->notify_list;
+		connid->notify_list = notifies;
+		Tcl_CallWhenDeleted(interp, PgNotifyInterpDelete,
+							(ClientData) notifies);
+	}
+
     /*
-     * Set or update a callback for a relation;
+     * Set or update a callback for a relation
      */
     if (callback) {
-	entry = Tcl_CreateHashEntry(&(connid->notify_hash), relname, &new);
-	if (new) {
-	    /* New callback, execute a listen command on the relation */
-	    char *cmd = (char *) ckalloc((unsigned) (strlen(argv[2])+8));
-	    sprintf(cmd, "LISTEN %s", relname);
-	    result = PQexec(conn, cmd);
-	    ckfree(cmd);
-	    if (!result || (result->resultStatus != PGRES_COMMAND_OK)) {
-		/* Error occurred during the execution of command */
-		if (result) PQclear(result);
-		ckfree(callback);
-		Tcl_DeleteHashEntry(entry);
-		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
-		return TCL_ERROR;
-	    }
-	    PQclear(result);
-	} else {
-	    /* Free the old callback string */
-	    ckfree((char *) Tcl_GetHashValue(entry));
-	}
-	/* Store the new callback command */
-	Tcl_SetHashValue(entry, callback);
+		entry = Tcl_CreateHashEntry(&notifies->notify_hash, caserelname, &new);
+		if (new) {
+			/* New callback, execute a listen command on the relation */
+			char *cmd = (char *) ckalloc((unsigned) (strlen(origrelname)+8));
+			sprintf(cmd, "LISTEN %s", origrelname);
+			result = PQexec(conn, cmd);
+			ckfree(cmd);
+			/* Transfer any notify events from libpq to Tcl event queue. */
+			PgNotifyTransferEvents(connid);
+			if (!result || (result->resultStatus != PGRES_COMMAND_OK)) {
+				/* Error occurred during the execution of command */
+				if (result) PQclear(result);
+				ckfree(callback);
+				ckfree(caserelname);
+				Tcl_DeleteHashEntry(entry);
+				Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
+				return TCL_ERROR;
+			}
+			PQclear(result);
+		} else {
+			/* Update, free the old callback string */
+			ckfree((char *) Tcl_GetHashValue(entry));
+		}
+		/* Store the new callback string */
+		Tcl_SetHashValue(entry, callback);
+		/* Start the notify event source if it isn't already running */
+		PgStartNotifyEventSource(connid);
     }
 
     /*
      * Remove a callback for a relation.  There is no way to
-     * un-listen a relation, simply remove the callback from
+     * un-listen a relation, so we simply remove the callback from
      * the notify hash table.
      */
     if (callback == NULL) {
-	entry = Tcl_FindHashEntry(&(connid->notify_hash), relname);
-	if (entry == NULL) {
-	    Tcl_AppendResult(interp, "not listening on ", relname, 0);
-	    return TCL_ERROR;
-	}
-	ckfree((char *) Tcl_GetHashValue(entry));
-	Tcl_DeleteHashEntry(entry);
+		entry = Tcl_FindHashEntry(&notifies->notify_hash, caserelname);
+		if (entry == NULL) {
+			Tcl_AppendResult(interp, "not listening on ", origrelname, 0);
+			ckfree(caserelname);
+			return TCL_ERROR;
+		}
+		ckfree((char *) Tcl_GetHashValue(entry));
+		Tcl_DeleteHashEntry(entry);
     }
 
-    return TCL_OK;
-}
-
-int
-Pg_notifies(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
-{
-    int count;
-    char buff[12];
-    char *callback;
-    Tcl_HashEntry *entry;
-    Pg_ConnectionId *connid;
-    PGconn *conn;
-    PGresult *result;
-    PGnotify *notify;
-
-    if (argc != 2) {
-	Tcl_AppendResult(interp, "wrong # args, should be \"",
-			 argv[0], " connection\"", 0);
-	return TCL_ERROR;
-    }
-
-    /*
-     * Get the connection argument.
-     */
-    conn = (PGconn*)PgGetConnectionId(interp, argv[1], &connid);
-    if (conn == (PGconn *)NULL) {
-	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-	return TCL_ERROR;
-    }
-
-    /* Execute an empty command to retrieve asynchronous notifications */
-    result = PQexec(conn, " ");
-    if (result == NULL) {
-      /* Error occurred during the execution of command */
-      Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
-      return TCL_ERROR;
-    }
-    PQclear(result);
-
-    /*
-     * Loop while there are pending notifies.
-     */
-    for (count=0; count < 999; count++) {
-	/* See if there is a pending notification */
-	notify = PQnotifies(conn);
-	if (notify == NULL) {
-	    break;
-	}
-	entry = Tcl_FindHashEntry(&(connid->notify_hash), notify->relname);
-	if (entry != NULL) {
-	    callback = (char*)Tcl_GetHashValue(entry);
-	    if (callback) {
-		/* This should be a global eval, shouldn't it? */
-		Tcl_Eval(interp, callback);
-		/* And what if there's an error.  Bgerror should be called? */
-	    }
-	}
-	free(notify);
-    }
-
-    /*
-     * Return the number of notifications processed.
-     */
-    sprintf(buff, "%d", count);
-    Tcl_SetResult(interp, buff, TCL_VOLATILE);
+	ckfree(caserelname);
     return TCL_OK;
 }

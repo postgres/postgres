@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.9 1998/03/15 08:02:59 scrappy Exp $
+ * $Id: pgtclCmds.h,v 1.10 1998/06/16 04:10:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,12 +14,28 @@
 #define PGTCLCMDS_H
 
 #include "tcl.h"
-#include "libpq/pqcomm.h"
 #include "libpq-fe.h"
-#include "libpq/libpq-fs.h"
 
 #define RES_HARD_MAX 128
 #define RES_START 16
+
+/*
+ * Each Pg_ConnectionId has a list of Pg_TclNotifies structs, one for each
+ * Tcl interpreter that has executed any pg_listens on the connection.
+ * We need this arrangement to be able to clean up if an interpreter is
+ * deleted while the connection remains open.  A free side benefit is that
+ * multiple interpreters can be registered to listen for the same notify
+ * name.  (All their callbacks will be called, but in an unspecified order.)
+ */
+
+typedef struct Pg_TclNotifies_s {
+    struct Pg_TclNotifies_s	*next;		/* list link */
+    Tcl_Interp 			*interp;	/* This Tcl interpreter */
+    /* NB: if interp == NULL, the interpreter is gone but we haven't
+     * yet got round to deleting the Pg_TclNotifies structure.
+     */
+    Tcl_HashTable		notify_hash;	/* Active pg_listen requests */
+} Pg_TclNotifies;
 
 typedef struct Pg_ConnectionId_s {
     char		id[32];
@@ -31,10 +47,11 @@ typedef struct Pg_ConnectionId_s {
     int			res_copy;	/* Query result with active copy */
     int			res_copyStatus; /* Copying status */
     PGresult		**results;	/* The results */
-    
-    Tcl_HashTable	notify_hash;
-} Pg_ConnectionId;
 
+    Pg_TclNotifies	*notify_list;	/* head of list of notify info */
+    int			notifier_running;  /* notify event source is live */
+
+} Pg_ConnectionId;
 
 #define RES_COPY_NONE	0
 #define RES_COPY_INPROGRESS	1
@@ -78,9 +95,5 @@ extern int Pg_lo_export(
     ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
 extern int Pg_listen(
     ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
-extern int Pg_notifies(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
-
 
 #endif /*PGTCLCMDS_H*/
-
