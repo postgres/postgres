@@ -688,9 +688,9 @@ int lobj_fd, retval;
 
 	oldstmtlen = strlen(old_statement);
 
-    for (opos = 0; opos <  oldstmtlen; opos++) {
+    for (opos = 0; opos < oldstmtlen; opos++) {
 
-		//	Squeeze carriage-returns/linfeed pairs to linefeed only
+		//	Squeeze carriage-return/linefeed pairs to linefeed only
 		if (old_statement[opos] == '\r' && opos+1 < oldstmtlen &&
 			old_statement[opos+1] == '\n') {
 			continue;
@@ -1156,7 +1156,7 @@ char key[33];
 		*funcEnd = svchar;
 		while ((*funcEnd != '\0') && isspace(*funcEnd)) funcEnd++;
 
-		/* We expect left parenthensis here,
+		/* We expect left parenthesis here,
 		 * else return fn body as-is since it is
 		 * one of those "function constants".
 		 */
@@ -1175,7 +1175,7 @@ char key[33];
 		}
 		/* copy mapped name and remaining input string */
 		strcpy(escape, mapFunc);
-		strncat(escape, funcEnd, sizeof(escape)-strlen(mapFunc));
+		strncat(escape, funcEnd, sizeof(escape)-1-strlen(mapFunc));
 	}
 	else {
 		/* Bogus key, leave untranslated */
