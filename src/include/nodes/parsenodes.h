@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.256 2004/05/26 13:57:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.257 2004/06/02 21:01:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -793,6 +793,7 @@ typedef enum AlterTableType
 	AT_ToastTable,				/* create toast table */
 	AT_ChangeOwner,				/* change owner */
 	AT_ClusterOn,				/* CLUSTER ON */
+	AT_DropCluster,				/* SET WITHOUT CLUSTER */
 	AT_DropOids					/* SET WITHOUT OIDS */
 } AlterTableType;
 

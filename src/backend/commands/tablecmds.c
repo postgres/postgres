@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.108 2004/05/26 04:41:12 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.109 2004/06/02 21:01:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,6 +233,7 @@ static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab);
 static void ATPostAlterTypeParse(char *cmd, List **wqueue);
 static void ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId);
 static void ATExecClusterOn(Relation rel, const char *indexName);
+static void ATExecDropCluster(Relation rel);
 static int	ri_trigger_type(Oid tgfoid);
 static void update_ri_trigger_args(Oid relid,
 					   const char *oldname,
@@ -1922,8 +1923,9 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_ClusterOn:	/* CLUSTER ON */
+		case AT_DropCluster:	/* SET WITHOUT CLUSTER */
 			ATSimplePermissions(rel, false);
-			/* This command never recurses */
+			/* These commands never recurse */
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
@@ -2082,6 +2084,9 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			break;
 		case AT_ClusterOn:		/* CLUSTER ON */
 			ATExecClusterOn(rel, cmd->name);
+			break;
+		case AT_DropCluster:		/* SET WITHOUT CLUSTER */
+			ATExecDropCluster(rel);
 			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
 			/*
@@ -5043,6 +5048,19 @@ ATExecClusterOn(Relation rel, const char *indexName)
 	/* And do the work */
 	mark_index_clustered(rel, indexOid);
 }
+
+/*
+ * ALTER TABLE SET WITHOUT CLUSTER
+ *
+ * We have to find any indexes on the table that have indisclustered bit
+ * set and turn it off.
+ */
+static void
+ATExecDropCluster(Relation rel)
+{
+	mark_index_clustered(rel, InvalidOid);
+}
+
 
 /*
  * ALTER TABLE CREATE TOAST TABLE

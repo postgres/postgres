@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.459 2004/06/01 03:28:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.460 2004/06/02 21:01:09 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1275,6 +1275,14 @@ alter_table_cmd:
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ClusterOn;
 					n->name = $3;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> SET WITHOUT CLUSTER */ 
+			| SET WITHOUT CLUSTER
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DropCluster;
+					n->name = NULL;
 					$$ = (Node *)n;
 				}
 		;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.70 2004/05/27 03:30:11 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.71 2004/06/02 21:01:08 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -42,6 +42,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     SET WITHOUT OIDS
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
+    SET WITHOUT CLUSTER
 </synopsis>
  </refsynopsisdiv>
 
@@ -213,12 +214,24 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <term><literal>CLUSTER</literal></term>
     <listitem>
      <para>
-      This form selects the default controlling index for future <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
+      This form selects the default index for future 
+      <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
       operations.
      </para>
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><literal>SET WITHOUT CLUSTER</literal></term>
+    <listitem>
+     <para>
+      This form removes the most recently used
+      <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
+      index specification from the table.
+     </para>
+    </listitem>
+   </varlistentry>
+ 
    <varlistentry>
     <term><literal>RENAME</literal></term>
     <listitem>
