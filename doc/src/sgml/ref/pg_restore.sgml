@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.21 2001/11/28 20:49:10 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.22 2002/02/11 00:14:10 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -514,12 +514,24 @@ connectDBStart() -- connect() failed: No such file or directory
   </title>
 
   <para>
+   If your installation has any local additions to the template1 database,
+   be careful to load the output of <command>pg_restore</command> into a
+   truly empty database; otherwise you are likely to get errors due to
+   duplicate definitions of the added objects.  To make an empty database
+   without any local additions, copy from template0 not template1,
+   for example:
+<programlisting>
+CREATE DATABASE foo WITH TEMPLATE = template0;
+</programlisting>
+  </para>
+
+  <para>
    The limitations of <command>pg_restore</command> are detailed below.
 
    <itemizedlist>
     <listitem>
      <para>
-      When restoring data to a table, <command>pg_restore</command> emits queries
+      When restoring data to a pre-existing table, <command>pg_restore</command> emits queries
       to disable triggers on user tables before inserting the data then emits queries to
       re-enable them after the data has been inserted.  If the restore is stopped in the
       middle, the system catalogs may be left in the wrong state.
@@ -538,7 +550,7 @@ connectDBStart() -- connect() failed: No such file or directory
 
   <para>
    See the <xref linkend="app-pgdump"> documentation for details on
-   limitation of <command>pg_dump</command>.
+   limitations of <command>pg_dump</command>.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.41 2001/12/08 03:24:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.42 2002/02/11 00:14:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -603,8 +603,21 @@ connectDBStart() -- connect() failed: No such file or directory
 
  <refsect1 id="pg-dump-notes">
   <title>Notes</title>
+
   <para>
-   <command>pg_dump</command> has a few limitations.
+   If your installation has any local additions to the template1 database,
+   be careful to restore the output of <command>pg_dump</command> into a
+   truly empty database; otherwise you are likely to get errors due to
+   duplicate definitions of the added objects.  To make an empty database
+   without any local additions, copy from template0 not template1,
+   for example:
+<programlisting>
+CREATE DATABASE foo WITH TEMPLATE = template0;
+</programlisting>
+  </para>
+
+  <para>
+   <command>pg_dump</command> has a few limitations:
 
    <itemizedlist>
     <listitem>
