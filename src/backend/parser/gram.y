@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.263 2001/10/18 17:30:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.264 2001/10/18 23:16:09 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4134,7 +4134,7 @@ opt_float:  '(' Iconst ')'
 opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,"NUMERIC precision %d must be beween 1 and %d",
+						elog(ERROR,"NUMERIC precision %d must be between 1 and %d",
 							 $2, NUMERIC_MAX_PRECISION);
 					if ($4 < 0 || $4 > $2)
 						elog(ERROR,"NUMERIC scale %d must be between 0 and precision %d",
@@ -4145,7 +4145,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 		| '(' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,"NUMERIC precision %d must be beween 1 and %d",
+						elog(ERROR,"NUMERIC precision %d must be between 1 and %d",
 							 $2, NUMERIC_MAX_PRECISION);
 
 					$$ = ($2 << 16) + VARHDRSZ;
@@ -4160,7 +4160,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 opt_decimal:  '(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,"DECIMAL precision %d must be beween 1 and %d",
+						elog(ERROR,"DECIMAL precision %d must be between 1 and %d",
 									$2, NUMERIC_MAX_PRECISION);
 					if ($4 < 0 || $4 > $2)
 						elog(ERROR,"DECIMAL scale %d must be between 0 and precision %d",
@@ -4171,7 +4171,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 		| '(' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,"DECIMAL precision %d must be beween 1 and %d",
+						elog(ERROR,"DECIMAL precision %d must be between 1 and %d",
 									$2, NUMERIC_MAX_PRECISION);
 
 					$$ = ($2 << 16) + VARHDRSZ;
@@ -4308,8 +4308,8 @@ ConstDatetime:  datetime
 					 */
 					$$->timezone = $5;
 					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"TIMESTAMP(%d) %s precision must be beween %d and %d",
-							 $3, ($5? " WITH TIME ZONE": ""), 0, 13);
+						elog(ERROR,"TIMESTAMP(%d)%s precision must be between %d and %d",
+							 $3, ($5 ? " WITH TIME ZONE": ""), 0, 13);
 					$$->typmod = $3;
 				}
 		| TIMESTAMP opt_timezone_x
@@ -4336,8 +4336,8 @@ ConstDatetime:  datetime
 					else
 						$$->name = xlateSqlType("time");
 					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"TIME(%d) %s precision must be beween %d and %d",
-							 $3, ($5? " WITH TIME ZONE": ""), 0, 13);
+						elog(ERROR,"TIME(%d)%s precision must be between %d and %d",
+							 $3, ($5 ? " WITH TIME ZONE": ""), 0, 13);
 					$$->typmod = $3;
 				}
 		| TIME opt_timezone
@@ -5091,7 +5091,7 @@ c_expr:  attr
 					d->name = xlateSqlType("timestamptz");
 					d->setof = FALSE;
 					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"CURRENT_TIMESTAMP(%d) precision must be beween %d and %d",
+						elog(ERROR,"CURRENT_TIMESTAMP(%d) precision must be between %d and %d",
 							 $3, 0, 13);
 					d->typmod = $3;
 
