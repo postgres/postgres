@@ -1,7 +1,7 @@
-postgresql 6.5.1 multi-byte (MB) support README	  July 11 1999
+PostgreSQL 7.0 multi-byte (MB) support README	  Mar 22 2000
 
 						Tatsuo Ishii
-						t-ishii@sra.co.jp
+						ishii@postgresql.org
 		  http://www.sra.co.jp/people/t-ishii/PostgreSQL/
 
 0. Introduction
@@ -9,12 +9,12 @@ postgresql 6.5.1 multi-byte (MB) support README	  July 11 1999
 The MB support is intended for allowing PostgreSQL to handle
 multi-byte character sets such as EUC(Extended Unix Code), Unicode and
 Mule internal code. With the MB enabled you can use multi-byte
-character sets in regexp ,LIKE and some functions. The default
+character sets in regexp ,LIKE and some other functions. The default
 encoding system chosen is determined while initializing your
 PostgreSQL installation using initdb(1). Note that this can be
-overridden when you create a database using createdb(1) or create
-database SQL command. So you could have multiple databases with
-different encoding systems.
+overridden when you create a database using createdb(1) or by using a
+create database SQL command. So you could have multiple databases with
+each different encoding system.
 
 MB also fixes some problems concerning with 8-bit single byte
 character sets including ISO8859. (I would not say all of problems
@@ -24,11 +24,11 @@ me know if you find any problem while using 8-bit characters)
 
 1. How to use
 
-run configure with the mb option:
+run configure with a multibyte option:
 
-	% configure --with-mb=encoding_system
+	% ./configure --enable-multibyte[=encoding_system]
 
-where encoding_system is one of:
+where the encoding_system is one of:
 
 	SQL_ASCII		ASCII
 	EUC_JP			Japanese EUC
@@ -48,21 +48,21 @@ where encoding_system is one of:
 
 Example:
 
-	% configure --with-mb=EUC_JP
+	% ./configure --enable-multibyte=EUC_JP
 
-If MB is disabled, nothing is changed except better supporting for
-8-bit single byte character sets.
+If the encoding system is omitted (./configure --enable-multibyte),
+SQL_ASCII is assumed.
 
-2. How to set encoding
+2. How to set the encoding
 
 initdb command defines the default encoding for a PostgreSQL
 installation. For example:
 
-	% initdb -e EUC_JP
+	% initdb -E EUC_JP
 
 sets the default encoding to EUC_JP(Extended Unix Code for Japanese).
-Note that you can use "-pgencoding" instead of "-e" if you like longer
-option string:-) If no -e or -pgencoding option is given, the encoding
+Note that you can use "--encoding" instead of "-E" if you like longer
+option string:-) If no -E or --encoding option is given, the encoding
 specified at the compile time is used.
 
 You can create a database with a different encoding.
@@ -75,78 +75,85 @@ another way to accomplish this is to use a SQL command:
 	CREATE DATABASE korean WITH ENCODING = 'EUC_KR';
 
 The encoding for a database is represented as "encoding" column in the
-pg_database system catalog.
+pg_database system catalog. You can see that by using -l or \l of psql
+command.
 
-	datname      |datdba|encoding|datpath      
-	-------------+------+--------+-------------
-	template1    |  1739|       1|template1    
-	postgres     |  1739|       0|postgres     
-	euc_jp       |  1739|       1|euc_jp       
-	euc_kr       |  1739|       3|euc_kr       
-	euc_cn       |  1739|       2|euc_cn       
-	unicode      |  1739|       5|unicode      
-	mule_internal|  1739|       6|mule_internal
+$ psql -l
+            List of databases
+   Database    |  Owner  |   Encoding    
+---------------+---------+---------------
+ euc_cn        | t-ishii | EUC_CN
+ euc_jp        | t-ishii | EUC_JP
+ euc_kr        | t-ishii | EUC_KR
+ euc_tw        | t-ishii | EUC_TW
+ mule_internal | t-ishii | MULE_INTERNAL
+ regression    | t-ishii | SQL_ASCII
+ template1     | t-ishii | EUC_JP
+ test          | t-ishii | EUC_JP
+ unicode       | t-ishii | UNICODE
+(9 rows)
 
-A number in the encoding column is "encoding id" and can be translated
-to the encoding name using pg_encoding command.
+3. Automatic encoding translation between backend and frontend
 
-	$ pg_encoding 1
-	EUC_JP
+PostgreSQL supports an automatic encoding translation between backend
+and frontend for some encodings.
 
-If an argument to pg_encoding is not a number, then it is regarded as
-an encoding name and pg_encoding will return the encoding id.
+  encoding of backend			available encoding of frontend
+  --------------------------------------------------------------------
+	EUC_JP				EUC_JP, SJIS
+  
+	EUC_TW				EUC_TW, BIG5
+  
+  	LATIN2				LATIN2, WIN1250
+  
+	LATIN5				LATIN5, WIN, ALT
+  
+	MULE_INTERNAL			EUC_JP, SJIS, EUC_KR, EUC_CN, 
+					EUC_TW, BIG5, LATIN1 to LATIN5, 
+					WIN, ALT, WIN1250
 
-	$ pg_encoding EUC_JP
-	1
+To enable the automatic encoding translation, you have to tell
+PostgreSQL the encoding you would like to use in frontend. There are
+several ways to accomplish this.
 
-3. PGCLIENTENCODING
+o using \encoding command in psql
 
-If an environment variable PGCLIENTENCODING is defined on the
-frontend, automatic encoding translation is done by the backend. For
-example, if the backend has been compiled with MB=EUC_JP and
-PGCLIENTENCODING=SJIS(Shift JIS: yet another Japanese encoding
-system), then any SJIS strings coming from the frontend would be
-translated to EUC_JP before going into the parser. Outputs from the
-backend would be translated to SJIS of course.
+\encoding allows you to change frontend encoding on the fly. For
+example, to change the encoding to SJIS, type:
 
-Supported encodings for PGCLIENTENCODING are:
+	\encoding SJIS
 
-	SQL_ASCII		ASCII
-	EUC_JP			Japanese EUC
-	SJIS			Yet another Japanese encoding
-	EUC_CN			Chinese EUC
-	EUC_KR			Korean EUC
-	EUC_TW			Taiwan EUC
-	BIG5			Traditional Chinese
-	MULE_INTERNAL		Mule internal
-	LATIN1			ISO 8859-1 English and some European languages
-	LATIN2			ISO 8859-2 English and some European languages
-	LATIN3			ISO 8859-3 English and some European languages
-	LATIN4			ISO 8859-4 English and some European languages
-	LATIN5			ISO 8859-5 English and some European languages
-	KOI8			KOI8-R
-	WIN			Windows CP1251
-	ALT			Windows CP866
-	WIN1250			Windows CP1250 (Czech)
+o using libpq functions
 
-Note that UNICODE is not supported(yet). Also note that the
-translation is not always possible. Suppose you choose EUC_JP for the
-backend, LATIN1 for the frontend, then some Japanese characters cannot
-be translated into latin. In this case, a letter cannot be represented
-in the Latin character set, would be transformed as:
+\encoding actually calls PQsetClientEncoding() for its purpose.
 
-	(HEXA DECIMAL)
+  int PQsetClientEncoding(PGconn *conn, const char *encoding)
 
-3. SET CLIENT_ENCODING TO command
+conn is a connection to the backend, and encoding is an encoding you
+want to use. If it successfully sets the encoding, it returns 0,
+otherwise -1. The current encoding for this connection can be shown by
+using:
 
-Actually setting the frontend side encoding information is done by a
-new command:
+  int PQclientEncoding(const PGconn *conn)
+
+Note that it returns the "encoding id," not the encoding symbol string
+such as "EUC_JP." To convert an encoding id to an encoding symbol, you
+can use:
+
+char *pg_encoding_to_char(int encoding_id)
+
+o using PGCLIENTENCODING
+
+If an environment variable PGCLIENTENCODING is defined in the
+frontend, an automatic encoding translation is done by the backend.
+
+o using SET CLIENT_ENCODING TO command
+
+Setting the frontend side encoding can be done a SQL command:
 
 	SET CLIENT_ENCODING TO 'encoding';
 
-where encoding is one of the encodings those can be set to
-PGCLIENTENCODING. Also you can use SQL92 syntax "SET NAMES" for this
-purpose:
+Also you can use SQL92 syntax "SET NAMES" for this purpose:
 
 	SET NAMES 'encoding';
 
@@ -158,10 +165,21 @@ To return to the default encoding:
 
 	RESET CLIENT_ENCODING;
 
-This would reset the frontend encoding to same as the backend
-encoding, thus no encoding translation would be performed.
+4. About Unicode
 
-4. References
+An automatic encoding translation between Unicode and any other
+encodings is not supported (yet). 
+
+5. What happens if the translation is not possible?
+
+Suppose you choose EUC_JP for the backend, LATIN1 for the frontend,
+then some Japanese characters could not be translated into LATIN1. In
+this case, a letter cannot be represented in the LATIN1 character set,
+would be transformed as:
+
+	(HEXA DECIMAL)
+
+6. References
 
 These are good sources to start learning various kind of encoding
 systems.
@@ -177,6 +195,16 @@ Unicode: http://www.unicode.org/
 	UTF-8 is defined here.
 
 5. History
+
+Mar 22, 2000
+	* Add new libpq functions PQsetClientEncoding, PQclientEncoding
+	* ./configure --with-mb=EUC_JP
+	  now deprecated. use 
+	  ./configure --enable-multibyte=EUC_JP
+	  instead
+  	* Add SQL_ASCII regression test case
+	* Add SJIS User Defined Character (UDC) support
+	* All of above will appear in 7.0
 
 July 11, 1999
 	* Add support for WIN1250 (Windows Czech) as a client encoding
