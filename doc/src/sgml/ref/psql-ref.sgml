@@ -1,0 +1,869 @@
+<REFENTRY ID="APP-PSQL">
+<REFMETA>
+<REFENTRYTITLE>
+<application>psql</application>
+</REFENTRYTITLE>
+<REFMISCINFO>Application</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+<application>psql</application>
+</REFNAME>
+<REFPURPOSE>
+<productname>Postgres</productname> interactive client
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-09-26</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+psql [ <replaceable class="parameter">dbname</replaceable> ]
+psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replaceable class="parameter">dbname</replaceable> ]
+    -e [ -f <replaceable class="parameter">filename</replaceable> ] [ -F <replaceable class="parameter">separator</replaceable> ] [ -h <replaceable class="parameter">hostname</replaceable> ] -Hln
+    [ -o <replaceable class="parameter">filename</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] -qsSt ] [ -T <replaceable class="parameter">table_options</replaceable> ] -ux [ <replaceable class="parameter">dbname</replaceable> ]
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-APP-PSQL-1">
+<REFSECT2INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+<application>psql</application> accepts many command-line arguments,
+a rich set of meta-commands, and the full <acronym>SQL</acronym> language
+supported by <productname>Postgres</productname>. The most common
+command-line arguments are:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">dbname</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+The name of an existing database to access.
+<replaceable class="parameter">dbname</replaceable>
+defaults to the value of the
+<envar>USER</envar>
+environment variable or, if that's not set, to the Unix account name of the
+current user.
+
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+-c <replaceable class="parameter">query</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+A single query to run. <application>psql</application> will exit on completion.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+</variablelist>
+
+<para>
+The full set of command-line arguments and meta-commands are described in a following
+section.
+
+<para>
+There are some environment variables which can be used in liu of
+command line arguments. 
+Additionally, the <productname>Postgres</productname> frontend library used by 
+the <application>psql</application> application
+looks for other optional environment variables to configure, for example,
+the style of date/time representation and the local time zone. Refer
+to the chapter on <filename>libpq</filename> in the
+<citetitle>Programmer's Guide</citetitle> for more details.
+
+<para>
+You may set any of the following environment variables to avoid
+specifying command-line options:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<envar>PGHOST</envar>
+</TERM>
+<LISTITEM>
+<PARA>
+The <acronym>DNS</acronym> host name of the database server.
+Setting <envar>PGHOST</envar> to a non-zero-length string causes
+<acronym>TCP/IP</acronym> communication
+to be used, rather than the default local Unix domain sockets.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<envar>PGPORT</envar>
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<envar>PGTTY</envar>
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<envar>PGOPTION</envar>
+</TERM>
+<LISTITEM>
+<PARA>
+If <envar>PGOPTION</envar>
+is specified, then the options it contains are parsed
+.BR before
+any command-line options.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+<envar>PGREALM</envar>
+</TERM>
+<LISTITEM>
+<PARA>
+<envar>PGREALM</envar>
+only applies if
+<productname>Kerberos</productname>
+authentication is in use.  
+If this environment variable is set, <productname>Postgres</productname>
+will attempt authentication with servers for this realm and will use
+separate ticket files to avoid conflicts with local ticket files.
+See the <citetitle>PostgreSQL Administrator's Guide</citetitle>
+for additional information on
+<productname>Kerberos</productname>.
+
+</variablelist>
+
+<REFSECT2 ID="R2-APP-PSQL-2">
+<REFSECT2INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+
+<application>psql</application>
+returns 0 to the shell on successful completion of all queries,
+1 for errors, 2 for abrupt disconnection from the backend.
+<application>psql</application>
+will also return 1 if the connection to a database could not be made for
+any reason.
+
+<REFSECT1 ID="R1-APP-PSQL-1">
+<REFSECT1INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+
+<application>psql</application> is a character-based front-end to 
+<productname>Postgres</productname>.
+It enables you to
+type in queries interactively, issue them to <productname>Postgres</productname>, 
+and see the query
+results.
+
+<para>
+<application>psql</application>
+is a <productname>Postgres</productname> client application.  Hence, a
+<application>postmaster</application> process
+ must be running on the database server host before
+<application>psql</application>
+is executed.  In addition, the correct parameters to identify
+the database server, such as the
+<application>postmaster</application> host name,
+ may need to be specified
+as described below.
+
+<para>
+When
+<application>psql</application>
+starts, it reads SQL commands from
+<filename>/etc/psqlrc</filename>
+and then from
+<filename>$(<envar>HOME</envar>)/.psqlrc</filename>
+This allows SQL commands like
+<command>SET</command>
+which can be used to set the date style to be run at the start of
+every session.
+
+<REFSECT2 ID="R2-APP-PSQL-3">
+<REFSECT2INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT2INFO>
+<TITLE>
+Connecting To A Database
+</TITLE>
+<para>
+<application>psql</application>
+attempts to make a connection to the database at the hostname and
+port number specified on the command line.   If the connection could not
+be made for any reason (e.g. insufficient privileges, postmaster is not
+running on the server, etc)
+.IR <application>psql</application>
+will return an error that says
+<programlisting>
+Connection to database failed.
+</programlisting>
+The reason for the connection failure is not provided.
+
+<REFSECT2 ID="R2-APP-PSQL-4">
+<REFSECT2INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT2INFO>
+<TITLE>
+Entering Queries
+</TITLE>
+<para>
+In normal operation, 
+<application>psql</application> provides a prompt with the name of the
+database that <application>psql</application> is current connected to 
+followed by the string "=>".
+For example,
+<programlisting>
+$ <userinput>psql testdb</userinput>
+Welcome to the POSTGRESQL interactive sql monitor:
+  Please read the file COPYRIGHT for copyright terms of POSTGRESQL
+
+   type \e? for help on slash commands
+   type \eq to quit
+   type \eg or terminate with semicolon to execute query
+ You are currently connected to the database: testdb
+
+testdb=>
+</programlisting>
+
+<para>
+At the prompt, the user may type in <acronym>SQL</acronym> queries.  
+Unless the -S option
+is set, input lines are sent to the backend when a query-terminating
+semicolon is reached.
+
+<para>
+Whenever a query is executed, 
+<application>psql</application> also polls for asynchronous notification
+events generated by <command>LISTEN</command> and <command>NOTIFY</command>.
+
+<para>
+<application>psql</application>
+can be used in a pipe sequence, and automatically detects when it
+is not listening or talking to a real tty.
+
+<REFSECT1 ID="R1-APP-PSQL-2">
+<REFSECT1INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT1INFO>
+<TITLE>
+Command-line Options
+</TITLE>
+<para>
+<application>psql</application>
+understands the following command-line options:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+-A
+</TERM>
+<LISTITEM>
+<PARA>
+Turn off fill justification when printing out table elements.
+
+<VARLISTENTRY>
+<TERM>
+-c <replaceable class="parameter">query</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Specifies that
+<application>psql</application>
+is to execute one query string,
+<replaceable class="parameter">query</replaceable>,
+and then exit.  This is useful for shell scripts, typically in
+conjunction with the <option>-q</option> option in shell scripts.
+
+<VARLISTENTRY>
+<TERM>
+-d <replaceable class="parameter">dbname</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Specifies the name of the database to connect to. This is equivalent to specifying
+<replaceable class="parameter">dbname</replaceable> as the last field in the
+command line.
+
+<VARLISTENTRY>
+<TERM>
+-e
+</TERM>
+<LISTITEM>
+<PARA>
+Echo the query sent to the backend
+
+<VARLISTENTRY>
+<TERM>
+-f <replaceable class="parameter">filename</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Use the file <replaceable class="parameter">filename</replaceable>
+as the source of queries instead of reading queries interactively.
+This file must be specified for and visible to the client frontend.
+
+<VARLISTENTRY>
+<TERM>
+-F <replaceable class="parameter">separator</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Use <replaceable class="parameter">separator</replaceable>
+as the field separator.
+The default is an ASCII vertical bar ("|").
+
+<VARLISTENTRY>
+<TERM>
+-h <replaceable class="parameter">hostname</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Specifies the host name of the machine on which the
+<application>postmaster</application>
+is running.
+Without this option, communication is performed using
+local Unix domain sockets.
+
+<VARLISTENTRY>
+<TERM>
+-H
+</TERM>
+<LISTITEM>
+<PARA>
+Turns on
+<acronym>HTML 3.0</acronym>
+tabular output.
+
+<VARLISTENTRY>
+<TERM>
+-l
+</TERM>
+<LISTITEM>
+<PARA>
+Lists all available databases, then exit. Other non-connection options are ignored.
+
+<VARLISTENTRY>
+<TERM>
+-n
+</TERM>
+<LISTITEM>
+<PARA>
+Do not use the readline library for input line editing and command history.
+
+<VARLISTENTRY>
+<TERM>
+-o <replaceable class="parameter">filename</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Put all output into file <replaceable class="parameter">filename</replaceable>.
+The path must be writable by the client.
+
+<VARLISTENTRY>
+<TERM>
+-p <replaceable class="parameter">port</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Specifies the TCP/IP port or, by omission, the local Unix domain socket file
+extension on which the
+<application>postmaster</application>
+is listening for connections.  Defaults to the value of the
+<envar>PGPORT</envar>
+environment variable, if set, or to 5432.
+
+<VARLISTENTRY>
+<TERM>
+-q
+</TERM>
+<LISTITEM>
+<PARA>
+Specifies that
+<application>psql</application>
+should do its work quietly.  By default, it
+prints welcome and exit messages and prompts for each query, and prints
+out the number of rows returned from a query.
+If this option is used, none of this happens. This is useful with the
+<option>-c</option> option.
+
+<VARLISTENTRY>
+<TERM>
+-s
+</TERM>
+<LISTITEM>
+<PARA>
+Run in single-step mode where the user is prompted for each query before
+it is sent to the backend.
+
+<VARLISTENTRY>
+<TERM>
+-S
+</TERM>
+<LISTITEM>
+<PARA>
+Runs in single-line mode where each query is terminated by a newline,
+instead of a semicolon.
+
+<VARLISTENTRY>
+<TERM>
+-t
+</TERM>
+<LISTITEM>
+<PARA>
+Turn off printing of column names.
+This is useful with the
+<option>-c</option>
+option in shell scripts.
+
+<VARLISTENTRY>
+<TERM>
+-T <replaceable class="parameter">table_options</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Allows you to specify options to be placed within the
+ <sgmltag>table ...</sgmltag> tag for <acronym>HTML 3.0</acronym>
+tabular output.For example, <literal>border</literal>
+will give you tables with borders.
+This must be used in conjunction with the <option>-H</option> option.
+
+<VARLISTENTRY>
+<TERM>
+-u
+</TERM>
+<LISTITEM>
+<PARA>
+Asks the user for the user name and password before connecting to the database.
+If the database does not require password authentication then these are
+ignored.  If the option is not used (and the PGPASSWORD environment variable
+is not set) and the database requires password authentication, then the
+connection will fail.  The user name is ignored anyway.
+
+<VARLISTENTRY>
+<TERM>
+-x
+</TERM>
+<LISTITEM>
+<PARA>
+Turns on extended row format mode. When enabled each row will have its column
+names printed on the left with the column values printed on the right.
+This is useful for rows which are otherwise too long to fit into
+one screen line. HTML row output supports this mode also.
+</variablelist>
+
+<para>
+You may set environment variables to avoid typing some of the above
+options.  See the section on environment variables below.
+
+
+<REFSECT1 ID="R1-APP-PSQL-3">
+<REFSECT1INFO>
+<DATE>1998-09-26</DATE>
+</REFSECT1INFO>
+<TITLE>
+<application>psql</application> Meta-Commands
+</TITLE>
+<para>
+Anything you enter in <application>psql</application> 
+that begins with an unquoted backslash is a <application>psql</application>
+meta-command.  Anything else is <acronym>SQL</acronym>
+ and simply goes into the current query buffer
+(and once you have at least one complete query, it gets automatically 
+submitted to the backend).  
+<Application>psql</Application> meta-commands are also called slash commands.
+
+<para>
+The format of a <application>psql</application> command is the backslash, 
+followed immediately by
+a command verb, then any arguments.  The arguments are separated from the
+command verb and each other by any number of white space characters.
+
+<para>
+With single character command verbs, you don't actually need to separate the
+command verb from the argument with white space, for historical reasons.
+You should anyway.
+
+<para>
+The following meta-commands are defined:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<literal>\a</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Toggle field alignment when printing out table elements.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\C</literal> <replaceable class="parameter">caption</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Set the HTML3.0 table caption to 
+<quote><replaceable class="parameter">caption</replaceable></quote>.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\connect</literal> <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ]
+</TERM>
+<LISTITEM>
+<PARA>
+Establish a connection to a new database, using the default 
+<replaceable class="parameter">username</replaceable> if none is specified.
+The previous connection is closed.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\copy</literal> <replaceable class="parameter">dbname</replaceable> { FROM | TO } <replaceable class="parameter">filename</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Perform a frontend (client) copy.  This is an operation that runs a SQL COPY command,
+but instead of the backend reading or writing the specified file, and 
+consequently requiring backend access and special user privilege, 
+<application>psql</application> reads or writes the 
+file and routes the data to or from the backend.  The default <literal>tab</literal>
+delimiter is used.
+<tip>
+<para>
+This operation is not as efficient as the <acronym>SQL</acronym> 
+<command>COPY</command> command because all data must pass through the
+client/server IP or socket connection. For large amounts of data this other
+technique may be preferable.
+</tip>
+
+<VARLISTENTRY>
+<TERM>
+<literal>\d</literal> [ <replaceable class="parameter">table</replaceable> ]
+</TERM>
+<LISTITEM>
+<PARA>
+List tables in the database, or if <replaceable class="parameter">table</replaceable>
+is specified, list the columns in that table.
+If table name is specified as an asterisk (<quote>*</quote>),
+list all tables and column information for each tables.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\da</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List all available aggregates.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\dd</literal> <replaceable class="parameter">object</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+List the description from <literal>pg_description</literal>
+of the specified object, which can be a
+table, table.column, type, operator, or aggregate.
+<tip>
+<para>
+Not all objects have a description in <literal>pg_description</literal>.
+This meta-command can be useful to get a quick description of a native
+<productname>Postgres</productname> feature.
+</tip>
+
+<VARLISTENTRY>
+<TERM>
+<literal>\df</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List functions.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\di</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List only indexes.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\do</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List only operators.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\ds</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List only sequences.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\dS</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List system tables and indexes.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\dt</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List only non-system tables.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\dT</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List types.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\e</literal> [ <replaceable class="parameter">filename</replaceable> ]
+</TERM>
+<LISTITEM>
+<PARA>
+Edit the current query buffer or the contents of the file
+<replaceable class="parameter">filename</replaceable>.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\E</literal> [ <replaceable class="parameter">filename</replaceable> ]
+</TERM>
+<LISTITEM>
+<PARA>
+Edit the current query buffer or the contents of the file
+<replaceable class="parameter">filename</replaceable>
+and execute it upon editor exit.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\f</literal> [ <replaceable class="parameter">separator</replaceable> ]
+</TERM>
+<LISTITEM>
+<PARA>
+Set the field separator.  Default is a single blank space.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\g</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]
+</TERM>
+<LISTITEM>
+<PARA>
+Send the current query input buffer to the backend and optionally
+save the output in <replaceable class="parameter">filename</replaceable>
+or pipe the output into a separate Unix shell to execute
+<replaceable class="parameter">command</replaceable>.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\h</literal> [ <replaceable class="parameter">command</replaceable> ]
+</TERM>
+<LISTITEM>
+<PARA>
+Give syntax help on the specified SQL command.  
+If <replaceable class="parameter">command</replaceable> is not a defined SQL command
+(or is not documented in <application>psql</application>), or if
+<replaceable class="parameter">command</replaceable> is not specified,
+then <application>psql</application> will 
+list all the commands for which syntax help is
+available.  If <replaceable class="parameter">command</replaceable>
+is an asterisk (<quote>*</quote>), then
+give syntax help on all SQL commands.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\H</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Toggle <acronym>HTML3</acronym> output. This is equivalent to the <option>-H</option>
+command-line option.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\i</literal> <replaceable class="parameter">filename</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Read queries from the file <replaceable class="parameter">filename</replaceable>
+into the query input buffer.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\l</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+List all the databases in the server.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\m</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Toggle the old monitor-like table display, which includes border characters
+surrounding the table.
+This is standard SQL output.
+By default, <application>psql</application> includes only field separators
+between columns.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\o</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]
+</TERM>
+<LISTITEM>
+<PARA>
+Save future query results to the file
+<replaceable class="parameter">filename</replaceable> or pipe future
+results into a separate Unix shell to execute
+<replaceable class="parameter">command</replaceable>.
+If no arguments are specified, send query results to
+<filename>stdout</filename>.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\p</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Print the current query buffer.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\q</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Quit the <application>psql</application> program.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\r</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Reset(clear) the query buffer.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\s</literal> [ <replaceable class="parameter">filename</replaceable> ]
+</TERM>
+<LISTITEM>
+<PARA>
+Print or save the command line history to 
+<replaceable class="parameter">filename</replaceable>.
+If <replaceable class="parameter">filename</replaceable> is omitted,
+do not save subsequent commands to a history file.
+This option is only available if <application>psql</application> is
+configured to use readline.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\t</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Toggle display of output column name headings and row count footer (defaults to on).
+
+<VARLISTENTRY>
+<TERM>
+<literal>\T</literal> <replaceable class="parameter">table_options</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Allows you to specify options to be placed within the
+ <sgmltag>table ...</sgmltag> tag
+for <acronym>HTML 3.0</acronym>
+tabular output.For example, <literal>border</literal>
+will give you tables with borders.
+This must be used in conjunction with the <command>\H</command> meta-command.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\x</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Toggles extended row format mode. When enabled each row will have its column
+names printed on the left with the column values printed on the right.
+This is useful for rows which are otherwise too long to fit into
+one screen line. <acronym>HTML</acronym> row output mode supports this flag too.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\w</literal> <replaceable class="parameter">filename</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+Outputs the current query buffer to the file
+<replaceable class="parameter">filename</replaceable>.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\z</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Produces a list of all tables in the database with their appropriate ACLs
+(grant/revoke permissions) listed.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\!</literal> [ <replaceable class="parameter">command</replaceable> ]
+</TERM>
+<LISTITEM>
+<PARA>
+Escape to a separate Unix shell or execute the Unix command
+<replaceable class="parameter">command</replaceable>.
+
+<VARLISTENTRY>
+<TERM>
+<literal>\?</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+Get help information about the slash (<quote>\</quote>) commands.
+
+</variablelist>
+
+</refentry>

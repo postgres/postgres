@@ -1,9 +1,12 @@
-<Chapter>
-<Title>Commands</Title>
+<chapter id="sql-commands">
+<Title>SQL Commands</Title>
 
 <Para>
+This is reference information for the <acronym>SQL</acronym>
+commands supported by <productname>Postgres</productname>.
 </Para>
 
+&abort;
 &alterTable;
 &alterUser;
 &begin;
@@ -62,6 +65,8 @@
 <title>SQL Functions</title>
 
 <para>
+This chapter provides reference information for the <acronym>SQL</acronym>
+functions supported by <productname>Postgres</productname>.
 </para>
 
 &currentDate;
@@ -71,6 +76,17 @@
 
 </chapter>
 
+<chapter Id="utilities">
+<title>Utility Applications</title>
+
+<para>
+This is reference information for the 
+<productname>Postgres</productname> support utilities.
+</para>
+
+&psqlRef;
+
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

@@ -1,0 +1,127 @@
+<REFENTRY ID="SQL-ABORT">
+<REFMETA>
+<REFENTRYTITLE>
+ABORT
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+ABORT
+</REFNAME>
+<REFPURPOSE>
+Aborts the current transaction
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-09-27</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+ABORT
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-ABORT-1">
+<REFSECT2INFO>
+<DATE>1998-09-27</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+None.
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-ABORT-2">
+<REFSECT2INFO>
+<DATE>1998-09-27</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+   ABORT
+</TERM>
+<LISTITEM>
+<PARA>
+          Message returned if successful.
+
+<VARLISTENTRY>
+<TERM>
+NOTICE:  UserAbortTransactionBlock and not in in-progress state
+ABORT
+</TERM>
+<LISTITEM>
+<PARA>
+          If there is not any transaction currently in progress.
+
+</VARLISTENTRY>
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-ABORT-1">
+<REFSECT1INFO>
+<DATE>1998-09-27</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+   <command>ABORT</command> rolls back the current transaction and causes
+   all the updates made by the transaction to be discarded. 
+This command is identical
+in behavior to the <acronym>SQL92</acronym> command <command>ROLLBACK</command>,
+and is present only for historical reasons.
+
+<REFSECT2 ID="R2-SQL-ABORT-3">
+<REFSECT2INFO>
+<DATE>1998-09-27</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<para>
+Use the <command>COMMIT</command> statement to successfully
+ terminate a transaction.
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-ABORT-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+<ProgramListing>
+--To abort all changes
+--
+ABORT WORK;
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-ABORT-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+
+<REFSECT2 ID="R2-SQL-ABORT-4">
+<REFSECT2INFO>
+<DATE>1998-09-27</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<para>
+This command is a <productname>Postgres</productname> extension present
+for historical reasons. <command>ROLLBACK</command> is the <acronym>SQL92</acronym>
+equivalent command.
+</PARA>
+
+</REFENTRY>

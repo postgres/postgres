@@ -55,6 +55,7 @@
 -->
 
 <!-- these are in the "commands" reference chapter -->
+<!entity abort              system "abort.sgml">
 <!entity alterTable         system "alter_table.sgml">
 <!entity alterUser          system "alter_user.sgml">
 <!entity begin              system "begin.sgml">
@@ -107,3 +108,6 @@
 <!entity show               system "show.sgml">
 <!entity update             system "update.sgml">
 <!entity vacuum             system "vacuum.sgml">
+
+<!-- these are in the "utilities" reference chapter -->
+<!entity psqlRef            system "psql-ref.sgml">

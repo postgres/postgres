@@ -569,7 +569,7 @@ SELECT actors.name
 <refentry id="SQL-SELECTINTO">
  <refmeta>
   <refentrytitle>
-   SELECT
+   SELECT INTO
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
