@@ -10551,7 +10551,7 @@ case $host_os in bsdi*|netbsd*)
 ac_cv_func_fseeko=yes
 esac
 
-# Solaris has a very slow qsort in certain cases.
+# Solaris has a very slow qsort in certain cases, so we replace it.
 case $host_os in
   solaris*) LIBOBJS="$LIBOBJS qsort.$ac_objext" ;;
 esac
