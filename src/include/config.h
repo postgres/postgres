@@ -44,7 +44,21 @@
 #ifndef       SIGNAL_ARGS
 #define SIGNAL_ARGS int postgres_signal_arg
 #endif
- 
+
+# NAMEDATALEN is the max length for system identifiers (e.g. table names,
+# attribute names, function names, etc.)
+#
+# These MUST be set here.  DO NOT COMMENT THESE OUT
+# Setting these too high will result in excess space usage for system catalogs
+# Setting them too low will make the system unusable.
+# values between 16 and 64 that are multiples of four are recommended.
+#
+# NOTE also that databases with different NAMEDATALEN's cannot interoperate!
+# 
+#define NAMEDATALEN 32
+# OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid) 
+#define OIDNAMELEN  36
+
 /*
  * On architectures for which we have not implemented spinlocks (or
  * cannot do so), we use System V semaphores.  We also use them for
