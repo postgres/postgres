@@ -170,7 +170,7 @@ Write-Ahead Log (WAL) to provide crash recovery with less performance
 ANALYZE stage of VACUUM no longer exclusively locks table (Bruce)
 Reduced file seeks (Denis Perchine)
 Improve BTREE code for duplicate keys (Tom)
-Store all large objects in a single operating system file (Denis Perchine, Tom)
+Store all large objects in a single table (Denis Perchine, Tom)
 Improve memory allocation performance (Karel, Tom)
 
 Source Code
