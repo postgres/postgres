@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.93 2002/11/10 07:25:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.94 2002/11/11 03:02:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,7 +651,8 @@ lookup_hash_entry(Agg *node, TupleTableSlot *slot)
 	MemoryContextSwitchTo(aggstate->aggcontext);
 	entrysize = sizeof(AggHashEntryData) +
 		(aggstate->numaggs - 1) * sizeof(AggStatePerGroupData);
-	entry = (AggHashEntry) palloc0(entrysize);
+	entry = (AggHashEntry) palloc(entrysize);
+	MemSet(entry, 0, entrysize);
 
 	entry->hashkey = hashkey;
 	entry->firstTuple = heap_copytuple(tuple);
@@ -887,8 +888,9 @@ agg_retrieve_direct(Agg *node)
 				Datum	   *dvalues;
 				char	   *dnulls;
 
-				dvalues = (Datum *) palloc0(sizeof(Datum) * tupType->natts);
+				dvalues = (Datum *) palloc(sizeof(Datum) * tupType->natts);
 				dnulls = (char *) palloc(sizeof(char) * tupType->natts);
+				MemSet(dvalues, 0, sizeof(Datum) * tupType->natts);
 				MemSet(dnulls, 'n', sizeof(char) * tupType->natts);
 				nullsTuple = heap_formtuple(tupType, dvalues, dnulls);
 				ExecStoreTuple(nullsTuple,
@@ -1168,10 +1170,13 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	 * allocate my private per-agg working storage
 	 */
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
-	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numaggs);
-	econtext->ecxt_aggnulls = (bool *) palloc0(sizeof(bool) * numaggs);
+	econtext->ecxt_aggvalues = (Datum *) palloc(sizeof(Datum) * numaggs);
+	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * numaggs);
+	econtext->ecxt_aggnulls = (bool *) palloc(sizeof(bool) * numaggs);
+	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * numaggs);
 
-	peragg = (AggStatePerAgg) palloc0(sizeof(AggStatePerAggData) * numaggs);
+	peragg = (AggStatePerAgg) palloc(sizeof(AggStatePerAggData) * numaggs);
+	MemSet(peragg, 0, sizeof(AggStatePerAggData) * numaggs);
 	aggstate->peragg = peragg;
 
 	if (node->aggstrategy == AGG_HASHED)
@@ -1183,7 +1188,8 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	{
 		AggStatePerGroup pergroup;
 
-		pergroup = (AggStatePerGroup) palloc0(sizeof(AggStatePerGroupData) * numaggs);
+		pergroup = (AggStatePerGroup) palloc(sizeof(AggStatePerGroupData) * numaggs);
+		MemSet(pergroup, 0, sizeof(AggStatePerGroupData) * numaggs);
 		aggstate->pergroup = pergroup;
 	}
 

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.34 2002/11/10 07:25:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.35 2002/11/11 03:02:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,9 @@ rt_poly_union(PG_FUNCTION_ARGS)
 	POLYGON    *b = PG_GETARG_POLYGON_P(1);
 	POLYGON    *p;
 
-	p = (POLYGON *) palloc0(sizeof(POLYGON));	/* zero any holes */
+	p = (POLYGON *) palloc(sizeof(POLYGON));
+
+	MemSet((char *) p, 0, sizeof(POLYGON));		/* zero any holes */
 	p->size = sizeof(POLYGON);
 	p->npts = 0;
 	p->boundbox.high.x = Max(a->boundbox.high.x, b->boundbox.high.x);
@@ -125,7 +127,9 @@ rt_poly_inter(PG_FUNCTION_ARGS)
 	POLYGON    *b = PG_GETARG_POLYGON_P(1);
 	POLYGON    *p;
 
-	p = (POLYGON *) palloc0(sizeof(POLYGON));	/* zero any holes */
+	p = (POLYGON *) palloc(sizeof(POLYGON));
+
+	MemSet((char *) p, 0, sizeof(POLYGON));		/* zero any holes */
 	p->size = sizeof(POLYGON);
 	p->npts = 0;
 	p->boundbox.high.x = Min(a->boundbox.high.x, b->boundbox.high.x);

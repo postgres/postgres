@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.67 2002/11/10 07:25:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.68 2002/11/11 03:02:19 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1008,7 +1008,7 @@ exec_stmt_perform(PLpgSQL_execstate * estate, PLpgSQL_stmt_perform * stmt)
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr);
-
+	
 	rc = exec_run_select(estate, expr, 0, NULL);
 	if (rc != SPI_OK_SELECT)
 		elog(ERROR, "query \"%s\" didn't return data", expr->query);
@@ -1627,8 +1627,9 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 		if (natts != stmt->row->nfields)
 			elog(ERROR, "Wrong record type supplied in RETURN NEXT");
 
-		dvalues = (Datum *) palloc0(natts * sizeof(Datum));
+		dvalues = (Datum *) palloc(natts * sizeof(Datum));
 		nulls = (char *) palloc(natts * sizeof(char));
+		MemSet(dvalues, 0, natts * sizeof(Datum));
 		MemSet(nulls, 'n', natts);
 
 		for (i = 0; i < natts; i++)

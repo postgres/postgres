@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.81 2002/11/10 07:25:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.82 2002/11/11 03:02:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,8 @@ makeacl(int n)
 	if (n < 0)
 		elog(ERROR, "makeacl: invalid size: %d", n);
 	size = ACL_N_SIZE(n);
-	new_acl = (Acl *) palloc0(size);
+	new_acl = (Acl *) palloc(size);
+	MemSet((char *) new_acl, 0, size);
 	new_acl->size = size;
 	new_acl->ndim = 1;
 	new_acl->flags = 0;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.178 2002/11/10 07:25:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.179 2002/11/11 03:02:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1348,9 +1348,13 @@ formrdesc(const char *relationName,
 
 	/*
 	 * allocate new relation desc
+	 */
+	relation = (Relation) palloc(sizeof(RelationData));
+
+	/*
 	 * clear all fields of reldesc
 	 */
-	relation = (Relation) palloc0(sizeof(RelationData));
+	MemSet((char *) relation, 0, sizeof(RelationData));
 	relation->rd_targblock = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
@@ -1376,7 +1380,8 @@ formrdesc(const char *relationName,
 	 * get us launched.  RelationCacheInitializePhase2() will read the
 	 * real data from pg_class and replace what we've done here.
 	 */
-	relation->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
+	relation->rd_rel = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
+	MemSet(relation->rd_rel, 0, CLASS_TUPLE_SIZE);
 
 	namestrcpy(&relation->rd_rel->relname, relationName);
 	relation->rd_rel->relnamespace = PG_CATALOG_NAMESPACE;
@@ -2049,7 +2054,8 @@ RelationBuildLocalRelation(const char *relname,
 	/*
 	 * allocate a new relation descriptor and fill in basic state fields.
 	 */
-	rel = (Relation) palloc0(sizeof(RelationData));
+	rel = (Relation) palloc(sizeof(RelationData));
+	MemSet((char *) rel, 0, sizeof(RelationData));
 
 	rel->rd_targblock = InvalidBlockNumber;
 
@@ -2087,7 +2093,8 @@ RelationBuildLocalRelation(const char *relname,
 	/*
 	 * initialize relation tuple form (caller may add/override data later)
 	 */
-	rel->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
+	rel->rd_rel = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
+	MemSet((char *) rel->rd_rel, 0, CLASS_TUPLE_SIZE);
 
 	namestrcpy(&rel->rd_rel->relname, relname);
 	rel->rd_rel->relnamespace = relnamespace;

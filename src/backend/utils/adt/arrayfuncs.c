@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.83 2002/11/10 07:25:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.84 2002/11/11 03:02:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,8 @@ array_in(PG_FUNCTION_ARGS)
 	if (nitems == 0)
 	{
 		/* Return empty array */
-		retval = (ArrayType *) palloc0(sizeof(ArrayType));
+		retval = (ArrayType *) palloc(sizeof(ArrayType));
+		MemSet(retval, 0, sizeof(ArrayType));
 		retval->size = sizeof(ArrayType);
 		retval->elemtype = element_type;
 		PG_RETURN_ARRAYTYPE_P(retval);
@@ -248,7 +249,8 @@ array_in(PG_FUNCTION_ARGS)
 						   typmod, typdelim, typlen, typbyval, typalign,
 						   &nbytes);
 	nbytes += ARR_OVERHEAD(ndim);
-	retval = (ArrayType *) palloc0(nbytes);
+	retval = (ArrayType *) palloc(nbytes);
+	MemSet(retval, 0, nbytes);
 	retval->size = nbytes;
 	retval->ndim = ndim;
 	retval->elemtype = element_type;
@@ -395,7 +397,8 @@ ReadArrayStr(char *arrayStr,
 				prod[MAXDIM];
 
 	mda_get_prod(ndim, dim, prod);
-	values = (Datum *) palloc0(nitems * sizeof(Datum));
+	values = (Datum *) palloc(nitems * sizeof(Datum));
+	MemSet(values, 0, nitems * sizeof(Datum));
 	MemSet(indx, 0, sizeof(indx));
 
 	/* read array enclosed within {} */
@@ -511,7 +514,10 @@ ReadArrayStr(char *arrayStr,
 		if (!typbyval)
 			for (i = 0; i < nitems; i++)
 				if (values[i] == (Datum) 0)
-					values[i] = PointerGetDatum(palloc0(typlen));
+				{
+					values[i] = PointerGetDatum(palloc(typlen));
+					MemSet(DatumGetPointer(values[i]), 0, typlen);
+				}
 	}
 	else
 	{
@@ -1587,7 +1593,8 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 
 	/* Allocate and initialize the result array */
 	nbytes += ARR_OVERHEAD(ndim);
-	result = (ArrayType *) palloc0(nbytes);
+	result = (ArrayType *) palloc(nbytes);
+	MemSet(result, 0, nbytes);
 
 	result->size = nbytes;
 	result->ndim = ndim;

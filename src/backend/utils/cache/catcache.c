@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.100 2002/11/10 07:25:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.101 2002/11/11 03:02:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -808,7 +808,8 @@ InitCatCache(int id,
 	 *
 	 * Note: we assume zeroing initializes the Dllist headers correctly
 	 */
-	cp = (CatCache *) palloc0(sizeof(CatCache) + NCCBUCKETS * sizeof(Dllist));
+	cp = (CatCache *) palloc(sizeof(CatCache) + NCCBUCKETS * sizeof(Dllist));
+	MemSet((char *) cp, 0, sizeof(CatCache) + NCCBUCKETS * sizeof(Dllist));
 
 	/*
 	 * initialize the cache's relation information for the relation
