@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.43 1997/09/08 03:19:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.44 1997/09/12 22:14:48 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2740,7 +2740,7 @@ res_target_list2: res_target_list2 ',' res_target_el2
 		;
 
 /* AS is not optional because shift/red conflict with unary ops */
-res_target_el2: a_expr AS ColId
+res_target_el2: a_expr_or_null AS ColId
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $3;
