@@ -50,9 +50,8 @@
 #define DRV_KSQO						1055
 #define DS_PG64							1057
 
-//Next default values for new
-	objects
-		//
+/* Next default values for new objects */
+
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE		104
