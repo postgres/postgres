@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.10 1998/08/22 05:19:17 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.11 1999/01/31 05:04:25 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -74,7 +74,7 @@ PARGS="-tq $AUTHOPT $PGHOSTOPT $PGPORTOPT"
 PSQL="psql $PARGS"
 
 #
-# see if user $USER is allowed to create new users
+# see if user $USER is a superuser
 #
 
 QUERY="select usesuper from pg_user where usename = '$USER' "
@@ -203,7 +203,7 @@ then
 
 	while [ "$yn" != y -a "$yn" != n ]
 	do
-		echo PG_OPT_DASH_N_PARAM "Is user \"$NEWUSER\" allowed to add users? (y/n) PG_OPT_BACKSLASH_C_PARAM"
+		echo PG_OPT_DASH_N_PARAM "Is user \"$NEWUSER\" a superuser? (y/n) PG_OPT_BACKSLASH_C_PARAM"
 		read yn
 	done
 
@@ -234,6 +234,14 @@ else
     echo "$CMDNAME: $NEWUSER was successfully added"
     if [ "$CANCREATE" = f ]
     then
-        echo "don't forget to create a database for $NEWUSER"
-    fi
+		echo PG_OPT_DASH_N_PARAM "Shall I create a database for \"$NEWUSER\" (y/n) PG_OPT_BACKSLASH_C_PARAM"
+		read yn
+
+		if [ "$yn" = y ]
+		then
+			createdb $NEWUSER
+		else
+        	echo "don't forget to create a database for $NEWUSER"
+    	fi
+	fi
 fi
