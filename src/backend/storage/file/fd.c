@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.56 2000/04/12 17:15:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.56.2.1 2000/09/23 23:31:24 tgl Exp $
  *
  * NOTES:
  *
@@ -181,7 +181,7 @@ static void Delete(File file);
 static void LruDelete(File file);
 static void Insert(File file);
 static int	LruInsert(File file);
-static void ReleaseLruFile(void);
+static bool ReleaseLruFile(void);
 static File AllocateVfd(void);
 static void FreeVfd(File file);
 
@@ -347,7 +347,10 @@ LruInsert(File file)
 	{
 
 		while (nfile + numAllocatedFiles >= pg_nofile())
-			ReleaseLruFile();
+		{
+			if (! ReleaseLruFile())
+				break;
+		}
 
 		/*
 		 * The open could still fail for lack of file descriptors, eg due
@@ -358,9 +361,12 @@ tryAgain:
 		vfdP->fd = open(vfdP->fileName, vfdP->fileFlags, vfdP->fileMode);
 		if (vfdP->fd < 0 && (errno == EMFILE || errno == ENFILE))
 		{
+			int		save_errno = errno;
+
 			errno = 0;
-			ReleaseLruFile();
-			goto tryAgain;
+			if (ReleaseLruFile())
+				goto tryAgain;
+			errno = save_errno;
 		}
 
 		if (vfdP->fd < 0)
@@ -392,20 +398,22 @@ tryAgain:
 	return 0;
 }
 
-static void
+static bool
 ReleaseLruFile()
 {
 	DO_DB(elog(DEBUG, "ReleaseLruFile. Opened %d", nfile));
 
-	if (nfile <= 0)
-		elog(ERROR, "ReleaseLruFile: No open files available to be closed");
-
-	/*
-	 * There are opened files and so there should be at least one used vfd
-	 * in the ring.
-	 */
-	Assert(VfdCache[0].lruMoreRecently != 0);
-	LruDelete(VfdCache[0].lruMoreRecently);
+	if (nfile > 0)
+	{
+		/*
+		 * There are opened files and so there should be at least one used
+		 * vfd in the ring.
+		 */
+		Assert(VfdCache[0].lruMoreRecently != 0);
+		LruDelete(VfdCache[0].lruMoreRecently);
+		return true;			/* freed a file */
+	}
+	return false;				/* no files available to free */
 }
 
 /*
@@ -612,17 +620,23 @@ fileNameOpenFile(FileName fileName,
 	vfdP = &VfdCache[file];
 
 	while (nfile + numAllocatedFiles >= pg_nofile())
-		ReleaseLruFile();
+	{
+		if (! ReleaseLruFile())
+			break;
+	}
 
 tryAgain:
 	vfdP->fd = open(fileName, fileFlags, fileMode);
 	if (vfdP->fd < 0 && (errno == EMFILE || errno == ENFILE))
 	{
+		int		save_errno = errno;
+
 		DO_DB(elog(DEBUG, "fileNameOpenFile: not enough descs, retry, er= %d",
 				   errno));
 		errno = 0;
-		ReleaseLruFile();
-		goto tryAgain;
+		if (ReleaseLruFile())
+			goto tryAgain;
+		errno = save_errno;
 	}
 
 	if (vfdP->fd < 0)
@@ -1004,11 +1018,14 @@ TryAgain:
 	{
 		if (errno == EMFILE || errno == ENFILE)
 		{
+			int		save_errno = errno;
+
 			DO_DB(elog(DEBUG, "AllocateFile: not enough descs, retry, er= %d",
 					   errno));
 			errno = 0;
-			ReleaseLruFile();
-			goto TryAgain;
+			if (ReleaseLruFile())
+				goto TryAgain;
+			errno = save_errno;
 		}
 	}
 	else
