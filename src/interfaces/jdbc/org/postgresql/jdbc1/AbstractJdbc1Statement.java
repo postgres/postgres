@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.36 2003/09/13 04:02:15 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.37 2003/09/17 05:07:37 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -917,7 +917,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public void setBoolean(int parameterIndex, boolean x) throws SQLException
 	{
-		bind(parameterIndex, x ? "'t'" : "'f'", PG_BOOLEAN);
+		bind(parameterIndex, x ? "'1'" : "'0'", PG_BOOLEAN);
 	}
 
 	/*
@@ -1551,11 +1551,15 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			case Types.BIT:
 				if (x instanceof Boolean)
 				{
-					bind(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE", PG_TEXT);
+					bind(parameterIndex, ((Boolean)x).booleanValue() ? "'1'" : "'0'", PG_BOOLEAN);
+				}
+				else if (x instanceof String)
+				{
+					bind(parameterIndex, Boolean.valueOf(x.toString()).booleanValue() ? "'1'" : "'0'", PG_BOOLEAN);
 				}
 				else if (x instanceof Number)
 				{
-					bind(parameterIndex, ((Number)x).intValue()==1 ? "TRUE" : "FALSE", PG_TEXT);
+					bind(parameterIndex, ((Number)x).intValue()==1 ? "'1'" : "'0'", PG_BOOLEAN);
 				}
 				else
 				{
