@@ -2758,11 +2758,11 @@ table_ref:  relation_expr
                 }
 	| relation_expr alias_clause 
 		{
-			cat2_str($1, $2);
+			$$= cat2_str($1, $2);
 		}
 	| '(' select_subclause ')' alias_clause 
 		{
-			cat_str(4, make_str("("), $2, make_str(")"), $4);
+			$$=cat_str(4, make_str("("), $2, make_str(")"), $4);
 		}
 	| joined_table  
 		{
@@ -2770,7 +2770,7 @@ table_ref:  relation_expr
                 }  
 	| '(' joined_table ')' alias_clause   
                 {
-                        cat_str(4, make_str("("), $2, make_str(")"), $4);
+                        $$=cat_str(4, make_str("("), $2, make_str(")"), $4);
                 }             
 	;
 

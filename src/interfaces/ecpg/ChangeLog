@@ -999,5 +999,10 @@ Son Oct 29 11:26:06 CET 2000
 Mon Oct 30 15:27:12 CET 2000
 
 	- Synced gram.y and preproc.y. 
+
+Tue Oct 31 16:09:55 CET 2000
+
+	- Added patch by Christof Petig <christof.petig@wtal.de> fixing some
+	  parser bugs.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
