@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.44 2002/07/04 15:35:07 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.45 2002/08/10 16:57:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,11 +195,7 @@ typedef struct _archiveHandle
 	CustomOutPtr CustomOutPtr;	/* Alternate script output routine */
 
 	/* Stuff for direct DB connection */
-	char	   *username;
-	char	   *dbname;			/* Name of db for connection */
 	char	   *archdbname;		/* DB name *read* from archive */
-	char	   *pghost;
-	char	   *pgport;
 	bool		requirePassword;
 	PGconn	   *connection;
 	PGconn	   *blobConnection; /* Connection for BLOB xref */

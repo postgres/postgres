@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.26 2002/07/28 15:22:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.27 2002/08/10 16:57:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -128,7 +128,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	The new user is allowed to create other users.
-	(Note: actually, this makes the new user a <firstterm>superuser</>.
+	(Note: Actually, this makes the new user a <firstterm>superuser</>.
 	The option is poorly named.)
        </para>
       </listitem>
@@ -264,7 +264,6 @@ PostgreSQL documentation
  <refsect1>
   <title>Examples</title>
 
-  <informalexample>
    <para>
     To create a user <literal>joe</literal> on the default database
     server:
@@ -275,9 +274,7 @@ PostgreSQL documentation
 <computeroutput>CREATE USER</computeroutput>
 </screen>
    </para>
-  </informalexample>
 
-  <informalexample>
    <para>
     To create the same user <literal>joe</literal> using the
     server on host <literal>eden</>, port 5000, avoiding the prompts and
@@ -288,7 +285,6 @@ PostgreSQL documentation
 <computeroutput>CREATE USER</computeroutput>
 </screen>
    </para>
-  </informalexample>
  </refsect1>
 
 

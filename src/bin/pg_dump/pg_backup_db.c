@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.35 2002/07/06 20:12:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.36 2002/08/10 16:57:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,10 +129,6 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
 	PQfinish(AH->connection);
 	AH->connection = newConn;
 
-	free(AH->username);
-	AH->username = strdup(newusername);
-	/* XXX Why don't we update AH->dbname? */
-
 	/* don't assume we still know the output schema */
 	if (AH->currSchema)
 		free(AH->currSchema);
@@ -241,26 +237,6 @@ ConnectDatabase(Archive *AHX,
 	if (AH->connection)
 		die_horribly(AH, modulename, "already connected to a database\n");
 
-	if (!dbname && !(dbname = getenv("PGDATABASE")))
-		die_horribly(AH, modulename, "no database name specified\n");
-
-	AH->dbname = strdup(dbname);
-
-	if (pghost != NULL)
-		AH->pghost = strdup(pghost);
-	else
-		AH->pghost = NULL;
-
-	if (pgport != NULL)
-		AH->pgport = strdup(pgport);
-	else
-		AH->pgport = NULL;
-
-	if (username != NULL)
-		AH->username = strdup(username);
-	else
-		AH->username = NULL;
-
 	if (reqPwd)
 	{
 		password = simple_prompt("Password: ", 100, false);
@@ -278,8 +254,8 @@ ConnectDatabase(Archive *AHX,
 	do
 	{
 		need_pass = false;
-		AH->connection = PQsetdbLogin(AH->pghost, AH->pgport, NULL, NULL,
-									  AH->dbname, AH->username, password);
+		AH->connection = PQsetdbLogin(pghost, pgport, NULL, NULL,
+									  dbname, username, password);
 
 		if (!AH->connection)
 			die_horribly(AH, modulename, "failed to connect to database\n");
@@ -302,7 +278,7 @@ ConnectDatabase(Archive *AHX,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
 		die_horribly(AH, modulename, "connection to database \"%s\" failed: %s",
-					 AH->dbname, PQerrorMessage(AH->connection));
+					 PQdb(AH->connection), PQerrorMessage(AH->connection));
 
 	/* check for version mismatch */
 	_check_database_version(AH, ignoreVersion);

@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.23 2002/06/20 20:29:42 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.24 2002/08/10 16:57:32 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -166,7 +166,9 @@ then
 fi
 
 if [ -z "$dbname" ]; then
-        if [ "$PGUSER" ]; then
+        if [ "$PGDATABASE" ]; then
+                dbname="$PGDATABASE"
+        elif [ "$PGUSER" ]; then
                 dbname="$PGUSER"
         else
                 dbname=`${PATHNAME}pg_id -u -n`

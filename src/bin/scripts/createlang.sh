@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.36 2002/06/20 20:29:42 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.37 2002/08/10 16:57:32 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -147,7 +147,9 @@ fi
 
 
 if [ -z "$dbname" ]; then
-        if [ "$PGUSER" ]; then
+        if [ "$PGDATABASE" ]; then
+                dbname="$PGDATABASE"
+        elif [ "$PGUSER" ]; then
                 dbname="$PGUSER"
         else
                 dbname=`${PATHNAME}pg_id -u -n`

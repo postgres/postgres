@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.46 2002/07/28 15:22:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.47 2002/08/10 16:57:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -43,7 +43,7 @@ PostgreSQL documentation
    <arg>-p <replaceable>port</replaceable></arg>
    <arg>-U <replaceable>username</replaceable></arg>
    <arg>-W</arg>
-   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+   <arg><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -126,7 +126,10 @@ PostgreSQL documentation
       <term><replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the database to be dumped.
+	Specifies the name of the database to be dumped.  If this is
+	not specified, the environment variable
+	<envar>PGDATABASE</envar> is used.  If that is not set, the
+	user name specified for the connection is used.
        </para>
       </listitem>
      </varlistentry>
@@ -562,7 +565,7 @@ PostgreSQL documentation
       <term><option>-U <replaceable>username</replaceable></option></term>
       <listitem>
        <para>
-        Connect as the given user.
+        Connect as the given user
        </para>
       </listitem>
      </varlistentry>
@@ -588,15 +591,6 @@ PostgreSQL documentation
   <variablelist>
    <varlistentry>
     <term><envar>PGDATABASE</envar></term>
-
-    <listitem>
-     <para>
-      Database to dump, unless overridden on the command line.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><envar>PGHOST</envar></term>
     <term><envar>PGPORT</envar></term>
     <term><envar>PGUSER</envar></term>

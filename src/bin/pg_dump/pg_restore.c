@@ -30,11 +30,11 @@
  *		as this notice is not removed.
  *
  *	The author is not responsible for loss or damages that may
- *	result from it's use.
+ *	result from its use.
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.37 2002/07/11 02:00:14 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.38 2002/08/10 16:57:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */

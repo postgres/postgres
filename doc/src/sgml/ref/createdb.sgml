@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.27 2002/07/28 15:22:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.28 2002/08/10 16:57:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -238,6 +238,16 @@ PostgreSQL documentation
 
   <variablelist>
    <varlistentry>
+    <term><envar>PGDATABASE</envar></term>
+    <listitem>
+     <para>
+      If set, the name of the database to create, unless overridden on
+      the command line.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><envar>PGHOST</envar></term>
     <term><envar>PGPORT</envar></term>
     <term><envar>PGUSER</envar></term>
@@ -246,7 +256,7 @@ PostgreSQL documentation
      <para>
       Default connection parameters.  <envar>PGUSER</envar> also
       determines the name of the database to create, if it is not
-      specified in the command line.
+      specified on the command line or by <envar>PGDATABASE</envar>.
      </para>
     </listitem>
    </varlistentry>
@@ -257,7 +267,6 @@ PostgreSQL documentation
  <refsect1 id="R1-APP-CREATEDB-2">
   <title>Examples</title>
 
-  <informalexample>
    <para>
     To create the database <literal>demo</literal> using the default
     database server:
@@ -268,9 +277,7 @@ PostgreSQL documentation
     The response is the same as you would have gotten from running the
     <command>CREATE DATABASE</command> <acronym>SQL</acronym> command.
    </para>
-  </informalexample>
 
-  <informalexample>
    <para>
     To create the database <literal>demo</literal> using the
     server on host <literal>eden</>, port 5000, using the
@@ -282,7 +289,6 @@ PostgreSQL documentation
 <computeroutput>CREATE DATABASE</computeroutput>
 </screen>
    </para>
-  </informalexample>
  </refsect1>
 
 

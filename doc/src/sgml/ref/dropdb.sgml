@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.16 2002/07/28 15:22:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.17 2002/08/10 16:57:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -191,7 +191,6 @@ PostgreSQL documentation
  <refsect1 id="R1-APP-DROPDB-2">
   <title>Examples</title>
 
-  <informalexample>
    <para>
     To destroy the database <literal>demo</literal> on the default
     database server:
@@ -200,9 +199,7 @@ PostgreSQL documentation
 <computeroutput>DROP DATABASE</computeroutput>
 </screen>
    </para>
-  </informalexample>
 
-  <informalexample>
    <para>
     To destroy the database <literal>demo</literal> using the
     server on host <literal>eden</literal>, port 5000, with verification and a peek
@@ -215,7 +212,6 @@ Are you sure? (y/n) </computeroutput><userinput>y</userinput>
 DROP DATABASE</computeroutput>
 </screen>
    </para>
-  </informalexample>
  </refsect1>
 
 

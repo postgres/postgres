@@ -11,61 +11,11 @@
  *	as this notice is not removed.
  *
  *	The author is not responsible for loss or damages that may
- *	result from it's use.
+ *	result from its use.
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.52 2002/07/04 15:35:07 momjian Exp $
- *
- * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
- *
- *		Initial version.
- *
- * Modifications - 31-Jul-2000 - pjw@rhyme.com.au (1.46, 1.47)
- *		Fixed version number initialization in _allocAH (pg_backup_archiver.c)
- *
- *
- * Modifications - 30-Oct-2000 - pjw@rhyme.com.au
- *		Added {Start,End}RestoreBlobs to allow extended TX during BLOB restore.
- *
- * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
- *	  - strdup() the current user just in case it's deallocated from it's TOC
- *		entry. Should *never* happen, but that's what they said about the
- *		Titanic...
- *
- *	  - Check results of IO routines more carefully.
- *
- * Modifications - 27-Jan-2001 - pjw@rhyme.com.au
- *	  - When dropping the schema, reconnect as owner of each object.
- *
- * Modifications - 6-Mar-2001 - pjw@rhyme.com.au
- *	  - Only disable triggers in DataOnly (or implied data-only) restores.
- *
- * Modifications - 31-Mar-2001 - pjw@rhyme.com.au
- *
- *	  - Rudimentary support for dependencies in archives. Current implementation
- *		uses dependencies to modify the OID used in sorting TOC entries.
- *		This will NOT handle multi-level dependencies, but will manage simple
- *		relationships like UDTs & their functions.
- *
- *	  - Treat OIDs with more respect (avoid using ints, use macros for
- *		conversion & comparison).
- *
- * Modifications - 10-May-2001 - pjw@rhyme.com.au
- *	  - Treat SEQUENCE SET TOC entries as data entries rather than schema
- *		entries.
- *	  - Make allowance for data entries that did not have a data dumper
- *		routine (eg. SEQUENCE SET)
- *
- * Modifications - 01-Nov-2001 - pjw@rhyme.com.au
- *	  - Fix handling of {data/schema}-only restores when using a full
- *		backup file; prior version was restoring schema in data-only
- *		restores. Added enum to make code easier to understand.
- *
- * Modifications - 18-Jan-2002 - pjw@rhyme.com.au
- *	  - Modified _tocEntryRequired to handle '<Init>/Max OID' as a special
- *		case (ie. as a DATA item) as per bugs reported by Bruce Momjian
- *		around 17-Jan-2002.
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.53 2002/08/10 16:57:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2263,7 +2213,7 @@ WriteHead(ArchiveHandle *AH)
 	WriteInt(AH, crtm.tm_mon);
 	WriteInt(AH, crtm.tm_year);
 	WriteInt(AH, crtm.tm_isdst);
-	WriteStr(AH, AH->dbname);
+	WriteStr(AH, PQdb(AH->connection));
 }
 
 void

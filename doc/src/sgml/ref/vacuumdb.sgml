@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.22 2002/07/28 15:22:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.23 2002/08/10 16:57:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -75,6 +75,11 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies the name of the database to be cleaned or analyzed.
+	If this is not specified and <option>-a</option> (or
+	<option>--all</option>) is not used, the database name is read
+	from the environment variable <envar>PGDATABASE</envar>.  If
+	that is not set, the user name specified for the connection is
+	used.
        </para>
       </listitem>
      </varlistentry>
@@ -251,6 +256,7 @@ PostgreSQL documentation
 
   <variablelist>
    <varlistentry>
+    <term><envar>PGDATABASE</envar></term>
     <term><envar>PGHOST</envar></term>
     <term><envar>PGPORT</envar></term>
     <term><envar>PGUSER</envar></term>
@@ -268,16 +274,13 @@ PostgreSQL documentation
  <refsect1>
   <title>Examples</title>
 
-  <informalexample>
    <para>
     To clean the database <literal>test</literal>:
 <screen>
 <prompt>$ </prompt><userinput>vacuumdb test</userinput>
 </screen>
    </para>
-  </informalexample>
 
-  <informalexample>
    <para>
     To clean and analyze for the optimizer a database named
     <literal>bigdb</literal>:
@@ -285,9 +288,7 @@ PostgreSQL documentation
 <prompt>$ </prompt><userinput>vacuumdb --analyze bigdb</userinput>
 </screen>
    </para>
-  </informalexample>
 
-  <informalexample>
    <para>
     To clean a single table
     <literal>foo</literal> in a database named
@@ -297,7 +298,6 @@ PostgreSQL documentation
 <prompt>$ </prompt><userinput>vacuumdb --analyze --verbose --table 'foo(bar)' xyzzy</userinput>
 </screen>
    </para>
-  </informalexample>
 
  </refsect1>
 
