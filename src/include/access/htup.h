@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.54 2002/06/20 20:29:43 momjian Exp $
+ * $Id: htup.h,v 1.55 2002/07/02 05:46:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,15 +57,24 @@
  * Also note that we omit the nulls bitmap if t_infomask shows that there
  * are no nulls in the tuple.
  */
+/*
+** We store five "virtual" fields Xmin, Cmin, Xmax, Cmax, and Xvac
+** in three physical fields t_xmin, t_cid, t_xmax:
+** CommandId     Cmin;		insert CID stamp
+** CommandId     Cmax;		delete CommandId stamp
+** TransactionId Xmin;		insert XID stamp
+** TransactionId Xmax;		delete XID stamp
+** TransactionId Xvac;		used by VACCUUM
+**
+** This assumes, that a CommandId can be stored in a TransactionId.
+*/
 typedef struct HeapTupleHeaderData
 {
 	Oid			t_oid;			/* OID of this tuple -- 4 bytes */
 
-	CommandId	t_cmin;			/* insert CID stamp -- 4 bytes each */
-	CommandId	t_cmax;			/* delete CommandId stamp */
-
-	TransactionId t_xmin;		/* insert XID stamp -- 4 bytes each */
-	TransactionId t_xmax;		/* delete XID stamp */
+	TransactionId t_xmin;		/* Xmin -- 4 bytes each */
+	TransactionId t_cid;		/* Cmin, Cmax, Xvac */
+	TransactionId t_xmax;		/* Xmax, Cmax */
 
 	ItemPointerData t_ctid;		/* current TID of this or newer tuple */
 
@@ -75,7 +84,7 @@ typedef struct HeapTupleHeaderData
 
 	uint8		t_hoff;			/* sizeof header incl. bitmap, padding */
 
-	/* ^ - 31 bytes - ^ */
+	/* ^ - 27 bytes - ^ */
 
 	bits8		t_bits[1];		/* bitmap of NULLs -- VARIABLE LENGTH */
 
@@ -96,6 +105,8 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 										 * attribute(s) */
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 
+#define HEAP_XMIN_IS_XMAX		0x0040	/* created and deleted in the */
+										/* same transaction */
 #define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update */
 										/* without logging */
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
@@ -108,6 +119,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 										 * vacuum */
 #define HEAP_MOVED_IN			0x8000	/* moved from another place by
 										 * vacuum */
+#define HEAP_MOVED (HEAP_MOVED_OFF | HEAP_MOVED_IN)
 
 #define HEAP_XACT_MASK			0xFFF0	/* visibility-related bits */
 
@@ -116,53 +128,100 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 /* HeapTupleHeader accessor macros */
 
 #define HeapTupleHeaderGetXmin(tup) \
-	((tup)->t_xmin)
+( \
+	(tup)->t_xmin \
+)
 
 #define HeapTupleHeaderGetXmax(tup) \
-	((tup)->t_xmax)
+( \
+	((tup)->t_infomask & HEAP_XMIN_IS_XMAX) ? \
+		(tup)->t_xmin \
+	: \
+		(tup)->t_xmax \
+)
 
-/* no AssertMacro, because this is read as a system-defined attribute also */
+/* no AssertMacro, because this is read as a system-defined attribute */
 #define HeapTupleHeaderGetCmin(tup) \
 ( \
-	(tup)->t_cmin \
+	((tup)->t_infomask & HEAP_MOVED) ? \
+		FirstCommandId \
+	: \
+	( \
+		((tup)->t_infomask & (HEAP_XMIN_IS_XMAX | HEAP_XMAX_INVALID)) ? \
+			(CommandId) (tup)->t_cid \
+		: \
+			FirstCommandId \
+	) \
 )
 
 #define HeapTupleHeaderGetCmax(tup) \
-	((tup)->t_cmax)
+( \
+	((tup)->t_infomask & HEAP_MOVED) ? \
+		FirstCommandId \
+	: \
+	( \
+		((tup)->t_infomask & (HEAP_XMIN_IS_XMAX | HEAP_XMAX_INVALID)) ? \
+			(CommandId) (tup)->t_xmax \
+		: \
+			(CommandId) (tup)->t_cid \
+	) \
+)
 
 #define HeapTupleHeaderGetXvac(tup) \
 ( \
-	AssertMacro((tup)->t_infomask & (HEAP_MOVED_IN | HEAP_MOVED_OFF)), \
-	(TransactionId) (tup)->t_cmin \
+	AssertMacro((tup)->t_infomask & HEAP_MOVED), \
+	(tup)->t_cid \
 )
 
 
 #define HeapTupleHeaderSetXmin(tup, xid) \
-	(TransactionIdStore((xid), &(tup)->t_xmin))
+( \
+	TransactionIdStore((xid), &(tup)->t_xmin) \
+)
 
 #define HeapTupleHeaderSetXminInvalid(tup) \
-	(StoreInvalidTransactionId(&(tup)->t_xmin))
+do { \
+	(tup)->t_infomask &= ~HEAP_XMIN_IS_XMAX; \
+	StoreInvalidTransactionId(&(tup)->t_xmin); \
+} while (0)
 
 #define HeapTupleHeaderSetXmax(tup, xid) \
-	(TransactionIdStore((xid), &(tup)->t_xmax))
+do { \
+	if (TransactionIdEquals((tup)->t_xmin, (xid))) \
+		(tup)->t_infomask |= HEAP_XMIN_IS_XMAX; \
+	else \
+	{ \
+		(tup)->t_infomask &= ~HEAP_XMIN_IS_XMAX; \
+		TransactionIdStore((xid), &(tup)->t_xmax); \
+	} \
+} while (0)
 
 #define HeapTupleHeaderSetXmaxInvalid(tup) \
-	(StoreInvalidTransactionId(&(tup)->t_xmax))
+do { \
+	(tup)->t_infomask &= ~HEAP_XMIN_IS_XMAX; \
+	StoreInvalidTransactionId(&(tup)->t_xmax); \
+} while (0)
 
 #define HeapTupleHeaderSetCmin(tup, cid) \
-( \
-	AssertMacro(!((tup)->t_infomask & (HEAP_MOVED_IN | HEAP_MOVED_OFF))), \
-	(tup)->t_cmin = (cid) \
-)
+do { \
+	Assert(!((tup)->t_infomask & HEAP_MOVED)); \
+	TransactionIdStore((TransactionId) (cid), &(tup)->t_cid); \
+} while (0)
 
 #define HeapTupleHeaderSetCmax(tup, cid) \
-	((tup)->t_cmax = (cid))
+do { \
+	Assert(!((tup)->t_infomask & HEAP_MOVED)); \
+	if ((tup)->t_infomask & HEAP_XMIN_IS_XMAX) \
+		TransactionIdStore((TransactionId) (cid), &(tup)->t_xmax); \
+	else \
+		TransactionIdStore((TransactionId) (cid), &(tup)->t_cid); \
+} while (0)
 
 #define HeapTupleHeaderSetXvac(tup, xid) \
-( \
-	AssertMacro((tup)->t_infomask & (HEAP_MOVED_IN | HEAP_MOVED_OFF)), \
-	TransactionIdStore((xid), (TransactionId *) &((tup)->t_cmin)) \
-)
+do { \
+	Assert((tup)->t_infomask & HEAP_MOVED); \
+	TransactionIdStore((xid), &(tup)->t_cid); \
+} while (0)
 
 
 /*

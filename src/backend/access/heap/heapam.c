@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.139 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.140 2002/07/02 05:46:14 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2204,7 +2204,7 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 		HeapTupleHeaderSetXmin(htup, record->xl_xid);
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
-		HeapTupleHeaderSetXmax(htup, InvalidTransactionId);
+		HeapTupleHeaderSetXmaxInvalid(htup);
 		HeapTupleHeaderSetCmax(htup, FirstCommandId);
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
