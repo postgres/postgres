@@ -1,3 +1,14 @@
+/*------------------------------------------------------------------------- 
+ *
+ * xlog.c
+ *
+ *
+ * Copyright (c) 1994, Regents of the University of California
+ *
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.6 1999/10/24 20:42:27 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -5,8 +16,10 @@
 #include <sys/time.h>
 
 #include "postgres.h"
+
 #include "access/xlog.h"
 #include "access/xact.h"
+#include "catalog/catversion.h"
 #include "storage/sinval.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
@@ -99,12 +112,15 @@ typedef struct ControlFileData
 	DBState			state;			/* */
 
 	/*
-	 * following data used to make sure that configurations for this DB
-	 * do not conflict with the backend
+	 * this data is used to make sure that configuration of this DB
+	 * is compatible with the current backend
 	 */
 	uint32			blcksz;			/* block size for this DB */
-	uint32			relseg_size;		/* segmented file's block number */
-	/* MORE DATA FOLLOWS AT THE END OF THIS STRUCTURE
+	uint32			relseg_size;	/* blocks per segment of large relation */
+	uint32			catalog_version_no;	/* internal version number */
+
+	/*
+	 * MORE DATA FOLLOWS AT THE END OF THIS STRUCTURE
 	 * - locations of data dirs 
 	 */
 } ControlFileData;
@@ -1171,6 +1187,7 @@ BootStrapXLOG()
 	ControlFile->state = DB_SHUTDOWNED;
 	ControlFile->blcksz = BLCKSZ;
 	ControlFile->relseg_size = RELSEG_SIZE;
+	ControlFile->catalog_version_no = CATALOG_VERSION_NO;
 
 	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
 		elog(STOP, "BootStrapXLOG failed to write control file: %d", errno);
@@ -1179,9 +1196,6 @@ BootStrapXLOG()
 		elog(STOP, "BootStrapXLOG failed to fsync control file: %d", errno);
 
 	close(fd);
-
-	return;
-
 }
 
 static char*
@@ -1258,11 +1272,16 @@ tryAgain:
 		!XRecOffIsValid(ControlFile->checkPoint.xrecoff))
 		elog(STOP, "Control file context is broken");
 
+	/* Check for incompatible database */
 	if (ControlFile->blcksz != BLCKSZ)
-		elog(STOP, "database was initialized in BLCKSZ(%d), but the backend was compiled in BLCKSZ(%d)",ControlFile->blcksz,BLCKSZ);
-
+		elog(STOP, "database was initialized with BLCKSZ %d,\n\tbut the backend was compiled with BLCKSZ %d.\n\tlooks like you need to initdb.",
+			 ControlFile->blcksz, BLCKSZ);
 	if (ControlFile->relseg_size != RELSEG_SIZE)
-		elog(STOP, "database was initialized in RELSEG_SIZE(%d), but the backend was compiled in RELSEG_SIZE(%d)",ControlFile->relseg_size, RELSEG_SIZE);
+		elog(STOP, "database was initialized with RELSEG_SIZE %d,\n\tbut the backend was compiled with RELSEG_SIZE %d.\n\tlooks like you need to initdb.",
+			 ControlFile->relseg_size, RELSEG_SIZE);
+	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
+		elog(STOP, "database was initialized with CATALOG_VERSION_NO %d,\n\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n\tlooks like you need to initdb.",
+			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
 
 	if (ControlFile->state == DB_SHUTDOWNED)
 		elog(LOG, "Data Base System was shutdowned at %s",

@@ -4,7 +4,7 @@
 #    Makefile for access/transam
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.7 1999/09/27 15:47:37 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.8 1999/10/24 20:42:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,6 +25,10 @@ depend dep:
 
 clean: 
 	rm -f SUBSYS.o $(OBJS)
+
+# ensure that version checks in xlog.c get recompiled when config.h or
+# catversion.h changes, even if "make depend" hasn't been done.
+xlog.o: xlog.c $(SRCDIR)/include/config.h $(SRCDIR)/include/catalog/catversion.h
 
 ifeq (depend,$(wildcard depend))
 include depend
