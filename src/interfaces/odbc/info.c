@@ -1738,17 +1738,18 @@ SQLColumns(
 		set_tuplefield_string(&row->tuple[5], field_type_name);
 
 
-		/*
+		/*----------
 		 * Some Notes about Postgres Data Types:
 		 *
 		 * VARCHAR - the length is stored in the pg_attribute.atttypmod field
 		 * BPCHAR  - the length is also stored as varchar is
 		 *
-		 * NUMERIC - the scale is stored in atttypmod as follows: precision =
-		 * ((atttypmod - VARHDRSZ) >> 16) & 0xffff scale	 = (atttypmod
-		 * - VARHDRSZ) & 0xffff
+		 * NUMERIC - the scale is stored in atttypmod as follows:
 		 *
+		 *	precision =((atttypmod - VARHDRSZ) >> 16) & 0xffff
+		 *	scale	 = (atttypmod - VARHDRSZ) & 0xffff
 		 *
+		 *----------
 		 */
 		qlog("SQLColumns: table='%s',field_name='%s',type=%d,sqltype=%d,name='%s'\n",
 			 table_name, field_name, field_type, pgtype_to_sqltype, field_type_name);

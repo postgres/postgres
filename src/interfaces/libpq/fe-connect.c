@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.162 2001/03/22 06:16:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.163 2001/03/23 04:49:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,10 +582,11 @@ update_db_info(PGconn *conn)
 		if (strncmp(conn->dbName + offset, "postgresql://", strlen("postgresql://")) == 0)
 		{
 
-			/*
+			/*-------
 			 * new style:
-			 * <tcp|unix>:postgresql://server[:port|:/unixsocket/path:][/db
-			 * name][?options]
+			 * 	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
+			 *	[/db name][?options]
+			 *-------
 			 */
 			offset += strlen("postgresql://");
 

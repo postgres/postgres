@@ -307,10 +307,11 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 		if (strncmp(dbname + offset, "postgresql://", strlen("postgresql://")) == 0)
 		{
 
-			/*
+			/*------
 			 * new style:
-			 * <tcp|unix>:postgresql://server[:port|:/unixsocket/path:][/db
-			 * name][?options]
+			 * 	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
+			 *	[/db name][?options]
+			 *------
 			 */
 			offset += strlen("postgresql://");
 

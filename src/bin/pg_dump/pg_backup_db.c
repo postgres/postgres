@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.16 2001/03/22 04:00:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.17 2001/03/23 04:49:55 momjian Exp $
  *
  * NOTES
  *
@@ -473,9 +473,10 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 				qry += loc + 1;
 				isEnd = (strcmp(AH->pgCopyBuf->data, "\\.\n") == 0);
 
-				/*
-				 * fprintf(stderr, "Sending '%s' via COPY (at end =
-				 * %d)\n\n", AH->pgCopyBuf->data, isEnd);
+				/*---------
+				 * fprintf(stderr, "Sending '%s' via
+				 *		COPY (at end = %d)\n\n", AH->pgCopyBuf->data, isEnd);
+				 *---------
 				 */
 
 				if (PQputline(AH->connection, AH->pgCopyBuf->data) != 0)

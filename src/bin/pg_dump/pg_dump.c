@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.196 2001/03/22 04:00:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.197 2001/03/23 04:49:55 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -4405,8 +4405,10 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 	/*
 	 * The logic we use for restoring sequences is as follows: -   Add a
 	 * basic CREATE SEQUENCE statement (use last_val for start if called
-	 * == 'f', else use min_val for start_val). -	Add a 'SETVAL(seq,
-	 * last_val, iscalled)' at restore-time iff we load data
+	 * with 'f', else use min_val for start_val).
+	 *
+	 *	Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff
+	 *  we load data
 	 */
 
 	if (!dataOnly)

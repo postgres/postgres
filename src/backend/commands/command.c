@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.124 2001/03/22 06:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.125 2001/03/23 04:49:52 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1034,11 +1034,13 @@ AlterTableDropColumn(const char *relationName,
 	ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attrdef_adrelid,
 						   F_OIDEQ, ObjectIdGetDatum(myrelid));
 
-	/*
+	/*--------
 	 * Oops pg_attrdef doesn't have (adrelid,adnum) index
-	 * ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attrdef_adnum,
-	 * F_INT2EQ, Int16GetDatum(attnum)); sysscan =
-	 * systable_beginscan(adrel, AttrDefaultIndex, 2, scankeys);
+	 *
+	 *	ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attrdef_adnum,
+	 * 								F_INT2EQ, Int16GetDatum(attnum));
+	 *	sysscan = systable_beginscan(adrel, AttrDefaultIndex, 2, scankeys);
+	 *--------
 	 */
 	sysscan = systable_beginscan(adrel, AttrDefaultIndex, 1, scankeys);
 	while (HeapTupleIsValid(tup = systable_getnext(sysscan)))

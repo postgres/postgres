@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.103 2001/03/22 03:59:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.104 2001/03/23 04:49:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1986,9 +1986,10 @@ prefix_quals(Var *leftop, Oid expr_op,
 	expr = make_opclause(op, leftop, (Var *) con);
 	result = makeList1(expr);
 
-	/*
-	 * If we can create a string larger than the prefix, we can say "x <
-	 * greaterstr".
+	/*-------
+	 * If we can create a string larger than the prefix, we can say
+	 * "x < greaterstr".
+	 *-------
 	 */
 	greaterstr = make_greater_string(prefix, datatype);
 	if (greaterstr)

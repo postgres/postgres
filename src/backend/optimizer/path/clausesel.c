@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.42 2001/03/22 03:59:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.43 2001/03/23 04:49:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,9 +297,11 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 			else
 			{
 
-				/*
-				 * We have found two similar clauses, such as x < y AND x
-				 * < z.  Keep only the more restrictive one.
+				/*------
+				 * We have found two similar clauses, such as
+				 * x < y AND x < z.
+				 * Keep only the more restrictive one.
+				 *------
 				 */
 				if (rqelem->lobound > s2)
 					rqelem->lobound = s2;
@@ -315,9 +317,11 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 			else
 			{
 
-				/*
-				 * We have found two similar clauses, such as x > y AND x
-				 * > z.  Keep only the more restrictive one.
+				/*------
+				 * We have found two similar clauses, such as
+				 * x > y AND x > z.
+				 * Keep only the more restrictive one.
+				 *------
 				 */
 				if (rqelem->hibound > s2)
 					rqelem->hibound = s2;

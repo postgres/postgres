@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.102 2001/03/22 04:00:41 momjian Exp $
+ * $Id: pg_type.h,v 1.103 2001/03/23 04:49:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -77,8 +77,9 @@ CATALOG(pg_type) BOOTSTRAP
 	 * be a "real" array type; some ordinary fixed-length types can also
 	 * be subscripted (e.g., oidvector). Variable-length types can *not*
 	 * be turned into pseudo-arrays like that. Hence, the way to determine
-	 * whether a type is a "true" array type is typelem != 0 and typlen <
-	 * 0.
+	 * whether a type is a "true" array type is if:
+	 *
+	 *	typelem != 0 and typlen < 0.
 	 */
 	Oid			typelem;
 	regproc		typinput;

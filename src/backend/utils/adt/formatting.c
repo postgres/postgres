@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.35 2001/03/22 06:16:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.36 2001/03/23 04:49:54 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -2846,9 +2846,11 @@ to_timestamp(PG_FUNCTION_ARGS)
 	else if (tmfc->yy)
 	{
 
-		/*
-		 * 2-digit year: '00' ... '69'	= 2000 ... 2069 '70' ... '99'  =
-		 * 1970 ... 1999
+		/*---------
+		 * 2-digit year:
+		 * '00' ... '69'  = 2000 ... 2069
+		 * '70' ... '99'  = 1970 ... 1999
+		 *---------
 		 */
 		tm->tm_year = tmfc->yy;
 
@@ -2860,9 +2862,11 @@ to_timestamp(PG_FUNCTION_ARGS)
 	else if (tmfc->yyy)
 	{
 
-		/*
-		 * 3-digit year: '100' ... '999' = 1100 ... 1999 '000' ... '099' =
-		 * 2000 ... 2099
+		/*---------
+		 * 3-digit year:
+		 *	'100' ... '999' = 1100 ... 1999
+		 *	'000' ... '099' = 2000 ... 2099
+		 *---------
 		 */
 		tm->tm_year = tmfc->yyy;
 

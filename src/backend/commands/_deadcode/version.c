@@ -10,7 +10,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.25 2001/01/24 19:42:53 momjian Exp $
+ *	$Id: version.c,v 1.26 2001/03/23 04:49:52 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created
@@ -77,9 +77,12 @@ static void
 eval_as_new_xact(char *query)
 {
 
-	/*
+	/*------
 	 * WARNING! do not uncomment the following lines WARNING!
-	 * CommitTransactionCommand(); StartTransactionCommand();
+	 *
+	 *	CommitTransactionCommand();
+	 *	StartTransactionCommand();
+	 *------
 	 */
 	CommandCounterIncrement();
 	pg_exec_query(query);

@@ -81,16 +81,27 @@ set_statement_option(ConnectionClass *conn,
 				stmt->options.scroll_concurrency = vParam;
 			break;
 
-			/*
-			 * if (globals.lie) { if (conn)
-			 * conn->stmtOptions.scroll_concurrency = vParam; if (stmt)
-			 * stmt->options.scroll_concurrency = vParam; } else {
+			/*----------
+			 * if (globals.lie)
+			 * {
+			 *		if (conn)
+			 * 			conn->stmtOptions.scroll_concurrency = vParam;
+			 *		if (stmt)
+			 * 			stmt->options.scroll_concurrency = vParam;
+			 *		} else {
+			 * 			if (conn)
+			 *				conn->stmtOptions.scroll_concurrency =
+			 * 					SQL_CONCUR_READ_ONLY;
+			 *			if (stmt)
+			 * 				stmt->options.scroll_concurrency =
+			 *					SQL_CONCUR_READ_ONLY;
 			 *
-			 * if (conn) conn->stmtOptions.scroll_concurrency =
-			 * SQL_CONCUR_READ_ONLY; if (stmt)
-			 * stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-			 *
-			 * if (vParam != SQL_CONCUR_READ_ONLY) changed = TRUE; } break;
+			 * 			if (vParam != SQL_CONCUR_READ_ONLY)
+			 *				changed = TRUE;
+			 *		}
+			 *		break;
+			 *	}
+			 *----------
 			 */
 
 		case SQL_CURSOR_TYPE:

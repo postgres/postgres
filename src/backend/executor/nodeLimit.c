@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.5 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.6 2001/03/23 04:49:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,8 @@ ExecLimit(Limit *node)
 		 * tuple in the offset region before we can return NULL.
 		 * Otherwise we won't be correctly aligned to start going forward
 		 * again.  So, although you might think we can quit when position
-		 * = offset + 1, we have to fetch a subplan tuple first, and then
-		 * exit when position = offset.
+		 * equals offset + 1, we have to fetch a subplan tuple first, and
+		 * then exit when position = offset.
 		 */
 		if (ScanDirectionIsForward(direction))
 		{

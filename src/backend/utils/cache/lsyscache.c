@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.51 2001/03/22 03:59:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.52 2001/03/23 04:49:55 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -272,7 +272,7 @@ get_attdispersion(Oid relid, AttrNumber attnum, double min_estimate)
 
 	/*
 	 * VACUUM ANALYZE has not been run for this table. Produce an estimate
-	 * = 1/numtuples.  This may produce unreasonably small estimates for
+	 * of 1/numtuples.  This may produce unreasonably small estimates for
 	 * large tables, so limit the estimate to no less than min_estimate.
 	 */
 	dispersion = 1.0 / (double) ntuples;

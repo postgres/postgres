@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.125 2001/03/22 04:00:51 momjian Exp $
+ * $Id: parsenodes.h,v 1.126 2001/03/23 04:49:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,10 +116,16 @@ typedef enum InhOption
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
-	char		subtype;		/* A = add column, T = alter column, D =
-								 * drop column, C = add constraint, X =
-								 * drop constraint, E = add toast table, U
-								 * = change owner */
+	char		subtype;		/*------------
+								 * 	A = add column
+								 *	T = alter column
+								 *	D = drop column
+								 *	C = add constraint
+								 *	X = drop constraint
+								 *	E = add toast table,
+								 *	U = change owner
+								 *------------
+								 */
 	char	   *relname;		/* table to work on */
 	InhOption	inhOpt;			/* recursively act on children? */
 	char	   *name;			/* column or constraint name to act on, or

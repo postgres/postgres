@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.86 2001/03/22 03:59:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.87 2001/03/23 04:49:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1642,9 +1642,10 @@ prefix_selectivity(char *prefix,
 							   Int32GetDatum(SEL_CONSTANT | SEL_RIGHT)));
 	pfree(DatumGetPointer(prefixcon));
 
-	/*
-	 * If we can create a string larger than the prefix, say "x <
-	 * greaterstr".
+	/*-------
+	 * If we can create a string larger than the prefix, say
+	 *	"x < greaterstr".
+	 *-------
 	 */
 	greaterstr = make_greater_string(prefix, datatype);
 	if (greaterstr)

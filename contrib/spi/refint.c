@@ -399,19 +399,29 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		{
 			relname = args2[0];
 
-			/*
-			 * For 'R'estrict action we construct SELECT query - SELECT 1
-			 * FROM _referencing_relation_ WHERE Fkey1 = $1 [AND Fkey2 =
-			 * $2 [...]] - to check is tuple referenced or not.
+			/*---------
+			 * For 'R'estrict action we construct SELECT query:
+			 *
+			 *  SELECT 1
+			 *	FROM _referencing_relation_
+			 *	WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]]
+			 *
+			 *  to check is tuple referenced or not.
+			 *---------
 			 */
 			if (action == 'r')
 
 				sprintf(sql, "select 1 from %s where ", relname);
 
-			/*
-			 * For 'C'ascade action we construct DELETE query - DELETE
-			 * FROM _referencing_relation_ WHERE Fkey1 = $1 [AND Fkey2 =
-			 * $2 [...]] - to delete all referencing tuples.
+			/*---------
+			 * For 'C'ascade action we construct DELETE query
+			 *
+			 *	DELETE
+			 *	FROM _referencing_relation_
+			 *	WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]]
+			 *
+			 * to delete all referencing tuples.
+			 *---------
 			 */
 
 			/*

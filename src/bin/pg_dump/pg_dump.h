@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.59 2001/03/22 04:00:15 momjian Exp $
+ * $Id: pg_dump.h,v 1.60 2001/03/23 04:49:56 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -158,8 +158,12 @@ typedef struct _oprInfo
 {
 	char	   *oid;
 	char	   *oprname;
-	char	   *oprkind;		/* "b" = binary, "l" = left unary, "r" =
-								 * right unary */
+	char	   *oprkind;		/*----------
+								 * 	b = binary,
+								 *	l = left unary
+								 *	r = right unary
+								 *----------
+								 */
 	char	   *oprcode;		/* operator function name */
 	char	   *oprleft;		/* left operand type */
 	char	   *oprright;		/* right operand type */

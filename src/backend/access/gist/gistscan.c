@@ -143,9 +143,10 @@ gistrescan(PG_FUNCTION_ARGS)
 			for (i = 0; i < s->numberOfKeys; i++)
 			{
 
-				/*
+				/*----------
 				 * s->keyData[i].sk_procedure =
-				 * index_getprocid(s->relation, 1, GIST_CONSISTENT_PROC);
+				 * 		index_getprocid(s->relation, 1, GIST_CONSISTENT_PROC);
+				 *----------
 				 */
 				s->keyData[i].sk_procedure
 					= RelationGetGISTStrategy(s->relation, s->keyData[i].sk_attno,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.28 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.29 2001/03/23 04:49:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,11 +319,13 @@ GetSnapshotData(bool serializable)
 				xid < FirstTransactionId || xid >= snapshot->xmax)
 			{
 
-				/*
-				 * Seems that there is no sense to store xid >=
-				 * snapshot->xmax (what we got from ReadNewTransactionId
-				 * above) in snapshot->xip - we just assume that all xacts
+				/*--------
+				 * Seems that there is no sense to store
+				 * 		xid >= snapshot->xmax
+				 * (what we got from ReadNewTransactionId above)
+				 * in snapshot->xip.  We just assume that all xacts
 				 * with such xid-s are running and may be ignored.
+				 *--------
 				 */
 				continue;
 			}

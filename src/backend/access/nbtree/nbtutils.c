@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.43 2001/03/22 03:59:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.44 2001/03/23 04:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,8 +412,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			if (DatumGetBool(test))
 				xform[j].sk_argument = cur->sk_argument;
 			else if (j == (BTEqualStrategyNumber - 1))
-				so->qual_ok = false;	/* key == a && key == b, but a !=
-										 * b */
+				so->qual_ok = false;
+			/* key == a && key == b, but a != b */
 		}
 		else
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.129 2001/03/22 03:59:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.130 2001/03/23 04:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2833,11 +2833,14 @@ write_irels(void)
 	 * the descriptors, nail them into cache so we never lose them.
 	 */
 
-	/*
-	 * Removed the following ProcessingMode change -- inoue At this point
-	 * 1) Catalog Cache isn't initialized 2) Relation Cache for the
-	 * following critical indexes aren't built oldmode =
-	 * GetProcessingMode(); SetProcessingMode(BootstrapProcessing);
+	/*---------
+	 * Removed the following ProcessingMode change -- inoue
+	 * At this point
+	 * 1) Catalog Cache isn't initialized
+	 * 2) Relation Cache for the following critical indexes aren't built
+	 * oldmode = GetProcessingMode();
+	 * SetProcessingMode(BootstrapProcessing);
+	 *---------
 	 */
 
 	bi.infotype = INFO_RELNAME;

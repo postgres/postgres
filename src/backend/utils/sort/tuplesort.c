@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.14 2001/03/22 04:00:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.15 2001/03/23 04:49:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,8 +129,10 @@ struct Tuplesortstate
 	 * kind of tuple we are sorting from the routines that don't need to
 	 * know it. They are set up by the tuplesort_begin_xxx routines.
 	 *
-	 * Function to compare two tuples; result is per qsort() convention, ie,
-	 * <0, 0, >0 according as a<b, a=b, a>b.
+	 * Function to compare two tuples; result is per qsort() convention,
+	 * ie:
+	 *
+	 * 	<0, 0, >0 according as a<b, a=b, a>b.
 	 */
 	int			(*comparetup) (Tuplesortstate *state, const void *a, const void *b);
 

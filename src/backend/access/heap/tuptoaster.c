@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.19 2001/03/22 06:16:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.20 2001/03/23 04:49:51 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -458,9 +458,10 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		int32		biggest_size = MAXALIGN(sizeof(varattrib));
 		Datum		old_value;
 
-		/*
-		 * Search for the biggest yet inlined attribute with attstorage =
-		 * 'x' or 'e'
+		/*------
+		 * Search for the biggest yet inlined attribute with
+		 * attstorage equals 'x' or 'e'
+		 *------
 		 */
 		for (i = 0; i < numAttrs; i++)
 		{
@@ -572,9 +573,10 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		int32		biggest_size = MAXALIGN(sizeof(varattrib));
 		Datum		old_value;
 
-		/*
-		 * Search for the biggest yet inlined attribute with attstorage =
-		 * 'm'
+		/*--------
+		 * Search for the biggest yet inlined attribute with
+		 * attstorage = 'm'
+		 *--------
 		 */
 		for (i = 0; i < numAttrs; i++)
 		{

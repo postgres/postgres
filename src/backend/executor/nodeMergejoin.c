@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.44 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.45 2001/03/23 04:49:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,10 +240,11 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 			break;
 		}
 
-		/*
+		/*-----------
 		 * ok, the compare clause failed so we test if the keys are
-		 * equal... if key1 != key2, we return false. otherwise key1 =
-		 * key2 so we move on to the next pair of keys.
+		 * equal... if key1 != key2, we return false. otherwise
+		 * key1 = key2 so we move on to the next pair of keys.
+		 *-----------
 		 */
 		const_value = ExecEvalExpr((Node *) lfirst(eqclause),
 								   econtext,
