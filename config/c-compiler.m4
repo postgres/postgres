@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.10 2003/11/01 20:48:51 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.10.2.1 2004/02/02 04:07:40 tgl Exp $
 
 
 # PGAC_C_SIGNED
@@ -146,7 +146,7 @@ done
 CFLAGS=$pgac_save_CFLAGS
 ])
 
-if test "$ac_env_CFLAGS_set" != set; then
+if test x"$pgac_cv_prog_cc_no_strict_aliasing" != x""; then
   CFLAGS="$CFLAGS $pgac_cv_prog_cc_no_strict_aliasing"
 fi])# PGAC_PROG_CC_NO_STRICT_ALIASING
 

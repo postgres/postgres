@@ -2471,7 +2471,7 @@ fi
 echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_no_strict_aliasing" >&5
 echo "${ECHO_T}$pgac_cv_prog_cc_no_strict_aliasing" >&6
 
-if test "$ac_env_CFLAGS_set" != set; then
+if test x"$pgac_cv_prog_cc_no_strict_aliasing" != x""; then
   CFLAGS="$CFLAGS $pgac_cv_prog_cc_no_strict_aliasing"
 fi
 
