@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.65 2002/03/21 23:27:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.66 2002/03/26 19:16:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * actions.  But for now, let's just grab AccessExclusiveLock all the
 	 * time.
 	 */
-	event_relation = heap_openr(event_obj->relname, AccessExclusiveLock);
+	event_relation = heap_openrv(event_obj, AccessExclusiveLock);
 	ev_relid = RelationGetRelid(event_relation);
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.65 2002/03/22 02:56:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.66 2002/03/26 19:16:09 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -634,6 +634,21 @@ func_iscachable(Oid funcid)
 
 /*				---------- RELATION CACHE ----------					 */
 
+/*
+ * get_relname_relid
+ *		Given name and namespace of a relation, look up the OID.
+ *
+ * Returns InvalidOid if there is no such relation.
+ */
+Oid
+get_relname_relid(const char *relname, Oid relnamespace)
+{
+	return GetSysCacheOid(RELNAMENSP,
+						  PointerGetDatum(relname),
+						  ObjectIdGetDatum(relnamespace),
+						  0, 0);
+}
+
 #ifdef NOT_USED
 /*
  * get_relnatts
@@ -664,10 +679,12 @@ get_relnatts(Oid relid)
 
 /*
  * get_rel_name
- *
  *		Returns the name of a given relation.
  *
- * Note: returns a palloc'd copy of the string, or NULL if no such relation.
+ * Returns a palloc'd copy of the string, or NULL if no such relation.
+ *
+ * NOTE: since relation name is not unique, be wary of code that uses this
+ * for anything except preparing error messages.
  */
 char *
 get_rel_name(Oid relid)

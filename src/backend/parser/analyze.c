@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.222 2002/03/22 02:56:33 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.223 2002/03/26 19:15:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
@@ -118,7 +119,7 @@ static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
 static void transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid);
 static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid);
-static bool relationHasPrimaryKey(char *relname);
+static bool relationHasPrimaryKey(Oid relationOid);
 static Oid	transformFkeyGetColType(CreateStmtContext *cxt, char *colname);
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
@@ -1048,7 +1049,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			/* In ALTER TABLE case, a primary index might already exist */
 			if (cxt->pkey != NULL ||
 				(OidIsValid(cxt->relOid) &&
-				 relationHasPrimaryKey((cxt->relation)->relname)))
+				 relationHasPrimaryKey(cxt->relOid)))
 				elog(ERROR, "%s / PRIMARY KEY multiple primary keys"
 					 " for table '%s' are not allowed",
 					 cxt->stmtType, (cxt->relation)->relname);
@@ -1115,10 +1116,10 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					int			count;
 
 					Assert(IsA(inh, RangeVar));
-					rel = heap_openr(inh->relname, AccessShareLock);
+					rel = heap_openrv(inh, AccessShareLock);
 					if (rel->rd_rel->relkind != RELKIND_RELATION)
 						elog(ERROR, "inherited table \"%s\" is not a relation",
-							 strVal(inh));
+							 inh->relname);
 					for (count = 0; count < rel->rd_att->natts; count++)
 					{
 						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
@@ -1724,7 +1725,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	 * beforehand.	We don't need to hold a refcount on the relcache
 	 * entry, however.
 	 */
-	heap_close(heap_openr(stmt->relation->relname, AccessExclusiveLock),
+	heap_close(heap_openrv(stmt->relation, AccessExclusiveLock),
 			   NoLock);
 
 	/*
@@ -2562,9 +2563,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			cxt.relation = stmt->relation;
 			cxt.inhRelations = NIL;
 			cxt.relation->istemp = is_temp_rel_name(stmt->relation->relname);
-			cxt.relOid = GetSysCacheOid(RELNAME,
-										PointerGetDatum((stmt->relation)->relname),
-										0, 0, 0);
+			cxt.relOid = RangeVarGetRelid(stmt->relation, false);
 			cxt.hasoids = SearchSysCacheExists(ATTNUM,
 											ObjectIdGetDatum(cxt.relOid),
 								  Int16GetDatum(ObjectIdAttributeNumber),
@@ -2594,9 +2593,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			cxt.relation = stmt->relation;
 			cxt.inhRelations = NIL;
 			cxt.relation->istemp = is_temp_rel_name(stmt->relation->relname);
-			cxt.relOid = GetSysCacheOid(RELNAME,
-										PointerGetDatum((stmt->relation)->relname),
-										0, 0, 0);
+			cxt.relOid = RangeVarGetRelid(stmt->relation, false);
 			cxt.hasoids = SearchSysCacheExists(ATTNUM,
 											ObjectIdGetDatum(cxt.relOid),
 								  Int16GetDatum(ObjectIdAttributeNumber),
@@ -2844,7 +2841,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 	/*
 	 * Open the referenced table
 	 */
-	pkrel = heap_openr(fkconstraint->pktable->relname, AccessShareLock);
+	pkrel = heap_openrv(fkconstraint->pktable, AccessShareLock);
 
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "Referenced relation \"%s\" is not a table",
@@ -2937,7 +2934,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 	/*
 	 * Open the referenced table
 	 */
-	pkrel = heap_openr(fkconstraint->pktable->relname, AccessShareLock);
+	pkrel = heap_openrv(fkconstraint->pktable, AccessShareLock);
 
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "Referenced relation \"%s\" is not a table",
@@ -3002,14 +2999,14 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
  *	See whether an existing relation has a primary key.
  */
 static bool
-relationHasPrimaryKey(char *relname)
+relationHasPrimaryKey(Oid relationOid)
 {
 	bool		result = false;
 	Relation	rel;
 	List	   *indexoidlist,
 			   *indexoidscan;
 
-	rel = heap_openr(relname, AccessShareLock);
+	rel = heap_open(relationOid, AccessShareLock);
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and
@@ -3084,10 +3081,10 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 		int			count;
 
 		Assert(IsA(inh, RangeVar));
-		rel = heap_openr(inh->relname, AccessShareLock);
+		rel = heap_openrv(inh, AccessShareLock);
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
 			elog(ERROR, "inherited table \"%s\" is not a relation",
-				 strVal(inh));
+				 inh->relname);
 		for (count = 0; count < rel->rd_att->natts; count++)
 		{
 			char	   *name = NameStr(rel->rd_att->attrs[count]->attname);

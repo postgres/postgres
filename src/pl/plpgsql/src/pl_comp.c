@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.38 2002/03/06 06:10:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.39 2002/03/26 19:17:02 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -46,6 +46,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_class.h"
@@ -941,6 +942,7 @@ plpgsql_parse_dblwordtype(char *string)
 	char	   *word2;
 	PLpgSQL_nsitem *nse;
 	bool		old_nsstate;
+	Oid			classOid;
 	HeapTuple	classtup;
 	Form_pg_class classStruct;
 	HeapTuple	attrtup;
@@ -998,8 +1000,14 @@ plpgsql_parse_dblwordtype(char *string)
 	/*
 	 * First word could also be a table name
 	 */
-	classtup = SearchSysCache(RELNAME,
-							  PointerGetDatum(word1),
+	classOid = RelnameGetRelid(word1);
+	if (!OidIsValid(classOid))
+	{
+		pfree(word1);
+		return T_ERROR;
+	}
+	classtup = SearchSysCache(RELOID,
+							  ObjectIdGetDatum(classOid),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
 	{
@@ -1024,7 +1032,7 @@ plpgsql_parse_dblwordtype(char *string)
 	 * Fetch the named table field and it's type
 	 */
 	attrtup = SearchSysCache(ATTNAME,
-							 ObjectIdGetDatum(classtup->t_data->t_oid),
+							 ObjectIdGetDatum(classOid),
 							 PointerGetDatum(word2),
 							 0, 0);
 	if (!HeapTupleIsValid(attrtup))
@@ -1049,7 +1057,7 @@ plpgsql_parse_dblwordtype(char *string)
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 	typ->typname = strdup(NameStr(typeStruct->typname));
-	typ->typoid = typetup->t_data->t_oid;
+	typ->typoid = attrStruct->atttypid;
 	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->typelem = typeStruct->typelem;
 	typ->typbyval = typeStruct->typbyval;
@@ -1074,6 +1082,7 @@ plpgsql_parse_dblwordtype(char *string)
 int
 plpgsql_parse_wordrowtype(char *string)
 {
+	Oid			classOid;
 	HeapTuple	classtup;
 	Form_pg_class classStruct;
 	HeapTuple	typetup;
@@ -1093,8 +1102,11 @@ plpgsql_parse_wordrowtype(char *string)
 	cp = strchr(word1, '%');
 	*cp = '\0';
 
-	classtup = SearchSysCache(RELNAME,
-							  PointerGetDatum(word1),
+	classOid = RelnameGetRelid(word1);
+	if (!OidIsValid(classOid))
+		elog(ERROR, "%s: no such class", word1);
+	classtup = SearchSysCache(RELOID,
+							  ObjectIdGetDatum(classOid),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
 		elog(ERROR, "%s: no such class", word1);
@@ -1106,15 +1118,6 @@ plpgsql_parse_wordrowtype(char *string)
 		elog(ERROR, "%s isn't a table", word1);
 
 	/*
-	 * Fetch the table's pg_type tuple too
-	 */
-	typetup = SearchSysCache(TYPENAME,
-							 PointerGetDatum(word1),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup for %s in pg_type failed", word1);
-
-	/*
 	 * Create a row datum entry and all the required variables that it
 	 * will point to.
 	 */
@@ -1123,11 +1126,9 @@ plpgsql_parse_wordrowtype(char *string)
 
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->nfields = classStruct->relnatts;
-	row->rowtypeclass = typetup->t_data->t_oid;
+	row->rowtypeclass = classStruct->reltype;
 	row->fieldnames = malloc(sizeof(char *) * row->nfields);
 	row->varnos = malloc(sizeof(int) * row->nfields);
-
-	ReleaseSysCache(typetup);
 
 	for (i = 0; i < row->nfields; i++)
 	{
@@ -1135,7 +1136,7 @@ plpgsql_parse_wordrowtype(char *string)
 		 * Get the attribute and it's type
 		 */
 		attrtup = SearchSysCache(ATTNUM,
-							   ObjectIdGetDatum(classtup->t_data->t_oid),
+								 ObjectIdGetDatum(classOid),
 								 Int16GetDatum(i + 1),
 								 0, 0);
 		if (!HeapTupleIsValid(attrtup))
@@ -1172,7 +1173,7 @@ plpgsql_parse_wordrowtype(char *string)
 		strcat(var->refname, cp);
 		var->datatype = malloc(sizeof(PLpgSQL_type));
 		var->datatype->typname = strdup(NameStr(typeStruct->typname));
-		var->datatype->typoid = typetup->t_data->t_oid;
+		var->datatype->typoid = attrStruct->atttypid;
 		perm_fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 		var->datatype->typelem = typeStruct->typelem;
 		var->datatype->typbyval = typeStruct->typbyval;

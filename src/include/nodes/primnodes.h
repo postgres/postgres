@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.59 2002/03/21 16:01:48 tgl Exp $
+ * $Id: primnodes.h,v 1.60 2002/03/26 19:16:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,47 @@ typedef struct Fjoin
 								 * cardinality of 0, we treat them as the
 								 * set {NULL}. */
 } Fjoin;
+
+
+/*
+ * Alias -
+ *	  specifies an alias for a range variable; the alias might also
+ *	  specify renaming of columns within the table.
+ */
+typedef struct Alias
+{
+	NodeTag		type;
+	char	   *aliasname;		/* aliased rel name (never qualified) */
+	List	   *colnames;		/* optional list of column aliases */
+	/* Note: colnames is a list of Value nodes (always strings) */
+} Alias;
+
+typedef enum InhOption
+{
+	INH_NO,						/* Do NOT scan child tables */
+	INH_YES,					/* DO scan child tables */
+	INH_DEFAULT					/* Use current SQL_inheritance option */
+} InhOption;
+
+/*
+ * RangeVar - range variable, used in FROM clauses
+ *
+ * Also used to represent table names in utility statements; there, the alias
+ * field is not used, and inhOpt shows whether to apply the operation
+ * recursively to child tables.  In some contexts it is also useful to carry
+ * a TEMP table indication here.
+ */
+typedef struct RangeVar
+{
+	NodeTag		type;
+	char	   *catalogname;	/* the catalog (database) name, or NULL */
+	char	   *schemaname;		/* the schema name, or NULL */
+	char	   *relname;		/* the relation/sequence name */
+	InhOption	inhOpt;			/* expand rel by inheritance? 
+								 * recursively act on children? */
+	bool		istemp;			/* is this a temp relation/sequence? */
+	Alias	   *alias;			/* table alias & optional column aliases */
+} RangeVar;
 
 
 /* ----------------------------------------------------------------
@@ -527,7 +568,7 @@ typedef struct JoinExpr
 	Node	   *rarg;			/* right subtree */
 	List	   *using;			/* USING clause, if any (list of String) */
 	Node	   *quals;			/* qualifiers on join, if any */
-	struct Alias *alias;		/* user-written alias clause, if any */
+	Alias	   *alias;			/* user-written alias clause, if any */
 	int			rtindex;		/* RT index assigned for join */
 } JoinExpr;
 

@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.154 2002/03/21 23:27:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.155 2002/03/26 19:15:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 
 #include "access/heapam.h"
 #include "catalog/heap.h"
+#include "catalog/namespace.h"
 #include "commands/command.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
@@ -696,10 +697,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 	if (operation == CMD_SELECT)
 	{
-		char	   *intoName;
-		Oid			intoRelationId;
-		TupleDesc	tupdesc;
-
 		if (!parseTree->isPortal)
 		{
 			/*
@@ -707,10 +704,16 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			 */
 			if (parseTree->into != NULL)
 			{
+				char	   *intoName;
+				Oid			namespaceId;
+				Oid			intoRelationId;
+				TupleDesc	tupdesc;
+
 				/*
 				 * create the "into" relation
 				 */
 				intoName = parseTree->into->relname;
+				namespaceId = RangeVarGetCreationNamespace(parseTree->into);
 
 				/*
 				 * have to copy tupType to get rid of constraints
@@ -719,6 +722,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 				intoRelationId =
 					heap_create_with_catalog(intoName,
+											 namespaceId,
 											 tupdesc,
 											 RELKIND_RELATION, true,
 											 parseTree->into->istemp,
@@ -738,7 +742,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				 * with CommandCounterIncrement(), so that the TOAST table
 				 * will be visible for insertion.
 				 */
-				AlterTableCreateToastTable(intoName, true);
+				AlterTableCreateToastTable(intoRelationId, true);
 
 				intoRelationDesc = heap_open(intoRelationId,
 											 AccessExclusiveLock);

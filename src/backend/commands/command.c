@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.165 2002/03/22 21:34:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.166 2002/03/26 19:15:36 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -26,6 +26,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_namespace.h"
@@ -34,7 +35,6 @@
 #include "catalog/pg_type.h"
 #include "commands/command.h"
 #include "commands/trigger.h"
-#include "commands/defrem.h"
 #include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -415,8 +415,8 @@ AlterTableAddColumn(const char *relationName,
 
 	rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	reltup = SearchSysCache(RELNAME,
-							PointerGetDatum(relationName),
+	reltup = SearchSysCache(RELOID,
+							ObjectIdGetDatum(myrelid),
 							0, 0, 0);
 
 	if (!HeapTupleIsValid(reltup))
@@ -424,7 +424,7 @@ AlterTableAddColumn(const char *relationName,
 			 relationName);
 
 	if (SearchSysCacheExists(ATTNAME,
-							 ObjectIdGetDatum(reltup->t_data->t_oid),
+							 ObjectIdGetDatum(myrelid),
 							 PointerGetDatum(colDef->colname),
 							 0, 0))
 		elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in table \"%s\"",
@@ -463,7 +463,7 @@ AlterTableAddColumn(const char *relationName,
 
 	attribute = (Form_pg_attribute) GETSTRUCT(attributeTuple);
 
-	attribute->attrelid = reltup->t_data->t_oid;
+	attribute->attrelid = myrelid;
 	namestrcpy(&(attribute->attname), colDef->colname);
 	attribute->atttypid = typeTuple->t_data->t_oid;
 	attribute->attstattarget = DEFAULT_ATTSTATTARGET;
@@ -532,7 +532,7 @@ AlterTableAddColumn(const char *relationName,
 	 */
 	if (colDef->constraints != NIL)
 	{
-		rel = heap_openr(relationName, AccessExclusiveLock);
+		rel = heap_open(myrelid, AccessExclusiveLock);
 		AddRelationRawConstraints(rel, NIL, colDef->constraints);
 		heap_close(rel, NoLock);
 	}
@@ -541,7 +541,7 @@ AlterTableAddColumn(const char *relationName,
 	 * Automatically create the secondary relation for TOAST if it
 	 * formerly had no such but now has toastable attributes.
 	 */
-	AlterTableCreateToastTable(relationName, true);
+	AlterTableCreateToastTable(myrelid, true);
 }
 
 
@@ -989,11 +989,7 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 				}
 				else
 				{
-					htup = SearchSysCache(RELOID,
-									 ObjectIdGetDatum(index->indexrelid),
-										  0, 0, 0);
-					RemoveIndex(NameStr(((Form_pg_class) GETSTRUCT(htup))->relname));
-					ReleaseSysCache(htup);
+					index_drop(index->indexrelid);
 				}
 				break;
 			}
@@ -1066,8 +1062,8 @@ AlterTableDropColumn(const char *relationName,
 	 * lock the pg_class tuple for update
 	 */
 	rel = heap_openr(RelationRelationName, RowExclusiveLock);
-	reltup = SearchSysCache(RELNAME,
-							PointerGetDatum(relationName),
+	reltup = SearchSysCache(RELOID,
+							ObjectIdGetDatum(myrelid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
@@ -1092,7 +1088,7 @@ AlterTableDropColumn(const char *relationName,
 	 * Get the target pg_attribute tuple and make a modifiable copy
 	 */
 	tup = SearchSysCacheCopy(ATTNAME,
-							 ObjectIdGetDatum(reltup->t_data->t_oid),
+							 ObjectIdGetDatum(myrelid),
 							 PointerGetDatum(colName),
 							 0, 0);
 	if (!HeapTupleIsValid(tup))
@@ -1370,7 +1366,8 @@ AlterTableAddConstraint(char *relationName,
 					 * someone doesn't delete rows out from under us.
 					 */
 
-					pkrel = heap_openr(fkconstraint->pktable->relname, AccessExclusiveLock);
+					pkrel = heap_openrv(fkconstraint->pktable,
+										AccessExclusiveLock);
 					if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 						elog(ERROR, "referenced table \"%s\" not a relation",
 							 fkconstraint->pktable->relname);
@@ -1557,43 +1554,48 @@ AlterTableDropConstraint(const char *relationName,
  * ALTER TABLE OWNER
  */
 void
-AlterTableOwner(const char *relationName, const char *newOwnerName)
+AlterTableOwner(const RangeVar *tgtrel, const char *newOwnerName)
 {
-	Oid relationOid;
-	Relation relation;
-	int32 newOwnerSysId;
+	Relation	rel;
+	Oid			myrelid;
+	int32		newOwnerSysId;
 
 	/* check that we are the superuser */
 	if (!superuser())
 		elog(ERROR, "ALTER TABLE: permission denied");
 
 	/* lookup the OID of the target relation */
-	relation = RelationNameGetRelation(relationName);
-	relationOid = relation->rd_id;
-	RelationClose(relation);
+	rel = relation_openrv(tgtrel, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
+	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
 	/* lookup the sysid of the new owner */
 	newOwnerSysId = get_usesysid(newOwnerName);
 
 	/* do all the actual work */
-	AlterTableOwnerId(relationOid, newOwnerSysId);
+	AlterTableOwnerId(myrelid, newOwnerSysId);
 }
 
 static void
 AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
 {
+	Relation		target_rel;
 	Relation		class_rel;
 	HeapTuple		tuple;
 	Relation		idescs[Num_pg_class_indices];
 	Form_pg_class	tuple_class;
 
+	/* Get exclusive lock till end of transaction on the target table */
+	target_rel = heap_open(relationOid, AccessExclusiveLock);
+
+	/* Get its pg_class tuple, too */
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
 	tuple = SearchSysCacheCopy(RELOID,
 							   ObjectIdGetDatum(relationOid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: object ID %hd not found",
-				relationOid);
-
+		elog(ERROR, "ALTER TABLE: relation %u not found", relationOid);
 	tuple_class = (Form_pg_class) GETSTRUCT(tuple);
 
 	/* Can we change the ownership of this tuple? */
@@ -1603,7 +1605,6 @@ AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
 	 * Okay, this is a valid tuple: change its ownership and
 	 * write to the heap.
 	 */
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple_class->relowner = newOwnerSysId;
 	simple_heap_update(class_rel, &tuple->t_self, tuple);
 
@@ -1617,25 +1618,25 @@ AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
 	 * indexes that belong to the table, as well as the table's toast
 	 * table (if it has one)
 	 */
-	if (tuple_class->relkind == RELKIND_RELATION)
+	if (tuple_class->relkind == RELKIND_RELATION ||
+		tuple_class->relkind == RELKIND_TOASTVALUE)
 	{
-		/* Search for indexes belonging to this table */
-		Relation target_rel;
 		List *index_oid_list, *i;
 
 		/* Find all the indexes belonging to this relation */
-		target_rel = heap_open(relationOid, RowExclusiveLock);
 		index_oid_list = RelationGetIndexList(target_rel);
-		heap_close(target_rel, RowExclusiveLock);
 
 		/* For each index, recursively change its ownership */
-		foreach (i, index_oid_list)
+		foreach(i, index_oid_list)
 		{
 			AlterTableOwnerId(lfirsti(i), newOwnerSysId);
 		}
 
 		freeList(index_oid_list);
+	}
 
+	if (tuple_class->relkind == RELKIND_RELATION)
+	{
 		/* If it has a toast table, recurse to change its ownership */
 		if (tuple_class->reltoastrelid != InvalidOid)
 		{
@@ -1644,7 +1645,8 @@ AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
 	}
 
 	heap_freetuple(tuple);
-	heap_close(class_rel, NoLock);
+	heap_close(class_rel, RowExclusiveLock);
+	heap_close(target_rel, NoLock);
 }
 
 static void
@@ -1669,10 +1671,9 @@ CheckTupleType(Form_pg_class tuple_class)
  * ALTER TABLE CREATE TOAST TABLE
  */
 void
-AlterTableCreateToastTable(const char *relationName, bool silent)
+AlterTableCreateToastTable(Oid relOid, bool silent)
 {
 	Relation	rel;
-	Oid			myrelid;
 	HeapTuple	reltup;
 	HeapTupleData classtuple;
 	TupleDesc	tupdesc;
@@ -1690,14 +1691,13 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
+	rel = heap_open(relOid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
+			 RelationGetRelationName(rel));
 
-	if (!pg_class_ownercheck(myrelid, GetUserId()))
+	if (!pg_class_ownercheck(relOid, GetUserId()))
 		elog(ERROR, "ALTER TABLE: permission denied");
 
 	/*
@@ -1705,12 +1705,12 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 */
 	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	reltup = SearchSysCache(RELNAME,
-							PointerGetDatum(relationName),
+	reltup = SearchSysCache(RELOID,
+							ObjectIdGetDatum(relOid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 relationName);
+			 RelationGetRelationName(rel));
 	classtuple.t_self = reltup->t_self;
 	ReleaseSysCache(reltup);
 
@@ -1739,7 +1739,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 		}
 
 		elog(ERROR, "ALTER TABLE: relation \"%s\" already has a toast table",
-			 relationName);
+			 RelationGetRelationName(rel));
 	}
 
 	/*
@@ -1756,14 +1756,14 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 		}
 
 		elog(ERROR, "ALTER TABLE: relation \"%s\" does not need a toast table",
-			 relationName);
+			 RelationGetRelationName(rel));
 	}
 
 	/*
 	 * Create the toast table and its index
 	 */
-	sprintf(toast_relname, "pg_toast_%u", myrelid);
-	sprintf(toast_idxname, "pg_toast_%u_idx", myrelid);
+	sprintf(toast_relname, "pg_toast_%u", relOid);
+	sprintf(toast_idxname, "pg_toast_%u_idx", relOid);
 
 	/* this is pretty painful...  need a tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(3);
@@ -1795,7 +1795,9 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 * collision, and the toast rel will be destroyed when its master is,
 	 * so there's no need to handle the toast rel as temp.
 	 */
-	toast_relid = heap_create_with_catalog(toast_relname, tupdesc,
+	toast_relid = heap_create_with_catalog(toast_relname,
+										   RelationGetNamespace(rel),
+										   tupdesc,
 										   RELKIND_TOASTVALUE, false,
 										   false, true);
 
@@ -1825,9 +1827,9 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	classObjectId[0] = OID_BTREE_OPS_OID;
 	classObjectId[1] = INT4_BTREE_OPS_OID;
 
-	toast_idxid = index_create(toast_relname, toast_idxname, indexInfo,
+	toast_idxid = index_create(toast_relid, toast_idxname, indexInfo,
 							   BTREE_AM_OID, classObjectId,
-							   true, true);
+							   false, true, true);
 
 	/*
 	 * Update toast rel's pg_class entry to show that it has an index. The
@@ -1927,21 +1929,15 @@ LockTableCommand(LockStmt *lockstmt)
 	foreach(p, lockstmt->relations)
 	{
 		RangeVar   *relation = lfirst(p);
-		char	   *relname = relation->relname;
 		Oid			reloid;
-		int			aclresult;
+		int32		aclresult;
 		Relation	rel;
 
 		/*
 		 * We don't want to open the relation until we've checked privilege.
 		 * So, manually get the relation OID.
 		 */
-		reloid = GetSysCacheOid(RELNAME,
-								PointerGetDatum(relname),
-								0, 0, 0);
-		if (!OidIsValid(reloid))
-			elog(ERROR, "LOCK TABLE: relation \"%s\" does not exist",
-				 relname);
+		reloid = RangeVarGetRelid(relation, false);
 
 		if (lockstmt->mode == AccessShareLock)
 			aclresult = pg_class_aclcheck(reloid, GetUserId(),
@@ -1958,7 +1954,7 @@ LockTableCommand(LockStmt *lockstmt)
 		/* Currently, we only allow plain tables to be locked */
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
 			elog(ERROR, "LOCK TABLE: %s is not a table",
-				 relname);
+				 relation->relname);
 
 		relation_close(rel, NoLock);	/* close rel, keep lock */
 	}

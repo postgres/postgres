@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rename.h,v 1.13 2001/11/05 17:46:33 momjian Exp $
+ * $Id: rename.h,v 1.14 2002/03/26 19:16:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@ extern void renameatt(char *relname,
 		  char *newattname,
 		  int recurse);
 
-extern void renamerel(const char *oldrelname,
+extern void renamerel(const RangeVar *relation,
 		  const char *newrelname);
 
 #endif   /* RENAME_H */

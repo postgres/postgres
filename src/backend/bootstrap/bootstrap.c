@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.124 2002/03/15 19:20:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.125 2002/03/26 19:15:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,8 +153,8 @@ extern char *optarg;
 
 typedef struct _IndexList
 {
-	char	   *il_heap;
-	char	   *il_ind;
+	Oid			il_heap;
+	Oid			il_ind;
 	IndexInfo  *il_info;
 	struct _IndexList *il_next;
 } IndexList;
@@ -1080,8 +1080,8 @@ AddStr(char *str, int strlength, int mderef)
  *		are present in the index.
  */
 void
-index_register(char *heap,
-			   char *ind,
+index_register(Oid heap,
+			   Oid ind,
 			   IndexInfo *indexInfo)
 {
 	IndexList  *newind;
@@ -1103,8 +1103,8 @@ index_register(char *heap,
 	oldcxt = MemoryContextSwitchTo(nogc);
 
 	newind = (IndexList *) palloc(sizeof(IndexList));
-	newind->il_heap = pstrdup(heap);
-	newind->il_ind = pstrdup(ind);
+	newind->il_heap = heap;
+	newind->il_ind = ind;
 	newind->il_info = (IndexInfo *) palloc(sizeof(IndexInfo));
 
 	memcpy(newind->il_info, indexInfo, sizeof(IndexInfo));
@@ -1126,8 +1126,8 @@ build_indices()
 		Relation	heap;
 		Relation	ind;
 
-		heap = heap_openr(ILHead->il_heap, NoLock);
-		ind = index_openr(ILHead->il_ind);
+		heap = heap_open(ILHead->il_heap, NoLock);
+		ind = index_open(ILHead->il_ind);
 		index_build(heap, ind, ILHead->il_info);
 
 		/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.31 2002/03/19 02:18:23 momjian Exp $
+ * $Id: defrem.h,v 1.32 2002/03/26 19:16:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 /*
  * prototypes in indexcmds.c
  */
-extern void DefineIndex(char *heapRelationName,
+extern void DefineIndex(RangeVar *heapRelation,
 			char *indexRelationName,
 			char *accessMethodName,
 			List *attributeList,
@@ -27,9 +27,9 @@ extern void DefineIndex(char *heapRelationName,
 			bool primary,
 			Expr *predicate,
 			List *rangetable);
-extern void RemoveIndex(char *name);
-extern void ReindexIndex(const char *indexRelationName, bool force);
-extern void ReindexTable(const char *relationName, bool force);
+extern void RemoveIndex(RangeVar *relation);
+extern void ReindexIndex(RangeVar *indexRelation, bool force);
+extern void ReindexTable(RangeVar *relation, bool force);
 extern void ReindexDatabase(const char *databaseName, bool force, bool all);
 
 /*

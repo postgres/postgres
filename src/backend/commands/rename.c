@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.64 2002/03/21 23:27:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.65 2002/03/26 19:15:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
@@ -266,19 +267,20 @@ renameatt(char *relname,
  *		renamerel		- change the name of a relation
  */
 void
-renamerel(const char *oldrelname, const char *newrelname)
+renamerel(const RangeVar *relation, const char *newrelname)
 {
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	reltup;
+	Oid			namespaceId;
 	Oid			reloid;
 	char		relkind;
 	bool		relhastriggers;
 	Relation	irelations[Num_pg_class_indices];
 
-	if (!allowSystemTableMods && IsSystemRelationName(oldrelname))
+	if (!allowSystemTableMods && IsSystemRelationName(relation->relname))
 		elog(ERROR, "renamerel: system relation \"%s\" may not be renamed",
-			 oldrelname);
+			 relation->relname);
 
 	if (!allowSystemTableMods && IsSystemRelationName(newrelname))
 		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
@@ -288,15 +290,16 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 * Check for renaming a temp table, which only requires altering the
 	 * temp-table mapping, not the underlying table.
 	 */
-	if (rename_temp_relation(oldrelname, newrelname))
+	if (rename_temp_relation(relation->relname, newrelname))
 		return;					/* all done... */
 
 	/*
 	 * Grab an exclusive lock on the target table or index, which we will
 	 * NOT release until end of transaction.
 	 */
-	targetrelation = relation_openr(oldrelname, AccessExclusiveLock);
+	targetrelation = relation_openrv(relation, AccessExclusiveLock);
 
+	namespaceId = RelationGetNamespace(targetrelation);
 	reloid = RelationGetRelid(targetrelation);
 	relkind = targetrelation->rd_rel->relkind;
 	relhastriggers = (targetrelation->rd_rel->reltriggers > 0);
@@ -323,13 +326,14 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 */
 	relrelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	reltup = SearchSysCacheCopy(RELNAME,
-								PointerGetDatum(oldrelname),
+	reltup = SearchSysCacheCopy(RELOID,
+								PointerGetDatum(reloid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "renamerel: relation \"%s\" does not exist", oldrelname);
+		elog(ERROR, "renamerel: relation \"%s\" does not exist",
+			 relation->relname);
 
-	if (RelnameFindRelid(newrelname) != InvalidOid)
+	if (get_relname_relid(newrelname, namespaceId) != InvalidOid)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
 	/*
@@ -352,7 +356,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 * Also rename the associated type, if any.
 	 */
 	if (relkind != RELKIND_INDEX)
-		TypeRename(oldrelname, newrelname);
+		TypeRename(relation->relname, newrelname);
 
 	/*
 	 * If it's a view, must also rename the associated ON SELECT rule.
@@ -362,7 +366,7 @@ renamerel(const char *oldrelname, const char *newrelname)
 		char	   *oldrulename,
 				   *newrulename;
 
-		oldrulename = MakeRetrieveViewRuleName(oldrelname);
+		oldrulename = MakeRetrieveViewRuleName(relation->relname);
 		newrulename = MakeRetrieveViewRuleName(newrelname);
 		RenameRewriteRule(oldrulename, newrulename);
 	}
@@ -374,11 +378,11 @@ renamerel(const char *oldrelname, const char *newrelname)
 	{
 		/* update tgargs where relname is primary key */
 		update_ri_trigger_args(reloid,
-							   oldrelname, newrelname,
+							   relation->relname, newrelname,
 							   false, true);
 		/* update tgargs where relname is foreign key */
 		update_ri_trigger_args(reloid,
-							   oldrelname, newrelname,
+							   relation->relname, newrelname,
 							   true, true);
 	}
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.45 2002/03/10 06:02:24 momjian Exp $
+ * $Id: index.h,v 1.46 2002/03/26 19:16:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,11 +29,12 @@ typedef void (*IndexBuildCallback) (Relation index,
 												void *state);
 
 
-extern Oid index_create(char *heapRelationName,
+extern Oid index_create(Oid heapRelationId,
 			 char *indexRelationName,
 			 IndexInfo *indexInfo,
 			 Oid accessMethodObjectId,
 			 Oid *classObjectId,
+			 bool istemp,
 			 bool primary,
 			 bool allow_system_table_mods);
 

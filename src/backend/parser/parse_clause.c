@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.86 2002/03/22 02:56:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.87 2002/03/26 19:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * analyze.c will eventually do the corresponding heap_close(), but *not*
 	 * release the lock.
 	 */
-	pstate->p_target_relation = heap_openr(relation->relname, RowExclusiveLock);
+	pstate->p_target_relation = heap_openrv(relation, RowExclusiveLock);
 
 	/*
 	 * Now build an RTE.

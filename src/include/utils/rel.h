@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.56 2002/02/19 20:11:19 tgl Exp $
+ * $Id: rel.h,v 1.57 2002/03/26 19:16:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,6 +281,14 @@ typedef Relation *RelationPtr;
 	: \
 		RelationGetPhysicalRelationName(relation) \
 )
+
+/*
+ * RelationGetNamespace
+ *
+ *	  Returns the rel's namespace OID.
+ */
+#define RelationGetNamespace(relation) \
+	((relation)->rd_rel->relnamespace)
 
 /* added to prevent circular dependency.  bjm 1999/11/15 */
 extern char *get_temp_rel_by_physicalname(const char *relname);

@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.36 2002/03/21 23:27:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.37 2002/03/26 19:15:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
@@ -48,7 +49,8 @@
  *------------------------------------------------------------------
  */
 
-static void CommentRelation(int objtype, char *relation, char *comment);
+static void CommentRelation(int objtype, char * schemaname, char *relation,
+							char *comment);
 static void CommentAttribute(char *relation, char *attrib, char *comment);
 static void CommentDatabase(char *database, char *comment);
 static void CommentRewrite(char *rule, char *comment);
@@ -74,7 +76,7 @@ static void CommentTrigger(char *trigger, char *relation, char *comments);
 */
 
 void
-CommentObject(int objtype, char *objname, char *objproperty,
+CommentObject(int objtype, char *schemaname, char *objname, char *objproperty,
 			  List *objlist, char *comment)
 {
 	switch (objtype)
@@ -83,7 +85,7 @@ CommentObject(int objtype, char *objname, char *objproperty,
 		case SEQUENCE:
 		case TABLE:
 		case VIEW:
-			CommentRelation(objtype, objname, comment);
+			CommentRelation(objtype, schemaname, objname, comment);
 			break;
 		case COLUMN:
 			CommentAttribute(objname, objproperty, comment);
@@ -323,9 +325,16 @@ DeleteComments(Oid oid, Oid classoid)
  */
 
 static void
-CommentRelation(int reltype, char *relname, char *comment)
+CommentRelation(int reltype, char *schemaname, char *relname, char *comment)
 {
 	Relation	relation;
+	RangeVar   *tgtrel = makeNode(RangeVar);
+	
+	
+	tgtrel->relname = relname;
+	tgtrel->schemaname = schemaname;
+	/* FIXME SCHEMA: Can we add comments to temp relations? */
+	tgtrel->istemp = false;
 
 	/*
 	 * Open the relation.  We do this mainly to acquire a lock that
@@ -333,7 +342,7 @@ CommentRelation(int reltype, char *relname, char *comment)
 	 * did, they'd fail to remove the entry we are about to make in
 	 * pg_description.)
 	 */
-	relation = relation_openr(relname, AccessShareLock);
+	relation = relation_openrv(tgtrel, AccessShareLock);
 
 	/* Check object security */
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
@@ -504,9 +513,7 @@ CommentRewrite(char *rule, char *comment)
 
 	/* pg_rewrite doesn't have a hard-coded OID, so must look it up */
 
-	classoid = GetSysCacheOid(RELNAME,
-							  PointerGetDatum(RewriteRelationName),
-							  0, 0, 0);
+	classoid = get_relname_relid(RewriteRelationName, PG_CATALOG_NAMESPACE);
 	Assert(OidIsValid(classoid));
 
 	/* Call CreateComments() to create/drop the comments */
@@ -604,9 +611,7 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 
 	/* pg_aggregate doesn't have a hard-coded OID, so must look it up */
 
-	classoid = GetSysCacheOid(RELNAME,
-							  PointerGetDatum(AggregateRelationName),
-							  0, 0, 0);
+	classoid = get_relname_relid(AggregateRelationName, PG_CATALOG_NAMESPACE);
 	Assert(OidIsValid(classoid));
 
 	/* Call CreateComments() to create/drop the comments */

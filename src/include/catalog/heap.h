@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.46 2002/03/20 19:44:52 tgl Exp $
+ * $Id: heap.h,v 1.47 2002/03/26 19:16:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "parser/parse_node.h"
 #include "utils/rel.h"
 
+
 typedef struct RawColumnDefault
 {
 	AttrNumber	attnum;			/* attribute to attach default to */
@@ -26,15 +27,15 @@ typedef struct RawColumnDefault
 								 * tree) */
 } RawColumnDefault;
 
-extern Oid	RelnameFindRelid(const char *relname);
-
-extern Relation heap_create(char *relname, TupleDesc tupDesc,
+extern Relation heap_create(char *relname, Oid relnamespace,
+			TupleDesc tupDesc,
 			bool istemp, bool storage_create,
 			bool allow_system_table_mods);
 
 extern void heap_storage_create(Relation rel);
 
-extern Oid heap_create_with_catalog(char *relname, TupleDesc tupdesc,
+extern Oid heap_create_with_catalog(char *relname, Oid relnamespace,
+						 TupleDesc tupdesc,
 						 char relkind, bool relhasoids, bool istemp,
 						 bool allow_system_table_mods);
 

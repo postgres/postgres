@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.40 2002/03/02 21:39:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.41 2002/03/26 19:15:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,10 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_namespace.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
@@ -179,7 +181,9 @@ Boot_CreateStmt:
 						}
 
 						tupdesc = CreateTupleDesc(numattr, attrtypes);
-						reldesc = heap_create(LexIDStr($4), tupdesc,
+						reldesc = heap_create(LexIDStr($4),
+											  PG_CATALOG_NAMESPACE,
+											  tupdesc,
 											  false, true, true);
 						reldesc->rd_rel->relhasoids = ! ($3);
 						elog(DEBUG3, "bootstrap relation created");
@@ -191,6 +195,7 @@ Boot_CreateStmt:
 
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
 						id = heap_create_with_catalog(LexIDStr($4),
+													  PG_CATALOG_NAMESPACE,
 													  tupdesc,
 													  RELKIND_RELATION,
 													  ! ($3),
@@ -232,7 +237,7 @@ Boot_DeclareIndexStmt:
 				{
 					do_start();
 
-					DefineIndex(LexIDStr($5),
+					DefineIndex(makeRangeVar(NULL, LexIDStr($5)),
 								LexIDStr($3),
 								LexIDStr($7),
 								$9, false, false, NULL, NIL);
@@ -245,7 +250,7 @@ Boot_DeclareUniqueIndexStmt:
 				{
 					do_start();
 
-					DefineIndex(LexIDStr($6),
+					DefineIndex(makeRangeVar(NULL, LexIDStr($6)),
 								LexIDStr($4),
 								LexIDStr($8),
 								$10, true, false, NULL, NIL);

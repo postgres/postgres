@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.173 2002/03/03 17:47:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.174 2002/03/26 19:15:28 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -48,9 +48,11 @@
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
+
 
 /*
  * macros used in guessing how many tuples are on a page.
@@ -61,15 +63,13 @@
 	((natts) * AVG_ATTR_SIZE + MAXALIGN(sizeof(HeapTupleHeaderData))))
 
 /* non-export function prototypes */
-static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
-				   bool istemp);
 static TupleDesc BuildFuncTupleDesc(Oid funcOid,
 				   Oid *classObjectId);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 int numatts, AttrNumber *attNums,
 						 Oid *classObjectId);
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
-static Oid	UpdateRelationRelation(Relation indexRelation, char *temp_relname);
+static void UpdateRelationRelation(Relation indexRelation, char *temp_relname);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
@@ -97,33 +97,6 @@ bool
 IsReindexProcessing(void)
 {
 	return reindexing;
-}
-
-/* ----------------------------------------------------------------
- *		GetHeapRelationOid
- * ----------------------------------------------------------------
- */
-static Oid
-GetHeapRelationOid(char *heapRelationName, char *indexRelationName, bool istemp)
-{
-	Oid			indoid;
-	Oid			heapoid;
-
-
-	indoid = RelnameFindRelid(indexRelationName);
-
-	if ((!istemp && OidIsValid(indoid)) ||
-		(istemp && is_temp_rel_name(indexRelationName)))
-		elog(ERROR, "index named \"%s\" already exists",
-			 indexRelationName);
-
-	heapoid = RelnameFindRelid(heapRelationName);
-
-	if (!OidIsValid(heapoid))
-		elog(ERROR, "cannot create index on non-existent relation \"%s\"",
-			 heapRelationName);
-
-	return heapoid;
 }
 
 static TupleDesc
@@ -356,12 +329,11 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
  *		UpdateRelationRelation
  * ----------------------------------------------------------------
  */
-static Oid
+static void
 UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 {
 	Relation	pg_class;
 	HeapTuple	tuple;
-	Oid			tupleOid;
 	Relation	idescs[Num_pg_class_indices];
 
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
@@ -372,9 +344,8 @@ UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 						   (void *) indexRelation->rd_rel);
 
 	/*
-	 * the new tuple must have the same oid as the relcache entry for the
-	 * index.  sure would be embarrassing to do this sort of thing in
-	 * polite company.
+	 * the new tuple must have the oid already chosen for the index.
+	 * sure would be embarrassing to do this sort of thing in polite company.
 	 */
 	tuple->t_data->t_oid = RelationGetRelid(indexRelation);
 	heap_insert(pg_class, tuple);
@@ -396,11 +367,8 @@ UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
 	}
 
-	tupleOid = tuple->t_data->t_oid;
 	heap_freetuple(tuple);
 	heap_close(pg_class, RowExclusiveLock);
-
-	return tupleOid;
 }
 
 /* ----------------------------------------------------------------
@@ -586,23 +554,30 @@ UpdateIndexRelation(Oid indexoid,
  * ----------------------------------------------------------------
  */
 Oid
-index_create(char *heapRelationName,
+index_create(Oid heapRelationId,
 			 char *indexRelationName,
 			 IndexInfo *indexInfo,
 			 Oid accessMethodObjectId,
 			 Oid *classObjectId,
+			 bool istemp,
 			 bool primary,
 			 bool allow_system_table_mods)
 {
 	Relation	heapRelation;
 	Relation	indexRelation;
 	TupleDesc	indexTupDesc;
-	Oid			heapoid;
+	Oid			namespaceId;
 	Oid			indexoid;
-	bool		istemp = is_temp_rel_name(heapRelationName);
 	char	   *temp_relname = NULL;
 
 	SetReindexProcessing(false);
+
+	/*
+	 * Only SELECT ... FOR UPDATE are allowed while doing this
+	 */
+	heapRelation = heap_open(heapRelationId, ShareLock);
+
+	namespaceId = RelationGetNamespace(heapRelation);
 
 	/*
 	 * check parameters
@@ -611,19 +586,15 @@ index_create(char *heapRelationName,
 		indexInfo->ii_NumKeyAttrs < 1)
 		elog(ERROR, "must index at least one column");
 
-	if (heapRelationName && !allow_system_table_mods &&
-	  IsSystemRelationName(heapRelationName) && IsNormalProcessingMode())
+	if (!allow_system_table_mods &&
+		IsSystemRelationName(RelationGetRelationName(heapRelation)) &&
+		IsNormalProcessingMode())
 		elog(ERROR, "User-defined indexes on system catalogs are not supported");
 
-	/*
-	 * get heap relation oid and open the heap relation
-	 */
-	heapoid = GetHeapRelationOid(heapRelationName, indexRelationName, istemp);
-
-	/*
-	 * Only SELECT ... FOR UPDATE are allowed while doing this
-	 */
-	heapRelation = heap_open(heapoid, ShareLock);
+	if ((!istemp && get_relname_relid(indexRelationName, namespaceId)) ||
+		(istemp && is_temp_rel_name(indexRelationName)))
+		elog(ERROR, "index named \"%s\" already exists",
+			 indexRelationName);
 
 	/*
 	 * construct tuple descriptor for index tuples
@@ -649,8 +620,11 @@ index_create(char *heapRelationName,
 	/*
 	 * create the index relation
 	 */
-	indexRelation = heap_create(indexRelationName, indexTupDesc,
+	indexRelation = heap_create(indexRelationName,
+								namespaceId,
+								indexTupDesc,
 								istemp, false, allow_system_table_mods);
+	indexoid = RelationGetRelid(indexRelation);
 
 	/*
 	 * Obtain exclusive lock on it.  Although no other backends can see it
@@ -671,7 +645,7 @@ index_create(char *heapRelationName,
 	 *	  (append RELATION tuple)
 	 * ----------------
 	 */
-	indexoid = UpdateRelationRelation(indexRelation, temp_relname);
+	UpdateRelationRelation(indexRelation, temp_relname);
 
 	/*
 	 * We create the disk file for this relation here
@@ -699,7 +673,7 @@ index_create(char *heapRelationName,
 	 *	  (Or, could define a rule to maintain the predicate) --Nels, Feb '92
 	 * ----------------
 	 */
-	UpdateIndexRelation(indexoid, heapoid, indexInfo,
+	UpdateIndexRelation(indexoid, heapRelationId, indexInfo,
 						classObjectId, primary);
 
 	/*
@@ -725,7 +699,7 @@ index_create(char *heapRelationName,
 	 */
 	if (IsBootstrapProcessingMode())
 	{
-		index_register(heapRelationName, indexRelationName, indexInfo);
+		index_register(heapRelationId, indexoid, indexInfo);
 		/* XXX shouldn't we close the heap and index rels here? */
 	}
 	else

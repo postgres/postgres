@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.37 2002/03/22 21:34:43 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.38 2002/03/26 19:15:10 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -566,6 +566,15 @@
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the table, index, view, etc.</entry>
+     </row>
+
+     <row>
+      <entry>relnamespace</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_namespace.oid</entry>
+      <entry>
+       The OID of the namespace that contains this relation
+      </entry>
      </row>
 
      <row>

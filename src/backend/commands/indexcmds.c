@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.64 2002/03/20 19:43:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.65 2002/03/26 19:15:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,8 @@
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
-#include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_opclass.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
@@ -33,6 +33,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/temprel.h"
 
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args != NIL)
@@ -61,7 +62,7 @@ static Oid	GetDefaultOpClass(Oid attrType, Oid accessMethodId);
  * 'rangetable' is needed to interpret the predicate.
  */
 void
-DefineIndex(char *heapRelationName,
+DefineIndex(RangeVar *heapRelation,
 			char *indexRelationName,
 			char *accessMethodName,
 			List *attributeList,
@@ -73,6 +74,7 @@ DefineIndex(char *heapRelationName,
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
 	Oid			relationId;
+	bool		istemp = is_temp_rel_name(heapRelation->relname);
 	Relation	rel;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
@@ -93,20 +95,20 @@ DefineIndex(char *heapRelationName,
 	/*
 	 * Open heap relation, acquire a suitable lock on it, remember its OID
 	 */
-	rel = heap_openr(heapRelationName, ShareLock);
+	rel = heap_openrv(heapRelation, ShareLock);
 
 	/* Note: during bootstrap may see uncataloged relation */
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_UNCATALOGED)
 		elog(ERROR, "DefineIndex: relation \"%s\" is not a table",
-			 heapRelationName);
+			 heapRelation->relname);
 
 	relationId = RelationGetRelid(rel);
 
 	heap_close(rel, NoLock);
 
 	if (!IsBootstrapProcessingMode() &&
-		IsSystemRelationName(heapRelationName) &&
+		IsSystemRelationName(heapRelation->relname) &&
 		!IndexesAreActive(relationId, false))
 		elog(ERROR, "Existing indexes are inactive. REINDEX first");
 
@@ -187,9 +189,9 @@ DefineIndex(char *heapRelationName,
 					   relationId, accessMethodName, accessMethodId);
 	}
 
-	index_create(heapRelationName, indexRelationName,
+	index_create(relationId, indexRelationName,
 				 indexInfo, accessMethodId, classObjectId,
-				 primary, allowSystemTableMods);
+				 istemp, primary, allowSystemTableMods);
 
 	/*
 	 * We update the relation's pg_class tuple even if it already has
@@ -500,23 +502,25 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
  *		...
  */
 void
-RemoveIndex(char *name)
+RemoveIndex(RangeVar *relation)
 {
+	Oid			indOid;
 	HeapTuple	tuple;
 
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(name),
+	indOid = RangeVarGetRelid(relation, false);
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(indOid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index \"%s\" does not exist", name);
+		elog(ERROR, "index \"%s\" does not exist", relation->relname);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 name, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
-
-	index_drop(tuple->t_data->t_oid);
+			 relation->relname, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
 	ReleaseSysCache(tuple);
+
+	index_drop(indOid);
 }
 
 /*
@@ -528,8 +532,9 @@ RemoveIndex(char *name)
  *		...
  */
 void
-ReindexIndex(const char *name, bool force /* currently unused */ )
+ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 {
+	Oid			indOid;
 	HeapTuple	tuple;
 	bool		overwrite = false;
 
@@ -541,22 +546,24 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
 
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(name),
+	indOid = RangeVarGetRelid(indexRelation, false);
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(indOid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index \"%s\" does not exist", name);
+		elog(ERROR, "index \"%s\" does not exist", indexRelation->relname);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 name, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
+			 indexRelation->relname,
+			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
+
+	ReleaseSysCache(tuple);
 
 	if (IsIgnoringSystemIndexes())
 		overwrite = true;
-	if (!reindex_index(tuple->t_data->t_oid, force, overwrite))
-		elog(WARNING, "index \"%s\" wasn't reindexed", name);
-
-	ReleaseSysCache(tuple);
+	if (!reindex_index(indOid, force, overwrite))
+		elog(WARNING, "index \"%s\" wasn't reindexed", indexRelation->relname);
 }
 
 /*
@@ -568,8 +575,9 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
  *		...
  */
 void
-ReindexTable(const char *name, bool force)
+ReindexTable(RangeVar *relation, bool force)
 {
+	Oid			heapOid;
 	HeapTuple	tuple;
 
 	/*
@@ -580,20 +588,22 @@ ReindexTable(const char *name, bool force)
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
 
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(name),
+	heapOid = RangeVarGetRelid(relation, false);
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(heapOid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "table \"%s\" does not exist", name);
+		elog(ERROR, "table \"%s\" does not exist", relation->relname);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION)
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 name, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
-
-	if (!reindex_relation(tuple->t_data->t_oid, force))
-		elog(WARNING, "table \"%s\" wasn't reindexed", name);
+			 relation->relname,
+			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
 	ReleaseSysCache(tuple);
+
+	if (!reindex_relation(heapOid, force))
+		elog(WARNING, "table \"%s\" wasn't reindexed", relation->relname);
 }
 
 /*

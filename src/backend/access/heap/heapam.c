@@ -8,15 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.131 2002/03/03 17:47:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.132 2002/03/26 19:15:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
  *		relation_open	- open any relation by relation OID
- *		relation_openr	- open any relation by name
+ *		relation_openrv	- open any relation specified by a RangeVar
+ *		relation_openr	- open a system relation by name
  *		relation_close	- close any relation
  *		heap_open		- open a heap relation by relation OID
- *		heap_openr		- open a heap relation by name
+ *		heap_openrv		- open a heap relation specified by a RangeVar
+ *		heap_openr		- open a system heap relation by name
  *		heap_close		- (now just a macro for relation_close)
  *		heap_beginscan	- begin relation scan
  *		heap_rescan		- restart a relation scan
@@ -44,6 +46,7 @@
 #include "access/valid.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
+#include "catalog/namespace.h"
 #include "miscadmin.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
@@ -481,13 +484,56 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 }
 
 /* ----------------
- *		relation_openr - open any relation by name
+ *		relation_openrv - open any relation specified by a RangeVar
  *
- *		As above, but lookup by name instead of OID.
+ *		As above, but the relation is specified by a RangeVar.
  * ----------------
  */
 Relation
-relation_openr(const char *relationName, LOCKMODE lockmode)
+relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
+{
+	Oid			relOid;
+
+	/*
+	 * In bootstrap mode, don't do any namespace processing.
+	 */
+	if (IsBootstrapProcessingMode())
+	{
+		Assert(relation->schemaname == NULL);
+		return relation_openr(relation->relname, lockmode);
+	}
+
+	/*
+	 * Check for shared-cache-inval messages before trying to open the
+	 * relation.  This is needed to cover the case where the name
+	 * identifies a rel that has been dropped and recreated since the
+	 * start of our transaction: if we don't flush the old syscache entry
+	 * then we'll latch onto that entry and suffer an error when we do
+	 * LockRelation. Note that relation_open does not need to do this,
+	 * since a relation's OID never changes.
+	 *
+	 * We skip this if asked for NoLock, on the assumption that the caller
+	 * has already ensured some appropriate lock is held.
+	 */
+	if (lockmode != NoLock)
+		AcceptInvalidationMessages();
+
+	/* Look up the appropriate relation using namespace search */
+	relOid = RangeVarGetRelid(relation, false);
+
+	/* Let relation_open do the rest */
+	return relation_open(relOid, lockmode);
+}
+
+/* ----------------
+ *		relation_openr - open a system relation specified by name.
+ *
+ *		As above, but the relation is specified by an unqualified name;
+ *		it is assumed to live in the system catalog namespace.
+ * ----------------
+ */
+Relation
+relation_openr(const char *sysRelationName, LOCKMODE lockmode)
 {
 	Relation	r;
 
@@ -500,25 +546,15 @@ relation_openr(const char *relationName, LOCKMODE lockmode)
 	IncrHeapAccessStat(global_openr);
 
 	/*
-	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  This is needed to cover the case where the name
-	 * identifies a rel that has been dropped and recreated since the
-	 * start of our transaction: if we don't flush the old relcache entry
-	 * then we'll latch onto that entry and suffer an error when we do
-	 * LockRelation. Note that relation_open does not need to do this,
-	 * since a relation's OID never changes.
-	 *
-	 * We skip this if asked for NoLock, on the assumption that the caller
-	 * has already ensured some appropriate lock is held.
+	 * We assume we should not need to worry about the rel's OID changing,
+	 * hence no need for AcceptInvalidationMessages here.
 	 */
-	if (lockmode != NoLock)
-		AcceptInvalidationMessages();
 
 	/* The relcache does all the real work... */
-	r = RelationNameGetRelation(relationName);
+	r = RelationSysNameGetRelation(sysRelationName);
 
 	if (!RelationIsValid(r))
-		elog(ERROR, "Relation \"%s\" does not exist", relationName);
+		elog(ERROR, "Relation \"%s\" does not exist", sysRelationName);
 
 	if (lockmode != NoLock)
 		LockRelation(r, lockmode);
@@ -582,17 +618,44 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 }
 
 /* ----------------
- *		heap_openr - open a heap relation by name
+ *		heap_openrv - open a heap relation specified
+ *		by a RangeVar node
  *
- *		As above, but lookup by name instead of OID.
+ *		As above, but relation is specified by a RangeVar.
  * ----------------
  */
 Relation
-heap_openr(const char *relationName, LOCKMODE lockmode)
+heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 {
 	Relation	r;
 
-	r = relation_openr(relationName, lockmode);
+	r = relation_openrv(relation, lockmode);
+
+	if (r->rd_rel->relkind == RELKIND_INDEX)
+		elog(ERROR, "%s is an index relation",
+			 RelationGetRelationName(r));
+	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
+		elog(ERROR, "%s is a special relation",
+			 RelationGetRelationName(r));
+
+	pgstat_initstats(&r->pgstat_info, r);
+
+	return r;
+}
+
+/* ----------------
+ *		heap_openr - open a system heap relation specified by name.
+ *
+ *		As above, but the relation is specified by an unqualified name;
+ *		it is assumed to live in the system catalog namespace.
+ * ----------------
+ */
+Relation
+heap_openr(const char *sysRelationName, LOCKMODE lockmode)
+{
+	Relation	r;
+
+	r = relation_openr(sysRelationName, lockmode);
 
 	if (r->rd_rel->relkind == RELKIND_INDEX)
 		elog(ERROR, "%s is an index relation",

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.72 2002/02/19 20:11:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.73 2002/03/26 19:15:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,8 @@
 
 
 static Oid	copy_heap(Oid OIDOldHeap, char *NewName, bool istemp);
-static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName);
+static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName,
+					   bool istemp);
 static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
 /*
@@ -54,7 +55,7 @@ static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
  *	 hand, re-creating n indexes may blow out the space.
  */
 void
-cluster(char *oldrelname, char *oldindexname)
+cluster(RangeVar *oldrelation, char *oldindexname)
 {
 	Oid			OIDOldHeap,
 				OIDOldIndex,
@@ -64,34 +65,40 @@ cluster(char *oldrelname, char *oldindexname)
 	bool		istemp;
 	char		NewHeapName[NAMEDATALEN];
 	char		NewIndexName[NAMEDATALEN];
-	char		saveoldrelname[NAMEDATALEN];
-	char		saveoldindexname[NAMEDATALEN];
+	RangeVar   *saveoldrelation;
+	RangeVar   *saveoldindex;
+	RangeVar   *NewHeap;
+	RangeVar   *NewIndex;
 
 	/*
-	 * Copy the arguments into local storage, just to be safe.
+	 * FIXME SCHEMAS: The old code had the comment:
+	 * "Copy the arguments into local storage, just to be safe."
+	 * By using copyObject we are not using local storage.
+	 * Was that really necessary?
 	 */
-	StrNCpy(saveoldrelname, oldrelname, NAMEDATALEN);
-	StrNCpy(saveoldindexname, oldindexname, NAMEDATALEN);
+	saveoldrelation = copyObject(oldrelation);
+	saveoldindex = copyObject(oldrelation);
+	saveoldindex->relname = pstrdup(oldindexname);
 
 	/*
 	 * We grab exclusive access to the target rel and index for the
 	 * duration of the transaction.
 	 */
-	OldHeap = heap_openr(saveoldrelname, AccessExclusiveLock);
+	OldHeap = heap_openrv(saveoldrelation, AccessExclusiveLock);
 	OIDOldHeap = RelationGetRelid(OldHeap);
 
-	OldIndex = index_openr(saveoldindexname);
+	OldIndex = index_openrv(saveoldindex);
 	LockRelation(OldIndex, AccessExclusiveLock);
 	OIDOldIndex = RelationGetRelid(OldIndex);
 
-	istemp = is_temp_rel_name(saveoldrelname);
+	istemp = is_temp_rel_name(saveoldrelation->relname);
 
 	/*
 	 * Check that index is in fact an index on the given relation
 	 */
 	if (OldIndex->rd_index->indrelid != OIDOldHeap)
 		elog(ERROR, "CLUSTER: \"%s\" is not an index for table \"%s\"",
-			 saveoldindexname, saveoldrelname);
+			 saveoldindex->relname, saveoldrelation->relname);
 
 	/* Drop relcache refcnts, but do NOT give up the locks */
 	heap_close(OldHeap, NoLock);
@@ -117,21 +124,26 @@ cluster(char *oldrelname, char *oldindexname)
 	/* Create new index over the tuples of the new heap. */
 	snprintf(NewIndexName, NAMEDATALEN, "temp_%u", OIDOldIndex);
 
-	copy_index(OIDOldIndex, OIDNewHeap, NewIndexName);
+	copy_index(OIDOldIndex, OIDNewHeap, NewIndexName, istemp);
 
 	CommandCounterIncrement();
 
 	/* Destroy old heap (along with its index) and rename new. */
-	heap_drop_with_catalog(saveoldrelname, allowSystemTableMods);
+	heap_drop_with_catalog(saveoldrelation->relname, allowSystemTableMods);
 
 	CommandCounterIncrement();
 
-	renamerel(NewHeapName, saveoldrelname);
+	NewHeap = copyObject(saveoldrelation);
+	NewHeap->relname = NewHeapName;
+	NewIndex = copyObject(saveoldindex);
+	NewIndex->relname = NewIndexName;
+	
+	renamerel(NewHeap, saveoldrelation->relname);
 
 	/* This one might be unnecessary, but let's be safe. */
 	CommandCounterIncrement();
 
-	renamerel(NewIndexName, saveoldindexname);
+	renamerel(NewIndex, saveoldindex->relname);
 }
 
 static Oid
@@ -151,7 +163,9 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 	 */
 	tupdesc = CreateTupleDescCopyConstr(OldHeapDesc);
 
-	OIDNewHeap = heap_create_with_catalog(NewName, tupdesc,
+	OIDNewHeap = heap_create_with_catalog(NewName,
+										  RelationGetNamespace(OldHeap),
+										  tupdesc,
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relhasoids,
 										  istemp,
@@ -168,7 +182,7 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 	 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so
 	 * that the TOAST table will be visible for insertion.
 	 */
-	AlterTableCreateToastTable(NewName, true);
+	AlterTableCreateToastTable(OIDNewHeap, true);
 
 	heap_close(OldHeap, NoLock);
 
@@ -176,7 +190,7 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 }
 
 static void
-copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
+copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName, bool istemp)
 {
 	Relation	OldIndex,
 				NewHeap;
@@ -189,18 +203,15 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 	 * Create a new index like the old one.  To do this I get the info
 	 * from pg_index, and add a new index with a temporary name (that will
 	 * be changed later).
-	 *
-	 * NOTE: index_create will cause the new index to be a temp relation if
-	 * its parent table is, so we don't need to do anything special for
-	 * the temp-table case here.
 	 */
 	indexInfo = BuildIndexInfo(OldIndex->rd_index);
 
-	index_create(RelationGetRelationName(NewHeap),
+	index_create(OIDNewHeap,
 				 NewIndexName,
 				 indexInfo,
 				 OldIndex->rd_rel->relam,
 				 OldIndex->rd_index->indclass,
+				 istemp,
 				 OldIndex->rd_index->indisprimary,
 				 allowSystemTableMods);
 

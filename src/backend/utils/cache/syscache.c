@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.69 2002/03/22 21:34:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.70 2002/03/26 19:16:14 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -86,14 +86,14 @@
  */
 struct cachedesc
 {
-	char	   *name;			/* name of the relation being cached */
-	char	   *indname;		/* name of index relation for this cache */
+	const char *name;			/* name of the relation being cached */
+	const char *indname;		/* name of index relation for this cache */
 	int			reloidattr;		/* attr number of rel OID reference, or 0 */
 	int			nkeys;			/* # of keys needed for cache lookup */
 	int			key[4];			/* attribute numbers of key attrs */
 };
 
-static struct cachedesc cacheinfo[] = {
+static const struct cachedesc cacheinfo[] = {
 	{AggregateRelationName,		/* AGGNAME */
 		AggregateNameTypeIndex,
 		0,
@@ -324,13 +324,13 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{RelationRelationName,		/* RELNAME */
-		ClassNameIndex,
+	{RelationRelationName,		/* RELNAMENSP */
+		ClassNameNspIndex,
 		ObjectIdAttributeNumber,
-		1,
+		2,
 		{
 			Anum_pg_class_relname,
-			0,
+			Anum_pg_class_relnamespace,
 			0,
 			0
 	}},
@@ -515,7 +515,7 @@ SearchSysCache(int cacheId,
 	 * when sought.  This is a kluge ... temp table substitution should be
 	 * happening at a higher level ...
 	 */
-	if (cacheId == RELNAME || cacheId == TYPENAME)
+	if (cacheId == RELNAMENSP || cacheId == TYPENAME)
 	{
 		char	   *nontemp_relname;
 

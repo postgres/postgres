@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.139 2002/03/24 04:31:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.140 2002/03/26 19:16:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_shadow.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
@@ -94,9 +95,10 @@ DropErrorMsg(char *relname, char wrongkind, char rightkind)
 }
 
 static void
-CheckDropPermissions(char *name, char rightkind)
+CheckDropPermissions(RangeVar *rel, char rightkind)
 {
 	struct kindstrings *rentry;
+	Oid			relOid;
 	HeapTuple	tuple;
 	Form_pg_class classform;
 
@@ -105,49 +107,54 @@ CheckDropPermissions(char *name, char rightkind)
 			break;
 	Assert(rentry->kind != '\0');
 
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(name),
+	relOid = RangeVarGetRelid(rel, true);
+	if (!OidIsValid(relOid))
+		elog(ERROR, "%s \"%s\" does not exist", rentry->name, rel->relname);
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "%s \"%s\" does not exist", rentry->name, name);
+		elog(ERROR, "%s \"%s\" does not exist", rentry->name, rel->relname);
 
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	if (classform->relkind != rightkind)
-		DropErrorMsg(name, classform->relkind, rightkind);
+		DropErrorMsg(rel->relname, classform->relkind, rightkind);
 
-	if (!pg_class_ownercheck(tuple->t_data->t_oid, GetUserId()))
+	if (!pg_class_ownercheck(relOid, GetUserId()))
 		elog(ERROR, "you do not own %s \"%s\"",
-			 rentry->name, name);
+			 rentry->name, rel->relname);
 
-	if (!allowSystemTableMods && IsSystemRelationName(name) &&
-		!is_temp_relname(name))
+	if (!allowSystemTableMods && IsSystemRelationName(rel->relname) &&
+		!is_temp_relname(rel->relname))
 		elog(ERROR, "%s \"%s\" is a system %s",
-			 rentry->name, name, rentry->name);
+			 rentry->name, rel->relname, rentry->name);
 
 	ReleaseSysCache(tuple);
 }
 
 static void
-CheckOwnership(char *relname, bool noCatalogs)
+CheckOwnership(RangeVar *rel, bool noCatalogs)
 {
+	Oid			relOid;
 	HeapTuple	tuple;
 
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(relname),
+	relOid = RangeVarGetRelid(rel, false);
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Relation \"%s\" does not exist", relname);
+		elog(ERROR, "Relation \"%s\" does not exist", rel->relname);
 
-	if (!pg_class_ownercheck(tuple->t_data->t_oid, GetUserId()))
-		elog(ERROR, "%s: %s", relname,
+	if (!pg_class_ownercheck(relOid, GetUserId()))
+		elog(ERROR, "%s: %s", rel->relname,
 			 aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 
 	if (noCatalogs)
 	{
-		if (!allowSystemTableMods && IsSystemRelationName(relname))
+		if (!allowSystemTableMods && IsSystemRelationName(rel->relname))
 			elog(ERROR, "relation \"%s\" is a system catalog",
-				 relname);
+				 rel->relname);
 	}
 
 	ReleaseSysCache(tuple);
@@ -251,47 +258,52 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateStmt:
-			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
+			{
+				Oid			relOid;
 
-			/*
-			 * Let AlterTableCreateToastTable decide if this one needs a
-			 * secondary relation too.
-			 */
-			CommandCounterIncrement();
-			AlterTableCreateToastTable(((CreateStmt *) parsetree)->relation->relname,
-									   true);
+				relOid = DefineRelation((CreateStmt *) parsetree,
+										RELKIND_RELATION);
+
+				/*
+				 * Let AlterTableCreateToastTable decide if this one needs a
+				 * secondary relation too.
+				 */
+				CommandCounterIncrement();
+				AlterTableCreateToastTable(relOid, true);
+			}
 			break;
 
 		case T_DropStmt:
 			{
 				DropStmt   *stmt = (DropStmt *) parsetree;
-				List	   *args = stmt->objects;
 				List	   *arg;
 
-				foreach(arg, args)
+				foreach(arg, stmt->objects)
 				{
-					relname = ((RangeVar *) lfirst(arg))->relname;
+					RangeVar   *rel = (RangeVar *) lfirst(arg);
+
+					relname = rel->relname;
 
 					switch (stmt->removeType)
 					{
 						case DROP_TABLE:
-							CheckDropPermissions(relname, RELKIND_RELATION);
+							CheckDropPermissions(rel, RELKIND_RELATION);
 							RemoveRelation(relname);
 							break;
 
 						case DROP_SEQUENCE:
-							CheckDropPermissions(relname, RELKIND_SEQUENCE);
+							CheckDropPermissions(rel, RELKIND_SEQUENCE);
 							RemoveRelation(relname);
 							break;
 
 						case DROP_VIEW:
-							CheckDropPermissions(relname, RELKIND_VIEW);
+							CheckDropPermissions(rel, RELKIND_VIEW);
 							RemoveView(relname);
 							break;
 
 						case DROP_INDEX:
-							CheckDropPermissions(relname, RELKIND_INDEX);
-							RemoveIndex(relname);
+							CheckDropPermissions(rel, RELKIND_INDEX);
+							RemoveIndex(rel);
 							break;
 
 						case DROP_RULE:
@@ -329,13 +341,12 @@ ProcessUtility(Node *parsetree,
 
 		case T_CommentStmt:
 			{
-				CommentStmt *statement;
+				CommentStmt *stmt;
 
-				statement = ((CommentStmt *) parsetree);
+				stmt = ((CommentStmt *) parsetree);
 
-				CommentObject(statement->objtype, statement->objname,
-							  statement->objproperty, statement->objlist,
-							  statement->comment);
+				CommentObject(stmt->objtype, stmt->objschema, stmt->objname,
+							  stmt->objproperty, stmt->objlist, stmt->comment);
 			}
 			break;
 
@@ -370,7 +381,7 @@ ProcessUtility(Node *parsetree,
 				RenameStmt *stmt = (RenameStmt *) parsetree;
 
 				relname = stmt->relation->relname;
-				CheckOwnership(relname, true);
+				CheckOwnership(stmt->relation, true);
 
 				/* ----------------
 				 *	XXX using len == 3 to tell the difference
@@ -389,7 +400,7 @@ ProcessUtility(Node *parsetree,
 					 * Note: we also rename the "type" tuple corresponding to
 					 * the relation.
 					 */
-					renamerel(relname,	/* old name */
+					renamerel(stmt->relation,	/* old relation */
 							  stmt->newname);	/* new name */
 				}
 				else
@@ -454,11 +465,11 @@ ProcessUtility(Node *parsetree,
 												 stmt->behavior);
 						break;
 					case 'E':	/* CREATE TOAST TABLE */
-						AlterTableCreateToastTable(stmt->relation->relname,
+						AlterTableCreateToastTable(RangeVarGetRelid(stmt->relation, false),
 												   false);
 						break;
 					case 'U':	/* ALTER OWNER */
-						AlterTableOwner(stmt->relation->relname,
+						AlterTableOwner(stmt->relation,
 										stmt->name);
 						break;
 					default:	/* oops */
@@ -519,10 +530,9 @@ ProcessUtility(Node *parsetree,
 			{
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
 
-				relname = stmt->relation->relname;
-				CheckOwnership(relname, true);
+				CheckOwnership(stmt->relation, true);
 
-				DefineIndex(stmt->relation->relname,	/* relation */
+				DefineIndex(stmt->relation,				/* relation */
 							stmt->idxname,				/* index name */
 							stmt->accessMethod, 		/* am name */
 							stmt->indexParams,			/* parameters */
@@ -638,10 +648,9 @@ ProcessUtility(Node *parsetree,
 			{
 				ClusterStmt *stmt = (ClusterStmt *) parsetree;
 
-				relname = stmt->relation->relname;
-				CheckOwnership(relname, true);
+				CheckOwnership(stmt->relation, true);
 
-				cluster(relname, stmt->indexname);
+				cluster(stmt->relation, stmt->indexname);
 			}
 			break;
 
@@ -775,13 +784,12 @@ ProcessUtility(Node *parsetree,
 								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O options",
 									 relname);
 						}
-						CheckOwnership(relname, false);
-						ReindexIndex(relname, stmt->force);
+						CheckOwnership(stmt->relation, false);
+						ReindexIndex(stmt->relation, stmt->force);
 						break;
 					case TABLE:
-						relname = (char *) stmt->relation->relname;
-						CheckOwnership(relname, false);
-						ReindexTable(relname, stmt->force);
+						CheckOwnership(stmt->relation, false);
+						ReindexTable(stmt->relation, stmt->force);
 						break;
 					case DATABASE:
 						relname = (char *) stmt->name;

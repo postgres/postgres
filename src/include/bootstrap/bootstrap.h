@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.27 2002/03/02 21:39:34 momjian Exp $
+ * $Id: bootstrap.h,v 1.28 2002/03/26 19:16:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ extern Form_pg_attribute attrtypes[MAXATTR];
 extern int	numattr;
 extern int	BootstrapMain(int ac, char *av[]);
 
-extern void index_register(char *heap, char *ind, IndexInfo *indexInfo);
+extern void index_register(Oid heap, Oid ind, IndexInfo *indexInfo);
 
 extern void err_out(void);
 extern void InsertOneTuple(Oid objectid);

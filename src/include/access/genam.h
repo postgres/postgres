@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.32 2002/02/19 20:11:19 tgl Exp $
+ * $Id: genam.h,v 1.33 2002/03/26 19:16:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
+#include "nodes/primnodes.h"
 
 
 /* Struct for statistics returned by bulk-delete operation */
@@ -50,7 +51,8 @@ typedef SysScanDescData *SysScanDesc;
  * generalized index_ interface routines (in indexam.c)
  */
 extern Relation index_open(Oid relationId);
-extern Relation index_openr(const char *relationName);
+extern Relation index_openrv(const RangeVar *relation);
+extern Relation index_openr(const char *sysRelationName);
 extern void index_close(Relation relation);
 extern InsertIndexResult index_insert(Relation relation,
 			 Datum *datum, char *nulls,

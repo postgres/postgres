@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.92 2002/03/06 20:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.93 2002/03/26 19:16:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -656,11 +656,11 @@ do { \
 
 CatCache *
 InitCatCache(int id,
-			 char *relname,
-			 char *indname,
+			 const char *relname,
+			 const char *indname,
 			 int reloidattr,
 			 int nkeys,
-			 int *key)
+			 const int *key)
 {
 	CatCache   *cp;
 	MemoryContext oldcxt;

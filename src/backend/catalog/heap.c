@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.191 2002/03/22 02:56:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.192 2002/03/26 19:15:25 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -38,7 +38,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_index.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -50,11 +50,9 @@
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
-#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
-#include "parser/parse_type.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
@@ -214,6 +212,7 @@ SystemAttributeByName(const char *attname, bool relhasoids)
  */
 Relation
 heap_create(char *relname,
+			Oid relnamespace,
 			TupleDesc tupDesc,
 			bool istemp,
 			bool storage_create,
@@ -222,7 +221,8 @@ heap_create(char *relname,
 	static unsigned int uniqueId = 0;
 
 	Oid			relid;
-	Oid			tblNode = MyDatabaseId;
+	Oid			dbid = MyDatabaseId;
+	RelFileNode	rnode;
 	bool		nailme = false;
 	Relation	rel;
 
@@ -238,9 +238,11 @@ heap_create(char *relname,
 	/*
 	 * Real ugly stuff to assign the proper relid in the relation
 	 * descriptor follows.	Note that only "bootstrapped" relations whose
-	 * OIDs are hard-coded in pg_class.h need be listed here.
+	 * OIDs are hard-coded in pg_class.h need be listed here.  We also
+	 * have to take special care for those rels that should be nailed
+	 * in cache and/or are shared across databases.
 	 */
-	if (relname && IsSystemRelationName(relname))
+	if (relname && relnamespace == PG_CATALOG_NAMESPACE)
 	{
 		if (strcmp(TypeRelationName, relname) == 0)
 		{
@@ -264,24 +266,24 @@ heap_create(char *relname,
 		}
 		else if (strcmp(ShadowRelationName, relname) == 0)
 		{
-			tblNode = InvalidOid;
+			dbid = InvalidOid;
 			relid = RelOid_pg_shadow;
 		}
 		else if (strcmp(GroupRelationName, relname) == 0)
 		{
-			tblNode = InvalidOid;
+			dbid = InvalidOid;
 			relid = RelOid_pg_group;
 		}
 		else if (strcmp(DatabaseRelationName, relname) == 0)
 		{
-			tblNode = InvalidOid;
+			dbid = InvalidOid;
 			relid = RelOid_pg_database;
 		}
 		else
 		{
 			relid = newoid();
 			if (IsSharedSystemRelationName(relname))
-				tblNode = InvalidOid;
+				dbid = InvalidOid;
 		}
 	}
 	else
@@ -298,10 +300,20 @@ heap_create(char *relname,
 	}
 
 	/*
+	 * For now, the physical identifier of the relation is the same as the
+	 * logical identifier.
+	 */
+	rnode.tblNode = dbid;
+	rnode.relNode = relid;
+
+	/*
 	 * build the relcache entry.
 	 */
-	rel = RelationBuildLocalRelation(relname, tupDesc,
-									 relid, tblNode,
+	rel = RelationBuildLocalRelation(relname,
+									 relnamespace,
+									 tupDesc,
+									 relid, dbid,
+									 rnode,
 									 nailme);
 
 	/*
@@ -329,7 +341,7 @@ heap_storage_create(Relation rel)
  *		1) CheckAttributeNames() is used to make certain the tuple
  *		   descriptor contains a valid set of attribute names
  *
- *		2) pg_class is opened and RelationFindRelid()
+ *		2) pg_class is opened and get_relname_relid()
  *		   performs a scan to ensure that no relation with the
  *		   same name already exists.
  *
@@ -398,73 +410,6 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids)
 					 NameStr(tupdesc->attrs[j]->attname));
 		}
 	}
-}
-
-/* --------------------------------
- *		RelnameFindRelid
- *
- *		Find any existing relation of the given name.
- * --------------------------------
- */
-Oid
-RelnameFindRelid(const char *relname)
-{
-	Oid			relid;
-
-	/*
-	 * If this is not bootstrap (initdb) time, use the catalog index on
-	 * pg_class.
-	 */
-	if (!IsBootstrapProcessingMode())
-	{
-		relid = GetSysCacheOid(RELNAME,
-							   PointerGetDatum(relname),
-							   0, 0, 0);
-	}
-	else
-	{
-		Relation	pg_class_desc;
-		ScanKeyData key;
-		HeapScanDesc pg_class_scan;
-		HeapTuple	tuple;
-
-		pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
-
-		/*
-		 * At bootstrap time, we have to do this the hard way.	Form the
-		 * scan key.
-		 */
-		ScanKeyEntryInitialize(&key,
-							   0,
-							   (AttrNumber) Anum_pg_class_relname,
-							   (RegProcedure) F_NAMEEQ,
-							   PointerGetDatum(relname));
-
-		/*
-		 * begin the scan
-		 */
-		pg_class_scan = heap_beginscan(pg_class_desc,
-									   0,
-									   SnapshotNow,
-									   1,
-									   &key);
-
-		/*
-		 * get a tuple.  if the tuple is NULL then it means we didn't find
-		 * an existing relation.
-		 */
-		tuple = heap_getnext(pg_class_scan, 0);
-
-		if (HeapTupleIsValid(tuple))
-			relid = tuple->t_data->t_oid;
-		else
-			relid = InvalidOid;
-
-		heap_endscan(pg_class_scan);
-
-		heap_close(pg_class_desc, AccessShareLock);
-	}
-	return relid;
 }
 
 /* --------------------------------
@@ -719,6 +664,7 @@ AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
  */
 Oid
 heap_create_with_catalog(char *relname,
+						 Oid relnamespace,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool relhasoids,
@@ -742,7 +688,7 @@ heap_create_with_catalog(char *relname,
 	CheckAttributeNames(tupdesc, relhasoids);
 
 	/* temp tables can mask non-temp tables */
-	if ((!istemp && RelnameFindRelid(relname)) ||
+	if ((!istemp && get_relname_relid(relname, relnamespace)) ||
 		(istemp && is_temp_rel_name(relname)))
 		elog(ERROR, "Relation '%s' already exists", relname);
 
@@ -765,8 +711,8 @@ heap_create_with_catalog(char *relname,
 	 * heap_storage_create() does all the "real" work of creating the disk
 	 * file for the relation.
 	 */
-	new_rel_desc = heap_create(relname, tupdesc, istemp, false,
-							   allow_system_table_mods);
+	new_rel_desc = heap_create(relname, relnamespace, tupdesc,
+							   istemp, false, allow_system_table_mods);
 
 	/* Fetch the relation OID assigned by heap_create */
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
@@ -916,10 +862,8 @@ RelationRemoveInheritance(Relation relation)
 	heap_close(catalogRelation, RowExclusiveLock);
 }
 
-/* --------------------------------
+/*
  *		RelationRemoveIndexes
- *
- * --------------------------------
  */
 static void
 RelationRemoveIndexes(Relation relation)

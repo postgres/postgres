@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.85 2002/03/20 19:44:55 tgl Exp $
+ * $Id: pg_attribute.h,v 1.86 2002/03/26 19:16:29 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -437,52 +437,54 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  */
 #define Schema_pg_class \
 { 1259, {"relname"},	   19, DEFAULT_ATTSTATTARGET, NAMEDATALEN,	1, 0, -1, -1, false, 'p', false, 'i', false, false }, \
-{ 1259, {"reltype"},	   26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1259, {"relowner"},	   23, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1259, {"relam"},		   26, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1259, {"relfilenode"},   26, 0,	4,	5, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1259, {"relpages"},	   23, 0,	4,	6, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1259, {"reltuples"},	   700, 0,	4,	7, 0, -1, -1, false, 'p', false, 'i', false, false }, \
-{ 1259, {"reltoastrelid"}, 26, 0,	4,	8, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1259, {"reltoastidxid"}, 26, 0,	4,	9, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1259, {"relhasindex"},   16, 0,	1, 10, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relisshared"},   16, 0,	1, 11, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relkind"},	   18, 0,	1, 12, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relnatts"},	   21, 0,	2, 13, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1259, {"relchecks"},	   21, 0,	2, 14, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1259, {"reltriggers"},   21, 0,	2, 15, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1259, {"relukeys"},	   21, 0,	2, 16, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1259, {"relfkeys"},	   21, 0,	2, 17, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1259, {"relrefs"},	   21, 0,	2, 18, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1259, {"relhasoids"},    16, 0,	1, 19, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relhaspkey"},    16, 0,	1, 20, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relhasrules"},   16, 0,	1, 21, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relhassubclass"},16, 0,	1, 22, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relacl"},		 1034, 0,  -1, 23, 0, -1, -1, false, 'x', false, 'i', false, false }
+{ 1259, {"relnamespace"},  26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1259, {"reltype"},	   26, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1259, {"relowner"},	   23, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1259, {"relam"},		   26, 0,	4,	5, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1259, {"relfilenode"},   26, 0,	4,	6, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1259, {"relpages"},	   23, 0,	4,	7, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1259, {"reltuples"},	   700, 0,	4,	8, 0, -1, -1, false, 'p', false, 'i', false, false }, \
+{ 1259, {"reltoastrelid"}, 26, 0,	4,	9, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1259, {"reltoastidxid"}, 26, 0,	4, 10, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1259, {"relhasindex"},   16, 0,	1, 11, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relisshared"},   16, 0,	1, 12, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relkind"},	   18, 0,	1, 13, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relnatts"},	   21, 0,	2, 14, 0, -1, -1, true, 'p', false, 's', false, false }, \
+{ 1259, {"relchecks"},	   21, 0,	2, 15, 0, -1, -1, true, 'p', false, 's', false, false }, \
+{ 1259, {"reltriggers"},   21, 0,	2, 16, 0, -1, -1, true, 'p', false, 's', false, false }, \
+{ 1259, {"relukeys"},	   21, 0,	2, 17, 0, -1, -1, true, 'p', false, 's', false, false }, \
+{ 1259, {"relfkeys"},	   21, 0,	2, 18, 0, -1, -1, true, 'p', false, 's', false, false }, \
+{ 1259, {"relrefs"},	   21, 0,	2, 19, 0, -1, -1, true, 'p', false, 's', false, false }, \
+{ 1259, {"relhasoids"},    16, 0,	1, 20, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relhaspkey"},    16, 0,	1, 21, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relhasrules"},   16, 0,	1, 22, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relhassubclass"},16, 0,	1, 23, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relacl"},		 1034, 0,  -1, 24, 0, -1, -1, false, 'x', false, 'i', false, false }
 
 DATA(insert ( 1259 relname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
-DATA(insert ( 1259 reltype			26 0  4   2 0 -1 -1 t p f i f f));
-DATA(insert ( 1259 relowner			23 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert ( 1259 relam			26 0  4   4 0 -1 -1 t p f i f f));
-DATA(insert ( 1259 relfilenode		26 0  4   5 0 -1 -1 t p f i f f));
-DATA(insert ( 1259 relpages			23 0  4   6 0 -1 -1 t p f i f f));
-DATA(insert ( 1259 reltuples	   700 0  4   7 0 -1 -1 f p f i f f));
-DATA(insert ( 1259 reltoastrelid	26 0  4   8 0 -1 -1 t p f i f f));
-DATA(insert ( 1259 reltoastidxid	26 0  4   9 0 -1 -1 t p f i f f));
-DATA(insert ( 1259 relhasindex		16 0  1  10 0 -1 -1 t p f c f f));
-DATA(insert ( 1259 relisshared		16 0  1  11 0 -1 -1 t p f c f f));
-DATA(insert ( 1259 relkind			18 0  1  12 0 -1 -1 t p f c f f));
-DATA(insert ( 1259 relnatts			21 0  2  13 0 -1 -1 t p f s f f));
-DATA(insert ( 1259 relchecks		21 0  2  14 0 -1 -1 t p f s f f));
-DATA(insert ( 1259 reltriggers		21 0  2  15 0 -1 -1 t p f s f f));
-DATA(insert ( 1259 relukeys			21 0  2  16 0 -1 -1 t p f s f f));
-DATA(insert ( 1259 relfkeys			21 0  2  17 0 -1 -1 t p f s f f));
-DATA(insert ( 1259 relrefs			21 0  2  18 0 -1 -1 t p f s f f));
-DATA(insert ( 1259 relhasoids		16 0  1  19 0 -1 -1 t p f c f f));
-DATA(insert ( 1259 relhaspkey		16 0  1  20 0 -1 -1 t p f c f f));
-DATA(insert ( 1259 relhasrules		16 0  1  21 0 -1 -1 t p f c f f));
-DATA(insert ( 1259 relhassubclass	16 0  1  22 0 -1 -1 t p f c f f));
-DATA(insert ( 1259 relacl		  1034 0 -1  23 0 -1 -1 f x f i f f));
+DATA(insert ( 1259 relnamespace		26 0  4   2 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 reltype			26 0  4   3 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relowner			23 0  4   4 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relam			26 0  4   5 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relfilenode		26 0  4   6 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relpages			23 0  4   7 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 reltuples	   700 0  4   8 0 -1 -1 f p f i f f));
+DATA(insert ( 1259 reltoastrelid	26 0  4   9 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 reltoastidxid	26 0  4  10 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relhasindex		16 0  1  11 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relisshared		16 0  1  12 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relkind			18 0  1  13 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relnatts			21 0  2  14 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relchecks		21 0  2  15 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 reltriggers		21 0  2  16 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relukeys			21 0  2  17 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relfkeys			21 0  2  18 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relrefs			21 0  2  19 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relhasoids		16 0  1  20 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relhaspkey		16 0  1  21 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relhasrules		16 0  1  22 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relhassubclass	16 0  1  23 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relacl		  1034 0 -1  24 0 -1 -1 f x f i f f));
 DATA(insert ( 1259 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert ( 1259 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert ( 1259 xmin				28 0  4  -3 0 -1 -1 t p f i f f));

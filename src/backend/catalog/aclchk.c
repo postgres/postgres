@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.58 2002/03/21 23:27:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.59 2002/03/26 19:15:22 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -22,6 +22,7 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_language.h"
@@ -200,7 +201,8 @@ ExecuteGrantStmt_Table(GrantStmt *stmt)
 
 	foreach(i, stmt->objects)
 	{
-		char	   *relname = ((RangeVar *) lfirst(i))->relname;
+		RangeVar   *relvar = (RangeVar *) lfirst(i);
+		Oid			relOid;
 		Relation	relation;
 		HeapTuple	tuple;
 		Form_pg_class pg_class_tuple;
@@ -216,27 +218,27 @@ ExecuteGrantStmt_Table(GrantStmt *stmt)
 
 		/* open pg_class */
 		relation = heap_openr(RelationRelationName, RowExclusiveLock);
-		tuple = SearchSysCache(RELNAME,
-							   PointerGetDatum(relname),
+		relOid = RangeVarGetRelid(relvar, false);
+		tuple = SearchSysCache(RELOID,
+							   ObjectIdGetDatum(relOid),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "relation \"%s\" not found",
-				 relname);
+			elog(ERROR, "relation %u not found", relOid);
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
 
-		if (!pg_class_ownercheck(tuple->t_data->t_oid, GetUserId()))
+		if (!pg_class_ownercheck(relOid, GetUserId()))
 			elog(ERROR, "%s: permission denied",
-				 relname);
+				 relvar->relname);
 
 		if (pg_class_tuple->relkind == RELKIND_INDEX)
 			elog(ERROR, "\"%s\" is an index",
-				 relname);
+				 relvar->relname);
 
 		/*
 		 * If there's no ACL, create a default using the pg_class.relowner
 		 * field.
 		 */
-		aclDatum = SysCacheGetAttr(RELNAME, tuple, Anum_pg_class_relacl,
+		aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl,
 								   &isNull);
 		if (isNull)
 			old_acl = acldefault(pg_class_tuple->relowner);

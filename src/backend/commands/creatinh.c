@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.91 2002/03/22 02:56:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.92 2002/03/26 19:15:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,11 @@
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
-#include "catalog/indexing.h"
 #include "catalog/heap.h"
+#include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/creatinh.h"
 #include "miscadmin.h"
@@ -54,6 +56,7 @@ Oid
 DefineRelation(CreateStmt *stmt, char relkind)
 {
 	char	   *relname = palloc(NAMEDATALEN);
+	Oid			namespaceId;
 	List	   *schema = stmt->tableElts;
 	int			numberOfAttributes;
 	Oid			relationId;
@@ -72,6 +75,12 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * as parser should have done this already).
 	 */
 	StrNCpy(relname, (stmt->relation)->relname, NAMEDATALEN);
+
+	/*
+	 * Look up the namespace in which we are supposed to create the
+	 * relation.
+	 */
+	namespaceId = RangeVarGetCreationNamespace(stmt->relation);
 
 	/*
 	 * Merge domain attributes into the known columns before processing table
@@ -147,7 +156,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		}
 	}
 
-	relationId = heap_create_with_catalog(relname, descriptor,
+	relationId = heap_create_with_catalog(relname, namespaceId,
+										  descriptor,
 										  relkind,
 										  stmt->hasoids || parentHasOids,
 										  stmt->relation->istemp,
@@ -330,7 +340,7 @@ MergeDomainAttributes(List *schema)
  * Input arguments:
  * 'schema' is the column/attribute definition for the table. (It's a list
  *		of ColumnDef's.) It is destructively changed.
- * 'supers' is a list of names (as Value objects) of parent relations.
+ * 'supers' is a list of names (as RangeVar nodes) of parent relations.
  * 'istemp' is TRUE if we are creating a temp relation.
  *
  * Output arguments:
@@ -418,24 +428,6 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	}
 
 	/*
-	 * Reject duplicate names in the list of parents, too.
-	 *
-	 * XXX needs to be smarter about schema-qualified table names.
-	 */
-	foreach(entry, supers)
-	{
-		List	   *rest;
-
-		foreach(rest, lnext(entry))
-		{
-			if (strcmp(((RangeVar *) lfirst(entry))->relname, 
-					   ((RangeVar *) lfirst(rest))->relname) == 0)
-				elog(ERROR, "CREATE TABLE: inherited relation \"%s\" duplicated",
-					 ((RangeVar *) lfirst(entry))->relname);
-		}
-	}
-
-	/*
 	 * Scan the parents left-to-right, and merge their attributes to form
 	 * a list of inherited attributes (inhSchema).	Also check to see if
 	 * we need to inherit an OID column.
@@ -443,30 +435,40 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	child_attno = 0;
 	foreach(entry, supers)
 	{
-		char	   *name = ((RangeVar *) lfirst(entry))->relname;
+		RangeVar   *parent = (RangeVar *) lfirst(entry);
 		Relation	relation;
 		TupleDesc	tupleDesc;
 		TupleConstr *constr;
 		AttrNumber *newattno;
 		AttrNumber	parent_attno;
 
-		relation = heap_openr(name, AccessShareLock);
+		relation = heap_openrv(parent, AccessShareLock);
 
 		if (relation->rd_rel->relkind != RELKIND_RELATION)
-			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table", name);
+			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table",
+				 parent->relname);
 		/* Permanent rels cannot inherit from temporary ones */
-		if (!istemp && is_temp_rel_name(name))
-			elog(ERROR, "CREATE TABLE: cannot inherit from temp relation \"%s\"", name);
+		if (!istemp && is_temp_rel_name(parent->relname))
+			elog(ERROR, "CREATE TABLE: cannot inherit from temp relation \"%s\"",
+				 parent->relname);
 
 		/*
 		 * We should have an UNDER permission flag for this, but for now,
 		 * demand that creator of a child table own the parent.
 		 */
 		if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-			elog(ERROR, "you do not own table \"%s\"", name);
+			elog(ERROR, "you do not own table \"%s\"",
+				 parent->relname);
 
-		parentOids = lappendi(parentOids, relation->rd_id);
-		setRelhassubclassInRelation(relation->rd_id, true);
+		/*
+		 * Reject duplications in the list of parents.
+		 */
+		if (intMember(RelationGetRelid(relation), parentOids))
+			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" duplicated",
+				 parent->relname);
+
+		parentOids = lappendi(parentOids, RelationGetRelid(relation));
+		setRelhassubclassInRelation(RelationGetRelid(relation), true);
 
 		parentHasOids |= relation->rd_rel->relhasoids;
 

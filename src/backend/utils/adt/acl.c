@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.69 2002/03/21 23:27:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.70 2002/03/26 19:16:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
@@ -723,7 +724,7 @@ makeAclString(const char *privileges, const char *grantee, char grant_or_revoke)
 /*
  * has_table_privilege_name_name
  *		Check user privileges on a relation given
- *		name usename, name relname, and text priv name.
+ *		name username, name relname, and text priv name.
  *
  * RETURNS
  *		a boolean value
@@ -995,7 +996,8 @@ has_table_privilege_cname_id(char *username, Oid reloid,
 							 text *priv_type_text)
 {
 	int32		usesysid;
-	char	   *relname;
+	AclMode		mode;
+	int32		result;
 
 	/*
 	 * Lookup userid based on username
@@ -1003,18 +1005,19 @@ has_table_privilege_cname_id(char *username, Oid reloid,
 	usesysid = get_usesysid(username);
 
 	/*
-	 * Lookup relname based on rel oid
+	 * Convert priv_type_text to an AclMode
 	 */
-	relname = get_rel_name(reloid);
-	if (relname == NULL)
-		elog(ERROR, "has_table_privilege: invalid relation oid %u",
-			 reloid);
+	mode = convert_priv_string(priv_type_text);
 
 	/*
-	 * Make use of has_table_privilege_id_cname. It accepts the arguments
-	 * we now have.
+	 * Finally, check for the privilege
 	 */
-	return has_table_privilege_id_cname(usesysid, relname, priv_type_text);
+	result = pg_class_aclcheck(reloid, usesysid, mode);
+
+	if (result == ACLCHECK_OK)
+		return true;
+	else
+		return false;
 }
 
 
@@ -1039,9 +1042,7 @@ has_table_privilege_id_cname(int32 usesysid, char *relname,
 	/*
 	 * Convert relname to rel OID.
 	 */
-	reloid = GetSysCacheOid(RELNAME,
-							PointerGetDatum(relname),
-							0, 0, 0);
+	reloid = RelnameGetRelid(relname);
 	if (!OidIsValid(reloid))
 		elog(ERROR, "has_table_privilege: relation \"%s\" does not exist",
 			 relname);

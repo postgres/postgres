@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.157 2002/03/19 02:18:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.158 2002/03/26 19:16:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,9 @@
  * INTERFACE ROUTINES
  *		RelationCacheInitialize			- initialize relcache
  *		RelationCacheInitializePhase2	- finish initializing relcache
- *		RelationIdCacheGetRelation		- get a reldesc from the cache (id)
- *		RelationNameCacheGetRelation	- get a reldesc from the cache (name)
  *		RelationIdGetRelation			- get a reldesc by relation id
- *		RelationNameGetRelation			- get a reldesc by relation name
+ *		RelationSysNameGetRelation		- get a reldesc by system rel name
+ *		RelationIdCacheGetRelation		- get a cached reldesc by relid
  *		RelationClose					- close an open relation
  *
  * NOTES
@@ -39,13 +38,13 @@
 #include "access/istrat.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
-#include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
@@ -70,7 +69,7 @@
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
 
 /*
- *		hardcoded tuple descriptors.  see lib/backend/catalog/pg_attribute.h
+ *		hardcoded tuple descriptors.  see include/catalog/pg_attribute.h
  */
 static FormData_pg_attribute Desc_pg_class[Natts_pg_class] = {Schema_pg_class};
 static FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Schema_pg_attribute};
@@ -80,11 +79,14 @@ static FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
 /*
  *		Hash tables that index the relation cache
  *
- *		Relations are looked up two ways, by name and by id,
+ *		Relations are looked up two ways, by OID and by name,
  *		thus there are two hash tables for referencing them.
+ *
+ *		The OID index covers all relcache entries.  The name index
+ *		covers *only* system relations (only those in PG_CATALOG_NAMESPACE).
  */
-static HTAB *RelationNameCache;
 static HTAB *RelationIdCache;
+static HTAB *RelationSysNameCache;
 
 /*
  * Bufmgr uses RelFileNode for lookup. Actually, I would like to do
@@ -128,7 +130,7 @@ static List *initFileRelationIds = NIL;
 
 /*
  *		RelationBuildDescInfo exists so code can be shared
- *		between RelationIdGetRelation() and RelationNameGetRelation()
+ *		between RelationIdGetRelation() and RelationSysNameGetRelation()
  */
 typedef struct RelationBuildDescInfo
 {
@@ -138,21 +140,21 @@ typedef struct RelationBuildDescInfo
 	union
 	{
 		Oid			info_id;	/* relation object id */
-		char	   *info_name;	/* relation name */
+		char	   *info_name;	/* system relation name */
 	}			i;
 } RelationBuildDescInfo;
-
-typedef struct relnamecacheent
-{
-	NameData	relname;
-	Relation	reldesc;
-} RelNameCacheEnt;
 
 typedef struct relidcacheent
 {
 	Oid			reloid;
 	Relation	reldesc;
 } RelIdCacheEnt;
+
+typedef struct relnamecacheent
+{
+	NameData	relname;
+	Relation	reldesc;
+} RelNameCacheEnt;
 
 typedef struct relnodecacheent
 {
@@ -165,24 +167,14 @@ typedef struct relnodecacheent
  */
 #define RelationCacheInsert(RELATION)	\
 do { \
-	RelIdCacheEnt *idhentry; RelNameCacheEnt *namehentry; \
-	char *relname; RelNodeCacheEnt *nodentry; bool found; \
-	relname = RelationGetPhysicalRelationName(RELATION); \
-	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
-											   relname, \
-											   HASH_ENTER, \
-											   &found); \
-	if (namehentry == NULL) \
-		elog(ERROR, "out of memory for relation descriptor cache"); \
-	/* used to give notice if found -- now just keep quiet */ ; \
-	namehentry->reldesc = RELATION; \
+	RelIdCacheEnt *idhentry; RelNodeCacheEnt *nodentry; bool found; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
 										   (void *) &(RELATION->rd_id), \
 										   HASH_ENTER, \
 										   &found); \
 	if (idhentry == NULL) \
 		elog(ERROR, "out of memory for relation descriptor cache"); \
-	/* used to give notice if found -- now just keep quiet */ ; \
+	/* used to give notice if found -- now just keep quiet */ \
 	idhentry->reldesc = RELATION; \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
 										   (void *) &(RELATION->rd_node), \
@@ -190,19 +182,21 @@ do { \
 										   &found); \
 	if (nodentry == NULL) \
 		elog(ERROR, "out of memory for relation descriptor cache"); \
-	/* used to give notice if found -- now just keep quiet */ ; \
+	/* used to give notice if found -- now just keep quiet */ \
 	nodentry->reldesc = RELATION; \
-} while(0)
-
-#define RelationNameCacheLookup(NAME, RELATION) \
-do { \
-	RelNameCacheEnt *hentry; \
-	hentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
-										   (void *) (NAME), HASH_FIND,NULL); \
-	if (hentry) \
-		RELATION = hentry->reldesc; \
-	else \
-		RELATION = NULL; \
+	if (RelationGetNamespace(RELATION) == PG_CATALOG_NAMESPACE) \
+	{ \
+		char *relname = RelationGetPhysicalRelationName(RELATION); \
+		RelNameCacheEnt *namehentry; \
+		namehentry = (RelNameCacheEnt*)hash_search(RelationSysNameCache, \
+												   relname, \
+												   HASH_ENTER, \
+												   &found); \
+		if (namehentry == NULL) \
+			elog(ERROR, "out of memory for relation descriptor cache"); \
+		/* used to give notice if found -- now just keep quiet */ \
+		namehentry->reldesc = RELATION; \
+	} \
 } while(0)
 
 #define RelationIdCacheLookup(ID, RELATION) \
@@ -210,6 +204,17 @@ do { \
 	RelIdCacheEnt *hentry; \
 	hentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
 										 (void *)&(ID), HASH_FIND,NULL); \
+	if (hentry) \
+		RELATION = hentry->reldesc; \
+	else \
+		RELATION = NULL; \
+} while(0)
+
+#define RelationSysNameCacheLookup(NAME, RELATION) \
+do { \
+	RelNameCacheEnt *hentry; \
+	hentry = (RelNameCacheEnt*)hash_search(RelationSysNameCache, \
+										   (void *) (NAME), HASH_FIND,NULL); \
 	if (hentry) \
 		RELATION = hentry->reldesc; \
 	else \
@@ -229,14 +234,7 @@ do { \
 
 #define RelationCacheDelete(RELATION) \
 do { \
-	RelNameCacheEnt *namehentry; RelIdCacheEnt *idhentry; \
-	char *relname; RelNodeCacheEnt *nodentry; \
-	relname = RelationGetPhysicalRelationName(RELATION); \
-	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
-											   relname, \
-											   HASH_REMOVE, NULL); \
-	if (namehentry == NULL) \
-		elog(WARNING, "trying to delete a reldesc that does not exist."); \
+	RelIdCacheEnt *idhentry; RelNodeCacheEnt *nodentry; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
 										   (void *)&(RELATION->rd_id), \
 										   HASH_REMOVE, NULL); \
@@ -247,6 +245,16 @@ do { \
 										   HASH_REMOVE, NULL); \
 	if (nodentry == NULL) \
 		elog(WARNING, "trying to delete a reldesc that does not exist."); \
+	if (RelationGetNamespace(RELATION) == PG_CATALOG_NAMESPACE) \
+	{ \
+		char *relname = RelationGetPhysicalRelationName(RELATION); \
+		RelNameCacheEnt *namehentry; \
+		namehentry = (RelNameCacheEnt*)hash_search(RelationSysNameCache, \
+												   relname, \
+												   HASH_REMOVE, NULL); \
+		if (namehentry == NULL) \
+			elog(WARNING, "trying to delete a reldesc that does not exist."); \
+	} \
 } while(0)
 
 
@@ -275,11 +283,11 @@ static void RelationClearRelation(Relation relation, bool rebuildIt);
 static void RelationReloadClassinfo(Relation relation);
 #endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
 static void RelationFlushRelation(Relation relation);
-static Relation RelationNameCacheGetRelation(const char *relationName);
+static Relation RelationSysNameCacheGetRelation(const char *relationName);
 static bool load_relcache_init_file(void);
 static void write_relcache_init_file(void);
 
-static void formrdesc(char *relationName, int natts,
+static void formrdesc(const char *relationName, int natts,
 		  FormData_pg_attribute *att);
 
 static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
@@ -304,12 +312,6 @@ static OpClassCacheEnt *LookupOpclassInfo(Oid operatorClassOid,
 
 
 /*
- *		RelationIdGetRelation() and RelationNameGetRelation()
- *						support functions
- */
-
-
-/*
  *		ScanPgRelation
  *
  *		this is used by RelationBuildDesc to find a pg_class
@@ -326,7 +328,8 @@ ScanPgRelation(RelationBuildDescInfo buildinfo)
 	Relation	pg_class_desc;
 	const char *indexRelname;
 	SysScanDesc pg_class_scan;
-	ScanKeyData key;
+	ScanKeyData key[2];
+	int			nkeys;
 
 	/*
 	 * form a scan key
@@ -334,19 +337,25 @@ ScanPgRelation(RelationBuildDescInfo buildinfo)
 	switch (buildinfo.infotype)
 	{
 		case INFO_RELID:
-			ScanKeyEntryInitialize(&key, 0,
+			ScanKeyEntryInitialize(&key[0], 0,
 								   ObjectIdAttributeNumber,
 								   F_OIDEQ,
 								   ObjectIdGetDatum(buildinfo.i.info_id));
+			nkeys = 1;
 			indexRelname = ClassOidIndex;
 			break;
 
 		case INFO_RELNAME:
-			ScanKeyEntryInitialize(&key, 0,
+			ScanKeyEntryInitialize(&key[0], 0,
 								   Anum_pg_class_relname,
 								   F_NAMEEQ,
 								   NameGetDatum(buildinfo.i.info_name));
-			indexRelname = ClassNameIndex;
+			ScanKeyEntryInitialize(&key[1], 0,
+								   Anum_pg_class_relnamespace,
+								   F_OIDEQ,
+								   ObjectIdGetDatum(PG_CATALOG_NAMESPACE));
+			nkeys = 2;
+			indexRelname = ClassNameNspIndex;
 			break;
 
 		default:
@@ -363,7 +372,7 @@ ScanPgRelation(RelationBuildDescInfo buildinfo)
 	pg_class_scan = systable_beginscan(pg_class_desc, indexRelname,
 									   criticalRelcachesBuilt,
 									   SnapshotNow,
-									   1, &key);
+									   nkeys, key);
 
 	pg_class_tuple = systable_getnext(pg_class_scan);
 
@@ -512,12 +521,8 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 			   (char *) attp,
 			   ATTRIBUTE_TUPLE_SIZE);
 
-
-
-		/*
-		 * Update constraint/default info
-		 */
-       if (attp->attnotnull)
+		/* Update constraint/default info */
+		if (attp->attnotnull)
 			constr->has_not_null = true;
 
 		if (attp->atthasdef)
@@ -1333,7 +1338,7 @@ LookupOpclassInfo(Oid operatorClassOid,
  * NOTE: we assume we are already switched into CacheMemoryContext.
  */
 static void
-formrdesc(char *relationName,
+formrdesc(const char *relationName,
 		  int natts,
 		  FormData_pg_attribute *att)
 {
@@ -1374,7 +1379,8 @@ formrdesc(char *relationName,
 	relation->rd_rel = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 	MemSet(relation->rd_rel, 0, CLASS_TUPLE_SIZE);
 
-	strcpy(RelationGetPhysicalRelationName(relation), relationName);
+	namestrcpy(&relation->rd_rel->relname, relationName);
+	relation->rd_rel->relnamespace = PG_CATALOG_NAMESPACE;
 
 	/*
 	 * It's important to distinguish between shared and non-shared
@@ -1488,12 +1494,12 @@ RelationIdCacheGetRelation(Oid relationId)
 }
 
 /*
- *		RelationNameCacheGetRelation
+ *		RelationSysNameCacheGetRelation
  *
- *		As above, but lookup by name.
+ *		As above, but lookup by name; only works for system catalogs.
  */
 static Relation
-RelationNameCacheGetRelation(const char *relationName)
+RelationSysNameCacheGetRelation(const char *relationName)
 {
 	Relation	rd;
 	NameData	name;
@@ -1503,7 +1509,7 @@ RelationNameCacheGetRelation(const char *relationName)
 	 * null-padded
 	 */
 	namestrcpy(&name, relationName);
-	RelationNameCacheLookup(NameStr(name), rd);
+	RelationSysNameCacheLookup(NameStr(name), rd);
 
 	if (RelationIsValid(rd))
 		RelationIncrementReferenceCount(rd);
@@ -1540,12 +1546,6 @@ RelationIdGetRelation(Oid relationId)
 	RelationBuildDescInfo buildinfo;
 
 	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_RelationIdGetRelation);
-	IncrHeapAccessStat(global_RelationIdGetRelation);
-
-	/*
 	 * first try and get a reldesc from the cache
 	 */
 	rd = RelationIdCacheGetRelation(relationId);
@@ -1564,22 +1564,16 @@ RelationIdGetRelation(Oid relationId)
 }
 
 /*
- *		RelationNameGetRelation
+ *		RelationSysNameGetRelation
  *
- *		As above, but lookup by name.
+ *		As above, but lookup by name; only works for system catalogs.
  */
 Relation
-RelationNameGetRelation(const char *relationName)
+RelationSysNameGetRelation(const char *relationName)
 {
 	char	   *temprelname;
 	Relation	rd;
 	RelationBuildDescInfo buildinfo;
-
-	/*
-	 * increment access statistics
-	 */
-	IncrHeapAccessStat(local_RelationNameGetRelation);
-	IncrHeapAccessStat(global_RelationNameGetRelation);
 
 	/*
 	 * if caller is looking for a temp relation, substitute its real name;
@@ -1592,7 +1586,7 @@ RelationNameGetRelation(const char *relationName)
 	/*
 	 * first try and get a reldesc from the cache
 	 */
-	rd = RelationNameCacheGetRelation(relationName);
+	rd = RelationSysNameCacheGetRelation(relationName);
 	if (RelationIsValid(rd))
 		return rd;
 
@@ -1951,17 +1945,17 @@ void
 RelationCacheInvalidate(void)
 {
 	HASH_SEQ_STATUS status;
-	RelNameCacheEnt *namehentry;
+	RelIdCacheEnt *idhentry;
 	Relation	relation;
 	List	   *rebuildList = NIL;
 	List	   *l;
 
 	/* Phase 1 */
-	hash_seq_init(&status, RelationNameCache);
+	hash_seq_init(&status, RelationIdCache);
 
-	while ((namehentry = (RelNameCacheEnt *) hash_seq_search(&status)) != NULL)
+	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 	{
-		relation = namehentry->reldesc;
+		relation = idhentry->reldesc;
 
 		/* Ignore xact-local relations, since they are never SI targets */
 		if (relation->rd_myxactonly)
@@ -2007,13 +2001,13 @@ void
 RelationCacheAbort(void)
 {
 	HASH_SEQ_STATUS status;
-	RelNameCacheEnt *namehentry;
+	RelIdCacheEnt *idhentry;
 
-	hash_seq_init(&status, RelationNameCache);
+	hash_seq_init(&status, RelationIdCache);
 
-	while ((namehentry = (RelNameCacheEnt *) hash_seq_search(&status)) != NULL)
+	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Relation	relation = namehentry->reldesc;
+		Relation	relation = idhentry->reldesc;
 
 		if (relation->rd_isnailed)
 			RelationSetReferenceCount(relation, 1);
@@ -2029,8 +2023,10 @@ RelationCacheAbort(void)
  */
 Relation
 RelationBuildLocalRelation(const char *relname,
+						   Oid relnamespace,
 						   TupleDesc tupDesc,
 						   Oid relid, Oid dbid,
+						   RelFileNode rnode,
 						   bool nailit)
 {
 	Relation	rel;
@@ -2086,7 +2082,8 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_rel = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 	MemSet((char *) rel->rd_rel, 0, CLASS_TUPLE_SIZE);
 
-	strcpy(RelationGetPhysicalRelationName(rel), relname);
+	namestrcpy(&rel->rd_rel->relname, relname);
+	rel->rd_rel->relnamespace = relnamespace;
 
 	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
 	rel->rd_rel->relhasoids = true;
@@ -2094,10 +2091,8 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_rel->reltype = InvalidOid;
 
 	/*
-	 * Insert relation OID and database/tablespace ID into the right
-	 * places. XXX currently we assume physical tblspace/relnode are same
-	 * as logical dbid/reloid.	Probably should pass an extra pair of
-	 * parameters.
+	 * Insert relation physical and logical identifiers (OIDs) into the
+	 * right places.
 	 */
 	rel->rd_rel->relisshared = (dbid == InvalidOid);
 
@@ -2106,11 +2101,10 @@ RelationBuildLocalRelation(const char *relname,
 	for (i = 0; i < natts; i++)
 		rel->rd_att->attrs[i]->attrelid = relid;
 
-	RelationInitLockInfo(rel);	/* see lmgr.c */
+	rel->rd_node = rnode;
+	rel->rd_rel->relfilenode = rnode.relNode;
 
-	rel->rd_node.tblNode = dbid;
-	rel->rd_node.relNode = relid;
-	rel->rd_rel->relfilenode = relid;
+	RelationInitLockInfo(rel);	/* see lmgr.c */
 
 	/*
 	 * Okay to insert into the relcache hash tables.
@@ -2201,8 +2195,8 @@ RelationCacheInitialize(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(NameData);
 	ctl.entrysize = sizeof(RelNameCacheEnt);
-	RelationNameCache = hash_create("Relcache by name", INITRELCACHESIZE,
-									&ctl, HASH_ELEM);
+	RelationSysNameCache = hash_create("Relcache by name", INITRELCACHESIZE,
+									   &ctl, HASH_ELEM);
 
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(RelIdCacheEnt);
@@ -2252,7 +2246,7 @@ void
 RelationCacheInitializePhase2(void)
 {
 	HASH_SEQ_STATUS status;
-	RelNameCacheEnt *namehentry;
+	RelIdCacheEnt *idhentry;
 
 	if (IsBootstrapProcessingMode())
 		return;
@@ -2290,7 +2284,7 @@ RelationCacheInitializePhase2(void)
 			RelationSetReferenceCount(ird, 1); \
 		} while (0)
 
-		LOAD_CRIT_INDEX(ClassNameIndex);
+		LOAD_CRIT_INDEX(ClassNameNspIndex);
 		LOAD_CRIT_INDEX(ClassOidIndex);
 		LOAD_CRIT_INDEX(AttributeRelidNumIndex);
 		LOAD_CRIT_INDEX(IndexRelidIndex);
@@ -2311,11 +2305,11 @@ RelationCacheInitializePhase2(void)
 	 * Also, if any of the relcache entries have rules or triggers,
 	 * load that info the hard way since it isn't recorded in the cache file.
 	 */
-	hash_seq_init(&status, RelationNameCache);
+	hash_seq_init(&status, RelationIdCache);
 
-	while ((namehentry = (RelNameCacheEnt *) hash_seq_search(&status)) != NULL)
+	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Relation	relation = namehentry->reldesc;
+		Relation	relation = idhentry->reldesc;
 
 		/*
 		 * If it's a faked-up entry, read the real pg_class tuple.
@@ -2399,8 +2393,8 @@ CreateDummyCaches(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(NameData);
 	ctl.entrysize = sizeof(RelNameCacheEnt);
-	RelationNameCache = hash_create("Relcache by name", INITRELCACHESIZE,
-									&ctl, HASH_ELEM);
+	RelationSysNameCache = hash_create("Relcache by name", INITRELCACHESIZE,
+									   &ctl, HASH_ELEM);
 
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(RelIdCacheEnt);
@@ -2427,14 +2421,14 @@ DestroyDummyCaches(void)
 
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-	if (RelationNameCache)
-		hash_destroy(RelationNameCache);
 	if (RelationIdCache)
 		hash_destroy(RelationIdCache);
+	if (RelationSysNameCache)
+		hash_destroy(RelationSysNameCache);
 	if (RelationNodeCache)
 		hash_destroy(RelationNodeCache);
 
-	RelationNameCache = RelationIdCache = RelationNodeCache = NULL;
+	RelationIdCache = RelationSysNameCache = RelationNodeCache = NULL;
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -3001,7 +2995,7 @@ write_relcache_init_file(void)
 	char		tempfilename[MAXPGPATH];
 	char		finalfilename[MAXPGPATH];
 	HASH_SEQ_STATUS status;
-	RelNameCacheEnt *namehentry;
+	RelIdCacheEnt *idhentry;
 	MemoryContext oldcxt;
 	int			i;
 
@@ -3031,13 +3025,13 @@ write_relcache_init_file(void)
 	/*
 	 * Write all the reldescs (in no particular order).
 	 */
-	hash_seq_init(&status, RelationNameCache);
+	hash_seq_init(&status, RelationIdCache);
 
 	initFileRelationIds = NIL;
 
-	while ((namehentry = (RelNameCacheEnt *) hash_seq_search(&status)) != NULL)
+	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Relation	rel = namehentry->reldesc;
+		Relation	rel = idhentry->reldesc;
 		Form_pg_class relform = rel->rd_rel;
 		Size		len;
 

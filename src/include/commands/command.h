@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.34 2002/03/21 16:01:41 tgl Exp $
+ * $Id: command.h,v 1.35 2002/03/26 19:16:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,10 +62,9 @@ extern void AlterTableDropConstraint(const char *relationName,
 						 bool inh, const char *constrName,
 						 int behavior);
 
-extern void AlterTableCreateToastTable(const char *relationName,
-						   bool silent);
+extern void AlterTableCreateToastTable(Oid relOid, bool silent);
 
-extern void AlterTableOwner(const char *relationName, const char *newOwnerName);
+extern void AlterTableOwner(const RangeVar *tgtrel, const char *newOwnerName);
 
 /*
  * LOCK

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.62 2002/03/19 02:18:22 momjian Exp $
+ * $Id: pg_class.h,v 1.63 2002/03/26 19:16:35 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -43,6 +43,7 @@
 CATALOG(pg_class) BOOTSTRAP
 {
 	NameData	relname;		/* class name */
+	Oid			relnamespace;	/* OID of namespace containing this class */
 	Oid			reltype;		/* OID of associated entry in pg_type */
 	int4		relowner;		/* class owner */
 	Oid			relam;			/* index access method; 0 if not an index */
@@ -99,31 +100,32 @@ typedef FormData_pg_class *Form_pg_class;
  *		relacl field.  This is a kluge.
  * ----------------
  */
-#define Natts_pg_class_fixed			22
-#define Natts_pg_class					23
+#define Natts_pg_class_fixed			23
+#define Natts_pg_class					24
 #define Anum_pg_class_relname			1
-#define Anum_pg_class_reltype			2
-#define Anum_pg_class_relowner			3
-#define Anum_pg_class_relam				4
-#define Anum_pg_class_relfilenode		5
-#define Anum_pg_class_relpages			6
-#define Anum_pg_class_reltuples			7
-#define Anum_pg_class_reltoastrelid		8
-#define Anum_pg_class_reltoastidxid		9
-#define Anum_pg_class_relhasindex		10
-#define Anum_pg_class_relisshared		11
-#define Anum_pg_class_relkind			12
-#define Anum_pg_class_relnatts			13
-#define Anum_pg_class_relchecks			14
-#define Anum_pg_class_reltriggers		15
-#define Anum_pg_class_relukeys			16
-#define Anum_pg_class_relfkeys			17
-#define Anum_pg_class_relrefs			18
-#define Anum_pg_class_relhasoids		19
-#define Anum_pg_class_relhaspkey		20
-#define Anum_pg_class_relhasrules		21
-#define Anum_pg_class_relhassubclass	22
-#define Anum_pg_class_relacl			23
+#define Anum_pg_class_relnamespace		2
+#define Anum_pg_class_reltype			3
+#define Anum_pg_class_relowner			4
+#define Anum_pg_class_relam				5
+#define Anum_pg_class_relfilenode		6
+#define Anum_pg_class_relpages			7
+#define Anum_pg_class_reltuples			8
+#define Anum_pg_class_reltoastrelid		9
+#define Anum_pg_class_reltoastidxid		10
+#define Anum_pg_class_relhasindex		11
+#define Anum_pg_class_relisshared		12
+#define Anum_pg_class_relkind			13
+#define Anum_pg_class_relnatts			14
+#define Anum_pg_class_relchecks			15
+#define Anum_pg_class_reltriggers		16
+#define Anum_pg_class_relukeys			17
+#define Anum_pg_class_relfkeys			18
+#define Anum_pg_class_relrefs			19
+#define Anum_pg_class_relhasoids		20
+#define Anum_pg_class_relhaspkey		21
+#define Anum_pg_class_relhasrules		22
+#define Anum_pg_class_relhassubclass	23
+#define Anum_pg_class_relacl			24
 
 /* ----------------
  *		initial contents of pg_class
@@ -132,21 +134,21 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-DATA(insert OID = 1247 (  pg_type		71	PGUID 0 1247 0 0 0 0 f f r 22 0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 f f r 22 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	75	PGUID 0 1249 0 0 0 0 f f r 15 0 0 0 0 0 f f f f _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 f f r 15 0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		81	PGUID 0 1255 0 0 0 0 f f r 18 0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 f f r 18 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		83	PGUID 0 1259 0 0 0 0 f f r 23 0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 f f r 24 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1260 (  pg_shadow		86	PGUID 0 1260 0 0 0 0 f t r 9  0 0 0 0 0 f f f f _null_ ));
+DATA(insert OID = 1260 (  pg_shadow		PGNSP 86 PGUID 0 1260 0 0 0 0 f t r 9  0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1261 (  pg_group		87	PGUID 0 1261 0 0 0 0 f t r 3  0 0 0 0 0 f f f f _null_ ));
+DATA(insert OID = 1261 (  pg_group		PGNSP 87 PGUID 0 1261 0 0 0 0 f t r 3  0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1262 (  pg_database	88	PGUID 0 1262 0 0 0 0 f t r 10  0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1262 (  pg_database	PGNSP 88 PGUID 0 1262 0 0 0 0 f t r 10  0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 376  (  pg_xactlock	0	PGUID 0    0 0 0 0 0 f t s 1  0 0 0 0 0 f f f f _null_ ));
+DATA(insert OID = 376  (  pg_xactlock	PGNSP  0 PGUID 0    0 0 0 0 0 f t s 1  0 0 0 0 0 f f f f _null_ ));
 DESCR("");
 
 #define RelOid_pg_type			1247

@@ -8,11 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.55 2001/11/02 16:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.56 2002/03/26 19:15:14 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
- *		index_openr		- open an index relation by name
+ *		index_openrv	- open an index relation specified by a RangeVar
+ *		index_openr		- open a system index relation by name
  *		index_close		- close an index relation
  *		index_beginscan - start a scan of an index
  *		index_rescan	- restart a scan of an index
@@ -136,17 +137,41 @@ index_open(Oid relationId)
 }
 
 /* ----------------
- *		index_openr - open an index relation by name
+ *		index_openrv - open an index relation specified
+ *		by a RangeVar node
  *
- *		As above, but lookup by name instead of OID.
+ *		As above, but relation is specified by a RangeVar.
  * ----------------
  */
 Relation
-index_openr(const char *relationName)
+index_openrv(const RangeVar *relation)
 {
 	Relation	r;
 
-	r = relation_openr(relationName, NoLock);
+	r = relation_openrv(relation, NoLock);
+
+	if (r->rd_rel->relkind != RELKIND_INDEX)
+		elog(ERROR, "%s is not an index relation",
+			 RelationGetRelationName(r));
+
+	pgstat_initstats(&r->pgstat_info, r);
+
+	return r;
+}
+
+/* ----------------
+ *		index_openr - open a system index relation specified by name.
+ *
+ *		As above, but the relation is specified by an unqualified name;
+ *		it is assumed to live in the system catalog namespace.
+ * ----------------
+ */
+Relation
+index_openr(const char *sysRelationName)
+{
+	Relation	r;
+
+	r = relation_openr(sysRelationName, NoLock);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
 		elog(ERROR, "%s is not an index relation",

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.107 2002/03/21 23:27:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.108 2002/03/26 19:15:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	char	   *constrname = "";
 	Oid			constrrelid = InvalidOid;
 
-	rel = heap_openr(stmt->relation->relname, AccessExclusiveLock);
+	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",
@@ -106,7 +106,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 			 */
 			Relation	conrel;
 
-			conrel = heap_openr(stmt->constrrel->relname, NoLock);
+			conrel = heap_openrv(stmt->constrrel, NoLock);
 			constrrelid = conrel->rd_id;
 			heap_close(conrel, NoLock);
 		}
@@ -285,8 +285,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 	 * rebuild relcache entries.
 	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
-	tuple = SearchSysCacheCopy(RELNAME,
-							   PointerGetDatum(stmt->relation->relname),
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(RelationGetRelid(rel)),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: relation %s not found in pg_class",
@@ -323,7 +323,7 @@ DropTrigger(DropTrigStmt *stmt)
 	int			found = 0;
 	int			tgfound = 0;
 
-	rel = heap_openr(stmt->relation->relname, AccessExclusiveLock);
+	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "DropTrigger: relation \"%s\" is not a table",
@@ -380,8 +380,8 @@ DropTrigger(DropTrigStmt *stmt)
 	 * rebuild relcache entries.
 	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
-	tuple = SearchSysCacheCopy(RELNAME,
-							   PointerGetDatum(stmt->relation->relname),
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(RelationGetRelid(rel)),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DropTrigger: relation %s not found in pg_class",
@@ -452,7 +452,7 @@ RelationRemoveTriggers(Relation rel)
 
 		pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 		tup = SearchSysCacheCopy(RELOID,
-								 RelationGetRelid(rel),
+								 ObjectIdGetDatum(RelationGetRelid(rel)),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "RelationRemoveTriggers: relation %u not found in pg_class",

@@ -25,8 +25,8 @@
  *------------------------------------------------------------------
  */
 
-extern void CommentObject(int objtype, char *objname, char *objproperty,
-			  List *objlist, char *comment);
+extern void CommentObject(int objtype, char * schemaname, char *objname,
+							char *objproperty, List *objlist, char *comment);
 
 extern void DeleteComments(Oid oid, Oid classoid);
 

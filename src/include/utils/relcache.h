@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.30 2002/02/19 20:11:20 tgl Exp $
+ * $Id: relcache.h,v 1.31 2002/03/26 19:16:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +20,11 @@
  * relation lookup routines
  */
 extern Relation RelationIdGetRelation(Oid relationId);
-extern Relation RelationNameGetRelation(const char *relationName);
-extern Relation RelationNodeCacheGetRelation(RelFileNode rnode);
+extern Relation RelationSysNameGetRelation(const char *relationName);
 
 /* finds an existing cache entry, but won't make a new one */
 extern Relation RelationIdCacheGetRelation(Oid relationId);
+extern Relation RelationNodeCacheGetRelation(RelFileNode rnode);
 
 extern void RelationClose(Relation relation);
 
@@ -46,8 +46,10 @@ extern void RelationCacheInitializePhase3(void);
  * Routine to create a relcache entry for an about-to-be-created relation
  */
 extern Relation RelationBuildLocalRelation(const char *relname,
+						   Oid relnamespace,
 						   TupleDesc tupDesc,
 						   Oid relid, Oid dbid,
+						   RelFileNode rnode,
 						   bool nailit);
 
 /*
