@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.152 2000/11/30 23:19:04 tgl Exp $
+ * $Id: config.h.in,v 1.153 2000/12/02 18:16:40 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -49,7 +49,6 @@
 #undef USE_ASSERT_CHECKING
 
 /* Set to 1 to use syslog() to write postmaster log (--enable-syslog) */
-/* (CAUTION: large log entries confuse syslog on many platforms!) */
 #undef ENABLE_SYSLOG
 
 /* Define to build with Kerberos 4 support (--with-krb4[=DIR]) */
@@ -227,8 +226,7 @@
 #define BITS_PER_BYTE		8
 
 /*
- * Define this is your operating system kernel supports AF_UNIX family
- * sockets.
+ * Define this if your operating system supports AF_UNIX family sockets.
  */
 #if !defined(__CYGWIN__) && !defined(__QNX__) && !defined(__BEOS__)
 # define HAVE_UNIX_SOCKETS 1
@@ -260,7 +258,10 @@
 #define CLOBBER_FREED_MEMORY
 #endif
 
-/* Define this to check memory leaks
+/* Define this to check memory allocation errors (scribbling on more
+ * bytes than were allocated).
+ * XXX For 7.1 development, define this automatically if --enable-cassert.
+ * In the long term it probably doesn't need to be on by default.
  */
 #ifdef USE_ASSERT_CHECKING 
 #define MEMORY_CONTEXT_CHECKING
@@ -268,15 +269,14 @@
 
 /* Define this to force all parse and plan trees to be passed through
  * copyObject(), to facilitate catching errors and omissions in copyObject().
- * XXX For 7.1 development, define this automatically if --enable-cassert.
- * In the long term it probably doesn't need to be on by default.
  */
-#ifdef USE_ASSERT_CHECKING
-#define COPY_PARSE_PLAN_TREES
-#endif
+/* #define COPY_PARSE_PLAN_TREES */
 
 /* Enable debugging print statements in the date/time support routines. */
 /* #define DATEDEBUG */
+
+/* Enable debugging print statements for lock-related operations. */
+/* #define LOCK_DEBUG */
 
 /*
  * Other debug #defines (documentation, anyone?)
@@ -284,16 +284,14 @@
 /* #define IPORTAL_DEBUG  */
 /* #define HEAPDEBUGALL  */
 /* #define ISTRATDEBUG  */
-/* #define FASTBUILD_DEBUG */
 /* #define ACLDEBUG */
 /* #define RTDEBUG */
 /* #define GISTDEBUG */
 /* #define OMIT_PARTIAL_INDEX */
-/* #define LOCK_DEBUG */
 
 /*
- * defining unsafe floats's will make float4 and float8
- * ops faster at the cost of safety, of course!        
+ * defining unsafe floats will make float4 and float8 ops faster
+ * by suppressing overflow/underflow checks.
  */
 /* #define UNSAFE_FLOATS */
 
@@ -405,7 +403,7 @@
 /* Set to 1 if you have <pwd.h> */
 #undef HAVE_PWD_H
 
-/* Set to 1 if you gettimeofday(a,b) vs gettimeofday(a) */
+/* Set to 1 if you have gettimeofday(a) instead of gettimeofday(a,b) */
 #undef GETTIMEOFDAY_1ARG
 #ifdef GETTIMEOFDAY_1ARG
 # define gettimeofday(a,b) gettimeofday(a)
@@ -608,23 +606,31 @@ extern void srandom(unsigned int seed);
 /* Define if C++ compiler accepts "#include <string>" */
 #undef HAVE_CXX_STRING_HEADER
 
-/* Define if you have the dlopen function */
+/* Define if you have dlopen() */
 #undef HAVE_DLOPEN
 
 /* Define if you have the optreset variable */
 #undef HAVE_INT_OPTRESET
 
+/* Define if you have strtoll() */
 #undef HAVE_STRTOLL
+
+/* Define if you have strtoq() */
 #undef HAVE_STRTOQ
 
+/* If strtoq() exists, rename it to the more standard strtoll() */
 #if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
 # define strtoll strtoq
 # define HAVE_STRTOLL 1
 #endif
 
+/* Define if you have strtoull() */
 #undef HAVE_STRTOULL
+
+/* Define if you have strtouq() */
 #undef HAVE_STRTOUQ
 
+/* If strtouq() exists, rename it to the more standard strtoull() */
 #if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
 # define strtoull strtouq
 # define HAVE_STRTOULL 1
