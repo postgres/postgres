@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.13 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.14 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.13 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.14 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -1006,7 +1006,7 @@ From pgsql-general-owner+M2497@hub.org Fri Jun 16 18:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04165
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:31:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.13 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.14 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5GLDaM14477;
 	Fri, 16 Jun 2000 17:13:36 -0400 (EDT)
@@ -2237,5 +2237,798 @@ from 1 to "maybe" for nodes that get too dense.
 
 ---------------
 Hannu
+
+
+From pgsql-hackers-owner+M21991@postgresql.org Wed Apr 24 23:37:37 2002
+Return-path: <pgsql-hackers-owner+M21991@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3P3ba416337
+	for <pgman@candle.pha.pa.us>; Wed, 24 Apr 2002 23:37:36 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id CF13447622B; Wed, 24 Apr 2002 23:37:31 -0400 (EDT)
+Received: from sraigw.sra.co.jp (sraigw.sra.co.jp [202.32.10.2])
+	by postgresql.org (Postfix) with ESMTP id 3EE92474E4B
+	for <pgsql-hackers@postgresql.org>; Wed, 24 Apr 2002 23:37:19 -0400 (EDT)
+Received: from srascb.sra.co.jp (srascb [133.137.8.65])
+	by sraigw.sra.co.jp (8.9.3/3.7W-sraigw) with ESMTP id MAA76393;
+	Thu, 25 Apr 2002 12:35:44 +0900 (JST)
+Received: (from root@localhost)
+	by srascb.sra.co.jp (8.11.6/8.11.6) id g3P3ZCK64299;
+	Thu, 25 Apr 2002 12:35:12 +0900 (JST)
+	(envelope-from t-ishii@sra.co.jp)
+Received: from sranhm.sra.co.jp (sranhm [133.137.170.62])
+	by srascb.sra.co.jp (8.11.6/8.11.6av) with ESMTP id g3P3ZBV64291;
+	Thu, 25 Apr 2002 12:35:11 +0900 (JST)
+	(envelope-from t-ishii@sra.co.jp)
+Received: from localhost (IDENT:t-ishii@srapc1474.sra.co.jp [133.137.170.59])
+	by sranhm.sra.co.jp (8.9.3+3.2W/3.7W-srambox) with ESMTP id MAA25562;
+	Thu, 25 Apr 2002 12:35:43 +0900
+To: tgl@sss.pgh.pa.us
+cc: cjs@cynic.net, pgman@candle.pha.pa.us, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead 
+In-Reply-To: <12342.1019705420@sss.pgh.pa.us>
+References: <Pine.NEB.4.43.0204251118040.445-100000@angelic.cynic.net>
+	<12342.1019705420@sss.pgh.pa.us>
+X-Mailer: Mew version 1.94.2 on Emacs 20.7 / Mule 4.1
+	=?iso-2022-jp?B?KBskQjAqGyhCKQ==?=
+MIME-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <20020425123429E.t-ishii@sra.co.jp>
+Date: Thu, 25 Apr 2002 12:34:29 +0900
+From: Tatsuo Ishii <t-ishii@sra.co.jp>
+X-Dispatcher: imput version 20000228(IM140)
+Lines: 12
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> Curt Sampson <cjs@cynic.net> writes:
+> > Grabbing bigger chunks is always optimal, AFICT, if they're not
+> > *too* big and you use the data. A single 64K read takes very little
+> > longer than a single 8K read.
+> 
+> Proof?
+
+Long time ago I tested with the 32k block size and got 1.5-2x speed up
+comparing ordinary 8k block size in the sequential scan case.
+FYI, if this is the case.
+--
+Tatsuo Ishii
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From mloftis@wgops.com Thu Apr 25 01:43:14 2002
+Return-path: <mloftis@wgops.com>
+Received: from free.wgops.com (root@dsl092-002-178.sfo1.dsl.speakeasy.net [66.92.2.178])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3P5hC426529
+	for <pgman@candle.pha.pa.us>; Thu, 25 Apr 2002 01:43:13 -0400 (EDT)
+Received: from wgops.com ([10.1.2.207])
+	by free.wgops.com (8.11.3/8.11.3) with ESMTP id g3P5hBR43020;
+	Wed, 24 Apr 2002 22:43:11 -0700 (PDT)
+	(envelope-from mloftis@wgops.com)
+Message-ID: <3CC7976F.7070407@wgops.com>
+Date: Wed, 24 Apr 2002 22:43:11 -0700
+From: Michael Loftis <mloftis@wgops.com>
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:0.9.4.1) Gecko/20020314 Netscape6/6.2.2
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Curt Sampson <cjs@cynic.net>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead
+References: <Pine.NEB.4.43.0204251118040.445-100000@angelic.cynic.net> <12342.1019705420@sss.pgh.pa.us>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+
+
+Tom Lane wrote:
+
+>Curt Sampson <cjs@cynic.net> writes:
+>
+>>Grabbing bigger chunks is always optimal, AFICT, if they're not
+>>*too* big and you use the data. A single 64K read takes very little
+>>longer than a single 8K read.
+>>
+>
+>Proof?
+>
+I contend this statement.
+
+It's optimal to a point.  I know that my system settles into it's best 
+read-speeds @ 32K or 64K chunks.  8K chunks are far below optimal for my 
+system.  Most systems I work on do far better at 16K than at 8K, and 
+most don't see any degradation when going to 32K chunks.  (this is 
+across numerous OSes and configs -- results are interpretations from 
+bonnie disk i/o marks).
+
+Depending on what you're doing it is more efficiend to read bigger 
+blocks up to a point.  If you're multi-thread or reading in non-blocking 
+mode, take as big a chunk as you can handle or are ready to process in 
+quick order.  If you're picking up a bunch of little chunks here and 
+there and know oyu're not using them again then choose a size that will 
+hopeuflly cause some of the reads to overlap, failing that, pick the 
+smallest usable read size.
+
+The OS can never do that stuff for you.
+
+
+
+From cjs@cynic.net Thu Apr 25 03:29:05 2002
+Return-path: <cjs@cynic.net>
+Received: from angelic.cynic.net ([202.232.117.21])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3P7T3404027
+	for <pgman@candle.pha.pa.us>; Thu, 25 Apr 2002 03:29:03 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+	by angelic.cynic.net (Postfix) with ESMTP
+	id 1C44E870E; Thu, 25 Apr 2002 16:28:51 +0900 (JST)
+Date: Thu, 25 Apr 2002 16:28:51 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead 
+In-Reply-To: <12342.1019705420@sss.pgh.pa.us>
+Message-ID: <Pine.NEB.4.43.0204251534590.3111-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+On Wed, 24 Apr 2002, Tom Lane wrote:
+
+> Curt Sampson <cjs@cynic.net> writes:
+> > Grabbing bigger chunks is always optimal, AFICT, if they're not
+> > *too* big and you use the data. A single 64K read takes very little
+> > longer than a single 8K read.
+>
+> Proof?
+
+Well, there are various sorts of "proof" for this assertion. What
+sort do you want?
+
+Here's a few samples; if you're looking for something different to
+satisfy you, let's discuss it.
+
+1. Theoretical proof: two components of the delay in retrieving a
+block from disk are the disk arm movement and the wait for the
+right block to rotate under the head.
+
+When retrieving, say, eight adjacent blocks, these will be spread
+across no more than two cylinders (with luck, only one). The worst
+case access time for a single block is the disk arm movement plus
+the full rotational wait; this is the same as the worst case for
+eight blocks if they're all on one cylinder. If they're not on one
+cylinder, they're still on adjacent cylinders, requiring a very
+short seek.
+
+2. Proof by others using it: SQL server uses 64K reads when doing
+table scans, as they say that their research indicates that the
+major limitation is usually the number of I/O requests, not the
+I/O capacity of the disk. BSD's explicitly separates the optimum
+allocation size for storage (1K fragments) and optimum read size
+(8K blocks) because they found performance to be much better when
+a larger size block was read. Most file system vendors, too, do
+read-ahead for this very reason.
+
+3. Proof by testing. I wrote a little ruby program to seek to a
+random point in the first 2 GB of my raw disk partition and read
+1-8 8K blocks of data. (This was done as one I/O request.) (Using
+the raw disk partition I avoid any filesystem buffering.) Here are
+typical results:
+
+ 125 reads of 16x8K blocks: 1.9 sec, 66.04 req/sec. 15.1 ms/req, 0.946 ms/block
+ 250 reads of  8x8K blocks: 1.9 sec, 132.3 req/sec. 7.56 ms/req, 0.945 ms/block
+ 500 reads of  4x8K blocks: 2.5 sec, 199 req/sec.   5.03 ms/req, 1.26 ms/block
+1000 reads of  2x8K blocks: 3.8 sec, 261.6 req/sec. 3.82 ms/req, 1.91 ms/block
+2000 reads of  1x8K blocks: 6.4 sec, 310.4 req/sec. 3.22 ms/req, 3.22 ms/block
+
+The ratios of data retrieval speed per read for groups of adjacent
+8K blocks, assuming a single 8K block reads in 1 time unit, are:
+
+    1 block	1.00
+    2 blocks	1.18
+    4 blocks	1.56
+    8 blocks	2.34
+    16 blocks	4.68
+
+At less than 20% more expensive, certainly two-block read requests
+could be considered to cost "very little more" than one-block read
+requests. Even four-block read requests are only half-again as
+expensive. And if you know you're really going to be using the
+data, read in 8 block chunks and your cost per block (in terms of
+time) drops to less than a third of the cost of single-block reads.
+
+Let me put paid to comments about multiple simultaneous readers
+making this invalid. Here's a typical result I get with four
+instances of the program running simultaneously:
+
+125 reads of 16x8K blocks: 4.4 sec, 28.21 req/sec. 35.4 ms/req, 2.22 ms/block
+250 reads of 8x8K blocks: 3.9 sec, 64.88 req/sec. 15.4 ms/req, 1.93 ms/block
+500 reads of 4x8K blocks: 5.8 sec, 86.52 req/sec. 11.6 ms/req, 2.89 ms/block
+1000 reads of 2x8K blocks: 10 sec, 100.2 req/sec. 9.98 ms/req, 4.99 ms/block
+2000 reads of 1x8K blocks: 18 sec, 110 req/sec. 9.09 ms/req, 9.09 ms/block
+
+Here's the ratio table again, with another column comparing the
+aggregate number of requests per second for one process and four
+processes:
+
+    1 block	1.00		310 : 440
+    2 blocks	1.10		262 : 401
+    4 blocks	1.28		199 : 346
+    8 blocks	1.69		132 : 260
+    16 blocks	3.89		 66 : 113
+
+Note that, here the relative increase in performance for increasing
+sizes of reads is even *better* until we get past 64K chunks. The
+overall throughput is better, of course, because with more requests
+per second coming in, the disk seek ordering code has more to work
+with and the average seek time spent seeking vs. reading will be
+reduced.
+
+You know, this is not rocket science; I'm sure there must be papers
+all over the place about this. If anybody still disagrees that it's
+a good thing to read chunks up to 64K or so when the blocks are
+adjacent and you know you'll need the data, I'd like to see some
+tangible evidence to support that.
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+From cjs@cynic.net Thu Apr 25 03:55:59 2002
+Return-path: <cjs@cynic.net>
+Received: from angelic.cynic.net ([202.232.117.21])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3P7tv405489
+	for <pgman@candle.pha.pa.us>; Thu, 25 Apr 2002 03:55:57 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+	by angelic.cynic.net (Postfix) with ESMTP
+	id 188EC870E; Thu, 25 Apr 2002 16:55:51 +0900 (JST)
+Date: Thu, 25 Apr 2002 16:55:50 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead
+In-Reply-To: <200204250404.g3P44OI19061@candle.pha.pa.us>
+Message-ID: <Pine.NEB.4.43.0204251636550.3111-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+On Thu, 25 Apr 2002, Bruce Momjian wrote:
+
+> Well, we are guilty of trying to push as much as possible on to other
+> software.  We do this for portability reasons, and because we think our
+> time is best spent dealing with db issues, not issues then can be deal
+> with by other existing software, as long as the software is decent.
+
+That's fine. I think that's a perfectly fair thing to do.
+
+It was just the wording (i.e., "it's this other software's fault
+that blah de blah") that got to me. To say, "We don't do readahead
+becase most OSes supply it, and we feel that other things would
+help more to improve performance," is fine by me. Or even, "Well,
+nobody feels like doing it. You want it, do it yourself," I have
+no problem with.
+
+> Sure, that is certainly true.  However, it is hard to know what the
+> future will hold even if we had perfect knowledge of what was happening
+> in the kernel.  We don't know who else is going to start doing I/O once
+> our I/O starts.  We may have a better idea with kernel knowledge, but we
+> still don't know 100% what will be cached.
+
+Well, we do if we use raw devices and do our own caching, using
+pages that are pinned in RAM. That was sort of what I was aiming
+at for the long run.
+
+> We have free-behind on our list.
+
+Uh...can't do it, if you're relying on the OS to do the buffering.
+How do you tell the OS that you're no longer going to use a page?
+
+> I think LRU-K will do this quite well
+> and be a nice general solution for more than just sequential scans.
+
+LRU-K sounds like a great idea to me, as does putting pages read
+for a table scan at the LRU end of the cache, rather than the MRU
+(assuming we do something to ensure that they stay in cache until
+read once, at any rate).
+
+But again, great for your own cache, but doesn't work with the OS
+cache. And I'm a bit scared to crank up too high the amount of
+memory I give Postgres, lest the OS try to too aggressively buffer
+all that I/O in what memory remains to it, and start blowing programs
+(like maybe the backend binary itself) out of RAM. But maybe this
+isn't typically a problem; I don't know.
+
+> There may be validity in this.  It is easy to do (I think) and could be
+> a win.
+
+It didn't look to difficult to me, when I looked at the code, and
+you can see what kind of win it is from the response I just made
+to Tom.
+
+> >     1. It is *not* true that you have no idea where data is when
+> >     using a storage array or other similar system. While you
+> >     certainly ought not worry about things such as head positions
+> >     and so on, it's been a given for a long, long time that two
+> >     blocks that have close index numbers are going to be close
+> >     together in physical storage.
+>
+> SCSI drivers, for example, are pretty smart.  Not sure we can take
+> advantage of that from user-land I/O.
+
+Looking at the NetBSD ones, I don't see what they're doing that's
+so smart. (Aside from some awfully clever workarounds for stupid
+hardware limitations that would otherwise kill performance.) What
+sorts of "smart" are you referring to?
+
+> Yes, but we are seeing some db's moving away from raw I/O.
+
+Such as whom? And are you certain that they're moving to using the
+OS buffer cache, too? MS SQL server, for example, uses the filesystem,
+but turns off all buffering on those files.
+
+> Our performance numbers beat most of the big db's already, so we must
+> be doing something right.
+
+Really? Do the performance numbers for simple, bulk operations
+(imports, exports, table scans) beat the others handily? My intuition
+says not, but I'll happily be convinced otherwise.
+
+> Yes, but do we spend our time doing that.  Is the payoff worth it, vs.
+> working on other features.  Sure it would be great to have all these
+> fancy things, but is this where our time should be spent, considering
+> other items on the TODO list?
+
+I agree that these things need to be assesed.
+
+> Jumping in and doing the I/O ourselves is a big undertaking, and looking
+> at our TODO list, I am not sure if it is worth it right now.
+
+Right. I'm not trying to say this is a critical priority, I'm just
+trying to determine what we do right now, what we could do, and
+the potential performance increase that would give us.
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+From cjs@cynic.net Thu Apr 25 05:19:11 2002
+Return-path: <cjs@cynic.net>
+Received: from angelic.cynic.net ([202.232.117.21])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3P9J9412878
+	for <pgman@candle.pha.pa.us>; Thu, 25 Apr 2002 05:19:10 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+	by angelic.cynic.net (Postfix) with ESMTP
+	id 50386870E; Thu, 25 Apr 2002 18:19:03 +0900 (JST)
+Date: Thu, 25 Apr 2002 18:19:02 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead 
+In-Reply-To: <Pine.NEB.4.43.0204251534590.3111-100000@angelic.cynic.net>
+Message-ID: <Pine.NEB.4.43.0204251805000.3111-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+On Thu, 25 Apr 2002, Curt Sampson wrote:
+
+> Here's the ratio table again, with another column comparing the
+> aggregate number of requests per second for one process and four
+> processes:
+>
+
+Just for interest, I ran this again with 20 processes working
+simultaneously. I did six runs at each blockread size and summed
+the tps for each process to find the aggregate number of reads per
+second during the test. I dropped the higest and the lowest ones,
+and averaged the rest. Here's the new table:
+
+		1 proc	4 procs	20 procs
+
+    1 block	310	440	260
+    2 blocks	262	401	481
+    4 blocks	199	346	354
+    8 blocks	132	260	250
+    16 blocks	 66	113	116
+
+I'm not sure at all why performance gets so much *worse* with a lot of
+contention on the 1K reads. This could have something to with NetBSD, or
+its buffer cache, or my laptop's crappy little disk drive....
+
+Or maybe I'm just running out of CPU.
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+From tgl@sss.pgh.pa.us Thu Apr 25 09:54:35 2002
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3PDsY407038
+	for <pgman@candle.pha.pa.us>; Thu, 25 Apr 2002 09:54:34 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g3PDsXF25059;
+	Thu, 25 Apr 2002 09:54:33 -0400 (EDT)
+To: Curt Sampson <cjs@cynic.net>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead 
+In-Reply-To: <Pine.NEB.4.43.0204251534590.3111-100000@angelic.cynic.net> 
+References: <Pine.NEB.4.43.0204251534590.3111-100000@angelic.cynic.net>
+Comments: In-reply-to Curt Sampson <cjs@cynic.net>
+	message dated "Thu, 25 Apr 2002 16:28:51 +0900"
+Date: Thu, 25 Apr 2002 09:54:32 -0400
+Message-ID: <25056.1019742872@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Curt Sampson <cjs@cynic.net> writes:
+> 1. Theoretical proof: two components of the delay in retrieving a
+> block from disk are the disk arm movement and the wait for the
+> right block to rotate under the head.
+
+> When retrieving, say, eight adjacent blocks, these will be spread
+> across no more than two cylinders (with luck, only one).
+
+Weren't you contending earlier that with modern disk mechs you really
+have no idea where the data is?  You're asserting as an article of 
+faith that the OS has been able to place the file's data blocks
+optimally --- or at least well enough to avoid unnecessary seeks.
+But just a few days ago I was getting told that random_page_cost
+was BS because there could be no such placement.
+
+I'm getting a tad tired of sweeping generalizations offered without
+proof, especially when they conflict.
+
+> 3. Proof by testing. I wrote a little ruby program to seek to a
+> random point in the first 2 GB of my raw disk partition and read
+> 1-8 8K blocks of data. (This was done as one I/O request.) (Using
+> the raw disk partition I avoid any filesystem buffering.)
+
+And also ensure that you aren't testing the point at issue.
+The point at issue is that *in the presence of kernel read-ahead*
+it's quite unclear that there's any benefit to a larger request size.
+Ideally the kernel will have the next block ready for you when you
+ask, no matter what the request is.
+
+There's been some talk of using the AIO interface (where available)
+to "encourage" the kernel to do read-ahead.  I don't foresee us
+writing our own substitute filesystem to make this happen, however.
+Oracle may have the manpower for that sort of boondoggle, but we
+don't...
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M22053@postgresql.org Thu Apr 25 20:45:42 2002
+Return-path: <pgsql-hackers-owner+M22053@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3Q0jg405210
+	for <pgman@candle.pha.pa.us>; Thu, 25 Apr 2002 20:45:42 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 17CE6476270; Thu, 25 Apr 2002 20:45:38 -0400 (EDT)
+Received: from doppelbock.patentinvestor.com (ip146.usw5.rb1.bel.nwlink.com [209.20.249.146])
+	by postgresql.org (Postfix) with ESMTP id 257DC47591C
+	for <pgsql-hackers@postgresql.org>; Thu, 25 Apr 2002 20:45:25 -0400 (EDT)
+Received: (from kaf@localhost)
+	by doppelbock.patentinvestor.com (8.11.6/8.11.2) id g3Q0erX14397;
+	Thu, 25 Apr 2002 17:40:53 -0700
+From: Kyle <kaf@nwlink.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15560.41493.529847.635632@doppelbock.patentinvestor.com>
+Date: Thu, 25 Apr 2002 17:40:53 -0700
+To: PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead 
+In-Reply-To: <25056.1019742872@sss.pgh.pa.us>
+References: <Pine.NEB.4.43.0204251534590.3111-100000@angelic.cynic.net>
+	<25056.1019742872@sss.pgh.pa.us>
+X-Mailer: VM 6.95 under 21.1 (patch 14) "Cuyahoga Valley" XEmacs Lucid
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+Tom Lane wrote:
+> ...
+> Curt Sampson <cjs@cynic.net> writes:
+> > 3. Proof by testing. I wrote a little ruby program to seek to a
+> > random point in the first 2 GB of my raw disk partition and read
+> > 1-8 8K blocks of data. (This was done as one I/O request.) (Using
+> > the raw disk partition I avoid any filesystem buffering.)
+> 
+> And also ensure that you aren't testing the point at issue.
+> The point at issue is that *in the presence of kernel read-ahead*
+> it's quite unclear that there's any benefit to a larger request size.
+> Ideally the kernel will have the next block ready for you when you
+> ask, no matter what the request is.
+> ...
+
+I have to agree with Tom.  I think the numbers below show that with
+kernel read-ahead, block size isn't an issue.
+
+The big_file1 file used below is 2.0 gig of random data, and the
+machine has 512 mb of main memory.  This ensures that we're not
+just getting cached data.
+
+foreach i (4k 8k 16k 32k 64k 128k)
+  echo $i
+  time dd bs=$i if=big_file1 of=/dev/null
+end
+
+and the results:
+
+bs    user    kernel   elapsed
+4k:   0.260   7.740    1:27.25
+8k:   0.210   8.060    1:30.48
+16k:  0.090   7.790    1:30.88
+32k:  0.060   8.090    1:32.75
+64k:  0.030   8.190    1:29.11
+128k: 0.070   9.830    1:28.74
+
+so with kernel read-ahead, we have basically the same elapsed (wall
+time) regardless of block size.  Sure, user time drops to a low at 64k
+blocksize, but kernel time is increasing.
+
+
+You could argue that this is a contrived example, no other I/O is
+being done.  Well I created a second 2.0g file (big_file2) and did two
+simultaneous reads from the same disk.  Sure performance went to hell
+but it shows blocksize is still irrelevant in a multi I/O environment
+with sequential read-ahead.
+
+foreach i ( 4k 8k 16k 32k 64k 128k )
+  echo $i
+  time dd bs=$i if=big_file1 of=/dev/null &
+  time dd bs=$i if=big_file2 of=/dev/null &
+  wait
+end
+
+bs    user    kernel   elapsed
+4k:   0.480   8.290    6:34.13  bigfile1
+      0.320   8.730    6:34.33  bigfile2
+8k:   0.250   7.580    6:31.75
+      0.180   8.450    6:31.88
+16k:  0.150   8.390    6:32.47
+      0.100   7.900    6:32.55
+32k:  0.190   8.460    6:24.72
+      0.060   8.410    6:24.73
+64k:  0.060   9.350    6:25.05
+      0.150   9.240    6:25.13
+128k: 0.090  10.610    6:33.14
+      0.110  11.320    6:33.31
+
+
+the differences in read times are basically in the mud.  Blocksize
+just doesn't matter much with the kernel doing readahead.
+
+-Kyle
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M22055@postgresql.org Thu Apr 25 22:19:07 2002
+Return-path: <pgsql-hackers-owner+M22055@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3Q2J7411254
+	for <pgman@candle.pha.pa.us>; Thu, 25 Apr 2002 22:19:07 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id F3924476208; Thu, 25 Apr 2002 22:19:02 -0400 (EDT)
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id 6741D474E71
+	for <pgsql-hackers@postgresql.org>; Thu, 25 Apr 2002 22:18:50 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g3Q2Ili11246;
+	Thu, 25 Apr 2002 22:18:47 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200204260218.g3Q2Ili11246@candle.pha.pa.us>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead
+In-Reply-To: <15560.41493.529847.635632@doppelbock.patentinvestor.com>
+To: Kyle <kaf@nwlink.com>
+Date: Thu, 25 Apr 2002 22:18:47 -0400 (EDT)
+cc: PostgreSQL-development <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+Nice test.  Would you test simultaneous 'dd' on the same file, perhaps
+with a slight delay between to the two so they don't read each other's
+blocks?
+
+seek() in the file will turn off read-ahead in most OS's.  I am not
+saying this is a major issue for PostgreSQL but the numbers would be
+interesting.
+
+
+---------------------------------------------------------------------------
+
+Kyle wrote:
+> Tom Lane wrote:
+> > ...
+> > Curt Sampson <cjs@cynic.net> writes:
+> > > 3. Proof by testing. I wrote a little ruby program to seek to a
+> > > random point in the first 2 GB of my raw disk partition and read
+> > > 1-8 8K blocks of data. (This was done as one I/O request.) (Using
+> > > the raw disk partition I avoid any filesystem buffering.)
+> > 
+> > And also ensure that you aren't testing the point at issue.
+> > The point at issue is that *in the presence of kernel read-ahead*
+> > it's quite unclear that there's any benefit to a larger request size.
+> > Ideally the kernel will have the next block ready for you when you
+> > ask, no matter what the request is.
+> > ...
+> 
+> I have to agree with Tom.  I think the numbers below show that with
+> kernel read-ahead, block size isn't an issue.
+> 
+> The big_file1 file used below is 2.0 gig of random data, and the
+> machine has 512 mb of main memory.  This ensures that we're not
+> just getting cached data.
+> 
+> foreach i (4k 8k 16k 32k 64k 128k)
+>   echo $i
+>   time dd bs=$i if=big_file1 of=/dev/null
+> end
+> 
+> and the results:
+> 
+> bs    user    kernel   elapsed
+> 4k:   0.260   7.740    1:27.25
+> 8k:   0.210   8.060    1:30.48
+> 16k:  0.090   7.790    1:30.88
+> 32k:  0.060   8.090    1:32.75
+> 64k:  0.030   8.190    1:29.11
+> 128k: 0.070   9.830    1:28.74
+> 
+> so with kernel read-ahead, we have basically the same elapsed (wall
+> time) regardless of block size.  Sure, user time drops to a low at 64k
+> blocksize, but kernel time is increasing.
+> 
+> 
+> You could argue that this is a contrived example, no other I/O is
+> being done.  Well I created a second 2.0g file (big_file2) and did two
+> simultaneous reads from the same disk.  Sure performance went to hell
+> but it shows blocksize is still irrelevant in a multi I/O environment
+> with sequential read-ahead.
+> 
+> foreach i ( 4k 8k 16k 32k 64k 128k )
+>   echo $i
+>   time dd bs=$i if=big_file1 of=/dev/null &
+>   time dd bs=$i if=big_file2 of=/dev/null &
+>   wait
+> end
+> 
+> bs    user    kernel   elapsed
+> 4k:   0.480   8.290    6:34.13  bigfile1
+>       0.320   8.730    6:34.33  bigfile2
+> 8k:   0.250   7.580    6:31.75
+>       0.180   8.450    6:31.88
+> 16k:  0.150   8.390    6:32.47
+>       0.100   7.900    6:32.55
+> 32k:  0.190   8.460    6:24.72
+>       0.060   8.410    6:24.73
+> 64k:  0.060   9.350    6:25.05
+>       0.150   9.240    6:25.13
+> 128k: 0.090  10.610    6:33.14
+>       0.110  11.320    6:33.31
+> 
+> 
+> the differences in read times are basically in the mud.  Blocksize
+> just doesn't matter much with the kernel doing readahead.
+> 
+> -Kyle
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 6: Have you searched our list archives?
+> 
+> http://archives.postgresql.org
+> 
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From cjs@cynic.net Thu Apr 25 22:27:23 2002
+Return-path: <cjs@cynic.net>
+Received: from angelic.cynic.net ([202.232.117.21])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g3Q2RL411868
+	for <pgman@candle.pha.pa.us>; Thu, 25 Apr 2002 22:27:22 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+	by angelic.cynic.net (Postfix) with ESMTP
+	id AF60C870E; Fri, 26 Apr 2002 11:27:17 +0900 (JST)
+Date: Fri, 26 Apr 2002 11:27:17 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Sequential Scan Read-Ahead 
+In-Reply-To: <25056.1019742872@sss.pgh.pa.us>
+Message-ID: <Pine.NEB.4.43.0204261028110.449-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+On Thu, 25 Apr 2002, Tom Lane wrote:
+
+> Curt Sampson <cjs@cynic.net> writes:
+> > 1. Theoretical proof: two components of the delay in retrieving a
+> > block from disk are the disk arm movement and the wait for the
+> > right block to rotate under the head.
+>
+> > When retrieving, say, eight adjacent blocks, these will be spread
+> > across no more than two cylinders (with luck, only one).
+>
+> Weren't you contending earlier that with modern disk mechs you really
+> have no idea where the data is?
+
+No, that was someone else. I contend that with pretty much any
+large-scale storage mechanism (i.e., anything beyond ramdisks),
+you will find that accessing two adjacent blocks is almost always
+1) close to as fast as accessing just the one, and 2) much, much
+faster than accessing two blocks that are relatively far apart.
+
+There will be the odd case where the two adjacent blocks are
+physically far apart, but this is rare.
+
+If this idea doesn't hold true, the whole idea that sequential
+reads are faster than random reads falls apart, and the optimizer
+shouldn't even have the option to make random reads cost more, much
+less have it set to four rather than one (or whatever it's set to).
+
+> You're asserting as an article of
+> faith that the OS has been able to place the file's data blocks
+> optimally --- or at least well enough to avoid unnecessary seeks.
+
+So are you, in the optimizer. But that's all right; the OS often
+can and does do this placement; the FFS filesystem is explicitly
+designed to do this sort of thing. If the filesystem isn't empty
+and the files grow a lot they'll be split into large fragments,
+but the fragments will be contiguous.
+
+> But just a few days ago I was getting told that random_page_cost
+> was BS because there could be no such placement.
+
+I've been arguing against that point as well.
+
+> And also ensure that you aren't testing the point at issue.
+> The point at issue is that *in the presence of kernel read-ahead*
+> it's quite unclear that there's any benefit to a larger request size.
+
+I will test this.
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
 
 
