@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.23 2002/02/18 16:13:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.24 2002/03/27 02:36:51 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -376,24 +376,28 @@ ERROR:  Can't serialize access due to concurrent update
    </indexterm>
 
    <para>
-    <productname>PostgreSQL</productname>
-    provides various lock modes to control concurrent
-    access to data in tables. Some of these lock modes are acquired by
-    <productname>PostgreSQL</productname>
-    automatically before statement execution, while others are
-    provided to be used by applications. All lock modes acquired in a
-    transaction are held for the duration 
-    of the transaction.
+    <productname>PostgreSQL</productname> provides various lock modes
+    to control concurrent access to data in tables.  Users normally
+    need not be concerned about the different lock modes because
+    <productname>PostgreSQL</productname> commands automatically
+    acquire locks of appropriate modes to ensure data integrity while
+    permitting an appropriate level of concurrent access.
+    Nevertheless, a user can manually lock a table in any of the
+    available modes using the <command>LOCK TABLE</command> command.
    </para>
 
-   <sect2>
-    <title>Table-level locks</title>
+   <para>
+    The list below shows the available lock modes and the contexts in
+    which they are used.  Remember that all of these lock modes are
+    table-level locks, even if the name contains the word
+    <quote>row</quote>.  The names of the lock modes are historical.
+   </para>
 
-    <para>
      <variablelist>
+      <title>Table-level lock modes</title>
       <varlistentry>
        <term>
-	AccessShareLock
+	<literal>ACCESS SHARE</literal>
        </term>
        <listitem>
 	<para>
@@ -402,139 +406,141 @@ ERROR:  Can't serialize access due to concurrent update
 	</para>
 
 	<para>
-	 Conflicts with AccessExclusiveLock only.
+	 Conflicts with the <literal>ACCESS EXCLUSIVE</literal> lock
+	 mode only.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	RowShareLock
+	<literal>ROW SHARE</literal>
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>SELECT FOR UPDATE</command>
-	 and <command>LOCK TABLE</command>
-	 <option>IN ROW SHARE MODE</option> statements.
+	 The <command>SELECT FOR UPDATE</command> command acquires a
+	 lock of this mode.
 	</para>
 
 	<para>
-	 Conflicts with ExclusiveLock and AccessExclusiveLock modes.
+	 Conflicts with the <literal>EXCLUSIVE</literal> and
+	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	RowExclusiveLock
+	<literal>ROW EXCLUSIVE</literal>
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>UPDATE</command>, <command>DELETE</command>,
-	 <command>INSERT</command> and <command>LOCK TABLE</command>
-	 <option>IN ROW EXCLUSIVE MODE</option> statements.
+	 The commands <command>UPDATE</command>,
+	 <command>DELETE</command>, and <command>INSERT</command>
+	 automatically acquire this lock mode.
 	</para>
 
 	<para>
-	 Conflicts with ShareLock, ShareRowExclusiveLock, ExclusiveLock and
-	 AccessExclusiveLock modes.
+	 Conflicts with the <literal>SHARE</literal>, <literal>SHARE ROW
+	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	ShareUpdateExclusiveLock
+	<literal>SHARE UPDATE EXCLUSIVE</literal>
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>VACUUM</command> (without <option>FULL</option>)
-	 and <command>LOCK TABLE</command>
-	 <option>IN SHARE UPDATE EXCLUSIVE MODE</option>
-	 statements.
+	 Acquired by <command>VACUUM</command> (without <option>FULL</option>).
 	</para>
 
 	<para>
-	 Conflicts with ShareUpdateExclusiveLock, ShareLock,
-	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock modes.
+	 Conflicts with the <literal>SHARE UPDATE EXCLUSIVE</literal>,
+	 <literal>SHARE</literal>, <literal>SHARE ROW
+	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	ShareLock
+	<literal>SHARE</literal>
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>CREATE INDEX</command>
-	 and <command>LOCK TABLE</command>
-	 <option>IN SHARE MODE</option>
-	 statements.
+	 Acquired by <command>CREATE INDEX</command>.
 	</para>
 
 	<para>
-	 Conflicts with RowExclusiveLock, ShareUpdateExclusiveLock,
-	 ShareRowExclusiveLock,
-	 ExclusiveLock and AccessExclusiveLock modes.
+	 Conflicts with the <literal>ROW EXCLUSIVE</literal>,
+	 <literal>SHARE UPDATE EXCLUSIVE</literal>, <literal>SHARE ROW
+	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	ShareRowExclusiveLock
+	<literal>SHARE ROW EXCLUSIVE</literal>
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>LOCK TABLE</command>
-	 <option>IN SHARE ROW EXCLUSIVE MODE</option> statements.
+         This lock mode is not automatically acquired by any command.
 	</para>
 
 	<para>
-	 Conflicts with RowExclusiveLock, ShareUpdateExclusiveLock,
-	 ShareLock, ShareRowExclusiveLock,
-	 ExclusiveLock and AccessExclusiveLock modes.
+	 Conflicts with the <literal>ROW EXCLUSIVE</literal>,
+	 <literal>SHARE UPDATE EXCLUSIVE</literal>,
+	 <literal>SHARE</literal>, <literal>SHARE ROW
+	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	ExclusiveLock
+	<literal>EXCLUSIVE LOCK</literal>
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>LOCK TABLE</command>
-	 <option>IN EXCLUSIVE MODE</option> statements.
+         This lock mode is not automatically acquired by any command.
 	</para>
 
 	<para>
-	 Conflicts with RowShareLock, RowExclusiveLock,
-	 ShareUpdateExclusiveLock, ShareLock,
-	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock
-	 modes.
+	 Conflicts with the <literal>ROW SHARE</literal>, <literal>ROW
+	 EXCLUSIVE</literal>, <literal>SHARE UPDATE
+	 EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
+	 ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	AccessExclusiveLock
+	<literal>ACCESS EXCLUSIVE</literal>
        </term>
        <listitem>
 	<para>
-	 Acquired by <command>ALTER TABLE</command>,
-	 <command>DROP TABLE</command>,
-	 <command>VACUUM FULL</command> and <command>LOCK TABLE</command>
-	 <option>IN ACCESS EXCLUSIVE MODE</option> (or plain
-	 <command>LOCK TABLE</command>) statements.
+	 Acquired by the <command>ALTER TABLE</command>, <command>DROP
+	 TABLE</command>, and <command>VACUUM FULL</command> commands.
+	 This is also the default lock mode for <command>LOCK TABLE</command>
+         statements that do not specify a mode explicitly.
 	</para>
 
 	<para>
-	 Conflicts with all modes (AccessShareLock, RowShareLock,
-	 RowExclusiveLock, ShareUpdateExclusiveLock, ShareLock,
-	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock).
+	 Conflicts with locks of all modes ( <literal>ACCESS
+	 SHARE</literal>, <literal>ROW SHARE</literal>, <literal>ROW
+	 EXCLUSIVE</literal>, <literal>SHARE UPDATE
+	 EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
+	 ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+	 <literal>ACCESS EXCLUSIVE</literal>).
 	</para>
        </listitem>
       </varlistentry>
@@ -542,30 +548,27 @@ ERROR:  Can't serialize access due to concurrent update
 
      <note>
       <para>
-       Only AccessExclusiveLock blocks <command>SELECT</command> (without
-       <option>FOR UPDATE</option>) statement.
+       Only an <literal>ACCESS EXCLUSIVE</literal> lock blocks a
+       <command>SELECT</command> (without <option>FOR UPDATE</option>)
+       statement.
       </para>
      </note>
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>Row-level locks</title>
 
     <para>
-     Row-level locks are acquired when rows are being updated (or deleted or
-     marked for update).
-     Row-level locks don't affect data querying. They block
-     writers to <emphasis>the same row</emphasis> only.
+     In addition to table-level locks, there are row-level locks.
+     Row-level locks are acquired when rows are being updated (or
+     deleted or marked for update).  Row-level locks don't affect data
+     querying; they block writers to <emphasis>the same row</emphasis>
+     only.  Row-level locks cannot be acquired explicitly by the user.
     </para>
 
     <para>
-     <productname>PostgreSQL</productname>
-     doesn't remember any information about modified rows in memory and
-     so has no limit to the number of rows locked at one time.  However,
-     locking a row may cause a disk write; thus, for example,
-     <command>SELECT FOR UPDATE</command> will modify
-     selected rows to mark them and so will result in disk writes.
+     <productname>PostgreSQL</productname> doesn't remember any
+     information about modified rows in memory, so is has no limit to
+     the number of rows locked at one time.  However, locking a row
+     may cause a disk write; thus, for example, <command>SELECT FOR
+     UPDATE</command> will modify selected rows to mark them and so
+     will result in disk writes.
     </para>
 
     <para>
@@ -575,7 +578,6 @@ ERROR:  Can't serialize access due to concurrent update
     updated.  Application writers normally need not be concerned with
     page-level locks, but we mention them for completeness.
    </para>
-   </sect2>
   </sect1>
 
   <sect1 id="locking-indexes">
