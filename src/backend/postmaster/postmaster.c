@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.267 2002/02/23 01:31:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.268 2002/03/02 20:46:12 tgl Exp $
  *
  * NOTES
  *
@@ -769,6 +769,14 @@ pmdaemonize(int argc, char *argv[])
 {
 	int			i;
 	pid_t		pid;
+#ifdef LINUX_PROFILE
+	struct itimerval prof_itimer;
+#endif
+
+#ifdef LINUX_PROFILE
+	/* see comments in BackendStartup */
+	getitimer(ITIMER_PROF, &prof_itimer);
+#endif
 
 	pid = fork();
 	if (pid == (pid_t) -1)
@@ -782,6 +790,10 @@ pmdaemonize(int argc, char *argv[])
 		/* Parent should just exit, without doing any atexit cleanup */
 		_exit(0);
 	}
+
+#ifdef LINUX_PROFILE
+	setitimer(ITIMER_PROF, &prof_itimer, NULL);
+#endif
 
 	MyProcPid = getpid();		/* reset MyProcPid to child */
 
@@ -1801,13 +1813,16 @@ SignalChildren(int signal)
 /*
  * BackendStartup -- start backend process
  *
- * returns: STATUS_ERROR if the fork/exec failed, STATUS_OK otherwise.
+ * returns: STATUS_ERROR if the fork failed, STATUS_OK otherwise.
  */
 static int
 BackendStartup(Port *port)
 {
 	Backend    *bn;				/* for backend cleanup */
 	pid_t		pid;
+#ifdef LINUX_PROFILE
+	struct itimerval prof_itimer;
+#endif
 
 	/*
 	 * Compute the cancel key that will be assigned to this backend. The
@@ -1838,6 +1853,16 @@ BackendStartup(Port *port)
 	fflush(stdout);
 	fflush(stderr);
 
+#ifdef LINUX_PROFILE
+	/*
+	 * Linux's fork() resets the profiling timer in the child process.
+	 * If we want to profile child processes then we need to save and restore
+	 * the timer setting.  This is a waste of time if not profiling, however,
+	 * so only do it if commanded by specific -DLINUX_PROFILE switch.
+	 */
+	getitimer(ITIMER_PROF, &prof_itimer);
+#endif
+
 #ifdef __BEOS__
 	/* Specific beos actions before backend startup */
 	beos_before_backend_startup();
@@ -1848,6 +1873,10 @@ BackendStartup(Port *port)
 	if (pid == 0)				/* child */
 	{
 		int			status;
+
+#ifdef LINUX_PROFILE
+		setitimer(ITIMER_PROF, &prof_itimer, NULL);
+#endif
 
 #ifdef __BEOS__
 		/* Specific beos backend startup actions */
@@ -2487,9 +2516,17 @@ SSDataBase(int xlop)
 {
 	pid_t		pid;
 	Backend    *bn;
+#ifdef LINUX_PROFILE
+	struct itimerval prof_itimer;
+#endif
 
 	fflush(stdout);
 	fflush(stderr);
+
+#ifdef LINUX_PROFILE
+	/* see comments in BackendStartup */
+	getitimer(ITIMER_PROF, &prof_itimer);
+#endif
 
 #ifdef __BEOS__
 	/* Specific beos actions before backend startup */
@@ -2504,6 +2541,10 @@ SSDataBase(int xlop)
 		char		nbbuf[ARGV_SIZE];
 		char		dbbuf[ARGV_SIZE];
 		char		xlbuf[ARGV_SIZE];
+
+#ifdef LINUX_PROFILE
+		setitimer(ITIMER_PROF, &prof_itimer, NULL);
+#endif
 
 #ifdef __BEOS__
 		/* Specific beos actions after backend startup */
@@ -2603,7 +2644,7 @@ SSDataBase(int xlop)
 	 */
 	if (xlop == BS_XLOG_CHECKPOINT)
 	{
-		if (!(bn = (Backend *) calloc(1, sizeof(Backend))))
+		if (!(bn = (Backend *) malloc(sizeof(Backend))))
 		{
 			elog(DEBUG, "CheckPointDataBase: malloc failed");
 			ExitPostmaster(1);
