@@ -36,7 +36,8 @@
 #define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
 #define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
 
-#define ARRISNULL(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : 1  ) : 1 )
+#define ARRISNULL(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : ( ( ARR_NDIM(x) ) ? (elog(ERROR,"Array is not one-dimentional: %d dimentions", ARR_NDIM(x)),1) : 1 ) ) : 1 )
+#define ARRISVOID(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : 1  ) : 0 )
 
 #define SORT(x) \
 	do { \
@@ -300,15 +301,16 @@ g_int_compress(PG_FUNCTION_ARGS)
 
 	if (ARRISNULL(r))
 	{
-#ifdef GIST_DEBUG
-		elog(NOTICE, "COMP IN: NULL");
-#endif
-		if (r)
-			if (r != (ArrayType *) DatumGetPointer(entry->key))
-				pfree(r);
-
-		gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset,
+		if ( ARRISVOID(r) ) {
+			ArrayType *out = new_intArrayType( 0 );
+			gistentryinit(*retval, PointerGetDatum(out),
+				  entry->rel, entry->page, entry->offset, VARSIZE(out), FALSE);
+		} else {
+			gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset,
 					  0, FALSE);
+		}
+		if (r) pfree(r);
+
 		PG_RETURN_POINTER(retval);
 	}
 
@@ -371,14 +373,20 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	else
 		in = NULL;
 
-	if (entry->bytes < ARR_OVERHEAD(NDIM) || ARRISNULL(in))
+	if (ARRISNULL(in))
 	{
 		retval = palloc(sizeof(GISTENTRY));
 
+		if ( ARRISVOID(in) ) {
+			r = new_intArrayType( 0 );
+			gistentryinit(*retval, PointerGetDatum(r),
+				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+		} else {
+			gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset, 0, FALSE);
+		}  
 		if (in)
 			if (in != (ArrayType *) DatumGetPointer(entry->key))
 				pfree(in);
-		gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset, 0, FALSE);
 #ifdef GIST_DEBUG
 		elog(NOTICE, "DECOMP IN: NULL");
 #endif
@@ -1137,10 +1145,17 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 
 	if (ARRISNULL(in))
 	{
+		if ( ARRISVOID(in) ) {
+			r = new_intArrayType( SIGLENINT );
+			gistentryinit(*retval, PointerGetDatum(r),
+				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+		} else {
+			gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset,
+					  0, FALSE);
+		}
 		if (in)
 			if (in != (ArrayType *) DatumGetPointer(entry->key))
 				pfree(in);
-		gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset, 0, FALSE);
 		PG_RETURN_POINTER (retval);
 	}
 
