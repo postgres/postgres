@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 24 14:33:26 EST 2001
+Last updated:		Wed Jan 24 18:55:23 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -24,7 +24,7 @@ PARSER
 * -SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
-  [inherit] 
+  [inheritance] 
 * -Be smarter about promoting types when UNION merges different data types
 * -redesign INSERT ... SELECT to have two levels of target list
 * -have INTERSECT/EXCEPT prevent duplicates unless ALL is specified (Tom)
@@ -34,7 +34,7 @@ VIEWS
 
 * -Views containing aggregates sometimes fail (Jan)
 * -Creating view and inheriting the view causes view* to show
-  duplicates (inherit) 
+  duplicates [inheritance] 
 * -Disallow LOCK on view (Mark Hollomon)
 
 MISC
@@ -145,7 +145,8 @@ INDEXES
 
 COMMANDS
 
-* ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
+* ALTER TABLE ADD COLUMN to inherited table put column in wrong place 
+  [inheritance]
 * -Add ALTER TABLE ALTER COLUMN feature (Peter E)
 * Add ALTER TABLE DROP COLUMN feature [drop]
 * -Add ALTER TABLE command to change table ownership (Mark H)
