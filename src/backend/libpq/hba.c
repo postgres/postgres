@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.77 2001/11/05 17:46:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.78 2001/11/12 04:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -820,7 +820,10 @@ ident_inet(const struct in_addr remote_ip_addr,
 			/* The query we send to the Ident server */
 			snprintf(ident_query, 80, "%d,%d\n",
 					 ntohs(remote_port), ntohs(local_port));
-			rc = send(sock_fd, ident_query, strlen(ident_query), 0);
+			/* loop in case send is interrupted */
+			do {
+				rc = send(sock_fd, ident_query, strlen(ident_query), 0);
+			} while (rc < 0 && errno == EINTR);
 			if (rc < 0)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
@@ -828,7 +831,8 @@ ident_inet(const struct in_addr remote_ip_addr,
 					  "trying to connect to Postgres (Host %s, Port %d),"
 						 "even though we successfully connected to it.  "
 						 "errno = %s (%d)\n",
-						 inet_ntoa(remote_ip_addr), IDENT_PORT, strerror(errno), errno);
+						 inet_ntoa(remote_ip_addr), IDENT_PORT,
+						 strerror(errno), errno);
 				fputs(PQerrormsg, stderr);
 				pqdebug("%s", PQerrormsg);
 				ident_return = false;
