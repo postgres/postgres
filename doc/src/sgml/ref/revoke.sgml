@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.9 2000/04/07 19:20:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.10 2000/04/10 01:35:44 momjian Exp $
 Postgres documentation
 -->
 
@@ -134,11 +134,6 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
 	  </para>
 	 </listitem>
 
-	 <listitem>
-	  <para>
-	   index
-	  </para>
-	 </listitem>
 	</itemizedlist>
        </para>
       </listitem>
