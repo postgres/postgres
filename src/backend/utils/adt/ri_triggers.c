@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.16 2000/05/30 00:49:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.17 2000/09/25 22:34:20 petere Exp $
  *
  * ----------
  */
@@ -24,6 +24,7 @@
 #include "catalog/pg_operator.h"
 #include "commands/trigger.h"
 #include "executor/spi_priv.h"
+#include "miscadmin.h"
 
 
 /* ----------
@@ -158,6 +159,9 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	bool		isnull;
 	int			i;
 	int			match_type;
+	Oid			save_uid;
+
+	save_uid = GetUserId();
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -252,8 +256,12 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		if (SPI_connect() != SPI_OK_CONNECT)
 			elog(NOTICE, "SPI_connect() failed in RI_FKey_check()");
 
+		SetUserId(RelationGetForm(pk_rel)->relowner);
+
 		if (SPI_execp(qplan, check_values, check_nulls, 1) != SPI_OK_SELECT)
 			elog(ERROR, "SPI_execp() failed in RI_FKey_check()");
+
+		SetUserId(save_uid);
 
 		if (SPI_processed == 0)
 			elog(ERROR, "%s referential integrity violation - "
@@ -435,8 +443,13 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * Now check that foreign key exists in PK table
 	 * ----------
 	 */
+
+	SetUserId(RelationGetForm(pk_rel)->relowner);
+
 	if (SPI_execp(qplan, check_values, check_nulls, 1) != SPI_OK_SELECT)
 		elog(ERROR, "SPI_execp() failed in RI_FKey_check()");
+
+	SetUserId(save_uid);
 
 	if (SPI_processed == 0)
 		elog(ERROR, "%s referential integrity violation - "
@@ -508,6 +521,9 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	char		del_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
+	Oid         save_uid;
+
+	save_uid = GetUserId();
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -659,8 +675,12 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			 * Now check for existing references
 			 * ----------
 			 */
+			SetUserId(RelationGetForm(pk_rel)->relowner);
+
 			if (SPI_execp(qplan, del_values, del_nulls, 1) != SPI_OK_SELECT)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_noaction_del()");
+
+			SetUserId(save_uid);
 
 			if (SPI_processed > 0)
 				elog(ERROR, "%s referential integrity violation - "
@@ -716,6 +736,9 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	char		upd_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
+	Oid         save_uid;
+
+	save_uid = GetUserId();
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -876,8 +899,12 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			 * Now check for existing references
 			 * ----------
 			 */
+			SetUserId(RelationGetForm(pk_rel)->relowner);
+
 			if (SPI_execp(qplan, upd_values, upd_nulls, 1) != SPI_OK_SELECT)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_noaction_upd()");
+
+			SetUserId(save_uid);
 
 			if (SPI_processed > 0)
 				elog(ERROR, "%s referential integrity violation - "
@@ -1570,6 +1597,9 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	char		upd_nulls[RI_MAX_NUMKEYS + 1];
 	bool		isnull;
 	int			i;
+	Oid         save_uid;
+
+	save_uid = GetUserId();
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1730,8 +1760,12 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			 * Now check for existing references
 			 * ----------
 			 */
+			SetUserId(RelationGetForm(pk_rel)->relowner);
+
 			if (SPI_execp(qplan, upd_values, upd_nulls, 1) != SPI_OK_SELECT)
 				elog(ERROR, "SPI_execp() failed in RI_FKey_restrict_upd()");
+
+			SetUserId(save_uid);
 
 			if (SPI_processed > 0)
 				elog(ERROR, "%s referential integrity violation - "
