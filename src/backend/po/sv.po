@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-06-25 15:07+0200\n"
-"PO-Revision-Date: 2004-06-27 11:33+0200\n"
+"PO-Revision-Date: 2004-09-09 08:01+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -5591,7 +5591,7 @@ msgstr ""
 
 #: y.tab.c:18669 gram.y:8074 gram.y:8076
 msgid "syntax error"
-msgstr "syntaxfel\""
+msgstr "syntaxfel"
 
 #: y.tab.c:18787
 msgid "parser stack overflow"
