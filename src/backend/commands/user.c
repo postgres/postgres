@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.53 2000/05/04 20:06:07 tgl Exp $
+ * $Id: user.c,v 1.53.2.1 2000/10/19 03:58:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -610,6 +610,10 @@ DropUser(DropUserStmt *stmt)
 		}
 		heap_endscan(scan);
 		heap_close(pg_rel, AccessExclusiveLock);
+		/*
+		 * Make changes visible ...
+		 */
+		CommandCounterIncrement();
 	}
 
 	/*
