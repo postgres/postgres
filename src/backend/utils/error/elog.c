@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.95 2002/04/04 04:43:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.96 2002/04/21 00:22:52 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <ctype.h>
-#ifdef ENABLE_SYSLOG
+#ifdef HAVE_SYSLOG
 #include <syslog.h>
 #endif
 
@@ -46,7 +46,7 @@ int			client_min_messages;
 char	   *client_min_messages_str = NULL;
 const char	client_min_messages_str_default[] = "notice";
 
-#ifdef ENABLE_SYSLOG
+#ifdef HAVE_SYSLOG
 /*
  * 0 = only stdout/stderr
  * 1 = stdout+stderr and syslog
@@ -351,7 +351,7 @@ elog(int lev, const char *fmt,...)
 	 * Message prepared; send it where it should go
 	 */
 
-#ifdef ENABLE_SYSLOG
+#ifdef HAVE_SYSLOG
 	/* Write to syslog, if enabled */
 	if (output_to_server && Use_syslog >= 1)
 	{
@@ -389,7 +389,7 @@ elog(int lev, const char *fmt,...)
 
 		write_syslog(syslog_level, msg_buf + timestamp_size);
 	}
-#endif   /* ENABLE_SYSLOG */
+#endif   /* HAVE_SYSLOG */
 
 	/* syslog doesn't want a trailing newline, but other destinations do */
 	strcat(msg_buf, "\n");
@@ -612,7 +612,7 @@ print_pid(void)
 
 
 
-#ifdef ENABLE_SYSLOG
+#ifdef HAVE_SYSLOG
 
 #ifndef PG_SYSLOG_LIMIT
 #define PG_SYSLOG_LIMIT 128
@@ -733,7 +733,7 @@ write_syslog(int level, const char *line)
 		syslog(level, "[%lu] %s", seq, line);
 	}
 }
-#endif   /* ENABLE_SYSLOG */
+#endif   /* HAVE_SYSLOG */
 
 
 static void

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.35 2002/03/06 06:23:20 momjian Exp $
+ * $Id: elog.h,v 1.36 2002/04/21 00:22:52 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 /*#define DEBUG	DEBUG1*/		/* Backward compatibility with pre-7.3 */
 
 /* Configurable parameters */
-#ifdef ENABLE_SYSLOG
+#ifdef HAVE_SYSLOG
 extern int	Use_syslog;
 #endif
 extern bool Log_timestamp;

@@ -858,7 +858,6 @@ Optional Features:
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
   --enable-odbc           build the ODBC driver package
-  --enable-syslog         enable logging to syslog
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -12167,24 +12166,19 @@ fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
 
-
-
-# Check whether --enable-syslog or --disable-syslog was given.
-if test "${enable_syslog+set}" = set; then
-  enableval="$enable_syslog"
-
-  case $enableval in
-    yes)
-      echo "$as_me:$LINENO: checking for syslog" >&5
-echo $ECHO_N "checking for syslog... $ECHO_C" >&6
-if test "${ac_cv_func_syslog+set}" = set; then
+for ac_func in syslog
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
+if eval "test \"\${$as_ac_var+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char syslog (); below.  */
+    which can conflict with char $ac_func (); below.  */
 #include <assert.h>
 /* Override any gcc2 internal prototype to avoid an error.  */
 #ifdef __cplusplus
@@ -12192,7 +12186,7 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char syslog ();
+char $ac_func ();
 char (*f) ();
 
 #ifdef F77_DUMMY_MAIN
@@ -12207,10 +12201,10 @@ main ()
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_syslog) || defined (__stub___syslog)
+#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
 choke me
 #else
-f = syslog;
+f = $ac_func;
 #endif
 
   ;
@@ -12229,44 +12223,23 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_func_syslog=yes
+  eval "$as_ac_var=yes"
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_cv_func_syslog=no
+eval "$as_ac_var=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_func_syslog" >&5
-echo "${ECHO_T}$ac_cv_func_syslog" >&6
-if test $ac_cv_func_syslog = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define ENABLE_SYSLOG 1
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
-else
-  { { echo "$as_me:$LINENO: error: no syslog interface found" >&5
-echo "$as_me: error: no syslog interface found" >&2;}
-   { (exit 1); exit 1; }; }
 fi
-
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --enable-syslog option" >&5
-echo "$as_me: error: no argument expected for --enable-syslog option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  enable_syslog=no
-
-fi;
-
+done
 
 
 echo "$as_me:$LINENO: checking for optreset" >&5

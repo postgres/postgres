@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.178 2002/04/14 17:23:20 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.179 2002/04/21 00:22:52 ishii Exp $
 
 dnl Developers, please strive to achieve this order:
 dnl
@@ -975,13 +975,7 @@ AC_TRY_LINK([#include <setjmp.h>],
 AC_MSG_RESULT(yes)],
             [AC_MSG_RESULT(no)])
 
-
-PGAC_ARG_BOOL(enable, syslog, no, [  --enable-syslog         enable logging to syslog],
-              [AC_CHECK_FUNC(syslog,
-                             [AC_DEFINE([ENABLE_SYSLOG], 1,
-                                        [Define to 1 if to enable the syslogging code])],
-                             [AC_MSG_ERROR([no syslog interface found])])])
-
+AC_CHECK_FUNCS([syslog])
 
 AC_CACHE_CHECK([for optreset], pgac_cv_var_int_optreset,
 [AC_TRY_LINK([#include <unistd.h>],

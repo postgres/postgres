@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.21 2002/04/10 22:47:09 petere Exp $
+ * $Id: pg_config.h.in,v 1.22 2002/04/21 00:22:52 ishii Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -46,9 +46,6 @@
 
 /* Set to 1 if you want ASSERT checking (--enable-cassert) */
 #undef USE_ASSERT_CHECKING
-
-/* Set to 1 to use syslog() to write postmaster log (--enable-syslog) */
-#undef ENABLE_SYSLOG
 
 /* Define to build with Kerberos 4 support (--with-krb4[=DIR]) */
 #undef KRB4
@@ -708,6 +705,8 @@ extern int fdatasync(int fildes);
 #undef HAVE_UINT64
 #undef HAVE_SIG_ATOMIC_T
 
+/* Define if you have syslog() */
+#undef HAVE_SYSLOG
 
 /*
  *------------------------------------------------------------------------
