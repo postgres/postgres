@@ -1,0 +1,261 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.1 2004/06/07 04:04:47 tgl Exp $ -->
+
+<sect1 id="rowtypes">
+ <title>Composite Types</title>
+
+ <indexterm>
+  <primary>composite type</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>row type</primary>
+ </indexterm>
+
+ <para>
+  A <firstterm>composite type</> describes the structure of a row or record;
+  it is in essence just a list of field names and their datatypes.
+  <productname>PostgreSQL</productname> allows values of composite types to be
+  used in many of the same ways that simple types can be used.  For example, a
+  column of a table can be declared to be of a composite type.
+ </para>
+
+ <sect2>
+  <title>Declaration of Composite Types</title>
+
+ <para>
+  Here are two simple examples of defining composite types:
+<programlisting>
+CREATE TYPE complex AS (
+    r       double precision,
+    i       double precision
+);
+
+CREATE TYPE inventory_item AS (
+    name            text,
+    supplier_id     integer,
+    price           numeric
+);
+</programlisting>
+  The syntax is comparable to <command>CREATE TABLE</>, except that only
+  field names and types can be specified; no constraints (such as <literal>NOT
+  NULL</>) can presently be included.  Note that the <literal>AS</> keyword
+  is essential; without it, the system will think a quite different kind
+  of <command>CREATE TYPE</> command is meant, and you'll get odd syntax
+  errors.
+ </para>
+
+ <para>
+  Having defined the types, we can use them to create tables:
+
+<programlisting>
+CREATE TABLE on_hand (
+    item      inventory_item,
+    count     integer
+);
+
+INSERT INTO on_hand VALUES (ROW('fuzzy dice', 42, 1.99), 1000);
+</programlisting>
+
+  or functions:
+
+<programlisting>
+CREATE FUNCTION price_extension(inventory_item, integer) RETURNS numeric
+AS 'SELECT $1.price * $2' LANGUAGE SQL;
+
+SELECT price_extension(item, 10) FROM on_hand;
+</programlisting>
+
+ </para>
+ </sect2>
+
+ <sect2>
+  <title>Composite Value Input</title>
+
+  <indexterm>
+   <primary>composite type</primary>
+   <secondary>constant</secondary>
+  </indexterm>
+
+  <para>
+   To write a composite value as a literal constant, enclose the field
+   values within parentheses and separate them by commas.  You may put double
+   quotes around any field value, and must do so if it contains commas or
+   parentheses.  (More details appear below.)  Thus, the general format of a
+   composite constant is the following:
+<synopsis>
+'( <replaceable>val1</replaceable> , <replaceable>val2</replaceable> , ... )'
+</synopsis>
+   An example is
+<programlisting>
+'("fuzzy dice",42,1.99)'
+</programlisting>
+   which would be a valid value of the <literal>inventory_item</> type
+   defined above.  To make a field be NULL, write no characters at all
+   in its position in the list.  For example, this constant specifies
+   a NULL third field:
+<programlisting>
+'("fuzzy dice",42,)'
+</programlisting>
+   If you want an empty string rather than NULL, write double quotes:
+<programlisting>
+'("",42,)'
+</programlisting>
+   Here the first field is a non-NULL empty string, the third is NULL.
+  </para>
+
+  <para>
+   (These constants are actually only a special case of
+   the generic type constants discussed in <xref
+   linkend="sql-syntax-constants-generic">.  The constant is initially
+   treated as a string and passed to the composite-type input conversion
+   routine.  An explicit type specification might be necessary.)
+  </para>
+
+ <para>
+  The <literal>ROW</literal> expression syntax may also be used to
+  construct composite values.  In most cases this is considerably
+  simpler to use than the string-literal syntax, since you don't have
+  to worry about multiple layers of quoting.  We already used this
+  method above:
+<programlisting>
+ROW('fuzzy dice', 42, 1.99)
+ROW('', 42, NULL)
+</programlisting>
+  The ROW keyword is actually optional as long as you have more than one
+  field in the expression, so these can simplify to
+<programlisting>
+('fuzzy dice', 42, 1.99)
+('', 42, NULL)
+</programlisting>
+  The <literal>ROW</> expression syntax is discussed in more detail in <xref
+  linkend="sql-syntax-row-constructors">.
+ </para>
+ </sect2>
+
+ <sect2>
+  <title>Accessing Composite Types</title>
+
+ <para>
+  To access a field of a composite column, one writes a dot and the field
+  name, much like selecting a field from a table name.  In fact, it's so
+  much like selecting from a table name that you often have to use parentheses
+  to keep from confusing the parser.  For example, you might try to select
+  some subfields from our <literal>on_hand</> example table with something
+  like:
+
+<programlisting>
+SELECT item.name FROM on_hand WHERE item.price > 9.99;
+</programlisting>
+
+  This will not work since the name <literal>item</> is taken to be a table
+  name, not a field name, per SQL syntax rules.  You must write it like this:
+
+<programlisting>
+SELECT (item).name FROM on_hand WHERE (item).price > 9.99;
+</programlisting>
+
+  or if you need to use the table name as well (for instance in a multi-table
+  query), like this:
+
+<programlisting>
+SELECT (on_hand.item).name FROM on_hand WHERE (on_hand.item).price > 9.99;
+</programlisting>
+
+  Now the parenthesized object is correctly interpreted as a reference to
+  the <literal>item</> column, and then the subfield can be selected from it.
+ </para>
+
+ <para>
+  Similar syntactic issues apply whenever you select a field from a composite
+  value.  For instance, to select just one field from the result of a function
+  that returns a composite value, you'd need to write something like
+
+<programlisting>
+SELECT (my_func(...)).field FROM ...
+</programlisting>
+
+  Without the extra parentheses, this will provoke a syntax error.
+ </para>
+ </sect2>
+
+ <sect2>
+  <title>Composite Type Input and Output Syntax</title>
+
+  <para>
+   The external text representation of a composite value consists of items that
+   are interpreted according to the I/O conversion rules for the individual
+   field types, plus decoration that indicates the composite structure.
+   The decoration consists of parentheses (<literal>(</> and <literal>)</>)
+   around the whole value, plus commas (<literal>,</>) between adjacent
+   items.  Whitespace outside the parentheses is ignored, but within the
+   parentheses it is considered part of the field value, and may or may not be
+   significant depending on the input conversion rules for the field datatype.
+   For example, in
+<programlisting>
+'(  42)'
+</programlisting>
+   the whitespace will be ignored if the field type is integer, but not if
+   it is text.
+  </para>
+
+  <para>
+   As shown previously, when writing a composite value you may write double
+   quotes around any individual field value.
+   You <emphasis>must</> do so if the field value would otherwise
+   confuse the composite-value parser.  In particular, fields containing
+   parentheses, commas, double quotes, or backslashes must be double-quoted.
+   To put a double quote or backslash in a quoted composite field value,
+   precede it with a backslash.  (Also, a pair of double quotes within a
+   double-quoted field value is taken to represent a double quote character,
+   analogously to the rules for single quotes in SQL literal strings.)
+   Alternatively, you can use backslash-escaping to protect all data characters
+   that would otherwise be taken as composite syntax.
+  </para>
+
+  <para>
+   A completely empty field value (no characters at all between the commas
+   or parentheses) represents a NULL.  To write a value that is an empty
+   string rather than NULL, write <literal>""</>.
+  </para>
+
+  <para>
+   The composite output routine will put double quotes around field values
+   if they are empty strings or contain parentheses, commas,
+   double quotes, backslashes, or white space.  (Doing so for white space
+   is not essential, but aids legibility.)  Double quotes and backslashes
+   embedded in field values will be doubled.
+  </para>
+
+ <note>
+  <para>
+   Remember that what you write in an SQL command will first be interpreted
+   as a string literal, and then as a composite.  This doubles the number of
+   backslashes you need.  For example, to insert a <type>text</> field
+   containing a double quote and a backslash in a composite
+   value, you'd need to write
+<programlisting>
+INSERT ... VALUES ('("\\"\\\\")');
+</programlisting>
+   The string-literal processor removes one level of backslashes, so that
+   what arrives at the composite-value parser looks like
+   <literal>("\"\\")</>.  In turn, the string
+   fed to the <type>text</> data type's input routine
+   becomes <literal>"\</>.  (If we were working
+   with a data type whose input routine also treated backslashes specially,
+   <type>bytea</> for example, we might need as many as eight backslashes
+   in the command to get one backslash into the stored composite field.)
+  </para>
+ </note>
+
+ <tip>
+  <para>
+   The <literal>ROW</> constructor syntax is usually easier to work with
+   than the composite-literal syntax when writing composite values in SQL
+   commands. 
+   In <literal>ROW</>, individual field values are written the same way
+   they would be written when not members of a composite.
+  </para>
+ </tip>
+ </sect2>
+
+</sect1>

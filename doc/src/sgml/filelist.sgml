@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.37 2004/04/20 01:11:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.38 2004/06/07 04:04:47 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -17,6 +17,7 @@
 
 <!-- user's guide -->
 <!entity array      SYSTEM "array.sgml">
+<!entity rowtypes   SYSTEM "rowtypes.sgml">
 <!entity datatype   SYSTEM "datatype.sgml">
 <!entity ddl        SYSTEM "ddl.sgml">
 <!entity dml        SYSTEM "dml.sgml">

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.144 2004/03/23 02:47:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.145 2004/06/07 04:04:47 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -2878,6 +2878,8 @@ SELECT * FROM test;
   </sect1>
 
   &array;
+
+  &rowtypes;
 
   <sect1 id="datatype-oid">
    <title>Object Identifier Types</title>

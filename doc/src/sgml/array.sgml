@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.34 2003/11/29 19:51:36 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.35 2004/06/07 04:04:47 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -10,7 +10,8 @@
  <para>
   <productname>PostgreSQL</productname> allows columns of a table to be
   defined as variable-length multidimensional arrays. Arrays of any
-  built-in type or user-defined type can be created.
+  built-in or user-defined base type can be created.  (Arrays of
+  composite types or domains are not yet supported, however.)
  </para>
 
  <sect2>

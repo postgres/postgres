@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.85 2004/04/01 21:28:43 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.86 2004/06/07 04:04:47 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -957,8 +957,8 @@
    The catalog <structname>pg_class</structname> catalogs tables and most
    everything else that has columns or is otherwise similar to a
    table.  This includes indexes (but see also
-   <structname>pg_index</structname>), sequences, views, and some
-   kinds of special relation; see <structfield>relkind</>.
+   <structname>pg_index</structname>), sequences, views, composite types,
+   and some kinds of special relation; see <structfield>relkind</>.
    Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
    columns are meaningful for all relation types.
@@ -999,8 +999,8 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
-       The OID of the data type that corresponds to this table, if any
-       (zero for indexes, which have no <structname>pg_type</> entry)
+       The OID of the data type that corresponds to this table's rowtype,
+       if any (zero for indexes, which have no <structname>pg_type</> entry)
       </entry>
      </row>
 
@@ -3420,7 +3420,7 @@
       <entry></entry>
       <entry>
        <structfield>typtype</structfield> is <literal>b</literal> for
-       a base type, <literal>c</literal> for a composite type (i.e., a
+       a base type, <literal>c</literal> for a composite type (e.g., a
        table's row type), <literal>d</literal> for a domain, or
        <literal>p</literal> for a pseudo-type.  See also
        <structfield>typrelid</structfield> and
@@ -3461,7 +3461,7 @@
        <structname>pg_class</structname> entry doesn't really represent
        a table, but it is needed anyway for the type's
        <structname>pg_attribute</structname> entries to link to.)
-       Zero for base types.
+       Zero for non-composite types.
       </entry>
      </row>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.92 2004/05/16 23:22:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.93 2004/06/07 04:04:47 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1496,18 +1496,24 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
    <title>Row Constructors</title>
 
    <indexterm>
-    <primary>row</primary>
+    <primary>composite type</primary>
+    <secondary>constructor</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>row type</primary>
     <secondary>constructor</secondary>
    </indexterm>
 
    <para>
-    A row constructor is an expression that builds a row value from values
+    A row constructor is an expression that builds a row value (also
+    called a composite value) from values
     for its member fields.  A row constructor consists of the key word
     <literal>ROW</literal>, a left parenthesis <literal>(</>, zero or more
     expressions (separated by commas) for the row field values, and finally
     a right parenthesis <literal>)</>.  For example,
 <programlisting>
-SELECT myfunc(ROW(1,2.5,'this is a test'));
+SELECT ROW(1,2.5,'this is a test');
 </programlisting>
     The key word <literal>ROW</> is optional when there is more than one
     expression in the list.
@@ -1549,10 +1555,10 @@ SELECT getf1(CAST(ROW(11,'this is a test',2.5) AS myrowtype));
   </para>
 
   <para>
-   Row constructors have only limited uses, other than creating an argument
-   value for a user-defined function that accepts a rowtype parameter, as
-   illustrated above.
-   It is possible to compare two row values or test a row with
+   Row constructors can be used to build composite values to be stored
+   in a composite-type table column, or to be passed to a function that
+   accepts a composite parameter.  Also,
+   it is possible to compare two row values or test a row with
    <literal>IS NULL</> or <literal>IS NOT NULL</>, for example
 <programlisting>
 SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
