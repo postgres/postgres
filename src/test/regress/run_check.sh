@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.8 2000/02/13 21:45:15 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.9 2000/02/19 22:13:36 tgl Exp $
 
 # ----------
 # Check call syntax
@@ -78,10 +78,15 @@ else
 fi
 
 # ----------
-# Set timezone and datestyle explicitly
+# Set backend timezone and datestyle explicitly
+#
+# To pass the horology test in its current form, the postmaster must be
+# started with PGDATESTYLE=ISO, while the frontend must be started with
+# PGDATESTYLE=Postgres.  We set the postmaster values here and change
+# to the frontend settings after the postmaster has been started.
 # ----------
 PGTZ="PST8PDT"; export PGTZ
-PGDATESTYLE="Postgres,US"; export PGDATESTYLE
+PGDATESTYLE="ISO,US"; export PGDATESTYLE
 
 # ----------
 # The SQL shell to use during this test
@@ -202,6 +207,11 @@ else
 	exit 4
 fi
 
+# ----------
+# Set frontend timezone and datestyle explicitly
+# ----------
+PGTZ="PST8PDT"; export PGTZ
+PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 
 # ----------
 # Create the regression database

@@ -1125,4 +1125,4 @@ SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
 
 RESET DateStyle;
 SHOW DateStyle;
-NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
+NOTICE:  DateStyle is ISO with US (NonEuropean) conventions
