@@ -4,12 +4,10 @@
 --  darcy@druid.net
 --  http://www.druid.net/darcy/
 -- 
---  $Header: /cvsroot/pgsql/contrib/chkpass/Attic/chkpass.sql,v 1.2 2001/08/10 18:57:32 tgl Exp $
---  best viewed with tabs set to 4
---  %%PGDIR%% changed to your local directory where modules is
+--  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.1 2001/08/23 16:50:33 tgl Exp $
 --
-
-load '%%PGDIR%%/modules/chkpass.so';
+--  best viewed with tabs set to 4
+--
 
 --
 --	Input and output functions and the type itself:
@@ -17,12 +15,12 @@ load '%%PGDIR%%/modules/chkpass.so';
 
 create function chkpass_in(opaque)
 	returns opaque
-	as '%%PGDIR%%/modules/chkpass.so'
+	as 'MODULE_PATHNAME'
 	language 'c';
 
 create function chkpass_out(opaque)
 	returns opaque
-	as '%%PGDIR%%/modules/chkpass.so'
+	as 'MODULE_PATHNAME'
 	language 'c';
 
 create type chkpass (
@@ -34,7 +32,7 @@ create type chkpass (
 
 create function raw(chkpass)
 	returns text
-	as '%%PGDIR%%/modules/chkpass.so', 'chkpass_rout'
+	as 'MODULE_PATHNAME', 'chkpass_rout'
 	language 'c';
 
 --
@@ -43,12 +41,12 @@ create function raw(chkpass)
 
 create function eq(chkpass, text)
 	returns bool
-	as '%%PGDIR%%/modules/chkpass.so', 'chkpass_eq'
+	as 'MODULE_PATHNAME', 'chkpass_eq'
 	language 'c';
 
 create function ne(chkpass, text)
 	returns bool
-	as '%%PGDIR%%/modules/chkpass.so', 'chkpass_ne'
+	as 'MODULE_PATHNAME', 'chkpass_ne'
 	language 'c';
 
 --
