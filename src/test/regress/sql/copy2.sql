@@ -51,6 +51,5 @@ COPY x (a,b,c,d,e) from stdin;
 
 COPY x TO stdout;
 DROP TABLE x;
-DROP SEQUENCE x_a_seq;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
