@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.13 1997/06/29 17:29:14 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.14 1997/08/20 01:50:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,10 @@
 
 extern char *parseString;
 extern char *parseCh;
+
+int CurScanPosition(void);
+int DefaultStartPosition;
+int CheckStartPosition;
 
 /* some versions of lex define this as a macro */
 #if defined(yywrap)
@@ -173,6 +177,10 @@ other		.
 			
 			keyword = ScanKeywordLookup((char*)yytext);
 			if (keyword != NULL) {
+				if ( keyword->value == DEFAULT )
+					DefaultStartPosition = CurScanPosition () + yyleng + 1;
+				else if ( keyword->value == CHECK )
+					CheckStartPosition = CurScanPosition () + yyleng + 1;
 				return (keyword->value);
 			} else {
 				yylval.str = pstrdup((char*)yytext);
@@ -240,6 +248,12 @@ unput(char c)
 	*--parseCh = c;
     }
 }
+
+int
+CurScanPosition(void)
+{
+    return (parseCh - parseString - yyleng - 1);
+}
 #endif /* !defined(FLEX_SCANNER) */
 
 #ifdef FLEX_SCANNER
@@ -265,16 +279,11 @@ myinput(char* buf, int max)
     }
 }
 
-#ifdef NOT_USED
-char*
-CurScan(void)
+int
+CurScanPosition(void)
 {
-/*
-    return (InputFrag ? InputFrag : parseCh) +
-	   (yy_c_buf_p - &yy_current_buffer->yy_ch_buf[yy_n_chars]);
-*/
+    return (yy_c_buf_p - yy_current_buffer->yy_ch_buf - yyleng);
 }
-#endif
 
 #endif /* FLEX_SCANNER */
 
