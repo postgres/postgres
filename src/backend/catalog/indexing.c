@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.74 2000/11/16 22:30:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.75 2000/12/14 07:02:42 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ CatalogIndexInsert(Relation *idescs,
 	char		nullv[INDEX_MAX_KEYS];
 	int			i;
 
-	if (IsIgnoringSystemIndexes())
+	if (IsIgnoringSystemIndexes() || (!heapRelation->rd_rel->relhasindex))
 		return;
 	heapDescriptor = RelationGetDescr(heapRelation);
 
