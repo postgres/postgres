@@ -1,0 +1,242 @@
+From pgsql-hackers-owner+M5149@postgresql.org Mon Feb 26 03:32:49 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA04497
+	for <pgman@candle.pha.pa.us>; Mon, 26 Feb 2001 03:32:48 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f1Q8TSx48319;
+	Mon, 26 Feb 2001 03:29:28 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5149@postgresql.org)
+Received: from store.d.zembu.com (nat.zembu.com [209.128.96.253])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f1Q8LPx47243
+	for <pgsql-hackers@postgreSQL.org>; Mon, 26 Feb 2001 03:21:25 -0500 (EST)
+	(envelope-from ncm@zembu.com)
+Received: by store.d.zembu.com (Postfix, from userid 509)
+	id 58E39A782; Mon, 26 Feb 2001 00:21:25 -0800 (PST)
+Date: Mon, 26 Feb 2001 00:21:25 -0800
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Re: [PATCHES] A patch for xlog.c
+Message-ID: <20010226002125.A2430@store.zembu.com>
+Reply-To: pgsql-hackers@postgresql.org
+References: <200102260200.VAA17397@candle.pha.pa.us> <22318.983161726@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <22318.983161726@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Sun, Feb 25, 2001 at 11:28:46PM -0500
+From: ncm@zembu.com (Nathan Myers)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+On Sun, Feb 25, 2001 at 11:28:46PM -0500, Tom Lane wrote:
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > It allows no backing store on disk.  
+
+I.e. it allows you to map memory without an associated inode; the memory
+may still be swapped.  Of course, there is no problem with mapping an 
+inode too, so that unrelated processes can join in.  Solarix has a flag
+to pin the shared pages in RAM so they can't be swapped out.
+
+> > It is the BSD solution to SysV
+> > share memory.  Here are all the BSDi flags:
+> 
+> >      MAP_ANON    Map anonymous memory not associated with any specific
+> >                  file.  The file descriptor used for creating MAP_ANON
+> >                  must be -1.  The offset parameter is ignored.
+> 
+> Hmm.  Now that I read down to the "nonstandard extensions" part of the
+> HPUX man page for mmap(), I find
+> 
+>      If MAP_ANONYMOUS is set in flags:
+> 
+>           o    A new memory region is created and initialized to all zeros.
+>                This memory region can be shared only with descendants of
+>                the current process.
+
+This is supported on Linux and BSD, but not on Solarix 7.  It's not 
+necessary; you can just map /dev/zero on SysV systems that don't 
+have MAP_ANON.
+
+> While I've said before that I don't think it's really necessary for
+> processes that aren't children of the postmaster to access the shared
+> memory, I'm not sure that I want to go over to a mechanism that makes it
+> *impossible* for that to be done.  Especially not if the only motivation
+> is to avoid having to configure the kernel's shared memory settings.
+
+There are enormous advantages to avoiding the need to configure kernel 
+settings.  It makes PG a better citizen.  PG is much easier to drop in 
+and use if you don't need attention from the IT department.
+
+But I don't know of any reason to avoid mapping an actual inode,
+so using mmap doesn't necessarily mean giving up sharing among
+unrelated processes.
+
+> Besides, what makes you think there's not a limit on the size of shmem
+> allocatable via mmap()?
+
+I've never seen any mmap limit documented.  Since mmap() is how 
+everybody implements shared libraries, such a limit would be equivalent 
+to a limit on how much/many shared libraries are used.  mmap() with 
+MAP_ANONYMOUS (or its SysV /dev/zero equivalent) is a common, modern 
+way to get raw storage for malloc(), so such a limit would be a limit
+on malloc() too.
+
+The mmap architecture comes to us from the Mach microkernel memory
+manager, backported into BSD and then copied widely.  Since it was
+the fundamental mechanism for all memory operations in Mach, arbitrary
+limits would make no sense.  That it worked so well is the reason it 
+was copied everywhere else, so adding arbitrary limits while copying 
+it would be silly.  I don't think we'll see any systems like that.
+
+Nathan Myers
+ncm@zembu.com
+
+From pgsql-hackers-owner+M6138@postgresql.org Mon Mar 19 07:57:59 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id HAA26926
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 07:57:59 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2JCug641835;
+	Mon, 19 Mar 2001 07:56:42 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6138@postgresql.org)
+Received: from fw.wintelcom.net (ns1.wintelcom.net [209.1.153.20])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f2JCt7641684
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 07:55:07 -0500 (EST)
+	(envelope-from bright@fw.wintelcom.net)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id f2JCt2325289;
+	Mon, 19 Mar 2001 04:55:02 -0800 (PST)
+Date: Mon, 19 Mar 2001 04:55:01 -0800
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Rod Taylor <rod.taylor@inquent.com>
+Cc: Hackers List <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Fw: [vorbis-dev] ogg123: shared memory by mmap()
+Message-ID: <20010319045500.T29888@fw.wintelcom.net>
+References: <018301c0b070$16049a40$2205010a@jester>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <018301c0b070$16049a40$2205010a@jester>; from rod.taylor@inquent.com on Mon, Mar 19, 2001 at 07:28:21AM -0500
+X-all-your-base: are belong to us.
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+WOOT WOOT! DANGER WILL ROBINSON!
+
+> ----- Original Message -----
+> From: "Christian Weisgerber" <naddy@mips.inka.de>
+> Newsgroups: list.vorbis.dev
+> To: <vorbis-dev@xiph.org>
+> Sent: Saturday, March 17, 2001 12:01 PM
+> Subject: [vorbis-dev] ogg123: shared memory by mmap()
+> 
+> 
+> > The patch below adds:
+> >
+> > - acinclude.m4:  A new macro A_FUNC_SMMAP to check that sharing
+> pages
+> >   through mmap() works.  This is taken from Joerg Schilling's star.
+> > - configure.in:  A_FUNC_SMMAP
+> > - ogg123/buffer.c:  If we have a working mmap(), use it to create
+> >   a region of shared memory instead of using System V IPC.
+> >
+> > Works on BSD.  Should also work on SVR4 and offspring (Solaris),
+> > and Linux.
+
+This is a really bad idea performance wise.  Solaris has a special
+code path for SYSV shared memory that doesn't require tons of swap
+tracking structures per-page/per-process.  FreeBSD also has this
+optimization (it's off by default, but should work since FreeBSD
+4.2 via the sysctl kern.ipc.shm_use_phys=1)
+
+Both OS's use a trick of making the pages non-pageable, this allows
+signifigant savings in kernel space required for each attached
+process, as well as the use of large pages which reduce the amount
+of TLB faults your processes will incurr.
+
+Anyhow, if you could make this a runtime option it wouldn't be so
+evil, but as a compile time option, it's a really bad idea for
+Solaris and FreeBSD.
+
+--
+-Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M6255@postgresql.org Tue Mar 20 18:46:33 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA02887
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 18:46:33 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KNjtH22390;
+	Tue, 20 Mar 2001 18:45:55 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6255@postgresql.org)
+Received: from fw.wintelcom.net (ns1.wintelcom.net [209.1.153.20])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KNiFH22033
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 18:44:15 -0500 (EST)
+	(envelope-from bright@fw.wintelcom.net)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id f2KNiAW02417;
+	Tue, 20 Mar 2001 15:44:10 -0800 (PST)
+Date: Tue, 20 Mar 2001 15:44:10 -0800
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Cc: Rod Taylor <rod.taylor@inquent.com>,
+        Hackers List <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Fw: [vorbis-dev] ogg123: shared memory by mmap()
+Message-ID: <20010320154410.H29888@fw.wintelcom.net>
+References: <20010319045500.T29888@fw.wintelcom.net> <200103202210.RAA23981@candle.pha.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <200103202210.RAA23981@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Tue, Mar 20, 2001 at 05:10:33PM -0500
+X-all-your-base: are belong to us.
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+* Bruce Momjian <pgman@candle.pha.pa.us> [010320 14:10] wrote:
+> > > > The patch below adds:
+> > > >
+> > > > - acinclude.m4:  A new macro A_FUNC_SMMAP to check that sharing
+> > > pages
+> > > >   through mmap() works.  This is taken from Joerg Schilling's star.
+> > > > - configure.in:  A_FUNC_SMMAP
+> > > > - ogg123/buffer.c:  If we have a working mmap(), use it to create
+> > > >   a region of shared memory instead of using System V IPC.
+> > > >
+> > > > Works on BSD.  Should also work on SVR4 and offspring (Solaris),
+> > > > and Linux.
+> > 
+> > This is a really bad idea performance wise.  Solaris has a special
+> > code path for SYSV shared memory that doesn't require tons of swap
+> > tracking structures per-page/per-process.  FreeBSD also has this
+> > optimization (it's off by default, but should work since FreeBSD
+> > 4.2 via the sysctl kern.ipc.shm_use_phys=1)
+> 
+> > 
+> > Both OS's use a trick of making the pages non-pageable, this allows
+> > signifigant savings in kernel space required for each attached
+> > process, as well as the use of large pages which reduce the amount
+> > of TLB faults your processes will incurr.
+> 
+> That is interesting.  BSDi has SysV shared memory as non-pagable, and I
+> always thought of that as a bug.  Seems you are saying that having it
+> pagable has a significant performance penalty.  Interesting.
+
+Yes, having it pageable is actually sort of bad.
+
+It doesn't allow you to do several important optimizations.
+
+-- 
+-Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
