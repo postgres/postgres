@@ -15,7 +15,7 @@ Moves cursor position
                 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 MOVE [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] [ <REPLACEABLE CLASS="PARAMETER">count</REPLACEABLE> ] 
@@ -25,35 +25,38 @@ FETCH [ RELATIVE ] [ { [ <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE> | ALL | 
 
 <REFSECT1 ID="R1-SQL-MOVE-1">
 <REFSECT1INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
 </TITLE>
 <PARA>
-   MOVE allows a user to move cursor position a specified
-   number of rows. MOVE works like the FETCH command, but only
-positions the cursor and does
+   <command>MOVE</command> allows a user to move cursor position a specified
+   number of rows.
+ <command>MOVE</command> works like the <command>FETCH</command> command,
+ but only positions the cursor and does
 not return rows.
 
 <para>
-Refer to the FETCH command for details on syntax and usage.
+Refer to the <command>FETCH</command> command for details on syntax and usage.
 
 <REFSECT2 ID="R2-SQL-MOVE-3">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
 </TITLE>
 <PARA>
-MOVE is a <productname>Postgres</productname> language extension.
+<command>MOVE</command> is a <productname>Postgres</productname>
+ language extension.
 
 <para>
-   Refer to FETCH for a description
+   Refer to <command>FETCH</command> for a description
      of valid arguments.
-   Refer to DECLARE to declare a cursor.
-   Refer to BEGIN WORK, COMMIT WORK, ROLLBACK WORK statements
+   Refer to <command>DECLARE</command> to declare a cursor.
+   Refer to <command>BEGIN WORK</command>, <command>COMMIT WORK</command>,
+ <command>ROLLBACK WORK</command> statements
      for further information about transactions.
 
 </REFSECT2>
@@ -64,28 +67,31 @@ Usage
 </TITLE>
 <PARA>
 <ProgramListing>
-   --set up and use a cursor:
-   --
-   BEGIN WORK;
-     DECLARE liahona CURSOR 
-         FOR SELECT * FROM films;
+--set up and use a cursor:
+--
+BEGIN WORK;
+    DECLARE liahona CURSOR  FOR SELECT * FROM films;
    
-   --Skip first 5 rows:
-   --
-     MOVE FORWARD 5 IN liahona;
-   
-   --Fetch 6th row in the cursor liahona:
-   --
-     FETCH 1 IN liahona;
-
-     code |title |did| date_prod|kind      |len
-     -----+------+---+----------+----------+------
-     P_303|48 Hrs|103|1982-10-22|Action    | 01:37
-
-   -- close the cursor liahona and commit work:
-   --
-     CLOSE liahona;
-   COMMIT WORK;
+    --Skip first 5 rows:
+    --
+    MOVE FORWARD 5 IN liahona;
+<computeroutput>
+MOVE
+</computeroutput>
+    --Fetch 6th row in the cursor liahona:
+    --
+    FETCH 1 IN liahona;
+<computeroutput>
+FETCH
+code |title |did| date_prod|kind      |len
+-----+------+---+----------+----------+------
+P_303|48 Hrs|103|1982-10-22|Action    | 01:37
+(1 row)
+</computeroutput>
+    -- close the cursor liahona and commit work:
+    --
+    CLOSE liahona;
+COMMIT WORK;
 </ProgramListing>
  
 </REFSECT1>
@@ -105,6 +111,9 @@ Compatibility
 SQL92
 </TITLE>
 <PARA>
-   There is no SQL92 MOVE statement. Instead, <acronym>SQL92</acronym> allows
-one to FETCH rows from an absolute cursor position.
+   There is no SQL92 <command>MOVE</command> statement. 
+Instead, <acronym>SQL92</acronym> allows
+one to <command>FETCH</command> rows from an absolute cursor position,
+implicitly moving the cursor to the correct place.
+
 </REFENTRY>

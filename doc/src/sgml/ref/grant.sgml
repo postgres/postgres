@@ -15,7 +15,7 @@ Grants access privilege to a user, a group or all users
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-23</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 GRANT <REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE> [, ...]
@@ -25,7 +25,7 @@ GRANT <REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE> [, ...]
 
 <REFSECT2 ID="R2-SQL-GRANT-1">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-23</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
@@ -147,11 +147,19 @@ representing all users.
 
 <REFSECT2 ID="R2-SQL-GRANT-2">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-23</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
 <PARA>
 
 <VARIABLELIST>
@@ -175,13 +183,14 @@ if it is impossible
           to give privileges to the specified group or users.
 
 </VARIABLELIST>
+</VARIABLELIST>
 
 </REFSECT2>
 </REFSYNOPSISDIV>
 
 <REFSECT1 ID="R1-SQL-GRANT-1">
 <REFSECT1INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-23</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
@@ -202,7 +211,7 @@ There is no need to GRANT privileges to the creator of
 
 <REFSECT2 ID="R2-SQL-GRANT-3">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-23</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
@@ -235,8 +244,8 @@ Use the <command>psql \z</command> command
 Currently, to create a GROUP you have to insert 
           data manually into table pg_group as:
 <programlisting>
-          INSERT INTO pg_group VALUES ('todos');
-          CREATE USER miriam IN GROUP todos;
+INSERT INTO pg_group VALUES ('todos');
+CREATE USER miriam IN GROUP todos;
 </programlisting>
    Refer to REVOKE statements to revoke access privileges.
 </tip>
@@ -249,15 +258,15 @@ Usage
 </TITLE>
 <PARA>
 <ProgramListing>
-   -- grant insert privilege to all users on table films:
-   --
-   GRANT INSERT ON films TO PUBLIC;
+-- grant insert privilege to all users on table films:
+--
+GRANT INSERT ON films TO PUBLIC;
 </programlisting>
 
 <programlisting>
-   -- grant all privileges to user manuel on view kinds:
-   --
-   GRANT ALL ON kinds TO manuel;
+-- grant all privileges to user manuel on view kinds:
+--
+GRANT ALL ON kinds TO manuel;
 </ProgramListing>
 
 </REFSECT1>
@@ -271,13 +280,13 @@ Compatibility
 
 <REFSECT2 ID="R2-SQL-GRANT-4">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-23</DATE>
 </REFSECT2INFO>
 <TITLE>
 SQL92
 </TITLE>
 <PARA>
-   The SQL92 syntax for GRANT allows setting privileges 
+   The <acronym>SQL92</acronym> syntax for GRANT allows setting privileges 
 for individual columns
 within a table, and allows setting a privilege to grant
 the same privileges to others.

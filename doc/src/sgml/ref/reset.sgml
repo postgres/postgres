@@ -15,7 +15,7 @@ Restores run-time parameters for session to default values
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 RESET <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
@@ -23,13 +23,13 @@ RESET <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
 
 <REFSECT2 ID="R2-SQL-RESET-1">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
 </TITLE>
 <PARA>
-</PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -45,13 +45,20 @@ Inputs
 
 <REFSECT2 ID="R2-SQL-RESET-2">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
 <PARA>
-</PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
 
 <VARIABLELIST>
 <VARLISTENTRY>
@@ -60,8 +67,11 @@ RESET VARIABLE
 </TERM>
 <LISTITEM>
 <PARA>
-          Message returned if successfully.
+          Message returned if 
+<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> is successfully reset
+to its default value..
 
+</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>
@@ -69,22 +79,24 @@ RESET VARIABLE
 
 <REFSECT1 ID="R1-SQL-RESET-1">
 <REFSECT1INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
 </TITLE>
 <PARA>
-   The RESET statement restores variables to the default values.
-Refer to the SET command for details on allowed values and defaults.
-RESET is an alternate form for
+ <command>RESET</command> restores variables to the
+ default values.
+Refer to the <command>SET</command> command for details on
+ allowed values and defaults.
+<command>RESET</command> is an alternate form for
 <synopsis>
 <command>SET <replaceable class="parameter">variable</replaceable> = DEFAULT</command>
 </synopsis>
 
 <REFSECT2 ID="R2-SQL-RESET-3">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
@@ -103,12 +115,12 @@ Usage
 </TITLE>
 <PARA>
 <ProgramListing>
-   -- reset DateStyle to its default;
-   RESET DateStyle;
+-- reset DateStyle to its default;
+RESET DateStyle;
 </programlisting>
 <programlisting>   
-   -- reset Geqo to its default;
-   RESET GEQO;
+-- reset Geqo to its default;
+RESET GEQO;
 </ProgramListing>
 
 </REFSECT1>
@@ -118,35 +130,15 @@ Usage
 Compatibility
 </TITLE>
 <PARA>
-</PARA>
 
 <REFSECT2 ID="R2-SQL-RESET-4">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 SQL92
 </TITLE>
 <PARA>
-   There is no RESET statement in SQL92.
-</REFENTRY>
+   There is no <command>RESET</command> in <acronym>SQL92</acronym>.
 
-<!--
-<REPLACEABLE CLASS="PARAMETER">
-</REPLACEABLE>
-<ReturnValue></ReturnValue>
-<PARA>
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
-</PARA>
--->
+</REFENTRY>

@@ -14,7 +14,7 @@ Shows run-time parameters for session
 </REFPURPOSE>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 SHOW <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
@@ -22,13 +22,13 @@ SHOW <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
 
 <REFSECT2 ID="R2-SQL-SHOW-1">
 <REFSECT2INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
 </TITLE>
 <PARA>
-</PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -36,7 +36,7 @@ Inputs
 </TERM>
 <LISTITEM>
 <PARA>
-          Refer to the SET statement for more information on available
+          Refer to <command>SET</command> for more information on available
           variables.
 </VARLISTENTRY>
 </VARIABLELIST>
@@ -45,70 +45,92 @@ Inputs
 
 <REFSECT2 ID="R2-SQL-SHOW-2">
 <REFSECT2INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
 <PARA>
-</PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-NOTICE: <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> is <ReturnValue>value</ReturnValue>
+<REPLACEABLE>status</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<returnvalue>NOTICE: <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> is <replaceable>value</replaceable></ReturnValue>
 SHOW VARIABLE
 </TERM>
 <LISTITEM>
 <PARA>
           Message returned if successfully.
 </listitem>
+
 <VARLISTENTRY>
 <TERM>
-NOTICE:  Unrecognized variable <ReturnValue>value</ReturnValue>
+<returnvalue>NOTICE:  Unrecognized variable <replaceable>value</replaceable></ReturnValue>
+</TERM>
 <LISTITEM>
 <PARA>
 Message returned if <ReturnValue>value</ReturnValue> does not exist.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
+
+<VARLISTENTRY>
+<TERM>
+NOTICE:  Time zone is unknown
+SHOW VARIABLE
+</TERM>
+<LISTITEM>
+<PARA>
+   If the TZ environment variable is not set.
+
 </VARIABLELIST>
+</VARIABLELIST>
+
 </REFSECT2>
 </REFSYNOPSISDIV>
 
 <REFSECT1 ID="R1-SQL-SHOW-1">
 <REFSECT1INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
 </TITLE>
 <PARA>
-   SHOW will display the current configuration parameters for
+   <command>SHOW</command> will display the current
+ configuration parameters for
    variable during a session.
 
 <para>
-   The session can be configured using SET statement, and values
-   can be restored to the defaults using RESET statement.
+   The session can be configured using <command>SET</command> statement,
+ and values
+   can be restored to the defaults using <command>RESET</command> statement.
    Parameters and values are case-insensitive.
 
 <REFSECT2 ID="R2-SQL-SHOW-3">
 <REFSECT2INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
 </TITLE>
 <PARA>
-   The SHOW statement is a <productname>Postgres</productname>
+   The <command>SHOW</command> is a <productname>Postgres</productname>
  language extension.
 
 <para>
-   Refer to the SET/RESET statements to set/reset variable values.
-   See also the SET TIME ZONE statement.
+   Refer to  <command>SET</command>/<command>RESET</command> 
+ to set/reset variable values.
+   See also  <command>SET TIME ZONE</command>.
 
-<para>
-   If the TZ environment variable is not set the SHOW TIME ZONE statement
-   gives the message: Time zone is unknown
 </REFSECT2>
 </REFSECT1>
 
@@ -118,13 +140,13 @@ Usage
 </TITLE>
 <PARA>
 <ProgramListing>
-   -- show DateStyle;
-   SHOW DateStyle;
-   NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
+-- show DateStyle;
+SHOW DateStyle;
+NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
 
-   -- show Geqo;
-   SHOW GEQO;
-   NOTICE:GEQO is ON
+-- show Geqo;
+SHOW GEQO;
+NOTICE:GEQO is ON
 </ProgramListing>
 
 </REFSECT1>
@@ -138,13 +160,13 @@ Compatibility
 
 <REFSECT2 ID="R2-SQL-SHOW-4">
 <REFSECT2INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 SQL92
 </TITLE>
 <PARA>
-    There is no SET statement defined in <acronym>SQL92</acronym>.
+    There is no <command>SET</command> defined in <acronym>SQL92</acronym>.
 </refsect2>
 </refsect1>
 </REFENTRY>

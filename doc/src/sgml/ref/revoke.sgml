@@ -15,7 +15,7 @@ Revokes access privilege from a user, a group or all users.
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 <REPLACEABLE CLASS="PARAMETER">
@@ -27,13 +27,13 @@ REVOKE <REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE> [, ...]
 
 <REFSECT2 ID="R2-SQL-REVOKE-1">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
 </TITLE>
 <PARA>
-</PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -89,7 +89,7 @@ RULE
 <LISTITEM>
 <PARA>
 Privilege to define rules on table/view.
-(See the <command>CREATE RULE</command> statement).
+(See <command>CREATE RULE</command>).
 
 <VARLISTENTRY>
 <TERM>
@@ -159,13 +159,20 @@ Rescind the specified privilege(s) for all users.
 
 <REFSECT2 ID="R2-SQL-REVOKE-2">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
 <PARA>
-</PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
 
 <VARIABLELIST>
 <VARLISTENTRY>
@@ -186,13 +193,14 @@ ERROR
           to revoke privileges from a group or users.
 
 </VARIABLELIST>
+</VARIABLELIST>
 
 </REFSECT2>
 </REFSYNOPSISDIV>
 
 <REFSECT1 ID="R1-SQL-REVOKE-1">
 <REFSECT1INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
@@ -203,7 +211,7 @@ Description
 
 <REFSECT2 ID="R2-SQL-REVOKE-3">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
@@ -249,13 +257,13 @@ Usage
 </TITLE>
 <PARA>
 <ProgramListing>
-   -- revoke insert privilege from all users on table films:
-   --
-   REVOKE INSERT ON films FROM PUBLIC;
+-- revoke insert privilege from all users on table films:
+--
+REVOKE INSERT ON films FROM PUBLIC;
 
-   -- revoke all privileges from user manuel on view kinds:
-   --
-   REVOKE ALL ON kinds FROM manuel;
+-- revoke all privileges from user manuel on view kinds:
+--
+REVOKE ALL ON kinds FROM manuel;
 </ProgramListing>
 
 </REFSECT1>
@@ -265,7 +273,6 @@ Usage
 Compatibility
 </TITLE>
 <PARA>
-</PARA>
 
 <REFSECT2 ID="R2-SQL-REVOKE-4">
 <REFSECT2INFO>
@@ -275,7 +282,8 @@ Compatibility
 SQL92
 </TITLE>
 <PARA>
-   The SQL92 syntax for REVOKE has additional capabilities for rescinding
+   The SQL92 syntax for <command>REVOKE</command>
+ has additional capabilities for rescinding
 privileges, including those on individual columns in tables:
 
 <variablelist>
@@ -328,23 +336,3 @@ If user1 gives a privilege WITH GRANT OPTION to user2,
                     this privilege it fails if he/she specify the RESTRICT
                     keyword.
 </REFENTRY>
-
-<!--
-<REPLACEABLE CLASS="PARAMETER">
-</REPLACEABLE>
-<ReturnValue></ReturnValue>
-<PARA>
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
-</PARA>
--->

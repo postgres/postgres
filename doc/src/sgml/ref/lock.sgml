@@ -15,10 +15,10 @@ Explicit lock of a table inside a transaction
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-LOCK [TABLE] <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+LOCK [ TABLE ] <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-SQL-LOCK-1">
@@ -44,13 +44,21 @@ Inputs
 
 <REFSECT2 ID="R2-SQL-LOCK-2">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
 <PARA>
-</PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -69,8 +77,10 @@ ERROR <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>: Table does not exist.
 </TERM>
 <LISTITEM>
 <PARA>
-Message returned if table don't exist.
+Message returned if <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+ does not exist.
 
+</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>
@@ -78,18 +88,20 @@ Message returned if table don't exist.
 
 <REFSECT1 ID="R1-SQL-LOCK-1">
 <REFSECT1INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
 </TITLE>
 <PARA>
-   The LOCK statement locks in exclusive mode a table inside
+   <command>LOCK</command> locks in exclusive mode a table inside
    a transaction. The classic use for this is
    the case where you want to select some data, then
    update it inside a transaction.
    If you don't explicit lock a table using LOCK statement, it will be
-   implicit locked only at first UPDATE, INSERT or DELETE operation.
+   implicit locked only at the first
+ <command>UPDATE</command>, <command>INSERT</command>,
+ or <command>DELETE</command> operation.
    If you don't exclusive lock the table before the select, some
    other user may also read the selected data, and try and do
    their own update, causing a deadlock while you both wait
@@ -105,18 +117,26 @@ Description
    the tables to become available. The only solution to this
    is for both users to lock tables in the same order, so
    user's lock acquisitions and requests to not form a deadlock.
-        
+
+<note>
+<para>
+<productname>Postgres</productname> does detect deadlocks and will
+rollback transactions to resolve the deadlock. Usually, at least one
+of the deadlocked transactions will complete successfully.
+</note>
+
 <REFSECT2 ID="R2-SQL-LOCK-3">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
 </TITLE>
 <PARA>
-LOCK is a PostgreSQL language extension.
+<command>LOCK</command> is a <productname>Postgres</productname>
+ language extension.
 <para>
-LOCK works only inside transactions.
+<command>LOCK</command> works only inside transactions.
 
 <note>
 <title>Bug</title>
@@ -134,14 +154,14 @@ Usage
 <PARA>
 </PARA>
 <ProgramListing>
-   --Explicit locking to prevent deadlock:
-   --
-   BEGIN WORK;
-     LOCK films;
-     SELECT * FROM films;
-     UPDATE films SET len = INTERVAL '100 minute'
-                WHERE len = INTERVAL '117 minute';
-   COMMIT WORK;
+--Explicit locking to prevent deadlock:
+--
+BEGIN WORK;
+    LOCK films;
+    SELECT * FROM films;
+    UPDATE films SET len = INTERVAL '100 minute'
+        WHERE len = INTERVAL '117 minute';
+COMMIT WORK;
 </ProgramListing>
         
 </REFSECT1>
@@ -151,17 +171,17 @@ Usage
 Compatibility
 </TITLE>
 <PARA>
-</PARA>
 
 <REFSECT2 ID="R2-SQL-LOCK-4">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 SQL92
 </TITLE>
 <PARA>
    There is no <command>LOCK TABLE</command> in <acronym>SQL92</acronym>,
- it uses SET TRANSACTION to specify
+ which instead uses <command>SET TRANSACTION</command> to specify
    concurrency level on transactions.
+
 </REFENTRY>

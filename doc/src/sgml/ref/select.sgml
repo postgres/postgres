@@ -14,23 +14,23 @@
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1998-09-06</date>
+   <date>1998-09-24</date>
   </refsynopsisdivinfo>
   <synopsis>
 SELECT [ALL|DISTINCT]
-    <replaceable class="PARAMETER">expression</replaceable> [AS <replaceable class="PARAMETER">name</replaceable>] [, ...]
-    [INTO [TABLE] <replaceable class="PARAMETER">intable</replaceable>]
-    [FROM <replaceable class="PARAMETER">table</replaceable> [<replaceable class="PARAMETER">alias</replaceable>] [, ...] ]
-    [WHERE <replaceable class="PARAMETER">condition</replaceable>]
-    [GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
-    [HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [UNION [ALL] <replaceable class="PARAMETER">select</replaceable>]
-    [ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...] ]
+    <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
+    [ INTO [TABLE] <replaceable class="PARAMETER">new_table</replaceable> ]
+    [ FROM <replaceable class="PARAMETER">table</replaceable> [<replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
+    [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+    [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
+    [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
+    [ UNION [ALL] <replaceable class="PARAMETER">select</replaceable> ]
+    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
   </synopsis>
   
   <refsect2 id="R2-SQL-SELECT-1">
    <refsect2info>
-    <date>1998-09-06</date>
+    <date>1998-09-24</date>
    </refsect2info>
    <title>
     Inputs
@@ -66,16 +66,16 @@ SELECT [ALL|DISTINCT]
      
      <varlistentry>
       <term>
-       <replaceable class="PARAMETER">intable</replaceable>
+       <replaceable class="PARAMETER">new_table</replaceable>
       </term>
       <listitem>
        <para>
 	If the INTO TABLE clause is specified, the result of the
 	query will be stored in another table with the indicated
 	name.
-	If <replaceable class="PARAMETER">intable</replaceable> does
+	If <replaceable class="PARAMETER">new_table</replaceable> does
 	not exist, it will be created automatically.
-	
+	Refer to <command>SELECT INTO</command> for more information.
 	<note>
 	 <para>
 	  The <command>CREATE TABLE AS</command> statement will also
@@ -151,11 +151,13 @@ SELECT [ALL|DISTINCT]
   
   <refsect2 id="R2-SQL-SELECT-2">
    <refsect2info>
-    <date>1998-09-06</date>
+    <date>1998-09-24</date>
    </refsect2info>
    <title>
     Outputs
    </title>
+<para>
+
    <variablelist>
     <varlistentry>
      <term>
@@ -170,7 +172,15 @@ SELECT [ALL|DISTINCT]
     
     <varlistentry>
      <term>
-      <returnvalue>count</returnvalue>
+      <replaceable>status</replaceable>
+     </term>
+     <listitem>
+      <para>
+
+   <variablelist>
+    <varlistentry>
+     <term>
+      <returnvalue><replaceable>count</replaceable></returnvalue>
      </term>
      <listitem>
       <para>
@@ -179,19 +189,21 @@ SELECT [ALL|DISTINCT]
      </listitem>
     </varlistentry>
    </variablelist>
+   </variablelist>
    
   </refsect2>
  </refsynopsisdiv>
  
  <refsect1 id="R1-SQL-SELECT-1">
   <refsect1info>
-   <date>1998-09-06</date>
+   <date>1998-09-24</date>
   </refsect1info>
   <title>
    Description
   </title>
   <para>
-   SELECT will get all rows which satisfy the WHERE condition
+   <command>SELECT</command> will get all rows which satisfy the
+ WHERE condition
    or all rows of a table if WHERE is omitted.</para>
    
   <para>
@@ -214,20 +226,21 @@ SELECT [ALL|DISTINCT]
    
   <para>
    You must have SELECT privilege to a table to read its values
-   (See GRANT/REVOKE statements).</para>
+   (See <command>GRANT</command>/<command>REVOKE</command> statements).
+</para>
    
   <refsect2 id="R2-SQL-WHERE-2">
    <refsect2info>
-    <date>1998-09-06</date>
+    <date>1998-09-24</date>
    </refsect2info>
    <title>
-    WHERE clause
+    WHERE Clause
    </title>
    <para>
     The optional WHERE condition has the general form:
     
     <synopsis>
-WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARAMETER">cond_op</replaceable> <replaceable class="PARAMETER">expr</replaceable> [<replaceable class="PARAMETER">log_op</replaceable> ...]
+WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARAMETER">cond_op</replaceable> <replaceable class="PARAMETER">expr</replaceable> [ <replaceable class="PARAMETER">log_op</replaceable> ... ]
     </synopsis>
     
     where <replaceable class="PARAMETER">cond_op</replaceable> can be
@@ -243,24 +256,24 @@ WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARA
   
   <refsect2 id="R2-SQL-GROUPBY-2">
    <refsect2info>
-    <date>1998-09-06</date>
+    <date>1998-09-24</date>
    </refsect2info>
    <title>
-    GROUP BY clause
+    GROUP BY Clause
    </title>
    <para>
     GROUP BY specifies a grouped table derived by the application
     of the this clause:
     <synopsis>
-     GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
+GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
     </synopsis></para></refsect2>
     
   <refsect2 id="R2-SQL-HAVING-2">
    <refsect2info>
-    <date>1998-09-06</date>
+    <date>1998-09-24</date>
    </refsect2info>
    <title>
-    HAVING clause
+    HAVING Clause
    </title>
    <para>
     The optional HAVING condition has the general form:
@@ -278,21 +291,22 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
     that do not meet the <replaceable class="PARAMETER">cond_expr</replaceable>.</para>
     
    <para>
-    Each column referenced in <replaceable class="PARAMETER">cond_expr</replaceable> shall unambiguously
+    Each column referenced in 
+<replaceable class="PARAMETER">cond_expr</replaceable> shall unambiguously
     reference a grouping column.
    </para>
   </refsect2>
   
   <refsect2 id="R2-SQL-ORDERBYCLAUSE-2">
    <refsect2info>
-    <date>1998-09-06</date>
+    <date>1998-09-24</date>
    </refsect2info>
    <title>
-    ORDER BY clause
+    ORDER BY Clause
    </title>
    <para>
     <synopsis>
-ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...]
+ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...]
     </synopsis></para>
     
    <para>
@@ -302,17 +316,18 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
     The ordinal numbers refers to the ordinal (left-to-right) position
     of the column. This feature makes it possible to define an ordering
     on the basis of a column that does not have a proper name.
-    This is never absolutely necessary because it is always possible assign a name
+    This is never absolutely necessary because it is always possible
+    assign a name
     to a calculated column using the AS clause, e.g.:
     <programlisting>
-     SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
+SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
     </programlisting></para>
     
    <para>
     The columns in the ORDER BY must appear in the SELECT clause.
     Thus the following statement is illegal:
     <programlisting>
-     SELECT name FROM distributors ORDER BY code;
+SELECT name FROM distributors ORDER BY code;
     </programlisting></para>
     
    <para>
@@ -323,15 +338,15 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
   
   <refsect2 id="R2-SQL-UNION-2">
    <refsect2info>
-    <date>1998-09-06</date>
+    <date>1998-09-24</date>
    </refsect2info>
    <title>
-    UNION clause
+    UNION Clause
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> UNION [ALL] <replaceable class="PARAMETER">table_query</replaceable>
-     [ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...] ]
+<replaceable class="PARAMETER">table_query</replaceable> UNION [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
+     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
     </synopsis>
     
     where
@@ -349,9 +364,10 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
     unless the ALL clause is specified.</para>
     
    <para>
-    Multiple UNION operators in the same SELECT statement are evaluated left to right.
-    Note that the ALL keyword is not global in nature, being applied only for the current pair of
-    table results.</para>
+    Multiple UNION operators in the same SELECT statement are
+evaluated left to right.
+    Note that the ALL keyword is not global in nature, being 
+applied only for the current pair of table results.</para>
     
   </refsect2></refsect1>
   
@@ -364,9 +380,9 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
    <literal>distributors</literal>:
   </para>
   <programlisting>
-    SELECT f.title, f.did, d.name, f.date_prod, f.kind
-        FROM distributors d, films f
-        WHERE f.did = d.did
+SELECT f.title, f.did, d.name, f.date_prod, f.kind
+    FROM distributors d, films f
+    WHERE f.did = d.did
 
     title                    |did|name            | date_prod|kind
     -------------------------+---+----------------+----------+----------
@@ -393,7 +409,7 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
    the reults by <literal>kind</literal>:
   </para>
   <programlisting>
-    SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
+SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
 
     kind      |total
     ----------+------
@@ -410,10 +426,10 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
    that are less than 5 hours:
   </para>
   <programlisting>
-    SELECT kind, SUM(len) AS total
-        FROM films
-        GROUP BY kind
-        HAVING SUM(len) < INTERVAL '5 hour';
+SELECT kind, SUM(len) AS total
+    FROM films
+    GROUP BY kind
+    HAVING SUM(len) < INTERVAL '5 hour';
 
     kind      |total
     ----------+------
@@ -426,8 +442,8 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
    (<literal>name</literal>):
   </para>
   <programlisting>
-    SELECT * FROM distributors ORDER BY name;
-    SELECT * FROM distributors ORDER BY 2;
+SELECT * FROM distributors ORDER BY name;
+SELECT * FROM distributors ORDER BY 2;
 
     did|name
     ---+----------------
@@ -462,13 +478,13 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
     --        112|Warner Bros.              3|Walter Matthau
     --        ...                           ...
 
-    SELECT distributors.name
+SELECT distributors.name
     FROM   distributors
     WHERE  distributors.name LIKE 'W%'
-    UNION
-           SELECT actors.name
-           FROM   actors
-           WHERE  actors.name LIKE 'W%'
+UNION
+SELECT actors.name
+    FROM   actors
+    WHERE  actors.name LIKE 'W%'
 
     name
     --------------
@@ -491,7 +507,7 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
   
   <refsect2 id="R2-SQL-SELECT-4">
    <refsect2info>
-    <date>1998-09-06</date>
+    <date>1998-09-24</date>
    </refsect2info>
    <title>
     <acronym>SQL92</acronym>
@@ -504,7 +520,7 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
      <date>1998-04-15</date>
     </refsect3info>
     <title>
-     SELECT clause
+     SELECT Clause
     </title>
     <para>
      In the <acronym>SQL92</acronym> standard, the optional keyword "AS"
@@ -526,10 +542,10 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
 
    <refsect3 id="R3-SQL-UNION-1">
     <refsect3info>
-     <date>1998-09-06</date>
+     <date>1998-09-24</date>
     </refsect3info>
     <title>
-     UNION clause
+     UNION Clause
     </title>
     <para>
      The <acronym>SQL92</acronym> syntax for UNION allows an
@@ -547,6 +563,73 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ASC | DESC] [, ...
    </refsect3>
    
   </refsect2>
+ </refsect1>
+</refentry>
+
+<refentry id="SQL-SELECTINTO">
+ <refmeta>
+  <refentrytitle>
+   SELECT
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   SELECT INTO
+  </refname>
+  <refpurpose>
+   Create a new table from an existing table or view
+  </refpurpose></refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-22</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
+    INTO [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
+    [ FROM <replaceable class="PARAMETER">table</replaceable> [<replaceable class="PARAMETER">alias</replaceable>] [, ...] ]
+    [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+    [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
+    [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
+    [ UNION [ ALL ] <replaceable class="PARAMETER">select</replaceable>]
+    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+  </synopsis>
+  
+  <refsect2 id="R2-SQL-SELECTINTO-1">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+All input fields are described in detail for SELECT.
+
+  <refsect2 id="R2-SQL-SELECTINTO-2">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+All output fields are described in detail for SELECT.
+
+  <refsect1 id="R1-SQL-SELECTINTO-1">
+   <refsect1info>
+    <date>1998-09-22</date>
+   </refsect1info>
+   <title>
+    Description
+   </title>
+   <para>
+SELECT INTO creates a new table from the results of a query. Typically, this
+query draws data from an existing table, but any SQL query is allowed.
+<note>
+<para>
+CREATE TABLE AS is functionally equivalent to the SELECT INTO command.
+</note>
+
  </refsect1>
 </refentry>
 

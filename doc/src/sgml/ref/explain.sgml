@@ -10,7 +10,7 @@ EXPLAIN
 EXPLAIN
 </REFNAME>
 <REFPURPOSE>
-Shows statement execution details.
+Shows statement execution details
 </REFPURPOSE>
 
 <REFSYNOPSISDIV>
@@ -64,11 +64,19 @@ Outputs
 <VARLISTENTRY>
 <TERM>
 NOTICE:  QUERY PLAN:
+<replaceable>plan</replaceable>
 </TERM>
 <LISTITEM>
 <PARA>
 Explicit query plan from the <productname>Postgres</productname> backend.
 
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
 <VARLISTENTRY>
 <TERM>
 EXPLAIN
@@ -77,6 +85,7 @@ EXPLAIN
 <PARA>
 Flag sent after query plan is shown.
 
+</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>
@@ -102,6 +111,13 @@ Description
 Notes
 </TITLE>
 <PARA>
+There is only sparse documentation on the optimizer's use of cost
+information in <productname>Postgres</productname>.
+General information on cost estimation for query optimization
+can be found in database textbooks.
+Refer to the <citetitle>Programmer's Guide</citetitle>
+in the chapters on indexes and the genetic query optimizer for
+more information.
 
 </REFSECT2>
 

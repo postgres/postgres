@@ -15,7 +15,7 @@ Signals all frontends and backends listening on a class
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 <REPLACEABLE CLASS="PARAMETER">
@@ -25,13 +25,13 @@ NOTIFY <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
 
 <REFSECT2 ID="R2-SQL-NOTIFY-1">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
 </TITLE>
 <PARA>
-</PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -47,13 +47,21 @@ Table or arbitrary relation class used for notification.
 
 <REFSECT2 ID="R2-SQL-NOTIFY-2">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
 <PARA>
-</PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -64,35 +72,37 @@ NOTIFY
 Notification message from backend.
 
 </VARIABLELIST>
+</VARIABLELIST>
 
 </REFSECT2>
 </REFSYNOPSISDIV>
 
 <REFSECT1 ID="R1-SQL-NOTIFY-1">
 <REFSECT1INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
 </TITLE>
 <PARA>
-   NOTIFY is used to awaken all backends and consequently all
-   frontends that have executed <command>LISTEN</command>  on 
-<replaceable class="parameter">classname</replaceable>.
+   <command>NOTIFY</command> is used to awaken all sessions which have
+previously executed
+ <command>LISTEN <replaceable class="parameter">classname</replaceable></command>.
  This can be used either within an instance-level rule 
 as part of the action body or from a  normal query.
 
 <para>
  When used from within a normal query, 
 this can be thought of as interprocess communication (IPC).  When
-used from within a rule, this can be thought of as an alerter mechanism.
+used from within a rule, this can be thought of as an alert mechanism.
 <para>
-       Notice that the mere fact that a notify has been
+       Note that the mere fact that a <command>NOTIFY</command> has been
  executed does not imply anything in particular about the state
        of  the class (e.g., that it has been updated),
  nor does the notification protocol transmit any useful information
  other than the class name.  
-Therefore, all notify does is indicate that some backend wishes its  peers  to
+Therefore, all <command>NOTIFY</command> does is indicate that some backend
+ wishes its  peers to
        examine <replaceable class="parameter">classname</replaceable>
  in some application-specific way.
 <para>
@@ -103,8 +113,8 @@ Therefore, all notify does is indicate that some backend wishes its  peers  to
 <para>
        This event notification is performed through the libpq protocol
  and frontend application interface.  The application  program
-  must  call  the routine <function>PQnotifies</function> in order to find out the 
-name of the class to which a given
+  must  call  the routine <function>PQnotifies</function>
+ in order to find out the name of the class to which a given
        notification corresponds.  
 If this code is not included in the application,  
 the  event  notification  will  be
@@ -112,7 +122,7 @@ the  event  notification  will  be
  
 <REFSECT2 ID="R2-SQL-NOTIFY-3">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
@@ -131,12 +141,15 @@ Usage
 <ProgramListing>
 -- Configure and execute a listen/notify sequence
 -- from psql
-postgres=> create table t (i int4);
-postgres=> listen t;
-LISTEN
-postgres=> notify t;
+CREATE TABLE t (i int4);
+<computeroutput>
+LISTEN t;
+</computeroutput>
+NOTIFY t;
+<computeroutput>
 NOTIFY
 ASYNC NOTIFY of 't' from backend pid '10949' received
+</computeroutput>
 </ProgramListing>
 
 </REFSECT1>
@@ -146,16 +159,16 @@ ASYNC NOTIFY of 't' from backend pid '10949' received
 Compatibility
 </TITLE>
 <PARA>
-</PARA>
+
 
 <REFSECT2 ID="R2-SQL-NOTIFY-4">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 SQL92
 </TITLE>
 <PARA>
-There is no NOTIFY statement in <acronym>SQL92</acronym>.
+There is no <command>NOTIFY</command> statement in <acronym>SQL92</acronym>.
 
 </REFENTRY>

@@ -15,7 +15,7 @@ Listen for notification on a relation
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 LISTEN <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
@@ -45,13 +45,20 @@ Table object used for notification.
 
 <REFSECT2 ID="R2-SQL-LISTEN-2">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
 <PARA>
-</PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -62,13 +69,14 @@ LISTEN
 Message returned upon successful completion of registration.
 
 </VARIABLELIST>
+</VARIABLELIST>
 
 </REFSECT2>
 </REFSYNOPSISDIV>
 
 <REFSECT1 ID="R1-SQL-LISTEN-1">
 <REFSECT1INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
@@ -95,15 +103,15 @@ never be processed.
 
 <REFSECT2 ID="R2-SQL-LISTEN-3">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
 </TITLE>
 <para>
 Note that <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
-needs not to be a valid class name but can be any string valid as a name up to 32
-characters long.
+needs not to be a valid class name but can be any string valid
+ as a name up to 32 characters long.
 
 <para>
 A restriction in some previous releases of
@@ -134,7 +142,6 @@ ASYNC NOTIFY of 'virtual' from backend pid '11239' received
 Compatibility
 </TITLE>
 <PARA>
-</PARA>
 
 <REFSECT2 ID="R2-SQL-LISTEN-4">
 <REFSECT2INFO>
@@ -144,5 +151,5 @@ Compatibility
 SQL92
 </TITLE>
 <PARA>
-   There is no LISTEN statement in <acronym>SQL92</acronym>.
+   There is no <command>LISTEN</command> in <acronym>SQL92</acronym>.
 </REFENTRY>

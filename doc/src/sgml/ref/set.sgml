@@ -14,7 +14,7 @@ SET
 </REFPURPOSE>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 <REPLACEABLE CLASS="PARAMETER">
@@ -26,12 +26,13 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 
 <REFSECT2 ID="R2-SQL-SET-1">
 <REFSECT2INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
 </TITLE>
 <PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
@@ -210,7 +211,8 @@ set time zone to your local timezone
 </varlistentry>
 </variablelist>
 
-There are also several internal or optimization parameters which can be specified
+There are also several internal or optimization
+ parameters which can be specified
 by the <command>SET</command> command:
 
 <variablelist>
@@ -293,12 +295,13 @@ enables the genetic optimizer algorithm
                            for statements with 8 or more tables.
 <varlistentry>
 <term>
-On=#
+On=<replaceable class="parameter">#</replaceable>
 </term>
 <listitem>
 <para>
-enables the genetic optimizer algorithm
-                           for statements with # or more tables.
+Takes an integer argument to enable the genetic optimizer algorithm
+ for statements with <replaceable class="parameter">#</replaceable>
+ or more tables in the query.
 <varlistentry>
 <term>
 Off
@@ -418,17 +421,25 @@ Equivalent to specifying <command>SET R_PLANS=Off</command>.
 
 <REFSECT2 ID="R2-SQL-SET-2">
 <REFSECT2INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
 <PARA>
-</PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-   SET VARIABLE
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<returnvalue>SET VARIABLE</returnvalue>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -436,12 +447,13 @@ Outputs
 
 <VARLISTENTRY>
 <TERM>
-   WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)
+<returnvalue>WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)</returnvalue>
 </TERM>
 <LISTITEM>
 <PARA>
-          If fails to set variable.
+          If the command fails to set variable.
 </VARLISTENTRY>
+</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>
@@ -449,31 +461,32 @@ Outputs
 
 <REFSECT1 ID="R1-SQL-SET-1">
 <REFSECT1INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
 </TITLE>
 <PARA>
-SET will modify configuration parameters for variable during
+<command>SET</command> will modify configuration parameters for variable during
    a session.
 
 <para>
-   Current values can be obtained using SHOW statement, and values
-   can be restored to the defaults using RESET statement.
+   Current values can be obtained using <command>SHOW</command>, and values
+   can be restored to the defaults using <command>RESET</command>.
    Parameters and values are case-insensitive. Note that the value
    field is always specified as a string, so is enclosed in
    single-quotes.
 <para>
-   SET TIME ZONE changes the session's default time zone offset.
+   <command>SET TIME ZONE</command> changes the session's
+ default time zone offset.
    A SQL-session always begins with an initial default time zone
    offset.
-   The SET TIME ZONE statement is used to change the default
+   The <command>SET TIME ZONE</command> statement is used to change the default
    time zone offset for the current SQL session.
 
 <REFSECT2 ID="R2-SQL-SET-3">
 <REFSECT2INFO>
-<DATE>1998-08-31</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
@@ -483,7 +496,8 @@ The <command>SET <replaceable class="parameter">variable</replaceable></command>
  statement is a <productname>Postgres</productname> language extension.
 
 <para>
-   Refer to SHOW/RESET statements to show/reset variable values.
+   Refer to <command>SHOW</command> and <command>RESET</command> to 
+display or reset the current values.
 
 </REFSECT2>
 </REFSECT1>
@@ -495,35 +509,35 @@ Usage
 <PARA>
 </PARA>
 <ProgramListing>
-   --Set the style of date to ISO:
-   --
-   SET DATESTYLE TO 'ISO';
+--Set the style of date to ISO:
+--
+SET DATESTYLE TO 'ISO';
 </programlisting>
 <programlisting> 
-   --Set GEQO to default:
-   --
-   SET GEQO = DEFAULT;
+--Set GEQO to default:
+--
+SET GEQO = DEFAULT;
 </programlisting>
 <programlisting> 
-   --Turn on right-hand evaluation of plans:
-   --
-   SET R_PLANS TO 'on';
+--Turn on right-hand evaluation of plans:
+--
+SET R_PLANS TO 'on';
 </programlisting>
 <programlisting> 
-   --set the timezone for Berkeley, California:
-   SET TIME ZONE 'PST8PDT';
+--set the timezone for Berkeley, California:
+SET TIME ZONE 'PST8PDT';
 
-   SELECT CURRENT_TIMESTAMP AS today;
+SELECT CURRENT_TIMESTAMP AS today;
 
    today
    ----------------------
    1998-03-31 07:41:21-08
 </programlisting>
 <programlisting> 
-   --set the timezone for Italy:
-   SET TIME ZONE 'Europe/Rome';
+--set the timezone for Italy:
+SET TIME ZONE 'Europe/Rome';
 
-   SELECT CURRENT_TIMESTAMP AS today;
+SELECT CURRENT_TIMESTAMP AS today;
 
    today
    ----------------------
@@ -541,7 +555,7 @@ Compatibility
 
 <REFSECT2 ID="R2-SQL-SET-4">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 SQL92
@@ -549,9 +563,10 @@ SQL92
 <PARA>
    There is no
 <command>SET <replaceable class="parameter">variable</replaceable></command>
-   in SQL92.
+   in <acronym>SQL92</acronym>.
 
-   The SQL92 syntax for SET TIME ZONE is slightly different,
+   The <acronym>SQL92</acronym> syntax for <command>SET TIME ZONE</command>
+ is slightly different,
  allowing only a single integer value for time zone specification:
 
 <programlisting>
@@ -559,23 +574,3 @@ SET TIME ZONE { interval_value_expression | LOCAL }
 </programlisting>
 
 </REFENTRY>
-
-<!--
-<REPLACEABLE CLASS="PARAMETER">
-</REPLACEABLE>
-<ReturnValue></ReturnValue>
-<PARA>
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
-</PARA>
--->

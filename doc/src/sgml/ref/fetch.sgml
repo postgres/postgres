@@ -146,7 +146,8 @@ NOTICE:  PerformPortalFetch: portal "<REPLACEABLE CLASS="PARAMETER">cursor</REPL
 </TERM>
 <LISTITEM>
 <PARA>
-If <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE> is not previously declared.
+If <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+ is not previously declared.
 The cursor must be declared within a transaction block.
 
 <VARLISTENTRY>
@@ -293,6 +294,9 @@ Usage
 Compatibility
 </TITLE>
 <PARA>
+The non-embedded use of cursors is a <productname>Postgres</productname>
+extension. The syntax and usage of cursors is being compared
+against the embedded form of cursors defined in <acronym>SQL92</acronym>.
 </PARA>
 
 <REFSECT2 ID="R2-SQL-FETCH-4">
@@ -303,7 +307,7 @@ Compatibility
 SQL92
 </TITLE>
 <PARA>
-SQL92 allows absolute positioning of the cursor for
+<acronym>SQL92</acronym> allows absolute positioning of the cursor for
 FETCH, and allows placing the results into explicit variables.
 
 <synopsis>

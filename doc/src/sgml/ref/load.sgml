@@ -15,7 +15,7 @@ Dynamically loads an object file
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 <REPLACEABLE CLASS="PARAMETER">
@@ -47,21 +47,41 @@ Object file for dynamic loading.
 
 <REFSECT2 ID="R2-SQL-LOAD-2">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
 </TITLE>
 <PARA>
-</PARA>
+
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-LOAD
+<replaceable>status</replaceable>
 </TERM>
 <LISTITEM>
 <PARA>
 
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<returnvalue>LOAD</returnvalue>
+</TERM>
+<LISTITEM>
+<PARA>
+Message returned on successful completion.
+
+<VARLISTENTRY>
+<TERM>
+<returnvalue>ERROR:  LOAD: could not open file '<REPLACEABLE CLASS="PARAMETER">filename</REPLACEABLE>'</returnvalue>
+</TERM>
+<LISTITEM>
+<PARA>
+Message returned if the specified file is not found. The file must be visible
+<emphasis>to the <productname>Postgres</productname> backend</emphasis>,
+with the appropriate full path name specified, to avoid this message.
+
+</VARIABLELIST>
 </VARIABLELIST>
 
 </REFSECT2>
@@ -69,7 +89,7 @@ LOAD
 
 <REFSECT1 ID="R1-SQL-LOAD-1">
 <REFSECT1INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
@@ -78,7 +98,7 @@ Description
 Loads an object (or ".o") file into the 
 <productname>Postgres</productname> backend address space.  Once a
 file is loaded, all functions in that file can be accessed.  This
-function is used in support of ADT's.
+function is used in support of user-defined types and functions.
 
 <para>
 If a file is not loaded using
@@ -92,7 +112,7 @@ at this time.
 
 <REFSECT2 ID="R2-SQL-LOAD-3">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
@@ -101,12 +121,14 @@ Notes
 Functions in loaded object files should not call functions in other
 object files loaded through the
 <command>LOAD</command>
-command, meaning, for example, that all functions in file A should
+command. For example, all functions in file <literal>A</literal> should
 call each other, functions in the standard or math libraries, or in
 Postgres itself.  They should not call functions defined in a different
-loaded file B.  This is because if B is reloaded, the Postgres loader is
-not able to relocate the calls from the functions in A into
-the new address space of B.  If B is not reloaded, however, there will
+loaded file <literal>B</literal>.
+  This is because if <literal>B</literal> is reloaded, the Postgres loader is
+not able to relocate the calls from the functions in <literal>A</literal> into
+the new address space of <literal>B</literal>.
+If <literal>B</literal> is not reloaded, however, there will
 not be a problem.
 
 <para>
@@ -114,7 +136,7 @@ Object files must be compiled to contain position independent code.
 For example, 
 on DECstations you must use
 <application>/bin/cc</application>
-with the "-G 0" option when compiling object files to be
+with the <literal>-G 0</literal> option when compiling object files to be
 loaded.
 
 <para>
@@ -130,9 +152,9 @@ Usage
 </TITLE>
 <PARA>
 <ProgramListing>
-   --Load the file /usr/postgres/demo/circle.o
-   --
-   LOAD "/usr/postgres/demo/circle.o"
+--Load the file /usr/postgres/demo/circle.o
+--
+LOAD "/usr/postgres/demo/circle.o"
 </ProgramListing>
         
 </REFSECT1>
@@ -146,12 +168,12 @@ Compatibility
 
 <REFSECT2 ID="R2-SQL-LOAD-4">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 SQL92
 </TITLE>
 <PARA>
-There is no LOAD statement in <acronym>SQL92</acronym>.
+There is no <command>LOAD</command> in <acronym>SQL92</acronym>.
 
 </REFENTRY>

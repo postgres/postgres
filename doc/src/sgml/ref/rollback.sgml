@@ -14,7 +14,7 @@ Aborts the current transaction
 </REFPURPOSE>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 ROLLBACK [ WORK ]
@@ -22,7 +22,7 @@ ROLLBACK [ WORK ]
 
 <REFSECT2 ID="R2-SQL-ROLLBACK-1">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
@@ -34,7 +34,7 @@ None.
 
 <REFSECT2 ID="R2-SQL-ROLLBACK-2">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
@@ -67,18 +67,18 @@ ABORT
 
 <REFSECT1 ID="R1-SQL-ROLLBACK-1">
 <REFSECT1INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
 </TITLE>
 <PARA>
-   ROLLBACK rolls back the current transaction and causes
+   <command>ROLLBACK</command> rolls back the current transaction and causes
    all the updates made by the transaction to be discarded.
 
 <REFSECT2 ID="R2-SQL-ROLLBACK-3">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
@@ -87,7 +87,8 @@ Notes
 The keyword WORK is noise and can be omitted.
 
 <para>
-Use the COMMIT statement to successfully terminate a transaction.
+Use the <command>COMMIT</command> statement to successfully
+ terminate a transaction.
 
 </REFSECT1>
 
@@ -97,9 +98,9 @@ Usage
 </TITLE>
 <PARA>
 <ProgramListing>
-   --To abort all changes:
-   --
-   ROLLBACK WORK;
+--To abort all changes:
+--
+ROLLBACK WORK;
 </ProgramListing>
 
 </REFSECT1>
@@ -113,7 +114,7 @@ Compatibility
 
 <REFSECT2 ID="R2-SQL-ROLLBACK-4">
 <REFSECT2INFO>
-<DATE>1998-04-15</DATE>
+<DATE>1998-09-24</DATE>
 </REFSECT2INFO>
 <TITLE>
 SQL92
@@ -121,23 +122,3 @@ SQL92
 <PARA>
     Full compatibility.
 </REFENTRY>
-
-<!--
-<REPLACEABLE CLASS="PARAMETER">
-</REPLACEABLE>
-<ReturnValue></ReturnValue>
-<PARA>
-</PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>&bull;
-</TERM>
-<LISTITEM>
-<PARA>
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-<PARA>
-</PARA>
--->
