@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.82 2001/11/19 09:05:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.83 2001/11/20 15:42:44 momjian Exp $
 Postgres documentation
 -->
 
@@ -1133,7 +1133,7 @@ Postgres documentation
       <entry><type>text</type></entry>
       <entry>
        Encodes binary data to <acronym>ASCII</acronym>-only representation.  Supported
-       types are: 'base64', 'hex'.
+       types are: 'base64', 'hex', 'escape'.
       </entry>
       <entry><literal>encode('123\\000\\001', 'base64')</literal></entry>
       <entry><literal>MTIzAAE=</literal></entry>
@@ -1161,6 +1161,186 @@ Postgres documentation
    The <function>to_ascii</function> function supports conversion from
    LATIN1, LATIN2, WIN1250 (CP1250) only.
   </para>
+ </sect1>
+
+
+ <sect1 id="functions-binarystring">
+  <title>Binary String Functions and Operators</title>
+
+  <para>
+   This section describes functions and operators for examining and
+   manipulating binary string values.  Strings in this context include
+   values of the type <type>BYTEA</type>.
+  </para>
+
+  <para>
+   <acronym>SQL</acronym> defines some string functions with a special syntax where
+   certain keywords rather than commas are used to separate the
+   arguments.  Details are in <xref linkend="functions-binarystring-sql">.
+   Some functions are also implemented using the regular syntax for
+   function invocation.  (See <xref linkend="functions-binarystring-other">.)
+  </para>
+
+  <table id="functions-binarystring-sql">
+   <title><acronym>SQL</acronym> Binary String Functions and Operators</title>
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>  
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry> <parameter>string</parameter> <literal>||</literal> <parameter>string</parameter> </entry>
+      <entry> <type>bytea</type> </entry>
+      <entry>
+       string concatenation
+       <indexterm>
+        <primary>binary strings</primary>
+	<secondary>concatenation</secondary>
+       </indexterm>
+      </entry>
+      <entry><literal>'\\\\Postgre'::bytea || '\\047SQL\\000'::bytea</></entry>
+      <entry><literal>\\Postgre'SQL\000</></entry>
+     </row>
+
+     <row>
+      <entry><function>octet_length</function>(<parameter>string</parameter>)</entry>
+      <entry><type>integer</type></entry>
+      <entry>number of bytes in binary string</entry>
+      <entry><literal>octet_length('jo\\000se'::bytea)</literal></entry>
+      <entry><literal>5</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>position</function>(<parameter>substring</parameter> in <parameter>string</parameter>)</entry>
+      <entry><type>integer</type></entry>
+      <entry>location of specified substring</entry>
+      <entry><literal>position('\\000om'::bytea in 'Th\\000omas'::bytea)</literal></entry>
+      <entry><literal>3</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>substring</function>(<parameter>string</parameter> <optional>from <type>integer</type></optional> <optional>for <type>integer</type></optional>)</entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       extract substring
+       <indexterm>
+        <primary>substring</primary>
+       </indexterm>
+      </entry>
+      <entry><literal>substring('Th\\000omas'::bytea from 2 for 3)</literal></entry>
+      <entry><literal>h\000o</literal></entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>trim</function>(<optional>both</optional>
+       <parameter>characters</parameter> from
+       <parameter>string</parameter>)
+      </entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Removes the longest string containing only the
+       <parameter>characters</parameter> from the
+       beginning/end/both ends of the <parameter>string</parameter>.
+      </entry>
+      <entry><literal>trim('\\000'::bytea from '\\000Tom\\000'::bytea)</literal></entry>
+      <entry><literal>Tom</literal></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Additional binary string manipulation functions are available and are
+   listed below.  Some of them are used internally to implement the
+   <acronym>SQL</acronym>-standard string functions listed above.
+  </para>
+
+  <table id="functions-binarystring-other">
+   <title>Other Binary String Functions</title>
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><function>btrim</function>(<parameter>string</parameter> <type>bytea</type>, <parameter>trim</parameter> <type>bytea</type>)</entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Remove (trim) the longest string consisting only of characters
+       in <parameter>trim</parameter> from the start and end of
+       <parameter>string</parameter>.
+      </entry>
+      <entry><literal>btrim('\\000trim\\000'::bytea,'\\000'::bytea)</literal></entry>
+      <entry><literal>trim</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>length</function>(<parameter>string</parameter>)</entry>
+      <entry><type>integer</type></entry>
+      <entry>
+       length of binary string
+       <indexterm>
+        <primary>binary strings</primary>
+	<secondary>length</secondary>
+       </indexterm>
+       <indexterm>
+        <primary>length</primary>
+	<secondary>binary strings</secondary>
+	<see>binary strings, length</see>
+       </indexterm>
+      </entry>
+      <entry><literal>length('jo\\000se'::bytea)</></entry>
+      <entry><literal>5</></entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>encode</function>(<parameter>string</parameter> <type>bytea</type>,
+              <parameter>type</parameter> <type>text</type>)
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Encodes binary string to <acronym>ASCII</acronym>-only representation.  Supported
+       types are: 'base64', 'hex', 'escape'.
+      </entry>
+      <entry><literal>encode('123\\000456'::bytea, 'escape')</literal></entry>
+      <entry><literal>123\000456</literal></entry>
+     </row>       
+
+     <row>
+      <entry>
+       <function>decode</function>(<parameter>string</parameter> <type>text</type>,
+              <parameter>type</parameter> <type>text</type>)
+      </entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Decodes binary string from <parameter>string</parameter> previously 
+       encoded with encode().  Parameter type is same as in encode().
+      </entry>
+      <entry><literal>decode('123\\000456', 'escape')</literal></entry>
+      <entry><literal>123\000456</literal></entry>
+     </row>       
+
+    </tbody>
+   </tgroup>
+  </table>
+
  </sect1>
 
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.71 2001/11/19 09:05:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.72 2001/11/20 15:42:44 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -965,22 +965,295 @@ SELECT b, char_length(b) FROM test2;
 
   </sect1>
 
-  <sect1 id="datatype-binary">
-   <title>Binary Data</title>
+ <sect1 id="datatype-binary">
+  <title>Binary Strings</title>
+   <para>
+    The <type>bytea</type> data type allows storage of binary strings.
+   </para>
+
+   <table tocentry="1">
+    <title>Binary String Types</title>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Type Name</entry>
+       <entry>Storage</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>bytea</entry>
+       <entry>4 bytes plus the actual string</entry>
+       <entry>Variable (not specifically limited)
+              length binary string</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <para>
-    The <type>bytea</type> data type allows storage of binary data,
-    specifically allowing storage of NULLs which are entered as
-    <literal>'\\000'</>. The first backslash is interpreted by the
-    single quotes, and the second is recognized by <type>bytea</> and
-    precedes a three digit octal value. For a similar reason, a
-    backslash must be entered into a field as <literal>'\\\\'</> or
-    <literal>'\\134'</>. You may also have to escape line feeds and
-    carriage return if your interface automatically translates these. It
-    can store values of any length. <type>Bytea</> is a non-standard
-    data type.
+    A binary string is a sequence of octets that does not have either a
+    character set or collation associated with it.  Bytea specifically
+    allows storage of NULLs and other 'non-printable' <acronym>ASCII
+    </acronym> characters.
    </para>
+
+   <para>
+    Certain <acronym>ASCII</acronym> characters MUST be escaped (but all
+    characters MAY be escaped) when used as part of a string literal in an
+    <acronym>SQL</acronym> statement. In general, to escape a character, it
+    is converted into the three digit octal number equal to the decimal
+    <acronym>ASCII</acronym> value, and preceeded by two backslashes. The
+    single quote (') and backslash (\) characters have special alternate
+    escape sequences. Details are in
+    <xref linkend="datatype-binary-sqlesc">.
+   </para>
+
+   <table id="datatype-binary-sqlesc">
+    <title><acronym>SQL</acronym> Literal Escaped <acronym>ASCII</acronym>
+           Characters</title>
+    <tgroup cols="5">
+     <thead>
+      <row>
+       <entry>Decimal <acronym>ASCII</acronym> Value</entry>
+       <entry>Description</entry>
+       <entry>Input Escaped Representation</entry>
+       <entry>Example</entry>
+       <entry>Printed Result</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry> <literal> 0 </literal> </entry>
+       <entry> null byte </entry>
+       <entry> <literal> '\\000' </literal> </entry>
+       <entry> <literal> select '\\000'::bytea; </literal> </entry>
+       <entry> <literal> \000 </literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal> 39 </literal> </entry>
+       <entry> single quote </entry>
+       <entry> <literal> '\\'' or '\\047' </literal> </entry>
+       <entry> <literal> select '\''::bytea; </literal></entry>
+       <entry> <literal> ' </literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal>92</literal> </entry>
+       <entry> backslash </entry>
+       <entry> <literal> '\\\\' or '\\134' </literal> </entry>
+       <entry> <literal> select '\\\\'::bytea; </literal></entry>
+       <entry> <literal> \\ </literal></entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    Note that the result in each of the examples above was exactly one
+    byte in length, even though the output representation of the null byte
+    and backslash are more than one character. Bytea output characters
+    are also escaped. In general, each "non-printable" character is
+    converted into the three digit octal number equal to its decimal
+    <acronym>ASCII</acronym> value, and preceeded by one backslash. Most
+    "printable" characters are represented by their standard
+    <acronym>ASCII</acronym> representation. The backslash (\) character
+    has a special alternate output representation. Details are in
+    <xref linkend="datatype-binary-resesc">.
+   </para>
+
+   <table id="datatype-binary-resesc">
+    <title><acronym>SQL</acronym> Output Escaped <acronym>ASCII</acronym>
+           Characters</title>
+    <tgroup cols="5">
+     <thead>
+      <row>
+       <entry>Decimal <acronym>ASCII</acronym> Value</entry>
+       <entry>Description</entry>
+       <entry>Output Escaped Representation</entry>
+       <entry>Example</entry>
+       <entry>Printed Result</entry>
+      </row>
+     </thead>
+
+     <tbody>
+
+      <row>
+       <entry> <literal> 39 </literal> </entry>
+       <entry> single quote </entry>
+       <entry> <literal> ' </literal> </entry>
+       <entry> <literal> select '\\047'::bytea; </literal></entry>
+       <entry> <literal> ' </literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal> 92 </literal> </entry>
+       <entry> backslash </entry>
+       <entry> <literal> \\ </literal> </entry>
+       <entry> <literal> select '\\134'::bytea; </literal></entry>
+       <entry> <literal> \\ </literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal> 0 to 31 and 127 to 255 </literal> </entry>
+       <entry> non-printable characters </entry>
+       <entry> <literal> \### (octal value) </literal> </entry>
+       <entry> <literal> select '\\001'::bytea; </literal> </entry>
+       <entry> <literal> \001 </literal></entry>
+      </row>
+
+      <row>
+       <entry> <literal> 32 to 126 </literal> </entry>
+       <entry> printable characters </entry>
+       <entry> ASCII representation </entry>
+       <entry> <literal>  select '\\176'::bytea; </literal> </entry>
+       <entry> <literal> ~ </literal></entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <acronym>SQL</acronym> string literals (input strings) must be
+    preceeded with two backslashes due to the fact that they must pass
+    through two parsers in the PostgreSQL backend. The first backslash
+    is interpreted as an escape character by the string literal parser,
+    and therefore is consumed, leaving the characters that follow it.
+    The second backslash is recognized by <type>bytea</> input function
+    as the prefix of a three digit octal value. For example, a string
+    literal passed to the backend as <literal>'\\001'</literal> becomes
+    <literal>'\001'</literal> after passing through the string literal
+    parser. The <literal>'\001'</literal> is then sent to the bytea
+    input function, where it is converted to a single byte with a decimal
+    <acronym>ASCII</acronym> value of 1.
+   </para>
+
+   <para>
+    For a similar reason, a backslash must be input as
+    <literal>'\\\\'</literal> (or <literal>'\\134'</literal>). The first
+    and third backslashes are interpreted as escape characters by the
+    string literal parser, and therefore are consumed, leaving the
+    second and forth backslashes untouched. The second and forth
+    backslashes are recognized by <type>bytea</> input function as a single
+    backslash. For example, a string literal passed to the backend as
+    <literal>'\\\\'</literal> becomes <literal>'\\'</literal> after passing
+    through the string literal parser. The <literal>'\\'</literal> is then
+    sent to the bytea input function, where it is converted to a single
+    byte with a decimal <acronym>ASCII</acronym> value of 92.
+   </para>
+
+   <para>
+    A single quote is a bit different in that it must be input as
+    <literal>'\''</literal> (or <literal>'\\134'</literal>), NOT as
+    <literal>'\\''</literal>. This is because, while the literal parser
+    interprets the single quote as a special character, and will consume
+    the single backslash, the bytea input function does NOT recognize
+    a single quote as a special character. Therefore a string
+    literal passed to the backend as <literal>'\''</literal> becomes
+    <literal>'''</literal> after passing through the string literal
+    parser. The <literal>'''</literal> is then sent to the bytea
+    input function, where it is retains its single byte decimal
+    <acronym>ASCII</acronym> value of 39.
+   </para>
+
+   <para>
+    Depending on the front end to PostgreSQL you use, you may have
+    additional work to do in terms of escaping and unescaping bytea
+    strings. For example, you may also have to escape line feeds and
+    carriage return if your interface automatically translates these.
+    Or you may have to double up on backslashes if the parser for your
+    language or choice also treats them as an escape character.
+   </para>
+
+   <sect2 id="datatype-binary-compat">
+    <title>Compatibility</title>
+    <para>
+     Bytea provides most of the functionality of the SQL99 binary string
+     type per SQL99 section 4.3. A comparison of PostgreSQL bytea and SQL99
+     Binary Strings is presented in
+     <xref linkend="datatype-binary-compat-comp">.
+    </para>
+
+    <table id="datatype-binary-compat-comp">
+     <title>Comparison of SQL99 Binary String and BYTEA types</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>SQL99</entry>
+        <entry>BYTEA</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry> Name of data type BINARY LARGE OBJECT or BLOB </entry>
+        <entry> Name of data type BYTEA </entry>
+       </row>
+
+       <row>
+        <entry> Sequence of octets that does not have either a character set
+                or collation associated with it. </entry>
+        <entry> same </entry>
+       </row>
+
+       <row>
+        <entry> Described by a binary data type descriptor containing the
+                name of the data type and the maximum length
+                in octets</entry>
+        <entry> Described by a binary data type descriptor containing the
+                name of the data type with no specific maximum length
+                </entry>
+       </row>
+
+       <row>
+        <entry> All binary strings are mutually comparable in accordance
+                with the rules of comparison predicates.</entry>
+        <entry> same</entry>
+       </row>
+
+       <row>
+        <entry> Binary string values can only be compared for equality.
+                </entry>
+        <entry> Binary string values can be compared for equality, greater
+                than, greater than or equal, less than, less than or equal
+                </entry>
+       </row>
+
+       <row>
+        <entry> Operators operating on and returning binary strings
+                include concatenation, substring, overlay, and trim</entry>
+        <entry> Operators operating on and returning binary strings
+                include concatenation, substring, and trim. The <literal>
+                'leading'</literal> and <literal>'trailing'</literal>
+                arguments for trim are not yet implemented.
+                </entry>
+       </row>
+
+       <row>
+        <entry> Other operators involving binary strings
+                include length, position, and the like predicate</entry>
+        <entry> same</entry>
+       </row>
+
+       <row>
+        <entry> A binary string literal is comprised of an even number of
+                hexidecimal digits, in single quotes, preceeded by "X",
+                e.g. X'1a43fe'</entry>
+        <entry> A binary string literal is comprised of ASCII characters
+                escaped according to the rules shown in 
+                <xref linkend="datatype-binary-sqlesc"> </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </sect2>
   </sect1>
+
 
   <sect1 id="datatype-datetime">
    <title>Date/Time Types</title>
