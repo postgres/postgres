@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.8 1997/05/16 07:24:13 thomas Exp $
+ * $Id: variable.c,v 1.9 1997/05/20 10:31:42 vadim Exp $
  *
  */
 
@@ -17,6 +17,7 @@
 extern Cost _cpu_page_wight_;
 extern Cost _cpu_index_page_wight_;
 extern bool _use_geqo_;
+extern bool _use_right_sided_plans_;
 
 /*-----------------------------------------------------------------------*/
 #if USE_EURODATES
@@ -100,6 +101,40 @@ static bool reset_geqo ()
     _use_geqo_ = true;
 #else
     _use_geqo_ = false;
+#endif
+    return TRUE;
+}
+	
+static bool parse_r_plans (const char *value)
+{
+
+    if ( strcasecmp (value, "on") == 0 )
+    	_use_right_sided_plans_ = true;
+    else if ( strcasecmp (value, "off") == 0 )
+    	_use_right_sided_plans_ = false;
+    else
+	elog(WARN, "Bad value for Right-sided Plans (%s)", value);
+    
+    return TRUE;
+}
+
+static bool show_r_plans ()
+{
+
+    if ( _use_right_sided_plans_ )
+    	elog (NOTICE, "Right-sided Plans are ON");
+    else
+    	elog (NOTICE, "Right-sided Plans are OFF");
+    return TRUE;
+}
+
+static bool reset_r_plans ()
+{
+
+#ifdef USE_RIGHT_SIDED_PLANS
+    _use_right_sided_plans_ = true;
+#else
+    _use_right_sided_plans_ = false;
 #endif
     return TRUE;
 }
@@ -250,6 +285,7 @@ struct VariableParsers
 		{ "cost_index",	parse_cost_index,
 				show_cost_index,	reset_cost_index },
 		{ "geqo",	parse_geqo,	show_geqo,	reset_geqo },
+		{ "r_plans",	parse_r_plans,	show_r_plans,	reset_r_plans },
 		{ NULL, NULL, NULL }
 	};
 
