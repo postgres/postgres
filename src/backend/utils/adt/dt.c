@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.46 1997/12/17 23:22:17 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.47 1997/12/23 19:26:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4122,9 +4122,9 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
 		case USE_GERMAN_DATES:
 			sprintf(str, "%02d.%02d", tm->tm_mday, tm->tm_mon);
 			if (tm->tm_year > 0)
-				sprintf((str + 5), "/%04d", tm->tm_year);
+				sprintf((str + 5), ".%04d", tm->tm_year);
 			else
-				sprintf((str + 5), "/%04d %s", -(tm->tm_year - 1), "BC");
+				sprintf((str + 5), ".%04d %s", -(tm->tm_year - 1), "BC");
 			break;
 
 		/* traditional date-only style for Postgres */
@@ -4274,12 +4274,12 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					-(tm->tm_year - 1), tm->tm_hour, tm->tm_min, "BC");
 			break;
 
-		/* German variant on European style; note mixed delimiters dd.mm/yyyy */
+		/* German variant on European style */
 		case USE_GERMAN_DATES:
 			sprintf(str, "%02d.%02d", tm->tm_mday, tm->tm_mon);
 			if (tm->tm_year > 0)
 			{
-				sprintf((str + 5), "/%04d %02d:%02d:%05.2f",
+				sprintf((str + 5), ".%04d %02d:%02d:%05.2f",
 					tm->tm_year, tm->tm_hour, tm->tm_min, sec);
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
@@ -4290,7 +4290,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 
 			}
 			else
-			sprintf((str + 5), "/%04d %02d:%02d %s",
+				sprintf((str + 5), ".%04d %02d:%02d %s",
 					-(tm->tm_year - 1), tm->tm_hour, tm->tm_min, "BC");
 			break;
 
