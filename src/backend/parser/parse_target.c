@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.70 2001/08/09 18:28:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.71 2001/09/10 14:53:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,7 +462,10 @@ FigureColname(Node *expr, Node *resval)
 	/* Some of these are easiest to do with the untransformed node */
 	switch (nodeTag(resval))
 	{
-			case T_Ident:
+		case T_TypeCast: 
+			return( ( ((Ident *) ((TypeCast *) resval)->arg)->name));
+			
+		case T_Ident:
 			return ((Ident *) resval)->name;
 		case T_Attr:
 			{
