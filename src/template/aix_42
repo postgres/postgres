@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-qchars=signed -qmaxmem=8192 -qhalt=w -qsrcmsg -qcheck=divzero -qlonglong
+CFLAGS:-O2 -qmaxmem=16384 -qhalt=w -qsrcmsg -qlanglvl=extended -qlonglong -qcpluscmt
 SHARED_LIB:-lc
 ALL:
 SRCH_INC:
