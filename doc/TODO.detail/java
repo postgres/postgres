@@ -622,3 +622,163 @@ TIP 6: Have you searched our list archives?
 
 http://www.postgresql.org/search.mpl
 
+From pgsql-general-owner+M14602@postgresql.org Sat Sep  1 00:50:49 2001
+Return-path: <pgsql-general-owner+M14602@postgresql.org>
+Received: from server1.pgsql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id f814onF24433
+	for <pgman@candle.pha.pa.us>; Sat, 1 Sep 2001 00:50:49 -0400 (EDT)
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by server1.pgsql.org (8.11.6/8.11.6) with ESMTP id f814pNq39726;
+	Fri, 31 Aug 2001 23:51:23 -0500 (CDT)
+	(envelope-from pgsql-general-owner+M14602@postgresql.org)
+Received: from ns1.austin.rr.com (ns1.austin.rr.com [24.93.35.62])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id f81439f96700
+	for <pgsql-general@postgresql.org>; Sat, 1 Sep 2001 00:03:09 -0400 (EDT)
+	(envelope-from rsanford@nolimitsystems.com)
+Received: from mightywombat (cs662523-179.houston.rr.com [66.25.23.179])
+	by ns1.austin.rr.com (8.12.0.Beta16/8.12.0.Beta16) with SMTP id f813x7pX027417
+	for <pgsql-general@postgresql.org>; Fri, 31 Aug 2001 22:59:07 -0500
+From: "Robert J. Sanford, Jr." <rsanford@nolimitsystems.com>
+To: <pgsql-general@postgresql.org>
+Subject: Re: [GENERAL] PL/java?
+Date: Fri, 31 Aug 2001 23:02:04 -0500
+Message-ID: <HOEFIONAHHKFEFENBMNOAEPPCBAA.rsanford@nolimitsystems.com>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4522.1200
+In-Reply-To: <MAEFKNDLAHNIFMAIEGHJCEKJCDAA.knight@phunc.com>
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+note - i don't work for any of the companies whose products
+are mentioned below. i have performed evaluations of these
+products and the support provided when attempting to determine
+what platform my company's systems should run on. unfortunately,
+i did not choose orion and i am suffering for it now...
+
+some goober blathered thusly:
+> Have you ever actually used Java on an enterprise-level 
+> application?  Ever see the Tomcat webserver?  It uses
+> 100MB of memory, drives the load on our server up to 8,
+> and doesn't serve nearly as fast apache. Do you really
+> want that in your database?
+
+first - don't complain about java because you or someone
+in your group/department/company made a poor decision on
+what tools to use. that's like complaining about mexican
+food when the only experience you have is eating an out-
+dated frozen burrito from the 7-11 freezer.
+
+when looking at the performance of java you have to take
+a look at two things - first you have to compare various
+java implementations against each other and then you have
+to compare the best java implementations against native
+c/c++ code. the following link does that. the java tests
+include tomcat, orion, websphere, and resin. jrun and
+weblogic were originally included in the testing but
+were both removed at their companies' request.
+
+the tests also compare orion vs microsoft asp running on
+win2k and iis5. all tests run on the same hardware.
+
+what i believe these tests clearly demonstrate is that
+java is not the problem, the implementation applications
+based on java is. i also do not believe that tomcat is
+a fair representation of java performance in that it is
+intended to be a reference implementation. as such, the
+code base should sacrifice performance for clarity.
+
+http://www.orionserver.com/benchmarks/benchmark.html
+
+
+while not in the benchmark i would also like to
+recommend jetty as an app server. it is an opensource,
+100% java web and application server. in its base form
+it is "just" a web, servlet, and jsp engine. it does,
+however, have contributed code providing integration
+with other j2ee opensource projects such as the JBoss
+EJB engine.
+
+you can find the jetty home page at:
+   http://jetty.mortbay.com/
+
+and then they blathered some more:
+> Compare the speed of Oracle 8 with 8i if you don't
+> believe me.  The stability is also much worse.  Ever
+> see a JVM on any platform that didn't crash if you
+> looked at it cockeyed?  Ever really trust the garbage
+> collection?  I don't.  I've found a memory leak in IBM 
+> developed java libraries.  Gotta restart that app
+> every once in a while to reclaim system resources it
+> gobbled up and never gave back.
+
+some mention was made regarding the performance of
+the oracle8i application server. well, oracle has
+realized that their performance was sub-optimal and
+rectified the situation by licensing the orion server
+for oracle9i. while money and politics most certainly
+play a part in any licensing arrangement they must
+also realize that making customers happy through the
+performance of their applications will lead to more
+money. the link to the press release is below.
+
+http://www.oracle.com/corporate/press/index.html?759347.html
+
+all of that being said...
+
+i don't think that the person that started this thread
+did anything wrong by making the request they did. that
+is what opensource is all about - contributions, even
+just contributions of ideas, are welcomed. even so, there
+are several options that i see for getting it implemented:
+1) its an open source project so implement it yourself.
+   while i have never worked on modifying the code base
+   i am extremely confident that the current developers
+   will be more than willing to give you advice and
+   pointers.
+2) if #1 is not feasible either because you don't have
+   the time, the inclination, or the experience then
+   you can write a contract that will pay one of the
+   postgres developers to implement it for you.
+3) if that isn't feasible you can try to get a volunteer
+   to do so.
+4) if that isn't feasible then you either have to live
+   with what you have, go elsewhere, or be quiet.
+
+to the person that blathered thusly in response to the
+request for java:
+> Merits of the language notwithstanding, I'd rather
+> not have a buggy, still under development
+> (depreciating everything under the sun with every
+> new iteration) JVM parasite in my DB.
+
+informed and intelligent debate is good. given that i
+believe such to be true, i would request that you
+refrain from blathering such vitriol and uninformed
+nonsense. not only is it for the good of the people
+on the list who don't want to hear it but it will
+also do you good by not telling everyone out there
+that you are a very silly person that doesn't deal
+with logic and/or facts.
+
+to everyone else on the list - if we all contribute
+a penny we could probably buy enough burritos from
+7-11 to make sure that his hands and mouth are busy
+for a good long while.
+
+rjsjr
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
