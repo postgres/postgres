@@ -4,12 +4,12 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.26 2000/06/07 16:26:41 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.27 2000/07/14 15:32:04 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../../Makefile.global
+include $(SRCDIR)/Makefile.global
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
@@ -19,10 +19,13 @@ OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \
       parse_type.o parse_coerce.o parse_target.o scan.o scansup.o
 
-all: SUBSYS.o
+all: $(SRCDIR)/include/parser/parse.h SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+
+$(SRCDIR)/include/parser/parse.h: parse.h
+	cp $< $@
 
 gram.c parse.h: gram.y
 	$(YACC) -d $(YFLAGS) $<
