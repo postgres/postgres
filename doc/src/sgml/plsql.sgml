@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.11 2000/12/22 18:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.12 2001/01/06 12:26:08 petere Exp $
 -->
 
  <chapter id="plsql">
@@ -55,8 +55,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.11 2000/12/22 18:57:50
    </para>
    <para>
     The PL/pgSQL call handler parses the functions source text and
-    produces an internal binary instruction tree on the first time, the
-    function is called by a backend. The produced bytecode is identified
+    produces an internal binary instruction tree on the first time the
+    function is called. The produced bytecode is identified
     in the call handler by the object ID of the function. This ensures,
     that changing a function by a DROP/CREATE sequence will take effect
     without establishing a new database connection. 
@@ -109,8 +109,8 @@ END;
     </para>
 
     <para>
-     There can be any number of subblocks in the statement section
-     of a block. Subblocks can be used to hide variables from outside a
+     There can be any number of sub-blocks in the statement section
+     of a block. Sub-blocks can be used to hide variables from outside a
      block of statements. The variables
      declared in the declarations section preceding a block are
      initialized to their default values every time the block is entered,
@@ -132,7 +132,7 @@ END;
     <para>
      There are two types of comments in PL/pgSQL. A double dash '--'
      starts a comment that extends to the end of the line. A '/*'
-     starts a block comment that extends to the next occurence of '*/'.
+     starts a block comment that extends to the next occurrence of '*/'.
      Block comments cannot be nested, but double dash comments can be
      enclosed into a block comment and a double dash can hide
      the block comment delimiters '/*' and '*/'.
@@ -145,8 +145,8 @@ END;
     <title>Declarations</title>
 
     <para>
-     All variables, rows and records used in a block or it's
-     subblocks must be declared in the declarations section of a block
+     All variables, rows and records used in a block or its
+     sub-blocks must be declared in the declarations section of a block
      except for the loop variable of a FOR loop iterating over a range
      of integer values. Parameters given to a PL/pgSQL function are
      automatically declared with the usual identifiers $n.
@@ -174,7 +174,7 @@ END;
 	assigning '<replaceable>now</replaceable>' to a variable of type
 	<replaceable>datetime</replaceable> causes the variable to have the
 	time of the actual function call, not when the function was
-	precompiled into it's bytecode.
+	precompiled into its bytecode.
        </para>
       </listitem>
      </varlistentry>
@@ -186,7 +186,7 @@ END;
       <listitem>
        <para>
 	Declares a row with the structure of the given class. Class must be
-	an existing table- or viewname of the database. The fields of the row
+	an existing table- or view name of the database. The fields of the row
 	are accessed in the dot notation. Parameters to a function can
 	be composite types (complete table rows). In that case, the
 	corresponding identifier $n will be a rowtype, but it
@@ -196,7 +196,7 @@ END;
 	don't have useful system attributes).
        </para>
        <para>
-	The fields of the rowtype inherit the tables fieldsizes 
+	The fields of the rowtype inherit the table's field sizes 
 	or precision for char() etc. data types.
        </para>
       </listitem>
@@ -263,7 +263,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
     <title>Data Types</title>
 
     <para>
-     The type of a varible can be any of the existing basetypes of
+     The type of a variable can be any of the existing base types of
      the database. <replaceable>type</replaceable> in the declarations
      section above is defined as:
     </para>
@@ -298,14 +298,14 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
     </para>
     <para>
      Using the <replaceable>class.field</replaceable>%TYPE
-     causes PL/pgSQL to lookup the attributes definitions at the
+     causes PL/pgSQL to look up the attributes definitions at the
      first call to the function during the lifetime of a backend.
      Have a table with a char(20) attribute and some PL/pgSQL functions
-     that deal with it's content in local variables. Now someone
+     that deal with its content in local variables. Now someone
      decides that char(20) isn't enough, dumps the table, drops it,
      recreates it now with the attribute in question defined as
      char(40) and restores the data. Ha - he forgot about the
-     funcitons. The computations inside them will truncate the values
+     functions. The computations inside them will truncate the values
      to 20 characters. But if they are defined using the
      <replaceable>class.field</replaceable>%TYPE
      declarations, they will automagically handle the size change or
@@ -320,7 +320,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
 
     <para>
      All expressions used in PL/pgSQL statements are processed using
-     the backends executor. Expressions that appear to contain
+     the backend's executor. Expressions that appear to contain
      constants may in fact require run-time evaluation (e.g. 'now' for the
      datetime type) so
      it is impossible for the PL/pgSQL parser
@@ -329,11 +329,12 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
      <programlisting>
       SELECT <replaceable>expression</replaceable>
      </programlisting>
-     using the SPI manager. In the expression, occurences of variable
+     using the SPI manager. In the expression, occurrences of variable
      identifiers are substituted by parameters and the actual values from
      the variables are passed to the executor in the parameter array. All
      expressions used in a PL/pgSQL function are only prepared and
-     saved once.
+     saved once.  The only exception to this rule is an EXECUTE statement
+     if parsing of a query is needed each time it is encountered.
     </para>
     <para>
      The type checking done by the <productname>Postgres</productname>
@@ -379,7 +380,7 @@ CREATE FUNCTION logfunc2 (text) RETURNS datetime AS '
     <para>
      In the case of logfunc2(), the <productname>Postgres</productname> 
      main parser does not know
-     what type 'now' should become and therefor it returns a datatype of
+     what type 'now' should become and therefore it returns a data type of
      text containing the string 'now'. During the assignment
      to the local variable curtime, the PL/pgSQL interpreter casts this
      string to the datetime type by calling the text_out() and datetime_in()
@@ -467,7 +468,7 @@ END IF;
       <term>Calling another function</term>
       <listitem>
        <para>
-	All functions defined in a <productname>Prostgres</productname>
+	All functions defined in a <productname>Postgres</productname>
 	database return a value. Thus, the normal way to call a function
 	is to execute a SELECT query or doing an assignment (resulting
 	in a PL/pgSQL internal SELECT). But there are cases where someone
@@ -483,6 +484,49 @@ PERFORM <replaceable>query</replaceable>
      </varlistentry>
 
      <varlistentry>
+      <term>Executing dynamic queries</term>
+      <listitem>
+       <cmdsynopsis>
+        <command>EXECUTE</command>
+        <arg choice="req"><replaceable class="command">query</replaceable></arg>
+       </cmdsynopsis>
+
+       <para>
+        Unlike all other queries in PL/pgSQL, a
+        <replaceable>query</replaceable> run by an EXECUTE statement
+        is not prepared and saved just once during the life of the
+        server.  Instead, the <replaceable>query</replaceable> is
+        prepared each time the statement is run. This allows the
+        <replaceable>query</replaceable> to be dynamically created
+        within the procedure to perform actions on variable tables and
+        fields.
+       </para>
+
+       <para>
+        An example:
+<programlisting>
+EXECUTE ''UPDATE tbl SET ''
+        || quote_ident(fieldname)
+        || '' = ''
+        || quote_literal(newvalue)
+        || '' WHERE ...'';
+</programlisting>
+        This example shows use of the functions
+        <function>quote_ident</function>(<type>TEXT</type>) and
+        <function>quote_literal</function>(<type>TEXT</type>).
+        Variables containing field and table identifiers should be
+        passed to function <function>quote_ident()</function>.
+        Variables containing literal elements of the dynamic query
+        string should be passed to
+        <function>quote_literal()</function>.  Both take the
+        appropriate steps to return the input text enclosed in single
+        or double quotes and with any embedded special characters
+        intact.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>Returning from the function</term>
       <listitem>
        <para>
@@ -491,7 +535,7 @@ RETURN <replaceable>expression</replaceable>
 	</programlisting>
 	The function terminates and the value of <replaceable>expression</replaceable>
 	will be returned to the upper executor. The return value of a function
-	cannot be undefined. If control reaches the end of the toplevel block
+	cannot be undefined. If control reaches the end of the top-level block
 	of the function without hitting a RETURN statement, a runtime error
 	will occur.
        </para>
@@ -619,7 +663,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
     </para>
     <para>
      First they have some special variables created automatically in the 
-     toplevel blocks declaration section. They are
+     top-level blocks declaration section. They are
     </para>
 
     <variablelist>
@@ -627,7 +671,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>NEW</term>
       <listitem>
        <para>
-	Datatype RECORD; variable holding the new database row on INSERT/UPDATE
+	Data type RECORD; variable holding the new database row on INSERT/UPDATE
 	operations on ROW level triggers.
        </para>
       </listitem>
@@ -637,7 +681,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>OLD</term>
       <listitem>
        <para>
-	Datatype RECORD; variable holding the old database row on UPDATE/DELETE
+	Data type RECORD; variable holding the old database row on UPDATE/DELETE
 	operations on ROW level triggers.
        </para>
       </listitem>
@@ -647,7 +691,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>TG_NAME</term>
       <listitem>
        <para>
-	Datatype name; variable that contains the name of the trigger actually
+	Data type name; variable that contains the name of the trigger actually
 	fired.
        </para>
       </listitem>
@@ -657,7 +701,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>TG_WHEN</term>
       <listitem>
        <para>
-	Datatype text; a string of either 'BEFORE' or 'AFTER' depending on the
+	Data type text; a string of either 'BEFORE' or 'AFTER' depending on the
 	triggers definition.
        </para>
       </listitem>
@@ -667,7 +711,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>TG_LEVEL</term>
       <listitem>
        <para>
-	Datatype text; a string of either 'ROW' or 'STATEMENT' depending on the
+	Data type text; a string of either 'ROW' or 'STATEMENT' depending on the
 	triggers definition.
        </para>
       </listitem>
@@ -677,7 +721,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>TG_OP</term>
       <listitem>
        <para>
-	Datatype text; a string of 'INSERT', 'UPDATE' or 'DELETE' telling
+	Data type text; a string of 'INSERT', 'UPDATE' or 'DELETE' telling
 	for which operation the trigger is actually fired.
        </para>
       </listitem>
@@ -687,7 +731,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>TG_RELID</term>
       <listitem>
        <para>
-	Datatype oid; the object ID of the table that caused the
+	Data type oid; the object ID of the table that caused the
 	trigger invocation.
        </para>
       </listitem>
@@ -697,7 +741,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>TG_RELNAME</term>
       <listitem>
        <para>
-	Datatype name; the name of the table that caused the trigger
+	Data type name; the name of the table that caused the trigger
 	invocation.
        </para>
       </listitem>
@@ -707,7 +751,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>TG_NARGS</term>
       <listitem>
        <para>
-	Datatype integer; the number of arguments given to the trigger
+	Data type integer; the number of arguments given to the trigger
 	procedure in the CREATE TRIGGER statement.
        </para>
       </listitem>
@@ -717,7 +761,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
       <term>TG_ARGV[]</term>
       <listitem>
        <para>
-	Datatype array of text; the arguments from the CREATE TRIGGER statement.
+	Data type array of text; the arguments from the CREATE TRIGGER statement.
 	The index counts from 0 and can be given as an expression. Invalid
 	indices (&lt; 0 or &gt;= tg_nargs) result in a NULL value.
        </para>
@@ -748,11 +792,11 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
      exception handling model. Whenever the parser, planner/optimizer
      or executor decide that a statement cannot be processed any longer,
      the whole transaction gets aborted and the system jumps back
-     into the mainloop to get the next query from the client application.
+     into the main loop to get the next query from the client application.
     </para>
     <para>
      It is possible to hook into the error mechanism to notice that this
-     happens. But currently it's impossible to tell what really
+     happens. But currently it is impossible to tell what really
      caused the abort (input/output conversion error, floating point
      error, parse error). And it is possible that the database backend
      is in an inconsistent state at this point so returning to the upper
@@ -787,7 +831,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
     of single quotes. The functions source text on CREATE FUNCTION must
     be a literal string. Single quotes inside of literal strings must be
     either doubled or quoted with a backslash. We are still looking for
-    an elegant alternative. In the meantime, doubling the single qoutes
+    an elegant alternative. In the meantime, doubling the single quotes
     as in the examples below should be used. Any solution for this
     in future versions of <productname>Postgres</productname> will be
     upward compatible.
@@ -848,7 +892,7 @@ CREATE FUNCTION c_overpaid (EMP, int4) RETURNS bool AS '
 
     <para>
      This trigger ensures, that any time a row is inserted or updated
-     in the table, the current username and time are stamped into the
+     in the table, the current user name and time are stamped into the
      row. And it ensures that an employees name is given and that the
      salary is a positive value.
 
