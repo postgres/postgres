@@ -310,10 +310,10 @@ dblink_open(PG_FUNCTION_ARGS)
 			conname = GET_STR(PG_GETARG_TEXT_P(0));
 			curname = GET_STR(PG_GETARG_TEXT_P(1));
 			sql = GET_STR(PG_GETARG_TEXT_P(2));
+			rcon = getConnectionByName(conname);
+			if (rcon)
+				conn = rcon->con;
 		}
-		rcon = getConnectionByName(conname);
-		if (rcon)
-			conn = rcon->con;
 	}
 	else if (PG_NARGS() == 4)
 	{
