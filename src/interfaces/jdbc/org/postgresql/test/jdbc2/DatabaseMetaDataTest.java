@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.16 2002/11/11 07:11:12 barry Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.17 2003/03/24 03:48:32 barry Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -237,13 +237,19 @@ public class DatabaseMetaDataTest extends TestCase
 
 	public void testTablePrivileges()
 	{
-		// At the moment just test that no exceptions are thrown KJ
 		try
 		{
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
-			ResultSet rs = dbmd.getTablePrivileges(null,null,"grantme");
+			ResultSet rs = dbmd.getTablePrivileges(null,null,"testmetadata");
+			boolean l_foundSelect = false;
+			while (rs.next()) {
+				if (rs.getString("GRANTEE").equals(TestUtil.getUser()) 
+					&& rs.getString("PRIVILEGE").equals("SELECT")) l_foundSelect = true; 
+			}
 			rs.close();
+			//Test that the table owner has select priv
+			assertTrue("Couldn't find SELECT priv on table testmetadata for " + TestUtil.getUser(),l_foundSelect);
 		} catch (SQLException sqle) {
 			sqle.printStackTrace();
 			fail(sqle.getMessage());
