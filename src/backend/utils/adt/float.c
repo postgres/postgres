@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.14 1997/05/11 15:11:38 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.15 1997/05/14 04:35:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
  *	 float4eq, float4ne, float4lt, float4le, float4gt, float4ge
  *	 float8eq, float8ne, float8lt, float8le, float8gt, float8ge
  *	Conversion routines:
- *	 ftod, dtof, itod, dtoi, i2tod, dtoi2, itof, ftoi, i2tof, ftoi2
+ *	 ftod, dtof, i4tod, dtoi4, i2tod, dtoi2, itof, ftoi, i2tof, ftoi2
  *
  *	Random float8 ops:
  * 	 dround, dtrunc, dsqrt, dcbrt, dpow, dexp, dlog1
@@ -743,17 +743,17 @@ float32 dtof(float64 num)
 
 
 /*
- *	dtoi		- converts a float8 number to an int4 number
+ *	dtoi4		- converts a float8 number to an int4 number
  */
-int32 dtoi(float64 num)
+int32 dtoi4(float64 num)
 {
     int32	result;
     
     if (!num)
-	elog(WARN,"dtoi:  unable to convert null",NULL);
+	elog(WARN,"dtoi4:  unable to convert null",NULL);
 
     if ((*num < INT_MIN) || (*num > INT_MAX))
-	elog(WARN,"dtoi:  integer out of range",NULL);
+	elog(WARN,"dtoi4:  integer out of range",NULL);
 
     result = rint(*num);
     return(result);
@@ -779,9 +779,9 @@ int16 dtoi2(float64 num)
 
 
 /*
- *	itod		- converts an int4 number to a float8 number
+ *	i4tod		- converts an int4 number to a float8 number
  */
-float64 itod(int32 num)
+float64 i4tod(int32 num)
 {
     float64	result;
     
@@ -807,17 +807,17 @@ float64 i2tod(int16 num)
 
 
 /*
- *	ftoi		- converts a float8 number to an int4 number
+ *	ftoi4		- converts a float8 number to an int4 number
  */
-int32 ftoi(float32 num)
+int32 ftoi4(float32 num)
 {
     int32	result;
     
     if (!num)
-	elog(WARN,"ftoi:  unable to convert null",NULL);
+	elog(WARN,"ftoi4:  unable to convert null",NULL);
 
     if ((*num < INT_MIN) || (*num > INT_MAX))
-	elog(WARN,"ftoi:  integer out of range",NULL);
+	elog(WARN,"ftoi4:  integer out of range",NULL);
 
     result = rint(*num);
     return(result);
@@ -843,9 +843,9 @@ int16 ftoi2(float32 num)
 
 
 /*
- *	itof		- converts an int4 number to a float8 number
+ *	i4tof		- converts an int4 number to a float8 number
  */
-float32 itof(int32 num)
+float32 i4tof(int32 num)
 {
     float32	result;
     

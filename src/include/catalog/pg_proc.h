@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.21 1997/05/11 15:19:33 thomas Exp $
+ * $Id: pg_proc.h,v 1.22 1997/05/14 04:34:19 thomas Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -392,10 +392,10 @@ DATA(insert OID = 312 (  dtof              PGUID 11 f t f 2 f 700 "701" 100 0 0 
 DATA(insert OID = 313 (  i2toi4            PGUID 11 f t f 1 f  23  "21" 100 0 0 100  foo bar ));
 DATA(insert OID = 314 (  i4toi2            PGUID 11 f t f 1 f  21  "23" 100 0 0 100  foo bar ));
 DATA(insert OID = 315 (  keyfirsteq        PGUID 11 f t f 2 f  16   "0 21" 100 0 0 100  foo bar ));
-DATA(insert OID = 316 (  itod              PGUID 11 f t f 1 f 701  "23" 100 0 0 100  foo bar ));
-DATA(insert OID = 317 (  dtoi              PGUID 11 f t f 1 f  23 "701" 100 0 0 100  foo bar ));
-DATA(insert OID = 318 (  itof              PGUID 11 f t f 1 f 700  "23" 100 0 0 100  foo bar ));
-DATA(insert OID = 319 (  ftoi              PGUID 11 f t f 1 f  23 "700" 100 0 0 100  foo bar ));
+DATA(insert OID = 316 (  i4tod             PGUID 11 f t f 1 f 701  "23" 100 0 0 100  foo bar ));
+DATA(insert OID = 317 (  dtoi4             PGUID 11 f t f 1 f  23 "701" 100 0 0 100  foo bar ));
+DATA(insert OID = 318 (  i4tof             PGUID 11 f t f 1 f 700  "23" 100 0 0 100  foo bar ));
+DATA(insert OID = 319 (  ftoi4             PGUID 11 f t f 1 f  23 "700" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 320 (  rtinsert          PGUID 11 f t f 5 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 321 (  rtdelete          PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
@@ -907,14 +907,14 @@ DATA(insert OID = 1405 (  int2         PGUID 14 f t f 1 f   21   "21" 100 0 0 10
 
 DATA(insert OID = 1406 (  float8       PGUID 14 f t f 1 f  701  "701" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1407 (  float8       PGUID 14 f t f 1 f  701  "700" 100 0 0 100  "select ftod($1)" - ));
-DATA(insert OID = 1408 (  float8       PGUID 14 f t f 1 f  701   "23" 100 0 0 100  "select itod($1)" - ));
+DATA(insert OID = 1408 (  float8       PGUID 14 f t f 1 f  701   "23" 100 0 0 100  "select i4tod($1)" - ));
 DATA(insert OID = 1409 (  float8       PGUID 14 f t f 1 f  701   "21" 100 0 0 100  "select i2tod($1)" - ));
-DATA(insert OID = 1410 (  float4       PGUID 14 f t f 1 f  700   "23" 100 0 0 100  "select itof($1)" - ));
+DATA(insert OID = 1410 (  float4       PGUID 14 f t f 1 f  700   "23" 100 0 0 100  "select i4tof($1)" - ));
 DATA(insert OID = 1411 (  float4       PGUID 14 f t f 1 f  700   "21" 100 0 0 100  "select i2tof($1)" - ));
 DATA(insert OID = 1412 (  int4         PGUID 14 f t f 1 f   23   "23" 100 0 0 100  "select $1" - ));
-DATA(insert OID = 1413 (  int4         PGUID 14 f t f 1 f   23  "701" 100 0 0 100  "select dtoi($1)" - ));
+DATA(insert OID = 1413 (  int4         PGUID 14 f t f 1 f   23  "701" 100 0 0 100  "select dtoi4($1)" - ));
 DATA(insert OID = 1414 (  int4         PGUID 14 f t f 1 f   23   "21" 100 0 0 100  "select i2toi4($1)" - ));
-DATA(insert OID = 1415 (  int4         PGUID 14 f t f 1 f   23  "700" 100 0 0 100  "select ftoi($1)" - ));
+DATA(insert OID = 1415 (  int4         PGUID 14 f t f 1 f   23  "700" 100 0 0 100  "select ftoi4($1)" - ));
 DATA(insert OID = 1416 (  int2         PGUID 14 f t f 1 f   21   "21" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1417 (  int2         PGUID 14 f t f 1 f   21   "23" 100 0 0 100  "select i4toi2($1)" - ));
 DATA(insert OID = 1418 (  int2         PGUID 14 f t f 1 f   21  "701" 100 0 0 100  "select dtoi2($1)" - ));

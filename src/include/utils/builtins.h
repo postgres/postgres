@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.17 1997/05/11 15:13:47 thomas Exp $
+ * $Id: builtins.h,v 1.18 1997/05/14 04:33:41 thomas Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -303,14 +303,14 @@ extern bool float8le(float64 arg1, float64 arg2);
 extern bool float8gt(float64 arg1, float64 arg2);
 extern bool float8ge(float64 arg1, float64 arg2);
 extern float64 ftod(float32 num);
-extern float64 itod(int32 num);
+extern float64 i4tod(int32 num);
 extern float64 i2tod(int16 num);
 extern float32 dtof(float64 num);
-extern int32 dtoi(float64 num);
+extern int32 dtoi4(float64 num);
 extern int16 dtoi2(float64 num);
-extern float32 itof(int32 num);
+extern float32 i4tof(int32 num);
 extern float32 i2tof(int16 num);
-extern int32 ftoi(float32 num);
+extern int32 ftoi4(float32 num);
 extern int16 ftoi2(float32 num);
 extern float64 dround(float64 arg1);
 extern float64 dtrunc(float64 arg1);
