@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.132 2001/08/24 14:07:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.133 2001/08/26 22:28:04 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -80,6 +80,7 @@ endif
 endif
 
 libdir := @libdir@
+pkglibdir = $(libdir)/postgresql
 
 includedir := @includedir@
 ifeq "$(findstring pgsql, $(includedir))" ""
@@ -185,6 +186,13 @@ RANLIB = @RANLIB@
 LORDER = @LORDER@
 X = @EXEEXT@
 
+# Perl 
+
+PERL			= @PERL@
+perl_installsitearch	= @perl_installsitearch@
+perl_installsitelib	= @perl_installsitelib@
+perl_installman3dir	= @perl_installman3dir@
+
 # Miscellaneous
 
 ANT	= @ANT@
@@ -192,7 +200,6 @@ AWK	= @AWK@
 LN_S	= @LN_S@
 MSGFMT  = @MSGFMT@
 MSGMERGE = @MSGMERGE@
-PERL	= @PERL@
 PYTHON	= @PYTHON@
 TAR	= @TAR@
 WISH	= @WISH@

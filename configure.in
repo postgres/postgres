@@ -650,7 +650,6 @@ esac
 AC_PROG_RANLIB
 AC_CHECK_PROGS(LORDER, lorder)
 AC_PATH_PROG(TAR, tar)
-AC_CHECK_PROGS(PERL, perl)
 
 AC_CHECK_PROGS(YACC, ['bison -y'])
 if test -z "$YACC"; then
@@ -668,6 +667,11 @@ AC_SUBST(YFLAGS)
 if test "$with_tk" = yes; then
     AC_PATH_PROG(WISH, wish)
     test -z "$WISH" && AC_MSG_ERROR(['wish' is required for Tk support])
+fi
+
+PGAC_PATH_PERL
+if test "$with_perl" = yes; then
+  PGAC_CHECK_PERL_DIRS
 fi
 
 if test "$with_python" = yes; then
