@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.46 2002/04/25 00:56:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.47 2002/06/15 00:52:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,13 +52,7 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 	}
 	
 	if (passwd == NULL || *passwd == '\0')
-	{
-		if (passwd)
-			pfree(passwd);
-		if (valuntil)
-			pfree(valuntil);
 		return STATUS_ERROR;
-	}
 
 	/* If they encrypt their password, force MD5 */
 	if (isMD5(passwd) && port->auth_method != uaMD5)
@@ -140,9 +134,6 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 			retval = STATUS_OK;
 	}
 
-	pfree(passwd);
-	if (valuntil)
-		pfree(valuntil);
 	if (port->auth_method == uaMD5)
 		pfree(crypt_pwd);
 
