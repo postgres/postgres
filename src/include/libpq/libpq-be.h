@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.25 2001/11/05 17:46:33 momjian Exp $
+ * $Id: libpq-be.h,v 1.26 2001/11/12 04:19:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,15 +145,5 @@ typedef struct Port
 
 
 extern ProtocolVersion FrontendProtocol;
-
-
-/*
- * prototypes for functions in pqpacket.c
- */
-void		PacketReceiveSetup(Packet *pkt, PacketDoneProc iodone, void *arg);
-int			PacketReceiveFragment(Port *port);
-void		PacketSendSetup(Packet *pkt, int nbytes, PacketDoneProc iodone, void *arg);
-int			PacketSendFragment(Port *port);
-void		PacketSendError(Packet *pkt, char *errormsg);
 
 #endif   /* LIBPQ_BE_H */
