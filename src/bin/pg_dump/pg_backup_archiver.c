@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.103 2005/01/25 22:44:31 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.104 2005/01/26 19:44:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,10 @@
 
 #include <ctype.h>
 #include <unistd.h>
+
+#ifdef WIN32
+#include <io.h>
+#endif
 
 #include "pqexpbuffer.h"
 #include "libpq/libpq-fs.h"
@@ -1709,6 +1713,21 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->gzOut = 0;
 	AH->OF = stdout;
 
+	/*
+	 * On Windows, we need to use binary mode to read/write non-text archive
+	 * formats.  Force stdin/stdout into binary mode in case that is what
+	 * we are using.
+	 */
+#ifdef WIN32
+	if (fmt != archNull)
+	{
+		if (mode == archModeWrite)
+			setmode(fileno(stdout), O_BINARY);
+		else
+			setmode(fileno(stdin), O_BINARY);
+	}
+#endif
+
 #if 0
 	write_msg(modulename, "archive format is %d\n", fmt);
 #endif
@@ -1720,7 +1739,6 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	switch (AH->format)
 	{
-
 		case archCustom:
 			InitArchiveFmt_Custom(AH);
 			break;
