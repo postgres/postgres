@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.7 2000/06/15 03:32:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.8 2000/06/18 03:11:40 tgl Exp $
  *
  * NOTES:
  *
@@ -532,14 +532,12 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 	return 0;
 }
 
-#ifdef NOT_USED
 void
 BufFileTell(BufFile *file, int *fileno, long *offset)
 {
 	*fileno = file->curFile;
 	*offset = file->curOffset + file->pos;
 }
-#endif
 
 /*
  * BufFileSeekBlock --- block-oriented seek
