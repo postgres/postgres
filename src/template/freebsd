@@ -4,9 +4,8 @@ case $host_cpu in
   alpha*)   CFLAGS="$CFLAGS -O" ;;
 esac
 
-SUPPORTS_THREADS=yes
-NEED_REENTRANT_FUNCS=yes 	# 4.8, 5.1  2003-09-12
-
+THREAD_SUPPORT=yes
+NEED_REENTRANT_FUNCS=yes
 THREAD_CPPFLAGS="-D_THREAD_SAFE"
 case $host_os in
 		freebsd2*|freebsd3*|freebsd4*)

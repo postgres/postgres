@@ -5,7 +5,7 @@ else
   CFLAGS=-v			# -v is like gcc -Wall
 fi
 
-SUPPORTS_THREADS=yes
+THREAD_SUPPORT=yes
 NEED_REENTRANT_FUNCS=yes	# 5.6 2003-09-13
 THREAD_LIBS="-pthread"
 

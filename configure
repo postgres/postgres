@@ -13273,7 +13273,7 @@ fi
 
 
 
-if test "$SUPPORTS_THREADS" != yes; then
+if test "$THREAD_SUPPORT" != yes; then
 { { echo "$as_me:$LINENO: error:
 Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
@@ -13295,6 +13295,7 @@ else
 THREAD_CPPFLAGS=
 THREAD_LIBS=
 fi
+
 
 
 
@@ -18211,6 +18212,7 @@ s,@python_includespec@,$python_includespec,;t t
 s,@python_libspec@,$python_libspec,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@HAVE_IPV6@,$HAVE_IPV6,;t t
+s,@THREAD_SUPPORT@,$THREAD_SUPPORT,;t t
 s,@THREAD_CPPFLAGS@,$THREAD_CPPFLAGS,;t t
 s,@THREAD_LIBS@,$THREAD_LIBS,;t t
 s,@HAVE_POSIX_SIGNALS@,$HAVE_POSIX_SIGNALS,;t t

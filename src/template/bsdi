@@ -10,5 +10,5 @@ case $host_os in
     ;;
 esac
 
-SUPPORTS_THREADS=yes
+THREAD_SUPPORT=yes
 NEED_REENTRANT_FUNCS=no		# verified 4.3 2003-09-26

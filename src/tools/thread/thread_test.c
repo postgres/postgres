@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/tools/thread/Attic/thread_test.c,v 1.1 2003/09/27 15:32:48 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/tools/thread/Attic/thread_test.c,v 1.2 2003/09/27 16:24:45 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 
 	printf("\
 Make sure you have added any needed 'THREAD_CPPFLAGS' and 'THREAD_LIBS'\n\
-defines to your template/${port} file before compiling this program.\n\n"
+defines to your template/$port file before compiling this program.\n\n"
 );
 	pthread_create(&thread1, NULL, (void * (*)(void *)) func_call_1, NULL);
 	pthread_create(&thread2, NULL, (void * (*)(void *)) func_call_2, NULL);
@@ -82,20 +82,14 @@ defines to your template/${port} file before compiling this program.\n\n"
 		strerror_p1 != strerror_p2)
 	{
 		printf("All your non-*_r functions are thread-safe.\n");
-		printf("Add this to your template/${port} file:\n\n");
-		printf("\
-SUPPORTS_THREADS=yes\n\
-NEED_REENTRANT_FUNCS=no\n"
-			  );
+		printf("Add this to your template/$port file:\n\n");
+		printf("NEED_REENTRANT_FUNCS=no\n");
 	}
 	else
 	{
 		printf("Not all non-*_r functions are thread-safe.\n");
-		printf("Add this to your template/${port} file:\n\n");
-		printf("\
-SUPPORTS_THREADS=yes\n\
-NEED_REENTRANT_FUNCS=yes\n"
-			  );
+		printf("Add this to your template/$port file:\n\n");
+		printf("NEED_REENTRANT_FUNCS=yes\n");
 	}
 
 	return 0;
