@@ -1,0 +1,1070 @@
+From pgsql-hackers-owner+M18800=candle.pha.pa.us=pgman@postgresql.org Wed Feb 13 15:25:43 2002
+Return-path: <pgsql-hackers-owner+M18800=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1DKPgP09129
+	for <pgman@candle.pha.pa.us>; Wed, 13 Feb 2002 15:25:42 -0500 (EST)
+Received: (qmail 83025 invoked by alias); 13 Feb 2002 20:25:41 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 13 Feb 2002 20:25:41 -0000
+Received: from h97.c194.tor.velocet.net (H97.C194.tor.velocet.net [216.138.194.97])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1DK7kE77269
+	for <pgsql-hackers@postgresql.org>; Wed, 13 Feb 2002 15:07:47 -0500 (EST)
+	(envelope-from rbt@zort.ca)
+Received: (qmail 41141 invoked by uid 0); 13 Feb 2002 20:07:41 -0000
+Received: from h97.c194.tor.velocet.net (HELO jester) (216.138.194.97)
+  by 192.168.1.11 with RC4-MD5 encrypted SMTP; 13 Feb 2002 20:07:41 -0000
+Message-ID: <003901c1b4ca$1d762500$8001a8c0@jester>
+From: "Rod Taylor" <rbt@zort.ca>
+To: "Hackers List" <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] NAMEDATALEN Changes
+Date: Wed, 13 Feb 2002 15:07:50 -0500
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+	boundary="----=_NextPart_000_0036_01C1B4A0.343E4DF0"
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2600.0000
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0036_01C1B4A0.343E4DF0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+
+NAMEDATALEN's benchmarked are 32, 64, 128 and 512.  Attached is the
+shell script I used to do it.
+
+First row of a set is the time(1) for the pgbench -i run, second is
+the actual benchmark.  Aside from the 'real' time of 64 there is a
+distinct increase in time required, but not significant.
+
+Benchmarks were run for 3000 transactions with scale factor of 5, but
+only 1 client.   If there is a preferred setting for pgbench I can do
+an overnight run with it.  Machine is a dual 500Mhz celery with 384MB
+ram and 2 IBM Deskstars in Raid 0, and a seperate system drive.
+
+Anything but 32 fails the 'name' check in the regression tests -- I
+assume this is expected?
+
+Don't know why 64 has a high 'real' time, but the system times are
+appropriate.
+
+NAMEDATALEN: 32
+
+158.97 real 1.81 user 0.14 sys
+
+80.58 real 1.30 user 3.81 sys
+
+
+
+NAMEDATALEN: 64
+
+248.40 real 1.85 user 0.10 sys
+
+96.36 real 1.44 user 3.86 sys
+
+
+
+NAMEDATALEN: 128
+
+156.74 real 1.84 user 0.10 sys
+
+94.36 real 1.47 user 4.01 sys
+
+
+
+NAMEDATALEN: 512
+
+157.99 real 1.83 user 0.12 sys
+
+101.14 real 1.47 user 4.23 sys
+
+--
+Rod Taylor
+
+Your eyes are weary from staring at the CRT. You feel sleepy. Notice
+how restful it is to watch the cursor blink. Close your eyes. The
+opinions stated above are yours. You cannot imagine why you ever felt
+otherwise.
+
+
+------=_NextPart_000_0036_01C1B4A0.343E4DF0
+Content-Type: application/octet-stream; name="datalenbench.sh"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment; filename="datalenbench.sh"
+
+#!/bin/sh
+
+PGSRC=3D/data/buildtree/postgres/postgresql-7.2
+PGBASEPORT=3D5400
+PGBASEBIN=3D/data/buildtree/postgres/postgres72
+
+LOG=3D/home/rbt/temp/bench_namedatalen.log
+
+
+for newDATALEN in 32 64 128 512 ; do
+
+  PGBIN=3D${PGBASEBIN}_${newDATALEN}
+  PGPORT=3D`echo "${PGBASEPORT}+${newDATALEN}" | bc`
+
+  sed -E 's/NAMEDATALEN\s[0-9]+/NAMEDATALEN ${newDATALEN}/g' ${PGSRC}/src/i=
+nclude/postgres_ext.h > ${PGSRC}/src/include/postgres_ext.h.tmp
+  mv ${PGSRC}/src/include/postgres_ext.h.tmp ${PGSRC}/src/include/postgres_=
+ext.h
+
+  cd ${PGSRC}
+  ./configure --prefix=3D${PGBIN} --with-pgport=3D${PGPORT} || (echo "UNABL=
+E TO CONFIGURE"; exit)
+
+  make clean
+  make clean install
+
+  cd ${PGSRC}/contrib/pgbench
+
+  gmake install
+
+
+  ${PGBIN}/bin/initdb -D ${PGBIN}/data  || (echo "UNABLE TO INITIALIZE"; ex=
+it 1)
+
+  ${PGBIN}/bin/pg_ctl -D ${PGBIN}/data start  || (echo "UNABLE TO START"; e=
+xit 1)
+
+  sleep 5
+
+  echo "NAMEDATALEN: ${newDATALEN}" >> ${LOG}
+  echo  >> ${LOG}
+  time -a -o ${LOG} ${PGBIN}/bin/pgbench -i -s 5 -d template1 -p ${PGPORT}
+
+  time -a -o ${LOG} ${PGBIN}/bin/pgbench -t 3000 -s 5 -d template1 -p ${PGP=
+ORT}
+  echo  >> ${LOG}
+  echo  >> ${LOG}
+
+  ${PGBIN}/bin/pg_ctl -D ${PGBIN}/data stop
+  rm -rf ${PGBIN}
+done
+
+------=_NextPart_000_0036_01C1B4A0.343E4DF0
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+------=_NextPart_000_0036_01C1B4A0.343E4DF0--
+
+
+From pgsql-hackers-owner+M18806=candle.pha.pa.us=pgman@postgresql.org Wed Feb 13 17:13:45 2002
+Return-path: <pgsql-hackers-owner+M18806=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1DMDiP15852
+	for <pgman@candle.pha.pa.us>; Wed, 13 Feb 2002 17:13:44 -0500 (EST)
+Received: (qmail 13525 invoked by alias); 13 Feb 2002 22:12:53 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 13 Feb 2002 22:12:53 -0000
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1DLsHE09337
+	for <pgsql-hackers@postgresql.org>; Wed, 13 Feb 2002 16:54:17 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g1DLrmf00943;
+	Wed, 13 Feb 2002 16:53:49 -0500 (EST)
+To: "Rod Taylor" <rbt@zort.ca>
+cc: "Hackers List" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] NAMEDATALEN Changes 
+In-Reply-To: <003901c1b4ca$1d762500$8001a8c0@jester> 
+References: <003901c1b4ca$1d762500$8001a8c0@jester>
+Comments: In-reply-to "Rod Taylor" <rbt@zort.ca>
+	message dated "Wed, 13 Feb 2002 15:07:50 -0500"
+Date: Wed, 13 Feb 2002 16:53:48 -0500
+Message-ID: <940.1013637228@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+"Rod Taylor" <rbt@zort.ca> writes:
+> [ some hard data ]
+
+Great!  The numbers for namedatalen = 64 seem like an outlier; perhaps
+something else going on on your system?  Did you try more than one run?
+
+> Anything but 32 fails the 'name' check in the regression tests -- I
+> assume this is expected?
+
+Right.  If you eyeball the actual diffs for the test you should see that
+the diff is due to a long name not getting truncated where the test
+expects it to be.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M18805=candle.pha.pa.us=pgman@postgresql.org Wed Feb 13 17:13:39 2002
+Return-path: <pgsql-hackers-owner+M18805=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1DMDcP15802
+	for <pgman@candle.pha.pa.us>; Wed, 13 Feb 2002 17:13:39 -0500 (EST)
+Received: (qmail 13545 invoked by alias); 13 Feb 2002 22:12:54 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 13 Feb 2002 22:12:54 -0000
+Received: from h97.c194.tor.velocet.net (H97.C194.tor.velocet.net [216.138.194.97])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1DM7iE12735
+	for <pgsql-hackers@postgresql.org>; Wed, 13 Feb 2002 17:07:44 -0500 (EST)
+	(envelope-from rbt@zort.ca)
+Received: (qmail 41562 invoked by uid 0); 13 Feb 2002 22:07:45 -0000
+Received: from h97.c194.tor.velocet.net (HELO jester) (216.138.194.97)
+  by 192.168.1.11 with RC4-MD5 encrypted SMTP; 13 Feb 2002 22:07:45 -0000
+Message-ID: <00f501c1b4da$e2f7b7c0$8001a8c0@jester>
+From: "Rod Taylor" <rbt@zort.ca>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Hackers List" <pgsql-hackers@postgresql.org>
+References: <003901c1b4ca$1d762500$8001a8c0@jester> <940.1013637228@sss.pgh.pa.us>
+Subject: Re: [HACKERS] NAMEDATALEN Changes 
+Date: Wed, 13 Feb 2002 17:07:54 -0500
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2600.0000
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> > Great!  The numbers for namedatalen = 64 seem like an outlier;
+perhaps
+> something else going on on your system?  Did you try more than one
+run?
+
+Ran it again shortly after sending the email.  It fell in line (mid
+way between 32 and 128) with Real time as would normally be expected.
+The times for the other values and 64's system times were very close
+to the original so I won't bother posting them again.
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M18807=candle.pha.pa.us=pgman@postgresql.org Wed Feb 13 17:58:53 2002
+Return-path: <pgsql-hackers-owner+M18807=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1DMwqP19126
+	for <pgman@candle.pha.pa.us>; Wed, 13 Feb 2002 17:58:52 -0500 (EST)
+Received: (qmail 26752 invoked by alias); 13 Feb 2002 22:58:21 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 13 Feb 2002 22:58:21 -0000
+Received: from post.webmailer.de (natwar.webmailer.de [192.67.198.70])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1DMRoE22486
+	for <pgsql-hackers@postgresql.org>; Wed, 13 Feb 2002 17:27:51 -0500 (EST)
+	(envelope-from barwick@gmx.net)
+Received: from there (pD9EB1E9E.dip.t-dialin.net [217.235.30.158])
+	by post.webmailer.de (8.9.3/8.8.7) with SMTP id XAA22201;
+	Wed, 13 Feb 2002 23:27:16 +0100 (MET)
+Message-ID: <200202132227.XAA22201@post.webmailer.de>
+From: Ian Barwick <barwick@gmx.net>
+To: "Rod Taylor" <rbt@zort.ca>, "Hackers List" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] NAMEDATALEN Changes
+Date: Wed, 13 Feb 2002 23:27:08 +0100
+X-Mailer: KMail [version 1.3.1]
+References: <003901c1b4ca$1d762500$8001a8c0@jester>
+In-Reply-To: <003901c1b4ca$1d762500$8001a8c0@jester>
+MIME-Version: 1.0
+Content-Type: Multipart/Mixed;
+  boundary="------------Boundary-00=_81THUZ3BONDS8SCE1A8O"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+--------------Boundary-00=_81THUZ3BONDS8SCE1A8O
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-Transfer-Encoding: 8bit
+
+On Wednesday 13 February 2002 21:07, Rod Taylor wrote:
+> NAMEDATALEN's benchmarked are 32, 64, 128 and 512.  Attached is the
+> shell script I used to do it.
+
+Attached is a modified version for Linux, if anyone is interested.
+
+Will run it overnight out of quasi-scientific interest.
+
+Nice to have an idea what kind of effect my very long NAMEDATALEN setting 
+(128) has.
+
+
+Yours
+
+Ian Barwick
+--------------Boundary-00=_81THUZ3BONDS8SCE1A8O
+Content-Type: application/x-shellscript; name="datalenbench.sh"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="datalenbench.sh"
+
+IyEvYmluL3NoCgpQR1NSQz1+cG9zdGdyZXMvcGdiZW5jaC9wb3N0Z3Jlc3Fs
+LTcuMgpQR0JBU0VQT1JUPTU0MDAKUEdCQVNFQklOPX5wb3N0Z3Jlcy9ob21l
+L3Bvc3RncmVzL3BnYmVuY2gvcG9zdGdyZXM3MgoKTE9HPX5wb3N0Z3Jlcy9i
+ZW5jaF9uYW1lZGF0YWxlbi5sb2cKCmZvciBuZXdEQVRBTEVOIGluIDMyIDY0
+IDEyOCA1MTIgOyBkbwoKICBQR0JJTj0ke1BHQkFTRUJJTn1fJHtuZXdEQVRB
+TEVOfQogIFBHUE9SVD1gZWNobyAiJHtQR0JBU0VQT1JUfSske25ld0RBVEFM
+RU59IiB8IGJjYAoKICBzZWQgInMvTkFNRURBVEFMRU5bWzpzcGFjZTpdXVsw
+LTldXHsxLFx9L05BTUVEQVRBTEVOICRuZXdEQVRBTEVOL2ciICR7UEdTUkN9
+L3NyYy9pbmNsdWRlL3Bvc3RncmVzX2V4dC5oID4gJHtQR1NSQ30vc3JjL2lu
+Y2x1ZGUvcG9zdGdyZXNfZXh0LmgudG1wCiAgbXYgJHtQR1NSQ30vc3JjL2lu
+Y2x1ZGUvcG9zdGdyZXNfZXh0LmgudG1wICR7UEdTUkN9L3NyYy9pbmNsdWRl
+L3Bvc3RncmVzX2V4dC5oCgogIGNkICR7UEdTUkN9CgogIC4vY29uZmlndXJl
+IC0tcHJlZml4PSR7UEdCSU59IC0td2l0aC1wZ3BvcnQ9JHtQR1BPUlR9IHx8
+IChlY2hvICJVTkFCTEUgVE8gQ09ORklHVVJFIjsgZXhpdCkKCiAgbWFrZSBj
+bGVhbgogIG1ha2UgY2xlYW4gaW5zdGFsbAoKICBjZCAke1BHU1JDfS9jb250
+cmliL3BnYmVuY2gKCiAgZ21ha2UgaW5zdGFsbAoKCiAgJHtQR0JJTn0vYmlu
+L2luaXRkYiAtRCAke1BHQklOfS9kYXRhICB8fCAoZWNobyAiVU5BQkxFIFRP
+IElOSVRJQUxJWkUiOyBleGl0IDEpCgogICR7UEdCSU59L2Jpbi9wZ19jdGwg
+LUQgJHtQR0JJTn0vZGF0YSBzdGFydCAgfHwgKGVjaG8gIlVOQUJMRSBUTyBT
+VEFSVCI7IGV4aXQgMSkKCiAgc2xlZXAgNQoKICBlY2hvICJOQU1FREFUQUxF
+TjogJHtuZXdEQVRBTEVOfSIgPj4gJHtMT0d9CgogICMgcG9pbnQgdG8gR05V
+IHRpbWUgKHNob3VsZCB3b3JrIG9uIHJlY2VudCBTdVNFIC8gUmVkSGF0KTsg
+WU1NVgogIFRJTUU9L3Vzci9iaW4vdGltZQogIFRJTUVfRk9STUFUPSIlZSBy
+ZWFsICVVIHVzZXIgJVMgc3lzIgoKICAkVElNRSAtYSAtbyAke0xPR30gLWYg
+IiRUSU1FX0ZPUk1BVCIgJHtQR0JJTn0vYmluL3BnYmVuY2ggLWkgLXMgNSAt
+ZCB0ZW1wbGF0ZTEgLXAgJHtQR1BPUlR9CgogICRUSU1FIC1hIC1vICR7TE9H
+fSAtZiAiJFRJTUVfRk9STUFUIiAke1BHQklOfS9iaW4vcGdiZW5jaCAtdCAz
+MDAwIC1zIDUgLWQgdGVtcGxhdGUxIC1wICR7UEdQT1JUfSAKICBlY2hvICA+
+PiAke0xPR30KICBlY2hvICA+PiAke0xPR30KCiAgJHtQR0JJTn0vYmluL3Bn
+X2N0bCAtRCAke1BHQklOfS9kYXRhIHN0b3AKICBybSAtcmYgJHtQR0JJTn0K
+ZG9uZQoK
+
+--------------Boundary-00=_81THUZ3BONDS8SCE1A8O
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+--------------Boundary-00=_81THUZ3BONDS8SCE1A8O--
+
+From pgsql-hackers-owner+M18811=candle.pha.pa.us=pgman@postgresql.org Wed Feb 13 19:13:40 2002
+Return-path: <pgsql-hackers-owner+M18811=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1E0DdP24221
+	for <pgman@candle.pha.pa.us>; Wed, 13 Feb 2002 19:13:39 -0500 (EST)
+Received: (qmail 40165 invoked by alias); 14 Feb 2002 00:13:34 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 14 Feb 2002 00:13:34 -0000
+Received: from student.gvsu.edu ([148.61.7.124])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1E0ABE39822
+	for <pgsql-hackers@postgresql.org>; Wed, 13 Feb 2002 19:10:11 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from [148.61.250.151] [148.61.250.151] by student.gvsu.edu
+	with Novonyx SMTP Server $Revision: 1.1 $; Wed, 13 Feb 2002 19:10:16 -0500 (EDT)
+Date: Wed, 13 Feb 2002 19:12:57 -0500 (EST)
+From: Peter Eisentraut <peter_e@gmx.net>
+X-Sender: <peter@peter.localdomain>
+To: Rod Taylor <rbt@zort.ca>
+cc: Hackers List <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] NAMEDATALEN Changes
+In-Reply-To: <003901c1b4ca$1d762500$8001a8c0@jester>
+Message-ID: <Pine.LNX.4.30.0202131912010.683-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Rod Taylor writes:
+
+> NAMEDATALEN's benchmarked are 32, 64, 128 and 512.  Attached is the
+> shell script I used to do it.
+
+That's around a 15% performance loss for increasing it to 64 or 128.
+Seems pretty scary actually.
+
+-- 
+Peter Eisentraut   peter_e@gmx.net
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M18815=candle.pha.pa.us=pgman@postgresql.org Wed Feb 13 20:02:31 2002
+Return-path: <pgsql-hackers-owner+M18815=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1E12TP29895
+	for <pgman@candle.pha.pa.us>; Wed, 13 Feb 2002 20:02:29 -0500 (EST)
+Received: (qmail 49786 invoked by alias); 14 Feb 2002 01:02:26 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 14 Feb 2002 01:02:26 -0000
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1E10oE49562
+	for <pgsql-hackers@postgresql.org>; Wed, 13 Feb 2002 20:00:50 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g1E107f04416;
+	Wed, 13 Feb 2002 20:00:07 -0500 (EST)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: Rod Taylor <rbt@zort.ca>, Hackers List <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] NAMEDATALEN Changes 
+In-Reply-To: <Pine.LNX.4.30.0202131912010.683-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0202131912010.683-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Wed, 13 Feb 2002 19:12:57 -0500"
+Date: Wed, 13 Feb 2002 20:00:06 -0500
+Message-ID: <4413.1013648406@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> That's around a 15% performance loss for increasing it to 64 or 128.
+> Seems pretty scary actually.
+
+Some of that could be bought back by fixing hashname() to not iterate
+past the first \0 when calculating the hash of a NAME datum; and then
+cc_hashname could go away.  Not sure how much this would buy though.
+
+Looking closely at Rod's script, I realize that the user+sys times it is
+reporting are not the backend's but the pgbench client's.  So it's
+impossible to tell from this how much of the extra cost is extra I/O and
+how much is CPU.  I'm actually quite surprised that the client side
+shows any CPU-time difference at all; I wouldn't think it ever sees any
+null-padded NAME values.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M18817=candle.pha.pa.us=pgman@postgresql.org Thu Feb 14 01:22:04 2002
+Return-path: <pgsql-hackers-owner+M18817=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1E6M3P26219
+	for <pgman@candle.pha.pa.us>; Thu, 14 Feb 2002 01:22:03 -0500 (EST)
+Received: (qmail 83168 invoked by alias); 14 Feb 2002 06:22:05 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 14 Feb 2002 06:22:05 -0000
+Received: from klamath.dyndns.org (CPE002078144ae0.cpe.net.cable.rogers.com [24.102.202.35])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1E5xfE81904
+	for <pgsql-hackers@postgresql.org>; Thu, 14 Feb 2002 00:59:41 -0500 (EST)
+	(envelope-from nconway@klamath.dyndns.org)
+Received: from localhost.localdomain (jiro [192.168.40.7])
+	by klamath.dyndns.org (Postfix) with ESMTP id 11D2E7007
+	for <pgsql-hackers@postgresql.org>; Thu, 14 Feb 2002 00:59:41 -0500 (EST)
+Subject: Re: [HACKERS] NAMEDATALEN Changes
+From: Neil Conway <nconway@klamath.dyndns.org>
+To: pgsql-hackers@postgresql.org
+In-Reply-To: <4413.1013648406@sss.pgh.pa.us>
+References: <Pine.LNX.4.30.0202131912010.683-100000@peter.localdomain> 
+	<4413.1013648406@sss.pgh.pa.us>
+Content-Type: multipart/mixed; boundary="=-0nvLRoTY5hWeegGhITre"
+X-Mailer: Evolution/1.0.2 
+Date: 14 Feb 2002 00:59:40 -0500
+Message-ID: <1013666380.5380.19.camel@jiro>
+MIME-Version: 1.0
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+--=-0nvLRoTY5hWeegGhITre
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+
+On Wed, 2002-02-13 at 20:00, Tom Lane wrote:
+> Peter Eisentraut <peter_e@gmx.net> writes:
+> > That's around a 15% performance loss for increasing it to 64 or 128.
+> > Seems pretty scary actually.
+> 
+> Some of that could be bought back by fixing hashname() to not iterate
+> past the first \0 when calculating the hash of a NAME datum; and then
+> cc_hashname could go away.  Not sure how much this would buy though.
+
+I've attached a pretty trivial patch that implements this. Instead of
+automatically hashing NAMEDATALEN bytes, hashname() uses only strlen()
+bytes: this should improve both the common case (small identifers, 5-10
+characters long), as well as reduce the penalty when NAMEDATALEN is
+increased. The patch passes the regression tests, FWIW. I didn't remove
+cc_hashname() -- I'll tackle that tomorrow unless anyone objects...
+
+I also did some pretty simple benchmarks; however, I'd appreciate it
+anyone could confirm these results.
+
+pg_bench: scale factor 1, 1 client, 10000 transactions.
+
+hardware: p3-850, 384 MB RAM, slow laptop IDE disk
+
+Run 1: Patch applied, NAMEDATALEN = 32
+
+    number of transactions actually processed: 10000/10000
+    tps = 19.940020(including connections establishing)
+    tps = 19.940774(excluding connections establishing)
+
+Run 2: Patch applied, NAMEDATALEN = 128
+
+    number of transactions actually processed: 10000/10000
+    tps = 20.849385(including connections establishing)
+    tps = 20.850010(excluding connections establishing)
+
+Run 3: Vanilla CVS, NAMEDATALEN = 32
+(This is to check that the patch doesn't cause performance regressions
+for the "common case")
+
+    number of transactions actually processed: 10000/10000
+    tps = 18.295418(including connections establishing)
+    tps = 18.296191(excluding connections establishing)
+
+The performance improvement @ NAMEDATALEN = 128 seems strange. As I
+said, these benchmarks may not be particularly accurate, so I'd suggest
+waiting for others to contribute results before drawing any conclusions.
+
+Oh, and this is my first "real" Pg patch, so my apologies if I've
+screwed something up. ;-)
+
+Cheers,
+
+Neil
+
+-- 
+Neil Conway <neilconway@rogers.com>
+PGP Key ID: DB3C29FC
+
+--=-0nvLRoTY5hWeegGhITre
+Content-Disposition: attachment; filename=hash_len.patch
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/x-patch; charset=ISO-8859-1
+
+*** ./src/backend/access/hash/hashfunc.c.orig	Wed Feb 13 21:09:37 2002
+--- ./src/backend/access/hash/hashfunc.c	Thu Feb 14 00:39:42 2002
+***************
+*** 95,101 ****
+  {
+  	char	   *key =3D NameStr(*PG_GETARG_NAME(0));
+=20=20
+! 	return hash_any((char *) key, NAMEDATALEN);
+  }
+=20=20
+  /*
+--- 95,101 ----
+  {
+  	char	   *key =3D NameStr(*PG_GETARG_NAME(0));
+=20=20
+! 	return hash_any(key, strlen(key));
+  }
+=20=20
+  /*
+***************
+*** 125,131 ****
+   *
+   * (Comment from the original db3 hashing code: )
+   *
+!  * "This is INCREDIBLY ugly, but fast.  We break the string up into 8 byte
+   * units.  On the first time through the loop we get the 'leftover bytes'
+   * (strlen % 8).  On every later iteration, we perform 8 HASHC's so we ha=
+ndle
+   * all 8 bytes.  Essentially, this saves us 7 cmp & branch instructions. =
+ If
+--- 125,131 ----
+   *
+   * (Comment from the original db3 hashing code: )
+   *
+!  * This is INCREDIBLY ugly, but fast.  We break the string up into 8 byte
+   * units.  On the first time through the loop we get the 'leftover bytes'
+   * (strlen % 8).  On every later iteration, we perform 8 HASHC's so we ha=
+ndle
+   * all 8 bytes.  Essentially, this saves us 7 cmp & branch instructions. =
+ If
+***************
+*** 134,140 ****
+   * "OZ's original sdbm hash"
+   */
+  Datum
+! hash_any(char *keydata, int keylen)
+  {
+  	uint32		n;
+  	int			loop;
+--- 134,140 ----
+   * "OZ's original sdbm hash"
+   */
+  Datum
+! hash_any(const char *keydata, int keylen)
+  {
+  	uint32		n;
+  	int			loop;
+*** ./src/include/access/hash.h.orig	Wed Feb 13 22:43:06 2002
+--- ./src/include/access/hash.h	Thu Feb 14 00:38:35 2002
+***************
+*** 265,271 ****
+  extern Datum hashint2vector(PG_FUNCTION_ARGS);
+  extern Datum hashname(PG_FUNCTION_ARGS);
+  extern Datum hashvarlena(PG_FUNCTION_ARGS);
+! extern Datum hash_any(char *keydata, int keylen);
+=20=20
+=20=20
+  /* private routines */
+--- 265,271 ----
+  extern Datum hashint2vector(PG_FUNCTION_ARGS);
+  extern Datum hashname(PG_FUNCTION_ARGS);
+  extern Datum hashvarlena(PG_FUNCTION_ARGS);
+! extern Datum hash_any(const char *keydata, int keylen);
+=20=20
+=20=20
+  /* private routines */
+
+--=-0nvLRoTY5hWeegGhITre
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+--=-0nvLRoTY5hWeegGhITre--
+
+
+From pgsql-hackers-owner+M18819=candle.pha.pa.us=pgman@postgresql.org Thu Feb 14 09:03:43 2002
+Return-path: <pgsql-hackers-owner+M18819=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1EE3gP17661
+	for <pgman@candle.pha.pa.us>; Thu, 14 Feb 2002 09:03:42 -0500 (EST)
+Received: (qmail 68050 invoked by alias); 14 Feb 2002 14:03:37 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 14 Feb 2002 14:03:37 -0000
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1EE1FE67720
+	for <pgsql-hackers@postgresql.org>; Thu, 14 Feb 2002 09:01:15 -0500 (EST)
+	(envelope-from greg@copelandconsulting.net)
+Received: from there (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with SMTP id g1EE1Dk24399;
+	Thu, 14 Feb 2002 08:01:14 -0600 (CST)
+Message-ID: <CCC.200202141401.g1EE1Dk24399@CopelandConsulting.Net>
+X-Trade-Id: <CCC.Thu, 14 Feb 2002 08:01:14 -0600 (CST).Thu, 14 Feb 2002 08:01:14 -0600 (CST).200202141401.g1EE1Dk24399.g1EE1Dk24399@CopelandConsulting.Net.
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Greg Copeland <greg@CopelandConsulting.Net>
+Organization: Copeland Computer Consulting
+To: Neil Conway <nconway@klamath.dyndns.org>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] NAMEDATALEN Changes
+Date: Thu, 14 Feb 2002 08:00:58 -0600
+X-Mailer: KMail [version 1.3.1]
+References: <Pine.LNX.4.30.0202131912010.683-100000@peter.localdomain> <4413.1013648406@sss.pgh.pa.us> <1013666380.5380.19.camel@jiro>
+In-Reply-To: <1013666380.5380.19.camel@jiro>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+On Wednesday 13 February 2002 23:59, Neil Conway wrote:
+> On Wed, 2002-02-13 at 20:00, Tom Lane wrote:
+
+[perf hit comment removed]
+
+>
+> I've attached a pretty trivial patch that implements this. Instead of
+> automatically hashing NAMEDATALEN bytes, hashname() uses only strlen()
+> bytes: this should improve both the common case (small identifers, 5-10
+> characters long), as well as reduce the penalty when NAMEDATALEN is
+> increased. The patch passes the regression tests, FWIW. I didn't remove
+> cc_hashname() -- I'll tackle that tomorrow unless anyone objects...
+>
+> I also did some pretty simple benchmarks; however, I'd appreciate it
+> anyone could confirm these results.
+>
+
+Please bare with me on this as this is my first posting having any real 
+content.  Please don't hang me out if I've overlooked anything and I'm 
+pointing out that I'm making a rather large assumption.  Please correct as 
+needed. 
+
+The primary assumption is that the actual key lengths can be less than 
+NAMEDATALEN.  That is, if the string, "shortkey" is a valid input key (??) 
+which provides a key length of 8-bytes as input to the hash_any() function 
+even though NAMEDATALEN may be something like 128 or larger.  If this 
+assumption is correct, then wouldn't increasing the default input key size 
+(NAMEDATALEN) beyond the maximum actual key length be a bug?  That is to say, 
+if we have a key with only 8-bytes of data and we iterrate over 128-bytes, 
+wouldn't the resulting hash be arbitrary and invalid as it would be hashing 
+memory which is not reflective of the key being hashed?
+
+If my assumptions are correct, then it sounds like using the strlen() 
+implementation (assuming input keys are valid C-strings) is really the proper 
+implementation short of using an adjusted min(NAMEDATALEN,strlen()) type 
+approach.
+
+[snip - var NAMEDATALEN benchmark results]
+
+
+Greg
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.6 (GNU/Linux)
+Comment: For info see http://www.gnupg.org
+
+iD8DBQE8a8Mg4lr1bpbcL6kRAlaxAJ47CO+ExL/ZMo/i6LDoetXrul9qqQCfQli3
+AvqN6RJjSuAH/p/mpZ8J4JY=
+=wnVM
+-----END PGP SIGNATURE-----
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M18820=candle.pha.pa.us=pgman@postgresql.org Thu Feb 14 10:14:25 2002
+Return-path: <pgsql-hackers-owner+M18820=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1EFEOP25217
+	for <pgman@candle.pha.pa.us>; Thu, 14 Feb 2002 10:14:24 -0500 (EST)
+Received: (qmail 80096 invoked by alias); 14 Feb 2002 15:14:19 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 14 Feb 2002 15:14:19 -0000
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1EEvpE77298
+	for <pgsql-hackers@postgresql.org>; Thu, 14 Feb 2002 09:57:51 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g1EEvof08568;
+	Thu, 14 Feb 2002 09:57:50 -0500 (EST)
+To: Greg Copeland <greg@CopelandConsulting.Net>
+cc: Neil Conway <nconway@klamath.dyndns.org>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] NAMEDATALEN Changes 
+In-Reply-To: <CCC.200202141401.g1EE1Dk24399@CopelandConsulting.Net> 
+References: <Pine.LNX.4.30.0202131912010.683-100000@peter.localdomain> <4413.1013648406@sss.pgh.pa.us> <1013666380.5380.19.camel@jiro> <CCC.200202141401.g1EE1Dk24399@CopelandConsulting.Net>
+Comments: In-reply-to Greg Copeland <greg@CopelandConsulting.Net>
+	message dated "Thu, 14 Feb 2002 08:00:58 -0600"
+Date: Thu, 14 Feb 2002 09:57:50 -0500
+Message-ID: <8565.1013698670@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Greg Copeland <greg@CopelandConsulting.Net> writes:
+> if we have a key with only 8-bytes of data and we iterrate over 128-bytes, 
+> wouldn't the resulting hash be arbitrary and invalid as it would be hashing 
+> memory which is not reflective of the key being hashed?
+
+As long as we do it *consistently*, we can do it either way.  Using the
+trailing nulls in the hash does alter the computed hash value --- but
+we're only ever gonna compare the hash value against other hash values
+computed on other NAMEs by this same routine.
+
+This all assumes that the inputs are valid NAMEs, viz strlen <
+NAMEDATALEN and no funny business beyond the first \0.  In practice,
+however, if a bogus NAME were handed to us we would just as soon ignore
+any characters beyond the first \0, because the ordering comparison
+operators for NAME all do so (they're all based on strncmp), as do the
+I/O routines etc.  So this change actually makes the system more
+self-consistent not less so.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M18827=candle.pha.pa.us=pgman@postgresql.org Thu Feb 14 13:53:52 2002
+Return-path: <pgsql-hackers-owner+M18827=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1EIrpP17729
+	for <pgman@candle.pha.pa.us>; Thu, 14 Feb 2002 13:53:51 -0500 (EST)
+Received: (qmail 47648 invoked by alias); 14 Feb 2002 18:53:50 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 14 Feb 2002 18:53:50 -0000
+Received: from klamath.dyndns.org (CPE002078144ae0.cpe.net.cable.rogers.com [24.102.202.35])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1EIbiE46318
+	for <pgsql-hackers@postgresql.org>; Thu, 14 Feb 2002 13:37:44 -0500 (EST)
+	(envelope-from nconway@klamath.dyndns.org)
+Received: by klamath.dyndns.org (Postfix, from userid 1000)
+	id 032E8700C; Thu, 14 Feb 2002 13:37:44 -0500 (EST)
+Date: Thu, 14 Feb 2002 13:37:43 -0500
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] NAMEDATALEN Changes
+Message-ID: <20020214183743.GA10423@klamath.dyndns.org>
+Mail-Followup-To: pgsql-hackers@postgresql.org
+References: <Pine.LNX.4.30.0202131912010.683-100000@peter.localdomain> <4413.1013648406@sss.pgh.pa.us> <1013666380.5380.19.camel@jiro>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="huq684BweRXVnRxX"
+Content-Disposition: inline
+In-Reply-To: <1013666380.5380.19.camel@jiro>
+User-Agent: Mutt/1.3.27i
+From: nconway@klamath.dyndns.org (Neil Conway)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+--huq684BweRXVnRxX
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+On Thu, Feb 14, 2002 at 12:59:40AM -0500, Neil Conway wrote:
+> I've attached a pretty trivial patch that implements this. Instead of
+> automatically hashing NAMEDATALEN bytes, hashname() uses only strlen()
+> bytes: this should improve both the common case (small identifers, 5-10
+> characters long), as well as reduce the penalty when NAMEDATALEN is
+> increased. The patch passes the regression tests, FWIW. I didn't remove
+> cc_hashname() -- I'll tackle that tomorrow unless anyone objects...
+
+Okay, I've attached a new version that removes cc_hashname(). As with
+the previous patch, this passes the regression tests. Feedback is welcome.
+
+Cheers,
+
+Neil
+
+
+--huq684BweRXVnRxX
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="hash_len.patch"
+
+*** ./src/backend/access/hash/hashfunc.c.orig	Wed Feb 13 21:09:37 2002
+--- ./src/backend/access/hash/hashfunc.c	Thu Feb 14 00:39:42 2002
+***************
+*** 95,101 ****
+  {
+  	char	   *key = NameStr(*PG_GETARG_NAME(0));
+  
+! 	return hash_any((char *) key, NAMEDATALEN);
+  }
+  
+  /*
+--- 95,101 ----
+  {
+  	char	   *key = NameStr(*PG_GETARG_NAME(0));
+  
+! 	return hash_any(key, strlen(key));
+  }
+  
+  /*
+***************
+*** 125,131 ****
+   *
+   * (Comment from the original db3 hashing code: )
+   *
+!  * "This is INCREDIBLY ugly, but fast.  We break the string up into 8 byte
+   * units.  On the first time through the loop we get the 'leftover bytes'
+   * (strlen % 8).  On every later iteration, we perform 8 HASHC's so we handle
+   * all 8 bytes.  Essentially, this saves us 7 cmp & branch instructions.  If
+--- 125,131 ----
+   *
+   * (Comment from the original db3 hashing code: )
+   *
+!  * This is INCREDIBLY ugly, but fast.  We break the string up into 8 byte
+   * units.  On the first time through the loop we get the 'leftover bytes'
+   * (strlen % 8).  On every later iteration, we perform 8 HASHC's so we handle
+   * all 8 bytes.  Essentially, this saves us 7 cmp & branch instructions.  If
+***************
+*** 134,140 ****
+   * "OZ's original sdbm hash"
+   */
+  Datum
+! hash_any(char *keydata, int keylen)
+  {
+  	uint32		n;
+  	int			loop;
+--- 134,140 ----
+   * "OZ's original sdbm hash"
+   */
+  Datum
+! hash_any(const char *keydata, int keylen)
+  {
+  	uint32		n;
+  	int			loop;
+*** ./src/backend/utils/cache/catcache.c.orig	Thu Feb 14 12:51:00 2002
+--- ./src/backend/utils/cache/catcache.c	Thu Feb 14 12:53:05 2002
+***************
+*** 93,99 ****
+  static Index CatalogCacheComputeTupleHashIndex(CatCache *cache,
+  								  HeapTuple tuple);
+  static void CatalogCacheInitializeCache(CatCache *cache);
+- static Datum cc_hashname(PG_FUNCTION_ARGS);
+  
+  
+  /*
+--- 93,98 ----
+***************
+*** 109,115 ****
+  		case CHAROID:
+  			return hashchar;
+  		case NAMEOID:
+! 			return cc_hashname;
+  		case INT2OID:
+  			return hashint2;
+  		case INT2VECTOROID:
+--- 108,114 ----
+  		case CHAROID:
+  			return hashchar;
+  		case NAMEOID:
+! 			return hashname;
+  		case INT2OID:
+  			return hashint2;
+  		case INT2VECTOROID:
+***************
+*** 129,151 ****
+  			return (PGFunction) NULL;
+  	}
+  }
+- 
+- static Datum
+- cc_hashname(PG_FUNCTION_ARGS)
+- {
+- 	/*
+- 	 * We need our own variant of hashname because we want to accept
+- 	 * null-terminated C strings as search values for name fields. So, we
+- 	 * have to make sure the data is correctly padded before we compute
+- 	 * the hash value.
+- 	 */
+- 	NameData	my_n;
+- 
+- 	namestrcpy(&my_n, NameStr(*PG_GETARG_NAME(0)));
+- 
+- 	return DirectFunctionCall1(hashname, NameGetDatum(&my_n));
+- }
+- 
+  
+  /*
+   * Standard routine for creating cache context if it doesn't exist yet
+--- 128,133 ----
+*** ./src/include/access/hash.h.orig	Wed Feb 13 22:43:06 2002
+--- ./src/include/access/hash.h	Thu Feb 14 00:38:35 2002
+***************
+*** 265,271 ****
+  extern Datum hashint2vector(PG_FUNCTION_ARGS);
+  extern Datum hashname(PG_FUNCTION_ARGS);
+  extern Datum hashvarlena(PG_FUNCTION_ARGS);
+! extern Datum hash_any(char *keydata, int keylen);
+  
+  
+  /* private routines */
+--- 265,271 ----
+  extern Datum hashint2vector(PG_FUNCTION_ARGS);
+  extern Datum hashname(PG_FUNCTION_ARGS);
+  extern Datum hashvarlena(PG_FUNCTION_ARGS);
+! extern Datum hash_any(const char *keydata, int keylen);
+  
+  
+  /* private routines */
+
+--huq684BweRXVnRxX
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+--huq684BweRXVnRxX--
+
+From pgsql-hackers-owner+M18833=candle.pha.pa.us=pgman@postgresql.org Thu Feb 14 16:22:34 2002
+Return-path: <pgsql-hackers-owner+M18833=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1ELMXP07956
+	for <pgman@candle.pha.pa.us>; Thu, 14 Feb 2002 16:22:34 -0500 (EST)
+Received: (qmail 80517 invoked by alias); 14 Feb 2002 21:22:29 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 14 Feb 2002 21:22:29 -0000
+Received: from post.webmailer.de (natpost.webmailer.de [192.67.198.65])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g1EL2mE77720
+	for <pgsql-hackers@postgresql.org>; Thu, 14 Feb 2002 16:02:48 -0500 (EST)
+	(envelope-from barwick@gmx.net)
+Received: from there (pD9EB17D4.dip.t-dialin.net [217.235.23.212])
+	by post.webmailer.de (8.9.3/8.8.7) with SMTP id WAA07320
+	for <pgsql-hackers@postgresql.org>; Thu, 14 Feb 2002 22:02:49 +0100 (MET)
+Message-ID: <200202142102.WAA07320@post.webmailer.de>
+Content-Type: text/plain;
+  charset="iso-2022-jp"
+From: Ian Barwick <barwick@gmx.net>
+To: "Hackers List" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] NAMEDATALEN Changes
+Date: Thu, 14 Feb 2002 22:02:34 +0100
+X-Mailer: KMail [version 1.3.1]
+References: <003901c1b4ca$1d762500$8001a8c0@jester> <200202132227.XAA22201@post.webmailer.de>
+In-Reply-To: <200202132227.XAA22201@post.webmailer.de>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Wednesday 13 February 2002 23:27, Ian Barwick wrote:
+> On Wednesday 13 February 2002 21:07, Rod Taylor wrote:
+> > NAMEDATALEN's benchmarked are 32, 64, 128 and 512.  Attached is the
+> > shell script I used to do it.
+>
+> Attached is a modified version for Linux, if anyone is interested.
+>
+> Will run it overnight out of quasi-scientific interest.
+>
+> Nice to have an idea what kind of effect my very long NAMEDATALEN setting
+> (128) has.
+
+Below the probably quite uninformative results, run under Linux with 2.2.16 
+on an AMD K2 350Mhz with 256MB RAM, EIDE HDs and other run of the mill
+hardware.
+
+I suspect some of the normal system jobs which usually run during the night
+caused the wildly varying results. Whatever else, for my purposes at least
+any performance issues with differening NAMEDATALENgths are nothing much
+to worry about.
+
+
+NAMEDATALEN: 32
+220.73 real 3.39 user 0.10 sys
+110.03 real 2.77 user 4.42 sys
+
+
+NAMEDATALEN: 64
+205.31 real 3.55 user 0.08 sys
+109.76 real 2.53 user 4.18 sys
+
+
+NAMEDATALEN: 128
+224.65 real 3.35 user 0.10 sys
+121.30 real 2.60 user 3.89 sys
+
+
+NAMEDATALEN: 256
+209.48 real 3.62 user 0.11 sys
+118.90 real 3.00 user 3.88 sys
+
+
+NAMEDATALEN: 512
+204.65 real 3.36 user 0.14 sys
+115.12 real 2.54 user 3.88 sys
+
+
+Ian Barwick
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
