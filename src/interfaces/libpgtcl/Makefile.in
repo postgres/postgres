@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.17 1998/06/15 21:01:46 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.18 1998/06/16 03:17:47 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,6 +45,16 @@ ifeq ($(PORTNAME), bsd)
     install-shlib-dep	:= install-shlib
     shlib		:= libpgtcl.so.1.0
     LDFLAGS_SL		= -x -Bshareable -Bforcearchive
+    CFLAGS		+= $(CFLAGS_SL)
+  endif
+endif
+
+ifeq ($(PORTNAME), bsdi)
+  ifdef BSD_SHLIB
+    install-shlib-dep	:= install-shlib
+    shlib		:= libpgtcl.o
+    LD			:= shlicc
+    LDFLAGS_SL		+= -O -r
     CFLAGS		+= $(CFLAGS_SL)
   endif
 endif
