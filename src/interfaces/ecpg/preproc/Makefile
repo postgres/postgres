@@ -39,6 +39,9 @@ else
 	@$(missing) flex $< $@
 endif
 
+c_keywords.o ecpg_keywords.o keywords.o pgc.o: preproc.h
+
+
 distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
 
 install: all installdirs
