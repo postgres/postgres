@@ -40,7 +40,7 @@ exec sql end declare section;
                 ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect to unix:postgresql://localhost:5432/mm; 
+	exec sql connect to unix:postgresql://localhost:5432/mm;
 
 	strcpy(msg, "create");
 	exec sql create table meskes(name char(8), born integer, age smallint, married date, children integer);

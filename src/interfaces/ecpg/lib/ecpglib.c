@@ -149,26 +149,21 @@ ECPGfinish(struct connection * act)
 		PQfinish(act->connection);
 		/* remove act from the list */
 		if (act == all_connections)
-		{
 			all_connections = act->next;
-			free(act->name);
-			free(act);
-		}
 		else
 		{
 			struct connection *con;
 
 			for (con = all_connections; con->next && con->next != act; con = con->next);
 			if (con->next)
-			{
 				con->next = act->next;
-				free(act->name);
-				free(act);
-			}
 		}
 
 		if (actual_connection == act)
 			actual_connection = all_connections;
+			
+		free(act->name);
+		free(act);
 	}
 	else
 		ECPGlog("ECPGfinish: called an extra time.\n");

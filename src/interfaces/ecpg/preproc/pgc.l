@@ -533,6 +533,12 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <C>";"	      	        { return(';'); }
 <C>","	      	        { return(','); }
 <C>"*"	      	        { return('*'); }
+<C>"%"	      	        { return('%'); }
+<C>"/"	      	        { return('/'); }
+<C>"+"	      	        { return('+'); }
+<C>"-"	      	        { return('-'); }
+<C>"("	      	        { return('('); }
+<C>")"	      	        { return(')'); }
 <C>{space}		{ ECHO; }
 <C>\{			{ return('{'); }
 <C>\}			{ return('}'); }

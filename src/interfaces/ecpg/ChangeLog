@@ -559,6 +559,10 @@ Mon Apr 12 17:56:14 CEST 1999
 Wed Apr 14 17:59:06 CEST 1999
 
 	- Added simple calculations for array bounds.
+
+Fri Apr 16 18:25:18 CEST 1999
+
+	- Fixed small bug in ECPGfinish().
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0
 

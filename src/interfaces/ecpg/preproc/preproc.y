@@ -3218,12 +3218,12 @@ nest_array_bounds:	'[' ']' nest_array_bounds
 
 Iresult:	Iconst			{ $$ = atol($1); }
 	|	'(' Iresult ')'		{ $$ = $2; }
-	|	Iresult '+' Iresult	{ $$ = $1 + $3};
-	|	Iresult '-' Iresult	{ $$ = $1 - $3};
-	|	Iresult '*' Iresult	{ $$ = $1 * $3};
-	|	Iresult '/' Iresult	{ $$ = $1 / $3};
-	|	Iresult '%' Iresult	{ $$ = $1 % $3};
-
+	|	Iresult '+' Iresult	{ $$ = $1 + $3; }
+	|	Iresult '-' Iresult	{ $$ = $1 - $3; }
+	|	Iresult '*' Iresult	{ $$ = $1 * $3; }
+	|	Iresult '/' Iresult	{ $$ = $1 / $3; }
+	|	Iresult '%' Iresult	{ $$ = $1 % $3; }
+	;
 
 
 /*****************************************************************************
