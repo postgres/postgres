@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.62 2002/04/21 19:12:46 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.63 2002/04/21 21:35:17 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,7 +259,7 @@ parse_datestyle_internal(char *value)
 static bool
 parse_datestyle(List *args)
 {
-	int			rstat;
+	int			rstat = FALSE;
 	List	   *arg;
 	char	   *value;
 
@@ -295,6 +295,7 @@ parse_datestyle(List *args)
 		else
 		{
 			elog(ERROR, "SET DATESTYLE argument is not valid");
+			value = NULL;
 		}
 
 		rstat = parse_datestyle_internal(value);
