@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.6 2003/08/04 02:40:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.7 2003/08/12 21:34:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,8 +232,7 @@ pqParseInput3(PGconn *conn)
 					if (pqGetInt(&(conn->be_key), 4, conn))
 						return;
 					break;
-				case 'T':		/* row descriptions (start of query
-								 * results) */
+				case 'T':		/* Row Description */
 					if (conn->result == NULL)
 					{
 						/* First 'T' in a query sequence */
@@ -252,6 +251,17 @@ pqParseInput3(PGconn *conn)
 						conn->asyncStatus = PGASYNC_READY;
 						return;
 					}
+					break;
+				case 'n':		/* No Data */
+					/*
+					 * NoData indicates that we will not be seeing a
+					 * RowDescription message because the statement or
+					 * portal inquired about doesn't return rows.
+					 * Set up a COMMAND_OK result, instead of TUPLES_OK.
+					 */
+					if (conn->result == NULL)
+						conn->result = PQmakeEmptyPGresult(conn,
+														   PGRES_COMMAND_OK);
 					break;
 				case 'D':		/* Data Row */
 					if (conn->result != NULL &&
