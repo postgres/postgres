@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.59 1998/09/01 04:36:43 momjian Exp $
+ * $Id: parsenodes.h,v 1.60 1998/10/02 16:23:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,6 +667,7 @@ typedef struct ParamNo
 	NodeTag		type;
 	int			number;			/* the number of the parameter */
 	TypeName   *typename;		/* the typecast */
+	List	   *indirection;	/* array references */
 } ParamNo;
 
 /*

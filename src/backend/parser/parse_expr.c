@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.35 1998/10/01 22:51:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.36 1998/10/02 16:23:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,39 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				param->paramtype = (Oid) toid;
 				param->param_tlist = (List *) NULL;
 
-				result = (Node *) param;
+				if (pno->indirection != NIL)
+				{
+					List	   *idx = pno->indirection;
+
+					while (idx != NIL)
+					{
+						A_Indices  *ai = (A_Indices *) lfirst(idx);
+						Node	   *lexpr = NULL,
+								   *uexpr;
+
+						uexpr = transformExpr(pstate, ai->uidx, precedence);	/* must exists */
+						if (exprType(uexpr) != INT4OID)
+							elog(ERROR, "array index expressions must be int4's");
+						if (ai->lidx != NULL)
+						{
+							lexpr = transformExpr(pstate, ai->lidx, precedence);
+							if (exprType(lexpr) != INT4OID)
+								elog(ERROR, "array index expressions must be int4's");
+						}
+						ai->lidx = lexpr;
+						ai->uidx = uexpr;
+
+						/*
+						 * note we reuse the list of indices, make sure we
+						 * don't free them! Otherwise, make a new list
+						 * here
+						 */
+						idx = lnext(idx);
+					}
+					result = (Node *) make_array_ref((Node *)param, pno->indirection);
+				}
+				else
+					result = (Node *) param;
 				break;
 			}
 		case T_A_Expr:

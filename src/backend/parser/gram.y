@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.33 1998/09/30 05:47:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.34 1998/10/02 16:23:04 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4598,10 +4598,11 @@ AexprConst:  Iconst
 				}
 		;
 
-ParamNo:  PARAM
+ParamNo:  PARAM opt_indirection
 				{
 					$$ = makeNode(ParamNo);
 					$$->number = $1;
+					$$->indirection = $2;
 				}
 		;
 
