@@ -7,17 +7,18 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.63 1996/11/12 11:41:27 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.64 1996/11/13 08:36:31 bryanh Exp $
 #
 # NOTES
-#    This is seen by any Makefiles that include mk/postgres.mk. To
+#    Essentially all Postgres make files include this file and use the 
+#    variables it sets.  To 
 #    override the default setting, create a Makefile.custom in this
 #    directory and put your defines there. (Makefile.custom is included
 #    near the end of this file.)
 #
 #    If you change any of these defines you probably have to 
-#	gmake clean; gmake
-#    since no dependecies are created for these. (of course you can 
+#       make clean; make
+#    since no dependencies are created for these. (of course you can 
 #    be crafty and check what files really depend on them and just remake
 #    those).
 #        
@@ -321,8 +322,15 @@ else
   AROPT = crs
 endif
 
+##############################################################################
+#
+# Shared libraries.
+# This is overridden for many PORTNAMEs below.
+
+SLSUFF= .so
+
 #----------------------------------------------------------------------
-ifeq ($PORTNAME, BSD44_derived)
+ifeq ($(PORTNAME), BSD44_derived)
 MK_PORT= BSD44_derived
 
 # cc is gcc, but never mind about that...
@@ -335,14 +343,7 @@ RANLIB=	/usr/bin/ranlib
 LEX= flex
 LDADD+= -L/usr/local/lib -lfl
 
-#
-# for postgres.user.mk
-#
 CFLAGS_SL= -fpic -DPIC
-
-ifneq ($(HOSTTYPE), mips)
-SLSUFF=	.so
-endif
 
 %.so: %.o
 	$(LD) -x -r -o $<.obj $<
@@ -363,10 +364,6 @@ MK_PORT= aix
 # might want to try installbsd instead 
 INSTALL= /usr/ucb/install
 
-#
-# for postgres.mk
-#
-
 # the -lm is because "pow" is defined in libbsd.a and we want pow(3m)
 LDADD_BE= -lm -lbsd
 
@@ -385,11 +382,7 @@ MAKE_EXPORTS= true
 CFLAGS_BE+= -qchars=signed -qmaxmem=4000 -DHAVE_ANSI_CPP
 
 
-#
-# for postgres.user.mk
-#
 EXPSUFF= .exp
-SLSUFF=	.so
 
 MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
 
@@ -407,9 +400,6 @@ endif
 
 ifeq ($(PORTNAME), alpha)
 MK_PORT= alpha
-#
-# for postgres.mk
-#
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # NOFIXADE disallows unaligned access.
@@ -426,11 +416,6 @@ endif
 
 # use the regex library
 USE_REGEX= 1
-
-#
-# for postgres.user.mk
-#
-SLSUFF= .so
 
 %.so:  %.o
 	$(LD) -shared -expect_unresolved '*' -o $@ $<
@@ -472,11 +457,6 @@ else
   LDADD_BE= -ldld -lcompat
 endif
 
-#
-# for postgres.user.mk
-#
-SLSUFF= .o
-
 endif
 
 #--------------------------------------------------------------------------
@@ -484,17 +464,10 @@ endif
 ifeq ($(PORTNAME), dgux)
 MK_PORT= linux
 
-SLSUFF=	.so
-#LDFLAGS+= -rdynamic
-
-
 CFLAGS_SL= -fpic
 %.so: %.o
 	$(CC) -shared -o $@ $<
 
-#
-# for postgres.mk
-#
 CC= gcc
 
 CFLAGS_BE= -D__USE_POSIX_SIGNALS -DUSE_POSIX_SIGNALS
@@ -512,9 +485,6 @@ endif
 ifeq ($(PORTNAME), hpux)
 MK_PORT= hpux
 
-#
-# for postgres.mk
-#
 LDADD_BE= -lBSD
 
 ifdef ENFORCE_ALIGNMENT
@@ -547,9 +517,6 @@ INSTALL= bsdinst
 # RANLIB is not used on HP-UX
 RANLIB= touch
 
-#
-# for postgres.user.mk
-#
 CFLAGS_SL= +z
 SLSUFF= .sl
 
@@ -569,9 +536,6 @@ MK_PORT= i386_solaris
 # cc won't work!
 CC= gcc
 
-#
-# for postgres.mk
-#
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # RANLIB is not used on solaris
@@ -589,16 +553,11 @@ LDADD_BE+= -lsocket -lnsl
 
 LD_ADD+= $(LDADD_BE)
 
-#
-# for postgres.user.mk
-#
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
 else
 CFLAGS_SL= -fPIC
 endif
-
-SLSUFF=	.so
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
@@ -615,9 +574,6 @@ MK_PORT= irix5
 
 CC= cc
 
-#
-# for postgres.mk
-#
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # RANLIB is not used on IRIX 5
@@ -636,8 +592,6 @@ INSTL_LIB_OPTS= -m 664
 CFLAGS_BE+= -DSYSV_DIRENT 
 
 LD_ADD+= $(LDADD_BE)
-
-SLSUFF= .so
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
@@ -663,16 +617,9 @@ MK_NO_LORDER= true
 # use the regex library
 USE_REGEX= 1
 
-#
-# for postgres.user.mk
-#
 CFLAGS_SL= -fpic
 %.so: %.o
 	$(CC) -shared -o $@ $<
-
-#
-# for postgres.mk
-#
 
 # The Linux gnulib #defines the problem away for you and calls 
 # the BSD routines if you give it the right flags.
@@ -694,16 +641,11 @@ CC= gcc
 INSTALL= /usr/bin/install
 RANLIB= /usr/bin/ranlib
 
-#
-# for postgres.user.mk
-#
 ifeq ($(CC), cc)
 CFLAGS_SL= -PIC
 else
 CFLAGS_SL= -fPIC
 endif
-
-SLSUFF= .so
 
 %.so: %.o
 	$(LD) -dc -dp -Bdynamic -o $@ $<
@@ -717,9 +659,6 @@ MK_PORT= sparc_solaris
 # cc won't work!
 CC= gcc
 
-#
-# for postgres.mk
-#
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # RANLIB is not used on solaris
@@ -737,16 +676,11 @@ LDADD_BE+= -lsocket -lnsl
 
 LD_ADD+= $(LDADD_BE)
 
-#
-# for postgres.user.mk
-#
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
 else
 CFLAGS_SL= -fPIC
 endif
-
-SLSUFF= .so
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
@@ -764,9 +698,6 @@ MK_PORT= svr4
 CFLAGS+= -W0
 YACC= bison -y
 
-#
-# for postgres.mk
-#
 CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
@@ -789,16 +720,11 @@ LDADD_BE+= -lsocket -lnsl -lc /usr/ucblib/libucb.a
 
 LD_ADD+= $(LDADD_BE)
 
-#
-# for postgres.user.mk
-#
 ifeq ($(CC), cc)
 #CFLAGS_SL= -K PIC
 else
 #CFLAGS_SL= -fPIC
 endif
-
-SLSUFF= .so
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
@@ -812,9 +738,6 @@ endif
 ifeq ($(PORTNAME), ultrix4)
 MK_PORT= ultrix4
 
-#
-# for postgres.mk
-#
 ifdef ENFORCE_ALIGNMENT
 CFLAGS_BE= -DNOFIXADE
 endif
@@ -825,9 +748,6 @@ NO_BEFOREINSTL= true
 INSTALL= /usr/bin/install
 RANLIB= /usr/bin/ranlib
 
-#
-# for postgres.user.mk
-#
 CFLAGS_SL= -G 0
 SLSUFF= .o
 
