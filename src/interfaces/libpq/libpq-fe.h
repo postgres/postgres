@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.42 1998/09/04 05:03:05 momjian Exp $
+ * $Id: libpq-fe.h,v 1.43 1998/09/18 16:46:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ typedef void (*PQnoticeProcessor) (void * arg, const char * message);
 	typedef struct _PQconninfoOption
 	{
 		char	   *keyword;	/* The keyword of the option			*/
-		char	   *environ;	/* Fallback environment variable name	*/
+		char	   *envvar;	/* Fallback environment variable name	*/
 		char	   *compiled;	/* Fallback compiled in default value	*/
 		char	   *val;		/* Options value						*/
 		char	   *label;		/* Label for field in connect dialog	*/

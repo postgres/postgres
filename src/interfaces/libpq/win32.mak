@@ -33,7 +33,7 @@ CLEAN :
 	-@erase "$(OUTDIR)\libpq.lib"
 	-@erase "$(OUTDIR)\libpq.dll"
 	-@erase "$(OUTDIR)\libpq.res"
-	-@erase "vc50.pch"
+	-@erase "$(OUTDIR)\vc*.*"
 	-@erase "$(OUTDIR)\libpq.pch"
 	-@erase "$(OUTDIR)\libpqdll.exp"
 	-@erase "$(OUTDIR)\libpqdll.lib"

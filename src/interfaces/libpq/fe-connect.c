@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.81 1998/09/03 02:10:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.82 1998/09/18 16:46:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1290,9 +1290,9 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		 * Try to get the environment variable fallback
 		 * ----------
 		 */
-		if (option->environ != NULL)
+		if (option->envvar != NULL)
 		{
-			if ((tmp = getenv(option->environ)) != NULL)
+			if ((tmp = getenv(option->envvar)) != NULL)
 			{
 				option->val = strdup(tmp);
 				continue;
