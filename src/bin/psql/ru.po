@@ -1,15 +1,15 @@
 # PSQL Translated Messages in Russian Language (KOI8-R)
 # Serguei A. Mokhov <stgunya@yahoo.com>, August-September 2001.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/ru.po,v 1.1 2001/09/06 11:10:47 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/ru.po,v 1.2 2001/09/10 14:51:33 momjian Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-09-06 13:10+0200\n"
-"PO-Revision-Date: 2001-09-03 14:39-0500\n"
-"Last-Translator: Serguei A. Mokhov <StGunya@yahoo.com>\n"
-"Language-Team: Serguei A. Mokhov <StGunya@yahoo.com>\n"
+"PO-Revision-Date: 2001-09-08 03:45-0500\n"
+"Last-Translator: Serguei A. Mokhov <stgunya@yahoo.com>\n"
+"Language-Team: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -45,7 +45,7 @@ msgstr "нет буфера запросов\n"
 #: command.c:436
 #, c-format
 msgid "%s: invalid encoding name\n"
-msgstr "%s: неправильное название кодировки\n"
+msgstr "%s: неправильное название кодировки символов\n"
 
 #: command.c:445
 #, c-format
@@ -94,7 +94,7 @@ msgid "\\%s: extra argument '%s' ignored\n"
 msgstr "\\%s: излишний аргумент: '%s' - пропущен\n"
 
 #: command.c:892 command.c:966 command.c:994
-msgid "parse error at end of line\n"
+msgid "parse error at the end of line\n"
 msgstr "ошибка при анализе синтаксиса в конце строки\n"
 
 #: command.c:1275 command.c:1299 startup.c:183 startup.c:201
@@ -221,11 +221,11 @@ msgstr "Использование пейджера выключено."
 
 #: command.c:1808
 msgid "Default footer is on."
-msgstr "Нижний колонтитул по умолчанию включён."
+msgstr "Нижний колонтитул по умолчанию включен."
 
 #: command.c:1810
 msgid "Default footer is off."
-msgstr "Нижний колонтитул по умолчанию выключён."
+msgstr "Нижний колонтитул по умолчанию выключен."
 
 #: command.c:1816
 #, c-format
@@ -239,9 +239,7 @@ msgstr "\\!: неудачно\n"
 #: common.c:50
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
-msgstr ""
-"%s: xstrdup: не возможно сделать копию нулевого указателя (внутренняя "
-"ошибка)\n"
+msgstr "%s: xstrdup: не возможно сделать копию нулевого указателя (внутренняя ошибка)\n"
 
 #: common.c:299 common.c:385
 msgid "You are currently not connected to a database.\n"
@@ -261,7 +259,7 @@ msgstr "Безуспешно.\n"
 
 #: common.c:355 common.c:525
 msgid "Succeeded.\n"
-msgstr "Успех.\n"
+msgstr "Успешно.\n"
 
 #: common.c:393
 #, c-format
@@ -283,15 +281,13 @@ msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
 msgstr ""
-"Введите данные для копирования с последующим символом новой строки "
-"(newline).\n"
+"Введите данные для копирования с последующим символом новой строки (newline).\n"
 "Закончите с обратным слешем и точкой на самой линии."
 
 #: common.c:531
 #, c-format
 msgid "Asynchronous NOTIFY '%s' from backend with pid %d received.\n"
-msgstr ""
-"Получен асинхронный сигнал NOTIFY '%s' от бэк-енда (backend) с pid %d.\n"
+msgstr "Получен асинхронный сигнал NOTIFY '%s' от бэк-енда (backend) с pid %d.\n"
 
 #: copy.c:81
 msgid "\\copy: arguments required\n"
@@ -335,7 +331,7 @@ msgstr "Это psql - интерактивный терминал PostgreSQL.\n"
 
 #: help.c:80
 msgid "Usage:"
-msgstr "Испльзование:"
+msgstr "Использование:"
 
 #: help.c:81
 msgid "  psql [options] [dbname [username]]\n"
@@ -351,19 +347,16 @@ msgstr "  -a              Показывать все входные данные скрипта"
 
 #: help.c:84
 msgid "  -A              Unaligned table output mode (-P format=unaligned)"
-msgstr ""
-"  -A              Режим неформатированного вывода (-P format=unaligned)"
+msgstr "  -A              Режим неформатированного вывода (-P format=unaligned)"
 
 #: help.c:85
 msgid "  -c COMMAND      Run only single command (SQL or internal) and exit"
-msgstr ""
-"  -c КОМАНДА      Выполнить только одну команду (SQL или внутреннюю) и выйти"
+msgstr "  -c КОМАНДА      Выполнить только одну команду (SQL или внутреннюю) и выйти"
 
 #: help.c:91
 #, c-format
 msgid "  -d DBNAME       Specify database name to connect to (default: %s)\n"
-msgstr ""
-"  -d ИМЯБД        Указать имя БД для подсоединения (по умолчанию: %s)\n"
+msgstr "  -d ИМЯБД        Указать имя БД для подсоединения (по умолчанию: %s)\n"
 
 #: help.c:93
 msgid "  -e              Echo commands sent to server"
@@ -371,8 +364,7 @@ msgstr "  -e              Показывать команды посланные серверу"
 
 #: help.c:94
 msgid "  -E              Display queries that internal commands generate"
-msgstr ""
-"  -E              Показывать запросы сформированные внутренними командами"
+msgstr "  -E              Показывать запросы сформированные системными командами"
 
 #: help.c:95
 msgid "  -f FILENAME     Execute commands from file, then exit"
@@ -383,8 +375,7 @@ msgstr "  -f ИМЯФАЙЛА     Выполнить команды из файла и выйти"
 msgid ""
 "  -F STRING       Set field separator (default: \"%s\") (-P fieldsep=)\n"
 msgstr ""
-"  -F СТРИНГ       Установить разделитель полей (по умолчанию: \"%s\") (-P "
-"fieldsep=)\n"
+"  -F СТРИНГ       Установить разделитель полей (по умолчанию: \"%s\") (-P fieldsep=)\n"
 
 #: help.c:101
 #, c-format
@@ -405,8 +396,7 @@ msgstr "  -l              Вывести список имеющихся баз данных и выйти"
 
 #: help.c:106
 msgid "  -n              Disable enhanced command line editing (readline)"
-msgstr ""
-"  -n              Отключит улучшенный редактор командной строки (readline)"
+msgstr "  -n              Отключит улучшенный редактор командной строки (readline)"
 
 #: help.c:107
 msgid "  -o FILENAME     Send query results to file (or |pipe)"
@@ -421,21 +411,17 @@ msgstr "  -p ПОРТ         Указать порт сервера баз данных (по умолчанию: %s)\n"
 msgid ""
 "  -P VAR[=ARG]    Set printing option 'VAR' to 'ARG' (see \\pset command)"
 msgstr ""
-"  -P VAR[=ARG]    Установить значение 'ARG' опции печати 'VAR'  (см. команду "
-"\\pset)"
+"  -P VAR[=ARG]    Установить значение 'ARG' опции печати 'VAR'  (см. команду \\pset)"
 
 #: help.c:115
 msgid "  -q              Run quietly (no messages, only query output)"
-msgstr ""
-"  -q              Выполняться \"тихо\" (без сообщений, только результаты "
-"запросов)"
+msgstr "  -q              Выполняться \"тихо\" (без сообщений, только результаты запросов)"
 
 #: help.c:116
 msgid ""
 "  -R STRING       Set record separator (default: newline) (-P recordsep=)"
 msgstr ""
-"  -R СТРИНГ       Установить разделитель записей (по умолчанию: новая "
-"строка) (-P recordsep=)"
+"  -R СТРИНГ       Установить разделитель записей (по умолчанию: новая строка) (-P recordsep=)"
 
 #: help.c:117
 msgid "  -s              Single step mode (confirm each query)"
@@ -443,8 +429,7 @@ msgstr "  -s              Пошаговый режим (подтверждение каждого запроса)"
 
 #: help.c:118
 msgid "  -S              Single line mode (end of line terminates SQL command)"
-msgstr ""
-"  -S              Режим одной строки (конец строки завершает команду SQL)"
+msgstr "  -S              Режим одной строки (конец строки завершает команду SQL)"
 
 #: help.c:119
 msgid "  -t              Print rows only (-P tuples_only)"
@@ -461,14 +446,11 @@ msgstr ""
 #: help.c:126
 #, c-format
 msgid "  -U NAME         Specify database user name (default: %s)\n"
-msgstr ""
-"  -U ИМЯ          Указать имя пользователя базы данных (по умолчанию: %s)\n"
+msgstr "  -U ИМЯ          Указать имя пользователя базы данных (по умолчанию: %s)\n"
 
 #: help.c:128
 msgid "  -v NAME=VALUE   Set psql variable 'NAME' to 'VALUE'"
-msgstr ""
-"  -v NAME=VALUE   Установить переменную psql с именем 'NAME' в значение "
-"'VALUE'"
+msgstr "  -v NAME=VALUE   Установить переменную psql с именем 'NAME' в значение 'VALUE'"
 
 #: help.c:129
 msgid "  -V              Show version information and exit"
@@ -476,16 +458,15 @@ msgstr "  -V              Показать версию и выйти"
 
 #: help.c:130
 msgid "  -W              Prompt for password (should happen automatically)"
-msgstr ""
-"  -W              Запросить пароль (должно производиться автоматически)"
+msgstr "  -W              Запросить пароль (должно производиться автоматически)"
 
 #: help.c:131
 msgid "  -x              Turn on expanded table output (-P expanded)"
-msgstr "  -x              Включит расширенный вывод таблици (-P expanded)"
+msgstr "  -x              Включит расширенный вывод таблицы (-P expanded)"
 
 #: help.c:132
 msgid "  -X              Do not read startup file (~/.psqlrc)"
-msgstr "  -X              Не читать файл предварительных настроек (~/.psqlrc)"
+msgstr "  -X              Не читать файл настроек при старте (~/.psqlrc)"
 
 #: help.c:135
 msgid ""
@@ -497,8 +478,7 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"Для дополнительной информации наберите \"\\?\" (для внутренних команд) или "
-"\"\\help\"\n"
+"Для дополнительной информации наберите \"\\?\" (для внутренних команд) или \"\\help\"\n"
 "(для команд SQL) в самом psql, или обратитесь к секции psql\n"
 "в документации PostgreSQL.\n"
 "\n"
@@ -506,9 +486,7 @@ msgstr ""
 
 #: help.c:194
 msgid " \\a             toggle between unaligned and aligned output mode\n"
-msgstr ""
-" \\a             переключиться между неформатированным и форматированным "
-"выводом\n"
+msgstr " \\a             переключиться между неформатированным и форматированным выводом\n"
 
 #: help.c:195
 #, c-format
@@ -516,169 +494,179 @@ msgid ""
 " \\c[onnect] [DBNAME|- [USER]]\n"
 "                connect to new database (currently \"%s\")\n"
 msgstr ""
+" \\c[onnect] [ИМЯБД|- [ПОЛЬЗОВАТЕЛЬ]]\n"
+"                подсоединится к новой базе данных (текущая: \"%s\")\n"
 
 #: help.c:198
 msgid " \\C TITLE       set table title\n"
-msgstr ""
+msgstr " \\C ЗАГОЛОВОК   установить заголовок таблицы\n"
 
 #: help.c:199
 msgid " \\cd [DIRNAME]  change the current working directory\n"
-msgstr ""
+msgstr " \\cd [ИМЯДИР]   поменять текущую рабочую директорию\n"
 
 #: help.c:200
 msgid " \\copy ...      perform SQL COPY with data stream to the client host\n"
-msgstr ""
+msgstr " \\copy ...      выполнить SQL COPY с потоком данный к хосту клиента\n"
 
 #: help.c:201
 msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
-msgstr ""
+msgstr " \\copyright     показать условия пользования и распространения PostgreSQL\n"
 
 #: help.c:202
 msgid " \\d TABLE       describe table (or view, index, sequence)\n"
-msgstr ""
+msgstr " \\d ТАБЛИЦА     описать таблицу (вид, индекс, или последовательность)\n"
 
 #: help.c:203
 msgid " \\d{t|i|s|v}... list tables/indexes/sequences/views\n"
-msgstr ""
+msgstr " \\d{t|i|s|v}... показать таблицы/индексы/последовательности/виды\n"
 
 #: help.c:204
 msgid ""
 " \\d{p|S|l}      list access privileges, system tables, or large objects\n"
 msgstr ""
+" \\d{p|S|l}      показать привилегии доступа, системные таблицы, или большие объекты (LO)\n"
 
 #: help.c:205
 msgid " \\da            list aggregate functions\n"
-msgstr ""
+msgstr " \\da            показать агрегатные функции\n"
 
 #: help.c:206
 msgid " \\dd NAME       show comment for table, type, function, or operator\n"
-msgstr ""
+msgstr " \\dd ИМЯ        показать пояснение к таблице, типу, функции, или оператору\n"
 
 #: help.c:207
 msgid " \\df            list functions\n"
-msgstr ""
+msgstr " \\df            показать функции\n"
 
 #: help.c:208
 msgid " \\do            list operators\n"
-msgstr ""
+msgstr " \\do            показать операторы\n"
 
 #: help.c:209
 msgid " \\dT            list data types\n"
-msgstr ""
+msgstr " \\dT            показать типы данных\n"
 
 #: help.c:210
 msgid ""
 " \\e FILENAME    edit the current query buffer or file with external editor\n"
 msgstr ""
+" \\e ИМЯФАЙЛА    редактировать текущий буфер запросов или файл с помощью внешнего редактора\n"
 
 #: help.c:211
 msgid " \\echo TEXT     write text to standard output\n"
-msgstr ""
+msgstr " \\echo ТЕКСТ    печатать текст в стандартный вывод\n"
 
 #: help.c:212
 msgid " \\encoding ENCODING  set client encoding\n"
-msgstr ""
+msgstr " \\encoding КОДИРОВКА установить кодировку клиента\n"
 
 #: help.c:213
 msgid " \\f STRING      set field separator\n"
-msgstr ""
+msgstr " \\f СТРИНГ      установить разделитель полей\n"
 
 #: help.c:214
 msgid ""
 " \\g FILENAME    send SQL command to server (and write results to file or |"
 "pipe)\n"
 msgstr ""
+" \\g ИМЯФАЙЛА    отправить SQL команду серверу (и записать результаты в файл или |"
+"канал)\n"
 
 #: help.c:215
 msgid " \\h NAME        help on syntax of SQL commands, * for all commands\n"
-msgstr ""
+msgstr " \\h ИМЯ         подсказка по синтаксису SQL команд; * для всех команд\n"
 
 #: help.c:216
 #, c-format
 msgid " \\H             toggle HTML output mode (currently %s)\n"
-msgstr ""
+msgstr " \\H             переключиться в режим вывода в формате HTML (текущий формат: %s)\n"
 
 #: help.c:218
 msgid " \\i FILENAME    execute commands from file\n"
-msgstr ""
+msgstr " \\i ИМЯФАЙЛА    выполнить команды из файла\n"
 
 #: help.c:219
 msgid " \\l             list all databases\n"
-msgstr ""
+msgstr " \\l             показать все базы данных\n"
 
 #: help.c:220
 msgid ""
 " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
 "                large object operations\n"
 msgstr ""
+" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                операции над большими объектами\n"
 
 #: help.c:222
 msgid " \\o FILENAME    send all query results to file or |pipe\n"
-msgstr ""
+msgstr " \\o ИМЯФАЙЛА    отправить все результаты запроса в файл или |канал\n"
 
 #: help.c:223
 msgid " \\p             show the content of the current query buffer\n"
-msgstr ""
+msgstr " \\p             показать текущее содержимое буфера запроса\n"
 
 #: help.c:224
 msgid ""
 " \\pset VAR      set table output option (VAR := {format|border|expanded|\n"
 "                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
 msgstr ""
+" \\pset VAR      установить опцию вывода таблицы (VAR := {format|border|expanded|\n"
+"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
 
 #: help.c:226
 msgid " \\q             quit psql\n"
-msgstr ""
+msgstr " \\q             выйти из psql\n"
 
 #: help.c:227
 msgid " \\qecho TEXT    write text to query output stream (see \\o)\n"
-msgstr ""
+msgstr " \\qecho ТЕКСТ   печатать текст в поток вывода запроса (см. \\o)\n"
 
 #: help.c:228
 msgid " \\r             reset (clear) the query buffer\n"
-msgstr ""
+msgstr " \\r             очистить буфер запросов\n"
 
 #: help.c:229
 msgid " \\s FILENAME    print history or save it to file\n"
-msgstr ""
+msgstr " \\s ИМЯФАЙЛА    вывести историю или сохранить её в файл\n"
 
 #: help.c:230
 msgid " \\set NAME VALUE  set internal variable\n"
-msgstr ""
+msgstr " \\set NAME VALUE  установить внутреннюю переменную (ИМЯ ЗНАЧЕНИЕ)\n"
 
 #: help.c:231
 #, c-format
 msgid " \\t             show only rows (currently %s)\n"
-msgstr ""
+msgstr " \\t             показывать только строки (в данный момент: %s)\n"
 
 #: help.c:233
 msgid " \\T TEXT        set HTML table tag attributes\n"
-msgstr ""
+msgstr " \\T ТЕКСТ       установить атрибуты HTML-тага <table>\n"
 
 #: help.c:234
 msgid " \\unset NAME    unset (delete) internal variable\n"
-msgstr ""
+msgstr " \\unset ИМЯ     удалить внутреннюю переменную\n"
 
 #: help.c:235
 msgid " \\w FILENAME    write current query buffer to file\n"
-msgstr ""
+msgstr " \\w ИМЯФАЙЛА    записать текущий буфер запросов в файл\n"
 
 #: help.c:236
 #, c-format
 msgid " \\x             toggle expanded output (currently %s)\n"
-msgstr ""
+msgstr " \\x             переключится в расширенный режим вывода (текущий: %s)\n"
 
 #: help.c:238
 msgid " \\z             list table access privileges\n"
-msgstr ""
+msgstr " \\z             показать привилегии доступа таблиц\n"
 
 #: help.c:239
 msgid " \\! [COMMAND]   execute command in shell or start interactive shell\n"
-msgstr ""
+msgstr " \\! [КОМАНДА]   выполнить команду в оболочке или запустить интерактивную оболочку\n"
 
 #: help.c:266
 msgid "Available help:"
-msgstr ""
+msgstr "Имеющаяся подсказка:"
 
 #: help.c:297
 #, c-format
@@ -689,6 +677,11 @@ msgid ""
 "%s\n"
 "\n"
 msgstr ""
+"Команда:     %s\n"
+"Описание: %s\n"
+"Синтаксис:\n"
+"%s\n"
+"\n"
 
 #: help.c:308
 #, c-format
@@ -696,67 +689,69 @@ msgid ""
 "No help available for '%-.*s'.\n"
 "Try \\h with no arguments to see available help.\n"
 msgstr ""
+"Нет подсказки для '%-.*s'.\n"
+"Попробуйте \\h без аргументов для просмотра имеющейся помощи.\n"
 
 #: input.c:171
 #, c-format
 msgid "could not save history to %s: %s\n"
-msgstr ""
+msgstr "не получилось сохранить историю в %s: %s\n"
 
 #: large_obj.c:66
 msgid "Warning: Your transaction in progress has been committed."
-msgstr ""
+msgstr "Предупреждение: Ваша текущая транзакция была завершена."
 
 #: large_obj.c:68
 msgid "Warning: Your transaction in progress has been rolled back."
-msgstr ""
+msgstr "Предупреждение: Ваша текущая транзакция была откачена обратно."
 
 #: large_obj.c:95
 msgid "\\lo_export: not connected to a database\n"
-msgstr ""
+msgstr "\\lo_export: не подсоединения к базе данных\n"
 
 #: large_obj.c:162
 msgid "\\lo_import: not connected to a database\n"
-msgstr ""
+msgstr "\\lo_import: не подсоединения к базе данных\n"
 
 #: large_obj.c:276
 msgid "\\lo_unlink: not connected to a database\n"
-msgstr ""
+msgstr "\\lo_unlink: не подсоединения к базе данных\n"
 
 #: describe.c:57 describe.c:110 describe.c:169 describe.c:221 describe.c:269
 #: describe.c:401 describe.c:530 describe.c:1034 large_obj.c:353
 msgid "Description"
-msgstr ""
+msgstr "Описание"
 
 #: large_obj.c:361
 msgid "Large objects"
-msgstr ""
+msgstr "Большие объекты"
 
 #: mainloop.c:242
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
-msgstr ""
+msgstr "Используйте \"\\q\" чтобы выйти из %s.\n"
 
 #: print.c:370
 msgid "(No rows)\n"
-msgstr ""
+msgstr "(Нет строк)\n "
 
 #: print.c:1075
 msgid "(1 row)"
-msgstr ""
+msgstr "(1 строка)"
 
 #: print.c:1077
 #, c-format
-msgid "(%d rows)"
+msgid "(%d строк)"
 msgstr ""
 
 #: startup.c:141 startup.c:615
 #, c-format
 msgid "%s: out of memory\n"
-msgstr ""
+msgstr "%s: недостаточно памяти\n"
 
 #: startup.c:177
 msgid "User name: "
-msgstr ""
+msgstr "Имя пользователя: "
 
 #: startup.c:286
 #, c-format

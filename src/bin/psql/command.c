@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.57 2001/09/02 23:52:19 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.58 2001/09/10 14:51:33 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -889,7 +889,7 @@ scan_option(char **string, enum option_type type, char *quote)
 
 				if (options_string[jj] == 0)
 				{
-					psql_error("parse error at end of line\n");
+					psql_error("parse error at the end of line\n");
 					*string = &options_string[jj];
 					return NULL;
 				}
@@ -963,7 +963,7 @@ scan_option(char **string, enum option_type type, char *quote)
 
 				if (options_string[jj] == 0)
 				{
-					psql_error("parse error at end of line\n");
+					psql_error("parse error at the end of line\n");
 					*string = &options_string[jj];
 					return NULL;
 				}
@@ -991,7 +991,7 @@ scan_option(char **string, enum option_type type, char *quote)
 				len = strcspn(options_string + pos + 1, "`");
 				if (options_string[pos + 1 + len] == 0)
 				{
-					psql_error("parse error at end of line\n");
+					psql_error("parse error at the end of line\n");
 					*string = &options_string[pos + 1 + len];
 					return NULL;
 				}
