@@ -59,23 +59,25 @@ ALL : sql_help.h psqlscan.c "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
 CLEAN :
 	-@erase "$(INTDIR)\command.obj"
 	-@erase "$(INTDIR)\common.obj"
+	-@erase "$(INTDIR)\copy.obj"
+	-@erase "$(INTDIR)\describe.obj"
 	-@erase "$(INTDIR)\help.obj"
 	-@erase "$(INTDIR)\input.obj"
-	-@erase "$(INTDIR)\stringutils.obj"
-	-@erase "$(INTDIR)\mainloop.obj"
-	-@erase "$(INTDIR)\copy.obj"
-	-@erase "$(INTDIR)\startup.obj"
-	-@erase "$(INTDIR)\prompt.obj"
-	-@erase "$(INTDIR)\variables.obj"
 	-@erase "$(INTDIR)\large_obj.obj"
+	-@erase "$(INTDIR)\mainloop.obj"
+	-@erase "$(INTDIR)\mbprint.obj"
 	-@erase "$(INTDIR)\print.obj"
-	-@erase "$(INTDIR)\describe.obj"
+	-@erase "$(INTDIR)\prompt.obj"
+	-@erase "$(INTDIR)\startup.obj"
+	-@erase "$(INTDIR)\stringutils.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
-	-@erase "$(INTDIR)\sprompt.obj"
+	-@erase "$(INTDIR)\variables.obj"
+	-@erase "$(INTDIR)\exec.obj"
 	-@erase "$(INTDIR)\getopt.obj"
 	-@erase "$(INTDIR)\getopt_long.obj"
 	-@erase "$(INTDIR)\path.obj"
-	-@erase "$(INTDIR)\mbprint.obj"
+	-@erase "$(INTDIR)\pgstrcasecmp.obj"
+	-@erase "$(INTDIR)\sprompt.obj"
 	-@erase "$(INTDIR)\psql.ilc"
 	-@erase "$(INTDIR)\psql.ild"
 	-@erase "$(INTDIR)\psql.tds"
@@ -125,23 +127,25 @@ LINK32_FLAGS=-L$(BCB)\lib;.\$(LIBPG_DIR) -x -v
 LINK32_OBJS= \
 	command.obj \
 	common.obj \
+	copy.obj \
+	describe.obj \
 	help.obj \
 	input.obj \
-	stringutils.obj \
-	mainloop.obj \
-	copy.obj \
-	startup.obj \
-	prompt.obj \
-	variables.obj \
 	large_obj.obj \
+	mainloop.obj \
+	mbprint.obj
 	print.obj \
-	describe.obj \
+	prompt.obj \
+	startup.obj \
+	stringutils.obj \
 	tab-complete.obj \
-	sprompt.obj \
+	variables.obj \
+	exec.obj \
 	getopt.obj \
 	getopt_long.obj \
 	path.obj \
-	mbprint.obj
+	pgstrcasecmp.obj \
+	sprompt.obj \
 	
 
 "$(OUTDIR)\psql.exe" : "$(OUTDIR)" $(LINK32_OBJS)
@@ -152,10 +156,12 @@ LINK32_OBJS= \
 	import32.lib $(LIBRARIES),,
 !
 
-sprompt.obj : "$(OUTDIR)" ..\..\port\sprompt.c
+exec.obj : "$(OUTDIR)" ..\..\port\exec.c
 getopt.obj : "$(OUTDIR)" ..\..\port\getopt.c
 getopt_long.obj : "$(OUTDIR)" ..\..\port\getopt_long.c
 path.obj : "$(OUTDIR)" ..\..\port\path.c
+pgstrcasecmp.obj : "$(OUTDIR)" ..\..\port\pgstrcasecmp.c
+sprompt.obj : "$(OUTDIR)" ..\..\port\sprompt.c
 
 "sql_help.h": create_help.pl 
        $(PERL) create_help.pl $(REFDOCDIR) $@

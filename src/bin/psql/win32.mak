@@ -22,24 +22,26 @@ ALL : sql_help.h psqlscan.c "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
 CLEAN :
 	-@erase "$(INTDIR)\command.obj"
 	-@erase "$(INTDIR)\common.obj"
+	-@erase "$(INTDIR)\copy.obj"
+	-@erase "$(INTDIR)\describe.obj"
 	-@erase "$(INTDIR)\help.obj"
 	-@erase "$(INTDIR)\input.obj"
-	-@erase "$(INTDIR)\stringutils.obj"
-	-@erase "$(INTDIR)\mainloop.obj"
-	-@erase "$(INTDIR)\copy.obj"
-	-@erase "$(INTDIR)\startup.obj"
-	-@erase "$(INTDIR)\prompt.obj"
-	-@erase "$(INTDIR)\variables.obj"
 	-@erase "$(INTDIR)\large_obj.obj"
+	-@erase "$(INTDIR)\mainloop.obj"
+	-@erase "$(INTDIR)\mbprint.obj"
 	-@erase "$(INTDIR)\print.obj"
-	-@erase "$(INTDIR)\describe.obj"
+	-@erase "$(INTDIR)\prompt.obj"
 	-@erase "$(INTDIR)\psqlscan.obj"
+	-@erase "$(INTDIR)\startup.obj"
+	-@erase "$(INTDIR)\stringutils.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
-	-@erase "$(INTDIR)\sprompt.obj"
+	-@erase "$(INTDIR)\variables.obj"
+	-@erase "$(INTDIR)\exec.obj"
 	-@erase "$(INTDIR)\getopt.obj"
 	-@erase "$(INTDIR)\getopt_long.obj"
 	-@erase "$(INTDIR)\path.obj"
-	-@erase "$(INTDIR)\mbprint.obj"
+	-@erase "$(INTDIR)\pgstrcasecmp.obj"
+	-@erase "$(INTDIR)\sprompt.obj"
 	-@erase "$(INTDIR)\*psql.pch"
 	-@erase "$(OUTDIR)\psql.exe"
 	-@erase "$(INTDIR)\..\..\port\pg_config_paths.h"
@@ -60,8 +62,7 @@ CLEAN :
 
 CPP_PROJ=/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
- /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
- /D "HAVE_STRDUP" /D "FRONTEND"
+ /I ..\..\include /I ..\..\interfaces\libpq /D "HAVE_STRDUP" /D "FRONTEND"
 
 CPP_OBJS=.\Release/
 CPP_SBRS=.
@@ -72,28 +73,28 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  odbccp32.lib wsock32.lib /nologo /subsystem:console /incremental:no\
  /pdb:"$(OUTDIR)\psql.pdb" /machine:I386 /out:"$(OUTDIR)\psql.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)\pgstrcasecmp.obj" \
-	"$(INTDIR)\exec.obj" \
 	"$(INTDIR)\command.obj" \
 	"$(INTDIR)\common.obj" \
+	"$(INTDIR)\copy.obj" \
+	"$(INTDIR)\describe.obj" \
 	"$(INTDIR)\help.obj" \
 	"$(INTDIR)\input.obj" \
-	"$(INTDIR)\stringutils.obj" \
-	"$(INTDIR)\mainloop.obj" \
-	"$(INTDIR)\copy.obj" \
-	"$(INTDIR)\startup.obj" \
-	"$(INTDIR)\prompt.obj" \
-	"$(INTDIR)\variables.obj" \
 	"$(INTDIR)\large_obj.obj" \
+	"$(INTDIR)\mainloop.obj" \
+	"$(INTDIR)\mbprint.obj" \
 	"$(INTDIR)\print.obj" \
-	"$(INTDIR)\describe.obj" \
+	"$(INTDIR)\prompt.obj" \
 	"$(INTDIR)\psqlscan.obj" \
+	"$(INTDIR)\startup.obj" \
+	"$(INTDIR)\stringutils.obj" \
 	"$(INTDIR)\tab-complete.obj" \
-	"$(INTDIR)\sprompt.obj" \
+	"$(INTDIR)\variables.obj" \
+	"$(INTDIR)\exec.obj" \
 	"$(INTDIR)\getopt.obj" \
 	"$(INTDIR)\getopt_long.obj" \
 	"$(INTDIR)\path.obj" \
-	"$(INTDIR)\mbprint.obj" \
+	"$(INTDIR)\pgstrcasecmp.obj" \
+	"$(INTDIR)\sprompt.obj" \
 	"..\..\interfaces\libpq\Release\libpqdll.lib"
 
 "$(OUTDIR)\psql.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -101,9 +102,9 @@ LINK32_OBJS= \
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
-"$(OUTDIR)\sprompt.obj" : "$(OUTDIR)" ..\..\port\sprompt.c
+"$(INTDIR)\exec.obj" : ..\..\port\exec.c
     $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\sprompt.c
+    $(CPP_PROJ) ..\..\port\exec.c
 <<
 
 "$(OUTDIR)\getopt.obj" : "$(OUTDIR)" ..\..\port\getopt.c
@@ -126,9 +127,9 @@ LINK32_OBJS= \
     $(CPP_PROJ) ..\..\port\pgstrcasecmp.c
 <<
 
-"$(INTDIR)\exec.obj" : ..\..\port\exec.c
+"$(OUTDIR)\sprompt.obj" : "$(OUTDIR)" ..\..\port\sprompt.c
     $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\exec.c
+    $(CPP_PROJ) ..\..\port\sprompt.c
 <<
 
 .c{$(CPP_OBJS)}.obj::
