@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.167 2001/07/15 13:45:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.168 2001/07/16 20:05:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -710,7 +710,7 @@ connectMakeNonblocking(PGconn *conn)
 #endif
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not socket to non-blocking mode: %s\n"),
+						  libpq_gettext("could not set socket to non-blocking mode: %s\n"),
 						  strerror(errno));
 		return 0;
 	}
