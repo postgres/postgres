@@ -48,7 +48,7 @@ static void _SPI_fetch(FetchStmt * stmt);
 #endif
 static int
 _SPI_execute_plan(_SPI_plan * plan,
-				  Datum *Values, char *Nulls, int tcount);
+				  Datum * Values, char *Nulls, int tcount);
 
 #define _SPI_CPLAN_CURCXT	0
 #define _SPI_CPLAN_PROCXT	1
@@ -199,7 +199,7 @@ SPI_exec(char *src, int tcount)
 }
 
 int
-SPI_execp(void *plan, Datum *Values, char *Nulls, int tcount)
+SPI_execp(void *plan, Datum * Values, char *Nulls, int tcount)
 {
 	int			res;
 
@@ -278,11 +278,108 @@ SPI_saveplan(void *plan)
 
 }
 
+HeapTuple
+SPI_copytuple(HeapTuple tuple)
+{
+	MemoryContext oldcxt = NULL;
+	HeapTuple	ctuple;
+
+	if (tuple == NULL)
+	{
+		SPI_result = SPI_ERROR_ARGUMENT;
+		return (NULL);
+	}
+
+	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	{
+		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
+			elog(FATAL, "SPI: stack corrupted");
+		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+	}
+
+	ctuple = heap_copytuple(tuple);
+
+	if (oldcxt)
+		MemoryContextSwitchTo(oldcxt);
+
+	return (ctuple);
+}
+
+HeapTuple
+SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
+				Datum * Values, char *Nulls)
+{
+	MemoryContext oldcxt = NULL;
+	HeapTuple	mtuple;
+	int			numberOfAttributes;
+	uint8		infomask;
+	Datum	   *v;
+	char	   *n;
+	bool		isnull;
+	int			i;
+
+	if (rel == NULL || tuple == NULL || natts <= 0 || attnum == NULL || Values == NULL)
+	{
+		SPI_result = SPI_ERROR_ARGUMENT;
+		return (NULL);
+	}
+
+	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	{
+		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
+			elog(FATAL, "SPI: stack corrupted");
+		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+	}
+	SPI_result = 0;
+	numberOfAttributes = rel->rd_att->natts;
+	v = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
+	n = (char *) palloc(numberOfAttributes * sizeof(char));
+
+	/* fetch old values and nulls */
+	for (i = 0; i < numberOfAttributes; i++)
+	{
+		v[i] = heap_getattr(tuple, InvalidBuffer, i + 1, rel->rd_att, &isnull);
+		n[i] = (isnull) ? 'n' : ' ';
+	}
+
+	/* replace values and nulls */
+	for (i = 0; i < natts; i++)
+	{
+		if (attnum[i] <= 0 || attnum[i] > numberOfAttributes)
+			break;
+		v[attnum[i] - 1] = Values[i];
+		n[attnum[i] - 1] = (Nulls && Nulls[i] == 'n') ? 'n' : ' ';
+	}
+
+	if (i == natts)				/* no errors in attnum[] */
+	{
+		mtuple = heap_formtuple(rel->rd_att, v, n);
+		infomask = mtuple->t_infomask;
+		memmove(&(mtuple->t_ctid), &(tuple->t_ctid),
+				((char *) &(tuple->t_hoff) - (char *) &(tuple->t_ctid)));
+		mtuple->t_infomask = infomask;
+		mtuple->t_natts = numberOfAttributes;
+	}
+	else
+	{
+		mtuple = NULL;
+		SPI_result = SPI_ERROR_NOATTRIBUTE;
+	}
+
+	pfree(v);
+	pfree(n);
+
+	if (oldcxt)
+		MemoryContextSwitchTo(oldcxt);
+
+	return (mtuple);
+}
+
 int
 SPI_fnumber(TupleDesc tupdesc, char *fname)
 {
 	int			res;
-	
+
 	for (res = 0; res < tupdesc->natts; res++)
 	{
 		if (strcasecmp(tupdesc->attrs[res]->attname.data, fname) == 0)
@@ -333,7 +430,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 Datum
 SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
 {
-	Datum	val;
+	Datum		val;
 
 	*isnull = true;
 	SPI_result = 0;
@@ -539,7 +636,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan * plan)
 }
 
 static int
-_SPI_execute_plan(_SPI_plan * plan, Datum *Values, char *Nulls, int tcount)
+_SPI_execute_plan(_SPI_plan * plan, Datum * Values, char *Nulls, int tcount)
 {
 	QueryTreeList *queryTree_list = plan->qtlist;
 	List	   *planTree_list = plan->ptlist;
@@ -591,7 +688,7 @@ _SPI_execute_plan(_SPI_plan * plan, Datum *Values, char *Nulls, int tcount)
 				{
 					paramLI->kind = PARAM_NUM;
 					paramLI->id = k + 1;
-					paramLI->isnull = (Nulls != NULL && Nulls[k] != 'n');
+					paramLI->isnull = (Nulls && Nulls[k] == 'n');
 					paramLI->value = Values[k];
 				}
 				paramLI->kind = PARAM_INVALID;
