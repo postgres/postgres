@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.129 2002/03/06 06:09:47 momjian Exp $
+ *	$Id: pqcomm.c,v 1.130 2002/04/03 00:44:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,7 +364,7 @@ StreamConnection(int server_fd, Port *port)
 							 (struct sockaddr *) & port->raddr,
 							 &addrlen)) < 0)
 	{
-		perror("postmaster: StreamConnection: accept");
+		elog(LOG, "StreamConnection: accept() failed: %m");
 		return STATUS_ERROR;
 	}
 
@@ -383,7 +383,7 @@ StreamConnection(int server_fd, Port *port)
 	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
 					&addrlen) < 0)
 	{
-		perror("postmaster: StreamConnection: getsockname");
+		elog(LOG, "StreamConnection: getsockname() failed: %m");
 		return STATUS_ERROR;
 	}
 
@@ -395,13 +395,13 @@ StreamConnection(int server_fd, Port *port)
 		if (setsockopt(port->sock, IPPROTO_TCP, TCP_NODELAY,
 					   (char *) &on, sizeof(on)) < 0)
 		{
-			perror("postmaster: StreamConnection: setsockopt(TCP_NODELAY)");
+			elog(LOG, "StreamConnection: setsockopt(TCP_NODELAY) failed: %m");
 			return STATUS_ERROR;
 		}
 		if (setsockopt(port->sock, SOL_SOCKET, SO_KEEPALIVE,
 					   (char *) &on, sizeof(on)) < 0)
 		{
-			perror("postmaster: StreamConnection: setsockopt(SO_KEEPALIVE)");
+			elog(LOG, "StreamConnection: setsockopt(SO_KEEPALIVE) failed: %m");
 			return STATUS_ERROR;
 		}
 	}
