@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.5 2001/11/21 05:53:41 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.6 2002/03/27 19:19:22 petere Exp $ -->
 
 <chapter id="pygresql">
  <title><application>PyGreSQL</application> - <application>Python</application> Interface</title>
@@ -469,7 +469,7 @@ make && make install
    programs. You can prompt the user for a value, put it in the
    default variable, and forget it, without having to modify your
    environment. The support for default variables can be disabled by
-   setting the <acronym>-DNO_DEF_VAR</acronym> option in the Python
+   setting the <option>-DNO_DEF_VAR</option> option in the Python
    Setup file. Methods relative to this are specified by te tag [DV].
   </para>
 

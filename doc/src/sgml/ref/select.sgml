@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.52 2002/03/22 19:20:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.53 2002/03/27 19:19:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -937,9 +937,7 @@ SELECT actors.name
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title>
-    <acronym>Extensions</acronym>
-   </title>
+   <title>Extensions</title>
 
    <para>
 <productname>PostgreSQL</productname> allows one to omit 

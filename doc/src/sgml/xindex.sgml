@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.22 2002/01/07 02:29:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.23 2002/03/27 19:19:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ PostgreSQL documentation
     pg_amproc, pg_operator</filename> and <filename>pg_opclass</filename>).
    Unfortunately, there is no simple command to do this.  We will demonstrate
    how to modify these catalogs through a running example:  a  new  operator
-   class for the <acronym>B-tree</acronym> access method that stores and
+   class for the B-tree access method that stores and
    sorts complex numbers in ascending absolute value order.
   </para>
  </sect1>
@@ -106,10 +106,10 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The <acronym>object ID</acronym> of the row in
+   The <acronym>OID</acronym> of the row in
    <filename>pg_am</filename> is used as a foreign key in a lot of other
    tables.  You  do not  need to  add a new row to this table; all that
-   you are interested in is the <acronym>object ID</acronym> of the access
+   you are interested in is the <acronym>OID</acronym> of the access
    method you want to extend:
 
 <screen>
