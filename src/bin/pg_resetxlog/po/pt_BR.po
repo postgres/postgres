@@ -6,7 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2005-01-07 12:28-0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-01-15 12:04-0200\n"
 "PO-Revision-Date: 2004-10-27 18:36-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
 "Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas."
@@ -77,6 +78,7 @@ msgstr ""
 "novamente.\n"
 
 #: pg_resetxlog.c:270
+#, c-format
 msgid ""
 "\n"
 "If these values seem acceptable, use -f to force reset.\n"
@@ -85,6 +87,7 @@ msgstr ""
 "Se estes valores lhe parecem aceitáveis, use -f para forçar o reinício.\n"
 
 #: pg_resetxlog.c:282
+#, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
 "Resetting the transaction log may cause data to be lost.\n"
@@ -95,6 +98,7 @@ msgstr ""
 "Se você quer continuar, use -f para forçar o reinício.\n"
 
 #: pg_resetxlog.c:295
+#, c-format
 msgid "Transaction log reset\n"
 msgstr "Log de transação reiniciado\n"
 
@@ -138,6 +142,7 @@ msgid "%s: invalid LC_CTYPE setting\n"
 msgstr "%s: definição do LC_CTYPE inválido\n"
 
 #: pg_resetxlog.c:464
+#, c-format
 msgid ""
 "Guessed pg_control values:\n"
 "\n"
@@ -146,6 +151,7 @@ msgstr ""
 "\n"
 
 #: pg_resetxlog.c:466
+#, c-format
 msgid ""
 "pg_control values:\n"
 "\n"
@@ -310,22 +316,26 @@ msgstr ""
 "\n"
 
 #: pg_resetxlog.c:752
+#, c-format
 msgid "Options:\n"
 msgstr "Opções:\n"
 
 #: pg_resetxlog.c:753
+#, c-format
 msgid "  -f              force update to be done\n"
 msgstr "  -f                força atualização\n"
 
 #: pg_resetxlog.c:754
+#, c-format
 msgid ""
 "  -l TLI,FILE,SEG force minimum WAL starting location for new transaction "
 "log\n"
 msgstr ""
-"  -l TLI,FILE,SEG     força localização inicial mínima do WAL para novo log "
-"de transação\n"
+"  -l TLI,FILE,SEG     força local inicial mínimo do WAL para novo log de "
+"transação\n"
 
 #: pg_resetxlog.c:755
+#, c-format
 msgid ""
 "  -n              no update, just show extracted control values (for "
 "testing)\n"
@@ -334,22 +344,27 @@ msgstr ""
 "extraídos (para teste)\n"
 
 #: pg_resetxlog.c:756
+#, c-format
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID            ajusta próximo OID\n"
 
 #: pg_resetxlog.c:757
+#, c-format
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID            ajusta próximo ID de transação\n"
 
 #: pg_resetxlog.c:758
+#, c-format
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help            mostra esta ajuda e sai\n"
 
 #: pg_resetxlog.c:759
+#, c-format
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version         mostra informação sobre a versão e sai\n"
 
 #: pg_resetxlog.c:760
+#, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"

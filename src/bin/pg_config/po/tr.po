@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-tr\n"
 "POT-Creation-Date: 2004-10-19 01:08+0100\n"
-"PO-Revision-Date: 2004-12-11 13:21+0200\n"
+"PO-Revision-Date: 2005-01-15 14:02+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
@@ -119,35 +119,50 @@ msgstr "%s: geçersiz argüman: %s\n"
 msgid "%s: could not find own executable\n"
 msgstr "%s: çalıştırılabilir dosya bulunamadı\n"
 
-#: ../../port/exec.c:193
-#: ../../port/exec.c:307
-#: ../../port/exec.c:350
+#: ../../port/exec.c:194
+#: ../../port/exec.c:308
+#: ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "geçerli dizin tespit edilemedi: %s"
 
-#: ../../port/exec.c:323
-#: ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "geçersiz ikili (binary) \"%s\""
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "\"%s\" ikili (binary) dosyası okunamadı"
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "\"%s\"  çalıştırmak için bulunamadı"
+
+#: ../../port/exec.c:324
+#: ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "symbolic link \"%s\" okuma hatası"
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "alt süreç %d çıkış koduyla sonuçlandırılmıştır"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"

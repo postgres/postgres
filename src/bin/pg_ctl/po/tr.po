@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl-tr\n"
 "POT-Creation-Date: 2005-01-04 19:05+0000\n"
-"PO-Revision-Date: 2005-01-04 21:54+0200\n"
-"Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
+"PO-Revision-Date: 2005-01-15 14:03+0200\n"
+"Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -15,7 +15,9 @@ msgstr ""
 "X-Poedit-Language: Turkish\n"
 "X-Poedit-Country: TURKEY\n"
 
-#: pg_ctl.c:201 pg_ctl.c:216 pg_ctl.c:1349
+#: pg_ctl.c:201
+#: pg_ctl.c:216
+#: pg_ctl.c:1349
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: yetersiz bellek\n"
@@ -28,9 +30,7 @@ msgstr "%s: \"%s\" PID dosyası açılamadı: %s"
 #: pg_ctl.c:469
 #, c-format
 msgid "%s: another postmaster may be running; trying to start postmaster anyway\n"
-msgstr ""
-"%s: Başka bir postmaster çalışıyor olabilir; postmaster yine de başlatılmaya "
-"çalışılıyor..\n"
+msgstr "%s: Başka bir postmaster çalışıyor olabilir; postmaster yine de başlatılmaya çalışılıyor..\n"
 
 #: pg_ctl.c:487
 #, c-format
@@ -86,7 +86,9 @@ msgstr "postmasterin başlaması bekleniyor..."
 msgid "could not start postmaster\n"
 msgstr "postmaster başlatılamadı\n"
 
-#: pg_ctl.c:591 pg_ctl.c:657 pg_ctl.c:724
+#: pg_ctl.c:591
+#: pg_ctl.c:657
+#: pg_ctl.c:724
 msgid " done\n"
 msgstr " tamam\n"
 
@@ -98,12 +100,16 @@ msgstr "postmaster başlatıldı\n"
 msgid "postmaster starting\n"
 msgstr "postmaster başlıyor\n"
 
-#: pg_ctl.c:610 pg_ctl.c:678 pg_ctl.c:738
+#: pg_ctl.c:610
+#: pg_ctl.c:678
+#: pg_ctl.c:738
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
 msgstr "%s: \"%s\" PID dosyası bulunamadı\n"
 
-#: pg_ctl.c:611 pg_ctl.c:679 pg_ctl.c:739
+#: pg_ctl.c:611
+#: pg_ctl.c:679
+#: pg_ctl.c:739
 msgid "Is postmaster running?\n"
 msgstr "postmaster çalışıyor mu?\n"
 
@@ -112,7 +118,8 @@ msgstr "postmaster çalışıyor mu?\n"
 msgid "%s: cannot stop postmaster; postgres is running (PID: %ld)\n"
 msgstr "%s: postmaster durdurulamadı; postgres çalışıyor (PID: %ld)\n"
 
-#: pg_ctl.c:625 pg_ctl.c:696
+#: pg_ctl.c:625
+#: pg_ctl.c:696
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
 msgstr "%s:durdurma sinyali başarısız oldu (PID: %ld): %s\n"
@@ -121,20 +128,24 @@ msgstr "%s:durdurma sinyali başarısız oldu (PID: %ld): %s\n"
 msgid "postmaster shutting down\n"
 msgstr "postmaster kapatılıyor\n"
 
-#: pg_ctl.c:637 pg_ctl.c:701
+#: pg_ctl.c:637
+#: pg_ctl.c:701
 msgid "waiting for postmaster to shut down..."
 msgstr "postmasterin kapanması bekleniyor..."
 
-#: pg_ctl.c:652 pg_ctl.c:718
+#: pg_ctl.c:652
+#: pg_ctl.c:718
 msgid " failed\n"
 msgstr " başarısız oldu\n"
 
-#: pg_ctl.c:654 pg_ctl.c:720
+#: pg_ctl.c:654
+#: pg_ctl.c:720
 #, c-format
 msgid "%s: postmaster does not shut down\n"
 msgstr "%s: postmaster kapanmaz\n"
 
-#: pg_ctl.c:659 pg_ctl.c:725
+#: pg_ctl.c:659
+#: pg_ctl.c:725
 msgid "postmaster stopped\n"
 msgstr "postmaster durduruldu\n"
 
@@ -147,7 +158,8 @@ msgstr "postmaster yine de başlatılıyor\n"
 msgid "%s: cannot restart postmaster; postgres is running (PID: %ld)\n"
 msgstr "%s: postmaster başlatılamadı; postgres çalışıyor (PID: %ld)\n"
 
-#: pg_ctl.c:690 pg_ctl.c:748
+#: pg_ctl.c:690
+#: pg_ctl.c:748
 msgid "Please terminate postgres and try again.\n"
 msgstr "Lütfen postgres'i durdurun ve yeniden deneyin.\n"
 
@@ -195,7 +207,8 @@ msgstr "%s:Çalıştırılabilir dosya bulunamadı\n"
 msgid "%s: could not find postmaster program executable\n"
 msgstr "%s: çalıştırılabilir postmaster programı bulunamadı\n"
 
-#: pg_ctl.c:899 pg_ctl.c:931
+#: pg_ctl.c:899
+#: pg_ctl.c:931
 #, c-format
 msgid "%s: could not open service manager\n"
 msgstr "%s: servis yöneticisi açılamadı\n"
@@ -242,10 +255,8 @@ msgid ""
 "report the status of a PostgreSQL server, or signal a PostgreSQL process.\n"
 "\n"
 msgstr ""
-"%s başlatmak, durdurmak, yeniden başlatmak, yapılandırma dosyalarını yeniden "
-"yüklemek\n"
-"PostgreSQL sunucusunun durumunu bildirmek, ya da PostgreSQL sürecini "
-"öldürmek için bir yardımcı programdır\n"
+"%s başlatmak, durdurmak, yeniden başlatmak, yapılandırma dosyalarını yeniden yüklemek\n"
+"PostgreSQL sunucusunun durumunu bildirmek, ya da PostgreSQL sürecini öldürmek için bir yardımcı programdır\n"
 "\n"
 
 #: pg_ctl.c:1102
@@ -265,9 +276,7 @@ msgstr "  %s stop    [-W] [-D VERİ_DİZİNİ] [-s] [-m SHUTDOWN-MODE]\n"
 #: pg_ctl.c:1105
 #, c-format
 msgid "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
-msgstr ""
-"  %s restart [-w] [-D VERİ_DİZİNİ] [-s] [-m SHUTDOWN-MODE] [-o \"SEÇENEKLER"
-"\"]\n"
+msgstr "  %s restart [-w] [-D VERİ_DİZİNİ] [-s] [-m SHUTDOWN-MODE] [-o \"SEÇENEKLER\"]\n"
 
 #: pg_ctl.c:1106
 #, c-format
@@ -289,9 +298,7 @@ msgstr "  %s kill    SİNYAL_ADI SÜREÇ_NUMARASI\n"
 msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 "                    [-w] [-o \"OPTIONS\"]\n"
-msgstr ""
-"  %s register   [-N servis adı] [-U kullanıcı adı] [-P şifre] [-D "
-"VERİ_DİZİNİ] [-w] [-o \"SEÇENEKLER\"]\n"
+msgstr "  %s register   [-N servis adı] [-U kullanıcı adı] [-P şifre] [-D VERİ_DİZİNİ] [-w] [-o \"SEÇENEKLER\"]\n"
 
 #: pg_ctl.c:1112
 #, c-format
@@ -335,15 +342,12 @@ msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
-"(Ön tanımlı işlem kapanmak için beklemektir; ancak başlamak ya da yeniden "
-"başlamak değildir.)\n"
+"(Ön tanımlı işlem kapanmak için beklemektir; ancak başlamak ya da yeniden başlamak değildir.)\n"
 "\n"
 
 #: pg_ctl.c:1123
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
-msgstr ""
-"Eğer -D seçeneği gözardı edilirse, PGDATA çevresel değişkeni "
-"kullanılacaktır.\n"
+msgstr "Eğer -D seçeneği gözardı edilirse, PGDATA çevresel değişkeni kullanılacaktır.\n"
 
 #: pg_ctl.c:1125
 msgid ""
@@ -355,9 +359,7 @@ msgstr ""
 
 #: pg_ctl.c:1126
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
-msgstr ""
-"  -l, --log DOSYA_ADI      Sunucu loglarını DOSYA_ADI dosyasına yaz (ya da "
-"dosyanın sonuna ekle).\n"
+msgstr "  -l, --log DOSYA_ADI      Sunucu loglarını DOSYA_ADI dosyasına yaz (ya da dosyanın sonuna ekle).\n"
 
 #: pg_ctl.c:1127
 msgid ""
@@ -400,12 +402,8 @@ msgid "  fast        quit directly, with proper shutdown\n"
 msgstr "  fast        düzgünce kapanmadan direk olarak dur\n"
 
 #: pg_ctl.c:1137
-msgid ""
-"  immediate   quit without complete shutdown; will lead to recovery on "
-"restart\n"
-msgstr ""
-"  immediate   tam bir kapanma gerçekleşmeden dur; yeniden başladığında "
-"recovery modunda açılır\n"
+msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
+msgstr "  immediate   tam bir kapanma gerçekleşmeden dur; yeniden başladığında recovery modunda açılır\n"
 
 #: pg_ctl.c:1139
 msgid ""
@@ -433,9 +431,7 @@ msgstr "  -P PASSWORD     PostgreSQL sunucusunu kaydetmek için hesabın şifres
 
 #: pg_ctl.c:1146
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
-msgstr ""
-"  -U USERNAME     PostgreSQL sunucusunu kaydetmek için gerekli kullanıcı "
-"adı\n"
+msgstr "  -U USERNAME     PostgreSQL sunucusunu kaydetmek için gerekli kullanıcı adı\n"
 
 #: pg_ctl.c:1149
 msgid ""
@@ -463,8 +459,7 @@ msgid ""
 "own the server process.\n"
 msgstr ""
 "%s: root olarak çalıştırılamaz\n"
-"Lütfen  (yani \"su\" kullanarak) sunucu sürecine sahip olacak (yetkisiz) "
-"kullanıcı\n"
+"Lütfen  (yani \"su\" kullanarak) sunucu sürecine sahip olacak (yetkisiz) kullanıcı\n"
 "ile sisteme giriş yapınız.\n"
 
 #: pg_ctl.c:1365
@@ -497,32 +492,50 @@ msgstr "%s: hiçbir işlem belirtilmedi\n"
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: Hiçbir veritabanı dizini belirtilmemiş ve PGDATA çevresel değişkeni boş\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#: ../../port/exec.c:194
+#: ../../port/exec.c:308
+#: ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "geçerli dizin tespit edilemedi: %s"
 
-#: ../../port/exec.c:322 ../../port/exec.c:358
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "geçersiz ikili (binary) \"%s\""
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "\"%s\" ikili (binary) dosyası okunamadı"
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "\"%s\"  çalıştırmak için bulunamadı"
+
+#: ../../port/exec.c:324
+#: ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
 
-#: ../../port/exec.c:337
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "symbolic link \"%s\" okuma hatası"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "alt süreç %d çıkış koduyla sonuçlandırılmıştır"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 
-#: ../../port/exec.c:591
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"

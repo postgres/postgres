@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres-tr\n"
 "POT-Creation-Date: 2005-01-04 18:59+0000\n"
-"PO-Revision-Date: 2005-01-07 08:47+0200\n"
+"PO-Revision-Date: 2005-01-15 14:05+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
@@ -212,7 +212,7 @@ msgstr "\"%s\" dosyası (log dosyası %u, segment %u) açma hatası: %m"
 #: access/transam/xlog.c:2939
 #: access/transam/xlog.c:5357
 #: access/transam/xlog.c:5475
-#: postmaster/postmaster.c:2905
+#: postmaster/postmaster.c:2906
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "\"%s\" dosyası oluşturulamıyor: %m"
@@ -224,8 +224,8 @@ msgstr "\"%s\" dosyası oluşturulamıyor: %m"
 #: commands/copy.c:1118
 #: commands/tablespace.c:664
 #: commands/tablespace.c:670
-#: postmaster/postmaster.c:2915
-#: postmaster/postmaster.c:2925
+#: postmaster/postmaster.c:2916
+#: postmaster/postmaster.c:2926
 #: utils/init/miscinit.c:832
 #: utils/init/miscinit.c:841
 #: utils/misc/guc.c:4799
@@ -1119,21 +1119,21 @@ msgstr "böyle bir savepoint bulunamadı"
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "bir transaction içinde 2^32-1 subtransactiondan fazla olamaz"
 
-#: bootstrap/bootstrap.c:299
-#: postmaster/postmaster.c:549
+#: bootstrap/bootstrap.c:300
+#: postmaster/postmaster.c:550
 #: tcop/postgres.c:2533
 #, c-format
 msgid "--%s requires a value"
 msgstr "--%s bir değer gerektirir"
 
-#: bootstrap/bootstrap.c:304
-#: postmaster/postmaster.c:554
+#: bootstrap/bootstrap.c:305
+#: postmaster/postmaster.c:555
 #: tcop/postgres.c:2538
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s bir değer gerektirir"
 
-#: bootstrap/bootstrap.c:481
+#: bootstrap/bootstrap.c:482
 msgid ""
 "Usage:\n"
 "  postgres -boot [OPTION]... DBNAME\n"
@@ -1451,7 +1451,7 @@ msgstr "\"%s\" tablespace'i mevcut değil"
 #: commands/user.c:1535
 #: commands/user.c:1772
 #: commands/user.c:1807
-#: libpq/pqcomm.c:499
+#: libpq/pqcomm.c:501
 #, c-format
 msgid "group \"%s\" does not exist"
 msgstr "\"%s\" grubu mevcut değil"
@@ -1715,68 +1715,68 @@ msgstr "\"%s\" sütunu %s pseudo-tipine sahip"
 msgid "relation \"%s\" already exists"
 msgstr "\"%s\" nesnesi zaten mevcut"
 
-#: catalog/heap.c:1586
+#: catalog/heap.c:1584
 #, c-format
 msgid "only table \"%s\" can be referenced in check constraint"
 msgstr "check constraint içerisinde sadece \"%s\" tablosu kullanılabilir"
 
-#: catalog/heap.c:1595
+#: catalog/heap.c:1593
 #: commands/typecmds.c:1872
 msgid "cannot use subquery in check constraint"
 msgstr "check constraint içinde subquery kullanılamaz"
 
-#: catalog/heap.c:1599
+#: catalog/heap.c:1597
 msgid "cannot use aggregate function in check constraint"
 msgstr "check constraint içinde aggregate function kullanılamaz"
 
-#: catalog/heap.c:1616
+#: catalog/heap.c:1614
 #: commands/tablecmds.c:3722
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "\"%s\" constraint 'i \"%s\" nesnesi için zaten mevcut"
 
-#: catalog/heap.c:1625
+#: catalog/heap.c:1623
 #, c-format
 msgid "check constraint \"%s\" already exists"
 msgstr "\"%s\"check constraint'i zaten mevcut"
 
-#: catalog/heap.c:1774
+#: catalog/heap.c:1772
 msgid "cannot use column references in default expression"
 msgstr "defaul ifadesinde sütun referansı kullanılamaz"
 
-#: catalog/heap.c:1782
+#: catalog/heap.c:1780
 msgid "default expression must not return a set"
 msgstr "öntanımlı ifade küme döndürmelidir"
 
-#: catalog/heap.c:1790
+#: catalog/heap.c:1788
 msgid "cannot use subquery in default expression"
 msgstr "öntanımlı ifadede subquery kullanılamaz"
 
-#: catalog/heap.c:1794
+#: catalog/heap.c:1792
 msgid "cannot use aggregate function in default expression"
 msgstr "öntanımlı ifadede aggregate fonksiyonu kullanılamaz"
 
-#: catalog/heap.c:1812
+#: catalog/heap.c:1810
 #: rewrite/rewriteHandler.c:647
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
 msgstr "\"%s\" kolonunun tipi %s'dır, ancak öntanımlı ifadenin tipi %s'dir."
 
-#: catalog/heap.c:1817
+#: catalog/heap.c:1815
 #: parser/analyze.c:2701
 #: parser/parse_node.c:247
-#: parser/parse_target.c:362
-#: parser/parse_target.c:572
-#: parser/parse_target.c:581
+#: parser/parse_target.c:367
+#: parser/parse_target.c:577
+#: parser/parse_target.c:586
 #: rewrite/rewriteHandler.c:652
 msgid "You will need to rewrite or cast the expression."
 msgstr "Bu ifadeyi yinden yazmalı ya da sonucunu cast etmelisiniz."
 
-#: catalog/heap.c:2078
+#: catalog/heap.c:2076
 msgid "cannot truncate a table referenced in a foreign key constraint"
 msgstr "ikincil anahtar bütünlük kısıtlamasının refere ettiği tabloyu truncate edemezsiniz"
 
-#: catalog/heap.c:2079
+#: catalog/heap.c:2077
 #, c-format
 msgid "Table \"%s\" references \"%s\" via foreign key constraint \"%s\"."
 msgstr "\"%s\" tablosu \"%s\" tablosunu, \"%s\" bütünlük kısıtlayıcısı ile referans ediyor."
@@ -1789,7 +1789,7 @@ msgstr "sistem katalog tabloları üzerinde kullanıcı tanımlı index oluştur
 msgid "shared indexes cannot be created after initdb"
 msgstr "initdb işleminden sonra shared indeks oluşturulamaz"
 
-#: catalog/index.c:1638
+#: catalog/index.c:1634
 #, c-format
 msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
 msgstr "\"%s\" shared indexe sadece stand-alone modunda reindex işlemi uygulanabilir"
@@ -1821,17 +1821,17 @@ msgid "no schema has been selected to create in"
 msgstr "oluşturma işlemi için şema adı belirtimemiş"
 
 #: catalog/namespace.c:1195
-#: parser/parse_expr.c:1158
-#: parser/parse_target.c:727
+#: parser/parse_expr.c:1171
+#: parser/parse_target.c:732
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "veritabanı-arası referanslar oluşturulamaz: %s"
 
 #: catalog/namespace.c:1201
+#: parser/parse_expr.c:1197
+#: parser/parse_target.c:741
 #: gram.y:2515
 #: gram.y:7425
-#: parser/parse_expr.c:1184
-#: parser/parse_target.c:736
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "geçersiz qualified adı (çok fazla noktalı isim): %s"
@@ -2210,7 +2210,7 @@ msgid "Specify a relation name as well as a rule name."
 msgstr "Rule adının yanında nesne adını da belirtin."
 
 #: commands/comment.c:619
-#: rewrite/rewriteDefine.c:582
+#: rewrite/rewriteDefine.c:580
 #: rewrite/rewriteRemove.c:59
 #, c-format
 msgid "rule \"%s\" for relation \"%s\" does not exist"
@@ -2733,8 +2733,8 @@ msgid "incorrect binary data format"
 msgstr "ikili veri biçimi hatası"
 
 #: commands/copy.c:2728
-#: parser/parse_target.c:650
-#: parser/parse_target.c:660
+#: parser/parse_target.c:655
+#: parser/parse_target.c:665
 #, c-format
 msgid "column \"%s\" specified more than once"
 msgstr "\"%s\" sütunu birden fazla belirtilmiş"
@@ -3071,7 +3071,7 @@ msgstr "index yüklemindeki kullanılacak fonksiyon IMMUTABLE olarak tanımlanma
 
 #: commands/indexcmds.c:475
 #: commands/tablecmds.c:1329
-#: parser/parse_expr.c:1085
+#: parser/parse_expr.c:1098
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "\"%s\" sütunu mevcut değil"
@@ -3541,16 +3541,16 @@ msgstr "\"%s\" sistem nesnesi taşınamaz"
 msgid "cannot move temporary tables of other sessions"
 msgstr "diğer oturumların geçici tabloları taşınamaz"
 
-#: commands/tablecmds.c:5696
+#: commands/tablecmds.c:5694
 msgid "shared tables cannot be toasted after initdb"
 msgstr "initdb işleminden sonra paylaşılmış tablolar toast edilemez"
 
-#: commands/tablecmds.c:5711
+#: commands/tablecmds.c:5709
 #, c-format
 msgid "table \"%s\" already has a TOAST table"
 msgstr "\"%s\" tablosunun zaten bir TOAST tablosu vardır"
 
-#: commands/tablecmds.c:5728
+#: commands/tablecmds.c:5726
 #, c-format
 msgid "table \"%s\" does not need a TOAST table"
 msgstr "\"%s\" tablosunun TOAST tablosuna gereksinmesi yoktur"
@@ -3636,12 +3636,12 @@ msgstr "setval: %s değeri kapsam dışıdır, sequence \"%s\" (%s..%s)"
 #: executor/execGrouping.c:384
 #: lib/dllist.c:43
 #: lib/dllist.c:88
-#: libpq/auth.c:636
+#: libpq/auth.c:640
 #: postmaster/pgstat.c:2430
 #: postmaster/pgstat.c:2497
-#: postmaster/postmaster.c:809
-#: postmaster/postmaster.c:1677
-#: postmaster/postmaster.c:2396
+#: postmaster/postmaster.c:810
+#: postmaster/postmaster.c:1678
+#: postmaster/postmaster.c:2397
 #: storage/buffer/localbuf.c:139
 #: storage/file/fd.c:588
 #: storage/file/fd.c:621
@@ -4740,7 +4740,7 @@ msgid "unexpected Kerberos protocol version received from client (received \"%s\
 msgstr "İstemciden beklenmeyen Kerberos protokol versiyonu alınmış (alınan \"%s\", beklenen \"%s\")"
 
 #: libpq/auth.c:126
-#: libpq/auth.c:305
+#: libpq/auth.c:309
 #, c-format
 msgid "unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")"
 msgstr "İstemciden beklenmeyen Kerberos kullanıcı adı alınmış (alınan \"%s\", beklenen \"%s\")"
@@ -4749,164 +4749,164 @@ msgstr "İstemciden beklenmeyen Kerberos kullanıcı adı alınmış (alınan \"
 msgid "Kerberos 4 not implemented on this server"
 msgstr "Kerberos 5 bu sunucuda desteklenmemektedir"
 
-#: libpq/auth.c:200
+#: libpq/auth.c:204
 #, c-format
 msgid "Kerberos initialization returned error %d"
 msgstr "Kerberos oluşturma hatası %d"
 
-#: libpq/auth.c:210
+#: libpq/auth.c:214
 #, c-format
 msgid "Kerberos keytab resolving returned error %d"
 msgstr "Kerberos keytab resolving hatası %d"
 
-#: libpq/auth.c:223
+#: libpq/auth.c:227
 #, c-format
 msgid "Kerberos sname_to_principal(\"%s\") returned error %d"
 msgstr "Kerberos sname_to_principal(\"%s\") hatası %d"
 
-#: libpq/auth.c:268
+#: libpq/auth.c:272
 #, c-format
 msgid "Kerberos recvauth returned error %d"
 msgstr "Kerberos recvauth hatası %d"
 
-#: libpq/auth.c:293
+#: libpq/auth.c:297
 #, c-format
 msgid "Kerberos unparse_name returned error %d"
 msgstr "Kerberos unparse_name hatası %d"
 
-#: libpq/auth.c:326
+#: libpq/auth.c:330
 msgid "Kerberos 5 not implemented on this server"
 msgstr "Kerberos 5 bu sunucuda desteklenmemektedir"
 
-#: libpq/auth.c:365
+#: libpq/auth.c:369
 #, c-format
 msgid "authentication failed for user \"%s\": host rejected"
 msgstr "\"%s\" kullanıcısı için kimlik doğrulaması başarısız oldu: adres geçerli değil"
 
-#: libpq/auth.c:368
+#: libpq/auth.c:372
 #, c-format
 msgid "Kerberos 4 authentication failed for user \"%s\""
 msgstr "\"%s\" kullanıcısı için Kerberos 4 kimlik doğrulaması başarısız oldu"
 
-#: libpq/auth.c:371
+#: libpq/auth.c:375
 #, c-format
 msgid "Kerberos 5 authentication failed for user \"%s\""
 msgstr "\"%s\" kullanıcısı için Kerberos 5 kimlik doğrulaması başarısız oldu"
 
-#: libpq/auth.c:374
+#: libpq/auth.c:378
 #, c-format
 msgid "\"trust\" authentication failed for user \"%s\""
 msgstr "\"%s\" kullanıcısı için \"trust\" kimlik doğrulaması başarısız oldu"
 
-#: libpq/auth.c:377
+#: libpq/auth.c:381
 #, c-format
 msgid "Ident authentication failed for user \"%s\""
 msgstr "\"%s\" kullanıcısı için Ident kimlik doğrulaması başarısız oldu"
 
-#: libpq/auth.c:382
+#: libpq/auth.c:386
 #, c-format
 msgid "password authentication failed for user \"%s\""
 msgstr "\"%s\" kullanıcısı için şifre doğrulaması başarısız oldu"
 
-#: libpq/auth.c:386
+#: libpq/auth.c:390
 #, c-format
 msgid "PAM authentication failed for user \"%s\""
 msgstr "\"%s\" kullanıcısı için PAM kimlik doğrulaması başarısız oldu"
 
-#: libpq/auth.c:390
+#: libpq/auth.c:394
 #, c-format
 msgid "authentication failed for user \"%s\": invalid authentication method"
 msgstr "\"%s\" kullanıcısının kimlik doğrulaması başarısız: geçersiz kimlik doğrulama yöntemi"
 
-#: libpq/auth.c:419
+#: libpq/auth.c:423
 msgid "missing or erroneous pg_hba.conf file"
 msgstr "Eksik ya da hatalı pg_hba.conf dosyası"
 
-#: libpq/auth.c:420
+#: libpq/auth.c:424
 msgid "See server log for details."
 msgstr "Ayrıntılar için sunucu loguna bakın."
 
-#: libpq/auth.c:446
+#: libpq/auth.c:450
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s"
 msgstr "\"%s\" adresi, \"%s\" kullanıcısı, \"%s\" veritabanı için pg_hba.conf içinde bir tanım yok, %s"
 
-#: libpq/auth.c:448
+#: libpq/auth.c:452
 msgid "SSL on"
 msgstr "SSL yetkin"
 
-#: libpq/auth.c:448
+#: libpq/auth.c:452
 msgid "SSL off"
 msgstr "SSL yetkisiz"
 
-#: libpq/auth.c:452
+#: libpq/auth.c:456
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\""
 msgstr "\"%s\" adresi, \"%s\" kullanıcısı, \"%s\" veritabanı için pg_hba.conf içinde bir tanım yok"
 
-#: libpq/auth.c:464
+#: libpq/auth.c:468
 msgid "Kerberos 4 only supports IPv4 connections"
 msgstr "Kerberos 4 sadece IPv4 bağlantıları destekliyor"
 
-#: libpq/auth.c:497
+#: libpq/auth.c:501
 #, c-format
 msgid "could not enable credential reception: %m"
 msgstr "kimlik doğrulama alımı etkinleştirmesi başarısız: %m"
 
-#: libpq/auth.c:584
+#: libpq/auth.c:588
 #, c-format
 msgid "error from underlying PAM layer: %s"
 msgstr "PAM katmanında hata: %s"
 
-#: libpq/auth.c:589
+#: libpq/auth.c:593
 #, c-format
 msgid "unsupported PAM conversation %d/%s"
 msgstr "desteklenmeyen PAM iletişimi %d/%s"
 
-#: libpq/auth.c:621
+#: libpq/auth.c:625
 msgid "empty password returned by client"
 msgstr "istemci boş şifre gönderdi"
 
-#: libpq/auth.c:681
+#: libpq/auth.c:685
 #, c-format
 msgid "could not create PAM authenticator: %s"
 msgstr "PAM authenticator oluşturulamıyor: %s"
 
-#: libpq/auth.c:692
+#: libpq/auth.c:696
 #, c-format
 msgid "pam_set_item(PAM_USER) failed: %s"
 msgstr "pam_set_item(PAM_USER) başarısız: %s"
 
-#: libpq/auth.c:703
+#: libpq/auth.c:707
 #, c-format
 msgid "pam_set_item(PAM_CONV) failed: %s"
 msgstr "pam_set_item(PAM_CONV) başarısız: %s"
 
-#: libpq/auth.c:714
+#: libpq/auth.c:718
 #, c-format
 msgid "pam_authenticate failed: %s"
 msgstr "pam_authenticate başarısız: %s"
 
-#: libpq/auth.c:725
+#: libpq/auth.c:729
 #, c-format
 msgid "pam_acct_mgmt failed: %s"
 msgstr "pam_acct_mgmt başarısız: %s"
 
-#: libpq/auth.c:736
+#: libpq/auth.c:740
 #, c-format
 msgid "could not release PAM authenticator: %s"
 msgstr "PAM authenticator bırakma başarısız: %s"
 
-#: libpq/auth.c:774
+#: libpq/auth.c:778
 #, c-format
 msgid "expected password response, got message type %d"
 msgstr "cevap olarak şifre beklenirken, %d mesaj tipi alındı"
 
-#: libpq/auth.c:802
+#: libpq/auth.c:806
 msgid "invalid password packet size"
 msgstr "geçersiz password paket boyutu"
 
-#: libpq/auth.c:806
+#: libpq/auth.c:810
 msgid "received password packet"
 msgstr "password paketi alınmıştır"
 
@@ -5057,8 +5057,8 @@ msgstr "\"%s\" dosyasında %d satırında, \"%s\" simgesinde geçersiz giriş"
 msgid "missing field in file \"%s\" at end of line %d"
 msgstr "\"%s\" dosyasında %d satırın sonunda eksik alan"
 
-#: guc-file.l:151
 #: libpq/hba.c:1051
+#: guc-file.l:151
 #, c-format
 msgid "could not open configuration file \"%s\": %m"
 msgstr "yapılandırma dosyası \"%s\" açılamadı: %m"
@@ -5140,95 +5140,100 @@ msgstr "host adı \"%s\", hizmet \"%s\" adrese çevirilemedi: %s"
 msgid "could not translate service \"%s\" to address: %s"
 msgstr "\"%s\" servesi adrese çevirilemedi: %s"
 
-#: libpq/pqcomm.c:309
+#: libpq/pqcomm.c:302
+#, c-format
+msgid "could not bind to all requested addresses: MAXLISTEN (%d) exceeded"
+msgstr "tüm istenilen adreslerine bind hatası: MAXLISTEN(%d) sınırı aşılmıştır"
+
+#: libpq/pqcomm.c:311
 msgid "IPv4"
 msgstr "IPv4"
 
-#: libpq/pqcomm.c:313
+#: libpq/pqcomm.c:315
 msgid "IPv6"
 msgstr "IPv6"
 
-#: libpq/pqcomm.c:318
+#: libpq/pqcomm.c:320
 msgid "Unix"
 msgstr "Unix"
 
-#: libpq/pqcomm.c:323
+#: libpq/pqcomm.c:325
 #, c-format
 msgid "unrecognized address family %d"
 msgstr "bilinmeyen adres ailesi %d"
 
 #. translator: %s is IPv4, IPv6, or Unix
-#: libpq/pqcomm.c:334
+#: libpq/pqcomm.c:336
 #, c-format
 msgid "could not create %s socket: %m"
 msgstr "%s: socket oluşturma hatası: %m"
 
-#: libpq/pqcomm.c:346
+#: libpq/pqcomm.c:348
 #, c-format
 msgid "setsockopt(SO_REUSEADDR) failed: %m"
 msgstr "setsockopt(SO_REUSEADDR) başarısız: %m"
 
-#: libpq/pqcomm.c:360
+#: libpq/pqcomm.c:362
 #, c-format
 msgid "setsockopt(IPV6_V6ONLY) failed: %m"
 msgstr "setsockopt(IPV6_V6ONLY) başarısız: %m"
 
 #. translator: %s is IPv4, IPv6, or Unix
-#: libpq/pqcomm.c:379
+#: libpq/pqcomm.c:381
 #, c-format
 msgid "could not bind %s socket: %m"
 msgstr "%s socket bind hatası: %m"
 
-#: libpq/pqcomm.c:382
+#: libpq/pqcomm.c:384
 #, c-format
 msgid "Is another postmaster already running on port %d? If not, remove socket file \"%s\" and retry."
 msgstr "Başka bir postmaster %d portunda çalışıyor mu? Değil ise \"%s\" socket dosyasını kaldırın ve yeniden deneyin."
 
-#: libpq/pqcomm.c:385
+#: libpq/pqcomm.c:387
 #, c-format
 msgid "Is another postmaster already running on port %d? If not, wait a few seconds and retry."
 msgstr "Başka bir postmaster %d portunda çalışıyor mu? Değil ise birkaç saniye bekleyin ve yeniden deneyin."
 
 #. translator: %s is IPv4, IPv6, or Unix
-#: libpq/pqcomm.c:419
+#: libpq/pqcomm.c:421
 #, c-format
 msgid "could not listen on %s socket: %m"
 msgstr "%s socket dinleme hatası: %m"
 
-#: libpq/pqcomm.c:509
+#: libpq/pqcomm.c:511
 #, c-format
 msgid "could not set group of file \"%s\": %m"
 msgstr "\"%s\" dosyasının grup atama hatası: %m"
 
-#: libpq/pqcomm.c:520
+#: libpq/pqcomm.c:522
 #, c-format
 msgid "could not set permissions of file \"%s\": %m"
 msgstr "\"%s\" dosyasının erişim hakklarını atanamıyor: %m"
 
-#: libpq/pqcomm.c:550
+#: libpq/pqcomm.c:552
 #, c-format
 msgid "could not accept new connection: %m"
 msgstr "yeni bağlantı alma hatası: %m"
 
-#: libpq/pqcomm.c:702
+#: libpq/pqcomm.c:704
 #, c-format
 msgid "could not receive data from client: %m"
 msgstr "istemciden veri alınamamıştır: %m"
 
-#: libpq/pqcomm.c:895
+#: libpq/pqcomm.c:897
 msgid "unexpected EOF within message length word"
 msgstr "mesaj uzunluk verisinde beklenmeyen EOF (dosya sonu)"
 
-#: libpq/pqcomm.c:906
+#: libpq/pqcomm.c:908
 msgid "invalid message length"
 msgstr "mesaj uzunluğu yanlıştır"
 
-#: libpq/pqcomm.c:928
-#: libpq/pqcomm.c:938
+#: libpq/pqcomm.c:930
+#: libpq/pqcomm.c:940
 msgid "incomplete message from client"
 msgstr "istemciden alınan mesaj eksik"
 
-#: libpq/pqcomm.c:1048
+#: libpq/pqcomm.c:1050
 #, c-format
 msgid "could not send data to client: %m"
 msgstr "istemci sürecine sinyal gönderme başarısız: %m"
@@ -5357,8 +5362,8 @@ msgstr "satır içine alınma işlemi sırasında \"%s\" SQL fonksiyonu"
 msgid "JOIN/ON clause refers to \"%s\", which is not part of JOIN"
 msgstr "JOIN/ON ifadesi, JOIN parçası olmayan \"%s\" öğesine referans etmektedir"
 
-#: gram.y:5161
 #: parser/parse_clause.c:423
+#: gram.y:5161
 msgid "subquery in FROM must have an alias"
 msgstr "FROM öğersindeki subquery bir aliası almalıdır"
 
@@ -5628,10 +5633,10 @@ msgstr "birden fazla DEFERRABLE/NOT DEFERRABLE tanımına izin verilmez"
 msgid "misplaced NOT DEFERRABLE clause"
 msgstr "NOT DEFERRABLE yanlış yerde kullanılmış"
 
-#: gram.y:2368
-#: gram.y:2383
 #: parser/analyze.c:2906
 #: parser/analyze.c:2930
+#: gram.y:2368
+#: gram.y:2383
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr "INITIALLY DEFERRED olarak tanımlanan kısıtlayıcı DEFERRABLE özelliğine sahip olmalıdır"
 
@@ -5698,7 +5703,7 @@ msgstr "$%d parametresi için geçersiz tip bulundu"
 #: parser/parse_coerce.c:723
 #: parser/parse_coerce.c:739
 #: parser/parse_coerce.c:753
-#: parser/parse_expr.c:1658
+#: parser/parse_expr.c:1671
 #, c-format
 msgid "cannot cast type %s to %s"
 msgstr "%s tipi %s tipine dökülemiyor"
@@ -5772,9 +5777,9 @@ msgstr "giriş, \"unknown\" tipinde olduğu için anyarray/anyelement tipi belir
 #: parser/parse_coerce.c:1228
 #: parser/parse_coerce.c:1245
 #: parser/parse_coerce.c:1299
-#: parser/parse_expr.c:794
-#: parser/parse_expr.c:1351
-#: parser/parse_expr.c:1390
+#: parser/parse_expr.c:807
+#: parser/parse_expr.c:1364
+#: parser/parse_expr.c:1403
 #: parser/parse_oper.c:920
 #, c-format
 msgid "could not find array type for data type %s"
@@ -5888,17 +5893,17 @@ msgstr "%s operatörü set döndürmemelidir"
 msgid "subquery has too few columns"
 msgstr "subquery'de yetersiz sütun sayısı"
 
-#: parser/parse_expr.c:1692
-#: parser/parse_expr.c:1771
+#: parser/parse_expr.c:1705
+#: parser/parse_expr.c:1784
 msgid "unequal number of entries in row expression"
 msgstr "satır ifadesinde eşitsiz öğe sayısı"
 
-#: parser/parse_expr.c:1713
+#: parser/parse_expr.c:1726
 #, c-format
 msgid "operator %s is not supported for row expressions"
 msgstr "satır ifadelerinde %s işlemi kullanılamaz"
 
-#: parser/parse_expr.c:1808
+#: parser/parse_expr.c:1821
 msgid "IS DISTINCT FROM requires = operator to yield boolean"
 msgstr "boolean değerini almak için IS DISTINCT FROM, = işlemini kullanmalıdır"
 
@@ -6041,46 +6046,46 @@ msgstr "op ANY/ALL (array) operatorun boolean tipinde değer getirilmesi gerekir
 msgid "op ANY/ALL (array) requires operator not to return a set"
 msgstr "op ANY/ALL (array) operatorun set tipinde değer getirilmesi gerekir"
 
-#: parser/parse_target.c:268
-#: parser/parse_target.c:503
+#: parser/parse_target.c:273
+#: parser/parse_target.c:508
 #, c-format
 msgid "cannot assign to system column \"%s\""
 msgstr "\"%s\" sistem sütununa veri atanamıyor"
 
-#: parser/parse_target.c:292
+#: parser/parse_target.c:297
 msgid "cannot set an array element to DEFAULT"
 msgstr "array öğesine DEFAULT değeri atanamıyor"
 
-#: parser/parse_target.c:296
+#: parser/parse_target.c:301
 msgid "cannot set a subfield to DEFAULT"
 msgstr "subfield, DEFAULT değeri alamaz"
 
-#: parser/parse_target.c:357
+#: parser/parse_target.c:362
 #, c-format
 msgid "column \"%s\" is of type %s but expression is of type %s"
 msgstr "\"%s\" sütunu %s tipinde ancak ifade %s tipindedir"
 
-#: parser/parse_target.c:489
+#: parser/parse_target.c:494
 #, c-format
 msgid "cannot assign to field \"%s\" of column \"%s\" because its type %s is not a composite type"
 msgstr "%3$s composite tipi olmadığı için \"%2$s\" sütununun \"%1$s\" alanına atama başarısız"
 
-#: parser/parse_target.c:497
+#: parser/parse_target.c:502
 #, c-format
 msgid "cannot assign to field \"%s\" of column \"%s\" because there is no such column in data type %s"
 msgstr "%3$s veri tipi olmadığı için \"%2$s\" sütununun \"%1$s\" alanına atama başarısız"
 
-#: parser/parse_target.c:567
+#: parser/parse_target.c:572
 #, c-format
 msgid "array assignment to \"%s\" requires type %s but expression is of type %s"
 msgstr "\"%s\" alanına atama işlemi %s veri tipini gerektirmektedir ancak %s veri tipi alınmış"
 
-#: parser/parse_target.c:576
+#: parser/parse_target.c:581
 #, c-format
 msgid "subfield \"%s\" is of type %s but expression is of type %s"
 msgstr "\"%s\" subfield %s tipinde ancak ifade %s tipindedir"
 
-#: parser/parse_target.c:805
+#: parser/parse_target.c:810
 msgid "SELECT * with no tables specified is not valid"
 msgstr "SELECT *, tablo tanımı olmadan geçersizdir"
 
@@ -6180,7 +6185,6 @@ msgstr "INTEVRAL(%d) kesinliği sıfırdan küçük olamaz"
 msgid "INTERVAL(%d) precision reduced to maximum allowed, %d"
 msgstr "INTEVRAL(%d) kesinliği izin verilen en yüksek değerine (%d) düşürülmüştür"
 
-#: gram.y:1886
 #: utils/adt/ri_triggers.c:302
 #: utils/adt/ri_triggers.c:364
 #: utils/adt/ri_triggers.c:543
@@ -6196,6 +6200,7 @@ msgstr "INTEVRAL(%d) kesinliği izin verilen en yüksek değerine (%d) düşür�
 #: utils/adt/ri_triggers.c:2441
 #: utils/adt/ri_triggers.c:2537
 #: utils/adt/ri_triggers.c:2660
+#: gram.y:1886
 msgid "MATCH PARTIAL not yet implemented"
 msgstr "MATCH PARTIAL implemente edilmemiştir"
 
@@ -6219,13 +6224,13 @@ msgstr "CREATE FUNCTION / OUT parametreleri implemente edilmemiş"
 msgid "CREATE FUNCTION / INOUT parameters are not implemented"
 msgstr "CREATE FUNCTION / INOUT parametreleri implemente edilmemiş"
 
-#: gram.y:3491
 #: utils/adt/regproc.c:639
+#: gram.y:3491
 msgid "missing argument"
 msgstr "argüman eksik"
 
-#: gram.y:3492
 #: utils/adt/regproc.c:640
+#: gram.y:3492
 msgid "Use NONE to denote the missing argument of a unary operator."
 msgstr "Unary operator'un bir argümanı eksik olduğunu göstermek için NONE kullanın"
 
@@ -6509,84 +6514,84 @@ msgstr ""
 msgid "You possibly need to raise your kernel's SEMVMX value to be at least %d.  Look into the PostgreSQL documentation for details."
 msgstr "Kernel SEMVMX değerini en az %d değerine kadar çıkartmalısınız.  Daha fazla bilgi için PostgreSQL dokümanlarına bakın."
 
-#: postmaster/postmaster.c:450
+#: postmaster/postmaster.c:451
 #, c-format
 msgid "%s: assert checking is not compiled in\n"
 msgstr "%s: assert checking desteği derlenmemiştir\n"
 
-#: postmaster/postmaster.c:566
-#: postmaster/postmaster.c:579
+#: postmaster/postmaster.c:567
+#: postmaster/postmaster.c:580
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Daha fazla bilgi için \"%s --help\" yazın\n"
 
-#: postmaster/postmaster.c:577
+#: postmaster/postmaster.c:578
 #, c-format
 msgid "%s: invalid argument: \"%s\"\n"
 msgstr "%s: geçersiz parametre: \"%s\"\n"
 
-#: postmaster/postmaster.c:604
+#: postmaster/postmaster.c:605
 #, c-format
 msgid "%s: the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16\n"
 msgstr "%s: buffer sayısı (-B), izin verilen bağlantı sayısından (-N) en az iki kat daha büyük ve 16'dan daha küçük olmamalıdır\n"
 
-#: postmaster/postmaster.c:610
+#: postmaster/postmaster.c:611
 #, c-format
 msgid "%s: superuser_reserved_connections must be less than max_connections\n"
 msgstr "%s: superuser_reserved_connections parametresi, max_connections parametresinden küçük olmalıdır\n"
 
-#: postmaster/postmaster.c:619
+#: postmaster/postmaster.c:620
 #, c-format
 msgid "%s: invalid datetoken tables, please fix\n"
 msgstr "%s: datetoken tabloları bozuk, lütfen düzeltin\n"
 
-#: postmaster/postmaster.c:653
+#: postmaster/postmaster.c:654
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr "%s: uygun postgres çalıştırma dosysı bulunamadı"
 
-#: postmaster/postmaster.c:720
+#: postmaster/postmaster.c:721
 msgid "invalid list syntax for \"listen_addresses\""
 msgstr "\"listen_addresses\" için geçersiz sözdizimi"
 
-#: postmaster/postmaster.c:739
+#: postmaster/postmaster.c:740
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "\"%s\" için socket oluşturma hatası"
 
-#: postmaster/postmaster.c:768
+#: postmaster/postmaster.c:769
 msgid "could not create Unix-domain socket"
 msgstr "UNIX-domani socket oluşturma hatası"
 
-#: postmaster/postmaster.c:776
+#: postmaster/postmaster.c:777
 msgid "no socket created for listening"
 msgstr "dinlemek için socket oluşturulmadı"
 
-#: postmaster/postmaster.c:853
+#: postmaster/postmaster.c:854
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: harici PID dosyası \"%s\" yazılamadı: %s\n"
 
-#: postmaster/postmaster.c:946
+#: postmaster/postmaster.c:947
 #, c-format
 msgid "data directory \"%s\" does not exist"
 msgstr "veritabanı deizini \"%s\" mevcut değil"
 
-#: postmaster/postmaster.c:951
+#: postmaster/postmaster.c:952
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "\"%s\" dizininin eriğim haklarını okunamıyor: %m"
 
-#: postmaster/postmaster.c:966
+#: postmaster/postmaster.c:967
 #, c-format
 msgid "data directory \"%s\" has group or world access"
 msgstr "veritabanı dizini \"%s\" gruba ve herkese erişime açıktır"
 
-#: postmaster/postmaster.c:968
+#: postmaster/postmaster.c:969
 msgid "Permissions should be u=rwx (0700)."
 msgstr "Erişim hakları u=rwx (0700) olmalıdır."
 
-#: postmaster/postmaster.c:979
+#: postmaster/postmaster.c:980
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -6597,17 +6602,17 @@ msgstr ""
 "\"%s\" klasöründe arama yapılmıştır,\n"
 "ancak \"%s\" dosyası bulunamamıştır: %s\n"
 
-#: postmaster/postmaster.c:1024
+#: postmaster/postmaster.c:1025
 #, c-format
 msgid "%s: could not fork background process: %s\n"
 msgstr "%s: artalan süreci başlatma hatası: %s\n"
 
-#: postmaster/postmaster.c:1046
+#: postmaster/postmaster.c:1047
 #, c-format
 msgid "%s: could not dissociate from controlling TTY: %s\n"
 msgstr "%s: control TTY ile bağlantı kesilemiyor: %s\n"
 
-#: postmaster/postmaster.c:1069
+#: postmaster/postmaster.c:1070
 #, c-format
 msgid ""
 "%s is the PostgreSQL server.\n"
@@ -6616,7 +6621,7 @@ msgstr ""
 "%s, PostgreSQL dunucusudur.\n"
 "\n"
 
-#: postmaster/postmaster.c:1070
+#: postmaster/postmaster.c:1071
 #, c-format
 msgid ""
 "Usage:\n"
@@ -6627,83 +6632,83 @@ msgstr ""
 "  %s [OPTION]...\n"
 "\n"
 
-#: postmaster/postmaster.c:1071
+#: postmaster/postmaster.c:1072
 #: tcop/postgres.c:2125
 msgid "Options:\n"
 msgstr "Opsiyonlar:\n"
 
-#: postmaster/postmaster.c:1073
+#: postmaster/postmaster.c:1074
 #: tcop/postgres.c:2127
 msgid "  -A 1|0          enable/disable run-time assert checking\n"
 msgstr "  -A 1|0          çalışma zamanı assert denetimi açık/kapalı\n"
 
-#: postmaster/postmaster.c:1075
+#: postmaster/postmaster.c:1076
 #: tcop/postgres.c:2129
 msgid "  -B NBUFFERS     number of shared buffers\n"
 msgstr "  -B NBUFFERS     shared buffers sayısı\n"
 
-#: postmaster/postmaster.c:1076
+#: postmaster/postmaster.c:1077
 #: tcop/postgres.c:2130
 msgid "  -c NAME=VALUE   set run-time parameter\n"
 msgstr "  -c NAME=VALUE   çalışma parametresine değer ver\n"
 
-#: postmaster/postmaster.c:1077
+#: postmaster/postmaster.c:1078
 msgid "  -d 1-5          debugging level\n"
 msgstr "  -d 1-5          debug düzeyi\n"
 
-#: postmaster/postmaster.c:1078
+#: postmaster/postmaster.c:1079
 #: tcop/postgres.c:2132
 msgid "  -D DATADIR      database directory\n"
 msgstr "  -D DATADIR      veritabanı dizini\n"
 
-#: postmaster/postmaster.c:1079
+#: postmaster/postmaster.c:1080
 #: tcop/postgres.c:2135
 msgid "  -F              turn fsync off\n"
 msgstr "  -F              UNIX fsync() kullanımı engelle\n"
 
-#: postmaster/postmaster.c:1080
+#: postmaster/postmaster.c:1081
 msgid "  -h HOSTNAME     host name or IP address to listen on\n"
 msgstr "  -h HOSTNAME     sunucunun kullanacağı host name veya IP adresi\n"
 
-#: postmaster/postmaster.c:1081
+#: postmaster/postmaster.c:1082
 msgid "  -i              enable TCP/IP connections\n"
 msgstr "  -i              TCP/IP bağlantıları etkinleştir\n"
 
-#: postmaster/postmaster.c:1082
+#: postmaster/postmaster.c:1083
 msgid "  -k DIRECTORY    Unix-domain socket location\n"
 msgstr "  -k DIRECTORY    Unix-domain socket'in yeri\n"
 
-#: postmaster/postmaster.c:1084
+#: postmaster/postmaster.c:1085
 msgid "  -l              enable SSL connections\n"
 msgstr "  -l              SSL bağlantıları etkinleştir\n"
 
-#: postmaster/postmaster.c:1086
+#: postmaster/postmaster.c:1087
 msgid "  -N MAX-CONNECT  maximum number of allowed connections\n"
 msgstr "  -N MAX-CONNECT  maksimum bağlantı sayısı\n"
 
-#: postmaster/postmaster.c:1087
+#: postmaster/postmaster.c:1088
 msgid "  -o OPTIONS      pass \"OPTIONS\" to each server process\n"
 msgstr "  -o OPTIONS      her backend sunucusuna şu \"OPTIONS\"ları ilet\n"
 
-#: postmaster/postmaster.c:1088
+#: postmaster/postmaster.c:1089
 msgid "  -p PORT         port number to listen on\n"
 msgstr "  -p PORT         sunucunun kullanacağı port numarası\n"
 
-#: postmaster/postmaster.c:1089
+#: postmaster/postmaster.c:1090
 msgid "  -S              silent mode (start in background without logging output)\n"
 msgstr "  -S              sessiz modu (log kayırları yazmadan arka plânda çalıştır)\n"
 
-#: postmaster/postmaster.c:1090
+#: postmaster/postmaster.c:1091
 #: tcop/postgres.c:2142
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help          bu help ekranı göster\n"
 
-#: postmaster/postmaster.c:1091
+#: postmaster/postmaster.c:1092
 #: tcop/postgres.c:2143
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version       versyon bilgileri göster\n"
 
-#: postmaster/postmaster.c:1093
+#: postmaster/postmaster.c:1094
 #: tcop/postgres.c:2144
 msgid ""
 "\n"
@@ -6712,15 +6717,15 @@ msgstr ""
 "\n"
 "Program geliştirici opsiyonlar:\n"
 
-#: postmaster/postmaster.c:1094
+#: postmaster/postmaster.c:1095
 msgid "  -n              do not reinitialize shared memory after abnormal exit\n"
 msgstr "  -n              anormal çıkıştan sonra shared memorynin yeniden biçimlendirmesini engelle\n"
 
-#: postmaster/postmaster.c:1095
+#: postmaster/postmaster.c:1096
 msgid "  -s              send SIGSTOP to all backend servers if one dies\n"
 msgstr "  -s              bir backend sunucunun çöktüğünde tüm backend'lere SIGSTOP gönder\n"
 
-#: postmaster/postmaster.c:1097
+#: postmaster/postmaster.c:1098
 msgid ""
 "\n"
 "Please read the documentation for the complete list of run-time\n"
@@ -6735,209 +6740,209 @@ msgstr ""
 "\n"
 "Sistem hataları <pgsql-bugs@postgresql.org> adresine bildiriniz.\n"
 
-#: postmaster/postmaster.c:1159
+#: postmaster/postmaster.c:1160
 #, c-format
 msgid "select() failed in postmaster: %m"
 msgstr "pstmaster içinde select() başarısız: %m"
 
-#: postmaster/postmaster.c:1310
-#: postmaster/postmaster.c:1341
+#: postmaster/postmaster.c:1311
+#: postmaster/postmaster.c:1342
 msgid "incomplete startup packet"
 msgstr "başlatma paketi eksik"
 
-#: postmaster/postmaster.c:1322
+#: postmaster/postmaster.c:1323
 msgid "invalid length of startup packet"
 msgstr "başlatma paketinin uzunluğu geçirsiz"
 
-#: postmaster/postmaster.c:1374
+#: postmaster/postmaster.c:1375
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "SSL görüşme cevabı gönderme başarısız: %m"
 
-#: postmaster/postmaster.c:1403
+#: postmaster/postmaster.c:1404
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "frontend protokolü %u.%u desteklenememktedir: sunucunun desteklediği protokolleri %u.0 ila %u.%u arasında"
 
-#: postmaster/postmaster.c:1467
+#: postmaster/postmaster.c:1468
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr "geçersiz sartup packet düzeni: son bayt bir sonlandırıcı olmalıdır"
 
-#: postmaster/postmaster.c:1496
+#: postmaster/postmaster.c:1497
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "başlatma paketinde PostgreSQL kullanıcı adı belirtilmemiştir"
 
-#: postmaster/postmaster.c:1549
+#: postmaster/postmaster.c:1550
 msgid "the database system is starting up"
 msgstr "veritabanı başlatılıyor"
 
-#: postmaster/postmaster.c:1554
+#: postmaster/postmaster.c:1555
 msgid "the database system is shutting down"
 msgstr "veritabanı kapatılıyor"
 
-#: postmaster/postmaster.c:1559
+#: postmaster/postmaster.c:1560
 msgid "the database system is in recovery mode"
 msgstr "veritabanı kurtarma modundadır"
 
-#: postmaster/postmaster.c:1564
+#: postmaster/postmaster.c:1565
 #: storage/ipc/sinval.c:105
 #: storage/lmgr/proc.c:246
 msgid "sorry, too many clients already"
 msgstr "özgünüm, istemci sayısı çok fazla"
 
-#: postmaster/postmaster.c:1789
+#: postmaster/postmaster.c:1790
 msgid "received SIGHUP, reloading configuration files"
 msgstr "SIGHUP sinyali alınmıştır, konfigurasyon dosyaları yeniden okunuyor"
 
-#: postmaster/postmaster.c:1841
+#: postmaster/postmaster.c:1842
 msgid "received smart shutdown request"
 msgstr "smart shutdown isteği alındı"
 
-#: postmaster/postmaster.c:1877
+#: postmaster/postmaster.c:1878
 msgid "received fast shutdown request"
 msgstr "fast shutdown isteği alındı"
 
-#: postmaster/postmaster.c:1884
+#: postmaster/postmaster.c:1885
 msgid "aborting any active transactions"
 msgstr "actif transactionlar iptal ediliyor"
 
-#: postmaster/postmaster.c:1922
+#: postmaster/postmaster.c:1923
 msgid "received immediate shutdown request"
 msgstr "immediate shutdown isteği alındı"
 
-#: postmaster/postmaster.c:1995
+#: postmaster/postmaster.c:1996
 msgid "startup process"
 msgstr "sistem başlatma süreci"
 
-#: postmaster/postmaster.c:1998
+#: postmaster/postmaster.c:1999
 msgid "aborting startup due to startup process failure"
 msgstr "başlatma süreci hatası nedeniyle başlatma süreci durdurulmuştır"
 
-#: postmaster/postmaster.c:2061
+#: postmaster/postmaster.c:2062
 msgid "background writer process"
 msgstr "artalan writer süreci"
 
-#: postmaster/postmaster.c:2074
+#: postmaster/postmaster.c:2075
 msgid "archiver process"
 msgstr "archiver süreci"
 
-#: postmaster/postmaster.c:2091
+#: postmaster/postmaster.c:2092
 msgid "statistics collector process"
 msgstr "istatistik toplama süreci"
 
-#: postmaster/postmaster.c:2105
+#: postmaster/postmaster.c:2106
 msgid "system logger process"
 msgstr "system logger süreci"
 
-#: postmaster/postmaster.c:2126
+#: postmaster/postmaster.c:2127
 msgid "all server processes terminated; reinitializing"
 msgstr "tüm sunucu süreçleri durdurulmuş; shared memory ve spamothorları yeniden tanımlanıyor"
 
-#: postmaster/postmaster.c:2172
-#: postmaster/postmaster.c:2182
+#: postmaster/postmaster.c:2173
+#: postmaster/postmaster.c:2183
 msgid "server process"
 msgstr "sunucu süreci"
 
-#: postmaster/postmaster.c:2227
+#: postmaster/postmaster.c:2228
 msgid "terminating any other active server processes"
 msgstr "diğer aktif sunucu süreçleri durduruluyor"
 
-#: postmaster/postmaster.c:2324
+#: postmaster/postmaster.c:2325
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) exit code %d ile sonlandırılmış"
 
-#: postmaster/postmaster.c:2333
+#: postmaster/postmaster.c:2334
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d"
 msgstr "%s (PID %d) %d sinyali tarafından sonlandırılmış"
 
-#: postmaster/postmaster.c:2342
+#: postmaster/postmaster.c:2343
 #, c-format
 msgid "%s (PID %d) exited with unexpected status %d"
 msgstr "%s (PID %d) bekleynmeyen status kodu ile sonlandırılmış %d"
 
-#: postmaster/postmaster.c:2467
+#: postmaster/postmaster.c:2468
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "bağlantı için yeni süreç başlatılamadı: %m"
 
-#: postmaster/postmaster.c:2506
+#: postmaster/postmaster.c:2507
 msgid "could not fork new process for connection: "
 msgstr "bağlantı için yeni süreç başlatılamadı:"
 
-#: postmaster/postmaster.c:2645
+#: postmaster/postmaster.c:2646
 #, c-format
 msgid "getnameinfo_all() failed: %s"
 msgstr "getnameinfo_all() başarısız: %s"
 
-#: postmaster/postmaster.c:2654
+#: postmaster/postmaster.c:2655
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "connection alındı: host=%s port=%s"
 
-#: postmaster/postmaster.c:2726
+#: postmaster/postmaster.c:2727
 #, c-format
 msgid "connection authorized: user=%s database=%s"
 msgstr "bağlantı tanımı: kullanıcı=%s veritabanı=%s"
 
-#: postmaster/postmaster.c:2944
+#: postmaster/postmaster.c:2945
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "\"%s\" sunucu süreci başlatma hatası: %m"
 
-#: postmaster/postmaster.c:3550
+#: postmaster/postmaster.c:3551
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "startup süreci başlatma hatası: %m"
 
-#: postmaster/postmaster.c:3554
+#: postmaster/postmaster.c:3555
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "backgroun writer süreci başlatma hatası: %m"
 
-#: postmaster/postmaster.c:3558
+#: postmaster/postmaster.c:3559
 #, c-format
 msgid "could not fork process: %m"
 msgstr "süreç başlatma hatası: %m"
 
-#: postmaster/postmaster.c:3732
+#: postmaster/postmaster.c:3733
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "backend içinde kullanılacak duplicate socket %d oluşturulamadı: hata kodu %d"
 
-#: postmaster/postmaster.c:3761
+#: postmaster/postmaster.c:3762
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "inherited socket oluşturulamıyor: hata kodu %d\n"
 
-#: postmaster/postmaster.c:3790
-#: postmaster/postmaster.c:3797
+#: postmaster/postmaster.c:3791
+#: postmaster/postmaster.c:3798
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "\"%s\" backend parametreler dosyasından okunamıyor: %s\n"
 
-#: postmaster/postmaster.c:3806
+#: postmaster/postmaster.c:3807
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "\"%s\" dosyası silme hatası: %s\n"
 
-#: postmaster/postmaster.c:3819
+#: postmaster/postmaster.c:3820
 #, c-format
 msgid "could not map view of backend variables: error code %d\n"
 msgstr "backend değişkenleri map view hatası: hata kodu: %d\n"
 
-#: postmaster/postmaster.c:3828
+#: postmaster/postmaster.c:3829
 #, c-format
 msgid "could not unmap view of backend variables: error code %d\n"
 msgstr "backend değişkenleri unmap view hatası: hata kodu: %d\n"
 
-#: postmaster/postmaster.c:3835
+#: postmaster/postmaster.c:3836
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %d\n"
 msgstr "backend parameter değişkenler tanıtıcısı kapatılamadı: hata kodu %d\n"
 
-#: postmaster/postmaster.c:4077
+#: postmaster/postmaster.c:4078
 #, c-format
 msgid "could not wait on child process handle: error code %d\n"
 msgstr "çocuk süreç handle bekleme hatası: error kodu: %d\n"
@@ -6951,15 +6956,15 @@ msgstr "checkpoint işlemi çok sık çağırılıyor (%d saniye aralıkla)"
 msgid "Consider increasing the configuration parameter \"checkpoint_segments\"."
 msgstr "\"checkpoint_segments\" konfigurasyon parametresi ile bu aralığı büyütebilirsiniz."
 
-#: postmaster/bgwriter.c:490
+#: postmaster/bgwriter.c:488
 msgid "not enough shared memory for background writer"
 msgstr "arka planı writer için sharem memory yeterli değildir"
 
-#: postmaster/bgwriter.c:555
+#: postmaster/bgwriter.c:553
 msgid "checkpoint request failed"
 msgstr "checkpoint isteği başarısız"
 
-#: postmaster/bgwriter.c:556
+#: postmaster/bgwriter.c:554
 msgid "Consult the server log for details."
 msgstr "Ayrıntılar için sunucu günlük dosyasına bakın."
 
@@ -7213,7 +7218,7 @@ msgid "disabling automatic rotation (use SIGHUP to reenable)"
 msgstr "otomatik dönüşüm etkisiz (yeniden yetkilendirmek için SIGHUP kullanın)"
 
 #: rewrite/rewriteDefine.c:104
-#: rewrite/rewriteDefine.c:589
+#: rewrite/rewriteDefine.c:587
 #, c-format
 msgid "rule \"%s\" for relation \"%s\" already exists"
 msgstr "Rule \"%s\", \"%s\" için zaten mevcut"
@@ -7356,26 +7361,26 @@ msgstr "ON DELETE DO INSTEAD rule gerekmetedir."
 msgid "conditional utility statements are not implemented"
 msgstr "Conditional utility statements emplemente edilmemiş"
 
-#: storage/buffer/bufmgr.c:217
+#: storage/buffer/bufmgr.c:216
 #, c-format
 msgid "invalid page header in block %u of relation \"%s\"; zeroing out page"
 msgstr "\"%2$s\" tablosunun %1$u bloğunda geçersiz sayfa başlığı; sayfa sıfırlanıyor"
 
-#: storage/buffer/bufmgr.c:224
+#: storage/buffer/bufmgr.c:223
 #, c-format
 msgid "invalid page header in block %u of relation \"%s\""
 msgstr "\"%2$s\" tablosunun %1$u bloğunda geçersiz sayfa başlığı"
 
-#: storage/buffer/bufmgr.c:2017
+#: storage/buffer/bufmgr.c:2013
 #, c-format
 msgid "could not write block %u of %u/%u/%u"
 msgstr "%2$u/%3$u/%4$u nesnesinin %1$u bloku yazılamıyor"
 
-#: storage/buffer/bufmgr.c:2022
+#: storage/buffer/bufmgr.c:2018
 msgid "Multiple failures --- write error may be permanent."
 msgstr "Çoklu bozukluk --- yazma hatası kalıcı olabilir."
 
-#: storage/buffer/bufmgr.c:2040
+#: storage/buffer/bufmgr.c:2036
 #, c-format
 msgid "writing block %u of relation %u/%u/%u"
 msgstr "block: %u nesne %u/%u/%u yazılıyor"
@@ -7497,52 +7502,52 @@ msgstr "log dosyası segment %u, nesne %u/%u/%u fsync yapılamıyor: %m"
 msgid "could not open segment %u of relation %u/%u/%u (target block %u): %m"
 msgstr "segment %u, nesne%u/%u/%u (hedef blok %u) açılamıyor: %m"
 
-#: storage/smgr/smgr.c:239
+#: storage/smgr/smgr.c:261
 #, c-format
 msgid "could not close relation %u/%u/%u: %m"
 msgstr "nesne %u/%u/%u kapatma hatası: %m"
 
-#: storage/smgr/smgr.c:333
+#: storage/smgr/smgr.c:361
 #, c-format
 msgid "could not create relation %u/%u/%u: %m"
 msgstr "nesne %u/%u/%u oluşturma hatası: %m"
 
-#: storage/smgr/smgr.c:457
+#: storage/smgr/smgr.c:485
 #, c-format
 msgid "could not remove relation %u/%u/%u: %m"
 msgstr "nesne %u/%u/%u kaldırma hatası: %m"
 
-#: storage/smgr/smgr.c:478
+#: storage/smgr/smgr.c:506
 #, c-format
 msgid "could not extend relation %u/%u/%u: %m"
 msgstr "nesne %u/%u/%u genişletme hatası: %m"
 
-#: storage/smgr/smgr.c:482
+#: storage/smgr/smgr.c:510
 msgid "Check free disk space."
 msgstr "Yeterli disk alanı kontrol edin"
 
-#: storage/smgr/smgr.c:499
+#: storage/smgr/smgr.c:527
 #, c-format
 msgid "could not read block %u of relation %u/%u/%u: %m"
 msgstr "%2$u/%3$u/%4$u nesnesinin %1$u bloku okunamıyor: %5$m"
 
-#: storage/smgr/smgr.c:524
+#: storage/smgr/smgr.c:552
 #, c-format
 msgid "could not write block %u of relation %u/%u/%u: %m"
 msgstr "%2$u/%3$u/%4$u nesnesinin %1$u bloku yazılamıyor: %5$m"
 
-#: storage/smgr/smgr.c:554
+#: storage/smgr/smgr.c:582
 #, c-format
 msgid "could not count blocks of relation %u/%u/%u: %m"
 msgstr "%u/%u/%u nesnesinin blok sayısı belirlenemiyor: %m"
 
-#: storage/smgr/smgr.c:587
-#: storage/smgr/smgr.c:871
+#: storage/smgr/smgr.c:615
+#: storage/smgr/smgr.c:899
 #, c-format
 msgid "could not truncate relation %u/%u/%u to %u blocks: %m"
 msgstr "%u/%u/%u nesnesi %u blok botutuna kadar kesilemiyor: %m"
 
-#: storage/smgr/smgr.c:644
+#: storage/smgr/smgr.c:672
 #, c-format
 msgid "could not sync relation %u/%u/%u: %m"
 msgstr "nesne %u/%u/%u sync hatası: %m"
@@ -8202,9 +8207,9 @@ msgstr "\"current\" tarih/saat değeri artık desteklenmiyor"
 #: utils/adt/date.c:1337
 #: utils/adt/date.c:1374
 #: utils/adt/date.c:2252
-#: utils/adt/formatting.c:2895
-#: utils/adt/formatting.c:2920
-#: utils/adt/formatting.c:2979
+#: utils/adt/formatting.c:2897
+#: utils/adt/formatting.c:2922
+#: utils/adt/formatting.c:2981
 #: utils/adt/nabstime.c:570
 #: utils/adt/nabstime.c:613
 #: utils/adt/nabstime.c:643
@@ -8283,7 +8288,7 @@ msgstr "\"%s\"  \"interval\" saat dilim geçersizdir"
 
 #: utils/adt/datetime.c:1495
 #: utils/adt/datetime.c:2360
-#: utils/adt/formatting.c:3181
+#: utils/adt/formatting.c:3183
 #, c-format
 msgid "inconsistent use of year %04d and \"BC\""
 msgstr "tutarsız %04d tıl ve \"BC\" tanımının kullanımı"
@@ -8534,28 +8539,28 @@ msgstr "\"E\" desteklenmiyor"
 msgid "\"%s\" is not a number"
 msgstr "\"%s\" bir sayı değildir"
 
-#: utils/adt/formatting.c:1689
+#: utils/adt/formatting.c:1691
 msgid "invalid AM/PM string"
 msgstr "geçersiz AM/PM satırı"
 
-#: utils/adt/formatting.c:2035
+#: utils/adt/formatting.c:2037
 msgid "\"TZ\"/\"tz\" not supported"
 msgstr "\"TZ\"/\"tz\" desteklenmiyor"
 
-#: utils/adt/formatting.c:2045
+#: utils/adt/formatting.c:2047
 #, c-format
 msgid "invalid value for %s"
 msgstr "%s için geçersiz değer"
 
-#: utils/adt/formatting.c:3142
+#: utils/adt/formatting.c:3144
 msgid "AM/PM hour must be between 1 and 12"
 msgstr "AM/PM saati 1 ile 12 arasında olmalıdır"
 
-#: utils/adt/formatting.c:3216
+#: utils/adt/formatting.c:3218
 msgid "cannot calculate day of year without year information"
 msgstr "yıl bilgisi olmadan yılın günü hesaplanamaz"
 
-#: utils/adt/formatting.c:4082
+#: utils/adt/formatting.c:4084
 msgid "\"RN\" not supported"
 msgstr "\"RN\" desteklenmiyor"
 
@@ -9405,12 +9410,12 @@ msgstr "%s tipi için giriş fonksiyonu mevcut değil"
 msgid "no output function available for type %s"
 msgstr "%s tipi için çıkış fonksiyonu mevcut değil"
 
-#: utils/cache/relcache.c:3293
+#: utils/cache/relcache.c:3264
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "relation-cache tanımlama dosyası \"%s\" açılamadı: %m"
 
-#: utils/cache/relcache.c:3295
+#: utils/cache/relcache.c:3266
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Devam ediyorum, ama bu işlem yanlıştır."
 
@@ -9639,7 +9644,7 @@ msgstr "\"%s\" lock dosyası okuma hatası: %m"
 #: utils/init/miscinit.c:589
 #, c-format
 msgid "lock file \"%s\" already exists"
-msgstr "\"%s\" lock dosyası mevcuttur: %m"
+msgstr "\"%s\" lock dosyası zaten mevcuttur"
 
 #: utils/init/miscinit.c:593
 #, c-format
@@ -10920,35 +10925,50 @@ msgstr "bellek yetersiz\n"
 msgid "Error setting junction for %s: %s"
 msgstr "%s için junction ayarlama hatası: %s"
 
-#: ../port/exec.c:193
-#: ../port/exec.c:306
-#: ../port/exec.c:349
+#: ../port/exec.c:194
+#: ../port/exec.c:308
+#: ../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "geçerli dizin tespit edilemedi: %s"
 
-#: ../port/exec.c:322
-#: ../port/exec.c:358
+#: ../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "geçersiz ikili (binary) \"%s\""
+
+#: ../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "\"%s\" ikili (binary) dosyası okunamadı"
+
+#: ../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "\"%s\"  çalıştırmak için bulunamadı"
+
+#: ../port/exec.c:324
+#: ../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
 
-#: ../port/exec.c:337
+#: ../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "symbolic link \"%s\" okuma hatası"
 
-#: ../port/exec.c:585
+#: ../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "alt süreç %d çıkış koduyla sonuçlandırılmıştır"
 
-#: ../port/exec.c:588
+#: ../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 
-#: ../port/exec.c:591
+#: ../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"

@@ -4,7 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2005-01-07 12:28-0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-01-15 12:04-0200\n"
 "PO-Revision-Date: 2004-12-02 21:06-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
 "Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas."
@@ -71,8 +72,8 @@ msgid ""
 "own the server process.\n"
 msgstr ""
 "%s: não pode ser executado como root\n"
-"Por favor entre (utilizando, i.e., \"su\") como usuário (sem privilégio) que "
-"será\n"
+"Por favor entre (utilizando, i.e., \"su\") como usuário (sem privilégios) "
+"que será\n"
 "o dono do processo do servidor.\n"
 
 #: initdb.c:687
@@ -118,10 +119,12 @@ msgstr ""
 "o diretório errado com a invocação da opção -L.\n"
 
 #: initdb.c:1084
+#, c-format
 msgid "selecting default max_connections ... "
 msgstr "selecionando max_connections padrão ... "
 
 #: initdb.c:1120
+#, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "selecionando shared_buffers padrão ... "
 
@@ -157,8 +160,9 @@ msgid "Enter it again: "
 msgstr "Digite-a novamente: "
 
 #: initdb.c:1385
+#, c-format
 msgid "Passwords didn't match.\n"
-msgstr "Senhas não combinam.\n"
+msgstr "Senhas não correspondem.\n"
 
 #: initdb.c:1412
 #, c-format
@@ -166,6 +170,7 @@ msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s: não pôde ler senha do arquivo \"%s\": %s\n"
 
 #: initdb.c:1425
+#, c-format
 msgid "setting password ... "
 msgstr "definindo senha ... "
 
@@ -212,6 +217,7 @@ msgid "copying template1 to template0 ... "
 msgstr "copiando template1 para template0 ... "
 
 #: initdb.c:1930
+#, c-format
 msgid "caught signal\n"
 msgstr "sinal foi recebido\n"
 
@@ -221,6 +227,7 @@ msgid "could not write to child process: %s\n"
 msgstr "não pôde escrever em processo filho: %s\n"
 
 #: initdb.c:1944
+#, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
@@ -239,6 +246,7 @@ msgstr ""
 "\n"
 
 #: initdb.c:2060
+#, c-format
 msgid "Usage:\n"
 msgstr "Uso:\n"
 
@@ -248,6 +256,7 @@ msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [OPÇÃO]... [DIRDADOS]\n"
 
 #: initdb.c:2062
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
@@ -256,17 +265,20 @@ msgstr ""
 "Opções:\n"
 
 #: initdb.c:2063
+#, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr ""
 " [-D, --pgdata=]DIRDADOS       local do agrupamento de banco de dados\n"
 
 #: initdb.c:2064
+#, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr ""
 "  -E, --encoding=CODIFICAÇÃO  ajusta a codificação padrão para novos bancos "
 "de dados\n"
 
 #: initdb.c:2065
+#, c-format
 msgid ""
 "  --locale=LOCALE           initialize database cluster with given locale\n"
 msgstr ""
@@ -274,6 +286,7 @@ msgstr ""
 "com a localidade informada\n"
 
 #: initdb.c:2066
+#, c-format
 msgid ""
 "  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
@@ -290,10 +303,12 @@ msgstr ""
 "                               como padrão)\n"
 
 #: initdb.c:2071
+#, c-format
 msgid "  --no-locale               equivalent to --locale=C\n"
 msgstr "  --no-locale                  equivalente a --locale=C\n"
 
 #: initdb.c:2072
+#, c-format
 msgid ""
 "  -A, --auth=METHOD         default authentication method for local "
 "connections\n"
@@ -302,16 +317,19 @@ msgstr ""
 "locais\n"
 
 #: initdb.c:2073
+#, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr ""
 "  -U, --username=NOME          nome do super-usuário do banco de dados\n"
 
 #: initdb.c:2074
+#, c-format
 msgid ""
 "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt               pergunta senha do novo super-usuário\n"
 
 #: initdb.c:2075
+#, c-format
 msgid ""
 "  --pwfile=FILE             read password for the new superuser from file\n"
 msgstr ""
@@ -319,15 +337,18 @@ msgstr ""
 "arquivo\n"
 
 #: initdb.c:2076
+#, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                   mostra essa ajuda e sai\n"
 
 #: initdb.c:2077
+#, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr ""
 "  -V, --version                mostra informação sobre a versão e sai\n"
 
 #: initdb.c:2078
+#, c-format
 msgid ""
 "\n"
 "Less commonly used options:\n"
@@ -336,22 +357,27 @@ msgstr ""
 "Opções utilizadas com menos frequência:\n"
 
 #: initdb.c:2079
+#, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug                  mostra saída da depuração\n"
 
 #: initdb.c:2080
+#, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                   mostra definições internas\n"
 
 #: initdb.c:2081
+#, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRETÓRIO                 onde encontrar os arquivos de entrada\n"
 
 #: initdb.c:2082
+#, c-format
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean                não remove após erros\n"
 
 #: initdb.c:2083
+#, c-format
 msgid ""
 "\n"
 "If the data directory is not specified, the environment variable PGDATA\n"
@@ -362,6 +388,7 @@ msgstr ""
 "é utilizada.\n"
 
 #: initdb.c:2085
+#, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
@@ -370,10 +397,12 @@ msgstr ""
 "Reporte erros a <pgsql-bugs@postgresql.org>.\n"
 
 #: initdb.c:2178
+#, c-format
 msgid "Running in debug mode.\n"
 msgstr "Executando no modo de depuração.\n"
 
 #: initdb.c:2182
+#, c-format
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Executando no modo sem limpeza. Erros não serão removidos.\n"
 
@@ -573,35 +602,51 @@ msgstr ""
 "\n"
 
 #: ../../port/dirmod.c:75 ../../port/dirmod.c:88 ../../port/dirmod.c:101
+#, c-format
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "não pôde identificar diretório atual: %s"
 
-#: ../../port/exec.c:322 ../../port/exec.c:358
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binário \"%s\" é inválido"
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "não pôde ler o binário \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "não pôde encontrar o \"%s\" para executá-lo"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "não pôde mudar diretório para \"%s\""
 
-#: ../../port/exec.c:337
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "não pôde ler link simbólico \"%s\""
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "processo filho terminou com código de saída %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "processo filho foi terminado pelo sinal %d"
 
-#: ../../port/exec.c:591
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "processo filho terminou com status inesperado %d"
+msgstr "processo filho terminou com status desconhecido %d"

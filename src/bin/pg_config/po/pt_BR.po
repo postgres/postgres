@@ -4,10 +4,12 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-12-08 15:33-0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-01-15 12:04-0200\n"
 "PO-Revision-Date: 2004-10-19 00:44-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
-"Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas.postgresql.org.br>\n"
+"Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas."
+"postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -24,6 +26,7 @@ msgstr ""
 "\n"
 
 #: pg_config.c:37
+#, c-format
 msgid "Usage:\n"
 msgstr "Uso:\n"
 
@@ -37,14 +40,17 @@ msgstr ""
 "\n"
 
 #: pg_config.c:39
+#, c-format
 msgid "Options:\n"
 msgstr "Opções:\n"
 
 #: pg_config.c:40
+#, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr "  --bindir              mostra local dos executáveis\n"
 
 #: pg_config.c:41
+#, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
@@ -54,25 +60,30 @@ msgstr ""
 "                        com cliente\n"
 
 #: pg_config.c:43
+#, c-format
 msgid ""
 "  --includedir-server   show location of C header files for the server\n"
 msgstr ""
 "  --includedir-server   mostra local dos arquivos de cabeçalho do servidor\n"
 
 #: pg_config.c:44
+#, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr "  --libdir              mostra local das bibliotecas objeto\n"
 
 #: pg_config.c:45
+#, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr ""
 "  --pkglibdir           mostra local dos módulos carregáveis dinamicamente\n"
 
 #: pg_config.c:46
+#, c-format
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr "  --pgxs                mostra local do makefile extensível\n"
 
 #: pg_config.c:47
+#, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
@@ -82,10 +93,12 @@ msgstr ""
 "                        o PostgreSQL foi gerado\n"
 
 #: pg_config.c:49
+#, c-format
 msgid "  --version             show the PostgreSQL version, then exit\n"
 msgstr "  --version             mostra a versão do PostgreSQL e sai\n"
 
 #: pg_config.c:50
+#, c-format
 msgid ""
 "  --help                show this help, then exit\n"
 "\n"
@@ -94,6 +107,7 @@ msgstr ""
 "\n"
 
 #: pg_config.c:51
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Reporte erros a <pgsql-bugs@postgresql.org>.\n"
 
@@ -121,32 +135,47 @@ msgstr "%s: argumento inválido: %s\n"
 msgid "%s: could not find own executable\n"
 msgstr "%s: não pôde encontrar o próprio executável\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "não pôde identificar diretório atual: %s"
 
-#: ../../port/exec.c:323 ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binário \"%s\" é inválido"
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "não pôde ler o binário \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "não pôde encontrar o \"%s\" para executá-lo"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "não pôde mudar diretório para \"%s\""
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "não pôde ler link simbólico \"%s\""
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "processo filho terminou com código de saída %d"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "processo filho foi terminado pelo sinal %d"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "processo filho terminou com status inesperado %d"
+msgstr "processo filho terminou com status desconhecido %d"

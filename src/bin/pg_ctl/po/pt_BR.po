@@ -4,7 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2005-01-07 12:28-0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-01-15 12:04-0200\n"
 "PO-Revision-Date: 2004-10-27 18:36-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
 "Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas."
@@ -82,6 +83,7 @@ msgid "waiting for postmaster to start..."
 msgstr "esperando o postmaster iniciar..."
 
 #: pg_ctl.c:586
+#, c-format
 msgid "could not start postmaster\n"
 msgstr "não pôde iniciar o postmaster\n"
 
@@ -134,6 +136,7 @@ msgid "%s: postmaster does not shut down\n"
 msgstr "%s: postmaster não desligou\n"
 
 #: pg_ctl.c:659 pg_ctl.c:725
+#, c-format
 msgid "postmaster stopped\n"
 msgstr "postmaster parado\n"
 
@@ -250,6 +253,7 @@ msgstr ""
 "\n"
 
 #: pg_ctl.c:1102
+#, c-format
 msgid "Usage:\n"
 msgstr "Uso:\n"
 
@@ -300,6 +304,7 @@ msgid "  %s unregister [-N SERVICENAME]\n"
 msgstr "  %s unregister [-N NOME_SERVIÇO]\n"
 
 #: pg_ctl.c:1115
+#, c-format
 msgid ""
 "\n"
 "Common options:\n"
@@ -308,34 +313,40 @@ msgstr ""
 "Opções comuns:\n"
 
 #: pg_ctl.c:1116
+#, c-format
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
 msgstr ""
-"  -D, --pgdata DIRDADOS  localização da área de armazenamento dos bancos de "
-"dados\n"
+"  -D, --pgdata DIRDADOS  local da área de armazenamento dos bancos de dados\n"
 
 #: pg_ctl.c:1117
+#, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr ""
 "  -s, --silent           mostra somente erros, nenhuma mensagem informativa\n"
 
 #: pg_ctl.c:1118
+#, c-format
 msgid "  -w                     wait until operation completes\n"
 msgstr "  -w                     espera até que a operação seja completada\n"
 
 #: pg_ctl.c:1119
+#, c-format
 msgid "  -W                     do not wait until operation completes\n"
 msgstr ""
 "  -W                     não espera até que a operação seja completada\n"
 
 #: pg_ctl.c:1120
+#, c-format
 msgid "  --help                 show this help, then exit\n"
 msgstr "  --help                 mostra esta ajuda e sai\n"
 
 #: pg_ctl.c:1121
+#, c-format
 msgid "  --version              output version information, then exit\n"
 msgstr "  --version              mostra informação sobre a versão e sai\n"
 
 #: pg_ctl.c:1122
+#, c-format
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
@@ -344,11 +355,13 @@ msgstr ""
 "\n"
 
 #: pg_ctl.c:1123
+#, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
 msgstr ""
 "Se a opção -D for omitida, a variável de ambiente PGDATA é utilizada.\n"
 
 #: pg_ctl.c:1125
+#, c-format
 msgid ""
 "\n"
 "Options for start or restart:\n"
@@ -357,12 +370,14 @@ msgstr ""
 "Opções para início ou reinício:\n"
 
 #: pg_ctl.c:1126
+#, c-format
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
 "  -l, --log ARQUIVO      escreve (ou concatena) log do servidor para "
 "ARQUIVO\n"
 
 #: pg_ctl.c:1127
+#, c-format
 msgid ""
 "  -o OPTIONS             command line options to pass to the postmaster\n"
 "                         (PostgreSQL server executable)\n"
@@ -372,10 +387,12 @@ msgstr ""
 "                         (executável do servidor PostgreSQL)\n"
 
 #: pg_ctl.c:1129
+#, c-format
 msgid "  -p PATH-TO-POSTMASTER  normally not necessary\n"
 msgstr "  -p CAMINHO-PARA-POSTMASTER   normalmente não é necessário\n"
 
 #: pg_ctl.c:1131
+#, c-format
 msgid ""
 "\n"
 "Options for stop or restart:\n"
@@ -384,11 +401,13 @@ msgstr ""
 "Opções para desligar ou reiniciar:\n"
 
 #: pg_ctl.c:1132
+#, c-format
 msgid "  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr ""
 "  -m MODO-DESLIGAMENTO   pode ser \"smart\", \"fast\" ou \"immediate\"\n"
 
 #: pg_ctl.c:1134
+#, c-format
 msgid ""
 "\n"
 "Shutdown modes are:\n"
@@ -397,14 +416,17 @@ msgstr ""
 "Modos de desligamento são:\n"
 
 #: pg_ctl.c:1135
+#, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart       sai depois que todos os clientes desconectarem\n"
 
 #: pg_ctl.c:1136
+#, c-format
 msgid "  fast        quit directly, with proper shutdown\n"
 msgstr "  fast        sai diretamente, com desligamento apropriado\n"
 
 #: pg_ctl.c:1137
+#, c-format
 msgid ""
 "  immediate   quit without complete shutdown; will lead to recovery on "
 "restart\n"
@@ -413,6 +435,7 @@ msgstr ""
 "durante o reinício\n"
 
 #: pg_ctl.c:1139
+#, c-format
 msgid ""
 "\n"
 "Allowed signal names for kill:\n"
@@ -421,6 +444,7 @@ msgstr ""
 "Sinais permitidos para sinalização:\n"
 
 #: pg_ctl.c:1143
+#, c-format
 msgid ""
 "\n"
 "Options for register and unregister:\n"
@@ -429,6 +453,7 @@ msgstr ""
 "Opções para registro ou desregistro:\n"
 
 #: pg_ctl.c:1144
+#, c-format
 msgid ""
 "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr ""
@@ -436,15 +461,18 @@ msgstr ""
 "PostgreSQL\n"
 
 #: pg_ctl.c:1145
+#, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
 msgstr "  -P SENHA        senha da conta que registrou o servidor PostgreSQL\n"
 
 #: pg_ctl.c:1146
+#, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
 msgstr ""
 "  -U USUÁRIO      nome do usuário que registrou o servidor PostgreSQL\n"
 
 #: pg_ctl.c:1149
+#, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
@@ -455,12 +483,12 @@ msgstr ""
 #: pg_ctl.c:1174
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s: modo de desligamento \"%s\" inválido\n"
+msgstr "%s: modo de desligamento \"%s\" desconhecido\n"
 
 #: pg_ctl.c:1207
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
-msgstr "%s: nome de sinal \"%s\" inválido\n"
+msgstr "%s: nome de sinal \"%s\" desconhecido\n"
 
 #: pg_ctl.c:1272
 #, c-format
@@ -491,7 +519,7 @@ msgstr "%s: faltando argumento para modo kill\n"
 #: pg_ctl.c:1413
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s: modo de operação \"%s\" inválido\n"
+msgstr "%s: modo de operação \"%s\" desconhecido\n"
 
 #: pg_ctl.c:1423
 #, c-format
@@ -506,32 +534,47 @@ msgstr ""
 "%s: nenhum diretório de banco de dados especificado e variável de ambiente "
 "PGDATA não foi definida\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "não pôde identificar diretório atual: %s"
 
-#: ../../port/exec.c:322 ../../port/exec.c:358
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binário \"%s\" é inválido"
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "não pôde ler o binário \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "não pôde encontrar o \"%s\" para executá-lo"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "não pôde mudar diretório para \"%s\""
 
-#: ../../port/exec.c:337
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "não pôde ler link simbólico \"%s\""
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "processo filho terminou com código de saída %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "processo filho foi terminado pelo sinal %d"
 
-#: ../../port/exec.c:591
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "processo filho terminou com status inesperado %d"
+msgstr "processo filho terminou com status desconhecido %d"
