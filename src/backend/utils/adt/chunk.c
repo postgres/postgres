@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.4 1996/11/08 05:59:40 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.5 1997/03/02 01:34:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ GetChunkSize(FILE *fd,
         for (j = 0, dmax[i] = 1; j < N; j++)
 	    if (dmax[i] < A[j][i])
 		dmax[i] = A[j][i];
-    csize = _PAGE_SIZE_/baseSize;
+    csize = BLCKSZ/baseSize;
     
     _FindBestChunk (csize, dmax, d, ndim, A, N);
     
@@ -242,7 +242,7 @@ get_next(int d[], int k, int C, int dmax[])
 }
 
 #ifdef LOARRAY
-static char a_chunk[_PAGE_SIZE_ + 4];	 /* 4 since a_chunk is in 
+static char a_chunk[BLCKSZ + 4];	 /* 4 since a_chunk is in 
 					    varlena format */
 #endif
 

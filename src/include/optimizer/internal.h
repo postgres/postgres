@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.2 1996/11/06 10:30:18 scrappy Exp $
+ * $Id: internal.h,v 1.3 1997/03/02 01:34:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
  *    
  */
 #define _CPU_PAGE_WEIGHT_  0.065      /* CPU-to-page cost weighting factor */
-#define _PAGE_SIZE_    8192           /* BLCKSZ (from ../h/bufmgr.h) */
 #define _MAX_KEYS_     INDEX_MAX_KEYS /* maximum number of keys in an index */
 #define _TID_SIZE_     6              /* sizeof(itemid) (from ../h/itemid.h) */
 
