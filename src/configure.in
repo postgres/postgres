@@ -548,6 +548,15 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
+AC_MSG_CHECKING(for type of last arg to accept)
+AC_TRY_COMPILE([#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+],
+[int a = accept(1, (struct sockaddr *) 0, (size_t *) 0);],
+[AC_DEFINE(SOCKET_SIZE_TYPE, size_t) AC_MSG_RESULT(size_t)],
+[AC_DEFINE(SOCKET_SIZE_TYPE, int) AC_MSG_RESULT(int)])
+
 dnl Check for any "odd" conditions
 AC_MSG_CHECKING(for int timezone)
 AC_TRY_LINK([#include <time.h>],

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.84 1998/10/01 01:40:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.85 1998/10/13 20:44:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,7 +503,7 @@ connectDB(PGconn *conn)
 	struct hostent *hp;
 	StartupPacket sp;
 	AuthRequest areq;
-	int			laddrlen;
+	SOCKET_SIZE_TYPE	laddrlen;
 	int			portno,
 				family;
 	char		beresp;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.56 1998/10/07 03:45:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.57 1998/10/13 20:44:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -653,8 +653,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 int
 StreamConnection(int server_fd, Port *port)
 {
-	int			len,
-				addrlen;
+	int			len;
+	SOCKET_SIZE_TYPE	addrlen;
 	int			family = port->raddr.sa.sa_family;
 
 	/* accept connection (and fill in the client (remote) address) */
@@ -725,8 +725,8 @@ StreamClose(int sock)
 int
 StreamOpen(char *hostName, short portName, Port *port)
 {
-	int			len,
-				err;
+	SOCKET_SIZE_TYPE	len;
+	int			err;
 	struct hostent *hp;
 	extern int	errno;
 
