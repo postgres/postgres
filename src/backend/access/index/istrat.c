@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.4 1996/10/23 07:38:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.5 1996/10/31 08:32:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
  
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
 #include "storage/fd.h"

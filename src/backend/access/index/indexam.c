@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.4 1996/10/21 07:38:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.5 1996/10/31 08:32:22 scrappy Exp $
  *
  * INTERFACE ROUTINES
  *	index_open 	- open an index relation by relationId
@@ -67,6 +67,7 @@
  
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
 #include "storage/fd.h"   
@@ -101,6 +102,7 @@
 
 #include "utils/palloc.h"
 
+#include <sys/types.h>
 #include "storage/ipc.h"
 #include "storage/spin.h"
 #include "utils/hsearch.h"

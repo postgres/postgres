@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.3 1996/10/21 07:38:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.4 1996/10/31 08:32:21 scrappy Exp $
  *
  * NOTES
  *    many of the old access method routines have been turned into
@@ -48,6 +48,7 @@
 
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"   
 #include "access/tupdesc.h"
 #include "storage/fd.h"
@@ -75,6 +76,8 @@
 #include "access/sdir.h"
 
 #include "lib/dllist.h"
+#include "lib/fstack.h"
+#include "utils/memutils.h"
 #include "nodes/memnodes.h"
 #include "utils/catcache.h"
 
