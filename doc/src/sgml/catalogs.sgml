@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.77 2003/11/01 01:56:28 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.78 2003/11/02 12:53:57 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -3327,7 +3327,7 @@
    A composite type is automatically created for each table in the database, to
    represent the row structure of the table.  It is also possible to create
    composite types with <command>CREATE TYPE AS</command> and
-   derived types with <command>CREATE DOMAIN</command>.
+   domains with <command>CREATE DOMAIN</command>.
   </para>
 
   <table>
@@ -3403,11 +3403,11 @@
       <entry></entry>
       <entry>
        <structfield>typtype</structfield> is <literal>b</literal> for
-       a base type, <literal>c</literal> for a composite type (i.e.,
-       a table's row type), <literal>d</literal> for a derived type (i.e.,
-       a domain), or <literal>p</literal> for a pseudo-type.  See also
-       <structfield>typrelid</structfield>
-       and <structfield>typbasetype</structfield>.
+       a base type, <literal>c</literal> for a composite type (i.e., a
+       table's row type), <literal>d</literal> for a domain, or
+       <literal>p</literal> for a pseudo-type.  See also
+       <structfield>typrelid</structfield> and
+       <structfield>typbasetype</structfield>.
       </entry>
      </row>
 
@@ -3588,9 +3588,9 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry><para>
-       If this is a derived type (see <structfield>typtype</structfield>),
+       If this is a domain (see <structfield>typtype</structfield>),
        then <structfield>typbasetype</structfield> identifies
-       the type that this one is based on.  Zero if not a derived type.
+       the type that this one is based on.  Zero if not a domain.
       </para></entry>
      </row>
 
