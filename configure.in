@@ -839,9 +839,8 @@ AC_CHECK_FUNC(inet_aton,
 AC_SUBST(INET_ATON)
 AC_CHECK_FUNC(strerror,
 	      AC_DEFINE(HAVE_STRERROR),
-	      [STRERROR='strerror.o' STRERROR2='../../backend/port/strerror.o'])
+	      STRERROR='strerror.o')
 AC_SUBST(STRERROR)
-AC_SUBST(STRERROR2)
 AC_CHECK_FUNC(strdup,
 	      AC_DEFINE(HAVE_STRDUP),
 	      STRDUP='../../utils/strdup.o')
