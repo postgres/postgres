@@ -275,6 +275,7 @@ reload with
      match the name of the database. Also, the restored database can
      have an arbitrary new name, so this mechanism is also suitable
      for renaming databases.
+    </para>
    </sect2>
   </sect1>
 </chapter>
