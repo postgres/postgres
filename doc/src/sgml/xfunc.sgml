@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.92 2004/12/30 21:45:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.93 2005/01/07 22:40:46 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -111,6 +111,39 @@ $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.92 2004/12/30 21:45:37 tgl Exp $
     <type>void</>, the last statement must be a <command>SELECT</>.
    </para>
 
+    <para>
+     Any collection of commands in the  <acronym>SQL</acronym>
+     language can be packaged together and defined as a function.
+     Besides <command>SELECT</command> queries, the commands can include data
+     modification queries (<command>INSERT</command>,
+     <command>UPDATE</command>, and <command>DELETE</command>), as well as
+     other SQL commands. (The only exception is that you can't put
+     <command>BEGIN</>, <command>COMMIT</>, <command>ROLLBACK</>, or
+     <command>SAVEPOINT</> commands into a <acronym>SQL</acronym> function.)
+     However, the final command 
+     must be a <command>SELECT</command> that returns whatever is
+     specified as the function's return type.  Alternatively, if you
+     want to define a SQL function that performs actions but has no
+     useful value to return, you can define it as returning <type>void</>.
+     In that case, the function body must not end with a <command>SELECT</command>.
+     For example, this function removes rows with negative salaries from
+     the <literal>emp</> table:
+
+<screen>
+CREATE FUNCTION clean_emp() RETURNS void AS '
+    DELETE FROM emp
+        WHERE salary &lt; 0;
+' LANGUAGE SQL;
+
+SELECT clean_emp();
+
+ clean_emp
+-----------
+
+(1 row)
+</screen>
+    </para>
+
    <para>
     The syntax of the <command>CREATE FUNCTION</command> command requires
     the function body to be written as a string constant.  It is usually
@@ -219,35 +252,6 @@ $$ LANGUAGE SQL;
 
      which adjusts the balance and returns the new balance.
     </para>
-
-    <para>
-     Any collection of commands in the  <acronym>SQL</acronym>
-     language can be packaged together and defined as a function.
-     Besides <command>SELECT</command> queries,
-     the commands can include data modification (i.e.,
-     <command>INSERT</command>, <command>UPDATE</command>, and
-     <command>DELETE</command>).  However, the final command 
-     must be a <command>SELECT</command> that returns whatever is
-     specified as the function's return type.  Alternatively, if you
-     want to define a SQL function that performs actions but has no
-     useful value to return, you can define it as returning <type>void</>.
-     In that case, the function body must not end with a <command>SELECT</command>.
-     For example:
-
-<screen>
-CREATE FUNCTION clean_emp() RETURNS void AS $$
-    DELETE FROM emp
-        WHERE salary &lt;= 0;
-$$ LANGUAGE SQL;
-
-SELECT clean_emp();
-
- clean_emp
------------
-
-(1 row)
-</screen>
-    </para>
    </sect2>
 
    <sect2>
@@ -282,7 +286,7 @@ SELECT name, double_salary(emp.*) AS dream
 
  name | dream
 ------+-------
- Sam  |  2400
+ Bill |  8400
 </screen>
     </para>
 
@@ -307,7 +311,7 @@ SELECT name, double_salary(emp) AS dream
      on-the-fly.  This can be done with the <literal>ROW</> construct.
      For example, we could adjust the data being passed to the function:
 <screen>
-SELECT name, double_salary(row(name, salary*1.1, age, cubicle)) AS dream
+SELECT name, double_salary(ROW(name, salary*1.1, age, cubicle)) AS dream
     FROM emp;
 </screen>
     </para>
@@ -320,7 +324,7 @@ SELECT name, double_salary(row(name, salary*1.1, age, cubicle)) AS dream
 <programlisting>
 CREATE FUNCTION new_emp() RETURNS emp AS $$
     SELECT text 'None' AS name,
-        1000 AS salary,
+        1000.0 AS salary,
         25 AS age,
         point '(2,2)' AS cubicle;
 $$ LANGUAGE SQL;
@@ -358,9 +362,46 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
     </para>     
 
     <para>
-     When you call a function that returns a row (composite type) in a
-     SQL expression, you might want only one field (attribute) from its
-     result.  You can do that with syntax like this:
+     A different way to define the same function is:
+
+<programlisting>
+CREATE FUNCTION new_emp() RETURNS emp AS $$
+    SELECT ROW('None', 1000.0, 25, '(2,2)')::emp;
+$$ LANGUAGE SQL;
+</programlisting>
+
+     Here we wrote a <command>SELECT</> that returns just a single
+     column of the correct composite type.  This isn't really better
+     in this situation, but it is a handy alternative in some cases
+     &mdash; for example, if we need to compute the result by calling
+     another function that returns the desired composite value.
+    </para>     
+
+    <para>
+     We could call this function directly in either of two ways:
+
+<screen>
+SELECT new_emp();
+
+         new_emp
+--------------------------
+ (None,1000.0,25,"(2,2)")
+
+SELECT * FROM new_emp();
+
+ name | salary | age | cubicle
+------+--------+-----+---------
+ None | 1000.0 |  25 | (2,2)
+</screen>
+
+     The second way is described more fully in <xref
+     linkend="xfunc-sql-table-functions">.
+    </para>     
+
+    <para>
+     When you use a function that returns a composite type,
+     you might want only one field (attribute) from its result.
+     You can do that with syntax like this:
 
 <screen>
 SELECT (new_emp()).name;
@@ -398,15 +439,14 @@ SELECT name(new_emp());
 
 <screen>
 -- This is the same as:
--- SELECT emp.name AS youngster FROM emp WHERE emp.age &lt; 30
+-- SELECT emp.name AS youngster FROM emp WHERE emp.age &lt; 30;
 
-SELECT name(emp) AS youngster
-    FROM emp
-    WHERE age(emp) &lt; 30;
+SELECT name(emp) AS youngster FROM emp WHERE age(emp) &lt; 30;
 
  youngster
 -----------
  Sam
+ Andy
 </screen>
     </para>
 
@@ -433,7 +473,7 @@ SELECT getname(new_emp());
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-sql-table-functions">
     <title><acronym>SQL</acronym> Functions as Table Sources</title>
 
     <para>
