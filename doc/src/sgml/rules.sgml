@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.33 2003/12/13 23:59:06 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.34 2004/03/09 05:05:40 momjian Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -873,7 +873,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 
         <ListItem>
 	<Para>
-	    They can be <literal>INSTEAD</> or not.
+	    They can be <literal>INSTEAD</> or <literal>ALSO</> (default).
 	</Para>
 	</ListItem>
 
@@ -904,7 +904,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 <ProgramListing>
 CREATE RULE <replaceable>rule_name</> AS ON <replaceable>event</>
     TO <replaceable>object</> [WHERE <replaceable>rule_qualification</>]
-    DO [INSTEAD] [<replaceable>action</> | (<replaceable>actions</>) | NOTHING];
+    DO [ALSO|INSTEAD] [<replaceable>action</> | (<replaceable>actions</>) | NOTHING];
 </ProgramListing>
 
     in mind.
@@ -920,7 +920,7 @@ CREATE RULE <replaceable>rule_name</> AS ON <replaceable>event</>
     Initially the query-tree list is empty.
     There can be zero (<literal>NOTHING</> key word), one, or multiple actions.
     To simplify, we will look at a rule with one action. This rule
-    can have a qualification or not and it can be <literal>INSTEAD</> or not.
+    can have a qualification or not and it can be <literal>INSTEAD</> or <literal>ALSO</> (default).
 </Para>
 
 <Para>
@@ -937,7 +937,7 @@ CREATE RULE <replaceable>rule_name</> AS ON <replaceable>event</>
 
     <variablelist>
      <varlistentry>
-      <term>No qualification and not <literal>INSTEAD</></term>
+      <term>No qualification and <literal>ALSO</></term>
       <listitem>
        <para>
         the query tree from the rule action with the original query
@@ -957,7 +957,7 @@ CREATE RULE <replaceable>rule_name</> AS ON <replaceable>event</>
      </varlistentry>
 
      <varlistentry>
-      <term>Qualification given and not <literal>INSTEAD</></term>
+      <term>Qualification given and <literal>ALSO</></term>
       <listitem>
        <para>
         the query tree from the rule action with the rule
@@ -980,7 +980,7 @@ CREATE RULE <replaceable>rule_name</> AS ON <replaceable>event</>
      </varlistentry>
     </variablelist>
 
-    Finally, if the rule is not <literal>INSTEAD</>, the unchanged original query tree is
+    Finally, if the rule is <literal>ALSO</>, the unchanged original query tree is
     added to the list. Since only qualified <literal>INSTEAD</> rules already add the
     original query tree, we end up with either one or two output query trees
     for a rule with one action.
@@ -1111,7 +1111,7 @@ INSERT INTO shoelace_log VALUES (
 </Para>
 
 <Para>
-    The rule is a qualified non-<literal>INSTEAD</> rule, so the rule system
+    The rule is a qualified <literal>ALSO</> rule, so the rule system
     has to return two query trees: the modified rule action and the original
     query tree. In step 1, the range table of the original query is
     incorporated into the rule's action query tree. This results in:
@@ -1190,7 +1190,7 @@ INSERT INTO shoelace_log VALUES (
    </para>
 
    <para>
-    That's it.  Since the rule is not <literal>INSTEAD</>, we also output the
+    That's it.  Since the rule is <literal>ALSO</>, we also output the
     original query tree.  In short, the output from the rule system
     is a list of two query trees that correspond to these statements:
 

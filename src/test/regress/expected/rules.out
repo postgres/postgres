@@ -34,19 +34,19 @@ create table rtest_system (sysname text, sysdesc text);
 create table rtest_interface (sysname text, ifname text);
 create table rtest_person (pname text, pdesc text);
 create table rtest_admin (pname text, sysname text);
-create rule rtest_sys_upd as on update to rtest_system do (
+create rule rtest_sys_upd as on update to rtest_system do also (
 	update rtest_interface set sysname = new.sysname 
 		where sysname = old.sysname;
 	update rtest_admin set sysname = new.sysname 
 		where sysname = old.sysname
 	);
-create rule rtest_sys_del as on delete to rtest_system do (
+create rule rtest_sys_del as on delete to rtest_system do also (
 	delete from rtest_interface where sysname = old.sysname;
 	delete from rtest_admin where sysname = old.sysname;
 	);
-create rule rtest_pers_upd as on update to rtest_person do 
+create rule rtest_pers_upd as on update to rtest_person do also
 	update rtest_admin set pname = new.pname where pname = old.pname;
-create rule rtest_pers_del as on delete to rtest_person do 
+create rule rtest_pers_del as on delete to rtest_person do also
 	delete from rtest_admin where pname = old.pname;
 --
 -- Tables and rules for the logging test

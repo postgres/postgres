@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.145 2004/02/21 00:34:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.146 2004/03/09 05:05:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"after", AFTER},
 	{"aggregate", AGGREGATE},
 	{"all", ALL},
+	{"also", ALSO},
 	{"alter", ALTER},
 	{"analyse", ANALYSE},		/* British spelling */
 	{"analyze", ANALYZE},

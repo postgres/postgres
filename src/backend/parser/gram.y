@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.446 2004/01/11 04:58:17 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.447 2004/03/09 05:05:41 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -332,7 +332,7 @@ static void doNegateFloat(Value *v);
 
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD AFTER
-	AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
+	AGGREGATE ALL ALSO ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASSERTION ASSIGNMENT AT AUTHORIZATION
 
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
@@ -3610,6 +3610,7 @@ event:		SELECT									{ $$ = CMD_SELECT; }
 
 opt_instead:
 			INSTEAD									{ $$ = TRUE; }
+			| ALSO									{ $$ = FALSE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
