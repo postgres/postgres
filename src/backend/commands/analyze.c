@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.68 2004/02/12 23:41:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.69 2004/02/13 06:39:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,7 @@ static double init_selection_state(int n);
 static double select_next_random_record(double t, int n, double *stateptr);
 static int	compare_rows(const void *a, const void *b);
 static void update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats);
+static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
 static bool std_typanalyze(VacAttrStats *stats);
 
@@ -259,12 +260,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		old_context = MemoryContextSwitchTo(col_context);
 		for (i = 0; i < attr_cnt; i++)
 		{
-			(*vacattrstats[i]->compute_stats) (vacattrstats[i],
-											   vacattrstats[i]->tupattnum,
-											   onerel->rd_att,
-											   totalrows,
-											   rows,
-											   numrows);
+			VacAttrStats *stats = vacattrstats[i];
+
+			stats->rows = rows;
+			stats->tupDesc = onerel->rd_att;
+			(*stats->compute_stats) (stats,
+									 std_fetch_func,
+									 numrows,
+									 totalrows);
 			MemoryContextResetAndDeleteChildren(col_context);
 		}
 		MemoryContextSwitchTo(old_context);
@@ -861,6 +864,22 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 	heap_close(sd, RowExclusiveLock);
 }
 
+/*
+ * Standard fetch function for use by compute_stats subroutines.
+ *
+ * This exists to provide some insulation between compute_stats routines
+ * and the actual storage of the sample data.
+ */
+static Datum
+std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
+{
+	int			attnum = stats->tupattnum;
+	HeapTuple	tuple = stats->rows[rownum];
+	TupleDesc	tupDesc = stats->tupDesc;
+
+	return heap_getattr(tuple, attnum, tupDesc, isNull);
+}
+
 
 /*==========================================================================
  *
@@ -915,12 +934,14 @@ static SortFunctionKind datumCmpFnKind;
 static int *datumCmpTupnoLink;
 
 
-static void compute_minimal_stats(VacAttrStats *stats, int attnum,
-					  TupleDesc tupDesc, double totalrows,
-					  HeapTuple *rows, int numrows);
-static void compute_scalar_stats(VacAttrStats *stats, int attnum,
-					 TupleDesc tupDesc, double totalrows,
-					 HeapTuple *rows, int numrows);
+static void compute_minimal_stats(VacAttrStatsP stats,
+								  AnalyzeAttrFetchFunc fetchfunc,
+								  int samplerows,
+								  double totalrows);
+static void compute_scalar_stats(VacAttrStatsP stats,
+								 AnalyzeAttrFetchFunc fetchfunc,
+								 int samplerows,
+								 double totalrows);
 static int	compare_scalars(const void *a, const void *b);
 static int	compare_mcvs(const void *a, const void *b);
 
@@ -1024,9 +1045,10 @@ std_typanalyze(VacAttrStats *stats)
  *	depend mainly on the length of the list we are willing to keep.
  */
 static void
-compute_minimal_stats(VacAttrStats *stats, int attnum,
-					  TupleDesc tupDesc, double totalrows,
-					  HeapTuple *rows, int numrows)
+compute_minimal_stats(VacAttrStatsP stats,
+					  AnalyzeAttrFetchFunc fetchfunc,
+					  int samplerows,
+					  double totalrows)
 {
 	int			i;
 	int			null_cnt = 0;
@@ -1061,9 +1083,8 @@ compute_minimal_stats(VacAttrStats *stats, int attnum,
 
 	fmgr_info(mystats->eqfunc, &f_cmpeq);
 
-	for (i = 0; i < numrows; i++)
+	for (i = 0; i < samplerows; i++)
 	{
-		HeapTuple	tuple = rows[i];
 		Datum		value;
 		bool		isnull;
 		bool		match;
@@ -1072,7 +1093,7 @@ compute_minimal_stats(VacAttrStats *stats, int attnum,
 
 		vacuum_delay_point();
 
-		value = heap_getattr(tuple, attnum, tupDesc, &isnull);
+		value = fetchfunc(stats, i, &isnull);
 
 		/* Check for null/nonnull */
 		if (isnull)
@@ -1166,7 +1187,7 @@ compute_minimal_stats(VacAttrStats *stats, int attnum,
 
 		stats->stats_valid = true;
 		/* Do the simple null-frac and width stats */
-		stats->stanullfrac = (double) null_cnt / (double) numrows;
+		stats->stanullfrac = (double) null_cnt / (double) samplerows;
 		if (is_varwidth)
 			stats->stawidth = total_width / (double) nonnull_cnt;
 		else
@@ -1222,10 +1243,10 @@ compute_minimal_stats(VacAttrStats *stats, int attnum,
 						denom,
 						stadistinct;
 
-			numer = (double) numrows *(double) d;
+			numer = (double) samplerows *(double) d;
 
-			denom = (double) (numrows - f1) +
-				(double) f1 *(double) numrows / totalrows;
+			denom = (double) (samplerows - f1) +
+				(double) f1 *(double) samplerows / totalrows;
 
 			stadistinct = numer / denom;
 			/* Clamp to sane range in case of roundoff error */
@@ -1270,7 +1291,7 @@ compute_minimal_stats(VacAttrStats *stats, int attnum,
 			if (ndistinct < 0)
 				ndistinct = -ndistinct * totalrows;
 			/* estimate # of occurrences in sample of a typical value */
-			avgcount = (double) numrows / ndistinct;
+			avgcount = (double) samplerows / ndistinct;
 			/* set minimum threshold count to store a value */
 			mincount = avgcount * 1.25;
 			if (mincount < 2)
@@ -1303,7 +1324,7 @@ compute_minimal_stats(VacAttrStats *stats, int attnum,
 				mcv_values[i] = datumCopy(track[i].value,
 										  stats->attr->attbyval,
 										  stats->attr->attlen);
-				mcv_freqs[i] = (double) track[i].count / (double) numrows;
+				mcv_freqs[i] = (double) track[i].count / (double) samplerows;
 			}
 			MemoryContextSwitchTo(old_context);
 
@@ -1333,9 +1354,10 @@ compute_minimal_stats(VacAttrStats *stats, int attnum,
  *	data values into order.
  */
 static void
-compute_scalar_stats(VacAttrStats *stats, int attnum,
-					 TupleDesc tupDesc, double totalrows,
-					 HeapTuple *rows, int numrows)
+compute_scalar_stats(VacAttrStatsP stats,
+					 AnalyzeAttrFetchFunc fetchfunc,
+					 int samplerows,
+					 double totalrows)
 {
 	int			i;
 	int			null_cnt = 0;
@@ -1359,23 +1381,22 @@ compute_scalar_stats(VacAttrStats *stats, int attnum,
 	int			num_bins = stats->attr->attstattarget;
 	StdAnalyzeData *mystats = (StdAnalyzeData *) stats->extra_data;
 
-	values = (ScalarItem *) palloc(numrows * sizeof(ScalarItem));
-	tupnoLink = (int *) palloc(numrows * sizeof(int));
+	values = (ScalarItem *) palloc(samplerows * sizeof(ScalarItem));
+	tupnoLink = (int *) palloc(samplerows * sizeof(int));
 	track = (ScalarMCVItem *) palloc(num_mcv * sizeof(ScalarMCVItem));
 
 	SelectSortFunction(mystats->ltopr, &cmpFn, &cmpFnKind);
 	fmgr_info(cmpFn, &f_cmpfn);
 
 	/* Initial scan to find sortable values */
-	for (i = 0; i < numrows; i++)
+	for (i = 0; i < samplerows; i++)
 	{
-		HeapTuple	tuple = rows[i];
 		Datum		value;
 		bool		isnull;
 
 		vacuum_delay_point();
 
-		value = heap_getattr(tuple, attnum, tupDesc, &isnull);
+		value = fetchfunc(stats, i, &isnull);
 
 		/* Check for null/nonnull */
 		if (isnull)
@@ -1505,7 +1526,7 @@ compute_scalar_stats(VacAttrStats *stats, int attnum,
 
 		stats->stats_valid = true;
 		/* Do the simple null-frac and width stats */
-		stats->stanullfrac = (double) null_cnt / (double) numrows;
+		stats->stanullfrac = (double) null_cnt / (double) samplerows;
 		if (is_varwidth)
 			stats->stawidth = total_width / (double) nonnull_cnt;
 		else
@@ -1546,10 +1567,10 @@ compute_scalar_stats(VacAttrStats *stats, int attnum,
 						denom,
 						stadistinct;
 
-			numer = (double) numrows *(double) d;
+			numer = (double) samplerows *(double) d;
 
-			denom = (double) (numrows - f1) +
-				(double) f1 *(double) numrows / totalrows;
+			denom = (double) (samplerows - f1) +
+				(double) f1 *(double) samplerows / totalrows;
 
 			stadistinct = numer / denom;
 			/* Clamp to sane range in case of roundoff error */
@@ -1599,13 +1620,13 @@ compute_scalar_stats(VacAttrStats *stats, int attnum,
 			if (ndistinct < 0)
 				ndistinct = -ndistinct * totalrows;
 			/* estimate # of occurrences in sample of a typical value */
-			avgcount = (double) numrows / ndistinct;
+			avgcount = (double) samplerows / ndistinct;
 			/* set minimum threshold count to store a value */
 			mincount = avgcount * 1.25;
 			if (mincount < 2)
 				mincount = 2;
 			/* don't let threshold exceed 1/K, however */
-			maxmincount = (double) numrows / (double) num_bins;
+			maxmincount = (double) samplerows / (double) num_bins;
 			if (mincount > maxmincount)
 				mincount = maxmincount;
 			if (num_mcv > track_cnt)
@@ -1636,7 +1657,7 @@ compute_scalar_stats(VacAttrStats *stats, int attnum,
 				mcv_values[i] = datumCopy(values[track[i].first].value,
 										  stats->attr->attbyval,
 										  stats->attr->attlen);
-				mcv_freqs[i] = (double) track[i].count / (double) numrows;
+				mcv_freqs[i] = (double) track[i].count / (double) samplerows;
 			}
 			MemoryContextSwitchTo(old_context);
 

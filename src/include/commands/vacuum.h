@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.49 2004/02/12 23:41:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.50 2004/02/13 06:39:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,18 +40,18 @@
  * and must return TRUE to continue analysis, FALSE to skip analysis of this
  * column.  In the TRUE case it must set the compute_stats and minrows fields,
  * and can optionally set extra_data to pass additional info to compute_stats.
+ * minrows is its request for the minimum number of sample rows to be gathered
+ * (but note this request might not be honored, eg if there are fewer rows
+ * than that in the table).
  *
  * The compute_stats routine will be called after sample rows have been
  * gathered.  Aside from this struct, it is passed:
- *		attnum: attribute number within the supplied tuples
- *		tupDesc: tuple descriptor for the supplied tuples
+ *		fetchfunc: a function for accessing the column values from the
+ *				   sample rows
+ *		samplerows: the number of sample tuples
  *		totalrows: estimated total number of rows in relation
- *		rows: an array of the sample tuples
- *		numrows: the number of sample tuples
- * Note that the passed attnum and tupDesc could possibly be different from
- * what one would expect by looking at the pg_attribute row.  It is important
- * to use these values for extracting attribute values from the given rows
- * (and not for any other purpose).
+ * The fetchfunc may be called with rownum running from 0 to samplerows-1.
+ * It returns a Datum and an isNull flag.
  *
  * compute_stats should set stats_valid TRUE if it is able to compute
  * any useful statistics.  If it does, the remainder of the struct holds
@@ -60,6 +60,11 @@
  * be CurrentMemoryContext when compute_stats is called.
  *----------
  */
+typedef struct VacAttrStats *VacAttrStatsP;
+
+typedef Datum (*AnalyzeAttrFetchFunc) (VacAttrStatsP stats, int rownum,
+									   bool *isNull);
+
 typedef struct VacAttrStats
 {
 	/*
@@ -74,9 +79,10 @@ typedef struct VacAttrStats
 	 * These fields must be filled in by the typanalyze routine,
 	 * unless it returns FALSE.
 	 */
-	void (*compute_stats) (struct VacAttrStats *stats, int attnum,
-						   TupleDesc tupDesc, double totalrows,
-						   HeapTuple *rows, int numrows);
+	void (*compute_stats) (VacAttrStatsP stats,
+						   AnalyzeAttrFetchFunc fetchfunc,
+						   int samplerows,
+						   double totalrows);
 	int			minrows;		/* Minimum # of rows wanted for stats */
 	void	   *extra_data;		/* for extra type-specific data */
 
@@ -100,6 +106,8 @@ typedef struct VacAttrStats
 	 * be looked at by type-specific functions.
 	 */
 	int			tupattnum;		/* attribute number within tuples */
+	HeapTuple  *rows;			/* access info for fetch function */
+	TupleDesc	tupDesc;
 } VacAttrStats;
 
 
