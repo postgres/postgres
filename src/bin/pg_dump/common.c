@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.11 1997/04/12 09:23:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.12 1997/06/02 02:51:49 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -203,12 +203,12 @@ dumpSchema(FILE *fout,
     int numInherits;
     int numAggregates;
     int numOperators;
-    TypeInfo *tinfo;
-    FuncInfo *finfo;
-    AggInfo *agginfo;
-    TableInfo *tblinfo;
-    InhInfo *inhinfo;
-    OprInfo *oprinfo;
+    TypeInfo *tinfo=NULL;
+    FuncInfo *finfo=NULL;
+    AggInfo *agginfo=NULL;
+    TableInfo *tblinfo=NULL;
+    InhInfo *inhinfo=NULL;
+    OprInfo *oprinfo=NULL;
 
 if (g_verbose) fprintf(stderr,"%s reading user-defined types %s\n",
 		       g_comment_start, g_comment_end);
@@ -274,9 +274,13 @@ if (!tablename && fout) {
 }
 
     *numTablesPtr = numTables;
+    clearAggInfo(agginfo,numAggregates);
+    clearOprInfo(oprinfo,numOperators);
+    clearTypeInfo(tinfo, numTypes);
+    clearFuncInfo(finfo,numFuncs);
+    clearInhInfo(inhinfo,numInherits);
     return tblinfo;
 }
-
 
 /*
  * dumpSchemaIdx:
@@ -300,6 +304,7 @@ dumpSchemaIdx(FILE *fout, int *numTablesPtr, const char *tablename,
   		g_comment_start, g_comment_end);
 	dumpIndices(fout, indinfo, numIndices, tblinfo, numTables, tablename);
     }
+   clearIndInfo(indinfo,numIndices);
 }
 
 /* flagInhAttrs -
@@ -409,9 +414,3 @@ isArchiveName(const char* relname)
 {
     return (strlen(relname) > 1 && relname[1] == ',');
 }
-
-
-
-
-
-
