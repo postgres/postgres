@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.61 2003/03/20 15:39:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.62 2003/03/25 02:44:36 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -441,7 +441,7 @@ PrintNotifications(void)
 	{
 		fprintf(pset.queryFout, gettext("Asynchronous NOTIFY '%s' from backend with pid %d received.\n"),
 				notify->relname, notify->be_pid);
-		free(notify);
+		PQfreemem(notify);
 		fflush(pset.queryFout);
 	}
 }

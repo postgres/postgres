@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.40 2003/02/01 00:22:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.41 2003/03/25 02:44:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -554,7 +554,7 @@ Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
 	if (event->connid == NULL)
 	{
 		if (event->notify)
-			PQfreeNotify(event->notify);
+			PQfreemem(event->notify);
 		return 1;
 	}
 
@@ -634,7 +634,7 @@ Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
 	Tcl_Release((ClientData) event->connid);
 
 	if (event->notify)
-		PQfreeNotify(event->notify);
+		PQfreemem(event->notify);
 
 	return 1;
 }

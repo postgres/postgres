@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.115 2003/03/24 18:33:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.116 2003/03/25 02:44:36 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -1049,8 +1049,7 @@ characters that are otherwise interpreted specially by the SQL parser.
 <function>PQescapeString</> performs this operation.
 </para>
 <para>
-The
-parameter <parameter>from</> points to the first character of the string that
+The parameter <parameter>from</> points to the first character of the string that
 is to be escaped, and the <parameter>length</> parameter counts the
 number of characters in this string.  (A terminating zero byte is
 neither necessary nor counted.)  <parameter>to</> shall point to a
@@ -1117,7 +1116,9 @@ unsigned char *PQescapeBytea(const unsigned char *from,
 
   <para>
    <function>PQescapeBytea</> returns an escaped version of the
-   <parameter>from</parameter> parameter binary string in memory allocated with <function>malloc()</>.
+   <parameter>from</parameter> parameter binary string in memory
+   allocated with <function>malloc()</>, and must be freed using
+   <function>PQfreemem()</>.
    The return string has all special characters replaced
    so that they can be properly processed by the PostgreSQL string literal
    parser, and the <type>bytea</type> input function. A terminating zero
@@ -1143,8 +1144,11 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
    such as might be returned by <function>PQgetvalue</function> when applied to a
    <type>bytea</type> column. <function>PQunescapeBytea</function> converts
    this string representation into its binary representation.
-   It returns a pointer to a buffer allocated with <function>malloc()</function>, or null on error, and puts the size
-   of the buffer in <parameter>to_length</parameter>.
+   It returns a pointer to a buffer allocated with
+   <function>malloc()</function>, or null on error, and puts the size of
+   the buffer in <parameter>to_length</parameter>. The memory must be
+   freed using <function>PQfreemem()</>.
+
   </para>
   </listitem>
   </varlistentry>
@@ -1161,7 +1165,9 @@ void PQfreemem(void *ptr);
 
 <para>
    Frees memory allocated by <application>libpq</>, particularly
-   <function>PQescapeBytea</function> and <function>PQunescapeBytea</function>.
+   <function>PQescapeBytea</function>,
+   <function>PQunescapeBytea</function>,
+   and <function>PQnotifies</function>.
    It is needed by Win32, which can not free memory across
    DLL's, unless multithreaded DLL's (/MD in VC6) are used.
   </para>
@@ -1926,7 +1932,7 @@ typedef struct pgNotify {
 } PGnotify;
 </synopsis>
 After processing a <structname>PGnotify</structname> object returned by <function>PQnotifies</function>,
-be sure to free it with <function>free()</function> to avoid a memory leak.
+be sure to free it with <function>PQfreemem()</function>.
 </para>
 
 <note>
@@ -2867,7 +2873,7 @@ main()
             fprintf(stderr,
                  "ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
                     notify-&gt;relname, notify-&gt;be_pid);
-            free(notify);
+            PQfreemem(notify);
         }
     }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.127 2003/03/22 03:29:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.128 2003/03/25 02:44:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1578,20 +1578,6 @@ PQnotifies(PGconn *conn)
 }
 
 /*
- * PQfreeNotify - free's the memory associated with a PGnotify
- *
- * This function is needed on Windows when using libpq.dll and
- * for example libpgtcl.dll: All memory allocated inside a dll
- * should be freed in the context of the same dll.
- *
- */
-void
-PQfreeNotify(PGnotify *notify)
-{
-	free(notify);
-}
-
-/*
  * PQgetline - gets a newline-terminated string from the backend.
  *
  * Chiefly here so that applications can use "COPY <rel> to stdout"
@@ -2470,3 +2456,22 @@ PQsendSome(PGconn *conn)
 {
 	return pqSendSome(conn);
 }
+
+/*
+ * PQfreeNotify - free's the memory associated with a PGnotify
+ *
+ * This function is here only for binary backward compatibility.
+ * New code should use PQfreemem().  A macro will automatically map
+ * calls to PQfreemem.  It should be removed in the future.  bjm 2003-03-24
+ */
+
+#undef PQfreeNotify
+void PQfreeNotify(PGnotify *notify);
+
+void
+PQfreeNotify(PGnotify *notify)
+{
+	PQfreemem(notify);
+}
+
+

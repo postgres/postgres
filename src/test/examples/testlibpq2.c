@@ -98,7 +98,7 @@ main()
 			fprintf(stderr,
 				 "ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
 					notify->relname, notify->be_pid);
-			free(notify);
+			PQfreemem(notify);
 			break;
 		}
 		PQclear(res);

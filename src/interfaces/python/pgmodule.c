@@ -2066,7 +2066,7 @@ pg_getnotify(pgobject * self, PyObject * args)
 		}
 
 		PyTuple_SET_ITEM(notify_result, 1, temp);
-		free(notify);
+		PQfreemem(notify);
 	}
 	else
 	{

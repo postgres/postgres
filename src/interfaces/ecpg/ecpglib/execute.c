@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.4 2003/03/20 15:56:50 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.5 2003/03/25 02:44:36 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1197,7 +1197,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		ECPGlog("ECPGexecute line %d: ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
 				stmt->lineno, notify->relname, notify->be_pid);
-		ECPGfree(notify);
+		PQfreemem(notify);
 	}
 
 	return status;
