@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.66 2001/08/21 14:48:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.67 2001/08/21 15:21:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <pwd.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>			/* for SCM_CREDS */
 #ifdef SCM_CREDS
 #include <sys/uio.h>			/* for struct iovec */

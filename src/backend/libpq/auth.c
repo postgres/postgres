@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.63 2001/08/21 00:33:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.64 2001/08/21 15:21:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>			/* for SCM_CREDS */
 #ifdef SCM_CREDS
 #include <sys/uio.h>			/* for struct iovec */

@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.56 2001/08/21 00:33:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.57 2001/08/21 15:21:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,12 +43,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #include <sys/socket.h>			/* for SCM_CREDS */
 #ifdef SCM_CREDS
 #include <sys/uio.h>			/* for struct iovec */
 #include <sys/ucred.h>
 #endif
-#include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #ifndef  MAXHOSTNAMELEN
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
 #endif
@@ -447,7 +447,7 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 	/* Prevent padding */
 	char cmsgmem[sizeof(struct cmsghdr) + sizeof(struct cmsgcred)];
 	/* Point to start of first structure */
-    struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
+	struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
 #endif
 
 	/*
