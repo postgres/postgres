@@ -1,6 +1,4 @@
-CREATE TABLE test1 (i int4, d float4, p polygon);
+CREATE TABLE test1 (i int4, t text, b bytea);
 
-INSERT INTO test1 values (1, 3.567, '(3.0, 4.0, 1.0, 2.0)'::polygon);
-
-INSERT INTO test1 values (2, 89.05, '(4.0, 3.0, 2.0, 1.0)'::polygon);
-
+INSERT INTO test1 values (1, 'joe''s place', '\\000\\001\\002\\003\\004');
+INSERT INTO test1 values (2, 'ho there', '\\004\\003\\002\\001\\000');

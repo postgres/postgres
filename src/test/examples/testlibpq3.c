@@ -1,34 +1,33 @@
 /*
  * testlibpq3.c
- *		Test the C version of LIBPQ, the POSTGRES frontend library.
- *	 tests the binary cursor interface
+ *		Test out-of-line parameters and binary I/O.
  *
+ * Before running this, populate a database with the following commands
+ * (provided in src/test/examples/testlibpq3.sql):
  *
+ * CREATE TABLE test1 (i int4, t text, b bytea);
  *
- populate a database by doing the following:
-
-CREATE TABLE test1 (i int4, d float4, p polygon);
-
-INSERT INTO test1 values (1, 3.567, '(3.0, 4.0, 1.0, 2.0)'::polygon);
-
-INSERT INTO test1 values (2, 89.05, '(4.0, 3.0, 2.0, 1.0)'::polygon);
-
- the expected output is:
-
-tuple 0: got
- i = (4 bytes) 1,
- d = (4 bytes) 3.567000,
- p = (4 bytes) 2 points			boundbox = (hi=3.000000/4.000000, lo = 1.000000,2.000000)
-tuple 1: got
- i = (4 bytes) 2,
- d = (4 bytes) 89.050003,
- p = (4 bytes) 2 points			boundbox = (hi=4.000000/3.000000, lo = 2.000000,1.000000)
-
+ * INSERT INTO test1 values (1, 'joe''s place', '\\000\\001\\002\\003\\004');
+ * INSERT INTO test1 values (2, 'ho there', '\\004\\003\\002\\001\\000');
+ *
+ * The expected output is:
+ *
+ * tuple 0: got
+ *  i = (4 bytes) 1
+ *  t = (11 bytes) 'joe's place'
+ *  b = (5 bytes) \000\001\002\003\004
  *
  */
-#include "postgres.h"			/* -> "c.h" -> int16, in access/attnum.h */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include "libpq-fe.h"
-#include "utils/geo_decls.h"	/* for the POLYGON type */
+
+/* for ntohl/htonl */
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 
 static void
 exit_nicely(PGconn *conn)
@@ -38,146 +37,118 @@ exit_nicely(PGconn *conn)
 }
 
 int
-main()
+main(int argc, char **argv)
 {
-	char	   *pghost,
-			   *pgport,
-			   *pgoptions,
-			   *pgtty;
-	char	   *dbName;
-
-	/*
-	 * int			nFields; int		  i, j;
-	 */
-	int			i;
-	int			i_fnum,
-				d_fnum,
-				p_fnum;
-
+	const char *conninfo;
 	PGconn	   *conn;
 	PGresult   *res;
+	const char *paramValues[1];
+	int			i,
+				j;
+	int			i_fnum,
+				t_fnum,
+				b_fnum;
 
 	/*
-	 * begin, by setting the parameters for a backend connection if the
-	 * parameters are null, then the system will try to use reasonable
-	 * defaults by looking up environment variables or, failing that,
-	 * using hardwired constants
+	 * If the user supplies a parameter on the command line, use it as
+	 * the conninfo string; otherwise default to setting dbname=template1
+	 * and using environment variables or defaults for all other connection
+	 * parameters.
 	 */
-	pghost = NULL;				/* host name of the backend server */
-	pgport = NULL;				/* port of the backend server */
-	pgoptions = NULL;			/* special options to start up the backend
-								 * server */
-	pgtty = NULL;				/* debugging tty for the backend server */
+	if (argc > 1)
+		conninfo = argv[1];
+	else
+		conninfo = "dbname = template1";
 
-	dbName = getenv("USER");	/* change this to the name of your test
-								 * database */
+	/* Make a connection to the database */
+	conn = PQconnectdb(conninfo);
 
-	/* make a connection to the database */
-	conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
-
-	/* check to see that the backend connection was successfully made */
-	if (PQstatus(conn) == CONNECTION_BAD)
+	/* Check to see that the backend connection was successfully made */
+	if (PQstatus(conn) != CONNECTION_OK)
 	{
-		fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
+		fprintf(stderr, "Connection to database '%s' failed.\n", PQdb(conn));
 		fprintf(stderr, "%s", PQerrorMessage(conn));
 		exit_nicely(conn);
 	}
 
-	/* start a transaction block */
-	res = PQexec(conn, "BEGIN");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	/*
+	 * The point of this program is to illustrate use of PQexecParams()
+	 * with out-of-line parameters, as well as binary transmission of
+	 * results.  By using out-of-line parameters we can avoid a lot of
+	 * tedious mucking about with quoting and escaping.  Notice how we
+	 * don't have to do anything special with the quote mark in the
+	 * parameter value.
+	 */
+
+	/* Here is our out-of-line parameter value */
+	paramValues[0] = "joe's place";
+
+	res = PQexecParams(conn,
+					   "SELECT * FROM test1 WHERE t = $1",
+					   1,		/* one param */
+					   NULL,	/* let the backend deduce param type */
+					   paramValues,
+					   NULL,	/* don't need param lengths since text */
+					   NULL,	/* default to all text params */
+					   1);		/* ask for binary results */
+
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
 		PQclear(res);
 		exit_nicely(conn);
 	}
 
-	/*
-	 * should PQclear PGresult whenever it is no longer needed to avoid
-	 * memory leaks
-	 */
-	PQclear(res);
-
-	/*
-	 * fetch instances from the pg_database, the system catalog of
-	 * databases
-	 */
-	res = PQexec(conn, "DECLARE mycursor BINARY CURSOR FOR select * from test1");
-	if (res == NULL ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "DECLARE CURSOR command failed\n");
-		if (res)
-			PQclear(res);
-		exit_nicely(conn);
-	}
-	PQclear(res);
-
-	res = PQexec(conn, "FETCH ALL in mycursor");
-	if (res == NULL ||
-		PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		fprintf(stderr, "FETCH ALL command didn't return tuples properly\n");
-		if (res)
-			PQclear(res);
-		exit_nicely(conn);
-	}
-
+	/* Use PQfnumber to avoid assumptions about field order in result */
 	i_fnum = PQfnumber(res, "i");
-	d_fnum = PQfnumber(res, "d");
-	p_fnum = PQfnumber(res, "p");
+	t_fnum = PQfnumber(res, "t");
+	b_fnum = PQfnumber(res, "b");
 
-	for (i = 0; i < 3; i++)
-	{
-		printf("type[%d] = %d, size[%d] = %d\n",
-			   i, PQftype(res, i),
-			   i, PQfsize(res, i));
-	}
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		int		   *ival;
-		float	   *dval;
-		int			plen;
-		POLYGON    *pval;
+		char	   *iptr;
+		char	   *tptr;
+		char	   *bptr;
+		int			blen;
+		int			ival;
 
-		/* we hard-wire this to the 3 fields we know about */
-		ival = (int *) PQgetvalue(res, i, i_fnum);
-		dval = (float *) PQgetvalue(res, i, d_fnum);
-		plen = PQgetlength(res, i, p_fnum);
+		/* Get the field values (we ignore possibility they are null!) */
+		iptr = PQgetvalue(res, i, i_fnum);
+		tptr = PQgetvalue(res, i, t_fnum);
+		bptr = PQgetvalue(res, i, b_fnum);
 
 		/*
-		 * plen doesn't include the length field so need to increment by
-		 * VARHDSZ
+		 * The binary representation of INT4 is in network byte order,
+		 * which we'd better coerce to the local byte order.
 		 */
-		pval = (POLYGON *) malloc(plen + VARHDRSZ);
-		pval->size = plen;
-		memmove((char *) &pval->npts, PQgetvalue(res, i, p_fnum), plen);
+		ival = ntohl(*((uint32_t *) iptr));
+
+		/*
+		 * The binary representation of TEXT is, well, text, and since
+		 * libpq was nice enough to append a zero byte to it, it'll work
+		 * just fine as a C string.
+		 *
+		 * The binary representation of BYTEA is a bunch of bytes, which
+		 * could include embedded nulls so we have to pay attention to
+		 * field length.
+		 */
+		blen = PQgetlength(res, i, b_fnum);
+
 		printf("tuple %d: got\n", i);
-		printf(" i = (%d bytes) %d,\n",
-			   PQgetlength(res, i, i_fnum), *ival);
-		printf(" d = (%d bytes) %f,\n",
-			   PQgetlength(res, i, d_fnum), *dval);
-		printf(" p = (%d bytes) %d points \tboundbox = (hi=%f/%f, lo = %f,%f)\n",
-			   PQgetlength(res, i, d_fnum),
-			   pval->npts,
-			   pval->boundbox.high.x,
-			   pval->boundbox.high.y,
-			   pval->boundbox.low.x,
-			   pval->boundbox.low.y);
+		printf(" i = (%d bytes) %d\n",
+			   PQgetlength(res, i, i_fnum), ival);
+		printf(" t = (%d bytes) '%s'\n",
+			   PQgetlength(res, i, t_fnum), tptr);
+		printf(" b = (%d bytes) ", blen);
+		for (j = 0; j < blen; j++)
+			printf("\\%03o", bptr[j]);
+		printf("\n\n");
 	}
 
-	PQclear(res);
-
-	/* close the portal */
-	res = PQexec(conn, "CLOSE mycursor");
-	PQclear(res);
-
-	/* end the transaction */
-	res = PQexec(conn, "END");
 	PQclear(res);
 
 	/* close the connection to the database and cleanup */
 	PQfinish(conn);
-	return 0;					/* Though PQfinish(conn1) has called
-								 * exit(1) */
+
+	return 0;
 }

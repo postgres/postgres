@@ -1,11 +1,11 @@
 /*
  * testlibpq4.c
- *		this test programs shows to use LIBPQ to make multiple backend
+ *		this test program shows to use LIBPQ to make multiple backend
  * connections
- *
  *
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include "libpq-fe.h"
 
 static void
