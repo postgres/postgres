@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.16 2001/03/22 04:01:14 momjian Exp $
+ * $Id: timestamp.h,v 1.17 2001/09/06 03:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,6 +176,9 @@ extern Datum now(PG_FUNCTION_ARGS);
 extern int	tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
 extern int timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
 			 double *fsec, char **tzn);
+
+extern int	interval2tm(Interval span, struct tm * tm, float8 *fsec);
+extern int	tm2interval(struct tm * tm, double fsec, Interval *span);
 
 extern Timestamp SetTimestamp(Timestamp timestamp);
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.68 2001/08/31 07:45:09 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.69 2001/09/06 03:22:41 momjian Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -1565,6 +1565,12 @@
 	<entry>to_char(timestamp 'now','HH12:MI:SS')</entry>
        </row>
        <row>
+	<entry>to_char(interval, text)</entry>
+	<entry>text</entry>
+	<entry>convert interval to string</entry>
+	<entry>to_char(interval '15h 2m 12s','HH24:MI:SS')</entry>
+       </row>
+       <row>
 	<entry>to_char(int, text)</entry>
 	<entry>text</entry>
 	<entry>convert int4/int8 to string</entry>
@@ -1644,6 +1650,14 @@
        <row>
 	<entry>SS</entry>
 	<entry>second (00-59)</entry>
+       </row>
+       <row>
+	<entry>MS</entry>
+	<entry>millisecond (000-999)</entry>
+       </row>
+       <row>
+	<entry>US</entry>
+	<entry>microsecond (000000-999999)</entry>
        </row>
        <row>
 	<entry>SSSS</entry>
@@ -1909,6 +1923,23 @@
        separator after the year, like
        <literal>to_date('20000-1131', 'YYYY-MMDD')</literal> or
        <literal>to_date('20000Nov31', 'YYYYMonDD')</literal>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Millisecond <literal>MS</literal> and microcesond <literal>US</literal>
+       values are in conversion from string to timestamp used as part of
+       second after decimal point. For example 
+       <literal>to_timestamp('12:3', 'SS:MS')</literal> is not 3 milliseconds,
+       but 300, because the conversion count it as <literal>12 + 0.3</literal>.
+       It means for format 'SS:MS' is '12:3' or '12:30' or '12:300' same
+       number of miliceconds. For the three milliseconds must be used
+       '12:003' that the counversion count as
+       <literal> 12 + 0.003 = 12.003 seconds </literal>. Here is a more 
+       complex example: 
+       <literal>to_timestamp('15:12:02.020.001230','HH:MI:SS.MS.US')</literal>
+       is 15 hours, 12 minutes, 2.021230 seconds. 
       </para>
      </listitem>
     </itemizedlist>

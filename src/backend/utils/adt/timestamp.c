@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.49 2001/05/03 22:53:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.50 2001/09/06 03:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,6 @@ static double time2t(const int hour, const int min, const double sec);
 static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
 static Timestamp dt2local(Timestamp dt, int timezone);
 static void dt2time(Timestamp dt, int *hour, int *min, double *sec);
-static int	interval2tm(Interval span, struct tm * tm, float8 *fsec);
-static int	tm2interval(struct tm * tm, double fsec, Interval *span);
-
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -412,7 +409,7 @@ tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *result)
 /* interval2tm()
  * Convert a interval data type to a tm structure.
  */
-static int
+int
 interval2tm(Interval span, struct tm * tm, float8 *fsec)
 {
 	double		time;
@@ -444,7 +441,7 @@ interval2tm(Interval span, struct tm * tm, float8 *fsec)
 	return 0;
 }	/* interval2tm() */
 
-static int
+int
 tm2interval(struct tm * tm, double fsec, Interval *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
