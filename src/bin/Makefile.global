@@ -7,10 +7,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.14 1997/04/04 10:40:56 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.15 1997/04/24 14:30:09 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
+SRCDIR=..
 LIBPQDIR:= $(SRCDIR)/libpq
 
 #
