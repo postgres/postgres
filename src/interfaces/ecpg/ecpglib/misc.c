@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.6 2003/06/25 11:51:18 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.7 2003/06/26 01:33:23 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -18,6 +18,11 @@
 #include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
 
+#ifndef LONG_LONG_MIN
+#define LONG_LONG_MIN LLONG_MIN
+#endif
+
+                                                 
 static struct sqlca_t sqlca_init =
 {
 	{
