@@ -4,7 +4,7 @@
  *	  this file contains the interface to version.c.
  *	  Also some parameters.
  *
- * $Header: /cvsroot/pgsql/src/include/Attic/version.h.in,v 1.7 1999/07/18 18:06:40 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/Attic/version.h.in,v 1.8 1999/11/01 02:33:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,8 +14,8 @@
 void ValidatePgVersion(const char *path, char **reason_p);
 void SetPgVersion(const char *path, char **reason_p);
 
-#define PG_RELEASE		"6"
-#define PG_VERSION		"6"
+#define PG_RELEASE		"7"
+#define PG_VERSION		"0"
 #define PG_SUBVERSION		"0"
 
 #define PG_VERFILE		"PG_VERSION"
