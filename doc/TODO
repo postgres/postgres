@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jul 26 20:56:24 EDT 2000
+Last updated:		Wed Jul 26 21:12:33 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -100,7 +100,7 @@ TYPES
 * Reject character sequences those are not valid in their charset
 * Make functions more multi-byte aware, i.e. trim()
 * Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes
-* Update macaddr manufacturer numbers, or remove the function
+* Update macaddr manufacturer numbers, or remove the function macaddr_manuf()
 
 VIEWS
 
