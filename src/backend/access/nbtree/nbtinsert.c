@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.11 1997/03/24 08:48:09 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.12 1997/04/16 01:48:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ static OffsetNumber _bt_findsplitloc(Relation rel, Page page, OffsetNumber start
 static void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static OffsetNumber _bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, BTItem btitem, BTItem afteritem);
 static bool _bt_goesonpg(Relation rel, Buffer buf, Size keysz, ScanKey scankey, BTItem afteritem);
-static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, Oid bti_oid, BTItem newItem);
+static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, BTItem oldItem, BTItem newItem);
 static bool _bt_isequal (TupleDesc itupdesc, Page page, OffsetNumber offnum, int keysz, ScanKey scankey);
 
 /*
@@ -357,7 +357,7 @@ _bt_insertonpg(Relation rel,
        			DOUBLEALIGN (IndexTupleDSize (stack->bts_btitem->bti_itup)) ) 
        		{
 		    _bt_updateitem(rel, keysz, pbuf, 
-		    		stack->bts_btitem->bti_oid, lowLeftItem);
+		    		stack->bts_btitem, lowLeftItem);
 		    _bt_relbuf(rel, buf, BT_WRITE);
 		    _bt_relbuf(rel, rbuf, BT_WRITE);
 		}
@@ -644,23 +644,14 @@ _bt_findsplitloc(Relation rel,
     OffsetNumber saferight;
     ItemId nxtitemid, safeitemid;
     BTItem safeitem, nxtitem;
-    IndexTuple safetup, nxttup;
     Size nbytes;
-    TupleDesc itupdesc;
     int natts;
-    int attno;
-    Datum attsafe;
-    Datum attnext;
-    bool null;
     
-    itupdesc = RelationGetTupleDescriptor(rel);
     natts = rel->rd_rel->relnatts;
-    
     saferight = start;
     safeitemid = PageGetItemId(page, saferight);
     nbytes = ItemIdGetLength(safeitemid) + sizeof(ItemIdData);
     safeitem = (BTItem) PageGetItem(page, safeitemid);
-    safetup = &(safeitem->bti_itup);
     
     i = OffsetNumberNext(start);
     
@@ -670,26 +661,17 @@ _bt_findsplitloc(Relation rel,
 	nxtitemid = PageGetItemId(page, i);
 	nbytes += (ItemIdGetLength(nxtitemid) + sizeof(ItemIdData));
 	nxtitem = (BTItem) PageGetItem(page, nxtitemid);
-	nxttup = &(nxtitem->bti_itup);
-	
-	/* test against last known safe item */
-	for (attno = 1; attno <= natts; attno++) {
-	    attsafe = index_getattr(safetup, attno, itupdesc, &null);
-	    attnext = index_getattr(nxttup, attno, itupdesc, &null);
 
-	    /*
-	     *  If the tuple we're looking at isn't equal to the last safe one
-	     *  we saw, then it's our new safe tuple.
-	     */
-	    
-	    if (!_bt_invokestrat(rel, attno, BTEqualStrategyNumber,
-				 attsafe, attnext)) {
-		safetup = nxttup;
-		saferight = i;
-		
-		/* break is for the attno for loop */
-		break;
-	    }
+	/* 
+	 * Test against last known safe item:
+	 * if the tuple we're looking at isn't equal to the last safe 
+	 * one we saw, then it's our new safe tuple.
+	 */
+	if ( !_bt_itemcmp (rel, natts, 
+			safeitem, nxtitem, BTEqualStrategyNumber) )
+	{
+	    safeitem = nxtitem;
+	    saferight = i;
 	}
 	i = OffsetNumberNext(i);
     }
@@ -753,7 +735,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
     rbkno = BufferGetBlockNumber(rbuf);
     lpage = BufferGetPage(lbuf);
     rpage = BufferGetPage(rbuf);
-    
+
     /*
      * step over the high key on the left page while building the 
      * left page pointer.
@@ -793,7 +775,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
     _bt_wrtbuf(rel, rootbuf);
     
     /* update metadata page with new root block number */
-    _bt_metaproot(rel, rootbknum);
+    _bt_metaproot(rel, rootbknum, 0);
 }
 
 /*
@@ -820,7 +802,6 @@ _bt_pgaddtup(Relation rel,
     Page page;
     BTPageOpaque opaque;
     BTItem chkitem;
-    Oid afteroid;
     
     page = BufferGetPage(buf);
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -829,14 +810,13 @@ _bt_pgaddtup(Relation rel,
     if (afteritem == (BTItem) NULL) {
 	itup_off = _bt_binsrch(rel, buf, keysz, itup_scankey, BT_INSERTION);
     } else {
-	afteroid = afteritem->bti_oid;
 	itup_off = first;
 	
 	do {
 	    chkitem =
 		(BTItem) PageGetItem(page, PageGetItemId(page, itup_off));
 	    itup_off = OffsetNumberNext(itup_off);
-	} while (chkitem->bti_oid != afteroid);
+	} while ( ! BTItemSame (chkitem, afteritem) );
     }
 
     (void) PageAddItem(page, (Item) btitem, itemsize, itup_off, LP_USED);
@@ -870,7 +850,6 @@ _bt_goesonpg(Relation rel,
     BTPageOpaque opaque;
     BTItem chkitem;
     OffsetNumber offnum, maxoff;
-    Oid afteroid;
     bool found;
     
     page = BufferGetPage(buf);
@@ -908,7 +887,6 @@ _bt_goesonpg(Relation rel,
 	return (false);
     
     /* damn, have to work for it.  i hate that. */
-    afteroid = afteritem->bti_oid;
     maxoff = PageGetMaxOffsetNumber(page);
     
     /*
@@ -924,7 +902,8 @@ _bt_goesonpg(Relation rel,
 	 offnum <= maxoff;
 	 offnum = OffsetNumberNext(offnum)) {
 	chkitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-	if (chkitem->bti_oid == afteroid) {
+
+	if ( BTItemSame (chkitem, afteritem) ) {
 	    found = true;
 	    break;
 	}
@@ -1029,7 +1008,7 @@ static void
 _bt_updateitem(Relation rel,
 	       Size keysz,
 	       Buffer buf,
-	       Oid bti_oid,
+	       BTItem oldItem,
 	       BTItem newItem)
 {
     Page page;
@@ -1050,10 +1029,10 @@ _bt_updateitem(Relation rel,
     do {
 	item = (BTItem) PageGetItem(page, PageGetItemId(page, i));
 	i = OffsetNumberNext(i);
-    } while (i <= maxoff && item->bti_oid != bti_oid);
+    } while (i <= maxoff && ! BTItemSame (item, oldItem));
     
     /* this should never happen (in theory) */
-    if (item->bti_oid != bti_oid) {
+    if ( ! BTItemSame (item, oldItem) ) {
 	elog(FATAL, "_bt_getstackbuf was lying!!");
     }
     

@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.13 1997/03/24 08:48:15 vadim Exp $
+ *    $Id: nbtsort.c,v 1.14 1997/04/16 01:48:27 vadim Exp $
  *
  * NOTES
  *
@@ -1021,9 +1021,13 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
     }
 #endif /* FASTBUILD_DEBUG && FASTBUILD_MERGE */
 #endif
-    if (last_bti == (BTItem) NULL) {
+    if (last_bti == (BTItem) NULL)
+    {
 	first_off = P_FIRSTKEY;
-    } else if (!_bt_itemcmp(index, _bt_nattr, bti, last_bti, BTEqualStrategyNumber)) {
+    }
+    else if ( !_bt_itemcmp(index, _bt_nattr, 
+    			bti, last_bti, BTEqualStrategyNumber) )
+    {
 	first_off = off;
     }
     last_off = off;
@@ -1061,7 +1065,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 	if (s->btps_doupper) {
 	    if (s->btps_next == (BTPageState *) NULL) {
 		opaque->btpo_flags |= BTP_ROOT;
-		_bt_metaproot(index, blkno);
+		_bt_metaproot(index, blkno, s->btps_level + 1);
 	    } else {
 		bti = _bt_minitem(s->btps_page, blkno, 0);
 		(void) _bt_buildadd(index, s->btps_next, bti, 0);

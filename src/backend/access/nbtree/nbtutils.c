@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.9 1997/03/24 08:48:16 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.10 1997/04/16 01:48:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,7 +297,9 @@ _bt_formitem(IndexTuple itup)
     btitem = (BTItem) palloc(nbytes_btitem);
     memmove((char *) &(btitem->bti_itup), (char *) itup, tuplen);
     
+#ifndef BTREE_VERSION_1
     btitem->bti_oid = newoid();
+#endif
     return (btitem);
 }
 

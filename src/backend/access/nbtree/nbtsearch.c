@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.16 1997/03/24 08:48:12 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.17 1997/04/16 01:48:17 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,8 @@ _bt_moveright(Relation rel,
     ItemId hikey;
     ItemId itemid;
     BlockNumber rblkno;
-    
+    int natts = rel->rd_rel->relnatts;
+        
     page = BufferGetPage(buf);
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
     
@@ -178,21 +179,42 @@ _bt_moveright(Relation rel,
      */
     
     if (_bt_skeycmp(rel, keysz, scankey, page, hikey,
-		    BTGreaterEqualStrategyNumber)) {
-	
+		    BTGreaterEqualStrategyNumber))
+    {
 	/* move right as long as we need to */
-	do {
+	do
+	{
+	    OffsetNumber offmax;
 	    /*
 	     *  If this page consists of all duplicate keys (hikey and first
 	     *  key on the page have the same value), then we don't need to
 	     *  step right.
+	     *
+	     *  NOTE for multi-column indices: we may do scan using
+	     *  keys not for all attrs. But we handle duplicates
+	     *  using all attrs in _bt_insert/_bt_spool code.
+	     *  And so we've to compare scankey with _last_ item
+	     *  on this page to do not lose "good" tuples if number
+	     *  of attrs > keysize. Example: (2,0) - last items on 
+	     *  this page, (2,1) - first item on next page (hikey), 
+	     *  our scankey is x = 2. Scankey >= (2,1) because of 
+	     *  we compare first attrs only, but we shouldn't to move
+	     *  right of here.		- vadim 04/15/97
 	     */
-	    if (PageGetMaxOffsetNumber(page) > P_HIKEY) {
+	    if ( (offmax = PageGetMaxOffsetNumber(page)) > P_HIKEY)
+	    {
 		itemid = PageGetItemId(page, P_FIRSTKEY);
 		if (_bt_skeycmp(rel, keysz, scankey, page, itemid,
 				BTEqualStrategyNumber)) {
 		    /* break is for the "move right" while loop */
 		    break;
+		}
+		else if ( natts > keysz )
+		{
+		    itemid = PageGetItemId(page, offmax);
+		    if (_bt_skeycmp(rel, keysz, scankey, page, itemid,
+				BTLessEqualStrategyNumber))
+		    	break;
 		}
 	    }
 	    
@@ -346,6 +368,7 @@ _bt_binsrch(Relation rel,
     Page page;
     BTPageOpaque opaque;
     OffsetNumber low, mid, high;
+    int natts = rel->rd_rel->relnatts;
     int result;
     
     page = BufferGetPage(buf);
@@ -379,55 +402,84 @@ _bt_binsrch(Relation rel,
 	else if (result < 0)
 	    high = mid - 1;
 	else
-	    return (_bt_firsteq(rel, itupdesc, page, keysz, scankey, mid));
+	{
+	    mid = _bt_firsteq(rel, itupdesc, page, keysz, scankey, mid);
+	    /*
+	     *  NOTE for multi-column indices: we may do scan using
+	     *  keys not for all attrs. But we handle duplicates using
+	     *  all attrs in _bt_insert/_bt_spool code. And so while
+	     *  searching on internal pages having number of attrs > keysize
+	     *  we want to point at the last item < the scankey, not at the 
+	     *  first item = the scankey (!!!), and let _bt_moveright
+	     *  decide later whether to move right or not (see comments and 
+	     *  example there). Note also that INSERTions are not affected 
+	     *  by this code (natts == keysz).		- vadim 04/15/97
+	     */
+	    if ( natts == keysz || opaque->btpo_flags & BTP_LEAF )
+	    	return (mid);
+    	    low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+    	    if ( mid == low )
+    	    	return (mid);
+	    return (OffsetNumberPrev(mid));
+	}
     }
 	
-	/*
-	 *  We terminated because the endpoints got too close together.  There
-	 *  are two cases to take care of.
-	 *
-	 *  For non-insertion searches on internal pages, we want to point at
-	 *  the last key <, or first key =, the scankey on the page.  This
-	 *  guarantees that we'll descend the tree correctly.
-	 *
-	 *  For all other cases, we want to point at the first key >=
-	 *  the scankey on the page.  This guarantees that scans and
-	 *  insertions will happen correctly.
-	 */
+    /*
+     *  We terminated because the endpoints got too close together.  There
+     *  are two cases to take care of.
+     *
+     *  For non-insertion searches on internal pages, we want to point at
+     *  the last key <, or first key =, the scankey on the page.  This
+     *  guarantees that we'll descend the tree correctly.
+     *  (NOTE comments above for multi-column indices).
+     *
+     *  For all other cases, we want to point at the first key >=
+     *  the scankey on the page.  This guarantees that scans and
+     *  insertions will happen correctly.
+     */
 	
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	if (!(opaque->btpo_flags & BTP_LEAF) && srchtype == BT_DESCENT) {
-	    
+    if (!(opaque->btpo_flags & BTP_LEAF) && srchtype == BT_DESCENT)
+    {	/*
+	 *  We want the last key <, or first key ==, the scan key.
+	 */
+	result = _bt_compare(rel, itupdesc, page, keysz, scankey, high);
+	
+	if (result == 0)
+	{
+	    mid = _bt_firsteq(rel, itupdesc, page, keysz, scankey, high);
 	    /*
-	     *  We want the last key <, or first key ==, the scan key.
+	     *  If natts > keysz we want last item < the scan key.
+	     *  See comments above for multi-column indices.
 	     */
-	    
-	    result = _bt_compare(rel, itupdesc, page, keysz, scankey, high);
-	    
-	    if (result == 0) {
-		return (_bt_firsteq(rel, itupdesc, page, keysz, scankey, high));
-	    } else if (result > 0) {
-		return (high);
-	    } else {
-		return (low);
-	    }
-	} else {
-	    
-	    /* we want the first key >= the scan key */
-	    result = _bt_compare(rel, itupdesc, page, keysz, scankey, low);
-	    if (result <= 0) {
-		return (low);
-	    } else {
-		if (low == high)
-		    return (OffsetNumberNext(low));
-		
-		result = _bt_compare(rel, itupdesc, page, keysz, scankey, high);
-		if (result <= 0)
-		    return (high);
-		else
-		    return (OffsetNumberNext(high));
-	    }
+	    if ( natts == keysz )
+	    	return (mid);
+    	    low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+    	    if ( mid == low )
+    	    	return (mid);
+	    return (OffsetNumberPrev(mid));
 	}
+	else if (result > 0)
+	    return (high);
+	else
+	    return (low);
+    } 
+    else	/* we want the first key >= the scan key */
+    {
+	result = _bt_compare(rel, itupdesc, page, keysz, scankey, low);
+	if (result <= 0)
+	    return (low);
+	else
+	{
+	    if (low == high)
+		return (OffsetNumberNext(low));
+		
+	    result = _bt_compare(rel, itupdesc, page, keysz, scankey, high);
+	    if (result <= 0)
+		return (high);
+	    else
+		return (OffsetNumberNext(high));
+	}
+    }
 }
 
 static OffsetNumber
@@ -1107,7 +1159,7 @@ _bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
     while (offnum <= maxoff) {
 	itemid = PageGetItemId(page, offnum);
 	btitem = (BTItem) PageGetItem(page, itemid);
-	if (btitem->bti_oid == svitem->bti_oid) {
+	if ( BTItemSame (btitem, svitem) ) {
 	    pfree(svitem);
 	    ItemPointerSet(current, blkno, offnum);
 	    return (false);

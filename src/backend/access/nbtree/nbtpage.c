@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.6 1996/11/05 10:35:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.7 1997/04/16 01:48:15 vadim Exp $
  *
  *  NOTES
  *     Postgres btree pages look like ordinary relation pages.  The opaque
@@ -38,12 +38,20 @@
 
 #define BTREE_METAPAGE	0
 #define BTREE_MAGIC	0x053162
+
+#ifdef BTREE_VERSION_1
+#define BTREE_VERSION	1
+#else
 #define BTREE_VERSION	0
+#endif
 
 typedef struct BTMetaPageData {
     uint32	btm_magic;
     uint32	btm_version;
     BlockNumber	btm_root;
+#ifdef BTREE_VERSION_1
+    int32	btm_level;
+#endif
 } BTMetaPageData;
 
 #define	BTPageGetMeta(p) \
@@ -95,6 +103,9 @@ _bt_metapinit(Relation rel)
     metad.btm_magic = BTREE_MAGIC;
     metad.btm_version = BTREE_VERSION;
     metad.btm_root = P_NONE;
+#ifdef BTREE_VERSION_1
+    metad.btm_level = 0;
+#endif
     memmove((char *) BTPageGetMeta(pg), (char *) &metad, sizeof(metad));
     
     op = (BTPageOpaque) PageGetSpecialPointer(pg);
@@ -179,6 +190,17 @@ _bt_getroot(Relation rel, int access)
     metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
     Assert(metaopaque->btpo_flags & BTP_META);
     metad = BTPageGetMeta(metapg);
+
+    if (metad->btm_magic != BTREE_MAGIC) {
+	elog(WARN, "Index %s is not a btree",
+	     RelationGetRelationName(rel));
+    }
+    
+    if (metad->btm_version != BTREE_VERSION) {
+	elog(WARN, "Version mismatch on %s:  version %d file, version %d code",
+	     RelationGetRelationName(rel),
+	     metad->btm_version, BTREE_VERSION);
+    }
     
     /* if no root page initialized yet, do it */
     if (metad->btm_root == P_NONE) {
@@ -209,6 +231,9 @@ _bt_getroot(Relation rel, int access)
 	    rootblkno = BufferGetBlockNumber(rootbuf);
 	    rootpg = BufferGetPage(rootbuf);
 	    metad->btm_root = rootblkno;
+#ifdef BTREE_VERSION_1
+    	    metad->btm_level = 1;
+#endif
 	    _bt_pageinit(rootpg, BufferGetPageSize(rootbuf));
 	    rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpg);
 	    rootopaque->btpo_flags |= (BTP_LEAF | BTP_ROOT);
@@ -387,7 +412,7 @@ _bt_pageinit(Page page, Size size)
  *	a reference to or lock on the metapage.
  */
 void
-_bt_metaproot(Relation rel, BlockNumber rootbknum)
+_bt_metaproot(Relation rel, BlockNumber rootbknum, int level)
 {
     Buffer metabuf;
     Page metap;
@@ -400,6 +425,12 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum)
     Assert(metaopaque->btpo_flags & BTP_META);
     metad = BTPageGetMeta(metap);
     metad->btm_root = rootbknum;
+#ifdef BTREE_VERSION_1
+    if ( level == 0 )			/* called from _do_insert */
+    	metad->btm_level += 1;
+    else
+    	metad->btm_level = level;	/* called from btsort */
+#endif
     _bt_wrtbuf(rel, metabuf);
 }
 
@@ -434,7 +465,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	item = (BTItem) PageGetItem(page, itemid);
 	
 	/* if the item is where we left it, we're done */
-	if (item->bti_oid == stack->bts_btitem->bti_oid)
+	if ( BTItemSame (item, stack->bts_btitem) )
 	    return (buf);
 	
 	/* if the item has just moved right on this page, we're done */
@@ -445,7 +476,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	    item = (BTItem) PageGetItem(page, itemid);
 	    
 	    /* if the item is where we left it, we're done */
-	    if (item->bti_oid == stack->bts_btitem->bti_oid)
+	    if ( BTItemSame (item, stack->bts_btitem) )
 		return (buf);
 	}
     }
@@ -471,7 +502,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	     offnum = OffsetNumberNext(offnum)) {
 	    itemid = PageGetItemId(page, offnum);
 	    item = (BTItem) PageGetItem(page, itemid);
-	    if (item->bti_oid == stack->bts_btitem->bti_oid)
+	    if ( BTItemSame (item, stack->bts_btitem) )
 		return (buf);
 	}
     }
