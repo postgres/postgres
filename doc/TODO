@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 12 12:38:45 EST 2004
+Last updated:		Thu Feb 12 12:50:57 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -392,9 +392,9 @@ Startup Time
 
 * Experiment with multi-threaded backend [thread]
 * Add connection pooling [pool]
-* Allow persistent backends [persistent]
+* Allow persistent backends [pool]
 * Create a transaction processor to aid in persistent connections and
-  connection pooling
+  connection pooling [pool]
 * Do listen() in postmaster and accept() in pre-forked backend
 * Have pre-forked backend pre-connect to last requested database or pass
   file descriptor to backend pre-forked for matching database
@@ -464,7 +464,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1205 2004/02/12 17:38:50 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1205 2004/02/12 17:38:50 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1206 2004/02/12 17:51:03 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1206 2004/02/12 17:51:03 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
