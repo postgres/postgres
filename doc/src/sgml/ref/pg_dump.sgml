@@ -14,20 +14,20 @@ Extract a <productname>Postgres</productname> database into a script file
 </REFPURPOSE>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-10-04</DATE>
+<DATE>1998-11-05</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 pg_dump [ <replaceable class="parameter">dbname</replaceable> ]
 pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
     [ -t <replaceable class="parameter">table</replaceable> ]
     [ -f <replaceable class="parameter">outputfile</replaceable> ]
-    [ -a ] [ -d ] [ -D ] [ -o ] [ -s ] [ -u ] [ -v ] [ -z ]
+    [ -a ] [ -d ] [ -D ] [ -n ] [ -N ] [ -o ] [ -s ] [ -u ] [ -v ] [ -z ]
     [ <replaceable class="parameter">dbname</replaceable> ]
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-APP-PG-DUMP-1">
 <REFSECT2INFO>
-<DATE>1998-10-04</DATE>
+<DATE>1998-11-05</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
@@ -88,7 +88,17 @@ Specifies the output file. Defaults to <filename>stdout</filename>.
 <para>
 Suppress double quotes around identifiers unless absolutely necessary.
 This may cause trouble loading this dumped data if there are reserved words
-used for identifiers.
+used for identifiers. 
+This was the default behavior in pre-v6.4 <application>pg_dump</application>.
+
+<varlistentry>
+<term>
+-N
+</term>
+<listitem>
+<para>
+Include double quotes around identifiers.
+This is the default.
 
 <varlistentry>
 <term>
@@ -183,7 +193,7 @@ Prompts for
 
 <REFSECT2 ID="R2-APP-PG-DUMP-2">
 <REFSECT2INFO>
-<DATE>1998-10-04</DATE>
+<DATE>1998-11-05</DATE>
 </REFSECT2INFO>
 <TITLE>
 Outputs
@@ -239,7 +249,7 @@ example, <application>psql</application>.
 
 <REFSECT1 ID="R1-APP-PG-DUMP-1">
 <REFSECT1INFO>
-<DATE>1998-10-04</DATE>
+<DATE>1998-11-05</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
@@ -267,7 +277,7 @@ in light of the limitations listed below.
 
 <REFSECT1 ID="R1-APP-PG-DUMP-2">
 <REFSECT1INFO>
-<DATE>1998-10-04</DATE>
+<DATE>1998-11-05</DATE>
 </REFSECT1INFO>
 <TITLE>
 Notes
@@ -300,7 +310,7 @@ Large objects are ignored and must be dealt with manually.
 
 <REFSECT1 ID="R1-APP-PG-DUMP-3">
 <REFSECT1INFO>
-<DATE>1998-10-04</DATE>
+<DATE>1998-11-05</DATE>
 </REFSECT1INFO>
 <TITLE>
 Usage
