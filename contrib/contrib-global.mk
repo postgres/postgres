@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.5 2002/11/02 00:16:21 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.6 2003/08/23 04:23:38 petere Exp $
 
 # This file contains generic rules to build many kinds of simple
 # contrib modules.  You only need to set a few variables and include
@@ -127,7 +127,7 @@ endif
 
 uninstall:
 ifneq (,$(DATA)$(DATA_built))
-	rm -f $(addprefix $(DESTDIR)$(datadir)/contrib/, $(DATA) $(DATA_built))
+	rm -f $(addprefix $(DESTDIR)$(datadir)/contrib/, $(notdir $(DATA) $(DATA_built)))
 endif
 ifdef MODULES
 	rm -f $(addprefix $(DESTDIR)$(pkglibdir)/, $(addsuffix $(DLSUFFIX), $(MODULES)))
