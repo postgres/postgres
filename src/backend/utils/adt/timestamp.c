@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.25 2000/04/12 17:15:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.26 2000/04/14 15:22:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1621,7 +1621,7 @@ timestamp_trunc(text *units, Timestamp *timestamp)
 		{
 			switch (val)
 			{
-				case DTK_MILLENIUM:
+				case DTK_MILLENNIUM:
 					tm->tm_year = (tm->tm_year / 1000) * 1000;
 				case DTK_CENTURY:
 					tm->tm_year = (tm->tm_year / 100) * 100;
@@ -1759,7 +1759,7 @@ interval_trunc(text *units, Interval *interval)
 		{
 			switch (val)
 			{
-				case DTK_MILLENIUM:
+				case DTK_MILLENNIUM:
 					tm->tm_year = (tm->tm_year / 1000) * 1000;
 				case DTK_CENTURY:
 					tm->tm_year = (tm->tm_year / 100) * 100;
@@ -1927,6 +1927,38 @@ timestamp_part(text *units, Timestamp *timestamp)
 					*result = (tm->tm_mon / 4) + 1;
 					break;
 
+				case DTK_WEEK:
+					{
+						int day0, day4, dayn;
+						dayn = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+						day4 = date2j(tm->tm_year, 1, 4);
+						/* day0 == offset to first day of week (Monday) */
+						day0 = (j2day(day4 - 1) % 7);
+						/* We need the first week containing a Thursday,
+						 * otherwise this day falls into the previous year
+						 * for purposes of counting weeks
+						 */
+						if (dayn < (day4 - day0))
+						{
+							day4 = date2j((tm->tm_year - 1), 1, 4);
+							/* day0 == offset to first day of week (Monday) */
+							day0 = (j2day(day4 - 1) % 7);
+						}
+						*result = (((dayn - (day4 - day0)) / 7) + 1);
+						/* Sometimes the last few days in a year will fall into
+						 * the first week of the next year, so check for this.
+						 */
+						if (*result >= 53)
+						{
+							day4 = date2j((tm->tm_year + 1), 1, 4);
+							/* day0 == offset to first day of week (Monday) */
+							day0 = (j2day(day4 - 1) % 7);
+							if (dayn >= (day4 - day0))
+								*result = (((dayn - (day4 - day0)) / 7) + 1);
+						}
+					}
+					break;
+
 				case DTK_YEAR:
 					*result = tm->tm_year;
 					break;
@@ -1939,7 +1971,7 @@ timestamp_part(text *units, Timestamp *timestamp)
 					*result = (tm->tm_year / 100);
 					break;
 
-				case DTK_MILLENIUM:
+				case DTK_MILLENNIUM:
 					*result = (tm->tm_year / 1000);
 					break;
 
@@ -2082,7 +2114,7 @@ interval_part(text *units, Interval *interval)
 					*result = (tm->tm_year / 100);
 					break;
 
-				case DTK_MILLENIUM:
+				case DTK_MILLENNIUM:
 					*result = (tm->tm_year / 1000);
 					break;
 
