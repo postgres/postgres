@@ -563,12 +563,14 @@ check_foreign_key(PG_FUNCTION_ARGS)
 				elog(ERROR, "%s: tuple referenced in %s",
 					 trigger->tgname, relname);
 		}
-#ifdef REFINT_VERBOSE
 		else
-			elog(DEBUG3, "%s: %d tuple(s) of %s are %s",
+		{
+#ifdef REFINT_VERBOSE
+			elog(NOTICE, "%s: %d tuple(s) of %s are %s",
 				 trigger->tgname, SPI_processed, relname,
 				 (action == 'c') ? "deleted" : "setted to null");
 #endif
+		}
 		args += nkeys + 1;		/* to the next relation */
 	}
 

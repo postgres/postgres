@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.40 2002/09/05 18:28:46 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.41 2002/10/03 18:40:02 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ all: all-spi
 
 .PHONY: all-spi
 all-spi:
-	$(MAKE) -C $(contribdir)/spi REFINT_VERBOSE=1 refint$(DLSUFFIX) autoinc$(DLSUFFIX)
+	$(MAKE) -C $(contribdir)/spi refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 
 
 ##
