@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.67 2004/03/23 19:35:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.68 2004/03/24 09:49:20 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -403,8 +403,9 @@ VACUUM FULL table;
    </para>
 
    <para>
-    Refer to <command>CREATE TABLE</command> for a further description
-    of valid parameters. <xref linkend="ddl"> has further information on
+    Refer to <xref linkend="sql-createtable"
+    endterm="sql-createtable-title"> for a further description of valid
+    parameters. <xref linkend="ddl"> has further information on
     inheritance.
    </para>
  </refsect1>
