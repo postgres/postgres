@@ -7,11 +7,17 @@ shlib_symbolic = -Wl,-Bsymbolic
 endif
 
 DLSUFFIX = .so
+
+ifeq ($(findstring sparc,$(host_cpu)), sparc)
+CFLAGS_SL = -fPIC -DPIC
+else
 CFLAGS_SL = -fpic -DPIC
+endif
+
 
 %.so: %.o
 ifdef ELF_SYSTEM
-	$(LD) -x -Bshareable -o $@ $<
+	$(CC) -shared -o $@ $<
 else
 	$(LD) $(LDREL) $(LDOUT) $<.obj -x $<
 	@echo building shared object $@
@@ -19,8 +25,7 @@ else
 	@${AR} cq $@.pic `lorder $<.obj | tsort`
 	${RANLIB} $@.pic
 	@rm -f $@
-	$(LD) -x -Bshareable -Bforcearchive \
-	  -o $@ $@.pic
+	$(LD) -x -Bshareable -Bforcearchive -o $@ $@.pic
 endif
 
 sqlmansect = 7

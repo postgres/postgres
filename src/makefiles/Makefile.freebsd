@@ -7,7 +7,13 @@ shlib_symbolic = -Wl,-Bsymbolic -lc
 endif
 
 DLSUFFIX = .so
+
+ifeq ($(findstring sparc,$(host_cpu)), sparc)
+CFLAGS_SL = -fPIC -DPIC
+else
 CFLAGS_SL = -fpic -DPIC
+endif
+
 
 %.so: %.o
 ifdef ELF_SYSTEM
