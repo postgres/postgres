@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.15 2003/12/21 16:36:34 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.16 2003/12/21 18:06:26 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.15 2003/12/21 16:36:34 pe
 
    <note>
    <title>Release date</title>
-   <simpara>2003-12-15</simpara>
+   <simpara>2003-12-22</simpara>
    </note>
 
    <para>
@@ -84,8 +84,8 @@ DROP SCHEMA information_schema CASCADE;
 <listitem><para>Fix for <type>bytea</type> index lookups (Joe)</para></listitem>
 <listitem><para>Fix information schema for bit data types (Peter)</para></listitem>
 <listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
-<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</para></listitem>
-<listitem><para>Make <function>PQescapeBytea</function> and <function>byteaout</function> consistent with each other (Joe)</para>
+<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</quote></para></listitem>
+<listitem><para>Make <function>PQescapeBytea</function> and <function>byteaout</function> consistent with each other (Joe)</para></listitem>
 <listitem><para>Escape <type>bytea</type> output for bytes > 0x7e(Joe)</para>
 <para>
   If different client encodings are used for <type>bytea</type> output and input, it
@@ -1995,7 +1995,7 @@ DROP SCHEMA information_schema CASCADE;
 
 <itemizedlist>
 <listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
-<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</para></listitem>
+<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</quote></para></listitem>
 <listitem><para>Force stats processes to detach from shared memory, ensuring cleaner shutdown</para></listitem>
 <listitem><para>Make PQescapeBytea and byteaout consistent with each other (Joe)</para></listitem>
 <listitem><para>Added missing SPI_finish() calls to dblink's get_tuple_of_interest() (Joe)</para></listitem>
