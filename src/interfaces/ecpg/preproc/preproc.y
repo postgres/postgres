@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.195 2002/07/21 11:09:41 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.196 2002/09/02 06:11:43 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -582,7 +582,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 
 			if (ptr == NULL)
 			{
-				sprintf(errortext, "trying to open undeclared cursor %s\n", $1);
+				snprintf(errortext, sizeof(errortext), "trying to open undeclared cursor %s\n", $1);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
@@ -1119,7 +1119,7 @@ columnDef:	ColId Typename ColQualList opt_collate
 		{
 			if (strlen($4) > 0)
 			{
-				sprintf(errortext, "Currently unsupported CREATE TABLE / COLLATE %s will be passed to backend", $4);
+				snprintf(errortext, sizeof(errortext), "Currently unsupported CREATE TABLE / COLLATE %s will be passed to backend", $4);
 				mmerror(PARSE_ERROR, ET_WARNING, errortext);
 			}
 			$$ = cat_str(4, $1, $2, $3, $4);
@@ -2406,7 +2406,7 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt
 				if (strcmp($2, ptr->name) == 0)
 				{
 						/* re-definition is a bug */
-					sprintf(errortext, "cursor %s already defined", $2);
+					snprintf(errortext, sizeof(errortext), "cursor %s already defined", $2);
 					mmerror(PARSE_ERROR, ET_ERROR, errortext);
 				}
 			}
@@ -3628,7 +3628,7 @@ connection_target: database_name opt_server opt_port
 			/* old style: dbname[@server][:port] */
 			if (strlen($2) > 0 && *($2) != '@')
 			{
-				sprintf(errortext, "Expected '@', found '%s'", $2);
+				sprintf(errortext, sizeof(errortext), "Expected '@', found '%s'", $2);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
@@ -3639,13 +3639,13 @@ connection_target: database_name opt_server opt_port
 			/* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
 			if (strncmp($1, "unix:postgresql", strlen("unix:postgresql")) != 0 && strncmp($1, "tcp:postgresql", strlen("tcp:postgresql")) != 0)
 			{
-				sprintf(errortext, "only protocols 'tcp' and 'unix' and database type 'postgresql' are supported");
+				snprintf(errortext, sizeof(errortext), "only protocols 'tcp' and 'unix' and database type 'postgresql' are supported");
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
 			if (strncmp($3, "//", strlen("//")) != 0)
 			{
-				sprintf(errortext, "Expected '://', found '%s'", $3);
+				snprintf(errortext, sizeof(errortext), "Expected '://', found '%s'", $3);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
@@ -3653,7 +3653,7 @@ connection_target: database_name opt_server opt_port
 				strncmp($3 + strlen("//"), "localhost", strlen("localhost")) != 0 &&
 				strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
 			{
-				sprintf(errortext, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
+				snprintf(errortext, sizeof(errortext), "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
@@ -3686,13 +3686,13 @@ db_prefix: ident CVARIABLE
 		{
 			if (strcmp($2, "postgresql") != 0 && strcmp($2, "postgres") != 0)
 			{
-				sprintf(errortext, "Expected 'postgresql', found '%s'", $2);
+				snprintf(errortext, sizeof(errortext), "Expected 'postgresql', found '%s'", $2);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
 			if (strcmp($1, "tcp") != 0 && strcmp($1, "unix") != 0)
 			{
-				sprintf(errortext, "Illegal connection type %s", $1);
+				snprintf(errortext, sizeof(errortext), "Illegal connection type %s", $1);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
@@ -3704,7 +3704,7 @@ server: Op server_name
 		{
 			if (strcmp($1, "@") != 0 && strcmp($1, "//") != 0)
 			{
-				sprintf(errortext, "Expected '@' or '://', found '%s'", $1);
+				snprintf(errortext, sizeof(errortext), "Expected '@' or '://', found '%s'", $1);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
@@ -3806,7 +3806,7 @@ opt_options: Op ColId
 
 			if (strcmp($1, "?") != 0)
 			{
-				sprintf(errortext, "unrecognised token '%s'", $1);
+				snprintf(errortext, sizeof(errortext), "unrecognised token '%s'", $1);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
@@ -3829,7 +3829,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
 				if (strcmp($2, ptr->name) == 0)
 				{
 						/* re-definition is a bug */
-					sprintf(errortext, "cursor %s already defined", $2);
+					snprintf(errortext, sizeof(errortext), "cursor %s already defined", $2);
 					mmerror(PARSE_ERROR, ET_ERROR, errortext);
 				}
 			}
@@ -3923,7 +3923,7 @@ type_declaration: S_TYPEDEF
 				if (strcmp($5, ptr->name) == 0)
 				{
 			        	/* re-definition is a bug */
-					sprintf(errortext, "Type %s already defined", $5);
+					snprintf(errortext, sizeof(errortext), "Type %s already defined", $5);
 					mmerror(PARSE_ERROR, ET_ERROR, errortext);
 				}
 			}
@@ -4528,7 +4528,7 @@ ECPGTypedef: TYPE_P
 					if (strcmp($3, ptr->name) == 0)
 					{
 						/* re-definition is a bug */
-						sprintf(errortext, "Type %s already defined", $3);
+						snprintf(errortext, sizeof(errortext), "Type %s already defined", $3);
 						mmerror(PARSE_ERROR, ET_ERROR, errortext);
 					}
 				}

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.98 2002/07/30 16:33:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.99 2002/09/02 06:11:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -405,7 +405,7 @@ cppline			{space}*#(.*\\{space})*.*
 							mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
 						if (literallen >= NAMEDATALEN)
 						{
-							sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
+							snprintf(errortext, sizeof(errortext), "identifier \"%s\" will be truncated to \"%.*s\"",
 									literalbuf, NAMEDATALEN-1, literalbuf);
 							literalbuf[NAMEDATALEN-1] = '\0';
 							mmerror(PARSE_ERROR, ET_WARNING, errortext);
@@ -831,7 +831,7 @@ cppline			{space}*#(.*\\{space})*.*
 								fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
 								continue;
 							}
-							sprintf (inc_file, "%s/%s", ip->path, yytext);
+							snprintf (inc_file, sizeof(inc_file), "%s/%s", ip->path, yytext);
 							yyin = fopen( inc_file, "r" );
 							if (!yyin)
 							{
@@ -844,7 +844,7 @@ cppline			{space}*#(.*\\{space})*.*
 						}
 						if (!yyin)
 						{
-							sprintf(errortext, "Cannot open include file %s in line %d\n", yytext, yylineno);
+							snprintf(errortext, sizeof(errortext), "Cannot open include file %s in line %d\n", yytext, yylineno);
 							mmerror(NO_INCLUDE_FILE, ET_FATAL, errortext);
 					  	}
 

@@ -164,8 +164,9 @@ int cube_yyerror ( char *msg ) {
 
   position = parse_buffer_pos() > parse_buffer_size() ? parse_buffer_pos() - 1 : parse_buffer_pos();
 
-  sprintf(
+  snprintf(
 	  buf, 
+	  256,
 	  "%s at or before position %d, character ('%c', \\%03o), input: '%s'\n", 
 	  msg,
 	  position,

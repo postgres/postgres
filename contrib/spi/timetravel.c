@@ -250,7 +250,7 @@ timetravel(PG_FUNCTION_ARGS)
 	 * Construct ident string as TriggerName $ TriggeredRelationId and try
 	 * to find prepared execution plan.
 	 */
-	snprintf(ident, 2 * NAMEDATALEN, "%s$%u", trigger->tgname, rel->rd_id);
+	snprintf(ident, sizeof(ident), "%s$%u", trigger->tgname, rel->rd_id);
 	plan = find_plan(ident, &Plans, &nPlans);
 
 	/* if there is no plan ... */
@@ -266,10 +266,10 @@ timetravel(PG_FUNCTION_ARGS)
 		/*
 		 * Construct query: INSERT INTO _relation_ VALUES ($1, ...)
 		 */
-		snprintf(sql, 8192, "INSERT INTO %s VALUES (", relname);
+		snprintf(sql, sizeof(sql), "INSERT INTO %s VALUES (", relname);
 		for (i = 1; i <= natts; i++)
 		{
-			snprintf(sql + strlen(sql), 8192 - strlen(sql), "$%d%s",
+			snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "$%d%s",
 					i, (i < natts) ? ", " : ")");
 			ctypes[i - 1] = SPI_gettypeid(tupdesc, i);
 		}

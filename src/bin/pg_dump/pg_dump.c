@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.295 2002/08/29 00:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.296 2002/09/02 06:11:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5706,7 +5706,7 @@ setMaxOid(Archive *fout)
 	PQclear(res);
 	if (g_verbose)
 		write_msg(NULL, "maximum system oid is %u\n", max_oid);
-	snprintf(sql, 1024,
+	snprintf(sql, sizeof(sql),
 			 "CREATE TEMPORARY TABLE pgdump_oid (dummy integer);\n"
 			 "COPY pgdump_oid WITH OIDS FROM stdin;\n"
 			 "%u\t0\n"

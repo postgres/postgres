@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.64 2002/08/18 01:39:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.65 2002/09/02 06:11:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1579,7 +1579,8 @@ Pg_lo_import(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	lobjId = lo_import(conn, filename);
 	if (lobjId == InvalidOid)
 	{
-		sprintf(interp->result, "Pg_lo_import of '%s' failed", filename);
+		/* What is the maximum size of this? FIXME if this is not a good quess */
+		snprintf(interp->result, 128, "Pg_lo_import of '%s' failed", filename);
 		return TCL_ERROR;
 	}
 	sprintf(interp->result, "%u", lobjId);

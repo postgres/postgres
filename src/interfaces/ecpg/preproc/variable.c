@@ -80,13 +80,13 @@ find_struct(char *name, char *next)
 	{
 		if (p->type->type != ECPGt_array)
 		{
-			sprintf(errortext, "variable %s is not a pointer", name);
+			snprintf(errortext, sizeof(errortext), "variable %s is not a pointer", name);
 			mmerror(PARSE_ERROR, ET_FATAL, errortext);
 		}
 
 		if (p->type->u.element->type != ECPGt_struct && p->type->u.element->type != ECPGt_union)
 		{
-			sprintf(errortext, "variable %s is not a pointer to a structure or a union", name);
+			snprintf(errortext, sizeof(errortext), "variable %s is not a pointer to a structure or a union", name);
 			mmerror(PARSE_ERROR, ET_FATAL, errortext);
 		}
 
@@ -100,7 +100,7 @@ find_struct(char *name, char *next)
 	{
 		if (p->type->type != ECPGt_struct && p->type->type != ECPGt_union)
 		{
-			sprintf(errortext, "variable %s is neither a structure nor a union", name);
+			snprintf(errortext, sizeof(errortext), "variable %s is neither a structure nor a union", name);
 			mmerror(PARSE_ERROR, ET_FATAL, errortext);
 		}
 
@@ -142,7 +142,7 @@ find_variable(char *name)
 
 	if (p == NULL)
 	{
-		sprintf(errortext, "The variable %s is not declared", name);
+		snprintf(errortext, sizeof(errortext), "The variable %s is not declared", name);
 		mmerror(PARSE_ERROR, ET_FATAL, errortext);
 	}
 
@@ -290,7 +290,7 @@ get_typedef(char *name)
 	for (this = types; this && strcmp(this->name, name); this = this->next);
 	if (!this)
 	{
-		sprintf(errortext, "invalid datatype '%s'", name);
+		snprintf(errortext, sizeof(errortext), "invalid datatype '%s'", name);
 		mmerror(PARSE_ERROR, ET_FATAL, errortext);
 	}
 
@@ -320,7 +320,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	}
 	
 	if (pointer_len>2)
-	{	sprintf(errortext, "No multilevel (more than 2) pointer supported %d",pointer_len);
+	{	snprintf(errortext, sizeof(errortext), "No multilevel (more than 2) pointer supported %d",pointer_len);
 	    mmerror(PARSE_ERROR, ET_FATAL, errortext);
 /*		mmerror(PARSE_ERROR, ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);*/
 	}

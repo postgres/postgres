@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.40 2002/07/30 16:33:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.41 2002/09/02 06:11:42 momjian Exp $
  *
  * ----------
  */
@@ -262,7 +262,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			 * ----------
 			 */
 			quoteRelationName(pkrelname, pk_rel);
-			sprintf(querystr, "SELECT 1 FROM ONLY %s x FOR UPDATE OF x",
+			snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x FOR UPDATE OF x",
 					pkrelname);
 
 			/*
@@ -413,13 +413,13 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		 * ----------
 		 */
 		quoteRelationName(pkrelname, pk_rel);
-		sprintf(querystr, "SELECT 1 FROM ONLY %s x", pkrelname);
+		snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x", pkrelname);
 		querysep = "WHERE";
 		for (i = 0; i < qkey.nkeypairs; i++)
 		{
 			quoteOneName(attname,
 						 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_PK_IDX]);
-			sprintf(querystr + strlen(querystr), " %s %s = $%d",
+			snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
 					querysep, attname, i+1);
 			querysep = "AND";
 			queryoids[i] = SPI_gettypeid(fk_rel->rd_att,
@@ -614,13 +614,13 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 		 * ----------
 		 */
 		quoteRelationName(pkrelname, pk_rel);
-		sprintf(querystr, "SELECT 1 FROM ONLY %s x", pkrelname);
+		snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x", pkrelname);
 		querysep = "WHERE";
 		for (i = 0; i < qkey.nkeypairs; i++)
 		{
 			quoteOneName(attname,
 						 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_PK_IDX]);
-			sprintf(querystr + strlen(querystr), " %s %s = $%d",
+			snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
 					querysep, attname, i+1);
 			querysep = "AND";
 			queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -816,13 +816,13 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "SELECT 1 FROM ONLY %s x", fkrelname);
+				snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x", fkrelname);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					sprintf(querystr + strlen(querystr), " %s %s = $%d",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
 							querysep, attname, i+1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -1050,13 +1050,13 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "SELECT 1 FROM ONLY %s x", fkrelname);
+				snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x", fkrelname);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					sprintf(querystr + strlen(querystr), " %s %s = $%d",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
 							querysep, attname, i+1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -1257,13 +1257,13 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "DELETE FROM ONLY %s", fkrelname);
+				snprintf(querystr, sizeof(querystr), "DELETE FROM ONLY %s", fkrelname);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					sprintf(querystr + strlen(querystr), " %s %s = $%d",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
 							querysep, attname, i+1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -1474,7 +1474,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "UPDATE ONLY %s SET", fkrelname);
+				snprintf(querystr, sizeof(querystr), "UPDATE ONLY %s SET", fkrelname);
 				qualstr[0] = '\0';
 				querysep = "";
 				qualsep = "WHERE";
@@ -1482,9 +1482,9 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					sprintf(querystr + strlen(querystr), "%s %s = $%d",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = $%d",
 							querysep, attname, i+1);
-					sprintf(qualstr + strlen(qualstr), " %s %s = $%d",
+					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
 							qualsep, attname, j+1);
 					querysep = ",";
 					qualsep = "AND";
@@ -1698,13 +1698,13 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "SELECT 1 FROM ONLY %s x", fkrelname);
+				snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x", fkrelname);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					sprintf(querystr + strlen(querystr), " %s %s = $%d",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
 							querysep, attname, i+1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -1926,13 +1926,13 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "SELECT 1 FROM ONLY %s x", fkrelname);
+				snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x", fkrelname);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					sprintf(querystr + strlen(querystr), " %s %s = $%d",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
 							querysep, attname, i+1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -2140,7 +2140,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "UPDATE ONLY %s SET", fkrelname);
+				snprintf(querystr, sizeof(querystr), "UPDATE ONLY %s SET", fkrelname);
 				qualstr[0] = '\0';
 				querysep = "";
 				qualsep = "WHERE";
@@ -2148,9 +2148,9 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					sprintf(querystr + strlen(querystr), "%s %s = NULL",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
 							querysep, attname);
-					sprintf(qualstr + strlen(qualstr), " %s %s = $%d",
+					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
 							qualsep, attname, i+1);
 					querysep = ",";
 					qualsep = "AND";
@@ -2384,7 +2384,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "UPDATE ONLY %s SET", fkrelname);
+				snprintf(querystr, sizeof(querystr), "UPDATE ONLY %s SET", fkrelname);
 				qualstr[0] = '\0';
 				querysep = "";
 				qualsep = "WHERE";
@@ -2400,11 +2400,11 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 					  !ri_OneKeyEqual(pk_rel, i, old_row, new_row, &qkey,
 									  RI_KEYPAIR_PK_IDX))
 					{
-						sprintf(querystr + strlen(querystr), "%s %s = NULL",
+						snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
 								querysep, attname);
 						querysep = ",";
 					}
-					sprintf(qualstr + strlen(qualstr), " %s %s = $%d",
+					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
 							qualsep, attname, i+1);
 					qualsep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -2616,7 +2616,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "UPDATE ONLY %s SET", fkrelname);
+				snprintf(querystr, sizeof(querystr), "UPDATE ONLY %s SET", fkrelname);
 				qualstr[0] = '\0';
 				querysep = "";
 				qualsep = "WHERE";
@@ -2624,9 +2624,9 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					sprintf(querystr + strlen(querystr), "%s %s = NULL",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
 							querysep, attname);
-					sprintf(qualstr + strlen(qualstr), " %s %s = $%d",
+					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
 							qualsep, attname, i+1);
 					querysep = ",";
 					qualsep = "AND";
@@ -2885,7 +2885,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				 * ----------
 				 */
 				quoteRelationName(fkrelname, fk_rel);
-				sprintf(querystr, "UPDATE ONLY %s SET", fkrelname);
+				snprintf(querystr, sizeof(querystr), "UPDATE ONLY %s SET", fkrelname);
 				qualstr[0] = '\0';
 				querysep = "";
 				qualsep = "WHERE";
@@ -2901,11 +2901,11 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 						!ri_OneKeyEqual(pk_rel, i, old_row,
 									  new_row, &qkey, RI_KEYPAIR_PK_IDX))
 					{
-						sprintf(querystr + strlen(querystr), "%s %s = NULL",
+						snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
 								querysep, attname);
 						querysep = ",";
 					}
-					sprintf(qualstr + strlen(qualstr), " %s %s = $%d",
+					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
 							qualsep, attname, i+1);
 					qualsep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,

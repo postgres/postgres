@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.22 2002/03/22 19:20:30 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.23 2002/09/02 06:11:42 momjian Exp $
 -->
 
 <Chapter id="spi">
@@ -3815,7 +3815,7 @@ execq(text *sql, int cnt)
             HeapTuple tuple = tuptable->vals[j];
             
             for (i = 1, buf[0] = 0; i <= tupdesc->natts; i++)
-                sprintf(buf + strlen (buf), " %s%s",
+                snprintf(buf + strlen (buf), sizeof(buf) - strlen(buf)," %s%s",
                         SPI_getvalue(tuple, tupdesc, i),
                         (i == tupdesc->natts) ? " " : " |");
             elog (INFO, "EXECQ: %s", buf);

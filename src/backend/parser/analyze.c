@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.246 2002/08/29 07:22:22 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.247 2002/09/02 06:11:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2153,7 +2153,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		/*
 		 * Make the leaf query be a subquery in the top-level rangetable.
 		 */
-		snprintf(selectName, 32, "*SELECT* %d", length(pstate->p_rtable) + 1);
+		snprintf(selectName, sizeof(selectName), "*SELECT* %d", length(pstate->p_rtable) + 1);
 		rte = addRangeTableEntryForSubquery(pstate,
 											selectQuery,
 											makeAlias(selectName, NIL),

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.94 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.95 2002/09/02 06:11:42 momjian Exp $
  *
  * NOTES:
  *
@@ -344,14 +344,14 @@ _dump_lru(void)
 	Vfd		   *vfdP = &VfdCache[mru];
 	char		buf[2048];
 
-	sprintf(buf, "LRU: MOST %d ", mru);
+	snprintf(buf, sizeof(buf), "LRU: MOST %d ", mru);
 	while (mru != 0)
 	{
 		mru = vfdP->lruLessRecently;
 		vfdP = &VfdCache[mru];
-		sprintf(buf + strlen(buf), "%d ", mru);
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%d ", mru);
 	}
-	sprintf(buf + strlen(buf), "LEAST");
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "LEAST");
 	elog(LOG, buf);
 }
 #endif   /* FDDEBUG */

@@ -22,6 +22,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
+#include "lib/stringinfo.h"
 
 /* number ranges for compression */
 #define MAXNUMRANGE 100
@@ -99,20 +100,19 @@ typedef char *BITVECP;
 static void
 printarr(ArrayType *a, int num)
 {
-	char		bbb[16384];
+	StringInfoData	bbb;
 	char	   *cur;
 	int			l;
 	int		   *d;
 
 	d = ARRPTR(a);
-	*bbb = '\0';
-	cur = bbb;
+	initStringInfo(&bbb);
 	for (l = 0; l < min(num, ARRNELEMS(a)); l++)
 	{
-		sprintf(cur, "%d ", d[l]);
-		cur = strchr(cur, '\0');
+		appendStringInfo(&bbb, "%d ", d[l]);
 	}
-	elog(DEBUG3, "\t\t%s", bbb);
+	elog(DEBUG3, "\t\t%s", bbb.data);
+	pfree(bbb.data);
 }
 static void
 printbitvec(BITVEC bv)
@@ -1924,7 +1924,7 @@ bqarr_in(PG_FUNCTION_ARGS) {
 	NODE *tmp;
 	int4 pos=0;
 #ifdef BS_DEBUG
-	char pbuf[16384],*cur;
+	StringInfoData	pbuf;
 #endif
 
 	state.buf = buf;
@@ -1955,16 +1955,15 @@ bqarr_in(PG_FUNCTION_ARGS) {
 	pos = query->size-1;
 	findoprnd( ptr, &pos );
 #ifdef BS_DEBUG
-	cur = pbuf;
-	*cur = '\0';
+	initStringInfo(&pbuf);
 	for( i=0;i<query->size;i++ ) {
 		if ( ptr[i].type == OPR )
-			sprintf(cur, "%c(%d) ", ptr[i].val, ptr[i].left);
+			appendStringInfo(&pbuf, "%c(%d) ", ptr[i].val, ptr[i].left);
 		else
-			sprintf(cur, "%d ", ptr[i].val );
-		cur = strchr(cur,'\0');
+			appendStringInfo(&pbuf, "%d ", ptr[i].val );
 	}
-	elog(DEBUG3,"POR: %s", pbuf);
+	elog(DEBUG3,"POR: %s", pbuf.data);
+	pfree(pbuf.data);
 #endif
 
 	PG_RETURN_POINTER( query );

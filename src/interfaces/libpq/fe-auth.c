@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.69 2002/08/29 03:22:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.70 2002/09/02 06:11:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ pg_krb4_init()
 	{
 		char		tktbuf[MAXPGPATH];
 
-		(void) sprintf(tktbuf, "%s@%s", tkt_string(), realm);
+		(void) snprintf(tktbuf, sizeof(tktbuf), "%s@%s", tkt_string(), realm);
 		krb_set_tkt_string(tktbuf);
 	}
 }
@@ -618,13 +618,13 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 		case AUTH_REQ_PASSWORD:
 			if (password == NULL || *password == '\0')
 			{
-				(void) sprintf(PQerrormsg,
+				(void) snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 							   "fe_sendauth: no password supplied\n");
 				return STATUS_ERROR;
 			}
 			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
 			{
-				(void) sprintf(PQerrormsg,
+				(void) snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "fe_sendauth: error sending password authentication\n");
 				return STATUS_ERROR;
 			}
