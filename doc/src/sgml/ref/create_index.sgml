@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.11 2000/04/11 05:39:15 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.12 2000/04/23 02:08:33 tgl Exp $
 Postgres documentation
 -->
 
@@ -24,9 +24,9 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
-    [ USING <replaceable class="parameter">acc_name</replaceable> ] ( <replaceable class="parameter">column</replaceable> [ <replaceable class="parameter">ops_name</replaceable>] [, ...] )
+    [ USING <replaceable class="parameter">acc_name</replaceable> ] ( <replaceable class="parameter">column</replaceable> [ <replaceable class="parameter">ops_name</replaceable> ] [, ...] )
 CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
-    [ USING <replaceable class="parameter">acc_name</replaceable> ] ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">col</replaceable> [, ... ]) <replaceable class="parameter">ops_name</replaceable> )
+    [ USING <replaceable class="parameter">acc_name</replaceable> ] ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">column</replaceable> [, ... ]) [ <replaceable class="parameter">ops_name</replaceable> ] )
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEINDEX-1">
@@ -74,16 +74,16 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
       <term><replaceable class="parameter">acc_name</replaceable></term>
       <listitem>
        <para>
-	the name of the access method which is to be used for
+	The name of the access method to be used for
 	the index. The default access method is BTREE.
-	Postgres provides three access methods for secondary indexes:
+	Postgres provides three access methods for indexes:
 
 	<variablelist>
 	 <varlistentry>
 	  <term>BTREE</term>
 	  <listitem>
 	   <para>
-	    an implementation of the Lehman-Yao
+	    an implementation of Lehman-Yao
 	    high-concurrency btrees.
 	   </para>
 	  </listitem>
@@ -133,8 +133,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
       <term><replaceable class="parameter">func_name</replaceable></term>
       <listitem>
        <para>
-	A user-defined function, which returns a value that can
-	be indexed.
+	A function, which returns a value that can be indexed.
        </para>
       </listitem>
      </varlistentry>
@@ -199,21 +198,15 @@ ERROR: Cannot create index: 'index_name' already exists.
   </para>
 
   <para>
-   In the first syntax shown above, the key fields for the
-   index are specified as column names; a column may also have
-   an associated operator class. An operator class is used
-   to specify the operators to be used for a particular
-   index. For example, a btree index on four-byte integers
-   would use the <literal>int4_ops</literal> class;
-   this operator class includes
-   comparison functions for four-byte integers. The default
-   operator class is the appropriate operator class for that
-   field type.
+   In the first syntax shown above, the key field(s) for the
+   index are specified as column names.
+   Multiple fields can be specified if the index access method supports
+   multi-column indexes.
   </para>
 
   <para>
    In the second syntax shown above, an index is defined
-   on the result of a user-defined function
+   on the result of a user-specified function
    <replaceable class="parameter">func_name</replaceable> applied
    to one or more attributes of a single class.
    These <firstterm>functional indices</firstterm>
@@ -224,8 +217,8 @@ ERROR: Cannot create index: 'index_name' already exists.
 
   <para>
    Postgres provides btree, rtree and hash access methods for
-   secondary indices.  The btree access method is an implementation of
-   the Lehman-Yao high-concurrency btrees.  The rtree access method
+   indices.  The btree access method is an implementation of
+   Lehman-Yao high-concurrency btrees.  The rtree access method
    implements standard rtrees using Guttman's quadratic split algorithm.
    The hash access method is an implementation of Litwin's linear
    hashing.  We mention the algorithms used solely to indicate that all
@@ -243,8 +236,9 @@ ERROR: Cannot create index: 'index_name' already exists.
    </title>
 
    <para>
-    The Postgres query optimizer will consider using btree indices in a scan
-    whenever an indexed attribute is involved in a comparison using one of:
+    The <productname>Postgres</productname>
+    query optimizer will consider using a btree index whenever
+    an indexed attribute is involved in a comparison using one of:
 
     <simplelist type="inline">
      <member>&lt;</member>
@@ -253,19 +247,6 @@ ERROR: Cannot create index: 'index_name' already exists.
      <member>&gt;=</member>
      <member>&gt;</member>
     </simplelist>
-   </para>
-
-   <para>
-    Both box classes support indices on the <literal>box</literal> data 
-    type in <productname>Postgres</productname>.
-    The difference between them is that <literal>bigbox_ops</literal>
-    scales box coordinates down, to avoid floating point exceptions from
-    doing multiplication, addition, and subtraction on very large
-    floating-point coordinates.  If the field on which your rectangles lie
-    is about 20,000 units square or larger, you should use
-    <literal>bigbox_ops</literal>.
-    The <literal>poly_ops</literal> operator class supports rtree
-    indices on <literal>polygon</literal> data.
    </para>
 
    <para>
@@ -292,26 +273,56 @@ ERROR: Cannot create index: 'index_name' already exists.
    </para>
 
    <para>
-    Currently, only the BTREE access method supports multi-column
-    indexes. Up to 7 keys may be specified.
+    Currently, only the btree access method supports multi-column
+    indexes. Up to 16 keys may be specified by default (this limit
+    can be altered when building Postgres).
    </para>
 
-   <para>
-    Use <xref linkend="sql-dropindex-title" endterm="sql-dropindex-title">
-    to remove an index.
-   </para>
+  <para>
+   An <firstterm>operator class</firstterm> can be specified for each
+   column of an index.  The operator class identifies the operators to
+   be used by the index for that column.  For example, a btree index on
+   four-byte integers would use the <literal>int4_ops</literal> class;
+   this operator class includes comparison functions for four-byte
+   integers.  In practice the default operator class for the field's
+   datatype is usually sufficient.  The main point of having operator classes
+   is that for some datatypes, there could be more than one meaningful
+   ordering.  For example, we might want to sort a complex-number datatype
+   either by absolute value or by real part.  We could do this by defining
+   two operator classes for the datatype and then selecting the proper
+   class when making an index.  There are also some operator classes with
+   special purposes:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The operator classes <literal>box_ops</literal> and
+      <literal>bigbox_ops</literal> both support rtree indices on the
+      <literal>box</literal> datatype.
+      The difference between them is that <literal>bigbox_ops</literal>
+      scales box coordinates down, to avoid floating point exceptions from
+      doing multiplication, addition, and subtraction on very large
+      floating-point coordinates.  If the field on which your rectangles lie
+      is about 20,000 units square or larger, you should use
+      <literal>bigbox_ops</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The <literal>int24_ops</literal>
+      operator class is useful for constructing indices on int2 data, and
+      doing comparisons against int4 data in query qualifications.
+      Similarly, <literal>int42_ops</literal>
+      support indices on int4 data that is to be compared against int2 data
+      in queries.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
 
    <para>
-    The <literal>int24_ops</literal>
-    operator class is useful for constructing indices on int2 data, and
-    doing comparisons against int4 data in query qualifications.
-    Similarly, <literal>int42_ops</literal>
-    support indices on int4 data that is to be compared against int2 data
-    in queries.
-   </para>
-
-   <para>
-    The following select list returns all ops_names:
+    The following query shows all defined operator classes:
 
     <programlisting>
 SELECT am.amname AS acc_name,
@@ -327,6 +338,11 @@ SELECT am.amname AS acc_name,
    </para>
   </refsect2>
  </refsect1>
+
+   <para>
+    Use <xref linkend="sql-dropindex-title" endterm="sql-dropindex-title">
+    to remove an index.
+   </para>
 
  <refsect1 id="R1-SQL-CREATEINDEX-2">
   <title>
