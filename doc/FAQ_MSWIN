@@ -1,6 +1,6 @@
 How to install PostgreSQL on Windows NT or Windows 2000
 =======================================================
-$Date: 2001/05/07 16:02:38 $
+$Date: 2001/05/11 22:27:12 $
 
 1.  Install the Cygwin package.
 
@@ -16,20 +16,16 @@ $Date: 2001/05/07 16:02:38 $
     <http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/>.
     Do not use versions prior to 1.04, they will not work.
 
-3.  Optional:  The "Andy Piper Tools" at <http://www.xemacs.freeserve.co.uk/>
-    are a collection of pre-compiled libraries and utilities that you
-    might find useful -- especially on Cygwin B20.
-
-4.  The Cygwin bin directory has to be placed in the path before the
+3.  The Cygwin bin directory has to be placed in the path before the
     Windows program directories, because the sort.exe has to be taken
     from Cygwin, not Windows.
 
-5.  Start ipc-daemon from the cygipc package.  Use "net start ipc-daemon",
+4.  Start ipc-daemon from the cygipc package.  Use "net start ipc-daemon",
     if ipc-daemon is installed as a service; otherwise, use "ipc-daemon &".
     This program needs to be running anytime you start the PostgreSQL
     server (postmaster).
 
-6.  Proceed according to the INSTALL file.  (./configure; make; etc.)
+5.  Proceed according to the INSTALL file.  (./configure; make; etc.)
 
 NOTE:  The following are known issues with PostgreSQL on Windows:
 
