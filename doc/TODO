@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Nov 12 00:35:44 EST 2001
+Last updated:		Mon Nov 12 02:10:47 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -55,6 +55,7 @@ ADMIN
 * Make it easier to create a database owned by someone who can't createdb
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
+* Allow usernames to be specified directly in pg_hba.conf (Bruce)
 
 TYPES
 
