@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.301 2004/10/08 15:03:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.302 2004/10/22 00:25:18 tgl Exp $
 -->
 
 <appendix id="release">
@@ -2095,6 +2095,76 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.301 2004/10/08 15:03:25 tgl Exp
 
    </itemizedlist>
   </sect3>
+
+  </sect2>
+ </sect1>
+
+  <sect1 id="release-7-4-6">
+   <title>Release 7.4.6</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-10-22</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.5.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.4.6</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Repair possible failure to update hint bits on disk</para>
+<para>
+Under rare circumstances this oversight could lead to 
+<quote>could not access transaction status</> failures, which qualifies
+it as a potential-data-loss bug.
+</para></listitem>
+<listitem><para>Ensure that hashed outer join does not miss tuples</para>
+<para>
+Very large left joins using a hash join plan could fail to output unmatched
+left-side rows given just the right data distribution.
+</para></listitem>
+<listitem><para>Disallow running pg_ctl as root</para>
+<para>
+This is to guard against any possible security issues.
+</para></listitem>
+<listitem><para>Avoid using temp files in /tmp in make_oidjoins_check</para>
+<para>
+This has been reported as a security issue, though it's hardly worthy of
+concern since there is no reason for non-developers to use this script anyway.
+</para></listitem>
+<listitem><para>Prevent forced backend shutdown from re-emitting prior command
+result</para>
+<para>
+In rare cases, a client might think that its last command had succeeded when
+it really had been aborted by forced database shutdown.
+</para></listitem>
+<listitem><para>Repair bug in pg_stat_get_backend_idset()</para>
+<para>
+This could lead to misbehavior in some of the system-statistics views.
+</para></listitem>
+<listitem><para>Fix small memory leak in postmaster</para></listitem>
+<listitem><para>Fix <quote>expected both swapped tables to have TOAST
+tables</> bug</para>
+<para>
+This could arise in cases such as CLUSTER after ALTER TABLE DROP COLUMN.
+</para></listitem>
+<listitem><para>Prevent <literal>pg_ctl restart</> from adding <literal>-D</> multiple times</para></listitem>
+<listitem><para>Fix problem with NULL values in GiST indexes</para></listitem>
+<listitem><para><literal>::</> is no longer interpreted as a variable in an
+ECPG prepare statement</para></listitem>
+</itemizedlist>
 
   </sect2>
  </sect1>
@@ -4352,6 +4422,56 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-3-8">
+   <title>Release 7.3.8</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-10-22</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.7.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.3.8</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Repair possible failure to update hint bits on disk</para>
+<para>
+Under rare circumstances this oversight could lead to 
+<quote>could not access transaction status</> failures, which qualifies
+it as a potential-data-loss bug.
+</para></listitem>
+<listitem><para>Ensure that hashed outer join does not miss tuples</para>
+<para>
+Very large left joins using a hash join plan could fail to output unmatched
+left-side rows given just the right data distribution.
+</para></listitem>
+<listitem><para>Disallow running pg_ctl as root</para>
+<para>
+This is to guard against any possible security issues.
+</para></listitem>
+<listitem><para>Avoid using temp files in /tmp in make_oidjoins_check</para>
+<para>
+This has been reported as a security issue, though it's hardly worthy of
+concern since there is no reason for non-developers to use this script anyway.
+</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
+
   <sect1 id="release-7-3-7">
    <title>Release 7.3.7</title>
 
@@ -5407,6 +5527,56 @@ operations on bytea columns (Joe)</para></listitem>
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-2-6">
+   <title>Release 7.2.6</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-10-22</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.2.5.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.2.6</title>
+
+    <para>
+     A dump/restore is not required for those running 7.2.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Repair possible failure to update hint bits on disk</para>
+<para>
+Under rare circumstances this oversight could lead to 
+<quote>could not access transaction status</> failures, which qualifies
+it as a potential-data-loss bug.
+</para></listitem>
+<listitem><para>Ensure that hashed outer join does not miss tuples</para>
+<para>
+Very large left joins using a hash join plan could fail to output unmatched
+left-side rows given just the right data distribution.
+</para></listitem>
+<listitem><para>Disallow running pg_ctl as root</para>
+<para>
+This is to guard against any possible security issues.
+</para></listitem>
+<listitem><para>Avoid using temp files in /tmp in make_oidjoins_check</para>
+<para>
+This has been reported as a security issue, though it's hardly worthy of
+concern since there is no reason for non-developers to use this script anyway.
+</para></listitem>
+<listitem><para>Update to newer versions of Bison</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
   <sect1 id="release-7-2-5">
    <title>Release 7.2.5</title>
