@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.6 1997/08/19 21:34:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.7 1997/08/27 09:03:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,6 +321,9 @@ ProcessQueryDesc(QueryDesc *queryDesc)
      * ----------------
      */
     ExecutorRun(queryDesc, state, EXEC_RUN, 0);
+    
+    /* save infos for EndCommand */
+    UpdateCommandInfo (operation, state->es_lastoid, state->es_processed);
     
     /* ----------------
      *   now, we close down all the scans and free allocated resources...

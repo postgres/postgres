@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.7 1997/08/19 21:34:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.8 1997/08/27 09:03:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,7 @@
 
 #include "commands/async.h"
 
-static Oid GetAppendOid(void);
-static void ResetAppendOid(void);
+static char CommandInfo[32] = {0};
 
 /* ----------------
  *	output functions
@@ -87,8 +86,6 @@ void (*DestToFunction(CommandDest dest))(HeapTuple, TupleDesc)
     return donothing;
 }
 
-#define IS_INSERT_TAG(tag) (*tag == 'I' && *(tag+1) == 'N')
-
 /* ----------------
  * 	EndCommand - tell destination that no more tuples will arrive
  * ----------------
@@ -106,14 +103,8 @@ EndCommand(char *commandTag, CommandDest dest)
 	 * ----------------
 	 */
 	pq_putnchar("C", 1);
-/*	pq_putint(0, 4); */
-	if (IS_INSERT_TAG(commandTag))
-	    {
-		sprintf(buf, "%s %d", commandTag, GetAppendOid());
-		pq_putstr(buf);
-	    }
-	else
-	    pq_putstr(commandTag);
+	sprintf(buf, "%s%s", commandTag, CommandInfo);
+	pq_putstr(buf);
 	pq_flush();
 	break;
 	
@@ -239,7 +230,7 @@ BeginCommand(char *pname,
 	 *	because nothing needs to be sent to the fe.
 	 * ----------------
 	 */
-        ResetAppendOid();
+    	CommandInfo[0] = 0;
 	if (isIntoPortal)
 	    return;
 	
@@ -318,41 +309,22 @@ BeginCommand(char *pname,
     }
 }
 
-static Oid AppendOid;
-
-static void
-ResetAppendOid(void)
-{
-    AppendOid = InvalidOid;
-}
-
-#define MULTI_TUPLE_APPEND -1
-
 void
-UpdateAppendOid(Oid newoid)
+UpdateCommandInfo (int operation, Oid lastoid, uint32 tuples)
 {
-    /*
-     * First update after AppendOid was reset (at command beginning).
-     */
-    if (AppendOid == InvalidOid)
-	AppendOid = newoid;
-    /*
-     * Already detected a multiple tuple append, return a void oid ;)
-     */
-    else if (AppendOid == MULTI_TUPLE_APPEND)
-	return;
-    /*
-     * Oid has been assigned once before, tag this as a multiple tuple
-     * append.
-     */
-    else
-	AppendOid = MULTI_TUPLE_APPEND;
-}
-
-static Oid
-GetAppendOid(void)
-{
-    if (AppendOid == MULTI_TUPLE_APPEND)
-	return InvalidOid;
-    return AppendOid;
+    switch (operation)
+    {
+    	case CMD_INSERT :
+    	    if ( tuples > 1 )
+    	    	lastoid = InvalidOid;
+	    sprintf (CommandInfo, " %u %u", lastoid, tuples);
+	    break;
+    	case CMD_DELETE :
+    	case CMD_UPDATE :
+	    sprintf (CommandInfo, " %u", tuples);
+	    break;
+	default :
+	    CommandInfo[0] = 0;
+    }
+    return;
 }

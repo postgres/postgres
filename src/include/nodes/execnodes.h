@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.7 1997/08/06 03:42:02 momjian Exp $
+ * $Id: execnodes.h,v 1.8 1997/08/27 09:04:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,6 +197,8 @@ typedef struct EState {
     TupleTable          es_tupleTable;
     JunkFilter		*es_junkFilter;
     int			*es_refcount;
+    uint32		es_processed;		/* # of tuples processed */
+    Oid			es_lastoid;		/* last oid processed (by INSERT) */
 } EState;
 
 /* ----------------

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.19 1997/08/22 14:28:20 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.20 1997/08/27 09:02:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 				   int numberTuples, ScanDirection direction,
 				   void (*printfunc)());
 static void ExecRetrieve(TupleTableSlot *slot, void (*printfunc)(),
-			 Relation intoRelationDesc);
+			 EState *estate);
 static void ExecAppend(TupleTableSlot *slot,ItemPointer tupleid,
 		       EState *estate);
 static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
@@ -171,6 +171,8 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
     plan =	  queryDesc->plantree;
     dest =	  queryDesc->dest;
     destination = (void (*)()) DestToFunction(dest);
+    estate->es_processed = 0;
+    estate->es_lastoid = InvalidOid;
 
 #if 0
     /*
@@ -665,7 +667,6 @@ ExecutePlan(EState *estate,
 	    ScanDirection direction,
 	    void (*printfunc)())
 {
-    Relation		intoRelationDesc;
     JunkFilter		*junkfilter;
 
     TupleTableSlot	*slot;
@@ -673,12 +674,6 @@ ExecutePlan(EState *estate,
     ItemPointerData	tuple_ctid;
     int	 		current_tuple_count;
     TupleTableSlot	*result;	
-
-    /* ----------------
-     *  get information
-     * ----------------
-     */
-    intoRelationDesc =	estate->es_into_relation_descriptor;
 
     /* ----------------
      *	initialize local variables
@@ -780,9 +775,9 @@ ExecutePlan(EState *estate,
 	
 	switch(operation) {
 	case CMD_SELECT:
-	    ExecRetrieve(slot, 	  /* slot containing tuple */
-			 printfunc,	  /* print function */
-			 intoRelationDesc); /* "into" relation */
+	    ExecRetrieve(slot,		/* slot containing tuple */
+			 printfunc,	/* print function */
+			 estate);	/*  */
 	    result = slot;
 	    break;
 	    
@@ -853,7 +848,7 @@ ExecutePlan(EState *estate,
 static void
 ExecRetrieve(TupleTableSlot *slot,
 	     void (*printfunc)(),
-	     Relation intoRelationDesc)
+	     EState *estate)
 {
     HeapTuple	tuple;
     TupleDesc 	attrtype;
@@ -869,9 +864,10 @@ ExecRetrieve(TupleTableSlot *slot,
      *	insert the tuple into the "into relation"
      * ----------------
      */
-    if (intoRelationDesc != NULL) {
-      heap_insert (intoRelationDesc, tuple);
-      IncrAppended();
+    if ( estate->es_into_relation_descriptor != NULL )
+    {
+    	heap_insert (estate->es_into_relation_descriptor, tuple);
+    	IncrAppended();
     }
 
     /* ----------------
@@ -880,6 +876,7 @@ ExecRetrieve(TupleTableSlot *slot,
      */
     (*printfunc)(tuple, attrtype);
     IncrRetrieved();
+    (estate->es_processed)++;
 }
 
 /* ----------------------------------------------------------------
@@ -947,7 +944,6 @@ ExecAppend(TupleTableSlot *slot,
     newId = heap_insert(resultRelationDesc, /* relation desc */
 			tuple);		    /* heap tuple */
     IncrAppended();
-    UpdateAppendOid(newId);
 
     /* ----------------
      *	process indices
@@ -961,6 +957,8 @@ ExecAppend(TupleTableSlot *slot,
     if (numIndices > 0) {
 	ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, false);
     }
+    (estate->es_processed)++;
+    estate->es_lastoid = newId;
 }
 
 /* ----------------------------------------------------------------
@@ -989,10 +987,12 @@ ExecDelete(TupleTableSlot *slot,
      *	delete the tuple
      * ----------------
      */
-    heap_delete(resultRelationDesc, /* relation desc */
-			tupleid);	    /* item pointer to tuple */
-
+    if ( heap_delete(resultRelationDesc,	/* relation desc */
+				tupleid) )	/* item pointer to tuple */
+    	return;
+    
     IncrDeleted();
+    (estate->es_processed)++;
 
     /* ----------------
      *	Note: Normally one would think that we have to
@@ -1094,6 +1094,7 @@ ExecReplace(TupleTableSlot *slot,
     }
 
     IncrReplaced();
+    (estate->es_processed)++;
 
     /* ----------------
      *	Note: instead of having to update the old index tuples

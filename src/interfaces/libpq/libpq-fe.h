@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.19 1997/05/09 03:28:54 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.20 1997/08/27 09:05:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,6 +225,7 @@ extern Oid PQftype(PGresult *res, int field_num);
 extern short PQfsize(PGresult *res, int field_num);
 extern char* PQcmdStatus(PGresult *res);
 extern const char* PQoidStatus(PGresult *res);
+extern const char* PQcmdTuples(PGresult *res);
 extern char* PQgetvalue(PGresult *res, int tup_num, int field_num);
 extern int PQgetlength(PGresult *res, int tup_num, int field_num);
 extern int PQgetisnull(PGresult *res, int tup_num, int field_num);
