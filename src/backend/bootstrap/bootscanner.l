@@ -9,13 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.19 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.20 2001/05/12 01:48:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <time.h>
-
 #include "postgres.h"
+
+#include <time.h>
 
 #include "access/attnum.h"
 #include "access/htup.h"
@@ -122,7 +122,7 @@ insert			{ return(INSERT_TUPLE); }
 						}
 
 .				{
-					printf("syntax error %d : -> %s\n", yyline, yytext);
+					elog(ERROR, "syntax error at line %d: unexpected character %s", yyline, yytext);
 				}
 
 
@@ -138,5 +138,5 @@ yywrap(void)
 void
 yyerror(const char *str)
 {
-	fprintf(stderr,"\tsyntax error %d : %s",yyline, str);
+	elog(ERROR, "syntax error at line %d: unexpected token %s", yyline, str);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.21 2001/01/24 19:43:20 momjian Exp $
+ * $Id: bootstrap.h,v 1.22 2001/05/12 01:48:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,9 @@
 #include "nodes/execnodes.h"
 #include "utils/rel.h"
 
-/* MAXATTR is the maximum number of attributes in a relation supported
- * at bootstrap time (ie, the max possible in a system table).
+/*
+ * MAXATTR is the maximum number of attributes in a relation supported
+ * at bootstrap time (i.e., the max possible in a system table).
  */
 #define MAXATTR 40
 
@@ -29,7 +30,6 @@ typedef struct hashnode
 	struct hashnode *next;
 } hashnode;
 
-#define EMITPROMPT printf("> ")
 
 extern Relation reldesc;
 extern Form_pg_attribute attrtypes[MAXATTR];

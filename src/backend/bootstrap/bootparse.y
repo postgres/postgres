@@ -9,15 +9,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.35 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.36 2001/05/12 01:48:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <time.h>
-
 #include "postgres.h"
 
+#include <time.h>
+#include <unistd.h>
 
 #include "access/attnum.h"
 #include "access/htup.h"
@@ -50,17 +50,31 @@
 #include "utils/nabstime.h"
 #include "utils/rel.h"
 
-#define DO_START { \
-					StartTransactionCommand();\
-				 }
 
-#define DO_END	 { \
-					CommitTransactionCommand();\
-					if (!Quiet) { EMITPROMPT; }\
-						fflush(stdout); \
-				 }
+static void
+do_start()
+{
+	StartTransactionCommand();
+	if (DebugMode)
+		elog(DEBUG, "start transaction");
+}
 
-int num_tuples_read = 0;
+
+static void
+do_end()
+{
+	CommitTransactionCommand();
+	if (DebugMode)
+		elog(DEBUG, "commit transaction");
+	if (isatty(0))
+	{
+		printf("bootstrap> ");
+		fflush(stdout);
+	}
+}
+
+
+int num_columns_read = 0;
 static Oid objectid;
 
 %}
@@ -71,12 +85,14 @@ static Oid objectid;
 	IndexElem	*ielem;
 	char		*str;
 	int			ival;
+	Oid			oidval;
 }
 
 %type <list>  boot_index_params
 %type <ielem> boot_index_param
 %type <ival> boot_const boot_ident
-%type <ival> optbootstrap optoideq boot_tuple boot_tuplelist
+%type <ival> optbootstrap boot_tuple boot_tuplelist
+%type <oidval> optoideq
 
 %token <ival> CONST ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
@@ -114,42 +130,49 @@ Boot_Query :
 Boot_OpenStmt:
 		  OPEN boot_ident
 				{
-					DO_START;
+					do_start();
 					boot_openrel(LexIDStr($2));
-					DO_END;
+					do_end();
 				}
 		;
 
 Boot_CloseStmt:
 		  XCLOSE boot_ident %prec low
 				{
-					DO_START;
+					do_start();
 					closerel(LexIDStr($2));
-					DO_END;
+					do_end();
 				}
 		| XCLOSE %prec high
 				{
-					DO_START;
+					do_start();
 					closerel(NULL);
-					DO_END;
+					do_end();
 				}
 		;
 
 Boot_CreateStmt:
 		  XCREATE optbootstrap boot_ident LPAREN
 				{
-					DO_START;
-					numattr=(int)0;
+					do_start();
+					numattr = 0;
+					if (DebugMode)
+					{
+						if ($2)
+							elog(DEBUG, "creating bootstrap relation %s...",
+								 LexIDStr($3));
+						else
+							elog(DEBUG, "creating relation %s...",
+								 LexIDStr($3));
+					}
 				}
 		  boot_typelist
 				{
-					if (!Quiet)
-						putchar('\n');
-					DO_END;
+					do_end();
 				}
 		  RPAREN
 				{
-					DO_START;
+					do_start();
 
 					if ($2)
 					{
@@ -158,17 +181,15 @@ Boot_CreateStmt:
 
 						if (reldesc)
 						{
-							puts("create bootstrap: Warning, open relation");
-							puts("exists, closing first");
+							elog(DEBUG, "create bootstrap: warning, open relation exists, closing first");
 							closerel(NULL);
 						}
-						if (DebugMode)
-							puts("creating bootstrap relation");
+
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
 						reldesc = heap_create(LexIDStr($3), tupdesc,
 											  false, true, true);
 						if (DebugMode)
-							puts("bootstrap relation created ok");
+							elog(DEBUG, "bootstrap relation created");
 					}
 					else
 					{
@@ -181,70 +202,65 @@ Boot_CreateStmt:
 													  RELKIND_RELATION,
 													  false,
 													  true);
-						if (!Quiet)
-							printf("CREATED relation %s with OID %u\n",
-								   LexIDStr($3), id);
+						if (DebugMode)
+							elog(DEBUG, "relation created with oid %u", id);
 					}
-					DO_END;
-					if (DebugMode)
-						puts("Commit End");
+					do_end();
 				}
 		;
 
 Boot_InsertStmt:
 		  INSERT_TUPLE optoideq
 				{
-					DO_START;
+					do_start();
 					if (DebugMode)
-						printf("tuple %d<", $2);
-					num_tuples_read = 0;
+					{
+						if ($2)
+							elog(DEBUG, "inserting row with oid %u...", $2);
+						else
+							elog(DEBUG, "inserting row...");
+					}
+					num_columns_read = 0;
 				}
 		  LPAREN  boot_tuplelist RPAREN
 				{
-					if (num_tuples_read != numattr)
-						elog(ERROR,"incorrect number of values for tuple");
+					if (num_columns_read != numattr)
+						elog(ERROR, "incorrect number of columns in row (expected %d, got %d)",
+							 numattr, num_columns_read);
 					if (reldesc == (Relation)NULL)
 					{
-						elog(ERROR,"must OPEN RELATION before INSERT\n");
+						elog(ERROR, "relation not open");
 						err_out();
 					}
-					if (DebugMode)
-						puts("Insert Begin");
 					objectid = $2;
 					InsertOneTuple(objectid);
-					if (DebugMode)
-						puts("Insert End");
-					if (!Quiet)
-						putchar('\n');
-					DO_END;
-					if (DebugMode)
-						puts("Transaction End");
+					do_end();
 				}
 		;
 
 Boot_DeclareIndexStmt:
 		  XDECLARE INDEX boot_ident ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
-					DO_START;
+					do_start();
 
 					DefineIndex(LexIDStr($5),
 								LexIDStr($3),
 								LexIDStr($7),
 								$9, NIL, 0, 0, 0, NIL);
-					DO_END;
+					do_end();
 				}
 		;
 
 Boot_DeclareUniqueIndexStmt:
 		  XDECLARE UNIQUE INDEX boot_ident ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
-					DO_START;
+					do_start();
 
 					DefineIndex(LexIDStr($6),
 								LexIDStr($4),
 								LexIDStr($8),
 								$10, NIL, 1, 0, 0, NIL);
-					DO_END;
+					do_end();
 				}
 		;
 
@@ -280,10 +296,8 @@ boot_type_thing:
 		  boot_ident EQUALS boot_ident
 				{
 				   if(++numattr > MAXATTR)
-						elog(FATAL,"Too many attributes\n");
+						elog(FATAL, "too many columns");
 				   DefineAttr(LexIDStr($1),LexIDStr($3),numattr-1);
-				   if (DebugMode)
-					   printf("\n");
 				}
 		;
 
@@ -299,10 +313,10 @@ boot_tuplelist:
 		;
 
 boot_tuple:
-		  boot_ident {InsertOneValue(objectid, LexIDStr($1), num_tuples_read++); }
-		| boot_const {InsertOneValue(objectid, LexIDStr($1), num_tuples_read++); }
+		  boot_ident {InsertOneValue(objectid, LexIDStr($1), num_columns_read++); }
+		| boot_const {InsertOneValue(objectid, LexIDStr($1), num_columns_read++); }
 		| NULLVAL
-			{ InsertOneNull(num_tuples_read++); }
+			{ InsertOneNull(num_columns_read++); }
 		;
 
 boot_const :

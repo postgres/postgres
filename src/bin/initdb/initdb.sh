@@ -23,7 +23,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.124 2001/05/08 16:28:46 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.125 2001/05/12 01:48:49 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -453,12 +453,10 @@ mkdir "$PGDATA"/base/1 || exit_nicely
 if [ "$debug" = yes ]
 then
     BACKEND_TALK_ARG="-d"
-else
-    BACKEND_TALK_ARG="-Q"
 fi
 
-BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
-FIRSTRUN="-boot -x1 -C -F -D$PGDATA $BACKEND_TALK_ARG"
+BACKENDARGS="-boot -F -D$PGDATA $BACKEND_TALK_ARG"
+FIRSTRUN="-boot -x1 -F -D$PGDATA $BACKEND_TALK_ARG"
 
 echo "Creating template1 database in $PGDATA/base/1"
 [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"

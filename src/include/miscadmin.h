@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.84 2001/05/08 21:06:43 petere Exp $
+ * $Id: miscadmin.h,v 1.85 2001/05/12 01:48:49 petere Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -113,7 +113,6 @@ extern int	PostmasterMain(int argc, char *argv[]);
  * from utils/init/globals.c
  */
 extern bool Noversion;
-extern bool Quiet;
 extern char *DataDir;
 
 extern int	MyProcPid;

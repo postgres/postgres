@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.106 2001/03/22 06:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.107 2001/05/12 01:48:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,13 +185,11 @@ err_out(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: postgres -boot [-d] [-C] [-F] [-O] [-Q] ");
-	fprintf(stderr, "[-P portno] [dbName]\n");
-	fprintf(stderr, "     d: debug mode\n");
-	fprintf(stderr, "     C: disable version checking\n");
-	fprintf(stderr, "     F: turn off fsync\n");
-	fprintf(stderr, "     O: set BootstrapProcessing mode\n");
-	fprintf(stderr, "     P portno: specify port number\n");
+	fprintf(stderr, "Usage:\n  postgres -boot [-d] [-D datadir] [-F] [-x num] dbname\n");
+	fprintf(stderr, "  -d               debug mode\n");
+	fprintf(stderr, "  -D datadir       data directory\n");
+	fprintf(stderr, "  -F               turn off fsync\n");
+	fprintf(stderr, "  -x num           internal use\n");
 
 	proc_exit(1);
 }
@@ -240,8 +238,6 @@ BootstrapMain(int argc, char *argv[])
 	 */
 
 	/* Set defaults, to be overriden by explicit options below */
-	Quiet = false;
-	Noversion = false;
 	dbName = NULL;
 	if (!IsUnderPostmaster)
 	{
@@ -250,7 +246,7 @@ BootstrapMain(int argc, char *argv[])
 												 * variable */
 	}
 
-	while ((flag = getopt(argc, argv, "D:dCQx:pB:F")) != EOF)
+	while ((flag = getopt(argc, argv, "B:dD:Fpx:")) != EOF)
 	{
 		switch (flag)
 		{
@@ -261,14 +257,8 @@ BootstrapMain(int argc, char *argv[])
 				DebugMode = true;		/* print out debugging info while
 										 * parsing */
 				break;
-			case 'C':
-				Noversion = true;
-				break;
 			case 'F':
 				enableFsync = false;
-				break;
-			case 'Q':
-				Quiet = true;
 				break;
 			case 'x':
 				xlogop = atoi(optarg);
@@ -285,21 +275,12 @@ BootstrapMain(int argc, char *argv[])
 		}
 	}							/* while */
 
-	if (argc - optind > 1)
+	if (argc - optind != 1)
 		usage();
-	else if (argc - optind == 1)
-		dbName = argv[optind];
 
-	if (dbName == NULL)
-	{
-		dbName = getenv("USER");
-		if (dbName == NULL)
-		{
-			fputs("bootstrap backend: failed, no db name specified\n", stderr);
-			fputs("          and no USER enviroment variable\n", stderr);
-			proc_exit(1);
-		}
-	}
+	dbName = argv[optind];
+
+	Assert(dbName);
 
 	if (!IsUnderPostmaster)
 	{
@@ -493,9 +474,9 @@ boot_openrel(char *relname)
 	if (reldesc != NULL)
 		closerel(NULL);
 
-	if (!Quiet)
-		printf("Amopen: relation %s. attrsize %d\n", relname ? relname : "(null)",
-			   (int) ATTRIBUTE_TUPLE_SIZE);
+	if (DebugMode)
+		elog(DEBUG, "open relation %s, attrsize %d", relname ? relname : "(null)",
+			 (int) ATTRIBUTE_TUPLE_SIZE);
 
 	reldesc = heap_openr(relname, NoLock);
 	numattr = reldesc->rd_rel->relnatts;
@@ -523,11 +504,10 @@ boot_openrel(char *relname)
 		{
 			Form_pg_attribute at = attrtypes[i];
 
-			printf("create attribute %d name %s len %d num %d type %d\n",
-				   i, NameStr(at->attname), at->attlen, at->attnum,
-				   at->atttypid
+			elog(DEBUG, "create attribute %d name %s len %d num %d type %u",
+				 i, NameStr(at->attname), at->attlen, at->attnum,
+				 at->atttypid
 				);
-			fflush(stdout);
 		}
 	}
 }
@@ -554,11 +534,11 @@ closerel(char *name)
 	}
 
 	if (reldesc == NULL)
-		elog(ERROR, "Warning: no opened relation to close.\n");
+		elog(ERROR, "no open relation to close");
 	else
 	{
-		if (!Quiet)
-			printf("Amclose: relation %s.\n", relname ? relname : "(null)");
+		if (DebugMode)
+			elog(DEBUG, "close relation %s", relname ? relname : "(null)");
 		heap_close(reldesc, NoLock);
 		reldesc = (Relation) NULL;
 	}
@@ -582,7 +562,7 @@ DefineAttr(char *name, char *type, int attnum)
 
 	if (reldesc != NULL)
 	{
-		fputs("Warning: no open relations allowed with 't' command.\n", stderr);
+		elog(DEBUG, "warning: no open relations allowed with 'create' command");
 		closerel(relname);
 	}
 
@@ -593,8 +573,8 @@ DefineAttr(char *name, char *type, int attnum)
 	{
 		attrtypes[attnum]->atttypid = Ap->am_oid;
 		namestrcpy(&attrtypes[attnum]->attname, name);
-		if (!Quiet)
-			printf("<%s %s> ", NameStr(attrtypes[attnum]->attname), type);
+		if (DebugMode)
+			elog(DEBUG, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
@@ -605,8 +585,8 @@ DefineAttr(char *name, char *type, int attnum)
 	{
 		attrtypes[attnum]->atttypid = Procid[typeoid].oid;
 		namestrcpy(&attrtypes[attnum]->attname, name);
-		if (!Quiet)
-			printf("<%s %s> ", NameStr(attrtypes[attnum]->attname), type);
+		if (DebugMode)
+			elog(DEBUG, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
 		attrtypes[attnum]->attstorage = 'p';
@@ -654,10 +634,7 @@ InsertOneTuple(Oid objectid)
 	int			i;
 
 	if (DebugMode)
-	{
-		printf("InsertOneTuple oid %u, %d attrs\n", objectid, numattr);
-		fflush(stdout);
-	}
+		elog(DEBUG, "inserting row oid %u, %d columns", objectid, numattr);
 
 	tupDesc = CreateTupleDesc(numattr, attrtypes);
 	tuple = heap_formtuple(tupDesc, values, Blanks);
@@ -668,10 +645,7 @@ InsertOneTuple(Oid objectid)
 	heap_insert(reldesc, tuple);
 	heap_freetuple(tuple);
 	if (DebugMode)
-	{
-		printf("End InsertOneTuple, objectid=%u\n", objectid);
-		fflush(stdout);
-	}
+		elog(DEBUG, "row inserted");
 
 	/*
 	 * Reset blanks for next tuple
@@ -691,30 +665,25 @@ InsertOneValue(Oid objectid, char *value, int i)
 	char	   *prt;
 	struct typmap **app;
 
+	AssertArg(i >= 0 || i < MAXATTR);
+
 	if (DebugMode)
-		printf("Inserting value: '%s'\n", value);
-	if (i < 0 || i >= MAXATTR)
-	{
-		printf("i out of range: %d\n", i);
-		Assert(0);
-	}
+		elog(DEBUG, "inserting column %d value '%s'", i, value);
 
 	if (Typ != (struct typmap **) NULL)
 	{
 		struct typmap *ap;
 
 		if (DebugMode)
-			puts("Typ != NULL");
+			elog(DEBUG, "Typ != NULL");
 		app = Typ;
 		while (*app && (*app)->am_oid != reldesc->rd_att->attrs[i]->atttypid)
 			++app;
 		ap = *app;
 		if (ap == NULL)
 		{
-			printf("Unable to find atttypid in Typ list! %u\n",
-				   reldesc->rd_att->attrs[i]->atttypid
-				);
-			Assert(0);
+			elog(FATAL, "unable to find atttypid %u in Typ list",
+				 reldesc->rd_att->attrs[i]->atttypid);
 		}
 		values[i] = OidFunctionCall3(ap->am_typ.typinput,
 									 CStringGetDatum(value),
@@ -724,8 +693,8 @@ InsertOneValue(Oid objectid, char *value, int i)
 											   values[i],
 									ObjectIdGetDatum(ap->am_typ.typelem),
 											   Int32GetDatum(-1)));
-		if (!Quiet)
-			printf("%s ", prt);
+		if (DebugMode)
+			elog(DEBUG, " -> %s", prt);
 		pfree(prt);
 	}
 	else
@@ -736,9 +705,9 @@ InsertOneValue(Oid objectid, char *value, int i)
 				break;
 		}
 		if (typeindex >= n_types)
-			elog(ERROR, "can't find type OID %u", attrtypes[i]->atttypid);
+			elog(ERROR, "type oid %u not found", attrtypes[i]->atttypid);
 		if (DebugMode)
-			printf("Typ == NULL, typeindex = %u idx = %d\n", typeindex, i);
+			elog(DEBUG, "Typ == NULL, typeindex = %u", typeindex);
 		values[i] = OidFunctionCall3(Procid[typeindex].inproc,
 									 CStringGetDatum(value),
 								ObjectIdGetDatum(Procid[typeindex].elem),
@@ -747,15 +716,12 @@ InsertOneValue(Oid objectid, char *value, int i)
 											   values[i],
 								ObjectIdGetDatum(Procid[typeindex].elem),
 											   Int32GetDatum(-1)));
-		if (!Quiet)
-			printf("%s ", prt);
+		if (DebugMode)
+			elog(DEBUG, " -> %s", prt);
 		pfree(prt);
 	}
 	if (DebugMode)
-	{
-		puts("End InsertValue");
-		fflush(stdout);
-	}
+		elog(DEBUG, "inserted");
 }
 
 /* ----------------
@@ -766,9 +732,8 @@ void
 InsertOneNull(int i)
 {
 	if (DebugMode)
-		printf("Inserting null\n");
-	if (i < 0 || i >= MAXATTR)
-		elog(FATAL, "i out of range (too many attrs): %d\n", i);
+		elog(DEBUG, "inserting column %d NULL", i);
+	Assert(i >= 0 || i < MAXATTR);
 	values[i] = PointerGetDatum(NULL);
 	Blanks[i] = 'n';
 }
@@ -855,7 +820,7 @@ gettype(char *type)
 				return i;
 		}
 		if (DebugMode)
-			printf("bootstrap.c: External Type: %s\n", type);
+			elog(DEBUG, "external type: %s", type);
 		rel = heap_openr(TypeRelationName, NoLock);
 		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
