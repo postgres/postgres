@@ -13,8 +13,6 @@
 
 #include <unistd.h>
 #include <signal.h>
-#include <string.h>
-#include <errno.h>
 
 #include "access/heapam.h"
 #include "access/htup.h"
@@ -27,7 +25,6 @@
 #include "fmgr.h"
 #include "storage/lmgr.h"
 #include "utils/fmgroids.h"
-#include "utils/palloc.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
