@@ -184,7 +184,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    control over who can define functions (e.g., write to relations
    with SQL fields) and triggers. Audit trails and alerters on the
    system catalogs <literal>pg_class</literal>,
-   <literal>pg_user</literal> and <literal>pg_group</literal> are also
+   <literal>pg_shadow</literal> and <literal>pg_group</literal> are also
    possible.
   </para>
 
