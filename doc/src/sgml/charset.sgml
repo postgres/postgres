@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.64 2005/03/13 05:31:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.65 2005/03/13 22:04:29 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -641,20 +641,22 @@ $ <userinput>psql -l</userinput>
        <tbody>
         <row>
          <entry><literal>BIG5</literal></entry>
-         <entry><literal>BIG5</literal>,
+         <entry><emphasis>BIG5</emphasis>,
          <literal>EUC_TW</literal>
+         <literal>MULE_INTERNAL</literal>,
+         <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>EUC_CN</literal></entry>
-         <entry><literal>EUC_CN</literal>,
+         <entry><emphasis>EUC_CN</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>EUC_JP</literal></entry>
-         <entry><literal>EUC_JP</literal>,
+         <entry><emphasis>EUC_JP</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>SJIS</literal>,
          <literal>UTF8</literal>
@@ -662,14 +664,14 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>EUC_KR</literal></entry>
-         <entry><literal>EUC_KR</literal>,
+         <entry><emphasis>EUC_KR</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>EUC_TW</literal></entry>
-         <entry><literal>EUC_TW</literal>,
+         <entry><emphasis>EUC_TW</emphasis>,
          <literal>BIG5</literal>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
@@ -677,19 +679,19 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>GB18030</literal></entry>
-         <entry><literal>GB18030</literal>,
+         <entry><emphasis>GB18030</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>GBK</literal></entry>
-         <entry><literal>GBK</literal>,
+         <entry><emphasis>GBK</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>ISO_8859_5</literal></entry>
-         <entry><literal>ISO_8859_5</literal>,
+         <entry><emphasis>ISO_8859_5</emphasis>,
          <literal>KOI8</literal>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>,
@@ -699,32 +701,31 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>ISO_8859_6</literal></entry>
-         <entry><literal>ISO_8859_6</literal>,
+         <entry><emphasis>ISO_8859_6</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>ISO_8859_7</literal></entry>
-         <entry><literal>ISO_8859_7</literal>,
+         <entry><emphasis>ISO_8859_7</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>ISO_8859_8</literal></entry>
-         <entry><literal>ISO_8859_8</literal>,
+         <entry><emphasis>ISO_8859_8</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>JOHAB</literal></entry>
-         <entry><literal>JOHAB</literal>,
+         <entry><emphasis>JOHAB</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>KOI8</literal></entry>
-         <entry>
-         <literal>KOI8</literal>,
+         <entry><emphasis>KOI8</emphasis>,
          <literal>ISO_8859_5</literal>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>,
@@ -734,14 +735,14 @@ $ <userinput>psql -l</userinput>
         </row>
         <row> 
          <entry><literal>LATIN1</literal></entry>
-         <entry><literal>LATIN1</literal>,
+         <entry><emphasis>LATIN1</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row> 
          <entry><literal>LATIN2</literal></entry>
-         <entry><literal>LATIN2</literal>,
+         <entry><emphasis>LATIN2</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>,
          <literal>WIN1250</literal>
@@ -749,62 +750,57 @@ $ <userinput>psql -l</userinput>
         </row>
         <row> 
          <entry><literal>LATIN3</literal></entry>
-         <entry><literal>LATIN3</literal>,
+         <entry><emphasis>LATIN3</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row> 
          <entry><literal>LATIN4</literal></entry>
-         <entry><literal>LATIN4</literal>,
+         <entry><emphasis>LATIN4</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row> 
          <entry><literal>LATIN5</literal></entry>
-         <entry><literal>LATIN5</literal>,
+         <entry><emphasis>LATIN5</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row> 
          <entry><literal>LATIN6</literal></entry>
-         <entry><literal>LATIN6</literal>,
-         <literal>MULE_INTERNAL</literal>,
+         <entry><emphasis>LATIN6</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row> 
          <entry><literal>LATIN7</literal></entry>
-         <entry><literal>LATIN7</literal>,
-         <literal>MULE_INTERNAL</literal>,
+         <entry><emphasis>LATIN7</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row> 
          <entry><literal>LATIN8</literal></entry>
-         <entry><literal>LATIN8</literal>,
-         <literal>MULE_INTERNAL</literal>,
+         <entry><emphasis>LATIN8</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row> 
          <entry><literal>LATIN9</literal></entry>
-         <entry><literal>LATIN9</literal>,
-         <literal>MULE_INTERNAL</literal>,
+         <entry><emphasis>LATIN9</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row> 
          <entry><literal>LATIN10</literal></entry>
-         <entry><literal>LATIN10</literal>,
-         <literal>MULE_INTERNAL</literal>,
+         <entry><emphasis>LATIN10</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>MULE_INTERNAL</literal></entry>
-         <entry>
+         <entry><emphasis>MULE_INTERNAL</emphasis>,
           <literal>BIG5</literal>,
           <literal>EUC_CN</literal>,
           <literal>EUC_JP</literal>,
@@ -812,7 +808,10 @@ $ <userinput>psql -l</userinput>
           <literal>EUC_TW</literal>,
           <literal>ISO_8859_5</literal>,
           <literal>KOI8</literal>,
-          <literal>LATIN1</literal> to <literal>LATIN5</literal>,
+          <literal>LATIN1</literal> to <literal>LATIN4</literal>,
+          <literal>LATIN2</literal>,
+          <literal>LATIN3</literal>,
+          <literal>LATIN4</literal>,
           <literal>SJIS</literal>,
           <literal>WIN866</literal>,
           <literal>WIN1250</literal>,
@@ -821,54 +820,55 @@ $ <userinput>psql -l</userinput>
         </row>
         <row> 
          <entry><literal>SJIS</literal></entry>
-         <entry><literal>SJIS</literal>,
+         <entry><emphasis>SJIS</emphasis>,
          <literal>EUC_JP</literal>,
+         <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>SQL_ASCII</literal></entry>
-         <entry><literal>SQL_ASCII</literal>,
+         <entry><emphasis>SQL_ASCII</emphasis>,
           <literal>MULE_INTERNAL</literal>,
           <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>UHC</literal></entry>
-         <entry><literal>UHC</literal>,
+         <entry><emphasis>UHC</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>UTF8</literal></entry>
-         <entry>
-         <literal>BIG5</literal>,
-         <literal>EUC_CN</literal>,
-         <literal>EUC_JP</literal>,
-         <literal>EUC_KR</literal>,
-         <literal>EUC_TW</literal>,
-         <literal>ISO_8859_5</literal>,
-         <literal>ISO_8859_6</literal>,
-         <literal>ISO_8859_7</literal>,
-         <literal>ISO_8859_8</literal>,
-         <literal>GB18030</literal>,
-         <literal>GBK</literal>,
-         <literal>JOHAB</literal>,
-         <literal>KOI8</literal>,
-         <literal>LATIN1</literal> to <literal>LATIN10</literal>,
-         <literal>SJIS</literal>,
-         <literal>UHC</literal>,
-         <literal>WIN866</literal>,
-         <literal>WIN874</literal>,
-         <literal>WIN1250</literal>,
-         <literal>WIN1251</literal>,
-         <literal>WIN1256</literal>,
-         <literal>WIN1258</literal>
+         <entry><emphasis>UTF8</emphasis>,
+          <literal>BIG5</literal>,
+          <literal>EUC_CN</literal>,
+          <literal>EUC_JP</literal>,
+          <literal>EUC_KR</literal>,
+          <literal>EUC_TW</literal>,
+          <literal>ISO_8859_5</literal>,
+          <literal>ISO_8859_6</literal>,
+          <literal>ISO_8859_7</literal>,
+          <literal>ISO_8859_8</literal>,
+          <literal>GB18030</literal>,
+          <literal>GBK</literal>,
+          <literal>JOHAB</literal>,
+          <literal>KOI8</literal>,
+          <literal>LATIN1</literal> to <literal>LATIN10</literal>,
+          <literal>SJIS</literal>,
+          <literal>UHC</literal>,
+          <literal>WIN866</literal>,
+          <literal>WIN874</literal>,
+          <literal>WIN1250</literal>,
+          <literal>WIN1251</literal>,
+          <literal>WIN1256</literal>,
+          <literal>WIN1258</literal>
          </entry>
         </row>
         <row>
          <entry><literal>WIN866</literal></entry>
-         <entry><literal>WIN866</literal>,
+         <entry><emphasis>WIN866</emphasis>,
           <literal>ISO_8859_5</literal>,
           <literal>KOI8</literal>,
           <literal>MULE_INTERNAL</literal>,
@@ -878,13 +878,13 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>WIN874</literal></entry>
-         <entry><literal>WIN874</literal>,
+         <entry><emphasis>WIN874</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>WIN1250</literal></entry>
-         <entry><literal>WIN1250</literal>,
+         <entry><emphasis>WIN1250</emphasis>,
           <literal>LATIN2</literal>,
           <literal>MULE_INTERNAL</literal>,
           <literal>UTF8</literal>
@@ -892,7 +892,7 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>WIN1251</literal></entry>
-         <entry><literal>WIN1251</literal>,
+         <entry><emphasis>WIN1251</emphasis>,
           <literal>ISO_8859_5</literal>,
           <literal>KOI8</literal>,
           <literal>MULE_INTERNAL</literal>,
@@ -902,13 +902,13 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>WIN1256</literal></entry>
-         <entry><literal>WIN1256</literal>,
+         <entry><emphasis>WIN1256</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
         <row>
          <entry><literal>WIN1258</literal></entry>
-         <entry><literal>WIN1258</literal>,
+         <entry><emphasis>WIN1258</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
