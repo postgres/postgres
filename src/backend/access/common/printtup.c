@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.4 1996/10/20 08:31:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.5 1996/10/20 22:04:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,16 @@
 
 #include "access/heaptuple.h" /* Prototypes */
 #include "fmgr.h" /* Prototypes */
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include "libpq/pqcomm.h"
+#include "libpq/libpq.h"
+
+#include <stdio.h>
+
+#include "utils/palloc.h"
 
 /* ----------------------------------------------------------------
  *	printtup / debugtup support

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.7 1996/10/20 08:31:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.8 1996/10/20 22:04:36 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -44,6 +44,23 @@
 #include "access/skey.h"
 #include "access/strat.h"
 #include "utils/rel.h"
+
+#include "utils/memutils.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
+
+#include "access/tupmacs.h"
+
+#include "utils/palloc.h"
+
+#include <stdio.h>
+#include "storage/ipc.h"
+#include "storage/bufmgr.h"
+#include "access/transam.h"
 
 /* this is so the sparcstation debugger works */
 

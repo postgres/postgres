@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.4 1996/10/20 08:31:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.5 1996/10/20 22:04:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@
 #include <time.h>
 #include "utils/nabstime.h"
 #include "access/htup.h"
+
+#include "executor/execdebug.h"
 
 /* ----------------------------------------------------------------
  *		  index scan key qualification code

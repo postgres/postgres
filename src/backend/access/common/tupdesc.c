@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.3 1996/10/20 08:31:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.4 1996/10/20 22:04:49 scrappy Exp $
  *
  * NOTES
  *    some of the executor utility code such as "ExecTypeFromTL" should be
@@ -49,6 +49,16 @@
 #include "nodes/parsenodes.h"
 
 #include "utils/palloc.h"
+
+#include <string.h>
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#endif
+
+#include "utils/geo-decls.h"
+#include "utils/builtins.h"
+
+#include <stdio.h>
 
 /* ----------------------------------------------------------------
  *	CreateTemplateTupleDesc
