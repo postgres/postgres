@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Apr  9 09:45:22 EDT 2002
+Last updated:		Fri Apr 12 20:20:17 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -78,6 +78,7 @@ DATA TYPES
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Functions returning sets do not totally work
 * Change factorial to return a numeric
+* Change NUMERIC data type to use base 10,000 internally
 * Add function to return compressed length of TOAST data values (Tom)
 * Add GUC parameter for DATESTYLE
 
