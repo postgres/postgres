@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.2 2002/06/19 06:11:36 thomas Exp $
 -->
 
  <appendix id="features">
@@ -13,17 +13,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
     compliance: basic, intermediate, and advanced. Most database
     products claiming <acronym>SQL</acronym> standards compliance were
     compliant at only the basic level, since the entire set of
-    intermediate and advanced features was either to voluminous or in
+    intermediate and advanced features was either too voluminous or in
     conflict with legacy behaviors.
    </para>
 
    <para>
     <acronym>SQL99</acronym> defines a large set of individual
     features rather than the ineffectively broad three levels found in
-    <acronym>SQL92</acronym>. We list the entire set of features
-    defined in the standard, with comments on those features not yet
-    implemented in <productname>PostgreSQL</productname>.
+    <acronym>SQL92</acronym>. We provide a list of supported features,
+    followed by a list of the features defined in SQL99 which are not
+    yet supported in PostgreSQL.
+   </para>
 
+   <para>
     <informaltable>
      <tgroup cols="3">
       <thead>
@@ -326,18 +328,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>E081-05</entry>
-        <entry>UPDATE privilege at the column level</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>E081-06</entry>
         <entry>REFERENCES privilege at the table level</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>E081-07</entry>
-        <entry>REFERENCES privilege at the column level</entry>
         <entry></entry>
        </row>
        <row>
@@ -433,31 +425,26 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        <row>
         <entry>E121-04</entry>
         <entry>OPEN statement</entry>
-        <entry></entry>
+        <entry>(cursor)</entry>
        </row>
        <row>
         <entry>E121-06</entry>
         <entry>Positioned UPDATE statement</entry>
-        <entry></entry>
+        <entry>(cursor)</entry>
        </row>
        <row>
         <entry>E121-07</entry>
         <entry>Positioned DELETE statement</entry>
-        <entry></entry>
+        <entry>(cursor)</entry>
        </row>
        <row>
         <entry>E121-08</entry>
         <entry>CLOSE statement</entry>
-        <entry></entry>
+        <entry>(cursor)</entry>
        </row>
        <row>
         <entry>E121-10</entry>
         <entry>FETCH statement implicit NEXT</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>E121-17</entry>
-        <entry>WITH HOLD cursors</entry>
         <entry></entry>
        </row>
        <row>
@@ -539,11 +526,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>E152-02</entry>
-        <entry>SET TRANSACTION statement: READ ONLY and READ WRITE clauses</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>E153</entry>
         <entry>Updatable queries with subqueries</entry>
         <entry></entry>
@@ -551,51 +533,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        <row>
         <entry>E161</entry>
         <entry>SQL comments using leading double minus</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>E171</entry>
-        <entry>SQLSTATE support</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>E182</entry>
-        <entry>Module language</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021</entry>
-        <entry>Basic information schema</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-01</entry>
-        <entry>COLUMNS view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-02</entry>
-        <entry>TABLES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-03</entry>
-        <entry>VIEWS view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-04</entry>
-        <entry>TABLE_CONSTRAINTS view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-05</entry>
-        <entry>REFERENTIAL_ CONSTRAINTS view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-06</entry>
-        <entry>CHECK_CONSTRAINTS view</entry>
         <entry></entry>
        </row>
        <row>
@@ -747,7 +684,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        </row>
        <row>
         <entry>F131-02</entry>
-        <entry>Multiple tables supported in queries with grouped views</entry>
+        <entry>Multiple tables supported in queries with grouped
+         views</entry> 
         <entry></entry>
        </row>
        <row>
@@ -757,18 +695,20 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        </row>
        <row>
         <entry>F131-04</entry>
-        <entry>Subqueries with GROUP BY and HAVING clauses and grouped views</entry>
+        <entry>Subqueries with GROUP BY and HAVING clauses and grouped
+         views</entry> 
         <entry></entry>
        </row>
        <row>
         <entry>F131-05</entry>
-        <entry>Single row SELECT with GROUP BY and HAVING clauses and grouped views</entry>
+        <entry>Single row SELECT with GROUP BY and HAVING clauses and
+         grouped views</entry> 
         <entry></entry>
        </row>
        <row>
         <entry>F181</entry>
         <entry>Multiple module support</entry>
-        <entry></entry>
+        <entry>Allow separate compilation modules in ecpg</entry>
        </row>
        <row>
         <entry>F201</entry>
@@ -846,38 +786,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F501</entry>
-        <entry>Features and conformance views</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F501-01</entry>
-        <entry>SQL_FEATURES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F501-02</entry>
-        <entry>SQL_SIZING view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F501-03</entry>
-        <entry>SQL_LANGUAGES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F812</entry>
-        <entry>Basic flagging</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>S011</entry>
         <entry>Distinct data types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S011-01</entry>
-        <entry>USER_DEFINED_TYPES view</entry>
         <entry></entry>
        </row>
        <row>
@@ -891,18 +801,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>T321-02</entry>
-        <entry>User-defined stored procedures with no overloading</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>T321-03</entry>
         <entry>Function invocation</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T321-04</entry>
-        <entry>CALL statement</entry>
         <entry></entry>
        </row>
        <row>
@@ -911,23 +811,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>T321-06</entry>
-        <entry>ROUTINES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T321-07</entry>
-        <entry>PARAMETERS view</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F032</entry>
         <entry>CASCADE drop behavior</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F033</entry>
-        <entry>ALTER TABLE statement: DROP COLUMN clause</entry>
         <entry></entry>
        </row>
        <row>
@@ -937,7 +822,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        </row>
        <row>
         <entry>F034-01</entry>
-        <entry>REVOKE statement performed by other than the owner of a schema object</entry>
+        <entry>REVOKE statement performed by other than the owner of a
+         schema object</entry> 
         <entry></entry>
        </row>
        <row>
@@ -947,7 +833,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        </row>
        <row>
         <entry>F034-03</entry>
-        <entry>REVOKE statement to revoke a privilege that the grantee has WITH GRANT OPTION</entry>
+        <entry>REVOKE statement to revoke a privilege that the grantee
+         has WITH GRANT OPTION</entry> 
         <entry></entry>
        </row>
        <row>
@@ -961,33 +848,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F111-01</entry>
-        <entry>READ UNCOMMITTED isolation level</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F111-02</entry>
         <entry>READ COMMITTED isolation level</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F111-03</entry>
-        <entry>REPEATABLE READ isolation level</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F121</entry>
-        <entry>Basic diagnostics management</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F121-01</entry>
-        <entry>GET DIAGNOSTICS statement</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F121-02</entry>
-        <entry>SET TRANSACTION statement: DIAGNOSTICS SIZE clause</entry>
         <entry></entry>
        </row>
        <row>
@@ -1006,31 +868,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F231</entry>
-        <entry>Privilege Tables</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F231-01</entry>
-        <entry>TABLE_PRIVILEGES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F231-02</entry>
-        <entry>COLUMN_PRIVILEGES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F231-03</entry>
-        <entry>USAGE_PRIVILEGES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F251</entry>
-        <entry>Domain support</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F271</entry>
         <entry>Compound character literals</entry>
         <entry></entry>
@@ -1046,18 +883,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F301</entry>
-        <entry>CORRESPONDING in query expressions</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F302</entry>
         <entry>INTERSECT table operator</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F302-01</entry>
-        <entry>INTERSECT DISTINCT table operator</entry>
         <entry></entry>
        </row>
        <row>
@@ -1083,11 +910,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        <row>
         <entry>F361</entry>
         <entry>Subprogram support</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F381</entry>
-        <entry>Extended schema manipulation</entry>
         <entry></entry>
        </row>
        <row>
@@ -1141,11 +963,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F421</entry>
-        <entry>National character</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F431</entry>
         <entry>Read-only scrollable cursors</entry>
         <entry></entry>
@@ -1181,16 +998,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F441</entry>
-        <entry>Extended set function support</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F451</entry>
-        <entry>Character set definition</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F461</entry>
         <entry>Named character sets</entry>
         <entry></entry>
@@ -1201,33 +1008,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F502</entry>
-        <entry>Enhanced documentation tables</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F502-01</entry>
-        <entry>SQL_SIZING_PROFILES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F502-02</entry>
-        <entry>SQL_IMPLEMENTATION_INFO view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F502-03</entry>
-        <entry>SQL_PACKAGES view</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F511</entry>
         <entry>BIT data type</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F521</entry>
-        <entry>Assertions</entry>
         <entry></entry>
        </row>
        <row>
@@ -1276,43 +1058,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F671</entry>
-        <entry>Subqueries in CHECK</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F691</entry>
-        <entry>Collation and translation</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F701</entry>
         <entry>Referential update actions</entry>
         <entry></entry>
        </row>
        <row>
-        <entry>F711</entry>
-        <entry>ALTER domain</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F721</entry>
-        <entry>Deferrable constraints</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F731</entry>
-        <entry>INSERT column privileges</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F741</entry>
         <entry>Referential MATCH types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F751</entry>
-        <entry>View CHECK enhancements</entry>
         <entry></entry>
        </row>
        <row>
@@ -1326,34 +1078,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>F781</entry>
-        <entry>Self-referencing operations</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F791</entry>
         <entry>Insensitive cursors</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F801</entry>
-        <entry>Full set function</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F811</entry>
-        <entry>Extended flagging</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F813</entry>
-        <entry>Extended flagging for "Core SQL Flagging" and "Catalog
-         Lookup" only</entry> 
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F821</entry>
-        <entry>Local table references</entry>
         <entry></entry>
        </row>
        <row>
@@ -1372,38 +1098,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>S023</entry>
-        <entry>Basic structured types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S024</entry>
-        <entry>Enhanced structured types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S041</entry>
-        <entry>Basic reference types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S043</entry>
-        <entry>Enhanced reference types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S051</entry>
-        <entry>Create table of type</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>S071</entry>
         <entry>SQL paths in function and type name resolution</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S081</entry>
-        <entry>Subtables</entry>
         <entry></entry>
        </row>
        <row>
@@ -1417,38 +1113,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>S091-02</entry>
-        <entry>Arrays of distinct types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S091-03</entry>
-        <entry>Array expressions</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>S092</entry>
         <entry>Arrays of user-defined types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S094</entry>
-        <entry>Arrays of reference types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S111</entry>
-        <entry>ONLY in query expressions</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S151</entry>
-        <entry>Type predicate</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S161</entry>
-        <entry>Subtype treatment</entry>
         <entry></entry>
        </row>
        <row>
@@ -1467,9 +1133,498 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
+        <entry>T031</entry>
+        <entry>BOOLEAN data type</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T141</entry>
+        <entry>SIMILAR predicate</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T151</entry>
+        <entry>DISTINCT predicate</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T171</entry>
+        <entry>LIKE clause in table definition</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T191</entry>
+        <entry>Referential action RESTRICT</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T201</entry>
+        <entry>Comparable data types for referential constraints</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T211</entry>
+        <entry>Basic trigger capability</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T211-01</entry>
+        <entry>Triggers activated on UPDATE, INSERT, or DELETE of one
+         base table</entry> 
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T211-02</entry>
+        <entry>BEFORE triggers</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T211-03</entry>
+        <entry>AFTER triggers</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T211-04</entry>
+        <entry>FOR EACH ROW triggers</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T211-08</entry>
+        <entry>Multiple triggers for the same the event are executed in
+         the order in which they were created</entry> 
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T212</entry>
+        <entry>Enhanced trigger capability</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T231</entry>
+        <entry>SENSITIVE cursors</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T241</entry>
+        <entry>START TRANSACTION statement</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T251</entry>
+        <entry>SET TRANSACTION statement: LOCAL option</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T312</entry>
+        <entry>OVERLAY function</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T322</entry>
+        <entry>Overloading of SQL-invoked functions and procedures</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T323</entry>
+        <entry>Explicit security for external routines</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T351</entry>
+        <entry>Bracketed SQL comments (/*...*/ comments)</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T401</entry>
+        <entry>INSERT into a cursor</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T441</entry>
+        <entry>ABS and MOD functions</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T461</entry>
+        <entry>Symmetric BETWEEN predicate</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T501</entry>
+        <entry>Enhanced EXISTS predicate</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T551</entry>
+        <entry>Optional key words for default syntax</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T571</entry>
+        <entry>Array-returning external SQL-invoked functions</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T581</entry>
+        <entry>Regular expression substring function</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T591</entry>
+        <entry>UNIQUE constraints of possibly null columns</entry>
+        <entry></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+  </sect1>
+
+  <sect1 id="unsupported-features-sql99">
+   <title>Unsupported Features</title>
+
+   <para>
+    The following features defined in <acronym>SQL99</acronym> are not
+    implemented in the current release of
+    <productname>PostgreSQL</productname>. In a few cases, equivalent
+    functionality is available.
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Identifier</entry>
+        <entry>Description</entry>
+        <entry>Comment</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>E081-05</entry>
+        <entry>UPDATE privilege at the column level</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>E081-07</entry>
+        <entry>REFERENCES privilege at the column level</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>E121-17</entry>
+        <entry>WITH HOLD cursors</entry>
+        <entry>Cursor stays open across transactions</entry>
+       </row>
+       <row>
+        <entry>E152-02</entry>
+        <entry>SET TRANSACTION statement: READ ONLY and READ WRITE
+         clauses</entry> 
+        <entry></entry>
+       </row>
+       <row>
+        <entry>E171</entry>
+        <entry>SQLSTATE support</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>E182</entry>
+        <entry>Module language</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021</entry>
+        <entry>Basic information schema</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-01</entry>
+        <entry>COLUMNS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-02</entry>
+        <entry>TABLES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-03</entry>
+        <entry>VIEWS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-04</entry>
+        <entry>TABLE_CONSTRAINTS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-05</entry>
+        <entry>REFERENTIAL_CONSTRAINTS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-06</entry>
+        <entry>CHECK_CONSTRAINTS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F033</entry>
+        <entry>ALTER TABLE statement: DROP COLUMN clause</entry>
+        <entry>Syntax accepted</entry>
+       </row>
+       <row>
+        <entry>F111-01</entry>
+        <entry>READ UNCOMMITTED isolation level</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F111-03</entry>
+        <entry>REPEATABLE READ isolation level</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F121</entry>
+        <entry>Basic diagnostics management</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F121-01</entry>
+        <entry>GET DIAGNOSTICS statement</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F121-02</entry>
+        <entry>SET TRANSACTION statement: DIAGNOSTICS SIZE clause</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F231</entry>
+        <entry>Privilege Tables</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F231-01</entry>
+        <entry>TABLE_PRIVILEGES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F231-02</entry>
+        <entry>COLUMN_PRIVILEGES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F231-03</entry>
+        <entry>USAGE_PRIVILEGES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F251</entry>
+        <entry>Domain support</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F301</entry>
+        <entry>CORRESPONDING in query expressions</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F302-01</entry>
+        <entry>INTERSECT DISTINCT table operator</entry>
+        <entry>Syntax accepted</entry>
+       </row>
+       <row>
+        <entry>F381</entry>
+        <entry>Extended schema manipulation</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F421</entry>
+        <entry>National character</entry>
+        <entry>Syntax accepted</entry>
+       </row>
+       <row>
+        <entry>F441</entry>
+        <entry>Extended set function support</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F451</entry>
+        <entry>Character set definition</entry>
+        <entry>Alternate implementation</entry>
+       </row>
+       <row>
+        <entry>F501</entry>
+        <entry>Features and conformance views</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F501-01</entry>
+        <entry>SQL_FEATURES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F501-02</entry>
+        <entry>SQL_SIZING view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F501-03</entry>
+        <entry>SQL_LANGUAGES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F502</entry>
+        <entry>Enhanced documentation tables</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F502-01</entry>
+        <entry>SQL_SIZING_PROFILES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F502-02</entry>
+        <entry>SQL_IMPLEMENTATION_INFO view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F502-03</entry>
+        <entry>SQL_PACKAGES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F521</entry>
+        <entry>Assertions</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F671</entry>
+        <entry>Subqueries in CHECK</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F691</entry>
+        <entry>Collation and translation</entry>
+        <entry>Alternate implementation</entry>
+       </row>
+       <row>
+        <entry>F711</entry>
+        <entry>ALTER domain</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F721</entry>
+        <entry>Deferrable constraints</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F731</entry>
+        <entry>INSERT column privileges</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F751</entry>
+        <entry>View CHECK enhancements</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F781</entry>
+        <entry>Self-referencing operations</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F801</entry>
+        <entry>Full set function</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F811</entry>
+        <entry>Extended flagging</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F812</entry>
+        <entry>Basic flagging</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F813</entry>
+        <entry>Extended flagging for "Core SQL Flagging" and "Catalog
+         Lookup" only</entry> 
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F821</entry>
+        <entry>Local table references</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S011-01</entry>
+        <entry>USER_DEFINED_TYPES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S023</entry>
+        <entry>Basic structured types</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S024</entry>
+        <entry>Enhanced structured types</entry>
+        <entry>Alternate implementation</entry>
+       </row>
+       <row>
+        <entry>S041</entry>
+        <entry>Basic reference types</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S043</entry>
+        <entry>Enhanced reference types</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S051</entry>
+        <entry>Create table of type</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S081</entry>
+        <entry>Subtables</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S091-02</entry>
+        <entry>Arrays of distinct types</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S091-03</entry>
+        <entry>Array expressions</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S094</entry>
+        <entry>Arrays of reference types</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S111</entry>
+        <entry>ONLY in query expressions</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>S151</entry>
+        <entry>Type predicate</entry>
+        <entry>IS OF (type list)</entry>
+       </row>
+       <row>
+        <entry>S161</entry>
+        <entry>Subtype treatment</entry>
+        <entry>TREAT(expr AS type)</entry>
+       </row>
+       <row>
         <entry>S211</entry>
         <entry>User-defined cast functions</entry>
-        <entry></entry>
+        <entry>CREATE CAST(type AS type) WITH</entry>
        </row>
        <row>
         <entry>S231</entry>
@@ -1489,7 +1644,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        <row>
         <entry>S251</entry>
         <entry>User-defined orderings</entry>
-        <entry></entry>
+        <entry>CREATE ORDERING FOR</entry>
        </row>
        <row>
         <entry>S261</entry>
@@ -1499,11 +1654,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        <row>
         <entry>T011</entry>
         <entry>Timestamp in Information Schema</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T031</entry>
-        <entry>BOOLEAN data type</entry>
         <entry></entry>
        </row>
        <row>
@@ -1563,57 +1713,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>T141</entry>
-        <entry>SIMILAR predicate</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T151</entry>
-        <entry>DISTINCT predicate</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T171</entry>
-        <entry>LIKE clause in table definition</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T191</entry>
-        <entry>Referential action RESTRICT</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T201</entry>
-        <entry>Comparable data types for referential constraints</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T211</entry>
-        <entry>Basic trigger capability</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T211-01</entry>
-        <entry>Triggers activated on UPDATE, INSERT, or DELETE of one
-         base table</entry> 
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T211-02</entry>
-        <entry>BEFORE triggers</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T211-03</entry>
-        <entry>AFTER triggers</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T211-04</entry>
-        <entry>FOR EACH ROW triggers</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>T211-05</entry>
         <entry>Ability to specify a search condition that must be true
          before the trigger is invoked</entry> 
@@ -1628,32 +1727,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        <row>
         <entry>T211-07</entry>
         <entry>TRIGGER privilege</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T211-08</entry>
-        <entry>Multiple triggers for the same the event are executed in
-         the order in which they were created</entry> 
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T212</entry>
-        <entry>Enhanced trigger capability</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T231</entry>
-        <entry>SENSITIVE cursors</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T241</entry>
-        <entry>START TRANSACTION statement</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T251</entry>
-        <entry>SET TRANSACTION statement: LOCAL option</entry>
         <entry></entry>
        </row>
        <row>
@@ -1677,18 +1750,23 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>T312</entry>
-        <entry>OVERLAY function</entry>
+        <entry>T321-02</entry>
+        <entry>User-defined stored procedures with no overloading</entry>
         <entry></entry>
        </row>
        <row>
-        <entry>T322</entry>
-        <entry>Overloading of SQL-invoked functions and procedures</entry>
+        <entry>T321-04</entry>
+        <entry>CALL statement</entry>
         <entry></entry>
        </row>
        <row>
-        <entry>T323</entry>
-        <entry>Explicit security for external routines</entry>
+        <entry>T321-06</entry>
+        <entry>ROUTINES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T321-07</entry>
+        <entry>PARAMETERS view</entry>
         <entry></entry>
        </row>
        <row>
@@ -1702,16 +1780,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>T351</entry>
-        <entry>Bracketed SQL comments (/*...*/ comments)</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T401</entry>
-        <entry>INSERT into a cursor</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>T411</entry>
         <entry>UPDATE statement: SET ROW option</entry>
         <entry></entry>
@@ -1719,16 +1787,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        <row>
         <entry>T431</entry>
         <entry>CUBE and ROLLUP operations</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T441</entry>
-        <entry>ABS and MOD functions</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T461</entry>
-        <entry>Symmetric BETWEEN predicate</entry>
         <entry></entry>
        </row>
        <row>
@@ -1742,11 +1800,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
         <entry></entry>
        </row>
        <row>
-        <entry>T501</entry>
-        <entry>Enhanced EXISTS predicate</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>T511</entry>
         <entry>Transaction counts</entry>
         <entry></entry>
@@ -1754,31 +1807,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.1 2002/06/15 02:59:55 tho
        <row>
         <entry>T541</entry>
         <entry>Updatable table references</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T551</entry>
-        <entry>Optional key words for default syntax</entry>
-        <entry></entry>
+        <entry>?</entry>
        </row>
        <row>
         <entry>T561</entry>
         <entry>Holdable locators</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T571</entry>
-        <entry>Array-returning external SQL-invoked functions</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T581</entry>
-        <entry>Regular expression substring function</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T591</entry>
-        <entry>UNIQUE constraints of possibly null columns</entry>
         <entry></entry>
        </row>
        <row>
