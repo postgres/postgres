@@ -30,19 +30,13 @@
  * hadn't seen his code).
  */
 
-#include <postgres.h>
+#include "postgres.h"
+
 #include "px-crypt.h"
 #define __set_errno(v)
 
 #ifndef __set_errno
 #define __set_errno(val) errno = (val)
-#endif
-
-#undef __CONST
-#ifdef __GNUC__
-#define __CONST __const
-#else
-#define __CONST
 #endif
 
 #ifdef __i386__
@@ -373,7 +367,7 @@ static unsigned char BF_atoi64[0x60] = {
 	(dst) = tmp; \
 }
 
-static int BF_decode(BF_word *dst, __CONST char *src, int size)
+static int BF_decode(BF_word *dst, const char *src, int size)
 {
 	unsigned char *dptr = (unsigned char *)dst;
 	unsigned char *end = dptr + size;
@@ -397,7 +391,7 @@ static int BF_decode(BF_word *dst, __CONST char *src, int size)
 	return 0;
 }
 
-static void BF_encode(char *dst, __CONST BF_word *src, int size)
+static void BF_encode(char *dst, const BF_word *src, int size)
 {
 	unsigned char *sptr = (unsigned char *)src;
 	unsigned char *end = sptr + size;
@@ -536,9 +530,9 @@ extern void _BF_body_r(BF_ctx *ctx);
 
 #endif
 
-static void BF_set_key(__CONST char *key, BF_key expanded, BF_key initial)
+static void BF_set_key(const char *key, BF_key expanded, BF_key initial)
 {
-	__CONST char *ptr = key;
+	const char *ptr = key;
 	int i, j;
 	BF_word tmp;
 
@@ -556,7 +550,7 @@ static void BF_set_key(__CONST char *key, BF_key expanded, BF_key initial)
 	}
 }
 
-char *_crypt_blowfish_rn(__CONST char *key, __CONST char *setting,
+char *_crypt_blowfish_rn(const char *key, const char *setting,
 	char *output, int size)
 {
 	struct {

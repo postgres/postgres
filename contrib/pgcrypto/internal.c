@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: internal.c,v 1.4 2001/08/21 00:42:41 momjian Exp $
+ * $Id: internal.c,v 1.5 2001/10/15 19:12:48 tgl Exp $
  */
 
 
@@ -134,7 +134,7 @@ int_sha1_update(PX_MD * h, const uint8 * data, uint dlen)
 {
 	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
 
-	SHA1Update(ctx, (const char *)data, dlen);
+	SHA1Update(ctx, data, dlen);
 }
 
 static void

@@ -10,19 +10,13 @@
  * may not be compiled always.        -- marko
  */
 
-#include <postgres.h>
+#include "postgres.h"
+
 #include "px-crypt.h"
 
 #include <errno.h>
 #ifndef __set_errno
-#define __set_errno(val) errno = (val)
-#endif
-
-#undef __CONST
-#ifdef __GNUC__
-#define __CONST __const
-#else
-#define __CONST
+#define __set_errno(val) (errno = (val))
 #endif
 
 typedef unsigned int BF_word;
@@ -31,7 +25,7 @@ unsigned char _crypt_itoa64[64 + 1] =
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 char *_crypt_gensalt_traditional_rn(unsigned long count,
-	__CONST char *input, int size, char *output, int output_size)
+	const char *input, int size, char *output, int output_size)
 {
 	if (size < 2 || output_size < 2 + 1 || (count && count != 25)) {
 		if (output_size > 0) output[0] = '\0';
@@ -47,7 +41,7 @@ char *_crypt_gensalt_traditional_rn(unsigned long count,
 }
 
 char *_crypt_gensalt_extended_rn(unsigned long count,
-	__CONST char *input, int size, char *output, int output_size)
+	const char *input, int size, char *output, int output_size)
 {
 	unsigned long value;
 
@@ -80,7 +74,7 @@ char *_crypt_gensalt_extended_rn(unsigned long count,
 }
 
 char *_crypt_gensalt_md5_rn(unsigned long count,
-	__CONST char *input, int size, char *output, int output_size)
+	const char *input, int size, char *output, int output_size)
 {
 	unsigned long value;
 
@@ -121,7 +115,7 @@ char *_crypt_gensalt_md5_rn(unsigned long count,
 static unsigned char BF_itoa64[64 + 1] =
 	"./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-static void BF_encode(char *dst, __CONST BF_word *src, int size)
+static void BF_encode(char *dst, const BF_word *src, int size)
 {
 	unsigned char *sptr = (unsigned char *)src;
 	unsigned char *end = sptr + size;
@@ -154,7 +148,7 @@ static void BF_encode(char *dst, __CONST BF_word *src, int size)
 }
 
 char *_crypt_gensalt_blowfish_rn(unsigned long count,
-	__CONST char *input, int size, char *output, int output_size)
+	const char *input, int size, char *output, int output_size)
 {
 	if (size < 16 || output_size < 7 + 22 + 1 ||
 	    (count && (count < 4 || count > 31))) {

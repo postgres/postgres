@@ -87,12 +87,14 @@ _rserv_log_()
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
 		newtuple = CurrentTriggerData->tg_newtuple;
 
+#ifndef PG_FUNCTION_INFO_V1
 	/*
 	 * Setting CurrentTriggerData to NULL prevents direct calls to trigger
 	 * functions in queries. Normally, trigger functions have to be called
 	 * by trigger manager code only.
 	 */
 	CurrentTriggerData = NULL;
+#endif
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)

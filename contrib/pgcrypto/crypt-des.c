@@ -58,17 +58,12 @@
  *	alignment).
  */
 
-#include <postgres.h>
+#include "postgres.h"
+
 #include "px-crypt.h"
 
 /* for ntohl/htonl */
 #include <netinet/in.h>
-
-
-/* We can't always assume gcc */
-#ifdef __GNUC__
-#define INLINE inline
-#endif
 
 #define _PASSWORD_EFMT1 '_'
 
@@ -200,7 +195,7 @@ static uint32 comp_maskl[8][128],
 static uint32 old_rawkey0,
 			old_rawkey1;
 
-static INLINE int
+static inline int
 ascii_to_bin(char ch)
 {
 	if (ch > 'z')
@@ -611,6 +606,7 @@ do_des(uint32 l_in, uint32 r_in, uint32 * l_out, uint32 * r_out, int count)
 static int
 des_cipher(const char *in, char *out, long salt, int count)
 {
+	uint32		buffer[2];
 	uint32		l_out,
 				r_out,
 				rawl,
@@ -622,13 +618,20 @@ des_cipher(const char *in, char *out, long salt, int count)
 
 	setup_salt(salt);
 
-	rawl = ntohl(*((uint32 *) in)++);
-	rawr = ntohl(*((uint32 *) in));
+	/* copy data to avoid assuming input is word-aligned */
+	memcpy(buffer, in, sizeof(buffer));
+
+	rawl = ntohl(buffer[0]);
+	rawr = ntohl(buffer[1]);
 
 	retval = do_des(rawl, rawr, &l_out, &r_out, count);
 
-	*((uint32 *) out)++ = htonl(l_out);
-	*((uint32 *) out) = htonl(r_out);
+	buffer[0] = htonl(l_out);
+	buffer[1] = htonl(r_out);
+
+	/* copy data to avoid assuming output is word-aligned */
+	memcpy(out, buffer, sizeof(buffer));
+
 	return (retval);
 }
 
