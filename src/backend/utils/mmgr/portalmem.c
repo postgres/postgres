@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.41 2001/03/22 04:00:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.42 2001/10/01 05:36:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ EnablePortalManager(void)
 										 ALLOCSET_DEFAULT_MAXSIZE);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
-	ctl.datasize = sizeof(Portal);
+	ctl.entrysize = sizeof(PortalHashEnt);
 
 	/*
 	 * use PORTALS_PER_USER, defined in utils/portal.h as a guess of how

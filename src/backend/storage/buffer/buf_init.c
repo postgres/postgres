@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.44 2001/09/29 04:02:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.45 2001/10/01 05:36:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,9 +280,7 @@ BufferShmemSize(void)
 	int			size = 0;
 
 	/* size of shmem index hash table */
-	size += hash_estimate_size(SHMEM_INDEX_SIZE,
-							   SHMEM_INDEX_KEYSIZE,
-							   SHMEM_INDEX_DATASIZE);
+	size += hash_estimate_size(SHMEM_INDEX_SIZE, sizeof(ShmemIndexEnt));
 
 	/* size of buffer descriptors */
 	size += MAXALIGN((NBuffers + 1) * sizeof(BufferDesc));
@@ -291,9 +289,7 @@ BufferShmemSize(void)
 	size += NBuffers * MAXALIGN(BLCKSZ);
 
 	/* size of buffer hash table */
-	size += hash_estimate_size(NBuffers,
-							   sizeof(BufferTag),
-							   sizeof(Buffer));
+	size += hash_estimate_size(NBuffers, sizeof(BufferLookupEnt));
 
 #ifdef BMTRACE
 	size += (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long);

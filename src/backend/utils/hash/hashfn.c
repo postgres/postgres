@@ -1,6 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * hashfn.c
+ *		Hash functions for use in dynahash.c hashtables
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
@@ -8,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.13 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.14 2001/10/01 05:36:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,155 +18,100 @@
 #include "utils/hsearch.h"
 
 /*
- * Assume that we've already split the bucket to which this
- * key hashes, calculate that bucket, and check that in fact
- * we did already split it.
+ * string_hash: hash function for keys that are null-terminated strings.
+ *
+ * NOTE: since dynahash.c backs this up with a fixed-length memcmp(),
+ * the key must actually be zero-padded to the specified maximum length
+ * to work correctly.  However, if it is known that nothing after the
+ * first zero byte is interesting, this is the right hash function to use.
+ *
+ * NOTE: this is the default hash function if none is specified.
  */
 long
-string_hash(char *key, int keysize)
+string_hash(void *key, int keysize)
 {
-	int			h;
 	unsigned char *k = (unsigned char *) key;
+	long		h = 0;
 
-	h = 0;
-
-	/*
-	 * Convert string to integer
-	 */
 	while (*k)
-		h = h * PRIME1 ^ (*k++ - ' ');
+		h = (h * PRIME1) ^ (*k++);
+
 	h %= PRIME2;
 
 	return h;
 }
 
-
+/*
+ * tag_hash: hash function for fixed-size tag values
+ *
+ * NB: we assume that the supplied key is aligned at least on an 'int'
+ * boundary, if its size is >= sizeof(int).
+ */
 long
-tag_hash(int *key, int keysize)
+tag_hash(void *key, int keysize)
 {
+	int		   *k = (int *) key;
 	long		h = 0;
 
 	/*
-	 * Convert tag to integer;	Use four byte chunks in a "jump table" to
-	 * go a little faster.	Currently the maximum keysize is 16 (mar 17
-	 * 1992) I have put in cases for up to 24.	Bigger than this will
-	 * resort to the old behavior of the for loop. (see the default case).
+	 * Use four byte chunks in a "jump table" to go a little faster.
+	 *
+	 * Currently the maximum keysize is 16 (mar 17 1992).  I have put in
+	 * cases for up to 32.  Bigger than this will resort to a for loop
+	 * (see the default case).
 	 */
 	switch (keysize)
 	{
+		case 8 * sizeof(int):
+			h = (h * PRIME1) ^ (*k++);
+			/* fall through */
+
+		case 7 * sizeof(int):
+			h = (h * PRIME1) ^ (*k++);
+			/* fall through */
+
 		case 6 * sizeof(int):
-			h = h * PRIME1 ^ (*key);
-			key++;
+			h = (h * PRIME1) ^ (*k++);
 			/* fall through */
 
 		case 5 * sizeof(int):
-			h = h * PRIME1 ^ (*key);
-			key++;
+			h = (h * PRIME1) ^ (*k++);
 			/* fall through */
 
 		case 4 * sizeof(int):
-			h = h * PRIME1 ^ (*key);
-			key++;
+			h = (h * PRIME1) ^ (*k++);
 			/* fall through */
 
 		case 3 * sizeof(int):
-			h = h * PRIME1 ^ (*key);
-			key++;
+			h = (h * PRIME1) ^ (*k++);
 			/* fall through */
 
 		case 2 * sizeof(int):
-			h = h * PRIME1 ^ (*key);
-			key++;
+			h = (h * PRIME1) ^ (*k++);
 			/* fall through */
 
 		case sizeof(int):
-			h = h * PRIME1 ^ (*key);
-			key++;
+			h = (h * PRIME1) ^ (*k++);
 			break;
 
 		default:
-			for (; keysize >= (int) sizeof(int); keysize -= sizeof(int), key++)
-				h = h * PRIME1 ^ (*key);
+			/* Do an int at a time */
+			for (; keysize >= (int) sizeof(int); keysize -= sizeof(int))
+				h = (h * PRIME1) ^ (*k++);
 
-			/*
-			 * now let's grab the last few bytes of the tag if the tag has
-			 * (size % 4) != 0 (which it sometimes will on a sun3).
-			 */
-			if (keysize)
+			/* Cope with any partial-int leftover bytes */
+			if (keysize > 0)
 			{
-				char	   *keytmp = (char *) key;
+				unsigned char   *keybyte = (unsigned char *) k;
 
-				switch (keysize)
-				{
-					case 3:
-						h = h * PRIME1 ^ (*keytmp);
-						keytmp++;
-						/* fall through */
-					case 2:
-						h = h * PRIME1 ^ (*keytmp);
-						keytmp++;
-						/* fall through */
-					case 1:
-						h = h * PRIME1 ^ (*keytmp);
-						break;
-				}
+				do
+					h = (h * PRIME1) ^ (*keybyte++);
+				while (--keysize > 0);
 			}
 			break;
 	}
 
 	h %= PRIME2;
+
 	return h;
 }
-
-/*
- * This is INCREDIBLY ugly, but fast.
- * We break the string up into 8 byte units.  On the first time
- * through the loop we get the "leftover bytes" (strlen % 8).
- * On every other iteration, we perform 8 HASHC's so we handle
- * all 8 bytes.  Essentially, this saves us 7 cmp & branch
- * instructions.  If this routine is heavily used enough, it's
- * worth the ugly coding
- */
-#ifdef NOT_USED
-long
-disk_hash(char *key)
-{
-	int			n = 0;
-	char	   *str = key;
-	int			len = strlen(key);
-	int			loop;
-
-#define HASHC	n = *str++ + 65599 * n
-
-	if (len > 0)
-	{
-		loop = (len + 8 - 1) >> 3;
-
-		switch (len & (8 - 1))
-		{
-			case 0:
-				do
-				{				/* All fall throughs */
-					HASHC;
-			case 7:
-					HASHC;
-			case 6:
-					HASHC;
-			case 5:
-					HASHC;
-			case 4:
-					HASHC;
-			case 3:
-					HASHC;
-			case 2:
-					HASHC;
-			case 1:
-					HASHC;
-				} while (--loop);
-		}
-
-	}
-	return n;
-}
-
-#endif

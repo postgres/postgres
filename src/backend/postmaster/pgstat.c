@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.7 2001/08/23 23:06:37 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.8 2001/10/01 05:36:13 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -511,7 +511,8 @@ pgstat_vacuum_tabstat(void)
 	 * Lookup our own database entry
 	 */
 	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
-					(char *)&MyDatabaseId, HASH_FIND, &found);
+												(void *) &MyDatabaseId,
+												HASH_FIND, &found);
 	if (!found || dbentry == NULL)
 		return -1;
 
@@ -926,8 +927,9 @@ pgstat_fetch_stat_dbentry(Oid dbid)
 	/*
 	 * Lookup the requested database
 	 */
-	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
-					(char *)&dbid, HASH_FIND, &found);
+	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+												 (void *) &dbid,
+												 HASH_FIND, &found);
 	if (!found || dbentry == NULL)
 		return NULL;
 
@@ -966,8 +968,9 @@ pgstat_fetch_stat_tabentry(Oid relid)
 	/*
 	 * Lookup our database.
 	 */
-	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
-					(char *)&MyDatabaseId, HASH_FIND, &found);
+	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+												 (void *) &MyDatabaseId,
+												 HASH_FIND, &found);
 	if (!found || dbentry == NULL)
 		return NULL;
 
@@ -976,8 +979,9 @@ pgstat_fetch_stat_tabentry(Oid relid)
 	 */
 	if (dbentry->tables == NULL)
 		return NULL;
-	tabentry = (PgStat_StatTabEntry *)hash_search(dbentry->tables,
-					(char *)&relid, HASH_FIND, &found);
+	tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
+												   (void *) &relid,
+												   HASH_FIND, &found);
 	if (!found || tabentry == NULL)
 		return NULL;
 
@@ -1197,9 +1201,9 @@ pgstat_main(int real_argc, char *real_argv[])
 	 * Create the dead backend hashtable
 	 */
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize  = sizeof(int);
-	hash_ctl.datasize = sizeof(PgStat_StatBeDead);
-	hash_ctl.hash     = tag_hash;
+	hash_ctl.keysize   = sizeof(int);
+	hash_ctl.entrysize = sizeof(PgStat_StatBeDead);
+	hash_ctl.hash      = tag_hash;
 	pgStatBeDead = hash_create(PGSTAT_BE_HASH_SIZE, &hash_ctl, 
 							HASH_ELEM | HASH_FUNCTION);
 	if (pgStatBeDead == NULL)
@@ -1720,8 +1724,9 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	 *
 	 * If the backend is known to be dead, we ignore this add.
 	 */
-	deadbe = (PgStat_StatBeDead *)hash_search(pgStatBeDead,
-						(char *)&(msg->m_procpid), HASH_FIND, &found);
+	deadbe = (PgStat_StatBeDead *) hash_search(pgStatBeDead,
+											   (void *) &(msg->m_procpid),
+											   HASH_FIND, &found);
 	if (deadbe == NULL)
 	{
 		fprintf(stderr, "PGSTAT: Dead backend table corrupted - abort\n");
@@ -1747,9 +1752,9 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	/*
 	 * Lookup or create the database entry for this backends DB.
 	 */
-	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
-					(char *)&(msg->m_databaseid), HASH_ENTER,
-					&found);
+	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+												 (void *) &(msg->m_databaseid),
+												 HASH_ENTER, &found);
     if (dbentry == NULL)
 	{
 		fprintf(stderr, "PGSTAT: DB hash table corrupted - abort\n");
@@ -1772,9 +1777,9 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 		dbentry->destroy			= 0;
 
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
-		hash_ctl.keysize  = sizeof(Oid);
-		hash_ctl.datasize = sizeof(PgStat_StatTabEntry);
-		hash_ctl.hash     = tag_hash;
+		hash_ctl.keysize   = sizeof(Oid);
+		hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
+		hash_ctl.hash      = tag_hash;
 		dbentry->tables = hash_create(PGSTAT_TAB_HASH_SIZE, &hash_ctl,
 							HASH_ELEM | HASH_FUNCTION);
 		if (dbentry->tables == NULL)
@@ -1827,8 +1832,9 @@ pgstat_sub_backend(int procpid)
 			 * the counting of backends, not the table access stats they
 			 * sent).
 			 */
-			deadbe = (PgStat_StatBeDead *)hash_search(pgStatBeDead,
-							(char *)&procpid, HASH_ENTER, &found);
+			deadbe = (PgStat_StatBeDead *) hash_search(pgStatBeDead,
+													   (void *) &procpid,
+													   HASH_ENTER, &found);
 			if (deadbe == NULL)
 			{
 				fprintf(stderr, "PGSTAT: dead backend hash table corrupted "
@@ -1914,8 +1920,8 @@ pgstat_write_statsfile(void)
 					hash_destroy(dbentry->tables);
 
 				hentry = hash_search(pgStatDBHash, 
-								(char *)&(dbentry->databaseid),
-								HASH_REMOVE, &found);
+									 (void *) &(dbentry->databaseid),
+									 HASH_REMOVE, &found);
 				if (hentry == NULL)
 				{
 					fprintf(stderr, "PGSTAT: database hash table corrupted "
@@ -1959,7 +1965,7 @@ pgstat_write_statsfile(void)
 				if (--(tabentry->destroy) == 0)
 				{
 					hentry = hash_search(dbentry->tables,
-									(char *)&(tabentry->tableid),
+									(void *) &(tabentry->tableid),
 									HASH_REMOVE, &found);
 					if (hentry == NULL)
 					{
@@ -2047,7 +2053,8 @@ pgstat_write_statsfile(void)
 		 */
 		if (--(deadbe->destroy) <= 0)
 		{
-			hentry = hash_search(pgStatBeDead, (char *)&(deadbe->procpid),
+			hentry = hash_search(pgStatBeDead,
+								 (void *) &(deadbe->procpid),
 							HASH_REMOVE, &found);
 			if (hentry == NULL)
 			{
@@ -2107,10 +2114,10 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	 * Create the DB hashtable
 	 */
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize  = sizeof(Oid);
-	hash_ctl.datasize = sizeof(PgStat_StatDBEntry);
-	hash_ctl.hash     = tag_hash;
-	hash_ctl.hcxt     = use_mcxt;
+	hash_ctl.keysize   = sizeof(Oid);
+	hash_ctl.entrysize = sizeof(PgStat_StatDBEntry);
+	hash_ctl.hash      = tag_hash;
+	hash_ctl.hcxt      = use_mcxt;
 	*dbhash = hash_create(PGSTAT_DB_HASH_SIZE, &hash_ctl, 
 							HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 	if (pgStatDBHash == NULL)
@@ -2175,8 +2182,8 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				/*
 				 * Add to the DB hash
 				 */
-				dbentry = (PgStat_StatDBEntry *)hash_search(*dbhash,
-								(char *)&dbbuf.databaseid,
+				dbentry = (PgStat_StatDBEntry *) hash_search(*dbhash,
+								(void *) &dbbuf.databaseid,
 								HASH_ENTER, &found);
 				if (dbentry == NULL)
 				{
@@ -2222,10 +2229,10 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 
 
 				memset(&hash_ctl, 0, sizeof(hash_ctl));
-				hash_ctl.keysize  = sizeof(Oid);
-				hash_ctl.datasize = sizeof(PgStat_StatTabEntry);
-				hash_ctl.hash     = tag_hash;
-				hash_ctl.hcxt     = use_mcxt;
+				hash_ctl.keysize   = sizeof(Oid);
+				hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
+				hash_ctl.hash      = tag_hash;
+				hash_ctl.hcxt      = use_mcxt;
 				dbentry->tables = hash_create(PGSTAT_TAB_HASH_SIZE, &hash_ctl,
 									HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 				if (dbentry->tables == NULL)
@@ -2286,8 +2293,8 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				if (tabhash == NULL)
 					break;
 
-				tabentry = (PgStat_StatTabEntry *)hash_search(tabhash,
-								(char *)&tabbuf.tableid,
+				tabentry = (PgStat_StatTabEntry *) hash_search(tabhash,
+								(void *) &tabbuf.tableid,
 								HASH_ENTER, &found);
 				if (tabentry == NULL)
 				{
@@ -2411,7 +2418,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				 * Count backends per database here.
 				 */
 				dbentry = (PgStat_StatDBEntry *)hash_search(*dbhash,
-								(char *)&((*betab)[havebackends].databaseid),
+								(void *) &((*betab)[havebackends].databaseid),
 								HASH_FIND, &found);
 				if (found)
 					dbentry->n_backends++;
@@ -2525,8 +2532,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	/*
 	 * Lookup the database in the hashtable.
 	 */
-	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
-							(char *)&(msg->m_hdr.m_databaseid),
+	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+							(void *) &(msg->m_hdr.m_databaseid),
 							HASH_FIND, &found);
 	if (dbentry == NULL)
 	{
@@ -2551,8 +2558,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	 */
 	for (i = 0; i < msg->m_nentries; i++)
 	{
-		tabentry = (PgStat_StatTabEntry *)hash_search(dbentry->tables,
-						(char *)&(tabmsg[i].t_id), 
+		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
+						(void *) &(tabmsg[i].t_id), 
 						HASH_ENTER, &found);
 		if (tabentry == NULL)
 		{
@@ -2625,8 +2632,8 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	/*
 	 * Lookup the database in the hashtable.
 	 */
-	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
-							(char *)&(msg->m_hdr.m_databaseid),
+	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+							(void *) &(msg->m_hdr.m_databaseid),
 							HASH_FIND, &found);
 	if (dbentry == NULL)
 	{
@@ -2648,8 +2655,8 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	 */
 	for (i = 0; i < msg->m_nentries; i++)
 	{
-		tabentry = (PgStat_StatTabEntry *)hash_search(dbentry->tables,
-						(char *)&(msg->m_tableid[i]), 
+		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
+						(void *) &(msg->m_tableid[i]), 
 						HASH_FIND, &found);
 		if (tabentry == NULL)
 		{
@@ -2685,8 +2692,8 @@ pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 	/*
 	 * Lookup the database in the hashtable.
 	 */
-	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
-							(char *)&(msg->m_databaseid),
+	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+							(void *) &(msg->m_databaseid),
 							HASH_FIND, &found);
 	if (dbentry == NULL)
 	{
@@ -2725,8 +2732,8 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	/*
 	 * Lookup the database in the hashtable.
 	 */
-	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
-							(char *)&(msg->m_hdr.m_databaseid),
+	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+							(void *) &(msg->m_hdr.m_databaseid),
 							HASH_FIND, &found);
 	if (dbentry == NULL)
 	{
@@ -2753,7 +2760,7 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize  = sizeof(Oid);
-	hash_ctl.datasize = sizeof(PgStat_StatTabEntry);
+	hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 	hash_ctl.hash     = tag_hash;
 	dbentry->tables = hash_create(PGSTAT_TAB_HASH_SIZE, &hash_ctl,
 						HASH_ELEM | HASH_FUNCTION);

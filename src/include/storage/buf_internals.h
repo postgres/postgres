@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.50 2001/09/29 04:02:26 tgl Exp $
+ * $Id: buf_internals.h,v 1.51 2001/10/01 05:36:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,13 @@ typedef struct sbufdesc
  */
 #define BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
 #define BL_PIN_COUNT_LOCK	(1 << 1)
+
+/* entry for buffer hashtable */
+typedef struct
+{
+	BufferTag	key;
+	Buffer		id;
+} BufferLookupEnt;
 
 /*
  *	mao tracing buffer allocation

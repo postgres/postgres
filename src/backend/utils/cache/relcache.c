@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.143 2001/08/25 18:52:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.144 2001/10/01 05:36:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ typedef struct relnodecacheent
 } RelNodeCacheEnt;
 
 /*
- *		macros to manipulate name cache and id cache
+ *		macros to manipulate the lookup hashtables
  */
 #define RelationCacheInsert(RELATION)	\
 do { \
@@ -149,7 +149,7 @@ do { \
 		/* used to give notice -- now just keep quiet */ ; \
 	namehentry->reldesc = RELATION; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										   (char *)&(RELATION->rd_id), \
+										   (void *) &(RELATION->rd_id), \
 										   HASH_ENTER, \
 										   &found); \
 	if (idhentry == NULL) \
@@ -158,7 +158,7 @@ do { \
 		/* used to give notice -- now just keep quiet */ ; \
 	idhentry->reldesc = RELATION; \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
-										   (char *)&(RELATION->rd_node), \
+										   (void *) &(RELATION->rd_node), \
 										   HASH_ENTER, \
 										   &found); \
 	if (nodentry == NULL) \
@@ -172,7 +172,7 @@ do { \
 do { \
 	RelNameCacheEnt *hentry; bool found; \
 	hentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
-										   (char *)NAME,HASH_FIND,&found); \
+										   (void *) (NAME),HASH_FIND,&found); \
 	if (hentry == NULL) \
 		elog(FATAL, "error in CACHE"); \
 	if (found) \
@@ -186,7 +186,7 @@ do { \
 	RelIdCacheEnt *hentry; \
 	bool found; \
 	hentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										 (char *)&(ID),HASH_FIND, &found); \
+										 (void *)&(ID),HASH_FIND, &found); \
 	if (hentry == NULL) \
 		elog(FATAL, "error in CACHE"); \
 	if (found) \
@@ -200,7 +200,7 @@ do { \
 	RelNodeCacheEnt *hentry; \
 	bool found; \
 	hentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
-									 (char *)&(NODE),HASH_FIND, &found); \
+									 (void *)&(NODE),HASH_FIND, &found); \
 	if (hentry == NULL) \
 		elog(FATAL, "error in CACHE"); \
 	if (found) \
@@ -223,14 +223,14 @@ do { \
 	if (!found) \
 		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										   (char *)&(RELATION->rd_id), \
+										   (void *)&(RELATION->rd_id), \
 										   HASH_REMOVE, &found); \
 	if (idhentry == NULL) \
 		elog(FATAL, "can't delete from relation descriptor cache"); \
 	if (!found) \
 		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
-										   (char *)&(RELATION->rd_node), \
+										   (void *)&(RELATION->rd_node), \
 										   HASH_REMOVE, &found); \
 	if (nodentry == NULL) \
 		elog(FATAL, "can't delete from relation descriptor cache"); \
@@ -2092,17 +2092,19 @@ RelationCacheInitialize(void)
 	/*
 	 * create global caches
 	 */
-	MemSet(&ctl, 0, (int) sizeof(ctl));
+	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(NameData);
-	ctl.datasize = sizeof(Relation);
+	ctl.entrysize = sizeof(RelNameCacheEnt);
 	RelationNameCache = hash_create(INITRELCACHESIZE, &ctl, HASH_ELEM);
 
 	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(RelIdCacheEnt);
 	ctl.hash = tag_hash;
 	RelationIdCache = hash_create(INITRELCACHESIZE, &ctl,
 								  HASH_ELEM | HASH_FUNCTION);
 
 	ctl.keysize = sizeof(RelFileNode);
+	ctl.entrysize = sizeof(RelNodeCacheEnt);
 	ctl.hash = tag_hash;
 	RelationNodeCache = hash_create(INITRELCACHESIZE, &ctl,
 									HASH_ELEM | HASH_FUNCTION);
@@ -2182,17 +2184,19 @@ CreateDummyCaches(void)
 
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-	MemSet(&ctl, 0, (int) sizeof(ctl));
+	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(NameData);
-	ctl.datasize = sizeof(Relation);
+	ctl.entrysize = sizeof(RelNameCacheEnt);
 	RelationNameCache = hash_create(INITRELCACHESIZE, &ctl, HASH_ELEM);
 
 	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(RelIdCacheEnt);
 	ctl.hash = tag_hash;
 	RelationIdCache = hash_create(INITRELCACHESIZE, &ctl,
 								  HASH_ELEM | HASH_FUNCTION);
 
 	ctl.keysize = sizeof(RelFileNode);
+	ctl.entrysize = sizeof(RelNodeCacheEnt);
 	ctl.hash = tag_hash;
 	RelationNodeCache = hash_create(INITRELCACHESIZE, &ctl,
 									HASH_ELEM | HASH_FUNCTION);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.18 2001/08/25 18:52:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.19 2001/10/01 05:36:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,9 +228,9 @@ _xl_init_rel_cache(void)
 	_xlrelarr[0].moreRecently = &(_xlrelarr[0]);
 	_xlrelarr[0].lessRecently = &(_xlrelarr[0]);
 
-	memset(&ctl, 0, (int) sizeof(ctl));
+	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(RelFileNode);
-	ctl.datasize = sizeof(XLogRelDesc *);
+	ctl.entrysize = sizeof(XLogRelCacheEntry);
 	ctl.hash = tag_hash;
 
 	_xlrelcache = hash_create(_XLOG_RELCACHESIZE, &ctl,
@@ -249,7 +249,7 @@ _xl_remove_hash_entry(XLogRelDesc **edata, Datum dummy)
 	rdesc->moreRecently->lessRecently = rdesc->lessRecently;
 
 	hentry = (XLogRelCacheEntry *) hash_search(_xlrelcache,
-				(char *) &(rdesc->reldata.rd_node), HASH_REMOVE, &found);
+				(void *) &(rdesc->reldata.rd_node), HASH_REMOVE, &found);
 
 	if (hentry == NULL)
 		elog(STOP, "_xl_remove_hash_entry: can't delete from cache");
@@ -321,7 +321,7 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 	bool		found;
 
 	hentry = (XLogRelCacheEntry *)
-		hash_search(_xlrelcache, (char *) &rnode, HASH_FIND, &found);
+		hash_search(_xlrelcache, (void *) &rnode, HASH_FIND, &found);
 
 	if (hentry == NULL)
 		elog(STOP, "XLogOpenRelation: error in cache");
@@ -345,7 +345,7 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 		res->reldata.rd_node = rnode;
 
 		hentry = (XLogRelCacheEntry *)
-			hash_search(_xlrelcache, (char *) &rnode, HASH_ENTER, &found);
+			hash_search(_xlrelcache, (void *) &rnode, HASH_ENTER, &found);
 
 		if (hentry == NULL)
 			elog(STOP, "XLogOpenRelation: can't insert into cache");

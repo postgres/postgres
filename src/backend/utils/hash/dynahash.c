@@ -1,14 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * dynahash.c
- *	  dynamic hashing
+ *	  dynamic hash tables
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.36 2001/06/22 19:16:23 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.37 2001/10/01 05:36:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,46 +41,40 @@
  * Modified by sullivan@postgres.berkeley.edu April 1990
  *		changed ctl structure for shared memory
  */
-#include <sys/types.h>
 
 #include "postgres.h"
+
+#include <sys/types.h>
+
 #include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 /*
+ * Key (also entry) part of a HASHELEMENT
+ */
+#define ELEMENTKEY(helem)  (((char *)(helem)) + MAXALIGN(sizeof(HASHELEMENT)))
+
+/*
  * Fast MOD arithmetic, assuming that y is a power of 2 !
  */
-
 #define MOD(x,y)			   ((x) & ((y)-1))
 
 /*
  * Private function prototypes
  */
 static void *DynaHashAlloc(Size size);
-static uint32 call_hash(HTAB *hashp, char *k);
-static SEG_OFFSET seg_alloc(HTAB *hashp);
-static int	bucket_alloc(HTAB *hashp);
-static int	dir_realloc(HTAB *hashp);
-static int	expand_table(HTAB *hashp);
-static int	hdefault(HTAB *hashp);
-static int	init_htab(HTAB *hashp, int nelem);
+static uint32 call_hash(HTAB *hashp, void *k);
+static HASHSEGMENT seg_alloc(HTAB *hashp);
+static bool	element_alloc(HTAB *hashp);
+static bool	dir_realloc(HTAB *hashp);
+static bool	expand_table(HTAB *hashp);
+static bool	hdefault(HTAB *hashp);
+static bool	init_htab(HTAB *hashp, long nelem);
 
 
-/* ----------------
+/*
  * memory allocation routines
- *
- * for postgres: all hash elements have to be in
- * the global cache context.  Otherwise the postgres
- * garbage collector is going to corrupt them. -wei
- *
- * ??? the "cache" memory context is intended to store only
- *	   system cache information.  The user of the hashing
- *	   routines should specify which context to use or we
- *	   should create a separate memory context for these
- *	   hash routines.  For now I have modified this code to
- *	   do the latter -cim 1/19/91
- * ----------------
  */
 static MemoryContext DynaHashCxt = NULL;
 static MemoryContext CurrentDynaHashCxt = NULL;
@@ -95,39 +90,22 @@ DynaHashAlloc(Size size)
 #define MEM_FREE		pfree
 
 
-/*
- * pointer access macros.  Shared memory implementation cannot
- * store pointers in the hash table data structures because
- * pointer values will be different in different address spaces.
- * these macros convert offsets to pointers and pointers to offsets.
- * Shared memory need not be contiguous, but all addresses must be
- * calculated relative to some offset (segbase).
- */
-
-#define GET_SEG(hp,seg_num)\
-  (SEGMENT) (((unsigned long) (hp)->segbase) + (hp)->dir[seg_num])
-
-#define GET_BUCKET(hp,bucket_offs)\
-  (ELEMENT *) (((unsigned long) (hp)->segbase) + bucket_offs)
-
-#define MAKE_HASHOFFSET(hp,ptr)\
-  ( ((unsigned long) ptr) - ((unsigned long) (hp)->segbase) )
-
 #if HASH_STATISTICS
 static long hash_accesses,
 			hash_collisions,
 			hash_expansions;
-
 #endif
+
 
 /************************** CREATE ROUTINES **********************/
 
 HTAB *
-hash_create(int nelem, HASHCTL *info, int flags)
+hash_create(long nelem, HASHCTL *info, int flags)
 {
-	HHDR	   *hctl;
 	HTAB	   *hashp;
+	HASHHDR	   *hctl;
 
+	/* First time through, create a memory context for hash tables */
 	if (!DynaHashCxt)
 		DynaHashCxt = AllocSetContextCreate(TopMemoryContext,
 											"DynaHash",
@@ -135,62 +113,57 @@ hash_create(int nelem, HASHCTL *info, int flags)
 											ALLOCSET_DEFAULT_INITSIZE,
 											ALLOCSET_DEFAULT_MAXSIZE);
 
+	/* Select allocation context for this hash table */
 	if (flags & HASH_CONTEXT)
 		CurrentDynaHashCxt = info->hcxt;
 	else
 		CurrentDynaHashCxt = DynaHashCxt;
 
+	/* Initialize the hash header */
 	hashp = (HTAB *) MEM_ALLOC(sizeof(HTAB));
+	if (!hashp)
+		return NULL;
 	MemSet(hashp, 0, sizeof(HTAB));
 
 	if (flags & HASH_FUNCTION)
 		hashp->hash = info->hash;
 	else
-	{
-		/* default */
-		hashp->hash = string_hash;
-	}
+		hashp->hash = string_hash; /* default hash function */
 
 	if (flags & HASH_SHARED_MEM)
 	{
-
 		/*
 		 * ctl structure is preallocated for shared memory tables. Note
 		 * that HASH_DIRSIZE had better be set as well.
 		 */
-
-		hashp->hctl = (HHDR *) info->hctl;
-		hashp->segbase = (char *) info->segbase;
+		hashp->hctl = info->hctl;
+		hashp->dir = info->dir;
 		hashp->alloc = info->alloc;
-		hashp->dir = (SEG_OFFSET *) info->dir;
 		hashp->hcxt = NULL;
 
 		/* hash table already exists, we're just attaching to it */
 		if (flags & HASH_ATTACH)
 			return hashp;
-
 	}
 	else
 	{
 		/* setup hash table defaults */
-
 		hashp->hctl = NULL;
-		hashp->alloc = MEM_ALLOC;
 		hashp->dir = NULL;
-		hashp->segbase = NULL;
+		hashp->alloc = MEM_ALLOC;
 		hashp->hcxt = DynaHashCxt;
-
 	}
 
 	if (!hashp->hctl)
 	{
-			hashp->hctl = (HHDR *) hashp->alloc(sizeof(HHDR));
+		hashp->hctl = (HASHHDR *) hashp->alloc(sizeof(HASHHDR));
 		if (!hashp->hctl)
-			return 0;
+			return NULL;
 	}
 
 	if (!hdefault(hashp))
-		return 0;
+		return NULL;
+
 	hctl = hashp->hctl;
 #ifdef HASH_STATISTICS
 	hctl->accesses = hctl->collisions = 0;
@@ -222,24 +195,26 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	if (flags & HASH_ELEM)
 	{
 		hctl->keysize = info->keysize;
-		hctl->datasize = info->datasize;
+		hctl->entrysize = info->entrysize;
 	}
+
 	if (flags & HASH_ALLOC)
 		hashp->alloc = info->alloc;
 	else
 	{
 		if (flags & HASH_CONTEXT)
 		{
+			/* hash table structures live in child of given context */
 			CurrentDynaHashCxt = AllocSetContextCreate(info->hcxt,
 											"DynaHashTable",
 											ALLOCSET_DEFAULT_MINSIZE,
 											ALLOCSET_DEFAULT_INITSIZE,
 											ALLOCSET_DEFAULT_MAXSIZE);
-			
 			hashp->hcxt = CurrentDynaHashCxt;
 		}
 		else
 		{
+			/* hash table structures live in child of DynaHashCxt */
 			CurrentDynaHashCxt = AllocSetContextCreate(DynaHashCxt,
 											"DynaHashTable",
 											ALLOCSET_DEFAULT_MINSIZE,
@@ -249,57 +224,54 @@ hash_create(int nelem, HASHCTL *info, int flags)
 		}
 	}
 
-	if (init_htab(hashp, nelem))
+	if (!init_htab(hashp, nelem))
 	{
 		hash_destroy(hashp);
-		return 0;
+		return NULL;
 	}
 	return hashp;
 }
 
 /*
- * Set default HHDR parameters.
+ * Set default HASHHDR parameters.
  */
-static int
+static bool
 hdefault(HTAB *hashp)
 {
-	HHDR	   *hctl;
+	HASHHDR	   *hctl = hashp->hctl;
 
-	MemSet(hashp->hctl, 0, sizeof(HHDR));
+	MemSet(hctl, 0, sizeof(HASHHDR));
 
-	hctl = hashp->hctl;
 	hctl->ssize = DEF_SEGSIZE;
 	hctl->sshift = DEF_SEGSIZE_SHIFT;
 	hctl->dsize = DEF_DIRSIZE;
 	hctl->ffactor = DEF_FFACTOR;
-	hctl->nkeys = 0;
+	hctl->nentries = 0;
 	hctl->nsegs = 0;
 
 	/* I added these MS. */
 
-	/* default memory allocation for hash buckets */
+	/* rather pointless defaults for key & entry size */
 	hctl->keysize = sizeof(char *);
-	hctl->datasize = sizeof(char *);
+	hctl->entrysize = 2 * sizeof(char *);
 
 	/* table has no fixed maximum size */
 	hctl->max_dsize = NO_MAX_DSIZE;
 
 	/* garbage collection for HASH_REMOVE */
-	hctl->freeBucketIndex = INVALID_INDEX;
+	hctl->freeList = NULL;
 
-	return 1;
+	return true;
 }
 
 
-static int
-init_htab(HTAB *hashp, int nelem)
+static bool
+init_htab(HTAB *hashp, long nelem)
 {
-	SEG_OFFSET *segp;
+	HASHHDR	   *hctl = hashp->hctl;
+	HASHSEGMENT *segp;
 	int			nbuckets;
 	int			nsegs;
-	HHDR	   *hctl;
-
-	hctl = hashp->hctl;
 
 	/*
 	 * Divide number of elements by the fill factor to determine a desired
@@ -329,29 +301,29 @@ init_htab(HTAB *hashp, int nelem)
 		if (!(hashp->dir))
 			hctl->dsize = nsegs;
 		else
-			return -1;
+			return false;
 	}
 
 	/* Allocate a directory */
 	if (!(hashp->dir))
 	{
 		CurrentDynaHashCxt = hashp->hcxt;
-		hashp->dir = (SEG_OFFSET *)
-			hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
+		hashp->dir = (HASHSEGMENT *)
+			hashp->alloc(hctl->dsize * sizeof(HASHSEGMENT));
 		if (!hashp->dir)
-			return -1;
+			return false;
 	}
 
 	/* Allocate initial segments */
 	for (segp = hashp->dir; hctl->nsegs < nsegs; hctl->nsegs++, segp++)
 	{
 		*segp = seg_alloc(hashp);
-		if (*segp == (SEG_OFFSET) 0)
-			return -1;
+		if (*segp == NULL)
+			return false;
 	}
 
 #if HASH_DEBUG
-	fprintf(stderr, "%s\n%s%x\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
+	fprintf(stderr, "%s\n%s%p\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
 			"init_htab:",
 			"TABLE POINTER   ", hashp,
 			"DIRECTORY SIZE  ", hctl->dsize,
@@ -362,9 +334,9 @@ init_htab(HTAB *hashp, int nelem)
 			"HIGH MASK       ", hctl->high_mask,
 			"LOW  MASK       ", hctl->low_mask,
 			"NSEGS           ", hctl->nsegs,
-			"NKEYS           ", hctl->nkeys);
+			"NENTRIES        ", hctl->nentries);
 #endif
-	return 0;
+	return true;
 }
 
 /*
@@ -375,14 +347,14 @@ init_htab(HTAB *hashp, int nelem)
  * NB: assumes that all hash structure parameters have default values!
  */
 long
-hash_estimate_size(long num_entries, long keysize, long datasize)
+hash_estimate_size(long num_entries, long entrysize)
 {
 	long		size = 0;
 	long		nBuckets,
 				nSegments,
 				nDirEntries,
-				nRecordAllocs,
-				recordSize;
+				nElementAllocs,
+				elementSize;
 
 	/* estimate number of buckets wanted */
 	nBuckets = 1L << my_log2((num_entries - 1) / DEF_FFACTOR + 1);
@@ -394,16 +366,15 @@ hash_estimate_size(long num_entries, long keysize, long datasize)
 		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
 
 	/* fixed control info */
-	size += MAXALIGN(sizeof(HHDR));		/* but not HTAB, per above */
+	size += MAXALIGN(sizeof(HASHHDR));		/* but not HTAB, per above */
 	/* directory */
-	size += MAXALIGN(nDirEntries * sizeof(SEG_OFFSET));
+	size += MAXALIGN(nDirEntries * sizeof(HASHSEGMENT));
 	/* segments */
-	size += nSegments * MAXALIGN(DEF_SEGSIZE * sizeof(BUCKET_INDEX));
-	/* records --- allocated in groups of BUCKET_ALLOC_INCR */
-	recordSize = sizeof(BUCKET_INDEX) + keysize + datasize;
-	recordSize = MAXALIGN(recordSize);
-	nRecordAllocs = (num_entries - 1) / BUCKET_ALLOC_INCR + 1;
-	size += nRecordAllocs * BUCKET_ALLOC_INCR * recordSize;
+	size += nSegments * MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET));
+	/* elements --- allocated in groups of HASHELEMENT_ALLOC_INCR */
+	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
+	nElementAllocs = (num_entries - 1) / HASHELEMENT_ALLOC_INCR + 1;
+	size += nElementAllocs * HASHELEMENT_ALLOC_INCR * elementSize;
 
 	return size;
 }
@@ -439,40 +410,11 @@ hash_select_dirsize(long num_entries)
 
 /********************** DESTROY ROUTINES ************************/
 
-/*
- * XXX this sure looks thoroughly broken to me --- tgl 2/99.
- * It's freeing every entry individually --- but they weren't
- * allocated individually, see bucket_alloc!!  Why doesn't it crash?
- * ANSWER: it probably does crash, but is never invoked in normal
- * operations...
- *
- * Thomas is right, it does crash. Therefore I changed the code
- * to use a separate memory context which is a child of the DynaHashCxt
- * by default. And the HASHCTL structure got extended with a hcxt
- * field, where someone can specify an explicit context (giving new
- * flag HASH_CONTEXT) and forget about hash_destroy() completely.
- * The shmem operations aren't changed, but in shmem mode a destroy
- * doesn't work anyway. Jan Wieck 03/2001.
- */
-
 void
 hash_destroy(HTAB *hashp)
 {
 	if (hashp != NULL)
 	{
-#if 0
-		SEG_OFFSET	segNum;
-		SEGMENT		segp;
-		int			nsegs = hashp->hctl->nsegs;
-		int			j;
-		BUCKET_INDEX *elp,
-					p,
-					q;
-		ELEMENT    *curr;
-#endif
-
-		/* cannot destroy a shared memory hash table */
-		Assert(!hashp->segbase);
 		/* allocation method must be one we know how to free, too */
 		Assert(hashp->alloc == MEM_ALLOC);
 		/* so this hashtable must have it's own context */
@@ -481,40 +423,18 @@ hash_destroy(HTAB *hashp)
 		hash_stats("destroy", hashp);
 
 		/*
-		 * Free buckets, dir etc. by destroying the hash tables
+		 * Free buckets, dir etc. by destroying the hash table's
 		 * memory context.
 		 */
 		MemoryContextDelete(hashp->hcxt);
 
-#if 0
-		/*
-		 * Dead code - replaced by MemoryContextDelete() above
-		 */
-		for (segNum = 0; nsegs > 0; nsegs--, segNum++)
-		{
-
-			segp = GET_SEG(hashp, segNum);
-			for (j = 0, elp = segp; j < hashp->hctl->ssize; j++, elp++)
-			{
-				for (p = *elp; p != INVALID_INDEX; p = q)
-				{
-					curr = GET_BUCKET(hashp, p);
-					q = curr->next;
-					MEM_FREE((char *) curr);
-				}
-			}
-			MEM_FREE((char *) segp);
-		}
-		MEM_FREE((char *) hashp->dir);
-#endif
-
 		/*
 		 * Free the HTAB and control structure, which are allocated
 		 * in the parent context (DynaHashCxt or the context given
-		 * by the caller of hash_create().
+		 * by the caller of hash_create()).
 		 */
-		MEM_FREE((char *) hashp->hctl);
-		MEM_FREE((char *) hashp);
+		MEM_FREE(hashp->hctl);
+		MEM_FREE(hashp);
 	}
 }
 
@@ -526,8 +446,8 @@ hash_stats(char *where, HTAB *hashp)
 	fprintf(stderr, "%s: this HTAB -- accesses %ld collisions %ld\n",
 			where, hashp->hctl->accesses, hashp->hctl->collisions);
 
-	fprintf(stderr, "hash_stats: keys %ld keysize %ld maxp %d segmentcount %d\n",
-			hashp->hctl->nkeys, hashp->hctl->keysize,
+	fprintf(stderr, "hash_stats: entries %ld keysize %ld maxp %d segmentcount %d\n",
+			hashp->hctl->nentries, hashp->hctl->keysize,
 			hashp->hctl->max_bucket, hashp->hctl->nsegs);
 	fprintf(stderr, "%s: total accesses %ld total collisions %ld\n",
 			where, hash_accesses, hash_collisions);
@@ -541,9 +461,9 @@ hash_stats(char *where, HTAB *hashp)
 /*******************************SEARCH ROUTINES *****************************/
 
 static uint32
-call_hash(HTAB *hashp, char *k)
+call_hash(HTAB *hashp, void *k)
 {
-	HHDR	   *hctl = hashp->hctl;
+	HASHHDR	   *hctl = hashp->hctl;
 	long		hash_val,
 				bucket;
 
@@ -553,7 +473,7 @@ call_hash(HTAB *hashp, char *k)
 	if (bucket > hctl->max_bucket)
 		bucket = bucket & hctl->low_mask;
 
-	return bucket;
+	return (uint32) bucket;
 }
 
 /*
@@ -566,31 +486,34 @@ call_hash(HTAB *hashp, char *k)
  *		foundPtr is TRUE if we found an element in the table
  *		(FALSE if we entered one).
  */
-long *
+void *
 hash_search(HTAB *hashp,
-			char *keyPtr,
+			void *keyPtr,
 			HASHACTION action,	/* HASH_FIND / HASH_ENTER / HASH_REMOVE
 								 * HASH_FIND_SAVE / HASH_REMOVE_SAVED */
 			bool *foundPtr)
 {
+	HASHHDR	   *hctl;
 	uint32		bucket;
 	long		segment_num;
 	long		segment_ndx;
-	SEGMENT		segp;
-	ELEMENT    *curr;
-	HHDR	   *hctl;
-	BUCKET_INDEX currIndex;
-	BUCKET_INDEX *prevIndexPtr;
-	char	   *destAddr;
+	HASHSEGMENT	segp;
+	HASHBUCKET currBucket;
+	HASHBUCKET *prevBucketPtr;
+
 	static struct State
 	{
-		ELEMENT    *currElem;
-		BUCKET_INDEX currIndex;
-		BUCKET_INDEX *prevIndex;
+		HASHBUCKET currBucket;
+		HASHBUCKET *prevBucketPtr;
 	}			saveState;
 
-	Assert((hashp && keyPtr));
-	Assert((action == HASH_FIND) || (action == HASH_REMOVE) || (action == HASH_ENTER) || (action == HASH_FIND_SAVE) || (action == HASH_REMOVE_SAVED));
+	Assert(hashp);
+	Assert(keyPtr);
+	Assert((action == HASH_FIND) ||
+		   (action == HASH_REMOVE) ||
+		   (action == HASH_ENTER) ||
+		   (action == HASH_FIND_SAVE) ||
+		   (action == HASH_REMOVE_SAVED));
 
 	hctl = hashp->hctl;
 
@@ -598,16 +521,16 @@ hash_search(HTAB *hashp,
 	hash_accesses++;
 	hashp->hctl->accesses++;
 #endif
+
 	if (action == HASH_REMOVE_SAVED)
 	{
-		curr = saveState.currElem;
-		currIndex = saveState.currIndex;
-		prevIndexPtr = saveState.prevIndex;
+		currBucket = saveState.currBucket;
+		prevBucketPtr = saveState.prevBucketPtr;
 
 		/*
 		 * Try to catch subsequent errors
 		 */
-		Assert(saveState.currElem && !(saveState.currElem = 0));
+		Assert(currBucket && !(saveState.currBucket = NULL));
 	}
 	else
 	{
@@ -615,25 +538,22 @@ hash_search(HTAB *hashp,
 		segment_num = bucket >> hctl->sshift;
 		segment_ndx = MOD(bucket, hctl->ssize);
 
-		segp = GET_SEG(hashp, segment_num);
+		segp = hashp->dir[segment_num];
 
 		Assert(segp);
 
-		prevIndexPtr = &segp[segment_ndx];
-		currIndex = *prevIndexPtr;
+		prevBucketPtr = &segp[segment_ndx];
+		currBucket = *prevBucketPtr;
 
 		/*
-		 * Follow collision chain
+		 * Follow collision chain looking for matching key
 		 */
-		for (curr = NULL; currIndex != INVALID_INDEX;)
+		while (currBucket != NULL)
 		{
-			/* coerce bucket index into a pointer */
-			curr = GET_BUCKET(hashp, currIndex);
-
-			if (!memcmp((char *) &(curr->key), keyPtr, hctl->keysize))
+			if (memcmp(ELEMENTKEY(currBucket), keyPtr, hctl->keysize) == 0)
 				break;
-			prevIndexPtr = &(curr->next);
-			currIndex = *prevIndexPtr;
+			prevBucketPtr = &(currBucket->link);
+			currBucket = *prevBucketPtr;
 #if HASH_STATISTICS
 			hash_collisions++;
 			hashp->hctl->collisions++;
@@ -645,48 +565,52 @@ hash_search(HTAB *hashp,
 	 * if we found an entry or if we weren't trying to insert, we're done
 	 * now.
 	 */
-	*foundPtr = (bool) (currIndex != INVALID_INDEX);
+	*foundPtr = (bool) (currBucket != NULL);
+
 	switch (action)
 	{
 		case HASH_ENTER:
-			if (currIndex != INVALID_INDEX)
-				return &(curr->key);
+			if (currBucket != NULL)
+				return (void *) ELEMENTKEY(currBucket);
 			break;
+
 		case HASH_REMOVE:
 		case HASH_REMOVE_SAVED:
-			if (currIndex != INVALID_INDEX)
+			if (currBucket != NULL)
 			{
-				Assert(hctl->nkeys > 0);
-				hctl->nkeys--;
+				Assert(hctl->nentries > 0);
+				hctl->nentries--;
 
 				/* remove record from hash bucket's chain. */
-				*prevIndexPtr = curr->next;
+				*prevBucketPtr = currBucket->link;
 
 				/* add the record to the freelist for this table.  */
-				curr->next = hctl->freeBucketIndex;
-				hctl->freeBucketIndex = currIndex;
+				currBucket->link = hctl->freeList;
+				hctl->freeList = currBucket;
 
 				/*
 				 * better hope the caller is synchronizing access to this
 				 * element, because someone else is going to reuse it the
 				 * next time something is added to the table
 				 */
-				return &(curr->key);
+				return (void *) ELEMENTKEY(currBucket);
 			}
-			return (long *) TRUE;
+			return (void *) TRUE;
+
 		case HASH_FIND:
-			if (currIndex != INVALID_INDEX)
-				return &(curr->key);
-			return (long *) TRUE;
+			if (currBucket != NULL)
+				return (void *) ELEMENTKEY(currBucket);
+			return (void *) TRUE;
+
 		case HASH_FIND_SAVE:
-			if (currIndex != INVALID_INDEX)
+			if (currBucket != NULL)
 			{
-				saveState.currElem = curr;
-				saveState.prevIndex = prevIndexPtr;
-				saveState.currIndex = currIndex;
-				return &(curr->key);
+				saveState.currBucket = currBucket;
+				saveState.prevBucketPtr = prevBucketPtr;
+				return (void *) ELEMENTKEY(currBucket);
 			}
-			return (long *) TRUE;
+			return (void *) TRUE;
+
 		default:
 			/* can't get here */
 			return NULL;
@@ -696,39 +620,36 @@ hash_search(HTAB *hashp,
 	 * If we got here, then we didn't find the element and we have to
 	 * insert it into the hash table
 	 */
-	Assert(currIndex == INVALID_INDEX);
+	Assert(currBucket == NULL);
 
 	/* get the next free bucket */
-	currIndex = hctl->freeBucketIndex;
-	if (currIndex == INVALID_INDEX)
+	currBucket = hctl->freeList;
+	if (currBucket == NULL)
 	{
 		/* no free elements.  allocate another chunk of buckets */
-		if (!bucket_alloc(hashp))
+		if (!element_alloc(hashp))
 			return NULL;
-		currIndex = hctl->freeBucketIndex;
+		currBucket = hctl->freeList;
 	}
-	Assert(currIndex != INVALID_INDEX);
+	Assert(currBucket != NULL);
 
-	curr = GET_BUCKET(hashp, currIndex);
-	hctl->freeBucketIndex = curr->next;
+	hctl->freeList = currBucket->link;
 
 	/* link into chain */
-	*prevIndexPtr = currIndex;
+	*prevBucketPtr = currBucket;
+	currBucket->link = NULL;
 
 	/* copy key into record */
-	destAddr = (char *) &(curr->key);
-	memmove(destAddr, keyPtr, hctl->keysize);
-	curr->next = INVALID_INDEX;
+	memcpy(ELEMENTKEY(currBucket), keyPtr, hctl->keysize);
 
 	/*
 	 * let the caller initialize the data field after hash_search returns.
 	 */
-	/* memmove(destAddr,keyPtr,hctl->keysize+hctl->datasize); */
 
 	/*
 	 * Check if it is time to split the segment
 	 */
-	if (++hctl->nkeys / (hctl->max_bucket + 1) > hctl->ffactor)
+	if (++hctl->nentries / (hctl->max_bucket + 1) > hctl->ffactor)
 	{
 
 		/*
@@ -737,14 +658,15 @@ hash_search(HTAB *hashp,
 		 */
 		expand_table(hashp);
 	}
-	return &(curr->key);
+
+	return (void *) ELEMENTKEY(currBucket);
 }
 
 /*
  * hash_seq_init/_search
  *			Sequentially search through hash table and return
  *			all the elements one by one, return NULL on error and
- *			return (long *) TRUE in the end.
+ *			return (void *) TRUE in the end.
  *
  * NOTE: caller may delete the returned element before continuing the scan.
  * However, deleting any other element while the scan is in progress is
@@ -757,31 +679,31 @@ hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp)
 {
 	status->hashp = hashp;
 	status->curBucket = 0;
-	status->curIndex = INVALID_INDEX;
+	status->curEntry = NULL;
 }
 
-long *
+void *
 hash_seq_search(HASH_SEQ_STATUS *status)
 {
 	HTAB	   *hashp = status->hashp;
-	HHDR	   *hctl = hashp->hctl;
+	HASHHDR	   *hctl = hashp->hctl;
 
 	while (status->curBucket <= hctl->max_bucket)
 	{
 		long		segment_num;
 		long		segment_ndx;
-		SEGMENT		segp;
+		HASHSEGMENT	segp;
 
-		if (status->curIndex != INVALID_INDEX)
+		if (status->curEntry != NULL)
 		{
 			/* Continuing scan of curBucket... */
-			ELEMENT    *curElem;
+			HASHELEMENT *curElem;
 
-			curElem = GET_BUCKET(hashp, status->curIndex);
-			status->curIndex = curElem->next;
-			if (status->curIndex == INVALID_INDEX)		/* end of this bucket */
+			curElem = status->curEntry;
+			status->curEntry = curElem->link;
+			if (status->curEntry == NULL) /* end of this bucket */
 				++status->curBucket;
-			return &(curElem->key);
+			return (void *) ELEMENTKEY(curElem);
 		}
 
 		/*
@@ -793,10 +715,10 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 		/*
 		 * first find the right segment in the table directory.
 		 */
-		segp = GET_SEG(hashp, segment_num);
+		segp = hashp->dir[segment_num];
 		if (segp == NULL)
 			/* this is probably an error */
-			return (long *) NULL;
+			return NULL;
 
 		/*
 		 * now find the right index into the segment for the first item in
@@ -806,13 +728,13 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 		 * directory of valid stuff.  if there are elements in the bucket
 		 * chains that point to the freelist we're in big trouble.
 		 */
-		status->curIndex = segp[segment_ndx];
+		status->curEntry = segp[segment_ndx];
 
-		if (status->curIndex == INVALID_INDEX)	/* empty bucket */
+		if (status->curEntry == NULL) /* empty bucket */
 			++status->curBucket;
 	}
 
-	return (long *) TRUE;		/* out of buckets */
+	return (void *) TRUE;		/* out of buckets */
 }
 
 
@@ -821,11 +743,11 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 /*
  * Expand the table by adding one more hash bucket.
  */
-static int
+static bool
 expand_table(HTAB *hashp)
 {
-	HHDR	   *hctl;
-	SEGMENT		old_seg,
+	HASHHDR	   *hctl = hashp->hctl;
+	HASHSEGMENT	old_seg,
 				new_seg;
 	long		old_bucket,
 				new_bucket;
@@ -833,17 +755,14 @@ expand_table(HTAB *hashp)
 				new_segndx;
 	long		old_segnum,
 				old_segndx;
-	ELEMENT    *chain;
-	BUCKET_INDEX *old,
-			   *newbi;
-	BUCKET_INDEX chainIndex,
-				nextIndex;
+	HASHBUCKET *oldlink,
+			   *newlink;
+	HASHBUCKET currElement,
+				nextElement;
 
 #ifdef HASH_STATISTICS
 	hash_expansions++;
 #endif
-
-	hctl = hashp->hctl;
 
 	new_bucket = hctl->max_bucket + 1;
 	new_segnum = new_bucket >> hctl->sshift;
@@ -854,9 +773,9 @@ expand_table(HTAB *hashp)
 		/* Allocate new segment if necessary -- could fail if dir full */
 		if (new_segnum >= hctl->dsize)
 			if (!dir_realloc(hashp))
-				return 0;
+				return false;
 		if (!(hashp->dir[new_segnum] = seg_alloc(hashp)))
-			return 0;
+			return false;
 		hctl->nsegs++;
 	}
 
@@ -890,137 +809,118 @@ expand_table(HTAB *hashp)
 	old_segnum = old_bucket >> hctl->sshift;
 	old_segndx = MOD(old_bucket, hctl->ssize);
 
-	old_seg = GET_SEG(hashp, old_segnum);
-	new_seg = GET_SEG(hashp, new_segnum);
+	old_seg = hashp->dir[old_segnum];
+	new_seg = hashp->dir[new_segnum];
 
-	old = &old_seg[old_segndx];
-	newbi = &new_seg[new_segndx];
-	for (chainIndex = *old;
-		 chainIndex != INVALID_INDEX;
-		 chainIndex = nextIndex)
+	oldlink = &old_seg[old_segndx];
+	newlink = &new_seg[new_segndx];
+
+	for (currElement = *oldlink;
+		 currElement != NULL;
+		 currElement = nextElement)
 	{
-		chain = GET_BUCKET(hashp, chainIndex);
-		nextIndex = chain->next;
-		if ((long) call_hash(hashp, (char *) &(chain->key)) == old_bucket)
+		nextElement = currElement->link;
+		if ((long) call_hash(hashp, (void *) ELEMENTKEY(currElement))
+			== old_bucket)
 		{
-			*old = chainIndex;
-			old = &chain->next;
+			*oldlink = currElement;
+			oldlink = &currElement->link;
 		}
 		else
 		{
-			*newbi = chainIndex;
-			newbi = &chain->next;
+			*newlink = currElement;
+			newlink = &currElement->link;
 		}
 	}
 	/* don't forget to terminate the rebuilt hash chains... */
-	*old = INVALID_INDEX;
-	*newbi = INVALID_INDEX;
-	return 1;
+	*oldlink = NULL;
+	*newlink = NULL;
+
+	return true;
 }
 
 
-static int
+static bool
 dir_realloc(HTAB *hashp)
 {
-	char	   *p;
-	char	   *old_p;
+	HASHSEGMENT *p;
+	HASHSEGMENT *old_p;
 	long		new_dsize;
 	long		old_dirsize;
 	long		new_dirsize;
 
 	if (hashp->hctl->max_dsize != NO_MAX_DSIZE)
-		return 0;
+		return false;
 
 	/* Reallocate directory */
 	new_dsize = hashp->hctl->dsize << 1;
-	old_dirsize = hashp->hctl->dsize * sizeof(SEG_OFFSET);
-	new_dirsize = new_dsize * sizeof(SEG_OFFSET);
+	old_dirsize = hashp->hctl->dsize * sizeof(HASHSEGMENT);
+	new_dirsize = new_dsize * sizeof(HASHSEGMENT);
 
+	old_p = hashp->dir;
 	CurrentDynaHashCxt = hashp->hcxt;
-	old_p = (char *) hashp->dir;
-	p = (char *) hashp->alloc((Size) new_dirsize);
+	p = (HASHSEGMENT *) hashp->alloc((Size) new_dirsize);
 
 	if (p != NULL)
 	{
-		memmove(p, old_p, old_dirsize);
-		MemSet(p + old_dirsize, 0, new_dirsize - old_dirsize);
+		memcpy(p, old_p, old_dirsize);
+		MemSet(((char *) p) + old_dirsize, 0, new_dirsize - old_dirsize);
 		MEM_FREE((char *) old_p);
-		hashp->dir = (SEG_OFFSET *) p;
+		hashp->dir = p;
 		hashp->hctl->dsize = new_dsize;
-		return 1;
+		return true;
 	}
-	return 0;
+
+	return false;
 }
 
 
-static SEG_OFFSET
+static HASHSEGMENT
 seg_alloc(HTAB *hashp)
 {
-	SEGMENT		segp;
-	SEG_OFFSET	segOffset;
+	HASHSEGMENT	segp;
 
 	CurrentDynaHashCxt = hashp->hcxt;
-	segp = (SEGMENT) hashp->alloc(sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
+	segp = (HASHSEGMENT) hashp->alloc(sizeof(HASHBUCKET) * hashp->hctl->ssize);
 
 	if (!segp)
-		return 0;
+		return NULL;
 
-	MemSet((char *) segp, 0,
-		   (long) sizeof(BUCKET_INDEX) * hashp->hctl->ssize);
+	MemSet(segp, 0, sizeof(HASHBUCKET) * hashp->hctl->ssize);
 
-	segOffset = MAKE_HASHOFFSET(hashp, segp);
-	return segOffset;
+	return segp;
 }
 
 /*
- * allocate some new buckets and link them into the free list
+ * allocate some new elements and link them into the free list
  */
-static int
-bucket_alloc(HTAB *hashp)
+static bool
+element_alloc(HTAB *hashp)
 {
+	HASHHDR	   *hctl = hashp->hctl;
+	Size		elementSize;
+	HASHELEMENT *tmpElement;
 	int			i;
-	ELEMENT    *tmpBucket;
-	long		bucketSize;
-	BUCKET_INDEX tmpIndex,
-				lastIndex;
 
-	/* Each bucket has a BUCKET_INDEX header plus user data. */
-	bucketSize = sizeof(BUCKET_INDEX) + hashp->hctl->keysize + hashp->hctl->datasize;
-
-	/* make sure its aligned correctly */
-	bucketSize = MAXALIGN(bucketSize);
+	/* Each element has a HASHELEMENT header plus user data. */
+	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(hctl->entrysize);
 
 	CurrentDynaHashCxt = hashp->hcxt;
-	tmpBucket = (ELEMENT *) hashp->alloc(BUCKET_ALLOC_INCR * bucketSize);
+	tmpElement = (HASHELEMENT *)
+		hashp->alloc(HASHELEMENT_ALLOC_INCR * elementSize);
 
-	if (!tmpBucket)
-		return 0;
+	if (!tmpElement)
+		return false;
 
-	/* tmpIndex is the shmem offset into the first bucket of the array */
-	tmpIndex = MAKE_HASHOFFSET(hashp, tmpBucket);
-
-	/* set the freebucket list to point to the first bucket */
-	lastIndex = hashp->hctl->freeBucketIndex;
-	hashp->hctl->freeBucketIndex = tmpIndex;
-
-	/*
-	 * initialize each bucket to point to the one behind it. NOTE: loop
-	 * sets last bucket incorrectly; we fix below.
-	 */
-	for (i = 0; i < BUCKET_ALLOC_INCR; i++)
+	/* link all the new entries into the freelist */
+	for (i = 0; i < HASHELEMENT_ALLOC_INCR; i++)
 	{
-		tmpBucket = GET_BUCKET(hashp, tmpIndex);
-		tmpIndex += bucketSize;
-		tmpBucket->next = tmpIndex;
+		tmpElement->link = hctl->freeList;
+		hctl->freeList = tmpElement;
+		tmpElement = (HASHELEMENT *) (((char *) tmpElement) + elementSize);
 	}
 
-	/*
-	 * the last bucket points to the old freelist head (which is probably
-	 * invalid or we wouldn't be here)
-	 */
-	tmpBucket->next = lastIndex;
-
-	return 1;
+	return true;
 }
 
 /* calculate ceil(log base 2) of num */

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.25 2001/09/29 04:02:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.26 2001/10/01 05:36:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,12 +103,12 @@ mminit()
 	}
 
 	info.keysize = sizeof(MMCacheTag);
-	info.datasize = sizeof(MMHashEntry) - sizeof(MMCacheTag);
+	info.entrysize = sizeof(MMHashEntry);
 	info.hash = tag_hash;
 
-	MMCacheHT = (HTAB *) ShmemInitHash("Main memory store HT",
-									   MMNBUFFERS, MMNBUFFERS,
-									 &info, (HASH_ELEM | HASH_FUNCTION));
+	MMCacheHT = ShmemInitHash("Main memory store HT",
+							  MMNBUFFERS, MMNBUFFERS,
+							  &info, (HASH_ELEM | HASH_FUNCTION));
 
 	if (MMCacheHT == (HTAB *) NULL)
 	{
@@ -117,12 +117,12 @@ mminit()
 	}
 
 	info.keysize = sizeof(MMRelTag);
-	info.datasize = sizeof(MMRelHashEntry) - sizeof(MMRelTag);
+	info.entrysize = sizeof(MMRelHashEntry);
 	info.hash = tag_hash;
 
-	MMRelCacheHT = (HTAB *) ShmemInitHash("Main memory rel HT",
-										  MMNRELATIONS, MMNRELATIONS,
-									 &info, (HASH_ELEM | HASH_FUNCTION));
+	MMRelCacheHT = ShmemInitHash("Main memory rel HT",
+								 MMNRELATIONS, MMNRELATIONS,
+								 &info, (HASH_ELEM | HASH_FUNCTION));
 
 	if (MMRelCacheHT == (HTAB *) NULL)
 	{
@@ -180,7 +180,8 @@ mmcreate(Relation reln)
 		tag.mmrt_dbid = MyDatabaseId;
 
 	entry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
-									  (char *) &tag, HASH_ENTER, &found);
+										   (void *) &tag,
+										   HASH_ENTER, &found);
 
 	if (entry == (MMRelHashEntry *) NULL)
 	{
@@ -224,7 +225,7 @@ mmunlink(RelFileNode rnode)
 			&& MMBlockTags[i].mmct_relid == rnode.relNode)
 		{
 			entry = (MMHashEntry *) hash_search(MMCacheHT,
-												(char *) &MMBlockTags[i],
+												(void *) &MMBlockTags[i],
 												HASH_REMOVE, &found);
 			if (entry == (MMHashEntry *) NULL || !found)
 			{
@@ -239,7 +240,8 @@ mmunlink(RelFileNode rnode)
 	rtag.mmrt_dbid = rnode.tblNode;
 	rtag.mmrt_relid = rnode.relNode;
 
-	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
+	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
+											(void *) &rtag,
 											HASH_REMOVE, &found);
 
 	if (rentry == (MMRelHashEntry *) NULL || !found)
@@ -302,7 +304,8 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 		(*MMCurTop)++;
 	}
 
-	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
+	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
+											(void *) &rtag,
 											HASH_FIND, &found);
 	if (rentry == (MMRelHashEntry *) NULL || !found)
 	{
@@ -312,7 +315,8 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 
 	tag.mmct_blkno = rentry->mmrhe_nblocks;
 
-	entry = (MMHashEntry *) hash_search(MMCacheHT, (char *) &tag,
+	entry = (MMHashEntry *) hash_search(MMCacheHT,
+										(void *) &tag,
 										HASH_ENTER, &found);
 	if (entry == (MMHashEntry *) NULL || found)
 	{
@@ -381,7 +385,8 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 	tag.mmct_blkno = blocknum;
 
 	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
-	entry = (MMHashEntry *) hash_search(MMCacheHT, (char *) &tag,
+	entry = (MMHashEntry *) hash_search(MMCacheHT,
+										(void *) &tag,
 										HASH_FIND, &found);
 
 	if (entry == (MMHashEntry *) NULL)
@@ -428,7 +433,8 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	tag.mmct_blkno = blocknum;
 
 	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
-	entry = (MMHashEntry *) hash_search(MMCacheHT, (char *) &tag,
+	entry = (MMHashEntry *) hash_search(MMCacheHT,
+										(void *) &tag,
 										HASH_FIND, &found);
 
 	if (entry == (MMHashEntry *) NULL)
@@ -502,7 +508,8 @@ mmnblocks(Relation reln)
 
 	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 
-	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
+	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
+											(void *) &rtag,
 											HASH_FIND, &found);
 
 	if (rentry == (MMRelHashEntry *) NULL)
@@ -558,16 +565,12 @@ MMShmemSize()
 	/*
 	 * first compute space occupied by the (dbid,relid,blkno) hash table
 	 */
-	size += hash_estimate_size(MMNBUFFERS,
-							   0,		/* MMHashEntry includes key */
-							   sizeof(MMHashEntry));
+	size += hash_estimate_size(MMNBUFFERS, sizeof(MMHashEntry));
 
 	/*
 	 * now do the same for the rel hash table
 	 */
-	size += hash_estimate_size(MMNRELATIONS,
-							   0,		/* MMRelHashEntry includes key */
-							   sizeof(MMRelHashEntry));
+	size += hash_estimate_size(MMNRELATIONS, sizeof(MMRelHashEntry));
 
 	/*
 	 * finally, add in the memory block we use directly

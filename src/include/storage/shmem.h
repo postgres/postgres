@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.31 2001/09/29 04:02:27 tgl Exp $
+ * $Id: shmem.h,v 1.32 2001/10/01 05:36:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,9 +73,7 @@ extern void *ShmemInitStruct(char *name, Size size, bool *foundPtr);
 
 /* size constants for the shmem index table */
  /* max size of data structure string name */
-#define SHMEM_INDEX_KEYSIZE (50)
- /* data in shmem index table hash bucket */
-#define SHMEM_INDEX_DATASIZE (sizeof(ShmemIndexEnt) - SHMEM_INDEX_KEYSIZE)
+#define SHMEM_INDEX_KEYSIZE		 (48)
  /* maximum size of the shmem index table */
 #define SHMEM_INDEX_SIZE		 (100)
 

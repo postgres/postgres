@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.25 2001/05/31 17:32:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.26 2001/10/01 05:36:16 tgl Exp $
  *
  * ----------
  */
@@ -2988,12 +2988,13 @@ ri_InitHashTables(void)
 
 	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(RI_QueryKey);
-	ctl.datasize = sizeof(void *);
-	ri_query_cache = hash_create(RI_INIT_QUERYHASHSIZE, &ctl, HASH_ELEM);
+	ctl.entrysize = sizeof(RI_QueryHashEntry);
+	ctl.hash = tag_hash;
+	ri_query_cache = hash_create(RI_INIT_QUERYHASHSIZE, &ctl,
+								 HASH_ELEM | HASH_FUNCTION);
 
-	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
-	ctl.datasize = sizeof(Oid) + sizeof(FmgrInfo);
+	ctl.entrysize = sizeof(RI_OpreqHashEntry);
 	ctl.hash = tag_hash;
 	ri_opreq_cache = hash_create(RI_INIT_OPREQHASHSIZE, &ctl,
 								 HASH_ELEM | HASH_FUNCTION);
@@ -3023,7 +3024,8 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
 	 * Lookup for the key
 	 */
 	entry = (RI_QueryHashEntry *) hash_search(ri_query_cache,
-										(char *) key, HASH_FIND, &found);
+											  (void *) key,
+											  HASH_FIND, &found);
 	if (entry == NULL)
 		elog(FATAL, "error in RI plan cache");
 	if (!found)
@@ -3054,7 +3056,8 @@ ri_HashPreparedPlan(RI_QueryKey *key, void *plan)
 	 * Add the new plan.
 	 */
 	entry = (RI_QueryHashEntry *) hash_search(ri_query_cache,
-									   (char *) key, HASH_ENTER, &found);
+											  (void *) key,
+											  HASH_ENTER, &found);
 	if (entry == NULL)
 		elog(FATAL, "can't insert into RI plan cache");
 	entry->plan = plan;
@@ -3224,14 +3227,15 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 	/*
 	 * On the first call initialize the hashtable
 	 */
-	if (!ri_query_cache)
+	if (!ri_opreq_cache)
 		ri_InitHashTables();
 
 	/*
 	 * Try to find the '=' operator for this type in our cache
 	 */
 	entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
-									(char *) &typeid, HASH_FIND, &found);
+											  (void *) &typeid,
+											  HASH_FIND, &found);
 	if (entry == NULL)
 		elog(FATAL, "error in RI operator cache");
 
@@ -3271,9 +3275,8 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 		MemoryContextSwitchTo(oldcontext);
 
 		entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
-												  (char *) &typeid,
-												  HASH_ENTER,
-												  &found);
+												  (void *) &typeid,
+												  HASH_ENTER, &found);
 		if (entry == NULL)
 			elog(FATAL, "can't insert into RI operator cache");
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.5 2001/09/29 04:02:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.6 2001/10/01 05:36:14 tgl Exp $
  *
  *
  * NOTES:
@@ -100,9 +100,6 @@ struct FSMRelation
 	FSMChunk   *relChunks;		/* linked list of page info chunks */
 };
 
-#define SHMEM_FSMHASH_KEYSIZE  sizeof(RelFileNode)
-#define SHMEM_FSMHASH_DATASIZE (sizeof(FSMRelation) - SHMEM_FSMHASH_KEYSIZE)
-
 /*
  * Info about individual pages in a relation is stored in chunks to reduce
  * allocation overhead.  Note that we allow any chunk of a relation's list
@@ -180,8 +177,8 @@ InitFreeSpaceMap(void)
 	MemSet(FreeSpaceMap, 0, sizeof(FSMHeader));
 
 	/* Create hashtable for FSMRelations */
-	info.keysize = SHMEM_FSMHASH_KEYSIZE;
-	info.datasize = SHMEM_FSMHASH_DATASIZE;
+	info.keysize = sizeof(RelFileNode);
+	info.entrysize = sizeof(FSMRelation);
 	info.hash = tag_hash;
 
 	FreeSpaceMap->relHash = ShmemInitHash("Free Space Map Hash",
@@ -224,9 +221,7 @@ FreeSpaceShmemSize(void)
 	size = MAXALIGN(sizeof(FSMHeader));
 
 	/* hash table, including the FSMRelation objects */
-	size += hash_estimate_size(MaxFSMRelations,
-							   SHMEM_FSMHASH_KEYSIZE,
-							   SHMEM_FSMHASH_DATASIZE);
+	size += hash_estimate_size(MaxFSMRelations, sizeof(FSMRelation));
 
 	/* FSMChunk objects */
 	nchunks = (MaxFSMPages - 1) / CHUNKPAGES + 1;
@@ -498,7 +493,7 @@ lookup_fsm_rel(RelFileNode *rel)
 	bool		found;
 
 	fsmrel = (FSMRelation *) hash_search(FreeSpaceMap->relHash,
-										 (Pointer) rel,
+										 (void *) rel,
 										 HASH_FIND,
 										 &found);
 	if (!fsmrel)
@@ -524,7 +519,7 @@ create_fsm_rel(RelFileNode *rel)
 	bool		found;
 
 	fsmrel = (FSMRelation *) hash_search(FreeSpaceMap->relHash,
-										 (Pointer) rel,
+										 (void *) rel,
 										 HASH_ENTER,
 										 &found);
 	if (!fsmrel)
@@ -595,7 +590,7 @@ delete_fsm_rel(FSMRelation *fsmrel)
 	unlink_fsm_rel(fsmrel);
 	FreeSpaceMap->numRels--;
 	result = (FSMRelation *) hash_search(FreeSpaceMap->relHash,
-										 (Pointer) &(fsmrel->key),
+										 (void *) &(fsmrel->key),
 										 HASH_REMOVE,
 										 &found);
 	if (!result || !found)

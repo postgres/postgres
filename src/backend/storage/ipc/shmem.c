@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.59 2001/09/29 04:02:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.60 2001/10/01 05:36:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ InitShmemIndex(void)
 
 	/* create the shared memory shmem index */
 	info.keysize = SHMEM_INDEX_KEYSIZE;
-	info.datasize = SHMEM_INDEX_DATASIZE;
+	info.entrysize = sizeof(ShmemIndexEnt);
 	hash_flags = HASH_ELEM;
 
 	/* This will acquire the shmem index lock, but not release it. */
@@ -208,7 +208,7 @@ InitShmemIndex(void)
 	strncpy(item.key, "ShmemIndex", SHMEM_INDEX_KEYSIZE);
 
 	result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, (char *) &item, HASH_ENTER, &found);
+		hash_search(ShmemIndex, (void *) &item, HASH_ENTER, &found);
 	if (!result)
 		elog(FATAL, "InitShmemIndex: corrupted shmem index");
 
@@ -248,17 +248,15 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	 * can't grow or other backends wouldn't be able to find it. So, make
 	 * sure we make it big enough to start with.
 	 *
-	 * The segbase is for calculating pointer values. The shared memory
-	 * allocator must be specified too.
+	 * The shared memory allocator must be specified too.
 	 */
 	infoP->dsize = infoP->max_dsize = hash_select_dirsize(max_size);
-	infoP->segbase = (long *) ShmemBase;
 	infoP->alloc = ShmemAlloc;
 	hash_flags |= HASH_SHARED_MEM | HASH_DIRSIZE;
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
-						sizeof(HHDR) + infoP->dsize * sizeof(SEG_OFFSET),
+						sizeof(HASHHDR) + infoP->dsize * sizeof(HASHSEGMENT),
 							   &found);
 
 	/*
@@ -266,18 +264,18 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	 * message since they have more information
 	 */
 	if (location == NULL)
-		return 0;
+		return NULL;
 
 	/*
-	 * it already exists, attach to it rather than allocate and initialize
+	 * if it already exists, attach to it rather than allocate and initialize
 	 * new space
 	 */
 	if (found)
 		hash_flags |= HASH_ATTACH;
 
 	/* Now provide the header and directory pointers */
-	infoP->hctl = (long *) location;
-	infoP->dir = (long *) (((char *) location) + sizeof(HHDR));
+	infoP->hctl = (HASHHDR *) location;
+	infoP->dir = (HASHSEGMENT *) (((char *) location) + sizeof(HASHHDR));
 
 	return hash_create(init_size, infoP, hash_flags);
 }
@@ -325,7 +323,7 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 
 	/* look it up in the shmem index */
 	result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, (char *) &item, HASH_ENTER, foundPtr);
+		hash_search(ShmemIndex, (void *) &item, HASH_ENTER, foundPtr);
 
 	if (!result)
 	{
@@ -359,7 +357,7 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 		{
 			/* out of memory */
 			Assert(ShmemIndex);
-			hash_search(ShmemIndex, (char *) &item, HASH_REMOVE, foundPtr);
+			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, foundPtr);
 			LWLockRelease(ShmemIndexLock);
 			*foundPtr = FALSE;
 

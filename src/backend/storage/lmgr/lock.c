@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.98 2001/09/30 00:45:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.99 2001/10/01 05:36:14 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -308,8 +308,8 @@ LockMethodTableInit(char *tabName,
 	 * allocate a hash table for LOCK structs.	This is used to store
 	 * per-locked-object information.
 	 */
-	info.keysize = SHMEM_LOCKTAB_KEYSIZE;
-	info.datasize = SHMEM_LOCKTAB_DATASIZE;
+	info.keysize = sizeof(LOCKTAG);
+	info.entrysize = sizeof(LOCK);
 	info.hash = tag_hash;
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
@@ -328,8 +328,8 @@ LockMethodTableInit(char *tabName,
 	 * allocate a hash table for HOLDER structs.  This is used to store
 	 * per-lock-holder information.
 	 */
-	info.keysize = SHMEM_HOLDERTAB_KEYSIZE;
-	info.datasize = SHMEM_HOLDERTAB_DATASIZE;
+	info.keysize = sizeof(HOLDERTAG);
+	info.entrysize = sizeof(HOLDER);
 	info.hash = tag_hash;
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
@@ -485,7 +485,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * Find or create a lock with this tag
 	 */
 	Assert(lockMethodTable->lockHash->hash == tag_hash);
-	lock = (LOCK *) hash_search(lockMethodTable->lockHash, (Pointer) locktag,
+	lock = (LOCK *) hash_search(lockMethodTable->lockHash,
+								(void *) locktag,
 								HASH_ENTER, &found);
 	if (!lock)
 	{
@@ -530,7 +531,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * Find or create a holder entry with this tag
 	 */
 	holderTable = lockMethodTable->holderHash;
-	holder = (HOLDER *) hash_search(holderTable, (Pointer) &holdertag,
+	holder = (HOLDER *) hash_search(holderTable,
+									(void *) &holdertag,
 									HASH_ENTER, &found);
 	if (!holder)
 	{
@@ -655,7 +657,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 				SHMQueueDelete(&holder->lockLink);
 				SHMQueueDelete(&holder->procLink);
 				holder = (HOLDER *) hash_search(holderTable,
-												(Pointer) holder,
+												(void *) holder,
 												HASH_REMOVE, &found);
 				if (!holder || !found)
 					elog(NOTICE, "LockAcquire: remove holder, table corrupted");
@@ -1019,7 +1021,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * Find a lock with this tag
 	 */
 	Assert(lockMethodTable->lockHash->hash == tag_hash);
-	lock = (LOCK *) hash_search(lockMethodTable->lockHash, (Pointer) locktag,
+	lock = (LOCK *) hash_search(lockMethodTable->lockHash,
+								(void *) locktag,
 								HASH_FIND, &found);
 
 	/*
@@ -1051,7 +1054,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	TransactionIdStore(xid, &holdertag.xid);
 
 	holderTable = lockMethodTable->holderHash;
-	holder = (HOLDER *) hash_search(holderTable, (Pointer) &holdertag,
+	holder = (HOLDER *) hash_search(holderTable,
+									(void *) &holdertag,
 									HASH_FIND_SAVE, &found);
 	if (!holder || !found)
 	{
@@ -1124,7 +1128,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		 */
 		Assert(lockMethodTable->lockHash->hash == tag_hash);
 		lock = (LOCK *) hash_search(lockMethodTable->lockHash,
-									(Pointer) &(lock->tag),
+									(void *) &(lock->tag),
 									HASH_REMOVE,
 									&found);
 		if (!lock || !found)
@@ -1153,7 +1157,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		HOLDER_PRINT("LockRelease: deleting", holder);
 		SHMQueueDelete(&holder->lockLink);
 		SHMQueueDelete(&holder->procLink);
-		holder = (HOLDER *) hash_search(holderTable, (Pointer) &holder,
+		holder = (HOLDER *) hash_search(holderTable,
+										(void *) &holder,
 										HASH_REMOVE_SAVED, &found);
 		if (!holder || !found)
 		{
@@ -1306,7 +1311,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 		 * remove the holder entry from the hashtable
 		 */
 		holder = (HOLDER *) hash_search(lockMethodTable->holderHash,
-										(Pointer) holder,
+										(void *) holder,
 										HASH_REMOVE,
 										&found);
 		if (!holder || !found)
@@ -1326,7 +1331,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			LOCK_PRINT("LockReleaseAll: deleting", lock, 0);
 			Assert(lockMethodTable->lockHash->hash == tag_hash);
 			lock = (LOCK *) hash_search(lockMethodTable->lockHash,
-										(Pointer) &(lock->tag),
+										(void *) &(lock->tag),
 										HASH_REMOVE, &found);
 			if (!lock || !found)
 			{
@@ -1364,14 +1369,10 @@ LockShmemSize(int maxBackends)
 																 * lockMethodTable->ctl */
 
 	/* lockHash table */
-	size += hash_estimate_size(max_table_size,
-							   SHMEM_LOCKTAB_KEYSIZE,
-							   SHMEM_LOCKTAB_DATASIZE);
+	size += hash_estimate_size(max_table_size, sizeof(LOCK));
 
 	/* holderHash table */
-	size += hash_estimate_size(max_table_size,
-							   SHMEM_HOLDERTAB_KEYSIZE,
-							   SHMEM_HOLDERTAB_DATASIZE);
+	size += hash_estimate_size(max_table_size, sizeof(HOLDER));
 
 	/*
 	 * Since the lockHash entry count above is only an estimate, add 10%
