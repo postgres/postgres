@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.17 2000/04/08 05:11:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.18 2000/04/14 15:17:28 thomas Exp $
 Postgres documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -50,6 +50,7 @@ Complete list of usable sgml source files in this directory.
 <!entity commit             system "commit.sgml">
 <!entity copyTable          system "copy.sgml">
 <!entity createAggregate    system "create_aggregate.sgml">
+<!entity createConstraint   system "create_constraint.sgml">
 <!entity createDatabase     system "create_database.sgml">
 <!entity createFunction     system "create_function.sgml">
 <!entity createGroup        system "create_group.sgml">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.39 2000/04/11 17:23:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.40 2000/04/14 15:17:28 thomas Exp $
 Postgres documentation
 -->
 
@@ -24,6 +24,7 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+SET CONSTRAINTS {ALL | <replaceable class="parameter">constraintlist</replaceable>} <replaceable>mode</replaceable>
 SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT }
 SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
   </synopsis>
@@ -92,7 +93,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
      </varlistentry>
 
      <varlistentry>
-      <term>DateStyle</term>
+      <term>DATESTYLE</term>
       <listitem>
        <para>
 	Set the date/time representation style. Affects the output format,
@@ -202,7 +203,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
      </varlistentry>
 
      <varlistentry>
-      <term>Seed</term>
+      <term>SEED</term>
       <listitem>
        <para>
 	Sets the internal seed for the random number generator.
@@ -243,14 +244,14 @@ SELECT setseed(<replaceable>value</replaceable>);
       <term>SERVER_ENCODING</term>
       <listitem>
        <para>
-	Sets the multi-byte server encoding
+	Sets the multi-byte server encoding to:
 	
 	<variablelist>
 	 <varlistentry>
 	  <term><replaceable class="parameter">value</replaceable></term>
 	  <listitem>
 	   <para>
-	    Sets the multi-byte server encoding.
+	    The identifying value for the server encoding.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -265,6 +266,47 @@ SELECT setseed(<replaceable>value</replaceable>);
      </varlistentry>
 
      <varlistentry>
+      <term>CONSTRAINT</term>
+      <listitem>
+       <para>
+	SET CONSTRAINTS is the SQL3 specified command to  change  the
+	default behaviour of constraints with respect to deferring in the current
+	transaction. Allowed parameters are:
+
+	<variablelist>
+	 <varlistentry>
+	  <term><replaceable class="parameter">constraintlist</replaceable></term>
+	  <listitem>
+	   <para>
+	    Comma separated list of deferrable constraint names.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term><replaceable class="parameter">mode</replaceable></term>
+	  <listitem>
+	   <para>
+	    The constraint mode. Allowed values are
+	    <option>DEFERRED</option> and <option>IMMEDIATE</option>.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+
+       <para>
+	In deferred mode, the actual check of the constraint is  held
+	back  until  either its mode is explicitly set to <option>IMMEDIATE</option>,
+	or until COMMIT.  This is actually only done for foreign  key
+	constraints,  so  it  does  not  apply  to  UNIQUE  or  other
+	constraints.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>TIME ZONE</term>
       <term>TIMEZONE</term>
       <listitem>
        <para>
@@ -862,7 +904,7 @@ SET VARIABLE
        </computeroutput></term>
       <listitem>
        <para>
-	Message returned if successfully.
+	Message returned if successful.
        </para>
       </listitem>
      </varlistentry>

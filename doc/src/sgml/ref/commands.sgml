@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.24 2000/04/08 05:11:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.25 2000/04/14 15:17:28 thomas Exp $
 Postgres documentation
 -->
 
@@ -24,6 +24,7 @@ Postgres documentation
    &commit;
    &copyTable;
    &createAggregate;
+   &createConstraint;
    &createDatabase;
    &createFunction;
    &createGroup;
