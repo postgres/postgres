@@ -7,14 +7,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hasht.h,v 1.7 1999/02/13 23:21:31 momjian Exp $
+ * $Id: hasht.h,v 1.7.2.1 1999/07/30 19:36:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HASHT_H
 #define HASHT_H
 
-#include <utils/hsearch.h>
+#include "utils/hsearch.h"
 
 typedef void (*HashtFunc) ();
 

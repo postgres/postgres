@@ -9,7 +9,7 @@
 #ifndef PG_CRYPT_H
 #define PG_CRYPT_H
 
-#include <libpq/libpq-be.h>
+#include "libpq/libpq-be.h"
 
 #define CRYPT_PWD_FILE	"pg_pwd"
 #define CRYPT_PWD_FILE_SEPCHAR	"'\\t'"
