@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.42 2000/01/27 18:11:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.43 2000/02/03 06:12:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,11 +218,11 @@ plan_union_queries(Query *parse)
 	parse->havingQual = NULL;
 	parse->hasAggs = false;
 
-	return (make_append(union_plans,
-						union_rts,
-						0,
-						NULL,
-						parse->targetList));
+	return make_append(union_plans,
+					   union_rts,
+					   0,
+					   NULL,
+					   parse->targetList);
 }
 
 
@@ -272,11 +272,11 @@ plan_inherit_queries(Query *parse, List *tlist, Index rt_index)
 	union_plans = plan_inherit_query(union_relids, rt_index, rt_entry,
 									 parse, tlist, &inheritrtable);
 
-	return (make_append(union_plans,
-						NULL,
-						rt_index,
-						inheritrtable,
-						((Plan *) lfirst(union_plans))->targetlist));
+	return make_append(union_plans,
+					   NULL,
+					   rt_index,
+					   inheritrtable,
+					   ((Plan *) lfirst(union_plans))->targetlist);
 }
 
 /*
@@ -551,9 +551,18 @@ make_append(List *appendplans,
 	node->unionrtables = unionrtables;
 	node->inheritrelid = rt_index;
 	node->inheritrtable = inheritrtable;
-	node->plan.cost = 0.0;
+	node->plan.cost = 0;
+	node->plan.plan_rows = 0;
+	node->plan.plan_width = 0;
 	foreach(subnode, appendplans)
-		node->plan.cost += ((Plan *) lfirst(subnode))->cost;
+	{
+		Plan   *subplan = (Plan *) lfirst(subnode);
+
+		node->plan.cost += subplan->cost;
+		node->plan.plan_rows += subplan->plan_rows;
+		if (node->plan.plan_width < subplan->plan_width)
+			node->plan.plan_width = subplan->plan_width;
+	}
 	node->plan.state = (EState *) NULL;
 	node->plan.targetlist = tlist;
 	node->plan.qual = NIL;

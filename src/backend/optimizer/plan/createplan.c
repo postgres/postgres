@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.82 2000/01/27 18:11:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.83 2000/02/03 06:12:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -743,9 +743,9 @@ create_hashjoin_node(HashPath *best_path,
  *	* Var nodes representing index keys must have varattno equal to the
  *	  index's attribute number, not the attribute number in the original rel.
  *	* indxpath.c may have selected an index that is binary-compatible with
- *	  the actual expression operator, but not the same; we must replace the
- *	  expression's operator with the binary-compatible equivalent operator
- *	  that the index will recognize.
+ *	  the actual expression operator, but not exactly the same datatype.
+ *	  We must replace the expression's operator with the binary-compatible
+ *	  equivalent operator that the index will recognize.
  *	* If the index key is on the right, commute the clause to put it on the
  *	  left.  (Someday the executor might not need this, but for now it does.)
  *
@@ -1054,6 +1054,7 @@ copy_path_costsize(Plan *dest, Path *src)
  * Copy cost and size info from a lower plan node to an inserted node.
  * This is not critical, since the decisions have already been made,
  * but it helps produce more reasonable-looking EXPLAIN output.
+ * (Some callers alter the info after copying it.)
  */
 static void
 copy_plan_costsize(Plan *dest, Plan *src)
@@ -1178,12 +1179,7 @@ make_nestloop(List *qptlist,
 	NestLoop   *node = makeNode(NestLoop);
 	Plan	   *plan = &node->join;
 
-	/*
-	 * this cost estimate is entirely bogus... hopefully it will be
-	 * overwritten by caller.
-	 */
-	plan->cost = (lefttree ? lefttree->cost : 0) +
-		(righttree ? righttree->cost : 0);
+	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1204,12 +1200,7 @@ make_hashjoin(List *tlist,
 	HashJoin   *node = makeNode(HashJoin);
 	Plan	   *plan = &node->join;
 
-	/*
-	 * this cost estimate is entirely bogus... hopefully it will be
-	 * overwritten by caller.
-	 */
-	plan->cost = (lefttree ? lefttree->cost : 0) +
-		(righttree ? righttree->cost : 0);
+	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = qpqual;
@@ -1248,12 +1239,7 @@ make_mergejoin(List *tlist,
 	MergeJoin  *node = makeNode(MergeJoin);
 	Plan	   *plan = &node->join;
 
-	/*
-	 * this cost estimate is entirely bogus... hopefully it will be
-	 * overwritten by caller.
-	 */
-	plan->cost = (lefttree ? lefttree->cost : 0) +
-		(righttree ? righttree->cost : 0);
+	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = qpqual;
@@ -1293,6 +1279,7 @@ make_material(List *tlist,
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree);
+	/* XXX shouldn't we charge some additional cost for materialization? */
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1310,6 +1297,20 @@ make_agg(List *tlist, Plan *lefttree)
 	Agg		   *node = makeNode(Agg);
 
 	copy_plan_costsize(&node->plan, lefttree);
+	/*
+	 * The tuple width from the input node is OK, as is the cost (we are
+	 * ignoring the cost of computing the aggregate; is there any value
+	 * in accounting for it?).  But the tuple count is bogus.  We will
+	 * produce a single tuple if the input is not a Group, and a tuple
+	 * per group otherwise.  For now, estimate the number of groups as
+	 * 10% of the number of tuples --- bogus, but how to do better?
+	 * (Note we assume the input Group node is in "tuplePerGroup" mode,
+	 * so it didn't reduce its row count already.)
+	 */
+	if (IsA(lefttree, Group))
+		node->plan.plan_rows *= 0.1;
+	else
+		node->plan.plan_rows = 1;
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
@@ -1329,6 +1330,15 @@ make_group(List *tlist,
 	Group	   *node = makeNode(Group);
 
 	copy_plan_costsize(&node->plan, lefttree);
+	/*
+	 * If tuplePerGroup (which is named exactly backwards) is true,
+	 * we will return all the input tuples, so the input node's row count
+	 * is OK.  Otherwise, we'll return only one tuple from each group.
+	 * For now, estimate the number of groups as 10% of the number of
+	 * tuples --- bogus, but how to do better?
+	 */
+	if (! tuplePerGroup)
+		node->plan.plan_rows *= 0.1;
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
@@ -1357,6 +1367,11 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 	List	   *slitem;
 
 	copy_plan_costsize(plan, lefttree);
+	/*
+	 * As for Group, we make the unsupported assumption that there will be
+	 * 10% as many tuples out as in.
+	 */
+	plan->plan_rows *= 0.1;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
