@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.34 2004/08/29 21:08:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.35 2004/09/02 16:42:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,8 +429,6 @@ make_relative(const char *my_exec_path, const char *p, char *ret_path)
 static const char *
 relative_path(const char *bin_path, const char *other_path)
 {
-	const char *other_sep = other_path;
-
 #ifdef WIN32
 	/* Driver letters match? */
 	if (isalpha(*bin_path) && bin_path[1] == ':' &&
@@ -446,7 +444,6 @@ relative_path(const char *bin_path, const char *other_path)
 			return NULL;
 		bin_path += 2;
 		other_path += 2;
-		other_sep = other_path + 1;		/* past separator */
 	}
 #endif
 
@@ -469,9 +466,6 @@ relative_path(const char *bin_path, const char *other_path)
 #endif
 			)
 			break;
-
-		if (IS_DIR_SEP(*other_path))
-			other_sep = other_path + 1; /* past separator */
 
 		bin_path++;
 		other_path++;
