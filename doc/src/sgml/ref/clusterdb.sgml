@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.1 2002/08/27 03:38:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.2 2002/09/03 01:11:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -19,7 +19,7 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>clusterdb</command>
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
-   <arg>--table | -t '<replaceable>table</replaceable> </arg>
+   <arg>--table | -t <replaceable>table</replaceable> </arg>
    <arg><replaceable>dbname</replaceable></arg>
    <sbr>
    <command>clusterdb</command>
@@ -33,8 +33,11 @@ PostgreSQL documentation
   <title>Description</title>
 
   <para>
-   <application>clusterdb</application> is a utility for clustering tables inside a
-   <productname>PostgreSQL</productname> database.
+   <application>clusterdb</application> is a utility for re-clustering tables
+   in a <productname>PostgreSQL</productname> database.  It finds table(s)
+   that have previously been clustered, and clusters them again on the same
+   index that was last used.  Tables that have never been clustered are not
+   touched.
   </para>
 
   <para>
@@ -52,8 +55,9 @@ PostgreSQL documentation
 
   <para>
   <application>clusterdb</application> will need to connect several times to the
-  <productname>PostgreSQL</productname> server, asking for the password each
-  time. It will probably be very convenient to have a PGPASSWORDFILE in that case.
+  <productname>PostgreSQL</productname> server.  If you are using password
+  authentication, it will ask for the password each time. It will probably be
+  very convenient to have a PGPASSWORDFILE in that case.
   </para>
 
  </refsect1>
