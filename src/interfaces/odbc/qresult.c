@@ -110,7 +110,6 @@ QR_Constructor(void)
 
 		rv->cache_size = globals.fetch_max;
 		rv->rowset_size = 1;
-
 	}
 
 	mylog("exit QR_Constructor\n");
@@ -152,7 +151,6 @@ QR_Destructor(QResultClass * self)
 	free(self);
 
 	mylog("QResult: exit DESTRUCTOR\n");
-
 }
 
 void
@@ -186,7 +184,6 @@ QR_free_memory(QResultClass * self)
 
 	if (self->backend_tuples)
 	{
-
 		for (row = 0; row < fcount; row++)
 		{
 			mylog("row = %d, num_fields = %d\n", row, num_fields);
@@ -284,7 +281,6 @@ QR_fetch_tuples(QResultClass * self, ConnectionClass * conn, char *cursor)
 	}
 	else
 	{
-
 		/* Always have to read the field attributes. */
 		/* But we dont have to reallocate memory for them! */
 
@@ -343,7 +339,6 @@ QR_close(QResultClass * self)
 				return FALSE;
 			}
 		}
-
 	}
 
 	return TRUE;
@@ -389,7 +384,6 @@ QR_next_tuple(QResultClass * self)
 	}
 	else
 	{
-
 		/*
 		 * See if we need to fetch another group of rows. We may be being
 		 * called from send_query(), and if so, don't send another fetch,
@@ -399,7 +393,6 @@ QR_next_tuple(QResultClass * self)
 
 		if (!self->inTuples)
 		{
-
 			if (!globals.use_declarefetch)
 			{
 				mylog("next_tuple: ALL_ROWS: done, fcount = %d, fetch_count = %d\n", fcount, fetch_count);
@@ -433,7 +426,6 @@ QR_next_tuple(QResultClass * self)
 
 				offset = self->fetch_count;
 				self->fetch_count++;
-
 			}
 
 
@@ -486,7 +478,6 @@ QR_next_tuple(QResultClass * self)
 
 	for (;;)
 	{
-
 		id = SOCK_get_char(sock);
 
 		switch (id)
@@ -533,7 +524,6 @@ QR_next_tuple(QResultClass * self)
 				self->inTuples = FALSE;
 				if (self->fcount > 0)
 				{
-
 					qlog("    [ fetched %d rows ]\n", self->fcount);
 					mylog("_next_tuple: 'C' fetch_max && fcount = %d\n", self->fcount);
 
@@ -626,7 +616,6 @@ QR_read_tuple(QResultClass * self, char binary)
 		}
 		else
 		{
-
 			/*
 			 * NO, the field is not null. so get at first the length of
 			 * the field (four bytes)

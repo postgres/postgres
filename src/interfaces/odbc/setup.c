@@ -50,7 +50,6 @@ typedef struct tagSETUPDLG
 	char		szDSN[MAXDSNAME];		/* Original data source name */
 	BOOL		fNewDSN;		/* New data source flag */
 	BOOL		fDefault;		/* Default data source flag */
-
 }			SETUPDLG, FAR * LPSETUPDLG;
 
 
@@ -73,7 +72,7 @@ BOOL INTFUNC SetDSNAttributes(HWND hwnd, LPSETUPDLG lpsetupdlg);
   Output	 :	TRUE success, FALSE otherwise
 --------------------------------------------------------------------------*/
 
-BOOL CALLBACK
+BOOL		CALLBACK
 ConfigDSN(HWND hwnd,
 		  WORD fRequest,
 		  LPCSTR lpszDriver,
@@ -153,7 +152,7 @@ ConfigDSN(HWND hwnd,
 		Input	   :  hdlg -- Dialog window handle
 		Output	   :  None
 --------------------------------------------------------------------------*/
-void INTFUNC
+void		INTFUNC
 CenterDialog(HWND hdlg)
 {
 	HWND		hwndFrame;
@@ -208,13 +207,12 @@ CenterDialog(HWND hdlg)
 --------------------------------------------------------------------------*/
 
 
-int CALLBACK
+int			CALLBACK
 ConfigDlgProc(HWND hdlg,
 			  WORD wMsg,
 			  WPARAM wParam,
 			  LPARAM lParam)
 {
-
 	switch (wMsg)
 	{
 			/* Initialize the dialog */
@@ -266,7 +264,6 @@ ConfigDlgProc(HWND hdlg,
 
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
-
 					/*
 					 * Ensure the OK button is enabled only when a data
 					 * source name
@@ -344,7 +341,7 @@ ConfigDlgProc(HWND hdlg,
   Input		 :	lpszAttributes - Pointer to attribute string
   Output	 :	None (global aAttr normally updated)
 --------------------------------------------------------------------------*/
-void INTFUNC
+void		INTFUNC
 ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 {
 	LPCSTR		lpsz;
@@ -370,7 +367,6 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 		cbKey = lpsz - lpszStart;
 		if (cbKey < sizeof(aszKey))
 		{
-
 			_fmemcpy(aszKey, lpszStart, cbKey);
 			aszKey[cbKey] = '\0';
 		}
@@ -398,7 +394,7 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
   Output	 :	TRUE if successful, FALSE otherwise
 --------------------------------------------------------------------------*/
 
-BOOL INTFUNC
+BOOL		INTFUNC
 SetDSNAttributes(HWND hwndParent, LPSETUPDLG lpsetupdlg)
 {
 	LPCSTR		lpszDSN;		/* Pointer to data source name */

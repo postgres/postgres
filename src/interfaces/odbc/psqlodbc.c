@@ -38,7 +38,7 @@ RETCODE SQL_API SQLDummyOrdinal(void);
 HINSTANCE NEAR s_hModule;		/* Saved module handle. */
 
 /*	This is where the Driver Manager attaches to this Driver */
-BOOL WINAPI
+BOOL		WINAPI
 DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 {
 	WORD		wVersionRequested;
@@ -59,7 +59,6 @@ DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 			if (LOBYTE(wsaData.wVersion) != 1 ||
 				HIBYTE(wsaData.wVersion) != 1)
 			{
-
 				WSACleanup();
 				return FALSE;
 			}
@@ -137,7 +136,7 @@ _fini(void)
 	Driver Manager do this.  Also, the ordinal values of the
 	functions must match the value of fFunction in SQLGetFunctions()
 */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDummyOrdinal(void)
 {
 	return SQL_SUCCESS;

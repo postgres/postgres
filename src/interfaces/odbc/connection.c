@@ -34,7 +34,7 @@
 extern GLOBAL_VALUES globals;
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLAllocConnect(
 				HENV henv,
 				HDBC FAR * phdbc)
@@ -75,7 +75,7 @@ SQLAllocConnect(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLConnect(
 		   HDBC hdbc,
 		   UCHAR FAR * szDSN,
@@ -132,7 +132,7 @@ SQLConnect(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLBrowseConnect(
 				 HDBC hdbc,
 				 UCHAR FAR * szConnStrIn,
@@ -151,7 +151,7 @@ SQLBrowseConnect(
 /*		-		-		-		-		-		-		-		-		- */
 
 /* Drop any hstmts open on hdbc and disconnect from database */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDisconnect(
 			  HDBC hdbc)
 {
@@ -191,7 +191,7 @@ SQLDisconnect(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFreeConnect(
 			   HDBC hdbc)
 {
@@ -239,7 +239,6 @@ CC_Constructor()
 
 	if (rv != NULL)
 	{
-
 		rv->henv = NULL;		/* not yet associated with an environment */
 
 		rv->errormsg = NULL;
@@ -280,7 +279,6 @@ CC_Constructor()
 		/* Statements under this conn will inherit these options */
 
 		InitializeStatementOptions(&rv->stmtOptions);
-
 	}
 	return rv;
 }
@@ -289,7 +287,6 @@ CC_Constructor()
 char
 CC_Destructor(ConnectionClass * self)
 {
-
 	mylog("enter CC_Destructor, self=%u\n", self);
 
 	if (self->status == CONN_EXECUTING)
@@ -380,7 +377,6 @@ CC_abort(ConnectionClass * self)
 			QR_Destructor(res);
 		else
 			return FALSE;
-
 	}
 
 	return TRUE;
@@ -499,12 +495,10 @@ CC_connect(ConnectionClass * self, char do_password)
 	mylog("%s: entering...\n", func);
 
 	if (do_password)
-
 		sock = self->sock;		/* already connected, just authenticate */
 
 	else
 	{
-
 		qlog("Global Options: Version='%s', fetch=%d, socket=%d, unknown_sizes=%d, max_varchar_size=%d, max_longvarchar_size=%d\n",
 			 POSTGRESDRIVERVERSION,
 			 globals.fetch_max,
@@ -606,7 +600,6 @@ CC_connect(ConnectionClass * self, char do_password)
 
 	do
 	{
-
 		if (do_password)
 			beresp = 'R';
 		else
@@ -690,7 +683,6 @@ CC_connect(ConnectionClass * self, char do_password)
 				self->errornumber = CONN_INVALID_AUTHENTICATION;
 				return 0;
 		}
-
 	} while (areq != AUTH_REQ_OK);
 
 	CC_clear_error(self);		/* clear any password error */
@@ -738,7 +730,6 @@ CC_connect(ConnectionClass * self, char do_password)
 	mylog("%s: returning...\n", func);
 
 	return 1;
-
 }
 
 char
@@ -955,7 +946,6 @@ CC_send_query(ConnectionClass * self, char *query, QueryInfo * qi)
 				}
 				else
 				{
-
 					char		clear = 0;
 
 					mylog("send_query: ok - 'C' - %s\n", cmdbuffer);
@@ -1187,7 +1177,6 @@ CC_send_function(ConnectionClass * self, int fnid, void *result_buf, int *actual
 
 	for (i = 0; i < nargs; ++i)
 	{
-
 		mylog("  arg[%d]: len = %d, isint = %d, integer = %d, ptr = %u\n", i, args[i].len, args[i].isint, args[i].u.integer, args[i].u.ptr);
 
 		SOCK_put_int(sock, args[i].len, 4);
@@ -1343,7 +1332,6 @@ CC_send_settings(ConnectionClass * self)
 			status = FALSE;
 
 		mylog("%s: result %d, status %d from set geqo\n", func, result, status);
-
 	}
 
 	/* KSQO */
@@ -1354,7 +1342,6 @@ CC_send_settings(ConnectionClass * self)
 			status = FALSE;
 
 		mylog("%s: result %d, status %d from set ksqo\n", func, result, status);
-
 	}
 
 	/* Global settings */

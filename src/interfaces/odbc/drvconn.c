@@ -65,7 +65,7 @@ extern HINSTANCE NEAR s_hModule;/* Saved module handle. */
 extern GLOBAL_VALUES globals;
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDriverConnect(
 				 HDBC hdbc,
 				 HWND hwnd,
@@ -147,7 +147,6 @@ dialog:
 				ci->port[0] == '\0' ||
 				password_required)
 			{
-
 				dialog_result = dconn_DoDialog(hwnd, ci);
 				if (dialog_result != SQL_SUCCESS)
 					return dialog_result;
@@ -216,7 +215,6 @@ dialog:
 
 	if (szConnStrOut)
 	{
-
 		/*
 		 * Return the completed string to the caller. The correct method
 		 * is to only construct the connect string if a dialog was put up,
@@ -269,7 +267,7 @@ dconn_DoDialog(HWND hwnd, ConnInfo * ci)
 }
 
 
-BOOL FAR PASCAL
+BOOL FAR	PASCAL
 dconn_FDriverConnectProc(
 						 HWND hdlg,
 						 UINT wMsg,
@@ -390,7 +388,6 @@ dconn_get_connect_attributes(UCHAR FAR * connect_string, ConnInfo * ci)
 
 		/* Copy the appropriate value to the conninfo  */
 		copyAttributes(ci, attribute, value);
-
 	}
 
 

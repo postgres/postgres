@@ -77,7 +77,6 @@ CI_read_fields(ColumnInfoClass * self, ConnectionClass * conn)
 	/* now read in the descriptions */
 	for (lf = 0; lf < new_num_fields; lf++)
 	{
-
 		SOCK_get_string(sock, new_field_name, MAX_MESSAGE_LEN);
 		new_adtid = (Oid) SOCK_get_int(sock, 4);
 		new_adtsize = (Int2) SOCK_get_int(sock, 2);
@@ -85,7 +84,6 @@ CI_read_fields(ColumnInfoClass * self, ConnectionClass * conn)
 		/* If 6.4 protocol, then read the atttypmod field */
 		if (PG_VERSION_GE(conn, 6.4))
 		{
-
 			mylog("READING ATTTYPMOD\n");
 			new_atttypmod = (Int4) SOCK_get_int(sock, 4);
 
@@ -93,7 +91,6 @@ CI_read_fields(ColumnInfoClass * self, ConnectionClass * conn)
 			new_atttypmod -= 4;
 			if (new_atttypmod < 0)
 				new_atttypmod = -1;
-
 		}
 
 		mylog("CI_read_fields: fieldname='%s', adtid=%d, adtsize=%d, atttypmod=%d\n", new_field_name, new_adtid, new_adtsize, new_atttypmod);
@@ -146,7 +143,6 @@ void
 CI_set_field_info(ColumnInfoClass * self, int field_num, char *new_name,
 				  Oid new_adtid, Int2 new_adtsize, Int4 new_atttypmod)
 {
-
 	/* check bounds */
 	if ((field_num < 0) || (field_num >= self->num_fields))
 		return;

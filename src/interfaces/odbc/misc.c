@@ -185,7 +185,6 @@ strncpy_null(char *dst, const char *src, int len)
 
 	if (NULL != dst)
 	{
-
 		/* Just in case, check for special lengths */
 		if (len == SQL_NULL_DATA)
 		{
@@ -241,7 +240,6 @@ make_string(char *s, int len, char *buf)
 char *
 my_strcat(char *buf, char *fmt, char *s, int len)
 {
-
 	if (s && (len > 0 || (len == SQL_NTS && strlen(s) > 0)))
 	{
 		int			length = (len > 0) ? len : strlen(s);

@@ -43,7 +43,7 @@ extern GLOBAL_VALUES globals;
 
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLRowCount(
 			HSTMT hstmt,
 			SDWORD FAR * pcrow)
@@ -81,7 +81,6 @@ SQLRowCount(
 	}
 	else
 	{
-
 		res = SC_get_Result(stmt);
 		if (res && pcrow)
 		{
@@ -114,7 +113,7 @@ SQLRowCount(
 /*		attached to "hstmt". */
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLNumResultCols(
 				 HSTMT hstmt,
 				 SWORD FAR * pccol)
@@ -135,7 +134,6 @@ SQLNumResultCols(
 	parse_ok = FALSE;
 	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT)
 	{
-
 		if (stmt->parse_status == STMT_PARSE_NONE)
 		{
 			mylog("SQLNumResultCols: calling parse_statement on stmt=%u\n", stmt);
@@ -152,7 +150,6 @@ SQLNumResultCols(
 
 	if (!parse_ok)
 	{
-
 		SC_pre_execute(stmt);
 		result = SC_get_Result(stmt);
 
@@ -179,7 +176,7 @@ SQLNumResultCols(
 
 /*		Return information about the database column the user wants */
 /*		information about. */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDescribeCol(
 			   HSTMT hstmt,
 			   UWORD icol,
@@ -229,7 +226,6 @@ SQLDescribeCol(
 	parse_ok = FALSE;
 	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT)
 	{
-
 		if (stmt->parse_status == STMT_PARSE_NONE)
 		{
 			mylog("SQLDescribeCol: calling parse_statement on stmt=%u\n", stmt);
@@ -241,7 +237,6 @@ SQLDescribeCol(
 
 		if (stmt->parse_status != STMT_PARSE_FATAL && stmt->fi && stmt->fi[icol])
 		{
-
 			if (icol >= stmt->nfld)
 			{
 				stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
@@ -342,7 +337,6 @@ SQLDescribeCol(
 	/************************/
 	if (pcbColDef)
 	{
-
 		if (precision < 0)
 			precision = 0;		/* "I dont know" */
 
@@ -381,7 +375,7 @@ SQLDescribeCol(
 
 /*		Returns result column descriptor information for a result set. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLColAttributes(
 				 HSTMT hstmt,
 				 UWORD icol,
@@ -422,7 +416,7 @@ SQLColAttributes(
 	icol--;
 
 	unknown_sizes = globals.unknown_sizes;		/* atoi(ci->unknown_sizes);
-												 *	*/
+												 * */
 	if (unknown_sizes == UNKNOWNS_AS_DONTKNOW)	/* not appropriate for
 												 * SQLColAttributes() */
 		unknown_sizes = UNKNOWNS_AS_MAX;
@@ -430,7 +424,6 @@ SQLColAttributes(
 	parse_ok = FALSE;
 	if (globals.parse && stmt->statement_type == STMT_TYPE_SELECT)
 	{
-
 		if (stmt->parse_status == STMT_PARSE_NONE)
 		{
 			mylog("SQLColAttributes: calling parse_statement\n");
@@ -453,7 +446,6 @@ SQLColAttributes(
 
 		if (stmt->parse_status != STMT_PARSE_FATAL && stmt->fi && stmt->fi[icol])
 		{
-
 			if (icol >= cols)
 			{
 				stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
@@ -542,7 +534,6 @@ SQLColAttributes(
 
 				mylog("SQLColAttr: COLUMN_LABEL = '%s'\n", p);
 				break;
-
 			}					/* otherwise same as column name -- FALL
 								 * THROUGH!!! */
 
@@ -652,7 +643,6 @@ SQLColAttributes(
 
 		if (pfDesc)
 			*pfDesc = value;
-
 	}
 
 
@@ -661,7 +651,7 @@ SQLColAttributes(
 
 /*		Returns result data for a single column in the current row. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetData(
 		   HSTMT hstmt,
 		   UWORD icol,
@@ -707,7 +697,6 @@ SQLGetData(
 
 	if (icol == 0)
 	{
-
 		if (stmt->options.use_bookmarks == SQL_UB_OFF)
 		{
 			stmt->errornumber = STMT_COLNUM_ERROR;
@@ -726,12 +715,10 @@ SQLGetData(
 		}
 
 		get_bookmark = TRUE;
-
 	}
 
 	else
 	{
-
 		/* use zero-based column numbers */
 		icol--;
 
@@ -849,7 +836,7 @@ SQLGetData(
 /*		Returns data for bound columns in the current row ("hstmt->iCursor"), */
 /*		advances the cursor. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFetch(
 		 HSTMT hstmt)
 {
@@ -919,7 +906,7 @@ SQLFetch(
 
 /*		This fetchs a block of data (rowset). */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLExtendedFetch(
 				 HSTMT hstmt,
 				 UWORD fFetchType,
@@ -1031,10 +1018,7 @@ SQLExtendedFetch(
 				stmt->rowset_start = 0;
 
 			else
-			{
-
 				stmt->rowset_start += (save_rowset_size > 0 ? save_rowset_size : stmt->options.rowset_size);
-			}
 
 			mylog("SQL_FETCH_NEXT: num_tuples=%d, currtuple=%d\n", num_tuples, stmt->currTuple);
 			break;
@@ -1050,16 +1034,9 @@ SQLExtendedFetch(
 			 */
 
 			if (stmt->rowset_start >= num_tuples)
-			{
 				stmt->rowset_start = num_tuples <= 0 ? 0 : (num_tuples - stmt->options.rowset_size);
-
-			}
 			else
-			{
-
 				stmt->rowset_start -= stmt->options.rowset_size;
-
-			}
 
 			break;
 
@@ -1116,7 +1093,6 @@ SQLExtendedFetch(
 		default:
 			SC_log_error(func, "Unsupported SQLExtendedFetch Direction", stmt);
 			return SQL_ERROR;
-
 	}
 
 
@@ -1172,7 +1148,6 @@ SQLExtendedFetch(
 	truncated = error = FALSE;
 	for (i = 0; i < stmt->options.rowset_size; i++)
 	{
-
 		stmt->bind_row = i;		/* set the binding location */
 		result = SC_fetch(stmt);
 
@@ -1220,7 +1195,6 @@ SQLExtendedFetch(
 		return SQL_SUCCESS_WITH_INFO;
 	else
 		return SQL_SUCCESS;
-
 }
 
 
@@ -1228,7 +1202,7 @@ SQLExtendedFetch(
 /*		the "hstmt". */
 
 /* CC: return SQL_NO_DATA_FOUND since we do not support multiple result sets */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLMoreResults(
 			   HSTMT hstmt)
 {
@@ -1237,7 +1211,7 @@ SQLMoreResults(
 
 /*	   This positions the cursor within a rowset, that was positioned using SQLExtendedFetch. */
 /*	   This will be useful (so far) only when using SQLGetData after SQLExtendedFetch.	 */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetPos(
 		  HSTMT hstmt,
 		  UWORD irow,
@@ -1301,12 +1275,11 @@ SQLSetPos(
 	stmt->currTuple = stmt->rowset_start + irow;
 
 	return SQL_SUCCESS;
-
 }
 
 /*		Sets options that control the behavior of cursors. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetScrollOptions(
 					HSTMT hstmt,
 					UWORD fConcurrency,
@@ -1322,7 +1295,7 @@ SQLSetScrollOptions(
 
 /*		Set the cursor name on a statement handle */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetCursorName(
 				 HSTMT hstmt,
 				 UCHAR FAR * szCursor,
@@ -1356,7 +1329,7 @@ SQLSetCursorName(
 
 /*		Return the cursor name for a statement handle */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetCursorName(
 				 HSTMT hstmt,
 				 UCHAR FAR * szCursor,

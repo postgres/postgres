@@ -102,18 +102,15 @@ set_statement_option(ConnectionClass * conn,
 
 			if (globals.lie)
 			{
-
 				if (conn)
 					conn->stmtOptions.cursor_type = vParam;
 				if (stmt)
 					stmt->options.cursor_type = vParam;
-
 			}
 			else
 			{
 				if (globals.use_declarefetch)
 				{
-
 					if (conn)
 						conn->stmtOptions.cursor_type = SQL_CURSOR_FORWARD_ONLY;
 					if (stmt)
@@ -126,7 +123,6 @@ set_statement_option(ConnectionClass * conn,
 				{
 					if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC)
 					{
-
 						if (conn)
 							conn->stmtOptions.cursor_type = vParam;		/* valid type */
 						if (stmt)
@@ -134,7 +130,6 @@ set_statement_option(ConnectionClass * conn,
 					}
 					else
 					{
-
 						if (conn)
 							conn->stmtOptions.cursor_type = SQL_CURSOR_STATIC;
 						if (stmt)
@@ -289,7 +284,7 @@ set_statement_option(ConnectionClass * conn,
 
 
 /* Implements only SQL_AUTOCOMMIT */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetConnectOption(
 					HDBC hdbc,
 					UWORD fOption,
@@ -312,7 +307,6 @@ SQLSetConnectOption(
 
 	switch (fOption)
 	{
-
 			/*
 			 * Statement Options (apply to all stmts on the connection and
 			 * become defaults for new stmts)
@@ -423,7 +417,6 @@ SQLSetConnectOption(
 				CC_log_error(func, option, conn);
 				return SQL_ERROR;
 			}
-
 	}
 
 	if (changed)
@@ -439,7 +432,7 @@ SQLSetConnectOption(
 /*		-		-		-		-		-		-		-		-		- */
 
 /* This function just can tell you whether you are in Autcommit mode or not */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetConnectOption(
 					HDBC hdbc,
 					UWORD fOption,
@@ -509,7 +502,6 @@ SQLGetConnectOption(
 				return SQL_ERROR;
 				break;
 			}
-
 	}
 
 	return SQL_SUCCESS;
@@ -517,7 +509,7 @@ SQLGetConnectOption(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetStmtOption(
 				 HSTMT hstmt,
 				 UWORD fOption,
@@ -544,7 +536,7 @@ SQLSetStmtOption(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetStmtOption(
 				 HSTMT hstmt,
 				 UWORD fOption,

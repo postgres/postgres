@@ -49,7 +49,6 @@ extern GLOBAL_VALUES globals;
 void
 SetDlgStuff(HWND hdlg, ConnInfo * ci)
 {
-
 	/*
 	 * If driver attribute NOT present, then set the datasource name and
 	 * description
@@ -81,7 +80,7 @@ GetDlgStuff(HWND hdlg, ConnInfo * ci)
 
 
 
-int CALLBACK
+int			CALLBACK
 driver_optionsProc(HWND hdlg,
 				   WORD wMsg,
 				   WPARAM wParam,
@@ -223,13 +222,12 @@ driver_optionsProc(HWND hdlg,
 
 					break;
 			}
-
 	}
 
 	return FALSE;
 }
 
-int CALLBACK
+int			CALLBACK
 ds_optionsProc(HWND hdlg,
 			   WORD wMsg,
 			   WPARAM wParam,
@@ -351,7 +349,6 @@ makeConnectString(char *connect_string, ConnInfo * ci)
 void
 copyAttributes(ConnInfo * ci, char *attribute, char *value)
 {
-
 	if (stricmp(attribute, "DSN") == 0)
 		strcpy(ci->dsn, value);
 
@@ -398,7 +395,6 @@ copyAttributes(ConnInfo * ci, char *attribute, char *value)
 	}
 
 	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s', conn_settings='%s')\n", ci->dsn, ci->server, ci->database, ci->username, ci->password, ci->port, ci->onlyread, ci->protocol, ci->conn_settings);
-
 }
 
 void
@@ -520,7 +516,6 @@ getDSNinfo(ConnInfo * ci, char overwrite)
 	qlog("          translation_dll='%s',translation_option='%s'\n",
 		 ci->translation_dll,
 		 ci->translation_option);
-
 }
 
 
@@ -778,7 +773,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 	/* Dont allow override of an override! */
 	if (!override)
 	{
-
 		/*
 		 * ConnSettings is stored in the driver section and per datasource
 		 * for override
@@ -805,7 +799,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 			strcpy(globals.protocol, temp);
 		else
 			strcpy(globals.protocol, DEFAULT_PROTOCOL);
-
 	}
 }
 

@@ -35,7 +35,7 @@
 
 /*		Bind parameters on a statement handle */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLBindParameter(
 				 HSTMT hstmt,
 				 UWORD ipar,
@@ -156,7 +156,7 @@ SQLBindParameter(
 /*		-		-		-		-		-		-		-		-		- */
 
 /*		Associate a user-supplied buffer with a database column. */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLBindCol(
 		   HSTMT hstmt,
 		   UWORD icol,
@@ -192,7 +192,6 @@ SQLBindCol(
 	/* If the bookmark column is being bound, then just save it */
 	if (icol == 0)
 	{
-
 		if (rgbValue == NULL)
 		{
 			stmt->bookmark.buffer = NULL;
@@ -268,7 +267,7 @@ SQLBindCol(
 /*	it is best to say this function is not supported and let the application assume a  */
 /*	data type (most likely varchar). */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDescribeParam(
 				 HSTMT hstmt,
 				 UWORD ipar,
@@ -322,7 +321,7 @@ SQLDescribeParam(
 
 /*		Sets multiple values (arrays) for the set of parameter markers. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLParamOptions(
 				HSTMT hstmt,
 				UDWORD crow,
@@ -345,7 +344,7 @@ SQLParamOptions(
 /*	like it does for SQLDescribeParam is that some applications don't care and try  */
 /*	to call it anyway. */
 /*	If the statement does not have parameters, it should just return 0. */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLNumParams(
 			 HSTMT hstmt,
 			 SWORD FAR * pcpar)
@@ -382,10 +381,8 @@ SQLNumParams(
 	}
 	else
 	{
-
 		for (i = 0; i < strlen(stmt->statement); i++)
 		{
-
 			if (stmt->statement[i] == '?' && !in_quote)
 				(*pcpar)++;
 			else
@@ -436,7 +433,6 @@ extend_bindings(StatementClass * stmt, int num_columns)
 	/* entries into the new structure */
 	if (stmt->bindings_allocated < num_columns)
 	{
-
 		new_bindings = create_empty_bindings(num_columns);
 		if (!new_bindings)
 		{
@@ -461,7 +457,6 @@ extend_bindings(StatementClass * stmt, int num_columns)
 
 		stmt->bindings = new_bindings;
 		stmt->bindings_allocated = num_columns;
-
 	}
 	/* There is no reason to zero out extra bindings if there are */
 	/* more than needed.  If an app has allocated extra bindings,  */

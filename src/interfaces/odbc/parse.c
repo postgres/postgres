@@ -78,7 +78,6 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 	while (!isspace((unsigned char) s[i]) && s[i] != ',' &&
 		   s[i] != '\0' && out != smax)
 	{
-
 		/* Handle quoted stuff */
 		if (out == 0 && (s[i] == '\"' || s[i] == '\''))
 		{
@@ -279,7 +278,6 @@ parse_statement(StatementClass * stmt)
 
 	while ((ptr = getNextToken(ptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) != NULL)
 	{
-
 		unquoted = !(quote || dquote);
 
 		mylog("unquoted=%d, quote=%d, dquote=%d, numeric=%d, delim='%c', token='%s', ptr='%s'\n", unquoted, quote, dquote, numeric, delim, token, ptr);
@@ -323,7 +321,6 @@ parse_statement(StatementClass * stmt)
 						 !stricmp(token, "group") ||
 						 !stricmp(token, "having")))
 		{
-
 			in_select = FALSE;
 			in_from = FALSE;
 			in_where = TRUE;
@@ -334,7 +331,6 @@ parse_statement(StatementClass * stmt)
 
 		if (in_select)
 		{
-
 			if (in_distinct)
 			{
 				mylog("in distinct\n");
@@ -389,7 +385,6 @@ parse_statement(StatementClass * stmt)
 
 			if (!in_field)
 			{
-
 				if (!token[0])
 					continue;
 
@@ -522,12 +517,10 @@ parse_statement(StatementClass * stmt)
 			fi[stmt->nfld - 1]->expr = TRUE;
 			fi[stmt->nfld - 1]->name[0] = '\0';
 			mylog("*** setting expression\n");
-
 		}
 
 		if (in_from)
 		{
-
 			if (!in_table)
 			{
 				if (!token[0])
@@ -581,7 +574,6 @@ parse_statement(StatementClass * stmt)
 	/* Resolve field names with tables */
 	for (i = 0; i < stmt->nfld; i++)
 	{
-
 		if (fi[i]->func || fi[i]->expr || fi[i]->numeric)
 		{
 			fi[i]->ti = NULL;
@@ -641,7 +633,6 @@ parse_statement(StatementClass * stmt)
 	/* Call SQLColumns for each table and store the result */
 	for (i = 0; i < stmt->ntab; i++)
 	{
-
 		/* See if already got it */
 		char		found = FALSE;
 
@@ -657,7 +648,6 @@ parse_statement(StatementClass * stmt)
 
 		if (!found)
 		{
-
 			mylog("PARSE: Getting SQLColumns for table[%d]='%s'\n", i, ti[i]->name);
 
 			result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
@@ -681,7 +671,6 @@ parse_statement(StatementClass * stmt)
 				mylog("      Success\n");
 				if (!(conn->ntables % COL_INCR))
 				{
-
 					mylog("PARSE: Allocing col_info at ntables=%d\n", conn->ntables);
 
 					conn->col_info = (COL_INFO **) realloc(conn->col_info, (conn->ntables + COL_INCR) * sizeof(COL_INFO *));
@@ -741,7 +730,6 @@ parse_statement(StatementClass * stmt)
 
 	for (i = 0; i < stmt->nfld;)
 	{
-
 		/* Dont worry about functions or quotes */
 		if (fi[i]->func || fi[i]->quote || fi[i]->numeric)
 		{
@@ -752,7 +740,6 @@ parse_statement(StatementClass * stmt)
 		/* Stars get expanded to all fields in the table */
 		else if (fi[i]->name[0] == '*')
 		{
-
 			char		do_all_tables;
 			int			total_cols,
 						old_size,
@@ -823,7 +810,6 @@ parse_statement(StatementClass * stmt)
 
 			for (k = 0; k < (do_all_tables ? stmt->ntab : 1); k++)
 			{
-
 				TABLE_INFO *the_ti = do_all_tables ? ti[k] : fi[i]->ti;
 
 				cols = QR_get_num_tuples(the_ti->col_info->result);
@@ -867,7 +853,6 @@ parse_statement(StatementClass * stmt)
 		 */
 		else if (fi[i]->ti)
 		{
-
 			if (!searchColInfo(fi[i]->ti->col_info, fi[i]))
 				parse = FALSE;
 

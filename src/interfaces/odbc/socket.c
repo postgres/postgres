@@ -70,7 +70,6 @@ SOCK_Constructor()
 		rv->reverse = FALSE;
 	}
 	return rv;
-
 }
 
 void
@@ -93,7 +92,6 @@ SOCK_Destructor(SocketClass * self)
 		free(self->buffer_out);
 
 	free(self);
-
 }
 
 
@@ -145,7 +143,6 @@ SOCK_connect_to(SocketClass * self, unsigned short port, char *hostname)
 	if (connect(self->socket, (struct sockaddr *) & (sadr),
 				sizeof(sadr)) < 0)
 	{
-
 		self->errornumber = SOCKET_COULD_NOT_CONNECT;
 		self->errormsg = "Could not connect to remote socket.";
 		closesocket(self->socket);
@@ -290,7 +287,6 @@ SOCK_flush_output(SocketClass * self)
 unsigned char
 SOCK_get_next_byte(SocketClass * self)
 {
-
 	if (self->buffer_read_in >= self->buffer_filled_in)
 	{
 		/* there are no more bytes left in the buffer -> */
@@ -313,7 +309,6 @@ SOCK_get_next_byte(SocketClass * self)
 			self->errormsg = "Socket has been closed.";
 			self->buffer_filled_in = 0;
 		}
-
 	}
 	return self->buffer_in[self->buffer_read_in++];
 }

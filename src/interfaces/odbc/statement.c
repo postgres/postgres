@@ -85,7 +85,7 @@ static struct
 };
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLAllocStmt(HDBC hdbc,
 			 HSTMT FAR * phstmt)
 {
@@ -139,7 +139,7 @@ SQLAllocStmt(HDBC hdbc,
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFreeStmt(HSTMT hstmt,
 			UWORD fOption)
 {
@@ -180,13 +180,9 @@ SQLFreeStmt(HSTMT hstmt,
 
 		/* Destroy the statement and free any results, cursors, etc. */
 		SC_Destructor(stmt);
-
 	}
 	else if (fOption == SQL_UNBIND)
-	{
 		SC_unbind_cols(stmt);
-
-	}
 	else if (fOption == SQL_CLOSE)
 	{
 		/* this should discard all the results, but leave the statement */
@@ -197,13 +193,9 @@ SQLFreeStmt(HSTMT hstmt,
 			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
-
 	}
 	else if (fOption == SQL_RESET_PARAMS)
-	{
 		SC_free_params(stmt, STMT_FREE_PARAMS_ALL);
-
-	}
 	else
 	{
 		stmt->errormsg = "Invalid option passed to SQLFreeStmt.";
@@ -298,7 +290,6 @@ SC_Constructor(void)
 char
 SC_Destructor(StatementClass * self)
 {
-
 	mylog("SC_Destructor: self=%u, self->result=%u, self->hdbc=%u\n", self, self->result, self->hdbc);
 	if (STMT_EXECUTING == self->status)
 	{
@@ -380,7 +371,6 @@ SC_free_params(StatementClass * self, char option)
 	{
 		if (self->parameters[i].data_at_exec == TRUE)
 		{
-
 			if (self->parameters[i].EXEC_used)
 			{
 				free(self->parameters[i].EXEC_used);
@@ -469,7 +459,6 @@ SC_recycle_statement(StatementClass * self)
 			conn = SC_get_conn(self);
 			if (!CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
 			{
-
 				CC_send_query(conn, "ABORT", NULL);
 				CC_set_no_trans(conn);
 			}
@@ -548,7 +537,6 @@ SC_recycle_statement(StatementClass * self)
 void
 SC_pre_execute(StatementClass * self)
 {
-
 	mylog("SC_pre_execute: status = %d\n", self->status);
 
 	if (self->status == STMT_READY)
@@ -690,11 +678,9 @@ SC_fetch(StatementClass * self)
 
 	if (self->manual_result || !globals.use_declarefetch)
 	{
-
 		if (self->currTuple >= QR_get_num_tuples(res) - 1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1))
 		{
-
 			/*
 			 * if at the end of the tuples, return "no data found" and set
 			 * the cursor past the end of the result set
@@ -708,7 +694,6 @@ SC_fetch(StatementClass * self)
 	}
 	else
 	{
-
 		/* read from the cache or the physical next tuple */
 		retval = QR_next_tuple(res);
 		if (retval < 0)
@@ -751,7 +736,6 @@ SC_fetch(StatementClass * self)
 
 	for (lf = 0; lf < num_cols; lf++)
 	{
-
 		mylog("fetch: cols=%d, lf=%d, self = %u, self->bindings = %u, buffer[] = %u\n", num_cols, lf, self, self->bindings, self->bindings[lf].buffer);
 
 		/* reset for SQLGetData */
@@ -860,7 +844,6 @@ SC_execute(StatementClass * self)
 	if (!self->internal && !CC_is_in_trans(conn) &&
 		((globals.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) || (!CC_is_in_autocommit(conn) && STMT_UPDATE(self))))
 	{
-
 		mylog("   about to begin a transaction on statement = %u\n", self);
 		res = CC_send_query(conn, "BEGIN", NULL);
 		if (!res)
@@ -902,7 +885,6 @@ SC_execute(StatementClass * self)
 	/* in copy_statement... */
 	if (self->statement_type == STMT_TYPE_SELECT)
 	{
-
 		char		fetch[128];
 
 		mylog("       Sending SELECT statement on stmt=%u, cursor_name='%s'\n", self, self->cursor_name);
@@ -914,7 +896,6 @@ SC_execute(StatementClass * self)
 		if (globals.use_declarefetch && self->result != NULL &&
 			QR_command_successful(self->result))
 		{
-
 			QR_Destructor(self->result);
 
 			/*
@@ -968,7 +949,6 @@ SC_execute(StatementClass * self)
 	/* Check the status of the result */
 	if (self->result)
 	{
-
 		was_ok = QR_command_successful(self->result);
 		was_nonfatal = QR_command_nonfatal(self->result);
 

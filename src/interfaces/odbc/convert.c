@@ -185,16 +185,11 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 /*	pcbValueOffset is for computing any pcbValue location */
 
 	if (bind_size > 0)
-	{
-
 		pcbValueOffset = rgbValueOffset = (bind_size * bind_row);
-	}
 	else
 	{
-
 		pcbValueOffset = bind_row * sizeof(SDWORD);
 		rgbValueOffset = bind_row * cbValueMax;
-
 	}
 
 	memset(&st, 0, sizeof(SIMPLE_TIME));
@@ -238,7 +233,6 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 	*********************************************************************/
 	switch (field_type)
 	{
-
 			/*
 			 * $$$ need to add parsing for date/time/timestamp strings in
 			 * PG_TYPE_CHAR,VARCHAR $$$
@@ -255,10 +249,7 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
 			if (strnicmp(value, "invalid", 7) != 0)
-			{
 				sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);
-
-			}
 			else
 			{					/* The timestamp is invalid so set
 								 * something conspicuous, like the epoch */
@@ -365,8 +356,6 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 
 	if (fCType == SQL_C_CHAR)
 	{
-
-
 		/* Special character formatting as required */
 
 		/*
@@ -447,7 +436,6 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 
 				if (cbValueMax > 0)
 				{
-
 					copy_len = (len >= cbValueMax) ? cbValueMax - 1 : len;
 
 					/* Copy the data */
@@ -474,7 +462,6 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 	}
 	else
 	{
-
 		/*
 		 * for SQL_C_CHAR, it's probably ok to leave currency symbols in.
 		 * But to convert to numeric types, it is necessary to get rid of
@@ -624,7 +611,6 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 
 				if (stmt->current_col >= 0)
 				{
-
 					/* No more data left for this column */
 					if (stmt->bindings[stmt->current_col].data_left == 0)
 						return COPY_NO_DATA_FOUND;
@@ -642,7 +628,6 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 					/* First call to SQLGetData so initialize data_left */
 					else
 						stmt->bindings[stmt->current_col].data_left = len;
-
 				}
 
 				if (cbValueMax > 0)
@@ -677,7 +662,6 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 		*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = len;
 
 	return result;
-
 }
 
 
@@ -748,7 +732,6 @@ copy_statement_with_parameters(StatementClass * stmt)
 
 	for (opos = 0; opos < oldstmtlen; opos++)
 	{
-
 		/* Squeeze carriage-return/linefeed pairs to linefeed only */
 		if (old_statement[opos] == '\r' && opos + 1 < oldstmtlen &&
 			old_statement[opos + 1] == '\n')
@@ -955,7 +938,6 @@ copy_statement_with_parameters(StatementClass * stmt)
 					mylog("m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d\n", st.m, st.d, st.y, st.hh, st.mm, st.ss);
 
 					break;
-
 				}
 			default:
 				/* error */
@@ -1065,14 +1047,9 @@ copy_statement_with_parameters(StatementClass * stmt)
 			case SQL_LONGVARBINARY:
 
 				if (stmt->parameters[param_number].data_at_exec)
-				{
-
 					lobj_oid = stmt->parameters[param_number].lobj_oid;
-
-				}
 				else
 				{
-
 					/* begin transaction if needed */
 					if (!CC_is_in_trans(stmt->hdbc))
 					{
@@ -1188,9 +1165,7 @@ copy_statement_with_parameters(StatementClass * stmt)
 					new_statement[npos++] = '\'';		/* Close Quote */
 
 				break;
-
 		}
-
 	}							/* end, for */
 
 	/* make sure new_statement is always null-terminated */
@@ -1253,7 +1228,6 @@ convert_escape(char *value)
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
-
 		/*
 		 * Function invocation Separate off the func name, skipping
 		 * trailing whitespace.
@@ -1304,7 +1278,6 @@ convert_escape(char *value)
 	}
 
 	return escape;
-
 }
 
 
@@ -1473,7 +1446,6 @@ conv_from_octal(unsigned char *s)
 		y += (s[i] - 48) * (int) pow(8, 3 - i);
 
 	return y;
-
 }
 
 unsigned int
@@ -1485,7 +1457,6 @@ conv_from_hex(unsigned char *s)
 
 	for (i = 1; i <= 2; i++)
 	{
-
 		if (s[i] >= 'a' && s[i] <= 'f')
 			val = s[i] - 'a' + 10;
 		else if (s[i] >= 'A' && s[i] <= 'F')
@@ -1563,7 +1534,6 @@ convert_to_pgbinary(unsigned char *in, char *out, int len)
 			strcpy(&out[o], conv_to_octal(in[i]));
 			o += 5;
 		}
-
 	}
 
 	mylog("convert_to_pgbinary: returning %d, out='%.*s'\n", o, o, out);
@@ -1661,7 +1631,6 @@ convert_lo(StatementClass * stmt, void *value, Int2 fCType, PTR rgbValue,
 
 	if (!bindInfo || bindInfo->data_left == -1)
 	{
-
 		/* begin transaction if needed */
 		if (!CC_is_in_trans(stmt->hdbc))
 		{
@@ -1700,7 +1669,6 @@ convert_lo(StatementClass * stmt, void *value, Int2 fCType, PTR rgbValue,
 		retval = lo_lseek(stmt->hdbc, stmt->lobj_fd, 0L, SEEK_END);
 		if (retval >= 0)
 		{
-
 			left = lo_tell(stmt->hdbc, stmt->lobj_fd);
 			if (bindInfo)
 				bindInfo->data_left = left;
@@ -1804,5 +1772,4 @@ convert_lo(StatementClass * stmt, void *value, Int2 fCType, PTR rgbValue,
 
 
 	return result;
-
 }

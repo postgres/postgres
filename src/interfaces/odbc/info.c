@@ -58,7 +58,7 @@ extern GLOBAL_VALUES globals;
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetInfo(
 		   HDBC hdbc,
 		   UWORD fInfoType,
@@ -698,7 +698,6 @@ SQLGetInfo(
 
 		if (rgbInfoValue)
 		{
-
 			if (len == 2)
 				*((WORD *) rgbInfoValue) = (WORD) value;
 			else if (len == 4)
@@ -715,7 +714,7 @@ SQLGetInfo(
 /*		-		-		-		-		-		-		-		-		- */
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetTypeInfo(
 			   HSTMT hstmt,
 			   SWORD fSqlType)
@@ -812,7 +811,7 @@ SQLGetTypeInfo(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetFunctions(
 				HDBC hdbc,
 				UWORD fFunction,
@@ -824,7 +823,6 @@ SQLGetFunctions(
 
 	if (fFunction == SQL_API_ALL_FUNCTIONS)
 	{
-
 		if (globals.lie)
 		{
 			int			i;
@@ -910,13 +908,10 @@ SQLGetFunctions(
 	}
 	else
 	{
-
 		if (globals.lie)
 			*pfExists = TRUE;
-
 		else
 		{
-
 			switch (fFunction)
 			{
 				case SQL_API_SQLALLOCCONNECT:
@@ -1100,7 +1095,7 @@ SQLGetFunctions(
 
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLTables(
 		  HSTMT hstmt,
 		  UCHAR FAR * szTableQualifier,
@@ -1330,7 +1325,6 @@ SQLTables(
 	result = SQLFetch(htbl_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-
 		/*
 		 * Determine if this table name is a system table. If treating
 		 * system tables as regular tables, then no need to do this test.
@@ -1338,7 +1332,6 @@ SQLTables(
 		systable = FALSE;
 		if (!atoi(ci->show_system_tables))
 		{
-
 			if (strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0)
 				systable = TRUE;
 
@@ -1379,7 +1372,6 @@ SQLTables(
 			(view && show_views) ||
 			(regular_table && show_regular_tables))
 		{
-
 			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) * sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
@@ -1427,7 +1419,7 @@ SQLTables(
 
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLColumns(
 		   HSTMT hstmt,
 		   UCHAR FAR * szTableQualifier,
@@ -1685,12 +1677,10 @@ SQLColumns(
 
 	if (result != SQL_ERROR && !stmt->internal)
 	{
-
 		if (relhasrules[0] != '1' &&
 			(atoi(ci->show_oid_column) ||
 			 strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0))
 		{
-
 			/* For OID fields */
 			the_type = PG_TYPE_OID;
 			row = (TupleNode *) malloc(sizeof(TupleNode) +
@@ -1718,7 +1708,6 @@ SQLColumns(
 
 			QR_add_tuple(stmt->result, row);
 		}
-
 	}
 
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
@@ -1779,7 +1768,6 @@ SQLColumns(
 		if ((field_type == PG_TYPE_VARCHAR) ||
 			(field_type == PG_TYPE_BPCHAR))
 		{
-
 			useStaticPrecision = FALSE;
 
 			if (mod_length >= 4)
@@ -1815,7 +1803,6 @@ SQLColumns(
 
 
 		result = SQLFetch(hcol_stmt);
-
 	}
 	if (result != SQL_NO_DATA_FOUND)
 	{
@@ -1868,7 +1855,7 @@ SQLColumns(
 	return SQL_SUCCESS;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSpecialColumns(
 				  HSTMT hstmt,
 				  UWORD fColType,
@@ -1983,11 +1970,9 @@ SQLSpecialColumns(
 			set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
 			QR_add_tuple(stmt->result, row);
-
 		}
 		else if (fColType == SQL_ROWVER)
 		{
-
 			Int2		the_type = PG_TYPE_INT4;
 
 			if (atoi(ci->row_versioning))
@@ -2019,7 +2004,7 @@ SQLSpecialColumns(
 	return SQL_SUCCESS;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLStatistics(
 			  HSTMT hstmt,
 			  UCHAR FAR * szTableQualifier,
@@ -2152,7 +2137,6 @@ SQLStatistics(
 		stmt->errornumber = col_stmt->errornumber;
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
 		goto SEEYA;
-
 	}
 
 	result = SQLFetch(hcol_stmt);
@@ -2179,7 +2163,6 @@ SQLStatistics(
 		stmt->errornumber = col_stmt->errornumber;
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
 		goto SEEYA;
-
 	}
 
 	SQLFreeStmt(hcol_stmt, SQL_DROP);
@@ -2191,7 +2174,6 @@ SQLStatistics(
 		stmt->errormsg = "SQLAllocStmt failed in SQLStatistics for indices.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		goto SEEYA;
-
 	}
 	indx_stmt = (StatementClass *) hindx_stmt;
 
@@ -2211,7 +2193,6 @@ SQLStatistics(
 		stmt->errornumber = indx_stmt->errornumber;
 		SQLFreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
-
 	}
 
 	/* bind the index name column */
@@ -2224,7 +2205,6 @@ SQLStatistics(
 		stmt->errornumber = indx_stmt->errornumber;
 		SQLFreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
-
 	}
 	/* bind the vector column */
 	result = SQLBindCol(hindx_stmt, 2, SQL_C_DEFAULT,
@@ -2236,7 +2216,6 @@ SQLStatistics(
 		stmt->errornumber = indx_stmt->errornumber;
 		SQLFreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
-
 	}
 	/* bind the "is unique" column */
 	result = SQLBindCol(hindx_stmt, 3, SQL_C_CHAR,
@@ -2260,7 +2239,6 @@ SQLStatistics(
 		stmt->errornumber = indx_stmt->errornumber;
 		SQLFreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
-
 	}
 
 	result = SQLBindCol(hindx_stmt, 5, SQL_C_CHAR,
@@ -2313,7 +2291,6 @@ SQLStatistics(
 	result = SQLFetch(hindx_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-
 		/* If only requesting unique indexs, then just return those. */
 		if (fUnique == SQL_INDEX_ALL ||
 			(fUnique == SQL_INDEX_UNIQUE && atoi(isunique)))
@@ -2322,7 +2299,6 @@ SQLStatistics(
 			/* add a row in this table for each field in the index */
 			while (i < 8 && fields_vector[i] != 0)
 			{
-
 				row = (TupleNode *) malloc(sizeof(TupleNode) +
 										   (13 - 1) * sizeof(TupleField));
 
@@ -2417,7 +2393,7 @@ SEEYA:
 		return SQL_SUCCESS;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLColumnPrivileges(
 					HSTMT hstmt,
 					UCHAR FAR * szTableQualifier,
@@ -2443,7 +2419,7 @@ SQLColumnPrivileges(
 /* SQLPrimaryKeys()
  * Retrieve the primary key columns for the specified table.
  */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLPrimaryKeys(
 			   HSTMT hstmt,
 			   UCHAR FAR * szTableQualifier,
@@ -2571,7 +2547,6 @@ SQLPrimaryKeys(
 
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-
 		row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
 
 		set_tuplefield_null(&row->tuple[0]);
@@ -2620,7 +2595,7 @@ SQLPrimaryKeys(
 	return SQL_SUCCESS;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLForeignKeys(
 			   HSTMT hstmt,
 			   UCHAR FAR * szPkTableQualifier,
@@ -2897,7 +2872,6 @@ SQLForeignKeys(
 
 		while (result == SQL_SUCCESS)
 		{
-
 			/* Compute the number of keyparts. */
 			num_keys = (trig_nargs - 4) / 2;
 
@@ -2912,7 +2886,6 @@ SQLForeignKeys(
 			/* If there is a pk table specified, then check it. */
 			if (pk_table_needed[0] != '\0')
 			{
-
 				/* If it doesn't match, then continue */
 				if (strcmp(pk_table, pk_table_needed))
 				{
@@ -3001,7 +2974,6 @@ SQLForeignKeys(
 
 			for (k = 0; k < num_keys; k++)
 			{
-
 				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
 
 				mylog("%s: pk_table = '%s', pkey_ptr = '%s'\n", func, pk_table, pkey_ptr);
@@ -3049,7 +3021,6 @@ SQLForeignKeys(
 	 */
 	else if (pk_table_needed[0] != '\0')
 	{
-
 		sprintf(tables_query, "SELECT	pg_trigger.tgargs, "
 				"		pg_trigger.tgnargs, "
 				"		pg_trigger.tgdeferrable, "
@@ -3171,7 +3142,6 @@ SQLForeignKeys(
 
 		while (result == SQL_SUCCESS)
 		{
-
 			/* Calculate the number of key parts */
 			num_keys = (trig_nargs - 4) / 2;;
 
@@ -3227,7 +3197,6 @@ SQLForeignKeys(
 
 			for (k = 0; k < num_keys; k++)
 			{
-
 				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_ptr, fk_table, fkey_ptr);
 
 				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
@@ -3290,7 +3259,7 @@ SQLForeignKeys(
 
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLProcedureColumns(
 					HSTMT hstmt,
 					UCHAR FAR * szProcQualifier,
@@ -3310,7 +3279,7 @@ SQLProcedureColumns(
 	return SQL_ERROR;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLProcedures(
 			  HSTMT hstmt,
 			  UCHAR FAR * szProcQualifier,
@@ -3328,7 +3297,7 @@ SQLProcedures(
 	return SQL_ERROR;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLTablePrivileges(
 				   HSTMT hstmt,
 				   UCHAR FAR * szTableQualifier,

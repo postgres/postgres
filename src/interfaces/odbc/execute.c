@@ -39,7 +39,7 @@ extern GLOBAL_VALUES globals;
 
 
 /*		Perform a Prepare on the SQL statement */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLPrepare(HSTMT hstmt,
 		   UCHAR FAR * szSqlStr,
 		   SDWORD cbSqlStr)
@@ -133,7 +133,7 @@ SQLPrepare(HSTMT hstmt,
 
 /*		Performs the equivalent of SQLPrepare, followed by SQLExecute. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLExecDirect(
 			  HSTMT hstmt,
 			  UCHAR FAR * szSqlStr,
@@ -195,7 +195,7 @@ SQLExecDirect(
 }
 
 /*		Execute a prepared SQL statement */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLExecute(
 		   HSTMT hstmt)
 {
@@ -274,7 +274,6 @@ SQLExecute(
 	if ((stmt->prepare && stmt->status != STMT_READY) ||
 		(stmt->status != STMT_ALLOCATED && stmt->status != STMT_READY))
 	{
-
 		stmt->errornumber = STMT_STATUS_ERROR;
 		stmt->errormsg = "The handle does not point to a statement that is ready to be executed";
 		SC_log_error(func, "", stmt);
@@ -321,14 +320,13 @@ SQLExecute(
 
 
 	return SC_execute(stmt);
-
 }
 
 
 
 
 /*		-		-		-		-		-		-		-		-		- */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLTransact(
 			HENV henv,
 			HDBC hdbc,
@@ -363,7 +361,6 @@ SQLTransact(
 			if (conn && conn->henv == henv)
 				if (SQLTransact(henv, (HDBC) conn, fType) != SQL_SUCCESS)
 					return SQL_ERROR;
-
 		}
 		return SQL_SUCCESS;
 	}
@@ -371,15 +368,9 @@ SQLTransact(
 	conn = (ConnectionClass *) hdbc;
 
 	if (fType == SQL_COMMIT)
-	{
 		stmt_string = "COMMIT";
-
-	}
 	else if (fType == SQL_ROLLBACK)
-	{
 		stmt_string = "ROLLBACK";
-
-	}
 	else
 	{
 		conn->errornumber = CONN_INVALID_ARGUMENT_NO;
@@ -391,7 +382,6 @@ SQLTransact(
 	/* If manual commit and in transaction, then proceed. */
 	if (!CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
 	{
-
 		mylog("SQLTransact: sending on conn %d '%s'\n", conn, stmt_string);
 
 		res = CC_send_query(conn, stmt_string, NULL);
@@ -418,7 +408,7 @@ SQLTransact(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLCancel(
 		  HSTMT hstmt)			/* Statement to cancel. */
 {
@@ -447,8 +437,6 @@ SQLCancel(
 	 */
 	if (stmt->data_at_exec < 0)
 	{
-
-
 		/*
 		 * MAJOR HACK for Windows to reset the driver manager's cursor
 		 * state: Because of what seems like a bug in the Odbc driver
@@ -490,7 +478,6 @@ SQLCancel(
 	stmt->put_data = FALSE;
 
 	return SQL_SUCCESS;
-
 }
 
 /*		-		-		-		-		-		-		-		-		- */
@@ -498,7 +485,7 @@ SQLCancel(
 /*		Returns the SQL string as modified by the driver. */
 /*		Currently, just copy the input string without modification */
 /*		observing buffer limits and truncation. */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLNativeSql(
 			 HDBC hdbc,
 			 UCHAR FAR * szSqlStrIn,
@@ -552,7 +539,7 @@ SQLNativeSql(
 /*		Supplies parameter data at execution time.		Used in conjuction with */
 /*		SQLPutData. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLParamData(
 			 HSTMT hstmt,
 			 PTR FAR * prgbValue)
@@ -663,7 +650,7 @@ SQLParamData(
 /*		Supplies parameter data at execution time.		Used in conjunction with */
 /*		SQLParamData. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLPutData(
 		   HSTMT hstmt,
 		   PTR rgbValue,
@@ -720,7 +707,6 @@ SQLPutData(
 		/* Handle Long Var Binary with Large Objects */
 		if (current_param->SQLType == SQL_LONGVARBINARY)
 		{
-
 			/* begin transaction if needed */
 			if (!CC_is_in_trans(stmt->hdbc))
 			{
@@ -774,7 +760,6 @@ SQLPutData(
 
 			retval = lo_write(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValue);
 			mylog("lo_write: cbValue=%d, wrote %d bytes\n", cbValue, retval);
-
 		}
 		else
 		{						/* for handling text fields and small
@@ -814,17 +799,14 @@ SQLPutData(
 
 		if (current_param->SQLType == SQL_LONGVARBINARY)
 		{
-
 			/* the large object fd is in EXEC_buffer */
 			retval = lo_write(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValue);
 			mylog("lo_write(2): cbValue = %d, wrote %d bytes\n", cbValue, retval);
 
 			*current_param->EXEC_used += cbValue;
-
 		}
 		else
 		{
-
 			buffer = current_param->EXEC_buffer;
 
 			if (cbValue == SQL_NTS)
@@ -845,11 +827,9 @@ SQLPutData(
 
 				/* reassign buffer incase realloc moved it */
 				current_param->EXEC_buffer = buffer;
-
 			}
 			else if (cbValue > 0)
 			{
-
 				old_pos = *current_param->EXEC_used;
 
 				*current_param->EXEC_used += cbValue;
@@ -871,14 +851,12 @@ SQLPutData(
 
 				/* reassign buffer incase realloc moved it */
 				current_param->EXEC_buffer = buffer;
-
 			}
 			else
 			{
 				SC_log_error(func, "bad cbValue", stmt);
 				return SQL_ERROR;
 			}
-
 		}
 	}
 

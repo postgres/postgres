@@ -22,7 +22,7 @@
 ConnectionClass *conns[MAX_CONNECTIONS];
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLAllocEnv(HENV FAR * phenv)
 {
 	static char *func = "SQLAllocEnv";
@@ -41,7 +41,7 @@ SQLAllocEnv(HENV FAR * phenv)
 	return SQL_SUCCESS;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFreeEnv(HENV henv)
 {
 	static char *func = "SQLFreeEnv";
@@ -62,7 +62,7 @@ SQLFreeEnv(HENV henv)
 
 /*		Returns the next SQL error information. */
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLError(
 		 HENV henv,
 		 HDBC hdbc,
@@ -212,7 +212,6 @@ SQLError(
 				}
 
 			mylog("       szSqlState = '%s', szError='%s'\n", szSqlState, szErrorMsg);
-
 		}
 		else
 		{
@@ -227,7 +226,6 @@ SQLError(
 			return SQL_NO_DATA_FOUND;
 		}
 		return SQL_SUCCESS;
-
 	}
 	else if (SQL_NULL_HDBC != hdbc)
 	{
@@ -322,7 +320,6 @@ SQLError(
 						/* general error */
 						break;
 				}
-
 		}
 		else
 		{
@@ -337,7 +334,6 @@ SQLError(
 			return SQL_NO_DATA_FOUND;
 		}
 		return SQL_SUCCESS;
-
 	}
 	else if (SQL_NULL_HENV != henv)
 	{

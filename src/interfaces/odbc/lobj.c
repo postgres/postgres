@@ -76,7 +76,6 @@ lo_close(ConnectionClass * conn, int fd)
 
 	else
 		return retval;
-
 }
 
 
