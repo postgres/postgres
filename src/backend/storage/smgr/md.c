@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.111 2004/08/30 02:54:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.112 2004/08/30 03:52:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -937,10 +937,19 @@ _mdfd_getseg(SMgrRelation reln, BlockNumber blkno, bool allowNotFound)
 			 * "target" block.	We should never need to create more than
 			 * one new segment per call, so this restriction seems
 			 * reasonable.
+			 *
+			 * BUT: when doing WAL recovery, disable this logic and create
+			 * segments unconditionally.  In this case it seems better
+			 * to assume the given blkno is good (it presumably came from
+			 * a CRC-checked WAL record); furthermore this lets us cope
+			 * in the case where we are replaying WAL data that has a write
+			 * into a high-numbered segment of a relation that was later
+			 * deleted.  We want to go ahead and create the segments so
+			 * we can finish out the replay.
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln,
 										  nextsegno,
-										  (segstogo == 1) ? O_CREAT : 0);
+								  (segstogo == 1 || InRecovery) ? O_CREAT : 0);
 			if (v->mdfd_chain == NULL)
 			{
 				if (allowNotFound && errno == ENOENT)
