@@ -9,12 +9,29 @@
 #include <time.h>
 #include <math.h>
 #include <float.h>
-#include <limits.h>
 
 #include "postgres.h"
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
 #include "utils/int8.h"
 
 #define MAXINT8LEN		25
+
+#ifndef INT_MAX
+#define INT_MAX (0x7FFFFFFFL)
+#endif
+#ifndef INT_MIN
+#define INT_MIN (-INT_MAX-1)
+#endif
+#ifndef SHRT_MAX
+#define SHRT_MAX (0x7FFF)
+#endif
+#ifndef SHRT_MIN
+#define SHRT_MIN (-SHRT_MAX-1)
+#endif
 
 
 /***********************************************************************
@@ -38,7 +55,7 @@ int8in(char *str)
 	int			sign = 1;
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) int8 external representation", NULL);
+		elog(ERROR, "Bad (null) int8 external representation");
 
 	/*
 	 * Do our own scan, rather than relying on sscanf which might be
@@ -78,7 +95,7 @@ int8out(int64 *val)
 		return NULL;
 
 	if ((len = snprintf(buf, MAXINT8LEN, INT64_FORMAT, *val)) < 0)
-		elog(ERROR, "Unable to format int8", NULL);
+		elog(ERROR, "Unable to format int8");
 
 	result = palloc(len + 1);
 
@@ -98,36 +115,54 @@ int8out(int64 *val)
 bool
 int8eq(int64 *val1, int64 *val2)
 {
+	if (!val1 || !val2)
+		return 0;
+
 	return *val1 == *val2;
 }	/* int8eq() */
 
 bool
 int8ne(int64 *val1, int64 *val2)
 {
+	if (!val1 || !val2)
+		return 0;
+
 	return *val1 != *val2;
 }	/* int8ne() */
 
 bool
 int8lt(int64 *val1, int64 *val2)
 {
+	if (!val1 || !val2)
+		return 0;
+
 	return *val1 < *val2;
 }	/* int8lt() */
 
 bool
 int8gt(int64 *val1, int64 *val2)
 {
+	if (!val1 || !val2)
+		return 0;
+
 	return *val1 > *val2;
 }	/* int8gt() */
 
 bool
 int8le(int64 *val1, int64 *val2)
 {
+	if (!val1 || !val2)
+		return 0;
+
 	return *val1 <= *val2;
 }	/* int8le() */
 
 bool
 int8ge(int64 *val1, int64 *val2)
 {
+	if (!val1 || !val2)
+		return 0;
+
 	return *val1 >= *val2;
 }	/* int8ge() */
 
@@ -138,36 +173,54 @@ int8ge(int64 *val1, int64 *val2)
 bool
 int84eq(int64 *val1, int32 val2)
 {
+	if (!val1)
+		return 0;
+
 	return *val1 == val2;
 }	/* int84eq() */
 
 bool
 int84ne(int64 *val1, int32 val2)
 {
+	if (!val1)
+		return 0;
+
 	return *val1 != val2;
 }	/* int84ne() */
 
 bool
 int84lt(int64 *val1, int32 val2)
 {
+	if (!val1)
+		return 0;
+
 	return *val1 < val2;
 }	/* int84lt() */
 
 bool
 int84gt(int64 *val1, int32 val2)
 {
+	if (!val1)
+		return 0;
+
 	return *val1 > val2;
 }	/* int84gt() */
 
 bool
 int84le(int64 *val1, int32 val2)
 {
+	if (!val1)
+		return 0;
+
 	return *val1 <= val2;
 }	/* int84le() */
 
 bool
 int84ge(int64 *val1, int32 val2)
 {
+	if (!val1)
+		return 0;
+
 	return *val1 >= val2;
 }	/* int84ge() */
 
@@ -178,36 +231,54 @@ int84ge(int64 *val1, int32 val2)
 bool
 int48eq(int32 val1, int64 *val2)
 {
+	if (!val2)
+		return 0;
+
 	return val1 == *val2;
 }	/* int48eq() */
 
 bool
 int48ne(int32 val1, int64 *val2)
 {
+	if (!val2)
+		return 0;
+
 	return val1 != *val2;
 }	/* int48ne() */
 
 bool
 int48lt(int32 val1, int64 *val2)
 {
+	if (!val2)
+		return 0;
+
 	return val1 < *val2;
 }	/* int48lt() */
 
 bool
 int48gt(int32 val1, int64 *val2)
 {
+	if (!val2)
+		return 0;
+
 	return val1 > *val2;
 }	/* int48gt() */
 
 bool
 int48le(int32 val1, int64 *val2)
 {
+	if (!val2)
+		return 0;
+
 	return val1 <= *val2;
 }	/* int48le() */
 
 bool
 int48ge(int32 val1, int64 *val2)
 {
+	if (!val2)
+		return 0;
+
 	return val1 >= *val2;
 }	/* int48ge() */
 
@@ -436,19 +507,10 @@ int84(int64 *val)
 	int32		result;
 
 	if (!PointerIsValid(val))
-		elog(ERROR, "Invalid (null) int64, can't convert int8 to int4", NULL);
+		elog(ERROR, "Invalid (null) int64, can't convert int8 to int4");
 
-#if NOT_USED
-
-	/*
-	 * Hmm. This conditional always tests true on my i686/linux box. It's
-	 * a gcc compiler bug, or I'm missing something obvious, which is more
-	 * likely... - thomas 1998-06-09
-	 */
 	if ((*val < INT_MIN) || (*val > INT_MAX))
-#endif
-		if ((*val < (-pow(2, 31) + 1)) || (*val > (pow(2, 31) - 1)))
-			elog(ERROR, "int8 conversion to int4 is out of range", NULL);
+		elog(ERROR, "int8 conversion to int4 is out of range");
 
 	result = *val;
 
@@ -474,10 +536,10 @@ int82(int64 *val)
 	int16		result;
 
 	if (!PointerIsValid(val))
-		elog(ERROR, "Invalid (null) int8, can't convert to int2", NULL);
+		elog(ERROR, "Invalid (null) int8, can't convert to int2");
 
-	if ((*val < (-pow(2, 15) + 1)) || (*val > (pow(2, 15) - 1)))
-		elog(ERROR, "int8 conversion to int2 is out of range", NULL);
+	if ((*val < SHRT_MIN) || (*val > SHRT_MAX))
+		elog(ERROR, "int8 conversion to int2 is out of range");
 
 	result = *val;
 
@@ -490,6 +552,9 @@ float64
 i8tod(int64 *val)
 {
 	float64		result = palloc(sizeof(float64data));
+
+	if (!PointerIsValid(val))
+		elog(ERROR, "Invalid (null) int8, can't convert to float8");
 
 	*result = *val;
 
@@ -511,8 +576,11 @@ dtoi8(float64 val)
 {
 	int64	   *result = palloc(sizeof(int64));
 
+	if (!PointerIsValid(val))
+		elog(ERROR, "Invalid (null) float8, can't convert to int8");
+
 	if ((*val < (-pow(2, 63) + 1)) || (*val > (pow(2, 63) - 1)))
-		elog(ERROR, "Floating point conversion to int64 is out of range", NULL);
+		elog(ERROR, "Floating point conversion to int64 is out of range");
 
 	*result = *val;
 
@@ -528,7 +596,7 @@ text_int8(text *str)
 	char	   *s;
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) int8 external representation", NULL);
+		elog(ERROR, "Bad (null) int8 external representation");
 
 	len = (VARSIZE(str) - VARHDRSZ);
 	s = palloc(len + 1);
