@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.1 1996/08/27 21:50:26 scrappy Exp $
+ * $Id: tupdesc.h,v 1.2 1996/09/16 05:33:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,21 +18,16 @@
 #include "nodes/pg_list.h"	/* for List */
 #include "catalog/pg_attribute.h"
 
-/*
- * a TupleDesc is an array of AttributeTupleForms, each of which is a
- * pointer to a AttributeTupleForm
- */
-/* typedef AttributeTupleForm      *TupleDesc; */
-
-/* a TupleDesc is a pointer to a structure which includes an array of */
-/* AttributeTupleForms, i.e. pg_attribute information, and the size of */
-/* the array, i.e. the number of attributes */
-/* in short, a TupleDesc completely captures the attribute information */
-/* for a tuple */
 
 typedef struct tupleDesc {
-    int  natts;
+/*------------------------------------------------------------------------ 
+  This structure contains all the attribute information (i.e. from Class 
+  pg_attribute) for a tuple. 
+-------------------------------------------------------------------------*/
+    int  natts;      
+      /* Number of attributes in the tuple */
     AttributeTupleForm *attrs;
+      /* attrs[N] is a pointer to the description of Attribute Number N+1.  */
 } *TupleDesc;
 
 extern TupleDesc CreateTemplateTupleDesc(int natts);

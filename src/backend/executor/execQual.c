@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.1.1.1 1996/07/09 06:21:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.2 1996/09/16 05:33:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,8 +172,24 @@ ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull)
  *    
  *    	Returns a Datum whose value is the value of a range
  *	variable with respect to given expression context.
- * ----------------------------------------------------------------
- */
+ *
+ *
+ *      As an entry condition, we expect that the the datatype the
+ *      plan expects to get (as told by our "variable" argument) is in
+ *      fact the datatype of the attribute the plan says to fetch (as
+ *      seen in the current context, identified by our "econtext"
+ *      argument).
+ * 
+ *      If we fetch a Type A attribute and Caller treats it as if it
+ *      were Type B, there will be undefined results (e.g. crash).
+ *      One way these might mismatch now is that we're accessing a
+ *      catalog class and the type information in the pg_attribute
+ *      class does not match the hardcoded pg_attribute information
+ *      (in pg_attribute.h) for the class in question.
+ *     
+ *      We have an Assert to make sure this entry condition is met.
+ * 
+ * ---------------------------------------------------------------- */
 Datum
 ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 {
@@ -211,8 +227,12 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
     heapTuple =  slot->val;
     tuple_type = slot->ttc_tupleDescriptor;
     buffer =	 slot->ttc_buffer;
-    
+
     attnum =  	variable->varattno;
+
+    /* (See prolog for explanation of this Assert) */
+    Assert(attnum < 0 ||
+           variable->vartype == tuple_type->attrs[attnum-1]->atttypid)
     
     /*
      * If the attribute number is invalid, then we are supposed to
