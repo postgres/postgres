@@ -1,8 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.3 1999/05/26 17:30:28 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.4 1999/06/23 06:17:51 thomas Exp $
 Date/time details
 
 $Log: datetime.sgml,v $
+Revision 2.4  1999/06/23 06:17:51  thomas
+Clarify input/output timezone information.
+Add detail on exact interpretation of "concatenated date"
+ for various lengths.
+
 Revision 2.3  1999/05/26 17:30:28  thomas
 Add chapters on CVS access, MVCC, SQL theory to the docs.
 Add an appendix with more details on date/time attributes and handling.
@@ -23,6 +28,12 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
   <title>Time Zones</title>
 
   <para>
+   <productname>Postgres</productname> must have internal tabular
+   information for time zone decoding, since there is no *nix standard
+   system interface to provide access to general, cross-timezone
+   information. The underlying OS <emphasis>is</emphasis> used to
+   provide time zone information for <emphasis>output</emphasis>.
+
    <table tocentry="1">
     <title><productname>Postgres</productname> Recognized Time Zones</title>
     <titleabbrev>Time Zones</titleabbrev>
@@ -504,23 +515,23 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
    <step>
     <para>
      The token is a number or number field.
-     If there are more than 4 digits, 
-     and if no other date fields have been previously read, then interpret 
-     as a "concatenated date" (e.g. <literal>19990118</literal>).
     </para>
-    
+
     <substeps>
      <step>
       <para>
        If there are more than 4 digits, 
        and if no other date fields have been previously read, then interpret 
-       as a "concatenated date" (e.g. <literal>19990118</literal>).
+       as a "concatenated date" (e.g. <literal>19990118</literal>). 8
+       and 6 digits are interpreted as year, month, and day, while 7
+       and 5 digits are interpreted as year, day of year.
       </para>
      </step>
 
      <step>
       <para>
-       If three digits and a year has already been decoded, then interpret as day of year.
+       If the token is three digits
+       and a year has already been decoded, then interpret as day of year.
       </para>
      </step>
      
@@ -568,8 +579,10 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
 
    <step>
     <para>
-     If BC has been specified, negate the year and offset by one 
-     (there is no year zero in the Gregorian calendar).
+     If BC has been specified, negate the year and offset by one for
+     internal storage
+     (there is no year zero in the Gregorian calendar, so numerically
+     1BC becomes year zero).
     </para>
    </step>
 
@@ -578,9 +591,18 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
      If BC was not specified, and if the year field was two digits in length, then
      adjust the year to 4 digits. If the field was less than 70, then add 2000;
      otherwise, add 1900.
+
+     <tip>
+      <para>
+       Gregorian years 1-99AD may be entered by using 4 digits with leading
+       zeros (e.g. 0099 is 99AD). Three digits are also accepted as a
+       year under most circumstances, though depending on position the
+       numeric string may
+       be interpreted as doy instead.
+      </para>
+     </tip>
     </para>
    </step>
-   
   </procedure>
  </sect1>
 
@@ -595,9 +617,9 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
   </note>
 
   <para>
-   The Julian Day invented by the French scholar
+   The Julian Day was invented by the French scholar
    Joseph Justus Scaliger (1540-1609)
-   and which probably takes its name from the Scaliger's father,
+   and probably takes its name from the Scaliger's father,
    the Italian scholar Julius Caesar Scaliger (1484-1558).
    Astronomers have used the Julian period to assign a unique number to
    every day since 1 January 4713 BC. This is the so-called Julian Day
@@ -606,7 +628,7 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
   </para>
 
   <para>
-   Julian Day is different from Julian Date.
+   <quote>Julian Day</quote> is different from <quote>Julian Date</quote>.
 
    The Julian calendar was introduced by Julius Caesar in 45 BC. It was
    in common use until the 1582, when countries started changing to the
@@ -633,13 +655,13 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
 
    <simplelist>
     <member>
-        Every year divisible by 4 is a leap year.
+     Every year divisible by 4 is a leap year.
     </member>
     <member>
-        However, every year divisible by 100 is not a leap year.
+     However, every year divisible by 100 is not a leap year.
     </member>
     <member>
-        However, every year divisible by 400 is a leap year after all.
+     However, every year divisible by 400 is a leap year after all.
     </member>
    </simplelist>
 
