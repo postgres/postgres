@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.40 2000/04/14 15:17:28 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.41 2000/04/14 23:12:29 momjian Exp $
 Postgres documentation
 -->
 
@@ -269,10 +269,9 @@ SELECT setseed(<replaceable>value</replaceable>);
       <term>CONSTRAINT</term>
       <listitem>
        <para>
-	SET CONSTRAINTS is the SQL3 specified command to  change  the
-	default behaviour of constraints with respect to deferring in the current
-	transaction. Allowed parameters are:
-
+	SET CONSTRAINTS controls the frequency of foreign key
+	constratint checking in the current transaction. Allowed
+	parameters are:
 	<variablelist>
 	 <varlistentry>
 	  <term><replaceable class="parameter">constraintlist</replaceable></term>
@@ -296,11 +295,11 @@ SELECT setseed(<replaceable>value</replaceable>);
        </para>
 
        <para>
-	In deferred mode, the actual check of the constraint is  held
-	back  until  either its mode is explicitly set to <option>IMMEDIATE</option>,
-	or until COMMIT.  This is actually only done for foreign  key
-	constraints,  so  it  does  not  apply  to  UNIQUE  or  other
-	constraints.
+	In <option>DEFERRED</option> mode, foreign key constraints
+	marked as <option>DEFERRABLE</option> are checked only at
+	transaction commit.
+	In <option>IMMEDIATE</option> mode, foreign key constraints
+	are checked at the end of each query.
        </para>
       </listitem>
      </varlistentry>
