@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.76 2004/04/21 18:06:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.77 2004/04/22 07:21:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,12 @@ extern int	BgWriterMaxpages;
 
 /* in buf_init.c */
 extern DLLIMPORT Block *BufferBlockPointers;
-extern long *PrivateRefCount;
+extern int32 *PrivateRefCount;
 
 /* in localbuf.c */
 extern DLLIMPORT int NLocBuffer;
 extern DLLIMPORT Block *LocalBufferBlockPointers;
-extern long *LocalRefCount;
+extern int32 *LocalRefCount;
 
 /* special pageno for bget */
 #define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */

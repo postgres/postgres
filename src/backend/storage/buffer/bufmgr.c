@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.162 2004/04/21 18:06:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.163 2004/04/22 07:21:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@
 bool		zero_damaged_pages = false;
 
 #ifdef NOT_USED
-int			ShowPinTrace = 0;
+bool			ShowPinTrace = false;
 #endif
 
 int			BgWriterDelay = 200;
@@ -843,7 +843,7 @@ AtEOXact_Buffers(bool isCommit)
 			if (isCommit)
 				elog(WARNING,
 					 "buffer refcount leak: [%03d] "
-					 "(rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
+					 "(rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
 					 i,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 					 buf->tag.blockNum, buf->flags,
@@ -1225,7 +1225,7 @@ recheck:
 			{
 				/* the sole pin should be ours */
 				if (bufHdr->refcount != 1 || PrivateRefCount[i - 1] == 0)
-					elog(FATAL, "block %u of %u/%u is still referenced (private %ld, global %d)",
+					elog(FATAL, "block %u of %u/%u is still referenced (private %d, global %u)",
 						 bufHdr->tag.blockNum,
 						 bufHdr->tag.rnode.tblNode,
 						 bufHdr->tag.rnode.relNode,
@@ -1330,8 +1330,9 @@ PrintBufferDescs(void)
 		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			elog(LOG, "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, \
-blockNum=%u, flags=0x%x, refcount=%d %ld)",
+			elog(LOG,
+				 "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, "
+				 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 				 i, buf->freeNext, buf->freePrev,
 				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 				 buf->tag.blockNum, buf->flags,
@@ -1344,7 +1345,7 @@ blockNum=%u, flags=0x%x, refcount=%d %ld)",
 		/* interactive backend */
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			printf("[%-2d] (%u/%u, %u) flags=0x%x, refcnt=%d %ld)\n",
+			printf("[%-2d] (%u/%u, %u) flags=0x%x, refcount=%u %d)\n",
 				   i, buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 				   buf->tag.blockNum,
 				   buf->flags, buf->refcount, PrivateRefCount[i]);
@@ -1364,8 +1365,9 @@ PrintPinnedBufs(void)
 	for (i = 0; i < NBuffers; ++i, ++buf)
 	{
 		if (PrivateRefCount[i] > 0)
-			elog(WARNING, "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, \
-blockNum=%u, flags=0x%x, refcount=%d %ld)",
+			elog(WARNING,
+				 "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, "
+				 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 				 i, buf->freeNext, buf->freePrev,
 				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 				 buf->tag.blockNum, buf->flags,
@@ -1458,7 +1460,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				}
 				if (LocalRefCount[i] > 0)
 				{
-					elog(WARNING, "FlushRelationBuffers(\"%s\" (local), %u): block %u is referenced (%ld)",
+					elog(WARNING, "FlushRelationBuffers(\"%s\" (local), %u): block %u is referenced (%d)",
 						 RelationGetRelationName(rel), firstDelBlock,
 						 bufHdr->tag.blockNum, LocalRefCount[i]);
 					return (-2);
@@ -1507,7 +1509,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 			if (bufHdr->refcount != 0)
 			{
 				LWLockRelease(BufMgrLock);
-				elog(WARNING, "FlushRelationBuffers(\"%s\", %u): block %u is referenced (private %ld, global %d)",
+				elog(WARNING, "FlushRelationBuffers(\"%s\", %u): block %u is referenced (private %d, global %u)",
 					 RelationGetRelationName(rel), firstDelBlock,
 					 bufHdr->tag.blockNum,
 					 PrivateRefCount[i], bufHdr->refcount);
@@ -1565,8 +1567,9 @@ IncrBufferRefCount_Debug(char *file, int line, Buffer buffer)
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "PIN(Incr) %d rel = %u/%u, blockNum = %u, \
-refcount = %ld, file: %s, line: %d\n",
+		fprintf(stderr,
+				"PIN(Incr) %d rel = %u/%u, blockNum = %u, "
+				"refcount = %d, file: %s, line: %d\n",
 				buffer,
 				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 				buf->tag.blockNum,
@@ -1584,8 +1587,9 @@ ReleaseBuffer_Debug(char *file, int line, Buffer buffer)
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "UNPIN(Rel) %d rel = %u/%u, blockNum = %u, \
-refcount = %ld, file: %s, line: %d\n",
+		fprintf(stderr,
+				"UNPIN(Rel) %d rel = %u/%u, blockNum = %u, "
+				"refcount = %d, file: %s, line: %d\n",
 				buffer,
 				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 				buf->tag.blockNum,
@@ -1612,8 +1616,9 @@ ReleaseAndReadBuffer_Debug(char *file,
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "UNPIN(Rel&Rd) %d rel = %u/%u, blockNum = %u, \
-refcount = %ld, file: %s, line: %d\n",
+		fprintf(stderr,
+				"UNPIN(Rel&Rd) %d rel = %u/%u, blockNum = %u, "
+				"refcount = %d, file: %s, line: %d\n",
 				buffer,
 				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 				buf->tag.blockNum,
@@ -1623,8 +1628,9 @@ refcount = %ld, file: %s, line: %d\n",
 	{
 		BufferDesc *buf = &BufferDescriptors[b - 1];
 
-		fprintf(stderr, "PIN(Rel&Rd) %d rel = %u/%u, blockNum = %u, \
-refcount = %ld, file: %s, line: %d\n",
+		fprintf(stderr,
+				"PIN(Rel&Rd) %d rel = %u/%u, blockNum = %u, "
+				"refcount = %d, file: %s, line: %d\n",
 				b,
 				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 				buf->tag.blockNum,
@@ -1819,7 +1825,7 @@ LockBufferForCleanup(Buffer buffer)
 	{
 		/* There should be exactly one pin */
 		if (LocalRefCount[-buffer - 1] != 1)
-			elog(ERROR, "incorrect local pin count: %ld",
+			elog(ERROR, "incorrect local pin count: %d",
 				 LocalRefCount[-buffer - 1]);
 		/* Nobody else to wait for */
 		return;
@@ -1827,7 +1833,7 @@ LockBufferForCleanup(Buffer buffer)
 
 	/* There should be exactly one local pin */
 	if (PrivateRefCount[buffer - 1] != 1)
-		elog(ERROR, "incorrect local pin count: %ld",
+		elog(ERROR, "incorrect local pin count: %d",
 			 PrivateRefCount[buffer - 1]);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
