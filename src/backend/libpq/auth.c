@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.72 2001/11/05 17:46:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.72.2.1 2002/02/25 20:07:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,9 +752,9 @@ CheckPAMAuth(Port *port, char *user, char *password)
 		return STATUS_ERROR;
 	}
 
-	if (retval == PAM_SUCCESS)
-		retval = pam_set_item(pamh, PAM_USER, user);
-	else
+	retval = pam_set_item(pamh, PAM_USER, user);
+
+	if (retval != PAM_SUCCESS)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "CheckPAMAuth: pam_set_item(PAM_USER) failed: '%s'\n",
@@ -764,9 +764,10 @@ CheckPAMAuth(Port *port, char *user, char *password)
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
-	if (retval == PAM_SUCCESS)
-		retval = pam_set_item(pamh, PAM_CONV, &pam_passw_conv);
-	else
+
+	retval = pam_set_item(pamh, PAM_CONV, &pam_passw_conv);
+
+	if (retval != PAM_SUCCESS)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "CheckPAMAuth: pam_set_item(PAM_CONV) failed: '%s'\n",
@@ -776,9 +777,10 @@ CheckPAMAuth(Port *port, char *user, char *password)
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
-	if (retval == PAM_SUCCESS)
-		retval = pam_authenticate(pamh, 0);
-	else
+
+	retval = pam_authenticate(pamh, 0);
+
+	if (retval != PAM_SUCCESS)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "CheckPAMAuth: pam_authenticate failed: '%s'\n",
@@ -788,9 +790,10 @@ CheckPAMAuth(Port *port, char *user, char *password)
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
-	if (retval == PAM_SUCCESS)
-		retval = pam_acct_mgmt(pamh, 0);
-	else
+
+	retval = pam_acct_mgmt(pamh, 0);
+
+	if (retval != PAM_SUCCESS)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "CheckPAMAuth: pam_acct_mgmt failed: '%s'\n",
@@ -800,24 +803,21 @@ CheckPAMAuth(Port *port, char *user, char *password)
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
-	if (retval == PAM_SUCCESS)
+
+	retval = pam_end(pamh, retval);
+
+	if (retval != PAM_SUCCESS)
 	{
-		retval = pam_end(pamh, retval);
-		if (retval != PAM_SUCCESS)
-		{
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "CheckPAMAuth: Failed to release PAM authenticator: '%s'\n",
-					 pam_strerror(pamh, retval));
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-		}
-
-		pam_passwd = NULL;		/* Unset pam_passwd */
-
-		return (retval == PAM_SUCCESS ? STATUS_OK : STATUS_ERROR);
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		 "CheckPAMAuth: Failed to release PAM authenticator: '%s'\n",
+				 pam_strerror(pamh, retval));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
 	}
-	else
-		return STATUS_ERROR;
+
+	pam_passwd = NULL;		/* Unset pam_passwd */
+
+	return (retval == PAM_SUCCESS ? STATUS_OK : STATUS_ERROR);
 }
 #endif   /* USE_PAM */
 
