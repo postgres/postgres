@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.131 2002/04/05 00:31:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.132 2002/04/10 22:46:48 petere Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Readline and Zlib are now required by default and must be turned off explicitly if their use is not desired
 Define a third class of function volatility to allow indexscans in more cases
 Locale support is now built by default; choice of locale is set by initdb and/or at run-time
 ALTER TABLE ALTER COLUMN SET/DROP NOT NULL

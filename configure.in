@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.176 2002/04/10 16:45:24 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.177 2002/04/10 22:46:31 petere Exp $
 
 dnl Developers, please strive to achieve this order:
 dnl
@@ -511,6 +511,19 @@ PGAC_ARG_OPTARG(with, openssl,
 AC_SUBST(with_openssl)
 
 
+#
+# Readline
+#
+PGAC_ARG_BOOL(with, readline, yes,
+              [  --without-readline      do not use Readline])
+
+#
+# Zlib
+#
+PGAC_ARG_BOOL(with, zlib, yes,
+              [  --without-zlib          do not use Zlib])
+
+
 
 #
 # Optionally enable the building of the ODBC driver
@@ -676,11 +689,6 @@ fi
 ## Libraries
 ##
 
-PGAC_CHECK_READLINE
-AC_SEARCH_LIBS(using_history, history,
-               [AC_DEFINE(HAVE_HISTORY_FUNCTIONS, 1,
-                          [Define if you have the history functions])])
-
 if test "$PORTNAME" != "aix" -a "$PORTNAME" != "alpha"
 then
 	AC_CHECK_LIB(bsd,      main)
@@ -705,15 +713,22 @@ AC_CHECK_LIB([[unix]], main)
 AC_SEARCH_LIBS(crypt,  crypt)
 # BeOS:
 AC_CHECK_LIB(bind,     __inet_ntoa)
-# Only consider libz to be present if we find <zlib.h> as well;
-# furthermore, check that <zlib.h> defines z_streamp (versions before
-# about 1.0.4 did not).  While we could work around the lack of z_streamp,
-# it seems unwise to encourage people to use such old zlib versions...
-AC_EGREP_HEADER(z_streamp, zlib.h, [
-AC_CHECK_LIB(z,        inflate)
-])
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
+
+if test "$with_readline" = yes; then
+  PGAC_CHECK_READLINE
+  if test x"$pgac_cv_check_readline" = x"no"; then
+    AC_MSG_ERROR([readline library not found
+Use --without-readline to disable readline support.])
+  fi
+fi
+
+if test "$with_zlib" = yes; then
+  AC_CHECK_LIB(z, inflate, [],
+               [AC_MSG_ERROR([zlib library not found
+Use --without-zlib to disable zlib support.])])
+fi
 
 if test "$with_krb4" = yes ; then
   AC_CHECK_LIB(des, [des_encrypt], [], [AC_MSG_ERROR([library 'des' is required for Kerberos 4])])
@@ -756,8 +771,21 @@ AC_CHECK_HEADERS([netinet/tcp.h], [], [],
 #endif
 ])
 
-AC_CHECK_HEADERS([readline/readline.h readline.h], [break])
-AC_CHECK_HEADERS([readline/history.h history.h], [break])
+if test "$with_readline" = yes; then
+  AC_CHECK_HEADERS([readline/readline.h], [],
+                   [AC_CHECK_HEADERS([readline.h], [],
+                                     [AC_MSG_ERROR([readline header not found
+Use --without-readline to disable readline support.])])])
+  AC_CHECK_HEADERS([readline/history.h], [],
+                   [AC_CHECK_HEADERS([history.h], [],
+                                     [AC_MSG_ERROR([history header not found
+Use --without-readline to disable readline support.])])])
+fi
+
+if test "$with_zlib" = yes; then
+  AC_CHECK_HEADER(zlib.h, [], [AC_MSG_ERROR([zlib header not found
+Use --without-zlib to disable zlib support.])])
+fi
 
 if test "$with_krb4" = yes ; then
   AC_CHECK_HEADER(krb.h, [], [AC_MSG_ERROR([header file <krb.h> is required for Kerberos 4])])
@@ -795,6 +823,15 @@ AC_CHECK_TYPES([struct cmsgcred, struct fcred, struct sockcred], [], [],
 [#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/ucred.h>])
+
+if test "$with_zlib" = yes; then
+  # Check that <zlib.h> defines z_streamp (versions before about 1.0.4
+  # did not).  While we could work around the lack of z_streamp, it
+  # seems unwise to encourage people to use such old zlib versions...
+  AC_CHECK_TYPE(z_streamp, [], [AC_MSG_ERROR([zlib version is too old
+Use --without-zlib to disable zlib support.])],
+                [#include <zlib.h>])
+fi
 
 if test "$with_krb5" = yes; then
 # Check for differences between MIT and Heimdal (KTH) releases
@@ -914,22 +951,10 @@ AC_CHECK_FUNCS(rint, [],
                [AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB)])
 
 
-# Readline versions < 2.1 don't have rl_completion_append_character
-AC_MSG_CHECKING([for rl_completion_append_character])
-AC_TRY_LINK([#include <stdio.h>
-#ifdef HAVE_READLINE_READLINE_H
-# include <readline/readline.h>
-#elif defined(HAVE_READLINE_H)
-# include <readline.h>
-#endif
-],
-[rl_completion_append_character = 'x';],
-[AC_MSG_RESULT(yes)
-AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER, 1,
-          [Define if you have rl_completion_append_character])],
-[AC_MSG_RESULT(no)])
-
-AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
+if test "$with_readline" = yes; then
+  PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
+  AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
+fi
 
 
 dnl Cannot use AC_CHECK_FUNC because finite may be a macro

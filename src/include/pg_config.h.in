@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.20 2002/04/03 05:39:33 petere Exp $
+ * $Id: pg_config.h.in,v 1.21 2002/04/10 22:47:09 petere Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -420,9 +420,6 @@
 /* Define if you have the stricmp function.  */
 #undef HAVE_STRICMP
 
-/* Set to 1 if you have history functions (either in libhistory or libreadline) */
-#undef HAVE_HISTORY_FUNCTIONS
-
 /* Set to 1 if you have <pwd.h> */
 #undef HAVE_PWD_H
 
@@ -589,9 +586,6 @@ extern int fdatasync(int fildes);
 
 /* Set to 1 if you have libreadline.a */
 #undef HAVE_LIBREADLINE
-
-/* Set to 1 if you have libhistory.a */
-#undef HAVE_LIBHISTORY
 
 /* Set to 1 if your libreadline defines rl_completion_append_character */
 #undef HAVE_RL_COMPLETION_APPEND_CHARACTER

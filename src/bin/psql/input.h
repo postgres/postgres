@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.15 2001/11/05 17:46:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.16 2002/04/10 22:47:03 petere Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -12,26 +12,20 @@
  * If some other file needs to have access to readline/history, include this
  * file and save yourself all this work.
  *
- * USE_READLINE and USE_HISTORY are the definite pointers regarding existence or not.
+ * USE_READLINE is the definite pointers regarding existence or not.
  */
 #ifdef HAVE_LIBREADLINE
-#if defined(HAVE_READLINE_READLINE_H)
-#include <readline/readline.h>
-#define USE_READLINE 1
-#elif defined(HAVE_READLINE_H)
-#include <readline.h>
-#define USE_READLINE 1
-#endif
-#endif
-
-#if defined(HAVE_HISTORY_FUNCTIONS)
-#if defined(HAVE_READLINE_HISTORY_H)
-#include <readline/history.h>
-#define USE_HISTORY 1
-#elif defined(HAVE_HISTORY_H)
-#include <history.h>
-#define USE_HISTORY 1
-#endif
+# define USE_READLINE 1
+# if defined(HAVE_READLINE_READLINE_H)
+#  include <readline/readline.h>
+# elif defined(HAVE_READLINE_H)
+#  include <readline.h>
+# endif
+# if defined(HAVE_READLINE_HISTORY_H)
+#  include <readline/history.h>
+# elif defined(HAVE_HISTORY_H)
+#  include <history.h>
+# endif
 #endif
 
 char	   *gets_interactive(char *prompt);

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.55 2002/03/27 19:16:13 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.56 2002/04/10 22:47:04 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -636,21 +636,12 @@ showVersion(void)
 {
 	puts("psql (PostgreSQL) " PG_VERSION);
 
-#if defined(USE_READLINE) || defined (USE_HISTORY) || defined(MULTIBYTE)
+#if defined(USE_READLINE) || defined(MULTIBYTE)
 	fputs(gettext("contains support for: "), stdout);
 
 #ifdef USE_READLINE
 	fputs(gettext("readline"), stdout);
 #define _Feature
-#endif
-
-#ifdef USE_HISTORY
-#ifdef _Feature
-	fputs(", ", stdout);
-#else
-#define _Feature
-#endif
-	fputs(gettext("history"), stdout);
 #endif
 
 #ifdef MULTIBYTE

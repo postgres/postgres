@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.9 2002/04/10 16:45:24 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.10 2002/04/10 22:46:33 petere Exp $
 
 
 # PGAC_PATH_FLEX
@@ -112,6 +112,27 @@ if test "$pgac_cv_check_readline" != no ; then
 else
   AC_MSG_RESULT(no)
 fi])# PGAC_CHECK_READLINE
+
+
+
+# PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
+# ---------------------------------------
+# Readline versions < 2.1 don't have rl_completion_append_character
+
+AC_DEFUN([PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER],
+[AC_MSG_CHECKING([for rl_completion_append_character])
+AC_TRY_LINK([#include <stdio.h>
+#ifdef HAVE_READLINE_READLINE_H
+# include <readline/readline.h>
+#elif defined(HAVE_READLINE_H)
+# include <readline.h>
+#endif
+],
+[rl_completion_append_character = 'x';],
+[AC_MSG_RESULT(yes)
+AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER, 1,
+          [Define if you have rl_completion_append_character])],
+[AC_MSG_RESULT(no)])])# PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
 
 
 
