@@ -1,0 +1,183 @@
+--
+-- TIME
+--
+CREATE TABLE TIME_TBL (f1 time, f2 time with time zone);
+INSERT INTO TIME_TBL VALUES ('00:00', '00:00 PDT');
+INSERT INTO TIME_TBL VALUES ('01:00', '01:00 PDT');
+INSERT INTO TIME_TBL VALUES ('02:03', '02:03 PDT');
+INSERT INTO TIME_TBL VALUES ('11:59', '11:59 PDT');
+INSERT INTO TIME_TBL VALUES ('12:00', '12:00 PDT');
+INSERT INTO TIME_TBL VALUES ('12:01', '12:01 PDT');
+INSERT INTO TIME_TBL VALUES ('23:59', '23:59 PDT');
+INSERT INTO TIME_TBL VALUES ('11:59:59.99 PM', '11:59:59.99 PM PDT');
+SELECT f1 AS "Time", f2 AS "Time TZ" FROM TIME_TBL;
+   Time   |   Time TZ   
+----------+-------------
+ 00:00:00 | 00:00:00-07
+ 01:00:00 | 01:00:00-07
+ 02:03:00 | 02:03:00-07
+ 11:59:00 | 11:59:00-07
+ 12:00:00 | 12:00:00-07
+ 12:01:00 | 12:01:00-07
+ 23:59:00 | 23:59:00-07
+ 23:59:59 | 23:59:59-07
+(8 rows)
+
+SELECT f1 AS "Three" FROM TIME_TBL WHERE f1 < '05:06:07';
+  Three   
+----------
+ 00:00:00
+ 01:00:00
+ 02:03:00
+(3 rows)
+
+SELECT f1 AS "Five" FROM TIME_TBL WHERE f1 > '05:06:07';
+   Five   
+----------
+ 11:59:00
+ 12:00:00
+ 12:01:00
+ 23:59:00
+ 23:59:59
+(5 rows)
+
+SELECT f1 AS "None" FROM TIME_TBL WHERE f1 < '00:00';
+ None 
+------
+(0 rows)
+
+SELECT f1 AS "Eight" FROM TIME_TBL WHERE f1 >= '00:00';
+  Eight   
+----------
+ 00:00:00
+ 01:00:00
+ 02:03:00
+ 11:59:00
+ 12:00:00
+ 12:01:00
+ 23:59:00
+ 23:59:59
+(8 rows)
+
+--
+-- TIME simple math
+--
+SELECT f1 + time '00:01' AS "Eight" FROM TIME_TBL;
+       Eight        
+--------------------
+ @ 1 min
+ @ 1 hour 1 min
+ @ 2 hours 4 mins
+ @ 12 hours
+ @ 12 hours 1 min
+ @ 12 hours 2 mins
+ @ 1 day
+ @ 1 day 59.99 secs
+(8 rows)
+
+SELECT f1 + time '01:00' AS "Eight" FROM TIME_TBL;
+           Eight            
+----------------------------
+ @ 1 hour
+ @ 2 hours
+ @ 3 hours 3 mins
+ @ 12 hours 59 mins
+ @ 13 hours
+ @ 13 hours 1 min
+ @ 1 day 59 mins
+ @ 1 day 59 mins 59.99 secs
+(8 rows)
+
+SELECT f1 + time '00:00:01.11' AS "Eight" FROM TIME_TBL;
+            Eight             
+------------------------------
+ @ 1.11 secs
+ @ 1 hour 1.11 secs
+ @ 2 hours 3 mins 1.11 secs
+ @ 11 hours 59 mins 1.11 secs
+ @ 12 hours 1.11 secs
+ @ 12 hours 1 min 1.11 secs
+ @ 23 hours 59 mins 1.11 secs
+ @ 1 day 1.10 secs
+(8 rows)
+
+SELECT f1 + time '00:00:59.99' AS "Eight" FROM TIME_TBL;
+             Eight             
+-------------------------------
+ @ 59.99 secs
+ @ 1 hour 59.99 secs
+ @ 2 hours 3 mins 59.99 secs
+ @ 11 hours 59 mins 59.99 secs
+ @ 12 hours 59.99 secs
+ @ 12 hours 1 min 59.99 secs
+ @ 23 hours 59 mins 59.99 secs
+ @ 1 day 59.98 secs
+(8 rows)
+
+SELECT f1 - '00:01' AS "Eight" FROM TIME_TBL;
+             Eight             
+-------------------------------
+ @ 1 min ago
+ @ 59 mins
+ @ 2 hours 2 mins
+ @ 11 hours 58 mins
+ @ 11 hours 59 mins
+ @ 12 hours
+ @ 23 hours 58 mins
+ @ 23 hours 58 mins 59.99 secs
+(8 rows)
+
+SELECT f1 - '01:00' AS "Eight" FROM TIME_TBL;
+             Eight             
+-------------------------------
+ @ 1 hour ago
+ @ 0
+ @ 1 hour 3 mins
+ @ 10 hours 59 mins
+ @ 11 hours
+ @ 11 hours 1 min
+ @ 22 hours 59 mins
+ @ 22 hours 59 mins 59.99 secs
+(8 rows)
+
+SELECT f1 - '00:00:01.11' AS "Eight" FROM TIME_TBL;
+             Eight             
+-------------------------------
+ @ 1.11 secs ago
+ @ 59 mins 58.89 secs
+ @ 2 hours 2 mins 58.89 secs
+ @ 11 hours 58 mins 58.89 secs
+ @ 11 hours 59 mins 58.89 secs
+ @ 12 hours 58.89 secs
+ @ 23 hours 58 mins 58.89 secs
+ @ 23 hours 59 mins 58.88 secs
+(8 rows)
+
+SELECT f1 - '00:00:59.99' AS "Eight" FROM TIME_TBL;
+            Eight             
+------------------------------
+ @ 59.99 secs ago
+ @ 59 mins 0.01 secs
+ @ 2 hours 2 mins 0.01 secs
+ @ 11 hours 58 mins 0.01 secs
+ @ 11 hours 59 mins 0.01 secs
+ @ 12 hours 0.01 secs
+ @ 23 hours 58 mins 0.01 secs
+ @ 23 hours 59 mins
+(8 rows)
+
+--
+-- TIME WITH TIME ZONE simple math
+--
+/*
+-- Not yet implemented
+-- Thomas 2000-09-09
+SELECT f2 + time '00:01' AS "" FROM TIME_TBL;
+SELECT f2 + time '01:00' AS "" FROM TIME_TBL;
+SELECT f2 + time '00:00:01.11' AS "" FROM TIME_TBL;
+SELECT f2 + '00:00:59.99' AS "" FROM TIME_TBL;
+SELECT f2 - '00:01' AS "" FROM TIME_TBL;
+SELECT f2 - '01:00' AS "" FROM TIME_TBL;
+SELECT f2 - '00:00:01.11' AS "" FROM TIME_TBL;
+SELECT f2 - '00:00:59.99' AS "" FROM TIME_TBL;
+*/

@@ -587,6 +587,7 @@ SELECT user_relns() AS user_relns
  copy_tbl
  d
  d_star
+ date_tbl
  default_seq
  default_tbl
  defaultexpr_tbl
@@ -648,12 +649,13 @@ SELECT user_relns() AS user_relns
  tenk1
  tenk2
  text_tbl
+ time_tbl
  timestamp_tbl
  tinterval_tbl
  toyemp
  varchar_tbl
  xacttest
-(90 rows)
+(92 rows)
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 --

@@ -1,0 +1,144 @@
+--
+-- DATE
+--
+CREATE TABLE DATE_TBL (f1 date);
+INSERT INTO DATE_TBL VALUES ('1957-04-09');
+INSERT INTO DATE_TBL VALUES ('1957-06-13');
+INSERT INTO DATE_TBL VALUES ('1996-02-28');
+INSERT INTO DATE_TBL VALUES ('1996-02-29');
+INSERT INTO DATE_TBL VALUES ('1996-03-01');
+INSERT INTO DATE_TBL VALUES ('1996-03-02');
+INSERT INTO DATE_TBL VALUES ('1997-02-28');
+INSERT INTO DATE_TBL VALUES ('1997-02-29');
+ERROR:  Bad date external representation '1997-02-29'
+INSERT INTO DATE_TBL VALUES ('1997-03-01');
+INSERT INTO DATE_TBL VALUES ('1997-03-02');
+INSERT INTO DATE_TBL VALUES ('2000-04-01');
+INSERT INTO DATE_TBL VALUES ('2000-04-02');
+INSERT INTO DATE_TBL VALUES ('2000-04-03');
+INSERT INTO DATE_TBL VALUES ('2038-04-08');
+INSERT INTO DATE_TBL VALUES ('2039-04-09');
+INSERT INTO DATE_TBL VALUES ('2040-04-10');
+SELECT f1 AS "Fifteen" FROM DATE_TBL;
+  Fifteen   
+------------
+ 04-09-1957
+ 06-13-1957
+ 02-28-1996
+ 02-29-1996
+ 03-01-1996
+ 03-02-1996
+ 02-28-1997
+ 03-01-1997
+ 03-02-1997
+ 04-01-2000
+ 04-02-2000
+ 04-03-2000
+ 04-08-2038
+ 04-09-2039
+ 04-10-2040
+(15 rows)
+
+SELECT f1 AS "Nine" FROM DATE_TBL WHERE f1 < '2000-01-01';
+    Nine    
+------------
+ 04-09-1957
+ 06-13-1957
+ 02-28-1996
+ 02-29-1996
+ 03-01-1996
+ 03-02-1996
+ 02-28-1997
+ 03-01-1997
+ 03-02-1997
+(9 rows)
+
+SELECT f1 AS "Three" FROM DATE_TBL
+  WHERE f1 BETWEEN '2000-01-01' AND '2001-01-01';
+   Three    
+------------
+ 04-01-2000
+ 04-02-2000
+ 04-03-2000
+(3 rows)
+
+--
+-- Simple math
+-- Leave most of it for the horology tests
+--
+SELECT f1 - date '2000-01-01' AS "Days From 2K" FROM DATE_TBL;
+ Days From 2K 
+--------------
+       -15607
+       -15542
+        -1403
+        -1402
+        -1401
+        -1400
+        -1037
+        -1036
+        -1035
+           91
+           92
+           93
+        13977
+        14343
+        14710
+(15 rows)
+
+SELECT f1 - date 'epoch' AS "Days From Epoch" FROM DATE_TBL;
+ Days From Epoch 
+-----------------
+           -4650
+           -4585
+            9554
+            9555
+            9556
+            9557
+            9920
+            9921
+            9922
+           11048
+           11049
+           11050
+           24934
+           25300
+           25667
+(15 rows)
+
+SELECT date 'yesterday' - date 'today' AS "One day";
+ One day 
+---------
+      -1
+(1 row)
+
+SELECT date 'today' - date 'tomorrow' AS "One day";
+ One day 
+---------
+      -1
+(1 row)
+
+SELECT date 'yesterday' - date 'tomorrow' AS "Two days";
+ Two days 
+----------
+       -2
+(1 row)
+
+SELECT date 'tomorrow' - date 'today' AS "One day";
+ One day 
+---------
+       1
+(1 row)
+
+SELECT date 'today' - date 'yesterday' AS "One day";
+ One day 
+---------
+       1
+(1 row)
+
+SELECT date 'tomorrow' - date 'yesterday' AS "Two days";
+ Two days 
+----------
+        2
+(1 row)
+

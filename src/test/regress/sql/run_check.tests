@@ -29,6 +29,8 @@ parallel	group2
  	test	path
  	test	polygon
  	test	circle
+ 	test	date
+ 	test	time
  	test	interval
  	test	timestamp
  	test	reltime

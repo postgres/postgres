@@ -2,6 +2,48 @@
 -- HOROLOGY
 --
 --
+-- date, time arithmetic
+--
+SELECT date '1981-02-03' + time '04:05:06' AS "Date + Time";
+         Date + Time          
+------------------------------
+ Tue Feb 03 04:05:06 1981 PST
+(1 row)
+
+SELECT date '1991-02-03' + time with time zone '04:05:06 PST' AS "Date + Time PST";
+       Date + Time PST        
+------------------------------
+ Sun Feb 03 04:05:06 1991 PST
+(1 row)
+
+SELECT date '2001-02-03' + time with time zone '04:05:06 UTC' AS "Date + Time UTC";
+       Date + Time UTC        
+------------------------------
+ Fri Feb 02 20:05:06 2001 PST
+(1 row)
+
+SELECT date '1991-02-03' + interval '2 years' AS "Add Two Years";
+        Add Two Years         
+------------------------------
+ Wed Feb 03 00:00:00 1993 PST
+(1 row)
+
+SELECT date '2001-12-13' - interval '2 years' AS "Subtract Two Years";
+      Subtract Two Years      
+------------------------------
+ Mon Dec 13 00:00:00 1999 PST
+(1 row)
+
+SELECT date '1991-02-03' - time '04:05:06' AS "Subtract Time";
+        Subtract Time         
+------------------------------
+ Sat Feb 02 19:54:54 1991 PST
+(1 row)
+
+SELECT date '1991-02-03' - time with time zone '04:05:06 UTC' AS "Subtract Time UTC";
+ERROR:  Unable to identify an operator '-' for types 'date' and 'timetz'
+	You will have to retype this query using an explicit cast
+--
 -- timestamp, interval arithmetic
 --
 SELECT timestamp '1996-03-01' - interval '1 second' AS "Feb 29";

@@ -18,6 +18,8 @@ path
 polygon
 circle
 geometry
+date
+time
 interval
 timestamp
 reltime

@@ -3,6 +3,24 @@
 --
 
 --
+-- date, time arithmetic
+--
+
+SELECT date '1981-02-03' + time '04:05:06' AS "Date + Time";
+
+SELECT date '1991-02-03' + time with time zone '04:05:06 PST' AS "Date + Time PST";
+
+SELECT date '2001-02-03' + time with time zone '04:05:06 UTC' AS "Date + Time UTC";
+
+SELECT date '1991-02-03' + interval '2 years' AS "Add Two Years";
+
+SELECT date '2001-12-13' - interval '2 years' AS "Subtract Two Years";
+
+SELECT date '1991-02-03' - time '04:05:06' AS "Subtract Time";
+
+SELECT date '1991-02-03' - time with time zone '04:05:06 UTC' AS "Subtract Time UTC";
+
+--
 -- timestamp, interval arithmetic
 --
 
