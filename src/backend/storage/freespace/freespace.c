@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.16 2003/03/04 21:51:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.17 2003/03/06 00:04:27 tgl Exp $
  *
  *
  * NOTES:
@@ -45,22 +45,26 @@
  * So the actual arithmetic is: for each relation compute myRequest as the
  * number of chunks needed to hold its RRFS page count (not counting the
  * first, guaranteed chunk); compute sumRequests as the sum of these values
- * over all relations; then for each relation figure its actual allocation
+ * over all relations; then for each relation figure its target allocation
  * as
  *			1 + round(spareChunks * myRequest / sumRequests)
  * where spareChunks = totalChunks - numRels is the number of chunks we have
  * a choice what to do with.  We round off these numbers because truncating
  * all of them would waste significant space.  But because of roundoff, it's
  * possible for the last few relations to get less space than they should;
- * the computed allocation must be checked against remaining available space.
+ * the target allocation must be checked against remaining available space.
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <errno.h>
 #include <limits.h>
 #include <math.h>
+#include <unistd.h>
 
+#include "miscadmin.h"
+#include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/itemptr.h"
 #include "storage/lwlock.h"
@@ -104,6 +108,53 @@ typedef BlockIdData IndexFSMPageData;
 	BlockIdGetBlockNumber(ptr)
 #define IndexFSMPageSetPageNum(ptr, pg)	\
 	BlockIdSet(ptr, pg)
+
+/*----------
+ * During database shutdown, we store the contents of FSM into a disk file,
+ * which is re-read during startup.  This way we don't have a startup
+ * transient condition where FSM isn't really functioning.
+ *
+ * The file format is:
+ *		label			"FSM\0"
+ *		endian			constant 0x01020304 for detecting endianness problems
+ *		version#
+ *		numRels
+ *	-- for each rel, in *reverse* usage order:
+ *		relfilenode
+ *		isIndex
+ *		avgRequest
+ *		lastPageCount
+ *		storedPages
+ *		arena data		array of storedPages FSMPageData or IndexFSMPageData
+ *----------
+ */
+
+/* Name of FSM cache file (relative to $PGDATA) */
+#define FSM_CACHE_FILENAME	"global/pg_fsm.cache"
+
+/* Fixed values in header */
+#define FSM_CACHE_LABEL		"FSM"
+#define FSM_CACHE_ENDIAN	0x01020304
+#define FSM_CACHE_VERSION	20030305
+
+/* File header layout */
+typedef struct FsmCacheFileHeader
+{
+	char		label[4];
+	uint32		endian;
+	uint32		version;
+	int32		numRels;
+} FsmCacheFileHeader;
+
+/* Per-relation header */
+typedef struct FsmCacheRelHeader
+{
+	RelFileNode key;			/* hash key (must be first) */
+	bool		isIndex;		/* if true, we store only page numbers */
+	uint32		avgRequest;		/* moving average of space requests */
+	int32		lastPageCount;	/* pages passed to RecordRelationFreeSpace */
+	int32		storedPages;	/* # of pages stored in arena */
+} FsmCacheRelHeader;
 
 
 /*
@@ -172,6 +223,7 @@ static FSMHeader *FreeSpaceMap; /* points to FSMHeader in shared memory */
 static FSMRelation *lookup_fsm_rel(RelFileNode *rel);
 static FSMRelation *create_fsm_rel(RelFileNode *rel);
 static void delete_fsm_rel(FSMRelation *fsmrel);
+static int	realloc_fsm_rel(FSMRelation *fsmrel, int nPages, bool isIndex);
 static void link_fsm_rel_usage(FSMRelation *fsmrel);
 static void unlink_fsm_rel_usage(FSMRelation *fsmrel);
 static void link_fsm_rel_storage(FSMRelation *fsmrel);
@@ -416,54 +468,18 @@ RecordRelationFreeSpace(RelFileNode *rel,
 	fsmrel = lookup_fsm_rel(rel);
 	if (fsmrel)
 	{
-		int			myRequest;
-		int			myAlloc;
 		int			curAlloc;
 		int			curAllocPages;
 		FSMPageData *newLocation;
 
-		/*
-		 * Delete existing entries, and update request status.
-		 */
-		fsmrel->storedPages = 0;
-		FreeSpaceMap->sumRequests -= fsm_calc_request(fsmrel);
-		fsmrel->lastPageCount = nPages;
-		fsmrel->isIndex = false;
-		myRequest = fsm_calc_request(fsmrel);
-		FreeSpaceMap->sumRequests += myRequest;
-		myAlloc = fsm_calc_target_allocation(myRequest);
-		/*
-		 * Need to reallocate space if (a) my target allocation is more
-		 * than my current allocation, AND (b) my actual immediate need
-		 * (myRequest+1 chunks) is more than my current allocation.
-		 * Otherwise just store the new data in-place.
-		 */
-		curAlloc = fsm_current_allocation(fsmrel);
-		if (myAlloc > curAlloc && (myRequest+1) > curAlloc && nPages > 0)
-		{
-			/* Remove entry from storage list, and compact */
-			unlink_fsm_rel_storage(fsmrel);
-			compact_fsm_storage();
-			/* Reattach to end of storage list */
-			link_fsm_rel_storage(fsmrel);
-			/* And allocate storage */
-			fsmrel->firstChunk = FreeSpaceMap->usedChunks;
-			FreeSpaceMap->usedChunks += myAlloc;
-			curAlloc = myAlloc;
-			/* Watch out for roundoff error */
-			if (FreeSpaceMap->usedChunks > FreeSpaceMap->totalChunks)
-			{
-				FreeSpaceMap->usedChunks = FreeSpaceMap->totalChunks;
-				curAlloc = FreeSpaceMap->totalChunks - fsmrel->firstChunk;
-			}
-		}
+		curAlloc = realloc_fsm_rel(fsmrel, nPages, false);
+		curAllocPages = curAlloc * CHUNKPAGES;
 		/*
 		 * If the data fits in our current allocation, just copy it;
 		 * otherwise must compress.
 		 */
 		newLocation = (FSMPageData *)
 			(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
-		curAllocPages = curAlloc * CHUNKPAGES;
 		if (nPages <= curAllocPages)
 		{
 			int			i;
@@ -539,48 +555,13 @@ RecordIndexFreeSpace(RelFileNode *rel,
 	fsmrel = lookup_fsm_rel(rel);
 	if (fsmrel)
 	{
-		int			myRequest;
-		int			myAlloc;
 		int			curAlloc;
 		int			curAllocPages;
 		int			i;
 		IndexFSMPageData *newLocation;
 
-		/*
-		 * Delete existing entries, and update request status.
-		 */
-		fsmrel->storedPages = 0;
-		FreeSpaceMap->sumRequests -= fsm_calc_request(fsmrel);
-		fsmrel->lastPageCount = nPages;
-		fsmrel->isIndex = true;
-		myRequest = fsm_calc_request(fsmrel);
-		FreeSpaceMap->sumRequests += myRequest;
-		myAlloc = fsm_calc_target_allocation(myRequest);
-		/*
-		 * Need to reallocate space if (a) my target allocation is more
-		 * than my current allocation, AND (b) my actual immediate need
-		 * (myRequest+1 chunks) is more than my current allocation.
-		 * Otherwise just store the new data in-place.
-		 */
-		curAlloc = fsm_current_allocation(fsmrel);
-		if (myAlloc > curAlloc && (myRequest+1) > curAlloc && nPages > 0)
-		{
-			/* Remove entry from storage list, and compact */
-			unlink_fsm_rel_storage(fsmrel);
-			compact_fsm_storage();
-			/* Reattach to end of storage list */
-			link_fsm_rel_storage(fsmrel);
-			/* And allocate storage */
-			fsmrel->firstChunk = FreeSpaceMap->usedChunks;
-			FreeSpaceMap->usedChunks += myAlloc;
-			curAlloc = myAlloc;
-			/* Watch out for roundoff error */
-			if (FreeSpaceMap->usedChunks > FreeSpaceMap->totalChunks)
-			{
-				FreeSpaceMap->usedChunks = FreeSpaceMap->totalChunks;
-				curAlloc = FreeSpaceMap->totalChunks - fsmrel->firstChunk;
-			}
-		}
+		curAlloc = realloc_fsm_rel(fsmrel, nPages, true);
+		curAllocPages = curAlloc * INDEXCHUNKPAGES;
 		/*
 		 * If the data fits in our current allocation, just copy it;
 		 * otherwise must compress.  But compression is easy: we merely
@@ -588,7 +569,6 @@ RecordIndexFreeSpace(RelFileNode *rel,
 		 */
 		newLocation = (IndexFSMPageData *)
 			(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
-		curAllocPages = curAlloc * INDEXCHUNKPAGES;
 		if (nPages > curAllocPages)
 			nPages = curAllocPages;
 
@@ -715,6 +695,254 @@ PrintFreeSpaceMapStatistics(int elevel)
 		 (double) FreeSpaceShmemSize() / 1024.0);
 }
 
+/*
+ * DumpFreeSpaceMap - dump contents of FSM into a disk file for later reload
+ *
+ * This is expected to be called during database shutdown, after updates to
+ * the FSM have stopped.  We lock the FreeSpaceLock but that's purely pro
+ * forma --- if anyone else is still accessing FSM, there's a problem.
+ */
+void
+DumpFreeSpaceMap(void)
+{
+	FILE	   *fp;
+	char		cachefilename[MAXPGPATH];
+	FsmCacheFileHeader header;
+	FSMRelation *fsmrel;
+
+	/* Try to create file */
+	snprintf(cachefilename, sizeof(cachefilename), "%s/%s",
+			 DataDir, FSM_CACHE_FILENAME);
+
+	unlink(cachefilename);		/* in case it exists w/wrong permissions */
+
+	fp = AllocateFile(cachefilename, PG_BINARY_W);
+	if (fp == NULL)
+	{
+		elog(LOG, "Failed to write %s: %m", cachefilename);
+		return;
+	}
+
+	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
+
+	/* Write file header */
+	MemSet(&header, 0, sizeof(header));
+	strcpy(header.label, FSM_CACHE_LABEL);
+	header.endian = FSM_CACHE_ENDIAN;
+	header.version = FSM_CACHE_VERSION;
+	header.numRels = FreeSpaceMap->numRels;
+	if (fwrite(&header, 1, sizeof(header), fp) != sizeof(header))
+		goto write_failed;
+
+	/* For each relation, in order from least to most recently used... */
+	for (fsmrel = FreeSpaceMap->usageListTail;
+		 fsmrel != NULL;
+		 fsmrel = fsmrel->priorUsage)
+	{
+		FsmCacheRelHeader relheader;
+		int			nPages;
+
+		/* Write relation header */
+		MemSet(&relheader, 0, sizeof(relheader));
+		relheader.key = fsmrel->key;
+		relheader.isIndex = fsmrel->isIndex;
+		relheader.avgRequest = fsmrel->avgRequest;
+		relheader.lastPageCount = fsmrel->lastPageCount;
+		relheader.storedPages = fsmrel->storedPages;
+		if (fwrite(&relheader, 1, sizeof(relheader), fp) != sizeof(relheader))
+			goto write_failed;
+
+		/* Write the per-page data directly from the arena */
+		nPages = fsmrel->storedPages;
+		if (nPages > 0)
+		{
+			Size		len;
+			char	   *data;
+
+			if (fsmrel->isIndex)
+				len = nPages * sizeof(IndexFSMPageData);
+			else
+				len = nPages * sizeof(FSMPageData);
+			data = (char *)
+				(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
+			if (fwrite(data, 1, len, fp) != len)
+				goto write_failed;
+		}
+	}
+
+	/* Clean up */
+	LWLockRelease(FreeSpaceLock);
+
+	FreeFile(fp);
+
+	return;
+
+write_failed:
+	elog(LOG, "Failed to write %s: %m", cachefilename);
+
+	/* Clean up */
+	LWLockRelease(FreeSpaceLock);
+
+	FreeFile(fp);
+
+	/* Remove busted cache file */
+	unlink(cachefilename);
+}
+
+/*
+ * LoadFreeSpaceMap - load contents of FSM from a disk file
+ *
+ * This is expected to be called during database startup, before any FSM
+ * updates begin.  We lock the FreeSpaceLock but that's purely pro
+ * forma --- if anyone else is accessing FSM yet, there's a problem.
+ *
+ * Notes: no complaint is issued if no cache file is found.  If the file is
+ * found, it is deleted after reading.  Thus, if we crash without a clean
+ * shutdown, the next cycle of life starts with no FSM data.  To do otherwise,
+ * we'd need to do significantly more validation in this routine, because of
+ * the likelihood that what is in the dump file would be out-of-date, eg
+ * there might be entries for deleted or truncated rels.
+ */
+void
+LoadFreeSpaceMap(void)
+{
+	FILE	   *fp;
+	char		cachefilename[MAXPGPATH];
+	FsmCacheFileHeader header;
+	int			relno;
+
+	/* Try to open file */
+	snprintf(cachefilename, sizeof(cachefilename), "%s/%s",
+			 DataDir, FSM_CACHE_FILENAME);
+
+	fp = AllocateFile(cachefilename, PG_BINARY_R);
+	if (fp == NULL)
+	{
+		if (errno != ENOENT)
+			elog(LOG, "Failed to read %s: %m", cachefilename);
+		return;
+	}
+
+	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
+
+	/* Read and verify file header */
+	if (fread(&header, 1, sizeof(header), fp) != sizeof(header) ||
+		strcmp(header.label, FSM_CACHE_LABEL) != 0 ||
+		header.endian != FSM_CACHE_ENDIAN ||
+		header.version != FSM_CACHE_VERSION ||
+		header.numRels < 0)
+	{
+		elog(LOG, "Bogus file header in %s", cachefilename);
+		goto read_failed;
+	}
+
+	/* For each relation, in order from least to most recently used... */
+	for (relno = 0; relno < header.numRels; relno++)
+	{
+		FsmCacheRelHeader relheader;
+		Size		len;
+		char	   *data;
+		FSMRelation *fsmrel;
+		int			nPages;
+		int			curAlloc;
+		int			curAllocPages;
+
+		/* Read and verify relation header, as best we can */
+		if (fread(&relheader, 1, sizeof(relheader), fp) != sizeof(relheader) ||
+			(relheader.isIndex != false && relheader.isIndex != true) ||
+			relheader.avgRequest >= BLCKSZ ||
+			relheader.lastPageCount < 0 ||
+			relheader.storedPages < 0)
+		{
+			elog(LOG, "Bogus rel header in %s", cachefilename);
+			goto read_failed;
+		}
+
+		/* Make sure lastPageCount doesn't exceed current MaxFSMPages */
+		if (relheader.lastPageCount > MaxFSMPages)
+			relheader.lastPageCount = MaxFSMPages;
+
+		/* Read the per-page data */
+		nPages = relheader.storedPages;
+		if (relheader.isIndex)
+			len = nPages * sizeof(IndexFSMPageData);
+		else
+			len = nPages * sizeof(FSMPageData);
+		data = (char *) palloc(len + 1); /* +1 to avoid palloc(0) */
+		if (fread(data, 1, len, fp) != len)
+		{
+			elog(LOG, "Premature EOF in %s", cachefilename);
+			pfree(data);
+			goto read_failed;
+		}
+
+		/*
+		 * Okay, create the FSM entry and insert data into it.  Since the
+		 * rels were stored in reverse usage order, at the end of the loop
+		 * they will be correctly usage-ordered in memory; and if
+		 * MaxFSMRelations is less than it used to be, we will correctly
+		 * drop the least recently used ones.
+		 */
+		fsmrel = create_fsm_rel(&relheader.key);
+		fsmrel->avgRequest = relheader.avgRequest;
+
+		curAlloc = realloc_fsm_rel(fsmrel, relheader.lastPageCount,
+								   relheader.isIndex);
+		if (relheader.isIndex)
+		{
+			IndexFSMPageData *newLocation;
+
+			curAllocPages = curAlloc * INDEXCHUNKPAGES;
+			/*
+			 * If the data fits in our current allocation, just copy it;
+			 * otherwise must compress.  But compression is easy: we merely
+			 * forget extra pages.
+			 */
+			newLocation = (IndexFSMPageData *)
+				(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
+			if (nPages > curAllocPages)
+				nPages = curAllocPages;
+			memcpy(newLocation, data, nPages * sizeof(IndexFSMPageData));
+			fsmrel->storedPages = nPages;
+		}
+		else
+		{
+			FSMPageData *newLocation;
+
+			curAllocPages = curAlloc * CHUNKPAGES;
+			/*
+			 * If the data fits in our current allocation, just copy it;
+			 * otherwise must compress.
+			 */
+			newLocation = (FSMPageData *)
+				(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
+			if (nPages <= curAllocPages)
+			{
+				memcpy(newLocation, data, nPages * sizeof(FSMPageData));
+				fsmrel->storedPages = nPages;
+			}
+			else
+			{
+				pack_existing_pages(newLocation, curAllocPages,
+									(FSMPageData *) data, nPages);
+				fsmrel->storedPages = curAllocPages;
+			}
+		}
+
+		pfree(data);
+	}
+
+read_failed:
+
+	/* Clean up */
+	LWLockRelease(FreeSpaceLock);
+
+	FreeFile(fp);
+
+	/* Remove cache file before it can become stale; see notes above */
+	unlink(cachefilename);
+}
+
 
 /*
  * Internal routines.  These all assume the caller holds the FreeSpaceLock.
@@ -810,6 +1038,57 @@ delete_fsm_rel(FSMRelation *fsmrel)
 										 NULL);
 	if (!result)
 		elog(ERROR, "FreeSpaceMap hashtable corrupted");
+}
+
+/*
+ * Reallocate space for a FSMRelation.
+ *
+ * This is shared code for RecordRelationFreeSpace and RecordIndexFreeSpace.
+ * The return value is the actual new allocation, in chunks.
+ */
+static int
+realloc_fsm_rel(FSMRelation *fsmrel, int nPages, bool isIndex)
+{
+	int			myRequest;
+	int			myAlloc;
+	int			curAlloc;
+
+	/*
+	 * Delete any existing entries, and update request status.
+	 */
+	fsmrel->storedPages = 0;
+	FreeSpaceMap->sumRequests -= fsm_calc_request(fsmrel);
+	fsmrel->lastPageCount = nPages;
+	fsmrel->isIndex = isIndex;
+	myRequest = fsm_calc_request(fsmrel);
+	FreeSpaceMap->sumRequests += myRequest;
+	myAlloc = fsm_calc_target_allocation(myRequest);
+	/*
+	 * Need to reallocate space if (a) my target allocation is more
+	 * than my current allocation, AND (b) my actual immediate need
+	 * (myRequest+1 chunks) is more than my current allocation.
+	 * Otherwise just store the new data in-place.
+	 */
+	curAlloc = fsm_current_allocation(fsmrel);
+	if (myAlloc > curAlloc && (myRequest+1) > curAlloc && nPages > 0)
+	{
+		/* Remove entry from storage list, and compact */
+		unlink_fsm_rel_storage(fsmrel);
+		compact_fsm_storage();
+		/* Reattach to end of storage list */
+		link_fsm_rel_storage(fsmrel);
+		/* And allocate storage */
+		fsmrel->firstChunk = FreeSpaceMap->usedChunks;
+		FreeSpaceMap->usedChunks += myAlloc;
+		curAlloc = myAlloc;
+		/* Watch out for roundoff error */
+		if (FreeSpaceMap->usedChunks > FreeSpaceMap->totalChunks)
+		{
+			FreeSpaceMap->usedChunks = FreeSpaceMap->totalChunks;
+			curAlloc = FreeSpaceMap->totalChunks - fsmrel->firstChunk;
+		}
+	}
+	return curAlloc;
 }
 
 /*

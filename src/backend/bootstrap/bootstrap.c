@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.147 2002/12/15 16:17:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.148 2003/03/06 00:04:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "executor/executor.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -398,10 +399,12 @@ BootstrapMain(int argc, char *argv[])
 
 		case BS_XLOG_STARTUP:
 			StartupXLOG();
+			LoadFreeSpaceMap();
 			proc_exit(0);		/* done */
 
 		case BS_XLOG_SHUTDOWN:
 			ShutdownXLOG();
+			DumpFreeSpaceMap();
 			proc_exit(0);		/* done */
 
 		default:

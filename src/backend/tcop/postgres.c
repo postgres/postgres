@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.315 2003/02/10 04:44:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.316 2003/03/06 00:04:27 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -46,6 +46,7 @@
 #include "parser/analyze.h"
 #include "parser/parser.h"
 #include "rewrite/rewriteHandler.h"
+#include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/fastpath.h"
@@ -1740,6 +1741,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		StartupXLOG();
 		on_shmem_exit(ShutdownXLOG, 0);
+
+		/*
+		 * Read any existing FSM cache file, and register to write one out
+		 * at exit.
+		 */
+		LoadFreeSpaceMap();
+		on_shmem_exit(DumpFreeSpaceMap, 0);
 	}
 
 	/*
@@ -1781,7 +1789,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.315 $ $Date: 2003/02/10 04:44:46 $\n");
+		puts("$Revision: 1.316 $ $Date: 2003/03/06 00:04:27 $\n");
 	}
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freespace.h,v 1.9 2003/03/04 21:51:22 tgl Exp $
+ * $Id: freespace.h,v 1.10 2003/03/06 00:04:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,9 @@ extern void FreeSpaceMapForgetRel(RelFileNode *rel);
 extern void FreeSpaceMapForgetDatabase(Oid dbid);
 
 extern void PrintFreeSpaceMapStatistics(int elevel);
+
+extern void DumpFreeSpaceMap(void);
+extern void LoadFreeSpaceMap(void);
 
 #ifdef FREESPACE_DEBUG
 extern void DumpFreeSpace(void);
