@@ -6,7 +6,7 @@
 --
 -- conditio sine qua non
 SHOW stats_start_collector;  -- must be on
- stats_start_collector
+ stats_start_collector 
 -----------------------
  on
 (1 row)

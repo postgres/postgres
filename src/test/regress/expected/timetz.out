@@ -77,4 +77,4 @@ SELECT f1 AS "Ten" FROM TIMETZ_TBL WHERE f1 >= '00:00-07';
 -- where we do mixed-type arithmetic. - thomas 2000-12-02
 SELECT f1 + time with time zone '00:01' AS "Illegal" FROM TIMETZ_TBL;
 ERROR:  operator does not exist: time with time zone + time with time zone
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.

@@ -52,6 +52,6 @@ ERROR:  cannot change number of columns in view
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b::numeric FROM viewtest_tbl;
-ERROR:  cannot change datatype of view column "b"
+ERROR:  cannot change data type of view column "b"
 DROP VIEW viewtest;
 DROP TABLE viewtest_tbl;
