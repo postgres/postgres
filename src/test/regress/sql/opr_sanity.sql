@@ -409,6 +409,13 @@ WHERE p1.oprcanhash AND NOT EXISTS
    WHERE opcamid = (SELECT oid FROM pg_am WHERE amname = 'hash') AND
          amopopr = p1.oid);
 
+-- And the converse.
+
+SELECT p1.oid, p1.oprname, op.opcname
+FROM pg_operator AS p1, pg_opclass op, pg_amop p
+WHERE amopopr = p1.oid AND amopclaid = op.oid
+  AND opcamid = (SELECT oid FROM pg_am WHERE amname = 'hash')
+  AND NOT p1.oprcanhash;
 
 -- Check that each operator defined in pg_operator matches its oprcode entry
 -- in pg_proc.  Easiest to do this separately for each oprkind.

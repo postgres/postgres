@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.39 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.40 2004/06/13 21:57:24 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -44,8 +44,26 @@ hashint4(PG_FUNCTION_ARGS)
 Datum
 hashint8(PG_FUNCTION_ARGS)
 {
-	/* we just use the low 32 bits... */
+	/*
+	 * The idea here is to produce a hash value compatible with the values
+	 * produced by hashint4 and hashint2 for logically equivalent inputs;
+	 * this is necessary if we ever hope to support cross-type hash joins
+	 * across these input types.  Since all three types are signed, we can
+	 * xor the high half of the int8 value if the sign is positive, or the
+	 * complement of the high half when the sign is negative.
+	 */
+#ifndef INT64_IS_BUSTED
+	int64		val = PG_GETARG_INT64(0);
+	uint32		lohalf = (uint32) val;
+	uint32		hihalf = (uint32) (val >> 32);
+
+	lohalf ^= (val >= 0) ? hihalf : ~hihalf;
+
+	PG_RETURN_UINT32(~lohalf);
+#else
+	/* here if we can't count on "x >> 32" to work sanely */
 	PG_RETURN_UINT32(~((uint32) PG_GETARG_INT64(0)));
+#endif
 }
 
 Datum

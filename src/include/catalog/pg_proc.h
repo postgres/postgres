@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.336 2004/06/13 19:56:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.337 2004/06/13 21:57:26 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -850,6 +850,8 @@ DESCR("hash");
 DATA(insert OID = 398 (  hashint2vector    PGNSP PGUID 12 f f t f i 1 23 "22" _null_  hashint2vector - _null_ ));
 DESCR("hash");
 DATA(insert OID = 399 (  hashmacaddr	   PGNSP PGUID 12 f f t f i 1 23 "829" _null_	hashmacaddr - _null_ ));
+DESCR("hash");
+DATA(insert OID = 422 (  hashinet		   PGNSP PGUID 12 f f t f i 1 23 "869" _null_	hashinet - _null_ ));
 DESCR("hash");
 DATA(insert OID = 458 (  text_larger	   PGNSP PGUID 12 f f t f i 2 25 "25 25" _null_	text_larger - _null_ ));
 DESCR("larger of two");

@@ -1,18 +1,18 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.51 2004/06/13 19:56:50 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.52 2004/06/13 21:57:25 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
 
 #include "postgres.h"
 
-#include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "access/hash.h"
 #include "catalog/pg_type.h"
 #include "libpq/ip.h"
 #include "libpq/libpq-be.h"
@@ -42,7 +42,7 @@ static int	ip_addrsize(inet *inetptr);
 	(((inet_struct *)VARDATA(inetptr))->type)
 
 #define ip_addr(inetptr) \
-	(((inet_struct *)VARDATA(inetptr))->ip_addr)
+	(((inet_struct *)VARDATA(inetptr))->ipaddr)
 
 #define ip_maxbits(inetptr) \
 	(ip_family(inetptr) == PGSQL_AF_INET ? 32 : 128)
@@ -60,7 +60,7 @@ ip_addrsize(inet *inetptr)
 		case PGSQL_AF_INET6:
 			return 16;
 		default:
-			return -1;
+			return 0;
 	}
 }
 
@@ -422,6 +422,27 @@ network_ne(PG_FUNCTION_ARGS)
 	inet	   *a2 = PG_GETARG_INET_P(1);
 
 	PG_RETURN_BOOL(network_cmp_internal(a1, a2) != 0);
+}
+
+/*
+ * Support function for hash indexes on inet/cidr.
+ *
+ * Since network_cmp considers only ip_family, ip_bits, and ip_addr,
+ * only these fields may be used in the hash; in particular don't use type.
+ */
+Datum
+hashinet(PG_FUNCTION_ARGS)
+{
+	inet	   *addr = PG_GETARG_INET_P(0);
+	int			addrsize = ip_addrsize(addr);
+	unsigned char key[sizeof(inet_struct)];
+
+	Assert(addrsize + 2 <= sizeof(key));
+	key[0] = ip_family(addr);
+	key[1] = ip_bits(addr);
+	memcpy(key + 2, ip_addr(addr), addrsize);
+
+	return hash_any(key, addrsize + 2);
 }
 
 /*
