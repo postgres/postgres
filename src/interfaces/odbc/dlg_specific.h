@@ -64,6 +64,8 @@
 #define INI_UNIQUEINDEX   "UniqueIndex"		/* Recognize unique indexes */
 #define INI_UNKNOWNSIZES  "UnknownSizes"	/* How to handle unknown result set sizes */
 
+#define INI_CANCELASFREESTMT  "CancelAsFreeStmt"
+
 #define INI_USEDECLAREFETCH "UseDeclareFetch"		/* Use Declare/Fetch cursors */
 
 /*	More ini stuff */
@@ -107,6 +109,8 @@
 #define DEFAULT_SHOWSYSTEMTABLES		0		// dont show system tables
 #define DEFAULT_LIE						0
 #define DEFAULT_PARSE					0
+
+#define DEFAULT_CANCELASFREESTMT		0
 
 #define DEFAULT_EXTRASYSTABLEPREFIXES	"dd_;"
 

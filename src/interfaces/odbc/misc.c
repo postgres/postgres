@@ -44,13 +44,13 @@ generate_filename(char* dirname,char* prefix,char* filename)
 		return;
 
 	strcpy(filename,dirname);
-	strcat(filename,DIRSEPERATOR);
+	strcat(filename,DIRSEPARATOR);
 	if(prefix != 0)
 		strcat(filename,prefix);
 #ifndef WIN32
 	strcat(filename,ptr->pw_name);
 #endif
-	sprintf(filename,"%s%d%s",filename,pid,".log");
+	sprintf(filename,"%s%u%s",filename,pid,".log");
 	return;
 }
 

@@ -71,7 +71,7 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
 char *p;
 
-	mylog( "%s: entering...\n", func);
+	mylog( "%s: entering...fInfoType=%d\n", func, fInfoType);
 
 	if ( ! conn) {
 		CC_log_error(func, "", NULL);
@@ -224,7 +224,7 @@ char *p;
 		break;
 
     case SQL_DBMS_NAME: /* ODBC 1.0 */
-        if (pcbInfoValue) *pcbInfoValue = 10;
+        if (pcbInfoValue) *pcbInfoValue = strlen(DBMS_NAME);
         strncpy_null((char *)rgbInfoValue, DBMS_NAME, (size_t)cbInfoValueMax);
         break;
 
@@ -238,7 +238,7 @@ char *p;
         // by direct experimentation they are not.  postgres forces
         // the newer transaction to wait before doing something that
         // would cause one of these problems.
-        *((DWORD *)rgbInfoValue) = SQL_TXN_SERIALIZABLE;
+        *((DWORD *)rgbInfoValue) = SQL_TXN_READ_COMMITTED; //SQL_TXN_SERIALIZABLE;
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -269,11 +269,12 @@ char *p;
 
     case SQL_FETCH_DIRECTION: /* ODBC 1.0 */
         // which fetch directions are supported? (bitmask)
-        *((DWORD *)rgbInfoValue) = globals.use_declarefetch ? 0 : (SQL_FD_FETCH_NEXT |
+        *((DWORD *)rgbInfoValue) = globals.use_declarefetch ? (SQL_FD_FETCH_NEXT) : (SQL_FD_FETCH_NEXT |
                                    SQL_FD_FETCH_FIRST |
                                    SQL_FD_FETCH_LAST |
                                    SQL_FD_FETCH_PRIOR |
-                                   SQL_FD_FETCH_ABSOLUTE);
+                                   SQL_FD_FETCH_ABSOLUTE |
+								   SQL_FD_FETCH_RELATIVE);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -285,7 +286,7 @@ char *p;
 
     case SQL_GETDATA_EXTENSIONS: /* ODBC 2.0 */
         // (bitmask)
-        *((DWORD *)rgbInfoValue) = (SQL_GD_ANY_COLUMN | SQL_GD_ANY_ORDER | SQL_GD_BOUND);
+        *((DWORD *)rgbInfoValue) = (SQL_GD_ANY_COLUMN | SQL_GD_ANY_ORDER | SQL_GD_BOUND | SQL_GD_BLOCK);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -296,8 +297,9 @@ char *p;
         break;
 
     case SQL_IDENTIFIER_CASE: /* ODBC 1.0 */
-        // are identifiers case-sensitive (yes)
-        *((WORD *)rgbInfoValue) = SQL_IC_SENSITIVE;
+        // are identifiers case-sensitive (yes, but only when quoted.  If not quoted, they
+		// default to lowercase)
+        *((WORD *)rgbInfoValue) = SQL_IC_LOWER;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -324,8 +326,7 @@ char *p;
 
     case SQL_LOCK_TYPES: /* ODBC 2.0 */
         // which lock types does SQLSetPos support? (bitmask)
-        // SQLSetPos doesn't exist yet
-        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_LCK_NO_CHANGE | SQL_LCK_EXCLUSIVE | SQL_LCK_UNLOCK) : 0;
+        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_LCK_NO_CHANGE | SQL_LCK_EXCLUSIVE | SQL_LCK_UNLOCK) : SQL_LCK_NO_CHANGE;
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -531,8 +532,7 @@ char *p;
 
     case SQL_POS_OPERATIONS: /* ODBC 2.0 */
         // what functions does SQLSetPos support? (bitmask)
-        // SQLSetPos does not exist yet
-        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : 0;
+        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : (SQL_POS_POSITION | SQL_POS_REFRESH);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -585,8 +585,7 @@ char *p;
         break;
 
     case SQL_QUOTED_IDENTIFIER_CASE: /* ODBC 2.0 */
-        // are "quoted" identifiers case-sensitive?
-        // well, we don't really let you quote identifiers, so...
+        // are "quoted" identifiers case-sensitive?  YES
         *((WORD *)rgbInfoValue) = SQL_IC_SENSITIVE;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
@@ -713,7 +712,7 @@ char *p;
     case SQL_TXN_ISOLATION_OPTION: /* ODBC 1.0 */
         // what transaction isolation options are available? (bitmask)
         // only the default--serializable transactions.
-        *((DWORD *)rgbInfoValue) = SQL_TXN_SERIALIZABLE;
+        *((DWORD *)rgbInfoValue) = SQL_TXN_READ_COMMITTED; // SQL_TXN_SERIALIZABLE;
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -751,7 +750,9 @@ static char *func = "SQLGetTypeInfo";
 StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
 int i;
-Int4 type;
+// Int4 type;
+Int4 pgType; 
+Int2 sqlType;
 
 	mylog("%s: entering...fSqlType = %d\n", func, fSqlType);
 
@@ -759,6 +760,7 @@ Int4 type;
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+
 
 	stmt->manual_result = TRUE;
 	stmt->result = QR_Constructor();
@@ -786,25 +788,58 @@ Int4 type;
 	QR_set_field_info(stmt->result, 13, "MINIMUM_SCALE", PG_TYPE_INT2, 2);
 	QR_set_field_info(stmt->result, 14, "MAXIMUM_SCALE", PG_TYPE_INT2, 2);
 
-    // cycle through the types
-    for(i=0, type = pgtypes_defined[0]; type; type = pgtypes_defined[++i]) {
+	for(i=0, sqlType = sqlTypes[0]; sqlType; sqlType = sqlTypes[++i]) {
+		pgType = sqltype_to_pgtype(sqlType);
 
-		if(fSqlType == SQL_ALL_TYPES || fSqlType == pgtype_to_sqltype(stmt, type)) {
-
+		if (fSqlType == SQL_ALL_TYPES || fSqlType == sqlType) {
 			row = (TupleNode *)malloc(sizeof(TupleNode) + (15 - 1)*sizeof(TupleField));
 
 			/*	These values can't be NULL */
+			set_tuplefield_string(&row->tuple[0], pgtype_to_name(stmt, pgType));
+			set_tuplefield_int2(&row->tuple[1], (Int2) sqlType);
+			set_tuplefield_int2(&row->tuple[6], pgtype_nullable(stmt, pgType));
+			set_tuplefield_int2(&row->tuple[7], pgtype_case_sensitive(stmt, pgType));
+			set_tuplefield_int2(&row->tuple[8], pgtype_searchable(stmt, pgType));
+			set_tuplefield_int2(&row->tuple[10], pgtype_money(stmt, pgType));
+
+			/*	Localized data-source dependent data type name (always NULL) */
+			set_tuplefield_null(&row->tuple[12]);	
+
+			/*	These values can be NULL */
+			set_nullfield_int4(&row->tuple[2], pgtype_precision(stmt, pgType, PG_STATIC, PG_STATIC));
+			set_nullfield_string(&row->tuple[3], pgtype_literal_prefix(stmt, pgType));
+			set_nullfield_string(&row->tuple[4], pgtype_literal_suffix(stmt, pgType));
+			set_nullfield_string(&row->tuple[5], pgtype_create_params(stmt, pgType));
+			set_nullfield_int2(&row->tuple[9], pgtype_unsigned(stmt, pgType));
+			set_nullfield_int2(&row->tuple[11], pgtype_auto_increment(stmt, pgType));
+			set_nullfield_int2(&row->tuple[13], pgtype_scale(stmt, pgType));
+			set_nullfield_int2(&row->tuple[14], pgtype_scale(stmt, pgType));
+
+			QR_add_tuple(stmt->result, row);
+		}
+	}
+
+    // cycle through the types
+//    for(i=0, type = pgtypes_defined[0]; type; type = pgtypes_defined[++i]) {
+
+//		if(fSqlType == SQL_ALL_TYPES || fSqlType == pgtype_to_sqltype(stmt, type)) {
+
+//			row = (TupleNode *)malloc(sizeof(TupleNode) + (15 - 1)*sizeof(TupleField));
+
+			/*	These values can't be NULL */
+/*
 			set_tuplefield_string(&row->tuple[0], pgtype_to_name(stmt, type));
 			set_tuplefield_int2(&row->tuple[1], pgtype_to_sqltype(stmt, type));
 			set_tuplefield_int2(&row->tuple[6], pgtype_nullable(stmt, type));
 			set_tuplefield_int2(&row->tuple[7], pgtype_case_sensitive(stmt, type));
 			set_tuplefield_int2(&row->tuple[8], pgtype_searchable(stmt, type));
 			set_tuplefield_int2(&row->tuple[10], pgtype_money(stmt, type));
-
+*/
 			/*	Localized data-source dependent data type name (always NULL) */
-			set_tuplefield_null(&row->tuple[12]);	
+//			set_tuplefield_null(&row->tuple[12]);	
 
 			/*	These values can be NULL */
+/*
 			set_nullfield_int4(&row->tuple[2], pgtype_precision(stmt, type, PG_STATIC, PG_STATIC));
 			set_nullfield_string(&row->tuple[3], pgtype_literal_prefix(stmt, type));
 			set_nullfield_string(&row->tuple[4], pgtype_literal_suffix(stmt, type));
@@ -815,11 +850,13 @@ Int4 type;
 			set_nullfield_int2(&row->tuple[14], pgtype_scale(stmt, type));
 
 			QR_add_tuple(stmt->result, row);
-		}
-    }
+*/
+//		}
+//    }
 
     stmt->status = STMT_FINISHED;
     stmt->currTuple = -1;
+	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
     return SQL_SUCCESS;
@@ -901,7 +938,7 @@ static char *func="SQLGetFunctions";
 			pfExists[SQL_API_SQLDATASOURCES]      = FALSE;  // only implemented by DM
 			pfExists[SQL_API_SQLDESCRIBEPARAM]    = FALSE;	// not properly implemented
 			pfExists[SQL_API_SQLDRIVERS]          = FALSE;  // only implemented by DM
-			pfExists[SQL_API_SQLEXTENDEDFETCH]    = globals.use_declarefetch ? FALSE : TRUE;
+			pfExists[SQL_API_SQLEXTENDEDFETCH]    = TRUE;
 			pfExists[SQL_API_SQLFOREIGNKEYS]      = TRUE;
 			pfExists[SQL_API_SQLMORERESULTS]      = TRUE;
 			pfExists[SQL_API_SQLNATIVESQL]        = TRUE;
@@ -910,8 +947,8 @@ static char *func="SQLGetFunctions";
 			pfExists[SQL_API_SQLPRIMARYKEYS]      = TRUE;
 			pfExists[SQL_API_SQLPROCEDURECOLUMNS] = FALSE;
 			pfExists[SQL_API_SQLPROCEDURES]       = FALSE;
-			pfExists[SQL_API_SQLSETPOS]           = FALSE;
-			pfExists[SQL_API_SQLSETSCROLLOPTIONS] = FALSE;	// odbc 1.0
+			pfExists[SQL_API_SQLSETPOS]           = TRUE;
+			pfExists[SQL_API_SQLSETSCROLLOPTIONS] = TRUE;	// odbc 1.0
 			pfExists[SQL_API_SQLTABLEPRIVILEGES]  = FALSE;
 		}
     } else {
@@ -970,7 +1007,7 @@ static char *func="SQLGetFunctions";
 			case SQL_API_SQLDATASOURCES:      *pfExists = FALSE; break;  // only implemented by DM
 			case SQL_API_SQLDESCRIBEPARAM:    *pfExists = FALSE; break;  // not properly implemented
 			case SQL_API_SQLDRIVERS:          *pfExists = FALSE; break;  // only implemented by DM
-			case SQL_API_SQLEXTENDEDFETCH:    *pfExists = globals.use_declarefetch ? FALSE : TRUE; break;
+			case SQL_API_SQLEXTENDEDFETCH:    *pfExists = TRUE; break;
 			case SQL_API_SQLFOREIGNKEYS:      *pfExists = TRUE; break;
 			case SQL_API_SQLMORERESULTS:      *pfExists = TRUE; break;
 			case SQL_API_SQLNATIVESQL:        *pfExists = TRUE; break;
@@ -979,8 +1016,8 @@ static char *func="SQLGetFunctions";
 			case SQL_API_SQLPRIMARYKEYS:      *pfExists = TRUE; break;
 			case SQL_API_SQLPROCEDURECOLUMNS: *pfExists = FALSE; break;
 			case SQL_API_SQLPROCEDURES:       *pfExists = FALSE; break;
-			case SQL_API_SQLSETPOS:           *pfExists = FALSE; break;
-			case SQL_API_SQLSETSCROLLOPTIONS: *pfExists = FALSE; break;	// odbc 1.0
+			case SQL_API_SQLSETPOS:           *pfExists = TRUE; break;
+			case SQL_API_SQLSETSCROLLOPTIONS: *pfExists = TRUE; break;	// odbc 1.0
 			case SQL_API_SQLTABLEPRIVILEGES:  *pfExists = FALSE; break;
 			}
 		}
@@ -1253,6 +1290,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 
     // set up the current tuple pointer for SQLFetch
 	stmt->currTuple = -1;
+	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
 	SQLFreeStmt(htbl_stmt, SQL_DROP);
@@ -1600,6 +1638,7 @@ ConnInfo *ci;
 
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
+	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
 	SQLFreeStmt(hcol_stmt, SQL_DROP);
@@ -1683,6 +1722,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 	}
     stmt->status = STMT_FINISHED;
     stmt->currTuple = -1;
+	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
 	mylog("SQLSpecialColumns(): EXIT,  stmt=%u\n", stmt);
@@ -2002,6 +2042,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
+	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
 	error = FALSE;
@@ -2186,6 +2227,7 @@ Int2 result_cols;
 
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
+	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
 	mylog("SQLPrimaryKeys(): EXIT, stmt=%u\n", stmt);
@@ -2270,6 +2312,7 @@ Int2 result_cols;
 
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
+	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
 

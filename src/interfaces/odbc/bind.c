@@ -128,12 +128,13 @@ static char *func="SQLBindParameter";
 		stmt->parameters[ipar].EXEC_buffer = NULL;
 	}
 
-	if (pcbValue && *pcbValue <= SQL_LEN_DATA_AT_EXEC_OFFSET)
+	/*	Data at exec macro only valid for C char/binary data */
+	if ((fSqlType == SQL_LONGVARBINARY || fSqlType == SQL_LONGVARCHAR) && pcbValue && *pcbValue <= SQL_LEN_DATA_AT_EXEC_OFFSET)
 		stmt->parameters[ipar].data_at_exec = TRUE;
 	else
 		stmt->parameters[ipar].data_at_exec = FALSE;
 
-	mylog("SQLBindParamater: ipar = %d, *pcbValue = %d, data_at_exec = %d\n", ipar, pcbValue ? *pcbValue: -777, stmt->parameters[ipar].data_at_exec);
+	mylog("SQLBindParamater: ipar=%d, paramType=%d, fCType=%d, fSqlType=%d, cbColDef=%d, ibScale=%d, rgbValue=%d, *pcbValue = %d, data_at_exec = %d\n", ipar, fParamType, fCType, fSqlType, cbColDef, ibScale, rgbValue, pcbValue ? *pcbValue: -777, stmt->parameters[ipar].data_at_exec);
 
 	return SQL_SUCCESS;
 }
@@ -194,6 +195,9 @@ mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 	}
 
 	icol--;		/* use zero based col numbers from here out */
+
+	/*	Reset for SQLGetData */
+	stmt->bindings[icol].data_left = -1;
 
 	if (rgbValue == NULL) {
 		/* we have to unbind the column */
@@ -357,6 +361,7 @@ int i;
 		new_bindings[i].buflen = 0;
 		new_bindings[i].buffer = NULL;
 		new_bindings[i].used = NULL;
+		new_bindings[i].data_left = -1;
 	}
 
 	return new_bindings;

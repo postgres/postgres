@@ -31,7 +31,6 @@
 
 extern GLOBAL_VALUES globals;
 
-// void CC_test(ConnectionClass *self);
 
 RETCODE SQL_API SQLAllocConnect(
                                 HENV     henv,
@@ -252,6 +251,14 @@ ConnectionClass *rv;
 		rv->translation_handle = NULL;
 		rv->DataSourceToDriver = NULL;
 		rv->DriverToDataSource = NULL;
+
+
+		/*	Initialize statement options to defaults */
+		/*	Statements under this conn will inherit these options */
+
+		InitializeStatementOptions(&rv->stmtOptions);
+
+
     } 
     return rv;
 }
@@ -337,7 +344,7 @@ QResultClass *res;
 
 		mylog("CC_abort:  sending ABORT!\n");
 
-		res = CC_send_query(self, "ABORT", NULL, NULL);
+		res = CC_send_query(self, "ABORT", NULL);
 		CC_set_no_trans(self);
 
 		if (res != NULL)
@@ -664,7 +671,7 @@ static char *func="CC_connect";
 	/* database really exists on the server machine */
 	mylog("sending an empty query...\n");
 
-	res = CC_send_query(self, " ", NULL, NULL);
+	res = CC_send_query(self, " ", NULL);
 	if ( res == NULL || QR_get_status(res) != PGRES_EMPTY_QUERY) {
 		mylog("got no result from the empty query.  (probably database does not exist)\n");
 		self->errornumber = CONNECTION_NO_SUCH_DATABASE;
@@ -690,8 +697,6 @@ static char *func="CC_connect";
 	*/
 	CC_send_settings(self);
 	CC_lookup_lo(self);		/* a hack to get the oid of our large object oid type */
-
-	// CC_test(self);
 
 	CC_clear_error(self);	/* clear any initial command errors */
 	self->status = CONN_CONNECTED;
@@ -812,9 +817,9 @@ int rv;
 	'declare cursor C3326857 for ...' and 'fetch 100 in C3326857' statements.
 */
 QResultClass *
-CC_send_query(ConnectionClass *self, char *query, QResultClass *result_in, char *cursor)
+CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 {
-QResultClass *res = NULL;
+QResultClass *result_in, *res = NULL;
 char id, swallow;
 SocketClass *sock = self->sock;
 static char msgbuffer[MAX_MESSAGE_LEN+1];
@@ -970,7 +975,7 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 			swallow = SOCK_get_char(sock);
 			if ((swallow != '\0') || SOCK_get_errcode(sock) != 0) {
 				self->errornumber = CONNECTION_BACKEND_CRAZY;
-				self->errormsg = "Unexpected protocol character from backend";
+				self->errormsg = "Unexpected protocol character from backend (send_query - I)";
 				res = QR_Constructor();
 				QR_set_status(res, PGRES_FATAL_ERROR);
 				return res;
@@ -1006,7 +1011,9 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 			SOCK_get_string(sock, msgbuffer, MAX_MESSAGE_LEN);
 			break;
 		case 'T': /* Tuple results start here */
-			if (result_in == NULL) {
+			result_in = qi ? qi->result_in : NULL;
+
+			if ( result_in == NULL) {
 				result_in = QR_Constructor();
 				mylog("send_query: 'T' no result_in: res = %u\n", result_in);
 				if ( ! result_in) {
@@ -1015,7 +1022,10 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 					return NULL;
 				}
 
-				if ( ! QR_fetch_tuples(result_in, self, cursor)) {
+				if (qi)
+					QR_set_cache_size(result_in, qi->row_size);
+
+				if ( ! QR_fetch_tuples(result_in, self, qi ? qi->cursor : NULL)) {
 					self->errornumber = CONNECTION_COULD_NOT_RECEIVE;
 					self->errormsg = QR_get_message(result_in);
 					return NULL;
@@ -1040,7 +1050,7 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 			return res;
 		default:
 			self->errornumber = CONNECTION_BACKEND_CRAZY;
-			self->errormsg = "Unexpected protocol character from backend";
+			self->errormsg = "Unexpected protocol character from backend (send_query)";
 			CC_set_no_trans(self);
 
 			mylog("send_query: error - %s\n", self->errormsg);
@@ -1058,7 +1068,6 @@ static char msgbuffer[MAX_MESSAGE_LEN+1];
 int i;
 
 	mylog("send_function(): conn=%u, fnid=%d, result_is_int=%d, nargs=%d\n", self, fnid, result_is_int, nargs);
-//	qlog("conn=%u, func=%d\n", self, fnid);
 
 	if (SOCK_get_errcode(sock) != 0) {
 		self->errornumber = CONNECTION_COULD_NOT_SEND;
@@ -1124,9 +1133,12 @@ int i;
 
 			return FALSE;
 
+		case 'Z':
+			break;
+
 		default:
 			self->errornumber = CONNECTION_BACKEND_CRAZY;
-			self->errormsg = "Unexpected protocol character from backend";
+			self->errormsg = "Unexpected protocol character from backend (send_function, args)";
 			CC_set_no_trans(self);
 
 			mylog("send_function: error - %s\n", self->errormsg);
@@ -1178,7 +1190,7 @@ int i;
 
 		default:
 			self->errornumber = CONNECTION_BACKEND_CRAZY;
-			self->errormsg = "Unexpected protocol character from backend";
+			self->errormsg = "Unexpected protocol character from backend (send_function, result)";
 			CC_set_no_trans(self);
 
 			mylog("send_function: error - %s\n", self->errormsg);
@@ -1351,108 +1363,4 @@ CC_log_error(char *func, char *desc, ConnectionClass *self)
 	else
 		qlog("INVALID CONNECTION HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
 }
-
-/*
-void
-CC_test(ConnectionClass *self)
-{
-static char *func = "CC_test";
-HSTMT hstmt1;
-RETCODE result;
-char pktab[255], fktab[255], pkcol[255], fkcol[255], tgname[255];
-SDWORD pktab_len, pkcol_len, fktab_len, fkcol_len, ur_len, dr_len, tgname_len;
-SWORD cols, seq;
-SDWORD update_rule, delete_rule;
-
-	mylog( "%s: entering...\n", func);
-
-	result = SQLAllocStmt( self, &hstmt1);
-	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		return;
-	}
-
-	result = SQLPrimaryKeys(hstmt1, NULL, 0, NULL, 0, "t1", SQL_NTS);
-
-	qlog("SQLPrimaryKeys result = %d\n", result);
-
-	result = SQLNumResultCols(hstmt1, &cols);
-	qlog("cols SQLTables result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 3, SQL_C_CHAR, pktab, sizeof(pktab), &pktab_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 4, SQL_C_CHAR, pkcol, sizeof(pkcol), &pkcol_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 5, SQL_C_SHORT, &seq, 0, NULL);
-	qlog("bind result = %d\n", result);
-
-	result = SQLFetch(hstmt1);
-	qlog("SQLFetch result = %d\n", result);
-	while (result != SQL_NO_DATA_FOUND) {
-		qlog("fetch on stmt1: result = %d, pktab='%s', pkcol='%s', seq=%d\n", 
-			result, pktab, pkcol, seq);
-
-		result = SQLFetch(hstmt1);
-	}
-	qlog("SQLFetch result = %d\n", result);
-
-	// Test of case #1 
-	result = SQLForeignKeys(hstmt1, "", SQL_NTS, "", SQL_NTS, "t1", SQL_NTS, 
-		NULL, 0, NULL, 0, NULL, 0);
-
-	//	Test of case #2 
-	result = SQLForeignKeys(hstmt1, "", SQL_NTS, "", SQL_NTS, NULL, 0, 
-		NULL, 0, NULL, 0, "ar_register", SQL_NTS);
-
-
-	//	Test of case #3 
-	result = SQLForeignKeys(hstmt1, NULL, 0, NULL, 0, "employee", SQL_NTS, 
-		NULL, 0, NULL, 0, "invoice", SQL_NTS);
-
-	qlog("SQLForeignKeys result = %d\n", result);
-
-	result = SQLNumResultCols(hstmt1, &cols);
-	qlog("cols SQLTables result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 3, SQL_C_CHAR, pktab, sizeof(pktab), &pktab_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 4, SQL_C_CHAR, pkcol, sizeof(pkcol), &pkcol_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 7, SQL_C_CHAR, fktab, sizeof(fktab), &fktab_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 8, SQL_C_CHAR, fkcol, sizeof(fkcol), &fkcol_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 9, SQL_C_SHORT, &seq, 0, NULL);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 10, SQL_C_LONG, &update_rule, 0, &ur_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 11, SQL_C_LONG, &delete_rule, 0, &dr_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLBindCol(hstmt1, 14, SQL_C_CHAR, tgname, sizeof(tgname), &tgname_len);
-	qlog("bind result = %d\n", result);
-
-	result = SQLFetch(hstmt1);
-	qlog("SQLFetch result = %d\n", result);
-	while (result != SQL_NO_DATA_FOUND) {
-		qlog("fetch on stmt1: result = %d, pktab='%s', pkcol='%s', fktab='%s', fkcol='%s', seq=%d, update_rule=%d, ur_len=%d, delete_rule=%d, dr_len=%d, tgname='%s', tgname_len=%d\n", 
-			result, pktab, pkcol, fktab, fkcol, seq, update_rule, ur_len, delete_rule, dr_len, tgname, tgname_len);
-
-		result = SQLFetch(hstmt1);
-	}
-	qlog("SQLFetch result = %d\n", result);
-
-	SQLFreeStmt(hstmt1, SQL_DROP);
-
-}
-*/
-
-
 

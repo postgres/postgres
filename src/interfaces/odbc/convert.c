@@ -101,18 +101,38 @@ copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *val
 BindInfoClass *bic = &(stmt->bindings[col]);
 
 	return copy_and_convert_field(stmt, field_type, value, (Int2)bic->returntype, (PTR)bic->buffer,
-                                (SDWORD)bic->buflen, (SDWORD *)bic->used, FALSE);
+                                (SDWORD)bic->buflen, (SDWORD *)bic->used);
 }
 
 /*	This is called by SQLGetData() */
 int
 copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType, 
-					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue, char multiple)
+					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue)
 {
-Int4 len = 0;
+Int4 len = 0, copy_len = 0;
 SIMPLE_TIME st;
 time_t t = time(NULL);
 struct tm *tim;
+int pcbValueOffset, rgbValueOffset;
+char *rgbValueBindRow, *ptr;
+int bind_row = stmt->bind_row;
+int bind_size = stmt->options.bind_size;
+int result = COPY_OK;
+char tempBuf[TEXT_FIELD_SIZE+5];
+
+/*	rgbValueOffset is *ONLY* for character and binary data */
+/*	pcbValueOffset is for computing any pcbValue location */
+
+	if (bind_size > 0) {
+
+		pcbValueOffset = rgbValueOffset = (bind_size * bind_row);
+	}
+	else {
+
+		pcbValueOffset = bind_row * sizeof(SDWORD);
+		rgbValueOffset = bind_row * cbValueMax;
+
+	}
 
 	memset(&st, 0, sizeof(SIMPLE_TIME));
 
@@ -122,13 +142,13 @@ struct tm *tim;
 	st.d = tim->tm_mday;
 	st.y = tim->tm_year + 1900;
 
-	mylog("copy_and_convert: field_type = %d, fctype = %d, value = '%s', cbValueMax=%d\n", field_type, fCType, value, cbValueMax);
+	mylog("copy_and_convert: field_type = %d, fctype = %d, value = '%s', cbValueMax=%d\n", field_type, fCType,  (value==NULL)?"<NULL>":value, cbValueMax);
 
 	if ( ! value) {
         /* handle a null just by returning SQL_NULL_DATA in pcbValue, */
         /* and doing nothing to the buffer.                           */
         if(pcbValue) {
-            *pcbValue = SQL_NULL_DATA;
+			*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = SQL_NULL_DATA;
         }
 		return COPY_OK;
 	}
@@ -191,7 +211,7 @@ struct tm *tim;
 	/* This is for internal use by SQLStatistics() */
 	case PG_TYPE_INT28: {
 		// this is an array of eight integers
-		short *short_array = (short *)rgbValue;
+		short *short_array = (short *) ( (char *) rgbValue + rgbValueOffset);
 
 		len = 16;
 
@@ -207,7 +227,7 @@ struct tm *tim;
 
 		/*  There is no corresponding fCType for this. */
 		if(pcbValue)
-			*pcbValue = len;
+			*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = len;
 
 		return COPY_OK;		/* dont go any further or the data will be trashed */
 						}
@@ -215,12 +235,12 @@ struct tm *tim;
 	/* This is a large object OID, which is used to store LONGVARBINARY objects. */
 	case PG_TYPE_LO:
 
-		return convert_lo( stmt, value, fCType, rgbValue, cbValueMax, pcbValue, multiple);
+		return convert_lo( stmt, value, fCType, ((char *) rgbValue + rgbValueOffset), cbValueMax, (SDWORD *) ((char *) pcbValue + pcbValueOffset));
 
 	default:
 
 		if (field_type == stmt->hdbc->lobj_type)	/* hack until permanent type available */
-			return convert_lo( stmt, value, fCType, rgbValue, cbValueMax, pcbValue, multiple);
+			return convert_lo( stmt, value, fCType, ((char *) rgbValue + rgbValueOffset), cbValueMax, (SDWORD *) ((char *) pcbValue + pcbValueOffset));
 	}
 
 	/*  Change default into something useable */
@@ -231,7 +251,10 @@ struct tm *tim;
 	}
 
 
+	rgbValueBindRow = (char *) rgbValue + rgbValueOffset;
+
     if(fCType == SQL_C_CHAR) {
+
 
 		/*	Special character formatting as required */
 		/*	These really should return error if cbValueMax is not big enough. */
@@ -239,13 +262,13 @@ struct tm *tim;
 		case PG_TYPE_DATE:
 		    len = 10;
 			if (cbValueMax > len)
-				sprintf((char *)rgbValue, "%.4d-%.2d-%.2d", st.y, st.m, st.d);
+				sprintf(rgbValueBindRow, "%.4d-%.2d-%.2d", st.y, st.m, st.d);
 			break;
 
 		case PG_TYPE_TIME:
 			len = 8;
 			if (cbValueMax > len)
-				sprintf((char *)rgbValue, "%.2d:%.2d:%.2d", st.hh, st.mm, st.ss);
+				sprintf(rgbValueBindRow, "%.2d:%.2d:%.2d", st.hh, st.mm, st.ss);
 			break;
 
 		case PG_TYPE_ABSTIME:
@@ -253,15 +276,15 @@ struct tm *tim;
 		case PG_TYPE_TIMESTAMP:
 			len = 19;
 			if (cbValueMax > len)
-				sprintf((char *) rgbValue, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d", 
+				sprintf(rgbValueBindRow, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d", 
 					st.y, st.m, st.d, st.hh, st.mm, st.ss);
 			break;
 
 		case PG_TYPE_BOOL:
 			len = 1;
 			if (cbValueMax > len) {
-				strcpy((char *) rgbValue, value);
-				mylog("PG_TYPE_BOOL: rgbValue = '%s'\n", rgbValue);
+				strcpy(rgbValueBindRow, value);
+				mylog("PG_TYPE_BOOL: rgbValueBindRow = '%s'\n", rgbValueBindRow);
 			}
 			break;
 
@@ -276,15 +299,48 @@ struct tm *tim;
 			object used to store those.
 		*/
 		case PG_TYPE_BYTEA:		// convert binary data to hex strings (i.e, 255 = "FF")
-			len = convert_pgbinary_to_char(value, rgbValue, cbValueMax);
+			len = convert_pgbinary_to_char(value, rgbValueBindRow, cbValueMax);
+
+			/***** THIS IS NOT PROPERLY IMPLEMENTED *****/
 			break;
 
 		default:
 			/*	convert linefeeds to carriage-return/linefeed */
-			convert_linefeeds( (char *) value, rgbValue, cbValueMax);
-		    len = strlen(rgbValue);
+			len = convert_linefeeds(value, tempBuf, sizeof(tempBuf));
+			ptr = tempBuf;
 
-			mylog("    SQL_C_CHAR, default: len = %d, cbValueMax = %d, rgbValue = '%s'\n", len, cbValueMax, rgbValue);
+			mylog("DEFAULT: len = %d, ptr = '%s'\n", len, ptr);
+
+			if (stmt->current_col >= 0) {
+				if (stmt->bindings[stmt->current_col].data_left == 0)
+					return COPY_NO_DATA_FOUND;
+				else if (stmt->bindings[stmt->current_col].data_left > 0) {
+					ptr += len - stmt->bindings[stmt->current_col].data_left;
+					len = stmt->bindings[stmt->current_col].data_left;
+				}
+				else
+					stmt->bindings[stmt->current_col].data_left = strlen(value);
+			}
+
+			if (cbValueMax > 0) {
+				
+				copy_len = (len >= cbValueMax) ? cbValueMax -1 : len;
+
+				/*	Copy the data */
+				strncpy_null(rgbValueBindRow, ptr, copy_len + 1);
+
+				/*	Adjust data_left for next time */
+				if (stmt->current_col >= 0) {
+					stmt->bindings[stmt->current_col].data_left -= copy_len;
+				}
+			}
+
+			/*	Finally, check for truncation so that proper status can be returned */
+			if ( len >= cbValueMax)
+				result = COPY_RESULT_TRUNCATED;
+
+
+			mylog("    SQL_C_CHAR, default: len = %d, cbValueMax = %d, rgbValueBindRow = '%s'\n", len, cbValueMax, rgbValueBindRow);
 			break;
 		}
 
@@ -301,7 +357,13 @@ struct tm *tim;
 		case SQL_C_DATE:
 			len = 6;
 			{
-			DATE_STRUCT *ds = (DATE_STRUCT *) rgbValue;
+			DATE_STRUCT *ds;
+			
+			if (bind_size > 0) {
+				ds = (DATE_STRUCT *) ((char *) rgbValue + (bind_row * bind_size));
+			} else {
+				ds = (DATE_STRUCT *) rgbValue + bind_row;
+			}
 			ds->year = st.y;
 			ds->month = st.m;
 			ds->day = st.d;
@@ -311,7 +373,13 @@ struct tm *tim;
 		case SQL_C_TIME:
 			len = 6;
 			{
-			TIME_STRUCT *ts = (TIME_STRUCT *) rgbValue;
+			TIME_STRUCT *ts;
+			
+			if (bind_size > 0) {
+				ts = (TIME_STRUCT *) ((char *) rgbValue + (bind_row * bind_size));
+			} else {
+				ts = (TIME_STRUCT *) rgbValue + bind_row;
+			}
 			ts->hour = st.hh;
 			ts->minute = st.mm;
 			ts->second = st.ss;
@@ -321,7 +389,12 @@ struct tm *tim;
 		case SQL_C_TIMESTAMP:					
 			len = 16;
 			{
-			TIMESTAMP_STRUCT *ts = (TIMESTAMP_STRUCT *) rgbValue;
+			TIMESTAMP_STRUCT *ts;
+			if (bind_size > 0) {
+				ts = (TIMESTAMP_STRUCT *) ((char *) rgbValue + (bind_row * bind_size));
+			} else {
+				ts = (TIMESTAMP_STRUCT *) rgbValue + bind_row;
+			}
 			ts->year = st.y;
 			ts->month = st.m;
 			ts->day = st.d;
@@ -334,59 +407,132 @@ struct tm *tim;
 
 		case SQL_C_BIT:
 			len = 1;
-			*((UCHAR *)rgbValue) = atoi(value);
-			mylog("SQL_C_BIT: val = %d, cb = %d, rgb=%d\n", atoi(value), cbValueMax, *((UCHAR *)rgbValue));
+			if (bind_size > 0) {
+				*(UCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+			} else {
+				*((UCHAR *)rgbValue + bind_row) = atoi(value);
+			}
+			// mylog("SQL_C_BIT: val = %d, cb = %d, rgb=%d\n", atoi(value), cbValueMax, *((UCHAR *)rgbValue));
 			break;
 
 		case SQL_C_STINYINT:
 		case SQL_C_TINYINT:
 			len = 1;
-			*((SCHAR *) rgbValue) = atoi(value);
+			if (bind_size > 0) {
+				*(SCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+			} else {
+				*((SCHAR *) rgbValue + bind_row) = atoi(value);
+			}
 			break;
 
 		case SQL_C_UTINYINT:
 			len = 1;
-			*((UCHAR *) rgbValue) = atoi(value);
+			if (bind_size > 0) {
+				*(UCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+			} else {
+				*((UCHAR *) rgbValue + bind_row) = atoi(value);
+			}
 			break;
 
 		case SQL_C_FLOAT:
 			len = 4;
-			*((SFLOAT *)rgbValue) = (float) atof(value);
+			if (bind_size > 0) {
+				*(SFLOAT *) ((char *) rgbValue + (bind_row * bind_size)) = (float) atof(value);
+			} else {
+				*((SFLOAT *)rgbValue + bind_row) = (float) atof(value);
+			}
 			break;
 
 		case SQL_C_DOUBLE:
 			len = 8;
-			*((SDOUBLE *)rgbValue) = atof(value);
+			if (bind_size > 0) {
+				*(SDOUBLE *) ((char *) rgbValue + (bind_row * bind_size)) = atof(value);
+			} else {
+				*((SDOUBLE *)rgbValue + bind_row) = atof(value);
+			}
 			break;
 
 		case SQL_C_SSHORT:
 		case SQL_C_SHORT:
 			len = 2;
-			*((SWORD *)rgbValue) = atoi(value);
+			if (bind_size > 0) {
+				*(SWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+			} else {
+				*((SWORD *)rgbValue + bind_row) = atoi(value);
+			}
 			break;
 
 		case SQL_C_USHORT:
 			len = 2;
-			*((UWORD *)rgbValue) = atoi(value);
+			if (bind_size > 0) {
+				*(UWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+			} else {
+				*((UWORD *)rgbValue + bind_row) = atoi(value);
+			}
 			break;
 
 		case SQL_C_SLONG:
 		case SQL_C_LONG:
 			len = 4;
-			*((SDWORD *)rgbValue) = atol(value);
+			if (bind_size > 0) {
+				*(SDWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atol(value);
+			} else {
+				*((SDWORD *)rgbValue + bind_row) = atol(value);
+			}
 			break;
 
 		case SQL_C_ULONG:
 			len = 4;
-			*((UDWORD *)rgbValue) = atol(value);
+			if (bind_size > 0) {
+				*(UDWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atol(value);
+			} else {
+				*((UDWORD *)rgbValue + bind_row) = atol(value);
+			}
 			break;
 
 		case SQL_C_BINARY:	
 
 			//	truncate if necessary
 			//	convert octal escapes to bytes
-			len = convert_from_pgbinary(value, rgbValue, cbValueMax);
-			mylog("SQL_C_BINARY: len = %d\n", len);
+
+			len = convert_from_pgbinary(value, tempBuf, sizeof(tempBuf));
+			ptr = tempBuf;
+
+			if (stmt->current_col >= 0) {
+
+				/*	No more data left for this column */
+				if (stmt->bindings[stmt->current_col].data_left == 0)
+					return COPY_NO_DATA_FOUND;
+
+				/*	Second (or more) call to SQLGetData so move the pointer */
+				else if (stmt->bindings[stmt->current_col].data_left > 0) {
+					ptr += len - stmt->bindings[stmt->current_col].data_left;
+					len = stmt->bindings[stmt->current_col].data_left;
+				}
+
+				/*	First call to SQLGetData so initialize data_left */
+				else	
+					stmt->bindings[stmt->current_col].data_left = len;
+
+			}
+
+			if (cbValueMax > 0) {
+				copy_len = (len > cbValueMax) ? cbValueMax : len;
+
+				/*	Copy the data */
+				memcpy(rgbValueBindRow, ptr, copy_len);
+
+				/*	Adjust data_left for next time */
+				if (stmt->current_col >= 0) {
+					stmt->bindings[stmt->current_col].data_left -= copy_len;
+				}
+			}
+
+			/*	Finally, check for truncation so that proper status can be returned */
+			if ( len > cbValueMax)
+				result = COPY_RESULT_TRUNCATED;
+
+			mylog("SQL_C_BINARY: len = %d, copy_len = %d\n", len, copy_len);
 			break;
 			
 		default:
@@ -395,10 +541,11 @@ struct tm *tim;
 	}
 
     // store the length of what was copied, if there's a place for it
-    if(pcbValue)
-        *pcbValue = len;
+    if(pcbValue) {
+        *(SDWORD *) ((char *)pcbValue + pcbValueOffset) = len;
+	}
 
-	return COPY_OK;
+	return result;
 
 }
 
@@ -423,6 +570,8 @@ struct tm *tim;
 SDWORD used;
 char *buffer, *buf;
 char in_quote = FALSE;
+Oid  lobj_oid;
+int lobj_fd, retval;
 
 
 	if ( ! old_statement) {
@@ -731,18 +880,50 @@ char in_quote = FALSE;
 		case SQL_VARBINARY:			/* non-ascii characters should be converted to octal */
 			new_statement[npos++] = '\'';	/*    Open Quote */
 
-			mylog("SQL_LONGVARBINARY: about to call convert_to_pgbinary, used = %d\n", used);
+			mylog("SQL_VARBINARY: about to call convert_to_pgbinary, used = %d\n", used);
 
 			npos += convert_to_pgbinary(buf, &new_statement[npos], used);
 
 			new_statement[npos++] = '\'';	/*    Close Quote */
 			
 			break;
+
 		case SQL_LONGVARBINARY:		
+
+			if ( stmt->parameters[param_number].data_at_exec) {
+
+				lobj_oid = stmt->parameters[param_number].lobj_oid;
+
+			}
+			else {
+
+				/*	store the oid */
+				lobj_oid = lo_creat(stmt->hdbc, INV_READ | INV_WRITE);
+				if (lobj_oid == 0) {
+					stmt->errornumber = STMT_EXEC_ERROR;
+					stmt->errormsg = "Couldnt create (in-line) large object.";
+					SC_log_error(func, "", stmt);
+					return SQL_ERROR;
+				}
+
+				/*	store the fd */
+				lobj_fd = lo_open(stmt->hdbc, lobj_oid, INV_WRITE);
+				if ( lobj_fd < 0) {
+					stmt->errornumber = STMT_EXEC_ERROR;
+					stmt->errormsg = "Couldnt open (in-line) large object for writing.";
+					SC_log_error(func, "", stmt);
+					return SQL_ERROR;
+				}
+
+				retval = lo_write(stmt->hdbc, lobj_fd, buffer, used);
+
+				lo_close(stmt->hdbc, lobj_fd);
+			}
+
 			/*	the oid of the large object -- just put that in for the
 				parameter marker -- the data has already been sent to the large object
 			*/
-			sprintf(param_string, "%d", stmt->parameters[param_number].lobj_oid);
+			sprintf(param_string, "%d", lobj_oid);
 			strcpy(&new_statement[npos], param_string);
 			npos += strlen(param_string);
 
@@ -912,38 +1093,27 @@ int nf;
 }
 
 /*	Change linefeed to carriage-return/linefeed */
-char *
+int
 convert_linefeeds(char *si, char *dst, size_t max)
 {
 size_t i = 0, out = 0;
-static char sout[TEXT_FIELD_SIZE+5];
-char *p;
 
-	if (dst)
-		p = dst;
-	else {
-		p = sout;
-		max = sizeof(sout);
-	}
-
-	p[0] = '\0';
-
-	for (i = 0; i < strlen(si) && out < max; i++) {
+	for (i = 0; i < strlen(si) && out < max - 1; i++) {
 		if (si[i] == '\n') {
 			/*	Only add the carriage-return if needed */
 			if (i > 0 && si[i-1] == '\r') {
-				p[out++] = si[i];
+				dst[out++] = si[i];
 				continue;
 			}
 
-			p[out++] = '\r';
-			p[out++] = '\n';
+			dst[out++] = '\r';
+			dst[out++] = '\n';
 		}
 		else
-			p[out++] = si[i];
+			dst[out++] = si[i];
 	}
-	p[out] = '\0';
-	return p;
+	dst[out] = '\0';
+	return out;
 }
 
 /*	Change carriage-return/linefeed to just linefeed 
@@ -1029,6 +1199,7 @@ convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValue
 {
 size_t i;
 int o=0;
+
 	
 	for (i = 0; i < strlen(value); ) {
 		if (value[i] == '\\') {
@@ -1042,7 +1213,7 @@ int o=0;
 		o++;
 	}
 
-	rgbValue[o] = '\0';
+	rgbValue[o] = '\0';	// extra protection
 
 	return o;
 }
@@ -1075,12 +1246,13 @@ int i, o=0;
 
 	for (i = 0; i < len; i++) {
 		mylog("convert_to_pgbinary: in[%d] = %d, %c\n", i, in[i], in[i]);
-		if (in[i] < 32 || in[i] > 126) {
+		if ( isalnum(in[i]) || in[i] == ' ') {
+			out[o++] = in[i];
+		}
+		else {
 			strcpy(&out[o], conv_to_octal(in[i])); 
 			o += 5;
 		}
-		else
-			out[o++] = in[i];
 
 	}
 
@@ -1150,15 +1322,25 @@ unsigned int i, o = 0;
 */
 int
 convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue, 
-		   SDWORD cbValueMax, SDWORD *pcbValue, char multiple)
+		   SDWORD cbValueMax, SDWORD *pcbValue)
 {
 Oid oid;
-int retval;
+int retval, result, left = -1;
+int bind_row = stmt->bind_row;
+BindInfoClass *bindInfo = NULL;
+
+
+/*	If using SQLGetData, then current_col will be set */
+	if (stmt->current_col >= 0) {
+		bindInfo = &stmt->bindings[stmt->current_col];
+		left = bindInfo->data_left;
+	}
 
 	/*	if this is the first call for this column,
 		open the large object for reading 
 	*/
-	if ( ! multiple) {
+
+	if ( ! bindInfo || bindInfo->data_left == -1) {
 		oid = atoi(value);
 		stmt->lobj_fd = lo_open(stmt->hdbc, oid, INV_READ);
 		if (stmt->lobj_fd < 0) {
@@ -1166,6 +1348,22 @@ int retval;
 			stmt->errormsg = "Couldnt open large object for reading.";
 			return COPY_GENERAL_ERROR;
 		}
+
+		/*	Get the size */
+		retval = lo_lseek(stmt->hdbc, stmt->lobj_fd, 0L, SEEK_END);
+		if (retval >= 0) {
+
+			left = lo_tell(stmt->hdbc, stmt->lobj_fd);
+			if (bindInfo)
+				bindInfo->data_left = left;
+
+			/*	return to beginning */
+			lo_lseek(stmt->hdbc, stmt->lobj_fd, 0L, SEEK_SET);
+		}
+	}
+
+	if (left == 0) {
+		return COPY_NO_DATA_FOUND;
 	}
 
 	if (stmt->lobj_fd < 0) {
@@ -1174,7 +1372,7 @@ int retval;
 		return COPY_GENERAL_ERROR;
 	}
 
-	retval = lo_read(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValueMax);
+	retval = lo_read(stmt->hdbc, stmt->lobj_fd, (char *) rgbValue, cbValueMax);
 	if (retval < 0) {
 		lo_close(stmt->hdbc, stmt->lobj_fd);
 		stmt->lobj_fd = -1;
@@ -1183,20 +1381,26 @@ int retval;
 		stmt->errormsg = "Error reading from large object.";
 		return COPY_GENERAL_ERROR;
 	}
-	else if (retval < cbValueMax)  {	/* success, all done */
+
+	if (retval < left)
+		result = COPY_RESULT_TRUNCATED;
+	else
+		result = COPY_OK;
+
+	if (pcbValue)
+		*pcbValue = left < 0 ? SQL_NO_TOTAL : left;
+
+
+	if (bindInfo && bindInfo->data_left > 0) 
+		bindInfo->data_left -= retval;
+
+
+	if (! bindInfo || bindInfo->data_left == 0) {
 		lo_close(stmt->hdbc, stmt->lobj_fd);
 		stmt->lobj_fd = -1;	/* prevent further reading */
-
-		if (pcbValue)
-			*pcbValue = retval;
-
-		return COPY_OK;
 	}
-	else {	/* retval == cbVaueMax -- assume truncated */
-		if (pcbValue)
-			*pcbValue = SQL_NO_TOTAL;
 
-		return COPY_RESULT_TRUNCATED;
 
-	}
+	return result;
+
 }

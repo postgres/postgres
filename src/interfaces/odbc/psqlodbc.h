@@ -40,7 +40,7 @@ typedef UInt4 Oid;
 #define MAX_CONNECT_STRING			4096
 #define ERROR_MSG_LENGTH			4096
 #define FETCH_MAX					100		/* default number of rows to cache for declare/fetch */
-#define FETCH_INCR					1000
+#define TUPLE_MALLOC_INC			100
 #define SOCK_BUFFER_SIZE			4096	/* default socket buffer size */
 #define MAX_CONNECTIONS				128		/* conns per environment (arbitrary)  */
 #define MAX_FIELDS					512
@@ -70,8 +70,8 @@ typedef UInt4 Oid;
 /* Driver stuff */
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.40.0001 PostgreSQL 6.4"
-#define POSTGRESDRIVERVERSION  "06.40.0001"
+#define DBMS_VERSION           "06.40.0002 PostgreSQL 6.4"
+#define POSTGRESDRIVERVERSION  "06.40.0002"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
@@ -116,11 +116,30 @@ typedef struct GlobalValues_
 	char				bools_as_char;
 	char				lie;
 	char				parse;
+	char				cancel_as_freestmt;
 	char				extra_systable_prefixes[MEDIUM_REGISTRY_LEN];
 	char				conn_settings[LARGE_REGISTRY_LEN];
 	FILE*				mylogFP;
 	FILE*				qlogFP;	
 } GLOBAL_VALUES;
+
+typedef struct StatementOptions_ {
+	int maxRows;
+	int maxLength;
+	int rowset_size;
+	int keyset_size;
+	int cursor_type;
+	int scroll_concurrency;
+	int retrieve_data;
+	int bind_size;		        /* size of each structure if using Row Binding */
+} StatementOptions;
+
+/*	Used to pass extra query info to send_query */
+typedef struct QueryInfo_ {
+	int				row_size;
+	QResultClass	*result_in;
+	char			*cursor;
+} QueryInfo;
 
 
 #define PG_TYPE_LO				-999	/* hack until permanent type available */

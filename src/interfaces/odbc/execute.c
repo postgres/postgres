@@ -36,6 +36,8 @@
 #include "bind.h"
 #include "lobj.h"
 
+extern GLOBAL_VALUES globals;
+
 
 //      Perform a Prepare on the SQL statement
 RETCODE SQL_API SQLPrepare(HSTMT     hstmt,
@@ -342,7 +344,7 @@ int lf;
 
 		mylog("SQLTransact: sending on conn %d '%s'\n", conn, stmt_string);
 
-		res = CC_send_query(conn, stmt_string, NULL, NULL);
+		res = CC_send_query(conn, stmt_string, NULL);
 		CC_set_no_trans(conn);
 
 		if ( ! res) {
@@ -364,12 +366,14 @@ int lf;
 
 //      -       -       -       -       -       -       -       -       -
 
-
 RETCODE SQL_API SQLCancel(
         HSTMT   hstmt)  // Statement to cancel.
 {
 static char *func="SQLCancel";
 StatementClass *stmt = (StatementClass *) hstmt;
+RETCODE result;
+HMODULE hmodule;
+FARPROC addr;
 
 	mylog( "%s: entering...\n", func);
 
@@ -380,8 +384,35 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	}
 
 	//	Not in the middle of SQLParamData/SQLPutData so cancel like a close.
-	if (stmt->data_at_exec < 0)
-		return SQLFreeStmt(hstmt, SQL_CLOSE);
+	if (stmt->data_at_exec < 0) {
+
+
+		/*	MAJOR HACK for Windows to reset the driver manager's cursor state:
+			Because of what seems like a bug in the Odbc driver manager,
+			SQLCancel does not act like a SQLFreeStmt(CLOSE), as many
+			applications depend on this behavior.  So, this 
+			brute force method calls the driver manager's function on
+			behalf of the application.  
+		*/
+
+#ifdef WIN32
+		if (globals.cancel_as_freestmt) {
+			hmodule = GetModuleHandle("ODBC32");
+			addr = GetProcAddress(hmodule, "SQLFreeStmt");
+			result = addr( (char *) (stmt->phstmt) - 96, SQL_CLOSE);
+		}
+		else {
+			result = SQLFreeStmt( hstmt, SQL_CLOSE);
+		}
+#else
+		result = SQLFreeStmt( hstmt, SQL_CLOSE);
+#endif
+
+		mylog("SQLCancel:  SQLFreeStmt returned %d\n", result);
+
+		SC_clear_error(hstmt);
+		return SQL_SUCCESS;
+	}
 
 	//	In the middle of SQLParamData/SQLPutData, so cancel that.
 	//	Note, any previous data-at-exec buffers will be freed in the recycle

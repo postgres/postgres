@@ -66,6 +66,10 @@ typedef enum {
 #define STMT_CREATE_TABLE_ERROR 17
 #define STMT_NO_CURSOR_NAME 18
 #define STMT_INVALID_CURSOR_NAME 19
+#define STMT_INVALID_ARGUMENT_NO 20
+#define STMT_ROW_OUT_OF_RANGE 21
+#define STMT_OPERATION_CANCELLED 22
+#define STMT_INVALID_CURSOR_POSITION 23
 
 /* statement types */
 enum {
@@ -93,6 +97,13 @@ enum {
 	STMT_PARSE_FATAL,
 };
 
+/*	Result style */
+enum {
+	STMT_FETCH_NONE = 0,
+	STMT_FETCH_NORMAL,
+	STMT_FETCH_EXTENDED,
+};
+
 typedef struct {
 	COL_INFO		*col_info;		/* cached SQLColumns info for this table */
 	char 			name[MAX_TABLE_LEN+1];
@@ -117,21 +128,16 @@ typedef struct {
 } FIELD_INFO;
 
 
-
 /********	Statement Handle	***********/
 struct StatementClass_ {
     ConnectionClass *hdbc;		/* pointer to ConnectionClass this statement belongs to */
-
     QResultClass *result;		/* result of the current statement */
+	HSTMT FAR *phstmt;
+	StatementOptions options;
 
     STMT_Status status;
     char *errormsg;
     int errornumber;
-	int maxRows;
-	int rowset_size;
-	int keyset_size;
-	int cursor_type;
-	int scroll_concurrency;
 
     /* information on bindings */
     BindInfoClass *bindings;	/* array to store the binding information */
@@ -141,7 +147,11 @@ struct StatementClass_ {
     int parameters_allocated;
     ParameterInfoClass *parameters;
 
-	Int4 currTuple;
+	Int4 currTuple;				/* current absolute row number (GetData, SetPos, SQLFetch) */
+	int  save_rowset_size;		/* saved rowset size in case of change/FETCH_NEXT */
+	int  rowset_start;			/* start of rowset (an absolute row number) */
+	int  bind_row;				/* current offset for Multiple row/column binding */
+	int  last_fetch_count;      /* number of rows retrieved in last fetch/extended fetch */
 	int  current_col;			/* current column for GetData -- used to handle multiple calls */
 	int  lobj_fd;				/* fd of the current large object */
 
@@ -181,6 +191,7 @@ struct StatementClass_ {
 
 /*	Statement prototypes */
 StatementClass *SC_Constructor(void);
+void InitializeStatementOptions(StatementOptions *opt);
 char SC_Destructor(StatementClass *self);
 int statement_type(char *statement);
 char parse_statement(StatementClass *stmt);

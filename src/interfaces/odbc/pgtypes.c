@@ -73,7 +73,104 @@ Int4 pgtypes_defined[]  = {
 				PG_TYPE_BYTEA,
 				PG_TYPE_LO,
 			    0 };
-			  
+
+/*	These are the SQL Types reported in SQLGetTypeInfo.  */
+Int2 sqlTypes [] = {
+	SQL_BIGINT,
+	/* SQL_BINARY, */
+	SQL_BIT,
+	SQL_CHAR,
+	SQL_DATE,
+	SQL_DECIMAL,
+	SQL_DOUBLE,
+	SQL_FLOAT,
+	SQL_INTEGER,
+	SQL_LONGVARBINARY,
+	SQL_LONGVARCHAR,
+	SQL_NUMERIC,
+	SQL_REAL,
+	SQL_SMALLINT,
+	SQL_TIME,
+	SQL_TIMESTAMP,
+	SQL_TINYINT,
+	SQL_VARBINARY,
+	SQL_VARCHAR,
+	0
+};
+
+Int4 sqltype_to_pgtype(SWORD fSqlType)
+{
+Int4 pgType;
+
+	switch(fSqlType) {
+
+	case SQL_BINARY:
+		pgType = PG_TYPE_BYTEA;
+		break;
+
+	case SQL_CHAR:
+		pgType = PG_TYPE_BPCHAR;
+		break;
+
+	case SQL_BIT:
+		pgType = globals.bools_as_char ? PG_TYPE_CHAR : PG_TYPE_BOOL;
+		break;
+
+	case SQL_DATE:
+		pgType = PG_TYPE_DATE;
+		break;
+
+	case SQL_DOUBLE:
+	case SQL_FLOAT:
+		pgType = PG_TYPE_FLOAT8;
+		break;
+
+	case SQL_INTEGER:
+	case SQL_BIGINT:
+	case SQL_NUMERIC:
+	case SQL_DECIMAL:
+		pgType = PG_TYPE_INT4;
+		break;
+
+	case SQL_LONGVARBINARY:
+		pgType = PG_TYPE_LO;
+		break;
+
+	case SQL_LONGVARCHAR:
+		pgType = globals.text_as_longvarchar ? PG_TYPE_TEXT : PG_TYPE_VARCHAR;
+		break;
+
+	case SQL_REAL:
+		pgType = PG_TYPE_FLOAT4;
+		break;
+
+	case SQL_SMALLINT:
+	case SQL_TINYINT:
+		pgType = PG_TYPE_INT2;
+		break;
+
+	case SQL_TIME:
+		pgType = PG_TYPE_TIME;
+		break;
+
+	case SQL_TIMESTAMP:
+		pgType = PG_TYPE_DATETIME;
+		break;
+
+	case SQL_VARBINARY:
+		pgType = PG_TYPE_BYTEA;
+		break;
+
+	case SQL_VARCHAR:
+		pgType = PG_TYPE_VARCHAR;
+		break;
+
+	default:
+		break;
+	}
+
+	return pgType;
+}
 
 /*	There are two ways of calling this function:  
 	1.	When going through the supported PG types (SQLGetTypeInfo)
@@ -94,7 +191,7 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_CHAR16:
 	case PG_TYPE_NAME:  		return SQL_CHAR;        
 
-	case PG_TYPE_BPCHAR:		return SQL_CHAR;		// temporary?
+	case PG_TYPE_BPCHAR:		return SQL_CHAR;
 
 	case PG_TYPE_VARCHAR:		return SQL_VARCHAR;
 
@@ -165,7 +262,7 @@ char *pgtype_to_name(StatementClass *stmt, Int4 type)
 	case PG_TYPE_CHAR8:         return "char8";
 	case PG_TYPE_CHAR16:		return "char16";
 	case PG_TYPE_VARCHAR:       return "varchar";
-	case PG_TYPE_BPCHAR:        return "bpchar";
+	case PG_TYPE_BPCHAR:        return "char";
 	case PG_TYPE_TEXT:          return "text";
 	case PG_TYPE_NAME:          return "name";
 	case PG_TYPE_INT2:          return "int2";

@@ -39,33 +39,41 @@
 
 
 #ifdef MY_LOG
-#define MYLOGFILE	"mylog_"
-#ifndef WIN32
-#define MYLOGDIR	"/tmp"
+  #define MYLOGFILE	"mylog_"
+  #ifndef WIN32
+    #define MYLOGDIR	"/tmp"
+  #else
+    #define MYLOGDIR	"c:"
+  #endif
+  void mylog();	/* prototype */
 #else
-#define MYLOGDIR	"c:"
-#endif
-void mylog();	/* prototype */
-#else
-#define mylog    // mylog
+  #ifndef WIN32
+    #define mylog(args...)	/* GNU convention for variable arguments */
+  #else
+    #define mylog    // mylog
+  #endif
 #endif
 
 #ifdef Q_LOG
-#define QLOGFILE	"psqlodbc_"
-#ifndef WIN32
-#define QLOGDIR		"/tmp"
+  #define QLOGFILE	"psqlodbc_"
+  #ifndef WIN32
+    #define QLOGDIR		"/tmp"
+  #else
+    #define QLOGDIR		"c:"
+  #endif
+  void qlog();	/* prototype */
 #else
-#define QLOGDIR		"c:"
-#endif
-void qlog();	/* prototype */
-#else
-#define qlog    // qlog
+  #ifndef WIN32
+    #define qlog(args...)	/* GNU convention for variable arguments */
+  #else
+    #define qlog    // qlog
+  #endif
 #endif
 
 #ifndef WIN32
-#define DIRSEPERATOR	"/"
+#define DIRSEPARATOR	"/"
 #else
-#define DIRSEPERATOR	"\\"
+#define DIRSEPARATOR	"\\"
 #endif
 
 void remove_newlines(char *string);

@@ -144,6 +144,14 @@ int status;
                     strcpy(szSqlState, "S1000");
                     // general error
                     break;  
+				case STMT_ROW_OUT_OF_RANGE:
+					strcpy(szSqlState, "S1107");
+					break;
+
+				case STMT_OPERATION_CANCELLED:
+					strcpy(szSqlState, "S1008");
+					break;
+
                 case STMT_NOT_IMPLEMENTED_ERROR:
                     strcpy(szSqlState, "S1C00"); // == 'driver not capable'
                     break;
@@ -171,7 +179,15 @@ int status;
 				case STMT_NO_CURSOR_NAME:
                     strcpy(szSqlState, "S1015");
                     break;
-                default:
+                case STMT_INVALID_ARGUMENT_NO:
+                    strcpy(szSqlState, "S1009");
+                    // invalid argument value
+                    break;
+				case STMT_INVALID_CURSOR_POSITION:
+                    strcpy(szSqlState, "S1109");
+                    break;
+                
+				default:
                     strcpy(szSqlState, "S1000");
                     // also a general error
                     break;
@@ -218,6 +234,10 @@ int status;
             
             if (NULL != szSqlState) 
                 switch(status) {
+				case STMT_OPTION_VALUE_CHANGED:
+				case CONN_OPTION_VALUE_CHANGED:
+                    strcpy(szSqlState, "01S02");
+					break;
                 case CONN_INIREAD_ERROR:
                     strcpy(szSqlState, "IM002");
                     // data source not found
@@ -254,6 +274,7 @@ int status;
                     strcpy(szSqlState, "S1001");
                     break;
                 case CONN_NOT_IMPLEMENTED_ERROR:
+				case STMT_NOT_IMPLEMENTED_ERROR:
                     strcpy(szSqlState, "S1C00");
                     break;
                 default:

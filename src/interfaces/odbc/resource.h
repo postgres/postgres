@@ -44,6 +44,7 @@
 #define DRV_EXTRASYSTABLEPREFIXES       1051
 #define DS_ROWVERSIONING                1052
 #define DRV_PARSE                       1052
+#define DRV_CANCELASFREESTMT            1053
 #define IDC_OPTIONS                     1054
 #define DRV_KSQO                        1055
 #define DS_PG64                         1057

@@ -37,6 +37,219 @@
 extern GLOBAL_VALUES globals;
 
 
+RETCODE set_statement_option(ConnectionClass *conn, 
+							 StatementClass *stmt, 
+							 UWORD   fOption,
+							 UDWORD  vParam)
+{
+static char *func="set_statement_option";
+char changed = FALSE;
+
+
+	switch(fOption) {
+	case SQL_ASYNC_ENABLE:/* ignored */
+		break;
+
+	case SQL_BIND_TYPE:		
+		/* now support multi-column and multi-row binding */
+		if (conn) conn->stmtOptions.bind_size = vParam;
+		if (stmt) stmt->options.bind_size = vParam;
+		break;
+
+	case SQL_CONCURRENCY:
+		/*	positioned update isn't supported so cursor concurrency is read-only */
+
+		if (conn) conn->stmtOptions.scroll_concurrency = vParam;
+		if (stmt) stmt->options.scroll_concurrency = vParam;
+		break;
+
+		/*
+		if (globals.lie) {
+			if (conn) conn->stmtOptions.scroll_concurrency = vParam;
+			if (stmt) stmt->options.scroll_concurrency = vParam;
+		}
+		else {
+
+			if (conn) conn->stmtOptions.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+			if (stmt) stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+
+			if (vParam != SQL_CONCUR_READ_ONLY)
+				changed = TRUE;
+		}
+		break;
+		*/
+		
+	case SQL_CURSOR_TYPE:
+		/*	if declare/fetch, then type can only be forward.
+			otherwise, it can only be forward or static.
+		*/
+		mylog("SetStmtOption(): SQL_CURSOR_TYPE = %d\n", vParam);
+
+		if (globals.lie) {
+
+			if (conn) conn->stmtOptions.cursor_type = vParam;
+			if (stmt) stmt->options.cursor_type = vParam;
+
+		}
+		else {
+			if (globals.use_declarefetch) {
+
+				if (conn) conn->stmtOptions.cursor_type = SQL_CURSOR_FORWARD_ONLY;
+				if (stmt) stmt->options.cursor_type = SQL_CURSOR_FORWARD_ONLY;
+
+				if (vParam != SQL_CURSOR_FORWARD_ONLY) 
+					changed = TRUE;
+			}
+			else {
+				if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC) {
+
+					if (conn) conn->stmtOptions.cursor_type = vParam;		// valid type
+					if (stmt) stmt->options.cursor_type = vParam;		// valid type
+				}
+				else {
+
+					if (conn) conn->stmtOptions.cursor_type = SQL_CURSOR_STATIC;
+					if (stmt) stmt->options.cursor_type = SQL_CURSOR_STATIC;
+
+					changed = TRUE;
+				}
+			}
+		}
+		break;
+
+	case SQL_KEYSET_SIZE: /* ignored, but saved and returned  */
+		mylog("SetStmtOption(): SQL_KEYSET_SIZE, vParam = %d\n", vParam);
+
+		if (conn) conn->stmtOptions.keyset_size = vParam;
+		if (stmt) stmt->options.keyset_size = vParam;
+
+		break;
+
+		/*
+		if (globals.lie)
+			stmt->keyset_size = vParam;
+		else {
+			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			stmt->errormsg = "Driver does not support keyset size option";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+		*/
+
+	case SQL_MAX_LENGTH:/* ignored, but saved */
+		mylog("SetStmtOption(): SQL_MAX_LENGTH, vParam = %d\n", vParam);
+		if (conn) conn->stmtOptions.maxLength = vParam;
+		if (stmt) stmt->options.maxLength = vParam;
+		break;
+
+	case SQL_MAX_ROWS: /* ignored, but saved */
+		mylog("SetStmtOption(): SQL_MAX_ROWS, vParam = %d\n", vParam);
+		if (conn) conn->stmtOptions.maxRows = vParam;
+		if (stmt) stmt->options.maxRows = vParam;
+		break;
+
+	case SQL_NOSCAN: /* ignored */
+		mylog("SetStmtOption: SQL_NOSCAN, vParam = %d\n", vParam);
+		break;
+
+	case SQL_QUERY_TIMEOUT: /* ignored */
+		mylog("SetStmtOption: SQL_QUERY_TIMEOUT, vParam = %d\n", vParam);
+		//	"0" returned in SQLGetStmtOption
+		break;
+
+	case SQL_RETRIEVE_DATA: /* ignored, but saved */
+		mylog("SetStmtOption(): SQL_RETRIEVE_DATA, vParam = %d\n", vParam);
+		if (conn) conn->stmtOptions.retrieve_data = vParam;
+		if (stmt) stmt->options.retrieve_data = vParam;
+		break;
+
+	case SQL_ROWSET_SIZE:
+		mylog("SetStmtOption(): SQL_ROWSET_SIZE, vParam = %d\n", vParam);
+
+
+		/*	Save old rowset size for SQLExtendedFetch purposes 
+			If the rowset_size is being changed since the last call
+			to fetch rows.
+		*/
+
+		if (stmt && stmt->save_rowset_size <= 0 && stmt->last_fetch_count > 0 )
+			stmt->save_rowset_size = stmt->options.rowset_size;
+
+		if (vParam < 1) {
+			vParam = 1;
+			changed = TRUE;
+		}
+
+		if (conn) conn->stmtOptions.rowset_size = vParam;
+		if (stmt) stmt->options.rowset_size = vParam;
+
+
+		break;
+
+	case SQL_SIMULATE_CURSOR: /* NOT SUPPORTED */
+		if (stmt) {
+			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			stmt->errormsg = "Simulated positioned update/delete not supported.  Use the cursor library.";
+			SC_log_error(func, "", stmt);
+		}
+		if (conn) {
+			conn->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			conn->errormsg = "Simulated positioned update/delete not supported.  Use the cursor library.";
+			CC_log_error(func, "", conn);
+		}
+		return SQL_ERROR;
+
+	case SQL_USE_BOOKMARKS: /* NOT SUPPORTED */
+		if (stmt) {
+			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			stmt->errormsg = "Driver does not support (SET) using bookmarks.";
+			SC_log_error(func, "", stmt);
+		}
+		if (conn) {
+			conn->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			conn->errormsg = "Driver does not support (SET) using bookmarks.";
+			CC_log_error(func, "", conn);
+		}
+		return SQL_ERROR;
+
+    default:
+		{
+		char option[64];
+
+		if (stmt) {
+			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			stmt->errormsg = "Unknown statement option (Set)";
+			sprintf(option, "fOption=%d, vParam=%ld", fOption, vParam);
+			SC_log_error(func, option, stmt);
+		}
+		if (conn) {
+			conn->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			conn->errormsg = "Unknown statement option (Set)";
+			sprintf(option, "fOption=%d, vParam=%ld", fOption, vParam);
+			CC_log_error(func, option, conn);
+		}
+
+        return SQL_ERROR;
+		}
+    }
+
+	if (changed) {
+		if (stmt) {
+			stmt->errormsg = "Requested value changed.";
+			stmt->errornumber = STMT_OPTION_VALUE_CHANGED;
+		}
+		if (conn) {
+			conn->errormsg = "Requested value changed.";
+			conn->errornumber = STMT_OPTION_VALUE_CHANGED;
+		}
+		return SQL_SUCCESS_WITH_INFO;
+	}
+	else
+		return SQL_SUCCESS;
+}
+
+
+
 /* Implements only SQL_AUTOCOMMIT */
 RETCODE SQL_API SQLSetConnectOption(
         HDBC    hdbc,
@@ -45,6 +258,9 @@ RETCODE SQL_API SQLSetConnectOption(
 {
 static char *func="SQLSetConnectOption";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
+char changed = FALSE;
+RETCODE retval;
+int i;
 
 	mylog("%s: entering...\n", func);
 
@@ -55,6 +271,47 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 
 
 	switch (fOption) {
+	/* Statement Options --
+	   (apply to all stmts on the connection and become defaults for new stmts)
+	*/
+	case SQL_ASYNC_ENABLE:
+	case SQL_BIND_TYPE:		
+	case SQL_CONCURRENCY:
+	case SQL_CURSOR_TYPE:
+	case SQL_KEYSET_SIZE: 
+	case SQL_MAX_LENGTH:
+	case SQL_MAX_ROWS:
+	case SQL_NOSCAN: 
+	case SQL_QUERY_TIMEOUT:
+	case SQL_RETRIEVE_DATA:
+	case SQL_ROWSET_SIZE:
+	case SQL_SIMULATE_CURSOR:
+	case SQL_USE_BOOKMARKS:
+
+		/*	Affect all current Statements */
+		for (i = 0; i < conn->num_stmts; i++) {
+			if ( conn->stmts[i]) {
+				set_statement_option(NULL, conn->stmts[i], fOption, vParam);
+			}
+		}
+
+		/*	Become the default for all future statements on this connection */
+		retval = set_statement_option(conn, NULL, fOption, vParam);
+
+		if (retval == SQL_SUCCESS_WITH_INFO)
+			changed = TRUE;
+		else if (retval == SQL_ERROR)
+			return SQL_ERROR;
+
+		break;
+
+	/**********************************/
+	/*****	Connection Options  *******/	
+	/**********************************/
+
+	case SQL_ACCESS_MODE: /* ignored */
+		break;
+
 	case SQL_AUTOCOMMIT:
 
 		/*  Since we are almost always in a transaction, this is now ok.
@@ -89,19 +346,34 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 
 		break;
 
-	case SQL_LOGIN_TIMEOUT:
+	case SQL_CURRENT_QUALIFIER: /* ignored */
 		break;
 
-	case SQL_ACCESS_MODE:
+	case SQL_LOGIN_TIMEOUT: /* ignored */
 		break;
 
-	case SQL_TXN_ISOLATION:
+	case SQL_PACKET_SIZE:	/* ignored */
+		break;
+
+	case SQL_QUIET_MODE:	/* ignored */
+		break;
+
+	case SQL_TXN_ISOLATION: /* ignored */
+		break;
+		
+	/*	These options should be handled by driver manager */
+	case SQL_ODBC_CURSORS:
+	case SQL_OPT_TRACE:
+	case SQL_OPT_TRACEFILE:
+	case SQL_TRANSLATE_DLL:
+	case SQL_TRANSLATE_OPTION:
+		CC_log_error(func, "This connect option (Set) is only used by the Driver Manager", conn);
 		break;
 
 	default:
 		{ 
 		char option[64];
-		conn->errormsg = "Driver does not support setting this connect option";
+		conn->errormsg = "Unknown connect option (Set)";
 		conn->errornumber = CONN_UNSUPPORTED_OPTION;
 		sprintf(option, "fOption=%d, vParam=%ld", fOption, vParam);
 		CC_log_error(func, option, conn);
@@ -109,7 +381,14 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 		}
 
 	}    
-	return SQL_SUCCESS;
+
+	if (changed) {
+		conn->errornumber = CONN_OPTION_VALUE_CHANGED;
+		conn->errormsg = "Requested value changed.";
+		return SQL_SUCCESS_WITH_INFO;
+	}
+	else
+		return SQL_SUCCESS;
 }
 
 //      -       -       -       -       -       -       -       -       -
@@ -131,22 +410,50 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 	}
 
 	switch (fOption) {
+	case SQL_ACCESS_MODE:/* NOT SUPPORTED */
+		*((UDWORD *) pvParam) = SQL_MODE_READ_WRITE;
+		break;
+
 	case SQL_AUTOCOMMIT:
 		*((UDWORD *)pvParam) = (UDWORD)( CC_is_in_autocommit(conn) ?
 						SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF);
 		break;
 
-	/* don't use qualifiers */
-	case SQL_CURRENT_QUALIFIER:
+	case SQL_CURRENT_QUALIFIER:	/* don't use qualifiers */
 		if(pvParam)
 			strcpy(pvParam, "");
 
 		break;
 
+	case SQL_LOGIN_TIMEOUT: /* NOT SUPPORTED */
+		*((UDWORD *) pvParam) = 0;
+		break;
+
+	case SQL_PACKET_SIZE: /* NOT SUPPORTED */
+		*((UDWORD *) pvParam) = globals.socket_buffersize;
+		break;
+
+	case SQL_QUIET_MODE:/* NOT SUPPORTED */
+		*((UDWORD *) pvParam) = (UDWORD) NULL;
+		break;
+
+	case SQL_TXN_ISOLATION:/* NOT SUPPORTED */
+		*((UDWORD *) pvParam) = SQL_TXN_SERIALIZABLE;
+		break;
+
+	/*	These options should be handled by driver manager */
+	case SQL_ODBC_CURSORS:
+	case SQL_OPT_TRACE:
+	case SQL_OPT_TRACEFILE:
+	case SQL_TRANSLATE_DLL:
+	case SQL_TRANSLATE_OPTION:
+		CC_log_error(func, "This connect option (Get) is only used by the Driver Manager", conn);
+		break;
+
 	default:
 		{
 		char option[64];
-		conn->errormsg = "Driver does not support getting this connect option";
+		conn->errormsg = "Unknown connect option (Get)";
 		conn->errornumber = CONN_UNSUPPORTED_OPTION;
 		sprintf(option, "fOption=%d", fOption);
 		CC_log_error(func, option, conn);
@@ -181,104 +488,7 @@ char changed = FALSE;
 		return SQL_INVALID_HANDLE;
 	}
 
-	switch(fOption) {
-	case SQL_QUERY_TIMEOUT:
-		mylog("SetStmtOption: vParam = %d\n", vParam);
-		//	"0" returned in SQLGetStmtOption
-		break;
-
-	case SQL_MAX_LENGTH:
-		//	"4096" returned in SQLGetStmtOption
-		break;
-
-	case SQL_MAX_ROWS:
-		mylog("SetStmtOption(): SQL_MAX_ROWS = %d, returning success\n", vParam);
-		stmt->maxRows = vParam;
-		return SQL_SUCCESS;
-		break;
-
-	case SQL_ROWSET_SIZE:
-		mylog("SetStmtOption(): SQL_ROWSET_SIZE = %d\n", vParam);
-
-		stmt->rowset_size = 1;		// only support 1 row at a time
-		if (vParam != 1) 
-			changed = TRUE;
-
-		break;
-
-	case SQL_KEYSET_SIZE:
-		mylog("SetStmtOption(): SQL_KEYSET_SIZE = %d\n", vParam);
-		if (globals.lie)
-			stmt->keyset_size = vParam;
-		else {
-			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-			stmt->errormsg = "Driver does not support keyset size option";
-			SC_log_error(func, "", stmt);
-			return SQL_ERROR;
-		}
-		break;
-
-	case SQL_CONCURRENCY:
-		//	positioned update isn't supported so cursor concurrency is read-only
-		mylog("SetStmtOption(): SQL_CONCURRENCY = %d\n", vParam);
-
-		if (globals.lie)
-			stmt->scroll_concurrency = vParam;
-		else {
-			stmt->scroll_concurrency = SQL_CONCUR_READ_ONLY;
-			if (vParam != SQL_CONCUR_READ_ONLY)
-				changed = TRUE;
-		}
-		break;
-		
-	case SQL_CURSOR_TYPE:
-		//	if declare/fetch, then type can only be forward.
-		//	otherwise, it can only be forward or static.
-		mylog("SetStmtOption(): SQL_CURSOR_TYPE = %d\n", vParam);
-
-		if (globals.lie)
-			stmt->cursor_type = vParam;
-		else {
-			if (globals.use_declarefetch) {
-				stmt->cursor_type = SQL_CURSOR_FORWARD_ONLY;
-				if (vParam != SQL_CURSOR_FORWARD_ONLY) 
-					changed = TRUE;
-			}
-			else {
-				if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC)
-					stmt->cursor_type = vParam;		// valid type
-				else {
-					stmt->cursor_type = SQL_CURSOR_STATIC;
-					changed = TRUE;
-				}
-			}
-		}
-		break;
-
-	case SQL_SIMULATE_CURSOR:
-		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Simulated positioned update/delete not supported.  Use the cursor library.";
-		SC_log_error(func, "", stmt);
-		return SQL_ERROR;
-
-    default:
-		{
-		char option[64];
-		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Driver does not support setting this statement option";
-		sprintf(option, "fOption=%d, vParam=%ld", fOption, vParam);
-		SC_log_error(func, option, stmt);
-        return SQL_ERROR;
-		}
-    }
-
-	if (changed) {
-		stmt->errormsg = "Requested value changed.";
-		stmt->errornumber = STMT_OPTION_VALUE_CHANGED;
-		return SQL_SUCCESS_WITH_INFO;
-	}
-	else
-		return SQL_SUCCESS;
+	return set_statement_option(NULL, stmt, fOption, vParam);
 }
 
 
@@ -304,54 +514,78 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	}
 
 	switch(fOption) {
-	case SQL_QUERY_TIMEOUT:
-		// how long we wait on a query before returning to the
-		// application (0 == forever)
-		*((SDWORD *)pvParam) = 0;
+	case SQL_GET_BOOKMARK:/* NOT SUPPORTED */
+		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		stmt->errormsg = "Driver does not support getting bookmarks.";
+		SC_log_error(func, "", stmt);
+		return SQL_ERROR;
 		break;
 
-	case SQL_MAX_LENGTH:
-		// what is the maximum length that will be returned in
-		// a single column
-		*((SDWORD *)pvParam) = 4096;
+	case SQL_ROW_NUMBER:
+		*((SDWORD *) pvParam) = stmt->currTuple + 1;
 		break;
 
-	case SQL_MAX_ROWS:
-		*((SDWORD *)pvParam) = stmt->maxRows;
-		mylog("GetSmtOption: MAX_ROWS, returning %d\n", stmt->maxRows);
+	case SQL_ASYNC_ENABLE:	/* NOT SUPPORTED */
+		*((SDWORD *) pvParam) = SQL_ASYNC_ENABLE_OFF;
+		break;
+
+	case SQL_BIND_TYPE:
+		*((SDWORD *) pvParam) = stmt->options.bind_size;
+		break;
+
+	case SQL_CONCURRENCY: /* NOT REALLY SUPPORTED */
+		mylog("GetStmtOption(): SQL_CONCURRENCY\n");
+		*((SDWORD *)pvParam) = stmt->options.scroll_concurrency;
+		break;
+
+	case SQL_CURSOR_TYPE: /* PARTIAL SUPPORT */
+		mylog("GetStmtOption(): SQL_CURSOR_TYPE\n");
+		*((SDWORD *)pvParam) = stmt->options.cursor_type;
+		break;
+
+	case SQL_KEYSET_SIZE: /* NOT SUPPORTED, but saved */
+		mylog("GetStmtOption(): SQL_KEYSET_SIZE\n");
+		*((SDWORD *)pvParam) = stmt->options.keyset_size;
+		break;
+
+	case SQL_MAX_LENGTH: /* NOT SUPPORTED, but saved */
+		*((SDWORD *)pvParam) = stmt->options.maxLength;
+		break;
+
+	case SQL_MAX_ROWS: /* NOT SUPPORTED, but saved */
+		*((SDWORD *)pvParam) = stmt->options.maxRows;
+		mylog("GetSmtOption: MAX_ROWS, returning %d\n", stmt->options.maxRows);
+		break;
+
+	case SQL_NOSCAN:/* NOT SUPPORTED */
+		*((SDWORD *) pvParam) = SQL_NOSCAN_ON;
+		break;
+
+	case SQL_QUERY_TIMEOUT: /* NOT SUPPORTED */
+		*((SDWORD *) pvParam) = 0;
+		break;
+
+	case SQL_RETRIEVE_DATA: /* NOT SUPPORTED, but saved */
+		*((SDWORD *) pvParam) = stmt->options.retrieve_data;
 		break;
 
 	case SQL_ROWSET_SIZE:
-		mylog("GetStmtOption(): SQL_ROWSET_SIZE\n");
-		*((SDWORD *)pvParam) = stmt->rowset_size;
+		*((SDWORD *) pvParam) = stmt->options.rowset_size;
 		break;
 
-	case SQL_KEYSET_SIZE:
-		mylog("GetStmtOption(): SQL_KEYSET_SIZE\n");
-		*((SDWORD *)pvParam) = stmt->keyset_size;
+	case SQL_SIMULATE_CURSOR:/* NOT SUPPORTED */
+		*((SDWORD *) pvParam) = SQL_SC_NON_UNIQUE;
 		break;
 
-	case SQL_CONCURRENCY:
-		mylog("GetStmtOption(): SQL_CONCURRENCY\n");
-		*((SDWORD *)pvParam) = stmt->scroll_concurrency;
+	case SQL_USE_BOOKMARKS:/* NOT SUPPORTED */
+		*((SDWORD *) pvParam) = SQL_UB_OFF;
 		break;
-
-	case SQL_CURSOR_TYPE:
-		mylog("GetStmtOption(): SQL_CURSOR_TYPE\n");
-		*((SDWORD *)pvParam) = stmt->cursor_type;
-		break;
-
-	case SQL_SIMULATE_CURSOR:
-		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Simulated positioned update/delete not supported. Use the cursor library.";
-		SC_log_error(func, "", stmt);
-		return SQL_ERROR;
 
 	default:
 		{
 		char option[64];
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		stmt->errormsg = "Driver does not support getting this statement option";
+		stmt->errormsg = "Unknown statement option (Get)";
 		sprintf(option, "fOption=%d", fOption);
 		SC_log_error(func, option, stmt);
 		return SQL_ERROR;

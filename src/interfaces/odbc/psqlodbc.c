@@ -126,4 +126,3 @@ RETCODE SQL_API SQLDummyOrdinal(void)
 	return SQL_SUCCESS;
 }
 
-

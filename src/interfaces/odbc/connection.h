@@ -35,33 +35,34 @@ typedef enum {
 } CONN_Status;
 
 /*	These errors have general sql error state */
-#define CONNECTION_SERVER_NOT_REACHED 1
-#define CONNECTION_MSG_TOO_LONG 3
-#define CONNECTION_COULD_NOT_SEND 4
-#define CONNECTION_NO_SUCH_DATABASE 5
-#define CONNECTION_BACKEND_CRAZY 6
-#define CONNECTION_NO_RESPONSE 7
-#define CONNECTION_SERVER_REPORTED_ERROR 8
-#define CONNECTION_COULD_NOT_RECEIVE 9
-#define CONNECTION_SERVER_REPORTED_WARNING 10
-#define CONNECTION_NEED_PASSWORD 12
+#define CONNECTION_SERVER_NOT_REACHED 101
+#define CONNECTION_MSG_TOO_LONG 103
+#define CONNECTION_COULD_NOT_SEND 104
+#define CONNECTION_NO_SUCH_DATABASE 105
+#define CONNECTION_BACKEND_CRAZY 106
+#define CONNECTION_NO_RESPONSE 107
+#define CONNECTION_SERVER_REPORTED_ERROR 108
+#define CONNECTION_COULD_NOT_RECEIVE 109
+#define CONNECTION_SERVER_REPORTED_WARNING 110
+#define CONNECTION_NEED_PASSWORD 112
 
 /*	These errors correspond to specific SQL states */
-#define CONN_INIREAD_ERROR 1
-#define CONN_OPENDB_ERROR 2
-#define CONN_STMT_ALLOC_ERROR 3
-#define CONN_IN_USE 4 
-#define CONN_UNSUPPORTED_OPTION 5
+#define CONN_INIREAD_ERROR 201
+#define CONN_OPENDB_ERROR 202
+#define CONN_STMT_ALLOC_ERROR 203
+#define CONN_IN_USE 204 
+#define CONN_UNSUPPORTED_OPTION 205
 /* Used by SetConnectoption to indicate unsupported options */
-#define CONN_INVALID_ARGUMENT_NO 6
+#define CONN_INVALID_ARGUMENT_NO 206
 /* SetConnectOption: corresponds to ODBC--"S1009" */
-#define CONN_TRANSACT_IN_PROGRES 7
-#define CONN_NO_MEMORY_ERROR 8
-#define CONN_NOT_IMPLEMENTED_ERROR 9
-#define CONN_INVALID_AUTHENTICATION 10
-#define CONN_AUTH_TYPE_UNSUPPORTED 11
-#define CONN_UNABLE_TO_LOAD_DLL 12
+#define CONN_TRANSACT_IN_PROGRES 207
+#define CONN_NO_MEMORY_ERROR 208
+#define CONN_NOT_IMPLEMENTED_ERROR 209
+#define CONN_INVALID_AUTHENTICATION 210
+#define CONN_AUTH_TYPE_UNSUPPORTED 211
+#define CONN_UNABLE_TO_LOAD_DLL 212
 
+#define CONN_OPTION_VALUE_CHANGED 213
 
 /* Conn_status defines */
 #define CONN_IN_AUTOCOMMIT 0x01
@@ -200,6 +201,7 @@ typedef BOOL (FAR WINAPI *DriverToDataSourceProc) (UDWORD,
 /*******	The Connection handle	************/
 struct ConnectionClass_ {
 	HENV			henv;					/* environment this connection was created on */
+	StatementOptions stmtOptions;
 	char			*errormsg;
 	int				errornumber;
 	CONN_Status		status;
@@ -244,7 +246,7 @@ char CC_connect(ConnectionClass *self, char do_password);
 char CC_add_statement(ConnectionClass *self, StatementClass *stmt);
 char CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
 char CC_get_error(ConnectionClass *self, int *number, char **message);
-QResultClass *CC_send_query(ConnectionClass *self, char *query, QResultClass *result_in, char *cursor);
+QResultClass *CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi);
 void CC_clear_error(ConnectionClass *self);
 char *CC_create_errormsg(ConnectionClass *self);
 int CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);

@@ -112,6 +112,8 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 
 		CheckDlgButton(hdlg, DRV_PARSE, globals.parse);
 
+		CheckDlgButton(hdlg, DRV_CANCELASFREESTMT, globals.cancel_as_freestmt);
+
 		SetDlgItemInt(hdlg, DRV_CACHE_SIZE, globals.fetch_max, FALSE);
 		SetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, globals.max_varchar_size, FALSE);
 		SetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, globals.max_longvarchar_size, TRUE);
@@ -150,6 +152,8 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 
 			globals.parse = IsDlgButtonChecked(hdlg, DRV_PARSE);
 
+			globals.cancel_as_freestmt = IsDlgButtonChecked(hdlg, DRV_CANCELASFREESTMT);
+
 			globals.fetch_max = GetDlgItemInt(hdlg, DRV_CACHE_SIZE, NULL, FALSE);
 			globals.max_varchar_size = GetDlgItemInt(hdlg, DRV_VARCHAR_SIZE, NULL, FALSE);
 			globals.max_longvarchar_size= GetDlgItemInt(hdlg, DRV_LONGVARCHAR_SIZE, NULL, TRUE);	// allows for SQL_NO_TOTAL
@@ -176,6 +180,7 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 			CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, DEFAULT_USEDECLAREFETCH);
 	
 			CheckDlgButton(hdlg, DRV_PARSE, DEFAULT_PARSE);
+			CheckDlgButton(hdlg, DRV_CANCELASFREESTMT, DEFAULT_CANCELASFREESTMT);
 
 			/*	Unknown Sizes */
 			CheckDlgButton(hdlg, DRV_UNKNOWN_DONTKNOW, 0);
@@ -682,6 +687,14 @@ char temp[256];
 	else if ( ! override)
 		globals.parse = DEFAULT_PARSE;
 
+	//	SQLCancel calls SQLFreeStmt in Driver Manager
+	SQLGetPrivateProfileString(section, INI_CANCELASFREESTMT, "", 
+				temp, sizeof(temp), filename);
+	if ( temp[0] ) 
+		globals.cancel_as_freestmt = atoi(temp);
+	else if ( ! override)
+		globals.cancel_as_freestmt = DEFAULT_CANCELASFREESTMT;
+
 	//	Readonly is stored in the driver section AND per datasource
 	SQLGetPrivateProfileString(section, INI_READONLY, "", 
 				temp, sizeof(temp), filename);
@@ -817,6 +830,10 @@ char tmp[128];
 	sprintf(tmp, "%d", globals.parse);
 	SQLWritePrivateProfileString(DBMS_NAME,
 		INI_PARSE, tmp, ODBCINST_INI);
+
+	sprintf(tmp, "%d", globals.cancel_as_freestmt);
+	SQLWritePrivateProfileString(DBMS_NAME,
+		INI_CANCELASFREESTMT, tmp, ODBCINST_INI);
 
 	sprintf(tmp, "%d", globals.max_varchar_size);
 	SQLWritePrivateProfileString(DBMS_NAME,

@@ -44,8 +44,13 @@ struct QResultClass_ {
 	//	Stuff for declare/fetch tuples
 	int fetch_count;					// logical rows read so far
 	int fcount;							// actual rows read in the fetch
+	int currTuple;
+	int base;
 
 	int num_fields;						// number of fields in the result
+	int cache_size;
+	int rowset_size;
+
     QueryResultCode status;
 
     char *message;
@@ -93,7 +98,7 @@ struct QResultClass_ {
 #define QR_get_status(self)				(self->status)
 
 //	Core Functions
-QResultClass *QR_Constructor(void);
+QResultClass *QR_Constructor();
 void QR_Destructor(QResultClass *self);
 char QR_read_tuple(QResultClass *self, char binary);
 int QR_next_tuple(QResultClass *self);
@@ -104,5 +109,10 @@ void QR_set_command(QResultClass *self, char *msg);
 void QR_set_notice(QResultClass *self, char *msg);
 
 void QR_set_num_fields(QResultClass *self, int new_num_fields); /* manual result only */
+
+void QR_inc_base(QResultClass *self, int base_inc);
+void QR_set_cache_size(QResultClass *self, int cache_size);
+void QR_set_rowset_size(QResultClass *self, int rowset_size);
+void QR_set_position(QResultClass *self, int pos);
  
 #endif

@@ -97,6 +97,14 @@ StatementClass *stmt;
 
 	*phstmt = (HSTMT) stmt;
 
+	/*	Copy default statement options based from Connection options
+	*/
+	stmt->options = conn->stmtOptions;
+
+
+	/*	Save the handle for later */
+	stmt->phstmt = phstmt;
+
     return SQL_SUCCESS;
 }
 
@@ -166,6 +174,18 @@ StatementClass *stmt = (StatementClass *) hstmt;
 /**********************************************************************
  * StatementClass implementation
  */
+void
+InitializeStatementOptions(StatementOptions *opt)
+{
+	opt->maxRows = 0;			// driver returns all rows
+	opt->maxLength = 0;			// driver returns all data for char/binary
+	opt->rowset_size = 1;
+	opt->keyset_size = 0;		// fully keyset driven is the default
+	opt->scroll_concurrency = SQL_CONCUR_READ_ONLY;
+	opt->cursor_type = SQL_CURSOR_FORWARD_ONLY;
+	opt->bind_size = 0;			/* default is to bind by column */
+	opt->retrieve_data = SQL_RD_ON;
+}
 
 StatementClass *
 SC_Constructor(void)
@@ -175,40 +195,51 @@ StatementClass *rv;
 	rv = (StatementClass *) malloc(sizeof(StatementClass));
 	if (rv) {
 		rv->hdbc = NULL;       /* no connection associated yet */
+		rv->phstmt = NULL;
 		rv->result = NULL;
 		rv->manual_result = FALSE;
 		rv->prepare = FALSE;
 		rv->status = STMT_ALLOCATED;
-		rv->maxRows = 0;			// driver returns all rows
-		rv->rowset_size = 1;
-		rv->keyset_size = 0;		// fully keyset driven is the default
-		rv->scroll_concurrency = SQL_CONCUR_READ_ONLY;
-		rv->cursor_type = SQL_CURSOR_FORWARD_ONLY;
+		rv->internal = FALSE;
+
 		rv->errormsg = NULL;
 		rv->errornumber = 0;
 		rv->errormsg_created = FALSE;
+
 		rv->statement = NULL;
 		rv->stmt_with_params[0] = '\0';
 		rv->statement_type = STMT_TYPE_UNKNOWN;
+
 		rv->bindings = NULL;
 		rv->bindings_allocated = 0;
+
 		rv->parameters_allocated = 0;
 		rv->parameters = 0;
+
 		rv->currTuple = -1;
+		rv->rowset_start = -1;
 		rv->current_col = -1;
-		rv->result = 0;
+		rv->bind_row = 0;
+		rv->last_fetch_count = 0;
+		rv->save_rowset_size = -1;
+
 		rv->data_at_exec = -1;
 		rv->current_exec_param = -1;
 		rv->put_data = FALSE;
+
 		rv->lobj_fd = -1;
-		rv->internal = FALSE;
 		rv->cursor_name[0] = '\0';
 
+		/*	Parse Stuff */
 		rv->ti = NULL;
 		rv->fi = NULL;
 		rv->ntab = 0;
 		rv->nfld = 0;
 		rv->parse_status = STMT_PARSE_NONE;
+
+
+		/*  Clear Statement Options -- defaults will be set in AllocStmt */
+		memset(&rv->options, 0, sizeof(StatementOptions));
 	}
 	return rv;
 }
@@ -361,7 +392,7 @@ mylog("recycle statement: self= %u\n", self);
 		conn = SC_get_conn(self);
 		if ( ! CC_is_in_autocommit(conn) && CC_is_in_trans(conn)) {             
 
-			CC_send_query(conn, "ABORT", NULL, NULL);
+			CC_send_query(conn, "ABORT", NULL);
 			CC_set_no_trans(conn);
 		}
 		break;
@@ -405,11 +436,18 @@ mylog("recycle statement: self= %u\n", self);
 		self->result = NULL;
 	}
 
+	/****************************************************************/
+	/*	Reset only parameters that have anything to do with results */
+	/****************************************************************/
+
 	self->status = STMT_READY;
 	self->manual_result = FALSE;	// very important
 
 	self->currTuple = -1;
+	self->rowset_start = -1;
 	self->current_col = -1;
+	self->bind_row = 0;
+	self->last_fetch_count = 0;
 
 	self->errormsg = NULL;
 	self->errornumber = 0;
@@ -451,6 +489,7 @@ SC_unbind_cols(StatementClass *self)
 Int2 lf;
 
 	for(lf = 0; lf < self->bindings_allocated; lf++) {
+		self->bindings[lf].data_left = -1;
 		self->bindings[lf].buflen = 0;
 		self->bindings[lf].buffer = NULL;
 		self->bindings[lf].used = NULL;
@@ -534,6 +573,7 @@ ConnectionClass *conn;
 QResultClass *res;
 char ok, was_ok, was_nonfatal;
 Int2 oldstatus, numcols;
+QueryInfo qi;
 
 
 	conn = SC_get_conn(self);
@@ -545,7 +585,7 @@ Int2 oldstatus, numcols;
 	if ( ! self->internal && ! CC_is_in_trans(conn) && (globals.use_declarefetch || STMT_UPDATE(self))) {
 
 		mylog("   about to begin a transaction on statement = %u\n", self);
-		res = CC_send_query(conn, "BEGIN", NULL, NULL);
+		res = CC_send_query(conn, "BEGIN", NULL);
 		if ( ! res) {
 			self->errormsg = "Could not begin a transaction";
 			self->errornumber = STMT_EXEC_ERROR;
@@ -587,14 +627,26 @@ Int2 oldstatus, numcols;
 
 
 		/*	send the declare/select */
-		self->result = CC_send_query(conn, self->stmt_with_params, NULL, NULL);
+		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 
 		if (globals.use_declarefetch && self->result != NULL) {
+
+			QR_Destructor(self->result);
+
 			/*	That worked, so now send the fetch to start getting data back */
-			sprintf(fetch, "fetch %d in %s", globals.fetch_max, self->cursor_name);
+			qi.result_in = NULL;
+			qi.cursor = self->cursor_name;
+			qi.row_size = globals.fetch_max;
+
+			/*	Most likely the rowset size will not be set by the application until 
+				after the statement	is executed, so might as well use the cache size.  
+				The qr_next_tuple() function will correct for any discrepancies in 
+				sizes and adjust the cache accordingly.
+			*/
+
+			sprintf(fetch, "fetch %d in %s", qi.row_size, self->cursor_name);
 			
-			//	Save the cursor in the result for later use
-			self->result = CC_send_query( conn, fetch, NULL, self->cursor_name);
+			self->result = CC_send_query( conn, fetch, &qi);
 		}
 
 		mylog("     done sending the query:\n");
@@ -604,11 +656,11 @@ Int2 oldstatus, numcols;
 	}
 	else  { // not a SELECT statement so don't use a cursor 		 
 		mylog("      its NOT a select statement: stmt=%u\n", self);
-		self->result = CC_send_query(conn, self->stmt_with_params, NULL, NULL);
+		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 		
 		//	If we are in autocommit, we must send the commit.
 		if ( ! self->internal && CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
-			CC_send_query(conn, "COMMIT", NULL, NULL);
+			CC_send_query(conn, "COMMIT", NULL);
 			CC_set_no_trans(conn);
 		}
 		
@@ -630,6 +682,7 @@ Int2 oldstatus, numcols;
 		
 		self->currTuple = -1; /* set cursor before the first tuple in the list */
 		self->current_col = -1;
+		self->rowset_start = -1;
 		
 		/* see if the query did return any result columns */
 		numcols = QR_NumResultCols(self->result);
@@ -692,7 +745,7 @@ SC_log_error(char *func, char *desc, StatementClass *self)
 		qlog("                 stmt_with_params='%s'\n", self->stmt_with_params);
 		qlog("                 data_at_exec=%d, current_exec_param=%d, put_data=%d\n", self->data_at_exec, self->current_exec_param, self->put_data);
 		qlog("                 currTuple=%d, current_col=%d, lobj_fd=%d\n", self->currTuple, self->current_col, self->lobj_fd);
-		qlog("                 maxRows=%d, rowset_size=%d, keyset_size=%d, cursor_type=%d, scroll_concurrency=%d\n", self->maxRows, self->rowset_size, self->keyset_size, self->cursor_type, self->scroll_concurrency);
+		qlog("                 maxRows=%d, rowset_size=%d, keyset_size=%d, cursor_type=%d, scroll_concurrency=%d\n", self->options.maxRows, self->options.rowset_size, self->options.keyset_size, self->options.cursor_type, self->options.scroll_concurrency);
 		qlog("                 cursor_name='%s'\n", self->cursor_name);
 
 		qlog("                 ----------------QResult Info -------------------------------\n");

@@ -17,6 +17,7 @@
  */
 struct BindInfoClass_ {
 	Int4 buflen;		/* size of buffer */
+	Int4 data_left;		/* amount of data left to read (SQLGetData) */
 	char *buffer;		/* pointer to the buffer */
 	Int4 *used;			/* used space in the buffer (for strings not counting the '\0') */
 	Int2 returntype;	/* kind of conversion to be applied when returning (SQL_C_DEFAULT, SQL_C_CHAR...) */
