@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.19 1996/11/14 10:24:07 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.20 1996/11/16 09:03:44 bryanh Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -839,7 +839,6 @@ PostgresMain(int argc, char *argv[])
      */
     
     MasterPid = getpid();
-    DataDir = GetPGData();
 
     /* ----------------
      *  parse command line arguments
@@ -1269,7 +1268,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.19 $ $Date: 1996/11/14 10:24:07 $");
+        puts("$Revision: 1.20 $ $Date: 1996/11/16 09:03:44 $");
     }
     
     /* ----------------
