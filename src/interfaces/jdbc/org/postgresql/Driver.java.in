@@ -419,7 +419,7 @@ public class Driver implements java.sql.Driver
 	 */
 	public String database()
 	{
-		return props.getProperty("PGDBNAME");
+		return props.getProperty("PGDBNAME", "");
 	}
 
 	/*

@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.44 2002/03/21 02:39:06 davec Exp $
+ * $Id: Connection.java,v 1.45 2002/03/26 05:52:48 barry Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -59,10 +59,6 @@ public abstract class Connection
 	private static final int AUTH_REQ_CRYPT = 4;
 	private static final int AUTH_REQ_MD5 = 5;
 
-  	public final static int PGASYNC_IDLE = 0;				/* nothing's happening, dude */
-	public final static int PGASYNC_BUSY = 1;				/* query in progress */
-	public final static int PGASYNC_READY = 2;			/* result ready for PQgetResult */
-
 
 	// These are used to cache oids, PGTypes and SQLTypes
 	private static Hashtable sqlTypeCache = new Hashtable();  // oid -> SQLType
@@ -81,7 +77,6 @@ public abstract class Connection
 	public int pid;
 	public int ckey;
 
-  public int asyncStatus = PGASYNC_READY;
 	/*
 	 * This is called by Class.forName() from within org.postgresql.Driver
 	 */
@@ -427,7 +422,7 @@ public abstract class Connection
 	 */
 	public java.sql.ResultSet ExecSQL(String sql, java.sql.Statement stat) throws SQLException
 	{
-		return new QueryExecutor2(sql, stat, pg_stream, this).execute();
+		return new QueryExecutor(sql, stat, pg_stream, this).execute();
 	}
 
 	/*
