@@ -5,17 +5,17 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: So., den 15.12.2002,
-   18:00 CET
+   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 14.02.2003,
+   22:30 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
-     * http://www.PostgreSQL.org/docs/faq-english.html (engl.)
-     * http://www.PostgreSQL.org/docs/faq-german.html (dt.)
+     * http://www.ca.PostgreSQL.org/docs/faq-english.html (engl.)
+     * http://www.ca.PostgreSQL.org/docs/faq-german.html (dt.)
        
    Übersetzungen dieses Dokuments in andere Sprachen sowie plattform-
    spezifische FAQs können unter
-   http://www.PostgreSQL.org/users-lounge/docs/faq.html eingesehen
+   http://www.ca.PostgreSQL.org/users-lounge/docs/faq.html eingesehen
    werden.
      _________________________________________________________________
    
@@ -222,7 +222,7 @@
    (Unix/NT-Portierungsbibliotheken) auf Windows NT/2000 zum Laufen
    gebracht werden. Hierzu bitte lesen Sie die in der Distribution
    enthaltene Datei pgsql/doc/FAQ_MSWIN oder die MS-Windows-FAQ unter
-   http://www.PostgreSQL.org/docs/faq-mswin.html.
+   http://www.ca.PostgreSQL.org/docs/faq-mswin.html.
    
    Eine eigenständige Portierung auf MS Win NT/2000/XP befindet sich in
    Vorbereitung.
@@ -275,12 +275,12 @@
    
    Eine Liste von Unternehmen, die Support für PostgreSQL auf
    kommerzieller Basis leisten, kann unter
-   http://www.PostgreSQL.org/users-lounge/commercial-support.html
+   http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html
    eingesehen werden.
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.3.
+   Die neueste Version von PostgreSQL ist 7.3.2 .
    
    Wir planen alle 4 Monate eine neue Version herauszugeben.
    
@@ -664,11 +664,6 @@
    wird verhindert, dass System-Ressourcen durch PostgreSQL aufgebraucht
    werden.
    
-   In den PostgreSQL-Versionen vor 6.5 war die maximale Anzahl von
-   Backends auf 64 festgelegt und eine Änderung setzte eine erneute
-   Kompilierung voraus, bei der die Konstante MaxBackendId in
-   include/storage/sinvaladt.h entsprechend angepasst werden mußte.
-   
     3.9) Was befindet sich im Verzeichnis pgsql_tmp/?
     
    Dieses Verzeichnis enthält temporäre Dateien, die durch den query
@@ -860,6 +855,10 @@
 
    (Die Aggregatfunktionen MIN() und MAX() verwenden keine Indizes).
    
+   Sollte es danach aussehen, also ob der Optimierer irrtümlich einen
+   sequentiellen Scan ausführt, führen Sie SET enable_seqscan TO 'off'
+   aus und prüfen Sie, ob die Indexabfrage dadurch scheller geworden ist.
+   
    Bei der Nutzung von Wildcard-Operatoren wie LIKE oder ~, können
    Indizes nur unter bestimmten Umständen verwendet werden:
      * Der Anfang des Suchmusters muß mit dem Anfang des Strings
@@ -942,30 +941,38 @@
     
 Typ           interner Name   Bemerkungen
 -------------------------------------------------
-"char"        char            1 Zeichen
-CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
 VARCHAR(n)    varchar         die Größe legt die Maximallänge fest; kein
                                Ausfüllen mit Leerzeichen
+CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
 TEXT          text            Die Länge wird nur durch die maximale Zeilenlänge
                                beschränkt
 BYTEA         bytea           Bytearray mit variabler Länge
+"char"        char            1 Zeichen
 
    Der interne Name kommt vor allem in den Systemkatalogen und in manchen
    Fehlermeldungen vor.
    
-   Die letzten vier Typen sind "varlena"-Typen (d.h. die ersten vier
-   Bytes geben die Länge an, gefolgt von den Daten). Daher ist der
-   tatsächlich belegte Platz immer etwas mehr als die deklarierte
-   Feldgröße. Allerdings wird unter Umständen auf diese Datentypen
-   Datenkompression durch das TOAST- Verfahren angewendet, womit der
-   tatsächlich belegte Platz auch geringer als erwartet ausfallen kann.
+   Die ersten vier Typen sind "varlena"-Typen (d.h. die ersten vier Bytes
+   geben die Länge an, gefolgt von den Daten). Daher ist der tatsächlich
+   belegte Platz immer etwas mehr als die deklarierte Feldgröße.
+   Allerdings wird unter Umständen auf diese Datentypen Datenkompression
+   durch das TOAST- Verfahren angewendet, womit der tatsächlich belegte
+   Platz auch geringer als erwartet ausfallen kann.
    
-   CHAR(n) ist geeignet für die Speicherung von Zeichenketten ähnlicher
-   Länge. VARCHAR(n) ist geeignet für Zeichenketten abweichender Längen,
-   setzt jedoch eine maximale Länge. TEXT setzt keine Längengrenze,
-   allerdings gibt es eine systembedingte Obergrenze von 1 GB. BYTEA ist
-   für binäre Daten, besonders für Werte, die NULL-Bytes haben. Die
-   erwähnten Typen weisen ähnliche Performanzeigenschaften auf.
+   Für die Speicherung von Zeichenketten variabler Länge empfiehlt sich
+   VARCHAR(n). Die maximale Länge eines VARCHAR(n)-Felds wird bei der
+   Tabellendefinition festgelegt. TEXT setzt keine Längengrenze,
+   allerdings gibt es eine systembedingte Obergrenze von 1 GB.
+   
+   CHAR(n) ist geeignet für die Speicherung von Zeichenketten, die alle
+   die gleiche Länge haben. Bitte beachten Sie, dass CHAR(n) automatisch
+   Zeichenketten bis zur definierten Feldlänge mit Leerzeichen ausfüllt,
+   während bei VARCHAR(n) nur die tatsächlich eingegebene Zeichenkette
+   gespeichert wird.
+   
+   BYTEA ist für binäre Daten, besonders für Werte, die NULL-Bytes haben.
+   
+   Die hier erwähnten Typen weisen ähnliche Performanzeigenschaften auf.
    
     4.15.1) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung des
     Werts?
@@ -1142,7 +1149,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
 
    Damit diese Abfrage effizient durchgeführt wird, sollte für 'spalte2'
    ein Index angelegt worden sein. Die Einschränkung von Abfragen mit IN
-   soll in einer künftigen PotsgreSQL-Version behoben werden.
+   wird in der nächsten PostgreSQL-Version (7.4) behoben werden.
    
     4.23) Wie führe ich einen OUTER JOIN durch?
     

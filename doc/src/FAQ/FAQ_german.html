@@ -14,16 +14,16 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: So., den 15.12.2002, 18:00 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Fr., den 14.02.2003, 22:30 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
-      <li><a href="http://www.PostgreSQL.org/docs/faq-english.html">http://www.PostgreSQL.org/docs/faq-english.html</a> (engl.)</li>
-      <li><a href="http://www.PostgreSQL.org/docs/faq-german.html">http://www.PostgreSQL.org/docs/faq-german.html</a> (dt.)</li>
+      <li><a href="http://www.ca.PostgreSQL.org/docs/faq-english.html">http://www.ca.PostgreSQL.org/docs/faq-english.html</a> (engl.)</li>
+      <li><a href="http://www.ca.PostgreSQL.org/docs/faq-german.html">http://www.ca.PostgreSQL.org/docs/faq-german.html</a> (dt.)</li>
     </ul>
     <p>Übersetzungen dieses Dokuments in andere Sprachen sowie plattform-
     spezifische FAQs können unter
-    <a href="http://www.PostgreSQL.org/users-lounge/docs/faq.html">http://www.PostgreSQL.org/users-lounge/docs/faq.html</a>
+    <a href="http://www.ca.PostgreSQL.org/users-lounge/docs/faq.html">http://www.ca.PostgreSQL.org/users-lounge/docs/faq.html</a>
     eingesehen werden.</p>
 
 <hr />
@@ -213,7 +213,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     (Unix/NT-Portierungsbibliotheken) auf Windows NT/2000 zum Laufen
     gebracht werden. Hierzu bitte lesen Sie die in der Distribution
     enthaltene Datei <em>pgsql/doc/FAQ_MSWIN</em> oder die MS-Windows-FAQ unter
-    <a href="http://www.PostgreSQL.org/docs/faq-mswin.html">http://www.PostgreSQL.org/docs/faq-mswin.html</a>.</p>
+    <a href="http://www.ca.PostgreSQL.org/docs/faq-mswin.html">http://www.ca.PostgreSQL.org/docs/faq-mswin.html</a>.</p>
 
     <p>Eine eigenständige Portierung auf MS Win NT/2000/XP befindet sich
     in Vorbereitung.</p>
@@ -270,12 +270,12 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Eine Liste von Unternehmen, die Support für PostgreSQL auf kommerzieller
     Basis leisten, kann unter
-      <a href="http://www.PostgreSQL.org/users-lounge/commercial-support.html">http://www.PostgreSQL.org/users-lounge/commercial-support.html</a>
+      <a href="http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html">http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html</a>
     eingesehen werden.</p>
 
     <h4><a name="1.7">1.7</a>) Was ist die neueste Version von PostgreSQL?</h4>
 
-    <p>Die neueste Version von PostgreSQL ist 7.3.</p>
+    <p>Die neueste Version von PostgreSQL ist 7.3.2 .</p>
 
     <p>Wir planen alle 4 Monate eine neue Version herauszugeben.</p>
 
@@ -665,11 +665,6 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     erlaubter Backend-Prozesse wird verhindert, dass System-Ressourcen
     durch PostgreSQL aufgebraucht werden.</p>
 
-    <p>In den PostgreSQL-Versionen vor 6.5 war die maximale Anzahl von Backends
-    auf 64 festgelegt und eine Änderung setzte eine erneute Kompilierung
-    voraus, bei der die Konstante <em>MaxBackendId</em> in <em>include/storage/sinvaladt.h</em>
-    entsprechend angepasst werden mußte.
-
     <h4><a name="3.9">3.9</a>) Was befindet sich im Verzeichnis <em>pgsql_tmp/</em>?</h4>
 
     <p>Dieses Verzeichnis enthält temporäre Dateien, die durch den <em>query executor</em>
@@ -861,6 +856,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 </pre>
     <p>(Die Aggregatfunktionen MIN() und MAX() verwenden keine Indizes). </p>
 
+    <p>Sollte es danach aussehen, also ob der Optimierer irrtümlich einen sequentiellen 
+    Scan ausführt, führen Sie <small>SET enable_seqscan TO 'off'</small> aus und prüfen
+    Sie, ob die Indexabfrage dadurch scheller geworden ist.</p>
+
     <p>Bei der Nutzung von Wildcard-Operatoren wie <small>LIKE</small> oder <small>~</small>, können
     Indizes nur unter bestimmten Umständen verwendet werden:</p>
   <ul>
@@ -946,30 +945,36 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <h4><a name="4.14">4.14</a>) Was ist der Unterschied zwischen den verschiedenen <small>CHAR</small>-Typen?</h4><pre>
 Typ           interner Name   Bemerkungen
 -------------------------------------------------
-"char"        char            1 Zeichen
-CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
 VARCHAR(n)    varchar         die Größe legt die Maximallänge fest; kein
                                Ausfüllen mit Leerzeichen
+CHAR(n)       bpchar          mit Leerzeichen gefüllt bis zur angegebenen Länge
 TEXT          text            Die Länge wird nur durch die maximale Zeilenlänge
                                beschränkt
 BYTEA         bytea           Bytearray mit variabler Länge
+"char"        char            1 Zeichen
 </pre>
     <p>Der <em>interne Name</em> kommt vor allem in den Systemkatalogen und in manchen
     Fehlermeldungen vor.</p>
 
-    <p>Die letzten vier Typen sind "<em>varlena</em>"-Typen (d.h. die ersten vier
+    <p>Die ersten vier Typen sind "<em>varlena</em>"-Typen (d.h. die ersten vier
     Bytes geben die Länge an, gefolgt von den Daten). Daher ist der tatsächlich
     belegte Platz immer etwas mehr als die deklarierte Feldgröße. Allerdings
     wird unter Umständen auf diese Datentypen Datenkompression durch das <small>TOAST</small>-
     Verfahren angewendet, womit der tatsächlich belegte Platz auch geringer
     als erwartet ausfallen kann.</p>
 
-    <p><small>CHAR(n)</small> ist geeignet für die Speicherung von Zeichenketten ähnlicher Länge.
-    VARCHAR(n) ist geeignet für Zeichenketten abweichender Längen, setzt jedoch
-    eine maximale Länge. <small>TEXT</small> setzt keine Längengrenze, allerdings gibt es
-    eine systembedingte Obergrenze von 1 GB. <small>BYTEA</small> ist für binäre Daten,
-    besonders für Werte, die <small>NULL</small>-Bytes haben. Die erwähnten Typen weisen
-    ähnliche Performanzeigenschaften auf.</p>
+    <p>Für die Speicherung von Zeichenketten variabler Länge empfiehlt sich <small>VARCHAR(n)</small>. 
+    Die maximale Länge eines <small>VARCHAR(n)</small>-Felds wird bei der Tabellendefinition
+    festgelegt. <small>TEXT</small> setzt keine Längengrenze, allerdings gibt es
+    eine systembedingte Obergrenze von 1 GB. 
+
+    <p><small>CHAR(n)</small> ist geeignet für die Speicherung von Zeichenketten, die alle 
+    die gleiche Länge haben. Bitte beachten Sie, dass <small>CHAR(n)</small> automatisch Zeichenketten
+    bis zur definierten Feldlänge mit Leerzeichen ausfüllt, während bei <small>VARCHAR(n)</small> nur
+    die tatsächlich eingegebene Zeichenkette gespeichert wird.</p>
+
+    <p><small>BYTEA</small> ist für binäre Daten, besonders für Werte, die <small>NULL</small>-Bytes haben. </p>
+    <p>Die hier erwähnten Typen weisen ähnliche Performanzeigenschaften auf.</p>
 
     <h4><a name="4.15.1">4.15.1</a>) Wie erzeuge ich ein serielles Feld mit automatischer Erhöhung des
     Werts?</h4>
@@ -1043,7 +1048,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
     Lücken in der Sequenznummerierung verursacht.</p>
 
 
-    <h4><a name="4.17">4.16</a>) Was ist ein <small>OID</small>? Was ist ein <small>TID</small>?</h4>
+    <h4><a name="4.16">4.16</a>) Was ist ein <small>OID</small>? Was ist ein <small>TID</small>?</h4>
 
     <p>OIDs sind PostgreSQLs Antwort auf eindeutige Zeilen-IDs. Jede Zeile,
     die in PostgreSQL erzeugt wird, bekommt eine eindeutige OID. Alle
@@ -1156,7 +1161,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
 </pre>
     <p> Damit diese Abfrage effizient durchgeführt wird, sollte für '<em>spalte2</em>'
     ein Index angelegt worden sein. Die Einschränkung von Abfragen mit <small>IN</small>
-    soll in einer künftigen PotsgreSQL-Version behoben werden.</p>
+    wird in der nächsten PostgreSQL-Version (7.4) behoben werden.</p>
 
     <h4><a name="4.23">4.23</a>) Wie führe ich einen <small>OUTER JOIN</small> durch?</h4>
 
