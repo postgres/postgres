@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.252 2004/03/23 01:23:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.253 2004/03/24 03:48:41 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1988,7 +1988,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Causes the duration of every completed statement to be logged.
         To use this option, it is recommended that you also enable
         <varname>log_statement</> and if not using <application>syslog</>
-	 log the PID using <varname>log_line_prefix</> so that you
+        log the PID using <varname>log_line_prefix</> so that you
         can link the statement to the duration using the process
         ID. The default is off.  Only superusers can turn off this
         option if it is enabled by the administrator.
@@ -2000,7 +2000,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>log_line_prefix</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-	 This is a <literal>printf</>-style string that is output at the
+	 This is a <function>printf</>-style string that is output at the
 	 beginning of each log line. The default is an empty string.
 	 Each recognized escape is replaced as outlined 
 	 below - anything else that looks like an escape is ignored. Other
@@ -2010,7 +2010,7 @@ SET ENABLE_SEQSCAN TO OFF;
 	 timestamp and process ID information, so you probably do not want to
 	 use those escapes if you are using <application>syslog</>.
 	 This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+     <filename>postgresql.conf</filename> configuration file.
 	 <informaltable>
 	  <tgroup cols="3">
 	   <thead>
@@ -2063,7 +2063,7 @@ SET ENABLE_SEQSCAN TO OFF;
 	    </row>
 	    <row>
 	     <entry><literal>%l</literal></entry>
-	     <entry>Number of the log line for each process, 
+	     <entry>Number of the log line for each process,
 	      starting at 1</entry>
 	     <entry>No</entry>
 	    </row>
@@ -2081,7 +2081,7 @@ SET ENABLE_SEQSCAN TO OFF;
 	    </row>
 	    <row>
 	     <entry><literal>%%</literal></entry>
-	     <entry>literal <literal>%</></entry>
+	     <entry>Literal <literal>%</></entry>
 	     <entry>No</entry>
 	    </row>
 	   </tbody>
