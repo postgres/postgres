@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.114 1999/05/22 02:55:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.115 1999/05/22 17:47:49 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -776,7 +776,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
  *		Some backend has bought the farm,
  *		so we need to stop what we're doing and exit.
  *
- *		die() preforms an orderly cleanup via ExitPostgres()
+ *		die() performs an orderly cleanup via ExitPostgres()
  * --------------------------------
  */
 
@@ -832,7 +832,6 @@ QueryCancelHandler(SIGNAL_ARGS)
 void
 CancelQuery(void)
 {
-
 	/*
 	 * QueryCancel flag will be reset in main loop, which we reach by
 	 * longjmp from elog().
@@ -857,36 +856,42 @@ usage(char *progname)
 #ifdef LOCK_MGR_DEBUG
 	fprintf(stderr, "\t-K lev\t\tset locking debug level [0|1|2]\n");
 #endif
+	fprintf(stderr, "\t-L \t\tturn off locking\n");
+	fprintf(stderr, "\t-N \t\tdon't use newline as interactive query delimiter\n");
 	fprintf(stderr, "\t-O \t\tallow system table structure changes\n");
-	fprintf(stderr, "\t-P port\t\tset port file descriptor\n");
 	fprintf(stderr, "\t-Q \t\tsuppress informational messages\n");
-	fprintf(stderr, "\t-S buffers\tset amount of sort memory available\n");
+	fprintf(stderr, "\t-S kbytes\tset amount of memory for sorts (in kbytes)\n");
 	fprintf(stderr, "\t-T options\tspecify pg_options\n");
 	fprintf(stderr, "\t-W sec\t\twait N seconds to allow attach from a debugger\n");
 	fprintf(stderr, "\t-d [1|2|3]\tset debug level\n");
 	fprintf(stderr, "\t-e \t\tturn on European date format\n");
 	fprintf(stderr, "\t-f [s|i|n|m|h]\tforbid use of some plan types\n");
-	fprintf(stderr, "\t-o file\t\tsend stdout and stderr to given filename \n");
+	fprintf(stderr, "\t-i \t\tdon't execute queries\n");
+	fprintf(stderr, "\t-o file\t\tsend stdout and stderr to given filename\n");
+	fprintf(stderr, "\t-p database\tbackend is started under a postmaster\n");
 	fprintf(stderr, "\t-s \t\tshow stats after each query\n");
+	fprintf(stderr, "\t-t [pa|pl|ex]\tshow timings after each query\n");
 	fprintf(stderr, "\t-v version\tset protocol version being used by frontend\n");
 }
 
 /* ----------------------------------------------------------------
- *		PostgresMain
- *		  postgres main loop
+ *	PostgresMain
+ *		postgres main loop
  *		all backends, interactive or otherwise start here
+ *
+ *	argc/argv are the command line arguments to be used.  When being forked
+ *	by the postmaster, these are not the original argv array of the process.
+ *	real_argc/real_argv point to the original argv array, which is needed by
+ *	PS_INIT_STATUS on some platforms.
  * ----------------------------------------------------------------
  */
 int
 PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 {
-	bool		flagC = false,
-				flagQ = false,
-				flagE = false,
-				flagEu = false;
 	int			flag;
 
 	char	   *DBName = NULL;
+	bool		secure = true;
 	int			errs = 0;
 
 	char		firstchar;
@@ -903,25 +908,18 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	extern char *optarg;
 	extern short DebugLvl;
 
-	/* ----------------
-	 *	parse command line arguments
-	 * ----------------
-	 */
-
 	/*
-	 * Set default values.
+	 * Set default values for command-line options.
 	 */
+	IsUnderPostmaster = false;
 	ShowStats = 0;
 	ShowParserStats = ShowPlannerStats = ShowExecutorStats = 0;
 	DeadlockCheckTimer = DEADLOCK_CHECK_TIMER;
+	Noversion = false;
+	EchoQuery = false;
 #ifdef LOCK_MGR_DEBUG
 	LockDebug = 0;
 #endif
-
-	/*
-	 * get hostname is either the environment variable PGHOST or NULL NULL
-	 * means Unix-socket only
-	 */
 	DataDir = getenv("PGDATA");
 
 	/*
@@ -943,8 +941,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 			DateStyle = USE_GERMAN_DATES;
 			EuroDates = TRUE;
 		}
-
-		if (strcasecmp(DBDate, "NONEURO") == 0)
+		else if (strcasecmp(DBDate, "NONEURO") == 0)
 			EuroDates = FALSE;
 		else if (strcasecmp(DBDate, "EURO") == 0)
 			EuroDates = TRUE;
@@ -953,14 +950,30 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	/*
 	 * Read default pg_options from file $DATADIR/pg_options.
 	 */
-	if(DataDir) {
+	if (DataDir)
 		read_pg_options(0);
-	}
 
-	optind = 1;					/* reset after postmaster usage */
+	/* ----------------
+	 *	parse command line arguments
+	 *
+	 *	There are now two styles of command line layout for the backend:
+	 *
+	 *	For interactive use (not started from postmaster) the format is
+	 *		postgres [switches] [databasename]
+	 *	If the databasename is omitted it is taken to be the user name.
+	 *
+	 *	When started from the postmaster, the format is
+	 *		postgres [secure switches] -p databasename [insecure switches]
+	 *	Switches appearing after -p came from the client (via "options"
+	 *	field of connection request).  For security reasons we restrict
+	 *	what these switches can do.
+	 * ----------------
+	 */
+
+	optind = 1;					/* reset after postmaster's usage */
 
 	while ((flag = getopt(argc, argv,
-						  "A:B:CD:d:EeFf:iK:LMm:NOo:P:pQS:sT:t:v:W:x:"))
+						  "A:B:CD:d:EeFf:iK:LNOo:p:QS:sT:t:v:W:x:"))
 		   != EOF)
 		switch (flag)
 		{
@@ -981,28 +994,32 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	specify the size of buffer pool
 				 * ----------------
 				 */
-				NBuffers = atoi(optarg);
+				if (secure)
+					NBuffers = atoi(optarg);
 				break;
 
 			case 'C':
 				/* ----------------
-				 *	don't print version string (don't know why this is 'C' --mao)
+				 *	don't print version string
 				 * ----------------
 				 */
-				flagC = true;
+				Noversion = true;
 				break;
 
 			case 'D':			/* PGDATA directory */
-				if (!DataDir) {
-				    DataDir = optarg;
-				    /* must be done after DataDir is defined */
-				    read_pg_options(0);
+				if (secure)
+				{
+					if (!DataDir)
+					{
+						DataDir = optarg;
+						/* must be done after DataDir is defined */
+						read_pg_options(0);
+					}
+					DataDir = optarg;
 				}
-				DataDir = optarg;
 				break;
 
 			case 'd':			/* debug level */
-				flagQ = false;
 				DebugLvl = (short) atoi(optarg);
 				if (DebugLvl >= 1)
 					Verbose = DebugLvl;
@@ -1029,7 +1046,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	E - echo the query the user entered
 				 * ----------------
 				 */
-				flagE = true;
+				EchoQuery = true;
 				break;
 
 			case 'e':
@@ -1037,7 +1054,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 * Use european date formats.
 				 * --------------------------
 				 */
-				flagEu = true;
+				EuroDates = true;
 				break;
 
 			case 'F':
@@ -1045,7 +1062,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	turn off fsync
 				 * --------------------
 				 */
-				disableFsync = true;
+				if (secure)
+					disableFsync = true;
 				break;
 
 			case 'f':
@@ -1092,15 +1110,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	turn off locking
 				 * --------------------
 				 */
-				lockingOff = 1;
-				break;
-
-			case 'M':
-				exit(PostmasterMain(argc, argv));
-				break;
-
-			case 'm':
-				/* Multiplexed backends are no longer supported. */
+				if (secure)
+					lockingOff = 1;
 				break;
 
 			case 'N':
@@ -1116,7 +1127,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	allow system table structure modifications
 				 * --------------------
 				 */
-				allowSystemTableMods = true;
+				if (secure)		/* XXX safe to allow from client??? */
+					allowSystemTableMods = true;
 				break;
 
 			case 'o':
@@ -1124,26 +1136,22 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	o - send output (stdout and stderr) to the given file
 				 * ----------------
 				 */
-				StrNCpy(OutputFileName, optarg, MAXPGPATH);
+				if (secure)
+					StrNCpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 
-			case 'p':			/* started by postmaster */
+			case 'p':
 				/* ----------------
 				 *	p - special flag passed if backend was forked
 				 *		by a postmaster.
 				 * ----------------
 				 */
-				IsUnderPostmaster = true;
-				break;
-
-			case 'P':
-				/* ----------------
-				 *	P - Use the passed file descriptor number as the port
-				 *	  on which to communicate with the user.  This is ONLY
-				 *	  useful for debugging when fired up by the postmaster.
-				 * ----------------
-				 */
-				Portfd = atoi(optarg);
+				if (secure)
+				{
+					IsUnderPostmaster = true;
+					DBName = optarg;
+					secure = false;	/* subsequent switches are NOT secure */
+				}
 				break;
 
 			case 'Q':
@@ -1151,7 +1159,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	Q - set Quiet mode (reduce debugging output)
 				 * ----------------
 				 */
-				flagQ = true;
 				Verbose = 0;
 				break;
 
@@ -1179,7 +1186,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 			case 'T':
-				parse_options(optarg);
+				/* ----------------
+				 *	T - tracing options
+				 * ----------------
+				 */
+				parse_options(optarg, secure);
 				break;
 
 			case 't':
@@ -1214,7 +1225,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 			case 'v':
-				FrontendProtocol = (ProtocolVersion) atoi(optarg);
+				if (secure)
+					FrontendProtocol = (ProtocolVersion) atoi(optarg);
 				break;
 
 			case 'W':
@@ -1268,32 +1280,38 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		}
 
 	/* ----------------
-	 *	get user name and pathname and check command line validity
+	 *	get user name (needed now in case it is the default database name)
+	 *	and check command line validity
 	 * ----------------
 	 */
 	SetPgUserName();
 	userName = GetPgUserName();
 
-#ifdef CYR_RECODE
-	SetCharSet();
-#endif
-
-	if (FindExec(pg_pathname, argv[0], "postgres") < 0)
-		elog(FATAL, "%s: could not locate executable, bailing out...",
-			 argv[0]);
-
-	if (errs || argc - optind > 1)
+	if (IsUnderPostmaster)
 	{
-		usage(argv[0]);
-		proc_exit(1);
+		/* noninteractive case: nothing should be left after switches */
+		if (errs || argc != optind || DBName == NULL)
+		{
+			usage(argv[0]);
+			proc_exit(1);
+		}
 	}
-	else if (argc - optind == 1)
-		DBName = argv[optind];
-	else if ((DBName = userName) == NULL)
+	else
 	{
-		fprintf(stderr, "%s: USER undefined and no database specified\n",
-				argv[0]);
-		proc_exit(1);
+		/* interactive case: database name can be last arg on command line */
+		if (errs || argc - optind > 1)
+		{
+			usage(argv[0]);
+			proc_exit(1);
+		}
+		else if (argc - optind == 1)
+			DBName = argv[optind];
+		else if ((DBName = userName) == NULL)
+		{
+			fprintf(stderr, "%s: USER undefined and no database specified\n",
+					argv[0]);
+			proc_exit(1);
+		}
 	}
 
 	if (ShowStats &&
@@ -1308,14 +1326,22 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		fprintf(stderr, "%s does not know where to find the database system "
 				"data.  You must specify the directory that contains the "
 				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
+				"option or by setting the PGDATA environment variable.\n\n",
 				argv[0]);
 		proc_exit(1);
 	}
 
-	Noversion = flagC;
-	EchoQuery = flagE;
-	EuroDates = flagEu;
+	/*
+	 * Set up additional info.
+	 */
+
+#ifdef CYR_RECODE
+	SetCharSet();
+#endif
+
+	if (FindExec(pg_pathname, argv[0], "postgres") < 0)
+		elog(FATAL, "%s: could not locate executable, bailing out...",
+			 argv[0]);
 
 	/*
 	 * Find remote host name or address.
@@ -1398,30 +1424,23 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	}
 
 	/* ----------------
-	 *	initialize portal file descriptors
+	 *	initialize I/O
 	 * ----------------
 	 */
 	if (IsUnderPostmaster)
 	{
-		if (Portfd < 0)
-		{
-			fprintf(stderr,
-					"Postmaster flag set: no port number specified, use /dev/null\n");
-#ifndef __CYGWIN32__
-			Portfd = open(NULL_DEV, O_RDWR, 0666);
-#else
-			Portfd = open(NULL_DEV, O_RDWR | O_BINARY, 0666);
-#endif
-		}
-		pq_init();	/* reset libpq */
+		pq_init();				/* initialize libpq at backend startup */
 		whereToSendOutput = Remote;
 	}
 	else
 		whereToSendOutput = Debug;
 
+	/* ----------------
+	 *	general initialization
+	 * ----------------
+	 */
 	SetProcessingMode(InitProcessing);
 
-	/* initialize */
 	if (Verbose)
 		TPRINTF(TRACE_VERBOSE, "InitPostgres");
 
@@ -1485,7 +1504,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.114 $ $Date: 1999/05/22 02:55:58 $\n");
+		puts("$Revision: 1.115 $ $Date: 1999/05/22 17:47:49 $\n");
 	}
 
 	/* ----------------
@@ -1493,9 +1512,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 *
 	 *	if an exception is encountered, processing resumes here
 	 *	so we abort the current transaction and start a new one.
-	 *	This must be done after we initialize the slave backends
-	 *	so that the slaves signal the master to abort the transaction
-	 *	rather than calling AbortCurrentTransaction() themselves.
 	 *
 	 *	Note:  elog(ERROR) does a siglongjmp() to transfer control here.
 	 * ----------------

@@ -257,9 +257,13 @@ set_option_flag(int flag, int value)
 /*
  * Parse an option string like "name,name+,name-,name=value".
  * Single options are delimited by ',',space,tab,newline or cr.
+ *
+ * If 'secure' is false, the option string came from a remote client via
+ * connection "debug options" field --- do not obey any requests that
+ * might potentially be security loopholes.
  */
 void
-parse_options(char *str)
+parse_options(char *str, bool secure)
 {
 	char	   *s,
 			   *name;
@@ -384,7 +388,7 @@ read_pg_options(SIGNAL_ARGS)
 			p--;
 		*p = '\0';
 		verbose = pg_options[TRACE_VERBOSE];
-		parse_options(buffer);
+		parse_options(buffer, true);
 		verbose |= pg_options[TRACE_VERBOSE];
 		if (verbose || postgres_signal_arg == SIGHUP)
 			tprintf(TRACE_ALL, "read_pg_options: %s", buffer);

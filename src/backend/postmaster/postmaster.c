@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.103 1999/02/21 01:41:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.104 1999/05/22 17:47:50 tgl Exp $
  *
  * NOTES
  *
@@ -191,7 +191,7 @@ static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
 /*
  * Set by the -o option
  */
-static char ExtraOptions[ARGV_SIZE] = "";
+static char ExtraOptions[MAXPATHLEN] = "";
 
 /*
  * These globals control the behavior of the postmaster in case some
@@ -1398,7 +1398,9 @@ BackendStartup(Port *port)
 }
 
 /*
- * split_opts -- destructively load a string into an argv array
+ * split_opts -- split a string of options and append it to an argv array
+ *
+ * NB: the string is destructively modified!
  *
  * Since no current POSTGRES arguments require any quoting characters,
  * we can use the simple-minded tactic of assuming each set of space-
@@ -1416,41 +1418,39 @@ split_opts(char **argv, int *argcp, char *s)
 	{
 		while (isspace(*s))
 			++s;
-		if (*s)
-			argv[i++] = s;
+		if (*s == '\0')
+			break;
+		argv[i++] = s;
 		while (*s && !isspace(*s))
 			++s;
-		if (isspace(*s))
+		if (*s)
 			*s++ = '\0';
 	}
+
 	*argcp = i;
 }
 
 /*
- * DoBackend -- set up the argument list and perform an execv system call
+ * DoBackend -- set up the backend's argument list and invoke backend main().
+ *
+ * This used to perform an execv() but we no longer exec the backend;
+ * it's the same executable as the postmaster.
  *
  * returns:
  *		Shouldn't return at all.
- *		If execv() fails, return status.
+ *		If PostgresMain() fails, return status.
  */
 static int
 DoBackend(Port *port)
 {
-	char		execbuf[MAXPATHLEN];
-	char		portbuf[ARGV_SIZE];
-	char		debugbuf[ARGV_SIZE];
-	char		ttybuf[ARGV_SIZE + 1];
-	char		protobuf[ARGV_SIZE + 1];
-	char		argbuf[(2 * ARGV_SIZE) + 1];
-
-	/*
-	 * each argument takes at least three chars, so we can't have more
-	 * than ARGV_SIZE arguments in (2 * ARGV_SIZE) chars (i.e.,
-	 * port->options plus ExtraOptions)...
-	 */
-	char	   *av[ARGV_SIZE];
-	char		dbbuf[ARGV_SIZE + 1];
+	char	   *av[ARGV_SIZE * 2];
 	int			ac = 0;
+	char		execbuf[MAXPATHLEN];
+	char		debugbuf[ARGV_SIZE];
+	char		protobuf[ARGV_SIZE];
+	char		dbbuf[ARGV_SIZE];
+	char		optbuf[ARGV_SIZE];
+	char		ttybuf[ARGV_SIZE];
 	int			i;
 	struct timeval now;
 	struct timezone tz;
@@ -1491,8 +1491,10 @@ DoBackend(Port *port)
 	StreamClose(ServerSock_UNIX);
 #endif
 
-	/* Save port for ps status */
+	/* Save port etc. for ps status */
 	MyProcPort = port;
+
+	MyProcPid = getpid();
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
@@ -1503,11 +1505,16 @@ DoBackend(Port *port)
 	gettimeofday(&now, &tz);
 	srandom(now.tv_usec);
 
-	/* Now, on to standard postgres stuff */
+	/* ----------------
+	 * Now, build the argv vector that will be given to PostgresMain.
+	 *
+	 * The layout of the command line is
+	 *		postgres [secure switches] -p databasename [insecure switches]
+	 * where the switches after -p come from the client request.
+	 * ----------------
+	 */
 
-	MyProcPid = getpid();
-
-	strncpy(execbuf, Execfile, MAXPATHLEN - 1);
+	StrNCpy(execbuf, Execfile, MAXPATHLEN);
 	av[ac++] = execbuf;
 
 	/*
@@ -1528,9 +1535,6 @@ DoBackend(Port *port)
 	real_argv[0] = Execfile;
 #endif
 
-	/* Tell the backend it is being called from the postmaster */
-	av[ac++] = "-p";
-
 	/*
 	 * Pass the requested debugging level along to the backend.  We
 	 * decrement by one; level one debugging in the postmaster traces
@@ -1538,37 +1542,53 @@ DoBackend(Port *port)
 	 * passed along to the backend.  This allows us to watch only the
 	 * postmaster or the postmaster and the backend.
 	 */
-
 	if (DebugLvl > 1)
 	{
 		sprintf(debugbuf, "-d%d", DebugLvl);
 		av[ac++] = debugbuf;
 	}
 
-	/* Pass the requested debugging output file */
-	if (port->tty[0])
-	{
-		strncpy(ttybuf, port->tty, ARGV_SIZE);
-		av[ac++] = "-o";
-		av[ac++] = ttybuf;
-	}
-
-	/* Tell the backend the descriptor of the fe/be socket */
-	sprintf(portbuf, "-P%d", port->sock);
-	av[ac++] = portbuf;
-
-	StrNCpy(argbuf, port->options, ARGV_SIZE);
-	strncat(argbuf, ExtraOptions, ARGV_SIZE);
-	argbuf[(2 * ARGV_SIZE)] = '\0';
-	split_opts(av, &ac, argbuf);
+	/*
+	 * Pass any backend switches specified with -o in the postmaster's
+	 * own command line.  We assume these are secure.
+	 * (It's OK to mangle ExtraOptions since we are now in the child process;
+	 * this won't change the postmaster's copy.)
+	 */
+	split_opts(av, &ac, ExtraOptions);
 
 	/* Tell the backend what protocol the frontend is using. */
-
 	sprintf(protobuf, "-v%u", port->proto);
 	av[ac++] = protobuf;
 
+	/*
+	 * Tell the backend it is being called from the postmaster,
+	 * and which database to use.  -p marks the end of secure switches.
+	 */
+	av[ac++] = "-p";
+
 	StrNCpy(dbbuf, port->database, ARGV_SIZE);
 	av[ac++] = dbbuf;
+
+	/*
+	 * Pass the (insecure) option switches from the connection request.
+	 */
+	StrNCpy(optbuf, port->options, ARGV_SIZE);
+	split_opts(av, &ac, optbuf);
+
+	/*
+	 * Pass the (insecure) debug output file request.
+	 *
+	 * NOTE: currently, this is useless code, since the backend will not
+	 * honor an insecure -o switch.  I left it here since the backend
+	 * could be modified to allow insecure -o, given adequate checking
+	 * that the specified filename is something safe to write on.
+	 */
+	if (port->tty[0])
+	{
+		StrNCpy(ttybuf, port->tty, ARGV_SIZE);
+		av[ac++] = "-o";
+		av[ac++] = ttybuf;
+	}
 
 	av[ac] = (char *) NULL;
 
@@ -1577,7 +1597,7 @@ DoBackend(Port *port)
 		fprintf(stderr, "%s child[%d]: starting with (",
 				progname, MyProcPid);
 		for (i = 0; i < ac; ++i)
-			fprintf(stderr, "%s, ", av[i]);
+			fprintf(stderr, "%s ", av[i]);
 		fprintf(stderr, ")\n");
 	}
 

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.15 1999/05/19 23:30:43 tgl Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.16 1999/05/22 17:47:47 tgl Exp $
 .TH POSTGRESQL UNIX 05/19/99 PostgreSQL PostgreSQL
 .SH NAME
 postgres - the Postgres backend server
@@ -25,13 +25,10 @@ data_directory]
 .BR "-O"
 ]
 [\c
-.BR "-P"
-filedes]
-[\c
 .BR "-Q"
 ]
 [\c
-.BR "-S n_buffers"
+.BR "-S kbytes"
 ]
 [\c
 .BR "-d"
@@ -111,17 +108,10 @@ while a transaction is in progress will probably cause data loss.
 .BR "-O"
 Override restrictions, so system table structures can be modified(pg_*).
 .TP
-.BR "-P" " filedes"
-.IR "filedes"
-specifies the file descriptor that corresponds to the socket (port) on
-which to communicate to the frontend process.  This option is
-.BR not
-useful for interactive use.
-.TP
 .BR "-Q"
 Specifies \*(lqquiet\*(rq mode.
 .TP
-.BR "-S"
+.BR "-S" " kbytes"
 Specifies the amount of memory to be used by internal sorts and hashes
 before resorting to temporary disk files.  The value is specified in
 kilobytes, and defaults to 512 kilobytes.  Note that for a complex query,
@@ -201,11 +191,12 @@ plan types if it has any other alternative.)
 .BR "-i"
 Prevents query execution, but shows the plan tree.
 .TP
-.BR "-p"
+.BR "-p" " databasename"
 Indicates to the backend server that it has been started by a 
 .IR postmaster
 and make different assumptions about buffer pool management, file
-descriptors, etc.
+descriptors, etc.  Switches following -p are restricted to those
+considered "secure".
 .TP
 .BR "-t" "pa[rser]|pl[anner]|e[xecutor]"
 Print timing statistics for each query relating to each of the major

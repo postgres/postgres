@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.28 1999/03/17 22:53:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.29 1999/05/22 17:47:46 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -36,7 +36,6 @@
 #include "catalog/catname.h"
 
 ProtocolVersion FrontendProtocol = PG_PROTOCOL_LATEST;
-int			Portfd = -1;
 
 bool		Noversion = false;
 bool		Quiet = false;
@@ -47,11 +46,11 @@ struct Port *MyProcPort;
 long		MyCancelKey;
 
 char	   *DataDir = NULL;
-
  /*
   * The PGDATA directory user says to use, or defaults to via environment
   * variable.  NULL if no option given and no environment variable set
   */
+
 Relation	reldesc;			/* current relation descriptor */
 
 char		OutputFileName[MAXPGPATH] = "";

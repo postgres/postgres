@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.27 1999/05/09 00:54:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.28 1999/05/22 17:47:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "utils/syscache.h"
 
 #include "storage/fd.h"			/* for O_ */
+#include "storage/ipc.h"		/* for proc_exit */
 
 /*
  * EnableAbortEnvVarName 
