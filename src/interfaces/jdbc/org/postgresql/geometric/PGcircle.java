@@ -7,7 +7,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGcircle.java,v 1.6 2003/09/13 04:02:14 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGcircle.java,v 1.6.2.1 2004/05/07 05:28:22 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ public class PGcircle extends PGobject implements Serializable, Cloneable
 	/*
 	 * This is the radius
 	 */
-	double radius;
+	public double radius;
 
 	/*
 	 * @param x coordinate of centre
