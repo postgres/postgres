@@ -374,23 +374,17 @@ We also support C-style block comments, e.g.:
      <firstterm>Strings</firstterm>
      in SQL are arbitrary sequences of ASCII characters bounded by single
      quotes ("'", e.g. <literal>'This is a string'</literal>).
-     Uppercase alphabetics within strings are accepted
-     literally.  Non-printing characters may be embedded within strings by
-     prepending them with a backslash
-     ("\"; e.g. "\<replaceable>tab</replaceable>".
      SQL92 allows single quotes to be embedded in strings by typing two 
-     adjacent single quotes (e.g. 'Dianne''s horse'), and for
-     historical reasons <productname>Postgres</productname> also allows 
-     single quotes to be escaped with a backslash
-     (e.g. 'Dianne\'s horse').
+     adjacent single quotes (e.g. <literal>'Dianne''s horse'</literal>).
+     In <productname>Postgres</productname> single quotes may alternatively
+     be escaped with a backslash ("\", e.g.
+     <literal>'Dianne\'s horse'</literal>).  To include a
+     backslash in a string constant, type two backslashes.
+     Non-printing characters may also be embedded within strings by
+     prepending them with a backslash
+     (e.g. <literal>'\<replaceable>tab</replaceable>'</literal>).
     </para>
 
-    <para>
-     Because of the limitations on
-     instance sizes, string constants are currently limited to a length of
-     a little less than 8192 bytes.  Larger strings may be handled using the
-     Postgres Large Object interface.
-    </para>
    </sect2>
 
    <sect2>

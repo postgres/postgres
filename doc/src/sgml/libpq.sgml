@@ -1958,15 +1958,6 @@ for information on correct values for these environment variables.
 </sect1>
 
 <sect1>
-<title>Caveats</title>
-
-<para>
-     The  query  buffer is 8192 bytes long, and queries over
-     that length will be rejected.
-</para>
-</sect1>
-
-<sect1>
 <title>Sample Programs</title>
 
 <sect2>
