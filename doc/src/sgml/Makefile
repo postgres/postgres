@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.49 2002/01/30 21:54:17 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.50 2002/04/14 17:23:20 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -19,12 +19,8 @@ include $(top_builddir)/src/Makefile.global
 .SECONDARY:
 .NOTPARALLEL:
 
-ifndef DOCBOOKSTYLE
-DOCBOOKSTYLE = /home/projects/pgsql/developers/thomas/db162.d/docbook
-endif
-
-ifndef DOCBOOKINDEX
-  DOCBOOKINDEX = $(DOCBOOKSTYLE)/bin/collateindex.pl
+ifndef COLLATEINDEX
+COLLATEINDEX = $(DOCBOOKSTYLE)/bin/collateindex.pl
 endif
 
 ifndef JADE
@@ -58,7 +54,9 @@ ALLBOOKS = admin developer programmer reference tutorial user
 
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) bookindex.sgml setindex.sgml
 
-CATALOG = $(DOCBOOKSTYLE)/catalog
+ifdef DOCBOOKSTYLE
+CATALOG = -c $(DOCBOOKSTYLE)/catalog
+endif
 
 
 ##
@@ -84,7 +82,7 @@ man: $(ALLSGML)
 ## HTML
 ##
 
-JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -i output-html -t sgml
+JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-html -t sgml
 
 postgres.html: postgres.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
@@ -100,22 +98,14 @@ programmer.html: catalogs.gif connections.gif
 postgres.html: catalogs.gif connections.gif
 
 
-COLLATEINDEX = $(PERL) $(DOCBOOKINDEX) -f -g -t 'Index'
+COLLATEINDEX := $(PERL) $(COLLATEINDEX) -f -g -t 'Index'
 
 ifeq (,$(wildcard HTML.index))
 bookindex.sgml:
-ifeq (,$(wildcard $(COLLATEINDEX)))
-	touch $@
-else
 	$(COLLATEINDEX) -o $@ -N
-endif
 
 setindex.sgml:
-ifeq (,$(wildcard $(COLLATEINDEX)))
-	touch $@
-else
 	$(COLLATEINDEX) -x -o $@ -N
-endif
 else
 bookindex.sgml: HTML.index
 	$(COLLATEINDEX) -i 'bookindex' -o $@ $<
@@ -131,19 +121,19 @@ endif
 
 # RTF to allow minor editing for hardcopy
 $(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print book-decl.sgml $<
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print book-decl.sgml $<
 
 # TeX
 # Regular TeX and pdfTeX have slightly differing requirements, so we
 # need to distinguish the path we're taking.
 
 $(addsuffix .tex-ps, $(ALLBOOKS)): %.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ book-decl.sgml $<
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ book-decl.sgml $<
 
 programmer.tex-ps: catalogs.eps connections.eps
 
 $(addsuffix .tex-pdf, $(ALLBOOKS)): %.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ book-decl.sgml $<
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ book-decl.sgml $<
 
 programmer.tex-pdf: catalogs.pdf connections.pdf
 
@@ -168,7 +158,7 @@ programmer.tex-pdf: catalogs.pdf connections.pdf
 # for debugging DSSSL code, and possibly to interface to some other
 # tools that can make use of this.
 $(addsuffix .fot, $(ALLBOOKS)): %.fot: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t fot -i output-print -o $@ book-decl.sgml $<
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t fot -i output-print -o $@ book-decl.sgml $<
 
 
 # Graphics
@@ -187,7 +177,7 @@ $(addsuffix .fot, $(ALLBOOKS)): %.fot: %.sgml $(ALLSGML) stylesheet.dsl
 ## Semi-automatic generation of some text files.
 ##
 
-JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -i output-text -t sgml
+JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-text -t sgml
 
 INSTALL HISTORY regress_README: % : %.html
 	@echo "|";\
@@ -219,10 +209,10 @@ regress_README.html: regress.sgml
 check: $(addprefix check-, $(ALLBOOKS)) check-postgres
 
 # Quick syntax check without style processing
-$(addprefix check-, $(ALLBOOKS)): check-%: %.sgml
+$(addprefix check-, $(ALLBOOKS)): check-%: %.sgml bookindex.sgml
 	$(NSGMLS) $(SGMLINCLUDE) -s book-decl.sgml $<
 
-check-postgres: postgres.sgml
+check-postgres: postgres.sgml setindex.sgml
 	$(NSGMLS) $(SGMLINCLUDE) -s $<
 
 

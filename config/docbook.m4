@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/docbook.m4,v 1.2 2002/03/29 17:32:53 petere Exp $
+# $Header: /cvsroot/pgsql/config/docbook.m4,v 1.3 2002/04/14 17:23:20 petere Exp $
 
 # PGAC_PROG_JADE
 # --------------
@@ -47,7 +47,8 @@ AC_SUBST([have_docbook])
 # PGAC_PATH_DOCBOOK_STYLESHEETS
 # -----------------------------
 AC_DEFUN([PGAC_PATH_DOCBOOK_STYLESHEETS],
-[AC_MSG_CHECKING([for DocBook stylesheets])
+[AC_ARG_VAR(DOCBOOKSTYLE, [location of DocBook stylesheets])dnl
+AC_MSG_CHECKING([for DocBook stylesheets])
 AC_CACHE_VAL([pgac_cv_path_stylesheets],
 [if test -n "$DOCBOOKSTYLE"; then
   pgac_cv_path_stylesheets=$DOCBOOKSTYLE
@@ -57,7 +58,8 @@ else
       for pgac_postfix in \
         sgml/stylesheets/nwalsh-modular \
         sgml/stylesheets/docbook \
-        sgml/docbook/dsssl/modular
+        sgml/docbook/dsssl/modular \
+        sgml/docbook/dsssl-stylesheets
       do
         pgac_candidate=$pgac_prefix/$pgac_infix/$pgac_postfix
         if test -r "$pgac_candidate/html/docbook.dsl" \
@@ -77,3 +79,15 @@ if test -n "$DOCBOOKSTYLE"; then
 else
   AC_MSG_RESULT(no)
 fi])# PGAC_PATH_DOCBOOK_STYLESHEETS
+
+
+# PGAC_PATH_COLLATEINDEX
+# ----------------------
+AC_DEFUN([PGAC_PATH_COLLATEINDEX],
+[AC_REQUIRE([PGAC_PATH_DOCBOOK_STYLESHEETS])dnl
+if test -n "$DOCBOOKSTYLE"; then
+  AC_PATH_PROGS(COLLATEINDEX, collateindex.pl, [],
+                [$DOCBOOKSTYLE/bin $PATH])
+else
+  AC_PATH_PROGS(COLLATEINDEX, collateindex.pl)
+fi])# PGAC_PATH_COLLATEINDEX

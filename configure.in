@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.177 2002/04/10 22:46:31 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.178 2002/04/14 17:23:20 petere Exp $
 
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1212,13 +1212,11 @@ fi
 # Check for DocBook and tools
 #
 PGAC_PROG_NSGMLS
-# If you don't have nsgmls you won't get very far, so save the cycles.
-if test -n "$NSGMLS"; then
-  PGAC_PROG_JADE
-  PGAC_CHECK_DOCBOOK([3.1])
-  PGAC_PATH_DOCBOOK_STYLESHEETS
-  AC_CHECK_PROGS(SGMLSPL, sgmlspl)
-fi
+PGAC_PROG_JADE
+PGAC_CHECK_DOCBOOK([3.1])
+PGAC_PATH_DOCBOOK_STYLESHEETS
+PGAC_PATH_COLLATEINDEX
+AC_CHECK_PROGS(SGMLSPL, sgmlspl)
 
 
 # prepare build tree if outside source tree

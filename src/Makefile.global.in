@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.145 2002/04/10 16:45:25 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.146 2002/04/14 17:23:20 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -153,6 +153,7 @@ TCLSH		= @TCLSH@
 
 have_docbook	= @have_docbook@
 DOCBOOKSTYLE	= @DOCBOOKSTYLE@
+COLLATEINDEX	= @COLLATEINDEX@
 
 
 ##########################################################################
