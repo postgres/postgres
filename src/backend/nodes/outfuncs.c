@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.115 2000/04/26 23:39:10 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.116 2000/05/25 22:43:12 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1255,7 +1255,7 @@ _outStream(StringInfo str, Stream *node)
 static void
 _outAExpr(StringInfo str, A_Expr *node)
 {
-	appendStringInfo(str, "EXPR ");
+	appendStringInfo(str, " AEXPR ");
 	switch (node->oper)
 	{
 		case AND:
@@ -1273,12 +1273,16 @@ _outAExpr(StringInfo str, A_Expr *node)
 		case NOTNULL:
 			appendStringInfo(str, "NOTNULL ");
 			break;
-		default:
+		case OP:
 			_outToken(str, node->opname);
 			appendStringInfo(str, " ");
 			break;
+		default:
+			appendStringInfo(str, "?? ");
+			break;
 	}
 	_outNode(str, node->lexpr);
+	appendStringInfo(str, " ");
 	_outNode(str, node->rexpr);
 }
 
