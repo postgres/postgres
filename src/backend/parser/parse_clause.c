@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.99 2002/11/15 02:50:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.100 2002/11/29 21:39:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1128,8 +1128,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 
 /*
  * transformGroupClause -
- *	  transform a Group By clause
- *
+ *	  transform a GROUP BY clause
  */
 List *
 transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
@@ -1151,7 +1150,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 
 			grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
 
-			grpcl->sortop = any_ordering_op(tle->resdom->restype);
+			grpcl->sortop = ordering_oper_opid(tle->resdom->restype);
 
 			glist = lappend(glist, grpcl);
 		}
@@ -1331,7 +1330,7 @@ addAllTargetsToSortList(List *sortlist, List *targetlist)
  * addTargetToSortList
  *		If the given targetlist entry isn't already in the ORDER BY list,
  *		add it to the end of the list, using the sortop with given name
- *		or any available sort operator if opname == NIL.
+ *		or the default sort operator if opname == NIL.
  *
  * Returns the updated ORDER BY list.
  */
@@ -1352,7 +1351,7 @@ addTargetToSortList(TargetEntry *tle, List *sortlist, List *targetlist,
 												  tle->resdom->restype,
 												  false);
 		else
-			sortcl->sortop = any_ordering_op(tle->resdom->restype);
+			sortcl->sortop = ordering_oper_opid(tle->resdom->restype);
 
 		sortlist = lappend(sortlist, sortcl);
 	}

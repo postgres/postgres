@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.131 2002/11/26 03:01:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.132 2002/11/29 21:39:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include <limits.h>
 
+#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -36,9 +37,11 @@
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_oper.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
+#include "utils/syscache.h"
 
 
 /* Expression kind codes for preprocess_expression */
@@ -57,6 +60,7 @@ static Node *preprocess_expression(Query *parse, Node *expr, int kind);
 static void preprocess_qual_conditions(Query *parse, Node *jtnode);
 static Plan *inheritance_planner(Query *parse, List *inheritlist);
 static Plan *grouping_planner(Query *parse, double tuple_fraction);
+static bool hash_safe_grouping(Query *parse);
 static List *make_subplanTargetList(Query *parse, List *tlist,
 					   AttrNumber **groupColIdx);
 static Plan *make_groupsortplan(Query *parse,
@@ -1252,11 +1256,14 @@ grouping_planner(Query *parse, double tuple_fraction)
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
 
 			/*
+			 * Check can't-do-it conditions, including whether the grouping
+			 * operators are hashjoinable.
+			 *
 			 * Executor doesn't support hashed aggregation with DISTINCT
 			 * aggregates.  (Doing so would imply storing *all* the input
 			 * values in the hash table, which seems like a certain loser.)
 			 */
-			if (!enable_hashagg)
+			if (!enable_hashagg || !hash_safe_grouping(parse))
 				use_hashed_grouping = false;
 			else if (parse->hasAggs &&
 					 (contain_distinct_agg_clause((Node *) tlist) ||
@@ -1552,6 +1559,33 @@ grouping_planner(Query *parse, double tuple_fraction)
 	}
 
 	return result_plan;
+}
+
+/*
+ * hash_safe_grouping - are grouping operators hashable?
+ *
+ * We assume hashed aggregation will work if the datatype's equality operator
+ * is marked hashjoinable.
+ */
+static bool
+hash_safe_grouping(Query *parse)
+{
+	List	   *gl;
+
+	foreach(gl, parse->groupClause)
+	{
+		GroupClause *grpcl = (GroupClause *) lfirst(gl);
+		TargetEntry *tle = get_sortgroupclause_tle(grpcl, parse->targetList);
+		Operator	optup;
+		bool		oprcanhash;
+
+		optup = equality_oper(tle->resdom->restype, false);
+		oprcanhash = ((Form_pg_operator) GETSTRUCT(optup))->oprcanhash;
+		ReleaseSysCache(optup);
+		if (!oprcanhash)
+			return false;
+	}
+	return true;
 }
 
 /*---------------

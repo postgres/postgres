@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.43 2002/10/03 21:06:23 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.44 2002/11/29 21:39:11 tgl Exp $
  *
  * ----------
  */
@@ -3669,12 +3669,7 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 		Oid			opr_proc;
 		FmgrInfo	finfo;
 
-		opr_proc = compatible_oper_funcid(makeList1(makeString("=")),
-										  typeid, typeid, true);
-		if (!OidIsValid(opr_proc))
-			elog(ERROR,
-			"ri_AttributesEqual(): cannot find '=' operator for type %u",
-				 typeid);
+		opr_proc = equality_oper_funcid(typeid);
 
 		/*
 		 * Since fmgr_info could fail, call it *before* creating the

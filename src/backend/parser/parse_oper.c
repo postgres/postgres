@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.60 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.61 2002/11/29 21:39:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,21 +130,115 @@ LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 	return operoid;
 }
 
-
-/* Select an ordering operator for the given datatype */
-Oid
-any_ordering_op(Oid argtype)
+/*
+ * equality_oper - identify a suitable equality operator for a datatype
+ *
+ * On failure, return NULL if noError, else report a standard error
+ */
+Operator
+equality_oper(Oid argtype, bool noError)
 {
-	Oid			order_opid;
+	Operator	optup;
 
-	order_opid = compatible_oper_opid(makeList1(makeString("<")),
-									  argtype, argtype, true);
-	if (!OidIsValid(order_opid))
-		elog(ERROR, "Unable to identify an ordering operator '%s' for type '%s'"
-			 "\n\tUse an explicit ordering operator or modify the query",
-			 "<", format_type_be(argtype));
-	return order_opid;
+	/*
+	 * Look for an "=" operator for the datatype.  We require it to be
+	 * an exact or binary-compatible match, since most callers are not
+	 * prepared to cope with adding any run-time type coercion steps.
+	 */
+	optup = compatible_oper(makeList1(makeString("=")),
+							argtype, argtype, true);
+	if (optup != NULL)
+	{
+		/*
+		 * Only believe that it's equality if it's mergejoinable,
+		 * hashjoinable, or uses eqsel() as oprrest.
+		 */
+		Form_pg_operator pgopform = (Form_pg_operator) GETSTRUCT(optup);
+
+		if (OidIsValid(pgopform->oprlsortop) ||
+			pgopform->oprcanhash ||
+			pgopform->oprrest == F_EQSEL)
+			return optup;
+
+		ReleaseSysCache(optup);
+	}
+	if (!noError)
+		elog(ERROR, "Unable to identify an equality operator for type %s",
+			 format_type_be(argtype));
+	return NULL;
 }
+
+/*
+ * ordering_oper - identify a suitable sorting operator ("<") for a datatype
+ *
+ * On failure, return NULL if noError, else report a standard error
+ */
+Operator
+ordering_oper(Oid argtype, bool noError)
+{
+	Operator	optup;
+
+	/*
+	 * Find the type's equality operator, and use its lsortop (it *must*
+	 * be mergejoinable).  We use this definition because for sorting and
+	 * grouping purposes, it's important that the equality and ordering
+	 * operators are consistent.
+	 */
+	optup = equality_oper(argtype, noError);
+	if (optup != NULL)
+	{
+		Oid		lsortop = ((Form_pg_operator) GETSTRUCT(optup))->oprlsortop;
+
+		ReleaseSysCache(optup);
+
+		if (OidIsValid(lsortop))
+		{
+			optup = SearchSysCache(OPEROID,
+								   ObjectIdGetDatum(lsortop),
+								   0, 0, 0);
+			if (optup != NULL)
+				return optup;
+		}
+	}
+	if (!noError)
+		elog(ERROR, "Unable to identify an ordering operator for type %s"
+			 "\n\tUse an explicit ordering operator or modify the query",
+			 format_type_be(argtype));
+	return NULL;
+}
+
+/*
+ * equality_oper_funcid - convenience routine for oprfuncid(equality_oper())
+ */
+Oid
+equality_oper_funcid(Oid argtype)
+{
+	Operator	optup;
+	Oid			result;
+
+	optup = equality_oper(argtype, false);
+	result = oprfuncid(optup);
+	ReleaseSysCache(optup);
+	return result;
+}
+
+/*
+ * ordering_oper_opid - convenience routine for oprid(ordering_oper())
+ *
+ * This was formerly called any_ordering_op()
+ */
+Oid
+ordering_oper_opid(Oid argtype)
+{
+	Operator	optup;
+	Oid			result;
+
+	optup = ordering_oper(argtype, false);
+	result = oprid(optup);
+	ReleaseSysCache(optup);
+	return result;
+}
+
 
 /* given operator tuple, return the operator OID */
 Oid
@@ -725,28 +819,6 @@ compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError)
 	if (optup != NULL)
 	{
 		result = oprid(optup);
-		ReleaseSysCache(optup);
-		return result;
-	}
-	return InvalidOid;
-}
-
-/* compatible_oper_funcid() -- get OID of a binary operator's function
- *
- * This is a convenience routine that extracts only the function OID
- * from the result of compatible_oper().  InvalidOid is returned if the
- * lookup fails and noError is true.
- */
-Oid
-compatible_oper_funcid(List *op, Oid arg1, Oid arg2, bool noError)
-{
-	Operator	optup;
-	Oid			result;
-
-	optup = compatible_oper(op, arg1, arg2, noError);
-	if (optup != NULL)
-	{
-		result = oprfuncid(optup);
 		ReleaseSysCache(optup);
 		return result;
 	}
