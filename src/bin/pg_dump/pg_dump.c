@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.256 2002/04/29 04:10:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.257 2002/04/29 17:30:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3229,7 +3229,7 @@ dumpDBComment(Archive *fout)
  *    wites out to fout the queries to recrease a user-defined domains
  *    as requested by dumpTypes
  */
-void
+static void
 dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 {
 	PQExpBuffer q = createPQExpBuffer();
