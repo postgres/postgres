@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.28 1999/10/04 04:37:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.29 1999/10/31 18:57:42 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,14 +40,15 @@
 
 #include "postgres.h"
 
-#include "executor/spi.h"
-#include "lib/stringinfo.h"
-#include "optimizer/clauses.h"
-#include "optimizer/tlist.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
+#include "executor/spi.h"
+#include "lib/stringinfo.h"
+#include "optimizer/clauses.h"
+#include "optimizer/tlist.h"
+#include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
@@ -111,6 +112,8 @@ static char *get_attribute_name(Oid relid, int2 attnum);
 static bool check_if_rte_used(Node *node, Index rt_index, int levelsup);
 static bool check_if_rte_used_walker(Node *node,
 									 check_if_rte_used_context *context);
+
+#define inherit_marker(rte)  ((rte)->inh ? "*" : "")
 
 
 /* ----------
@@ -907,7 +910,7 @@ get_select_query_def(Query *query, deparse_context *context)
 
 	/* ----------
 	 * Now check if any of the used rangetable entries is different
-	 * from *NEW* and *CURRENT*. If so we must omit the FROM clause
+	 * from *NEW* and *CURRENT*. If so we must provide the FROM clause
 	 * later.
 	 * ----------
 	 */
@@ -965,13 +968,11 @@ get_select_query_def(Query *query, deparse_context *context)
 							 quote_identifier(tle->resdom->resname));
 	}
 
-	/* If we need other tables that *NEW* or *CURRENT* add the FROM clause */
+	/* If we need other tables than *NEW* or *CURRENT* add the FROM clause */
 	if (!rt_constonly && rt_numused > 0)
 	{
-		appendStringInfo(buf, " FROM");
-
+		sep = " FROM ";
 		i = 0;
-		sep = " ";
 		foreach(l, query->rtable)
 		{
 			if (rt_used[i++])
@@ -986,8 +987,9 @@ get_select_query_def(Query *query, deparse_context *context)
 
 				appendStringInfo(buf, sep);
 				sep = ", ";
-				appendStringInfo(buf, "%s",
-								 quote_identifier(rte->relname));
+				appendStringInfo(buf, "%s%s",
+								 quote_identifier(rte->relname),
+								 inherit_marker(rte));
 				if (strcmp(rte->relname, rte->refname) != 0)
 					appendStringInfo(buf, " %s",
 									 quote_identifier(rte->refname));
@@ -1081,7 +1083,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	 * Start the query with INSERT INTO relname
 	 * ----------
 	 */
-	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
+	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "INSERT INTO %s",
 					 quote_identifier(rte->relname));
 
@@ -1134,9 +1136,10 @@ get_update_query_def(Query *query, deparse_context *context)
 	 * Start the query with UPDATE relname SET
 	 * ----------
 	 */
-	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	appendStringInfo(buf, "UPDATE %s SET ",
-					 quote_identifier(rte->relname));
+	rte = rt_fetch(query->resultRelation, query->rtable);
+	appendStringInfo(buf, "UPDATE %s%s SET ",
+					 quote_identifier(rte->relname),
+					 inherit_marker(rte));
 
 	/* Add the comma separated list of 'attname = value' */
 	sep = "";
@@ -1174,9 +1177,10 @@ get_delete_query_def(Query *query, deparse_context *context)
 	 * Start the query with DELETE FROM relname
 	 * ----------
 	 */
-	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	appendStringInfo(buf, "DELETE FROM %s",
-					 quote_identifier(rte->relname));
+	rte = rt_fetch(query->resultRelation, query->rtable);
+	appendStringInfo(buf, "DELETE FROM %s%s",
+					 quote_identifier(rte->relname),
+					 inherit_marker(rte));
 
 	/* Add a WHERE clause if given */
 	if (query->qual != NULL)
@@ -1198,7 +1202,7 @@ get_rte_for_var(Var *var, deparse_context *context)
 	while (sup-- > 0)
 		rtlist = lnext(rtlist);
 
-	return (RangeTblEntry *) nth(var->varno - 1, (List *) lfirst(rtlist));
+	return rt_fetch(var->varno, (List *) lfirst(rtlist));
 }
 
 
