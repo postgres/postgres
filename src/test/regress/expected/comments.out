@@ -1,0 +1,35 @@
+QUERY: SELECT 'trailing' AS first;
+first   
+--------
+trailing
+(1 row)
+
+QUERY:  
+SELECT /* embedded single line */ 'embedded' AS second;
+second  
+--------
+embedded
+(1 row)
+
+QUERY: SELECT /* both embedded and trailing single line */ 'both' AS third;
+third
+-----
+both 
+(1 row)
+
+QUERY:  
+SELECT 'before multi-line' AS fourth;
+fourth           
+-----------------
+before multi-line
+(1 row)
+
+QUERY: /* This is an example of SQL which should not execute:
+ * select 'multi-line';
+ */
+SELECT 'after multi-line' AS fifth;
+fifth           
+----------------
+after multi-line
+(1 row)
+
