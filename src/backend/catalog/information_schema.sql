@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.15 2003/10/18 19:06:10 tgl Exp $
+ * $Id: information_schema.sql,v 1.16 2003/11/08 20:43:52 tgl Exp $
  */
 
 /*
@@ -382,7 +382,7 @@ CREATE VIEW columns AS
                OR has_table_privilege(c.oid, 'SELECT')
                OR has_table_privilege(c.oid, 'INSERT')
                OR has_table_privilege(c.oid, 'UPDATE')
-               OR has_table_privilege(c.oid, 'RERERENCES') );
+               OR has_table_privilege(c.oid, 'REFERENCES') );
 
 GRANT SELECT ON columns TO PUBLIC;
 
@@ -1370,7 +1370,7 @@ CREATE VIEW tables AS
                OR has_table_privilege(c.oid, 'UPDATE')
                OR has_table_privilege(c.oid, 'DELETE')
                OR has_table_privilege(c.oid, 'RULE')
-               OR has_table_privilege(c.oid, 'RERERENCES')
+               OR has_table_privilege(c.oid, 'REFERENCES')
                OR has_table_privilege(c.oid, 'TRIGGER') );
 
 GRANT SELECT ON tables TO PUBLIC;
@@ -1574,7 +1574,7 @@ CREATE VIEW views AS
                OR has_table_privilege(c.oid, 'UPDATE')
                OR has_table_privilege(c.oid, 'DELETE')
                OR has_table_privilege(c.oid, 'RULE')
-               OR has_table_privilege(c.oid, 'RERERENCES')
+               OR has_table_privilege(c.oid, 'REFERENCES')
                OR has_table_privilege(c.oid, 'TRIGGER') );
 
 GRANT SELECT ON views TO PUBLIC;
