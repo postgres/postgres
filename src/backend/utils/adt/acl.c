@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.106 2004/06/18 06:13:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.107 2004/07/12 20:23:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
+#include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -54,6 +55,8 @@ static Oid	convert_language_name(text *languagename);
 static AclMode convert_language_priv_string(text *priv_type_text);
 static Oid	convert_schema_name(text *schemaname);
 static AclMode convert_schema_priv_string(text *priv_type_text);
+static Oid convert_tablespace_name(text *tablespacename);
+static AclMode convert_tablespace_priv_string(text *priv_type_text);
 
 
 /*
@@ -2201,6 +2204,207 @@ convert_schema_priv_string(text *priv_type_text)
 		return ACL_USAGE;
 	if (pg_strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
+	return ACL_NO_RIGHTS;		/* keep compiler quiet */
+}
+
+/*
+ * has_tablespace_privilege variants
+ *		These are all named "has_tablespace_privilege" at the SQL level.
+ *		They take various combinations of tablespace name, tablespace OID,
+ *		user name, user sysid, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.
+ */
+
+/*
+ * has_tablespace_privilege_name_name
+ *		Check user privileges on a tablespace given
+ *		name username, text tablespacename, and text priv name.
+ */
+Datum
+has_tablespace_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	text	   *tablespacename = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	Oid			tablespaceoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	tablespaceoid = convert_tablespace_name(tablespacename);
+	mode = convert_tablespace_priv_string(priv_type_text);
+
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_tablespace_privilege_name
+ *		Check user privileges on a tablespace given
+ *		text tablespacename and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_tablespace_privilege_name(PG_FUNCTION_ARGS)
+{
+	text	   *tablespacename = PG_GETARG_TEXT_P(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	AclId		usesysid;
+	Oid			tablespaceoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	tablespaceoid = convert_tablespace_name(tablespacename);
+	mode = convert_tablespace_priv_string(priv_type_text);
+
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_tablespace_privilege_name_id
+ *		Check user privileges on a tablespace given
+ *		name usename, tablespace oid, and text priv name.
+ */
+Datum
+has_tablespace_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			tablespaceoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	mode = convert_tablespace_priv_string(priv_type_text);
+
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_tablespace_privilege_id
+ *		Check user privileges on a tablespace given
+ *		tablespace oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_tablespace_privilege_id(PG_FUNCTION_ARGS)
+{
+	Oid			tablespaceoid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	AclId		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	mode = convert_tablespace_priv_string(priv_type_text);
+
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_tablespace_privilege_id_name
+ *		Check user privileges on a tablespace given
+ *		usesysid, text tablespacename, and text priv name.
+ */
+Datum
+has_tablespace_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	text	   *tablespacename = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			tablespaceoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	tablespaceoid = convert_tablespace_name(tablespacename);
+	mode = convert_tablespace_priv_string(priv_type_text);
+
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_tablespace_privilege_id_id
+ *		Check user privileges on a tablespace given
+ *		usesysid, tablespace oid, and text priv name.
+ */
+Datum
+has_tablespace_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			tablespaceoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	AclMode		mode;
+	AclResult	aclresult;
+
+	mode = convert_tablespace_priv_string(priv_type_text);
+
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ *		Support routines for has_tablespace_privilege family.
+ */
+
+/*
+ * Given a tablespace name expressed as a string, look it up and return Oid
+ */
+static Oid
+convert_tablespace_name(text *tablespacename)
+{
+	char			*spcname;
+	Oid			oid;
+	
+	spcname = DatumGetCString(DirectFunctionCall1(textout,
+                                                           PointerGetDatum(tablespacename)));
+	oid = get_tablespace_oid(spcname);
+
+        if (!OidIsValid(oid))
+                ereport(ERROR,
+                                (errcode(ERRCODE_UNDEFINED_OBJECT),
+                                 errmsg("tablespace \"%s\" does not exist", spcname)));
+
+	return oid;
+}
+
+/*
+ * convert_tablespace_priv_string
+ *		Convert text string to AclMode value.
+ */
+static AclMode
+convert_tablespace_priv_string(text *priv_type_text)
+{
+	char	   *priv_type;
+
+	priv_type = DatumGetCString(DirectFunctionCall1(textout,
+									   PointerGetDatum(priv_type_text)));
+
+	/*
+	 * Return mode from priv_type string
+	 */
+	if (pg_strcasecmp(priv_type, "CREATE") == 0)
+		return ACL_CREATE;
+	if (pg_strcasecmp(priv_type, "CREATE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_CREATE);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

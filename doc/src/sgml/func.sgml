@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.213 2004/07/02 22:49:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.214 2004/07/12 20:23:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -6980,6 +6980,21 @@ SELECT set_config('log_statement_stats', 'off', false);
        <entry><type>boolean</type></entry>
        <entry>does current user have privilege for schema</entry>
       </row>
+      <row>
+       <entry><literal><function>has_tablespace_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>tablespace</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for tablespace</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_tablespace_privilege</function>(<parameter>tablespace</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for tablespace</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -6998,6 +7013,9 @@ SELECT set_config('log_statement_stats', 'off', false);
    </indexterm>
    <indexterm zone="functions-misc">
     <primary>has_schema_privilege</primary>
+   </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>has_tablespace_privilege</primary>
    </indexterm>
 
    <para>
@@ -7062,6 +7080,14 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     The desired access privilege type must evaluate to
     <literal>CREATE</literal> or
     <literal>USAGE</literal>.
+   </para>
+
+   <para>
+    <function>has_tablespace_privilege</function> checks whether a user
+    can access a tablespace in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>.
+    The desired access privilege type must evaluate to
+    <literal>CREATE</literal>.
    </para>
 
   <para>
