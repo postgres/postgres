@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.9 1996/10/10 08:20:09 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.10 1996/10/15 07:16:41 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +338,7 @@ freePGconn(PGconn *conn)
 static void
 closePGconn(PGconn *conn)
 {
-    const struct sigaction ignore_action = {SIG_IGN, 0, 0, NULL};
+    const struct sigaction ignore_action = {SIG_IGN, 0, 0};
     struct sigaction oldaction;
 
     /* If connection is already gone, that's cool.  No reason for kernel
