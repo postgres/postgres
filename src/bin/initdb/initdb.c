@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.29 2004/05/14 17:04:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.30 2004/05/17 13:17:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on
 
 /* path to 'initdb' binary directory */
 char	   bindir[MAXPGPATH];
-char	   backendbin[MAXPGPATH];
+char	   backend_exec[MAXPGPATH];
 
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
@@ -819,7 +819,7 @@ test_connections(void)
 				 "\"%s\" -boot -x0 %s "
 				 "-c shared_buffers=%d -c max_connections=%d template1 "
 				 "<%s >%s 2>&1",
-				 backendbin, boot_options,
+				 backend_exec, boot_options,
 				 conns[i] * 5, conns[i],
 				 DEVNULL, DEVNULL);
 		status = system(cmd);
@@ -855,7 +855,7 @@ test_buffers(void)
 				 "\"%s\" -boot -x0 %s "
 				 "-c shared_buffers=%d -c max_connections=%d template1 "
 				 "<%s >%s 2>&1",
-				 backendbin, boot_options,
+				 backend_exec, boot_options,
 				 bufs[i], n_connections,
 				 DEVNULL, DEVNULL);
 		status = system(cmd);
@@ -1004,7 +1004,7 @@ bootstrap_template1(char *short_version)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" -boot -x1 %s %s template1",
-			 backendbin, boot_options, talkargs);
+			 backend_exec, boot_options, talkargs);
 
 	PG_CMD_OPEN;
 
@@ -1054,7 +1054,7 @@ setup_shadow(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1094,7 +1094,7 @@ get_set_pwd(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1148,7 +1148,7 @@ unlimit_systables(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1221,7 +1221,7 @@ setup_depend(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1254,7 +1254,7 @@ setup_sysviews(void)
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s -N template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1286,7 +1286,7 @@ setup_description(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1334,7 +1334,7 @@ setup_conversion(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1390,7 +1390,7 @@ setup_privileges(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1453,7 +1453,7 @@ setup_schema(void)
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s -N template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1470,7 +1470,7 @@ setup_schema(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1510,7 +1510,7 @@ vacuum_db(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1566,7 +1566,7 @@ make_template0(void)
 
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s template1 >%s",
-			 backendbin, backend_options,
+			 backend_exec, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1933,7 +1933,7 @@ main(int argc, char *argv[])
 	putenv(pgdenv);
 
 	if ((ret = find_other_exec(argv[0], "postgres", PG_VERSIONSTR,
-							   backendbin)) < 0)
+							   backend_exec)) < 0)
 	{
 		if (ret == -1)
 			fprintf(stderr,
@@ -1951,7 +1951,7 @@ main(int argc, char *argv[])
 	}
 
 	/* store binary directory */
-	strcpy(bindir, backendbin);
+	strcpy(bindir, backend_exec);
 	*last_path_separator(bindir) = '\0';
 	
 	if ((short_version = get_short_version()) == NULL)
