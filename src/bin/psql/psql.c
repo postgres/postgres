@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.4 1996/07/18 05:48:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.5 1996/07/20 08:44:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ tableList (PsqlSettings *ps, bool deep_tablelist)
   strcat(listbuf,"  FROM pg_class, pg_user ");
   strcat(listbuf,"WHERE ( relkind = 'r' OR relkind = 'i') ");
   strcat(listbuf,"  and relname !~ '^pg_'");
-  strcat(listbuf,"  and relname !~ '^Inv'");
+  strcat(listbuf,"  and relname !~ '^Inv[0-9]+'");
 /* the usesysid = relowner won't work on stock 1.0 dbs, need to 
    add in the int4oideq function */
   strcat(listbuf,"  and usesysid = relowner");
