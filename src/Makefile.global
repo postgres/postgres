@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.72 1996/11/18 06:07:12 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.73 1996/11/18 16:32:53 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -408,6 +408,8 @@ else
   CFLAGS_BE= -DPRE_BSDI_2_1
   LDADD_BE= -ldld -lcompat -lipc
 endif
+
+DLSUFFIX= .o
 
 endif
 
