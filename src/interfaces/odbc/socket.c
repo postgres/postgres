@@ -58,11 +58,18 @@ SocketClass *rv;
 
 		rv->buffer_in = (unsigned char *) malloc(globals.socket_buffersize);
 		if ( ! rv->buffer_in)
+		{
+			free(rv);
 			return NULL;
+		}
 
 		rv->buffer_out = (unsigned char *) malloc(globals.socket_buffersize);
 		if ( ! rv->buffer_out)
+		{
+			free(rv->buffer_in);
+			free(rv);
 			return NULL;
+		}
 		
         rv->errormsg = NULL;
         rv->errornumber = 0;

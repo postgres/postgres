@@ -425,6 +425,7 @@ char rv = 1;
 		if (conns[lf] && conns[lf]->henv == self)
 			rv = rv && CC_Destructor(conns[lf]);
 	}
+	free(self);
 
 	mylog("exit EN_Destructor: rv = %d\n", rv);
 	return rv;
