@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.47 2003/01/20 18:54:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.48 2003/02/06 22:21:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
 
 
 typedef struct
@@ -400,14 +401,25 @@ flatten_join_alias_vars_mutator(Node *node,
 		RangeTblEntry *rte;
 		Node	   *newvar;
 
+		/* No change unless Var belongs to a JOIN of the target level */
 		if (var->varlevelsup != context->sublevels_up)
 			return node;		/* no need to copy, really */
 		rte = rt_fetch(var->varno, context->root->rtable);
 		if (rte->rtekind != RTE_JOIN)
 			return node;
 		Assert(var->varattno > 0);
+		/* Okay, must expand it */
 		newvar = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
-		/* expand it; recurse in case join input is itself a join */
+		/*
+		 * If we are expanding an alias carried down from an upper query,
+		 * must adjust its varlevelsup fields.
+		 */
+		if (context->sublevels_up != 0)
+		{
+			newvar = copyObject(newvar);
+			IncrementVarSublevelsUp(newvar, context->sublevels_up, 0);
+		}
+		/* Recurse in case join input is itself a join */
 		return flatten_join_alias_vars_mutator(newvar, context);
 	}
 	if (IsA(node, InClauseInfo))
