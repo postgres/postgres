@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.64 1998/08/11 18:28:47 momjian Exp $
+ * $Id: pg_proc.h,v 1.65 1998/08/15 06:47:39 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2041,9 +2041,6 @@ DESCR("");
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  868 (  strpos	   PGUID 14 f t f 2 f 23 "25 25" 100 0 0 100  "select textpos($1, $2)" - ));
 DESCR("find position of substring");
-
-DATA(insert OID =  869 (  trim		   PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select btrim($1, \' \')" - ));
-DESCR("trim trailing whitespace");
 DATA(insert OID =  870 (  lower		   PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
 DESCR("lowercase");
 DATA(insert OID =  871 (  upper		   PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
