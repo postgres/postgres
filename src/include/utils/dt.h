@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.17 1997/08/21 23:57:00 momjian Exp $
+ * $Id: dt.h,v 1.18 1997/09/04 18:44:29 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,6 +259,7 @@ extern bool datetime_le(DateTime *dt1, DateTime *dt2);
 extern bool datetime_ge(DateTime *dt1, DateTime *dt2);
 extern bool datetime_gt(DateTime *dt1, DateTime *dt2);
 extern bool datetime_finite(DateTime *datetime);
+extern int datetime_cmp(DateTime *dt1, DateTime *dt2);
 extern DateTime *datetime_smaller(DateTime *dt1, DateTime *dt2);
 extern DateTime *datetime_larger(DateTime *dt1, DateTime *dt2);
 
@@ -270,6 +271,7 @@ extern bool timespan_lt(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_le(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_ge(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_gt(TimeSpan *span1, TimeSpan *span2);
+extern int timespan_cmp(TimeSpan *span1, TimeSpan *span2);
 extern TimeSpan *timespan_smaller(TimeSpan *span1, TimeSpan *span2);
 extern TimeSpan *timespan_larger(TimeSpan *span1, TimeSpan *span2);
 
