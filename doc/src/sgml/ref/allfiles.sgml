@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.37 2002/04/04 04:25:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.38 2002/04/24 02:49:50 momjian Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -40,6 +40,7 @@ Complete list of usable sgml source files in this directory.
 <!entity alterDatabase      system "alter_database.sgml">
 <!entity alterGroup         system "alter_group.sgml">
 <!entity alterTable         system "alter_table.sgml">
+<!entity alterTrigger       system "alter_trigger.sgml">
 <!entity alterUser          system "alter_user.sgml">
 <!entity analyze            system "analyze.sgml">
 <!entity begin              system "begin.sgml">
