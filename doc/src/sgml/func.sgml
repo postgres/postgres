@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.84 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.85 2001/11/21 22:33:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4191,18 +4191,18 @@ SELECT NULLIF(value, '(none)') ...
 
      <tbody>
       <row>
-       <entry>current_user</>
-       <entry>name</>
+       <entry><function>current_user</></entry>
+       <entry><type>name</></entry>
        <entry>user name of current execution context</>
       </row>
       <row>
-       <entry>session_user</>
-       <entry>name</>
+       <entry><function>session_user</></entry>
+       <entry><type>name</></entry>
        <entry>session user name</>
       </row>
       <row>
-       <entry>user</>
-       <entry>name</>
+       <entry><function>user</></entry>
+       <entry><type>name</></entry>
        <entry>equivalent to <function>current_user</></>
       </row>
      </tbody>
@@ -4216,7 +4216,7 @@ SELECT NULLIF(value, '(none)') ...
 
    <para>
     The <function>session_user</> is the user that initiated a database
-    connection and is fixed for the duration of that connection. The
+    connection; it is fixed for the duration of that connection. The
     <function>current_user</> is the user identifier that is applicable
     for permission checking. Currently it is always equal to the session
     user, but in the future there might be <quote>setuid</> functions and
@@ -4226,7 +4226,7 @@ SELECT NULLIF(value, '(none)') ...
    </para>
 
    <para>
-    Note that these functions have special syntactic status in <acronym>SQL</>;
+    Note that these functions have special syntactic status in <acronym>SQL</>:
     they must be called without trailing parentheses.
    </para>
 
@@ -4237,6 +4237,32 @@ SELECT NULLIF(value, '(none)') ...
      of <function>current_user</>.
     </para>
    </note>
+
+   <table>
+    <title>System Information Functions</>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</> <entry>Return Type</> <entry>Description</></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><function>version</></entry>
+       <entry><type>text</></entry>
+       <entry>PostgreSQL version information</>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm zone="functions-misc">
+    <primary>version</primary>
+   </indexterm>
+
+   <para>
+    <function>version()</> returns a string describing the PostgreSQL
+    server's version.
+   </para>
 
    <table>
     <title>Access Privilege Inquiry Functions</>
@@ -4272,7 +4298,9 @@ SELECT NULLIF(value, '(none)') ...
    <para>
     <function>has_table_privilege</> determines whether a user
     can access a table in a particular way.  The user can be
-    specified by name or by ID (<classname>pg_user</>.<structfield>usesysid</>) or if the argument is omitted
+    specified by name or by ID
+    (<classname>pg_user</>.<structfield>usesysid</>), or if the argument is
+    omitted
     <function>current_user</> is assumed.  The table can be specified
     by name or by OID.  (Thus, there are actually six variants of
     <function>has_table_privilege</>, which can be distinguished by
@@ -4284,7 +4312,7 @@ SELECT NULLIF(value, '(none)') ...
    </para>
 
    <table>
-    <title>System Information Functions</>
+    <title>Catalog Information Functions</>
     <tgroup cols="3">
      <thead>
       <row><entry>Name</> <entry>Return Type</> <entry>Description</></row>
@@ -4292,21 +4320,53 @@ SELECT NULLIF(value, '(none)') ...
 
      <tbody>
       <row>
-       <entry>version</>
-       <entry>text</>
-       <entry>PostgreSQL version information</>
+       <entry><function>pg_get_viewdef</>(<parameter>viewname</parameter>)</entry>
+       <entry><type>text</></entry>
+       <entry>Get CREATE VIEW command for view</>
+      </row>
+      <row>
+       <entry><function>pg_get_ruledef</>(<parameter>rulename</parameter>)</entry>
+       <entry><type>text</></entry>
+       <entry>Get CREATE RULE command for rule</>
+      </row>
+      <row>
+       <entry><function>pg_get_indexdef</>(<parameter>indexOID</parameter>)</entry>
+       <entry><type>text</></entry>
+       <entry>Get CREATE INDEX command for index</>
+      </row>
+      <row>
+       <entry><function>pg_get_userbyid</>(<parameter>userid</parameter>)</entry>
+       <entry><type>name</></entry>
+       <entry>Get user name given sysid</>
       </row>
      </tbody>
     </tgroup>
    </table>
 
    <indexterm zone="functions-misc">
-    <primary>version</primary>
+    <primary>pg_get_viewdef</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>pg_get_ruledef</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>pg_get_indexdef</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>pg_get_userbyid</primary>
    </indexterm>
 
    <para>
-    <function>version()</> returns a string describing the PostgreSQL
-    server's version.
+    These functions extract information from the system catalogs.
+    <function>pg_get_viewdef()</>, <function>pg_get_ruledef()</>, and
+    <function>pg_get_indexdef()</> respectively reconstruct the creating
+    command for a view, rule, or index.  (Note that this is a decompiled
+    reconstruction, not the verbatim text of the command.)
+    <function>pg_get_userbyid()</> extracts a user's name given a
+    <structfield>usesysid</> value.
    </para>
 
   </sect1>
