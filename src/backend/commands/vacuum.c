@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.26 1997/03/10 15:08:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.27 1997/04/02 03:48:01 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,10 +219,13 @@ vc_vacuum(NameData *VacRelP)
     /* get list of relations */
     vrl = vc_getrels(p, VacRelP);
 
-    if (VacRelP != NULL)
-    	vc_delhilowstats(vrl->vrl_relid);
-    else
-    	vc_delhilowstats(InvalidOid);
+    if ( vrl != NULL )
+    {
+    	if (VacRelP != NULL)
+    	    vc_delhilowstats(vrl->vrl_relid);
+    	else
+    	    vc_delhilowstats(InvalidOid);
+    }
     	
     /* vacuum each heap relation */
     for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
