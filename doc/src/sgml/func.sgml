@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.170 2003/09/08 19:38:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.171 2003/09/11 17:26:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -6873,7 +6873,7 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
        <entry><literal><function>pg_type_is_visible</function>(<parameter>type_oid</parameter>)</literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>is type visible in search path</entry>
+       <entry>is type (or domain) visible in search path</entry>
       </row>
       <row>
        <entry><literal><function>pg_function_is_visible</function>(<parameter>function_oid</parameter>)</literal>
@@ -6930,7 +6930,7 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
    <function>pg_operator_is_visible</function>,
    <function>pg_opclass_is_visible</function>, and
    <function>pg_conversion_is_visible</function> perform the same sort of
-   visibility check for types, functions, operators, operator classes
+   visibility check for types (and domains), functions, operators, operator classes
    and conversions, respectively.  For functions and operators, an object in
    the search path is visible if there is no object of the same name
    <emphasis>and argument data type(s)</> earlier in the path.  For
