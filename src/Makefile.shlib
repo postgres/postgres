@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.65 2002/10/09 16:21:54 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.66 2003/01/11 17:22:19 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -126,9 +126,8 @@ ifeq ($(PORTNAME), netbsd)
 endif
 
 ifeq ($(PORTNAME), hpux)
-# HPUX doesn't believe in version numbers for shlibs
-  shlib			:= lib$(NAME)$(DLSUFFIX)
-  LINK.shared		= $(LD) -b +b $(libdir)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  LINK.shared		= $(LD) +h $(soname) -b +b $(libdir)
 endif
 
 ifeq ($(PORTNAME), irix5)
