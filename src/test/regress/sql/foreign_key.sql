@@ -674,3 +674,23 @@ INSERT INTO pktable VALUES (2000, 3); -- too late
 COMMIT;
 
 DROP TABLE fktable, pktable;
+
+-- deferrable, initially deferred
+CREATE TABLE pktable (
+	id		INT4 PRIMARY KEY,
+	other	INT4
+);
+
+CREATE TABLE fktable (
+	id		INT4 PRIMARY KEY,
+	fk		INT4 REFERENCES pktable DEFERRABLE INITIALLY DEFERRED
+);
+
+BEGIN;
+
+-- no error here
+INSERT INTO fktable VALUES (100, 200);
+
+-- error here on commit
+COMMIT;
+
