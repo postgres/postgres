@@ -1,7 +1,11 @@
 This is an implementation of RD-tree data structure using GiST interface
 of PostgreSQL. It has built-in lossy compression - must be declared
-in index creation - with (islossy). Current implementation has index support 
-for one-dimensional array of int4's.
+in index creation - with (islossy). Current implementation provides index 
+support for one-dimensional array of int4's - gist__int_ops, suitable for
+small and medium size of arrays (used on default), and gist__intbig_ops for 
+indexing large arrays (we use superimposed signature with length of 4096 
+bits to represent sets). 
+
 All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 (oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
 for additional information.
@@ -25,7 +29,7 @@ EXAMPLE USAGE:
   -- create indices
 CREATE unique index message_key on message ( mid );
 CREATE unique index message_section_map_key2 on message_section_map (sid, mid );
-CREATE INDEX message_rdtree_idx on message using gist ( sections ) with ( islossy );
+CREATE INDEX message_rdtree_idx on message using gist ( sections gist__int_ops) with ( islossy );
 
   -- select some messages with section in 1 OR 2 - OVERLAP operator
   select message.mid from message where message.sections && '{1,2}';  

@@ -49,7 +49,7 @@ print <<EOT;
 CREATE unique index message_key on message ( mid );
 --CREATE unique index message_section_map_key1 on message_section_map ( mid, sid );
 CREATE unique index message_section_map_key2 on message_section_map ( sid, mid );
-CREATE INDEX message_rdtree_idx on message using gist ( sections ) with ( islossy );
+CREATE INDEX message_rdtree_idx on message using gist ( sections gist__int_ops ) with ( islossy );
 VACUUM ANALYZE;
 
 select count(*) from message;
