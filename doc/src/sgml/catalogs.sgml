@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.11 2000/12/10 22:37:27 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.12 2000/12/11 18:26:37 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -1302,7 +1302,7 @@
       <entry>oprnegate</entry>
       <entry><type>oid</type></entry>
       <entry>pg_operator.oid</entry>
-      <entry>Inverse of this operator, if any</entry>
+      <entry>Negator of this operator, if any</entry>
      </row>
 
      <row>
