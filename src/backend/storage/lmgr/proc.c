@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.22 1997/09/18 20:21:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.23 1997/10/30 17:23:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.22 1997/09/18 20:21:39 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.23 1997/10/30 17:23:59 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -78,13 +78,6 @@
 
 static void HandleDeadLock(int sig);
 static PROC *ProcWakeup(PROC *proc, int errType);
-
-/*
- * timeout (in seconds) for resolving possible deadlock
- */
-#ifndef DEADLOCK_TIMEOUT
-#define DEADLOCK_TIMEOUT		60
-#endif
 
 /* --------------------
  * Spin lock for manipulating the shared process data structure:
