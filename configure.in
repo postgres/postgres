@@ -572,6 +572,9 @@ if test "$with_openssl" = yes ; then
   if test -d "${openssl_prefix}/lib" ; then
     openssl_libdir="${openssl_prefix}/lib"
     LIBS="$LIBS -L${openssl_prefix}/lib"
+  else
+    openssl_libdir="${openssl_prefix}"
+    LIBS="$LIBS -L${openssl_prefix}"
   fi
 fi
 
