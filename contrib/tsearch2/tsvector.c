@@ -451,6 +451,8 @@ tsvector_in(PG_FUNCTION_ARGS)
 
 	if (len > 0)
 		len = uniqueentry(arr, len, tmpbuf, &buflen);
+	else
+		buflen=0;
 	totallen = CALCDATASIZE(len, buflen);
 	in = (tsvector *) palloc(totallen);
 	memset(in, 0, totallen);
