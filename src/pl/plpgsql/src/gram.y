@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.31 2002/03/06 18:50:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.32 2002/05/01 12:40:22 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -641,6 +641,7 @@ decl_defval		: ';'
 
 decl_defkey		: K_ASSIGN
 				| K_DEFAULT
+				;
 
 proc_sect		:
 					{
@@ -1024,6 +1025,7 @@ fori_lower		:
 
 						$$.expr = plpgsql_read_expression(K_DOTDOT, "..");
 					}
+				;
 
 stmt_fors		: opt_label K_FOR lno fors_target K_IN K_SELECT expr_until_loop loop_body
 					{
@@ -1053,6 +1055,7 @@ stmt_fors		: opt_label K_FOR lno fors_target K_IN K_SELECT expr_until_loop loop_
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
+				;
 
 stmt_dynfors : opt_label K_FOR lno fors_target K_IN K_EXECUTE expr_until_loop loop_body
 					{
@@ -1082,6 +1085,7 @@ stmt_dynfors : opt_label K_FOR lno fors_target K_IN K_EXECUTE expr_until_loop lo
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
+				;
 
 fors_target		: T_RECORD
 					{ $$ = yylval.rec; }
