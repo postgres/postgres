@@ -4,7 +4,7 @@
 #    Makefile for optimizer/util
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.9 1999/08/16 02:17:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.10 1999/12/09 19:14:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ OBJS = restrictinfo.o clauses.o indexnode.o plancat.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

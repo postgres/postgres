@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.21 1999/10/18 02:42:31 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.22 1999/12/09 19:14:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 gram.c parse.h: gram.y
 	$(YACC) $(YFLAGS) $<

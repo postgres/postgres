@@ -4,7 +4,7 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.9 1998/07/26 04:31:00 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.10 1999/12/09 19:15:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ OBJS = enbl.o findbe.o globals.o miscinit.o postinit.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

@@ -4,7 +4,7 @@
 #    Makefile for utils/sort
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/sort/Makefile,v 1.7 1999/10/17 22:15:05 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/sort/Makefile,v 1.8 1999/12/09 19:15:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ OBJS = logtape.o tuplesort.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

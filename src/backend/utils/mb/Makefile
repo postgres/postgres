@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.3 1999/02/02 18:51:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.4 1999/12/09 19:15:31 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ OBJS = common.o conv.o mbutils.o wchar.o wstrcmp.o wstrncmp.o variable.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

@@ -4,7 +4,7 @@
 #    Makefile for port/sparc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/sunos4/Attic/Makefile,v 1.2 1997/12/20 00:26:30 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/sunos4/Attic/Makefile,v 1.3 1999/12/09 19:14:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ OBJS = strtol.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend

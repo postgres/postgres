@@ -4,7 +4,7 @@
 #    Makefile for optimizer/prep
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Makefile,v 1.8 1998/09/03 02:34:32 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Makefile,v 1.9 1999/12/09 19:14:47 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ OBJS = prepqual.o preptlist.o prepunion.o prepkeyset.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

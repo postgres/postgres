@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.27 1999/11/17 21:21:50 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.28 1999/12/09 19:15:16 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o chunk.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

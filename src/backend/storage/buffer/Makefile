@@ -4,7 +4,7 @@
 #    Makefile for storage/buffer
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.11 1998/06/16 07:18:15 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.12 1999/12/09 19:14:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ OBJS = buf_table.o buf_init.o bufmgr.o freelist.o localbuf.o s_lock.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

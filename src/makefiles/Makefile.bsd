@@ -5,7 +5,7 @@ endif
 ifdef ELF_SYSTEM
 	$(LD) -x -Bshareable -o $@ $<
 else
-	$(LD) -x -r -o $<.obj $<
+	$(LD) $(LDREL) -x  -o $<.obj $<
 	@echo building shared object $@
 	@rm -f $@.pic
 	@${AR} cq $@.pic `lorder $<.obj | tsort`

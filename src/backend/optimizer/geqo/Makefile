@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Id: Makefile,v 1.11 1999/02/15 03:22:00 momjian Exp $
+# $Id: Makefile,v 1.12 1999/12/09 19:14:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ OBJS =	geqo_copy.o geqo_eval.o geqo_main.o geqo_misc.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

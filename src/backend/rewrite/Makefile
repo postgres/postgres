@@ -4,7 +4,7 @@
 #    Makefile for rewrite
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.8 1998/07/26 04:30:37 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.9 1999/12/09 19:14:56 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ OBJS = rewriteRemove.o rewriteDefine.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

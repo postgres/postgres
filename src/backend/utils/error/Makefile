@@ -4,7 +4,7 @@
 #    Makefile for utils/error
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.5 1998/04/06 00:26:45 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.6 1999/12/09 19:15:20 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ OBJS = assert.o elog.o exc.o excabort.o excid.o format.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

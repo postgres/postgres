@@ -4,7 +4,7 @@
 #    Makefile for access/rtree
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/Makefile,v 1.6 1998/04/06 00:21:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/Makefile,v 1.7 1999/12/09 19:14:31 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ OBJS = rtget.o rtproc.o rtree.o rtscan.o rtstrat.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

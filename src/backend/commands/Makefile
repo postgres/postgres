@@ -4,7 +4,7 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.20 1999/10/26 16:32:46 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.21 1999/12/09 19:14:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ OBJS = async.o creatinh.o command.o comment.o copy.o indexcmds.o define.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 # The following declares a hard-coded dependency on parse.h since, 
 # if compiled without make dep, comment.c would get compiled before 

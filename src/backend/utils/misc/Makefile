@@ -4,7 +4,7 @@
 #    Makefile for utils/misc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.9 1998/08/25 21:34:10 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.10 1999/12/09 19:15:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ OBJS = database.o superuser.o trace.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

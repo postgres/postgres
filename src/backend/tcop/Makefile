@@ -4,7 +4,7 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.18 1998/07/26 04:30:46 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.19 1999/12/09 19:15:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ OBJS= dest.o fastpath.o postgres.o pquery.o utility.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 # The following dependencies are picked up by the make dep, but since 
 # not everyone can do make dep, and these are particularly important

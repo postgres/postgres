@@ -4,7 +4,7 @@
 #    Makefile for utils/mmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Makefile,v 1.5 1998/04/06 00:27:24 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Makefile,v 1.6 1999/12/09 19:15:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ OBJS = aset.o mcxt.o palloc.o portalmem.o oset.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

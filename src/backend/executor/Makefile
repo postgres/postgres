@@ -4,7 +4,7 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.9 1999/11/23 20:06:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.10 1999/12/09 19:14:38 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ OBJS = execAmi.o execFlatten.o execJunk.o execMain.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) -r -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
