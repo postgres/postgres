@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.8 2004/06/30 15:01:56 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.9 2004/07/01 18:32:58 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -435,7 +435,7 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 {
 	va_list		args;
 	struct descriptor *desc;
-	struct descriptor_item *desc_item, *last_di;
+	struct descriptor_item *desc_item;
 
 	for (desc = all_descriptors; desc; desc = desc->next)
 	{
@@ -457,7 +457,7 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 
 	if (desc_item == NULL)
 	{
-		desc_item = ECPGalloc(sizeof(*desc_item), lineno);
+		desc_item = (struct descriptor_item *) ECPGalloc(sizeof(*desc_item), lineno);
 		desc_item->num = index;
 		desc_item->next = desc->items;
 		desc->items = desc_item;
