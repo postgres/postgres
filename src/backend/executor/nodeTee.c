@@ -15,7 +15,7 @@
  *	ExecEndTee
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.3 1996/11/06 06:47:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.4 1996/11/08 00:46:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,9 @@
 #include "executor/executor.h"
 #include "executor/nodeTee.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "tcop/pquery.h"
+#include "access/heapam.h"
 
 /* ------------------------------------------------------------------
  *	ExecInitTee
@@ -484,6 +486,8 @@ ExecEndTee(Tee* node, Plan* parent)
 	    orig = CurrentMemoryContext;
 	    MemoryContextSwitchTo(teeState->tee_mcxt);
 	  }
+	  else
+		orig = 0;
 
 	  if (teeState->tee_leftScanDesc)
 	    {

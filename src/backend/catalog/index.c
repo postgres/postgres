@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.7 1996/11/06 07:31:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.8 1996/11/08 00:44:30 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1514,6 +1514,12 @@ DefaultBuild(Relation heapRelation,
 	econtext = makeNode(ExprContext);
 	FillDummyExprContext(econtext, slot, heapDescriptor, buffer);
     }
+	else
+	{
+		econtext = NULL;
+		tupleTable = 0;
+		slot = NULL;
+	}
 #endif /* OMIT_PARTIAL_INDEX */        
 
     /* ----------------

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.14 1996/11/06 08:21:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.15 1996/11/08 00:45:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,9 +130,9 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
                 } else fp = stdout;
             } else {
                 mode_t oumask;  /* Pre-existing umask value */
-                (void) umask((mode_t) 0);
+                oumask =  umask((mode_t) 0);
                 fp = fopen(filename, "w");
-                (void) umask(oumask);
+                umask(oumask);
                 if (fp == NULL) 
                     elog(WARN, "COPY command, running in backend with "
                          "effective uid %d, could not open file '%s' for ",

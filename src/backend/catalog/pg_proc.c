@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.4 1996/11/06 07:31:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.5 1996/11/08 00:44:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,6 @@ ProcedureCreate(char *procedureName,
 	    if (strcmp(languageName, "sql") == 0) {
 		elog(WARN, "ProcedureDefine: sql functions cannot take type \"opaque\"");
 	    }
-	    else
 		toid = 0;
 	} else {
 	    toid = TypeGet(strVal(t), &defined);
@@ -151,7 +150,6 @@ ProcedureCreate(char *procedureName,
 	if (strcmp(languageName, "sql") == 0) {
 	    elog(WARN, "ProcedureCreate: sql functions cannot return type \"opaque\"");
 	}
-	else
 	    typeObjectId = 0;
     }
     

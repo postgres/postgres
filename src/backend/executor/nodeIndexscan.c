@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.4 1996/11/06 06:47:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.5 1996/11/08 00:45:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -593,13 +593,11 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	n_keys = 	length(qual);
 	scan_keys = (n_keys <= 0) ? NULL :
 	    (ScanKey)palloc(n_keys * sizeof(ScanKeyData));
+	run_keys = (n_keys <= 0) ? NULL :
+		(int *)palloc(n_keys * sizeof(int));
 	
 	CXT1_printf("ExecInitIndexScan: context is %d\n",
 		    CurrentMemoryContext);
-	
-	if (n_keys > 0) {
-	    run_keys = (int *)	palloc(n_keys * sizeof(int));
-	}
 	
 	/* ----------------
 	 *  for each opclause in the given qual,
@@ -613,9 +611,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	    Node	*rightop; 	/* expr on rhs ... */
 	    
 	    int		scanvar; 	/* which var identifies varattno */
-	    AttrNumber	varattno; 	/* att number used in scan */
+	    AttrNumber	varattno = 0; 	/* att number used in scan */
 	    Oid		opid;		/* operator id used in scan */
-	    Datum	scanvalue; 	/* value used in scan (if const) */
+	    Datum	scanvalue = 0; 	/* value used in scan (if const) */
 	    
 	    /* ----------------
 	     *	extract clause information from the qualification

@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.1 1996/08/28 07:22:06 scrappy Exp $
+ * $Id: execdebug.h,v 1.2 1996/11/08 00:46:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECDEBUG_H
 #define EXECDEBUG_H
+
+#include "access/printtup.h"
 
 /* ----------------------------------------------------------------
  *	debugging defines.
@@ -221,11 +223,15 @@ extern int     NIndexTupleInserted;
 #define EU_nodeDisplay(l)		nodeDisplay(l, 0)
 #define EU_printf(s)			printf(s)
 #define EU1_printf(s, a)		printf(s, a)
+#define EU2_printf(s, a)		printf(s, a, b)
+#define EU3_printf(s, a)		printf(s, a, b, c)
 #define EU4_printf(s, a, b, c, d)	printf(s, a, b, c, d)
 #else
 #define EU_nodeDisplay(l)		
 #define EU_printf(s)			
 #define EU1_printf(s, a)		
+#define EU2_printf(s, a, b)
+#define EU3_printf(s, a, b, c)
 #define EU4_printf(s, a, b, c, d)	
 #endif /* EXEC_UTILSDEBUG */
 

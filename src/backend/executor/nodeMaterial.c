@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.4 1996/11/06 06:47:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.5 1996/11/08 00:45:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
     Plan		*outerPlan;
     TupleDesc		tupType;
     Relation		tempDesc;
-    int			len;
+    /* int			len; */
     
     /* ----------------
      *  assign the node's execution state
