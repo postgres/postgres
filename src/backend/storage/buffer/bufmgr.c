@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.2 1996/07/23 05:44:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.3 1996/09/19 19:50:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,7 +280,7 @@ ReadBufferWithBufferLock(Relation reln,
 	 * the buffer can tell that the contents are invalid.
 	 */
 	bufHdr->flags |= BM_IO_ERROR;
-	
+	bufHdr->flags &= ~BM_IO_IN_PROGRESS;
     } else {
 	/* IO Succeeded.  clear the flags, finish buffer update */
 	
@@ -296,6 +296,9 @@ ReadBufferWithBufferLock(Relation reln,
 #endif
     
     SpinRelease(BufMgrLock);
+    
+    if (status == SM_FAIL)
+	return(InvalidBuffer);
     
     return(BufferDescriptorGetBuffer(bufHdr));
 }
@@ -387,6 +390,14 @@ BufferAlloc(Relation reln,
 	/* GetFreeBuffer will abort if it can't find a free buffer */
 	buf = GetFreeBuffer();
 	
+	/* 
+	 * But it can return buf == NULL if we are in aborting 
+	 * transaction now and so elog(WARN,...) in GetFreeBuffer 
+	 * will not abort again.
+	 */
+	if ( buf == NULL )
+		return (NULL);
+	
 	/*
 	 * There should be exactly one pin on the buffer after
 	 * it is allocated -- ours.  If it had a pin it wouldn't
@@ -399,6 +410,7 @@ BufferAlloc(Relation reln,
 	PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 1;
 	
 	if (buf->flags & BM_DIRTY) {
+	    bool smok;
 	    /*
 	     * Set BM_IO_IN_PROGRESS to keep anyone from doing anything
 	     * with the contents of the buffer while we write it out.
@@ -428,11 +440,38 @@ BufferAlloc(Relation reln,
 	     * you on machines that don't have spinlocks.  If you don't
 	     * operate with much concurrency, well...
 	     */
-	    (void) BufferReplace(buf, true);
-	    BufferFlushCount++;
+	    smok = BufferReplace(buf, true);
 #ifndef OPTIMIZE_SINGLE
 	    SpinAcquire(BufMgrLock); 
 #endif /* OPTIMIZE_SINGLE */
+
+	    if ( smok == FALSE )
+	    {
+		elog(NOTICE, "BufferAlloc: cannot write block %u for %s/%s",
+			 buf->tag.blockNum, buf->sb_dbname, buf->sb_relname);
+		inProgress = FALSE;
+		buf->flags |= BM_IO_ERROR;
+		buf->flags &= ~BM_IO_IN_PROGRESS;
+#ifdef HAS_TEST_AND_SET
+		S_UNLOCK(&(buf->io_in_progress_lock));
+#else /* !HAS_TEST_AND_SET */
+		if (buf->refcount > 1)
+		    SignalIO(buf);
+#endif /* !HAS_TEST_AND_SET */
+		PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
+		buf->refcount--;
+		if ( buf->refcount == 0 )
+		{
+		    AddBufferToFreelist(buf);
+		    buf->flags |= BM_FREE;
+		}
+		buf = (BufferDesc *) NULL;
+	    }
+	    else
+	    {
+		BufferFlushCount++;
+		buf->flags &= ~BM_DIRTY;
+	    }
 	    
 	    /*
 	     * Somebody could have pinned the buffer while we were
@@ -445,7 +484,7 @@ BufferAlloc(Relation reln,
 	     * no reason to think that we have an immediate disaster on
 	     * our hands.
 	     */
-	    if (buf->refcount > 1) {
+	    if (buf && buf->refcount > 1) {
 		inProgress = FALSE;
 		buf->flags &= ~BM_IO_IN_PROGRESS;
 #ifdef HAS_TEST_AND_SET
@@ -473,18 +512,6 @@ BufferAlloc(Relation reln,
 		 * to do. We'll just handle this as if it were found in
 		 * the buffer pool in the first place.
 		 */
-		
-		PinBuffer(buf2);
-		inProgress = (buf2->flags & BM_IO_IN_PROGRESS);
-		
-		*foundPtr = TRUE;
-		if (inProgress) {
-		    WaitIO(buf2, BufMgrLock);
-		    if (buf2->flags & BM_IO_ERROR) {
-			*foundPtr = FALSE;
-		    }
-		}
-		
 		if ( buf != NULL )
 		{
 #ifdef HAS_TEST_AND_SET
@@ -499,8 +526,18 @@ BufferAlloc(Relation reln,
 			PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
 			AddBufferToFreelist(buf);
 			buf->flags |= BM_FREE;
-			buf->flags &= ~BM_DIRTY;
 			buf->flags &= ~BM_IO_IN_PROGRESS;
+		}
+
+		PinBuffer(buf2);
+		inProgress = (buf2->flags & BM_IO_IN_PROGRESS);
+		
+		*foundPtr = TRUE;
+		if (inProgress) {
+		    WaitIO(buf2, BufMgrLock);
+		    if (buf2->flags & BM_IO_ERROR) {
+			*foundPtr = FALSE;
+		    }
 		}
 		
 		SpinRelease(BufMgrLock);
@@ -530,13 +567,6 @@ BufferAlloc(Relation reln,
 	SpinRelease(BufMgrLock);
 	elog(FATAL,"buffer wasn't in the buffer table\n");
 
-    }
-    
-    if (buf->flags & BM_DIRTY) {
-	/* must clear flag first because of wierd race 
-	 * condition described below.  
-	 */
-	buf->flags &= ~BM_DIRTY;
     }
     
     /* record the database name and relation name for this buffer */
@@ -813,6 +843,30 @@ BufferSync()
 	    if (bufdb == MyDatabaseId || bufdb == (Oid) 0) {
 		reln = RelationIdCacheGetRelation(bufrel);
 		
+		/* 
+		 *  We have to pin buffer to keep anyone from stealing it
+		 *  from the buffer pool while we are flushing it or
+		 *  waiting in WaitIO. It's bad for GetFreeBuffer in
+		 *  BufferAlloc, but there is no other way to prevent
+		 *  writing into disk block data from some other buffer,
+		 *  getting smgr status of some other block and
+		 *  clearing BM_DIRTY of ...		- VAdim 09/16/96
+		 */
+		PinBuffer(bufHdr);
+		if (bufHdr->flags & BM_IO_IN_PROGRESS)
+		{
+		    WaitIO(bufHdr, BufMgrLock);
+		    UnpinBuffer(bufHdr);
+		    if (bufHdr->flags & BM_IO_ERROR)
+		    {
+			elog(WARN, "cannot write %u for %s",
+				bufHdr->tag.blockNum, bufHdr->sb_relname);
+		    }
+		    if (reln != (Relation)NULL)
+			RelationDecrementReferenceCount(reln);
+		    continue;
+		}
+
 		/*
 		 *  If we didn't have the reldesc in our local cache, flush this
 		 *  page out using the 'blind write' storage manager routine.  If
@@ -836,8 +890,10 @@ BufferSync()
 		SpinAcquire(BufMgrLock);
 #endif /* OPTIMIZE_SINGLE */
 		
+		UnpinBuffer(bufHdr);
 		if (status == SM_FAIL) {
-		    elog(WARN, "cannot write %d for %16s",
+		    bufHdr->flags |= BM_IO_ERROR;
+		    elog(WARN, "cannot write %u for %s",
 			 bufHdr->tag.blockNum, bufHdr->sb_relname);
 		}
 		
