@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.48 2001/03/22 03:59:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.49 2001/04/23 04:32:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -685,6 +685,9 @@ compatible_oper(char *op, Oid arg1, Oid arg2, bool noError)
 		(opform->oprright == arg2 ||
 		 IS_BINARY_COMPATIBLE(opform->oprright, arg2)))
 		return optup;
+
+	/* nope... */
+	ReleaseSysCache(optup);
 
 	if (!noError)
 		op_error(op, arg1, arg2);
