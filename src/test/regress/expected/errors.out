@@ -15,7 +15,7 @@ ERROR:  All fields in the UNIQUE ON clause must appear in the target list
 QUERY: delete from;
 ERROR:  parser: parse error at or near ";"
 QUERY: delete from nonesuch;
-ERROR:  nonesuch: Table does not exist.
+ERROR:  Relation 'nonesuch' does not exist
 QUERY: drop table;
 ERROR:  parser: parse error at or near ";"
 QUERY: drop table nonesuch;
@@ -23,9 +23,9 @@ ERROR:  Relation 'nonesuch' does not exist
 QUERY: alter table rename;
 ERROR:  parser: parse error at or near ";"
 QUERY: alter table nonesuch rename to newnonesuch;
-ERROR:  renamerel: relation "nonesuch" does not exist
+ERROR:  Relation 'nonesuch' does not exist
 QUERY: alter table nonesuch rename to stud_emp;
-ERROR:  renamerel: relation "nonesuch" does not exist
+ERROR:  Relation 'nonesuch' does not exist
 QUERY: alter table stud_emp rename to pg_stud_emp;
 ERROR:  renamerel: Illegal class name: "pg_stud_emp" -- pg_ is reserved for system catalogs
 QUERY: alter table stud_emp rename to aggtest;
@@ -33,7 +33,7 @@ ERROR:  renamerel: relation "aggtest" exists
 QUERY: alter table stud_emp rename to stud_emp;
 ERROR:  renamerel: relation "stud_emp" exists
 QUERY: alter table nonesuchrel rename column nonesuchatt to newnonesuchatt;
-ERROR:  renameatt: relation "nonesuchrel" nonexistent
+ERROR:  Relation 'nonesuchrel' does not exist
 QUERY: alter table emp rename column nonesuchatt to newnonesuchatt;
 ERROR:  renameatt: attribute "nonesuchatt" nonexistent
 QUERY: alter table emp rename column salary to manager;

@@ -26,4 +26,4 @@ col
 QUERY: DROP TABLE temptest;
 QUERY: CREATE TEMP TABLE temptest(col int);
 QUERY: SELECT * FROM temptest;
-ERROR:  temptest: Table does not exist.
+ERROR:  Relation 'temptest' does not exist
