@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.6 2000/07/06 18:22:45 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.7 2000/07/11 12:32:03 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -929,8 +929,16 @@ toast_fetch_datum(varattrib *attr)
 	Datum					chunk;
 	bool					isnull;
 
+	char				   *chunks_found;
+	char				   *chunks_expected;
+
 	ressize = attr->va_content.va_external.va_extsize;
     numchunks = (ressize / TOAST_MAX_CHUNK_SIZE) + 1;
+
+	chunks_found    = palloc(numchunks);
+	chunks_expected = palloc(numchunks);
+	memset(chunks_found,    0, numchunks);
+	memset(chunks_expected, 1, numchunks);
 
 	result = (varattrib *)palloc(ressize + VARHDRSZ);
 	VARATT_SIZEP(result) = ressize + VARHDRSZ;
@@ -971,7 +979,7 @@ toast_fetch_datum(varattrib *attr)
 		heap_fetch(toastrel, SnapshotAny, &toasttup, &buffer);
 		pfree(indexRes);
 
-		if (!toasttup.t_data)
+		if (toasttup.t_data == NULL)
 			continue;
 		ttup = &toasttup;
 
@@ -983,6 +991,20 @@ toast_fetch_datum(varattrib *attr)
 		chunk = heap_getattr(ttup, 3, toasttupDesc, &isnull);
 
 		/* ----------
+		 * Some checks on the data we've found
+		 * ----------
+		 */
+		if (residx * TOAST_MAX_CHUNK_SIZE + VARATT_SIZE(chunk) - VARHDRSZ
+						> ressize)
+			elog(ERROR, "chunk data exceeds original data size for "
+						"toast value %d", 
+						attr->va_content.va_external.va_valueid);
+		if (chunks_found[residx]++ > 0)
+			elog(ERROR, "chunk %d for toast value %d appears multiple times",
+						residx,
+						attr->va_content.va_external.va_valueid);
+
+		/* ----------
 		 * Copy the data into our result
 		 * ----------
 		 */
@@ -992,6 +1014,16 @@ toast_fetch_datum(varattrib *attr)
 
 		ReleaseBuffer(buffer);
 	}
+
+	/* ----------
+	 * Final checks that we successfully fetched the datum
+	 * ----------
+	 */
+	if (memcmp(chunks_found, chunks_expected, numchunks) != 0)
+		elog(ERROR, "not all toast chunks found for value %d",
+						attr->va_content.va_external.va_valueid);
+	pfree(chunks_expected);
+	pfree(chunks_found);
 
 	/* ----------
 	 * End scan and close relations
