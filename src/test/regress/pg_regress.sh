@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.38 2004/01/08 20:04:41 neilc Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.39 2004/05/02 04:27:37 momjian Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -208,6 +208,18 @@ esac
 
 
 # ----------
+# Set up pwd to give a win32 happy pathname
+# ----------
+
+case $host_platform in
+    *-*-mingw32*)
+        PWDFLAGS=-W;;
+    *)
+        PWDFLAGS=;;
+esac
+
+
+# ----------
 # Set backend timezone and datestyle explicitly
 #
 # To pass the horology test in its current form, the postmaster must be
@@ -294,7 +306,7 @@ LOGDIR=$outputdir/log
 if [ x"$temp_install" != x"" ]
 then
     if echo x"$temp_install" | grep -v '^x/' >/dev/null 2>&1; then
-        temp_install="`pwd`/$temp_install"
+        temp_install="`pwd $PWDFLAGS`/$temp_install"
     fi
 
     bindir=$temp_install/install/$bindir
