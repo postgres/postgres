@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.2 1998/10/28 06:49:04 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.3 1998/10/31 03:58:51 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -56,12 +56,25 @@ install-shlib-dep :=
 # Makefile.global (or really Makefile.port) to supply DLSUFFIX and other
 # symbols.
 
+ifeq ($(PORTNAME), freebsd)
+  ifdef BSD_SHLIB
+    install-shlib-dep	:= install-shlib
+    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    ifdef ELF_SYSTEM
+      LDFLAGS_SL	:= -x -Bshareable
+    else
+      LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
+    endif
+    CFLAGS		+= $(CFLAGS_SL)
+  endif
+endif
+
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
     install-shlib-dep	:= install-shlib
-    shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-    LDFLAGS_SL			:= -x -Bshareable -Bforcearchive
-    CFLAGS				+= $(CFLAGS_SL)
+    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LDFLAGS_SL		:= -x -Bshareable -Bforcearchive
+    CFLAGS		+= $(CFLAGS_SL)
   endif
 endif
 

@@ -618,7 +618,7 @@ case "$host_os" in
    linux*) os=linux need_tas=no ;;
     bsdi*) os=bsdi need_tas=no ;;
  freebsd3*) os=freebsd need_tas=no elf=yes ;;
- freebsd1*) os=freebsd need_tas=no ;;
+ freebsd12*) os=freebsd need_tas=no ;;
   netbsd*|openbsd*) os=bsd need_tas=no ;;
     dgux*) os=dgux need_tas=no ;;
      aix*) os=aix need_tas=no ;;

@@ -5,9 +5,9 @@
 	@${AR} cq $@.pic `lorder $<.obj | tsort`
 	${RANLIB} $@.pic
 	@rm -f $@
-	ifdef ELF_SYSTEM
-		$(LD) -x -Bshareable -o $@ $@.pic
-	else
-	        $(LD) -x -Bshareable -Bforcearchive -o $@ $@.pic
-	endif
+ifdef ELF_SYSTEM
+	$(LD) -x -Bshareable -o $@ $@.pic
+else
+        $(LD) -x -Bshareable -Bforcearchive -o $@ $@.pic
+endif
 
