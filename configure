@@ -747,7 +747,7 @@ PORTNAME=$template
 case $host in
   *-*-hpux*)        need_tas=yes; tas_file=hpux.s ;;
   sparc-*-solaris*) need_tas=yes; tas_file=solaris_sparc.s ;;
-  i?86-*-solaris)   need_tas=yes; tas_file=solaris_i386.s ;;
+  i?86-*-solaris*)   need_tas=yes; tas_file=solaris_i386.s ;;
   *)                need_tas=no;  tas_file=dummy.s ;;
 esac
 
@@ -2718,7 +2718,7 @@ echo "using CPPFLAGS=$CPPFLAGS"
 echo "using LDFLAGS=$LDFLAGS"
 
 
-for ac_prog in gawk mawk nawk awk
+for ac_prog in mawk gawk nawk awk
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -5542,7 +5542,7 @@ else
 int main() {
 
 /* Ultrix mips cc rejects this.  */
-typedef int charset[2]; const charset x={0,0};
+typedef int charset[2]; const charset x;
 /* SunOS 4.1.1 cc rejects this.  */
 char const *const *ccp;
 char **p;
@@ -5617,7 +5617,7 @@ for ac_kw in inline __inline__ __inline; do
 #include "confdefs.h"
 
 int main() {
-} $ac_kw int foo() {
+} $ac_kw foo() {
 ; return 0; }
 EOF
 if { (eval echo configure:5624: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
