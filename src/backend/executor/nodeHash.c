@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.2 1996/07/22 23:30:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.3 1996/07/26 20:03:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,8 +594,7 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
        *  - Chris Dunlop, <chris@onthe.net.au>
        * ------------------
        */
-      elog(WARN, "hash table out of memory. Use -B parameter to increase buffe
-rs.");
+      elog(WARN, "hash table out of memory. Use -B parameter to increase buffers.");
 #endif
 
     }
