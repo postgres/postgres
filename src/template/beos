@@ -4,7 +4,4 @@ CFLAGS='-O2'
 LDFLAGS='-lbind'
 SRCH_INC='/boot/apps/GeekGadgets/include'
 SRCH_LIB='/boot/apps/GeekGadgets/lib'
-USE_LOCALE=no
 DLSUFFIX=.so
-YFLAGS=-d
-YACC='bison -y'
