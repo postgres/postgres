@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.36 2001/11/24 19:57:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.37 2002/02/23 01:01:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,7 +515,9 @@ int8fac(PG_FUNCTION_ARGS)
 	int64		result;
 	int64		i;
 
-	if (arg1 < 1)
+	if (arg1 == 0)
+		result = 1;
+	else if (arg1 < 1)
 		result = 0;
 	else
 		for (i = arg1, result = 1; i > 0; --i)
