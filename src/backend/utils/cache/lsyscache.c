@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.36 1999/11/22 17:56:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.37 1999/12/31 03:18:43 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -25,15 +25,16 @@
 /*
  * op_class -
  *
- *		Return t iff operator 'opno' is in operator class 'opclass'.
+ *		Return t iff operator 'opid' is in operator class 'opclass' for
+ *		access method 'amopid'.
  *
  */
 bool
-op_class(Oid oprno, int32 opclass, Oid amopid)
+op_class(Oid opid, Oid opclass, Oid amopid)
 {
 	if (HeapTupleIsValid(SearchSysCacheTuple(AMOPOPID,
 											 ObjectIdGetDatum(opclass),
-											 ObjectIdGetDatum(oprno),
+											 ObjectIdGetDatum(opid),
 											 ObjectIdGetDatum(amopid),
 											 0)))
 		return true;

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.20 1999/08/16 02:06:23 tgl Exp $
+ * $Id: lsyscache.h,v 1.21 1999/12/31 03:18:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,7 @@
 
 #include "access/htup.h"
 
-extern bool op_class(Oid oprno, int32 opclass, Oid amopid);
+extern bool op_class(Oid opid, Oid opclass, Oid amopid);
 extern char *get_attname(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, char *attname);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
