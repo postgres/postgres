@@ -19164,12 +19164,14 @@ $MAKE -C $srcdir/src/tools/thread clean >&5 ||
 	( rm -f src/Makefile.global
 	  { { echo "$as_me:$LINENO: error: Can not clean thread test directory." >&5
 echo "$as_me: error: Can not clean thread test directory." >&2;}
-   { (exit 1); exit 1; }; })
+   { (exit 1); exit 1; }; }) ||
+	exit $?
 $MAKE -C $srcdir/src/tools/thread >&5 ||
 	( rm -f src/Makefile.global
 	  { { echo "$as_me:$LINENO: error: Can not build thread test proram." >&5
 echo "$as_me: error: Can not build thread test proram." >&2;}
-   { (exit 1); exit 1; }; })
+   { (exit 1); exit 1; }; }) ||
+	exit $?
 $srcdir/src/tools/thread/thread_test >&5 ||
 	( rm -f src/Makefile.global
 	  echo "no"
@@ -19178,12 +19180,14 @@ $srcdir/src/tools/thread/thread_test >&5 ||
 	  echo
 	  { { echo "$as_me:$LINENO: error: Thread test program failed.  Your platform is not thread-safe." >&5
 echo "$as_me: error: Thread test program failed.  Your platform is not thread-safe." >&2;}
-   { (exit 1); exit 1; }; })
+   { (exit 1); exit 1; }; }) ||
+	exit $?
 $MAKE -C $srcdir/src/tools/thread clean >&5 ||
 	( rm -f src/Makefile.global
 	  { { echo "$as_me:$LINENO: error: Can not clean thread test directory." >&5
 echo "$as_me: error: Can not clean thread test directory." >&2;}
-   { (exit 1); exit 1; }; })
+   { (exit 1); exit 1; }; }) ||
+	exit $?
 echo "yes"
 else
 { echo "$as_me:$LINENO: WARNING:
