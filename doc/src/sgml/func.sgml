@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.74 2001/09/28 08:15:35 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.75 2001/09/28 20:48:17 thomas Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -2291,43 +2291,43 @@
 
       <tbody>
        <row>
-        <entry> <type><literal>+</literal> </entry>
+        <entry> <literal>+</literal> </entry>
         <entry><type>timestamp</type> '2001-09-28 01:00' + <type>interval</type> '23 hours'</entry>
         <entry><type>timestamp</type> '2001-09-29 00:00'</entry>
        </row>
 
        <row>
-        <entry> <type><literal>+</literal> </entry>
+        <entry> <literal>+</literal> </entry>
         <entry><type>date</type> '2001-09-28' + <type>interval</type> '1 hour'</entry>
         <entry><type>timestamp</type> '2001-09-28 01:00'</entry>
        </row>
 
        <row>
-        <entry> <type><literal>+</literal> </entry>
+        <entry> <literal>+</literal> </entry>
         <entry><type>time</type> '01:00' + <type>interval</type> '3 hours'</entry>
         <entry><type>time</type> '04:00'</entry>
        </row>
 
        <row>
-        <entry> <type><literal>-</literal> </entry>
+        <entry> <literal>-</literal> </entry>
         <entry><type>timestamp</type> '2001-09-28 23:00' - <type>interval</type> '23 hours'</entry>
         <entry><type>timestamp</type> '2001-09-28'</entry>
        </row>
 
        <row>
-        <entry> <type><literal>-</literal> </entry>
+        <entry> <literal>-</literal> </entry>
         <entry><type>date</type> '2001-09-28' + <type>interval</type> '1 hour'</entry>
         <entry><type>timestamp</type> '2001-09-27 23:00'</entry>
        </row>
 
        <row>
-        <entry> <type><literal>-</literal> </entry>
+        <entry> <literal>-</literal> </entry>
         <entry><type>time</type> '05:00' + <type>interval</type> '2 hours'</entry>
         <entry><type>time</type> '03:00'</entry>
        </row>
 
        <row>
-        <entry> <type><literal>-</literal> </entry>
+        <entry> <literal>-</literal> </entry>
         <entry><type>interval</type> '2 hours' - <type>time</type> '05:00'</entry>
         <entry><type>time</type> '03:00:00'</entry>
        </row>
