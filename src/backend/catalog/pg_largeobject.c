@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.16 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.17 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,32 +77,29 @@ LargeObjectDrop(Oid loid)
 {
 	bool		found = false;
 	Relation	pg_largeobject;
-	Relation	pg_lo_idx;
 	ScanKeyData skey[1];
-	IndexScanDesc sd;
+	SysScanDesc sd;
 	HeapTuple	tuple;
 
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
+	ScanKeyEntryInitialize(&skey[0], 0x0,
+						   (AttrNumber) Anum_pg_largeobject_loid,
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(loid));
 
-	pg_largeobject = heap_openr(LargeObjectRelationName, RowShareLock);
-	pg_lo_idx = index_openr(LargeObjectLOidPNIndex);
+	pg_largeobject = heap_openr(LargeObjectRelationName, RowExclusiveLock);
 
-	sd = index_beginscan(pg_largeobject, pg_lo_idx, SnapshotNow, 1, skey);
+	sd = systable_beginscan(pg_largeobject, LargeObjectLOidPNIndex, true,
+							SnapshotNow, 1, skey);
 
-	while ((tuple = index_getnext(sd, ForwardScanDirection)) != NULL)
+	while ((tuple = systable_getnext(sd)) != NULL)
 	{
 		simple_heap_delete(pg_largeobject, &tuple->t_self);
 		found = true;
 	}
 
-	index_endscan(sd);
+	systable_endscan(sd);
 
-	index_close(pg_lo_idx);
-	heap_close(pg_largeobject, RowShareLock);
+	heap_close(pg_largeobject, RowExclusiveLock);
 
 	if (!found)
 		ereport(ERROR,
@@ -115,32 +112,29 @@ LargeObjectExists(Oid loid)
 {
 	bool		retval = false;
 	Relation	pg_largeobject;
-	Relation	pg_lo_idx;
 	ScanKeyData skey[1];
-	IndexScanDesc sd;
+	SysScanDesc sd;
 	HeapTuple	tuple;
 
 	/*
 	 * See if we can find any tuples belonging to the specified LO
 	 */
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
+	ScanKeyEntryInitialize(&skey[0], 0x0,
+						   (AttrNumber) Anum_pg_largeobject_loid,
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(loid));
 
-	pg_largeobject = heap_openr(LargeObjectRelationName, RowShareLock);
-	pg_lo_idx = index_openr(LargeObjectLOidPNIndex);
+	pg_largeobject = heap_openr(LargeObjectRelationName, AccessShareLock);
 
-	sd = index_beginscan(pg_largeobject, pg_lo_idx, SnapshotNow, 1, skey);
+	sd = systable_beginscan(pg_largeobject, LargeObjectLOidPNIndex, true,
+							SnapshotNow, 1, skey);
 
-	if ((tuple = index_getnext(sd, ForwardScanDirection)) != NULL)
+	if ((tuple = systable_getnext(sd)) != NULL)
 		retval = true;
 
-	index_endscan(sd);
+	systable_endscan(sd);
 
-	index_close(pg_lo_idx);
-	heap_close(pg_largeobject, RowShareLock);
+	heap_close(pg_largeobject, AccessShareLock);
 
 	return retval;
 }

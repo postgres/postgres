@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.20 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.21 2003/09/24 18:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -56,43 +56,6 @@ REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replac
     </listitem>
    </itemizedlist>
   </para>
-
-  <para>
-   If you suspect corruption of an index on a user table, you can
-   simply rebuild that index, or all indexes on the table, using
-   <command>REINDEX INDEX</command> or <command>REINDEX
-   TABLE</command>.  Another approach to dealing with a corrupted
-   user-table index is just to drop and recreate it.  This may in fact
-   be preferable if you would like to maintain some semblance of
-   normal operation on the table meanwhile.  <command>REINDEX</>
-   acquires exclusive lock on the table, while <command>CREATE
-   INDEX</> only locks out writes not reads of the table.
-  </para>
-
-  <para>
-   Things are more difficult if you need to recover from corruption of
-   an index on a system table.  In this case it's important for the
-   system to not have used any of the suspect indexes itself.
-   (Indeed, in this sort of scenario you may find that server
-   processes are crashing immediately at start-up, due to reliance on
-   the corrupted indexes.)  To recover safely, the server must be shut
-   down and a stand-alone <productname>PostgreSQL</productname> server
-   must be started instead with the command-line options
-   <option>-O</option> and <option>-P</option>.  (These options allow
-   system table modifications and prevent use of system indexes,
-   respectively.)  Then, <command>REINDEX DATABASE</>,
-   <command>REINDEX TABLE</>, or <command>REINDEX INDEX</> can be
-   issued, depending on how much you want to reconstruct.  If in
-   doubt, use <command>REINDEX DATABASE FORCE</> to force
-   reconstruction of all system indexes in the database.  Then quit
-   the standalone server session and restart the real server.
-  </para>
-
-  <para>
-   See the <xref linkend="app-postgres"> reference page for more
-   information about how to interact with the stand-alone server
-   interface.
-  </para>
  </refsect1>
   
  <refsect1>
@@ -104,8 +67,8 @@ REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replac
     <listitem>
      <para>
       Recreate all system indexes of a specified database. Indexes on
-      user tables are not included. This form of <command>REINDEX</>
-      can only be used in stand-alone mode (see above).
+      user tables are not processed.  Also, indexes on shared system
+      catalogs are skipped except in stand-alone mode (see below).
      </para>
     </listitem>
    </varlistentry>
@@ -114,7 +77,8 @@ REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replac
     <term><literal>TABLE</literal></term>
     <listitem>
      <para>
-      Recreate all indexes of a specified table.
+      Recreate all indexes of a specified table.  If the table has a
+      secondary <quote>TOAST</> table, that is reindexed as well.
      </para>
     </listitem>
    </varlistentry>
@@ -142,14 +106,91 @@ REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replac
     <term><literal>FORCE</literal></term>
     <listitem>
      <para>
-      Force rebuild of system indexes.  Without this key word,
-      <command>REINDEX</> skips system indexes that are not marked
-      invalid.  <literal>FORCE</> is irrelevant for <command>REINDEX
-      INDEX</> or when reindexing user indexes.
+      This is an obsolete option; it is ignored if specified.
      </para>
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   If you suspect corruption of an index on a user table, you can
+   simply rebuild that index, or all indexes on the table, using
+   <command>REINDEX INDEX</command> or <command>REINDEX
+   TABLE</command>.  Another approach to dealing with a corrupted
+   user-table index is just to drop and recreate it.  This may in fact
+   be preferable if you would like to maintain some semblance of
+   normal operation on the table meanwhile.  <command>REINDEX</>
+   acquires exclusive lock on the table, while <command>CREATE
+   INDEX</> only locks out writes not reads of the table.
+  </para>
+
+  <para>
+   Things are more difficult if you need to recover from corruption of
+   an index on a system table.  In this case it's important for the
+   system to not have used any of the suspect indexes itself.
+   (Indeed, in this sort of scenario you may find that server
+   processes are crashing immediately at start-up, due to reliance on
+   the corrupted indexes.)  To recover safely, the server must be started
+   with the <option>-P</option> option, which prevents it from using
+   indexes for system catalog lookups.
+  </para>
+
+  <para>
+   One way to do this is to shut down the postmaster and start a stand-alone
+   <productname>PostgreSQL</productname> server
+   with the <option>-P</option> option included on its command line.
+   Then, <command>REINDEX DATABASE</>,
+   <command>REINDEX TABLE</>, or <command>REINDEX INDEX</> can be
+   issued, depending on how much you want to reconstruct.  If in
+   doubt, use <command>REINDEX DATABASE</> to select
+   reconstruction of all system indexes in the database.  Then quit
+   the standalone server session and restart the regular server.
+   See the <xref linkend="app-postgres"> reference page for more
+   information about how to interact with the stand-alone server
+   interface.
+  </para>
+
+  <para>
+   Alternatively, a regular server session can be started with
+   <option>-P</option> included in its command line options.
+   The method for doing this varies across clients, but in all
+   <application>libpq</>-based clients, it is possible to set
+   the <envar>PGOPTIONS</envar> environment variable to <literal>-P</>
+   before starting the client.  Note that while this method does not
+   require locking out other clients, it may still be wise to prevent
+   other users from connecting to the damaged database until repairs
+   have been completed.
+  </para>
+
+  <para>
+   If corruption is suspected in the indexes of any of the shared
+   system catalogs (<structname>pg_database</structname>,
+   <structname>pg_group</structname>, or
+   <structname>pg_shadow</structname>), then a standalone server
+   must be used to repair it.  <command>REINDEX</> will not process
+   shared catalogs in multiuser mode.
+  </para>
+
+  <para>
+   For all indexes except the shared system catalogs, <command>REINDEX</>
+   is crash-safe and transaction-safe.  <command>REINDEX</> is not
+   crash-safe for shared indexes, which is why this case is disallowed
+   during normal operation.  If a failure occurs while reindexing one
+   of these catalogs in standalone mode, it is important that the failure
+   be rectified and the <command>REINDEX</> operation redone
+   before attempting to restart the regular server.
+  </para>
+
+  <para>
+   Prior to <productname>PostgreSQL</productname> 7.4, <command>REINDEX
+   TABLE</> did not automatically process TOAST tables, and so those had
+   to be reindexed by separate commands.  This is still possible, but
+   redundant.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -172,11 +213,15 @@ REINDEX INDEX my_index;
   </para>
 
   <para>
-   Rebuild all system indexes (this will only work in a stand-alone
-   server session):
+   Rebuild all system indexes in a particular database, without trusting them
+   to be valid already:
 
 <programlisting>
-REINDEX DATABASE my_database FORCE;
+$ <userinput>export PGOPTIONS="-P"</userinput>
+$ <userinput>psql broken_db</userinput>
+...
+broken_db=> REINDEX DATABASE broken_db;
+broken_db=> \q
 </programlisting>
   </para>
  </refsect1>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.59 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.60 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,12 @@ SendSharedInvalidMessage(SharedInvalidationMessage *msg)
 /*
  * ReceiveSharedInvalidMessages
  *		Process shared-cache-invalidation messages waiting for this backend
+ *
+ * NOTE: it is entirely possible for this routine to be invoked recursively
+ * as a consequence of processing inside the invalFunction or resetFunction.
+ * Hence, we must be holding no SI resources when we call them.  The only
+ * bad side-effect is that SIDelExpiredDataEntries might be called extra
+ * times on the way out of a nested call.
  */
 void
 ReceiveSharedInvalidMessages(

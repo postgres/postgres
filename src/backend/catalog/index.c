@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.216 2003/09/23 01:51:09 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.217 2003/09/24 18:54:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -76,26 +76,7 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					Oid *classOids,
 					bool primary);
 static Oid	IndexGetRelation(Oid indexId);
-static bool activate_index(Oid indexId, bool activate, bool inplace);
 
-
-static bool reindexing = false;
-
-
-bool
-SetReindexProcessing(bool reindexmode)
-{
-	bool		old = reindexing;
-
-	reindexing = reindexmode;
-	return old;
-}
-
-bool
-IsReindexProcessing(void)
-{
-	return reindexing;
-}
 
 /*
  *		ConstructTupleDescriptor
@@ -497,8 +478,6 @@ index_create(Oid heapRelationId,
 	Oid			namespaceId;
 	Oid			indexoid;
 	int			i;
-
-	SetReindexProcessing(false);
 
 	/*
 	 * Only SELECT ... FOR UPDATE are allowed while doing this
@@ -973,46 +952,6 @@ FormIndexDatum(IndexInfo *indexInfo,
 }
 
 
-/* ---------------------------------------------
- *		Indexes of the relation active ?
- *
- * Caller must hold an adequate lock on the relation to ensure the
- * answer won't be changing.
- * ---------------------------------------------
- */
-bool
-IndexesAreActive(Relation heaprel)
-{
-	bool		isactive;
-	Relation	indexRelation;
-	HeapScanDesc scan;
-	ScanKeyData entry;
-
-	if (heaprel->rd_rel->relkind != RELKIND_RELATION &&
-		heaprel->rd_rel->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"%s\" isn't an indexable relation",
-						RelationGetRelationName(heaprel))));
-
-	/* If pg_class.relhasindex is set, indexes are active */
-	isactive = heaprel->rd_rel->relhasindex;
-	if (isactive)
-		return isactive;
-
-	/* Otherwise, look to see if there are any indexes */
-	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0,
-						   Anum_pg_index_indrelid, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(heaprel)));
-	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
-	if (heap_getnext(scan, ForwardScanDirection) == NULL)
-		isactive = true;		/* no indexes, so report "active" */
-	heap_endscan(scan);
-	heap_close(indexRelation, AccessShareLock);
-	return isactive;
-}
-
 /* ----------------
  *		set relhasindex of relation's pg_class entry
  *
@@ -1038,12 +977,13 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	HeapScanDesc pg_class_scan = NULL;
 
 	/*
-	 * Find the tuple to update in pg_class.
+	 * Find the tuple to update in pg_class.  In bootstrap mode we can't
+	 * use heap_update, so cheat and overwrite the tuple in-place.  In
+	 * normal processing, make a copy to scribble on.
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	if (!IsIgnoringSystemIndexes() &&
-		(!IsReindexProcessing() || pg_class->rd_rel->relhasindex))
+	if (!IsBootstrapProcessingMode())
 	{
 		tuple = SearchSysCacheCopy(RELOID,
 								   ObjectIdGetDatum(relid),
@@ -1064,14 +1004,12 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u", relid);
+	classtuple = (Form_pg_class) GETSTRUCT(tuple);
 
-	/*
-	 * Update fields in the pg_class tuple.
-	 */
+	/* Apply required updates */
+
 	if (pg_class_scan)
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
-
-	classtuple = (Form_pg_class) GETSTRUCT(tuple);
 
 	if (classtuple->relhasindex != hasindex)
 	{
@@ -1141,80 +1079,48 @@ setNewRelfilenode(Relation relation)
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
-	HeapScanDesc pg_class_scan = NULL;
-	bool		in_place_upd;
 	RelationData workrel;
 
-	Assert(!IsSystemRelation(relation) || IsToastRelation(relation) ||
+	/* Can't change relfilenode for nailed tables (indexes ok though) */
+	Assert(!relation->rd_isnailed ||
 		   relation->rd_rel->relkind == RELKIND_INDEX);
+	/* Can't change for shared tables or indexes */
+	Assert(!relation->rd_rel->relisshared);
 
 	/* Allocate a new relfilenode */
 	newrelfilenode = newoid();
 
 	/*
-	 * Find the RELATION relation tuple for the given relation.
+	 * Find the pg_class tuple for the given relation.  This is not used
+	 * during bootstrap, so okay to use heap_update always.
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	in_place_upd = IsIgnoringSystemIndexes();
-
-	if (!in_place_upd)
-	{
-		tuple = SearchSysCacheCopy(RELOID,
-							ObjectIdGetDatum(RelationGetRelid(relation)),
-								   0, 0, 0);
-	}
-	else
-	{
-		ScanKeyData key[1];
-
-		ScanKeyEntryInitialize(&key[0], 0,
-							   ObjectIdAttributeNumber,
-							   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)));
-
-		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
-		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
-	}
-
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(RelationGetRelid(relation)),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u",
 			 RelationGetRelid(relation));
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
-	/* schedule unlinking old relfilenode */
-	smgrunlink(DEFAULT_SMGR, relation);
-
 	/* create another storage file. Is it a little ugly ? */
+	/* NOTE: any conflict in relfilenode value will be caught here */
 	memcpy((char *) &workrel, relation, sizeof(RelationData));
 	workrel.rd_fd = -1;
 	workrel.rd_node.relNode = newrelfilenode;
 	heap_storage_create(&workrel);
 	smgrclose(DEFAULT_SMGR, &workrel);
 
-	/* update the pg_class row */
-	if (in_place_upd)
-	{
-		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
-		rd_rel->relfilenode = newrelfilenode;
-		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
-		BufferSync();
-		/* Send out shared cache inval if necessary */
-		if (!IsBootstrapProcessingMode())
-			CacheInvalidateHeapTuple(pg_class, tuple);
-	}
-	else
-	{
-		rd_rel->relfilenode = newrelfilenode;
-		simple_heap_update(pg_class, &tuple->t_self, tuple);
-		CatalogUpdateIndexes(pg_class, tuple);
-	}
+	/* schedule unlinking old relfilenode */
+	smgrunlink(DEFAULT_SMGR, relation);
 
-	if (!pg_class_scan)
-		heap_freetuple(tuple);
-	else
-		heap_endscan(pg_class_scan);
+	/* update the pg_class row */
+	rd_rel->relfilenode = newrelfilenode;
+	simple_heap_update(pg_class, &tuple->t_self, tuple);
+	CatalogUpdateIndexes(pg_class, tuple);
+
+	heap_freetuple(tuple);
 
 	heap_close(pg_class, RowExclusiveLock);
 
@@ -1264,11 +1170,21 @@ UpdateStats(Oid relid, double reltuples)
 	whichRel = relation_open(relid, ShareLock);
 
 	/*
-	 * Find the RELATION relation tuple for the given relation.
+	 * Find the tuple to update in pg_class.  Normally we make a copy of
+	 * the tuple using the syscache, modify it, and apply heap_update.
+	 * But in bootstrap mode we can't use heap_update, so we cheat and
+	 * overwrite the tuple in-place.
+	 *
+	 * We also must cheat if reindexing pg_class itself, because the
+	 * target index may presently not be part of the set of indexes that
+	 * CatalogUpdateIndexes would update (see reindex_relation).  In this
+	 * case the stats updates will not be WAL-logged and so could be lost
+	 * in a crash.  This seems OK considering VACUUM does the same thing.
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	in_place_upd = (IsIgnoringSystemIndexes() || IsReindexProcessing());
+	in_place_upd = IsBootstrapProcessingMode() ||
+		ReindexIsProcessingHeap(RelationGetRelid(pg_class));
 
 	if (!in_place_upd)
 	{
@@ -1291,6 +1207,7 @@ UpdateStats(Oid relid, double reltuples)
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u", relid);
+	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
 	 * Figure values to insert.
@@ -1331,18 +1248,12 @@ UpdateStats(Oid relid, double reltuples)
 	 * also reduces the window wherein concurrent CREATE INDEX commands
 	 * may conflict.)
 	 */
-	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
-
 	if (rd_rel->relpages != (int32) relpages ||
 		rd_rel->reltuples != (float4) reltuples)
 	{
 		if (in_place_upd)
 		{
-			/*
-			 * At bootstrap time, we don't need to worry about concurrency
-			 * or visibility of changes, so we cheat.  Also cheat if
-			 * REINDEX.
-			 */
+			/* Bootstrap or reindex case: overwrite fields in place. */
 			LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
 			rd_rel->relpages = (int32) relpages;
 			rd_rel->reltuples = (float4) reltuples;
@@ -1562,10 +1473,13 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * should not see any tuples inserted by open
 					 * transactions --- unless it's our own transaction.
 					 * (Consider INSERT followed by CREATE INDEX within a
-					 * transaction.)
+					 * transaction.)  An exception occurs when reindexing
+					 * a system catalog, because we often release lock on
+					 * system catalogs before committing.
 					 */
 					if (!TransactionIdIsCurrentTransactionId(
-							  HeapTupleHeaderGetXmin(heapTuple->t_data)))
+							  HeapTupleHeaderGetXmin(heapTuple->t_data))
+						&& !IsSystemRelation(heapRelation))
 						elog(ERROR, "concurrent insert in progress");
 					indexIt = true;
 					tupleIsAlive = true;
@@ -1577,10 +1491,13 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * should not see any tuples deleted by open
 					 * transactions --- unless it's our own transaction.
 					 * (Consider DELETE followed by CREATE INDEX within a
-					 * transaction.)
+					 * transaction.)  An exception occurs when reindexing
+					 * a system catalog, because we often release lock on
+					 * system catalogs before committing.
 					 */
 					if (!TransactionIdIsCurrentTransactionId(
-							  HeapTupleHeaderGetXmax(heapTuple->t_data)))
+							  HeapTupleHeaderGetXmax(heapTuple->t_data))
+						&& !IsSystemRelation(heapRelation))
 						elog(ERROR, "concurrent delete in progress");
 					indexIt = true;
 					tupleIsAlive = false;
@@ -1690,81 +1607,57 @@ IndexGetRelation(Oid indexId)
 	return result;
 }
 
-/* ---------------------------------
- * activate_index -- activate/deactivate the specified index.
- *		Note that currently PostgreSQL doesn't hold the
- *		status per index
- * ---------------------------------
+/*
+ * reindex_index - This routine is used to recreate a single index
  */
-static bool
-activate_index(Oid indexId, bool activate, bool inplace)
-{
-	if (!activate)				/* Currently does nothing */
-		return true;
-	return reindex_index(indexId, false, inplace);
-}
-
-/* --------------------------------
- * reindex_index - This routine is used to recreate an index
- * --------------------------------
- */
-bool
-reindex_index(Oid indexId, bool force, bool inplace)
+void
+reindex_index(Oid indexId)
 {
 	Relation	iRel,
 				heapRelation;
 	IndexInfo  *indexInfo;
 	Oid			heapId;
-	bool		old;
+	bool		inplace;
 
 	/*
 	 * Open our index relation and get an exclusive lock on it.
 	 *
-	 * Note: doing this before opening the parent heap relation means there's
-	 * a possibility for deadlock failure against another xact that is
-	 * doing normal accesses to the heap and index.  However, it's not
-	 * real clear why you'd be needing to do REINDEX on a table that's in
-	 * active use, so I'd rather have the protection of making sure the
-	 * index is locked down.
+	 * Note: for REINDEX INDEX, doing this before opening the parent heap
+	 * relation means there's a possibility for deadlock failure against
+	 * another xact that is doing normal accesses to the heap and index.
+	 * However, it's not real clear why you'd be wanting to do REINDEX INDEX
+	 * on a table that's in active use, so I'd rather have the protection of
+	 * making sure the index is locked down.  In the REINDEX TABLE and
+	 * REINDEX DATABASE cases, there is no problem because caller already
+	 * holds exclusive lock on the parent table.
 	 */
 	iRel = index_open(indexId);
 	LockRelation(iRel, AccessExclusiveLock);
 
-	old = SetReindexProcessing(true);
-
 	/* Get OID of index's parent table */
 	heapId = iRel->rd_index->indrelid;
 
-	/* Open the parent heap relation */
+	/* Open and lock the parent heap relation */
 	heapRelation = heap_open(heapId, AccessExclusiveLock);
+
+	SetReindexProcessing(heapId, indexId);
 
 	/*
 	 * If it's a shared index, we must do inplace processing (because we
-	 * have no way to update relfilenode in other databases).  Also, if
-	 * it's a nailed-in-cache index, we must do inplace processing because
-	 * the relcache can't cope with changing its relfilenode.
+	 * have no way to update relfilenode in other databases).  Otherwise
+	 * we can do it the normal transaction-safe way.
 	 *
-	 * In either of these cases, we are definitely processing a system index,
-	 * so we'd better be ignoring system indexes.
+	 * Since inplace processing isn't crash-safe, we only allow it in a
+	 * standalone backend.  (In the REINDEX TABLE and REINDEX DATABASE cases,
+	 * the caller should have detected this.)
 	 */
-	if (iRel->rd_rel->relisshared)
-	{
-		if (!IsIgnoringSystemIndexes())
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				   errmsg("the target relation %u is shared", indexId)));
-		inplace = true;
-	}
-#ifndef ENABLE_REINDEX_NAILED_RELATIONS
-	if (iRel->rd_isnailed)
-	{
-		if (!IsIgnoringSystemIndexes())
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				   errmsg("the target relation %u is nailed", indexId)));
-		inplace = true;
-	}
-#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
+	inplace = iRel->rd_rel->relisshared;
+
+	if (inplace && IsUnderPostmaster)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("shared index \"%s\" can only be reindexed in standalone mode",
+						RelationGetRelationName(iRel))));
 
 	/* Fetch info needed for index_build */
 	indexInfo = BuildIndexInfo(iRel);
@@ -1797,160 +1690,94 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	 * index_build will close both the heap and index relations (but not
 	 * give up the locks we hold on them).	So we're done.
 	 */
-
-	SetReindexProcessing(old);
-
-	return true;
+	SetReindexProcessing(InvalidOid, InvalidOid);
 }
 
 /*
- * ----------------------------
- * activate_indexes_of_a_table
- *	activate/deactivate indexes of the specified table.
+ * reindex_relation - This routine is used to recreate all indexes
+ * of a relation (and its toast relation too, if any).
  *
- * Caller must already hold exclusive lock on the table.
- * ----------------------------
+ * Returns true if any indexes were rebuilt.
  */
 bool
-activate_indexes_of_a_table(Relation heaprel, bool activate)
+reindex_relation(Oid relid)
 {
-	if (IndexesAreActive(heaprel))
-	{
-		if (!activate)
-			setRelhasindex(RelationGetRelid(heaprel), false, false,
-						   InvalidOid);
-		else
-			return false;
-	}
-	else
-	{
-		if (activate)
-			reindex_relation(RelationGetRelid(heaprel), false);
-		else
-			return false;
-	}
-	return true;
-}
-
-/* --------------------------------
- * reindex_relation - This routine is used to recreate indexes
- * of a relation.
- * --------------------------------
- */
-bool
-reindex_relation(Oid relid, bool force)
-{
-	Relation	indexRelation;
-	ScanKeyData entry;
-	HeapScanDesc scan;
-	HeapTuple	indexTuple;
-	bool		old,
-				reindexed;
-	bool		deactivate_needed,
-				overwrite;
 	Relation	rel;
-
-	overwrite = deactivate_needed = false;
+	Oid			toast_relid;
+	bool		is_pg_class;
+	bool		result;
+	List	   *indexIds,
+			   *doneIndexes,
+			   *indexId;
 
 	/*
 	 * Ensure to hold an exclusive lock throughout the transaction. The
-	 * lock could be less intensive (in the non-overwrite path) but for
-	 * now it's AccessExclusiveLock for simplicity.
+	 * lock could perhaps be less intensive (in the non-overwrite case)
+	 * but for now it's AccessExclusiveLock for simplicity.
 	 */
 	rel = heap_open(relid, AccessExclusiveLock);
 
-	/*
-	 * ignore the indexes of the target system relation while processing
-	 * reindex.
-	 */
-	if (!IsIgnoringSystemIndexes() &&
-		IsSystemRelation(rel) && !IsToastRelation(rel))
-		deactivate_needed = true;
+	toast_relid = rel->rd_rel->reltoastrelid;
 
 	/*
-	 * Shared system indexes must be overwritten because it's impossible
-	 * to update pg_class tuples of all databases.
+	 * Get the list of index OIDs for this relation.  (We trust to the
+	 * relcache to get this with a sequential scan if ignoring system
+	 * indexes.)
 	 */
-	if (rel->rd_rel->relisshared)
+	indexIds = RelationGetIndexList(rel);
+
+	/*
+	 * reindex_index will attempt to update the pg_class rows for the
+	 * relation and index.  If we are processing pg_class itself, we
+	 * want to make sure that the updates do not try to insert index
+	 * entries into indexes we have not processed yet.  (When we are
+	 * trying to recover from corrupted indexes, that could easily
+	 * cause a crash.)  We can accomplish this because CatalogUpdateIndexes
+	 * will use the relcache's index list to know which indexes to update.
+	 * We just force the index list to be only the stuff we've processed.
+	 *
+	 * It is okay to not insert entries into the indexes we have not
+	 * processed yet because all of this is transaction-safe.  If we fail
+	 * partway through, the updated rows are dead and it doesn't matter
+	 * whether they have index entries.  Also, a new pg_class index will
+	 * be created with an entry for its own pg_class row because we do
+	 * setNewRelfilenode() before we do index_build().
+	 */
+	is_pg_class = (RelationGetRelid(rel) == RelOid_pg_class);
+	doneIndexes = NIL;
+
+	/* Reindex all the indexes. */
+	foreach(indexId, indexIds)
 	{
-		if (IsIgnoringSystemIndexes())
-		{
-			overwrite = true;
-			deactivate_needed = true;
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("the target relation %u is shared", relid)));
+		Oid		indexOid = lfirsto(indexId);
+
+		if (is_pg_class)
+			RelationSetIndexList(rel, doneIndexes);
+
+		reindex_index(indexOid);
+
+		CommandCounterIncrement();
+
+		if (is_pg_class)
+			doneIndexes = lappendo(doneIndexes, indexOid);
 	}
 
-	old = SetReindexProcessing(true);
-
-	if (deactivate_needed)
-	{
-		if (IndexesAreActive(rel))
-		{
-			if (!force)
-			{
-				SetReindexProcessing(old);
-				heap_close(rel, NoLock);
-				return false;
-			}
-			activate_indexes_of_a_table(rel, false);
-			CommandCounterIncrement();
-		}
-	}
+	if (is_pg_class)
+		RelationSetIndexList(rel, indexIds);
 
 	/*
-	 * Continue to hold the lock.
+	 * Close rel, but continue to hold the lock.
 	 */
 	heap_close(rel, NoLock);
 
-	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,
-						   F_OIDEQ, ObjectIdGetDatum(relid));
-	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
-	reindexed = false;
-	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
+	result = (indexIds != NIL);
 
-		if (activate_index(index->indexrelid, true, overwrite))
-			reindexed = true;
-		else
-		{
-			reindexed = false;
-			break;
-		}
-	}
-	heap_endscan(scan);
-	heap_close(indexRelation, AccessShareLock);
-	if (reindexed)
-	{
-		/*
-		 * Ok,we could use the reindexed indexes of the target system
-		 * relation now.
-		 */
-		if (deactivate_needed)
-		{
-			if (!overwrite && relid == RelOid_pg_class)
-			{
-				/*
-				 * For pg_class, relhasindex should be set to true here in
-				 * place.
-				 */
-				setRelhasindex(relid, true, false, InvalidOid);
-				CommandCounterIncrement();
+	/*
+	 * If the relation has a secondary toast rel, reindex that too while we
+	 * still hold the lock on the master table.
+	 */
+	if (toast_relid != InvalidOid)
+		result |= reindex_relation(toast_relid);
 
-				/*
-				 * However the following setRelhasindex() is needed to
-				 * keep consistency with WAL.
-				 */
-			}
-			setRelhasindex(relid, true, false, InvalidOid);
-		}
-	}
-	SetReindexProcessing(old);
-
-	return reindexed;
+	return result;
 }

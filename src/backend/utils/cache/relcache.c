@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.188 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.189 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,9 +279,7 @@ static HTAB *OpClassCache = NULL;
 
 static void RelationClearRelation(Relation relation, bool rebuild);
 
-#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 static void RelationReloadClassinfo(Relation relation);
-#endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
 static void RelationFlushRelation(Relation relation);
 static Relation RelationSysNameCacheGetRelation(const char *relationName);
 static bool load_relcache_init_file(void);
@@ -290,7 +288,7 @@ static void write_relcache_init_file(void);
 static void formrdesc(const char *relationName, int natts,
 		  FormData_pg_attribute *att);
 
-static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
+static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK);
 static Relation AllocateRelationDesc(Relation relation, Form_pg_class relp);
 static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 					   Relation relation);
@@ -322,7 +320,7 @@ static OpClassCacheEnt *LookupOpclassInfo(Oid operatorClassOid,
  *		and must eventually be freed with heap_freetuple.
  */
 static HeapTuple
-ScanPgRelation(RelationBuildDescInfo buildinfo)
+ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK)
 {
 	HeapTuple	pg_class_tuple;
 	Relation	pg_class_desc;
@@ -367,11 +365,12 @@ ScanPgRelation(RelationBuildDescInfo buildinfo)
 	/*
 	 * Open pg_class and fetch a tuple.  Force heap scan if we haven't yet
 	 * built the critical relcache entries (this includes initdb and
-	 * startup without a pg_internal.init file).
+	 * startup without a pg_internal.init file).  The caller can also
+	 * force a heap scan by setting indexOK == false.
 	 */
 	pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
 	pg_class_scan = systable_beginscan(pg_class_desc, indexRelname,
-									   criticalRelcachesBuilt,
+									   indexOK && criticalRelcachesBuilt,
 									   SnapshotNow,
 									   nkeys, key);
 
@@ -834,7 +833,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	/*
 	 * find the tuple in pg_class corresponding to the given relation id
 	 */
-	pg_class_tuple = ScanPgRelation(buildinfo);
+	pg_class_tuple = ScanPgRelation(buildinfo, true);
 
 	/*
 	 * if no such tuple exists, return NULL
@@ -875,7 +874,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 * it could be new too, but it's okay to forget that fact if forced to
 	 * flush the entry.)
 	 */
-	relation->rd_isnailed = false;
+	relation->rd_isnailed = 0;
 	relation->rd_isnew = false;
 	relation->rd_istemp = isTempNamespace(relation->rd_rel->relnamespace);
 
@@ -1386,7 +1385,7 @@ formrdesc(const char *relationName,
 	 * all entries built with this routine are nailed-in-cache; none are
 	 * for new or temp relations.
 	 */
-	relation->rd_isnailed = true;
+	relation->rd_isnailed = 1;
 	relation->rd_isnew = false;
 	relation->rd_istemp = false;
 
@@ -1500,7 +1499,7 @@ formrdesc(const char *relationName,
  *		Lookup an existing reldesc by OID.
  *
  *		Only try to get the reldesc by looking in the cache,
- *		do not go to the disk.
+ *		do not go to the disk if it's not present.
  *
  *		NB: relation ref count is incremented if successful.
  *		Caller should eventually decrement count.  (Usually,
@@ -1514,7 +1513,12 @@ RelationIdCacheGetRelation(Oid relationId)
 	RelationIdCacheLookup(relationId, rd);
 
 	if (RelationIsValid(rd))
+	{
 		RelationIncrementReferenceCount(rd);
+		/* revalidate nailed index if necessary */
+		if (rd->rd_isnailed == 2)
+			RelationReloadClassinfo(rd);
+	}
 
 	return rd;
 }
@@ -1538,11 +1542,27 @@ RelationSysNameCacheGetRelation(const char *relationName)
 	RelationSysNameCacheLookup(NameStr(name), rd);
 
 	if (RelationIsValid(rd))
+	{
 		RelationIncrementReferenceCount(rd);
+		/* revalidate nailed index if necessary */
+		if (rd->rd_isnailed == 2)
+			RelationReloadClassinfo(rd);
+	}
 
 	return rd;
 }
 
+/*
+ *		RelationNodeCacheGetRelation
+ *
+ *		As above, but lookup by relfilenode.
+ *
+ * NOTE: this must NOT try to revalidate invalidated nailed indexes, since
+ * that could cause us to return an entry with a different relfilenode than
+ * the caller asked for.  Currently this is used only by the buffer manager.
+ * Really the bufmgr's idea of relations should be separated out from the
+ * relcache ...
+ */
 Relation
 RelationNodeCacheGetRelation(RelFileNode rnode)
 {
@@ -1647,39 +1667,60 @@ RelationClose(Relation relation)
 #endif
 }
 
-#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 /*
- * RelationReloadClassinfo
+ * RelationReloadClassinfo - reload the pg_class row (only)
  *
- *	This function is especially for nailed relations.
- *	relhasindex/relfilenode could be changed even for
- *	nailed relations.
+ *	This function is used only for nailed indexes.  Since a REINDEX can
+ *	change the relfilenode value for a nailed index, we have to reread
+ *	the pg_class row anytime we get an SI invalidation on a nailed index
+ *	(without throwing away the whole relcache entry, since we'd be unable
+ *	to rebuild it).
+ *
+ *	We can't necessarily reread the pg_class row right away; we might be
+ *	in a failed transaction when we receive the SI notification.  If so,
+ *	RelationClearRelation just marks the entry as invalid by setting
+ *	rd_isnailed to 2.  This routine is called to fix the entry when it
+ *	is next needed.
  */
 static void
 RelationReloadClassinfo(Relation relation)
 {
 	RelationBuildDescInfo buildinfo;
+	bool		indexOK;
 	HeapTuple	pg_class_tuple;
 	Form_pg_class relp;
 
-	if (!relation->rd_rel)
-		return;
+	/* Should be called only for invalidated nailed indexes */
+	Assert(relation->rd_isnailed == 2 &&
+		   relation->rd_rel->relkind == RELKIND_INDEX);
+	/* Read the pg_class row */
 	buildinfo.infotype = INFO_RELID;
 	buildinfo.i.info_id = relation->rd_id;
-	pg_class_tuple = ScanPgRelation(buildinfo);
+	/*
+	 * Don't try to use an indexscan of pg_class_oid_index to reload the
+	 * info for pg_class_oid_index ...
+	 */
+	indexOK = strcmp(RelationGetRelationName(relation), ClassOidIndex) != 0;
+	pg_class_tuple = ScanPgRelation(buildinfo, indexOK);
 	if (!HeapTupleIsValid(pg_class_tuple))
 		elog(ERROR, "could not find tuple for system relation %u",
 			 relation->rd_id);
-	RelationCacheDelete(relation);
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
-	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
-	relation->rd_node.relNode = relp->relfilenode;
-	RelationCacheInsert(relation);
+	if (relation->rd_node.relNode != relp->relfilenode)
+	{
+		/* We have to re-insert the entry into the relcache indexes */
+		RelationCacheDelete(relation);
+		memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
+		relation->rd_node.relNode = relp->relfilenode;
+		RelationCacheInsert(relation);
+	}
 	heap_freetuple(pg_class_tuple);
-
-	return;
+	/* Must adjust number of blocks after we know the new relfilenode */
+	relation->rd_targblock = InvalidBlockNumber;
+	RelationUpdateNumberOfBlocks(relation);
+	/* Okay, now it's valid again */
+	relation->rd_isnailed = 1;
 }
-#endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
 
 /*
  * RelationClearRelation
@@ -1712,15 +1753,27 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * Never, never ever blow away a nailed-in system relation, because
 	 * we'd be unable to recover.  However, we must update rd_nblocks and
 	 * reset rd_targblock, in case we got called because of a relation
-	 * cache flush that was triggered by VACUUM.
+	 * cache flush that was triggered by VACUUM.  If it's a nailed index,
+	 * then we need to re-read the pg_class row to see if its relfilenode
+	 * changed.  We can't necessarily do that here, because we might be in
+	 * a failed transaction.  We assume it's okay to do it if there are open
+	 * references to the relcache entry (cf notes for AtEOXact_RelationCache).
+	 * Otherwise just mark the entry as possibly invalid, and it'll be fixed
+	 * when next opened.
 	 */
 	if (relation->rd_isnailed)
 	{
-		relation->rd_targblock = InvalidBlockNumber;
-		RelationUpdateNumberOfBlocks(relation);
-#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
-		RelationReloadClassinfo(relation);
-#endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
+		if (relation->rd_rel->relkind == RELKIND_INDEX)
+		{
+			relation->rd_isnailed = 2;	/* needs to be revalidated */
+			if (relation->rd_refcnt > 1)
+				RelationReloadClassinfo(relation);
+		}
+		else
+		{
+			relation->rd_targblock = InvalidBlockNumber;
+			RelationUpdateNumberOfBlocks(relation);
+		}
 		return;
 	}
 
@@ -1928,6 +1981,12 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
  *	 because (a) during the first pass we won't process any more SI messages,
  *	 so hash_seq_search will complete safely; (b) during the second pass we
  *	 only hold onto pointers to nondeletable entries.
+ *
+ *	 The two-phase approach also makes it easy to ensure that we process
+ *	 nailed-in-cache indexes before other nondeletable items, and that we
+ *	 process pg_class_oid_index first of all.  In scenarios where a nailed
+ *	 index has been given a new relfilenode, we have to detect that update
+ *	 before the nailed index is used in reloading any other relcache entry.
  */
 void
 RelationCacheInvalidate(void)
@@ -1935,6 +1994,7 @@ RelationCacheInvalidate(void)
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
 	Relation	relation;
+	List	   *rebuildFirstList = NIL;
 	List	   *rebuildList = NIL;
 	List	   *l;
 
@@ -1954,14 +2014,32 @@ RelationCacheInvalidate(void)
 		if (RelationHasReferenceCountZero(relation))
 		{
 			/* Delete this entry immediately */
+			Assert(!relation->rd_isnailed);
 			RelationClearRelation(relation, false);
 		}
 		else
 		{
-			/* Add entry to list of stuff to rebuild in second pass */
-			rebuildList = lcons(relation, rebuildList);
+			/*
+			 * Add this entry to list of stuff to rebuild in second pass.
+			 * pg_class_oid_index goes on the front of rebuildFirstList,
+			 * other nailed indexes on the back, and everything else into
+			 * rebuildList (in no particular order).
+			 */
+			if (relation->rd_isnailed &&
+				relation->rd_rel->relkind == RELKIND_INDEX)
+			{
+				if (strcmp(RelationGetRelationName(relation),
+						   ClassOidIndex) == 0)
+					rebuildFirstList = lcons(relation, rebuildFirstList);
+				else
+					rebuildFirstList = lappend(rebuildFirstList, relation);
+			}
+			else
+				rebuildList = lcons(relation, rebuildList);
 		}
 	}
+
+	rebuildList = nconc(rebuildFirstList, rebuildList);
 
 	/* Phase 2: rebuild the items found to need rebuild in phase 1 */
 	foreach(l, rebuildList)
@@ -1976,6 +2054,11 @@ RelationCacheInvalidate(void)
  * AtEOXact_RelationCache
  *
  *	Clean up the relcache at transaction commit or abort.
+ *
+ * Note: this must be called *before* processing invalidation messages.
+ * In the case of abort, we don't want to try to rebuild any invalidated
+ * cache entries (since we can't safely do database accesses).  Therefore
+ * we must reset refcnts before handling pending invalidations.
  */
 void
 AtEOXact_RelationCache(bool commit)
@@ -2045,6 +2128,16 @@ AtEOXact_RelationCache(bool commit)
 			/* abort case, just reset it quietly */
 			RelationSetReferenceCount(relation, expected_refcnt);
 		}
+
+		/*
+		 * Flush any temporary index list.
+		 */
+		if (relation->rd_indexvalid == 2)
+		{
+			freeList(relation->rd_indexlist);
+			relation->rd_indexlist = NIL;
+			relation->rd_indexvalid = 0;
+		}
 	}
 }
 
@@ -2101,7 +2194,7 @@ RelationBuildLocalRelation(const char *relname,
 	 * want it kicked out.	e.g. pg_attribute!!!
 	 */
 	if (nailit)
-		rel->rd_isnailed = true;
+		rel->rd_isnailed = 1;
 
 	/*
 	 * create a new tuple descriptor from the one passed in.  We do this
@@ -2288,7 +2381,7 @@ RelationCacheInitializePhase2(void)
 			buildinfo.infotype = INFO_RELNAME; \
 			buildinfo.i.info_name = (indname); \
 			ird = RelationBuildDesc(buildinfo, NULL); \
-			ird->rd_isnailed = true; \
+			ird->rd_isnailed = 1; \
 			RelationSetReferenceCount(ird, 1); \
 		} while (0)
 
@@ -2575,7 +2668,7 @@ CheckConstraintFetch(Relation relation)
  * The index list is created only if someone requests it.  We scan pg_index
  * to find relevant indexes, and add the list to the relcache entry so that
  * we won't have to compute it again.  Note that shared cache inval of a
- * relcache entry will delete the old list and set rd_indexfound to false,
+ * relcache entry will delete the old list and set rd_indexvalid to 0,
  * so that we must recompute the index list on next request.  This handles
  * creation or deletion of an index.
  *
@@ -2602,7 +2695,7 @@ RelationGetIndexList(Relation relation)
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the list. */
-	if (relation->rd_indexfound)
+	if (relation->rd_indexvalid != 0)
 		return listCopy(relation->rd_indexlist);
 
 	/*
@@ -2638,7 +2731,7 @@ RelationGetIndexList(Relation relation)
 	/* Now save a copy of the completed list in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	relation->rd_indexlist = listCopy(result);
-	relation->rd_indexfound = true;
+	relation->rd_indexvalid = 1;
 	MemoryContextSwitchTo(oldcxt);
 
 	return result;
@@ -2674,6 +2767,35 @@ insert_ordered_oid(List *list, Oid datum)
 	/* Insert datum into list after item l */
 	lnext(l) = lconso(datum, lnext(l));
 	return list;
+}
+
+/*
+ * RelationSetIndexList -- externally force the index list contents
+ *
+ * This is used to temporarily override what we think the set of valid
+ * indexes is.  The forcing will be valid only until transaction commit
+ * or abort.
+ *
+ * This should only be applied to nailed relations, because in a non-nailed
+ * relation the hacked index list could be lost at any time due to SI
+ * messages.  In practice it is only used on pg_class (see REINDEX).
+ *
+ * It is up to the caller to make sure the given list is correctly ordered.
+ */
+void
+RelationSetIndexList(Relation relation, List *indexIds)
+{
+	MemoryContext oldcxt;
+
+	Assert(relation->rd_isnailed == 1);
+	/* Copy the list into the cache context (could fail for lack of mem) */
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	indexIds = listCopy(indexIds);
+	MemoryContextSwitchTo(oldcxt);
+	/* Okay to replace old list */
+	freeList(relation->rd_indexlist);
+	relation->rd_indexlist = indexIds;
+	relation->rd_indexvalid = 2;		/* mark list as forced */
 }
 
 /*
@@ -3087,7 +3209,7 @@ load_relcache_init_file(void)
 			RelationSetReferenceCount(rel, 1);
 		else
 			RelationSetReferenceCount(rel, 0);
-		rel->rd_indexfound = false;
+		rel->rd_indexvalid = 0;
 		rel->rd_indexlist = NIL;
 		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));
 

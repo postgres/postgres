@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.206 2003/09/09 23:22:21 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.207 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -992,11 +992,9 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->kind)
 				{
 					case OBJECT_INDEX:
-						CheckRelationOwnership(stmt->relation, false);
 						ReindexIndex(stmt->relation, stmt->force);
 						break;
 					case OBJECT_TABLE:
-						CheckRelationOwnership(stmt->relation, false);
 						ReindexTable(stmt->relation, stmt->force);
 						break;
 					case OBJECT_DATABASE:

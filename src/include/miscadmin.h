@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.133 2003/08/26 15:38:25 tgl Exp $
+ * $Id: miscadmin.h,v 1.134 2003/09/24 18:54:01 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -296,18 +296,17 @@ extern void InitPostgres(const char *dbname, const char *username);
 extern void BaseInit(void);
 
 /* in utils/init/miscinit.c */
+extern void IgnoreSystemIndexes(bool mode);
+extern bool IsIgnoringSystemIndexes(void);
+extern void SetReindexProcessing(Oid heapOid, Oid indexOid);
+extern bool ReindexIsProcessingHeap(Oid heapOid);
+extern bool ReindexIsProcessingIndex(Oid indexOid);
 extern void CreateDataDirLockFile(const char *datadir, bool amPostmaster);
 extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 extern void TouchSocketLockFile(void);
 extern void RecordSharedMemoryInLockFile(unsigned long id1,
 							 unsigned long id2);
-
 extern void ValidatePgVersion(const char *path);
 extern void process_preload_libraries(char *preload_libraries_string);
-
-/* these externs do not belong here... */
-extern void IgnoreSystemIndexes(bool mode);
-extern bool IsIgnoringSystemIndexes(void);
-extern bool IsCacheInitialized(void);
 
 #endif   /* MISCADMIN_H */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.36 2003/09/18 20:30:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.37 2003/09/24 18:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -177,9 +177,9 @@ PostgreSQL documentation
       <term><option>-P</option></term>
       <listitem>
        <para>
-	Ignore system indexes while scanning/updating system tables. The
-	<command>REINDEX</command> command for system tables/indexes
-	requires this option to be used.
+	Ignore system indexes when reading system tables (but still update
+	the indexes when modifying the tables).  This is useful when
+	recovering from damaged system indexes.
        </para>
       </listitem>
      </varlistentry>

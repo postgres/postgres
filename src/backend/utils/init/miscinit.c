@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.113 2003/08/04 04:03:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.114 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,11 @@ static char socketLockFile[MAXPGPATH];
 
 /* ----------------------------------------------------------------
  *		ignoring system indexes support stuff
+ *
+ * NOTE: "ignoring system indexes" means we do not use the system indexes
+ * for lookups (either in hardwired catalog accesses or in planner-generated
+ * plans).  We do, however, still update the indexes when a catalog
+ * modification is made.
  * ----------------------------------------------------------------
  */
 
@@ -61,20 +66,66 @@ static bool isIgnoringSystemIndexes = false;
  *		True if ignoring system indexes.
  */
 bool
-IsIgnoringSystemIndexes()
+IsIgnoringSystemIndexes(void)
 {
 	return isIgnoringSystemIndexes;
 }
 
 /*
  * IgnoreSystemIndexes
- *	Set true or false whether PostgreSQL ignores system indexes.
- *
+ *		Set true or false whether PostgreSQL ignores system indexes.
  */
 void
 IgnoreSystemIndexes(bool mode)
 {
 	isIgnoringSystemIndexes = mode;
+}
+
+/* ----------------------------------------------------------------
+ *		system index reindexing support
+ *
+ * When we are busy reindexing a system index, this code provides support
+ * for preventing catalog lookups from using that index.
+ * ----------------------------------------------------------------
+ */
+
+static Oid	currentlyReindexedHeap = InvalidOid;
+static Oid	currentlyReindexedIndex = InvalidOid;
+
+/*
+ * ReindexIsProcessingHeap
+ *		True if heap specified by OID is currently being reindexed.
+ */
+bool
+ReindexIsProcessingHeap(Oid heapOid)
+{
+	return heapOid == currentlyReindexedHeap;
+}
+
+/*
+ * ReindexIsProcessingIndex
+ *		True if index specified by OID is currently being reindexed.
+ */
+bool
+ReindexIsProcessingIndex(Oid indexOid)
+{
+	return indexOid == currentlyReindexedIndex;
+}
+
+/*
+ * SetReindexProcessing
+ *		Set flag that specified heap/index are being reindexed.
+ *		Pass InvalidOid to indicate that reindexing is not active.
+ */
+void
+SetReindexProcessing(Oid heapOid, Oid indexOid)
+{
+	/* Args should be both, or neither, InvalidOid */
+	Assert((heapOid == InvalidOid) == (indexOid == InvalidOid));
+	/* Reindexing is not re-entrant. */
+	Assert(indexOid == InvalidOid || currentlyReindexedIndex == InvalidOid);
+	currentlyReindexedHeap = heapOid;
+	currentlyReindexedIndex = indexOid;
 }
 
 /* ----------------------------------------------------------------

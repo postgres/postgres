@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.83 2003/08/22 20:26:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.84 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -963,12 +963,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	reloid = rtentry->relid;
 
 	currentRelation = heap_open(reloid, AccessShareLock);
-
-	if (!RelationGetForm(currentRelation)->relhasindex)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("indexes of relation %u were deactivated",
-						reloid)));
 
 	indexstate->ss.ss_currentRelation = currentRelation;
 	indexstate->ss.ss_currentScanDesc = NULL;	/* no heap scan here */

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.259 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.260 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -904,11 +904,6 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	int			nindexes,
 				i;
 	VRelStats  *vacrelstats;
-	bool		reindex = false;
-
-	if (IsIgnoringSystemIndexes() &&
-		IsSystemRelation(onerel))
-		reindex = true;
 
 	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
@@ -927,26 +922,8 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 	/* Now open all indexes of the relation */
 	vac_open_indexes(onerel, &nindexes, &Irel);
-	if (!Irel)
-		reindex = false;
-	else if (!RelationGetForm(onerel)->relhasindex)
-		reindex = true;
 	if (nindexes > 0)
 		vacrelstats->hasindex = true;
-
-#ifdef NOT_USED
-
-	/*
-	 * reindex in VACUUM is dangerous under WAL. ifdef out until it
-	 * becomes safe.
-	 */
-	if (reindex)
-	{
-		vac_close_indexes(nindexes, Irel);
-		Irel = (Relation *) NULL;
-		activate_indexes_of_a_table(onerel, false);
-	}
-#endif   /* NOT_USED */
 
 	/* Clean/scan index relation(s) */
 	if (Irel != (Relation *) NULL)
@@ -993,11 +970,6 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 				elog(ERROR, "FlushRelationBuffers returned %d", i);
 		}
 	}
-
-#ifdef NOT_USED
-	if (reindex)
-		activate_indexes_of_a_table(onerel, true);
-#endif   /* NOT_USED */
 
 	/* update shared free space map with final free space info */
 	vac_update_fsm(onerel, &fraged_pages, vacrelstats->rel_pages);

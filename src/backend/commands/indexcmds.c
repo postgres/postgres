@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.108 2003/09/23 01:51:09 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.109 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,14 +111,6 @@ DefineIndex(RangeVar *heapRelation,
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
-
-	if (!IsBootstrapProcessingMode() &&
-		IsSystemRelation(rel) &&
-		!IndexesAreActive(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_INDEXES_DEACTIVATED),
-				 errmsg("existing indexes are inactive"),
-				 errhint("REINDEX the table first.")));
 
 	heap_close(rel, NoLock);
 
@@ -599,10 +591,6 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 {
 	Oid			indOid;
 	HeapTuple	tuple;
-	bool		overwrite;
-
-	/* Choose in-place-or-not mode */
-	overwrite = IsIgnoringSystemIndexes();
 
 	indOid = RangeVarGetRelid(indexRelation, false);
 	tuple = SearchSysCache(RELOID,
@@ -617,37 +605,14 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 				 errmsg("relation \"%s\" is not an index",
 						indexRelation->relname)));
 
-	if (IsSystemClass((Form_pg_class) GETSTRUCT(tuple)) &&
-		!IsToastClass((Form_pg_class) GETSTRUCT(tuple)))
-	{
-		if (!allowSystemTableMods)
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied: \"%s\" is a system index",
-							indexRelation->relname),
-					 errhint("Do REINDEX in standalone postgres with -O -P options.")));
-		if (!IsIgnoringSystemIndexes())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied: \"%s\" is a system index",
-							indexRelation->relname),
-					 errhint("Do REINDEX in standalone postgres with -P -O options.")));
-	}
+	/* Check permissions */
+	if (!pg_class_ownercheck(indOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   indexRelation->relname);
 
 	ReleaseSysCache(tuple);
 
-	/*
-	 * In-place REINDEX within a transaction block is dangerous, because
-	 * if the transaction is later rolled back we have no way to undo
-	 * truncation of the index's physical file.  Disallow it.
-	 */
-	if (overwrite)
-		PreventTransactionChain((void *) indexRelation, "REINDEX");
-
-	if (!reindex_index(indOid, force, overwrite))
-		ereport(WARNING,
-				(errmsg("index \"%s\" wasn't reindexed",
-						indexRelation->relname)));
+	reindex_index(indOid);
 }
 
 /*
@@ -655,54 +620,62 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
  *		Recreate indexes of a table.
  */
 void
-ReindexTable(RangeVar *relation, bool force)
+ReindexTable(RangeVar *relation, bool force /* currently unused */ )
 {
 	Oid			heapOid;
-	char		relkind;
+	HeapTuple	tuple;
 
 	heapOid = RangeVarGetRelid(relation, false);
-	relkind = get_rel_relkind(heapOid);
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(heapOid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
+		elog(ERROR, "cache lookup failed for relation %u", heapOid);
 
-	if (relkind != RELKIND_RELATION && relkind != RELKIND_TOASTVALUE)
+	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION &&
+		((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_TOASTVALUE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("relation \"%s\" is not a table",
 						relation->relname)));
 
-	/*
-	 * In-place REINDEX within a transaction block is dangerous, because
-	 * if the transaction is later rolled back we have no way to undo
-	 * truncation of the index's physical file.  Disallow it.
-	 *
-	 * XXX we assume that in-place reindex will only be done if
-	 * IsIgnoringSystemIndexes() is true.
-	 */
-	if (IsIgnoringSystemIndexes())
-		PreventTransactionChain((void *) relation, "REINDEX");
+	/* Check permissions */
+	if (!pg_class_ownercheck(heapOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   relation->relname);
 
-	if (!reindex_relation(heapOid, force))
+	/* Can't reindex shared tables except in standalone mode */
+	if (((Form_pg_class) GETSTRUCT(tuple))->relisshared && IsUnderPostmaster)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("shared table \"%s\" can only be reindexed in standalone mode",
+						relation->relname)));
+
+	ReleaseSysCache(tuple);
+
+	if (!reindex_relation(heapOid))
 		ereport(WARNING,
-				(errmsg("table \"%s\" wasn't reindexed",
+				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
 }
 
 /*
  * ReindexDatabase
  *		Recreate indexes of a database.
+ *
+ * To reduce the probability of deadlocks, each table is reindexed in a
+ * separate transaction, so we can release the lock on it right away.
  */
 void
-ReindexDatabase(const char *dbname, bool force, bool all)
+ReindexDatabase(const char *dbname, bool force /* currently unused */,
+				bool all)
 {
 	Relation	relationRelation;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	MemoryContext private_context;
 	MemoryContext old;
-	int			relcnt,
-				relalc,
-				i,
-				oncealc = 200;
-	Oid		   *relids = (Oid *) NULL;
+	List	   *relids = NIL;
 
 	AssertArg(dbname);
 
@@ -715,21 +688,12 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   dbname);
 
-	if (!allowSystemTableMods)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("REINDEX DATABASE must be done in standalone postgres with -O -P options")));
-	if (!IsIgnoringSystemIndexes())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("REINDEX DATABASE must be done in standalone postgres with -P -O options")));
-
 	/*
 	 * We cannot run inside a user transaction block; if we were inside a
 	 * transaction, then our commit- and start-transaction-command calls
 	 * would not have the intended effect!
 	 */
-	PreventTransactionChain((void *) dbname, "REINDEX");
+	PreventTransactionChain((void *) dbname, "REINDEX DATABASE");
 
 	/*
 	 * Create a memory context that will survive forced transaction
@@ -744,54 +708,67 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 											ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
+	 * We always want to reindex pg_class first.  This ensures that if
+	 * there is any corruption in pg_class' indexes, they will be fixed
+	 * before we process any other tables.  This is critical because
+	 * reindexing itself will try to update pg_class.
+	 */
+	old = MemoryContextSwitchTo(private_context);
+	relids = lappendo(relids, RelOid_pg_class);
+	MemoryContextSwitchTo(old);
+
+	/*
 	 * Scan pg_class to build a list of the relations we need to reindex.
+	 *
+	 * We only consider plain relations here (toast rels will be processed
+	 * indirectly by reindex_relation).
 	 */
 	relationRelation = heap_openr(RelationRelationName, AccessShareLock);
 	scan = heap_beginscan(relationRelation, SnapshotNow, 0, NULL);
-	relcnt = relalc = 0;
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		char		relkind;
+		Form_pg_class classtuple = (Form_pg_class) GETSTRUCT(tuple);
 
-		if (!all)
+		if (classtuple->relkind != RELKIND_RELATION)
+			continue;
+
+		if (!all)				/* only system tables? */
 		{
-			if (!(IsSystemClass((Form_pg_class) GETSTRUCT(tuple)) &&
-				  !IsToastClass((Form_pg_class) GETSTRUCT(tuple))))
+			if (!IsSystemClass(classtuple))
 				continue;
 		}
-		relkind = ((Form_pg_class) GETSTRUCT(tuple))->relkind;
-		if (relkind == RELKIND_RELATION || relkind == RELKIND_TOASTVALUE)
+
+		if (IsUnderPostmaster)	/* silently ignore shared tables */
 		{
-			old = MemoryContextSwitchTo(private_context);
-			if (relcnt == 0)
-			{
-				relalc = oncealc;
-				relids = palloc(sizeof(Oid) * relalc);
-			}
-			else if (relcnt >= relalc)
-			{
-				relalc *= 2;
-				relids = repalloc(relids, sizeof(Oid) * relalc);
-			}
-			MemoryContextSwitchTo(old);
-			relids[relcnt] = HeapTupleGetOid(tuple);
-			relcnt++;
+			if (classtuple->relisshared)
+				continue;
 		}
+
+		if (HeapTupleGetOid(tuple) == RelOid_pg_class)
+			continue;			/* got it already */
+
+		old = MemoryContextSwitchTo(private_context);
+		relids = lappendo(relids, HeapTupleGetOid(tuple));
+		MemoryContextSwitchTo(old);
 	}
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
 	/* Now reindex each rel in a separate transaction */
 	CommitTransactionCommand();
-	for (i = 0; i < relcnt; i++)
+	while (relids)
 	{
+		Oid		relid = lfirsto(relids);
+
 		StartTransactionCommand();
 		SetQuerySnapshot();		/* might be needed for functions in
 								 * indexes */
-		if (reindex_relation(relids[i], force))
+		if (reindex_relation(relid))
 			ereport(NOTICE,
-					(errmsg("relation %u was reindexed", relids[i])));
+					(errmsg("table \"%s\" was reindexed",
+							get_rel_name(relid))));
 		CommitTransactionCommand();
+		relids = lnext(relids);
 	}
 	StartTransactionCommand();
 

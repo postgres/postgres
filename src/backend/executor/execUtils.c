@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.103 2003/08/08 21:41:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.104 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -647,11 +647,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 
 	resultRelInfo->ri_NumIndices = 0;
 
-	/* checks for disabled indexes */
+	/* fast path if no indexes */
 	if (!RelationGetForm(resultRelation)->relhasindex)
-		return;
-	if (IsIgnoringSystemIndexes() &&
-		IsSystemRelation(resultRelation))
 		return;
 
 	/*

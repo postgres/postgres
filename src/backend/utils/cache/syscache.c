@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.90 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.91 2003/09/24 18:54:01 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -436,17 +436,9 @@ static const struct cachedesc cacheinfo[] = {
 	}}
 };
 
-static CatCache *SysCache[
-						  lengthof(cacheinfo)];
+static CatCache *SysCache[lengthof(cacheinfo)];
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
-
-
-bool
-IsCacheInitialized(void)
-{
-	return CacheInitialized;
-}
 
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.67 2003/08/04 02:40:15 momjian Exp $
+ * $Id: rel.h,v 1.68 2003/09/24 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,8 +119,10 @@ typedef struct RelationData
 	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
 	 */
 	bool		rd_istemp;		/* rel uses the local buffer mgr */
-	bool		rd_isnailed;	/* rel is nailed in cache */
-	bool		rd_indexfound;	/* true if rd_indexlist is valid */
+	char		rd_isnailed;	/* rel is nailed in cache: 0 = no, 1 = yes,
+								 * 2 = yes but possibly invalid */
+	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid,
+								 * 1 = valid, 2 = temporarily forced */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	TupleDesc	rd_att;			/* tuple descriptor */
 	Oid			rd_id;			/* relation's object id */

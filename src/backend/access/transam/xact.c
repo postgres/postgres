@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.152 2003/08/08 21:41:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.153 2003/09/24 18:54:01 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -834,8 +834,6 @@ StartTransaction(void)
 	 */
 	s->state = TRANS_START;
 
-	SetReindexProcessing(false);
-
 	/*
 	 * generate a new transaction id
 	 */
@@ -1085,6 +1083,7 @@ AbortTransaction(void)
 	AtEOXact_Namespace(false);
 	AtEOXact_CatCache(false);
 	AtEOXact_Files();
+	SetReindexProcessing(InvalidOid, InvalidOid);
 	pgstat_count_xact_rollback();
 
 	/*
