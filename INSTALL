@@ -81,7 +81,15 @@ To install PostgreSQL on UNIX platforms:
    Customization can be done by editing src/Makefile.global. You may change
    the various configuration options here, such as where the PostgreSQL
    executable files are installed and where postgres looks for the database
-   directory.  The configuration switches are fairly self-explanatory, but we
+   directory.  
+
+   PostgreSQL V6.0 also supports src/Makefile.custom. This is not supplied
+   with the distribution, but may be created to contain only the options 
+   you wish to change in src/Makefile.global. This has the advantage that
+   it will not be overwritten when you install a new version of PostgreSQL
+   over the top of your current installation.
+
+   The configuration switches are fairly self-explanatory, but we
    will go over some of the more commonly-changed options:
 
      - PORTNAME specifies the platform on which PostgreSQL is being built.
@@ -100,14 +108,25 @@ To install PostgreSQL on UNIX platforms:
        readline is not supplied with PostgreSQL and can be found in the
        usual ftp sites for GNU software.
 
-     - HBA specifies whether you wish to use host-based authentication
-       for PostgreSQL.  See the section "How to Create a Database System"
-       for how to set up the HBA permissions if you decide to use HBA.
+   In the simplest case, you would create src/Makefile.custom containing
+   just the line:
 
-   After editing src/Makefile.global, you are ready to compile PostgreSQL
-   (it takes about 10 minutes on a 133Mhz Pentium running linux):
+       PORTNAME= portname
+
+   (where you replace portname with the name of the system you are using).
+
+   Even easier is to enter the src directory and run the customize shell
+   script which will prompt you with various questions and create
+   Makefile.custom for you:
 
      % cd src
+     % customize
+
+   After editing src/Makefile.global or src/Makefile.custom, you are ready 
+   to compile PostgreSQL (it takes about 10 minutes on a 133Mhz Pentium 
+   running linux):
+
+     % cd src                              ( if you're not already there )
      % gmake 
 
    The gmake ultimately issues the message "All of PostgreSQL is
@@ -148,8 +167,8 @@ superuser.  The simplest way is by creating and running a C language
 function.  There are plans to remedy this in future developent.
 
 The program initdb (part of Postgres) is what initializes (creates) a
-database system.  Initdb uses the defaults specified in Makefile.global.
-See the man page for initdb for more information.
+database system.  Initdb uses the defaults specified in Makefile.global
+or Makefile.custom. See the man page for initdb for more information.
 
   % initdb --pgdata=/usr/local/pgsql/data --pglib=/usr/local/pgsql/lib
 
