@@ -272,65 +272,63 @@ insert into pg_ts_cfg values ('default', 'default','C');
 insert into pg_ts_cfg values ('default_russian', 'default','ru_RU.KOI8-R');
 insert into pg_ts_cfg values ('simple', 'default');
 
-copy pg_ts_cfgmap from stdin;
-default	lword	{en_stem}
-default	nlword	{simple}
-default	word	{simple}
-default	email	{simple}
-default	url	{simple}
-default	host	{simple}
-default	sfloat	{simple}
-default	version	{simple}
-default	part_hword	{simple}
-default	nlpart_hword	{simple}
-default	lpart_hword	{en_stem}
-default	hword	{simple}
-default	lhword	{en_stem}
-default	nlhword	{simple}
-default	uri	{simple}
-default	file	{simple}
-default	float	{simple}
-default	int	{simple}
-default	uint	{simple}
-default_russian	lword	{en_stem}
-default_russian	nlword	{ru_stem}
-default_russian	word	{ru_stem}
-default_russian	email	{simple}
-default_russian	url	{simple}
-default_russian	host	{simple}
-default_russian	sfloat	{simple}
-default_russian	version	{simple}
-default_russian	part_hword	{simple}
-default_russian	nlpart_hword	{ru_stem}
-default_russian	lpart_hword	{en_stem}
-default_russian	hword	{ru_stem}
-default_russian	lhword	{en_stem}
-default_russian	nlhword	{ru_stem}
-default_russian	uri	{simple}
-default_russian	file	{simple}
-default_russian	float	{simple}
-default_russian	int	{simple}
-default_russian	uint	{simple}
-simple	lword	{simple}
-simple	nlword	{simple}
-simple	word	{simple}
-simple	email	{simple}
-simple	url	{simple}
-simple	host	{simple}
-simple	sfloat	{simple}
-simple	version	{simple}
-simple	part_hword	{simple}
-simple	nlpart_hword	{simple}
-simple	lpart_hword	{simple}
-simple	hword	{simple}
-simple	lhword	{simple}
-simple	nlhword	{simple}
-simple	uri	{simple}
-simple	file	{simple}
-simple	float	{simple}
-simple	int	{simple}
-simple	uint	{simple}
-\.
+insert into pg_ts_cfgmap values ('default', 'lword', '{en_stem}');
+insert into pg_ts_cfgmap values ('default', 'nlword', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'word', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'email', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'url', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'host', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'sfloat', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'version', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'part_hword', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'nlpart_hword', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'lpart_hword', '{en_stem}');
+insert into pg_ts_cfgmap values ('default', 'hword', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'lhword', '{en_stem}');
+insert into pg_ts_cfgmap values ('default', 'nlhword', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'uri', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'file', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'float', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'int', '{simple}');
+insert into pg_ts_cfgmap values ('default', 'uint', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'lword', '{en_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'nlword', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'word', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'email', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'url', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'host', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'sfloat', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'version', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'part_hword', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'nlpart_hword', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'lpart_hword', '{en_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'hword', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'lhword', '{en_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'nlhword', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'uri', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'file', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'float', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'int', '{simple}');
+insert into pg_ts_cfgmap values ('default_russian', 'uint', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'lword', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'nlword', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'word', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'email', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'url', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'host', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'sfloat', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'version', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'part_hword', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'nlpart_hword', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'lpart_hword', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'hword', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'lhword', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'nlhword', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'uri', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'file', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'float', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'int', '{simple}');
+insert into pg_ts_cfgmap values ('simple', 'uint', '{simple}');
 
 --tsvector type
 CREATE FUNCTION tsvector_in(cstring)
