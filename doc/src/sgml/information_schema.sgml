@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.7 2003/09/11 21:42:19 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.8 2003/09/11 23:15:51 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -325,7 +325,7 @@
    privileges on entire tables, not individual columns.  Therefore,
    this view contains the same information as
    <literal>table_privileges</literal>, just represented through one
-   row for each column in each appropriate table, but it only convers
+   row for each column in each appropriate table, but it only covers
    privilege types where column granularity is possible:
    <literal>SELECT</literal>, <literal>INSERT</literal>,
    <literal>UPDATE</literal>, <literal>REFERENCES</literal>.  If you
