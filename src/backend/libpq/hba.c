@@ -5,10 +5,12 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.56 2001/07/30 14:50:21 momjian Exp $
+ *	$Id: hba.c,v 1.57 2001/07/31 22:55:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <errno.h>
 #include <pwd.h>
 #include <sys/types.h>
@@ -17,8 +19,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
-#include "postgres.h"
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -30,23 +30,29 @@
 /* Maximum size of one token in the configuration file	*/
 
 #define IDENT_USERNAME_MAX 512
- /* Max size of username ident server can return */
+/* Max size of username ident server can return */
 
-static List *hba_lines = NULL;	/* A list of lists: entry for every line,
-								 * list of tokens on each line.
-								 */
+/*
+ * These variables hold the pre-parsed contents of the hba and ident
+ * configuration files.  Each is a list of sublists, one sublist for
+ * each (non-empty, non-comment) line of the file.  Each sublist's
+ * first item is an integer line number (so we can give somewhat-useful
+ * location info in error messages).  Remaining items are palloc'd strings,
+ * one string per token on the line.  Note there will always be at least
+ * one token, since blank lines are not entered in the data structure.
+ */
+static List *hba_lines = NIL;	/* pre-parsed contents of hba file */
+static List *ident_lines = NIL;	/* pre-parsed contents of ident file */
 
-static List *ident_lines = NULL;/* A list of lists: entry for every line,
-								 * list of tokens on each line.
-								 */
 
-/* Some standard C libraries, including GNU, have an isblank() function.
-   Others, including Solaris, do not.  So we have our own.
-*/
+/*
+ * Some standard C libraries, including GNU, have an isblank() function.
+ * Others, including Solaris, do not.  So we have our own.
+ */
 static bool
 isblank(const char c)
 {
-	return c == ' ' || c == 0x09;/* tab */
+	return c == ' ' || c == '\t';
 }
 
 
@@ -65,15 +71,16 @@ next_token(FILE *fp, char *buf, const int bufsz)
 	int			c;
 	char	   *eb = buf + (bufsz - 1);
 
-	/* Move over inital token-delimiting blanks */
-	while (isblank(c = getc(fp)))
+	/* Move over initial token-delimiting blanks */
+	while ((c = getc(fp)) != EOF && isblank(c))
 		;
 
-	if (c != '\n')
+	if (c != EOF && c != '\n')
 	{
 		/*
 		 * build a token in buf of next characters up to EOF, eol, or
-		 * blank.
+		 * blank.  If the token gets too long, we still parse it correctly,
+		 * but the excess characters are not stored into *buf.
 		 */
 		while (c != EOF && c != '\n' && !isblank(c))
 		{
@@ -82,10 +89,11 @@ next_token(FILE *fp, char *buf, const int bufsz)
 			c = getc(fp);
 		}
 		/*
-		 * Put back the char right after the token (putting back EOF
-		 * is ok)
+		 * Put back the char right after the token (critical in case it
+		 * is eol, since we need to detect end-of-line at next call).
 		 */
-		ungetc(c, fp);
+		if (c != EOF)
+			ungetc(c, fp);
 	}
 	*buf = '\0';
 }
@@ -96,66 +104,71 @@ read_to_eol(FILE *file)
 {
 	int			c;
 
-	while ((c = getc(file)) != '\n' && c != EOF)
+	while ((c = getc(file)) != EOF && c != '\n')
 		;
 }
 
 
 /*
- *  Process the file line by line and create a list of list of tokens.
+ *  Read the given file and create a list of line sublists.
  */
-static void
-tokenize_file(FILE *file, List **lines)
+static List *
+tokenize_file(FILE *file)
 {
+	List	   *lines = NIL;
+	List	   *next_line = NIL;
+	int			line_number = 1;
 	char		buf[MAX_TOKEN];
-	List		*next_line = NIL;
-	bool		comment_found = false;
+	char	   *comment_ptr;
 
-	while (1)
+	while (!feof(file))
 	{
 		next_token(file, buf, sizeof(buf));
-		if (feof(file))
-			break;
 
 		/* trim off comment, even if inside a token */
-		if (strstr(buf,"#") != NULL)
-		{
-			*strstr(buf,"#") = '\0';
-			comment_found = true;
-		}
+		comment_ptr = strchr(buf, '#');
+		if (comment_ptr != NULL)
+			*comment_ptr = '\0';
 
-		/* add token to list */
+		/* add token to list, unless we are at eol or comment start */
 		if (buf[0] != '\0')
 		{
 			if (next_line == NIL)
 			{
 				/* make a new line List */
-				next_line = lcons(pstrdup(buf), NIL);
-				*lines = lappend(*lines, next_line);
+				next_line = makeListi1(line_number);
+				lines = lappend(lines, next_line);
 			}
-			else
-				/* append token to line */
-				next_line = lappend(next_line, pstrdup(buf));
+			/* append token to current line's list */
+			next_line = lappend(next_line, pstrdup(buf));
 		}
 		else
-			/* force a new List line */
-			next_line = NIL;
-
-		if (comment_found)
 		{
-			/* Skip the rest of the line */
+			/* we are at real or logical eol, so force a new line List */
+			next_line = NIL;
+		}
+
+		if (comment_ptr != NULL)
+		{
+			/* Found a comment, so skip the rest of the line */
 			read_to_eol(file);
 			next_line = NIL;
-			comment_found = false;
 		}
+
+		/* Advance line number whenever we reach eol */
+		if (next_line == NIL)
+			line_number++;
 	}
+
+	return lines;
 }
 
 
 /*
- * Free memory used by lines/tokens
+ * Free memory used by lines/tokens (ie, structure built by tokenize_file)
  */
-static void free_lines(List **lines)
+static void
+free_lines(List **lines)
 {
 	if (*lines)
 	{
@@ -163,26 +176,32 @@ static void free_lines(List **lines)
 
 		foreach(line, *lines)
 		{
-			foreach(token,lfirst(line))
+			List   *ln = lfirst(line);
+
+			/* free the pstrdup'd tokens (don't try it on the line number) */
+			foreach(token, lnext(ln))
 				pfree(lfirst(token));
-			freeList(lfirst(line));
+			/* free the sublist structure itself */
+			freeList(ln);
 		}
+		/* free the list structure itself */
 		freeList(*lines);
-		*lines = NULL;
+		/* clear the static variable */
+		*lines = NIL;
 	}
 }
 
 
 /*
- *  Read from file FILE the rest of a host record, after the mask field,
+ *  Scan the rest of a host record (after the mask field)
  *  and return the interpretation of it as *userauth_p, auth_arg, and
- *  *error_p.
+ *  *error_p.  line points to the next token of the line.
  */
 static void
 parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
 				bool *error_p)
 {
-	char		*token = NULL;
+	char		*token;
 
 	if (!line)
 		*error_p = true;
@@ -206,17 +225,17 @@ parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
 			*userauth_p = uaCrypt;
 		else
 			*error_p = true;
+		line = lnext(line);
 	}
 
 	if (!*error_p)
 	{
 		/* Get the authentication argument token, if any */
-		line = lnext(line);
 		if (!line)
 			auth_arg[0] = '\0';
 		else
 		{
-			StrNCpy(auth_arg, token, MAX_AUTH_ARG - 1);
+			StrNCpy(auth_arg, lfirst(line), MAX_AUTH_ARG - 1);
 			/* If there is more on the line, it is an error */
 			if (lnext(line))
 				*error_p = true;
@@ -226,24 +245,29 @@ parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
 
 
 /*
- *  Process the non-comment lines in the config file.
+ *  Process one line from the hba config file.
  *
- *  See if it applies to a connection to a host with IP address "*raddr"
- *  to a database named "*database".	If so, return *found_p true
- *  and *userauth_p and *auth_arg as the values from the entry.
+ *  See if it applies to a connection from a host with IP address port->raddr
+ *  to a database named port->database.  If so, return *found_p true
+ *  and fill in the auth arguments into the appropriate port fields.
  *  If not, leave *found_p as it was.  If the record has a syntax error,
- *  return *error_p true, after issuing a message to stderr.	If no error,
+ *  return *error_p true, after issuing a message to stderr.  If no error,
  *  leave *error_p as it was.
  */
 static void
 parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 {
-	char		*db;
+	int			line_number;
 	char		*token;
+	char		*db;
 
 	Assert(line != NIL);
-	token = lfirst(line);
+	line_number = lfirsti(line);
+	line = lnext(line);
+	Assert(line != NIL);
+
 	/* Check the record type. */
+	token = lfirst(line);
 	if (strcmp(token, "local") == 0)
 	{
 		/* Get the database. */
@@ -252,16 +276,16 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 		db = lfirst(line);
 
+		/* Read the rest of the line. */
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
-		/* Read the rest of the line. */
 		parse_hba_auth(line, &port->auth_method, port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 
 		/*
-		 * For now, disallow methods that need AF_INET sockets to work.
+		 * Disallow auth methods that need AF_INET sockets to work.
 		 */
 		if (!*error_p &&
 			(port->auth_method == uaIdent ||
@@ -270,11 +294,13 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 
 		/*
-		 * If this record isn't for our database, or this is the wrong
-		 * sort of connection, ignore it.
+		 * If this record doesn't match the parameters of the connection
+		 * attempt, ignore it.
 		 */
-		if ((strcmp(db, port->database) != 0 && strcmp(db, "all") != 0 &&
-			 (strcmp(db, "sameuser") != 0 || strcmp(port->database, port->user) != 0)) ||
+		if ((strcmp(db, port->database) != 0 &&
+			 strcmp(db, "all") != 0 &&
+			 (strcmp(db, "sameuser") != 0 ||
+			  strcmp(port->database, port->user) != 0)) ||
 			port->raddr.sa.sa_family != AF_UNIX)
 			return;
 	}
@@ -311,8 +337,6 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (!line)
 			goto hba_syntax;
 		token = lfirst(line);
-
-		/* Remember the IP address field and go get mask field. */
 		if (!inet_aton(token, &file_ip_addr))
 			goto hba_syntax;
 
@@ -321,14 +345,10 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (!line)
 			goto hba_syntax;
 		token = lfirst(line);
-
 		if (!inet_aton(token, &mask))
 			goto hba_syntax;
 
-		/*
-		 * This is the record we're looking for.  Read the rest of the
-		 * info from it.
-		 */
+		/* Read the rest of the line. */
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
@@ -337,13 +357,15 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 
 		/*
-		 * If this record isn't for our database, or this is the wrong
-		 * sort of connection, ignore it.
+		 * If this record doesn't match the parameters of the connection
+		 * attempt, ignore it.
 		 */
-		if ((strcmp(db, port->database) != 0 && strcmp(db, "all") != 0 &&
-			 (strcmp(db, "sameuser") != 0 || strcmp(port->database, port->user) != 0)) ||
+		if ((strcmp(db, port->database) != 0 &&
+			 strcmp(db, "all") != 0 &&
+			 (strcmp(db, "sameuser") != 0 ||
+			  strcmp(port->database, port->user) != 0)) ||
 			port->raddr.sa.sa_family != AF_INET ||
-			((file_ip_addr.s_addr ^ port->raddr.in.sin_addr.s_addr) & mask.s_addr) != 0x0000)
+			((file_ip_addr.s_addr ^ port->raddr.in.sin_addr.s_addr) & mask.s_addr) != 0)
 			return;
 	}
 	else
@@ -355,7 +377,9 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 
 hba_syntax:
 	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "parse_hba: invalid syntax in pg_hba.conf file\n");
+			 "parse_hba: invalid syntax in pg_hba.conf file at line %d, token \"%s\"\n",
+			 line_number,
+			 line ? (const char *) lfirst(line) : "(end of line)");
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
 
@@ -365,14 +389,15 @@ hba_syntax:
 
 
 /*
- *  Process the hba file line by line.
+ *  Scan the (pre-parsed) hba file line by line, looking for a match
+ *	to the port's connection request.
  */
 static bool
 check_hba(hbaPort *port)
 {
-	List 	*line;
 	bool	found_entry = false;
 	bool	error = false;
+	List 	*line;
 
 	foreach (line, hba_lines)
 	{
@@ -401,9 +426,8 @@ check_hba(hbaPort *port)
  * system.
  */
 static void
-load_hba()
+load_hba(void)
 {
-
 	int			fd,
 				bufsize;
 	FILE	   *file;			/* The config file we have to read */
@@ -454,7 +478,7 @@ load_hba()
 		}
 		else
 		{
-			tokenize_file(file, &hba_lines);
+			hba_lines = tokenize_file(file);
 			FreeFile(file);
 		}
 		pfree(conf_file);
@@ -464,60 +488,78 @@ load_hba()
 
 
 /*
+ *	Process one line from the ident config file.
+ *
  *  Take the line and compare it to the needed map, pg_user and ident_user.
+ *	*found_p and *error_p are set according to our results.
  */
 static void
 parse_ident_usermap(List *line, const char *usermap_name, const char *pg_user,
-				 const char *ident_user, bool *found_p, bool *error_p)
+					const char *ident_user, bool *found_p, bool *error_p)
 {
+	int			line_number;
 	char		*token;
 	char		*file_map;
 	char		*file_pguser;
 	char		*file_ident_user;
 
-	*error_p = false;
 	*found_p = false;
+	*error_p = false;
 
-	/* A token read from the file */
 	Assert(line != NIL);
+	line_number = lfirsti(line);
+	line = lnext(line);
+	Assert(line != NIL);
+
+	/* Get the map token (must exist) */
 	token = lfirst(line);
 	file_map = token;
 
+	/* Get the ident user token (must be provided) */
 	line = lnext(line);
 	if (!line)
 		goto ident_syntax;
 	token = lfirst(line);
-	if (token[0] != '\0')
-	{
-		file_ident_user = token;
-		line = lnext(line);
-		if (!line)
-			goto ident_syntax;
-		token = lfirst(line);
-		if (token[0] != '\0')
-		{
-			file_pguser = token;
-			if (strcmp(file_map, usermap_name) == 0 &&
-				strcmp(file_pguser, pg_user) == 0 &&
-				strcmp(file_ident_user, ident_user) == 0)
-				*found_p = true;
-		}
-	}
+	file_ident_user = token;
 
+	/* Get the PG username token */
+	line = lnext(line);
+	if (!line)
+		goto ident_syntax;
+	token = lfirst(line);
+	file_pguser = token;
+
+	/* Match? */
+	if (strcmp(file_map, usermap_name) == 0 &&
+		strcmp(file_pguser, pg_user) == 0 &&
+		strcmp(file_ident_user, ident_user) == 0)
+		*found_p = true;
 	return;
 
 ident_syntax:
 	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "parse_ident_usermap: invalid syntax in pg_ident.conf file\n");
+			 "parse_ident_usermap: invalid syntax in pg_ident.conf file at line %d, token \"%s\"\n",
+			 line_number,
+			 line ? (const char *) lfirst(line) : "(end of line)");
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
+
 	*error_p = true;
 	return;
 }
 
 
 /*
- *  Process the ident usermap file line by line.
+ *  Scan the (pre-parsed) ident usermap file line by line, looking for a match
+ *
+ *  See if the user with ident username "ident_user" is allowed to act
+ *  as Postgres user "pguser" according to usermap "usermap_name".
+ *
+ *  Special case: For usermap "sameuser", don't look in the usermap
+ *  file.  That's an implied map where "pguser" must be identical to
+ *  "ident_user" in order to be authorized.
+ *
+ *  Iff authorized, return true.
  */
 static bool
 check_ident_usermap(const char *usermap_name,
@@ -530,7 +572,7 @@ check_ident_usermap(const char *usermap_name,
 	if (usermap_name[0] == '\0')
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			"load_ident_usermap: hba configuration file does not "
+			"check_ident_usermap: hba configuration file does not "
 			"have the usermap field filled in in the entry that pertains "
 			"to this connection.  That field is essential for Ident-based "
 			"authentication.\n");
@@ -560,18 +602,10 @@ check_ident_usermap(const char *usermap_name,
 
 
 /*
- *  See if the user with ident username "ident_user" is allowed to act
- *  as Postgres user "pguser" according to usermap "usermap_name".   Look
- *  it up in the usermap file.
- *
- *  Special case: For usermap "sameuser", don't look in the usermap
- *  file.  That's an implied map where "pguser" must be identical to
- *  "ident_user" in order to be authorized.
- *
- *  Iff authorized, return *checks_out_p == true.
+ * Read the ident config file and create a List of Lists of tokens in the file.
  */
 static void
-load_ident()
+load_ident(void)
 {
 	FILE	   *file;		/* The map file we have to read */
 	char	   *map_file;	/* The name of the map file we have to
@@ -591,14 +625,14 @@ load_ident()
 	{
 		/* The open of the map file failed.  */
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			"load_ident_usermap: Unable to open usermap file \"%s\": %s\n",
-			map_file, strerror(errno));
+				 "load_ident: Unable to open usermap file \"%s\": %s\n",
+				 map_file, strerror(errno));
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 	}
 	else
 	{
-		tokenize_file(file, &ident_lines);
+		ident_lines = tokenize_file(file);
 		FreeFile(file);
 	}
 	pfree(map_file);
@@ -607,15 +641,15 @@ load_ident()
 
 /*
  *  Parse the string "*ident_response" as a response from a query to an Ident
- *  server.  If it's a normal response indicating a username, return
- *  *error_p == false and the username as *ident_user.  If it's anything
- *  else, return *error_p == true and *ident_user undefined.
+ *  server.  If it's a normal response indicating a username, return true
+ *  and store the username at *ident_user.  If it's anything else,
+ *	return false.
  */
 static bool
 interpret_ident_response(char *ident_response,
 						 char *ident_user)
 {
-	char	   *cursor = ident_response;/* Cursor into *ident_response */
+	char	   *cursor = ident_response; /* Cursor into *ident_response */
 
 	/*
 	 * Ident's response, in the telnet tradition, should end in crlf
@@ -693,11 +727,10 @@ interpret_ident_response(char *ident_response,
  *  owns the tcp connection from his port "remote_port" to port
  *  "local_port_addr" on host "local_ip_addr".  Return the username the
  *  ident server gives as "*ident_user".
-
+ *
  *  IP addresses and port numbers are in network byte order.
-
- *  But iff we're unable to get the information from ident, return
- *  false.
+ *
+ *  But iff we're unable to get the information from ident, return false.
  */
 static int
 ident(const struct in_addr remote_ip_addr,
@@ -845,8 +878,9 @@ authident(struct sockaddr_in *raddr, struct sockaddr_in *laddr,
 
 /*
  *  Determine what authentication method should be used when accessing database
- *  "database" from frontend "raddr", user "user".  Return the method,
- *  an optional argument, and STATUS_OK.
+ *  "database" from frontend "raddr", user "user".  Return the method and
+ *  an optional argument (stored in fields of *port), and STATUS_OK.
+ *
  *  Note that STATUS_ERROR indicates a problem with the hba config file.
  *  If the file is OK but does not contain any entry matching the request,
  *  we return STATUS_OK and method = uaReject.
@@ -854,7 +888,6 @@ authident(struct sockaddr_in *raddr, struct sockaddr_in *laddr,
 int
 hba_getauthmethod(hbaPort *port)
 {
-
 	if (check_hba(port))
 		return STATUS_OK;
 	else
@@ -862,9 +895,10 @@ hba_getauthmethod(hbaPort *port)
 }
 
 /*
- * Clear tokenized file contents and force reload on next use.
+ * Clear and reload tokenized file contents.
  */
-void load_hba_and_ident(void)
+void
+load_hba_and_ident(void)
 {
 	load_hba();
 	load_ident();
@@ -874,6 +908,7 @@ void load_hba_and_ident(void)
 /* Character set stuff.  Not sure it really belongs in this file. */
 
 #ifdef CYR_RECODE
+
 #define CHARSET_FILE "charset.conf"
 #define MAX_CHARSETS   10
 #define KEY_HOST	   1
@@ -1072,7 +1107,5 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 		pfree((struct CharsetItem *) ChArray[i]);
 	}
 }
-#endif
 
-
-
+#endif /* CYR_RECODE */

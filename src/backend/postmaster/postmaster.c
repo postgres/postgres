@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.232 2001/07/30 14:50:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.233 2001/07/31 22:55:45 tgl Exp $
  *
  * NOTES
  *
@@ -805,11 +805,11 @@ ServerLoop(void)
 				later;
 	struct timezone tz;
 
+	load_hba_and_ident();
+
 	gettimeofday(&now, &tz);
 
 	nSockets = initMasks(&readmask, &writemask);
-
-	load_hba_and_ident();
 
 	for (;;)
 	{
@@ -876,8 +876,8 @@ ServerLoop(void)
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
-			load_hba_and_ident();
 			ProcessConfigFile(PGC_SIGHUP);
+			load_hba_and_ident();
 		}
 
 		/*
@@ -1902,19 +1902,24 @@ DoBackend(Port *port)
 	/* Close the postmaster's other sockets */
 	ClosePostmasterPorts();
 
-	SetProcessingMode(InitProcessing);
-
 	/* Save port etc. for ps status */
 	MyProcPort = port;
 
 	/* Reset MyProcPid to new backend's pid */
 	MyProcPid = getpid();
 
-	whereToSendOutput = Remote;
+	whereToSendOutput = Remote;	/* XXX probably doesn't belong here */
 
+	/*
+	 * Receive the startup packet (which might turn out to be a cancel
+	 * request packet); then perform client authentication.
+	 */
 	status = ProcessStartupPacket(port, false);
+
 	if (status == 127)
 		return 0;				/* cancel request processed */
+
+	ClientAuthentication(MyProcPort); /* might not return, if failure */
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
@@ -1990,7 +1995,18 @@ DoBackend(Port *port)
 		av[ac++] = "-o";
 		av[ac++] = ttybuf;
 	}
+
 	av[ac] = (char *) NULL;
+
+	/*
+	 * Release postmaster's working memory context so that backend can
+	 * recycle the space.  Note this does not trash *MyProcPort, because
+	 * ConnCreate() allocated that space with malloc() ... else we'd need
+	 * to copy the Port data here.
+	 */
+	MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContextDelete(PostmasterContext);
+	PostmasterContext = NULL;
 
 	/*
 	 * Debug: print arguments being passed to backend

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.228 2001/07/30 14:50:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.229 2001/07/31 22:55:45 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -45,7 +45,6 @@
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
-#include "libpq/auth.h"
 #include "nodes/print.h"
 #include "optimizer/cost.h"
 #include "optimizer/planner.h"
@@ -1144,26 +1143,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (IsUnderPostmaster)
+	if (!IsUnderPostmaster)
 	{
-		MemoryContextSwitchTo(TopMemoryContext);
-		ClientAuthentication(MyProcPort); /* might not return */
-		/*
-		 * Release postmaster's working memory context so that backend can
-		 * recycle the space.  Note this does not trash *MyProcPort, because
-		 * ConnCreate() allocated that space with malloc() ... else we'd need
-		 * to copy the Port data here.  We delete it here because the
-		 * authorization file tokens are stored in this context.
-		 */
-		MemoryContextDelete(PostmasterContext);
-		PostmasterContext = NULL;
-	}
-	else
-	{
-		SetProcessingMode(InitProcessing);
 		EnableExceptionHandling(true);
 		MemoryContextInit();
 	}
+
+	SetProcessingMode(InitProcessing);
 
 	/*
 	 * Set default values for command-line options.
@@ -1725,7 +1711,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.228 $ $Date: 2001/07/30 14:50:24 $\n");
+		puts("$Revision: 1.229 $ $Date: 2001/07/31 22:55:45 $\n");
 	}
 
 	/*
