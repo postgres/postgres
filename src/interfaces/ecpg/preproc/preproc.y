@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.287 2004/06/17 11:52:25 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.288 2004/06/20 10:45:47 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -382,7 +382,7 @@ add_additional_variables(char *name, bool insert)
         STABLE START STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P
         SUBSTRING SYSID
 
-        TABLE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP TO TOAST
+        TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP TO TOAST
         TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P TRUNCATE TRUSTED TYPE_P
         UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL UPDATE USAGE
         USER USING
@@ -451,7 +451,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	Typename SimpleTypename Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_timezone opt_interval table_ref fetch_direction
-%type  <str>	row_descriptor ConstDatetime AlterDomainStmt AlterSeqStmt
+%type  <str>	ConstDatetime AlterDomainStmt AlterSeqStmt
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
 %type  <str>	sortby qualified_name_list name_list ColId_or_Sconst
@@ -471,13 +471,13 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
-%type  <str>	RuleStmt opt_column oper_argtypes NumConst
+%type  <str>	RuleStmt opt_column oper_argtypes NumConst var_name
 %type  <str>	MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>	RemoveAggrStmt opt_procedural select_no_parens CreateCastStmt
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_Trusted opt_lancompiler
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>	VariableResetStmt AlterTableStmt from_list overlay_list
-%type  <str>	user_list OptUserList OptUserElem relation_name
+%type  <str>	user_list OptUserList OptUserElem relation_name OptTableSpace
 %type  <str>	CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>	OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
@@ -506,13 +506,13 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	select_limit opt_for_update_clause CheckPointStmt
 %type  <str>	OptSchemaName OptSchemaEltList schema_stmt opt_drop_behavior
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
-%type  <str>	columnref dotted_name function_name insert_target_el
+%type  <str>	columnref function_name insert_target_el
 %type  <str>	insert_target_list insert_column_item DropRuleStmt
 %type  <str>	createfunc_opt_item set_rest var_list_or_default
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
 %type  <str>	DropUserStmt copy_from copy_opt_list copy_opt_item
 %type  <str>	opt_oids TableLikeClause key_action opt_definition
-%type  <str>	cast_context row r_expr qual_Op qual_all_Op opt_default
+%type  <str>	cast_context row qual_Op qual_all_Op opt_default
 %type  <str>	CreateConversionStmt any_operator opclass_item_list
 %type  <str>	iso_level type_list CharacterWithLength ConstCharacter
 %type  <str>	CharacterWithoutLength BitWithLength BitWithoutLength
@@ -542,7 +542,8 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
 %type  <str>	ecpg_into_using prepared_name struct_union_type_with_symbol
 %type  <str>	ECPGunreserved ECPGunreserved_interval cvariable
-%type  <str>	AlterDatabaseOwnerStmt
+%type  <str>	AlterDbOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
+%type  <str>	DropTableSpaceStmt indirection indirection_el
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -593,7 +594,7 @@ opt_at: AT connection_target
 		};
 
 stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
-		| AlterDatabaseOwnerStmt	{ output_statement($1, 0, connection); }
+		| AlterDbOwnerStmt	{ output_statement($1, 0, connection); }
 		| AlterDomainStmt	{ output_statement($1, 0, connection); }
 		| AlterGroupStmt	{ output_statement($1, 0, connection); }
 		| AlterSeqStmt		{ output_statement($1, 0, connection); }
@@ -641,6 +642,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		| CreateSeqStmt		{ output_statement($1, 0, connection); }
 		| CreateStmt		{ output_statement($1, 0, connection); }
 		| CreateTrigStmt	{ output_statement($1, 0, connection); }
+		| CreateTableSpaceStmt	{ output_statement($1, 0, connection); }
 		| CreateUserStmt	{ output_statement($1, 0, connection); }
 		| CreatedbStmt		{ output_statement($1, 0, connection); }
 		/*| DeallocateStmt	{ output_statement($1, 0, connection); }*/
@@ -654,6 +656,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		| DropPLangStmt		{ output_statement($1, 0, connection); }
 		| DropRuleStmt		{ output_statement($1, 0, connection); }
 		| DropStmt		{ output_statement($1, 0, connection); }
+		| DropTableSpaceStmt	{ output_statement($1, 0, connection); }
 		| DropTrigStmt		{ output_statement($1, 0, connection); }
 		| DropUserStmt		{ output_statement($1, 0, connection); }
 		| DropdbStmt		{ output_statement($1, 0, connection); }
@@ -969,10 +972,10 @@ DropGroupStmt: DROP GROUP_P UserId
  *
  *****************************************************************************/
 
-CreateSchemaStmt:  CREATE SCHEMA UserId OptSchemaName AUTHORIZATION UserId OptSchemaEltList
-			{ $$ = cat_str(6, make_str("create schema"), $3, $4, make_str("authorization"), $6, $7); }
-		| CREATE SCHEMA ColId OptSchemaEltList
-			{ $$ = cat_str(3, make_str("create schema"), $3, $4); }
+CreateSchemaStmt:  CREATE SCHEMA OptSchemaName AUTHORIZATION UserId OptTableSpace OptSchemaEltList
+			{ $$ = cat_str(6, make_str("create schema"), $3, make_str("authorization"), $5, $6, $7); }
+		| CREATE SCHEMA ColId OptTableSpace OptSchemaEltList
+			{ $$ = cat_str(4, make_str("create schema"), $3, $4, $5); }
 		;
 
 OptSchemaName: ColId		{ $$ = $1; }
@@ -1013,9 +1016,9 @@ VariableSetStmt:  SET set_rest
 			{ $$ = cat2_str(make_str("set session"), $3 ); }
 		;
 
-set_rest:	ColId TO var_list_or_default
+set_rest:	var_name TO var_list_or_default
 			{ $$ = cat_str(3, $1, make_str("to"), $3); }
-		| ColId "=" var_list_or_default
+		| var_name "=" var_list_or_default
                         { $$ = cat_str(3, $1, make_str("="), $3); }
 		| TIME ZONE zone_value
 			{ $$ = cat2_str(make_str("time zone"), $3); }
@@ -1030,6 +1033,11 @@ set_rest:	ColId TO var_list_or_default
 		| SESSION AUTHORIZATION DEFAULT
 			{ $$ = make_str("session authorization default"); }
 		;
+
+var_name:	ColId			{ $$ = $1; }
+		| var_name '.' ColId	{ $$ = cat_str(3, $1, make_str("."), $3); }
+		;
+		
 
 var_list_or_default:  var_list
 			{ $$ = $1; }
@@ -1192,6 +1200,9 @@ alter_table_cmd:
 /* ALTER TABLE <name> CLUSTER ON <indexname> */
 		| CLUSTER ON name
 			{ $$ = cat_str(2, make_str("cluster on"), $3); }
+/* ALTER TABLE <name> SET WITHOUT CLUSTER */
+		| SET WITHOUT CLUSTER
+			{ $$ = make_str("set without cluster"); }
 		;
 
 alter_column_default:
@@ -1300,11 +1311,11 @@ opt_using:	USING		{ $$ = make_str("using"); }
  *****************************************************************************/
 
 CreateStmt:  CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-				OptInherit OptWithOids OnCommitOption
-			{ $$ = cat_str(10, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8, $9, $10); }
+				OptInherit OptWithOids OnCommitOption OptTableSpace
+			{ $$ = cat_str(11, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8, $9, $10, $11); }
 		| CREATE OptTemp TABLE qualified_name OF qualified_name
-			'(' OptTableElementList ')' OptWithOids OnCommitOption
-			{ $$ = cat_str(11, make_str("create"), $2, make_str("table"), $4, make_str("of"), $6, make_str("("), $8, make_str(")"), $10, $11); }
+			'(' OptTableElementList ')' OptWithOids OnCommitOption OptTableSpace
+			{ $$ = cat_str(12, make_str("create"), $2, make_str("table"), $4, make_str("of"), $6, make_str("("), $8, make_str(")"), $10, $11, $12); }
 		;
 
 /*
@@ -1494,6 +1505,9 @@ OnCommitOption:   ON COMMIT DROP		{ $$ = make_str("on commit drop"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
+OptTableSpace:  TABLESPACE name	{ $$ = cat2_str(make_str("tablespace"), $2); }
+		| /*EMPTY*/	{ $$ = EMPTY; }
+		;
 
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
@@ -1547,8 +1561,8 @@ CreateAsElement:  ColId { $$ = $1; }
  *
  *****************************************************************************/
 
-CreateSeqStmt:	CREATE OptTemp SEQUENCE qualified_name OptSeqList
-			{ $$ = cat_str(4, make_str("create"), $2, make_str("sequence"), $4, $5); }
+CreateSeqStmt:	CREATE OptTemp SEQUENCE qualified_name OptSeqList OptTableSpace
+			{ $$ = cat_str(5, make_str("create"), $2, make_str("sequence"), $4, $5, $6); }
 		;
 
 AlterSeqStmt: ALTER SEQUENCE qualified_name OptSeqList
@@ -1604,12 +1618,10 @@ opt_Trusted:	TRUSTED { $$ = make_str("trusted"); }
 
 /* This ought to be just func_name, but that causes reduce/reduce conflicts
  * (CREATE LANGUAGE is the only place where func_name isn't followed by '(').
- * Work around by using name and dotted_name separately.
+ * Work around by using simple names instead.
  */
-handler_name: name
-                               { $$ = $1; }
-	| dotted_name
-                               { $$ = $1; /* XXX changing soon */ }
+handler_name: name	{ $$ = $1; }
+	| name attrs    { $$ = cat2_str($1, $2); }
                ;
 
 opt_lancompiler: LANCOMPILER StringConst
@@ -1625,6 +1637,35 @@ DropPLangStmt:	DROP opt_procedural LANGUAGE StringConst opt_drop_behavior
 opt_procedural: PROCEDURAL	{ $$ = make_str("prcedural"); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
+
+/*****************************************************************************
+ *
+ *             QUERY:
+ *             CREATE TABLESPACE tablespace LOCATION '/path/to/tablespace/'
+ *
+ *****************************************************************************/
+
+CreateTableSpaceStmt: CREATE TABLESPACE name OptTableSpaceOwner LOCATION Sconst
+			{ $$ = cat_str(5,make_str("create tablespace"), $3, $4, make_str("location"), $6); }
+		;
+
+OptTableSpaceOwner: OWNER name	{ $$ = cat2_str(make_str("owner"), $2); }
+		| /*EMPTY*/ 	{ $$ = EMPTY; }
+		;
+
+/*****************************************************************************
+ *
+ *             QUERY :
+ *                             DROP TABLESPACE <tablespace>
+ *
+ *             No need for drop behaviour as we cannot implement dependencies for
+ *             objects in other databases; we can only support RESTRICT.
+ *
+ ****************************************************************************/
+
+
+DropTableSpaceStmt: DROP TABLESPACE name	{ $$ = cat2_str(make_str("drop tablespace"), $3); };
+
 
 /*****************************************************************************
  *
@@ -1851,11 +1892,18 @@ any_name_list:  any_name
                        { $$ = cat_str(3, $1, make_str(","), $3); }
                ;
 
-any_name: ColId
-                       { $$ = $1; }
-               | dotted_name
-                       { $$ = $1; }
-                ;
+any_name: ColId        { $$ = $1; }
+	| ColId attrs  { $$ = cat2_str($1, $2); }
+        ;
+
+/*
+ * The slightly convoluted way of writing this production avoids reduce/reduce
+ * errors against indirection_el.
+ */
+attrs: '.' attr_name		{ $$ = cat2_str(make_str("."), $2); }
+	| '.' attr_name attrs	{ $$ = cat_str(3, make_str("."), $2, $3); }
+	;
+
 /*****************************************************************************
  *
  *			   QUERY:
@@ -2041,6 +2089,8 @@ privilege_target: qualified_name_list
 			{ $$ = cat2_str(make_str("language") , $2); }
 		| SCHEMA name_list
 			{ $$ = cat2_str(make_str("schema") , $2); }
+		| TABLESPACE name_list
+			{ $$ = cat2_str(make_str("tablespace") , $2); }
 		;
 
 grantee_list: grantee
@@ -2082,13 +2132,13 @@ function_with_argtypes: func_name func_args { $$ = cat2_str($1, $2); };
  *		QUERY:
  *				create index <indexname> on <relname>
  *				  [ using <access> ] "(" ( <col> | using <opclass> ] )+ ")"
- *				  [ where <predicate> ]
+ *				  [ tablespace <tablespacename> ] [ where <predicate> ]
  *
  *****************************************************************************/
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
-				access_method_clause '(' index_params ')' where_clause
-			{ $$ = cat_str(11, make_str("create"), $2, make_str("index"), $4, make_str("on"), $6, $7, make_str("("), $9, make_str(")"), $11); }
+				access_method_clause '(' index_params ')' OptTableSpace where_clause
+			{ $$ = cat_str(12, make_str("create"), $2, make_str("index"), $4, make_str("on"), $6, $7, make_str("("), $9, make_str(")"), $11, $12); }
 		;
 
 index_opt_unique:  UNIQUE	{ $$ = make_str("unique"); }
@@ -2505,7 +2555,11 @@ createdb_opt_list:	createdb_opt_item
 			{ $$ = cat2_str($1, $2); }
 		;
 
-createdb_opt_item:	LOCATION opt_equal StringConst
+createdb_opt_item:	TABLESPACE opt_equal name
+			{ $$ = cat_str(3,make_str("tablespace"), $2, $3); }
+		| TABLESPACE opt_equal DEFAULT
+			{ $$ = cat_str(3, make_str("tablespace"), $2, make_str("default")); }
+		| LOCATION opt_equal StringConst
 			{ $$ = cat_str(3,make_str("location"), $2, $3); }
 		| LOCATION opt_equal DEFAULT
 			{ $$ = cat_str(3, make_str("location"), $2, make_str("default")); }
@@ -2535,7 +2589,7 @@ opt_equal: '='					{ $$ = make_str("="); }
  *
  *****************************************************************************/
 
-AlterDatabaseOwnerStmt: ALTER DATABASE database_name OWNER TO UserId
+AlterDbOwnerStmt: ALTER DATABASE database_name OWNER TO UserId
 		      	{ $$ = cat_str(4, make_str("alter database"), $3, make_str("owner to"), $6); }
 AlterDatabaseSetStmt: ALTER DATABASE database_name SET set_rest
 			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("set"), $5); }
@@ -3413,80 +3467,6 @@ opt_interval:  YEAR_P			{ $$ = make_str("year"); }
  *	expression grammar
  *
  *****************************************************************************/
-
-/* Expressions using row descriptors
- * Define row_descriptor to allow yacc to break the reduce/reduce conflict
- *	with singleton expressions.
- */
-r_expr: row IN_P select_with_parens
-			{ $$ = cat_str(3, $1, make_str("in"), $3); }
-		| row NOT IN_P select_with_parens
-			{ $$ = cat_str(3, $1, make_str("not in"), $4); }
-		| row subquery_Op sub_type select_with_parens %prec Op
-			{ $$ = cat_str(4, $1, $2, $3, $4); }
-		| row subquery_Op select_with_parens %prec Op
-			{ $$ = cat_str(3, $1, $2, $3); }
-		| row subquery_Op row %prec Op
-			{ $$ = cat_str(3, $1, $2, $3); }
-		| row IS NULL_P
-			{ $$ = cat2_str($1, make_str("is null")); }
-		| row IS NOT NULL_P
-		        { $$ = cat2_str($1, make_str("is not null")); }
-		| row OVERLAPS row
-			{ $$ = cat_str(3, $1, make_str("overlaps"), $3); }
-		| row IS DISTINCT FROM row %prec IS
-		        { $$ = cat_str(3, $1, make_str("is distinct from"), $5); }
-		;
-
-row: ROW '(' row_descriptor ')'
-		{ $$ = cat_str(3, make_str("row ("), $3, make_str(")")); }
-	| ROW '(' a_expr ')'
-	        { $$ = cat_str(3, make_str("row ("), $3, make_str(")")); }
-	| ROW '(' ')'
-		{ $$ = make_str("row()"); }
-	| '(' row_descriptor ')'
-                { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
-	;
-
-row_descriptor:  expr_list ',' a_expr
-			{ $$ = cat_str(3, $1, make_str(","), $3); }
-		;
-
-sub_type:  ANY					{ $$ = make_str("ANY"); }
-		| SOME					{ $$ = make_str("SOME"); }
-		| ALL					{ $$ = make_str("ALL"); }
-			  ;
-
-all_Op:  Op 				{ $$ = $1; }
-	| MathOp			{ $$ = $1; }
-	;
-
-MathOp: '+'				{ $$ = make_str("+"); }
-		| '-'			{ $$ = make_str("-"); }
-		| '*'			{ $$ = make_str("*"); }
-		| '%'			{ $$ = make_str("%"); }
-		| '^'			{ $$ = make_str("^"); }
-		| '/'			{ $$ = make_str("/"); }
-		| '<'			{ $$ = make_str("<"); }
-		| '>'			{ $$ = make_str(">"); }
-		| '='			{ $$ = make_str("="); }
-		;
-
-qual_Op:  Op 				{ $$ = $1; }
-		| OPERATOR '(' any_operator ')'	{ $$ = cat_str(3, make_str("operator ("), $3, make_str(")")); }
-		;
-
-qual_all_Op:  all_Op 				{ $$ = $1; }
-		| OPERATOR '(' any_operator ')'	{ $$ = cat_str(3, make_str("operator ("), $3, make_str(")")); }
-		;
-
-subquery_Op:  all_Op 				{ $$ = $1; }
-		| OPERATOR '(' any_operator ')'	{ $$ = cat_str(3, make_str("operator ("), $3, make_str(")")); }
-		| LIKE 				{ $$ = make_str("like"); }
-		| NOT LIKE 			{ $$ = make_str("not like"); }
-		| ILIKE 			{ $$ = make_str("ilike"); }
-		| NOT ILIKE 			{ $$ = make_str("not ilike"); }
-		;
 		
 /* General expressions
  * This is the heart of the expression syntax.
@@ -3634,8 +3614,6 @@ a_expr:  c_expr
 			{ $$ = cat_str(6, $1, $2, $3, make_str("("), $5, make_str(")")); }
 		| UNIQUE select_with_parens %prec Op
 			{ $$ = cat2_str(make_str("unique"), $2); }
-		| r_expr
-			{ $$ = $1; }
 		;
 
 /* Restricted expressions
@@ -3704,10 +3682,8 @@ c_expr: columnref
 			{ $$ = $1;	}
 		| AexprConst
 			{ $$ = $1;	}
-		| PARAM attrs opt_indirection
-			{ $$ = cat_str(3, make_str("param"), $2, $3); }
-		| '(' a_expr ')' attrs opt_indirection
-			{ $$ = cat_str(5, make_str("("), $2, make_str(")"), $4, $5); }
+		| PARAM opt_indirection
+			{ $$ = cat2_str(make_str("param"), $2); }
 		| '(' a_expr ')' opt_indirection
 			{ $$ = cat_str(4, make_str("("), $2, make_str(")"), $4); }
 		| case_expr
@@ -3771,17 +3747,52 @@ c_expr: columnref
 			{ $$ = cat2_str(make_str("array"), $2); }
 		| ARRAY array_expr
 			{ $$ = cat2_str(make_str("array"), $2); }
+		| row
+			{ $$ = $1; }
 		;
-/*
- * This used to use ecpg_expr, but since there is no shift/reduce conflict
- * anymore, we can remove ecpg_expr. - MM
- */
-opt_indirection:  '[' a_expr ']' opt_indirection
-			{ $$ = cat_str(4, make_str("["), $2, make_str("]"), $4); }
-		| '[' a_expr ':' a_expr ']' opt_indirection
-			{ $$ = cat_str(6, make_str("["), $2, make_str(":"), $4, make_str("]"), $6); }
-		| /* EMPTY */
-			{ $$ = EMPTY; }
+
+row: ROW '(' expr_list ')'
+		{ $$ = cat_str(3, make_str("row ("), $3, make_str(")")); }
+	| ROW '(' ')'
+		{ $$ = make_str("row()"); }
+	| '(' expr_list ',' a_expr ')'
+                { $$ = cat_str(5, make_str("("), $2, make_str(","), $4, make_str(")")); }
+	;
+
+sub_type:  ANY		{ $$ = make_str("ANY"); }
+	| SOME		{ $$ = make_str("SOME"); }
+	| ALL		{ $$ = make_str("ALL"); }
+	;
+
+all_Op:  Op 				{ $$ = $1; }
+	| MathOp			{ $$ = $1; }
+	;
+
+MathOp: '+'				{ $$ = make_str("+"); }
+		| '-'			{ $$ = make_str("-"); }
+		| '*'			{ $$ = make_str("*"); }
+		| '%'			{ $$ = make_str("%"); }
+		| '^'			{ $$ = make_str("^"); }
+		| '/'			{ $$ = make_str("/"); }
+		| '<'			{ $$ = make_str("<"); }
+		| '>'			{ $$ = make_str(">"); }
+		| '='			{ $$ = make_str("="); }
+		;
+
+qual_Op:  Op 				{ $$ = $1; }
+		| OPERATOR '(' any_operator ')'	{ $$ = cat_str(3, make_str("operator ("), $3, make_str(")")); }
+		;
+
+qual_all_Op:  all_Op 				{ $$ = $1; }
+		| OPERATOR '(' any_operator ')'	{ $$ = cat_str(3, make_str("operator ("), $3, make_str(")")); }
+		;
+
+subquery_Op:  all_Op 				{ $$ = $1; }
+		| OPERATOR '(' any_operator ')'	{ $$ = cat_str(3, make_str("operator ("), $3, make_str(")")); }
+		| LIKE 				{ $$ = make_str("like"); }
+		| NOT LIKE 			{ $$ = make_str("not like"); }
+		| ILIKE 			{ $$ = make_str("ilike"); }
+		| NOT ILIKE 			{ $$ = make_str("not ilike"); }
 		;
 
 expr_list:	a_expr
@@ -3918,27 +3929,29 @@ case_default:  ELSE a_expr
 		;
 
 case_arg:  a_expr			{ $$ = $1; }
-		| /*EMPTY*/			{ $$ = EMPTY; }
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
-columnref: relation_name opt_indirection
-		{ $$ = cat2_str($1, $2); }
-	| dotted_name opt_indirection
-		{ $$ = cat2_str($1, $2); }
+columnref: relation_name		{ $$ = $1; }
+	| relation_name indirection	{ $$ = cat2_str($1, $2); }
 	;
 
-dotted_name: relation_name attrs
-			{ $$ = cat2_str($1, $2); }
-		;
+indirection_el:
+	'.' attr_name			{ $$ = cat2_str(make_str("."), $2); }
+	| '.' '*'			{ $$ = make_str(".*"); }
+	| '[' a_expr ']'		{ $$ = cat_str(3, make_str("["), $2, make_str("]")); }
+	| '[' a_expr ':' a_expr ']'	{ $$ = cat_str(5, make_str("["), $2, make_str(":"), $4, make_str("]")); }
+	;
 
-attrs: '.' attr_name
-			{ $$ = cat2_str(make_str("."), $2); }
-		| '.' '*'
-			{ $$ = make_str(".*"); }
-		| '.' attr_name attrs
-			{ $$ = cat_str(3, make_str("."), $2, $3); }
-		;
+indirection:	indirection_el		{ $$ = $1; }
+	| indirection indirection_el	{ $$ = cat2_str($1, $2); }
+	;
 
+opt_indirection:
+	/*EMPTY*/				{ $$ = EMPTY; }
+	| opt_indirection indirection_el	{ $$ = cat2_str($1, $2);} 
+	;
+	
 opt_empty_parentheses: '(' ')'	{ $$ = make_str("()"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
@@ -3946,11 +3959,10 @@ opt_empty_parentheses: '(' ')'	{ $$ = make_str("()"); }
 
 /*****************************************************************************
  *
- *	target lists
+ *	target lists for SELECT, UPDATE, INSERT
  *
  *****************************************************************************/
 
-/* Target lists as found in SELECT ... and INSERT VALUES ( ... ) */
 target_list:  target_list ',' target_el
 			{ $$ = cat_str(3, $1, make_str(","), $3);  }
 		| target_el
@@ -4047,8 +4059,8 @@ insert_target_list:  insert_target_list ',' insert_target_el
 				{	$$ = $1;  }
 		;
 
-insert_target_el:  target_el	{	$$ = $1;  }
-		| DEFAULT	{	$$ = make_str("default"); }
+insert_target_el:  a_expr	{ $$ = $1;  }
+		| DEFAULT	{ $$ = make_str("default"); }
 		;
 
 
@@ -4070,8 +4082,8 @@ qualified_name_list:  qualified_name
 
 qualified_name: relation_name
 		{ $$ = $1; }
-		| dotted_name
-		{ $$ = $1; }
+		| relation_name attrs
+		{ $$ = cat2_str($1, $2); }
 		;
 
 name_list:  name
@@ -4089,18 +4101,10 @@ index_name:				ColId			{ $$ = $1; };
 
 file_name:				StringConst		{ $$ = $1; };
 
-/* func_name will soon return a List ... but not yet */
-/*
-func_name: function_name
-			{ $$ = list_make1(makeString($1)); }
-		| dotted_name
-			{ $$ = $1; }
-		;
-*/
 func_name: function_name
 			{ $$ = $1; }
-		| dotted_name
-			{ $$ = $1; }
+		| relation_name indirection
+			{ $$ = cat2_str($1, $2); }
 		;
 
 
@@ -4115,8 +4119,6 @@ AexprConst:  PosAllConst
 			{ $$ = cat_str(3, $1, $2, $3); }
 		| ConstInterval  '(' PosIntConst ')' StringConst opt_interval
 			{ $$ = cat_str(6, $1, make_str("("), $3, make_str(")"), $5, $6); }
-		| PARAM opt_indirection
-			{ $$ = cat2_str(make_str("param"), $2); }
 		| TRUE_P
 			{ $$ = make_str("true"); }
 		| FALSE_P
@@ -5898,6 +5900,7 @@ ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| STORAGE			{ $$ = make_str("storage"); }
 		| STRICT_P			{ $$ = make_str("strict"); }
 		| SYSID				{ $$ = make_str("sysid"); }
+		| TABLESPACE			{ $$ = make_str("tablespace"); }
 		| TEMP				{ $$ = make_str("temp"); }
 		| TEMPLATE			{ $$ = make_str("template"); }
 		| TEMPORARY			{ $$ = make_str("temporary"); }
