@@ -321,7 +321,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 	else
 	{
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
-		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1);
+		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize));
 
 		switch (type)
 		{
