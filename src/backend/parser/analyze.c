@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.3 1996/07/20 07:58:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.4 1996/08/06 16:27:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,6 +509,10 @@ transformCursorStmt(ParseState *pstate, CursorStmt *stmt)
     qry->sortClause = transformSortClause(stmt->orderClause,
 					  qry->targetList,
 					  qry->uniqueFlag);
+    /* fix group by clause */
+    qry->groupClause = transformGroupClause(pstate,
+                                          stmt->groupClause);
+
     qry->rtable = pstate->p_rtable;
 
     if (pstate->p_numAgg > 0)
