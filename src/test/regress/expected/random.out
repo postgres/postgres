@@ -15,11 +15,11 @@ SELECT count(*) FROM onek;
 --  have a regression test which can pass/fail
 -- - thomas 1998-08-17
 SELECT count(*) AS random INTO RANDOM_TBL
-  FROM onek WHERE oidrand(onek.oid, 10);
+  FROM onek WHERE random() < 1.0/10;
 -- select again, the count should be different
 INSERT INTO RANDOM_TBL (random)
   SELECT count(*)
-  FROM onek WHERE oidrand(onek.oid, 10);
+  FROM onek WHERE random() < 1.0/10;
 -- now test the results for randomness in the correct range
 SELECT random, count(random) FROM RANDOM_TBL
   GROUP BY random HAVING count(random) > 1;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.138 2003/02/06 20:25:31 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.139 2003/02/13 05:24:01 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -682,14 +682,15 @@ PostgreSQL documentation
        <entry><literal>round(42.4382, 2)</literal></entry>
        <entry>42.44</entry>
       </row>
-<!--
-     <row>
-      <entry><function>setseed</function>(<replaceable>new-seed</replaceable>)</entry>
-      <entry>set seed for subsequent random() calls</entry>
-      <entry><literal>setseed(0.54823)</literal></entry>
-      <entry></entry>
-     </row>
--->
+
+      <row>
+       <entry><function>setseed</function>(<type>dp</type>)</entry>
+       <entry><type>int32</type></entry>
+       <entry>set seed for subsequent random() calls</entry>
+       <entry><literal>setseed(0.54823)</literal></entry>
+       <entry>1177314959</entry>
+      </row>
+
       <row>
        <entry><function>sign</function>(<type>dp</type> or <type>numeric</type>)</entry>
        <entry>(same as input)</entry>
@@ -955,7 +956,8 @@ PostgreSQL documentation
        <entry><function>substring</function>(<parameter>string</parameter> from <replaceable>pattern</replaceable> for <replaceable>escape</replaceable>)</entry>
        <entry><type>text</type></entry>
        <entry>
-        Extract substring matching SQL regular expression
+        Extract substring matching <acronym>SQL</acronym> regular
+        expression
         <indexterm>
          <primary>substring</primary>
         </indexterm>
@@ -1168,7 +1170,7 @@ PostgreSQL documentation
        <entry><type>text</type></entry>
        <entry>
         Return the given string suitably quoted to be used as an identifier
-	in an SQL query string.
+	in an <acronym>SQL</acronym> query string.
 	Quotes are added only if necessary (i.e., if the string contains
 	non-identifier characters or would be case-folded).
 	Embedded quotes are properly doubled.
@@ -1182,7 +1184,7 @@ PostgreSQL documentation
        <entry><type>text</type></entry>
        <entry>
         Return the given string suitably quoted to be used as a literal
-	in an SQL query string.
+	in an <acronym>SQL</acronym> query string.
 	Embedded quotes and backslashes are properly doubled.
        </entry>
        <entry><literal>quote_literal('O\'Reilly')</literal></entry>
@@ -2511,14 +2513,15 @@ PostgreSQL documentation
      <function>SUBSTRING(<parameter>string</parameter> FROM
      <replaceable>pattern</replaceable> FOR
      <replaceable>escape</replaceable>)</function>, provides
-     extraction of a substring that matches a SQL99 regular expression
-     pattern.  As with <literal>SIMILAR TO</>, the specified pattern
-     must match to the entire data string, else the function fails and
-     returns null.  To indicate the part of the pattern that should be
-     returned on success, SQL99 specifies that the pattern must
-     contain two occurrences of the escape character followed by
-     double quote (<literal>"</>).  The text matching the portion of
-     the pattern between these markers is returned.
+     extraction of a substring that matches a <acronym>SQL99</acronym>
+     regular expression pattern.  As with <literal>SIMILAR TO</>, the
+     specified pattern must match to the entire data string, else the
+     function fails and returns null.  To indicate the part of the
+     pattern that should be returned on success,
+     <acronym>SQL99</acronym> specifies that the pattern must contain
+     two occurrences of the escape character followed by double quote
+     (<literal>"</>).  The text matching the portion of the pattern
+     between these markers is returned.
     </para>
 
    <para>
@@ -6025,11 +6028,11 @@ SELECT TIMESTAMP 'now';
    </table>
 
   <para>
-   For largely historical reasons, the sequence to be operated on by
-   a sequence-function call is specified by a text-string argument.
-   To achieve some compatibility with the handling of ordinary SQL
-   names, the sequence functions convert their argument to lower case
-   unless the string is double-quoted.  Thus
+   For largely historical reasons, the sequence to be operated on by a
+   sequence-function call is specified by a text-string argument.  To
+   achieve some compatibility with the handling of ordinary
+   <acronym>SQL</acronym> names, the sequence functions convert their
+   argument to lower case unless the string is double-quoted.  Thus
 <programlisting>
 nextval('foo')      <lineannotation>operates on sequence <literal>foo</literal></>
 nextval('FOO')      <lineannotation>operates on sequence <literal>foo</literal></>
@@ -6480,7 +6483,8 @@ SELECT NULLIF(value, '(none)') ...
    <para>
     The <function>current_setting</function> is used to obtain the current
     value of the <parameter>setting_name</parameter> setting, as a query
-    result. It is the equivalent to the SQL <command>SHOW</command> command.
+    result. It is the equivalent to the <acronym>SQL</acronym>
+    <command>SHOW</command> command.
     For example:
 <programlisting>
 select current_setting('DateStyle');
@@ -6497,8 +6501,8 @@ select current_setting('DateStyle');
     If <parameter>is_local</parameter> is set to <literal>true</literal>,
     the new value will only apply to the current transaction. If you want
     the new value to apply for the current session, use
-    <literal>false</literal> instead. It is the equivalent to the SQL
-    <command>SET</command> command. For example:
+    <literal>false</literal> instead. It is the equivalent to the
+    <acronym>SQL</acronym> <command>SET</command> command. For example:
 <programlisting>
 select set_config('show_statement_stats','off','f');
  set_config
