@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.1 2004/08/20 04:29:32 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.2 2004/08/20 14:56:57 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -28,7 +28,7 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable>
 where <replaceable class="PARAMETER">action</replaceable> is one of:
 
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
-    SET INDEXSPACE <replaceable class="PARAMETER">indexspace_name</replaceable>
+    SET TABLESPACE <replaceable class="PARAMETER">indexspace_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
