@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug 20 15:30:27 EDT 2004
+Last updated:		Fri Aug 20 16:07:04 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -370,8 +370,11 @@ Commands
 	o Disallow dropping of an inherited constraint
 	o Allow objects to be moved to different schemas
 	o Allow ALTER TABLESPACE to move to different directories
-	o Allow databases, schemas, and indexes to be moved to different 
-	  tablespaces
+	o Allow databases and schemas to be moved to different tablespaces
+
+	One complexity is whether moving a schema should move all existing
+	schema objects or just define the location for future object creation.
+
 	o Allow moving system tables to other tablespaces, where possible
 
 	Currently non-global system tables must be in the default database
@@ -379,9 +382,8 @@ Commands
 
 	o -Add ALTER DOMAIN, AGGREGATE, CONVERSION ... OWNER TO
 	o -Add ALTER SEQUENCE ... OWNER TO
-	o Add ALTER INDEX that works just like ALTER TABLE already does
+	o -Add ALTER INDEX that works just like ALTER TABLE already does
 	  on an index
-	o Add ALTER INDEX syntax to work like ALTER TABLE indexname
 
 * CLUSTER
 	o Automatically maintain clustering on a table
