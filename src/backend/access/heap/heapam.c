@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.148 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.149 2002/09/26 22:46:29 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1185,10 +1185,14 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		rdata[0].len = SizeOfHeapInsert;
 		rdata[0].next = &(rdata[1]);
 
-		xlhdr.t_oid = HeapTupleGetOid(tup);
 		xlhdr.t_natts = tup->t_data->t_natts;
+		xlhdr.t_infomask = tup->t_data->t_infomask;
 		xlhdr.t_hoff = tup->t_data->t_hoff;
-		xlhdr.mask = tup->t_data->t_infomask;
+		/*
+		 * note we mark rdata[1] as belonging to buffer; if XLogInsert
+		 * decides to write the whole page to the xlog, we don't need to
+		 * store xl_heap_header in the xlog.
+		 */
 		rdata[1].buffer = buffer;
 		rdata[1].data = (char *) &xlhdr;
 		rdata[1].len = SizeOfHeapHeader;
@@ -1200,7 +1204,11 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		rdata[2].len = tup->t_len - offsetof(HeapTupleHeaderData, t_bits);
 		rdata[2].next = NULL;
 
-		/* If this is the single and first tuple on page... */
+		/*
+		 * If this is the single and first tuple on page, we can reinit the
+		 * page instead of restoring the whole thing.  Set flag, and hide
+		 * buffer references from XLogInsert.
+		 */
 		if (ItemPointerGetOffsetNumber(&(tup->t_self)) == FirstOffsetNumber &&
 			PageGetMaxOffsetNumber(page) == FirstOffsetNumber)
 		{
@@ -2041,11 +2049,10 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	rdata[1].len = 0;
 	rdata[1].next = &(rdata[2]);
 
-	xlhdr.hdr.t_oid = HeapTupleGetOid(newtup);
 	xlhdr.hdr.t_natts = newtup->t_data->t_natts;
+	xlhdr.hdr.t_infomask = newtup->t_data->t_infomask;
 	xlhdr.hdr.t_hoff = newtup->t_data->t_hoff;
-	xlhdr.hdr.mask = newtup->t_data->t_infomask;
-	if (move)					/* remember xmin & xmax */
+	if (move)					/* remember xmax & xmin */
 	{
 		TransactionId xid[2];	/* xmax, xmin */
 
@@ -2060,6 +2067,10 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 			   2 * sizeof(TransactionId));
 		hsize += 2 * sizeof(TransactionId);
 	}
+	/*
+	 * As with insert records, we need not store the rdata[2] segment
+	 * if we decide to store the whole buffer instead.
+	 */
 	rdata[2].buffer = newbuf;
 	rdata[2].data = (char *) &xlhdr;
 	rdata[2].len = hsize;
@@ -2276,18 +2287,16 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup = &tbuf.hdr;
 		MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
 		/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
-		memcpy((char *) &tbuf + offsetof(HeapTupleHeaderData, t_bits),
+		memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
 			   (char *) xlrec + SizeOfHeapInsert + SizeOfHeapHeader,
 			   newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
 		htup->t_natts = xlhdr.t_natts;
+		htup->t_infomask = xlhdr.t_infomask;
 		htup->t_hoff = xlhdr.t_hoff;
-		htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 		HeapTupleHeaderSetXmin(htup, record->xl_xid);
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		htup->t_ctid = xlrec->target.tid;
-		if (reln->rd_rel->relhasoids)
-			HeapTupleHeaderSetOid(htup, xlhdr.t_oid);
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
 							 LP_USED | OverwritePageMode);
@@ -2454,34 +2463,27 @@ newsame:;
 		htup = &tbuf.hdr;
 		MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
 		/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
-		memcpy((char *) &tbuf + offsetof(HeapTupleHeaderData, t_bits),
+		memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
 			   (char *) xlrec + hsize,
 			   newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
 		htup->t_natts = xlhdr.t_natts;
+		htup->t_infomask = xlhdr.t_infomask;
 		htup->t_hoff = xlhdr.t_hoff;
-		if (reln->rd_rel->relhasoids)
-			HeapTupleHeaderSetOid(htup, xlhdr.t_oid);
 
 		if (move)
 		{
 			TransactionId xid[2];		/* xmax, xmin */
 
-			hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
 			memcpy((char *) xid,
-				   (char *) xlrec + hsize, 2 * sizeof(TransactionId));
-			htup->t_infomask = xlhdr.mask;
-			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
-								  HEAP_XMIN_INVALID |
-								  HEAP_MOVED_OFF);
-			htup->t_infomask |= HEAP_MOVED_IN;
+				   (char *) xlrec + SizeOfHeapUpdate + SizeOfHeapHeader,
+				   2 * sizeof(TransactionId));
 			HeapTupleHeaderSetXmin(htup, xid[1]);
 			HeapTupleHeaderSetXmax(htup, xid[0]);
 			HeapTupleHeaderSetXvac(htup, record->xl_xid);
 		}
 		else
 		{
-			htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 			HeapTupleHeaderSetXmin(htup, record->xl_xid);
 			HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		}

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.37 2002/09/04 20:31:37 momjian Exp $
+ * $Id: xlog.h,v 1.38 2002/09/26 22:46:29 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -110,7 +110,7 @@ typedef struct XLogContRecord
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD059	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD05A	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {

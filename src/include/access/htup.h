@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.60 2002/09/04 20:31:37 momjian Exp $
+ * $Id: htup.h,v 1.61 2002/09/26 22:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,6 +261,8 @@ do { \
 
 
 /*
+ * WAL record definitions for heapam.c's WAL operations
+ *
  * XLOG allows to store some information in high 4 bits of log
  * record xl_info field
  */
@@ -300,15 +302,22 @@ typedef struct xl_heap_delete
 
 #define SizeOfHeapDelete	(offsetof(xl_heap_delete, target) + SizeOfHeapTid)
 
+/*
+ * We don't store the whole fixed part (HeapTupleHeaderData) of an inserted
+ * or updated tuple in WAL; we can save a few bytes by reconstructing the
+ * fields that are available elsewhere in the WAL record, or perhaps just
+ * plain needn't be reconstructed.  These are the fields we must store.
+ * NOTE: t_hoff could be recomputed, but we may as well store it because
+ * it will come for free due to alignment considerations.
+ */
 typedef struct xl_heap_header
 {
-	Oid			t_oid;
 	int16		t_natts;
+	uint16		t_infomask;
 	uint8		t_hoff;
-	uint8		mask;			/* low 8 bits of t_infomask */
 } xl_heap_header;
 
-#define SizeOfHeapHeader	(offsetof(xl_heap_header, mask) + sizeof(uint8))
+#define SizeOfHeapHeader	(offsetof(xl_heap_header, t_hoff) + sizeof(uint8))
 
 /* This is what we need to know about insert */
 typedef struct xl_heap_insert
@@ -339,6 +348,8 @@ typedef struct xl_heap_clean
 } xl_heap_clean;
 
 #define SizeOfHeapClean (offsetof(xl_heap_clean, block) + sizeof(BlockNumber))
+
+
 
 /*
  * MaxTupleSize is the maximum allowed size of a tuple, including header and
