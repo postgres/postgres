@@ -136,7 +136,8 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
    When a database object is created, it is assigned an owner. The
    owner is the user that executed the creation statement. There is
    currently no polished interface for changing the owner of a database
-   object. By default, only an owner (or a superuser) can do anything
+   object (except for tables, for which <command>ALTER TABLE</> can do it).
+   By default, only an owner (or a superuser) can do anything
    with the object. In order to allow other users to use it,
    <firstterm>privileges</firstterm> must be granted.
   </para>
