@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.89 2004/11/19 21:27:42 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.90 2004/11/20 21:13:04 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -257,9 +257,9 @@ endif # enable_shared
 
 all-lib: all-static-lib all-shared-lib
 
-all-static-lib: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h lib$(NAME).a
+all-static-lib: lib$(NAME).a
 
-all-shared-lib: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h $(shlib)
+all-shared-lib: $(shlib)
 
 ifndef LORDER
 MK_NO_LORDER := true

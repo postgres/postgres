@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.121 2004/11/17 17:46:19 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.122 2004/11/20 21:13:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,13 +37,15 @@ endif
 
 ifeq ($(PORTNAME), win32)
 OBJS += win32.o libpqrc.o
-libpqrc.o : libpq.rc
-	windres -i libpq.rc -o libpqrc.o
 DLL_DEFFILE=libpqdll.def
+
+libpqrc.o: libpq.rc
+	windres -i libpq.rc -o libpqrc.o
+
 ifeq ($(enable_thread_safety), yes)
 # This doesn't work yet because configure test fails.  2004-06-19
 OBJS += pthread-win32.o
-PTHREAD_H_WIN32 = yes
+PTHREAD_H_WIN32 = pthread.h
 endif
 endif
 
@@ -57,7 +59,7 @@ SHLIB_LINK += -lwsock32 -lws2_32 $(filter -leay32 -lssleay32, $(LIBS))
 endif
 
 
-all: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h def-files all-lib
+all: $(PTHREAD_H_WIN32) def-files all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -118,12 +120,14 @@ $(srcdir)/blibpqdll.def: exports.txt
 
 
 ifneq ($(PTHREAD_H_WIN32), "")
-pthread.h : % : $(top_srcdir)/src/interfaces/libpq/pthread.h.win
+pthread.h: $(top_srcdir)/src/interfaces/libpq/pthread.h.win
 	rm -f $@ && $(LN_S) $< .
 endif
 
-$(top_srcdir)/src/port/pg_config_paths.h:
-	$(MAKE) -C $(top_srcdir)/src/port pg_config_paths.h
+fe-connect.o: fe-connect.c $(top_builddir)/src/port/pg_config_paths.h
+
+$(top_builddir)/src/port/pg_config_paths.h:
+	$(MAKE) -C $(top_builddir)/src/port pg_config_paths.h
 
 install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/libpq-fe.h $(DESTDIR)$(includedir)
