@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.59 1996/11/10 17:35:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.60 1996/11/11 03:12:00 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -59,7 +59,7 @@
 #	to change it in Makefile.custom.
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
-PORTNAME=	BSD44_derived
+PORTNAME=	UNKNOWN
 
 # Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
 # compiling to a.out (which means you're using the dld dynamic loading 
@@ -146,7 +146,8 @@ OIDNAMELEN = 36
 
 # Set COPT to -O for optimization, or -g for debuggable binaries
 # Many people prefer -O2, and -m486 if you are using a i486 or better
-COPT= -O
+# Use -Werror to stop the compile when any warnings occur
+COPT= -O #-Werror
 
 # Commenting out CASSERT will make things go a LOT faster, but you will
 # also loose a lot of useful error-checking.
@@ -859,8 +860,8 @@ includedir=	$(HEADERDIR)
 #
 # Flags for CC and LD. (depend on COPT and PROFILE)
 #
-# PostgreSQL should *always* compile with -Wall -Werror enabled
-CFLAGS+=	-Wall -Wmissing-prototypes #-Werror
+# PostgreSQL should *always* compile with these enabled
+CFLAGS+=	-Wall -Wmissing-prototypes
 
 # Globally pass debugging/optimization/profiling flags based
 # on the options selected above.
