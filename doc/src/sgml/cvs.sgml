@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.14 2001/01/20 04:16:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.15 2001/09/07 21:36:46 momjian Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -67,10 +67,10 @@ Thomas Lockhart
      Do an initial login to the <productname>CVS</productname> server:
 
      <programlisting>
-$ cvs -d :pserver:anoncvs@postgresql.org:/home/projects/pgsql/cvsroot login
+$ cvs -d :pserver:anoncvs@anoncvs.postgresql.org:/home/projects/pgsql/cvsroot login
      </programlisting>
 
-     You will be prompted for a password; enter '<literal>postgresql</literal>'.
+     You will be prompted for a password; just press <literal>ENTER</literal>.
      You should only need to do this once, since the password will be
      saved in <literal>.cvspass</literal> in your home directory.
     </para>
@@ -80,7 +80,7 @@ $ cvs -d :pserver:anoncvs@postgresql.org:/home/projects/pgsql/cvsroot login
     <para>
      Fetch the <productname>Postgres</productname> sources:
      <programlisting>
-cvs -z3 -d :pserver:anoncvs@postgresql.org:/home/projects/pgsql/cvsroot co -P pgsql
+cvs -z3 -d :pserver:anoncvs@anoncvs.postgresql.org:/home/projects/pgsql/cvsroot co -P pgsql
      </programlisting>
 
      which installs the <productname>Postgres</productname> sources into a 
@@ -399,7 +399,7 @@ $ cvsup -L 2 <replaceable class="parameter">postgres.cvsup</replaceable>
 # - Pull the full CVS repository, not just the latest snapshot
 #
 # Defaults that apply to all the collections
-*default host=postgresql.org
+*default host=cvsup.postgresql.org
 *default compress
 *default release=cvs
 *default delete use-rel-suffix
@@ -438,7 +438,7 @@ pgsql
 # for the PostgreSQL ORDBMS project
 #
 # Defaults that apply to all the collections
-*default host=postgresql.org
+*default host=cvsup.postgresql.org
 *default compress
 *default release=cvs
 *default delete use-rel-suffix
@@ -479,7 +479,7 @@ pgsql
      You can use pre-built binaries
      if you have a platform for which binaries
      are posted on 
-     <ulink url="ftp://postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>,
+     <ulink url="ftp://ftp.postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>,
      or if you are running FreeBSD, for which
      <productname>CVSup</productname> is available as a port.
 
@@ -520,7 +520,7 @@ pgsql
       <step performance="optional">
        <para>
 	If you have another platform, check for and download the appropriate binary from
-	<ulink url="ftp://postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>.
+	<ulink url="ftp://ftp.postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>.
        </para>
       </step>
      </substeps>
