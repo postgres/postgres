@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.146 2001/07/10 22:09:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.147 2001/07/12 18:02:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2462,8 +2462,7 @@ _copyCreateGroupStmt(CreateGroupStmt *from)
 
 	if (from->name)
 		newnode->name = pstrdup(from->name);
-	newnode->sysid = from->sysid;
-	Node_Copy(from, newnode, initUsers);
+	Node_Copy(from, newnode, options);
 
 	return newnode;
 }
@@ -2476,7 +2475,6 @@ _copyAlterGroupStmt(AlterGroupStmt *from)
 	if (from->name)
 		newnode->name = pstrdup(from->name);
 	newnode->action = from->action;
-	newnode->sysid = from->sysid;
 	Node_Copy(from, newnode, listUsers);
 
 	return newnode;

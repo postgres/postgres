@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.235 2001/07/10 22:09:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.236 2001/07/12 18:02:59 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -155,7 +155,10 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_lock, lock_type
 %type <boolean>	opt_force
 
-%type <list>	user_list, users_in_new_group_clause
+%type <list>	user_list
+
+%type <list>	OptGroupList
+%type <defelt>	OptGroupElem
 
 %type <list>	OptUserList
 %type <defelt>	OptUserElem
@@ -489,19 +492,19 @@ stmt :	AlterSchemaStmt
  *****************************************************************************/
 
 CreateUserStmt:  CREATE USER UserId OptUserList 
-				{
+				  {
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
 					n->options = $4;
 					$$ = (Node *)n;
-				}
-                | CREATE USER UserId WITH OptUserList
-               {
+				  }
+                 | CREATE USER UserId WITH OptUserList
+                  {
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
 					n->options = $5;
 					$$ = (Node *)n;
-               }                   
+                  }                   
 		;
 
 /*****************************************************************************
@@ -512,19 +515,19 @@ CreateUserStmt:  CREATE USER UserId OptUserList
  *****************************************************************************/
 
 AlterUserStmt:  ALTER USER UserId OptUserList
-				{
+				 {
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
 					n->options = $4;
 					$$ = (Node *)n;
-				}
-			| ALTER USER UserId WITH OptUserList
-				{
+				 }
+			    | ALTER USER UserId WITH OptUserList
+				 {
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
 					n->options = $5;
 					$$ = (Node *)n;
-				}
+				 }
 		;
 
 /*****************************************************************************
@@ -618,35 +621,43 @@ user_list:  user_list ',' UserId
  *
  *****************************************************************************/
 
-CreateGroupStmt:  CREATE GROUP UserId 
-				{
+CreateGroupStmt:  CREATE GROUP UserId OptGroupList
+				   {
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
-					n->sysid = -1;
-					n->initUsers = NIL;
+					n->options = $4;
 					$$ = (Node *)n;
-				}
-			| CREATE GROUP UserId WITH users_in_new_group_clause
-				{
+				   }
+			      | CREATE GROUP UserId WITH OptGroupList
+				   {
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
-					n->sysid = -1;
-					n->initUsers = $5;
+					n->options = $5;
 					$$ = (Node *)n;
-				}
-			| CREATE GROUP UserId WITH SYSID Iconst users_in_new_group_clause
-				{
-					CreateGroupStmt *n = makeNode(CreateGroupStmt);
-					n->name = $3;
-					n->sysid = $6;
-					n->initUsers = $7;
-					$$ = (Node *)n;
-				}
+				   }
 		;
 
-users_in_new_group_clause:  USER user_list		{ $$ = $2; }
-			| /* EMPTY */						{ $$ = NIL; }
-		;                         
+/*
+ * Options for CREATE GROUP
+ */
+OptGroupList: OptGroupList OptGroupElem		{ $$ = lappend($1, $2); }
+			| /* EMPTY */					{ $$ = NIL; }
+		;
+
+OptGroupElem:  USER user_list
+                { 
+				  $$ = makeNode(DefElem);
+				  $$->defname = "userElts";
+				  $$->arg = (Node *)$2;
+				}
+               | SYSID Iconst
+				{
+				  $$ = makeNode(DefElem);
+				  $$->defname = "sysid";
+				  $$->arg = (Node *)makeInteger($2);
+				}
+        ;
+
 
 /*****************************************************************************
  *
@@ -659,7 +670,6 @@ AlterGroupStmt:  ALTER GROUP UserId ADD USER user_list
 				{
 					AlterGroupStmt *n = makeNode(AlterGroupStmt);
 					n->name = $3;
-					n->sysid = -1;
 					n->action = +1;
 					n->listUsers = $6;
 					$$ = (Node *)n;
@@ -668,12 +678,12 @@ AlterGroupStmt:  ALTER GROUP UserId ADD USER user_list
 				{
 					AlterGroupStmt *n = makeNode(AlterGroupStmt);
 					n->name = $3;
-					n->sysid = -1;
 					n->action = -1;
 					n->listUsers = $6;
 					$$ = (Node *)n;
 				}
 			;
+
 
 /*****************************************************************************
  *

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.78 2001/07/10 22:09:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.79 2001/07/12 18:02:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -787,13 +787,47 @@ CreateGroup(CreateGroupStmt *stmt)
 	HeapTuple	tuple;
 	TupleDesc	pg_group_dsc;
 	bool		group_exists = false,
-				sysid_exists = false;
+				sysid_exists = false,
+				havesysid = false;
 	int			max_id = 0;
 	Datum		new_record[Natts_pg_group];
 	char		new_record_nulls[Natts_pg_group];
 	List	   *item,
-			   *newlist = NULL;
+               *option,
+			   *newlist = NIL;
 	ArrayType  *userarray;
+    int			sysid = 0;
+    List	   *userElts = NIL;
+    DefElem    *dsysid = NULL;
+    DefElem    *duserElts = NULL;
+
+	foreach(option, stmt->options)
+	{
+		DefElem *defel = (DefElem *) lfirst(option);
+
+        if (strcasecmp(defel->defname, "sysid") == 0) {
+            if (dsysid)
+                elog(ERROR, "CREATE GROUP: conflicting options");
+            dsysid = defel;
+        }
+        else if (strcasecmp(defel->defname, "userElts") == 0) {
+            if (duserElts)
+                elog(ERROR, "CREATE GROUP: conflicting options");
+            duserElts = defel;
+        }
+        else 
+            elog(ERROR,"CREATE GROUP: option \"%s\" not recognized",
+                 defel->defname);
+    }
+
+    if (dsysid)
+	{
+		sysid = intVal(dsysid->arg);
+		havesysid = true;
+	}
+
+    if (duserElts)
+		userElts = (List *) duserElts->arg;
 
 	/*
 	 * Make sure the user can do this.
@@ -819,8 +853,8 @@ CreateGroup(CreateGroupStmt *stmt)
 		datum = heap_getattr(tuple, Anum_pg_group_grosysid,
 							 pg_group_dsc, &null);
 		Assert(!null);
-		if (stmt->sysid >= 0)	/* customized id wanted */
-			sysid_exists = (DatumGetInt32(datum) == stmt->sysid);
+		if (havesysid)	/* customized id wanted */
+			sysid_exists = (DatumGetInt32(datum) == sysid);
 		else
 		{
 			/* pick 1 + max */
@@ -835,19 +869,19 @@ CreateGroup(CreateGroupStmt *stmt)
 			 stmt->name);
 	if (sysid_exists)
 		elog(ERROR, "CREATE GROUP: group sysid %d is already assigned",
-			 stmt->sysid);
+			 sysid);
 
 	/*
 	 * Translate the given user names to ids
 	 */
-	foreach(item, stmt->initUsers)
+	foreach(item, userElts)
 	{
 		const char *groupuser = strVal(lfirst(item));
 		Value	   *v;
 
 		v = makeInteger(get_usesysid(groupuser));
 		if (!member(v, newlist))
-			newlist = lcons(v, newlist);
+			newlist = lappend(newlist, v);
 	}
 
 	/* build an array to insert */
@@ -872,14 +906,12 @@ CreateGroup(CreateGroupStmt *stmt)
 	/*
 	 * Form a tuple to insert
 	 */
-	if (stmt->sysid >= 0)
-		max_id = stmt->sysid;
-	else
-		max_id++;
+	if (!havesysid)
+		sysid = max_id + 1;
 
 	new_record[Anum_pg_group_groname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->name));
-	new_record[Anum_pg_group_grosysid - 1] = Int32GetDatum(max_id);
+	new_record[Anum_pg_group_grosysid - 1] = Int32GetDatum(sysid);
 	new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(userarray);
 
 	new_record_nulls[Anum_pg_group_groname - 1] = ' ';
@@ -952,7 +984,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		char		new_record_nulls[Natts_pg_group];
 		ArrayType  *newarray,
 				   *oldarray;
-		List	   *newlist = NULL,
+		List	   *newlist = NIL,
 				   *item;
 		HeapTuple	tuple;
 		bool		null = false;
@@ -976,7 +1008,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				v = makeInteger(arrval);
 				/* filter out duplicates */
 				if (!member(v, newlist))
-					newlist = lcons(v, newlist);
+					newlist = lappend(newlist, v);
 			}
 
 		/*
@@ -1007,7 +1039,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			}
 
 			if (!member(v, newlist))
-				newlist = lcons(v, newlist);
+				newlist = lappend(newlist, v);
 			else
 				/*
 				 * we silently assume here that this error will only come
@@ -1074,7 +1106,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			char		new_record_nulls[Natts_pg_group];
 			ArrayType  *oldarray,
 					   *newarray;
-			List	   *newlist = NULL,
+			List	   *newlist = NIL,
 					   *item;
 			int			i;
 
@@ -1094,7 +1126,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				v = makeInteger(arrval);
 				/* filter out duplicates */
 				if (!member(v, newlist))
-					newlist = lcons(v, newlist);
+					newlist = lappend(newlist, v);
 			}
 
 			/*

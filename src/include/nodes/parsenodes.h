@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.134 2001/07/10 22:09:29 tgl Exp $
+ * $Id: parsenodes.h,v 1.135 2001/07/12 18:03:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,8 +365,7 @@ typedef struct CreateGroupStmt
 {
 	NodeTag		type;
 	char	   *name;			/* name of the new group */
-	int			sysid;			/* group id (-1 if pick default) */
-	List	   *initUsers;		/* list of initial users */
+	List	   *options;		/* List of DefElem nodes */
 } CreateGroupStmt;
 
 typedef struct AlterGroupStmt
@@ -374,7 +373,6 @@ typedef struct AlterGroupStmt
 	NodeTag		type;
 	char	   *name;			/* name of group to alter */
 	int			action;			/* +1 = add, -1 = drop user */
-	int			sysid;			/* sysid change */
 	List	   *listUsers;		/* list of users to add/drop */
 } AlterGroupStmt;
 

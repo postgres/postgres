@@ -331,7 +331,7 @@ make_name(void)
 %type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
 %type  <str>    select_offset_value ReindexStmt join_type opt_boolean
 %type  <str>	join_qual update_list AlterSchemaStmt joined_table
-%type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
+%type  <str>	opt_level opt_lock lock_type OptGroupList OptGroupElem
 %type  <str>    OptConstrFromTable comment_op OptTempTableName StringConst
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
@@ -691,23 +691,32 @@ user_list:  user_list ',' UserId
  *
  *
  ****************************************************************************/
-CreateGroupStmt: CREATE GROUP UserId
+CreateGroupStmt:  CREATE GROUP UserId OptGroupList
 				{
-					$$ = cat2_str(make_str("create group"), $3);
+					$$ = cat_str(3, make_str("create group"), $3, $4);
 				}
-			| CREATE GROUP UserId WITH users_in_new_group_clause
+			| CREATE GROUP UserId WITH OptGroupList
 				{
 					$$ = cat_str(4, make_str("create group"), $3, make_str("with"), $5);
 				}
-			| CREATE GROUP UserId WITH SYSID Iconst users_in_new_group_clause
-				{
-					$$ = cat_str(5, make_str("create group"), $3, make_str("with sysid"), $6, $7);
-				}
-			;
+		;
 
-users_in_new_group_clause:  USER user_list   { $$ = cat2_str(make_str("user"), $2); }
-                            | /* EMPTY */          { $$ = EMPTY; }
-               ;
+/*
+ * Options for CREATE GROUP
+ */
+OptGroupList: OptGroupList OptGroupElem		{ $$ = cat2_str($1, $2); }
+			| /* EMPTY */					{ $$ = EMPTY; }
+		;
+
+OptGroupElem:  USER user_list
+                { 
+					$$ = cat2_str(make_str("user"), $2);
+				}
+               | SYSID Iconst
+				{
+					$$ = cat2_str(make_str("sysid"), $2);
+				}
+        ;
 
 
 /*****************************************************************************
