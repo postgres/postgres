@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.15 1999/02/13 23:21:50 momjian Exp $
+ * $Id: paths.h,v 1.16 1999/02/14 04:56:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ extern List *find_index_paths(Query *root, RelOptInfo *rel, List *indices,
  * joinpath.h
  *	   routines to create join paths
  */
-extern void find_all_join_paths(Query *root, List *joinrels);
+extern void update_rels_pathlist_for_joins(Query *root, List *joinrels);
 
 
 /*
@@ -77,14 +77,14 @@ extern MergeInfo *match_order_mergeinfo(PathOrder *ordering,
  * joinrels.h
  *	  routines to determine which relations to join
  */
-extern List *find_join_rels(Query *root, List *outer_rels);
+extern List *make_new_rels_by_joins(Query *root, List *outer_rels);
 extern void add_new_joininfos(Query *root, List *joinrels, List *outerrels);
 extern List *final_join_rels(List *join_rel_list);
 
 /*
  * prototypes for path/prune.c
  */
-extern void prune_joinrels(List *rel_list);
+extern void merge_rels_with_same_relids(List *rel_list);
 extern void rels_set_cheapest(List *rel_list);
 extern List *merge_joinrels(List *rel_list1, List *rel_list2);
 extern List *prune_oldrels(List *old_rels);

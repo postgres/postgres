@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.23 1999/02/13 23:16:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.24 1999/02/14 04:56:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,16 +303,16 @@ add_vars_to_targetlist(Query *root, List *vars, List *join_relids)
  *****************************************************************************/
 
 /*
- * init_join_info
+ * set_joininfo_mergeable_hashable
  *	  Set the MergeJoinable or HashJoinable field for every joininfo node
- *	  (within a rel node) and the MergeJoinOrder or HashJoinOp field for
+ *	  (within a rel node) and the mergejoinorder or hashjoinop field for
  *	  each restrictinfo node(within a joininfo node) for all relations in a
  *	  query.
  *
  *	  Returns nothing.
  */
 void
-init_join_info(List *rel_list)
+set_joininfo_mergeable_hashable(List *rel_list)
 {
 	List	   *x,
 			   *y,

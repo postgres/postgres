@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.31 1999/02/13 23:16:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.32 1999/02/14 04:56:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,10 +24,10 @@
 #include "utils/elog.h"
 
 
-static List *prune_joinrel(RelOptInfo *rel, List *other_rels);
+static List *merge_rel_with_same_relids(RelOptInfo *rel, List *other_rels);
 
 /*
- * prune_joinrels
+ * merge_rels_with_same_relids
  *	  Removes any redundant relation entries from a list of rel nodes
  *	  'rel_list'.  Obviously, the first relation can't be a duplicate.
  *
@@ -35,7 +35,7 @@ static List *prune_joinrel(RelOptInfo *rel, List *other_rels);
  *
  */
 void
-prune_joinrels(List *rel_list)
+merge_rels_with_same_relids(List *rel_list)
 {
 	List	   *i;
 
@@ -44,11 +44,11 @@ prune_joinrels(List *rel_list)
 	 * deleted
 	 */
 	foreach(i, rel_list)
-		lnext(i) = prune_joinrel((RelOptInfo *) lfirst(i), lnext(i));
+		lnext(i) = merge_rel_with_same_relids((RelOptInfo *) lfirst(i), lnext(i));
 }
 
 /*
- * prune_joinrel
+ * merge_rel_with_same_relids
  *	  Prunes those relations from 'other_rels' that are redundant with
  *	  'rel'.  A relation is redundant if it is built up of the same
  *	  relations as 'rel'.  Paths for the redundant relation are merged into
@@ -59,7 +59,7 @@ prune_joinrels(List *rel_list)
  *
  */
 static List *
-prune_joinrel(RelOptInfo *rel, List *other_rels)
+merge_rel_with_same_relids(RelOptInfo *rel, List *other_rels)
 {
 	List	   *i = NIL;
 	List	   *result = NIL;
@@ -126,7 +126,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
 	{
 		RelOptInfo *rel = (RelOptInfo *) lfirst(xrel);
 
-		rel_list2 = prune_joinrel(rel, rel_list2);
+		rel_list2 = merge_rel_with_same_relids(rel, rel_list2);
 	}
 	return append(rel_list1, rel_list2);
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.21 1999/02/13 23:21:50 momjian Exp $
+ * $Id: planmain.h,v 1.22 1999/02/14 04:56:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
  */
 extern void make_var_only_tlist(Query *root, List *tlist);
 extern void add_restrict_and_join_to_rels(Query *root, List *clauses);
-extern void init_join_info(List *rel_list);
+extern void set_joininfo_mergeable_hashable(List *rel_list);
 extern void add_missing_vars_to_tlist(Query *root, List *tlist);
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.23 1999/02/13 23:16:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.24 1999/02/14 04:56:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, Rel
 					 List *hashinfo_list);
 
 /*
- * find_all_join_paths
+ * update_rels_pathlist_for_joins
  *	  Creates all possible ways to process joins for each of the join
  *	  relations in the list 'joinrels.'  Each unique path will be included
  *	  in the join relation's 'pathlist' field.
@@ -62,16 +62,17 @@ static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, Rel
  * It does a destructive modification.
  */
 void
-find_all_join_paths(Query *root, List *joinrels)
+update_rels_pathlist_for_joins(Query *root, List *joinrels)
 {
 	List	   *mergeinfo_list = NIL;
 	List	   *hashinfo_list = NIL;
 	List	   *temp_list = NIL;
 	List	   *path = NIL;
+	List	   *j;
 
-	while (joinrels != NIL)
+	foreach(j, joinrels)
 	{
-		RelOptInfo *joinrel = (RelOptInfo *) lfirst(joinrels);
+		RelOptInfo *joinrel = (RelOptInfo *) lfirst(j);
 		List	   *innerrelids;
 		List	   *outerrelids;
 		RelOptInfo *innerrel;
@@ -174,8 +175,6 @@ find_all_join_paths(Query *root, List *joinrels)
 			 * since the base level
 			 */
 		}
-
-		joinrels = lnext(joinrels);
 	}
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.31 1999/02/13 23:16:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.32 1999/02/14 04:56:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ query_planner(Query *root,
 					else
 						return (Plan *) scan;
 				}
-				break;
+ 				break;
 			default:
 				return (Plan *) NULL;
 		}
@@ -257,12 +257,7 @@ subplanner(Query *root,
 	add_restrict_and_join_to_rels(root, qual);
 	add_missing_vars_to_tlist(root, flat_tlist);
 
-	/*
-	 * Find all possible scan and join paths. Mark all the clauses and
-	 * relations that can be processed using special join methods, then do
-	 * the exhaustive path search.
-	 */
-	init_join_info(root->base_rel_list);
+	set_joininfo_mergeable_hashable(root->base_rel_list);
 
 	final_rel_list = find_paths(root, root->base_rel_list);
 

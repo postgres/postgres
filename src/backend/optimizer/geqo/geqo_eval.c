@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.29 1999/02/13 23:16:07 momjian Exp $
+ * $Id: geqo_eval.c,v 1.30 1999/02/14 04:56:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *out
 			}
 
 			/* process new_rel->pathlist */
-			find_all_join_paths(root, new_rels);
+			update_rels_pathlist_for_joins(root, new_rels);
 
 			/* prune new_rels */
 			/* MAU: is this necessary? */

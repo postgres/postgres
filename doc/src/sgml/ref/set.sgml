@@ -406,7 +406,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  </para>
 	  <para>
 		This algorithm is on by default, which used GEQO for
-		statements of six or more tables and indexes.
+		statements of six or more tables.
 		(See the chapter on GEQO in the Programmer's Guide
 		for more information).
 	  </para>
@@ -677,7 +677,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  SET DATESTYLE TO 'ISO';
 	</programlisting>
 	<programlisting> 
-	  --Enable GEQO for queries with 4 or more tables and indexes
+	  --Enable GEQO for queries with 4 or more tables
 	  --
 	  SET GEQO ON=4;
 	</programlisting>

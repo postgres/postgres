@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.20 1999/02/13 23:16:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.21 1999/02/14 04:56:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptI
 				 JoinInfo * jinfo);
 
 /*
- * find_join_rels
+ * make_new_rels_by_joins
  *	  Find all possible joins for each of the outer join relations in
  *	  'outer_rels'.  A rel node is created for each possible join relation,
  *	  and the resulting list of nodes is returned.	If at all possible, only
@@ -57,7 +57,7 @@ static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptI
  * Returns a list of rel nodes corresponding to the new join relations.
  */
 List *
-find_join_rels(Query *root, List *outer_rels)
+make_new_rels_by_joins(Query *root, List *outer_rels)
 {
 	List	   *joins = NIL;
 	List	   *join_list = NIL;
@@ -69,6 +69,10 @@ find_join_rels(Query *root, List *outer_rels)
 
 		if (!(joins = find_clause_joins(root, outer_rel, outer_rel->joininfo)))
 		{
+			/*
+			 * Oops, we have a relation that is not joined to any other
+			 * relation.  Cartesian product time.
+			 */
 			if (BushyPlanFlag)
 				joins = find_clauseless_joins(outer_rel, outer_rels);
 			else
@@ -124,7 +128,8 @@ find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 					{
 						if (rel != NULL)
 							join_list = lappend(join_list, rel);
-						rel = init_join_rel(get_base_rel(root, lfirsti(other_rels)),
+						rel = init_join_rel(get_base_rel(root,
+														 lfirsti(other_rels)),
 											outer_rel,
 											joininfo);
 					}

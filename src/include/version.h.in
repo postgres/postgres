@@ -1,10 +1,10 @@
-/*-------------------------------------------------------------------------
+/*------------------------------------------------------------------------- 
  *
- * version.h.in--
+ * version.h.in
  *	  this file contains the interface to version.c.
  *	  Also some parameters.
  *
- * $Header: /cvsroot/pgsql/src/include/Attic/version.h.in,v 1.4 1998/12/25 02:20:11 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/Attic/version.h.in,v 1.5 1999/02/14 04:56:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

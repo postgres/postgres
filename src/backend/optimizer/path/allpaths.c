@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.31 1999/02/13 23:16:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.32 1999/02/14 04:56:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ bool		_use_geqo_ = false;
 int32		_use_geqo_rels_ = GEQO_RELS;
 
 
-static void find_rel_paths(Query *root, List *rels);
+static void find_base_rel_paths(Query *root, List *rels);
 static List *find_join_paths(Query *root, List *outer_rels, int levels_needed);
 
 #ifdef OPTIMIZER_DEBUG
@@ -71,10 +71,7 @@ find_paths(Query *root, List *rels)
 	if (levels_needed <= 0)
 		return NIL;
 
-	/*
-	 * Find the base relation paths.
-	 */
-	find_rel_paths(root, rels);
+	find_base_rel_paths(root, rels);
 
 	if (levels_needed <= 1)
 	{
@@ -96,7 +93,7 @@ find_paths(Query *root, List *rels)
 }
 
 /*
- * find_rel_paths
+ * find_base_rel_paths
  *	  Finds all paths available for scanning each relation entry in
  *	  'rels'.  Sequential scan and any available indices are considered
  *	  if possible(indices are not considered for lower nesting levels).
@@ -105,7 +102,7 @@ find_paths(Query *root, List *rels)
  *	  MODIFIES: rels
  */
 static void
-find_rel_paths(Query *root, List *rels)
+find_base_rel_paths(Query *root, List *rels)
 {
 	List	   *temp;
 
@@ -154,7 +151,7 @@ find_rel_paths(Query *root, List *rels)
  *	  finding ways to join relations(both original and derived) together.
  *
  * 'outer_rels' is the current list of relations for which join paths
- *				are to be found, i.e., he current list of relations that
+ *				are to be found, i.e., the current list of relations that
  *				have already been derived.
  * 'levels_needed' is the number of iterations needed
  *
@@ -172,20 +169,8 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 	 * genetic query optimizer entry point	   *
 	 *	  <utesch@aut.tu-freiberg.de>		   *
 	 *******************************************/
-	{
-		List	   *temp;
-		int			paths_to_consider = 0;
-
-		foreach(temp, outer_rels)
-		{
-			RelOptInfo *rel = (RelOptInfo *) lfirst(temp);
-			paths_to_consider += length(rel->pathlist);
-		}
-
-		if ((_use_geqo_) && paths_to_consider >= _use_geqo_rels_)
-			/* returns _one_ RelOptInfo, so lcons it */
-			return lcons(geqo(root), NIL);	
-	}
+	if ((_use_geqo_) && length(root->base_relation_list_) >= _use_geqo_rels_)
+		return lcons(geqo(root), NIL);  /* returns *one* Rel, so lcons it */
 	
 	/*******************************************
 	 * rest will be deprecated in case of GEQO *
@@ -199,11 +184,11 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 		 * modify 'new_rels' accordingly, then eliminate redundant join
 		 * relations.
 		 */
-		new_rels = find_join_rels(root, outer_rels);
+		new_rels = make_new_rels_by_joins(root, outer_rels);
 
-		find_all_join_paths(root, new_rels);
+		update_rels_pathlist_for_joins(root, new_rels);
 
-		prune_joinrels(new_rels);
+		merge_rels_with_same_relids(new_rels);
 
 #if 0
 		/*
@@ -232,11 +217,11 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 		foreach(x, new_rels)
 		{
 			rel = (RelOptInfo *) lfirst(x);
+
 			if (rel->size <= 0)
 				rel->size = compute_rel_size(rel);
 			rel->width = compute_rel_width(rel);
 
-			/* #define OPTIMIZER_DEBUG */
 #ifdef OPTIMIZER_DEBUG
 			printf("levels left: %d\n", levels_needed);
 			debug_print_rel(root, rel);
@@ -259,6 +244,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 		}
 		else
 			root->join_rel_list = new_rels;
+
 		if (!BushyPlanFlag)
 			outer_rels = new_rels;
 	}
