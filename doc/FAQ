@@ -214,31 +214,29 @@
    available for discussion of matters pertaining to PostgreSQL. To
    subscribe, send mail with the following lines in the body (not the
    subject line)
-        subscribe
-        end
+    subscribe
+    end
 
    to pgsql-general-request@PostgreSQL.org.
    
    There is also a digest list available. To subscribe to this list, send
    email to: pgsql-general-digest-request@PostgreSQL.org with a body of:
-        subscribe
-        end
+    subscribe
+    end
 
    Digests are sent out to members of this list whenever the main list
    has received around 30k of messages.
    
    The bugs mailing list is available. To subscribe to this list, send
    email to pgsql-bugs-request@PostgreSQL.org with a body of:
-   
-        subscribe
-        end
+    subscribe
+    end
 
    There is also a developers discussion mailing list available. To
    subscribe to this list, send email to
    pgsql-hackers-request@PostgreSQL.org with a body of:
-   
-        subscribe
-        end
+    subscribe
+    end
 
    Additional mailing lists and information about PostgreSQL can be found
    via the PostgreSQL WWW home page at:
@@ -284,7 +282,7 @@
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM.
    
    Another one is "Teach Yourself SQL in 21 Days, Second Edition" at
-   http://members.tripod.com/er4ebus/sql/index.htm 
+   http://members.tripod.com/er4ebus/sql/index.htm
    
    Many of our users like The Practical SQL Handbook, Bowman, Judith S.,
    et al., Addison-Wesley. Others like The Complete Reference SQL, Groff
@@ -558,8 +556,8 @@
    Both postmaster and postgres have several debug options available.
    First, whenever you start the postmaster, make sure you send the
    standard output and error to a log file, like:
-        cd /usr/local/pgsql
-        ./bin/postmaster >server.log 2>&1 &
+    cd /usr/local/pgsql
+    ./bin/postmaster >server.log 2>&1 &
 
    This will put a server.log file in the top-level PostgreSQL directory.
    This file contains useful information about problems or errors
@@ -668,11 +666,11 @@
     4.5) How do you remove a column from a table?
     
    We do not support ALTER TABLE DROP COLUMN, but do this:
-        SELECT ...  -- select all columns but the one you want to remove
-        INTO TABLE new_table
-        FROM old_table;
-        DROP TABLE old_table;
-        ALTER TABLE new_table RENAME TO old_table;
+    SELECT ...  -- select all columns but the one you want to remove
+    INTO TABLE new_table
+    FROM old_table;
+    DROP TABLE old_table;
+    ALTER TABLE new_table RENAME TO old_table;
 
     4.6) What is the maximum size for a row, table, database?
     
@@ -680,7 +678,7 @@
 Maximum size for a database?             unlimited (60GB databases exist)
 Maximum size for a table?                unlimited on all operating systems
 Maximum size for a row?                  8k, configurable to 32k
-Maximum number of rows in a table?       unlimited
+Maximum number of rows in a table?   unlimited
 Maximum number of columns in a table?    unlimited
 Maximum number of indexes on a table?    unlimited
 
@@ -798,7 +796,7 @@ Maximum number of indexes on a table?    unlimited
    case-insensitive regular expression matching. There is no
    case-insensitive variant of the LIKE operator, but you can get the
    effect of case-insensitive LIKE with this:
-        WHERE lower(textfield) LIKE lower(pattern)
+    WHERE lower(textfield) LIKE lower(pattern)
 
     4.14) In a query, how do I detect if a field is NULL?
     
@@ -818,8 +816,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
    some error messages.
    
    The last four types above are "varlena" types (i.e., the first four
-   bytes on disk are the length, followed by the data).  Thus the actual
-   space used is slightly greater than the declared size.  However, these
+   bytes on disk are the length, followed by the data). Thus the actual
+   space used is slightly greater than the declared size. However, these
    data types are also subject to compression or being stored out-of-line
    by TOAST, so the space on disk might also be less than expected.
    
@@ -827,18 +825,18 @@ BYTEA           bytea           variable-length byte array (null-safe)
     
    PostgreSQL supports a SERIAL data type. It auto-creates a sequence and
    index on the column. For example, this:
-        CREATE TABLE person (
-                id   SERIAL,
-                name TEXT
-        );
+    CREATE TABLE person (
+        id   SERIAL,
+        name TEXT
+    );
 
    is automatically translated into this:
-        CREATE SEQUENCE person_id_seq;
-        CREATE TABLE person (
-                id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
-                name TEXT
-        );
-        CREATE UNIQUE INDEX person_id_key ON person ( id );
+    CREATE SEQUENCE person_id_seq;
+    CREATE TABLE person (
+        id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
+        name TEXT
+    );
+    CREATE UNIQUE INDEX person_id_key ON person ( id );
 
    See the create_sequence manual page for more information about
    sequences. You can also use each row's OID field as a unique value.
@@ -853,8 +851,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
    object with the nextval() function before inserting and then insert it
    explicitly. Using the example table in 4.16.1, that might look like
    this:
-        $newSerialID = nextval('person_id_seq');
-        INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
+    $newSerialID = nextval('person_id_seq');
+    INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
 
    You would then also have the new value stored in $newSerialID for use
    in other queries (e.g., as a foreign key to the person table). Note
@@ -864,8 +862,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
    
    Alternatively, you could retrieve the assigned SERIAL value with the
    currval() function after it was inserted by default, e.g.,
-        INSERT INTO person (name) VALUES ('Blaise Pascal');
-        $newID = currval('person_id_seq');
+    INSERT INTO person (name) VALUES ('Blaise Pascal');
+    $newID = currval('person_id_seq');
 
    Finally, you could use the OID returned from the INSERT statement to
    look up the default value, though this is probably the least portable
@@ -933,8 +931,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
    It is possible you have run out of virtual memory on your system, or
    your kernel has a low limit for certain resources. Try this before
    starting the postmaster:
-        ulimit -d 65536
-        limit datasize 64m
+    ulimit -d 65536
+    limit datasize 64m
 
    Depending on your shell, only one of these may succeed, but it will
    set your process data segment limit much higher and perhaps allow the
@@ -964,21 +962,21 @@ BYTEA           bytea           variable-length byte array (null-safe)
     4.22) How do I create a column that will default to the current time?
     
    Use now():
-        CREATE TABLE test (x int, modtime timestamp DEFAULT now() );
+CREATE TABLE test (x int, modtime timestamp DEFAULT now() );
 
     4.23) Why are my subqueries using IN so slow?
     
    Currently, we join subqueries to outer queries by sequentially
    scanning the result of the subquery for each row of the outer query. A
    workaround is to replace IN with EXISTS:
-        SELECT *
-        FROM tab
-        WHERE col1 IN (SELECT col2 FROM TAB2)
+SELECT *
+    FROM tab
+    WHERE col1 IN (SELECT col2 FROM TAB2)
 
    to:
-        SELECT *
-        FROM tab
-        WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
+SELECT *
+    FROM tab
+    WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
 
    We hope to fix this limitation in a future release.
    
@@ -988,14 +986,14 @@ BYTEA           bytea           variable-length byte array (null-safe)
    can be simulated using UNION and NOT IN. For example, when joining
    tab1 and tab2, the following query does an outer join of the two
    tables:
-        SELECT tab1.col1, tab2.col2
-        FROM tab1, tab2
-        WHERE tab1.col1 = tab2.col1
-        UNION ALL
-        SELECT tab1.col1, NULL
-        FROM tab1
-        WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
-        ORDER BY tab1.col1
+    SELECT tab1.col1, tab2.col2
+    FROM tab1, tab2
+    WHERE tab1.col1 = tab2.col1
+    UNION ALL
+    SELECT tab1.col1, NULL
+    FROM tab1
+    WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
+    ORDER BY tab1.col1
      _________________________________________________________________
    
                             Extending PostgreSQL
