@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.31 2000/06/29 16:27:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.32 2000/06/30 18:03:40 momjian Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -44,7 +44,7 @@ MainLoop(FILE *source)
 
 	bool		success;
 	volatile char in_quote;		/* == 0 for no in_quote */
-	volatile bool xcomment;		/* in extended comment */
+	volatile bool in_xcomment;	/* in extended comment */
 	volatile int paren_level;
 	unsigned int query_start;
 	volatile int count_eof = 0;
@@ -80,7 +80,7 @@ MainLoop(FILE *source)
 		exit(EXIT_FAILURE);
 	}
 
-	xcomment = false;
+	in_xcomment = false;
 	in_quote = 0;
 	paren_level = 0;
 	slashCmdStatus = CMD_UNKNOWN;		/* set default */
@@ -123,7 +123,7 @@ MainLoop(FILE *source)
 				resetPQExpBuffer(query_buf);
 
 				/* reset parsing state */
-				xcomment = false;
+				in_xcomment = false;
 				in_quote = 0;
 				paren_level = 0;
 				count_eof = 0;
@@ -147,7 +147,7 @@ MainLoop(FILE *source)
 			line = xstrdup(query_buf->data);
 			resetPQExpBuffer(query_buf);
 			/* reset parsing state since we are rescanning whole line */
-			xcomment = false;
+			in_xcomment = false;
 			in_quote = 0;
 			paren_level = 0;
 			slashCmdStatus = CMD_UNKNOWN;
@@ -168,7 +168,7 @@ MainLoop(FILE *source)
 					prompt_status = PROMPT_SINGLEQUOTE;
 				else if (in_quote && in_quote == '"')
 					prompt_status = PROMPT_DOUBLEQUOTE;
-				else if (xcomment)
+				else if (in_xcomment)
 					prompt_status = PROMPT_COMMENT;
 				else if (paren_level)
 					prompt_status = PROMPT_PAREN;
@@ -296,22 +296,43 @@ MainLoop(FILE *source)
 				bslash_count = 0;
 
 		rescan:
-			/* start of extended comment? */
-			if (line[i] == '/' && line[i + thislen] == '*')
+			/*
+			 *	It is important to place the in_* test routines
+			 * 	before the in_* detection routines.
+			 *	i.e. we have to test if we are in a quote before
+			 *	testing for comments. bjm  2000-06-30
+			 */
+			
+			/* in quote? */
+			if (in_quote)
 			{
-				xcomment = true;
-				ADVANCE_1;
+				/* end of quote */
+				if (line[i] == in_quote && bslash_count % 2 == 0)
+					in_quote = '\0';
 			}
 
 			/* in extended comment? */
-			else if (xcomment)
+			else if (in_xcomment)
 			{
 				if (line[i] == '*' && line[i + thislen] == '/')
 				{
-					xcomment = false;
+					in_xcomment = false;
 					ADVANCE_1;
 				}
 			}
+
+			/* start of extended comment? */
+			else if (line[i] == '/' && line[i + thislen] == '*')
+			{
+				in_xcomment = true;
+				ADVANCE_1;
+			}
+
+			/* start of quote */
+			else if (!was_bslash &&
+					 (line[i] == '\'' || line[i] == '"'))
+				in_quote = line[i];
+
 
 			/* single-line comment? truncate line */
 			else if (line[i] == '-' && line[i + thislen] == '-')
@@ -319,19 +340,6 @@ MainLoop(FILE *source)
 				line[i] = '\0'; /* remove comment */
 				break;
 			}
-
-			/* in quote? */
-			else if (in_quote)
-			{
-				/* end of quote */
-				if (line[i] == in_quote && bslash_count % 2 == 0)
-					in_quote = '\0';
-			}
-
-			/* start of quote */
-			else if (!was_bslash &&
-					 (line[i] == '\'' || line[i] == '"'))
-				in_quote = line[i];
 
 			/* count nested parentheses */
 			else if (line[i] == '(')
