@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.143 2000/09/12 04:49:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.144 2000/09/12 21:06:46 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1538,11 +1538,9 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	 */
 	rte = makeNode(RangeTblEntry);
 	rte->relname = RelationGetRelationName(rel);
-#ifndef DISABLE_EREF
-	rte->ref = makeNode(Attr);
-	rte->ref->relname = RelationGetRelationName(rel);
-#endif
 	rte->relid = RelationGetRelid(rel);
+	rte->eref = makeNode(Attr);
+	rte->eref->relname = RelationGetRelationName(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
 	rte->skipAcl = false;
@@ -1623,11 +1621,9 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	 */
 	rte = makeNode(RangeTblEntry);
 	rte->relname = RelationGetRelationName(rel);
-#ifndef DISABLE_EREF
-	rte->ref = makeNode(Attr);
-	rte->ref->relname = RelationGetRelationName(rel);
-#endif
 	rte->relid = RelationGetRelid(rel);
+	rte->eref = makeNode(Attr);
+	rte->eref->relname = RelationGetRelationName(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
 	rte->skipAcl = false;
@@ -1723,6 +1719,7 @@ AddRelationRawConstraints(Relation rel,
 	int			numoldchecks;
 	ConstrCheck *oldchecks;
 	ParseState *pstate;
+	RangeTblEntry *rte;
 	int			numchecks;
 	List	   *listptr;
 	Relation	relrel;
@@ -1752,7 +1749,8 @@ AddRelationRawConstraints(Relation rel,
 	 */
 	pstate = make_parsestate(NULL);
 	makeRangeTable(pstate, NULL);
-	addRangeTableEntry(pstate, relname, makeAttr(relname, NULL), false, true, true);
+	rte = addRangeTableEntry(pstate, relname, NULL, false, true);
+	addRTEtoJoinTree(pstate, rte);
 
 	/*
 	 * Process column default expressions.

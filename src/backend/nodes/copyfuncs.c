@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.120 2000/08/11 23:45:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.121 2000/09/12 21:06:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,8 +311,12 @@ _copyTidScan(TidScan *from)
 static void
 CopyJoinFields(Join *from, Join *newnode)
 {
-	/* nothing extra */
-	return;
+	newnode->jointype = from->jointype;
+	Node_Copy(from, newnode, joinqual);
+	/* subPlan list must point to subplans in the new subtree, not the old */
+	if (from->plan.subPlan != NIL)
+		newnode->plan.subPlan = nconc(newnode->plan.subPlan,
+									  pull_subplans((Node *) newnode->joinqual));
 }
 
 
@@ -381,8 +385,8 @@ _copyMergeJoin(MergeJoin *from)
 	/*
 	 * We must add subplans in mergeclauses to the new plan's subPlan list
 	 */
-	if (from->join.subPlan != NIL)
-		newnode->join.subPlan = nconc(newnode->join.subPlan,
+	if (from->join.plan.subPlan != NIL)
+		newnode->join.plan.subPlan = nconc(newnode->join.plan.subPlan,
 						  pull_subplans((Node *) newnode->mergeclauses));
 
 	return newnode;
@@ -414,8 +418,8 @@ _copyHashJoin(HashJoin *from)
 	/*
 	 * We must add subplans in hashclauses to the new plan's subPlan list
 	 */
-	if (from->join.subPlan != NIL)
-		newnode->join.subPlan = nconc(newnode->join.subPlan,
+	if (from->join.plan.subPlan != NIL)
+		newnode->join.plan.subPlan = nconc(newnode->join.plan.subPlan,
 						   pull_subplans((Node *) newnode->hashclauses));
 
 	return newnode;
@@ -506,21 +510,6 @@ _copyGroupClause(GroupClause *from)
 
 	newnode->tleSortGroupRef = from->tleSortGroupRef;
 	newnode->sortop = from->sortop;
-
-	return newnode;
-}
-
-static JoinExpr *
-_copyJoinExpr(JoinExpr *from)
-{
-	JoinExpr *newnode = makeNode(JoinExpr);
-
-	newnode->jointype = from->jointype;
-	newnode->isNatural = from->isNatural;
-	Node_Copy(from, newnode, larg);
-	Node_Copy(from, newnode, rarg);
-	Node_Copy(from, newnode, alias);
-	Node_Copy(from, newnode, quals);
 
 	return newnode;
 }
@@ -914,6 +903,34 @@ _copyRelabelType(RelabelType *from)
 	return newnode;
 }
 
+static RangeTblRef *
+_copyRangeTblRef(RangeTblRef *from)
+{
+	RangeTblRef *newnode = makeNode(RangeTblRef);
+
+	newnode->rtindex = from->rtindex;
+
+	return newnode;
+}
+
+static JoinExpr *
+_copyJoinExpr(JoinExpr *from)
+{
+	JoinExpr *newnode = makeNode(JoinExpr);
+
+	newnode->jointype = from->jointype;
+	newnode->isNatural = from->isNatural;
+	Node_Copy(from, newnode, larg);
+	Node_Copy(from, newnode, rarg);
+	Node_Copy(from, newnode, using);
+	Node_Copy(from, newnode, quals);
+	Node_Copy(from, newnode, alias);
+	Node_Copy(from, newnode, colnames);
+	Node_Copy(from, newnode, colvars);
+
+	return newnode;
+}
+
 /* ----------------
  *		_copyCaseExpr
  * ----------------
@@ -1014,6 +1031,7 @@ _copyRelOptInfo(RelOptInfo *from)
 
 	Node_Copy(from, newnode, baserestrictinfo);
 	newnode->baserestrictcost = from->baserestrictcost;
+	newnode->outerjoinset = listCopy(from->outerjoinset);
 	Node_Copy(from, newnode, joininfo);
 	Node_Copy(from, newnode, innerjoin);
 
@@ -1137,6 +1155,7 @@ _copyIndexPath(IndexPath *from)
 	Node_Copy(from, newnode, indexqual);
 	newnode->indexscandir = from->indexscandir;
 	newnode->joinrelids = listCopy(from->joinrelids);
+	newnode->alljoinquals = from->alljoinquals;
 	newnode->rows = from->rows;
 
 	return newnode;
@@ -1177,6 +1196,7 @@ _copyTidPath(TidPath *from)
 static void
 CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
 {
+	newnode->jointype = from->jointype;
 	Node_Copy(from, newnode, outerjoinpath);
 	Node_Copy(from, newnode, innerjoinpath);
 	Node_Copy(from, newnode, joinrestrictinfo);
@@ -1286,6 +1306,7 @@ _copyRestrictInfo(RestrictInfo *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, clause);
+	newnode->isjoinqual = from->isjoinqual;
 	Node_Copy(from, newnode, subclauseindices);
 	newnode->mergejoinoperator = from->mergejoinoperator;
 	newnode->left_sortop = from->left_sortop;
@@ -1370,12 +1391,11 @@ _copyRangeTblEntry(RangeTblEntry *from)
 
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
-	Node_Copy(from, newnode, ref);
-	Node_Copy(from, newnode, eref);
 	newnode->relid = from->relid;
+	Node_Copy(from, newnode, alias);
+	Node_Copy(from, newnode, eref);
 	newnode->inh = from->inh;
 	newnode->inFromCl = from->inFromCl;
-	newnode->inJoinSet = from->inJoinSet;
 	newnode->skipAcl = from->skipAcl;
 
 	return newnode;
@@ -1526,18 +1546,6 @@ _copyTypeName(TypeName *from)
 	return newnode;
 }
 
-static RelExpr *
-_copyRelExpr(RelExpr *from)
-{
-	RelExpr   *newnode = makeNode(RelExpr);
-
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
-	newnode->inh = from->inh;
-
-	return newnode;
-}
-
 static SortGroupBy *
 _copySortGroupBy(SortGroupBy *from)
 {
@@ -1555,7 +1563,20 @@ _copyRangeVar(RangeVar *from)
 {
 	RangeVar   *newnode = makeNode(RangeVar);
 
-	Node_Copy(from, newnode, relExpr);
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	newnode->inh = from->inh;
+	Node_Copy(from, newnode, name);
+
+	return newnode;
+}
+
+static RangeSubselect *
+_copyRangeSubselect(RangeSubselect *from)
+{
+	RangeSubselect   *newnode = makeNode(RangeSubselect);
+
+	Node_Copy(from, newnode, subquery);
 	Node_Copy(from, newnode, name);
 
 	return newnode;
@@ -1650,6 +1671,8 @@ _copyQuery(Query *from)
 	newnode->hasSubLinks = from->hasSubLinks;
 
 	Node_Copy(from, newnode, rtable);
+	Node_Copy(from, newnode, jointree);
+
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, qual);
 	Node_Copy(from, newnode, rowMark);
@@ -2548,6 +2571,12 @@ copyObject(void *from)
 		case T_RelabelType:
 			retval = _copyRelabelType(from);
 			break;
+		case T_RangeTblRef:
+			retval = _copyRangeTblRef(from);
+			break;
+		case T_JoinExpr:
+			retval = _copyJoinExpr(from);
+			break;
 
 			/*
 			 * RELATION NODES
@@ -2809,14 +2838,14 @@ copyObject(void *from)
 		case T_TypeCast:
 			retval = _copyTypeCast(from);
 			break;
-		case T_RelExpr:
-			retval = _copyRelExpr(from);
-			break;
 		case T_SortGroupBy:
 			retval = _copySortGroupBy(from);
 			break;
 		case T_RangeVar:
 			retval = _copyRangeVar(from);
+			break;
+		case T_RangeSubselect:
+			retval = _copyRangeSubselect(from);
 			break;
 		case T_TypeName:
 			retval = _copyTypeName(from);
@@ -2844,9 +2873,6 @@ copyObject(void *from)
 			break;
 		case T_GroupClause:
 			retval = _copyGroupClause(from);
-			break;
-		case T_JoinExpr:
-			retval = _copyJoinExpr(from);
 			break;
 		case T_CaseExpr:
 			retval = _copyCaseExpr(from);

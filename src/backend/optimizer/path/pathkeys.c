@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.24 2000/08/08 15:41:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.25 2000/09/12 21:06:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -694,8 +694,8 @@ find_mergeclauses_for_pathkeys(List *pathkeys, List *restrictinfos)
  *
  * 'mergeclauses' is a list of RestrictInfos for mergejoin clauses
  *			that will be used in a merge join.
- * 'tlist' is a relation target list for either the inner or outer
- *			side of the proposed join rel.	(Not actually needed anymore)
+ * 'rel' is the relation the pathkeys will apply to (ie, either the inner
+ *			or outer side of the proposed join rel).
  *
  * Returns a pathkeys list that can be applied to the indicated relation.
  *
@@ -706,7 +706,7 @@ find_mergeclauses_for_pathkeys(List *pathkeys, List *restrictinfos)
 List *
 make_pathkeys_for_mergeclauses(Query *root,
 							   List *mergeclauses,
-							   List *tlist)
+							   RelOptInfo *rel)
 {
 	List	   *pathkeys = NIL;
 	List	   *i;
@@ -722,30 +722,37 @@ make_pathkeys_for_mergeclauses(Query *root,
 		Assert(restrictinfo->mergejoinoperator != InvalidOid);
 
 		/*
-		 * Find the key and sortop needed for this mergeclause.
-		 *
-		 * Both sides of the mergeclause should appear in one of the query's
-		 * pathkey equivalence classes, so it doesn't matter which one we
-		 * use here.
+		 * Which key and sortop is needed for this relation?
 		 */
 		key = (Node *) get_leftop(restrictinfo->clause);
 		sortop = restrictinfo->left_sortop;
+		if (!IsA(key, Var) ||
+			!intMember(((Var *) key)->varno, rel->relids))
+		{
+			key = (Node *) get_rightop(restrictinfo->clause);
+			sortop = restrictinfo->right_sortop;
+			if (!IsA(key, Var) ||
+				!intMember(((Var *) key)->varno, rel->relids))
+				elog(ERROR, "make_pathkeys_for_mergeclauses: can't identify which side of mergeclause to use");
+		}
 
 		/*
-		 * Find pathkey sublist for this sort item.  We expect to find the
-		 * canonical set including the mergeclause's left and right sides;
-		 * if we get back just the one item, something is rotten.
+		 * Find or create canonical pathkey sublist for this sort item.
 		 */
 		item = makePathKeyItem(key, sortop);
 		pathkey = make_canonical_pathkey(root, item);
-		Assert(length(pathkey) > 1);
 
 		/*
-		 * Since the item we just made is not in the returned canonical
-		 * set, we can free it --- this saves a useful amount of storage
-		 * in a big join tree.
+		 * Most of the time we will get back a canonical pathkey set
+		 * including both the mergeclause's left and right sides (the only
+		 * case where we don't is if the mergeclause appeared in an OUTER
+		 * JOIN, which causes us not to generate an equijoin set from it).
+		 * Therefore, most of the time the item we just made is not part
+		 * of the returned structure, and we can free it.  This check
+		 * saves a useful amount of storage in a big join tree.
 		 */
-		pfree(item);
+		if (item != (PathKeyItem *) lfirst(pathkey))
+			pfree(item);
 
 		pathkeys = lappend(pathkeys, pathkey);
 	}

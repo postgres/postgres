@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.31 2000/09/06 14:15:20 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.32 2000/09/12 21:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,38 +56,16 @@ thisLockWasTriggered_walker(Node *node,
 			return true;
 		return false;
 	}
-	if (IsA(node, SubLink))
-	{
-
-		/*
-		 * Standard expression_tree_walker will not recurse into
-		 * subselect, but here we must do so.
-		 */
-		SubLink    *sub = (SubLink *) node;
-
-		if (thisLockWasTriggered_walker((Node *) (sub->lefthand), context))
-			return true;
-		context->sublevels_up++;
-		if (thisLockWasTriggered_walker((Node *) (sub->subselect), context))
-		{
-			context->sublevels_up--;	/* not really necessary */
-			return true;
-		}
-		context->sublevels_up--;
-		return false;
-	}
 	if (IsA(node, Query))
 	{
-		/* Reach here after recursing down into subselect above... */
-		Query	   *qry = (Query *) node;
+		/* Recurse into subselects */
+		bool		result;
 
-		if (thisLockWasTriggered_walker((Node *) (qry->targetList), context))
-			return true;
-		if (thisLockWasTriggered_walker((Node *) (qry->qual), context))
-			return true;
-		if (thisLockWasTriggered_walker((Node *) (qry->havingQual), context))
-			return true;
-		return false;
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node, thisLockWasTriggered_walker,
+								   (void *) context);
+		context->sublevels_up--;
+		return result;
 	}
 	return expression_tree_walker(node, thisLockWasTriggered_walker,
 								  (void *) context);
@@ -175,7 +153,7 @@ matchLocks(CmdType event,
 
 typedef struct
 {
-	Oid	evowner;
+	Oid			evowner;
 } checkLockPerms_context;
 
 static bool
@@ -184,23 +162,8 @@ checkLockPerms_walker(Node *node,
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, SubLink))
-	{
-		/*
-		 * Standard expression_tree_walker will not recurse into
-		 * subselect, but here we must do so.
-		 */
-		SubLink    *sub = (SubLink *) node;
-
-		if (checkLockPerms_walker((Node *) (sub->lefthand), context))
-			return true;
-		if (checkLockPerms_walker((Node *) (sub->subselect), context))
-			return true;
-		return false;
-	}
 	if (IsA(node, Query))
 	{
-		/* Reach here after recursing down into subselect above... */
 		Query	   *qry = (Query *) node;
 		int			rtablength = length(qry->rtable);
 		int			i;
@@ -212,13 +175,10 @@ checkLockPerms_walker(Node *node,
 			int32		reqperm;
 			int32		aclcheck_res;
 
-			if (rte->ref != NULL)
-			{
-				if (strcmp(rte->ref->relname, "*NEW*") == 0)
-					continue;
-				if (strcmp(rte->ref->relname, "*OLD*") == 0)
-					continue;
-			}
+			if (strcmp(rte->eref->relname, "*NEW*") == 0)
+				continue;
+			if (strcmp(rte->eref->relname, "*OLD*") == 0)
+				continue;
 
 			if (i == qry->resultRelation)
 				switch (qry->commandType)
@@ -250,14 +210,8 @@ checkLockPerms_walker(Node *node,
 
 		/* If there are sublinks, search for them and check their RTEs */
 		if (qry->hasSubLinks)
-		{
-			if (checkLockPerms_walker((Node *) (qry->targetList), context))
-				return true;
-			if (checkLockPerms_walker((Node *) (qry->qual), context))
-				return true;
-			if (checkLockPerms_walker((Node *) (qry->havingQual), context))
-				return true;
-		}
+			return query_tree_walker(qry, checkLockPerms_walker,
+									 (void *) context);
 		return false;
 	}
 	return expression_tree_walker(node, checkLockPerms_walker,
@@ -278,7 +232,7 @@ checkLockPerms(List *locks, Query *parsetree, int rt_index)
 		return;					/* nothing to check */
 
 	/*
-	 * Get the usename of the rule's event relation owner
+	 * Get the userid of the rule's event relation owner
 	 */
 	rte = rt_fetch(rt_index, parsetree->rtable);
 	ev_rel = heap_openr(rte->relname, AccessShareLock);

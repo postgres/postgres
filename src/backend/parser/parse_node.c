@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.45 2000/08/24 03:29:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.46 2000/09/12 21:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,8 @@ make_parsestate(ParseState *parentParseState)
 	pstate = palloc(sizeof(ParseState));
 	MemSet(pstate, 0, sizeof(ParseState));
 
-	pstate->p_last_resno = 1;
 	pstate->parentParseState = parentParseState;
+	pstate->p_last_resno = 1;
 
 	return pstate;
 }
@@ -164,35 +164,44 @@ make_op(char *opname, Node *ltree, Node *rtree)
 
 /*
  * make_var
- *		Build a Var node for an attribute identified by name
+ *		Build a Var node for an attribute identified by RTE and attrno
  */
 Var *
-make_var(ParseState *pstate, Oid relid, char *refname,
-		 char *attrname)
+make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
 {
-	HeapTuple	tp;
-	Form_pg_attribute att_tup;
 	int			vnum,
-				attid;
+				sublevels_up;
 	Oid			vartypeid;
 	int32		type_mod;
-	int			sublevels_up;
 
-	vnum = refnameRangeTablePosn(pstate, refname, &sublevels_up);
+	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
-	tp = SearchSysCacheTuple(ATTNAME,
-							 ObjectIdGetDatum(relid),
-							 PointerGetDatum(attrname),
-							 0, 0);
-	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "Relation %s does not have attribute %s",
-			 refname, attrname);
-	att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-	attid = att_tup->attnum;
-	vartypeid = att_tup->atttypid;
-	type_mod = att_tup->atttypmod;
+	if (rte->relid != InvalidOid)
+	{
+		/* Plain relation RTE --- get the attribute's type info */
+		HeapTuple	tp;
+		Form_pg_attribute att_tup;
 
-	return makeVar(vnum, attid, vartypeid, type_mod, sublevels_up);
+		tp = SearchSysCacheTuple(ATTNUM,
+								 ObjectIdGetDatum(rte->relid),
+								 Int16GetDatum(attrno),
+								 0, 0);
+		/* this shouldn't happen... */
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "Relation %s does not have attribute %d",
+				 rte->relname, attrno);
+		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		vartypeid = att_tup->atttypid;
+		type_mod = att_tup->atttypmod;
+	}
+	else
+	{
+		/* Subselect RTE --- get type info from subselect's tlist */
+		elog(ERROR, "make_var: subselect in FROM not implemented yet");
+		vartypeid = type_mod = 0;
+	}
+
+	return makeVar(vnum, attrno, vartypeid, type_mod, sublevels_up);
 }
 
 /*

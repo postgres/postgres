@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.18 2000/06/09 01:44:26 momjian Exp $
+ * $Id: pg_list.h,v 1.19 2000/09/12 21:07:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ extern List *nconc(List *list1, List *list2);
 extern List *lcons(void *datum, List *list);
 extern List *lconsi(int datum, List *list);
 extern bool member(void *datum, List *list);
+extern bool ptrMember(void *datum, List *list);
 extern bool intMember(int datum, List *list);
 extern Value *makeInteger(long i);
 extern Value *makeFloat(char *numericStr);

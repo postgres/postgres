@@ -1,9 +1,9 @@
 /**********************************************************************
- * get_ruledef.c	- Function to get a rules definition text
- *			  out of its tuple
+ * ruleutils.c	- Functions to convert stored expressions/querytrees
+ *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.60 2000/09/12 04:15:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.61 2000/09/12 21:07:05 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -43,6 +43,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
+#include "commands/view.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "optimizer/clauses.h"
@@ -50,8 +51,8 @@
 #include "parser/keywords.h"
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
-#include "commands/view.h"
 
 
 /* ----------
@@ -64,12 +65,6 @@ typedef struct
 	List	   *rangetables;	/* List of List of RangeTblEntry */
 	bool		varprefix;		/* TRUE to print prefixes on Vars */
 } deparse_context;
-
-typedef struct
-{
-	Index		rt_index;
-	int			levelsup;
-} check_if_rte_used_context;
 
 
 /* ----------
@@ -108,13 +103,13 @@ static void get_func_expr(Expr *expr, deparse_context *context);
 static void get_tle_expr(TargetEntry *tle, deparse_context *context);
 static void get_const_expr(Const *constval, deparse_context *context);
 static void get_sublink_expr(Node *node, deparse_context *context);
+static void get_from_clause(Query *query, deparse_context *context);
+static void get_from_clause_item(Node *jtnode, Query *query,
+								 deparse_context *context);
 static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
 static char *get_relation_name(Oid relid);
 static char *get_attribute_name(Oid relid, int2 attnum);
-static bool check_if_rte_used(Node *node, Index rt_index, int levelsup);
-static bool check_if_rte_used_walker(Node *node,
-						 check_if_rte_used_context *context);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -230,13 +225,13 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	Name		vname = PG_GETARG_NAME(0);
 	text	   *ruledef;
 	Datum		args[1];
-	char		nulls[2];
+	char		nulls[1];
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
 	StringInfoData buf;
 	int			len;
-	char		*name;
+	char	   *name;
 
 	/* ----------
 	 * We need the view name somewhere deep down
@@ -276,7 +271,6 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	name = MakeRetrieveViewRuleName(rulename);
 	args[0] = PointerGetDatum(name);
 	nulls[0] = ' ';
-	nulls[1] = '\0';
 	spirc = SPI_execp(plan_getview, args, nulls, 1);
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for view %s", rulename);
@@ -883,59 +877,7 @@ get_select_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	char	   *sep;
-	TargetEntry *tle;
-	RangeTblEntry *rte;
-	bool	   *rt_used;
-	int			rt_length;
-	int			rt_numused = 0;
-	bool		rt_constonly = TRUE;
-	int			i;
 	List	   *l;
-
-	/* ----------
-	 * First we need to know which and how many of the
-	 * range table entries in the query are used in the target list
-	 * or queries qualification
-	 * ----------
-	 */
-	rt_length = length(query->rtable);
-	rt_used = palloc(sizeof(bool) * rt_length);
-	for (i = 0; i < rt_length; i++)
-	{
-		if (check_if_rte_used((Node *) (query->targetList), i + 1, 0) ||
-			check_if_rte_used(query->qual, i + 1, 0) ||
-			check_if_rte_used(query->havingQual, i + 1, 0))
-		{
-			rt_used[i] = TRUE;
-			rt_numused++;
-		}
-		else
-			rt_used[i] = FALSE;
-	}
-
-	/* ----------
-	 * Now check if any of the used rangetable entries is different
-	 * from *NEW* and *OLD*. If so we must provide the FROM clause
-	 * later.
-	 * ----------
-	 */
-	i = 0;
-	foreach(l, query->rtable)
-	{
-		if (!rt_used[i++])
-			continue;
-
-		rte = (RangeTblEntry *) lfirst(l);
-		if (rte->ref == NULL)
-			continue;
-		if (strcmp(rte->ref->relname, "*NEW*") == 0)
-			continue;
-		if (strcmp(rte->ref->relname, "*OLD*") == 0)
-			continue;
-
-		rt_constonly = FALSE;
-		break;
-	}
 
 	/* ----------
 	 * Build up the query string - first we say SELECT
@@ -947,9 +889,9 @@ get_select_query_def(Query *query, deparse_context *context)
 	sep = " ";
 	foreach(l, query->targetList)
 	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		bool		tell_as = false;
 
-		tle = (TargetEntry *) lfirst(l);
 		appendStringInfo(buf, sep);
 		sep = ", ";
 
@@ -962,6 +904,7 @@ get_select_query_def(Query *query, deparse_context *context)
 		else
 		{
 			Var		   *var = (Var *) (tle->expr);
+			RangeTblEntry *rte;
 			char	   *attname;
 
 			rte = get_rte_for_var(var, context);
@@ -975,60 +918,8 @@ get_select_query_def(Query *query, deparse_context *context)
 							 quote_identifier(tle->resdom->resname));
 	}
 
-	/* If we need other tables than *NEW* or *OLD* add the FROM clause */
-	if (!rt_constonly && rt_numused > 0)
-	{
-		sep = " FROM ";
-		i = 0;
-		foreach(l, query->rtable)
-		{
-			if (rt_used[i++])
-			{
-				rte = (RangeTblEntry *) lfirst(l);
-
-				if (rte->ref == NULL)
-					continue;
-				if (strcmp(rte->ref->relname, "*NEW*") == 0)
-					continue;
-				if (strcmp(rte->ref->relname, "*OLD*") == 0)
-					continue;
-
-				appendStringInfo(buf, sep);
-				sep = ", ";
-				appendStringInfo(buf, "%s%s",
-								 only_marker(rte),
-								 quote_identifier(rte->relname));
-
-				/*
-				 * NOTE: SQL92 says you can't write column aliases unless
-				 * you write a table alias --- so, if there's an alias
-				 * list, make sure we emit a table alias even if it's the
-				 * same as the table's real name.
-				 */
-				if ((rte->ref != NULL)
-					&& ((strcmp(rte->relname, rte->ref->relname) != 0)
-						|| (rte->ref->attrs != NIL)))
-				{
-					appendStringInfo(buf, " %s",
-									 quote_identifier(rte->ref->relname));
-					if (rte->ref->attrs != NIL)
-					{
-						List	   *col;
-
-						appendStringInfo(buf, " (");
-						foreach(col, rte->ref->attrs)
-						{
-							if (col != rte->ref->attrs)
-								appendStringInfo(buf, ", ");
-							appendStringInfo(buf, "%s",
-								  quote_identifier(strVal(lfirst(col))));
-						}
-						appendStringInfoChar(buf, ')');
-					}
-				}
-			}
-		}
-	}
+	/* Add the FROM clause if needed */
+	get_from_clause(query, context);
 
 	/* Add the WHERE clause if given */
 	if (query->qual != NULL)
@@ -1066,52 +957,32 @@ get_insert_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	char	   *sep;
-	TargetEntry *tle;
-	RangeTblEntry *rte;
-	bool	   *rt_used;
-	int			rt_length;
-	int			rt_numused = 0;
 	bool		rt_constonly = TRUE;
+	RangeTblEntry *rte;
 	int			i;
 	List	   *l;
 
 	/* ----------
 	 * We need to know if other tables than *NEW* or *OLD*
 	 * are used in the query. If not, it's an INSERT ... VALUES,
-	 * otherwise an INSERT ... SELECT.
+	 * otherwise an INSERT ... SELECT.  (Pretty klugy ... fix this
+	 * when we redesign querytrees!)
 	 * ----------
 	 */
-	rt_length = length(query->rtable);
-	rt_used = palloc(sizeof(bool) * rt_length);
-	for (i = 0; i < rt_length; i++)
-	{
-		if (check_if_rte_used((Node *) (query->targetList), i + 1, 0) ||
-			check_if_rte_used(query->qual, i + 1, 0) ||
-			check_if_rte_used(query->havingQual, i + 1, 0))
-		{
-			rt_used[i] = TRUE;
-			rt_numused++;
-		}
-		else
-			rt_used[i] = FALSE;
-	}
-
 	i = 0;
 	foreach(l, query->rtable)
 	{
-		if (!rt_used[i++])
-			continue;
-
 		rte = (RangeTblEntry *) lfirst(l);
-		if (rte->ref == NULL)
+		i++;
+		if (strcmp(rte->eref->relname, "*NEW*") == 0)
 			continue;
-		if (strcmp(rte->ref->relname, "*NEW*") == 0)
+		if (strcmp(rte->eref->relname, "*OLD*") == 0)
 			continue;
-		if (strcmp(rte->ref->relname, "*OLD*") == 0)
-			continue;
-
-		rt_constonly = FALSE;
-		break;
+		if (rangeTableEntry_used((Node *) query, i, 0))
+		{
+			rt_constonly = FALSE;
+			break;
+		}
 	}
 
 	/* ----------
@@ -1122,11 +993,11 @@ get_insert_query_def(Query *query, deparse_context *context)
 	appendStringInfo(buf, "INSERT INTO %s",
 					 quote_identifier(rte->relname));
 
-	/* Add the target list */
+	/* Add the insert-column-names list */
 	sep = " (";
 	foreach(l, query->targetList)
 	{
-		tle = (TargetEntry *) lfirst(l);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
@@ -1141,7 +1012,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		sep = "";
 		foreach(l, query->targetList)
 		{
-			tle = (TargetEntry *) lfirst(l);
+			TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 			appendStringInfo(buf, sep);
 			sep = ", ";
@@ -1194,6 +1065,9 @@ get_update_query_def(Query *query, deparse_context *context)
 							 quote_identifier(tle->resdom->resname));
 		get_tle_expr(tle, context);
 	}
+
+	/* Add the FROM clause if needed */
+	get_from_clause(query, context);
 
 	/* Finally add a WHERE clause if given */
 	if (query->qual != NULL)
@@ -1281,16 +1155,13 @@ get_rule_expr(Node *node, deparse_context *context)
 
 				if (context->varprefix)
 				{
-					if (rte->ref == NULL)
-						appendStringInfo(buf, "%s.",
-										 quote_identifier(rte->relname));
-					else if (strcmp(rte->ref->relname, "*NEW*") == 0)
+					if (strcmp(rte->eref->relname, "*NEW*") == 0)
 						appendStringInfo(buf, "new.");
-					else if (strcmp(rte->ref->relname, "*OLD*") == 0)
+					else if (strcmp(rte->eref->relname, "*OLD*") == 0)
 						appendStringInfo(buf, "old.");
 					else
 						appendStringInfo(buf, "%s.",
-									quote_identifier(rte->ref->relname));
+									quote_identifier(rte->eref->relname));
 				}
 				appendStringInfo(buf, "%s",
 						  quote_identifier(get_attribute_name(rte->relid,
@@ -1860,6 +1731,165 @@ get_sublink_expr(Node *node, deparse_context *context)
 		appendStringInfoChar(buf, ')');
 }
 
+
+/* ----------
+ * get_from_clause			- Parse back a FROM clause
+ * ----------
+ */
+static void
+get_from_clause(Query *query, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	char	   *sep;
+	List	   *l;
+
+	/*
+	 * We use the query's jointree as a guide to what to print.  However,
+	 * we must ignore auto-added RTEs that are marked not inFromCl.
+	 * Also ignore the rule pseudo-RTEs for NEW and OLD.
+	 */
+	sep = " FROM ";
+
+	foreach(l, query->jointree)
+	{
+		Node   *jtnode = (Node *) lfirst(l);
+
+		if (IsA(jtnode, RangeTblRef))
+		{
+			int			varno = ((RangeTblRef *) jtnode)->rtindex;
+			RangeTblEntry *rte = rt_fetch(varno, query->rtable);
+
+			if (!rte->inFromCl)
+				continue;
+			if (strcmp(rte->eref->relname, "*NEW*") == 0)
+				continue;
+			if (strcmp(rte->eref->relname, "*OLD*") == 0)
+				continue;
+		}
+
+		appendStringInfo(buf, sep);
+		get_from_clause_item(jtnode, query, context);
+		sep = ", ";
+	}
+}
+
+static void
+get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+
+	if (IsA(jtnode, RangeTblRef))
+	{
+		int			varno = ((RangeTblRef *) jtnode)->rtindex;
+		RangeTblEntry *rte = rt_fetch(varno, query->rtable);
+
+		appendStringInfo(buf, "%s%s",
+						 only_marker(rte),
+						 quote_identifier(rte->relname));
+		if (rte->alias != NULL)
+		{
+			appendStringInfo(buf, " %s",
+							 quote_identifier(rte->alias->relname));
+			if (rte->alias->attrs != NIL)
+			{
+				List	   *col;
+
+				appendStringInfo(buf, " (");
+				foreach(col, rte->alias->attrs)
+				{
+					if (col != rte->alias->attrs)
+						appendStringInfo(buf, ", ");
+					appendStringInfo(buf, "%s",
+									 quote_identifier(strVal(lfirst(col))));
+				}
+				appendStringInfoChar(buf, ')');
+			}
+		}
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		appendStringInfoChar(buf, '(');
+		get_from_clause_item(j->larg, query, context);
+		if (j->isNatural)
+			appendStringInfo(buf, " NATURAL");
+		switch (j->jointype)
+		{
+			case JOIN_INNER:
+				if (j->quals)
+					appendStringInfo(buf, " JOIN ");
+				else
+					appendStringInfo(buf, " CROSS JOIN ");
+				break;
+			case JOIN_LEFT:
+				appendStringInfo(buf, " LEFT JOIN ");
+				break;
+			case JOIN_FULL:
+				appendStringInfo(buf, " FULL JOIN ");
+				break;
+			case JOIN_RIGHT:
+				appendStringInfo(buf, " RIGHT JOIN ");
+				break;
+			case JOIN_UNION:
+				appendStringInfo(buf, " UNION JOIN ");
+				break;
+			default:
+				elog(ERROR, "get_from_clause_item: unknown join type %d",
+					 (int) j->jointype);
+		}
+		get_from_clause_item(j->rarg, query, context);
+		if (! j->isNatural)
+		{
+			if (j->using)
+			{
+				List	   *col;
+
+				appendStringInfo(buf, " USING (");
+				foreach(col, j->using)
+				{
+					if (col != j->using)
+						appendStringInfo(buf, ", ");
+					appendStringInfo(buf, "%s",
+									 quote_identifier(strVal(lfirst(col))));
+				}
+				appendStringInfoChar(buf, ')');
+			}
+			else if (j->quals)
+			{
+				appendStringInfo(buf, " ON (");
+				get_rule_expr(j->quals, context);
+				appendStringInfoChar(buf, ')');
+			}
+		}
+		appendStringInfoChar(buf, ')');
+		/* Yes, it's correct to put alias after the right paren ... */
+		if (j->alias != NULL)
+		{
+			appendStringInfo(buf, " %s",
+							 quote_identifier(j->alias->relname));
+			if (j->alias->attrs != NIL)
+			{
+				List	   *col;
+
+				appendStringInfo(buf, " (");
+				foreach(col, j->alias->attrs)
+				{
+					if (col != j->alias->attrs)
+						appendStringInfo(buf, ", ");
+					appendStringInfo(buf, "%s",
+									 quote_identifier(strVal(lfirst(col))));
+				}
+				appendStringInfoChar(buf, ')');
+			}
+		}
+	}
+	else
+		elog(ERROR, "get_from_clause_item: unexpected node type %d",
+			 nodeTag(jtnode));
+}
+
+
 /* ----------
  * tleIsArrayAssign			- check for array assignment
  * ----------
@@ -1989,57 +2019,4 @@ get_attribute_name(Oid relid, int2 attnum)
 
 	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
 	return pstrdup(NameStr(attStruct->attname));
-}
-
-
-/* ----------
- * check_if_rte_used
- *		Check a targetlist or qual to see if a given rangetable entry
- *		is used in it
- * ----------
- */
-static bool
-check_if_rte_used(Node *node, Index rt_index, int levelsup)
-{
-	check_if_rte_used_context context;
-
-	context.rt_index = rt_index;
-	context.levelsup = levelsup;
-	return check_if_rte_used_walker(node, &context);
-}
-
-static bool
-check_if_rte_used_walker(Node *node,
-						 check_if_rte_used_context *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		return var->varno == context->rt_index &&
-			var->varlevelsup == context->levelsup;
-	}
-	if (IsA(node, SubLink))
-	{
-		SubLink    *sublink = (SubLink *) node;
-		Query	   *query = (Query *) sublink->subselect;
-
-		/* Recurse into subquery; expression_tree_walker will not */
-		if (check_if_rte_used((Node *) (query->targetList),
-							  context->rt_index, context->levelsup + 1) ||
-			check_if_rte_used(query->qual,
-							  context->rt_index, context->levelsup + 1) ||
-			check_if_rte_used(query->havingQual,
-							  context->rt_index, context->levelsup + 1))
-			return true;
-
-		/*
-		 * fall through to let expression_tree_walker examine lefthand
-		 * args
-		 */
-	}
-	return expression_tree_walker(node, check_if_rte_used_walker,
-								  (void *) context);
 }

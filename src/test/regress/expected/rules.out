@@ -1159,6 +1159,47 @@ SELECT count(*) FROM shoe;
 (1 row)
 
 --
+-- Simple test of qualified ON INSERT ... this did not work in 7.0 ...
+--
+create table foo (f1 int);
+create table foo2 (f1 int);
+create rule foorule as on insert to foo where f1 < 100
+do instead nothing;
+insert into foo values(1);
+insert into foo values(1001);
+select * from foo;
+  f1  
+------
+ 1001
+(1 row)
+
+drop rule foorule;
+-- this should fail because f1 is not exposed for unqualified reference:
+create rule foorule as on insert to foo where f1 < 100
+do instead insert into foo2 values (f1);
+ERROR:  Attribute 'f1' not found
+-- this is the correct way:
+create rule foorule as on insert to foo where f1 < 100
+do instead insert into foo2 values (new.f1);
+insert into foo values(2);
+insert into foo values(100);
+select * from foo;
+  f1  
+------
+ 1001
+  100
+(2 rows)
+
+select * from foo2;
+ f1 
+----
+  2
+(1 row)
+
+drop rule foorule;
+drop table foo;
+drop table foo2;
+--
 -- Check that ruleutils are working
 --
 SELECT viewname, definition FROM pg_views ORDER BY viewname;
@@ -1200,7 +1241,7 @@ SELECT tablename, rulename, definition FROM pg_rules
  rtest_order1  | rtest_order_r1  | CREATE RULE rtest_order_r1 AS ON INSERT TO rtest_order1 DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 1 - this should run 3rd or 4th'::text);
  rtest_order1  | rtest_order_r2  | CREATE RULE rtest_order_r2 AS ON INSERT TO rtest_order1 DO INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 2 - this should run 1st'::text);
  rtest_order1  | rtest_order_r3  | CREATE RULE rtest_order_r3 AS ON INSERT TO rtest_order1 DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 3 - this should run 3rd or 4th'::text);
- rtest_order1  | rtest_order_r4  | CREATE RULE rtest_order_r4 AS ON INSERT TO rtest_order1 WHERE (rtest_order2.a < 100) DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 4 - this should run 2nd'::text);
+ rtest_order1  | rtest_order_r4  | CREATE RULE rtest_order_r4 AS ON INSERT TO rtest_order1 WHERE (new.a < 100) DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 4 - this should run 2nd'::text);
  rtest_person  | rtest_pers_del  | CREATE RULE rtest_pers_del AS ON DELETE TO rtest_person DO DELETE FROM rtest_admin WHERE (rtest_admin.pname = old.pname);
  rtest_person  | rtest_pers_upd  | CREATE RULE rtest_pers_upd AS ON UPDATE TO rtest_person DO UPDATE rtest_admin SET pname = new.pname WHERE (rtest_admin.pname = old.pname);
  rtest_system  | rtest_sys_del   | CREATE RULE rtest_sys_del AS ON DELETE TO rtest_system DO (DELETE FROM rtest_interface WHERE (rtest_interface.sysname = old.sysname); DELETE FROM rtest_admin WHERE (rtest_admin.sysname = old.sysname); );

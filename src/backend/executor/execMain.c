@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.126 2000/09/12 04:49:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.127 2000/09/12 21:06:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,16 +399,17 @@ ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
 	 * If we have a result relation, determine whether the result rel is
 	 * scanned or merely written.  If scanned, we will insist on read
 	 * permission as well as modify permission.
+	 *
+	 * Note: it might look faster to apply rangeTableEntry_used(), but
+	 * that's not correct since it will trigger on jointree references
+	 * to the RTE.  We only want to know about actual Var nodes.
 	 */
 	if (resultRelation > 0)
 	{
-		List	   *qvars = pull_varnos(parseTree->qual);
-		List	   *tvars = pull_varnos((Node *) parseTree->targetList);
+		List	   *qvars = pull_varnos((Node *) parseTree);
 
-		resultIsScanned = (intMember(resultRelation, qvars) ||
-						   intMember(resultRelation, tvars));
+		resultIsScanned = intMember(resultRelation, qvars);
 		freeList(qvars);
-		freeList(tvars);
 	}
 
 	/*
@@ -571,8 +572,8 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
 				  bool isResultRelation, bool resultIsScanned)
 {
 	char	   *relName;
+	Oid			userid;
 	int32		aclcheck_result;
-	Oid		userid;
 
 	if (rte->skipAcl)
 	{
@@ -703,13 +704,11 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		 */
 		RelationInfo *resultRelationInfo;
 		Index		resultRelationIndex;
-		RangeTblEntry *rtentry;
 		Oid			resultRelationOid;
 		Relation	resultRelationDesc;
 
 		resultRelationIndex = resultRelation;
-		rtentry = rt_fetch(resultRelationIndex, rangeTable);
-		resultRelationOid = rtentry->relid;
+		resultRelationOid = getrelid(resultRelationIndex, rangeTable);
 		resultRelationDesc = heap_open(resultRelationOid, RowExclusiveLock);
 
 		if (resultRelationDesc->rd_rel->relkind == RELKIND_SEQUENCE)
@@ -770,7 +769,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 			if (!(rm->info & ROW_MARK_FOR_UPDATE))
 				continue;
-			relid = rt_fetch(rm->rti, rangeTable)->relid;
+			relid = getrelid(rm->rti, rangeTable);
 			relation = heap_open(relid, RowShareLock);
 			erm = (execRowMark *) palloc(sizeof(execRowMark));
 			erm->relation = relation;
@@ -1623,10 +1622,10 @@ ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
 		rte = makeNode(RangeTblEntry);
 
 		rte->relname = RelationGetRelationName(rel);
-		rte->ref = makeNode(Attr);
-		rte->ref->relname = rte->relname;
 		rte->relid = RelationGetRelid(rel);
-		/* inh, inFromCl, inJoinSet, skipAcl won't be used, leave them zero */
+		rte->eref = makeNode(Attr);
+		rte->eref->relname = rte->relname;
+		/* inh, inFromCl, skipAcl won't be used, leave them zero */
 
 		/* Set up single-entry range table */
 		econtext->ecxt_range_table = lcons(rte, NIL);

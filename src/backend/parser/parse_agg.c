@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.39 2000/07/17 03:05:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.40 2000/09/12 21:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,6 +152,11 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 */
 	if (contain_agg_clause(qry->qual))
 		elog(ERROR, "Aggregates not allowed in WHERE clause");
+	/*
+	 * ON-conditions in JOIN expressions are like WHERE clauses.
+	 */
+	if (contain_agg_clause((Node *) qry->jointree))
+		elog(ERROR, "Aggregates not allowed in JOIN conditions");
 
 	/*
 	 * No aggregates allowed in GROUP BY clauses, either.

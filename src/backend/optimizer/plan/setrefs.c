@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.64 2000/06/04 20:50:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.65 2000/09/12 21:06:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,11 +106,13 @@ set_plan_references(Plan *plan)
 			set_join_references((Join *) plan);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			break;
 		case T_MergeJoin:
 			set_join_references((Join *) plan);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			fix_expr_references(plan,
 								(Node *) ((MergeJoin *) plan)->mergeclauses);
 			break;
@@ -118,6 +120,7 @@ set_plan_references(Plan *plan)
 			set_join_references((Join *) plan);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			fix_expr_references(plan,
 								(Node *) ((HashJoin *) plan)->hashclauses);
 			break;
@@ -236,15 +239,15 @@ fix_expr_references(Plan *plan, Node *node)
 static void
 set_join_references(Join *join)
 {
-	Plan	   *outer = join->lefttree;
-	Plan	   *inner = join->righttree;
+	Plan	   *outer = join->plan.lefttree;
+	Plan	   *inner = join->plan.righttree;
 	List	   *outer_tlist = ((outer == NULL) ? NIL : outer->targetlist);
 	List	   *inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
 
-	join->targetlist = join_references(join->targetlist,
-									   outer_tlist,
-									   inner_tlist,
-									   (Index) 0);
+	join->plan.targetlist = join_references(join->plan.targetlist,
+											outer_tlist,
+											inner_tlist,
+											(Index) 0);
 }
 
 /*

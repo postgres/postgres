@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.62 2000/05/31 00:28:22 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.63 2000/09/12 21:06:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,9 @@ int			geqo_rels = DEFAULT_GEQO_RELS;
 
 
 static void set_base_rel_pathlist(Query *root);
-static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed);
+static List *build_jointree_rels(Query *root);
+static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
+										 List *initial_rels);
 
 #ifdef OPTIMIZER_DEBUG
 static void debug_print_rel(Query *root, RelOptInfo *rel);
@@ -43,27 +45,38 @@ RelOptInfo *
 make_one_rel(Query *root)
 {
 	int			levels_needed;
+	List	   *initial_rels;
 
 	/*
-	 * Set the number of join (not nesting) levels yet to be processed.
+	 * Count the number of top-level jointree nodes.  This is the depth
+	 * of the dynamic-programming algorithm we must employ to consider
+	 * all ways of joining the top-level nodes.  Currently, we build
+	 * JoinExpr joins in exactly the order implied by the join expression,
+	 * so no dynamic-programming search is needed within a JoinExpr.
 	 */
-	levels_needed = length(root->base_rel_list);
+	levels_needed = length(root->jointree);
 
 	if (levels_needed <= 0)
-		return NULL;
+		return NULL;			/* nothing to do? */
 
 	/*
 	 * Generate access paths for the base rels.
 	 */
 	set_base_rel_pathlist(root);
 
+	/*
+	 * Construct a list of rels corresponding to the toplevel jointree nodes.
+	 * This may contain both base rels and rels constructed according to
+	 * explicit JOIN directives.
+	 */
+	initial_rels = build_jointree_rels(root);
+
 	if (levels_needed == 1)
 	{
-
 		/*
-		 * Single relation, no more processing is required.
+		 * Single jointree node, so we're done.
 		 */
-		return (RelOptInfo *) lfirst(root->base_rel_list);
+		return (RelOptInfo *) lfirst(initial_rels);
 	}
 	else
 	{
@@ -71,7 +84,7 @@ make_one_rel(Query *root)
 		/*
 		 * Generate join tree.
 		 */
-		return make_one_rel_by_joins(root, levels_needed);
+		return make_one_rel_by_joins(root, levels_needed, initial_rels);
 	}
 }
 
@@ -126,19 +139,46 @@ set_base_rel_pathlist(Query *root)
 }
 
 /*
+ * build_jointree_rels
+ *	  Construct a RelOptInfo for each item in the query's jointree.
+ *
+ * At present, we handle explicit joins in the FROM clause exactly as
+ * specified, with no search for other join orders.  Only the cross-product
+ * joins at the top level are involved in the dynamic-programming search.
+ */
+static List *
+build_jointree_rels(Query *root)
+{
+	List	   *rels = NIL;
+	List	   *jt;
+
+	foreach(jt, root->jointree)
+	{
+		Node	   *jtnode = (Node *) lfirst(jt);
+
+		rels = lappend(rels, make_rel_from_jointree(root, jtnode));
+	}
+	return rels;
+}
+
+/*
  * make_one_rel_by_joins
  *	  Find all possible joinpaths for a query by successively finding ways
  *	  to join component relations into join relations.
  *
  * 'levels_needed' is the number of iterations needed, ie, the number of
- *		base relations present in the query
+ *		independent jointree items in the query.  This is > 1.
+ *
+ * 'initial_rels' is a list of RelOptInfo nodes for each independent
+ *		jointree item.  These are the components to be joined together.
  *
  * Returns the final level of join relations, i.e., the relation that is
  * the result of joining all the original relations together.
  */
 static RelOptInfo *
-make_one_rel_by_joins(Query *root, int levels_needed)
+make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 {
+	List	  **joinitems;
 	int			lev;
 	RelOptInfo *rel;
 
@@ -152,34 +192,35 @@ make_one_rel_by_joins(Query *root, int levels_needed)
 
 	/*
 	 * We employ a simple "dynamic programming" algorithm: we first find
-	 * all ways to build joins of two base relations, then all ways to
-	 * build joins of three base relations (from two-base-rel joins and
-	 * other base rels), then four-base-rel joins, and so on until we have
-	 * considered all ways to join all N relations into one rel.
+	 * all ways to build joins of two jointree items, then all ways to
+	 * build joins of three items (from two-item joins and single items),
+	 * then four-item joins, and so on until we have considered all ways
+	 * to join all the items into one rel.
+	 *
+	 * joinitems[j] is a list of all the j-item rels.  Initially we set
+	 * joinitems[1] to represent all the single-jointree-item relations.
 	 */
+	joinitems = (List **) palloc((levels_needed+1) * sizeof(List *));
+	MemSet(joinitems, 0, (levels_needed+1) * sizeof(List *));
+
+	joinitems[1] = initial_rels;
 
 	for (lev = 2; lev <= levels_needed; lev++)
 	{
-		List	   *first_old_rel = root->join_rel_list;
 		List	   *x;
 
 		/*
 		 * Determine all possible pairs of relations to be joined at this
 		 * level, and build paths for making each one from every available
-		 * pair of lower-level relations.  Results are prepended to
-		 * root->join_rel_list.
+		 * pair of lower-level relations.
 		 */
-		make_rels_by_joins(root, lev);
+		joinitems[lev] = make_rels_by_joins(root, lev, joinitems);
 
 		/*
-		 * The relations created at the current level will appear at the
-		 * front of root->join_rel_list.
+		 * Do cleanup work on each just-processed rel.
 		 */
-		foreach(x, root->join_rel_list)
+		foreach(x, joinitems[lev])
 		{
-			if (x == first_old_rel)
-				break;			/* no more rels added at this level */
-
 			rel = (RelOptInfo *) lfirst(x);
 
 #ifdef NOT_USED
@@ -202,14 +243,12 @@ make_one_rel_by_joins(Query *root, int levels_needed)
 	}
 
 	/*
-	 * Now, the front of the join_rel_list should be the single rel
+	 * We should have a single rel at the final level,
 	 * representing the join of all the base rels.
 	 */
-	Assert(length(root->join_rel_list) > 0);
-	rel = (RelOptInfo *) lfirst(root->join_rel_list);
-	Assert(length(rel->relids) == levels_needed);
-	Assert(length(root->join_rel_list) == 1 ||
-		   length(((RelOptInfo *) lsecond(root->join_rel_list))->relids) < levels_needed);
+	Assert(length(joinitems[levels_needed]) == 1);
+	rel = (RelOptInfo *) lfirst(joinitems[levels_needed]);
+	Assert(length(rel->relids) == length(root->base_rel_list));
 
 	return rel;
 }

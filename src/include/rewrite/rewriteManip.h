@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.21 2000/04/12 17:16:50 momjian Exp $
+ * $Id: rewriteManip.h,v 1.22 2000/09/12 21:07:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,12 @@ extern void ChangeVarNodes(Node *node, int old_varno, int new_varno,
 			   int sublevels_up);
 extern void IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 						int min_sublevels_up);
+
+extern bool rangeTableEntry_used(Node *node, int rt_index,
+								 int sublevels_up);
+extern bool attribute_used(Node *node, int rt_index, int attno,
+						   int sublevels_up);
+
 extern void AddQual(Query *parsetree, Node *qual);
 extern void AddHavingQual(Query *parsetree, Node *havingQual);
 extern void AddNotQual(Query *parsetree, Node *qual);

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.38 2000/07/12 02:37:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.39 2000/09/12 21:06:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,11 +46,10 @@
  *								  type of tuple in a slot
  *
  *	 CONVENIENCE INITIALIZATION ROUTINES
- *		ExecInitResultTupleSlot    \	convience routines to initialize
+ *		ExecInitResultTupleSlot	   \	convenience routines to initialize
  *		ExecInitScanTupleSlot		\	the various tuple slots for nodes
- *		ExecInitMarkedTupleSlot		/  which store copies of tuples.
- *		ExecInitOuterTupleSlot	   /
- *		ExecInitHashTupleSlot	  /
+ *		ExecInitExtraTupleSlot		/	which store copies of tuples.
+ *		ExecInitNullTupleSlot	   /
  *
  *	 old routines:
  *		ExecGetTupType			- get type of tuple returned by this node
@@ -560,10 +559,11 @@ ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
  * ----------------------------------------------------------------
  */
 /* --------------------------------
- *		ExecInit{Result,Scan,Raw,Marked,Outer,Hash}TupleSlot
+ *		ExecInit{Result,Scan,Extra}TupleSlot
  *
- *		These are convenience routines to initialize the specfied slot
- *		in nodes inheriting the appropriate state.
+ *		These are convenience routines to initialize the specified slot
+ *		in nodes inheriting the appropriate state.  ExecInitExtraTupleSlot
+ *		is used for initializing special-purpose slots.
  * --------------------------------
  */
 #define INIT_SLOT_DEFS \
@@ -583,7 +583,7 @@ ExecInitResultTupleSlot(EState *estate, CommonState *commonstate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
-	commonstate->cs_ResultTupleSlot = (TupleTableSlot *) slot;
+	commonstate->cs_ResultTupleSlot = slot;
 }
 
 /* ----------------
@@ -595,50 +595,51 @@ ExecInitScanTupleSlot(EState *estate, CommonScanState *commonscanstate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
-	commonscanstate->css_ScanTupleSlot = (TupleTableSlot *) slot;
-}
-
-#ifdef NOT_USED
-/* ----------------
- *		ExecInitMarkedTupleSlot
- * ----------------
- */
-void
-ExecInitMarkedTupleSlot(EState *estate, MergeJoinState *mergestate)
-{
-	INIT_SLOT_DEFS;
-	INIT_SLOT_ALLOC;
-	mergestate->mj_MarkedTupleSlot = (TupleTableSlot *) slot;
-}
-
-#endif
-
-/* ----------------
- *		ExecInitOuterTupleSlot
- * ----------------
- */
-void
-ExecInitOuterTupleSlot(EState *estate, HashJoinState *hashstate)
-{
-	INIT_SLOT_DEFS;
-	INIT_SLOT_ALLOC;
-	hashstate->hj_OuterTupleSlot = slot;
+	commonscanstate->css_ScanTupleSlot = slot;
 }
 
 /* ----------------
- *		ExecInitHashTupleSlot
+ *		ExecInitExtraTupleSlot
  * ----------------
  */
-#ifdef NOT_USED
-void
-ExecInitHashTupleSlot(EState *estate, HashJoinState *hashstate)
+TupleTableSlot *
+ExecInitExtraTupleSlot(EState *estate)
 {
 	INIT_SLOT_DEFS;
 	INIT_SLOT_ALLOC;
-	hashstate->hj_HashTupleSlot = slot;
+	return slot;
 }
 
-#endif
+/* ----------------
+ *		ExecInitNullTupleSlot
+ *
+ * Build a slot containing an all-nulls tuple of the given type.
+ * This is used as a substitute for an input tuple when performing an
+ * outer join.
+ * ----------------
+ */
+TupleTableSlot *
+ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
+{
+	TupleTableSlot*   slot = ExecInitExtraTupleSlot(estate);
+	/*
+	 * Since heap_getattr() will treat attributes beyond a tuple's t_natts
+	 * as being NULL, we can make an all-nulls tuple just by making it be of
+	 * zero length.  However, the slot descriptor must match the real tupType.
+	 */
+	HeapTuple	nullTuple;
+	Datum		values[1];
+	char		nulls[1];
+	static struct tupleDesc NullTupleDesc;		/* we assume this inits to
+												 * zeroes */
+
+	ExecSetSlotDescriptor(slot, tupType);
+
+	nullTuple = heap_formtuple(&NullTupleDesc, values, nulls);
+
+	return ExecStoreTuple(nullTuple, slot, InvalidBuffer, true);
+}
+
 
 static TupleTableSlot *
 NodeGetResultTupleSlot(Plan *node)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.76 2000/08/22 13:01:20 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.77 2000/09/12 21:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ static char	   *literalbuf;		/* expandable buffer */
 static int		literallen;		/* actual current length */
 static int		literalalloc;	/* current allocated buffer size */
 
-static int		xcdepth = 0;
+static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 
 #define startlit()  (literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
@@ -510,22 +510,24 @@ other			.
 
 %%
 
-void yyerror(const char * message)
+void
+yyerror(const char *message)
 {
 	elog(ERROR, "parser: %s at or near \"%s\"", message, yytext);
 }
 
-int yywrap()
+int
+yywrap(void)
 {
 	return(1);
 }
 
 /*
- init_io:
+ scanner_init:
 	called by postgres before any actual parsing is done
 */
 void
-init_io()
+scanner_init(void)
 {
 	/* it's important to set this to NULL
 	   because input()/myinput() checks the non-nullness of parseCh

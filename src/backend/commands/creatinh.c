@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.63 2000/08/04 06:12:11 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.64 2000/09/12 21:06:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,7 +259,6 @@ change_varattnos_walker(Node *node, const AttrNumber *newattno)
 	{
 		Var	*var = (Var *) node;
 
-		Assert(newattno != NULL);
 		if (var->varlevelsup == 0 && var->varno == 1)
 		{
 			/*
@@ -270,18 +269,19 @@ change_varattnos_walker(Node *node, const AttrNumber *newattno)
 			 */
 			Assert(newattno[var->varattno - 1] > 0);
 			var->varattno = newattno[var->varattno - 1];
-			return true;
 		}
-		else
-			return false;
+		return false;
 	}
-	return expression_tree_walker(node, change_varattnos_walker, (void *)newattno);
+	return expression_tree_walker(node, change_varattnos_walker,
+								  (void *) newattno);
 }
+
 static bool
 change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
 {
-	return expression_tree_walker(node, change_varattnos_walker, (void *)newattno);
+	return change_varattnos_walker(node, newattno);
 }
+
 /*
  * MergeAttributes
  *		Returns new schema given initial schema and supers.

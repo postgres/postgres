@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.47 2000/04/12 17:16:40 momjian Exp $
+ * $Id: relation.h,v 1.48 2000/09/12 21:07:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,9 @@ typedef enum CostSelector
  *					participates (only used for base rels)
  *		baserestrictcost - Estimated cost of evaluating the baserestrictinfo
  *					clauses at a single tuple (only used for base rels)
+ *		outerjoinset - If the rel appears within the nullable side of an outer
+ *					join, the list of all relids participating in the highest
+ *					such outer join; else NIL (only used for base rels)
  *		joininfo  - List of JoinInfo nodes, containing info about each join
  *					clause in which this relation participates
  *		innerjoin - List of Path nodes that represent indices that may be used
@@ -94,6 +97,10 @@ typedef enum CostSelector
  * We store baserestrictcost in the RelOptInfo (for base relations) because
  * we know we will need it at least once (to price the sequential scan)
  * and may need it multiple times to price index scans.
+ *
+ * outerjoinset is used to ensure correct placement of WHERE clauses that
+ * apply to outer-joined relations; we must not apply such WHERE clauses
+ * until after the outer join is performed.
  */
 
 typedef struct RelOptInfo
@@ -124,6 +131,7 @@ typedef struct RelOptInfo
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if
 										 * base rel) */
 	Cost		baserestrictcost;		/* cost of evaluating the above */
+	Relids		outerjoinset;			/* integer list of base relids */
 	List	   *joininfo;		/* JoinInfo structures */
 	List	   *innerjoin;		/* potential indexscans for nestloop joins */
 
@@ -263,6 +271,9 @@ typedef struct Path
  * that refer to values of other rels, so those other rels must be
  * included in the outer joinrel in order to make a usable join.
  *
+ * 'alljoinquals' is also used only for inner paths of nestloop joins.
+ * This flag is TRUE iff all the indexquals came from JOIN/ON conditions.
+ *
  * 'rows' is the estimated result tuple count for the indexscan.  This
  * is the same as path.parent->rows for a simple indexscan, but it is
  * different for a nestloop inner path, because the additional indexquals
@@ -277,6 +288,7 @@ typedef struct IndexPath
 	List	   *indexqual;
 	ScanDirection indexscandir;
 	Relids		joinrelids;		/* other rels mentioned in indexqual */
+	bool		alljoinquals;	/* all indexquals derived from JOIN conds? */
 	double		rows;			/* estimated number of result tuples */
 } IndexPath;
 
@@ -295,8 +307,11 @@ typedef struct JoinPath
 {
 	Path		path;
 
+	JoinType	jointype;
+
 	Path	   *outerjoinpath;	/* path for the outer side of the join */
 	Path	   *innerjoinpath;	/* path for the inner side of the join */
+
 	List	   *joinrestrictinfo;		/* RestrictInfos to apply to join */
 
 	/*
@@ -375,11 +390,12 @@ typedef struct HashPath
  * The clause cannot actually be applied until we have built a join rel
  * containing all the base rels it references, however.
  *
- * When we construct a join rel that describes exactly the set of base rels
- * referenced in a multi-relation restriction clause, we place that clause
- * into the joinrestrictinfo lists of paths for the join rel.  It will be
- * applied at that join level, and will not propagate any further up the
- * join tree.  (Note: the "predicate migration" code was once intended to
+ * When we construct a join rel that includes all the base rels referenced
+ * in a multi-relation restriction clause, we place that clause into the
+ * joinrestrictinfo lists of paths for the join rel, if neither left nor
+ * right sub-path includes all base rels referenced in the clause.  The clause
+ * will be applied at that join level, and will not propagate any further up
+ * the join tree.  (Note: the "predicate migration" code was once intended to
  * push restriction clauses up and down the plan tree based on evaluation
  * costs, but it's dead code and is unlikely to be resurrected in the
  * foreseeable future.)
@@ -394,18 +410,30 @@ typedef struct HashPath
  * or hashjoin clauses are fairly limited --- the code for each kind of
  * path is responsible for identifying the restrict clauses it can use
  * and ignoring the rest.  Clauses not implemented by an indexscan,
- * mergejoin, or hashjoin will be placed in the qpqual field of the
- * final Plan node, where they will be enforced by general-purpose
+ * mergejoin, or hashjoin will be placed in the plan qual or joinqual field
+ * of the final Plan node, where they will be enforced by general-purpose
  * qual-expression-evaluation code.  (But we are still entitled to count
  * their selectivity when estimating the result tuple count, if we
  * can guess what it is...)
+ *
+ * When dealing with outer joins we must distinguish between qual clauses
+ * that came from WHERE and those that came from JOIN/ON or JOIN/USING.
+ * (For inner joins there's no semantic difference and we can treat the
+ * clauses interchangeably.)  Both kinds of quals are stored as RestrictInfo
+ * nodes during planning, but there's a flag to indicate where they came from.
+ * Note also that when outer joins are present, a qual clause may be treated
+ * as referencing more rels than it really does.  This trick ensures that the
+ * qual will be evaluated at the right level of the join tree --- we don't
+ * want quals from WHERE to be evaluated until after the outer join is done.
  */
 
 typedef struct RestrictInfo
 {
 	NodeTag		type;
 
-	Expr	   *clause;			/* the represented clause of WHERE cond */
+	Expr	   *clause;			/* the represented clause of WHERE or JOIN */
+
+	bool		isjoinqual;		/* TRUE if clause came from JOIN/ON */
 
 	/* only used if clause is an OR clause: */
 	List	   *subclauseindices;		/* indexes matching subclauses */
@@ -437,7 +465,7 @@ typedef struct RestrictInfo
 typedef struct JoinInfo
 {
 	NodeTag		type;
-	Relids		unjoined_relids;/* some rels not yet part of my RelOptInfo */
+	Relids		unjoined_relids; /* some rels not yet part of my RelOptInfo */
 	List	   *jinfo_restrictinfo;		/* relevant RestrictInfos */
 } JoinInfo;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.13 2000/06/15 00:52:07 momjian Exp $
+ * $Id: execdebug.h,v 1.14 2000/09/12 21:07:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,16 +129,6 @@
  */
 
 /* ----------------
- *		EXEC_MERGEJOINPFREE is a flag which causes merge joins
- *		to pfree intermittant tuples (which is the proper thing)
- *		Not defining this means we avoid menory management problems
- *		at the cost of doing deallocation of stuff only at the
- *		end of the transaction
- * ----------------
-#undef EXEC_MERGEJOINPFREE
- */
-
-/* ----------------
  *		EXEC_DEBUGINTERACTIVE is a flag which enables the
  *		user to issue "DEBUG" commands from an interactive
  *		backend.
@@ -170,11 +160,10 @@
  *			  only as necessary -cim 10/26/89
  * ----------------------------------------------------------------
  */
-#define T_OR_F(b)				(b ? "true" : "false")
+#define T_OR_F(b)				((b) ? "true" : "false")
 #define NULL_OR_TUPLE(slot)		(TupIsNull(slot) ? "null" : "a tuple")
 
 
-/* #define EXEC_TUPLECOUNT - XXX take out for now for executor stubbing -- jolly*/
 /* ----------------
  *		tuple count debugging defines
  * ----------------
@@ -326,28 +315,31 @@ extern int	NIndexTupleInserted;
 #define MJ1_printf(s, p)				printf(s, p)
 #define MJ2_printf(s, p1, p2)			printf(s, p1, p2)
 #define MJ_debugtup(tuple, type)		debugtup(tuple, type, NULL)
-#define MJ_dump(context, state)			ExecMergeTupleDump(econtext, state)
+#define MJ_dump(state)					ExecMergeTupleDump(state)
 #define MJ_DEBUG_QUAL(clause, res) \
   MJ2_printf("  ExecQual(%s, econtext) returns %s\n", \
 			 CppAsString(clause), T_OR_F(res));
 
 #define MJ_DEBUG_MERGE_COMPARE(qual, res) \
-  MJ2_printf("  MergeCompare(mergeclauses, %s, ..) returns %s\n", \
+  MJ2_printf("  MergeCompare(mergeclauses, %s, ...) returns %s\n", \
 			 CppAsString(qual), T_OR_F(res));
 
 #define MJ_DEBUG_PROC_NODE(slot) \
-  MJ2_printf("  %s = ExecProcNode(innerPlan) returns %s\n", \
+  MJ2_printf("  %s = ExecProcNode(...) returns %s\n", \
 			 CppAsString(slot), NULL_OR_TUPLE(slot));
+
 #else
+
 #define MJ_nodeDisplay(l)
 #define MJ_printf(s)
 #define MJ1_printf(s, p)
 #define MJ2_printf(s, p1, p2)
 #define MJ_debugtup(tuple, type)
-#define MJ_dump(context, state)
+#define MJ_dump(state)
 #define MJ_DEBUG_QUAL(clause, res)
 #define MJ_DEBUG_MERGE_COMPARE(qual, res)
 #define MJ_DEBUG_PROC_NODE(slot)
+
 #endif	 /* EXEC_MERGEJOINDEBUG */
 
 /* ----------------------------------------------------------------

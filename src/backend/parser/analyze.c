@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.156 2000/08/29 04:20:44 momjian Exp $
+ *	$Id: analyze.c,v 1.157 2000/09/12 21:07:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/relcache.h"
@@ -54,6 +55,8 @@ static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
 static void transformFkeyCheckAttrs(FkConstraint *fkconstraint);
 
+static void release_pstate_resources(ParseState *pstate);
+
 /* kluge to return extra info from transformCreateStmt() */
 static List *extras_before;
 static List *extras_after;
@@ -71,28 +74,22 @@ List *
 parse_analyze(List *pl, ParseState *parentParseState)
 {
 	List	   *result = NIL;
-	ParseState *pstate;
-	Query	   *parsetree;
 
 	while (pl != NIL)
 	{
+		ParseState *pstate = make_parsestate(parentParseState);
+		Query	   *parsetree;
+
 		extras_before = extras_after = NIL;
-		pstate = make_parsestate(parentParseState);
 
 		parsetree = transformStmt(pstate, lfirst(pl));
-		if (pstate->p_target_relation != NULL)
-			heap_close(pstate->p_target_relation, AccessShareLock);
-		pstate->p_target_relation = NULL;
-		pstate->p_target_rangetblentry = NULL;
+		release_pstate_resources(pstate);
 
 		while (extras_before != NIL)
 		{
 			result = lappend(result,
-						   transformStmt(pstate, lfirst(extras_before)));
-			if (pstate->p_target_relation != NULL)
-				heap_close(pstate->p_target_relation, AccessShareLock);
-			pstate->p_target_relation = NULL;
-			pstate->p_target_rangetblentry = NULL;
+							 transformStmt(pstate, lfirst(extras_before)));
+			release_pstate_resources(pstate);
 			extras_before = lnext(extras_before);
 		}
 
@@ -102,10 +99,7 @@ parse_analyze(List *pl, ParseState *parentParseState)
 		{
 			result = lappend(result,
 							 transformStmt(pstate, lfirst(extras_after)));
-			if (pstate->p_target_relation != NULL)
-				heap_close(pstate->p_target_relation, AccessShareLock);
-			pstate->p_target_relation = NULL;
-			pstate->p_target_rangetblentry = NULL;
+			release_pstate_resources(pstate);
 			extras_after = lnext(extras_after);
 		}
 
@@ -114,6 +108,15 @@ parse_analyze(List *pl, ParseState *parentParseState)
 	}
 
 	return result;
+}
+
+static void
+release_pstate_resources(ParseState *pstate)
+{
+	if (pstate->p_target_relation != NULL)
+		heap_close(pstate->p_target_relation, AccessShareLock);
+	pstate->p_target_relation = NULL;
+	pstate->p_target_rangetblentry = NULL;
 }
 
 /*
@@ -176,11 +179,11 @@ transformStmt(ParseState *pstate, Node *parseTree)
 						Resdom	   *rd;
 
 						id = nth(i, n->aliases);
-						Assert(nodeTag(id) == T_Ident);
+						Assert(IsA(id, Ident));
 						te = nth(i, targetList);
-						Assert(nodeTag(te) == T_TargetEntry);
+						Assert(IsA(te, TargetEntry));
 						rd = te->resdom;
-						Assert(nodeTag(rd) == T_Resdom);
+						Assert(IsA(rd, Resdom));
 						rd->resname = pstrdup(id->name);
 					}
 				}
@@ -290,15 +293,17 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->commandType = CMD_DELETE;
 
 	/* set up a range table */
-	makeRangeTable(pstate, NULL);
-	setTargetTable(pstate, stmt->relname, stmt->inh);
+	makeRangeTable(pstate, NIL);
+	setTargetTable(pstate, stmt->relname, stmt->inh, true);
 
 	qry->distinctClause = NIL;
 
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
+	/* done building the rtable */
 	qry->rtable = pstate->p_rtable;
+	qry->jointree = pstate->p_jointree;
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
@@ -387,12 +392,14 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 *
 	 * In particular, it's time to add the INSERT target to the rangetable.
 	 * (We didn't want it there until now since it shouldn't be visible in
-	 * the SELECT part.)
+	 * the SELECT part.)  Note that the INSERT target is NOT added to the
+	 * join tree, since we don't want to join over it.
 	 */
-	setTargetTable(pstate, stmt->relname, FALSE);
+	setTargetTable(pstate, stmt->relname, false, false);
 
 	/* now the range table will not change */
 	qry->rtable = pstate->p_rtable;
+	qry->jointree = pstate->p_jointree;
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
@@ -908,7 +915,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	while (dlist != NIL)
 	{
 		constraint = lfirst(dlist);
-		Assert(nodeTag(constraint) == T_Constraint);
+		Assert(IsA(constraint, Constraint));
 		Assert((constraint->contype == CONSTR_PRIMARY)
 			   || (constraint->contype == CONSTR_UNIQUE));
 
@@ -1427,17 +1434,68 @@ static Query *
 transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 {
 	Query	   *qry;
-	Query	   *action;
-	List	   *actions;
+	RangeTblEntry *oldrte;
+	RangeTblEntry *newrte;
 
 	qry = makeNode(Query);
 	qry->commandType = CMD_UTILITY;
+	qry->utilityStmt = (Node *) stmt;
 
 	/*
-	 * 'instead nothing' rules with a qualification need a query a
+	 * NOTE: 'OLD' must always have a varno equal to 1 and 'NEW'
+	 * equal to 2.  Set up their RTEs in the main pstate for use
+	 * in parsing the rule qualification.
+	 */
+	Assert(pstate->p_rtable == NIL);
+	oldrte = addRangeTableEntry(pstate, stmt->object->relname,
+								makeAttr("*OLD*", NULL),
+								false, true);
+	newrte = addRangeTableEntry(pstate, stmt->object->relname,
+								makeAttr("*NEW*", NULL),
+								false, true);
+	/*
+	 * They must be in the jointree too for lookup purposes, but only add
+	 * the one(s) that are relevant for the current kind of rule.  In an
+	 * UPDATE rule, quals must refer to OLD.field or NEW.field to be
+	 * unambiguous, but there's no need to be so picky for INSERT & DELETE.
+	 * (Note we marked the RTEs "inFromCl = true" above to allow unqualified
+	 * references to their fields.)
+	 */
+	switch (stmt->event)
+	{
+		case CMD_SELECT:
+			addRTEtoJoinTree(pstate, oldrte);
+			break;
+		case CMD_UPDATE:
+			addRTEtoJoinTree(pstate, oldrte);
+			addRTEtoJoinTree(pstate, newrte);
+			break;
+		case CMD_INSERT:
+			addRTEtoJoinTree(pstate, newrte);
+			break;
+		case CMD_DELETE:
+			addRTEtoJoinTree(pstate, oldrte);
+			break;
+		default:
+			elog(ERROR, "transformRuleStmt: unexpected event type %d",
+				 (int) stmt->event);
+			break;
+	}
+
+	/* take care of the where clause */
+	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+
+	if (length(pstate->p_rtable) != 2) /* naughty, naughty... */
+		elog(ERROR, "Rule WHERE condition may not contain references to other relations");
+
+	/* save info about sublinks in where clause */
+	qry->hasSubLinks = pstate->p_hasSubLinks;
+
+	/*
+	 * 'instead nothing' rules with a qualification need a query
 	 * rangetable so the rewrite handler can add the negated rule
 	 * qualification to the original query. We create a query with the new
-	 * command type CMD_NOTHING here that is treated special by the
+	 * command type CMD_NOTHING here that is treated specially by the
 	 * rewrite system.
 	 */
 	if (stmt->actions == NIL)
@@ -1445,54 +1503,95 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 		Query	   *nothing_qry = makeNode(Query);
 
 		nothing_qry->commandType = CMD_NOTHING;
-
-		addRangeTableEntry(pstate, stmt->object->relname,
-						   makeAttr("*OLD*", NULL),
-						   FALSE, FALSE, FALSE);
-		addRangeTableEntry(pstate, stmt->object->relname,
-						   makeAttr("*NEW*", NULL),
-						   FALSE, FALSE, FALSE);
-
 		nothing_qry->rtable = pstate->p_rtable;
+		nothing_qry->jointree = NIL; /* no join actually wanted */
 
 		stmt->actions = lappend(NIL, nothing_qry);
 	}
-
-	actions = stmt->actions;
-
-	/*
-	 * transform each statment, like parse_analyze()
-	 */
-	while (actions != NIL)
+	else
 	{
+		List	   *actions;
 
 		/*
-		 * NOTE: 'OLD' must always have a varno equal to 1 and 'NEW'
-		 * equal to 2.
+		 * transform each statement, like parse_analyze()
 		 */
-		addRangeTableEntry(pstate, stmt->object->relname,
-						   makeAttr("*OLD*", NULL),
-						   FALSE, FALSE, FALSE);
-		addRangeTableEntry(pstate, stmt->object->relname,
-						   makeAttr("*NEW*", NULL),
-						   FALSE, FALSE, FALSE);
+		foreach(actions, stmt->actions)
+		{
+			ParseState *sub_pstate = make_parsestate(pstate->parentParseState);
+			Query	   *sub_qry;
+			bool		has_old,
+						has_new;
 
-		pstate->p_last_resno = 1;
-		pstate->p_is_rule = true;		/* for expand all */
-		pstate->p_hasAggs = false;
+			/*
+			 * Set up OLD/NEW in the rtable for this statement.  The entries
+			 * are marked not inFromCl because we don't want them to be
+			 * referred to by unqualified field names nor "*" in the rule
+			 * actions.  We don't need to add them to the jointree for
+			 * qualified-name lookup, either (see qualifiedNameToVar()).
+			 */
+			oldrte = addRangeTableEntry(sub_pstate, stmt->object->relname,
+										makeAttr("*OLD*", NULL),
+										false, false);
+			newrte = addRangeTableEntry(sub_pstate, stmt->object->relname,
+										makeAttr("*NEW*", NULL),
+										false, false);
 
-		action = (Query *) lfirst(actions);
-		if (action->commandType != CMD_NOTHING)
-			lfirst(actions) = transformStmt(pstate, lfirst(actions));
-		actions = lnext(actions);
+			/* Transform the rule action statement */
+			sub_qry = transformStmt(sub_pstate, lfirst(actions));
+
+			/*
+			 * Validate action's use of OLD/NEW, qual too
+			 */
+			has_old =
+				rangeTableEntry_used((Node *) sub_qry, PRS2_OLD_VARNO, 0) ||
+				rangeTableEntry_used(stmt->whereClause, PRS2_OLD_VARNO, 0);
+			has_new =
+				rangeTableEntry_used((Node *) sub_qry, PRS2_NEW_VARNO, 0) ||
+				rangeTableEntry_used(stmt->whereClause, PRS2_NEW_VARNO, 0);
+
+			switch (stmt->event)
+			{
+				case CMD_SELECT:
+					if (has_old)
+						elog(ERROR, "ON SELECT rule may not use OLD");
+					if (has_new)
+						elog(ERROR, "ON SELECT rule may not use NEW");
+					break;
+				case CMD_UPDATE:
+					/* both are OK */
+					break;
+				case CMD_INSERT:
+					if (has_old)
+						elog(ERROR, "ON INSERT rule may not use OLD");
+					break;
+				case CMD_DELETE:
+					if (has_new)
+						elog(ERROR, "ON DELETE rule may not use NEW");
+					break;
+				default:
+					elog(ERROR, "transformRuleStmt: unexpected event type %d",
+						 (int) stmt->event);
+					break;
+			}
+
+			/*
+			 * For efficiency's sake, add OLD to the rule action's jointree
+			 * only if it was actually referenced in the statement or qual.
+			 * NEW is not really a relation and should never be added.
+			 */
+			if (has_old)
+			{
+				addRTEtoJoinTree(sub_pstate, oldrte);
+				sub_qry->jointree = sub_pstate->p_jointree;
+			}
+
+			lfirst(actions) = sub_qry;
+
+			release_pstate_resources(sub_pstate);
+			pfree(sub_pstate);
+		}
 	}
 
-	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
-
-	qry->hasSubLinks = pstate->p_hasSubLinks;
-
-	qry->utilityStmt = (Node *) stmt;
 	return qry;
 }
 
@@ -1558,6 +1657,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->intersectClause = stmt->intersectClause;
 
 	qry->rtable = pstate->p_rtable;
+	qry->jointree = pstate->p_jointree;
 
 	if (stmt->forUpdate != NULL)
 		transformForUpdate(qry, stmt->forUpdate);
@@ -1585,17 +1685,17 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 * do this with REPLACE in POSTQUEL so we keep the feature.
 	 */
 	makeRangeTable(pstate, stmt->fromClause);
-	setTargetTable(pstate, stmt->relname, stmt->inh);
+	setTargetTable(pstate, stmt->relname, stmt->inh, true);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
-	qry->hasSubLinks = pstate->p_hasSubLinks;
-
 	qry->rtable = pstate->p_rtable;
+	qry->jointree = pstate->p_jointree;
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
+	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
@@ -1689,7 +1789,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 			transformColumnType(pstate, (ColumnDef *) stmt->def);
 			break;
 		case 'C':
-			if (stmt->def && nodeTag(stmt->def) == T_FkConstraint)
+			if (stmt->def && IsA(stmt->def, FkConstraint))
 			{
 				CreateTrigStmt *fk_trigger;
 				List	   *fk_attr;
@@ -2085,7 +2185,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 			i++;
 		}
 		if (l2 == NULL)
-			elog(ERROR, "FOR UPDATE: relation '%s' not found in FROM clause",
+			elog(ERROR, "FOR UPDATE: relation \"%s\" not found in FROM clause",
 				 relname);
 	}
 

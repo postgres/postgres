@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdefs.h,v 1.6 2000/01/26 05:58:05 momjian Exp $
+ * $Id: execdefs.h,v 1.7 2000/09/12 21:07:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,13 @@
 #define EXEC_MJ_NEXTOUTER				5
 #define EXEC_MJ_TESTOUTER				6
 #define EXEC_MJ_NEXTINNER				7
-#define EXEC_MJ_SKIPINNER				8
-#define EXEC_MJ_SKIPOUTER				9
-#define EXEC_MJ_FILLINNER			   10
-#define EXEC_MJ_FILLOUTER			   11
+#define EXEC_MJ_SKIPOUTER_BEGIN			8
+#define EXEC_MJ_SKIPOUTER_TEST			9
+#define EXEC_MJ_SKIPOUTER_ADVANCE		10
+#define EXEC_MJ_SKIPINNER_BEGIN			11
+#define EXEC_MJ_SKIPINNER_TEST			12
+#define EXEC_MJ_SKIPINNER_ADVANCE		13
+#define EXEC_MJ_ENDOUTER				14
+#define EXEC_MJ_ENDINNER				15
 
 #endif	 /* EXECDEFS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.65 2000/06/15 03:32:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.66 2000/09/12 21:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,9 @@
 #include "access/heapam.h"
 #include "optimizer/tlist.h"
 #include "nodes/makefuncs.h"
+#include "parser/analyze.h"
 #include "parser/parse.h"
+#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -33,57 +35,81 @@
 
 static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
 
+static void extractUniqueColumns(List *common_colnames,
+								 List *src_colnames, List *src_colvars,
+								 List **res_colnames, List **res_colvars);
+static Node *transformUsingClause(ParseState *pstate,
+								  List *leftVars, List *rightVars);
+static RangeTblRef *transformTableEntry(ParseState *pstate, RangeVar *r);
+static RangeTblRef *transformRangeSubselect(ParseState *pstate,
+											RangeSubselect *r);
+static Node *transformFromClauseItem(ParseState *pstate, Node *n);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
-static void parseFromClause(ParseState *pstate, List *frmList);
-static RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
 					List *targetlist, char *opname);
 static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
-
-#ifndef DISABLE_OUTER_JOINS
-static List *transformUsingClause(ParseState *pstate, List *using,
-								  List *left, List *right);
-#endif
 
 
 /*
  * makeRangeTable -
  *	  Build the initial range table from the FROM clause.
+ *
+ * The range table constructed here may grow as we transform the expressions
+ * in the query's quals and target list. (Note that this happens because in
+ * POSTQUEL, we allow references to relations not specified in the
+ * from-clause.  PostgreSQL keeps this extension to standard SQL.)
+ *
+ * Note: we assume that pstate's p_rtable and p_jointree lists were
+ * initialized to NIL when the pstate was created.  We will add onto
+ * any entries already present --- this is needed for rule processing!
  */
 void
 makeRangeTable(ParseState *pstate, List *frmList)
 {
-	/* Currently, nothing to do except this: */
-	parseFromClause(pstate, frmList);
+	List	   *fl;
+
+	/*
+	 * The grammar will have produced a list of RangeVars, RangeSubselects,
+	 * and/or JoinExprs. Transform each one, and then add it to the join tree.
+	 */
+	foreach(fl, frmList)
+	{
+		Node	   *n = lfirst(fl);
+
+		n = transformFromClauseItem(pstate, n);
+		pstate->p_jointree = lappend(pstate->p_jointree, n);
+	}
 }
 
 /*
  * setTargetTable
- *	  Add the target relation of INSERT or UPDATE to the range table,
+ *	  Add the target relation of INSERT/UPDATE/DELETE to the range table,
  *	  and make the special links to it in the ParseState.
  *
- *	  Note that the target is not marked as either inFromCl or inJoinSet.
+ *	  inJoinSet says whether to add the target to the join tree.
  *	  For INSERT, we don't want the target to be joined to; it's a
  *	  destination of tuples, not a source.	For UPDATE/DELETE, we do
- *	  need to scan or join the target.	This will happen without the
- *	  inJoinSet flag because the planner's preprocess_targetlist()
- *	  adds the destination's CTID attribute to the targetlist, and
- *	  therefore the destination will be a referenced table even if
- *	  there is no other use of any of its attributes.  Tricky, eh?
+ *	  need to scan or join the target.
  */
 void
-setTargetTable(ParseState *pstate, char *relname, bool inh)
+setTargetTable(ParseState *pstate, char *relname, bool inh, bool inJoinSet)
 {
 	RangeTblEntry *rte;
 
 	/* look for relname only at current nesting level... */
 	if (refnameRangeTablePosn(pstate, relname, NULL) == 0)
-		rte = addRangeTableEntry(pstate, relname,
-								 makeAttr(relname, NULL),
-								 inh, FALSE, FALSE);
+	{
+		rte = addRangeTableEntry(pstate, relname, NULL, inh, false);
+	}
 	else
+	{
 		rte = refnameRangeTableEntry(pstate, relname);
+		/* XXX what if pre-existing entry has wrong inh setting? */
+	}
+
+	if (inJoinSet)
+		addRTEtoJoinTree(pstate, rte);
 
 	/* This could only happen for multi-action rules */
 	if (pstate->p_target_relation != NULL)
@@ -95,34 +121,478 @@ setTargetTable(ParseState *pstate, char *relname, bool inh)
 }
 
 
-static Node *
-mergeInnerJoinQuals(ParseState *pstate, Node *clause)
+/*
+ * Extract all not-in-common columns from column lists of a source table
+ */
+static void
+extractUniqueColumns(List *common_colnames,
+					 List *src_colnames, List *src_colvars,
+					 List **res_colnames, List **res_colvars)
 {
-	List	   *jquals;
+	List	   *new_colnames = NIL;
+	List	   *new_colvars = NIL;
+	List	   *lnames,
+			   *lvars = src_colvars;
 
-	foreach(jquals, pstate->p_join_quals)
+	foreach(lnames, src_colnames)
 	{
-		Node	   *jqual = (Node *) lfirst(jquals);
+		char	   *colname = strVal(lfirst(lnames));
+		bool		match = false;
+		List	   *cnames;
 
-		if (clause == NULL)
-			clause = jqual;
+		foreach(cnames, common_colnames)
+		{
+			char	   *ccolname = strVal(lfirst(cnames));
+
+			if (strcmp(colname, ccolname) == 0)
+			{
+				match = true;
+				break;
+			}
+		}
+
+		if (!match)
+		{
+			new_colnames = lappend(new_colnames, lfirst(lnames));
+			new_colvars = lappend(new_colvars, lfirst(lvars));
+		}
+
+		lvars = lnext(lvars);
+	}
+
+	*res_colnames = new_colnames;
+	*res_colvars = new_colvars;
+}
+
+/* transformUsingClause()
+ * Build a complete ON clause from a partially-transformed USING list.
+ * We are given lists of Var nodes representing left and right match columns.
+ * Result is a transformed qualification expression.
+ */
+static Node *
+transformUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
+{
+	Node	   *result = NULL;
+	List	   *lvars,
+			   *rvars = rightVars;
+
+	/*
+	 * We cheat a little bit here by building an untransformed operator
+	 * tree whose leaves are the already-transformed Vars.  This is OK
+	 * because transformExpr() won't complain about already-transformed
+	 * subnodes.
+	 */
+	foreach(lvars, leftVars)
+	{
+		Node	   *lvar = (Node *) lfirst(lvars);
+		Node	   *rvar = (Node *) lfirst(rvars);
+		A_Expr	   *e;
+
+		e = makeNode(A_Expr);
+		e->oper = OP;
+		e->opname = "=";
+		e->lexpr = copyObject(lvar);
+		e->rexpr = copyObject(rvar);
+
+		if (result == NULL)
+			result = (Node *) e;
 		else
 		{
 			A_Expr	   *a = makeNode(A_Expr);
 
 			a->oper = AND;
 			a->opname = NULL;
-			a->lexpr = clause;
-			a->rexpr = jqual;
-			clause = (Node *) a;
+			a->lexpr = result;
+			a->rexpr = (Node *) e;
+			result = (Node *) a;
 		}
+
+		rvars = lnext(rvars);
 	}
 
-	/* Make sure that we don't add same quals twice... */
-	pstate->p_join_quals = NIL;
+	result = transformExpr(pstate, result, EXPR_COLUMN_FIRST);
 
-	return clause;
-}	/* mergeInnerJoinQuals() */
+	if (exprType(result) != BOOLOID)
+	{
+		/* This could only happen if someone defines a funny version of '=' */
+		elog(ERROR, "USING clause must return type bool, not type %s",
+			 typeidTypeName(exprType(result)));
+	}
+
+	return result;
+}	/* transformUsingClause() */
+
+
+/*
+ * transformTableEntry --- transform a RangeVar (simple relation reference)
+ */
+static RangeTblRef *
+transformTableEntry(ParseState *pstate, RangeVar *r)
+{
+	char	   *relname = r->relname;
+	RangeTblEntry *rte;
+	RangeTblRef *rtr;
+
+	/*
+	 * mark this entry to indicate it comes from the FROM clause. In SQL,
+	 * the target list can only refer to range variables specified in the
+	 * from clause but we follow the more powerful POSTQUEL semantics and
+	 * automatically generate the range variable if not specified. However
+	 * there are times we need to know whether the entries are legitimate.
+	 */
+	rte = addRangeTableEntry(pstate, relname, r->name, r->inh, true);
+
+	/*
+	 * We create a RangeTblRef, but we do not add it to the jointree here.
+	 * makeRangeTable will do so, if we are at top level of the FROM clause.
+	 */
+	rtr = makeNode(RangeTblRef);
+	/* assume new rte is at end */
+	rtr->rtindex = length(pstate->p_rtable);
+	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
+
+	return rtr;
+}
+
+
+/*
+ * transformRangeSubselect --- transform a sub-SELECT appearing in FROM
+ */
+static RangeTblRef *
+transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
+{
+	SelectStmt *subquery = (SelectStmt *) r->subquery;
+	List	   *parsetrees;
+	Query	   *query;
+
+	/*
+	 * subquery node might not be SelectStmt if user wrote something like
+	 * FROM (SELECT ... UNION SELECT ...).  Our current implementation of
+	 * UNION/INTERSECT/EXCEPT is too messy to deal with here, so punt until
+	 * we redesign querytrees to make it more reasonable.
+	 */
+	if (subquery == NULL || !IsA(subquery, SelectStmt))
+		elog(ERROR, "Set operations not yet supported in subselects in FROM");
+
+	/*
+	 * Analyze and transform the subquery as if it were an independent
+	 * statement (we do NOT want it to see the outer query as a parent).
+	 */
+	parsetrees = parse_analyze(lcons(subquery, NIL), NULL);
+
+	/*
+	 * Check that we got something reasonable.  Some of these conditions
+	 * are probably impossible given restrictions of the grammar, but
+	 * check 'em anyway.
+	 */
+	if (length(parsetrees) != 1)
+		elog(ERROR, "Unexpected parse analysis result for subselect in FROM");
+	query = (Query *) lfirst(parsetrees);
+	if (query == NULL || !IsA(query, Query))
+		elog(ERROR, "Unexpected parse analysis result for subselect in FROM");
+
+	if (query->commandType != CMD_SELECT)
+		elog(ERROR, "Expected SELECT query from subselect in FROM");
+	if (query->resultRelation != 0 || query->into != NULL)
+		elog(ERROR, "Subselect in FROM may not have SELECT INTO");
+
+
+	elog(ERROR, "Subselect in FROM not done yet");
+
+	return NULL;
+}
+
+
+/*
+ * transformFromClauseItem -
+ *	  Transform a FROM-clause item, adding any required entries to the
+ *	  range table list being built in the ParseState, and return the
+ *	  transformed item ready to include in the jointree list.
+ *	  This routine can recurse to handle SQL92 JOIN expressions.
+ */
+static Node *
+transformFromClauseItem(ParseState *pstate, Node *n)
+{
+	if (IsA(n, RangeVar))
+	{
+		/* Plain relation reference */
+		return (Node *) transformTableEntry(pstate, (RangeVar *) n);
+	}
+	else if (IsA(n, RangeSubselect))
+	{
+		/* Plain relation reference */
+		return (Node *) transformRangeSubselect(pstate, (RangeSubselect *) n);
+	}
+	else if (IsA(n, JoinExpr))
+	{
+		/* A newfangled join expression */
+		JoinExpr   *j = (JoinExpr *) n;
+		List	   *l_colnames,
+				   *r_colnames,
+				   *res_colnames,
+				   *l_colvars,
+				   *r_colvars,
+				   *res_colvars;
+
+		/*
+		 * Recursively process the left and right subtrees
+		 */
+		j->larg = transformFromClauseItem(pstate, j->larg);
+		j->rarg = transformFromClauseItem(pstate, j->rarg);
+
+		/*
+		 * Extract column name and var lists from both subtrees
+		 */
+		if (IsA(j->larg, JoinExpr))
+		{
+			/* Make a copy of the subtree's lists so we can modify! */
+			l_colnames = copyObject(((JoinExpr *) j->larg)->colnames);
+			l_colvars = copyObject(((JoinExpr *) j->larg)->colvars);
+		}
+		else
+		{
+			RangeTblEntry *rte;
+
+			Assert(IsA(j->larg, RangeTblRef));
+			rte = rt_fetch(((RangeTblRef *) j->larg)->rtindex,
+						   pstate->p_rtable);
+			expandRTE(pstate, rte, &l_colnames, &l_colvars);
+			/* expandRTE returns new lists, so no need for copyObject */
+		}
+		if (IsA(j->rarg, JoinExpr))
+		{
+			/* Make a copy of the subtree's lists so we can modify! */
+			r_colnames = copyObject(((JoinExpr *) j->rarg)->colnames);
+			r_colvars = copyObject(((JoinExpr *) j->rarg)->colvars);
+		}
+		else
+		{
+			RangeTblEntry *rte;
+
+			Assert(IsA(j->rarg, RangeTblRef));
+			rte = rt_fetch(((RangeTblRef *) j->rarg)->rtindex,
+						   pstate->p_rtable);
+			expandRTE(pstate, rte, &r_colnames, &r_colvars);
+			/* expandRTE returns new lists, so no need for copyObject */
+		}
+
+		/*
+		 * Natural join does not explicitly specify columns; must
+		 * generate columns to join. Need to run through the list of
+		 * columns from each table or join result and match up the
+		 * column names. Use the first table, and check every column
+		 * in the second table for a match.  (We'll check that the
+		 * matches were unique later on.)
+		 * The result of this step is a list of column names just like an
+		 * explicitly-written USING list.
+		 */
+		if (j->isNatural)
+		{
+			List	   *rlist = NIL;
+			List	   *lx,
+					   *rx;
+
+			Assert(j->using == NIL); /* shouldn't have USING() too */
+
+			foreach(lx, l_colnames)
+			{
+				char	   *l_colname = strVal(lfirst(lx));
+				Value	   *m_name = NULL;
+
+				foreach(rx, r_colnames)
+				{
+					char	   *r_colname = strVal(lfirst(rx));
+
+					if (strcmp(l_colname, r_colname) == 0)
+					{
+						m_name = makeString(l_colname);
+						break;
+					}
+				}
+
+				/* matched a right column? then keep as join column... */
+				if (m_name != NULL)
+					rlist = lappend(rlist, m_name);
+			}
+
+			j->using = rlist;
+		}
+
+		/*
+		 * Now transform the join qualifications, if any.
+		 */
+		res_colnames = NIL;
+		res_colvars = NIL;
+
+		if (j->using)
+		{
+			/*
+			 * JOIN/USING (or NATURAL JOIN, as transformed above).
+			 * Transform the list into an explicit ON-condition,
+			 * and generate a list of result columns.
+			 */
+			List	   *ucols = j->using;
+			List	   *l_usingvars = NIL;
+			List	   *r_usingvars = NIL;
+			List	   *ucol;
+
+			Assert(j->quals == NULL); /* shouldn't have ON() too */
+
+			foreach(ucol, ucols)
+			{
+				char	   *u_colname = strVal(lfirst(ucol));
+				List	   *col;
+				Node	   *l_colvar,
+						   *r_colvar,
+						   *colvar;
+				int			ndx;
+				int			l_index = -1;
+				int			r_index = -1;
+
+				ndx = 0;
+				foreach(col, l_colnames)
+				{
+					char	   *l_colname = strVal(lfirst(col));
+
+					if (strcmp(l_colname, u_colname) == 0)
+					{
+						if (l_index >= 0)
+							elog(ERROR, "Common column name \"%s\" appears more than once in left table", u_colname);
+						l_index = ndx;
+					}
+					ndx++;
+				}
+				if (l_index < 0)
+					elog(ERROR, "USING column \"%s\" not found in left table",
+						 u_colname);
+
+				ndx = 0;
+				foreach(col, r_colnames)
+				{
+					char	   *r_colname = strVal(lfirst(col));
+
+					if (strcmp(r_colname, u_colname) == 0)
+					{
+						if (r_index >= 0)
+							elog(ERROR, "Common column name \"%s\" appears more than once in right table", u_colname);
+						r_index = ndx;
+					}
+					ndx++;
+				}
+				if (r_index < 0)
+					elog(ERROR, "USING column \"%s\" not found in right table",
+						 u_colname);
+
+				l_colvar = nth(l_index, l_colvars);
+				l_usingvars = lappend(l_usingvars, l_colvar);
+				r_colvar = nth(r_index, r_colvars);
+				r_usingvars = lappend(r_usingvars, r_colvar);
+
+				res_colnames = lappend(res_colnames,
+									   nth(l_index, l_colnames));
+				switch (j->jointype)
+				{
+					case JOIN_INNER:
+					case JOIN_LEFT:
+						colvar = l_colvar;
+						break;
+					case JOIN_RIGHT:
+						colvar = r_colvar;
+						break;
+					default:
+					{
+						/* Need COALESCE(l_colvar, r_colvar) */
+						CaseExpr *c = makeNode(CaseExpr);
+						CaseWhen *w = makeNode(CaseWhen);
+						A_Expr *a = makeNode(A_Expr);
+
+						a->oper = NOTNULL;
+						a->lexpr = l_colvar;
+						w->expr = (Node *) a;
+						w->result = l_colvar;
+						c->args = lcons(w, NIL);
+						c->defresult = r_colvar;
+						colvar = transformExpr(pstate, (Node *) c,
+											   EXPR_COLUMN_FIRST);
+						break;
+					}
+				}
+				res_colvars = lappend(res_colvars, colvar);
+			}
+
+			j->quals = transformUsingClause(pstate, l_usingvars, r_usingvars);
+		}
+		else if (j->quals)
+		{
+			/* User-written ON-condition; transform it */
+			j->quals = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
+			if (exprType(j->quals) != BOOLOID)
+			{
+				elog(ERROR, "ON clause must return type bool, not type %s",
+					 typeidTypeName(exprType(j->quals)));
+			}
+			/* XXX should check that ON clause refers only to joined tbls */
+		}
+		else
+		{
+			/* CROSS JOIN: no quals */
+		}
+
+		/* Add remaining columns from each side to the output columns */
+		extractUniqueColumns(res_colnames,
+							 l_colnames, l_colvars,
+							 &l_colnames, &l_colvars);
+		extractUniqueColumns(res_colnames,
+							 r_colnames, r_colvars,
+							 &r_colnames, &r_colvars);
+		res_colnames = nconc(res_colnames, l_colnames);
+		res_colvars = nconc(res_colvars, l_colvars);
+		res_colnames = nconc(res_colnames, r_colnames);
+		res_colvars = nconc(res_colvars, r_colvars);
+
+		/*
+		 * Process alias (AS clause), if any.
+		 *
+		 * The given table alias must be unique in the current nesting level,
+		 * ie it cannot match any RTE refname or jointable alias.  This is
+		 * a bit painful to check because my own child joins are not yet in
+		 * the pstate's jointree, so they have to be scanned separately.
+		 */
+		if (j->alias)
+		{
+			/* Check against previously created RTEs and jointree entries */
+			if (refnameRangeOrJoinEntry(pstate, j->alias->relname, NULL))
+				elog(ERROR, "Table name \"%s\" specified more than once",
+					 j->alias->relname);
+			/* Check children */
+			if (scanJoinTreeForRefname(j->larg, j->alias->relname) ||
+				scanJoinTreeForRefname(j->rarg, j->alias->relname))
+				elog(ERROR, "Table name \"%s\" specified more than once",
+					 j->alias->relname);
+			/*
+			 * If a column alias list is specified, substitute the alias
+			 * names into my output-column list
+			 */
+			if (j->alias->attrs != NIL)
+			{
+				if (length(j->alias->attrs) != length(res_colnames))
+					elog(ERROR, "Column alias list for \"%s\" has wrong number of entries (need %d)",
+						 j->alias->relname, length(res_colnames));
+				res_colnames = j->alias->attrs;
+			}
+		}
+
+		j->colnames = res_colnames;
+		j->colvars = res_colvars;
+
+		return (Node *) j;
+	}
+	else
+		elog(ERROR, "transformFromClauseItem: unexpected node (internal error)"
+			 "\n\t%s", nodeToString(n));
+	return NULL;				/* can't get here, just keep compiler quiet */
+}
+
 
 /*
  * transformWhereClause -
@@ -133,15 +603,10 @@ transformWhereClause(ParseState *pstate, Node *clause)
 {
 	Node	   *qual;
 
-	if (pstate->p_join_quals != NIL)
-		clause = mergeInnerJoinQuals(pstate, clause);
-
 	if (clause == NULL)
 		return NULL;
 
-	pstate->p_in_where_clause = true;
 	qual = transformExpr(pstate, clause, EXPR_COLUMN_FIRST);
-	pstate->p_in_where_clause = false;
 
 	if (exprType(qual) != BOOLOID)
 	{
@@ -150,570 +615,6 @@ transformWhereClause(ParseState *pstate, Node *clause)
 	}
 	return qual;
 }
-
-#ifndef DISABLE_JOIN_SYNTAX
-char *
-			AttrString(Attr *attr);
-
-char *
-AttrString(Attr *attr)
-{
-	Value	   *val;
-
-	Assert(length(attr->attrs) == 1);
-
-	val = lfirst(attr->attrs);
-
-	Assert(IsA(val, String));
-
-	return strVal(val);
-}
-
-List *
-			ListTableAsAttrs(ParseState *pstate, char *table);
-List *
-ListTableAsAttrs(ParseState *pstate, char *table)
-{
-	Attr	   *attr = expandTable(pstate, table, TRUE);
-	List	   *rlist = NIL;
-	List	   *col;
-
-	foreach(col, attr->attrs)
-	{
-		Attr	   *a = makeAttr(table, strVal((Value *) lfirst(col)));
-
-		rlist = lappend(rlist, a);
-	}
-
-	return rlist;
-}
-
-List *
-			makeUniqueAttrList(List *candidates, List *idents);
-List *
-makeUniqueAttrList(List *attrs, List *filter)
-{
-	List	   *result = NULL;
-	List	   *candidate;
-
-	foreach(candidate, attrs)
-	{
-		List	   *fmember;
-		bool		match = FALSE;
-		Attr	   *cattr = lfirst(candidate);
-
-		Assert(IsA(cattr, Attr));
-		Assert(length(cattr->attrs) == 1);
-
-		foreach(fmember, filter)
-		{
-			Attr	   *fattr = lfirst(fmember);
-
-			Assert(IsA(fattr, Attr));
-			Assert(length(fattr->attrs) == 1);
-
-			if (strcmp(strVal(lfirst(cattr->attrs)), strVal(lfirst(fattr->attrs))) == 0)
-			{
-				match = TRUE;
-				break;
-			}
-		}
-
-		if (!match)
-			result = lappend(result, cattr);
-	}
-
-	return result;
-}
-
-List *
-			makeAttrList(Attr *attr);
-
-List *
-makeAttrList(Attr *attr)
-{
-	List	   *result = NULL;
-
-	char	   *name = attr->relname;
-	List	   *col;
-
-	foreach(col, attr->attrs)
-	{
-		Attr	   *newattr = makeAttr(name, strVal((Value *) lfirst(col)));
-
-		result = lappend(result, newattr);
-	}
-
-	return result;
-}
-#ifdef NOT_USED
-/* ExpandAttrs()
- * Take an existing attribute node and return a list of attribute nodes
- * with one attribute name per node.
- */
-List *
-ExpandAttrs(Attr *attr)
-{
-	List	   *col;
-	char	   *relname = attr->relname;
-	List	   *rlist = NULL;
-
-	Assert(attr != NULL);
-
-	if ((attr->attrs == NULL) || (length(attr->attrs) <= 1))
-		return lcons(attr, NIL);
-
-	foreach(col, attr->attrs)
-	{
-		Attr	   *attr = lfirst(col);
-
-		rlist = lappend(rlist, makeAttr(relname, AttrString(attr)));
-	}
-
-	return rlist;
-}
-#endif
-
-/* transformUsingClause()
- * Take an ON or USING clause from a join expression and expand if necessary.
- * Result is an implicitly-ANDed list of untransformed qualification clauses.
- */
-static List *
-transformUsingClause(ParseState *pstate, List *usingList,
-					 List *leftList, List *rightList)
-{
-	List	   *result = NIL;
-	List	   *using;
-
-	foreach(using, usingList)
-	{
-		Attr	   *uattr = lfirst(using);
-		Attr	   *lattr = NULL,
-				   *rattr = NULL;
-		List	   *col;
-		A_Expr	   *e;
-
-		/*
-		 * find the first instances of this column in the shape list and
-		 * the last table in the shape list...
-		 */
-		foreach(col, leftList)
-		{
-			Attr	   *attr = lfirst(col);
-
-			if (strcmp(AttrString(attr), AttrString(uattr)) == 0)
-			{
-				lattr = attr;
-				break;
-			}
-		}
-		foreach(col, rightList)
-		{
-			Attr	   *attr = lfirst(col);
-
-			if (strcmp(AttrString(attr), AttrString(uattr)) == 0)
-			{
-				rattr = attr;
-				break;
-			}
-		}
-
-		Assert((lattr != NULL) && (rattr != NULL));
-
-		e = makeNode(A_Expr);
-		e->oper = OP;
-		e->opname = "=";
-		e->lexpr = (Node *) lattr;
-		e->rexpr = (Node *) rattr;
-
-		result = lappend(result, e);
-	}
-
-	return result;
-}	/* transformUsingClause() */
-
-#endif
-
-
-static RangeTblEntry *
-transformTableEntry(ParseState *pstate, RangeVar *r)
-{
-	RelExpr    *baserel = r->relExpr;
-	char	   *relname = baserel->relname;
-
-#if 0
-	char	   *refname;
-	List	   *columns;
-
-#endif
-	RangeTblEntry *rte;
-
-#if 0
-	if (r->name != NULL)
-		refname = r->name->relname;
-	else
-		refname = NULL;
-
-	columns = ListTableAsAttrs(pstate, relname);
-
-	/* alias might be specified... */
-	if (r->name != NULL)
-	{
-#ifndef DISABLE_JOIN_SYNTAX
-		if (length(columns) > 0)
-		{
-			if (length(r->name->attrs) > 0)
-			{
-				if (length(columns) != length(r->name->attrs))
-					elog(ERROR, "'%s' has %d columns but %d %s specified",
-						 relname, length(columns), length(r->name->attrs),
-						 ((length(r->name->attrs) != 1) ? "aliases" : "alias"));
-
-				aliasList = nconc(aliasList, r->name->attrs);
-			}
-			else
-			{
-				r->name->attrs = columns;
-
-				aliasList = nconc(aliasList, r->name->attrs);
-			}
-		}
-		else
-			elog(NOTICE, "transformTableEntry: column aliases not handled (internal error)");
-#else
-		elog(ERROR, "Column aliases not yet supported");
-#endif
-	}
-	else
-	{
-		refname = relname;
-		aliasList = nconc(aliasList, columns);
-	}
-#endif
-
-	if (r->name == NULL)
-		r->name = makeAttr(relname, NULL);
-
-	/*
-	 * marks this entry to indicate it comes from the FROM clause. In SQL,
-	 * the target list can only refer to range variables specified in the
-	 * from clause but we follow the more powerful POSTQUEL semantics and
-	 * automatically generate the range variable if not specified. However
-	 * there are times we need to know whether the entries are legitimate.
-	 *
-	 * eg. select * from foo f where f.x = 1; will generate wrong answer if
-	 * we expand * to foo.x.
-	 */
-
-	rte = addRangeTableEntry(pstate, relname, r->name,
-							 baserel->inh, TRUE, TRUE);
-
-	return rte;
-}	/* transformTableEntry() */
-
-
-/*
- * parseFromClause -
- *	  turns the table references specified in the from-clause into a
- *	  range table. The range table may grow as we transform the expressions
- *	  in the target list. (Note that this happens because in POSTQUEL, we
- *	  allow references to relations not specified in the from-clause. We
- *	  also allow now as an extension.)
- *
- * The FROM clause can now contain JoinExpr nodes, which contain parsing info
- * for inner and outer joins. The USING clause must be expanded into a qualification
- * for an inner join at least, since that is compatible with the old syntax.
- * Not sure yet how to handle outer joins, but it will become clear eventually?
- * - thomas 1998-12-16
- */
-static void
-parseFromClause(ParseState *pstate, List *frmList)
-{
-	List	   *fl;
-
-	foreach(fl, frmList)
-	{
-		Node	   *n = lfirst(fl);
-
-		/*
-		 * marks this entry to indicate it comes from the FROM clause. In
-		 * SQL, the target list can only refer to range variables
-		 * specified in the from clause but we follow the more powerful
-		 * POSTQUEL semantics and automatically generate the range
-		 * variable if not specified. However there are times we need to
-		 * know whether the entries are legitimate.
-		 *
-		 * eg. select * from foo f where f.x = 1; will generate wrong answer
-		 * if we expand * to foo.x.
-		 */
-
-		/* Plain vanilla inner join, just like we've always had? */
-		if (IsA(n, RangeVar))
-			transformTableEntry(pstate, (RangeVar *) n);
-
-		/* A newfangled join expression? */
-		else if (IsA(n, JoinExpr))
-		{
-#ifndef DISABLE_JOIN_SYNTAX
-			RangeTblEntry *l_rte,
-					   *r_rte;
-			Attr	   *l_name,
-					   *r_name = NULL;
-			JoinExpr   *j = (JoinExpr *) n;
-
-			if (j->alias != NULL)
-				elog(ERROR, "JOIN table aliases are not supported");
-
-			/* nested join? then handle the left one first... */
-			if (IsA(j->larg, JoinExpr))
-			{
-				parseFromClause(pstate, lcons(j->larg, NIL));
-				l_name = ((JoinExpr *) j->larg)->alias;
-			}
-			else
-			{
-				Assert(IsA(j->larg, RangeVar));
-				l_rte = transformTableEntry(pstate, (RangeVar *) j->larg);
-				l_name = expandTable(pstate, l_rte->eref->relname, TRUE);
-			}
-
-			if (IsA(j->rarg, JoinExpr))
-			{
-				parseFromClause(pstate, lcons(j->rarg, NIL));
-				l_name = ((JoinExpr *) j->larg)->alias;
-			}
-			else
-			{
-				Assert(IsA(j->rarg, RangeVar));
-				r_rte = transformTableEntry(pstate, (RangeVar *) j->rarg);
-				r_name = expandTable(pstate, r_rte->eref->relname, TRUE);
-			}
-
-			/*
-			 * Natural join does not explicitly specify columns; must
-			 * generate columns to join. Need to run through the list of
-			 * columns from each table or join result and match up the
-			 * column names. Use the first table, and check every column
-			 * in the second table for a match.
-			 */
-			if (j->isNatural)
-			{
-				List	   *lx,
-						   *rx;
-				List	   *rlist = NULL;
-
-				foreach(lx, l_name->attrs)
-				{
-					Ident	   *id = NULL;
-					Value	   *l_col = lfirst(lx);
-
-					Assert(IsA(l_col, String));
-
-					foreach(rx, r_name->attrs)
-					{
-						Value	   *r_col = lfirst(rx);
-
-						Assert(IsA(r_col, String));
-
-						if (strcmp(strVal(l_col), strVal(r_col)) == 0)
-						{
-							id = (Ident *) makeNode(Ident);
-							id->name = strVal(l_col);
-							break;
-						}
-					}
-
-					/* right column matched? then keep as join column... */
-					if (id != NULL)
-						rlist = lappend(rlist, id);
-				}
-				j->quals = rlist;
-
-				printf("NATURAL JOIN columns are %s\n", nodeToString(rlist));
-			}
-
-			if (j->jointype == INNER_P)
-			{
-				/* CROSS JOIN */
-				if (j->quals == NULL)
-					printf("CROSS JOIN...\n");
-
-				/*
-				 * JOIN/USING This is an inner join, so rip apart the join
-				 * node and transform into a traditional FROM list.
-				 * NATURAL JOIN and JOIN USING both change the shape of
-				 * the result. Need to generate a list of result columns
-				 * to use for target list expansion and validation.
-				 */
-				else if (IsA(j->quals, List))
-				{
-
-					/*
-					 * List of Ident nodes means column names from a real
-					 * USING clause. Determine the shape of the joined
-					 * table.
-					 */
-					List	   *ucols,
-							   *ucol;
-					List	   *shape = NULL;
-					List	   *alias = NULL;
-					List	   *l_shape,
-							   *r_shape;
-
-					List	   *l_cols = makeAttrList(l_name);
-					List	   *r_cols = makeAttrList(r_name);
-
-					printf("USING input tables are:\n %s\n %s\n",
-						   nodeToString(l_name), nodeToString(r_name));
-
-					printf("USING expanded tables are:\n %s\n %s\n",
-						   nodeToString(l_cols), nodeToString(r_cols));
-
-					/* Columns from the USING clause... */
-					ucols = (List *) j->quals;
-					foreach(ucol, ucols)
-					{
-						List	   *col;
-						Attr	   *l_attr = NULL,
-								   *r_attr = NULL;
-						Ident	   *id = lfirst(ucol);
-
-						Attr	   *attr = makeAttr("", id->name);
-
-						foreach(col, l_cols)
-						{
-							attr = lfirst(col);
-							if (strcmp(AttrString(attr), id->name) == 0)
-							{
-								l_attr = attr;
-								break;
-							}
-						}
-
-						foreach(col, r_cols)
-						{
-							attr = lfirst(col);
-							if (strcmp(AttrString(attr), id->name) == 0)
-							{
-								r_attr = attr;
-								break;
-							}
-						}
-
-						if (l_attr == NULL)
-							elog(ERROR, "USING column '%s' not found in table '%s'",
-								 id->name, l_name->relname);
-						if (r_attr == NULL)
-							elog(ERROR, "USING column '%s' not found in table '%s'",
-								 id->name, r_name->relname);
-
-						shape = lappend(shape, l_attr);
-						alias = lappend(alias, makeAttr("", AttrString(l_attr)));
-					}
-					printf("JOIN/USING join columns are %s\n", nodeToString(shape));
-
-					/* Remaining columns from the left side... */
-					l_shape = makeUniqueAttrList(makeAttrList(l_name), shape);
-
-					printf("JOIN/USING left columns are %s\n", nodeToString(l_shape));
-
-					r_shape = makeUniqueAttrList(makeAttrList(r_name), shape);
-
-					printf("JOIN/USING right columns are %s\n", nodeToString(r_shape));
-
-					printf("JOIN/USING input quals are %s\n", nodeToString(j->quals));
-
-					j->quals = transformUsingClause(pstate, shape, l_cols, r_cols);
-
-					printf("JOIN/USING transformed quals are %s\n", nodeToString(j->quals));
-
-					alias = nconc(nconc(alias, listCopy(l_shape)), listCopy(r_shape));
-					shape = nconc(nconc(shape, l_shape), r_shape);
-
-					printf("JOIN/USING shaped table is %s\n", nodeToString(shape));
-					printf("JOIN/USING alias list is %s\n", nodeToString(alias));
-
-					pstate->p_shape = shape;
-					pstate->p_alias = alias;
-				}
-
-				/* otherwise, must be an expression from an ON clause... */
-				else
-					j->quals = (List *) lcons(j->quals, NIL);
-
-				/* listCopy may not be needed here --- will j->quals list
-				 * be used again anywhere?  The #ifdef'd code below may need
-				 * it, if it ever gets used...
-				 */
-				pstate->p_join_quals = nconc(pstate->p_join_quals,
-											 listCopy(j->quals));
-
-#if 0
-				if (qual == NULL)
-					elog(ERROR, "JOIN/ON not supported in this context");
-
-				printf("Table aliases are %s\n", nodeToString(*aliasList));
-#endif
-
-#if 0
-				/* XXX this code is WRONG because j->quals is a List
-				 * not a simple expression.  Perhaps *qual
-				 * ought also to be a List and we append to it,
-				 * similarly to the way p_join_quals is handled above?
-				 */
-				if (*qual == NULL)
-				{
-					/* merge qualified join clauses... */
-					if (j->quals != NULL)
-					{
-						if (*qual != NULL)
-						{
-							A_Expr	   *a = makeNode(A_Expr);
-
-							a->oper = AND;
-							a->opname = NULL;
-							a->lexpr = (Node *) *qual;
-							a->rexpr = (Node *) j->quals;
-
-							*qual = (Node *) a;
-						}
-						else
-							*qual = (Node *) j->quals;
-					}
-				}
-				else
-				{
-					elog(ERROR, "Multiple JOIN/ON clauses not handled (internal error)");
-					*qual = lappend(*qual, j->quals);
-				}
-#endif
-
-				/*
-				 * if we are transforming this node back into a FROM list,
-				 * then we will need to replace the node with two nodes.
-				 * Will need access to the previous list item to change
-				 * the link pointer to reference these new nodes. Try
-				 * accumulating and returning a new list. - thomas
-				 * 1999-01-08 Not doing this yet though!
-				 */
-
-			}
-			else if ((j->jointype == LEFT)
-					 || (j->jointype == RIGHT)
-					 || (j->jointype == FULL))
-				elog(ERROR, "OUTER JOIN is not yet supported");
-			else
-				elog(ERROR, "Unrecognized JOIN clause; tag is %d (internal error)",
-					 j->jointype);
-#else
-			elog(ERROR, "JOIN expressions are not yet implemented");
-#endif
-		}
-		else
-			elog(ERROR, "parseFromClause: unexpected FROM clause node (internal error)"
-				 "\n\t%s", nodeToString(n));
-	}
-}	/* parseFromClause() */
 
 
 /*
@@ -786,10 +687,10 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 			 * is a matching column.  If so, fall through to let
 			 * transformExpr() do the rest.  NOTE: if name could refer
 			 * ambiguously to more than one column name exposed by FROM,
-			 * colnameRangeTableEntry will elog(ERROR).  That's just what
+			 * colnameToVar will elog(ERROR).  That's just what
 			 * we want here.
 			 */
-			if (colnameRangeTableEntry(pstate, name) != NULL)
+			if (colnameToVar(pstate, name) != NULL)
 				name = NULL;
 		}
 

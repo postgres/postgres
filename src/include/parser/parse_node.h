@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.20 2000/05/12 01:33:52 tgl Exp $
+ * $Id: parse_node.h,v 1.21 2000/09/12 21:07:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,36 +16,28 @@
 #include "nodes/parsenodes.h"
 #include "utils/rel.h"
 
-/* State information used during parse analysis
- * p_join_quals is a list of untransformed qualification expressions
- * (implicitly ANDed together) found in the FROM clause.
- * Needs to be available later to merge with other qualifiers from the
- * WHERE clause.
+/*
+ * State information used during parse analysis
  */
 typedef struct ParseState
 {
-	int			p_last_resno;
-	List	   *p_rtable;
-	struct ParseState *parentParseState;
+	struct ParseState *parentParseState; /* stack link */
+	List	   *p_rtable;		/* range table so far */
+	List	   *p_jointree;		/* join tree so far */
+	int			p_last_resno;	/* last targetlist resno assigned */
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;
 	bool		p_is_insert;
 	bool		p_is_update;
-	bool		p_is_rule;
-	bool		p_in_where_clause;
 	Relation	p_target_relation;
 	RangeTblEntry *p_target_rangetblentry;
-	List	   *p_shape;
-	List	   *p_alias;
-	List	   *p_join_quals;
 } ParseState;
 
 extern ParseState *make_parsestate(ParseState *parentParseState);
 extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
 extern Node *make_operand(char *opname, Node *tree,
 			 Oid orig_typeId, Oid target_typeId);
-extern Var *make_var(ParseState *pstate, Oid relid, char *refname,
-		 char *attrname);
+extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno);
 extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
 						 List *indirection,

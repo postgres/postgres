@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.46 2000/07/24 03:10:54 tgl Exp $
+ * $Id: paths.h,v 1.47 2000/09/12 21:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,21 +61,23 @@ extern void create_tidscan_paths(Query *root, RelOptInfo *rel);
  *	   routines to create join paths
  */
 extern void add_paths_to_joinrel(Query *root, RelOptInfo *joinrel,
-					 RelOptInfo *outerrel,
-					 RelOptInfo *innerrel,
-					 List *restrictlist);
+								 RelOptInfo *outerrel,
+								 RelOptInfo *innerrel,
+								 JoinType jointype,
+								 List *restrictlist);
 
 /*
  * joinrels.c
  *	  routines to determine which relations to join
  */
-extern void make_rels_by_joins(Query *root, int level);
-extern RelOptInfo *make_rels_by_clause_joins(Query *root,
-						  RelOptInfo *old_rel,
-						  List *other_rels);
-extern RelOptInfo *make_rels_by_clauseless_joins(Query *root,
-							  RelOptInfo *old_rel,
-							  List *other_rels);
+extern List *make_rels_by_joins(Query *root, int level, List **joinrels);
+extern List *make_rels_by_clause_joins(Query *root,
+									   RelOptInfo *old_rel,
+									   List *other_rels);
+extern List *make_rels_by_clauseless_joins(Query *root,
+										   RelOptInfo *old_rel,
+										   List *other_rels);
+extern RelOptInfo *make_rel_from_jointree(Query *root, Node *jtnode);
 
 /*
  * pathkeys.c
@@ -110,7 +112,7 @@ extern List *make_pathkeys_for_sortclauses(List *sortclauses,
 extern List *find_mergeclauses_for_pathkeys(List *pathkeys,
 							   List *restrictinfos);
 extern List *make_pathkeys_for_mergeclauses(Query *root,
-							   List *mergeclauses,
-							   List *tlist);
+											List *mergeclauses,
+											RelOptInfo *rel);
 
 #endif	 /* PATHS_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.112 2000/09/12 05:09:50 momjian Exp $
+ * $Id: parsenodes.h,v 1.113 2000/09/12 21:07:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct Query
 	Node	   *utilityStmt;	/* non-null if this is a non-optimizable
 								 * statement */
 
-	int			resultRelation; /* target relation (index to rtable) */
+	int			resultRelation; /* target relation (index into rtable) */
 	char	   *into;			/* portal (cursor) name */
 	bool		isPortal;		/* is this a retrieve into portal? */
 	bool		isBinary;		/* binary portal? */
@@ -50,6 +50,8 @@ typedef struct Query
 	bool		hasSubLinks;	/* has subquery SubLink */
 
 	List	   *rtable;			/* list of range table entries */
+	List	   *jointree;		/* table join tree (from the FROM clause) */
+
 	List	   *targetList;		/* target list (of TargetEntry) */
 	Node	   *qual;			/* qualifications applied to tuples */
 	List	   *rowMark;		/* list of RowMark entries */
@@ -1058,16 +1060,6 @@ typedef struct ResTarget
 } ResTarget;
 
 /*
- * RelExpr - relation expressions
- */
-typedef struct RelExpr
-{
-	NodeTag		type;
-	char	   *relname;		/* the relation name */
-	bool		inh;			/* inheritance query */
-} RelExpr;
-
-/*
  * SortGroupBy - for ORDER BY clause
  */
 typedef struct SortGroupBy
@@ -1083,9 +1075,20 @@ typedef struct SortGroupBy
 typedef struct RangeVar
 {
 	NodeTag		type;
-	RelExpr    *relExpr;		/* the relation expression */
-	Attr	   *name;			/* the name to be referenced (optional) */
+	char	   *relname;		/* the relation name */
+	bool		inh;			/* expand rel by inheritance? */
+	Attr	   *name;			/* optional table alias & column aliases */
 } RangeVar;
+
+/*
+ * RangeSubselect - subquery appearing in a FROM clause
+ */
+typedef struct RangeSubselect
+{
+	NodeTag		type;
+	Node	   *subquery;		/* the untransformed sub-select clause */
+	Attr	   *name;			/* optional table alias & column aliases */
+} RangeSubselect;
 
 /*
  * IndexElem - index parameters (used in CREATE INDEX)
@@ -1114,20 +1117,6 @@ typedef struct DefElem
 	Node	   *arg;			/* a (Value *) or a (TypeName *) */
 } DefElem;
 
-/*
- * JoinExpr - for JOIN expressions
- */
-typedef struct JoinExpr
-{
-	NodeTag		type;
-	int			jointype;
-	bool		isNatural;		/* Natural join? Will need to shape table */
-	Node	   *larg;			/* RangeVar or join expression */
-	Node	   *rarg;			/* RangeVar or join expression */
-	Attr	   *alias;			/* table and column aliases, if any */
-	List	   *quals;			/* qualifiers on join, if any */
-} JoinExpr;
-
 
 /****************************************************************************
  *	Nodes for a Query tree
@@ -1155,11 +1144,12 @@ typedef struct TargetEntry
  *	  Some of the following are only used in one of
  *	  the parsing, optimizing, execution stages.
  *
- *	  eref is the expanded table name and columns for the underlying
- *	  relation. Note that for outer join syntax, allowed reference names
- *	  could be modified as one evaluates the nested clauses (e.g.
- *	  "SELECT ... FROM t1 NATURAL JOIN t2 WHERE ..." forbids explicit mention
- *	  of a table name in any reference to the join column.
+ *	  alias is an Attr node representing the AS alias-clause attached to the
+ *	  FROM expression, or NULL if no clause.
+ *
+ *	  eref is the table reference name and column reference names (either
+ *	  real or aliases).  This is filled in during parse analysis.  Note that
+ *	  system columns (OID etc) are not included in the column list.
  *
  *	  inFromCl marks those range variables that are listed in the FROM clause.
  *	  In SQL, the query can only refer to range variables listed in the
@@ -1170,29 +1160,17 @@ typedef struct TargetEntry
  *	  implicitly-added RTE shouldn't change the namespace for unqualified
  *	  column names processed later, and it also shouldn't affect the
  *	  expansion of '*'.
- *
- *	  inJoinSet marks those range variables that the planner should join
- *	  over even if they aren't explicitly referred to in the query.  For
- *	  example, "SELECT COUNT(1) FROM tx" should produce the number of rows
- *	  in tx.  A more subtle example uses a POSTQUEL implicit RTE:
- *			SELECT COUNT(1) FROM tx WHERE TRUE OR (tx.f1 = ty.f2)
- *	  Here we should get the product of the sizes of tx and ty.  However,
- *	  the query optimizer can simplify the WHERE clause to "TRUE", so
- *	  ty will no longer be referred to explicitly; without a flag forcing
- *	  it to be included in the join, we will get the wrong answer.	So,
- *	  a POSTQUEL implicit RTE must be marked inJoinSet but not inFromCl.
  *--------------------
  */
 typedef struct RangeTblEntry
 {
 	NodeTag		type;
 	char	   *relname;		/* real name of the relation */
-	Attr	   *ref;			/* reference names (given in FROM clause) */
-	Attr	   *eref;			/* expanded reference names */
 	Oid			relid;			/* OID of the relation */
+	Attr	   *alias;			/* user-written alias clause, if any */
+	Attr	   *eref;			/* expanded reference names */
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause */
-	bool		inJoinSet;		/* planner must include this rel */
 	bool		skipAcl;		/* skip ACL check in executor */
 } RangeTblEntry;
 

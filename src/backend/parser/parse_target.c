@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.61 2000/08/08 15:42:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.62 2000/09/12 21:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 #include "nodes/makefuncs.h"
+#include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -104,36 +105,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				 * Target item is a single '*', expand all tables (eg.
 				 * SELECT * FROM emp)
 				 */
-				if (pstate->p_shape != NULL)
-				{
-					List	   *s,
-							   *a;
-					int			i;
-
-					Assert(length(pstate->p_shape) == length(pstate->p_alias));
-
-					s = pstate->p_shape;
-					a = pstate->p_alias;
-					for (i = 0; i < length(pstate->p_shape); i++)
-					{
-						TargetEntry *te;
-						char	   *colname;
-						Attr	   *shape = lfirst(s);
-						Attr	   *alias = lfirst(a);
-
-						Assert(IsA(shape, Attr) &&IsA(alias, Attr));
-
-						colname = strVal(lfirst(alias->attrs));
-						te = transformTargetEntry(pstate, (Node *) shape,
-												  NULL, colname, false);
-						p_target = lappend(p_target, te);
-						s = lnext(s);
-						a = lnext(a);
-					}
-				}
-				else
-					p_target = nconc(p_target,
-									 ExpandAllTables(pstate));
+				p_target = nconc(p_target,
+								 ExpandAllTables(pstate));
 			}
 			else if (att->attrs != NIL &&
 					 strcmp(strVal(lfirst(att->attrs)), "*") == 0)
@@ -143,10 +116,30 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				 * Target item is relation.*, expand that table (eg.
 				 * SELECT emp.*, dname FROM emp, dept)
 				 */
-				p_target = nconc(p_target,
-								 expandAll(pstate, att->relname,
-										   makeAttr(att->relname, NULL),
-										   &pstate->p_last_resno));
+				Node	   *rteorjoin;
+				int			sublevels_up;
+
+				rteorjoin = refnameRangeOrJoinEntry(pstate, att->relname,
+													&sublevels_up);
+
+				if (rteorjoin == NULL)
+				{
+					rteorjoin = (Node *) addImplicitRTE(pstate, att->relname);
+					sublevels_up = 0;
+				}
+
+				if (IsA(rteorjoin, RangeTblEntry))
+					p_target = nconc(p_target,
+									 expandRelAttrs(pstate,
+													(RangeTblEntry *) rteorjoin));
+				else if (IsA(rteorjoin, JoinExpr))
+					p_target = nconc(p_target,
+									 expandJoinAttrs(pstate,
+													 (JoinExpr *) rteorjoin,
+													 sublevels_up));
+				else
+					elog(ERROR, "transformTargetList: unexpected node type %d",
+						 nodeTag(rteorjoin));
 			}
 			else
 			{
@@ -219,23 +212,12 @@ updateTargetListEntry(ParseState *pstate,
 	 */
 	if (indirection)
 	{
-#ifndef DISABLE_JOIN_SYNTAX
-		Attr	   *att = makeAttr(pstrdup(RelationGetRelationName(rd)), colname);
-
-#else
-		Attr	   *att = makeNode(Attr);
-
-#endif
+		Attr	   *att = makeAttr(pstrdup(RelationGetRelationName(rd)),
+								   colname);
 		Node	   *arrayBase;
 		ArrayRef   *aref;
 
-#ifdef DISABLE_JOIN_SYNTAX
-		att->relname = pstrdup(RelationGetRelationName(rd));
-		att->attrs = lcons(makeString(colname), NIL);
-#endif
-		arrayBase = ParseNestedFuncOrColumn(pstate, att,
-											&pstate->p_last_resno,
-											EXPR_COLUMN_FIRST);
+		arrayBase = ParseNestedFuncOrColumn(pstate, att, EXPR_COLUMN_FIRST);
 		aref = transformArraySubscripts(pstate, arrayBase,
 										indirection,
 										pstate->p_is_insert,
@@ -401,46 +383,54 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 }
 
 /* ExpandAllTables()
- * Turns '*' (in the target list) into a list of attributes
- * (of all relations in the range table)
+ * Turns '*' (in the target list) into a list of targetlist entries.
+ *
+ * tlist entries are generated for each relation appearing in the FROM list,
+ * which by now has been expanded into a join tree.
  */
 static List *
 ExpandAllTables(ParseState *pstate)
 {
 	List	   *target = NIL;
-	List	   *rt,
-			   *rtable;
-
-	rtable = pstate->p_rtable;
-	if (pstate->p_is_rule)
-	{
-
-		/*
-		 * skip first two entries, "*new*" and "*current*"
-		 */
-		rtable = lnext(lnext(rtable));
-	}
+	List	   *jt;
 
 	/* SELECT *; */
-	if (rtable == NIL)
+	if (pstate->p_jointree == NIL)
 		elog(ERROR, "Wildcard with no tables specified not allowed");
 
-	foreach(rt, rtable)
+	foreach(jt, pstate->p_jointree)
 	{
-		RangeTblEntry *rte = lfirst(rt);
+		Node	   *n = (Node *) lfirst(jt);
 
-		/*
-		 * we only expand those listed in the from clause. (This will also
-		 * prevent us from using the wrong table in inserts: eg. tenk2 in
-		 * "insert into tenk2 select * from tenk1;")
-		 */
-		if (!rte->inFromCl)
-			continue;
+		if (IsA(n, RangeTblRef))
+		{
+			RangeTblEntry *rte;
 
-		target = nconc(target,
-					   expandAll(pstate, rte->eref->relname, rte->eref,
-								 &pstate->p_last_resno));
+			rte = rt_fetch(((RangeTblRef *) n)->rtindex,
+						   pstate->p_rtable);
+
+			/*
+			 * Ignore added-on relations that were not listed in the FROM
+			 * clause.
+			 */
+			if (!rte->inFromCl)
+				continue;
+
+			target = nconc(target, expandRelAttrs(pstate, rte));
+		}
+		else if (IsA(n, JoinExpr))
+		{
+			/* A newfangled join expression */
+			JoinExpr   *j = (JoinExpr *) n;
+
+			/* Currently, a join expr could only have come from FROM. */
+			target = nconc(target, expandJoinAttrs(pstate, j, 0));
+		}
+		else
+			elog(ERROR, "ExpandAllTables: unexpected node (internal error)"
+				 "\n\t%s", nodeToString(n));
 	}
+
 	return target;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.20 2000/08/24 03:29:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.21 2000/09/12 21:06:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,10 +62,10 @@ ExecNestLoop(NestLoop *node)
 	NestLoopState *nlstate;
 	Plan	   *innerPlan;
 	Plan	   *outerPlan;
-	bool		needNewOuterTuple;
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *innerTupleSlot;
-	List	   *qual;
+	List	   *joinqual;
+	List	   *otherqual;
 	ExprContext *econtext;
 
 	/* ----------------
@@ -75,9 +75,10 @@ ExecNestLoop(NestLoop *node)
 	ENL1_printf("getting info from node");
 
 	nlstate = node->nlstate;
-	qual = node->join.qual;
-	outerPlan = outerPlan(&node->join);
-	innerPlan = innerPlan(&node->join);
+	joinqual = node->join.joinqual;
+	otherqual = node->join.plan.qual;
+	outerPlan = outerPlan((Plan *) node);
+	innerPlan = innerPlan((Plan *) node);
 	econtext = nlstate->jstate.cs_ExprContext;
 
 	/* ----------------
@@ -115,7 +116,7 @@ ExecNestLoop(NestLoop *node)
 
 	/* ----------------
 	 *	Ok, everything is setup for the join so now loop until
-	 *	we return a qualifying join tuple..
+	 *	we return a qualifying join tuple.
 	 * ----------------
 	 */
 	ENL1_printf("entering main loop");
@@ -123,44 +124,14 @@ ExecNestLoop(NestLoop *node)
 	for (;;)
 	{
 		/* ----------------
-		 *	The essential idea now is to get the next inner tuple
-		 *	and join it with the current outer tuple.
+		 *	If we don't have an outer tuple, get the next one and
+		 *	reset the inner scan.
 		 * ----------------
 		 */
-		needNewOuterTuple = TupIsNull(outerTupleSlot);
-
-		/* ----------------
-		 *	if we have an outerTuple, try to get the next inner tuple.
-		 * ----------------
-		 */
-		if (!needNewOuterTuple)
+		if (nlstate->nl_NeedNewOuter)
 		{
-			ENL1_printf("getting new inner tuple");
-
-			innerTupleSlot = ExecProcNode(innerPlan, (Plan *) node);
-			econtext->ecxt_innertuple = innerTupleSlot;
-
-			if (TupIsNull(innerTupleSlot))
-			{
-				ENL1_printf("no inner tuple, need new outer tuple");
-				needNewOuterTuple = true;
-			}
-		}
-
-		/* ----------------
-		 *	loop until we have a new outer tuple and a new
-		 *	inner tuple.
-		 * ----------------
-		 */
-		while (needNewOuterTuple)
-		{
-			/* ----------------
-			 *	now try to get the next outer tuple
-			 * ----------------
-			 */
 			ENL1_printf("getting new outer tuple");
 			outerTupleSlot = ExecProcNode(outerPlan, (Plan *) node);
-			econtext->ecxt_outertuple = outerTupleSlot;
 
 			/* ----------------
 			 *	if there are no more outer tuples, then the join
@@ -175,12 +146,14 @@ ExecNestLoop(NestLoop *node)
 
 			ENL1_printf("saving new outer tuple information");
 			nlstate->jstate.cs_OuterTupleSlot = outerTupleSlot;
+			econtext->ecxt_outertuple = outerTupleSlot;
+			nlstate->nl_NeedNewOuter = false;
+			nlstate->nl_MatchedOuter = false;
 
 			/* ----------------
-			 *	now rescan the inner plan and get a new inner tuple
+			 *	now rescan the inner plan
 			 * ----------------
 			 */
-
 			ENL1_printf("rescanning inner plan");
 
 			/*
@@ -189,48 +162,101 @@ ExecNestLoop(NestLoop *node)
 			 * expr context.
 			 */
 			ExecReScan(innerPlan, econtext, (Plan *) node);
+		}
 
-			ENL1_printf("getting new inner tuple");
+		/* ----------------
+		 *	we have an outerTuple, try to get the next inner tuple.
+		 * ----------------
+		 */
+		ENL1_printf("getting new inner tuple");
 
-			innerTupleSlot = ExecProcNode(innerPlan, (Plan *) node);
-			econtext->ecxt_innertuple = innerTupleSlot;
+		innerTupleSlot = ExecProcNode(innerPlan, (Plan *) node);
+		econtext->ecxt_innertuple = innerTupleSlot;
 
-			if (TupIsNull(innerTupleSlot))
-				ENL1_printf("couldn't get inner tuple - need new outer tuple");
-			else
+		if (TupIsNull(innerTupleSlot))
+		{
+			ENL1_printf("no inner tuple, need new outer tuple");
+
+			nlstate->nl_NeedNewOuter = true;
+
+			if (! nlstate->nl_MatchedOuter &&
+				node->join.jointype == JOIN_LEFT)
 			{
-				ENL1_printf("got inner and outer tuples");
-				needNewOuterTuple = false;
+				/*
+				 * We are doing an outer join and there were no join matches
+				 * for this outer tuple.  Generate a fake join tuple with
+				 * nulls for the inner tuple, and return it if it passes
+				 * the non-join quals.
+				 */
+				econtext->ecxt_innertuple = nlstate->nl_NullInnerTupleSlot;
+
+				ENL1_printf("testing qualification for outer-join tuple");
+
+				if (ExecQual(otherqual, econtext, false))
+				{
+					/* ----------------
+					 *	qualification was satisfied so we project and
+					 *	return the slot containing the result tuple
+					 *	using ExecProject().
+					 * ----------------
+					 */
+					TupleTableSlot *result;
+					ExprDoneCond isDone;
+
+					ENL1_printf("qualification succeeded, projecting tuple");
+
+					result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
+
+					if (isDone != ExprEndResult)
+					{
+						nlstate->jstate.cs_TupFromTlist =
+							(isDone == ExprMultipleResult);
+						return result;
+					}
+				}
 			}
-		}						/* while (needNewOuterTuple) */
+			/*
+			 * Otherwise just return to top of loop for a new outer tuple.
+			 */
+			continue;
+		}
 
 		/* ----------------
 		 *	 at this point we have a new pair of inner and outer
 		 *	 tuples so we test the inner and outer tuples to see
-		 *	 if they satisify the node's qualification.
+		 *	 if they satisfy the node's qualification.
+		 *
+		 *	 Only the joinquals determine MatchedOuter status,
+		 *	 but all quals must pass to actually return the tuple.
 		 * ----------------
 		 */
 		ENL1_printf("testing qualification");
 
-		if (ExecQual((List *) qual, econtext, false))
+		if (ExecQual(joinqual, econtext, false))
 		{
-			/* ----------------
-			 *	qualification was satisified so we project and
-			 *	return the slot containing the result tuple
-			 *	using ExecProject().
-			 * ----------------
-			 */
-			TupleTableSlot *result;
-			ExprDoneCond isDone;
+			nlstate->nl_MatchedOuter = true;
 
-			ENL1_printf("qualification succeeded, projecting tuple");
-
-			result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
-
-			if (isDone != ExprEndResult)
+			if (otherqual == NIL || ExecQual(otherqual, econtext, false))
 			{
-				nlstate->jstate.cs_TupFromTlist = (isDone == ExprMultipleResult);
-				return result;
+				/* ----------------
+				 *	qualification was satisfied so we project and
+				 *	return the slot containing the result tuple
+				 *	using ExecProject().
+				 * ----------------
+				 */
+				TupleTableSlot *result;
+				ExprDoneCond isDone;
+
+				ENL1_printf("qualification succeeded, projecting tuple");
+
+				result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
+
+				if (isDone != ExprEndResult)
+				{
+					nlstate->jstate.cs_TupFromTlist =
+						(isDone == ExprMultipleResult);
+					return result;
+				}
 			}
 		}
 
@@ -264,7 +290,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
 	 *	assign execution state to node
 	 * ----------------
 	 */
-	node->join.state = estate;
+	node->join.plan.state = estate;
 
 	/* ----------------
 	 *	  create new nest loop state
@@ -281,19 +307,33 @@ ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
 	 */
 	ExecAssignExprContext(estate, &nlstate->jstate);
 
-#define NESTLOOP_NSLOTS 1
-	/* ----------------
-	 *	tuple table initialization
-	 * ----------------
-	 */
-	ExecInitResultTupleSlot(estate, &nlstate->jstate);
-
 	/* ----------------
 	 *	  now initialize children
 	 * ----------------
 	 */
 	ExecInitNode(outerPlan((Plan *) node), estate, (Plan *) node);
 	ExecInitNode(innerPlan((Plan *) node), estate, (Plan *) node);
+
+#define NESTLOOP_NSLOTS 2
+	/* ----------------
+	 *	tuple table initialization
+	 * ----------------
+	 */
+	ExecInitResultTupleSlot(estate, &nlstate->jstate);
+
+	switch (node->join.jointype)
+	{
+		case JOIN_INNER:
+			break;
+		case JOIN_LEFT:
+			nlstate->nl_NullInnerTupleSlot =
+				ExecInitNullTupleSlot(estate,
+									  ExecGetTupType(innerPlan((Plan*) node)));
+			break;
+		default:
+			elog(ERROR, "ExecInitNestLoop: unsupported join type %d",
+				 (int) node->join.jointype);
+	}
 
 	/* ----------------
 	 *	initialize tuple type and projection info
@@ -308,6 +348,8 @@ ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
 	 */
 	nlstate->jstate.cs_OuterTupleSlot = NULL;
 	nlstate->jstate.cs_TupFromTlist = false;
+	nlstate->nl_NeedNewOuter = true;
+	nlstate->nl_MatchedOuter = false;
 
 	NL1_printf("ExecInitNestLoop: %s\n",
 			   "node initialized");
@@ -394,4 +436,6 @@ ExecReScanNestLoop(NestLoop *node, ExprContext *exprCtxt, Plan *parent)
 	/* let outerPlan to free its result tuple ... */
 	nlstate->jstate.cs_OuterTupleSlot = NULL;
 	nlstate->jstate.cs_TupFromTlist = false;
+	nlstate->nl_NeedNewOuter = true;
+	nlstate->nl_MatchedOuter = false;
 }

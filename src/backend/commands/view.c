@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.47 2000/09/12 04:49:07 momjian Exp $
+ *	$Id: view.c,v 1.48 2000/09/12 21:06:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,12 +116,14 @@ char *
 MakeRetrieveViewRuleName(char *viewName)
 {
 	char	   *buf;
+#ifdef MULTIBYTE
+	int			len;
+#endif
 
 	buf = palloc(strlen(viewName) + 5);
 	snprintf(buf, strlen(viewName) + 5, "_RET%s", viewName);
 
 #ifdef MULTIBYTE
-	int len;
 	len = pg_mbcliplen(buf,strlen(buf),NAMEDATALEN-1);
 	buf[len] = '\0';
 #else
@@ -203,6 +205,10 @@ DefineViewRules(char *viewName, Query *viewParse)
  * Of course we must also increase the 'varnos' of all the Var nodes
  * by 2...
  *
+ * These extra RT entries are not actually used in the query, obviously.
+ * We add them so that views look the same as ON SELECT rules ---
+ * the rule rewriter assumes that ALL rules have OLD and NEW RTEs.
+ *
  * NOTE: these are destructive changes. It would be difficult to
  * make a complete copy of the parse tree and make the changes
  * in the copy.
@@ -211,43 +217,32 @@ DefineViewRules(char *viewName, Query *viewParse)
 static void
 UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 {
-	List	   *old_rt;
 	List	   *new_rt;
 	RangeTblEntry *rt_entry1,
 			   *rt_entry2;
 
 	/*
-	 * first offset all var nodes by 2
-	 */
-	OffsetVarNodes((Node *) viewParse->targetList, 2, 0);
-	OffsetVarNodes(viewParse->qual, 2, 0);
-
-	OffsetVarNodes(viewParse->havingQual, 2, 0);
-
-
-	/*
-	 * find the old range table...
-	 */
-	old_rt = viewParse->rtable;
-
-	/*
 	 * create the 2 new range table entries and form the new range
 	 * table... OLD first, then NEW....
 	 */
-	rt_entry1 = addRangeTableEntry(NULL, (char *) viewName,
+	rt_entry1 = addRangeTableEntry(NULL, viewName,
 								   makeAttr("*OLD*", NULL),
-								   FALSE, FALSE, FALSE);
-	rt_entry2 = addRangeTableEntry(NULL, (char *) viewName,
+								   false, false);
+	rt_entry2 = addRangeTableEntry(NULL, viewName,
 								   makeAttr("*NEW*", NULL),
-								   FALSE, FALSE, FALSE);
-	new_rt = lcons(rt_entry2, old_rt);
-	new_rt = lcons(rt_entry1, new_rt);
+								   false, false);
+	new_rt = lcons(rt_entry1, lcons(rt_entry2, viewParse->rtable));
 
 	/*
 	 * Now the tricky part.... Update the range table in place... Be
 	 * careful here, or hell breaks loooooooooooooOOOOOOOOOOOOOOOOOOSE!
 	 */
 	viewParse->rtable = new_rt;
+
+	/*
+	 * now offset all var nodes by 2, and jointree RT indexes too.
+	 */
+	OffsetVarNodes((Node *) viewParse, 2, 0);
 }
 
 /*-------------------------------------------------------------------
@@ -270,7 +265,7 @@ DefineView(char *viewName, Query *viewParse)
 	viewTlist = viewParse->targetList;
 
 	/*
-	 * Create the "view" relation NOTE: if it already exists, the xaxt
+	 * Create the "view" relation NOTE: if it already exists, the xact
 	 * will be aborted.
 	 */
 	DefineVirtualRelation(viewName, viewTlist);

@@ -687,6 +687,39 @@ SELECT count(*) FROM shoe;
 
 
 --
+-- Simple test of qualified ON INSERT ... this did not work in 7.0 ...
+--
+create table foo (f1 int);
+create table foo2 (f1 int);
+
+create rule foorule as on insert to foo where f1 < 100
+do instead nothing;
+
+insert into foo values(1);
+insert into foo values(1001);
+select * from foo;
+
+drop rule foorule;
+
+-- this should fail because f1 is not exposed for unqualified reference:
+create rule foorule as on insert to foo where f1 < 100
+do instead insert into foo2 values (f1);
+-- this is the correct way:
+create rule foorule as on insert to foo where f1 < 100
+do instead insert into foo2 values (new.f1);
+
+insert into foo values(2);
+insert into foo values(100);
+
+select * from foo;
+select * from foo2;
+
+drop rule foorule;
+drop table foo;
+drop table foo2;
+
+
+--
 -- Check that ruleutils are working
 --
 SELECT viewname, definition FROM pg_views ORDER BY viewname;

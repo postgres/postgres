@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.39 2000/06/18 22:44:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.40 2000/09/12 21:06:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -133,7 +133,7 @@ print_rt(List *rtable)
 		RangeTblEntry *rte = lfirst(l);
 
 		printf("%d\t%s(%s)\t%u\t%d\t%s\n",
-			   i, rte->relname, rte->ref->relname, rte->relid,
+			   i, rte->relname, rte->eref->relname, rte->relid,
 			   rte->inFromCl,
 			   (rte->inh ? "inh" : ""));
 		i++;
@@ -157,7 +157,6 @@ print_expr(Node *expr, List *rtable)
 	if (IsA(expr, Var))
 	{
 		Var		   *var = (Var *) expr;
-		RangeTblEntry *rt;
 		char	   *relname,
 				   *attname;
 
@@ -173,10 +172,10 @@ print_expr(Node *expr, List *rtable)
 				break;
 			default:
 				{
+					RangeTblEntry *rt;
+
 					rt = rt_fetch(var->varno, rtable);
-					relname = rt->relname;
-					if (rt->ref && rt->ref->relname)
-						relname = rt->ref->relname;		/* table renamed */
+					relname = rt->eref->relname;
 					attname = get_attname(rt->relid, var->varattno);
 				}
 				break;

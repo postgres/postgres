@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.125 2000/08/08 15:41:26 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.126 2000/09/12 21:06:49 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -268,6 +268,9 @@ _outQuery(StringInfo str, Query *node)
 	appendStringInfo(str, " :rtable ");
 	_outNode(str, node->rtable);
 
+	appendStringInfo(str, " :jointree ");
+	_outNode(str, node->jointree);
+
 	appendStringInfo(str, " :targetlist ");
 	_outNode(str, node->targetList);
 
@@ -389,7 +392,6 @@ _outAppend(StringInfo str, Append *node)
 					 " :inheritrelid %u :inheritrtable ",
 					 node->inheritrelid);
 	_outNode(str, node->inheritrtable);
-
 }
 
 /*
@@ -400,7 +402,9 @@ _outJoin(StringInfo str, Join *node)
 {
 	appendStringInfo(str, " JOIN ");
 	_outPlanInfo(str, (Plan *) node);
-
+	appendStringInfo(str, " :jointype %d :joinqual ",
+					 (int) node->jointype);
+	_outNode(str, node->joinqual);
 }
 
 /*
@@ -411,6 +415,9 @@ _outNestLoop(StringInfo str, NestLoop *node)
 {
 	appendStringInfo(str, " NESTLOOP ");
 	_outPlanInfo(str, (Plan *) node);
+	appendStringInfo(str, " :jointype %d :joinqual ",
+					 (int) node->join.jointype);
+	_outNode(str, node->join.joinqual);
 }
 
 /*
@@ -421,6 +428,9 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 {
 	appendStringInfo(str, " MERGEJOIN ");
 	_outPlanInfo(str, (Plan *) node);
+	appendStringInfo(str, " :jointype %d :joinqual ",
+					 (int) node->join.jointype);
+	_outNode(str, node->join.joinqual);
 
 	appendStringInfo(str, " :mergeclauses ");
 	_outNode(str, node->mergeclauses);
@@ -434,17 +444,14 @@ _outHashJoin(StringInfo str, HashJoin *node)
 {
 	appendStringInfo(str, " HASHJOIN ");
 	_outPlanInfo(str, (Plan *) node);
+	appendStringInfo(str, " :jointype %d :joinqual ",
+					 (int) node->join.jointype);
+	_outNode(str, node->join.joinqual);
 
 	appendStringInfo(str, " :hashclauses ");
 	_outNode(str, node->hashclauses);
-
-	appendStringInfo(str,
-					 " :hashjoinop %u ",
+	appendStringInfo(str, " :hashjoinop %u ",
 					 node->hashjoinop);
-
-	appendStringInfo(str,
-					 " :hashdone %d ",
-					 node->hashdone);
 }
 
 static void
@@ -758,32 +765,6 @@ _outSubLink(StringInfo str, SubLink *node)
 }
 
 /*
- *	FieldSelect
- */
-static void
-_outFieldSelect(StringInfo str, FieldSelect *node)
-{
-	appendStringInfo(str, " FIELDSELECT :arg ");
-	_outNode(str, node->arg);
-
-	appendStringInfo(str, " :fieldnum %d :resulttype %u :resulttypmod %d ",
-					 node->fieldnum, node->resulttype, node->resulttypmod);
-}
-
-/*
- *	RelabelType
- */
-static void
-_outRelabelType(StringInfo str, RelabelType *node)
-{
-	appendStringInfo(str, " RELABELTYPE :arg ");
-	_outNode(str, node->arg);
-
-	appendStringInfo(str, " :resulttype %u :resulttypmod %d ",
-					 node->resulttype, node->resulttypmod);
-}
-
-/*
  *	ArrayRef is a subclass of Expr
  */
 static void
@@ -847,6 +828,66 @@ _outParam(StringInfo str, Param *node)
 }
 
 /*
+ *	FieldSelect
+ */
+static void
+_outFieldSelect(StringInfo str, FieldSelect *node)
+{
+	appendStringInfo(str, " FIELDSELECT :arg ");
+	_outNode(str, node->arg);
+
+	appendStringInfo(str, " :fieldnum %d :resulttype %u :resulttypmod %d ",
+					 node->fieldnum, node->resulttype, node->resulttypmod);
+}
+
+/*
+ *	RelabelType
+ */
+static void
+_outRelabelType(StringInfo str, RelabelType *node)
+{
+	appendStringInfo(str, " RELABELTYPE :arg ");
+	_outNode(str, node->arg);
+
+	appendStringInfo(str, " :resulttype %u :resulttypmod %d ",
+					 node->resulttype, node->resulttypmod);
+}
+
+/*
+ *	RangeTblRef
+ */
+static void
+_outRangeTblRef(StringInfo str, RangeTblRef *node)
+{
+	appendStringInfo(str, " RANGETBLREF %d ",
+					 node->rtindex);
+}
+
+/*
+ *	JoinExpr
+ */
+static void
+_outJoinExpr(StringInfo str, JoinExpr *node)
+{
+	appendStringInfo(str, " JOINEXPR :jointype %d :isNatural %s :larg ",
+					 (int) node->jointype,
+					 node->isNatural ? "true" : "false");
+	_outNode(str, node->larg);
+	appendStringInfo(str, " :rarg ");
+	_outNode(str, node->rarg);
+	appendStringInfo(str, " :using ");
+	_outNode(str, node->using);
+	appendStringInfo(str, " :quals ");
+	_outNode(str, node->quals);
+	appendStringInfo(str, " :alias ");
+	_outNode(str, node->alias);
+	appendStringInfo(str, " :colnames ");
+	_outNode(str, node->colnames);
+	appendStringInfo(str, " :colvars ");
+	_outNode(str, node->colvars);
+}
+
+/*
  *	Stuff from execnodes.h
  */
 
@@ -897,6 +938,11 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 					 node->pruneable ? "true" : "false");
 	_outNode(str, node->baserestrictinfo);
 
+	appendStringInfo(str,
+					 " :baserestrictcost %.2f :outerjoinset ",
+					 node->baserestrictcost);
+	_outIntList(str, node->outerjoinset);
+
 	appendStringInfo(str, " :joininfo ");
 	_outNode(str, node->joininfo);
 
@@ -931,14 +977,14 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
 	appendStringInfo(str, " RTE :relname ");
 	_outToken(str, node->relname);
-	appendStringInfo(str, " :ref ");
-	_outNode(str, node->ref);
-	appendStringInfo(str,
-			 " :relid %u :inh %s :inFromCl %s :inJoinSet %s :skipAcl %s",
-					 node->relid,
+	appendStringInfo(str, " :relid %u :alias ",
+					 node->relid);
+	_outNode(str, node->alias);
+	appendStringInfo(str, " :eref ");
+	_outNode(str, node->eref);
+	appendStringInfo(str, " :inh %s :inFromCl %s :skipAcl %s",
 					 node->inh ? "true" : "false",
 					 node->inFromCl ? "true" : "false",
-					 node->inJoinSet ? "true" : "false",
 					 node->skipAcl ? "true" : "false");
 }
 
@@ -985,7 +1031,8 @@ _outIndexPath(StringInfo str, IndexPath *node)
 					 (int) node->indexscandir);
 	_outIntList(str, node->joinrelids);
 
-	appendStringInfo(str, " :rows %.2f ",
+	appendStringInfo(str, " :alljoinquals %s :rows %.2f ",
+					 node->alljoinquals ? "true" : "false",
 					 node->rows);
 }
 
@@ -1021,7 +1068,8 @@ _outNestPath(StringInfo str, NestPath *node)
 					 node->path.startup_cost,
 					 node->path.total_cost);
 	_outNode(str, node->path.pathkeys);
-	appendStringInfo(str, " :outerjoinpath ");
+	appendStringInfo(str, " :jointype %d :outerjoinpath ",
+					 (int) node->jointype);
 	_outNode(str, node->outerjoinpath);
 	appendStringInfo(str, " :innerjoinpath ");
 	_outNode(str, node->innerjoinpath);
@@ -1041,7 +1089,8 @@ _outMergePath(StringInfo str, MergePath *node)
 					 node->jpath.path.startup_cost,
 					 node->jpath.path.total_cost);
 	_outNode(str, node->jpath.path.pathkeys);
-	appendStringInfo(str, " :outerjoinpath ");
+	appendStringInfo(str, " :jointype %d :outerjoinpath ",
+					 (int) node->jpath.jointype);
 	_outNode(str, node->jpath.outerjoinpath);
 	appendStringInfo(str, " :innerjoinpath ");
 	_outNode(str, node->jpath.innerjoinpath);
@@ -1070,7 +1119,8 @@ _outHashPath(StringInfo str, HashPath *node)
 					 node->jpath.path.startup_cost,
 					 node->jpath.path.total_cost);
 	_outNode(str, node->jpath.path.pathkeys);
-	appendStringInfo(str, " :outerjoinpath ");
+	appendStringInfo(str, " :jointype %d :outerjoinpath ",
+					 (int) node->jpath.jointype);
 	_outNode(str, node->jpath.outerjoinpath);
 	appendStringInfo(str, " :innerjoinpath ");
 	_outNode(str, node->jpath.innerjoinpath);
@@ -1101,7 +1151,8 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	appendStringInfo(str, " RESTRICTINFO :clause ");
 	_outNode(str, node->clause);
 
-	appendStringInfo(str, " :subclauseindices ");
+	appendStringInfo(str, " :isjoinqual %s :subclauseindices ",
+					 node->isjoinqual ? "true" : "false");
 	_outNode(str, node->subclauseindices);
 
 	appendStringInfo(str, " :mergejoinoperator %u ", node->mergejoinoperator);
@@ -1483,12 +1534,6 @@ _outNode(StringInfo str, void *obj)
 			case T_SubLink:
 				_outSubLink(str, obj);
 				break;
-			case T_FieldSelect:
-				_outFieldSelect(str, obj);
-				break;
-			case T_RelabelType:
-				_outRelabelType(str, obj);
-				break;
 			case T_ArrayRef:
 				_outArrayRef(str, obj);
 				break;
@@ -1500,6 +1545,18 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Param:
 				_outParam(str, obj);
+				break;
+			case T_FieldSelect:
+				_outFieldSelect(str, obj);
+				break;
+			case T_RelabelType:
+				_outRelabelType(str, obj);
+				break;
+			case T_RangeTblRef:
+				_outRangeTblRef(str, obj);
+				break;
+			case T_JoinExpr:
+				_outJoinExpr(str, obj);
 				break;
 			case T_EState:
 				_outEState(str, obj);

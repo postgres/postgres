@@ -1,6 +1,6 @@
 --
 -- JOIN
--- Test join clauses
+-- Test JOIN clauses
 --
 
 CREATE TABLE J1_TBL (
@@ -34,6 +34,7 @@ INSERT INTO J2_TBL VALUES (1, -1);
 INSERT INTO J2_TBL VALUES (2, 2);
 INSERT INTO J2_TBL VALUES (3, -3);
 INSERT INTO J2_TBL VALUES (2, 4);
+INSERT INTO J2_TBL VALUES (5, -5);
 
 --
 -- CORRELATION NAMES
@@ -86,6 +87,9 @@ SELECT '' AS "xxx", tx.ii, tx.jj, tx.kk
   FROM (J1_TBL t1 (a, b, c) CROSS JOIN J2_TBL t2 (d, e))
     AS tx (ii, jj, tt, ii2, kk);
 
+SELECT '' AS "xxx", *
+  FROM J1_TBL CROSS JOIN J2_TBL a CROSS JOIN J2_TBL b;
+
 
 --
 --
@@ -128,9 +132,6 @@ SELECT '' AS "xxx", *
 SELECT '' AS "xxx", *
   FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (d, a);
 
-SELECT '' AS "xxx", *
-  FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (d, a);
-
 -- mismatch number of columns
 -- currently, Postgres will fill in with underlying names
 SELECT '' AS "xxx", *
@@ -147,9 +148,6 @@ SELECT '' AS "xxx", *
 SELECT '' AS "xxx", *
   FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.k);
 
-SELECT '' AS "xxx", *
-  FROM J1_TBL CROSS JOIN J2_TBL;
-
 
 --
 -- Non-equi-joins
@@ -164,21 +162,23 @@ SELECT '' AS "xxx", *
 --
 
 SELECT '' AS "xxx", *
-  FROM J1_TBL OUTER JOIN J2_TBL USING (i);
-
-SELECT '' AS "xxx", *
   FROM J1_TBL LEFT OUTER JOIN J2_TBL USING (i);
 
 SELECT '' AS "xxx", *
   FROM J1_TBL RIGHT OUTER JOIN J2_TBL USING (i);
 
+-- Note that OUTER is a noise word
 SELECT '' AS "xxx", *
-  FROM J1_TBL FULL OUTER JOIN J2_TBL USING (i);
+  FROM J1_TBL FULL JOIN J2_TBL USING (i);
 
 
 --
 -- More complicated constructs
 --
+
+-- UNION JOIN isn't implemented yet
+SELECT '' AS "xxx", *
+  FROM J1_TBL UNION JOIN J2_TBL;
 
 --
 -- Clean up

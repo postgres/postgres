@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.40 2000/05/30 00:49:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.41 2000/09/12 21:06:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ create_or_index_paths(Query *root,
 
 				/* This isn't a nestloop innerjoin, so: */
 				pathnode->joinrelids = NIL;		/* no join clauses here */
+				pathnode->alljoinquals = false;
 				pathnode->rows = rel->rows;
 
 				best_or_subclause_indices(root,

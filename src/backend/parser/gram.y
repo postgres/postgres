@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.188 2000/09/12 05:09:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.189 2000/09/12 21:07:01 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -36,6 +36,7 @@
 #include <ctype.h>
 
 #include "postgres.h"
+
 #include "access/htup.h"
 #include "access/xact.h"
 #include "catalog/catname.h"
@@ -77,15 +78,10 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
-static void param_type_init(Oid *typev, int nargs);
 static bool exprIsNullConstant(Node *arg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
 
-/* old versions of flex define this as a macro */
-#if defined(yywrap)
-#undef yywrap
-#endif /* yywrap */
 %}
 
 
@@ -95,6 +91,7 @@ static void doNegateFloat(Value *v);
 	char				chr;
 	char				*str;
 	bool				boolean;
+	JoinType			jtype;
 	List				*list;
 	Node				*node;
 	Value				*value;
@@ -108,7 +105,6 @@ static void doNegateFloat(Value *v);
 	JoinExpr			*jexpr;
 	IndexElem			*ielem;
 	RangeVar			*range;
-	RelExpr				*relexp;
 	A_Indices			*aind;
 	ResTarget			*target;
 	ParamNo				*paramno;
@@ -194,19 +190,8 @@ static void doNegateFloat(Value *v);
 %type <boolean>	opt_table
 %type <boolean>	opt_chain, opt_trans
 
-%type <jexpr>	from_expr, join_clause, join_expr
-%type <jexpr>	join_clause_with_union, join_expr_with_union
 %type <node>	join_outer, join_qual
-%type <ival>	join_type
-%type <list>	using_list
-%type <ident>	using_expr
-/***
-#ifdef ENABLE_ORACLE_JOIN_SYNTAX
-%type <list>	oracle_list
-%type <jexpr>	oracle_expr
-%type <boolean>	oracle_outer
-#endif
-***/
+%type <jtype>	join_type
 
 %type <list>	extract_list, position_list
 %type <list>	substr_list, substr_from, substr_for, trim_list
@@ -246,8 +231,9 @@ static void doNegateFloat(Value *v);
 %type <attr>	event_object, attr, alias_clause
 %type <sortgroupby>		sortby
 %type <ielem>	index_elem, func_index
-%type <range>	table_expr
-%type <relexp>	relation_expr
+%type <node>	table_ref
+%type <jexpr>	joined_table
+%type <range>	relation_expr
 %type <target>	target_el, update_target_el
 %type <paramno> ParamNo
 
@@ -356,6 +342,12 @@ static void doNegateFloat(Value *v);
 		TEMP, TOAST, TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
+/* The grammar thinks these are keywords, but they are not in the keywords.c
+ * list and so can never be entered directly.  The filter in parser.c
+ * creates these tokens when required.
+ */
+%token			UNIONJOIN
+
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, FCONST, SCONST, Op
 %token <ival>	ICONST, PARAM
@@ -364,7 +356,9 @@ static void doNegateFloat(Value *v);
 %token			OP
 
 /* precedence: lowest to highest */
-%left		UNION INTERSECT EXCEPT
+%left		UNION EXCEPT
+%left		INTERSECT
+%left		JOIN UNIONJOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
 %left		OR
 %left		AND
 %right		NOT
@@ -800,7 +794,7 @@ VariableSetStmt:  SET ColId TO var_value
 					n->value = $3;
 					$$ = (Node *) n;
 #else
-					elog(ERROR, "SET NAMES is not supported.");
+					elog(ERROR, "SET NAMES is not supported");
 #endif
 				}
 		;
@@ -1031,7 +1025,6 @@ AlterTableStmt:
 					n->relname = $3;
 					$$ = (Node *)n;
 				}
-
 /* ALTER TABLE <name> OWNER TO UserId */
 		| ALTER TABLE relation_name OWNER TO UserId
 				{
@@ -2956,7 +2949,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb
 					CreatedbStmt *n;
 
 					if ($5 == NULL && $6 == -1)
-						elog(ERROR, "CREATE DATABASE WITH requires at least one option.");
+						elog(ERROR, "CREATE DATABASE WITH requires at least one option");
 
                     n = makeNode(CreatedbStmt);
 					n->dbname = $3;
@@ -3465,7 +3458,7 @@ SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
 /* This rule parses Select statements that can appear within set operations,
  * including UNION, INTERSECT and EXCEPT.  '(' and ')' can be used to specify
  * the ordering of the set operations.  Without '(' and ')' we want the
- * operations to be left associative.
+ * operations to be ordered per the precedence specs at the head of this file.
  *
  * Note that sort clauses cannot be included at this level --- a sort clause
  * can only appear at the end of the complete Select, and it will be handled
@@ -3486,10 +3479,12 @@ select_clause: '(' select_clause ')'
 			{
 				$$ = $1; 
 			}
-		| select_clause EXCEPT select_clause
+		| select_clause EXCEPT opt_all select_clause
 			{
 				$$ = (Node *)makeA_Expr(AND,NULL,$1,
-										makeA_Expr(NOT,NULL,NULL,$3));
+										makeA_Expr(NOT,NULL,NULL,$4));
+				if ($3)
+					elog(ERROR, "EXCEPT ALL is not implemented yet");
 			}
 		| select_clause UNION opt_all select_clause
 			{	
@@ -3506,9 +3501,11 @@ select_clause: '(' select_clause ')'
 				}
 				$$ = (Node *)makeA_Expr(OR,NULL,$1,$4);
 			}
-		| select_clause INTERSECT select_clause
+		| select_clause INTERSECT opt_all select_clause
 			{
-				$$ = (Node *)makeA_Expr(AND,NULL,$1,$3);
+				$$ = (Node *)makeA_Expr(AND,NULL,$1,$4);
+				if ($3)
+					elog(ERROR, "INTERSECT ALL is not implemented yet");
 			}
 		; 
 
@@ -3741,64 +3738,150 @@ update_list:  OF va_list						{ $$ = $2; }
  *****************************************************************************/
 
 from_clause:  FROM from_list					{ $$ = $2; }
-/***
-#ifdef ENABLE_ORACLE_JOIN_SYNTAX
-		| FROM oracle_list						{ $$ = $2; }
-#endif
-***/
-		| FROM from_expr						{ $$ = lcons($2, NIL); }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-from_list:  from_list ',' table_expr			{ $$ = lappend($1, $3); }
-		| table_expr							{ $$ = lcons($1, NIL); }
+from_list:  from_list ',' table_ref				{ $$ = lappend($1, $3); }
+		| table_ref								{ $$ = lcons($1, NIL); }
 		;
 
-/***********
- * This results in one shift/reduce conflict, presumably due to the trailing "(+)"
- * - Thomas 1999-09-20
+/*
+ * table_ref is where an alias clause can be attached.  Note we cannot make
+ * alias_clause have an empty production because that causes parse conflicts
+ * between table_ref := '(' joined_table ')' alias_clause
+ * and joined_table := '(' joined_table ')'.  So, we must have the
+ * redundant-looking productions here instead.
+ */
+table_ref:  relation_expr
+				{
+					$$ = (Node *) $1;
+				}
+		| relation_expr alias_clause
+				{
+					$1->name = $2;
+					$$ = (Node *) $1;
+				}
+		| '(' select_clause ')'
+				{
+					RangeSubselect *n = makeNode(RangeSubselect);
+					n->subquery = $2;
+					n->name = NULL;
+					$$ = (Node *) n;
+				}
+		| '(' select_clause ')' alias_clause
+				{
+					RangeSubselect *n = makeNode(RangeSubselect);
+					n->subquery = $2;
+					n->name = $4;
+					$$ = (Node *) n;
+				}
+		| joined_table
+				{
+					$$ = (Node *) $1;
+				}
+		| '(' joined_table ')' alias_clause
+				{
+					$2->alias = $4;
+					$$ = (Node *) $2;
+				}
+		;
+
+/*
+ * It may seem silly to separate joined_table from table_ref, but there is
+ * method in SQL92's madness: if you don't do it this way you get reduce-
+ * reduce conflicts, because it's not clear to the parser generator whether
+ * to expect alias_clause after ')' or not.  For the same reason we must
+ * treat 'JOIN' and 'join_type JOIN' separately, rather than allowing
+ * join_type to expand to empty; if we try it, the parser generator can't
+ * figure out when to reduce an empty join_type right after table_ref.
  *
-#ifdef ENABLE_ORACLE_JOIN_SYNTAX
-oracle_list:  oracle_expr						{ $$ = lcons($1, NIL); }
-		;
+ * Note that a CROSS JOIN is the same as an unqualified
+ * INNER JOIN, and an INNER JOIN/ON has the same shape
+ * but a qualification expression to limit membership.
+ * A NATURAL JOIN implicitly matches column names between
+ * tables and the shape is determined by which columns are
+ * in common. We'll collect columns during the later transformations.
+ */
 
-oracle_expr:  ColId ',' ColId oracle_outer
+joined_table:  '(' joined_table ')'
 				{
-					elog(ERROR,"Oracle OUTER JOIN not yet supported");
-					$$ = NULL;
+					$$ = $2;
 				}
-		| oracle_outer ColId ',' ColId
+		| table_ref CROSS JOIN table_ref
 				{
-					elog(ERROR,"Oracle OUTER JOIN not yet supported");
-					$$ = NULL;
+					/* CROSS JOIN is same as unqualified inner join */
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = JOIN_INNER;
+					n->isNatural = FALSE;
+					n->larg = $1;
+					n->rarg = $4;
+					n->using = NIL;
+					n->quals = NULL;
+					$$ = n;
 				}
-		;
-
-oracle_outer:  '(' '+' ')'						{ $$ = TRUE; }
-		;
-#endif
-***********/
-
-from_expr:  '(' join_clause_with_union ')' alias_clause
+		| table_ref UNIONJOIN table_ref
 				{
-					JoinExpr *j = $2;
-					j->alias = $4;
-					$$ = j;
+					/* UNION JOIN is made into 1 token to avoid shift/reduce
+					 * conflict against regular UNION keyword.
+					 */
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = JOIN_UNION;
+					n->isNatural = FALSE;
+					n->larg = $1;
+					n->rarg = $3;
+					n->using = NIL;
+					n->quals = NULL;
+					$$ = n;
 				}
-		| join_clause
-				{	$$ = $1; }
-		;
-
-table_expr:  relation_expr alias_clause
+		| table_ref join_type JOIN table_ref join_qual
 				{
-					$$ = makeNode(RangeVar);
-					$$->relExpr = $1;
-					$$->name = $2;
-
-#ifdef DISABLE_JOIN_SYNTAX
-					if (($2 != NULL) && ($2->attrs != NULL))
-						elog(ERROR, "Column aliases in table expressions not yet supported");
-#endif
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = $2;
+					n->isNatural = FALSE;
+					n->larg = $1;
+					n->rarg = $4;
+					if ($5 != NULL && IsA($5, List))
+						n->using = (List *) $5;	/* USING clause */
+					else
+						n->quals = $5; /* ON clause */
+					$$ = n;
+				}
+		| table_ref JOIN table_ref join_qual
+				{
+					/* letting join_type reduce to empty doesn't work */
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = JOIN_INNER;
+					n->isNatural = FALSE;
+					n->larg = $1;
+					n->rarg = $3;
+					if ($4 != NULL && IsA($4, List))
+						n->using = (List *) $4;	/* USING clause */
+					else
+						n->quals = $4; /* ON clause */
+					$$ = n;
+				}
+		| table_ref NATURAL join_type JOIN table_ref
+				{
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = $3;
+					n->isNatural = TRUE;
+					n->larg = $1;
+					n->rarg = $5;
+					n->using = NIL; /* figure out which columns later... */
+					n->quals = NULL; /* fill later */
+					$$ = n;
+				}
+		| table_ref NATURAL JOIN table_ref
+				{
+					/* letting join_type reduce to empty doesn't work */
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = JOIN_INNER;
+					n->isNatural = TRUE;
+					n->larg = $1;
+					n->rarg = $4;
+					n->using = NIL; /* figure out which columns later... */
+					n->quals = NULL; /* fill later */
+					$$ = n;
 				}
 		;
 
@@ -3824,102 +3907,17 @@ alias_clause:  AS ColId '(' name_list ')'
 					$$ = makeNode(Attr);
 					$$->relname = $1;
 				}
-		| /*EMPTY*/
-				{
-					$$ = NULL;  /* no qualifiers */
-				}
 		;
 
-/* A UNION JOIN is the same as a FULL OUTER JOIN which *omits*
- * all result rows which would have matched on an INNER JOIN.
- * Syntactically, must enclose the UNION JOIN in parens to avoid
- * conflicts with SELECT/UNION.
- */
-join_clause:  join_clause join_expr
-				{
-					$2->larg = (Node *)$1;
-					$$ = $2;
-				}
-		| table_expr join_expr
-				{
-					$2->larg = (Node *)$1;
-					$$ = $2;
-				}
-		;
-
-/* This is everything but the left side of a join.
- * Note that a CROSS JOIN is the same as an unqualified
- * INNER JOIN, and an INNER JOIN/ON has the same shape
- * but a qualification expression to limit membership.
- * A NATURAL JOIN implicitly matches column names between
- * tables and the shape is determined by which columns are
- * in common. We'll collect columns during the later transformations.
- */
-join_expr:  join_type JOIN table_expr join_qual
-				{
-					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = $1;
-					n->rarg = (Node *)$3;
-					n->quals = (List *)$4;
-					$$ = n;
-				}
-		| NATURAL join_type JOIN table_expr
-				{
-					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = $2;
-					n->isNatural = TRUE;
-					n->rarg = (Node *)$4;
-					n->quals = NULL; /* figure out which columns later... */
-					$$ = n;
-				}
-		| CROSS JOIN table_expr
-				{
-					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = INNER_P;
-					n->isNatural = FALSE;
-					n->rarg = (Node *)$3;
-					n->quals = NULL;
-					$$ = n;
-				}
-		;
-
-join_clause_with_union:  join_clause_with_union join_expr_with_union
-				{
-					$2->larg = (Node *)$1;
-					$$ = $2;
-				}
-		| table_expr join_expr_with_union
-				{
-					$2->larg = (Node *)$1;
-					$$ = $2;
-				}
-		;
-
-join_expr_with_union:  join_expr
-				{	$$ = $1; }
-		| UNION JOIN table_expr
-				{
-					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = UNION;
-					n->rarg = (Node *)$3;
-					n->quals = NULL;
-					$$ = n;
-
-					elog(ERROR,"UNION JOIN not yet implemented");
-				}
+join_type:  FULL join_outer						{ $$ = JOIN_FULL; }
+		| LEFT join_outer						{ $$ = JOIN_LEFT; }
+		| RIGHT join_outer						{ $$ = JOIN_RIGHT; }
+		| INNER_P								{ $$ = JOIN_INNER; }
 		;
 
 /* OUTER is just noise... */
-join_type:  FULL join_outer						{ $$ = FULL; }
-		| LEFT join_outer						{ $$ = LEFT; }
-		| RIGHT join_outer						{ $$ = RIGHT; }
-		| OUTER_P								{ $$ = LEFT; }
-		| INNER_P								{ $$ = INNER_P; }
-		| /*EMPTY*/								{ $$ = INNER_P; }
-		;
-
 join_outer:  OUTER_P							{ $$ = NULL; }
-		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
+		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 /* JOIN qualification clauses
@@ -3927,60 +3925,43 @@ join_outer:  OUTER_P							{ $$ = NULL; }
  *  USING ( column list ) allows only unqualified column names,
  *                        which must match between tables.
  *  ON expr allows more general qualifications.
- * - thomas 1999-01-07
+ *
+ * We return USING as a List node, while an ON-expr will not be a List.
  */
 
-join_qual:  USING '(' using_list ')'			{ $$ = (Node *)$3; }
-		| ON a_expr								{ $$ = (Node *)$2; }
+join_qual:  USING '(' name_list ')'				{ $$ = (Node *) $3; }
+		| ON a_expr								{ $$ = $2; }
 		;
 
-using_list:  using_list ',' using_expr			{ $$ = lappend($1, $3); }
-		| using_expr							{ $$ = lcons($1, NIL); }
-		;
-
-using_expr:  ColId
-				{
-					/* could be a column name or a relation_name */
-					Ident *n = makeNode(Ident);
-					n->name = $1;
-					n->indirection = NULL;
-					$$ = n;
-				}
-		;
-
-where_clause:  WHERE a_expr						{ $$ = $2; }
-		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
-		;
 
 relation_expr:	relation_name
 				{
     				/* default inheritance */
-					$$ = makeNode(RelExpr);
+					$$ = makeNode(RangeVar);
 					$$->relname = $1;
 					$$->inh = SQL_inheritance;
+					$$->name = NULL;
 				}
 		| relation_name '*'				%prec '='
 				{
 					/* inheritance query */
-					$$ = makeNode(RelExpr);
+					$$ = makeNode(RangeVar);
 					$$->relname = $1;
 					$$->inh = TRUE;
+					$$->name = NULL;
 				}
 		| ONLY relation_name			%prec '='
 				{
 					/* no inheritance */
-					$$ = makeNode(RelExpr);
+					$$ = makeNode(RangeVar);
 					$$->relname = $2;
 					$$->inh = FALSE;
+					$$->name = NULL;
                 }
 		;
 
-opt_array_bounds:	'[' ']' opt_array_bounds
-				{  $$ = lcons(makeInteger(-1), $3); }
-		| '[' Iconst ']' opt_array_bounds
-				{  $$ = lcons(makeInteger($2), $4); }
-		| /*EMPTY*/
-				{  $$ = NIL; }
+where_clause:  WHERE a_expr						{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
 		;
 
 
@@ -4021,6 +4002,14 @@ Typename:  SimpleTypename opt_array_bounds
 					$$ = $2;
 					$$->setof = TRUE;
 				}
+		;
+
+opt_array_bounds:	'[' ']' opt_array_bounds
+				{  $$ = lcons(makeInteger(-1), $3); }
+		| '[' Iconst ']' opt_array_bounds
+				{  $$ = lcons(makeInteger($2), $4); }
+		| /*EMPTY*/
+				{  $$ = NIL; }
 		;
 
 SimpleTypename:  ConstTypename
@@ -6024,29 +6013,19 @@ xlateSqlType(char *name)
 
 void parser_init(Oid *typev, int nargs)
 {
+	saved_relname[0] = '\0';
 	QueryIsRule = FALSE;
-	saved_relname[0]= '\0';
-
-	param_type_init(typev, nargs);
-}
-
-
-/*
- * param_type_init()
- *
- * Keep enough information around to fill out the type of param nodes
- * used in postquel functions
- */
-static void
-param_type_init(Oid *typev, int nargs)
-{
-	pfunc_num_args = nargs;
+	/*
+	 * Keep enough information around to fill out the type of param nodes
+	 * used in postquel functions
+	 */
 	param_type_info = typev;
+	pfunc_num_args = nargs;
 }
 
 Oid param_type(int t)
 {
-	if ((t > pfunc_num_args) || (t == 0))
+	if ((t > pfunc_num_args) || (t <= 0))
 		return InvalidOid;
 	return param_type_info[t - 1];
 }

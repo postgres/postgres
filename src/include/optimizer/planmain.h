@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.43 2000/07/24 03:10:54 tgl Exp $
+ * $Id: planmain.h,v 1.44 2000/09/12 21:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,7 @@
 /*
  * prototypes for plan/planmain.c
  */
-extern Plan *query_planner(Query *root, List *tlist, List *qual,
-			  double tuple_fraction);
+extern Plan *query_planner(Query *root, List *tlist, double tuple_fraction);
 
 /*
  * prototypes for plan/createplan.c
@@ -40,9 +39,10 @@ extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 /*
  * prototypes for plan/initsplan.c
  */
-extern void make_var_only_tlist(Query *root, List *tlist);
+extern void build_base_rel_tlists(Query *root, List *tlist);
+extern Relids add_join_quals_to_rels(Query *root, Node *jtnode);
 extern void add_restrict_and_join_to_rels(Query *root, List *clauses);
-extern void add_missing_rels_to_query(Query *root);
+extern List *add_missing_rels_to_query(Query *root, Node *jtnode);
 extern void process_implied_equality(Query *root, Node *item1, Node *item2,
 									 Oid sortop1, Oid sortop2);
 
@@ -58,6 +58,7 @@ extern void fix_opids(Node *node);
  * prep/prepkeyset.c
  */
 extern bool _use_keyset_query_optimizer;
+
 extern void transformKeySetQuery(Query *origNode);
 
 #endif	 /* PLANMAIN_H */

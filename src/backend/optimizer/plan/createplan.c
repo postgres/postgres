@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.95 2000/08/13 02:50:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.96 2000/09/12 21:06:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,36 +42,47 @@ static IndexScan *create_indexscan_node(Query *root, IndexPath *best_path,
 static TidScan *create_tidscan_node(TidPath *best_path, List *tlist,
 					List *scan_clauses);
 static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
-					 List *clauses, Plan *outer_node, List *outer_tlist,
-					 Plan *inner_node, List *inner_tlist);
+									  List *joinclauses, List *otherclauses,
+									  Plan *outer_node, List *outer_tlist,
+									  Plan *inner_node, List *inner_tlist);
 static MergeJoin *create_mergejoin_node(MergePath *best_path, List *tlist,
-					  List *clauses, Plan *outer_node, List *outer_tlist,
-					  Plan *inner_node, List *inner_tlist);
+										List *joinclauses, List *otherclauses,
+										Plan *outer_node, List *outer_tlist,
+										Plan *inner_node, List *inner_tlist);
 static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
-					 List *clauses, Plan *outer_node, List *outer_tlist,
-					 Plan *inner_node, List *inner_tlist);
+									  List *joinclauses, List *otherclauses,
+									  Plan *outer_node, List *outer_tlist,
+									  Plan *inner_node, List *inner_tlist);
 static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
 static List *fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 					 Form_pg_index index);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
 					 Form_pg_index index,
 					 Oid *opclass);
+static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual,
 			   List *indxqualorig,
 			   ScanDirection indexscandir);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tideval);
-static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
-			  Plan *righttree);
-static HashJoin *make_hashjoin(List *tlist, List *qpqual,
-			  List *hashclauses, Plan *lefttree, Plan *righttree);
+static NestLoop *make_nestloop(List *tlist,
+							   List *joinclauses, List *otherclauses,
+							   Plan *lefttree, Plan *righttree,
+							   JoinType jointype);
+static HashJoin *make_hashjoin(List *tlist,
+							   List *joinclauses, List *otherclauses,
+							   List *hashclauses,
+							   Plan *lefttree, Plan *righttree,
+							   JoinType jointype);
 static Hash *make_hash(List *tlist, Node *hashkey, Plan *lefttree);
-static MergeJoin *make_mergejoin(List *tlist, List *qpqual,
-			   List *mergeclauses, Plan *righttree, Plan *lefttree);
+static MergeJoin *make_mergejoin(List *tlist,
+								 List *joinclauses, List *otherclauses,
+								 List *mergeclauses,
+								 Plan *lefttree, Plan *righttree,
+								 JoinType jointype);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
-static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 
 /*
  * create_plan
@@ -195,7 +206,8 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 	List	   *outer_tlist;
 	Plan	   *inner_node;
 	List	   *inner_tlist;
-	List	   *clauses;
+	List	   *joinclauses;
+	List	   *otherclauses;
 	Join	   *retval = NULL;
 
 	outer_node = create_plan(root, best_path->outerjoinpath);
@@ -204,14 +216,25 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 	inner_node = create_plan(root, best_path->innerjoinpath);
 	inner_tlist = inner_node->targetlist;
 
-	clauses = get_actual_clauses(best_path->joinrestrictinfo);
+	if (IS_OUTER_JOIN(best_path->jointype))
+	{
+		get_actual_join_clauses(best_path->joinrestrictinfo,
+								&joinclauses, &otherclauses);
+	}
+	else
+	{
+		/* We can treat all clauses alike for an inner join */
+		joinclauses = get_actual_clauses(best_path->joinrestrictinfo);
+		otherclauses = NIL;
+	}
 
 	switch (best_path->path.pathtype)
 	{
 		case T_MergeJoin:
 			retval = (Join *) create_mergejoin_node((MergePath *) best_path,
 													tlist,
-													clauses,
+													joinclauses,
+													otherclauses,
 													outer_node,
 													outer_tlist,
 													inner_node,
@@ -220,7 +243,8 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 		case T_HashJoin:
 			retval = (Join *) create_hashjoin_node((HashPath *) best_path,
 												   tlist,
-												   clauses,
+												   joinclauses,
+												   otherclauses,
 												   outer_node,
 												   outer_tlist,
 												   inner_node,
@@ -229,7 +253,8 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 		case T_NestLoop:
 			retval = (Join *) create_nestloop_node((NestPath *) best_path,
 												   tlist,
-												   clauses,
+												   joinclauses,
+												   otherclauses,
 												   outer_node,
 												   outer_tlist,
 												   inner_node,
@@ -411,30 +436,6 @@ create_indexscan_node(Query *root,
 	return scan_node;
 }
 
-static TidScan *
-make_tidscan(List *qptlist,
-			 List *qpqual,
-			 Index scanrelid,
-			 List *tideval)
-{
-	TidScan    *node = makeNode(TidScan);
-	Plan	   *plan = &node->scan.plan;
-
-	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
-	plan->targetlist = qptlist;
-	plan->qual = qpqual;
-	plan->lefttree = NULL;
-	plan->righttree = NULL;
-	node->scan.scanrelid = scanrelid;
-	node->tideval = copyObject(tideval);		/* XXX do we really need a
-												 * copy? */
-	node->needRescan = false;
-	node->scan.scanstate = (CommonScanState *) NULL;
-
-	return node;
-}
-
 /*
  * create_tidscan_node
  *	 Returns a tidscan node for the base relation scanned by 'best_path'
@@ -488,7 +489,8 @@ create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
 static NestLoop *
 create_nestloop_node(NestPath *best_path,
 					 List *tlist,
-					 List *clauses,
+					 List *joinclauses,
+					 List *otherclauses,
 					 Plan *outer_node,
 					 List *outer_tlist,
 					 Plan *inner_node,
@@ -535,7 +537,8 @@ create_nestloop_node(NestPath *best_path,
 			 * attnos, and may have been commuted as well).
 			 */
 			if (length(indxqualorig) == 1)		/* single indexscan? */
-				clauses = set_difference(clauses, lfirst(indxqualorig));
+				joinclauses = set_difference(joinclauses,
+											 lfirst(indxqualorig));
 
 			/* only refs to outer vars get changed in the inner indexqual */
 			innerscan->indxqualorig = join_references(indxqualorig,
@@ -577,15 +580,26 @@ create_nestloop_node(NestPath *best_path,
 											inner_node);
 	}
 
-	join_node = make_nestloop(tlist,
-							  join_references(clauses,
-											  outer_tlist,
-											  inner_tlist,
-											  (Index) 0),
-							  outer_node,
-							  inner_node);
+	/*
+	 * Set quals to contain INNER/OUTER var references.
+	 */
+	joinclauses = join_references(joinclauses,
+								  outer_tlist,
+								  inner_tlist,
+								  (Index) 0);
+	otherclauses = join_references(otherclauses,
+								   outer_tlist,
+								   inner_tlist,
+								   (Index) 0);
 
-	copy_path_costsize(&join_node->join, &best_path->path);
+	join_node = make_nestloop(tlist,
+							  joinclauses,
+							  otherclauses,
+							  outer_node,
+							  inner_node,
+							  best_path->jointype);
+
+	copy_path_costsize(&join_node->join.plan, &best_path->path);
 
 	return join_node;
 }
@@ -593,14 +607,14 @@ create_nestloop_node(NestPath *best_path,
 static MergeJoin *
 create_mergejoin_node(MergePath *best_path,
 					  List *tlist,
-					  List *clauses,
+					  List *joinclauses,
+					  List *otherclauses,
 					  Plan *outer_node,
 					  List *outer_tlist,
 					  Plan *inner_node,
 					  List *inner_tlist)
 {
-	List	   *qpqual,
-			   *mergeclauses;
+	List	   *mergeclauses;
 	MergeJoin  *join_node;
 
 	mergeclauses = get_actual_clauses(best_path->path_mergeclauses);
@@ -610,10 +624,18 @@ create_mergejoin_node(MergePath *best_path,
 	 * the list of quals that must be checked as qpquals. Set those
 	 * clauses to contain INNER/OUTER var references.
 	 */
-	qpqual = join_references(set_difference(clauses, mergeclauses),
-							 outer_tlist,
-							 inner_tlist,
-							 (Index) 0);
+	joinclauses = join_references(set_difference(joinclauses, mergeclauses),
+								  outer_tlist,
+								  inner_tlist,
+								  (Index) 0);
+
+	/*
+	 * Fix the additional qpquals too.
+	 */
+	otherclauses = join_references(otherclauses,
+								   outer_tlist,
+								   inner_tlist,
+								   (Index) 0);
 
 	/*
 	 * Now set the references in the mergeclauses and rearrange them so
@@ -640,13 +662,54 @@ create_mergejoin_node(MergePath *best_path,
 									inner_node,
 									best_path->innersortkeys);
 
-	join_node = make_mergejoin(tlist,
-							   qpqual,
-							   mergeclauses,
-							   inner_node,
-							   outer_node);
+	/*
+	 * The executor requires the inner side of a mergejoin to support "mark"
+	 * and "restore" operations.  Not all plan types do, so we must be careful
+	 * not to generate an invalid plan.  If necessary, an invalid inner plan
+	 * can be handled by inserting a Materialize node.
+	 *
+	 * Since the inner side must be ordered, and only Sorts and IndexScans can
+	 * create order to begin with, you might think there's no problem --- but
+	 * you'd be wrong.  Nestloop and merge joins can *preserve* the order of
+	 * their inputs, so they can be selected as the input of a mergejoin,
+	 * and that won't work in the present executor.
+	 *
+	 * Doing this here is a bit of a kluge since the cost of the Materialize
+	 * wasn't taken into account in our earlier decisions.  But Materialize
+	 * is hard to estimate a cost for, and the above consideration shows that
+	 * this is a rare case anyway, so this seems an acceptable way to proceed.
+	 *
+	 * This check must agree with ExecMarkPos/ExecRestrPos in
+	 * executor/execAmi.c!
+	 */
+	switch (nodeTag(inner_node))
+	{
+		case T_SeqScan:
+		case T_IndexScan:
+		case T_Material:
+		case T_Sort:
+			/* OK, these inner plans support mark/restore */
+			break;
 
-	copy_path_costsize(&join_node->join, &best_path->jpath.path);
+		default:
+			/* Ooops, need to materialize the inner plan */
+			inner_node = (Plan *) make_material(inner_tlist,
+												inner_node);
+			break;
+	}
+
+	/*
+	 * Now we can build the mergejoin node.
+	 */
+	join_node = make_mergejoin(tlist,
+							   joinclauses,
+							   otherclauses,
+							   mergeclauses,
+							   outer_node,
+							   inner_node,
+							   best_path->jpath.jointype);
+
+	copy_path_costsize(&join_node->join.plan, &best_path->jpath.path);
 
 	return join_node;
 }
@@ -654,13 +717,13 @@ create_mergejoin_node(MergePath *best_path,
 static HashJoin *
 create_hashjoin_node(HashPath *best_path,
 					 List *tlist,
-					 List *clauses,
+					 List *joinclauses,
+					 List *otherclauses,
 					 Plan *outer_node,
 					 List *outer_tlist,
 					 Plan *inner_node,
 					 List *inner_tlist)
 {
-	List	   *qpqual;
 	List	   *hashclauses;
 	HashJoin   *join_node;
 	Hash	   *hash_node;
@@ -679,10 +742,18 @@ create_hashjoin_node(HashPath *best_path,
 	 * the list of quals that must be checked as qpquals. Set those
 	 * clauses to contain INNER/OUTER var references.
 	 */
-	qpqual = join_references(set_difference(clauses, hashclauses),
-							 outer_tlist,
-							 inner_tlist,
-							 (Index) 0);
+	joinclauses = join_references(set_difference(joinclauses, hashclauses),
+								  outer_tlist,
+								  inner_tlist,
+								  (Index) 0);
+
+	/*
+	 * Fix the additional qpquals too.
+	 */
+	otherclauses = join_references(otherclauses,
+								   outer_tlist,
+								   inner_tlist,
+								   (Index) 0);
 
 	/*
 	 * Now set the references in the hashclauses and rearrange them so
@@ -701,12 +772,14 @@ create_hashjoin_node(HashPath *best_path,
 	 */
 	hash_node = make_hash(inner_tlist, innerhashkey, inner_node);
 	join_node = make_hashjoin(tlist,
-							  qpqual,
+							  joinclauses,
+							  otherclauses,
 							  hashclauses,
 							  outer_node,
-							  (Plan *) hash_node);
+							  (Plan *) hash_node,
+							  best_path->jpath.jointype);
 
-	copy_path_costsize(&join_node->join, &best_path->jpath.path);
+	copy_path_costsize(&join_node->join.plan, &best_path->jpath.path);
 
 	return join_node;
 }
@@ -1065,45 +1138,75 @@ make_indexscan(List *qptlist,
 	return node;
 }
 
-
-static NestLoop *
-make_nestloop(List *qptlist,
-			  List *qpqual,
-			  Plan *lefttree,
-			  Plan *righttree)
+static TidScan *
+make_tidscan(List *qptlist,
+			 List *qpqual,
+			 Index scanrelid,
+			 List *tideval)
 {
-	NestLoop   *node = makeNode(NestLoop);
-	Plan	   *plan = &node->join;
+	TidScan    *node = makeNode(TidScan);
+	Plan	   *plan = &node->scan.plan;
 
 	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->tideval = copyObject(tideval);		/* XXX do we really need a
+												 * copy? */
+	node->needRescan = false;
+	node->scan.scanstate = (CommonScanState *) NULL;
+
+	return node;
+}
+
+
+static NestLoop *
+make_nestloop(List *tlist,
+			  List *joinclauses,
+			  List *otherclauses,
+			  Plan *lefttree,
+			  Plan *righttree,
+			  JoinType jointype)
+{
+	NestLoop   *node = makeNode(NestLoop);
+	Plan	   *plan = &node->join.plan;
+
+	/* cost should be inserted by caller */
+	plan->state = (EState *) NULL;
+	plan->targetlist = tlist;
+	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
-	node->nlstate = (NestLoopState *) NULL;
+	node->join.jointype = jointype;
+	node->join.joinqual = joinclauses;
 
 	return node;
 }
 
 static HashJoin *
 make_hashjoin(List *tlist,
-			  List *qpqual,
+			  List *joinclauses,
+			  List *otherclauses,
 			  List *hashclauses,
 			  Plan *lefttree,
-			  Plan *righttree)
+			  Plan *righttree,
+			  JoinType jointype)
 {
 	HashJoin   *node = makeNode(HashJoin);
-	Plan	   *plan = &node->join;
+	Plan	   *plan = &node->join.plan;
 
 	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
-	plan->qual = qpqual;
+	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
 	node->hashclauses = hashclauses;
-	node->hashdone = false;
+	node->join.jointype = jointype;
+	node->join.joinqual = joinclauses;
 
 	return node;
 }
@@ -1133,21 +1236,25 @@ make_hash(List *tlist, Node *hashkey, Plan *lefttree)
 
 static MergeJoin *
 make_mergejoin(List *tlist,
-			   List *qpqual,
+			   List *joinclauses,
+			   List *otherclauses,
 			   List *mergeclauses,
+			   Plan *lefttree,
 			   Plan *righttree,
-			   Plan *lefttree)
+			   JoinType jointype)
 {
 	MergeJoin  *node = makeNode(MergeJoin);
-	Plan	   *plan = &node->join;
+	Plan	   *plan = &node->join.plan;
 
 	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
-	plan->qual = qpqual;
+	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
 	node->mergeclauses = mergeclauses;
+	node->join.jointype = jointype;
+	node->join.joinqual = joinclauses;
 
 	return node;
 }

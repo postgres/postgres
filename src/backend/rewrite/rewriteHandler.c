@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.79 2000/09/06 14:15:20 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.80 2000/09/12 21:07:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,12 +51,11 @@ static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 				  Node *rule_qual,
 				  int rt_index,
 				  CmdType event,
-				  bool *instead_flag);
-static bool rangeTableEntry_used(Node *node, int rt_index, int sublevels_up);
-static bool attribute_used(Node *node, int rt_index, int attno,
-			   int sublevels_up);
-static bool modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
-						   int sublevels_up, int new_sublevels_up);
+				  bool instead_flag);
+static List *adjustJoinTree(Query *parsetree, int rt_index, bool *found);
+static bool modifyAggrefChangeVarnodes(Query *query,
+									   int rt_index, int new_index,
+									   int sublevels_up, int new_sublevels_up);
 static Node *modifyAggrefDropQual(Node *node, Node *targetNode);
 static SubLink *modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree);
 static Node *modifyAggrefQual(Node *node, Query *parsetree);
@@ -80,16 +79,15 @@ gatherRewriteMeta(Query *parsetree,
 				  Node *rule_qual,
 				  int rt_index,
 				  CmdType event,
-				  bool *instead_flag)
+				  bool instead_flag)
 {
 	RewriteInfo *info;
 	int			rt_length;
-	int			result_reln;
 
 	info = (RewriteInfo *) palloc(sizeof(RewriteInfo));
 	info->rt_index = rt_index;
 	info->event = event;
-	info->instead_flag = *instead_flag;
+	info->instead_flag = instead_flag;
 	info->rule_action = (Query *) copyObject(rule_action);
 	info->rule_qual = (Node *) copyObject(rule_qual);
 	if (info->rule_action == NULL)
@@ -99,20 +97,53 @@ gatherRewriteMeta(Query *parsetree,
 		info->nothing = FALSE;
 		info->action = info->rule_action->commandType;
 		info->current_varno = rt_index;
-		info->rt = parsetree->rtable;
-		rt_length = length(info->rt);
-		info->rt = nconc(info->rt, copyObject(info->rule_action->rtable));
+		rt_length = length(parsetree->rtable);
 
+		/* Adjust rule action and qual to offset its varnos */
 		info->new_varno = PRS2_NEW_VARNO + rt_length;
-		OffsetVarNodes(info->rule_action->qual, rt_length, 0);
-		OffsetVarNodes((Node *) info->rule_action->targetList, rt_length, 0);
+		OffsetVarNodes((Node *) info->rule_action, rt_length, 0);
 		OffsetVarNodes(info->rule_qual, rt_length, 0);
-		ChangeVarNodes((Node *) info->rule_action->qual,
-					   PRS2_OLD_VARNO + rt_length, rt_index, 0);
-		ChangeVarNodes((Node *) info->rule_action->targetList,
+		/* but its references to *OLD* should point at original rt_index */
+		ChangeVarNodes((Node *) info->rule_action,
 					   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 		ChangeVarNodes(info->rule_qual,
 					   PRS2_OLD_VARNO + rt_length, rt_index, 0);
+
+		/*
+		 * We want the main parsetree's rtable to end up as the concatenation
+		 * of its original contents plus those of all the relevant rule
+		 * actions.  Also store same into all the rule_action rtables.
+		 * Some of the entries may be unused after we finish rewriting, but
+		 * if we tried to clean those out we'd have a much harder job to
+		 * adjust RT indexes in the query's Vars.  It's OK to have unused
+		 * RT entries, since planner will ignore them.
+		 *
+		 * NOTE KLUGY HACK: we assume the parsetree rtable had at least one
+		 * entry to begin with (OK enough, else where'd the rule come from?).
+		 * Because of this, if multiple rules nconc() their rtable additions
+		 * onto parsetree->rtable, they'll all see the same rtable because
+		 * they all have the same list head pointer.
+		 */
+		parsetree->rtable = nconc(parsetree->rtable,
+								  info->rule_action->rtable);
+		info->rule_action->rtable = parsetree->rtable;
+
+		/*
+		 * Each rule action's jointree should be the main parsetree's jointree
+		 * plus that rule's jointree, but *without* the original rtindex
+		 * that we're replacing (if present, which it won't be for INSERT).
+		 * Note that if the rule refers to OLD, its jointree will add back
+		 * a reference to rt_index.
+		 *
+		 * XXX This might be wrong for subselect-in-FROM?
+		 */
+		{
+			bool	found;
+			List   *newjointree = adjustJoinTree(parsetree, rt_index, &found);
+
+			info->rule_action->jointree = nconc(newjointree,
+												info->rule_action->jointree);
+		}
 
 		/*
 		 * bug here about replace CURRENT  -- sort of replace current is
@@ -121,7 +152,8 @@ gatherRewriteMeta(Query *parsetree,
 		 */
 		if (info->action != CMD_SELECT)
 		{						/* i.e update XXXXX */
-			int			new_result_reln = 0;
+			int			result_reln;
+			int			new_result_reln;
 
 			result_reln = info->rule_action->resultRelation;
 			switch (result_reln)
@@ -140,152 +172,31 @@ gatherRewriteMeta(Query *parsetree,
 	return info;
 }
 
-
 /*
- * rangeTableEntry_used -
- *	we need to process a RTE for RIR rules only if it is
- *	referenced somewhere in var nodes of the query.
+ * Copy the query's jointree list, and attempt to remove any occurrence
+ * of the given rt_index as a top-level join item (we do not look for it
+ * within JoinExprs).  Returns modified jointree list --- original list
+ * is not changed.  *found is set to indicate if we found the rt_index.
  */
-
-typedef struct
+static List *
+adjustJoinTree(Query *parsetree, int rt_index, bool *found)
 {
-	int			rt_index;
-	int			sublevels_up;
-} rangeTableEntry_used_context;
+	List	   *newjointree = listCopy(parsetree->jointree);
+	List	   *jjt;
 
-static bool
-rangeTableEntry_used_walker(Node *node,
-							rangeTableEntry_used_context *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
+	*found = false;
+	foreach(jjt, newjointree)
 	{
-		Var		   *var = (Var *) node;
+		RangeTblRef *rtr = lfirst(jjt);
 
-		if (var->varlevelsup == context->sublevels_up &&
-			var->varno == context->rt_index)
-			return true;
-		return false;
+		if (IsA(rtr, RangeTblRef) && rtr->rtindex == rt_index)
+		{
+			newjointree = lremove(rtr, newjointree);
+			*found = true;
+			break;
+		}
 	}
-	if (IsA(node, SubLink))
-	{
-
-		/*
-		 * Standard expression_tree_walker will not recurse into
-		 * subselect, but here we must do so.
-		 */
-		SubLink    *sub = (SubLink *) node;
-
-		if (rangeTableEntry_used_walker((Node *) (sub->lefthand), context))
-			return true;
-		if (rangeTableEntry_used((Node *) (sub->subselect),
-								 context->rt_index,
-								 context->sublevels_up + 1))
-			return true;
-		return false;
-	}
-	if (IsA(node, Query))
-	{
-		/* Reach here after recursing down into subselect above... */
-		Query	   *qry = (Query *) node;
-
-		if (rangeTableEntry_used_walker((Node *) (qry->targetList), context))
-			return true;
-		if (rangeTableEntry_used_walker((Node *) (qry->qual), context))
-			return true;
-		if (rangeTableEntry_used_walker((Node *) (qry->havingQual), context))
-			return true;
-		return false;
-	}
-	return expression_tree_walker(node, rangeTableEntry_used_walker,
-								  (void *) context);
-}
-
-static bool
-rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
-{
-	rangeTableEntry_used_context context;
-
-	context.rt_index = rt_index;
-	context.sublevels_up = sublevels_up;
-	return rangeTableEntry_used_walker(node, &context);
-}
-
-
-/*
- * attribute_used -
- *	Check if a specific attribute number of a RTE is used
- *	somewhere in the query
- */
-
-typedef struct
-{
-	int			rt_index;
-	int			attno;
-	int			sublevels_up;
-} attribute_used_context;
-
-static bool
-attribute_used_walker(Node *node,
-					  attribute_used_context *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varlevelsup == context->sublevels_up &&
-			var->varno == context->rt_index &&
-			var->varattno == context->attno)
-			return true;
-		return false;
-	}
-	if (IsA(node, SubLink))
-	{
-
-		/*
-		 * Standard expression_tree_walker will not recurse into
-		 * subselect, but here we must do so.
-		 */
-		SubLink    *sub = (SubLink *) node;
-
-		if (attribute_used_walker((Node *) (sub->lefthand), context))
-			return true;
-		if (attribute_used((Node *) (sub->subselect),
-						   context->rt_index,
-						   context->attno,
-						   context->sublevels_up + 1))
-			return true;
-		return false;
-	}
-	if (IsA(node, Query))
-	{
-		/* Reach here after recursing down into subselect above... */
-		Query	   *qry = (Query *) node;
-
-		if (attribute_used_walker((Node *) (qry->targetList), context))
-			return true;
-		if (attribute_used_walker((Node *) (qry->qual), context))
-			return true;
-		if (attribute_used_walker((Node *) (qry->havingQual), context))
-			return true;
-		return false;
-	}
-	return expression_tree_walker(node, attribute_used_walker,
-								  (void *) context);
-}
-
-static bool
-attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
-{
-	attribute_used_context context;
-
-	context.rt_index = rt_index;
-	context.attno = attno;
-	context.sublevels_up = sublevels_up;
-	return attribute_used_walker(node, &context);
+	return newjointree;
 }
 
 
@@ -330,48 +241,26 @@ modifyAggrefChangeVarnodes_walker(Node *node,
 		}
 		return false;
 	}
-	if (IsA(node, SubLink))
-	{
-
-		/*
-		 * Standard expression_tree_walker will not recurse into
-		 * subselect, but here we must do so.
-		 */
-		SubLink    *sub = (SubLink *) node;
-
-		if (modifyAggrefChangeVarnodes_walker((Node *) (sub->lefthand),
-											  context))
-			return true;
-		if (modifyAggrefChangeVarnodes((Node *) (sub->subselect),
-									   context->rt_index,
-									   context->new_index,
-									   context->sublevels_up + 1,
-									   context->new_sublevels_up + 1))
-			return true;
-		return false;
-	}
 	if (IsA(node, Query))
 	{
-		/* Reach here after recursing down into subselect above... */
-		Query	   *qry = (Query *) node;
+		/* Recurse into subselects */
+		bool		result;
 
-		if (modifyAggrefChangeVarnodes_walker((Node *) (qry->targetList),
-											  context))
-			return true;
-		if (modifyAggrefChangeVarnodes_walker((Node *) (qry->qual),
-											  context))
-			return true;
-		if (modifyAggrefChangeVarnodes_walker((Node *) (qry->havingQual),
-											  context))
-			return true;
-		return false;
+		context->sublevels_up++;
+		context->new_sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   modifyAggrefChangeVarnodes_walker,
+								   (void *) context);
+		context->sublevels_up--;
+		context->new_sublevels_up--;
+		return result;
 	}
 	return expression_tree_walker(node, modifyAggrefChangeVarnodes_walker,
 								  (void *) context);
 }
 
 static bool
-modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
+modifyAggrefChangeVarnodes(Query *query, int rt_index, int new_index,
 						   int sublevels_up, int new_sublevels_up)
 {
 	modifyAggrefChangeVarnodes_context context;
@@ -380,7 +269,8 @@ modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
 	context.new_index = new_index;
 	context.sublevels_up = sublevels_up;
 	context.new_sublevels_up = new_sublevels_up;
-	return modifyAggrefChangeVarnodes_walker(node, &context);
+	return query_tree_walker(query, modifyAggrefChangeVarnodes_walker,
+							 (void *) &context);
 }
 
 
@@ -453,6 +343,7 @@ modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 	SubLink    *sublink;
 	TargetEntry *tle;
 	Resdom	   *resdom;
+	RangeTblRef *rtr;
 
 	aggVarNos = pull_varnos(aggref->target);
 	if (length(aggVarNos) != 1)
@@ -492,6 +383,9 @@ modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 	subquery->distinctClause = NIL;
 	subquery->sortClause = NIL;
 	subquery->rtable = lcons(copyObject(rte), NIL);
+	rtr = makeNode(RangeTblRef);
+	rtr->rtindex = 1;
+	subquery->jointree = lcons(rtr, NIL);
 	subquery->targetList = lcons(tle, NIL);
 	subquery->qual = modifyAggrefDropQual((Node *) parsetree->qual,
 										  (Node *) aggref);
@@ -517,7 +411,7 @@ modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 	 * Note that because of previous line, these references have
 	 * varlevelsup = 1, which must be changed to 0.
 	 */
-	modifyAggrefChangeVarnodes((Node *) subquery,
+	modifyAggrefChangeVarnodes(subquery,
 							   lfirsti(aggVarNos), 1,
 							   1, 0);
 
@@ -675,6 +569,8 @@ apply_RIR_view_mutator(Node *node,
 			   apply_RIR_view_mutator, context);
 		MUTATE(newnode->havingQual, query->havingQual, Node *,
 			   apply_RIR_view_mutator, context);
+		MUTATE(newnode->jointree, query->jointree, List *,
+			   apply_RIR_view_mutator, context);
 		return (Node *) newnode;
 	}
 	return expression_tree_mutator(node, apply_RIR_view_mutator,
@@ -703,7 +599,7 @@ ApplyRetrieveRule(Query *parsetree,
 				  int rt_index,
 				  int relation_level,
 				  Relation relation,
-				  bool relWasInJoinSet)
+				  bool relIsUsed)
 {
 	Query	   *rule_action = NULL;
 	Node	   *rule_qual;
@@ -735,17 +631,34 @@ ApplyRetrieveRule(Query *parsetree,
 	addedrtable = copyObject(rule_action->rtable);
 
 	/*
-	 * If the original rel wasn't in the join set, none of its spawn is.
-	 * If it was, then leave the spawn's flags as they are.
+	 * If the original rel wasn't in the join set (which'd be the case
+	 * for the target of an INSERT, for example), none of its spawn is.
+	 * If it was, then the spawn has to be added to the join set.
 	 */
-	if (!relWasInJoinSet)
+	if (relIsUsed)
 	{
-		foreach(l, addedrtable)
-		{
-			RangeTblEntry *rte = lfirst(l);
+		/*
+		 * QUICK HACK: this all needs to be replaced, but for now, find
+		 * the original rel in the jointree, remove it, and add the rule
+		 * action's jointree.  This will not work for views referenced
+		 * in JoinExprs!!
+		 *
+		 * Note: it is possible that the old rel is referenced in the query
+		 * but isn't present in the jointree; this should only happen for
+		 * *OLD* and *NEW*.  We must not fail if so, but add the rule's
+		 * jointree anyway.  (This is a major crock ... should fix rule
+		 * representation ...)
+		 */
+		bool	found;
+		List   *newjointree = adjustJoinTree(parsetree, rt_index, &found);
+		List   *addedjointree = (List *) copyObject(rule_action->jointree);
 
-			rte->inJoinSet = false;
-		}
+		if (!found)
+			elog(DEBUG, "ApplyRetrieveRule: can't find old rel %s (%d) in jointree",
+				 rt_fetch(rt_index, rtable)->eref->relname, rt_index);
+		OffsetVarNodes((Node *) addedjointree, rt_length, 0);
+		newjointree = nconc(newjointree, addedjointree);
+		parsetree->jointree = newjointree;
 	}
 
 	rtable = nconc(rtable, addedrtable);
@@ -845,6 +758,10 @@ ApplyRetrieveRule(Query *parsetree,
  * NOTE: although this has the form of a walker, we cheat and modify the
  * SubLink nodes in-place.	It is caller's responsibility to ensure that
  * no unwanted side-effects occur!
+ *
+ * This is unlike most of the other routines that recurse into subselects,
+ * because we must take control at the SubLink node in order to replace
+ * the SubLink's subselect link with the possibly-rewritten subquery.
  */
 static bool
 fireRIRonSubselect(Node *node, void *context)
@@ -854,30 +771,15 @@ fireRIRonSubselect(Node *node, void *context)
 	if (IsA(node, SubLink))
 	{
 		SubLink    *sub = (SubLink *) node;
-		Query	   *qry;
 
-		/* Process lefthand args */
-		if (fireRIRonSubselect((Node *) (sub->lefthand), context))
-			return true;
 		/* Do what we came for */
-		qry = fireRIRrules((Query *) (sub->subselect));
-		sub->subselect = (Node *) qry;
-		/* Need not recurse into subselect, because fireRIRrules did it */
-		return false;
+		sub->subselect = (Node *) fireRIRrules((Query *) (sub->subselect));
+		/* Fall through to process lefthand args of SubLink */
 	}
-	if (IsA(node, Query))
-	{
-		/* Reach here when called from fireRIRrules */
-		Query	   *qry = (Query *) node;
-
-		if (fireRIRonSubselect((Node *) (qry->targetList), context))
-			return true;
-		if (fireRIRonSubselect((Node *) (qry->qual), context))
-			return true;
-		if (fireRIRonSubselect((Node *) (qry->havingQual), context))
-			return true;
-		return false;
-	}
+	/*
+	 * Do NOT recurse into Query nodes, because fireRIRrules already
+	 * processed subselects for us.
+	 */
 	return expression_tree_walker(node, fireRIRonSubselect,
 								  (void *) context);
 }
@@ -897,7 +799,7 @@ fireRIRrules(Query *parsetree)
 	RuleLock   *rules;
 	RewriteRule *rule;
 	RewriteRule RIRonly;
-	bool		relWasInJoinSet;
+	bool		relIsUsed;
 	int			i;
 	List	   *l;
 
@@ -916,11 +818,12 @@ fireRIRrules(Query *parsetree)
 		 * If the table is not referenced in the query, then we ignore it.
 		 * This prevents infinite expansion loop due to new rtable entries
 		 * inserted by expansion of a rule. A table is referenced if it is
-		 * part of the join set (a source table), or is the result table,
-		 * or is referenced by any Var nodes.
+		 * part of the join set (a source table), or is referenced by any
+		 * Var nodes, or is the result table.
 		 */
-		if (!rte->inJoinSet && rt_index != parsetree->resultRelation &&
-			!rangeTableEntry_used((Node *) parsetree, rt_index, 0))
+		relIsUsed = rangeTableEntry_used((Node *) parsetree, rt_index, 0);
+
+		if (!relIsUsed && rt_index != parsetree->resultRelation)
 			continue;
 
 		rel = heap_openr(rte->relname, AccessShareLock);
@@ -930,9 +833,6 @@ fireRIRrules(Query *parsetree)
 			heap_close(rel, AccessShareLock);
 			continue;
 		}
-
-		relWasInJoinSet = rte->inJoinSet;		/* save before possibly
-												 * clearing */
 
 		/*
 		 * Collect the RIR rules that we must apply
@@ -947,21 +847,9 @@ fireRIRrules(Query *parsetree)
 			if (rule->attrno > 0)
 			{
 				/* per-attr rule; do we need it? */
-				if (!attribute_used((Node *) parsetree,
-									rt_index,
+				if (!attribute_used((Node *) parsetree, rt_index,
 									rule->attrno, 0))
 					continue;
-			}
-			else
-			{
-
-				/*
-				 * Rel-wide ON SELECT DO INSTEAD means this is a view.
-				 * Remove the view from the planner's join target set, or
-				 * we'll get no rows out because view itself is empty!
-				 */
-				if (rule->isInstead)
-					rte->inJoinSet = false;
 			}
 
 			locks = lappend(locks, rule);
@@ -989,7 +877,7 @@ fireRIRrules(Query *parsetree)
 										  rt_index,
 										  RIRonly.attrno == -1,
 										  rel,
-										  relWasInJoinSet);
+										  relIsUsed);
 		}
 
 		heap_close(rel, AccessShareLock);
@@ -999,7 +887,7 @@ fireRIRrules(Query *parsetree)
 		parsetree->qual = modifyAggrefQual(parsetree->qual, parsetree);
 
 	if (parsetree->hasSubLinks)
-		fireRIRonSubselect((Node *) parsetree, NULL);
+		query_tree_walker(parsetree, fireRIRonSubselect, NULL);
 
 	return parsetree;
 }
@@ -1056,13 +944,20 @@ CopyAndAddQual(Query *parsetree,
 	{
 		List	   *rtable;
 		int			rt_length;
+		List	   *jointree;
 
 		rtable = new_tree->rtable;
 		rt_length = length(rtable);
 		rtable = nconc(rtable, copyObject(rule_action->rtable));
+		/* XXX above possibly wrong for subselect-in-FROM */
 		new_tree->rtable = rtable;
 		OffsetVarNodes(new_qual, rt_length, 0);
 		ChangeVarNodes(new_qual, PRS2_OLD_VARNO + rt_length, rt_index, 0);
+		jointree = copyObject(rule_action->jointree);
+		OffsetVarNodes((Node *) jointree, rt_length, 0);
+		ChangeVarNodes((Node *) jointree, PRS2_OLD_VARNO + rt_length,
+					   rt_index, 0);
+		new_tree->jointree = nconc(new_tree->jointree, jointree);
 	}
 	/* XXX -- where current doesn't work for instead nothing.... yet */
 	AddNotQual(new_tree, new_qual);
@@ -1103,8 +998,7 @@ fireRules(Query *parsetree,
 	foreach(i, locks)
 	{
 		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
-		Node	   *qual,
-				   *event_qual;
+		Node	   *event_qual;
 		List	   *actions;
 		List	   *r;
 
@@ -1227,7 +1121,7 @@ fireRules(Query *parsetree,
 			 *--------------------------------------------------
 			 */
 			info = gatherRewriteMeta(parsetree, rule_action, rule_qual,
-									 rt_index, event, instead_flag);
+									 rt_index, event, *instead_flag);
 
 			/* handle escapable cases, or those handled by other code */
 			if (info->nothing)
@@ -1247,11 +1141,9 @@ fireRules(Query *parsetree,
 			 * splitting into two queries one w/rule_qual, one w/NOT
 			 * rule_qual. Also add user query qual onto rule action
 			 */
-			qual = parsetree->qual;
-			AddQual(info->rule_action, qual);
+			AddQual(info->rule_action, parsetree->qual);
 
-			if (info->rule_qual != NULL)
-				AddQual(info->rule_action, info->rule_qual);
+			AddQual(info->rule_action, info->rule_qual);
 
 			/*--------------------------------------------------
 			 * Step 2:
@@ -1264,18 +1156,6 @@ fireRules(Query *parsetree,
 
 			/*--------------------------------------------------
 			 * Step 3:
-			 *	  rewriting due to retrieve rules
-			 *--------------------------------------------------
-			 */
-			info->rule_action->rtable = info->rt;
-
-			/*
-			 * ProcessRetrieveQuery(info->rule_action, info->rt,
-			 * &orig_instead_flag, TRUE);
-			 */
-
-			/*--------------------------------------------------
-			 * Step 4
 			 *	  Simplify? hey, no algorithm for simplification... let
 			 *	  the planner do it.
 			 *--------------------------------------------------
@@ -1403,7 +1283,7 @@ deepRewriteQuery(Query *parsetree)
 		rewritten = nconc(rewritten, qual_products);
 
 	/* ----------
-	 * The original query is appended last if not instead
+	 * The original query is appended last (if no "instead" rule)
 	 * because update and delete rule actions might not do
 	 * anything if they are invoked after the update or
 	 * delete is performed. The command counter increment
@@ -1471,17 +1351,15 @@ BasicQueryRewrite(Query *parsetree)
 		 */
 		if (query->hasAggs)
 		{
-			query->hasAggs =
-				checkExprHasAggs((Node *) (query->targetList)) ||
-				checkExprHasAggs((Node *) (query->havingQual));
-			if (checkExprHasAggs((Node *) (query->qual)))
-				elog(ERROR, "BasicQueryRewrite: failed to remove aggs from qual");
+			query->hasAggs = checkExprHasAggs((Node *) query);
+			if (query->hasAggs)
+				if (checkExprHasAggs(query->qual))
+					elog(ERROR, "BasicQueryRewrite: failed to remove aggs from qual");
 		}
 		if (query->hasSubLinks)
-			query->hasSubLinks =
-				checkExprHasSubLink((Node *) (query->targetList)) ||
-				checkExprHasSubLink((Node *) (query->qual)) ||
-				checkExprHasSubLink((Node *) (query->havingQual));
+		{
+			query->hasSubLinks = checkExprHasSubLink((Node *) query);
+		}
 		results = lappend(results, query);
 	}
 

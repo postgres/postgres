@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.48 2000/08/24 03:29:13 tgl Exp $
+ * $Id: execnodes.h,v 1.49 2000/09/12 21:07:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -469,11 +469,18 @@ typedef CommonState JoinState;
 
 /* ----------------
  *	 NestLoopState information
+ *
+ *		NeedNewOuter       true if need new outer tuple on next call
+ *		MatchedOuter       true if found a join match for current outer tuple
+ *		NullInnerTupleSlot prepared null tuple for left outer joins
  * ----------------
  */
 typedef struct NestLoopState
 {
 	JoinState	jstate;			/* its first field is NodeTag */
+	bool		nl_NeedNewOuter;
+	bool		nl_MatchedOuter;
+	TupleTableSlot *nl_NullInnerTupleSlot;
 } NestLoopState;
 
 /* ----------------
@@ -482,7 +489,13 @@ typedef struct NestLoopState
  *		OuterSkipQual	   outerKey1 < innerKey1 ...
  *		InnerSkipQual	   outerKey1 > innerKey1 ...
  *		JoinState		   current "state" of join. see executor.h
+ *		MatchedOuter       true if found a join match for current outer tuple
+ *		MatchedInner       true if found a join match for current inner tuple
+ *		OuterTupleSlot     pointer to slot in tuple table for cur outer tuple
+ *		InnerTupleSlot     pointer to slot in tuple table for cur inner tuple
  *		MarkedTupleSlot    pointer to slot in tuple table for marked tuple
+ *		NullOuterTupleSlot prepared null tuple for right outer joins
+ *		NullInnerTupleSlot prepared null tuple for left outer joins
  * ----------------
  */
 typedef struct MergeJoinState
@@ -491,7 +504,13 @@ typedef struct MergeJoinState
 	List	   *mj_OuterSkipQual;
 	List	   *mj_InnerSkipQual;
 	int			mj_JoinState;
+	bool		mj_MatchedOuter;
+	bool		mj_MatchedInner;
+	TupleTableSlot *mj_OuterTupleSlot;
+	TupleTableSlot *mj_InnerTupleSlot;
 	TupleTableSlot *mj_MarkedTupleSlot;
+	TupleTableSlot *mj_NullOuterTupleSlot;
+	TupleTableSlot *mj_NullInnerTupleSlot;
 } MergeJoinState;
 
 /* ----------------
@@ -506,6 +525,10 @@ typedef struct MergeJoinState
  *		hj_InnerHashKey			the inner hash key in the hashjoin condition
  *		hj_OuterTupleSlot		tuple slot for outer tuples
  *		hj_HashTupleSlot		tuple slot for hashed tuples
+ *		hj_NullInnerTupleSlot   prepared null tuple for left outer joins
+ *		hj_NeedNewOuter         true if need new outer tuple on next call
+ *		hj_MatchedOuter         true if found a join match for current outer
+ *		hj_hashdone				true if hash-table-build phase is done
  * ----------------
  */
 typedef struct HashJoinState
@@ -517,6 +540,10 @@ typedef struct HashJoinState
 	Node	   *hj_InnerHashKey;
 	TupleTableSlot *hj_OuterTupleSlot;
 	TupleTableSlot *hj_HashTupleSlot;
+	TupleTableSlot *hj_NullInnerTupleSlot;
+	bool		hj_NeedNewOuter;
+	bool		hj_MatchedOuter;
+	bool		hj_hashdone;
 } HashJoinState;
 
 

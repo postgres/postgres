@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.12 2000/01/26 05:58:30 momjian Exp $
+ * $Id: rewriteHandler.h,v 1.13 2000/09/12 21:07:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +16,8 @@
 
 #include "nodes/parsenodes.h"
 
-struct _rewrite_meta_knowledge
+typedef struct RewriteInfo
 {
-	List	   *rt;
 	int			rt_index;
 	bool		instead_flag;
 	int			event;
@@ -28,9 +27,7 @@ struct _rewrite_meta_knowledge
 	Query	   *rule_action;
 	Node	   *rule_qual;
 	bool		nothing;
-};
-
-typedef struct _rewrite_meta_knowledge RewriteInfo;
+} RewriteInfo;
 
 
 extern List *QueryRewrite(Query *parsetree);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.27 2000/06/18 22:44:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.28 2000/09/12 21:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,7 @@ get_base_rel(Query *root, int relid)
 	rel->tuples = 0;
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost = 0;
+	rel->outerjoinset = NIL;
 	rel->joininfo = NIL;
 	rel->innerjoin = NIL;
 
@@ -178,6 +179,7 @@ get_join_rel(Query *root,
 	joinrel->tuples = 0;
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost = 0;
+	joinrel->outerjoinset = NIL;
 	joinrel->joininfo = NIL;
 	joinrel->innerjoin = NIL;
 
@@ -216,8 +218,7 @@ get_join_rel(Query *root,
 							   restrictlist);
 
 	/*
-	 * Add the joinrel to the front of the query's joinrel list.
-	 * (allpaths.c depends on this ordering!)
+	 * Add the joinrel to the query's joinrel list.
 	 */
 	root->join_rel_list = lcons(joinrel, root->join_rel_list);
 

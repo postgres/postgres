@@ -35,10 +35,10 @@ RelOptInfo.pathlist.  (Actually, we discard Paths that are obviously
 inferior alternatives before they ever get into the pathlist --- what
 ends up in the pathlist is the cheapest way of generating each potentially
 useful sort ordering of the relation.)  Also create RelOptInfo.joininfo
-nodes that list all the joins that involve this relation.  For example,
-the WHERE clause "tab1.col1 = tab2.col1" generates a JoinInfo for tab1
-listing tab2 as an unjoined relation, and also one for tab2 showing tab1
-as an unjoined relation.
+nodes that list all the join clauses that involve this relation.  For
+example, the WHERE clause "tab1.col1 = tab2.col1" generates a JoinInfo
+for tab1 listing tab2 as an unjoined relation, and also one for tab2
+showing tab1 as an unjoined relation.
 
 If we have only a single base relation in the query, we are done now.
 Otherwise we have to figure out how to join the base relations into a
@@ -128,6 +128,19 @@ Once we have built the final join rel, we use either the cheapest path
 for it or the cheapest path with the desired ordering (if that's cheaper
 than applying a sort to the cheapest other path).
 
+The above dynamic-programming search is only conducted for simple cross
+joins (ie, SELECT FROM tab1, tab2, ...).  When the FROM clause contains
+explicit JOIN clauses, we join rels in exactly the order implied by the
+join tree.  Searching for the best possible join order is done only at
+the top implicit-cross-join level.  For example, in
+	SELECT FROM tab1, tab2, (tab3 NATURAL JOIN tab4)
+we will always join tab3 to tab4 and then consider all ways to join that
+result to tab1 and tab2.  Note that the JOIN syntax only constrains the
+order of joining --- we will still consider all available Paths and
+join methods for each JOIN operator.  We also consider both sides of
+the JOIN operator as inner or outer (so that we can transform RIGHT JOIN
+into LEFT JOIN).
+
 
 Optimizer Functions
 -------------------
@@ -158,13 +171,12 @@ planner()
    get a target list that only contains column names, no expressions
    if none, then return
 ---subplanner()
-    make list of relations in target
-    make list of relations in where clause
+    make list of base relations used in query
     split up the qual into restrictions (a=1) and joins (b=c)
-    find relation clauses can do merge sort and hash joins
+    find relation clauses that can do merge sort and hash joins
 ----make_one_rel()
      set_base_rel_pathlist()
-      find scan and all index paths for each relation
+      find scan and all index paths for each base relation
       find selectivity of columns used in joins
 -----make_one_rel_by_joins()
       jump to geqo if needed

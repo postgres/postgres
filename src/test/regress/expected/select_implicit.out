@@ -120,7 +120,7 @@ ERROR:  GROUP BY position 3 is not in target list
 SELECT count(*) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY b ORDER BY b;
-ERROR:  Column 'b' is ambiguous
+ERROR:  Column reference "b" is ambiguous
 --   order w/ target under ambiguous condition
 --   failure NOT expected
 SELECT a, a FROM test_missing_target
@@ -282,7 +282,7 @@ SELECT count(b) FROM test_missing_target
 SELECT count(x.a) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY b/2 ORDER BY b/2;
-ERROR:  Column 'b' is ambiguous
+ERROR:  Column reference "b" is ambiguous
 --   group w/ existing GROUP BY target under ambiguous condition
 SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
@@ -299,7 +299,7 @@ SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y
 SELECT count(b) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY x.b/2;
-ERROR:  Column 'b' is ambiguous
+ERROR:  Column reference "b" is ambiguous
 --   group w/o existing GROUP BY target under ambiguous condition
 --   into a table
 SELECT count(x.b) INTO TABLE test_missing_target3 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.27 2000/04/12 17:16:42 momjian Exp $
+ * $Id: pathnode.h,v 1.28 2000/09/12 21:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,26 +34,29 @@ extern IndexPath *create_index_path(Query *root, RelOptInfo *rel,
 extern TidPath *create_tidscan_path(RelOptInfo *rel, List *tideval);
 
 extern NestPath *create_nestloop_path(RelOptInfo *joinrel,
-					 Path *outer_path,
-					 Path *inner_path,
-					 List *restrict_clauses,
-					 List *pathkeys);
+									  JoinType jointype,
+									  Path *outer_path,
+									  Path *inner_path,
+									  List *restrict_clauses,
+									  List *pathkeys);
 
 extern MergePath *create_mergejoin_path(RelOptInfo *joinrel,
-					  Path *outer_path,
-					  Path *inner_path,
-					  List *restrict_clauses,
-					  List *pathkeys,
-					  List *mergeclauses,
-					  List *outersortkeys,
-					  List *innersortkeys);
+										JoinType jointype,
+										Path *outer_path,
+										Path *inner_path,
+										List *restrict_clauses,
+										List *pathkeys,
+										List *mergeclauses,
+										List *outersortkeys,
+										List *innersortkeys);
 
 extern HashPath *create_hashjoin_path(RelOptInfo *joinrel,
-					 Path *outer_path,
-					 Path *inner_path,
-					 List *restrict_clauses,
-					 List *hashclauses,
-					 Selectivity innerdisbursion);
+									  JoinType jointype,
+									  Path *outer_path,
+									  Path *inner_path,
+									  List *restrict_clauses,
+									  List *hashclauses,
+									  Selectivity innerdisbursion);
 
 /*
  * prototypes for relnode.c

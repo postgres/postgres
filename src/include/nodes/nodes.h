@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.75 2000/08/24 03:29:13 tgl Exp $
+ * $Id: nodes.h,v 1.76 2000/09/12 21:07:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,8 @@ typedef enum NodeTag
 	T_ArrayRef,
 	T_Iter,
 	T_RelabelType,
+	T_RangeTblRef,
+	T_JoinExpr,
 
 	/*---------------------
 	 * TAGS FOR PLANNER NODES (relation.h)
@@ -204,7 +206,7 @@ typedef enum NodeTag
 	T_A_Indices,
 	T_ResTarget,
 	T_TypeCast,
-	T_RelExpr,
+	T_RangeSubselect,
 	T_SortGroupBy,
 	T_RangeVar,
 	T_TypeName,
@@ -217,14 +219,14 @@ typedef enum NodeTag
 	T_SortClause,
 	T_GroupClause,
 	T_SubSelectXXX,				/* not used anymore; this tag# is available */
-	T_JoinExpr,
+	T_oldJoinExprXXX,			/* not used anymore; this tag# is available */
 	T_CaseExpr,
 	T_CaseWhen,
 	T_RowMark,
 	T_FkConstraint,
 
 	/*---------------------
-	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (cf. fmgr.h)
+	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)
 	 *---------------------
 	 */
 	T_TriggerData = 800,		/* in commands/trigger.h */
@@ -310,7 +312,7 @@ typedef double Cost;			/* execution cost (in page-access units) */
 
 /*
  * CmdType -
- *	  enums for type of operation to aid debugging
+ *	  enums for type of operation represented by a Query
  *
  * ??? could have put this in parsenodes.h but many files not in the
  *	  optimizer also need this...
@@ -328,5 +330,41 @@ typedef enum CmdType
 								 * with qual */
 } CmdType;
 
+
+/*
+ * JoinType -
+ *	  enums for types of relation joins
+ *
+ * JoinType determines the exact semantics of joining two relations using
+ * a matching qualification.  For example, it tells what to do with a tuple
+ * that has no match in the other relation.
+ *
+ * This is needed in both parsenodes.h and plannodes.h, so put it here...
+ */
+typedef enum JoinType
+{
+	/*
+	 * The canonical kinds of joins
+	 */
+	JOIN_INNER,					/* matching tuple pairs only */
+	JOIN_LEFT,					/* pairs + unmatched outer tuples */
+	JOIN_FULL,					/* pairs + unmatched outer + unmatched inner */
+	JOIN_RIGHT,					/* pairs + unmatched inner tuples */
+	/*
+	 * SQL92 considers UNION JOIN to be a kind of join, so list it here for
+	 * parser convenience, even though it's not implemented like a join in
+	 * the executor.  (The planner must convert it to an Append plan.)
+	 */
+	JOIN_UNION
+	/*
+	 * Eventually we will have some additional join types for efficient
+	 * support of queries like WHERE foo IN (SELECT bar FROM ...).
+	 */
+} JoinType;
+
+#define IS_OUTER_JOIN(jointype) \
+	((jointype) == JOIN_LEFT || \
+	 (jointype) == JOIN_FULL || \
+	 (jointype) == JOIN_RIGHT)
 
 #endif	 /* NODES_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.50 2000/08/24 23:34:09 tgl Exp $
+ * $Id: executor.h,v 1.51 2000/09/12 21:07:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,9 @@ extern void ExecSetSlotDescriptorIsNew(TupleTableSlot *slot, bool isNew);
 extern void ExecInitResultTupleSlot(EState *estate, CommonState *commonstate);
 extern void ExecInitScanTupleSlot(EState *estate,
 					  CommonScanState *commonscanstate);
-extern void ExecInitOuterTupleSlot(EState *estate, HashJoinState *hashstate);
+extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate);
+extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
+											 TupleDesc tupType);
 
 extern TupleDesc ExecGetTupType(Plan *node);
 extern TupleDesc ExecTypeFromTL(List *targetList);

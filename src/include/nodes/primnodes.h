@@ -1,13 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * primnodes.h
- *	  Definitions for parse tree/query tree ("primitive") nodes.
+ *	  Definitions for "primitive" node types, those that are used in more
+ *	  than one of the parse/plan/execute stages of the query pipeline.
+ *	  Currently, these are mostly nodes for executable expressions
+ *	  and join trees.
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.47 2000/08/24 03:29:13 tgl Exp $
+ * $Id: primnodes.h,v 1.48 2000/09/12 21:07:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +101,12 @@ typedef struct Fjoin
 	BoolPtr		fj_alwaysDone;
 } Fjoin;
 
+
+/* ----------------------------------------------------------------
+ *					node types for executable expressions
+ * ----------------------------------------------------------------
+ */
+
 /* ----------------
  * Expr
  *		typeOid			- oid of the type of this expression
@@ -155,7 +164,7 @@ typedef struct Var
 	AttrNumber	varattno;
 	Oid			vartype;
 	int32		vartypmod;
-	Index		varlevelsup;	/* erased by upper optimizer */
+	Index		varlevelsup;
 	Index		varnoold;		/* mainly for debugging --- see above */
 	AttrNumber	varoattno;
 } Var;
@@ -479,5 +488,77 @@ typedef struct RelabelType
 	Oid			resulttype;
 	int32		resulttypmod;
 } RelabelType;
+
+
+/* ----------------------------------------------------------------
+ *					node types for join trees
+ *
+ * The leaves of a join tree structure are RangeTblRef nodes.  Above
+ * these, JoinExpr nodes can appear to denote a specific kind of join
+ * or qualified join.  A join tree can also contain List nodes --- a list
+ * implies an unqualified cross-product join of its members.  The planner
+ * is allowed to combine the elements of a list using whatever join order
+ * seems good to it.  At present, JoinExpr nodes are always joined in
+ * exactly the order implied by the tree structure (except the planner
+ * may choose to swap inner and outer members of a join pair).
+ *
+ * NOTE: currently, the planner only supports a List at the top level of
+ * a join tree.  Should generalize this to allow Lists at lower levels.
+ *
+ * NOTE: the qualification expressions present in JoinExpr nodes are
+ * *in addition to* the query's main WHERE clause.  For outer joins there
+ * is a real semantic difference between a join qual and a WHERE clause,
+ * though if all joins are inner joins they are interchangeable.
+ *
+ * NOTE: in the raw output of gram.y, a join tree contains RangeVar and
+ * RangeSubselect nodes, which are both replaced by RangeTblRef nodes
+ * during the parse analysis phase.
+ * ----------------------------------------------------------------
+ */
+
+/*
+ * RangeTblRef - reference to an entry in the query's rangetable
+ *
+ * We could use direct pointers to the RT entries and skip having these
+ * nodes, but multiple pointers to the same node in a querytree cause
+ * lots of headaches, so it seems better to store an index into the RT.
+ */
+typedef struct RangeTblRef
+{
+	NodeTag		type;
+	int			rtindex;
+} RangeTblRef;
+
+/*----------
+ * JoinExpr - for SQL JOIN expressions
+ *
+ * isNatural, using, and quals are interdependent.  The user can write only
+ * one of NATURAL, USING(), or ON() (this is enforced by the grammar).
+ * If he writes NATURAL then parse analysis generates the equivalent USING()
+ * list, and from that fills in "quals" with the right equality comparisons.
+ * If he writes USING() then "quals" is filled with equality comparisons.
+ * If he writes ON() then only "quals" is set.  Note that NATURAL/USING
+ * are not equivalent to ON() since they also affect the output column list.
+ *
+ * alias is an Attr node representing the AS alias-clause attached to the
+ * join expression, or NULL if no clause.  During parse analysis, colnames
+ * is filled with a list of String nodes giving the column names (real or
+ * alias) of the output of the join, and colvars is filled with a list of
+ * expressions that can be copied to reference the output columns.
+ *----------
+ */
+typedef struct JoinExpr
+{
+	NodeTag		type;
+	JoinType	jointype;		/* type of join */
+	bool		isNatural;		/* Natural join? Will need to shape table */
+	Node	   *larg;			/* left subtree */
+	Node	   *rarg;			/* right subtree */
+	List	   *using;			/* USING clause, if any (list of String) */
+	Node	   *quals;			/* qualifiers on join, if any */
+	struct Attr *alias;			/* user-written alias clause, if any */
+	List	   *colnames;		/* output column names (list of String) */
+	List	   *colvars;		/* output column nodes (list of expressions) */
+} JoinExpr;
 
 #endif	 /* PRIMNODES_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.55 2000/05/30 00:49:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.56 2000/09/12 21:06:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,27 +25,32 @@
 #include "utils/lsyscache.h"
 
 static void sort_inner_and_outer(Query *root, RelOptInfo *joinrel,
-					 RelOptInfo *outerrel, RelOptInfo *innerrel,
-					 List *restrictlist, List *mergeclause_list);
+								 RelOptInfo *outerrel, RelOptInfo *innerrel,
+								 List *restrictlist, List *mergeclause_list,
+								 JoinType jointype);
 static void match_unsorted_outer(Query *root, RelOptInfo *joinrel,
-					 RelOptInfo *outerrel, RelOptInfo *innerrel,
-					 List *restrictlist, List *mergeclause_list);
+								 RelOptInfo *outerrel, RelOptInfo *innerrel,
+								 List *restrictlist, List *mergeclause_list,
+								 JoinType jointype);
 
 #ifdef NOT_USED
 static void match_unsorted_inner(Query *root, RelOptInfo *joinrel,
-					 RelOptInfo *outerrel, RelOptInfo *innerrel,
-					 List *restrictlist, List *mergeclause_list);
+								 RelOptInfo *outerrel, RelOptInfo *innerrel,
+								 List *restrictlist, List *mergeclause_list,
+								 JoinType jointype);
 
 #endif
 static void hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
-					 RelOptInfo *outerrel, RelOptInfo *innerrel,
-					 List *restrictlist);
-static Path *best_innerjoin(List *join_paths, List *outer_relid);
+								 RelOptInfo *outerrel, RelOptInfo *innerrel,
+								 List *restrictlist, JoinType jointype);
+static Path *best_innerjoin(List *join_paths, List *outer_relid,
+							JoinType jointype);
 static Selectivity estimate_disbursion(Query *root, Var *var);
 static List *select_mergejoin_clauses(RelOptInfo *joinrel,
-						 RelOptInfo *outerrel,
-						 RelOptInfo *innerrel,
-						 List *restrictlist);
+									  RelOptInfo *outerrel,
+									  RelOptInfo *innerrel,
+									  List *restrictlist,
+									  JoinType jointype);
 
 
 /*
@@ -64,6 +69,7 @@ add_paths_to_joinrel(Query *root,
 					 RelOptInfo *joinrel,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,
+					 JoinType jointype,
 					 List *restrictlist)
 {
 	List	   *mergeclause_list = NIL;
@@ -75,14 +81,15 @@ add_paths_to_joinrel(Query *root,
 		mergeclause_list = select_mergejoin_clauses(joinrel,
 													outerrel,
 													innerrel,
-													restrictlist);
+													restrictlist,
+													jointype);
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
 	 * sorted.
 	 */
 	sort_inner_and_outer(root, joinrel, outerrel, innerrel,
-						 restrictlist, mergeclause_list);
+						 restrictlist, mergeclause_list, jointype);
 
 	/*
 	 * 2. Consider paths where the outer relation need not be explicitly
@@ -90,7 +97,7 @@ add_paths_to_joinrel(Query *root,
 	 * path is already ordered.
 	 */
 	match_unsorted_outer(root, joinrel, outerrel, innerrel,
-						 restrictlist, mergeclause_list);
+						 restrictlist, mergeclause_list, jointype);
 
 #ifdef NOT_USED
 
@@ -107,7 +114,7 @@ add_paths_to_joinrel(Query *root,
 	 * other order.
 	 */
 	match_unsorted_inner(root, joinrel, outerrel, innerrel,
-						 restrictlist, mergeclause_list);
+						 restrictlist, mergeclause_list, jointype);
 #endif
 
 	/*
@@ -116,7 +123,7 @@ add_paths_to_joinrel(Query *root,
 	 */
 	if (enable_hashjoin)
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel,
-							 restrictlist);
+							 restrictlist, jointype);
 }
 
 /*
@@ -131,6 +138,7 @@ add_paths_to_joinrel(Query *root,
  *		clauses that apply to this join
  * 'mergeclause_list' is a list of RestrictInfo nodes for available
  *		mergejoin clauses in this join
+ * 'jointype' is the type of join to do
  */
 static void
 sort_inner_and_outer(Query *root,
@@ -138,7 +146,8 @@ sort_inner_and_outer(Query *root,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,
 					 List *restrictlist,
-					 List *mergeclause_list)
+					 List *mergeclause_list,
+					 JoinType jointype)
 {
 	List	   *i;
 
@@ -187,10 +196,10 @@ sort_inner_and_outer(Query *root,
 		 */
 		outerkeys = make_pathkeys_for_mergeclauses(root,
 												   curclause_list,
-												   outerrel->targetlist);
+												   outerrel);
 		innerkeys = make_pathkeys_for_mergeclauses(root,
 												   curclause_list,
-												   innerrel->targetlist);
+												   innerrel);
 		/* Build pathkeys representing output sort order. */
 		merge_pathkeys = build_join_pathkeys(outerkeys,
 											 joinrel->targetlist,
@@ -204,6 +213,7 @@ sort_inner_and_outer(Query *root,
 		 */
 		add_path(joinrel, (Path *)
 				 create_mergejoin_path(joinrel,
+									   jointype,
 									   outerrel->cheapest_total_path,
 									   innerrel->cheapest_total_path,
 									   restrictlist,
@@ -243,6 +253,7 @@ sort_inner_and_outer(Query *root,
  *		clauses that apply to this join
  * 'mergeclause_list' is a list of RestrictInfo nodes for available
  *		mergejoin clauses in this join
+ * 'jointype' is the type of join to do
  */
 static void
 match_unsorted_outer(Query *root,
@@ -250,16 +261,33 @@ match_unsorted_outer(Query *root,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,
 					 List *restrictlist,
-					 List *mergeclause_list)
+					 List *mergeclause_list,
+					 JoinType jointype)
 {
+	bool		nestjoinOK;
 	Path	   *bestinnerjoin;
 	List	   *i;
+
+	/*
+	 * Nestloop only supports inner and left joins.
+	 */
+	switch (jointype)
+	{
+		case JOIN_INNER:
+		case JOIN_LEFT:
+			nestjoinOK = true;
+			break;
+		default:
+			nestjoinOK = false;
+			break;
+	}
 
 	/*
 	 * Get the best innerjoin indexpath (if any) for this outer rel. It's
 	 * the same for all outer paths.
 	 */
-	bestinnerjoin = best_innerjoin(innerrel->innerjoin, outerrel->relids);
+	bestinnerjoin = best_innerjoin(innerrel->innerjoin, outerrel->relids,
+								   jointype);
 
 	foreach(i, outerrel->pathlist)
 	{
@@ -282,31 +310,38 @@ match_unsorted_outer(Query *root,
 											 joinrel->targetlist,
 											 root->equi_key_list);
 
-		/*
-		 * Always consider a nestloop join with this outer and cheapest-
-		 * total-cost inner.  Consider nestloops using the cheapest-
-		 * startup-cost inner as well, and the best innerjoin indexpath.
-		 */
-		add_path(joinrel, (Path *)
-				 create_nestloop_path(joinrel,
-									  outerpath,
-									  innerrel->cheapest_total_path,
-									  restrictlist,
-									  merge_pathkeys));
-		if (innerrel->cheapest_startup_path != innerrel->cheapest_total_path)
+		if (nestjoinOK)
+		{
+			/*
+			 * Always consider a nestloop join with this outer and cheapest-
+			 * total-cost inner.  Consider nestloops using the cheapest-
+			 * startup-cost inner as well, and the best innerjoin indexpath.
+			 */
 			add_path(joinrel, (Path *)
 					 create_nestloop_path(joinrel,
+										  jointype,
 										  outerpath,
-										  innerrel->cheapest_startup_path,
+										  innerrel->cheapest_total_path,
 										  restrictlist,
 										  merge_pathkeys));
-		if (bestinnerjoin != NULL)
-			add_path(joinrel, (Path *)
-					 create_nestloop_path(joinrel,
-										  outerpath,
-										  bestinnerjoin,
-										  restrictlist,
-										  merge_pathkeys));
+			if (innerrel->cheapest_startup_path !=
+				innerrel->cheapest_total_path)
+				add_path(joinrel, (Path *)
+						 create_nestloop_path(joinrel,
+											  jointype,
+											  outerpath,
+											  innerrel->cheapest_startup_path,
+											  restrictlist,
+											  merge_pathkeys));
+			if (bestinnerjoin != NULL)
+				add_path(joinrel, (Path *)
+						 create_nestloop_path(joinrel,
+											  jointype,
+											  outerpath,
+											  bestinnerjoin,
+											  restrictlist,
+											  merge_pathkeys));
+		}
 
 		/* Look for useful mergeclauses (if any) */
 		mergeclauses = find_mergeclauses_for_pathkeys(outerpath->pathkeys,
@@ -319,7 +354,7 @@ match_unsorted_outer(Query *root,
 		/* Compute the required ordering of the inner path */
 		innersortkeys = make_pathkeys_for_mergeclauses(root,
 													   mergeclauses,
-												   innerrel->targetlist);
+													   innerrel);
 
 		/*
 		 * Generate a mergejoin on the basis of sorting the cheapest
@@ -328,6 +363,7 @@ match_unsorted_outer(Query *root,
 		 */
 		add_path(joinrel, (Path *)
 				 create_mergejoin_path(joinrel,
+									   jointype,
 									   outerpath,
 									   innerrel->cheapest_total_path,
 									   restrictlist,
@@ -373,6 +409,7 @@ match_unsorted_outer(Query *root,
 					newclauses = mergeclauses;
 				add_path(joinrel, (Path *)
 						 create_mergejoin_path(joinrel,
+											   jointype,
 											   outerpath,
 											   innerpath,
 											   restrictlist,
@@ -409,6 +446,7 @@ match_unsorted_outer(Query *root,
 					}
 					add_path(joinrel, (Path *)
 							 create_mergejoin_path(joinrel,
+												   jointype,
 												   outerpath,
 												   innerpath,
 												   restrictlist,
@@ -437,6 +475,7 @@ match_unsorted_outer(Query *root,
  *		clauses that apply to this join
  * 'mergeclause_list' is a list of RestrictInfo nodes for available
  *		mergejoin clauses in this join
+ * 'jointype' is the type of join to do
  */
 static void
 match_unsorted_inner(Query *root,
@@ -444,7 +483,8 @@ match_unsorted_inner(Query *root,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,
 					 List *restrictlist,
-					 List *mergeclause_list)
+					 List *mergeclause_list,
+					 JoinType jointype)
 {
 	List	   *i;
 
@@ -466,7 +506,7 @@ match_unsorted_inner(Query *root,
 		/* Compute the required ordering of the outer path */
 		outersortkeys = make_pathkeys_for_mergeclauses(root,
 													   mergeclauses,
-												   outerrel->targetlist);
+													   outerrel);
 
 		/*
 		 * Generate a mergejoin on the basis of sorting the cheapest
@@ -478,6 +518,7 @@ match_unsorted_inner(Query *root,
 											 root->equi_key_list);
 		add_path(joinrel, (Path *)
 				 create_mergejoin_path(joinrel,
+									   jointype,
 									   outerrel->cheapest_total_path,
 									   innerpath,
 									   restrictlist,
@@ -506,6 +547,7 @@ match_unsorted_inner(Query *root,
 											 root->equi_key_list);
 		add_path(joinrel, (Path *)
 				 create_mergejoin_path(joinrel,
+									   jointype,
 									   totalouterpath,
 									   innerpath,
 									   restrictlist,
@@ -524,6 +566,7 @@ match_unsorted_inner(Query *root,
 												 root->equi_key_list);
 			add_path(joinrel, (Path *)
 					 create_mergejoin_path(joinrel,
+										   jointype,
 										   startupouterpath,
 										   innerpath,
 										   restrictlist,
@@ -547,17 +590,35 @@ match_unsorted_inner(Query *root,
  * 'innerrel' is the inner join relation
  * 'restrictlist' contains all of the RestrictInfo nodes for restriction
  *		clauses that apply to this join
+ * 'jointype' is the type of join to do
  */
 static void
 hash_inner_and_outer(Query *root,
 					 RelOptInfo *joinrel,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,
-					 List *restrictlist)
+					 List *restrictlist,
+					 JoinType jointype)
 {
 	Relids		outerrelids = outerrel->relids;
 	Relids		innerrelids = innerrel->relids;
+	bool		isouterjoin;
 	List	   *i;
+
+	/*
+	 * Hashjoin only supports inner and left joins.
+	 */
+	switch (jointype)
+	{
+		case JOIN_INNER:
+			isouterjoin = false;
+			break;
+		case JOIN_LEFT:
+			isouterjoin = true;
+			break;
+		default:
+			return;
+	}
 
 	/*
 	 * Scan the join's restrictinfo list to find hashjoinable clauses that
@@ -580,6 +641,13 @@ hash_inner_and_outer(Query *root,
 
 		if (restrictinfo->hashjoinoperator == InvalidOid)
 			continue;			/* not hashjoinable */
+
+		/*
+		 * If processing an outer join, only use explicit join clauses for
+		 * hashing.  For inner joins we need not be so picky.
+		 */
+		if (isouterjoin && !restrictinfo->isjoinqual)
+			continue;
 
 		clause = restrictinfo->clause;
 		/* these must be OK, since check_hashjoinable accepted the clause */
@@ -609,6 +677,7 @@ hash_inner_and_outer(Query *root,
 		 */
 		add_path(joinrel, (Path *)
 				 create_hashjoin_path(joinrel,
+									  jointype,
 									  outerrel->cheapest_total_path,
 									  innerrel->cheapest_total_path,
 									  restrictlist,
@@ -617,6 +686,7 @@ hash_inner_and_outer(Query *root,
 		if (outerrel->cheapest_startup_path != outerrel->cheapest_total_path)
 			add_path(joinrel, (Path *)
 					 create_hashjoin_path(joinrel,
+										  jointype,
 										  outerrel->cheapest_startup_path,
 										  innerrel->cheapest_total_path,
 										  restrictlist,
@@ -641,26 +711,49 @@ hash_inner_and_outer(Query *root,
  * usable path.
  */
 static Path *
-best_innerjoin(List *join_paths, Relids outer_relids)
+best_innerjoin(List *join_paths, Relids outer_relids, JoinType jointype)
 {
 	Path	   *cheapest = (Path *) NULL;
+	bool		isouterjoin;
 	List	   *join_path;
+
+	/*
+	 * Nestloop only supports inner and left joins.
+	 */
+	switch (jointype)
+	{
+		case JOIN_INNER:
+			isouterjoin = false;
+			break;
+		case JOIN_LEFT:
+			isouterjoin = true;
+			break;
+		default:
+			return NULL;
+	}
 
 	foreach(join_path, join_paths)
 	{
-		Path	   *path = (Path *) lfirst(join_path);
+		IndexPath   *path = (IndexPath *) lfirst(join_path);
 
 		Assert(IsA(path, IndexPath));
+
+		/*
+		 * If processing an outer join, only use explicit join clauses in the
+		 * inner indexscan.  For inner joins we need not be so picky.
+		 */
+		if (isouterjoin && !path->alljoinquals)
+			continue;
 
 		/*
 		 * path->joinrelids is the set of base rels that must be part of
 		 * outer_relids in order to use this inner path, because those
 		 * rels are used in the index join quals of this inner path.
 		 */
-		if (is_subseti(((IndexPath *) path)->joinrelids, outer_relids) &&
+		if (is_subseti(path->joinrelids, outer_relids) &&
 			(cheapest == NULL ||
-			 compare_path_costs(path, cheapest, TOTAL_COST) < 0))
-			cheapest = path;
+			 compare_path_costs((Path *) path, cheapest, TOTAL_COST) < 0))
+			cheapest = (Path *) path;
 	}
 	return cheapest;
 }
@@ -683,6 +776,9 @@ estimate_disbursion(Query *root, Var *var)
 		return 0.1;
 
 	relid = getrelid(var->varno, root->rtable);
+
+	if (relid == InvalidOid)
+		return 0.1;
 
 	return (Selectivity) get_attdisbursion(relid, var->varattno, 0.1);
 }
@@ -707,11 +803,13 @@ static List *
 select_mergejoin_clauses(RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
-						 List *restrictlist)
+						 List *restrictlist,
+						 JoinType jointype)
 {
 	List	   *result_list = NIL;
 	Relids		outerrelids = outerrel->relids;
 	Relids		innerrelids = innerrel->relids;
+	bool		isouterjoin = IS_OUTER_JOIN(jointype);
 	List	   *i;
 
 	foreach(i, restrictlist)
@@ -720,6 +818,37 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 		Expr	   *clause;
 		Var		   *left,
 				   *right;
+
+		/*
+		 * If processing an outer join, only use explicit join clauses in the
+		 * merge.  For inner joins we need not be so picky.
+		 *
+		 * Furthermore, if it is a right/full join then *all* the explicit
+		 * join clauses must be mergejoinable, else the executor will fail.
+		 * If we are asked for a right join then just return NIL to indicate
+		 * no mergejoin is possible (we can handle it as a left join instead).
+		 * If we are asked for a full join then emit an error, because there
+		 * is no fallback.
+		 */
+		if (isouterjoin)
+		{
+			if (!restrictinfo->isjoinqual)
+				continue;
+			switch (jointype)
+			{
+				case JOIN_RIGHT:
+					if (restrictinfo->mergejoinoperator == InvalidOid)
+						return NIL;	/* not mergejoinable */
+					break;
+				case JOIN_FULL:
+					if (restrictinfo->mergejoinoperator == InvalidOid)
+						elog(ERROR, "FULL JOIN is only supported with mergejoinable join conditions");
+					break;
+				default:
+					/* otherwise, it's OK to have nonmergeable join quals */
+					break;
+			}
+		}
 
 		if (restrictinfo->mergejoinoperator == InvalidOid)
 			continue;			/* not mergejoinable */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.53 2000/07/28 02:13:16 tgl Exp $
+ * $Id: geqo_eval.c,v 1.54 2000/09/12 21:06:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,11 +93,11 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
  * Returns a new join relation incorporating all joins in a left-sided tree.
  */
 RelOptInfo *
-gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old_rel)
+gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene,
+		   RelOptInfo *old_rel)
 {
 	RelOptInfo *inner_rel;		/* current relation */
 	int			base_rel_index;
-	RelOptInfo *new_rel;
 
 	if (rel_count < num_gene)
 	{							/* tree not yet finished */
@@ -116,16 +116,22 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 		else
 		{						/* tree main part */
 			List	   *acceptable_rels = lcons(inner_rel, NIL);
+			List	   *new_rels;
+			RelOptInfo *new_rel;
 
-			new_rel = make_rels_by_clause_joins(root, old_rel,
-												acceptable_rels);
-			if (!new_rel)
+			new_rels = make_rels_by_clause_joins(root, old_rel,
+												 acceptable_rels);
+			/* Shouldn't get more than one result */
+			Assert(length(new_rels) <= 1);
+			if (new_rels == NIL)
 			{
-				new_rel = make_rels_by_clauseless_joins(root, old_rel,
-														acceptable_rels);
-				if (!new_rel)
+				new_rels = make_rels_by_clauseless_joins(root, old_rel,
+														 acceptable_rels);
+				Assert(length(new_rels) <= 1);
+				if (new_rels == NIL)
 					elog(ERROR, "gimme_tree: failed to construct join rel");
 			}
+			new_rel = (RelOptInfo *) lfirst(new_rels);
 
 			rel_count++;
 			Assert(length(new_rel->relids) == rel_count);

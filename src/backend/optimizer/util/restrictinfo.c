@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.10 2000/05/30 00:49:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.11 2000/09/12 21:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,4 +53,30 @@ get_actual_clauses(List *restrictinfo_list)
 		result = lappend(result, clause->clause);
 	}
 	return result;
+}
+
+/*
+ * get_actual_join_clauses
+ *
+ * Extract clauses from 'restrictinfo_list', separating those that
+ * came from JOIN/ON conditions from those that didn't.
+ */
+void
+get_actual_join_clauses(List *restrictinfo_list,
+						List **joinquals, List **otherquals)
+{
+	List	   *temp;
+
+	*joinquals = NIL;
+	*otherquals = NIL;
+
+	foreach(temp, restrictinfo_list)
+	{
+		RestrictInfo *clause = (RestrictInfo *) lfirst(temp);
+
+		if (clause->isjoinqual)
+			*joinquals = lappend(*joinquals, clause->clause);
+		else
+			*otherquals = lappend(*otherquals, clause->clause);
+	}
 }

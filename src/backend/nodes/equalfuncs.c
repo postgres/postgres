@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.72 2000/08/11 23:45:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.73 2000/09/12 21:06:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,6 +257,26 @@ _equalSubLink(SubLink *a, SubLink *b)
 }
 
 static bool
+_equalArrayRef(ArrayRef *a, ArrayRef *b)
+{
+	if (a->refelemtype != b->refelemtype)
+		return false;
+	if (a->refattrlength != b->refattrlength)
+		return false;
+	if (a->refelemlength != b->refelemlength)
+		return false;
+	if (a->refelembyval != b->refelembyval)
+		return false;
+	if (!equal(a->refupperindexpr, b->refupperindexpr))
+		return false;
+	if (!equal(a->reflowerindexpr, b->reflowerindexpr))
+		return false;
+	if (!equal(a->refexpr, b->refexpr))
+		return false;
+	return equal(a->refassgnexpr, b->refassgnexpr);
+}
+
+static bool
 _equalFieldSelect(FieldSelect *a, FieldSelect *b)
 {
 	if (!equal(a->arg, b->arg))
@@ -283,23 +303,37 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 }
 
 static bool
-_equalArrayRef(ArrayRef *a, ArrayRef *b)
+_equalRangeTblRef(RangeTblRef *a, RangeTblRef *b)
 {
-	if (a->refelemtype != b->refelemtype)
+	if (a->rtindex != b->rtindex)
 		return false;
-	if (a->refattrlength != b->refattrlength)
+
+	return true;
+}
+
+static bool
+_equalJoinExpr(JoinExpr *a, JoinExpr *b)
+{
+	if (a->jointype != b->jointype)
 		return false;
-	if (a->refelemlength != b->refelemlength)
+	if (a->isNatural != b->isNatural)
 		return false;
-	if (a->refelembyval != b->refelembyval)
+	if (!equal(a->larg, b->larg))
 		return false;
-	if (!equal(a->refupperindexpr, b->refupperindexpr))
+	if (!equal(a->rarg, b->rarg))
 		return false;
-	if (!equal(a->reflowerindexpr, b->reflowerindexpr))
+	if (!equal(a->using, b->using))
 		return false;
-	if (!equal(a->refexpr, b->refexpr))
+	if (!equal(a->quals, b->quals))
 		return false;
-	return equal(a->refassgnexpr, b->refassgnexpr);
+	if (!equal(a->alias, b->alias))
+		return false;
+	if (!equal(a->colnames, b->colnames))
+		return false;
+	if (!equal(a->colvars, b->colvars))
+		return false;
+
+	return true;
 }
 
 /*
@@ -370,6 +404,8 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 		return false;
 	if (!equali(a->joinrelids, b->joinrelids))
 		return false;
+	if (a->alljoinquals != b->alljoinquals)
+		return false;
 
 	/*
 	 * Skip 'rows' because of possibility of floating-point roundoff
@@ -394,6 +430,8 @@ static bool
 _equalJoinPath(JoinPath *a, JoinPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
+		return false;
+	if (a->jointype != b->jointype)
 		return false;
 	if (!equal(a->outerjoinpath, b->outerjoinpath))
 		return false;
@@ -456,6 +494,8 @@ static bool
 _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	if (!equal(a->clause, b->clause))
+		return false;
+	if (a->isjoinqual != b->isjoinqual)
 		return false;
 	if (!equal(a->subclauseindices, b->subclauseindices))
 		return false;
@@ -556,6 +596,8 @@ _equalQuery(Query *a, Query *b)
 	if (a->hasSubLinks != b->hasSubLinks)
 		return false;
 	if (!equal(a->rtable, b->rtable))
+		return false;
+	if (!equal(a->jointree, b->jointree))
 		return false;
 	if (!equal(a->targetList, b->targetList))
 		return false;
@@ -1476,17 +1518,6 @@ _equalTypeCast(TypeCast *a, TypeCast *b)
 }
 
 static bool
-_equalRelExpr(RelExpr *a, RelExpr *b)
-{
-	if (!equalstr(a->relname, b->relname))
-		return false;
-	if (a->inh != b->inh)
-		return false;
-
-	return true;
-}
-
-static bool
 _equalSortGroupBy(SortGroupBy *a, SortGroupBy *b)
 {
 	if (!equalstr(a->useOp, b->useOp))
@@ -1500,7 +1531,20 @@ _equalSortGroupBy(SortGroupBy *a, SortGroupBy *b)
 static bool
 _equalRangeVar(RangeVar *a, RangeVar *b)
 {
-	if (!equal(a->relExpr, b->relExpr))
+	if (!equalstr(a->relname, b->relname))
+		return false;
+	if (a->inh != b->inh)
+		return false;
+	if (!equal(a->name, b->name))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalRangeSubselect(RangeSubselect *a, RangeSubselect *b)
+{
+	if (!equal(a->subquery, b->subquery))
 		return false;
 	if (!equal(a->name, b->name))
 		return false;
@@ -1605,16 +1649,15 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 {
 	if (!equalstr(a->relname, b->relname))
 		return false;
-	if (!equal(a->ref, b->ref))
-		return false;
-	/* XXX what about eref? */
 	if (a->relid != b->relid)
+		return false;
+	if (!equal(a->alias, b->alias))
+		return false;
+	if (!equal(a->eref, b->eref))
 		return false;
 	if (a->inh != b->inh)
 		return false;
 	if (a->inFromCl != b->inFromCl)
-		return false;
-	if (a->inJoinSet != b->inJoinSet)
 		return false;
 	if (a->skipAcl != b->skipAcl)
 		return false;
@@ -1639,25 +1682,6 @@ _equalRowMark(RowMark *a, RowMark *b)
 	if (a->rti != b->rti)
 		return false;
 	if (a->info != b->info)
-		return false;
-
-	return true;
-}
-
-static bool
-_equalJoinExpr(JoinExpr *a, JoinExpr *b)
-{
-	if (a->jointype != b->jointype)
-		return false;
-	if (a->isNatural != b->isNatural)
-		return false;
-	if (!equal(a->larg, b->larg))
-		return false;
-	if (!equal(a->rarg, b->rarg))
-		return false;
-	if (!equal(a->alias, b->alias))
-		return false;
-	if (!equal(a->quals, b->quals))
 		return false;
 
 	return true;
@@ -1807,6 +1831,12 @@ equal(void *a, void *b)
 			break;
 		case T_RelabelType:
 			retval = _equalRelabelType(a, b);
+			break;
+		case T_RangeTblRef:
+			retval = _equalRangeTblRef(a, b);
+			break;
+		case T_JoinExpr:
+			retval = _equalJoinExpr(a, b);
 			break;
 
 		case T_RelOptInfo:
@@ -2067,14 +2097,14 @@ equal(void *a, void *b)
 		case T_TypeCast:
 			retval = _equalTypeCast(a, b);
 			break;
-		case T_RelExpr:
-			retval = _equalRelExpr(a, b);
-			break;
 		case T_SortGroupBy:
 			retval = _equalSortGroupBy(a, b);
 			break;
 		case T_RangeVar:
 			retval = _equalRangeVar(a, b);
+			break;
+		case T_RangeSubselect:
+			retval = _equalRangeSubselect(a, b);
 			break;
 		case T_TypeName:
 			retval = _equalTypeName(a, b);
@@ -2103,9 +2133,6 @@ equal(void *a, void *b)
 		case T_GroupClause:
 			/* GroupClause is equivalent to SortClause */
 			retval = _equalSortClause(a, b);
-			break;
-		case T_JoinExpr:
-			retval = _equalJoinExpr(a, b);
 			break;
 		case T_CaseExpr:
 			retval = _equalCaseExpr(a, b);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.64 2000/05/30 00:49:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.65 2000/09/12 21:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,9 @@ set_cheapest(RelOptInfo *parent_rel)
 	Path	   *cheapest_total_path;
 
 	Assert(IsA(parent_rel, RelOptInfo));
-	Assert(pathlist != NIL);
+
+	if (pathlist == NIL)
+		elog(ERROR, "Unable to devise a query plan for the given query");
 
 	cheapest_startup_path = cheapest_total_path = (Path *) lfirst(pathlist);
 
@@ -352,6 +354,7 @@ create_index_path(Query *root,
 	 * number of rows is the same as the parent rel's estimate.
 	 */
 	pathnode->joinrelids = NIL; /* no join clauses here */
+	pathnode->alljoinquals = false;
 	pathnode->rows = rel->rows;
 
 	cost_index(&pathnode->path, root, rel, index, indexquals, false);
@@ -393,6 +396,7 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
  *	  relations.
  *
  * 'joinrel' is the join relation.
+ * 'jointype' is the type of join required
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
@@ -403,6 +407,7 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
  */
 NestPath   *
 create_nestloop_path(RelOptInfo *joinrel,
+					 JoinType jointype,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
@@ -412,6 +417,7 @@ create_nestloop_path(RelOptInfo *joinrel,
 
 	pathnode->path.pathtype = T_NestLoop;
 	pathnode->path.parent = joinrel;
+	pathnode->jointype = jointype;
 	pathnode->outerjoinpath = outer_path;
 	pathnode->innerjoinpath = inner_path;
 	pathnode->joinrestrictinfo = restrict_clauses;
@@ -428,6 +434,7 @@ create_nestloop_path(RelOptInfo *joinrel,
  *	  two relations
  *
  * 'joinrel' is the join relation
+ * 'jointype' is the type of join required
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
@@ -440,6 +447,7 @@ create_nestloop_path(RelOptInfo *joinrel,
  */
 MergePath  *
 create_mergejoin_path(RelOptInfo *joinrel,
+					  JoinType jointype,
 					  Path *outer_path,
 					  Path *inner_path,
 					  List *restrict_clauses,
@@ -463,6 +471,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
 
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;
+	pathnode->jpath.jointype = jointype;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.joinrestrictinfo = restrict_clauses;
@@ -486,6 +495,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
  *	  Creates a pathnode corresponding to a hash join between two relations.
  *
  * 'joinrel' is the join relation
+ * 'jointype' is the type of join required
  * 'outer_path' is the cheapest outer path
  * 'inner_path' is the cheapest inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
@@ -496,6 +506,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
  */
 HashPath   *
 create_hashjoin_path(RelOptInfo *joinrel,
+					 JoinType jointype,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
@@ -506,6 +517,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 
 	pathnode->jpath.path.pathtype = T_HashJoin;
 	pathnode->jpath.path.parent = joinrel;
+	pathnode->jpath.jointype = jointype;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.joinrestrictinfo = restrict_clauses;

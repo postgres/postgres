@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.73 2000/08/24 03:29:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.74 2000/09/12 21:06:58 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -591,7 +591,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 					elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 						 var->varattno, rte->relid);
 				elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",
-					 rte->ref->relname, attname);
+					 rte->eref->relname, attname);
 			}
 		}
 	}
@@ -1639,25 +1639,44 @@ simplify_op_or_func(Expr *expr, List *args)
  * will have List structure at the top level, and it handles TargetEntry nodes
  * so that a scan of a target list can be handled without additional code.
  * (But only the "expr" part of a TargetEntry is examined, unless the walker
- * chooses to process TargetEntry nodes specially.)
+ * chooses to process TargetEntry nodes specially.)  Also, RangeTblRef and
+ * JoinExpr nodes are handled, so that qual expressions in a jointree can be
+ * processed without additional code.
  *
- * expression_tree_walker will handle a SUBPLAN_EXPR node by recursing into
- * the args and slink->oper lists (which belong to the outer plan), but it
- * will *not* visit the inner plan, since that's typically what expression
- * tree walkers want.  A walker that wants to visit the subplan can force
- * appropriate behavior by recognizing subplan expression nodes and doing
- * the right thing.
+ * expression_tree_walker will handle SubLink and SubPlan nodes by recursing
+ * normally into the "lefthand" arguments (which belong to the outer plan).
+ * It will also call the walker on the sub-Query node; however, when
+ * expression_tree_walker itself is called on a Query node, it does nothing
+ * and returns "false".  The net effect is that unless the walker does
+ * something special at a Query node, sub-selects will not be visited
+ * during an expression tree walk.  This is exactly the behavior wanted
+ * in many cases --- and for those walkers that do want to recurse into
+ * sub-selects, special behavior is typically needed anyway at the entry
+ * to a sub-select (such as incrementing a depth counter).  A walker that
+ * wants to examine sub-selects should include code along the lines of:
  *
- * Bare SubLink nodes (without a SUBPLAN_EXPR) are handled by recursing into
- * the "lefthand" argument list only.  (A bare SubLink should be seen only if
- * the tree has not yet been processed by subselect.c.)  Again, this can be
- * overridden by the walker, but it seems to be the most useful default
- * behavior.
+ *		if (IsA(node, Query))
+ *		{
+ *			adjust context for subquery;
+ *			result = query_tree_walker((Query *) node, my_walker, context);
+ *			restore context if needed;
+ *			return result;
+ *		}
+ *
+ * query_tree_walker is a convenience routine (see below) that calls the
+ * walker on all the expression subtrees of the given Query node.
+ *
+ * NOTE: currently, because make_subplan() clears the subselect link in
+ * a SubLink node, it is not actually possible to recurse into subselects
+ * of an already-planned expression tree.  This is OK for current uses,
+ * but ought to be cleaned up when we redesign querytree processing.
  *--------------------
  */
 
 bool
-			expression_tree_walker(Node *node, bool (*walker) (), void *context)
+expression_tree_walker(Node *node,
+					   bool (*walker) (),
+					   void *context)
 {
 	List	   *temp;
 
@@ -1677,6 +1696,7 @@ bool
 		case T_Const:
 		case T_Var:
 		case T_Param:
+		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
 			break;
 		case T_Expr:
@@ -1750,16 +1770,30 @@ bool
 
 				/*
 				 * If the SubLink has already been processed by
-				 * subselect.c, it will have lefthand=NIL, and we only
-				 * need to look at the oper list.  Otherwise we only need
-				 * to look at lefthand (the Oper nodes in the oper list
-				 * are deemed uninteresting).
+				 * subselect.c, it will have lefthand=NIL, and we need to
+				 * scan the oper list.  Otherwise we only need to look at
+				 * the lefthand list (the incomplete Oper nodes in the oper
+				 * list are deemed uninteresting, perhaps even confusing).
 				 */
 				if (sublink->lefthand)
-					return walker((Node *) sublink->lefthand, context);
+				{
+					if (walker((Node *) sublink->lefthand, context))
+						return true;
+				}
 				else
-					return walker((Node *) sublink->oper, context);
+				{
+					if (walker((Node *) sublink->oper, context))
+						return true;
+				}
+				/*
+				 * Also invoke the walker on the sublink's Query node,
+				 * so it can recurse into the sub-query if it wants to.
+				 */
+				return walker(sublink->subselect, context);
 			}
+			break;
+		case T_Query:
+			/* Do nothing with a sub-Query, per discussion above */
 			break;
 		case T_List:
 			foreach(temp, (List *) node)
@@ -1770,6 +1804,23 @@ bool
 			break;
 		case T_TargetEntry:
 			return walker(((TargetEntry *) node)->expr, context);
+		case T_JoinExpr:
+			{
+				JoinExpr    *join = (JoinExpr *) node;
+
+				if (walker(join->larg, context))
+					return true;
+				if (walker(join->rarg, context))
+					return true;
+				if (walker(join->quals, context))
+					return true;
+				if (walker((Node *) join->colvars, context))
+					return true;
+				/* alias clause, using list, colnames list are deemed
+				 * uninteresting.
+				 */
+			}
+			break;
 		default:
 			elog(ERROR, "expression_tree_walker: Unexpected node type %d",
 				 nodeTag(node));
@@ -1777,6 +1828,37 @@ bool
 	}
 	return false;
 }
+
+/*
+ * query_tree_walker --- initiate a walk of a Query's expressions
+ *
+ * This routine exists just to reduce the number of places that need to know
+ * where all the expression subtrees of a Query are.  Note it can be used
+ * for starting a walk at top level of a Query regardless of whether the
+ * walker intends to descend into subqueries.  It is also useful for
+ * descending into subqueries within a walker.
+ */
+bool
+query_tree_walker(Query *query,
+				  bool (*walker) (),
+				  void *context)
+{
+	Assert(query != NULL && IsA(query, Query));
+
+	if (walker((Node *) query->targetList, context))
+		return true;
+	if (walker(query->qual, context))
+		return true;
+	if (walker(query->havingQual, context))
+		return true;
+	if (walker((Node *) query->jointree, context))
+		return true;
+	/*
+	 * XXX for subselect-in-FROM, may need to examine rtable as well
+	 */
+	return false;
+}
+
 
 /*--------------------
  * expression_tree_mutator() is designed to support routines that make a
@@ -1838,7 +1920,9 @@ bool
  */
 
 Node *
-			expression_tree_mutator(Node *node, Node *(*mutator) (), void *context)
+expression_tree_mutator(Node *node,
+						Node *(*mutator) (),
+						void *context)
 {
 
 	/*
@@ -1866,6 +1950,7 @@ Node *
 		case T_Const:
 		case T_Var:
 		case T_Param:
+		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
 			return (Node *) copyObject(node);
 		case T_Expr:
@@ -2041,6 +2126,20 @@ Node *
 
 				FLATCOPY(newnode, targetentry, TargetEntry);
 				MUTATE(newnode->expr, targetentry->expr, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_JoinExpr:
+			{
+				JoinExpr *join = (JoinExpr *) node;
+				JoinExpr *newnode;
+
+				FLATCOPY(newnode, join, JoinExpr);
+				MUTATE(newnode->larg, join->larg, Node *);
+				MUTATE(newnode->rarg, join->rarg, Node *);
+				MUTATE(newnode->quals, join->quals, Node *);
+				MUTATE(newnode->colvars, join->colvars, List *);
+				/* We do not mutate alias, using, or colnames by default */
 				return (Node *) newnode;
 			}
 			break;

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.58 2000/08/13 02:50:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.59 2000/09/12 21:06:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+#include "parser/parsetree.h"
 #include "utils/memutils.h"
 
 
@@ -41,10 +42,7 @@ static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
  *	  not any fancier features.
  *
  * tlist is the target list the query should produce (NOT root->targetList!)
- * qual is the qualification of the query (likewise!)
  * tuple_fraction is the fraction of tuples we expect will be retrieved
- *
- * qual must already have been converted to implicit-AND form.
  *
  * Note: the Query node now also includes a query_pathkeys field, which
  * is both an input and an output of query_planner().  The input value
@@ -75,9 +73,9 @@ static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
 Plan *
 query_planner(Query *root,
 			  List *tlist,
-			  List *qual,
 			  double tuple_fraction)
 {
+	List	   *normal_qual;
 	List	   *noncachable_qual;
 	List	   *constant_qual;
 	List	   *var_only_tlist;
@@ -96,7 +94,7 @@ query_planner(Query *root,
 		root->query_pathkeys = NIL;		/* signal unordered result */
 
 		/* Make childless Result node to evaluate given tlist. */
-		return (Plan *) make_result(tlist, (Node *) qual, (Plan *) NULL);
+		return (Plan *) make_result(tlist, root->qual, (Plan *) NULL);
 	}
 
 	/*
@@ -111,10 +109,12 @@ query_planner(Query *root,
 	 * noncachable functions but no vars, such as "WHERE random() < 0.5".
 	 * These cannot be treated as normal restriction or join quals, but
 	 * they're not constants either.  Instead, attach them to the qpqual
-	 * of the top-level plan, so that they get evaluated once per potential
+	 * of the top plan, so that they get evaluated once per potential
 	 * output tuple.
 	 */
-	qual = pull_constant_clauses(qual, &noncachable_qual, &constant_qual);
+	normal_qual = pull_constant_clauses((List *) root->qual,
+										&noncachable_qual,
+										&constant_qual);
 
 	/*
 	 * Create a target list that consists solely of (resdom var) target
@@ -132,7 +132,7 @@ query_planner(Query *root,
 	/*
 	 * Choose the best access path and build a plan for it.
 	 */
-	subplan = subplanner(root, var_only_tlist, qual, tuple_fraction);
+	subplan = subplanner(root, var_only_tlist, normal_qual, tuple_fraction);
 
 	/*
 	 * Handle the noncachable quals.
@@ -188,6 +188,8 @@ subplanner(Query *root,
 		   List *qual,
 		   double tuple_fraction)
 {
+	List	   *joined_rels;
+	List	   *brel;
 	RelOptInfo *final_rel;
 	Plan	   *resultplan;
 	MemoryContext mycontext;
@@ -196,7 +198,7 @@ subplanner(Query *root,
 	Path	   *presortedpath;
 
 	/*
-	 * Initialize the targetlist and qualification, adding entries to
+	 * Examine the targetlist and qualifications, adding entries to
 	 * base_rel_list as relation references are found (e.g., in the
 	 * qualification, the targetlist, etc.).  Restrict and join clauses
 	 * are added to appropriate lists belonging to the mentioned
@@ -207,13 +209,29 @@ subplanner(Query *root,
 	root->join_rel_list = NIL;
 	root->equi_key_list = NIL;
 
-	make_var_only_tlist(root, flat_tlist);
+	build_base_rel_tlists(root, flat_tlist);
+	(void) add_join_quals_to_rels(root, (Node *) root->jointree);
+	/* this must happen after add_join_quals_to_rels: */
 	add_restrict_and_join_to_rels(root, qual);
 
 	/*
-	 * Make sure we have RelOptInfo nodes for all relations used.
+	 * Make sure we have RelOptInfo nodes for all relations to be joined.
 	 */
-	add_missing_rels_to_query(root);
+	joined_rels = add_missing_rels_to_query(root, (Node *) root->jointree);
+
+	/*
+	 * Check that the join tree includes all the base relations used in
+	 * the query --- otherwise, the parser or rewriter messed up.
+	 */
+	foreach(brel, root->base_rel_list)
+	{
+		RelOptInfo *baserel = (RelOptInfo *) lfirst(brel);
+		int		relid = lfirsti(baserel->relids);
+
+		if (! ptrMember(baserel, joined_rels))
+			elog(ERROR, "Internal error: no jointree entry for rel %s (%d)",
+				 rt_fetch(relid, root->rtable)->eref->relname, relid);
+	}
 
 	/*
 	 * Use the completed lists of equijoined keys to deduce any implied
@@ -258,12 +276,11 @@ subplanner(Query *root,
 		 * We expect to end up here for a trivial INSERT ... VALUES query
 		 * (which will have a target relation, so it gets past
 		 * query_planner's check for empty range table; but the target rel
-		 * is unreferenced and not marked inJoinSet, so we find there is
-		 * nothing to join).
+		 * is not in the join tree, so we find there is nothing to join).
 		 *
 		 * It's also possible to get here if the query was rewritten by the
-		 * rule processor (creating rangetable entries not marked
-		 * inJoinSet) but the rules either did nothing or were simplified
+		 * rule processor (creating dummy rangetable entries that are not in
+		 * the join tree) but the rules either did nothing or were simplified
 		 * to nothing by constant-expression folding.  So, don't complain.
 		 */
 		root->query_pathkeys = NIL;		/* signal unordered result */

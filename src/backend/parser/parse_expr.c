@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.82 2000/08/08 15:42:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.83 2000/09/12 21:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,41 +157,51 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				{
 					case OP:
 						{
-							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
-							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr,
+															  precedence);
+							Node	   *rexpr = transformExpr(pstate,
+															  a->rexpr,
+															  precedence);
 
 							result = (Node *) make_op(a->opname, lexpr, rexpr);
 						}
 						break;
 					case ISNULL:
 						{
-							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr,
+															  precedence);
 
 							result = ParseFuncOrColumn(pstate,
 													   "nullvalue",
 													   lcons(lexpr, NIL),
 													   false, false,
-												   &pstate->p_last_resno,
 													   precedence);
 						}
 						break;
 					case NOTNULL:
 						{
-							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr,
+															  precedence);
 
 							result = ParseFuncOrColumn(pstate,
 													   "nonnullvalue",
 													   lcons(lexpr, NIL),
 													   false, false,
-												   &pstate->p_last_resno,
 													   precedence);
 						}
 						break;
 					case AND:
 						{
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr,
+															  precedence);
+							Node	   *rexpr = transformExpr(pstate,
+															  a->rexpr,
+															  precedence);
 							Expr	   *expr = makeNode(Expr);
-							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
-							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(lexpr) != BOOLOID)
 								elog(ERROR, "left-hand side of AND is type '%s', not '%s'",
@@ -209,9 +219,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						break;
 					case OR:
 						{
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr,
+															  precedence);
+							Node	   *rexpr = transformExpr(pstate,
+															  a->rexpr,
+															  precedence);
 							Expr	   *expr = makeNode(Expr);
-							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
-							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(lexpr) != BOOLOID)
 								elog(ERROR, "left-hand side of OR is type '%s', not '%s'",
@@ -227,8 +241,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						break;
 					case NOT:
 						{
+							Node	   *rexpr = transformExpr(pstate,
+															  a->rexpr,
+															  precedence);
 							Expr	   *expr = makeNode(Expr);
-							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(rexpr) != BOOLOID)
 								elog(ERROR, "argument to NOT is type '%s', not '%s'",
@@ -254,13 +270,14 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 				/* transform the list of arguments */
 				foreach(args, fn->args)
-					lfirst(args) = transformExpr(pstate, (Node *) lfirst(args), precedence);
+					lfirst(args) = transformExpr(pstate,
+												 (Node *) lfirst(args),
+												 precedence);
 				result = ParseFuncOrColumn(pstate,
 										   fn->funcname,
 										   fn->args,
 										   fn->agg_star,
 										   fn->agg_distinct,
-										   &pstate->p_last_resno,
 										   precedence);
 				break;
 			}
@@ -609,8 +626,7 @@ transformAttr(ParseState *pstate, Attr *att, int precedence)
 {
 	Node	   *basenode;
 
-	basenode = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
-									   precedence);
+	basenode = ParseNestedFuncOrColumn(pstate, att, precedence);
 	return transformIndirection(pstate, basenode, att->indirection);
 }
 
@@ -618,7 +634,6 @@ static Node *
 transformIdent(ParseState *pstate, Ident *ident, int precedence)
 {
 	Node	   *result = NULL;
-	RangeTblEntry *rte;
 
 	/*
 	 * try to find the ident as a relation ... but not if subscripts
@@ -634,14 +649,10 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 	if (result == NULL || precedence == EXPR_COLUMN_FIRST)
 	{
 		/* try to find the ident as a column */
-		if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL)
-		{
-			/* Convert it to a fully qualified Attr, and transform that */
-			Attr	   *att = makeAttr(rte->eref->relname, ident->name);
+		Node   *var = colnameToVar(pstate, ident->name);
 
-			att->indirection = ident->indirection;
-			return transformAttr(pstate, att, precedence);
-		}
+		if (var != NULL)
+			result = transformIndirection(pstate, var, ident->indirection);
 	}
 
 	if (result == NULL)

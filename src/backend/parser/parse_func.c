@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.89 2000/08/24 03:29:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.90 2000/09/12 21:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,19 +64,20 @@ static Oid	agg_select_candidate(Oid typeid, CandidateList candidates);
  ** a tree with of Iter and Func nodes.
  */
 Node *
-ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int precedence)
+ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 {
 	List	   *mutator_iter;
 	Node	   *retval = NULL;
 
 	if (attr->paramNo != NULL)
 	{
-		Param	   *param = (Param *) transformExpr(pstate, (Node *) attr->paramNo, EXPR_RELATION_FIRST);
+		Param	   *param = (Param *) transformExpr(pstate,
+													(Node *) attr->paramNo,
+													EXPR_RELATION_FIRST);
 
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
 								   lcons(param, NIL),
 								   false, false,
-								   curr_resno,
 								   precedence);
 	}
 	else
@@ -88,7 +89,6 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
 								   lcons(ident, NIL),
 								   false, false,
-								   curr_resno,
 								   precedence);
 	}
 
@@ -98,7 +98,6 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(mutator_iter)),
 								   lcons(retval, NIL),
 								   false, false,
-								   curr_resno,
 								   precedence);
 	}
 
@@ -241,17 +240,15 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 Node *
 ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				  bool agg_star, bool agg_distinct,
-				  int *curr_resno, int precedence)
+				  int precedence)
 {
 	Oid			rettype = InvalidOid;
 	Oid			argrelid = InvalidOid;
 	Oid			funcid = InvalidOid;
 	List	   *i = NIL;
 	Node	   *first_arg = NULL;
-	char	   *relname = NULL;
-	char	   *refname = NULL;
+	char	   *refname;
 	Relation	rd;
-	Oid			relid;
 	int			nargs = length(fargs);
 	Func	   *funcnode;
 	Oid			oid_array[FUNC_MAX_ARGS];
@@ -283,81 +280,17 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
 		{
 			Ident	   *ident = (Ident *) first_arg;
-			RangeTblEntry *rte;
-			AttrNumber	attnum;
 
 			/*
 			 * first arg is a relation. This could be a projection.
 			 */
 			refname = ident->name;
 
-			rte = refnameRangeTableEntry(pstate, refname);
-			if (rte == NULL)
-			{
-				rte = addRangeTableEntry(pstate, refname,
-										 makeAttr(refname, NULL),
-										 FALSE, FALSE, TRUE);
-				warnAutoRange(pstate, refname);
-			}
+			retval = qualifiedNameToVar(pstate, refname, funcname, true);
+			if (retval)
+				return retval;
 
-			relname = rte->relname;
-			relid = rte->relid;
-			attnum = InvalidAttrNumber;
-
-			/*
-			 * If the attr isn't a set, just make a var for it.  If it is
-			 * a set, treat it like a function and drop through. Look
-			 * through the explicit column list first, since we now allow
-			 * column aliases. - thomas 2000-02-07
-			 */
-			if (rte->eref->attrs != NULL)
-			{
-				List	   *c;
-
-				/*
-				 * start counting attributes/columns from one. zero is
-				 * reserved for InvalidAttrNumber. - thomas 2000-01-27
-				 */
-				int			i = 1;
-
-				foreach(c, rte->eref->attrs)
-				{
-					char	   *colname = strVal(lfirst(c));
-
-					/* found a match? */
-					if (strcmp(colname, funcname) == 0)
-					{
-						char	   *basename = get_attname(relid, i);
-
-						if (basename != NULL)
-						{
-							funcname = basename;
-							attnum = i;
-						}
-
-						/*
-						 * attnum was initialized to InvalidAttrNumber
-						 * earlier, so no need to reset it if the above
-						 * test fails. - thomas 2000-02-07
-						 */
-						break;
-					}
-					i++;
-				}
-				if (attnum == InvalidAttrNumber)
-					attnum = specialAttNum(funcname);
-			}
-			else
-				attnum = get_attnum(relid, funcname);
-
-			if (attnum != InvalidAttrNumber)
-			{
-				return (Node *) make_var(pstate,
-										 relid,
-										 refname,
-										 funcname);
-			}
-			/* else drop through - attr is a set */
+			/* else drop through - attr is a set or function */
 		}
 		else if (ISCOMPLEX(exprType(first_arg)))
 		{
@@ -376,10 +309,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				toid = exprType(first_arg);
 				rd = heap_openr_nofail(typeidTypeName(toid));
 				if (RelationIsValid(rd))
-				{
-					relname = RelationGetRelationName(rd);
 					heap_close(rd, NoLock);
-				}
 				else
 					elog(ERROR, "Type '%s' is not a relation type",
 						 typeidTypeName(toid));
@@ -506,17 +436,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			rte = refnameRangeTableEntry(pstate, refname);
 			if (rte == NULL)
-			{
-				rte = addRangeTableEntry(pstate, refname,
-										 makeAttr(refname, NULL),
-										 FALSE, FALSE, TRUE);
-				warnAutoRange(pstate, refname);
-			}
+				rte = addImplicitRTE(pstate, refname);
 
-			relname = rte->relname;
-
-			vnum = refnameRangeTablePosn(pstate, rte->eref->relname,
-										 &sublevels_up);
+			vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
 			/*
 			 * for func(relname), the param to the function is the tuple
@@ -525,7 +447,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * but has varattno == 0 to signal that the whole tuple is the
 			 * argument.
 			 */
-			toid = typeTypeId(typenameType(relname));
+			toid = typeTypeId(typenameType(rte->relname));
+
 			/* replace it in the arg list */
 			lfirst(i) = makeVar(vnum, 0, toid, -1, sublevels_up);
 		}
@@ -665,16 +588,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 	/* perform the necessary typecasting of arguments */
 	make_arguments(pstate, nargs, fargs, oid_array, true_oid_array);
-
-	/*
-	 * Special checks to disallow sequence functions with side-effects
-	 * in WHERE clauses.  This is pretty much of a hack; why disallow these
-	 * when we have no way to check for side-effects of user-defined fns?
-	 */
-	if (funcid == F_NEXTVAL && pstate->p_in_where_clause)
-		elog(ERROR, "Sequence function nextval is not allowed in WHERE clauses");
-	if (funcid == F_SETVAL && pstate->p_in_where_clause)
-		elog(ERROR, "Sequence function setval is not allowed in WHERE clauses");
 
 	expr = makeNode(Expr);
 	expr->typeOid = rettype;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.88 2000/08/21 20:55:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.89 2000/09/12 21:06:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "utils/lsyscache.h"
 
 
+static void preprocess_join_conditions(Query *parse, Node *jtnode);
 static List *make_subplanTargetList(Query *parse, List *tlist,
 					   AttrNumber **groupColIdx);
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
@@ -163,6 +164,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 * canonicalize_qual?
 	 */
 	parse->qual = (Node *) canonicalize_qual((Expr *) parse->qual, true);
+
 #ifdef OPTIMIZER_DEBUG
 	printf("After canonicalize_qual()\n");
 	pprint(parse->qual);
@@ -211,6 +213,9 @@ subquery_planner(Query *parse, double tuple_fraction)
 		parse->havingQual = SS_replace_correlation_vars(parse->havingQual);
 	}
 
+	/* Do all the above for each qual condition (ON clause) in the join tree */
+	preprocess_join_conditions(parse, (Node *) parse->jointree);
+
 	/* Do the main planning (potentially recursive) */
 
 	return union_planner(parse, tuple_fraction);
@@ -224,6 +229,58 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 */
 }
 
+/*
+ * preprocess_join_conditions
+ *		Recursively scan the query's jointree and do subquery_planner's
+ *		qual preprocessing work on each ON condition found therein.
+ */
+static void
+preprocess_join_conditions(Query *parse, Node *jtnode)
+{
+	if (jtnode == NULL)
+		return;
+	if (IsA(jtnode, List))
+	{
+		List	   *l;
+
+		foreach(l, (List *) jtnode)
+			preprocess_join_conditions(parse, lfirst(l));
+	}
+	else if (IsA(jtnode, RangeTblRef))
+	{
+		/* nothing to do here */
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		preprocess_join_conditions(parse, j->larg);
+		preprocess_join_conditions(parse, j->rarg);
+
+		/* Simplify constant expressions */
+		j->quals = eval_const_expressions(j->quals);
+
+		/* Canonicalize the qual, and convert it to implicit-AND format */
+		j->quals = (Node *) canonicalize_qual((Expr *) j->quals, true);
+
+		/* Expand SubLinks to SubPlans */
+		if (parse->hasSubLinks)
+		{
+			j->quals = SS_process_sublinks(j->quals);
+			/*
+			 * ON conditions, like WHERE clauses, are evaluated pre-GROUP;
+			 * so we allow ungrouped vars in them.
+			 */
+		}
+
+		/* Replace uplevel vars with Param nodes */
+		if (PlannerQueryLevel > 1)
+			j->quals = SS_replace_correlation_vars(j->quals);
+	}
+	else
+		elog(ERROR, "preprocess_join_conditions: unexpected node type %d",
+			 nodeTag(jtnode));
+}
 
 /*--------------------
  * union_planner
@@ -542,7 +599,6 @@ union_planner(Query *parse,
 		/* Generate the (sub) plan */
 		result_plan = query_planner(parse,
 									sub_tlist,
-									(List *) parse->qual,
 									tuple_fraction);
 
 		/*

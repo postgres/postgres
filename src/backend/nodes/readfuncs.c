@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.95 2000/08/08 15:41:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.96 2000/09/12 21:06:49 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -118,6 +118,9 @@ _readQuery()
 
 	token = lsptok(NULL, &length);		/* skip :rtable */
 	local_node->rtable = nodeRead(true);
+
+	token = lsptok(NULL, &length);		/* skip :jointree */
+	local_node->jointree = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :targetlist */
 	local_node->targetList = nodeRead(true);
@@ -335,14 +338,22 @@ _readAppend()
 
 /* ----------------
  *		_getJoin
- *
- * In case Join is not the same structure as Plan someday.
  * ----------------
  */
 static void
 _getJoin(Join *node)
 {
+	char	   *token;
+	int			length;
+
 	_getPlan((Plan *) node);
+
+	token = lsptok(NULL, &length);		/* skip the :jointype */
+	token = lsptok(NULL, &length);		/* get the jointype */
+	node->jointype = (JoinType) atoi(token);
+
+	token = lsptok(NULL, &length);		/* skip the :joinqual */
+	node->joinqual = nodeRead(true);	/* get the joinqual */
 }
 
 
@@ -399,6 +410,7 @@ _readMergeJoin()
 	local_node = makeNode(MergeJoin);
 
 	_getJoin((Join *) local_node);
+
 	token = lsptok(NULL, &length);		/* eat :mergeclauses */
 	local_node->mergeclauses = nodeRead(true);	/* now read it */
 
@@ -429,19 +441,13 @@ _readHashJoin()
 	token = lsptok(NULL, &length);		/* get hashjoinop */
 	local_node->hashjoinop = strtoul(token, NULL, 10);
 
-	token = lsptok(NULL, &length);		/* eat :hashdone */
-	token = lsptok(NULL, &length);		/* eat hashdone */
-	local_node->hashdone = false;
-
 	return local_node;
 }
 
 /* ----------------
  *		_getScan
  *
- *	Scan is a subclass of Node
- *	(Actually, according to the plannodes.h include file, it is a
- *	subclass of Plan.  This is why _getPlan is used here.)
+ *	Scan is a subclass of Plan.
  *
  *	Scan gets its own get function since stuff inherits it.
  * ----------------
@@ -462,7 +468,7 @@ _getScan(Scan *node)
 /* ----------------
  *		_readScan
  *
- * Scan is a subclass of Plan (Not Node, see above).
+ * Scan is a subclass of Plan.
  * ----------------
  */
 static Scan *
@@ -1154,6 +1160,74 @@ _readRelabelType()
 	return local_node;
 }
 
+/* ----------------
+ *		_readRangeTblRef
+ *
+ *	RangeTblRef is a subclass of Node
+ * ----------------
+ */
+static RangeTblRef *
+_readRangeTblRef()
+{
+	RangeTblRef *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(RangeTblRef);
+
+	token = lsptok(NULL, &length);		/* get rtindex */
+	local_node->rtindex = atoi(token);
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readJoinExpr
+ *
+ *	JoinExpr is a subclass of Node
+ * ----------------
+ */
+static JoinExpr *
+_readJoinExpr()
+{
+	JoinExpr   *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(JoinExpr);
+
+	token = lsptok(NULL, &length);		/* eat :jointype */
+	token = lsptok(NULL, &length);		/* get jointype */
+	local_node->jointype = (JoinType) atoi(token);
+
+	token = lsptok(NULL, &length);		/* eat :isNatural */
+	token = lsptok(NULL, &length);		/* get :isNatural */
+	local_node->isNatural = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* eat :larg */
+	local_node->larg = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :rarg */
+	local_node->rarg = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :using */
+	local_node->using = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :quals */
+	local_node->quals = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :alias */
+	local_node->alias = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :colnames */
+	local_node->colnames = nodeRead(true); /* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :colvars */
+	local_node->colvars = nodeRead(true); /* now read it */
+
+	return local_node;
+}
+
 /*
  *	Stuff from execnodes.h
  */
@@ -1252,7 +1326,14 @@ _readRelOptInfo()
 	local_node->pruneable = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* get :baserestrictinfo */
-	local_node->baserestrictinfo = nodeRead(true);		/* now read it */
+	local_node->baserestrictinfo = nodeRead(true); /* now read it */
+
+	token = lsptok(NULL, &length);		/* get :baserestrictcost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->baserestrictcost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* get :outerjoinset */
+	local_node->outerjoinset = toIntList(nodeRead(true)); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joininfo */
 	local_node->joininfo = nodeRead(true);		/* now read it */
@@ -1324,12 +1405,15 @@ _readRangeTblEntry()
 	else
 		local_node->relname = debackslash(token, length);
 
-	token = lsptok(NULL, &length);		/* eat :ref */
-	local_node->ref = nodeRead(true);	/* now read it */
-
 	token = lsptok(NULL, &length);		/* eat :relid */
 	token = lsptok(NULL, &length);		/* get :relid */
 	local_node->relid = strtoul(token, NULL, 10);
+
+	token = lsptok(NULL, &length);		/* eat :alias */
+	local_node->alias = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :eref */
+	local_node->eref = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :inh */
 	token = lsptok(NULL, &length);		/* get :inh */
@@ -1338,10 +1422,6 @@ _readRangeTblEntry()
 	token = lsptok(NULL, &length);		/* eat :inFromCl */
 	token = lsptok(NULL, &length);		/* get :inFromCl */
 	local_node->inFromCl = (token[0] == 't') ? true : false;
-
-	token = lsptok(NULL, &length);		/* eat :inJoinSet */
-	token = lsptok(NULL, &length);		/* get :inJoinSet */
-	local_node->inJoinSet = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* eat :skipAcl */
 	token = lsptok(NULL, &length);		/* get :skipAcl */
@@ -1444,6 +1524,10 @@ _readIndexPath()
 	token = lsptok(NULL, &length);		/* get :joinrelids */
 	local_node->joinrelids = toIntList(nodeRead(true));
 
+	token = lsptok(NULL, &length);		/* get :alljoinquals */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->alljoinquals = (token[0] == 't') ? true : false;
+
 	token = lsptok(NULL, &length);		/* get :rows */
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->rows = atof(token);
@@ -1520,6 +1604,10 @@ _readNestPath()
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
+	token = lsptok(NULL, &length);		/* get :jointype */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jointype = (JoinType) atoi(token);
+
 	token = lsptok(NULL, &length);		/* get :outerjoinpath */
 	local_node->outerjoinpath = nodeRead(true); /* now read it */
 
@@ -1527,7 +1615,7 @@ _readNestPath()
 	local_node->innerjoinpath = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
-	local_node->joinrestrictinfo = nodeRead(true);		/* now read it */
+	local_node->joinrestrictinfo = nodeRead(true); /* now read it */
 
 	return local_node;
 }
@@ -1562,6 +1650,10 @@ _readMergePath()
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
+	token = lsptok(NULL, &length);		/* get :jointype */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jpath.jointype = (JoinType) atoi(token);
+
 	token = lsptok(NULL, &length);		/* get :outerjoinpath */
 	local_node->jpath.outerjoinpath = nodeRead(true);	/* now read it */
 
@@ -1569,7 +1661,7 @@ _readMergePath()
 	local_node->jpath.innerjoinpath = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
-	local_node->jpath.joinrestrictinfo = nodeRead(true);		/* now read it */
+	local_node->jpath.joinrestrictinfo = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_mergeclauses */
 	local_node->path_mergeclauses = nodeRead(true);		/* now read it */
@@ -1613,6 +1705,10 @@ _readHashPath()
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
+	token = lsptok(NULL, &length);		/* get :jointype */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jpath.jointype = (JoinType) atoi(token);
+
 	token = lsptok(NULL, &length);		/* get :outerjoinpath */
 	local_node->jpath.outerjoinpath = nodeRead(true);	/* now read it */
 
@@ -1620,7 +1716,7 @@ _readHashPath()
 	local_node->jpath.innerjoinpath = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
-	local_node->jpath.joinrestrictinfo = nodeRead(true);		/* now read it */
+	local_node->jpath.joinrestrictinfo = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_hashclauses */
 	local_node->path_hashclauses = nodeRead(true);		/* now read it */
@@ -1671,6 +1767,10 @@ _readRestrictInfo()
 
 	token = lsptok(NULL, &length);		/* get :clause */
 	local_node->clause = nodeRead(true);		/* now read it */
+
+	token = lsptok(NULL, &length);		/* get :isjoinqual */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->isjoinqual = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* get :subclauseindices */
 	local_node->subclauseindices = nodeRead(true);		/* now read it */
@@ -1789,6 +1889,10 @@ parsePlanString(void)
 		return_value = _readFieldSelect();
 	else if (length == 11 && strncmp(token, "RELABELTYPE", length) == 0)
 		return_value = _readRelabelType();
+	else if (length == 11 && strncmp(token, "RANGETBLREF", length) == 0)
+		return_value = _readRangeTblRef();
+	else if (length == 8 && strncmp(token, "JOINEXPR", length) == 0)
+		return_value = _readJoinExpr();
 	else if (length == 3 && strncmp(token, "AGG", length) == 0)
 		return_value = _readAgg();
 	else if (length == 4 && strncmp(token, "HASH", length) == 0)

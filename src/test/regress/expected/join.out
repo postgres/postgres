@@ -1,6 +1,6 @@
 --
 -- JOIN
--- Test join clauses
+-- Test JOIN clauses
 --
 CREATE TABLE J1_TBL (
   i integer,
@@ -28,6 +28,7 @@ INSERT INTO J2_TBL VALUES (1, -1);
 INSERT INTO J2_TBL VALUES (2, 2);
 INSERT INTO J2_TBL VALUES (3, -3);
 INSERT INTO J2_TBL VALUES (2, 4);
+INSERT INTO J2_TBL VALUES (5, -5);
 --
 -- CORRELATION NAMES
 -- Make sure that table/column aliases are supported
@@ -78,22 +79,26 @@ SELECT '' AS "xxx", *
  xxx | a | b |   c   | d | e  
 -----+---+---+-------+---+----
      | 1 | 3 | one   | 1 | -1
-     | 2 | 2 | two   | 1 | -1
-     | 3 | 1 | three | 1 | -1
-     | 4 | 0 | four  | 1 | -1
      | 1 | 3 | one   | 2 |  2
-     | 2 | 2 | two   | 2 |  2
-     | 3 | 1 | three | 2 |  2
-     | 4 | 0 | four  | 2 |  2
      | 1 | 3 | one   | 3 | -3
-     | 2 | 2 | two   | 3 | -3
-     | 3 | 1 | three | 3 | -3
-     | 4 | 0 | four  | 3 | -3
      | 1 | 3 | one   | 2 |  4
+     | 1 | 3 | one   | 5 | -5
+     | 2 | 2 | two   | 1 | -1
+     | 2 | 2 | two   | 2 |  2
+     | 2 | 2 | two   | 3 | -3
      | 2 | 2 | two   | 2 |  4
+     | 2 | 2 | two   | 5 | -5
+     | 3 | 1 | three | 1 | -1
+     | 3 | 1 | three | 2 |  2
+     | 3 | 1 | three | 3 | -3
      | 3 | 1 | three | 2 |  4
+     | 3 | 1 | three | 5 | -5
+     | 4 | 0 | four  | 1 | -1
+     | 4 | 0 | four  | 2 |  2
+     | 4 | 0 | four  | 3 | -3
      | 4 | 0 | four  | 2 |  4
-(16 rows)
+     | 4 | 0 | four  | 5 | -5
+(20 rows)
 
 SELECT '' AS "xxx", t1.a, t2.e
   FROM J1_TBL t1 (a, b, c), J2_TBL t2 (d, e)
@@ -116,58 +121,218 @@ SELECT '' AS "xxx", *
  xxx | i | j |   t   | i | k  
 -----+---+---+-------+---+----
      | 1 | 3 | one   | 1 | -1
-     | 2 | 2 | two   | 1 | -1
-     | 3 | 1 | three | 1 | -1
-     | 4 | 0 | four  | 1 | -1
      | 1 | 3 | one   | 2 |  2
-     | 2 | 2 | two   | 2 |  2
-     | 3 | 1 | three | 2 |  2
-     | 4 | 0 | four  | 2 |  2
      | 1 | 3 | one   | 3 | -3
-     | 2 | 2 | two   | 3 | -3
-     | 3 | 1 | three | 3 | -3
-     | 4 | 0 | four  | 3 | -3
      | 1 | 3 | one   | 2 |  4
+     | 1 | 3 | one   | 5 | -5
+     | 2 | 2 | two   | 1 | -1
+     | 2 | 2 | two   | 2 |  2
+     | 2 | 2 | two   | 3 | -3
      | 2 | 2 | two   | 2 |  4
+     | 2 | 2 | two   | 5 | -5
+     | 3 | 1 | three | 1 | -1
+     | 3 | 1 | three | 2 |  2
+     | 3 | 1 | three | 3 | -3
      | 3 | 1 | three | 2 |  4
+     | 3 | 1 | three | 5 | -5
+     | 4 | 0 | four  | 1 | -1
+     | 4 | 0 | four  | 2 |  2
+     | 4 | 0 | four  | 3 | -3
      | 4 | 0 | four  | 2 |  4
-(16 rows)
+     | 4 | 0 | four  | 5 | -5
+(20 rows)
 
 -- ambiguous column
 SELECT '' AS "xxx", i, k, t
   FROM J1_TBL CROSS JOIN J2_TBL;
-ERROR:  Column 'i' is ambiguous
+ERROR:  Column reference "i" is ambiguous
 -- resolve previous ambiguity by specifying the table name
 SELECT '' AS "xxx", t1.i, k, t
   FROM J1_TBL t1 CROSS JOIN J2_TBL t2;
  xxx | i | k  |   t   
 -----+---+----+-------
      | 1 | -1 | one
-     | 2 | -1 | two
-     | 3 | -1 | three
-     | 4 | -1 | four
      | 1 |  2 | one
-     | 2 |  2 | two
-     | 3 |  2 | three
-     | 4 |  2 | four
      | 1 | -3 | one
-     | 2 | -3 | two
-     | 3 | -3 | three
-     | 4 | -3 | four
      | 1 |  4 | one
+     | 1 | -5 | one
+     | 2 | -1 | two
+     | 2 |  2 | two
+     | 2 | -3 | two
      | 2 |  4 | two
+     | 2 | -5 | two
+     | 3 | -1 | three
+     | 3 |  2 | three
+     | 3 | -3 | three
      | 3 |  4 | three
+     | 3 | -5 | three
+     | 4 | -1 | four
+     | 4 |  2 | four
+     | 4 | -3 | four
      | 4 |  4 | four
-(16 rows)
+     | 4 | -5 | four
+(20 rows)
 
 SELECT '' AS "xxx", ii, tt, kk
   FROM (J1_TBL CROSS JOIN J2_TBL)
     AS tx (ii, jj, tt, ii2, kk);
-ERROR:  JOIN table aliases are not supported
+ xxx | ii |  tt   | kk 
+-----+----+-------+----
+     |  1 | one   | -1
+     |  1 | one   |  2
+     |  1 | one   | -3
+     |  1 | one   |  4
+     |  1 | one   | -5
+     |  2 | two   | -1
+     |  2 | two   |  2
+     |  2 | two   | -3
+     |  2 | two   |  4
+     |  2 | two   | -5
+     |  3 | three | -1
+     |  3 | three |  2
+     |  3 | three | -3
+     |  3 | three |  4
+     |  3 | three | -5
+     |  4 | four  | -1
+     |  4 | four  |  2
+     |  4 | four  | -3
+     |  4 | four  |  4
+     |  4 | four  | -5
+(20 rows)
+
 SELECT '' AS "xxx", tx.ii, tx.jj, tx.kk
   FROM (J1_TBL t1 (a, b, c) CROSS JOIN J2_TBL t2 (d, e))
     AS tx (ii, jj, tt, ii2, kk);
-ERROR:  JOIN table aliases are not supported
+ xxx | ii | jj | kk 
+-----+----+----+----
+     |  1 |  3 | -1
+     |  1 |  3 |  2
+     |  1 |  3 | -3
+     |  1 |  3 |  4
+     |  1 |  3 | -5
+     |  2 |  2 | -1
+     |  2 |  2 |  2
+     |  2 |  2 | -3
+     |  2 |  2 |  4
+     |  2 |  2 | -5
+     |  3 |  1 | -1
+     |  3 |  1 |  2
+     |  3 |  1 | -3
+     |  3 |  1 |  4
+     |  3 |  1 | -5
+     |  4 |  0 | -1
+     |  4 |  0 |  2
+     |  4 |  0 | -3
+     |  4 |  0 |  4
+     |  4 |  0 | -5
+(20 rows)
+
+SELECT '' AS "xxx", *
+  FROM J1_TBL CROSS JOIN J2_TBL a CROSS JOIN J2_TBL b;
+ xxx | i | j |   t   | i | k  | i | k  
+-----+---+---+-------+---+----+---+----
+     | 1 | 3 | one   | 1 | -1 | 1 | -1
+     | 1 | 3 | one   | 1 | -1 | 2 |  2
+     | 1 | 3 | one   | 1 | -1 | 3 | -3
+     | 1 | 3 | one   | 1 | -1 | 2 |  4
+     | 1 | 3 | one   | 1 | -1 | 5 | -5
+     | 1 | 3 | one   | 2 |  2 | 1 | -1
+     | 1 | 3 | one   | 2 |  2 | 2 |  2
+     | 1 | 3 | one   | 2 |  2 | 3 | -3
+     | 1 | 3 | one   | 2 |  2 | 2 |  4
+     | 1 | 3 | one   | 2 |  2 | 5 | -5
+     | 1 | 3 | one   | 3 | -3 | 1 | -1
+     | 1 | 3 | one   | 3 | -3 | 2 |  2
+     | 1 | 3 | one   | 3 | -3 | 3 | -3
+     | 1 | 3 | one   | 3 | -3 | 2 |  4
+     | 1 | 3 | one   | 3 | -3 | 5 | -5
+     | 1 | 3 | one   | 2 |  4 | 1 | -1
+     | 1 | 3 | one   | 2 |  4 | 2 |  2
+     | 1 | 3 | one   | 2 |  4 | 3 | -3
+     | 1 | 3 | one   | 2 |  4 | 2 |  4
+     | 1 | 3 | one   | 2 |  4 | 5 | -5
+     | 1 | 3 | one   | 5 | -5 | 1 | -1
+     | 1 | 3 | one   | 5 | -5 | 2 |  2
+     | 1 | 3 | one   | 5 | -5 | 3 | -3
+     | 1 | 3 | one   | 5 | -5 | 2 |  4
+     | 1 | 3 | one   | 5 | -5 | 5 | -5
+     | 2 | 2 | two   | 1 | -1 | 1 | -1
+     | 2 | 2 | two   | 1 | -1 | 2 |  2
+     | 2 | 2 | two   | 1 | -1 | 3 | -3
+     | 2 | 2 | two   | 1 | -1 | 2 |  4
+     | 2 | 2 | two   | 1 | -1 | 5 | -5
+     | 2 | 2 | two   | 2 |  2 | 1 | -1
+     | 2 | 2 | two   | 2 |  2 | 2 |  2
+     | 2 | 2 | two   | 2 |  2 | 3 | -3
+     | 2 | 2 | two   | 2 |  2 | 2 |  4
+     | 2 | 2 | two   | 2 |  2 | 5 | -5
+     | 2 | 2 | two   | 3 | -3 | 1 | -1
+     | 2 | 2 | two   | 3 | -3 | 2 |  2
+     | 2 | 2 | two   | 3 | -3 | 3 | -3
+     | 2 | 2 | two   | 3 | -3 | 2 |  4
+     | 2 | 2 | two   | 3 | -3 | 5 | -5
+     | 2 | 2 | two   | 2 |  4 | 1 | -1
+     | 2 | 2 | two   | 2 |  4 | 2 |  2
+     | 2 | 2 | two   | 2 |  4 | 3 | -3
+     | 2 | 2 | two   | 2 |  4 | 2 |  4
+     | 2 | 2 | two   | 2 |  4 | 5 | -5
+     | 2 | 2 | two   | 5 | -5 | 1 | -1
+     | 2 | 2 | two   | 5 | -5 | 2 |  2
+     | 2 | 2 | two   | 5 | -5 | 3 | -3
+     | 2 | 2 | two   | 5 | -5 | 2 |  4
+     | 2 | 2 | two   | 5 | -5 | 5 | -5
+     | 3 | 1 | three | 1 | -1 | 1 | -1
+     | 3 | 1 | three | 1 | -1 | 2 |  2
+     | 3 | 1 | three | 1 | -1 | 3 | -3
+     | 3 | 1 | three | 1 | -1 | 2 |  4
+     | 3 | 1 | three | 1 | -1 | 5 | -5
+     | 3 | 1 | three | 2 |  2 | 1 | -1
+     | 3 | 1 | three | 2 |  2 | 2 |  2
+     | 3 | 1 | three | 2 |  2 | 3 | -3
+     | 3 | 1 | three | 2 |  2 | 2 |  4
+     | 3 | 1 | three | 2 |  2 | 5 | -5
+     | 3 | 1 | three | 3 | -3 | 1 | -1
+     | 3 | 1 | three | 3 | -3 | 2 |  2
+     | 3 | 1 | three | 3 | -3 | 3 | -3
+     | 3 | 1 | three | 3 | -3 | 2 |  4
+     | 3 | 1 | three | 3 | -3 | 5 | -5
+     | 3 | 1 | three | 2 |  4 | 1 | -1
+     | 3 | 1 | three | 2 |  4 | 2 |  2
+     | 3 | 1 | three | 2 |  4 | 3 | -3
+     | 3 | 1 | three | 2 |  4 | 2 |  4
+     | 3 | 1 | three | 2 |  4 | 5 | -5
+     | 3 | 1 | three | 5 | -5 | 1 | -1
+     | 3 | 1 | three | 5 | -5 | 2 |  2
+     | 3 | 1 | three | 5 | -5 | 3 | -3
+     | 3 | 1 | three | 5 | -5 | 2 |  4
+     | 3 | 1 | three | 5 | -5 | 5 | -5
+     | 4 | 0 | four  | 1 | -1 | 1 | -1
+     | 4 | 0 | four  | 1 | -1 | 2 |  2
+     | 4 | 0 | four  | 1 | -1 | 3 | -3
+     | 4 | 0 | four  | 1 | -1 | 2 |  4
+     | 4 | 0 | four  | 1 | -1 | 5 | -5
+     | 4 | 0 | four  | 2 |  2 | 1 | -1
+     | 4 | 0 | four  | 2 |  2 | 2 |  2
+     | 4 | 0 | four  | 2 |  2 | 3 | -3
+     | 4 | 0 | four  | 2 |  2 | 2 |  4
+     | 4 | 0 | four  | 2 |  2 | 5 | -5
+     | 4 | 0 | four  | 3 | -3 | 1 | -1
+     | 4 | 0 | four  | 3 | -3 | 2 |  2
+     | 4 | 0 | four  | 3 | -3 | 3 | -3
+     | 4 | 0 | four  | 3 | -3 | 2 |  4
+     | 4 | 0 | four  | 3 | -3 | 5 | -5
+     | 4 | 0 | four  | 2 |  4 | 1 | -1
+     | 4 | 0 | four  | 2 |  4 | 2 |  2
+     | 4 | 0 | four  | 2 |  4 | 3 | -3
+     | 4 | 0 | four  | 2 |  4 | 2 |  4
+     | 4 | 0 | four  | 2 |  4 | 5 | -5
+     | 4 | 0 | four  | 5 | -5 | 1 | -1
+     | 4 | 0 | four  | 5 | -5 | 2 |  2
+     | 4 | 0 | four  | 5 | -5 | 3 | -3
+     | 4 | 0 | four  | 5 | -5 | 2 |  4
+     | 4 | 0 | four  | 5 | -5 | 5 | -5
+(100 rows)
+
 --
 --
 -- Inner joins (equi-joins)
@@ -249,14 +414,6 @@ SELECT '' AS "xxx", *
      | 4 | 0 | four | 2
 (2 rows)
 
-SELECT '' AS "xxx", *
-  FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (d, a);
- xxx | a | b |  c   | d 
------+---+---+------+---
-     | 2 | 2 | two  | 2
-     | 4 | 0 | four | 2
-(2 rows)
-
 -- mismatch number of columns
 -- currently, Postgres will fill in with underlying names
 SELECT '' AS "xxx", *
@@ -290,28 +447,6 @@ SELECT '' AS "xxx", *
      | 4 | 0 | four | 2 | 4
 (2 rows)
 
-SELECT '' AS "xxx", *
-  FROM J1_TBL CROSS JOIN J2_TBL;
- xxx | i | j |   t   | i | k  
------+---+---+-------+---+----
-     | 1 | 3 | one   | 1 | -1
-     | 2 | 2 | two   | 1 | -1
-     | 3 | 1 | three | 1 | -1
-     | 4 | 0 | four  | 1 | -1
-     | 1 | 3 | one   | 2 |  2
-     | 2 | 2 | two   | 2 |  2
-     | 3 | 1 | three | 2 |  2
-     | 4 | 0 | four  | 2 |  2
-     | 1 | 3 | one   | 3 | -3
-     | 2 | 2 | two   | 3 | -3
-     | 3 | 1 | three | 3 | -3
-     | 4 | 0 | four  | 3 | -3
-     | 1 | 3 | one   | 2 |  4
-     | 2 | 2 | two   | 2 |  4
-     | 3 | 1 | three | 2 |  4
-     | 4 | 0 | four  | 2 |  4
-(16 rows)
-
 --
 -- Non-equi-joins
 --
@@ -320,8 +455,8 @@ SELECT '' AS "xxx", *
  xxx | i | j |   t   | i | k 
 -----+---+---+-------+---+---
      | 1 | 3 | one   | 2 | 2
-     | 2 | 2 | two   | 2 | 2
      | 1 | 3 | one   | 2 | 4
+     | 2 | 2 | two   | 2 | 2
      | 2 | 2 | two   | 2 | 4
      | 3 | 1 | three | 2 | 4
      | 4 | 0 | four  | 2 | 4
@@ -331,20 +466,47 @@ SELECT '' AS "xxx", *
 -- Outer joins
 --
 SELECT '' AS "xxx", *
-  FROM J1_TBL OUTER JOIN J2_TBL USING (i);
-ERROR:  OUTER JOIN is not yet supported
-SELECT '' AS "xxx", *
   FROM J1_TBL LEFT OUTER JOIN J2_TBL USING (i);
-ERROR:  OUTER JOIN is not yet supported
+ xxx | i | j |   t   | k  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+     | 4 | 0 | four  |   
+(5 rows)
+
 SELECT '' AS "xxx", *
   FROM J1_TBL RIGHT OUTER JOIN J2_TBL USING (i);
-ERROR:  OUTER JOIN is not yet supported
+ xxx | i | j |   t   | k  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+     | 5 |   |       | -5
+(5 rows)
+
+-- Note that OUTER is a noise word
 SELECT '' AS "xxx", *
-  FROM J1_TBL FULL OUTER JOIN J2_TBL USING (i);
-ERROR:  OUTER JOIN is not yet supported
+  FROM J1_TBL FULL JOIN J2_TBL USING (i);
+ xxx | i | j |   t   | k  
+-----+---+---+-------+----
+     | 1 | 3 | one   | -1
+     | 2 | 2 | two   |  2
+     | 2 | 2 | two   |  4
+     | 3 | 1 | three | -3
+     | 4 | 0 | four  |   
+     | 5 |   |       | -5
+(6 rows)
+
 --
 -- More complicated constructs
 --
+-- UNION JOIN isn't implemented yet
+SELECT '' AS "xxx", *
+  FROM J1_TBL UNION JOIN J2_TBL;
+ERROR:  UNION JOIN is not implemented yet
 --
 -- Clean up
 --

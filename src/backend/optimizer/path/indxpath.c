@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.94 2000/08/24 03:29:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.95 2000/09/12 21:06:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1482,7 +1482,9 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 	{
 		List	   *clausegroup = lfirst(i);
 		IndexPath  *pathnode = makeNode(IndexPath);
-		List	   *indexquals;
+		List	   *indexquals = NIL;
+		bool		alljoinquals = true;
+		List	   *temp;
 
 		/* XXX this code ought to be merged with create_index_path? */
 
@@ -1496,7 +1498,16 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 		 */
 		pathnode->path.pathkeys = NIL;
 
-		indexquals = get_actual_clauses(clausegroup);
+		/* extract bare indexqual clauses, check whether all from JOIN/ON */
+		foreach(temp, clausegroup)
+		{
+			RestrictInfo *clause = (RestrictInfo *) lfirst(temp);
+
+			indexquals = lappend(indexquals, clause->clause);
+			if (! clause->isjoinqual)
+				alljoinquals = false;
+		}
+
 		/* expand special operators to indexquals the executor can handle */
 		indexquals = expand_indexqual_conditions(indexquals);
 
@@ -1513,6 +1524,8 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 
 		/* joinrelids saves the rels needed on the outer side of the join */
 		pathnode->joinrelids = lfirst(outerrelids_list);
+
+		pathnode->alljoinquals = alljoinquals;
 
 		/*
 		 * We must compute the estimated number of output rows for the

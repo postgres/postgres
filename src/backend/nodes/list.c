@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.32 2000/06/09 01:44:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.33 2000/09/12 21:06:49 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -351,6 +351,25 @@ member(void *l1, List *l2)
 	return false;
 }
 
+/*
+ * like member(), but use when pointer-equality comparison is sufficient
+ */
+bool
+ptrMember(void *l1, List *l2)
+{
+	List	   *i;
+
+	foreach(i, l2)
+	{
+		if (l1 == ((void *) lfirst(i)))
+			return true;
+	}
+	return false;
+}
+
+/*
+ * membership test for integer lists
+ */
 bool
 intMember(int l1, List *l2)
 {

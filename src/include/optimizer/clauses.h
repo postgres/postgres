@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.38 2000/08/13 02:50:26 tgl Exp $
+ * $Id: clauses.h,v 1.39 2000/09/12 21:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,9 +73,11 @@ extern void CommuteClause(Expr *clause);
 extern Node *eval_const_expressions(Node *node);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
-											   void *context);
+								   void *context);
 extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
-												 void *context);
+									 void *context);
+extern bool query_tree_walker(Query *query, bool (*walker) (),
+							  void *context);
 
 #define is_subplan(clause)	((clause) != NULL && \
 							 IsA(clause, Expr) && \

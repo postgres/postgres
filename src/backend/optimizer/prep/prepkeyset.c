@@ -107,6 +107,7 @@ transformKeySetQuery(Query *origNode)
 		Node_Copy(origNode, unionNode, distinctClause);
 		Node_Copy(origNode, unionNode, sortClause);
 		Node_Copy(origNode, unionNode, rtable);
+		Node_Copy(origNode, unionNode, jointree);
 		Node_Copy(origNode, unionNode, targetList);
 
 		origNode->unionClause = lappend(origNode->unionClause, unionNode);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.51 2000/06/20 04:22:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.52 2000/09/12 21:06:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -528,12 +528,9 @@ fix_parsetree_attnums(Index rt_index,
 	context.new_relid = new_relid;
 	context.sublevels_up = 0;
 
-	/*
-	 * We must scan both the targetlist and qual, but we know the
-	 * havingQual is empty, so we can ignore it.
-	 */
-	fix_parsetree_attnums_walker((Node *) parsetree->targetList, &context);
-	fix_parsetree_attnums_walker((Node *) parsetree->qual, &context);
+	query_tree_walker(parsetree,
+					  fix_parsetree_attnums_walker,
+					  (void *) &context);
 }
 
 /*
@@ -565,38 +562,17 @@ fix_parsetree_attnums_walker(Node *node,
 		}
 		return false;
 	}
-	if (IsA(node, SubLink))
-	{
-
-		/*
-		 * Standard expression_tree_walker will not recurse into
-		 * subselect, but here we must do so.
-		 */
-		SubLink    *sub = (SubLink *) node;
-
-		if (fix_parsetree_attnums_walker((Node *) (sub->lefthand), context))
-			return true;
-		context->sublevels_up++;
-		if (fix_parsetree_attnums_walker((Node *) (sub->subselect), context))
-		{
-			context->sublevels_up--;
-			return true;
-		}
-		context->sublevels_up--;
-		return false;
-	}
 	if (IsA(node, Query))
 	{
-		/* Reach here after recursing down into subselect above... */
-		Query	   *qry = (Query *) node;
+		/* Recurse into subselects */
+		bool		result;
 
-		if (fix_parsetree_attnums_walker((Node *) (qry->targetList), context))
-			return true;
-		if (fix_parsetree_attnums_walker((Node *) (qry->qual), context))
-			return true;
-		if (fix_parsetree_attnums_walker((Node *) (qry->havingQual), context))
-			return true;
-		return false;
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   fix_parsetree_attnums_walker,
+								   (void *) context);
+		context->sublevels_up--;
+		return result;
 	}
 	return expression_tree_walker(node, fix_parsetree_attnums_walker,
 								  (void *) context);
