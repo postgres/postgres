@@ -1,13 +1,10 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.68 2003/03/25 16:15:35 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.69 2003/04/15 13:23:35 petere Exp $
  -->
 
 <chapter id="catalogs">
  <title>System Catalogs</title>
-
- <sect1 id="catalogs-overview">
-  <title>Overview</title>
 
   <para>
    The system catalogs are the place where a relational database
@@ -16,21 +13,30 @@
    <productname>PostgreSQL</productname>'s system catalogs are regular
    tables.  You can drop and recreate the tables, add columns, insert
    and update values, and severely mess up your system that way.
-   Normally one should not change the system catalogs by hand, there
+   Normally, one should not change the system catalogs by hand, there
    are always SQL commands to do that.  (For example, <command>CREATE
    DATABASE</command> inserts a row into the
-   <structname>pg_database</structname> catalog -- and actually
+   <structname>pg_database</structname> catalog --- and actually
    creates the database on disk.)  There are some exceptions for
-   especially esoteric operations, such as adding index access methods.
+   particularly esoteric operations, such as adding index access methods.
   </para>
+
+ <sect1 id="catalogs-overview">
+  <title>Overview</title>
+
+  <para>
+   <xref linkend="catalog-table"> lists the system catalogs.
+   More detailed documentation of each catalog follows below.
+  </para>
+
   <para>
    Most system catalogs are copied from the template database during
-   database creation, and are thereafter database-specific. A few
-   catalogs are physically shared across all databases in an installation;
+   database creation and are thereafter database-specific. A few
+   catalogs are physically shared across all databases in a cluster;
    these are marked in the descriptions of the individual catalogs.
   </para>
 
-  <table>
+  <table id="catalog-table">
    <title>System Catalogs</title>
 
    <tgroup cols="2">
@@ -43,185 +49,159 @@
 
     <tbody>
      <row>
-      <entry><link linkend="catalog-pg-aggregate">
-       <database class="table">pg_aggregate</database></link></entry>
+      <entry><link linkend="catalog-pg-aggregate"><structname>pg_aggregate</structname></link></entry>
       <entry>aggregate functions</entry>
      </row>
 
      <row>
-      <entry>pg_am</entry>
+      <entry><link linkend="catalog-pg-am"><structname>pg_am</structname></link></entry>
       <entry>index access methods</entry>
      </row>
 
      <row>
-      <entry>pg_amop</entry>
+      <entry><link linkend="catalog-pg-amop"><structname>pg_amop</structname></link></entry>
       <entry>access method operators</entry>
      </row>
 
      <row>
-      <entry>pg_amproc</entry>
+      <entry><link linkend="catalog-pg-amproc"><structname>pg_amproc</structname></link></entry>
       <entry>access method support procedures</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-attrdef">
-       <database class="table">pg_attrdef</database></link></entry>
+      <entry><link linkend="catalog-pg-attrdef"><structname>pg_attrdef</structname></link></entry>
       <entry>column default values</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-attribute">
-       <database class="table">pg_attribute</database></link></entry>
-      <entry>table columns (<quote>attributes</quote>, <quote>fields</quote>)</entry>
+      <entry><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link></entry>
+      <entry>table columns (<quote>attributes</quote>)</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-cast">
-       <database class="table">pg_cast</database></link></entry>
+      <entry><link linkend="catalog-pg-cast"><structname>pg_cast</structname></link></entry>
       <entry>casts (data type conversions)</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-class">
-       <database class="table">pg_class</database></link></entry>
+      <entry><link linkend="catalog-pg-class"><structname>pg_class</structname></link></entry>
       <entry>tables, indexes, sequences (<quote>relations</quote>)</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-constraint">
-       <database class="table">pg_constraint</database></link></entry>
-      <entry>check constraints, unique / primary key constraints, foreign key constraints</entry>
+      <entry><link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link></entry>
+      <entry>check constraints, unique constraints, primary key constraints, foreign key constraints</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-conversion">
-       <database class="table">pg_conversion</database></link></entry>
+      <entry><link linkend="catalog-pg-conversion"><structname>pg_conversion</structname></link></entry>
       <entry>encoding conversion information</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-database">
-       <database class="table">pg_database</database></link></entry>
+      <entry><link linkend="catalog-pg-database"><structname>pg_database</structname></link></entry>
       <entry>databases within this database cluster</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-depend">
-       <database class="table">pg_depend</database></link></entry>
+      <entry><link linkend="catalog-pg-depend"><structname>pg_depend</structname></link></entry>
       <entry>dependencies between database objects</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-description">
-       <database class="table">pg_description</database></link></entry>
+      <entry><link linkend="catalog-pg-description"><structname>pg_description</structname></link></entry>
       <entry>descriptions or comments on database objects</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-group">
-       <database class="table">pg_group</database></link></entry>
+      <entry><link linkend="catalog-pg-group"><structname>pg_group</structname></link></entry>
       <entry>groups of database users</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-index">
-       <database class="table">pg_index</database></link></entry>
+      <entry><link linkend="catalog-pg-index"><structname>pg_index</structname></link></entry>
       <entry>additional index information</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-inherits">
-       <database class="table">pg_inherits</database></link></entry>
+      <entry><link linkend="catalog-pg-inherits"><structname>pg_inherits</structname></link></entry>
       <entry>table inheritance hierarchy</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-language">
-       <database class="table">pg_language</database></link></entry>
+      <entry><link linkend="catalog-pg-language"><structname>pg_language</structname></link></entry>
       <entry>languages for writing functions</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-largeobject">
-       <database class="table">pg_largeobject</database></link></entry>
+      <entry><link linkend="catalog-pg-largeobject"><structname>pg_largeobject</structname></link></entry>
       <entry>large objects</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-listener">
-       <database class="table">pg_listener</database></link></entry>
-      <entry>asynchronous notification</entry>
+      <entry><link linkend="catalog-pg-listener"><structname>pg_listener</structname></link></entry>
+      <entry>asynchronous notification support</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-namespace">
-       <database class="table">pg_namespace</database></link></entry>
-      <entry>namespaces (schemas)</entry>
+      <entry><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link></entry>
+      <entry>schemas</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-opclass">
-       <database class="table">pg_opclass</database></link></entry>
+      <entry><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link></entry>
       <entry>index access method operator classes</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-operator">
-       <database class="table">pg_operator</database></link></entry>
+      <entry><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link></entry>
       <entry>operators</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-proc">
-       <database class="table">pg_proc</database></link></entry>
+      <entry><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link></entry>
       <entry>functions and procedures</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-rewrite">
-       <database class="table">pg_rewrite</database></link></entry>
-      <entry>query rewriter rules</entry>
+      <entry><link linkend="catalog-pg-rewrite"><structname>pg_rewrite</structname></link></entry>
+      <entry>query rewrite rules</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-shadow">
-       <database class="table">pg_shadow</database></link></entry>
+      <entry><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link></entry>
       <entry>database users</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-statistic">
-       <database class="table">pg_statistic</database></link></entry>
-      <entry>optimizer statistics</entry>
+      <entry><link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link></entry>
+      <entry>planner statistics</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-trigger">
-       <database class="table">pg_trigger</database></link></entry>
+      <entry><link linkend="catalog-pg-trigger"><structname>pg_trigger</structname></link></entry>
       <entry>triggers</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-type">
-       <database class="table">pg_type</database></link></entry>
+      <entry><link linkend="catalog-pg-type"><structname>pg_type</structname></link></entry>
       <entry>data types</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
-
-  <para>
-   More detailed documentation of each catalog follows below.
-  </para>
-
  </sect1>
 
 
  <sect1 id="catalog-pg-aggregate">
-  <title>pg_aggregate</title>
+  <title><structname>pg_aggregate</structname></title>
+
+  <indexterm zone="catalog-pg-aggregate">
+   <primary>pg_aggregate</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_aggregate</structname> stores information about
+   The catalog <structname>pg_aggregate</structname> stores information about
    aggregate functions.  An aggregate function is a function that
    operates on a set of values (typically one column from each row
    that matches a query condition) and returns a single value computed
@@ -230,12 +210,12 @@
    <function>max</function>.  Each entry in
    <structname>pg_aggregate</structname> is an extension of an entry
    in <structname>pg_proc</structname>.  The <structname>pg_proc</structname>
-   entry carries the aggregate's name, input and output datatypes, and
+   entry carries the aggregate's name, input and output data types, and
    other information that is similar to ordinary functions.
   </para>
 
   <table>
-   <title>pg_aggregate Columns</title>
+   <title><structname>pg_aggregate</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -248,38 +228,38 @@
     </thead>
     <tbody>
      <row>
-      <entry>aggfnoid</entry>
+      <entry><structfield>aggfnoid</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry>pg_proc OID of the aggregate function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><structname>pg_proc</structname> OID of the aggregate function</entry>
      </row>
      <row>
-      <entry>aggtransfn</entry>
+      <entry><structfield>aggtransfn</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>Transition function</entry>
      </row>
      <row>
-      <entry>aggfinalfn</entry>
+      <entry><structfield>aggfinalfn</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>Final function (zero if none)</entry>
      </row>
      <row>
-      <entry>aggtranstype</entry>
+      <entry><structfield>aggtranstype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>The type of the aggregate function's internal transition (state) data</entry>
      </row>
      <row>
-      <entry>agginitval</entry>
+      <entry><structfield>agginitval</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>
        The initial value of the transition state.  This is a text
        field containing the initial value in its external string
-       representation.  If the field is NULL, the transition state
-       value starts out NULL.
+       representation.  If the value is null, the transition state
+       value starts out null.
       </entry>
      </row>
     </tbody>
@@ -297,16 +277,20 @@
 
 
  <sect1 id="catalog-pg-am">
-  <title>pg_am</title>
+  <title><structname>pg_am</structname></title>
+
+  <indexterm zone="catalog-pg-am">
+   <primary>pg_am</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_am</structname> stores information about index access
+   The catalog <structname>pg_am</structname> stores information about index access
    methods.  There is one row for each index access method supported by
    the system.
   </para>
 
   <table>
-   <title>pg_am Columns</title>
+   <title><structname>pg_am</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -320,144 +304,144 @@
     <tbody>
 
      <row>
-      <entry>amname</entry>
+      <entry><structfield>amname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>name of the access method</entry>
+      <entry>Name of the access method</entry>
      </row>
 
      <row>
-      <entry>amowner</entry>
+      <entry><structfield>amowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>user ID of the owner (currently not used)</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry>User ID of the owner (currently not used)</entry>
      </row>
 
      <row>
-      <entry>amstrategies</entry>
+      <entry><structfield>amstrategies</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>number of operator strategies for this access method</entry>
+      <entry>Number of operator strategies for this access method</entry>
      </row>
 
      <row>
-      <entry>amsupport</entry>
+      <entry><structfield>amsupport</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>number of support routines for this access method</entry>
+      <entry>Number of support routines for this access method</entry>
      </row>
 
      <row>
-      <entry>amorderstrategy</entry>
+      <entry><structfield>amorderstrategy</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>zero if the index offers no sort order, otherwise the strategy
+      <entry>Zero if the index offers no sort order, otherwise the strategy
       number of the strategy operator that describes the sort order</entry>
      </row>
 
      <row>
-      <entry>amcanunique</entry>
+      <entry><structfield>amcanunique</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>does AM support unique indexes?</entry>
+      <entry>Does the access method support unique indexes?</entry>
      </row>
 
      <row>
-      <entry>amcanmulticol</entry>
+      <entry><structfield>amcanmulticol</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>does AM support multicolumn indexes?</entry>
+      <entry>Does the access method support multicolumn indexes?</entry>
      </row>
 
      <row>
-      <entry>amindexnulls</entry>
+      <entry><structfield>amindexnulls</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>does AM support NULL index entries?</entry>
+      <entry>Does the access method support null index entries?</entry>
      </row>
 
      <row>
-      <entry>amconcurrent</entry>
+      <entry><structfield>amconcurrent</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>does AM support concurrent updates?</entry>
+      <entry>Does the access method support concurrent updates?</entry>
      </row>
 
      <row>
-      <entry>amgettuple</entry>
+      <entry><structfield>amgettuple</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry><quote>next valid tuple</quote> function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><quote>Next valid tuple</quote> function</entry>
      </row>
 
      <row>
-      <entry>aminsert</entry>
+      <entry><structfield>aminsert</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry><quote>insert this tuple</quote> function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><quote>Insert this tuple</quote> function</entry>
      </row>
 
      <row>
-      <entry>ambeginscan</entry>
+      <entry><structfield>ambeginscan</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry><quote>start new scan</quote> function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><quote>Start new scan</quote> function</entry>
      </row>
 
      <row>
-      <entry>amrescan</entry>
+      <entry><structfield>amrescan</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry><quote>restart this scan</quote> function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><quote>Restart this scan</quote> function</entry>
      </row>
 
      <row>
-      <entry>amendscan</entry>
+      <entry><structfield>amendscan</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry><quote>end this scan</quote> function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><quote>End this scan</quote> function</entry>
      </row>
 
      <row>
-      <entry>ammarkpos</entry>
+      <entry><structfield>ammarkpos</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry><quote>mark current scan position</quote> function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><quote>Mark current scan position</quote> function</entry>
      </row>
 
      <row>
-      <entry>amrestrpos</entry>
+      <entry><structfield>amrestrpos</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry><quote>restore marked scan position</quote> function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><quote>Restore marked scan position</quote> function</entry>
      </row>
 
      <row>
-      <entry>ambuild</entry>
+      <entry><structfield>ambuild</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry><quote>build new index</quote> function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><quote>Build new index</quote> function</entry>
      </row>
 
      <row>
-      <entry>ambulkdelete</entry>
+      <entry><structfield>ambulkdelete</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry>bulk-delete function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry>Bulk-delete function</entry>
      </row>
 
      <row>
-      <entry>amvacuumcleanup</entry>
+      <entry><structfield>amvacuumcleanup</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry>post-VACUUM cleanup function</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry>Post-<command>VACUUM</command> cleanup function</entry>
      </row>
 
      <row>
-      <entry>amcostestimate</entry>
+      <entry><structfield>amcostestimate</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry>estimate cost of an indexscan</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry>Function to estimate cost of an index scan</entry>
      </row>
 
     </tbody>
@@ -465,33 +449,37 @@
   </table>
 
    <para>
-    An index AM that supports multiple columns (has
+    An index access method that supports multiple columns (has
     <structfield>amcanmulticol</structfield> true) <emphasis>must</>
-    support indexing nulls in columns after the first, because the planner
+    support indexing null values in columns after the first, because the planner
     will assume the index can be used for queries on just the first
-    column(s).  For example, consider an index on (a,b) and a query
-    WHERE a = 4.  The system will assume the index can be used to scan for
-    rows with a = 4, which is wrong if the index omits rows where b is null.
-    However it is okay to omit rows where the first indexed column is null.
+    column(s).  For example, consider an index on (a,b) and a query with
+    <literal>WHERE a = 4</literal>.  The system will assume the index can be used to scan for
+    rows with <literal>a = 4</literal>, which is wrong if the index omits rows where <literal>b</> is null.
+    It is, however, OK to omit rows where the first indexed column is null.
     (GiST currently does so.)
     <structfield>amindexnulls</structfield> should be set true only if the
-    index AM indexes all rows, including arbitrary combinations of nulls.
+    index access method indexes all rows, including arbitrary combinations of null values.
    </para>
 
  </sect1>
 
 
  <sect1 id="catalog-pg-amop">
-  <title>pg_amop</title>
+  <title><structname>pg_amop</structname></title>
+
+  <indexterm zone="catalog-pg-amop">
+   <primary>pg_amop</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_amop</structname> stores information about operators
+   The catalog <structname>pg_amop</structname> stores information about operators
    associated with index access method operator classes.  There is one
    row for each operator that is a member of an operator class.
   </para>
 
   <table>
-   <title>pg_amop Columns</title>
+   <title><structname>pg_amop</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -505,31 +493,31 @@
     <tbody>
 
      <row>
-      <entry>amopclaid</entry>
+      <entry><structfield>amopclaid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_opclass.oid</entry>
-      <entry>the index opclass this entry is for</entry>
+      <entry><literal>pg_opclass.oid</literal></entry>
+      <entry>The index operator class this entry is for</entry>
      </row>
 
      <row>
-      <entry>amopstrategy</entry>
+      <entry><structfield>amopstrategy</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>operator strategy number</entry>
+      <entry>Operator strategy number</entry>
      </row>
 
      <row>
-      <entry>amopreqcheck</entry>
+      <entry><structfield>amopreqcheck</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>index hit must be rechecked</entry>
+      <entry>Index hit must be rechecked</entry>
      </row>
 
      <row>
-      <entry>amopopr</entry>
+      <entry><structfield>amopopr</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_operator.oid</entry>
-      <entry>the operator's pg_operator OID</entry>
+      <entry><literal>pg_operator.oid</literal></entry>
+      <entry>OID of the operator</entry>
      </row>
 
     </tbody>
@@ -540,17 +528,21 @@
 
 
  <sect1 id="catalog-pg-amproc">
-  <title>pg_amproc</title>
+  <title><structname>pg_amproc</structname></title>
+
+  <indexterm zone="catalog-pg-amproc">
+   <primary>pg_amproc</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_amproc</structname> stores information about support
+   The catalog <structname>pg_amproc</structname> stores information about support
    procedures
    associated with index access method operator classes.  There is one
    row for each support procedure belonging to an operator class.
   </para>
 
   <table>
-   <title>pg_amproc Columns</title>
+   <title><structname>pg_amproc</structname> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -564,24 +556,24 @@
     <tbody>
 
      <row>
-      <entry>amopclaid</entry>
+      <entry><structfield>amopclaid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_opclass.oid</entry>
-      <entry>the index opclass this entry is for</entry>
+      <entry><literal>pg_opclass.oid</literal></entry>
+      <entry>The index operator class this entry is for</entry>
      </row>
 
      <row>
-      <entry>amprocnum</entry>
+      <entry><structfield>amprocnum</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>support procedure index</entry>
+      <entry>Support procedure number</entry>
      </row>
 
      <row>
-      <entry>amproc</entry>
+      <entry><structfield>amproc</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry>OID of the proc</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
+      <entry>OID of the procedure</entry>
      </row>
 
     </tbody>
@@ -592,10 +584,14 @@
 
 
  <sect1 id="catalog-pg-attrdef">
-  <title>pg_attrdef</title>
+  <title><structname>pg_attrdef</structname></title>
+
+  <indexterm zone="catalog-pg-attrdef">
+   <primary>pg_attrdef</primary>
+  </indexterm>
 
   <para>
-   This catalog stores column default values.  The main information
+   The catalog <structname>pg_attrdef</structname> stores column default values.  The main information
    about columns is stored in <structname>pg_attribute</structname>
    (see below).  Only columns that explicitly specify a default value
    (when the table is created or the column is added) will have an
@@ -603,7 +599,7 @@
   </para>
 
   <table>
-   <title>pg_attrdef Columns</title>
+   <title><structname>pg_attrdef</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -617,28 +613,28 @@
 
     <tbody>
      <row>
-      <entry>adrelid</entry>
+      <entry><structfield>adrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>The table this column belongs to</entry>
      </row>
 
      <row>
-      <entry>adnum</entry>
+      <entry><structfield>adnum</structfield></entry>
       <entry><type>int2</type></entry>
-      <entry>pg_attribute.attnum</entry>
+      <entry><literal>pg_attribute.attnum</literal></entry>
       <entry>The number of the column</entry>
      </row>
 
      <row>
-      <entry>adbin</entry>
+      <entry><structfield>adbin</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>An internal representation of the column default value</entry>
+      <entry>The internal representation of the column default value</entry>
      </row>
 
      <row>
-      <entry>adsrc</entry>
+      <entry><structfield>adsrc</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>A human-readable representation of the default value</entry>
@@ -651,10 +647,14 @@
 
 
  <sect1 id="catalog-pg-attribute">
-  <title>pg_attribute</title>
+  <title><structname>pg_attribute</structname></title>
+
+  <indexterm zone="catalog-pg-attribute">
+   <primary>pg_attribute</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_attribute</structname> stores information about
+   The catalog <structname>pg_attribute</structname> stores information about
    table columns.  There will be exactly one
    <structname>pg_attribute</structname> row for every column in every
    table in the database.  (There will also be attribute entries for
@@ -667,7 +667,7 @@
   </para>
 
   <table>
-   <title>pg_attribute Columns</title>
+   <title><structname>pg_attribute</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -681,28 +681,28 @@
 
     <tbody>
      <row>
-      <entry>attrelid</entry>
+      <entry><structfield>attrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>The table this column belongs to</entry>
      </row>
 
      <row>
-      <entry>attname</entry>
+      <entry><structfield>attname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>Column name</entry>
+      <entry>The column name</entry>
      </row>
 
      <row>
-      <entry>atttypid</entry>
+      <entry><structfield>atttypid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>The data type of this column</entry>
      </row>
 
      <row>
-      <entry>attstattarget</entry>
+      <entry><structfield>attstattarget</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
@@ -711,26 +711,25 @@
        <command>ANALYZE</command>.
        A zero value indicates that no statistics should be collected.
        A negative value says to use the system default statistics target.
-       The exact meaning of positive values is datatype-dependent.
-       For scalar datatypes, <structfield>attstattarget</structfield>
+       The exact meaning of positive values is data type-dependent.
+       For scalar data types, <structfield>attstattarget</structfield>
        is both the target number of <quote>most common values</quote>
        to collect, and the target number of histogram bins to create.
       </entry>
      </row>
 
      <row>
-      <entry>attlen</entry>
+      <entry><structfield>attlen</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
-       This is a copy of
-       <structname>pg_type</structname>.<structfield>typlen</structfield>
-       of this column's type.
+       A copy of <literal>pg_type.typlen</literal> of this column's
+       type
       </entry>
      </row>
 
      <row>
-      <entry>attnum</entry>
+      <entry><structfield>attnum</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
@@ -741,7 +740,7 @@
      </row>
 
      <row>
-      <entry>attndims</entry>
+      <entry><structfield>attndims</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
@@ -752,7 +751,7 @@
      </row>
 
      <row>
-      <entry>attcacheoff</entry>
+      <entry><structfield>attcacheoff</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
@@ -763,7 +762,7 @@
      </row>
 
      <row>
-      <entry>atttypmod</entry>
+      <entry><structfield>atttypmod</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
@@ -771,35 +770,32 @@
        supplied at table creation time (for example, the maximum
        length of a <type>varchar</type> column).  It is passed to
        type-specific input functions and length coercion functions.
-       The value will generally be -1 for types that do not need typmod.
+       The value will generally be -1 for types that do not need <structfield>atttypmod</>.
       </entry>
      </row>
 
      <row>
-      <entry>attbyval</entry>
+      <entry><structfield>attbyval</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       A copy of
-       <structname>pg_type</structname>.<structfield>typbyval</structfield>
-       of this column's type
+       A copy of <literal>pg_type.typbyval</> of this column's type
       </entry>
      </row>
 
      <row>
-      <entry>attstorage</entry>
+      <entry><structfield>attstorage</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Normally a copy of
-       <structname>pg_type</structname>.<structfield>typstorage</structfield>
-       of this column's type.  For TOASTable datatypes, this can be altered
+       Normally a copy of <literal>pg_type.typstorage</> of this
+       column's type.  For TOAST-able data types, this can be altered
        after column creation to control storage policy.
       </entry>
      </row>
 
      <row>
-      <entry>attisset</entry>
+      <entry><structfield>attisset</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -807,7 +803,7 @@
        stored in the attribute is the OID of a tuple in the
        <structname>pg_proc</structname> catalog.  The
        <structname>pg_proc</structname> tuple contains the query
-       string that defines this set - i.e., the query to run to get
+       string that defines this set, i.e., the query to run to get
        the set.  So the <structfield>atttypid</structfield> (see
        above) refers to the type returned by this query, but the
        actual length of this attribute is the length (size) of an
@@ -817,28 +813,26 @@
      </row>
 
      <row>
-      <entry>attalign</entry>
+      <entry><structfield>attalign</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       A copy of
-       <structname>pg_type</structname>.<structfield>typalign</structfield>
-       of this column's type
+       A copy of <literal>pg_type.typalign</> of this column's type
       </entry>
      </row>
 
      <row>
-      <entry>attnotnull</entry>
+      <entry><structfield>attnotnull</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       This represents a NOT NULL constraint.  It is possible to
-       change this field to enable or disable the constraint.
+       This represents a not-null constraint.  It is possible to
+       change this column to enable or disable the constraint.
       </entry>
      </row>
 
      <row>
-      <entry>atthasdef</entry>
+      <entry><structfield>atthasdef</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -849,7 +843,7 @@
      </row>
 
      <row>
-      <entry>attisdropped</entry>
+      <entry><structfield>attisdropped</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -860,7 +854,7 @@
      </row>
 
      <row>
-      <entry>attislocal</entry>
+      <entry><structfield>attislocal</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -870,7 +864,7 @@
      </row>
 
      <row>
-      <entry>attinhcount</entry>
+      <entry><structfield>attinhcount</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
@@ -886,15 +880,19 @@
 
 
  <sect1 id="catalog-pg-cast">
-  <title>pg_cast</title>
+  <title><structname>pg_cast</structname></title>
+
+  <indexterm zone="catalog-pg-cast">
+   <primary>pg_cast</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_cast</structname> stores data type conversion paths,
+   The catalog <structname>pg_cast</structname> stores data type conversion paths,
    both built-in paths and those defined with <command>CREATE CAST</command>.
   </para>
 
   <table>
-   <title>pg_cast Columns</title>
+   <title><structfield>pg_cast</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -908,32 +906,32 @@
 
     <tbody>
      <row>
-      <entry>castsource</entry>
+      <entry><structfield>castsource</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>OID of the source data type</entry>
      </row>
 
      <row>
-      <entry>casttarget</entry>
+      <entry><structfield>casttarget</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>OID of the target data type</entry>
      </row>
 
      <row>
-      <entry>castfunc</entry>
+      <entry><structfield>castfunc</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>
        The OID of the function to use to perform this cast.  Zero is
-       stored if the data types are binary coercible (that is, no
+       stored if the data types are binary compatible (that is, no
        run-time operation is needed to perform the cast).
       </entry>
      </row>
 
      <row>
-      <entry>castcontext</entry>
+      <entry><structfield>castcontext</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
@@ -952,21 +950,25 @@
  </sect1>
 
  <sect1 id="catalog-pg-class">
-  <title>pg_class</title>
+  <title><structname>pg_class</structname></title>
+
+  <indexterm zone="catalog-pg-class">
+   <primary>pg_class</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_class</structname> catalogs tables and most
+   The catalog <structname>pg_class</structname> catalogs tables and most
    everything else that has columns or is otherwise similar to a
    table.  This includes indexes (but see also
    <structname>pg_index</structname>), sequences, views, and some
    kinds of special relation; see <structfield>relkind</>.
    Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
-   fields are meaningful for all relation types.
+   columns are meaningful for all relation types.
   </para>
 
   <table>
-   <title>pg_class Columns</title>
+   <title><structname>pg_class</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -980,54 +982,54 @@
 
     <tbody>
      <row>
-      <entry>relname</entry>
+      <entry><structfield>relname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the table, index, view, etc.</entry>
      </row>
 
      <row>
-      <entry>relnamespace</entry>
+      <entry><structfield>relnamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_namespace.oid</entry>
+      <entry><literal>pg_namespace.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this relation
       </entry>
      </row>
 
      <row>
-      <entry>reltype</entry>
+      <entry><structfield>reltype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>
        The OID of the data type that corresponds to this table, if any
-       (zero for indexes, which have no pg_type entry)
+       (zero for indexes, which have no <structname>pg_type</> entry)
       </entry>
      </row>
 
      <row>
-      <entry>relowner</entry>
+      <entry><structfield>relowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
       <entry>Owner of the relation</entry>
      </row>
 
      <row>
-      <entry>relam</entry>
+      <entry><structfield>relam</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_am.oid</entry>
+      <entry><literal>pg_am.oid</literal></entry>
       <entry>If this is an index, the access method used (B-tree, hash, etc.)</entry>
      </row>
 
      <row>
-      <entry>relfilenode</entry>
+      <entry><structfield>relfilenode</structfield></entry>
       <entry><type>oid</type></entry>
       <entry></entry>
       <entry>Name of the on-disk file of this relation; 0 if none</entry>
      </row>
 
      <row>
-      <entry>relpages</entry>
+      <entry><structfield>relpages</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
@@ -1040,7 +1042,7 @@
      </row>
 
      <row>
-      <entry>reltuples</entry>
+      <entry><structfield>reltuples</structfield></entry>
       <entry><type>float4</type></entry>
       <entry></entry>
       <entry>
@@ -1052,9 +1054,9 @@
      </row>
 
      <row>
-      <entry>reltoastrelid</entry>
+      <entry><structfield>reltoastrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>
        OID of the TOAST table associated with this table, 0 if none.
        The TOAST table stores large attributes <quote>out of
@@ -1063,29 +1065,29 @@
      </row>
 
      <row>
-      <entry>reltoastidxid</entry>
+      <entry><structfield>reltoastidxid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>
        For a TOAST table, the OID of its index.  0 if not a TOAST table.
       </entry>
      </row>
 
      <row>
-      <entry>relhasindex</entry>
+      <entry><structfield>relhasindex</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
        True if this is a table and it has (or recently had) any
        indexes. This is set by <command>CREATE INDEX</command>, but
        not cleared immediately by <command>DROP INDEX</command>.
-       <command>VACUUM</command> clears relhasindex if it finds the
+       <command>VACUUM</command> clears <structfield>relhasindex</> if it finds the
        table has no indexes.
       </entry>
      </row>
 
      <row>
-      <entry>relisshared</entry>
+      <entry><structfield>relisshared</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if this table is shared across all databases in the
@@ -1094,29 +1096,31 @@
      </row>
 
      <row>
-      <entry>relkind</entry>
+      <entry><structfield>relkind</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       'r' = ordinary table, 'i' = index, 'S' = sequence, 'v' = view,
-       'c' = composite type, 's' = special, 't' = TOAST table
+       <literal>r</> = ordinary table, <literal>i</> = index,
+       <literal>S</> = sequence, <literal>v</> = view, <literal>c</> =
+       composite type, <literal>s</> = special, <literal>t</> = TOAST
+       table
       </entry>
      </row>
 
      <row>
-      <entry>relnatts</entry>
+      <entry><structfield>relnatts</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
-       Number of user columns in the relation (system columns not counted).
-       There must be this many corresponding entries in
+       Number of user columns in the relation (system columns not
+       counted).  There must be this many corresponding entries in
        <structname>pg_attribute</structname>.  See also
-       <structname>pg_attribute</structname>.<structfield>attnum</structfield>.
+       <literal>pg_attribute.attnum</literal>.
       </entry>
      </row>
 
      <row>
-      <entry>relchecks</entry>
+      <entry><structfield>relchecks</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
@@ -1126,7 +1130,7 @@
      </row>
 
      <row>
-      <entry>reltriggers</entry>
+      <entry><structfield>reltriggers</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
@@ -1136,28 +1140,28 @@
      </row>
 
      <row>
-      <entry>relukeys</entry>
+      <entry><structfield>relukeys</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>unused  (<emphasis>Not</emphasis> the number of unique keys)</entry>
+      <entry>unused  (<emphasis>not</emphasis> the number of unique keys)</entry>
      </row>
 
      <row>
-      <entry>relfkeys</entry>
+      <entry><structfield>relfkeys</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>unused  (<emphasis>Not</emphasis> the number of foreign keys on the table)</entry>
+      <entry>unused  (<emphasis>not</emphasis> the number of foreign keys on the table)</entry>
      </row>
 
      <row>
-      <entry>relrefs</entry>
+      <entry><structfield>relrefs</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>unused</entry>
      </row>
 
      <row>
-      <entry>relhasoids</entry>
+      <entry><structfield>relhasoids</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -1166,7 +1170,7 @@
      </row>
 
      <row>
-      <entry>relhaspkey</entry>
+      <entry><structfield>relhaspkey</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -1175,7 +1179,7 @@
      </row>
 
      <row>
-      <entry>relhasrules</entry>
+      <entry><structfield>relhasrules</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Table has rules; see
@@ -1184,18 +1188,18 @@
      </row>
 
      <row>
-      <entry>relhassubclass</entry>
+      <entry><structfield>relhassubclass</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>At least one table inherits from this one</entry>
      </row>
 
      <row>
-      <entry>relacl</entry>
+      <entry><structfield>relacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
       <entry>
-       Access permissions.  See the descriptions of
+       Access privileges; see the descriptions of
        <command>GRANT</command> and <command>REVOKE</command> for
        details.
       </entry>
@@ -1206,30 +1210,26 @@
  </sect1>
 
  <sect1 id="catalog-pg-constraint">
-  <title>pg_constraint</title>
+  <title><structname>pg_constraint</structname></title>
+
+  <indexterm zone="catalog-pg-constraint">
+   <primary>pg_constraint</primary>
+  </indexterm>
 
   <para>
-   This system catalog stores CHECK, PRIMARY KEY, UNIQUE, and FOREIGN KEY
-   constraints on tables.  (Column
-   constraints are not treated specially.  Every column constraint is
-   equivalent to some table constraint.)  See under <command>CREATE
-   TABLE</command> for more information.
+   The catalog <structname>pg_constraint</structname> stores check, primary key, unique, and foreign
+   key constraints on tables.  (Column constraints are not treated
+   specially.  Every column constraint is equivalent to some table
+   constraint.)  Not-null constraints are represented in the
+   <structname>pg_attribute</> catalog.
   </para>
 
-  <note>
-   <para>
-    NOT NULL constraints are represented in the <structname>pg_attribute</>
-    catalog.
-   </para>
-  </note>
-
   <para>
-   CHECK constraints on domains are stored here, too.  Global ASSERTIONS
-   (a currently-unsupported SQL feature) may someday appear here as well.
+   Check constraints on domains are stored here, too.
   </para>
 
   <table>
-   <title>pg_constraint Columns</title>
+   <title><structname>pg_constraint</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -1243,112 +1243,112 @@
 
     <tbody>
      <row>
-      <entry>conname</entry>
+      <entry><structfield>conname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Constraint name (not necessarily unique!)</entry>
      </row>
 
      <row>
-      <entry>connamespace</entry>
+      <entry><structfield>connamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_namespace.oid</entry>
+      <entry><literal>pg_namespace.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this constraint
       </entry>
      </row>
 
      <row>
-      <entry>contype</entry>
+      <entry><structfield>contype</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-        'c' = check constraint,
-        'f' = foreign key constraint,
-        'p' = primary key constraint,
-        'u' = unique constraint
+        <literal>c</> = check constraint,
+        <literal>f</> = foreign key constraint,
+        <literal>p</> = primary key constraint,
+        <literal>u</> = unique constraint
       </entry>
      </row>
 
      <row>
-      <entry>condeferrable</entry>
-      <entry><type>boolean</type></entry>
+      <entry><structfield>condeferrable</structfield></entry>
+      <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Is the constraint deferrable?</entry>
      </row>
 
      <row>
-      <entry>condeferred</entry>
-      <entry><type>boolean</type></entry>
+      <entry><structfield>condeferred</structfield></entry>
+      <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Is the constraint deferred by default?</entry>
      </row>
 
      <row>
-      <entry>conrelid</entry>
+      <entry><structfield>conrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>The table this constraint is on; 0 if not a table constraint</entry>
      </row>
 
      <row>
-      <entry>contypid</entry>
+      <entry><structfield>contypid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>The domain this constraint is on; 0 if not a domain constraint</entry>
      </row>
 
      <row>
-      <entry>confrelid</entry>
+      <entry><structfield>confrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>If a foreign key, the referenced table; else 0</entry>
      </row>
 
      <row>
-      <entry>confupdtype</entry>
+      <entry><structfield>confupdtype</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key update action code</entry>
      </row>
 
      <row>
-      <entry>confdeltype</entry>
+      <entry><structfield>confdeltype</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key deletion action code</entry>
      </row>
 
      <row>
-      <entry>confmatchtype</entry>
+      <entry><structfield>confmatchtype</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key match type</entry>
      </row>
 
      <row>
-      <entry>conkey</entry>
+      <entry><structfield>conkey</structfield></entry>
       <entry><type>int2[]</type></entry>
-      <entry>pg_attribute.attnum</entry>
+      <entry><literal>pg_attribute.attnum</></entry>
       <entry>If a table constraint, list of columns which the constraint constrains</entry>
      </row>
 
      <row>
-      <entry>confkey</entry>
+      <entry><structfield>confkey</structfield></entry>
       <entry><type>int2[]</type></entry>
-      <entry>pg_attribute.attnum</entry>
+      <entry><literal>pg_attribute.attnum</></entry>
       <entry>If a foreign key, list of the referenced columns</entry>
      </row>
 
      <row>
-      <entry>conbin</entry>
+      <entry><structfield>conbin</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>If a check constraint, an internal representation of the expression</entry>
      </row>
 
      <row>
-      <entry>consrc</entry>
+      <entry><structfield>consrc</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>If a check constraint, a human-readable representation of the expression</entry>
@@ -1359,24 +1359,28 @@
 
   <note>
    <para>
-    <structname>pg_class</structname>.<structfield>relchecks</structfield>
-    needs to agree with the number of check-constraint entries found in this
-    table for the given relation.
+    <literal>pg_class.relchecks</literal> needs to agree with the
+    number of check-constraint entries found in this table for the
+    given relation.
    </para>
   </note>
 
  </sect1>
 
  <sect1 id="catalog-pg-conversion">
-  <title>pg_conversion</title>
+  <title><structname>pg_conversion</structname></title>
+
+  <indexterm zone="catalog-pg-conversion">
+   <primary>pg_conversion</primary>
+  </indexterm>
 
   <para>
-   This system catalog stores encoding conversion information. See
+   The catalog <structname>pg_conversion</structname> stores encoding conversion information. See
    <command>CREATE CONVERSION</command> for more information.
   </para>
 
   <table>
-   <title>pg_conversion Columns</title>
+   <title><structname>pg_conversion</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -1390,54 +1394,54 @@
 
     <tbody>
      <row>
-      <entry>conname</entry>
+      <entry><structfield>conname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Conversion name (unique within a namespace)</entry>
      </row>
 
      <row>
-      <entry>connamespace</entry>
+      <entry><structfield>connamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_namespace.oid</entry>
+      <entry><literal>pg_namespace.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this conversion
       </entry>
      </row>
 
      <row>
-      <entry>conowner</entry>
+      <entry><structfield>conowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>Owner (creator) of the namespace</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry>Owner of the conversion</entry>
      </row>
 
      <row>
-      <entry>conforencoding</entry>
-      <entry><type>int4</type></entry>
-      <entry></entry>
-      <entry>Source(for) encoding ID</entry>
-     </row>
-
-     <row>
-      <entry>contoencoding</entry>
+      <entry><structfield>conforencoding</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>Destination(to) encoding ID</entry>
+      <entry>Source encoding ID</entry>
      </row>
 
      <row>
-      <entry>conproc</entry>
+      <entry><structfield>contoencoding</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Destination encoding ID</entry>
+     </row>
+
+     <row>
+      <entry><structfield>conproc</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>Conversion procedure</entry>
      </row>
 
      <row>
-      <entry>condefault</entry>
-      <entry><type>boolean</type></entry>
+      <entry><structfield>condefault</structfield></entry>
+      <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>true if this is the default conversion</entry>
+      <entry>True if this is the default conversion</entry>
      </row>
 
     </tbody>
@@ -1447,10 +1451,14 @@
  </sect1>
 
  <sect1 id="catalog-pg-database">
-  <title>pg_database</title>
+  <title><structname>pg_database</structname></title>
+
+  <indexterm zone="catalog-pg-database">
+   <primary>pg_database</primary>
+  </indexterm>
 
   <para>
-   The <structname>pg_database</structname> catalog stores information
+   The catalog <structname>pg_database</structname> stores information
    about the available databases.  Databases are created with the
    <command>CREATE DATABASE</command> command.  Consult
    <xref linkend="managing-databases"> for details about the meaning of some of the
@@ -1465,7 +1473,7 @@
   </para>
 
   <table>
-   <title>pg_database Columns</title>
+   <title><structname>pg_database</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -1479,50 +1487,50 @@
 
     <tbody>
      <row>
-      <entry>datname</entry>
+      <entry><structfield>datname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Database name</entry>
      </row>
 
      <row>
-      <entry>datdba</entry>
+      <entry><structfield>datdba</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
       <entry>Owner of the database, usually the user who created it</entry>
      </row>
 
      <row>
-      <entry>encoding</entry>
+      <entry><structfield>encoding</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>Character/multibyte encoding for this database</entry>
+      <entry>Character encoding for this database</entry>
      </row>
 
      <row>
-      <entry>datistemplate</entry>
+      <entry><structfield>datistemplate</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
        If true then this database can be used in the
-       <quote>TEMPLATE</quote> clause of <command>CREATE
+       <literal>TEMPLATE</literal> clause of <command>CREATE
        DATABASE</command> to create a new database as a clone of
        this one.
       </entry>
      </row>
 
      <row>
-      <entry>datallowconn</entry>
+      <entry><structfield>datallowconn</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
        If false then no one can connect to this database.  This is
-       used to protect the template0 database from being altered.
+       used to protect the <literal>template0</> database from being altered.
       </entry>
      </row>
 
      <row>
-      <entry>datlastsysoid</entry>
+      <entry><structfield>datlastsysoid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry></entry>
       <entry>
@@ -1532,7 +1540,7 @@
      </row>
 
      <row>
-      <entry>datvacuumxid</entry>
+      <entry><structfield>datvacuumxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
@@ -1543,19 +1551,19 @@
      </row>
 
      <row>
-      <entry>datfrozenxid</entry>
+      <entry><structfield>datfrozenxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
        All tuples inserted by transaction IDs before this one have been
        relabeled with a permanent (<quote>frozen</>) transaction ID in this
        database.  This is useful to check whether a database must be vacuumed
-       soon to avoid transaction ID wraparound problems.
+       soon to avoid transaction ID wrap-around problems.
       </entry>
      </row>
 
      <row>
-      <entry>datpath</entry>
+      <entry><structfield>datpath</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>
@@ -1566,17 +1574,17 @@
      </row>
 
      <row>
-      <entry>datconfig</entry>
+      <entry><structfield>datconfig</structfield></entry>
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>Session defaults for run-time configuration variables</entry>
      </row>
 
      <row>
-      <entry>datacl</entry>
+      <entry><structfield>datacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access permissions</entry>
+      <entry>Access privileges</entry>
      </row>
     </tbody>
    </tgroup>
@@ -1585,18 +1593,22 @@
 
 
  <sect1 id="catalog-pg-depend">
-  <title>pg_depend</title>
+  <title><structname>pg_depend</structname></title>
+
+  <indexterm zone="catalog-pg-depend">
+   <primary>pg_depend</primary>
+  </indexterm>
 
   <para>
-   The <structname>pg_depend</structname> table records the dependency
+   The catalog <structname>pg_depend</structname> records the dependency
    relationships between database objects.  This information allows
    <command>DROP</> commands to find which other objects must be dropped
-   by <command>DROP CASCADE</>, or prevent dropping in the <command>DROP
+   by <command>DROP CASCADE</> or prevent dropping in the <command>DROP
    RESTRICT</> case.
   </para>
 
   <table>
-   <title>pg_depend Columns</title>
+   <title><structname>pg_depend</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -1610,59 +1622,63 @@
 
     <tbody>
      <row>
-      <entry>classid</entry>
+      <entry><structfield>classid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
-      <entry>The oid of the system catalog the dependent object is in</entry>
+      <entry><literal>pg_class.oid</literal></entry>
+      <entry>The OID of the system catalog the dependent object is in</entry>
      </row>
 
      <row>
-      <entry>objid</entry>
+      <entry><structfield>objid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>any oid attribute</entry>
-      <entry>The oid of the specific dependent object</entry>
+      <entry>any OID column</entry>
+      <entry>The OID of the specific dependent object</entry>
      </row>
 
      <row>
-      <entry>objsubid</entry>
+      <entry><structfield>objsubid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>For a table attribute, this is the attribute's
-       column number (the objid and classid refer to the table itself).
-       For all other object types, this field is presently zero.
+      <entry>
+       For a table column, this is the column number (the
+       <structfield>objid</> and <structfield>classid</> refer to the
+       table itself).  For all other object types, this column is
+       zero.
       </entry>
      </row>
 
      <row>
-      <entry>refclassid</entry>
+      <entry><structfield>refclassid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
-      <entry>The oid of the system catalog the referenced object is in</entry>
+      <entry><literal>pg_class.oid</literal></entry>
+      <entry>The OID of the system catalog the referenced object is in</entry>
      </row>
 
      <row>
-      <entry>refobjid</entry>
+      <entry><structfield>refobjid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry>any oid attribute</entry>
-      <entry>The oid of the specific referenced object</entry>
+      <entry>The OID of the specific referenced object</entry>
      </row>
 
      <row>
-      <entry>refobjsubid</entry>
+      <entry><structfield>refobjsubid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>For a table attribute, this is the attribute's
-       column number (the refobjid and refclassid refer to the table itself).
-       For all other object types, this field is presently zero.
+      <entry>
+       For a table column, this is the column number (the
+       <structfield>refobjid</> and <structfield>refclassid</> refer
+       to the table itself).  For all other object types, this column
+       is zero.
       </entry>
      </row>
 
      <row>
-      <entry>deptype</entry>
+      <entry><structfield>deptype</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       A code defining the specific semantics of this dependency relationship.
+       A code defining the specific semantics of this dependency relationship; see text.
       </entry>
      </row>
 
@@ -1676,52 +1692,67 @@
    object.  However, there are several subflavors identified by
    <structfield>deptype</>:
 
-   <itemizedlist>
-    <listitem>
-     <para>
-      DEPENDENCY_NORMAL ('n'): normal relationship between separately-created
-      objects.  The dependent object may be dropped without affecting the
-      referenced object.  The referenced object may only be dropped by
-      specifying CASCADE, in which case the dependent object is dropped too.
-      Example: a table column has a normal dependency on its datatype.
-     </para>
-    </listitem>
+   <variablelist>
+    <varlistentry>
+     <term><symbol>DEPENDENCY_NORMAL</> (<literal>n</>)</term>
+     <listitem>
+      <para>
+       A normal relationship between separately-created objects.  The
+       dependent object may be dropped without affecting the
+       referenced object.  The referenced object may only be dropped
+       by specifying <literal>CASCADE</>, in which case the dependent
+       object is dropped, too.  Example: a table column has a normal
+       dependency on its data type.
+      </para>
+     </listitem>
+    </varlistentry>
 
-    <listitem>
-     <para>
-      DEPENDENCY_AUTO ('a'): the dependent object can be dropped separately
-      from the referenced object, and should be automatically dropped
-      (regardless of RESTRICT or CASCADE mode) if the referenced object
-      is dropped.
-      Example: a named constraint on a table is made auto-dependent on
-      the table, so that it will go away if the table is dropped.
-     </para>
-    </listitem>
+    <varlistentry>
+     <term><symbol>DEPENDENCY_AUTO</> (<literal>a</>)</term>
+     <listitem>
+      <para>
+       The dependent object can be dropped separately from the
+       referenced object, and should be automatically dropped
+       (regardless of <literal>RESTRICT</> or <literal>CASCADE</>
+       mode) if the referenced object is dropped.  Example: a named
+       constraint on a table is made autodependent on the table, so
+       that it will go away if the table is dropped.
+      </para>
+     </listitem>
+    </varlistentry>
 
-    <listitem>
-     <para>
-      DEPENDENCY_INTERNAL ('i'): the dependent object was created as part
-      of creation of the referenced object, and is really just a part of
-      its internal implementation.  A DROP of the dependent object will be
-      disallowed outright (we'll tell the user to issue a DROP against the
-      referenced object, instead).  A DROP of the referenced object will be
-      propagated through to drop the dependent object whether CASCADE is
-      specified or not.
-      Example: a trigger that's created to enforce a foreign-key constraint
-      is made internally dependent on the constraint's pg_constraint entry.
-     </para>
-    </listitem>
+    <varlistentry>
+     <term><symbol>DEPENDENCY_INTERNAL</> (<literal>i</>)</term>
+     <listitem>
+      <para>
+       The dependent object was created as part of creation of the
+       referenced object, and is really just a part of its internal
+       implementation.  A <command>DROP</> of the dependent object
+       will be disallowed outright (we'll tell the user to issue a
+       <command>DROP</> against the referenced object, instead).  A
+       <command>DROP</> of the referenced object will be propagated
+       through to drop the dependent object whether
+       <command>CASCADE</> is specified or not.  Example: a trigger
+       that's created to enforce a foreign-key constraint is made
+       internally dependent on the constraint's
+       <structname>pg_constraint</> entry.
+      </para>
+     </listitem>
+    </varlistentry>
 
-    <listitem>
-     <para>
-      DEPENDENCY_PIN ('p'): there is no dependent object; this type of entry
-      is a signal that the system itself depends on the referenced object,
-      and so that object must never be deleted.  Entries of this type are
-      created only during initdb.  The fields for the dependent object
-      contain zeroes.
-     </para>
-    </listitem>
-   </itemizedlist>
+    <varlistentry>
+     <term><symbol>DEPENDENCY_PIN</> (<literal>p</>)</term>
+     <listitem>
+      <para>
+       There is no dependent object; this type of entry is a signal
+       that the system itself depends on the referenced object, and so
+       that object must never be deleted.  Entries of this type are
+       created only by <command>initdb</command>.  The columns for the
+       dependent object contain zeroes.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
 
    Other dependency flavors may be needed in future.
   </para>
@@ -1730,19 +1761,23 @@
 
 
  <sect1 id="catalog-pg-description">
-  <title>pg_description</title>
+  <title><structname>pg_description</structname></title>
+
+  <indexterm zone="catalog-pg-description">
+   <primary>pg_description</primary>
+  </indexterm>
 
   <para>
-   The pg_description table can store an optional description or
+   The catalog <structname>pg_description</> can store an optional description or
    comment for each database object.  Descriptions can be manipulated
    with the <command>COMMENT</command> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
    Descriptions of many built-in system objects are provided in the initial
-   contents of pg_description.
+   contents of <structname>pg_description</structname>.
   </para>
 
   <table>
-   <title>pg_description Columns</title>
+   <title><structname>pg_description</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -1756,31 +1791,33 @@
 
     <tbody>
      <row>
-      <entry>objoid</entry>
+      <entry><structfield>objoid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>any oid attribute</entry>
-      <entry>The oid of the object this description pertains to</entry>
+      <entry>any OID column</entry>
+      <entry>The OID of the object this description pertains to</entry>
      </row>
 
      <row>
-      <entry>classoid</entry>
+      <entry><structfield>classoid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
-      <entry>The oid of the system catalog this object appears in</entry>
+      <entry><literal>pg_class.oid</literal></entry>
+      <entry>The OID of the system catalog this object appears in</entry>
      </row>
 
      <row>
-      <entry>objsubid</entry>
+      <entry><structfield>objsubid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>For a comment on a table attribute, this is the attribute's
-       column number (the objoid and classoid refer to the table itself).
-       For all other object types, this field is presently zero.
+      <entry>
+       For a comment on a table column, this is the column number (the
+       <structfield>objoid</> and <structfield>classoid</> refer to
+       the table itself).  For all other object types, this column is
+       zero.
       </entry>
      </row>
 
      <row>
-      <entry>description</entry>
+      <entry><structfield>description</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Arbitrary text that serves as the description of this object.</entry>
@@ -1793,13 +1830,17 @@
 
 
  <sect1 id="catalog-pg-group">
-  <title>pg_group</title>
+  <title><structname>pg_group</structname></title>
+
+  <indexterm zone="catalog-pg-group">
+   <primary>pg_group</primary>
+  </indexterm>
 
   <para>
-   This catalog defines groups and stores what users belong to what
+   The catalog <structname>pg_group</structname> defines groups and stores what users belong to what
    groups.  Groups are created with the <command>CREATE
    GROUP</command> command.  Consult <xref linkend="user-manag"> for information
-   about user permission management.
+   about user privilege management.
   </para>
 
   <para>
@@ -1811,7 +1852,7 @@
   </para>
 
   <table>
-   <title>pg_group Columns</title>
+   <title><structname>pg_group</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -1825,24 +1866,24 @@
 
     <tbody>
      <row>
-      <entry>groname</entry>
+      <entry><structfield>groname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the group</entry>
      </row>
 
      <row>
-      <entry>grosysid</entry>
+      <entry><structfield>grosysid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>An arbitrary number to identify this group</entry>
      </row>
 
      <row>
-      <entry>grolist</entry>
+      <entry><structfield>grolist</structfield></entry>
       <entry><type>int4[]</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>An array containing the ids of the users in this group</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry>An array containing the IDs of the users in this group</entry>
      </row>
     </tbody>
    </tgroup>
@@ -1852,16 +1893,20 @@
 
 
  <sect1 id="catalog-pg-index">
-  <title>pg_index</title>
+  <title><structname>pg_index</structname></title>
+
+  <indexterm zone="catalog-pg-index">
+   <primary>pg_index</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_index</structname> contains part of the information
+   The catalog <structname>pg_index</structname> contains part of the information
    about indexes.  The rest is mostly in
    <structname>pg_class</structname>.
   </para>
 
   <table>
-   <title>pg_index Columns</title>
+   <title><structname>pg_index</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -1875,33 +1920,33 @@
 
     <tbody>
      <row>
-      <entry>indexrelid</entry>
+      <entry><structfield>indexrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
-      <entry>The OID of the pg_class entry for this index</entry>
+      <entry><literal>pg_class.oid</literal></entry>
+      <entry>The OID of the <structname>pg_class</> entry for this index</entry>
      </row>
 
      <row>
-      <entry>indrelid</entry>
+      <entry><structfield>indrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
-      <entry>The OID of the pg_class entry for the table this index is for</entry>
+      <entry><literal>pg_class.oid</literal></entry>
+      <entry>The OID of the <structname>pg_class</> entry for the table this index is for</entry>
      </row>
 
      <row>
-      <entry>indproc</entry>
+      <entry><structfield>indproc</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>The function's OID if this is a functional index,
       else zero</entry>
      </row>
 
      <row>
-      <entry>indkey</entry>
+      <entry><structfield>indkey</structfield></entry>
       <entry><type>int2vector</type></entry>
       <entry>pg_attribute.attnum</entry>
       <entry>
-       This is a vector (array) of up to
+       This is an array of up to
        <symbol>INDEX_MAX_KEYS</symbol> values that indicate which
        table columns this index pertains to.  For example a value of
        <literal>1 3</literal> would mean that the first and the third
@@ -1912,50 +1957,50 @@
      </row>
 
      <row>
-      <entry>indclass</entry>
+      <entry><structfield>indclass</structfield></entry>
       <entry><type>oidvector</type></entry>
       <entry>pg_opclass.oid</entry>
       <entry>
        For each column in the index key this contains a reference to
-       the <quote>operator class</quote> to use.  See
+       the operator class to use.  See
        <structname>pg_opclass</structname> for details.
       </entry>
      </row>
 
      <row>
-      <entry>indisclustered</entry>
+      <entry><structfield>indisclustered</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>If true, the table was last clustered on this index.</entry>
      </row>
 
      <row>
-      <entry>indisunique</entry>
+      <entry><structfield>indisunique</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>If true, this is a unique index.</entry>
      </row>
 
      <row>
-      <entry>indisprimary</entry>
+      <entry><structfield>indisprimary</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>If true, this index represents the primary key of the table.
-      (indisunique should always be true when this is true.)</entry>
+      (<structfield>indisunique</> should always be true when this is true.)</entry>
      </row>
 
      <row>
-      <entry>indreference</entry>
+      <entry><structfield>indreference</structfield></entry>
       <entry><type>oid</type></entry>
       <entry></entry>
       <entry>unused</entry>
      </row>
 
      <row>
-      <entry>indpred</entry>
+      <entry><structfield>indpred</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Expression tree (in the form of a nodeToString representation)
+      <entry>Expression tree (in the form of a <function>nodeToString()</function> representation)
       for partial index predicate.  Empty string if not a partial
       index.</entry>
      </row>
@@ -1967,14 +2012,19 @@
 
 
  <sect1 id="catalog-pg-inherits">
-  <title>pg_inherits</title>
+  <title><structname>pg_inherits</structname></title>
+
+  <indexterm zone="catalog-pg-inherits">
+   <primary>pg_inherits</primary>
+  </indexterm>
 
   <para>
-   This catalog records information about table inheritance hierarchies.
+   The catalog <structname>pg_inherits</> records information about
+   table inheritance hierarchies.
   </para>
 
   <table>
-   <title>pg_inherits Columns</title>
+   <title><structname>pg_inherits</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -1988,25 +2038,25 @@
 
     <tbody>
      <row>
-      <entry>inhrelid</entry>
+      <entry><structfield>inhrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>
        The OID of the child table.
       </entry>
      </row>
 
      <row>
-      <entry>inhparent</entry>
+      <entry><structfield>inhparent</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>
        The OID of the parent table.
       </entry>
      </row>
 
      <row>
-      <entry>inhseqno</entry>
+      <entry><structfield>inhseqno</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
@@ -2023,17 +2073,21 @@
 
 
  <sect1 id="catalog-pg-language">
-  <title>pg_language</title>
+  <title><structname>pg_language</structname></title>
+
+  <indexterm zone="catalog-pg-language">
+   <primary>pg_language</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_language</structname> registers call interfaces or
+   The catalog <structname>pg_language</structname> registers call interfaces or
    languages in which you can write functions or stored procedures.
    See under <command>CREATE LANGUAGE</command> and in
-   <xref linkend="server-programming"> for more information about language handlers.
+   <xref linkend="xplang"> for more information about language handlers.
   </para>
 
   <table>
-   <title>pg_language Columns</title>
+   <title><structname>pg_language</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2047,14 +2101,14 @@
 
     <tbody>
      <row>
-      <entry>lanname</entry>
+      <entry><structfield>lanname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the language (to be specified when creating a function)</entry>
      </row>
 
      <row>
-      <entry>lanispl</entry>
+      <entry><structfield>lanispl</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -2067,23 +2121,23 @@
      </row>
 
      <row>
-      <entry>lanpltrusted</entry>
+      <entry><structfield>lanpltrusted</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
        This is a trusted language.  See under <command>CREATE
        LANGUAGE</command> what this means.  If this is an internal
        language (<structfield>lanispl</structfield> is false) then
-       this field is meaningless.
+       this column is meaningless.
       </entry>
      </row>
 
      <row>
-      <entry>lanplcallfoid</entry>
+      <entry><structfield>lanplcallfoid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>
-       For non-internal languages this references the language
+       For noninternal languages this references the language
        handler, which is a special function that is responsible for
        executing all functions that are written in the particular
        language.
@@ -2091,9 +2145,9 @@
      </row>
 
      <row>
-      <entry>lanvalidator</entry>
+      <entry><structfield>lanvalidator</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>
        This references a language validator function that is responsible
        for checking the syntax and validity of new functions when they
@@ -2103,10 +2157,10 @@
      </row>
 
      <row>
-      <entry>lanacl</entry>
+      <entry><structfield>lanacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access permissions</entry>
+      <entry>Access privileges</entry>
      </row>
     </tbody>
    </tgroup>
@@ -2116,20 +2170,24 @@
 
 
  <sect1 id="catalog-pg-largeobject">
-  <title>pg_largeobject</title>
+  <title><structname>pg_largeobject</structname></title>
+
+  <indexterm zone="catalog-pg-largeobject">
+   <primary>pg_largeobject</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_largeobject</structname> holds the data making up
+   The catalog <structname>pg_largeobject</structname> holds the data making up
    <quote>large objects</quote>.  A large object is identified by an
    OID assigned when it is created.  Each large object is broken into
    segments or <quote>pages</> small enough to be conveniently stored as rows
    in <structname>pg_largeobject</structname>.
-   The amount of data per page is defined to be LOBLKSIZE (which is currently
-   BLCKSZ/4, or typically 2Kbytes).
+   The amount of data per page is defined to be <literal>LOBLKSIZE</> (which is currently
+   <literal>BLCKSZ/4</>, or typically 2 kB).
   </para>
 
   <table>
-   <title>pg_largeobject Columns</title>
+   <title><structname>pg_largeobject</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2143,14 +2201,14 @@
 
     <tbody>
      <row>
-      <entry>loid</entry>
+      <entry><structfield>loid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry></entry>
       <entry>Identifier of the large object that includes this page</entry>
      </row>
 
      <row>
-      <entry>pageno</entry>
+      <entry><structfield>pageno</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>Page number of this page within its large object
@@ -2158,12 +2216,12 @@
      </row>
 
      <row>
-      <entry>data</entry>
+      <entry><structfield>data</structfield></entry>
       <entry><type>bytea</type></entry>
       <entry></entry>
       <entry>
        Actual data stored in the large object.
-       This will never be more than LOBLKSIZE bytes, and may be less.
+       This will never be more than <symbol>LOBLKSIZE</> bytes and may be less.
       </entry>
      </row>
     </tbody>
@@ -2173,9 +2231,9 @@
   <para>
    Each row of <structname>pg_largeobject</structname> holds data
    for one page of a large object, beginning at
-   byte offset (pageno * LOBLKSIZE) within the object.  The implementation
+   byte offset (<literal>pageno * LOBLKSIZE</>) within the object.  The implementation
    allows sparse storage: pages may be missing, and may be shorter than
-   LOBLKSIZE bytes even if they are not the last page of the object.
+   <literal>LOBLKSIZE</> bytes even if they are not the last page of the object.
    Missing regions within a large object read as zeroes.
   </para>
 
@@ -2183,10 +2241,14 @@
 
 
  <sect1 id="catalog-pg-listener">
-  <title>pg_listener</title>
+  <title><structname>pg_listener</structname></title>
+
+  <indexterm zone="catalog-pg-listener">
+   <primary>pg_listener</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_listener</structname> supports the <command>LISTEN</>
+   The catalog <structname>pg_listener</structname> supports the <command>LISTEN</>
    and <command>NOTIFY</> commands.  A listener creates an entry in
    <structname>pg_listener</structname> for each notification name
    it is listening for.  A notifier scans <structname>pg_listener</structname>
@@ -2196,7 +2258,7 @@
   </para>
 
   <table>
-   <title>pg_listener Columns</title>
+   <title><structname>pg_listener</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2210,28 +2272,28 @@
 
     <tbody>
      <row>
-      <entry>relname</entry>
+      <entry><structfield>relname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Notify condition name.  (The name need not match any actual
-      relation in the database; the term <quote>relname</> is historical.)
+      relation in the database; the name <structfield>relname</> is historical.)
       </entry>
      </row>
 
      <row>
-      <entry>listenerpid</entry>
+      <entry><structfield>listenerpid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>PID of the backend process that created this entry.</entry>
+      <entry>PID of the server process that created this entry.</entry>
      </row>
 
      <row>
-      <entry>notification</entry>
+      <entry><structfield>notification</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
        Zero if no event is pending for this listener.  If an event is
-       pending, the PID of the backend that sent the notification.
+       pending, the PID of the server process that sent the notification.
       </entry>
      </row>
     </tbody>
@@ -2242,16 +2304,21 @@
 
 
  <sect1 id="catalog-pg-namespace">
-  <title>pg_namespace</title>
+  <title><structname>pg_namespace</structname></title>
+
+  <indexterm zone="catalog-pg-namespace">
+   <primary>pg_namespace</primary>
+  </indexterm>
 
   <para>
-   A namespace is the structure underlying SQL92 schemas: each namespace
-   can have a separate collection of relations, types, etc without name
+   The catalog <structname>pg_namespace</> stores namespaces.
+   A namespace is the structure underlying SQL schemas: each namespace
+   can have a separate collection of relations, types, etc. without name
    conflicts.
   </para>
 
   <table>
-   <title>pg_namespace Columns</title>
+   <title><structname>pg_namespace</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2265,24 +2332,24 @@
 
     <tbody>
      <row>
-      <entry>nspname</entry>
+      <entry><structfield>nspname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the namespace</entry>
      </row>
 
      <row>
-      <entry>nspowner</entry>
+      <entry><structfield>nspowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>Owner (creator) of the namespace</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry>Owner of the namespace</entry>
      </row>
 
      <row>
-      <entry>nspacl</entry>
+      <entry><structfield>nspacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access permissions</entry>
+      <entry>Access privileges</entry>
      </row>
     </tbody>
    </tgroup>
@@ -2292,23 +2359,27 @@
 
 
  <sect1 id="catalog-pg-opclass">
-  <title>pg_opclass</title>
+  <title><structname>pg_opclass</structname></title>
+
+  <indexterm zone="catalog-pg-opclass">
+   <primary>pg_opclass</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_opclass</structname> defines
+   The catalog <structname>pg_opclass</structname> defines
    index access method operator classes.  Each operator class defines
-   semantics for index columns of a particular datatype and a particular
+   semantics for index columns of a particular data type and a particular
    index access method.  Note that there can be multiple operator classes
-   for a given datatype/access method combination, thus supporting multiple
+   for a given data type/access method combination, thus supporting multiple
    behaviors.
   </para>
 
   <para>
-   Operator classes are described at length in <xref linkend="server-programming">.
+   Operator classes are described at length in <xref linkend="xindex">.
   </para>
 
   <table>
-   <title>pg_opclass Columns</title>
+   <title><structname>pg_opclass</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2322,52 +2393,52 @@
     <tbody>
 
      <row>
-      <entry>opcamid</entry>
+      <entry><structfield>opcamid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_am.oid</entry>
-      <entry>index access method opclass is for</entry>
+      <entry><literal>pg_am.oid</literal></entry>
+      <entry>Index access method opclass is for</entry>
      </row>
 
      <row>
-      <entry>opcname</entry>
+      <entry><structfield>opcname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>name of this opclass</entry>
+      <entry>Name of this operator class</entry>
      </row>
 
      <row>
-      <entry>opcnamespace</entry>
+      <entry><structfield>opcnamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_namespace.oid</entry>
-      <entry>namespace of this opclass</entry>
+      <entry><literal>pg_namespace.oid</literal></entry>
+      <entry>Namespace of this operator class</entry>
      </row>
 
      <row>
-      <entry>opcowner</entry>
+      <entry><structfield>opcowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>opclass owner</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry>Operator class owner</entry>
      </row>
 
      <row>
-      <entry>opcintype</entry>
+      <entry><structfield>opcintype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
-      <entry>type of input data for opclass</entry>
+      <entry><literal>pg_type.oid</literal></entry>
+      <entry>Input data type of the operator class</entry>
      </row>
 
      <row>
-      <entry>opcdefault</entry>
+      <entry><structfield>opcdefault</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>true if opclass is default for opcintype</entry>
+      <entry>True if this operator class is the default for <structfield>opcintype</></entry>
      </row>
 
      <row>
-      <entry>opckeytype</entry>
+      <entry><structfield>opckeytype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
-      <entry>type of index data, or zero if same as opcintype</entry>
+      <entry><literal>pg_type.oid</literal></entry>
+      <entry>Type of index data, or zero if same as <structfield>opcintype</></entry>
      </row>
 
     </tbody>
@@ -2381,7 +2452,7 @@
    <structname>pg_amproc</structname>.  Those rows are considered to be
    part of the operator class definition --- this is not unlike the way
    that a relation is defined by a single <structname>pg_class</structname>
-   row, plus associated rows in <structname>pg_attribute</structname> and
+   row plus associated rows in <structname>pg_attribute</structname> and
    other tables.
   </para>
 
@@ -2389,15 +2460,20 @@
 
 
  <sect1 id="catalog-pg-operator">
-  <title>pg_operator</title>
+  <title><structname>pg_operator</structname></title>
+
+  <indexterm zone="catalog-pg-operator">
+   <primary>pg_operator</primary>
+  </indexterm>
 
   <para>
-   See <command>CREATE OPERATOR</command> and <xref linkend="xoper">
-   for details on these operator parameters.
+   The catalog <structname>pg_operator</> stores information about operators.  See
+   <command>CREATE OPERATOR</command> and <xref linkend="xoper"> for
+   details on these operator parameters.
   </para>
 
   <table>
-   <title>pg_operator Columns</title>
+   <title><structname>pg_operator</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2411,84 +2487,84 @@
 
     <tbody>
      <row>
-      <entry>oprname</entry>
+      <entry><structfield>oprname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the operator</entry>
      </row>
 
      <row>
-      <entry>oprnamespace</entry>
+      <entry><structfield>oprnamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_namespace.oid</entry>
+      <entry><literal>pg_namespace.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this operator
       </entry>
      </row>
 
      <row>
-      <entry>oprowner</entry>
+      <entry><structfield>oprowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>Owner (creator) of the operator</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry>Owner of the operator</entry>
      </row>
 
      <row>
-      <entry>oprkind</entry>
+      <entry><structfield>oprkind</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       'b' = infix (<quote>both</quote>), 'l' = prefix
-       (<quote>left</quote>), 'r' = postfix (<quote>right</quote>)
+       <literal>b</> = infix (<quote>both</quote>), <literal>l</> = prefix
+       (<quote>left</quote>), <literal>r</> = postfix (<quote>right</quote>)
       </entry>
      </row>
 
      <row>
-      <entry>oprcanhash</entry>
+      <entry><structfield>oprcanhash</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>This operator supports hash joins.</entry>
      </row>
 
      <row>
-      <entry>oprleft</entry>
+      <entry><structfield>oprleft</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>Type of the left operand</entry>
      </row>
 
      <row>
-      <entry>oprright</entry>
+      <entry><structfield>oprright</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>Type of the right operand</entry>
      </row>
 
      <row>
-      <entry>oprresult</entry>
+      <entry><structfield>oprresult</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>Type of the result</entry>
      </row>
 
      <row>
-      <entry>oprcom</entry>
+      <entry><structfield>oprcom</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_operator.oid</entry>
+      <entry><literal>pg_operator.oid</literal></entry>
       <entry>Commutator of this operator, if any</entry>
      </row>
 
      <row>
-      <entry>oprnegate</entry>
+      <entry><structfield>oprnegate</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_operator.oid</entry>
+      <entry><literal>pg_operator.oid</literal></entry>
       <entry>Negator of this operator, if any</entry>
      </row>
 
      <row>
-      <entry>oprlsortop</entry>
+      <entry><structfield>oprlsortop</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_operator.oid</entry>
+      <entry><literal>pg_operator.oid</literal></entry>
       <entry>
        If this operator supports merge joins, the operator that sorts
        the type of the left-hand operand (<literal>L&lt;L</>)
@@ -2496,9 +2572,9 @@
      </row>
 
      <row>
-      <entry>oprrsortop</entry>
+      <entry><structfield>oprrsortop</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_operator.oid</entry>
+      <entry><literal>pg_operator.oid</literal></entry>
       <entry>
        If this operator supports merge joins, the operator that sorts
        the type of the right-hand operand (<literal>R&lt;R</>)
@@ -2506,9 +2582,9 @@
      </row>
 
      <row>
-      <entry>oprltcmpop</entry>
+      <entry><structfield>oprltcmpop</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_operator.oid</entry>
+      <entry><literal>pg_operator.oid</literal></entry>
       <entry>
        If this operator supports merge joins, the less-than operator that
        compares the left and right operand types (<literal>L&lt;R</>)
@@ -2516,9 +2592,9 @@
      </row>
 
      <row>
-      <entry>oprgtcmpop</entry>
+      <entry><structfield>oprgtcmpop</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_operator.oid</entry>
+      <entry><literal>pg_operator.oid</literal></entry>
       <entry>
        If this operator supports merge joins, the greater-than operator that
        compares the left and right operand types (<literal>L&gt;R</>)
@@ -2526,23 +2602,23 @@
      </row>
 
      <row>
-      <entry>oprcode</entry>
+      <entry><structfield>oprcode</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>Function that implements this operator</entry>
      </row>
 
      <row>
-      <entry>oprrest</entry>
+      <entry><structfield>oprrest</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>Restriction selectivity estimation function for this operator</entry>
      </row>
 
      <row>
-      <entry>oprjoin</entry>
+      <entry><structfield>oprjoin</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>Join selectivity estimation function for this operator</entry>
      </row>
     </tbody>
@@ -2550,7 +2626,7 @@
   </table>
 
   <para>
-   Unused fields contain zeroes, for example oprleft is zero for a
+   Unused column contain zeroes, for example <structfield>oprleft</structfield> is zero for a
    prefix operator.
   </para>
 
@@ -2558,23 +2634,27 @@
 
 
  <sect1 id="catalog-pg-proc">
-  <title>pg_proc</title>
+  <title><structname>pg_proc</structname></title>
+
+  <indexterm zone="catalog-pg-proc">
+   <primary>pg_proc</primary>
+  </indexterm>
 
   <para>
-   This catalog stores information about functions (or procedures).
+   The catalog <structname>pg_proc</> stores information about functions (or procedures).
    The description of <command>CREATE FUNCTION</command> and
    <xref linkend="xfunc"> contain more information about the meaning of
-   some fields.
+   some columns.
   </para>
 
   <para>
    The table contains data for aggregate functions as well as plain functions.
    If <structfield>proisagg</structfield> is true, there should be a matching
-   row in <structname>pg_aggregate</structname>.
+   row in <structfield>pg_aggregate</structfield>.
   </para>
 
   <table>
-   <title>pg_proc Columns</title>
+   <title><structname>pg_proc</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2588,44 +2668,44 @@
 
     <tbody>
      <row>
-      <entry>proname</entry>
+      <entry><structfield>proname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the function</entry>
      </row>
 
      <row>
-      <entry>pronamespace</entry>
+      <entry><structfield>pronamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_namespace.oid</entry>
+      <entry><literal>pg_namespace.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this function
       </entry>
      </row>
 
      <row>
-      <entry>proowner</entry>
+      <entry><structfield>proowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>Owner (creator) of the function</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry>Owner of the function</entry>
      </row>
 
      <row>
-      <entry>prolang</entry>
+      <entry><structfield>prolang</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_language.oid</entry>
+      <entry><literal>pg_language.oid</literal></entry>
       <entry>Implementation language or call interface of this function</entry>
      </row>
 
      <row>
-      <entry>proisagg</entry>
+      <entry><structfield>proisagg</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Function is an aggregate function</entry>
      </row>
 
      <row>
-      <entry>prosecdef</entry>
+      <entry><structfield>prosecdef</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Function is a security definer (i.e., a <quote>setuid</>
@@ -2633,7 +2713,7 @@
      </row>
 
      <row>
-      <entry>proisstrict</entry>
+      <entry><structfield>proisstrict</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -2645,15 +2725,15 @@
      </row>
 
      <row>
-      <entry>proretset</entry>
+      <entry><structfield>proretset</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Function returns a set (ie, multiple values of the specified
+      <entry>Function returns a set (i.e., multiple values of the specified
       data type)</entry>
      </row>
 
      <row>
-      <entry>provolatile</entry>
+      <entry><structfield>provolatile</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
@@ -2672,28 +2752,28 @@
      </row>
 
      <row>
-      <entry>pronargs</entry>
+      <entry><structfield>pronargs</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>Number of arguments</entry>
      </row>
 
      <row>
-      <entry>prorettype</entry>
+      <entry><structfield>prorettype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>Data type of the return value</entry>
      </row>
 
      <row>
-      <entry>proargtypes</entry>
+      <entry><structfield>proargtypes</structfield></entry>
       <entry><type>oidvector</type></entry>
-      <entry>pg_type.oid</entry>
-      <entry>A vector with the data types of the function arguments</entry>
+      <entry><literal>pg_type.oid</literal></entry>
+      <entry>An array with the data types of the function arguments</entry>
      </row>
 
      <row>
-      <entry>prosrc</entry>
+      <entry><structfield>prosrc</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>
@@ -2705,7 +2785,7 @@
      </row>
 
      <row>
-      <entry>probin</entry>
+      <entry><structfield>probin</structfield></entry>
       <entry><type>bytea</type></entry>
       <entry></entry>
       <entry>Additional information about how to invoke the function.
@@ -2714,38 +2794,40 @@
      </row>
 
      <row>
-      <entry>proacl</entry>
+      <entry><structfield>proacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
-      <entry>Access permissions</entry>
+      <entry>Access privileges</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
 
   <para>
-  Currently, prosrc contains the function's C-language name (link symbol)
-  for compiled functions, both built-in and dynamically loaded.  For all
-  other language types, prosrc contains the function's source text.
-  </para>
-
-  <para>
-  Currently, probin is unused except for dynamically-loaded C functions,
-  for which it gives the name of the shared library file containing the
-  function.
+   <structfield>prosrc</structfield> contains the function's C-language
+   name (link symbol) for compiled functions, both built-in and
+   dynamically loaded.  For all other language types,
+   <structfield>prosrc</structfield> contains the function's source
+   text.  <structfield>probin</structfield> is unused except for
+   dynamically-loaded C functions, for which it gives the name of the
+   shared library file containing the function.
   </para>
 
  </sect1>
 
  <sect1 id="catalog-pg-rewrite">
-  <title>pg_rewrite</title>
+  <title><structname>pg_rewrite</structname></title>
+
+  <indexterm zone="catalog-pg-rewrite">
+   <primary>pg_rewrite</primary>
+  </indexterm>
 
   <para>
-   This system catalog stores rewrite rules for tables and views.
+   The catalog <structname>pg_rewrite</structname> stores rewrite rules for tables and views.
   </para>
 
   <table>
-   <title>pg_rewrite Columns</title>
+   <title><structname>pg_rewrite</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2759,21 +2841,21 @@
 
     <tbody>
      <row>
-      <entry>rulename</entry>
+      <entry><structfield>rulename</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Rule name</entry>
      </row>
 
      <row>
-      <entry>ev_class</entry>
+      <entry><structfield>ev_class</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>The table this rule is for</entry>
      </row>
 
      <row>
-      <entry>ev_attr</entry>
+      <entry><structfield>ev_attr</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>The column this rule is for (currently, always zero to
@@ -2781,34 +2863,43 @@
      </row>
 
      <row>
-      <entry>ev_type</entry>
+      <entry><structfield>ev_type</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
-      <entry>Event type that the rule is for: '1' = SELECT,
-      '2' = UPDATE, '3' = INSERT, '4' = DELETE</entry>
+      <entry>
+       Event type that the rule is for: 1 = <command>SELECT</>, 2 =
+       <command>UPDATE</>, 3 = <command>INSERT</>, 4 =
+       <command>DELETE</>
+      </entry>
      </row>
 
      <row>
-      <entry>is_instead</entry>
+      <entry><structfield>is_instead</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if the rule is an INSTEAD rule</entry>
+      <entry>True if the rule is an <literal>INSTEAD</literal> rule</entry>
      </row>
 
      <row>
-      <entry>ev_qual</entry>
+      <entry><structfield>ev_qual</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Expression tree (in the form of a nodeToString representation)
-      for the rule's qualifying condition</entry>
+      <entry>
+       Expression tree (in the form of a
+       <function>nodeToString()</function> representation) for the
+       rule's qualifying condition
+      </entry>
      </row>
 
      <row>
-      <entry>ev_action</entry>
+      <entry><structfield>ev_action</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Query tree (in the form of a nodeToString representation)
-      for the rule's action</entry>
+      <entry>
+       Query tree (in the form of a
+       <function>nodeToString()</function> representation) for the
+       rule's action
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -2816,7 +2907,7 @@
 
   <note>
    <para>
-    <structname>pg_class</structname>.<structfield>relhasrules</structfield>
+    <literal>pg_class.relhasrules</literal>
     must be true if a table has any rules in this catalog.
    </para>
   </note>
@@ -2825,19 +2916,23 @@
 
 
  <sect1 id="catalog-pg-shadow">
-  <title>pg_shadow</title>
+  <title><structname>pg_shadow</structname></title>
+
+  <indexterm zone="catalog-pg-shadow">
+   <primary>pg_shadow</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_shadow</structname> contains information about
+   The catalog <structname>pg_shadow</structname> contains information about
    database users.  The name stems from the fact that this table
    should not be readable by the public since it contains passwords.
-   <structname>pg_user</structname> is a publicly readable view on
-   <structname>pg_shadow</structname> that blanks out the password field.
+   <structfield>pg_user</structfield> is a publicly readable view on
+   <structfield>pg_shadow</structfield> that blanks out the password field.
   </para>
 
   <para>
    <xref linkend="user-manag"> contains detailed information about user and
-   permission management.
+   privilege management.
   </para>
 
   <para>
@@ -2849,7 +2944,7 @@
   </para>
 
   <table>
-   <title>pg_shadow Columns</title>
+   <title><structname>pg_shadow</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2863,59 +2958,59 @@
 
     <tbody>
      <row>
-      <entry>usename</entry>
+      <entry><structfield>usename</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>User name</entry>
      </row>
 
      <row>
-      <entry>usesysid</entry>
+      <entry><structfield>usesysid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>User id (arbitrary number used to reference this user)</entry>
      </row>
 
      <row>
-      <entry>usecreatedb</entry>
+      <entry><structfield>usecreatedb</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>User may create databases</entry>
      </row>
 
      <row>
-      <entry>usesuper</entry>
+      <entry><structfield>usesuper</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>User is a superuser</entry>
      </row>
 
      <row>
-      <entry>usecatupd</entry>
+      <entry><structfield>usecatupd</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
        User may update system catalogs.  (Even a superuser may not do
-       this unless this attribute is true.)
+       this unless this column is true.)
       </entry>
      </row>
 
      <row>
-      <entry>passwd</entry>
+      <entry><structfield>passwd</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Password</entry>
      </row>
 
      <row>
-      <entry>valuntil</entry>
+      <entry><structfield>valuntil</structfield></entry>
       <entry><type>abstime</type></entry>
       <entry></entry>
       <entry>Account expiry time (only used for password authentication)</entry>
      </row>
 
      <row>
-      <entry>useconfig</entry>
+      <entry><structfield>useconfig</structfield></entry>
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>Session defaults for run-time configuration variables</entry>
@@ -2928,10 +3023,14 @@
 
 
  <sect1 id="catalog-pg-statistic">
-  <title>pg_statistic</title>
+  <title><structname>pg_statistic</structname></title>
+
+  <indexterm zone="catalog-pg-statistic">
+   <primary>pg_statistic</primary>
+  </indexterm>
 
   <para>
-   <structname>pg_statistic</structname> stores statistical data about
+   The catalog <structname>pg_statistic</structname> stores statistical data about
    the contents of the database.  Entries are created by
    <command>ANALYZE</command> and subsequently used by the query planner.
    There is one entry for each table column that has been analyzed.
@@ -2943,7 +3042,7 @@
    Since different kinds of statistics may be appropriate for different
    kinds of data, <structname>pg_statistic</structname> is designed not
    to assume very much about what sort of statistics it stores.  Only
-   extremely general statistics (such as NULL-ness) are given dedicated
+   extremely general statistics (such as nullness) are given dedicated
    columns in <structname>pg_statistic</structname>.  Everything else
    is stored in <quote>slots</quote>, which are groups of associated columns whose
    content is identified by a code number in one of the slot's columns.
@@ -2966,7 +3065,7 @@
   </para>
 
   <table>
-   <title>pg_statistic Columns</title>
+   <title><structname>pg_statistic</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -2980,84 +3079,91 @@
 
     <tbody>
      <row>
-      <entry>starelid</entry>
+      <entry><structfield>starelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>The table that the described column belongs to</entry>
      </row>
 
      <row>
-      <entry>staattnum</entry>
+      <entry><structfield>staattnum</structfield></entry>
       <entry><type>int2</type></entry>
-      <entry>pg_attribute.attnum</entry>
+      <entry><literal>pg_attribute.attnum</literal></entry>
       <entry>The number of the described column</entry>
      </row>
 
      <row>
-      <entry>stanullfrac</entry>
+      <entry><structfield>stanullfrac</structfield></entry>
       <entry><type>float4</type></entry>
       <entry></entry>
-      <entry>The fraction of the column's entries that are NULL</entry>
+      <entry>The fraction of the column's entries that are null</entry>
      </row>
 
      <row>
-      <entry>stawidth</entry>
+      <entry><structfield>stawidth</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>The average stored width, in bytes, of non-NULL entries</entry>
+      <entry>The average stored width, in bytes, of nonnull entries</entry>
      </row>
 
      <row>
-      <entry>stadistinct</entry>
+      <entry><structfield>stadistinct</structfield></entry>
       <entry><type>float4</type></entry>
       <entry></entry>
-      <entry>The number of distinct non-NULL data values in the column.
+      <entry>The number of distinct nonnull data values in the column.
       A value greater than zero is the actual number of distinct values.
       A value less than zero is the negative of a fraction of the number
       of rows in the table (for example, a column in which values appear about
-      twice on the average could be represented by stadistinct = -0.5).
+      twice on the average could be represented by <structfield>stadistinct</> = -0.5).
       A zero value means the number of distinct values is unknown.
       </entry>
      </row>
 
      <row>
-      <entry>stakindN</entry>
+      <entry><structfield>stakind<replaceable>N</></structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>A code number indicating the kind of statistics stored in the Nth
-      <quote>slot</quote> of the <structname>pg_statistic</structname> row.
+      <entry>
+       A code number indicating the kind of statistics stored in the
+       <replaceable>N</>th <quote>slot</quote> of the
+       <structname>pg_statistic</structname> row.
       </entry>
      </row>
 
      <row>
-      <entry>staopN</entry>
+      <entry><structfield>staop<replaceable>N</></structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_operator.oid</entry>
-      <entry>An operator used to derive the statistics stored in the
-      Nth <quote>slot</quote>.  For example, a histogram slot would show the <literal>&lt;</literal>
-      operator that defines the sort order of the data.
+      <entry><literal>pg_operator.oid</literal></entry>
+      <entry>
+       An operator used to derive the statistics stored in the
+       <replaceable>N</>th <quote>slot</quote>.  For example, a
+       histogram slot would show the <literal>&lt;</literal> operator
+       that defines the sort order of the data.
       </entry>
      </row>
 
      <row>
-      <entry>stanumbersN</entry>
+      <entry><structfield>stanumbers<replaceable>N</></structfield></entry>
       <entry><type>float4[]</type></entry>
       <entry></entry>
-      <entry>Numerical statistics of the appropriate kind for the Nth
-      <quote>slot</quote>, or NULL if the slot kind does not involve numerical values.
+      <entry>
+       Numerical statistics of the appropriate kind for the
+       <replaceable>N</>th <quote>slot</quote>, or null if the slot
+       kind does not involve numerical values.
       </entry>
      </row>
 
      <row>
-      <entry>stavaluesN</entry>
+      <entry><structfield>stavalues<replaceable>N</></structfield></entry>
       <entry><type>anyarray</type></entry>
       <entry></entry>
-      <entry>Column data values of the appropriate kind for the Nth
-      <quote>slot</quote>, or NULL if the slot kind does not store any data
-      values.
-      Each array's element values are actually of the specific column's
-      datatype, so there is no way to define these columns' type more
-      specifically than <quote>anyarray</>.
+      <entry>
+       Column data values of the appropriate kind for the
+       <replaceable>N</>th <quote>slot</quote>, or null if the slot
+       kind does not store any data values.  Each array's element
+       values are actually of the specific column's data type, so there
+       is no way to define these columns' type more specifically than
+       <type>anyarray</>.
       </entry>
      </row>
     </tbody>
@@ -3068,15 +3174,19 @@
 
 
  <sect1 id="catalog-pg-trigger">
-  <title>pg_trigger</title>
+  <title><structname>pg_trigger</structname></title>
+
+  <indexterm zone="catalog-pg-trigger">
+   <primary>pg_trigger</primary>
+  </indexterm>
 
   <para>
-   This system catalog stores triggers on tables.  See under
+   The catalog <structname>pg_trigger</structname> stores triggers on tables.  See under
    <command>CREATE TRIGGER</command> for more information.
   </para>
 
   <table>
-   <title>pg_trigger Columns</title>
+   <title><structname>pg_trigger</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -3090,35 +3200,35 @@
 
     <tbody>
      <row>
-      <entry>tgrelid</entry>
+      <entry><structfield>tgrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>The table this trigger is on</entry>
      </row>
 
      <row>
-      <entry>tgname</entry>
+      <entry><structfield>tgname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Trigger name (must be unique among triggers of same table)</entry>
      </row>
 
      <row>
-      <entry>tgfoid</entry>
+      <entry><structfield>tgfoid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>The function to be called</entry>
      </row>
 
      <row>
-      <entry>tgtype</entry>
+      <entry><structfield>tgtype</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>Bitmask identifying trigger conditions</entry>
      </row>
 
      <row>
-      <entry>tgenabled</entry>
+      <entry><structfield>tgenabled</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if trigger is enabled (not presently checked everywhere
@@ -3127,56 +3237,56 @@
      </row>
 
      <row>
-      <entry>tgisconstraint</entry>
+      <entry><structfield>tgisconstraint</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if trigger implements an RI constraint</entry>
+      <entry>True if trigger implements a referential integrity constraint</entry>
      </row>
 
      <row>
-      <entry>tgconstrname</entry>
+      <entry><structfield>tgconstrname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>RI constraint name</entry>
+      <entry>Referential integrity constraint name</entry>
      </row>
 
      <row>
-      <entry>tgconstrrelid</entry>
+      <entry><structfield>tgconstrrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
-      <entry>The table referenced by an RI constraint</entry>
+      <entry><literal>pg_class.oid</literal></entry>
+      <entry>The table referenced by an referential integrity constraint</entry>
      </row>
 
      <row>
-      <entry>tgdeferrable</entry>
+      <entry><structfield>tgdeferrable</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if deferrable</entry>
      </row>
 
      <row>
-      <entry>tginitdeferred</entry>
+      <entry><structfield>tginitdeferred</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if initially deferred</entry>
      </row>
 
      <row>
-      <entry>tgnargs</entry>
+      <entry><structfield>tgnargs</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>Number of argument strings passed to trigger function</entry>
      </row>
 
      <row>
-      <entry>tgattr</entry>
+      <entry><structfield>tgattr</structfield></entry>
       <entry><type>int2vector</type></entry>
       <entry></entry>
       <entry>Currently unused</entry>
      </row>
 
      <row>
-      <entry>tgargs</entry>
+      <entry><structfield>tgargs</structfield></entry>
       <entry><type>bytea</type></entry>
       <entry></entry>
       <entry>Argument strings to pass to trigger, each null-terminated</entry>
@@ -3187,8 +3297,8 @@
 
   <note>
    <para>
-    <structname>pg_class</structname>.<structfield>reltriggers</structfield>
-    needs to match up with the entries in this table.
+    <literal>pg_class.reltriggers</literal> needs to match up with the
+    entries in this table.
    </para>
   </note>
 
@@ -3196,19 +3306,23 @@
 
 
  <sect1 id="catalog-pg-type">
-  <title>pg_type</title>
+  <title><structname>pg_type</structname></title>
+
+  <indexterm zone="catalog-pg-type">
+   <primary>pg_type</primary>
+  </indexterm>
 
   <para>
-   This catalog stores information about data types.  Scalar types
-   (<quote>base types</>) are created with <command>CREATE TYPE</command>.
+   The catalog <structname>pg_type</structname> stores information about data types.  Base types
+   (scalar types) are created with <command>CREATE TYPE</command>.
    A complex type is automatically created for each table in the database, to
    represent the row structure of the table.  It is also possible to create
-   complex types with <command>CREATE TYPE AS</command>, and
+   complex types with <command>CREATE TYPE AS</command> and
    derived types with <command>CREATE DOMAIN</command>.
   </para>
 
   <table>
-   <title>pg_type Columns</title>
+   <title><structname>pg_type</> Columns</title>
 
    <tgroup cols=4>
     <thead>
@@ -3222,30 +3336,30 @@
 
     <tbody>
      <row>
-      <entry>typname</entry>
+      <entry><structfield>typname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Data type name</entry>
      </row>
 
      <row>
-      <entry>typnamespace</entry>
+      <entry><structfield>typnamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_namespace.oid</entry>
+      <entry><literal>pg_namespace.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this type
       </entry>
      </row>
 
      <row>
-      <entry>typowner</entry>
+      <entry><structfield>typowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry>pg_shadow.usesysid</entry>
-      <entry>Owner (creator) of the type</entry>
+      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry>Owner of the type</entry>
      </row>
 
      <row>
-      <entry>typlen</entry>
+      <entry><structfield>typlen</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
@@ -3258,7 +3372,7 @@
      </row>
 
      <row>
-      <entry>typbyval</entry>
+      <entry><structfield>typbyval</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
@@ -3278,7 +3392,7 @@
      </row>
 
      <row>
-      <entry>typtype</entry>
+      <entry><structfield>typtype</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
@@ -3292,17 +3406,19 @@
      </row>
 
      <row>
-      <entry>typisdefined</entry>
+      <entry><structfield>typisdefined</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if the type is defined, false if this is a placeholder
-      entry for a not-yet-defined type.  When typisdefined is false,
-      nothing except the type name, namespace, and OID can be relied on.
+      <entry>
+       True if the type is defined, false if this is a placeholder
+       entry for a not-yet-defined type.  When
+       <structfield>typisdefined</structfield> is false, nothing
+       except the type name, namespace, and OID can be relied on.
       </entry>
      </row>
 
      <row>
-      <entry>typdelim</entry>
+      <entry><structfield>typdelim</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Character that separates two values of this type when parsing
@@ -3311,25 +3427,25 @@
      </row>
 
      <row>
-      <entry>typrelid</entry>
+      <entry><structfield>typrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
+      <entry><literal>pg_class.oid</literal></entry>
       <entry>
        If this is a complex type (see
-       <structfield>typtype</structfield>), then this field points to
+       <structfield>typtype</structfield>), then this column points to
        the <structname>pg_class</structname> entry that defines the
        corresponding table.  (For a free-standing composite type, the
        <structname>pg_class</structname> entry doesn't really represent
        a table, but it is needed anyway for the type's
        <structname>pg_attribute</structname> entries to link to.)
-       Zero for non-complex types.
+       Zero for base types.
       </entry>
      </row>
 
      <row>
-      <entry>typelem</entry>
+      <entry><structfield>typelem</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry>
        If <structfield>typelem</structfield> is not 0 then it
        identifies another row in <structname>pg_type</structname>.
@@ -3341,7 +3457,7 @@
        also have nonzero <structfield>typelem</structfield>, for example
        <type>name</type> and <type>oidvector</type>.
        If a fixed-length type has a <structfield>typelem</structfield> then
-       its internal representation must be N values of the
+       its internal representation must be some number of values of the
        <structfield>typelem</structfield> data type with no other data.
        Variable-length array types have a header defined by the array
        subroutines.
@@ -3349,21 +3465,21 @@
      </row>
 
      <row>
-      <entry>typinput</entry>
+      <entry><structfield>typinput</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>Input conversion function</entry>
      </row>
 
      <row>
-      <entry>typoutput</entry>
+      <entry><structfield>typoutput</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
+      <entry><literal>pg_proc.oid</literal></entry>
       <entry>Output conversion function</entry>
      </row>
 
      <row>
-      <entry>typalign</entry>
+      <entry><structfield>typalign</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry><para>
@@ -3381,30 +3497,30 @@
        Possible values are:
        <itemizedlist>
         <listitem>
-         <para>'c' = CHAR alignment, i.e., no alignment needed.</para>
+         <para><literal>c</> = <type>char</type> alignment, i.e., no alignment needed.</para>
         </listitem>
         <listitem>
-         <para>'s' = SHORT alignment (2 bytes on most machines).</para>
+         <para><literal>s</> = <type>short</type> alignment (2 bytes on most machines).</para>
         </listitem>
         <listitem>
-         <para>'i' = INT alignment (4 bytes on most machines).</para>
+         <para><literal>i</> = <type>int</type> alignment (4 bytes on most machines).</para>
         </listitem>
         <listitem>
-         <para>'d' = DOUBLE alignment (8 bytes on many machines, but by no means all).</para>
+         <para><literal>d</> = <type>double</type> alignment (8 bytes on many machines, but by no means all).</para>
         </listitem>
        </itemizedlist>
       </para><note>
        <para>
         For types used in system tables, it is critical that the size
         and alignment defined in <structname>pg_type</structname>
-        agree with the way that the compiler will lay out the field in
+        agree with the way that the compiler will lay out the column in
         a struct representing a table row.
        </para>
       </note></entry>
      </row>
 
      <row>
-      <entry>typstorage</entry>
+      <entry><structfield>typstorage</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
       <entry><para>
@@ -3415,42 +3531,42 @@
        Possible values are
        <itemizedlist>
         <listitem>
-         <para>'p': Value must always be stored plain.</para>
+         <para><literal>p</>: Value must always be stored plain.</para>
         </listitem>
         <listitem>
          <para>
-          'e': Value can be stored in a <quote>secondary</quote>
+          <literal>e</>: Value can be stored in a <quote>secondary</quote>
           relation (if relation has one, see
-          <structname>pg_class</structname>.<structfield>reltoastrelid</structfield>).
+          <literal>pg_class.reltoastrelid</literal>).
          </para>
         </listitem>
         <listitem>
-         <para>'m': Value can be stored compressed inline.</para>
+         <para><literal>m</>: Value can be stored compressed inline.</para>
         </listitem>
         <listitem>
-         <para>'x': Value can be stored compressed inline or in <quote>secondary</quote>.</para>
+         <para><literal>x</>: Value can be stored compressed inline or stored in <quote>secondary</quote> storage.</para>
         </listitem>
        </itemizedlist>
-       Note that 'm' fields can also be moved out to secondary
-       storage, but only as a last resort ('e' and 'x' fields are
+       Note that <literal>m</> columns can also be moved out to secondary
+       storage, but only as a last resort (<literal>e</> and <literal>x</> columns are
        moved first).
       </para></entry>
      </row>
 
      <row>
-      <entry>typnotnull</entry>
+      <entry><structfield>typnotnull</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry><para>
-       <structfield>typnotnull</structfield> represents a NOT NULL
-       constraint on a type.  Presently used for domains only.
+       <structfield>typnotnull</structfield> represents a not-null
+       constraint on a type.  Used for domains only.
       </para></entry>
      </row>
 
      <row>
-      <entry>typbasetype</entry>
+      <entry><structfield>typbasetype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry>pg_type.oid</entry>
+      <entry><literal>pg_type.oid</literal></entry>
       <entry><para>
        If this is a derived type (see <structfield>typtype</structfield>),
        then <structfield>typbasetype</structfield> identifies
@@ -3459,49 +3575,49 @@
      </row>
 
      <row>
-      <entry>typtypmod</entry>
+      <entry><structfield>typtypmod</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry><para>
-       Domains use <structfield>typtypmod</structfield> to record the typmod
+       Domains use <structfield>typtypmod</structfield> to record the <literal>typmod</>
        to be applied to their base type (-1 if base type does not use a
-       typmod).  -1 if this type is not a domain.
+       <literal>typmod</>).  -1 if this type is not a domain.
       </para></entry>
      </row>
 
      <row>
-      <entry>typndims</entry>
+      <entry><structfield>typndims</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry><para>
        <structfield>typndims</structfield> is the number of array dimensions
        for a domain that is an array (that is, typbasetype is an array type;
        the domain's typelem will match the base type's typelem).
-       Zero for non-domains and non-array domains.
+       Zero for types other than array domains.
        </para></entry>
      </row>
 
      <row>
-      <entry>typdefaultbin</entry>
+      <entry><structfield>typdefaultbin</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry><para>
-       If <structfield>typdefaultbin</> is not NULL, it is the nodeToString
-       representation of a default expression for the type.  Currently this is
+       If <structfield>typdefaultbin</> is not null, it is the <function>nodeToString()</function>
+       representation of a default expression for the type.  This is
        only used for domains.
       </para></entry>
      </row>
 
      <row>
-      <entry>typdefault</entry>
+      <entry><structfield>typdefault</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry><para>
-       <structfield>typdefault</> is NULL if the type has no associated
-       default value. If <structfield>typdefaultbin</> is not NULL,
+       <structfield>typdefault</> is null if the type has no associated
+       default value. If <structfield>typdefaultbin</> is not null,
        <structfield>typdefault</> must contain a human-readable version of the
        default expression represented by <structfield>typdefaultbin</>.  If
-       <structfield>typdefaultbin</> is NULL and <structfield>typdefault</> is
+       <structfield>typdefaultbin</> is null and <structfield>typdefault</> is
        not, then <structfield>typdefault</> is the external representation of
        the type's default value, which may be fed to the type's input
        converter to produce a constant.
