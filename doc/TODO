@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jul 21 00:41:03 EDT 2001
+Last updated:		Mon Jul 30 12:48:40 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -98,6 +98,7 @@ INDEXES
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
 * Add FILLFACTOR to index creation
+* Order duplicate index entries by tid
 * -Re-enable partial indexes
 * -Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
@@ -274,6 +275,7 @@ CACHE
 
 * Cache most recent query plan(s) (Karel) [prepare]
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
+* Add free-behind capability for large sequential scans
 
 VACUUM
 
@@ -307,6 +309,7 @@ MISCELLANEOUS
 * Add hash for evaluating GROUP BY aggregates
 * Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
 * Create spinlock sleepers queue so everyone doesn't wake up at once
+* Add queue of backends waiting for spinlock
 
 SOURCE CODE
 -----------
