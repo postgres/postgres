@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ordering.h,v 1.1 1996/08/28 07:23:17 scrappy Exp $
+ * $Id: ordering.h,v 1.2 1996/11/06 09:27:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ORDERING_H
 #define ORDERING_H
+
+#include <nodes/relation.h>
 
 extern bool equal_path_path_ordering(PathOrder *path_ordering1,
 				     PathOrder *path_ordering2);
