@@ -12,15 +12,15 @@ CREATE FUNCTION widget_out(opaque)
    LANGUAGE 'c';
 CREATE FUNCTION check_primary_key ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/refint.so'
+	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
 	LANGUAGE 'c';
 CREATE FUNCTION check_foreign_key ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/refint.so'
+	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
 	LANGUAGE 'c';
 CREATE FUNCTION autoinc ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/autoinc.so'
+	AS '_OBJWD_/../../../contrib/spi/autoinc_DLSUFFIX_'
 	LANGUAGE 'c';
 CREATE FUNCTION funny_dup17 ()
         RETURNS opaque

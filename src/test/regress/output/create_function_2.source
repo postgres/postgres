@@ -43,4 +43,4 @@ CREATE FUNCTION reverse_name(name)
 --
 -- Function dynamic loading
 --
-LOAD '/opt/postgres/current/src/test/regress/input/../regress.so';
+LOAD '_OBJWD_/regress_DLSUFFIX_';
