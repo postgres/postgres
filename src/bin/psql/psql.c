@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.46 1997/01/05 23:46:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.47 1997/01/10 20:52:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1289,11 +1289,11 @@ MainLoop(PsqlSettings * settings, FILE * source)
 	    printf("EOF\n");	/* Goes on prompt line */
 	    eof = true;
 	} else {
-	    if (!interactive && !settings->singleStep && !settings->quiet)
-		fprintf(stderr, "%s\n", line);
-
 	    /* remove whitespaces on the right, incl. \n's */
 	    line = rightTrim(line);
+
+	    if (!interactive && !settings->singleStep && !settings->quiet)
+		fprintf(stderr, "%s\n", line);
 
 	    if (line[0] == '\0') {
 		free(line);
