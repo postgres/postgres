@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.74 2005/02/13 03:04:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.75 2005/02/27 00:49:28 momjian Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
@@ -239,6 +239,7 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.74 2005/02/13 03:04:15 tgl Exp
   &gist;
   &storage;
   &bki;
+  &planstats;
 
  </part>
 
