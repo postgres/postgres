@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.26 2000/02/20 14:29:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.27 2000/03/01 21:09:56 petere Exp $
 Postgres documentation
 -->
 
@@ -1555,6 +1555,16 @@ Access permissions for database "test"
 
 
     <varlistentry>
+      <term>-X, --no-psqlrc</term>
+      <listitem>
+      <para>
+      Do not read the startup file <filename>~/.psqlrc</filename>.
+      </para>
+      </listitem>
+    </varlistentry>
+
+
+    <varlistentry>
       <term>-?, --help</term>
       <listitem>
       <para>
@@ -2065,7 +2075,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
     </para>
 
     <para>
-    Before starting up in interactive mode, <application>psql</application> attempts
+    Before starting up, <application>psql</application> attempts
     to read and execute commands from the file <filename>$HOME/.psqlrc</filename>. It
     could be used to set up the client or the server to taste (using the <command>\set
     </command> and <command>SET</command> commands).
@@ -2101,7 +2111,7 @@ $endif
     does not seem to use it, you must make sure that <productname>PostgreSQL</productname>'s
     top-level <filename>configure</filename> script finds it. <filename>configure</filename>
     needs to find both the library <filename>libreadline.a</filename>
-    (or <filename>libreadline.so</filename> on systems with shared libraries)
+    (or a shared library equivalent)
     <emphasis>and</emphasis> the header files <filename>readline.h</filename> and
     <filename>history.h</filename> (or <filename>readline/readline.h</filename> and
     <filename>readline/history.h</filename>) in appropriate directories. If
@@ -2273,6 +2283,15 @@ Field separator is "oo".
       <application>psql</application> only works smootly with servers of the
       same version. That does not mean other combinations will fail outright,
       but subtle and not-so-subtle problems might come up.
+      </para>
+      </listitem>
+
+      <listitem>
+      <para>
+      Pressing Control-C during a <quote>copy in</quote> (data sent to the
+      server) doesn't show the most ideal of behaviours. If you get a message
+      such as <quote>PQexec: you gotta get out of a COPY state yourself</quote>,
+      simply reset the connection by entering <literal>\c - -</literal>.
       </para>
       </listitem>
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.26 2000/02/27 01:10:31 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.27 2000/03/01 21:09:58 petere Exp $
  */
 #include "postgres.h"
 
@@ -70,6 +70,7 @@ struct adhoc_opts
 	enum _actions action;
 	char	   *action_string;
 	bool		no_readline;
+    bool        no_psqlrc;
 };
 
 static void
@@ -192,7 +193,7 @@ main(int argc, char *argv[])
 		int			success = listAllDbs(false);
 
 		PQfinish(pset.db);
-		exit(!success);
+		exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
     SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
@@ -213,7 +214,12 @@ main(int argc, char *argv[])
      * process file given by -f
      */
 	if (options.action == ACT_FILE)
+    {
+        if (!options.no_psqlrc)
+            process_psqlrc();
+
 		successResult = process_file(options.action_string);
+    }
 	/*
      * process slash command if one was given to -c
      */
@@ -257,7 +263,8 @@ main(int argc, char *argv[])
         SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
         SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
         SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
-        process_psqlrc();
+        if (!options.no_psqlrc)
+            process_psqlrc();
         if (!pset.notty)
             initializeInput(options.no_readline ? 0 : 1);
 		successResult = MainLoop(stdin);
@@ -310,11 +317,12 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"tuples-only", no_argument, NULL, 't'},
 		{"table-attr", required_argument, NULL, 'T'},
 		{"username", required_argument, NULL, 'U'},
-		{"expanded", no_argument, NULL, 'x'},
 		{"set", required_argument, NULL, 'v'},
 		{"variable", required_argument, NULL, 'v'},
 		{"version", no_argument, NULL, 'V'},
 		{"password", no_argument, NULL, 'W'},
+		{"expanded", no_argument, NULL, 'x'},
+        {"no-psqlrc", no_argument, NULL, 'X'},
 		{"help", no_argument, NULL, '?'},
 	};
 
@@ -329,13 +337,13 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 	memset(options, 0, sizeof *options);
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWx?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWxX?", long_options, &optindex)) != -1)
 #else /* not HAVE_GETOPT_LONG */
 	/*
 	 * Be sure to leave the '-' in here, so we can catch accidental long
 	 * options.
 	 */
-	while ((c = getopt(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWx?-")) != -1)
+	while ((c = getopt(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWxX?-")) != -1)
 #endif /* not HAVE_GETOPT_LONG */
 	{
 		switch (c)
@@ -439,9 +447,6 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case 'U':
 				options->username = optarg;
 				break;
-			case 'x':
-				pset.popt.topt.expanded = true;
-				break;
 			case 'v':
 				{
 					char	   *value;
@@ -478,6 +483,12 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case 'W':
 				pset.getPassword = true;
 				break;
+			case 'x':
+				pset.popt.topt.expanded = true;
+				break;
+            case 'X':
+                options->no_psqlrc = true;
+                break;
 			case '?':
                 /* Actual help option given */
                 if (strcmp(argv[optind-1], "-?")==0 || strcmp(argv[optind-1], "--help")==0)

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.11 2000/02/21 19:40:41 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.12 2000/03/01 21:09:58 petere Exp $
  */
 #include "postgres.h"
 #include "copy.h"
@@ -28,7 +28,7 @@
 #define strcasecmp(x,y) stricmp(x,y)
 #endif
 
-bool copy_state;
+bool copy_in_state;
 
 /*
  * parse_slash_copy
@@ -335,6 +335,8 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 	char		copybuf[COPYBUFSIZ];
 	int			ret;
 
+    assert(cancelConn);
+
 	while (!copydone)
 	{
 		ret = PQgetline(conn, copybuf, COPYBUFSIZ);
@@ -363,7 +365,7 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 	}
 	fflush(copystream);
 	ret = !PQendcopy(conn);
-    copy_state = false;
+    cancelConn = NULL;
     return ret;
 }
 
@@ -394,6 +396,10 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 	int			c = 0;
     int         ret;
 
+#ifdef USE_ASSERT_CHECKING
+    assert(copy_in_state);
+#endif
+
 	if (prompt)					/* disable prompt if not interactive */
 	{
 		if (! isatty(fileno(copystream)))
@@ -409,6 +415,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 		}
 		firstload = true;
 		linedone = false;
+
 		while (!linedone)
 		{						/* for each bufferload in line ... */
 			s = copybuf;
@@ -427,6 +434,8 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 			{
 				PQputline(conn, "\\.");
 				copydone = true;
+                if (pset.cur_cmd_interactive)
+                    puts("\\.");
 				break;
 			}
 			PQputline(conn, copybuf);
@@ -443,6 +452,6 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 		PQputline(conn, "\n");
 	}
 	ret = !PQendcopy(conn);
-    copy_state = false;
+    copy_in_state = false;
     return ret;
 }

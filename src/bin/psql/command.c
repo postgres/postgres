@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.23 2000/02/21 02:05:12 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.24 2000/03/01 21:09:58 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -432,7 +432,7 @@ exec_command(const char *cmd,
 		}
 		else
         {
-			success = process_file(fname) == EXIT_SUCCESS;
+			success = (process_file(fname) == EXIT_SUCCESS);
             free (fname);
         }
 	}
@@ -727,7 +727,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "?") == 0)
 		slashUsage();
 
-#if 1
+#if 0
     /*
 	 * These commands don't do anything. I just use them to test the
 	 * parser.

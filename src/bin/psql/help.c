@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.22 2000/02/20 14:28:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.23 2000/03/01 21:09:58 petere Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -124,10 +124,11 @@ usage(void)
 		env = user;
 	printf("  -U <username>   Specify database username (default: %s)\n", env);
 
-	puts(  "  -x              Turn on expanded table output (-P expanded)");
 	puts(  "  -v name=val     Set psql variable 'name' to 'value'");
 	puts(  "  -V              Show version information and exit");
 	puts(  "  -W              Prompt for password (should happen automatically)");
+	puts(  "  -x              Turn on expanded table output (-P expanded)");
+	puts(  "  -X              Do not read startup file (~/.psqlrc)");
 
     puts(  "\nFor more information, type \"\\?\" (for internal commands) or \"\\help\"");
     puts(  "(for SQL commands) from within psql, or consult the psql section in");

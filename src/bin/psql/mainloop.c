@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.22 2000/02/20 14:28:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.23 2000/03/01 21:09:58 petere Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -40,18 +40,17 @@ MainLoop(FILE *source)
                                    yet, use this one for \e, etc. */
 	char	   *line;			/* current line of input */
 	int			len;			/* length of the line */
-	int			successResult = EXIT_SUCCESS;
-	backslashResult slashCmdStatus;
+	volatile int successResult = EXIT_SUCCESS;
+	volatile backslashResult slashCmdStatus;
 
 	bool		success;
-	char		in_quote;		/* == 0 for no in_quote */
-	bool        xcomment;		/* in extended comment */
-	int			paren_level;
+	volatile char in_quote;		/* == 0 for no in_quote */
+	volatile bool xcomment;		/* in extended comment */
+	volatile int paren_level;
 	unsigned int query_start;
-    int         count_eof = 0;
+    volatile int count_eof = 0;
     const char *var;
-    bool         was_bslash;
-    unsigned int bslash_count = 0;
+    volatile unsigned int bslash_count = 0;
 
 	int			i,
 				prevlen,
@@ -98,7 +97,6 @@ MainLoop(FILE *source)
          */
         if (cancel_pressed)
         {
-            cancel_pressed = false;
             if (!pset.cur_cmd_interactive)
             {
                 /*
@@ -109,23 +107,33 @@ MainLoop(FILE *source)
                 successResult = EXIT_USER;
                 break;
             }
+
+            cancel_pressed = false;
         }
-#ifndef WIN32
+
         if (sigsetjmp(main_loop_jmp, 1) != 0)
         {
             /* got here with longjmp */
+
             if (pset.cur_cmd_interactive)
             {
                 fputc('\n', stdout);
                 resetPQExpBuffer(query_buf);
+
+                /* reset parsing state */
+                xcomment = false;
+                in_quote = 0;
+                paren_level = 0;
+                count_eof = 0;
+                slashCmdStatus = CMD_UNKNOWN;
             }
             else
             {
                 successResult = EXIT_USER;
                 break;
-            }            
+            }
         }
-#endif
+
 
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{
@@ -273,7 +281,7 @@ MainLoop(FILE *source)
              ADVANCE_1)
 		{
 			/* was the previous character a backslash? */
-			was_bslash = (i > 0 && line[i - prevlen] == '\\');
+			bool was_bslash = (i > 0 && line[i - prevlen] == '\\');
             if (was_bslash)
                 bslash_count++;
             else

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.17 2000/02/21 19:40:41 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.18 2000/03/01 21:09:58 petere Exp $
  */
 #include "postgres.h"
 #include "common.h"
@@ -170,6 +170,8 @@ NoticeProcessor(void * arg, const char * message)
  *
  * Returns a malloc()'ed string with the input (w/o trailing newline).
  */
+static bool prompt_state;
+
 char *
 simple_prompt(const char *prompt, int maxlen, bool echo)
 {
@@ -186,6 +188,8 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		return NULL;
 	if (prompt)
 		fputs(prompt, stderr);
+
+    prompt_state = true;
 
 #ifdef HAVE_TERMIOS_H
 	if (!echo)
@@ -206,6 +210,8 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		puts("");
 	}
 #endif
+
+    prompt_state = false;
 
 	length = strlen(destination);
 	if (length > 0 && destination[length - 1] != '\n')
@@ -238,7 +244,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
  * facilities in a signal handler.
  */
 
-static PGconn *cancelConn;
+PGconn *cancelConn;
 volatile bool cancel_pressed;
 
 #define write_stderr(String) write(fileno(stderr), String, strlen(String))
@@ -246,24 +252,20 @@ volatile bool cancel_pressed;
 void
 handle_sigint(SIGNAL_ARGS)
 {
-    cancel_pressed = true;
-
-    if (copy_state)
+    /* Don't muck around if copying in or prompting for a password. */
+    if ((copy_in_state && pset.cur_cmd_interactive) || prompt_state)
         return;
 
 	if (cancelConn == NULL)
-#ifndef WIN32
         siglongjmp(main_loop_jmp, 1);
-#else
-		return;
-#endif
 
-	/* Try to send cancel request */
+    cancel_pressed = true;
+
 	if (PQrequestCancel(cancelConn))
-		write_stderr("\nCancel request sent\n");
+		write_stderr("Cancel request sent\n");
 	else
 	{
-		write_stderr("\nCould not send cancel request: ");
+		write_stderr("Could not send cancel request: ");
 		write_stderr(PQerrorMessage(cancelConn));
 	}
 }
@@ -300,10 +302,11 @@ PSQLexec(const char *query)
 
 	cancelConn = pset.db;
 	res = PQexec(pset.db, query);
-    if (PQresultStatus(res) == PGRES_COPY_IN ||
-        PQresultStatus(res) == PGRES_COPY_OUT)
-        copy_state = true;
-    cancelConn = NULL;
+    if (PQresultStatus(res) == PGRES_COPY_IN)
+        copy_in_state = true;
+    /* keep cancel connection for copy out state */
+    if (PQresultStatus(res) != PGRES_COPY_OUT)
+        cancelConn = NULL;
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
@@ -394,10 +397,11 @@ SendQuery(const char *query)
 
 	cancelConn = pset.db;
 	results = PQexec(pset.db, query);
-    if (PQresultStatus(results) == PGRES_COPY_IN ||
-        PQresultStatus(results) == PGRES_COPY_OUT)
-        copy_state = true;
-    cancelConn = NULL;
+    if (PQresultStatus(results) == PGRES_COPY_IN)
+        copy_in_state = true;
+    /* keep cancel connection for copy out state */
+    if (PQresultStatus(results) != PGRES_COPY_OUT)
+        cancelConn = NULL;
 
 	if (results == NULL)
 	{
