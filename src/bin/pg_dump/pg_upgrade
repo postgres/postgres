@@ -1,11 +1,10 @@
 #!/bin/sh
 #
-# pg_upgrade: update a database without needing a full dump/reload cycle
+# pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-echo "pg_upgrade is disabled in this release because the on-disk structure" 1>&2
-echo "of the tables has changed compared to previous releases." 1>&2
-exit 1
+# NOTE: we must be sure to update the version-checking code a few dozen lines
+# below for each new PostgreSQL release.
 
 trap "rm -f /tmp/$$" 0 1 2 3 15
 
@@ -33,37 +32,76 @@ OLDDIR="$1"
 
 # check things
 
-if [ ! -f "./data/PG_VERSION" ]
+if [ ! -d "./data" ]
 then	echo "`basename $0` must be run from the directory containing
-the database directory \`data' (`dirname $PGDATA`.)" 1>&2
+the database directory \`data\' (`dirname $PGDATA`.)" 1>&2
+	echo "You must have run initdb to create the template1 database." 1>&2
 	exit 1
 fi
 
 if [ ! -d "./$OLDDIR" ]
-then	echo "You must rename your old /data directory to /$OLDDIR and run initdb." 1>&2
-	exit 1
-fi
-
-if [ ! -d "./$OLDDIR/base/template1" ]
-then	echo "There is not database template1 in ./$OLDDIR/base." 1>&2
-	exit 1
-fi
-
-if [ ! -d "./data" ]
-then	echo "You must run initdb to create the template1 database." 1>&2
+then	echo "You must rename your old data directory to $OLDDIR and run initdb." 1>&2
 	exit 1
 fi
 
 if [ ! -d "./data/base/template1" ]
-then	echo "$0 must be run as the postgres superuser." 1>&2
+then	echo "Cannot find database template1 in ./data/base." 1>&2
+	echo "Are you running $0 as the postgres superuser?" 1>&2
 	exit 1
 fi
 
-# do I need to create a database?
+if [ ! -d "./$OLDDIR/base/template1" ]
+then	echo "There is no database template1 in ./$OLDDIR/base." 1>&2
+	exit 1
+fi
 
-# remove any COPY statements
-# we don't even need pgdump_oid because we are moving pg_variable
-# then shouldn't be in there anyway
+if [ ! -r "./data/PG_VERSION" ]
+then	echo "Cannot read ./data/PG_VERSION --- something is wrong." 1>&2
+	exit 1
+fi
+
+if [ ! -r "./$OLDDIR/PG_VERSION" ]
+then	echo "Cannot read ./$OLDDIR/PG_VERSION --- something is wrong." 1>&2
+	exit 1
+fi
+
+# Get the actual versions seen in the data dirs.
+DESTVERSION=`cat ./data/PG_VERSION`
+SRCVERSION=`cat ./$OLDDIR/PG_VERSION`
+
+# Check for version compatibility.
+# This code will need to be updated/reviewed for each new PostgreSQL release.
+
+# MYVERSION is the expected output database version
+MYVERSION="6.6"
+
+if [ "$DESTVERSION" != "$MYVERSION" ]
+then	echo "$0 is for PostgreSQL version $MYVERSION, but ./data/PG_VERSION contains $DESTVERSION." 1>&2
+	echo "Did you run initdb for version $MYVERSION?" 1>&2
+	exit 1
+fi
+
+# Check that input database is of a compatible version (anything with the same
+# physical layout of user tables and indexes should be OK).  I did not write
+# something like "$SRCVERSION -ge $MINVERSION" because test(1) isn't bright
+# enough to compare dotted version strings properly.  Using a case statement
+# looks uglier but is more flexible.
+
+case "$SRCVERSION" in
+    6.5) ;;
+    6.6) ;;
+    *)	echo "Sorry, `basename $0` cannot upgrade database version $SRCVERSION to $DESTVERSION." 1>&2
+	echo "The on-disk structure of tables has changed." 1>&2
+	echo "You will need to dump and restore using pg_dump." 1>&2
+	exit 1;;
+esac
+
+
+# OK, ready to proceed.
+# XXX Do I need to create a database?
+
+# remove any COPY statements, except for the one that loads pg_shadow.
+# there shouldn't be any others in there anyway...
 
 cat $INPUT | awk '	{
 				if (toupper($1) == "COPY" && $2 != "pg_shadow")
@@ -82,6 +120,8 @@ $0 aborted." 1>&2
 	exit 1
 fi
 
+echo "Input script $INPUT complete, moving data files..."
+
 for DIR in data/base/*
 do
 	BASEDIR="`basename $DIR`"
@@ -92,13 +132,14 @@ do
 			BASEFILE="`basename $FILE`"
 			if [ `expr "$BASEFILE" : "pg_"` -ne 3 -a \
 				"$BASEFILE" != "PG_VERSION" ]
-			then	mv $FILE $DIR
+			then	mv -f $FILE $DIR
 			fi
 		done
 	fi
 done
 
-mv $OLDDIR/pg_log data
-mv $OLDDIR/pg_variable data
+mv -f $OLDDIR/pg_log data
+mv -f $OLDDIR/pg_variable data
 
 echo "You may remove the $OLDDIR directory with 'rm -r $OLDDIR'."
+exit 0
