@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.29 2004/06/09 19:08:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.30 2004/08/08 01:48:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -187,6 +187,19 @@ UPDATE employees SET sales_count = sales_count + 1 FROM accounts
 <programlisting>
 UPDATE employees SET sales_count = sales_count + 1 WHERE id =
   (SELECT sales_person FROM accounts WHERE name = 'Acme Corporation');
+</programlisting>
+
+   Attempt to insert a new stock item along with the quantity of stock. If
+   the item exists, update the stock count of the existing item. To do this,
+   use savepoints.
+<programlisting>
+BEGIN;
+SAVEPOINT sp1;
+INSERT INTO wines VALUES('Chateau Lafite 2003', '24');
+-- Check for unique violation on name
+ROLLBACK TO sp1;
+UPDATE wines SET stock = stock + 24 WHERE winename='Chateau Lafite 2003';
+COMMIT;
 </programlisting>
   </para>
  </refsect1>

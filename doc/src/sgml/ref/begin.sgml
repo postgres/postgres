@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.31 2004/08/01 17:32:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.32 2004/08/08 01:48:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -100,6 +100,9 @@ BEGIN [ WORK | TRANSACTION ]
   <para>
    Issuing <command>BEGIN</> when already inside a transaction block will
    provoke a warning message.  The state of the transaction is not affected.
+   To nest transactions within a transaction block, use savepoints 
+   (See <xref linkend="sql-start-transaction" endterm="sql-start-transaction-title">
+   for more information).
   </para>
  </refsect1>
 
