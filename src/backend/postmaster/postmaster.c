@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.308 2003/03/20 04:51:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.309 2003/03/24 22:40:14 tgl Exp $
  *
  * NOTES
  *
@@ -767,6 +767,10 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
+	/* ignore SIGXFSZ, so that ulimit violations work like disk full */
+#ifdef SIGXFSZ
+	pqsignal(SIGXFSZ, SIG_IGN); /* ignored */
+#endif
 
 	/*
 	 * Reset whereToSendOutput from Debug (its starting state) to None.
