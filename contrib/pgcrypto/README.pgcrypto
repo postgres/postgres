@@ -21,6 +21,11 @@ After editing Makefile:
 make
 make install
 
+To run regression tests, install both PostgreSQL and pgcrypto
+and then run
+
+make installcheck
+
 SQL FUNCTIONS
 =============
 
@@ -181,7 +186,7 @@ OpenSSL (0.9.6):
     Url:	http://www.openssl.org/
 
 
-mhash (0.8.9) + mcrypt (2.4.11):
+mhash (0.8.9) + mcrypt (2.4.16):
     Hashes:	MD5, SHA1, CRC32, CRC32B, GOST, TIGER, RIPEMD160,
 		HAVAL(256,224,192,160,128)
     Ciphers:	DES, DES3, CAST-128(CAST5), CAST-256, xTEA, 3-way,

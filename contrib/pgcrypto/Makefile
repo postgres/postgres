@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.8 2001/09/29 03:11:58 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.9 2001/09/30 22:18:29 momjian Exp $
 #
 
 subdir = contrib/pgcrypto
@@ -70,6 +70,9 @@ EXTRA_CLEAN	:= gen-rtab
 
 PG_CPPFLAGS	:= $(CRYPTO_CFLAGS) -I$(srcdir) 
 SHLIB_LINK 	:= $(CRYPTO_LDFLAGS)
+
+REGRESS := init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
+		crypt-des crypt-md5 crypt-blowfish crypt-xdes 
 
 include $(top_srcdir)/contrib/contrib-global.mk
 

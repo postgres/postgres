@@ -22,7 +22,7 @@ unsigned px_gen_salt(const char *salt_type, char *dst, int rounds);
 Random
 ======
 
-int px_rand_get_bytes(uint8 *dst, int num)
+int px_get_random_bytes(uint8 *dst, int num)
 
 
 Crypto "objects"
