@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.29 1997/05/20 03:39:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.30 1997/06/01 03:18:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -919,7 +919,7 @@ do_field(PQprintOpt *po, PGresult *res,
 
     if (!skipit) {
         for (p=pval, o=buf; *p; *(o++)=*(p++)) {
-            if ((fs_len==1 && (*p==*(po->fieldSep))) || *p=='\\')
+            if ((fs_len==1 && (*p==*(po->fieldSep))) || *p=='\\' || *p=='\n')
               *(o++)='\\';
             if (po->align && (*pval=='E' || *pval=='e' ||
                               !((*p>='0' && *p<='9') || 
