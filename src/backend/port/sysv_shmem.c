@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.9 2003/05/08 14:49:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.10 2003/05/08 19:17:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@ static void IpcMemoryDetach(int status, Datum shmaddr);
 static void IpcMemoryDelete(int status, Datum shmId);
 static void *PrivateMemoryCreate(uint32 size);
 static void PrivateMemoryDelete(int status, Datum memaddr);
+static PGShmemHeader *PGSharedMemoryAttach(IpcMemoryKey key,
+										IpcMemoryId *shmid, void *addr);
 
 
 /*
@@ -297,19 +299,30 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	IpcMemoryKey NextShmemSegID;
 	void	   *memAddress;
 	PGShmemHeader *hdr;
+	IpcMemoryId shmid;
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
-	if (ExecBackend && UsedShmemSegID != 0)
-		NextShmemSegID = UsedShmemSegID;
-	else
-		NextShmemSegID = port * 1000 + 1;
+	/* Just attach and return the pointer */
+	if (ExecBackend && UsedShmemSegAddr != NULL && !makePrivate)
+	{
+		if ((hdr = (PGShmemHeader *) memAddress = PGSharedMemoryAttach(
+						UsedShmemSegID, &shmid, UsedShmemSegAddr)) == NULL)
+		{
+			fprintf(stderr, "Unable to attach to proper memory at fixed address: shmget(key=%d, addr=%p) failed: %s\n",
+				(int) UsedShmemSegID, UsedShmemSegAddr, strerror(errno));
+			proc_exit(1);
+		}
+		return hdr;
+	}
+
+	/* Create shared memory */
+	
+	NextShmemSegID = port * 1000 + 1;
 
 	for (;;NextShmemSegID++)
 	{
-		IpcMemoryId shmid;
-
 		/* Special case if creating a private segment --- just malloc() it */
 		if (makePrivate)
 		{
@@ -317,52 +330,17 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 			break;
 		}
 
-		/* If attach to fixed address, only try once */
-		if (ExecBackend && UsedShmemSegAddr != NULL && NextShmemSegID != UsedShmemSegID)
-		{
-			fprintf(stderr, "Unable to attach to memory at fixed address: shmget(key=%d, addr=%p) failed: %s\n",
-				(int) UsedShmemSegID, UsedShmemSegAddr, strerror(errno));
-			proc_exit(1);
-		}
-
-		if (!ExecBackend || UsedShmemSegAddr == NULL)
-		{
-			/* Try to create new segment */
-			memAddress = InternalIpcMemoryCreate(NextShmemSegID, size);
-			if (memAddress)
-				break;				/* successful create and attach */
-		}
-
-		/* See if it looks to be leftover from a dead Postgres process */
-		shmid = shmget(NextShmemSegID, sizeof(PGShmemHeader), 0);
-		if (shmid < 0)
-			continue;			/* failed: must be some other app's */
-
-		/* use intimate shared memory on SPARC Solaris */
-		memAddress = shmat(shmid, UsedShmemSegAddr,
-#if defined(solaris) && defined(__sparc__)
-				SHM_SHARE_MMU
-#else
-				0
-#endif
-			);
-
-		if (memAddress == (void *) -1)
-			continue;			/* failed: must be some other app's */
-
-		hdr = (PGShmemHeader *) memAddress;
-		if (hdr->magic != PGShmemMagic)
-		{
-			shmdt(memAddress);
-			continue;			/* segment belongs to a non-Postgres app */
-		}
-
-		/* Successfully attached to shared memory, which is all we wanted */
-		if (ExecBackend && UsedShmemSegAddr != NULL)
-			break;
+		/* Try to create new segment */
+		memAddress = InternalIpcMemoryCreate(NextShmemSegID, size);
+		if (memAddress)
+			break;				/* successful create and attach */
 
 		/* Check shared memory and possibly remove and recreate */
 			
+		if ((hdr = (PGShmemHeader *) memAddress = PGSharedMemoryAttach(
+						NextShmemSegID, &shmid, UsedShmemSegAddr)) == NULL)
+			continue;			/* can't attach, not one of mine */
+
 		/*
 		 * If I am not the creator and it belongs to an extant process,
 		 * continue.
@@ -401,31 +379,60 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 		 */
 	}
 
+	/*
+	 * OK, we created a new segment.  Mark it as created by this process.
+	 * The order of assignments here is critical so that another Postgres
+	 * process can't see the header as valid but belonging to an invalid
+	 * PID!
+	 */
 	hdr = (PGShmemHeader *) memAddress;
+	hdr->creatorPID = getpid();
+	hdr->magic = PGShmemMagic;
 
-	if (!ExecBackend || makePrivate || UsedShmemSegAddr == NULL)
-	{
-		/*
-		 * OK, we created a new segment.  Mark it as created by this process.
-		 * The order of assignments here is critical so that another Postgres
-		 * process can't see the header as valid but belonging to an invalid
-		 * PID!
-		 */
-		hdr->creatorPID = getpid();
-		hdr->magic = PGShmemMagic;
+	/*
+	 * Initialize space allocation status for segment.
+	 */
+	hdr->totalsize = size;
+	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+
 	
-		/*
-		 * Initialize space allocation status for segment.
-		 */
-		hdr->totalsize = size;
-		hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
-	}
-
-	if (ExecBackend && !makePrivate && UsedShmemSegAddr == NULL)
+	if (ExecBackend && UsedShmemSegAddr == NULL && !makePrivate)
 	{
 		UsedShmemSegAddr = memAddress;
 		UsedShmemSegID = NextShmemSegID;
 	}
+	
+	return hdr;
+}
 
+
+/*
+ *	Attach to shared memory and make sure it has a Postgres header
+ */
+static PGShmemHeader *
+PGSharedMemoryAttach(IpcMemoryKey key, IpcMemoryId *shmid, void *addr)
+{
+	PGShmemHeader *hdr;
+
+	if ((*shmid = shmget(key, sizeof(PGShmemHeader), 0)) < 0)
+		return NULL;
+
+	hdr = (PGShmemHeader *) shmat(*shmid, UsedShmemSegAddr,
+#if defined(solaris) && defined(__sparc__)
+			/* use intimate shared memory on SPARC Solaris */
+			SHM_SHARE_MMU
+#else
+			0
+#endif
+		);
+
+	if (hdr == (PGShmemHeader *) -1)
+		return NULL;			/* failed: must be some other app's */
+
+	if (hdr->magic != PGShmemMagic)
+	{
+		shmdt(hdr);
+		return NULL;			/* segment belongs to a non-Postgres app */
+	}
 	return hdr;
 }
