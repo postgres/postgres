@@ -19,8 +19,6 @@
 
 /* Make stuff compile faster by excluding not used stuff */
 
-#define WIN32_LEAN_AND_MEAN
-#define WIN32_EXTRA_LEAN
 #define VC_EXTRALEAN
 #ifndef __MINGW32__
 #define NOGDI
@@ -31,6 +29,9 @@
 #include <winsock.h>
 #include <stdio.h>
 #include "win32.h"
+#include "postgres_fe.h"
+#include "libpq-fe.h"
+#include "libpq-int.h"
 
 static struct WSErrorEntry
 {
