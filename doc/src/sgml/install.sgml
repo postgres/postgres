@@ -284,7 +284,8 @@ in tables), don't do it.
 </Para>
 
 <Para>
-     If the <application>pg_dumpall</application> command seems to take a long time and you think
+     If the <application>pg_dumpall</application> command
+ seems to take a long time and you think
      it might have died, then, from another terminal, type
 <programlisting>
 $ ls -l db.out
@@ -294,16 +295,20 @@ $ ls -l db.out
 
 <Para>
      Please note that if you are upgrading from a version prior to
-     <ProductName>Postgres95</ProductName> v1.09 then you must back up your database, install
-     <ProductName>Postgres95</ProductName> v1.09, restore your database, then back it up again.
-     You should also read the release notes which should cover any release-specific issues.
+     <ProductName>Postgres95</ProductName> v1.09 then you must back up your database,
+ install
+     <ProductName>Postgres95</ProductName> v1.09, restore your database,
+ then back it up again.
+     You should also read the release notes which should cover any
+ release-specific issues.
 </Para>
 
 <caution>
 <Para>
      You must make sure that your database is not updated in the middle of
      your backup.  If necessary, bring down postmaster, edit the permissions
-     in file <filename>/usr/local/pgsql/data/pg_hba.conf</filename> to allow only you on, then
+     in file <filename>/usr/local/pgsql/data/pg_hba.conf</filename>
+ to allow only you on, then
      bring <application>postmaste</application>r back up.
 </Para>
 </caution>
@@ -648,6 +653,22 @@ pg_id: can't load library 'libpq.so'
 </programlisting>
  then the above step was necessary.  Simply
      do this step, then try to create the database again.
+</Para>
+</Step>
+
+<Step Performance="optional">
+<Para>
+If you used the <option>--with-perl</option> option to configure, check
+the install log to see whether the Perl module was actually installed.
+If you've followed our advice to make the Postgres files be owned by
+an unprivileged userid, then the Perl module won't have been installed,
+for lack of write privileges on the Perl library directories.  You can
+complete its installation, either now or later, by becoming the user that
+does own the Perl library (often root) (via <command>su</command>) and doing
+<ProgramListing>
+$ cd /usr/src/pgsql/src/interfaces/perl5
+$ gmake install
+</ProgramListing>
 </Para>
 </Step>
 
@@ -1242,22 +1263,20 @@ And so on.  You get the idea.
 
 <Para>
 Questions? Bugs? Feedback?
-First, read the files in directory /usr/src/pgsql/doc.  The FAQ in
-this directory may be particularly useful.
+First, read the files in directory <filename>/usr/src/pgsql/doc/</filename>.  
+The FAQ in this directory may be particularly useful.
 </Para>
 
 <Para>
-If <ProductName>Postgres</ProductName> failed to compile on your computer then fill out the form
-in file /usr/src/pgsql/doc/bug.template and mail it to the location
-indicated at the top of the form.
+If <ProductName>Postgres</ProductName> failed to compile on your computer 
+then fill out the form in file <filename>/usr/src/pgsql/doc/bug.template</filename>
+ and mail it to the location indicated at the top of the form.
 </Para>
 
 <Para>
-Mail questions to
-<ULink url="pgsql-questions@postgresql.org">pgsql-questions@postgresql.org</ULink>.
-For more information on the various mailing lists, see 
+Check on the web site at
 <ULink url="http://www.postgresql.org">http://www.postgresql.org</ULink>
-and look for the mailing lists.
+For more information on the various support mailing lists.
 </Para>
 </Sect1>
 
