@@ -27,7 +27,9 @@ fi
 # tools/thread/thread_test must be run
 THREAD_CPPFLAGS="$THREAD_CPPFLAGS -D_REENTRANT"
 
-THREAD_SUPPORT=yes
+# Disabled because flags are required for all apps using libpq.
+# Waiting to see if other platforms need this too.  2004-03-22
+#THREAD_SUPPORT=yes
 # verified UnixWare 7.1.4 2004-03-18
 STRERROR_THREADSAFE=yes
 GETPWUID_THREADSAFE=yes
