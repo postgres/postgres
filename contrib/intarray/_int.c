@@ -41,13 +41,13 @@
 #define SORT(x) \
 	do { \
 		 if ( ARRNELEMS( x ) > 1 ) \
-			isort( (void*)ARRPTR( x ), ARRNELEMS( x ) ); \
+			isort( ARRPTR( x ), ARRNELEMS( x ) ); \
 	} while(0)
 
 #define PREPAREARR(x) \
 	do { \
 		 if ( ARRNELEMS( x ) > 1 ) \
-			if ( isort( (void*)ARRPTR( x ), ARRNELEMS( x ) ) ) \
+			if ( isort( ARRPTR( x ), ARRNELEMS( x ) ) ) \
 				x = _int_unique( x ); \
 	} while(0)
 
@@ -126,7 +126,7 @@ typedef void (*formfloat) (ArrayType *, float *);
 /*
 ** usefull function
 */
-static bool isort(int *a, const int len);
+static bool isort(int4 *a, const int len);
 static ArrayType *new_intArrayType(int num);
 static ArrayType *copy_intArrayType(ArrayType *a);
 static ArrayType *resize_intArrayType(ArrayType *a, int num);
@@ -152,48 +152,72 @@ static ArrayType *_int_common_union(bytea *entryvec,
 /*
 ** GiST support methods
 */
-bool		g_int_consistent(GISTENTRY *entry, ArrayType *query, StrategyNumber strategy);
-GISTENTRY  *g_int_compress(GISTENTRY *entry);
-GISTENTRY  *g_int_decompress(GISTENTRY *entry);
-float	   *g_int_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result);
-GIST_SPLITVEC *g_int_picksplit(bytea *entryvec, GIST_SPLITVEC *v);
-ArrayType  *g_int_union(bytea *entryvec, int *sizep);
-bool	   *g_int_same(ArrayType *b1, ArrayType *b2, bool *result);
+PG_FUNCTION_INFO_V1( g_int_consistent );
+PG_FUNCTION_INFO_V1( g_int_compress );
+PG_FUNCTION_INFO_V1( g_int_decompress );
+PG_FUNCTION_INFO_V1( g_int_penalty );
+PG_FUNCTION_INFO_V1( g_int_picksplit );
+PG_FUNCTION_INFO_V1( g_int_union );
+PG_FUNCTION_INFO_V1( g_int_same );
+
+Datum	g_int_consistent(PG_FUNCTION_ARGS);
+Datum	g_int_compress(PG_FUNCTION_ARGS);
+Datum	g_int_decompress(PG_FUNCTION_ARGS);
+Datum	g_int_penalty(PG_FUNCTION_ARGS);
+Datum	g_int_picksplit(PG_FUNCTION_ARGS);
+Datum	g_int_union(PG_FUNCTION_ARGS);
+Datum	g_int_same(PG_FUNCTION_ARGS);
 
 
 /*
 ** R-tree support functions
 */
-bool		inner_int_contains(ArrayType *a, ArrayType *b);
-bool		inner_int_overlap(ArrayType *a, ArrayType *b);
-ArrayType  *inner_int_union(ArrayType *a, ArrayType *b);
-ArrayType  *inner_int_inter(ArrayType *a, ArrayType *b);
+static bool		inner_int_contains(ArrayType *a, ArrayType *b);
+static bool		inner_int_overlap(ArrayType *a, ArrayType *b);
+static ArrayType  *inner_int_union(ArrayType *a, ArrayType *b);
+static ArrayType  *inner_int_inter(ArrayType *a, ArrayType *b);
+static void		rt__int_size(ArrayType *a, float *sz);
 
-bool		_int_different(ArrayType *a, ArrayType *b);
-bool		_int_same(ArrayType *a, ArrayType *b);
-bool		_int_contains(ArrayType *a, ArrayType *b);
-bool		_int_contained(ArrayType *a, ArrayType *b);
-bool		_int_overlap(ArrayType *a, ArrayType *b);
-ArrayType  *_int_union(ArrayType *a, ArrayType *b);
-ArrayType  *_int_inter(ArrayType *a, ArrayType *b);
-void		rt__int_size(ArrayType *a, float *sz);
+PG_FUNCTION_INFO_V1( _int_different );
+PG_FUNCTION_INFO_V1( _int_same );
+PG_FUNCTION_INFO_V1( _int_contains );
+PG_FUNCTION_INFO_V1( _int_contained );
+PG_FUNCTION_INFO_V1( _int_overlap );
+PG_FUNCTION_INFO_V1( _int_union );
+PG_FUNCTION_INFO_V1( _int_inter );
+
+Datum	_int_different(PG_FUNCTION_ARGS);
+Datum	_int_same(PG_FUNCTION_ARGS);
+Datum	_int_contains(PG_FUNCTION_ARGS);
+Datum	_int_contained(PG_FUNCTION_ARGS);
+Datum	_int_overlap(PG_FUNCTION_ARGS);
+Datum	_int_union(PG_FUNCTION_ARGS);
+Datum	_int_inter(PG_FUNCTION_ARGS);
 
 /*
 ** _intbig methods
 */
-bool		g_intbig_consistent(GISTENTRY *entry, ArrayType *query, StrategyNumber strategy);
-GISTENTRY  *g_intbig_compress(GISTENTRY *entry);
-GISTENTRY  *g_intbig_decompress(GISTENTRY *entry);
-float	   *g_intbig_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result);
-GIST_SPLITVEC *g_intbig_picksplit(bytea *entryvec, GIST_SPLITVEC *v);
-ArrayType  *g_intbig_union(bytea *entryvec, int *sizep);
-bool	   *g_intbig_same(ArrayType *a, ArrayType *b, bool *result);
+PG_FUNCTION_INFO_V1( g_intbig_consistent );
+PG_FUNCTION_INFO_V1( g_intbig_compress );
+PG_FUNCTION_INFO_V1( g_intbig_decompress );
+PG_FUNCTION_INFO_V1( g_intbig_penalty );
+PG_FUNCTION_INFO_V1( g_intbig_picksplit );
+PG_FUNCTION_INFO_V1( g_intbig_union );
+PG_FUNCTION_INFO_V1( g_intbig_same );
+
+Datum	g_intbig_consistent(PG_FUNCTION_ARGS);
+Datum	g_intbig_compress(PG_FUNCTION_ARGS);
+Datum	g_intbig_decompress(PG_FUNCTION_ARGS);
+Datum	g_intbig_penalty(PG_FUNCTION_ARGS);
+Datum	g_intbig_picksplit(PG_FUNCTION_ARGS);
+Datum	g_intbig_union(PG_FUNCTION_ARGS);
+Datum	g_intbig_same(PG_FUNCTION_ARGS);
 
 static bool _intbig_contains(ArrayType *a, ArrayType *b);
 static bool _intbig_overlap(ArrayType *a, ArrayType *b);
 static ArrayType *_intbig_union(ArrayType *a, ArrayType *b);
 
-/*static ArrayType *	_intbig_inter(ArrayType *a, ArrayType *b);*/
+static ArrayType *	_intbig_inter(ArrayType *a, ArrayType *b);
 static void rt__intbig_size(ArrayType *a, float *sz);
 static void gensign(BITVEC sign, int *a, int len);
 
@@ -207,11 +231,11 @@ static void gensign(BITVEC sign, int *a, int len);
 ** the predicate x op query == FALSE, where op is the oper
 ** corresponding to strategy in the pg_amop table.
 */
-bool
-g_int_consistent(GISTENTRY *entry,
-				 ArrayType *query,
-				 StrategyNumber strategy)
-{
+Datum
+g_int_consistent(PG_FUNCTION_ARGS) {
+	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
+	ArrayType *query = ( ArrayType * )PG_GETARG_POINTER(1);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 
 	/* sort query for fast search, key is already sorted */
@@ -239,21 +263,26 @@ g_int_consistent(GISTENTRY *entry,
 		default:
 			retval = FALSE;
 	}
-	return (retval);
+	PG_RETURN_BOOL(retval);
 }
 
-ArrayType  *
-g_int_union(bytea *entryvec, int *sizep)
+Datum
+g_int_union(PG_FUNCTION_ARGS)
 {
-	return _int_common_union(entryvec, sizep, inner_int_union);
+	PG_RETURN_POINTER( _int_common_union(
+		(bytea *) PG_GETARG_POINTER(0), 
+		(int *) PG_GETARG_POINTER(1), 
+		inner_int_union 
+	) );
 }
 
 /*
 ** GiST Compress and Decompress methods
 */
-GISTENTRY  *
-g_int_compress(GISTENTRY *entry)
+Datum
+g_int_compress(PG_FUNCTION_ARGS)
 {
+	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
 	ArrayType  *r;
 	int			len;
@@ -280,7 +309,7 @@ g_int_compress(GISTENTRY *entry)
 
 		gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset,
 					  0, FALSE);
-		return (retval);
+		PG_RETURN_POINTER(retval);
 	}
 
 	if (entry->leafkey)
@@ -320,12 +349,13 @@ g_int_compress(GISTENTRY *entry)
 	gistentryinit(*retval, PointerGetDatum(r),
 				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
-	return (retval);
+	PG_RETURN_POINTER(retval);
 }
 
-GISTENTRY  *
-g_int_decompress(GISTENTRY *entry)
+Datum
+g_int_decompress(PG_FUNCTION_ARGS)
 {
+	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
 	ArrayType  *r;
 	int		   *dr,
@@ -352,7 +382,7 @@ g_int_decompress(GISTENTRY *entry)
 #ifdef GIST_DEBUG
 		elog(NOTICE, "DECOMP IN: NULL");
 #endif
-		return (retval);
+		PG_RETURN_POINTER(retval);
 	}
 
 
@@ -363,7 +393,7 @@ g_int_decompress(GISTENTRY *entry)
 	{							/* not comressed value */
 		/* sometimes strange bytesize */
 		gistentryinit(*entry, PointerGetDatum(in), entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
-		return (entry);
+		PG_RETURN_POINTER(entry);
 	}
 
 #ifdef GIST_DEBUG
@@ -386,28 +416,35 @@ g_int_decompress(GISTENTRY *entry)
 
 	gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
-	return (retval);
+	PG_RETURN_POINTER(retval);
 }
 
 /*
 ** The GiST Penalty method for _intments
 */
-float *
-g_int_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
+Datum
+g_int_penalty(PG_FUNCTION_ARGS)
 {
-	return _int_common_penalty(origentry, newentry, result, inner_int_union, rt__int_size);
+	PG_RETURN_POINTER( _int_common_penalty( 
+		(GISTENTRY *)PG_GETARG_POINTER(0), 
+		(GISTENTRY *)PG_GETARG_POINTER(1), 
+		(float *)    PG_GETARG_POINTER(2), 
+		inner_int_union, rt__int_size
+	) );
 }
 
 
-GIST_SPLITVEC *
-g_int_picksplit(bytea *entryvec,
-				GIST_SPLITVEC *v)
+Datum
+g_int_picksplit(PG_FUNCTION_ARGS)
 {
-	return _int_common_picksplit(entryvec, v,
-								 inner_int_union,
-								 inner_int_inter,
-								 rt__int_size,
-								 1e-8);
+	PG_RETURN_POINTER( _int_common_picksplit(
+		(bytea *)PG_GETARG_POINTER(0), 
+		(GIST_SPLITVEC *)PG_GETARG_POINTER(1),
+		inner_int_union,
+		inner_int_inter,
+		rt__int_size,
+		1e-8
+	) );
 }
 
 /*
@@ -415,26 +452,38 @@ g_int_picksplit(bytea *entryvec,
 */
 
 
-bool *
-g_int_same(ArrayType *b1, ArrayType *b2, bool *result)
+Datum
+g_int_same(PG_FUNCTION_ARGS)
 {
-	if (_int_same(b1, b2))
-		*result = TRUE;
-	else
-		*result = FALSE;
+	bool *result = (bool *)PG_GETARG_POINTER(2);
+	*result = DatumGetBool(
+		DirectFunctionCall2(
+			_int_same,
+			PointerGetDatum(PG_GETARG_POINTER(0)),
+			PointerGetDatum(PG_GETARG_POINTER(1))
+		)
+	);
 
-	return (result);
+	PG_RETURN_POINTER(result);
 }
 
-bool
-_int_contained(ArrayType *a, ArrayType *b)
+Datum 
+_int_contained(PG_FUNCTION_ARGS)
 {
-	return (_int_contains(b, a));
+	PG_RETURN_BOOL( DatumGetBool( 
+		DirectFunctionCall2( 
+			_int_contains, 
+			PointerGetDatum(PG_GETARG_POINTER(1)), 
+			PointerGetDatum(PG_GETARG_POINTER(0)) 
+		)
+	));
 }
 
-bool
-_int_contains(ArrayType *a, ArrayType *b)
+Datum
+_int_contains(PG_FUNCTION_ARGS)
 {
+	ArrayType *a = (ArrayType *)PG_GETARG_POINTER(0);
+	ArrayType *b = (ArrayType *)PG_GETARG_POINTER(1);
 	bool		res;
 	ArrayType  *an,
 			   *bn;
@@ -451,10 +500,10 @@ _int_contains(ArrayType *a, ArrayType *b)
 	res = inner_int_contains(an, bn);
 	pfree(an);
 	pfree(bn);
-	return res;
+	PG_RETURN_BOOL( res );
 }
 
-bool
+static bool
 inner_int_contains(ArrayType *a, ArrayType *b)
 {
 	int			na,
@@ -497,15 +546,23 @@ inner_int_contains(ArrayType *a, ArrayType *b)
  * Operator class for R-tree indexing
  *****************************************************************************/
 
-bool
-_int_different(ArrayType *a, ArrayType *b)
+Datum 
+_int_different(PG_FUNCTION_ARGS)
 {
-	return (!_int_same(a, b));
+	PG_RETURN_BOOL( ! DatumGetBool( 
+		DirectFunctionCall2( 
+			_int_same, 
+			PointerGetDatum(PG_GETARG_POINTER(0)), 
+			PointerGetDatum(PG_GETARG_POINTER(1)) 
+		)
+	));
 }
 
-bool
-_int_same(ArrayType *a, ArrayType *b)
+Datum
+_int_same(PG_FUNCTION_ARGS)
 {
+	ArrayType *a = (ArrayType *)PG_GETARG_POINTER(0);
+	ArrayType *b = (ArrayType *)PG_GETARG_POINTER(1);
 	int			na,
 				nb;
 	int			n;
@@ -546,14 +603,16 @@ _int_same(ArrayType *a, ArrayType *b)
 	pfree(an);
 	pfree(bn);
 
-	return result;
+	PG_RETURN_BOOL(result);
 }
 
 /*	_int_overlap -- does a overlap b?
  */
-bool
-_int_overlap(ArrayType *a, ArrayType *b)
+Datum
+_int_overlap(PG_FUNCTION_ARGS)
 {
+	ArrayType *a = (ArrayType *)PG_GETARG_POINTER(0);
+	ArrayType *b = (ArrayType *)PG_GETARG_POINTER(1);
 	bool		result;
 	ArrayType  *an,
 			   *bn;
@@ -572,10 +631,10 @@ _int_overlap(ArrayType *a, ArrayType *b)
 	pfree(an);
 	pfree(bn);
 
-	return result;
+	PG_RETURN_BOOL( result );
 }
 
-bool
+static bool
 inner_int_overlap(ArrayType *a, ArrayType *b)
 {
 	int			na,
@@ -609,9 +668,11 @@ inner_int_overlap(ArrayType *a, ArrayType *b)
 	return FALSE;
 }
 
-ArrayType  *
-_int_union(ArrayType *a, ArrayType *b)
+Datum
+_int_union(PG_FUNCTION_ARGS)
 {
+	ArrayType *a = (ArrayType *)PG_GETARG_POINTER(0);
+	ArrayType *b = (ArrayType *)PG_GETARG_POINTER(1);
 	ArrayType  *result;
 	ArrayType  *an,
 			   *bn;
@@ -631,10 +692,10 @@ _int_union(ArrayType *a, ArrayType *b)
 	if (bn)
 		pfree(bn);
 
-	return result;
+	PG_RETURN_POINTER( result );
 }
 
-ArrayType  *
+static ArrayType  *
 inner_int_union(ArrayType *a, ArrayType *b)
 {
 	ArrayType  *r = NULL;
@@ -691,15 +752,17 @@ inner_int_union(ArrayType *a, ArrayType *b)
 }
 
 
-ArrayType  *
-_int_inter(ArrayType *a, ArrayType *b)
+Datum
+_int_inter(PG_FUNCTION_ARGS)
 {
+	ArrayType *a = (ArrayType *)PG_GETARG_POINTER(0);
+	ArrayType *b = (ArrayType *)PG_GETARG_POINTER(1);
 	ArrayType  *result;
 	ArrayType  *an,
 			   *bn;
 
 	if (ARRISNULL(a) || ARRISNULL(b))
-		return new_intArrayType(0);
+		PG_RETURN_POINTER(new_intArrayType(0));
 
 	an = copy_intArrayType(a);
 	bn = copy_intArrayType(b);
@@ -712,10 +775,10 @@ _int_inter(ArrayType *a, ArrayType *b)
 	pfree(an);
 	pfree(bn);
 
-	return result;
+	PG_RETURN_POINTER( result );
 }
 
-ArrayType  *
+static ArrayType  *
 inner_int_inter(ArrayType *a, ArrayType *b)
 {
 	ArrayType  *r;
@@ -764,7 +827,7 @@ inner_int_inter(ArrayType *a, ArrayType *b)
 		return resize_intArrayType(r, dr - ARRPTR(r));
 }
 
-void
+static void
 rt__int_size(ArrayType *a, float *size)
 {
 	if (ARRISNULL(a))
@@ -782,11 +845,11 @@ rt__int_size(ArrayType *a, float *size)
 
 /* len >= 2 */
 static bool
-isort(int *a, int len)
+isort(int4 *a, int len)
 {
-	int			tmp,
+	int4			tmp,
 				index;
-	int		   *cur,
+	int4		   *cur,
 			   *end;
 	bool		r = FALSE;
 
@@ -1006,9 +1069,12 @@ _intbig_inter(ArrayType *a, ArrayType *b)
 	return r;
 }
 
-bool *
-g_intbig_same(ArrayType *a, ArrayType *b, bool *result)
+Datum
+g_intbig_same(PG_FUNCTION_ARGS)
 {
+	ArrayType *a = (ArrayType *)PG_GETARG_POINTER(0);
+	ArrayType *b = (ArrayType *)PG_GETARG_POINTER(1);
+	bool *result = (bool *)PG_GETARG_POINTER(2);
 	BITVECP		da,
 				db;
 	int			i;
@@ -1016,7 +1082,7 @@ g_intbig_same(ArrayType *a, ArrayType *b, bool *result)
 	if (ARRISNULL(a) || ARRISNULL(b))
 	{
 		*result = (ARRISNULL(a) && ARRISNULL(b)) ? TRUE : FALSE;
-		return result;
+		PG_RETURN_POINTER( result );
 	}
 
 	da = SIGPTR(a);
@@ -1026,28 +1092,46 @@ g_intbig_same(ArrayType *a, ArrayType *b, bool *result)
 	if (da[i] != db[i])
 	{
 		*result = FALSE;
-		return result;
+		PG_RETURN_POINTER( result );
 	}
 	);
 
 	*result = TRUE;
-	return result;
+	PG_RETURN_POINTER( result );
 }
 
-GISTENTRY  *
-g_intbig_compress(GISTENTRY *entry)
+Datum
+g_intbig_compress(PG_FUNCTION_ARGS)
 {
+	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
 	ArrayType  *r,
 			   *in;
+	bool maycompress = true;
+	int i;
 
 	if (DatumGetPointer(entry->key) != NULL)
 		in = (ArrayType *) PG_DETOAST_DATUM(entry->key);
 	else
 		in = NULL;
 
-	if (!entry->leafkey)
-		return entry;
+	if (!entry->leafkey) {
+		if ( ! ARRISNULL(in) ) {
+			LOOPBYTE( 
+				if ( ( ((char*)ARRPTR(in))[i] & 0xff ) != 0xff ) {
+					maycompress = false;
+					break;
+				}
+			); 
+			if ( maycompress ) {
+				retval = palloc(sizeof(GISTENTRY));
+				r = new_intArrayType(1);
+				gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+				PG_RETURN_POINTER( retval );
+			}	
+		}
+		PG_RETURN_POINTER( entry );
+	}
 
 	retval = palloc(sizeof(GISTENTRY));
 
@@ -1057,7 +1141,7 @@ g_intbig_compress(GISTENTRY *entry)
 			if (in != (ArrayType *) DatumGetPointer(entry->key))
 				pfree(in);
 		gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset, 0, FALSE);
-		return (retval);
+		PG_RETURN_POINTER (retval);
 	}
 
 	r = new_intArrayType(SIGLENINT);
@@ -1065,60 +1149,101 @@ g_intbig_compress(GISTENTRY *entry)
 			ARRPTR(in),
 			ARRNELEMS(in));
 
+	LOOPBYTE( 
+		if( ( ((char*)ARRPTR(in))[i] & 0xff ) != 0xff ) {
+			maycompress = false;
+			break;
+		}
+	); 
+
+	if ( maycompress ) {
+		pfree(r);
+		r = new_intArrayType(1);
+	}	
+
 	gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
 	if (in)
-		if (in != (ArrayType *) DatumGetPointer(entry->key))
+		if ( in != (ArrayType *) DatumGetPointer(entry->key))
 			pfree(in);
 
-	return (retval);
+	PG_RETURN_POINTER (retval);
 }
 
-GISTENTRY  *
-g_intbig_decompress(GISTENTRY *entry)
+Datum
+g_intbig_decompress(PG_FUNCTION_ARGS)
 {
+	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
 	ArrayType  *key;
 
-	key = (ArrayType *) PG_DETOAST_DATUM(entry->key);
-	if (key != (ArrayType *) DatumGetPointer(entry->key))
+	if ( DatumGetPointer(entry->key) != NULL )
+		key = (ArrayType *) PG_DETOAST_DATUM(entry->key);
+	else
+		key = NULL;
+
+	if ( key != (ArrayType *) DatumGetPointer(entry->key))
 	{
 		GISTENTRY  *retval;
 
 		retval = palloc(sizeof(GISTENTRY));
 
-		gistentryinit(*retval, PointerGetDatum(key), entry->rel, entry->page, entry->offset, VARSIZE(key), FALSE);
-		return retval;
+		gistentryinit(*retval, PointerGetDatum(key), entry->rel, entry->page, entry->offset, (key) ? VARSIZE(key) : 0, FALSE);
+		PG_RETURN_POINTER( retval );
 	}
-	return entry;
+	if ( ! ARRISNULL(key) )
+		if ( ARRNELEMS(key) == 1 ) {
+			GISTENTRY  *retval;
+			ArrayType  *newkey;
+
+			retval = palloc(sizeof(GISTENTRY));
+			newkey = new_intArrayType(SIGLENINT);
+			MemSet( (void*)ARRPTR(newkey), 0xff, SIGLEN ); 
+
+			gistentryinit(*retval, PointerGetDatum(newkey), entry->rel, entry->page, entry->offset, VARSIZE(newkey), FALSE);
+			PG_RETURN_POINTER( retval );
+		}
+	PG_RETURN_POINTER( entry );
 }
 
-GIST_SPLITVEC *
-g_intbig_picksplit(bytea *entryvec, GIST_SPLITVEC *v)
+Datum
+g_intbig_picksplit(PG_FUNCTION_ARGS)
 {
-	return _int_common_picksplit(entryvec, v,
-								 _intbig_union,
-								 _intbig_inter,
-								 rt__intbig_size,
-								 1.0);
-
+	PG_RETURN_POINTER( _int_common_picksplit(
+		(bytea *)PG_GETARG_POINTER(0), 
+		(GIST_SPLITVEC *)PG_GETARG_POINTER(1),
+		_intbig_union,
+		_intbig_inter,
+		rt__intbig_size,
+		1.0
+	) );
 }
 
-ArrayType  *
-g_intbig_union(bytea *entryvec, int *sizep)
+Datum
+g_intbig_union(PG_FUNCTION_ARGS)
 {
-	return _int_common_union(entryvec, sizep, _intbig_union);
+        PG_RETURN_POINTER( _int_common_union(
+                (bytea *) PG_GETARG_POINTER(0),
+                (int *) PG_GETARG_POINTER(1),
+                _intbig_union
+        ) );
 }
 
-float *
-g_intbig_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
+Datum
+g_intbig_penalty(PG_FUNCTION_ARGS)
 {
-	_int_common_penalty(origentry, newentry, result, _intbig_union, rt__intbig_size);
-	return result;
+	PG_RETURN_POINTER( _int_common_penalty( 
+		(GISTENTRY *)PG_GETARG_POINTER(0), 
+		(GISTENTRY *)PG_GETARG_POINTER(1), 
+		(float *)    PG_GETARG_POINTER(2), 
+		_intbig_union, rt__intbig_size
+	) );
 }
 
-bool
-g_intbig_consistent(GISTENTRY *entry, ArrayType *query, StrategyNumber strategy)
-{
+Datum
+g_intbig_consistent(PG_FUNCTION_ARGS) {
+        GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
+        ArrayType *query = ( ArrayType * )PG_GETARG_POINTER(1);
+        StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 	ArrayType  *q;
 
@@ -1147,7 +1272,7 @@ g_intbig_consistent(GISTENTRY *entry, ArrayType *query, StrategyNumber strategy)
 			retval = FALSE;
 	}
 	pfree(q);
-	return (retval);
+	PG_RETURN_BOOL(retval);
 }
 
 /*****************************************************************
@@ -1158,7 +1283,7 @@ g_intbig_consistent(GISTENTRY *entry, ArrayType *query, StrategyNumber strategy)
 ** The GiST Union method for _intments
 ** returns the minimal set that encloses all the entries in entryvec
 */
-ArrayType  *
+static ArrayType  *
 _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
 {
 	int			numranges,
@@ -1202,7 +1327,7 @@ _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
  * The GiST Penalty method for _intments *
  *****************************************/
 
-float *
+static float *
 _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 					formarray unionf,
 					formfloat sizef)
@@ -1232,7 +1357,7 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 ** The GiST PickSplit method for _intments
 ** We use Guttman's poly time split algorithm
 */
-GIST_SPLITVEC *
+static GIST_SPLITVEC *
 _int_common_picksplit(bytea *entryvec,
 					  GIST_SPLITVEC *v,
 					  formarray unionf,
