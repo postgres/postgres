@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.191 1999/10/21 00:43:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.192 1999/10/21 01:24:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2993,7 +2993,7 @@ main(int argc, char **argv)
 	if (!settings.quiet && !settings.notty && !singleQuery && !qfilename)
 	{
 		printf("Welcome to the PostgreSQL interactive terminal.\n");
-		printf("(Please read the copyright file for legal issues.)\n");
+		printf("(Please read the copyright file for legal information.)\n");
 
 		if ((version = selectVersion(&settings)) != NULL)
 			printf("[%s]\n", version);
