@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.69 2002/11/21 00:42:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.70 2002/12/13 05:36:24 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -363,68 +363,96 @@ psql_completion(char *text, int start, int end)
 	else if (!prev_wd)
 		COMPLETE_WITH_LIST(sql_commands);
 
-/* CREATE or DROP */
+/* CREATE or DROP but not ALTER TABLE sth DROP */
 	/* complete with something you can create or drop */
-	else if (strcasecmp(prev_wd, "CREATE") == 0 || strcasecmp(prev_wd, "DROP") == 0)
-		matches = completion_matches(text, create_command_generator);
+	else if (strcasecmp(prev_wd, "CREATE") == 0 || 
+			 (strcasecmp(prev_wd, "DROP") == 0 &&
+			  strcasecmp(prev3_wd,"TABLE") != 0 ))
+        matches = completion_matches(text, create_command_generator);
 
 /* ALTER */
-	/* complete with what you can alter (TABLE, GROUP, USER, ...) */
-	else if (strcasecmp(prev_wd, "ALTER") == 0)
+    /* complete with what you can alter (TABLE, GROUP, USER, ...) 
+     * unless we're in ALTER TABLE sth ALTER*/
+    else if (strcasecmp(prev_wd, "ALTER") == 0  &&
+			 strcasecmp(prev3_wd, "TABLE") != 0 )
 	{
-		char	   *list_ALTER[] = {"DATABASE", "GROUP", "SCHEMA", "TABLE", "TRIGGER", "USER", NULL};
+		char	   *list_ALTER[] = {"DATABASE", "GROUP", "SCHEMA", "TABLE",
+									"TRIGGER", "USER", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
 	}
 
 	/* ALTER DATABASE <name> */
-	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "DATABASE") == 0)
+	else if (strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 strcasecmp(prev2_wd, "DATABASE") == 0)
 	{
 		char	   *list_ALTERDATABASE[] = {"RESET", "SET", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERDATABASE);
 	}
 	/* ALTER TRIGGER <name>, add ON */
-	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "TRIGGER") == 0)
+	else if (strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 strcasecmp(prev2_wd, "TRIGGER") == 0)
 		COMPLETE_WITH_CONST("ON");
 
 	/*
 	 * If we have ALTER TRIGGER <sth> ON, then add the correct tablename
 	 */
-	else if (strcasecmp(prev4_wd, "ALTER") == 0 && strcasecmp(prev3_wd, "TRIGGER") == 0
-	  && strcasecmp(prev_wd, "ON") == 0)
+	else if (strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 strcasecmp(prev3_wd, "TRIGGER") == 0 &&
+			 strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
 	/*
-	 * If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or
-	 * RENAME
+	 * If we detect ALTER TABLE <name>, suggest either ADD, DROP, ALTER,
+	 * RENAME, or OWNER
 	 */
-	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "TABLE") == 0)
+	else if (strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 strcasecmp(prev2_wd, "TABLE") == 0)
 	{
-		char	   *list_ALTER2[] = {"ADD", "ALTER", "RENAME", NULL};
+		char	   *list_ALTER2[] = {"ADD", "ALTER", "DROP", "RENAME",
+									 "OWNER TO", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER2);
 	}
 	/* If we have TABLE <sth> ALTER|RENAME, provide list of columns */
 	else if (strcasecmp(prev3_wd, "TABLE") == 0 &&
-			 (strcasecmp(prev_wd, "ALTER") == 0 || strcasecmp(prev_wd, "RENAME") == 0))
+			 (strcasecmp(prev_wd, "ALTER") == 0 ||
+			  strcasecmp(prev_wd, "RENAME") == 0))
 		COMPLETE_WITH_ATTR(prev2_wd);
 
+	/* If we have TABLE <sth> DROP, provide COLUMN or CONSTRAINT */
+	else if (strcasecmp(prev3_wd, "TABLE") == 0 &&
+			 strcasecmp(prev_wd, "DROP")  == 0)
+	{
+		char	   *list_TABLEDROP[] = {"COLUMN", "CONSTRAINT", NULL};
+		COMPLETE_WITH_LIST(list_TABLEDROP);
+	}
+	/* If we have TABLE <sth> DROP COLUMN, provide list of columns */
+	else if (strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 strcasecmp(prev2_wd, "DROP") == 0 && 
+			 strcasecmp(prev_wd, "COLUMN") == 0)
+		COMPLETE_WITH_ATTR(prev3_wd);
+
 	/* complete ALTER GROUP <foo> with ADD or DROP */
-	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "GROUP") == 0)
+	else if (strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 strcasecmp(prev2_wd, "GROUP") == 0)
 	{
 		char	   *list_ALTERGROUP[] = {"ADD", "DROP", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERGROUP);
 	}
 	/* complete ALTER GROUP <foo> ADD|DROP with USER */
-	else if (strcasecmp(prev4_wd, "ALTER") == 0 && strcasecmp(prev3_wd, "GROUP") == 0
-			 && (strcasecmp(prev_wd, "ADD") == 0 || strcasecmp(prev_wd, "DROP") == 0))
+	else if (strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 strcasecmp(prev3_wd, "GROUP") == 0 &&
+			 (strcasecmp(prev_wd, "ADD") == 0 ||
+			  strcasecmp(prev_wd, "DROP") == 0))
 		COMPLETE_WITH_CONST("USER");
 	/* complete {ALTER} GROUP <foo> ADD|DROP USER with a user name */
-	else if (strcasecmp(prev4_wd, "GROUP") == 0
-			 && (strcasecmp(prev2_wd, "ADD") == 0 || strcasecmp(prev2_wd, "DROP") == 0)
-			 && strcasecmp(prev_wd, "USER") == 0)
+	else if (strcasecmp(prev4_wd, "GROUP") == 0 &&
+			 (strcasecmp(prev2_wd, "ADD") == 0 ||
+			  strcasecmp(prev2_wd, "DROP") == 0) &&
+			 strcasecmp(prev_wd, "USER") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_users);
 
 /* ANALYZE */
@@ -447,7 +475,8 @@ psql_completion(char *text, int start, int end)
 	 * If we have CLUSTER <sth> ON, then add the correct tablename as
 	 * well.
 	 */
-	else if (strcasecmp(prev3_wd, "CLUSTER") == 0 && strcasecmp(prev_wd, "ON") == 0)
+	else if (strcasecmp(prev3_wd, "CLUSTER") == 0 &&
+			 strcasecmp(prev_wd, "ON") == 0)
 	{
 		char		query_buffer[BUF_SIZE];		/* Some room to build
 												 * queries. */
@@ -463,16 +492,18 @@ psql_completion(char *text, int start, int end)
 /* COMMENT */
 	else if (strcasecmp(prev_wd, "COMMENT") == 0)
 		COMPLETE_WITH_CONST("ON");
-	else if (strcasecmp(prev2_wd, "COMMENT") == 0 && strcasecmp(prev_wd, "ON") == 0)
+	else if (strcasecmp(prev2_wd, "COMMENT") == 0 &&
+			 strcasecmp(prev_wd, "ON") == 0)
 	{
 		char	   *list_COMMENT[] =
-		{"DATABASE", "INDEX", "RULE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW",
-			"COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", "CONSTRAINT",
-		"DOMAIN", NULL};
+		{"DATABASE", "INDEX", "RULE", "SCHEMA", "SEQUENCE", "TABLE",
+		 "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR",
+		 "TRIGGER", "CONSTRAINT", "DOMAIN", NULL};
 
 		COMPLETE_WITH_LIST(list_COMMENT);
 	}
-	else if (strcasecmp(prev4_wd, "COMMENT") == 0 && strcasecmp(prev3_wd, "ON") == 0)
+	else if (strcasecmp(prev4_wd, "COMMENT") == 0 &&
+			 strcasecmp(prev3_wd, "ON") == 0)
 		COMPLETE_WITH_CONST("IS");
 
 /* COPY */
@@ -483,7 +514,8 @@ psql_completion(char *text, int start, int end)
 	 */
 	else if (strcasecmp(prev_wd, "COPY") == 0 ||
 			 strcasecmp(prev_wd, "\\copy") == 0 ||
-			 (strcasecmp(prev2_wd, "COPY") == 0 && strcasecmp(prev_wd, "BINARY") == 0))
+			 (strcasecmp(prev2_wd, "COPY") == 0 &&
+			  strcasecmp(prev_wd, "BINARY") == 0))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 	/* If we have COPY|BINARY <sth>, complete it with "TO" or "FROM" */
 	else if (strcasecmp(prev2_wd, "COPY") == 0 ||
@@ -497,24 +529,29 @@ psql_completion(char *text, int start, int end)
 
 /* CREATE INDEX */
 	/* First off we complete CREATE UNIQUE with "INDEX" */
-	else if (strcasecmp(prev2_wd, "CREATE") == 0 && strcasecmp(prev_wd, "UNIQUE") == 0)
+	else if (strcasecmp(prev2_wd, "CREATE") == 0 &&
+			 strcasecmp(prev_wd, "UNIQUE") == 0)
 		COMPLETE_WITH_CONST("INDEX");
 	/* If we have CREATE|UNIQUE INDEX <sth>, then add "ON" */
 	else if (strcasecmp(prev2_wd, "INDEX") == 0 &&
-			 (strcasecmp(prev3_wd, "CREATE") == 0 || strcasecmp(prev3_wd, "UNIQUE") == 0))
+			 (strcasecmp(prev3_wd, "CREATE") == 0 ||
+			  strcasecmp(prev3_wd, "UNIQUE") == 0))
 		COMPLETE_WITH_CONST("ON");
 	/* Complete ... INDEX <name> ON with a list of tables  */
-	else if ((strcasecmp(prev3_wd, "INDEX") == 0 && strcasecmp(prev_wd, "ON") == 0) || (0))
+	else if (strcasecmp(prev3_wd, "INDEX") == 0 &&
+			 strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
 	/*
 	 * Complete INDEX <name> ON <table> with a list of table columns
 	 * (which should really be in parens)
 	 */
-	else if (strcasecmp(prev4_wd, "INDEX") == 0 && strcasecmp(prev2_wd, "ON") == 0)
+	else if (strcasecmp(prev4_wd, "INDEX") == 0 &&
+			 strcasecmp(prev2_wd, "ON") == 0)
 		COMPLETE_WITH_ATTR(prev_wd);
 	/* same if you put in USING */
-	else if ((strcasecmp(prev4_wd, "ON") == 0 && strcasecmp(prev2_wd, "USING") == 0))
+	else if (strcasecmp(prev4_wd, "ON") == 0 &&
+			 strcasecmp(prev2_wd, "USING") == 0)
 		COMPLETE_WITH_ATTR(prev3_wd);
 	/* Complete USING with an index method */
 	else if (strcasecmp(prev_wd, "USING") == 0)
@@ -526,7 +563,8 @@ psql_completion(char *text, int start, int end)
 
 /* CREATE RULE */
 	/* Complete "CREATE RULE <sth>" with "AS" */
-	else if (strcasecmp(prev3_wd, "CREATE") == 0 && strcasecmp(prev2_wd, "RULE") == 0)
+	else if (strcasecmp(prev3_wd, "CREATE") == 0 &&
+			 strcasecmp(prev2_wd, "RULE") == 0)
 		COMPLETE_WITH_CONST("AS");
 	/* Complete "CREATE RULE <sth> AS with "ON" */
 	else if (strcasecmp(prev4_wd, "CREATE") == 0 &&
@@ -538,7 +576,8 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev2_wd, "AS") == 0 &&
 			 strcasecmp(prev_wd, "ON") == 0)
 	{
-		char	   *rule_events[] = {"SELECT", "UPDATE", "INSERT", "DELETE", NULL};
+		char	   *rule_events[] = {"SELECT", "UPDATE", "INSERT",
+									 "DELETE", NULL};
 
 		COMPLETE_WITH_LIST(rule_events);
 	}
@@ -556,7 +595,8 @@ psql_completion(char *text, int start, int end)
 
 /* CREATE TABLE */
 	/* Complete CREATE TEMP with "TABLE" */
-	else if (strcasecmp(prev2_wd, "CREATE") == 0 && strcasecmp(prev_wd, "TEMP") == 0)
+	else if (strcasecmp(prev2_wd, "CREATE") == 0 &&
+			 strcasecmp(prev_wd, "TEMP") == 0)
 		COMPLETE_WITH_CONST("TABLE");
 
 /* CREATE TRIGGER */
@@ -564,7 +604,8 @@ psql_completion(char *text, int start, int end)
 
 /* CREATE VIEW */
 	/* Complete "CREATE VIEW <name>" with "AS" */
-	else if (strcasecmp(prev3_wd, "CREATE") == 0 && strcasecmp(prev2_wd, "VIEW") == 0)
+	else if (strcasecmp(prev3_wd, "CREATE") == 0 &&
+			 strcasecmp(prev2_wd, "VIEW") == 0)
 		COMPLETE_WITH_CONST("AS");
 	/* Complete "CREATE VIEW <sth> AS with "SELECT" */
 	else if (strcasecmp(prev4_wd, "CREATE") == 0 &&
@@ -585,10 +626,12 @@ psql_completion(char *text, int start, int end)
 			   strcasecmp(prev2_wd, "AFTER") == 0))
 		COMPLETE_WITH_CONST("FROM");
 	/* Complete DELETE FROM with a list of tables */
-	else if (strcasecmp(prev2_wd, "DELETE") == 0 && strcasecmp(prev_wd, "FROM") == 0)
+	else if (strcasecmp(prev2_wd, "DELETE") == 0 &&
+			 strcasecmp(prev_wd, "FROM") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 	/* Complete DELETE FROM <table> with "WHERE" (perhaps a safe idea?) */
-	else if (strcasecmp(prev3_wd, "DELETE") == 0 && strcasecmp(prev2_wd, "FROM") == 0)
+	else if (strcasecmp(prev3_wd, "DELETE") == 0 &&
+			 strcasecmp(prev2_wd, "FROM") == 0)
 		COMPLETE_WITH_CONST("WHERE");
 
 /* EXPLAIN */
@@ -598,19 +641,22 @@ psql_completion(char *text, int start, int end)
 	 * the list of SQL commands
 	 */
 	else if (strcasecmp(prev_wd, "EXPLAIN") == 0 ||
-			 (strcasecmp(prev2_wd, "EXPLAIN") == 0 && strcasecmp(prev_wd, "VERBOSE") == 0))
+			 (strcasecmp(prev2_wd, "EXPLAIN") == 0 &&
+			  strcasecmp(prev_wd, "VERBOSE") == 0))
 		COMPLETE_WITH_LIST(sql_commands);
 
 /* FETCH && MOVE */
 	/* Complete FETCH with one of FORWARD, BACKWARD, RELATIVE */
-	else if (strcasecmp(prev_wd, "FETCH") == 0 || strcasecmp(prev_wd, "MOVE") == 0)
+	else if (strcasecmp(prev_wd, "FETCH") == 0 ||
+			 strcasecmp(prev_wd, "MOVE") == 0)
 	{
 		char	   *list_FETCH1[] = {"FORWARD", "BACKWARD", "RELATIVE", NULL};
 
 		COMPLETE_WITH_LIST(list_FETCH1);
 	}
 	/* Complete FETCH <sth> with one of ALL, NEXT, PRIOR */
-	else if (strcasecmp(prev2_wd, "FETCH") == 0 || strcasecmp(prev2_wd, "MOVE") == 0)
+	else if (strcasecmp(prev2_wd, "FETCH") == 0 ||
+			 strcasecmp(prev2_wd, "MOVE") == 0)
 	{
 		char	   *list_FETCH2[] = {"ALL", "NEXT", "PRIOR", NULL};
 
@@ -621,7 +667,8 @@ psql_completion(char *text, int start, int end)
 	 * Complete FETCH <sth1> <sth2> with "FROM" or "TO". (Is there a
 	 * difference? If not, remove one.)
 	 */
-	else if (strcasecmp(prev3_wd, "FETCH") == 0 || strcasecmp(prev3_wd, "MOVE") == 0)
+	else if (strcasecmp(prev3_wd, "FETCH") == 0 ||
+			 strcasecmp(prev3_wd, "MOVE") == 0)
 	{
 		char	   *list_FROMTO[] = {"FROM", "TO", NULL};
 
@@ -630,14 +677,16 @@ psql_completion(char *text, int start, int end)
 
 /* GRANT && REVOKE*/
 	/* Complete GRANT/REVOKE with a list of privileges */
-	else if (strcasecmp(prev_wd, "GRANT") == 0 || strcasecmp(prev_wd, "REVOKE") == 0)
+	else if (strcasecmp(prev_wd, "GRANT") == 0 ||
+			 strcasecmp(prev_wd, "REVOKE") == 0)
 	{
 		char	   *list_privileg[] = {"SELECT", "INSERT", "UPDATE", "DELETE", "RULE", "REFERENCES", "TRIGGER", "CREATE", "TEMPORARY", "EXECUTE", "USAGE", "ALL", NULL};
 
 		COMPLETE_WITH_LIST(list_privileg);
 	}
 	/* Complete GRANT/REVOKE <sth> with "ON" */
-	else if (strcasecmp(prev2_wd, "GRANT") == 0 || strcasecmp(prev2_wd, "REVOKE") == 0)
+	else if (strcasecmp(prev2_wd, "GRANT") == 0 ||
+			 strcasecmp(prev2_wd, "REVOKE") == 0)
 		COMPLETE_WITH_CONST("ON");
 
 	/*
@@ -646,16 +695,19 @@ psql_completion(char *text, int start, int end)
 	 *
 	 * XXX should also offer DATABASE, FUNCTION, LANGUAGE, SCHEMA here
 	 */
-	else if ((strcasecmp(prev3_wd, "GRANT") == 0 || strcasecmp(prev3_wd, "REVOKE") == 0) &&
+	else if ((strcasecmp(prev3_wd, "GRANT") == 0 ||
+			  strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class "
 							"WHERE relkind in ('r','i','S','v') AND "
 							"substr(relname,1,%d)='%s' AND pg_catalog.pg_table_is_visible(oid)");
 	/* Complete "GRANT * ON * " with "TO" */
-	else if (strcasecmp(prev4_wd, "GRANT") == 0 && strcasecmp(prev2_wd, "ON") == 0)
+	else if (strcasecmp(prev4_wd, "GRANT") == 0 &&
+			 strcasecmp(prev2_wd, "ON") == 0)
 		COMPLETE_WITH_CONST("TO");
 	/* Complete "REVOKE * ON * " with "FROM" */
-	else if (strcasecmp(prev4_wd, "REVOKE") == 0 && strcasecmp(prev2_wd, "ON") == 0)
+	else if (strcasecmp(prev4_wd, "REVOKE") == 0 &&
+			 strcasecmp(prev2_wd, "ON") == 0)
 		COMPLETE_WITH_CONST("FROM");
 
 	/*
@@ -668,24 +720,29 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev_wd, "INSERT") == 0)
 		COMPLETE_WITH_CONST("INTO");
 	/* Complete INSERT INTO with table names */
-	else if (strcasecmp(prev2_wd, "INSERT") == 0 && strcasecmp(prev_wd, "INTO") == 0)
+	else if (strcasecmp(prev2_wd, "INSERT") == 0 &&
+			 strcasecmp(prev_wd, "INTO") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 	/* Complete "INSERT INTO <table> (" with attribute names */
-	else if (rl_line_buffer[start - 1] == '(' && strcasecmp(prev3_wd, "INSERT") == 0 && strcasecmp(prev2_wd, "INTO") == 0)
+	else if (rl_line_buffer[start - 1] == '(' &&
+			 strcasecmp(prev3_wd, "INSERT") == 0 &&
+			 strcasecmp(prev2_wd, "INTO") == 0)
 		COMPLETE_WITH_ATTR(prev_wd);
 
 	/*
 	 * Complete INSERT INTO <table> with "VALUES" or "SELECT" or "DEFAULT
 	 * VALUES"
 	 */
-	else if (strcasecmp(prev3_wd, "INSERT") == 0 && strcasecmp(prev2_wd, "INTO") == 0)
+	else if (strcasecmp(prev3_wd, "INSERT") == 0 &&
+			 strcasecmp(prev2_wd, "INTO") == 0)
 	{
 		char	   *list_INSERT[] = {"DEFAULT VALUES", "SELECT", "VALUES", NULL};
 
 		COMPLETE_WITH_LIST(list_INSERT);
 	}
 	/* Complete INSERT INTO <table> (attribs) with "VALUES" or "SELECT" */
-	else if (strcasecmp(prev4_wd, "INSERT") == 0 && strcasecmp(prev3_wd, "INTO") == 0 &&
+	else if (strcasecmp(prev4_wd, "INSERT") == 0 &&
+			 strcasecmp(prev3_wd, "INTO") == 0 &&
 			 prev_wd[strlen(prev_wd) - 1] == ')')
 	{
 		char	   *list_INSERT[] = {"SELECT", "VALUES", NULL};
@@ -694,30 +751,37 @@ psql_completion(char *text, int start, int end)
 	}
 
 	/* Insert an open parenthesis after "VALUES" */
-	else if (strcasecmp(prev_wd, "VALUES") == 0 && strcasecmp(prev2_wd, "DEFAULT") != 0)
+	else if (strcasecmp(prev_wd, "VALUES") == 0 &&
+			 strcasecmp(prev2_wd, "DEFAULT") != 0)
 		COMPLETE_WITH_CONST("(");
 
 /* LOCK */
 	/* Complete LOCK [TABLE] with a list of tables */
-	else if ((strcasecmp(prev_wd, "LOCK") == 0) ||
-	 (strcasecmp(prev_wd, "TABLE") == 0 && strcasecmp(prev2_wd, "LOCK")))
+	else if (strcasecmp(prev_wd, "LOCK") == 0 ||
+	 		 (strcasecmp(prev_wd, "TABLE") == 0 &&
+			  strcasecmp(prev2_wd, "LOCK")))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
 	/* For the following, handle the case of a single table only for now */
 
 	/* Complete LOCK [TABLE] <table> with "IN" */
-	else if ((strcasecmp(prev2_wd, "LOCK") == 0 && strcasecmp(prev_wd, "TABLE")) ||
-			 (strcasecmp(prev2_wd, "TABLE") == 0 && strcasecmp(prev3_wd, "LOCK") == 0))
+	else if ((strcasecmp(prev2_wd, "LOCK") == 0 &&
+			  strcasecmp(prev_wd, "TABLE")) ||
+			 (strcasecmp(prev2_wd, "TABLE") == 0 &&
+			  strcasecmp(prev3_wd, "LOCK") == 0))
 		COMPLETE_WITH_CONST("IN");
 
 	/* Complete LOCK [TABLE] <table> IN with a lock mode */
 	else if (strcasecmp(prev_wd, "IN") == 0 &&
 			 (strcasecmp(prev3_wd, "LOCK") == 0 ||
-	(strcasecmp(prev3_wd, "TABLE") == 0 && strcasecmp(prev3_wd, "LOCK"))))
+			  (strcasecmp(prev3_wd, "TABLE") == 0 &&
+			   strcasecmp(prev3_wd, "LOCK"))))
 	{
-		char	   *lock_modes[] = {"ACCESS SHARE MODE", "ROW SHARE MODE", "ROW EXCLUSIVE MODE",
-			"SHARE UPDATE EXCLUSIVE MODE", "SHARE MODE", "SHARE ROW EXCLUSIVE MODE",
-		"EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE", NULL};
+		char	   *lock_modes[] = {"ACCESS SHARE MODE",
+			"ROW SHARE MODE", "ROW EXCLUSIVE MODE",
+			"SHARE UPDATE EXCLUSIVE MODE", "SHARE MODE",
+			"SHARE ROW EXCLUSIVE MODE",
+			"EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE", NULL};
 
 		COMPLETE_WITH_LIST(lock_modes);
 	}
@@ -748,18 +812,21 @@ psql_completion(char *text, int start, int end)
 
 /* SET, RESET, SHOW */
 	/* Complete with a variable name */
-	else if ((strcasecmp(prev_wd, "SET") == 0 && strcasecmp(prev3_wd, "UPDATE") != 0) ||
+	else if ((strcasecmp(prev_wd, "SET") == 0 &&
+			  strcasecmp(prev3_wd, "UPDATE") != 0) ||
 			 strcasecmp(prev_wd, "RESET") == 0 ||
 			 strcasecmp(prev_wd, "SHOW") == 0)
 		COMPLETE_WITH_LIST(pgsql_variables);
 	/* Complete "SET TRANSACTION ISOLOLATION LEVEL" */
-	else if (strcasecmp(prev2_wd, "SET") == 0 && strcasecmp(prev_wd, "TRANSACTION") == 0)
+	else if (strcasecmp(prev2_wd, "SET") == 0 &&
+			 strcasecmp(prev_wd, "TRANSACTION") == 0)
 		COMPLETE_WITH_CONST("ISOLATION");
 	else if (strcasecmp(prev3_wd, "SET") == 0 &&
 			 strcasecmp(prev2_wd, "TRANSACTION") == 0 &&
 			 strcasecmp(prev_wd, "ISOLATION") == 0)
 		COMPLETE_WITH_CONST("LEVEL");
-	else if ((strcasecmp(prev4_wd, "SET") == 0 || strcasecmp(prev4_wd, "AS") == 0) &&
+	else if ((strcasecmp(prev4_wd, "SET") == 0 ||
+			  strcasecmp(prev4_wd, "AS") == 0) &&
 			 strcasecmp(prev3_wd, "TRANSACTION") == 0 &&
 			 strcasecmp(prev2_wd, "ISOLATION") == 0 &&
 			 strcasecmp(prev_wd, "LEVEL") == 0)
@@ -774,14 +841,16 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev_wd, "READ") == 0)
 		COMPLETE_WITH_CONST("COMMITTED");
 	/* Complete SET CONSTRAINTS <foo> with DEFERRED|IMMEDIATE */
-	else if (strcasecmp(prev3_wd, "SET") == 0 && strcasecmp(prev2_wd, "CONSTRAINTS") == 0)
+	else if (strcasecmp(prev3_wd, "SET") == 0 &&
+			 strcasecmp(prev2_wd, "CONSTRAINTS") == 0)
 	{
 		char	   *constraint_list[] = {"DEFERRED", "IMMEDIATE", NULL};
 
 		COMPLETE_WITH_LIST(constraint_list);
 	}
 	/* Complete SET SESSION with AUTHORIZATION or CHARACTERISTICS... */
-	else if (strcasecmp(prev2_wd, "SET") == 0 && strcasecmp(prev_wd, "SESSION") == 0)
+	else if (strcasecmp(prev2_wd, "SET") == 0 &&
+			 strcasecmp(prev_wd, "SESSION") == 0)
 	{
 		char	   *my_list[] = {"AUTHORIZATION",
 			"CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL",
@@ -804,7 +873,8 @@ psql_completion(char *text, int start, int end)
 	{
 		if (strcasecmp(prev2_wd, "DateStyle") == 0)
 		{
-			char	   *my_list[] = {"'ISO'", "'SQL'", "'Postgres'", "'European'", "'NonEuropean'", "'German'", "DEFAULT", NULL};
+			char	   *my_list[] = {"'ISO'", "'SQL'", "'Postgres'",
+			"'European'", "'NonEuropean'", "'German'", "DEFAULT", NULL};
 
 			COMPLETE_WITH_LIST(my_list);
 		}
@@ -849,7 +919,9 @@ psql_completion(char *text, int start, int end)
 /* VACUUM */
 	else if (strcasecmp(prev_wd, "VACUUM") == 0)
 		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class WHERE relkind='r' and substr(relname,1,%d)='%s' and pg_catalog.pg_table_is_visible(oid) UNION SELECT 'FULL'::name UNION SELECT 'ANALYZE'::name");
-	else if (strcasecmp(prev2_wd, "VACUUM") == 0 && (strcasecmp(prev_wd, "FULL") == 0 || strcasecmp(prev_wd, "ANALYZE") == 0))
+	else if (strcasecmp(prev2_wd, "VACUUM") == 0 &&
+			 (strcasecmp(prev_wd, "FULL") == 0 ||
+			  strcasecmp(prev_wd, "ANALYZE") == 0))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
 /* WHERE */
@@ -871,9 +943,9 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(sql_commands);
 	else if (strcmp(prev_wd, "\\pset") == 0)
 	{
-		char	   *my_list[] = {"format", "border", "expanded", "null", "fieldsep",
-			"tuples_only", "title", "tableattr", "pager",
-		"recordsep", NULL};
+		char	   *my_list[] = {"format", "border", "expanded",
+			"null", "fieldsep", "tuples_only", "title", "tableattr", "pager",
+			"recordsep", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
@@ -1015,7 +1087,8 @@ complete_from_query(char *text, int state)
 
 	/* Find something that matches */
 	if (result && PQresultStatus(result) == PGRES_TUPLES_OK)
-		while (list_index < PQntuples(result) && (item = PQgetvalue(result, list_index++, 0)))
+		while (list_index < PQntuples(result) &&
+			   (item = PQgetvalue(result, list_index++, 0)))
 			if (strncasecmp(text, item, string_length) == 0)
 				return xstrdup(item);
 
