@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.35 2004/12/30 21:45:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.36 2005/01/17 03:04:17 momjian Exp $
 -->
 
  <chapter id="plperl">
@@ -489,7 +489,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD{name}</literal></term>
+     <term><literal>$_TD-&gt;{name}</literal></term>
      <listitem>
       <para>
        Name of the trigger being called
@@ -498,7 +498,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD{event}</literal></term>
+     <term><literal>$_TD-&gt;{event}</literal></term>
      <listitem>
       <para>
        Trigger event: <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>, or <literal>UNKNOWN</>
@@ -507,7 +507,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD{when}</literal></term>
+     <term><literal>$_TD-&gt;{when}</literal></term>
      <listitem>
       <para>
        When the trigger was called: <literal>BEFORE</literal>, <literal>AFTER</literal>, or <literal>UNKNOWN</literal>
@@ -516,7 +516,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD{level}</literal></term>
+     <term><literal>$_TD-&gt;{level}</literal></term>
      <listitem>
       <para>
        The trigger level: <literal>ROW</literal>, <literal>STATEMENT</literal>, or <literal>UNKNOWN</literal>
@@ -525,7 +525,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD{relid}</literal></term>
+     <term><literal>$_TD-&gt;{relid}</literal></term>
      <listitem>
       <para>
        OID of the table on which the trigger fired
@@ -534,7 +534,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD{relname}</literal></term>
+     <term><literal>$_TD-&gt;{relname}</literal></term>
      <listitem>
       <para>
        Name of the table on which the trigger fired
@@ -543,7 +543,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>@{$_TD{argv}}</literal></term>
+     <term><literal>@{$_TD-&gt;{argv}}</literal></term>
      <listitem>
       <para>
        Arguments of the trigger function
@@ -552,7 +552,7 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD{argc}</literal></term>
+     <term><literal>$_TD-&gt;{argc}</literal></term>
      <listitem>
       <para>
        Number of arguments of the trigger function
