@@ -106,7 +106,7 @@ setweight(PG_FUNCTION_ARGS)
 			p = POSDATAPTR(out, entry);
 			while (j--)
 			{
-				p->weight = w;
+				WEP_SETWEIGHT(*p,w);
 				p++;
 			}
 		}
@@ -144,10 +144,10 @@ add_pos(tsvector * src, WordEntry * srcptr, tsvector * dest, WordEntry * destptr
 		*clen = 0;
 
 	startlen = *clen;
-	for (i = 0; i < slen && *clen < MAXNUMPOS && (*clen == 0 || dpos[*clen - 1].pos != MAXENTRYPOS - 1); i++)
+	for (i = 0; i < slen && *clen < MAXNUMPOS && (*clen == 0 || WEP_GETPOS(dpos[*clen - 1]) != MAXENTRYPOS - 1); i++)
 	{
-		dpos[*clen].weight = spos[i].weight;
-		dpos[*clen].pos = LIMITPOS(spos[i].pos + maxpos);
+		WEP_SETWEIGHT(dpos[*clen], WEP_GETWEIGHT(spos[i]));
+		WEP_SETPOS(dpos[*clen], LIMITPOS(WEP_GETPOS(spos[i]) + maxpos));
 		(*clen)++;
 	}
 
@@ -186,8 +186,8 @@ concat(PG_FUNCTION_ARGS)
 			p = POSDATAPTR(in1, ptr);
 			while (j--)
 			{
-				if (p->pos > maxpos)
-					maxpos = p->pos;
+				if (WEP_GETPOS(*p) > maxpos)
+					maxpos = WEP_GETPOS(*p);
 				p++;
 			}
 		}

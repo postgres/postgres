@@ -396,7 +396,7 @@ checkclass_str(CHKVAL * chkval, WordEntry * val, ITEM * item)
 
 	while (len--)
 	{
-		if (item->weight & (1 << ptr->weight))
+		if (item->weight & (1 << WEP_GETWEIGHT(*ptr)))
 			return true;
 		ptr++;
 	}

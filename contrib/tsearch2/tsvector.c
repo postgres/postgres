@@ -50,9 +50,9 @@ Datum		tsvector_length(PG_FUNCTION_ARGS);
 static int
 comparePos(const void *a, const void *b)
 {
-	if (((WordEntryPos *) a)->pos == ((WordEntryPos *) b)->pos)
+	if (WEP_GETPOS(*(WordEntryPos *) a) == WEP_GETPOS(*(WordEntryPos *) b))
 		return 1;
-	return (((WordEntryPos *) a)->pos > ((WordEntryPos *) b)->pos) ? 1 : -1;
+	return (WEP_GETPOS(*(WordEntryPos *) a)> WEP_GETPOS(*(WordEntryPos *) b)) ? 1 : -1;
 }
 
 static int
@@ -70,16 +70,15 @@ uniquePos(WordEntryPos * a, int4 l)
 	ptr = a + 1;
 	while (ptr - a < l)
 	{
-		if (ptr->pos != res->pos)
+		if (WEP_GETPOS(*ptr) != WEP_GETPOS(*res))
 		{
 			res++;
-			res->pos = ptr->pos;
-			res->weight = ptr->weight;
-			if (res - a >= MAXNUMPOS - 1 || res->pos == MAXENTRYPOS - 1)
+			*res = *ptr;
+			if (res - a >= MAXNUMPOS - 1 || WEP_GETPOS(*res) == MAXENTRYPOS - 1)
 				break;
 		}
-		else if (ptr->weight > res->weight)
-			res->weight = ptr->weight;
+		else if (WEP_GETWEIGHT(*ptr) > WEP_GETWEIGHT(*res))
+			WEP_SETWEIGHT(*res, WEP_GETWEIGHT(*ptr));
 		ptr++;
 	}
 	return res + 1 - a;
@@ -324,12 +323,12 @@ gettoken_tsvector(TI_IN_STATE * state)
 					state->pos = (WordEntryPos *) repalloc(state->pos, sizeof(WordEntryPos) * state->alen);
 				}
 				(*(uint16 *) (state->pos))++;
-				state->pos[*(uint16 *) (state->pos)].pos = LIMITPOS(atoi(state->prsbuf));
-				if (state->pos[*(uint16 *) (state->pos)].pos == 0)
+				WEP_SETPOS(state->pos[*(uint16 *) (state->pos)], LIMITPOS(atoi(state->prsbuf)));
+				if (WEP_GETPOS(state->pos[*(uint16 *) (state->pos)]) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("wrong position info")));
-				state->pos[*(uint16 *) (state->pos)].weight = 0;
+				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 0 );
 				state->state = WAITPOSDELIM;
 			}
 			else
@@ -343,35 +342,35 @@ gettoken_tsvector(TI_IN_STATE * state)
 				state->state = INPOSINFO;
 			else if (tolower(*(state->prsbuf)) == 'a' || *(state->prsbuf) == '*')
 			{
-				if (state->pos[*(uint16 *) (state->pos)].weight)
+				if ( WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]) )
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				state->pos[*(uint16 *) (state->pos)].weight = 3;
+				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 3 );
 			}
 			else if (tolower(*(state->prsbuf)) == 'b')
 			{
-				if (state->pos[*(uint16 *) (state->pos)].weight)
+				if ( WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]) )
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				state->pos[*(uint16 *) (state->pos)].weight = 2;
+				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 2 );
 			}
 			else if (tolower(*(state->prsbuf)) == 'c')
 			{
-				if (state->pos[*(uint16 *) (state->pos)].weight)
+				if ( WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]) )
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				state->pos[*(uint16 *) (state->pos)].weight = 1;
+				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 1 );
 			}
 			else if (tolower(*(state->prsbuf)) == 'd')
 			{
-				if (state->pos[*(uint16 *) (state->pos)].weight)
+				if ( WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]) )
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				state->pos[*(uint16 *) (state->pos)].weight = 0;
+				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 0 );
 			}
 			else if (isspace((unsigned char) *(state->prsbuf)) ||
 					 *(state->prsbuf) == '\0')
@@ -540,9 +539,9 @@ tsvector_out(PG_FUNCTION_ARGS)
 			wptr = POSDATAPTR(out, ptr);
 			while (pp)
 			{
-				sprintf(curout, "%d", wptr->pos);
+				sprintf(curout, "%d", WEP_GETPOS(*wptr));
 				curout = strchr(curout, '\0');
-				switch (wptr->weight)
+				switch (WEP_GETWEIGHT(*wptr))
 				{
 					case 3:
 						*curout++ = 'A';
@@ -704,8 +703,8 @@ makevalue(PRSTEXT * prs)
 			wptr = POSDATAPTR(in, ptr);
 			for (j = 0; j < *(uint16 *) cur; j++)
 			{
-				wptr[j].weight = 0;
-				wptr[j].pos = prs->words[i].pos.apos[j + 1];
+				WEP_SETWEIGHT(wptr[j], 0);
+				WEP_SETPOS(wptr[j], prs->words[i].pos.apos[j + 1]);
 			}
 			cur += sizeof(uint16) + prs->words[i].pos.apos[0] * sizeof(WordEntryPos);
 			pfree(prs->words[i].pos.apos);

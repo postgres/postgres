@@ -23,12 +23,25 @@ typedef struct
 #define MAXSTRLEN ( 1<<11 )
 #define MAXSTRPOS ( 1<<20 )
 
+/*
+Equivalent to 
 typedef struct
 {
-	uint16
-				weight:2,
-				pos:14;
-}	WordEntryPos;
+       uint16
+                                weight:2,
+                                pos:14;
+}       WordEntryPos;
+
+*/
+
+typedef uint16 WordEntryPos;
+
+#define  WEP_GETWEIGHT(x)	( (x) >> 14 )
+#define  WEP_GETPOS(x)	( (x) & 0x3fff )
+
+#define  WEP_SETWEIGHT(x,v)  (x) = ( (v) << 14 ) | ( (x) & 0x3fff ) 
+#define  WEP_SETPOS(x,v)	(x) = ( (x) & 0xc000 ) | ( (v) & 0x3fff ) 
+
 
 #define MAXENTRYPOS (1<<14)
 #define MAXNUMPOS	256

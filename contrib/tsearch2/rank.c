@@ -39,7 +39,7 @@ Datum		get_covers(PG_FUNCTION_ARGS);
 
 static float weights[] = {0.1, 0.2, 0.4, 1.0};
 
-#define wpos(wep)	( w[ ((WordEntryPos*)(wep))->weight ] )
+#define wpos(wep)	( w[ WEP_GETWEIGHT(wep) ] )
 
 #define DEF_NORM_METHOD 0
 
@@ -113,8 +113,8 @@ find_wordentry(tsvector * t, QUERYTYPE * q, ITEM * item)
 }
 
 static WordEntryPos POSNULL[] = {
-	{0, 0},
-	{0, MAXENTRYPOS - 1}
+	0,
+	0
 };
 
 static float
@@ -136,6 +136,7 @@ calc_rank_and(float *w, tsvector * t, QUERYTYPE * q)
 
 	memset(pos, 0, sizeof(uint16 **) * q->size);
 	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
+	WEP_SETPOS(POSNULL[1], MAXENTRYPOS-1); 
 
 	for (i = 0; i < q->size; i++)
 	{
@@ -165,14 +166,14 @@ calc_rank_and(float *w, tsvector * t, QUERYTYPE * q)
 			{
 				for (p = 0; p < lenct; p++)
 				{
-					dist = Abs(post[l].pos - ct[p].pos);
+					dist = Abs((int)WEP_GETPOS(post[l]) - (int)WEP_GETPOS(ct[p]));
 					if (dist || (dist == 0 && (pos[i] == (uint16 *) POSNULL || pos[k] == (uint16 *) POSNULL)))
 					{
 						float		curw;
 
 						if (!dist)
 							dist = MAXENTRYPOS;
-						curw = sqrt(wpos(&(post[l])) * wpos(&(ct[p])) * word_distance(dist));
+						curw = sqrt(wpos(post[l]) * wpos(ct[p]) * word_distance(dist));
 						res = (res < 0) ? curw : 1.0 - (1.0 - res) * (1.0 - curw);
 					}
 				}
@@ -219,9 +220,9 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 		for (j = 0; j < dimt; j++)
 		{
 			if (res < 0)
-				res = wpos(&(post[j]));
+				res = wpos(post[j]);
 			else
-				res = 1.0 - (1.0 - res) * (1.0 - wpos(&(post[j])));
+				res = 1.0 - (1.0 - res) * (1.0 - wpos(post[j]));
 		}
 	}
 	return res;
@@ -497,7 +498,7 @@ get_docrep(tsvector * txt, QUERYTYPE * query, int *doclen)
 		for (j = 0; j < dimt; j++)
 		{
 			doc[cur].item = &(item[i]);
-			doc[cur].pos = post[j].pos;
+			doc[cur].pos = WEP_GETPOS(post[j]);
 			cur++;
 		}
 	}
@@ -656,7 +657,7 @@ get_covers(PG_FUNCTION_ARGS)
 		{
 			dw[cur].w = STRPTR(txt) + pptr[i].pos;
 			dw[cur].len = pptr[i].len;
-			dw[cur].pos = posdata[j].pos;
+			dw[cur].pos = WEP_GETPOS(posdata[j]);
 			cur++;
 		}
 		len += (pptr[i].len + 1) * (int) POSDATALEN(txt, &(pptr[i]));

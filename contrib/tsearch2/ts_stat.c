@@ -42,7 +42,7 @@ check_weight(tsvector * txt, WordEntry * wptr, int8 weight)
 
 	while (len--)
 	{
-		if (weight & (1 << ptr->weight))
+		if (weight & (1 << WEP_GETWEIGHT(*ptr)))
 			num++;
 		ptr++;
 	}
