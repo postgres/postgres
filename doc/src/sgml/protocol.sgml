@@ -478,7 +478,7 @@ AsciiRow (B)
                 corresponding field is not NULL.
 </Para>
 <Para>
-	Then, for each field, there is the following:
+	Then, for each field with a non-NULL value, there is the following:
 <VariableList>
 <VarListEntry>
 <Term>
@@ -723,7 +723,7 @@ BinaryRow (B)
                 corresponding field is not NULL.
 </Para>
 <Para>
-	Then, for each field, there is the following:
+	Then, for each field with a non-NULL value, there is the following:
 <VariableList>
 <VarListEntry>
 <Term>
@@ -798,9 +798,9 @@ CopyDataRows (B & F)
 </Term>
 <ListItem>
 <Para>
-	This is a stream of rows where each row is terminated by a Char1('\n').
-	This is then followed by the sequence Char1('\\'), Char1('.'),
-	Char1('\n').
+	This is a stream of rows where each row is terminated by a Byte1('\n').
+	This is then followed by the sequence Byte1('\\'), Byte1('.'),
+	Byte1('\n').
 </Para>
 </ListItem>
 </VarListEntry>
