@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.169 2000/12/05 19:15:10 tgl Exp $
+ *	$Id: analyze.c,v 1.170 2000/12/05 19:57:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1209,18 +1209,26 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						List *pkattrs;
 						Ident *pkattr;
 						if (ind->unique) {
-							foreach(pkattrs, fkconstraint->pk_attrs) {
+							int count=0;
+							foreach(indparms, ind->indexParams) {
+								count++;
+							}
+							if (count!=length(fkconstraint->pk_attrs))
 								found=0;
-								pkattr=lfirst(pkattrs);
-								foreach(indparms, ind->indexParams) {
-									indparm=lfirst(indparms);
-									if (strcmp(indparm->name, pkattr->name)==0) {
-										found=1;
-										break;
+							else {
+								foreach(pkattrs, fkconstraint->pk_attrs) {
+									found=0;
+									pkattr=lfirst(pkattrs);
+									foreach(indparms, ind->indexParams) {
+										indparm=lfirst(indparms);
+										if (strcmp(indparm->name, pkattr->name)==0) {
+											found=1;
+											break;
+										}
 									}
+									if (!found)
+										break;
 								}
-								if (!found)
-									break;
 							}
 						}
 						if (found)
@@ -2634,26 +2642,31 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 		{
 			List *attrl;
 
-			/* go through the fkconstraint->pk_attrs list */
-			foreach(attrl, fkconstraint->pk_attrs)
-			{
-				Ident *attr=lfirst(attrl);
-				found = false;
-				for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+			for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
+			if (i!=length(fkconstraint->pk_attrs))
+				found=false;
+			else {
+				/* go through the fkconstraint->pk_attrs list */
+				foreach(attrl, fkconstraint->pk_attrs)
 				{
-					int		pkattno = indexStruct->indkey[i];
-					if (pkattno>0)
+					Ident *attr=lfirst(attrl);
+					found = false;
+					for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 					{
-						char *name = NameStr(pkrel_attrs[pkattno - 1]->attname);
-						if (strcmp(name, attr->name)==0)
+						int		pkattno = indexStruct->indkey[i];
+						if (pkattno>0)
 						{
-							found = true;
-							break;
+							char *name = NameStr(pkrel_attrs[pkattno - 1]->attname);
+							if (strcmp(name, attr->name)==0)
+							{
+								found = true;
+								break;
+							}
 						}
 					}
+					if (!found)
+						break;
 				}
-				if (!found)
-					break;
 			}
 		}
 		ReleaseSysCache(indexTuple);

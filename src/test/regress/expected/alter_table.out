@@ -273,6 +273,9 @@ SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 CREATE TABLE tmp2 (a int primary key);
 NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'tmp2_pkey' for table 'tmp2'
 CREATE TABLE tmp3 (a int, b int);
+CREATE TABLE tmp4 (a int, b int, unique(a,b));
+NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'tmp4_a_key' for table 'tmp4'
+CREATE TABLE tmp5 (a int, b int);
 -- Insert rows into tmp2 (pktable)
 INSERT INTO tmp2 values (1);
 INSERT INTO tmp2 values (2);
@@ -299,6 +302,13 @@ DELETE FROM tmp3 where a=5;
 -- Try (and succeed)
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
 NOTICE:  ALTER TABLE ... ADD CONSTRAINT will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
+-- tmp4 is a,b
+ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
+NOTICE:  ALTER TABLE ... ADD CONSTRAINT will create implicit trigger(s) for FOREIGN KEY check(s)
+ERROR:  UNIQUE constraint matching given keys for referenced table "tmp4" not found
+DROP TABLE tmp5;
+DROP TABLE tmp4;
 DROP TABLE tmp3;
 NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "tmp2"
 NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "tmp2"

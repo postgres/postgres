@@ -418,3 +418,10 @@ CREATE TABLE FKTABLE_FAIL2 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest1)
 DROP TABLE FKTABLE_FAIL1;
 DROP TABLE FKTABLE_FAIL2;
 DROP TABLE PKTABLE;
+
+-- Test for referencing column number smaller than referenced constraint
+CREATE TABLE PKTABLE (ptest1 int, ptest2 int, UNIQUE(ptest1, ptest2));
+CREATE TABLE FKTABLE_FAIL1 (ftest1 int REFERENCES pktable(ptest1));
+
+DROP TABLE FKTABLE_FAIL1;
+DROP TABLE PKTABLE;

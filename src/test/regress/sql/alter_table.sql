@@ -169,6 +169,10 @@ CREATE TABLE tmp2 (a int primary key);
 
 CREATE TABLE tmp3 (a int, b int);
 
+CREATE TABLE tmp4 (a int, b int, unique(a,b));
+
+CREATE TABLE tmp5 (a int, b int);
+
 -- Insert rows into tmp2 (pktable)
 INSERT INTO tmp2 values (1);
 INSERT INTO tmp2 values (2);
@@ -194,6 +198,15 @@ DELETE FROM tmp3 where a=5;
 
 -- Try (and succeed)
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
+
+-- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
+-- tmp4 is a,b
+
+ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
+
+DROP TABLE tmp5;
+
+DROP TABLE tmp4;
 
 DROP TABLE tmp3;
 

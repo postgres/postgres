@@ -703,3 +703,12 @@ ERROR:  table "fktable_fail1" does not exist
 DROP TABLE FKTABLE_FAIL2;
 ERROR:  table "fktable_fail2" does not exist
 DROP TABLE PKTABLE;
+-- Test for referencing column number smaller than referenced constraint
+CREATE TABLE PKTABLE (ptest1 int, ptest2 int, UNIQUE(ptest1, ptest2));
+NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'pktable_ptest1_key' for table 'pktable'
+CREATE TABLE FKTABLE_FAIL1 (ftest1 int REFERENCES pktable(ptest1));
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ERROR:  UNIQUE constraint matching given keys for referenced table "pktable" not found
+DROP TABLE FKTABLE_FAIL1;
+ERROR:  table "fktable_fail1" does not exist
+DROP TABLE PKTABLE;
