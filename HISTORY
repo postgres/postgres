@@ -34,7 +34,9 @@ usage.
 Migration to 7.1
 
    A dump/restore using pg_dump is required for those wishing to migrate
-   data from any previous release.
+   data from any previous release.  One significant change is that
+   SELECT ... LIMIT 10,20 now uses the 10 as the OFFSET and the 20 as
+   the LIMIT.  Previous versions had this reversed.
 
 
 
