@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.4 1997/04/09 02:24:19 vadim Exp $
+ * $Id: internal.h,v 1.5 1997/04/24 15:38:34 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,8 @@
  *    	System-dependent tuning constants
  *    
  */
-#define _CPU_PAGE_WEIGHT_  0.065	/* CPU-heap-to-page cost weighting factor */
-#define _CPU_INDEX_PAGE_WEIGHT_ 0.033	/* CPU-index-to-page cost weighting factor */
+#define _CPU_PAGE_WEIGHT_  0.033	/* CPU-heap-to-page cost weighting factor */
+#define _CPU_INDEX_PAGE_WEIGHT_ 0.017	/* CPU-index-to-page cost weighting factor */
 #define _MAX_KEYS_     INDEX_MAX_KEYS	/* maximum number of keys in an index */
 #define _TID_SIZE_     6		/* sizeof(itemid) (from ../h/itemid.h) */
 
