@@ -7,16 +7,6 @@
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
 
-/* postgres allocation function */
-#define free    pfree
-#define malloc  palloc
-#define realloc repalloc
-
-#ifdef strdup
-#undef strdup
-#endif
-#define strdup  pstrdup
-
 char *token = NULL;  /* pointer to token */
 char *s     = NULL;  /* to return WHOLE hyphenated-word */
 

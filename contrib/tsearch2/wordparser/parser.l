@@ -8,16 +8,6 @@
 /* Avoid exit() on fatal scanner errors */
 #define fprintf(file, fmt, msg)  ts_error(ERROR, fmt, msg)
 
-/* postgres allocation function */
-#define free    pfree
-#define malloc  palloc
-#define realloc repalloc
-
-#ifdef strdup
-#undef strdup
-#endif
-#define strdup  pstrdup
-
 char *token = NULL;  /* pointer to token */
 char *s     = NULL;  /* to return WHOLE hyphenated-word */
 
@@ -303,6 +293,3 @@ void start_parse_str(char* str, int limit) {
 	tsearch2_yy_switch_to_buffer( buf );
 	BEGIN INITIAL;
 }
-
-
-
