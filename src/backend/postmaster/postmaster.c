@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.163 2000/08/29 16:40:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.164 2000/08/30 14:54:22 momjian Exp $
  *
  * NOTES
  *
@@ -195,10 +195,7 @@ static int	SendStop = false;
 bool NetServer = false;	/* listen on TCP/IP */
 
 #ifdef USE_SSL
-static bool SecureNetServer = false;	/* if not zero, postmaster listens
-										 * for only SSL non-local
-										 * connections */
-
+static bool DisableSSL = false; /* Completely disable SSL, even if compiled in */
 #endif
 
 static pid_t StartupPID = 0,
@@ -455,7 +452,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 #ifdef USE_SSL
 			case 'l':
-				SecureNetServer = true;
+ 			        DisableSSL = true;
 				break;
 #endif
 			case 'm':
@@ -566,13 +563,14 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #ifdef USE_SSL
-	if (!NetServer && SecureNetServer)
+	if (!NetServer && !DisableSSL)
 	{
-		fprintf(stderr, "%s: For SSL, you must enable TCP/IP connections.\n",
+		fprintf(stderr, "%s: For SSL, you must enable TCP/IP connections. Use -l to disable SSL\n",
 				progname);
 		exit(1);
 	}
-	InitSSL();
+	if (!DisableSSL)
+	        InitSSL();
 #endif
 
 	if (NetServer)
@@ -754,7 +752,7 @@ usage(const char *progname)
 	printf("  -F              turn fsync off\n");
 	printf("  -i              listen on TCP/IP sockets\n");
 #ifdef USE_SSL
-	printf("  -l              listen only on SSL connections (EXPERIMENTAL)\n");
+	printf("  -l              disable SSL\n");
 #endif
 	printf("  -N <number>     maximum number of allowed connections (1..%d, default %d)\n",
 			MAXBACKENDS, DEF_MAXBACKENDS);
@@ -1062,7 +1060,11 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 		char		SSLok;
 
 #ifdef USE_SSL
-		SSLok = 'S';			/* Support for SSL */
+                if (DisableSSL || port->laddr.sa.sa_family != AF_INET)
+		        /* No SSL when disabled or on Unix sockets */
+   		        SSLok = 'N';
+		else
+		        SSLok = 'S';		/* Support for SSL */
 #else
 		SSLok = 'N';			/* No support for SSL */
 #endif
@@ -1073,13 +1075,15 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 		}
 
 #ifdef USE_SSL
-		if (!(port->ssl = SSL_new(SSL_context)) ||
-			!SSL_set_fd(port->ssl, port->sock) ||
-			SSL_accept(port->ssl) <= 0)
-		{
-			fprintf(stderr, "Failed to initialize SSL connection: %s, errno: %d (%s)\n",
-					ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
-			return STATUS_ERROR;
+		if (SSLok == 'S') {
+		  if (!(port->ssl = SSL_new(SSL_context)) ||
+		      !SSL_set_fd(port->ssl, port->sock) ||
+		      SSL_accept(port->ssl) <= 0)
+		    {
+		      fprintf(stderr, "Failed to initialize SSL connection: %s, errno: %d (%s)\n",
+			      ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
+		      return STATUS_ERROR;
+		    }
 		}
 #endif
 		/* ready for the normal startup packet */
@@ -1091,18 +1095,6 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 
 	/* Could add additional special packet types here */
 
-#ifdef USE_SSL
-
-	/*
-	 * Any SSL negotiation must have taken place here, so drop the
-	 * connection ASAP if we require SSL
-	 */
-	if (SecureNetServer && !port->ssl)
-	{
-		PacketSendError(&port->pktInfo, "Backend requires secure connection.");
-		return STATUS_OK;
-	}
-#endif
 
 	/* Check we can handle the protocol the frontend is using. */
 

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.26 2000/05/27 04:13:05 momjian Exp $
+ * $Id: libpq-int.h,v 1.27 2000/08/30 14:54:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,6 +263,7 @@ struct pg_conn
 
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
+	bool        require_ssl;    /* Require SSL to make connection */
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 #endif
 

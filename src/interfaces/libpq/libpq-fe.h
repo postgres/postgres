@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.66 2000/04/14 00:24:52 tgl Exp $
+ * $Id: libpq-fe.h,v 1.67 2000/08/30 14:54:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,9 @@ extern		"C"
  * such as Oid.
  */
 #include "postgres_ext.h"
+#ifdef USE_SSL
+#include <openssl/ssl.h>
+#endif
 
 /* Application-visible enum types */
 
@@ -222,6 +225,11 @@ extern		"C"
 	extern int	PQbackendPID(const PGconn *conn);
 	extern int	PQclientEncoding(const PGconn *conn);
 	extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
+#ifdef USE_SSL
+	/* Get the SSL structure associated with a connection */
+	extern SSL  *PQgetssl(PGconn *conn);
+#endif
+
 
 	/* Enable/disable tracing */
 	extern void PQtrace(PGconn *conn, FILE *debug_port);

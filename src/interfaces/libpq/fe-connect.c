@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.132 2000/08/20 10:55:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.133 2000/08/30 14:54:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,6 @@ inet_aton(const char *cp, struct in_addr * inp)
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
-
 #endif
 
 #define NOTIFYLIST_INITIAL_SIZE 10
@@ -130,6 +129,11 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 	{"options", "PGOPTIONS", DefaultOption, NULL,
 	"Backend-Debug-Options", "D", 40},
+
+#ifdef USE_SSL
+	{"requiressl", "PGREQUIRESSL", "0", NULL,
+	 "Require-SSL", "", 1 },
+#endif
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
@@ -303,6 +307,10 @@ PQconnectStart(const char *conninfo)
 	conn->pguser = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
+#ifdef USE_SSL
+	tmp = conninfo_getval(connOptions, "requiressl");
+	conn->require_ssl = tmp ? (tmp[0]=='1'?true:false) : false;
+#endif
 
 	/* ----------
 	 * Free the option info - all is in conn now
@@ -474,6 +482,14 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	}
 	else
 		conn->dbName = strdup(dbName);
+
+
+#ifdef USE_SSL
+	if ((tmp = getenv("PGREQUIRESSL")) != NULL)
+		conn->require_ssl = (tmp[0]=='1')?true:false;
+	else
+		conn->require_ssl = 0;
+#endif
 
 	if (error)
 		conn->status = CONNECTION_BAD;
@@ -781,13 +797,55 @@ connectDBStart(PGconn *conn)
 		goto connect_errReturn;
 #endif
 
-#ifdef USE_SSL
-
-	/*
-	 * This needs to be done before we set into nonblocking, since SSL
-	 * negotiation does not like that mode
+	/* ----------
+	 * Start / make connection.  We are hopefully in non-blocking mode
+	 * now, but it is possible that:
+	 *	 1. Older systems will still block on connect, despite the
+	 *		non-blocking flag. (Anyone know if this is true?)
+	 *	 2. We are running under Windows, and aren't even trying
+	 *		to be non-blocking (see above).
+	 *	 3. We are using SSL.
+	 * Thus, we have make arrangements for all eventualities.
+	 * ----------
 	 */
+	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
+	{
+#ifndef WIN32
+		if (errno == EINPROGRESS || errno == 0)
+#else
+		if (WSAGetLastError() == WSAEINPROGRESS)
+#endif
+		{
 
+			/*
+			 * This is fine - we're in non-blocking mode, and the
+			 * connection is in progress.
+			 */
+			conn->status = CONNECTION_STARTED;
+		}
+		else
+		{
+			/* Something's gone wrong */
+			printfPQExpBuffer(&conn->errorMessage,
+							  "connectDBStart() -- connect() failed: %s\n"
+							  "\tIs the postmaster running%s at '%s'\n"
+							  "\tand accepting connections on %s '%s'?\n",
+							  strerror(errno),
+							  (family == AF_INET) ? " (with -i)" : "",
+							  conn->pghost ? conn->pghost : "localhost",
+							  (family == AF_INET) ?
+							  "TCP/IP port" : "Unix socket",
+							  conn->pgport);
+			goto connect_errReturn;
+		}
+	}
+	else
+	{
+		/* We're connected already */
+		conn->status = CONNECTION_MADE;
+	}
+
+#ifdef USE_SSL
 	/* Attempt to negotiate SSL usage */
 	if (conn->allow_ssl_try)
 	{
@@ -837,7 +895,7 @@ connectDBStart(PGconn *conn)
 		{
 			/* Received error - probably protocol mismatch */
 			if (conn->Pfdebug)
-				fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-6.6.\n");
+				fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-7.0.\n");
 			close(conn->sock);
 			conn->allow_ssl_try = FALSE;
 			return connectDBStart(conn);
@@ -849,55 +907,15 @@ connectDBStart(PGconn *conn)
 			goto connect_errReturn;
 		}
 	}
+	if (conn->require_ssl && !conn->ssl) 
+	{
+		/* Require SSL, but server does not support/want it */
+		printfPQExpBuffer(&conn->errorMessage,
+						  "Server does not support SSL when SSL was required.\n");
+		goto connect_errReturn;
+	}
 #endif
 
-	/* ----------
-	 * Start / make connection.  We are hopefully in non-blocking mode
-	 * now, but it is possible that:
-	 *	 1. Older systems will still block on connect, despite the
-	 *		non-blocking flag. (Anyone know if this is true?)
-	 *	 2. We are running under Windows, and aren't even trying
-	 *		to be non-blocking (see above).
-	 *	 3. We are using SSL.
-	 * Thus, we have make arrangements for all eventualities.
-	 * ----------
-	 */
-	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
-	{
-#ifndef WIN32
-		if (errno == EINPROGRESS || errno == 0)
-#else
-		if (WSAGetLastError() == WSAEINPROGRESS)
-#endif
-		{
-
-			/*
-			 * This is fine - we're in non-blocking mode, and the
-			 * connection is in progress.
-			 */
-			conn->status = CONNECTION_STARTED;
-		}
-		else
-		{
-			/* Something's gone wrong */
-			printfPQExpBuffer(&conn->errorMessage,
-							  "connectDBStart() -- connect() failed: %s\n"
-							  "\tIs the postmaster running%s at '%s'\n"
-							  "\tand accepting connections on %s '%s'?\n",
-							  strerror(errno),
-							  (family == AF_INET) ? " (with -i)" : "",
-							  conn->pghost ? conn->pghost : "localhost",
-							  (family == AF_INET) ?
-							  "TCP/IP port" : "Unix socket",
-							  conn->pgport);
-			goto connect_errReturn;
-		}
-	}
-	else
-	{
-		/* We're connected already */
-		conn->status = CONNECTION_MADE;
-	}
 
 	/*
 	 * This makes the connection non-blocking, for all those cases which
@@ -2483,6 +2501,15 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	return -1;
 }
 
+#endif
+
+#ifdef USE_SSL
+SSL *PQgetssl(PGconn *conn)
+{
+	if (!conn)
+		return NULL;
+	return conn->ssl;
+}
 #endif
 
 void
