@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.115 2002/12/05 04:04:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.116 2003/01/27 00:47:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -908,7 +908,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 
 	if (!(superuser()
 	 || ((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
-		elog(ERROR, "permission denied");
+		elog(ERROR, "ALTER USER SET: permission denied");
 
 	for (i = 0; i < Natts_pg_shadow; i++)
 		repl_repl[i] = ' ';

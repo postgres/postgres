@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.9 2002/12/04 05:18:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.10 2003/01/27 00:45:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ ConversionDrop(Oid conversionOid, DropBehavior behavior)
 
 	if (!superuser() &&
 		((Form_pg_conversion) GETSTRUCT(tuple))->conowner != GetUserId())
-		elog(ERROR, "permission denied");
+		elog(ERROR, "DROP CONVERSION: permission denied");
 
 	ReleaseSysCache(tuple);
 

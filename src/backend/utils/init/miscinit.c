@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.99 2003/01/25 05:19:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.100 2003/01/27 00:51:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -616,7 +616,7 @@ SetSessionAuthorization(AclId userid)
 
 	if (userid != AuthenticatedUserId &&
 		!AuthenticatedUserIsSuperuser)
-		elog(ERROR, "permission denied");
+		elog(ERROR, "SET SESSION AUTHORIZATION: permission denied");
 
 	SetSessionUserId(userid);
 	SetUserId(userid);

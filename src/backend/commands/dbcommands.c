@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.109 2002/12/05 04:04:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.110 2003/01/27 00:46:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,7 +532,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	if (!(superuser()
 		|| ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
-		elog(ERROR, "permission denied");
+		elog(ERROR, "ALTER DATABASE SET: permission denied");
 
 	MemSet(repl_repl, ' ', sizeof(repl_repl));
 	repl_repl[Anum_pg_database_datconfig - 1] = 'r';
