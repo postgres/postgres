@@ -9,10 +9,10 @@ dropdb $DBNAME
 sleep 1
 
 echo "**** Create test database $DBNAME ****"
-createdb $DBNAME
+createdb $DBNAME || exit 1
 
 echo "**** Create procedural language pltcl ****"
-createlang pltcl $DBNAME
+createlang pltcl $DBNAME || exit 1
 
 echo "**** Create tables, functions and triggers ****"
 psql -q -n $DBNAME <test_setup.sql

@@ -7,6 +7,8 @@ dropdb $DBNAME > test.log 2>&1
 # drop failure is ok...
 echo " Done. ***"
 
+sleep 1
+
 echo -n "*** Create $DBNAME."
 if createdb $DBNAME >> test.log 2>&1 ; then
   echo " Done. ***"
