@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.5 1996/08/06 16:43:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.6 1996/08/13 01:29:33 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -2112,7 +2112,7 @@ xlateSqlType(char *name)
 	return "int2";
     else if (!strcasecmp(name, "float") ||
 	     !strcasecmp(name, "real"))
-	return "float4";
+	return "float8";
     else
 	return name;
 }
