@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.11 1997/09/08 20:59:22 momjian Exp $
+ * $Id: memutils.h,v 1.12 1998/01/11 21:03:10 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -82,11 +82,16 @@ s...)
 		(((long)(LEN) + (sizeof (long) - 1)) & ~(sizeof (long) -1))
 #endif
 
+#if ! defined(sco)
 #define DOUBLEALIGN(LEN)\
 		(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
 
 #define MAXALIGN(LEN)\
 		(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
+#else
+#define DOUBLEALIGN(LEN) INTALIGN(LEN)
+#define MAXALIGN(LEN)    INTALIGN(LEN)
+#endif
 
 /*****************************************************************************
  *	  oset.h --			Fixed format ordered set definitions.				 *
