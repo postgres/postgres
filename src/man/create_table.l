@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.2 1996/12/11 00:27:19 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.3 1997/01/08 22:37:23 momjian Exp $
 .TH "CREATE TABLE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create table \(em create a new class
@@ -34,7 +34,7 @@ is specified by appending
 .IR n
 pairs of square brackets:
 .nf
-att_name = type[][]..[]
+att_name type[][]..[]
 .fi
 .PP
 The optional
@@ -129,7 +129,7 @@ create table foo (bar int4) archive = heavy
 --Create class tictactoe to store noughts-and-crosses
 --boards as a 2-dimensional array
 --
-create table tictactoe (game int4, board = char[][])
+create table tictactoe (game int4, board char[][])
 .fi
 .nf
 --
@@ -139,7 +139,7 @@ create table tictactoe (game int4, board = char[][])
 --type.  The type must exist in the "pg_type" catalog or be
 --the one currently being defined.
 --
-create table newemp (name text, manager = newemp)
+create table newemp (name text, manager newemp)
 .fi
 .SH "SEE ALSO"
 drop table(l).
