@@ -14,6 +14,7 @@
     doc/src/sgml/ref manual pages
 
 * Ports
+    update config.guess and config.sub at the start of beta
     update ports list in doc/src/sgml/installation.sgml
     update INSTALL
     platform-specific FAQ's, if needed
