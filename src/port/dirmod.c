@@ -1,3 +1,9 @@
+/*
+ *	These are replacement versions of unlink and rename that work on
+ *	Win32 (NT, Win2k, XP).  replace() doesn't work on Win95/98/Me.
+ *
+ */
+ 
 #ifndef TEST_VERSION
 
 #undef rename
