@@ -86,6 +86,9 @@ CreateTrigger(CreateTrigStmt * stmt)
 		TRIGGER_SETT_BEFORE(tgtype);
 	if (stmt->row)
 		TRIGGER_SETT_ROW(tgtype);
+	else
+		elog (WARN, "CreateTrigger: STATEMENT triggers are unimplemented, yet");
+	
 	for (i = 0; i < 3 && stmt->actions[i]; i++)
 	{
 		switch (stmt->actions[i])
