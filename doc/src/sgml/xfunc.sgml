@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.40 2001/10/26 21:17:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.41 2001/11/01 04:07:29 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -72,10 +72,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.40 2001/10/26 21:17:03 tgl E
 
    <para>
     SQL functions execute an arbitrary list of SQL statements, returning
-    the results of the last query in the list.  In the simple (non-set)
+    the result of the last query in the list, which must be a
+    <literal>SELECT</>.
+    In the simple (non-set)
     case, the first row of the last query's result will be returned.
-    (Bear in mind that <quote>the first row</quote> is not well-defined
-    unless you use <literal>ORDER BY</>.)  If the last query happens
+    (Bear in mind that <quote>the first row</quote> of a multi-row
+    result is not well-defined unless you use <literal>ORDER BY</>.)
+    If the last query happens
     to return no rows at all, NULL will be returned.
    </para>
 
@@ -441,7 +444,8 @@ SELECT name, listchildren(name) FROM nodes;
 (5 rows)
 </screen>
 
-     Notice that no output row appears for Child2, Child3, etc.
+     In the last SELECT,
+     notice that no output row appears for Child2, Child3, etc.
      This happens because listchildren() returns an empty set
      for those inputs, so no output rows are generated.
     </para>
