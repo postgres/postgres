@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.73 2004/05/26 04:41:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.74 2004/06/05 19:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,9 +226,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	else
 	{
 		attr_cnt = onerel->rd_att->natts;
-		/* +1 here is just to avoid palloc(0) with zero-column table */
-		vacattrstats = (VacAttrStats **) palloc((attr_cnt + 1) *
-												sizeof(VacAttrStats *));
+		vacattrstats = (VacAttrStats **)
+			palloc(attr_cnt * sizeof(VacAttrStats *));
 		tcnt = 0;
 		for (i = 1; i <= attr_cnt; i++)
 		{
@@ -505,8 +504,8 @@ compute_index_stats(Relation onerel, double totalrows,
 							estate);
 
 		/* Compute and save index expression values */
-		exprvals = (Datum *) palloc((numrows * attr_cnt + 1) * sizeof(Datum));
-		exprnulls = (bool *) palloc((numrows * attr_cnt + 1) * sizeof(bool));
+		exprvals = (Datum *) palloc(numrows * attr_cnt * sizeof(Datum));
+		exprnulls = (bool *) palloc(numrows * attr_cnt * sizeof(bool));
 		numindexrows = 0;
 		tcnt = 0;
 		for (rowno = 0; rowno < numrows; rowno++)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.79 2004/05/26 18:54:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.80 2004/06/05 19:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,10 +347,9 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
 	if (portal->tupDesc == NULL)
 		return;
 	natts = portal->tupDesc->natts;
-	/* +1 avoids palloc(0) if no columns */
 	portal->formats = (int16 *)
 		MemoryContextAlloc(PortalGetHeapMemory(portal),
-						   (natts + 1) * sizeof(int16));
+						   natts * sizeof(int16));
 	if (nFormats > 1)
 	{
 		/* format specified for each column */

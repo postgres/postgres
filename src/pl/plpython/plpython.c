@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.47 2004/05/07 00:24:59 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.48 2004/06/05 19:48:09 tgl Exp $
  *
  *********************************************************************
  */
@@ -531,10 +531,9 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 	plkeys = PyDict_Keys(plntup);
 	natts = PyList_Size(plkeys);
 
-	/* +1 to avoid palloc(0) on empty tuple */
-	modattrs = palloc(natts * sizeof(int) + 1);
-	modvalues = palloc(natts * sizeof(Datum) + 1);
-	modnulls = palloc(natts + 1);
+	modattrs = (int *) palloc(natts * sizeof(int));
+	modvalues = (Datum *) palloc(natts * sizeof(Datum));
+	modnulls = (char *) palloc(natts * sizeof(char));
 
 	tupdesc = tdata->tg_relation->rd_att;
 
@@ -2174,48 +2173,46 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 		RERAISE_EXC();
 	}
 
-	if (nargs)
+	nulls = palloc(nargs * sizeof(char));
+
+	for (i = 0; i < nargs; i++)
 	{
-		nulls = palloc((nargs + 1) * sizeof(char));
+		PyObject   *elem,
+				   *so;
+		char	   *sv;
 
-		for (i = 0; i < nargs; i++)
+		elem = PySequence_GetItem(list, i);
+		if (elem != Py_None)
 		{
-			PyObject   *elem,
-					   *so;
-			char	   *sv;
+			so = PyObject_Str(elem);
+			sv = PyString_AsString(so);
 
-			elem = PySequence_GetItem(list, i);
-			if (elem != Py_None)
-			{
-				so = PyObject_Str(elem);
-				sv = PyString_AsString(so);
+			/*
+			 * FIXME -- if this can elog, we have leak
+			 */
+			plan->values[i] =
+				FunctionCall3(&(plan->args[i].out.d.typfunc),
+							  CStringGetDatum(sv),
+							  ObjectIdGetDatum(plan->args[i].out.d.typelem),
+							  Int32GetDatum(-1));
 
-				/*
-				 * FIXME -- if this can elog, we have leak
-				 */
-				plan->values[i] = FunctionCall3(&(plan->args[i].out.d.typfunc),
-												CStringGetDatum(sv),
-						   ObjectIdGetDatum(plan->args[i].out.d.typelem),
-												Int32GetDatum(-1));
+			Py_DECREF(so);
+			Py_DECREF(elem);
 
-				Py_DECREF(so);
-				Py_DECREF(elem);
-
-				nulls[i] = ' ';
-			}
-			else
-			{
-				Py_DECREF(elem);
-				plan->values[i] = (Datum) 0;
-				nulls[i] = 'n';
-			}
+			nulls[i] = ' ';
 		}
-		nulls[i] = '\0';
+		else
+		{
+			Py_DECREF(elem);
+			plan->values[i] = (Datum) 0;
+			nulls[i] = 'n';
+		}
 	}
-	else
-		nulls = NULL;
 
 	rv = SPI_execp(plan->plan, plan->values, nulls, limit);
+
+	pfree(nulls);
+
 	RESTORE_EXC();
 
 	for (i = 0; i < nargs; i++)

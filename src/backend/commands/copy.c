@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.224 2004/05/26 04:41:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.225 2004/06/05 19:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1158,13 +1158,11 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 
 	/*
 	 * Get info about the columns we need to process.
-	 *
-	 * +1's here are to avoid palloc(0) in a zero-column table.
 	 */
-	out_functions = (FmgrInfo *) palloc((num_phys_attrs + 1) * sizeof(FmgrInfo));
-	elements = (Oid *) palloc((num_phys_attrs + 1) * sizeof(Oid));
-	isvarlena = (bool *) palloc((num_phys_attrs + 1) * sizeof(bool));
-	force_quote = (bool *) palloc((num_phys_attrs + 1) * sizeof(bool));
+	out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
+	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
+	isvarlena = (bool *) palloc(num_phys_attrs * sizeof(bool));
+	force_quote = (bool *) palloc(num_phys_attrs * sizeof(bool));
 	foreach(cur, attnumlist)
 	{
 		int			attnum = lfirst_int(cur);
@@ -1501,14 +1499,13 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * relation, including the input function, the element type (to pass
 	 * to the input function), and info about defaults and constraints.
 	 * (Which input function we use depends on text/binary format choice.)
-	 * +1's here are to avoid palloc(0) in a zero-column table.
 	 */
-	in_functions = (FmgrInfo *) palloc((num_phys_attrs + 1) * sizeof(FmgrInfo));
-	elements = (Oid *) palloc((num_phys_attrs + 1) * sizeof(Oid));
-	defmap = (int *) palloc((num_phys_attrs + 1) * sizeof(int));
-	defexprs = (ExprState **) palloc((num_phys_attrs + 1) * sizeof(ExprState *));
-	constraintexprs = (ExprState **) palloc0((num_phys_attrs + 1) * sizeof(ExprState *));
-	force_notnull = (bool *) palloc((num_phys_attrs + 1) * sizeof(bool));
+	in_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
+	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
+	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
+	defexprs = (ExprState **) palloc(num_phys_attrs * sizeof(ExprState *));
+	constraintexprs = (ExprState **) palloc0(num_phys_attrs * sizeof(ExprState *));
+	force_notnull = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
 	for (attnum = 1; attnum <= num_phys_attrs; attnum++)
 	{
@@ -1635,8 +1632,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		fmgr_info(in_func_oid, &oid_in_function);
 	}
 
-	values = (Datum *) palloc((num_phys_attrs + 1) * sizeof(Datum));
-	nulls = (char *) palloc((num_phys_attrs + 1) * sizeof(char));
+	values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
+	nulls = (char *) palloc(num_phys_attrs * sizeof(char));
 
 	/* Make room for a PARAM_EXEC value for domain constraint checks */
 	if (hasConstraints)

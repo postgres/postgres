@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/memutils.h,v 1.54 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/memutils.h,v 1.55 2004/06/05 19:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,13 @@
  *
  * XXX This is deliberately chosen to correspond to the limiting size
  * of varlena objects under TOAST.	See VARATT_MASK_SIZE in postgres.h.
+ *
+ * XXX Also, various places in aset.c assume they can compute twice an
+ * allocation's size without overflow, so beware of raising this.
  */
 #define MaxAllocSize	((Size) 0x3fffffff)		/* 1 gigabyte - 1 */
 
-#define AllocSizeIsValid(size)	(0 < (size) && (size) <= MaxAllocSize)
+#define AllocSizeIsValid(size)	((Size) (size) <= MaxAllocSize)
 
 /*
  * All chunks allocated by any memory context manager are required to be

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.162 2004/06/01 03:28:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.163 2004/06/05 19:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2129,8 +2129,6 @@ ExecEvalRow(RowExprState *rstate,
 
 	/* Allocate workspace */
 	nargs = list_length(rstate->args);
-	if (nargs == 0)				/* avoid palloc(0) if no fields */
-		nargs = 1;
 	values = (Datum *) palloc(nargs * sizeof(Datum));
 	nulls = (char *) palloc(nargs * sizeof(char));
 

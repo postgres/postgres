@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.104 2004/06/04 02:37:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.105 2004/06/05 19:48:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1942,10 +1942,8 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	/*
 	 * We need a temporary argtypes array to load with data. (The finished
 	 * plan structure will contain a copy of it.)
-	 *
-	 * +1 is just to avoid palloc(0) error.
 	 */
-	argtypes = (Oid *) palloc(sizeof(Oid) * (expr->nparams + 1));
+	argtypes = (Oid *) palloc(expr->nparams * sizeof(Oid));
 
 	for (i = 0; i < expr->nparams; i++)
 	{
@@ -1998,8 +1996,8 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 	/*
 	 * Now build up the values and nulls arguments for SPI_execp()
 	 */
-	values = palloc(sizeof(Datum) * (expr->nparams + 1));
-	nulls = palloc(expr->nparams + 1);
+	values = (Datum *) palloc(expr->nparams * sizeof(Datum));
+	nulls = (char *) palloc(expr->nparams * sizeof(char));
 
 	for (i = 0; i < expr->nparams; i++)
 	{
@@ -2479,8 +2477,8 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 	 * refcursor opened with OPEN ... FOR SELECT ...;
 	 * ----------
 	 */
-	values = palloc(sizeof(Datum) * (query->nparams + 1));
-	nulls = palloc(query->nparams + 1);
+	values = (Datum *) palloc(query->nparams * sizeof(Datum));
+	nulls = (char *) palloc(query->nparams * sizeof(char));
 
 	for (i = 0; i < query->nparams; i++)
 	{
@@ -3324,8 +3322,8 @@ exec_run_select(PLpgSQL_execstate * estate,
 	/*
 	 * Now build up the values and nulls arguments for SPI_execp()
 	 */
-	values = palloc(sizeof(Datum) * (expr->nparams + 1));
-	nulls = palloc(expr->nparams + 1);
+	values = (Datum *) palloc(expr->nparams * sizeof(Datum));
+	nulls = (char *) palloc(expr->nparams * sizeof(char));
 
 	for (i = 0; i < expr->nparams; i++)
 	{
@@ -3528,8 +3526,7 @@ exec_move_row(PLpgSQL_execstate * estate,
 			/* If we have a tupdesc but no data, form an all-nulls tuple */
 			char	   *nulls;
 
-			/* +1 to avoid possible palloc(0) if no attributes */
-			nulls = (char *) palloc(tupdesc->natts * sizeof(char) + 1);
+			nulls = (char *) palloc(tupdesc->natts * sizeof(char));
 			memset(nulls, 'n', tupdesc->natts * sizeof(char));
 
 			rec->tup = heap_formtuple(tupdesc, NULL, nulls);

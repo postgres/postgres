@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.41 2004/05/31 19:24:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.42 2004/06/05 19:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -918,9 +918,6 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 	/* No need to allocate more pages than the relation has blocks */
 	if (relblocks < (BlockNumber) maxpages)
 		maxpages = (int) relblocks;
-	/* avoid palloc(0) */
-	if (maxpages < 1)
-		maxpages = 1;
 
 	vacrelstats->fs_is_heap = false;
 	vacrelstats->num_free_pages = 0;

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.5 2003/11/29 19:52:04 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.6 2004/06/05 19:48:09 tgl Exp $
 
 Notes about memory allocation redesign
 --------------------------------------
@@ -51,6 +51,26 @@ this fact to clean up at transaction end: by resetting all the active
 contexts, we reclaim all memory.  What we need are additional contexts
 that can be reset or deleted at strategic times within a query, such as
 after each tuple.
+
+
+Some notes about the palloc API versus standard C library
+---------------------------------------------------------
+
+The behavior of palloc and friends is similar to the standard C library's
+malloc and friends, but there are some deliberate differences too.  Here
+are some notes to clarify the behavior.
+
+* If out of memory, palloc and repalloc exit via elog(ERROR).  They never
+return NULL, and it is not necessary or useful to test for such a result.
+
+* palloc(0) is explicitly a valid operation.  It does not return a NULL
+pointer, but a valid chunk of which no bytes may be used.  (However, the
+chunk might later be repalloc'd larger; it can also be pfree'd without
+error.)  (Note: this behavior is new in Postgres 7.5; earlier versions
+disallowed palloc(0).  It seems more consistent to allow it, however.)
+Similarly, repalloc allows realloc'ing to zero size.
+
+* pfree and repalloc do not accept a NULL pointer.  This is intentional.
 
 
 pfree/repalloc no longer depend on CurrentMemoryContext

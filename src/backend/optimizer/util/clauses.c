@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.173 2004/06/01 04:47:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.174 2004/06/05 19:48:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2016,7 +2016,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * actual substitution of the inputs.  So start building expression
 	 * with inputs substituted.
 	 */
-	usecounts = (int *) palloc0((funcform->pronargs + 1) * sizeof(int));
+	usecounts = (int *) palloc0(funcform->pronargs * sizeof(int));
 	newexpr = substitute_actual_parameters(newexpr, funcform->pronargs,
 										   args, usecounts);
 

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.52 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.53 2004/06/05 19:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -358,9 +358,7 @@ current_schemas(PG_FUNCTION_ARGS)
 	int			i;
 	ArrayType  *array;
 
-	/* +1 here is just to avoid palloc(0) error */
-
-	names = (Datum *) palloc((list_length(search_path) + 1) * sizeof(Datum));
+	names = (Datum *) palloc(list_length(search_path) * sizeof(Datum));
 	i = 0;
 	foreach(l, search_path)
 	{

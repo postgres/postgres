@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.117 2004/06/02 17:28:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.118 2004/06/05 19:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -693,7 +693,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	/* No point in remembering more than MaxFSMPages pages */
 	maxFreePages = MaxFSMPages;
 	if ((BlockNumber) maxFreePages > num_pages)
-		maxFreePages = (int) num_pages + 1;		/* +1 to avoid palloc(0) */
+		maxFreePages = (int) num_pages;
 	freePages = (BlockNumber *) palloc(maxFreePages * sizeof(BlockNumber));
 	nFreePages = 0;
 

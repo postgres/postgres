@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.27 2003/12/01 21:59:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.28 2004/06/05 19:48:08 tgl Exp $
  *
  *	Interface:
  *
@@ -147,11 +147,10 @@ InitDeadLockChecking(void)
 	 * We need to consider rearranging at most MaxBackends/2 wait queues
 	 * (since it takes at least two waiters in a queue to create a soft
 	 * edge), and the expanded form of the wait queues can't involve more
-	 * than MaxBackends total waiters.	(But avoid palloc(0) if
-	 * MaxBackends = 1.)
+	 * than MaxBackends total waiters.
 	 */
 	waitOrders = (WAIT_ORDER *)
-		palloc(((MaxBackends + 1) / 2) * sizeof(WAIT_ORDER));
+		palloc((MaxBackends / 2) * sizeof(WAIT_ORDER));
 	waitOrderProcs = (PGPROC **) palloc(MaxBackends * sizeof(PGPROC *));
 
 	/*
