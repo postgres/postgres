@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.161 2004/01/10 18:13:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.162 2004/01/12 20:48:15 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -61,6 +61,10 @@ static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node, List *active_fns);
+static List *simplify_or_arguments(List *args,
+								   bool *haveNull, bool *forceTrue);
+static List *simplify_and_arguments(List *args,
+									bool *haveNull, bool *forceFalse);
 static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
 				  bool allow_inline, List *active_fns);
 static Expr *evaluate_function(Oid funcid, Oid result_type, List *args,
@@ -249,6 +253,9 @@ make_andclause(List *andclauses)
  * Variant of make_andclause for ANDing two qual conditions together.
  * Qual conditions have the property that a NULL nodetree is interpreted
  * as 'true'.
+ *
+ * NB: this makes no attempt to preserve AND/OR flatness; so it should not
+ * be used on a qual that has already been run through prepqual.c.
  */
 Node *
 make_and_qual(Node *qual1, Node *qual2)
@@ -1210,7 +1217,6 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	{
 		BoolExpr   *expr = (BoolExpr *) node;
 		List	   *args;
-		Const	   *const_input;
 
 		/*
 		 * Reduce constants in the BoolExpr's arguments.  We know args is
@@ -1225,115 +1231,52 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		{
 			case OR_EXPR:
 				{
-					/*----------
-					 * OR arguments are handled as follows:
-					 *	non constant: keep
-					 *	FALSE: drop (does not affect result)
-					 *	TRUE: force result to TRUE
-					 *	NULL: keep only one
-					 * We keep one NULL input because ExecEvalOr returns NULL
-					 * when no input is TRUE and at least one is NULL.
-					 *----------
-					 */
-					FastList	newargs;
-					List	   *arg;
+					List	   *newargs;
 					bool		haveNull = false;
 					bool		forceTrue = false;
 
-					FastListInit(&newargs);
-					foreach(arg, args)
-					{
-						if (!IsA(lfirst(arg), Const))
-						{
-							FastAppend(&newargs, lfirst(arg));
-							continue;
-						}
-						const_input = (Const *) lfirst(arg);
-						if (const_input->constisnull)
-							haveNull = true;
-						else if (DatumGetBool(const_input->constvalue))
-							forceTrue = true;
-						/* otherwise, we can drop the constant-false input */
-					}
-
-					/*
-					 * We could return TRUE before falling out of the
-					 * loop, but this coding method will be easier to
-					 * adapt if we ever add a notion of non-removable
-					 * functions. We'd need to check all the inputs for
-					 * non-removability.
-					 */
+					newargs = simplify_or_arguments(args,
+													&haveNull, &forceTrue);
 					if (forceTrue)
 						return MAKEBOOLCONST(true, false);
 					if (haveNull)
-						FastAppend(&newargs, MAKEBOOLCONST(false, true));
+						newargs = lappend(newargs, MAKEBOOLCONST(false, true));
 					/* If all the inputs are FALSE, result is FALSE */
-					if (FastListValue(&newargs) == NIL)
+					if (newargs == NIL)
 						return MAKEBOOLCONST(false, false);
 					/* If only one nonconst-or-NULL input, it's the result */
-					if (lnext(FastListValue(&newargs)) == NIL)
-						return (Node *) lfirst(FastListValue(&newargs));
+					if (lnext(newargs) == NIL)
+						return (Node *) lfirst(newargs);
 					/* Else we still need an OR node */
-					return (Node *) make_orclause(FastListValue(&newargs));
+					return (Node *) make_orclause(newargs);
 				}
 			case AND_EXPR:
 				{
-					/*----------
-					 * AND arguments are handled as follows:
-					 *	non constant: keep
-					 *	TRUE: drop (does not affect result)
-					 *	FALSE: force result to FALSE
-					 *	NULL: keep only one
-					 * We keep one NULL input because ExecEvalAnd returns NULL
-					 * when no input is FALSE and at least one is NULL.
-					 *----------
-					 */
-					FastList	newargs;
-					List	   *arg;
+					List	   *newargs;
 					bool		haveNull = false;
 					bool		forceFalse = false;
 
-					FastListInit(&newargs);
-					foreach(arg, args)
-					{
-						if (!IsA(lfirst(arg), Const))
-						{
-							FastAppend(&newargs, lfirst(arg));
-							continue;
-						}
-						const_input = (Const *) lfirst(arg);
-						if (const_input->constisnull)
-							haveNull = true;
-						else if (!DatumGetBool(const_input->constvalue))
-							forceFalse = true;
-						/* otherwise, we can drop the constant-true input */
-					}
-
-					/*
-					 * We could return FALSE before falling out of the
-					 * loop, but this coding method will be easier to
-					 * adapt if we ever add a notion of non-removable
-					 * functions. We'd need to check all the inputs for
-					 * non-removability.
-					 */
+					newargs = simplify_and_arguments(args,
+													 &haveNull, &forceFalse);
 					if (forceFalse)
 						return MAKEBOOLCONST(false, false);
 					if (haveNull)
-						FastAppend(&newargs, MAKEBOOLCONST(false, true));
+						newargs = lappend(newargs, MAKEBOOLCONST(false, true));
 					/* If all the inputs are TRUE, result is TRUE */
-					if (FastListValue(&newargs) == NIL)
+					if (newargs == NIL)
 						return MAKEBOOLCONST(true, false);
 					/* If only one nonconst-or-NULL input, it's the result */
-					if (lnext(FastListValue(&newargs)) == NIL)
-						return (Node *) lfirst(FastListValue(&newargs));
+					if (lnext(newargs) == NIL)
+						return (Node *) lfirst(newargs);
 					/* Else we still need an AND node */
-					return (Node *) make_andclause(FastListValue(&newargs));
+					return (Node *) make_andclause(newargs);
 				}
 			case NOT_EXPR:
 				Assert(length(args) == 1);
 				if (IsA(lfirst(args), Const))
 				{
-					const_input = (Const *) lfirst(args);
+					Const *const_input = (Const *) lfirst(args);
+
 					/* NOT NULL => NULL */
 					if (const_input->constisnull)
 						return MAKEBOOLCONST(false, true);
@@ -1341,8 +1284,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					return MAKEBOOLCONST(!DatumGetBool(const_input->constvalue),
 										 false);
 				}
+				else if (not_clause((Node *) lfirst(args)))
+				{
+					/* Cancel NOT/NOT */
+					return (Node *) get_notclausearg((Expr *) lfirst(args));
+				}
 				/* Else we still need a NOT node */
-				return (Node *) make_notclause(lfirst(args));
+				return (Node *) make_notclause((Expr *) lfirst(args));
 			default:
 				elog(ERROR, "unrecognized boolop: %d",
 					 (int) expr->boolop);
@@ -1577,6 +1525,128 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	 */
 	return expression_tree_mutator(node, eval_const_expressions_mutator,
 								   (void *) active_fns);
+}
+
+/*
+ * Subroutine for eval_const_expressions: scan the arguments of an OR clause
+ *
+ * OR arguments are handled as follows:
+ *		non constant: keep
+ *		FALSE: drop (does not affect result)
+ *		TRUE: force result to TRUE
+ *		NULL: keep only one
+ * We must keep one NULL input because ExecEvalOr returns NULL when no input
+ * is TRUE and at least one is NULL.
+ *
+ * This is split out as a subroutine so that we can recurse to fold sub-ORs
+ * into the upper OR clause, thereby preserving AND/OR flatness.
+ *
+ * The output arguments *haveNull and *forceTrue must be initialized FALSE
+ * by the caller.  They will be set TRUE if a null constant or true constant,
+ * respectively, is detected anywhere in the argument list.
+ */
+static List *
+simplify_or_arguments(List *args, bool *haveNull, bool *forceTrue)
+{
+	List	   *newargs = NIL;
+	List	   *larg;
+
+	foreach(larg, args)
+	{
+		Node   *arg = (Node *) lfirst(larg);
+
+		if (IsA(arg, Const))
+		{
+			Const  *const_input = (Const *) arg;
+
+			if (const_input->constisnull)
+				*haveNull = true;
+			else if (DatumGetBool(const_input->constvalue))
+			{
+				*forceTrue = true;
+				/*
+				 * Once we detect a TRUE result we can just exit the loop
+				 * immediately.  However, if we ever add a notion of
+				 * non-removable functions, we'd need to keep scanning.
+				 */
+				return NIL;
+			}
+			/* otherwise, we can drop the constant-false input */
+		}
+		else if (or_clause(arg))
+		{
+			newargs = nconc(newargs,
+							simplify_or_arguments(((BoolExpr *) arg)->args,
+												  haveNull, forceTrue));
+		}
+		else
+		{
+			newargs = lappend(newargs, arg);
+		}
+	}
+
+	return newargs;
+}
+
+/*
+ * Subroutine for eval_const_expressions: scan the arguments of an AND clause
+ *
+ * AND arguments are handled as follows:
+ *		non constant: keep
+ *		TRUE: drop (does not affect result)
+ *		FALSE: force result to FALSE
+ *		NULL: keep only one
+ * We must keep one NULL input because ExecEvalAnd returns NULL when no input
+ * is FALSE and at least one is NULL.
+ *
+ * This is split out as a subroutine so that we can recurse to fold sub-ANDs
+ * into the upper AND clause, thereby preserving AND/OR flatness.
+ *
+ * The output arguments *haveNull and *forceFalse must be initialized FALSE
+ * by the caller.  They will be set TRUE if a null constant or false constant,
+ * respectively, is detected anywhere in the argument list.
+ */
+static List *
+simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
+{
+	List	   *newargs = NIL;
+	List	   *larg;
+
+	foreach(larg, args)
+	{
+		Node   *arg = (Node *) lfirst(larg);
+
+		if (IsA(arg, Const))
+		{
+			Const  *const_input = (Const *) arg;
+
+			if (const_input->constisnull)
+				*haveNull = true;
+			else if (!DatumGetBool(const_input->constvalue))
+			{
+				*forceFalse = true;
+				/*
+				 * Once we detect a FALSE result we can just exit the loop
+				 * immediately.  However, if we ever add a notion of
+				 * non-removable functions, we'd need to keep scanning.
+				 */
+				return NIL;
+			}
+			/* otherwise, we can drop the constant-true input */
+		}
+		else if (and_clause(arg))
+		{
+			newargs = nconc(newargs,
+							simplify_and_arguments(((BoolExpr *) arg)->args,
+												   haveNull, forceFalse));
+		}
+		else
+		{
+			newargs = lappend(newargs, arg);
+		}
+	}
+
+	return newargs;
 }
 
 /*
