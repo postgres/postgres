@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.76 2002/03/31 06:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.77 2002/03/31 07:49:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,9 @@
 #include "utils/syscache.h"
 
 
-static Oid	copy_heap(Oid OIDOldHeap, char *NewName);
-static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName);
+static Oid	copy_heap(Oid OIDOldHeap, const char *NewName);
+static Oid	copy_index(Oid OIDOldIndex, Oid OIDNewHeap,
+					   const char *NewIndexName);
 static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
 /*
@@ -58,13 +59,12 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 {
 	Oid			OIDOldHeap,
 				OIDOldIndex,
-				OIDNewHeap;
+				OIDNewHeap,
+				OIDNewIndex;
 	Relation	OldHeap,
 				OldIndex;
 	char		NewHeapName[NAMEDATALEN];
 	char		NewIndexName[NAMEDATALEN];
-	RangeVar   *NewHeap;
-	RangeVar   *NewIndex;
 
 	/*
 	 * We grab exclusive access to the target rel and index for the
@@ -115,7 +115,7 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 	/* Create new index over the tuples of the new heap. */
 	snprintf(NewIndexName, NAMEDATALEN, "temp_%u", OIDOldIndex);
 
-	copy_index(OIDOldIndex, OIDNewHeap, NewIndexName);
+	OIDNewIndex = copy_index(OIDOldIndex, OIDNewHeap, NewIndexName);
 
 	CommandCounterIncrement();
 
@@ -124,23 +124,16 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 
 	CommandCounterIncrement();
 
-	/* XXX ugly, and possibly wrong in the presence of schemas... */
-	/* would be better to pass OIDs to renamerel. */
-	NewHeap = copyObject(oldrelation);
-	NewHeap->relname = NewHeapName;
-	NewIndex = copyObject(oldrelation);
-	NewIndex->relname = NewIndexName;
-	
-	renamerel(NewHeap, oldrelation->relname);
+	renamerel(OIDNewHeap, oldrelation->relname);
 
 	/* This one might be unnecessary, but let's be safe. */
 	CommandCounterIncrement();
 
-	renamerel(NewIndex, oldindexname);
+	renamerel(OIDNewIndex, oldindexname);
 }
 
 static Oid
-copy_heap(Oid OIDOldHeap, char *NewName)
+copy_heap(Oid OIDOldHeap, const char *NewName)
 {
 	TupleDesc	OldHeapDesc,
 				tupdesc;
@@ -181,9 +174,10 @@ copy_heap(Oid OIDOldHeap, char *NewName)
 	return OIDNewHeap;
 }
 
-static void
-copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
+static Oid
+copy_index(Oid OIDOldIndex, Oid OIDNewHeap, const char *NewIndexName)
 {
+	Oid			OIDNewIndex;
 	Relation	OldIndex,
 				NewHeap;
 	IndexInfo  *indexInfo;
@@ -198,19 +192,21 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 	 */
 	indexInfo = BuildIndexInfo(OldIndex->rd_index);
 
-	index_create(OIDNewHeap,
-				 NewIndexName,
-				 indexInfo,
-				 OldIndex->rd_rel->relam,
-				 OldIndex->rd_index->indclass,
-				 OldIndex->rd_index->indisprimary,
-				 allowSystemTableMods);
+	OIDNewIndex = index_create(OIDNewHeap,
+							   NewIndexName,
+							   indexInfo,
+							   OldIndex->rd_rel->relam,
+							   OldIndex->rd_index->indclass,
+							   OldIndex->rd_index->indisprimary,
+							   allowSystemTableMods);
 
 	setRelhasindex(OIDNewHeap, true,
 				   OldIndex->rd_index->indisprimary, InvalidOid);
 
 	index_close(OldIndex);
 	heap_close(NewHeap, NoLock);
+
+	return OIDNewIndex;
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.67 2002/03/31 06:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.68 2002/03/31 07:49:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,8 +69,8 @@ static void update_ri_trigger_args(Oid relid,
  */
 void
 renameatt(Oid relid,
-		  char *oldattname,
-		  char *newattname,
+		  const char *oldattname,
+		  const char *newattname,
 		  bool recurse)
 {
 	Relation	targetrelation;
@@ -250,51 +250,36 @@ renameatt(Oid relid,
  *		renamerel		- change the name of a relation
  */
 void
-renamerel(const RangeVar *relation, const char *newrelname)
+renamerel(Oid relid, const char *newrelname)
 {
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	reltup;
 	Oid			namespaceId;
-	Oid			reloid;
 	char		relkind;
 	bool		relhastriggers;
 	Relation	irelations[Num_pg_class_indices];
-
-	if (!allowSystemTableMods && IsSystemRelationName(relation->relname))
-		elog(ERROR, "renamerel: system relation \"%s\" may not be renamed",
-			 relation->relname);
-
-	if (!allowSystemTableMods && IsSystemRelationName(newrelname))
-		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
-			 newrelname);
 
 	/*
 	 * Grab an exclusive lock on the target table or index, which we will
 	 * NOT release until end of transaction.
 	 */
-	targetrelation = relation_openrv(relation, AccessExclusiveLock);
+	targetrelation = relation_open(relid, AccessExclusiveLock);
 
 	namespaceId = RelationGetNamespace(targetrelation);
-	reloid = RelationGetRelid(targetrelation);
+
+	/* Validity checks */
+	if (!allowSystemTableMods &&
+		IsSystemRelationName(RelationGetRelationName(targetrelation)))
+		elog(ERROR, "renamerel: system relation \"%s\" may not be renamed",
+			 RelationGetRelationName(targetrelation));
+
+	if (!allowSystemTableMods && IsSystemRelationName(newrelname))
+		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
+			 newrelname);
+
 	relkind = targetrelation->rd_rel->relkind;
 	relhastriggers = (targetrelation->rd_rel->reltriggers > 0);
-
-	/*
-	 * Close rel, but keep exclusive lock!
-	 */
-	relation_close(targetrelation, NoLock);
-
-	/*
-	 * Flush the relcache entry (easier than trying to change it at
-	 * exactly the right instant).	It'll get rebuilt on next access to
-	 * relation.
-	 *
-	 * XXX What if relation is myxactonly?
-	 *
-	 * XXX this is probably not necessary anymore?
-	 */
-	RelationIdInvalidateRelationCacheByRelationId(reloid);
 
 	/*
 	 * Find relation's pg_class tuple, and make sure newrelname isn't in
@@ -303,11 +288,11 @@ renamerel(const RangeVar *relation, const char *newrelname)
 	relrelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
 	reltup = SearchSysCacheCopy(RELOID,
-								PointerGetDatum(reloid),
+								PointerGetDatum(relid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "renamerel: relation \"%s\" does not exist",
-			 relation->relname);
+			 RelationGetRelationName(targetrelation));
 
 	if (get_relname_relid(newrelname, namespaceId) != InvalidOid)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
@@ -332,7 +317,8 @@ renamerel(const RangeVar *relation, const char *newrelname)
 	 * Also rename the associated type, if any.
 	 */
 	if (relkind != RELKIND_INDEX)
-		TypeRename(relation->relname, namespaceId, newrelname);
+		TypeRename(RelationGetRelationName(targetrelation), namespaceId,
+				   newrelname);
 
 	/*
 	 * If it's a view, must also rename the associated ON SELECT rule.
@@ -342,7 +328,7 @@ renamerel(const RangeVar *relation, const char *newrelname)
 		char	   *oldrulename,
 				   *newrulename;
 
-		oldrulename = MakeRetrieveViewRuleName(relation->relname);
+		oldrulename = MakeRetrieveViewRuleName(RelationGetRelationName(targetrelation));
 		newrulename = MakeRetrieveViewRuleName(newrelname);
 		RenameRewriteRule(oldrulename, newrulename);
 	}
@@ -353,14 +339,21 @@ renamerel(const RangeVar *relation, const char *newrelname)
 	if (relhastriggers)
 	{
 		/* update tgargs where relname is primary key */
-		update_ri_trigger_args(reloid,
-							   relation->relname, newrelname,
+		update_ri_trigger_args(relid,
+							   RelationGetRelationName(targetrelation),
+							   newrelname,
 							   false, true);
 		/* update tgargs where relname is foreign key */
-		update_ri_trigger_args(reloid,
-							   relation->relname, newrelname,
+		update_ri_trigger_args(relid,
+							   RelationGetRelationName(targetrelation),
+							   newrelname,
 							   true, true);
 	}
+
+	/*
+	 * Close rel, but keep exclusive lock!
+	 */
+	relation_close(targetrelation, NoLock);
 }
 
 /*
