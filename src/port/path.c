@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.48 2005/01/06 18:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.49 2005/01/06 21:41:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #ifdef WIN32
+#define _WIN32_IE 0x0400
 #include <shlobj.h>
 #else
 #include <unistd.h>

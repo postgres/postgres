@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.64 2005/01/06 18:29:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.65 2005/01/06 21:41:44 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -817,6 +817,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 						  fnbuf);
 		return 0;
 	}
+#ifndef WIN32
 	if (!S_ISREG(buf.st_mode) || (buf.st_mode & 0077) ||
 		buf.st_uid != getuid())
 	{
@@ -825,6 +826,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 						  fnbuf);
 		return 0;
 	}
+#endif
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,

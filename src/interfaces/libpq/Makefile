@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.125 2004/12/31 22:03:50 pgsql Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.126 2005/01/06 21:41:44 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ endif
 # matter.)
 SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS)) $(PTHREAD_LIBS)
 ifeq ($(PORTNAME), win32)
-SHLIB_LINK += -lwsock32 -lws2_32 $(filter -leay32 -lssleay32, $(LIBS))
+SHLIB_LINK += -lwsock32 -lws2_32 -lshell32 $(filter -leay32 -lssleay32, $(LIBS))
 endif
 
 

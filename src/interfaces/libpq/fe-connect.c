@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.298 2005/01/06 20:06:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.299 2005/01/06 21:41:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 
 #ifdef WIN32
 #include "win32.h"
+#define _WIN32_IE 0x0400
 #include <shlobj.h>
 #else
 #include <sys/socket.h>
