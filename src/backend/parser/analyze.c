@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.190 2001/06/23 00:07:34 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.191 2001/06/25 21:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/numeric.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.37 2001/05/03 22:53:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.38 2001/06/25 21:11:44 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -67,21 +67,23 @@
 #define DEBUG_elog_output	NOTICE
 ***/
 
-#include <stdio.h>
-#include <string.h>
+#include "postgres.h"
+
 #include <ctype.h>
 #include <sys/time.h>
 #include <unistd.h>
+#ifdef USE_LOCALE
 #include <locale.h>
+#endif
 #include <math.h>
 #include <float.h>
 
-#include "postgres.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/formatting.h"
 #include "utils/int8.h"
+#include "utils/numeric.h"
 #include "utils/pg_locale.h"
 
 /* ----------

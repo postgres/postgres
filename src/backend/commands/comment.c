@@ -7,14 +7,13 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.30 2001/06/13 21:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.31 2001/06/25 21:11:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "utils/builtins.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
@@ -26,11 +25,12 @@
 #include "catalog/pg_class.h"
 #include "commands/comment.h"
 #include "miscadmin.h"
-#include "parser/parse.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse.h"
 #include "rewrite/rewriteRemove.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
@@ -717,7 +717,7 @@ CommentOperator(char *opername, List *arguments, char *comment)
 	/*** Get the procedure associated with the operator ***/
 
 	data = (Form_pg_operator) GETSTRUCT(optuple);
-	oid = RegprocToOid(data->oprcode);
+	oid = data->oprcode;
 	if (oid == InvalidOid)
 		elog(ERROR, "operator '%s' does not have an underlying function", opername);
 

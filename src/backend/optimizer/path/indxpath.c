@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.107 2001/06/17 02:05:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.108 2001/06/25 21:11:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/selfuncs.h"
 #include "utils/syscache.h"
 
 

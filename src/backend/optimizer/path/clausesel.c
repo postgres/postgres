@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.45 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.46 2001/06/25 21:11:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "parser/parsetree.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/selfuncs.h"
 
 
 /* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
@@ -509,6 +510,16 @@ clause_selectivity(Query *root,
 		 */
 		s1 = (Selectivity) 0.5;
 	}
+	else if (IsA(clause, NullTest))
+	{
+		/* Use node specific selectivity calculation function */
+		s1 = nulltestsel(root, (NullTest *) clause, varRelid);
+	}
+	else if (IsA(clause, BooleanTest))
+	{
+		/* Use node specific selectivity calculation function */
+		s1 = booltestsel(root, (BooleanTest *) clause, varRelid);
+	}
 	else if (IsA(clause, RelabelType))
 	{
 		/* Not sure this case is needed, but it can't hurt */
@@ -516,6 +527,10 @@ clause_selectivity(Query *root,
 								((RelabelType *) clause)->arg,
 								varRelid);
 	}
+
+#ifdef SELECTIVITY_DEBUG
+	elog(NOTICE, "clause_selectivity: s1 %f", s1);
+#endif	 /* SELECTIVITY_DEBUG */
 
 	return s1;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.74 2001/05/07 00:43:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.75 2001/06/25 21:11:43 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "nodes/parsenodes.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.93 2001/06/09 22:16:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.94 2001/06/25 21:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,7 @@
 #include "utils/date.h"
 #include "utils/int8.h"
 #include "utils/lsyscache.h"
+#include "utils/selfuncs.h"
 #include "utils/syscache.h"
 
 /*
@@ -117,6 +118,10 @@
 /* default number of distinct values in a table */
 #define DEFAULT_NUM_DISTINCT  200
 
+/* default selectivity estimate for boolean and null test nodes */
+#define DEFAULT_UNK_SEL			0.005
+#define DEFAULT_NOT_UNK_SEL		(1.0 - DEFAULT_UNK_SEL)
+#define DEFAULT_BOOL_SEL		0.5
 
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
@@ -931,6 +936,327 @@ icnlikesel(PG_FUNCTION_ARGS)
 	result = patternsel(fcinfo, Pattern_Type_Like_IC);
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
+}
+
+/*
+ *		booltestsel		- Selectivity of BooleanTest Node.
+ */
+Selectivity
+booltestsel(Query *root, BooleanTest *clause, int varRelid)
+{
+	Var			   *var;
+	Node		   *arg;
+	Oid				relid;
+	HeapTuple		statsTuple;
+	Datum		   *values;
+	int				nvalues;
+	float4		   *numbers;
+	int				nnumbers;
+	double			selec;
+
+	Assert(clause && IsA(clause, BooleanTest));
+
+	arg = (Node *) clause->arg;
+
+	/*
+	 * Ignore any binary-compatible relabeling (probably unnecessary,
+	 * but can't hurt)
+	 */
+	if (IsA(arg, RelabelType))
+		arg = ((RelabelType *) arg)->arg;
+
+	if (IsA(arg, Var) && (varRelid == 0 || varRelid == ((Var *) arg)->varno))
+		var = (Var *) arg;
+	else
+	{
+		/*
+		 * If argument is not a Var, we can't get statistics for it, but
+		 * perhaps clause_selectivity can do something with it.  We ignore
+		 * the possibility of a NULL value when using clause_selectivity,
+		 * and just assume the value is either TRUE or FALSE.
+		 */
+		switch (clause->booltesttype)
+	    {
+			case IS_UNKNOWN:
+				selec = DEFAULT_UNK_SEL;
+				break;
+			case IS_NOT_UNKNOWN:
+				selec = DEFAULT_NOT_UNK_SEL;
+				break;
+	        case IS_TRUE:
+	        case IS_NOT_FALSE:
+				selec = (double) clause_selectivity(root, arg, varRelid);
+				break;
+	        case IS_FALSE:
+	        case IS_NOT_TRUE:
+				selec = 1.0 - (double) clause_selectivity(root, arg, varRelid);
+				break;
+	        default:
+	            elog(ERROR, "booltestsel: unexpected booltesttype %d",
+	                 (int) clause->booltesttype);
+				selec = 0.0;	/* Keep compiler quiet */
+				break;
+		}
+		return (Selectivity) selec;
+	}
+
+	/* get stats for the attribute, if available */
+	relid = getrelid(var->varno, root->rtable);
+	if (relid == InvalidOid)
+		statsTuple = NULL;
+	else
+		statsTuple = SearchSysCache(STATRELATT,
+									ObjectIdGetDatum(relid),
+									Int16GetDatum(var->varattno),
+									0, 0);
+
+	if (HeapTupleIsValid(statsTuple))
+	{
+		Form_pg_statistic stats;
+		double			freq_null;
+
+		stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
+
+		freq_null = stats->stanullfrac;
+
+		if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
+							 STATISTIC_KIND_MCV, InvalidOid,
+							 &values, &nvalues,
+							 &numbers, &nnumbers)
+			&& nnumbers > 0)
+		{
+			double			freq_true;
+			double			freq_false;
+
+			/*
+			 * Get first MCV frequency and derive frequency for true.
+			 */
+			if (DatumGetBool(values[0]))
+				freq_true = numbers[0];
+			else
+				freq_true = 1.0 - numbers[0] - freq_null;
+
+			/*
+			 * Next derive freqency for false.
+			 * Then use these as appropriate to derive frequency for each case.
+			 */
+			freq_false = 1.0 - freq_true - freq_null;
+
+			switch (clause->booltesttype)
+		    {
+		        case IS_UNKNOWN:
+					/* select only NULL values */
+					selec = freq_null;
+					break;
+		        case IS_NOT_UNKNOWN:
+					/* select non-NULL values */
+					selec = 1.0 - freq_null;
+					break;
+		        case IS_TRUE:
+					/* select only TRUE values */
+					selec = freq_true;
+					break;
+		        case IS_NOT_TRUE:
+					/* select non-TRUE values */
+					selec = 1.0 - freq_true;
+					break;
+		        case IS_FALSE:
+					/* select only FALSE values */
+					selec = freq_false;
+					break;
+		        case IS_NOT_FALSE:
+					/* select non-FALSE values */
+					selec = 1.0 - freq_false;
+					break;
+		        default:
+		            elog(ERROR, "booltestsel: unexpected booltesttype %d",
+		                 (int) clause->booltesttype);
+					selec = 0.0; /* Keep compiler quiet */
+					break;
+			}
+
+			free_attstatsslot(var->vartype, values, nvalues,
+							  numbers, nnumbers);
+		}
+		else
+		{
+			/*
+			 * No most-common-value info available.
+			 * Still have null fraction information,
+			 * so use it for IS [NOT] UNKNOWN.
+			 * Otherwise adjust for null fraction and
+			 * assume an even split for boolean tests.
+			 */
+			switch (clause->booltesttype)
+		    {
+		        case IS_UNKNOWN:
+					/*
+					 * Use freq_null directly.
+					 */
+					selec = freq_null;
+					break;
+		        case IS_NOT_UNKNOWN:
+					/*
+					 * Select not unknown (not null) values.
+					 * Calculate from freq_null.
+					 */
+					selec = 1.0 - freq_null;
+					break;
+		        case IS_TRUE:
+		        case IS_NOT_TRUE:
+		        case IS_FALSE:
+		        case IS_NOT_FALSE:
+					selec = (1.0 - freq_null) / 2.0;
+					break;
+		        default:
+		            elog(ERROR, "booltestsel: unexpected booltesttype %d",
+		                 (int) clause->booltesttype);
+					selec = 0.0; /* Keep compiler quiet */
+					break;
+			}
+		}
+
+		ReleaseSysCache(statsTuple);
+	}
+	else
+	{
+		/*
+		 * No VACUUM ANALYZE stats available, so use a default value.
+		 * (Note: not much point in recursing to clause_selectivity here.)
+		 */
+		switch (clause->booltesttype)
+		{
+			case IS_UNKNOWN:
+				selec = DEFAULT_UNK_SEL;
+				break;
+			case IS_NOT_UNKNOWN:
+				selec = DEFAULT_NOT_UNK_SEL;
+				break;
+			case IS_TRUE:
+			case IS_NOT_TRUE:
+			case IS_FALSE:
+			case IS_NOT_FALSE:
+				selec = DEFAULT_BOOL_SEL;
+				break;
+			default:
+				elog(ERROR, "booltestsel: unexpected booltesttype %d",
+					 (int) clause->booltesttype);
+				selec = 0.0; /* Keep compiler quiet */
+				break;
+		}
+	}
+
+	/* result should be in range, but make sure... */
+	if (selec < 0.0)
+		selec = 0.0;
+	else if (selec > 1.0)
+		selec = 1.0;
+
+	return (Selectivity) selec;
+}
+
+/*
+ *		nulltestsel		- Selectivity of NullTest Node.
+ */
+Selectivity
+nulltestsel(Query *root, NullTest *clause, int varRelid)
+{
+	Var			   *var;
+	Node		   *arg;
+	Oid				relid;
+	HeapTuple		statsTuple;
+	double			selec;
+	double			defselec;
+	double			freq_null;
+
+	Assert(clause && IsA(clause, NullTest));
+
+	switch (clause->nulltesttype)
+    {
+        case IS_NULL:
+			defselec = DEFAULT_UNK_SEL;
+			break;
+        case IS_NOT_NULL:
+			defselec = DEFAULT_NOT_UNK_SEL;
+			break;
+        default:
+            elog(ERROR, "nulltestsel: unexpected nulltesttype %d",
+                 (int) clause->nulltesttype);
+            return (Selectivity) 0;  /* keep compiler quiet */
+	}
+
+	arg = (Node *) clause->arg;
+
+	/*
+	 * Ignore any binary-compatible relabeling
+	 */
+	if (IsA(arg, RelabelType))
+		arg = ((RelabelType *) arg)->arg;
+
+	if (IsA(arg, Var) && (varRelid == 0 || varRelid == ((Var *) arg)->varno))
+		var = (Var *) arg;
+	else
+	{
+		/*
+		 * punt if non-Var argument
+		 */
+		return (Selectivity) defselec;
+	}
+
+	relid = getrelid(var->varno, root->rtable);
+	if (relid == InvalidOid)
+			return (Selectivity) defselec;
+
+	/* get stats for the attribute, if available */
+	statsTuple = SearchSysCache(STATRELATT,
+								ObjectIdGetDatum(relid),
+								Int16GetDatum(var->varattno),
+								0, 0);
+	if (HeapTupleIsValid(statsTuple))
+	{
+		Form_pg_statistic stats;
+
+		stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
+		freq_null = stats->stanullfrac;
+
+		switch (clause->nulltesttype)
+	    {
+	        case IS_NULL:
+				/*
+				 * Use freq_null directly.
+				 */
+				selec = freq_null;
+				break;
+	        case IS_NOT_NULL:
+				/*
+				 * Select not unknown (not null) values.
+				 * Calculate from freq_null.
+				 */
+				selec = 1.0 - freq_null;
+				break;
+	        default:
+	            elog(ERROR, "nulltestsel: unexpected nulltesttype %d",
+	                 (int) clause->nulltesttype);
+				return (Selectivity) 0;  /* keep compiler quiet */
+		}
+
+		ReleaseSysCache(statsTuple);
+	}
+	else
+	{
+		/*
+		 * No VACUUM ANALYZE stats available, so make a guess
+		 */
+		selec = defselec;
+	}
+
+	/* result should be in range, but make sure... */
+	if (selec < 0.0)
+		selec = 0.0;
+	else if (selec > 1.0)
+		selec = 1.0;
+
+	return (Selectivity) selec;
 }
 
 /*
