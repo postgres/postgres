@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.5 1996/11/30 03:38:09 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.6 1996/12/03 05:06:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,22 @@ other		.
 			if (keyword != NULL) {
 				return (keyword->value);
 			} else {
-				yylval.str = pstrdup((char*)yytext);
+				if (toupper(((char *)yytext)[0]) == 'A' &&
+				    strcasecmp((char *)yytext,"AVG") == 0)
+				    yylval.str = pstrdup("avg");
+				else if (toupper(((char *)yytext)[0]) == 'C' &&
+				    strcasecmp((char *)yytext,"COUNT") == 0)
+				    yylval.str = pstrdup("count");
+				else if (toupper(((char *)yytext)[0]) == 'M' &&
+				    strcasecmp((char *)yytext,"MAX") == 0)
+				    yylval.str = pstrdup("max");
+				else if (toupper(((char *)yytext)[0]) == 'M' &&
+				    strcasecmp((char *)yytext,"MIN") == 0)
+				    yylval.str = pstrdup("min");
+				else if (toupper(((char *)yytext)[0]) == 'S' &&
+				    strcasecmp((char *)yytext,"SUM") == 0)
+				    yylval.str = pstrdup("sum");
+				else	yylval.str = pstrdup((char*)yytext);
 				return (IDENT);
 			}
 		}

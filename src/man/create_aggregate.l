@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_aggregate.l,v 1.1 1996/11/14 10:15:42 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_aggregate.l,v 1.2 1996/12/03 05:06:35 momjian Exp $
 .TH "CREATE AGGREGATE" SQL 11/05/95 Postgres95 Postgres95
 .SH NAME
 create aggregate \(em define a new aggregate
@@ -70,6 +70,9 @@ Aggregates also require two initial conditions, one for each
 transition function.  These are specified and stored in the database
 as fields of type
 .IR text .
+.PP
+For compatability, aggregates named "avg", "count", "max", "min",
+and "sum" are lowercased on input.
 .SH EXAMPLE
 This
 .IR avg
