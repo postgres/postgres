@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.85 2000/12/11 00:49:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.86 2000/12/11 16:35:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.85 2000/12/11 00:49:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.86 2000/12/11 16:35:59 tgl Exp $
  */
 #include "postgres.h"
 
@@ -61,12 +61,11 @@
 #include <sys/sem.h>
 #endif
 
+#include "miscadmin.h"
+
 #if defined(__darwin__)
 #include "port/darwin/sem.h"
 #endif
-
-#include "miscadmin.h"
-
 
 /* In Ultrix and QNX, sem.h must be included after ipc.h */
 #ifdef HAVE_SYS_SEM_H
@@ -74,6 +73,7 @@
 #endif
 
 #include "storage/proc.h"
+
 
 
 void		HandleDeadLock(SIGNAL_ARGS);
