@@ -50,7 +50,7 @@ WHERE (p1.typtype = 'c' AND p1.typrelid = 0) OR
     (p1.typtype != 'c' AND p1.typrelid != 0);
 
 -- Look for basic types that don't have an array type.
--- NOTE: as of 7.3, this check finds SET, smgr, and unknown.
+-- NOTE: as of 7.5, this check finds smgr and unknown.
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
@@ -72,11 +72,13 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     ((p2.pronargs = 1 AND p2.proargtypes[0] = 'cstring'::regtype) OR
+     (p2.pronargs = 2 AND p2.proargtypes[0] = 'cstring'::regtype AND
+      p2.proargtypes[1] = 'oid'::regtype) OR
      (p2.pronargs = 3 AND p2.proargtypes[0] = 'cstring'::regtype AND
       p2.proargtypes[1] = 'oid'::regtype AND
       p2.proargtypes[2] = 'int4'::regtype));
 
--- As of 7.3, this check finds SET and refcursor, which are borrowing
+-- As of 7.5, this check finds refcursor, which is borrowing
 -- other types' I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
@@ -94,12 +96,14 @@ WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND
 
 -- Check for bogus typoutput routines
 
--- As of 7.3, this check finds SET and refcursor, which are borrowing
+-- As of 7.5, this check finds refcursor, which is borrowing
 -- other types' I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typoutput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     ((p2.pronargs = 1 AND p2.proargtypes[0] = p1.oid) OR
+     (p2.pronargs = 2 AND p2.proargtypes[0] = p1.oid AND
+      p2.proargtypes[1] = 'oid'::regtype) OR
      (p2.oid = 'array_out'::regproc AND
       p1.typelem != 0 AND p1.typlen = -1))
 ORDER BY 1;
@@ -142,6 +146,8 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typsend = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     ((p2.pronargs = 1 AND p2.proargtypes[0] = p1.oid) OR
+     (p2.pronargs = 2 AND p2.proargtypes[0] = p1.oid AND
+      p2.proargtypes[1] = 'oid'::regtype) OR
      (p2.oid = 'array_send'::regproc AND
       p1.typelem != 0 AND p1.typlen = -1))
 ORDER BY 1;
