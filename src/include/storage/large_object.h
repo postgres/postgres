@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.18 2000/10/24 01:38:43 tgl Exp $
+ * $Id: large_object.h,v 1.19 2000/10/24 03:34:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,13 +47,18 @@ typedef struct LargeObjectDesc {
 /*
  * Each "page" (tuple) of a large object can hold this much data
  *
- * Calculation is max tuple size less tuple header, loid field (Oid),
- * pageno field (int32), and varlena header of data (int32).  Note we
- * assume none of the fields will be NULL, hence no need for null bitmap.
+ * We could set this as high as BLCKSZ less some overhead, but it seems
+ * better to make it a smaller value, so that not as much space is used
+ * up when a page-tuple is updated.  Note that the value is deliberately
+ * chosen large enough to trigger the tuple toaster, so that we will
+ * attempt to compress page tuples in-line.  (But they won't be moved off
+ * unless the user creates a toast-table for pg_largeobject...)
+ *
+ * Also, it seems to be a smart move to make the page size be a power of 2,
+ * since clients will often be written to send data in power-of-2 blocks.
+ * This avoids unnecessary tuple updates caused by partial-page writes.
  */
-#define	LOBLKSIZE		(MaxTupleSize \
-						 - MAXALIGN(offsetof(HeapTupleHeaderData, t_bits)) \
-						 - sizeof(Oid) - sizeof(int32) * 2)
+#define	LOBLKSIZE		(BLCKSZ / 4)
 
 
 /*
