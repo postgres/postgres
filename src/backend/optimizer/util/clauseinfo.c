@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.2 1996/07/22 23:30:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.3 1996/07/31 18:47:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ get_relattvals(List *clauseinfo_list,
 
 	temp = (CInfo *)lfirst(i);
 	get_relattval((Node*)temp->clause, &dummy, &attno, &constval, &flag);
-	result1 = lappendi(result1, attno);
+	result1 = lappendi(result1, (int)attno);
 	result2 = lappendi(result2, constval);
 	result3 = lappendi(result3, flag);
     }

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.1.1.1 1996/07/09 06:22:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.2 1996/07/31 18:48:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,7 +380,7 @@ btreesel(Oid operatorObjectId,
 	result = (float64)fmgr(get_oprrest (operatorObjectId),
 			       (char*)operatorObjectId,
 			       (char*)indrelid,
-			       (char*)attributeNumber,
+			       (char*)(int)attributeNumber,
 			       (char*)constValue,
 			       (char*)constFlag,
 			       NULL);
@@ -422,7 +422,7 @@ btreenpage(Oid operatorObjectId,
 	temp = (float64)fmgr(get_oprrest (operatorObjectId),
 			     (char*)operatorObjectId,
 			     (char*)indrelid,
-			     (char*)attributeNumber,
+			     (char*)(int)attributeNumber,
 			     (char*)constValue,
 			     (char*)constFlag,
 			     NULL);
@@ -484,7 +484,7 @@ hashsel(Oid operatorObjectId,
 	result = (float64)fmgr(get_oprrest (operatorObjectId),
 			       (char*)operatorObjectId,
 			       (char*)indrelid,
-			       (char*)attributeNumber,
+			       (char*)(int)attributeNumber,
 			       (char*)constValue,
 			       (char*)constFlag,
 			       NULL);
@@ -545,7 +545,7 @@ hashnpage(Oid operatorObjectId,
 	temp = (float64)fmgr(get_oprrest (operatorObjectId),
 			     (char*)operatorObjectId,
 			     (char*)indrelid,
-			     (char*)attributeNumber,
+			     (char*)(int)attributeNumber,
 			     (char*)constValue,
 			     (char*)constFlag,
 			     NULL);
