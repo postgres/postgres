@@ -3,6 +3,15 @@
 # This can format all PostgreSQL *.c and *.h files,
 # excluding libpq++, *.y, and *.l files.
 #
+#
+# This can format all PostgreSQL *.c and *.h files,
+# excluding libpq++, *.y, and *.l files.
+#
+# On 09/06/1997, from the top directory, I ran:
+#
+#   find . -name '*.[ch]' -type f -print | grep -v '++' | xargs -n100 PGINDENT
+#
+
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 entab </dev/null >/dev/null
 if [ "$?" -ne 0 ]
@@ -24,8 +33,8 @@ do
 \2;g' | # workaround for indent bug
 	detab -t4 -qc |
 	sed 's;^DATA(.*$;/*&*/;' >/tmp/$$a    # protect backslashes in DATA() 
-	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -cli1 -di16 -nfc1 \
-		-lp -nip -nbc -psl -di1 -i4 -l75 -npro /tmp/$$a >/tmp/$$ 2>&1
+	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -nfc1 -di12 -l70 \
+		-lp -nip -npro /tmp/$$a >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
 	then	echo "$FILE"
 		cat /tmp/$$
