@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.81.2.1 2000/09/25 04:34:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.81.2.2 2000/10/04 07:50:00 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2532,8 +2532,6 @@ AbortBufferIO(void)
 			if (buf->flags & BM_IO_ERROR)
 			{
 				elog(NOTICE, "!!! write error seems permanent !!!");
-				elog(NOTICE, "!!! now kill all backends and reset postmaster !!!");
-				proc_exit(255);
 			}
 			buf->flags |= BM_DIRTY;
 		}
