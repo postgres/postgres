@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.26 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.27 2004/09/22 17:41:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,17 +96,10 @@ FunctionNext(FunctionScanState *node)
 	/*
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
+	heapTuple = tuplestore_getheaptuple(tuplestorestate,
+										ScanDirectionIsForward(direction),
+										&should_free);
 	slot = node->ss.ss_ScanTupleSlot;
-	if (tuplestorestate)
-		heapTuple = tuplestore_getheaptuple(tuplestorestate,
-									   ScanDirectionIsForward(direction),
-											&should_free);
-	else
-	{
-		heapTuple = NULL;
-		should_free = false;
-	}
-
 	return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
 }
 

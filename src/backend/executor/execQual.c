@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.168 2004/08/29 05:06:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.169 2004/09/22 17:41:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1115,7 +1115,8 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
  *		ExecMakeTableFunctionResult
  *
  * Evaluate a table function, producing a materialized result in a Tuplestore
- * object.	(If function returns an empty set, we just return NULL instead.)
+ * object.  *returnDesc is set to the tupledesc actually returned by the
+ * function, or NULL if it didn't provide one.
  */
 Tuplestorestate *
 ExecMakeTableFunctionResult(ExprState *funcexpr,
@@ -1127,6 +1128,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	TupleDesc	tupdesc = NULL;
 	Oid			funcrettype;
 	bool		returnsTuple;
+	bool		returnsSet = false;
 	FunctionCallInfoData fcinfo;
 	ReturnSetInfo rsinfo;
 	HeapTupleData tmptup;
@@ -1134,6 +1136,31 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	MemoryContext oldcontext;
 	bool		direct_function_call;
 	bool		first_time = true;
+
+	callerContext = CurrentMemoryContext;
+
+	funcrettype = exprType((Node *) funcexpr->expr);
+
+	returnsTuple = (funcrettype == RECORDOID ||
+					get_typtype(funcrettype) == 'c');
+
+	/*
+	 * Prepare a resultinfo node for communication.  We always do this
+	 * even if not expecting a set result, so that we can pass
+	 * expectedDesc.  In the generic-expression case, the expression
+	 * doesn't actually get to see the resultinfo, but set it up anyway
+	 * because we use some of the fields as our own state variables.
+	 */
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	fcinfo.resultinfo = (Node *) &rsinfo;
+	rsinfo.type = T_ReturnSetInfo;
+	rsinfo.econtext = econtext;
+	rsinfo.expectedDesc = expectedDesc;
+	rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
+	rsinfo.returnMode = SFRM_ValuePerCall;
+	/* isDone is filled below */
+	rsinfo.setResult = NULL;
+	rsinfo.setDesc = NULL;
 
 	/*
 	 * Normally the passed expression tree will be a FuncExprState, since
@@ -1165,6 +1192,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 
 			init_fcache(func->funcid, fcache, econtext->ecxt_per_query_memory);
 		}
+		returnsSet = fcache->func.fn_retset;
 
 		/*
 		 * Evaluate the function's argument list.
@@ -1174,7 +1202,6 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		 * the inner loop.	So do it in caller context.  Perhaps we should
 		 * make a separate context just to hold the evaluated arguments?
 		 */
-		MemSet(&fcinfo, 0, sizeof(fcinfo));
 		fcinfo.flinfo = &(fcache->func);
 		argDone = ExecEvalFuncArgs(&fcinfo, fcache->args, econtext);
 		/* We don't allow sets in the arguments of the table function */
@@ -1185,7 +1212,8 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 
 		/*
 		 * If function is strict, and there are any NULL arguments, skip
-		 * calling the function and return NULL (actually an empty set).
+		 * calling the function and act like it returned NULL (or an empty
+		 * set, in the returns-set case).
 		 */
 		if (fcache->func.fn_strict)
 		{
@@ -1194,10 +1222,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			for (i = 0; i < fcinfo.nargs; i++)
 			{
 				if (fcinfo.argnull[i])
-				{
-					*returnDesc = NULL;
-					return NULL;
-				}
+					goto no_function_result;
 			}
 		}
 	}
@@ -1207,33 +1232,11 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		direct_function_call = false;
 	}
 
-	funcrettype = exprType((Node *) funcexpr->expr);
-
-	returnsTuple = (funcrettype == RECORDOID ||
-					get_typtype(funcrettype) == 'c');
-
-	/*
-	 * Prepare a resultinfo node for communication.  We always do this
-	 * even if not expecting a set result, so that we can pass
-	 * expectedDesc.  In the generic-expression case, the expression
-	 * doesn't actually get to see the resultinfo, but set it up anyway
-	 * because we use some of the fields as our own state variables.
-	 */
-	fcinfo.resultinfo = (Node *) &rsinfo;
-	rsinfo.type = T_ReturnSetInfo;
-	rsinfo.econtext = econtext;
-	rsinfo.expectedDesc = expectedDesc;
-	rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-	rsinfo.returnMode = SFRM_ValuePerCall;
-	/* isDone is filled below */
-	rsinfo.setResult = NULL;
-	rsinfo.setDesc = NULL;
-
 	/*
 	 * Switch to short-lived context for calling the function or
 	 * expression.
 	 */
-	callerContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * Loop to handle the ValuePerCall protocol (which is also the same
@@ -1269,23 +1272,26 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		{
 			/*
 			 * Check for end of result set.
-			 *
-			 * Note: if function returns an empty set, we don't build a
-			 * tupdesc or tuplestore (since we can't get a tupdesc in the
-			 * function-returning-tuple case)
 			 */
 			if (rsinfo.isDone == ExprEndResult)
 				break;
 
 			/*
-			 * Can't do anything useful with NULL rowtype values.
-			 * Currently we raise an error, but another alternative is to
-			 * just ignore the result and "continue" to get another row.
+			 * Can't do anything very useful with NULL rowtype values.
+			 * For a function returning set, we consider this a protocol
+			 * violation (but another alternative would be to just ignore
+			 * the result and "continue" to get another row).  For a function
+			 * not returning set, we fall out of the loop; we'll cons up
+			 * an all-nulls result row below.
 			 */
 			if (returnsTuple && fcinfo.isnull)
+			{
+				if (!returnsSet)
+					break;
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("function returning row cannot return null value")));
+						 errmsg("function returning set of rows cannot return null value")));
+			}
 
 			/*
 			 * If first time through, build tupdesc and tuplestore for
@@ -1379,6 +1385,35 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 							(int) rsinfo.returnMode)));
 
 		first_time = false;
+	}
+
+no_function_result:
+
+	/*
+	 * If we got nothing from the function (ie, an empty-set or NULL result),
+	 * we have to create the tuplestore to return, and if it's a
+	 * non-set-returning function then insert a single all-nulls row.
+	 */
+	if (rsinfo.setResult == NULL)
+	{
+		MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		tupstore = tuplestore_begin_heap(true, false, work_mem);
+		rsinfo.setResult = tupstore;
+		if (!returnsSet)
+		{
+			int			natts = expectedDesc->natts;
+			Datum	   *nulldatums;
+			char	   *nullflags;
+			HeapTuple	tuple;
+
+			MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+			nulldatums = (Datum *) palloc0(natts * sizeof(Datum));
+			nullflags = (char *) palloc(natts * sizeof(char));
+			memset(nullflags, 'n', natts * sizeof(char));
+			tuple = heap_formtuple(expectedDesc, nulldatums, nullflags);
+			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+			tuplestore_puttuple(tupstore, tuple);
+		}
 	}
 
 	MemoryContextSwitchTo(callerContext);
