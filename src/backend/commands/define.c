@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.21 1998/01/05 16:38:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.22 1998/02/13 13:23:33 scrappy Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -94,7 +94,7 @@ compute_return_type(const Node *returnType,
 		TypeName   *setType = (TypeName *) returnType;
 
 		*prorettype_p = setType->name;
-		*returnsSet_p = true;
+		*returnsSet_p = setType->setof;
 	}
 	else
 	{
