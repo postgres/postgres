@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/createdb.1,v 1.11 1998/07/24 16:36:56 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/createdb.1,v 1.12 1998/07/24 16:44:03 momjian Exp $
 .TH CREATEDB UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 createdb - create a database
@@ -135,7 +135,6 @@ or the backend server.  Ensure that your Postgres site administrator has
 properly installed Postgres and initialized the site with 
 .IR initdb .
 .SH NOTE
-The command internally runs \fIpsql\fP connected to the \fItemplate1\fP
-database to perform the operation.
-
+The command internally runs \fIcreate database\fP from \fP\fIpsql\fP
+connected to the \fItemplate1\fP database to perform the operation.
 

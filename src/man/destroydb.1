@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/destroydb.1,v 1.10 1998/07/24 16:36:56 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/destroydb.1,v 1.11 1998/07/24 16:44:03 momjian Exp $
 .TH DESTROYDB UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 destroydb - destroy an existing database
@@ -135,6 +135,6 @@ or the backend server.  Contact your Postgres site administrator to
 ensure that ensure that the files and database entries associated with
 the database are completely removed.
 .SH NOTE
-The command internally runs \fIpsql\fP connected to the \fItemplate1\fP
-database to perform the operation.
+The command internally runs \fIdrop database\fP from \fIpsql\fP
+connected to the \fItemplate1\fP database to perform the operation.
 
