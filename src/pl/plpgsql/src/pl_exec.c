@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.17 2000/01/15 22:43:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.18 2000/02/07 03:39:13 inoue Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2344,7 +2344,7 @@ exec_move_row(PLpgSQL_execstate * estate,
 	{
 		if (HeapTupleIsValid(tup))
 		{
-			if (row->nfields != tupdesc->natts)
+			if (row->nfields != tup->t_data->t_natts)
 			{
 				elog(ERROR, "query didn't return correct # of attributes for %s",
 					 row->refname);
