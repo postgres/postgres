@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * dynloader.c
+ * ultrix4.c
  *	  This dynamic loader uses Andrew Yu's libdl-1.0 package for Ultrix 4.x.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.15 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.16 2002/11/08 20:23:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

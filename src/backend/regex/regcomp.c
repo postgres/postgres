@@ -47,7 +47,6 @@
 #include "regex/utils.h"
 #include "regex/regex2.h"
 #include "regex/cname.h"
-#include <locale.h>
 
 struct cclass
 {

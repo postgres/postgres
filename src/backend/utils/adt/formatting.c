@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.56 2002/09/20 03:57:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.57 2002/11/08 20:23:56 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -72,7 +72,6 @@
 #include <ctype.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <locale.h>
 #include <math.h>
 #include <float.h>
 

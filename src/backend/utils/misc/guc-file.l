@@ -4,15 +4,13 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.13 2002/07/30 16:33:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.14 2002/11/08 20:23:57 momjian Exp $
  */
 
 %{
 
 #include "postgres.h"
 
-#include <string.h>
-#include <stdarg.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstrint.c,v 1.3 2001/08/24 14:07:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstrint.c,v 1.4 2002/11/08 20:23:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,6 @@
 #include "c.h"
 
 #include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 
 int

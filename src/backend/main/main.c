@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.55 2002/10/31 22:37:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.56 2002/11/08 20:23:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <pwd.h>
 #include <unistd.h>
-#include <locale.h>
 
 #if defined(__alpha) && defined(__osf__)
 #include <sys/sysinfo.h>

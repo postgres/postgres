@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.10 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.11 2002/11/08 20:23:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include <errno.h>
 #include <semaphore.h>
-#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>

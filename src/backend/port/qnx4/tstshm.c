@@ -7,15 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstshm.c,v 1.3 2001/08/24 14:07:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstshm.c,v 1.4 2002/11/08 20:23:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <sys/shm.h>
 

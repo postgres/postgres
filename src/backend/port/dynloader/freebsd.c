@@ -43,9 +43,6 @@ static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 #include <link.h>
 #include <dlfcn.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-
 static char error_message[BUFSIZ];
 
 char *

@@ -8,15 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.53 2002/09/04 20:31:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.54 2002/11/08 20:23:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "access/xact.h"

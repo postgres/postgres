@@ -9,7 +9,6 @@
  */
 
 #include "postgres.h"
-#include <stdio.h>
 #include <OS.h>
 #include <errno.h>
 

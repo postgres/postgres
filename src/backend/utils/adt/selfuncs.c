@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119 2002/10/19 02:56:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.120 2002/11/08 20:23:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,6 @@
 
 #include <ctype.h>
 #include <math.h>
-#include <locale.h>
 
 #include "access/heapam.h"
 #include "access/tuptoaster.h"

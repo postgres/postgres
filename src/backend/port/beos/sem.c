@@ -10,7 +10,6 @@
 
 
 #include "postgres.h"
-#include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
 #include <OS.h>
