@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.67 1999/01/21 16:08:55 vadim Exp $
+ * $Id: parsenodes.h,v 1.68 1999/01/21 22:48:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,6 +333,7 @@ typedef struct IndexStmt
 								 * transformStmt() */
 	bool	   *lossy;			/* is index lossy? */
 	bool		unique;			/* is index unique? */
+	bool		primary;		/* is index on primary key? */
 } IndexStmt;
 
 /* ----------------------

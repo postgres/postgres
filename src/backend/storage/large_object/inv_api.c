@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.44 1998/12/15 12:46:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.45 1999/01/21 22:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,7 +178,7 @@ inv_create(int flags)
 	classObjectId[0] = INT4_OPS_OID;
 	index_create(objname, indname, NULL, NULL, BTREE_AM_OID,
 				 1, &attNums[0], &classObjectId[0],
-				 0, (Datum) NULL, NULL, FALSE, FALSE);
+				 0, (Datum) NULL, NULL, FALSE, FALSE, FALSE);
 
 	/* make the index visible in this transaction */
 	CommandCounterIncrement();

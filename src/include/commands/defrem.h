@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.13 1998/09/01 04:35:30 momjian Exp $
+ * $Id: defrem.h,v 1.14 1999/01/21 22:48:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@ extern void DefineIndex(char *heapRelationName,
 			List *attributeList,
 			List *parameterList,
 			bool unique,
+			bool primary,
 			Expr *predicate,
 			List *rangetable);
 extern void ExtendIndex(char *indexRelationName,

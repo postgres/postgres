@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.93 1999/01/21 16:08:38 vadim Exp $
+ *  $Id: analyze.c,v 1.94 1999/01/21 22:48:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,10 +721,14 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple keys for table %s are not legal", stmt->relname);
 
 			have_pkey = TRUE;
+			index->primary = TRUE;
 			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
 		}
 		else
+		{
+			index->primary = FALSE;
 			index->idxname = NULL;
+		}
 
 		index->relname = stmt->relname;
 		index->accessMethod = "btree";

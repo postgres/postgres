@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.21 1998/08/24 01:13:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.22 1999/01/21 22:48:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,7 @@ Boot_DeclareIndexStmt:
 					DefineIndex(LexIDStr($5),
 								LexIDStr($3),
 								LexIDStr($7),
-								$9, NIL, 0, 0, NIL);
+								$9, NIL, 0, 0, 0, NIL);
 					DO_END;
 				}
 		;
