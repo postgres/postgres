@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Jan 19 09:17:41 EST 2005
+Last updated:		Sat Jan 22 15:05:08 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -246,7 +246,7 @@ Indexes
 * Use indexes for MIN() and MAX()
 
   MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
-  BY col {DESC} LIMIT 1. Completing this item involves making this
+  BY col {DESC} LIMIT 1. Completing this item involves doing this
   transformation automatically.
 
 * Use index to restrict rows returned by multi-key index when used with
@@ -684,8 +684,20 @@ Cache
 
   We could use a fixed row count and a +/- count to follow MVCC
   visibility rules, or a single cached value could be used and
-  invalidated if anyone modifies the table.
+  invalidated if anyone modifies the table.  Another idea is to
+  get a count directly from a unique index, but for this to be
+  faster than a sequential scan it must avoid access to the heap
+  to obtain tuple visibility information.
 
+* Allow data to be pulled directly from indexes
+
+  Currently indexes do not have enough tuple tuple visibility
+  information to allow data to be pulled from the index without
+  also accessing the heap.  One way to allow this is to set a bit
+  to index tuples to indicate if a tuple is currently visible to
+  all transactions when the first valid heap lookup happens.  This 
+  bit would have to be cleared when a heap tuple is expired.
+  
 * Consider automatic caching of queries at various levels:
 	o Parsed query tree
 	o Query execute plan
