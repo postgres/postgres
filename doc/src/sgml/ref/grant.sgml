@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.36 2003/09/20 20:12:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.37 2003/10/31 20:00:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -66,19 +66,21 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
   </para>
 
   <para>
-   There is no need to grant privileges to the owner of an object (usually the user that created it),
-   as the owner has all privileges by default.  (The owner could,
-   however, choose to revoke some of his own privileges for safety.)
-   The right to drop an object, or to alter it in any way is
-   not described by a grantable right; it is inherent in the owner,
-   and cannot be granted or revoked.
+   If <literal>WITH GRANT OPTION</literal> is specified, the recipient
+   of the privilege may in turn grant it to others.  By default this
+   is not allowed.  Grant options can only be granted to individual
+   users, not to groups or <literal>PUBLIC</literal>.
   </para>
 
   <para>
-   If <literal>WITH GRANT OPTION</literal> is specified, the recipient
-   of the privilege may in turn grant it to others.  By default this
-   is not possible.  Grant options can only be granted to individual
-   users, not groups or <literal>PUBLIC</literal>.
+   There is no need to grant privileges to the owner of an object
+   (usually the user that created it),
+   as the owner has all privileges by default.  (The owner could,
+   however, choose to revoke some of his own privileges for safety.)
+   The right to drop an object, or to alter its definition in any way is
+   not described by a grantable privilege; it is inherent in the owner,
+   and cannot be granted or revoked.  It is not possible for the owner's
+   grant options to be revoked, either.
   </para>
 
   <para>
@@ -261,6 +263,13 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     is comparable to the rights of <literal>root</> in a Unix system.
     As with <literal>root</>, it's unwise to operate as a superuser
     except when absolutely necessary.
+   </para>
+
+   <para>
+    If a superuser chooses to issue a <command>GRANT</> or <command>REVOKE</>
+    command, the command is performed as though it were issued by the
+    owner of the affected object.  In particular, privileges granted via
+    such a command will appear to have been granted by the object owner.
    </para>
 
    <para>

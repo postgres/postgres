@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.27 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.28 2003/10/31 20:00:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -64,6 +64,11 @@ REVOKE [ GRANT OPTION FOR ]
   </para>
 
   <para>
+   See the description of the <xref linkend="sql-grant" endterm="sql-grant-title"> command for
+   the meaning of the privilege types.
+  </para>
+
+  <para>
    Note that any particular user will have the sum
    of privileges granted directly to him, privileges granted to any group he
    is presently a member of, and privileges granted to
@@ -71,11 +76,6 @@ REVOKE [ GRANT OPTION FOR ]
    from <literal>PUBLIC</literal> does not necessarily mean that all users
    have lost <literal>SELECT</> privilege on the object: those who have it granted
    directly or via a group will still have it.
-  </para>
-
-  <para>
-   See the description of the <xref linkend="sql-grant" endterm="sql-grant-title"> command for
-   the meaning of the privilege types.
   </para>
 
   <para>
@@ -116,6 +116,15 @@ REVOKE [ GRANT OPTION FOR ]
    the <literal>CASCADE</literal> option so that the privilege is
    automatically revoked from user C.
   </para>
+
+   <para>
+    If a superuser chooses to issue a <command>GRANT</> or <command>REVOKE</>
+    command, the command is performed as though it were issued by the
+    owner of the affected object.  Since all privileges ultimately come
+    from the object owner (possibly indirectly via chains of grant options),
+    it is possible for a superuser to revoke all privileges, but this may
+    require use of <literal>CASCADE</literal> as stated above.
+   </para>
  </refsect1>
 
  <refsect1 id="SQL-REVOKE-examples">
@@ -153,7 +162,8 @@ REVOKE [ GRANT OPTION FOR ] <replaceable class="PARAMETER">privileges</replaceab
     { RESTRICT | CASCADE }
 </synopsis>
     One of <literal>RESTRICT</literal> or <literal>CASCADE</literal>
-    is required.
+    is required according to the standard, but <productname>PostgreSQL</>
+    assumes <literal>RESTRICT</literal> by default.
    </para>
  </refsect1>
 
