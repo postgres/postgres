@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 20 11:57:21 EDT 2004
+Last updated:		Thu May 20 12:35:32 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -74,6 +74,7 @@ Data Types
 * -Make LENGTH() of CHAR() not count trailing spaces
 * Allow substring/replace() to get/set bit values
 * Add GUC variable to allow output of interval values in ISO8601 format
+* Support composite types as table columns
 
 
 * ARRAYS
@@ -265,7 +266,7 @@ Clients
 * Have psql show more information about sequences
 * Allow pg_dumpall to use non-text output formats
 * Have pg_dump use multi-statement transactions for INSERT dumps
-* Move psql backslash database information into the backend, use nmeumonic
+* Move psql backslash database information into the backend, use mnemonic
   commands? [psql]
 
 
@@ -283,10 +284,6 @@ Clients
 	o Make SET CONNECTION thread-aware, non-standard?
 	o Allow multidimensional arrays
 
-* Python
-	o Allow users to register their own types with pg_
-	o Allow SELECT to return a dictionary of dictionaries
-	o Allow COPY BINARY FROM
 
 
 Referential Integrity
@@ -453,7 +450,6 @@ Source Code
   manuals
 * Add optional CRC checksum to heap and index pages
 * -Change representation of whole-tuple parameters to functions
-* Support composite types as table columns
 * Clarify use of 'application' and 'command' tags in SGML docs
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
