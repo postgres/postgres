@@ -536,6 +536,67 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 		return p;
 }
 
+static Int2
+getTimestampScale(StatementClass *stmt, Int4 type, int col)
+{
+	ConnectionClass	*conn = SC_get_conn (stmt);
+	Int4		atttypmod;
+	QResultClass *result;
+	ColumnInfoClass *flds;
+
+	mylog("getTimestampScale: type=%d, col=%d\n", type, col);
+
+	if (col < 0)
+		return 0;
+	if (PG_VERSION_LT(conn, 7.2))
+		return 0;
+
+	result = SC_get_Result(stmt);
+
+	/*
+	 * Manual Result Sets -- use assigned column width (i.e., from
+	 * set_tuplefield_string)
+	 */
+	atttypmod = 0;
+	if (stmt->manual_result)
+	{
+		flds = result->fields;
+		if (flds)
+			atttypmod = flds->atttypmod[col];
+mylog("atttypmod1=%d\n", atttypmod);
+	}
+	else 
+		atttypmod = QR_get_atttypmod(result, col);
+mylog("atttypmod2=%d\n", atttypmod);
+	return (atttypmod > -1 ? atttypmod : 0);
+}
+
+
+static Int4
+getTimestampPrecision(StatementClass *stmt, Int4 type, int col)
+{
+	Int4	fixed, scale;
+
+	mylog("getTimestampPrecision: type=%d, col=%d\n", type, col);
+
+	switch (type)
+	{
+		case PG_TYPE_TIME:
+			fixed = 8;
+			break;
+		case PG_TYPE_TIME_WITH_TMZONE:
+			fixed = 11;
+			break;
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
+			fixed = 19;
+			break;
+		default:
+			fixed = 22;
+			break;
+	}
+	scale = getTimestampScale(stmt, type, col);	
+	return (scale > 0) ? fixed + 1 + scale : fixed;	
+}
 
 /*
  *	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, PG_TYPE_NUMERIC, SQLColumns will
@@ -591,7 +652,8 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 		case PG_TYPE_TIMESTAMP:
 			return 22;
 		case PG_TYPE_DATETIME:
-			return 22;
+			/* return 22; */
+			return getTimestampPrecision(stmt, type, col);
 
 		case PG_TYPE_BOOL:
 			return 1;
@@ -728,7 +790,8 @@ pgtype_scale(StatementClass *stmt, Int4 type, int col)
 		case PG_TYPE_TIMESTAMP:
 			return 0;
 		case PG_TYPE_DATETIME:
-			return 0;
+			/* return 0; */
+			return getTimestampScale(stmt, type, col);
 
 		case PG_TYPE_NUMERIC:
 			return getNumericScale(stmt, type, col);

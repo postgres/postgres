@@ -22,6 +22,8 @@ struct BindInfoClass_
 	char	   *buffer;			/* pointer to the buffer */
 	Int4	   *used;			/* used space in the buffer (for strings
 								 * not counting the '\0') */
+	char		*ttlbuf;		/* to save the large result */
+	Int4		ttlbuflen;		/* the buffer length */
 	Int2		returntype;		/* kind of conversion to be applied when
 								 * returning (SQL_C_DEFAULT,
 								 * SQL_C_CHAR...) */

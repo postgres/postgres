@@ -354,8 +354,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7,1,0,8
- PRODUCTVERSION 7,1,0,8
+ FILEVERSION 7,1,0,9
+ PRODUCTVERSION 7,1,0,9
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -377,14 +377,14 @@ BEGIN
             VALUE "CompanyName", "Insight Distribution Systems\0"
 #endif
             VALUE "FileDescription", "PostgreSQL Driver\0"
-            VALUE "FileVersion", " 07.01.0008\0"
+            VALUE "FileVersion", " 07.01.0009\0"
             VALUE "InternalName", "psqlodbc\0"
             VALUE "LegalCopyright", "\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
             VALUE "OriginalFilename", "psqlodbc.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Microsoft Open Database Connectivity\0"
-            VALUE "ProductVersion", " 07.01.0008\0"
+            VALUE "ProductVersion", " 07.01.0009\0"
             VALUE "SpecialBuild", "\0"
         END
     END

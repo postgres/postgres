@@ -424,6 +424,8 @@ create_empty_bindings(int num_columns)
 		new_bindings[i].buffer = NULL;
 		new_bindings[i].used = NULL;
 		new_bindings[i].data_left = -1;
+		new_bindings[i].ttlbuf = NULL;
+		new_bindings[i].ttlbuflen = 0;
 	}
 
 	return new_bindings;

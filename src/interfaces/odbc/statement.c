@@ -320,7 +320,15 @@ SC_Destructor(StatementClass *self)
 	 */
 	/* about that here. */
 	if (self->bindings)
+	{
+		int	lf;
+		for (lf = 0; lf < self->bindings_allocated; lf++)
+		{
+			if (self->bindings[lf].ttlbuf != NULL)
+				free(self->bindings[lf].ttlbuf);
+		}
 		free(self->bindings);
+	}
 
 	/* Free the parsed table information */
 	if (self->ti)

@@ -216,32 +216,6 @@ PGAPI_GetInfo(
 
 		case SQL_DRIVER_ODBC_VER:
 			p = DRIVER_ODBC_VER;
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-			{
-				static char dver[32];
-
-				SQLGetPrivateProfileString(DBMS_NAME,
-				"DriverODBCVer", "", dver, sizeof(dver), "odbcinst.ini");
-				if (dver[0])
-				{
-					int			major,
-								minor;
-
-					mylog("REGISTRY_ODBC_VER = %s\n", dver)
-						;
-					if (sscanf(dver, "%x.%x", &major, &minor) >= 2)
-					{
-						Int2		drv_ver = (major << 8) + minor;
-
-						if (drv_ver > ODBCVER)
-						{
-							conn->driver_version = drv_ver;
-							p = dver;
-						}
-					}
-				}
-			}
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
 			break;
 
 		case SQL_DRIVER_VER:	/* ODBC 1.0 */
@@ -842,6 +816,7 @@ PGAPI_GetFunctions(
 
 	if (fFunction == SQL_API_ALL_FUNCTIONS)
 	{
+#if (ODBCVER < 0x0300)
 		if (ci->drivers.lie)
 		{
 			int			i;
@@ -856,6 +831,7 @@ PGAPI_GetFunctions(
 				pfExists[i] = TRUE;
 		}
 		else
+#endif
 		{
 			memset(pfExists, 0, sizeof(UWORD) * 100);
 
@@ -2685,7 +2661,7 @@ PGAPI_PrimaryKeys(
 /*
  *	Multibyte support stuff for SQLForeignKeys().
  *	There may be much more effective way in the
- *	future version. The way is very forcive currently.
+ *	future version. The way is very forcible currently.
  */
 static BOOL
 isMultibyte(const unsigned char *str)

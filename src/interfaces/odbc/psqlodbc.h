@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.53 2001/10/28 06:26:14 momjian Exp $
+ * $Id: psqlodbc.h,v 1.54 2001/11/05 09:46:17 inoue Exp $
  *
  */
 
@@ -21,9 +21,7 @@
 #include <stdio.h>				/* for FILE* pointers: see GLOBAL_VALUES */
 
 /* Must come before sql.h */
-#ifdef	ODBCVER_REP
-#define ODBCVER						ODBCVER_REP
-#else
+#ifndef	ODBCVER
 #define ODBCVER						0x0250
 #endif	 /* ODBCVER_REP */
 
@@ -77,18 +75,27 @@ typedef UInt4 Oid;
 #endif
 
 /* Driver stuff */
-#define DRIVER_ODBC_VER				"02.50"
 
 #define DRIVERNAME					"PostgreSQL ODBC"
+#if (ODBCVER >= 0x0300)
+#define DRIVER_ODBC_VER				"03.00"
+#define DBMS_NAME					"PostgreSQL30"
+#else
+#define DRIVER_ODBC_VER				"02.50"
 #define DBMS_NAME					"PostgreSQL"
+#endif /* ODBCVER */
 
-#define POSTGRESDRIVERVERSION		"07.01.0008"
+#define POSTGRESDRIVERVERSION		"07.01.0009"
 
 #ifdef WIN32
+#if (ODBCVER >= 0x0300)
+#define DRIVER_FILE_NAME			"PSQLODBC30.DLL"
+#else
 #define DRIVER_FILE_NAME			"PSQLODBC.DLL"
+#endif /* ODBCVER */
 #else
 #define DRIVER_FILE_NAME			"libpsqlodbc.so"
-#endif
+#endif /* WIN32 */
 
 /* Limits */
 #ifdef WIN32

@@ -27,7 +27,8 @@ typedef struct
 	int			hh;
 	int			mm;
 	int			ss;
-} SIMPLE_TIME;
+	int			fr;
+}			SIMPLE_TIME;
 
 int			copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col);
 int copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType,

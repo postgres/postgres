@@ -12,6 +12,7 @@
  *-------
  */
 
+#include "pgtypes.h"
 #include "columninfo.h"
 
 #include "connection.h"
@@ -95,7 +96,16 @@ CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 			new_atttypmod = (Int4) SOCK_get_int(sock, 4);
 
 			/* Subtract the header length */
-			new_atttypmod -= 4;
+			switch (new_adtid)
+			{
+				case PG_TYPE_DATETIME:
+				case PG_TYPE_TIMESTAMP_NO_TMZONE:
+				case PG_TYPE_TIME:
+				case PG_TYPE_TIME_WITH_TMZONE:
+					break;
+				default:
+					new_atttypmod -= 4;
+			}
 			if (new_atttypmod < 0)
 				new_atttypmod = -1;
 

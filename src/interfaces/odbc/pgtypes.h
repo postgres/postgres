@@ -58,8 +58,10 @@
 #define PG_TYPE_VARCHAR			1043
 #define PG_TYPE_DATE			1082
 #define PG_TYPE_TIME			1083
+#define PG_TYPE_TIMESTAMP_NO_TMZONE	1114	/* since 7.2 */
 #define PG_TYPE_DATETIME		1184
-#define PG_TYPE_TIMESTAMP		1296
+#define PG_TYPE_TIME_WITH_TMZONE	1266	/* since 7.1 */
+#define PG_TYPE_TIMESTAMP		1296	/* deprecated since 7.0 */
 #define PG_TYPE_NUMERIC			1700
 
 /* extern Int4 pgtypes_defined[]; */

@@ -38,6 +38,11 @@
 #include "connection.h"
 #include "pgapifunc.h"
 
+#ifdef	__CYGWIN__
+#define TIMEZONE_GLOBAL	_timezone
+#elif	defined(WIN32) || defined(HAVE_INT_TIMEZONE)
+#define	TIMEZONE_GLOBAL	timezone
+#endif
 
 /*
  *	How to map ODBC scalar functions {fn func(args)} to Postgres.
@@ -136,6 +141,156 @@ static char *conv_to_octal(unsigned char val);
 
 
 
+/*	
+ *	TIMESTAMP <-----> SIMPLE_TIME
+ *		precision support since 7.2.
+ *		time zone support is unavailable(the stuff is unreliable)
+ */
+static	BOOL timestamp2stime(const char * str, SIMPLE_TIME *st, BOOL *bZone, int *zone)
+{
+	char	rest[64], *ptr;
+	int	scnt, i;
+	long		timediff;
+	BOOL	withZone = *bZone;
+
+	*bZone = FALSE;
+	*zone = 0;
+	st->fr = 0;
+	if ((scnt = sscanf(str, "%4d-%2d-%2d %2d:%2d:%2d%s", &st->y, &st->m, &st->d, &st->hh, &st->mm, &st->ss, rest)) < 6)
+		return FALSE;
+	else if (scnt == 6)
+		return TRUE;
+	switch (rest[0])
+	{
+		case '+':
+			*bZone = TRUE;
+			*zone = atoi(&rest[1]);
+			break;
+		case '-':
+			*bZone = TRUE;
+			*zone = -atoi(&rest[1]);
+			break;
+		case '.':
+			if ((ptr = strchr(rest, '+')) != NULL)
+			{
+				*bZone = TRUE;
+				*zone = atoi(&ptr[1]);
+				*ptr = '\0';
+			}
+			else if ((ptr = strchr(rest, '-')) != NULL)
+			{
+				*bZone = TRUE;
+				*zone = -atoi(&ptr[1]);
+				*ptr = '\0';
+			}
+			for (i = 1; i < 10; i++)
+			{
+				if (!isdigit(rest[i]))
+					break;
+			}
+			for (; i < 10; i++)
+				rest[i] = '0';
+			rest[i] = '\0';
+			st->fr = atoi(&rest[1]);
+			break;
+		default:
+			return	TRUE;
+	}
+	if (!withZone || !*bZone || st->y < 1970)
+		return TRUE;
+#if defined(WIN32) || defined(HAVE_INT_TIMEZONE)
+	if (!tzname[0] || !tzname[0][0])
+	{
+		*bZone = FALSE;
+		return TRUE;
+	}
+	timediff = TIMEZONE_GLOBAL + (*zone) * 3600;
+	if (!daylight && timediff == 0) /* the same timezone */
+		return TRUE;
+	else
+	{
+		struct tm	tm, *tm2;
+		time_t		time0;
+
+		*bZone = FALSE;
+		tm.tm_year = st->y - 1900;
+		tm.tm_mon = st->m - 1;
+		tm.tm_mday = st->d;
+		tm.tm_hour = st->hh;
+		tm.tm_min = st->mm;
+		tm.tm_sec = st->ss;
+		tm.tm_isdst = -1;
+		time0 = mktime(&tm);
+		if (time0 < 0)
+			return TRUE;
+		if (tm.tm_isdst > 0)
+			timediff -= 3600;
+		if (timediff == 0) /* the same time zone */
+			return TRUE;
+		time0 -= timediff;
+		if (time0 >= 0 && (tm2 = localtime(&time0)) != NULL)
+		{
+			st->y = tm2->tm_year + 1900;
+			st->m = tm2->tm_mon + 1;
+			st->d = tm2->tm_mday;
+			st->hh= tm2->tm_hour;
+			st->mm= tm2->tm_min;
+			st->ss= tm2->tm_sec;
+			*bZone = TRUE;
+		}
+	}
+#endif /* WIN32 */
+	return	TRUE;
+}
+
+static	BOOL stime2timestamp(const SIMPLE_TIME *st, char * str, BOOL bZone, BOOL precision)
+{
+	char	precstr[16], zonestr[16];
+	int	i;
+
+	precstr[0] = '\0';
+	if (precision && st->fr)
+	{
+		sprintf(precstr, ".%09d", st->fr);
+		for (i = 9; i > 0; i--)
+		{
+			if (precstr[i] != '0')
+				break;
+			precstr[i] = '\0';
+		}
+	}
+	zonestr[0] = '\0';
+#if defined(WIN32) || defined(HAVE_INT_TIMEZONE)
+	if (bZone && tzname[0] && tzname[0][0] && st->y >= 1970)
+	{
+		long	zoneint;
+		struct tm	tm;
+		time_t		time0;
+
+		zoneint = TIMEZONE_GLOBAL;
+		if (daylight && st->y >=1900)
+		{ 
+			tm.tm_year = st->y - 1900;
+			tm.tm_mon = st->m - 1;
+			tm.tm_mday = st->d;
+			tm.tm_hour = st->hh;
+			tm.tm_min = st->mm;
+			tm.tm_sec = st->ss;
+			tm.tm_isdst = -1;
+			time0 = mktime(&tm);
+			if (time0 >= 0 && tm.tm_isdst > 0)
+				zoneint -= 3600;
+		}
+		if (zoneint > 0)
+			sprintf(zonestr, "-%02d", (int)zoneint / 3600);
+		else
+			sprintf(zonestr, "+%02d", -(int)zoneint / 3600);
+	}
+#endif /* WIN32 */
+	sprintf(str, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d%s%s", st->y, st->m, st->d, st->hh, st->mm, st->ss, precstr, zonestr);
+	return	TRUE;
+}
+
 /*	This is called by SQLFetch() */
 int
 copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col)
@@ -165,14 +320,29 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	int			bind_size = stmt->options.bind_size;
 	int			result = COPY_OK;
 	BOOL		changed;
-	static char *tempBuf = NULL;
-	static unsigned int tempBuflen = 0;
 	const char *neut_str = value;
 	char		midtemp[2][32];
 	int			mtemp_cnt = 0;
+	static	BindInfoClass	sbic;
+	BindInfoClass		*pbic;
 
-	if (!tempBuf)
-		tempBuflen = 0;
+	if (stmt->current_col >= 0)
+	{
+		pbic = &stmt->bindings[stmt->current_col];
+		if (pbic->data_left == -2)
+			pbic->data_left = (cbValueMax > 0) ? 0 : -1;	/* This seems to be * needed for ADO ? */
+		if (pbic->data_left == 0)
+		{
+			if (pbic->ttlbuf != NULL)
+			{
+				free(pbic->ttlbuf);
+				pbic->ttlbuf = NULL;
+				pbic->ttlbuflen = 0;
+			}
+			pbic->data_left = -2; /* needed by ADO ? */
+			return	COPY_NO_DATA_FOUND;
+		}
+	}
 	/*---------
 	 *	rgbValueOffset is *ONLY* for character and binary data.
 	 *	pcbValueOffset is for computing any pcbValue location
@@ -243,8 +413,15 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
+			st.fr = 0;
 			if (strnicmp(value, "invalid", 7) != 0)
-				sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);
+			{
+				BOOL	bZone = (field_type != PG_TYPE_TIMESTAMP_NO_TMZONE && PG_VERSION_GE(SC_get_conn(stmt), 7.2));
+				int	zone;
+				/*sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);*/
+				bZone = FALSE; /* time zone stuff is unreliable */
+				timestamp2stime(value, &st, &bZone, &zone);
+			}
 			else
 			{
 				/*
@@ -421,10 +598,14 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				break;
 
 			default:
-				if (stmt->current_col >= 0 && stmt->bindings[stmt->current_col].data_left == -2)
-					stmt->bindings[stmt->current_col].data_left = (cbValueMax > 0) ? 0 : -1;	/* This seems to be
-																								 * needed for ADO ? */
-				if (stmt->current_col < 0 || stmt->bindings[stmt->current_col].data_left < 0)
+				if (stmt->current_col < 0)
+				{
+					pbic = &sbic;
+					pbic->data_left = -1;
+				}
+				else
+					pbic = &stmt->bindings[stmt->current_col];
+				if (pbic->data_left < 0)
 				{
 					/* convert linefeeds to carriage-return/linefeed */
 					len = convert_linefeeds(neut_str, NULL, 0, &changed);
@@ -434,51 +615,42 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 						result = COPY_RESULT_TRUNCATED;
 						break;
 					}
+					if (!pbic->ttlbuf)
+						pbic->ttlbuflen = 0;
 					if (changed || len >= cbValueMax)
 					{
-						if (len >= (int) tempBuflen)
+						if (len >= (int) pbic->ttlbuflen)
 						{
-							tempBuf = realloc(tempBuf, len + 1);
-							tempBuflen = len + 1;
+							pbic->ttlbuf = realloc(pbic->ttlbuf, len + 1);
+							pbic->ttlbuflen = len + 1;
 						}
-						convert_linefeeds(neut_str, tempBuf, tempBuflen, &changed);
-						ptr = tempBuf;
+						convert_linefeeds(neut_str, pbic->ttlbuf, pbic->ttlbuflen, &changed);
+						ptr = pbic->ttlbuf;
 					}
 					else
 					{
-						if (tempBuf)
+						if (pbic->ttlbuf)
 						{
-							free(tempBuf);
-							tempBuf = NULL;
+							free(pbic->ttlbuf);
+							pbic->ttlbuf = NULL;
 						}
 						ptr = neut_str;
 					}
 				}
 				else
-					ptr = tempBuf;
+					ptr = pbic->ttlbuf;
 
 				mylog("DEFAULT: len = %d, ptr = '%s'\n", len, ptr);
 
 				if (stmt->current_col >= 0)
 				{
-					if (stmt->bindings[stmt->current_col].data_left == 0)
+					if (pbic->data_left > 0)
 					{
-						if (tempBuf)
-						{
-							free(tempBuf);
-							tempBuf = NULL;
-						}
-						/* The following seems to be needed for ADO ? */
-						stmt->bindings[stmt->current_col].data_left = -2;
-						return COPY_NO_DATA_FOUND;
-					}
-					else if (stmt->bindings[stmt->current_col].data_left > 0)
-					{
-						ptr += strlen(ptr) - stmt->bindings[stmt->current_col].data_left;
-						len = stmt->bindings[stmt->current_col].data_left;
+						ptr += strlen(ptr) - pbic->data_left;
+						len = pbic->data_left;
 					}
 					else
-						stmt->bindings[stmt->current_col].data_left = len;
+						pbic->data_left = len;
 				}
 
 				if (cbValueMax > 0)
@@ -491,7 +663,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 					/* Adjust data_left for next time */
 					if (stmt->current_col >= 0)
-						stmt->bindings[stmt->current_col].data_left -= copy_len;
+						pbic->data_left -= copy_len;
 				}
 
 				/*
@@ -502,10 +674,10 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					result = COPY_RESULT_TRUNCATED;
 				else
 				{
-					if (tempBuf)
+					if (pbic->ttlbuf != NULL)
 					{
-						free(tempBuf);
-						tempBuf = NULL;
+						free(pbic->ttlbuf);
+						pbic->ttlbuf = NULL;
 					}
 				}
 
@@ -537,6 +709,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		switch (fCType)
 		{
 			case SQL_C_DATE:
+#if (ODBCVER >= 0x0300)
+			case SQL_C_TYPE_DATE: /* 91 */
+#endif
 				len = 6;
 				{
 					DATE_STRUCT *ds;
@@ -552,6 +727,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				break;
 
 			case SQL_C_TIME:
+#if (ODBCVER >= 0x0300)
+			case SQL_C_TYPE_TIME: /* 92 */
+#endif
 				len = 6;
 				{
 					TIME_STRUCT *ts;
@@ -567,6 +745,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				break;
 
 			case SQL_C_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+			case SQL_C_TYPE_TIMESTAMP: /* 93 */
+#endif
 				len = 16;
 				{
 					TIMESTAMP_STRUCT *ts;
@@ -581,7 +762,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					ts->hour = st.hh;
 					ts->minute = st.mm;
 					ts->second = st.ss;
-					ts->fraction = 0;
+					ts->fraction = st.fr;
 				}
 				break;
 
@@ -671,37 +852,38 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				/* truncate if necessary */
 				/* convert octal escapes to bytes */
 
-				if (len = strlen(neut_str), len >= (int) tempBuflen)
+				if (stmt->current_col < 0)
 				{
-					tempBuf = realloc(tempBuf, len + 1);
-					tempBuflen = len + 1;
+					pbic = &sbic;
+					pbic->data_left = -1;
 				}
-				len = convert_from_pgbinary(neut_str, tempBuf, tempBuflen);
-				ptr = tempBuf;
+				else
+					pbic = &stmt->bindings[stmt->current_col];
+				if (!pbic->ttlbuf)
+					pbic->ttlbuflen = 0;
+				if (len = strlen(neut_str), len >= (int) pbic->ttlbuflen)
+				{
+					pbic->ttlbuf = realloc(pbic->ttlbuf, len + 1);
+					pbic->ttlbuflen = len + 1;
+				}
+				len = convert_from_pgbinary(neut_str, pbic->ttlbuf, pbic->ttlbuflen);
+				ptr = pbic->ttlbuf;
 
 				if (stmt->current_col >= 0)
 				{
-					/* No more data left for this column */
-					if (stmt->bindings[stmt->current_col].data_left == 0)
-					{
-						free(tempBuf);
-						tempBuf = NULL;
-						return COPY_NO_DATA_FOUND;
-					}
-
 					/*
 					 * Second (or more) call to SQLGetData so move the
 					 * pointer
 					 */
-					else if (stmt->bindings[stmt->current_col].data_left > 0)
+					if (pbic->data_left > 0)
 					{
-						ptr += len - stmt->bindings[stmt->current_col].data_left;
-						len = stmt->bindings[stmt->current_col].data_left;
+						ptr += len - pbic->data_left;
+						len = pbic->data_left;
 					}
 
 					/* First call to SQLGetData so initialize data_left */
 					else
-						stmt->bindings[stmt->current_col].data_left = len;
+						pbic->data_left = len;
 
 				}
 
@@ -714,7 +896,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 					/* Adjust data_left for next time */
 					if (stmt->current_col >= 0)
-						stmt->bindings[stmt->current_col].data_left -= copy_len;
+						pbic->data_left -= copy_len;
 				}
 
 				/*
@@ -724,10 +906,10 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				if (len > cbValueMax)
 					result = COPY_RESULT_TRUNCATED;
 
-				if (tempBuf)
+				if (pbic->ttlbuf)
 				{
-					free(tempBuf);
-					tempBuf = NULL;
+					free(pbic->ttlbuf);
+					pbic->ttlbuf = NULL;
 				}
 				mylog("SQL_C_BINARY: len = %d, copy_len = %d\n", len, copy_len);
 				break;
@@ -741,6 +923,8 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	if (pcbValue)
 		*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = len;
 
+	if (result == COPY_OK && stmt->current_col >=0)
+		stmt->bindings[stmt->current_col].data_left = 0;
 	return result;
 
 }
@@ -1406,6 +1590,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 				}
 
 			case SQL_C_DATE:
+#if (ODBCVER >= 0x0300)
+			case SQL_C_TYPE_DATE: /* 91 */
+#endif
 				{
 					DATE_STRUCT *ds = (DATE_STRUCT *) buffer;
 
@@ -1417,6 +1604,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 				}
 
 			case SQL_C_TIME:
+#if (ODBCVER >= 0x0300)
+			case SQL_C_TYPE_TIME: /* 92 */
+#endif
 				{
 					TIME_STRUCT *ts = (TIME_STRUCT *) buffer;
 
@@ -1428,6 +1618,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 				}
 
 			case SQL_C_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+			case SQL_C_TYPE_TIMESTAMP: /* 93 */
+#endif
 				{
 					TIMESTAMP_STRUCT *tss = (TIMESTAMP_STRUCT *) buffer;
 
@@ -1437,6 +1630,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 					st.hh = tss->hour;
 					st.mm = tss->minute;
 					st.ss = tss->second;
+					st.fr = tss->fraction;
 
 					mylog("m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d\n", st.m, st.d, st.y, st.hh, st.mm, st.ss);
 
@@ -1487,6 +1681,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 				break;
 
 			case SQL_DATE:
+#if (ODBCVER >= 0x0300)
+			case SQL_TYPE_DATE: /* 91 */
+#endif
 				if (buf)
 				{				/* copy char data to time */
 					my_strcpy(cbuf, sizeof(cbuf), buf, used);
@@ -1499,6 +1696,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 				break;
 
 			case SQL_TIME:
+#if (ODBCVER >= 0x0300)
+			case SQL_TYPE_TIME: /* 92 */
+#endif
 				if (buf)
 				{				/* copy char data to time */
 					my_strcpy(cbuf, sizeof(cbuf), buf, used);
@@ -1511,6 +1711,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 				break;
 
 			case SQL_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+			case SQL_TYPE_TIMESTAMP: /* 93 */
+#endif
 
 				if (buf)
 				{
@@ -1518,8 +1721,12 @@ copy_statement_with_parameters(StatementClass *stmt)
 					parse_datetime(cbuf, &st);
 				}
 
-				sprintf(tmp, "'%.4d-%.2d-%.2d %.2d:%.2d:%.2d'",
-						st.y, st.m, st.d, st.hh, st.mm, st.ss);
+				/* sprintf(tmp, "'%.4d-%.2d-%.2d %.2d:%.2d:%.2d'",
+						st.y, st.m, st.d, st.hh, st.mm, st.ss);*/
+				tmp[0] = '\'';
+				/* Time zone stuff is unreliable */
+				stime2timestamp(&st, tmp + 1, FALSE, PG_VERSION_GE(conn, 7.2));
+				strcat(tmp, "'");
 
 				CVT_APPEND_STR(tmp);
 
@@ -2203,7 +2410,43 @@ decode(const char *in, char *out)
 	out[o++] = '\0';
 }
 
-
+static const char *hextbl = "0123456789ABCDEF";
+static int
+pg_bin2hex(UCHAR *src, UCHAR *dst, int length)
+{
+	UCHAR	chr, *src_wk, *dst_wk;
+	BOOL	backwards;
+	int	i;
+	
+	backwards = FALSE;
+	if (dst < src)
+	{
+		if (dst + length > src + 1)
+			return -1;
+	}
+	else if (dst < src + length)
+		backwards = TRUE;
+	if (backwards)
+	{
+		for (i = 0, src_wk = src + length - 1, dst_wk = dst + 2 * length - 1; i < length; i++, src_wk--)
+		{
+			chr = *src_wk;
+			*dst_wk-- = hextbl[chr % 16];
+			*dst_wk-- = hextbl[chr >> 4];
+		}
+	}
+	else
+	{
+		for (i = 0, src_wk = src, dst_wk = dst; i < length; i++, src_wk++)
+		{
+			chr = *src_wk;
+			*dst_wk++ = hextbl[chr >> 4];
+			*dst_wk++ = hextbl[chr % 16];
+		}
+	}
+	dst[2 * length] = '\0';
+	return length;
+}
 /*-------
  *	1. get oid (from 'value')
  *	2. open the large object
@@ -2231,6 +2474,7 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 	BindInfoClass *bindInfo = NULL;
 	ConnectionClass *conn = SC_get_conn(stmt);
 	ConnInfo   *ci = &(conn->connInfo);
+	int	factor = (fCType == SQL_C_CHAR ? 2 : 1);
 
 	/* If using SQLGetData, then current_col will be set */
 	if (stmt->current_col >= 0)
@@ -2304,7 +2548,7 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 		return COPY_GENERAL_ERROR;
 	}
 
-	retval = lo_read(conn, stmt->lobj_fd, (char *) rgbValue, cbValueMax);
+	retval = lo_read(conn, stmt->lobj_fd, (char *) rgbValue, factor > 1 ? (cbValueMax - 1) / factor : cbValueMax);
 	if (retval < 0)
 	{
 		lo_close(conn, stmt->lobj_fd);
@@ -2341,13 +2585,15 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 		return COPY_GENERAL_ERROR;
 	}
 
+	if (factor > 1)
+		pg_bin2hex((char *) rgbValue, (char *) rgbValue, retval);
 	if (retval < left)
 		result = COPY_RESULT_TRUNCATED;
 	else
 		result = COPY_OK;
 
 	if (pcbValue)
-		*pcbValue = left < 0 ? SQL_NO_TOTAL : left;
+		*pcbValue = left < 0 ? SQL_NO_TOTAL : left * factor;
 
 	if (bindInfo && bindInfo->data_left > 0)
 		bindInfo->data_left -= retval;
