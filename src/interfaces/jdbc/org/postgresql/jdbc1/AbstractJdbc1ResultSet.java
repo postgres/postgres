@@ -13,7 +13,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.6 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.7 2002/10/19 22:10:36 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the jdbc2
  * methods.  The real ResultSet class (for jdbc1) is org.postgresql.jdbc1.Jdbc1ResultSet
@@ -646,6 +646,10 @@ public abstract class AbstractJdbc1ResultSet
 		if (wasNullFlag)
 			return null;
 
+		// if we don't have at least 2 characters it can't be money.
+ 		if (s.length() < 2)
+ 			return s;
+
 		// Handle Money
 		if (s.charAt(0) == '(')
 		{
@@ -654,6 +658,10 @@ public abstract class AbstractJdbc1ResultSet
 		if (s.charAt(0) == '$')
 		{
 			s = s.substring(1);
+		}
+ 		else if (s.charAt(0) == '-' && s.charAt(1) == '$')
+ 		{
+ 			s = "-" + s.substring(2);
 		}
 
 		return s;
