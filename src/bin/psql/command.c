@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.39 2000/11/25 06:21:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.40 2000/11/26 11:09:32 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -1395,7 +1395,7 @@ static bool
 do_edit(const char *filename_arg, PQExpBuffer query_buf)
 {
 	char		fnametmp[MAXPGPATH];
-	FILE	   *stream;
+	FILE	   *stream = NULL;
 	const char *fname;
 	bool		error = false;
 	int			fd;
