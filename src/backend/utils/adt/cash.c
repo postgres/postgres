@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.12 1997/09/08 21:48:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.13 1997/09/13 04:39:08 momjian Exp $
  */
 
 #include <stdio.h>
@@ -165,8 +165,9 @@ cash_in(const char *str)
  *	positive-valued amounts. - tgl 97/04/14
  */
 const char *
-cash_out(Cash *value)
+cash_out(Cash *in_value)
 {
+	Cash		value = *in_value;
 	char	   *result;
 	char		buf[CASH_BUFSZ];
 	int			minus = 0;
