@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64.2.2 2002/08/22 05:27:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64.2.3 2002/09/30 20:57:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,28 +274,20 @@ date_timestamptz(PG_FUNCTION_ARGS)
 	TimestampTz result;
 	struct tm	tt,
 			   *tm = &tt;
-	time_t		utime;
 
-	j2date((dateVal + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+	j2date((dateVal + date2j(2000, 1, 1)),
+		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
 	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 	{
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+		int			tz;
+
 		tm->tm_hour = 0;
 		tm->tm_min = 0;
 		tm->tm_sec = 0;
-		tm->tm_isdst = -1;
+		tz = DetermineLocalTimeZone(tm);
 
-		tm->tm_year -= 1900;
-		tm->tm_mon -= 1;
-		utime = mktime(tm);
-		if (utime == -1)
-			elog(ERROR, "Unable to convert date to tm");
-
-		result = utime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400.0);
-#else
-		result = dateVal * 86400.0 + CTimeZone;
-#endif
+		result = dateVal * 86400.0 + tz;
 	}
 	else
 	{
