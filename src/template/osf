@@ -5,4 +5,8 @@ fi
 
 THREAD_SUPPORT=yes
 NEED_REENTRANT_FUNCS=no		# 4.0 2003-09-13
-THREAD_LIBS="-pthread"
+if test "$GCC" = yes
+then	THREAD_LIBS="-pthread"
+else	THREAD_CPPFLAGS="-pthread"
+	THREAD_LIBS="-lpthread"
+fi
