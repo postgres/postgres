@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.37.2.1 1996/12/11 23:07:37 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.37.2.2 1996/12/14 08:19:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1092,7 +1092,7 @@ HandleSlashCmds(PsqlSettings * settings,
 	    char           *fs = DEFAULT_FIELD_SEP;
 	    if (optarg)
 		fs = optarg;
-	    if (settings->opt.fieldSep);
+	    if (settings->opt.fieldSep)
 	    	free(settings->opt.fieldSep);
 	    if (!(settings->opt.fieldSep = strdup(fs))) {
 		perror("malloc");
