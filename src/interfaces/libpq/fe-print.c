@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.14 1998/10/06 03:02:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.15 1998/10/06 14:16:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,13 +515,12 @@ PQmblen(unsigned char *s)
 
 #else
 
-#ifdef WIN32
+/* Provide a default definition in case someone calls it anyway */
 int
 PQmblen(unsigned char *s)
 {
+	return 1;
 }
-#endif	/* WIN32 */
-
 
 #endif	/* MULTIBYTE */
 

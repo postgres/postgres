@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.44 1998/10/01 01:40:23 tgl Exp $
+ * $Id: libpq-fe.h,v 1.45 1998/10/06 14:16:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,9 +283,8 @@ extern		"C"
 							  int width);			/* width of column, if
 													 * 0, use variable width */
 
-#ifdef MULTIBYTE
+	/* Determine length of multibyte encoded char at *s */
 	extern int	PQmblen(unsigned char *s);
-#endif
 
 /* === in fe-lobj.c === */
 
