@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.1.1.1 1996/07/09 06:21:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.2 1996/09/23 08:29:52 scrappy Exp $
  *
  * NOTES
  *    This should be moved to a more appropriate place.  It is here
@@ -241,7 +241,8 @@ lo_import(text *filename)
      */
     fd = open(VARDATA(filename), O_RDONLY, 0666);
     if (fd < 0)  {   /* error */
-	elog(WARN, "lo_import: can't open unix file\"%s\"\n", filename);
+	elog(WARN, "lo_import: can't open unix file\"%s\"\n", 
+             VARDATA(filename));
     }
 
     /*
