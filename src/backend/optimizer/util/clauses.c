@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.148 2003/07/28 18:33:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.149 2003/08/03 23:46:37 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
 #include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
@@ -1710,8 +1711,12 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
  * so we keep track of which functions we are already expanding and
  * do not re-expand them.  Also, if a parameter is used more than once
  * in the SQL-function body, we require it not to contain any volatile
- * functions or sublinks --- volatiles might deliver inconsistent answers,
- * and subplans might be unreasonably expensive to evaluate multiple times.
+ * functions (volatiles might deliver inconsistent answers) nor to be
+ * unreasonably expensive to evaluate.  The expensiveness check not only
+ * prevents us from doing multiple evaluations of an expensive parameter
+ * at runtime, but is a safety value to limit growth of an expression due
+ * to repeated inlining.
+ *
  * We must also beware of changing the volatility or strictness status of
  * functions by inlining them.
  *
@@ -1912,9 +1917,26 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		}
 		else if (usecounts[i] != 1)
 		{
-			/* Param used multiple times: uncool if volatile or expensive */
-			if (contain_volatile_functions(param) ||
-				contain_subplans(param))
+			/* Param used multiple times: uncool if expensive or volatile */
+			QualCost	eval_cost;
+
+			/*
+			 * We define "expensive" as "contains any subplan or more than
+			 * 10 operators".  Note that the subplan search has to be done
+			 * explicitly, since cost_qual_eval() will barf on unplanned
+			 * subselects.
+			 */
+			if (contain_subplans(param))
+				goto fail;
+			cost_qual_eval(&eval_cost, makeList1(param));
+			if (eval_cost.startup + eval_cost.per_tuple >
+				10 * cpu_operator_cost)
+				goto fail;
+			/*
+			 * Check volatility last since this is more expensive than the
+			 * above tests
+			 */
+			if (contain_volatile_functions(param))
 				goto fail;
 		}
 		i++;
