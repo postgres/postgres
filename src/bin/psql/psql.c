@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.155 1998/08/22 04:49:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.156 1998/08/27 13:25:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,16 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <io.h>
+#else
 #include <sys/param.h>			/* for MAXPATHLEN */
-#include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#endif
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include "postgres.h"
@@ -56,6 +62,23 @@
 #if defined(HAVE_HISTORY) && !defined(USE_HISTORY)
 #define USE_HISTORY 1
 #endif
+#endif
+
+
+#ifdef WIN32
+#define popen(x,y) _popen(x,y)
+#define pclose(x) _pclose(x)
+#define open(x,y,z) _open(x,y,z)
+#define strcasecmp(x,y) stricmp(x,y)
+#define pqsignal(x,y) 
+#define MAXPATHLEN MAX_PATH
+#define R_OK 0
+
+/* getopt is not in the standard includes on Win32 */
+extern char *optarg;
+extern int optind, opterr, optopt;
+int  getopt (int, char * const [], const char *);
+char *__progname = "psql";
 #endif
 
 /* This prompt string is assumed to have at least 3 characters by code in MainLoop().
@@ -1468,7 +1491,11 @@ do_edit(const char *filename_arg, char *query, int *status_p)
 	}
 	else
 	{
+#ifndef WIN32
 		sprintf(tmp, "/tmp/psql.%ld.%ld", (long) geteuid(), (long) getpid());
+#else
+		GetTempFileName(".","psql",0,tmp);
+#endif
 		fname = tmp;
 		unlink(tmp);
 		if (ql > 0)
@@ -1503,7 +1530,7 @@ do_edit(const char *filename_arg, char *query, int *status_p)
 	else
 	{
 		editFile(fname);
-		if ((fd = open(fname, O_RDONLY)) == -1)
+		if ((fd = open(fname, O_RDONLY, 0)) == -1)
 		{
 			perror(fname);
 			if (!filename_arg)
@@ -2648,6 +2675,16 @@ main(int argc, char **argv)
 
 	char	   *home = NULL;	/* Used to store $HOME */
 
+#ifdef WIN32
+	{
+		WSADATA wsaData;
+		if (WSAStartup(MAKEWORD(1,1),&wsaData)) {
+			fprintf(stderr,"Failed to start winsock: %i\n",WSAGetLastError());
+			exit(1);
+		}
+	}
+#endif
+	
 	MemSet(&settings, 0, sizeof settings);
 	settings.opt.align = 1;
 	settings.opt.header = 1;

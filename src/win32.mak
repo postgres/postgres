@@ -13,5 +13,7 @@ NULL=nul
 ALL: 
    cd interfaces\libpq
    nmake /f win32.mak
+   cd ..\..\bin\psql
+   nmake /f win32.mak
    cd ..\..
    echo All Win32 parts have been built!
