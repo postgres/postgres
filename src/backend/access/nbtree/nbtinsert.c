@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.7 1996/11/13 20:47:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.8 1996/12/06 09:45:30 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,7 @@ static OffsetNumber _bt_findsplitloc(Relation rel, Page page, OffsetNumber start
 static void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static OffsetNumber _bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, BTItem btitem, BTItem afteritem);
 static bool _bt_goesonpg(Relation rel, Buffer buf, Size keysz, ScanKey scankey, BTItem afteritem);
-
-#if 0
 static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, Oid bti_oid, BTItem newItem);
-#endif
 
 /*
  *  _bt_doinsert() -- Handle insertion of a single btitem in the tree.
@@ -265,6 +262,8 @@ _bt_insertonpg(Relation rel,
 	    
 	    if (_bt_itemcmp(rel, keysz, stack->bts_btitem, new_item,
 	                    BTGreaterStrategyNumber)) {
+		ppageop = (BTPageOpaque) PageGetSpecialPointer(page);
+		Assert (P_LEFTMOST(ppageop));
 		lowLeftItem =
 		    (BTItem) PageGetItem(page,
 					 PageGetItemId(page, P_FIRSTKEY));
@@ -278,56 +277,80 @@ _bt_insertonpg(Relation rel,
 		/* because it's bigger than what was there before).       */
                 /*                                  --djm 8/21/96         */
 
-		/* _bt_updateitem(rel, keysz, pbuf, stack->bts_btitem->bti_oid,
-		               lowLeftItem); */
-		
-		/* get the parent page */
-		ppage = BufferGetPage(pbuf);
-		ppageop = (BTPageOpaque) PageGetSpecialPointer(ppage);
+		/* 
+		 * but it works for items with the same size and so why don't
+		 * use it for them ? - vadim 12/05/96
+		 */
+	    	if ( DOUBLEALIGN (IndexTupleDSize (lowLeftItem->bti_itup)) ==
+       			DOUBLEALIGN (IndexTupleDSize (stack->bts_btitem->bti_itup)) ) 
+       		{
+		    _bt_updateitem(rel, keysz, pbuf, 
+		    		stack->bts_btitem->bti_oid, lowLeftItem);
+		    _bt_relbuf(rel, buf, BT_WRITE);
+		    _bt_relbuf(rel, rbuf, BT_WRITE);
+		}
+		else
+		{
+		    /* get the parent page */
+		    ppage = BufferGetPage(pbuf);
+		    ppageop = (BTPageOpaque) PageGetSpecialPointer(ppage);
 
-		/* figure out which key is leftmost (if the parent page   */
-		/* is rightmost, too, it must be the root)                */
-		if(P_RIGHTMOST(ppageop)) {
-		    leftmost_offset = P_HIKEY;
-		} else {
-		    leftmost_offset = P_FIRSTKEY;
-	    }
-       		PageIndexTupleDelete(ppage, leftmost_offset);
+		    /* 
+		     * figure out which key is leftmost (if the parent page
+		     * is rightmost, too, it must be the root)
+		     */
+		    if(P_RIGHTMOST(ppageop)) {
+		    	leftmost_offset = P_HIKEY;
+		    } else {
+		    	leftmost_offset = P_FIRSTKEY;
+	    	    }
+       		    PageIndexTupleDelete(ppage, leftmost_offset);
 		
-		/* don't write anything out yet--we still have the write  */
-		/* lock, and now we call another _bt_insertonpg to        */
-		/* insert the correct leftmost key                        */
+		   /* 
+		    * don't write anything out yet--we still have the write
+		    * lock, and now we call another _bt_insertonpg to
+		    * insert the correct leftmost key
+		    */
 
-		/* make a new leftmost item, using the tuple data from    */
-		/* lowLeftItem.  point it to the left child.              */
-		/* update it on the stack at the same time.               */
-		bknum = BufferGetBlockNumber(buf);
-		pfree(stack->bts_btitem);
-		stack->bts_btitem = _bt_formitem(&(lowLeftItem->bti_itup));
-		ItemPointerSet(&(stack->bts_btitem->bti_itup.t_tid), 
+		    /* 
+		     * make a new leftmost item, using the tuple data from
+		     * lowLeftItem.  point it to the left child.
+		     * update it on the stack at the same time.
+		     */
+		    bknum = BufferGetBlockNumber(buf);
+		    pfree(stack->bts_btitem);
+		    stack->bts_btitem = _bt_formitem(&(lowLeftItem->bti_itup));
+		    ItemPointerSet(&(stack->bts_btitem->bti_itup.t_tid), 
 			       bknum, P_HIKEY);
 		
-		/* unlock the children before doing this */
-		_bt_relbuf(rel, buf, BT_WRITE);
-		_bt_relbuf(rel, rbuf, BT_WRITE);
+		    /* unlock the children before doing this */
+		    _bt_relbuf(rel, buf, BT_WRITE);
+		    _bt_relbuf(rel, rbuf, BT_WRITE);
 		
-		/* a regular _bt_binsrch should find the right place to   */
-		/* put the new entry, since it should be lower than any   */
-		/* other key on the page, therefore set afteritem to NULL */
-		newskey = _bt_mkscankey(rel, &(stack->bts_btitem->bti_itup));
-		newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
+		    /* 
+		     * a regular _bt_binsrch should find the right place to
+		     * put the new entry, since it should be lower than any
+		     * other key on the page, therefore set afteritem to NULL
+		     */
+		    newskey = _bt_mkscankey(rel, &(stack->bts_btitem->bti_itup));
+		    newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
 					keysz, newskey, stack->bts_btitem,
 					NULL);
 
-		pfree(newres);
-		pfree(newskey);
+		    pfree(newres);
+		    pfree(newskey);
 	    
-		/* we have now lost our lock on the parent buffer, and    */
-		/* need to get it back.                                   */
-		pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
-	    } else {
-	    _bt_relbuf(rel, buf, BT_WRITE);
-	    _bt_relbuf(rel, rbuf, BT_WRITE);
+		    /* 
+		     * we have now lost our lock on the parent buffer, and
+		     * need to get it back.
+		     */
+		    pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
+		}
+	    }
+	    else
+	    {
+	    	_bt_relbuf(rel, buf, BT_WRITE);
+	    	_bt_relbuf(rel, rbuf, BT_WRITE);
 	    }
 	    
 	    newskey = _bt_mkscankey(rel, &(new_item->bti_itup));
@@ -872,8 +895,6 @@ _bt_itemcmp(Relation rel,
     return (true);
 }
 
-#if 0
-/* gone since updating in place doesn't work in general --djm 11/13/96 */
 /*
  *	_bt_updateitem() -- updates the key of the item identified by the
  *			    oid with the key of newItem (done in place if
@@ -912,18 +933,23 @@ _bt_updateitem(Relation rel,
 	elog(FATAL, "_bt_getstackbuf was lying!!");
     }
     
+    /*
+     * It's  defined by caller (_bt_insertonpg)
+     */
+    /*
     if(IndexTupleDSize(newItem->bti_itup) >
        IndexTupleDSize(item->bti_itup)) {
 	elog(NOTICE, "trying to overwrite a smaller value with a bigger one in _bt_updateitem");
 	elog(WARN, "this is not good.");
     }
+     */
 
     oldIndexTuple = &(item->bti_itup);
     newIndexTuple = &(newItem->bti_itup);
 
 	/* keep the original item pointer */
-	ItemPointerCopy(&(oldIndexTuple->t_tid), &itemPtrData);
-	CopyIndexTuple(newIndexTuple, &oldIndexTuple);
-	ItemPointerCopy(&itemPtrData, &(oldIndexTuple->t_tid));
+    ItemPointerCopy(&(oldIndexTuple->t_tid), &itemPtrData);
+    CopyIndexTuple(newIndexTuple, &oldIndexTuple);
+    ItemPointerCopy(&itemPtrData, &(oldIndexTuple->t_tid));
+    
 }
-#endif
