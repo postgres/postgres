@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.2 1997/09/01 06:21:00 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.3 1997/09/16 02:49:23 momjian Exp $
 .TH PGBUILTIN INTRO 04/01/97 PostgreSQL PostgreSQL
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
@@ -615,6 +615,7 @@ These operations are cast in terms of SQL types and so are
 directly usable as C function prototypes.
 
 .nf
+.eo
 result   |left_type |right_type|operatr|func_name          
 ---------+----------+----------+-------+-------------------
 _aclitem |_aclitem  |aclitem   |+      |aclinsert          
@@ -1055,9 +1056,9 @@ point    |point     |point     |+      |point_add
 point    |point     |point     |-      |point_sub          
 point    |point     |point     |/      |point_div          
 polygon  |point     |circle    |<->    |dist_pc            
-text     |bpchar    |bpchar    |\|\|   |textcat            
-text     |text      |text      |\|\|   |textcat            
-text     |varchar   |varchar   |\|\|   |textcat            
+text     |bpchar    |bpchar    |||     |textcat            
+text     |text      |text      |||     |textcat            
+text     |varchar   |varchar   |||     |textcat            
 timespan |datetime  |datetime  |-      |datetime_mi        
 timespan |timespan  |timespan  |+      |timespan_pl        
 timespan |timespan  |timespan  |-      |timespan_mi        
@@ -1065,6 +1066,7 @@ timespan |timespan  |timespan  |/      |timespan_div
 tinterval|abstime   |abstime   |<#>    |mktinterval        
 (446 rows)
 
+.ec
 .fi
 .SH "LEFT UNARY OPERATORS"
 The table below gives the left unary operators that are
