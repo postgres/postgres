@@ -1,15 +1,15 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2003.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.11.2.1 2003/11/14 02:05:03 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.11.2.2 2003/11/16 08:59:21 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-13 19:53+0100\n"
-"PO-Revision-Date: 2003-11-13 19:59+0100\n"
+"POT-Creation-Date: 2003-11-16 09:55+0100\n"
+"PO-Revision-Date: 2003-11-16 09:58+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -2564,9 +2564,9 @@ msgstr ""
 #: commands/sequence.c:820 executor/execGrouping.c:328
 #: executor/execGrouping.c:388 executor/nodeIndexscan.c:1035 executor/spi.c:85
 #: executor/spi.c:167 guc-file.l:151 guc-file.l:277 guc-file.l:314
-#: lib/dllist.c:43 lib/dllist.c:88 libpq/auth.c:634 postmaster/pgstat.c:832
-#: postmaster/pgstat.c:849 postmaster/pgstat.c:2246 postmaster/pgstat.c:2309
-#: postmaster/pgstat.c:2354 postmaster/pgstat.c:2405
+#: lib/dllist.c:43 lib/dllist.c:88 libpq/auth.c:634 postmaster/pgstat.c:857
+#: postmaster/pgstat.c:874 postmaster/pgstat.c:2271 postmaster/pgstat.c:2334
+#: postmaster/pgstat.c:2379 postmaster/pgstat.c:2430
 #: postmaster/postmaster.c:1556 postmaster/postmaster.c:2153
 #: postmaster/postmaster.c:2916 storage/buffer/localbuf.c:129
 #: storage/file/fd.c:523 storage/file/fd.c:556 storage/file/fd.c:701
@@ -5418,147 +5418,151 @@ msgstr ""
 msgid "could not resolve \"localhost\": %s"
 msgstr "konnte »localhost« nicht auflösen: %s"
 
-#: postmaster/pgstat.c:221
+#: postmaster/pgstat.c:228
 #, c-format
 msgid "could not create socket for statistics collector: %m"
 msgstr "konnte Socket für Statistiksammelprozess nicht erzeugen: %m"
 
-#: postmaster/pgstat.c:233
+#: postmaster/pgstat.c:240
 #, c-format
 msgid "could not bind socket for statistics collector: %m"
 msgstr "konnte Socket für Statistiksammelprozess nicht binden: %m"
 
-#: postmaster/pgstat.c:245
+#: postmaster/pgstat.c:251
 #, c-format
 msgid "could not get address of socket for statistics collector: %m"
 msgstr ""
 "konnte Adresse für Socket für Statistiksammelprozess nicht ermitteln: %m"
 
-#: postmaster/pgstat.c:259
+#: postmaster/pgstat.c:267
 #, c-format
 msgid "could not connect socket for statistics collector: %m"
 msgstr "konnte nicht mit Socket für Statistiksammelprozess verbinden: %m"
 
-#: postmaster/pgstat.c:273
+#: postmaster/pgstat.c:282
+msgid "disabling statistics collector for lack of working socket"
+msgstr "Statistiksammelprozess wird abgeschaltet, weil keine funktionierende Socket vorhanden ist"
+
+#: postmaster/pgstat.c:296
 #, c-format
 msgid "could not set statistics collector socket to nonblocking mode: %m"
 msgstr ""
 "konnte Socket von Statistiksammelprozess nicht auf nicht blockierenden Modus "
 "setzen: %m"
 
-#: postmaster/pgstat.c:284
+#: postmaster/pgstat.c:307
 #, c-format
 msgid "could not create pipe for statistics collector: %m"
 msgstr "konnte Pipe für Statistiksammelprozess nicht erzeugen: %m"
 
-#: postmaster/pgstat.c:345
+#: postmaster/pgstat.c:370
 msgid "statistics collector startup skipped"
 msgstr "Start des Statistiksammelprozesses übersprungen"
 
-#: postmaster/pgstat.c:376
+#: postmaster/pgstat.c:401
 #, c-format
 msgid "could not fork statistics buffer: %m"
 msgstr "konnte Statistikpuffer nicht starten (fork-Fehler): %m"
 
-#: postmaster/pgstat.c:789
+#: postmaster/pgstat.c:814
 msgid "must be superuser to reset statistics counters"
 msgstr "nur Superuser können Statistikzähler zurücksetzen"
 
-#: postmaster/pgstat.c:1270
+#: postmaster/pgstat.c:1295
 #, c-format
 msgid "could not create pipe for statistics buffer: %m"
 msgstr "konnte Pipe für Statistikpuffer nicht erzeugen: %m"
 
-#: postmaster/pgstat.c:1278
+#: postmaster/pgstat.c:1303
 #, c-format
 msgid "could not fork statistics collector: %m"
 msgstr "konnte Statistiksammelprozess nicht starten (fork-Fehler): %m"
 
-#: postmaster/pgstat.c:1335 postmaster/pgstat.c:1348 postmaster/pgstat.c:1637
-#: postmaster/pgstat.c:1893 postmaster/pgstat.c:1925 postmaster/pgstat.c:1979
-#: postmaster/pgstat.c:2240 postmaster/pgstat.c:2301 postmaster/pgstat.c:2347
-#: postmaster/pgstat.c:2398 postmaster/pgstat.c:2627 postmaster/pgstat.c:2809
+#: postmaster/pgstat.c:1360 postmaster/pgstat.c:1373 postmaster/pgstat.c:1662
+#: postmaster/pgstat.c:1918 postmaster/pgstat.c:1950 postmaster/pgstat.c:2004
+#: postmaster/pgstat.c:2265 postmaster/pgstat.c:2326 postmaster/pgstat.c:2372
+#: postmaster/pgstat.c:2423 postmaster/pgstat.c:2652 postmaster/pgstat.c:2834
 msgid "out of memory in statistics collector --- abort"
 msgstr "Speicher im Statistiksammmelprozess aufgebraucht --- Abbruch"
 
-#: postmaster/pgstat.c:1414
+#: postmaster/pgstat.c:1439
 #, c-format
 msgid "select() failed in statistics collector: %m"
 msgstr "select() im Statistiksammelprozess fehlgeschlagen: %m"
 
-#: postmaster/pgstat.c:1456
+#: postmaster/pgstat.c:1481
 #, c-format
 msgid "could not read from statistics collector pipe: %m"
 msgstr "konnte nicht aus Pipe des Statistiksammelprozesses lesen: %m"
 
-#: postmaster/pgstat.c:1475
+#: postmaster/pgstat.c:1500
 msgid "invalid statistics message length"
 msgstr "ungültige Länge von Statistiknachricht"
 
-#: postmaster/pgstat.c:1625
+#: postmaster/pgstat.c:1650
 #, c-format
 msgid "could not set statistics collector pipe to nonblocking mode: %m"
 msgstr ""
 "konnte Pipe von Statistiksammelprozess nicht auf nicht blockierenden Modus "
 "setzen: %m"
 
-#: postmaster/pgstat.c:1665
+#: postmaster/pgstat.c:1690
 msgid "statistics buffer is full"
 msgstr "Statistikpuffer ist voll"
 
-#: postmaster/pgstat.c:1698
+#: postmaster/pgstat.c:1723
 #, c-format
 msgid "select() failed in statistics buffer: %m"
 msgstr "select() im Statistikpufferprozess fehlgeschlagen: %m"
 
-#: postmaster/pgstat.c:1714
+#: postmaster/pgstat.c:1739
 #, c-format
 msgid "could not read statistics message: %m"
 msgstr "konnte Statistiknachricht nicht lesen: %m"
 
-#: postmaster/pgstat.c:1779
+#: postmaster/pgstat.c:1804
 #, c-format
 msgid "could not write to statistics collector pipe: %m"
 msgstr "konnte nicht in Pipe des Statistiksammelprozesses schreiben: %m"
 
-#: postmaster/pgstat.c:1833
+#: postmaster/pgstat.c:1858
 #, c-format
 msgid "invalid server process ID %d"
 msgstr "ungültige Serverprozess-ID %d"
 
-#: postmaster/pgstat.c:2028
+#: postmaster/pgstat.c:2053
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "konnte temporäre Statistikdatei »%s« nicht öffnen: %m"
 
-#: postmaster/pgstat.c:2055
+#: postmaster/pgstat.c:2080
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr "Datenbank-Hash-Tabelle beim Aufräumen verfälscht --- Abbruch"
 
-#: postmaster/pgstat.c:2092
+#: postmaster/pgstat.c:2117
 #, c-format
 msgid "tables hash table for database %u corrupted during cleanup --- abort"
 msgstr ""
 "Tabellen-Hash-Tabelle für Datenbank %u beim Aufräumen verfälscht --- Abbruch"
 
-#: postmaster/pgstat.c:2141
+#: postmaster/pgstat.c:2166
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "konnte temporäre Statistikdatei »%s« nicht schließen: %m"
 
-#: postmaster/pgstat.c:2150
+#: postmaster/pgstat.c:2175
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr "konnte temporäre Statistikdatei »%s« nicht in »%s« umbenennen: %m"
 
-#: postmaster/pgstat.c:2172
+#: postmaster/pgstat.c:2197
 msgid "dead-server-process hash table corrupted during cleanup --- abort"
 msgstr ""
 "Hash-Tabelle über tote Serverprozesse beim Aufräumen verfälscht --- Abbruch"
 
-#: postmaster/pgstat.c:2283 postmaster/pgstat.c:2315 postmaster/pgstat.c:2378
-#: postmaster/pgstat.c:2411 postmaster/pgstat.c:2432 postmaster/pgstat.c:2478
-#: postmaster/pgstat.c:2511
+#: postmaster/pgstat.c:2308 postmaster/pgstat.c:2340 postmaster/pgstat.c:2403
+#: postmaster/pgstat.c:2436 postmaster/pgstat.c:2457 postmaster/pgstat.c:2503
+#: postmaster/pgstat.c:2536
 msgid "corrupted pgstat.stat file"
 msgstr "verfälschte Datei pgstat.stat"
 
