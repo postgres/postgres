@@ -311,7 +311,7 @@ dectoasc(Decimal *np, char *cp, int len, int right)
 int
 dectodbl(Decimal *np, double *dblp)
 {
-	Numeric *nres = PGTYPESnumeric_new();;
+	Numeric *nres = PGTYPESnumeric_new();
 	int i;
 
 	if (nres == NULL)
