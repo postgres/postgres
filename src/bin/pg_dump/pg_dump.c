@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_dump.c
- *	  pg_dump is an utility for dumping out a postgres database
+ *	  pg_dump is a utility for dumping out a postgres database
  *	  into a script file.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.202 2001/04/14 13:11:03 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.203 2001/04/22 21:34:13 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -194,6 +194,7 @@ static char *GetPrivileges(const char *s);
 static int	dumpBlobs(Archive *AH, char *, void *);
 static int	dumpDatabase(Archive *AH);
 static PQExpBuffer getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo);
+static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 
 extern char *optarg;
 extern int	optind,
@@ -3932,26 +3933,19 @@ getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo)
 {
 	PQExpBuffer pkBuf = createPQExpBuffer();
 	int			k;
-	int			indkey;
-
-	resetPQExpBuffer(pkBuf);
 
 	appendPQExpBuffer(pkBuf, "Constraint %s Primary Key (",
 					  tblInfo->primary_key_name);
 
-
 	for (k = 0; k < INDEX_MAX_KEYS; k++)
 	{
-		char	   *attname;
+		int			indkey;
+		const char *attname;
 
 		indkey = atoi(indInfo->indkey[k]);
 		if (indkey == InvalidAttrNumber)
 			break;
-		indkey--;
-		if (indkey == ObjectIdAttributeNumber - 1)
-			attname = "oid";
-		else
-			attname = tblInfo->attnames[indkey];
+		attname = getAttrName(indkey, tblInfo);
 
 		appendPQExpBuffer(pkBuf, "%s%s",
 						  (k == 0) ? "" : ", ",
@@ -3961,6 +3955,41 @@ getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo)
 	appendPQExpBuffer(pkBuf, ")");
 
 	return pkBuf;
+}
+
+/*
+ * getAttrName: extract the correct name for an attribute
+ *
+ * The array tblInfo->attnames[] only provides names of user attributes;
+ * if a system attribute number is supplied, we have to fake it.
+ * We also do a little bit of bounds checking for safety's sake.
+ */
+static const char *
+getAttrName(int attrnum, TableInfo *tblInfo)
+{
+	if (attrnum > 0 && attrnum <= tblInfo->numatts)
+		return tblInfo->attnames[attrnum-1];
+	switch (attrnum)
+	{
+		case SelfItemPointerAttributeNumber:
+			return "ctid";
+		case ObjectIdAttributeNumber:
+			return "oid";
+		case MinTransactionIdAttributeNumber:
+			return "xmin";
+		case MinCommandIdAttributeNumber:
+			return "cmin";
+		case MaxTransactionIdAttributeNumber:
+			return "xmax";
+		case MaxCommandIdAttributeNumber:
+			return "cmax";
+		case TableOidAttributeNumber:
+			return "tableoid";
+	}
+	fprintf(stderr, "getAttrName(): Invalid attribute number %d for table %s\n",
+			attrnum, tblInfo->relname);
+	exit_nicely(g_conn);
+	return NULL;				/* keep compiler quiet */
 }
 
 /*
@@ -3978,8 +4007,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 	char	   *classname[INDEX_MAX_KEYS];
 	char	   *funcname;		/* the name of the function to comput the
 								 * index key from */
-	int			indkey,
-				indclass;
+	int			indclass;
 	int			nclass;
 
 	PQExpBuffer q = createPQExpBuffer(),
@@ -4111,19 +4139,17 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 		resetPQExpBuffer(attlist);
 		for (k = 0; k < INDEX_MAX_KEYS; k++)
 		{
-			char	   *attname;
+			int			indkey;
+			const char *attname;
 
 			indkey = atoi(indinfo[i].indkey[k]);
 			if (indkey == InvalidAttrNumber)
 				break;
-			indkey--;
-			if (indkey == ObjectIdAttributeNumber - 1)
-				attname = "oid";
-			else
-				attname = tblinfo[tableInd].attnames[indkey];
+			attname = getAttrName(indkey, &tblinfo[tableInd]);
 			if (funcname)
 				appendPQExpBuffer(attlist, "%s%s",
-					 (k == 0) ? "" : ", ", fmtId(attname, force_quotes));
+								  (k == 0) ? "" : ", ",
+								  fmtId(attname, force_quotes));
 			else
 			{
 				if (k >= nclass)
@@ -4138,20 +4164,14 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 				appendPQExpBuffer(id1, fmtId(attname, force_quotes));
 				appendPQExpBuffer(id2, fmtId(classname[k], force_quotes));
 				appendPQExpBuffer(attlist, "%s%s %s",
-							 (k == 0) ? "" : ", ", id1->data, id2->data);
+								  (k == 0) ? "" : ", ",
+								  id1->data, id2->data);
 				free(classname[k]);
 			}
 		}
 
 		if (!tablename || (strcmp(indinfo[i].indrelname, tablename) == 0) || (strlen(tablename) == 0))
 		{
-
-			/*
-			 * We make the index belong to the owner of its table, which
-			 * is not necessarily right but should answer 99% of the time.
-			 * Would have to add owner name to IndInfo to do it right.
-			 */
-
 			resetPQExpBuffer(id1);
 			resetPQExpBuffer(id2);
 			appendPQExpBuffer(id1, fmtId(indinfo[i].indexrelname, force_quotes));
@@ -4178,11 +4198,15 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			else
 				appendPQExpBuffer(q, " %s );\n", attlist->data);
 
-			/* Dump Index Comments */
-
+			/*
+			 * We make the index belong to the owner of its table, which
+			 * is not necessarily right but should answer 99% of the time.
+			 * Would have to add owner name to IndInfo to do it right.
+			 */
 			ArchiveEntry(fout, tblinfo[tableInd].oid, id1->data, "INDEX", NULL, q->data, delq->data,
 						 "", tblinfo[tableInd].usename, NULL, NULL);
 
+			/* Dump Index Comments */
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "INDEX %s", id1->data);
 			dumpComment(fout, q->data, indinfo[i].indoid);
