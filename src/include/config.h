@@ -140,6 +140,7 @@
 
 /* does anybody use this? */
 #if defined(next)
+#  define USE_LIMITS_H
 #  define JMP_BUF
 #  define NEED_SIG_JMP
 #  define SB_PAD 56
