@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.146 2000/04/12 17:16:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.147 2000/04/14 01:34:24 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2290,7 +2290,7 @@ getIndices(int *numIndices)
  *------------------------------------------------------------------
 */
 
-void
+static void
 dumpComment(FILE *fout, const char *target, const char *oid)
 {
 
