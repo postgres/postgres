@@ -50,8 +50,9 @@
 
 # TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
 
-local   all         all                                                                trust
-host    all         all         127.0.0.1         255.255.255.255                      trust
-host    all         all         ::1               ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff        trust
-host    all         all         ::ffff:127.0.0.1/128	trust
+local   all         all                                             trust
+host    all         all         127.0.0.1         255.255.255.255   trust
 
+# uncomment these to support IPv6 localhost connections
+# host  all         all         ::1               ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff        trust
+# host  all         all         ::ffff:127.0.0.1/128                trust
