@@ -1,7 +1,7 @@
 #!/bin/sh
 # unused_oids
 #
-# $Header: /cvsroot/pgsql/src/include/catalog/unused_oids,v 1.1 1997/03/15 06:03:08 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/include/catalog/unused_oids,v 1.2 1998/12/31 20:09:49 momjian Exp $
 #
 #	finds blocks of oids that have not already been claimed by 
 #	post_hackers for internal purposes.  primarily useful for
@@ -37,5 +37,5 @@ BEGIN {
 	last = $1;
 }
 END {
-	print last + 1, "-";
+	print last + 1, "-", 2^14-1; /* current BootstrapObjectIdData value */
 }'
