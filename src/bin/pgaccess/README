@@ -60,7 +60,7 @@ go for it.
 
 You run it with the command:
 
-	wish -f pgaccess.tcl.
+	wish -f pgaccess.tcl
 
 Another way of loading the PostgreSQL library is running it with pgwish.
 It's a wish compiled with libpgtcl library so it could understand the
