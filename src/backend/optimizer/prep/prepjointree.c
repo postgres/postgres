@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.14 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.15 2004/01/10 00:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,10 +168,11 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			List	   *rt;
 
 			/*
-			 * First make a modifiable copy of the subquery.  This avoids
-			 * problems if the same subquery is referenced from multiple
-			 * jointree items (which can't happen normally, but might after
-			 * rule rewriting).
+			 * Need a modifiable copy of the subquery to hack on.  Even if
+			 * we didn't sometimes choose not to pull up below, we must do
+			 * this to avoid problems if the same subquery is referenced from
+			 * multiple jointree items (which can't happen normally, but might
+			 * after rule rewriting).
 			 */
 			subquery = copyObject(subquery);
 
@@ -195,6 +196,33 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			subquery->jointree = (FromExpr *)
 				pull_up_subqueries(subquery, (Node *) subquery->jointree,
 								   false);
+
+			/*
+			 * Now we must recheck whether the subquery is still simple
+			 * enough to pull up.  If not, abandon processing it.
+			 *
+			 * We don't really need to recheck all the conditions involved,
+			 * but it's easier just to keep this "if" looking the same as
+			 * the one above.
+			 */
+			if (is_simple_subquery(subquery) &&
+				(!below_outer_join || has_nullable_targetlist(subquery)) &&
+				!contain_whole_tuple_var((Node *) parse, varno, 0))
+			{
+				/* good to go */
+			}
+			else
+			{
+				/*
+				 * Give up, return unmodified RangeTblRef.
+				 *
+				 * Note: The work we just did will be redone when the
+				 * subquery gets planned on its own.  Perhaps we could avoid
+				 * that by storing the modified subquery back into the
+				 * rangetable, but I'm not gonna risk it now.
+				 */
+				return jtnode;
+			}
 
 			/*
 			 * Adjust level-0 varnos in subquery so that we can append its
