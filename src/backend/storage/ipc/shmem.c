@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.40 1999/05/25 16:11:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.41 1999/06/03 13:33:13 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -593,6 +593,10 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
  *
  * Strange place for this func, but we have to lookup process data structures
  * for all running backends. - vadim 11/26/96
+ *
+ * We should keep all PROC structs not in ShmemIndex - this is too
+ * general hash table...
+ *
  */
 bool
 TransactionIdIsInProgress(TransactionId xid)
@@ -648,10 +652,7 @@ GetSnapshotData(bool serializable)
 
 	snapshot->xip = (TransactionId *) malloc(have * sizeof(TransactionId));
 	snapshot->xmin = cid;
-	if (serializable)
-		snapshot->xmax = cid;
-	else
-		ReadNewTransactionId(&(snapshot->xmax));
+	ReadNewTransactionId(&(snapshot->xmax));
 
 	SpinAcquire(ShmemIndexLock);
 
@@ -660,8 +661,10 @@ GetSnapshotData(bool serializable)
 	{
 		if (result == (ShmemIndexEnt *) TRUE)
 		{
-			if (MyProc->xmin == InvalidTransactionId)
+			if (serializable)
 				MyProc->xmin = snapshot->xmin;
+			/* Serializable snapshot must be computed before any other... */
+			Assert(MyProc->xmin != InvalidTransactionId);
 			SpinRelease(ShmemIndexLock);
 			snapshot->xcnt = count;
 			return snapshot;
@@ -670,13 +673,24 @@ GetSnapshotData(bool serializable)
 			strncmp(result->key, "PID ", 4) != 0)
 			continue;
 		proc = (PROC *) MAKE_PTR(result->location);
-		xid = proc->xid;		/* we don't use spin-locking in xact.c ! */
-		if (proc == MyProc || xid < FirstTransactionId)
+		/* 
+		 * We don't use spin-locking when changing proc->xid 
+		 * in GetNewTransactionId() and in AbortTransaction() !..
+		 */
+		xid = proc->xid;
+		if (proc == MyProc || 
+			xid < FirstTransactionId || xid >= snapshot->xmax)
+		{
+			/*
+			 * Seems that there is no sense to store xid >= snapshot->xmax
+			 * (what we got from ReadNewTransactionId above) in snapshot->xip 
+			 * - we just assume that all xacts with such xid-s are running 
+			 * and may be ignored.
+			 */
 			continue;
+		}
 		if (xid < snapshot->xmin)
 			snapshot->xmin = xid;
-		else if (xid > snapshot->xmax)
-			snapshot->xmax = xid;
 		if (have == 0)
 		{
 			snapshot->xip = (TransactionId *) realloc(snapshot->xip,
@@ -712,7 +726,7 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 
 	Assert(ShmemIndex);
 
-	ReadNewTransactionId(XmaxRecent);
+	*XmaxRecent = GetCurrentTransactionId();
 
 	SpinAcquire(ShmemIndexLock);
 
@@ -728,7 +742,7 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 			strncmp(result->key, "PID ", 4) != 0)
 			continue;
 		proc = (PROC *) MAKE_PTR(result->location);
-		xmin = proc->xmin;		/* we don't use spin-locking in xact.c ! */
+		xmin = proc->xmin;	/* we don't use spin-locking in AbortTransaction() ! */
 		if (proc == MyProc || xmin < FirstTransactionId)
 			continue;
 		if (xmin < *XmaxRecent)
