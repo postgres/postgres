@@ -30,6 +30,8 @@ LDFLAGS += -Wl,-z
 
 export_dynamic = -Wl,-E
 
+INSTALL_SHLIB_OPTS = -m 555
+
 AROPT = crs
 
 DLSUFFIX = .sl

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.122 2001/03/05 09:39:51 peter Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.123 2001/03/10 10:38:59 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -185,12 +185,14 @@ WISH	= @WISH@
 
 # Installation.
 
-INSTALL	= @INSTALL@
+INSTALL	= $(SHELL) $(top_srcdir)/config/install-sh -c
 
-INSTALL_PROGRAM	= @INSTALL_PROGRAM@
-INSTALL_SCRIPT	= @INSTALL_SCRIPT@
-INSTALL_DATA	= @INSTALL_DATA@
-INSTALL_SHLIB	= @INSTALL_SHLIB@
+INSTALL_PROGRAM	= $(INSTALL)
+INSTALL_SCRIPT	= $(INSTALL) -m 755
+INSTALL_DATA	= $(INSTALL) -m 644
+INSTALL_SHLIB	= $(INSTALL) $(INSTALL_SHLIB_OPTS)
+# Override in Makefile.port if necessary
+INSTALL_SHLIB_OPTS = -m 755
 
 mkinstalldirs	= $(SHELL) $(top_srcdir)/config/mkinstalldirs
 missing		= $(SHELL) $(top_srcdir)/config/missing

@@ -602,30 +602,6 @@ echo "using CPPFLAGS=$CPPFLAGS"
 echo "using LDFLAGS=$LDFLAGS"
 
 
-# Figure out how to invoke "install" and what install options to use.
-
-AC_PROG_INSTALL
-# When Autoconf chooses install-sh as install program it tries to generate
-# a relative path to it in each makefile where it subsitutes it. This clashes
-# with our Makefile.global concept. This workaround helps.
-case $INSTALL in
-  *install-sh*) INSTALL='\${SHELL} \${top_srcdir}/config/install-sh -c';;
-esac
-
-# Fix Autoconf's brain-dead defaults for script installs.
-INSTALL_SCRIPT="\${INSTALL} -m 755"
-
-# HPUX wants shared libs to be mode 555. Add your platform's special
-# needs here if necessary.
-case $host_os in
-    hpux*)      INSTL_SHLIB_OPTS="-m 555" ;;
-    *)          INSTL_SHLIB_OPTS="-m 755" ;;
-esac
-
-INSTALL_SHLIB="\${INSTALL} $INSTL_SHLIB_OPTS"
-AC_SUBST(INSTALL_SHLIB)
-
-
 AC_PROG_AWK
 PGAC_PATH_FLEX
 AC_PROG_LN_S
