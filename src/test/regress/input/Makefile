@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/input/Attic/Makefile,v 1.2 1997/04/06 08:28:33 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/input/Attic/Makefile,v 1.3 1997/04/26 05:44:38 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,8 +29,9 @@ all: $(INFILES)
 	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
 	if [ -z "$$USER" ]; then echo 'Cannot deduce $$USER.'; exit 1; fi; \
 	rm -f $@; \
-	C=`pwd`; \
+	PWD=`pwd`; \
+	OBJ=`pwd`; \
 	sed -e "s:_CWD_:$(PWD):g" \
-	    -e "s:_OBJWD_:$(PWD):g" \
+	    -e "s:_OBJWD_:$$OBJ/\.\.:g" \
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
 	    -e "s/_USER_/$$USER/g" < $< > ../sql/$@

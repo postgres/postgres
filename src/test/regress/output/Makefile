@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/output/Attic/Makefile,v 1.2 1997/04/06 08:28:57 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/output/Attic/Makefile,v 1.3 1997/04/26 05:45:13 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,14 +27,16 @@ all: $(INFILES)
 %.out: %.source
 	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
 	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
-	if [ -z "$$USER" ]; then echo 'Cannot deduce $USER.'; exit 1; fi; \
+	if [ -z "$$USER" ]; then echo 'Cannot deduce $$USER.'; exit 1; fi; \
 	rm -f expected.out; \
 	MYTZ=`date | cut -c21`; \
 	C="`pwd`"; \
-	sed -e "s:_CWD_:$(PWD):g" \
+	sed -e "s:_CWD_:$(PWD)/\.\.:g" \
+	    -e "s:\.\./output:\.\./input:g" \
 	    -e "s:_OBJWD_:$(PWD):g" \
             -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
 	    -e "s;\([A-Z][a-z][a-z][^ ]* [A-Z][a-z][a-z] [0-9 ][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [0-9][0-9][0-9][0-9] \)[A-Z]\([A-Z][A-Z]\);\1$$MYTZ\2;g" \
 	    -e "s;\([A-Z][a-z][a-z][^ ]* [A-Z][a-z][a-z] [0-9 ][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] \)[A-Z]\([A-Z][A-Z] [0-9][0-9][0-9][0-9]\);\1$$MYTZ\2;g" \
-	    -e "s:_USER_:$$USER:g" < $< > ../expected/$@
+	    -e "s:_USER_:$$USER:g" < $< | \
+	sed -e "s:/output/\.\./:/input/\.\./:g"> ../expected/$@
 	@echo "YOUR EXPECTED RESULTS ARE NOW IN FILE expected.out."

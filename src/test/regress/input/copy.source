@@ -6,43 +6,43 @@
 -- CLASS POPULATION
 --	(any resemblance to real life is purely coincidental)
 --
-COPY onek FROM '_CWD_/data/onek.data';
+COPY onek FROM '_CWD_/../data/onek.data';
 
-COPY tenk1 FROM '_CWD_/data/tenk.data';
+COPY tenk1 FROM '_CWD_/../data/tenk.data';
 
-COPY slow_emp4000 FROM '_CWD_/data/rect.data';
+COPY slow_emp4000 FROM '_CWD_/../data/rect.data';
 
-COPY person FROM '_CWD_/data/person.data';
+COPY person FROM '_CWD_/../data/person.data';
 
-COPY emp FROM '_CWD_/data/emp.data';
+COPY emp FROM '_CWD_/../data/emp.data';
 
-COPY student FROM '_CWD_/data/student.data';
+COPY student FROM '_CWD_/../data/student.data';
 
-COPY stud_emp FROM '_CWD_/data/stud_emp.data';
+COPY stud_emp FROM '_CWD_/../data/stud_emp.data';
 
-COPY road FROM '_CWD_/data/streets.data';
+COPY road FROM '_CWD_/../data/streets.data';
 
-COPY real_city FROM '_CWD_/data/real_city.data';
+COPY real_city FROM '_CWD_/../data/real_city.data';
 
-COPY hash_i4_heap FROM '_CWD_/data/hash.data';
+COPY hash_i4_heap FROM '_CWD_/../data/hash.data';
 
-COPY hash_c16_heap FROM '_CWD_/data/hash.data';
+COPY hash_c16_heap FROM '_CWD_/../data/hash.data';
 
-COPY hash_txt_heap FROM '_CWD_/data/hash.data';
+COPY hash_txt_heap FROM '_CWD_/../data/hash.data';
 
-COPY hash_f8_heap FROM '_CWD_/data/hash.data';
+COPY hash_f8_heap FROM '_CWD_/../data/hash.data';
 
 -- the data in this file has a lot of duplicates in the index key
 -- fields, leading to long bucket chains and lots of table expansion.
 -- this is therefore a stress test of the bucket overflow code (unlike
 -- the data in hash.data, which has unique index keys).
 --
--- COPY hash_ovfl_heap FROM '_CWD_/data/hashovfl.data';
+-- COPY hash_ovfl_heap FROM '_CWD_/../data/hashovfl.data';
 
-COPY bt_i4_heap FROM '_CWD_/data/desc.data';
+COPY bt_i4_heap FROM '_CWD_/../data/desc.data';
 
-COPY bt_c16_heap FROM '_CWD_/data/hash.data';
+COPY bt_c16_heap FROM '_CWD_/../data/hash.data';
 
-COPY bt_txt_heap FROM '_CWD_/data/desc.data';
+COPY bt_txt_heap FROM '_CWD_/../data/desc.data';
 
-COPY bt_f8_heap FROM '_CWD_/data/hash.data';
+COPY bt_f8_heap FROM '_CWD_/../data/hash.data';

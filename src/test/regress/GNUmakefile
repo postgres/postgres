@@ -7,14 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.4 1997/04/12 09:34:31 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.5 1997/04/26 05:44:06 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-CFLAGS+= -I$(LIBPQDIR) -I../../include
+CFLAGS+= -I$(LIBPQDIR) 
 
 LDADD+= -L$(LIBPQDIR) -lpq
         
@@ -37,59 +37,21 @@ ifdef EXPSUFF
 INFILES+= $(DLOBJS:.o=$(EXPSUFF))
 endif
 
-# OUTFILES is the files that get created by running the regression test.
-OUTFILES= stud_emp.data onek.data regress.out aportal.out
-
 #
 # prepare to run the test (including clean-up after the last run)
 #
 all: $(INFILES)
 	cd input; gmake all; cd ..
 	cd output; gmake all; cd ..
-	rm -f $(OUTFILES)
 
 #
 # run the test
 #
-runtest: $(INFILES) expected.out 
+runtest: $(INFILES) 
 	$(SHELL) ./regress.sh 2>&1 | tee regress.out
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 
-# The expected.input file is part of the distribution.  It was made by hand
-# from 'regress.out' from a reference run of the regression test, replacing
-# installation-dependent things with names like _CWD_.  The following rule
-# turns those names back into real values for the instant installation to
-# create a standard (expected.out) against which to compare regress.out 
-# from the experimental run.
-#
-#
-expected.out: expected.input
-	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
-	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
-	if [ -z "$$USER" ]; then echo 'Cannot deduce $USER.'; exit 1; fi; \
-	rm -f expected.out; \
-	MYTZ=`date | cut -c21`; \
-	C="`pwd`"; \
-	sed -e "s:_CWD_:$$C:g" \
-	    -e "s:_OBJWD_:$$C:g" \
-            -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
-	    -e "s;\([A-Z][a-z][a-z][^ ]* [A-Z][a-z][a-z] [0-9 ][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [0-9][0-9][0-9][0-9] \)[A-Z]\([A-Z][A-Z]\);\1$$MYTZ\2;g" \
-	    -e "s;\([A-Z][a-z][a-z][^ ]* [A-Z][a-z][a-z] [0-9 ][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] \)[A-Z]\([A-Z][A-Z] [0-9][0-9][0-9][0-9]\);\1$$MYTZ\2;g" \
-	    -e "s:_USER_:$$USER:g" < expected.input > expected.out
-	@echo "YOUR EXPECTED RESULTS ARE NOW IN FILE expected.out."
-
-%.sql: %.source
-	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
-	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
-	if [ -z "$$USER" ]; then echo 'Cannot deduce $$USER.'; exit 1; fi; \
-	rm -f $@; \
-	C=`pwd`; \
-	sed -e "s:_CWD_:$$C:g" \
-	    -e "s:_OBJWD_:$$C:g" \
-	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
-	    -e "s/_USER_/$$USER/g" < $< > $@
-
 clean:
 	rm -f $(INFILES)
-	rm -f $(OUTFILES)
-
+	$(MAKE) -C sql clean
+	$(MAKE) -C expected clean
