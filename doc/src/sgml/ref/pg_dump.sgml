@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.60 2003/03/25 16:15:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.61 2003/04/17 15:34:37 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -33,42 +33,47 @@ PostgreSQL documentation
   </title>
 
   <para>
-   <application>pg_dump</application> is a utility for saving a
-   <productname>PostgreSQL</productname> database into a script or an
-   archive file.  The script files are in plain-text format and
-   contain the SQL commands required to reconstruct the database to
-   the state it was in at the time it was saved.  To restore these
-   scripts, use <xref linkend="app-psql">.  They can be used to
-   reconstruct the database even on other machines and other
-   architectures, with some modifications even on other SQL database
-   products.
+   <application>pg_dump</application> is a utility for backing up a
+   <productname>PostgreSQL</productname> database. It makes consistent
+   backups even if the database is being used concurrently.
+   <application>pg_dump</application> does not block other users
+   accessing the database (readers or writers).
   </para>
 
   <para>
-   Furthermore, there are alternative archive file formats
-   that are meant to be used with <xref linkend="app-pgrestore"> to
-   rebuild the database, and they also allow
-   <application>pg_restore</application> to be selective about what is
-   restored, or even to reorder the items prior to being restored. The
-   archive files are also designed to be portable across
+   Dumps can be output in script or archive file formats. The script
+   files are in plain-text format and contain the SQL commands required
+   to reconstruct the database to the state it was in at the time it was
+   saved. To restore these scripts, use <xref linkend="app-psql">. They
+   can be used to reconstruct the database even on other machines and
+   other architectures, with some modifications even on other SQL
+   database products.
+  </para>
+
+  <para>
+   The alternative archive file formats that are meant to be used with
+   <xref linkend="app-pgrestore"> to rebuild the database, and they also
+   allow <application>pg_restore</application> to be selective about
+   what is restored, or even to reorder the items prior to being
+   restored. The archive files are also designed to be portable across
    architectures.
   </para>
 
   <para>
    When used with one of the archive file formats and combined with
-   <application>pg_restore</application>, <application>pg_dump</application> provides a
-   flexible archival and 
+   <application>pg_restore</application>,
+   <application>pg_dump</application> provides a flexible archival and
    transfer mechanism. <application>pg_dump</application> can be used to
-   backup an entire database, then <application>pg_restore</application> can
-   be used to examine the archive and/or select which parts of the
-   database are to be restored.
-   The most flexible output file format is the <quote>custom</quote>
-   format (<option>-Fc</option>). It allows for selection and
-   reordering of all archived items, and is compressed by default. The
-   <application>tar</application> format (<option>-Ft</option>) is not
-   compressed and it is not possible to reorder data when loading, but
-   it is otherwise quite flexible; moreover, it can be manipulated with
-   other tools such as <command>tar</command>.
+   backup an entire database, then <application>pg_restore</application>
+   can be used to examine the archive and/or select which parts of the
+   database are to be restored. The most flexible output file format is
+   the <quote>custom</quote> format (<option>-Fc</option>). It allows
+   for selection and reordering of all archived items, and is compressed
+   by default. The <application>tar</application> format
+   (<option>-Ft</option>) is not compressed and it is not possible to
+   reorder data when loading, but it is otherwise quite flexible;
+   moreover, it can be manipulated with other tools such as
+   <command>tar</command>.
   </para>
 
   <para>
@@ -77,12 +82,6 @@ PostgreSQL documentation
    light of the limitations listed below.
   </para>
 
-  <para>
-   <application>pg_dump</application> makes consistent backups even if the
-   database is being used concurrently.  <application>pg_dump</application>
-   does not block other users accessing the database (readers or
-   writers).
-  </para>
  </refsect1>
 
  <refsect1 id="pg-dump-options">
