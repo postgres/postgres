@@ -3,7 +3,7 @@
  *
  * PostgreSQL transaction log manager
  *
- * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.10 2000/11/21 21:16:05 petere Exp $
+ * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.11 2000/11/25 20:33:53 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -107,13 +107,11 @@ extern void xlog_desc(char *buf, uint8 xl_info, char* rec);
 extern void UpdateControlFile(void);
 extern int XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
+extern void XLOGPathInit(void);
 extern void BootStrapXLOG(void);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(void);
 extern void CreateCheckPoint(bool shutdown);
 extern void SetThisStartUpID(void);
-
-extern char XLogDir[];
-extern char ControlFilePath[];
 
 #endif	 /* XLOG_H */

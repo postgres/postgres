@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.46 2000/11/18 03:55:51 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.47 2000/11/25 20:33:52 tgl Exp $
  */
 
 #include <limits.h>
@@ -84,10 +84,6 @@ cash_in(PG_FUNCTION_ARGS)
 			   *nsymbol;
 
 #ifdef USE_LOCALE
-#ifdef CASHDEBUG
-	setlocale(LC_ALL, "");
-	lconvert = localeconv();
-#endif
 	if (lconvert == NULL)
 		lconvert = localeconv();
 

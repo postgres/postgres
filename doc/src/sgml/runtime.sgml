@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.38 2000/11/22 01:41:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.39 2000/11/25 20:33:47 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -79,9 +79,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.38 2000/11/22 01:41:12 mom
    <command>initdb</command> will attempt to create the directory you
    specify if it does not already exist. It is likely that it won't
    have the permission to do so (if you followed our advice and
-   created an unprivileged account). In that case you can create the
-   directory yourself (as root) and transfer ownership of it or grant
-   write access to it. Here is how this might work:
+   created an unprivileged account). In that case you should create the
+   directory yourself (as root) and transfer ownership of it to the
+   Postgres user account. Here is how this might work:
 <screen>
 root# <userinput>mkdir /usr/local/pgsql/data</userinput>
 root# <userinput>chown postgres /usr/local/pgsql/data</userinput>
@@ -100,6 +100,28 @@ postgres&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
    database it is essential that it be well secured from unauthorized
    access. <command>initdb</command> therefore revokes access
    permissions from everyone but the Postgres user account.
+  </para>
+
+  <para>
+   One surprise you might encounter while running <command>initdb</command> is
+   a notice similar to this one:
+<screen>
+NOTICE:  Initializing database with en_US collation order.
+        This locale setting will prevent use of index optimization for
+        LIKE and regexp searches.  If you are concerned about speed of
+        such queries, you may wish to set LC_COLLATE to "C" and
+        re-initdb.  For more information see the Administrator's Guide.
+</screen>
+   This notice is intended to warn you that the currently selected locale
+   will cause indexes to be sorted in an order that prevents them from
+   being used for LIKE and regular-expression searches.  If you need
+   good performance of such searches, you should set your current locale
+   to "C" and re-run <command>initdb</command>.  On most systems, setting the
+   current locale is done by changing the value of the environment variable
+   <literal>LC_ALL</literal> or <literal>LANG</literal>.  The sort order used
+   within a particular database cluster is set by <command>initdb</command>
+   and cannot be changed later, short of dumping all data, re-initdb,
+   reload data.  So it's important to make this choice correctly now.
   </para>
  </sect1>
 

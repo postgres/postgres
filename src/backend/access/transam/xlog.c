@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.33 2000/11/21 22:27:26 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.34 2000/11/25 20:33:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <dirent.h>
+#ifdef USE_LOCALE
+#include <locale.h>
+#endif
 
 #include "access/transam.h"
 #include "access/xact.h"
@@ -30,12 +33,11 @@
 #include "storage/s_lock.h"
 #include "access/xlog.h"
 #include "access/xlogutils.h"
+#include "utils/builtins.h"
 #include "utils/relcache.h"
 
 #include "miscadmin.h"
 
-char		XLogDir[MAXPGPATH];
-char		ControlFilePath[MAXPGPATH];
 int			XLOGbuffers = 8;
 XLogRecPtr	MyLastRecPtr = {0, 0};
 bool		StopIfError = false;
@@ -49,6 +51,9 @@ SPINLOCK	ControlFileLockId;
 
 /* To generate new xid */
 SPINLOCK	XidGenLockId;
+
+static char		XLogDir[MAXPGPATH];
+static char		ControlFilePath[MAXPGPATH];
 
 #define MinXLOGbuffers	4
 
@@ -107,6 +112,10 @@ typedef struct XLogCtlData
 
 static XLogCtlData *XLogCtl = NULL;
 
+/*
+ * Contents of pg_control
+ */
+
 typedef enum DBState
 {
 	DB_STARTUP = 0,
@@ -116,30 +125,38 @@ typedef enum DBState
 	DB_IN_PRODUCTION
 } DBState;
 
+#define LOCALE_NAME_BUFLEN  128
+
 typedef struct ControlFileData
 {
+	/*
+	 * XLOG state
+	 */
 	uint32		logId;			/* current log file id */
 	uint32		logSeg;			/* current log file segment (1-based) */
 	XLogRecPtr	checkPoint;		/* last check point record ptr */
 	time_t		time;			/* time stamp of last modification */
-	DBState		state;			/* */
+	DBState		state;			/* see enum above */
 
 	/*
 	 * this data is used to make sure that configuration of this DB is
-	 * compatible with the current backend
+	 * compatible with the backend executable
 	 */
 	uint32		blcksz;			/* block size for this DB */
 	uint32		relseg_size;	/* blocks per segment of large relation */
 	uint32		catalog_version_no;		/* internal version number */
-	char		archdir[MAXPGPATH];		/* where to move offline log files */
+	/* active locales --- "C" if compiled without USE_LOCALE: */
+	char		lc_collate[LOCALE_NAME_BUFLEN];
+	char		lc_ctype[LOCALE_NAME_BUFLEN];
 
 	/*
-	 * MORE DATA FOLLOWS AT THE END OF THIS STRUCTURE - locations of data
-	 * dirs
+	 * important directory locations
 	 */
+	char		archdir[MAXPGPATH];		/* where to move offline log files */
 } ControlFileData;
 
 static ControlFileData *ControlFile = NULL;
+
 
 typedef struct CheckPoint
 {
@@ -204,6 +221,8 @@ static void XLogWrite(char *buffer);
 static int	XLogFileInit(uint32 log, uint32 seg, bool *usexistent);
 static int	XLogFileOpen(uint32 log, uint32 seg, bool econt);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, char *buffer);
+static void WriteControlFile(void);
+static void ReadControlFile(void);
 static char *str_time(time_t tnow);
 static void xlog_outrec(char *buf, XLogRecord *record);
 
@@ -1210,25 +1229,169 @@ next_record_is_invalid:;
 	return (record);
 }
 
+/*
+ * I/O routines for pg_control
+ *
+ * *ControlFile is a buffer in shared memory that holds an image of the
+ * contents of pg_control.  WriteControlFile() initializes pg_control
+ * given a preloaded buffer, ReadControlFile() loads the buffer from
+ * the pg_control file (during postmaster or standalone-backend startup),
+ * and UpdateControlFile() rewrites pg_control after we modify xlog state.
+ *
+ * For simplicity, WriteControlFile() initializes the fields of pg_control
+ * that are related to checking backend/database compatibility, and
+ * ReadControlFile() verifies they are correct.  We could split out the
+ * I/O and compatibility-check functions, but there seems no need currently.
+ */
+
 void
-UpdateControlFile()
+XLOGPathInit(void)
+{
+	/* Init XLOG file paths */
+	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
+	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
+}
+
+static void
+WriteControlFile(void)
+{
+	int			fd;
+	char		buffer[BLCKSZ];
+#ifdef USE_LOCALE
+	char	   *localeptr;
+#endif
+
+	/*
+	 * Initialize compatibility-check fields
+	 */
+	ControlFile->blcksz = BLCKSZ;
+	ControlFile->relseg_size = RELSEG_SIZE;
+	ControlFile->catalog_version_no = CATALOG_VERSION_NO;
+#ifdef USE_LOCALE
+	localeptr = setlocale(LC_COLLATE, NULL);
+	if (!localeptr)
+		elog(STOP, "Invalid LC_COLLATE setting");
+	StrNCpy(ControlFile->lc_collate, localeptr, LOCALE_NAME_BUFLEN);
+	localeptr = setlocale(LC_CTYPE, NULL);
+	if (!localeptr)
+		elog(STOP, "Invalid LC_CTYPE setting");
+	StrNCpy(ControlFile->lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
+	/*
+	 * Issue warning notice if initdb'ing in a locale that will not permit
+	 * LIKE index optimization.  This is not a clean place to do it, but
+	 * I don't see a better place either...
+	 */
+	if (!locale_is_like_safe())
+		elog(NOTICE, "Initializing database with %s collation order."
+			 "\n\tThis locale setting will prevent use of index optimization for"
+			 "\n\tLIKE and regexp searches.  If you are concerned about speed of"
+			 "\n\tsuch queries, you may wish to set LC_COLLATE to \"C\" and"
+			 "\n\tre-initdb.  For more information see the Administrator's Guide.",
+			 ControlFile->lc_collate);
+#else
+	strcpy(ControlFile->lc_collate, "C");
+	strcpy(ControlFile->lc_ctype, "C");
+#endif
+
+	/*
+	 * We write out BLCKSZ bytes into pg_control, zero-padding the
+	 * excess over sizeof(ControlFileData).  This reduces the odds
+	 * of premature-EOF errors when reading pg_control.  We'll still
+	 * fail when we check the contents of the file, but hopefully with
+	 * a more specific error than "couldn't read pg_control".
+	 */
+	if (sizeof(ControlFileData) > BLCKSZ)
+		elog(STOP, "sizeof(ControlFileData) is too large ... fix xlog.c");
+	memset(buffer, 0, BLCKSZ);
+	memcpy(buffer, ControlFile, sizeof(ControlFileData));
+
+	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		elog(STOP, "WriteControlFile failed to create control file (%s): %m",
+			 ControlFilePath);
+
+	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+		elog(STOP, "WriteControlFile failed to write control file: %m");
+
+	if (fsync(fd) != 0)
+		elog(STOP, "WriteControlFile failed to fsync control file: %m");
+
+	close(fd);
+}
+
+static void
+ReadControlFile(void)
+{
+	int			fd;
+
+	/*
+	 * Read data...
+	 */
+	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		elog(STOP, "open(\"%s\") failed: %m", ControlFilePath);
+
+	if (read(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
+		elog(STOP, "read(\"%s\") failed: %m", ControlFilePath);
+
+	close(fd);
+
+	/*
+	 * Do compatibility checking immediately.  We do this here for 2 reasons:
+	 *
+	 * (1) if the database isn't compatible with the backend executable,
+	 * we want to abort before we can possibly do any damage;
+	 *
+	 * (2) this code is executed in the postmaster, so the setlocale() will
+	 * propagate to forked backends, which aren't going to read this file
+	 * for themselves.  (These locale settings are considered critical
+	 * compatibility items because they can affect sort order of indexes.)
+	 */
+	if (ControlFile->blcksz != BLCKSZ)
+		elog(STOP, "database was initialized with BLCKSZ %d,\n\tbut the backend was compiled with BLCKSZ %d.\n\tlooks like you need to initdb.",
+			 ControlFile->blcksz, BLCKSZ);
+	if (ControlFile->relseg_size != RELSEG_SIZE)
+		elog(STOP, "database was initialized with RELSEG_SIZE %d,\n\tbut the backend was compiled with RELSEG_SIZE %d.\n\tlooks like you need to initdb.",
+			 ControlFile->relseg_size, RELSEG_SIZE);
+	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
+		elog(STOP, "database was initialized with CATALOG_VERSION_NO %d,\n\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n\tlooks like you need to initdb.",
+			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
+#ifdef USE_LOCALE
+	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
+		elog(STOP, "database was initialized with LC_COLLATE '%s',\n\twhich is not recognized by setlocale().\n\tlooks like you need to initdb.",
+			 ControlFile->lc_collate);
+	if (setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
+		elog(STOP, "database was initialized with LC_CTYPE '%s',\n\twhich is not recognized by setlocale().\n\tlooks like you need to initdb.",
+			 ControlFile->lc_ctype);
+#else
+	if (strcmp(ControlFile->lc_collate, "C") != 0 ||
+		strcmp(ControlFile->lc_ctype, "C") != 0)
+		elog(STOP, "database was initialized with LC_COLLATE '%s' and LC_CTYPE '%s',\n\tbut the backend was compiled without locale support.\n\tlooks like you need to initdb or recompile.",
+			 ControlFile->lc_collate, ControlFile->lc_ctype);
+#endif
+}
+
+void
+UpdateControlFile(void)
 {
 	int			fd;
 
 	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "open(cntlfile) failed: %m");
+		elog(STOP, "open(\"%s\") failed: %m", ControlFilePath);
 
-	if (write(fd, ControlFile, BLCKSZ) != BLCKSZ)
+	if (write(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
 		elog(STOP, "write(cntlfile) failed: %m");
 
 	if (fsync(fd) != 0)
 		elog(STOP, "fsync(cntlfile) failed: %m");
 
 	close(fd);
-
-	return;
 }
+
+/*
+ * Management of shared memory for XLOG
+ */
 
 int
 XLOGShmemSize(void)
@@ -1237,7 +1400,8 @@ XLOGShmemSize(void)
 		XLOGbuffers = MinXLOGbuffers;
 
 	return (sizeof(XLogCtlData) + BLCKSZ * XLOGbuffers +
-			sizeof(XLogRecPtr) * XLOGbuffers + BLCKSZ);
+			sizeof(XLogRecPtr) * XLOGbuffers +
+			sizeof(ControlFileData));
 }
 
 void
@@ -1245,16 +1409,25 @@ XLOGShmemInit(void)
 {
 	bool		found;
 
+	/* this must agree with space requested by XLOGShmemSize() */
 	if (XLOGbuffers < MinXLOGbuffers)
 		XLOGbuffers = MinXLOGbuffers;
 
-	ControlFile = (ControlFileData *)
-		ShmemInitStruct("Control File", BLCKSZ, &found);
-	Assert(!found);
 	XLogCtl = (XLogCtlData *)
 		ShmemInitStruct("XLOG Ctl", sizeof(XLogCtlData) + BLCKSZ * XLOGbuffers +
 						sizeof(XLogRecPtr) * XLOGbuffers, &found);
 	Assert(!found);
+	ControlFile = (ControlFileData *)
+		ShmemInitStruct("Control File", sizeof(ControlFileData), &found);
+	Assert(!found);
+
+	/*
+	 * If we are not in bootstrap mode, pg_control should already exist.
+	 * Read and validate it immediately (see comments in ReadControlFile()
+	 * for the reasons why).
+	 */
+	if (!IsBootstrapProcessingMode())
+		ReadControlFile();
 }
 
 /*
@@ -1263,21 +1436,13 @@ XLOGShmemInit(void)
 void
 BootStrapXLOG()
 {
-	int			fd;
-	char		buffer[BLCKSZ];
 	CheckPoint	checkPoint;
-
 #ifdef XLOG
+	char		buffer[BLCKSZ];
 	bool        usexistent = false;
 	XLogPageHeader page = (XLogPageHeader) buffer;
 	XLogRecord *record;
-
 #endif
-
-	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
-	if (fd < 0)
-		elog(STOP, "BootStrapXLOG failed to create control file (%s): %m",
-			 ControlFilePath);
 
 	checkPoint.redo.xlogid = 0;
 	checkPoint.redo.xrecoff = SizeOfXLogPHD;
@@ -1319,23 +1484,15 @@ BootStrapXLOG()
 
 #endif
 
-	memset(ControlFile, 0, BLCKSZ);
+	memset(ControlFile, 0, sizeof(ControlFileData));
 	ControlFile->logId = 0;
 	ControlFile->logSeg = 1;
 	ControlFile->checkPoint = checkPoint.redo;
 	ControlFile->time = time(NULL);
 	ControlFile->state = DB_SHUTDOWNED;
-	ControlFile->blcksz = BLCKSZ;
-	ControlFile->relseg_size = RELSEG_SIZE;
-	ControlFile->catalog_version_no = CATALOG_VERSION_NO;
+	/* some additional ControlFile fields are set in WriteControlFile() */
 
-	if (write(fd, ControlFile, BLCKSZ) != BLCKSZ)
-		elog(STOP, "BootStrapXLOG failed to write control file: %m");
-
-	if (fsync(fd) != 0)
-		elog(STOP, "BootStrapXLOG failed to fsync control file: %m");
-
-	close(fd);
+	WriteControlFile();
 }
 
 static char *
@@ -1367,7 +1524,6 @@ StartupXLOG()
 	bool		sie_saved = false;
 
 #endif
-	int			fd;
 
 	elog(LOG, "starting up");
 
@@ -1389,16 +1545,12 @@ StartupXLOG()
 	S_INIT_LOCK(&(XLogCtl->chkp_lck));
 
 	/*
-	 * Open/read Control file
+	 * Read control file and check XLOG status looks valid.
+	 *
+	 * Note: in most control paths, *ControlFile is already valid and we
+	 * need not do ReadControlFile() here, but might as well do it to be sure.
 	 */
-	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
-	if (fd < 0)
-		elog(STOP, "open(\"%s\") failed: %m", ControlFilePath);
-
-	if (read(fd, ControlFile, BLCKSZ) != BLCKSZ)
-		elog(STOP, "read(\"%s\") failed: %m", ControlFilePath);
-
-	close(fd);
+	ReadControlFile();
 
 	if (ControlFile->logSeg == 0 ||
 		ControlFile->time <= 0 ||
@@ -1407,17 +1559,6 @@ StartupXLOG()
 		!XRecOffIsValid(ControlFile->checkPoint.xrecoff))
 		elog(STOP, "control file context is broken");
 
-	/* Check for incompatible database */
-	if (ControlFile->blcksz != BLCKSZ)
-		elog(STOP, "database was initialized with BLCKSZ %d,\n\tbut the backend was compiled with BLCKSZ %d.\n\tlooks like you need to initdb.",
-			 ControlFile->blcksz, BLCKSZ);
-	if (ControlFile->relseg_size != RELSEG_SIZE)
-		elog(STOP, "database was initialized with RELSEG_SIZE %d,\n\tbut the backend was compiled with RELSEG_SIZE %d.\n\tlooks like you need to initdb.",
-			 ControlFile->relseg_size, RELSEG_SIZE);
-	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
-		elog(STOP, "database was initialized with CATALOG_VERSION_NO %d,\n\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n\tlooks like you need to initdb.",
-			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
-
 	if (ControlFile->state == DB_SHUTDOWNED)
 		elog(LOG, "database system was shut down at %s",
 			 str_time(ControlFile->time));
@@ -1425,12 +1566,10 @@ StartupXLOG()
 		elog(LOG, "database system shutdown was interrupted at %s",
 			 str_time(ControlFile->time));
 	else if (ControlFile->state == DB_IN_RECOVERY)
-	{
 		elog(LOG, "database system was interrupted being in recovery at %s\n"
 			 "\tThis propably means that some data blocks are corrupted\n"
 			 "\tand you will have to use last backup for recovery.",
 			 str_time(ControlFile->time));
-	}
 	else if (ControlFile->state == DB_IN_PRODUCTION)
 		elog(LOG, "database system was interrupted at %s",
 			 str_time(ControlFile->time));

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.82 2000/11/16 22:30:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.83 2000/11/25 20:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,9 @@
 
 #include <ctype.h>
 #include <math.h>
+#ifdef USE_LOCALE
+#include <locale.h>
+#endif
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -1581,6 +1584,11 @@ pattern_fixed_prefix(char *patt, Pattern_Type ptype,
  *
  * A fixed prefix "foo" is estimated as the selectivity of the expression
  * "var >= 'foo' AND var < 'fop'" (see also indxqual.c).
+ *
+ * XXX Note: we make use of the upper bound to estimate operator selectivity
+ * even if the locale is such that we cannot rely on the upper-bound string.
+ * The selectivity only needs to be approximately right anyway, so it seems
+ * more useful to use the upper-bound code than not.
  */
 static Selectivity
 prefix_selectivity(char *prefix,
@@ -1862,6 +1870,44 @@ pattern_selectivity(char *patt, Pattern_Type ptype)
 	return result;
 }
 
+/*
+ * Test whether the database's LOCALE setting is safe for LIKE/regexp index
+ * optimization.  The key requirement here is that given a prefix string,
+ * say "foo", we must be able to generate another string "fop" that is
+ * greater than all strings "foobar" starting with "foo".  Unfortunately,
+ * many non-C locales have bizarre collation rules in which "fop" > "foo"
+ * is not sufficient to ensure "fop" > "foobar".  Until we can come up
+ * with a more bulletproof way of generating the upper-bound string,
+ * disable the optimization in locales where it is not known to be safe.
+ */
+bool
+locale_is_like_safe(void)
+{
+#ifdef USE_LOCALE
+	/* Cache result so we only have to compute it once */
+	static int	result = -1;
+	char	   *localeptr;
+
+	if (result >= 0)
+		return (bool) result;
+	localeptr = setlocale(LC_COLLATE, NULL);
+	if (!localeptr)
+		elog(STOP, "Invalid LC_COLLATE setting");
+	/*
+	 * Currently we accept only "C" and "POSIX" (do any systems still
+	 * return "POSIX"?).  Which other locales allow safe optimization?
+	 */
+	if (strcmp(localeptr, "C") == 0)
+		result = true;
+	else if (strcmp(localeptr, "POSIX") == 0)
+		result = true;
+	else
+		result = false;
+	return (bool) result;
+#else /* not USE_LOCALE */
+	return true;				/* We must be in C locale, which is OK */
+#endif /* USE_LOCALE */
+}
 
 /*
  * Try to generate a string greater than the given string or any string it is
@@ -1878,9 +1924,12 @@ pattern_selectivity(char *patt, Pattern_Type ptype)
  * This could be rather slow in the worst case, but in most cases we won't
  * have to try more than one or two strings before succeeding.
  *
- * XXX in a sufficiently weird locale, this might produce incorrect results?
- * For example, in German I believe "ss" is treated specially --- if we are
- * given "foos" and return "foot", will this actually be greater than "fooss"?
+ * XXX this is actually not sufficient, since it only copes with the case
+ * where individual characters collate in an order different from their
+ * numeric code assignments.  It does not handle cases where there are
+ * cross-character effects, such as specially sorted digraphs, multiple
+ * sort passes, etc.  For now, we just shut down the whole thing in locales
+ * that do such things :-(
  */
 char *
 make_greater_string(const char *str, Oid datatype)

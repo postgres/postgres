@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.98 2000/11/16 22:30:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.99 2000/11/25 20:33:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1746,56 +1746,68 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_BPCHAR_LIKE_OP:
 		case OID_VARCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
-			/* the right-hand const is type text for all of these */
-			patt = DatumGetCString(DirectFunctionCall1(textout,
-													   constvalue));
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-											   &prefix, &rest) != Pattern_Prefix_None;
-			if (prefix)
-				pfree(prefix);
-			pfree(patt);
+			if (locale_is_like_safe())
+			{
+				/* the right-hand const is type text for all of these */
+				patt = DatumGetCString(DirectFunctionCall1(textout,
+														   constvalue));
+				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
+												   &prefix, &rest) != Pattern_Prefix_None;
+				if (prefix)
+					pfree(prefix);
+				pfree(patt);
+			}
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_VARCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
-			/* the right-hand const is type text for all of these */
-			patt = DatumGetCString(DirectFunctionCall1(textout,
-													   constvalue));
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-											   &prefix, &rest) != Pattern_Prefix_None;
-			if (prefix)
-				pfree(prefix);
-			pfree(patt);
+			if (locale_is_like_safe())
+			{
+				/* the right-hand const is type text for all of these */
+				patt = DatumGetCString(DirectFunctionCall1(textout,
+														   constvalue));
+				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
+												   &prefix, &rest) != Pattern_Prefix_None;
+				if (prefix)
+					pfree(prefix);
+				pfree(patt);
+			}
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
-			/* the right-hand const is type text for all of these */
-			patt = DatumGetCString(DirectFunctionCall1(textout,
-													   constvalue));
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-											   &prefix, &rest) != Pattern_Prefix_None;
-			if (prefix)
-				pfree(prefix);
-			pfree(patt);
+			if (locale_is_like_safe())
+			{
+				/* the right-hand const is type text for all of these */
+				patt = DatumGetCString(DirectFunctionCall1(textout,
+														   constvalue));
+				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
+												   &prefix, &rest) != Pattern_Prefix_None;
+				if (prefix)
+					pfree(prefix);
+				pfree(patt);
+			}
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 		case OID_VARCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
-			/* the right-hand const is type text for all of these */
-			patt = DatumGetCString(DirectFunctionCall1(textout,
-													   constvalue));
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-											   &prefix, &rest) != Pattern_Prefix_None;
-			if (prefix)
-				pfree(prefix);
-			pfree(patt);
+			if (locale_is_like_safe())
+			{
+				/* the right-hand const is type text for all of these */
+				patt = DatumGetCString(DirectFunctionCall1(textout,
+														   constvalue));
+				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
+												   &prefix, &rest) != Pattern_Prefix_None;
+				if (prefix)
+					pfree(prefix);
+				pfree(patt);
+			}
 			break;
 	}
 
@@ -2053,8 +2065,8 @@ prefix_quals(Var *leftop, Oid expr_op,
 	result = makeList1(expr);
 
 	/*
-	 * If we can create a string larger than the prefix, say "x <
-	 * greaterstr".
+	 * If we can create a string larger than the prefix, we can say
+	 * "x < greaterstr".
 	 */
 	greaterstr = make_greater_string(prefix, datatype);
 	if (greaterstr)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.142 2000/11/21 03:23:20 tgl Exp $
+ * $Id: builtins.h,v 1.143 2000/11/25 20:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,6 +376,7 @@ extern Pattern_Prefix_Status pattern_fixed_prefix(char *patt,
 												  Pattern_Type ptype,
 												  char **prefix,
 												  char **rest);
+extern bool locale_is_like_safe(void);
 extern char *make_greater_string(const char *str, Oid datatype);
 
 /* tid.c */
