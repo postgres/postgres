@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.58 2004/10/07 17:29:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.59 2004/10/07 18:57:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ static void vacuum_db(void);
 static void make_template0(void);
 static void trapsig(int signum);
 static void check_ok(void);
-static void escape_locale(char **locale);
+static char *escape_quotes(const char *src);
 static bool chklocale(const char *locale);
 static void setlocales(void);
 static void usage(const char *progname);
@@ -1100,20 +1100,19 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "shared_buffers = %d", n_buffers);
 	conflines = replace_token(conflines, "#shared_buffers = 1000", repltok);
 
-	   	   	   	
-	escape_locale(&lc_messages);
+	lc_messages = escape_quotes(lc_messages);
 	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'", lc_messages);
 	conflines = replace_token(conflines, "#lc_messages = 'C'", repltok);
 
-	escape_locale(&lc_monetary);
+	lc_monetary = escape_quotes(lc_monetary);
 	snprintf(repltok, sizeof(repltok), "lc_monetary = '%s'", lc_monetary);
 	conflines = replace_token(conflines, "#lc_monetary = 'C'", repltok);
 
-	escape_locale(&lc_numeric);
+	lc_numeric = escape_quotes(lc_numeric);
 	snprintf(repltok, sizeof(repltok), "lc_numeric = '%s'", lc_numeric);
 	conflines = replace_token(conflines, "#lc_numeric = 'C'", repltok);
 
-	escape_locale(&lc_time);
+	lc_time = escape_quotes(lc_time);
 	snprintf(repltok, sizeof(repltok), "lc_time = '%s'", lc_time);
 	conflines = replace_token(conflines, "#lc_time = 'C'", repltok);
 
@@ -1902,22 +1901,23 @@ check_ok()
 }
 
 /*
- * Escape any single quotes or backslashes in locale
+ * Escape any single quotes or backslashes in given string
  */
-static void
-escape_locale(char **locale)
+static char *
+escape_quotes(const char *src)
 {
-	int			len = strlen(*locale),
+	int			len = strlen(src),
 				i, j;
-	char		*loc_temp = xmalloc(len * 2 + 1);
+	char		*result = xmalloc(len * 2 + 1);
 	
 	for (i = 0, j = 0; i < len; i++)
 	{
-		if ((*locale)[i] == '\'' || (*locale)[i] == '\\')
-			loc_temp[j++] = '\\';
-		loc_temp[j++] = (*locale)[i];
+		if (src[i] == '\'' || src[i] == '\\')
+			result[j++] = '\\';
+		result[j++] = src[i];
 	}
-	*locale = loc_temp;
+	result[j] = '\0';
+	return result;
 }
 
 /*
