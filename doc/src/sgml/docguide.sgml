@@ -239,7 +239,7 @@ right, and I can verify the document with "nsgmls -s docguide.sgml".
 <title>Building Documentation</title>
 
 <para>
-GNU <programname>make</programname> is used to build documentation from the DocBook sources.
+GNU <application>make</application> is used to build documentation from the DocBook sources.
 There are a few environment definitions which may need to be set or modified for your installation.
 The <filename>Makefile</filename> looks for 
 <filename>doc/../src/Makefile</filename>
