@@ -1,3 +1,5 @@
+
+
 (1997-10-01)
 PostgreSQL has a Web site at http://www.postgresql.org/ which carries details
 on the latest release, upcoming features, and other information to make your
@@ -10,3 +12,5 @@ welcoming you to the list. Other mailing lists and support information are
 detailed on the Web site.
 
 Thank you for choosing PostgreSQL, a leading-edge freeware product.
+
+
