@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.9 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.10 2004/01/11 04:58:17 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -84,11 +84,13 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
       <term><replaceable class="parameter">schema_element</replaceable></term>
       <listitem>
        <para>
-        An SQL statement defining an object to be created within the schema.
-	Currently, only <command>CREATE TABLE</>, <command>CREATE VIEW</>, 
-	and <command>GRANT</> are accepted as clauses within
-	<command>CREATE SCHEMA</>.  Other kinds of objects may be created
-	in separate commands after the schema is created.
+        An SQL statement defining an object to be created within the
+        schema. Currently, only <command>CREATE
+        TABLE</>, <command>CREATE VIEW</>, <command>CREATE
+        INDEX</>, <command>CREATE SEQUENCE</>, <command>CREATE
+        TRIGGER</> and <command>GRANT</> are accepted as clauses
+        within <command>CREATE SCHEMA</>. Other kinds of objects may
+        be created in separate commands after the schema is created.
        </para>
       </listitem>
      </varlistentry>

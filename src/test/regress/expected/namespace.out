@@ -1,0 +1,52 @@
+--
+-- Regression tests for schemas (namespaces)
+--
+CREATE SCHEMA test_schema_1
+       CREATE UNIQUE INDEX abc_a_idx ON abc (a)
+       CREATE VIEW abc_view AS
+              SELECT a+1 AS a, b+1 AS b FROM abc
+       CREATE TABLE abc (
+              a serial,
+              b int UNIQUE
+       );
+NOTICE:  CREATE TABLE will create implicit sequence "abc_a_seq" for "serial" column "abc.a"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "abc_b_key" for table "abc"
+-- verify that the objects were created
+SELECT COUNT(*) FROM pg_class WHERE relnamespace =
+    (SELECT oid FROM pg_namespace WHERE nspname = 'test_schema_1');
+ count 
+-------
+     5
+(1 row)
+
+INSERT INTO test_schema_1.abc DEFAULT VALUES;
+INSERT INTO test_schema_1.abc DEFAULT VALUES;
+INSERT INTO test_schema_1.abc DEFAULT VALUES;
+SELECT * FROM test_schema_1.abc;
+ a | b 
+---+---
+ 1 |  
+ 2 |  
+ 3 |  
+(3 rows)
+
+SELECT * FROM test_schema_1.abc_view;
+ a | b 
+---+---
+ 2 |  
+ 3 |  
+ 4 |  
+(3 rows)
+
+DROP SCHEMA test_schema_1 CASCADE;
+NOTICE:  drop cascades to view test_schema_1.abc_view
+NOTICE:  drop cascades to rule _RETURN on view test_schema_1.abc_view
+NOTICE:  drop cascades to table test_schema_1.abc
+-- verify that the objects were dropped
+SELECT COUNT(*) FROM pg_class WHERE relnamespace =
+    (SELECT oid FROM pg_namespace WHERE nspname = 'test_schema_1');
+ count 
+-------
+     0
+(1 row)
+

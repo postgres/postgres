@@ -60,7 +60,7 @@ ignore: random
 # ----------
 # The fourth group of parallel test
 # ----------
-test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index update
+test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index update namespace
 
 test: privileges
 test: misc

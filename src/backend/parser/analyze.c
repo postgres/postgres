@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.294 2004/01/10 23:28:45 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.295 2004/01/11 04:58:17 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,11 @@ typedef struct
 	const char *stmtType;		/* "CREATE SCHEMA" or "ALTER SCHEMA" */
 	char	   *schemaname;		/* name of schema */
 	char	   *authid;			/* owner of schema */
+	List	   *sequences;		/* CREATE SEQUENCE items */
 	List	   *tables;			/* CREATE TABLE items */
 	List	   *views;			/* CREATE VIEW items */
+	List	   *indexes;		/* CREATE INDEX items */
+	List	   *triggers;		/* CREATE TRIGGER items */
 	List	   *grants;			/* GRANT items */
 	List	   *fwconstraints;	/* Forward referencing FOREIGN KEY
 								 * constraints */
@@ -3152,13 +3155,28 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	ReleaseSysCache(ctype);
 }
 
+static void
+setSchemaName(char *context_schema, char **stmt_schema_name)
+{
+	if (*stmt_schema_name == NULL)
+		*stmt_schema_name = context_schema;
+	else if (strcmp(context_schema, *stmt_schema_name) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
+				 errmsg("CREATE specifies a schema (%s) "
+						"different from the one being created (%s)",
+						*stmt_schema_name, context_schema)));
+}
+
 /*
  * analyzeCreateSchemaStmt -
  *	  analyzes the "create schema" statement
  *
  * Split the schema element list into individual commands and place
- * them in the result list in an order such that there are no
- * forward references (e.g. GRANT to a table created later in the list).
+ * them in the result list in an order such that there are no forward
+ * references (e.g. GRANT to a table created later in the list). Note
+ * that the logic we use for determining forward references is
+ * presently quite incomplete.
  *
  * SQL92 also allows constraints to make forward references, so thumb through
  * the table columns and move forward references to a posterior alter-table
@@ -3168,7 +3186,7 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
  * but we can't analyze the later commands until we've executed the earlier
  * ones, because of possible inter-object references.
  *
- * Note: Called from commands/command.c
+ * Note: Called from commands/schemacmds.c
  */
 List *
 analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
@@ -3180,9 +3198,12 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 	cxt.stmtType = "CREATE SCHEMA";
 	cxt.schemaname = stmt->schemaname;
 	cxt.authid = stmt->authid;
+	cxt.sequences = NIL;
 	cxt.tables = NIL;
 	cxt.views = NIL;
+	cxt.indexes = NIL;
 	cxt.grants = NIL;
+	cxt.triggers = NIL;
 	cxt.fwconstraints = NIL;
 	cxt.alters = NIL;
 	cxt.blist = NIL;
@@ -3198,23 +3219,24 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 
 		switch (nodeTag(element))
 		{
+			case T_CreateSeqStmt:
+				{
+					CreateSeqStmt *elp = (CreateSeqStmt *) element;
+
+					setSchemaName(cxt.schemaname, &elp->sequence->schemaname);
+					cxt.sequences = lappend(cxt.sequences, element);
+				}
+				break;
+
 			case T_CreateStmt:
 				{
 					CreateStmt *elp = (CreateStmt *) element;
 
-					if (elp->relation->schemaname == NULL)
-						elp->relation->schemaname = cxt.schemaname;
-					else if (strcmp(cxt.schemaname, elp->relation->schemaname) != 0)
-						ereport(ERROR,
-							 (errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
-							  errmsg("CREATE specifies a schema (%s)"
-							" different from the one being created (%s)",
-							elp->relation->schemaname, cxt.schemaname)));
+					setSchemaName(cxt.schemaname, &elp->relation->schemaname);
 
 					/*
 					 * XXX todo: deal with constraints
 					 */
-
 					cxt.tables = lappend(cxt.tables, element);
 				}
 				break;
@@ -3223,20 +3245,30 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 				{
 					ViewStmt   *elp = (ViewStmt *) element;
 
-					if (elp->view->schemaname == NULL)
-						elp->view->schemaname = cxt.schemaname;
-					else if (strcmp(cxt.schemaname, elp->view->schemaname) != 0)
-						ereport(ERROR,
-							 (errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
-							  errmsg("CREATE specifies a schema (%s)"
-							" different from the one being created (%s)",
-								elp->view->schemaname, cxt.schemaname)));
+					setSchemaName(cxt.schemaname, &elp->view->schemaname);
 
 					/*
 					 * XXX todo: deal with references between views
 					 */
-
 					cxt.views = lappend(cxt.views, element);
+				}
+				break;
+
+			case T_IndexStmt:
+				{
+					IndexStmt *elp = (IndexStmt *) element;
+
+					setSchemaName(cxt.schemaname, &elp->relation->schemaname);
+					cxt.indexes = lappend(cxt.indexes, element);
+				}
+				break;
+
+			case T_CreateTrigStmt:
+				{
+					CreateTrigStmt *elp = (CreateTrigStmt *) element;
+
+					setSchemaName(cxt.schemaname, &elp->relation->schemaname);
+					cxt.triggers = lappend(cxt.triggers, element);
 				}
 				break;
 
@@ -3251,8 +3283,11 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 	}
 
 	result = NIL;
+	result = nconc(result, cxt.sequences);
 	result = nconc(result, cxt.tables);
 	result = nconc(result, cxt.views);
+	result = nconc(result, cxt.indexes);
+	result = nconc(result, cxt.triggers);
 	result = nconc(result, cxt.grants);
 
 	return result;
