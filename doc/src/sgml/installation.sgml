@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.198 2004/05/17 15:00:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.199 2004/05/17 16:06:25 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -497,7 +497,11 @@ su - postgres
 
         <para>
          If you have special needs, you can also customize the
-         individual subdirectories with the following options.
+         individual subdirectories with the following options. However,
+         if you leave these with their defaults, the installation will be
+         relocatable, meaning you can move the directory after
+         installation. (The <literal>man</> and <literal>doc</>
+         locations are not affected by this.)
         </para>
        </listitem>
       </varlistentry>
