@@ -216,7 +216,7 @@
 	<entry>atan2(float8,float8)</entry>
 	<entry>float8</entry>
 	<entry>arctangent</entry>
-	<entry>atan3(10.0,20.0)</entry>
+	<entry>atan2(10.0,20.0)</entry>
        </row>
        <row>
 	<entry>cos(float8)</entry>
