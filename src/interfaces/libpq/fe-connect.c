@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.27 1997/03/25 09:08:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.28 1997/04/02 18:26:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,7 +540,7 @@ connectDB(PGconn *conn)
 				{
 				PGresult *res;
 				
-				sprintf(setQuery, "SET %s TO \".60%s\"", eo->pgName, val);
+				sprintf(setQuery, "SET %s TO '.60%s'", eo->pgName, val);
 				res = PQexec(conn, setQuery);
 				PQclear(res);	/* Don't care? */
 				}
