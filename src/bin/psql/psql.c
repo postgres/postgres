@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.88 1997/08/26 17:00:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.89 1997/09/01 06:09:53 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,27 @@
 # endif
 #endif
 
+/* This prompt string is assumed to have at least 3 characters by code in MainLoop().
+ * A character two characters from the end is replaced each time by a mode character.
+ */
 #define PROMPT "=> "
+
+#define PROMPT_READY	'='
+#define PROMPT_CONTINUE	'-'
+#define PROMPT_COMMENT	'*'
+#define PROMPT_QUOTE	'\''
+
+/* Backslash command handling:
+ *  0 - send currently constructed query to backend (i.e. we got a \g)
+ *  1 - skip processing of this line, continue building up query
+ *  2 - terminate processing of this query entirely
+ *  3 - new query supplied by edit
+ */
+#define CMD_UNKNOWN	-1
+#define CMD_SEND	0
+#define CMD_SKIP_LINE	1
+#define CMD_TERMINATE	2
+#define CMD_NEWEDIT	3
 
 #define MAX_QUERY_BUFFER 20000
 
@@ -978,28 +998,28 @@ do_edit(const char *filename_arg, char *query, int *status_p)
     }
 
     if (error)
-	*status_p = 1;
+	*status_p = CMD_SKIP_LINE;
     else {
 	editFile(fname);
 	if ((fd = open(fname, O_RDONLY)) == -1) {
 	    perror(fname);
 	    if (!filename_arg)
 		unlink(fname);
-	    *status_p = 1;
+	    *status_p = CMD_SKIP_LINE;
 	} else {
 	    if ((cc = read(fd, query, MAX_QUERY_BUFFER)) == -1) {
 		perror(fname);
 		close(fd);
 		if (!filename_arg)
 		    unlink(fname);
-		*status_p = 1;
+		*status_p = CMD_SKIP_LINE;
 	    } else {
 		query[cc] = '\0';
 		close(fd);
 		if (!filename_arg)
 		    unlink(fname);
 		rightTrim(query);
-		*status_p = 3;
+		*status_p = CMD_NEWEDIT;
 	    }
 	}
     }
@@ -1118,17 +1138,19 @@ do_shell(const char *command)
  * Handles all the different commands that start with \ db_ptr is a pointer to
  * the TgDb* structure line is the current input line prompt_ptr is a pointer
  * to the prompt string, a pointer is used because the prompt can be used
- * with a connection to a new database returns a status: 0 - send currently
- * constructed query to backend (i.e. we got a \g) 1 - skip processing of
- * this line, continue building up query 2 - terminate processing of this
- * query entirely, 3 - new query supplied by edit
+ * with a connection to a new database.
+ * Returns a status:
+ *  0 - send currently constructed query to backend (i.e. we got a \g)
+ *  1 - skip processing of this line, continue building up query
+ *  2 - terminate processing of this query entirely
+ *  3 - new query supplied by edit
  */
 static int
 HandleSlashCmds(PsqlSettings * settings,
 		char *line,
 		char *query)
 {
-    int             status = 1;
+    int             status = CMD_SKIP_LINE;
     char           *optarg;
     /*
      * Pointer inside the <cmd> string to the argument of the slash command,
@@ -1188,7 +1210,7 @@ HandleSlashCmds(PsqlSettings * settings,
 	}
 	if (optarg && !(settings->opt.caption = strdup(optarg))) {
 	    perror("malloc");
-	    exit(1);
+	    exit(CMD_TERMINATE);
 	}
 	break;
     case 'c':{
@@ -1261,7 +1283,7 @@ HandleSlashCmds(PsqlSettings * settings,
 		lastfile = malloc(strlen(optarg + 1));
 		if (!lastfile) {
 		    perror("malloc");
-		    exit(1);
+		    exit(CMD_TERMINATE);
 		}
 		strcpy(lastfile, optarg);
 	    } else if (!lastfile) {
@@ -1293,10 +1315,10 @@ HandleSlashCmds(PsqlSettings * settings,
 	    	free(settings->opt.fieldSep);
 	    if (!(settings->opt.fieldSep = strdup(fs))) {
 		perror("malloc");
-		exit(1);
+		exit(CMD_TERMINATE);
 	    }
 	    if (!settings->quiet)
-		printf("field separater changed to '%s'\n", settings->opt.fieldSep);
+		printf("field separator changed to '%s'\n", settings->opt.fieldSep);
 	    break;
 	}
     case 'g':			/* \g means send query */
@@ -1304,9 +1326,9 @@ HandleSlashCmds(PsqlSettings * settings,
 	    settings->gfname = NULL;
 	else if (!(settings->gfname = strdup(optarg))) {
 	    perror("malloc");
-	    exit(1);
+	    exit(CMD_TERMINATE);
 	}
-	status = 0;
+	status = CMD_SEND;
 	break;
     case 'h':			/* help */
 	{
@@ -1346,7 +1368,7 @@ HandleSlashCmds(PsqlSettings * settings,
 	}
 	break;
     case 'q':			/* \q is quit */
-	status = 2;
+	status = CMD_TERMINATE;
 	break;
     case 'r':			/* reset(clear) the buffer */
 	query[0] = '\0';
@@ -1369,13 +1391,13 @@ HandleSlashCmds(PsqlSettings * settings,
 		free(settings->opt.fieldSep);
 	    settings->opt.fieldSep = strdup("|");
 	    if (!settings->quiet)
-		printf("field separater changed to '%s'\n", settings->opt.fieldSep);
+		printf("field separator changed to '%s'\n", settings->opt.fieldSep);
 	} else {
 	    if (settings->opt.fieldSep)
 	    	free(settings->opt.fieldSep);
 	    settings->opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
 	    if (!settings->quiet)
-		printf("field separater changed to '%s'\n", settings->opt.fieldSep);
+		printf("field separator changed to '%s'\n", settings->opt.fieldSep);
 	}
 	break;
     case 'z': 			/* list table rights (grant/revoke) */
@@ -1391,7 +1413,7 @@ HandleSlashCmds(PsqlSettings * settings,
 	    settings->opt.tableOpt = NULL;
 	else if (!(settings->opt.tableOpt = strdup(optarg))) {
 	    perror("malloc");
-	    exit(1);
+	    exit(CMD_TERMINATE);
 	}
 	break;
     case 'x':
@@ -1407,31 +1429,33 @@ HandleSlashCmds(PsqlSettings * settings,
     }
     free(cmd);
     return status;
-}
+} /* HandleSlashCmds() */
 
-/*
- * MainLoop: main processing loop for reading lines of input and sending them
- * to the backend
+/* MainLoop()
+ * Main processing loop for reading lines of input
+ *  and sending them to the backend.
  * 
- * this loop is re-entrant.  May be called by \i command which reads input from
- * a file
- * 
- * db_ptr must be initialized and set
+ * This loop is re-entrant. May be called by \i command
+ *  which reads input from a file.
+ * db_ptr must be initialized and set.
  */
 
 static int
 MainLoop(PsqlSettings * settings, FILE * source)
 {
     char           *line;	/* line of input */
+    char           *xcomment;	/* start of extended comment */
     int             len;	/* length of the line */
     char            query[MAX_QUERY_BUFFER];	/* multi-line query storage */
     int             successResult = 1;
-    int             slashCmdStatus = 0;
+    int             slashCmdStatus = CMD_SEND;
     /*
-     * slashCmdStatus can be: 0 - send currently constructed query to backend
-     * (i.e. we got a \g) 1 - skip processing of this line, continue building
-     * up query 2 - terminate processing of this query entirely 3 - new query
-     * supplied by edit
+     * slashCmdStatus can be:
+     *  CMD_UNKNOWN	- send currently constructed query to backend (i.e. we got a \g)
+     *  CMD_SEND	- send currently constructed query to backend (i.e. we got a \g)
+     *  CMD_SKIP_LINE	- skip processing of this line, continue building up query
+     *  CMD_TERMINATE	- terminate processing of this query entirely
+     *  CMD_NEWEDIT	- new query supplied by edit
      */
 
     bool            querySent = false;
@@ -1441,8 +1465,6 @@ MainLoop(PsqlSettings * settings, FILE * source)
     /* We've reached the end of our command input. */
     bool            success;
     bool            in_quote;
-    bool            was_bslash;	/* backslash */
-    bool            was_dash;
     int             paren_level;
     char           *query_start;
 
@@ -1467,24 +1489,30 @@ MainLoop(PsqlSettings * settings, FILE * source)
 	GetNextLine = gets_fromFile;
 
     query[0] = '\0';
+    xcomment = NULL;
     in_quote = false;
     paren_level = 0;
-    slashCmdStatus = -1;	/* set default */
+    slashCmdStatus = CMD_UNKNOWN;	/* set default */
 
-    /* main loop for getting queries and executing them */
+    /* main loop to get queries and execute them */
     while (!eof) {
-	if (slashCmdStatus == 3) {
+	/* just returned from editing the line? then just copy to the input buffer */
+	if (slashCmdStatus == CMD_NEWEDIT) {
 	    paren_level = 0;
 	    line = strdup(query);
 	    query[0] = '\0';
+
+	/* otherwise, get another line and set interactive prompt if necessary */
 	} else {
 	    if (interactive && !settings->quiet) {
-	    	if (in_quote)
-	    	    settings->prompt[strlen(settings->prompt)-3] = '\'';
-	    	else if (query[0] != '\0' && !querySent)
-	    	    settings->prompt[strlen(settings->prompt)-3] = '-';
-	    	else
-	    	    settings->prompt[strlen(settings->prompt)-3] = '=';
+		if (in_quote)
+		    settings->prompt[strlen(settings->prompt)-3] = PROMPT_QUOTE;
+		else if (xcomment != NULL)
+		    settings->prompt[strlen(settings->prompt)-3] = PROMPT_COMMENT;
+		else if (query[0] != '\0' && !querySent)
+		    settings->prompt[strlen(settings->prompt)-3] = PROMPT_CONTINUE;
+		else
+		    settings->prompt[strlen(settings->prompt)-3] = PROMPT_READY;
 	    }
 	    line = GetNextLine(settings->prompt, source);
 #ifdef HAVE_HISTORY
@@ -1493,7 +1521,20 @@ MainLoop(PsqlSettings * settings, FILE * source)
 #endif
 	}
 
-	query_start = line;
+	/* query - pointer to current command
+	 * query_start - placeholder for next command
+	 */
+
+	/* not currently inside an extended comment? */
+	if (xcomment == NULL) {
+	    query_start = line;
+
+	/* otherwise, continue the extended comment... */
+	} else {
+	    query_start = line;
+	    xcomment = line;
+	};
+
 	if (line == NULL) {	/* No more input.  Time to quit */
 	    if (!settings->quiet)
 		printf("EOF\n");	/* Goes on prompt line */
@@ -1502,9 +1543,11 @@ MainLoop(PsqlSettings * settings, FILE * source)
 	    /* remove whitespaces on the right, incl. \n's */
 	    line = rightTrim(line);
 
+	    /* echo back if input is from file */
 	    if (!interactive && !settings->singleStep && !settings->quiet)
 		fprintf(stderr, "%s\n", line);
 
+	    /* nothing on line after trimming? then ignore */
 	    if (line[0] == '\0') {
 		free(line);
 		continue;
@@ -1516,43 +1559,65 @@ MainLoop(PsqlSettings * settings, FILE * source)
 		SendQuery(&success, settings, line, false, false, 0);
 		successResult &= success;
 		querySent = true;
+
 	    } else {
-		int             i;
-		was_bslash = false;
-		was_dash = false;
+		int i;
 
 		for (i = 0; i < len; i++) {
-		    if (!in_quote && line[i] == '\\') {
-			char            hold_char = line[i];
+		    if (querySent && !isspace(line[i])) {
+			query[0] = '\0';
+			querySent = false;
+		    }
+
+		    /* inside a quote? */
+		    if (in_quote && (line[i] != '\'')) {
+			continue;
+
+		    /* inside an extended comment? */
+		    } else if (xcomment != NULL) {
+			if (line[i] == '*' && line[i+1] == '/') {
+			    xcomment = NULL;
+			    i++;
+			};
+			continue;
+
+		    /* possible backslash command? */
+		    } else if (line[i] == '\\') {
+			char hold_char = line[i];
 
 			line[i] = '\0';
 			if (query_start[0] != '\0') {
 			    if (query[0] != '\0') {
 				strcat(query, "\n");
 				strcat(query, query_start);
-			    } else
+			    } else {
 				strcpy(query, query_start);
+			    };
 			}
 			line[i] = hold_char;
 			query_start = line + i;
 			break;	/* handle command */
-		    }
-		    if (querySent && !isspace(line[i])) {
-			query[0] = '\0';
-			querySent = false;
-		    }
-		    if (!in_quote && was_dash && line[i] == '-') {
+
+		    /* start an extended comment? */
+		    } else if (line[i] == '/' && line[i+1] == '*') {
+			xcomment = line + i;
+			i++;
+			continue;
+
+		    /* single-line comment? truncate line */
+		    } else if (line[i] == '-' && line[i+1] == '-') {
 			/* print comment at top of query */
 			if (settings->singleStep)
-			    fprintf(stdout, "%s\n", line + i - 1);
-			line[i - 1] = '\0';	/* remove comment */
+			    fprintf(stdout, "%s\n", line + i);
+			line[i] = '\0';	/* remove comment */
 			break;
-		    }
-		    was_dash = false;
 
-		    if (!in_quote && !paren_level &&
-			line[i] == ';') {
-			char            hold_char = line[i + 1];
+		    } else if (line[i] == '\'') {
+			in_quote ^= 1;
+
+		    /* semi-colon? then send query now */
+		    } else if (!paren_level && line[i] == ';') {
+			char hold_char = line[i + 1];
 
 			line[i + 1] = '\0';
 			if (query_start[0] != '\0') {
@@ -1567,34 +1632,34 @@ MainLoop(PsqlSettings * settings, FILE * source)
 			line[i + 1] = hold_char;
 			query_start = line + i + 1;
 			querySent = true;
-		    }
-		    if (was_bslash)
-			was_bslash = false;
-		    else if (line[i] == '\\')
-			was_bslash = true;
-		    else if (line[i] == '\'')
-			in_quote ^= 1;
-		    else if (!in_quote && line[i] == '(')
+
+		    } else if (line[i] == '(') {
 			paren_level++;
-		    else if (!in_quote && paren_level && line[i] == ')')
+
+		    } else if (paren_level && line[i] == ')') {
 			paren_level--;
-		    else if (!in_quote && line[i] == '-')
-			was_dash = true;
+		    };
 		}
 	    }
 
-	    slashCmdStatus = -1;
+	    /* nothing on line after trimming? then ignore */
+	    if (line[0] == '\0') {
+		free(line);
+		continue;
+	    }
+
+	    slashCmdStatus = CMD_UNKNOWN;
 	    if (!in_quote && query_start[0] == '\\') {
 		slashCmdStatus = HandleSlashCmds(settings,
 						 query_start,
 						 query);
-		if (slashCmdStatus == 1) {
+		if (slashCmdStatus == CMD_SKIP_LINE) {
 		    if (query[0] == '\0')
 			paren_level = 0;
 		    free(line);
 		    continue;
 		}
-		if (slashCmdStatus == 2) {
+		if (slashCmdStatus == CMD_TERMINATE) {
 		    free(line);
 		    break;
 		}
@@ -1617,15 +1682,23 @@ MainLoop(PsqlSettings * settings, FILE * source)
 		free(line); /* PURIFY */
 	    }
 
-	    if (slashCmdStatus == 0) {
+	    /* had a backslash-g? force the query to be sent */
+	    if (slashCmdStatus == CMD_SEND) {
+#if FALSE
+		if (! querySent) {
+		    SendQuery(&success, settings, query, false, false, 0);
+		    successResult &= success;
+		}
+#else
 		SendQuery(&success, settings, query, false, false, 0);
 		successResult &= success;
+#endif
 		querySent = true;
 	    }
 	}
     }				/* while */
     return successResult;
-}
+} /* MainLoop() */
 
 int
 main(int argc, char **argv)
