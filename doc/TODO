@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb  4 17:40:21 EST 2000
+Last updated:		Sat Feb  5 12:02:12 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -235,7 +235,7 @@ PERFORMANCE
 
 FSYNC
 
-* -Allow transaction commits with rollback with no-fsync performance [fsync](Vadim)
+* Allow transaction commits with rollback with no-fsync performance [fsync](Vadim)
 * -Prevent fsync in SELECT-only queries(Vadim)
 
 INDEXES
