@@ -22,7 +22,7 @@ It can be done by done by typing configure, make and make install.
 			  CYGWIN32 INSTALLATION
 
 1. Download the Cygwin32 IPC Package by Ludovic LANGE 
-   http://www.multione.capgemini.fr:80/tools/pack_ipc/current.tar.gz
+   http://penguin.cz/~horak/cygwin32_ipc-1.03.tar.gz
 2. Untar the package and follow the readme instructions.
 3. Apply the patch at the end of this file to the cygipc sources
    before compiling the library.
