@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.32 2003/11/13 20:30:37 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.33 2003/11/23 21:42:13 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,5 +31,5 @@ installdirs:
 uninstall:
 	rm -f $(DESTDIR)$(bindir)/initdb$(X)
 
-clean distclean:
+clean distclean maintainer-clean:
 	rm -f initdb$(X) $(OBJS)
