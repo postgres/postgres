@@ -1,6 +1,6 @@
 
-*** expected/float8.out	Fri Feb 20 00:08:58 1998
---- results/float8.out	Sat Feb 28 16:53:53 1998
+*** expected/float8.out	Thu Mar 19 00:49:38 1998
+--- results/float8.out	Sun Mar 22 15:36:24 1998
 ***************
 *** 9,17 ****
   QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
@@ -287,12 +287,29 @@
 
 ----------------------
 
-*** expected/numerology.out	Fri Feb 20 00:09:37 1998
---- results/numerology.out	Sat Feb 28 16:53:53 1998
+*** expected/numerology.out	Thu Mar 19 00:49:56 1998
+--- results/numerology.out	Sun Mar 22 15:36:25 1998
 ***************
-*** 36,44 ****
-      |     0
-      |     0
+*** 23,28 ****
+--- 23,31 ----
+  QUERY: INSERT INTO TEMP_INT4 (f1)
+    SELECT int4(f1) FROM FLOAT8_TBL
+    WHERE (f1 > -2147483647) AND (f1 < 2147483647);
++ ERROR:  There is no operator '>' for types 'float8' and 'int4'
++ 	You will either have to retype this query using an explicit cast,
++ 	or you will have to define the operator using CREATE OPERATOR
+  QUERY: INSERT INTO TEMP_INT4 (f1)
+    SELECT int4(f1) FROM INT2_TBL;
+  QUERY: SELECT '' AS nine, f1 FROM TEMP_INT4
+***************
+*** 31,44 ****
+  ----+------
+      |-32767
+      | -1234
+-     | -1004
+-     |   -35
+-     |     0
+-     |     0
       |     0
       |  1234
       | 32767
@@ -300,15 +317,14 @@
   
   QUERY: CREATE TABLE TEMP_INT2 (f1 INT2);
   QUERY: INSERT INTO TEMP_INT2 (f1)
---- 36,46 ----
+--- 34,43 ----
+  ----+------
+      |-32767
+      | -1234
       |     0
-      |     0
-      |     0
-+     |     0
-+     |     0
       |  1234
       | 32767
-! (11 rows)
+! (5 rows)
   
   QUERY: CREATE TABLE TEMP_INT2 (f1 INT2);
   QUERY: INSERT INTO TEMP_INT2 (f1)
@@ -321,7 +337,7 @@
   
   QUERY: CREATE TABLE TEMP_GROUP (f1 INT4, f2 INT4, f3 FLOAT8);
   QUERY: INSERT INTO TEMP_GROUP
---- 58,66 ----
+--- 55,63 ----
       |    0
       |    0
       |    0
@@ -334,8 +350,8 @@
 
 ----------------------
 
-*** expected/geometry.out	Fri Feb 20 00:09:04 1998
---- results/geometry.out	Sat Feb 28 16:53:57 1998
+*** expected/geometry.out	Thu Mar 19 00:49:41 1998
+--- results/geometry.out	Sun Mar 22 15:36:29 1998
 ***************
 *** 100,106 ****
         |(5.1,34.5)|[(1,2),(3,4)]                |(3,4)                               
@@ -577,8 +593,8 @@
 
 ----------------------
 
-*** expected/tinterval.out	Fri Feb 20 00:12:49 1998
---- results/tinterval.out	Sat Feb 28 16:54:00 1998
+*** expected/tinterval.out	Thu Mar 19 00:50:31 1998
+--- results/tinterval.out	Sun Mar 22 15:36:32 1998
 ***************
 *** 110,129 ****
      ORDER BY interval1, interval2;
@@ -625,88 +641,8 @@
 
 ----------------------
 
-*** expected/create_index.out	Fri Feb 20 00:08:41 1998
---- results/create_index.out	Sat Feb 28 16:55:10 1998
-***************
-*** 8,22 ****
---- 8,36 ----
-  QUERY: CREATE INDEX tenk2_unique1 ON tenk2 USING btree(unique1 int4_ops);
-  QUERY: CREATE INDEX tenk2_unique2 ON tenk2 USING btree(unique2 int4_ops);
-  QUERY: CREATE INDEX tenk2_hundred ON tenk2 USING btree(hundred int4_ops);
-+ PQexec() -- Request was sent to backend, but backend closed the channel before responding.
-+ 	This probably means the backend terminated abnormally before or while processing the request.
-  QUERY: CREATE INDEX rix ON road USING btree (name text_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX iix ON ihighway USING btree (name text_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX six ON shighway USING btree (name text_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX bt_i4_index ON bt_i4_heap USING btree (seqno int4_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX bt_c16_index ON bt_c16_heap USING btree (seqno char16_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX bt_txt_index ON bt_txt_heap USING btree (seqno text_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX bt_f8_index ON bt_f8_heap USING btree (seqno float8_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX rect2ind ON fast_emp4000 USING rtree (home_base bigbox_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX hash_c16_index ON hash_c16_heap USING hash (random char16_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
-+ PQexec() -- There is no connection to the backend.
-  QUERY: CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops);
-+ PQexec() -- There is no connection to the backend.
-
-----------------------
-
-*** expected/sanity_check.out	Fri Feb 20 00:10:05 1998
---- results/sanity_check.out	Sat Feb 28 16:55:27 1998
-***************
-*** 5,20 ****
-     ORDER BY relname;
-  relname       |relhasindex
-  --------------+-----------
-- bt_c16_heap   |t          
-- bt_f8_heap    |t          
-- bt_i4_heap    |t          
-- bt_txt_heap   |t          
-- fast_emp4000  |t          
-- hash_c16_heap |t          
-- hash_f8_heap  |t          
-- hash_i4_heap  |t          
-- hash_txt_heap |t          
-- ihighway      |t          
-  onek          |t          
-  pg_attrdef    |t          
-  pg_attribute  |t          
---- 5,10 ----
-***************
-*** 24,32 ****
-  pg_relcheck   |t          
-  pg_trigger    |t          
-  pg_type       |t          
-- road          |t          
-- shighway      |t          
-  tenk1         |t          
-  tenk2         |t          
-! (23 rows)
-  
---- 14,20 ----
-  pg_relcheck   |t          
-  pg_trigger    |t          
-  pg_type       |t          
-  tenk1         |t          
-  tenk2         |t          
-! (11 rows)
-  
-
-----------------------
-
-*** expected/random.out	Fri Feb 20 00:10:04 1998
---- results/random.out	Sat Feb 28 16:55:32 1998
+*** expected/random.out	Thu Mar 19 00:50:07 1998
+--- results/random.out	Sun Mar 22 15:38:52 1998
 ***************
 *** 7,18 ****
   QUERY: SELECT count(*) FROM onek where oidrand(onek.oid, 10);
