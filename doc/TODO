@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue May  8 15:01:35 EDT 2001
+Last updated:		Wed May  9 16:39:58 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -295,6 +295,7 @@ SOURCE CODE
 * Move some things from /contrib into main tree, like soundex
 * Allow plug-in modules to emulate features from other databases
 * Add mention of VACUUM, log rotation to Administrator's Guide
+* Add PL/Python documentation
 
 ---------------------------------------------------------------------------
 
