@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.21 1999/11/22 17:56:37 momjian Exp $
+ * $Id: pg_opclass.h,v 1.22 1999/11/23 04:47:39 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -68,11 +68,9 @@ DATA(insert OID =  422 (	box_ops			603   ));
 DESCR("");
 DATA(insert OID =  423 (	float8_ops		701   ));
 DESCR("");
-/* Technically, deftype is wrong, but it must be unique for index, bjm */
-DATA(insert OID =  424 (	int24_ops		424   ));
+DATA(insert OID =  424 (	int24_ops		  0   ));
 DESCR("");
-/* Technically, deftype is wrong, but it must be unique for index, bjm */
-DATA(insert OID =  425 (	int42_ops		425   ));
+DATA(insert OID =  425 (	int42_ops		  0   ));
 DESCR("");
 DATA(insert OID =  426 (	int4_ops		 23   ));
 DESCR("");
@@ -87,8 +85,7 @@ DATA(insert OID =  431 (	text_ops		 25   ));
 DESCR("");
 DATA(insert OID =  432 (	abstime_ops		702   ));
 DESCR("");
-/* Technically, deftype is wrong, but it must be unique for index, bjm */
-DATA(insert OID =  433 (	bigbox_ops		433   ));
+DATA(insert OID =  433 (	bigbox_ops		603   ));
 DESCR("");
 DATA(insert OID =  434 (	poly_ops		604   ));
 DESCR("");

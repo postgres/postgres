@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.29 1999/11/22 17:56:37 momjian Exp $
+ * $Id: indexing.h,v 1.30 1999/11/23 04:47:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,8 @@ DECLARE_UNIQUE_INDEX(pg_inherits_relid_seqno_index on pg_inherits using btree(in
 DECLARE_UNIQUE_INDEX(pg_language_name_index on pg_language using btree(lanname name_ops));
 DECLARE_UNIQUE_INDEX(pg_language_oid_index on pg_language using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_listener_relname_pid_index on pg_listener using btree(relname name_ops, listenerpid int4_ops));
-DECLARE_UNIQUE_INDEX(pg_opclass_deftype_index on pg_opclass using btree(opcdeftype oid_ops));
+/* This column needs to allow multiple zero entries, but is in the cache */
+DECLARE_INDEX(pg_opclass_deftype_index on pg_opclass using btree(opcdeftype oid_ops));
 DECLARE_UNIQUE_INDEX(pg_opclass_name_index on pg_opclass using btree(opcname name_ops));
 DECLARE_UNIQUE_INDEX(pg_operator_oid_index on pg_operator using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_operator_oprname_l_r_k_index on pg_operator using btree(oprname name_ops, oprleft oid_ops, oprright oid_ops, oprkind char_ops));
