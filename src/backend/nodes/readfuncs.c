@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.76 1999/12/13 01:26:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.77 2000/01/09 00:26:24 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -233,9 +233,9 @@ _getPlan(Plan *node)
 	token = lsptok(NULL, &length);		/* next is the actual cost */
 	node->cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* skip the :size */
-	token = lsptok(NULL, &length);		/* get the plan_size */
-	node->plan_size = atoi(token);
+	token = lsptok(NULL, &length);		/* skip the :rows */
+	token = lsptok(NULL, &length);		/* get the plan_rows */
+	node->plan_rows = atof(token);
 
 	token = lsptok(NULL, &length);		/* skip the :width */
 	token = lsptok(NULL, &length);		/* get the plan_width */
@@ -1293,6 +1293,14 @@ _readRelOptInfo()
 	token = lsptok(NULL, &length);		/* get :relids */
 	local_node->relids = toIntList(nodeRead(true));		/* now read it */
 
+	token = lsptok(NULL, &length);		/* get :rows */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->rows = atof(token);
+
+	token = lsptok(NULL, &length);		/* get :width */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->width = atoi(token);
+
 	token = lsptok(NULL, &length);		/* get :indexed */
 	token = lsptok(NULL, &length);		/* now read it */
 
@@ -1303,19 +1311,11 @@ _readRelOptInfo()
 
 	token = lsptok(NULL, &length);		/* get :pages */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->pages = (unsigned int) atoi(token);
+	local_node->pages = atol(token);
 
 	token = lsptok(NULL, &length);		/* get :tuples */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->tuples = (unsigned int) atoi(token);
-
-	token = lsptok(NULL, &length);		/* get :size */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->size = (unsigned int) atoi(token);
-
-	token = lsptok(NULL, &length);		/* get :width */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->width = (unsigned int) atoi(token);
+	local_node->tuples = atof(token);
 
 	token = lsptok(NULL, &length);		/* get :targetlist */
 	local_node->targetlist = nodeRead(true);	/* now read it */
@@ -1344,6 +1344,34 @@ _readRelOptInfo()
 
 	token = lsptok(NULL, &length);		/* get :innerjoin */
 	local_node->innerjoin = nodeRead(true);		/* now read it */
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readIndexOptInfo
+ * ----------------
+ */
+static IndexOptInfo *
+_readIndexOptInfo()
+{
+	IndexOptInfo *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(IndexOptInfo);
+
+	token = lsptok(NULL, &length);		/* get :indexoid */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->indexoid = (Oid) atoi(token);
+
+	token = lsptok(NULL, &length);		/* get :pages */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->pages = atol(token);
+
+	token = lsptok(NULL, &length);		/* get :tuples */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->tuples = atof(token);
 
 	return local_node;
 }
@@ -1572,9 +1600,6 @@ _readNestPath()
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
-	token = lsptok(NULL, &length);		/* get :pathinfo */
-	local_node->pathinfo = nodeRead(true);		/* now read it */
-
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
 	 * For now, i'll just print the addresses.
@@ -1625,9 +1650,6 @@ _readMergePath()
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
-
-	token = lsptok(NULL, &length);		/* get :pathinfo */
-	local_node->jpath.pathinfo = nodeRead(true);		/* now read it */
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1688,9 +1710,6 @@ _readHashPath()
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
-
-	token = lsptok(NULL, &length);		/* get :pathinfo */
-	local_node->jpath.pathinfo = nodeRead(true);		/* now read it */
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1761,10 +1780,6 @@ _readRestrictInfo()
 
 	token = lsptok(NULL, &length);		/* get :clause */
 	local_node->clause = nodeRead(true);		/* now read it */
-
-	token = lsptok(NULL, &length);		/* get :selectivity */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->selectivity = atof(token);
 
 	token = lsptok(NULL, &length);		/* get :subclauseindices */
 	local_node->subclauseindices = nodeRead(true);		/* now read it */
@@ -1909,6 +1924,8 @@ parsePlanString(void)
 		return_value = _readEState();
 	else if (!strncmp(token, "RELOPTINFO", length))
 		return_value = _readRelOptInfo();
+	else if (!strncmp(token, "INDEXOPTINFO", length))
+		return_value = _readIndexOptInfo();
 	else if (!strncmp(token, "TARGETENTRY", length))
 		return_value = _readTargetEntry();
 	else if (!strncmp(token, "RTE", length))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.29 1999/12/16 22:19:47 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.30 2000/01/09 00:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,11 +730,29 @@ _freeRelOptInfo(RelOptInfo *node)
 
 	freeObject(node->targetlist);
 	freeObject(node->pathlist);
-	/* is this right? cheapestpath will typically be a pointer into
+	/* XXX is this right? cheapestpath will typically be a pointer into
 	 * pathlist, won't it?
 	 */
 	freeObject(node->cheapestpath);
 
+	freeObject(node->restrictinfo);
+	freeObject(node->joininfo);
+	freeObject(node->innerjoin);
+
+	pfree(node);
+}
+
+/* ----------------
+ *		_freeIndexOptInfo
+ * ----------------
+ */
+static void
+_freeIndexOptInfo(IndexOptInfo *node)
+{
+	/* ----------------
+	 *	free remainder of node
+	 * ----------------
+	 */
 	if (node->classlist)
 		pfree(node->classlist);
 
@@ -745,10 +763,6 @@ _freeRelOptInfo(RelOptInfo *node)
 		pfree(node->ordering);
 
 	freeObject(node->indpred);
-
-	freeObject(node->restrictinfo);
-	freeObject(node->joininfo);
-	freeObject(node->innerjoin);
 
 	pfree(node);
 }
@@ -837,7 +851,6 @@ _freeTidPath(TidPath *node)
 static void
 FreeJoinPathFields(JoinPath *node)
 {
-	freeObject(node->pathinfo);
 	freeObject(node->outerjoinpath);
 	freeObject(node->innerjoinpath);
 }
@@ -936,7 +949,7 @@ _freeRestrictInfo(RestrictInfo *node)
 	 * ----------------
 	 */
 	freeObject(node->clause);
-	/* this is certainly wrong?  index RelOptInfos don't belong to
+	/* this is certainly wrong?  IndexOptInfos don't belong to
 	 * RestrictInfo...
 	 */
 	freeObject(node->subclauseindices);
@@ -1252,6 +1265,9 @@ freeObject(void *node)
 			break;
 		case T_Stream:
 			_freeStream(node);
+			break;
+		case T_IndexOptInfo:
+			_freeIndexOptInfo(node);
 			break;
 
 			/*

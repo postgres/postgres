@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.24 1999/08/16 02:17:48 tgl Exp $
+ * $Id: geqo_misc.c,v 1.25 2000/01/09 00:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,10 +177,9 @@ geqo_print_path(Query *root, Path *path, int indent)
 	}
 	if (join)
 	{
-		int			size = path->parent->size;
-
 		jp = (JoinPath *) path;
-		printf("%s size=%d cost=%f\n", ptype, size, path->path_cost);
+		printf("%s rows=%.0f cost=%f\n",
+			   ptype, path->parent->rows, path->path_cost);
 		switch (nodeTag(path))
 		{
 			case T_MergePath:
@@ -188,7 +187,7 @@ geqo_print_path(Query *root, Path *path, int indent)
 				for (i = 0; i < indent + 1; i++)
 					printf("\t");
 				printf("   clauses=(");
-				geqo_print_joinclauses(root, ((JoinPath *) path)->pathinfo);
+				geqo_print_joinclauses(root, path->parent->restrictinfo);
 				printf(")\n");
 
 				if (nodeTag(path) == T_MergePath)
@@ -213,11 +212,10 @@ geqo_print_path(Query *root, Path *path, int indent)
 	}
 	else
 	{
-		int			size = path->parent->size;
 		int			relid = lfirsti(path->parent->relids);
 
-		printf("%s(%d) size=%d cost=%f\n",
-			   ptype, relid, size, path->path_cost);
+		printf("%s(%d) rows=%.0f cost=%f\n",
+			   ptype, relid, path->parent->rows, path->path_cost);
 
 		if (IsA(path, IndexPath))
 		{
@@ -236,7 +234,7 @@ geqo_print_rel(Query *root, RelOptInfo *rel)
 	printf("(");
 	foreach(l, rel->relids)
 		printf("%d ", lfirsti(l));
-	printf("): size=%d width=%d\n", rel->size, rel->width);
+	printf("): rows=%.0f width=%d\n", rel->rows, rel->width);
 
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)

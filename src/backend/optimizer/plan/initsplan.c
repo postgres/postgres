@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.40 1999/10/07 04:23:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.41 2000/01/09 00:26:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ static void add_restrict_and_join_to_rel(Query *root, Node *clause);
 static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 								  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars);
+static void set_restrictinfo_joininfo(RestrictInfo *restrictinfo);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
 
@@ -165,12 +166,6 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 	restrictinfo->hashjoinoperator = InvalidOid;
 
 	/*
-	 * The selectivity of the clause must be computed regardless of
-	 * whether it's a restriction or a join clause
-	 */
-	restrictinfo->selectivity = compute_clause_selec(root, clause);
-
-	/*
 	 * Retrieve all relids and vars contained within the clause.
 	 */
 	clause_get_relids_vars(clause, &relids, &vars);
@@ -189,12 +184,20 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 	{
 		/*
 		 * 'clause' is a join clause, since there is more than one atom in
-		 * the relid list.  Add it to the join lists of all the relevant
+		 * the relid list.  Set additional RestrictInfo fields for joining.
+		 */
+		set_restrictinfo_joininfo(restrictinfo);
+		/*
+		 * Add clause to the join lists of all the relevant
 		 * relations.  (If, perchance, 'clause' contains NO vars, then
 		 * nothing will happen...)
 		 */
 		add_join_info_to_rels(root, restrictinfo, relids);
-		/* we are going to be doing a join, so add vars to targetlists */
+		/*
+		 * Add vars used in the join clause to targetlists of member relations,
+		 * so that they will be emitted by the plan nodes that scan those
+		 * relations (else they won't be available at the join node!).
+		 */
 		add_vars_to_targetlist(root, vars);
 	}
 }
@@ -202,7 +205,7 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 /*
  * add_join_info_to_rels
  *	  For every relation participating in a join clause, add 'restrictinfo' to
- *	  the appropriate joininfo list (creating a new one and adding it to the
+ *	  the appropriate joininfo list (creating a new list and adding it to the
  *	  appropriate rel node if necessary).
  *
  * 'restrictinfo' describes the join clause
@@ -218,8 +221,8 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 	foreach(join_relid, join_relids)
 	{
 		int			cur_relid = lfirsti(join_relid);
-		JoinInfo   *joininfo;
 		Relids		unjoined_relids = NIL;
+		JoinInfo   *joininfo;
 		List	   *otherrel;
 
 		/* Get the relids not equal to the current relid */
@@ -230,18 +233,12 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 		}
 
 		/*
-		 * Find or make the joininfo node for this combination of rels
+		 * Find or make the joininfo node for this combination of rels,
+		 * and add the restrictinfo node to it.
 		 */
 		joininfo = find_joininfo_node(get_base_rel(root, cur_relid),
 									  unjoined_relids);
-
-		/*
-		 * And add the restrictinfo node to it.  NOTE that each joininfo
-		 * gets its own copy of the restrictinfo node!  (Is this really
-		 * necessary?  Possibly ... later parts of the optimizer destructively
-		 * modify restrict/join clauses...)
-		 */
-		joininfo->jinfo_restrictinfo = lcons(copyObject((void *) restrictinfo),
+		joininfo->jinfo_restrictinfo = lcons(restrictinfo,
 											 joininfo->jinfo_restrictinfo);
 	}
 }
@@ -253,36 +250,17 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
  *****************************************************************************/
 
 /*
- * set_joininfo_mergeable_hashable
- *	  Examine each join clause used in a query and set the merge and hash
- *	  info fields in those that are mergejoinable or hashjoinable.
+ * set_restrictinfo_joininfo
+ *	  Examine a RestrictInfo that has been determined to be a join clause,
+ *	  and set the merge and hash info fields if it can be merge/hash joined.
  */
-void
-set_joininfo_mergeable_hashable(List *rel_list)
+static void
+set_restrictinfo_joininfo(RestrictInfo *restrictinfo)
 {
-	List	   *x;
-
-	foreach(x, rel_list)
-	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(x);
-		List	   *y;
-
-		foreach(y, rel->joininfo)
-		{
-			JoinInfo   *joininfo = (JoinInfo *) lfirst(y);
-			List	   *z;
-
-			foreach(z, joininfo->jinfo_restrictinfo)
-			{
-				RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(z);
-
-				if (_enable_mergejoin_)
-					check_mergejoinable(restrictinfo);
-				if (_enable_hashjoin_)
-					check_hashjoinable(restrictinfo);
-			}
-		}
-	}
+	if (_enable_mergejoin_)
+		check_mergejoinable(restrictinfo);
+	if (_enable_hashjoin_)
+		check_hashjoinable(restrictinfo);
 }
 
 /*

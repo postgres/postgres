@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.44 1999/11/25 00:21:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.45 2000/01/09 00:26:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,9 @@
 
 /* are we looking at a functional index selectivity request? */
 #define FunctionalSelectivity(nIndKeys,attNum) ((attNum)==InvalidAttrNumber)
+
+/* default selectivity estimate for equalities such as "A = b" */
+#define DEFAULT_EQ_SEL  0.01
 
 /* default selectivity estimate for inequalities such as "A < b" */
 #define DEFAULT_INEQ_SEL  (1.0 / 3.0)
@@ -75,7 +78,7 @@ eqsel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	if (NONVALUE(attno) || NONVALUE(relid))
-		*result = 0.1;
+		*result = DEFAULT_EQ_SEL;
 	else
 	{
 		Oid			typid;
@@ -369,15 +372,16 @@ eqjoinsel(Oid opid,
 	float64data num1,
 				num2,
 				min;
+	bool		unknown1 = NONVALUE(relid1) || NONVALUE(attno1);
+	bool		unknown2 = NONVALUE(relid2) || NONVALUE(attno2);
 
 	result = (float64) palloc(sizeof(float64data));
-	if (NONVALUE(attno1) || NONVALUE(relid1) ||
-		NONVALUE(attno2) || NONVALUE(relid2))
-		*result = 0.1;
+	if (unknown1 && unknown2)
+		*result = DEFAULT_EQ_SEL;
 	else
 	{
-		num1 = get_attdisbursion(relid1, attno1, 0.01);
-		num2 = get_attdisbursion(relid2, attno2, 0.01);
+		num1 = unknown1 ? 1.0 : get_attdisbursion(relid1, attno1, 0.01);
+		num2 = unknown2 ? 1.0 : get_attdisbursion(relid2, attno2, 0.01);
 		/*
 		 * The join selectivity cannot be more than num2, since each
 		 * tuple in table 1 could match no more than num2 fraction of
@@ -385,6 +389,9 @@ eqjoinsel(Oid opid,
 		 * matches the most common value in table 2, so probably it's
 		 * less).  By the same reasoning it is not more than num1.
 		 * The min is therefore an upper bound.
+		 *
+		 * If we know the disbursion of only one side, use it; the reasoning
+		 * above still works.
 		 *
 		 * XXX can we make a better estimate here?  Using the nullfrac
 		 * statistic might be helpful, for example.  Assuming the operator

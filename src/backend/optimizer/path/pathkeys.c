@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.16 1999/08/22 20:14:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.17 2000/01/09 00:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,7 +261,7 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
  * ordering of that key is not interesting.
  */
 List *
-build_index_pathkeys(Query *root, RelOptInfo *rel, RelOptInfo *index)
+build_index_pathkeys(Query *root, RelOptInfo *rel, IndexOptInfo *index)
 {
 	List	   *retval = NIL;
 	int		   *indexkeys = index->indexkeys;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.34 1999/11/23 20:07:02 momjian Exp $
+ * $Id: plannodes.h,v 1.35 2000/01/09 00:26:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,10 +63,12 @@
 typedef struct Plan
 {
 	NodeTag		type;
+
+	/* planner's estimates of cost and result size */
 	Cost		cost;
-	int			plan_size;
+	double		plan_rows;
 	int			plan_width;
-	int			plan_tupperpage;
+
 	EState	   *state;			/* at execution time, state's of
 								 * individual nodes point to one EState
 								 * for the whole top-level plan */
@@ -185,10 +187,10 @@ typedef struct IndexScan
  */
 typedef struct TidScan
 {
-        Scan            scan;
+	Scan		scan;
 	bool		needRescan;
-        List            *tideval;
-        TidScanState    *tidstate;
+	List	   *tideval;
+	TidScanState *tidstate;
 } TidScan;
 
 /* 

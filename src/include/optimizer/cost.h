@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.24 1999/11/23 20:07:05 momjian Exp $
+ * $Id: cost.h,v 1.25 2000/01/09 00:26:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,34 +33,28 @@ extern bool _enable_mergejoin_;
 extern bool _enable_hashjoin_;
 extern bool _enable_tidscan_;
 
-extern Cost cost_seqscan(int relid, int relpages, int reltuples);
-extern Cost cost_index(Oid indexid, int expected_indexpages, Cost selec,
-		   int relpages, int reltuples, int indexpages,
-		   int indextuples, bool is_injoin);
-extern Cost cost_tidscan(List *evallist);
-extern Cost cost_sort(List *pathkeys, int tuples, int width);
-extern Cost cost_nestloop(Cost outercost, Cost innercost, int outertuples,
-			  int innertuples, int outerpages, bool is_indexjoin);
-extern Cost cost_mergejoin(Cost outercost, Cost innercost,
-			   List *outersortkeys, List *innersortkeys,
-		   int outersize, int innersize, int outerwidth, int innerwidth);
-extern Cost cost_hashjoin(Cost outercost, Cost innercost,
-						  int outersize, int innersize,
-						  int outerwidth, int innerwidth,
-						  Cost innerdisbursion);
-extern int	compute_rel_size(RelOptInfo *rel);
-extern int	compute_rel_width(RelOptInfo *rel);
-extern int	compute_joinrel_size(JoinPath *joinpath);
-extern int	page_size(int tuples, int width);
+extern Cost cost_seqscan(RelOptInfo *baserel);
+extern Cost cost_index(RelOptInfo *baserel, IndexOptInfo *index,
+					   long expected_indexpages, Selectivity selec,
+					   bool is_injoin);
+extern Cost cost_tidscan(RelOptInfo *baserel, List *tideval);
+extern Cost cost_sort(List *pathkeys, double tuples, int width);
+extern Cost cost_nestloop(Path *outer_path, Path *inner_path,
+						  bool is_indexjoin);
+extern Cost cost_mergejoin(Path *outer_path, Path *inner_path,
+						   List *outersortkeys, List *innersortkeys);
+extern Cost cost_hashjoin(Path *outer_path, Path *inner_path,
+						  Selectivity innerdisbursion);
+extern void set_rel_rows_width(Query *root, RelOptInfo *rel);
+extern void set_joinrel_rows_width(Query *root, RelOptInfo *rel,
+								   JoinPath *joinpath);
 
 /*
- * prototypes for fuctions in clausesel.h
+ * prototypes for clausesel.c
  *	  routines to compute clause selectivities
  */
-extern void set_clause_selectivities(List *restrictinfo_list, Cost new_selectivity);
-extern Cost product_selec(List *restrictinfo_list);
-extern void set_rest_relselec(Query *root, List *rel_list);
-extern void set_rest_selec(Query *root, List *restrictinfo_list);
-extern Cost compute_clause_selec(Query *root, Node *clause);
+extern Selectivity restrictlist_selec(Query *root, List *restrictinfo_list);
+extern Selectivity clauselist_selec(Query *root, List *clauses);
+extern Selectivity compute_clause_selec(Query *root, Node *clause);
 
 #endif	 /* COST_H */

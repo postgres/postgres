@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.44 1999/09/21 20:58:08 momjian Exp $
+ * $Id: geqo_eval.c,v 1.45 2000/01/09 00:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 	joinrel = gimme_tree(root, tour, 0, num_gene, NULL);
 
 	/* compute fitness */
-	fitness = (Cost) joinrel->cheapestpath->path_cost;
+	fitness = joinrel->cheapestpath->path_cost;
 
 	/* restore join_rel_list */
 	root->join_rel_list = savelist;
@@ -177,16 +177,14 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 				elog(DEBUG, "gimme_tree: still %d relations left", length(new_rels));
 			}
 
-			rels_set_cheapest(new_rels);
+			rels_set_cheapest(root, new_rels);
 
 			/* get essential new relation */
 			new_rel = (RelOptInfo *) lfirst(new_rels);
 			rel_count++;
 
 			/* processing of other new_rel attributes */
-			if (new_rel->size <= 0)
-				new_rel->size = compute_rel_size(new_rel);
-			new_rel->width = compute_rel_width(new_rel);
+			set_rel_rows_width(root, new_rel);
 
 			root->join_rel_list = lcons(new_rel, NIL);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.98 1999/12/13 01:26:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.99 2000/01/09 00:26:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,9 +75,9 @@ static void
 CopyPlanFields(Plan *from, Plan *newnode)
 {
 	newnode->cost = from->cost;
-	newnode->plan_size = from->plan_size;
+	newnode->plan_rows = from->plan_rows;
 	newnode->plan_width = from->plan_width;
-	newnode->plan_tupperpage = from->plan_tupperpage;
+	/* state is NOT copied */
 	newnode->targetlist = copyObject(from->targetlist);
 	newnode->qual = copyObject(from->qual);
 	newnode->lefttree = copyObject(from->lefttree);
@@ -962,24 +962,43 @@ static RelOptInfo *
 _copyRelOptInfo(RelOptInfo *from)
 {
 	RelOptInfo *newnode = makeNode(RelOptInfo);
-	int			i,
-				len;
 
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
 	newnode->relids = listCopy(from->relids);
+
+	newnode->rows = from->rows;
+	newnode->width = from->width;
+
+	Node_Copy(from, newnode, targetlist);
+	Node_Copy(from, newnode, pathlist);
+	/* XXX cheapestpath should point to a member of pathlist? */
+	Node_Copy(from, newnode, cheapestpath);
+	newnode->pruneable = from->pruneable;
 
 	newnode->indexed = from->indexed;
 	newnode->pages = from->pages;
 	newnode->tuples = from->tuples;
-	newnode->size = from->size;
-	newnode->width = from->width;
-	Node_Copy(from, newnode, targetlist);
-	Node_Copy(from, newnode, pathlist);
-	Node_Copy(from, newnode, cheapestpath);
-	newnode->pruneable = from->pruneable;
+
+	Node_Copy(from, newnode, restrictinfo);
+	Node_Copy(from, newnode, joininfo);
+	Node_Copy(from, newnode, innerjoin);
+
+	return newnode;
+}
+
+/* ----------------
+ *		_copyIndexOptInfo
+ * ----------------
+ */
+static IndexOptInfo *
+_copyIndexOptInfo(IndexOptInfo *from)
+{
+	IndexOptInfo *newnode = makeNode(IndexOptInfo);
+	int			i,
+				len;
+
+	newnode->indexoid = from->indexoid;
+	newnode->pages = from->pages;
+	newnode->tuples = from->tuples;
 
 	if (from->classlist)
 	{
@@ -1014,10 +1033,6 @@ _copyRelOptInfo(RelOptInfo *from)
 	newnode->relam = from->relam;
 	newnode->indproc = from->indproc;
 	Node_Copy(from, newnode, indpred);
-
-	Node_Copy(from, newnode, restrictinfo);
-	Node_Copy(from, newnode, joininfo);
-	Node_Copy(from, newnode, innerjoin);
 
 	return newnode;
 }
@@ -1120,7 +1135,6 @@ _copyTidPath(TidPath *from)
 static void
 CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
 {
-	Node_Copy(from, newnode, pathinfo);
 	Node_Copy(from, newnode, outerjoinpath);
 	Node_Copy(from, newnode, innerjoinpath);
 }
@@ -1229,7 +1243,6 @@ _copyRestrictInfo(RestrictInfo *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, clause);
-	newnode->selectivity = from->selectivity;
 	Node_Copy(from, newnode, subclauseindices);
 	newnode->mergejoinoperator = from->mergejoinoperator;
 	newnode->left_sortop = from->left_sortop;
@@ -1616,6 +1629,9 @@ copyObject(void *from)
 			break;
 		case T_Stream:
 			retval = _copyStream(from);
+			break;
+		case T_IndexOptInfo:
+			retval = _copyIndexOptInfo(from);
 			break;
 
 			/*

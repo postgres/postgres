@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.40 1999/11/22 17:56:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.41 2000/01/09 00:26:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <math.h>
 
 #include "postgres.h"
+
+#include <math.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -23,18 +24,10 @@
 #include "catalog/pg_inherits.h"
 #include "optimizer/clauses.h"
 #include "optimizer/internal.h"
+#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
 #include "utils/syscache.h"
-
-
-static void IndexSelectivity(Oid indexrelid, Oid baserelid, int nIndexKeys,
-							 Oid *operatorObjectIds,
-							 AttrNumber *varAttributeNumbers,
-							 Datum *constValues,
-							 int *constFlags,
-							 float *idxPages,
-							 float *idxSelec);
 
 
 /*
@@ -47,39 +40,33 @@ static void IndexSelectivity(Oid indexrelid, Oid baserelid, int nIndexKeys,
  */
 void
 relation_info(Query *root, Index relid,
-			  bool *hasindex, int *pages, int *tuples)
+			  bool *hasindex, long *pages, double *tuples)
 {
+	Oid			relationObjectId = getrelid(relid, root->rtable);
 	HeapTuple	relationTuple;
 	Form_pg_class relation;
-	Oid			relationObjectId;
 
-	relationObjectId = getrelid(relid, root->rtable);
 	relationTuple = SearchSysCacheTuple(RELOID,
 										ObjectIdGetDatum(relationObjectId),
 										0, 0, 0);
-	if (HeapTupleIsValid(relationTuple))
-	{
-		relation = (Form_pg_class) GETSTRUCT(relationTuple);
-
-		*hasindex = (relation->relhasindex) ? true : false;
-		*pages = relation->relpages;
-		*tuples = relation->reltuples;
-	}
-	else
-	{
+	if (!HeapTupleIsValid(relationTuple))
 		elog(ERROR, "relation_info: Relation %u not found",
 			 relationObjectId);
-	}
+	relation = (Form_pg_class) GETSTRUCT(relationTuple);
+
+	*hasindex = (relation->relhasindex) ? true : false;
+	*pages = relation->relpages;
+	*tuples = relation->reltuples;
 }
 
 /*
  * find_secondary_indexes
- *	  Creates a list of RelOptInfo nodes containing information for each
+ *	  Creates a list of IndexOptInfo nodes containing information for each
  *	  secondary index defined on the given relation.
  *
  * 'relid' is the RT index of the relation for which indices are being located
  *
- * Returns a list of new index RelOptInfo nodes.
+ * Returns a list of new IndexOptInfo nodes.
  */
 List *
 find_secondary_indexes(Query *root, Index relid)
@@ -105,7 +92,7 @@ find_secondary_indexes(Query *root, Index relid)
 	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
 	{
 		Form_pg_index	index = (Form_pg_index) GETSTRUCT(indexTuple);
-		RelOptInfo	   *info = makeNode(RelOptInfo);
+		IndexOptInfo   *info = makeNode(IndexOptInfo);
 		int				i;
 		Relation		indexRelation;
 		uint16			amstrategy;
@@ -120,7 +107,7 @@ find_secondary_indexes(Query *root, Index relid)
 		info->ordering = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS+1));
 
 		/* Extract info from the pg_index tuple */
-		info->relids = lconsi(index->indexrelid, NIL);
+		info->indexoid = index->indexrelid;
 		info->indproc = index->indproc;		/* functional index ?? */
 		if (VARSIZE(&index->indpred) != 0)	/* partial index ?? */
 		{
@@ -172,17 +159,6 @@ find_secondary_indexes(Query *root, Index relid)
 			info->ordering[i] = ((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
 		}
 
-		info->indexed = false;		/* not indexed itself */
-		info->size = 0;
-		info->width = 0;
-		info->targetlist = NIL;
-		info->pathlist = NIL;
-		info->cheapestpath = NULL;
-		info->pruneable = true;
-		info->restrictinfo = NIL;
-		info->joininfo = NIL;
-		info->innerjoin = NIL;
-
 		indexes = lcons(info, indexes);
 	}
 
@@ -200,76 +176,210 @@ find_secondary_indexes(Query *root, Index relid)
  *	  but here we consider the cost of just one pass.
  *
  * 'root' is the query root
- * 'relid' is the RT index of the relation being scanned
- * 'indexid' is the OID of the index to be used
+ * 'rel' is the relation being scanned
+ * 'index' is the index to be used
  * 'indexquals' is the list of qual condition exprs (implicit AND semantics)
  * '*idxPages' receives an estimate of the number of index pages touched
- * '*idxSelec' receives an estimate of selectivity of the scan
+ * '*idxSelec' receives an estimate of selectivity of the scan, ie fraction
+ *		of the relation's tuples that will be retrieved
  */
 void
 index_selectivity(Query *root,
-				  int relid,
-				  Oid indexid,
+				  RelOptInfo *rel,
+				  IndexOptInfo *index,
 				  List *indexquals,
-				  float *idxPages,
-				  float *idxSelec)
+				  long *idxPages,
+				  Selectivity *idxSelec)
 {
-	int			nclauses = length(indexquals);
-	Oid		   *opno_array;
-	AttrNumber *attno_array;
-	Datum	   *value_array;
-	int		   *flag_array;
+	int			relid;
+	Oid			baserelid,
+				indexrelid;
+	HeapTuple	indRel,
+				indexTuple;
+	Form_pg_class indexrelation;
+	Oid			relam;
+	Form_pg_index pgindex;
+	int			nIndexKeys;
+	float64data npages,
+				select,
+				fattr_select;
+	bool		nphack = false;
 	List	   *q;
-	int			i;
 
-	if (nclauses <= 0)
-	{
-		*idxPages = 0.0;
-		*idxSelec = 1.0;
-		return;
-	}
-	opno_array = (Oid *) palloc(nclauses * sizeof(Oid));
-	attno_array = (AttrNumber *) palloc(nclauses * sizeof(AttrNumber));
-	value_array = (Datum *) palloc(nclauses * sizeof(Datum));
-	flag_array = (int *) palloc(nclauses * sizeof(int));
+	Assert(length(rel->relids) == 1); /* must be a base rel */
+	relid = lfirsti(rel->relids);
 
-	i = 0;
+	baserelid = getrelid(relid, root->rtable);
+	indexrelid = index->indexoid;
+
+	indRel = SearchSysCacheTuple(RELOID,
+								 ObjectIdGetDatum(indexrelid),
+								 0, 0, 0);
+	if (!HeapTupleIsValid(indRel))
+		elog(ERROR, "index_selectivity: index %u not found in pg_class",
+			 indexrelid);
+	indexrelation = (Form_pg_class) GETSTRUCT(indRel);
+	relam = indexrelation->relam;
+
+	indexTuple = SearchSysCacheTuple(INDEXRELID,
+									 ObjectIdGetDatum(indexrelid),
+									 0, 0, 0);
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "index_selectivity: index %u not found in pg_index",
+			 indexrelid);
+	pgindex = (Form_pg_index) GETSTRUCT(indexTuple);
+
+	nIndexKeys = 1;
+	while (pgindex->indclass[nIndexKeys] != InvalidOid)
+		nIndexKeys++;
+
+	/*
+	 * Hack for non-functional btree npages estimation: npages =
+	 * index_pages * selectivity_of_1st_attr_clause(s) - vadim 04/24/97
+	 */
+	if (relam == BTREE_AM_OID && pgindex->indproc == InvalidOid)
+		nphack = true;
+
+	npages = 0.0;
+	select = 1.0;
+	fattr_select = 1.0;
+
 	foreach(q, indexquals)
 	{
 		Node	   *expr = (Node *) lfirst(q);
+		Oid			opno;
 		int			dummyrelid;
+		AttrNumber	attno;
+		Datum		value;
+		int			flag;
+		Oid			indclass;
+		HeapTuple	amopTuple;
+		Form_pg_amop amop;
+		float64		amopnpages,
+					amopselect;
 
+		/*
+		 * Extract info from clause.
+		 */
 		if (is_opclause(expr))
-			opno_array[i] = ((Oper *) ((Expr *) expr)->oper)->opno;
+			opno = ((Oper *) ((Expr *) expr)->oper)->opno;
 		else
-			opno_array[i] = InvalidOid;
+			opno = InvalidOid;
+		get_relattval(expr, relid, &dummyrelid, &attno, &value, &flag);
 
-		get_relattval(expr, relid, &dummyrelid, &attno_array[i],
-					  &value_array[i], &flag_array[i]);
-		i++;
+		/*
+		 * Find the AM class for this key.
+		 */
+		if (pgindex->indproc != InvalidOid)
+		{
+			/*
+			 * Functional index: AM class is the first one defined since
+			 * functional indices have exactly one key.
+			 */
+			indclass = pgindex->indclass[0];
+		}
+		else
+		{
+			int			i;
+			indclass = InvalidOid;
+			for (i = 0; pgindex->indkey[i]; i++)
+			{
+				if (attno == pgindex->indkey[i])
+				{
+					indclass = pgindex->indclass[i];
+					break;
+				}
+			}
+		}
+		if (!OidIsValid(indclass))
+		{
+			/*
+			 * Presumably this means that we are using a functional index
+			 * clause and so had no variable to match to the index key ...
+			 * if not we are in trouble.
+			 */
+			elog(NOTICE, "index_selectivity: no key %d in index %u",
+				 attno, indexrelid);
+			continue;
+		}
+
+		amopTuple = SearchSysCacheTuple(AMOPOPID,
+										ObjectIdGetDatum(indclass),
+										ObjectIdGetDatum(opno),
+										ObjectIdGetDatum(relam),
+										0);
+		if (!HeapTupleIsValid(amopTuple))
+		{
+			/*
+			 * We might get here because indxpath.c selected a binary-
+			 * compatible index.  Try again with the compatible operator.
+			 */
+			if (opno != InvalidOid)
+			{
+				opno = indexable_operator((Expr *) expr, indclass, relam,
+										  ((flag & SEL_RIGHT) != 0));
+				amopTuple = SearchSysCacheTuple(AMOPOPID,
+												ObjectIdGetDatum(indclass),
+												ObjectIdGetDatum(opno),
+												ObjectIdGetDatum(relam),
+												0);
+			}
+			if (!HeapTupleIsValid(amopTuple))
+				elog(ERROR, "index_selectivity: no amop %u %u %u",
+					 indclass, opno, relam);
+		}
+		amop = (Form_pg_amop) GETSTRUCT(amopTuple);
+
+		if (!nphack)
+		{
+			amopnpages = (float64) fmgr(amop->amopnpages,
+										(char *) opno,
+										(char *) baserelid,
+										(char *) (int) attno,
+										(char *) value,
+										(char *) flag,
+										(char *) nIndexKeys,
+										(char *) indexrelid);
+			if (PointerIsValid(amopnpages))
+				npages += *amopnpages;
+		}
+
+		amopselect = (float64) fmgr(amop->amopselect,
+									(char *) opno,
+									(char *) baserelid,
+									(char *) (int) attno,
+									(char *) value,
+									(char *) flag,
+									(char *) nIndexKeys,
+									(char *) indexrelid);
+		if (PointerIsValid(amopselect))
+		{
+			select *= *amopselect;
+			if (nphack && attno == pgindex->indkey[0])
+				fattr_select *= *amopselect;
+		}
 	}
 
-	IndexSelectivity(indexid,
-					 getrelid(relid, root->rtable),
-					 nclauses,
-					 opno_array,
-					 attno_array,
-					 value_array,
-					 flag_array,
-					 idxPages,
-					 idxSelec);
-
-	pfree(opno_array);
-	pfree(attno_array);
-	pfree(value_array);
-	pfree(flag_array);
+	/*
+	 * Estimation of npages below is hack of course, but it's better than
+	 * it was before.		- vadim 04/09/97
+	 */
+	if (nphack)
+	{
+		npages = fattr_select * indexrelation->relpages;
+		*idxPages = (long) ceil((double) npages);
+	}
+	else
+	{
+		if (nIndexKeys > 1)
+			npages = npages / (1.0 + nIndexKeys);
+		*idxPages = (long) ceil((double) (npages / nIndexKeys));
+	}
+	*idxSelec = select;
 }
 
 /*
  * restriction_selectivity
- *
- *	  NOTE: The routine is now merged with RestrictionClauseSelectivity
- *	  as defined in plancat.c
  *
  * Returns the selectivity of a specified operator.
  * This code executes registered procedures stored in the
@@ -279,7 +389,7 @@ index_selectivity(Query *root,
  *		relation OIDs or attribute numbers are 0, then the clause
  *		isn't of the form (op var const).
  */
-Cost
+Selectivity
 restriction_selectivity(Oid functionObjectId,
 						Oid operatorObjectId,
 						Oid relationObjectId,
@@ -297,28 +407,25 @@ restriction_selectivity(Oid functionObjectId,
 							(char *) constFlag,
 							NULL);
 	if (!PointerIsValid(result))
-		elog(ERROR, "RestrictionClauseSelectivity: bad pointer");
+		elog(ERROR, "restriction_selectivity: bad pointer");
 
 	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "RestrictionClauseSelectivity: bad value %lf",
-			 *result);
+		elog(ERROR, "restriction_selectivity: bad value %lf", *result);
 
-	return (Cost) *result;
+	return (Selectivity) *result;
 }
 
 /*
  * join_selectivity
- *	  Similarly, this routine is merged with JoinClauseSelectivity in
- *	  plancat.c
  *
- *	  Returns the selectivity of an operator, given the join clause
- *	  information.
+ * Returns the selectivity of an operator, given the join clause
+ * information.
  *
  * XXX The assumption in the selectivity procedures is that if the
  *		relation OIDs or attribute numbers are 0, then the clause
  *		isn't of the form (op var var).
  */
-Cost
+Selectivity
 join_selectivity(Oid functionObjectId,
 				 Oid operatorObjectId,
 				 Oid relationObjectId1,
@@ -336,13 +443,12 @@ join_selectivity(Oid functionObjectId,
 							(char *) (int) attributeNumber2,
 							NULL);
 	if (!PointerIsValid(result))
-		elog(ERROR, "JoinClauseSelectivity: bad pointer");
+		elog(ERROR, "join_selectivity: bad pointer");
 
 	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "JoinClauseSelectivity: bad value %lf",
-			 *result);
+		elog(ERROR, "join_selectivity: bad value %lf", *result);
 
-	return (Cost) *result;
+	return (Selectivity) *result;
 }
 
 /*
@@ -421,172 +527,3 @@ VersionGetParents(Oid verrelid)
 }
 
 #endif
-
-
-/*****************************************************************************
- *
- *****************************************************************************/
-
-/*
- * IndexSelectivity
- *
- *	  Calls the 'amopnpages' and 'amopselect' functions for each
- *	  AM operator when a given index (specified by 'indexrelid') is used.
- *	  The total number of pages and product of the selectivities are returned.
- *
- *	  Assumption: the attribute numbers and operator ObjectIds are in order
- *	  WRT to each other (otherwise, you have no way of knowing which
- *	  AM operator class or attribute number corresponds to which operator.
- *
- * 'nIndexKeys' is the number of qual clauses in use
- * 'varAttributeNumbers' contains attribute numbers for variables
- * 'constValues' contains the constant values
- * 'constFlags' describes how to treat the constants in each clause
- */
-static void
-IndexSelectivity(Oid indexrelid,
-				 Oid baserelid,
-				 int nIndexKeys,
-				 Oid *operatorObjectIds,
-				 AttrNumber *varAttributeNumbers,
-				 Datum *constValues,
-				 int *constFlags,
-				 float *idxPages,
-				 float *idxSelec)
-{
-	int			i,
-				n;
-	HeapTuple	indexTuple,
-				amopTuple,
-				indRel;
-	Form_pg_class indexrelation;
-	Form_pg_index index;
-	Form_pg_amop amop;
-	Oid			indclass;
-	float64data npages,
-				select;
-	float64		amopnpages,
-				amopselect;
-	Oid			relam;
-	bool		nphack = false;
-	float64data fattr_select = 1.0;
-
-	indRel = SearchSysCacheTuple(RELOID,
-								 ObjectIdGetDatum(indexrelid),
-								 0, 0, 0);
-	if (!HeapTupleIsValid(indRel))
-		elog(ERROR, "IndexSelectivity: index %u not found",
-			 indexrelid);
-	indexrelation = (Form_pg_class) GETSTRUCT(indRel);
-	relam = indexrelation->relam;
-
-	indexTuple = SearchSysCacheTuple(INDEXRELID,
-									 ObjectIdGetDatum(indexrelid),
-									 0, 0, 0);
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "IndexSelectivity: index %u not found",
-			 indexrelid);
-	index = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	/*
-	 * Hack for non-functional btree npages estimation: npages =
-	 * index_pages * selectivity_of_1st_attr_clause(s) - vadim 04/24/97
-	 */
-	if (relam == BTREE_AM_OID &&
-		varAttributeNumbers[0] != InvalidAttrNumber)
-		nphack = true;
-
-	npages = 0.0;
-	select = 1.0;
-	for (n = 0; n < nIndexKeys; n++)
-	{
-		/*
-		 * Find the AM class for this key.
-		 *
-		 * If the first attribute number is invalid then we have a functional
-		 * index, and AM class is the first one defined since functional
-		 * indices have exactly one key.
-		 */
-		indclass = (varAttributeNumbers[0] == InvalidAttrNumber) ?
-			index->indclass[0] : InvalidOid;
-		i = 0;
-		while ((i < nIndexKeys) && (indclass == InvalidOid))
-		{
-			if (varAttributeNumbers[n] == index->indkey[i])
-			{
-				indclass = index->indclass[i];
-				break;
-			}
-			i++;
-		}
-		if (!OidIsValid(indclass))
-		{
-
-			/*
-			 * Presumably this means that we are using a functional index
-			 * clause and so had no variable to match to the index key ...
-			 * if not we are in trouble.
-			 */
-			elog(NOTICE, "IndexSelectivity: no key %d in index %u",
-				 varAttributeNumbers[n], indexrelid);
-			continue;
-		}
-
-		amopTuple = SearchSysCacheTuple(AMOPOPID,
-										ObjectIdGetDatum(indclass),
-										ObjectIdGetDatum(operatorObjectIds[n]),
-										ObjectIdGetDatum(relam),
-										0);
-		if (!HeapTupleIsValid(amopTuple))
-			elog(ERROR, "IndexSelectivity: no amop %u %u %u",
-				 indclass, operatorObjectIds[n], relam);
-		amop = (Form_pg_amop) GETSTRUCT(amopTuple);
-
-		if (!nphack)
-		{
-			amopnpages = (float64) fmgr(amop->amopnpages,
-										(char *) operatorObjectIds[n],
-										(char *) baserelid,
-										(char *) (int) varAttributeNumbers[n],
-										(char *) constValues[n],
-										(char *) constFlags[n],
-										(char *) nIndexKeys,
-										(char *) indexrelid);
-			if (PointerIsValid(amopnpages))
-				npages += *amopnpages;
-		}
-
-		amopselect = (float64) fmgr(amop->amopselect,
-									(char *) operatorObjectIds[n],
-									(char *) baserelid,
-									(char *) (int) varAttributeNumbers[n],
-									(char *) constValues[n],
-									(char *) constFlags[n],
-									(char *) nIndexKeys,
-									(char *) indexrelid);
-
-		if (PointerIsValid(amopselect))
-		{
-			select *= *amopselect;
-			if (nphack && varAttributeNumbers[n] == index->indkey[0])
-				fattr_select *= *amopselect;
-		}
-	}
-
-	/*
-	 * Estimation of npages below is hack of course, but it's better than
-	 * it was before.		- vadim 04/09/97
-	 */
-	if (nphack)
-	{
-		npages = fattr_select * indexrelation->relpages;
-		*idxPages = ceil((double) npages);
-	}
-	else
-	{
-		if (nIndexKeys > 1)
-			npages = npages / (1.0 + nIndexKeys);
-		*idxPages = ceil((double) (npages / nIndexKeys));
-	}
-	*idxSelec = select;
-}

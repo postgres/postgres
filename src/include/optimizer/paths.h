@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.36 1999/11/23 20:07:06 momjian Exp $
+ * $Id: paths.h,v 1.37 2000/01/09 00:26:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@ extern RelOptInfo *make_one_rel(Query *root, List *rels);
 extern List *create_index_paths(Query *root, RelOptInfo *rel, List *indices,
 				   List *restrictinfo_list,
 				   List *joininfo_list);
+extern Oid indexable_operator(Expr *clause, Oid opclass, Oid relam,
+							  bool indexkey_on_left);
 extern List *expand_indexqual_conditions(List *indexquals);
 
 /*
@@ -65,7 +67,7 @@ extern bool pathkeys_contained_in(List *keys1, List *keys2);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 											bool indexpaths_only);
 extern List *build_index_pathkeys(Query *root, RelOptInfo *rel,
-								  RelOptInfo *index);
+								  IndexOptInfo *index);
 extern List *build_join_pathkeys(List *outer_pathkeys,
 								 List *join_rel_tlist, List *joinclauses);
 extern bool commute_pathkeys(List *pathkeys);
@@ -93,7 +95,7 @@ extern bool is_subset(List *s1, List *s2);
  * prototypes for path/prune.c
  */
 extern void merge_rels_with_same_relids(List *rel_list);
-extern void rels_set_cheapest(List *rel_list);
+extern void rels_set_cheapest(Query *root, List *rel_list);
 extern List *del_rels_all_bushy_inactive(List *old_rels);
 
 #endif	 /* PATHS_H */

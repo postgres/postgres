@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.39 1999/08/16 02:17:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.40 2000/01/09 00:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,6 @@ static List *new_join_tlist(List *tlist, int first_resdomno);
 static void build_joinrel_restrict_and_join(RelOptInfo *joinrel,
 											List *joininfo_list,
 											Relids join_relids);
-static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel,
-							 RelOptInfo *inner_rel);
 
 /*
  * make_rels_by_joins
@@ -207,19 +205,15 @@ make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 	 * The list will be flattened out in update_rels_pathlist_for_joins().
 	 */
 	joinrel->relids = lcons(outer_rel->relids, lcons(inner_rel->relids, NIL));
-	joinrel->indexed = false;
-	joinrel->pages = 0;
-	joinrel->tuples = 0;
-	joinrel->size = 0;
+	joinrel->rows = 0;
 	joinrel->width = 0;
-/*	joinrel->targetlist = NIL;*/
+	joinrel->targetlist = NIL;
 	joinrel->pathlist = NIL;
 	joinrel->cheapestpath = (Path *) NULL;
 	joinrel->pruneable = true;
-	joinrel->classlist = NULL;
-	joinrel->indexkeys = NULL;
-	joinrel->ordering = NULL;
-	joinrel->relam = InvalidOid;
+	joinrel->indexed = false;
+	joinrel->pages = 0;
+	joinrel->tuples = 0;
 	joinrel->restrictinfo = NIL;
 	joinrel->joininfo = NIL;
 	joinrel->innerjoin = NIL;
@@ -236,21 +230,22 @@ make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel.
+	 *
+	 * nconc(listCopy(x), y) is an idiom for making a new list without
+	 * changing either input list.
 	 */
 	build_joinrel_restrict_and_join(joinrel,
-									nconc(copyObject(outer_rel->joininfo),
-										  copyObject(inner_rel->joininfo)),
+									nconc(listCopy(outer_rel->joininfo),
+										  inner_rel->joininfo),
 									nconc(listCopy(outer_rel->relids),
-										  listCopy(inner_rel->relids)));
-
-	set_joinrel_size(joinrel, outer_rel, inner_rel);
+										  inner_rel->relids));
 
 	return joinrel;
 }
 
 /*
  * new_join_tlist
- *	  Builds a join relations's target list by keeping those elements that
+ *	  Builds a join relation's target list by keeping those elements that
  *	  will be in the final target list and any other elements that are still
  *	  needed for future joins.	For a target list entry to still be needed
  *	  for future joins, its 'joinlist' field must not be empty after removal
@@ -311,18 +306,16 @@ new_join_tlist(List *tlist,
  * 'joininfo_list' is a list of joininfo nodes from the relations being joined
  * 'join_relids' is a list of all base relids in the new join relation
  *
- * NB: the elements of joininfo_list have all been COPIED and so can safely
- * be destructively modified and/or inserted in the new joinrel's lists.
- * The amount of copying going on here is probably vastly excessive,
- * since we copied the underlying clauses as well...
+ * NB: Formerly, we made deep(!) copies of each input RestrictInfo to pass
+ * up to the join relation.  I believe this is no longer necessary, because
+ * RestrictInfo nodes are no longer context-dependent.  Instead, just add
+ * the original nodes to the lists belonging to the join relation.
  */
 static void
 build_joinrel_restrict_and_join(RelOptInfo *joinrel,
 								List *joininfo_list,
 								Relids join_relids)
 {
-	List	   *output_restrictinfo_list = NIL;
-	List	   *output_joininfo_list = NIL;
 	List	   *xjoininfo;
 
 	foreach(xjoininfo, joininfo_list)
@@ -341,38 +334,25 @@ build_joinrel_restrict_and_join(RelOptInfo *joinrel,
 			 * Be careful to eliminate duplicates, since we will see the
 			 * same clauses arriving from both input relations...
 			 */
-			output_restrictinfo_list =
-				LispUnion(output_restrictinfo_list,
+			joinrel->restrictinfo =
+				LispUnion(joinrel->restrictinfo,
 						  joininfo->jinfo_restrictinfo);
 		}
 		else
 		{
-			JoinInfo   *old_joininfo;
-
 			/*
-			 * There might already be a JoinInfo with the same set of
-			 * unjoined relids in output_joininfo_list; don't make a
-			 * redundant entry.
+			 * These clauses are still join clauses at this level,
+			 * so find or make the appropriate JoinInfo item for the joinrel,
+			 * and add the clauses to it (eliminating duplicates).
 			 */
-			old_joininfo = joininfo_member(new_unjoined_relids,
-										   output_joininfo_list);
-			if (old_joininfo)
-			{
-				old_joininfo->jinfo_restrictinfo =
-					LispUnion(old_joininfo->jinfo_restrictinfo,
-							  joininfo->jinfo_restrictinfo);
-			}
-			else
-			{
-				joininfo->unjoined_relids = new_unjoined_relids;
-				output_joininfo_list = lcons(joininfo,
-											 output_joininfo_list);
-			}
+			JoinInfo   *new_joininfo;
+
+			new_joininfo = find_joininfo_node(joinrel, new_unjoined_relids);
+			new_joininfo->jinfo_restrictinfo =
+				LispUnion(new_joininfo->jinfo_restrictinfo,
+						  joininfo->jinfo_restrictinfo);
 		}
 	}
-
-	joinrel->restrictinfo = output_restrictinfo_list;
-	joinrel->joininfo = output_joininfo_list;
 }
 
 /*
@@ -422,36 +402,6 @@ get_cheapest_complete_rel(List *join_rel_list)
 	}
 
 	return final_rel;
-}
-
-static void
-set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel,
-				 RelOptInfo *inner_rel)
-{
-	double		dtuples;
-	int			ntuples;
-
-	/* avoid overflow ... probably, tuple estimates in RelOptInfo
-	 * just ought to be double ...
-	 */
-	dtuples = (double) outer_rel->tuples * (double) inner_rel->tuples;
-
-	if (joinrel->restrictinfo != NULL)
-		dtuples *= product_selec(joinrel->restrictinfo);
-
-	if (dtuples >= MAXINT)		/* avoid overflow */
-		ntuples = MAXINT;
-	else
-		ntuples = (int) dtuples;
-
-	/*
-	 * I bet sizes less than 1 will screw up optimization so make the best
-	 * case 1 instead of 0	- jolly
-	 */
-	if (ntuples < 1)
-		ntuples = 1;
-
-	joinrel->tuples = ntuples;
 }
 
 /*

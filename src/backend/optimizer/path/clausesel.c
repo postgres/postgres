@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.26 1999/09/09 02:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.27 2000/01/09 00:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,102 +24,58 @@
 
 
 /****************************************************************************
- *		ROUTINES TO SET CLAUSE SELECTIVITIES
- ****************************************************************************/
-
-/*
- * set_clause_selectivities -
- *	  Sets the selectivity field for each clause in 'restrictinfo-list'
- *	  to 'new-selectivity'.  If the selectivity has already been set,
- *	  change it only if the new one is better.
- */
-void
-set_clause_selectivities(List *restrictinfo_list, Cost new_selectivity)
-{
-	List	   *rlist;
-
-	foreach(rlist, restrictinfo_list)
-	{
-		RestrictInfo *clausenode = (RestrictInfo *) lfirst(rlist);
-		Cost		cost_clause = clausenode->selectivity;
-
-		if (cost_clause <= 0 || new_selectivity < cost_clause)
-			clausenode->selectivity = new_selectivity;
-	}
-}
-
-/*
- * product_selec -
- *	  Multiplies the selectivities of each clause in 'restrictinfo-list'.
- *
- * Returns a flonum corresponding to the selectivity of 'restrictinfo-list'.
- */
-Cost
-product_selec(List *restrictinfo_list)
-{
-	Cost		result = (Cost) 1.0;
-	List	   *rlist;
-
-	foreach(rlist, restrictinfo_list)
-	{
-		result *= ((RestrictInfo *) lfirst(rlist))->selectivity;
-	}
-	return result;
-}
-
-/*
- * set_rest_relselec -
- *	  Scans through clauses on each relation and assigns a selectivity to
- *	  those clauses that haven't been assigned a selectivity by an index.
- *
- * MODIFIES: selectivities of the various rel's restrictinfo slots.
- */
-void
-set_rest_relselec(Query *root, List *rel_list)
-{
-	List	   *x;
-
-	foreach(x, rel_list)
-	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(x);
-		set_rest_selec(root, rel->restrictinfo);
-	}
-}
-
-/*
- * set_rest_selec -
- *	  Sets the selectivity fields for those clauses within a single
- *	  relation's 'restrictinfo-list' that haven't already been set.
- */
-void
-set_rest_selec(Query *root, List *restrictinfo_list)
-{
-	List	   *rlist;
-
-	foreach(rlist, restrictinfo_list)
-	{
-		RestrictInfo *clause = (RestrictInfo *) lfirst(rlist);
-
-		if (clause->selectivity <= 0)
-		{
-			clause->selectivity =
-				compute_clause_selec(root, (Node *) clause->clause);
-		}
-	}
-}
-
-/****************************************************************************
  *		ROUTINES TO COMPUTE SELECTIVITIES
  ****************************************************************************/
 
 /*
- * compute_clause_selec -
- *	  Computes the selectivity of a clause.
+ * restrictlist_selec -
+ *	  Compute the selectivity of an implicitly-ANDed list of RestrictInfo
+ *	  clauses.
+ *
+ * This is the same as clauselist_selec except for the form of the input.
  */
-Cost
+Selectivity
+restrictlist_selec(Query *root, List *restrictinfo_list)
+{
+	List	   *clauselist = get_actual_clauses(restrictinfo_list);
+	Selectivity	result;
+
+	result = clauselist_selec(root, clauselist);
+	freeList(clauselist);
+	return result;
+}
+
+/*
+ * clauselist_selec -
+ *	  Compute the selectivity of an implicitly-ANDed list of boolean
+ *	  expression clauses.
+ */
+Selectivity
+clauselist_selec(Query *root, List *clauses)
+{
+	Selectivity		s1 = 1.0;
+	List		   *clause;
+
+	/* Use the product of the selectivities of the subclauses.
+	 * XXX this is probably too optimistic, since the subclauses
+	 * are very likely not independent...
+	 */
+	foreach(clause, clauses)
+	{
+		Selectivity	s2 = compute_clause_selec(root, (Node *) lfirst(clause));
+		s1 = s1 * s2;
+	}
+	return s1;
+}
+
+/*
+ * compute_clause_selec -
+ *	  Compute the selectivity of a general boolean expression clause.
+ */
+Selectivity
 compute_clause_selec(Query *root, Node *clause)
 {
-	Cost		s1 = 1.0;		/* default for any unhandled clause type */
+	Selectivity		s1 = 1.0;	/* default for any unhandled clause type */
 
 	if (clause == NULL)
 		return s1;
@@ -131,17 +87,12 @@ compute_clause_selec(Query *root, Node *clause)
 		 * is what we have. The magic #define constants are a hack.  I
 		 * didn't want to have to do system cache look ups to find out all
 		 * of that info.
-		 *
-		 * XXX why are we using varno and varoattno?  Seems like it should
-		 * be varno/varattno or varnoold/varoattno, not mix & match...
 		 */
-		Oid			relid = getrelid(((Var *) clause)->varno,
-									 root->rtable);
-
 		s1 = restriction_selectivity(F_EQSEL,
 									 BooleanEqualOperator,
-									 relid,
-									 ((Var *) clause)->varoattno,
+									 getrelid(((Var *) clause)->varno,
+											  root->rtable),
+									 ((Var *) clause)->varattno,
 									 Int8GetDatum(true),
 									 SEL_CONSTANT | SEL_RIGHT);
 	}
@@ -163,21 +114,12 @@ compute_clause_selec(Query *root, Node *clause)
 	}
 	else if (and_clause(clause))
 	{
-		/* Use the product of the selectivities of the subclauses.
-		 * XXX this is probably too optimistic, since the subclauses
-		 * are very likely not independent...
-		 */
-		List   *arg;
-		s1 = 1.0;
-		foreach(arg, ((Expr *) clause)->args)
-		{
-			Cost		s2 = compute_clause_selec(root, (Node *) lfirst(arg));
-			s1 = s1 * s2;
-		}
+		s1 = clauselist_selec(root, ((Expr *) clause)->args);
 	}
 	else if (or_clause(clause))
 	{
-		/* Selectivities for an 'or' clause are computed as s1+s2 - s1*s2
+		/*
+		 * Selectivities for an 'or' clause are computed as s1+s2 - s1*s2
 		 * to account for the probable overlap of selected tuple sets.
 		 * XXX is this too conservative?
 		 */
@@ -185,31 +127,15 @@ compute_clause_selec(Query *root, Node *clause)
 		s1 = 0.0;
 		foreach(arg, ((Expr *) clause)->args)
 		{
-			Cost		s2 = compute_clause_selec(root, (Node *) lfirst(arg));
+			Selectivity	s2 = compute_clause_selec(root, (Node *) lfirst(arg));
 			s1 = s1 + s2 - s1 * s2;
 		}
-	}
-	else if (is_funcclause(clause))
-	{
-		/*
-		 * This is not an operator, so we guess at the selectivity. THIS
-		 * IS A HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
-		 * SELECTIVITIES THEMSELVES.	   -- JMH 7/9/92
-		 */
-		s1 = (Cost) 0.3333333;
-	}
-	else if (is_subplan(clause))
-	{
-		/*
-		 * Just for the moment! FIX ME! - vadim 02/04/98
-		 */
-		s1 = 1.0;
 	}
 	else if (is_opclause(clause))
 	{
 		if (NumRelids(clause) == 1)
 		{
-			/* The clause is not a join clause, since there is only one
+			/* The opclause is not a join clause, since there is only one
 			 * relid in the clause.  The clause selectivity will be based on
 			 * the operator selectivity and operand values.
 			 */
@@ -221,33 +147,20 @@ compute_clause_selec(Query *root, Node *clause)
 			 * selectivity of 0.5
 			 */
 			if (!oprrest)
-				s1 = (Cost) 0.5;
+				s1 = (Selectivity) 0.5;
 			else
 			{
 				int			relidx;
 				AttrNumber	attno;
 				Datum		constval;
 				int			flag;
+				Oid			reloid;
 
 				get_relattval(clause, 0, &relidx, &attno, &constval, &flag);
-				if (relidx && attno)
-					s1 = (Cost) restriction_selectivity(oprrest,
-														opno,
-														getrelid(relidx,
-																 root->rtable),
-														attno,
-														constval,
-														flag);
-				else
-				{
-					/*
-					 * attno can be 0 if the clause had a function in it,
-					 * i.e.   WHERE myFunc(f) = 10
-					 *
-					 * XXX should be FIXED to use function selectivity
-					 */
-					s1 = (Cost) (0.5);
-				}
+				reloid = relidx ? getrelid(relidx, root->rtable) : InvalidOid;
+				s1 = restriction_selectivity(oprrest, opno,
+											 reloid, attno,
+											 constval, flag);
 			}
 		}
 		else
@@ -265,29 +178,40 @@ compute_clause_selec(Query *root, Node *clause)
 			 * selectivity of 0.5
 			 */
 			if (!oprjoin)
-				s1 = (Cost) (0.5);
+				s1 = (Selectivity) 0.5;
 			else
 			{
 				int			relid1,
 							relid2;
 				AttrNumber	attno1,
 							attno2;
+				Oid			reloid1,
+							reloid2;
 
 				get_rels_atts(clause, &relid1, &attno1, &relid2, &attno2);
-				if (relid1 && relid2 && attno1 && attno2)
-
-					s1 = (Cost) join_selectivity(oprjoin,
-												 opno,
-												 getrelid(relid1,
-														  root->rtable),
-												 attno1,
-												 getrelid(relid2,
-														  root->rtable),
-												 attno2);
-				else			/* XXX more code for function selectivity? */
-					s1 = (Cost) (0.5);
+				reloid1 = relid1 ? getrelid(relid1, root->rtable) : InvalidOid;
+				reloid2 = relid2 ? getrelid(relid2, root->rtable) : InvalidOid;
+				s1 = join_selectivity(oprjoin, opno,
+									  reloid1, attno1,
+									  reloid2, attno2);
 			}
 		}
+	}
+	else if (is_funcclause(clause))
+	{
+		/*
+		 * This is not an operator, so we guess at the selectivity. THIS
+		 * IS A HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
+		 * SELECTIVITIES THEMSELVES.	   -- JMH 7/9/92
+		 */
+		s1 = (Selectivity) 0.3333333;
+	}
+	else if (is_subplan(clause))
+	{
+		/*
+		 * Just for the moment! FIX ME! - vadim 02/04/98
+		 */
+		s1 = 1.0;
 	}
 
 	return s1;

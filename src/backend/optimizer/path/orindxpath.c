@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.32 1999/08/16 02:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.33 2000/01/09 00:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,11 @@ static void best_or_subclause_indices(Query *root, RelOptInfo *rel,
 									  List *subclauses, List *indices,
 									  List **indexquals,
 									  List **indexids,
-									  Cost *cost, Cost *selec);
+									  Cost *cost);
 static void best_or_subclause_index(Query *root, RelOptInfo *rel,
 									List *indexqual, List *indices,
-									int *retIndexid,
-									Cost *retCost, Cost *retSelec);
+									Oid *retIndexid,
+									Cost *retCost);
 
 
 /*
@@ -89,7 +89,6 @@ create_or_index_paths(Query *root,
 				List	   *indexquals;
 				List	   *indexids;
 				Cost		cost;
-				Cost		selec;
 
 				best_or_subclause_indices(root,
 										  rel,
@@ -97,8 +96,7 @@ create_or_index_paths(Query *root,
 										  clausenode->subclauseindices,
 										  &indexquals,
 										  &indexids,
-										  &cost,
-										  &selec);
+										  &cost);
 
 				pathnode->path.pathtype = T_IndexScan;
 				pathnode->path.parent = rel;
@@ -114,7 +112,6 @@ create_or_index_paths(Query *root,
 				pathnode->indexqual = indexquals;
 				pathnode->joinrelids = NIL;	/* no join clauses here */
 				pathnode->path.path_cost = cost;
-				clausenode->selectivity = (Cost) selec;
 
 				path_list = lappend(path_list, pathnode);
 			}
@@ -141,13 +138,12 @@ create_or_index_paths(Query *root,
  *
  * 'rel' is the node of the relation on which the indexes are defined
  * 'subclauses' are the subclauses of the 'or' clause
- * 'indices' is a list of sublists of the index nodes that matched each
- *		subclause of the 'or' clause
+ * 'indices' is a list of sublists of the IndexOptInfo nodes that matched
+ *		each subclause of the 'or' clause
  * '*indexquals' gets the constructed indexquals for the path (a list
  *		of sublists of clauses, one sublist per scan of the base rel)
- * '*indexids' gets a list of the index IDs for each scan of the rel
+ * '*indexids' gets a list of the index OIDs for each scan of the rel
  * '*cost' gets the total cost of the path
- * '*selec' gets the total selectivity of the path.
  */
 static void
 best_or_subclause_indices(Query *root,
@@ -156,23 +152,20 @@ best_or_subclause_indices(Query *root,
 						  List *indices,
 						  List **indexquals,	/* return value */
 						  List **indexids,		/* return value */
-						  Cost *cost,			/* return value */
-						  Cost *selec)			/* return value */
+						  Cost *cost)			/* return value */
 {
 	List	   *slist;
 
 	*indexquals = NIL;
 	*indexids = NIL;
 	*cost = (Cost) 0.0;
-	*selec = (Cost) 0.0;
 
 	foreach(slist, subclauses)
 	{
 		Expr	   *subclause = lfirst(slist);
 		List	   *indexqual;
-		int			best_indexid;
+		Oid			best_indexid;
 		Cost		best_cost;
-		Cost		best_selec;
 
 		/* Convert this 'or' subclause to an indexqual list */
 		indexqual = make_ands_implicit(subclause);
@@ -180,18 +173,13 @@ best_or_subclause_indices(Query *root,
 		indexqual = expand_indexqual_conditions(indexqual);
 
 		best_or_subclause_index(root, rel, indexqual, lfirst(indices),
-								&best_indexid, &best_cost, &best_selec);
+								&best_indexid, &best_cost);
+
+		Assert(best_indexid != InvalidOid);
 
 		*indexquals = lappend(*indexquals, indexqual);
 		*indexids = lappendi(*indexids, best_indexid);
 		*cost += best_cost;
-		/* We approximate the selectivity as the sum of the clause
-		 * selectivities (but not more than 1).
-		 * XXX This is too pessimistic, isn't it?
-		 */
-		*selec += best_selec;
-		if (*selec > (Cost) 1.0)
-			*selec = (Cost) 1.0;
 
 		indices = lnext(indices);
 	}
@@ -205,59 +193,50 @@ best_or_subclause_indices(Query *root,
  *
  * 'rel' is the node of the relation on which the index is defined
  * 'indexqual' is the indexqual list derived from the subclause
- * 'indices' is a list of index nodes that match the subclause
- * '*retIndexid' gets the ID of the best index
+ * 'indices' is a list of IndexOptInfo nodes that match the subclause
+ * '*retIndexid' gets the OID of the best index
  * '*retCost' gets the cost of a scan with that index
- * '*retSelec' gets the selectivity of that scan
  */
 static void
 best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
 						List *indexqual,
 						List *indices,
-						int *retIndexid,		/* return value */
-						Cost *retCost,	/* return value */
-						Cost *retSelec) /* return value */
+						Oid *retIndexid,		/* return value */
+						Cost *retCost)			/* return value */
 {
 	bool		first_run = true;
 	List	   *ilist;
 
 	/* if we don't match anything, return zeros */
-	*retIndexid = 0;
-	*retCost = (Cost) 0.0;
-	*retSelec = (Cost) 0.0;
+	*retIndexid = InvalidOid;
+	*retCost = 0.0;
 
 	foreach(ilist, indices)
 	{
-		RelOptInfo *index = (RelOptInfo *) lfirst(ilist);
-		Oid			indexid = (Oid) lfirsti(index->relids);
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
+		long		npages;
+		Selectivity	selec;
 		Cost		subcost;
-		float		npages;
-		float		selec;
+
+		Assert(IsA(index, IndexOptInfo));
 
 		index_selectivity(root,
-						  lfirsti(rel->relids),
-						  indexid,
+						  rel,
+						  index,
 						  indexqual,
 						  &npages,
 						  &selec);
 
-		subcost = cost_index(indexid,
-							 (int) npages,
-							 (Cost) selec,
-							 rel->pages,
-							 rel->tuples,
-							 index->pages,
-							 index->tuples,
+		subcost = cost_index(rel, index,
+							 npages, selec,
 							 false);
 
 		if (first_run || subcost < *retCost)
 		{
-			*retIndexid = indexid;
+			*retIndexid = index->indexoid;
 			*retCost = subcost;
-			*retSelec = selec;
 			first_run = false;
 		}
 	}
-
 }

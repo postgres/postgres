@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.54 1999/12/24 06:43:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.55 2000/01/09 00:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,6 +303,17 @@ _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 }
 
 static bool
+_equalIndexOptInfo(IndexOptInfo *a, IndexOptInfo *b)
+{
+	/* We treat IndexOptInfos as equal if they refer to the same index.
+	 * Is this sufficient?
+	 */
+	if (a->indexoid != b->indexoid)
+		return false;
+	return true;
+}
+
+static bool
 _equalPathKeyItem(PathKeyItem *a, PathKeyItem *b)
 {
 	if (a->sortop != b->sortop)
@@ -357,8 +368,6 @@ static bool
 _equalJoinPath(JoinPath *a, JoinPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
-		return false;
-	if (!equal(a->pathinfo, b->pathinfo))
 		return false;
 	if (!equal(a->outerjoinpath, b->outerjoinpath))
 		return false;
@@ -469,7 +478,6 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	if (!equal(a->clause, b->clause))
 		return false;
-	/* do not check selectivity because of roundoff error worries */
 	if (!equal(a->subclauseindices, b->subclauseindices))
 		return false;
 	if (a->mergejoinoperator != b->mergejoinoperator)
@@ -791,6 +799,9 @@ equal(void *a, void *b)
 			break;
 		case T_RelOptInfo:
 			retval = _equalRelOptInfo(a, b);
+			break;
+		case T_IndexOptInfo:
+			retval = _equalIndexOptInfo(a, b);
 			break;
 		case T_PathKeyItem:
 			retval = _equalPathKeyItem(a, b);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.19 1999/08/16 02:17:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.20 2000/01/09 00:26:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,21 +37,15 @@ get_base_rel(Query *root, int relid)
 	{
 		rel = makeNode(RelOptInfo);
 		rel->relids = relids;
-		rel->indexed = false;
-		rel->pages = 0;
-		rel->tuples = 0;
-		rel->size = 0;
+		rel->rows = 0;
 		rel->width = 0;
 		rel->targetlist = NIL;
 		rel->pathlist = NIL;
 		rel->cheapestpath = (Path *) NULL;
 		rel->pruneable = true;
-		rel->classlist = NULL;
-		rel->indexkeys = NULL;
-		rel->ordering = NULL;
-		rel->relam = InvalidOid;
-		rel->indproc = InvalidOid;
-		rel->indpred = NIL;
+		rel->indexed = false;
+		rel->pages = 0;
+		rel->tuples = 0;
 		rel->restrictinfo = NIL;
 		rel->joininfo = NIL;
 		rel->innerjoin = NIL;

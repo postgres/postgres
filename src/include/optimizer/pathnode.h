@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.22 1999/11/23 20:07:06 momjian Exp $
+ * $Id: pathnode.h,v 1.23 2000/01/09 00:26:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,26 +21,27 @@
 extern bool path_is_cheaper(Path *path1, Path *path2);
 extern Path *set_cheapest(RelOptInfo *parent_rel, List *pathlist);
 extern List *add_pathlist(RelOptInfo *parent_rel, List *old_paths,
-			  List *new_paths);
+						  List *new_paths);
 
 extern Path *create_seqscan_path(RelOptInfo *rel);
-
 extern IndexPath *create_index_path(Query *root, RelOptInfo *rel,
-		RelOptInfo *index, List *restriction_clauses);
+									IndexOptInfo *index,
+									List *restriction_clauses);
 extern TidPath *create_tidscan_path(RelOptInfo *rel, List *tideval);
 
 extern NestPath *create_nestloop_path(RelOptInfo *joinrel,
-		RelOptInfo *outer_rel, Path *outer_path, Path *inner_path,
-		List *pathkeys);
+									  Path *outer_path, Path *inner_path,
+									  List *pathkeys);
 
-extern MergePath *create_mergejoin_path(RelOptInfo *joinrel, int outersize,
-		int innersize, int outerwidth, int innerwidth, Path *outer_path,
-		Path *inner_path, List *pathkeys,
-		List *mergeclauses, List *outersortkeys, List *innersortkeys);
+extern MergePath *create_mergejoin_path(RelOptInfo *joinrel, Path *outer_path,
+										Path *inner_path, List *pathkeys,
+										List *mergeclauses,
+										List *outersortkeys,
+										List *innersortkeys);
 
-extern HashPath *create_hashjoin_path(RelOptInfo *joinrel, int outersize,
-		int innersize, int outerwidth, int innerwidth, Path *outer_path,
-		Path *inner_path, List *hashclauses, Cost innerdisbursion);
+extern HashPath *create_hashjoin_path(RelOptInfo *joinrel, Path *outer_path,
+									  Path *inner_path, List *hashclauses,
+									  Selectivity innerdisbursion);
 
 /*
  * prototypes for rel.c

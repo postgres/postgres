@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.77 1999/11/23 20:06:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.78 2000/01/09 00:26:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
+#include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
@@ -31,12 +32,12 @@
 
 static List *switch_outer(List *clauses);
 static int set_tlist_sort_info(List *tlist, List *pathkeys);
-static Scan *create_scan_node(Path *best_path, List *tlist);
-static Join *create_join_node(JoinPath *best_path, List *tlist);
+static Scan *create_scan_node(Query *root, Path *best_path, List *tlist);
+static Join *create_join_node(Query *root, JoinPath *best_path, List *tlist);
 static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
 					List *scan_clauses);
-static IndexScan *create_indexscan_node(IndexPath *best_path, List *tlist,
-					  List *scan_clauses);
+static IndexScan *create_indexscan_node(Query *root, IndexPath *best_path,
+										List *tlist, List *scan_clauses);
 static TidScan *create_tidscan_node(TidPath *best_path, List *tlist,
 					  List *scan_clauses); 
 static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
@@ -49,10 +50,11 @@ static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
-static List *fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
+static List *fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 								  Form_pg_index index);
-static Node *fix_indxqual_operand(Node *node, IndexPath *index_path,
-								  Form_pg_index index);
+static Node *fix_indxqual_operand(Node *node, int baserelid,
+								  Form_pg_index index,
+								  Oid *opclass);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
@@ -66,7 +68,8 @@ static MergeJoin *make_mergejoin(List *tlist, List *qpqual,
 			   List *mergeclauses, Plan *righttree, Plan *lefttree);
 static Material *make_material(List *tlist, Oid nonameid, Plan *lefttree,
 			  int keycount);
-static void copy_costsize(Plan *dest, Plan *src);
+static void copy_path_costsize(Plan *dest, Path *src);
+static void copy_plan_costsize(Plan *dest, Plan *src);
 
 /*
  * create_plan
@@ -84,45 +87,30 @@ static void copy_costsize(Plan *dest, Plan *src);
  *	  Returns the access plan.
  */
 Plan *
-create_plan(Path *best_path)
+create_plan(Query *root, Path *best_path)
 {
-	List	   *tlist;
+	List	   *tlist = best_path->parent->targetlist;
 	Plan	   *plan_node = (Plan *) NULL;
-	RelOptInfo *parent_rel;
-	int			size;
-	int			width;
-	int			pages;
-	int			tuples;
-
-	parent_rel = best_path->parent;
-	tlist = parent_rel->targetlist;
-	size = parent_rel->size;
-	width = parent_rel->width;
-	pages = parent_rel->pages;
-	tuples = parent_rel->tuples;
 
 	switch (best_path->pathtype)
 	{
 		case T_IndexScan:
 		case T_SeqScan:
 		case T_TidScan:
-			plan_node = (Plan *) create_scan_node(best_path, tlist);
+			plan_node = (Plan *) create_scan_node(root, best_path, tlist);
 			break;
 		case T_HashJoin:
 		case T_MergeJoin:
 		case T_NestLoop:
-			plan_node = (Plan *) create_join_node((JoinPath *) best_path, tlist);
+			plan_node = (Plan *) create_join_node(root,
+												  (JoinPath *) best_path,
+												  tlist);
 			break;
 		default:
-			/* do nothing */
+			elog(ERROR, "create_plan: unknown pathtype %d",
+				 best_path->pathtype);
 			break;
 	}
-
-	plan_node->plan_size = size;
-	plan_node->plan_width = width;
-	if (pages == 0)
-		pages = 1;
-	plan_node->plan_tupperpage = tuples / pages;
 
 #ifdef NOT_USED					/* fix xfunc */
 	/* sort clauses by cost/(1-selectivity) -- JMH 2/26/92 */
@@ -149,9 +137,8 @@ create_plan(Path *best_path)
  *	 Returns the scan node.
  */
 static Scan *
-create_scan_node(Path *best_path, List *tlist)
+create_scan_node(Query *root, Path *best_path, List *tlist)
 {
-
 	Scan	   *node = NULL;
 	List	   *scan_clauses;
 
@@ -168,7 +155,8 @@ create_scan_node(Path *best_path, List *tlist)
 			break;
 
 		case T_IndexScan:
-			node = (Scan *) create_indexscan_node((IndexPath *) best_path,
+			node = (Scan *) create_indexscan_node(root,
+												  (IndexPath *) best_path,
 												  tlist,
 												  scan_clauses);
 			break;
@@ -199,7 +187,7 @@ create_scan_node(Path *best_path, List *tlist)
  *	  Returns the join node.
  */
 static Join *
-create_join_node(JoinPath *best_path, List *tlist)
+create_join_node(Query *root, JoinPath *best_path, List *tlist)
 {
 	Plan	   *outer_node;
 	List	   *outer_tlist;
@@ -208,13 +196,13 @@ create_join_node(JoinPath *best_path, List *tlist)
 	List	   *clauses;
 	Join	   *retval = NULL;
 
-	outer_node = create_plan((Path *) best_path->outerjoinpath);
+	outer_node = create_plan(root, best_path->outerjoinpath);
 	outer_tlist = outer_node->targetlist;
 
-	inner_node = create_plan((Path *) best_path->innerjoinpath);
+	inner_node = create_plan(root, best_path->innerjoinpath);
 	inner_tlist = inner_node->targetlist;
 
-	clauses = get_actual_clauses(best_path->pathinfo);
+	clauses = get_actual_clauses(best_path->path.parent->restrictinfo);
 
 	switch (best_path->path.pathtype)
 	{
@@ -280,20 +268,19 @@ create_join_node(JoinPath *best_path, List *tlist)
 static SeqScan *
 create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 {
-	SeqScan    *scan_node = (SeqScan *) NULL;
-	Index		scan_relid = -1;
-	List	   *temp;
+	SeqScan    *scan_node;
+	Index		scan_relid;
 
-	temp = best_path->parent->relids;
 	/* there should be exactly one base rel involved... */
-	Assert(length(temp) == 1);
-	scan_relid = (Index) lfirsti(temp);
+	Assert(length(best_path->parent->relids) == 1);
+
+	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
 	scan_node = make_seqscan(tlist,
 							 scan_clauses,
 							 scan_relid);
 
-	scan_node->plan.cost = best_path->path_cost;
+	copy_path_costsize(&scan_node->plan, best_path);
 
 	return scan_node;
 }
@@ -312,7 +299,8 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
  * scan.
  */
 static IndexScan *
-create_indexscan_node(IndexPath *best_path,
+create_indexscan_node(Query *root,
+					  IndexPath *best_path,
 					  List *tlist,
 					  List *scan_clauses)
 {
@@ -322,11 +310,12 @@ create_indexscan_node(IndexPath *best_path,
 	List	   *ixid;
 	IndexScan  *scan_node;
 	bool		lossy = false;
+	double		plan_rows;
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
 
-	/* check and see if any of the indices are lossy */
+	/* check to see if any of the indices are lossy */
 	foreach(ixid, best_path->indexid)
 	{
 		HeapTuple	indexTuple;
@@ -354,44 +343,72 @@ create_indexscan_node(IndexPath *best_path,
 	 *
 	 * Since the indexquals were generated from the restriction clauses
 	 * given by scan_clauses, there will normally be some duplications
-	 * between the lists.  Get rid of the duplicates, then add back if lossy.
+	 * between the lists.  We get rid of the duplicates, then add back
+	 * if lossy.
+	 *
+	 * If this indexscan is a nestloop-join inner indexscan (as indicated
+	 * by having nonempty joinrelids), then it uses indexqual conditions
+	 * that are not part of the relation's restriction clauses.  The rows
+	 * estimate stored in the relation's RelOptInfo will be an overestimate
+	 * because it did not take these extra conditions into account.  So,
+	 * in this case we recompute the selectivity of the whole scan ---
+	 * considering both indexqual and qpqual --- rather than using the
+	 * RelOptInfo's rows value.  Since clausesel.c assumes it's working on
+	 * minimized (no duplicates) expressions, we have to do that while we
+	 * have the duplicate-free qpqual available.
 	 */
+	plan_rows = best_path->path.parent->rows; /* OK unless nestloop inner */
+
 	if (length(indxqual) > 1)
 	{
 		/*
 		 * Build an expression representation of the indexqual, expanding
 		 * the implicit OR and AND semantics of the first- and second-level
-		 * lists.  XXX Is it really necessary to do a deep copy here?
+		 * lists.
 		 */
 		List	   *orclauses = NIL;
 		List	   *orclause;
 		Expr	   *indxqual_expr;
 
 		foreach(orclause, indxqual)
-		{
 			orclauses = lappend(orclauses,
-								make_ands_explicit((List *) copyObject(lfirst(orclause))));
-		}
+								make_ands_explicit(lfirst(orclause)));
 		indxqual_expr = make_orclause(orclauses);
 
-		/* this set_difference is almost certainly a waste of time... */
 		qpqual = set_difference(scan_clauses,
 								lcons(indxqual_expr, NIL));
 
+		if (best_path->joinrelids)
+		{
+			/* recompute output row estimate using all available quals */
+			plan_rows = best_path->path.parent->tuples *
+				clauselist_selec(root, lcons(indxqual_expr, qpqual));
+		}
+
 		if (lossy)
-			qpqual = lappend(qpqual, indxqual_expr);
+			qpqual = lappend(qpqual, copyObject(indxqual_expr));
 	}
 	else if (indxqual != NIL)
 	{
 		/* Here, we can simply treat the first sublist as an independent
 		 * set of qual expressions, since there is no top-level OR behavior.
 		 */
-		qpqual = set_difference(scan_clauses, lfirst(indxqual));
+		List	   *indxqual_list = lfirst(indxqual);
+
+		qpqual = set_difference(scan_clauses, indxqual_list);
+
+		if (best_path->joinrelids)
+		{
+			/* recompute output row estimate using all available quals */
+			plan_rows = best_path->path.parent->tuples *
+				clauselist_selec(root, nconc(listCopy(indxqual_list), qpqual));
+		}
+
 		if (lossy)
-			qpqual = nconc(qpqual, (List *) copyObject(lfirst(indxqual)));
+			qpqual = nconc(qpqual, (List *) copyObject(indxqual_list));
 	}
 	else
-		qpqual = NIL;
+		qpqual = scan_clauses;
 
 	/* The executor needs a copy with the indexkey on the left of each clause
 	 * and with index attr numbers substituted for table ones.
@@ -405,7 +422,8 @@ create_indexscan_node(IndexPath *best_path,
 							   fixed_indxqual,
 							   indxqual);
 
-	scan_node->scan.plan.cost = best_path->path.path_cost;
+	copy_path_costsize(&scan_node->scan.plan, &best_path->path);
+	scan_node->scan.plan.plan_rows = plan_rows;
 
 	return scan_node;
 }
@@ -416,11 +434,11 @@ make_tidscan(List *qptlist,
 			Index scanrelid,	
 			List *tideval)
 {
-        TidScan	*node = makeNode(TidScan);
+	TidScan	*node = makeNode(TidScan);
 	Plan	*plan = &node->scan.plan;
 
 	plan->cost = 0;
-	plan->plan_size = 0;
+	plan->plan_rows = 0;
 	plan->plan_width = 0;
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
@@ -428,7 +446,7 @@ make_tidscan(List *qptlist,
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
-	node->tideval = copyObject(tideval);
+	node->tideval = copyObject(tideval); /* XXX do we really need a copy? */
 	node->needRescan = false;
 	node->scan.scanstate = (CommonScanState *) NULL;
 
@@ -443,25 +461,23 @@ make_tidscan(List *qptlist,
 static TidScan *
 create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
 {
-	TidScan	*scan_node = (TidScan *) NULL;
-	Index	scan_relid = -1;
-	List	*temp;
+	TidScan	*scan_node;
+	Index	scan_relid;
 
-	temp = best_path->path.parent->relids;
-	if (temp == NULL)
-		elog(ERROR, "scanrelid is empty");
-	else if (length(temp) != 1)
-		return scan_node;
-	else 
-		scan_relid = (Index) lfirsti(temp);
+	/* there should be exactly one base rel involved... */
+	Assert(length(best_path->path.parent->relids) == 1);
+
+	scan_relid = (Index) lfirsti(best_path->path.parent->relids);
+
 	scan_node = make_tidscan(tlist,
-				 scan_clauses,
-				 scan_relid,
-				 best_path->tideval);
+							 scan_clauses,
+							 scan_relid,
+							 best_path->tideval);
 
 	if (best_path->unjoined_relids)
 		scan_node->needRescan = true; 
-	scan_node->scan.plan.cost = best_path->path.path_cost;
+
+	copy_path_costsize(&scan_node->scan.plan, &best_path->path);
 
 	return scan_node;
 }
@@ -581,7 +597,7 @@ create_nestloop_node(NestPath *best_path,
 							  outer_node,
 							  inner_node);
 
-	join_node->join.cost = best_path->path.path_cost;
+	copy_path_costsize(&join_node->join, &best_path->path);
 
 	return join_node;
 }
@@ -639,7 +655,7 @@ create_mergejoin_node(MergePath *best_path,
 							   inner_node,
 							   outer_node);
 
-	join_node->join.cost = best_path->jpath.path.path_cost;
+	copy_path_costsize(&join_node->join, &best_path->jpath.path);
 
 	return join_node;
 }
@@ -699,7 +715,7 @@ create_hashjoin_node(HashPath *best_path,
 							  outer_node,
 							  (Plan *) hash_node);
 
-	join_node->join.cost = best_path->jpath.path.path_cost;
+	copy_path_costsize(&join_node->join, &best_path->jpath.path);
 
 	return join_node;
 }
@@ -713,10 +729,18 @@ create_hashjoin_node(HashPath *best_path,
 
 /*
  * fix_indxqual_references
- *	  Adjust indexqual clauses to refer to index attributes instead of the
- *	  attributes of the original relation.  Also, commute clauses if needed
- *	  to put the indexkey on the left.  (Someday the executor might not need
- *	  that, but for now it does.)
+ *	  Adjust indexqual clauses to the form the executor's indexqual
+ *	  machinery needs.
+ *
+ * We have three tasks here:
+ *	* Var nodes representing index keys must have varattno equal to the
+ *	  index's attribute number, not the attribute number in the original rel.
+ *	* indxpath.c may have selected an index that is binary-compatible with
+ *	  the actual expression operator, but not the same; we must replace the
+ *	  expression's operator with the binary-compatible equivalent operator
+ *	  that the index will recognize.
+ *	* If the index key is on the right, commute the clause to put it on the
+ *	  left.  (Someday the executor might not need this, but for now it does.)
  *
  * This code used to be entirely bogus for multi-index scans.  Now it keeps
  * track of which index applies to each subgroup of index qual clauses...
@@ -729,6 +753,7 @@ static List *
 fix_indxqual_references(List *indexquals, IndexPath *index_path)
 {
 	List	   *fixed_quals = NIL;
+	int			baserelid = lfirsti(index_path->path.parent->relids);
 	List	   *indexids = index_path->indexid;
 	List	   *i;
 
@@ -737,19 +762,31 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
 		List	   *indexqual = lfirst(i);
 		Oid			indexid = lfirsti(indexids);
 		HeapTuple	indexTuple;
+		Oid			relam;
 		Form_pg_index index;
 
+		/* Get the relam from the index's pg_class entry */
+		indexTuple = SearchSysCacheTuple(RELOID,
+										 ObjectIdGetDatum(indexid),
+										 0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "fix_indxqual_references: index %u not found in pg_class",
+				 indexid);
+		relam = ((Form_pg_class) GETSTRUCT(indexTuple))->relam;
+
+		/* Need the index's pg_index entry for other stuff */
 		indexTuple = SearchSysCacheTuple(INDEXRELID,
 										 ObjectIdGetDatum(indexid),
 										 0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "fix_indxqual_references: index %u not found",
+			elog(ERROR, "fix_indxqual_references: index %u not found in pg_index",
 				 indexid);
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		fixed_quals = lappend(fixed_quals,
 							  fix_indxqual_sublist(indexqual,
-												   index_path,
+												   baserelid,
+												   relam,
 												   index));
 
 		indexids = lnext(indexids);
@@ -761,11 +798,11 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
  * Fix the sublist of indexquals to be used in a particular scan.
  *
  * For each qual clause, commute if needed to put the indexkey operand on the
- * left, and then change its varno.  We do not need to change the other side
- * of the clause.
+ * left, and then change its varno.  (We do not need to change the other side
+ * of the clause.)  Also change the operator if necessary.
  */
 static List *
-fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
+fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 					 Form_pg_index index)
 {
 	List	   *fixed_qual = NIL;
@@ -779,6 +816,8 @@ fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
 		Datum		constval;
 		int			flag;
 		Expr	   *newclause;
+		Oid			opclass,
+					newopno;
 
 		if (!is_opclause((Node *) clause) ||
 			length(clause->args) != 2)
@@ -788,8 +827,7 @@ fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
 		 *
 		 * get_relattval sets flag&SEL_RIGHT if the indexkey is on the LEFT.
 		 */
-		get_relattval((Node *) clause,
-					  lfirsti(index_path->path.parent->relids),
+		get_relattval((Node *) clause, baserelid,
 					  &relid, &attno, &constval, &flag);
 
 		/* Copy enough structure to allow commuting and replacing an operand
@@ -802,10 +840,27 @@ fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
 		if ((flag & SEL_RIGHT) == 0)
 			CommuteClause(newclause);
 
-		/* Now, change the indexkey operand as needed. */
+		/* Now, determine which index attribute this is,
+		 * change the indexkey operand as needed,
+		 * and get the index opclass.
+		 */
 		lfirst(newclause->args) = fix_indxqual_operand(lfirst(newclause->args),
-													   index_path,
-													   index);
+													   baserelid,
+													   index,
+													   &opclass);
+
+		/* Substitute the appropriate operator if the expression operator
+		 * is merely binary-compatible with the index.  This shouldn't fail,
+		 * since indxpath.c found it before...
+		 */
+		newopno = indexable_operator(newclause, opclass, relam, true);
+		if (newopno == InvalidOid)
+			elog(ERROR, "fix_indxqual_sublist: failed to find substitute op");
+		if (newopno != ((Oper *) newclause->oper)->opno)
+		{
+			newclause->oper = (Node *) copyObject(newclause->oper);
+			((Oper *) newclause->oper)->opno = newopno;
+		}
 
 		fixed_qual = lappend(fixed_qual, newclause);
 	}
@@ -813,12 +868,12 @@ fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
 }
 
 static Node *
-fix_indxqual_operand(Node *node, IndexPath *index_path,
-					 Form_pg_index index)
+fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
+					 Oid *opclass)
 {
 	if (IsA(node, Var))
 	{
-		if (((Var *) node)->varno == lfirsti(index_path->path.parent->relids))
+		if (((Var *) node)->varno == baserelid)
 		{
 			int			varatt = ((Var *) node)->varattno;
 			int			pos;
@@ -829,6 +884,7 @@ fix_indxqual_operand(Node *node, IndexPath *index_path,
 				{
 					Node	   *newnode = copyObject(node);
 					((Var *) newnode)->varattno = pos + 1;
+					*opclass = index->indclass[pos];
 					return newnode;
 				}
 			}
@@ -850,6 +906,9 @@ fix_indxqual_operand(Node *node, IndexPath *index_path,
 	 * think --- suspect this issue if a join clause involving a function call
 	 * misbehaves...)
 	 */
+
+	/* indclass[0] is the only class of a functional index */
+	*opclass = index->indclass[0];
 
 	/* return the unmodified node */
 	return node;
@@ -964,23 +1023,44 @@ set_tlist_sort_info(List *tlist, List *pathkeys)
 }
 
 /*
+ * Copy cost and size info from a Path node to the Plan node created from it.
+ * The executor won't use this info, but it's needed by EXPLAIN.
+ */
+static void
+copy_path_costsize(Plan *dest, Path *src)
+{
+	if (src)
+	{
+		dest->cost = src->path_cost;
+		dest->plan_rows = src->parent->rows;
+		dest->plan_width = src->parent->width;
+	}
+	else
+	{
+		dest->cost = 0;
+		dest->plan_rows = 0;
+		dest->plan_width = 0;
+	}
+}
+
+/*
  * Copy cost and size info from a lower plan node to an inserted node.
  * This is not critical, since the decisions have already been made,
  * but it helps produce more reasonable-looking EXPLAIN output.
  */
 static void
-copy_costsize(Plan *dest, Plan *src)
+copy_plan_costsize(Plan *dest, Plan *src)
 {
 	if (src)
 	{
 		dest->cost = src->cost;
-		dest->plan_size = src->plan_size;
+		dest->plan_rows = src->plan_rows;
 		dest->plan_width = src->plan_width;
 	}
 	else
 	{
 		dest->cost = 0;
-		dest->plan_size = 0;
+		dest->plan_rows = 0;
 		dest->plan_width = 0;
 	}
 }
@@ -1042,7 +1122,7 @@ make_seqscan(List *qptlist,
 	SeqScan    *node = makeNode(SeqScan);
 	Plan	   *plan = &node->plan;
 
-	copy_costsize(plan, NULL);
+	copy_plan_costsize(plan, NULL);
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1065,7 +1145,7 @@ make_indexscan(List *qptlist,
 	IndexScan  *node = makeNode(IndexScan);
 	Plan	   *plan = &node->scan.plan;
 
-	copy_costsize(plan, NULL);
+	copy_plan_costsize(plan, NULL);
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1140,7 +1220,7 @@ make_hash(List *tlist, Var *hashkey, Plan *lefttree)
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
 
-	copy_costsize(plan, lefttree);
+	copy_plan_costsize(plan, lefttree);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NULL;
@@ -1183,8 +1263,8 @@ make_sort(List *tlist, Oid nonameid, Plan *lefttree, int keycount)
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
 
-	copy_costsize(plan, lefttree);
-	plan->cost += cost_sort(NULL, plan->plan_size, plan->plan_width);
+	copy_plan_costsize(plan, lefttree);
+	plan->cost += cost_sort(NIL, plan->plan_rows, plan->plan_width);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1205,7 +1285,7 @@ make_material(List *tlist,
 	Material   *node = makeNode(Material);
 	Plan	   *plan = &node->plan;
 
-	copy_costsize(plan, lefttree);
+	copy_plan_costsize(plan, lefttree);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1222,7 +1302,7 @@ make_agg(List *tlist, Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 
-	copy_costsize(&node->plan, lefttree);
+	copy_plan_costsize(&node->plan, lefttree);
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
@@ -1241,7 +1321,7 @@ make_group(List *tlist,
 {
 	Group	   *node = makeNode(Group);
 
-	copy_costsize(&node->plan, lefttree);
+	copy_plan_costsize(&node->plan, lefttree);
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
@@ -1266,7 +1346,7 @@ make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 	Unique	   *node = makeNode(Unique);
 	Plan	   *plan = &node->plan;
 
-	copy_costsize(plan, lefttree);
+	copy_plan_costsize(plan, lefttree);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1292,7 +1372,7 @@ make_result(List *tlist,
 #ifdef NOT_USED
 	tlist = generate_fjoin(tlist);
 #endif
-	copy_costsize(plan, subplan);
+	copy_plan_costsize(plan, subplan);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;

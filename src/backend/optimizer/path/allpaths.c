@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.54 1999/11/23 20:06:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.55 2000/01/09 00:26:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,23 +66,16 @@ make_one_rel(Query *root, List *rels)
 
 	if (levels_needed <= 1)
 	{
-
 		/*
-		 * Unsorted single relation, no more processing is required.
+		 * Single relation, no more processing is required.
 		 */
 		return lfirst(rels);
 	}
 	else
 	{
-
 		/*
-		 * This means that joins or sorts are required. Set selectivities
-		 * of any clauses not yet set.  (I think that this is redundant;
-		 * set_base_rel_pathlist should have set them all already.  But
-		 * a scan to check that they are all set doesn't cost much...)
+		 * Generate join tree.
 		 */
-		set_rest_relselec(root, rels);
-
 		return make_one_rel_by_joins(root, rels, levels_needed);
 	}
 }
@@ -115,7 +108,7 @@ set_base_rel_pathlist(Query *root, List *rels)
 		tidscan_pathlist = create_tidscan_paths(root, rel);
 		if (tidscan_pathlist)
 			sequential_scan_list = nconc(sequential_scan_list,
-				tidscan_pathlist);
+										 tidscan_pathlist);
 		rel_index_scan_list = create_index_paths(root,
 												 rel,
 												 indices,
@@ -126,7 +119,6 @@ set_base_rel_pathlist(Query *root, List *rels)
 		 * to have marked OR restriction clauses with relevant indices;
 		 * this is why it doesn't need to be given the full list of indices.
 		 */
-
 		or_index_scan_list = create_or_index_paths(root, rel,
 												   rel->restrictinfo);
 
@@ -139,19 +131,10 @@ set_base_rel_pathlist(Query *root, List *rels)
 									 nconc(rel_index_scan_list,
 										   or_index_scan_list));
 
+		/* Now find the cheapest of the paths */
 		set_cheapest(rel, rel->pathlist);
-
-		/* Set the selectivity estimates for any restriction clauses that
-		 * didn't get set as a byproduct of index-path selectivity estimation
-		 * (see create_index_path()).
-		 */
-		set_rest_selec(root, rel->restrictinfo);
-
-		/* Calculate the estimated size (post-restrictions) and tuple width
-		 * for this base rel.  This uses the restriction clause selectivities.
-		 */
-		rel->size = compute_rel_size(rel);
-		rel->width = compute_rel_width(rel);
+		/* Mark rel with estimated output rows and width */
+		set_rel_rows_width(root, rel);
 	}
 }
 
@@ -217,15 +200,11 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 				xfunc_trypullup((RelOptInfo *) lfirst(x));
 #endif
 
-		rels_set_cheapest(joined_rels);
+		rels_set_cheapest(root, joined_rels);
 
 		foreach(x, joined_rels)
 		{
 			rel = (RelOptInfo *) lfirst(x);
-
-			if (rel->size <= 0)
-				rel->size = compute_rel_size(rel);
-			rel->width = compute_rel_width(rel);
 
 #ifdef OPTIMIZER_DEBUG
 			printf("levels left: %d\n", levels_needed);
@@ -297,10 +276,9 @@ print_path(Query *root, Path *path, int indent)
 	}
 	if (join)
 	{
-		int			size = path->parent->size;
-
 		jp = (JoinPath *) path;
-		printf("%s size=%d cost=%f\n", ptype, size, path->path_cost);
+		printf("%s rows=%.0f cost=%f\n",
+			   ptype, path->parent->rows, path->path_cost);
 		switch (nodeTag(path))
 		{
 			case T_MergePath:
@@ -308,7 +286,7 @@ print_path(Query *root, Path *path, int indent)
 				for (i = 0; i < indent + 1; i++)
 					printf("\t");
 				printf("   clauses=(");
-				print_joinclauses(root, ((JoinPath *) path)->pathinfo);
+				print_joinclauses(root, jp->path.parent->restrictinfo);
 				printf(")\n");
 
 				if (nodeTag(path) == T_MergePath)
@@ -333,11 +311,10 @@ print_path(Query *root, Path *path, int indent)
 	}
 	else
 	{
-		int			size = path->parent->size;
 		int			relid = lfirsti(path->parent->relids);
 
-		printf("%s(%d) size=%d cost=%f\n",
-			   ptype, relid, size, path->path_cost);
+		printf("%s(%d) rows=%.0f cost=%f\n",
+			   ptype, relid, path->parent->rows, path->path_cost);
 
 		if (IsA(path, IndexPath))
 		{
@@ -355,7 +332,7 @@ debug_print_rel(Query *root, RelOptInfo *rel)
 	printf("(");
 	foreach(l, rel->relids)
 		printf("%d ", lfirsti(l));
-	printf("): size=%d width=%d\n", rel->size, rel->width);
+	printf("): rows=%.0f width=%d\n", rel->rows, rel->width);
 
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)

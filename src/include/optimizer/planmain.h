@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.34 1999/10/07 04:23:19 tgl Exp $
+ * $Id: planmain.h,v 1.35 2000/01/09 00:26:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@ extern Plan *query_planner(Query *root, List *tlist, List *qual);
 /*
  * prototypes for plan/createplan.c
  */
-extern Plan *create_plan(Path *best_path);
+extern Plan *create_plan(Query *root, Path *best_path);
 extern SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 extern Sort *make_sort(List *tlist, Oid nonameid, Plan *lefttree,
 		  int keycount);
@@ -41,7 +41,6 @@ extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 extern void make_var_only_tlist(Query *root, List *tlist);
 extern void add_restrict_and_join_to_rels(Query *root, List *clauses);
 extern void add_missing_rels_to_query(Query *root);
-extern void set_joininfo_mergeable_hashable(List *rel_list);
 
 /*
  * prototypes for plan/setrefs.c

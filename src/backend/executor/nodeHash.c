@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.41 1999/12/16 22:19:44 wieck Exp $
+ *	$Id: nodeHash.c,v 1.42 2000/01/09 00:26:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ HashJoinTable
 ExecHashTableCreate(Hash *node)
 {
 	Plan	   *outerNode;
-	int			ntuples;
+	double		ntuples;
 	int			tupsize;
 	double		inner_rel_bytes;
 	double		hash_table_bytes;
@@ -250,9 +250,9 @@ ExecHashTableCreate(Hash *node)
 	 * ----------------
 	 */
 	outerNode = outerPlan(node);
-	ntuples = outerNode->plan_size;
-	if (ntuples <= 0)			/* force a plausible size if no info */
-		ntuples = 1000;
+	ntuples = outerNode->plan_rows;
+	if (ntuples <= 0.0)			/* force a plausible size if no info */
+		ntuples = 1000.0;
 
 	/*
 	 * estimate tupsize based on footprint of tuple in hashtable... but
@@ -260,7 +260,7 @@ ExecHashTableCreate(Hash *node)
 	 */
 	tupsize = MAXALIGN(outerNode->plan_width) +
 		MAXALIGN(sizeof(HashJoinTupleData));
-	inner_rel_bytes = (double) ntuples *tupsize * FUDGE_FAC;
+	inner_rel_bytes = ntuples * tupsize * FUDGE_FAC;
 
 	/*
 	 * Target hashtable size is SortMem kilobytes, but not less than
@@ -276,7 +276,7 @@ ExecHashTableCreate(Hash *node)
 	 * for an average bucket load of NTUP_PER_BUCKET (per virtual
 	 * bucket!).
 	 */
-	totalbuckets = (int) ceil((double) ntuples * FUDGE_FAC / NTUP_PER_BUCKET);
+	totalbuckets = (int) ceil(ntuples * FUDGE_FAC / NTUP_PER_BUCKET);
 
 	/*
 	 * Count the number of buckets we think will actually fit in the

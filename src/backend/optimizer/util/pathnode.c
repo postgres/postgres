@@ -7,15 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.55 1999/11/23 20:07:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.56 2000/01/09 00:26:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
 
 #include "postgres.h"
-
-
 
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -37,10 +35,7 @@
 bool
 path_is_cheaper(Path *path1, Path *path2)
 {
-	Cost		cost1 = path1->path_cost;
-	Cost		cost2 = path2->path_cost;
-
-	return (bool) (cost1 < cost2);
+	return (bool) (path1->path_cost < path2->path_cost);
 }
 
 /*
@@ -60,8 +55,8 @@ set_cheapest(RelOptInfo *parent_rel, List *pathlist)
 	List	   *p;
 	Path	   *cheapest_so_far;
 
-	Assert(pathlist != NIL);
 	Assert(IsA(parent_rel, RelOptInfo));
+	Assert(pathlist != NIL);
 
 	cheapest_so_far = (Path *) lfirst(pathlist);
 
@@ -192,18 +187,11 @@ Path *
 create_seqscan_path(RelOptInfo *rel)
 {
 	Path	   *pathnode = makeNode(Path);
-	int			relid = 0;
 
 	pathnode->pathtype = T_SeqScan;
 	pathnode->parent = rel;
-	pathnode->path_cost = 0.0;
 	pathnode->pathkeys = NIL;	/* seqscan has unordered result */
-
-	if (rel->relids != NIL)		/* can this happen? */
-		relid = lfirsti(rel->relids);
-
-	pathnode->path_cost = cost_seqscan(relid,
-									   rel->pages, rel->tuples);
+	pathnode->path_cost = cost_seqscan(rel);
 
 	return pathnode;
 }
@@ -222,7 +210,7 @@ create_seqscan_path(RelOptInfo *rel)
 IndexPath  *
 create_index_path(Query *root,
 				  RelOptInfo *rel,
-				  RelOptInfo *index,
+				  IndexOptInfo *index,
 				  List *restriction_clauses)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
@@ -239,8 +227,7 @@ create_index_path(Query *root,
 	 * conditions.  If we do have restriction conditions to use, they
 	 * will get inserted below.
 	 */
-	Assert(length(index->relids) == 1);
-	pathnode->indexid = index->relids;
+	pathnode->indexid = lconsi(index->indexoid, NIL);
 	pathnode->indexqual = lcons(NIL, NIL);
 	pathnode->joinrelids = NIL;	/* no join clauses here */
 
@@ -250,13 +237,9 @@ create_index_path(Query *root,
 		 * We have no restriction clauses, so compute scan cost using
 		 * selectivity of 1.0.
 		 */
-		pathnode->path.path_cost = cost_index(lfirsti(index->relids),
+		pathnode->path.path_cost = cost_index(rel, index,
 											  index->pages,
-											  1.0,
-											  rel->pages,
-											  rel->tuples,
-											  index->pages,
-											  index->tuples,
+											  (Selectivity) 1.0,
 											  false);
 	}
 	else
@@ -266,9 +249,8 @@ create_index_path(Query *root,
 		 * restriction clause(s).  Also, place indexqual in path node.
 		 */
 		List	   *indexquals;
-		float		npages;
-		float		selec;
-		Cost		clausesel;
+		long		npages;
+		Selectivity	selec;
 
 		indexquals = get_actual_clauses(restriction_clauses);
 		/* expand special operators to indexquals the executor can handle */
@@ -280,39 +262,15 @@ create_index_path(Query *root,
 		lfirst(pathnode->indexqual) = indexquals;
 
 		index_selectivity(root,
-						  lfirsti(rel->relids),
-						  lfirsti(index->relids),
+						  rel,
+						  index,
 						  indexquals,
 						  &npages,
 						  &selec);
 
-		pathnode->path.path_cost = cost_index(lfirsti(index->relids),
-											  (int) npages,
-											  selec,
-											  rel->pages,
-											  rel->tuples,
-											  index->pages,
-											  index->tuples,
+		pathnode->path.path_cost = cost_index(rel, index,
+											  npages, selec,
 											  false);
-
-		/*
-		 * Set selectivities of clauses used with index to the selectivity
-		 * of this index, subdividing the selectivity equally over each of
-		 * the clauses.  To the extent that index_selectivity() can make a
-		 * better estimate of the joint selectivity of these clauses than
-		 * the product of individual estimates from compute_clause_selec()
-		 * would be, this should give us a more accurate estimate of the
-		 * total selectivity of all the clauses.
-		 *
-		 * XXX If there is more than one useful index for this rel, and the
-		 * indexes can be used with different but overlapping groups of
-		 * restriction clauses, we may end up with too optimistic an estimate,
-		 * since set_clause_selectivities() will save the minimum of the
-		 * per-clause selectivity estimated with each index.  But that should
-		 * be fairly unlikely for typical index usage.
-		 */
-		clausesel = pow(selec, 1.0 / (double) length(restriction_clauses));
-		set_clause_selectivities(restriction_clauses, clausesel);
 	}
 
 	return pathnode;
@@ -331,14 +289,12 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
 
 	pathnode->path.pathtype = T_TidScan;
 	pathnode->path.parent = rel;
-	pathnode->path.path_cost = 0.0;
 	pathnode->path.pathkeys = NIL;
-
-	pathnode->path.path_cost = cost_tidscan(tideval);
+	pathnode->path.path_cost = cost_tidscan(rel, tideval);
 	/* divide selectivity for each clause to get an equal selectivity
 	 * as IndexScan does OK ? 
 	*/
-	pathnode->tideval = copyObject(tideval);
+	pathnode->tideval = copyObject(tideval); /* is copy really necessary? */
 	pathnode->unjoined_relids = NIL;
 
 	return pathnode;
@@ -350,7 +306,6 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
  *	  relations.
  *
  * 'joinrel' is the join relation.
- * 'outer_rel' is the outer join relation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'pathkeys' are the path keys of the new join path
@@ -360,7 +315,6 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
  */
 NestPath   *
 create_nestloop_path(RelOptInfo *joinrel,
-					 RelOptInfo *outer_rel,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *pathkeys)
@@ -371,15 +325,10 @@ create_nestloop_path(RelOptInfo *joinrel,
 	pathnode->path.parent = joinrel;
 	pathnode->outerjoinpath = outer_path;
 	pathnode->innerjoinpath = inner_path;
-	pathnode->pathinfo = joinrel->restrictinfo;
 	pathnode->path.pathkeys = pathkeys;
 
-	pathnode->path.path_cost = cost_nestloop(outer_path->path_cost,
-											 inner_path->path_cost,
-											 outer_rel->size,
-											 inner_path->parent->size,
-											 page_size(outer_rel->size,
-													   outer_rel->width),
+	pathnode->path.path_cost = cost_nestloop(outer_path,
+											 inner_path,
 											 IsA(inner_path, IndexPath));
 
 	return pathnode;
@@ -391,10 +340,6 @@ create_nestloop_path(RelOptInfo *joinrel,
  *	  two relations
  *
  * 'joinrel' is the join relation
- * 'outersize' is the number of tuples in the outer relation
- * 'innersize' is the number of tuples in the inner relation
- * 'outerwidth' is the number of bytes per tuple in the outer relation
- * 'innerwidth' is the number of bytes per tuple in the inner relation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'pathkeys' are the path keys of the new join path
@@ -405,10 +350,6 @@ create_nestloop_path(RelOptInfo *joinrel,
  */
 MergePath  *
 create_mergejoin_path(RelOptInfo *joinrel,
-					  int outersize,
-					  int innersize,
-					  int outerwidth,
-					  int innerwidth,
 					  Path *outer_path,
 					  Path *inner_path,
 					  List *pathkeys,
@@ -433,19 +374,14 @@ create_mergejoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.path.parent = joinrel;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
-	pathnode->jpath.pathinfo = joinrel->restrictinfo;
 	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->path_mergeclauses = mergeclauses;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
-	pathnode->jpath.path.path_cost = cost_mergejoin(outer_path->path_cost,
-													inner_path->path_cost,
+	pathnode->jpath.path.path_cost = cost_mergejoin(outer_path,
+													inner_path,
 													outersortkeys,
-													innersortkeys,
-													outersize,
-													innersize,
-													outerwidth,
-													innerwidth);
+													innersortkeys);
 
 	return pathnode;
 }
@@ -455,10 +391,6 @@ create_mergejoin_path(RelOptInfo *joinrel,
  *	  Creates a pathnode corresponding to a hash join between two relations.
  *
  * 'joinrel' is the join relation
- * 'outersize' is the number of tuples in the outer relation
- * 'innersize' is the number of tuples in the inner relation
- * 'outerwidth' is the number of bytes per tuple in the outer relation
- * 'innerwidth' is the number of bytes per tuple in the inner relation
  * 'outer_path' is the cheapest outer path
  * 'inner_path' is the cheapest inner path
  * 'hashclauses' is a list of the hash join clause (always a 1-element list)
@@ -467,14 +399,10 @@ create_mergejoin_path(RelOptInfo *joinrel,
  */
 HashPath *
 create_hashjoin_path(RelOptInfo *joinrel,
-					 int outersize,
-					 int innersize,
-					 int outerwidth,
-					 int innerwidth,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *hashclauses,
-					 Cost innerdisbursion)
+					 Selectivity innerdisbursion)
 {
 	HashPath   *pathnode = makeNode(HashPath);
 
@@ -482,14 +410,11 @@ create_hashjoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.path.parent = joinrel;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
-	pathnode->jpath.pathinfo = joinrel->restrictinfo;
 	/* A hashjoin never has pathkeys, since its ordering is unpredictable */
 	pathnode->jpath.path.pathkeys = NIL;
 	pathnode->path_hashclauses = hashclauses;
-	pathnode->jpath.path.path_cost = cost_hashjoin(outer_path->path_cost,
-												   inner_path->path_cost,
-												   outersize, innersize,
-												   outerwidth, innerwidth,
+	pathnode->jpath.path.path_cost = cost_hashjoin(outer_path,
+												   inner_path,
 												   innerdisbursion);
 
 	return pathnode;

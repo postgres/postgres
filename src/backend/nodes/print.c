@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.33 1999/11/23 20:06:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.34 2000/01/09 00:26:24 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -364,8 +364,8 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 		return;
 	for (i = 0; i < indentLevel; i++)
 		printf(" ");
-	printf("%s%s :c=%.4f :s=%d :w=%d ", label, plannode_type(p),
-		   p->cost, p->plan_size, p->plan_width);
+	printf("%s%s :c=%.4f :r=%.0f :w=%d ", label, plannode_type(p),
+		   p->cost, p->plan_rows, p->plan_width);
 	if (IsA(p, Scan) ||IsA(p, SeqScan))
 	{
 		RangeTblEntry *rte;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.46 1999/08/21 03:49:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.47 2000/01/09 00:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ static List *match_unsorted_inner(RelOptInfo *joinrel, RelOptInfo *outerrel,
 								  List *mergeclause_list);
 static List *hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
 								  RelOptInfo *outerrel, RelOptInfo *innerrel);
-static Cost estimate_disbursion(Query *root, Var *var);
+static Selectivity estimate_disbursion(Query *root, Var *var);
 static List *select_mergejoin_clauses(List *restrictinfo_list);
 
 /*
@@ -258,12 +258,8 @@ sort_inner_and_outer(RelOptInfo *joinrel,
 											 curclause_list);
 		/* And now we can make the path. */
 		path_node = create_mergejoin_path(joinrel,
-										  outerrel->size,
-										  innerrel->size,
-										  outerrel->width,
-										  innerrel->width,
-										  (Path *) outerrel->cheapestpath,
-										  (Path *) innerrel->cheapestpath,
+										  outerrel->cheapestpath,
+										  innerrel->cheapestpath,
 										  merge_pathkeys,
 										  get_actual_clauses(curclause_list),
 										  outerkeys,
@@ -359,7 +355,6 @@ match_unsorted_outer(RelOptInfo *joinrel,
 		/* Always consider a nestloop join with this outer and best inner. */
 		path_list = lappend(path_list,
 							create_nestloop_path(joinrel,
-												 outerrel,
 												 outerpath,
 												 nestinnerpath,
 												 merge_pathkeys));
@@ -393,7 +388,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
 			int			clausecount;
 
 			cheapest_cost = cheapest_inner->path_cost +
-				cost_sort(innersortkeys, innerrel->size, innerrel->width);
+				cost_sort(innersortkeys, innerrel->rows, innerrel->width);
 
 			for (clausecount = mergeclausecount;
 				 clausecount > 0;
@@ -427,10 +422,6 @@ match_unsorted_outer(RelOptInfo *joinrel,
 								 get_actual_clauses(mergeclauses));
 		path_list = lappend(path_list,
 							create_mergejoin_path(joinrel,
-												  outerrel->size,
-												  innerrel->size,
-												  outerrel->width,
-												  innerrel->width,
 												  outerpath,
 												  mergeinnerpath,
 												  merge_pathkeys,
@@ -496,7 +487,7 @@ match_unsorted_inner(RelOptInfo *joinrel,
 			if (mergeouterpath != NULL &&
 				mergeouterpath->path_cost <=
 				(outerrel->cheapestpath->path_cost +
-				 cost_sort(outersortkeys, outerrel->size, outerrel->width)))
+				 cost_sort(outersortkeys, outerrel->rows, outerrel->width)))
 			{
 				/* Use mergeouterpath */
 				outersortkeys = NIL;	/* no explicit sort step */
@@ -516,10 +507,6 @@ match_unsorted_inner(RelOptInfo *joinrel,
 			mergeclauses = get_actual_clauses(mergeclauses);
 			path_list = lappend(path_list,
 								create_mergejoin_path(joinrel,
-													  outerrel->size,
-													  innerrel->size,
-													  outerrel->width,
-													  innerrel->width,
 													  mergeouterpath,
 													  innerpath,
 													  merge_pathkeys,
@@ -563,7 +550,7 @@ hash_inner_and_outer(Query *root,
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
 			Var		   *innerop;
-			Cost		innerdisbursion;
+			Selectivity	innerdisbursion;
 			HashPath   *hash_path;
 
 			/* find the inner var and estimate its disbursion */
@@ -574,12 +561,8 @@ hash_inner_and_outer(Query *root,
 			innerdisbursion = estimate_disbursion(root, innerop);
 
 			hash_path = create_hashjoin_path(joinrel,
-											 outerrel->size,
-											 innerrel->size,
-											 outerrel->width,
-											 innerrel->width,
-											 (Path *) outerrel->cheapestpath,
-											 (Path *) innerrel->cheapestpath,
+											 outerrel->cheapestpath,
+											 innerrel->cheapestpath,
 											 lcons(clause, NIL),
 											 innerdisbursion);
 			hpath_list = lappend(hpath_list, hash_path);
@@ -598,7 +581,7 @@ hash_inner_and_outer(Query *root,
  * we know that the inner rel is well-dispersed (or the alternatives
  * seem much worse).
  */
-static Cost
+static Selectivity
 estimate_disbursion(Query *root, Var *var)
 {
 	Oid			relid;
@@ -608,7 +591,7 @@ estimate_disbursion(Query *root, Var *var)
 
 	relid = getrelid(var->varno, root->rtable);
 
-	return (Cost) get_attdisbursion(relid, var->varattno, 0.1);
+	return (Selectivity) get_attdisbursion(relid, var->varattno, 0.1);
 }
 
 /*

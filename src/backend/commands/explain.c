@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.50 1999/11/23 20:06:48 momjian Exp $
+ *	  $Id: explain.c,v 1.51 2000/01/09 00:26:18 tgl Exp $
  *
  */
 
@@ -256,8 +256,8 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	}
 	if (es->printCost)
 	{
-		appendStringInfo(str, "  (cost=%.2f rows=%d width=%d)",
-						 plan->cost, plan->plan_size, plan->plan_width);
+		appendStringInfo(str, "  (cost=%.2f rows=%.0f width=%d)",
+						 plan->cost, plan->plan_rows, plan->plan_width);
 	}
 	appendStringInfo(str, "\n");
 

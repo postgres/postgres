@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.43 1999/08/16 02:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.44 2000/01/09 00:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ merge_rel_with_same_relids(RelOptInfo *rel, List *unmerged_rels)
  *	  relations), set pointers to the cheapest path and compute rel size.
  */
 void
-rels_set_cheapest(List *rel_list)
+rels_set_cheapest(Query *root, List *rel_list)
 {
 	List	   *x;
 
@@ -101,7 +101,7 @@ rels_set_cheapest(List *rel_list)
 
 		cheapest = (JoinPath *) set_cheapest(rel, rel->pathlist);
 		if (IsA_JoinPath(cheapest))
-			rel->size = compute_joinrel_size(cheapest);
+			set_joinrel_rows_width(root, rel, cheapest);
 		else
 			elog(ERROR, "rels_set_cheapest: non JoinPath found");
 	}

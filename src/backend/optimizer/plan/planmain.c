@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.48 1999/12/09 05:58:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.49 2000/01/09 00:26:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,8 +218,6 @@ subplanner(Query *root,
 	add_restrict_and_join_to_rels(root, qual);
 	add_missing_rels_to_query(root);
 
-	set_joininfo_mergeable_hashable(root->base_rel_list);
-
 	final_rel = make_one_rel(root, root->base_rel_list);
 
 	if (! final_rel)
@@ -275,7 +273,7 @@ subplanner(Query *root,
 							  final_rel->cheapestpath->pathkeys))
 	{
 		root->query_pathkeys = final_rel->cheapestpath->pathkeys;
-		return create_plan(final_rel->cheapestpath);
+		return create_plan(root, final_rel->cheapestpath);
 	}
 
 	/*
@@ -283,7 +281,7 @@ subplanner(Query *root,
 	 * cheaper than doing an explicit sort on cheapestpath.
 	 */
 	cheapest_cost = final_rel->cheapestpath->path_cost +
-		cost_sort(root->query_pathkeys, final_rel->size, final_rel->width);
+		cost_sort(root->query_pathkeys, final_rel->rows, final_rel->width);
 
 	sortedpath = get_cheapest_path_for_pathkeys(final_rel->pathlist,
 												root->query_pathkeys,
@@ -294,7 +292,7 @@ subplanner(Query *root,
 		{
 			/* Found a better presorted path, use it */
 			root->query_pathkeys = sortedpath->pathkeys;
-			return create_plan(sortedpath);
+			return create_plan(root, sortedpath);
 		}
 		/* otherwise, doing it the hard way is still cheaper */
 	}
@@ -322,7 +320,7 @@ subplanner(Query *root,
 				 * backwards scan, we have to convert to Plan format and
 				 * then poke the result.
 				 */
-				Plan	   *sortedplan = create_plan(sortedpath);
+				Plan	   *sortedplan = create_plan(root, sortedpath);
 				List	   *sortedpathkeys;
 
 				Assert(IsA(sortedplan, IndexScan));
@@ -350,5 +348,5 @@ subplanner(Query *root,
 	 * an aggregate function...)
 	 */
 	root->query_pathkeys = final_rel->cheapestpath->pathkeys;
-	return create_plan(final_rel->cheapestpath);
+	return create_plan(root, final_rel->cheapestpath);
 }

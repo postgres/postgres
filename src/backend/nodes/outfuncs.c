@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.100 1999/12/13 01:26:53 tgl Exp $
+ *	$Id: outfuncs.c,v 1.101 2000/01/09 00:26:23 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -265,9 +265,9 @@ static void
 _outPlanInfo(StringInfo str, Plan *node)
 {
 	appendStringInfo(str,
-				  ":cost %g :size %d :width %d :state %s :qptargetlist ",
+				  ":cost %g :rows %.0f :width %d :state %s :qptargetlist ",
 					 node->cost,
-					 node->plan_size,
+					 node->plan_rows,
 					 node->plan_width,
 					 node->state ? "not-NULL" : "<>");
 	_outNode(str, node->targetlist);
@@ -834,6 +834,7 @@ _outEState(StringInfo str, EState *node)
 /*
  *	Stuff from relation.h
  */
+
 static void
 _outRelOptInfo(StringInfo str, RelOptInfo *node)
 {
@@ -841,12 +842,12 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	_outIntList(str, node->relids);
 
 	appendStringInfo(str,
-	 " :indexed %s :pages %u :tuples %u :size %u :width %u :targetlist ",
+	 " :rows %.0f :width %d :indexed %s :pages %ld :tuples %.0f :targetlist ",
+					 node->rows,
+					 node->width,
 					 node->indexed ? "true" : "false",
 					 node->pages,
-					 node->tuples,
-					 node->size,
-					 node->width);
+					 node->tuples);
 	_outNode(str, node->targetlist);
 
 	appendStringInfo(str, " :pathlist ");
@@ -869,6 +870,15 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 
 	appendStringInfo(str, " :innerjoin ");
 	_outNode(str, node->innerjoin);
+}
+
+static void
+_outIndexOptInfo(StringInfo str, IndexOptInfo *node)
+{
+	appendStringInfo(str, " INDEXOPTINFO :indexoid %u :pages %ld :tuples %g ",
+					 node->indexoid,
+					 node->pages,
+					 node->tuples);
 }
 
 /*
@@ -910,7 +920,7 @@ _outRowMark(StringInfo str, RowMark *node)
 static void
 _outPath(StringInfo str, Path *node)
 {
-	appendStringInfo(str, " PATH :pathtype %d :cost %f :pathkeys ",
+	appendStringInfo(str, " PATH :pathtype %d :cost %.2f :pathkeys ",
 					 node->pathtype,
 					 node->path_cost);
 	_outNode(str, node->pathkeys);
@@ -923,7 +933,7 @@ static void
 _outIndexPath(StringInfo str, IndexPath *node)
 {
 	appendStringInfo(str,
-					 " INDEXPATH :pathtype %d :cost %f :pathkeys ",
+					 " INDEXPATH :pathtype %d :cost %.2f :pathkeys ",
 					 node->path.pathtype,
 					 node->path.path_cost);
 	_outNode(str, node->path.pathkeys);
@@ -945,7 +955,7 @@ static void
 _outTidPath(StringInfo str, TidPath *node)
 {
 	appendStringInfo(str,
-					 " TIDPATH :pathtype %d :cost %f :pathkeys ",
+					 " TIDPATH :pathtype %d :cost %.2f :pathkeys ",
 					 node->path.pathtype,
 					 node->path.path_cost);
 	_outNode(str, node->path.pathkeys);
@@ -964,13 +974,10 @@ static void
 _outNestPath(StringInfo str, NestPath *node)
 {
 	appendStringInfo(str,
-					 " NESTPATH :pathtype %d :cost %f :pathkeys ",
+					 " NESTPATH :pathtype %d :cost %.2f :pathkeys ",
 					 node->path.pathtype,
 					 node->path.path_cost);
 	_outNode(str, node->path.pathkeys);
-
-	appendStringInfo(str, " :pathinfo ");
-	_outNode(str, node->pathinfo);
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -990,13 +997,10 @@ static void
 _outMergePath(StringInfo str, MergePath *node)
 {
 	appendStringInfo(str,
-					 " MERGEPATH :pathtype %d :cost %f :pathkeys ",
+					 " MERGEPATH :pathtype %d :cost %.2f :pathkeys ",
 					 node->jpath.path.pathtype,
 					 node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.pathkeys);
-
-	appendStringInfo(str, " :pathinfo ");
-	_outNode(str, node->jpath.pathinfo);
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1025,13 +1029,10 @@ static void
 _outHashPath(StringInfo str, HashPath *node)
 {
 	appendStringInfo(str,
-					 " HASHPATH :pathtype %d :cost %f :pathkeys ",
+					 " HASHPATH :pathtype %d :cost %.2f :pathkeys ",
 					 node->jpath.path.pathtype,
 					 node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.pathkeys);
-
-	appendStringInfo(str, " :pathinfo ");
-	_outNode(str, node->jpath.pathinfo);
 
 	/*
 	 * Not sure if these are nodes; they're declared as "struct path *".
@@ -1067,9 +1068,7 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	appendStringInfo(str, " RESTRICTINFO :clause ");
 	_outNode(str, node->clause);
 
-	appendStringInfo(str,
-					 " :selectivity %f :subclauseindices ",
-					 node->selectivity);
+	appendStringInfo(str, " :subclauseindices ");
 	_outNode(str, node->subclauseindices);
 
 	appendStringInfo(str, " :mergejoinoperator %u ", node->mergejoinoperator);
@@ -1465,6 +1464,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_RelOptInfo:
 				_outRelOptInfo(str, obj);
+				break;
+			case T_IndexOptInfo:
+				_outIndexOptInfo(str, obj);
 				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);

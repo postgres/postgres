@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.59 1999/12/16 17:24:19 momjian Exp $
+ * $Id: nodes.h,v 1.60 2000/01/09 00:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@ typedef enum NodeTag
 	T_JoinInfo,
 	T_Stream,
 	T_TidPath,
+	T_IndexOptInfo,
 
 	/*---------------------
 	 * TAGS FOR EXECUTOR NODES (execnodes.h)
@@ -286,12 +287,17 @@ extern void *copyObject(void *obj);
 extern bool equal(void *a, void *b);
 
 
-/* ----------------
- *		I don't know why this is here.  Most likely a hack..
- *		-cim 6/3/90
- * ----------------
+/*
+ * Typedefs for identifying qualifier selectivities and plan costs as such.
+ * These are just plain "double"s, but declaring a variable as Selectivity
+ * or Cost makes the intent more obvious.
+ *
+ * These could have gone into plannodes.h or some such, but many files
+ * depend on them...
  */
-typedef float Cost;
+typedef double Selectivity;		/* fraction of tuples a qualifier will pass */
+typedef double Cost;			/* execution cost (in page-access units) */
+
 
 /*
  * CmdType -
