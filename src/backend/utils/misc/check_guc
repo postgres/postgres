@@ -15,7 +15,7 @@
 ## postgresql.conf.sample, it should be listed here so that it 
 ## can be ignored
 INTENTIONALLY_NOT_INCLUDED="pre_auth_delay lc_messages lc_monetary \
-lc_time lc_numeric fixbtree server_encoding session_authorization"
+lc_time lc_numeric server_encoding session_authorization"
 
 ### What options are listed in postgresql.conf.sample, but don't appear 
 ### in guc.c?

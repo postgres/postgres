@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.98 2003/02/23 22:43:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.99 2003/02/23 23:27:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,6 @@ typedef struct
 
 
 bool		FastBuild = true;	/* use SORT instead of insertion build */
-
-/*
- * TEMPORARY FLAG FOR TESTING NEW FIX TREE
- * CODE WITHOUT AFFECTING ANYONE ELSE
- */
-bool		FixBTree = true;
 
 static void _bt_restscan(IndexScanDesc scan);
 static void btbuildCallback(Relation index,

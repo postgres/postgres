@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.114 2003/02/06 20:25:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.115 2003/02/23 23:27:21 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -60,7 +60,6 @@ extern int	CheckPointTimeout;
 extern bool autocommit;
 extern int	CommitDelay;
 extern int	CommitSiblings;
-extern bool FixBTree;
 
 #ifdef HAVE_SYSLOG
 extern char *Syslog_facility;
@@ -496,10 +495,6 @@ static struct config_bool
 	{
 		{"australian_timezones", PGC_USERSET}, &Australian_timezones,
 		false, ClearDateCache, NULL
-	},
-	{
-		{"fixbtree", PGC_POSTMASTER}, &FixBTree,
-		true, NULL, NULL
 	},
 	{
 		{"password_encryption", PGC_USERSET}, &Password_encryption,
