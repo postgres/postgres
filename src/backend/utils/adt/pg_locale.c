@@ -1,20 +1,17 @@
-
 /* -----------------------------------------------------------------------
  * pg_locale.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.6 2000/08/29 04:41:47 momjian Exp $
+ *	 The PostgreSQL locale utils.
  *
+ *
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.7 2000/11/25 22:43:08 tgl Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
- *
- *	 The PostgreSQL locale utils.
  *
  *	Karel Zak - Zakkr
  *
  * -----------------------------------------------------------------------
  */
-
-#include <stdio.h>
 
 #include "postgres.h"
 
@@ -28,11 +25,13 @@
 
 static struct lconv *CurrentLocaleConv = NULL;
 
+static void PGLC_setlocale(PG_LocaleCategories * lc);
+
 /*------
- * Return in PG_LocaleCategories current locale setting
+ * Return in PG_LocaleCategories the current locale settings
  *------
  */
-PG_LocaleCategories *
+void
 PGLC_current(PG_LocaleCategories * lc)
 {
 	lc->lang = getenv("LANG");
@@ -45,7 +44,6 @@ PGLC_current(PG_LocaleCategories * lc)
 #ifdef LC_MESSAGES
 	lc->lc_messages = setlocale(LC_MESSAGES, NULL);
 #endif
-	return lc;
 }
 
 
@@ -55,7 +53,7 @@ PGLC_current(PG_LocaleCategories * lc)
  * Print a PG_LocaleCategories struct as DEBUG
  *------
  */
-PG_LocaleCategories *
+static void
 PGLC_debug_lc(PG_LocaleCategories * lc)
 {
 #ifdef LC_MESSAGES
@@ -73,72 +71,86 @@ PGLC_debug_lc(PG_LocaleCategories * lc)
 		 , lc->lc_messages
 #endif
 	);
-
-	return lc;
 }
 
 #endif
 
 /*------
  * Set locales via a PG_LocaleCategories struct
+ *
+ * NB: it would be very dangerous to set the locale values to any random
+ * choice of locale, since that could cause indexes to become corrupt, etc.
+ * Therefore this routine is NOT exported from this module.  It should be
+ * used only to restore previous locale settings during PGLC_localeconv.
  *------
  */
-PG_LocaleCategories *
+static void
 PGLC_setlocale(PG_LocaleCategories * lc)
 {
+	if (!setlocale(LC_COLLATE, lc->lc_collate))
+		elog(NOTICE, "pg_setlocale(): 'LC_COLLATE=%s' cannot be honored.",
+			 lc->lc_collate);
+
 	if (!setlocale(LC_CTYPE, lc->lc_ctype))
-		elog(NOTICE, "pg_setlocale(): 'LC_CTYPE=%s' cannot be honored.", lc->lc_ctype);
+		elog(NOTICE, "pg_setlocale(): 'LC_CTYPE=%s' cannot be honored.",
+			 lc->lc_ctype);
 
 	if (!setlocale(LC_NUMERIC, lc->lc_numeric))
-		elog(NOTICE, "pg_setlocale(): 'LC_NUMERIC=%s' cannot be honored.", lc->lc_numeric);
+		elog(NOTICE, "pg_setlocale(): 'LC_NUMERIC=%s' cannot be honored.",
+			 lc->lc_numeric);
 
 	if (!setlocale(LC_TIME, lc->lc_time))
-		elog(NOTICE, "pg_setlocale(): 'LC_TIME=%s' cannot be honored.", lc->lc_time);
-
-	if (!setlocale(LC_COLLATE, lc->lc_collate))
-		elog(NOTICE, "pg_setlocale(): 'LC_COLLATE=%s' cannot be honored.", lc->lc_collate);
+		elog(NOTICE, "pg_setlocale(): 'LC_TIME=%s' cannot be honored.",
+			 lc->lc_time);
 
 	if (!setlocale(LC_MONETARY, lc->lc_monetary))
-		elog(NOTICE, "pg_setlocale(): 'LC_MONETARY=%s' cannot be honored.", lc->lc_monetary);
+		elog(NOTICE, "pg_setlocale(): 'LC_MONETARY=%s' cannot be honored.",
+			 lc->lc_monetary);
+
 #ifdef LC_MESSAGES
 	if (!setlocale(LC_MESSAGES, lc->lc_messages))
-		elog(NOTICE, "pg_setlocale(): 'LC_MESSAGE=%s' cannot be honored.", lc->lc_messages);
+		elog(NOTICE, "pg_setlocale(): 'LC_MESSAGE=%s' cannot be honored.",
+			 lc->lc_messages);
 #endif
-	return lc;
 }
 
 /*------
  * Return the POSIX lconv struct (contains number/money formatting information)
- * with locale information for *all* categories.
- * => Returned lconv is *independent* on current locale catogories setting - in
- * contrast to standard localeconv().
+ * with locale information for all categories.  Note that returned lconv
+ * does not depend on currently active category settings, but on external
+ * environment variables for locale.
  *
- * ! libc prepare memory space for lconv itself and all returned strings in
- *	 lconv are *static strings*.
+ * XXX we assume that restoring old category settings via setlocale() will
+ * not immediately corrupt the static data returned by localeconv().
+ * How portable is this?
+ *
+ * XXX in any case, there certainly must not be any other calls to
+ * localeconv() anywhere in the backend, else the values reported here
+ * will be overwritten with the Postgres-internal locale settings.
  *------
  */
 struct lconv *
 PGLC_localeconv(void)
 {
 	PG_LocaleCategories lc;
-	
+
+	/* Did we do it already? */
 	if (CurrentLocaleConv)
 		return CurrentLocaleConv;
 
 	/* Save current locale setting to lc */
 	PGLC_current(&lc);
 
-	/* Set all locale category for current lang */
+	/* Set all locale categories based on postmaster's environment vars */
 	setlocale(LC_ALL, "");
 
-	/* Get numeric formatting information */
+	/* Get formatting information for the external environment */
 	CurrentLocaleConv = localeconv();
 
-	/* Set previous original locale */
+	/* Restore Postgres' internal locale settings */
 	PGLC_setlocale(&lc);
 
 	return CurrentLocaleConv;
 }
-
 
 #endif	 /* USE_LOCALE */

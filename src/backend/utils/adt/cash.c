@@ -9,18 +9,23 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.47 2000/11/25 20:33:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.48 2000/11/25 22:43:08 tgl Exp $
  */
+
+#include "postgres.h"
 
 #include <limits.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef USE_LOCALE
 #include <locale.h>
+#endif
 
-#include "postgres.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/cash.h"
+#include "utils/pg_locale.h"
+
 
 static const char *num_word(Cash value);
 
@@ -30,11 +35,6 @@ static const char *num_word(Cash value);
 #define TERMINATOR		(CASH_BUFSZ - 1)
 #define LAST_PAREN		(TERMINATOR - 1)
 #define LAST_DIGIT		(LAST_PAREN - 1)
-
-#ifdef USE_LOCALE
-static struct lconv *lconvert = NULL;
-
-#endif
 
 
 /*
@@ -82,11 +82,11 @@ cash_in(PG_FUNCTION_ARGS)
 				ssymbol,
 				psymbol,
 			   *nsymbol;
+#ifdef USE_LOCALE
+	struct lconv *lconvert = PGLC_localeconv();
+#endif
 
 #ifdef USE_LOCALE
-	if (lconvert == NULL)
-		lconvert = localeconv();
-
 	/*
 	 * frac_digits will be CHAR_MAX in some locales, notably C.  However,
 	 * just testing for == CHAR_MAX is risky, because of compilers like
@@ -238,11 +238,11 @@ cash_out(PG_FUNCTION_ARGS)
 				dsymbol,
 			   *nsymbol;
 	char		convention;
+#ifdef USE_LOCALE
+	struct lconv *lconvert = PGLC_localeconv();
+#endif
 
 #ifdef USE_LOCALE
-	if (lconvert == NULL)
-		lconvert = localeconv();
-
 	/* see comments about frac_digits in cash_in() */
 	points = lconvert->frac_digits;
 	if (points < 0 || points > 10)

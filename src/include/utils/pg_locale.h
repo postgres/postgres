@@ -1,13 +1,12 @@
-
 /* -----------------------------------------------------------------------
  * pg_locale.h
  *
- * $Header: /cvsroot/pgsql/src/include/utils/pg_locale.h,v 1.4 2000/04/12 17:16:55 momjian Exp $
+ *	 The PostgreSQL locale utils.
  *
+ *
+ * $Id: pg_locale.h,v 1.5 2000/11/25 22:43:07 tgl Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
- *
- *	 The PostgreSQL locale utils.
  *
  *	Karel Zak - Zakkr
  *
@@ -35,13 +34,13 @@ typedef struct PG_LocaleCategories
 }			PG_LocaleCategories;
 
 
-extern PG_LocaleCategories *PGLC_current(PG_LocaleCategories * lc);
-extern PG_LocaleCategories *PGLC_setlocale(PG_LocaleCategories * lc);
+extern void PGLC_current(PG_LocaleCategories * lc);
 
 /*------
  * Return the POSIX lconv struct (contains number/money formatting information)
- * with locale information for *all* categories. Returned lconv is *independent*
- * on current locale catogories setting - in contrast to standard localeconv().
+ * with locale information for all categories.  Note that returned lconv
+ * does not depend on currently active category settings, but on external
+ * environment variables for locale.
  *------
  */
 extern struct lconv *PGLC_localeconv(void);
