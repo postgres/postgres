@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.6 1997/01/25 21:01:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.7 1997/01/26 00:45:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ InitBufferPool(IPCKey key)
     /* we need both checks because a sbufdesc_padded > PADDED_SBUFDESC_SIZE
        will shrink sbufdesc to the required size, which is bad */
     if (sizeof(struct sbufdesc) != PADDED_SBUFDESC_SIZE ||
-	sizeof(struct sbufdesc_padded) > PADDED_SBUFDESC_SIZE)
+	sizeof(struct sbufdesc_unpadded) > PADDED_SBUFDESC_SIZE)
     	elog(WARN,"Internal error:  sbufdesc does not have the proper size, "
 				"contact the Postgres developers");
     if (sizeof(struct sbufdesc_unpadded) <= PADDED_SBUFDESC_SIZE/2)
