@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.226 2003/03/17 17:58:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.227 2003/03/18 22:11:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -937,7 +937,7 @@ connectDBStart(PGconn *conn)
 	if (ret || addrs == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("failed to getaddrinfo(): %s\n"),
+						  libpq_gettext("getaddrinfo() failed: %s\n"),
 						  gai_strerror(ret));
 		goto connect_errReturn;
 	}
