@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.152 2000/02/26 18:13:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.153 2000/03/01 05:18:19 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -168,7 +168,7 @@ static void doNegateFloat(Value *v);
 %type <chr>		operation, TriggerOneEvent
 
 %type <list>	stmtblock, stmtmulti,
-		result, relation_name_list, OptTableElementList,
+		result, OptTempTableName, relation_name_list, OptTableElementList,
 		OptInherit, definition, opt_distinct,
 		opt_with, func_args, func_args_list, func_as,
 		oper_argtypes, RuleActionList, RuleActionMulti,
@@ -182,7 +182,7 @@ static void doNegateFloat(Value *v);
 %type <node>	func_return
 %type <boolean>	set_opt
 
-%type <boolean>	TriggerForOpt, TriggerForType, OptTemp, OptTempType, OptTempScope
+%type <boolean>	TriggerForOpt, TriggerForType, OptTemp
 
 %type <list>	for_update_clause, update_list
 %type <boolean>	opt_all
@@ -263,15 +263,12 @@ static void doNegateFloat(Value *v);
 %type <str>		TypeId
 
 %type <node>	TableConstraint
-%type <list>	ColQualList, ColQualifier
-%type <list>	ColQualListWithNull
-%type <node>	ColConstraint, ColConstraintElem, PrimaryKey, NotNull
-%type <node>	DefaultClause, DefaultExpr
-%type <node>	ColConstraintWithNull, ColConstraintElemWithNull
+%type <list>	ColQualList
+%type <node>	ColConstraint, ColConstraintElem, ConstraintAttr
 %type <ival>	key_actions, key_delete, key_update, key_reference
 %type <str>		key_match
-%type <ival>	ConstraintAttribute, DeferrabilityClause,
-				TimeClause
+%type <ival>	ConstraintAttributeSpec, ConstraintDeferrabilitySpec,
+				ConstraintTimeSpec
 
 %type <list>	constraints_set_list
 %type <list>	constraints_set_namelist
@@ -987,24 +984,25 @@ CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				}
 		;
 
-OptTemp:  OptTempType						{ $$ = $1; }
-			| OptTempScope OptTempType		{ $$ = $2; }
-		;
-
-OptTempType:  TEMP							{ $$ = TRUE; }
-			| TEMPORARY						{ $$ = TRUE; }
-			| /*EMPTY*/						{ $$ = FALSE; }
-		;
-
-OptTempScope:  GLOBAL
+/*
+ * Redundancy here is needed to avoid shift/reduce conflicts,
+ * since TEMP is not a reserved word.  See also OptTempTableName.
+ */
+OptTemp:      TEMPORARY						{ $$ = TRUE; }
+			| TEMP							{ $$ = TRUE; }
+			| LOCAL TEMPORARY				{ $$ = TRUE; }
+			| LOCAL TEMP					{ $$ = TRUE; }
+			| GLOBAL TEMPORARY
 				{
 					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
 					$$ = TRUE;
 				}
-			| LOCAL
+			| GLOBAL TEMP
 				{
-					 $$ = FALSE;
+					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					$$ = TRUE;
 				}
+			| /*EMPTY*/						{ $$ = FALSE; }
 		;
 
 OptTableElementList:  OptTableElementList ',' OptTableElement
@@ -1028,16 +1026,11 @@ OptTableElement:  columnDef						{ $$ = $1; }
 			| TableConstraint					{ $$ = $1; }
 		;
 
-columnDef:  ColId Typename ColQualifier opt_collate
+columnDef:  ColId Typename ColQualList opt_collate
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typename = $2;
-#if 0
-					n->raw_default = NULL;
-					n->cooked_default = NULL;
-					n->is_not_null = FALSE;
-#endif
 					n->constraints = $3;
 
 					if ($4 != NULL)
@@ -1046,18 +1039,13 @@ columnDef:  ColId Typename ColQualifier opt_collate
 
 					$$ = (Node *)n;
 				}
-			| ColId SERIAL ColQualifier opt_collate
+			| ColId SERIAL ColQualList opt_collate
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("integer");
 					n->typename->typmod = -1;
-#if 0
-					n->raw_default = NULL;
-					n->cooked_default = NULL;
-#endif
-					n->is_not_null = TRUE;
 					n->is_sequence = TRUE;
 					n->constraints = $3;
 
@@ -1069,74 +1057,105 @@ columnDef:  ColId Typename ColQualifier opt_collate
 				}
 		;
 
-/*
- * ColQualifier encapsulates an entire column qualification,
- * including DEFAULT, constraints, and constraint attributes.
- * Note that the DefaultClause handles the empty case.
- */
-ColQualifier:  DefaultClause ColQualList
-				{
-					if ($1 != NULL)
-						$$ = lcons($1, $2);
-					else
-						$$ = $2;
-				}
-			| NotNull DefaultClause ColQualListWithNull
-				{
-					$$ = lcons($1, $3);
-					if ($2 != NULL)
-						$$ = lcons($2, $$);
-				}
-			| DefaultExpr NotNull ColQualListWithNull
-				{
-					$$ = lcons($2, $3);
-					if ($1 != NULL)
-						$$ = lcons($1, $$);
-				}
-			| DefaultExpr NotNull
-				{
-					$$ = lcons($2, NIL);
-					if ($1 != NULL)
-						$$ = lcons($1, $$);
-				}
-			| NotNull DefaultClause
-				{
-					$$ = lcons($1, NIL);
-					if ($2 != NULL)
-						$$ = lcons($2, $$);
-				}
-			| NULL_P DefaultClause ColQualListWithNull
-				{
-					$$ = $3;
-					if ($2 != NULL)
-						$$ = lcons($2, $$);
-				}
-			| NULL_P DefaultClause
-				{
-					if ($2 != NULL)
-						$$ = lcons($2, NIL);
-					else
-						$$ = NIL;
-				}
-			| DefaultClause
-				{
-					if ($1 != NULL)
-						$$ = lcons($1, NIL);
-					else
-						$$ = NIL;
-				}
+ColQualList:  ColQualList ColConstraint		{ $$ = lappend($1, $2); }
+			| /*EMPTY*/						{ $$ = NIL; }
 		;
 
-/*
+ColConstraint:
+		CONSTRAINT name ColConstraintElem
+				{
+					switch (nodeTag($3))
+					{
+						case T_Constraint:
+							{
+								Constraint *n = (Constraint *)$3;
+								n->name = $2;
+							}
+							break;
+						case T_FkConstraint:
+							{
+								FkConstraint *n = (FkConstraint *)$3;
+								n->constr_name = $2;
+							}
+							break;
+						default:
+							break;
+					}
+					$$ = $3;
+				}
+		| ColConstraintElem
+				{ $$ = $1; }
+		| ConstraintAttr
+				{ $$ = $1; }
+		;
+
+/* DEFAULT NULL is already the default for Postgres.
+ * But define it here and carry it forward into the system
+ * to make it explicit.
+ * - thomas 1998-09-13
+ *
+ * WITH NULL and NULL are not SQL92-standard syntax elements,
+ * so leave them out. Use DEFAULT NULL to explicitly indicate
+ * that a column may have that value. WITH NULL leads to
+ * shift/reduce conflicts with WITH TIME ZONE anyway.
+ * - thomas 1999-01-08
+ *
  * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
  * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
  * or be part of a_expr NOT LIKE or similar constructs).
  */
-DefaultClause:  DefaultExpr					{ $$ = $1; }
-			| /*EMPTY*/						{ $$ = NULL; }
-		;
-
-DefaultExpr:  DEFAULT NULL_P
+ColConstraintElem:
+			  NOT NULL_P
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_NOTNULL;
+					n->name = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| NULL_P
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_NULL;
+					n->name = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| UNIQUE
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_UNIQUE;
+					n->name = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| PRIMARY KEY
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PRIMARY;
+					n->name = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| CHECK '(' a_expr ')'
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_CHECK;
+					n->name = NULL;
+					n->raw_expr = $3;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| DEFAULT NULL_P
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_DEFAULT;
@@ -1156,133 +1175,7 @@ DefaultExpr:  DEFAULT NULL_P
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
-		;
-
-ColQualList:  ColQualList ColConstraint
-				{
-					if ($2 != NULL)
-						$$ = lappend($1, $2);
-					else
-						$$ = $1;
-				}
-			| ColConstraint
-				{
-					if ($1 != NULL)
-						$$ = lcons($1, NIL);
-					else
-						$$ = NULL;
-				}
-		;
-
-ColQualListWithNull:  ColConstraintWithNull ColQualListWithNull
-				{
-					if ($1 != NULL)
-						$$ = lcons($1, $2);
-					else
-						$$ = $2;
-				}
-			| ColConstraintWithNull
-				{
-					if ($1 != NULL)
-						$$ = lcons($1, NIL);
-					else
-						$$ = NULL;
-				}
-		;
-
-ColConstraint: CONSTRAINT name ColConstraintElem
-				{
-					switch (nodeTag($3))
-					{
-						case T_Constraint:
-							{
-								Constraint *n = (Constraint *)$3;
-								if (n != NULL) n->name = $2;
-							}
-							break;
-						case T_FkConstraint:
-							{
-								FkConstraint *n = (FkConstraint *)$3;
-								if (n != NULL) n->constr_name = $2;
-							}
-							break;
-						default:
-							break;
-					}
-					$$ = $3;
-				}
-		| ColConstraintElem
-				{ $$ = $1; }
-		;
-
-ColConstraintWithNull:  CONSTRAINT name ColConstraintElemWithNull
-				{
-					switch (nodeTag($3))
-					{
-						case T_Constraint:
-							{
-								Constraint *n = (Constraint *)$3;
-								if (n != NULL) n->name = $2;
-							}
-							break;
-						case T_FkConstraint:
-							{
-								FkConstraint *n = (FkConstraint *)$3;
-								if (n != NULL) n->constr_name = $2;
-							}
-							break;
-						default:
-							break;
-					}
-					$$ = $3;
-				}
-		| ColConstraintElemWithNull
-				{ $$ = $1; }
-		;
-
-/* DEFAULT NULL is already the default for Postgres.
- * But define it here and carry it forward into the system
- * to make it explicit.
- * - thomas 1998-09-13
- *
- * WITH NULL and NULL are not SQL92-standard syntax elements,
- * so leave them out. Use DEFAULT NULL to explicitly indicate
- * that a column may have that value. WITH NULL leads to
- * shift/reduce conflicts with WITH TIME ZONE anyway.
- * - thomas 1999-01-08
- */
-ColConstraintElem:  ColConstraintElemWithNull
-				{
-					$$ = $1;
-				}
-			| UNIQUE
-				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_UNIQUE;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					$$ = (Node *)n;
-				}
-			| PrimaryKey
-				{
-					$$ = $1;
-				}
-		;
-
-ColConstraintElemWithNull:  CHECK '(' a_expr ')'
-				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_CHECK;
-					n->name = NULL;
-					n->raw_expr = $3;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					$$ = (Node *)n;
-				}
-			| REFERENCES ColId opt_column_list
-				key_match key_actions ConstraintAttribute
+			| REFERENCES ColId opt_column_list key_match key_actions 
 				{
 					FkConstraint *n = makeNode(FkConstraint);
 					n->constr_name		= NULL;
@@ -1291,48 +1184,49 @@ ColConstraintElemWithNull:  CHECK '(' a_expr ')'
 					n->pk_attrs			= $3;
 					n->match_type		= $4;
 					n->actions			= $5;
-					n->deferrable		= (($6 & 1) != 0);
-					n->initdeferred		= (($6 & 2) != 0);
-					$$ = (Node *)n;
-				}
-			| REFERENCES ColId opt_column_list
-				key_match key_actions
-				{
-					FkConstraint *n = makeNode(FkConstraint);
-					n->constr_name		= NULL;
-					n->pktable_name		= $2;
-					n->fk_attrs			= NIL;
-					n->pk_attrs			= $3;
-					n->match_type		= $4;
-					n->actions			= $5;
-					n->deferrable		= true;
+					n->deferrable		= false;
 					n->initdeferred		= false;
 					$$ = (Node *)n;
 				}
 		;
 
-PrimaryKey:  PRIMARY KEY
+/*
+ * ConstraintAttr represents constraint attributes, which we parse as if
+ * they were independent constraint clauses, in order to avoid shift/reduce
+ * conflicts (since NOT might start either an independent NOT NULL clause
+ * or an attribute).  analyze.c is responsible for attaching the attribute
+ * information to the preceding "real" constraint node, and for complaining
+ * if attribute clauses appear in the wrong place or wrong combinations.
+ *
+ * See also ConstraintAttributeSpec, which can be used in places where
+ * there is no parsing conflict.
+ */
+ConstraintAttr: DEFERRABLE
 				{
 					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_PRIMARY;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
+					n->contype = CONSTR_ATTR_DEFERRABLE;
+					$$ = (Node *)n;
+				}
+			| NOT DEFERRABLE
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_ATTR_NOT_DEFERRABLE;
+					$$ = (Node *)n;
+				}
+			| INITIALLY DEFERRED
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_ATTR_DEFERRED;
+					$$ = (Node *)n;
+				}
+			| INITIALLY IMMEDIATE
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_ATTR_IMMEDIATE;
 					$$ = (Node *)n;
 				}
 		;
 
-NotNull:  NOT NULL_P
-				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_NOTNULL;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					$$ = (Node *)n;
-				}
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
  *  a column definition. ColConstraintElem specifies the embedded form.
@@ -1345,13 +1239,13 @@ TableConstraint:  CONSTRAINT name ConstraintElem
 						case T_Constraint:
 							{
 								Constraint *n = (Constraint *)$3;
-								if (n != NULL) n->name = $2;
+								n->name = $2;
 							}
 							break;
 						case T_FkConstraint:
 							{
 								FkConstraint *n = (FkConstraint *)$3;
-								if (n != NULL) n->constr_name = $2;
+								n->constr_name = $2;
 							}
 							break;
 						default:
@@ -1382,14 +1276,18 @@ ConstraintElem:  CHECK '(' a_expr ')'
 					n->keys = $3;
 					$$ = (Node *)n;
 				}
-		| PrimaryKey '(' columnList ')'
+		| PRIMARY KEY '(' columnList ')'
 				{
-					Constraint *n = (Constraint *)$1;
-					n->keys = $3;
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PRIMARY;
+					n->name = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
+					n->keys = $4;
 					$$ = (Node *)n;
 				}
 		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list
-				key_match key_actions ConstraintAttribute
+				key_match key_actions ConstraintAttributeSpec
 				{
 					FkConstraint *n = makeNode(FkConstraint);
 					n->constr_name		= NULL;
@@ -1400,20 +1298,6 @@ ConstraintElem:  CHECK '(' a_expr ')'
 					n->actions			= $10;
 					n->deferrable		= ($11 & 1) != 0;
 					n->initdeferred		= ($11 & 2) != 0;
-					$$ = (Node *)n;
-				}
-		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list
-				key_match key_actions
-				{
-					FkConstraint *n = makeNode(FkConstraint);
-					n->constr_name		= NULL;
-					n->pktable_name		= $7;
-					n->fk_attrs			= $4;
-					n->pk_attrs			= $8;
-					n->match_type		= $9;
-					n->actions			= $10;
-					n->deferrable		= false;
-					n->initdeferred		= false;
 					$$ = (Node *)n;
 				}
 		;
@@ -1645,7 +1529,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				}
 		| CREATE CONSTRAINT TRIGGER name AFTER TriggerEvents ON
 				relation_name OptConstrFromTable 
-				ConstraintAttribute
+				ConstraintAttributeSpec
 				FOR EACH ROW EXECUTE PROCEDURE name '(' TriggerFuncArgs ')'
 				{
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
@@ -1740,37 +1624,41 @@ OptConstrFromTable:			/* Empty */
 				}
 		;
 
-ConstraintAttribute:  DeferrabilityClause
+ConstraintAttributeSpec:  ConstraintDeferrabilitySpec
+			{ $$ = $1; }
+		| ConstraintDeferrabilitySpec ConstraintTimeSpec
 			{
-				$$ = $1;
+				if ($1 == 0 && $2 != 0)
+					elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+				$$ = $1 | $2;
 			}
-		| TimeClause
+		| ConstraintTimeSpec
 			{
 				if ($1 != 0)
 					$$ = 3;
 				else
 					$$ = 0;
 			}
-		| DeferrabilityClause TimeClause
-			{
-				if ($1 == 0 && $2 != 0)
-					elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
-				$$ = $1 | $2;
-			}
-		| TimeClause DeferrabilityClause
+		| ConstraintTimeSpec ConstraintDeferrabilitySpec
 			{
 				if ($2 == 0 && $1 != 0)
 					elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
 				$$ = $1 | $2;
 			}
+		| /* Empty */
+			{ $$ = 0; }
 		;
 
-DeferrabilityClause:  DEFERRABLE				{ $$ = 1; }
-		| NOT DEFERRABLE						{ $$ = 0; }
+ConstraintDeferrabilitySpec: NOT DEFERRABLE
+			{ $$ = 0; }
+		| DEFERRABLE
+			{ $$ = 1; }
 		;
 
-TimeClause:  INITIALLY IMMEDIATE				{ $$ = 0; }
-		| INITIALLY DEFERRED					{ $$ = 2; }
+ConstraintTimeSpec: INITIALLY IMMEDIATE
+			{ $$ = 0; }
+		| INITIALLY DEFERRED
+			{ $$ = 2; }
 		;
 
 
@@ -3395,8 +3283,39 @@ SubSelect:	SELECT opt_distinct target_list
 		;
 
 		/* easy way to return two values. Can someone improve this?  bjm */
-result:  INTO OptTemp opt_table relation_name	{ $$ = lcons(makeInteger($2), (List *)$4); }
-		| /*EMPTY*/								{ $$ = lcons(makeInteger(false), NIL); }
+result:  INTO OptTempTableName			{ $$ = $2; }
+		| /*EMPTY*/						{ $$ = lcons(makeInteger(false), NIL); }
+		;
+
+/*
+ * Redundancy here is needed to avoid shift/reduce conflicts,
+ * since TEMP is not a reserved word.  See also OptTemp.
+ *
+ * The result is a cons cell (not a true list!) containing
+ * a boolean and a table name.
+ */
+OptTempTableName:  TEMPORARY opt_table relation_name
+				{ $$ = lcons(makeInteger(TRUE), (List *) $3); }
+			| TEMP opt_table relation_name
+				{ $$ = lcons(makeInteger(TRUE), (List *) $3); }
+			| LOCAL TEMPORARY opt_table relation_name
+				{ $$ = lcons(makeInteger(TRUE), (List *) $4); }
+			| LOCAL TEMP opt_table relation_name
+				{ $$ = lcons(makeInteger(TRUE), (List *) $4); }
+			| GLOBAL TEMPORARY opt_table relation_name
+				{
+					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					$$ = lcons(makeInteger(TRUE), (List *) $4);
+				}
+			| GLOBAL TEMP opt_table relation_name
+				{
+					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					$$ = lcons(makeInteger(TRUE), (List *) $4);
+				}
+			| TABLE relation_name
+				{ $$ = lcons(makeInteger(FALSE), (List *) $2); }
+			| relation_name
+				{ $$ = lcons(makeInteger(FALSE), (List *) $1); }
 		;
 
 opt_table:  TABLE								{ $$ = TRUE; }
@@ -5274,7 +5193,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| CREATEUSER					{ $$ = "createuser"; }
 		| CYCLE							{ $$ = "cycle"; }
 		| DATABASE						{ $$ = "database"; }
-		| DEFERRABLE					{ $$ = "deferrable"; }
 		| DEFERRED						{ $$ = "deferred"; }
 		| DELIMITERS					{ $$ = "delimiters"; }
 		| DOUBLE						{ $$ = "double"; }
@@ -5288,7 +5206,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
 		| INHERITS						{ $$ = "inherits"; }
-		| INITIALLY						{ $$ = "initially"; }
 		| INSENSITIVE					{ $$ = "insensitive"; }
 		| INSTEAD						{ $$ = "instead"; }
 		| INTERVAL						{ $$ = "interval"; }
@@ -5335,6 +5252,8 @@ ColId:  IDENT							{ $$ = $1; }
 		| STDIN							{ $$ = "stdin"; }
 		| STDOUT						{ $$ = "stdout"; }
 		| SYSID							{ $$ = "sysid"; }
+		| TEMP							{ $$ = "temp"; }
+		| TEMPORARY						{ $$ = "temporary"; }
 		| TIME							{ $$ = "time"; }
 		| TIMESTAMP						{ $$ = "timestamp"; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
@@ -5371,6 +5290,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| CURRENT_USER					{ $$ = "current_user"; }
 		| DEC							{ $$ = "dec"; }
 		| DECIMAL						{ $$ = "decimal"; }
+		| DEFERRABLE					{ $$ = "deferrable"; }
 		| DO							{ $$ = "do"; }
 		| ELSE							{ $$ = "else"; }
 		| END_TRANS						{ $$ = "end"; }
@@ -5381,6 +5301,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| FOREIGN						{ $$ = "foreign"; }
 		| GLOBAL						{ $$ = "global"; }
 		| GROUP							{ $$ = "group"; }
+		| INITIALLY						{ $$ = "initially"; }
 		| LISTEN						{ $$ = "listen"; }
 		| LOAD							{ $$ = "load"; }
 		| LOCAL							{ $$ = "local"; }

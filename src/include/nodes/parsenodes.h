@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.100 2000/02/18 09:29:44 inoue Exp $
+ * $Id: parsenodes.h,v 1.101 2000/03/01 05:18:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,32 +152,51 @@ typedef struct CreateStmt
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelnames;	/* relations to inherit from (list of
 								 * T_String Values) */
-	List	   *constraints;	/* list of constraints (Constraint nodes) */
+	List	   *constraints;	/* constraints (list of Constraint and
+								 * FkConstraint nodes) */
 } CreateStmt;
 
-typedef enum ConstrType			/* types of constraints */
-{
-	CONSTR_NULL, CONSTR_NOTNULL, CONSTR_DEFAULT, CONSTR_CHECK,
-	CONSTR_PRIMARY, CONSTR_UNIQUE
-} ConstrType;
-
-/*
+/* ----------
+ * Definitions for plain (non-FOREIGN KEY) constraints in CreateStmt
+ *
+ * XXX probably these ought to be unified with FkConstraints at some point?
+ *
  * For constraints that use expressions (CONSTR_DEFAULT, CONSTR_CHECK)
  * we may have the expression in either "raw" form (an untransformed
  * parse tree) or "cooked" form (the nodeToString representation of
  * an executable expression tree), depending on how this Constraint
  * node was created (by parsing, or by inheritance from an existing
  * relation).  We should never have both in the same node!
+ *
+ * Constraint attributes (DEFERRABLE etc) are initially represented as
+ * separate Constraint nodes for simplicity of parsing.  analyze.c makes
+ * a pass through the constraints list to attach the info to the appropriate
+ * FkConstraint node (and, perhaps, someday to other kinds of constraints).
+ * ----------
  */
+
+typedef enum ConstrType			/* types of constraints */
+{
+	CONSTR_NULL,				/* not SQL92, but a lot of people expect it */
+	CONSTR_NOTNULL,
+	CONSTR_DEFAULT,
+	CONSTR_CHECK,
+	CONSTR_PRIMARY,
+	CONSTR_UNIQUE,
+	CONSTR_ATTR_DEFERRABLE,		/* attributes for previous constraint node */
+	CONSTR_ATTR_NOT_DEFERRABLE,
+	CONSTR_ATTR_DEFERRED,
+	CONSTR_ATTR_IMMEDIATE
+} ConstrType;
 
 typedef struct Constraint
 {
 	NodeTag		type;
 	ConstrType	contype;
-	char	   *name;			/* name */
-	Node	   *raw_expr;		/* untransformed parse tree */
-	char	   *cooked_expr;	/* nodeToString representation */
-	List	   *keys;			/* list of primary keys */
+	char	   *name;			/* name, or NULL if unnamed */
+	Node	   *raw_expr;		/* expr, as untransformed parse tree */
+	char	   *cooked_expr;	/* expr, as nodeToString representation */
+	List	   *keys;			/* list of primary keys (or unique columns) */
 } Constraint;
 
 

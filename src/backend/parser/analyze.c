@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.138 2000/02/29 12:28:25 wieck Exp $
+ *	$Id: analyze.c,v 1.139 2000/03/01 05:18:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
 
 static void transformForUpdate(Query *qry, List *forUpdate);
 static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint);
+static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
 
 /* kluge to return extra info from transformCreateStmt() */
@@ -589,6 +590,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	IndexStmt	   *index,
 				   *pkey = NULL;
 	IndexElem	   *iparam;
+	bool			saw_nullable;
 
 	q = makeNode(Query);
 	q->commandType = CMD_UTILITY;
@@ -621,6 +623,12 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					FuncCall   *funccallnode;
 					CreateSeqStmt *sequence;
 
+					/*
+					 * Create appropriate constraints for SERIAL.  We do this
+					 * in full, rather than shortcutting, so that we will
+					 * detect any conflicting constraints the user wrote
+					 * (like a different DEFAULT).
+					 */
 					sname = makeObjectName(stmt->relname, column->colname,
 										   "seq");
 					/*
@@ -644,27 +652,37 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					constraint->raw_expr = (Node *) funccallnode;
 					constraint->cooked_expr = NULL;
 					constraint->keys = NULL;
-
-					column->constraints = lappend(column->constraints, constraint);
+					column->constraints = lappend(column->constraints,
+												  constraint);
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_UNIQUE;
 					constraint->name = makeObjectName(stmt->relname,
 													  column->colname,
 													  "key");
-					column->constraints = lappend(column->constraints, constraint);
+					column->constraints = lappend(column->constraints,
+												  constraint);
+
+					constraint = makeNode(Constraint);
+					constraint->contype = CONSTR_NOTNULL;
+					column->constraints = lappend(column->constraints,
+												  constraint);
 
 					sequence = makeNode(CreateSeqStmt);
 					sequence->seqname = pstrdup(sname);
 					sequence->options = NIL;
 
 					elog(NOTICE, "CREATE TABLE will create implicit sequence '%s' for SERIAL column '%s.%s'",
-					  sequence->seqname, stmt->relname, column->colname);
+						 sequence->seqname, stmt->relname, column->colname);
 
 					blist = lcons(sequence, NIL);
 				}
 
 				/* Process column constraints, if any... */
+				transformConstraintAttrs(column->constraints);
+
+				saw_nullable = false;
+
 				foreach(clist, column->constraints)
 				{
 					constraint = lfirst(clist);
@@ -676,7 +694,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					 * to be processed later.
 					 * ----------
 					 */
-					if (nodeTag(constraint) == T_FkConstraint)
+					if (IsA(constraint, FkConstraint))
 					{
 						Ident	*id = makeNode(Ident);
 						id->name		= column->colname;
@@ -693,23 +711,19 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					switch (constraint->contype)
 					{
 						case CONSTR_NULL:
-
-							/*
-							 * We should mark this explicitly, so we
-							 * can tell if NULL and NOT NULL are both
-							 * specified
-							 */
-							if (column->is_not_null)
+							if (saw_nullable && column->is_not_null)
 								elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
 									 " for '%s.%s'", stmt->relname, column->colname);
 							column->is_not_null = FALSE;
+							saw_nullable = true;
 							break;
 
 						case CONSTR_NOTNULL:
-							if (column->is_not_null)
-								elog(ERROR, "CREATE TABLE/NOT NULL already specified"
+							if (saw_nullable && ! column->is_not_null)
+								elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
 									 " for '%s.%s'", stmt->relname, column->colname);
 							column->is_not_null = TRUE;
+							saw_nullable = true;
 							break;
 
 						case CONSTR_DEFAULT:
@@ -742,6 +756,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							constraints = lappend(constraints, constraint);
 							break;
 
+						case CONSTR_ATTR_DEFERRABLE:
+						case CONSTR_ATTR_NOT_DEFERRABLE:
+						case CONSTR_ATTR_DEFERRED:
+						case CONSTR_ATTR_IMMEDIATE:
+							/* transformConstraintAttrs took care of these */
+							break;
+
 						default:
 							elog(ERROR, "parser: unrecognized constraint (internal error)");
 							break;
@@ -767,10 +788,16 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						constraints = lappend(constraints, constraint);
 						break;
 
+					case CONSTR_NULL:
 					case CONSTR_NOTNULL:
 					case CONSTR_DEFAULT:
+					case CONSTR_ATTR_DEFERRABLE:
+					case CONSTR_ATTR_NOT_DEFERRABLE:
+					case CONSTR_ATTR_DEFERRED:
+					case CONSTR_ATTR_IMMEDIATE:
 						elog(ERROR, "parser: illegal context for constraint (internal error)");
 						break;
+
 					default:
 						elog(ERROR, "parser: unrecognized constraint (internal error)");
 						break;
@@ -2000,6 +2027,95 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 }
 
 /*
+ * Preprocess a list of column constraint clauses
+ * to attach constraint attributes to their primary constraint nodes
+ * and detect inconsistent/misplaced constraint attributes.
+ *
+ * NOTE: currently, attributes are only supported for FOREIGN KEY primary
+ * constraints, but someday they ought to be supported for other constraints.
+ */
+static void
+transformConstraintAttrs(List *constraintList)
+{
+	Node	   *lastprimarynode = NULL;
+	bool		saw_deferrability = false;
+	bool		saw_initially = false;
+	List	   *clist;
+
+	foreach(clist, constraintList)
+	{
+		Node   *node = lfirst(clist);
+
+		if (! IsA(node, Constraint))
+		{
+			lastprimarynode = node;
+			/* reset flags for new primary node */
+			saw_deferrability = false;
+			saw_initially = false;
+		}
+		else
+		{
+			Constraint	   *con = (Constraint *) node;
+
+			switch (con->contype)
+			{
+				case CONSTR_ATTR_DEFERRABLE:
+					if (lastprimarynode == NULL ||
+						! IsA(lastprimarynode, FkConstraint))
+						elog(ERROR, "Misplaced DEFERRABLE clause");
+					if (saw_deferrability)
+						elog(ERROR, "Multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed");
+					saw_deferrability = true;
+					((FkConstraint *) lastprimarynode)->deferrable = true;
+					break;
+				case CONSTR_ATTR_NOT_DEFERRABLE:
+					if (lastprimarynode == NULL ||
+						! IsA(lastprimarynode, FkConstraint))
+						elog(ERROR, "Misplaced NOT DEFERRABLE clause");
+					if (saw_deferrability)
+						elog(ERROR, "Multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed");
+					saw_deferrability = true;
+					((FkConstraint *) lastprimarynode)->deferrable = false;
+					if (saw_initially &&
+						((FkConstraint *) lastprimarynode)->initdeferred)
+						elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+					break;
+				case CONSTR_ATTR_DEFERRED:
+					if (lastprimarynode == NULL ||
+						! IsA(lastprimarynode, FkConstraint))
+						elog(ERROR, "Misplaced INITIALLY DEFERRED clause");
+					if (saw_initially)
+						elog(ERROR, "Multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed");
+					saw_initially = true;
+					((FkConstraint *) lastprimarynode)->initdeferred = true;
+					/* If only INITIALLY DEFERRED appears, assume DEFERRABLE */
+					if (! saw_deferrability)
+						((FkConstraint *) lastprimarynode)->deferrable = true;
+					else if (! ((FkConstraint *) lastprimarynode)->deferrable)
+						elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+					break;
+				case CONSTR_ATTR_IMMEDIATE:
+					if (lastprimarynode == NULL ||
+						! IsA(lastprimarynode, FkConstraint))
+						elog(ERROR, "Misplaced INITIALLY IMMEDIATE clause");
+					if (saw_initially)
+						elog(ERROR, "Multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed");
+					saw_initially = true;
+					((FkConstraint *) lastprimarynode)->initdeferred = false;
+					break;
+				default:
+					/* Otherwise it's not an attribute */
+					lastprimarynode = node;
+					/* reset flags for new primary node */
+					saw_deferrability = false;
+					saw_initially = false;
+					break;
+			}
+		}
+	}
+}
+
+/*
  * Special handling of type definition for a column
  */
 static void
@@ -2027,4 +2143,3 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 		}
 	}
 }
-
