@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.2 1996/10/23 07:41:31 scrappy Exp $
+ * $Id: transam.h,v 1.3 1996/11/01 09:30:42 scrappy Exp $
  *
  *   NOTES
  *	Transaction System Version 101 now support proper oid
@@ -17,9 +17,8 @@
 #ifndef TRANSAM_H
 #define TRANSAM_H
 
-#include "utils/nabstime.h"
-#include "utils/rel.h"
 #include "storage/bufmgr.h"
+#include "utils/nabstime.h"
 
 /* ----------------
  *	transaction system version id

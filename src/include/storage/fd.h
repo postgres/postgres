@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.2 1996/10/31 09:49:45 scrappy Exp $
+ * $Id: fd.h,v 1.3 1996/11/01 09:31:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,6 @@
 #include <stdio.h>	/* for SEEK_ on the rest */
 #endif /* SEEK_SET */
 #endif /* WIN32 */
-
-#include "storage/block.h"
 
 typedef char   *FileName;
 
