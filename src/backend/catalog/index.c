@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.77 1999/06/04 02:19:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.78 1999/06/16 11:01:17 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -990,9 +990,7 @@ index_create(char *heapRelationName,
 		Oid			relid = RelnameFindRelid(indexRelationName);
 
 		if (relid != InvalidOid)
-		{
 			RelationForgetRelation(relid);
-		}
 	}
 
 	/* save user relation name because heap_create changes it */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.87 1999/06/04 02:19:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.88 1999/06/16 11:01:17 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -811,9 +811,7 @@ heap_create_with_catalog(char *relname,
 		Oid			relid = RelnameFindRelid(relname);
 
 		if (relid != InvalidOid)
-		{
 			RelationForgetRelation(relid);
-		}
 	}
 
 	/* save user relation name because heap_create changes it */
