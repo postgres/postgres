@@ -120,7 +120,15 @@ public class LargeObjectManager
     res.close();
     DriverManager.println("Large Object initialised");
   }
-  
+
+  /*
+   * Added to free resources during garbage collection,
+   * Philip Crotwell <crotwell@seis.sc.edu>
+   */
+  protected void finalize() {
+    close();
+  }
+
   /**
    * This opens an existing large object, based on its OID. This method
    * assumes that READ and WRITE access is required (the default).
