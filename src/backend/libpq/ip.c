@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.29 2004/09/27 23:24:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.30 2004/11/08 01:54:40 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -340,37 +340,40 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 {
 	long		bits;
 	char	   *endptr;
-	struct sockaddr_in mask4;
-
-#ifdef	HAVE_IPV6
-	struct sockaddr_in6 mask6;
-#endif
 
 	bits = strtol(numbits, &endptr, 10);
 
 	if (*numbits == '\0' || *endptr != '\0')
 		return -1;
 
-	if ((bits < 0) || (family == AF_INET && bits > 32)
-#ifdef HAVE_IPV6
-		|| (family == AF_INET6 && bits > 128)
-#endif
-		)
-		return -1;
-
 	switch (family)
 	{
 		case AF_INET:
-			mask4.sin_addr.s_addr =
-				htonl((0xffffffffUL << (32 - bits))
-					  & 0xffffffffUL);
-			memcpy(mask, &mask4, sizeof(mask4));
-			break;
+			{
+				struct sockaddr_in mask4;
+				long		maskl;
+
+				if (bits < 0 || bits > 32)
+					return -1;
+				/* avoid "x << 32", which is not portable */
+				if (bits > 0)
+					maskl = (0xffffffffUL << (32 - (int) bits))
+						& 0xffffffffUL;
+				else
+					maskl = 0;
+				mask4.sin_addr.s_addr = htonl(maskl);
+				memcpy(mask, &mask4, sizeof(mask4));
+				break;
+			}
+
 #ifdef HAVE_IPV6
 		case AF_INET6:
 			{
+				struct sockaddr_in6 mask6;
 				int			i;
 
+				if (bits < 0 || bits > 128)
+					return -1;
 				for (i = 0; i < 16; i++)
 				{
 					if (bits <= 0)
@@ -380,7 +383,7 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 					else
 					{
 						mask6.sin6_addr.s6_addr[i] =
-							(0xff << (8 - bits)) & 0xff;
+							(0xff << (8 - (int) bits)) & 0xff;
 					}
 					bits -= 8;
 				}
