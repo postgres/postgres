@@ -20,5 +20,4 @@ horology/hppa=horology-no-DST-before-1970
 horology/sparc-sun-solaris=horology-solaris-1947
 abstime/sparc-sun-solaris=abstime-solaris-1947
 tinterval/sparc-sun-solaris=tinterval-solaris-1947
-#include <sys/types.h>				/* For pid_t */
 
