@@ -32,6 +32,7 @@ create_type
 create_table
 create_function_2
 constraints
+triggers
 copy
 create_misc
 create_aggregate

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.9 1997/07/29 14:09:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.10 1997/09/11 09:13:27 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,6 +43,7 @@ endif
 all: $(INFILES)
 	cd input; $(MAKE) all; cd ..
 	cd output; $(MAKE) all; cd ..
+	$(MAKE) -C ../../../contrib/spi REFINT_VERBOSE=1
 
 #
 # run the test
