@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.134 2002/09/24 21:26:44 tgl Exp $
+ * $Id: pg_type.h,v 1.134.2.1 2003/01/08 21:40:49 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -18,6 +18,8 @@
  */
 #ifndef PG_TYPE_H
 #define PG_TYPE_H
+
+#include "nodes/nodes.h"
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
@@ -537,7 +539,7 @@ DATA(insert OID = 2282 ( opaque			PGNSP PGUID  4 t p t \054 0 0 opaque_in opaque
  */
 extern Oid	TypeShellMake(const char *typeName, Oid typeNamespace);
 
-extern Oid TypeCreate(const char *typeName,
+extern Oid	TypeCreate(const char *typeName,
 		   Oid typeNamespace,
 		   Oid assignedTypeOid,
 		   Oid relationOid,
@@ -550,7 +552,7 @@ extern Oid TypeCreate(const char *typeName,
 		   Oid elementType,
 		   Oid baseType,
 		   const char *defaultTypeValue,
-		   const char *defaultTypeBin,
+		   char *defaultTypeBin,
 		   bool passedByValue,
 		   char alignment,
 		   char storage,
@@ -558,9 +560,20 @@ extern Oid TypeCreate(const char *typeName,
 		   int32 typNDims,
 		   bool typeNotNull);
 
+extern void GenerateTypeDependencies(Oid typeNamespace,
+									 Oid typeObjectId,
+									 Oid relationOid,
+									 char relationKind,
+									 Oid inputProcedure,
+									 Oid outputProcedure,
+									 Oid elementType,
+									 Oid baseType,
+									 Node *defaultExpr,
+									 bool rebuild);
 
 extern void TypeRename(const char *oldTypeName, Oid typeNamespace,
 		   const char *newTypeName);
+
 extern char *makeArrayTypeName(const char *typeName);
 
 #endif   /* PG_TYPE_H */
