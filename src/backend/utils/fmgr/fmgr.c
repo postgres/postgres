@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.38 2000/05/16 20:48:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.39 2000/05/22 02:34:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
  *
  * XXX: use of global fmgr_pl_finfo variable is really ugly.  FIXME
  */
+FmgrInfo        *fmgr_pl_finfo;
 
 static char *
 fmgr_pl(char *arg0,...)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.62 2000/04/12 17:14:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.63 2000/05/22 02:34:20 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -304,7 +304,7 @@ bool
 TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
-				   Oid typeid,
+				   Oid oidtypeid,
 				   int32 typmod,
 				   int attdim,
 				   bool attisset)
@@ -378,7 +378,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 * ----------------
 	 */
 	tuple = SearchSysCacheTuple(TYPEOID,
-								ObjectIdGetDatum(typeid),
+								ObjectIdGetDatum(oidtypeid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
@@ -431,7 +431,7 @@ TupleDescInitEntry(TupleDesc desc,
 	   */
 	if (attisset)
 	{
-		Type		t = typeidType(OIDOID);
+		Type		t = oidtypeidType(OIDOID);
 
 		att->attlen = typeLen(t);
 		att->attbyval = typeByVal(t);
