@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.64 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.65 2003/09/07 02:18:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,8 @@ load_external_function(char *filename, char *funcname,
 		if (stat(fullname, &stat_buf) == -1)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				  errmsg("could not access file \"%s\": %m", fullname)));
+					 errmsg("could not access file \"%s\": %m",
+							fullname)));
 
 		for (file_scanner = file_list;
 			 file_scanner != (DynamicFileList *) NULL &&
@@ -177,7 +178,8 @@ void
 load_file(char *filename)
 {
 	DynamicFileList *file_scanner,
-			   *p;
+			   *prv,
+			   *nxt;
 	struct stat stat_buf;
 	char	   *fullname;
 
@@ -196,31 +198,27 @@ load_file(char *filename)
 				(errcode_for_file_access(),
 				 errmsg("could not access file \"%s\": %m", fullname)));
 
-	if (file_list != (DynamicFileList *) NULL)
+	/*
+	 * We have to zap all entries in the list that match on either filename
+	 * or inode, else load_external_function() won't do anything.
+	 */
+	prv = NULL;
+	for (file_scanner = file_list; file_scanner != NULL; file_scanner = nxt)
 	{
-		if (SAME_INODE(stat_buf, *file_list))
+		nxt = file_scanner->next;
+		if (strcmp(fullname, file_scanner->filename) == 0 ||
+			SAME_INODE(stat_buf, *file_scanner))
 		{
-			p = file_list;
-			file_list = p->next;
-			pg_dlclose(p->handle);
-			free((char *) p);
+			if (prv)
+				prv->next = nxt;
+			else
+				file_list = nxt;
+			pg_dlclose(file_scanner->handle);
+			free((char *) file_scanner);
+			/* prv does not change */
 		}
 		else
-		{
-			for (file_scanner = file_list;
-				 file_scanner->next != (DynamicFileList *) NULL;
-				 file_scanner = file_scanner->next)
-			{
-				if (SAME_INODE(stat_buf, *(file_scanner->next)))
-				{
-					p = file_scanner->next;
-					file_scanner->next = p->next;
-					pg_dlclose(p->handle);
-					free((char *) p);
-					break;
-				}
-			}
-		}
+			prv = file_scanner;
 	}
 
 	load_external_function(fullname, (char *) NULL, false, (void *) NULL);
