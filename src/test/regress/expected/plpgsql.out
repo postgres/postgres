@@ -2103,3 +2103,73 @@ select sp_add_user('user3');
 
 drop function sp_add_user(text);
 drop function sp_id_user(text);
+--
+-- tests for refcursors
+--
+create table rc_test (a int, b int);
+copy rc_test from stdin;
+create function return_refcursor(rc refcursor) returns refcursor as $$
+begin
+    open rc for select a from rc_test;
+    return rc;
+end
+$$ language 'plpgsql';
+create function refcursor_test1(refcursor) returns refcursor as $$
+begin
+    perform return_refcursor($1);
+    return $1;
+end
+$$ language 'plpgsql';
+begin;
+select refcursor_test1('test1');
+ refcursor_test1 
+-----------------
+ test1
+(1 row)
+
+fetch next from test1;
+ a 
+---
+ 5
+(1 row)
+
+select refcursor_test1('test2');
+ refcursor_test1 
+-----------------
+ test2
+(1 row)
+
+fetch all from test2;
+  a  
+-----
+   5
+  50
+ 500
+(3 rows)
+
+commit;
+-- should fail
+fetch next from test1;
+ERROR:  cursor "test1" does not exist
+create function refcursor_test2(int) returns boolean as $$
+declare
+    c1 cursor (param integer) for select * from rc_test where a > param;
+    nonsense record;
+begin
+    open c1($1);
+    fetch c1 into nonsense;
+    close c1;
+    if found then
+        return true;
+    else
+        return false;
+    end if;
+end
+$$ language 'plpgsql';
+select refcursor_test2(20000) as "Should be false",
+       refcursor_test2(20) as "Should be true";
+ Should be false | Should be true 
+-----------------+----------------
+ f               | t
+(1 row)
+

@@ -1807,3 +1807,59 @@ select sp_add_user('user3');
 
 drop function sp_add_user(text);
 drop function sp_id_user(text);
+
+--
+-- tests for refcursors
+--
+create table rc_test (a int, b int);
+copy rc_test from stdin;
+5	10
+50	100
+500	1000
+\.
+
+create function return_refcursor(rc refcursor) returns refcursor as $$
+begin
+    open rc for select a from rc_test;
+    return rc;
+end
+$$ language 'plpgsql';
+
+create function refcursor_test1(refcursor) returns refcursor as $$
+begin
+    perform return_refcursor($1);
+    return $1;
+end
+$$ language 'plpgsql';
+
+begin;
+
+select refcursor_test1('test1');
+fetch next from test1;
+
+select refcursor_test1('test2');
+fetch all from test2;
+
+commit;
+
+-- should fail
+fetch next from test1;
+
+create function refcursor_test2(int) returns boolean as $$
+declare
+    c1 cursor (param integer) for select * from rc_test where a > param;
+    nonsense record;
+begin
+    open c1($1);
+    fetch c1 into nonsense;
+    close c1;
+    if found then
+        return true;
+    else
+        return false;
+    end if;
+end
+$$ language 'plpgsql';
+
+select refcursor_test2(20000) as "Should be false",
+       refcursor_test2(20) as "Should be true";
