@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.83 2001/10/01 20:15:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.84 2001/10/04 22:00:10 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -136,7 +136,7 @@ static void get_sublink_expr(Node *node, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
-static void get_opclass_name(Oid opclass, bool only_nondefault,
+static void get_opclass_name(Oid opclass, Oid actual_datatype,
 							 StringInfo buf);
 static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
@@ -408,7 +408,9 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	sep = "";
 	for (keyno = 0; keyno < INDEX_MAX_KEYS; keyno++)
 	{
-		if (idxrec->indkey[keyno] == InvalidAttrNumber)
+		AttrNumber attnum = idxrec->indkey[keyno];
+
+		if (attnum == InvalidAttrNumber)
 			break;
 
 		appendStringInfo(&keybuf, sep);
@@ -419,13 +421,15 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		 */
 		appendStringInfo(&keybuf, "%s",
 			  quote_identifier(get_relid_attribute_name(idxrec->indrelid,
-												idxrec->indkey[keyno])));
+														attnum)));
 
 		/*
 		 * If not a functional index, add the operator class name
 		 */
 		if (idxrec->indproc == InvalidOid)
-			get_opclass_name(idxrec->indclass[keyno], true, &keybuf);
+			get_opclass_name(idxrec->indclass[keyno],
+							 get_atttype(idxrec->indrelid, attnum),
+							 &keybuf);
 	}
 
 	if (idxrec->indproc != InvalidOid)
@@ -446,7 +450,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		appendStringInfo(&buf, "%s(%s)",
 						 quote_identifier(NameStr(procStruct->proname)),
 						 keybuf.data);
-		get_opclass_name(idxrec->indclass[0], true, &buf);
+		get_opclass_name(idxrec->indclass[0], procStruct->prorettype, &buf);
 
 		ReleaseSysCache(proctup);
 	}
@@ -2504,12 +2508,14 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
  * get_opclass_name			- fetch name of an index operator class
  *
  * The opclass name is appended (after a space) to buf.
- * If "only_nondefault" is true, the opclass name is appended only if
- * it isn't the default for its datatype.
+ *
+ * Output is suppressed if the opclass is the default for the given
+ * actual_datatype.  (If you don't want this behavior, just pass
+ * InvalidOid for actual_datatype.)
  * ----------
  */
 static void
-get_opclass_name(Oid opclass, bool only_nondefault,
+get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf)
 {
 	HeapTuple	ht_opc;
@@ -2521,7 +2527,7 @@ get_opclass_name(Oid opclass, bool only_nondefault,
 	if (!HeapTupleIsValid(ht_opc))
 		elog(ERROR, "cache lookup failed for opclass %u", opclass);
 	opcrec = (Form_pg_opclass) GETSTRUCT(ht_opc);
-	if (!only_nondefault || !opcrec->opcdefault)
+	if (actual_datatype != opcrec->opcintype || !opcrec->opcdefault)
 		appendStringInfo(buf, " %s",
 						 quote_identifier(NameStr(opcrec->opcname)));
 	ReleaseSysCache(ht_opc);
