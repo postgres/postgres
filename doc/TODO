@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Feb 24 09:14:47 EST 2005
+Last updated:		Thu Feb 24 18:39:38 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -949,7 +949,8 @@ Source Code
 
 	  To fix UTF8, the data needs to be converted to UTF16 and then
 	  the Win32 wcscoll() can be used, and perhaps other functions
-	  like towupper().
+	  like towupper().  However, UTF8 already works with normal
+	  locales but provides no ordering.
 
 
 * Wire Protocol Changes
