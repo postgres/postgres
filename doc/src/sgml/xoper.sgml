@@ -91,7 +91,7 @@ SELECT (a + b) AS c FROM test_complex;
     sure that they are right!  Incorrect use of an optimization clause can
     result in backend crashes, subtly wrong output, or other Bad Things.
     You can always leave out an optimization clause if you are not sure
-    about it --- the only consequence is that queries might run slower than
+    about it; the only consequence is that queries might run slower than
     they need to.
    </para>
 
@@ -101,75 +101,80 @@ SELECT (a + b) AS c FROM test_complex;
     the ones that release 6.5 understands.
    </para>
 
-  <sect2>
-   <title>COMMUTATOR</title>
+   <sect2>
+    <title>COMMUTATOR</title>
 
-   <para>
-    The COMMUTATOR clause, if provided, names an operator that is the
-    commutator of the operator being defined.  We say that operator A is the
-    commutator of operator B if (x A y) equals (y B x) for all possible input
-    values x,y.  Notice that B is also the commutator of A.  For example,
-    operators '<' and '>' for a particular datatype are usually each others'
-    commutators, and operator '+' is usually commutative with itself.
-    But operator '-' is usually not commutative with anything.
-   </para>
+    <para>
+     The COMMUTATOR clause, if provided, names an operator that is the
+     commutator of the operator being defined.  We say that operator A is the
+     commutator of operator B if (x A y) equals (y B x) for all possible input
+     values x,y.  Notice that B is also the commutator of A.  For example,
+     operators '<' and '>' for a particular datatype are usually each others'
+     commutators, and operator '+' is usually commutative with itself.
+     But operator '-' is usually not commutative with anything.
+    </para>
 
-   <para>
-    The left argument type of a commuted operator is the same as the
-    right argument type of its commutator, and vice versa.  So the name of
-    the commutator operator is all that <ProductName>Postgres</ProductName>
-    needs to be given to look up the commutator, and that's all that need
-    be provided in the COMMUTATOR clause.
-   </para>
+    <para>
+     The left argument type of a commuted operator is the same as the
+     right argument type of its commutator, and vice versa.  So the name of
+     the commutator operator is all that <ProductName>Postgres</ProductName>
+     needs to be given to look up the commutator, and that's all that need
+     be provided in the COMMUTATOR clause.
+    </para>
 
-   <para>
-    When you are defining a self-commutative operator, you just do it.
-    When you are defining a pair of commutative operators, things are
-    a little trickier: how can the first one to be defined refer to the
-    other one, which you haven't defined yet?  There are two solutions
-    to this problem:
-   </para>
+    <para>
+     When you are defining a self-commutative operator, you just do it.
+     When you are defining a pair of commutative operators, things are
+     a little trickier: how can the first one to be defined refer to the
+     other one, which you haven't defined yet?  There are two solutions
+     to this problem:
 
-   <para>
-    One way is to omit the COMMUTATOR clause in the first operator that
-    you define, and then provide one in the second operator's definition.
-    Since <ProductName>Postgres</ProductName> knows that commutative
-    operators come in pairs, when it sees the second definition it will
-    automatically go back and fill in the missing COMMUTATOR clause in
-    the first definition.
-   </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	One way is to omit the COMMUTATOR clause in the first operator that
+	you define, and then provide one in the second operator's definition.
+	Since <ProductName>Postgres</ProductName> knows that commutative
+	operators come in pairs, when it sees the second definition it will
+	automatically go back and fill in the missing COMMUTATOR clause in
+	the first definition.
+       </para>
+      </listitem>
 
-   <para>
-    The other, more straightforward way is just to include COMMUTATOR clauses
-    in both definitions.  When <ProductName>Postgres</ProductName> processes
-    the first definition and realizes that COMMUTATOR refers to a non-existent
-    operator, the system will make a dummy entry for that operator in the
-    system's pg_operator table.  This dummy entry will have valid data only
-    for the operator name, left and right argument types, and result type,
-    since that's all that <ProductName>Postgres</ProductName> can deduce
-    at this point.  The first operator's catalog entry will link to this
-    dummy entry.  Later, when you define the second operator, the system
-    updates the dummy entry with the additional information from the second
-    definition.  If you try to use the dummy operator before it's been filled
-    in, you'll just get an error message.  (Note: this procedure did not work
-    reliably in <ProductName>Postgres</ProductName> versions before 6.5,
-    but it is now the recommended way to do things.)
-   </para>
+      <listitem>
+       <para>
+	The other, more straightforward way is just to include COMMUTATOR clauses
+	in both definitions.  When <ProductName>Postgres</ProductName> processes
+	the first definition and realizes that COMMUTATOR refers to a non-existent
+	operator, the system will make a dummy entry for that operator in the
+	system's pg_operator table.  This dummy entry will have valid data only
+	for the operator name, left and right argument types, and result type,
+	since that's all that <ProductName>Postgres</ProductName> can deduce
+	at this point.  The first operator's catalog entry will link to this
+	dummy entry.  Later, when you define the second operator, the system
+	updates the dummy entry with the additional information from the second
+	definition.  If you try to use the dummy operator before it's been filled
+	in, you'll just get an error message.  (Note: this procedure did not work
+	reliably in <ProductName>Postgres</ProductName> versions before 6.5,
+	but it is now the recommended way to do things.)
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </sect2>
 
-  </sect2>
+   <sect2>
+    <title>NEGATOR</title>
 
-  <sect2>
-   <title>NEGATOR</title>
-
-   <para>
-    The NEGATOR clause, if provided, names an operator that is the
-    negator of the operator being defined.  We say that operator A
-    is the negator of operator B if both return boolean results and
-    (x A y) equals NOT (x B y) for all possible inputs x,y.
-    Notice that B is also the negator of A.
-    For example, '<' and '>=' are a negator pair for most datatypes.
-    An operator can never be validly be its own negator.
-   </para>
+    <para>
+     The NEGATOR clause, if provided, names an operator that is the
+     negator of the operator being defined.  We say that operator A
+     is the negator of operator B if both return boolean results and
+     (x A y) equals NOT (x B y) for all possible inputs x,y.
+     Notice that B is also the negator of A.
+     For example, '<' and '>=' are a negator pair for most datatypes.
+     An operator can never be validly be its own negator.
+    </para>
 
    <para>
     Unlike COMMUTATOR, a pair of unary operators could validly be marked
@@ -288,129 +293,134 @@ SELECT (a + b) AS c FROM test_complex;
     <para>
      The HASHES clause, if present, tells the system that it is OK to
      use the hash join method for a join based on this operator.  HASHES
-     only makes sense for binary operators that return boolean --- and
-     in practice, the operator had better be equality for some data type.
+     only makes sense for binary operators that return boolean, and
+     in practice the operator had better be equality for some data type.
     </para>
 
-   <para>
-    The assumption underlying hash join is that the join operator can
-    only return TRUE for pairs of left and right values that hash to the
-    same hash code.  If two values get put in different hash buckets, the
-    join will never compare them at all, implicitly assuming that the
-    result of the join operator must be FALSE.  So it never makes sense
-    to specify HASHES for operators that do not represent equality.
-   </para>
+    <para>
+     The assumption underlying hash join is that the join operator can
+     only return TRUE for pairs of left and right values that hash to the
+     same hash code.  If two values get put in different hash buckets, the
+     join will never compare them at all, implicitly assuming that the
+     result of the join operator must be FALSE.  So it never makes sense
+     to specify HASHES for operators that do not represent equality.
+    </para>
 
-   <para>
-    In fact, logical equality is not good enough either --- the operator
-    had better represent pure bitwise equality, because the hash function
-    will be computed on the memory representation of the values regardless
-    of what the bits mean.  For example, equality of
-    time intervals is not bitwise equality; the interval equality operator
-    considers two time intervals equal if they have the same
-    duration, whether or not their endpoints are identical.  What this means
-    is that a join using "=" between interval fields would yield different
-    results if implemented as a hash join than if implemented another way,
-    because a large fraction of the pairs that should match will hash to
-    different values and will never be compared by the hash join.  But
-    if the optimizer chose to use a different kind of join, all the pairs
-    that the equality operator says are equal will be found.
-    We don't want that kind of inconsistency, so we don't mark interval
-    equality as hashable.
-   </para>
+    <para>
+     In fact, logical equality is not good enough either; the operator
+     had better represent pure bitwise equality, because the hash function
+     will be computed on the memory representation of the values regardless
+     of what the bits mean.  For example, equality of
+     time intervals is not bitwise equality; the interval equality operator
+     considers two time intervals equal if they have the same
+     duration, whether or not their endpoints are identical.  What this means
+     is that a join using "=" between interval fields would yield different
+     results if implemented as a hash join than if implemented another way,
+     because a large fraction of the pairs that should match will hash to
+     different values and will never be compared by the hash join.  But
+     if the optimizer chose to use a different kind of join, all the pairs
+     that the equality operator says are equal will be found.
+     We don't want that kind of inconsistency, so we don't mark interval
+     equality as hashable.
+    </para>
 
-   <para>
-    There are also machine-dependent ways in which a hash join might fail
-    to do the right thing.  For example, if your datatype
-    is a structure in which there may be uninteresting pad bits, it's unsafe
-    to mark the equality operator HASHES.  (Unless, perhaps, you write
-    your other operators to ensure that the unused bits are always zero.)
-    Another example is that the FLOAT datatypes are unsafe for hash
-    joins.  On machines that meet the IEEE floating point standard, minus
-    zero and plus zero are different values (different bit patterns) but
-    they are defined to compare equal.  So, if float equality were marked
-    HASHES, a minus zero and a plus zero would probably not be matched up
-    by a hash join, but they would be matched up by any other join process.
-   </para>
+    <para>
+     There are also machine-dependent ways in which a hash join might fail
+     to do the right thing.  For example, if your datatype
+     is a structure in which there may be uninteresting pad bits, it's unsafe
+     to mark the equality operator HASHES.  (Unless, perhaps, you write
+     your other operators to ensure that the unused bits are always zero.)
+     Another example is that the FLOAT datatypes are unsafe for hash
+     joins.  On machines that meet the IEEE floating point standard, minus
+     zero and plus zero are different values (different bit patterns) but
+     they are defined to compare equal.  So, if float equality were marked
+     HASHES, a minus zero and a plus zero would probably not be matched up
+     by a hash join, but they would be matched up by any other join process.
+    </para>
 
-   <para>
-    The bottom line is that you should probably only use HASHES for
-    equality operators that are (or could be) implemented by memcmp().
-   </para>
+    <para>
+     The bottom line is that you should probably only use HASHES for
+     equality operators that are (or could be) implemented by memcmp().
+    </para>
 
-  </sect2>
+   </sect2>
 
-  <sect2>
-   <title>SORT1 and SORT2</title>
+   <sect2>
+    <title>SORT1 and SORT2</title>
 
-   <para>
-    The SORT clauses, if present, tell the system that it is OK to use
-    the merge join method for a join based on the current operator.
-    Both must be specified if either is.  The current operator must be
-    equality for some pair of data types, and the SORT1 and SORT2 clauses
-    name the ordering operator ('<' operator) for the left and right-side
-    data types respectively.
-   </para>
+    <para>
+     The SORT clauses, if present, tell the system that it is permissible to use
+     the merge join method for a join based on the current operator.
+     Both must be specified if either is.  The current operator must be
+     equality for some pair of data types, and the SORT1 and SORT2 clauses
+     name the ordering operator ('<' operator) for the left and right-side
+     data types respectively.
+    </para>
 
-   <para>
-    Merge join is based on the idea of sorting the left and righthand tables
-    into order and then scanning them in parallel.  So, both data types must
-    be capable of being fully ordered, and the join operator must be one
-    that can only succeed for pairs of values that fall at the "same place"
-    in the sort order.  In practice this means that the join operator must
-    behave like equality.  But unlike hashjoin, where the left and right
-    data types had better be the same (or at least bitwise equivalent),
-    it is possible to mergejoin two
-    distinct data types so long as they are logically compatible.  For
-    example, the int2-versus-int4 equality operator is mergejoinable.
-    We only need sorting operators that will bring both datatypes into a
-    logically compatible sequence.
-   </para>
+    <para>
+     Merge join is based on the idea of sorting the left and righthand tables
+     into order and then scanning them in parallel.  So, both data types must
+     be capable of being fully ordered, and the join operator must be one
+     that can only succeed for pairs of values that fall at the "same place"
+     in the sort order.  In practice this means that the join operator must
+     behave like equality.  But unlike hashjoin, where the left and right
+     data types had better be the same (or at least bitwise equivalent),
+     it is possible to mergejoin two
+     distinct data types so long as they are logically compatible.  For
+     example, the int2-versus-int4 equality operator is mergejoinable.
+     We only need sorting operators that will bring both datatypes into a
+     logically compatible sequence.
+    </para>
 
-   <para>
-    When specifying merge sort operators, the current operator and both
-    referenced operators must return boolean; the SORT1 operator must have
-    both input datatypes equal to the current operator's left argument type,
-    and the SORT2 operator must have
-    both input datatypes equal to the current operator's right argument type.
-    (As with COMMUTATOR and NEGATOR, this means that the operator name is
-    sufficient to specify the operator, and the system is able to make dummy
-    operator entries if you happen to define the equality operator before
-    the other ones.)
-   </para>
+    <para>
+     When specifying merge sort operators, the current operator and both
+     referenced operators must return boolean; the SORT1 operator must have
+     both input datatypes equal to the current operator's left argument type,
+     and the SORT2 operator must have
+     both input datatypes equal to the current operator's right argument type.
+     (As with COMMUTATOR and NEGATOR, this means that the operator name is
+     sufficient to specify the operator, and the system is able to make dummy
+     operator entries if you happen to define the equality operator before
+     the other ones.)
+    </para>
 
-   <para>
-    In practice you should only write SORT clauses for an '=' operator,
-    and the two referenced operators should always be named '<'.  Trying
-    to use merge join with operators named anything else will result in
-    hopeless confusion, for reasons we'll see in a moment.
-   </para>
+    <para>
+     In practice you should only write SORT clauses for an '=' operator,
+     and the two referenced operators should always be named '<'.  Trying
+     to use merge join with operators named anything else will result in
+     hopeless confusion, for reasons we'll see in a moment.
+    </para>
 
-   <para>
-    There are additional restrictions on operators that you mark
-    mergejoinable.  These restrictions are not currently checked by
-    CREATE OPERATOR, but a merge join may fail at runtime if any are
-    not true:
-   </para>
+    <para>
+     There are additional restrictions on operators that you mark
+     mergejoinable.  These restrictions are not currently checked by
+     CREATE OPERATOR, but a merge join may fail at runtime if any are
+     not true:
 
-   <para>
-    The mergejoinable equality operator must have a commutator
-    (itself if the two data types are the same, or a related equality operator
-    if they are different).
-   </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	The mergejoinable equality operator must have a commutator
+	(itself if the two data types are the same, or a related equality operator
+	if they are different).
+       </para>
+      </listitem>
 
-   <para>
-    There must be '<' and '>' ordering operators having the same left and
-    right input datatypes as the mergejoinable operator itself.  These
-    operators <emphasis>must</emphasis> be named '<' and '>' --- you do
-    not have any choice in the matter, since there is no provision for
-    specifying them explicitly.  Note that if the left and right data types
-    are different, neither of these operators is the same as either
-    SORT operator.  But they had better order the data values compatibly
-    with the SORT operators, or mergejoin will fail to work.
-   </para>
-
-  </sect2>
+      <listitem>
+       <para>
+	There must be '<' and '>' ordering operators having the same left and
+	right input datatypes as the mergejoinable operator itself.  These
+	operators <emphasis>must</emphasis> be named '<' and '>'; you do
+	not have any choice in the matter, since there is no provision for
+	specifying them explicitly.  Note that if the left and right data types
+	are different, neither of these operators is the same as either
+	SORT operator.  But they had better order the data values compatibly
+	with the SORT operators, or mergejoin will fail to work.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </sect2>
 
   </sect1>
  </Chapter>

@@ -98,6 +98,39 @@
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
+<BOOKBIBLIO ID="DATE94">
+-->
+    <title id="DATE94-full">
+     An Introduction to Database Systems
+    </title>
+    <titleabbrev id="DATE94">
+     Date, 1994
+    </titleabbrev>
+    <edition>6</edition>
+    <authorgroup>
+     <author>
+      <firstname>C. J.</firstname>
+      <surname>Date</surname>
+     </author>
+    </authorgroup>
+    <volumenum>1</volumenum>
+    <pubdate>1994</pubdate>
+    <publisher>
+     <publishername>Addison-Wesley</publishername>
+    </publisher>
+    <copyright>
+     <year>1994</year>
+     <holder>Addison-Wesley Longman, Inc.</holder>
+    </copyright>
+<!--
+</BOOKBIBLIO>
+-->
+   </biblioentry>
+
+   <biblioentry>
+<!--
+<BIBLIOMISC>&dash;</BIBLIOMISC>
+
 <BOOKBIBLIO ID="MELT93">
 -->
     <title id="MELT93-full">
@@ -133,6 +166,38 @@
 <!--
 </BOOKBIBLIO>
 -->
+   </biblioentry>
+
+   <biblioentry>
+<!--
+<BIBLIOMISC>&dash;</BIBLIOMISC>
+
+<BOOKBIBLIO ID="ULL88">
+-->
+    <title id="ULL88-full">
+     Principles of Database and Knowledge
+    </title>
+    <subtitle>
+     Base Systems
+    </subtitle>
+    <titleabbrev id="ULL88">
+     Ullman, 1988
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>Jeffrey D.</firstname>
+      <surname>Ullman</surname>
+     </author>
+    </authorgroup>
+    <volumenum>1</volumenum>
+    <publisher>
+     <publishername>
+      Computer Science Press
+     </publishername>
+    </publisher>
+    <pubdate>
+     1988
+    </pubdate>
    </biblioentry>
 
   </bibliodiv>

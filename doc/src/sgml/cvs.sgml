@@ -1,9 +1,16 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.5 1999/05/22 02:27:23 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.6 1999/05/26 17:30:28 thomas Exp $
 CVS code repository
 Thomas Lockhart
 
 $Log: cvs.sgml,v $
+Revision 1.6  1999/05/26 17:30:28  thomas
+Add chapters on CVS access, MVCC, SQL theory to the docs.
+Add an appendix with more details on date/time attributes and handling.
+Update most references to Postgres version numbers to 6.5,
+ *except* for the porting list which will require a report
+ from a successful installation to be updated.
+
 Revision 1.5  1999/05/22 02:27:23  thomas
 Finish initial markup of cvs.sgml, and include it in the programmer's guide
  and the integrated doc. Clean up other markup.
@@ -52,7 +59,7 @@ Not yet included in a document (should go in the developer's doc?).
  </para>
 
  <para>
-  At least two options,
+  At least two methods,
   anonymous CVS and <productname>CVSup</productname>, 
   are available to pull the <productname>CVS</productname> code tree from the 
   <productname>Postgres</productname> server to your local machine.
@@ -496,7 +503,7 @@ pgsql
     <title><productname>CVSup</productname> Installation from Binaries</title>
 
     <para>
-     You can instead use pre-built binaries
+     You can use pre-built binaries
      if you have a platform for which binaries
      are posted on 
      <ulink url="ftp://postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>,
@@ -517,7 +524,7 @@ pgsql
     <para>
      At the time of writing, binaries are available for
      Alpha/Tru64, ix86/xBSD,
-     HPPA/HPUX-10.20, and MIPS/irix.
+     HPPA/HPUX-10.20, MIPS/irix,
      ix86/linux-libc5, ix86/linux-glibc,
      Sparc/Solaris, and Sparc/SunOS.
     </para>
@@ -540,7 +547,7 @@ pgsql
       <step performance="optional">
        <para>
 	If you have another platform, check for and download the appropriate binary from
-	<ulink url="ftp://postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>,
+	<ulink url="ftp://postgresql.org/pub">the <productname>Postgres</productname> ftp site</ulink>.
        </para>
       </step>
      </substeps>

@@ -1,16 +1,23 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.2 1999/05/22 02:27:23 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.3 1999/05/26 17:30:28 thomas Exp $
 Date/time details
 
 $Log: datetime.sgml,v $
+Revision 2.3  1999/05/26 17:30:28  thomas
+Add chapters on CVS access, MVCC, SQL theory to the docs.
+Add an appendix with more details on date/time attributes and handling.
+Update most references to Postgres version numbers to 6.5,
+ *except* for the porting list which will require a report
+ from a successful installation to be updated.
+
 Revision 2.2  1999/05/22 02:27:23  thomas
 Finish initial markup of cvs.sgml, and include it in the programmer's guide
  and the integrated doc. Clean up other markup.
 
 -->
 
-<appendix label="UG1" id="datetime-append">
- <title>Date/Time Support</title>
+<appendix label="UG1" id="datetime-appendix">
+ <title id="datetime-appendix-title">Date/Time Support</title>
 
  <sect1>
   <title>Time Zones</title>

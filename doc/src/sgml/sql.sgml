@@ -88,9 +88,9 @@
     language. That means it is
     based on the <firstterm>relational data model</firstterm>
     first published by E.F. Codd in
-    1970. We will give a formal description of the relational model in
-    section <xref linkend="formal-notion" endterm="formal-notion">
-    <!--{\it Formal Notion of the Relational Data Model}-->
+    1970. We will give a formal description of the relational model
+    later (in
+    <xref linkend="formal-notion" endterm="formal-notion">)
     but first we want to have a look at it from a more intuitive
     point of view.
   </para>
@@ -101,7 +101,7 @@
     A table consists of rows and columns where each row represents a
     record and each column represents an attribute of the records
     contained in the table.
-    Figure <xref linkend="supplier-fig" endterm="supplier-fig">
+    <xref linkend="supplier-fig" endterm="supplier-fig">
     shows an example of a database consisting of three tables:
 
     <itemizedlist>
@@ -127,6 +127,7 @@
       </para>
      </listitem>
     </itemizedlist>
+
     <example>
      <title id="supplier-fig">The Suppliers and Parts Database</title>
      <programlisting>
@@ -162,7 +163,7 @@
   </sect1>
 
   <sect1>
-   <title id="formal-notion">Formal Notion of the Relational Data Model</title>
+   <title id="formal-notion">Relational Data Model Formalities</title>
 
    <para>
     The mathematical concept underlying the relational model is the
@@ -288,7 +289,7 @@ attributes are taken from. We often write a relation scheme as
     <parameter>D<subscript>i</subscript></parameter>,
     for each attribute
     <parameter>A<subscript>i</subscript></parameter>,
-    1 &lt;&equals; <literal>i</literal> &lt;&equals; <literal>k</literal>,
+    1 &lt;= <literal>i</literal> &lt;= <literal>k</literal>,
     where the values of the attributes are taken from. We often write
     a relation scheme as
     <literal>R(<parameter>A<subscript>1</subscript></parameter>,
@@ -325,11 +326,11 @@ attributes are taken from. We often write a relation scheme as
      integers. We define this by assigning a data type to each
      attribute. The type of <classname>SNAME</classname> will be
      <type>VARCHAR(20)</type> (this is the <acronym>SQL</acronym> type
-     for character strings of length &lt;&equals; 20),
+     for character strings of length &lt;= 20),
      the type of <classname>SNO</classname> will be
      <type>INTEGER</type>. With the assignment of a data type we also have selected
      a domain for an attribute. The domain of <classname>SNAME</classname> is the set of all
-     character strings of length &lt;&equals; 20,
+     character strings of length &lt;= 20,
      the domain of <classname>SNO</classname> is the set of
      all integer numbers.
     </para>
@@ -337,11 +338,10 @@ attributes are taken from. We often write a relation scheme as
   </sect1>
 
   <sect1>
-   <title id="operations">Operations in the Relational Data
-    Model</title>
+   <title id="operations">Operations in the Relational Data Model</title>
 
    <para>
-    In <xref linkend="formal-notion" endterm="formal-notion">
+    In the previous section (<xref linkend="formal-notion" endterm="formal-notion">)
     we defined the mathematical notion of
     the relational model. Now we know how the data can be stored using a
     relational data model but we do not know what to do with all these
@@ -483,8 +483,8 @@ attributes are taken from. We often write a relation scheme as
 	projecting out the duplicate column.
        </para>
 
-       <example id="join-example">
-	<title>An Inner Join</title>
+       <example>
+	<title id="join-example">An Inner Join</title>
 
 	<para>
 	 Let's have a look at the tables that are produced by evaluating the steps
@@ -600,36 +600,41 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 
     <para>
      For a more detailed description and definition of the relational
-     algebra refer to <citetitle>ullman</citetitle> or
-     <citetitle>date86</citetitle>.
+     algebra refer to [<xref linkend="ULL88" endterm="ULL88">] or
+     [<xref linkend="DATE94" endterm="DATE94">].
     </para>
 
-    <para id="suppl-rel-alg">
-     Recall that we formulated all those relational operators to be able to
-     retrieve data from the database. Let's return to our example of
-     section <xref linkend="operations" endterm="operations">
-     where someone wanted to know the names of all
-     suppliers that sell the part <literal>Screw</literal>. 
-     This question can be answered
-     using relational algebra by the following operation:
+    <example>
+     <title id="suppl-rel-alg">A Query Using Relational Algebra</title>
+     <para>
+      Recall that we formulated all those relational operators to be able to
+      retrieve data from the database. Let's return to our example from 
+      the previous
+      section (<xref linkend="operations" endterm="operations">)
+      where someone wanted to know the names of all
+      suppliers that sell the part <literal>Screw</literal>. 
+      This question can be answered
+      using relational algebra by the following operation:
 
-      &pi;<subscript>SUPPLIER.SNAME</subscript>(&sigma;<subscript>PART.PNAME='Screw'</subscript>(SUPPLIER &prod; SELLS &prod; PART))
+      <programlisting>
+&pi;<subscript>SUPPLIER.SNAME</subscript>(&sigma;<subscript>PART.PNAME='Screw'</subscript>(SUPPLIER &prod; SELLS &prod; PART))
+      </programlisting>
+     </para>
 
-    </para>
+     <para>
+      We call such an operation a query. If we evaluate the above query
+      against the our example tables
+      (<xref linkend="supplier-fig" endterm="supplier-fig">)
+      we will obtain the following result:
 
-    <para>
-     We call such an operation a query. If we evaluate the above query
-     against the tables from figure
-     <xref linkend="supplier-fig" endterm="supplier-fig"> (The suppliers and
-     parts database) we will obtain the following result:
-
-     <programlisting>
+      <programlisting>
                              SNAME
                             -------
                              Smith
                              Adams
-     </programlisting>
-    </para>
+      </programlisting>
+     </para>
+    </example>
    </sect2>
 
    <sect2 id="rel-calc">
@@ -662,8 +667,10 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
      We want to discuss the tuple relational calculus only because it is
      the one underlying the most relational languages. For a detailed
      discussion on <acronym>DRC</acronym> (and also
-     <acronym>TRC</acronym>) see <citetitle>date86</citetitle> or
-     <citetitle>ullman</citetitle>.
+     <acronym>TRC</acronym>) see
+     [<xref linkend="DATE94" endterm="DATE94">]
+     or
+     [<xref linkend="ULL88" endterm="ULL88">].
     </para>
    </sect2>
 
@@ -686,18 +693,19 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
      <xref linkend="suppl-rel-alg" endterm="suppl-rel-alg">
      using <acronym>TRC</acronym> we formulate the following query:
 
+<programlisting>
      {x(SNAME) &mid; x &isin; SUPPLIER &and; \nonumber
                        &exist; y &isin; SELLS &exist; z &isin; PART (y(SNO)=x(SNO) &and; \nonumber
                         z(PNO)=y(PNO) &and; \nonumber
                         z(PNAME)='Screw')} \nonumber
+     </programlisting>
     </para>
 
     <para>
-     Evaluating the query against the tables from figure
+     Evaluating the query against the tables from
      <xref linkend="supplier-fig" endterm="supplier-fig">
-     (The suppliers and parts database)
      again leads to the same result
-     as in example
+     as in
      <xref linkend="suppl-rel-alg" endterm="suppl-rel-alg">.
     </para>
    </sect2>
@@ -715,8 +723,9 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
      algorithm</quote>) by which an arbitrary expression of the relational
      calculus can be reduced to a semantically equivalent expression of
      relational algebra. For a more detailed discussion on that refer to
-     <citetitle>date86</citetitle> and
-     <citetitle>ullman</citetitle>. 
+     [<xref linkend="DATE94" endterm="DATE94">]
+     and
+     [<xref linkend="ULL88" endterm="ULL88">].
     </para>
 
     <para>
@@ -733,7 +742,8 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
    <title>The <acronym>SQL</acronym> Language</title>
 
    <para>
-    As most modern relational languages <acronym>SQL</acronym> is based on the tuple
+    As is the case with most modern relational languages,
+    <acronym>SQL</acronym> is based on the tuple
     relational calculus. As a result every query that can be formulated
     using the tuple relational calculus (or equivalently, relational
     algebra) can also be formulated using <acronym>SQL</acronym>. There are, however,
@@ -781,7 +791,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
    </para>
 
    <sect2 id="select">
-    <title>Select</title>
+    <title id="select-title">Select</title>
 
     <para>
      The most often used command in <acronym>SQL</acronym> is the
@@ -806,7 +816,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
     <para>
      Now we will illustrate the complex syntax of the SELECT statement
      with various examples. The tables used for the examples are defined in
-     figure <xref linkend="supplier-fig" endterm="supplier-fig"> (The suppliers and parts database).
+     <xref linkend="supplier-fig" endterm="supplier-fig">.
     </para>
 
     <sect3>
@@ -816,7 +826,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       Here are some simple examples using a SELECT statement:
 
       <example>
-       <title>Simple Query with Qualification</title>
+       <title id="simple-query">Simple Query with Qualification</title>
        <para>
 	To retrieve all tuples from table PART where the attribute PRICE is
 	greater than 10 we formulate the following query:
@@ -858,8 +868,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 
 	Note that the <acronym>SQL</acronym> SELECT corresponds to the 
 	"projection" in relational algebra not to the "selection"
-	(see section <xref linkend="rel-alg" endterm="rel-alg">
-	(Relational Algebra).
+	(see <xref linkend="rel-alg" endterm="rel-alg"> for more details).
        </para>
 
        <para>
@@ -953,7 +962,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       because there are common named attributes (SNO and PNO) among the
       relations. Now we can distinguish between the common named attributes
       by simply prefixing the attribute name with the alias name followed by
-      a dot. The join is calculated in the same way as shown in example
+      a dot. The join is calculated in the same way as shown in 
       <xref linkend="join-example" endterm="join-example">.
       First the Cartesian product
 
@@ -979,7 +988,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       section).
 
       <example>
-       <title>Aggregates</title>
+       <title id="aggregates-example">Aggregates</title>
 
        <para>
 	If we want to know the average cost of all parts in table PART we use
@@ -1048,7 +1057,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       A<subscript>1</subscript>, &tdot;, A<subscript>k</subscript>.
 
       <example>
-       <title>Aggregates</title>
+       <title id="aggregates-groupby">Aggregates</title>
        <para>
 	If we want to know how many parts are sold by every supplier we
 	formulate the query:
@@ -1143,7 +1152,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       clause. 
 
       <example>
-       <title>Having</title>
+       <title id="having-example">Having</title>
 
        <para>
 	If we want only those suppliers selling more than one part we use the
@@ -1182,7 +1191,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       <acronym>SQL</acronym>.
 
       <example>
-       <title>Subselect</title>
+       <title id="subselect-example">Subselect</title>
 
        <para>
 	If we want to know all parts having a greater price than the part
@@ -1250,7 +1259,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       difference of the tuples derived by two subqueries.
 
       <example>
-       <title>Union, Intersect, Except</title>
+       <title id="union-example">Union, Intersect, Except</title>
 
        <para>
 	The following query is an example for UNION:
@@ -1334,7 +1343,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
     </para>
 
     <sect3 id="create">
-     <title>Create Table</title>
+     <title id="create-title">Create Table</title>
 
      <para>
       The most fundamental command for data definition is the
@@ -1349,10 +1358,10 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       </synopsis>
 
       <example>
-       <title>Table Creation</title>
+       <title id="table-create">Table Creation</title>
 
        <para>
-	To create the tables defined in figure
+	To create the tables defined in
 	<xref linkend="supplier-fig" endterm="supplier-fig"> the
 	following <acronym>SQL</acronym> statements are used:
 
@@ -1467,7 +1476,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 
      <para>
       <example>
-       <title>Create Index</title>
+       <title id="index-create">Create Index</title>
 
        <para>
 	To create an index named I on attribute SNAME of relation SUPPLIER
@@ -1506,7 +1515,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       stored data. Instead, the system stores the definition of the
       view (i.e. the rules about how to access physically stored base
       tables in order to materialize the view) somewhere in the system
-      catalogs (see section <xref linkend="catalogs" endterm="catalogs">). For a
+      catalogs (see
+      <xref linkend="catalogs-title" endterm="catalogs-title">). For a
       discussion on different techniques to implement views refer to
 <!--
       section
@@ -1527,7 +1537,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 
       where <replaceable class="parameter">select_stmt</replaceable> 
       is a valid select statement as defined
-      in section <xref linkend="select" endterm="select">.
+      in <xref linkend="select-title" endterm="select-title">.
       Note that <replaceable class="parameter">select_stmt</replaceable> is
       not executed when the view is created. It is just stored in the 
       <firstterm>system catalogs</firstterm>
@@ -1536,7 +1546,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 
      <para>
       Let the following view definition be given (we use
-      the tables from figure <xref linkend="supplier-fig" endterm="supplier-fig"> again):
+      the tables from <xref linkend="supplier-fig" endterm="supplier-fig"> again):
 
       <programlisting>
    CREATE VIEW London_Suppliers
@@ -1625,7 +1635,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 
      <para>
       Once a table is created (see
-      <xref linkend="create" endterm="create">), it can be filled
+      <xref linkend="create-title" endterm="create-title">), it can be filled
       with tuples using the command <command>INSERT INTO</command>.
       The syntax is:
 
@@ -1638,8 +1648,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
      </para>
 
      <para>
-      To insert the first tuple into the relation SUPPLIER of figure
-      <xref linkend="supplier-fig" endterm="supplier-fig"> we use the
+      To insert the first tuple into the relation SUPPLIER (from
+      <xref linkend="supplier-fig" endterm="supplier-fig">) we use the
       following statement:
 
       <programlisting>
@@ -1716,7 +1726,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
    </sect2>
 
    <sect2 id="catalogs">
-    <title>System Catalogs</title>
+    <title id="catalogs-title">System Catalogs</title>
 
     <para>
      In every <acronym>SQL</acronym> database system
@@ -1772,18 +1782,23 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
     </para>
 
     <para>
-     A program using embedded <acronym>SQL</acronym> in a host language consists of statements
-     of the host language and of embedded <acronym>SQL</acronym> (ESQL) statements. Every ESQL
-     statement begins with the keywords EXEC SQL. The ESQL statements are
-     transformed to statements of the host language by a <firstterm>precompiler</firstterm>
+     A program using embedded <acronym>SQL</acronym>
+     in a host language consists of statements
+     of the host language and of
+     <firstterm>embedded <acronym>SQL</acronym></firstterm>
+     (<acronym>ESQL</acronym>) statements. Every <acronym>ESQL</acronym>
+     statement begins with the keywords <command>EXEC SQL</command>.
+     The <acronym>ESQL</acronym> statements are
+     transformed to statements of the host language
+     by a <firstterm>precompiler</firstterm>
      (which usually inserts
      calls to library routines that perform the various <acronym>SQL</acronym>
      commands). 
     </para>
 
     <para>
-     When we look at the examples throughout section
-     <xref linkend="select" endterm="select"> we
+     When we look at the examples throughout
+     <xref linkend="select-title" endterm="select-title"> we
      realize that the result of the queries is very often a set of
      tuples. Most host languages are not designed to operate on sets so we
      need a mechanism to access every single tuple of the set of tuples
@@ -1795,8 +1810,11 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 
     <para>
      For a detailed discussion on embedded <acronym>SQL</acronym>
-     refer to <citetitle>date</citetitle>,
-     <citetitle>date86</citetitle> or <citetitle>ullman</citetitle>.
+     refer to
+     [<xref linkend="DATE97" endterm="DATE97">],
+     [<xref linkend="DATE94" endterm="DATE94">],
+     or
+     [<xref linkend="ULL88" endterm="ULL88">].
     </para>
    </sect2>
   </sect1>

@@ -1,10 +1,17 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.5 1998/10/31 09:36:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.6 1999/05/26 17:30:30 thomas Exp $
 
 Postgres User's Reference documentation.
 - thomas 1998-08-31
 
 $Log: reference.sgml,v $
+Revision 1.6  1999/05/26 17:30:30  thomas
+Add chapters on CVS access, MVCC, SQL theory to the docs.
+Add an appendix with more details on date/time attributes and handling.
+Update most references to Postgres version numbers to 6.5,
+ *except* for the porting list which will require a report
+ from a successful installation to be updated.
+
 Revision 1.5  1998/10/31 09:36:37  thomas
 Cleanup for v6.4 release.
 Make new file current.sgml to hold release info for the current release.
@@ -32,7 +39,7 @@ Bigger updates to the installation instructions (install and config).
 
 <Title>PostgreSQL Reference Manual</Title>
 <BookInfo>
-    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
+    <ReleaseInfo>Covering v6.5 for general release</ReleaseInfo>
     <BookBiblio>
     <AuthorGroup>
       <Author>
@@ -69,12 +76,12 @@ Bigger updates to the installation instructions (install and config).
     </AuthorGroup>
 -->
  
-    <Date>(last updated 1998-08-31)</Date>
+    <Date>(last updated 1999-06-01)</Date>
     </BookBiblio>
 
 <LegalNotice>
 <Para>
-<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
+<ProductName>PostgreSQL</ProductName> is &copy; 1998-9
 by the Postgres Global Development Group.
 </Para>
 </LegalNotice>
