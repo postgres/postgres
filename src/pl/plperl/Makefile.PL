@@ -51,10 +51,9 @@ my $opcode = '';
 }
 
 my $perllib = "-L$Config{archlibexp}/CORE -lperl";
-my $dynalib = "$Config{archlibexp}/auto/DynaLoader/DynaLoader.a";
 
 WriteMakefile( 'NAME' => 'plperl', 
-	dynamic_lib => { 'OTHERLDFLAGS' => "$opcode $perllib $dynalib" } ,
+	dynamic_lib => { 'OTHERLDFLAGS' => "$opcode $perllib" } ,
 	INC => '-I$(SRCDIR)/include -I$(SRCDIR)/backend',
 	XS => { 'SPI.xs' => 'SPI.c' },
 	OBJECT => 'plperl.o eloglvl.o SPI.o',

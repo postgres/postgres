@@ -219,7 +219,15 @@ static void
 plperl_init_safe_interp(void)
 {
 
-	char	   *embedding[] = {"", "-e", "use DynaLoader; require Safe; SPI::bootstrap()", "0"};
+	char	   *embedding[3] = {
+		"", "-e", 
+		/* no commas between the next 4 please. They are supposed to be one string
+		 */
+		"require Safe; SPI::bootstrap();"
+		"sub ::mksafefunc { my $x = new Safe; $x->permit_only(':default');"
+		"$x->share(qw[&elog &DEBUG &NOTICE &NOIND &ERROR]);"
+		" return $x->reval(qq[sub { $_[0] }]); }"
+		};
 
 	plperl_safe_interp = perl_alloc();
 	if (!plperl_safe_interp)
@@ -302,16 +310,19 @@ plperl_call_handler(FmgrInfo *proinfo,
  **********************************************************************/
 static
 SV *
-plperl_create_sub(SV * s)
+plperl_create_sub(char * s)
 {
 	dSP;
 
 	SV		   *subref = NULL;
+	int count;
 
 	ENTER;
 	SAVETMPS;
 	PUSHMARK(SP);
-	perl_eval_sv(s, G_SCALAR | G_EVAL | G_KEEPERR);
+	XPUSHs(sv_2mortal(newSVpv(s,0)));
+	PUTBACK;
+	count = perl_call_pv("mksafefunc", G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
 	if (SvTRUE(GvSV(errgv)))
@@ -321,6 +332,10 @@ plperl_create_sub(SV * s)
 		FREETMPS;
 		LEAVE;
 		elog(ERROR, "creation of function failed : %s", SvPV(GvSV(errgv), na));
+	}
+
+	if (count != 1) {
+		elog(ERROR, "creation of function failed - no return from mksafefunc");
 	}
 
 	/*
@@ -357,7 +372,6 @@ plperl_create_sub(SV * s)
  *
  **********************************************************************/
 
-extern void boot_DynaLoader _((CV * cv));
 extern void boot_Opcode _((CV * cv));
 extern void boot_SPI _((CV * cv));
 
@@ -366,7 +380,6 @@ plperl_init_shared_libs(void)
 {
 	char	   *file = __FILE__;
 
-	newXS("DynaLoader::bootstrap", boot_DynaLoader, file);
 	newXS("Opcode::bootstrap", boot_Opcode, file);
 	newXS("SPI::bootstrap", boot_SPI, file);
 }
@@ -492,8 +505,6 @@ plperl_func_handler(FmgrInfo *proinfo,
 		HeapTuple	typeTup;
 		Form_pg_proc procStruct;
 		Form_pg_type typeStruct;
-		SV		   *proc_internal_def;
-		char		proc_internal_args[4096];
 		char	   *proc_source;
 
 		/************************************************************
@@ -550,7 +561,6 @@ plperl_func_handler(FmgrInfo *proinfo,
 		 * of all procedure arguments
 		 ************************************************************/
 		prodesc->nargs = proinfo->fn_nargs;
-		proc_internal_args[0] = '\0';
 		for (i = 0; i < proinfo->fn_nargs; i++)
 		{
 			typeTup = SearchSysCacheTuple(TYPEOID,
@@ -584,23 +594,12 @@ plperl_func_handler(FmgrInfo *proinfo,
 		 ************************************************************/
 		proc_source = textout(&(procStruct->prosrc));
 
-		/*
-		 * the string has been split for readbility. please don't put
-		 * commas between them. Hope everyone is ANSI
-		 */
-		proc_internal_def = newSVpvf(
-									 "$::x = new Safe;"
-									 "$::x->permit_only(':default');"
-				   "$::x->share(qw[&elog &DEBUG &NOTICE &NOIND &ERROR]);"
-									 "use strict;"
-				   "return $::x->reval( q[ sub { %s } ]);", proc_source);
-
-		pfree(proc_source);
 
 		/************************************************************
 		 * Create the procedure in the interpreter
 		 ************************************************************/
-		prodesc->reference = plperl_create_sub(proc_internal_def);
+		prodesc->reference = plperl_create_sub(proc_source);
+		pfree(proc_source);
 		if (!prodesc->reference)
 		{
 			free(prodesc->proname);
