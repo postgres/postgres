@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.40 2000/04/12 17:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.41 2000/06/03 04:41:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,11 +373,7 @@ expandAll(ParseState *pstate, char *relname, Attr *ref, int *this_resno)
 	{
 		rte = addRangeTableEntry(pstate, relname, ref,
 								 FALSE, FALSE, TRUE);
-#ifdef WARN_FROM
-		elog(NOTICE, "Adding missing FROM-clause entry%s for table %s",
-			 pstate->parentParseState != NULL ? " in subquery" : "",
-			 refname);
-#endif
+		warnAutoRange(pstate, ref->relname);
 	}
 
 	rel = heap_open(rte->relid, AccessShareLock);
@@ -526,3 +522,26 @@ attnumTypeId(Relation rd, int attid)
 	 */
 	return rd->rd_att->attrs[attid - 1]->atttypid;
 }
+
+void
+warnAutoRange(ParseState *pstate, char *refname)
+{
+	List	   *temp;
+	bool		foundInFromCl = false;
+
+	foreach(temp, pstate->p_rtable)
+	{
+		RangeTblEntry *rte = lfirst(temp);
+
+		if (rte->inFromCl)
+		{
+			foundInFromCl = true;
+			break;
+		}
+	}
+	if (foundInFromCl)
+		elog(NOTICE, "Adding missing FROM-clause entry%s for table %s",
+			pstate->parentParseState != NULL ? " in subquery" : "",
+			refname);
+}
+
