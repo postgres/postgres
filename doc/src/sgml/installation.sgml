@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.45 2001/04/06 15:52:41 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.45.2.1 2001/05/14 15:11:31 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
@@ -958,7 +958,7 @@ PATH=$PATH:/usr/local/pgsql/bin
 </programlisting>
     If you are using csh or tcsh, then use this command:
 <programlisting>
-set path = ( /usr/local/pgsql/bin path )
+set path = ( /usr/local/pgsql/bin $path )
 </programlisting>
    </para>
 
