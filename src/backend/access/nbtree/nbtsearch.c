@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.34 1998/04/10 22:07:41 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.35 1998/05/13 03:44:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,7 @@ _bt_skeycmp(Relation rel,
 		/* see comments about NULLs handling in btbuild */
 		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
 		{
-			Assert(entry->sk_procedure == NullValueRegProcedure);
+			Assert(entry->sk_procedure == F_NULLVALUE);
 			keyNull = true;
 			if (isNull)
 				compare = (strat == BTEqualStrategyNumber) ? true : false;
@@ -665,7 +665,7 @@ _bt_compare(Relation rel,
 		/* see comments about NULLs handling in btbuild */
 		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
 		{
-			Assert(entry->sk_procedure == NullValueRegProcedure);
+			Assert(entry->sk_procedure == F_NULLVALUE);
 			if (null)
 				tmpres = (long) 0;		/* NULL "=" NULL */
 			else

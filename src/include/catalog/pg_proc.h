@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.57 1998/05/12 17:46:48 momjian Exp $
+ * $Id: pg_proc.h,v 1.58 1998/05/13 03:44:24 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1225,7 +1225,6 @@ DESCR("equals");
 
 DATA(insert OID = 1029 (  nullvalue		   PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
-#define NullValueRegProcedure 1029
 DATA(insert OID = 1030 (  nonnullvalue	   PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
 DATA(insert OID = 1031 (  aclitemin		   PGUID 11 f t f 1 f 1033 "0" 100 0 0 100	foo bar ));
