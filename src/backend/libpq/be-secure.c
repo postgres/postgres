@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.8 2003/01/08 23:34:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.9 2003/03/29 03:57:05 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -339,7 +339,7 @@ secure_write(Port *port, void *ptr, size_t len)
 				port->count += n;
 				break;
 			case SSL_ERROR_WANT_WRITE:
-				n = secure_read(port, ptr, len);
+				n = secure_write(port, ptr, len);
 				break;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
