@@ -551,3 +551,64 @@ Gavin
 ---------------------------(end of broadcast)---------------------------
 TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
 
+From pgsql-general-owner+M33538@postgresql.org Tue Nov 26 03:46:45 2002
+Return-path: <pgsql-general-owner+M33538@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id gAQ8kio01351
+	for <pgman@candle.pha.pa.us>; Tue, 26 Nov 2002 03:46:44 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 8EB404760F9; Tue, 26 Nov 2002 03:46:13 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id B1942475FCE; Tue, 26 Nov 2002 03:46:06 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 950CD474E53
+	for <pgsql-general@postgresql.org>; Tue, 26 Nov 2002 03:45:30 -0500 (EST)
+Received: from hera.hs-niederrhein.de (hera.hs-niederrhein.de [194.94.120.3])
+	by postgresql.org (Postfix) with ESMTP id 4E172474E44
+	for <pgsql-general@postgresql.org>; Tue, 26 Nov 2002 03:45:29 -0500 (EST)
+Received: (from root@localhost)
+	by hera.hs-niederrhein.de (8.11.6+Sun/8.11.6) id gAQ8jTK27063
+	for pgsql-general@postgresql.org; Tue, 26 Nov 2002 09:45:29 +0100 (CET)
+Received: from terra (31-094.hs-niederrhein.de [193.175.48.94])
+	by hera.hs-niederrhein.de (8.11.6+Sun/8.11.6) with SMTP id gAQ8jPP27051
+	for <pgsql-general@postgresql.org>; Tue, 26 Nov 2002 09:45:25 +0100 (CET)
+Date: Tue, 26 Nov 2002 09:43:32 +0100
+From: Christoph Dalitz <christoph.dalitz@hs-niederrhein.de>
+To: pgsql-general@postgresql.org
+Subject: [GENERAL] ALTER TRIGGER DISABLE/ENABLE
+Message-ID: <20021126094332.58250aef.christoph.dalitz@hs-niederrhein.de>
+X-Mailer: Sylpheed version 0.6.6 (GTK+ 1.2.8; i586-pc-linux-gnu)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS perl-11
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: ORr
+
+Hello,
+
+while there have been suggested some hacks on the system catalog
+for disabling/enabling triggers, these have two serious disadvantages:
+
+ - they cannot be done by the owner of the trigger
+   (only the DBA has write access to the system catalog)
+ - messing in the system catalog for simple DB schema changes makes
+   most users feel uneasy
+
+Oracle has an SQL command "ALTER TRIGGER triggername DISABLE|ENABLE".
+Were it possible to put this command on the TODO list for a future PG release?
+
+Thanks,
+
+Christoph Dalitz
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
