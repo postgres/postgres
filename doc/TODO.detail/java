@@ -2146,3 +2146,101 @@ TIP 5: Have you checked our extensive FAQ?
 
 http://www.postgresql.org/users-lounge/docs/faq.html
 
+From pgsql-general-owner+M19758=candle.pha.pa.us=pgman@postgresql.org Wed Jan 23 11:33:11 2002
+Return-path: <pgsql-general-owner+M19758=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g0NGXAU13298
+	for <pgman@candle.pha.pa.us>; Wed, 23 Jan 2002 11:33:10 -0500 (EST)
+Received: (qmail 89931 invoked by alias); 23 Jan 2002 16:32:58 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 23 Jan 2002 16:32:58 -0000
+Received: from barry.xythos.com (h-64-105-36-191.SNVACAID.covad.net [64.105.36.191])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id g0NG9Tl75462
+	for <pgsql-general@postgresql.org>; Wed, 23 Jan 2002 11:09:29 -0500 (EST)
+	(envelope-from barry@xythos.com)
+Received: from xythos.com (localhost.localdomain [127.0.0.1])
+	by barry.xythos.com (8.11.6/8.11.6) with ESMTP id g0N1sGn24841;
+	Tue, 22 Jan 2002 17:54:16 -0800
+Message-ID: <3C4E17C8.8040909@xythos.com>
+Date: Tue, 22 Jan 2002 17:54:16 -0800
+From: Barry Lind <barry@xythos.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.7) Gecko/20011221
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: Nic Ferrier <nferrier@tapsellferrier.co.uk>
+cc: Doug McNaught <doug@wireboard.com>, pgsql-general@postgresql.org
+Subject: Re: [GENERAL] implemention of calls to stored procs.
+References: <87sn8yx6xu.fsf@tf1.tapsellferrier.co.uk>	<m3r8oh6i1a.fsf@varsoon.denali.to> <87n0z5yjer.fsf@tf1.tapsellferrier.co.uk>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+Nic,
+
+Check out http://www.rootshell.be/~hornyakl/download
+This has the latest code for pl/pgj. The Java procedure language support 
+that Laszlo Hornyak (hornyakl@users.sourceforge.net) has been working on 
+for the last month or so.
+
+thanks,
+--Barry
+
+
+Nic Ferrier wrote:
+
+> Firstly, thanks for your responses... good to know I was thinking the
+> right thing (and, yes, I was taking the process thing into account,
+> tho' I didn't realise threads weren't used at all).
+> 
+> 
+> Doug McNaught <doug@wireboard.com> writes:
+> 
+> 
+>>Nic Ferrier <nferrier@tapsellferrier.co.uk> writes: 
+>> 
+>>
+>>>I've been looking at the implementation of the procedural language  
+>>>support code with a view to writing a java plugin (ie: something to 
+>>>allow java classes to be used as stored procs). 
+>>>
+>> 
+>>Someone else has been talking about this--check the archives from the 
+>>last six months. 
+>>
+> 
+> I couldn't find any reference but the archive searcher is broken right
+> now and a manual search is not very reliable.
+> 
+> It's not terribly difficult to crack this actually... I was going to
+> use GCJ as a platform for a base java class that could be used like a
+> quick C stored proc.
+> 
+> I envisage having a natively implemented JDBC Connection passed to an
+> init method in such a class.
+> 
+> 
+> GCJ is perfect for this task because it has a native call interface,
+> CNI, which is a seamless part of the class heirarchy.
+> 
+> Once I've got something working I'll drop a line here.
+> 
+> 
+> 
+> Nic
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 5: Have you checked our extensive FAQ?
+> 
+> http://www.postgresql.org/users-lounge/docs/faq.html
+> 
+> 
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
