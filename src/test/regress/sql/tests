@@ -8,9 +8,6 @@ int2
 int4
 int8
 oid
-oidint2
-oidint4
-oidname
 float4
 float8
 numerology

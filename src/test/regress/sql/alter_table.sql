@@ -44,9 +44,9 @@ ALTER TABLE temp ADD COLUMN t box;
 
 ALTER TABLE temp ADD COLUMN u tinterval;
 
-ALTER TABLE temp ADD COLUMN v oidint4;
+ALTER TABLE temp ADD COLUMN v datetime;
 
-ALTER TABLE temp ADD COLUMN w oidname;
+ALTER TABLE temp ADD COLUMN w timespan;
 
 ALTER TABLE temp ADD COLUMN x float8[];
 
@@ -113,9 +113,9 @@ ALTER TABLE temp ADD COLUMN t box;
 
 ALTER TABLE temp ADD COLUMN u tinterval;
 
-ALTER TABLE temp ADD COLUMN v oidint4;
+ALTER TABLE temp ADD COLUMN v datetime;
 
-ALTER TABLE temp ADD COLUMN w oidname;
+ALTER TABLE temp ADD COLUMN w timespan;
 
 ALTER TABLE temp ADD COLUMN x float8[];
 
