@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.16 2000/07/01 21:27:11 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.17 2000/07/03 16:01:30 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -42,7 +42,7 @@
  *		Numeric		- to_number()
  *
  *
- *	Karel Zak - Zakkr
+ *	Karel Zak
  *
  * -----------------------------------------------------------------------
  */
@@ -105,8 +105,8 @@
  * External (defined in PgSQL dt.c (timestamp utils))
  * ----------
  */
-extern char *months[],			/* month abbreviation	*/
-		   *days[];				/* full days		*/
+extern char	*months[],		/* month abbreviation	*/
+		*days[];		/* full days		*/
 
 /* ----------
  * Format parser structs
@@ -114,27 +114,27 @@ extern char *months[],			/* month abbreviation	*/
  */
 typedef struct
 {
-	char	   *name;			/* suffix string		*/
-	int			len,			/* suffix length		*/
-				id,				/* used in node->suffix */
-				type;			/* prefix / postfix			*/
+	char	*name;			/* suffix string		*/
+	int	len,			/* suffix length		*/
+		id,			/* used in node->suffix */
+		type;			/* prefix / postfix			*/
 } KeySuffix;
 
 typedef struct
 {
-	char	   *name;			/* keyword			*/
-	/* action for keyword		*/
-	int			len,			/* keyword length		*/
-				(*action) (),
-				id;				/* keyword id			*/
+	char	*name;			/* keyword			*/
+					/* action for keyword		*/
+	int	len,			/* keyword length		*/
+		(*action) (),
+		id;			/* keyword id			*/
 } KeyWord;
 
 typedef struct
 {
-	int			type;			/* node type			*/
-	KeyWord    *key;			/* if node type is KEYWORD	*/
-	int			character,		/* if node type is CHAR		*/
-				suffix;			/* keyword suffix		*/
+	int	type;			/* node type			*/
+	KeyWord	*key;			/* if node type is KEYWORD	*/
+	int	character,		/* if node type is CHAR		*/
+		suffix;			/* keyword suffix		*/
 } FormatNode;
 
 #define NODE_TYPE_END		1
@@ -233,21 +233,11 @@ static char *numth[] = {"st", "nd", "rd", "th", NULL};
 #define TH_UPPER	1
 #define TH_LOWER	2
 
-
-#ifdef DEBUG_TO_FROM_CHAR
-#define NOTICE_TM {\
-		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
-			tm->tm_sec, tm->tm_year,\
-			tm->tm_min, tm->tm_wday, tm->tm_hour, tm->tm_yday,\
-			tm->tm_mday, tm->tm_isdst,tm->tm_mon);\
-	}
-#endif
-
 /* ----------
  * Flags for DCH version
  * ----------
  */
-static int	DCH_global_flag = 0;
+static int		DCH_global_flag = 0;
 
 #define DCH_F_FX	0x01
 
@@ -260,15 +250,15 @@ static int	DCH_global_flag = 0;
  */
 typedef struct
 {
-	int			pre,			/* (count) numbers before decimal */
-				post,			/* (count) numbers after decimal  */
-				lsign,			/* want locales sign		  */
-				flag,			/* number parametrs		  */
-				pre_lsign_num,	/* tmp value for lsign		  */
-				multi,			/* multiplier for 'V'		  */
-				zero_start,		/* position of first zero	  */
-				zero_end,		/* position of last zero	  */
-				need_locale;	/* needs it locale		  */
+	int	pre,		/* (count) numbers before decimal */
+		post,		/* (count) numbers after decimal  */
+		lsign,		/* want locales sign		  */
+		flag,		/* number parametrs		  */
+		pre_lsign_num,	/* tmp value for lsign		  */
+		multi,		/* multiplier for 'V'		  */
+		zero_start,	/* position of first zero	  */
+		zero_end,	/* position of last zero	  */
+		need_locale;	/* needs it locale		  */
 } NUMDesc;
 
 /* ----------
@@ -278,14 +268,14 @@ typedef struct
 #define NUM_F_DECIMAL	0x01
 #define NUM_F_LDECIMAL	0x02
 #define NUM_F_ZERO	0x04
-#define NUM_F_BLANK 0x08
+#define NUM_F_BLANK	0x08
 #define NUM_F_FILLMODE	0x10
-#define NUM_F_LSIGN 0x20
+#define NUM_F_LSIGN	0x20
 #define NUM_F_BRACKET	0x40
-#define NUM_F_MINUS 0x80
+#define NUM_F_MINUS	0x80
 #define NUM_F_PLUS	0x100
-#define NUM_F_ROMAN 0x200
-#define NUM_F_MULTI 0x400
+#define NUM_F_ROMAN	0x200
+#define NUM_F_MULTI	0x400
 
 #define NUM_LSIGN_PRE	-1
 #define NUM_LSIGN_POST	1
@@ -297,20 +287,20 @@ typedef struct
  */
 #define IS_DECIMAL(_f)	((_f)->flag & NUM_F_DECIMAL)
 #define IS_LDECIMAL(_f) ((_f)->flag & NUM_F_LDECIMAL)
-#define IS_ZERO(_f) ((_f)->flag & NUM_F_ZERO)
+#define IS_ZERO(_f)	((_f)->flag & NUM_F_ZERO)
 #define IS_BLANK(_f)	((_f)->flag & NUM_F_BLANK)
 #define IS_FILLMODE(_f) ((_f)->flag & NUM_F_FILLMODE)
 #define IS_BRACKET(_f)	((_f)->flag & NUM_F_BRACKET)
 #define IS_MINUS(_f)	((_f)->flag & NUM_F_MINUS)
 #define IS_LSIGN(_f)	((_f)->flag & NUM_F_LSIGN)
-#define IS_PLUS(_f) ((_f)->flag & NUM_F_PLUS)
+#define IS_PLUS(_f)	((_f)->flag & NUM_F_PLUS)
 #define IS_ROMAN(_f)	((_f)->flag & NUM_F_ROMAN)
 #define IS_MULTI(_f)	((_f)->flag & NUM_F_MULTI)
 
 /* ----------
  * Format picture cache
- *		(cache size:
- *		Number part		= NUM_CACHE_SIZE * NUM_CACHE_FIELDS
+ *	(cache size:
+ *		Number part	= NUM_CACHE_SIZE * NUM_CACHE_FIELDS
  *		Date-time part	= DCH_CACHE_SIZE * DCH_CACHE_FIELDS
  *	)
  * ----------
@@ -324,35 +314,76 @@ typedef struct
 {
 	FormatNode	format[DCH_CACHE_SIZE + 1];
 	char		str[DCH_CACHE_SIZE + 1];
-	int			age;
+	int		age;
 } DCHCacheEntry;
 
 typedef struct
 {
 	FormatNode	format[NUM_CACHE_SIZE + 1];
 	char		str[NUM_CACHE_SIZE + 1];
-	int			age;
+	int		age;
 	NUMDesc		Num;
 } NUMCacheEntry;
 
-static DCHCacheEntry DCHCache[DCH_CACHE_FIELDS + 1];	/* global cache for
-														 * date/time part */
+/* global cache for --- date/time part */
+static DCHCacheEntry DCHCache[DCH_CACHE_FIELDS + 1];	
+
 static int	n_DCHCache = 0;		/* number of entries */
 static int	DCHCounter = 0;
 
-static NUMCacheEntry NUMCache[NUM_CACHE_FIELDS + 1];	/* global cache for
-														 * number part */
+/* global cache for --- number part */
+static NUMCacheEntry NUMCache[NUM_CACHE_FIELDS + 1];	
+
 static int	n_NUMCache = 0;		/* number of entries */
 static int	NUMCounter = 0;
 
 #define MAX_INT32	(2147483640)
 
 /* ----------
+ * For char->date/time conversion
+ * ----------
+ */
+typedef struct {
+	int	hh, am, pm, mi, ss, ssss, d, dd, ddd, mm, yyyy, bc, ww, w, cc, q, j;
+} TmFromChar;
+
+#define ZERO_tmfc( _X )	\
+	do { \
+		(_X)->hh= (_X)->am= (_X)->pm= (_X)->mi= (_X)->ss= (_X)->ssss= \
+		(_X)->d= (_X)->dd= (_X)->ddd= (_X)->mm= (_X)->yyyy= (_X)->bc= \
+		(_X)->ww= (_X)->w= (_X)->cc= (_X)->q= (_X)->j= 0; \
+	} while(0) 
+
+#ifdef DEBUG_TO_FROM_CHAR
+
+#define NOTICE_TMFC \
+		elog(DEBUG_elog_output, "TMFC:\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nyyyy %d\nbc %d\nww %d\nw %d\ncc %d\nq %d\nj %d", \
+			tmfc->hh, tmfc->am, tmfc->pm, tmfc->mi, tmfc->ss, \
+			tmfc->ssss, tmfc->d, tmfc->dd, tmfc->ddd, tmfc->mm, \
+			tmfc->yyyy, tmfc->bc, tmfc->ww, tmfc->w, tmfc->cc, \
+			tmfc->q, tmfc->j);
+
+#define NOTICE_TM \
+		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
+			tm->tm_sec, tm->tm_year,\
+			tm->tm_min, tm->tm_wday, tm->tm_hour, tm->tm_yday,\
+			tm->tm_mday, tm->tm_isdst,tm->tm_mon)
+#endif
+
+#define ZERO_tm( _X ) \
+	do {	\
+		(_X)->tm_sec  = (_X)->tm_year = (_X)->tm_min = (_X)->tm_wday = \
+		(_X)->tm_hour = (_X)->tm_yday = (_X)->tm_isdst = 0; \
+		(_X)->tm_mday = (_X)->tm_mon  = 1; \
+	} while(0)
+
+/* ----------
  * Private global-modul definitions
  * ----------
  */
-static struct tm _tm,
-		   *tm = &_tm;
+static struct tm _tm, *tm = &_tm;
+static TmFromChar _tmfc, *tmfc = &_tmfc;
+static char *tzn;
 
 /* ----------
  * Utils
@@ -469,6 +500,7 @@ typedef enum
 	DCH_RM,
 	DCH_SSSS,
 	DCH_SS,
+	DCH_TZ,
 	DCH_WW,
 	DCH_W,
 	DCH_Y_YYY,
@@ -503,6 +535,7 @@ typedef enum
 	DCH_rm,
 	DCH_ssss,
 	DCH_ss,
+	DCH_tz,
 	DCH_ww,
 	DCH_w,
 	DCH_y_yyy,
@@ -595,6 +628,7 @@ static KeyWord DCH_keywords[] = {
 	{"RM", 2, dch_date, DCH_RM},/* R */
 	{"SSSS", 4, dch_time, DCH_SSSS},	/* S */
 	{"SS", 2, dch_time, DCH_SS},
+	{"TZ", 2, dch_time, DCH_TZ},		/* T */
 	{"WW", 2, dch_date, DCH_WW},/* W */
 	{"W", 1, dch_date, DCH_W},
 	{"Y,YYY", 5, dch_date, DCH_Y_YYY},	/* Y */
@@ -629,6 +663,7 @@ static KeyWord DCH_keywords[] = {
 	{"rm", 2, dch_date, DCH_rm},/* r */
 	{"ssss", 4, dch_time, DCH_SSSS},	/* s */
 	{"ss", 2, dch_time, DCH_SS},
+	{"tz", 2, dch_time, DCH_tz},		/* t */
 	{"ww", 2, dch_date, DCH_WW},/* w */
 	{"w", 1, dch_date, DCH_W},
 	{"y,yyy", 5, dch_date, DCH_Y_YYY},	/* y */
@@ -701,10 +736,10 @@ static int	DCH_index[KeyWord_INDEX_SIZE] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, DCH_A_D, DCH_B_C, DCH_CC, DCH_DAY, -1,
 	DCH_FX, -1, DCH_HH24, -1, DCH_J, -1, -1, DCH_MI, -1, -1,
-	DCH_P_M, DCH_Q, DCH_RM, DCH_SSSS, -1, -1, -1, DCH_WW, -1, DCH_Y_YYY,
+	DCH_P_M, DCH_Q, DCH_RM, DCH_SSSS, DCH_TZ, -1, -1, DCH_WW, -1, DCH_Y_YYY,
 	-1, -1, -1, -1, -1, -1, -1, DCH_a_d, DCH_b_c, DCH_cc,
 	DCH_day, -1, DCH_fx, -1, DCH_hh24, -1, DCH_j, -1, -1, DCH_mi,
-	-1, -1, DCH_p_m, DCH_q, DCH_rm, DCH_ssss, -1, -1, -1, DCH_ww,
+	-1, -1, DCH_p_m, DCH_q, DCH_rm, DCH_ssss, DCH_tz, -1, -1, DCH_ww,
 	-1, DCH_y_yyy, -1, -1, -1, -1
 
 	/*---- chars over 126 are skiped ----*/
@@ -740,33 +775,32 @@ static int	NUM_index[KeyWord_INDEX_SIZE] = {
  */
 typedef struct NUMProc
 {
-	int			type;			/* FROM_CHAR (TO_NUMBER) or TO_CHAR */
+	int		type;			/* FROM_CHAR (TO_NUMBER) or TO_CHAR */
 
-	NUMDesc    *Num;			/* number description		*/
+	NUMDesc    	*Num;			/* number description		*/
 
-	int			sign,			/* '-' or '+'			*/
-				sign_wrote,		/* was sign write		*/
-				sign_pos,		/* pre number sign position */
-				num_count,		/* number of write digits	*/
-				num_in,			/* is inside number		*/
-				num_curr,		/* current position in number	*/
-				num_pre,		/* space before first number	*/
+	int		sign,			/* '-' or '+'			*/
+			sign_wrote,		/* was sign write		*/
+			sign_pos,		/* pre number sign position */
+			num_count,		/* number of write digits	*/
+			num_in,			/* is inside number		*/
+			num_curr,		/* current position in number	*/
+			num_pre,		/* space before first number	*/
 
-				read_dec,		/* to_number - was read dec. point	*/
-				read_post;		/* to_number - number of dec. digit */
+			read_dec,		/* to_number - was read dec. point	*/
+			read_post;		/* to_number - number of dec. digit */
 
-	char	   *number,			/* string with number	*/
-			   *number_p,		/* pointer to current number pozition */
-			   *inout,			/* in / out buffer	*/
-			   *inout_p,		/* pointer to current inout pozition */
-			   *last_relevant,	/* last relevant number after decimal
-								 * point */
+	char		*number,		/* string with number	*/
+			*number_p,		/* pointer to current number pozition */
+			*inout,			/* in / out buffer	*/
+			*inout_p,		/* pointer to current inout pozition */
+			*last_relevant,		/* last relevant number after decimal point */
 
-			   *L_negative_sign,/* Locale */
-			   *L_positive_sign,
-			   *decimal,
-			   *L_thousands_sep,
-			   *L_currency_symbol;
+			*L_negative_sign,/* Locale */
+			*L_positive_sign,
+			*decimal,
+			*L_thousands_sep,
+			*L_currency_symbol;
 } NUMProc;
 
 
@@ -1011,11 +1045,11 @@ static void
 parse_format(FormatNode *node, char *str, KeyWord *kw,
 			 KeySuffix *suf, int *index, int ver, NUMDesc *Num)
 {
-	KeySuffix  *s;
-	FormatNode *n;
-	int			node_set = 0,
-				suffix,
-				last = 0;
+	KeySuffix	*s;
+	FormatNode	*n;
+	int		node_set = 0,
+			suffix,
+			last = 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
 	elog(DEBUG_elog_output, "to_char/number(): run parser.");
@@ -1163,8 +1197,7 @@ DCH_processor(FormatNode *node, char *inout, int flag)
 	{
 		if (n->type == NODE_TYPE_ACTION)
 		{
-
-			int			len;
+			int	len;
 
 			/* ----------
 			 * Call node action function
@@ -1260,8 +1293,8 @@ dump_node(FormatNode *node, int max)
 static char *
 get_th(char *num, int type)
 {
-	int			len = strlen(num),
-				last, seclast;
+	int	len = strlen(num),
+		last, seclast;
 
 	last = *(num + (len - 1));
 	if (!isdigit((unsigned char) last))
@@ -1355,46 +1388,17 @@ str_tolower(char *buff)
 }
 
 /* ----------
- * Check if in string is AC or BC (return: 0==none; -1==BC; 1==AC)
- * ----------
- */
-/************* not used - use AD/BC format pictures instead  **********
-static int
-is_acdc(char *str, int *len)
-{
-	char	*p;
-
-	for(p=str; *p != '\0'; p++) {
-		if (isspace(*p))
-			continue;
-
-		if (*(p+1)) {
-			if (toupper(*p)=='B' && toupper(*(++p))=='C') {
-				*len += (p - str) +1;
-				return -1;
-			} else if (toupper(*p)=='A' && toupper(*(++p))=='C') {
-				*len += (p - str) +1;
-				return 1;
-			}
-		}
-		return 0;
-	}
-	return 0;
-}
-******************************/
-
-/* ----------
  * Sequential search with to upper/lower conversion
  * ----------
  */
 static int
 seq_search(char *name, char **array, int type, int max, int *len)
 {
-	char	   *p,
-			   *n,
-			  **a;
-	int			last,
-				i;
+	char	*p,
+		*n,
+		**a;
+	int	last,
+		i;
 
 	*len = 0;
 
@@ -1470,9 +1474,9 @@ seq_search(char *name, char **array, int type, int max, int *len)
 static void
 dump_index(KeyWord *k, int *index)
 {
-	int			i,
-				count = 0,
-				free_i = 0;
+	int	i,
+		count = 0,
+		free_i = 0;
 
 	elog(DEBUG_elog_output, "TO-FROM_CHAR: Dump KeyWord Index:");
 
@@ -1511,13 +1515,14 @@ dch_global(int arg, char *inout, int suf, int flag, FormatNode *node)
 {
 	switch (arg)
 	{
-
-			case DCH_FX:
-			DCH_global_flag |= DCH_F_FX;
-			break;
+		case DCH_FX:
+		DCH_global_flag |= DCH_F_FX;
+		break;
 	}
 	return -1;
 }
+
+#define AMPM_ERROR	elog(ERROR, "to_timestamp(): bad AM/PM string")
 
 /* ----------
  * Master function of TIME for:
@@ -1532,67 +1537,82 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 	switch (arg)
 	{
-
-		case DCH_A_M:
+		case DCH_A_M:	
 		case DCH_P_M:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_hour > 13 ? P_M_STR : A_M_STR));
+				strcpy(inout, ((tm->tm_hour > 11 
+					&& tm->tm_hour < 24) ? P_M_STR : A_M_STR));
 				return 3;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, P_M_STR, 4) == 0 && tm->tm_hour < 13)
-					tm->tm_hour += 12;
+				if (strncmp(inout, P_M_STR, 4) == 0)
+					tmfc->pm = TRUE;
+				else if (strncmp(inout, A_M_STR, 4) == 0)
+					tmfc->am = TRUE;	
+				else
+					AMPM_ERROR;	
 				return 3;
 			}
-
+			break;
 		case DCH_AM:
 		case DCH_PM:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_hour > 13 ? PM_STR : AM_STR));
+				strcpy(inout, ((tm->tm_hour > 11 
+					&& tm->tm_hour < 24) ? PM_STR : AM_STR));
 				return 1;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, PM_STR, 2) == 0 && tm->tm_hour < 13)
-					tm->tm_hour += 12;
+				if (strncmp(inout, PM_STR, 2) == 0)
+					tmfc->pm = TRUE;
+				else if (strncmp(inout, AM_STR, 2) == 0)
+					tmfc->am = TRUE;
+				else
+					AMPM_ERROR;	
 				return 1;
 			}
-
+			break;
 		case DCH_a_m:
 		case DCH_p_m:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_hour > 13 ? p_m_STR : a_m_STR));
+				strcpy(inout, ((tm->tm_hour > 11 
+					&& tm->tm_hour < 24) ? p_m_STR : a_m_STR));
 				return 3;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, p_m_STR, 4) == 0 && tm->tm_hour < 13)
-					tm->tm_hour += 12;
+				if (strncmp(inout, p_m_STR, 4) == 0)
+					tmfc->pm = TRUE;
+				else if (strncmp(inout, a_m_STR, 4) == 0)
+					tmfc->am = TRUE;
+				else
+					AMPM_ERROR;	
 				return 3;
 			}
-
+			break;
 		case DCH_am:
 		case DCH_pm:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_hour > 13 ? pm_STR : am_STR));
+				strcpy(inout, ((tm->tm_hour > 11
+					&& tm->tm_hour < 24) ? pm_STR : am_STR));
 				return 1;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, pm_STR, 2) == 0 && tm->tm_hour < 13)
-					tm->tm_hour += 12;
+				if (strncmp(inout, pm_STR, 2) == 0)
+					tmfc->pm = TRUE;
+				else if (strncmp(inout, am_STR, 2) == 0)
+					tmfc->am = TRUE;
+				else
+					AMPM_ERROR;	
 				return 1;
 			}
-
+			break;
 		case DCH_HH:
 		case DCH_HH12:
 			if (flag == TO_CHAR)
@@ -1612,16 +1632,16 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 			{
 				if (S_FM(suf))
 				{
-					sscanf(inout, "%d", &tm->tm_hour);
-					return int4len((int4) tm->tm_hour) - 1 + SKIP_THth(suf);
+					sscanf(inout, "%d", &tmfc->hh);
+					return int4len((int4) tmfc->hh) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
-					sscanf(inout, "%02d", &tm->tm_hour);
+					sscanf(inout, "%02d", &tmfc->hh);
 					return 1 + SKIP_THth(suf);
 				}
 			}
-
+			break;
 		case DCH_HH24:
 			if (flag == TO_CHAR)
 			{
@@ -1638,16 +1658,16 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 			{
 				if (S_FM(suf))
 				{
-					sscanf(inout, "%d", &tm->tm_hour);
-					return int4len((int4) tm->tm_hour) - 1 + SKIP_THth(suf);
+					sscanf(inout, "%d", &tmfc->hh);
+					return int4len((int4) tmfc->hh) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
-					sscanf(inout, "%02d", &tm->tm_hour);
+					sscanf(inout, "%02d", &tmfc->hh);
 					return 1 + SKIP_THth(suf);
 				}
 			}
-
+			break;
 		case DCH_MI:
 			if (flag == TO_CHAR)
 			{
@@ -1664,15 +1684,16 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 			{
 				if (S_FM(suf))
 				{
-					sscanf(inout, "%d", &tm->tm_min);
-					return int4len((int4) tm->tm_min) - 1 + SKIP_THth(suf);
+					sscanf(inout, "%d", &tmfc->mi);
+					return int4len((int4) tmfc->mi) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
-					sscanf(inout, "%02d", &tm->tm_min);
+					sscanf(inout, "%02d", &tmfc->mi);
 					return 1 + SKIP_THth(suf);
 				}
 			}
+			break;
 		case DCH_SS:
 			if (flag == TO_CHAR)
 			{
@@ -1689,15 +1710,16 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 			{
 				if (S_FM(suf))
 				{
-					sscanf(inout, "%d", &tm->tm_sec);
-					return int4len((int4) tm->tm_sec) - 1 + SKIP_THth(suf);
+					sscanf(inout, "%d", &tmfc->ss);
+					return int4len((int4) tmfc->ss) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
-					sscanf(inout, "%02d", &tm->tm_sec);
+					sscanf(inout, "%02d", &tmfc->ss);
 					return 1 + SKIP_THth(suf);
 				}
 			}
+			break;
 		case DCH_SSSS:
 			if (flag == TO_CHAR)
 			{
@@ -1708,31 +1730,59 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout) - 1;
 			}
-			else if (flag == FROM_CHAR)
-				elog(ERROR, "to_timestamp(): SSSS is not supported");
+			else if (flag == FROM_CHAR) 
+			{
+				sscanf(inout, "%d", &tmfc->ssss);
+				return int4len((int4) tmfc->ssss) - 1 + SKIP_THth(suf);
+			}
+			break;
+		case DCH_tz:
+		case DCH_TZ:
+			if (flag == TO_CHAR)
+			{
+				int siz = strlen(tzn);
+				
+				if (arg == DCH_TZ)
+					strcpy(inout, tzn);
+				else 
+				{
+					char *p = palloc(siz);
+					
+					strcpy(p, tzn);
+					strcpy(inout, str_tolower(p));
+					pfree(p);
+				}
+				return siz - 1;
+			} 
+			else if (flag == FROM_CHAR) 
+			{
+				elog(ERROR, "to_timestamp(): TZ/tz not supported.");
+			}	
 	}
 	return -1;
 }
 
-#define CHECK_SEQ_SEARCH(_l, _s) {					\
+#define CHECK_SEQ_SEARCH(_l, _s) \
+do { \
 	if (_l <= 0) {							\
 		elog(ERROR, "to_timestamp(): bad value for %s", _s);	\
 	}								\
-}
+} while (0)
+
 
 /* ----------
  * Master of DATE for:
- *					  TO_CHAR	- write (inout) formated string
- *					  FROM_CHAR - scan (inout) string by course of FormatNode
+ *		  TO_CHAR	- write (inout) formated string
+ *		  FROM_CHAR - scan (inout) string by course of FormatNode
  * ----------
  */
 static int
 dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 {
-	char		buff[DCH_CACHE_SIZE],
-			   *p_inout;
-	int			i,
-				len;
+	char	buff[DCH_CACHE_SIZE],
+		*p_inout;
+	int	i,
+		len;
 
 	p_inout = inout;
 
@@ -1746,10 +1796,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 	{
 		if (arg == DCH_MONTH || arg == DCH_Month || arg == DCH_month)
 		{
-
-			tm->tm_mon = seq_search(inout, months_full, ONE_UPPER, FULL_SIZ, &len);
+			tmfc->mm = seq_search(inout, months_full, ONE_UPPER, FULL_SIZ, &len) +1;
 			CHECK_SEQ_SEARCH(len, "MONTH/Month/month");
-			++tm->tm_mon;
 			if (S_FM(suf))
 				return len - 1;
 			else
@@ -1758,17 +1806,13 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 		}
 		else if (arg == DCH_MON || arg == DCH_Mon || arg == DCH_mon)
 		{
-
-			tm->tm_mon = seq_search(inout, months, ONE_UPPER, MAX_MON_LEN, &len);
+			tmfc->mm = seq_search(inout, months, ONE_UPPER, MAX_MON_LEN, &len) +1;
 			CHECK_SEQ_SEARCH(len, "MON/Mon/mon");
-			++tm->tm_mon;
 			return 2;
-
 		}
 		else if (arg == DCH_DAY || arg == DCH_Day || arg == DCH_day)
 		{
-
-			tm->tm_wday = seq_search(inout, days, ONE_UPPER, FULL_SIZ, &len);
+			tmfc->d = seq_search(inout, days, ONE_UPPER, FULL_SIZ, &len);
 			CHECK_SEQ_SEARCH(len, "DAY/Day/day");
 			if (S_FM(suf))
 				return len - 1;
@@ -1778,11 +1822,9 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 		}
 		else if (arg == DCH_DY || arg == DCH_Dy || arg == DCH_dy)
 		{
-
-			tm->tm_wday = seq_search(inout, days, ONE_UPPER, MAX_DY_LEN, &len);
+			tmfc->d = seq_search(inout, days, ONE_UPPER, MAX_DY_LEN, &len);
 			CHECK_SEQ_SEARCH(len, "DY/Dy/dy");
 			return 2;
-
 		}
 	}
 
@@ -1799,13 +1841,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, B_C_STR, 4) == 0 && tm->tm_year > 0)
-					tm->tm_year = -(tm->tm_year);
-				if (tm->tm_year < 0)
-					tm->tm_year = tm->tm_year + 1;
+				if (strncmp(inout, B_C_STR, 4) == 0)
+					tmfc->bc = TRUE;
 				return 3;
 			}
-
+			break;
 		case DCH_AD:
 		case DCH_BC:
 			if (flag == TO_CHAR)
@@ -1816,13 +1856,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, BC_STR, 2) == 0 && tm->tm_year > 0)
-					tm->tm_year = -(tm->tm_year);
-				if (tm->tm_year < 0)
-					tm->tm_year = tm->tm_year + 1;
+				if (strncmp(inout, BC_STR, 2) == 0)
+					tmfc->bc = TRUE;
 				return 1;
 			}
-
+			break;
 		case DCH_a_d:
 		case DCH_b_c:
 			if (flag == TO_CHAR)
@@ -1833,13 +1871,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, b_c_STR, 4) == 0 && tm->tm_year > 0)
-					tm->tm_year = -(tm->tm_year);
-				if (tm->tm_year < 0)
-					tm->tm_year = tm->tm_year + 1;
+				if (strncmp(inout, b_c_STR, 4) == 0)
+					tmfc->bc = TRUE;
 				return 3;
 			}
-
+			break;
 		case DCH_ad:
 		case DCH_bc:
 			if (flag == TO_CHAR)
@@ -1850,13 +1886,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				if (strncmp(inout, bc_STR, 2) == 0 && tm->tm_year > 0)
-					tm->tm_year = -(tm->tm_year);
-				if (tm->tm_year < 0)
-					tm->tm_year = tm->tm_year + 1;
+				if (strncmp(inout, bc_STR, 2) == 0)
+					tmfc->bc = TRUE;
 				return 1;
 			}
-
+			break;
 		case DCH_MONTH:
 			strcpy(inout, months_full[tm->tm_mon - 1]);
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout));
@@ -1864,14 +1898,14 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				return strlen(p_inout) - 1;
 			else
 				return 8;
-
+			
 		case DCH_Month:
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
 				return 8;
-
+			
 		case DCH_month:
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
 			*inout = tolower(*inout);
@@ -1879,12 +1913,12 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				return strlen(p_inout) - 1;
 			else
 				return 8;
-
+			
 		case DCH_MON:
 			strcpy(inout, months[tm->tm_mon - 1]);
 			inout = str_toupper(inout);
 			return 2;
-
+			
 		case DCH_Mon:
 			strcpy(inout, months[tm->tm_mon - 1]);
 			return 2;
@@ -1910,16 +1944,16 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			{
 				if (S_FM(suf))
 				{
-					sscanf(inout, "%d", &tm->tm_mon);
-					return int4len((int4) tm->tm_mon) - 1 + SKIP_THth(suf);
+					sscanf(inout, "%d", &tmfc->mm);
+					return int4len((int4) tmfc->mm) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
-					sscanf(inout, "%02d", &tm->tm_mon);
+					sscanf(inout, "%02d", &tmfc->mm);
 					return 1 + SKIP_THth(suf);
 				}
 			}
-
+			break;
 		case DCH_DAY:
 			strcpy(inout, days[tm->tm_wday]);
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout));
@@ -1973,16 +2007,16 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			{
 				if (S_FM(suf))
 				{
-					sscanf(inout, "%d", &tm->tm_yday);
-					return int4len((int4) tm->tm_yday) - 1 + SKIP_THth(suf);
+					sscanf(inout, "%d", &tmfc->ddd);
+					return int4len((int4) tmfc->ddd) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
-					sscanf(inout, "%03d", &tm->tm_yday);
+					sscanf(inout, "%03d", &tmfc->ddd);
 					return 2 + SKIP_THth(suf);
 				}
 			}
-
+			break;
 		case DCH_DD:
 			if (flag == TO_CHAR)
 			{
@@ -1999,15 +2033,16 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			{
 				if (S_FM(suf))
 				{
-					sscanf(inout, "%d", &tm->tm_mday);
-					return int4len((int4) tm->tm_mday) - 1 + SKIP_THth(suf);
+					sscanf(inout, "%d", &tmfc->dd);
+					return int4len((int4) tmfc->dd) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
-					sscanf(inout, "%02d", &tm->tm_mday);
+					sscanf(inout, "%02d", &tmfc->dd);
 					return 1 + SKIP_THth(suf);
 				}
 			}
+			break;
 		case DCH_D:
 			if (flag == TO_CHAR)
 			{
@@ -2021,17 +2056,15 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%1d", &tm->tm_wday);
-				if (tm->tm_wday)
-					--tm->tm_wday;
+				sscanf(inout, "%1d", &tmfc->d);
 				return 0 + SKIP_THth(suf);
 			}
-
+			break;
 		case DCH_WW:
 			if (flag == TO_CHAR)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,
-						(tm->tm_yday - tm->tm_wday + 7) / 7);
+						(tm->tm_yday-1) / 7 + 1);
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				if (S_FM(suf) || S_THth(suf))
@@ -2040,8 +2073,20 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 					return 1;
 
 			}
-			else if (flag == FROM_CHAR)
-				elog(ERROR, "to_datatime(): WW is not supported");
+			else if (flag == FROM_CHAR) 
+			{
+				if (S_FM(suf))
+				{
+					sscanf(inout, "%d", &tmfc->ww);
+					return int4len((int4) tmfc->ww) - 1 + SKIP_THth(suf);
+				}
+				else
+				{
+					sscanf(inout, "%02d", &tmfc->ww);
+					return 1 + SKIP_THth(suf);
+				}
+			}
+			break;	
 		case DCH_Q:
 			if (flag == TO_CHAR)
 			{
@@ -2055,8 +2100,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 			}
 			else if (flag == FROM_CHAR)
-				elog(ERROR, "to_datatime(): Q is not supported");
-
+			{
+				sscanf(inout, "%1d", &tmfc->q);
+				return 0 + SKIP_THth(suf);
+			}
+			break;
 		case DCH_CC:
 			if (flag == TO_CHAR)
 			{
@@ -2071,7 +2119,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 			}
 			else if (flag == FROM_CHAR)
-				elog(ERROR, "to_datatime(): CC is not supported");
+			{
+				sscanf(inout, "%d", &tmfc->cc);
+				return int4len((int4) tmfc->cc) + SKIP_THth(suf) -1;
+			}
+			break;
 		case DCH_Y_YYY:
 			if (flag == TO_CHAR)
 			{
@@ -2079,35 +2131,23 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				sprintf(inout, "%d,%03d", i, YEAR_ABS(tm->tm_year) - (i * 1000));
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
-
-				/*
-				 * if (tm->tm_year < 0) strcat(inout, BC_STR_ORIG);
-				 */
 				return strlen(p_inout) - 1;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
-				int			cc,
-							yy;
+				int			cc;
 
-				sscanf(inout, "%d,%03d", &cc, &yy);
-				tm->tm_year = (cc * 1000) + yy;
+				sscanf(inout, "%d,%03d", &cc, &tmfc->yyyy);
+				tmfc->yyyy += (cc * 1000);
 
-				if (!S_FM(suf) && tm->tm_year <= 9999 && tm->tm_year >= -9999)
+				if (!S_FM(suf) && tmfc->yyyy <= 9999 && tmfc->yyyy >= -9999)
 					len = 5;
 				else
-					len = int4len((int4) tm->tm_year) + 1;
+					len = int4len((int4) tmfc->yyyy) + 1;
 				len += SKIP_THth(suf);
-
-				/*
-				 * AC/BC if (is_acdc(inout+len, &len) < 0 && tm->tm_year >
-				 * 0) tm->tm_year = -(tm->tm_year); if (tm->tm_year < 0)
-				 * tm->tm_year = tm->tm_year+1;
-				 */
 				return len - 1;
 			}
-
+			break;
 		case DCH_YYYY:
 			if (flag == TO_CHAR)
 			{
@@ -2117,30 +2157,19 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 					sprintf(inout, "%d", YEAR_ABS(tm->tm_year));
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
-
-				/*
-				 * if (tm->tm_year < 0) strcat(inout, BC_STR_ORIG);
-				 */
 				return strlen(p_inout) - 1;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%d", &tm->tm_year);
-				if (!S_FM(suf) && tm->tm_year <= 9999 && tm->tm_year >= -9999)
+				sscanf(inout, "%d", &tmfc->yyyy);
+				if (!S_FM(suf) && tmfc->yyyy <= 9999 && tmfc->yyyy >= -9999)
 					len = 4;
 				else
-					len = int4len((int4) tm->tm_year);
+					len = int4len((int4) tmfc->yyyy);
 				len += SKIP_THth(suf);
-
-				/*
-				 * AC/BC if (is_acdc(inout+len, &len) < 0 && tm->tm_year >
-				 * 0) tm->tm_year = -(tm->tm_year); if (tm->tm_year < 0)
-				 * tm->tm_year = tm->tm_year+1;
-				 */
 				return len - 1;
 			}
-
+			break;
 		case DCH_YYY:
 			if (flag == TO_CHAR)
 			{
@@ -2157,13 +2186,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				int			yy;
-
-				sscanf(inout, "%03d", &yy);
-				tm->tm_year = (tm->tm_year / 1000) * 1000 + yy;
+				sscanf(inout, "%03d", &tmfc->yyyy);
 				return 2 + SKIP_THth(suf);
 			}
-
+			break;
 		case DCH_YY:
 			if (flag == TO_CHAR)
 			{
@@ -2180,13 +2206,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				int			yy;
-
-				sscanf(inout, "%02d", &yy);
-				tm->tm_year = (tm->tm_year / 100) * 100 + yy;
+				sscanf(inout, "%02d", &tmfc->yyyy);
 				return 1 + SKIP_THth(suf);
 			}
-
+			break;
 		case DCH_Y:
 			if (flag == TO_CHAR)
 			{
@@ -2203,13 +2226,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				int			yy;
-
-				sscanf(inout, "%1d", &yy);
-				tm->tm_year = (tm->tm_year / 10) * 10 + yy;
+				sscanf(inout, "%1d", &tmfc->yyyy);
 				return 0 + SKIP_THth(suf);
 			}
-
+			break;
 		case DCH_RM:
 			if (flag == TO_CHAR)
 			{
@@ -2223,15 +2243,14 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				tm->tm_mon = 11 - seq_search(inout, rm_months_upper, ALL_UPPER, FULL_SIZ, &len);
+				tmfc->mm = 12 - seq_search(inout, rm_months_upper, ALL_UPPER, FULL_SIZ, &len);
 				CHECK_SEQ_SEARCH(len, "RM");
-				++tm->tm_mon;
 				if (S_FM(suf))
 					return len - 1;
 				else
 					return 3;
 			}
-
+			break;
 		case DCH_rm:
 			if (flag == TO_CHAR)
 			{
@@ -2245,30 +2264,31 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				tm->tm_mon = 11 - seq_search(inout, rm_months_lower, ALL_UPPER, FULL_SIZ, &len);
+				tmfc->mm = 12 - seq_search(inout, rm_months_lower, ALL_UPPER, FULL_SIZ, &len);
 				CHECK_SEQ_SEARCH(len, "rm");
-				++tm->tm_mon;
 				if (S_FM(suf))
 					return len - 1;
 				else
 					return 3;
 			}
-
+			break;
 		case DCH_W:
 			if (flag == TO_CHAR)
 			{
-				sprintf(inout, "%d", (tm->tm_mday - tm->tm_wday + 7) / 7);
+				sprintf(inout, "%d", (tm->tm_mday-1) / 7 + 1);
 				if (S_THth(suf))
 				{
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 					return 2;
 				}
 				return 0;
-
 			}
 			else if (flag == FROM_CHAR)
-				elog(ERROR, "to_datatime(): W is not supported");
-
+			{
+				sscanf(inout, "%1d", &tmfc->w);
+				return 0 + SKIP_THth(suf);
+			}
+			break;
 		case DCH_J:
 			if (flag == TO_CHAR)
 			{
@@ -2278,7 +2298,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				return strlen(p_inout) - 1;
 			}
 			else if (flag == FROM_CHAR)
-				elog(ERROR, "to_datatime(): J is not supported");
+			{
+				sscanf(inout, "%d", &tmfc->j);
+				return int4len((int4) tmfc->j) + SKIP_THth(suf) -1;
+			}
+			break;
 	}
 	return -1;
 }
@@ -2382,32 +2406,25 @@ Datum
 timestamp_to_char(PG_FUNCTION_ARGS)
 {
 	Timestamp	dt = PG_GETARG_TIMESTAMP(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
-	text	   *result,
-			   *result_tmp;
-	FormatNode *format;
-	char	   *str;
+	text		*fmt = PG_GETARG_TEXT_P(1);
+	text		*result,
+			*result_tmp;
+			
+	FormatNode	*format;
+	char		*str;
 	double		fsec;
-	char	   *tzn;
-	int			len = 0,
-				tz,
-				flag = 0,
-				x = 0;
+	int		len = 0,
+			tz,
+			flag = 0,
+			x = 0;
 
 	len = VARSIZE(fmt) - VARHDRSZ;
 
 	if ((!len) || (TIMESTAMP_NOT_FINITE(dt)))
 		return PointerGetDatum(textin(""));
 
-	tm->tm_sec = 0;
-	tm->tm_year = 0;
-	tm->tm_min = 0;
-	tm->tm_wday = 0;
-	tm->tm_hour = 0;
-	tm->tm_yday = 0;
-	tm->tm_mday = 1;
-	tm->tm_isdst = 0;
-	tm->tm_mon = 1;
+	ZERO_tm(tm);	
+	tzn = NULL;
 
 	if (TIMESTAMP_IS_EPOCH(dt))
 	{
@@ -2446,10 +2463,9 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	 * Allocate new memory if format picture is bigger than static cache
 	 * and not use cache (call parser always) - flag=1 show this variant
 	 * ----------
-		 */
+	 */
 	if (len > DCH_CACHE_SIZE)
 	{
-
 		format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
 		flag = 1;
 
@@ -2479,9 +2495,9 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 			 * Not in the cache, must run parser and save a new
 			 * format-picture to the cache.
 			 * ----------
-				 */
+			 */
 			parse_format(ent->format, str, DCH_keywords,
-						 DCH_suff, DCH_index, DCH_TYPE, NULL);
+					 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
 			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoa? */
 
@@ -2527,25 +2543,18 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 Datum
 to_timestamp(PG_FUNCTION_ARGS)
 {
-	text	   *date_str = PG_GETARG_TEXT_P(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
-	FormatNode *format;
-	int			flag = 0;
+	text		*date_str = PG_GETARG_TEXT_P(0);
+	text		*fmt = PG_GETARG_TEXT_P(1);
+	FormatNode	*format;
+	int		flag = 0;
 	Timestamp	result;
-	char	   *str;
-	int			len = 0,
-				fsec = 0,
-				tz = 0;
+	char		*str;
+	int		len = 0,
+			fsec = 0,
+			tz = 0;
 
-	tm->tm_sec = 0;
-	tm->tm_year = 0;
-	tm->tm_min = 0;
-	tm->tm_wday = 0;
-	tm->tm_hour = 0;
-	tm->tm_yday = 0;
-	tm->tm_mday = 1;
-	tm->tm_isdst = 0;
-	tm->tm_mon = 1;
+	ZERO_tm(tm);
+	ZERO_tmfc(tmfc);
 
 	len = VARSIZE(fmt) - VARHDRSZ;
 
@@ -2564,10 +2573,9 @@ to_timestamp(PG_FUNCTION_ARGS)
 		 * Allocate new memory if format picture is bigger than static cache
 		 * and not use cache (call parser always) - flag=1 show this variant
 		 * ----------
-			 */
+		 */
 		if (len > DCH_CACHE_SIZE)
 		{
-
 			format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
 			flag = 1;
 
@@ -2624,6 +2632,101 @@ to_timestamp(PG_FUNCTION_ARGS)
 		if (flag)
 			pfree(format);
 	}
+
+	/* --------------------------------------------------------------
+	 * Convert values that user define for FROM_CHAR (to_date/to_timestamp) 
+	 * to standard 'tm'
+	 * ----------
+	 */	
+#ifdef DEBUG_TO_FROM_CHAR
+	NOTICE_TMFC;
+#endif	
+	if (tmfc->ssss) 
+	{
+		int x;
+		
+		if (tmfc->ssss > 3600) 
+			tm->tm_sec = x - ((tm->tm_min = (x = tmfc->ssss - 
+				((tm->tm_hour= tmfc->ssss / 3600) * 3600)) / 60) * 60);
+		else if (tmfc->ssss > 60) 
+			tm->tm_sec =  tmfc->ssss - ((tm->tm_min =  tmfc->ssss / 60) * 60);
+		else 
+			tm->tm_sec = tmfc->ssss;
+	} 
+
+	if (tmfc->cc)
+		tm->tm_year = (tmfc->cc-1) * 100;
+
+	if (tmfc->ww) 
+		tmfc->ddd = (tmfc->ww - 1) * 7 + 1;
+
+	if (tmfc->w) 
+		tmfc->dd = (tmfc->w - 1) * 7 + 1;
+
+	if (tmfc->ss)	tm->tm_sec = tmfc->ss;
+	if (tmfc->mi)	tm->tm_min = tmfc->mi;
+	if (tmfc->hh)	tm->tm_hour = tmfc->hh;
+	
+	if (tmfc->pm || tmfc->am) 
+	{ 
+		if (tm->tm_hour < 1 || tm->tm_hour > 12) 
+			elog(ERROR, "to_timestamp(): AM/PM hour must be between 1 and 12"); 
+		
+		if (tmfc->pm && tm->tm_hour < 12)
+			tm->tm_hour += 12;
+			
+		else if (tmfc->am && tm->tm_hour == 12)
+			tm->tm_hour = 0;	
+	} 
+
+	switch (tmfc->q) 
+	{
+		case 1:	tm->tm_mday = 1; tm->tm_mon = 1;  break;
+		case 2:	tm->tm_mday = 1; tm->tm_mon = 4;  break;
+		case 3:	tm->tm_mday = 1; tm->tm_mon = 7;  break;
+		case 4:	tm->tm_mday = 1; tm->tm_mon = 10; break;
+	}
+	
+	if (tmfc->j)
+		j2date(tmfc->j, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+	if (tmfc->yyyy)	
+		tm->tm_year = tmfc->yyyy;
+	if (tmfc->bc && tm->tm_year > 0)
+		tm->tm_year = -(tm->tm_year);
+	if (tm->tm_year < 0)
+		tm->tm_year = tm->tm_year + 1;
+	if (tmfc->d)	tm->tm_wday = tmfc->d;
+	if (tmfc->dd)	tm->tm_mday = tmfc->dd;	
+	if (tmfc->ddd)	tm->tm_yday = tmfc->ddd;
+	if (tmfc->mm)	tm->tm_mon  = tmfc->mm;	
+
+	if (tmfc->ddd && (tm->tm_mon <=1 || tm->tm_mday <=1))
+	{
+		/* count mday and mon from yday */
+		int *y, i;
+		
+		int ysum[2][13] = {
+    		{ 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365, 0 },
+    		{ 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366, 0 }};
+    		
+ 		if (!tm->tm_year)
+ 			elog(ERROR, "to_timestamp() cat't convert yday without year information");
+ 		
+ 		y = ysum[ isleap(tm->tm_year) ];	
+ 			
+ 		for (i=0; i <= 11; i++) 
+ 		{
+			if (tm->tm_yday < y[i]) 
+				break;
+ 		}
+ 		if (tm->tm_mon <=1)
+ 			tm->tm_mon = i+1;
+ 		
+ 		if (tm->tm_mday <=1)
+ 			tm->tm_mday = i == 0 ?	tm->tm_yday :
+ 						tm->tm_yday - y[i-1];
+	}
+	/* -------------------------------------------------------------- */
 
 #ifdef DEBUG_TO_FROM_CHAR
 	NOTICE_TM;
@@ -2703,17 +2806,18 @@ fill_str(char *str, int c, int max)
 	return str;
 }
 
-#define zeroize_NUM(_n) {		\
+#define zeroize_NUM(_n) \
+do { \
 	(_n)->flag		= 0;	\
 	(_n)->lsign		= 0;	\
 	(_n)->pre		= 0;	\
 	(_n)->post		= 0;	\
-	(_n)->pre_lsign_num = 0;	\
+	(_n)->pre_lsign_num	= 0;	\
 	(_n)->need_locale	= 0;	\
 	(_n)->multi		= 0;	\
 	(_n)->zero_start	= 0;	\
 	(_n)->zero_end		= 0;	\
-}
+} while(0)
 
 static NUMCacheEntry *
 NUM_cache_getnew(char *str)
@@ -2777,7 +2881,7 @@ NUM_cache_getnew(char *str)
 static NUMCacheEntry *
 NUM_cache_search(char *str)
 {
-	int			i = 0;
+	int i = 0;
 	NUMCacheEntry *ent;
 
 	/* counter overload check  - paranoa? */
@@ -2899,12 +3003,12 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 static char *
 int_to_roman(int number)
 {
-	int			len = 0,
-				num = 0,
-				set = 0;
-	char	   *p = NULL,
-			   *result,
-				numstr[5];
+	int	len = 0,
+		num = 0,
+		set = 0;
+	char	*p = NULL,
+		*result,
+		numstr[5];
 
 	result = (char *) palloc(16);
 	*result = '\0';
@@ -3039,7 +3143,7 @@ static char *
 get_last_relevant_decnum(char *num)
 {
 	char	   *result,
-			   *p = strchr(num, '.');
+		   *p = strchr(num, '.');
 
 #ifdef DEBUG_TO_FROM_CHAR
 	elog(DEBUG_elog_output, "CALL: get_last_relevant_decnum()");
@@ -3186,8 +3290,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		}
 		else
 		{
-
-			int			x = strlen(Np->decimal);
+			int	x = strlen(Np->decimal);
 
 #ifdef DEBUG_TO_FROM_CHAR
 			elog(DEBUG_elog_output, "Try read locale point (%c).", *Np->inout_p);
@@ -3420,8 +3523,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			  int plen, int sign, int type)
 {
 	FormatNode *n;
-	NUMProc		_Np,
-			   *Np = &_Np;
+	NUMProc	_Np,
+		*Np = &_Np;
 
 	Np->Num = Num;
 	Np->type = type;
@@ -3506,9 +3609,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		{
 			if (IS_DECIMAL(Np->Num))
 				Np->last_relevant = get_last_relevant_decnum(
-															 Np->number +
-								 ((Np->Num->zero_end - Np->num_pre > 0) ?
-								  Np->Num->zero_end - Np->num_pre : 0));
+							Np->number +
+							((Np->Num->zero_end - Np->num_pre > 0) ?
+							 Np->Num->zero_end - Np->num_pre : 0));
 		}
 
 		if (!Np->sign_wrote && Np->num_pre == 0)
@@ -3850,23 +3953,23 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
  *	(sorry, but I hate copy same code - macro is better..)
  * ----------
  */
-#define NUM_TOCHAR_prepare {							\
-									\
+#define NUM_TOCHAR_prepare \
+do { \
 	len = VARSIZE(fmt) - VARHDRSZ;					\
 									\
 	if (len <= 0)							\
-		return PointerGetDatum(textin(""));					\
+		return PointerGetDatum(textin(""));			\
 									\
-	result	= (text *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ);	\
+	result	= (text *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ); \
 	format	= NUM_cache(len, &Num, VARDATA(fmt), &flag);		\
-}
+} while(0)
 
 /* ----------
  * MACRO: Finish part of NUM
  * ----------
  */
-#define NUM_TOCHAR_finish {						\
-									\
+#define NUM_TOCHAR_finish \
+do { \
 	NUM_processor(format, &Num, VARDATA(result),			\
 		numstr, plen, sign, TO_CHAR);				\
 	pfree(orgnum);							\
@@ -3879,14 +3982,14 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	 * needs, now it must be re-allocate to result real size	\
 	 * ----------							\
 	 */								\
-	len			= strlen(VARDATA(result));			\
+	len		= strlen(VARDATA(result));			\
 	result_tmp	= result;					\
 	result		= (text *) palloc( len + 1 + VARHDRSZ);		\
 									\
 	strcpy( VARDATA(result), VARDATA(result_tmp));			\
 	VARSIZE(result) = len + VARHDRSZ;				\
 	pfree(result_tmp);						\
-}
+} while(0)
 
 /* -------------------
  * NUMERIC to_number() (convert string to numeric)
@@ -3895,16 +3998,16 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 Datum
 numeric_to_number(PG_FUNCTION_ARGS)
 {
-	text	   *value = PG_GETARG_TEXT_P(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
-	NUMDesc		Num;
-	Datum		result;
+	text	*value = PG_GETARG_TEXT_P(0);
+	text	*fmt = PG_GETARG_TEXT_P(1);
+	NUMDesc	Num;
+	Datum	result;
 	FormatNode *format;
-	char	   *numstr;
-	int			flag = 0;
-	int			len = 0;
-	int			scale,
-				precision;
+	char	*numstr;
+	int	flag = 0;
+	int	len = 0;
+	int	scale,
+		precision;
 
 	len = VARSIZE(fmt) - VARHDRSZ;
 
@@ -3925,9 +4028,9 @@ numeric_to_number(PG_FUNCTION_ARGS)
 		pfree(format);
 
 	result = DirectFunctionCall3(numeric_in,
-								 CStringGetDatum(numstr),
-								 ObjectIdGetDatum(InvalidOid),
-								 Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
+			 CStringGetDatum(numstr),
+			 ObjectIdGetDatum(InvalidOid),
+			 Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
 	pfree(numstr);
 	return result;
 }
@@ -3939,20 +4042,20 @@ numeric_to_number(PG_FUNCTION_ARGS)
 Datum
 numeric_to_char(PG_FUNCTION_ARGS)
 {
-	Numeric		value = PG_GETARG_NUMERIC(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
-	NUMDesc		Num;
+	Numeric	value = PG_GETARG_NUMERIC(0);
+	text	*fmt = PG_GETARG_TEXT_P(1);
+	NUMDesc	Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
-	int			flag = 0;
-	int			len = 0,
-				plen = 0,
-				sign = 0;
-	char	   *numstr,
-			   *orgnum,
-			   *p;
-	Numeric		x;
+	text	*result,
+		*result_tmp;
+	int	flag = 0;
+	int	len = 0,
+		plen = 0,
+		sign = 0;
+	char	*numstr,
+		*orgnum,
+		*p;
+	Numeric	x;
 
 	NUM_TOCHAR_prepare;
 
@@ -3963,8 +4066,8 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	if (IS_ROMAN(&Num))
 	{
 		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
-												NumericGetDatum(value),
-												Int32GetDatum(0)));
+					NumericGetDatum(value),
+					Int32GetDatum(0)));
 		numstr = orgnum = int_to_roman(numeric_int4(x));
 		pfree(x);
 	}
@@ -3975,9 +4078,9 @@ numeric_to_char(PG_FUNCTION_ARGS)
 		if (IS_MULTI(&Num))
 		{
 			Numeric		a = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-											Int32GetDatum(10)));
+							Int32GetDatum(10)));
 			Numeric		b = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-											Int32GetDatum(Num.multi)));
+							Int32GetDatum(Num.multi)));
 
 			x = numeric_power(a, b);
 			val = numeric_mul(value, x);
@@ -3988,10 +4091,10 @@ numeric_to_char(PG_FUNCTION_ARGS)
 		}
 
 		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
-												NumericGetDatum(val),
-												Int32GetDatum(Num.post)));
+						NumericGetDatum(val),
+						Int32GetDatum(Num.post)));
 		orgnum = DatumGetCString(DirectFunctionCall1(numeric_out,
-													 NumericGetDatum(x)));
+						 NumericGetDatum(x)));
 		pfree(x);
 
 		if (*orgnum == '-')
@@ -4034,18 +4137,18 @@ numeric_to_char(PG_FUNCTION_ARGS)
 Datum
 int4_to_char(PG_FUNCTION_ARGS)
 {
-	int32		value = PG_GETARG_INT32(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
-	NUMDesc		Num;
+	int32	value = PG_GETARG_INT32(0);
+	text	*fmt = PG_GETARG_TEXT_P(1);
+	NUMDesc	Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
-	int			flag = 0;
-	int			len = 0,
-				plen = 0,
-				sign = 0;
-	char	   *numstr,
-			   *orgnum;
+	text	*result,
+		*result_tmp;
+	int	flag = 0;
+	int	len = 0,
+		plen = 0,
+		sign = 0;
+	char	*numstr,
+		*orgnum;
 
 	NUM_TOCHAR_prepare;
 
@@ -4062,13 +4165,13 @@ int4_to_char(PG_FUNCTION_ARGS)
 		if (IS_MULTI(&Num))
 		{
 			orgnum = DatumGetCString(DirectFunctionCall1(int4out,
-						Int32GetDatum(value * ((int32) pow((double) 10, (double) Num.multi)))));
+					Int32GetDatum(value * ((int32) pow((double) 10, (double) Num.multi)))));
 			Num.pre += Num.multi;
 		}
 		else
 		{
 			orgnum = DatumGetCString(DirectFunctionCall1(int4out,
-									 Int32GetDatum(value)));
+					 Int32GetDatum(value)));
 		}
 		len = strlen(orgnum);
 
@@ -4082,7 +4185,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 
 		if (Num.post)
 		{
-			int			i;
+			int	i;
 
 			numstr = palloc(len + 1 + Num.post);
 			strcpy(numstr, orgnum + (*orgnum == '-' ? 1 : 0));
@@ -4118,18 +4221,18 @@ int4_to_char(PG_FUNCTION_ARGS)
 Datum
 int8_to_char(PG_FUNCTION_ARGS)
 {
-	int64		value = PG_GETARG_INT64(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
-	NUMDesc		Num;
+	int64	value = PG_GETARG_INT64(0);
+	text	*fmt = PG_GETARG_TEXT_P(1);
+	NUMDesc	Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
-	int			flag = 0;
-	int			len = 0,
-				plen = 0,
-				sign = 0;
-	char	   *numstr,
-			   *orgnum;
+	text	*result,
+		*result_tmp;
+	int	flag = 0;
+	int	len = 0,
+		plen = 0,
+		sign = 0;
+	char	*numstr,
+		*orgnum;
 
 	NUM_TOCHAR_prepare;
 
@@ -4150,14 +4253,14 @@ int8_to_char(PG_FUNCTION_ARGS)
 			double		multi = pow((double) 10, (double) Num.multi);
 
 			value = DatumGetInt64(DirectFunctionCall2(int8mul,
-								  Int64GetDatum(value),
-								  DirectFunctionCall1(dtoi8,
-													  Float8GetDatum(multi))));
+						  Int64GetDatum(value),
+						  DirectFunctionCall1(dtoi8,
+						  Float8GetDatum(multi))));
 			Num.pre += Num.multi;
 		}
 
 		orgnum = DatumGetCString(DirectFunctionCall1(int8out,
-													 Int64GetDatum(value)));
+						 Int64GetDatum(value)));
 		len = strlen(orgnum);
 
 		if (*orgnum == '-')
@@ -4170,7 +4273,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 
 		if (Num.post)
 		{
-			int			i;
+			int	i;
 
 			numstr = palloc(len + 1 + Num.post);
 			strcpy(numstr, orgnum + (*orgnum == '-' ? 1 : 0));
@@ -4206,19 +4309,19 @@ int8_to_char(PG_FUNCTION_ARGS)
 Datum
 float4_to_char(PG_FUNCTION_ARGS)
 {
-	float4		value = PG_GETARG_FLOAT4(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
-	NUMDesc		Num;
+	float4	value = PG_GETARG_FLOAT4(0);
+	text	*fmt = PG_GETARG_TEXT_P(1);
+	NUMDesc	Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
-	int			flag = 0;
-	int			len = 0,
-				plen = 0,
-				sign = 0;
-	char	   *numstr,
-			   *orgnum,
-			   *p;
+	text	*result,
+		*result_tmp;
+	int	flag = 0;
+	int	len = 0,
+		plen = 0,
+		sign = 0;
+	char	*numstr,
+		*orgnum,
+		*p;
 
 	NUM_TOCHAR_prepare;
 
@@ -4233,7 +4336,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 
 		if (IS_MULTI(&Num))
 		{
-			float		multi = pow((double) 10, (double) Num.multi);
+			float	multi = pow((double) 10, (double) Num.multi);
 
 			val = value * multi;
 			Num.pre += Num.multi;
@@ -4286,19 +4389,19 @@ float4_to_char(PG_FUNCTION_ARGS)
 Datum
 float8_to_char(PG_FUNCTION_ARGS)
 {
-	float8		value = PG_GETARG_FLOAT8(0);
-	text	   *fmt = PG_GETARG_TEXT_P(1);
-	NUMDesc		Num;
+	float8	value = PG_GETARG_FLOAT8(0);
+	text	*fmt = PG_GETARG_TEXT_P(1);
+	NUMDesc	Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
-	int			flag = 0;
-	int			len = 0,
-				plen = 0,
-				sign = 0;
-	char	   *numstr,
-			   *orgnum,
-			   *p;
+	text	*result,
+		*result_tmp;
+	int	flag = 0;
+	int	len = 0,
+		plen = 0,
+		sign = 0;
+	char	*numstr,
+		*orgnum,
+		*p;
 
 	NUM_TOCHAR_prepare;
 
@@ -4313,7 +4416,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 
 		if (IS_MULTI(&Num))
 		{
-			double		multi = pow((double) 10, (double) Num.multi);
+			double	multi = pow((double) 10, (double) Num.multi);
 
 			val = value * multi;
 			Num.pre += Num.multi;

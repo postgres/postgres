@@ -785,11 +785,11 @@
        </row>
        <row>
 	<entry>W</entry>
-	<entry>week of month</entry>
+	<entry>week of month (1-5) where first week start on the first day of the month</entry>
        </row> 
        <row>
 	<entry>WW</entry>
-	<entry>week number of year</entry>
+	<entry>week number of year (1-53) where first week start on the first day of the year</entry>
        </row>
        <row>
 	<entry>CC</entry>
@@ -810,6 +810,14 @@
        <row>
 	<entry>rm</entry>
 	<entry>month in Roman Numerals (I-XII; I=JAN) - lower case</entry>
+       </row>
+       <row>
+	<entry>TZ</entry>
+	<entry>timezone string - upper case (not supported in the to_timestamp())</entry>
+       </row>
+       <row>
+	<entry>tz</entry>
+	<entry>timezone string - lower case (not supported in the to_timestamp())</entry>
        </row>
       </tbody>
      </tgroup>
@@ -871,9 +879,12 @@
      <listitem>
       <para>
        <function>to_timestamp</function> and <function>to_date</function>
-       skip blank space if the <literal>FX</literal> option is
-       not used. <literal>FX</literal> must be specified as the first item
-       in the template.
+       skip multiple blank space in converted string if the <literal>FX</literal> option 
+       is not used. <literal>FX</literal> must be specified as the first item
+       in the template; for example 
+       <literal>to_timestamp('2000    JUN','YYYY MON')</literal> is right, but
+       <literal>to_timestamp('2000    JUN','FXYYYY MON')</literal> returns error,
+       because to_timestamp() expects one blank space only.
       </para>
      </listitem>
 
