@@ -129,7 +129,7 @@ register_error(long code, char *fmt,...)
 static struct connection *
 get_connection(const char *connection_name)
 {
-	struct connection *con = all_connections;;
+	struct connection *con = all_connections;
 	
 	if (connection_name == NULL || strcmp(connection_name, "CURRENT") == 0)
 		return actual_connection;
@@ -377,11 +377,11 @@ next_insert(char *text)
 	char *ptr = text;
 	bool string = false;
 	
-	for (; ptr[1] != '\0' && (ptr[0] != ';' || ptr[1] != ';' || string); ptr++)
-		if (ptr[0] == '\'')
+	for (; *ptr != '\0' && (*ptr != '?' || string); ptr++)
+		if (*ptr == '\'')
 			string = string ? false : true;
 			
-	return (ptr[1] == '\0') ? NULL : ptr;
+	return (*ptr == '\0') ? NULL : ptr;
 }
 
 static bool
@@ -604,7 +604,7 @@ ECPGexecute(struct statement * stmt)
 			strcat(newcopy,
 				   copiedquery
 				   + (p - newcopy)
-				   + sizeof(";;") - 1 /* don't count the '\0' */);
+				   + sizeof("?") - 1 /* don't count the '\0' */);
 		}
 
 		/*
@@ -675,7 +675,7 @@ ECPGexecute(struct statement * stmt)
 				{
 					ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d\n",
 							stmt->lineno, ntuples);
-					register_error(ECPG_NOT_FOUND, "Data not found line %d.", stmt->lineno);
+					register_error(ECPG_NOT_FOUND, "No data found line %d.", stmt->lineno);
 					status = false;
 					break;
 				}
@@ -1266,8 +1266,8 @@ replace_variables(char *text)
 			
 		if (!string && *ptr == ':')
 		{
-			ptr[0] = ptr[1] = ';';
-			for (ptr += 2; *ptr && isvarchar(*ptr); ptr++)
+			*ptr = '?';
+			for (++ptr; *ptr && isvarchar(*ptr); ptr++)
 				*ptr = ' ';
 		}
 	}
@@ -1307,7 +1307,7 @@ ECPGprepare(int lineno, char *name, char *variable)
         stmt->command = ecpg_strdup(variable, lineno);
         stmt->inlist = stmt->outlist = NULL;
         
-        /* if we have C variables in our statment replace them with ';;' */
+        /* if we have C variables in our statment replace them with '?' */
         replace_variables(stmt->command);                	
         
 	/* add prepared statement to our list */

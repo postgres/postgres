@@ -1097,7 +1097,7 @@ user_group_clause:  IN GROUP user_group_list	{ $$ = cat2_str(make1_str("in group
 			| /*EMPTY*/		{ $$ = make1_str(""); }
 		;
 
-user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make1_str("valid until"), $3);; }
+user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make1_str("valid until"), $3); }
 			| /*EMPTY*/			{ $$ = make1_str(""); }
 		;
 
@@ -2221,7 +2221,7 @@ set_opt:  SETOF					{ $$ = make1_str("setof"); }
 
 RemoveStmt:  DROP remove_type name
 				{
-					$$ = cat3_str(make1_str("drop"), $2, $3);;
+					$$ = cat3_str(make1_str("drop"), $2, $3);
 				}
 		;
 
@@ -2931,7 +2931,7 @@ opt_select_limit:      LIMIT select_limit_value ',' select_offset_value
                | LIMIT select_limit_value OFFSET select_offset_value
                        { $$ = cat4_str(make1_str("limit"), $2, make1_str("offset"), $4); }
                | LIMIT select_limit_value
-                       { $$ = cat2_str(make1_str("limit"), $2);; }
+                       { $$ = cat2_str(make1_str("limit"), $2); }
                | OFFSET select_offset_value LIMIT select_limit_value
                        { $$ = cat4_str(make1_str("offset"), $2, make1_str("limit"), $4); }
                | OFFSET select_offset_value
@@ -3835,7 +3835,7 @@ a_expr:  attr opt_indirection
 		| case_expr
 				{       $$ = $1; }
 		| cinputvariable
-			        { $$ = make1_str(";;"); }
+			        { $$ = make1_str("?"); }
 		;
 
 /* Restricted expressions
@@ -3982,7 +3982,7 @@ extract_list:  extract_arg FROM a_expr
 		| /* EMPTY */
 				{	$$ = make1_str(""); }
 		| cinputvariable
-			        { $$ = make1_str(";;"); }
+			        { $$ = make1_str("?"); }
 		;
 
 extract_arg:  datetime		{ $$ = $1; }
@@ -4734,7 +4734,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident cursor_clause
 				        this->next = cur;
 				        this->name = $2;
 					this->connection = connection;
-				        this->command =  cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for ;;"), $7);
+				        this->command =  cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for ?"), $7);
 					this->argsresult = NULL;
 
 					thisquery->type = &ecpg_query;
@@ -5037,7 +5037,7 @@ ECPGExecute : EXECUTE SQL_IMMEDIATE execstring
 
 		add_variable(&argsinsert, thisquery, &no_indicator); 
 
-		$$ = make1_str(";;");
+		$$ = make1_str("?");
 	}
 	| EXECUTE ident 
 	{
@@ -5052,7 +5052,7 @@ ECPGExecute : EXECUTE SQL_IMMEDIATE execstring
 		add_variable(&argsinsert, thisquery, &no_indicator); 
 	} opt_using
 	{
-		$$ = make1_str(";;");
+		$$ = make1_str("?");
 	}
 
 execstring: char_variable |
@@ -5860,7 +5860,7 @@ cinputvariable : cvariable indicator {
 
 civariableonly : cvariable {
 		add_variable(&argsinsert, find_variable($1), &no_indicator); 
-		$$ = make1_str(";;");
+		$$ = make1_str("?");
 }
 
 cvariable: CVARIABLE			{ $$ = $1; }

@@ -472,7 +472,7 @@ Mon Feb 22 19:47:45 CET 1999
 
 	- Added 'at <db_connection>' option to all commands it is apllicable
 	  to. Due to changing the API of some libecpg functions this
-	  requires me to increase the major version number.
+	  requires me to increase the major version number of libecpg.
 	- Synced pgc.l with scan.l.
 	- Added support for unions.
 
@@ -498,5 +498,9 @@ Thu Mar  4 19:49:28 CET 1999
 	- Switched memory allocation to calloc() to make sure memory is
 	  cleared.
 	- Fixed varchar auto-allocating.
+
+Sat Mar  6 14:06:07 CET 1999
+
+	- Replaced placeholder ';;' by '?' since this is what standard says.
 	- Set library version to 3.0.0
-	- Set ecpg version to 3.0.0
+	- Set ecpg version to 2.6.0

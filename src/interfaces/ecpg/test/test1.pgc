@@ -63,7 +63,7 @@ exec sql end declare section;
 	printf("Inserted %d tuples via execute immediate\n", sqlca.sqlerrd[2]);
 
         strcpy(msg, "execute insert 4");
-        sprintf(command, "insert into test(name, amount, letter) select name, amount+;;, letter from test");
+        sprintf(command, "insert into test(name, amount, letter) select name, amount+?, letter from test");
 	exec sql prepare I from :command;
         exec sql at pm execute I using :increment;
         
