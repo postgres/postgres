@@ -2,6 +2,8 @@
 # Makefile - test for 2.5.3 flex bug
 # Bruce Momjian 5/14/97
 #
+include ../Makefile.global
+
 .DEFAULT all : lextest
 
 install:
