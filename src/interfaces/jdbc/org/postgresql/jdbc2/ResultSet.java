@@ -401,7 +401,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	 */
 	public Timestamp getTimestamp(int columnIndex) throws SQLException
 	{
-		return toTimestamp( getString(columnIndex), this );
+		return toTimestamp( getString(columnIndex), this, fields[columnIndex-1].getPGType() );
 	}
 
 	/*
@@ -1660,7 +1660,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	*
 	* @throws SQLException if there is a problem parsing s.
 	**/
-	public static Timestamp toTimestamp(String s, ResultSet resultSet)
+	public static Timestamp toTimestamp(String s, ResultSet resultSet, String pgDataType)
 	throws SQLException
 	{
 		if (s == null)
@@ -1735,18 +1735,26 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				}
 				else
 				{
-					// Just found fractional seconds but no timezone.
+				    // Just found fractional seconds but no timezone.
+				    //If timestamptz then we use GMT, else local timezone
+		                    if (pgDataType.equals("timestamptz")) {
+				        resultSet.sbuf.append(" GMT");
+					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
+			            } else {
 					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			            }
 				}
 			}
 			else if (slen == 19)
 			{
-				// No tz or fractional second info.
-				// I'm not sure if it is
-				// possible to have a string in this format, as pg
-				// should give us tz qualified timestamps back, but it was
-				// in the old code, so I'm handling it for now.
+			    // No tz or fractional second info.
+			    //If timestamptz then we use GMT, else local timezone
+		            if (pgDataType.equals("timestamptz")) {
+				resultSet.sbuf.append(" GMT");
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+			    } else {
 				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			    }
 			}
 			else
 			{

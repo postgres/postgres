@@ -566,17 +566,25 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			}
 			else
 			{
-				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			    //if type is timestamptz then data is in GMT, else it is in local timezone
+			    if (fields[columnIndex - 1].getPGType().equals("timestamptz")) {
+				sbuf.append(" GMT");
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
+			    } else {
+                                df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			    }
 			}
 		}
 		else if (slen == 19)
 		{
 			// No tz or fractional second info. 
-			// I'm not sure if it is
-			// possible to have a string in this format, as pg
-			// should give us tz qualified timestamps back, but it was
-			// in the old code, so I'm handling it for now.
+			// if type is timestamptz then data is in GMT, else it is in local timezone
+		    if (fields[columnIndex - 1].getPGType().equals("timestamptz")) {
+			sbuf.append(" GMT");
+			df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+		    } else {
 			df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		    }
 		}
 		else
 		{
