@@ -1,35 +1,32 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.3 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.4 2000/11/11 23:01:45 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-DROPDB">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-DROPDB-TITLE">
-   <application>dropdb</application>
-  </refentrytitle>
+  <refentrytitle id="APP-DROPDB-TITLE"><application>dropdb</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   <application>dropdb</application>
-  </refname>
-  <refpurpose>
-   Remove an existing <productname>Postgres</productname> database
-  </refpurpose>
+  <refname>dropdb</refname>
+  <refpurpose>Remove an existing <productname>Postgres</productname> database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-11-07</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-dropdb [ <replaceable class="parameter">options</replaceable> ] <replaceable class="parameter">dbname</replaceable>
-  </synopsis>
+  <cmdsynopsis>
+   <command>dropdb</command>
+   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
 
   <refsect2 id="R2-APP-DROPDB-1">
-   <refsect2info>
-    <date>1999-11-07</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -124,9 +121,6 @@ dropdb [ <replaceable class="parameter">options</replaceable> ] <replaceable cla
 
 
   <refsect2 id="R2-APP-DROPDB-2">
-   <refsect2info>
-    <date>1998-10-02</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -157,9 +151,6 @@ dropdb [ <replaceable class="parameter">options</replaceable> ] <replaceable cla
 
 
  <refsect1 id="R1-APP-DROPDB-1">
-  <refsect1info>
-   <date>1998-10-02</date>
-  </refsect1info>
   <title>
    Description
   </title>
@@ -185,32 +176,33 @@ dropdb [ <replaceable class="parameter">options</replaceable> ] <replaceable cla
  </refsect1>
 
  <refsect1 id="R1-APP-DROPDB-2">
-  <refsect1info>
-   <date>1999-11-07</date>
-  </refsect1info>
-  <title>
-   Usage
-  </title>
-  <para>
-   To destroy the database <literal>demo</literal>
-   on the default database server:
-   <programlisting>
-$ <userinput>dropdb demo</userinput>
-DROP DATABASE
-   </programlisting>
-  </para>
-  <para>
-   To destroy the database <literal>demo</literal>
-   using the postmaster on host eden, port 5000, with verification
-   and a peek at the underlying query:
-   <programlisting>
-$ <userinput>dropdb -p 5000 -h eden -i -e demo</userinput>
-Database "demo" will be permanently deleted.
-Are you sure? (y/n) <userinput>y</userinput>
-DROP DATABASE "demo"
-DROP DATABASE
-   </programlisting>
-  </para>
+  <title>Usage</title>
+
+  <informalexample>
+   <para>
+    To destroy the database <literal>demo</literal> on the default
+    database server:
+<screen>
+<prompt>$ </prompt><userinput>dropdb demo</userinput>
+<computeroutput>DROP DATABASE</computeroutput>
+</screen>
+   </para>
+  </informalexample>
+
+  <informalexample>
+   <para>
+    To destroy the database <literal>demo</literal> using the
+    postmaster on host eden, port 5000, with verification and a peek
+    at the underlying query:
+<screen>
+<prompt>$ </prompt><userinput>dropdb -p 5000 -h eden -i -e demo</userinput>
+<computeroutput>Database "demo" will be permanently deleted.
+Are you sure? (y/n) </computeroutput><userinput>y</userinput>
+<computeroutput>DROP DATABASE "demo"
+DROP DATABASE</computeroutput>
+</screen>
+   </para>
+  </informalexample>
  </refsect1>
 </refentry>
 

@@ -1,36 +1,32 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.9 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.10 2000/11/11 23:01:40 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-CREATEUSER">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-CREATEUSER-TITLE">
-   <application>createuser</application>
-  </refentrytitle>
+  <refentrytitle id="APP-CREATEUSER-TITLE"><application>createuser</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
- <refnamediv>
-  <refname>
-   <application>createuser</application>
-  </refname>
-  <refpurpose>
-   Create a new <productname>Postgres</productname> user
-  </refpurpose>
- </refnamediv>
- <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-11-07</date>
-  </refsynopsisdivinfo>
 
-  <synopsis>
-createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceable class="parameter">username</replaceable> ]
-  </synopsis>
+ <refnamediv>
+  <refname>createuser</refname>
+  <refpurpose>Create a new <productname>Postgres</productname> user</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>createuser</command>
+   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg><replaceable>username</replaceable></arg>
+  </cmdsynopsis>
 
   <refsect2 id="R2-APP-CREATEUSER-1">
-   <refsect2info>
-    <date>1999-11-07</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -159,9 +155,6 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
   </refsect2>
 
   <refsect2 id="R2-APP-CREATEUSER-2">
-   <refsect2info>
-    <date>1999-11-07</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -195,9 +188,6 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
  </refsynopsisdiv>
   
  <refsect1 id="R1-APP-CREATEUSER-1">
-  <refsect1info>
-   <date>1998-11-07</date>
-  </refsect1info>
   <title>
    Description
   </title>
@@ -226,35 +216,33 @@ createuser [ <replaceable class="parameter">options</replaceable> ] [ <replaceab
 
 
  <refsect1 id="R1-APP-CREATEUSER-2">
-  <refsect1info>
-   <date>1999-11-07</date>
-  </refsect1info>
-  <title>
-   Usage
-  </title>
-  <para>
-   To create a user <literal>joe</literal>
-   on the default database server:
+  <title>Usage</title>
 
-   <programlisting>
-$ <userinput>createuser joe</userinput>
-Is the new user allowed to create databases? (y/n) <userinput>n</userinput>
-Shall the new user be allowed to create more new users? (y/n) <userinput>n</userinput>
-CREATE USER
-   </programlisting>
-  </para>
+  <informalexample>
+   <para>
+    To create a user <literal>joe</literal> on the default database
+    server:
+<screen>
+<prompt>$ </prompt><userinput>createuser joe</userinput>
+<computeroutput>Is the new user allowed to create databases? (y/n) </computeroutput><userinput>n</userinput>
+<computeroutput>Shall the new user be allowed to create more new users? (y/n) </computeroutput><userinput>n</userinput>
+<computeroutput>CREATE USER</computeroutput>
+</screen>
+   </para>
+  </informalexample>
 
-  <para>
-   To create the same user <literal>joe</literal>
-   using the postmaster on host eden, port 5000, avoiding
-   the prompts and taking a look at the underlying query:
-
-   <programlisting>
-$ <userinput>createuser -p 5000 -h eden -D -A -e joe</userinput>
-CREATE USER "joe" NOCREATEDB NOCREATEUSER
-CREATE USER
-   </programlisting>
-  </para>
+  <informalexample>
+   <para>
+    To create the same user <literal>joe</literal> using the
+    postmaster on host eden, port 5000, avoiding the prompts and
+    taking a look at the underlying query:
+<screen>
+<prompt>$ </prompt><userinput>createuser -p 5000 -h eden -D -A -e joe</userinput>
+<computeroutput>CREATE USER "joe" NOCREATEDB NOCREATEUSER</computeroutput>
+<computeroutput>CREATE USER</computeroutput>
+</screen>
+   </para>
+  </informalexample>
  </refsect1>
 
 </refentry>

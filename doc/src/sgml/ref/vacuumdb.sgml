@@ -1,37 +1,44 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.9 2000/05/02 20:02:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.10 2000/11/11 23:01:45 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-VACUUMDB">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-VACUUMDB-TITLE">
-   <application>vacuumdb</application>
-  </refentrytitle>
+  <refentrytitle id="APP-VACUUMDB-TITLE"><application>vacuumdb</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname id="vacuumdb">
-   <application>vacuumdb</application>
-  </refname>
-  <refpurpose>
-   Clean and analyze a <productname>Postgres</productname> database
-  </refpurpose>
+  <refname id="vacuumdb">vacuumdb</refname>
+  <refpurpose>Clean and analyze a <productname>Postgres</productname> database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-12-04</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-vacuumdb [ <replaceable class="parameter">options</replaceable> ] [ --analyze | -z ]
-    [ --alldb | -a ] [ --verbose | -v ]
-    [ --table '<replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [,...] ) ]' ] [ [-d] <replaceable class="parameter">dbname</replaceable> ]
-  </synopsis>
+  <cmdsynopsis>
+   <command>vacuumdb</command>
+   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg><arg>-d</arg> <replaceable>dbname</replaceable></arg>
+   <group><arg>--analyze</arg><arg>-z</arg></group>
+   <group><arg>--verbose</arg><arg>-v</arg></group>
+   <sbr>
+   <arg>--table '<replaceable>table</replaceable>
+    <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>'
+   </arg>
+   <sbr>
+   <command>vacuumdb</command>
+   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <group><arg>--all</arg><arg>-a</arg></group>
+   <group><arg>--analyze</arg><arg>-z</arg></group>
+   <group><arg>--verbose</arg><arg>-v</arg></group>
+  </cmdsynopsis>
 
   <refsect2 id="R2-APP-VACUUMDB-1">
-   <refsect2info>
-    <date>1999-12-04</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -174,9 +181,6 @@ vacuumdb [ <replaceable class="parameter">options</replaceable> ] [ --analyze | 
   </refsect2>
 
   <refsect2 id="R2-APP-VACUUMDB-2">
-   <refsect2info>
-    <date>1999-12-04</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -213,9 +217,6 @@ vacuumdb [ <replaceable class="parameter">options</replaceable> ] [ --analyze | 
  </refsynopsisdiv>
  
  <refsect1 id="R1-APP-VACUUMDB-1">
-  <refsect1info>
-   <date>1999-12-04</date>
-  </refsect1info>
   <title>
    Description
   </title>
@@ -243,34 +244,37 @@ vacuumdb [ <replaceable class="parameter">options</replaceable> ] [ --analyze | 
  </refsect1>
 
  <refsect1 id="R1-APP-VACUUMDB-3">
-  <refsect1info>
-   <date>1998-10-04</date>
-  </refsect1info>
-  <title>
-   Usage
-  </title>
+  <title>Usage</title>
 
-  <para>
-   To clean the database <literal>test</literal>:
-<programlisting>
-$ vacuumdb test
-</programlisting>
-  </para>
+  <informalexample>
+   <para>
+    To clean the database <literal>test</literal>:
+<screen>
+<prompt>$ </prompt><userinput>vacuumdb test</userinput>
+</screen>
+   </para>
+  </informalexample>
 
-  <para>
-   To analyze a database named <literal>bigdb</literal> for the optimizer:
-<programlisting>
-$ vacuumdb --analyze bigdb
-</programlisting>
-  </para>
+  <informalexample>
+   <para>
+    To analyze for the optimzer a database named
+    <literal>bigdb</literal>:
+<screen>
+<prompt>$ </prompt><userinput>vacuumdb --analyze bigdb</userinput>
+</screen>
+   </para>
+  </informalexample>
 
-  <para>
-   To analyze a single column <literal>bar</literal> in table <literal>foo</literal>
-   in a database named <literal>xyzzy</literal> for the optimizer:
-<programlisting>
-$ vacuumdb --analyze --verbose --table 'foo(bar)' xyzzy
-</programlisting>
-  </para>
+  <informalexample>
+   <para>
+    To analyze a single column <literal>bar</literal> in table
+    <literal>foo</literal> in a database named
+    <literal>xyzzy</literal> for the optimizer:
+<screen>
+<prompt>$ </prompt><userinput>vacuumdb --analyze --verbose --table 'foo(bar)' xyzzy</userinput>
+</screen>
+   </para>
+  </informalexample>
 
  </refsect1>
 </refentry>

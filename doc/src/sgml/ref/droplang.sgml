@@ -1,31 +1,36 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.3 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.4 2000/11/11 23:01:45 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-DROPLANG">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-DROPLANG-TITLE">
-   <application>droplang</application>
-  </refentrytitle>
+  <refentrytitle id="APP-DROPLANG-TITLE"><application>droplang</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname id="droplang">
-   <application>droplang</application>
-  </refname>
-  <refpurpose>
-   Remove a programming language from a <productname>Postgres</productname> database
-  </refpurpose>
+  <refname id="droplang">droplang</refname>
+  <refpurpose>Remove a programming language from a <productname>Postgres</productname> database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-12-05</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-droplang [ <replaceable class="parameter">connection options</replaceable> ] [ <replaceable class="parameter">langname</replaceable> [ <replaceable class="parameter">dbname</replaceable> ] ]
-droplang [ <replaceable class="parameter">connection options</replaceable> ] --list|-l
-  </synopsis>
+  <cmdsynopsis>
+   <command>droplang</command>
+   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg><replaceable>langname</replaceable></arg>
+   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+   <sbr>
+   <command>droplang</command>
+   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <group choice="plain"><arg>--list</arg><arg>-l</arg></group>
+   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
 
   <refsect2 id="R2-APP-DROPLANG-1">
    <title>
@@ -119,9 +124,6 @@ droplang [ <replaceable class="parameter">connection options</replaceable> ] --l
   </refsect2>
 
   <refsect2 id="R2-APP-DROPLANG-2">
-   <refsect2info>
-    <date>1999-12-05</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -136,9 +138,6 @@ droplang [ <replaceable class="parameter">connection options</replaceable> ] --l
  </refsynopsisdiv>
  
  <refsect1 id="R1-APP-DROPLANG-1">
-  <refsect1info>
-   <date>1999-12-05</date>
-  </refsect1info>
   <title>
    Description
   </title>
@@ -172,15 +171,16 @@ droplang [ <replaceable class="parameter">connection options</replaceable> ] --l
  </refsect1>
  
  <refsect1 id="R1-APP-DROPLANG-3">
-  <title>
-   Usage
-  </title>
-  <para>
-   To remove <literal>pltcl</literal>:
-<programlisting>
-$ droplang pltcl
-</programlisting>
-  </para>
+  <title>Usage</title>
+
+  <informalexample>
+   <para>
+    To remove <literal>pltcl</literal>:
+<screen>
+<prompt>$ </prompt><userinput>droplang pltcl</userinput>
+</screen>
+   </para>
+  </informalexample>
  </refsect1>
 </refentry>
 

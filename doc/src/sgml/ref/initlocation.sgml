@@ -1,75 +1,33 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.11 2000/11/11 23:01:45 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-INITLOCATION">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-INITLOCATION-TITLE">
-   <application>initlocation</application>
-  </refentrytitle>
+  <refentrytitle id="APP-INITLOCATION-TITLE"><application>initlocation</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   <application>initlocation</application>
-  </refname>
-  <refpurpose>
-   Create a secondary <productname>Postgres</productname> database storage area
-  </refpurpose>
+  <refname>initlocation</refname>
+  <refpurpose>Create a secondary <productname>Postgres</productname> database storage area</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-01-17</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-initlocation <replaceable class="parameter">directory</replaceable>
-  </synopsis>
-
-  <refsect2 id="R2-APP-INITLOCATION-1">
-   <refsect2info>
-    <date>1998-10-02</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">directory</replaceable></term>
-      <listitem>
-       <para>
-	Where in your Unix filesystem do you want alternate databases to go?
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-APP-INITLOCATION-2">
-   <refsect2info>
-    <date>1998-09-26</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <application>initlocation</application> will create directories in 
-    the specified place.
-   </para>
-  </refsect2>
+  <cmdsynopsis>
+   <command>initlocation</command>
+   <arg choice="plain"><replaceable>directory</replaceable></arg>
+  </cmdsynopsis>
  </refsynopsisdiv>
 
  <refsect1 id="R1-APP-INITLOCATION-1">
-  <refsect1info>
-   <date>1998-09-26</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+  <title>Description</title>
   <para>
    <application>initlocation</application> 
    creates a new <productname>Postgres</productname> secondary database storage area.
@@ -85,33 +43,34 @@ initlocation <replaceable class="parameter">directory</replaceable>
  </refsect1>
 
  <refsect1 id="R1-APP-INITLOCATION-2">
-  <refsect1info>
-   <date>1998-09-26</date>
-  </refsect1info>
-  <title>
-   Usage
-  </title>
-  <para>
-   To create a database in an alternate location, using an environment variable:
-<programlisting>
-$ export PGDATA2=/opt/postgres/data
-</programlisting>
-Start and stop postmaster so it sees the $PGDATA2 environment variable.
-The system must be configured so the postmaster sees $PGDATA2 every time it
-starts.
-<programlisting>
-$ initlocation PGDATA2
-$ createdb -D 'PGDATA2' 'testdb' 
-</programlisting>
-  </para>
+  <title>Usage</title>
 
-  <para>
-  Alternatively, if you allow absolute paths you could write:
-<programlisting>
-$ initlocation /opt/postgres/data
-$ createdb -D '/opt/postgres/data/testdb' testdb 
-</programlisting>
-  </para>
+  <informalexample>
+   <para>
+    To create a database in an alternate location, using an
+    environment variable:
+<screen>
+<prompt>$ </prompt><userinput>export PGDATA2=/opt/postgres/data</userinput>
+</screen>
+    Stop and start postmaster so it sees the <envar>PGDATA2</envar>
+    environment variable.  The system must be configured so the
+    postmaster sees <envar>PGDATA2</envar> every time it starts.  Finally:
+<screen>
+<prompt>$</prompt> <userinput>initlocation PGDATA2</userinput>
+<prompt>$</prompt> <userinput>createdb -D PGDATA2 testdb</userinput>
+</screen>
+   </para>
+  </informalexample>
+
+  <informalexample>
+   <para>
+    Alternatively, if you allow absolute paths you could write:
+<screen>
+<prompt>$</prompt> <userinput>initlocation /opt/postgres/data</userinput>
+<prompt>$</prompt> <userinput>createdb -D /opt/postgres/data/testdb testdb</userinput>
+</screen>
+   </para>
+  </informalexample>
  </refsect1>
 </refentry>
 

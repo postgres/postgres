@@ -1,31 +1,36 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.9 2000/11/04 21:09:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.10 2000/11/11 23:01:38 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-CREATELANG">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-CREATELANG-TITLE">
-   <application>createlang</application>
-  </refentrytitle>
+  <refentrytitle id="APP-CREATELANG-TITLE"><application>createlang</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname id="createlang">
-   <application>createlang</application>
-  </refname>
-  <refpurpose>
-   Add a new programming language to a <productname>Postgres</productname> database
-  </refpurpose>
+  <refname id="createlang">createlang</refname>
+  <refpurpose>Add a new programming language to a <productname>Postgres</productname> database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-12-05</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-createlang [ <replaceable class="parameter">connection options</replaceable> ] [ <replaceable class="parameter">langname</replaceable> [ <replaceable class="parameter">dbname</replaceable> ] ]
-createlang [ <replaceable class="parameter">connection options</replaceable> ] --list|-l [ <replaceable class="parameter">dbname</replaceable> ]
-  </synopsis>
+  <cmdsynopsis>
+   <command>createlang</command>
+   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg><replaceable>langname</replaceable></arg>
+   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+   <sbr>
+   <command>createlang</command>
+   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <group choice="plain"><arg>--list</arg><arg>-l</arg></group>
+   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
 
   <refsect2 id="R2-APP-CREATELANG-1">
    <title>
@@ -119,9 +124,6 @@ createlang [ <replaceable class="parameter">connection options</replaceable> ] -
   </refsect2>
 
   <refsect2 id="R2-APP-CREATELANG-2">
-   <refsect2info>
-    <date>1998-10-04</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -136,9 +138,6 @@ createlang [ <replaceable class="parameter">connection options</replaceable> ] -
  </refsynopsisdiv>
  
  <refsect1 id="R1-APP-CREATELANG-1">
-  <refsect1info>
-   <date>1999-12-05</date>
-  </refsect1info>
   <title>
    Description
   </title>
@@ -171,15 +170,17 @@ createlang [ <replaceable class="parameter">connection options</replaceable> ] -
  </refsect1>
  
  <refsect1 id="R1-APP-CREATELANG-3">
-  <title>
-   Usage
-  </title>
-  <para>
-   To install <literal>pltcl</literal>:
-<programlisting>
-$ createlang pltcl dbname
-</programlisting>
-  </para>
+  <title>Usage</title>
+
+  <informalexample>
+   <para>
+    To install <literal>pltcl</literal> into the database
+    <literal>template1</literal>:
+<screen>
+<prompt>$ </prompt><userinput>createlang pltcl template1</userinput>
+</screen>
+   </para>
+  </informalexample>
  </refsect1>
 </refentry>
 

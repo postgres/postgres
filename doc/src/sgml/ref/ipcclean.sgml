@@ -1,63 +1,32 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.2 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.3 2000/11/11 23:01:45 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-IPCCLEAN">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-IPCCLEAN-TITLE">
-   <application>ipcclean</application>
-  </refentrytitle>
+  <refentrytitle id="APP-IPCCLEAN-TITLE"><application>ipcclean</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   <application>ipcclean</application>
-  </refname>
-  <refpurpose>
-   Clean up shared memory and semaphores from aborted backends
-  </refpurpose>
+  <refname>ipcclean</refname>
+  <refpurpose>Clean up shared memory and semaphores from aborted backends</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-ipcclean
-  </synopsis>
-
-  <refsect2 id="R2-APP-IPCCLEAN-1">
-   <refsect2info>
-    <date>1999-07-20</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    None.
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-APP-IPCCLEAN-2">
-   <refsect2info>
-    <date>1999-07-30</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    None.
-   </para>
-  </refsect2>
+  <cmdsynopsis>
+   <command>ipcclean</command>
+  </cmdsynopsis>
  </refsynopsisdiv>
 
  <refsect1 id="R1-APP-IPCCLEAN-1">
-  <refsect1info>
-   <date>1999-07-20</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+  <title>Description</title>
   <para>
    <application>ipcclean</application>
    cleans up shared memory and semaphore space from aborted backends by

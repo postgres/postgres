@@ -1,20 +1,32 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.3 2000/10/20 13:44:39 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.4 2000/11/11 23:01:45 petere Exp $ -->
 
 <refentry id="app-pgconfig">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="app-pgconfig-title">pg_config</>
-  <refmiscinfo>Application</>
+  <refentrytitle id="app-pgconfig-title">pg_config</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>pg_config</>
-  <refpurpose>Provides information about the installed version of <productname>PostgreSQL</></>
+  <refname>pg_config</refname>
+  <refpurpose>Provides information about the installed version of <productname>PostgreSQL</></refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
-<synopsis>
-pg_config --bindir | --includedir | --libdir | --configure | --version
-</synopsis>
+  <cmdsynopsis>
+   <command>pg_config</command>
+   <group choice="req" rep="repeat">
+    <arg>--bindir</arg>
+    <arg>--includedir</arg>
+    <arg>--libdir</arg>
+    <arg>--configure</arg>
+    <arg>--version</arg>
+   </group>
+  </cmdsynopsis>
  </refsynopsisdiv>
 
  <refsect1>

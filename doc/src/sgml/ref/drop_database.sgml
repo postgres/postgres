@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.11 2000/11/11 23:01:43 petere Exp $
 Postgres documentation
 -->
 
-<refentry id="SQL-DROPDATABASE" xreflabel="drop_database">
+<refentry id="SQL-DROPDATABASE">
  <refmeta>
   <refentrytitle id="SQL-DROPDATABASE-TITLE">
    DROP DATABASE

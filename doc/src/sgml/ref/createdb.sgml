@@ -1,35 +1,33 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.10 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.11 2000/11/11 23:01:38 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-CREATEDB" xreflabel="createdb">
+ <docinfo>
+  <date>2000-11-11</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="APP-CREATEDB-TITLE">
-   <application>createdb</application>
-  </refentrytitle>
+  <refentrytitle id="APP-CREATEDB-TITLE"><application>createdb</application></refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   <application>createdb</application>
-  </refname>
-  <refpurpose>
-   Create a new <productname>Postgres</productname> database
-  </refpurpose>
+  <refname>createdb</refname>
+  <refpurpose>Create a new <productname>Postgres</productname> database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-11-07</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">description</replaceable> ]
-  </synopsis>
+  <cmdsynopsis>
+   <command>createdb</command>
+   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+   <arg><replaceable>description</replaceable></arg>
+  </cmdsynopsis>
 
   <refsect2 id="R2-APP-CREATEDB-1">
-   <refsect2info>
-    <date>1999-11-07</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -99,9 +97,8 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
       <term>-D, --location <replaceable class="parameter">datadir</replaceable></term>
       <listitem>
        <para>
-	Specifies the alternate database location for this database installation.
-	This is the location of the installation system tables, not the location
-	of this specific database, which may be different.
+	Specifies the alternative database location.  See also <xref
+	linkend="app-initlocation" endterm="app-initlocation-title">.
        </para>
       </listitem>
      </varlistentry>
@@ -146,9 +143,6 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
   </refsect2>
 
   <refsect2 id="R2-APP-CREATEDB-2">
-   <refsect2info>
-    <date>1999-11-07</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -189,9 +183,6 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
  </refsynopsisdiv>
 
  <refsect1 id="R1-APP-CREATEDB-1">
-  <refsect1info>
-   <date>1999-11-07</date>
-  </refsect1info>
   <title>
    Description
   </title>
@@ -215,36 +206,34 @@ createdb [ <replaceable class="parameter">options</replaceable> ] <replaceable c
  </refsect1>
 
  <refsect1 id="R1-APP-CREATEDB-2">
-  <refsect1info>
-   <date>1999-11-07</date>
-  </refsect1info>
-  <title>
-   Usage
-  </title>
-  <para>
-   To create the database <literal>demo</literal>
-   using the default database server:
+  <title>Usage</title>
 
-   <programlisting>
-$ <userinput>createdb demo</userinput>
-CREATE DATABASE
-   </programlisting>
+  <informalexample>
+   <para>
+    To create the database <literal>demo</literal> using the default
+    database server:
+<screen>
+<prompt>$ </prompt><userinput>createdb demo</userinput>
+<computeroutput>CREATE DATABASE</computeroutput>
+</screen>
+    The response is the same as you would have gotten from running the
+    <command>CREATE DATABASE</command> <acronym>SQL</acronym> command.
+   </para>
+  </informalexample>
 
-   The response is the same as you would have gotten from running the
-   <command>CREATE DATABASE</command> <acronym>SQL</acronym> command.
-  </para>
-
-  <para>
-   To create the database <literal>demo</literal>
-   using the postmaster on host eden, port 5000, using the <literal>LATIN1</literal>
-   encoding scheme with a look at the underlying query:
-
-   <programlisting>
-$ <userinput>createdb -p 5000 -h eden -E LATIN1 -e demo</userinput>
-CREATE DATABASE "demo" WITH ENCODING = 'LATIN1'
-CREATE DATABASE
-   </programlisting>
-  </para>
+  <informalexample>
+   <para>
+    To create the database <literal>demo</literal> using the
+    postmaster on host eden, port 5000, using the
+    <literal>LATIN1</literal> encoding scheme with a look at the
+    underlying query:
+<screen>
+<prompt>$ </prompt><userinput>createdb -p 5000 -h eden -E LATIN1 -e demo</userinput>
+<computeroutput>CREATE DATABASE "demo" WITH ENCODING = 'LATIN1'</computeroutput>
+<computeroutput>CREATE DATABASE</computeroutput>
+</screen>
+   </para>
+  </informalexample>
  </refsect1>
 </refentry>
 
