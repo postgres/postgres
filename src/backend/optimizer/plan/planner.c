@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.64 1999/08/22 20:14:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.65 1999/08/22 23:56:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ static List *make_subplanTargetList(Query *parse, List *tlist,
 									AttrNumber **groupColIdx);
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
 							List *groupClause, AttrNumber *grpColIdx,
-							bool is_sorted, Plan *subplan);
+							bool is_presorted, Plan *subplan);
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
 
 /*****************************************************************************
@@ -91,7 +91,7 @@ union_planner(Query *parse)
 	List	   *rangetable = parse->rtable;
 	Plan	   *result_plan = (Plan *) NULL;
 	AttrNumber *groupColIdx = NULL;
-	bool		is_sorted = false;
+	List	   *current_pathkeys = NIL;
 	Index		rt_index;
 
 	if (parse->unionClause)
@@ -102,6 +102,11 @@ union_planner(Query *parse)
 									  parse->commandType,
 									  parse->resultRelation,
 									  parse->rtable);
+		/*
+		 * We leave current_pathkeys NIL indicating we do not know sort order.
+		 * Actually, for a normal UNION we have done an explicit sort; ought
+		 * to change interface to plan_union_queries to pass that info back!
+		 */
 	}
 	else if ((rt_index = first_inherit_rt_entry(rangetable)) != -1)
 	{
@@ -135,6 +140,10 @@ union_planner(Query *parse)
 
 		if (parse->rowMark != NULL)
 			elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
+		/*
+		 * We leave current_pathkeys NIL indicating we do not know sort order
+		 * of the Append-ed results.
+		 */
 	}
 	else
 	{
@@ -183,24 +192,24 @@ union_planner(Query *parse)
 		}
 
 		/*
+		 * Generate appropriate target list for subplan; may be different
+		 * from tlist if grouping or aggregation is needed.
+		 */
+		sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
+
+		/*
 		 * Figure out whether we need a sorted result from query_planner.
 		 *
 		 * If we have a GROUP BY clause, then we want a result sorted
-		 * properly for grouping.  Otherwise, if there is an ORDER BY clause
-		 * and no need for an aggregate node, we want to sort by the ORDER BY
-		 * clause.  (XXX In some cases, we could presort even when there is
-		 * an aggregate, but I'll leave that refinement for another day.)
-		 *
-		 * NOTE: the reason we put the target pathkeys into the Query node
-		 * rather than passing them as an argument to query_planner is that
-		 * the low-level routines in indxpath.c want to be able to see them.
+		 * properly for grouping.  Otherwise, if there is an ORDER BY clause,
+		 * we want to sort by the ORDER BY clause.
 		 */
 		if (parse->groupClause)
 		{
 			parse->query_pathkeys =
 				make_pathkeys_for_sortclauses(parse->groupClause, tlist);
 		}
-		else if (parse->sortClause && ! parse->hasAggs)
+		else if (parse->sortClause)
 		{
 			parse->query_pathkeys =
 				make_pathkeys_for_sortclauses(parse->sortClause, tlist);
@@ -210,23 +219,16 @@ union_planner(Query *parse)
 			parse->query_pathkeys = NIL;
 		}
 
-		/*
-		 * Generate appropriate target list for subplan; may be different
-		 * from tlist if grouping or aggregation is needed.
-		 */
-		sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
-
 		/* Generate the (sub) plan */
 		result_plan = query_planner(parse,
 									parse->commandType,
 									sub_tlist,
 									(List *) parse->qual);
 
-		/* query_planner sets query_pathkeys to NIL if it didn't make
-		 * a properly sorted plan
+		/* query_planner returns actual sort order (which is not
+		 * necessarily what we requested) in query_pathkeys.
 		 */
-		if (parse->query_pathkeys)
-			is_sorted = true;
+		current_pathkeys = parse->query_pathkeys;
 	}
 
 	/* query_planner returns NULL if it thinks plan is bogus */
@@ -241,6 +243,8 @@ union_planner(Query *parse)
 	{
 		bool		tuplePerGroup;
 		List	   *group_tlist;
+		List	   *group_pathkeys;
+		bool		is_sorted;
 
 		/*
 		 * Decide whether how many tuples per group the Group node needs
@@ -261,18 +265,33 @@ union_planner(Query *parse)
 		else
 			group_tlist = tlist;
 
+		/*
+		 * Figure out whether the path result is already ordered the way we
+		 * need it --- if so, no need for an explicit sort step.
+		 */
+		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
+													   tlist);
+		if (pathkeys_contained_in(group_pathkeys, current_pathkeys))
+		{
+			is_sorted = true;	/* no sort needed now */
+			/* current_pathkeys remains unchanged */
+		}
+		else
+		{
+			/* We will need to do an explicit sort by the GROUP BY clause.
+			 * make_groupplan will do the work, but set current_pathkeys
+			 * to indicate the resulting order.
+			 */
+			is_sorted = false;
+			current_pathkeys = group_pathkeys;
+		}
+
 		result_plan = make_groupplan(group_tlist,
 									 tuplePerGroup,
 									 parse->groupClause,
 									 groupColIdx,
 									 is_sorted,
 									 result_plan);
-
-		/*
-		 * Assume the result of the group step is not ordered suitably
-		 * for any ORDER BY that may exist.  XXX it might be; improve this!
-		 */
-		is_sorted = false;
 	}
 
 	/*
@@ -325,20 +344,23 @@ union_planner(Query *parse)
 		/* HAVING clause, if any, becomes qual of the Agg node */
 		result_plan->qual = (List *) parse->havingQual;
 
-		/*
-		 * Assume result is not ordered suitably for ORDER BY.
-		 * XXX it might be; improve this!
-		 */
-		is_sorted = false;
+		/* Note: Agg does not affect any existing sort order of the tuples */
 	}
 
 	/*
 	 * If we were not able to make the plan come out in the right order,
 	 * add an explicit sort step.
 	 */
-	if (parse->sortClause && ! is_sorted)
+	if (parse->sortClause)
 	{
-		result_plan = make_sortplan(tlist, parse->sortClause, result_plan);
+		List	   *sort_pathkeys;
+
+		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
+													  tlist);
+		if (! pathkeys_contained_in(sort_pathkeys, current_pathkeys))
+		{
+			result_plan = make_sortplan(tlist, parse->sortClause, result_plan);
+		}
 	}
 
 	/*
@@ -474,12 +496,12 @@ make_groupplan(List *group_tlist,
 			   bool tuplePerGroup,
 			   List *groupClause,
 			   AttrNumber *grpColIdx,
-			   bool is_sorted,
+			   bool is_presorted,
 			   Plan *subplan)
 {
 	int			numCols = length(groupClause);
 
-	if (! is_sorted)
+	if (! is_presorted)
 	{
 		/*
 		 * The Sort node always just takes a copy of the subplan's tlist

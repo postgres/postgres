@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.42 1999/08/22 20:14:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.43 1999/08/22 23:56:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,11 +44,14 @@ static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
  *	  qual is the qualification of the query
  *
  *	  Note: the Query node now also includes a query_pathkeys field, which
+ *	  is both an input and an output of query_planner().  The input value
  *	  signals query_planner that the indicated sort order is wanted in the
- *	  final output plan.  If, for some reason, query_planner is unable to
- *	  comply, it sets query_pathkeys to NIL before returning.  (The reason
- *	  query_pathkeys is a Query field and not a passed parameter is that
- *	  the low-level routines in indxpath.c need to see it.)
+ *	  final output plan.  The output value is the actual pathkeys of the
+ *	  selected path.  This might not be the same as what the caller requested;
+ *	  the caller must do pathkeys_contained_in() to decide whether an
+ *	  explicit sort is still needed.  (The main reason query_pathkeys is a
+ *	  Query field and not a passed parameter is that the low-level routines
+ *	  in indxpath.c need to see it.)
  *
  *	  Returns a query plan.
  */
@@ -255,7 +258,11 @@ subplanner(Query *root,
 	if (root->query_pathkeys == NIL ||
 		pathkeys_contained_in(root->query_pathkeys,
 							  final_rel->cheapestpath->pathkeys))
+	{
+		root->query_pathkeys = final_rel->cheapestpath->pathkeys;
 		return create_plan(final_rel->cheapestpath);
+	}
+
 	/*
 	 * Otherwise, look to see if we have an already-ordered path that is
 	 * cheaper than doing an explicit sort on cheapestpath.
@@ -271,6 +278,7 @@ subplanner(Query *root,
 		if (sortedpath->path_cost <= cheapest_cost)
 		{
 			/* Found a better presorted path, use it */
+			root->query_pathkeys = sortedpath->pathkeys;
 			return create_plan(sortedpath);
 		}
 		/* otherwise, doing it the hard way is still cheaper */
@@ -300,21 +308,31 @@ subplanner(Query *root,
 				 * then poke the result.
 				 */
 				Plan	   *sortedplan = create_plan(sortedpath);
+				List	   *sortedpathkeys;
 
 				Assert(IsA(sortedplan, IndexScan));
 				((IndexScan *) sortedplan)->indxorderdir = BackwardScanDirection;
+				/*
+				 * Need to generate commuted keys representing the actual
+				 * sort order.  This should succeed, probably, but just in
+				 * case it does not, use the original root->query_pathkeys
+				 * as a conservative approximation.
+				 */
+				sortedpathkeys = copyObject(sortedpath->pathkeys);
+				if (commute_pathkeys(sortedpathkeys))
+					root->query_pathkeys = sortedpathkeys;
+
 				return sortedplan;
 			}
 		}
 	}
 
-	/* Nothing for it but to sort the cheapestpath...
-	 *
-	 * We indicate we failed to sort the plan, and let the caller
-	 * stick the appropriate sort node on top.  union_planner has to be
-	 * able to add a sort node anyway, so no need for extra code here.
+	/* Nothing for it but to sort the cheapestpath --- but we let the
+	 * caller do that.  union_planner has to be able to add a sort node
+	 * anyway, so no need for extra code here.  (Furthermore, the given
+	 * pathkeys might involve something we can't compute yet, such as
+	 * an aggregate function...)
 	 */
-	root->query_pathkeys = NIL; /* sorry, it ain't sorted */
-
+	root->query_pathkeys = final_rel->cheapestpath->pathkeys;
 	return create_plan(final_rel->cheapestpath);
 }

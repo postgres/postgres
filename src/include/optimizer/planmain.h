@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.32 1999/08/22 20:14:56 tgl Exp $
+ * $Id: planmain.h,v 1.33 1999/08/22 23:56:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@ extern Sort *make_sort(List *tlist, Oid nonameid, Plan *lefttree,
 extern Agg *make_agg(List *tlist, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Plan *lefttree);
+extern Noname *make_noname(List *tlist, List *pathkeys, Plan *subplan);
 extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 

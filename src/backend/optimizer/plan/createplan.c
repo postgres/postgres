@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.75 1999/08/22 20:14:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.76 1999/08/22 23:56:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,6 @@ static List *fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
 								  Form_pg_index index);
 static Node *fix_indxqual_operand(Node *node, IndexPath *index_path,
 								  Form_pg_index index);
-static Noname *make_noname(List *tlist, List *pathkeys, Plan *plan_node);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig);
 static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
@@ -926,12 +925,12 @@ copy_costsize(Plan *dest, Plan *src)
  *	  'tlist' is the target list of the scan to be sorted or materialized
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
  *			(NIL implies no sort needed, just materialize it)
- *	  'plan_node' is the node which yields input tuples
+ *	  'subplan' is the node which yields input tuples
  */
-static Noname *
+Noname *
 make_noname(List *tlist,
 			List *pathkeys,
-			Plan *plan_node)
+			Plan *subplan)
 {
 	List	   *noname_tlist;
 	int			numsortkeys;
@@ -946,7 +945,7 @@ make_noname(List *tlist,
 		/* need to sort */
 		retval = (Plan *) make_sort(noname_tlist,
 									_NONAME_RELATION_ID_,
-									plan_node,
+									subplan,
 									numsortkeys);
 	}
 	else
@@ -954,7 +953,7 @@ make_noname(List *tlist,
 		/* no sort */
 		retval = (Plan *) make_material(noname_tlist,
 										_NONAME_RELATION_ID_,
-										plan_node,
+										subplan,
 										0);
 	}
 
