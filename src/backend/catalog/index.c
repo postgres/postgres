@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.136 2001/01/23 04:32:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.137 2001/01/24 00:06:07 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -62,7 +62,7 @@
 static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
 				   bool istemp);
 static TupleDesc BuildFuncTupleDesc(Oid funcOid);
-static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
+static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 										  int numatts, AttrNumber *attNums);
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static Oid	UpdateRelationRelation(Relation indexRelation, char *temp_relname);
@@ -166,7 +166,7 @@ BuildFuncTupleDesc(Oid funcOid)
 	Oid			retType;
 
 	/*
-	 * Allocate and zero a tuple descriptor.
+	 * Allocate and zero a tuple descriptor for a one-column tuple.
 	 */
 	funcTupDesc = CreateTemplateTupleDesc(1);
 	funcTupDesc->attrs[0] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
@@ -208,7 +208,7 @@ BuildFuncTupleDesc(Oid funcOid)
 	funcTupDesc->attrs[0]->attbyval = ((Form_pg_type) GETSTRUCT(tuple))->typbyval;
 	funcTupDesc->attrs[0]->attcacheoff = -1;
 	funcTupDesc->attrs[0]->atttypmod = -1;
-	funcTupDesc->attrs[0]->attstorage = 'p';
+	funcTupDesc->attrs[0]->attstorage = ((Form_pg_type) GETSTRUCT(tuple))->typstorage;
 	funcTupDesc->attrs[0]->attalign = ((Form_pg_type) GETSTRUCT(tuple))->typalign;
 
 	ReleaseSysCache(tuple);
@@ -223,8 +223,7 @@ BuildFuncTupleDesc(Oid funcOid)
  * ----------------------------------------------------------------
  */
 static TupleDesc
-ConstructTupleDescriptor(Oid heapoid,
-						 Relation heapRelation,
+ConstructTupleDescriptor(Relation heapRelation,
 						 int numatts,
 						 AttrNumber *attNums)
 {
@@ -253,25 +252,16 @@ ConstructTupleDescriptor(Oid heapoid,
 	{
 		AttrNumber	atnum;		/* attributeNumber[attributeOffset] */
 		AttrNumber	atind;
-		char	   *from;		/* used to simplify memcpy below */
-		char	   *to;			/* used to simplify memcpy below */
+		Form_pg_attribute from;
+		Form_pg_attribute to;
 
 		/* ----------------
-		 *	 get the attribute number and make sure it's valid
+		 *	 get the attribute number and make sure it's valid;
+		 *	 determine which attribute descriptor to copy
 		 * ----------------
 		 */
 		atnum = attNums[i];
-		if (atnum > natts)
-			elog(ERROR, "Cannot create index: attribute %d does not exist",
-				 atnum);
 
-		indexTupDesc->attrs[i] =
-			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-
-		/* ----------------
-		 *	 determine which tuple descriptor to copy
-		 * ----------------
-		 */
 		if (!AttrNumberIsForUserDefinedAttr(atnum))
 		{
 			/* ----------------
@@ -285,7 +275,7 @@ ConstructTupleDescriptor(Oid heapoid,
 				elog(ERROR, "Cannot create index on system attribute: attribute number out of range (%d)", atnum);
 			atind = (-atnum) - 1;
 
-			from = (char *) (&sysatts[atind]);
+			from = &sysatts[atind];
 		}
 		else
 		{
@@ -293,9 +283,12 @@ ConstructTupleDescriptor(Oid heapoid,
 			 *	  here we are indexing on a normal attribute (1...n)
 			 * ----------------
 			 */
+			if (atnum > natts)
+				elog(ERROR, "Cannot create index: attribute %d does not exist",
+					 atnum);
 			atind = AttrNumberGetAttrOffset(atnum);
 
-			from = (char *) (heapTupDesc->attrs[atind]);
+			from = heapTupDesc->attrs[atind];
 		}
 
 		/* ----------------
@@ -303,26 +296,26 @@ ConstructTupleDescriptor(Oid heapoid,
 		 *	 the tuple desc data...
 		 * ----------------
 		 */
-		to = (char *) (indexTupDesc->attrs[i]);
+		indexTupDesc->attrs[i] = to =
+			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 		memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
 
 		/*
 		 * Fix the stuff that should not be the same as the underlying attr
 		 */
-		((Form_pg_attribute) to)->attnum = i + 1;
+		to->attnum = i + 1;
 
-		((Form_pg_attribute) to)->attdispersion = 0.0;
-		((Form_pg_attribute) to)->attnotnull = false;
-		((Form_pg_attribute) to)->atthasdef = false;
-		((Form_pg_attribute) to)->attcacheoff = -1;
+		to->attdispersion = 0.0;
+		to->attnotnull = false;
+		to->atthasdef = false;
+		to->attcacheoff = -1;
 
-		/* ----------------
-		 *	  now we have to drop in the proper relation descriptor
-		 *	  into the copied tuple form's attrelid and we should be
-		 *	  all set.
-		 * ----------------
+		/*
+		 * We do not yet have the correct relation OID for the index,
+		 * so just set it invalid for now.  InitializeAttributeOids()
+		 * will fix it later.
 		 */
-		((Form_pg_attribute) to)->attrelid = heapoid;
+		to->attrelid = InvalidOid;
 	}
 
 	return indexTupDesc;
@@ -916,8 +909,7 @@ index_create(char *heapRelationName,
 	if (OidIsValid(indexInfo->ii_FuncOid))
 		indexTupDesc = BuildFuncTupleDesc(indexInfo->ii_FuncOid);
 	else
-		indexTupDesc = ConstructTupleDescriptor(heapoid,
-												heapRelation,
+		indexTupDesc = ConstructTupleDescriptor(heapRelation,
 												indexInfo->ii_NumKeyAttrs,
 												indexInfo->ii_KeyAttrNumbers);
 
