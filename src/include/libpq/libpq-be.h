@@ -7,21 +7,22 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.1 1996/08/28 07:22:59 scrappy Exp $
+ * $Id: libpq-be.h,v 1.2 1996/11/06 08:07:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LIBPQ_BE_H
 #define LIBPQ_BE_H
 
+#include <access/htup.h>
+#include <access/tupdesc.h>
+#include <libpq/libpq.h>
+
 /* ----------------
  *	include stuff common to fe and be
  * ----------------
  */
-#include "libpq/libpq.h"
-#include "access/htup.h"
 
-#include "access/tupdesc.h"
 
 /* ----------------
  *	declarations for backend libpq support routines
