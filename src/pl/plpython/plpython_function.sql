@@ -257,6 +257,12 @@ if len(rv):
 return None
 '
 	LANGUAGE 'plpython';
+/* Flat out syntax error
+*/
+CREATE FUNCTION sql_syntax_error() RETURNS text
+        AS
+'plpy.execute("syntax error")'
+        LANGUAGE 'plpython';
 
 /* check the handling of uncaught python exceptions
  */
@@ -287,5 +293,36 @@ return seq
 '
 	LANGUAGE 'plpython';
 
+CREATE OR REPLACE FUNCTION read_file(text) RETURNS text AS '
+  return open(args[0]).read()
+' LANGUAGE 'plpython';
 
+CREATE OR REPLACE FUNCTION write_file(text,text) RETURNS text AS '
+  open(args[0],"w").write(args[1])
+' LANGUAGE 'plpython';
+
+CREATE OR REPLACE FUNCTION getpid() RETURNS int4 AS '
+  import os
+  return os.getpid()
+' LANGUAGE 'plpython';
+
+CREATE OR REPLACE FUNCTION uname() RETURNS int4 AS '
+  import os
+  return os.uname()
+' LANGUAGE 'plpython';
+
+CREATE OR REPLACE FUNCTION sys_exit() RETURNS text AS '
+  import sys
+  return sys.exit()
+' LANGUAGE 'plpython';
+
+CREATE OR REPLACE FUNCTION sys_argv() RETURNS text AS '
+  import sys
+  return str(sys.argv)
+' LANGUAGE 'plpython';
+
+CREATE OR REPLACE FUNCTION sys_version() RETURNS text AS '
+  import sys
+  return str(sys.version)
+' LANGUAGE 'plpython';
 

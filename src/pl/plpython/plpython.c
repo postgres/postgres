@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.12 2001/11/05 17:46:39 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.13 2001/11/16 18:04:31 tgl Exp $
  *
  *********************************************************************
  */
@@ -188,6 +188,10 @@ static void PLy_init_interp(void);
 static void PLy_init_safe_interp(void);
 static void PLy_init_plpy(void);
 
+/* Helper functions used during initialization */
+static int  populate_methods(PyObject *klass, PyMethodDef *methods);
+static PyObject *build_tuple(char* string_list[], int len);
+
 /* error handler.  collects the current Python exception, if any,
  * and appends it to the error and sends it to elog
  */
@@ -198,6 +202,10 @@ static void PLy_elog(int, const char *,...);
 static void
 PLy_exception_set(PyObject *, const char *,...)
 __attribute__((format(printf, 2, 3)));
+
+/* Get the innermost python procedure called from the backend.
+ */
+static char *PLy_procedure_name(PLyProcedure *);
 
 /* some utility functions
  */
@@ -240,6 +248,10 @@ static void PLy_input_datum_func2(PLyDatumToOb *, Form_pg_type);
 static void PLy_output_tuple_funcs(PLyTypeInfo *, TupleDesc);
 static void PLy_input_tuple_funcs(PLyTypeInfo *, TupleDesc);
 
+/* RExec methods
+ */
+static PyObject *PLy_r_open(PyObject *self, PyObject* args);
+
 /* conversion functions
  */
 static PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
@@ -255,6 +267,11 @@ static PyObject *PLyString_FromString(const char *);
 static int	PLy_first_call = 1;
 static volatile int PLy_call_level = 0;
 
+/*
+ * Last function called by postgres backend
+ */
+static PLyProcedure *PLy_last_procedure = NULL;
+
 /* this gets modified in plpython_call_handler and PLy_elog.
  * test it any old where, but do NOT modify it anywhere except
  * those two functions
@@ -265,35 +282,60 @@ static PyObject *PLy_interp_globals = NULL;
 static PyObject *PLy_interp_safe = NULL;
 static PyObject *PLy_interp_safe_globals = NULL;
 static PyObject *PLy_importable_modules = NULL;
+static PyObject *PLy_ok_posix_names = NULL;
+static PyObject *PLy_ok_sys_names = NULL;
 static PyObject *PLy_procedure_cache = NULL;
 
-char	   *PLy_importable_modules_list[] = {
+static char *PLy_importable_modules_list[] = {
 	"array",
 	"bisect",
+	"binascii",
 	"calendar",
 	"cmath",
+	"codecs",
 	"errno",
 	"marshal",
 	"math",
 	"md5",
 	"mpz",
 	"operator",
+	"pcre",
 	"pickle",
 	"random",
 	"re",
+	"regex",
+	"sre",
 	"sha",
 	"string",
 	"StringIO",
+	"struct",
 	"time",
 	"whrandom",
 	"zlib"
 };
 
+static char *PLy_ok_posix_names_list[] = {
+	/* None for now */
+};
+
+static char *PLy_ok_sys_names_list[] = {
+	"byteeorder",
+	"copyright",
+	"getdefaultencoding",
+	"getrefcount",
+	"hexrevision",
+	"maxint",
+	"maxunicode",
+	"platform",
+	"version",
+	"version_info"
+};
+
 /* Python exceptions
  */
-PyObject   *PLy_exc_error = NULL;
-PyObject   *PLy_exc_fatal = NULL;
-PyObject   *PLy_exc_spi_error = NULL;
+static PyObject   *PLy_exc_error = NULL;
+static PyObject   *PLy_exc_fatal = NULL;
+static PyObject   *PLy_exc_spi_error = NULL;
 
 /* some globals for the python module
  */
@@ -334,7 +376,6 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 	fmgr_info_cxt(functionId, finfo, TopMemoryContext);
 }
 
-
 Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
 {
@@ -366,8 +407,10 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		}
 		else
 			PLy_restart_in_progress += 1;
-		if (proc)
+		if (proc) 
+		{
 			Py_DECREF(proc->me);
+		}
 		RERAISE_EXC();
 	}
 
@@ -805,7 +848,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 	if (plrv == NULL)
 	{
 		elog(FATAL, "Aiieee, PLy_procedure_call returned NULL");
-#if 0
+#ifdef NOT_USED
 		if (!PLy_restart_in_progress)
 			PLy_elog(ERROR, "plpython: Function \"%s\" failed.", proc->proname);
 
@@ -853,11 +896,15 @@ PyObject *
 PLy_procedure_call(PLyProcedure * proc, char *kargs, PyObject * vargs)
 {
 	PyObject   *rv;
+	PLyProcedure *current;
 
 	enter();
 
+	current = PLy_last_procedure;
+	PLy_last_procedure = proc;
 	PyDict_SetItemString(proc->globals, kargs, vargs);
 	rv = PyObject_CallFunction(proc->reval, "O", proc->code);
+	PLy_last_procedure = current;
 
 	if ((rv == NULL) || (PyErr_Occurred()))
 	{
@@ -1149,12 +1196,6 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 	proc->interp = PyObject_CallMethod(PLy_interp_safe, "RExec", NULL);
 	if ((proc->interp == NULL) || (PyErr_Occurred()))
 		PLy_elog(ERROR, "Unable to create rexec.RExec instance");
-
-	/*
-	 * tweak the list of permitted modules
-	 */
-	PyObject_SetAttrString(proc->interp, "ok_builtin_modules",
-						   PLy_importable_modules);
 
 	proc->reval = PyObject_GetAttrString(proc->interp, "r_eval");
 	if ((proc->reval == NULL) || (PyErr_Occurred()))
@@ -1632,9 +1673,12 @@ static PyObject *PLy_plan_status(PyObject *, PyObject *);
 static PyObject *PLy_result_new(void);
 static void PLy_result_dealloc(PyObject *);
 static PyObject *PLy_result_getattr(PyObject *, char *);
+#ifdef NOT_USED
+/* Appear to be unused */
 static PyObject *PLy_result_fetch(PyObject *, PyObject *);
 static PyObject *PLy_result_nrows(PyObject *, PyObject *);
 static PyObject *PLy_result_status(PyObject *, PyObject *);
+#endif
 static int	PLy_result_length(PyObject *);
 static PyObject *PLy_result_item(PyObject *, int);
 static PyObject *PLy_result_slice(PyObject *, int, int);
@@ -1650,7 +1694,7 @@ static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, int);
 static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *, int, int);
 
 
-PyTypeObject PLy_PlanType = {
+static PyTypeObject PLy_PlanType = {
 	PyObject_HEAD_INIT(NULL)
 	0,							/* ob_size */
 	"PLyPlan",					/* tp_name */
@@ -1679,13 +1723,13 @@ PyTypeObject PLy_PlanType = {
 	PLy_plan_doc,				/* tp_doc */
 };
 
-PyMethodDef PLy_plan_methods[] = {
+static PyMethodDef PLy_plan_methods[] = {
 	{"status", (PyCFunction) PLy_plan_status, METH_VARARGS, NULL},
 	{NULL, NULL, 0, NULL}
 };
 
 
-PySequenceMethods PLy_result_as_sequence = {
+static PySequenceMethods PLy_result_as_sequence = {
 	(inquiry) PLy_result_length,	/* sq_length */
 	(binaryfunc) 0,				/* sq_concat */
 	(intargfunc) 0,				/* sq_repeat */
@@ -1695,7 +1739,7 @@ PySequenceMethods PLy_result_as_sequence = {
 	(intintobjargproc) PLy_result_ass_slice,	/* sq_ass_slice */
 };
 
-PyTypeObject PLy_ResultType = {
+static PyTypeObject PLy_ResultType = {
 	PyObject_HEAD_INIT(NULL)
 	0,							/* ob_size */
 	"PLyResult",				/* tp_name */
@@ -1723,14 +1767,15 @@ PyTypeObject PLy_ResultType = {
 	0,							/* tp_xxx4 */
 	PLy_result_doc,				/* tp_doc */
 };
-
-PyMethodDef PLy_result_methods[] = {
+#ifdef NOT_USED
+/* Appear to be unused */
+static PyMethodDef PLy_result_methods[] = {
 	{"fetch", (PyCFunction) PLy_result_fetch, METH_VARARGS, NULL,},
 	{"nrows", (PyCFunction) PLy_result_nrows, METH_VARARGS, NULL},
 	{"status", (PyCFunction) PLy_result_status, METH_VARARGS, NULL},
 	{NULL, NULL, 0, NULL}
 };
-
+#endif
 
 static PyMethodDef PLy_methods[] = {
 	/*
@@ -1833,7 +1878,7 @@ PLy_plan_status(PyObject * self, PyObject * args)
 /* result object methods
  */
 
-static PyObject *
+PyObject *
 PLy_result_new(void)
 {
 	PLyResultObject *ob;
@@ -1853,7 +1898,7 @@ PLy_result_new(void)
 	return (PyObject *) ob;
 }
 
-static void
+void
 PLy_result_dealloc(PyObject * arg)
 {
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -1867,19 +1912,20 @@ PLy_result_dealloc(PyObject * arg)
 	PyMem_DEL(ob);
 }
 
-static PyObject *
+PyObject *
 PLy_result_getattr(PyObject * self, char *attr)
 {
 	return NULL;
 }
-
-static PyObject *
+#ifdef NOT_USED
+/* Appear to be unused */
+PyObject *
 PLy_result_fetch(PyObject * self, PyObject * args)
 {
 	return NULL;
 }
 
-static PyObject *
+PyObject *
 PLy_result_nrows(PyObject * self, PyObject * args)
 {
 	PLyResultObject *ob = (PLyResultObject *) self;
@@ -1888,7 +1934,7 @@ PLy_result_nrows(PyObject * self, PyObject * args)
 	return ob->nrows;
 }
 
-static PyObject *
+PyObject *
 PLy_result_status(PyObject * self, PyObject * args)
 {
 	PLyResultObject *ob = (PLyResultObject *) self;
@@ -1896,7 +1942,7 @@ PLy_result_status(PyObject * self, PyObject * args)
 	Py_INCREF(ob->status);
 	return ob->status;
 }
-
+#endif
 int
 PLy_result_length(PyObject * arg)
 {
@@ -1991,7 +2037,8 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_spi_error,
 							"Unknown error in PLy_spi_prepare.");
-		return NULL;
+		PLy_elog(NOTICE,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		RERAISE_EXC();
 	}
 
 	if (list != NULL)
@@ -2097,7 +2144,7 @@ PLy_spi_execute(PyObject * self, PyObject * args)
 
 	enter();
 
-#if 0
+#ifdef NOT_USED
 
 	/*
 	 * there should - hahaha - be an python exception set so just return
@@ -2187,7 +2234,8 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_error,
 							"Unknown error in PLy_spi_execute_plan");
-		return NULL;
+		PLy_elog(NOTICE,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		RERAISE_EXC();
 	}
 
 	if (nargs)
@@ -2249,16 +2297,15 @@ PLy_spi_execute_query(char *query, int limit)
 	if (TRAP_EXC())
 	{
 		RESTORE_EXC();
-
 		if ((!PLy_restart_in_progress) && (!PyErr_Occurred()))
 			PyErr_SetString(PLy_exc_spi_error,
 							"Unknown error in PLy_spi_execute_query.");
-		return NULL;
+		PLy_elog(NOTICE,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		RERAISE_EXC();
 	}
 
 	rv = SPI_exec(query, limit);
 	RESTORE_EXC();
-
 	if (rv < 0)
 	{
 		PLy_exception_set(PLy_exc_spi_error,
@@ -2311,7 +2358,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 						"Unknown error in PLy_spi_execute_fetch_result");
 			Py_DECREF(result);
 			PLy_typeinfo_dealloc(&args);
-			return NULL;
+			RERAISE_EXC();
 		}
 
 		if (rows)
@@ -2450,13 +2497,33 @@ PLy_init_plpy(void)
 		elog(ERROR, "Unable to init plpy.");
 }
 
+/*
+ *  New RExec methods
+ */
+
+PyObject* 
+PLy_r_open(PyObject *self, PyObject* args)
+{
+	PyErr_SetString(PyExc_IOError, "can't open files in restricted mode");
+	return NULL;
+}
+
+
+static PyMethodDef PLy_r_exec_methods[] = {
+	{"r_open", (PyCFunction)PLy_r_open, METH_VARARGS, NULL},
+	{NULL, NULL, 0, NULL}
+};
+
+/*
+ *  Init new RExec
+ */
+
 void
 PLy_init_safe_interp(void)
 {
-	PyObject   *rmod;
+	PyObject   *rmod, *rexec, *rexec_dict;
 	char	   *rname = "rexec";
-	int			i,
-				imax;
+	int	    len;
 
 	enter();
 
@@ -2467,19 +2534,93 @@ PLy_init_safe_interp(void)
 	PyDict_SetItemString(PLy_interp_globals, rname, rmod);
 	PLy_interp_safe = rmod;
 
-	imax = sizeof(PLy_importable_modules_list) / sizeof(char *);
-	PLy_importable_modules = PyTuple_New(imax);
-	for (i = 0; i < imax; i++)
-	{
-		PyObject   *m = PyString_FromString(PLy_importable_modules_list[i]);
+	len = sizeof(PLy_importable_modules_list) / sizeof(char *);
+	PLy_importable_modules = build_tuple(PLy_importable_modules_list, len);
 
-		PyTuple_SetItem(PLy_importable_modules, i, m);
-	}
+	len = sizeof(PLy_ok_posix_names_list) / sizeof(char *);
+	PLy_ok_posix_names = build_tuple(PLy_ok_posix_names_list, len);
+
+	len = sizeof(PLy_ok_sys_names_list) / sizeof(char *);
+	PLy_ok_sys_names = build_tuple(PLy_ok_sys_names_list, len);
 
 	PLy_interp_safe_globals = PyDict_New();
 	if (PLy_interp_safe_globals == NULL)
 		PLy_elog(ERROR, "Unable to create shared global dictionary.");
 
+	/*
+	 * get an rexec.RExec class
+	 */
+	rexec = PyDict_GetItemString(PyModule_GetDict(rmod), "RExec");
+
+	if (rexec == NULL || !PyClass_Check(rexec))
+		PLy_elog(ERROR, "Unable to get RExec object.");
+
+
+	rexec_dict = ((PyClassObject*)rexec)->cl_dict;
+
+	/*
+	 * tweak the list of permitted modules, posix and sys functions 
+	 */
+	PyDict_SetItemString(rexec_dict, "ok_builtin_modules", PLy_importable_modules);
+	PyDict_SetItemString(rexec_dict, "ok_posix_names",     PLy_ok_posix_names);
+	PyDict_SetItemString(rexec_dict, "ok_sys_names",       PLy_ok_sys_names);
+
+	/*
+	 * change the r_open behavior
+	 */
+	if( populate_methods(rexec, PLy_r_exec_methods) )
+		PLy_elog(ERROR, "Failed to update RExec methods.");
+}
+
+/* Helper function to build tuples from string lists */
+static
+PyObject *build_tuple(char* string_list[], int len)
+{
+	PyObject *tup = PyTuple_New(len);
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		PyObject *m = PyString_FromString(string_list[i]);
+
+		PyTuple_SetItem(tup, i, m);
+	}
+	return tup;
+}
+
+/* Helper function for populating a class with method wrappers. */
+static int
+populate_methods(PyObject *klass, PyMethodDef *methods)
+{
+	if (!klass || !methods)
+		return 0;
+
+	for ( ; methods->ml_name; ++methods) {
+
+		/* get a wrapper for the built-in function */   
+		PyObject *func = PyCFunction_New(methods, NULL);
+		PyObject *meth;
+		int status;
+
+		if (!func)
+			return -1;
+
+		/* turn the function into an unbound method */  
+		if (!(meth = PyMethod_New(func, NULL, klass))) {
+			Py_DECREF(func);
+			return -1;
+		}
+
+		/* add method to dictionary */
+		status = PyDict_SetItemString( ((PyClassObject*)klass)->cl_dict, 
+						methods->ml_name, meth);
+		Py_DECREF(meth);
+		Py_DECREF(func);
+
+		/* stop now if an error occurred, otherwise do the next method */
+		if (status)
+			return status;
+	}
+	return 0;
 }
 
 
@@ -2566,7 +2707,7 @@ PLy_log(volatile int level, PyObject * self, PyObject * args)
 		 * hideously.
 		 */
 		elog(FATAL, "plpython: Aiieee, elog threw an unknown exception!");
-		return NULL;
+		RERAISE_EXC();
 	}
 
 	elog(level, sv);
@@ -2583,6 +2724,18 @@ PLy_log(volatile int level, PyObject * self, PyObject * args)
 	return Py_None;
 }
 
+
+/* Get the last procedure name called by the backend ( the innermost,
+ * If a plpython procedure call calls the backend and the backend calls
+ * another plpython procedure )
+ */
+
+char *PLy_procedure_name(PLyProcedure *proc)
+{
+        if ( proc == NULL )
+	        return "<unknown procedure>";
+        return proc->proname;
+}
 
 /* output a python traceback/exception via the postgresql elog
  * function.  not pretty.
