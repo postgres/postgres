@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.20 1997/12/18 12:54:36 momjian Exp $
+ * $Id: nodes.h,v 1.21 1998/01/09 21:13:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,11 +142,11 @@ typedef enum NodeTag
 	 *---------------------
 	 */
 	T_Query = 600,
-	T_AppendStmt,
+	T_InsertStmt,
 	T_DeleteStmt,
-	T_ReplaceStmt,
+	T_UpdateStmt,
 	T_CursorStmt,
-	T_RetrieveStmt,
+	T_SelectStmt,
 	T_AddAttrStmt,
 	T_AggregateStmt,
 	T_ChangeACLStmt,
