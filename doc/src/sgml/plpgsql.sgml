@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.58 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.59 2005/02/10 05:01:07 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2602,7 +2602,7 @@ CREATE FUNCTION emp_stamp() RETURNS trigger AS $emp_stamp$
         END IF;
 
         -- Remember who changed the payroll when
-        NEW.last_date := 'now';
+        NEW.last_date := now();
         NEW.last_user := current_user;
         RETURN NEW;
     END;
