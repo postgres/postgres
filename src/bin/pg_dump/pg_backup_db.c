@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.53 2004/04/22 02:39:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.54 2004/08/20 16:07:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,8 @@ static void notice_processor(void *arg, const char *message);
 static char *_sendSQLLine(ArchiveHandle *AH, char *qry, char *eos);
 static char *_sendCopyLine(ArchiveHandle *AH, char *qry, char *eos);
 
+static int _isIdentChar(char c);
+static int _isDQChar(char c, int atStart);
 
 static int
 _parse_version(ArchiveHandle *AH, const char *versionString)
@@ -416,6 +418,9 @@ static char *
 _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 {
 	int			pos = 0;		/* Current position */
+	char			*sqlPtr;
+	int 			consumed;
+	int			startDT = 0;
 
 	/*
 	 * The following is a mini state machine to assess the end of an SQL
@@ -433,88 +438,174 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 		appendPQExpBufferChar(AH->sqlBuf, qry[pos]);
 		/* fprintf(stderr, " %c",qry[pos]); */
 
-		switch (AH->sqlparse.state)
+		/* Loop until character consumed */
+		do
 		{
+			/* If a character needs to be scanned in a different state,
+			 * consumed can be set to 0 to avoid advancing. Care must
+			 * be taken to ensure internal state is not damaged.
+			 */
+			consumed = 1;
 
-			case SQL_SCAN:		/* Default state == 0, set in _allocAH */
-				if (qry[pos] == ';' && AH->sqlparse.braceDepth == 0)
+			switch (AH->sqlparse.state)
 				{
-					/* Send It & reset the buffer */
-
-					/*
-					 * fprintf(stderr, "    sending: '%s'\n\n",
-					 * AH->sqlBuf->data);
-					 */
-					ExecuteSqlCommand(AH, AH->sqlBuf, "could not execute query", false);
-					resetPQExpBuffer(AH->sqlBuf);
-					AH->sqlparse.lastChar = '\0';
-
-					/*
-					 * Remove any following newlines - so that embedded
-					 * COPY commands don't get a starting newline.
-					 */
-					pos++;
-					for (; pos < (eos - qry) && qry[pos] == '\n'; pos++);
-
-					/* We've got our line, so exit */
-					return qry + pos;
-				}
-				else
-				{
-					if (qry[pos] == '"' || qry[pos] == '\'')
+	
+				case SQL_SCAN:		/* Default state == 0, set in _allocAH */
+					if (qry[pos] == ';' && AH->sqlparse.braceDepth == 0)
 					{
-						/* fprintf(stderr,"[startquote]\n"); */
-						AH->sqlparse.state = SQL_IN_QUOTE;
-						AH->sqlparse.quoteChar = qry[pos];
-						AH->sqlparse.backSlash = 0;
-					}
-					else if (qry[pos] == '-' && AH->sqlparse.lastChar == '-')
-						AH->sqlparse.state = SQL_IN_SQL_COMMENT;
-					else if (qry[pos] == '*' && AH->sqlparse.lastChar == '/')
-						AH->sqlparse.state = SQL_IN_EXT_COMMENT;
-					else if (qry[pos] == '(')
-						AH->sqlparse.braceDepth++;
-					else if (qry[pos] == ')')
-						AH->sqlparse.braceDepth--;
-
-					AH->sqlparse.lastChar = qry[pos];
-				}
-				break;
-
-			case SQL_IN_SQL_COMMENT:
-				if (qry[pos] == '\n')
-					AH->sqlparse.state = SQL_SCAN;
-				break;
-
-			case SQL_IN_EXT_COMMENT:
-				if (AH->sqlparse.lastChar == '*' && qry[pos] == '/')
-					AH->sqlparse.state = SQL_SCAN;
-				break;
-
-			case SQL_IN_QUOTE:
-				if (!AH->sqlparse.backSlash && AH->sqlparse.quoteChar == qry[pos])
-				{
-					/* fprintf(stderr,"[endquote]\n"); */
-					AH->sqlparse.state = SQL_SCAN;
-				}
-				else
-				{
-
-					if (qry[pos] == '\\')
-					{
-						if (AH->sqlparse.lastChar == '\\')
-							AH->sqlparse.backSlash = !AH->sqlparse.backSlash;
-						else
-							AH->sqlparse.backSlash = 1;
+						/* We've got the end of a statement.
+						 * Send It & reset the buffer.
+						 */
+	
+						/*
+						 * fprintf(stderr, "    sending: '%s'\n\n",
+						 * AH->sqlBuf->data);
+						 */
+						ExecuteSqlCommand(AH, AH->sqlBuf, "could not execute query", false);
+						resetPQExpBuffer(AH->sqlBuf);
+						AH->sqlparse.lastChar = '\0';
+	
+						/*
+						 * Remove any following newlines - so that embedded
+						 * COPY commands don't get a starting newline.
+						 */
+						pos++;
+						for (; pos < (eos - qry) && qry[pos] == '\n'; pos++);
+	
+						/* We've got our line, so exit */
+						return qry + pos;
 					}
 					else
-						AH->sqlparse.backSlash = 0;
-				}
-				break;
+					{
+						/* 
+						 * Look for normal boring quote chars, or dollar-quotes. We make
+						 * the assumption that $-quotes will not have an ident character
+						 * before them in all pg_dump output.
+						 */
+						if (	qry[pos] == '"' 
+							|| qry[pos] == '\'' 
+						     	|| ( qry[pos] == '$' && _isIdentChar(AH->sqlparse.lastChar) == 0 )
+						   )
+						{
+							/* fprintf(stderr,"[startquote]\n"); */
+							AH->sqlparse.state = SQL_IN_QUOTE;
+							AH->sqlparse.quoteChar = qry[pos];
+							AH->sqlparse.backSlash = 0;
+							if (qry[pos] == '$')
+							{
+								/* override the state */
+								AH->sqlparse.state = SQL_IN_DOLLARTAG;
+								/* Used for checking first char of tag */
+								startDT = 1;
+								/* We store the tag for later comparison. */
+								AH->sqlparse.tagBuf = createPQExpBuffer();
+								/* Get leading $ */
+								appendPQExpBufferChar(AH->sqlparse.tagBuf, qry[pos]);
+							}
+						}
+						else if (qry[pos] == '-' && AH->sqlparse.lastChar == '-')
+							AH->sqlparse.state = SQL_IN_SQL_COMMENT;
+						else if (qry[pos] == '*' && AH->sqlparse.lastChar == '/')
+							AH->sqlparse.state = SQL_IN_EXT_COMMENT;
+						else if (qry[pos] == '(')
+							AH->sqlparse.braceDepth++;
+						else if (qry[pos] == ')')
+							AH->sqlparse.braceDepth--;
+	
+						AH->sqlparse.lastChar = qry[pos];
+					}
+					break;
+	
+				case SQL_IN_DOLLARTAG:
+	
+					/* Like a quote, we look for a closing char *but* we only
+					 * allow a very limited set of contained chars, and no escape chars.
+					 * If invalid chars are found, we abort tag processing.
+					 */
+	
+					if (qry[pos] == '$')
+					{
+						/* fprintf(stderr,"[endquote]\n"); */
+						/* Get trailing $ */
+						appendPQExpBufferChar(AH->sqlparse.tagBuf, qry[pos]);
+						AH->sqlparse.state = SQL_IN_DOLLARQUOTE;
+					}
+					else
+					{
+						if ( _isDQChar(qry[pos], startDT) )
+						{
+							/* Valid, so add */
+							appendPQExpBufferChar(AH->sqlparse.tagBuf, qry[pos]);
+						}
+						else
+						{
+							/* Jump back to 'scan' state, we're not really in a tag,
+							 * and valid tag chars do not include the various chars
+							 * we look for in this state machine, so it's safe to just
+							 * jump from this state back to SCAN. We set consumed = 0
+							 * so that this char gets rescanned in new state.
+							 */
+							destroyPQExpBuffer(AH->sqlparse.tagBuf);
+							AH->sqlparse.state = SQL_SCAN;
+							consumed = 0;
+						}
+					}
+					startDT = 0;
+					break;
+	
 
-		}
-		AH->sqlparse.lastChar = qry[pos];
-		/* fprintf(stderr, "\n"); */
+				case SQL_IN_DOLLARQUOTE:
+					/*
+					 * Comparing the entire string backwards each time is NOT efficient, 
+					 * but dollar quotes in pg_dump are small and the code is a lot simpler.
+					 */
+					sqlPtr = AH->sqlBuf->data + AH->sqlBuf->len - AH->sqlparse.tagBuf->len;
+	
+					if (strncmp(AH->sqlparse.tagBuf->data, sqlPtr, AH->sqlparse.tagBuf->len) == 0) {
+						/* End of $-quote */
+						AH->sqlparse.state = SQL_SCAN;
+						destroyPQExpBuffer(AH->sqlparse.tagBuf);
+					}
+					break;
+	
+				case SQL_IN_SQL_COMMENT:
+					if (qry[pos] == '\n')
+						AH->sqlparse.state = SQL_SCAN;
+					break;
+	
+				case SQL_IN_EXT_COMMENT:
+					if (AH->sqlparse.lastChar == '*' && qry[pos] == '/')
+						AH->sqlparse.state = SQL_SCAN;
+					break;
+	
+				case SQL_IN_QUOTE:
+
+					if (!AH->sqlparse.backSlash && AH->sqlparse.quoteChar == qry[pos])
+					{
+						/* fprintf(stderr,"[endquote]\n"); */
+						AH->sqlparse.state = SQL_SCAN;
+					}
+					else
+					{
+	
+						if (qry[pos] == '\\')
+						{
+							if (AH->sqlparse.lastChar == '\\')
+								AH->sqlparse.backSlash = !AH->sqlparse.backSlash;
+							else
+								AH->sqlparse.backSlash = 1;
+						}
+						else
+							AH->sqlparse.backSlash = 0;
+					}
+					break;
+	
+			}
+
+		} while (consumed == 0);
+
+ 		AH->sqlparse.lastChar = qry[pos];
+ 		/* fprintf(stderr, "\n"); */
 	}
 
 	/*
@@ -758,4 +849,39 @@ CommitTransactionXref(ArchiveHandle *AH)
 	AH->blobTxActive = false;
 
 	destroyPQExpBuffer(qry);
+}
+
+static int _isIdentChar(char c)
+{
+	if (		(c >= 'a' && c <= 'z')
+		||	(c >= 'A' && c <= 'Z')
+		||	(c >= '0' && c <= '9')
+		||	(c == '_')
+		||	(c == '$')
+		||	(c >= '\200' && c <= '\377')
+	   )
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+static int _isDQChar(char c, int atStart)
+{	
+	if (		(c >= 'a' && c <= 'z')
+		||	(c >= 'A' && c <= 'Z')
+		||	(c == '_')
+		||	(atStart == 0 && c >= '0' && c <= '9')
+		||	(c >= '\200' && c <= '\377')
+	   )
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }

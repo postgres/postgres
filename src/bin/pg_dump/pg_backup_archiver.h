@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.58 2004/04/22 02:39:10 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.59 2004/08/20 16:07:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,9 @@ typedef enum
 	SQL_SCAN = 0,
 	SQL_IN_SQL_COMMENT,
 	SQL_IN_EXT_COMMENT,
-	SQL_IN_QUOTE
+	SQL_IN_QUOTE,
+	SQL_IN_DOLLARTAG,
+	SQL_IN_DOLLARQUOTE
 } sqlparseState;
 
 typedef struct
@@ -147,6 +149,7 @@ typedef struct
 	char		lastChar;
 	char		quoteChar;
 	int			braceDepth;
+	PQExpBuffer	tagBuf;
 } sqlparseInfo;
 
 typedef struct _archiveHandle
