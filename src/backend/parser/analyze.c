@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.82 1998/08/26 04:20:27 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.83 1998/08/26 05:22:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -408,7 +408,7 @@ makeTableName(void *elem,...)
 }
 
 static char *
-CreateIndexName(char *tname, char *cname, char *label, List *indices)
+CreateIndexName(char *table_name, char *column_name, char *label, List *indices)
 {
 	int			pass = 0;
 	char	   *iname = NULL;
@@ -417,10 +417,10 @@ CreateIndexName(char *tname, char *cname, char *label, List *indices)
 	char		name2[NAMEDATALEN + 1];
 
 	/* use working storage, since we might be trying several possibilities */
-	strcpy(name2, cname);
+	strcpy(name2, column_name);
 	while (iname == NULL)
 	{
-		iname = makeTableName(tname, name2, label, NULL);
+		iname = makeTableName(table_name, name2, label, NULL);
 		/* unable to make a name at all? then quit */
 		if (iname == NULL)
 			break;
@@ -442,7 +442,7 @@ CreateIndexName(char *tname, char *cname, char *label, List *indices)
 		pfree(iname);
 		iname = NULL;
 		pass++;
-		sprintf(name2, "%s_%d", cname, (pass + 1));
+		sprintf(name2, "%s_%d", column_name, (pass + 1));
 	}
 
 	return (iname);
@@ -700,7 +700,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			iparam->name = strcpy(palloc(strlen(column->colname) + 1), column->colname);
 			iparam->args = NIL;
 			iparam->class = NULL;
-			iparam->tname = NULL;
+			iparam->typename = NULL;
 			index->indexParams = lappend(index->indexParams, iparam);
 
 			if (index->idxname == NULL)

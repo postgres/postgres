@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.53 1998/08/24 19:04:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.54 1998/08/26 05:22:34 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -344,8 +344,8 @@ ConstructTupleDescriptor(Oid heapoid,
 		if (attributeList)
 		{
 			IndexKey = (IndexElem *) lfirst(attributeList);
+			IndexKeyType = IndexKey->typename;
 			attributeList = lnext(attributeList);
-			IndexKeyType = IndexKey->tname;
 		}
 		else
 			IndexKeyType = NULL;
@@ -782,7 +782,7 @@ UpdateIndexRelation(Oid indexoid,
 	while (attributeList != NIL)
 	{
 		IndexKey = (IndexElem *) lfirst(attributeList);
-		if (IndexKey->tname != NULL)
+		if (IndexKey->typename != NULL)
 		{
 			indexForm->indhaskeytype = 1;
 			break;

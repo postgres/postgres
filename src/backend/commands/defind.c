@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.22 1998/08/19 02:01:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.23 1998/08/26 05:22:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include <catalog/index.h>
 #include <catalog/pg_index.h>
 #include <catalog/pg_proc.h>
+#include <catalog/pg_type.h>
 #include <catalog/pg_opclass.h>
 #include <nodes/plannodes.h>
 #include <nodes/primnodes.h>
@@ -195,9 +196,8 @@ DefineIndex(char *heapRelationName,
 	}
 	else
 	{
-		attributeNumberA =
-			(AttrNumber *) palloc(numberOfAttributes *
-								  sizeof attributeNumberA[0]);
+		attributeNumberA = (AttrNumber *) palloc(numberOfAttributes *
+										  sizeof attributeNumberA[0]);
 
 		classObjectId =
 			(Oid *) palloc(numberOfAttributes * sizeof classObjectId[0]);
@@ -464,7 +464,7 @@ FuncIndexArgs(IndexElem *funcIndex,
 static void
 NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			   AttrNumber *attNumP,
-			   Oid *opOidP,
+			   Oid *classOidP,
 			   Oid relId)
 {
 	List	   *rest;
@@ -519,7 +519,22 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			elog(ERROR, "DefineIndex: %s class not found",
 				 attribute->class);
 		}
-		*opOidP++ = tuple->t_oid;
+		*classOidP++ = tuple->t_oid;
+		/* we want the type so we can set the proper alignment, etc. */
+		if (attribute->typename == NULL)
+		{
+			Oid typoid = ((Form_pg_opclass) GETSTRUCT(tuple))->opcdeftype;
+			
+			tuple = SearchSysCacheTuple(TYPOID,
+									  ObjectIdGetDatum(typoid),
+									  0, 0, 0);
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "create index: type for class '%s' undefined",
+					 attribute->class);
+			/* we just set the name because that is all we need */
+			attribute->typename = makeNode(TypeName);
+			attribute->typename->name = nameout(&((TypeTupleForm) GETSTRUCT(tuple))->typname);
+		}
 	}
 }
 

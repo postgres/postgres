@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.26 1998/08/25 21:36:53 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.27 1998/08/26 05:22:49 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -295,7 +295,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
 		RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED, 
-		VACUUM, VERBOSE, VERSION, ENCODING
+		VACUUM, VERBOSE, VERSION, ENCODING, UNLISTEN
 
 /* Keywords (obsolete; retain through next version for parser - thomas 1997-12-04) */
 %token	ARCHIVE
@@ -1697,7 +1697,7 @@ func_index:  func_name '(' name_list ')' opt_type opt_class
 					$$->name = $1;
 					$$->args = $3;
 					$$->class = $6;
-					$$->tname = $5;
+					$$->typename = $5;
 				}
 		  ;
 
@@ -1707,7 +1707,7 @@ index_elem:  attr_name opt_type opt_class
 					$$->name = $1;
 					$$->args = NIL;
 					$$->class = $3;
-					$$->tname = $2;
+					$$->typename = $2;
 				}
 		;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.43 1998/08/04 16:43:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.44 1998/08/26 05:22:37 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -179,8 +179,8 @@ _outIndexElem(StringInfo str, IndexElem *node)
 	_outNode(str, node->args);
 	appendStringInfo(str, " :class ");
 	appendStringInfo(str, node->class);
-	appendStringInfo(str, " :tname ");
-	_outNode(str, node->tname);
+	appendStringInfo(str, " :typename ");
+	_outNode(str, node->typename);
 }
 
 static void

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.35 1998/08/24 01:14:09 momjian Exp $
+ * $Id: pg_attribute.h,v 1.36 1998/08/26 05:22:53 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -178,7 +178,7 @@ typedef FormData_pg_attribute *AttributeTupleForm;
  * ----------------
  */
 #define Schema_pg_type \
-{ 1247, {"typname"},	   19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
+{ 1247, {"typname"},	   19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'd', '\0', '\0' }, \
 { 1247, {"typowner"},	   23, 0,	4,	2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1247, {"typlen"},		   21, 0,	2,	3, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1247, {"typprtlen"},     21, 0,	2,	4, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
@@ -195,7 +195,7 @@ typedef FormData_pg_attribute *AttributeTupleForm;
 { 1247, {"typalign"},	   18, 0,	1, 15, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1247, {"typdefault"},    25, 0,  -1, 16, 0, -1, -1, '\0'	, '\0', 'i', '\0', '\0' }
 
-DATA(insert OID = 0 ( 1247 typname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1247 typname			19 0 NAMEDATALEN   1 0 -1 -1 f f d f f));
 DATA(insert OID = 0 ( 1247 typowner			23 0  4   2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1247 typlen			21 0  2   3 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1247 typprtlen		21 0  2   4 0 -1 -1 t f s f f));
@@ -222,9 +222,9 @@ DATA(insert OID = 0 ( 1247 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  *		pg_database
  * ----------------
  */
-DATA(insert OID = 0 ( 1262 datname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
-DATA(insert OID = 0 ( 1262 datdba			23 0  4   2 0 -1 -1 t f s f f));
-DATA(insert OID = 0 ( 1262 encoding			23 0  4   3 0 -1 -1 t f s f f));
+DATA(insert OID = 0 ( 1262 datname			19 0 NAMEDATALEN   1 0 -1 -1 f f d f f));
+DATA(insert OID = 0 ( 1262 datdba			23 0  4   2 0 -1 -1 t f i f f));
+DATA(insert OID = 0 ( 1262 encoding			23 0  4   3 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1262 datpath			25 0 -1   4 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1262 ctid				27 0  6  -1 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1262 oid				26 0  4  -2 0 -1 -1 t f i f f));
@@ -238,7 +238,7 @@ DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  * ----------------
  */
 #define Schema_pg_proc \
-{ 1255, {"proname"},			19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"proname"},			19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'd', '\0', '\0' }, \
 { 1255, {"proowner"},			23, 0,  4,  2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1255, {"prolang"},			26, 0,  4,  3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1255, {"proisinh"},			16, 0,  1,  4, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
@@ -255,7 +255,7 @@ DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 { 1255, {"prosrc"},				25, 0, -1,  15,	0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
 { 1255, {"probin"},				17, 0, -1,  16,	0, -1, -1, '\0', '\0', 'i', '\0', '\0' }
 
-DATA(insert OID = 0 ( 1255 proname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1255 proname			19 0 NAMEDATALEN   1 0 -1 -1 f f d f f));
 DATA(insert OID = 0 ( 1255 proowner			23 0  4   2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1255 prolang			26 0  4   3 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1255 proisinh			16 0  1   4 0 -1 -1 t f c f f));
@@ -282,8 +282,8 @@ DATA(insert OID = 0 ( 1255 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  *		pg_shadow
  * ----------------
  */
-DATA(insert OID = 0 ( 1260 usename		19	0 NAMEDATALEN	1 0 -1 -1 f f i f f));
-DATA(insert OID = 0 ( 1260 usesysid		23	0	4	2 0 -1 -1 t f s f f));
+DATA(insert OID = 0 ( 1260 usename		19	0 NAMEDATALEN	1 0 -1 -1 f f d f f));
+DATA(insert OID = 0 ( 1260 usesysid		23	0	4	2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1260 usecreatedb	16	0	1	3 0 -1 -1 t f c f f));
 DATA(insert OID = 0 ( 1260 usetrace		16	0	1	4 0 -1 -1 t f c f f));
 DATA(insert OID = 0 ( 1260 usesuper		16	0	1	5 0 -1 -1 t f c f f));
@@ -301,8 +301,8 @@ DATA(insert OID = 0 ( 1260 cmax			29 0  4  -6 0 -1 -1 t f i f f));
  *		pg_group
  * ----------------
  */
-DATA(insert OID = 0 ( 1261 groname			19 0 NAMEDATALEN  1 0 -1 -1 f f i f f));
-DATA(insert OID = 0 ( 1261 grosysid			23 0  4   2 0 -1 -1 t f s f f));
+DATA(insert OID = 0 ( 1261 groname			19 0 NAMEDATALEN  1 0 -1 -1 f f d f f));
+DATA(insert OID = 0 ( 1261 grosysid			23 0  4   2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1261 grolist		  1007 0 -1   3 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1261 ctid				27 0  6  -1 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1261 oid				26 0  4  -2 0 -1 -1 t f i f f));
@@ -317,7 +317,7 @@ DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  */
 #define Schema_pg_attribute \
 { 1249, {"attrelid"},	  26, 0,	4,	1, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1249, {"attname"},	  19, 0, NAMEDATALEN,	2, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
+{ 1249, {"attname"},	  19, 0, NAMEDATALEN,	2, 0, -1, -1, '\0', '\0', 'd ', '\0', '\0' }, \
 { 1249, {"atttypid"},	  26, 0,	4,	3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1249, {"attdisbursion"}, 700, 0,	4,	4, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
 { 1249, {"attlen"},		  21, 0,	2,	5, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
@@ -332,7 +332,7 @@ DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 { 1249, {"atthasdef"},   16, 0,	1, 14, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1249 attrelid			26 0  4   1 0 -1 -1 t f i f f));
-DATA(insert OID = 0 ( 1249 attname			19 0 NAMEDATALEN  2 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1249 attname			19 0 NAMEDATALEN  2 0 -1 -1 f f d f f));
 DATA(insert OID = 0 ( 1249 atttypid			26 0  4   3 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 attdisbursion   700 0  4   4 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1249 attlen			21 0  2   5 0 -1 -1 t f s f f));
@@ -357,7 +357,7 @@ DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  * ----------------
  */
 #define Schema_pg_class \
-{ 1259, {"relname"},	   19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
+{ 1259, {"relname"},	   19, 0, NAMEDATALEN,  1, 0, -1, -1, '\0', '\0', 'd', '\0', '\0' }, \
 { 1259, {"reltype"},	   26, 0,	4,	2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1259, {"relowner"},	   23, 0,	4,	3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1259, {"relam"},		   26, 0,	4,	4, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
@@ -372,7 +372,7 @@ DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 { 1259, {"relhasrules"},   16,	0,  1, 13, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1259, {"relacl"},	 	 1034, 0, -1, 14, 0, -1, -1,	'\0', '\0', 'i', '\0', '\0' }
 
-DATA(insert OID = 0 ( 1259 relname			19 0 NAMEDATALEN   1 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1259 relname			19 0 NAMEDATALEN   1 0 -1 -1 f f d f f));
 DATA(insert OID = 0 ( 1259 reltype			26 0  4   2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 relowner			23 0  4   3 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 relam			26 0  4   4 0 -1 -1 t f i f f));
@@ -413,7 +413,7 @@ DATA(insert OID = 0 ( 1215 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  * ----------------
  */
 DATA(insert OID = 0 ( 1216 rcrelid			26 0  4   1 0 -1 -1 t f i f f));
-DATA(insert OID = 0 ( 1216 rcname			19 0  NAMEDATALEN  2 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1216 rcname			19 0  NAMEDATALEN  2 0 -1 -1 f f d f f));
 DATA(insert OID = 0 ( 1216 rcbin			25 0 -1   3 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1216 rcsrc			25 0 -1   4 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1216 ctid				27 0  6  -1 0 -1 -1 f f i f f));
@@ -428,7 +428,7 @@ DATA(insert OID = 0 ( 1216 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  * ----------------
  */
 DATA(insert OID = 0 ( 1219 tgrelid			26 0  4   1 0 -1 -1 t f i f f));
-DATA(insert OID = 0 ( 1219 tgname			19 0  NAMEDATALEN  2 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tgname			19 0  NAMEDATALEN  2 0 -1 -1 f f d f f));
 DATA(insert OID = 0 ( 1219 tgfoid			26 0  4   3 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1219 tgtype			21 0  2   4 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1219 tgnargs			21 0  2   5 0 -1 -1 t f s f f));
