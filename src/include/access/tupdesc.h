@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.24 1999/07/16 17:07:28 momjian Exp $
+ * $Id: tupdesc.h,v 1.25 1999/10/03 23:55:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,22 +21,20 @@
 typedef struct attrDefault
 {
 	AttrNumber	adnum;
-	char	   *adbin;
-	char	   *adsrc;
+	char	   *adbin;			/* nodeToString representation of expr */
 } AttrDefault;
 
 typedef struct constrCheck
 {
 	char	   *ccname;
-	char	   *ccbin;
-	char	   *ccsrc;
+	char	   *ccbin;			/* nodeToString representation of expr */
 } ConstrCheck;
 
 /* This structure contains constraints of a tuple */
 typedef struct tupleConstr
 {
-	AttrDefault *defval;
-	ConstrCheck *check;
+	AttrDefault *defval;		/* array */
+	ConstrCheck *check;			/* array */
 	uint16		num_defval;
 	uint16		num_check;
 	bool		has_not_null;

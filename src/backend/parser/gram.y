@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.105 1999/10/02 21:33:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.106 1999/10/03 23:55:30 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -72,8 +72,6 @@ static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
-static List *makeConstantList( A_Const *node);
-static char *FlattenStringList(List *list);
 static char *fmtId(char *rawid);
 static void param_type_init(Oid *typev, int nargs);
 static Node *doNegate(Node *n);
@@ -217,7 +215,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <node>	def_arg, columnElem, where_clause,
 				a_expr, a_expr_or_null, b_expr, AexprConst,
 				in_expr, having_clause
-%type <list>	row_descriptor, row_list, c_list, c_expr, in_expr_nodes
+%type <list>	row_descriptor, row_list, in_expr_nodes
 %type <node>	row_expr
 %type <str>		row_op
 %type <node>	case_expr, case_arg, when_clause, case_default
@@ -250,8 +248,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <str>		TypeId
 
 %type <node>	TableConstraint
-%type <list>	constraint_list, constraint_expr
-%type <list>	default_list, default_expr
 %type <list>	ColPrimaryKey, ColQualList, ColQualifier
 %type <node>	ColConstraint, ColConstraintElem
 %type <list>	key_actions, key_action
@@ -716,7 +712,7 @@ alter_clause:  ADD opt_column columnDef
 				}
 			| DROP opt_column ColId
 				{	elog(ERROR,"ALTER TABLE/DROP COLUMN not yet implemented"); }
-			| ALTER opt_column ColId SET DEFAULT default_expr
+			| ALTER opt_column ColId SET DEFAULT a_expr
 				{	elog(ERROR,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented"); }
 			| ALTER opt_column ColId DROP DEFAULT
 				{	elog(ERROR,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented"); }
@@ -864,7 +860,8 @@ columnDef:  ColId Typename ColQualifier
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typename = $2;
-					n->defval = NULL;
+					n->raw_default = NULL;
+					n->cooked_default = NULL;
 					n->is_not_null = FALSE;
 					n->constraints = $3;
 					$$ = (Node *)n;
@@ -875,7 +872,8 @@ columnDef:  ColId Typename ColQualifier
 					n->colname = $1;
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("integer");
-					n->defval = NULL;
+					n->raw_default = NULL;
+					n->cooked_default = NULL;
 					n->is_not_null = TRUE;
 					n->is_sequence = TRUE;
 					n->constraints = $3;
@@ -909,7 +907,8 @@ ColPrimaryKey:  PRIMARY KEY
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
 					n->name = NULL;
-					n->def = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
 					n->keys = NULL;
 					$$ = lcons((Node *)n, NIL);
 				}
@@ -928,7 +927,7 @@ ColConstraint:
 		;
 
 /* DEFAULT NULL is already the default for Postgres.
- * Bue define it here and carry it forward into the system
+ * But define it here and carry it forward into the system
  * to make it explicit.
  * - thomas 1998-09-13
  * WITH NULL and NULL are not SQL92-standard syntax elements,
@@ -936,13 +935,17 @@ ColConstraint:
  * that a column may have that value. WITH NULL leads to
  * shift/reduce conflicts with WITH TIME ZONE anyway.
  * - thomas 1999-01-08
+ * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
+ * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
+ * or be part of a_expr NOT LIKE or similar constructs).
  */
-ColConstraintElem:  CHECK '(' constraint_expr ')'
+ColConstraintElem:  CHECK '(' a_expr ')'
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
 					n->name = NULL;
-					n->def = FlattenStringList($3);
+					n->raw_expr = $3;
+					n->cooked_expr = NULL;
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
@@ -951,16 +954,18 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_DEFAULT;
 					n->name = NULL;
-					n->def = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
-			| DEFAULT default_expr
+			| DEFAULT b_expr
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_DEFAULT;
 					n->name = NULL;
-					n->def = FlattenStringList($2);
+					n->raw_expr = $2;
+					n->cooked_expr = NULL;
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
@@ -969,7 +974,8 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_NOTNULL;
 					n->name = NULL;
-					n->def = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
@@ -978,7 +984,8 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->name = NULL;
-					n->def = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
@@ -987,7 +994,8 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
 					n->name = NULL;
-					n->def = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
@@ -996,112 +1004,6 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
 					$$ = NULL;
 				}
-		;
-
-default_list:  default_list ',' default_expr
-				{
-					$$ = lappend($1,makeString(","));
-					$$ = nconc($$, $3);
-				}
-			| default_expr
-				{
-					$$ = $1;
-				}
-		;
-
-/* The Postgres default column value is NULL.
- * Rather than carrying DEFAULT NULL forward as a clause,
- * let's just have it be a no-op.
-			| NULL_P
-				{	$$ = lcons( makeString("NULL"), NIL); }
- * - thomas 1998-09-13
- */
-default_expr:  AexprConst
-				{	$$ = makeConstantList((A_Const *) $1); }
-			| '-' default_expr %prec UMINUS
-				{	$$ = lcons( makeString( "-"), $2); }
-			| default_expr '+' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "+"), $3)); }
-			| default_expr '-' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
-			| default_expr '/' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
-			| default_expr '%' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "%"), $3)); }
-			| default_expr '*' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
-			| default_expr '^' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "^"), $3)); }
-			| default_expr '|' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "|"), $3)); }
-			| default_expr '=' default_expr
-				{	elog(ERROR,"boolean expressions not supported in DEFAULT"); }
-			| default_expr '<' default_expr
-				{	elog(ERROR,"boolean expressions not supported in DEFAULT"); }
-			| default_expr '>' default_expr
-				{	elog(ERROR,"boolean expressions not supported in DEFAULT"); }
-			| ':' default_expr
-				{	$$ = lcons( makeString( ":"), $2); }
-			| ';' default_expr
-				{	$$ = lcons( makeString( ";"), $2); }
-			| '|' default_expr
-				{	$$ = lcons( makeString( "|"), $2); }
-			| default_expr TYPECAST Typename
-				{
-					$3->name = fmtId($3->name);
-					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
-				}
-			| CAST '(' default_expr AS Typename ')'
-				{
-					$5->name = fmtId($5->name);
-					$$ = nconc( lcons( makeString( "CAST"), $3), makeList( makeString("AS"), $5, -1));
-				}
-			| '(' default_expr ')'
-				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
-			| func_name '(' ')'
-				{
-					$$ = makeList( makeString($1), makeString("("), -1);
-					$$ = lappend( $$, makeString(")"));
-				}
-			| func_name '(' default_list ')'
-				{
-					$$ = makeList( makeString($1), makeString("("), -1);
-					$$ = nconc( $$, $3);
-					$$ = lappend( $$, makeString(")"));
-				}
-			| default_expr Op default_expr
-				{
-					if (!strcmp("<=", $2) || !strcmp(">=", $2))
-						elog(ERROR,"boolean expressions not supported in DEFAULT");
-					$$ = nconc( $1, lcons( makeString( $2), $3));
-				}
-			| Op default_expr
-				{	$$ = lcons( makeString( $1), $2); }
-			| default_expr Op
-				{	$$ = lappend( $1, makeString( $2)); }
-			/* XXX - thomas 1997-10-07 v6.2 function-specific code to be changed */
-			| CURRENT_DATE
-				{	$$ = lcons( makeString( "date( 'current'::datetime + '0 sec')"), NIL); }
-			| CURRENT_TIME
-				{	$$ = lcons( makeString( "'now'::time"), NIL); }
-			| CURRENT_TIME '(' Iconst ')'
-				{
-					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
-					$$ = lcons( makeString( "'now'::time"), NIL);
-				}
-			| CURRENT_TIMESTAMP
-				{	$$ = lcons( makeString( "now()"), NIL); }
-			| CURRENT_TIMESTAMP '(' Iconst ')'
-				{
-					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
-					$$ = lcons( makeString( "now()"), NIL);
-				}
-			| CURRENT_USER
-				{	$$ = lcons( makeString( "CURRENT_USER"), NIL); }
-			| USER
-				{	$$ = lcons( makeString( "USER"), NIL); }
 		;
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
@@ -1118,12 +1020,13 @@ TableConstraint:  CONSTRAINT name ConstraintElem
 				{ $$ = $1; }
 		;
 
-ConstraintElem:  CHECK '(' constraint_expr ')'
+ConstraintElem:  CHECK '(' a_expr ')'
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
 					n->name = NULL;
-					n->def = FlattenStringList($3);
+					n->raw_expr = $3;
+					n->cooked_expr = NULL;
 					$$ = (Node *)n;
 				}
 		| UNIQUE '(' columnList ')'
@@ -1131,7 +1034,8 @@ ConstraintElem:  CHECK '(' constraint_expr ')'
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->name = NULL;
-					n->def = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
 					n->keys = $3;
 					$$ = (Node *)n;
 				}
@@ -1140,7 +1044,8 @@ ConstraintElem:  CHECK '(' constraint_expr ')'
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
 					n->name = NULL;
-					n->def = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
 					n->keys = $4;
 					$$ = (Node *)n;
 				}
@@ -1149,153 +1054,6 @@ ConstraintElem:  CHECK '(' constraint_expr ')'
 					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
 					$$ = NULL;
 				}
-		;
-
-constraint_list:  constraint_list ',' constraint_expr
-				{
-					$$ = lappend($1,makeString(","));
-					$$ = nconc($$, $3);
-				}
-			| constraint_expr
-				{
-					$$ = $1;
-				}
-		;
-
-constraint_expr:  AexprConst
-				{	$$ = makeConstantList((A_Const *) $1); }
-			| NULL_P
-				{	$$ = lcons( makeString("NULL"), NIL); }
-			| ColId
-				{
-					$$ = lcons( makeString(fmtId($1)), NIL);
-				}
-			| '-' constraint_expr %prec UMINUS
-				{	$$ = lcons( makeString( "-"), $2); }
-			| constraint_expr '+' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "+"), $3)); }
-			| constraint_expr '-' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
-			| constraint_expr '/' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
-			| constraint_expr '%' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "%"), $3)); }
-			| constraint_expr '*' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
-			| constraint_expr '^' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "^"), $3)); }
-			| constraint_expr '|' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "|"), $3)); }
-			| constraint_expr '=' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "="), $3)); }
-			| constraint_expr '<' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "<"), $3)); }
-			| constraint_expr '>' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( ">"), $3)); }
-			| ':' constraint_expr
-				{	$$ = lcons( makeString( ":"), $2); }
-			| ';' constraint_expr
-				{	$$ = lcons( makeString( ";"), $2); }
-			| '|' constraint_expr
-				{	$$ = lcons( makeString( "|"), $2); }
-			| constraint_expr TYPECAST Typename
-				{
-					$3->name = fmtId($3->name);
-					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
-				}
-			| CAST '(' constraint_expr AS Typename ')'
-				{
-					$5->name = fmtId($5->name);
-					$$ = nconc( lcons( makeString( "CAST"), $3), makeList( makeString("AS"), $5, -1));
-				}
-			| '(' constraint_expr ')'
-				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
-			| func_name '(' ')'
-				{
-					$$ = makeList( makeString($1), makeString("("), -1);
-					$$ = lappend( $$, makeString(")"));
-				}
-			| func_name '(' constraint_list ')'
-				{
-					$$ = makeList( makeString($1), makeString("("), -1);
-					$$ = nconc( $$, $3);
-					$$ = lappend( $$, makeString(")"));
-				}
-			| constraint_expr Op constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( $2), $3)); }
-			| constraint_expr LIKE constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "LIKE"), $3)); }
-			| constraint_expr NOT LIKE constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "NOT LIKE"), $4)); }
-			| constraint_expr AND constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "AND"), $3)); }
-			| constraint_expr OR constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "OR"), $3)); }
-			| NOT constraint_expr
-				{	$$ = lcons( makeString( "NOT"), $2); }
-			| Op constraint_expr
-				{	$$ = lcons( makeString( $1), $2); }
-			| constraint_expr Op
-				{	$$ = lappend( $1, makeString( $2)); }
-			| constraint_expr ISNULL
-				{	$$ = lappend( $1, makeString( "IS NULL")); }
-			| constraint_expr IS NULL_P
-				{	$$ = lappend( $1, makeString( "IS NULL")); }
-			| constraint_expr NOTNULL
-				{	$$ = lappend( $1, makeString( "IS NOT NULL")); }
-			| constraint_expr IS NOT NULL_P
-				{	$$ = lappend( $1, makeString( "IS NOT NULL")); }
-			| constraint_expr IS TRUE_P
-				{	$$ = lappend( $1, makeString( "IS TRUE")); }
-			| constraint_expr IS FALSE_P
-				{	$$ = lappend( $1, makeString( "IS FALSE")); }
-			| constraint_expr IS NOT TRUE_P
-				{	$$ = lappend( $1, makeString( "IS NOT TRUE")); }
-			| constraint_expr IS NOT FALSE_P
-				{	$$ = lappend( $1, makeString( "IS NOT FALSE")); }
-			| constraint_expr IN '(' c_list ')'
-				{
-					$$ = lappend( $1, makeString("IN"));
-					$$ = lappend( $$, makeString("("));
-					$$ = nconc( $$, $4);
-					$$ = lappend( $$, makeString(")"));
-				}
-			| constraint_expr NOT IN '(' c_list ')'
-				{
-					$$ = lappend( $1, makeString("NOT IN"));
-					$$ = lappend( $$, makeString("("));
-					$$ = nconc( $$, $5);
-					$$ = lappend( $$, makeString(")"));
-				}
-			| constraint_expr BETWEEN c_expr AND c_expr
-				{
-					$$ = lappend( $1, makeString("BETWEEN"));
-					$$ = nconc( $$, $3);
-					$$ = lappend( $$, makeString("AND"));
-					$$ = nconc( $$, $5);
-				}
-			| constraint_expr NOT BETWEEN c_expr AND c_expr
-				{
-					$$ = lappend( $1, makeString("NOT BETWEEN"));
-					$$ = nconc( $$, $4);
-					$$ = lappend( $$, makeString("AND"));
-					$$ = nconc( $$, $6);
-				}
-		;
-
-c_list:  c_list ',' c_expr
-				{
-					$$ = lappend($1, makeString(","));
-					$$ = nconc($$, $3);
-				}
-			| c_expr
-				{
-					$$ = $1;
-				}
-		;
-
-c_expr:  AexprConst
-				{	$$ = makeConstantList((A_Const *) $1); }
 		;
 
 key_match:  MATCH FULL					{ $$ = NULL; }
@@ -1346,7 +1104,8 @@ CreateAsElement:  ColId
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typename = NULL;
-					n->defval = NULL;
+					n->raw_default = NULL;
+					n->cooked_default = NULL;
 					n->is_not_null = FALSE;
 					n->constraints = NULL;
 					$$ = (Node *)n;
@@ -5493,95 +5252,6 @@ void parser_init(Oid *typev, int nargs)
 
 	param_type_init(typev, nargs);
 }
-
-
-/* FlattenStringList()
- * Traverse list of string nodes and convert to a single string.
- * Used for reconstructing string form of complex expressions.
- *
- * Allocate at least one byte for terminator.
- */
-static char *
-FlattenStringList(List *list)
-{
-	List *l;
-	Value *v;
-	char *s;
-	char *sp;
-	int nlist, len = 0;
-
-	nlist = length(list);
-	l = list;
-	while(l != NIL) {
-		v = (Value *)lfirst(l);
-		sp = v->val.str;
-		l = lnext(l);
-		len += strlen(sp);
-	};
-	len += nlist;
-
-	s = (char*) palloc(len+1);
-	*s = '\0';
-
-	l = list;
-	while(l != NIL) {
-		v = (Value *)lfirst(l);
-		sp = v->val.str;
-		l = lnext(l);
-		strcat(s,sp);
-		if (l != NIL) strcat(s," ");
-	};
-	*(s+len) = '\0';
-
-	return s;
-} /* FlattenStringList() */
-
-
-/* makeConstantList()
- * Convert constant value node into string node.
- */
-static List *
-makeConstantList( A_Const *n)
-{
-	List *result = NIL;
-	char *typval = NULL;
-	char *defval = NULL;
-
-	if (nodeTag(n) != T_A_Const) {
-		elog(ERROR,"Cannot handle non-constant parameter");
-
-	} else if (n->val.type == T_Float) {
-		defval = (char*) palloc(20+1);
-		sprintf( defval, "%g", n->val.val.dval);
-		result = lcons( makeString(defval), NIL);
-
-	} else if (n->val.type == T_Integer) {
-		defval = (char*) palloc(20+1);
-		sprintf( defval, "%ld", n->val.val.ival);
-		result = lcons( makeString(defval), NIL);
-
-	} else if (n->val.type == T_String) {
-		defval = (char*) palloc(strlen( ((A_Const *) n)->val.val.str) + 3);
-		strcpy( defval, "'");
-		strcat( defval, ((A_Const *) n)->val.val.str);
-		strcat( defval, "'");
-		if (n->typename != NULL)
-		{
-			typval = (char*) palloc(strlen( n->typename->name) + 1);
-			strcpy(typval, n->typename->name);
-			result = lappend( lcons( makeString(typval), NIL), makeString(defval));
-		}
-		else
-		{
-			result = lcons( makeString(defval), NIL);
-		}
-
-	} else {
-		elog(ERROR,"Internal error in makeConstantList(): cannot encode node");
-	};
-
-	return result;
-} /* makeConstantList() */
 
 
 /* fmtId()

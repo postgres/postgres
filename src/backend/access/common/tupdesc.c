@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.54 1999/07/17 20:16:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.55 1999/10/03 23:55:25 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -160,8 +160,6 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 			{
 				if (constr->defval[i].adbin)
 					cpy->defval[i].adbin = pstrdup(constr->defval[i].adbin);
-				if (constr->defval[i].adsrc)
-					cpy->defval[i].adsrc = pstrdup(constr->defval[i].adsrc);
 			}
 		}
 
@@ -175,8 +173,6 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 					cpy->check[i].ccname = pstrdup(constr->check[i].ccname);
 				if (constr->check[i].ccbin)
 					cpy->check[i].ccbin = pstrdup(constr->check[i].ccbin);
-				if (constr->check[i].ccsrc)
-					cpy->check[i].ccsrc = pstrdup(constr->check[i].ccsrc);
 			}
 		}
 
@@ -206,8 +202,6 @@ FreeTupleDesc(TupleDesc tupdesc)
 			{
 				if (attrdef[i].adbin)
 					pfree(attrdef[i].adbin);
-				if (attrdef[i].adsrc)
-					pfree(attrdef[i].adsrc);
 			}
 			pfree(attrdef);
 		}
@@ -221,8 +215,6 @@ FreeTupleDesc(TupleDesc tupdesc)
 					pfree(check[i].ccname);
 				if (check[i].ccbin)
 					pfree(check[i].ccbin);
-				if (check[i].ccsrc)
-					pfree(check[i].ccsrc);
 			}
 			pfree(check);
 		}
@@ -438,7 +430,7 @@ BuildDescForRelation(List *schema, char *relname)
 	AttrDefault *attrdef = NULL;
 	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
 	char	   *attname;
-	char	   *typename;
+	char		typename[NAMEDATALEN];
 	int32		atttypmod;
 	int			attdim;
 	int			ndef = 0;
@@ -454,11 +446,9 @@ BuildDescForRelation(List *schema, char *relname)
 
 	attnum = 0;
 
-	typename = palloc(NAMEDATALEN);
-
 	foreach(p, schema)
 	{
-		ColumnDef  *entry;
+		ColumnDef  *entry = lfirst(p);
 		List	   *arry;
 
 		/* ----------------
@@ -469,7 +459,6 @@ BuildDescForRelation(List *schema, char *relname)
 		 */
 		attnum++;
 
-		entry = lfirst(p);
 		attname = entry->colname;
 		arry = entry->typename->arrayBounds;
 		attisset = entry->typename->setof;
@@ -513,13 +502,15 @@ BuildDescForRelation(List *schema, char *relname)
 			constr->has_not_null = true;
 		desc->attrs[attnum - 1]->attnotnull = entry->is_not_null;
 
-		if (entry->defval != NULL)
+		/* Note we copy only pre-cooked default expressions.
+		 * Digestion of raw ones is someone else's problem.
+		 */
+		if (entry->cooked_default != NULL)
 		{
 			if (attrdef == NULL)
 				attrdef = (AttrDefault *) palloc(natts * sizeof(AttrDefault));
 			attrdef[ndef].adnum = attnum;
-			attrdef[ndef].adbin = NULL;
-			attrdef[ndef].adsrc = entry->defval;
+			attrdef[ndef].adbin = pstrdup(entry->cooked_default);
 			ndef++;
 			desc->attrs[attnum - 1]->atthasdef = true;
 		}
@@ -539,7 +530,11 @@ BuildDescForRelation(List *schema, char *relname)
 			constr->num_defval = ndef;
 		}
 		else
+		{
+			constr->defval = NULL;
 			constr->num_defval = 0;
+		}
+		constr->check = NULL;
 		constr->num_check = 0;
 	}
 	else

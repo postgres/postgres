@@ -96,7 +96,8 @@ DefineSequence(CreateSeqStmt *seq)
 		typnam->typmod = -1;
 		coldef = makeNode(ColumnDef);
 		coldef->typename = typnam;
-		coldef->defval = NULL;
+		coldef->raw_default = NULL;
+		coldef->cooked_default = NULL;
 		coldef->is_not_null = false;
 		null[i - 1] = ' ';
 

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.119 1999/09/18 19:07:12 tgl Exp $
+ *	$Id: analyze.c,v 1.120 1999/10/03 23:55:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,7 +396,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 				if (namestrcmp(&(thisatt->attname), resnode->resname) == 0)
 					break;
 			}
-			if (tl != NIL)		/* something given for this attr */
+			if (tl != NIL)		/* found TLE for this attr */
 				continue;
 			/*
 			 * No user-supplied value, so add a targetentry with DEFAULT expr
@@ -573,7 +573,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	q = makeNode(Query);
 	q->commandType = CMD_UTILITY;
 
-	elements = stmt->tableElts;
 	constraints = stmt->constraints;
 	columns = NIL;
 	dlist = NIL;
@@ -581,7 +580,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	/*
 	 * Run through each primary element in the table creation clause
 	 */
-	while (elements != NIL)
+	foreach(elements, stmt->tableElts)
 	{
 		element = lfirst(elements);
 		switch (nodeTag(element))
@@ -594,19 +593,31 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				if (column->is_sequence)
 				{
 					char	   *sname;
-					char	   *cstring;
+					char	   *qstring;
+					A_Const	   *snamenode;
+					FuncCall   *funccallnode;
 					CreateSeqStmt *sequence;
 
 					sname = makeObjectName(stmt->relname, column->colname,
 										   "seq");
+					/*
+					 * Create an expression tree representing the function
+					 * call  nextval('"sequencename"')
+					 */
+					qstring = palloc(strlen(sname) + 2 + 1);
+					sprintf(qstring, "\"%s\"", sname);
+					snamenode = makeNode(A_Const);
+					snamenode->val.type = T_String;
+					snamenode->val.val.str = qstring;
+					funccallnode = makeNode(FuncCall);
+					funccallnode->funcname = "nextval";
+					funccallnode->args = lcons(snamenode, NIL);
+
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_DEFAULT;
 					constraint->name = sname;
-					cstring = palloc(10 + strlen(constraint->name) + 3 + 1);
-					strcpy(cstring, "nextval('\"");
-					strcat(cstring, constraint->name);
-					strcat(cstring, "\"')");
-					constraint->def = cstring;
+					constraint->raw_expr = (Node *) funccallnode;
+					constraint->cooked_expr = NULL;
 					constraint->keys = NULL;
 
 					column->constraints = lappend(column->constraints, constraint);
@@ -628,69 +639,65 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					blist = lcons(sequence, NIL);
 				}
 
-				/* Check for column constraints, if any... */
-				if (column->constraints != NIL)
+				/* Process column constraints, if any... */
+				foreach(clist, column->constraints)
 				{
-					clist = column->constraints;
-					while (clist != NIL)
+					constraint = lfirst(clist);
+					switch (constraint->contype)
 					{
-						constraint = lfirst(clist);
-						switch (constraint->contype)
-						{
-							case CONSTR_NULL:
+						case CONSTR_NULL:
 
-								/*
-								 * We should mark this explicitly, so we
-								 * can tell if NULL and NOT NULL are both
-								 * specified
-								 */
-								if (column->is_not_null)
-									elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
-										 " for '%s.%s'", stmt->relname, column->colname);
-								column->is_not_null = FALSE;
-								break;
+							/*
+							 * We should mark this explicitly, so we
+							 * can tell if NULL and NOT NULL are both
+							 * specified
+							 */
+							if (column->is_not_null)
+								elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
+									 " for '%s.%s'", stmt->relname, column->colname);
+							column->is_not_null = FALSE;
+							break;
 
-							case CONSTR_NOTNULL:
-								if (column->is_not_null)
-									elog(ERROR, "CREATE TABLE/NOT NULL already specified"
-										 " for '%s.%s'", stmt->relname, column->colname);
-								column->is_not_null = TRUE;
-								break;
+						case CONSTR_NOTNULL:
+							if (column->is_not_null)
+								elog(ERROR, "CREATE TABLE/NOT NULL already specified"
+									 " for '%s.%s'", stmt->relname, column->colname);
+							column->is_not_null = TRUE;
+							break;
 
-							case CONSTR_DEFAULT:
-								if (column->defval != NULL)
-									elog(ERROR, "CREATE TABLE/DEFAULT multiple values specified"
-										 " for '%s.%s'", stmt->relname, column->colname);
-								column->defval = constraint->def;
-								break;
+						case CONSTR_DEFAULT:
+							if (column->raw_default != NULL)
+								elog(ERROR, "CREATE TABLE/DEFAULT multiple values specified"
+									 " for '%s.%s'", stmt->relname, column->colname);
+							column->raw_default = constraint->raw_expr;
+							Assert(constraint->cooked_expr == NULL);
+							break;
 
-							case CONSTR_PRIMARY:
-								if (constraint->name == NULL)
-									constraint->name = makeObjectName(stmt->relname, NULL, "pkey");
-								if (constraint->keys == NIL)
-									constraint->keys = lappend(constraint->keys, column);
-								dlist = lappend(dlist, constraint);
-								break;
+						case CONSTR_PRIMARY:
+							if (constraint->name == NULL)
+								constraint->name = makeObjectName(stmt->relname, NULL, "pkey");
+							if (constraint->keys == NIL)
+								constraint->keys = lappend(constraint->keys, column);
+							dlist = lappend(dlist, constraint);
+							break;
 
-							case CONSTR_UNIQUE:
-								if (constraint->name == NULL)
-									constraint->name = makeObjectName(stmt->relname, column->colname, "key");
-								if (constraint->keys == NIL)
-									constraint->keys = lappend(constraint->keys, column);
-								dlist = lappend(dlist, constraint);
-								break;
+						case CONSTR_UNIQUE:
+							if (constraint->name == NULL)
+								constraint->name = makeObjectName(stmt->relname, column->colname, "key");
+							if (constraint->keys == NIL)
+								constraint->keys = lappend(constraint->keys, column);
+							dlist = lappend(dlist, constraint);
+							break;
 
-							case CONSTR_CHECK:
-								constraints = lappend(constraints, constraint);
-								if (constraint->name == NULL)
-									constraint->name = makeObjectName(stmt->relname, column->colname, NULL);
-								break;
+						case CONSTR_CHECK:
+							if (constraint->name == NULL)
+								constraint->name = makeObjectName(stmt->relname, column->colname, NULL);
+							constraints = lappend(constraints, constraint);
+							break;
 
-							default:
-								elog(ERROR, "parser: unrecognized constraint (internal error)", NULL);
-								break;
-						}
-						clist = lnext(clist);
+						default:
+							elog(ERROR, "parser: unrecognized constraint (internal error)", NULL);
+							break;
 					}
 				}
 				break;
@@ -715,19 +722,17 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 					case CONSTR_NOTNULL:
 					case CONSTR_DEFAULT:
-						elog(ERROR, "parser: illegal context for constraint (internal error)", NULL);
+						elog(ERROR, "parser: illegal context for constraint (internal error)");
 						break;
 					default:
-						elog(ERROR, "parser: unrecognized constraint (internal error)", NULL);
+						elog(ERROR, "parser: unrecognized constraint (internal error)");
 						break;
 				}
 				break;
 
 			default:
-				elog(ERROR, "parser: unrecognized node (internal error)", NULL);
+				elog(ERROR, "parser: unrecognized node (internal error)");
 		}
-
-		elements = lnext(elements);
 	}
 
 	stmt->tableElts = columns;

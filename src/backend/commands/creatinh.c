@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.47 1999/09/23 17:02:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.48 1999/10/03 23:55:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,15 +45,19 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	List	   *schema = stmt->tableElts;
 	int			numberOfAttributes;
 	Oid			relationId;
-	List	   *inheritList = NULL;
+	Relation	rel;
+	List	   *inheritList;
 	TupleDesc	descriptor;
-	List	   *constraints;
+	List	   *old_constraints;
+	List	   *rawDefaults;
+	List	   *listptr;
+	int			i;
+	AttrNumber	attnum;
 
 	if (strlen(stmt->relname) >= NAMEDATALEN)
-		elog(ERROR, "the relation name %s is >= %d characters long", stmt->relname,
-			 NAMEDATALEN);
-	StrNCpy(relname, stmt->relname, NAMEDATALEN);		/* make full length for
-														 * copy */
+		elog(ERROR, "the relation name %s is >= %d characters long",
+			 stmt->relname, NAMEDATALEN);
+	StrNCpy(relname, stmt->relname, NAMEDATALEN);
 
 	/* ----------------
 	 *	Handle parameters
@@ -66,8 +70,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 *	generate relation schema, including inherited attributes.
 	 * ----------------
 	 */
-	schema = MergeAttributes(schema, inheritList, &constraints);
-	constraints = nconc(constraints, stmt->constraints);
+	schema = MergeAttributes(schema, inheritList, &old_constraints);
 
 	numberOfAttributes = length(schema);
 	if (numberOfAttributes <= 0)
@@ -78,53 +81,53 @@ DefineRelation(CreateStmt *stmt, char relkind)
 
 	/* ----------------
 	 *	create a relation descriptor from the relation schema
-	 *	and create the relation.
+	 *	and create the relation.  Note that in this stage only
+	 *	inherited (pre-cooked) defaults and constraints will be
+	 *	included into the new relation.  (BuildDescForRelation
+	 *	takes care of the inherited defaults, but we have to copy
+	 *	inherited constraints here.)
 	 * ----------------
 	 */
 	descriptor = BuildDescForRelation(schema, relname);
 
-	if (constraints != NIL)
+	if (old_constraints != NIL)
 	{
-		List	   *entry;
-		int			nconstr = length(constraints),
-					ncheck = 0,
-					i;
-		ConstrCheck *check = (ConstrCheck *) palloc(nconstr * sizeof(ConstrCheck));
+		ConstrCheck *check = (ConstrCheck *) palloc(length(old_constraints) *
+													sizeof(ConstrCheck));
+		int			ncheck = 0;
 
-		foreach(entry, constraints)
+		foreach(listptr, old_constraints)
 		{
-			Constraint *cdef = (Constraint *) lfirst(entry);
+			Constraint *cdef = (Constraint *) lfirst(listptr);
 
-			if (cdef->contype == CONSTR_CHECK)
+			if (cdef->contype != CONSTR_CHECK)
+				continue;
+
+			if (cdef->name != NULL)
 			{
-				if (cdef->name != NULL)
+				for (i = 0; i < ncheck; i++)
 				{
-					for (i = 0; i < ncheck; i++)
-					{
-						if (strcmp(check[i].ccname, cdef->name) == 0)
-							elog(ERROR,
-								 "DefineRelation: name (%s) of CHECK constraint duplicated",
-								 cdef->name);
-					}
-					check[ncheck].ccname = cdef->name;
+					if (strcmp(check[i].ccname, cdef->name) == 0)
+						elog(ERROR, "Duplicate CHECK constraint name: '%s'",
+							 cdef->name);
 				}
-				else
-				{
-					check[ncheck].ccname = (char *) palloc(NAMEDATALEN);
-					snprintf(check[ncheck].ccname, NAMEDATALEN, "$%d", ncheck + 1);
-				}
-				check[ncheck].ccbin = NULL;
-				check[ncheck].ccsrc = (char *) cdef->def;
-				ncheck++;
+				check[ncheck].ccname = cdef->name;
 			}
+			else
+			{
+				check[ncheck].ccname = (char *) palloc(NAMEDATALEN);
+				snprintf(check[ncheck].ccname, NAMEDATALEN, "$%d", ncheck + 1);
+			}
+			Assert(cdef->raw_expr == NULL && cdef->cooked_expr != NULL);
+			check[ncheck].ccbin = pstrdup(cdef->cooked_expr);
+			ncheck++;
 		}
 		if (ncheck > 0)
 		{
-			if (ncheck < nconstr)
-				check = (ConstrCheck *) repalloc(check, ncheck * sizeof(ConstrCheck));
 			if (descriptor->constr == NULL)
 			{
 				descriptor->constr = (TupleConstr *) palloc(sizeof(TupleConstr));
+				descriptor->constr->defval = NULL;
 				descriptor->constr->num_defval = 0;
 				descriptor->constr->has_not_null = false;
 			}
@@ -137,6 +140,61 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  relkind, stmt->istemp);
 
 	StoreCatalogInheritance(relationId, inheritList);
+
+	/*
+	 * Now add any newly specified column default values
+	 * and CHECK constraints to the new relation.  These are passed
+	 * to us in the form of raw parsetrees; we need to transform
+	 * them to executable expression trees before they can be added.
+	 * The most convenient way to do that is to apply the parser's
+	 * transformExpr routine, but transformExpr doesn't work unless
+	 * we have a pre-existing relation.  So, the transformation has
+	 * to be postponed to this final step of CREATE TABLE.
+	 *
+	 * First, scan schema to find new column defaults.
+	 */
+	rawDefaults = NIL;
+	attnum = 0;
+
+	foreach(listptr, schema)
+	{
+		ColumnDef  *colDef = lfirst(listptr);
+		RawColumnDefault *rawEnt;
+
+		attnum++;
+
+		if (colDef->raw_default == NULL)
+			continue;
+		Assert(colDef->cooked_default == NULL);
+
+		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+		rawEnt->attnum = attnum;
+		rawEnt->raw_default = colDef->raw_default;
+		rawDefaults = lappend(rawDefaults, rawEnt);
+	}
+
+	/* If no raw defaults and no constraints, nothing to do. */
+	if (rawDefaults == NIL && stmt->constraints == NIL)
+		return;
+
+	/*
+	 * We must bump the command counter to make the newly-created
+	 * relation tuple visible for opening.
+	 */
+	CommandCounterIncrement();
+	/*
+	 * Open the new relation.
+	 */
+	rel = heap_openr(relname, AccessExclusiveLock);
+	/*
+	 * Parse and add the defaults/constraints.
+	 */
+	AddRelationRawConstraints(rel, rawDefaults, stmt->constraints);
+	/*
+	 * Clean up.  We keep lock on new relation (although it shouldn't
+	 * be visible to anyone else anyway, until commit).
+	 */
+	heap_close(rel, NoLock);
 }
 
 /*
@@ -164,18 +222,14 @@ RemoveRelation(char *name)
  * Exceptions:
  *                BadArg if name is invalid
  *
- *
  * Note:
  *                Rows are removed, indices are truncated and reconstructed.
  */
-
 void
 TruncateRelation(char *name)
 {
-
-  AssertArg(name);
-  heap_truncate(name);
-
+	AssertArg(name);
+	heap_truncate(name);
 }
 
 /*
@@ -316,22 +370,25 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			typename->typmod = attribute->atttypmod;
 			def->typename = typename;
 			def->is_not_null = attribute->attnotnull;
-			def->defval = NULL;
+			def->raw_default = NULL;
+			def->cooked_default = NULL;
 			if (attribute->atthasdef)
 			{
-				AttrDefault *attrdef = constr->defval;
+				AttrDefault *attrdef;
 				int			i;
 
-				Assert(constr != NULL && constr->num_defval > 0);
+				Assert(constr != NULL);
 
+				attrdef = constr->defval;
 				for (i = 0; i < constr->num_defval; i++)
 				{
-					if (attrdef[i].adnum != attrno + 1)
-						continue;
-					def->defval = pstrdup(attrdef[i].adsrc);
-					break;
+					if (attrdef[i].adnum == attrno + 1)
+					{
+						def->cooked_default = pstrdup(attrdef[i].adbin);
+						break;
+					}
 				}
-				Assert(def->defval != NULL);
+				Assert(def->cooked_default != NULL);
 			}
 			partialResult = lcons(def, partialResult);
 		}
@@ -343,14 +400,15 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 
 			for (i = 0; i < constr->num_check; i++)
 			{
-				Constraint *cdef = (Constraint *) makeNode(Constraint);
+				Constraint *cdef = makeNode(Constraint);
 
 				cdef->contype = CONSTR_CHECK;
 				if (check[i].ccname[0] == '$')
 					cdef->name = NULL;
 				else
 					cdef->name = pstrdup(check[i].ccname);
-				cdef->def = (void *) pstrdup(check[i].ccsrc);
+				cdef->raw_expr = NULL;
+				cdef->cooked_expr = pstrdup(check[i].ccbin);
 				constraints = lappend(constraints, cdef);
 			}
 		}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.87 1999/09/30 14:54:24 wieck Exp $
+ * $Id: builtins.h,v 1.88 1999/10/03 23:55:37 tgl Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -371,6 +371,14 @@ extern Oid	regproctooid(RegProcedure rp);
 
 /* define macro to replace mixed-case function call - tgl 97/04/27 */
 #define RegprocToOid(rp) regproctooid(rp)
+
+/* ruleutils.c */
+extern text *pg_get_ruledef(NameData *rname);
+extern text	*pg_get_viewdef(NameData *rname);
+extern text	*pg_get_indexdef(Oid indexrelid);
+extern NameData *pg_get_userbyid(int32 uid);
+extern char *deparse_expression(Node *expr, List *rangetables,
+								bool forceprefix);
 
 /* selfuncs.c */
 extern float64 eqsel(Oid opid, Oid relid, AttrNumber attno, Datum value, int32 flag);

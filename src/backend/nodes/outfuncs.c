@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.95 1999/08/31 01:28:32 tgl Exp $
+ *	$Id: outfuncs.c,v 1.96 1999/10/03 23:55:29 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -124,10 +124,12 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	appendStringInfo(str, " COLUMNDEF :colname %s :typename ",
 					 stringStringInfo(node->colname));
 	_outNode(str, node->typename);
-
-	appendStringInfo(str, " :is_not_null %s :defval %s :constraints ",
+	appendStringInfo(str, " :is_not_null %s :is_sequence %s :raw_default ",
 					 node->is_not_null ? "true" : "false",
-					 stringStringInfo(node->defval));
+					 node->is_sequence ? "true" : "false");
+	_outNode(str, node->raw_default);
+	appendStringInfo(str, " :cooked_default %s :constraints ",
+					 stringStringInfo(node->cooked_default));
 	_outNode(str, node->constraints);
 }
 
@@ -1216,11 +1218,17 @@ _outConstraint(StringInfo str, Constraint *node)
 			break;
 
 		case CONSTR_CHECK:
-			appendStringInfo(str, " CHECK %s", stringStringInfo(node->def));
+			appendStringInfo(str, " CHECK :raw ");
+			_outNode(str, node->raw_expr);
+			appendStringInfo(str, " :cooked %s ",
+							 stringStringInfo(node->cooked_expr));
 			break;
 
 		case CONSTR_DEFAULT:
-			appendStringInfo(str, " DEFAULT %s", stringStringInfo(node->def));
+			appendStringInfo(str, " DEFAULT :raw ");
+			_outNode(str, node->raw_expr);
+			appendStringInfo(str, " :cooked %s ",
+							 stringStringInfo(node->cooked_expr));
 			break;
 
 		case CONSTR_NOTNULL:
@@ -1236,7 +1244,6 @@ _outConstraint(StringInfo str, Constraint *node)
 			appendStringInfo(str, "<unrecognized constraint>");
 			break;
 	}
-	return;
 }
 
 static void

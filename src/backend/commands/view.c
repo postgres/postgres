@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.37 1999/07/17 20:16:54 momjian Exp $
+ *	$Id: view.c,v 1.38 1999/10/03 23:55:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,8 @@ DefineVirtualRelation(char *relname, List *tlist)
 			def->typename = typename;
 
 			def->is_not_null = false;
-			def->defval = (char *) NULL;
+			def->raw_default = NULL;
+			def->cooked_default = NULL;
 
 			attrList = lappend(attrList, def);
 		}

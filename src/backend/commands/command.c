@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.54 1999/09/18 19:06:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.55 1999/10/03 23:55:27 tgl Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -324,7 +324,7 @@ PerformAddAttribute(char *relationName,
 	 */
 	if (colDef->is_not_null)
 		elog(ERROR, "Can't add a NOT NULL attribute to an existing relation");
-	if (colDef->defval)
+	if (colDef->raw_default || colDef->cooked_default)
 		elog(ERROR, "ADD ATTRIBUTE: DEFAULT not yet implemented");
 
 	/*
@@ -457,7 +457,8 @@ PerformAddAttribute(char *relationName,
 		attribute->attisset = (bool) (tform->typtype == 'c');
 		attribute->attalign = tform->typalign;
 		attribute->attnotnull = false;
-		attribute->atthasdef = (colDef->defval != NULL);
+		attribute->atthasdef = (colDef->raw_default != NULL ||
+								colDef->cooked_default != NULL);
 
 		heap_insert(attrdesc, attributeTuple);
 		if (hasindex)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.73 1999/09/18 19:07:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.74 1999/10/03 23:55:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  *		RelationIdGetRelation			- get a reldesc by relation id
  *		RelationNameGetRelation			- get a reldesc by relation name
  *		RelationClose					- close an open relation
- *		RelationFlushRelation			- flush relation information
+ *		RelationRebuildRelation			- rebuild relation information
  *
  * NOTES
  *		This file is in the process of being cleaned up
@@ -59,8 +59,9 @@
 #include "utils/temprel.h"
 
 
+static void RelationClearRelation(Relation relation, bool rebuildIt);
 static void RelationFlushRelation(Relation *relationPtr,
-					  bool onlyFlushReferenceCountZero);
+								  bool onlyFlushReferenceCountZero);
 static Relation RelationNameCacheGetRelation(char *relationName);
 static void RelationCacheAbortWalker(Relation *relationPtr,
 									 int dummy);
@@ -247,34 +248,6 @@ static List *newlyCreatedRelns = NULL;
  */
 
 
-#if NOT_USED					/* XXX This doesn't seem to be used
-								 * anywhere */
-/* --------------------------------
- *		BuildDescInfoError returns a string appropriate to
- *		the buildinfo passed to it
- * --------------------------------
- */
-static char *
-BuildDescInfoError(RelationBuildDescInfo buildinfo)
-{
-	static char errBuf[64];
-
-	MemSet(errBuf, 0, (int) sizeof(errBuf));
-	switch (buildinfo.infotype)
-	{
-		case INFO_RELID:
-			sprintf(errBuf, "(relation id %u)", buildinfo.i.info_id);
-			break;
-		case INFO_RELNAME:
-			sprintf(errBuf, "(relation name %s)", buildinfo.i.info_name);
-			break;
-	}
-
-	return errBuf;
-}
-
-#endif
-
 /* --------------------------------
  *		ScanPgRelation
  *
@@ -403,7 +376,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
  *
  *		If 'relation' is NULL, allocate a new RelationData object.
  *		If not, reuse the given object (that path is taken only when
- *		we have to rebuild a relcache entry during RelationFlushRelation).
+ *		we have to rebuild a relcache entry during RelationClearRelation).
  * ----------------
  */
 static Relation
@@ -578,11 +551,14 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 		if (attp->atthasdef)
 		{
 			if (attrdef == NULL)
+			{
 				attrdef = (AttrDefault *) palloc(relation->rd_rel->relnatts *
 												 sizeof(AttrDefault));
+				MemSet(attrdef, 0,
+					   relation->rd_rel->relnatts * sizeof(AttrDefault));
+			}
 			attrdef[ndef].adnum = i;
 			attrdef[ndef].adbin = NULL;
-			attrdef[ndef].adsrc = NULL;
 			ndef++;
 		}
 	}
@@ -1231,7 +1207,9 @@ RelationNameGetRelation(char *relationName)
  */
 
 /* --------------------------------
- *		RelationClose - close an open relation
+ * RelationClose - close an open relation
+ *
+ *	 Actually, we just decrement the refcount.
  * --------------------------------
  */
 void
@@ -1242,17 +1220,18 @@ RelationClose(Relation relation)
 }
 
 /* --------------------------------
- * RelationFlushRelation
+ * RelationClearRelation
  *
- *	 Actually blows away a relation cache entry... RelationFree doesn't do
- *	 anything anymore.
+ *	 Physically blow away a relation cache entry, or reset it and rebuild
+ *	 it from scratch (that is, from catalog entries).  The latter path is
+ *	 usually used when we are notified of a change to an open relation
+ *	 (one with refcount > 0).  However, this routine just does whichever
+ *	 it's told to do; callers must determine which they want.
  * --------------------------------
  */
 static void
-RelationFlushRelation(Relation *relationPtr,
-					  bool onlyFlushReferenceCountZero)
+RelationClearRelation(Relation relation, bool rebuildIt)
 {
-	Relation	relation = *relationPtr;
 	MemoryContext oldcxt;
 
 	/*
@@ -1261,19 +1240,18 @@ RelationFlushRelation(Relation *relationPtr,
 	 * if the relation is not deleted, the next smgr access should
 	 * reopen the files automatically.  This ensures that the low-level
 	 * file access state is updated after, say, a vacuum truncation.
+	 *
 	 * NOTE: this call is a no-op if the relation's smgr file is already
 	 * closed or unlinked.
 	 */
 	smgrclose(DEFAULT_SMGR, relation);
 
-	if (relation->rd_isnailed || relation->rd_myxactonly)
-	{
-		/* Do not flush relation cache entry if it is a nailed-in system
-		 * relation or it is marked transaction-local.
-		 * (To delete a local relation, caller must clear rd_myxactonly!)
-		 */
+	/*
+	 * Never, never ever blow away a nailed-in system relation,
+	 * because we'd be unable to recover.
+	 */
+	if (relation->rd_isnailed)
 		return;
-	}
 
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
@@ -1293,19 +1271,21 @@ RelationFlushRelation(Relation *relationPtr,
 	FreeTriggerDesc(relation);
 	pfree(RelationGetForm(relation));
 
-	/* If we're really done with the relcache entry, blow it away.
+	/*
+	 * If we're really done with the relcache entry, blow it away.
 	 * But if someone is still using it, reconstruct the whole deal
 	 * without moving the physical RelationData record (so that the
-	 * someone's pointer is still valid).  Preserve ref count, too.
+	 * someone's pointer is still valid).  Must preserve ref count
+	 * and myxactonly flag, too.
 	 */
-	if (!onlyFlushReferenceCountZero ||
-		RelationHasReferenceCountZero(relation))
+	if (! rebuildIt)
 	{
 		pfree(relation);
 	}
 	else
 	{
 		uint16		old_refcnt = relation->rd_refcnt;
+		bool		old_myxactonly = relation->rd_myxactonly;
 		RelationBuildDescInfo buildinfo;
 
 		buildinfo.infotype = INFO_RELID;
@@ -1315,19 +1295,53 @@ RelationFlushRelation(Relation *relationPtr,
 		{
 			/* Should only get here if relation was deleted */
 			pfree(relation);
-			elog(ERROR, "RelationFlushRelation: relation %u deleted while still in use",
+			elog(ERROR, "RelationClearRelation: relation %u deleted while still in use",
 				 buildinfo.i.info_id);
 		}
 		RelationSetReferenceCount(relation, old_refcnt);
+		relation->rd_myxactonly = old_myxactonly;
 	}
 
 	MemoryContextSwitchTo(oldcxt);
 }
 
 /* --------------------------------
- *		RelationForgetRelation -
- *		   RelationFlushRelation + if the relation is myxactonly then
- *		   get rid of the relation descriptor from the newly created
+ * RelationFlushRelation
+ *
+ *	 Rebuild the relation if it is open (refcount > 0), else blow it away.
+ *	 Setting onlyFlushReferenceCountZero to FALSE overrides refcount check.
+ *	 This is currently only used to process SI invalidation notifications.
+ *	 The peculiar calling convention (pointer to pointer to relation)
+ *	 is needed so that we can use this routine as a hash table walker.
+ * --------------------------------
+ */
+static void
+RelationFlushRelation(Relation *relationPtr,
+					  bool onlyFlushReferenceCountZero)
+{
+	Relation	relation = *relationPtr;
+
+	/*
+	 * Do nothing to transaction-local relations, since they cannot be
+	 * subjects of SI notifications from other backends.
+	 */
+	if (relation->rd_myxactonly)
+		return;
+
+	/*
+	 * Zap it.  Rebuild if it has nonzero ref count and we did not get
+	 * the override flag.
+	 */
+	RelationClearRelation(relation,
+						  (onlyFlushReferenceCountZero &&
+						   ! RelationHasReferenceCountZero(relation)));
+}
+
+/* --------------------------------
+ * RelationForgetRelation -
+ *
+ *		   RelationClearRelation + if the relation is myxactonly then
+ *		   remove the relation descriptor from the newly created
  *		   relation list.
  * --------------------------------
  */
@@ -1368,10 +1382,22 @@ RelationForgetRelation(Oid rid)
 			MemoryContextSwitchTo(oldcxt);
 		}
 
-		relation->rd_myxactonly = false; /* so it can be flushed */
-
-		RelationFlushRelation(&relation, false);
+		/* Unconditionally destroy the relcache entry */
+		RelationClearRelation(relation, false);
 	}
+}
+
+/* --------------------------------
+ * RelationRebuildRelation -
+ *
+ *		   Force a relcache entry to be rebuilt from catalog entries.
+ *		   This is needed, eg, after modifying an attribute of the rel.
+ * --------------------------------
+ */
+void
+RelationRebuildRelation(Relation relation)
+{
+	RelationClearRelation(relation, true);
 }
 
 /* --------------------------------
@@ -1573,6 +1599,11 @@ RelationPurgeLocalRelation(bool xactCommitted)
 
 		Assert(reln != NULL && reln->rd_myxactonly);
 
+		reln->rd_myxactonly = false; /* mark it not on list anymore */
+
+		newlyCreatedRelns = lnext(newlyCreatedRelns);
+		pfree(l);
+
 		if (!xactCommitted)
 		{
 
@@ -1592,13 +1623,8 @@ RelationPurgeLocalRelation(bool xactCommitted)
 				smgrunlink(DEFAULT_SMGR, reln);
 		}
 
-		reln->rd_myxactonly = false; /* so it can be flushed */
-
 		if (!IsBootstrapProcessingMode())
-			RelationFlushRelation(&reln, false);
-
-		newlyCreatedRelns = lnext(newlyCreatedRelns);
-		pfree(l);
+			RelationClearRelation(reln, false);
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1717,7 +1743,7 @@ AttrDefaultFetch(Relation relation)
 		{
 			if (adform->adnum != attrdef[i].adnum)
 				continue;
-			if (attrdef[i].adsrc != NULL)
+			if (attrdef[i].adbin != NULL)
 				elog(ERROR, "AttrDefaultFetch: second record found for attr %s in rel %s",
 				relation->rd_att->attrs[adform->adnum - 1]->attname.data,
 					 relation->rd_rel->relname.data);
@@ -1730,14 +1756,6 @@ AttrDefaultFetch(Relation relation)
 				relation->rd_att->attrs[adform->adnum - 1]->attname.data,
 					 relation->rd_rel->relname.data);
 			attrdef[i].adbin = textout(val);
-			val = (struct varlena *) fastgetattr(&tuple,
-												 Anum_pg_attrdef_adsrc,
-												 adrel->rd_att, &isnull);
-			if (isnull)
-				elog(ERROR, "AttrDefaultFetch: adsrc IS NULL for attr %s in rel %s",
-				relation->rd_att->attrs[adform->adnum - 1]->attname.data,
-					 relation->rd_rel->relname.data);
-			attrdef[i].adsrc = textout(val);
 			break;
 		}
 		ReleaseBuffer(buffer);
@@ -1816,13 +1834,6 @@ RelCheckFetch(Relation relation)
 			elog(ERROR, "RelCheckFetch: rcbin IS NULL for rel %s",
 				 relation->rd_rel->relname.data);
 		check[found].ccbin = textout(val);
-		val = (struct varlena *) fastgetattr(&tuple,
-											 Anum_pg_relcheck_rcsrc,
-											 rcrel->rd_att, &isnull);
-		if (isnull)
-			elog(ERROR, "RelCheckFetch: rcsrc IS NULL for rel %s",
-				 relation->rd_rel->relname.data);
-		check[found].ccsrc = textout(val);
 		found++;
 		ReleaseBuffer(buffer);
 	}

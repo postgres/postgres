@@ -34,7 +34,9 @@ four| i1|i2
 QUERY: CREATE TABLE error_tbl (i int DEFAULT (100, ));
 ERROR:  parser: parse error at or near ","
 QUERY: CREATE TABLE error_tbl (b1 bool DEFAULT 1 < 2);
-ERROR:  boolean expressions not supported in DEFAULT
+ERROR:  parser: parse error at or near "<"
+QUERY: CREATE TABLE error_tbl (b1 bool DEFAULT (1 < 2));
+QUERY: DROP TABLE error_tbl;
 QUERY: CREATE TABLE CHECK_TBL (x int,
 	CONSTRAINT CHECK_CON CHECK (x > 3));
 QUERY: INSERT INTO CHECK_TBL VALUES (5);

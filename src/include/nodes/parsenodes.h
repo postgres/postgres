@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.82 1999/10/02 21:33:33 tgl Exp $
+ * $Id: parsenodes.h,v 1.83 1999/10/03 23:55:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,25 +140,36 @@ typedef struct CreateStmt
 {
 	NodeTag		type;
 	bool		istemp;			/* is this a temp table? */
-	char	   *relname;		/* the relation to create */
-	List	   *tableElts;		/* column definitions list of Column */
-	List	   *inhRelnames;	/* relations to inherit from list of Value
-								 * (string) */
-	List	   *constraints;	/* list of constraints (ConstaintDef) */
+	char	   *relname;		/* name of relation to create */
+	List	   *tableElts;		/* column definitions (list of ColumnDef) */
+	List	   *inhRelnames;	/* relations to inherit from (list of
+								 * T_String Values) */
+	List	   *constraints;	/* list of constraints (Constraint nodes) */
 } CreateStmt;
 
-typedef enum ConstrType			/* type of constaints */
+typedef enum ConstrType			/* types of constraints */
 {
-	CONSTR_NULL, CONSTR_NOTNULL, CONSTR_DEFAULT, CONSTR_CHECK, CONSTR_PRIMARY, CONSTR_UNIQUE
+	CONSTR_NULL, CONSTR_NOTNULL, CONSTR_DEFAULT, CONSTR_CHECK,
+	CONSTR_PRIMARY, CONSTR_UNIQUE
 } ConstrType;
+
+/*
+ * For constraints that use expressions (CONSTR_DEFAULT, CONSTR_CHECK)
+ * we may have the expression in either "raw" form (an untransformed
+ * parse tree) or "cooked" form (the nodeToString representation of
+ * an executable expression tree), depending on how this Constraint
+ * node was created (by parsing, or by inheritance from an existing
+ * relation).  We should never have both in the same node!
+ */
 
 typedef struct Constraint
 {
 	NodeTag		type;
 	ConstrType	contype;
 	char	   *name;			/* name */
-	void	   *def;			/* definition */
-	void	   *keys;			/* list of primary keys */
+	Node	   *raw_expr;		/* untransformed parse tree */
+	char	   *cooked_expr;	/* nodeToString representation */
+	List	   *keys;			/* list of primary keys */
 } Constraint;
 
 /* ----------------------
@@ -790,6 +801,18 @@ typedef struct CaseWhen
 
 /*
  * ColumnDef - column definition (used in various creates)
+ *
+ * If the column has a default value, we may have the value expression
+ * in either "raw" form (an untransformed parse tree) or "cooked" form
+ * (the nodeToString representation of an executable expression tree),
+ * depending on how this ColumnDef node was created (by parsing, or by
+ * inheritance from an existing relation).  We should never have both
+ * in the same node!
+ *
+ * The constraints list may contain a CONSTR_DEFAULT item in a raw
+ * parsetree produced by gram.y, but transformCreateStmt will remove
+ * the item and set raw_default instead.  CONSTR_DEFAULT items
+ * should not appear in any subsequent processing.
  */
 typedef struct ColumnDef
 {
@@ -798,8 +821,9 @@ typedef struct ColumnDef
 	TypeName   *typename;		/* type of column */
 	bool		is_not_null;	/* flag to NOT NULL constraint */
 	bool		is_sequence;	/* is a sequence? */
-	char	   *defval;			/* default value of column */
-	List	   *constraints;	/* constraints on column */
+	Node	   *raw_default;	/* default value (untransformed parse tree) */
+	char	   *cooked_default;	/* nodeToString representation */
+	List	   *constraints;	/* other constraints on column */
 } ColumnDef;
 
 /*
