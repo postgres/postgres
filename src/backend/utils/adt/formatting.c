@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.67 2003/08/25 16:13:27 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.68 2003/09/03 14:59:41 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -1294,6 +1294,16 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 
 	for (n = node, s = inout; n->type != NODE_TYPE_END; n++)
 	{
+		if (flag == FROM_CHAR && *s=='\0')
+			/*
+			 * The input string is shorter than format picture, 
+			 * so it's good time to break this loop...
+			 * 
+			 * Note: this isn't relevant for TO_CHAR mode, beacuse 
+			 *       it use 'inout' allocated by format picture length.
+			 */
+			break;
+
 		if (n->type == NODE_TYPE_ACTION)
 		{
 			int			len;
@@ -1328,9 +1338,8 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 				}
 			}
 		}
-
+		
 		++s;					/* ! */
-
 	}
 
 	if (flag == TO_CHAR)
@@ -2715,10 +2724,10 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 {
 	FormatNode *format;
 	struct tm  *tm = NULL;
-	char	   *str_fmt,
-			   *result;
-	bool		incache;
-	int			len = VARSIZE(fmt) - VARHDRSZ;
+	char	   *fmt_str,
+		   *result;
+	bool	incache;
+	int	fmt_len = VARSIZE(fmt) - VARHDRSZ;
 
 	tm = tmtcTm(tmtc);
 	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7;
@@ -2727,29 +2736,28 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 	/*
 	 * Convert fmt to C string
 	 */
-	str_fmt = (char *) palloc(len + 1);
-	memcpy(str_fmt, VARDATA(fmt), len);
-	*(str_fmt + len) = '\0';
+	fmt_str = (char *) palloc(fmt_len + 1);
+	memcpy(fmt_str, VARDATA(fmt), fmt_len);
+	*(fmt_str + fmt_len) = '\0';
 
 	/*
 	 * Allocate result
 	 */
-	result = palloc((len * DCH_MAX_ITEM_SIZ) + 1);
+	result = palloc((fmt_len * DCH_MAX_ITEM_SIZ) + 1);
 
 	/*
 	 * Allocate new memory if format picture is bigger than static cache
-	 * and not use cache (call parser always) - incache=FALSE show this
-	 * variant
+	 * and not use cache (call parser always) 
 	 */
-	if (len > DCH_CACHE_SIZE)
+	if (fmt_len > DCH_CACHE_SIZE)
 	{
-		format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
+		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
 		incache = FALSE;
 
-		parse_format(format, str_fmt, DCH_keywords,
+		parse_format(format, fmt_str, DCH_keywords,
 					 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-		(format + len)->type = NODE_TYPE_END;	/* Paranoia? */
+		(format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
 
 	}
 	else
@@ -2758,25 +2766,24 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 		 * Use cache buffers
 		 */
 		DCHCacheEntry *ent;
-
 		incache = TRUE;
 
-		if ((ent = DCH_cache_search(str_fmt)) == NULL)
+		if ((ent = DCH_cache_search(fmt_str)) == NULL)
 		{
 
-			ent = DCH_cache_getnew(str_fmt);
+			ent = DCH_cache_getnew(fmt_str);
 
 			/*
 			 * Not in the cache, must run parser and save a new
 			 * format-picture to the cache.
 			 */
-			parse_format(ent->format, str_fmt, DCH_keywords,
+			parse_format(ent->format, fmt_str, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoia? */
+			(ent->format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
 
 #ifdef DEBUG_TO_FROM_CHAR
-			/* dump_node(ent->format, len); */
+			/* dump_node(ent->format, fmt_len); */
 			/* dump_index(DCH_keywords, DCH_index);  */
 #endif
 		}
@@ -2788,22 +2795,27 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 	if (!incache)
 		pfree(format);
 
-	pfree(str_fmt);
+	pfree(fmt_str);
 
 	/*
 	 * for result is allocated max memory, which current format-picture
 	 * needs, now it allocate result with real size
 	 */
-	if (!(len = strlen(result)))
-		pfree(result);
-	else
+	if (result && *result)
 	{
-		text	   *res = (text *) palloc(len + 1 + VARHDRSZ);
+		int len = strlen(result);
+	
+		if (len)
+		{
+			text	   *res = (text *) palloc(len + 1 + VARHDRSZ);
 
-		memcpy(VARDATA(res), result, len);
-		VARATT_SIZEP(res) = len + VARHDRSZ;
-		return res;
+			memcpy(VARDATA(res), result, len);
+			VARATT_SIZEP(res) = len + VARHDRSZ;
+			pfree(result);
+			return res;
+		}
 	}
+	pfree(result);
 	return NULL;
 }
 
@@ -2953,39 +2965,39 @@ do_to_timestamp(text *date_txt, text *fmt,
 {
 	FormatNode *format;
 	TmFromChar	tmfc;
-	bool		incache;
-	char	   *str;
-	char	   *date_str;
-	int			len,
-				date_len;
+	int		fmt_len;
 
 	ZERO_tm(tm);
 	*fsec = 0;
 
 	ZERO_tmfc(&tmfc);
 
-	len = VARSIZE(fmt) - VARHDRSZ;
+	fmt_len = VARSIZE(fmt) - VARHDRSZ;
 
-	if (len)
+	if (fmt_len)
 	{
-		str = (char *) palloc(len + 1);
-		memcpy(str, VARDATA(fmt), len);
-		*(str + len) = '\0';
+		int date_len;
+		char *fmt_str;
+		char *date_str;
+		bool incache;
+		
+		fmt_str = (char *) palloc(fmt_len + 1);
+		memcpy(fmt_str, VARDATA(fmt), fmt_len);
+		*(fmt_str + fmt_len) = '\0';
 
 		/*
 		 * Allocate new memory if format picture is bigger than static
-		 * cache and not use cache (call parser always) - incache=FALSE
-		 * show this variant
+		 * cache and not use cache (call parser always)
 		 */
-		if (len > DCH_CACHE_SIZE)
+		if (fmt_len > DCH_CACHE_SIZE)
 		{
-			format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
+			format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
 			incache = FALSE;
 
-			parse_format(format, str, DCH_keywords,
+			parse_format(format, fmt_str, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-			(format + len)->type = NODE_TYPE_END;		/* Paranoia? */
+			(format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
 		}
 		else
 		{
@@ -2993,24 +3005,23 @@ do_to_timestamp(text *date_txt, text *fmt,
 			 * Use cache buffers
 			 */
 			DCHCacheEntry *ent;
+			incache = TRUE;
 
-			incache = 0;
-
-			if ((ent = DCH_cache_search(str)) == NULL)
+			if ((ent = DCH_cache_search(fmt_str)) == NULL)
 			{
 
-				ent = DCH_cache_getnew(str);
+				ent = DCH_cache_getnew(fmt_str);
 
 				/*
 				 * Not in the cache, must run parser and save a new
 				 * format-picture to the cache.
 				 */
-				parse_format(ent->format, str, DCH_keywords,
+				parse_format(ent->format, fmt_str, DCH_keywords,
 							 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-				(ent->format + len)->type = NODE_TYPE_END;		/* Paranoia? */
+				(ent->format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
 #ifdef DEBUG_TO_FROM_CHAR
-				/* dump_node(ent->format, len); */
+				/* dump_node(ent->format, fmt_len); */
 				/* dump_index(DCH_keywords, DCH_index); */
 #endif
 			}
@@ -3021,7 +3032,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		 * Call action for each node in FormatNode tree
 		 */
 #ifdef DEBUG_TO_FROM_CHAR
-		/* dump_node(format, len); */
+		/* dump_node(format, fmt_len); */
 #endif
 
 		/*
@@ -3035,8 +3046,8 @@ do_to_timestamp(text *date_txt, text *fmt,
 		DCH_processor(format, date_str, FROM_CHAR, (void *) &tmfc);
 
 		pfree(date_str);
-		pfree(str);
-		if (incache)
+		pfree(fmt_str);
+		if (!incache)
 			pfree(format);
 	}
 
