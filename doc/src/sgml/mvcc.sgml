@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.43 2003/12/13 23:59:06 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.44 2004/08/14 22:18:23 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -394,6 +394,90 @@ ERROR:  could not serialize access due to concurrent update
     a transaction executes several successive commands that must see
     identical views of the database.
    </para>
+
+   <sect3 id="mvcc-serializability">
+    <title>Serializable Isolation versus True Serializability</title>
+
+   <indexterm>
+    <primary>serializability</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>predicate locking</primary>
+   </indexterm>
+
+   <para>
+    The intuitive meaning (and mathematical definition) of
+    <quote>serializable</> execution is that any two successfully committed
+    concurrent transactions will appear to have executed strictly serially,
+    one after the other --- although which one appeared to occur first may
+    not be predictable in advance.  It is important to realize that forbidding
+    the undesirable behaviors listed in <xref linkend="mvcc-isolevel-table">
+    is not sufficient to guarantee true serializability, and in fact
+    <productname>PostgreSQL</productname>'s Serializable mode <emphasis>does
+    not guarantee serializable execution in this sense</>.  As an example,
+    consider a table <structname>mytab</>, initially containing
+<screen>
+ class | value 
+-------+-------
+     1 |    10
+     1 |    20
+     2 |   100
+     2 |   200
+</screen>
+    Suppose that serializable transaction A computes
+<screen>
+SELECT SUM(value) FROM mytab WHERE class = 1;
+</screen>
+    and then inserts the result (30) as the <structfield>value</> in a
+    new row with <structfield>class</> = 2.  Concurrently, serializable
+    transaction B computes
+<screen>
+SELECT SUM(value) FROM mytab WHERE class = 2;
+</screen>
+    and obtains the result 300, which it inserts in a new row with
+    <structfield>class</> = 1.  Then both transactions commit.  None of
+    the listed undesirable behaviors have occurred, yet we have a result
+    that could not have occurred in either order serially.  If A had
+    executed before B, B would have computed the sum 330, not 300, and
+    similarly the other order would have resulted in a different sum
+    computed by A.
+   </para>
+
+   <para>
+    To guarantee true mathematical serializability, it is necessary for
+    a database system to enforce <firstterm>predicate locking</>, which
+    means that a transaction cannot insert or modify a row that would
+    have matched the <literal>WHERE</> condition of a query in another concurrent
+    transaction.  For example, once transaction A has executed the query
+    <literal>SELECT ... WHERE class = 1</>, a predicate-locking system
+    would forbid transaction B from inserting any new row with class 1
+    until A has committed.
+     <footnote>
+      <para>
+       Essentially, a predicate-locking system prevents phantom reads
+       by restricting what is written, whereas MVCC prevents them by
+       restricting what is read.
+      </para>
+     </footnote>
+    Such a locking system is complex to
+    implement and extremely expensive in execution, since every session must
+    be aware of the details of every query executed by every concurrent
+    transaction.  And this large expense is mostly wasted, since in
+    practice most applications do not do the sorts of things that could
+    result in problems.  (Certainly the example above is rather contrived
+    and unlikely to represent real software.)  Accordingly,
+    <productname>PostgreSQL</productname> does not implement predicate
+    locking, and so far as we are aware no other production DBMS does either.
+   </para>
+
+   <para>
+    In those cases where the possibility of nonserializable execution
+    is a real hazard, problems can be prevented by appropriate use of
+    explicit locking.  Further discussion appears in the following
+    sections.
+   </para>
+  </sect3>
   </sect2>
  </sect1>
 
@@ -434,7 +518,8 @@ ERROR:  could not serialize access due to concurrent update
    <para>
     The list below shows the available lock modes and the contexts in
     which they are used automatically by
-    <productname>PostgreSQL</productname>.
+    <productname>PostgreSQL</productname>.  You can also acquire any
+    of these locks explicitly with the command <xref linkend="sql-lock">.
     Remember that all of these lock modes are table-level locks,
     even if the name contains the word
     <quote>row</quote>; the names of the lock modes are historical.
@@ -736,8 +821,8 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     <para>
      The best defense against deadlocks is generally to avoid them by
      being certain that all applications using a database acquire
-     locks on multiple objects in a consistent order. That was the
-     reason for the previous deadlock example: if both transactions
+     locks on multiple objects in a consistent order. In the example
+     above, if both transactions
      had updated the rows in the same order, no deadlock would have
      occurred. One should also ensure that the first lock acquired on
      an object in a transaction is the highest mode that will be
@@ -778,7 +863,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     Another way to think about it is that each
     transaction sees a snapshot of the database contents, and concurrently
     executing transactions may very well see different snapshots.  So the
-    whole concept of <quote>now</quote> is somewhat suspect anyway.
+    whole concept of <quote>now</quote> is somewhat ill-defined anyway.
     This is not normally
     a big problem if the client applications are isolated from each other,
     but if the clients can communicate via channels outside the database
@@ -801,8 +886,8 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
    </para>
 
    <para>
-    Global validity checks require extra thought under <acronym>MVCC</acronym>.  For
-    example, a banking application might wish to check that the sum of
+    Global validity checks require extra thought under <acronym>MVCC</acronym>.
+    For example, a banking application might wish to check that the sum of
     all credits in one table equals the sum of debits in another table,
     when both tables are being actively updated.  Comparing the results of two
     successive <literal>SELECT sum(...)</literal> commands will not work reliably under
@@ -824,9 +909,9 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
 
    <para>
     Note also that if one is
-    relying on explicit locks to prevent concurrent changes, one should use
+    relying on explicit locking to prevent concurrent changes, one should use
     Read Committed mode, or in Serializable mode be careful to obtain the
-    lock(s) before performing queries.  An explicit lock obtained in a
+    lock(s) before performing queries.  A lock obtained by a
     serializable transaction guarantees that no other transactions modifying
     the table are still running, but if the snapshot seen by the
     transaction predates obtaining the lock, it may predate some now-committed
@@ -834,7 +919,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     frozen at the start of its first query or data-modification command
     (<literal>SELECT</>, <literal>INSERT</>,
     <literal>UPDATE</>, or <literal>DELETE</>), so
-    it's possible to obtain explicit locks before the snapshot is
+    it's possible to obtain locks explicitly before the snapshot is
     frozen.
    </para>
   </sect1>
@@ -888,10 +973,11 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
       </term>
       <listitem>
        <para>
-	Share/exclusive page-level locks are used for read/write
-	access.  Locks are released after the page is processed.
-	Page-level locks provide better concurrency than index-level
-	ones but are liable to deadlocks.
+	Share/exclusive hash-bucket-level locks are used for read/write
+	access.  Locks are released after the whole bucket is processed.
+	Bucket-level locks provide better concurrency than index-level
+	ones, but deadlock is possible since the locks are held longer
+	than one index operation.
        </para>
       </listitem>
      </varlistentry>
