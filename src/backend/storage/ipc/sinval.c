@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.29 2001/03/23 04:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.30 2001/05/07 17:20:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 	insertOK = SIInsertDataEntry(shmInvalBuffer, &newInvalid);
 	SpinRelease(SInvalLock);
 	if (!insertOK)
-		elog(NOTICE, "RegisterSharedInvalid: SI buffer overflow");
+		elog(DEBUG, "RegisterSharedInvalid: SI buffer overflow");
 }
 
 /*
@@ -116,7 +116,7 @@ void
 		if (getResult < 0)
 		{
 			/* got a reset message */
-			elog(NOTICE, "InvalidateSharedInvalid: cache state reset");
+			elog(DEBUG, "InvalidateSharedInvalid: cache state reset");
 			resetFunction();
 		}
 		else
