@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.178 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.179 2005/01/12 17:32:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -646,16 +646,29 @@ transformExpr(ParseState *pstate, Node *expr)
 
 				/* transform the test expression, if any */
 				arg = transformExpr(pstate, (Node *) c->arg);
-				newc->arg = (Expr *) arg;
+
 				/* generate placeholder for test expression */
 				if (arg)
 				{
+					/*
+					 * If test expression is an untyped literal, force it to
+					 * text.  We have to do something now because we won't be
+					 * able to do this coercion on the placeholder.  This is
+					 * not as flexible as what was done in 7.4 and before,
+					 * but it's good enough to handle the sort of silly
+					 * coding commonly seen.
+					 */
+					if (exprType(arg) == UNKNOWNOID)
+						arg = coerce_to_common_type(pstate, arg,
+													TEXTOID, "CASE");
 					placeholder = makeNode(CaseTestExpr);
 					placeholder->typeId = exprType(arg);
 					placeholder->typeMod = exprTypmod(arg);
 				}
 				else
 					placeholder = NULL;
+
+				newc->arg = (Expr *) arg;
 
 				/* transform the list of arguments */
 				newargs = NIL;
