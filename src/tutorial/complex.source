@@ -2,12 +2,12 @@
 --
 -- complex.sql-
 --    This file shows how to create a new user-defined type and how to
---    use them.
+--    use this new type.
 -- 
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.1.1.1 1996/07/09 06:22:34 scrappy Exp $
+-- $Id: complex.source,v 1.2 1996/12/28 02:22:07 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ SELECT  a + '(1.0,1.0)'::complex AS aa,
 
 -----------------------------
 -- Creating aggregate functions
---	you can also define aggregate functions. The syntax is some what
+--	you can also define aggregate functions. The syntax is somewhat
 --	cryptic but the idea is to express the aggregate in terms of state
 --	transition functions.
 -----------------------------
@@ -122,8 +122,8 @@ SELECT complex_sum(a) FROM test_complex;
 
 -------------------------------------------------------------------------------
 --             ATTENTION!      ATTENTION!      ATTENTION!                    --
---  YOU MAY SKIP THE SECTION BELOW ON INTERFACING WITH INDICIES. YOU DON'T   --
---  NEED THE FOLLOWING IF YOU DON'T USE INDICIES WITH NEW DATA TYPES.        --
+--  YOU MAY SKIP THE SECTION BELOW ON INTERFACING WITH INDICES. YOU DON'T    --
+--  NEED THE FOLLOWING IF YOU DON'T USE INDICES WITH NEW DATA TYPES.         --
 -------------------------------------------------------------------------------
 
 SELECT 'READ ABOVE!' AS STOP;
@@ -239,7 +239,8 @@ INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
       and proname = 'complex_abs_cmp';
 
 -- now, we can define a btree index on complex types. First, let's populate
--- the table (THIS DOESN'T ACTUALLY WORK. YOU NEED MANY MORE TUPLES.)
+-- the table. Note that postgres needs many more tuples to start using the
+-- btree index during selects.
 INSERT INTO test_complex VALUES ('(56.0,-22.5)', '(-43.2,-0.07)')
 INSERT INTO test_complex VALUES ('(-91.9,33.6)', '(8.6,3.0)');
 

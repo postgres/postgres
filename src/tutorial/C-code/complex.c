@@ -113,9 +113,9 @@ int4
 complex_abs_cmp(Complex *a, Complex *b)
 {
     double amag = Mag(a), bmag = Mag(b);
-    if (a < b)
+    if (amag < bmag)
 	return -1;
-    else if (a > b)
+    else if (amag > bmag)
 	return 1;
     else
 	return 0;
