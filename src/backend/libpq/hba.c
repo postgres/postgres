@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.12 1996/11/16 08:09:16 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.13 1996/11/27 08:15:16 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include <libpq/libpq.h>
 #include <libpq/pqcomm.h>
 #include <libpq/hba.h>
+#include <port-protos.h>    /* For inet_aton() */
 
 
 #define CONF_FILE "pg_hba.conf"             

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.17 1996/11/26 08:12:39 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.18 1996/11/27 08:16:16 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -51,9 +51,11 @@ CMDNAME=`basename $0`
 # The 2>/dev/null is to swallow the "postconfig: not found" message if there
 # is no postconfig.
 
-postconfig_result="$(sh -c postconfig 2>/dev/null)"
+postconfig_result=`sh -c postconfig 2>/dev/null`
 if [ ! -z $postconfig_result ]; then
-  export $postconfig_result
+  set -a   # Make the following variable assignment exported to environment
+  eval $postconfig_result
+  set +a   # back to normal
 fi
 
 # Set defaults:
@@ -131,8 +133,8 @@ if [ -z $PGLIB ]; then
     echo "Postgres (the PGLIB directory).  You must identify the PGLIB "
     echo "directory either with a --pglib invocation option, or by "
     echo "setting the PGLIB environment variable, or by having a program "
-    echo "called 'postconfig' in your search path that sets the PGLIB "
-    echo "environment variable."
+    echo "called 'postconfig' in your search path that outputs an asignment "
+    echo "for PGLIB."
     exit 20
 fi
 

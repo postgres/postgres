@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.74 1996/11/23 09:50:34 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.75 1996/11/27 08:13:44 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -606,7 +606,7 @@ ifeq ($(PORTNAME), sparc_solaris)
 # cc won't work!
 CC= gcc
 
-LDADD_BE= -ll -ldl
+LDADD_BE= -lsocket -lnsl -ll -ldl
 
 # RANLIB is not used on solaris
 RANLIB= touch

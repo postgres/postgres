@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/port.c,v 1.2 1996/11/06 06:48:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/port.c,v 1.3 1996/11/27 08:15:25 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,9 @@
 #include <stdlib.h>
 
 #include <errno.h>
+
+#include "postgres.h"
+#include "port-protos.h"
 #include "rusagestub.h"
 
 long

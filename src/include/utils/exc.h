@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.4 1996/11/10 03:06:26 momjian Exp $
+ * $Id: exc.h,v 1.5 1996/11/27 08:16:44 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,17 +15,15 @@
 
 #include <setjmp.h>
 
+#include "config.h"
+
 extern char *ExcFileName;
 extern Index ExcLineNumber;
 
 /*
  * ExcMessage and Exception are now defined in c.h
  */
-
-#if defined(hpux) || \
-    defined(linux) || \
-    defined(next) || \
-    defined(WIN32)
+#if !defined(SIGJMP_BUF)
 typedef jmp_buf		ExcContext;
 #else
 typedef sigjmp_buf	ExcContext;

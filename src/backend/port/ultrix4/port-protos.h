@@ -6,12 +6,19 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.2 1996/11/26 03:18:58 bryanh Exp $
+ * $Id: port-protos.h,v 1.3 1996/11/27 08:15:30 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PORT_PORTOS_H
 #define PORT_PORTOS_H
+
+/*
+ * Externals in libc that need prototypes (or at least declarations)
+ */
+
+extern char *ecvt(double, int, int*, int*);
+extern char *fcvt(double, int, int*, int*);
 
 /* dynloader.c */
 /*

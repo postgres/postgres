@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.6 1996/11/06 10:30:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.7 1996/11/27 08:15:54 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #else
 # include <string.h>
 #endif
+#include <port-protos.h> /* ecvt(), fcvt() */
 
 int32
 pg_atoi(char *s, int size, int c)

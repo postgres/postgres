@@ -17,8 +17,14 @@
 
 #define HAVE_MEMMOVE
 
-#if defined(sequent) 
+#if defined(aix)
+#  define CLASS_CONFLICT 
+#  define DISABLE_XOPEN_NLS 
+#  define NEED_ISINF
 #  define NEED_UNION_SEMUN 
+#  define NEED_SYS_SELECT_H
+#  define HAVE_TZSET
+#  define HAVE_ANSI_CPP
 #endif
 
 #if defined(alpha)
@@ -30,6 +36,19 @@
 #  define NEED_UNION_SEMUN 
 #endif
 
+#if defined(BSD44_derived) || \
+    defined(bsdi)
+#  if defined(bsdi)
+#    define SIGJMP_BUF
+#  endif
+#  define USE_LIMITS_H
+#  define USE_POSIX_TIME
+#  define NEED_CBRT
+#  if defined(PRE_BSDI_2_1)
+#    define NEED_UNION_SEMUN 
+#  endif
+#endif
+
 #if defined(dgux)
 #  define LINUX_ELF
 #  define NEED_UNION_SEMUN 
@@ -37,26 +56,8 @@
 #  define -DUSE_POSIX_SIGNALS
 #endif
 
-#if defined(ultrix4)
-#  define NEED_ISINF 
-#  define USE_POSIX_TIME
-#  define NEED_UNION_SEMUN 
-#  define NEED_STRDUP
-#endif
-
-#if defined(linux)
-/* __USE_POSIX, __USE_BSD, and __USE_BSD_SIGNAL used to be defined either
-   here or with -D compile options, but __ macros should be set and used by C
-   library macros, not Postgres code.  __USE_POSIX is set by features.h,
-   __USE_BSD is set by bsd/signal.h, and __USE_BSD_SIGNAL appears not to
-   be used.
-*/
-#  define USE_POSIX_TIME
-#  define HAVE_TZSET
-#  define NEED_CBRT
-#endif
-
 #if defined(hpux)
+#  define SIGJMP_BUF
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
 #  define NEED_CBRT
@@ -73,6 +74,38 @@
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
+#endif
+
+#if defined(irix5)
+#  define USE_POSIX_TIME 
+#  define USE_POSIX_SIGNALS
+#  define NEED_ISINF 
+#  define NO_EMPTY_STMTS
+#  define NO_VFORK
+#  define HAVE_TZSET
+#  define SYSV_DIRENT
+#endif
+
+#if defined(linux)
+/* __USE_POSIX, __USE_BSD, and __USE_BSD_SIGNAL used to be defined either
+   here or with -D compile options, but __ macros should be set and used by C
+   library macros, not Postgres code.  __USE_POSIX is set by features.h,
+   __USE_BSD is set by bsd/signal.h, and __USE_BSD_SIGNAL appears not to
+   be used.
+*/
+#  define SIGJMP_BUF
+#  define USE_POSIX_TIME
+#  define HAVE_TZSET
+#  define NEED_CBRT
+#endif
+
+#if defined(next)
+#  define SIGJMP_BUF
+#  define NEED_SIG_JMP
+#endif
+
+#if defined(sequent) 
+#  define NEED_UNION_SEMUN 
 #endif
 
 #if defined(sparc) && !defined(sparc_solaris)
@@ -103,11 +136,8 @@
 #  define SYSV_DIRENT
 #endif
 
-#if defined(next)
-#  define NEED_SIG_JMP
-#endif
-
 #if defined(win32)
+#  define SIGJMP_BUF
 #  define NEED_SIG_JMP
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
@@ -118,35 +148,13 @@
 #  define NEED_ISINF
 #endif /* WIN32 */
 
-#if defined(BSD44_derived) || \
-    defined(bsdi)
-#  define USE_LIMITS_H
-#  define USE_POSIX_TIME
-#  define NEED_CBRT
-#  ifdef PRE_BSDI_2_1
-#    define NEED_UNION_SEMUN 
-#  endif
-#endif
-
-#if defined(aix)
-#  define CLASS_CONFLICT 
-#  define DISABLE_XOPEN_NLS 
-#  define NEED_ISINF
-#  define NEED_UNION_SEMUN 
-#  define NEED_SYS_SELECT_H
-#  define HAVE_TZSET
-#  define HAVE_ANSI_CPP
-#endif
-
-#if defined(irix5)
-#  define USE_POSIX_TIME 
-#  define USE_POSIX_SIGNALS
+#if defined(ultrix4)
 #  define NEED_ISINF 
-#  define NO_EMPTY_STMTS
-#  define NO_VFORK
-#  define HAVE_TZSET
-#  define SYSV_DIRENT
+#  define USE_POSIX_TIME
+#  define NEED_UNION_SEMUN 
+#  define NEED_STRDUP
 #endif
+
 
 /*
  * The following is used as the arg list for signal handlers.  Any ports

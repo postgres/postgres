@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.26 1996/11/24 04:07:00 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.27 1996/11/27 08:15:36 bryanh Exp $
  *
  * NOTES
  *
@@ -80,6 +80,7 @@
 #include "utils/mcxt.h"
 #include "storage/proc.h"
 #include "utils/elog.h"
+#include "port-protos.h"   /* For gethostname() */
 
 #if defined(DBX_VERSION)
 # define FORK() (0)

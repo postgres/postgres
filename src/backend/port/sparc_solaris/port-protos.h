@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.1.1.1 1996/07/09 06:21:45 scrappy Exp $
+ * $Id: port-protos.h,v 1.2 1996/11/27 08:15:23 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,8 @@
 #define PORT_PROTOS_H
 
 #include <dlfcn.h>
+
+#include "config.h"   /* For MAXPATHLEN */
 #include "fmgr.h"			/* for func_ptr */
 #include "utils/dynamic_loader.h"
 
@@ -34,5 +36,12 @@
 /* port.c */
 extern long random(void);
 extern void srandom(int seed);
+
+/* inet_aton.c in backend/port directory */
+extern int inet_aton(const char *cp, struct in_addr *addr);
+
+/* In system library, but can't find prototype in system library .h files */
+extern int gethostname(char *name, int namelen);
+
 
 #endif /* PORT_PROTOS_H */

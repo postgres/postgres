@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.9 1996/11/04 04:00:28 momjian Exp $
+ * $Id: ipc.h,v 1.10 1996/11/27 08:16:38 bryanh Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -22,6 +22,7 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/ipc.h>   /* For IPC_PRIVATE */
 
 /*
  * Many architectures have support for user-level spinlocks (i.e., an

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.5 1996/11/10 03:03:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.6 1996/11/27 08:16:01 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include <stdio.h>		/* for sprintf() */
 #include <errno.h>
 #include <sys/file.h>
+#include <fcntl.h>
 #include <string.h>
  
 #include "postgres.h"
