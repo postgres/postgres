@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.14 1996/11/10 01:35:39 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.15 1996/11/17 04:56:01 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -84,18 +84,15 @@ usage(const char* progname)
     fprintf(stderr, "\t -H hostname \t\t server host name\n");
     fprintf(stderr, "\t -p port     \t\t server port number\n");
     fprintf(stderr, "\t -v          \t\t verbose\n");
-    fprintf(stderr, "\t -d[a]       \t\t dump data as proper insert strings\n");
-    fprintf(stderr, "\t             \t\t (if 'a' then attribute names also)\n");
+    fprintf(stderr, "\t -d          \t\t dump data as proper insert strings\n");
+    fprintf(stderr, "\t -D          \t\t dump data as inserts with attribute names\n");
     fprintf(stderr, "\t -S          \t\t dump out only the schema, no data\n");
     fprintf(stderr, "\t -a          \t\t dump out only the data, no schema\n");
     fprintf(stderr, "\t -t table    \t\t dump for this table only\n");
     fprintf(stderr, "\t -o          \t\t dump object id's (oids)\n");
-    fprintf(stderr, "\n if dbname is not supplied, then the DATABASE environment name is used\n");
+    fprintf(stderr, "\nIf dbname is not supplied, then the DATABASE environment name is used.\n");
     fprintf(stderr, "\n");
 
-    fprintf(stderr, "\tpg_dump dumps out postgres databases and produces a script file\n");
-    fprintf(stderr, "\tof SQL commands to regenerate the schema\n");
-    fprintf(stderr, "\tThe SQL output is designed for import into Postgres95\n");
     exit(1);
 }
 
@@ -137,7 +134,7 @@ main(int argc, char** argv)
 
     progname = *argv;
 
-    while ((c = getopt(argc, argv,"f:H:p:t:vSDd:ao")) != EOF) {
+    while ((c = getopt(argc, argv,"f:H:p:t:vSDdDao")) != EOF) {
 	switch(c) {
 	case 'f': /* output file name */
 	    filename = optarg;
@@ -156,7 +153,10 @@ main(int argc, char** argv)
 	    break;
         case 'd': /* dump data as proper insert strings */
             dumpData = 1;
-            attrNames = strstr(optarg,"a") ? 1 : 0;
+            break;
+        case 'D': /* dump data as proper insert strings with attr names */
+            dumpData = 1;
+            attrNames = 1;
             break;
 	case 't': /* Dump data for this table only */
 	    tablename = optarg;
