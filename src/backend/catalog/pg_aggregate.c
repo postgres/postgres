@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.1.1.1 1996/07/09 06:21:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.2 1996/11/03 23:27:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,7 @@
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/skey.h"
-#include "access/htup.h"
 #include "access/tupdesc.h"
-#include "utils/rel.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/builtins.h"
 #include "fmgr.h"
@@ -31,6 +28,8 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_aggregate.h"
+
+#include "miscadmin.h"
 
 /* ----------------
  * AggregateCreate

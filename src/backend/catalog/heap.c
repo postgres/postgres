@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.2 1996/10/24 07:54:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.3 1996/11/03 23:27:01 scrappy Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -30,43 +30,35 @@
 
 #include "postgres.h"
 
+#include "parser/catalog_utils.h"
+
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "access/htup.h"
 #include "access/istrat.h"
-#include "access/relscan.h"
-#include "access/skey.h"
-#include "utils/tqual.h"	/* for NowTimeQual */
-#include "storage/buf.h"
 #include "storage/bufmgr.h"
-#include "storage/itemptr.h"
 #include "lib/hasht.h"
 #include "miscadmin.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
-#include "utils/elog.h"			/* XXX */
 #include "utils/mcxt.h"
 #include "utils/palloc.h"
-#include "utils/rel.h"
 #include "utils/relcache.h"
 
 #include "catalog/catname.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_ipl.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 
 #include "catalog/catalog.h"
-#include "parser/catalog_utils.h"
 
 #include "storage/lmgr.h"
 
 #include "rewrite/rewriteRemove.h"
+
+#include "storage/smgr.h"
 
 static void AddNewAttributeTuples(Oid new_rel_oid, TupleDesc tupdesc);
 static void CheckAttributeNames(TupleDesc tupdesc);

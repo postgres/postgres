@@ -8,35 +8,30 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.2 1996/08/26 06:29:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.3 1996/11/03 23:27:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 #include "utils/builtins.h"
-#include "utils/rel.h"
-#include "utils/elog.h"
 #include "utils/oidcompos.h"
 #include "utils/palloc.h"
-#include "access/htup.h"
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "access/attnum.h"
-#include "access/funcindex.h"
 #include "access/skey.h"
-#include "storage/buf.h"
 #include "storage/bufmgr.h"
 #include "nodes/execnodes.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_attribute.h"
 #include "utils/syscache.h"
 #include "catalog/indexing.h"
 #include "catalog/index.h"
+
+#include "miscadmin.h"
 
 /*
  * Names of indices on the following system catalogs:
@@ -141,7 +136,6 @@ CatalogIndexInsert(Relation *idescs,
     HeapTuple pgIndexTup;
     TupleDesc heapDescriptor;
     IndexTupleForm pgIndexP;
-    IndexTuple newIndxTup;
     Datum datum;
     int natts;
     AttrNumber *attnumP;

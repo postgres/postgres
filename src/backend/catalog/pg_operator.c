@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.2 1996/10/07 03:27:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.3 1996/11/03 23:27:06 scrappy Exp $
  *
  * NOTES
  *    these routines moved here from commands/define.c and somewhat cleaned up.
@@ -18,21 +18,18 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/relscan.h"
 #include "access/skey.h"
 #include "access/htup.h"
-#include "utils/rel.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "parser/catalog_utils.h"
 
 #include "catalog/catname.h"
-#include "utils/syscache.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
 #include "storage/bufmgr.h"
 
 #include "fmgr.h"
+
+#include "miscadmin.h"
 
 static Oid OperatorGetWithOpenRelation(Relation pg_operator_desc,
 				       const char *operatorName,

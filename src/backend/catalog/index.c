@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.4 1996/08/27 22:16:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.5 1996/11/03 23:27:02 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -25,25 +25,18 @@
  */
 #include "postgres.h"
 
-#include "access/attnum.h"
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/skey.h"
 #include "utils/builtins.h"
-#include "utils/tqual.h"
-#include "access/tupdesc.h"
-#include "access/funcindex.h"
 #include "access/xact.h"
+#include "parser/catalog_utils.h"
 
 #include "storage/smgr.h"
+#include "storage/lmgr.h"
 #include "miscadmin.h"
 #include "utils/mcxt.h"
 #include "utils/palloc.h"
-#include "utils/rel.h"
 #include "utils/relcache.h"
-#include "utils/elog.h"
 
 #include "bootstrap/bootstrap.h"
 
@@ -51,15 +44,11 @@
 #include "catalog/catalog.h"
 #include "utils/syscache.h"
 #include "catalog/pg_attribute.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_class.h"
-#include "catalog/pg_type.h"
 #include "catalog/indexing.h"
 
 #include "catalog/heap.h"
 
-#include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 
 #include "catalog/index.h"
@@ -70,7 +59,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
 
-#include "parser/catalog_utils.h"
+#include "access/istrat.h"
 
 /*
  * macros used in guessing how many tuples are on a page.

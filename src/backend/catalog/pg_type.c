@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.1.1.1 1996/07/09 06:21:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.2 1996/11/03 23:27:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,18 +19,15 @@
 #include "access/skey.h"
 #include "access/tupdesc.h"
 #include "utils/builtins.h"
-#include "utils/rel.h"
 #include "utils/palloc.h"
 #include "fmgr.h"
-#include "utils/elog.h"
 #include "parser/catalog_utils.h"
 
 #include "catalog/catname.h"
-#include "utils/syscache.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "catalog/indexing.h"
 #include "storage/lmgr.h"
+
+#include "miscadmin.h"
 
 /* ----------------------------------------------------------------
  * 	TypeGetWithOpenRelation
