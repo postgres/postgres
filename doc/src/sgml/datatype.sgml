@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.42 2000/11/16 06:03:40 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.43 2000/12/03 14:47:18 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -497,9 +497,9 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        </row>
        <row>
 	<entry>text</entry>
-	<entry>(4+length) bytes</entry>
-	<entry>Best choice</entry>
-	<entry>Variable-length</entry>
+	<entry>(4+n) bytes</entry>
+	<entry>Most flexible</entry>
+	<entry>Variable unlimited length</entry>
        </row>
        <row>
 	<entry>varchar(n)</entry>
@@ -513,11 +513,10 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </para>
 
    <para>
-    There is one other fixed-length character type in <productname>Postgres</productname>. 
-    The <type>name</type> type
-    only has one purpose and that is for storage of internal catalog
-    names.
-    It is not intended for use by the general user.
+    There is one other fixed-length character type in <productname>Postgres</productname>.
+    The <type>name</type> type exists <emphasis>only</emphasis> for
+    storage of internal catalog names and
+    is not intended for use by the general user.
     Its length is currently defined as 32 bytes (31 characters plus terminator) 
     but should be reference using NAMEDATALEN.
     The length is set at compile time (and is therefore adjustable for
