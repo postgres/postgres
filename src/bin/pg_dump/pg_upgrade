@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.12 1999/09/28 16:02:28 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.13 1999/09/28 18:04:18 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -100,23 +100,24 @@ esac
 
 
 # OK, ready to proceed.
-# XXX Do I need to create a database?
 
-# remove any COPY statements, except for the one that loads pg_shadow.
-# there shouldn't be any others in there anyway...
+# Remove any COPY statements, except for the one that loads pg_shadow.
+# There shouldn't be any others in there anyway...
+# Also marks rows as committed because when pg_log is replaced with
+# the saved version, the transaction statuses may be wrong, so
+# vacuum sets the on-row status to the proper value.
 
 cat $INPUT | awk '	{
 				if (toupper($1) == "COPY" && $2 != "pg_shadow")
 					while (getline $0 > 0 && $0 != "\\.")
 						;
+				else if (tolower($1) == "\\connect" && 
+					 tolower($2) == "template1")
+					printf "VACUUM;\n%s\n", $0;
 				else	print $0;
 			}' >/tmp/$$
 
-# Add a VACUUM command to the end of the pg_dump script.  With MVCC,
-# this is necessary to ensure that all the rows in the new database's
-# system tables will still be considered committed after we overwrite
-# pg_log with the old database's commit log...
-
+# We need to vacuum the last database too
 echo "VACUUM;" >>/tmp/$$
 
 # Create and vacuum empty tables/indexes
