@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/AbstractJdbc1Connection.java,v 1.28 2003/11/29 19:52:09 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/AbstractJdbc1Connection.java,v 1.29 2003/12/18 03:27:15 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1109,7 +1109,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 	 */
 	public void close() throws SQLException
 	{
-		if (haveMinimumCompatibleVersion("7.4")) {
+		if (getPGProtocolVersionMajor() == 3) {
 			closeV3();
 		} else {
 			closeV2();

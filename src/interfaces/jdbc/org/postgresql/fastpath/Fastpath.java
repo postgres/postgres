@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Fastpath.java,v 1.19 2003/12/17 15:45:05 davec Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Fastpath.java,v 1.20 2003/12/18 03:27:14 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ public class Fastpath
 	 */
 	public Object fastpath(int fnid, boolean resulttype, FastpathArg[] args) throws SQLException
 	{
-		if (conn.haveMinimumCompatibleVersion("7.4")) {
+		if (conn.getPGProtocolVersionMajor() == 3) {
 			return fastpathV3(fnid, resulttype, args);
 		} else {
 			return fastpathV2(fnid, resulttype, args);
