@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.222 2002/08/29 00:17:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.223 2002/08/29 04:38:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -623,6 +623,12 @@ AddNewRelationType(const char *typeName,
 				   Oid new_type_oid)
 {
 	/*
+	 * We set the I/O procedures of a complex type to record_in and
+	 * record_out, so that a user will get an error message not a weird
+	 * number if he tries to SELECT a complex type.
+	 *
+	 * OLD and probably obsolete comments:
+	 *
 	 * The sizes are set to oid size because it makes implementing sets
 	 * MUCH easier, and no one (we hope) uses these fields to figure out
 	 * how much space to allocate for the type. An oid is the type used
@@ -639,8 +645,8 @@ AddNewRelationType(const char *typeName,
 			   sizeof(Oid),		/* internal size */
 			   'c',				/* type-type (complex) */
 			   ',',				/* default array delimiter */
-			   F_OIDIN,			/* input procedure */
-			   F_OIDOUT,		/* output procedure */
+			   F_RECORD_IN,		/* input procedure */
+			   F_RECORD_OUT,	/* output procedure */
 			   InvalidOid,		/* array element type - irrelevant */
 			   InvalidOid,		/* domain base type - irrelevant */
 			   NULL,			/* default type value - none */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.131 2002/08/29 00:17:06 tgl Exp $
+ * $Id: pg_type.h,v 1.132 2002/08/29 04:38:04 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -296,13 +296,13 @@ DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
 DATA(insert OID = 32 (	SET		   PGNSP PGUID -1 f b t \054 0   0 unknownin unknownout i p f 0 -1 0 _null_ _null_ ));
 DESCR("set of tuples");
 
-DATA(insert OID = 71 (	pg_type		 PGNSP PGUID 4 t c t \054 1247 0 int4in int4out i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 75 (	pg_attribute PGNSP PGUID 4 t c t \054 1249 0 int4in int4out i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 81 (	pg_proc		 PGNSP PGUID 4 t c t \054 1255 0 int4in int4out i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 83 (	pg_class	 PGNSP PGUID 4 t c t \054 1259 0 int4in int4out i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 86 (	pg_shadow	 PGNSP PGUID 4 t c t \054 1260 0 int4in int4out i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 87 (	pg_group	 PGNSP PGUID 4 t c t \054 1261 0 int4in int4out i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 88 (	pg_database  PGNSP PGUID 4 t c t \054 1262 0 int4in int4out i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 71 (	pg_type		 PGNSP PGUID 4 t c t \054 1247 0 record_in record_out i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 75 (	pg_attribute PGNSP PGUID 4 t c t \054 1249 0 record_in record_out i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 81 (	pg_proc		 PGNSP PGUID 4 t c t \054 1255 0 record_in record_out i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 83 (	pg_class	 PGNSP PGUID 4 t c t \054 1259 0 record_in record_out i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 86 (	pg_shadow	 PGNSP PGUID 4 t c t \054 1260 0 record_in record_out i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 87 (	pg_group	 PGNSP PGUID 4 t c t \054 1261 0 record_in record_out i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 88 (	pg_database  PGNSP PGUID 4 t c t \054 1262 0 record_in record_out i p f 0 -1 0 _null_ _null_ ));
 
 /* OIDS 100 - 199 */
 
