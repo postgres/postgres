@@ -244,3 +244,21 @@ drop domain ddef2 restrict;
 drop domain ddef3 restrict;
 drop domain ddef4 restrict;
 drop domain ddef5 restrict;
+
+-- Make sure that constraints of newly-added domain columns are
+-- enforced correctly, even if there's no default value for the new
+-- column. Per bug #1433
+create domain str_domain as text not null;
+
+create table domain_test (a int, b int);
+
+insert into domain_test values (1, 2);
+insert into domain_test values (1, 2);
+
+-- should fail
+alter table domain_test add column c str_domain;
+
+create domain str_domain2 as text check (value <> 'foo') default 'foo';
+
+-- should fail
+alter table domain_test add column d str_domain2;
