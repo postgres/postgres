@@ -3,15 +3,18 @@
  *
  *	Definitions for the PostgreSQL statistics collector daemon.
  *
- *	Copyright (c) 2001, PostgreSQL Global Development Group
+ *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.h,v 1.13 2003/03/20 03:34:56 momjian Exp $
+ *	$Id: pgstat.h,v 1.14 2003/04/26 02:57:14 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
 #define PGSTAT_H
 
+#include "utils/hsearch.h"
 #include "utils/nabstime.h"
+#include "utils/rel.h"
+
 
 /* ----------
  * Paths for the statistics files. The %s is replaced with the
@@ -26,16 +29,17 @@
  * ----------
  */
 #define PGSTAT_STAT_INTERVAL	500		/* How often to write the status	*/
- /* file, in milliseconds.			 */
+ /* file; in milliseconds.			 */
 
 #define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed		*/
- /* objects known to give delayed	 */
- /* UDP packets time to arrive,		 */
+ /* objects known, to give delayed	 */
+ /* UDP packets time to arrive;		 */
  /* in milliseconds.				 */
 
-#define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY					\
-								/ PGSTAT_STAT_INTERVAL)
+#define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY / PGSTAT_STAT_INTERVAL)
 
+#define PGSTAT_RESTART_INTERVAL	60		/* How often to attempt to restart */
+ /* a failed statistics collector; in seconds. */
 
 /* ----------
  * How much of the actual query string to send to the collector.
@@ -323,7 +327,7 @@ typedef union PgStat_Msg
 
 
 /* ----------
- * Global variables
+ * GUC parameters
  * ----------
  */
 extern bool pgstat_collect_startcollector;
@@ -333,12 +337,18 @@ extern bool pgstat_collect_tuplelevel;
 extern bool pgstat_collect_blocklevel;
 
 /* ----------
+ * Other global variables
+ * ----------
+ */
+extern bool pgstat_is_running;
+
+/* ----------
  * Functions called from postmaster
  * ----------
  */
-extern int	pgstat_init(void);
-extern int	pgstat_start(void);
-extern int	pgstat_ispgstat(int pid);
+extern void pgstat_init(void);
+extern void pgstat_start(void);
+extern bool pgstat_ispgstat(int pid);
 extern void pgstat_close_sockets(void);
 extern void pgstat_beterm(int pid);
 

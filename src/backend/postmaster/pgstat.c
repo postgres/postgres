@@ -10,13 +10,10 @@
  *
  *			- Add a pgstat config column to pg_database, so this
  *			  entire thing can be enabled/disabled on a per db base.
- *			  Not to be done before 7.2 - requires catalog change and
- *			  thus an initdb and we might want to provide this as a
- *			  patch for 7.1.
  *
- *	Copyright (c) 2001, PostgreSQL Global Development Group
+ *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.33 2003/04/25 01:24:00 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.34 2003/04/26 02:57:14 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -30,6 +27,8 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <signal.h>
+
+#include "pgstat.h"
 
 #include "access/xact.h"
 #include "access/heapam.h"
@@ -47,8 +46,6 @@
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
 
-#include "pgstat.h"
-
 
 /* ----------
  * GUC parameters
@@ -61,6 +58,12 @@ bool		pgstat_collect_tuplelevel = false;
 bool		pgstat_collect_blocklevel = false;
 
 /* ----------
+ * Other global variables
+ * ----------
+ */
+bool		pgstat_is_running = false;
+
+/* ----------
  * Local data
  * ----------
  */
@@ -69,8 +72,8 @@ static int	pgStatPipe[2];
 static struct sockaddr_in pgStatAddr;
 static int	pgStatPmPipe[2] = {-1, -1};
 
-static int	pgStatRunning = 0;
 static int	pgStatPid;
+static time_t last_pgstat_start_time;
 
 static long pgStatNumMessages = 0;
 
@@ -130,14 +133,12 @@ static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
  * pgstat_init() -
  *
  *	Called from postmaster at startup. Create the resources required
- *	by the statistics collector process.
- *
- *	NOTE: failure exit from this routine causes the postmaster to abort.
- *	This is unfriendly and should not be done except in dire straits.
- *	Better to let the postmaster start with stats collection disabled.
+ *	by the statistics collector process.  If unable to do so, do not
+ *	fail --- better to let the postmaster start with stats collection
+ *	disabled.
  * ----------
  */
-int
+void
 pgstat_init(void)
 {
 	int			alen;
@@ -168,7 +169,7 @@ pgstat_init(void)
 	 * Nothing else required if collector will not get started
 	 */
 	if (!pgstat_collect_startcollector)
-		return 0;
+		return;
 
 	/*
 	 * Create the UDP socket for sending and receiving statistic messages
@@ -231,7 +232,7 @@ pgstat_init(void)
 		goto startup_failed;
 	}
 
-	return 0;
+	return;
 
 startup_failed:
 	if (pgStatSock >= 0)
@@ -239,11 +240,10 @@ startup_failed:
 	pgStatSock = -1;
 
 	/* Adjust GUC variables to suppress useless activity */
+	pgstat_collect_startcollector = false;
 	pgstat_collect_querystring = false;
 	pgstat_collect_tuplelevel = false;
 	pgstat_collect_blocklevel = false;
-
-	return 0;
 }
 
 
@@ -251,31 +251,51 @@ startup_failed:
  * pgstat_start() -
  *
  *	Called from postmaster at startup or after an existing collector
- *	died.  Fire up a fresh statistics collector.
+ *	died.  Attempt to fire up a fresh statistics collector.
  *
- *	NOTE: failure exit from this routine causes the postmaster to abort.
+ *	Note: if fail, we will be called again from the postmaster main loop.
  * ----------
  */
-int
+void
 pgstat_start(void)
 {
+	time_t		curtime;
+
 	/*
 	 * Do nothing if no collector needed
 	 */
-	if (!pgstat_collect_startcollector)
-		return 0;
+	if (pgstat_is_running || !pgstat_collect_startcollector)
+		return;
 
 	/*
-	 * Check that the socket is there, else pgstat_init failed
+	 * Do nothing if too soon since last collector start.  This is a
+	 * safety valve to protect against continuous respawn attempts if
+	 * the collector is dying immediately at launch.  Note that since
+	 * we will be re-called from the postmaster main loop, we will get
+	 * another chance later.
+	 */
+	curtime = time(NULL);
+	if ((unsigned int) (curtime - last_pgstat_start_time) <
+		(unsigned int) PGSTAT_RESTART_INTERVAL)
+		return;
+	last_pgstat_start_time = curtime;
+
+	/*
+	 * Check that the socket is there, else pgstat_init failed.
 	 */
 	if (pgStatSock < 0)
 	{
 		elog(LOG, "PGSTAT: statistics collector startup skipped");
-		return 0;
+		/*
+		 * We can only get here if someone tries to manually turn
+		 * pgstat_collect_startcollector on after it had been off.
+		 */
+		pgstat_collect_startcollector = false;
+		return;
 	}
 
 	/*
-	 * Then fork off the collector.  Remember its PID for pgstat_ispgstat.
+	 * Okay, fork off the collector.  Remember its PID for pgstat_ispgstat.
 	 */
 
 	fflush(stdout);
@@ -294,15 +314,14 @@ pgstat_start(void)
 			beos_backend_startup_failed();
 #endif
 			elog(LOG, "PGSTAT: fork() failed: %m");
-			pgStatRunning = 0;
-			return 0;
+			return;
 
 		case 0:
 			break;
 
 		default:
-			pgStatRunning = 1;
-			return 0;
+			pgstat_is_running = true;
+			return;
 	}
 
 	/* in postmaster child ... */
@@ -335,16 +354,19 @@ pgstat_start(void)
  *	was the statistics collector.
  * ----------
  */
-int
+bool
 pgstat_ispgstat(int pid)
 {
-	if (pgStatRunning == 0)
-		return 0;
+	if (!pgstat_is_running)
+		return false;
 
 	if (pgStatPid != pid)
-		return 0;
+		return false;
 
-	return 1;
+	/* Oh dear ... */
+	pgstat_is_running = false;
+
+	return true;
 }
 
 

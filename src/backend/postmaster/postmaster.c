@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.314 2003/04/22 00:08:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.315 2003/04/26 02:57:14 tgl Exp $
  *
  * NOTES
  *
@@ -790,12 +790,10 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	/*
-	 * Initialize and startup the statistics collector process
+	 * Initialize and try to startup the statistics collector process
 	 */
-	if (pgstat_init() < 0)
-		ExitPostmaster(1);
-	if (pgstat_start() < 0)
-		ExitPostmaster(1);
+	pgstat_init();
+	pgstat_start();
 
 	/*
 	 * Load cached files for client authentication.
@@ -1058,6 +1056,10 @@ ServerLoop(void)
 				ConnFree(port);
 			}
 		}
+
+		/* If we have lost the stats collector, try to start a new one */
+		if (!pgstat_is_running)
+			pgstat_start();
 	}
 }
 
@@ -1720,8 +1722,9 @@ reaper(SIGNAL_ARGS)
 #endif
 
 		/*
-		 * Check if this child was the statistics collector. If so, start
-		 * a new one.
+		 * Check if this child was the statistics collector. If so,
+		 * try to start a new one.  (If fail, we'll try again in
+		 * future cycles of the main loop.)
 		 */
 		if (pgstat_ispgstat(pid))
 		{
