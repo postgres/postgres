@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.47 2002/09/23 20:43:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.47.2.1 2003/04/25 21:29:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	else
 	{
 		attr_cnt = onerel->rd_att->natts;
-		vacattrstats = (VacAttrStats **) palloc(attr_cnt *
+		/* +1 here is just to avoid palloc(0) with zero-column table */
+		vacattrstats = (VacAttrStats **) palloc((attr_cnt + 1) *
 												sizeof(VacAttrStats *));
 		tcnt = 0;
 		for (i = 1; i <= attr_cnt; i++)
