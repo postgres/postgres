@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.21 2002/04/12 09:37:10 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.22 2002/06/11 22:21:01 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -198,7 +198,7 @@ fi
 
 dbcomment=`echo "$dbcomment" | sed "s/'/\\\\\'/g"`
 
-${PATHNAME}psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
+${PATHNAME}psql $PSQLOPT -d "$dbname" -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
 if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: comment creation failed (database was created)" 1>&2
 	exit 1
