@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.2 1996/07/25 06:55:23 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.3 1996/07/27 02:19:00 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ done
 AUTHOPT="-a $AUTHSYS"
 [ -z "$AUTHSYS" ] && AUTHOPT=""
 
-psql -Tq $AUTHOPT -H $PGHOST -p $PGPORT -c "create database $dbname" template1 || {
+psql -tq $AUTHOPT -h $PGHOST -p $PGPORT -c "create database $dbname" template1 || {
     echo "$CMDNAME: database creation failed on $dbname."
     exit 1
 }

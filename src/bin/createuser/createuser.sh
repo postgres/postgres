@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.2 1996/07/25 06:55:30 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.3 1996/07/27 02:19:06 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -55,7 +55,7 @@ done
 AUTHOPT="-a $AUTHSYS"
 [ -z "$AUTHSYS" ] && AUTHOPT=""
 
-PARGS="-T -q $AUTHOPT -H $PGHOST -p $PGPORT"
+PARGS="-tq $AUTHOPT -h $PGHOST -p $PGPORT"
 
 #
 # generate the first part of the actual monitor command

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.2 1996/07/25 06:55:49 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.3 1996/07/27 02:19:18 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -55,7 +55,7 @@ done
 AUTHOPT="-a $AUTHSYS"
 [ -z "$AUTHSYS" ] && AUTHOPT=""
 
-PARGS="-Tq $AUTHOPT -p $PGPORT -H $PGHOST"
+PARGS="-tq $AUTHOPT -p $PGPORT -h $PGHOST"
 
 #
 # generate the first part of the actual monitor command
