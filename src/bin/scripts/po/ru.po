@@ -1,16 +1,19 @@
-# ru.po
 # PGSCRIPTS Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/po/Attic/ru.po,v 1.2 2003/08/24 21:18:52 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/po/Attic/ru.po,v 1.3 2003/08/25 21:29:53 petere Exp $
+#
+# To the new translator:
+#   PG Russian Translation Discussion Group: <http://groups.yahoo.com/group/pgsql-rus/>
+#   PG Glossary: <http://www.sai.msu.su/~megera/oddmuse/index.cgi?Pgsql_Glossary>
 #
 # ChangeLog:
-#   - July 24 - August 23, 2003: Initial Translation for 7.4.*; Serguei A. Mokhov, <mokhov@cs.concordia.ca>
+#   - July 24 - August 25, 2003: Complete Initial Translation for 7.4.*; Serguei A. Mokhov, <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2003-07-23 04:18-0300\n"
-"PO-Revision-Date: 2003-08-23 12:44-0500\n"
+"Project-Id-Version: PostgreSQL 7.4\n"
+"POT-Creation-Date: 2003-08-25 04:19-0300\n"
+"PO-Revision-Date: 2003-08-25 12:26-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -397,7 +400,7 @@ msgid "  -i, --sysid=SYSID         select sysid for new user\n"
 msgstr "  -i, --sysid=SYSID         выбрать sysid для нового пользователья\n"
 
 #: createuser.c:254
-msgid  "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr ""
 "  -U, --username=ПОЛЬЗОВАТЕЛЬ\n"
 "                            имя пользователья для подсоединения (но не для создания)\n"
@@ -449,7 +452,7 @@ msgstr ""
 #: dropdb.c:144
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
-msgstr "  %s [ОПЦИЯ]... [ИМЯБД]\n"
+msgstr "  %s [ОПЦИЯ]... ИМЯБД\n"
 
 #: dropdb.c:147
 #: dropuser.c:147
@@ -516,27 +519,27 @@ msgstr ""
 #: clusterdb.c:119
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
-msgstr ""
+msgstr "%s: нельзя переупорядочить все базы и одну конкретную одновременно\n"
 
 #: clusterdb.c:125
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
-msgstr ""
+msgstr "%s: нельзя переупорядочить одну и ту же таблицу во всех базах\n"
 
 #: clusterdb.c:181
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
-msgstr ""
+msgstr "%s: ощибка при переупорядочивании таблицы \"%s\" в базе \"%s\": %s"
 
 #: clusterdb.c:184
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
-msgstr ""
+msgstr "%s: ощибка при переупорядочивании базы \"%s\": %s"
 
 #: clusterdb.c:217
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
-msgstr ""
+msgstr "%s: переупорядочивание базы \"%s\"\n"
 
 #: clusterdb.c:231
 #, c-format
@@ -544,6 +547,8 @@ msgid ""
 "%s clusters all previously clustered tables in a database.\n"
 "\n"
 msgstr ""
+"%s переупорядочивает ранее перегруппированные таблицы в базе данных согласно индексу.\n"
+"\n"
 
 #: clusterdb.c:233
 #: vacuumdb.c:257
@@ -553,15 +558,15 @@ msgstr "  %s [ОПЦИЯ]... [ИМЯБД]\n"
 
 #: clusterdb.c:235
 msgid "  -a, --all                 cluster all databases\n"
-msgstr ""
+msgstr "  -a, --all                 переупорядочить все базы\n"
 
 #: clusterdb.c:236
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
-msgstr ""
+msgstr "  -d, --dbname=ИМЯБД        имя базы для переупорядочивания\n"
 
 #: clusterdb.c:237
 msgid "  -t, --table=TABLE         cluster specific table only\n"
-msgstr ""
+msgstr "  -t, --table=ТАБЛИЦА        переупорядочить конкретную таблицу\n"
 
 #: clusterdb.c:247
 msgid ""
@@ -574,27 +579,27 @@ msgstr ""
 #: vacuumdb.c:135
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
-msgstr ""
+msgstr "%s: нельзя произвести сборку мусора для всех баз и одной конкретной одновременно\n"
 
 #: vacuumdb.c:141
 #, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
-msgstr ""
+msgstr "%s: нельзя произвести сборку мусора в одной и той же таблице во всех базах\n"
 
 #: vacuumdb.c:204
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
-msgstr ""
+msgstr "%s: ошибка при сборке мусора в таблице \"%s\" в базе \"%s\": %s"
 
 #: vacuumdb.c:207
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
-msgstr ""
+msgstr "%s: vacuuming of database \"%s\" failed: %s"
 
 #: vacuumdb.c:241
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
-msgstr ""
+msgstr "%s: ошибка при сборке мусора в базе \"%s\"\n"
 
 #: vacuumdb.c:255
 #, c-format
@@ -607,23 +612,23 @@ msgstr ""
 
 #: vacuumdb.c:259
 msgid "  -a, --all                       vacuum all databases\n"
-msgstr ""
+msgstr "  -a, --all                       произвести сборку мусора во всех базах\n"
 
 #: vacuumdb.c:260
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
-msgstr ""
+msgstr "  -d, --dbname=ИМЯБД              произвести сборку мусора в указанной базе\n"
 
 #: vacuumdb.c:261
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
-msgstr ""
+msgstr "  -t, --table='ТАБЛИЦА[(КОЛОНКИ)]' произвести сборку мусора в указанной таблице\n"
 
 #: vacuumdb.c:262
 msgid "  -f, --full                      do full vacuuming\n"
-msgstr ""
+msgstr "  -f, --full                      произвесим глобальную сборку мусора\n"
 
 #: vacuumdb.c:263
 msgid "  -z, --analyze                   update optimizer hints\n"
-msgstr ""
+msgstr "  -z, --analyze                   обновить статистику для оптимизатора\n"
 
 #: vacuumdb.c:264
 msgid "  -e, --echo                      show the commands being sent to the server\n"
