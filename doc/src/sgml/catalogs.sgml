@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.54 2002/08/24 15:00:45 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.55 2002/08/28 15:02:55 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -890,11 +890,12 @@
   <title>pg_class</title>
 
   <para>
-   <structname>pg_class</structname> catalogs tables and mostly
+   <structname>pg_class</structname> catalogs tables and most
    everything else that has columns or is otherwise similar to a
    table.  This includes indexes (but see also
    <structname>pg_index</structname>), sequences, views, and some
-   kinds of special relation.  Below, when we mean all of these
+   kinds of special relation; see <structfield>relkind</>.
+.  Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
    fields are meaningful for all relation types.
   </para>
@@ -957,7 +958,7 @@
       <entry>relfilenode</entry>
       <entry><type>oid</type></entry>
       <entry></entry>
-      <entry>Name of the on-disk file of this relation</entry>
+      <entry>Name of the on-disk file of this relation; 0 if none</entry>
      </row>
 
      <row>
@@ -1030,7 +1031,7 @@
       <entry></entry>
       <entry>
        'r' = ordinary table, 'i' = index, 'S' = sequence, 'v' = view,
-       's' = special, 't' = secondary TOAST table
+       'c' = composite type, 's' = special, 't' = TOAST table
       </entry>
      </row>
 
@@ -3127,8 +3128,9 @@
   <para>
    This catalog stores information about data types.  Scalar types
    (<quote>base types</>) are created with <command>CREATE TYPE</command>.
-   A complex type is also created for each table in the database, to
+   A complex type is automatically created for each table in the database, to
    represent the row structure of the table.  It is also possible to create
+   complex types with <command>CREATE TYPE AS</command>, and
    derived types with <command>CREATE DOMAIN</command>.
   </para>
 
@@ -3242,9 +3244,11 @@
       <entry>
        If this is a complex type (see
        <structfield>typtype</structfield>), then this field points to
-       the <structfield>pg_class</structfield> entry that defines the
-       corresponding table. A table could theoretically be used as a
-       composite data type, but this is only partly functional.
+       the <structname>pg_class</structname> entry that defines the
+       corresponding table.  (For a free-standing composite type, the
+       <structname>pg_class</structname> entry doesn't really represent
+       a table, but it is needed anyway for the type's
+       <structname>pg_attribute</structname> entries to link to.)
        Zero for non-complex types.
       </entry>
      </row>
