@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.1 2000/09/29 17:17:37 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.2 2000/10/01 22:23:14 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -312,8 +312,8 @@ then
     # ----------
 
     message "starting postmaster"
-    [ "$debug" = yes ] && postmaster_options='$postmaster_options -d 5'
-    [ "$unix_sockets" = no ] && postmaster_options='$postmaster_options -i'
+    [ "$debug" = yes ] && postmaster_options="$postmaster_options -d 5"
+    [ "$unix_sockets" = no ] && postmaster_options="$postmaster_options -i"
     "$bindir/postmaster" -D "$PGDATA" -p "$PGPORT" -F $postmaster_options >"$LOGDIR/postmaster.log" 2>&1 &
     postmaster_pid=$!
 
