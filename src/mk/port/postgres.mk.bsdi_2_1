@@ -1,12 +1,14 @@
 #-------------------------------------------------------------------------
 #
 # postgres.mk.bsdi--
-#    Intel x86/BSDi v2.0 specific rules and variables
+#    Intel x86/BSDi v2.1 specific rules and variables
 #
-#  for questions about the BSD/OS port, contact Kurt Lidl (lidl@pix.com)
-# 
+# for questions about the BSD/OS port, contact:
+#    Bruce Momjian (maillist@candle.pha.pa.us)
+#    Kurt Lidl (lidl@pix.com)
+#
 # Copyright (c) 1994-5, Regents of the University of California
-#
+# 
 # NOTE
 #    you may remove lines that start with ## which are general comments
 #-------------------------------------------------------------------------
@@ -14,7 +16,7 @@ ifndef MK_PORT
 MK_PORT=	bsdi_2_1
 
 # cc is gcc v1.42
-# gcc is gcc v2.6.3
+# gcc is gcc v2.7.2
 CC=			gcc
 
 RANLIB=		ranlib
@@ -22,10 +24,6 @@ INSTALL=	install
 LEX=		lex
 AROPT=		cq
 
-# use the regex library
-USE_REGEX = 1
-
-LDADD_BE= -ldl -lcompat
 LD_ADD+=	-ltermcap
 
 #
@@ -36,6 +34,7 @@ SLSUFF=		.o
 #
 # for postgres.mk
 #
-CFLAGS_OPT=	-O -DUSE_POSIX_SIGNALS # -O2
+CFLAGS_OPT=	-O2 -m486
+CFLAGS_BE = -DUSE_POSIX_SIGNALS
 
 endif
