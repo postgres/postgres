@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.75 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.76 2004/03/08 21:35:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,7 +462,7 @@ CommentDatabase(List *qualname, char *comment)
 	/* Only allow comments on the current database */
 	if (oid != MyDatabaseId)
 	{
-		ereport(WARNING,
+		ereport(WARNING,	/* throw just a warning so pg_restore doesn't fail */
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("database comments may only be applied to the current database")));
 		return;
