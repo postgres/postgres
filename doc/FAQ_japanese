@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Tue Aug 31 23:28:02 EDT 2004
+原文最終更新日: Sat Nov 20 17:28:23 EST 2004
 
 現在の維持管理者: Bruce Momjian (pgman@candle.pha.pa.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -24,7 +24,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 
         この和訳についてお気づきの点は(juk at PostgreSQL.jp)までメールでお寄せ下さい。
 
-                                                2004年10月18日    桑村 潤
+                                                2004年11月24日    桑村 潤
 ]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
@@ -116,8 +116,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 4.25) 関数で複数のロウまたはカラムを返すにはどうしますか？
 4.26) なぜ、PL/PgSQL 関数の中から一時テーブルを確実に create/drop することがで
 きないのでしょうか？
-4.27) どのようなリプリケーションオプションを利用できますか?
-4.28) どのような暗号化オプションを利用できますか?
+4.27) どのような暗号化オプションを利用できますか?
 
                         PostgreSQLの拡張についての質問                         
                                                                                
@@ -994,9 +993,8 @@ Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 せん。
 
     [訳注：
-          インターウィズの片岡さんが多次元幾何オブジェクトへの拡張作業中です。詳しくは、
-        http://www.interwiz.koganei.tokyo.jp/software/geometric/index.html
-        をご覧ください。
+        R-Tree インデックスはGiSTで開発されています。
+        http://www.sai.msu.su/~megera/postgres/gist/
     ]
 
 4.11) 遺伝的問い合わせ最適化とは何ですか？
@@ -1295,24 +1293,7 @@ PL/PgSQL は関数の内容をキャッシュし、その不幸な副作用のため、もし PL/PgSQL 関数
 時テーブルアクセスのために使うことです。これで、毎回問い合わせをパースし直すこ
 とになるでしょう。
 
-4.27) どのようなリプリケーションオプションを利用できますか?
-
-マスター／スレーブのリプリケーションオプションがいくつか利用可能です。これらの
-オプションではマスターのみがデータベースを変更でき、スレーブはデータベースを読
-むだけです。 http://gborg.PostgreSQL.org/genpage?replication_research の最後に
-それらを一覧にしてあります。マルチ-マスターのリプリケーションによるソリューショ
-ンは http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php にて作業
-が進められています。
-
-[訳注 Jan Wieckさんによるカスケード可能なマスター・スレーブ型のレプリケーション
-Slony-I http://gborg.postgresql.org/project/slony1/projdisplay.php 石井達夫さん
-によるコネクションプールサーバ PGPool http://www2b.biglobe.ne.jp/~caco/pgpool/
-三谷篤さんによるマルチマスタ方式の同期レプリケーション PGCluster http://
-www.csra.co.jp/~mitani/jpug/pgcluster/index.html JPUG 分散トランザクション開発
-分科会では、永安悟史さんが２相コミットの実装を行いました。 http://
-www.postgresql.jp/wg/dt/index.html ]
-
-4.28) どのような暗号化オプションを利用できますか?
+4.27) どのような暗号化オプションを利用できますか?
 
  ・ contrib/pgcryptoにはSQL問い合わせの中で使うための沢山の暗号化を含みます。
  ・ クライアントとサーバとの間の伝送を暗号化するには、サーバではpostgresql.conf
@@ -1324,6 +1305,23 @@ www.postgresql.jp/wg/dt/index.html ]
     号化されます。それより前のバージョンではpostgresql.conf中で
     PASSWORD_ENCRYPTIONを有効にする必要があります。
  ・ サーバーを走らせるのに暗号化ファイルシステムを使うこともできます。
+
+[訳注
+   レプリケーション関連の項目がなくなりましたが、訳注のみ残してあります。
+
+    Jan Wieckさんによるカスケード可能なマスター・スレーブ型のレプリケーション Slony-I 
+        http://gborg.postgresql.org/project/slony1/projdisplay.php
+
+    石井達夫さんによるコネクションプール サーバ PGPool
+        http://www2b.biglobe.ne.jp/~caco/pgpool/
+
+    三谷篤さんによるマルチマスタ方式の同期レプリケーション PGCluster
+        http://www.csra.co.jp/~mitani/jpug/pgcluster/index.html
+
+    JPUG 分散トランザクション開発分科会では、永安悟史さんが２相コミット
+    の実装を行いました。
+        http://www.postgresql.jp/wg/dt/index.html
+]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
 
@@ -1360,7 +1358,7 @@ www.postgresql.jp/wg/dt/index.html ]
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2004年10月21日
+  最終更新日:   2004年11月24日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1383,7 +1381,7 @@ www.postgresql.jp/wg/dt/index.html ]
                 石井 達夫(Tatsuo Ishii <t-ishii at sra.co.jp>)
 
   をはじめ、ポストグレスに関する話題豊富な日本語ポストグレス・メーリングリスト、
-和訳のきっかけを作ってくれた JF(Linux Japanese FAQ Mailing List)プロジェクト、
+和訳のきっかけを作ってくれた JF(Linux Japanese FAQ Mailing List)プロジェクト、FreeBSD ドキュメンテーションプロジェクト、
 その他、直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの皆さんに感謝します。
 
   日本語版のこの文書は、以下からもたどれます。

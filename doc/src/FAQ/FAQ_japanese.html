@@ -8,7 +8,7 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Tue Aug 31 23:28:02 EDT 2004</P>
+原文最終更新日:		Sat Nov 20 17:28:23 EST 2004</P>
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -42,7 +42,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 
 	この和訳についてお気づきの点は(<A HREF="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</A>)までメールでお寄せ下さい。
 
-						2004年10月18日    桑村 潤
+						2004年11月24日    桑村 潤
 ]
 </PRE></SMALL>
 
@@ -127,8 +127,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 <A HREF="#4.24">4.24</A>) 複数のデータベースを使う問い合わせはどのようにすればできますか？<br>
 <A HREF="#4.25">4.25</A>) 関数で複数のロウまたはカラムを返すにはどうしますか？<br>
 <A HREF="#4.26">4.26</A>) なぜ、PL/PgSQL 関数の中から一時テーブルを確実に create/drop することができないのでしょうか？<br>
-<A href="#4.27">4.27</A>) どのようなリプリケーションオプションを利用できますか?<BR>
-<A href="#4.28">4.28</A>) どのような暗号化オプションを利用できますか?<BR>
+<A href="#4.27">4.27</A>) どのような暗号化オプションを利用できますか?<BR>
 
 <H2 align="center">PostgreSQLの拡張についての質問</H2>
 
@@ -1018,9 +1017,8 @@ Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 <P>
 <SMALL><PRE>
     [訳注：
-	  インターウィズの片岡さんが多次元幾何オブジェクトへの拡張作業中です。詳しくは、
-	<A HREF="http://www.interwiz.koganei.tokyo.jp/software/geometric/index.html">http://www.interwiz.koganei.tokyo.jp/software/geometric/index.html</A>
-	をご覧ください。
+	R-Tree インデックスはGiSTで開発されています。
+	<a href="http://www.sai.msu.su/~megera/postgres/gist/">http://www.sai.msu.su/~megera/postgres/gist/</a>
     ]
 </PRE></SMALL>
 
@@ -1312,20 +1310,25 @@ PostgreSQL は SQL 標準構文を使う外部結合(アウタージョイン)をサポートします。ここ
 PL/PgSQL は関数の内容をキャッシュし、その不幸な副作用のため、もし PL/PgSQL 関数が一時テーブルにアクセスすると、そのテーブルはあとでドロップされ再作成されますが、関数が再び呼び出されると、キャッシュされているその関数の内容はまだ古い一時テーブルを依然として指しているからです。解決策は、 PL/PgSQL の中で <SMALL>EXECUTE</SMALL> を一時テーブルアクセスのために使うことです。これで、毎回問い合わせをパースし直すことになるでしょう。</P>
 
 
-<H4><A name="4.27">4.27</A>) どのようなリプリケーションオプションを利用できますか?
+<H4><A name="4.27">4.27</A>) どのような暗号化オプションを利用できますか?
 </H4>
-<P>
-マスター／スレーブのリプリケーションオプションがいくつか利用可能です。これらのオプションではマスターのみがデータベースを変更でき、スレーブはデータベースを読むだけです。
-<a href="http://gborg.PostgreSQL.org/genpage?replication_research">
-http://gborg.PostgreSQL.org/genpage?replication_research</a>
-の最後にそれらを一覧にしてあります。
-マルチ-マスターのリプリケーションによるソリューションは
-<ahref="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">
-http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
-にて作業が進められています。
-</P>
+<UL>
+<LI><I>contrib/pgcrypto</I>には<SMALL>SQL</SMALL>問い合わせの中で使うための沢山の暗号化を含みます。
+</LI>
+<LI>クライアントとサーバとの間の伝送を暗号化するには、サーバでは<I>postgresql.conf</I>の<I>ssl</I>オプションを<I>true</I> に設定し、<I>pg_hba.conf</I>には適用する<I>host</I>あるいは<I>hostssl</I>の行がなくてはなりません。そして、クライアントでは<I>sslmode</I>を<I>disable</I>にしてはなりません。
+(PostgreSQL純正のSSL接続のかわりに、stunnel や ssh サードパーティ製の暗号化転送を使うことも可能であることも記しておきます。)
+</LI>
+<LI>バージョン7.3 ではデータベースユーザのパスワードは保存される時に自動的に暗号化されます。 それより前のバージョンでは<I>postgresql.conf</I>中で<I>PASSWORD_ENCRYPTION</I>を有効にする必要があります。 
+</LI>
 
+<LI>サーバーを走らせるのに暗号化ファイルシステムを使うこともできます。</LI>
+</UL>
+
+
+<P>
+<pre>
 [訳注
+   レプリケーション関連の項目がなくなりましたが、訳注のみ残してあります。
 
     Jan Wieckさんによるカスケード可能なマスター・スレーブ型のレプリケーション Slony-I 
 	http://gborg.postgresql.org/project/slony1/projdisplay.php
@@ -1340,20 +1343,8 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
     の実装を行いました。
 	http://www.postgresql.jp/wg/dt/index.html
 ]
-
-<H4><A name="4.28">4.28</A>) どのような暗号化オプションを利用できますか?
-</H4>
-<UL>
-<LI><I>contrib/pgcrypto</I>には<SMALL>SQL</SMALL>問い合わせの中で使うための沢山の暗号化を含みます。
-</LI>
-<LI>クライアントとサーバとの間の伝送を暗号化するには、サーバでは<I>postgresql.conf</I>の<I>ssl</I>オプションを<I>true</I> に設定し、<I>pg_hba.conf</I>には適用する<I>host</I>あるいは<I>hostssl</I>の行がなくてはなりません。そして、クライアントでは<I>sslmode</I>を<I>disable</I>にしてはなりません。
-(PostgreSQL純正のSSL接続のかわりに、stunnel や ssh サードパーティ製の暗号化転送を使うことも可能であることも記しておきます。)
-</LI>
-<LI>バージョン7.3 ではデータベースユーザのパスワードは保存される時に自動的に暗号化されます。 それより前のバージョンでは<I>postgresql.conf</I>中で<I>PASSWORD_ENCRYPTION</I>を有効にする必要があります。 
-</LI>
-
-<LI>サーバーを走らせるのに暗号化ファイルシステムを使うこともできます。</LI>
-</UL>
+</pre>
+<P>
 
 
 <P>
@@ -1392,7 +1383,7 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2004年10月21日
+  最終更新日:	2004年11月24日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1415,7 +1406,7 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 		石井 達夫(<A HREF="mailto:t-ishii at sra.co.jp">Tatsuo Ishii &lt;t-ishii at sra.co.jp&gt;</A>)
 
   をはじめ、ポストグレスに関する話題豊富な<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">日本語ポストグレス・メーリングリスト</A>、
-和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、
+和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、FreeBSD ドキュメンテーションプロジェクト、
 その他、直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの皆さんに感謝します。
 
   日本語版のこの文書は、以下からもたどれます。
