@@ -10,12 +10,10 @@
  *
  *  Sverre H. Huseby <sverrehu@online.no>
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/md5.c,v 1.7 2001/09/27 23:16:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/md5.c,v 1.8 2001/09/29 19:49:50 tgl Exp $
  */
 
 #include "postgres.h"
-
-#include <errno.h>
 
 #include "libpq/crypt.h"
 
@@ -291,24 +289,31 @@ md5_hash(const void *buff, size_t len, char *hexsum)
 
 
 /*
- * puts  md5(username+passwd)  in buf provided buflen is at least 36 bytes
- * returns 1 on success, 0 on any kind of failure and sets errno accordingly
+ * Computes MD5 checksum of "passwd" (a null-terminated string) followed
+ * by "salt" (which need not be null-terminated).
+ *
+ * Output format is "md5" followed by a 32-hex-digit MD5 checksum.
+ * Hence, the output buffer "buf" must be at least 36 bytes long.
+ *
+ * Returns TRUE if okay, FALSE on error (out of memory).
  */
 bool EncryptMD5(const char *passwd, const char *salt, size_t salt_len,
 				char *buf)
 {
-	char *crypt_buf = palloc(strlen(passwd) + salt_len);
+	size_t	passwd_len = strlen(passwd);
+	char *crypt_buf = palloc(passwd_len + salt_len);
 	bool ret;
 	
-	strcpy(buf, "md5");
 	/*
 	 *	Place salt at the end because it may be known by users
 	 *	trying to crack the MD5 output.
 	 */	
 	strcpy(crypt_buf, passwd);
-	memcpy(crypt_buf+strlen(passwd), salt, salt_len);
+	memcpy(crypt_buf+passwd_len, salt, salt_len);
 
-	ret = md5_hash(crypt_buf, strlen(passwd) + salt_len, buf + 3);
+	strcpy(buf, "md5");
+	ret = md5_hash(crypt_buf, passwd_len + salt_len, buf + 3);
+
 	pfree(crypt_buf);
 
 	return ret;
