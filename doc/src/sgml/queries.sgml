@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.7 2001/05/12 22:51:35 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.8 2001/08/30 08:16:42 ishii Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -409,7 +409,7 @@ SELECT a.* FROM (my_table AS a JOIN your_table AS b ON ...) AS c
 <programlisting>
 FROM T1 INNER JOIN T2 USING (C)
 FROM T1 LEFT OUTER JOIN T2 USING (C)
-FROM (T1 RIGHT OUTER JOIN T2 ON (T1C1=T2C1)) AS DT1
+FROM (T1 RIGHT OUTER JOIN T2 ON (T1.C1=T2.C1)) AS DT1
 FROM (T1 FULL OUTER JOIN T2 USING (C)) AS DT1 (DT1C1, DT1C2)
 
 FROM T1 NATURAL INNER JOIN T2
