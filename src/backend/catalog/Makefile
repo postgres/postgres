@@ -4,7 +4,7 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.7 1997/12/20 00:23:26 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.8 1998/01/05 18:42:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ INCLUDE_OPT = -I..
 
 CFLAGS+=$(INCLUDE_OPT)
 
-OBJS = catalog.o heap.o index.o indexing.o \
+OBJS = catalog.o heap.o index.o indexing.o aclchk.o \
        pg_aggregate.o pg_operator.o pg_proc.o pg_type.o
 
 all: SUBSYS.o global1.bki.source local1_template1.bki.source \

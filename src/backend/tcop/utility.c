@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.35 1998/01/05 16:39:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.36 1998/01/05 18:43:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "commands/explain.h"
 #include "commands/trigger.h"
 #include "commands/proclang.h"
+#include "commands/variable.h"
 
 #include "nodes/parsenodes.h"
 #include "../backend/parser/parse.h"
@@ -45,7 +46,6 @@
 #include "rewrite/rewriteDefine.h"
 #include "tcop/tcopdebug.h"
 #include "tcop/dest.h"
-#include "tcop/variable.h"
 #include "tcop/utility.h"
 #include "fmgr.h"				/* For load_file() */
 #include "storage/fd.h"

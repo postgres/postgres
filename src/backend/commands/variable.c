@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.26 1998/01/05 16:39:35 momjian Exp $
+ * $Id: variable.c,v 1.1 1998/01/05 18:42:50 momjian Exp $
  *
  */
 
@@ -12,7 +12,7 @@
 #include <time.h>
 #include "postgres.h"
 #include "miscadmin.h"
-#include "tcop/variable.h"
+#include "commands/variable.h"
 #include "utils/builtins.h"
 #include "optimizer/internal.h"
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.22 1998/01/05 16:39:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.1 1998/01/05 18:42:40 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
