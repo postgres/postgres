@@ -65,11 +65,11 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.21 2005/03/16 15:11:43 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.22 2005/03/16 15:12:18 momjian Exp $";*/
 
 int			pg_snprintf(char *str, size_t count, const char *fmt,...);
 int			pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
-int			pg_printf(const char *format, ...);
+int			pg_printf(const char *format,...);
 static void dopr(char *buffer, const char *format, va_list args, char *end);
 
 /* Prevent recursion */
@@ -81,7 +81,8 @@ static void dopr(char *buffer, const char *format, va_list args, char *end);
 int
 pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 {
-	char *end;
+	char	   *end;
+
 	str[0] = '\0';
 	end = str + count - 1;
 	dopr(str, fmt, args, end);
@@ -107,14 +108,14 @@ pg_fprintf(FILE *stream, const char *fmt,...)
 {
 	int			len;
 	va_list		args;
-	char*		buffer[4096];
-	char*		p;
+	char	   *buffer[4096];
+	char	   *p;
 
 	va_start(args, fmt);
-	len = pg_vsnprintf((char*)buffer, (size_t)4096, fmt, args);
+	len = pg_vsnprintf((char *) buffer, (size_t) 4096, fmt, args);
 	va_end(args);
-	p = (char*)buffer;
-	for( ;*p; p++)
+	p = (char *) buffer;
+	for (; *p; p++)
 		putc(*p, stream);
 	return len;
 }
@@ -124,14 +125,14 @@ pg_printf(const char *fmt,...)
 {
 	int			len;
 	va_list		args;
-	char*		buffer[4096];
-	char*		p;
+	char	   *buffer[4096];
+	char	   *p;
 
 	va_start(args, fmt);
-	len = pg_vsnprintf((char*)buffer, (size_t)4096, fmt, args);
+	len = pg_vsnprintf((char *) buffer, (size_t) 4096, fmt, args);
 	va_end(args);
-	p = (char*)buffer;
-	for( ;*p; p++)
+	p = (char *) buffer;
+	for (; *p; p++)
 		putchar(*p);
 	return len;
 }
@@ -141,21 +142,21 @@ pg_printf(const char *fmt,...)
  */
 
 static void fmtstr(char *value, int ljust, int len, int zpad, int maxwidth,
-				   char *end, char **output);
+	   char *end, char **output);
 static void fmtnum(int64 value, int base, int dosign, int ljust, int len,
-				   int zpad, char *end, char **output);
+	   int zpad, char *end, char **output);
 static void fmtfloat(double value, char type, int ljust, int len,
-					 int precision, int pointflag, char *end, char **output);
+		 int precision, int pointflag, char *end, char **output);
 static void dostr(char *str, int cut, char *end, char **output);
 static void dopr_outch(int c, char *end, char **output);
 
-#define	FMTSTR		1
-#define	FMTNUM		2
-#define	FMTNUM_U	3
-#define	FMTFLOAT	4
-#define	FMTCHAR		5
-#define	FMTWIDTH	6
-#define	FMTLEN		7
+#define FMTSTR		1
+#define FMTNUM		2
+#define FMTNUM_U	3
+#define FMTFLOAT	4
+#define FMTCHAR		5
+#define FMTWIDTH	6
+#define FMTLEN		7
 
 static void
 dopr(char *buffer, const char *format, va_list args, char *end)
@@ -169,40 +170,41 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 	int			len;
 	int			zpad;
 	int			i;
-	const char*		format_save;
-	const char*		fmtbegin;
+	const char *format_save;
+	const char *fmtbegin;
 	int			fmtpos = 1;
 	int			realpos = 0;
 	int			precision;
 	int			position;
-	char		*output;
+	char	   *output;
 	int			percents = 1;
 	const char *p;
-	struct fmtpar {
-		const char*	fmtbegin;
-		const char*	fmtend;
-		void*	value;
-		int64	numvalue;
-		double	fvalue;
-		int	charvalue;
-		int	ljust;
-		int	len;
-		int	zpad;
-		int	maxwidth;
-		int	base;
-		int	dosign;
-		char	type;
-		int	precision;
-		int	pointflag;
-		char	func;
-		int	realpos;
-		int	longflag;
-		int	longlongflag;
-	} *fmtpar, **fmtparptr;
+	struct fmtpar
+	{
+		const char *fmtbegin;
+		const char *fmtend;
+		void	   *value;
+		int64		numvalue;
+		double		fvalue;
+		int			charvalue;
+		int			ljust;
+		int			len;
+		int			zpad;
+		int			maxwidth;
+		int			base;
+		int			dosign;
+		char		type;
+		int			precision;
+		int			pointflag;
+		char		func;
+		int			realpos;
+		int			longflag;
+		int			longlongflag;
+	}		   *fmtpar, **fmtparptr;
 
 	/* Create enough structures to hold all arguments */
 	for (p = format; *p != '\0'; p++)
-		if (*p == '%')	/* counts %% as two, so overcounts */
+		if (*p == '%')			/* counts %% as two, so overcounts */
 			percents++;
 #ifndef FRONTEND
 	fmtpar = pgport_palloc(sizeof(struct fmtpar) * percents);
@@ -219,7 +221,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 		exit(1);
 	}
 #endif
-			
+
 	format_save = format;
 
 	output = buffer;
@@ -255,7 +257,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 					case '8':
 					case '9':
 						if (!pointflag)
-						{ 
+						{
 							len = len * 10 + ch - '0';
 							position = position * 10 + ch - '0';
 						}
@@ -275,7 +277,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 							fmtpar[fmtpos].func = FMTLEN;
 						else
 							fmtpar[fmtpos].func = FMTWIDTH;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						goto nextch;
 					case '.':
@@ -288,17 +290,18 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 							longflag = 1;
 						goto nextch;
 #ifdef NOT_USED
-					/*
-					 *	We might export this to client apps so we should
-					 *	support 'qd' and 'I64d'(MinGW) also in case the
-					 *	native version does.
-					 */
+
+						/*
+						 * We might export this to client apps so we should
+						 * support 'qd' and 'I64d'(MinGW) also in case the
+						 * native version does.
+						 */
 					case 'q':
 						longlongflag = 1;
 						longflag = 1;
 						goto nextch;
 					case 'I':
-						if (*format == '6' && *(format+1) == '4')
+						if (*format == '6' && *(format + 1) == '4')
 						{
 							format += 2;
 							longlongflag = 1;
@@ -319,7 +322,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM_U;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						break;
 					case 'o':
@@ -334,7 +337,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM_U;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						break;
 					case 'd':
@@ -349,7 +352,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						break;
 					case 'x':
@@ -363,7 +366,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM_U;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						break;
 					case 'X':
@@ -377,7 +380,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].len = len;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM_U;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						break;
 					case 's':
@@ -388,14 +391,14 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].maxwidth = maxwidth;
 						fmtpar[fmtpos].func = FMTSTR;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						break;
 					case 'c':
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
 						fmtpar[fmtpos].func = FMTCHAR;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						break;
 					case 'e':
@@ -412,7 +415,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].precision = precision;
 						fmtpar[fmtpos].pointflag = pointflag;
 						fmtpar[fmtpos].func = FMTFLOAT;
-						fmtpar[fmtpos].realpos = realpos?realpos:fmtpos;
+						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
 						fmtpos++;
 						break;
 					case '%':
@@ -429,55 +432,57 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 
 performpr:
 	/* reorder pointers */
-	for(i = 1; i < fmtpos; i++)
+	for (i = 1; i < fmtpos; i++)
 		fmtparptr[i] = &fmtpar[fmtpar[i].realpos];
 
 	/* assign values */
-	for(i = 1; i < fmtpos; i++){
-		switch(fmtparptr[i]->func){
-		case FMTSTR:
-			fmtparptr[i]->value = va_arg(args, char *);
-			break;
-		case FMTNUM:
-			if (fmtparptr[i]->longflag)
-			{
-				if (fmtparptr[i]->longlongflag)
-					fmtparptr[i]->numvalue = va_arg(args, int64);
+	for (i = 1; i < fmtpos; i++)
+	{
+		switch (fmtparptr[i]->func)
+		{
+			case FMTSTR:
+				fmtparptr[i]->value = va_arg(args, char *);
+				break;
+			case FMTNUM:
+				if (fmtparptr[i]->longflag)
+				{
+					if (fmtparptr[i]->longlongflag)
+						fmtparptr[i]->numvalue = va_arg(args, int64);
+					else
+						fmtparptr[i]->numvalue = va_arg(args, long);
+				}
 				else
-					fmtparptr[i]->numvalue = va_arg(args, long);
-			}
-			else
-				fmtparptr[i]->numvalue = va_arg(args, int);
-			break;
-		case FMTNUM_U:
-			if (fmtparptr[i]->longflag)
-			{
-				if (fmtparptr[i]->longlongflag)
-					fmtparptr[i]->numvalue = va_arg(args, uint64);
+					fmtparptr[i]->numvalue = va_arg(args, int);
+				break;
+			case FMTNUM_U:
+				if (fmtparptr[i]->longflag)
+				{
+					if (fmtparptr[i]->longlongflag)
+						fmtparptr[i]->numvalue = va_arg(args, uint64);
+					else
+						fmtparptr[i]->numvalue = va_arg(args, unsigned long);
+				}
 				else
-					fmtparptr[i]->numvalue = va_arg(args, unsigned long);
-			}
-			else
-				fmtparptr[i]->numvalue = va_arg(args, unsigned int);
-			break;
-		case FMTFLOAT:
-			fmtparptr[i]->fvalue = va_arg(args, double);
-			break;
-		case FMTCHAR:
-			fmtparptr[i]->charvalue = va_arg(args, int);
-			break;
-		case FMTLEN:
-			if (i + 1 < fmtpos && fmtparptr[i + 1]->func != FMTWIDTH)
-				fmtparptr[i + 1]->len = va_arg(args, int);
-			/* For "%*.*f", use the second arg */
-			if (i + 2 < fmtpos && fmtparptr[i + 1]->func == FMTWIDTH)
-				fmtparptr[i + 2]->len = va_arg(args, int);
-			break;
-		case FMTWIDTH:
-			if (i + 1 < fmtpos)
-				fmtparptr[i + 1]->maxwidth = fmtparptr[i + 1]->precision =
-														va_arg(args, int);
-			break;
+					fmtparptr[i]->numvalue = va_arg(args, unsigned int);
+				break;
+			case FMTFLOAT:
+				fmtparptr[i]->fvalue = va_arg(args, double);
+				break;
+			case FMTCHAR:
+				fmtparptr[i]->charvalue = va_arg(args, int);
+				break;
+			case FMTLEN:
+				if (i + 1 < fmtpos && fmtparptr[i + 1]->func != FMTWIDTH)
+					fmtparptr[i + 1]->len = va_arg(args, int);
+				/* For "%*.*f", use the second arg */
+				if (i + 2 < fmtpos && fmtparptr[i + 1]->func == FMTWIDTH)
+					fmtparptr[i + 2]->len = va_arg(args, int);
+				break;
+			case FMTWIDTH:
+				if (i + 1 < fmtpos)
+					fmtparptr[i + 1]->maxwidth = fmtparptr[i + 1]->precision =
+						va_arg(args, int);
+				break;
 		}
 	}
 
@@ -486,7 +491,7 @@ performpr:
 	format = format_save;
 	while ((ch = *format++))
 	{
-		for(i = 1; i < fmtpos; i++)
+		for (i = 1; i < fmtpos; i++)
 		{
 			if (ch == '%' && *format == '%')
 			{
@@ -495,27 +500,28 @@ performpr:
 			}
 			if (fmtpar[i].fmtbegin == format - 1)
 			{
-				switch(fmtparptr[i]->func){
-				case FMTSTR:
-					fmtstr(fmtparptr[i]->value, fmtparptr[i]->ljust,
-						fmtparptr[i]->len, fmtparptr[i]->zpad,
-						fmtparptr[i]->maxwidth, end, &output);
-					break;
-				case FMTNUM:
-				case FMTNUM_U:
-					fmtnum(fmtparptr[i]->numvalue, fmtparptr[i]->base,
-						fmtparptr[i]->dosign, fmtparptr[i]->ljust,
+				switch (fmtparptr[i]->func)
+				{
+					case FMTSTR:
+						fmtstr(fmtparptr[i]->value, fmtparptr[i]->ljust,
+							   fmtparptr[i]->len, fmtparptr[i]->zpad,
+							   fmtparptr[i]->maxwidth, end, &output);
+						break;
+					case FMTNUM:
+					case FMTNUM_U:
+						fmtnum(fmtparptr[i]->numvalue, fmtparptr[i]->base,
+							   fmtparptr[i]->dosign, fmtparptr[i]->ljust,
 						fmtparptr[i]->len, fmtparptr[i]->zpad, end, &output);
-					break;
-				case FMTFLOAT:
-					fmtfloat(fmtparptr[i]->fvalue, fmtparptr[i]->type,
-						fmtparptr[i]->ljust, fmtparptr[i]->len,
-						fmtparptr[i]->precision, fmtparptr[i]->pointflag,
-						end, &output);
-					break;
-				case FMTCHAR:
-					dopr_outch(fmtparptr[i]->charvalue, end, &output);
-					break;
+						break;
+					case FMTFLOAT:
+						fmtfloat(fmtparptr[i]->fvalue, fmtparptr[i]->type,
+								 fmtparptr[i]->ljust, fmtparptr[i]->len,
+							fmtparptr[i]->precision, fmtparptr[i]->pointflag,
+								 end, &output);
+						break;
+					case FMTCHAR:
+						dopr_outch(fmtparptr[i]->charvalue, end, &output);
+						break;
 				}
 				format = fmtpar[i].fmtend;
 				goto nochar;
@@ -523,8 +529,9 @@ performpr:
 		}
 		dopr_outch(ch, end, &output);
 nochar:
-	/* nothing */
-	; /* semicolon required because a goto has to be attached to a statement */
+		/* nothing */
+		;						/* semicolon required because a goto has to be
+								 * attached to a statement */
 	}
 	*output = '\0';
 
@@ -579,8 +586,8 @@ fmtnum(int64 value, int base, int dosign, int ljust, int len, int zpad,
 	int			caps = 0;
 
 	/*
-	 * DEBUGP(("value 0x%x, base %d, dosign %d, ljust %d, len %d, zpad
-	 * %d\n", value, base, dosign, ljust, len, zpad ));
+	 * DEBUGP(("value 0x%x, base %d, dosign %d, ljust %d, len %d, zpad %d\n",
+	 * value, base, dosign, ljust, len, zpad ));
 	 */
 	uvalue = value;
 	if (dosign)
