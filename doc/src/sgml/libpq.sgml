@@ -432,6 +432,24 @@ PGRES_FATAL_ERROR
 
 <ListItem>
 <Para>
+<Function>PQresStatus</Function>
+	Converts the enumerated type returned by PQresultStatus into
+	a string constant describing the status code.
+<synopsis>
+const char *PQresStatus(ExecStatusType status);
+</synopsis>
+Older code may perform this same operation by direct access to a constant
+string array inside libpq,
+<synopsis>
+extern const char * const pgresStatus[];
+</synopsis>
+However, using the function is recommended instead, since it is more portable
+and will not fail on out-of-range values.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
 <Function>PQresultErrorMessage</Function>
 returns the error message associated with the query, or an empty string
 if there was no error.
@@ -910,8 +928,7 @@ terms is readable data on the file descriptor identified by PQsocket.
 When the main loop detects input ready, it should call PQconsumeInput
 to read the input.  It can then call PQisBusy, followed by PQgetResult
 if PQisBusy returns FALSE.  It can also call PQnotifies to detect NOTIFY
-messages (see "Asynchronous Notification", below).  An example is given
-in the sample programs section.
+messages (see "Asynchronous Notification", below).
 </Para>
 
 <Para>
@@ -1230,10 +1247,10 @@ int PQendcopy(PGconn *conn);
 As an example:
 
 <ProgramListing>
-PQexec(conn, "create table foo (a int4, b char16, d float8)");
+PQexec(conn, "create table foo (a int4, b char(16), d float8)");
 PQexec(conn, "copy foo from stdin");
-PQputline(conn, "3&lt;TAB&gt;hello world&lt;TAB&gt;4.5\n");
-PQputline(conn,"4&lt;TAB&gt;goodbye world&lt;TAB&gt;7.11\n");
+PQputline(conn, "3\thello world\t4.5\n");
+PQputline(conn,"4\tgoodbye world\t7.11\n");
 ...
 PQputline(conn,"\\.\n");
 PQendcopy(conn);
@@ -1671,22 +1688,25 @@ main()
 <Para>
 <ProgramListing>
 /*
- * testlibpq2.c Test of the asynchronous notification interface
+ * testlibpq2.c
+ *  Test of the asynchronous notification interface
  *
- * populate a database with the following:
+ * Start this program, then from psql in another window do
+ *   NOTIFY TBL2;
  *
- * CREATE TABLE TBL1 (i int4);
+ * Or, if you want to get fancy, try this:
+ * Populate a database with the following:
  *
- * CREATE TABLE TBL2 (i int4);
+ *   CREATE TABLE TBL1 (i int4);
  *
- * CREATE RULE r1 AS ON INSERT TO TBL1 DO [INSERT INTO TBL2 values
- * (new.i); NOTIFY TBL2];
+ *   CREATE TABLE TBL2 (i int4);
  *
- * Then start up this program After the program has begun, do
+ *   CREATE RULE r1 AS ON INSERT TO TBL1 DO
+ *     (INSERT INTO TBL2 values (new.i); NOTIFY TBL2);
  *
- * INSERT INTO TBL1 values (10);
+ * and do
  *
- *
+ *   INSERT INTO TBL1 values (10);
  *
  */
 #include &lt;stdio.h&gt;
