@@ -1,5 +1,5 @@
 -- PostgreSQL catalog extensions for ODBC compatibility
--- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.3 2001/10/13 19:16:32 petere Exp $
+-- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.4 2001/12/02 11:36:04 petere Exp $
 
 -- ODBC functions are described here:
 -- <http://msdn.microsoft.com/library/en-us/odbc/htm/odbcscalar_functions.asp>
@@ -16,7 +16,7 @@
 -- Built-in: ASCII, BIT_LENGTH, CHAR_LENGTH, CHARACTER_LENGTH, LTRIM,
 --           OCTET_LENGTH, POSITION, REPEAT, RTRIM, SUBSTRING
 -- Missing: DIFFERENCE, REPLACE, SOUNDEX, LENGTH (ODBC sense)
--- Keyword problems: CHAR, LEFT, RIGHT
+-- Keyword problems: CHAR
 
 
 -- CHAR(code)
@@ -44,7 +44,7 @@ CREATE OR REPLACE FUNCTION lcase(text) RETURNS text AS '
 
 
 -- LEFT(string, count)
-CREATE OR REPLACE FUNCTION "left"(text, integer) RETURNS text AS '
+CREATE OR REPLACE FUNCTION left(text, integer) RETURNS text AS '
     SELECT substring($1 for $2);
 ' LANGUAGE SQL;
 
@@ -59,7 +59,7 @@ CREATE OR REPLACE FUNCTION locate(text, text, integer) RETURNS integer AS '
 
 
 -- RIGHT(string, count)
-CREATE OR REPLACE FUNCTION "right"(text, integer) RETURNS text AS '
+CREATE OR REPLACE FUNCTION right(text, integer) RETURNS text AS '
     SELECT substring($1 from char_length($1) - $2 + 1);
 ' LANGUAGE SQL;
 
