@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.16 2000/11/14 18:37:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.17 2000/11/15 19:43:39 petere Exp $
 Postgres documentation
 -->
 
@@ -146,9 +146,6 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 
      <varlistentry>
       <term><computeroutput>ERROR:  Unable to create database directory '<replaceable>path</replaceable>'.</computeroutput></term>
-     </varlistentry>
-
-     <varlistentry>
       <term><computeroutput>ERROR:  Could not initialize database directory.</computeroutput></term>
       <listitem>
        <para>
