@@ -1,4 +1,4 @@
-pgbench README		2002/07/20 Tatsuo Ishii (t-ishii@sra.co.jp)
+pgbench README		2003/11/26 Tatsuo Ishii (t-ishii@sra.co.jp)
 
 ■pgbench とは？
 
@@ -183,6 +183,11 @@ pgbench は石井 達夫によって書かれました．ライセンス条件は pgbench.c 
 できます．
 
 ■改定履歴
+
+2003/11/26
+	* 谷田さんのパッチを適用．pgbench -iの際に，後から主キーを作成
+	  するようにした．これによって初期化の実行時間が大幅に短縮でき
+	  る(はず)．
 
 2003/06/10
 	* メモリが初期化されていないバグを修正
