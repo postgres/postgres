@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.98 2001/10/03 18:25:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.99 2001/10/13 23:32:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,7 +581,18 @@ scalarineqsel(Query *root, Oid operator, bool isgt,
 						else if (val >= high)
 							binfrac = 1.0;
 						else
+						{
 							binfrac = (val - low) / (high - low);
+							/*
+							 * Watch out for the possibility that we got a NaN
+							 * or Infinity from the division.  This can happen
+							 * despite the previous checks, if for example
+							 * "low" is -Infinity.
+							 */
+							if (isnan(binfrac) ||
+								binfrac < 0.0 || binfrac > 1.0)
+								binfrac = 0.5;
+						}
 					}
 					else
 					{
@@ -1665,8 +1676,8 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  * subroutines in pg_type.
  *
  * All numeric datatypes are simply converted to their equivalent
- * "double" values.  XXX what about NUMERIC values that are outside
- * the range of "double"?
+ * "double" values.  (NUMERIC values that are outside the range of "double"
+ * are clamped to +/- HUGE_VAL.)
  *
  * String datatypes are converted by convert_string_to_scalar(),
  * which is explained below.  The reason why this routine deals with
@@ -1677,8 +1688,9 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  *
  * The several datatypes representing absolute times are all converted
  * to Timestamp, which is actually a double, and then we just use that
- * double value.  Note this will give bad results for the various "special"
- * values of Timestamp --- what can we do with those?
+ * double value.  Note this will give correct results even for the "special"
+ * values of Timestamp, since those are chosen to compare correctly;
+ * see timestamp_cmp.
  *
  * The several datatypes representing relative times (intervals) are all
  * converted to measurements expressed in seconds.
@@ -1793,8 +1805,10 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 		case FLOAT8OID:
 			return (double) DatumGetFloat8(value);
 		case NUMERICOID:
-			return (double) DatumGetFloat8(DirectFunctionCall1(numeric_float8,
-															   value));
+			/* Note: out-of-range values will be clamped to +-HUGE_VAL */
+			return (double)
+				DatumGetFloat8(DirectFunctionCall1(numeric_float8_no_overflow,
+												   value));
 		case OIDOID:
 		case REGPROCOID:
 			/* we can treat OIDs as integers... */

@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.44 2001/10/03 05:29:24 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.45 2001/10/13 23:32:33 tgl Exp $
  *
  * ----------
  */
@@ -1660,6 +1660,35 @@ numeric_float8(PG_FUNCTION_ARGS)
 	pfree(tmp);
 
 	PG_RETURN_DATUM(result);
+}
+
+
+/* Convert numeric to float8; if out of range, return +/- HUGE_VAL */
+Datum
+numeric_float8_no_overflow(PG_FUNCTION_ARGS)
+{
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	char	   *tmp;
+	double		val;
+	char	   *endptr;
+
+	if (NUMERIC_IS_NAN(num))
+		PG_RETURN_FLOAT8(NAN);
+
+	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
+											  NumericGetDatum(num)));
+
+	/* unlike float8in, we ignore ERANGE from strtod */
+	val = strtod(tmp, &endptr);
+	if (*endptr != '\0')
+	{
+		/* shouldn't happen ... */
+		elog(ERROR, "Bad float8 input format '%s'", tmp);
+	}
+
+	pfree(tmp);
+
+	PG_RETURN_FLOAT8(val);
 }
 
 
