@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.8 1997/03/14 23:18:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.9 1997/03/25 04:10:21 vadim Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -1017,10 +1017,18 @@ CommitTransactionCommand()
 	 *	someplace within a transaction block.  We increment the
 	 *	command counter and return.  Someday we may free resources
 	 *	local to the command.
+	 *
+	 *	That someday is today, at least for memory allocated by
+	 *	command in the BlankPortal' HeapMemory context.
+	 *		- vadim 03/25/97
 	 * ----------------
 	 */
     case TBLOCK_INPROGRESS:
 	CommandCounterIncrement();
+#ifdef TBL_FREE_CMD_MEMORY
+	EndPortalAllocMode ();
+	StartPortalAllocMode (DefaultAllocMode, 0);
+#endif	
 	break;
 	
 	/* ----------------
