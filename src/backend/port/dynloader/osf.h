@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: alpha.h,v 1.5 2000/05/28 17:56:02 tgl Exp $
+ * $Id: osf.h,v 1.1 2000/10/10 21:08:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */

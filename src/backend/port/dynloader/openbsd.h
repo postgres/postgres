@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bsd.h,v 1.6 2000/01/26 05:56:44 momjian Exp $
+ * $Id: openbsd.h,v 1.1 2000/10/10 21:08:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
