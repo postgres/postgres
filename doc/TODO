@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 13 08:17:47 EST 2000
+Last updated:		Thu Jan 13 20:06:46 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -60,7 +60,7 @@ PARSER
 VIEWS
 
 * Views containing aggregates sometimes fail(Jan)
-* Views with spaces in view name fail when referenced
+* -Views with spaces in view name fail when referenced
 * Creating view and inheriting the view causes view* to show
   duplicates(inherit) 
 
