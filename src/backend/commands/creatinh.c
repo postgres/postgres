@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< creatinh.c
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.62 2000/07/04 06:11:27 tgl Exp $
-=======
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.62 2000/07/04 06:11:27 tgl Exp $
->>>>>>> 1.58
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.63 2000/08/04 06:12:11 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +25,14 @@
 #include "commands/creatinh.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
+#include "optimizer/clauses.h"
 
 /* ----------------
  *		local stuff
  * ----------------
  */
 
-static bool checkAttrExists(const char *attributeName,
+static int checkAttrExists(const char *attributeName,
 				const char *attributeType, List *schema);
 static List *MergeAttributes(List *schema, List *supers, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
@@ -247,6 +244,45 @@ TruncateRelation(char *name)
 }
 
 /*
+ * complementary static functions for MergeAttributes().
+ * Varattnos of pg_relcheck.rcbin should be rewritten when
+ * subclasses inherit the constraints from the super class.
+ * Note that these functions rewrite varattnos while walking
+ * through a node tree. 
+ */
+static bool
+change_varattnos_walker(Node *node, const AttrNumber *newattno)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var	*var = (Var *) node;
+
+		Assert(newattno != NULL);
+		if (var->varlevelsup == 0 && var->varno == 1)
+		{
+			/*
+			 * ??? the following may be a problem when the
+			 * node is multiply referenced though
+			 * stringToNode() doesn't create such a node
+			 * currently. 
+			 */
+			Assert(newattno[var->varattno - 1] > 0);
+			var->varattno = newattno[var->varattno - 1];
+			return true;
+		}
+		else
+			return false;
+	}
+	return expression_tree_walker(node, change_varattnos_walker, (void *)newattno);
+}
+static bool
+change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
+{
+	return expression_tree_walker(node, change_varattnos_walker, (void *)newattno);
+}
+/*
  * MergeAttributes
  *		Returns new schema given initial schema and supers.
  *
@@ -283,6 +319,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 	List	   *entry;
 	List	   *inhSchema = NIL;
 	List	   *constraints = NIL;
+	int		attnums;
 
 	/*
 	 * Validates that there are no duplications. Validity checking of
@@ -325,6 +362,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 	/*
 	 * merge the inherited attributes into the schema
 	 */
+	attnums = 0;
 	foreach(entry, supers)
 	{
 		char	   *name = strVal(lfirst(entry));
@@ -333,15 +371,30 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		AttrNumber	attrno;
 		TupleDesc	tupleDesc;
 		TupleConstr *constr;
+		AttrNumber	*newattno, *partialAttidx;
+		Node		*expr;
+		int		i, attidx, attno_exist;
 
 		relation = heap_openr(name, AccessShareLock);
 		setRelhassubclassInRelation(relation->rd_id, true);
 		tupleDesc = RelationGetDescr(relation);
+		/* allocate a new attribute number table and initialize */
+		newattno = (AttrNumber *) palloc(tupleDesc->natts * sizeof(AttrNumber));
+		for (i = 0; i < tupleDesc->natts; i++)
+			newattno [i] = 0;
+		/*
+		 * searching and storing order are different.
+		 * another table is needed.
+		 */ 
+		partialAttidx = (AttrNumber *) palloc(tupleDesc->natts * sizeof(AttrNumber));
+		for (i = 0; i < tupleDesc->natts; i++)
+			partialAttidx [i] = 0;
 		constr = tupleDesc->constr;
 
 		if (relation->rd_rel->relkind != RELKIND_RELATION)
 			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table", name);
 
+		attidx = 0;
 		for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--)
 		{
 			Form_pg_attribute attribute = tupleDesc->attrs[attrno];
@@ -365,16 +418,21 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			 * check validity
 			 *
 			 */
-			if (checkAttrExists(attributeName, attributeType, schema))
+			if (checkAttrExists(attributeName, attributeType, schema) != 0)
 				elog(ERROR, "CREATE TABLE: attribute \"%s\" already exists in inherited schema",
 					 attributeName);
 
-			if (checkAttrExists(attributeName, attributeType, inhSchema))
+			if (0 < (attno_exist = checkAttrExists(attributeName, attributeType, inhSchema)))
+			{
 
 				/*
 				 * this entry already exists
 				 */
+				newattno[attribute->attnum - 1] = attno_exist;
 				continue;
+			}
+			attidx++;
+			partialAttidx[attribute->attnum - 1] = attidx;
 
 			/*
 			 * add an entry to the schema
@@ -408,6 +466,13 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			}
 			partialResult = lcons(def, partialResult);
 		}
+		for (i = 0; i < tupleDesc->natts; i++)
+		{
+			if (partialAttidx[i] > 0)
+				newattno[i] = attnums + attidx + 1 - partialAttidx[i];
+		}
+		attnums += attidx;
+		pfree(partialAttidx);
 
 		if (constr && constr->num_check > 0)
 		{
@@ -424,10 +489,14 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 				else
 					cdef->name = pstrdup(check[i].ccname);
 				cdef->raw_expr = NULL;
-				cdef->cooked_expr = pstrdup(check[i].ccbin);
+				/* adjust varattnos of ccbin here */
+				expr = stringToNode(check[i].ccbin);
+				change_varattnos_of_a_node(expr, newattno);
+				cdef->cooked_expr = nodeToString(expr);
 				constraints = lappend(constraints, cdef);
 			}
 		}
+		pfree(newattno);
 
 		/*
 		 * Close the parent rel, but keep our AccessShareLock on it until
@@ -645,17 +714,19 @@ again:
 
 
 /*
- * returns true if attribute already exists in schema, false otherwise.
+ * returns the index(star with 1) if attribute already exists in schema, 0 otherwise.
  */
-static bool
+static int
 checkAttrExists(const char *attributeName, const char *attributeType, List *schema)
 {
 	List	   *s;
+	int	i = 0;
 
 	foreach(s, schema)
 	{
 		ColumnDef  *def = lfirst(s);
 
+		++i;
 		if (strcmp(attributeName, def->colname) == 0)
 		{
 
@@ -665,10 +736,10 @@ checkAttrExists(const char *attributeName, const char *attributeType, List *sche
 			if (strcmp(attributeType, def->typename->name) != 0)
 				elog(ERROR, "CREATE TABLE: attribute \"%s\" type conflict (%s and %s)",
 					 attributeName, attributeType, def->typename->name);
-			return true;
+			return i;
 		}
 	}
-	return false;
+	return 0;
 }
 
 
