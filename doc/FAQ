@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Dec 24 12:18:49 EST 2004
+   Last updated: Mon Jan 3 22:43:02 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -150,7 +150,7 @@
    
    PostgreSQL Data Base Management System
    
-   Portions copyright (c) 1996-2004, PostgreSQL Global Development Group
+   Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permission to use, copy, modify, and distribute this software and its
@@ -189,6 +189,11 @@
    prepackaged installer is available at
    http://pgfoundry.org/projects/pginstaller. MSDOS-based versions of
    Windows (Win95, Win98, WinMe) can run PostgreSQL using Cygwin.
+   
+   There is also a Novell Netware 6 port at http://forge.novell.com, and
+   an OS/2 (eComStation) version at
+   http://www.os2world.com/cgi-bin/news/viewnews.cgi?category=32&id=11035
+   94114.
    
    There is also a Novell Netware 6 port at http://forge.novell.com.
    
