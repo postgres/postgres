@@ -4,17 +4,32 @@
   <Para>
    <ProductName>Postgres</ProductName> supports left unary,
    right  unary  and  binary
-   operators.   Operators  can  be  overloaded, or re-used
-   with different numbers  and  types  of  arguments.   If
+   operators.   Operators  can  be  overloaded; that is,
+   the same operator name can be used for different operators
+   that have different numbers and types of arguments.   If
    there  is  an ambiguous situation and the system cannot
    determine the correct operator to use, it  will  return
-   an  error  and you may have to typecast the left and/or
+   an  error.  You may have to typecast the left and/or
    right operands to help it understand which operator you
    meant to use.
-   To  create  an  operator for adding two complex numbers
-   can be done as follows.  First  we  need  to  create  a
-   function  to add the new types. Then, we can create the
-   operator with the function.
+  </Para>
+
+  <Para>
+   Every operator is "syntactic sugar" for a call to an
+   underlying function that does the real work; so you must
+   first create the underlying function before you can create
+   the operator.  However, an operator is <emphasis>not</emphasis>
+   merely syntactic sugar, because it carries additional information
+   that helps the query planner optimize queries that use the
+   operator.  Much of this chapter will be devoted to explaining
+   that additional information.
+  </Para>
+
+  <Para>
+   Here is an example of creating an operator for adding two
+   complex numbers.  We assume we've already created the definition
+   of type complex.  First we need a function that does the work;
+   then we can define the operator:
 
    <ProgramListing>
 CREATE FUNCTION complex_add(complex, complex)
@@ -32,11 +47,7 @@ CREATE OPERATOR + (
   </Para>
 
   <Para>
-   We've shown how to create a binary  operator  here.  To
-   create  unary  operators, just omit one of leftarg (for
-   left unary) or rightarg (for right unary).
-   If we give the system enough type information,  it  can
-   automatically figure out which operators to use.
+   Now we can do:
      
    <ProgramListing>
 SELECT (a + b) AS c FROM test_complex;
@@ -51,8 +62,18 @@ SELECT (a + b) AS c FROM test_complex;
    </ProgramListing>
   </Para>
 
+  <Para>
+   We've shown how to create a binary  operator  here.  To
+   create  unary  operators, just omit one of leftarg (for
+   left unary) or rightarg (for right unary).  The procedure
+   clause and the argument clauses are the only required items
+   in CREATE OPERATOR.  The COMMUTATOR clause shown in the example
+   is an optional hint to the query optimizer.  Further details about
+   COMMUTATOR and other optimizer hints appear below.
+  </Para>
+
   <sect1>
-   <title>Hash Join Operators</title>
+   <title>Operator Optimization Information</title>
 
    <note>
     <title>Author</title>
@@ -62,39 +83,335 @@ SELECT (a + b) AS c FROM test_complex;
    </note>
 
    <para>
-    The assumption underlying hash join is that two values that will be
-    considered equal by the comparison operator will always have the same
-    hash value.  If two values get put in different hash buckets, the join
-    will never compare them at all, so they are necessarily treated as
-    unequal.
+    A <ProductName>Postgres</ProductName> operator definition can include
+    several optional clauses that tell the system useful things about how
+    the operator behaves.  These clauses should be provided whenever
+    appropriate, because they can make for considerable speedups in execution
+    of queries that use the operator.  But if you provide them, you must be
+    sure that they are right!  Incorrect use of an optimization clause can
+    result in backend crashes, subtly wrong output, or other Bad Things.
+    You can always leave out an optimization clause if you are not sure
+    about it --- the only consequence is that queries might run slower than
+    they need to.
    </para>
 
    <para>
-    But we have a number of datatypes for which the "=" operator is not
-    a straight bitwise comparison.  For example, intervaleq is not bitwise
-    at all; it considers two time intervals equal if they have the same
+    Additional optimization clauses might be added in future versions of
+    <ProductName>Postgres</ProductName>.  The ones described here are all
+    the ones that release 6.5 understands.
+   </para>
+
+  <sect2>
+   <title>COMMUTATOR</title>
+
+   <para>
+    The COMMUTATOR clause, if provided, names an operator that is the
+    commutator of the operator being defined.  We say that operator A is the
+    commutator of operator B if (x A y) equals (y B x) for all possible input
+    values x,y.  Notice that B is also the commutator of A.  For example,
+    operators '<' and '>' for a particular datatype are usually each others'
+    commutators, and operator '+' is usually commutative with itself.
+    But operator '-' is usually not commutative with anything.
+   </para>
+
+   <para>
+    The left argument type of a commuted operator is the same as the
+    right argument type of its commutator, and vice versa.  So the name of
+    the commutator operator is all that <ProductName>Postgres</ProductName>
+    needs to be given to look up the commutator, and that's all that need
+    be provided in the COMMUTATOR clause.
+   </para>
+
+   <para>
+    When you are defining a self-commutative operator, you just do it.
+    When you are defining a pair of commutative operators, things are
+    a little trickier: how can the first one to be defined refer to the
+    other one, which you haven't defined yet?  There are two solutions
+    to this problem:
+   </para>
+
+   <para>
+    One way is to omit the COMMUTATOR clause in the first operator that
+    you define, and then provide one in the second operator's definition.
+    Since <ProductName>Postgres</ProductName> knows that commutative
+    operators come in pairs, when it sees the second definition it will
+    automatically go back and fill in the missing COMMUTATOR clause in
+    the first definition.
+   </para>
+
+   <para>
+    The other, more straightforward way is just to include COMMUTATOR clauses
+    in both definitions.  When <ProductName>Postgres</ProductName> processes
+    the first definition and realizes that COMMUTATOR refers to a non-existent
+    operator, the system will make a dummy entry for that operator in the
+    system's pg_operator table.  This dummy entry will have valid data only
+    for the operator name, left and right argument types, and result type,
+    since that's all that <ProductName>Postgres</ProductName> can deduce
+    at this point.  The first operator's catalog entry will link to this
+    dummy entry.  Later, when you define the second operator, the system
+    updates the dummy entry with the additional information from the second
+    definition.  If you try to use the dummy operator before it's been filled
+    in, you'll just get an error message.  (Note: this procedure did not work
+    reliably in <ProductName>Postgres</ProductName> versions before 6.5,
+    but it is now the recommended way to do things.)
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>NEGATOR</title>
+
+   <para>
+    The NEGATOR clause, if provided, names an operator that is the
+    negator of the operator being defined.  We say that operator A
+    is the negator of operator B if both return boolean results and
+    (x A y) equals NOT (x B y) for all possible inputs x,y.
+    Notice that B is also the negator of A.
+    For example, '<' and '>=' are a negator pair for most datatypes.
+    An operator can never be validly be its own negator.
+   </para>
+
+   <para>
+    Unlike COMMUTATOR, a pair of unary operators could validly be marked
+    as each others' negators; that would mean (A x) equals NOT (B x)
+    for all x, or the equivalent for right-unary operators.
+   </para>
+
+   <para>
+    An operator's negator must have the same left and/or right argument types
+    as the operator itself, so just as with COMMUTATOR, only the operator
+    name need be given in the NEGATOR clause.
+   </para>
+
+   <para>
+    Providing NEGATOR is very helpful to the query optimizer since
+    it allows expressions like NOT (x = y) to be simplified into
+    x <> y.  This comes up more often than you might think, because
+    NOTs can be inserted as a consequence of other rearrangements.
+   </para>
+
+   <para>
+    Pairs of negator operators can be defined using the same methods
+    explained above for commutator pairs.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>RESTRICT</title>
+
+   <para>
+    The RESTRICT clause, if provided, names a restriction selectivity
+    estimation function for the operator (note that this is a function
+    name, not an operator name).  RESTRICT clauses only make sense for
+    binary operators that return boolean.  The idea behind a restriction
+    selectivity estimator is to guess what fraction of the rows in a
+    table will satisfy a WHERE-clause condition of the form
+   <ProgramListing>
+    		field OP constant
+   </ProgramListing>
+    for the current operator and a particular constant value.
+    This assists the optimizer by
+    giving it some idea of how many rows will be eliminated by WHERE
+    clauses that have this form.  (What happens if the constant is on
+    the left, you may be wondering?  Well, that's one of the things that
+    COMMUTATOR is for...)
+   </para>
+
+   <para>
+    Writing new restriction selectivity estimation functions is far beyond
+    the scope of this chapter, but fortunately you can usually just use
+    one of the system's standard estimators for many of your own operators.
+    These are the standard restriction estimators:
+   <ProgramListing>
+	eqsel		for =
+	neqsel		for <>
+	intltsel	for < or <=
+	intgtsel	for > or >=
+   </ProgramListing>
+    It might seem a little odd that these are the categories, but they
+    make sense if you think about it.  '=' will typically accept only
+    a small fraction of the rows in a table; '<>' will typically reject
+    only a small fraction.  '<' will accept a fraction that depends on
+    where the given constant falls in the range of values for that table
+    column (which, it just so happens, is information collected by
+    VACUUM ANALYZE and made available to the selectivity estimator).
+    '<=' will accept a slightly larger fraction than '<' for the same
+    comparison constant, but they're close enough to not be worth
+    distinguishing, especially since we're not likely to do better than a
+    rough guess anyhow.  Similar remarks apply to '>' and '>='.
+   </para>
+
+   <para>
+    You can frequently get away with using either eqsel or neqsel for
+    operators that have very high or very low selectivity, even if they
+    aren't really equality or inequality.  For example, the regular expression
+    matching operators (~, ~*, etc) use eqsel on the assumption that they'll
+    usually only match a small fraction of the entries in a table.
+   </para>
+
+  <sect2>
+   <title>JOIN</title>
+
+   <para>
+    The JOIN clause, if provided, names a join selectivity
+    estimation function for the operator (note that this is a function
+    name, not an operator name).  JOIN clauses only make sense for
+    binary operators that return boolean.  The idea behind a join
+    selectivity estimator is to guess what fraction of the rows in a
+    pair of tables will satisfy a WHERE-clause condition of the form
+   <ProgramListing>
+                table1.field1 OP table2.field2
+   </ProgramListing>
+    for the current operator.  As with the RESTRICT clause, this helps
+    the optimizer very substantially by letting it figure out which
+    of several possible join sequences is likely to take the least work.
+   </para>
+
+   <para>
+    As before, this chapter will make no attempt to explain how to write
+    a join selectivity estimator function, but will just suggest that
+    you use one of the standard estimators if one is applicable:
+   <ProgramListing>
+	eqjoinsel	for =
+	neqjoinsel	for <>
+	intltjoinsel	for < or <=
+	intgtjoinsel	for > or >=
+   </ProgramListing>
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>HASHES</title>
+
+   <para>
+    The HASHES clause, if present, tells the system that it is OK to
+    use the hash join method for a join based on this operator.  HASHES
+    only makes sense for binary operators that return boolean --- and
+    in practice, the operator had better be equality for some data type.
+   </para>
+
+   <para>
+    The assumption underlying hash join is that the join operator can
+    only return TRUE for pairs of left and right values that hash to the
+    same hash code.  If two values get put in different hash buckets, the
+    join will never compare them at all, implicitly assuming that the
+    result of the join operator must be FALSE.  So it never makes sense
+    to specify HASHES for operators that do not represent equality.
+   </para>
+
+   <para>
+    In fact, logical equality is not good enough either --- the operator
+    had better represent pure bitwise equality, because the hash function
+    will be computed on the memory representation of the values regardless
+    of what the bits mean.  For example, equality of
+    time intervals is not bitwise equality; the interval equality operator
+    considers two time intervals equal if they have the same
     duration, whether or not their endpoints are identical.  What this means
-    is that a join using "=" between interval fields will yield different
+    is that a join using "=" between interval fields would yield different
     results if implemented as a hash join than if implemented another way,
     because a large fraction of the pairs that should match will hash to
-    different values and will never be compared.
+    different values and will never be compared by the hash join.  But
+    if the optimizer chose to use a different kind of join, all the pairs
+    that the equality operator says are equal will be found.
+    We don't want that kind of inconsistency, so we don't mark interval
+    equality as hashable.
    </para>
 
    <para>
-    I believe the same problem exists for float data; for example, on
-    IEEE-compliant machines, minus zero and plus zero have different bit
-    patterns (hence different hash values) but should be considered equal.
-    A hashjoin will get it wrong.
+    There are also machine-dependent ways in which a hash join might fail
+    to do the right thing.  For example, if your datatype
+    is a structure in which there may be uninteresting pad bits, it's unsafe
+    to mark the equality operator HASHES.  (Unless, perhaps, you write
+    your other operators to ensure that the unused bits are always zero.)
+    Another example is that the FLOAT datatypes are unsafe for hash
+    joins.  On machines that meet the IEEE floating point standard, minus
+    zero and plus zero are different values (different bit patterns) but
+    they are defined to compare equal.  So, if float equality were marked
+    HASHES, a minus zero and a plus zero would probably not be matched up
+    by a hash join, but they would be matched up by any other join process.
    </para>
 
    <para>
-    I will go through pg_operator and remove the hashable flag from
-    operators that are not safely hashable, but I see no way to
-    automatically check for this sort of mistake.  The only long-term
-    answer is to raise the consciousness of datatype creators about what
-    it means to set the oprcanhash flag.  Don't do it unless your equality
-    operator can be implemented as memcmp()!
+    The bottom line is that you should probably only use HASHES for
+    equality operators that are (or could be) implemented by memcmp().
    </para>
+
+  </sect2>
+
+  <sect2>
+   <title>SORT1 and SORT2</title>
+
+   <para>
+    The SORT clauses, if present, tell the system that it is OK to use
+    the merge join method for a join based on the current operator.
+    Both must be specified if either is.  The current operator must be
+    equality for some pair of data types, and the SORT1 and SORT2 clauses
+    name the ordering operator ('<' operator) for the left and right-side
+    data types respectively.
+   </para>
+
+   <para>
+    Merge join is based on the idea of sorting the left and righthand tables
+    into order and then scanning them in parallel.  So, both data types must
+    be capable of being fully ordered, and the join operator must be one
+    that can only succeed for pairs of values that fall at the "same place"
+    in the sort order.  In practice this means that the join operator must
+    behave like equality.  But unlike hashjoin, where the left and right
+    data types had better be the same (or at least bitwise equivalent),
+    it is possible to mergejoin two
+    distinct data types so long as they are logically compatible.  For
+    example, the int2-versus-int4 equality operator is mergejoinable.
+    We only need sorting operators that will bring both datatypes into a
+    logically compatible sequence.
+   </para>
+
+   <para>
+    When specifying merge sort operators, the current operator and both
+    referenced operators must return boolean; the SORT1 operator must have
+    both input datatypes equal to the current operator's left argument type,
+    and the SORT2 operator must have
+    both input datatypes equal to the current operator's right argument type.
+    (As with COMMUTATOR and NEGATOR, this means that the operator name is
+    sufficient to specify the operator, and the system is able to make dummy
+    operator entries if you happen to define the equality operator before
+    the other ones.)
+   </para>
+
+   <para>
+    In practice you should only write SORT clauses for an '=' operator,
+    and the two referenced operators should always be named '<'.  Trying
+    to use merge join with operators named anything else will result in
+    hopeless confusion, for reasons we'll see in a moment.
+   </para>
+
+   <para>
+    There are additional restrictions on operators that you mark
+    mergejoinable.  These restrictions are not currently checked by
+    CREATE OPERATOR, but a merge join may fail at runtime if any are
+    not true:
+   </para>
+
+   <para>
+    The mergejoinable equality operator must have a commutator
+    (itself if the two data types are the same, or a related equality operator
+    if they are different).
+   </para>
+
+   <para>
+    There must be '<' and '>' ordering operators having the same left and
+    right input datatypes as the mergejoinable operator itself.  These
+    operators <emphasis>must</emphasis> be named '<' and '>' --- you do
+    not have any choice in the matter, since there is no provision for
+    specifying them explicitly.  Note that if the left and right data types
+    are different, neither of these operators is the same as either
+    SORT operator.  But they had better order the data values compatibly
+    with the SORT operators, or mergejoin will fail to work.
+   </para>
+
+  </sect2>
+
   </sect1>
  </Chapter>
 
