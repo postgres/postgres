@@ -6,15 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.1 1996/08/28 07:21:43 scrappy Exp $
+ * $Id: command.h,v 1.2 1996/11/06 08:02:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include "utils/portal.h"
-#include "tcop/dest.h"
+#include <utils/portal.h>
+#include <tcop/dest.h>
+#include <nodes/memnodes.h>
 
 extern MemoryContext PortalExecutorHeapMemory;
 
