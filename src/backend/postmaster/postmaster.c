@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.93 1998/07/09 03:28:47 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.94 1998/08/25 21:04:36 scrappy Exp $
  *
  * NOTES
  *
@@ -238,6 +238,9 @@ void GetCharSetByHost(char *, int, char *);
 
 #endif
 
+#ifdef USE_ASSERT_CHECKING
+int assert_enabled = 1;
+#endif
 
 static void
 checkDataDir(const char *DataDir, bool *DataDirOK)
@@ -294,8 +297,6 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 		}
 	}
 }
-
-
 
 int
 PostmasterMain(int argc, char *argv[])
@@ -365,10 +366,22 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
-	while ((opt = getopt(nonblank_argc, argv, "a:B:b:D:dim:Mno:p:Ss")) != EOF)
+	while ((opt = getopt(nonblank_argc, argv,"A:a:B:b:D:dim:Mno:p:Ss")) != EOF)
 	{
 		switch (opt)
 		{
+			case 'A':
+#ifndef USE_ASSERT_CHECKING
+				fprintf(stderr, "Assert checking is not enabled\n");
+#else
+				/*
+				 * Pass this option also to each backend.
+				 */
+				assert_enabled = atoi(optarg);
+				strcat(ExtraOptions, " -A ");
+				strcat(ExtraOptions, optarg);
+#endif
+				break;
 			case 'a':
 				/* Can no longer set authentication method. */
 				break;
@@ -566,6 +579,9 @@ static void
 usage(const char *progname)
 {
 	fprintf(stderr, "usage: %s [options]\n", progname);
+#ifdef USE_ASSERT_CHECKING
+	fprintf(stderr, "\t-A [1|0]\tenable/disable runtime assert checking\n");
+#endif
 	fprintf(stderr, "\t-B nbufs\tset number of shared buffers\n");
 	fprintf(stderr, "\t-D datadir\tset data directory\n");
 	fprintf(stderr, "\t-S \t\tsilent mode (disassociate from tty)\n");

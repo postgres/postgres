@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.42 1998/06/23 15:35:46 momjian Exp $
+ * $Id: c.h,v 1.43 1998/08/25 21:04:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,12 +583,10 @@ typedef struct Exception
 } Exception;
 
 /*
- * USE_ASSERT_CHECKING, if defined, turns off all the assertions.
+ * USE_ASSERT_CHECKING, if defined, turns on all the assertions.
  * - plai  9/5/90
  *
- * It should _NOT_ be undef'ed in releases or in benchmark copies
- *
- * #undef USE_ASSERT_CHECKING
+ * It should _NOT_ be defined in releases or in benchmark copies
  */
 
 /*
@@ -597,7 +595,7 @@ typedef struct Exception
  *
  */
 #define Trap(condition, exception) \
-		{ if (condition) \
+		{ if ((assert_enabled) && (condition)) \
 				ExceptionalCondition(CppAsString(condition), &(exception), \
 						(char*)NULL, __FILE__, __LINE__); }
 
@@ -609,7 +607,7 @@ typedef struct Exception
  *	Isn't CPP fun?
  */
 #define TrapMacro(condition, exception) \
-	((bool) ((! condition) || \
+	((bool) ((! assert_enabled) || (! condition) || \
 			 (ExceptionalCondition(CppAsString(condition), \
 								  &(exception), \
 								  (char*) NULL, __FILE__, __LINE__))))
@@ -619,6 +617,7 @@ typedef struct Exception
 #define AssertMacro(condition)	(void)true
 #define AssertArg(condition)
 #define AssertState(condition)
+#define assert_enabled 0
 #else
 #define Assert(condition) \
 		Trap(!(condition), FailedAssertion)
@@ -632,6 +631,7 @@ typedef struct Exception
 #define AssertState(condition) \
 		Trap(!(condition), BadState)
 
+extern int assert_enabled;
 #endif							/* USE_ASSERT_CHECKING */
 
 /*
@@ -640,7 +640,7 @@ typedef struct Exception
  *
  */
 #define LogTrap(condition, exception, printArgs) \
-		{ if (condition) \
+		{ if ((assert_enabled) && (condition)) \
 				ExceptionalCondition(CppAsString(condition), &(exception), \
 						form printArgs, __FILE__, __LINE__); }
 
@@ -650,7 +650,7 @@ typedef struct Exception
  *		#define foo(x) (LogAssertMacro(x != 0, "yow!") && bar(x))
  */
 #define LogTrapMacro(condition, exception, printArgs) \
-	((bool) ((! condition) || \
+	((bool) ((! assert_enabled) || (! condition) || \
 			 (ExceptionalCondition(CppAsString(condition), \
 								   &(exception), \
 								   form printArgs, __FILE__, __LINE__))))
@@ -673,6 +673,10 @@ typedef struct Exception
 #define LogAssertState(condition, printArgs) \
 		LogTrap(!(condition), BadState, printArgs)
 
+extern int	assertEnable(int val);
+#ifdef ASSERT_CHECKING_TEST
+extern int	assertTest(int val);
+#endif
 #endif							/* USE_ASSERT_CHECKING */
 
 /* ----------------------------------------------------------------

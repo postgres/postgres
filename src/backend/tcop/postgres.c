@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.84 1998/08/25 15:00:17 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.85 1998/08/25 21:04:38 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -850,6 +850,9 @@ usage(char *progname)
 {
 	fprintf(stderr,
 			"Usage: %s [options] [dbname]\n", progname);
+#ifdef USE_ASSERT_CHECKING
+	fprintf(stderr, "    A: enable/disable assert checking\n");
+#endif
 	fprintf(stderr, "\t-B buffers\tset number of buffers in buffer pool\n");
 	fprintf(stderr, "\t-C \t\tsupress version info\n");
 	fprintf(stderr, "\t-D dir\t\tdata directory\n");
@@ -866,6 +869,7 @@ usage(char *progname)
 	fprintf(stderr, "\t-o file\t\tsend stdout and stderr to given filename \n");
 	fprintf(stderr, "\t-s \t\tshow stats after each query\n");
 	fprintf(stderr, "\t-v version\tset protocol version being used by frontend\n");
+	fprintf(stderr, "\t-W \t\twait N seconds to allow attach from a debugger\n");
 }
 
 /* ----------------------------------------------------------------
@@ -943,10 +947,22 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
     optind = 1; /* reset after postmaster usage */
 	
-	while ((flag = getopt(argc, argv, "B:bCD:d:Eef:iK:Lm:MNo:P:pQS:st:v:x:F"))
+	while ((flag = getopt(argc, argv,
+						  "A:B:bCD:d:Eef:iK:Lm:MNo:P:pQS:st:v:x:FW:"))
 		   != EOF)
 		switch (flag)
 		{
+			case 'A':
+				/* ----------------
+				 *  enable/disable assert checking.
+				 * ----------------
+				 */
+#ifdef USE_ASSERT_CHECKING
+				assert_enabled = atoi(optarg);
+#else
+				fprintf(stderr, "Assert checking is not enabled\n");
+#endif
+				break;
 
 			case 'b':
 				/* ----------------
@@ -955,6 +971,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 */
 				BushyPlanFlag = 1;
 				break;
+
 			case 'B':
 				/* ----------------
 				 *	specify the size of buffer pool
@@ -1163,6 +1180,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 			case 'v':
 				FrontendProtocol = (ProtocolVersion) atoi(optarg);
+				break;
+
+			case 'W':
+				/* ----------------
+				 *  wait N seconds to allow attach from a debugger
+				 * ----------------
+				 */
+				sleep(atoi(optarg));
 				break;
 
 			case 'x':
@@ -1390,7 +1415,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.84 $ $Date: 1998/08/25 15:00:17 $");
+		puts("$Revision: 1.85 $ $Date: 1998/08/25 21:04:38 $");
 	}
 
 	/* ----------------
@@ -1631,3 +1656,29 @@ ShowUsage(void)
 	PrintBufferUsage(StatFp);
 /*	   DisplayTupleCount(StatFp); */
 }
+
+#ifdef USE_ASSERT_CHECKING
+int
+assertEnable(int val)
+{
+	assert_enabled = val;
+	return val;
+}
+
+#ifdef ASSERT_CHECKING_TEST
+int
+assertTest(int val)
+{
+	Assert(val == 0);
+
+	if (assert_enabled) {
+		/* val != 0 should be trapped by previous Assert */
+		elog(NOTICE, "Assert test successfull (val = %d)", val);
+	} else {
+		elog(NOTICE, "Assert checking is disabled (val = %d)", val);
+	}
+
+	return val;
+}
+#endif
+#endif
