@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-06-25 15:07+0200\n"
-"PO-Revision-Date: 2004-09-09 08:46+0200\n"
+"PO-Revision-Date: 2004-10-17 17:36+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -7291,7 +7291,7 @@ msgstr ""
 #: utils/adt/date.c:2522 utils/adt/timestamp.c:3698 utils/adt/timestamp.c:3845
 #, c-format
 msgid "time zone \"%s\" not recognized"
-msgstr "tidszone \"%s\" känna inte igen"
+msgstr "tidszonen \"%s\" känns inte igen"
 
 #: utils/adt/date.c:2544
 #, c-format
