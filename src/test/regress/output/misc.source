@@ -502,6 +502,7 @@ slow_emp4000
 street         
 stud_emp       
 student        
+subselect_tbl  
 tenk1          
 tenk2          
 text_tbl       
@@ -510,5 +511,5 @@ tinterval_tbl
 toyemp         
 varchar_tbl    
 xacttest       
-(68 rows)
+(69 rows)
 
