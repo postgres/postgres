@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep  5 12:32:58 EDT 2002
+Last updated:		Thu Sep  5 18:02:37 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -46,8 +46,7 @@ Permissions
 
 * -Improve control over user privileges, including table creation
 * -Allow user/group names to be specified directly in pg_hba.conf (Bruce)
-* -Add PGPASSWORDFILE environment variable or ~/.pgpass to store
-  user/host/password combinations
+* -Add ~/.pgpass to store passwords with user/host/password combinations
 * -Allow permissions for functions (Peter E)
 * -Allow object creation to be disabled for specific users
 
