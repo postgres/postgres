@@ -1,10 +1,4 @@
-B011	Core
-B012	Core
-B013	Core
-B014	Core
-B015	Core
-B016	Core
-B017	Core
+C011	Core
 E011	Core
 E021	Core
 E031	Core
@@ -31,14 +25,12 @@ F051	Core
 F052	Enhanced datetime facilities
 F081	Core
 F131	Core
+F181	Core
 F191	Enhanced integrity management
 F201	Core
 F221	Core
 F261	Core
-F302	OLAP facilities
-F304	OLAP facilities
 F311	Core
-F401	OLAP facilities
 F411	Enhanced datetime facilities
 F471	Core
 F481	Core
@@ -46,8 +38,6 @@ F491	Enhanced integrity management
 F501	Core
 F521	Enhanced integrity management
 F555	Enhanced datetime facilities
-F591	OLAP facilities
-F641	OLAP facilities
 F671	Enhanced integrity management
 F701	Enhanced integrity management
 F812	Core
@@ -64,13 +54,14 @@ S151	Basic object support
 S161	Enhanced object support
 S211	Enhanced object support
 S231	Enhanced object support
-S241	Enhanced object support
 T041	Basic object support
 T191	Enhanced integrity management
 T201	Enhanced integrity management
-T211	Enhanced integrity management
 T211	Active database
+T211	Enhanced integrity management
 T212	Enhanced integrity management
 T321	Core
 T322	PSM
-T431	OLAP facilities
+T431	OLAP
+T611	OLAP
+T631	Core
