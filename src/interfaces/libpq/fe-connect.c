@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.261 2003/09/22 00:23:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.262 2003/10/02 19:52:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2262,7 +2262,23 @@ retry4:
 		goto cancel_errReturn;
 	}
 
-	/* Sent it, done */
+	/*
+	 * Wait for the postmaster to close the connection, which indicates that
+	 * it's processed the request.  Without this delay, we might issue another
+	 * command only to find that our cancel zaps that command instead of the
+	 * one we thought we were canceling.  Note we don't actually expect this
+	 * read to obtain any data, we are just waiting for EOF to be signaled.
+	 */
+retry5:
+	if (recv(tmpsock, (char *) &crp, 1, 0) < 0)
+	{
+		if (SOCK_ERRNO == EINTR)
+			/* Interrupted system call - we'll just try again */
+			goto retry5;
+		/* we ignore other error conditions */
+	}
+
+	/* All done */
 	closesocket(tmpsock);
 #ifdef WIN32
 	WSASetLastError(save_errno);
