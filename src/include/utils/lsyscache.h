@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.19 1999/08/09 03:13:28 tgl Exp $
+ * $Id: lsyscache.h,v 1.20 1999/08/16 02:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@ extern HeapTuple get_operator_tuple(Oid opno);
 extern Oid	get_negator(Oid opid);
 extern RegProcedure get_oprrest(Oid opid);
 extern RegProcedure get_oprjoin(Oid opid);
+extern Oid	get_func_rettype(Oid funcid);
 extern int	get_relnatts(Oid relid);
 extern char *get_rel_name(Oid relid);
 extern struct varlena *get_relstub(Oid relid, int no, bool *islast);
