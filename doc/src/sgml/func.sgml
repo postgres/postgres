@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.184 2003/12/25 03:36:23 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.185 2003/12/26 21:30:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -258,7 +258,7 @@ PostgreSQL documentation
 
    <para>
     <indexterm>
-     <primary>between</primary>
+     <primary>BETWEEN</primary>
     </indexterm>
     In addition to the comparison operators, the special
     <token>BETWEEN</token> construct is available.<indexterm><primary>BETWEEN</primary></indexterm>
@@ -6476,7 +6476,7 @@ SELECT COALESCE(description, short_description, '(none)') ...
    <title><literal>NULLIF</></title>
 
   <indexterm>
-   <primary>nullif</primary>
+   <primary>NULLIF</primary>
   </indexterm>
 
 <synopsis>
@@ -8025,23 +8025,23 @@ SELECT col1 FROM tab1
   <title>Row and Array Comparisons</title>
 
   <indexterm>
-   <primary>in</primary>
+   <primary>IN</primary>
   </indexterm>
 
   <indexterm>
-   <primary>not in</primary>
+   <primary>NOT IN</primary>
   </indexterm>
 
   <indexterm>
-   <primary>any</primary>
+   <primary>ANY</primary>
   </indexterm>
 
   <indexterm>
-   <primary>all</primary>
+   <primary>ALL</primary>
   </indexterm>
 
   <indexterm>
-   <primary>some</primary>
+   <primary>SOME</primary>
   </indexterm>
 
   <para>
