@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.16 2000/03/23 22:25:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.17 2000/03/23 23:16:47 momjian Exp $
 Postgres documentation
 -->
 
@@ -86,7 +86,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
       <term>Notes</term>
       <listitem>
        <para>
-	If EXCLUSIVE or SHARE are not speicified, EXCLUSIVE is assumed.
+	If EXCLUSIVE or SHARE are not specified, EXCLUSIVE is assumed.
 	If  ROW or ACCESS is not specified, the entire table is locked
 	for the duration of the transaction.
        </para>
@@ -117,14 +117,14 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        <note>
 	<para>
 	 This lock mode is acquired automatically over tables being queried.
-	 This lock is released automatically after the statement completes.
+	 It is released after the statement completes.
 	 It does not remain for the duration of the transaction.
 	</para>
        </note>
 
        <para>
 	This is the least restrictive lock mode.  It conflicts only with
-	ACCESS EXCLUSIVE mode. It is intended to protect a table being
+	ACCESS EXCLUSIVE mode. It is used to protect a table being
 	modified by concurrent <command>ALTER TABLE</command>, 
 	<command>DROP TABLE</command> and <command>VACUUM</command> 
 	commands.
@@ -139,7 +139,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        <para>
 	 Automatically acquired by <command>SELECT...FOR UPDATE</command>.
 	 While it is a shared lock, there is the intention to later upgrade
-	 this to an EXCLUSIVE lock.
+	 this to a ROW EXCLUSIVE lock.
 	</para>
        </note>
 

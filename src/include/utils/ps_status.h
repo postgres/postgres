@@ -50,7 +50,7 @@ char *ps_status_buffer = NULL
 
 extern char Ps_status_buffer[];
 
-#define PS_DEFINE_BUFFER
+#undef PS_DEFINE_BUFFER
 
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
 	{ \
@@ -75,7 +75,7 @@ extern char Ps_status_buffer[];
 #endif
 
 #ifdef NO_PS_STATUS
-#define PS_DEFINE_BUFFER
+#undef PS_DEFINE_BUFFER
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname)
 #define PS_CLEAR_STATUS()
 #define PS_SET_STATUS(status) { if ((status)); }

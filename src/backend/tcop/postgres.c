@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.147 2000/03/01 02:39:46 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.148 2000/03/23 23:16:48 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -97,7 +97,9 @@
 CommandDest whereToSendOutput = Debug;
 
 /* Define status buffer needed by PS_SET_STATUS */
+#ifdef PS_DEFINE_BUFFER
 PS_DEFINE_BUFFER;
+#endif
 
 extern void		BaseInit(void);
 extern void		StartupXLOG(void);
@@ -1503,7 +1505,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.147 $ $Date: 2000/03/01 02:39:46 $\n");
+		puts("$Revision: 1.148 $ $Date: 2000/03/23 23:16:48 $\n");
 	}
 
 	/*
