@@ -122,7 +122,7 @@ The <productname>Postgres</productname> datetime type will break MS Access.
 -->
 
 <sect1>
-<title><productname>Unix</productname> Applications</title>
+<title>Unix Applications</title>
 
 <para>
 <productname>ApplixWare</productname> has an <acronym>ODBC</acronym> database interface
