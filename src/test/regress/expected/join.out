@@ -1,0 +1,94 @@
+QUERY: CREATE TABLE JOIN_TBL (
+  i integer,
+  j integer,
+  x text
+);
+QUERY: CREATE TABLE JOIN2_TBL (
+  i integer,
+  k integer
+);
+QUERY: INSERT INTO JOIN_TBL VALUES (1, 3, 'one');
+QUERY: INSERT INTO JOIN_TBL VALUES (2, 2, 'two');
+QUERY: INSERT INTO JOIN_TBL VALUES (3, 1, 'three');
+QUERY: INSERT INTO JOIN_TBL VALUES (4, 0, 'four');
+QUERY: INSERT INTO JOIN2_TBL VALUES (1, -1);
+QUERY: INSERT INTO JOIN2_TBL VALUES (2, 2);
+QUERY: INSERT INTO JOIN2_TBL VALUES (3, -3);
+QUERY: INSERT INTO JOIN2_TBL VALUES (2, 4);
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL CROSS JOIN JOIN2_TBL;
+xxx|i|j|x    |i| k
+---+-+-+-----+-+--
+   |1|3|one  |1|-1
+   |2|2|two  |1|-1
+   |3|1|three|1|-1
+   |4|0|four |1|-1
+   |1|3|one  |2| 2
+   |2|2|two  |2| 2
+   |3|1|three|2| 2
+   |4|0|four |2| 2
+   |1|3|one  |3|-3
+   |2|2|two  |3|-3
+   |3|1|three|3|-3
+   |4|0|four |3|-3
+   |1|3|one  |2| 4
+   |2|2|two  |2| 4
+   |3|1|three|2| 4
+   |4|0|four |2| 4
+(16 rows)
+
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL NATURAL JOIN JOIN2_TBL;
+ERROR:  JOIN expressions are not yet implemented
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL INNER JOIN JOIN2_TBL USING (i);
+ERROR:  JOIN expressions are not yet implemented
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i = JOIN2_TBL.i);
+ERROR:  JOIN expressions are not yet implemented
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i = JOIN2_TBL.k);
+ERROR:  JOIN expressions are not yet implemented
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL CROSS JOIN JOIN2_TBL;
+xxx|i|j|x    |i| k
+---+-+-+-----+-+--
+   |1|3|one  |1|-1
+   |2|2|two  |1|-1
+   |3|1|three|1|-1
+   |4|0|four |1|-1
+   |1|3|one  |2| 2
+   |2|2|two  |2| 2
+   |3|1|three|2| 2
+   |4|0|four |2| 2
+   |1|3|one  |3|-3
+   |2|2|two  |3|-3
+   |3|1|three|3|-3
+   |4|0|four |3|-3
+   |1|3|one  |2| 4
+   |2|2|two  |2| 4
+   |3|1|three|2| 4
+   |4|0|four |2| 4
+(16 rows)
+
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i <= JOIN2_TBL.k);
+ERROR:  JOIN expressions are not yet implemented
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL OUTER JOIN JOIN2_TBL USING (i);
+NOTICE:  OUTER JOIN not yet implemented
+ERROR:  JOIN expressions are not yet implemented
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL LEFT OUTER JOIN JOIN2_TBL USING (i);
+NOTICE:  LEFT OUTER JOIN not yet implemented
+ERROR:  JOIN expressions are not yet implemented
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL RIGHT OUTER JOIN JOIN2_TBL USING (i);
+NOTICE:  RIGHT OUTER JOIN not yet implemented
+ERROR:  JOIN expressions are not yet implemented
+QUERY: SELECT '' AS "xxx", *
+  FROM JOIN_TBL FULL OUTER JOIN JOIN2_TBL USING (i);
+NOTICE:  FULL OUTER JOIN not yet implemented
+ERROR:  JOIN expressions are not yet implemented
+QUERY: DROP TABLE JOIN_TBL;
+QUERY: DROP TABLE JOIN2_TBL;

@@ -50,6 +50,7 @@ select_having
 subselect
 union
 case
+join
 aggregates
 transactions
 random

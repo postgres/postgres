@@ -1,0 +1,87 @@
+--
+-- join.sql
+--
+-- Test join clauses
+--
+
+CREATE TABLE JOIN_TBL (
+  i integer,
+  j integer,
+  x text
+);
+
+CREATE TABLE JOIN2_TBL (
+  i integer,
+  k integer
+);
+
+INSERT INTO JOIN_TBL VALUES (1, 3, 'one');
+INSERT INTO JOIN_TBL VALUES (2, 2, 'two');
+INSERT INTO JOIN_TBL VALUES (3, 1, 'three');
+INSERT INTO JOIN_TBL VALUES (4, 0, 'four');
+
+INSERT INTO JOIN2_TBL VALUES (1, -1);
+INSERT INTO JOIN2_TBL VALUES (2, 2);
+INSERT INTO JOIN2_TBL VALUES (3, -3);
+INSERT INTO JOIN2_TBL VALUES (2, 4);
+
+
+--
+-- Inner joins (equi-joins)
+--
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL CROSS JOIN JOIN2_TBL;
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL NATURAL JOIN JOIN2_TBL;
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL INNER JOIN JOIN2_TBL USING (i);
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i = JOIN2_TBL.i);
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i = JOIN2_TBL.k);
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL CROSS JOIN JOIN2_TBL;
+
+
+--
+-- Non-equi-joins
+--
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i <= JOIN2_TBL.k);
+
+
+--
+-- Outer joins
+--
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL OUTER JOIN JOIN2_TBL USING (i);
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL LEFT OUTER JOIN JOIN2_TBL USING (i);
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL RIGHT OUTER JOIN JOIN2_TBL USING (i);
+
+SELECT '' AS "xxx", *
+  FROM JOIN_TBL FULL OUTER JOIN JOIN2_TBL USING (i);
+
+
+--
+-- More complicated constructs
+--
+
+--
+-- Clean up
+--
+
+DROP TABLE JOIN_TBL;
+DROP TABLE JOIN2_TBL;
+
