@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jun 14 09:43:58 EDT 2004
+Last updated:		Fri Jun 18 12:03:13 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -38,7 +38,7 @@ Administration
 * Allow limits on per-db/user connections
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
-* Add the concept of dataspaces/tablespaces [tablespaces] (Gavin)
+* -Add the concept of dataspaces/tablespaces (Gavin)
 * -Allow logging of only data definition(DDL), or DDL and modification statements
 * -Allow log lines to include session-level information, like database and user
 * Allow server log information to be output as INSERT statements
