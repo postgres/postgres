@@ -10,26 +10,26 @@ then e-mail it to pgsql-patches@postgresql.org instead.  Please use the
 command "diff -c" to generate the patch.
 
 You may also enter a bug report at http://www.postgresql.org/ instead of
-e-mail-ing this form.
+e-mailing this form.
 
 ============================================================================
                         POSTGRESQL BUG REPORT TEMPLATE
 ============================================================================
 
 
-Your name		:	
+Your name		:
 Your email address	:
 
 
-System Configuration
+System Configuration:
 ---------------------
-  Architecture (example: Intel Pentium)  	:
+  Architecture (example: Intel Pentium)		:
 
-  Operating System (example: Linux 2.4.18) 	:
+  Operating System (example: Linux 2.4.18)	:
 
-  PostgreSQL version (example: PostgreSQL-8.0):   PostgreSQL-8.0
+  PostgreSQL version (example: PostgreSQL 8.0.0):  PostgreSQL 8.0.0
 
-  Compiler used (example:  gcc 2.95.2)		:
+  Compiler used (example: gcc 3.3.5)		:
 
 
 Please enter a FULL description of your problem:
