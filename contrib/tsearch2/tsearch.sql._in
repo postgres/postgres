@@ -666,6 +666,42 @@ CREATE FUNCTION get_covers(tsvector,tsquery)
         language 'C'
         with (isstrict);
 
+--debug function
+create type tsdebug as (
+        ts_name text,
+        tok_type text,
+        description text,
+        token   text,
+        dict_name text[],
+        "tsvector" tsvector
+);
+
+create function _get_parser_from_curcfg() 
+returns text as 
+' select prs_name from pg_ts_cfg where oid = show_curcfg() '
+language 'SQL' with(isstrict,iscachable);
+
+create function ts_debug(text)
+returns setof tsdebug as '
+select 
+        m.ts_name,
+        t.alias as tok_type,
+        t.descr as description,
+        p.token,
+        m.dict_name,
+        strip(to_tsvector(p.token)) as tsvector
+from
+        parse( _get_parser_from_curcfg(), $1 ) as p,
+        token_type() as t,
+        pg_ts_cfgmap as m,
+        pg_ts_cfg as c
+where
+        t.tokid=p.tokid and
+        t.alias = m.tok_alias and 
+        m.ts_name=c.ts_name and 
+        c.oid=show_curcfg() 
+' language 'SQL' with(isstrict);
+
 
 --example of ISpell dictionary
 --update pg_ts_dict set dict_initoption='DictFile="/usr/local/share/ispell/russian.dict" ,AffFile ="/usr/local/share/ispell/russian.aff", StopFile="/usr/local/share/ispell/russian.stop"' where dict_id=4;

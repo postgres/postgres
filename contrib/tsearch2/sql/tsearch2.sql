@@ -241,3 +241,5 @@ The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('sea'));
 
+--check debug
+select * from ts_debug('Tsearch module for PostgreSQL 7.3.3');

@@ -26,6 +26,8 @@ DROP TYPE tsquery CASCADE;
 DROP TYPE gtsvector CASCADE;
 DROP TYPE tsstat CASCADE;
 DROP TYPE statinfo CASCADE;
+DROP TYPE tsdebug CASCADE;
+
 
 DROP FUNCTION lexize(oid, text) ;
 DROP FUNCTION lexize(text, text);
@@ -58,5 +60,6 @@ DROP FUNCTION gtsvector_picksplit(internal, internal);
 DROP FUNCTION gtsvector_union(bytea, internal);
 DROP FUNCTION reset_tsearch();
 DROP FUNCTION tsearch2() CASCADE;
+DROP FUNCTION _get_parser_from_curcfg();
 
 END;

@@ -2056,3 +2056,14 @@ A thousand years to trace
 The granite features of this cliff
 (1 row)
 
+--check debug
+select * from ts_debug('Tsearch module for PostgreSQL 7.3.3');
+ ts_name | tok_type | description |   token    | dict_name |   tsvector   
+---------+----------+-------------+------------+-----------+--------------
+ default | lword    | Latin word  | Tsearch    | {en_stem} | 'tsearch'
+ default | lword    | Latin word  | module     | {en_stem} | 'modul'
+ default | lword    | Latin word  | for        | {en_stem} | 
+ default | lword    | Latin word  | PostgreSQL | {en_stem} | 'postgresql'
+ default | version  | VERSION     | 7.3.3      | {simple}  | '7.3.3'
+(5 rows)
+
