@@ -1029,5 +1029,10 @@ Mon Dec 18 12:27:52 CET 2000
 	- Synced gram.y and preproc.y.
 	- Synced keyword.c.
 	- Added several small patches from Christof.
+
+Fri Dec 22 13:33:31 CET 2000
+
+	- Fixed bug in a connect statement using varchars.
+	- Synced gram.y and preproc.y.   
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

@@ -15,6 +15,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 	char *t = "uvwxyz1234";
 	double f;
 	bool b = true;
+	varchar database[3];
 EXEC SQL END DECLARE SECTION;
 	FILE *dbgs;
 
@@ -23,7 +24,8 @@ EXEC SQL END DECLARE SECTION;
 	if ((dbgs = fopen("log", "w")) != NULL)
                 ECPGdebug(1, dbgs);
 
-        EXEC SQL CONNECT TO mm;
+	strcpy(database.arr, "mm");
+        EXEC SQL CONNECT TO :database;
 
 	EXEC SQL SET AUTOCOMMIT = ON;
 

@@ -313,7 +313,7 @@ make_name(void)
 %type  <str>    index_list func_index index_elem opt_class access_method_clause
 %type  <str>    index_opt_unique IndexStmt func_return ConstInterval
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
-%type  <str>    def_elem def_list definition def_name def_type DefineStmt
+%type  <str>    def_elem def_list definition DefineStmt
 %type  <str>    opt_instead event event_object RuleActionList opt_using
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes sysid_clause
@@ -1335,7 +1335,7 @@ OptSeqElem:  CACHE IntConst
  *****************************************************************************/
 
 CreatePLangStmt:  CREATE PLangTrusted opt_procedural LANGUAGE StringConst 
-			HANDLER def_name LANCOMPILER StringConst
+			HANDLER func_name LANCOMPILER StringConst
 			{
 				$$ = cat_str(9, make_str("create"), $2, $3, make_str("language"), $5, make_str("handler"), $7, make_str("langcompiler"), $9);
 			}
@@ -1482,22 +1482,19 @@ DropTrigStmt:  DROP TRIGGER name ON relation_name
  *
  *****************************************************************************/
 
-DefineStmt:  CREATE def_type def_name definition
-				{
-					$$ = cat_str(3, make_str("create"), $2, $3, $4);
-				}
+DefineStmt:  CREATE AGGREGATE func_name definition
+		{
+			$$ = cat_str(3, make_str("create aggregate"), $3, $4);
+		}
+                | CREATE OPERATOR all_Op definition
+		{
+			$$ = cat_str(3, make_str("create operator"), $3, $4);
+		}
+                | CREATE TYPE_P name definition  
+		{
+			$$ = cat_str(3, make_str("create type"), $3, $4);
+		}
 		;
-
-def_type:  OPERATOR		{ $$ = make_str("operator"); }
-		| TYPE_P	{ $$ = make_str("type"); }
-		| AGGREGATE	{ $$ = make_str("aggregate"); }
-		;
-
-def_name:  PROCEDURE		{ $$ = make_str("procedure"); }
-		| JOIN		{ $$ = make_str("join"); }
-		| all_Op	{ $$ = $1; }
-		| ColId		{ $$ = $1; }
- 		;
 
 definition:  '(' def_list ')'				{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		;
@@ -1506,16 +1503,12 @@ def_list:  def_elem					{ $$ = $1; }
 		| def_list ',' def_elem			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-def_elem:  def_name '=' def_arg	{
+def_elem:  ColLabel '=' def_arg	{
 					$$ = cat_str(3, $1, make_str("="), $3);
 				}
-		| def_name
+		| ColLabel
 				{
 					$$ = $1;
-				}
-		| DEFAULT '=' def_arg
-				{
-					$$ = cat2_str(make_str("default ="), $3);
 				}
 		;
 
@@ -1977,7 +1970,7 @@ RemoveFuncStmt:  DROP FUNCTION func_name func_args
 				}
 		;
 
-RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
+RemoveAggrStmt:  DROP AGGREGATE func_name aggr_argtype
 				{
 						$$ = cat_str(3, make_str("drop aggregate"), $3, $4);
 				}
@@ -3964,8 +3957,20 @@ connection_target: database_name opt_server opt_port
 		{
 		  if ($1[0] == '\"')
 			$$ = $1;
-		  else if (strcmp($1, "?") == 0)
-			$$ = mm_strdup(argsinsert->variable->name);
+		  else if (strcmp($1, "?") == 0) /* variable */
+                  {
+                        enum ECPGttype typ = argsinsert->variable->type->typ;
+ 
+                        /* if array see what's inside */
+                        if (typ == ECPGt_array)
+                                typ = argsinsert->variable->type->u.element->typ;
+ 
+                        /* handle varchars */
+                        if (typ == ECPGt_varchar)
+                                $$ = make2_str(mm_strdup(argsinsert->variable->name), make_str(".arr"));
+                        else
+                                $$ = mm_strdup(argsinsert->variable->name);
+                  }
 		  else
 			$$ = make3_str(make_str("\""), $1, make_str("\""));
 		}
@@ -4040,6 +4045,20 @@ user_name: UserId       {
         | StringConst   { 
 			  if ($1[0] == '\"')
 				$$ = $1;
+			  else if (strcmp($1, "?") == 0) /* variable */
+        	          {
+                	        enum ECPGttype typ = argsinsert->variable->type->typ;
+ 
+                        	/* if array see what's inside */
+	                        if (typ == ECPGt_array)
+        	                        typ = argsinsert->variable->type->u.element->typ;
+ 
+                	        /* handle varchars */
+                        	if (typ == ECPGt_varchar)
+                                	$$ = make2_str(mm_strdup(argsinsert->variable->name), make_str(".arr"));
+	                        else
+        	                        $$ = mm_strdup(argsinsert->variable->name);
+                	  }
 			  else
 				$$ = make3_str(make_str("\""), $1, make_str("\""));
 			}
@@ -5033,6 +5052,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| PRIOR				{ $$ = make_str("prior"); }
 	| PRIVILEGES			{ $$ = make_str("privileges"); }
 	| PROCEDURAL			{ $$ = make_str("procedural"); }
+	| PROCEDURE			{ $$ = make_str("procedure"); }
 	| READ				{ $$ = make_str("read"); }
 	| REINDEX			{ $$ = make_str("reindex"); }
 	| RELATIVE			{ $$ = make_str("relative"); }
@@ -5180,7 +5200,6 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| POSITION	{ $$ = make_str("position"); }
 		| PRECISION	{ $$ = make_str("precision"); }
 		| PRIMARY	{ $$ = make_str("primary"); }
-		| PROCEDURE	{ $$ = make_str("procedure"); }
 		| PUBLIC	{ $$ = make_str("public"); }
 		| REFERENCES	{ $$ = make_str("references"); }
 		| RESET		{ $$ = make_str("reset"); }
