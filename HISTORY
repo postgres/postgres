@@ -39,6 +39,7 @@ Detailed Change List
 
 Updated version of pgaccess 0.98
 NT-specific patch
+Fix dumping rules on inherited tables
 
   ------------------------------------------------------------------------
                                                                Release 6.5.2
