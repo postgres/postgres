@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.79 2000/07/17 03:05:20 tgl Exp $
+ * $Id: c.h,v 1.80 2000/07/17 04:35:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,12 +49,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/fcntl.h>
 #include <stddef.h>
 #include <stdarg.h>
 
 #ifdef __CYGWIN32__
 #include <errno.h>
+#include <sys/fcntl.h>		/* ensure O_BINARY is available */
 #endif
 
 /* ----------------------------------------------------------------
