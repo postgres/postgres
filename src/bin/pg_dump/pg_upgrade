@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.18 2002/01/09 16:00:46 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.19 2002/01/09 16:08:54 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -228,9 +228,6 @@ do
 		TABLE=""
 	fi
 done
-
-rm -r data/pg_clog
-mv -f $OLDDIR/pg_clog data
 
 echo "You must stop/start the postmaster before doing anything else."
 echo "You may remove the $OLDDIR directory with 'rm -r $OLDDIR'."
