@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.32 1998/09/25 13:36:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.33 1998/09/30 05:47:56 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -257,57 +257,52 @@ Oid	param_type(int t); /* used in parse_expr.c */
  */
 
 /* Keywords (in SQL92 reserved words) */
-%token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY AS, ASC,
+%token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
 		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
 		CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
 		END_TRANS, EXECUTE, EXISTS, EXTRACT,
-		FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
+		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GRANT, GROUP, HAVING, HOUR_P,
 		IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS,
 		JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
-		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NOTIFY, NULL_P, NUMERIC,
+		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULL_P, NUMERIC,
 		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
 		TABLE, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
-		TO, TRAILING, TRANSACTION, TRIM,
+		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNION, UNIQUE, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL3 reserved words) */
-%token	FALSE_P, TRIGGER, TRUE_P
+%token	TRIGGER
 
 /* Keywords (in SQL92 non-reserved words) */
 %token	TYPE_P
 
-/* Keywords for Postgres support (not in SQL92 reserved words) */
-%token	ABORT_TRANS, AFTER, AGGREGATE, ANALYZE,
-		BACKWARD, BEFORE, BINARY, CACHE, CLUSTER, COPY, CYCLE,
-		DATABASE, DELIMITERS, DO, EACH, EXPLAIN, EXTEND,
+/* Keywords for Postgres support (not in SQL92 reserved words)
+ *
+ * The CREATEDB and CREATEUSER tokens should go away
+ * when some sort of pg_privileges relation is introduced.
+ * - Todd A. Brandys 1998-01-01?
+ */
+%token	ABORT_TRANS, AFTER, AGGREGATE, ANALYZE, BACKWARD, BEFORE, BINARY, 
+		CACHE, CLUSTER, COPY, CREATEDB, CREATEUSER, CYCLE,
+		DATABASE, DELIMITERS, DO, EACH, ENCODING, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
 		INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LISTEN, LOAD, LOCK_P, LOCATION, MAXVALUE, MINVALUE, MOVE,
-		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
+		LANCOMPILER, LISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE, MINVALUE, MOVE,
+		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
+		OIDS, OPERATOR, PASSWORD, PROCEDURAL,
 		RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED, 
-		VACUUM, VERBOSE, VERSION, ENCODING, UNLISTEN
-
-/* Keywords (obsolete; retain through next version for parser - thomas 1997-12-04) */
-%token	ARCHIVE
-
-/*
- * Tokens for pg_passwd support.  The CREATEDB and CREATEUSER tokens should go away
- * when some sort of pg_privileges relation is introduced.
- *
- *                                    Todd A. Brandys
- */
-%token	PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
+		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, SCONST, Op
@@ -709,7 +704,7 @@ copy_delimiter:  USING DELIMITERS Sconst		{ $$ = $3; }
  *****************************************************************************/
 
 CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
-				OptInherit OptArchiveType
+				OptInherit
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					n->relname = $3;
@@ -1195,14 +1190,6 @@ key_reference:  NO ACTION				{ $$ = NULL; }
 
 OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
 		| /*EMPTY*/										{ $$ = NIL; }
-		;
-
-/*
- *	"ARCHIVE" keyword was removed in 6.3, but we keep it for now
- *  so people can upgrade with old pg_dump scripts. - momjian 1997-11-20(?)
- */
-OptArchiveType:  ARCHIVE '=' NONE						{ }
-		| /*EMPTY*/										{ }
 		;
 
 CreateAsStmt:  CREATE TABLE relation_name OptCreateAs AS SubSelect
@@ -4646,43 +4633,68 @@ ColId:  IDENT							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| ABSOLUTE						{ $$ = "absolute"; }
 		| ACTION						{ $$ = "action"; }
+		| AFTER							{ $$ = "after"; }
+		| AGGREGATE						{ $$ = "aggregate"; }
+		| BACKWARD						{ $$ = "backward"; }
+		| BEFORE						{ $$ = "before"; }
 		| CACHE							{ $$ = "cache"; }
+		| CREATEDB						{ $$ = "createdb"; }
+		| CREATEUSER					{ $$ = "createuser"; }
 		| CYCLE							{ $$ = "cycle"; }
 		| DATABASE						{ $$ = "database"; }
 		| DELIMITERS					{ $$ = "delimiters"; }
 		| DOUBLE						{ $$ = "double"; }
 		| EACH							{ $$ = "each"; }
 		| ENCODING						{ $$ = "encoding"; }
+		| FORWARD						{ $$ = "forward"; }
 		| FUNCTION						{ $$ = "function"; }
+		| HANDLER						{ $$ = "handler"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
+		| INHERITS						{ $$ = "inherits"; }
 		| INSENSITIVE					{ $$ = "insensitive"; }
+		| INSTEAD						{ $$ = "instead"; }
+		| ISNULL						{ $$ = "isnull"; }
 		| KEY							{ $$ = "key"; }
 		| LANGUAGE						{ $$ = "language"; }
+		| LANCOMPILER					{ $$ = "lancompiler"; }
 		| LOCATION						{ $$ = "location"; }
 		| MATCH							{ $$ = "match"; }
 		| MAXVALUE						{ $$ = "maxvalue"; }
 		| MINVALUE						{ $$ = "minvalue"; }
 		| NEXT							{ $$ = "next"; }
+		| NOCREATEDB					{ $$ = "nocreatedb"; }
+		| NOCREATEUSER					{ $$ = "nocreateuser"; }
+		| NOTHING						{ $$ = "nothing"; }
+		| NOTNULL						{ $$ = "notnull"; }
 		| OF							{ $$ = "of"; }
+		| OIDS							{ $$ = "oids"; }
 		| ONLY							{ $$ = "only"; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
 		| PASSWORD						{ $$ = "password"; }
 		| PRIOR							{ $$ = "prior"; }
 		| PRIVILEGES					{ $$ = "privileges"; }
+		| PROCEDURAL					{ $$ = "procedural"; }
 		| READ							{ $$ = "read"; }
 		| RECIPE						{ $$ = "recipe"; }
 		| RELATIVE						{ $$ = "relative"; }
+		| RENAME						{ $$ = "rename"; }
+		| RETURNS						{ $$ = "returns"; }
 		| ROW							{ $$ = "row"; }
+		| RULE							{ $$ = "rule"; }
 		| SCROLL						{ $$ = "scroll"; }
+		| SEQUENCE						{ $$ = "sequence"; }
 		| SERIAL						{ $$ = "serial"; }
 		| START							{ $$ = "start"; }
 		| STATEMENT						{ $$ = "statement"; }
+		| STDIN							{ $$ = "stdin"; }
+		| STDOUT						{ $$ = "stdout"; }
 		| TIME							{ $$ = "time"; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
 		| TIMEZONE_MINUTE				{ $$ = "timezone_minute"; }
 		| TRIGGER						{ $$ = "trigger"; }
+		| TRUSTED						{ $$ = "trusted"; }
 		| TYPE_P						{ $$ = "type"; }
 		| VALID							{ $$ = "valid"; }
 		| VERSION						{ $$ = "version"; }
@@ -4700,20 +4712,37 @@ ColId:  IDENT							{ $$ = $1; }
  *  when used as a full identifier. - thomas 1997-11-06
  */
 ColLabel:  ColId						{ $$ = $1; }
-		| ARCHIVE						{ $$ = "archive"; }
+		| ABORT_TRANS					{ $$ = "abort"; }
+		| ANALYZE						{ $$ = "analyze"; }
+		| BINARY						{ $$ = "binary"; }
 		| CLUSTER						{ $$ = "cluster"; }
 		| CONSTRAINT					{ $$ = "constraint"; }
+		| COPY							{ $$ = "copy"; }
 		| CROSS							{ $$ = "cross"; }
+		| CURRENT						{ $$ = "current"; }
+		| DO							{ $$ = "do"; }
+		| EXPLAIN						{ $$ = "explain"; }
+		| EXTEND						{ $$ = "extend"; }
+		| FALSE_P						{ $$ = "false"; }
 		| FOREIGN						{ $$ = "foreign"; }
 		| GROUP							{ $$ = "group"; }
+		| LISTEN						{ $$ = "listen"; }
 		| LOAD							{ $$ = "load"; }
+		| LOCK_P						{ $$ = "lock"; }
+		| MOVE							{ $$ = "move"; }
+		| NEW							{ $$ = "new"; }
+		| NONE							{ $$ = "none"; }
 		| ORDER							{ $$ = "order"; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
+		| RESET							{ $$ = "reset"; }
+		| SETOF							{ $$ = "setof"; }
+		| SHOW							{ $$ = "show"; }
 		| TABLE							{ $$ = "table"; }
 		| TRANSACTION					{ $$ = "transaction"; }
 		| TRUE_P						{ $$ = "true"; }
-		| FALSE_P						{ $$ = "false"; }
+		| VACUUM						{ $$ = "vacuum"; }
+		| VERBOSE						{ $$ = "verbose"; }
 		;
 
 SpecialRuleRelation:  CURRENT

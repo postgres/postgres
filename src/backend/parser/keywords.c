@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.45 1998/09/13 04:19:31 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.46 1998/09/30 05:47:57 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"analyze", ANALYZE},
 	{"and", AND},
 	{"any", ANY},
-	{"archive", ARCHIVE},
 	{"as", AS},
 	{"asc", ASC},
 	{"backward", BACKWARD},
@@ -116,6 +115,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"inherits", INHERITS},
 	{"inner", INNER_P},
 	{"insert", INSERT},
+	{"insensitive", INSENSITIVE},
 	{"instead", INSTEAD},
 	{"interval", INTERVAL},
 	{"into", INTO},
@@ -202,6 +202,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"substring", SUBSTRING},
 	{"table", TABLE},
 	{"time", TIME},
+	{"timestamp", TIMESTAMP},
 	{"timezone_hour", TIMEZONE_HOUR},
 	{"timezone_minute", TIMEZONE_MINUTE},
 	{"to", TO},
