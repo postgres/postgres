@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.156 2001/06/25 21:11:45 tgl Exp $
+ * $Id: builtins.h,v 1.157 2001/07/11 22:14:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,6 +409,8 @@ extern Datum byteaGetByte(PG_FUNCTION_ARGS);
 extern Datum byteaGetBit(PG_FUNCTION_ARGS);
 extern Datum byteaSetByte(PG_FUNCTION_ARGS);
 extern Datum byteaSetBit(PG_FUNCTION_ARGS);
+extern Datum binary_encode(PG_FUNCTION_ARGS);
+extern Datum binary_decode(PG_FUNCTION_ARGS);
 
 /* version.c */
 extern Datum pgsql_version(PG_FUNCTION_ARGS);

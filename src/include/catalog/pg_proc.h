@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.195 2001/06/22 19:16:24 wieck Exp $
+ * $Id: pg_proc.h,v 1.196 2001/07/11 22:14:02 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2684,6 +2684,11 @@ DESCR("Statistics: Blocks fetched for database");
 DATA(insert OID = 1945 (  pg_stat_get_db_blocks_hit		PGUID 12 f t t t 1 f 20 "26" 100 0 0 100	pg_stat_get_db_blocks_hit - ));
 DESCR("Statistics: Block found in cache for database");
 
+DATA(insert OID = 1946 (  encode						PGUID 12 f t t t 2 f 25 "17 25" 100 0 0 100	binary_encode - ));
+DESCR("Convert bytea value into some ascii-only text string");
+DATA(insert OID = 1947 (  decode						PGUID 12 f t t t 2 f 17 "25 25" 100 0 0 100	binary_decode - ));
+DESCR("Convert ascii-encoded text string into bytea value");
+ 
 /*
  * prototypes for functions pg_proc.c
  */

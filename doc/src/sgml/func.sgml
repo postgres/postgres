@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.63 2001/07/03 02:42:18 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.64 2001/07/11 22:14:01 momjian Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -1050,6 +1050,34 @@
       </entry>
       <entry>translate('12345', '14', 'ax')</entry>
       <entry>a23x5</entry>
+     </row>       
+     
+     <row>
+      <entry>
+       encode(<parameter>data</parameter> <type>bytea</type>,
+              <parameter>type</parameter> <type>text</type>)
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Encodes binary data to ascii-only representation.  Supported
+       types are: 'base64', 'hex'.
+      </entry>
+      <entry>encode('123\\000\\001', 'base64')</entry>
+      <entry>MTIzAAE=</entry>
+     </row>       
+
+     <row>
+      <entry>
+       decode(<parameter>string</parameter> <type>text</type>,
+              <parameter>type</parameter> <type>text</type>)
+      </entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Decodes binary data from <parameter>string</parameter> previously 
+       encoded with encode().  Parameter type is same as in encode().
+      </entry>
+      <entry>decode('MTIzAAE=', 'base64')</entry>
+      <entry>123\000\001</entry>
      </row>       
 
     </tbody>
