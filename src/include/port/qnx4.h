@@ -7,8 +7,6 @@
 
 #undef HAVE_GETRUSAGE
 
-typedef u_short ushort;
-
 extern int	isnan(double dsrc);
 extern long random(void);
 extern void srandom(unsigned int seed);

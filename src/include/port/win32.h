@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.34 2004/09/27 23:24:40 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.35 2004/10/05 13:48:35 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -191,18 +191,12 @@ struct itimerval
 int			setitimer(int which, const struct itimerval * value, struct itimerval * ovalue);
 
 
-/* FROM SRA */
-
 /*
  * Supplement to <sys/types.h>.
  */
-#define uid_t int
-#define gid_t int
-#define pid_t unsigned long
-#define ssize_t int
-#define mode_t int
-#define key_t long
-#define ushort unsigned short
+typedef int uid_t;
+typedef int gid_t;
+typdef long key_t;
 
 /*
  * Supplement to <sys/stat.h>.
