@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.73 2005/03/21 01:23:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.74 2005/03/27 18:38:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 					isnull,
 					(char *) tp + hoff,
 					&tupmask,
-					(hasnull ? (bits8 *) tp + sizeof(*tuple) : NULL));
+					(hasnull ? (bits8 *) tp + sizeof(IndexTupleData) : NULL));
 
 #ifdef TOAST_INDEX_HACK
 	for (i = 0; i < numberOfAttributes; i++)
@@ -230,8 +230,7 @@ nocache_index_getattr(IndexTuple tup,
 	*isnull = false;
 #endif
 
-	data_off = IndexTupleHasMinHeader(tup) ? sizeof *tup :
-		IndexInfoFindDataOffset(tup->t_info);
+	data_off = IndexInfoFindDataOffset(tup->t_info);
 
 	attnum--;
 
@@ -256,7 +255,7 @@ nocache_index_getattr(IndexTuple tup,
 		 */
 
 		/* XXX "knows" t_bits are just after fixed tuple header! */
-		bp = (bits8 *) ((char *) tup + sizeof(*tup));
+		bp = (bits8 *) ((char *) tup + sizeof(IndexTupleData));
 
 #ifdef IN_MACRO
 /* This is handled in the macro */

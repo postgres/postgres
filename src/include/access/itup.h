@@ -7,18 +7,30 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.42 2005/03/21 01:24:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.43 2005/03/27 18:38:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITUP_H
 #define ITUP_H
 
-#include "access/ibit.h"
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
 #include "storage/itemptr.h"
 
+
+/*
+ * Index tuple header structure
+ *
+ * All index tuples start with IndexTupleData.  If the HasNulls bit is set,
+ * this is followed by an IndexAttributeBitMapData.  The index attribute
+ * values follow, beginning at a MAXALIGN boundary.
+ *
+ * Note that the space allocated for the bitmap does not vary with the number
+ * of attributes; that is because we don't have room to store the number of
+ * attributes in the header.  Given the MAXALIGN constraint there's no space
+ * savings to be had anyway, for usual values of INDEX_MAX_KEYS.
+ */
 
 typedef struct IndexTupleData
 {
@@ -36,44 +48,40 @@ typedef struct IndexTupleData
 
 	unsigned short t_info;		/* various info about tuple */
 
-	/*
-	 * please make sure sizeof(IndexTupleData) is MAXALIGN'ed. See
-	 * IndexInfoFindDataOffset() for the reason.
-	 */
-
 } IndexTupleData;				/* MORE DATA FOLLOWS AT END OF STRUCT */
 
 typedef IndexTupleData *IndexTuple;
 
+typedef struct IndexAttributeBitMapData
+{
+	bits8		bits[(INDEX_MAX_KEYS + 8 - 1) / 8];
+} IndexAttributeBitMapData;
 
-/* ----------------
- *		externs
- * ----------------
+typedef IndexAttributeBitMapData *IndexAttributeBitMap;
+
+/*
+ * t_info manipulation macros
  */
-
 #define INDEX_SIZE_MASK 0x1FFF
-#define INDEX_NULL_MASK 0x8000
+/* bit 0x2000 is not used at present */
 #define INDEX_VAR_MASK	0x4000
-/* bit 0x2000 is not used */
+#define INDEX_NULL_MASK 0x8000
 
 #define IndexTupleSize(itup)		((Size) (((IndexTuple) (itup))->t_info & INDEX_SIZE_MASK))
 #define IndexTupleDSize(itup)		((Size) ((itup).t_info & INDEX_SIZE_MASK))
 #define IndexTupleHasNulls(itup)	((((IndexTuple) (itup))->t_info & INDEX_NULL_MASK))
 #define IndexTupleHasVarwidths(itup) ((((IndexTuple) (itup))->t_info & INDEX_VAR_MASK))
 
-#define IndexTupleHasMinHeader(itup) (!IndexTupleHasNulls(itup))
 
 /*
  * Takes an infomask as argument (primarily because this needs to be usable
  * at index_form_tuple time so enough space is allocated).
- *
- * Change me if adding an attribute to IndexTuples!!!!!!!!!!!
  */
 #define IndexInfoFindDataOffset(t_info) \
 ( \
-	(!((unsigned short)(t_info) & INDEX_NULL_MASK)) ? \
+	(!((t_info) & INDEX_NULL_MASK)) ? \
 	( \
-		(Size)sizeof(IndexTupleData) \
+		(Size)MAXALIGN(sizeof(IndexTupleData)) \
 	) \
 	: \
 	( \
@@ -85,7 +93,7 @@ typedef IndexTupleData *IndexTuple;
  *		index_getattr
  *
  *		This gets called many times, so we macro the cacheable and NULL
- *		lookups, and call noncachegetattr() for the rest.
+ *		lookups, and call nocache_index_getattr() for the rest.
  *
  * ----------------
  */
@@ -98,13 +106,7 @@ typedef IndexTupleData *IndexTuple;
 		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ? \
 		( \
 			fetchatt((tupleDesc)->attrs[(attnum)-1], \
-			(char *) (tup) + \
-			( \
-				IndexTupleHasMinHeader(tup) ? \
-						sizeof (*(tup)) \
-					: \
-						IndexInfoFindDataOffset((tup)->t_info) \
-			) \
+			(char *) (tup) + IndexInfoFindDataOffset((tup)->t_info) \
 			+ (tupleDesc)->attrs[(attnum)-1]->attcacheoff) \
 		) \
 		: \
@@ -112,7 +114,7 @@ typedef IndexTupleData *IndexTuple;
 	) \
 	: \
 	( \
-		(att_isnull((attnum)-1, (char *)(tup) + sizeof(*(tup)))) ? \
+		(att_isnull((attnum)-1, (char *)(tup) + sizeof(IndexTupleData))) ? \
 		( \
 			*(isnull) = true, \
 			(Datum)NULL \
