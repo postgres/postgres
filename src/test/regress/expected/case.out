@@ -67,28 +67,28 @@ One|Two WHEN with default
 
 QUERY: SELECT '' AS "Five",
   CASE
-    WHEN i >= 0 THEN i
-  END AS ">= 0 or Null"
+    WHEN i >= 3 THEN i
+  END AS ">= 3 or Null"
   FROM CASE_TBL;
-Five|>= 0 or Null
+Five|>= 3 or Null
 ----+------------
-    |           1
-    |           2
+    |            
+    |            
     |           3
     |           4
 (4 rows)
 
 QUERY: SELECT '' AS "Five",
-  CASE WHEN i >= 0 THEN (i - i)
+  CASE WHEN i >= 3 THEN (i + i)
        ELSE i
   END AS "Simplest Math"
   FROM CASE_TBL;
 Five|Simplest Math
 ----+-------------
-    |            0
-    |            0
-    |            0
-    |            0
+    |            1
+    |            2
+    |            6
+    |            8
 (4 rows)
 
 QUERY: SELECT '' AS "Five", i AS "Value",
@@ -107,8 +107,7 @@ Five|Value|Category
     |    4|big     
 (4 rows)
 
-QUERY: /*
-SELECT '' AS "Five",
+QUERY: SELECT '' AS "Five",
   CASE WHEN ((i < 0) or (i < 0)) THEN 'small'
        WHEN ((i = 0) or (i = 0)) THEN 'zero'
        WHEN ((i = 1) or (i = 1)) THEN 'one'
@@ -116,8 +115,15 @@ SELECT '' AS "Five",
        ELSE 'big'
   END AS "Category"
   FROM CASE_TBL;
-*/
-SELECT * FROM CASE_TBL WHERE COALESCE(f,i) = 4;
+Five|Category
+----+--------
+    |one     
+    |two     
+    |big     
+    |big     
+(4 rows)
+
+QUERY: SELECT * FROM CASE_TBL WHERE COALESCE(f,i) = 4;
 i|f
 -+-
 4| 
@@ -128,33 +134,77 @@ i|f
 -+-
 (0 rows)
 
-QUERY: /*
-This crashes the backend at the moment...
-- thomas 1998-12-12
-SELECT COALESCE(a.i, a.f, b.i, b.j)
+QUERY: SELECT COALESCE(a.f, b.i, b.j)
   FROM CASE_TBL a, CASE2_TBL b;
-*/
-SELECT *
+ case
+-----
+ 10.1
+ 20.2
+-30.3
+    1
+ 10.1
+ 20.2
+-30.3
+    2
+ 10.1
+ 20.2
+-30.3
+    3
+ 10.1
+ 20.2
+-30.3
+    2
+ 10.1
+ 20.2
+-30.3
+    1
+ 10.1
+ 20.2
+-30.3
+   -6
+(24 rows)
+
+QUERY: SELECT *
   FROM CASE_TBL a, CASE2_TBL b
-  WHERE COALESCE(a.i, a.f, b.i, b.j) = 4;
+  WHERE COALESCE(a.f, b.i, b.j) = 2;
 i|f|i| j
 -+-+-+--
-4| |1|-1
 4| |2|-2
-4| |3|-3
 4| |2|-4
-4| |1|  
-4| | |-6
-(6 rows)
+(2 rows)
 
-QUERY: /*
-This crashes the backend at the moment...
-- thomas 1998-12-12
-SELECT '' AS Five, NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
+QUERY: SELECT '' AS Five, NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
   NULLIF(b.i, 4) AS "NULLIF(b.i,4)"
   FROM CASE_TBL a, CASE2_TBL b;
-*/
-SELECT '' AS "Two", *
+five|NULLIF(a.i,b.i)|NULLIF(b.i,4)
+----+---------------+-------------
+    |               |            1
+    |              2|            1
+    |              3|            1
+    |              4|            1
+    |              1|            2
+    |               |            2
+    |              3|            2
+    |              4|            2
+    |              1|            3
+    |              2|            3
+    |               |            3
+    |              4|            3
+    |              1|            2
+    |               |            2
+    |              3|            2
+    |              4|            2
+    |               |            1
+    |              2|            1
+    |              3|            1
+    |              4|            1
+    |              1|             
+    |              2|             
+    |              3|             
+    |              4|             
+(24 rows)
+
+QUERY: SELECT '' AS "Two", *
   FROM CASE_TBL a, CASE2_TBL b
   WHERE COALESCE(f,b.i) = 2;
 Two|i|f|i| j
@@ -164,13 +214,13 @@ Two|i|f|i| j
 (2 rows)
 
 QUERY: UPDATE CASE_TBL
-  SET i = CASE WHEN i >= 0 THEN (- i)
+  SET i = CASE WHEN i >= 3 THEN (- i)
                 ELSE (2 * i) END;
 QUERY: SELECT * FROM CASE_TBL;
  i|    f
 --+-----
--1| 10.1
--2| 20.2
+ 2| 10.1
+ 4| 20.2
 -3|-30.3
 -4|     
 (4 rows)
@@ -181,21 +231,25 @@ QUERY: UPDATE CASE_TBL
 QUERY: SELECT * FROM CASE_TBL;
   i|    f
 ---+-----
- -3| 10.1
- -6| 20.2
+  4| 10.1
+  8| 20.2
  -9|-30.3
 -12|     
 (4 rows)
 
-QUERY: /*
-This crashes the backend at the moment...
-- thomas 1998-12-12
-UPDATE CASE_TBL
+QUERY: UPDATE CASE_TBL
   SET i = CASE WHEN b.i >= 2 THEN (2 * j)
                 ELSE (3 * j) END
   FROM CASE2_TBL b
   WHERE j = -CASE_TBL.i;
-SELECT * FROM CASE_TBL;
-*/
-DROP TABLE CASE_TBL;
+QUERY: SELECT * FROM CASE_TBL;
+  i|    f
+---+-----
+  8| 20.2
+ -9|-30.3
+-12|     
+ -8| 10.1
+(4 rows)
+
+QUERY: DROP TABLE CASE_TBL;
 QUERY: DROP TABLE CASE2_TBL;

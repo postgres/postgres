@@ -65,12 +65,12 @@ SELECT '6' AS "One",
 
 SELECT '' AS "Five",
   CASE
-    WHEN i >= 0 THEN i
-  END AS ">= 0 or Null"
+    WHEN i >= 3 THEN i
+  END AS ">= 3 or Null"
   FROM CASE_TBL;
 
 SELECT '' AS "Five",
-  CASE WHEN i >= 0 THEN (i - i)
+  CASE WHEN i >= 3 THEN (i + i)
        ELSE i
   END AS "Simplest Math"
   FROM CASE_TBL;
@@ -84,7 +84,6 @@ SELECT '' AS "Five", i AS "Value",
   END AS "Category"
   FROM CASE_TBL;
 
-/*
 SELECT '' AS "Five",
   CASE WHEN ((i < 0) or (i < 0)) THEN 'small'
        WHEN ((i = 0) or (i = 0)) THEN 'zero'
@@ -93,7 +92,6 @@ SELECT '' AS "Five",
        ELSE 'big'
   END AS "Category"
   FROM CASE_TBL;
-*/
 
 --
 -- Examples of qualifications involving tables
@@ -109,24 +107,16 @@ SELECT * FROM CASE_TBL WHERE COALESCE(f,i) = 4;
 
 SELECT * FROM CASE_TBL WHERE NULLIF(f,i) = 2;
 
-/*
-This crashes the backend at the moment...
-- thomas 1998-12-12
-SELECT COALESCE(a.i, a.f, b.i, b.j)
+SELECT COALESCE(a.f, b.i, b.j)
   FROM CASE_TBL a, CASE2_TBL b;
-*/
 
 SELECT *
   FROM CASE_TBL a, CASE2_TBL b
-  WHERE COALESCE(a.i, a.f, b.i, b.j) = 4;
+  WHERE COALESCE(a.f, b.i, b.j) = 2;
 
-/*
-This crashes the backend at the moment...
-- thomas 1998-12-12
 SELECT '' AS Five, NULLIF(a.i,b.i) AS "NULLIF(a.i,b.i)",
   NULLIF(b.i, 4) AS "NULLIF(b.i,4)"
   FROM CASE_TBL a, CASE2_TBL b;
-*/
 
 SELECT '' AS "Two", *
   FROM CASE_TBL a, CASE2_TBL b
@@ -137,7 +127,7 @@ SELECT '' AS "Two", *
 --
 
 UPDATE CASE_TBL
-  SET i = CASE WHEN i >= 0 THEN (- i)
+  SET i = CASE WHEN i >= 3 THEN (- i)
                 ELSE (2 * i) END;
 
 SELECT * FROM CASE_TBL;
@@ -148,9 +138,6 @@ UPDATE CASE_TBL
 
 SELECT * FROM CASE_TBL;
 
-/*
-This crashes the backend at the moment...
-- thomas 1998-12-12
 UPDATE CASE_TBL
   SET i = CASE WHEN b.i >= 2 THEN (2 * j)
                 ELSE (3 * j) END
@@ -158,7 +145,6 @@ UPDATE CASE_TBL
   WHERE j = -CASE_TBL.i;
 
 SELECT * FROM CASE_TBL;
-*/
 
 --
 -- Clean up
