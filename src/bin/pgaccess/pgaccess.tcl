@@ -1,3 +1,4 @@
+#!/usr/bin/wish
 #############################################################################
 # Visual Tcl v1.10 Project
 #
@@ -48,7 +49,7 @@ switch $activetab {
 		}
 	}
 	Views {
-		if {[tk_messageBox -title "FINAL WARNING" -message "Youa re going to delete view:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete view:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
 			sql_exec noquiet "drop view $objtodelete"
 			sql_exec quiet "delete from pga_layout where tablename='$objtodelete'"
 			cmd_Views
@@ -67,8 +68,28 @@ switch $activetab {
 			cmd_Sequences
 		}
 	}
+	Functions {
+		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete function:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+			delete_function $objtodelete
+			cmd_Functions
+		}
+	}
 }
 if {$temp==""} return;
+}
+
+proc delete_function {objname} {
+global dbc
+pg_select $dbc "select * from pg_proc where proname='$objname'" rec {
+	set funcpar $rec(proargtypes)
+	set nrpar $rec(pronargs)
+}
+set lispar {}
+for {set i 0} {$i<$nrpar} {incr i} {
+	lappend lispar [get_pgtype [lindex $funcpar $i]]
+}
+set lispar [join $lispar ,]
+sql_exec noquiet "drop function $objname ($lispar)"
 }
 
 proc cmd_Design {} {
@@ -83,6 +104,25 @@ switch $activetab {
 
 proc cmd_Functions {} {
 global dbc
+set maxim 0
+set pgid 0
+cursor_watch .dw
+catch {
+	pg_select $dbc "select proowner,count(*) from pg_proc group by proowner" rec {
+		if {$rec(count)>$maxim} {
+			set maxim $rec(count)
+			set pgid $rec(proowner)
+		}
+	}
+.dw.lb delete 0 end
+catch {
+	pg_select $dbc "select proname from pg_proc where prolang=14 and proowner<>$pgid order by proname" rec {
+		.dw.lb insert end $rec(proname)
+	}	
+}
+cursor_arrow .dw
+}
+
 }
 
 proc cmd_Import_Export {how} {
@@ -101,15 +141,20 @@ if {$activetab=="Tables"} {
 }
 
 proc cmd_New {} {
-global dbc activetab queryname queryoid cbv
+global dbc activetab queryname queryoid cbv funcpar funcname funcret
 if {$dbc==""} return;
 switch $activetab {
     Tables {Window show .nt; focus .nt.etabn}
     Queries {
             Window show .qb
+			set queryoid 0
+			set queryname {}
             set cbv 0
+			.qb.cbv configure -state normal
         }
     Views {
+			set queryoid 0
+			set queryname {}
             Window show .qb
             set cbv 1
             .qb.cbv configure -state disabled
@@ -118,6 +163,17 @@ switch $activetab {
 			Window show .sqf
 			focus .sqf.e1
     	}
+	Functions {
+			Window show .fw
+			set funcname {}
+			set funcpar {}
+			set funcret {}
+			place .fw.okbtn -y 255
+			.fw.okbtn configure -state normal
+			.fw.okbtn configure -text Define
+			.fw.text1 delete 1.0 end
+			focus .fw.e1
+		}
 }
 }
 
@@ -131,7 +187,37 @@ switch $activetab {
     Queries {open_query view}
 	Views {open_view}
 	Sequences {open_sequence $objname}
+	Functions {open_function $objname}
 }
+}
+
+proc get_pgtype {oid} {
+global dbc
+set temp "unknown"
+pg_select $dbc "select typname from pg_type where oid=$oid" rec {
+	set temp $rec(typname)
+}
+return $temp
+}
+
+proc open_function {objname} {
+global dbc funcname funcpar funcret
+Window show .fw
+place .fw.okbtn -y 400
+.fw.okbtn configure -state disabled
+.fw.text1 delete 1.0 end
+pg_select $dbc "select * from pg_proc where proname='$objname'" rec {
+	set funcname $objname
+	set temppar $rec(proargtypes)
+	set funcret [get_pgtype $rec(prorettype)]
+	set funcnrp $rec(pronargs)
+	.fw.text1 insert end $rec(prosrc)
+}
+set funcpar {}
+for {set i 0} {$i<$funcnrp} {incr i} {
+	lappend funcpar [get_pgtype [lindex $temppar $i]]
+}
+set funcpar [join $funcpar ,]
 }
 
 proc cmd_Queries {} {
@@ -150,6 +236,7 @@ global dbc oldobjname activetab
 if {$dbc==""} return;
 if {$activetab=="Views"} return;
 if {$activetab=="Sequences"} return;
+if {$activetab=="Functions"} return;
 set temp [get_dwlb_Selection]
 if {$temp==""} {
 	tk_messageBox -title Warning -message "Please select first an object!"
@@ -328,25 +415,70 @@ set thetag [lindex $taglist $i]
 return [string range $thetag 1 end]
 }
 
+proc save_new_record {} {
+global dbc newrec_fields newrec_values tablename msg last_rownum
+if {$newrec_fields==""} {return 1}
+set msg "Saving new record ..."
+after 1000 {set msg ""}
+set retval [catch {
+	set sqlcmd "insert into $tablename ([join $newrec_fields ,]) values ([join $newrec_values ,])"
+	set pgres [pg_exec $dbc $sqlcmd]
+	} errmsg]
+if {$retval} {
+	show_error "Error inserting new record\n\n$errmsg"
+	return 0
+}
+set oid [pg_result $pgres -oid]
+pg_result $pgres -clear
+.mw.c itemconfigure new -fill black
+.mw.c addtag o$oid withtag new
+.mw.c dtag new o0
+.mw.c dtag rows new
+# Replace * from untouched new row elements with "  "
+foreach item [.mw.c find withtag unt] {
+	.mw.c itemconfigure $item -text "  "
+}
+.mw.c dtag rows unt
+incr last_rownum
+draw_new_record
+set newrec_fields {}
+set newrec_values {}
+return 1
+}
+
 proc hide_entry {} {
 global dirty dbc msg fldval itemid colname tablename
+global newrec_fields newrec_values
 
 if {$dirty} {
     cursor_watch .mw
-    set msg "Saving record ..."
-    after 1000 {set msg ""}
     set oid [get_tag_info $itemid o]
     set fld [lindex $colname [get_tag_info $itemid c]]
-    set retval [catch {
-        set pgr [pg_exec $dbc "update $tablename set $fld='$fldval' where oid=$oid"]
-        pg_result $pgr -clear
-        } errmsg ]
+    set fldval [string trim $fldval]
+	set fillcolor black
+	if {$oid==0} {
+		set fillcolor red
+		set sfp [lsearch $newrec_fields $fld]
+		if {$sfp>-1} {
+			set newrec_fields [lreplace $newrec_fields $sfp $sfp]
+			set newrec_values [lreplace $newrec_values $sfp $sfp]
+		}			
+		lappend newrec_fields $fld
+		lappend newrec_values '$fldval'
+		# Remove the untouched tag from the object
+		.mw.c dtag $itemid unt
+		set retval 1
+	} else {
+	    set msg "Updating record ..."
+	    after 1000 {set msg ""}
+	    set retval [sql_exec noquiet "update $tablename set $fld='$fldval' where oid=$oid"]
+	}
     cursor_arrow .mw
-    if {$retval} {
-        show_error "Error updating record:\n$errmsg"
-        return
+    if {!$retval} {
+		set msg ""
+    	return
     }
-    .mw.c itemconfigure $itemid -text $fldval
+    .mw.c itemconfigure $itemid -text $fldval -fill $fillcolor
 }
 catch {destroy .mw.entf}
 set dirty false
@@ -359,29 +491,34 @@ cursor_watch .mw
 set layout_name $tablename
 catch {unset colcount colname colwidth}
 set layout_found false
-set retval [catch {set pgres [pg_exec $dbc "select * from pga_layout where tablename='$tablename'"]}]
+set retval [catch {set pgres [pg_exec $dbc "select *,oid from pga_layout where tablename='$tablename' order by oid desc"]}]
 if {$retval} {
     # Probably table pga_layout isn't yet defined
     sql_exec noquiet "create table pga_layout (tablename varchar(64),nrcols int2,colname text,colwidth text)"
 	sql_exec quiet "grant ALL on pga_layout to PUBLIC"
 } else {
-    if {[pg_result $pgres -numTuples]==1} {
+	set nrlay [pg_result $pgres -numTuples]
+    if {$nrlay>=1} {
         set layoutinfo [pg_result $pgres -getTuple 0]
         set colcount [lindex $layoutinfo 1]
         set colname  [lindex $layoutinfo 2]
         set colwidth [lindex $layoutinfo 3]
+		set goodoid [lindex $layoutinfo 4]
         set layout_found true
-    } elseif {[pg_result $pgres -numTuples]>1} {
+    }
+    if {$nrlay>1} {
 		show_error "Multiple ([pg_result $pgres -numTuples]) layout info found\n\nPlease report the bug!"
+		sql_exec quiet "delete from pga_layout where (tablename='$tablename') and (oid<>$goodoid)"
     }
 }
 catch {pg_result $pgres -clear}
 }
 
-proc load_table {tablename} {
-global ds_query ds_updatable ds_isaquery sortfield filter
-load_layout $tablename
-set ds_query "select oid,$tablename.* from $tablename"
+proc load_table {objname} {
+global ds_query ds_updatable ds_isaquery sortfield filter tablename
+set tablename $objname
+load_layout $objname
+set ds_query "select oid,$tablename.* from $objname"
 set ds_updatable true
 set ds_isaquery false
 select_records $ds_query
@@ -544,6 +681,10 @@ set_scrollbar
 proc select_records {sql} {
 global dbc field dirty nrecs toprec colwidth colname colcount ds_updatable
 global layout_found layout_name tablename leftcol leftoffset msg
+global newrec_fields newrec_values
+global last_rownum
+set newrec_fields {}
+set newrec_values {}
 hide_entry
 .mw.c delete rows
 .mw.c delete header
@@ -597,9 +738,13 @@ for {set i 0} {$i<$nrecs} {incr i} {
         set fldtext [lindex $curtup [expr $j+$shift]]
         if {$fldtext==""} {set fldtext "  "};
         .mw.c create text $posx [expr 30+$i*14] -text $fldtext -tags [subst {$tagoid c$j rows}] -anchor w -font -*-Clean-Medium-R-Normal-*-*-130-*-*-*-*-*
+#       .mw.c create text $posx [expr 30+$i*14] -text $fldtext -tags [subst {$tagoid c$j rows}] -anchor w -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
         incr posx [expr [lindex $colwidth $j]+2]
     }
 }
+set last_rownum $i
+# Defining position for input data
+draw_new_record
 pg_result $pgres -clear
 set toprec 0
 set_scrollbar
@@ -611,6 +756,16 @@ if {$ds_updatable} then {
 set dirty false
 draw_headers
 cursor_arrow .mw
+}
+
+proc draw_new_record {} {
+global ds_updatable last_rownum colwidth colcount
+set posx 10
+if {$ds_updatable} {for {set j 0} {$j<$colcount} {incr j} {
+	.mw.c create text $posx [expr 30+$last_rownum*14] -text * -tags [subst {o0 c$j rows new unt}]  -anchor w -font -*-Clean-Medium-R-Normal-*-*-130-*-*-*-*-*
+    incr posx [expr [lindex $colwidth $j]+2]
+  }
+}
 }
 
 proc set_scrollbar {} {
@@ -626,7 +781,13 @@ global dirty fldval msg itemid colname colwidth
 hide_entry
 set itemid $id
 set colidx [get_tag_info $id c]
-set fldval [.mw.c itemcget $id -text]
+set fldval [string trim [.mw.c itemcget $id -text]]
+# It's a new record tag ?
+if {[get_tag_info $id n]=="ew"} {
+	set fldval ""
+} else {
+	if {![save_new_record]} return;
+}
 set dirty false
 set coord [.mw.c coords $id]
 entry .mw.entf -textvar fldval -width [expr int(([lindex $colwidth $colidx]-5)/6.2)] -borderwidth 0 -background #ddfefe  -highlightthickness 0 -selectborderwidth 0  -font -*-Clean-Medium-R-Normal-*-*-130-*-*-*-*-*;
@@ -660,6 +821,7 @@ global dbc tablist activetab
 if {$dbc==""} return;
 set curtab [$w cget -text]
 #if {$activetab==$curtab} return;
+.dw.btndesign configure -state disabled
 if {$activetab!=""} {
     place .dw.tab$activetab -x 10
     .dw.tab$activetab configure -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
@@ -668,6 +830,10 @@ $w configure -font -Adobe-Helvetica-Bold-R-Normal-*-*-120-*-*-*-*-*
 place $w -x 7
 place .dw.lmask -x 80 -y [expr 86+25*[lsearch -exact $tablist $curtab]]
 set activetab $curtab
+# Tabs where button Design is enabled
+if {[lsearch $activetab [list Queries]]!=-1} {
+	.dw.btndesign configure -state normal
+}
 .dw.lb delete 0 end
 cmd_$curtab
 }
@@ -761,7 +927,7 @@ by Constantin Teodorescu}
     label $base.l3 \
         -borderwidth 0 \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief sunken -text {vers 0.3} 
+        -relief sunken -text {vers 0.34} 
     label $base.l4 \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief groove \
@@ -884,6 +1050,7 @@ proc vTclWindow.dw {base} {
         -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
         -highlightthickness 0 -selectborderwidth 0 \
         -yscrollcommand {.dw.sb set} 
+    bind $base.lb <Double-Button-1> {cmd_Open}
     button $base.btnnew \
         -borderwidth 1 -command cmd_New \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
@@ -1140,21 +1307,27 @@ if {($ds_isaquery=="true") && ("$filter$sortfield"!="")} {
         set nq "$nq order by $sortfield"
     }
 }
-select_records $nq} \
+if {[save_new_record]} {select_records $nq}
+} \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
         -pady 3 -text Reload 
     button $base.exitbtn \
         -borderwidth 1 \
-        -command {.mw.c delete rows
-.mw.c delete header
-set sortfield {}
-set filter {}
-Window hide .mw} \
+        -command {
+if {[save_new_record]} {
+	.mw.c delete rows
+	.mw.c delete header
+	set sortfield {}
+	set filter {}
+	Window hide .mw
+}
+} \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
         -pady 3 -text Close 
     canvas $base.c \
         -background #fefefe -borderwidth 2 -height 207 -relief ridge \
         -width 295 
+	bind .mw.c <Button-3> {hide_entry;save_new_record}
     label $base.msglbl \
         -anchor w -borderwidth 1 \
         -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
@@ -1293,7 +1466,8 @@ proc vTclWindow.nt {base} {
     show_error "You must specify field size!"
 } else {
   if {$fldsize==""} then {set sup ""} else {set sup "($fldsize)"}
-  if {$defaultval==""} then {set sup2 ""} else {set sup2 " DEFAULT '$defaultval'"}
+  if {[regexp $fldtype "varchar2char4char8char16textdatetime"]} {set supc "'"} else {set supc ""}
+  if {$defaultval==""} then {set sup2 ""} else {set sup2 " DEFAULT $supc$defaultval$supc"}
   .nt.lb insert end [format "%-17s%-14s%-16s" $fldname $fldtype$sup $sup2$notnull]
   focus .nt.e2
   set fldname {}
@@ -1367,6 +1541,11 @@ proc vTclWindow.nt {base} {
         \
         -command {set fldtype char; if {("char"=="varchar")||("char"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
         -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -label char 
+    $base.pop add command \
+        \
+        -command {set fldtype char2; if {("char2"=="varchar")||("char2"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -label char2
     $base.pop add command \
         \
         -command {set fldtype char4; if {("char4"=="varchar")||("char4"=="char")} then {.nt.e3 configure -state normal;focus .nt.e3} else {.nt.e3 configure -state disabled;focus .nt.e5} } \
@@ -1767,6 +1946,96 @@ Window hide .sqf
         -x 40 -y 175 -anchor nw -bordermode ignore 
     place $base.closebtn \
         -x 195 -y 175 -anchor nw -bordermode ignore 
+}
+
+proc vTclWindow.fw {base} {
+    if {$base == ""} {
+        set base .fw
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 306x288+298+290
+    wm maxsize $base 1009 738
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 0 0
+    wm deiconify $base
+    wm title $base "Function"
+    label $base.l1 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text Name 
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable funcname 
+    label $base.l2 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text Parameters 
+    entry $base.e2 \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable funcpar 
+    label $base.l3 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -relief raised -text Returns 
+    entry $base.e3 \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable funcret 
+    text $base.text1 \
+        -background #fefefe -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -highlightthickness 1 -selectborderwidth 0 
+    button $base.okbtn \
+        -borderwidth 1 -command {
+			if {$funcname==""} {
+				show_error "You must supply a name for this function!"
+			} elseif {$funcret==""} {
+				show_error "You must supply a return type!"
+			} else {
+				set funcbody [.fw.text1 get 1.0 end]
+			    regsub -all "\n" $funcbody " " funcbody
+				if {[sql_exec noquiet "create function $funcname ($funcpar) returns $funcret as '$funcbody' language 'sql'"]} {
+					Window hide .fw
+					tk_messageBox -title PostgreSQL -message "Function created!"
+					tab_click .dw.tabFunctions
+				}
+								
+			}
+        } \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Define
+    button $base.cancelbtn \
+        -borderwidth 1 -command {Window hide .fw} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Close 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    place $base.l1 \
+        -x 15 -y 18 -anchor nw -bordermode ignore 
+    place $base.e1 \
+        -x 95 -y 15 -width 198 -height 22 -anchor nw -bordermode ignore 
+    place $base.l2 \
+        -x 15 -y 48 -anchor nw -bordermode ignore 
+    place $base.e2 \
+        -x 95 -y 45 -width 198 -height 22 -anchor nw -bordermode ignore 
+    place $base.l3 \
+        -x 15 -y 78 -anchor nw -bordermode ignore 
+    place $base.e3 \
+        -x 95 -y 75 -width 198 -height 22 -anchor nw -bordermode ignore 
+    place $base.text1 \
+        -x 15 -y 105 -width 275 -height 141 -anchor nw -bordermode ignore 
+    place $base.okbtn \
+        -x 90 -y 255 -anchor nw -bordermode ignore 
+	place $base.cancelbtn \
+		-x 160 -y 255 -anchor nw -bordermode ignore
 }
 
 Window show .
