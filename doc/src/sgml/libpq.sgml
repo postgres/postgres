@@ -13,9 +13,9 @@
      following directories:
 
 <ProgramListing>
-../src/test/regress
-         ../src/test/examples
-         ../src/bin/psql
+    ../src/test/regress
+    ../src/test/examples
+    ../src/bin/psql
 </ProgramListing>
 
 <Para>
@@ -82,19 +82,21 @@
 <ItemizedList>
 <ListItem>
 <Para>
-<Function>PQsetdb</Function> 
+<Function>PQsetdbLogin</Function> 
           Makes a new connection to a backend.
 <ProgramListing>
-PGconn *PQsetdb(char *pghost,
-                char *pgport,
-                char *pgoptions,
-                char *pgtty,
-                char *dbName);
+PGconn *PQsetdbLogin(const char *pghost,
+                const char *pgport,
+                const char *pgoptions,
+                const char *pgtty,
+                const char *dbName,
+                const char *login,
+                const char *pwd);
 </ProgramListing>
           If  any  argument  is NULL, then the corresponding
           environment variable is checked. If the  environment  variable  is  also  not  set, then hardwired
           defaults are used.
-          PQsetdb always returns  a  valid  PGconn  pointer.
+          PQsetdbLogin always returns  a  valid  PGconn  pointer.
           The  PQstatus (see below) command should be called
           to ensure that  a  connection  was  properly  made
           before queries are sent via the connection.  <FileName>libpq</FileName>
@@ -104,6 +106,51 @@ PGconn *PQsetdb(char *pghost,
           directly  referencing  the  fields  of  the PGconn
           structure as they are subject  to  change  in  the
           future.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+<Function>PQsetdb</Function> 
+          Makes a new connection to a backend.
+<ProgramListing>
+PGconn *PQsetdb(char *pghost,
+                char *pgport,
+                char *pgoptions,
+                char *pgtty,
+                char *dbName);
+</ProgramListing>
+          This is a macro that calls PQsetdbLogin() with null pointers
+          for the login and pwd parameters.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+<Function>PQconndefaults</Function>  
+         Returns the database name of the connection.
+<ProgramListing>
+PQconninfoOption *PQconndefaults(void)
+
+struct PQconninfoOption
+	{
+		char   *keyword;   /* The keyword of the option	*/
+		char   *environ;   /* Fallback environment variable name */
+		char   *compiled;  /* Fallback compiled in default value */
+		char   *val;	   /* Options value */
+		char   *label;	   /* Label for field in connect dialog	*/
+		char   *dispchar;  /* Character to display for this field
+				      in a connect dialog. Values are:
+				      ""	Display entered value as is
+				      "*"	Password field - hide value
+				      "D"	Debug options - don't
+				      create a field by default */
+		int	dispsize;  /* Field size in characters for dialog */
+	};
+
+</ProgramListing>
+	Returns the address of the connection options structure.  This may
+	be used to determine all possible options and their current values.
 </Para>
 </ListItem>
 
@@ -345,7 +392,7 @@ Oid PQftype(PGresult *res,
           field.  Field indices start at 0.
 <ProgramListing>
 int2 PQfsize(PGresult *res,
-                           int field_index);
+             int field_index);
 </ProgramListing>
 </Para>
 </ListItem>
@@ -376,6 +423,20 @@ char* PQgetvalue(PGresult *res,
 
 <ListItem>
 <Para>
+<Function>PQgetisnull</Function>
+           Tests a field for a NULL entry.
+<ProgramListing>
+int PQgetisnull(PGresult *res,
+                int tup_num,
+                int field_num);
+</ProgramListing>
+            This function returns  1 if the field contains a NULL, 0 if
+            it contains a known value..
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
 <Function>PQgetlength</Function>
             Returns   the   length  of  a  field
           (attribute) in bytes.  If the field  is  a  struct
@@ -384,8 +445,8 @@ char* PQgetvalue(PGresult *res,
           less.
 <ProgramListing>
 int PQgetlength(PGresult *res,
-                              int tup_num,
-                              int field_num);
+                int tup_num,
+                int field_num);
 </ProgramListing>
 </Para>
 </ListItem>
@@ -403,6 +464,19 @@ char *PQcmdStatus(PGresult *res);
 
 <ListItem>
 <Para>
+<Function>PQcmdTuples</Function>
+	  Returns the number of rows affected by the last command.
+<ProgramListing>
+const char *PQcmdTuples(PGresult *res);
+</ProgramListing>
+          If the last command was INSERT, UPDATE or DELETE, this returns
+          a string containing the number of rows affected.  If the last
+          command was anything else, it returns the empty string.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
 <Function>PQoidStatus</Function>
           Returns a string with the object id of  the  tuple
           inserted  if  the last query is an INSERT command.
@@ -415,19 +489,65 @@ char* PQoidStatus(PGresult *res);
 
 <ListItem>
 <Para>
+<Function>PQprint</Function>
+          Prints out all the  tuples  and,  optionally,  the
+          attribute  names  to  the specified output stream.
+<ProgramListing>
+void PQprint(FILE* fout,      /* output stream */
+             PGresult* res,
+             PQprintOpt* po);
+
+struct _PQprintOpt
+	{
+		pqbool	header;	     /* print output field headings and row count */
+		pqbool	align;	     /* fill align the fields */
+		pqbool	standard;    /* old brain dead format */
+		pqbool	html3;	     /* output html tables */
+		pqbool	expanded;    /* expand tables */
+		pqbool	pager;	     /* use pager for output if needed */
+		char	*fieldSep;   /* field separator */
+		char	*tableOpt;   /* insert to HTML &lt;table ...&gt; */
+		char	*caption;    /* HTML &lt;caption&gt; */
+		char	**fieldName; /* null terminated array of replacement field names */
+	};
+</ProgramListing>
+	This funtion is intended to replace PQprintTuples(), which is
+	now obsolete.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
 <Function>PQprintTuples</Function>
           Prints out all the  tuples  and,  optionally,  the
           attribute  names  to  the specified output stream.
           The programs psql and monitor  both  use  PQprintTuples for output.
 <ProgramListing>
-void PQprintTuples(
-                     PGresult* res,
-                     FILE* fout,      /* output stream */
-                     int printAttName,/* print attribute names or not*/
-                     int terseOutput, /* delimiter bars or not?*/
-                     int width        /* width of column, variable width if 0*/
-                     );
+void PQprintTuples(PGresult* res,
+                   FILE* fout,      /* output stream */
+                   int printAttName,/* print attribute names or not*/
+                   int terseOutput, /* delimiter bars or not?*/
+                   int width);      /* width of column, variable width if 0*/
 </ProgramListing>
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+<Function>PQdisplayTuples</Function>
+          Prints out all the  tuples  and,  optionally,  the
+          attribute  names  to  the specified output stream.
+<ProgramListing>
+void PQdisplayTuples(
+                     PGresult* res,
+                     FILE* fout,           /* output stream */
+                     int fillAlign,        /* space fill to align columns */
+                     const char *fieldSep, /* field separator */
+	                 int printHeader,      /* display headers? */
+		             int quiet);           /* suppress print of row count at end */
+</ProgramListing>
+          PQdisplayTuples() was intended to supersede PQprintTuples(), and
+          is in turn superseded by PQprint().
 </Para>
 </ListItem>
 <ListItem>
@@ -479,7 +599,7 @@ typedef struct {
              int isint;
              union {
                  int *ptr;
-              int integer;
+                 int integer;
              } u;
          } PQArgBlock;
 </ProgramListing>

@@ -11,6 +11,17 @@
 <Title>GiST Indices</Title>
 
 <Para>
+The information about GIST is at
+ <ULink url="http://GiST.CS.Berkeley.EDU:8000/gist/">http://GiST.CS.Berkeley.EDU:8000/gist/</ULink>
+
+with more on different indexing and sorting schemes at
+<ULink url="http://s2k-ftp.CS.Berkeley.EDU:8000/personal/jmh/">http://s2k-ftp.CS.Berkeley.EDU:8000/personal/jmh/</ULink>
+
+And there is more interesting reading at the Berkely database site at 
+<ULink url="http://epoch.cs.berkeley.edu:8000/">http://epoch.cs.berkeley.edu:8000/</ULink>.
+
+
+<Para>
 <Note>
 <Title>Author</Title>
 <Para>
