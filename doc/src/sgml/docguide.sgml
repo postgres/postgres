@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.27 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.28 2000/10/17 15:26:40 petere Exp $
 Documentation Guide
 Thomas Lockhart
 -->
@@ -83,7 +83,7 @@ Thomas Lockhart
       </row>
       <row>
        <entry>./INSTALL</entry>
-       <entry>Installation instructions (text from sgml->rtf->text)</entry>
+       <entry>Installation instructions</entry>
       </row>
       <row>
        <entry>./README</entry>
@@ -848,6 +848,7 @@ End:
   </sect2>
  </sect1>
 
+
  <sect1 id="doc-build">
   <title>Building Documentation</title>
 
@@ -911,9 +912,8 @@ PSTYLE= /home/lockhart/SGML/db143.d/docbook/print
 % make install
    </programlisting>
   </para>
- </sect1>
 
- <sect1 id="doc-manpages">
+ <sect2 id="doc-manpages">
   <title>Manpages</title>
 
   <para>
@@ -966,9 +966,9 @@ $ make man
     </para>
    </step>
   </procedure>
- </sect1>
+ </sect2>
 
- <sect1 id="doc-hardcopy">
+ <sect2 id="doc-hardcopy">
   <title>Hardcopy Generation for v7.0</title>
 
   <para>
@@ -994,99 +994,6 @@ $ make man
 
   </para>
 -->
-
-  <sect2>
-   <title>Text Hardcopy</title>
-
-   <para>
-    <filename>INSTALL</filename> and <filename>HISTORY</filename> are
-    updated for each release. For historical reasons, these files are
-    in plain text, but are derived from the newer
-    <acronym>SGML</acronym> sources.
-   </para>
-
-   <procedure>
-    <title>Plain Text Generation</title>
-
-    <para>
-     Both <filename>INSTALL</filename> and
-     <filename>HISTORY</filename> are generated from existing
-     <acronym>SGML</acronym> sources. They are extracted from the same 
-     intermediate <acronym>RTF</acronym> file.
-    </para>
-
-    <step performance="required">
-     <para>
-      Generate <acronym>RTF</acronym> by typing:
-      <programlisting>
-% cd doc/src/sgml
-% make installation.rtf
-      </programlisting>
-     </para>
-    </step>
-      
-    <step performance="required">
-     <para>
-      Import <filename>installation.rtf</filename> into
-      <productname>Applix Words</productname>.
-     </para>
-    </step>
-
-    <step performance="required">
-     <para>
-      Set the page width and margins.
-     </para>
-
-     <substeps>
-      <step performance="required">
-       <para>
-	Adjust the page width in File.PageSetup to 10 inches.
-       </para>
-      </step>
-
-      <step performance="required">
-       <para>
-	Select all text.
-	Adjust the right margin using the ruler to 9.5 inches. This
-	will give a maximum column width of 79 characters, within the
-	80 columns upper limit goal.
-       </para>
-      </step>
-     </substeps>
-    </step>
-
-    <step performance="required">
-     <para>
-      Lop off the parts of the document which are not needed.
-     </para>
-
-     <para>
-      For <filename>INSTALL</filename>, remove all release notes from
-      the end of the text, except for those from the current release.
-      For <filename>HISTORY</filename>, remove all text up to the
-      release notes, preserving and modifying the title and ToC.
-     </para>
-    </step>
-
-    <step performance="required">
-     <para>
-      Export the result as "ASCII Layout".
-     </para>
-    </step>
-
-    <step performance="required">
-     <para>
-      Using emacs or vi, clean up the tabular information in
-      <filename>INSTALL</filename>. Remove the "mailto"
-      <acronym>URLs</acronym> for the porting contributors to shrink
-      the column heights.
-     </para>
-    </step>
-   </procedure>
-  </sect2>
-
-  <sect2>
-   <title>Postscript Hardcopy</title>
 
    <para>
     Several areas are addressed while generating Postscript
@@ -1321,9 +1228,133 @@ exit
      </para>
     </step>
    </procedure>
+  </sect2>
+
+  <sect2>
+   <title>Plain Text Files</title>
+
+   <para>
+    Several files are distributed as plain text, for reading during
+    the installation process. The <filename>INSTALL</filename> file
+    corresponds to the chapter in the <citetitle>Administrator's
+    Guide</citetitle>, with some minor changes to account for the
+    different context.  To recreate the file, change to the directory
+    <filename>doc/src/sgml</filename> and enter <userinput>gmake
+    INSTALL</userinput>.  This will create a file
+    <filename>INSTALL.html</filename> that can be saved as text with
+    <productname>Netscape Navigator</productname> and put into the
+    place of the existing file.  <productname>Netscape</productname>
+    seems to offer the best quality for <acronym>HTML</acronym> to
+    text conversions (over <application>lynx</application> and
+    <application>w3m</application>).
+   </para>
+
+   <para>
+    The file <filename>HISTORY</filename> can be created similarly,
+    using the command <userinput>gmake HISTORY</userinput>.  The table
+    of contents should be removed manually from the resulting text
+    file.
+   </para>
+
+   <para>
+    Since it does not change very often, the generation of the file
+    <filename>src/test/regress/README</filename> is not fully
+    automated.  After building the <acronym>HTML</acronym> version of
+    the <citetitle>Administrator's Guide</citetitle>, convert the
+    resulting files <filename>regress.htm</filename> and
+    <filename>regress-platform.htm</filename> to text, using
+    <productname>Netscape</productname>.  Then paste the text files
+    together and edit them to taste (e.g., remove the navigation
+    bars, remove the references to other chapters).
+   </para>
+
+<!--
+  * This is how you can create text files via RTF and ApplixWare,
+  * for historical reference.
+
+   <procedure>
+    <title>Plain Text Generation</title>
+
+    <para>
+     Both <filename>INSTALL</filename> and
+     <filename>HISTORY</filename> are generated from existing
+     <acronym>SGML</acronym> sources. They are extracted from the same 
+     intermediate <acronym>RTF</acronym> file.
+    </para>
+
+    <step performance="required">
+     <para>
+      Generate <acronym>RTF</acronym> by typing:
+      <programlisting>
+% cd doc/src/sgml
+% make installation.rtf
+      </programlisting>
+     </para>
+    </step>
+      
+    <step performance="required">
+     <para>
+      Import <filename>installation.rtf</filename> into
+      <productname>Applix Words</productname>.
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Set the page width and margins.
+     </para>
+
+     <substeps>
+      <step performance="required">
+       <para>
+	Adjust the page width in File.PageSetup to 10 inches.
+       </para>
+      </step>
+
+      <step performance="required">
+       <para>
+	Select all text.
+	Adjust the right margin using the ruler to 9.5 inches. This
+	will give a maximum column width of 79 characters, within the
+	80 columns upper limit goal.
+       </para>
+      </step>
+     </substeps>
+    </step>
+
+    <step performance="required">
+     <para>
+      Lop off the parts of the document which are not needed.
+     </para>
+
+     <para>
+      For <filename>INSTALL</filename>, remove all release notes from
+      the end of the text, except for those from the current release.
+      For <filename>HISTORY</filename>, remove all text up to the
+      release notes, preserving and modifying the title and ToC.
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Export the result as "ASCII Layout".
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Using emacs or vi, clean up the tabular information in
+      <filename>INSTALL</filename>. Remove the "mailto"
+      <acronym>URLs</acronym> for the porting contributors to shrink
+      the column heights.
+     </para>
+    </step>
+   </procedure>
+-->
 
   </sect2>
  </sect1>
+
 
  <sect1 id="doc-toolsets">
   <title>Toolsets</title>

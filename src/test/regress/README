@@ -1,241 +1,223 @@
+REGRESSION TESTS
 
-Introduction
+The regression tests are a comprehensive set of tests for the SQL
+implementation in PostgreSQL. They test standard SQL operations as
+well as the extended capabilities of PostgreSQL. The test suite was
+originally developed by Jolly Chen and Andrew Yu, and was extensively
+revised and repackaged by Marc Fournier and Thomas Lockhart. From
+PostgreSQL 6.1 onward the regression tests are current for every
+official release.
 
-  The PostgreSQL regression tests are a comprehensive set of tests for the
-  SQL implementation embedded in PostgreSQL.  They test standard SQL
-  operations as well as the extended capabilities of PostgreSQL.
+The regression test can be run against an already installed and
+running server, or using a temporary installation within the build
+tree.  Furthermore, there is a "parallel" and a "sequential" mode for
+running the tests. The sequential method runs each test script in
+turn, whereas the parallel method starts up multiple server processes
+to run groups of tests in parallel. Parallel testing gives confidence
+that interprocess communication and locking are working correctly. For
+historical reasons, the sequential test is usually run against an
+existing installation and the parallel method "stand-alone", but there
+are technical reasons for this.
 
-  The regression tests were originally developed by Jolly Chen and Andrew Yu,
-  and were extensively revised/repackaged by Marc Fournier and Thomas Lockhart.
-  From PostgreSQL v6.1 onward the regression tests are current for every
-  official release.
+To run the regression tests after building but before installation,
+type
 
-  Some properly installed and fully functional PostgreSQL installations
-  can fail some of these regression tests due to artifacts of floating point
-  representation and time zone support. The current tests are evaluated
-  using a simple "diff" algorithm, and are sensitive to small system
-  differences. For apparently failed tests, examining the differences
-  may reveal that the differences are not significant.
+$ gmake check
 
-Preparation
+in the top-level directory. (Or you can change to src/test/regress and
+run the command there.) This will first build several auxiliary files,
+such as platform-dependent "expected" files and some sample
+user-defined trigger functions, and then run the test driver
+script. At the end you should see something like
 
-  To prepare for regression testing, do "make all" in the regression test
-  directory.  This compiles a 'C' program with PostgreSQL extension functions
-  into a shared library.  Localized SQL scripts and output-comparison
-  files are also created for the tests that need them.  The localization
-  replaces macros in the source files with absolute pathnames and user names.  
+======================
+ All 75 tests passed.
+======================
 
-  Normally, the regression tests should be run as the postgres user since
-  the 'src/test/regress' directory and sub-directories are owned by the
-  postgres user. If you run the regression test as another user the
-  'src/test/regress' directory tree must be writeable to that user.
+or otherwise a note about what tests failed. See the section called
+Test Evaluation below for more.
 
-  It was formerly necessary to run the postmaster with system time zone
-  set to PST, but this is no longer required.  You can run the regression
-  tests under your normal postmaster configuration.  The test script will
-  set the PGTZ environment variable to ensure that timezone-dependent tests
-  produce the expected results.
+     Note: Because this test method runs a temporary server, it will
+     not work when you are the root user (the server will not start as
+     root). If you already did the build as root, you do not have to
+     start all over. Instead, make the regression test directory
+     writable by some other user, log in as that user, and restart the
+     tests.
 
-Directory Layout
+     root# chmod -R a+w src/test/regress
+     root# su - joeuser
+     joeuser$ gmake check
 
-  input/ .... .source files that are converted using 'make all' into
-              some of the .sql files in the 'sql' subdirectory
+     (The only possible "security risk" here is that other users might
+     be able to alter the regression test results behind your back. Use
+     common sense when managing user permissions.)
 
-  output/ ... .source files that are converted using 'make all' into
-              .out files in the 'expected' subdirectory
+     Alternatively, run the tests after installation.
 
-  sql/ ...... .sql files used to perform the regression tests
+     Tip: On some systems, the default Bourne-compatible shell
+     (/bin/sh) gets confused when it has to manage too many child
+     processes in parallel. This may cause the parallel test run to
+     lock up or fail. In such cases, specify a different
+     Bourne-compatible shell on the command line, for example:
 
-  expected/ . .out files that represent what we *expect* the results to
-              look like
+     $ gmake SHELL=/bin/ksh check
 
-  results/ .. .out files that contain what the results *actually* look
-              like. Also used as temporary storage for table copy testing.
+To run the tests after installation, initialize a data area and start
+the server, then type
 
-Running the regression test
+$ gmake installcheck
 
-  If you have previously run the regression test for a different Postgres
-  release, make sure you have up-to-date comparison files by doing
+The server is expected to be running on the local host with the
+default port number.
 
-        make clean all
+Test Evaluation
 
-  The regression test is invoked with the command:
+Some properly installed and fully functional PostgreSQL installations
+can "fail" some of these regression tests due to artifacts of floating
+point representation and time zone support. The tests are currently
+evaluated using a simple diff comparison against the outputs generated
+on a reference system, so the results are sensitive to small system
+differences. When a test is reported as "failed", always examine the
+differences between expected and actual results; you may well find
+that the differences are not significant. Nonetheless, we still strive
+to maintain accurate reference files across all supported platforms,
+so it can be expected that all tests pass.
 
-        make runtest
-
-  or you can do
-
-	make runcheck
-
-  which invokes a parallel form of the regress tests, and does not
-  need an already-installed postmaster.  Instead, runcheck creates
-  a temporary installation under the regress directory.
-
-Comparing expected/actual output
-
-  The results are in files in the ./results directory. These results
-  can be compared with results in the ./expected directory using 'diff'.
-  (The test script now does this for you, and leaves the differences
-  in ./regression.diffs.)
-
-  The files might not compare exactly. The following paragraphs attempt
-  to explain the differences.
-
-  Once the output files have been verified for a particular platform,
-  it is possible to provide new platform-specific comparison files,
-  so that future test runs won't report bogus "failures".  See
-  'Platform-specific comparison files', below.
+The actual outputs of the regression tests are in files in the
+src/test/regress/results directory. The test script uses diff to
+compare each output file against the reference outputs stored in the
+src/test/regress/expected directory. Any differences are saved for
+your inspection in src/test/regress/regression.diffs. (Or you can run
+diff yourself, if you prefer.)
 
 Error message differences
 
-  Some of the regression tests involve intentional invalid input values.
-  Error messages can come from either the Postgres code or from the host
-  platform system routines. In the latter case, the messages may vary
-  between platforms, but should reflect similar information. These
-  differences in messages will result in a "failed" regression test which
-  can be validated by inspection.
+Some of the regression tests involve intentional invalid input
+values. Error messages can come from either the PostgreSQL code or
+from the host platform system routines. In the latter case, the
+messages may vary between platforms, but should reflect similar
+information. These differences in messages will result in a "failed"
+regression test which can be validated by inspection.
 
-DATE/TIME differences
+Date and time differences
 
-  Most of the date and time results are dependent on timezone environment.
-  The reference files are generated for timezone PST8PDT (Berkeley,
-  California) and there will be apparent failures if the tests are not
-  run with that timezone setting.  The regression test driver sets
-  environment variable PGTZ to PST8PDT to ensure proper results.
+Most of the date and time results are dependent on the time zone
+environment. The reference files are generated for time zone PST8PDT
+(Berkeley, California) and there will be apparent failures if the
+tests are not run with that time zone setting. The regression test
+driver sets environment variable PGTZ to PST8PDT to ensure proper
+results. However, your system must provide library support for the
+PST8PDT time zone, or the time zone-dependent tests will fail. To
+verify that your machine does have this support, type the following:
 
-  There appear to be some systems which do not accept the recommended syntax
-  for explicitly setting the local time zone rules; you may need to use
-  a different PGTZ setting on such machines.
+$ env TZ=PST8PDT date
 
-  Some systems using older timezone libraries fail to apply daylight-savings
-  corrections to pre-1970 dates, causing pre-1970 PDT times to be displayed
-  in PST instead.  This will result in localized differences in the test
-  results.
+The command above should have returned the current system time in the
+PST8PDT time zone. If the PST8PDT database is not available, then your
+system may have returned the time in GMT. If the PST8PDT time zone is
+not available, you can set the time zone rules explicitly:
 
-FLOATING POINT differences
+PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
 
-  Some of the tests involve computing 64-bit (FLOAT8) numbers from table
-  columns. Differences in results involving mathematical functions of
-  FLOAT8 columns have been observed. These differences occur where
-  different operating systems are used on the same platform ie:
-  BSDI and SOLARIS on Intel/86, and where the same operating system is
-  used used on different platforms, ie: SOLARIS on SPARC and Intel/86.
+There appear to be some systems which do not accept the recommended
+syntax for explicitly setting the local time zone rules; you may need
+to use a different PGTZ setting on such machines.
 
-  Human eyeball comparison is needed to determine the real significance
-  of these differences which are usually 10 places to the right of
-  the decimal point.
+Some systems using older time zone libraries fail to apply
+daylight-savings corrections to dates before 1970, causing pre-1970
+PDT times to be displayed in PST instead. This will result in
+localized differences in the test results.
 
-  Some systems signal errors from pow() and exp() differently from
-  the mechanism expected by the current Postgres code.
+Some of the queries in the "timestamp" test will fail if you run the
+test on the day of a daylight-savings time changeover, or the day
+before or after one. These queries assume that the intervals between
+midnight yesterday, midnight today and midnight tomorrow are exactly
+twenty-four hours -- which is wrong if daylight-savings time went into
+or out of effect meanwhile.
 
-POLYGON differences
+Floating point differences
 
-  Several of the tests involve operations on geographic data about the
-  Oakland/Berkley CA street map. The map data is expressed as polygons
-  whose vertices are represented as pairs of FLOAT8 numbers (decimal
-  latitude and longitude). Initially, some tables are created and
-  loaded with geographic data, then some views are created which join
-  two tables using the polygon intersection operator (##), then a select
-  is done on the view. 
+Some of the tests involve computing 64-bit (double precision) numbers
+from table columns. Differences in results involving mathematical
+functions of double precision columns have been observed. The float8
+and geometry tests are particularly prone to small differences across
+platforms, or even with different compiler optimization options. Human
+eyeball comparison is needed to determine the real significance of
+these differences which are usually 10 places to the right of the
+decimal point.
 
-  When comparing the results from different platforms, differences occur
-  in the 2nd or 3rd place to the right of the decimal point. The SQL
-  statements where these problems occur are the following:
+Some systems signal errors from pow() and exp() differently from the
+mechanism expected by the current PostgreSQL code.
 
-    QUERY: SELECT * from street;
-    QUERY: SELECT * from iexit;
+Polygon differences
 
-Random differences
+Several of the tests involve operations on geographic data about the
+Oakland/Berkeley, CA street map. The map data is expressed as polygons
+whose vertices are represented as pairs of double precision numbers
+(decimal latitude and longitude). Initially, some tables are created
+and loaded with geographic data, then some views are created which
+join two tables using the polygon intersection operator (##), then a
+select is done on the view.
 
-  There is at least one test case in random.out which is intended to produce
-  random results. This causes random to fail the regression testing.
-  Typing "diff results/random.out expected/random.out" should produce only
-  one or a few lines of differences for this reason, but other floating
-  point differences on dissimilar architectures might cause many more
-  differences. See the release notes below.
+When comparing the results from different platforms, differences occur
+in the 2nd or 3rd place to the right of the decimal point. The SQL
+statements where these problems occur are the following:
 
-The 'expected' files
+SELECT * from street;
+SELECT * from iexit;
 
-  The ./expected/*.out files were adapted from the original monolithic
-  'expected.input' file provided by Jolly Chen et al. Newer versions of these
-  files generated on various development machines have been substituted after
-  careful (?) inspection. Many of the development machines are running a
-  Unix OS variant (FreeBSD, Linux, etc) on Ix86 hardware.
+The "random" test
+
+There is at least one case in the "random" test script that is
+intended to produce random results. This causes random to fail the
+regression test once in a while (perhaps once in every five to ten
+trials). Typing
+
+diff results/random.out expected/random.out
+
+should produce only one or a few lines of differences. You need not
+worry unless the random test always fails in repeated attempts. (On
+the other hand, if the random test is never reported to fail even in
+many trials of the regress tests, you probably should worry.)
 
 Platform-specific comparison files
 
-  Since some of the tests inherently produce platform-specific results,
-  we have provided a way to supply platform-specific result comparison
-  files.  Frequently, the same variation applies to multiple platforms;
-  rather than supplying a separate comparison file for every platform,
-  there is a mapping file that defines which comparison file to use.
-  So, to eliminate bogus test "failures" for a particular platform,
-  you must choose or make a variant result file, and then add a line
-  to the mapping file, which is "resultmap".
+Since some of the tests inherently produce platform-specific results,
+we have provided a way to supply platform-specific result comparison
+files.  Frequently, the same variation applies to multiple platforms;
+rather than supplying a separate comparison file for every platform,
+there is a mapping file that defines which comparison file to use. So,
+to eliminate bogus test "failures" for a particular platform, you must
+choose or make a variant result file, and then add a line to the
+mapping file, which is "resultmap".
 
-  Each line in the mapping file is of the form
-		testname/platformnamepattern=comparisonfilename
-  The test name is just the name of the particular regression test module.
-  The platform name pattern is a pattern in the style of expr(1) (that is,
-  a regular expression with an implicit ^ anchor at the start).  It is matched
-  against the platform name as printed by config.guess.  The comparison
-  file name is the name of the substitute result comparison file.
+Each line in the mapping file is of the form
 
-  For example: the int2 regress test includes a deliberate entry of a value
-  that is too large to fit in int2.  The specific error message that is
-  produced is platform-dependent; our reference platform emits
+    testname/platformnamepattern=comparisonfilename
+
+The test name is just the name of the particular regression test
+module. The platform name pattern is a pattern in the style of expr(1)
+(that is, a regular expression with an implicit ^ anchor at the
+start). It is matched against the platform name as printed by
+config.guess. The comparison file name is the name of the substitute
+result comparison file.
+
+For example: the int2 regress test includes a deliberate entry of a
+value that is too large to fit in int2. The specific error message
+that is produced is platform-dependent; our reference platform emits
+
     ERROR:  pg_atoi: error reading "100000": Numerical result out of range
-  but a fair number of other Unix platforms emit
+
+but a fair number of other Unix platforms emit
+
     ERROR:  pg_atoi: error reading "100000": Result too large
-  Therefore, we provide a variant comparison file, int2-too-large.out,
-  that includes this spelling of the error message.  To silence the
-  bogus "failure" message on HPPA platforms,  resultmap includes
-		int2/hppa=int2-too-large
-  which will trigger on any machine for which config.guess's output
-  begins with 'hppa'.  Other lines in resultmap select the variant
-  comparison file for other platforms where it's appropriate.
 
-Current release notes (Thomas.Lockhart@jpl.nasa.gov)
+Therefore, we provide a variant comparison file, int2-too-large.out,
+that includes this spelling of the error message. To silence the bogus
+"failure" message on HPPA platforms, resultmap includes
 
-  The regression tests have been adapted and extensively modified for the
-  v6.1 release of PostgreSQL.
+                int2/hppa=int2-too-large
 
-  Three new data types (datetime, timespan, and circle) have been added to
-  the native set of PostgreSQL types. Points, boxes, paths, and polygons
-  have had their output formats made consistant across the data types.
-  The polygon output in misc.out has only been spot-checked for correctness
-  relative to the original regression output.
-
-  PostgreSQL v6.1 introduces a new, alternate optimizer which uses "genetic"
-  algorithms. These algorithms introduce a random behavior in the ordering
-  of query results when the query contains multiple qualifiers or multiple
-  tables (giving the optimizer a choice on order of evaluation). Several
-  regression tests have been modified to explicitly order the results, and
-  hence are insensitive to optimizer choices. A few regression tests are
-  for data types which are inherently unordered (e.g. points and time
-  intervals) and tests involving those types are explicitly bracketed with
-  "set geqo to 'off'" and "reset geqo".
-
-  The interpretation of array specifiers (the curly braces around atomic
-  values) appears to have changed sometime after the original regression
-  tests were generated. The current ./expected/*.out files reflect this
-  new interpretation, which may not be correct!
-
-  The float8 regression test fails on at least some platforms. This is due
-  to differences in implementations of pow() and exp() and the signaling
-  mechanisms used for overflow and underflow conditions.
-
-  The "random" results in the random test should cause the "random" test
-  to be "failed", since the regression tests are evaluated using a simple
-  diff. However, "random" does not seem to produce random results on my 
-  test machine (Linux/gcc/i686).
-
-Sample timing results
-
-  Timing under Linux 2.0.27 seems to have a roughly 5% variation from run
-  to run, presumably due to the timing vagaries of multitasking systems.
-
-  Time   System
-  06:12  Pentium Pro 180, 32MB, Linux 2.0.30, gcc 2.7.2 -O2 -m486
-  12:06  P-100, 48MB, Linux 2.0.29, gcc
-  39:58  Sparc IPC 32MB, Solaris 2.5, gcc 2.7.2.1 -O -g
+which will trigger on any machine for which config.guess's output
+begins with 'hppa'. Other lines in resultmap select the variant
+comparison file for other platforms where it's appropriate.

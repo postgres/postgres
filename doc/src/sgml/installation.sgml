@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.24 2000/10/16 03:25:16 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.25 2000/10/17 15:26:40 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -744,20 +744,20 @@ All of PostgreSQL is successfully made. Ready to install.
    <para>
     If you want to test the newly built server before you install it,
     you can run the regression tests at this point. The regression
-    tests are a test suite to verify that <productname>PostgreSQL</> runs on your machine
-    in the way the developers expected it to. Type
+    tests are a test suite to verify that <productname>PostgreSQL</>
+    runs on your machine in the way the developers expected it
+    to. Type
 <screen>
-<userinput>gmake -C src/test/regress all runcheck</userinput>
-<!-- XXX How about just `gmake check'? -->
+<userinput>gmake check</userinput>
 </screen>
     It is possible that some tests fail, due to differences in error
-    message wording or floating point results. The file
-    <filename>src/test/regress/README</> and
-    <![%flattext-install-include[the <citetitle>Administrator's Guide</citetitle>]]>
-    <![%flattext-install-ignore[<xref linkend="regress">]]>
-    contain detailed
-    information about interpreting the test results. You can repeat
-    this test at any later time by issuing the same command.
+    message wording or floating point results.
+    <![%flattext-install-include[The file
+    <filename>src/test/regress/README</> and the
+    <citetitle>Administrator's Guide</citetitle> contain]]>
+    <![%flattext-install-ignore[<xref linkend="regress"> contains]]>
+    detailed information about interpreting the test results. You can
+    repeat this test at any later time by issuing the same command.
    </para>
   </step>
 

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.23 2000/10/10 22:01:50 momjian Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.24 2000/10/17 15:26:39 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -201,21 +201,30 @@ distclean:
 	cp -p ../graphics/$@ .
 
 
-# Generation of the INSTALL text file. Not fully automated, but better
-# than nothing.
-.PHONY: INSTALL
-INSTALL: INSTALL.html
+#
+# Semi-automatic generation of some text files.
+#
+
+INSTALL HISTORY: % : %.html
 	@echo "|";\
 	 echo "| You should now take \`$<', save it as a text file in Netscape,";\
-	 echo "| and put it in place of the existing \`INSTALL' file.";\
+	 echo "| and put it in place of the existing \`$@' file.";\
 	 echo "|"
-	@rm -f tempfile.html tempfile.sgml
 
-INSTALL.html: tempfile.html
-	sed -e 's/Chapter 1. *//g' < $< > $@
 
-tempfile.html: tempfile.sgml
-	jade -d $(HDSL) -V nochunks -t sgml $< > $@
+INSTALL.html HISTORY.html: %.html : tempfile_%.html
+	sed 's/Chapter 1. *//g' $< >$@
 
-tempfile.sgml: standalone-install.sgml installation.sgml
-	cat $+ > $@
+tempfile_INSTALL.html tempfile_HISTORY.html: tempfile_%.html : tempfile_%.sgml
+	jade -d $(HDSL) -V nochunks -t sgml $< >$@
+
+
+tempfile_INSTALL.sgml: standalone-install.sgml installation.sgml
+	cat $+ >$@
+
+tempfile_HISTORY.sgml: release.sgml
+	( echo '<!doctype chapter PUBLIC "-//OASIS//DTD DocBook V3.1//EN">'; \
+	  cat $< ) >$@
+
+
+.INTERMEDIATE: tempfile_INSTALL.html tempfile_HISTORY.html tempfile_INSTALL.sgml tempfile_HISTORY.sgml
