@@ -10,4 +10,5 @@ To use this program, you must:
 	o add any THREAD_CPPFLAGS and THREAD_LIBS defines to your
 	  template/${port} file
 	o run "configure --enable-thread-safety"
+	o compile the main source tree
 	o compile and run this program
