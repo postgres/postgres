@@ -6,17 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.1 1996/08/28 01:58:11 scrappy Exp $
+ * $Id: itemptr.h,v 1.2 1996/10/19 04:01:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	ITEMPTR_H
 #define ITEMPTR_H
 
-#include "c.h"
-#include "storage/block.h"
+#include "storage/block.h" 
 #include "storage/off.h"
-#include "storage/itemid.h"
 
 /*
  * ItemPointer:
