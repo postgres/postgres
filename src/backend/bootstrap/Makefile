@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.24 2000/07/19 16:29:47 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.25 2000/08/28 11:53:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,9 +48,13 @@ $(srcdir)/bootparse.c $(srcdir)/bootstrap_tokens.h: bootparse.y Makefile
 	rm -f y.tab.c y.tab.h
 
 $(srcdir)/bootscanner.c: bootscanner.l Makefile
-	$(LEX) $(LFLAGS) $<
-	$(sed-magic) < lex.yy.c > $@
+ifdef FLEX
+	$(FLEX) $(FLEXFLAGS) $<
+	$(sed-magic) lex.yy.c > $@
 	rm -f lex.yy.c
+else
+	@$(missing) flex $< $@
+endif
 
 clean:
 	rm -f SUBSYS.o $(OBJS) bootstrap.o

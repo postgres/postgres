@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.28 2000/07/19 16:29:50 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.29 2000/08/28 11:53:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,8 +30,11 @@ $(srcdir)/gram.c $(srcdir)/parse.h: gram.y
 	mv y.tab.h $(srcdir)/parse.h
 
 $(srcdir)/scan.c: scan.l
-	$(LEX) $(LFLAGS) $<
-	mv lex.yy.c $@
+ifdef FLEX
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
+else
+	@$(missing) flex $< $@
+endif
 
 
 analyze.o keywords.o parse_clause.o parse_expr.o scan.o: $(srcdir)/parse.h

@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.5 2000/07/19 16:30:24 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.6 2000/08/28 11:53:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,12 +60,14 @@ $(srcdir)/pl_gram.c $(srcdir)/pl.tab.h: gram.y
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < y.tab.h > $(srcdir)/pl.tab.h
 	rm -f y.tab.c y.tab.h
 
-# Assuming flex here for -i and -l options, since scan.l requires flex anyway.
 $(srcdir)/pl_scan.c: scan.l
-	$(LEX) $(LFLAGS) -i -l $<
+ifdef FLEX
+	$(FLEX) -i -l $(FLEXFLAGS) $<
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < lex.yy.c > $@
 	rm -f lex.yy.c
-
+else
+	@$(missing) flex $< $@
+endif
 
 distprep: $(srcdir)/pl_scan.c $(srcdir)/pl.tab.h $(srcdir)/pl_gram.c
 
@@ -74,7 +76,8 @@ mklang.sql: mklang.sql.in
 
 
 clean distclean: clean-lib
-	rm -f *.o y.tab.c y.tab.h lex.yy.c mklang.sql
+	rm -f $(OBJS) mklang.sql
+	@rm -f y.tab.c y.tab.h lex.yy.c
 
 maintainer-clean: clean
 	rm -f $(srcdir)/pl_gram.c $(srcdir)/pl.tab.h $(srcdir)/pl_scan.c

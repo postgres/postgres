@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.17 2000/08/25 10:00:31 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.18 2000/08/28 11:53:20 petere Exp $
 
 subdir = src/backend/utils/misc
 top_builddir = ../../../..
@@ -19,18 +19,19 @@ SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 guc-file.c: guc-file.l
-	$(LEX) $(LFLAGS) $<
-	sed -e 's/lex\.yy\.c/guc-file\.c/g' \
-	    -e 's/^yy/GUC_yy/g' \
-	    -e 's/\([^a-zA-Z0-9_]\)yy/\1GUC_yy/g' < lex.yy.c > $@
+ifdef FLEX
+	$(FLEX) $(FLEXFLAGS) $<
+	sed -e 's/^yy/GUC_yy/g' -e 's/\([^a-zA-Z0-9_]\)yy/\1GUC_yy/g' lex.yy.c > $@
 	rm -f lex.yy.c
-
+else
+	@$(missing) flex $< $@
+endif
 
 # Note: guc-file.c is not deleted by 'make clean',
 # since we want to ship it in distribution tarballs.
-
 clean: 
-	rm -f SUBSYS.o $(OBJS) lex.yy.c
+	rm -f SUBSYS.o $(OBJS)
+	@rm -f lex.yy.c
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

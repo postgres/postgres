@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.6 2000/08/28 11:53:12 petere Exp $
 # This comes from the official Autoconf macro archive at
 # <http://research.cys.de/autoconf-archive/>
 # (I removed the $ before the Id CVS keyword below.)
@@ -65,7 +65,7 @@ extern accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_acc
  AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG3,$ac_cv_func_accept_arg3)
 ])
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.6 2000/08/28 11:53:12 petere Exp $
 
 
 
@@ -154,7 +154,7 @@ undefine([AC_TYPE_NAME])dnl
 undefine([AC_CV_NAME])dnl
 ])# PGAC_CHECK_ALIGNOF
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.6 2000/08/28 11:53:12 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -233,7 +233,7 @@ fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
 # Macros to detect certain C++ features
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.6 2000/08/28 11:53:12 petere Exp $
 
 
 # PGAC_CLASS_STRING
@@ -299,10 +299,82 @@ AC_LANG_RESTORE])
 if test $pgac_cv_cxx_namespace_std = yes ; then
     AC_DEFINE(HAVE_NAMESPACE_STD, 1, [Define to 1 if the C++ compiler understands `using namespace std'])
 fi])# PGAC_CXX_NAMESPACE_STD
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.6 2000/08/28 11:53:12 petere Exp $
+
+
+# PGAC_PATH_FLEX
+# --------------
+# Look for Flex, set the output variable FLEX to its path if found.
+# Avoid the buggy version 2.5.3. Also find Flex if its installed
+# under `lex', but do not accept other Lex programs.
+
+AC_DEFUN([PGAC_PATH_FLEX],
+[AC_CACHE_CHECK([for flex], pgac_cv_path_flex,
+[# Let the user override the test
+if test -n "$FLEX"; then
+  pgac_cv_path_flex=$FLEX
+else
+  pgac_save_IFS=$IFS
+  IFS=:
+  for pgac_dir in $PATH; do
+    if test -z "$pgac_dir" || test x"$pgac_dir" = x"."; then
+      pgac_dir=`pwd`
+    fi
+    for pgac_prog in flex lex; do
+      pgac_candidate="$pgac_dir/$pgac_prog"
+      if test -f "$pgac_candidate" \
+        && $pgac_candidate --version >/dev/null 2>&1
+      then
+        echo '%%'  > conftest.l
+        if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
+          if $pgac_candidate --version | grep '2\.5\.3' >/dev/null 2>&1; then
+            pgac_broken_flex=$pgac_candidate
+            continue
+          fi
+
+          pgac_cv_path_flex=$pgac_candidate
+          break 2
+        fi
+      fi
+    done
+  done
+  IFS=$pgac_save_IFS
+  rm -f conftest.l
+  : ${pgac_cv_path_flex=no}
+fi
+])[]dnl AC_CACHE_CHECK
+
+if test x"$pgac_cv_path_flex" = x"no"; then
+  if test -n "$pgac_broken_flex"; then
+    AC_MSG_WARN([
+***
+The Flex version 2.5.3 you have at $pgac_broken_flex contains a bug. You
+should get version 2.5.4 or later.
+###])
+  fi
+
+  AC_MSG_WARN([
+***
+Without Flex you won't be able to build PostgreSQL from scratch, or change
+any of the scanner definition files. You can obtain Flex from a GNU mirror
+site. (If you are using the official distribution of PostgreSQL then you
+do not need to worry about this because the lexer files are pre-generated.)
+***])
+fi
+
+if test x"$pgac_cv_path_flex" = x"no"; then
+  FLEX=
+else
+  FLEX=$pgac_cv_path_flex
+fi
+
+AC_SUBST(FLEX)
+AC_SUBST(FLEXFLAGS)
+])# PGAC_PATH_FLEX
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.5 2000/08/27 19:00:00 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.6 2000/08/28 11:53:12 petere Exp $
 #
 
 # PGAC_PROG_PYTHON

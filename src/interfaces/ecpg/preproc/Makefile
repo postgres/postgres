@@ -32,8 +32,11 @@ $(srcdir)/preproc.c $(srcdir)/preproc.h: preproc.y
 	mv y.tab.h $(srcdir)/preproc.h
 
 $(srcdir)/pgc.c: pgc.l
-	$(LEX) $(LFLAGS) $<
-	mv lex.yy.c $@
+ifdef FLEX
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
+else
+	@$(missing) flex $< $@
+endif
 
 distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
 
@@ -49,7 +52,7 @@ uninstall:
 clean distclean:
 	rm -f *.o ecpg$(X)
 # garbage from partial builds
-	rm -f y.tab.c y.tab.h lex.yy.c
+	@rm -f y.tab.c y.tab.h
 # garbage from development
 	@rm -f core a.out *~ *.output *.tab.c
 

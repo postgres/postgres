@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.90 2000/07/22 01:48:53 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.91 2000/08/28 11:53:14 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -165,6 +165,7 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_SHLIB = @INSTALL_SHLIB@
 
 mkinstalldirs = @mkinstalldirs@
+missing = $(top_srcdir)/config/missing
 
 RANLIB= @RANLIB@
 
@@ -175,7 +176,8 @@ CC= @CC@
 CPP= @CPP@
 YACC= @YACC@
 YFLAGS = @YFLAGS@
-LEX= @LEX@
+FLEX = @FLEX@
+FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
 AROPT= @AROPT@
 CPPFLAGS = @CPPFLAGS@
 CFLAGS = -I$(SRCDIR)/include $(CPPFLAGS) @CFLAGS@
