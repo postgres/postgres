@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.17 1998/01/07 18:46:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.18 1998/01/07 22:08:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,7 +333,7 @@ varcharlen(char *arg)
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 
-	return VARSIZE(arg);
+	return VARSIZE(arg) - VARHDRSZ;
 }
 
 bool
