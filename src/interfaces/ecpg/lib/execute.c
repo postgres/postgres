@@ -341,6 +341,7 @@ ECPGis_type_an_array(int type,const struct statement * stmt,const struct variabl
 	array_query = (char *) ecpg_alloc(strlen("select typelem from pg_type where oid=") + 11, stmt->lineno);
 	sprintf(array_query, "select typelem from pg_type where oid=%d", type);
 	query = PQexec(stmt->connection->connection, array_query);
+	free(array_query);
 	if (PQresultStatus(query) == PGRES_TUPLES_OK)
 	{
 		isarray = atol((char *) PQgetvalue(query, 0, 0));
@@ -1005,7 +1006,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.15 2000/12/18 11:33:54 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.16 2001/01/02 22:03:02 momjian Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);
