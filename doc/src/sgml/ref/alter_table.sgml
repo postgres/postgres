@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.43 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.44 2002/04/24 02:40:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -53,6 +53,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </title>
    <para>
     <variablelist>
+
      <varlistentry>
       <term><replaceable class="PARAMETER"> table </replaceable></term>
       <listitem>
