@@ -6,24 +6,18 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.1 1996/08/28 01:59:21 scrappy Exp $
+ * $Id: rel.h,v 1.2 1996/10/19 04:06:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	REL_H
 #define REL_H
 
-#include "postgres.h"
-
 #include "storage/fd.h"
-#include "access/strat.h"	
-#include "access/tupdesc.h"
-
 #include "catalog/pg_am.h"
-#include "catalog/pg_operator.h"
 #include "catalog/pg_class.h"
-
 #include "rewrite/prs2lock.h"
+#include "access/strat.h"
 
 typedef struct RelationData {
     File		rd_fd; 		/* open file descriptor */
