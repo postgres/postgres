@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.17 1996/08/14 16:44:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.18 1996/09/16 05:50:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,6 +370,10 @@ PQexec(PGconn* conn, const char* query)
   PGnotify *newNotify;
   FILE *pfin, *pfout, *pfdebug;
 
+#ifdef PQ_NOTIFY_PATCH
+  int isCommand = 0;			/* DZ - 31-8-1996 */
+#endif
+
   pname[0]='\0';
 
   if (!conn) return NULL;
@@ -457,6 +461,13 @@ PQexec(PGconn* conn, const char* query)
 	clear = 0;
 
 	pqPuts("Q ",pfout,pfdebug); /* send an empty query */
+#ifdef PQ_NOTIFY_PATCH
+        /*
+         * Set a flag and process messages in the usual way because
+         * there may be async notifications pending.  DZ - 31-8-1996
+         */
+        isCommand = 1;
+#else
 	while (!clear)
 	  {
 	    if (pqGets(buffer,ERROR_MSG_LENGTH,pfin,pfdebug) == 1)
@@ -466,6 +477,7 @@ PQexec(PGconn* conn, const char* query)
 	result = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
 	strncpy(result->cmdStatus,cmdStatus, CMDSTATUS_LEN-1);
 	return result;
+#endif
       }
       break;
     case 'E': /* error return */
@@ -482,6 +494,17 @@ PQexec(PGconn* conn, const char* query)
 	if ((c = pqGetc(pfin,pfdebug)) != '\0') {
 	  fprintf(stderr,"error!, unexpected character %c following 'I'\n", c);
 	}
+#ifdef PQ_NOTIFY_PATCH
+	if (isCommand) {
+	    /*
+	     * If this is the result of a portal query command set the
+	     * command status and message accordingly.  DZ - 31-8-1996
+	     */
+	    result = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
+	    strncpy(result->cmdStatus,cmdStatus, CMDSTATUS_LEN-1);
+	    return result;
+	}
+#endif
 	result = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
 	return result;
       }
