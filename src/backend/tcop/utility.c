@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.32 1997/12/04 00:27:24 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.33 1998/01/01 05:48:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,9 @@
 #include "utils/syscache.h"
 #endif
 
+void DefineUser(CreateUserStmt *stmt);
+void AlterUser(AlterUserStmt *stmt);
+void RemoveUser(char *username);
 
 /* ----------------
  *		CHECK_IF_ABORTED() is used to avoid doing unnecessary
@@ -239,13 +242,12 @@ ProcessUtility(Node * parsetree,
 				CHECK_IF_ABORTED();
 
 				/*
-				 * owner checking done in PerformAddAttribute (now
-				 * recursive)
+				 * owner checking done in PerformAddAttribute (now recursive)
 				 */
 				PerformAddAttribute(stmt->relname,
 									userName,
 									stmt->inh,
-									stmt->colDef);
+									(ColumnDef *)stmt->colDef);
 			}
 			break;
 
