@@ -1,6 +1,8 @@
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
+#define SQLERRMC_LEN	70
+
 #ifdef __cplusplus
 extern		"C"
 {
@@ -14,7 +16,7 @@ extern		"C"
 		struct
 		{
 			int			sqlerrml;
-			char		sqlerrmc[70];
+			char		sqlerrmc[SQLERRMC_LEN];
 		}			sqlerrm;
 		char		sqlerrp[8];
 		long		sqlerrd[6];

@@ -109,7 +109,7 @@ register_error(long code, char *fmt,...)
 
 	sqlca.sqlcode = code;
 	va_start(args, fmt);
-	vsprintf(sqlca.sqlerrm.sqlerrmc, fmt, args);
+	vsnprintf(sqlca.sqlerrm.sqlerrmc, SQLERRMC_LEN, fmt, args);
 	va_end(args);
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
 
@@ -649,7 +649,8 @@ ECPGexecute(struct statement * stmt)
 				int			nfields,
 							ntuples,
 							act_tuple,
-							act_field;
+							act_field,
+							isarray;
 
 			case PGRES_TUPLES_OK:
 				nfields = PQnfields(results);
@@ -677,6 +678,16 @@ ECPGexecute(struct statement * stmt)
 						register_error(ECPG_TOO_FEW_ARGUMENTS, "Too few arguments line %d.", stmt->lineno);
 						return (false);
 					}
+
+					array_query = (char *)ecpg_alloc(strlen("select typelem from pg_type where oid=") + 11, stmt -> lineno);
+					sprintf(array_query, "select typelem from pg_type where oid=%d", PQftype(results, act_field));
+					query = PQexec(stmt->connection->connection, array_query);
+					isarray = 0;
+					if (PQresultStatus(query) == PGRES_TUPLES_OK) {
+						isarray = atol((char *)PQgetvalue(query, 0, 0));
+						ECPGlog("ECPGexecute line %d: TYPE database: %d C: %d array: %s\n", stmt->lineno, PQftype(results, act_field), var->type, isarray ? "yes" : "no");
+					}
+					PQclear(query);
 
 					/*
 					 * if we don't have enough space, we cannot read all
@@ -726,14 +737,6 @@ ECPGexecute(struct statement * stmt)
 						add_mem(var->value, stmt->lineno);
 					}
 										
-#if 0
-					array_query = (char *)ecpg_alloc(strlen("select typelem from pg_type where oid=") + 11, stmt -> lineno);
-					sprintf(array_query, "select typelem from pg_type where oid=%d", PQftype(results, act_field));
-					query = PQexec(stmt->connection->connection, array_query);
-					if (PQresultStatus(query) == PGRES_TUPLES_OK)
-						ECPGlog("ECPGexecute line %d: TYPE database: %d C: %d array OID: %s\n", stmt->lineno, PQftype(results, act_field), var->type, (char *)PQgetvalue(query, 0, 0));
-					PQclear(query);
-#endif
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 					{
 						pval = (char *)PQgetvalue(results, act_tuple, act_field);
