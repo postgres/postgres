@@ -4298,7 +4298,7 @@ fi
 ##
 ## Header files
 ##
-for ac_hdr in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h netinet/tcp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/socket.h sys/types.h sys/un.h termios.h
+for ac_hdr in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h netinet/tcp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/un.h sys/types.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h)
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
