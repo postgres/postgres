@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.9 1997/03/25 04:10:21 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.10 1997/04/02 03:38:02 vadim Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -149,6 +149,7 @@
 #include <utils/relcache.h>
 #include <miscadmin.h>
 #include <commands/async.h>
+#include <commands/sequence.h>
 
 /* ----------------
  *	global variables holding the current transaction state.
@@ -813,7 +814,8 @@ CommitTransaction()
      *	do commit processing
      * ----------------
      */
-     DestroyTempRels();
+    CloseSequences ();
+    DestroyTempRels();
     AtEOXact_portals();
     RecordTransactionCommit();
     RelationPurgeLocalRelation(true);
@@ -878,6 +880,7 @@ AbortTransaction()
      *	do abort processing
      * ----------------
      */
+    CloseSequences ();
     AtEOXact_portals();
     RecordTransactionAbort();
     RelationPurgeLocalRelation(false);
