@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.85 2003/10/02 06:36:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.86 2003/10/06 16:38:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3453,6 +3453,13 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	Trigger		trig;
 	List	   *list;
 	int			count;
+
+	/*
+	 * See if we can do it with a single LEFT JOIN query.  A FALSE result
+	 * indicates we must proceed with the fire-the-trigger method.
+	 */
+	if (RI_Initial_Check(fkconstraint, rel, pkrel))
+		return;
 
 	/*
 	 * Scan through each tuple, calling RI_FKey_check_ins (insert trigger)
