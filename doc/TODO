@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar 31 07:55:05 EST 2002
+Last updated:		Sun Mar 31 20:56:13 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -58,7 +58,7 @@ ADMIN
 * -Make it easier to create a database owned by someone who can't createdb,
   perhaps CREATE DATABASE dbname WITH OWNER = "user" (Gavin)
 * -Make equals sign optional in CREATE DATABASE WITH param = 'val'
-* -Remove unreferenced table files and temp tables during database vacuum
+* Remove unreferenced table files and temp tables during database vacuum
   or postmaster startup (Bruce)
 * Add table name mapping for numeric file names (Bruce)
 * Remove behavior of postmaster -o after making postmaster/postgres
@@ -249,7 +249,7 @@ CLIENTS
   or multiple SELECTS to avoid bad system catalog entries
 * -Have pg_dump -C dump database location and encoding information
 * Allow psql \d to show foreign keys
-* -Allow psql \d to show temporary table structure
+* Allow psql \d to show temporary table structure
 * Allow psql to show transaction status if backend protocol changes made
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * Add config file check for $ODBCINI, $HOME/.odbc.ini, installpath/etc/odbc.ini
