@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.188 2002/05/19 20:00:53 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.189 2002/05/20 09:29:41 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -328,7 +328,7 @@ make_name(void)
 %type  <str>	RemoveAggrStmt opt_procedural select_no_parens
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_Trusted opt_lancompiler
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
-%type  <str>	VariableResetStmt AlterTableStmt DropUserStmt from_list
+%type  <str>	VariableResetStmt AlterTableStmt from_list
 %type  <str>	opt_trans user_list OptUserList OptUserElem relation_name
 %type  <str>	CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>	OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
@@ -361,18 +361,19 @@ make_name(void)
 %type  <str>	insert_target_list insert_column_item DropRuleStmt
 %type  <str>	createfunc_opt_item set_rest var_list_or_default
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
+%type  <str>	DropUserStmt 
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into
-%type  <str>	storage_clause opt_initializer c_anything blockstart
-%type  <str>	blockend variable_list variable c_thing c_term
+%type  <str>	storage_clause opt_initializer c_anything 
+%type  <str>	variable_list variable c_thing c_term
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
 %type  <str>	stmt ECPGRelease execstring server_name
 %type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
 %type  <str>	quoted_ident_stringvar var_type_declarations
 %type  <str>	db_prefix server opt_options opt_connection_name c_list
-%type  <str>	ECPGSetConnection cpp_line ECPGTypedef c_args ECPGKeywords
+%type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>	struct_type s_struct vt_declarations variable_declarations
@@ -382,7 +383,7 @@ make_name(void)
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel
 %type  <str>	reserved_keyword unreserved_keyword
 %type  <str>	col_name_keyword func_name_keyword
-%type  <str>	ECPGTypeName variablelist cvariable
+%type  <str>	ECPGTypeName variablelist
 
 %type  <descriptor> ECPGGetDescriptor
 
@@ -409,10 +410,10 @@ statements: /*EMPTY*/
 statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 		| ecpgstart stmt ';'
 		| ECPGDeclaration
-		| c_thing						{ fprintf(yyout, "%s", $1); free($1); }
-		| cpp_line						{ fprintf(yyout, "%s", $1); free($1); }
-		| blockstart					{ fputs($1, yyout); free($1); }
-		| blockend						{ fputs($1, yyout); free($1); }
+		| c_thing		{ fprintf(yyout, "%s", $1); free($1); }
+		| CPP_LINE		{ fprintf(yyout, "%s", $1); free($1); }
+		| '{'			{ braces_open++; fputs("{", yyout); }
+		| '}'			{ remove_variables(braces_open--); fputs("}", yyout); }
 		;
 
 opt_at: AT connection_target
@@ -689,14 +690,13 @@ AlterUserSetStmt: ALTER USER UserId SET set_rest
  *
  *
  *****************************************************************************/
-
 DropUserStmt:  DROP USER user_list
 			{ $$ = cat2_str(make_str("drop user"), $3);}
 		;
-
 /*
  * Options for CREATE USER and ALTER USER
  */
+
 OptUserList: OptUserList OptUserElem	{ $$ = cat2_str($1, $2); }
 		| /* EMPTY */					{ $$ = EMPTY; }
 		;
@@ -724,7 +724,6 @@ user_list:	user_list ',' UserId
 		| UserId	
 			{ $$ = $1; }
 		;
-
 
 /*****************************************************************************
  *
@@ -822,13 +821,12 @@ schema_stmt: CreateStmt		{ $$ = $1; }
  *	  SET TIME ZONE 'var_value'
  *
  *****************************************************************************/
-
 VariableSetStmt:  SET set_rest
 			{ $$ = cat2_str(make_str("set"), $2 ); }
 		| SET LOCAL set_rest
-			{ $$ = cat2_str(make_str("set local"), $2 ); }
+			{ $$ = cat2_str(make_str("set local"), $3 ); }
 		| SET SESSION set_rest
-			{ $$ = cat2_str(make_str("set session"), $2 ); }
+			{ $$ = cat2_str(make_str("set session"), $3 ); }
 		;
 
 set_rest:	ColId TO var_list_or_default
@@ -876,7 +874,6 @@ opt_boolean:  TRUE_P		{ $$ = make_str("true"); }
 		| ON				{ $$ = make_str("on"); }
 		| OFF				{ $$ = make_str("off"); }
 		;
-
 /* Timezone values can be:
  * - a string such as 'pst8pdt'
  * - a column identifier such as "pst8pdt"
@@ -2193,7 +2190,7 @@ opt_equal: '='					{ $$ = make_str("="); }
  *****************************************************************************/
 
 AlterDatabaseSetStmt: ALTER DATABASE database_name SET set_rest
-			{ $$ = cat_str(4, make_str("alter database"), $3, make_Str("set"), $5); }
+			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("set"), $5); }
 		| ALTER DATABASE database_name VariableResetStmt
 			{ $$ = cat_str(3, make_str("alter database"), $3, $4); }
 		;
@@ -2881,7 +2878,7 @@ opt_decimal:  '(' PosIntConst ',' PosIntConst ')'
  * The following implements BIT() and BIT VARYING().
  */
 Bit:  BIT opt_varying '(' PosIntConst ')'
-			{ $$ = cat_str(5, $1, $2, make_str("("), $4, make_str(")")); }
+			{ $$ = cat_str(5, make_str("bit"), $2, make_str("("), $4, make_str(")")); }
 		| BIT opt_varying
 			{ $$ = cat2_str(make_str("bit"), $2); }
 		;
@@ -3687,7 +3684,7 @@ connection_target: database_name opt_server opt_port
 		}
 		;
 
-db_prefix: ident cvariable
+db_prefix: ident CVARIABLE
 		{
 			if (strcmp($2, "postgresql") != 0 && strcmp($2, "postgres") != 0)
 			{
@@ -3778,7 +3775,7 @@ user_name: UserId
 		}
 		;
 
-char_variable: cvariable
+char_variable: CVARIABLE
 		{
 			/* check if we have a char variable */
 			struct variable *p = find_variable($1);
@@ -4421,14 +4418,14 @@ ECPGAllocateDescr:	SQL_ALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
  * read from descriptor
  */
 
-ECPGGetDescHeaderItem: cvariable '=' desc_header_item
+ECPGGetDescHeaderItem: CVARIABLE '=' desc_header_item
 			{ push_assignment($1, $3); }
 		;
 
 desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
 		;
 
-ECPGGetDescItem: cvariable '=' descriptor_item	{ push_assignment($1, $3); };
+ECPGGetDescItem: CVARIABLE '=' descriptor_item	{ push_assignment($1, $3); };
 
 descriptor_item:	SQL_CARDINALITY		{ $$ = ECPGd_cardinality; }
 		| SQL_DATA						{ $$ = ECPGd_data; }
@@ -4461,7 +4458,7 @@ ECPGGetDescriptorHeader:	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar
 		;
 
 ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar
-						SQL_VALUE cvariable ECPGGetDescItems
+						SQL_VALUE CVARIABLE ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
 		|	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
@@ -4851,6 +4848,7 @@ function_name:	ident						{ $$ = $1; }
 ColLabel:  ECPGColLabel					{ $$ = $1; }
 		| ECPGTypeName					{ $$ = $1; }
 		| CHAR							{ $$ = make_str("char"); }
+		| INT							{ $$ = make_str("int"); }
 		| UNION							{ $$ = make_str("union"); }
 		;
 
@@ -5043,29 +5041,36 @@ unreserved_keyword:
  * looks too much like a function call for an LR(1) parser.
  */
 col_name_keyword:
-		  BIT							{ $$ = make_str("bit"); }
+		BIGINT			{ $$ = make_str("bigint");}
+		| BIT			{ $$ = make_str("bit"); }
 /* CHAR must be excluded from ECPGColLabel because of conflict with UNSIGNED
-		| CHAR							{ $$ = make_str("char"); }
+		| CHAR			{ $$ = make_str("char"); }
  */
-		| CHARACTER						{ $$ = make_str("character"); }
-		| COALESCE						{ $$ = make_str("coalesce"); }
-		| DEC							{ $$ = make_str("dec"); }
-		| DECIMAL						{ $$ = make_str("decimal"); }
-		| EXISTS						{ $$ = make_str("exists"); }
-		| EXTRACT						{ $$ = make_str("extract"); }
-		| FLOAT							{ $$ = make_str("float"); }
-		| INTERVAL						{ $$ = make_str("interval"); }
-		| NCHAR							{ $$ = make_str("nchar"); }
-		| NONE							{ $$ = make_str("none"); }
-		| NULLIF						{ $$ = make_str("nullif"); }
-		| NUMERIC						{ $$ = make_str("numeric"); }
-		| POSITION						{ $$ = make_str("position"); }
-		| SETOF							{ $$ = make_str("setof"); }
-		| SUBSTRING						{ $$ = make_str("substring"); }
-		| TIME							{ $$ = make_str("time"); }
-		| TIMESTAMP						{ $$ = make_str("timestamp"); }
-		| TRIM							{ $$ = make_str("trim"); }
-		| VARCHAR						{ $$ = make_str("varchar"); }
+		| CHARACTER		{ $$ = make_str("character"); }
+		| COALESCE		{ $$ = make_str("coalesce"); }
+		| DEC			{ $$ = make_str("dec"); }
+		| DECIMAL		{ $$ = make_str("decimal"); }
+		| EXISTS		{ $$ = make_str("exists"); }
+		| EXTRACT		{ $$ = make_str("extract"); }
+		| FLOAT			{ $$ = make_str("float"); }
+/* INT must be excluded from ECPGColLabel because of conflict 
+		| INT			{ $$ = make_str("int"); }
+ */
+		| INTEGER 		{ $$ = make_str("integer"); }
+		| INTERVAL		{ $$ = make_str("interval"); }
+		| NCHAR			{ $$ = make_str("nchar"); }
+		| NONE			{ $$ = make_str("none"); }
+		| NULLIF		{ $$ = make_str("nullif"); }
+		| NUMERIC		{ $$ = make_str("numeric"); }
+		| POSITION		{ $$ = make_str("position"); }
+		| REAL			{ $$ = make_str("real"); }
+		| SETOF			{ $$ = make_str("setof"); }
+		| SMALLINT		{ $$ = make_str("smallint"); }
+		| SUBSTRING		{ $$ = make_str("substring"); }
+		| TIME			{ $$ = make_str("time"); }
+		| TIMESTAMP		{ $$ = make_str("timestamp"); }
+		| TRIM			{ $$ = make_str("trim"); }
+		| VARCHAR		{ $$ = make_str("varchar"); }
 		;
 
 /* Function identifier --- keywords that can be function names.
@@ -5188,14 +5193,14 @@ c_args: /*EMPTY*/		{ $$ = EMPTY; }
 		| c_list		{ $$ = $1; }
 		;
 
-coutputvariable: cvariable indicator
+coutputvariable: CVARIABLE indicator
 			{ add_variable(&argsresult, find_variable($1), find_variable($2)); }
-		| cvariable
+		| CVARIABLE
 			{ add_variable(&argsresult, find_variable($1), &no_indicator); }
 		;
 
 
-civarind: cvariable indicator
+civarind: CVARIABLE indicator
 		{
 			if ($2 != NULL && (find_variable($2))->type->type == ECPGt_array)
 				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
@@ -5204,18 +5209,15 @@ civarind: cvariable indicator
 		}
 		;
 
-civar: cvariable
+civar: CVARIABLE
 		{
 			add_variable(&argsinsert, find_variable($1), &no_indicator);
 			$$ = $1;
 		}
 		;
 
-cvariable: CVARIABLE				{ $$ = $1; }
-		;
-
 indicator: CVARIABLE				{ check_indicator((find_variable($1))->type); $$ = $1; }
-		| SQL_INDICATOR cvariable	{ check_indicator((find_variable($2))->type); $$ = $2; }
+		| SQL_INDICATOR CVARIABLE	{ check_indicator((find_variable($2))->type); $$ = $2; }
 		| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 		;
 
@@ -5235,10 +5237,8 @@ quoted_ident_stringvar: IDENT
  * C stuff
  */
 
-cpp_line: CPP_LINE	{ $$ = $1; };
-
 c_stuff_item: c_anything			{ $$ = $1; }
-		| '(' ')'					{ $$ = make_str("()"); }
+		| '(' ')'			{ $$ = make_str("()"); }
 		| '(' c_stuff ')'
 			{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		;
@@ -5248,19 +5248,19 @@ c_stuff: c_stuff_item	{ $$ = $1; }
 			{ $$ = cat2_str($1, $2); }
 		;
 
-c_list: c_term						{ $$ = $1; }
-		| c_list ',' c_term			{ $$ = cat_str(3, $1, make_str(","), $3); }
+c_list: c_term				{ $$ = $1; }
+		| c_list ',' c_term	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-c_term:  c_stuff					{ $$ = $1; }
-		| '{' c_list '}'			{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }
+c_term:  c_stuff			{ $$ = $1; }
+		| '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }
 		;
 
 c_thing:	c_anything	{ $$ = $1; }
-		|	'('						{ $$ = make_str("("); }
-		|	')'						{ $$ = make_str(")"); }
-		|	','						{ $$ = make_str(","); }
-		|	';'						{ $$ = make_str(";"); }
+		|	'('	{ $$ = make_str("("); }
+		|	')'	{ $$ = make_str(")"); }
+		|	','	{ $$ = make_str(","); }
+		|	';'	{ $$ = make_str(";"); }
 		;
 
 c_anything:  IDENT					{ $$ = $1; }
@@ -5315,25 +5315,13 @@ c_anything:  IDENT					{ $$ = $1; }
 		| '='						{ $$ = make_str("="); }
 		;
 
-blockstart : '{'
-		{
-			braces_open++;
-			$$ = make_str("{");
-		};
-
-blockend : '}'
-		{
-			remove_variables(braces_open--);
-			$$ = make_str("}");
-		};
-
 %%
 
 void yyerror( char * error)
 {
 	char buf[1024];
 
-	snprintf(buf,sizeof buf,"%s at or near \"%s\"",error,yytext);
+	snprintf(buf,sizeof buf,"%s at or near \"%s\"", error, token_start ? token_start : yytext);
 	buf[sizeof(buf)-1]=0;
 	mmerror(PARSE_ERROR, ET_ERROR, buf);
 }

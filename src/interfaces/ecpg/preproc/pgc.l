@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.91 2002/05/19 20:00:53 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.92 2002/05/20 09:29:41 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,9 +50,8 @@ static int		literalalloc;			/* current allocated buffer size */
 #define startlit()	(literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
 static void addlitchar (unsigned char);
-static unsigned char unescape_single_char(unsigned char);
 
-static char        *token_start;
+char *token_start;
 int state_before;
 
 struct _yy_buffer 
@@ -307,7 +306,7 @@ cppline			{space}*#(.*\\{space})*.*
 						ECHO;
 						if (xcdepth <= 0)
 						{
-							BEGIN(INITIAL);
+							BEGIN(state_before);
 							token_start = NULL;
 						}
 						else
@@ -377,7 +376,7 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 <xq>{xqdouble}		{ addlitchar('\''); }
 <xq>{xqinside}		{ addlit(yytext, yyleng); }
-<xq>{xqescape}  	{ addlitchar(unescape_single_char(yytext[1])); }
+<xq>{xqescape}  	{ addlit(yytext, yyleng); }
 <xq>{xqoctesc}		{ unsigned char c = strtoul(yytext+1, NULL, 8);
                           addlitchar(c); }
 <xq>{xqcat}			{ /* ignore */ }
@@ -936,22 +935,9 @@ addlitchar(unsigned char ychar)
 	literalbuf[literallen] = '\0';
 }
 
-unsigned char
-unescape_single_char(unsigned char c)
+int
+yywrap(void)
 {
-        switch (c)
-        {
-                case 'b':
-                        return '\b';
-                case 'f':
-                        return '\f';
-                case 'n':
-                        return '\n';
-                case 'r':
-                        return '\r';
-                case 't':
-                        return '\t';
-                default:
-                        return c;
-	}
+	return(1);
 }
+

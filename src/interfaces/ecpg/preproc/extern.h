@@ -18,7 +18,7 @@ extern char *descriptor_index;
 extern char *descriptor_name;
 extern char *connection;
 extern char *input_filename;
-extern char *yytext,
+extern char *yytext, *token_start,
 			errortext[128];
 
 #ifdef YYDEBUG

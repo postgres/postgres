@@ -29,7 +29,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"enum", SQL_ENUM},
 	{"extern", S_EXTERN},
 	{"float", FLOAT},
-	{"int", SQL_INT},
+	{"int", INT},
 	{"long", SQL_LONG},
 	{"register", S_REGISTER},
 	{"short", SQL_SHORT},
