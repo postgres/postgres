@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.34 1999/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.35 1999/02/02 17:46:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,7 +701,7 @@ OperandIsInner(Node *opnd, int inner_relid)
 /*---------------------------------------------------------
  *
  * get_agg_tlist_references -
- *	  changes the target list of an Agg node so that it points to
+ *	  generates the target list of an Agg node so that it points to
  *	  the tuples returned by its left tree subplan.
  *
  *	We now also generate a linked list of Aggref pointers for Agg.
@@ -1177,8 +1177,7 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupCla
 		foreach(t, ((List *) ((SubLink *) ((SubPlan *)
 						   ((Expr *) clause)->oper)->sublink)->lefthand))
 		{
-			agg_list =
-				nconc(agg_list,
+			agg_list = nconc(agg_list,
 					  check_having_qual_for_aggs(lfirst(t),
 										subplanTargetList, groupClause));
 		}
@@ -1190,9 +1189,8 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupCla
 			foreach(tmp_ptr, ((SubLink *) ((SubPlan *)
 								((Expr *) clause)->oper)->sublink)->oper)
 			{
-				agg_list =
-					nconc(agg_list,
-					 check_having_qual_for_aggs((Node *) lfirst(((Expr *)
+				agg_list = nconc(agg_list,
+						 check_having_qual_for_aggs((Node *) lfirst(((Expr *)
 												 lfirst(tmp_ptr))->args),
 										subplanTargetList, groupClause));
 			}
@@ -1220,9 +1218,8 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupCla
 			 */
 			if (contained_in_group_clause)
 			{
-				agg_list =
-					nconc(agg_list,
-						  check_having_qual_for_aggs(lfirst(t),
+				agg_list = nconc(agg_list,
+						  		 check_having_qual_for_aggs(lfirst(t),
 										subplanTargetList, groupClause));
 			}
 			else
@@ -1235,7 +1232,6 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupCla
 	}
 	else
 	{
-
 		/*
 		 * Ooops! we can not handle that!
 		 */

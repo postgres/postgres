@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.38 1999/01/25 18:02:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.39 1999/02/02 17:46:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,11 +235,10 @@ union_planner(Query *parse)
 
 		/***S*H***/
 		/* Use 'new_tlist' instead of 'tlist' */
-		result_plan =
-			make_groupPlan(&new_tlist,
-						   tuplePerGroup,
-						   parse->groupClause,
-						   result_plan);
+		result_plan = make_groupPlan(&new_tlist,
+								   tuplePerGroup,
+								   parse->groupClause,
+								   result_plan);
 	}
 
 	/*
@@ -255,12 +254,11 @@ union_planner(Query *parse)
 		result_plan = (Plan *) make_agg(tlist, result_plan);
 
 		/*
-		 * set the varno/attno entries to the appropriate references to
+		 * get the varno/attno entries to the appropriate references to
 		 * the result tuple of the subplans.
 		 */
 		((Agg *) result_plan)->aggs =
 		  get_agg_tlist_references((Agg *) result_plan); 
-
 
 		/***S*H***/
 		if(parse->havingQual!=NULL) 
@@ -299,11 +297,13 @@ union_planner(Query *parse)
 		    ((Agg *) result_plan)->plan.qual=(List *) parse->havingQual;
 
 		    /* Check every clause of the havingQual for aggregates used and append
-		     * them to result_plan->aggs */
+		     * them to result_plan->aggs
+			 */
 		    foreach(clause, ((Agg *) result_plan)->plan.qual)
 		      {
 			/* Make sure there are aggregates in the havingQual 
-			 * if so, the list must be longer after check_having_qual_for_aggs */
+			 * if so, the list must be longer after check_having_qual_for_aggs
+			 */
 			old_length=length(((Agg *) result_plan)->aggs);			
 			
 			((Agg *) result_plan)->aggs = nconc(((Agg *) result_plan)->aggs,

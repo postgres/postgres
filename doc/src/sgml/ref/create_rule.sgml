@@ -198,11 +198,11 @@ Without
     <example>
      <title>Example of a circular rewrite rule combination.</title>
      <programlisting>
-create rule bad_rule_combination_1 is
+create rule bad_rule_combination_1 as
     on select to EMP
     do instead select to TOYEMP
 
-create rule bad_rule_combination_2 is
+create rule bad_rule_combination_2 as
     on select to TOYEMP
     do instead select to EMP
      </programlisting>
@@ -232,7 +232,7 @@ select * from EMP
    Make Sam get the same salary adjustment as Joe:
    
    <programlisting>
-create rule example_1 is
+create rule example_1 as
     on update EMP.salary where current.name = "Joe"
     do update EMP (salary = new.salary)
     where EMP.name = "Sam"
@@ -248,7 +248,7 @@ create rule example_1 is
   <para>
    Make Bill get Joe's salary when it is accessed:
    <programlisting>
-create rule example_2 is
+create rule example_2 as
     on select to EMP.salary
     where current.name = "Bill"
     do instead
@@ -261,7 +261,7 @@ create rule example_2 is
    department (<function>current_user</function> returns the name of
    the current user):
    <programlisting>  
-create rule example_3 is
+create rule example_3 as
     on select to EMP.salary
     where current.dept = "shoe" and current_user = "Joe"
     do instead nothing
@@ -272,7 +272,7 @@ create rule example_3 is
    <programlisting>
 create TOYEMP(name = char16, salary = int4)
 
-create rule example_4 is
+create rule example_4 as
     on select to TOYEMP
     do instead
     select (EMP.name, EMP.salary) from EMP
@@ -282,7 +282,7 @@ create rule example_4 is
   <para>
    All new employees must make 5,000 or less
    <programlisting>
-create rule example_5 is
+create rule example_5 as
     on insert to EMP where new.salary > 5000
     do update newset salary = 5000
    </programlisting>

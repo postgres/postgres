@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.9 1998/06/24 13:21:24 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.10 1999/02/02 17:46:17 momjian Exp $
 .TH "CREATE RULE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create rule - define a new rule
@@ -124,11 +124,11 @@ Postgres to
 --
 --Example of a circular rewrite rule combination. 
 --
-create rule bad_rule_combination_1 is
+create rule bad_rule_combination_1 as
 	on select to EMP 
 	do instead select to TOYEMP
 
-create rule bad_rule_combination_2 is
+create rule bad_rule_combination_2 as
 	on select to TOYEMP
 	do instead select to EMP
 
@@ -146,7 +146,7 @@ access to a class in order to define a rule on it.
 --
 --Make Sam get the same salary adjustment as Joe
 --
-create rule example_1 is
+create rule example_1 as
     on update EMP.salary where current.name = "Joe"
     do update EMP (salary = new.salary)
 	where EMP.name = "Sam"
@@ -161,7 +161,7 @@ Joe's salary on to Sam.
 --
 --Make Bill get Joe's salary when it is accessed
 --
-create rule example_2 is
+create rule example_2 as
     on select to EMP.salary
         where current.name = "Bill"
     do instead
@@ -172,7 +172,7 @@ create rule example_2 is
 --Deny Joe access to the salary of employees in the shoe
 --department.  (pg_username() returns the name of the current user)
 --
-create rule example_3 is
+create rule example_3 as
     on select to EMP.salary
 	where current.dept = "shoe"
               and pg_username() = "Joe"
@@ -184,7 +184,7 @@ create rule example_3 is
 --
 create TOYEMP(name = name, salary = int4)
 
-create rule example_4 is
+create rule example_4 as
     on select to TOYEMP
     do instead select (EMP.name, EMP.salary) from EMP
 	where EMP.dept = "toy"
@@ -193,7 +193,7 @@ create rule example_4 is
 --
 --All new employees must make 5,000 or less
 --
-create rule example_5 is
+create rule example_5 as
 	on insert to EMP where new.salary > 5000
 	do update newset salary = 5000
 .fi

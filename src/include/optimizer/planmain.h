@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.18 1999/01/25 18:02:28 momjian Exp $
+ * $Id: planmain.h,v 1.19 1999/02/02 17:46:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ extern void add_missing_vars_to_tlist(Query *root, List *tlist);
  */
 extern void set_tlist_references(Plan *plan);
 extern List *join_references(List *clauses, List *outer_tlist,
-				List *inner_tlist);
+							 List *inner_tlist);
 extern List *index_outerjoin_references(List *inner_indxqual,
 						   List *outer_tlist, Index inner_relid);
 extern List *get_agg_tlist_references(Agg *aggNode);
