@@ -48,7 +48,7 @@
 #	Performance
 #
 #sort_mem = 512
-#shared_buffers = 2*max_connections # min 16
+#shared_buffers = 64	# 2*max_connections, min 16
 #fsync = true
 
 
