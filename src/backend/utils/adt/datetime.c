@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.114 2003/08/25 22:47:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.115 2003/08/25 23:30:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
  * which are 30 or 45 minutes away from an even hour, most are on an hour
  * boundary, and none on other boundaries.
  *
- * Let's include all strings from my current zinc time zone database.
+ * Let's include all strings from my current zic time zone database.
  * Not all of them are unique, or even very understandable, so we will
  * leave some commented out for now.
  */
@@ -91,8 +91,8 @@ static datetkn datetktbl[] = {
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
 	{"abstime", IGNORE_DTF, 0}, /* for pre-v6.1 "Invalid Abstime" */
 	{"acsst", DTZ, POS(42)},	/* Cent. Australia */
-	{"acst", DTZ, NEG(16)},		/* Atlantic/Porto Acre */
-	{"act", TZ, NEG(20)},		/* Atlantic/Porto Acre */
+	{"acst", DTZ, NEG(16)},		/* Atlantic/Porto Acre Summer Time */
+	{"act", TZ, NEG(20)},		/* Atlantic/Porto Acre Time */
 	{DA_D, ADBC, AD},			/* "ad" for years >= 0 */
 	{"adt", DTZ, NEG(12)},		/* Atlantic Daylight Time */
 	{"aesst", DTZ, POS(44)},	/* E. Australia */
@@ -107,9 +107,12 @@ static datetkn datetktbl[] = {
 	{"am", AMPM, AM},
 	{"amst", DTZ, POS(20)},		/* Armenia Summer Time (Yerevan) */
 #if 0
-	{"amst", DTZ, NEG(12)},		/* Porto Velho */
+	{"amst", DTZ, NEG(12)},		/* Amazon Summer Time (Porto Velho) */
 #endif
 	{"amt", TZ, POS(16)},		/* Armenia Time (Yerevan) */
+#if 0
+	{"amt", TZ, NEG(16)},		/* Amazon Time (Porto Velho) */
+#endif
 	{"anast", DTZ, POS(52)},	/* Anadyr Summer Time (Russia) */
 	{"anat", TZ, POS(48)},		/* Anadyr Time (Russia) */
 	{"apr", MONTH, 4},
@@ -147,10 +150,8 @@ static datetkn datetktbl[] = {
 #endif
 	{"bot", TZ, NEG(16)},		/* Bolivia Time */
 	{"bra", TZ, NEG(12)},		/* Brazil Time */
-#if 0
-	brst
-	brt
-#endif
+	{"brst", DTZ, NEG(8)},		/* Brasilia Summer Time */
+	{"brt", TZ, NEG(12)},		/* Brasilia Time */
 	{"bst", DTZ, POS(4)},		/* British Summer Time */
 #if 0
 	{"bst", TZ, NEG(12)},		/* Brazil Standard Time */
@@ -226,10 +227,8 @@ static datetkn datetktbl[] = {
 	{"fjt", TZ, NEG(48)},		/* Fiji Time */
 	{"fkst", DTZ, NEG(12)},		/* Falkland Islands Summer Time */
 	{"fkt", TZ, NEG(8)},		/* Falkland Islands Time */
-#if 0
-	fnst
-	fnt
-#endif
+	{"fnst", DTZ, NEG(4)},		/* Fernando de Noronha Summer Time */
+	{"fnt", TZ, NEG(8)},		/* Fernando de Noronha Time */
 	{"fri", DOW, 5},
 	{"friday", DOW, 5},
 	{"fst", TZ, POS(4)},		/* French Summer Time */
@@ -324,7 +323,7 @@ static datetkn datetktbl[] = {
 	{"mez", TZ, POS(4)},		/* Middle Europe Zone */
 	{"mht", TZ, POS(48)},		/* Kwajalein */
 	{"mm", UNITS, DTK_MINUTE},	/* "minute" for ISO input */
-	{"mmt", TZ, POS(26)},		/* Myannar Time */
+	{"mmt", TZ, POS(26)},		/* Myanmar Time */
 	{"mon", DOW, 1},
 	{"monday", DOW, 1},
 #if 0

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.32 2003/07/29 00:03:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.33 2003/08/25 23:30:25 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -536,18 +536,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.32 2003/07/29 00:03:17 tg
 	<entry>+07:00</entry>
 	<entry>Christmas (Island) Time</entry>
        </row>
-<!--
-       Conflicts with China Coastal Time
-       <row>
-	<entry>CCT</entry>
-	<entry>+06:30</entry>
-	<entry>Cocos Island Time</entry>
-       </row>
--->
        <row>
 	<entry>MMT</entry>
 	<entry>+06:30</entry>
-	<entry>Myannar Time</entry>
+	<entry>Myanmar Time</entry>
        </row>
        <row>
 	<entry>ALMT</entry>
@@ -760,6 +752,21 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.32 2003/07/29 00:03:17 tg
 	<entry>West Africa Time</entry>
        </row>
        <row>
+	<entry>FNST</entry>
+	<entry>-01:00</entry>
+	<entry>Fernando de Noronha Summer Time</entry>
+       </row>
+       <row>
+	<entry>FNT</entry>
+	<entry>-02:00</entry>
+	<entry>Fernando de Noronha Time</entry>
+       </row>
+       <row>
+	<entry>BRST</entry>
+	<entry>-02:00</entry>
+	<entry>Brasilia Summer Time</entry>
+       </row>
+       <row>
 	<entry>NDT</entry>
 	<entry>-02:30</entry>
 	<entry>Newfoundland Daylight-Saving Time</entry>
@@ -773,6 +780,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.32 2003/07/29 00:03:17 tg
 	<entry>AWT</entry>
 	<entry>-03:00</entry>
 	<entry>(unknown)</entry>
+       </row>
+       <row>
+	<entry>BRT</entry>
+	<entry>-03:00</entry>
+	<entry>Brasilia Time</entry>
        </row>
        <row>
 	<entry>NFT</entry>
@@ -795,11 +807,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.32 2003/07/29 00:03:17 tg
 	<entry>Atlantic/Porto Acre Summer Time</entry>
        </row>
        <row>
-	<entry>ACT</entry>
-	<entry>-05:00</entry>
-	<entry>Atlantic/Porto Acre Standard Time</entry>
-       </row>
-       <row>
 	<entry>EDT</entry>
 	<entry>-04:00</entry>
 	<entry>Eastern Daylight-Saving Time</entry>
@@ -811,6 +818,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.32 2003/07/29 00:03:17 tg
       <entry>GMT +4 hours</entry>
       </row>
        -->
+       <row>
+	<entry>ACT</entry>
+	<entry>-05:00</entry>
+	<entry>Atlantic/Porto Acre Standard Time</entry>
+       </row>
        <row>
 	<entry>CDT</entry>
 	<entry>-05:00</entry>
