@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.7 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.8 2000/04/04 19:42:36 momjian Exp $
 Postgres documentation
 -->
 
@@ -25,7 +25,6 @@ Postgres documentation
   <synopsis>
 MOVE [ <replaceable class="PARAMETER">selector</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] 
     { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
-    FETCH [ RELATIVE ] [ { [ <replaceable class="PARAMETER">#</replaceable> | ALL | NEXT | PRIOR ] } ] FROM ] <replaceable class="PARAMETER">cursor</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
