@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.11 2004/08/30 02:54:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.12 2004/10/17 20:47:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@
 
 static bool remove_tablespace_directories(Oid tablespaceoid, bool redo);
 static void set_short_version(const char *path);
-static bool directory_is_empty(const char *path);
 
 
 /*
@@ -680,8 +679,10 @@ set_short_version(const char *path)
 
 /*
  * Check if a directory is empty.
+ *
+ * This probably belongs somewhere else, but not sure where...
  */
-static bool
+bool
 directory_is_empty(const char *path)
 {
 	DIR		   *dirdesc;

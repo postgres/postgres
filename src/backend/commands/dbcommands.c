@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.144 2004/08/30 03:50:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.145 2004/10/17 20:47:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,6 +281,37 @@ createdb(const CreatedbStmt *stmt)
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
 						   tablespacename);
+
+		/*
+		 * If we are trying to change the default tablespace of the template,
+		 * we require that the template not have any files in the new default
+		 * tablespace.  This is necessary because otherwise the copied
+		 * database would contain pg_class rows that refer to its default
+		 * tablespace both explicitly (by OID) and implicitly (as zero), which
+		 * would cause problems.  For example another CREATE DATABASE using
+		 * the copied database as template, and trying to change its default
+		 * tablespace again, would yield outright incorrect results (it would
+		 * improperly move tables to the new default tablespace that should
+		 * stay in the same tablespace).
+		 */
+		if (dst_deftablespace != src_deftablespace)
+		{
+			char	   *srcpath;
+			struct stat st;
+
+			srcpath = GetDatabasePath(src_dboid, dst_deftablespace);
+
+			if (stat(srcpath, &st) == 0 &&
+				S_ISDIR(st.st_mode) &&
+				!directory_is_empty(srcpath))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot assign new default tablespace \"%s\"",
+								tablespacename),
+						 errdetail("There is a conflict because database \"%s\" already has some tables in this tablespace.",
+								   dbtemplate)));
+			pfree(srcpath);
+		}
 	}
 	else
 	{
@@ -311,11 +342,6 @@ createdb(const CreatedbStmt *stmt)
 	/*
 	 * Iterate through all tablespaces of the template database, and copy
 	 * each one to the new database.
-	 *
-	 * If we are trying to change the default tablespace of the template, we
-	 * require that the template not have any files in the new default
-	 * tablespace.	This avoids the need to merge two subdirectories. This
-	 * could probably be improved later.
 	 */
 	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
 	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
@@ -333,7 +359,8 @@ createdb(const CreatedbStmt *stmt)
 
 		srcpath = GetDatabasePath(src_dboid, srctablespace);
 
-		if (stat(srcpath, &st) < 0 || !S_ISDIR(st.st_mode))
+		if (stat(srcpath, &st) < 0 || !S_ISDIR(st.st_mode) ||
+			directory_is_empty(srcpath))
 		{
 			/* Assume we can ignore it */
 			pfree(srcpath);
@@ -352,7 +379,8 @@ createdb(const CreatedbStmt *stmt)
 			remove_dbtablespaces(dboid);
 			ereport(ERROR,
 					(errmsg("could not initialize database directory"),
-				errdetail("Directory \"%s\" already exists.", dstpath)));
+					 errdetail("Directory \"%s\" already exists.",
+							   dstpath)));
 		}
 
 #ifndef WIN32
