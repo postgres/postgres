@@ -1,10 +1,57 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.115.2.5 2002/03/25 21:24:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.115.2.6 2002/08/22 23:26:26 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-7-2-2">
+   <title>Release 7.2.2</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2002-08-23</simpara>
+   </note>
+
+   <para>
+    This has a variety of fixes from 7.2.1.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.2.2</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     7.2.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+<literallayout>
+Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/PgSQL (Tom)
+Fix for compressed transaction log id wraparound (Tom)
+Fix PQescapeBytea/PQunescapeBytea so that they handle bytes > 0x7f (Tatsuo)
+Fix for psql and pg_dump crashing when invoked with non-existand long 
+  options (Tatsuo)
+Fix crash when invoking geometric operators (Tom)
+Allow OPEN cursor(args) (Tom)
+Fix for rtree_gist index build (Teodor)
+Fix for dumping user-defined aggregates (Tom)
+Contrib/intarray fixes (Oleg)
+Fix for complex UNION/EXCEPT/INTERSECT queries using parens (Tom)
+Fix to pg_convert (Tatsuo)
+Fix for crash with long DATA strings (Thomes, Neil)
+Fix for repeat(), lpad(), rpad() and long strings (Neil)
+</literallayout>
+    </para>
+   </sect2>
+  </sect1>
+  
+  
   <sect1 id="release-7-2-1">
    <title>Release 7.2.1</title>
 
