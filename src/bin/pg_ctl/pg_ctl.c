@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.15 2004/06/11 04:17:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.16 2004/06/11 16:36:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,71 +221,33 @@ start_postmaster(void)
 	 * to pass everything to a shell to process them.
 	 */
 	char		cmd[MAXPGPATH];
-	int			ret;
-	char		*pgexec = postgres_path;
 	
-#ifdef WIN32
 	/*
-	 *	Win32 has a problem with the interaction between START and system().
-	 *	There is no way to quote the executable name passed to START.
-	 *	Therefore, we put the executable name in a temporary batch file
-	 *	and run it via START.
+	 *	 Win32 needs START /B rather than "&".
+	 *
+	 *	Win32 has a problem with START and quoted executable names.
+	 *	You must add a "" as the title at the beginning so you can quote
+	 *	the executable name:
+	 *		http://www.winnetmag.com/Article/ArticleID/14589/14589.html
+	 *		http://dev.remotenetworktechnology.com/cmd/cmdfaq.htm
 	 */
-	char		tmp[MAXPGPATH] = "C:\\PG_CTL_XXXXXX", /* good location? */
-				bat[MAXPGPATH];
-	int			fd = mkstemp(tmp);
-
-	if (fd == -1)
-	{
-		fprintf(stderr, _("%s: cannot create batch file %s to start server: %s\n"),
-						progname, tmp, strerror(errno));
-		exit(1);
-	}
-	write(fd, postgres_path, strlen(postgres_path));
-	write(fd, "\n", 1);
-	close(fd);
-
-	strcpy(bat, tmp);
-	strcat(bat, ".BAT");
-	pgexec = bat;
-	if (rename(tmp, bat) == -1)
-	{
-		fprintf(stderr, _("%s: cannot rename batch file %s to %s: %s\n"),
-						progname, tmp, bat, strerror(errno));
-		unlink(tmp);
-		exit(1);
-	}
-#endif
-
 	if (log_file != NULL)
-		/* Win32 needs START /B rather than "&" */
 #ifndef WIN32
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < \"%s\" >> \"%s\" 2>&1 &%s",
 #else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B %s %s < \"%s\" >> \"%s\" 2>&1%s",
+		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s < \"%s\" >> \"%s\" 2>&1%s",
 #endif
-				 SYSTEMQUOTE, pgexec, post_opts, DEVNULL, log_file,
+				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, log_file,
 				 SYSTEMQUOTE);
 	else
 #ifndef WIN32
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < \"%s\" 2>&1 &%s",
 #else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B %s %s < \"%s\" 2>&1%s",
+		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s < \"%s\" 2>&1%s",
 #endif
-				 SYSTEMQUOTE, pgexec, post_opts, DEVNULL, SYSTEMQUOTE);
+				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, SYSTEMQUOTE);
 
-	ret = system(cmd);
-
-#ifdef WIN32
-	/* We are unlinking it while it is running, but that should be OK */
-	if (unlink(bat))
-	{
-		fprintf(stderr, _("%s: cannot remove batch file %s: %s\n"),
-						progname, bat, strerror(errno));
-		exit(1);
-	}
-#endif
-	return ret;
+	return system(cmd);
 }
 
 
