@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.258 2002/08/20 04:47:52 momjian Exp $
+ * $Id: pg_proc.h,v 1.259 2002/08/20 19:23:07 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2679,8 +2679,6 @@ DESCR("unary plus");
 DATA(insert OID = 1915 (  numeric_uplus    PGNSP PGUID 12 f f t f i 1 1700 "1700"  numeric_uplus - _null_ ));
 DESCR("unary plus");
 
-DATA(insert OID = 1920 (  pg_lock_status   PGNSP PGUID 12 f f f t v 0 0 "0" lock_status_srf - _null_ ));
-DESCR("view system lock information");
 DATA(insert OID = 1922 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 25 25"  has_table_privilege_name_name - _null_ ));
 DESCR("user privilege on relation by username, rel name");
 DATA(insert OID = 1923 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 26 25"  has_table_privilege_name_id - _null_ ));
@@ -2896,6 +2894,8 @@ DATA(insert OID = 2078 (  set_config		PGNSP PGUID 12 f f f f v 3 25 "25 25 16" s
 DESCR("SET X as a function");
 DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 f f t t s 0 2249 "" show_all_settings - _null_ ));
 DESCR("SHOW ALL as a function");
+DATA(insert OID = 2085 (  pg_lock_status   PGNSP PGUID 12 f f f t v 0 0 "" lock_status_srf - _null_ ));
+DESCR("view system lock information");
 
 DATA(insert OID = 2079 (  pg_table_is_visible		PGNSP PGUID 12 f f t f s 1 16 "26"  pg_table_is_visible - _null_ ));
 DESCR("is table visible in search path?");
