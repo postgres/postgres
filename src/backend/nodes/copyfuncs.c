@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.186 2002/05/17 01:19:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.187 2002/05/17 18:32:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2098,18 +2098,17 @@ _copyIndexStmt(IndexStmt *from)
 	return newnode;
 }
 
-static ProcedureStmt *
-_copyProcedureStmt(ProcedureStmt *from)
+static CreateFunctionStmt *
+_copyCreateFunctionStmt(CreateFunctionStmt *from)
 {
-	ProcedureStmt *newnode = makeNode(ProcedureStmt);
+	CreateFunctionStmt *newnode = makeNode(CreateFunctionStmt);
 
 	newnode->replace = from->replace;
 	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, argTypes);
 	Node_Copy(from, newnode, returnType);
+	Node_Copy(from, newnode, options);
 	Node_Copy(from, newnode, withClause);
-	Node_Copy(from, newnode, as);
-	newnode->language = pstrdup(from->language);
 
 	return newnode;
 }
@@ -2865,8 +2864,8 @@ copyObject(void *from)
 		case T_IndexStmt:
 			retval = _copyIndexStmt(from);
 			break;
-		case T_ProcedureStmt:
-			retval = _copyProcedureStmt(from);
+		case T_CreateFunctionStmt:
+			retval = _copyCreateFunctionStmt(from);
 			break;
 		case T_RemoveAggrStmt:
 			retval = _copyRemoveAggrStmt(from);

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.133 2002/05/17 01:19:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.134 2002/05/17 18:32:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -923,7 +923,7 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 }
 
 static bool
-_equalProcedureStmt(ProcedureStmt *a, ProcedureStmt *b)
+_equalCreateFunctionStmt(CreateFunctionStmt *a, CreateFunctionStmt *b)
 {
 	if (a->replace != b->replace)
 		return false;
@@ -933,11 +933,9 @@ _equalProcedureStmt(ProcedureStmt *a, ProcedureStmt *b)
 		return false;
 	if (!equal(a->returnType, b->returnType))
 		return false;
+	if (!equal(a->options, b->options))
+		return false;
 	if (!equal(a->withClause, b->withClause))
-		return false;
-	if (!equal(a->as, b->as))
-		return false;
-	if (!equalstr(a->language, b->language))
 		return false;
 
 	return true;
@@ -2020,8 +2018,8 @@ equal(void *a, void *b)
 		case T_IndexStmt:
 			retval = _equalIndexStmt(a, b);
 			break;
-		case T_ProcedureStmt:
-			retval = _equalProcedureStmt(a, b);
+		case T_CreateFunctionStmt:
+			retval = _equalCreateFunctionStmt(a, b);
 			break;
 		case T_RemoveAggrStmt:
 			retval = _equalRemoveAggrStmt(a, b);

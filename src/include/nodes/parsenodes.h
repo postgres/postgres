@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.177 2002/05/17 01:19:19 tgl Exp $
+ * $Id: parsenodes.h,v 1.178 2002/05/17 18:32:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1200,17 +1200,16 @@ typedef struct IndexStmt
  *		Create Function Statement
  * ----------------------
  */
-typedef struct ProcedureStmt
+typedef struct CreateFunctionStmt
 {
 	NodeTag		type;
 	bool		replace;		/* T => replace if already exists */
 	List	   *funcname;		/* qualified name of function to create */
 	List	   *argTypes;		/* list of argument types (TypeName nodes) */
 	TypeName   *returnType;		/* the return type */
+	List	   *options;		/* a list of DefElem */
 	List	   *withClause;		/* a list of DefElem */
-	List	   *as;				/* definition of function body */
-	char	   *language;		/* C, SQL, etc */
-} ProcedureStmt;
+} CreateFunctionStmt;
 
 /* ----------------------
  *		Drop Aggregate Statement

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.316 2002/05/17 01:19:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.317 2002/05/17 18:32:52 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -141,7 +141,7 @@ static void doNegateFloat(Value *v);
 		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropAssertStmt, DropTrigStmt,
 		DropRuleStmt, DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
-		NotifyStmt, OptimizableStmt, ProcedureStmt, ReindexStmt,
+		NotifyStmt, OptimizableStmt, CreateFunctionStmt, ReindexStmt,
 		RemoveAggrStmt, RemoveFuncStmt, RemoveOperStmt,
 		RenameStmt, RevokeStmt, RuleActionStmt, RuleActionStmtOrEmpty,
 		RuleStmt, SelectStmt, TransactionStmt, TruncateStmt,
@@ -201,7 +201,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	stmtblock, stmtmulti,
 		OptTableElementList, OptInherit, definition, opt_distinct,
-		opt_with, func_args, func_args_list, func_as,
+		opt_with, func_args, func_args_list, func_as, createfunc_opt_list
 		oper_argtypes, RuleActionList, RuleActionMulti,
 		opt_column_list, columnList, opt_name_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
@@ -214,6 +214,7 @@ static void doNegateFloat(Value *v);
 
 %type <range>	into_clause, OptTempTableName
 
+%type <defelt>  createfunc_opt_item
 %type <typnam>	func_arg, func_return, func_type, aggr_argtype
 
 %type <boolean>	opt_arg, TriggerForOpt, TriggerForType, OptTemp, OptWithOids
@@ -388,6 +389,9 @@ static void doNegateFloat(Value *v);
 		TEMP, TEMPLATE, TOAST, TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
+%token <keyword> CALLED, DEFINER, EXTERNAL, IMMUTABLE, IMPLICIT, INPUT,
+		INVOKER, SECURITY, STABLE, STRICT, VOLATILE
+
 /* The grammar thinks these are keywords, but they are not in the keywords.c
  * list and so can never be entered directly.  The filter in parser.c
  * creates these tokens when required.
@@ -467,6 +471,7 @@ stmt : AlterDatabaseSetStmt
 		| CreateStmt
 		| CreateAsStmt
 		| CreateDomainStmt
+		| CreateFunctionStmt
 		| CreateSchemaStmt
 		| CreateGroupStmt
 		| CreateSeqStmt
@@ -494,7 +499,6 @@ stmt : AlterDatabaseSetStmt
 		| UnlistenStmt
 		| LockStmt
 		| NotifyStmt
-		| ProcedureStmt
 		| ReindexStmt
 		| RemoveAggrStmt
 		| RemoveOperStmt
@@ -2769,26 +2773,21 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *
  *****************************************************************************/
 
-ProcedureStmt:	CREATE opt_or_replace FUNCTION func_name func_args
-			 RETURNS func_return AS func_as LANGUAGE ColId_or_Sconst opt_with
+CreateFunctionStmt:	CREATE opt_or_replace FUNCTION func_name func_args
+			 RETURNS func_return createfunc_opt_list opt_with
 				{
-					ProcedureStmt *n = makeNode(ProcedureStmt);
+					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					n->replace = $2;
 					n->funcname = $4;
 					n->argTypes = $5;
 					n->returnType = $7;
-					n->withClause = $12;
-					n->as = $9;
-					n->language = $11;
+					n->options = $8;
+					n->withClause = $9;
 					$$ = (Node *)n;
 				};
 
 opt_or_replace:  OR REPLACE						{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
-		;
-
-opt_with:  WITH definition						{ $$ = $2; }
-		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 func_args:  '(' func_args_list ')'				{ $$ = $2; }
@@ -2831,12 +2830,6 @@ opt_arg:  IN
 				}
 		;
 
-func_as: Sconst
-				{   $$ = makeList1(makeString($1)); }
-		| Sconst ',' Sconst
-				{ 	$$ = makeList2(makeString($1), makeString($3)); }
-		;
-
 func_return:  func_type
 				{
 					/* We can catch over-specified arguments here if we want to,
@@ -2863,6 +2856,104 @@ func_type:	Typename
 					$$->typmod = -1;
 				}
 		;
+
+
+createfunc_opt_list: createfunc_opt_item
+                { $$ = makeList1($1); }
+        | createfunc_opt_list createfunc_opt_item
+                { $$ = lappend($1, $2); }
+        ;
+
+createfunc_opt_item: AS func_as
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "as";
+					$$->arg = (Node *)$2;
+				}
+		| LANGUAGE ColId_or_Sconst
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "language";
+					$$->arg = (Node *)makeString($2);
+				}
+		| IMMUTABLE
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "volatility";
+					$$->arg = (Node *)makeString("immutable");
+				}
+		| STABLE
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "volatility";
+					$$->arg = (Node *)makeString("stable");
+				}
+		| VOLATILE
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "volatility";
+					$$->arg = (Node *)makeString("volatile");
+				}
+		| CALLED ON NULL_P INPUT
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "strict";
+					$$->arg = (Node *)makeInteger(FALSE);
+				}
+		| RETURNS NULL_P ON NULL_P INPUT
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "strict";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+		| STRICT
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "strict";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+		| EXTERNAL SECURITY DEFINER
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "security";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+		| EXTERNAL SECURITY INVOKER
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "security";
+					$$->arg = (Node *)makeInteger(FALSE);
+				}
+		| SECURITY DEFINER
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "security";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+		| SECURITY INVOKER
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "security";
+					$$->arg = (Node *)makeInteger(FALSE);
+				}
+		| IMPLICIT CAST
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "implicit";
+					$$->arg = (Node *)makeInteger(TRUE);
+				}
+		;
+
+func_as: Sconst
+				{   $$ = makeList1(makeString($1)); }
+		| Sconst ',' Sconst
+				{ 	$$ = makeList2(makeString($1), makeString($3)); }
+		;
+
+opt_with:  WITH definition						{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NIL; }
+		;
+
 
 /*****************************************************************************
  *
@@ -6137,6 +6228,7 @@ unreserved_keyword:
 		| BEGIN_TRANS
 		| BY
 		| CACHE
+		| CALLED
 		| CASCADE
 		| CHAIN
 		| CHARACTERISTICS
@@ -6156,6 +6248,7 @@ unreserved_keyword:
 		| DAY_P
 		| DECLARE
 		| DEFERRED
+		| DEFINER
 		| DELETE
 		| DELIMITERS
 		| DOMAIN_P
@@ -6168,6 +6261,7 @@ unreserved_keyword:
 		| EXCLUSIVE
 		| EXECUTE
 		| EXPLAIN
+		| EXTERNAL
 		| FETCH
 		| FORCE
 		| FORWARD
@@ -6176,13 +6270,17 @@ unreserved_keyword:
 		| HANDLER
 		| HOUR_P
 		| IMMEDIATE
+		| IMMUTABLE
+		| IMPLICIT
 		| INCREMENT
 		| INDEX
 		| INHERITS
 		| INOUT
+		| INPUT
 		| INSENSITIVE
 		| INSERT
 		| INSTEAD
+		| INVOKER
 		| ISOLATION
 		| KEY
 		| LANGUAGE
@@ -6238,18 +6336,21 @@ unreserved_keyword:
 		| SCHEMA
 		| SCROLL
 		| SECOND_P
+		| SECURITY
 		| SESSION
 		| SEQUENCE
 		| SERIALIZABLE
 		| SET
 		| SHARE
 		| SHOW
+		| STABLE
 		| START
 		| STATEMENT
 		| STATISTICS
 		| STDIN
 		| STDOUT
 		| STORAGE
+		| STRICT
 		| SYSID
 		| TEMP
 		| TEMPLATE
@@ -6272,6 +6373,7 @@ unreserved_keyword:
 		| VARYING
 		| VERSION
 		| VIEW
+		| VOLATILE
 		| WITH
 		| WITHOUT
 		| WORK

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.3 2002/04/27 03:45:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.4 2002/05/17 18:32:52 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -159,6 +159,104 @@ compute_parameter_types(List *argTypes, Oid languageOid,
 	return parameterCount;
 }
 
+
+/*
+ * Dissect the list of options assembled in gram.y into function
+ * attributes.
+ */
+
+static void
+compute_attributes_sql_style(const List *options,
+							 List **as,
+							 char **language,
+							 char *volatility_p,
+							 bool *strict_p,
+							 bool *security_definer,
+							 bool *implicit_cast)
+{
+	const List *option;
+	DefElem *as_item = NULL;
+	DefElem *language_item = NULL;
+	DefElem *volatility_item = NULL;
+	DefElem *strict_item = NULL;
+	DefElem *security_item = NULL;
+	DefElem *implicit_item = NULL;
+
+	foreach(option, options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		if (strcmp(defel->defname, "as")==0)
+		{
+			if (as_item)
+				elog(ERROR, "conflicting or redundant options");
+			as_item = defel;
+		}
+		else if (strcmp(defel->defname, "language")==0)
+		{
+			if (language_item)
+				elog(ERROR, "conflicting or redundant options");
+			language_item = defel;
+		}
+		else if (strcmp(defel->defname, "volatility")==0)
+		{
+			if (volatility_item)
+				elog(ERROR, "conflicting or redundant options");
+			volatility_item = defel;
+		}
+		else if (strcmp(defel->defname, "strict")==0)
+		{
+			if (strict_item)
+				elog(ERROR, "conflicting or redundant options");
+			strict_item = defel;
+		}
+		else if (strcmp(defel->defname, "security")==0)
+		{
+			if (security_item)
+				elog(ERROR, "conflicting or redundant options");
+			security_item = defel;
+		}
+		else if (strcmp(defel->defname, "implicit")==0)
+		{
+			if (implicit_item)
+				elog(ERROR, "conflicting or redundant options");
+			implicit_item = defel;
+		}
+		else
+			elog(ERROR, "invalid CREATE FUNCTION option");
+	}
+
+	if (as_item)
+		*as = (List *)as_item->arg;
+	else
+		elog(ERROR, "no function body specified");
+
+	if (language_item)
+		*language = strVal(language_item->arg);
+	else
+		elog(ERROR, "no language specified");
+
+	if (volatility_item)
+	{
+		if (strcmp(strVal(volatility_item->arg), "immutable")==0)
+			*volatility_p = PROVOLATILE_IMMUTABLE;
+		else if (strcmp(strVal(volatility_item->arg), "stable")==0)
+			*volatility_p = PROVOLATILE_STABLE;
+		else if (strcmp(strVal(volatility_item->arg), "volatile")==0)
+			*volatility_p = PROVOLATILE_VOLATILE;
+		else
+			elog(ERROR, "invalid volatility");
+	}
+
+	if (strict_item)
+		*strict_p = intVal(strict_item->arg);
+	if (security_item)
+		*security_definer = intVal(security_item->arg);
+	if (implicit_item)
+		*implicit_cast = intVal(implicit_item->arg);
+}
+
+
 /*-------------
  *	 Interpret the parameters *parameters and return their contents as
  *	 *byte_pct_p, etc.
@@ -183,22 +281,13 @@ compute_parameter_types(List *argTypes, Oid languageOid,
  *------------
  */
 static void
-compute_full_attributes(List *parameters,
-						int32 *byte_pct_p, int32 *perbyte_cpu_p,
-						int32 *percall_cpu_p, int32 *outin_ratio_p,
-						bool *isImplicit_p, bool *isStrict_p,
-						char *volatility_p)
+compute_attributes_with_style(List *parameters,
+							  int32 *byte_pct_p, int32 *perbyte_cpu_p,
+							  int32 *percall_cpu_p, int32 *outin_ratio_p,
+							  bool *isImplicit_p, bool *isStrict_p,
+							  char *volatility_p)
 {
 	List	   *pl;
-
-	/* the defaults */
-	*byte_pct_p = BYTE_PCT;
-	*perbyte_cpu_p = PERBYTE_CPU;
-	*percall_cpu_p = PERCALL_CPU;
-	*outin_ratio_p = OUTIN_RATIO;
-	*isImplicit_p = false;
-	*isStrict_p = false;
-	*volatility_p = PROVOLATILE_VOLATILE;
 
 	foreach(pl, parameters)
 	{
@@ -290,12 +379,13 @@ interpret_AS_clause(Oid languageOid, const char *languageName, const List *as,
  *	 Execute a CREATE FUNCTION utility statement.
  */
 void
-CreateFunction(ProcedureStmt *stmt)
+CreateFunction(CreateFunctionStmt *stmt)
 {
 	char	   *probin_str;
 	char	   *prosrc_str;
 	Oid			prorettype;
 	bool		returnsSet;
+	char	   *language;
 	char		languageName[NAMEDATALEN];
 	Oid			languageOid;
 	char	   *funcname;
@@ -308,10 +398,12 @@ CreateFunction(ProcedureStmt *stmt)
 				percall_cpu,
 				outin_ratio;
 	bool		isImplicit,
-				isStrict;
+				isStrict,
+				security;
 	char		volatility;
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
+	List	   *as_clause;
 
 	/* Convert list of names to a name and namespace */
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->funcname,
@@ -322,8 +414,21 @@ CreateFunction(ProcedureStmt *stmt)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_namespace_name(namespaceId));
 
+	/* defaults attributes */
+	byte_pct = BYTE_PCT;
+	perbyte_cpu = PERBYTE_CPU;
+	percall_cpu = PERCALL_CPU;
+	outin_ratio = OUTIN_RATIO;
+	isImplicit = false;
+	isStrict = false;
+	volatility = PROVOLATILE_VOLATILE;
+
+	/* override attributes from explicit list */
+	compute_attributes_sql_style(stmt->options,
+								 &as_clause, &language, &volatility, &isStrict, &security, &isImplicit);
+
 	/* Convert language name to canonical case */
-	case_translate_language_name(stmt->language, languageName);
+	case_translate_language_name(language, languageName);
 
 	/* Look up the language and validate permissions */
 	languageTuple = SearchSysCache(LANGNAME,
@@ -363,12 +468,12 @@ CreateFunction(ProcedureStmt *stmt)
 	parameterCount = compute_parameter_types(stmt->argTypes, languageOid,
 											 parameterTypes);
 
-	compute_full_attributes(stmt->withClause,
-							&byte_pct, &perbyte_cpu, &percall_cpu,
-							&outin_ratio, &isImplicit, &isStrict,
-							&volatility);
+	compute_attributes_with_style(stmt->withClause,
+								  &byte_pct, &perbyte_cpu, &percall_cpu,
+								  &outin_ratio, &isImplicit, &isStrict,
+								  &volatility);
 
-	interpret_AS_clause(languageOid, languageName, stmt->as,
+	interpret_AS_clause(languageOid, languageName, as_clause,
 						&prosrc_str, &probin_str);
 
 	/*

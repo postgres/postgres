@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.109 2002/05/03 00:32:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.110 2002/05/17 18:32:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"both", BOTH},
 	{"by", BY},
 	{"cache", CACHE},
+	{"called", CALLED},
 	{"cascade", CASCADE},
 	{"case", CASE},
 	{"cast", CAST},
@@ -95,6 +96,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"default", DEFAULT},
 	{"deferrable", DEFERRABLE},
 	{"deferred", DEFERRED},
+	{"definer", DEFINER},
 	{"delete", DELETE},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
@@ -114,6 +116,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
 	{"explain", EXPLAIN},
+	{"external", EXTERNAL},
 	{"extract", EXTRACT},
 	{"false", FALSE_P},
 	{"fetch", FETCH},
@@ -134,6 +137,8 @@ static const ScanKeyword ScanKeywords[] = {
 	{"hour", HOUR_P},
 	{"ilike", ILIKE},
 	{"immediate", IMMEDIATE},
+	{"immutable", IMMUTABLE},
+	{"implicit", IMPLICIT},
 	{"in", IN},
 	{"increment", INCREMENT},
 	{"index", INDEX},
@@ -141,6 +146,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"initially", INITIALLY},
 	{"inner", INNER_P},
 	{"inout", INOUT},
+	{"input", INPUT},
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
@@ -149,6 +155,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"intersect", INTERSECT},
 	{"interval", INTERVAL},
 	{"into", INTO},
+	{"invoker", INVOKER},
 	{"is", IS},
 	{"isnull", ISNULL},
 	{"isolation", ISOLATION},
@@ -234,6 +241,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"schema", SCHEMA},
 	{"scroll", SCROLL},
 	{"second", SECOND_P},
+	{"security", SECURITY},
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
 	{"serializable", SERIALIZABLE},
@@ -245,12 +253,14 @@ static const ScanKeyword ScanKeywords[] = {
 	{"show", SHOW},
 	{"smallint", SMALLINT},
 	{"some", SOME},
+	{"stable", STABLE},
 	{"start", START},
 	{"statement", STATEMENT},
 	{"statistics", STATISTICS},
 	{"stdin", STDIN},
 	{"stdout", STDOUT},
 	{"storage", STORAGE},
+	{"strict", STRICT},
 	{"substring", SUBSTRING},
 	{"sysid", SYSID},
 	{"table", TABLE},
@@ -288,6 +298,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"verbose", VERBOSE},
 	{"version", VERSION},
 	{"view", VIEW},
+	{"volatile", VOLATILE},
 	{"when", WHEN},
 	{"where", WHERE},
 	{"with", WITH},

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.260 2002/05/13 17:45:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.261 2002/05/17 18:32:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3152,18 +3152,14 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs)
 
 		(*deps)[depIdx++] = strdup(lanplcallfoid);
 
-		appendPQExpBuffer(delqry, "DROP PROCEDURAL LANGUAGE ");
-		formatStringLiteral(delqry, lanname, CONV_ALL);
-		appendPQExpBuffer(delqry, ";\n");
+		appendPQExpBuffer(delqry, "DROP PROCEDURAL LANGUAGE %s;\n", fmtId(lanname, force_quotes));
 
-		appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE ",
+		appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE %s",
 						  (PQgetvalue(res, i, i_lanpltrusted)[0] == 't') ?
-						  "TRUSTED " : "");
-		formatStringLiteral(defqry, lanname, CONV_ALL);
-		appendPQExpBuffer(defqry, " HANDLER %s LANCOMPILER ",
+						  "TRUSTED " : "",
+						  fmtId(lanname, force_quotes));
+		appendPQExpBuffer(defqry, " HANDLER %s;\n",
 						  fmtId(finfo[fidx].proname, force_quotes));
-		formatStringLiteral(defqry, lancompiler, CONV_ALL);
-		appendPQExpBuffer(defqry, ";\n");
 
 		(*deps)[depIdx++] = NULL;		/* End of List */
 
@@ -3221,9 +3217,6 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	char	   *proimplicit;
 	char	   *proisstrict;
 	char	   *lanname;
-	char	   *listSep;
-	char	   *listSepComma = ",";
-	char	   *listSepNone = "";
 	char	   *rettypename;
 
 	if (finfo->dumped)
@@ -3337,52 +3330,33 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	rettypename = getFormattedTypeName(finfo->prorettype, zeroAsOpaque);
 
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", fn->data);
-	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE ",
+	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE %s",
 					  (proretset[0] == 't') ? "SETOF " : "",
 					  rettypename,
-					  asPart->data);
-	formatStringLiteral(q, lanname, CONV_ALL);
+					  asPart->data,
+					  fmtId(lanname, force_quotes));
 
 	free(rettypename);
 
-	if (provolatile[0] != PROVOLATILE_VOLATILE ||
-		proimplicit[0] == 't' ||
-		proisstrict[0] == 't')	/* OR in new attrs here */
+	if (provolatile[0] != PROVOLATILE_VOLATILE)
 	{
-		appendPQExpBuffer(q, " WITH (");
-		listSep = listSepNone;
-
 		if (provolatile[0] == PROVOLATILE_IMMUTABLE)
-		{
-			appendPQExpBuffer(q, "%s isImmutable", listSep);
-			listSep = listSepComma;
-		}
+			appendPQExpBuffer(q, " IMMUTABLE");
 		else if (provolatile[0] == PROVOLATILE_STABLE)
-		{
-			appendPQExpBuffer(q, "%s isStable", listSep);
-			listSep = listSepComma;
-		}
+			appendPQExpBuffer(q, " STABLE");
 		else if (provolatile[0] != PROVOLATILE_VOLATILE)
 		{
 			write_msg(NULL, "Unexpected provolatile value for function %s\n",
 					  finfo->proname);
 			exit_nicely();
 		}
+	}	
 
-		if (proimplicit[0] == 't')
-		{
-			appendPQExpBuffer(q, "%s implicitCoercion", listSep);
-			listSep = listSepComma;
-		}
+	if (proimplicit[0] == 't')
+		appendPQExpBuffer(q, " IMPLICIT CAST");
 
-		if (proisstrict[0] == 't')
-		{
-			appendPQExpBuffer(q, "%s isStrict", listSep);
-			listSep = listSepComma;
-		}
-
-		appendPQExpBuffer(q, " )");
-	}
+	if (proisstrict[0] == 't')
+		appendPQExpBuffer(q, " STRICT");
 
 	appendPQExpBuffer(q, ";\n");
 

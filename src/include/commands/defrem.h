@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.36 2002/04/16 23:08:12 tgl Exp $
+ * $Id: defrem.h,v 1.37 2002/05/17 18:32:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ extern void ReindexDatabase(const char *databaseName, bool force, bool all);
  * DefineFoo and RemoveFoo are now both in foocmds.c
  */
 
-extern void CreateFunction(ProcedureStmt *stmt);
+extern void CreateFunction(CreateFunctionStmt *stmt);
 extern void RemoveFunction(List *functionName, List *argTypes);
 
 extern void DefineOperator(List *names, List *parameters);

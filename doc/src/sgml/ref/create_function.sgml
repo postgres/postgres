@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.37 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.38 2002/05/17 18:32:52 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -17,13 +17,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.37 2002/04/23 
 <synopsis>
 CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rettype</replaceable>
-    AS '<replaceable class="parameter">definition</replaceable>'
-    LANGUAGE <replaceable class="parameter">langname</replaceable>
-    [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
-CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
-    RETURNS <replaceable class="parameter">rettype</replaceable>
-    AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
-    LANGUAGE <replaceable class="parameter">langname</replaceable>
+  { LANGUAGE <replaceable class="parameter">langname</replaceable>
+    | IMMUTABLE | STABLE | VOLATILE
+    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
+    | IMPLICIT CAST
+    | AS '<replaceable class="parameter">definition</replaceable>'
+    | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
+  } ...
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
@@ -33,8 +33,13 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
   <para>
    <command>CREATE FUNCTION</command> defines a new function.
-   <command>CREATE OR REPLACE FUNCTION</command> will either create
-   a new function, or replace an existing definition.
+   <command>CREATE OR REPLACE FUNCTION</command> will either create a
+   new function, or replace an existing definition.
+  </para>
+
+  <para>
+   The user that creates the function becomes the owner of the function.
+  </para>
 
    <variablelist>
     <title>Parameters</title>
@@ -81,7 +86,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
      <listitem>
       <para>
-       The return data type.  The output type may be specified as a
+       The return data type.  The return type may be specified as a
        base type, complex type, <literal>setof</literal> type,
        <literal>opaque</literal>, or the same as the type of an
        existing column.
@@ -91,6 +96,105 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        return type of <literal>opaque</literal> do not return a value.
        These cannot be called directly; trigger functions make use of
        this feature.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">langname</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the language that the function is implemented in.
+       May be <literal>SQL</literal>, <literal>C</literal>,
+       <literal>internal</literal>, or the name of a user-defined
+       procedural language.  (See also <xref linkend="app-createlang"
+       endterm="app-createlang-title">.)  For backward compatibility,
+       the name may be enclosed by single quotes.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>IMMUTABLE</term>
+     <term>STABLE</term>
+     <term>VOLATILE</term>
+
+     <listitem>
+      <para>
+       These attributes inform the system whether it is safe to
+       replace multiple evaluations of the function with a single
+       evaluation, for run-time optimization.  At most one choice
+       should be specified.  If none of these appear,
+       <literal>VOLATILE</literal> is the default assumption.
+      </para>
+
+      <para>
+       <literal>IMMUTABLE</literal> indicates that the function always
+       returns the same result when given the same argument values; that
+       is, it does not do database lookups or otherwise use information not
+       directly present in its parameter list.  If this option is given,
+       any call of the function with all-constant arguments can be
+       immediately replaced with the function value.
+      </para>
+
+      <para>
+       <literal>STABLE</literal> indicates that within a single table scan
+       the function will consistently
+       return the same result for the same argument values, but that its
+       result could change across SQL statements.  This is the appropriate
+       selection for functions whose results depend on database lookups,
+       parameter variables (such as the current time zone), etc.  Also note
+       that the <literal>CURRENT_TIMESTAMP</> family of functions qualify
+       as stable, since their values do not change within a transaction.
+      </para>
+
+      <para>
+       <literal>VOLATILE</literal> indicates that the function value can
+       change even within a single table scan, so no optimizations can be
+       made.  Relatively few database functions are volatile in this sense;
+       some examples are <literal>random()</>, <literal>currval()</>,
+       <literal>timeofday()</>.  Note that any function that has side-effects
+       must be classified volatile, even if its result is quite predictable,
+       to prevent calls from being optimized away; an example is
+       <literal>setval()</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>CALLED ON NULL INPUT</term>
+     <term>RETURNS NULL ON NULL INPUT</term>
+     <term>STRICT</term>
+
+     <listitem>
+      <para>
+       <literal>CALLED ON NULL INPUT</literal> (the default) indicates
+       that the function will be called normally when some of its
+       arguments are null.  It is then the function author's
+       responsibility to check for NULLs if necessary and respond
+       appropriately.
+      </para>
+
+      <para>
+       <literal>RETURNS NULL ON NULL INPUT</literal> or
+       <literal>STRICT</literal> indicates that the function always
+       returns NULL whenever any of its arguments are NULL.  If this
+       parameter is specified, the function is not executed when there
+       are NULL arguments; instead a NULL result is assumed
+       automatically.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>IMPLICIT CAST</literal</term>
+
+     <listitem>
+      <para>
+       Indicates that the function may be used for implicit type
+       conversions.  See <xref linkend="sql-createfunction-cast-functions"
+       endterm="sql-createfunction-cast-functions-title"> for more detail.
       </para>
      </listitem>
     </varlistentry>
@@ -126,115 +230,55 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="parameter">langname</replaceable></term>
-
-     <listitem>
-      <para>
-       May be <literal>SQL</literal>, <literal>C</literal>,
-       <literal>internal</literal>, or <replaceable
-       class="parameter">plname</replaceable>, where <replaceable
-       class="parameter">plname</replaceable> is the name of a
-       created procedural language. See
-       <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
-       for details.  For backward compatibility, the name may be
-       enclosed by single quotes.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><replaceable class="parameter">attribute</replaceable></term>
 
      <listitem>
       <para>
-       An optional piece of information about the function, used for
-       optimization.  See below for details.
-      </para>
-     </listitem>
-    </varlistentry>
+       The historical way to specify optional pieces of information
+       about the function.  The following attributes may appear here:
+
+      <variablelist>
+       <varlistentry>
+        <term>isStrict</term>
+        <listitem>
+         <para>
+          Equivalent to <literal>STRICT</literal> or <literal>RETURNS NULL ON NULL INPUT</literal>
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>isImmutable</term>
+        <term>isCachable</term>
+        <term>isStable</term>
+        <term>isVolatile</term>
+        <listitem>
+         <para>
+          Equivalent to <literal>IMMUTABLE</literal>,
+          <literal>STABLE</literal>, <literal>VOLATILE</literal>.
+          <literal>isCachable</literal> is an obsolete equivalent of
+          <literal>isImmutable</literal>; it's still accepted for
+          backwards-compatibility reasons.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>implicitCoercion</term>
+        <listitem>
+         <para>
+          Same as <literal>IMPLICIT CAST</literal>
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+
+      Attribute names are not case-sensitive.
+     </para>
+    </listitem>
+   </varlistentry>
 
    </variablelist>
-  </para>
-
-  <para>
-   The user that creates the function becomes the owner of the function.
-  </para>
-
-  <para>
-    The following attributes may appear in the WITH clause:
-
-    <variablelist>
-     <varlistentry>
-      <term>isStrict</term>
-      <listitem>
-       <para>
-	<option>isStrict</option> indicates that the function always
-	returns NULL whenever any of its arguments are NULL.  If this
-	attribute is specified, the function is not executed when there
-	are NULL arguments; instead a NULL result is assumed automatically.
-	When <option>isStrict</option> is not specified, the function will
-	be called for NULL inputs.  It is then the function author's
-	responsibility to check for NULLs if necessary and respond
-	appropriately.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>isImmutable</term>
-      <term>isCachable</term>
-      <term>isStable</term>
-      <term>isVolatile</term>
-      <listitem>
-       <para>
-        These attributes inform the system whether it is safe to replace
-	multiple evaluations of the function with a single evaluation.
-	At most one choice should be specified.  (If none of these appear,
-	<option>isVolatile</option> is the default assumption.)
-	<option>isImmutable</option> indicates that the function always
-	returns the same result when given the same argument values; that
-	is, it does not do database lookups or otherwise use information not
-	directly present in its parameter list.  If this option is given,
-	any call of the function with all-constant arguments can be
-	immediately replaced with the function value.
-	<option>isCachable</option> is an
-	obsolete equivalent of <option>isImmutable</option>; it's still
-	accepted for backwards-compatibility reasons.
-	<option>isStable</option> indicates that within a single table scan
-	the function will consistently
-	return the same result for the same argument values, but that its
-	result could change across SQL statements.  This is the appropriate
-	selection for functions whose results depend on database lookups,
-	parameter variables (such as the current timezone), etc.  Also note
-	that the <literal>CURRENT_TIMESTAMP</> family of functions qualify
-	as stable, since their values do not change within a transaction.
-	<option>isVolatile</option> indicates that the function value can
-	change even within a single table scan, so no optimizations can be
-	made.  Relatively few database functions are volatile in this sense;
-	some examples are <literal>random()</>, <literal>currval()</>,
-	<literal>timeofday()</>.  Note that any function that has side-effects
-	must be classified volatile, even if its result is quite predictable,
-	to prevent calls from being optimized away; an example is
-	<literal>setval()</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>implicitCoercion</term>
-      <listitem>
-       <para>
-	<option>implicitCoercion</option> indicates that the function 
-	may be used for implicit type conversions.
-	See <xref linkend="coercion-functions"
-	endterm="coercion-functions-title"> for more detail.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    Attribute names are not case-sensitive.
-  </para>
 
  </refsect1>
 
@@ -328,21 +372,18 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   </para>
  </refsect1>
 
- <refsect1 id="COERCION-FUNCTIONS">
-  <refsect1info>
-   <date>2002-04-11</date>
-  </refsect1info>
-  <title id="coercion-functions-title">
-   Type Coercion Functions
+ <refsect1 id="sql-createfunction-cast-function">
+  <title id="sql-createfunction-cast-functions-title">
+   Type Cast Functions
   </title>
   <para>
-   A function that has one parameter and is named the same as its output
-   datatype (including the schema name) is considered to be a <firstterm>type
-   coercion function</>: it can be invoked to convert a value of its input
-   datatype into a value 
+   A function that has one argument and is named the same as its return
+   data type (including the schema name) is considered to be a <firstterm>type
+   casting function</>: it can be invoked to convert a value of its input
+   data type into a value 
    of its output datatype.  For example,
 <programlisting>
-	SELECT CAST(42 AS text);
+SELECT CAST(42 AS text);
 </programlisting>
    converts the integer constant 42 to text by invoking a function
    <literal>text(int4)</>, if such a function exists and returns type
@@ -350,31 +391,33 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   If a potential coercion function is marked <literal>implicitCoercion</>,
-   then it can be invoked in any context where the conversion it defines
-   is required.  Coercion functions not so marked can be invoked only by
-   explicit <literal>CAST</>,
-   <replaceable>x</><literal>::</><replaceable>typename</>,
-   or <replaceable>typename</>(<replaceable>x</>) constructs.
-   For example, supposing that foo.f1 is a column of type text, then
+   If a potential cast function is marked <literal>IMPLICIT CAST</>,
+   then it can be invoked implicitly in any context where the
+   conversion it defines is required.  Cast functions not so marked
+   can be invoked only by explicit <literal>CAST</>,
+   <replaceable>x</><literal>::</><replaceable>typename</>, or
+   <replaceable>typename</>(<replaceable>x</>) constructs.  For
+   example, supposing that <literal>foo.f1</literal> is a column of
+   type <type>text</type>, then
 <programlisting>
-	INSERT INTO foo(f1) VALUES(42);
+INSERT INTO foo(f1) VALUES(42);
 </programlisting>
    will be allowed if <literal>text(int4)</> is marked
-   <literal>implicitCoercion</>, otherwise not.
+   <literal>IMPLICIT CAST</>, otherwise not.
   </para>
 
   <para>
-   It is wise to be conservative about marking coercion functions as
-   implicit coercions.  An overabundance of implicit coercion paths
-   can cause <productname>PostgreSQL</productname> to choose surprising
-   interpretations of commands, 
-   or to be unable to resolve commands at all because there are multiple
-   possible interpretations.  A good rule of thumb is to make coercions
-   implicitly invokable only for information-preserving transformations
-   between types in the same general type category.  For example, int2
-   to int4 coercion can reasonably be implicit, but be wary of marking
-   int4 to text or float8 to int4 as implicit coercions.
+   It is wise to be conservative about marking cast functions as
+   implicit casts.  An overabundance of implicit casting paths can
+   cause <productname>PostgreSQL</productname> to choose surprising
+   interpretations of commands, or to be unable to resolve commands at
+   all because there are multiple possible interpretations.  A good
+   rule of thumb is to make cast implicitly invokable only for
+   information-preserving transformations between types in the same
+   general type category.  For example, <type>int2</type> to
+   <type>int4</type> casts can reasonably be implicit, but be wary of
+   marking <type>int4</type> to <type>text</type> or
+   <type>float8</type> to <type>int4</type> as implicit casts.
   </para>
  </refsect1>
   
@@ -403,7 +446,7 @@ SELECT one() AS answer;
    user-created shared library named <filename>funcs.so</> (the extension
    may vary across platforms).  The shared library file is sought in the
    server's dynamic library search path.  This particular routine calculates
-   a check digit and returns TRUE if the check digit in the function
+   a check digit and returns true if the check digit in the function
    parameters is correct.  It is intended for use in a CHECK
    constraint.
 
@@ -422,7 +465,7 @@ CREATE TABLE product (
   </para>
 
   <para>
-   This example creates a function that does type conversion from the
+   The next example creates a function that does type conversion from the
    user-defined type complex to the built-in type point.  The
    function is implemented by a dynamically loaded object that was
    compiled from C source (we illustrate the now-deprecated alternative
@@ -436,7 +479,7 @@ CREATE TABLE product (
 <programlisting>
 CREATE FUNCTION point(complex) RETURNS point
     AS '/home/bernie/pgsql/lib/complex.so', 'complex_to_point'
-    LANGUAGE C WITH (isStrict);
+    LANGUAGE C STRICT;
 </programlisting>
 
   The C declaration of the function could be:
@@ -466,7 +509,7 @@ Point * complex_to_point (Complex *z)
   <para>
    A <command>CREATE FUNCTION</command> command is defined in SQL99.
    The <application>PostgreSQL</application> version is similar but
-   not compatible.  The attributes are not portable, neither are the
+   not fully compatible.  The attributes are not portable, neither are the
    different available languages.
   </para>
  </refsect1>
@@ -476,10 +519,11 @@ Point * complex_to_point (Complex *z)
   <title>See Also</title>
 
   <para>
-   <xref linkend="sql-dropfunction">,
-   <xref linkend="sql-grant">,
-   <xref linkend="sql-load">,
-   <xref linkend="sql-revoke">,
+   <xref linkend="sql-dropfunction" endterm="sql-dropfunction-title">,
+   <xref linkend="sql-grant" endterm="sql-grant-title">,
+   <xref linkend="sql-load" endterm="sql-load-title">,
+   <xref linkend="sql-revoke" endterm="sql-revoke-title">,
+   <xref linkend="app-createlang">,
    <citetitle>PostgreSQL Programmer's Guide</citetitle>
   </para>
  </refsect1>
