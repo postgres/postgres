@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.47 1998/02/10 16:04:26 momjian Exp $
+ * $Id: parsenodes.h,v 1.48 1998/02/21 06:32:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -864,6 +864,7 @@ typedef struct RangeTblEntry
 	Oid			relid;
 	bool		inh;			/* inheritance? */
 	bool		inFromCl;		/* comes from From Clause */
+	bool		skipAcl;		/* skip ACL check in executor */
 } RangeTblEntry;
 
 /*

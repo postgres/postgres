@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.38 1998/02/13 03:27:42 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.39 1998/02/21 06:31:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1495,6 +1495,7 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	newnode->relid = from->relid;
 	newnode->inh = from->inh;
 	newnode->inFromCl = from->inFromCl;
+	newnode->skipAcl  = from->skipAcl;
 
 		
 	return newnode;
