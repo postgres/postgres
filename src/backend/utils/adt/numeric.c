@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.25 2000/02/24 02:05:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.26 2000/03/13 02:31:13 tgl Exp $
  *
  * ----------
  */
@@ -491,14 +491,17 @@ numeric_sign(Numeric num)
 /* ----------
  * numeric_round() -
  *
- *	Modify rscale and dscale of a number and round it if required.
+ *	Round a value to have 'scale' digits after the decimal point.
+ *	We allow negative 'scale', implying rounding before the decimal
+ *	point --- Oracle interprets rounding that way.
  * ----------
  */
 Numeric
 numeric_round(Numeric num, int32 scale)
 {
-	int32		typmod;
-	int			precision;
+	Numeric		res;
+	NumericVar	arg;
+	int			i;
 
 	/* ----------
 	 * Handle NULL
@@ -515,27 +518,79 @@ numeric_round(Numeric num, int32 scale)
 		return make_result(&const_nan);
 
 	/* ----------
-	 * Check that the requested scale is valid
+	 * Limit the scale value to avoid possible overflow in calculations below.
 	 * ----------
 	 */
-	if (scale < 0 || scale > NUMERIC_MAX_DISPLAY_SCALE)
-		elog(ERROR, "illegal numeric scale %d - must be between 0 and %d",
-			 scale, NUMERIC_MAX_DISPLAY_SCALE);
+	scale = MIN(NUMERIC_MAX_RESULT_SCALE,
+				MAX(-NUMERIC_MAX_RESULT_SCALE, scale));
 
 	/* ----------
-	 * Let numeric() and in turn apply_typmod() do the job
+	 * Unpack the argument and round it at the proper digit position
 	 * ----------
 	 */
-	precision = MAX(0, num->n_weight) + scale;
-	typmod = (((precision + 2) << 16) | scale) + VARHDRSZ;
-	return numeric(num, typmod);
+	init_var(&arg);
+	set_var_from_num(num, &arg);
+
+	i = arg.weight + scale + 1;
+
+	if (i < arg.ndigits)
+	{
+		/* If i = 0, the value loses all digits, but could round up if its
+		 * first digit is more than 4.  If i < 0 the result must be 0.
+		 */
+		if (i < 0)
+		{
+			arg.ndigits = 0;
+		}
+		else
+		{
+			int		carry = (arg.digits[i] > 4) ? 1 : 0;
+
+			arg.ndigits = i;
+
+			while (carry)
+			{
+				carry += arg.digits[--i];
+				arg.digits[i] = carry % 10;
+				carry /= 10;
+			}
+
+			if (i < 0)
+			{
+				Assert(i == -1); /* better not have added more than 1 digit */
+				Assert(arg.digits > arg.buf);
+				arg.digits--;
+				arg.ndigits++;
+				arg.weight++;
+			}
+		}
+	}
+
+	/* ----------
+	 * Set result's scale to something reasonable.
+	 * ----------
+	 */
+	scale = MIN(NUMERIC_MAX_DISPLAY_SCALE, MAX(0, scale));
+	arg.rscale = scale;
+	arg.dscale = scale;
+
+	/* ----------
+	 * Return the rounded result
+	 * ----------
+	 */
+	res = make_result(&arg);
+
+	free_var(&arg);
+	return res;
 }
 
 
 /* ----------
  * numeric_trunc() -
  *
- *	Modify rscale and dscale of a number and cut it if required.
+ *	Truncate a value to have 'scale' digits after the decimal point.
+ *	We allow negative 'scale', implying a truncation before the decimal
+ *	point --- Oracle interprets truncation that way.
  * ----------
  */
 Numeric
@@ -559,24 +614,28 @@ numeric_trunc(Numeric num, int32 scale)
 		return make_result(&const_nan);
 
 	/* ----------
-	 * Check that the requested scale is valid
+	 * Limit the scale value to avoid possible overflow in calculations below.
 	 * ----------
 	 */
-	if (scale < 0 || scale > NUMERIC_MAX_DISPLAY_SCALE)
-		elog(ERROR, "illegal numeric scale %d - must be between 0 and %d",
-			 scale, NUMERIC_MAX_DISPLAY_SCALE);
+	scale = MIN(NUMERIC_MAX_RESULT_SCALE,
+				MAX(-NUMERIC_MAX_RESULT_SCALE, scale));
 
 	/* ----------
-	 * Unpack the argument and truncate it
+	 * Unpack the argument and truncate it at the proper digit position
 	 * ----------
 	 */
 	init_var(&arg);
 	set_var_from_num(num, &arg);
 
+	arg.ndigits = MIN(arg.ndigits, MAX(0, arg.weight + scale + 1));
+
+	/* ----------
+	 * Set result's scale to something reasonable.
+	 * ----------
+	 */
+	scale = MIN(NUMERIC_MAX_DISPLAY_SCALE, MAX(0, scale));
 	arg.rscale = scale;
 	arg.dscale = scale;
-
-	arg.ndigits = MIN(arg.ndigits, MAX(0, arg.weight + scale + 1));
 
 	/* ----------
 	 * Return the truncated result
