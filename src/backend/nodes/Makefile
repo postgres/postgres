@@ -4,7 +4,7 @@
 #    Makefile for nodes
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.7 1999/02/06 16:50:24 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.8 1999/02/23 07:24:08 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,12 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
-depend dep:
+outfuncs.o: ../parse.h
+
+../parse.h:
+	$(MAKE) -C .. parse.h
+
+depend dep: ../parse.h
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
