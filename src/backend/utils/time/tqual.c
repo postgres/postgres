@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.35 2000/01/26 05:57:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.36 2000/07/03 04:45:09 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -441,7 +441,11 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 	}
 
 	if (TransactionIdIsCurrentTransactionId(tuple->t_xmax))
+	{
+		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			return true;
 		return false;
+	}
 
 	if (!TransactionIdDidCommit(tuple->t_xmax))
 	{
