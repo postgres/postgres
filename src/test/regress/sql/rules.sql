@@ -679,7 +679,7 @@ SELECT * FROM shoelace_log ORDER BY sl_name;
 insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
 insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
 
-SELECT * FROM shoelace_obsolete;
+SELECT * FROM shoelace_obsolete ORDER BY sl_len_cm;
 SELECT * FROM shoelace_candelete;
 
 DELETE FROM shoelace WHERE EXISTS

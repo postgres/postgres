@@ -1121,7 +1121,7 @@ SELECT * FROM shoelace_log ORDER BY sl_name;
 	SELECT * FROM shoelace_obsolete WHERE sl_avail = 0;
 insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
 insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
-SELECT * FROM shoelace_obsolete;
+SELECT * FROM shoelace_obsolete ORDER BY sl_len_cm;
   sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
 ------------+----------+------------+--------+----------+-----------
  sl9        |        0 | pink       |     35 | inch     |      88.9
