@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.33 1999/02/13 23:18:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.34 1999/03/21 06:31:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,11 +34,12 @@ static char *aclparse(char *s, AclItem *aip, unsigned *modechg);
 /*
  * getid
  *		Consumes the first alphanumeric string (identifier) found in string
- *		's', ignoring any leading white space.
+ *		's', ignoring any leading white space.  If it finds a double quote
+ *		it returns the word inside the quotes.
  *
  * RETURNS:
  *		the string position in 's' that points to the next non-space character
- *		in 's'.  Also:
+ *		in 's', after any quotes.  Also:
  *		- loads the identifier into 'name'.  (If no identifier is found, 'name'
  *		  contains an empty string).
  */
@@ -47,13 +48,27 @@ getid(char *s, char *n)
 {
 	unsigned	len;
 	char	   *id;
+	int		in_quotes = 0;
 
 	Assert(s && n);
 
 	while (isspace(*s))
 		++s;
-	for (id = s, len = 0; isalnum(*s) || *s == '_'; ++len, ++s)
-		;
+
+	if (*s == '"')
+	{
+		in_quotes = 1;
+		s++;
+	}
+
+	for (id = s, len = 0; isalnum(*s) || *s == '_' || in_quotes; ++len, ++s)
+	{
+		if (in_quotes && *s == '"') 
+		{
+			len--;
+			in_quotes = 0;
+		}
+	}
 	if (len > sizeof(NameData))
 		elog(ERROR, "getid: identifier cannot be >%d characters",
 			 sizeof(NameData));
@@ -91,12 +106,16 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 
 	Assert(s && aip && modechg);
 
+#ifdef ACLDEBUG_TRACE
+	printf("aclparse: input = '%s'\n", s);
+#endif ACLDEBUG_TRACE
 	aip->ai_idtype = ACL_IDTYPE_UID;
 	s = getid(s, name);
 	if (*s != ACL_MODECHG_ADD_CHR &&
 		*s != ACL_MODECHG_DEL_CHR &&
 		*s != ACL_MODECHG_EQL_CHR)
-	{							/* we just read a keyword, not a name */
+	{
+		/* we just read a keyword, not a name */
 		if (!strcmp(name, ACL_IDTYPE_GID_KEYWORD))
 			aip->ai_idtype = ACL_IDTYPE_GID;
 		else if (strcmp(name, ACL_IDTYPE_UID_KEYWORD))
@@ -668,15 +687,15 @@ makeAclStmt(char *privileges, List *rel_list, char *grantee,
 	/* the grantee string is "G <group_name>", "U  <user_name>", or "ALL" */
 	if (grantee[0] == 'G')		/* group permissions */
 	{
-		sprintf(str, "%s %s%c%s",
+		sprintf(str, "%s %c%s%c%c%s",
 				ACL_IDTYPE_GID_KEYWORD,
-				grantee + 2, grant_or_revoke, privileges);
+				'"', grantee + 2, '"', grant_or_revoke, privileges);
 	}
 	else if (grantee[0] == 'U') /* user permission */
 	{
-		sprintf(str, "%s %s%c%s",
+		sprintf(str, "%s %c%s%c%c%s",
 				ACL_IDTYPE_UID_KEYWORD,
-				grantee + 2, grant_or_revoke, privileges);
+				'"', grantee + 2, '"', grant_or_revoke, privileges);
 	}
 	else
 /* all permission */
