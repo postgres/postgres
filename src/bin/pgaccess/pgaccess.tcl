@@ -164,6 +164,7 @@ set tablename $objname
 switch $activetab {
     Queries {open_query design}
     Scripts {design_script $objname}
+    Forms {fd_load_form $objname design}
     Reports {
 	Window show .rb
 	tkwait visibility .rb
@@ -261,6 +262,13 @@ switch $activetab {
 	Window show .rb ; tkwait visibility .rb ; rb_init ; set rbvar(reportname) {} ; set rbvar(justpreview) 0
 	focus .rb.e2
     }
+    Forms {
+    	Window show .fd
+    	Window show .fdtb
+    	Window show .fdmenu
+    	Window show .fda
+    	fd_init
+    }
     Scripts {
 	design_script {}
     }
@@ -317,7 +325,7 @@ if {$activetab=="Sequences"} return;
 if {$activetab=="Functions"} return;
 set temp [get_dwlb_Selection]
 if {$temp==""} {
-	tk_messageBox -title Warning -message "Please select first an object!"
+	tk_messageBox -title Warning -message "Please select an object first !"
 	return;
 }
 set oldobjname $temp
@@ -326,21 +334,25 @@ Window show .rf
 
 proc {cmd_Reports} {} {
 global dbc
+cursor_watch .dw
 catch {
     pg_select $dbc "select * from pga_reports order by reportname" rec {
 	.dw.lb insert end "$rec(reportname)"
     }
 }
+cursor_arrow .dw
 }
 
 proc {cmd_Scripts} {} {
 global dbc
+cursor_watch .dw
 .dw.lb delete 0 end
 catch {
     pg_select $dbc "select * from pga_scripts order by scriptname" rec {
 	.dw.lb insert end $rec(scriptname)
     }
 }
+cursor_arrow .dw
 }
 
 proc {cmd_Sequences} {} {
@@ -502,6 +514,371 @@ global dbc
 #    }
 }
 
+proc {fd_change_coord} {} {
+global fdvar fdobj
+set i $fdvar(moveitemobj)
+set c $fdobj($i,c)
+set c [list $fdvar(c_left) $fdvar(c_top) [expr $fdvar(c_left)+$fdvar(c_width)] [expr $fdvar(c_top)+$fdvar(c_height)]]
+set fdobj($i,c) $c
+.fd.c delete o$i
+fd_draw_object $i
+fd_draw_hookers $i
+}
+
+proc {fd_delete_object} {} {
+global fdvar
+set i $fdvar(moveitemobj)
+.fd.c delete o$i
+.fd.c delete hook
+set j [lsearch $fdvar(objlist) $i]
+set fdvar(objlist) [lreplace $fdvar(objlist) $j $j]
+}
+
+proc {fd_draw_hook} {x y} {
+.fd.c create rectangle [expr $x-2] [expr $y-2] [expr $x+2] [expr $y+2] -fill black -tags hook
+}
+
+proc {fd_draw_hookers} {i} {
+global fdobj
+foreach {x1 y1 x2 y2} $fdobj($i,c) {}
+.fd.c delete hook
+fd_draw_hook $x1 $y1
+fd_draw_hook $x1 $y2
+fd_draw_hook $x2 $y1
+fd_draw_hook $x2 $y2
+}
+
+proc {fd_draw_object} {i} {
+global fdvar fdobj
+set c $fdobj($i,c)
+foreach {x1 y1 x2 y2} $c {}
+.fd.c delete o$i
+switch $fdobj($i,t) {
+    button {
+        fd_draw_rectangle $x1 $y1 $x2 $y2 raised #a0a0a0 o$i
+        .fd.c create text [expr ($x1+$x2)/2] [expr ($y1+$y2)/2] -text $fdobj($i,l) -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags o$i
+    }
+    entry {
+        fd_draw_rectangle $x1 $y1 $x2 $y2 sunken white o$i
+    }
+    label {
+        .fd.c create text $x1 $y1 -text $fdobj($i,l) -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -anchor nw -tags o$i
+    }
+    checkbox {
+        fd_draw_rectangle [expr $x1+2] [expr $y1+5] [expr $x1+12] [expr $y1+15] raised #a0a0a0 o$i
+        .fd.c create text [expr $x1+20] [expr $y1+3] -text $fdobj($i,l) -anchor nw -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags o$i
+    }
+    radio {
+        .fd.c create oval [expr $x1+4] [expr $y1+5] [expr $x1+14] [expr $y1+15] -fill white -tags o$i
+        .fd.c create text [expr $x1+24] [expr $y1+3] -text $fdobj($i,l) -anchor nw -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags o$i
+    }
+    query {
+        .fd.c create oval $x1 $y1 [expr $x1+20] [expr $y1+20] -fill white -tags o$i
+        .fd.c create text [expr $x1+5] [expr $y1+4] -text Q  -anchor nw -font -Adobe-Helvetica-Bold-R-Normal-*-*-120-*-*-*-*-* -tags o$i
+    }
+    listbox {
+        fd_draw_rectangle $x1 $y1 [expr $x2-12] $y2 sunken white o$i
+        fd_draw_rectangle [expr $x2-11] $y1 $x2 $y2 sunken gray o$i
+        .fd.c create line [expr $x2-5] $y1 $x2 [expr $y1+10] -fill #808080 -tags o$i
+        .fd.c create line [expr $x2-10] [expr $y1+9] $x2 [expr $y1+9] -fill #808080 -tags o$i
+        .fd.c create line [expr $x2-10] [expr $y1+9] [expr $x2-5] $y1 -fill white -tags o$i
+        .fd.c create line [expr $x2-5] $y2 $x2 [expr $y2-10] -fill #808080 -tags o$i
+        .fd.c create line [expr $x2-10] [expr $y2-9] $x2 [expr $y2-9] -fill white -tags o$i
+        .fd.c create line [expr $x2-10] [expr $y2-9] [expr $x2-5] $y2 -fill white -tags o$i
+    }
+}
+.fd.c raise hook
+}
+
+proc {fd_draw_rectangle} {x1 y1 x2 y2 relief color tag} {
+if {$relief=="raised"} {
+    set c1 white
+    set c2 #606060
+} else {
+    set c1 #606060
+    set c2 white
+}
+if {$color != "none"} {
+    .fd.c create rectangle $x1 $y1 $x2 $y2 -outline "" -fill $color -tags $tag
+}
+.fd.c create line $x1 $y1 $x2 $y1 -fill $c1 -tags $tag
+.fd.c create line $x1 $y1 $x1 $y2 -fill $c1 -tags $tag
+.fd.c create line $x1 $y2 $x2 $y2 -fill $c2 -tags $tag
+.fd.c create line $x2 $y1 $x2 [expr 1+$y2] -fill $c2 -tags $tag
+}
+
+proc {fd_init} {} {
+global fdvar fdobj
+catch {unset fdvar}
+catch {unset fdobj}
+catch {.fd.c delete all}
+set fdvar(forminame) {udf0}
+set fdvar(formname) "New form"
+set fdvar(objnum) 0
+set fdvar(objlist) {}
+set fdvar(oper) none
+set fdvar(tool) point
+}
+
+proc {fd_item_click} {x y} {
+global fdvar fdobj
+set fdvar(oper) none
+set fdvar(moveitemobj) {}
+set il [.fd.c find overlapping $x $y $x $y]
+if {[llength $il]==0} return
+set tl [.fd.c gettags [lindex $il 0]]
+set i [lsearch -glob $tl o*]
+if {$i==-1} return
+set objnum [string range [lindex $tl $i] 1 end]
+set fdvar(moveitemobj) $objnum
+set fdvar(moveitemx) $x
+set fdvar(moveitemy) $y
+set fdvar(oper) move
+fd_show_attributes $objnum
+fd_draw_hookers $objnum
+}
+
+proc {fd_load_form} {name mode} {
+global fdvar fdobj dbc
+fd_init
+set fdvar(formname) $name
+if {$mode=="design"} {
+	Window show .fd
+	Window show .fdmenu
+	Window show .fda
+	Window show .fdtb
+}
+#set fid [open "$name.form" r]
+#set info [gets $fid]
+#close $fid
+set res [pg_exec $dbc "select * from pga_forms where formname='$fdvar(formname)'"]
+set info [lindex [pg_result $res -getTuple 0] 1]
+pg_result $res -clear
+set fdvar(forminame) [lindex $info 0]
+set fdvar(objnum) [lindex $info 1]
+set fdvar(objlist) [lindex $info 2]
+set fdvar(geometry) [lindex $info 3]
+set j 0
+foreach objinfo [lrange $info 4 end] {
+    foreach {t n c x l v} $objinfo {}
+    set i [lindex $fdvar(objlist) $j]
+    set fdobj($i,t) $t
+    set fdobj($i,n) $n
+    set fdobj($i,c) $c
+    set fdobj($i,l) $l
+    set fdobj($i,x) $x
+    set fdobj($i,v) $v
+    if {$mode=="design"} {fd_draw_object $i}
+    incr j
+}
+}
+
+proc {fd_mouse_down} {x y} {
+global fdvar
+set x [expr 3*int($x/3)]
+set y [expr 3*int($y/3)]
+set fdvar(xstart) $x
+set fdvar(ystart) $y
+if {$fdvar(tool)=="point"} {
+    fd_item_click $x $y
+    return
+}
+set fdvar(oper) draw
+}
+
+proc {fd_mouse_move} {x y} {
+global fdvar
+#set fdvar(msg) "x=$x y=$y"
+set x [expr 3*int($x/3)]
+set y [expr 3*int($y/3)]
+set oper ""
+catch {set oper $fdvar(oper)}
+if {$oper=="draw"} {
+    catch {.fd.c delete curdraw}
+    .fd.c create rectangle $fdvar(xstart) $fdvar(ystart) $x $y -tags curdraw
+    return
+}
+if {$oper=="move"} {
+    set dx [expr $x-$fdvar(moveitemx)]
+    set dy [expr $y-$fdvar(moveitemy)]
+    .fd.c move o$fdvar(moveitemobj) $dx $dy
+    .fd.c move hook $dx $dy
+    set fdvar(moveitemx) $x
+    set fdvar(moveitemy) $y
+}
+}
+
+proc {fd_mouse_up} {x y} {
+global fdvar fdobj
+set x [expr 3*int($x/3)]
+set y [expr 3*int($y/3)]
+if {$fdvar(oper)=="move"} {
+    set fdvar(moveitem) {}
+    set fdvar(oper) none
+    set oc $fdobj($fdvar(moveitemobj),c)
+    set dx [expr $x - $fdvar(xstart)]
+    set dy [expr $y - $fdvar(ystart)]
+    set newcoord [list [expr $dx+[lindex $oc 0]] [expr $dy+[lindex $oc 1]] [expr $dx+[lindex $oc 2]] [expr $dy+[lindex $oc 3]]]
+    set fdobj($fdvar(moveitemobj),c) $newcoord
+    fd_show_attributes $fdvar(moveitemobj)
+    fd_draw_hookers $fdvar(moveitemobj)
+    return
+}
+if {$fdvar(oper)!="draw"} return
+set fdvar(oper) none
+.fd.c delete curdraw
+incr fdvar(objnum)
+set i $fdvar(objnum)
+lappend fdvar(objlist) $i
+# t=type , c=coords , n=name , l=label
+set fdobj($i,t) $fdvar(tool)
+set fdobj($i,c) [list $fdvar(xstart) $fdvar(ystart) $x $y]
+set fdobj($i,n) $fdvar(tool)$i
+set fdobj($i,l) $fdvar(tool)$i
+set fdobj($i,x) {}
+set fdobj($i,v) {}
+fd_draw_object $i
+fd_show_attributes $i
+set fdvar(moveitemobj) $i
+fd_draw_hookers $i
+set fdvar(tool) point
+}
+
+proc {fd_save_form} {name} {
+global fdvar fdobj dbc
+if {[tk_messageBox -title Warning -message "Do you want to save the form into the database ?" -type yesno -default yes]=="no"} {return 1}
+if {[string length $fdvar(forminame)]==0} {
+    tk_messageBox -title Warning -message "Forms need an internal name, only literals, low case"
+    return 0
+}
+if {[string length $fdvar(formname)]==0} {
+	tk_messageBox -title Warning -message "Form must have a name"
+	return 0
+}
+#set fid [open "$name.form" w]
+set info [list $fdvar(forminame) $fdvar(objnum) $fdvar(objlist) [wm geometry .fd]]
+foreach i $fdvar(objlist) {
+    lappend info [list $fdobj($i,t) $fdobj($i,n) $fdobj($i,c) $fdobj($i,x) $fdobj($i,l) $fdobj($i,v)]
+}
+#puts $fid $info
+#close $fid
+set res [pg_exec $dbc "delete from pga_forms where formname='$fdvar(formname)'"]
+pg_result $res -clear
+set res [pg_exec $dbc "insert into pga_forms values ('$fdvar(formname)','$info')"]
+pg_result $res -clear
+cmd_Forms
+return 1
+}
+
+proc {fd_set_command} {} {
+global fdobj fdvar
+set i $fdvar(moveitemobj)
+set fdobj($i,x) $fdvar(c_cmd)
+}
+
+proc {fd_set_name} {} {
+global fdvar fdobj
+set i $fdvar(moveitemobj)
+foreach k $fdvar(objlist) {
+    if {($fdobj($k,n)==$fdvar(c_name)) && ($i!=$k)} {
+        tk_messageBox -title Warning -message "There is another object (a $fdobj($k,t)) with the same name. Please change it!"
+        return
+    }
+}
+set fdobj($i,n) $fdvar(c_name)
+fd_show_attributes $i
+}
+
+proc {fd_set_text} {} {
+global fdvar fdobj
+set fdobj($fdvar(moveitemobj),l) $fdvar(c_text)
+fd_draw_object $fdvar(moveitemobj)
+}
+
+proc {fd_show_attributes} {i} {
+global fdvar fdobj
+set fdvar(c_info) "$fdobj($i,t) .$fdvar(forminame).$fdobj($i,n)"
+set fdvar(c_name) $fdobj($i,n)
+set c $fdobj($i,c)
+set fdvar(c_top) [lindex $c 1]
+set fdvar(c_left) [lindex $c 0]
+set fdvar(c_width) [expr [lindex $c 2]-[lindex $c 0]]
+set fdvar(c_height) [expr [lindex $c 3]-[lindex $c 1]]
+set fdvar(c_cmd) {}
+catch {set fdvar(c_cmd) $fdobj($i,x)}
+set fdvar(c_var) {}
+catch {set fdvar(c_var) $fdobj($i,v)}
+set fdvar(c_text) {}
+catch {set fdvar(c_text) $fdobj($i,l)}
+}
+
+proc {fd_test} {} {
+global fdvar fdobj dbc datasets
+set base .$fdvar(forminame)
+if {[winfo exists $base]} {
+   wm deiconify $base; return
+}
+toplevel $base -class Toplevel
+wm focusmodel $base passive
+wm geometry $base $fdvar(geometry)
+wm maxsize $base 785 570
+wm minsize $base 1 1
+wm overrideredirect $base 0
+wm resizable $base 1 1
+wm deiconify $base
+wm title $base $fdvar(formname)
+foreach item $fdvar(objlist) {
+set coord $fdobj($item,c)
+set name $fdobj($item,n)
+set wh "-width [expr 3+[lindex $coord 2]-[lindex $coord 0]]  -height [expr 3+[lindex $coord 3]-[lindex $coord 1]]"
+set visual 1
+switch $fdobj($item,t) {
+    button {
+        set cmd {}
+        catch {set cmd $fdobj($item,x)}
+        button $base.$name  -borderwidth 1 -padx 0 -pady 0 -text "$fdobj($item,l)" -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -command [subst {$cmd}]
+    }
+    checkbox {
+        checkbutton  $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -borderwidth 1
+        set wh {}
+    }
+    query { set visual 0
+        set procbody "proc $base.$name:execute {} {global dbc datasets ; set datasets($base.$name) \[pg_exec \$dbc \"$fdobj($item,x)\"\] ; set ceva \[$base.$name:fields\]}"
+        eval $procbody
+#        tk_messageBox -message $procbody
+        set procbody "proc $base.$name:nrecords {} {global datasets ; return \[pg_result \$datasets($base.$name) -numTuples\]}"
+        eval $procbody
+#        tk_messageBox -message $procbody
+        set procbody "proc $base.$name:close {} {global datasets ; pg_result \$datasets($base.$name) -clear}"
+        eval $procbody
+#        tk_messageBox -message $procbody
+        set procbody "proc $base.$name:fields {} {global datasets ; set fl {} ; foreach fd \[pg_result \$datasets($base.$name) -lAttributes\] {lappend fl \[lindex \$fd 0\]} ; set datasets($base.$name,fields) \$fl ; return \$fl}"
+#        tk_messageBox -message $procbody
+        eval $procbody
+        eval "proc $base.$name:movefirst {} {global datasets ; set datasets($base.$name,recno) 0}"
+        eval "proc $base.$name:movenext {} {global datasets ; incr datasets($base.$name,recno)}"
+        eval "proc $base.$name:moveprevious {} {global datasets ; incr datasets($base.$name,recno) -1 ; if {\$datasets($base.$name,recno)==-1} {$base.$name:movefirst}}"
+        eval "proc $base.$name:movelast {} {global datasets ; set datasets($base.$name,recno) \[expr \[$base.$name:nrecords\] -1\]}"
+        eval "proc $base.$name:updatecontrols {} {global datasets ; set i 0 ; foreach fld \$datasets($base.$name,fields) {catch {upvar $base.$name.\$fld dbvar ; set dbvar \[lindex \[pg_result \$datasets($base.$name) -getTuple \$datasets($base.$name,recno)\] \$i\]} ; incr i}}"
+    }
+    radio {
+        radiobutton  $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -borderwidth 1
+        set wh {}
+    }
+    entry {
+        set var {} ; catch {set var $fdobj($item,v)}
+        entry $base.$name -bo 1 -ba white -selectborderwidth 0  -highlightthickness 0 
+        if {$var!=""} {$base.$name configure -textvar $var}
+    }
+    label {set wh {} ; label $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -anchor nw -padx 0 -pady 0 -text $fdobj($item,l)}
+    listbox {listbox $base.$name -borderwidth 1 -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*}
+}
+if $visual {eval [subst "place $base.$name  -x [expr [lindex $coord 0]-1] -y [expr [lindex $coord 1]-1] -anchor nw $wh -bordermode ignore"]}
+}
+}
+
+
+
 proc {get_dwlb_Selection} {} {
 set temp [.dw.lb curselection]
 if {$temp==""} return "";
@@ -553,6 +930,9 @@ if {$retval} {
     close $fid
 }
 }
+
+
+
 
 proc {mw_canvas_click} {x y} {
 global mw msg
@@ -1069,13 +1449,8 @@ if {[catch {set newdbc [pg_connect $newdbname -host $newhost -port $newpport]} m
 }
 
 proc {open_form} {formname} {
-global dbc
-
-set frmsrc {}
-pg_select $dbc "select * from pga_forms where formname='$formname'" rec {
-    set frmsrc $rec(formsource)
-}
-eval $frmsrc
+     fd_load_form $formname run
+     fd_test
 }
 
 proc {open_function} {objname} {
@@ -1960,12 +2335,6 @@ sql_exec noquiet "delete from pga_reports where reportname='$rbvar(reportname)'"
 sql_exec noquiet "insert into pga_reports (reportname,reportsource,reportbody) values ('$rbvar(reportname)','$rbvar(tablename)','$prog')"
 }
 
-proc {main} {argc argv} {
-global dbc
-set dbc [pg_connect ultex]
-rb_init
-}
-
 proc {save_pref} {} {
 global pref
 catch {
@@ -2043,7 +2412,7 @@ place $w -x 7
 place .dw.lmask -x 80 -y [expr 86+25*[lsearch -exact $tablist $curtab]]
 set activetab $curtab
 # Tabs where button Design is enabled
-if {[lsearch {Scripts Queries Reports} $activetab]!=-1} {
+if {[lsearch {Scripts Queries Reports Forms} $activetab]!=-1} {
 	.dw.btndesign configure -state normal
 }
 .dw.lb delete 0 end
@@ -2190,7 +2559,7 @@ proc vTclWindow.about {base} {
     label $base.l2  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {A Tcl/Tk interface to
 PostgreSQL
 by Constantin Teodorescu} 
-    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.76}
+    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.81}
     label $base.l4  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {You will always get the latest version at:
 http://www.flex.ro/pgaccess
 
@@ -3640,6 +4009,424 @@ proc vTclWindow.tiw {base} {
     place $base.fr11.lic  -x 95 -y 30 -width 32 -height 16 -anchor nw -bordermode ignore 
     place $base.fr11.l5  -x 10 -y 55 -anchor nw -bordermode ignore 
     place $base.fr11.lif  -x 10 -y 70 -width 178 -height 68 -anchor nw -bordermode ignore
+}
+
+proc vTclWindow.fd {base} {
+    if {$base == ""} {
+        set base .fd
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 377x315+185+234
+    wm maxsize $base 785 570
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 1 1
+    wm deiconify $base
+    wm title $base "Form design"
+    bind $base <Key-Delete> {
+        fd_delete_object
+    }
+    canvas $base.c \
+        -background #828282 -height 207 -highlightthickness 0 -relief ridge \
+        -selectborderwidth 0 -width 295 
+    bind $base.c <Button-1> {
+        fd_mouse_down %x %y
+    }
+    bind $base.c <ButtonRelease-1> {
+        fd_mouse_up %x %y
+    }
+    bind $base.c <Motion> {
+        fd_mouse_move %x %y
+    }
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    pack $base.c \
+        -in .fd -anchor center -expand 1 -fill both -side top 
+}
+
+proc vTclWindow.fda {base} {
+    if {$base == ""} {
+        set base .fda
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 225x197+589+29
+    wm maxsize $base 785 570
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 1 1
+    wm deiconify $base
+    wm title $base "Attributes"
+    label $base.l1 \
+        -anchor nw -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -justify left -text Name -width 8 
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(c_name) 
+    bind $base.e1 <Key-Return> {
+        fd_set_name
+    }
+    label $base.l2 \
+        -anchor nw -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -justify left -text Top -width 8 
+    entry $base.e2 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(c_top) 
+    bind $base.e2 <Key-Return> {
+        fd_change_coord
+    }
+    label $base.l3 \
+        -anchor w -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text Left \
+        -width 8 
+    entry $base.e3 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(c_left) 
+    bind $base.e3 <Key-Return> {
+        fd_change_coord
+    }
+    label $base.l4 \
+        -anchor w -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text Width \
+        -width 8 
+    entry $base.e4 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(c_width) 
+    bind $base.e4 <Key-Return> {
+        fd_change_coord
+    }
+    label $base.l5 \
+        -anchor w -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 0 \
+        -text Height -width 8 
+    entry $base.e5 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(c_height) 
+    bind $base.e5 <Key-Return> {
+        fd_change_coord
+    }
+    label $base.l6 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 0 \
+        -text Command 
+    entry $base.e6 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(c_cmd) 
+    bind $base.e6 <Key-Return> {
+        fd_set_command
+    }
+    button $base.bcmd \
+        -borderwidth 1 \
+        -command {Window show .fdcmd
+.fdcmd.f.txt delete 1.0 end
+.fdcmd.f.txt insert end $fdvar(c_cmd)} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 3 \
+        -pady 3 -text ... -width 1 
+    label $base.l7 \
+        -anchor w -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -text Variable -width 8 
+    entry $base.e7 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(c_var) 
+    bind $base.e7 <Key-Return> {
+        set fdobj($fdvar(moveitemobj),v) $fdvar(c_var)
+    }
+    label $base.l8 \
+        -anchor w -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -text Text \
+        -width 8 
+    entry $base.e8 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(c_text) 
+    bind $base.e8 <Key-Return> {
+        fd_set_text
+    }
+    label $base.l0 \
+        -borderwidth 1 -relief raised -text {checkbox .udf0.checkbox17} \
+        -textvariable fdvar(c_info) -width 28 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    grid $base.l1 \
+        -in .fda -column 0 -row 1 -columnspan 1 -rowspan 1 
+    grid $base.e1 \
+        -in .fda -column 1 -row 1 -columnspan 1 -rowspan 1 -pady 2 
+    grid $base.l2 \
+        -in .fda -column 0 -row 2 -columnspan 1 -rowspan 1 
+    grid $base.e2 \
+        -in .fda -column 1 -row 2 -columnspan 1 -rowspan 1 
+    grid $base.l3 \
+        -in .fda -column 0 -row 3 -columnspan 1 -rowspan 1 
+    grid $base.e3 \
+        -in .fda -column 1 -row 3 -columnspan 1 -rowspan 1 -pady 2 
+    grid $base.l4 \
+        -in .fda -column 0 -row 4 -columnspan 1 -rowspan 1 
+    grid $base.e4 \
+        -in .fda -column 1 -row 4 -columnspan 1 -rowspan 1 
+    grid $base.l5 \
+        -in .fda -column 0 -row 5 -columnspan 1 -rowspan 1 
+    grid $base.e5 \
+        -in .fda -column 1 -row 5 -columnspan 1 -rowspan 1 -pady 2 
+    grid $base.l6 \
+        -in .fda -column 0 -row 6 -columnspan 1 -rowspan 1 
+    grid $base.e6 \
+        -in .fda -column 1 -row 6 -columnspan 1 -rowspan 1 
+    grid $base.bcmd \
+        -in .fda -column 2 -row 6 -columnspan 1 -rowspan 1 
+    grid $base.l7 \
+        -in .fda -column 0 -row 7 -columnspan 1 -rowspan 1 
+    grid $base.e7 \
+        -in .fda -column 1 -row 7 -columnspan 1 -rowspan 1 
+    grid $base.l8 \
+        -in .fda -column 0 -row 8 -columnspan 1 -rowspan 1 
+    grid $base.e8 \
+        -in .fda -column 1 -row 8 -columnspan 1 -rowspan 1 -pady 2 
+    grid $base.l0 \
+        -in .fda -column 0 -row 0 -columnspan 2 -rowspan 1 
+}
+
+proc vTclWindow.fdcmd {base} {
+    if {$base == ""} {
+        set base .fdcmd
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 282x274+616+367
+    wm maxsize $base 785 570
+    wm minsize $base 1 19
+    wm overrideredirect $base 0
+    wm resizable $base 1 1
+    wm title $base "Command"
+    frame $base.f \
+        -borderwidth 2 -height 75 -relief groove -width 125 
+    scrollbar $base.f.sb \
+        -borderwidth 1 -command {.fdcmd.f.txt yview} -orient vert -width 12 
+    text $base.f.txt \
+        -font -*-Clean-Medium-R-Normal--*-130-*-*-*-*-*-* -height 1 \
+        -width 115 -yscrollcommand {.fdcmd.f.sb set} 
+    frame $base.fb \
+        -height 75 -width 125 
+    button $base.fb.b1 \
+        -borderwidth 1 \
+        -command {set fdvar(c_cmd) [.fdcmd.f.txt get 1.0 "end - 1 chars"]
+Window hide .fdcmd
+fd_set_command} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Ok -width 5 
+    button $base.fb.b2 \
+        -borderwidth 1 -command {Window hide .fdcmd} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Cancel 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    pack $base.f \
+        -in .fdcmd -anchor center -expand 1 -fill both -side top 
+    pack $base.f.sb \
+        -in .fdcmd.f -anchor e -expand 1 -fill y -side right 
+    pack $base.f.txt \
+        -in .fdcmd.f -anchor center -expand 1 -fill both -side top 
+    pack $base.fb \
+        -in .fdcmd -anchor center -expand 0 -fill none -side top 
+    pack $base.fb.b1 \
+        -in .fdcmd.fb -anchor center -expand 0 -fill none -side left 
+    pack $base.fb.b2 \
+        -in .fdcmd.fb -anchor center -expand 0 -fill none -side top 
+}
+
+proc vTclWindow.fdmenu {base} {
+    if {$base == ""} {
+        set base .fdmenu
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 288x70+193+129
+    wm maxsize $base 785 570
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 0 0
+    wm deiconify $base
+    wm title $base "Commands"
+    button $base.but17 \
+        -borderwidth 1 \
+        -command {if {[tk_messageBox -title Warning -message "Delete all objects ?" -type yesno -default no]=="no"} return
+fd_init} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Delete all} 
+    button $base.but18 \
+        -borderwidth 1 -command {set fdvar(geometry) [wm geometry .fd] ; fd_test } \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Test form} 
+    button $base.but19 \
+        -borderwidth 1 -command {destroy .$fdvar(forminame)} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Close test form} 
+    button $base.bex \
+        -borderwidth 1 \
+        -command {if {[fd_save_form $fdvar(formname)]==1} {
+catch {Window destroy .fd}
+catch {Window destroy .fdtb}
+catch {Window destroy .fdmenu}
+catch {Window destroy .fda}
+catch {Window destroy .fdcmd}
+catch {Window destroy .$fdvar(forminame)}
+}} \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
+        -pady 3 -text Close 
+    button $base.bload \
+        -borderwidth 1 -command {fd_load_form nimic design} \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
+        -pady 3 -text {Load from database} 
+    button $base.button17 \
+        -borderwidth 1 -command {fd_save_form nimic} \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
+        -pady 3 -text Save 
+    label $base.l1 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -text {Form name} 
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(formname) 
+    label $base.l2 \
+        -borderwidth 0 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -text {Form's window internal name} 
+    entry $base.e2 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -selectborderwidth 0 -textvariable fdvar(forminame) 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    place $base.but17 \
+        -x 5 -y 80 -width 62 -height 24 -anchor nw -bordermode ignore 
+    place $base.but18 \
+        -x 5 -y 45 -width 62 -height 24 -anchor nw -bordermode ignore 
+    place $base.but19 \
+        -x 70 -y 45 -width 94 -height 24 -anchor nw -bordermode ignore 
+    place $base.bex \
+        -x 230 -y 45 -height 24 -anchor nw -bordermode ignore 
+    place $base.bload \
+        -x 75 -y 80 -width 114 -height 23 -anchor nw -bordermode ignore 
+    place $base.button17 \
+        -x 165 -y 45 -width 44 -height 24 -anchor nw -bordermode ignore 
+    place $base.l1 \
+        -x 5 -y 5 -anchor nw -bordermode ignore 
+    place $base.e1 \
+        -x 75 -y 5 -width 193 -height 17 -anchor nw -bordermode ignore 
+    place $base.l2 \
+        -x 5 -y 25 -anchor nw -bordermode ignore 
+    place $base.e2 \
+        -x 175 -y 25 -width 60 -height 17 -anchor nw -bordermode ignore 
+}
+
+proc vTclWindow.fdtb {base} {
+    if {$base == ""} {
+        set base .fdtb
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 90x152+65+180
+    wm maxsize $base 785 570
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 1 1
+    wm deiconify $base
+    wm title $base "Toolbar"
+    radiobutton $base.rb1 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -highlightthickness 0 -text Point -value point -variable fdvar(tool) \
+        -width 9 
+    radiobutton $base.rb2 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -foreground #000000 -highlightthickness 0 -selectcolor #0000ee \
+        -text Label -value label -variable fdvar(tool) -width 9 
+    radiobutton $base.rb3 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -highlightthickness 0 -text Entry -value entry -variable fdvar(tool) \
+        -width 9 
+    radiobutton $base.rb4 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -highlightthickness 0 -text Button -value button \
+        -variable fdvar(tool) -width 9 
+    radiobutton $base.rb5 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+        -highlightthickness 0 -text {List box} -value listbox \
+        -variable fdvar(tool) -width 9 
+    radiobutton $base.rb6 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -highlightthickness 0 -text {Check box} -value checkbox \
+        -variable fdvar(tool) -width 9 
+    radiobutton $base.rb7 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -highlightthickness 0 -text {Radio btn} -value radio \
+        -variable fdvar(tool) -width 9 
+    radiobutton $base.rb8 \
+        -anchor w -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -highlightthickness 0 -text Query -value query -variable fdvar(tool) \
+        -width 9 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    grid $base.rb1 \
+        -in .fdtb -column 0 -row 0 -columnspan 1 -rowspan 1 
+    grid $base.rb2 \
+        -in .fdtb -column 0 -row 1 -columnspan 1 -rowspan 1 
+    grid $base.rb3 \
+        -in .fdtb -column 0 -row 2 -columnspan 1 -rowspan 1 
+    grid $base.rb4 \
+        -in .fdtb -column 0 -row 3 -columnspan 1 -rowspan 1 
+    grid $base.rb5 \
+        -in .fdtb -column 0 -row 4 -columnspan 1 -rowspan 1 
+    grid $base.rb6 \
+        -in .fdtb -column 0 -row 5 -columnspan 1 -rowspan 1 
+    grid $base.rb7 \
+        -in .fdtb -column 0 -row 6 -columnspan 1 -rowspan 1 
+    grid $base.rb8 \
+        -in .fdtb -column 0 -row 7 -columnspan 1 -rowspan 1 
 }
 
 Window show .
