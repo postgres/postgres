@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.54 1999/06/10 14:17:09 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.55 1999/06/11 09:00:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1960,7 +1960,12 @@ UnlockBuffers()
 		}
 		if (BufferLocks[i] & BL_RI_LOCK)
 		{
-			Assert(buf->ri_lock);
+			/* 
+			 * Someone else could remove our RI lock when acquiring
+			 * W lock. This is possible if we came here from elog(ERROR)
+			 * from IpcSemaphore{Lock|Unlock}(WaitCLSemId). And so we
+			 * don't do Assert(buf->ri_lock) here.
+			 */
 			buf->ri_lock = false;
 		}
 		if (BufferLocks[i] & BL_W_LOCK)
@@ -2008,7 +2013,6 @@ LockBuffer(Buffer buffer, int mode)
 		{
 			Assert(buf->w_lock);
 			Assert(buf->r_locks == 0);
-			Assert(!buf->ri_lock);
 			Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_RI_LOCK)))
 				buf->w_lock = false;
 			BufferLocks[buffer - 1] &= ~BL_W_LOCK;
@@ -2043,10 +2047,15 @@ LockBuffer(Buffer buffer, int mode)
 		Assert(!(BufferLocks[buffer - 1] & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
 		while (buf->r_locks > 0 || buf->w_lock)
 		{
-			if (buf->r_locks > 3)
+			if (buf->r_locks > 3 || (BufferLocks[buffer - 1] & BL_RI_LOCK))
 			{
-				if (!(BufferLocks[buffer - 1] & BL_RI_LOCK))
-					BufferLocks[buffer - 1] |= BL_RI_LOCK;
+				/*
+				 * Our RI lock might be removed by concurrent W lock
+				 * acquiring (see what we do with RI locks below
+				 * when our own W acquiring succeeded) and so
+				 * we set RI lock again if we already did this.
+				 */
+				BufferLocks[buffer - 1] |= BL_RI_LOCK;
 				buf->ri_lock = true;
 			}
 #ifdef HAS_TEST_AND_SET
@@ -2063,6 +2072,10 @@ LockBuffer(Buffer buffer, int mode)
 		BufferLocks[buffer - 1] |= BL_W_LOCK;
 		if (BufferLocks[buffer - 1] & BL_RI_LOCK)
 		{
+			/*
+			 * It's possible to remove RI locks acquired by another
+			 * W lockers here, but they'll take care about it.
+			 */
 			buf->ri_lock = false;
 			BufferLocks[buffer - 1] &= ~BL_RI_LOCK;
 		}
