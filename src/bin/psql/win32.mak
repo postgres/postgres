@@ -32,6 +32,7 @@ CLEAN :
 	-@erase "$(INTDIR)\describe.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
 	-@erase "$(INTDIR)\getopt.obj"
+	-@erase "$(INTDIR)\mbprint.obj"
 	-@erase "$(INTDIR)\vc50.idb"
 	-@erase "$(OUTDIR)\psql.exe"
 
@@ -73,6 +74,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\describe.obj" \
 	"$(INTDIR)\tab-complete.obj" \
 	"$(INTDIR)\getopt.obj" \
+	"$(INTDIR)\mbprint.obj" \
 	"..\..\interfaces\libpq\Release\libpqdll.lib"
 
 "$(OUTDIR)\psql.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)

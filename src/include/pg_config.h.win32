@@ -1,3 +1,5 @@
+#ifndef	pg_config_h_win32__
+#define	pg_config_h_win32__
 /*
  * Parts of pg_config.h that you get with autoconf on other systems
  */
@@ -23,3 +25,8 @@
 
 #define HAVE_CXX_STRING_HEADER
 #define HAVE_NAMESPACE_STD
+
+/* use _snprintf instead of snprintf */
+#define	HAVE_SNPRINTF_DECL
+#define snprintf	_snprintf
+#endif /* pg_config_h_win32__ */

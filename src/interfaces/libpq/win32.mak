@@ -73,6 +73,7 @@ CLEAN :
 	-@erase "$(OUTDIR)\libpqdll.lib"
 !IFDEF MULTIBYTE
 	-@erase "$(INTDIR)\wchar.obj"
+	-@erase "$(INTDIR)\encnames.obj"
 !ENDIF
 
 "$(OUTDIR)" :
@@ -106,7 +107,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\pqexpbuffer.obj"
 
 !IFDEF MULTIBYTE
-LIB32_OBJS = $(LIB32_OBJS) "$(INTDIR)\wchar.obj"
+LIB32_OBJS = $(LIB32_OBJS) "$(INTDIR)\wchar.obj" "$(INTDIR)\encnames.obj"
 !ENDIF
 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
@@ -154,6 +155,14 @@ LINK32_OBJS= \
 "$(INTDIR)\wchar.obj" : ..\..\backend\utils\mb\wchar.c
     $(CPP) @<<
     $(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
+<<
+!ENDIF
+
+
+!IFDEF MULTIBYTE
+"$(INTDIR)\encnames.obj" : ..\..\backend\utils\mb\encnames.c
+    $(CPP) @<<
+    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\encnames.c
 <<
 !ENDIF
 
