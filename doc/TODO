@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Nov  1 15:06:47 EST 2001
+Last updated:		Tue Nov  6 18:42:18 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -291,6 +291,7 @@ EXOTIC FEATURES
 MISCELLANEOUS
 
 * Increase identifier length (NAMEDATALEN) if small performance hit
+* Increase maximum number of function parameters
 * -Populate backend status area and write program to dump status data (Jan)
 * -Put sort files in their own directory (Bruce)
 * Show location of syntax error in query [yacc]
