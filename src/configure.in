@@ -3,6 +3,10 @@ AC_INIT(backend/access/common/heaptuple.c)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
 AC_CONFIG_HEADER(include/config.h)
 
+dnl Autoconf 2.12, at least, generates a useless relative path to install-sh
+dnl unless we do this.
+AC_CONFIG_AUX_DIR(`pwd`)
+
 AC_CANONICAL_HOST
 
 tas_file=dummy.s
@@ -132,18 +136,20 @@ if test ! -f "template/$TEMPLATE"; then
 	exit
 fi
 
-AROPT=`grep '^AROPT:' template/$TEMPLATE | awk -F: '{print $2}'`
-SHARED_LIB=`grep '^SHARED_LIB:' template/$TEMPLATE | awk -F: '{print $2}'`
-CFLAGS=`grep '^CFLAGS:' template/$TEMPLATE | awk -F: '{print $2}'`
-SRCH_INC=`grep '^SRCH_INC:' template/$TEMPLATE | awk -F: '{print $2}'`
-SRCH_LIB=`grep '^SRCH_LIB:' template/$TEMPLATE | awk -F: '{print $2}'`
-USE_LOCALE=`grep '^USE_LOCALE:' template/$TEMPLATE | awk -F: '{print $2}'`
-DLSUFFIX=`grep '^DLSUFFIX:' template/$TEMPLATE | awk -F: '{print $2}'`
-DL_LIB=`grep '^DL_LIB:' template/$TEMPLATE | awk -F: '{print $2}'`
-YACC=`grep '^YACC:' template/$TEMPLATE | awk -F: '{print $2}'`
-YFLAGS=`grep '^YFLAGS:' template/$TEMPLATE | awk -F: '{print $2}'`
-CC=`grep '^CC:' template/$TEMPLATE | awk -F: '{print $2}'`
-LIBS=`grep '^LIBS:' template/$TEMPLATE | awk -F: '{print $2}'`
+dnl Read the selected template file.
+dnl For reasons of backwards compatibility, lines of the form
+dnl     IDENTIFIER: something
+dnl should be treated as variable assignments.  However, we also want to
+dnl allow other shell commands in the template file (in case the file
+dnl needs to make conditional tests, etc).  So, generate a temp file with
+dnl the IDENTIFIER: lines translated, then source it.
+
+[
+rm -f conftest.sh
+sed 's/^\([A-Za-z_]*\):\(.*\)$/\1="\2"/' "template/$TEMPLATE" >conftest.sh
+. conftest.sh
+rm -f conftest.sh
+]
 
 
 AC_ARG_WITH(includes,
@@ -416,12 +422,9 @@ AC_ARG_WITH(CXX,
     [   AC_PROG_CXX])
 AC_SUBST(HAVECXX)
 
-AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install, NONE, /usr/ucb:$PATH )
-if test "$INSTALL" = "NONE"
-then
-	# fall back on our own script
-	INSTALL=`pwd`/install-sh
-fi
+dnl Figure out how to invoke "install" and what install options to use.
+
+AC_PROG_INSTALL
 
 INSTLOPTS="-m 444"
 INSTL_EXE_OPTS="-m 555"
@@ -434,17 +437,6 @@ case "$host_os" in
 	INSTL_SHLIB_OPTS="-m 555" ;;
 esac
 
-dnl These flavors of install need -c to install by copy rather than move.
-dnl install by move is fatal because it removes stuff from the source tree!
-case "`basename $INSTALL`" in
- install|installbsd|scoinst|install-sh)
-	INSTLOPTS="-c $INSTLOPTS"
-	INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
-	INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
-	INSTL_SHLIB_OPTS="-c $INSTL_SHLIB_OPTS";;
-esac
-
-echo "- Using $INSTALL"
 AC_SUBST(INSTALL)
 AC_SUBST(INSTLOPTS)
 AC_SUBST(INSTL_LIB_OPTS)
@@ -569,6 +561,7 @@ AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
+AC_STRUCT_TIMEZONE
 
 AC_MSG_CHECKING(for type of last arg to accept)
 AC_TRY_COMPILE([#include <stdlib.h>
