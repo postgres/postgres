@@ -43,6 +43,7 @@
 #define FLOAT4OID	700
 #define FLOAT8OID	701
 #define CASHOID		790
+#define NUMERICOID	1700
 
 static PyObject *PGError;
 static const char *PyPgVersion = "3.1";
@@ -298,6 +299,7 @@ get_type_array(PGresult *result, int nfields)
 
 			case FLOAT4OID:
 			case FLOAT8OID:
+			case NUMERICOID:
 				typ[j] = 2;
 				break;
 
@@ -1805,6 +1807,7 @@ pgquery_getresult(pgqueryobject * self, PyObject * args)
 
 			case FLOAT4OID:
 			case FLOAT8OID:
+			case NUMERICOID:
 				typ[j] = 2;
 				break;
 
@@ -1940,6 +1943,7 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 
 			case FLOAT4OID:
 			case FLOAT8OID:
+			case NUMERICOID:
 				typ[j] = 2;
 				break;
 
