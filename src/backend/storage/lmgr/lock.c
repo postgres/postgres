@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.19 1998/01/23 06:01:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.20 1998/01/23 22:16:46 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -706,6 +706,20 @@ LockResolveConflicts(LOCKTAB *ltable,
 		 */
 		MemSet(result->holders, 0, nLockTypes * sizeof(*(lock->holders)));
 		result->nHolding = 0;
+	}
+
+	{
+		/* ------------------------
+		 * If someone with a greater priority is waiting for the lock,
+		 * do not continue and share the lock, even if we can.  bjm
+		 * ------------------------
+		 */
+		int				myprio = ltable->ctl->prio[lockt];
+		PROC_QUEUE		*waitQueue = &(lock->waitProcs);
+		PROC			*topproc = (PROC *) MAKE_PTR(waitQueue->links.prev);
+
+		if (waitQueue->size && topproc->prio > myprio)
+			return STATUS_FOUND;
 	}
 
 	/* ----------------------------
