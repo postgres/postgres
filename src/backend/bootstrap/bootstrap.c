@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.1.1.1 1996/07/09 06:21:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.2 1996/07/15 19:21:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,9 @@ static char *relname;                   /* current relation name */
 AttributeTupleForm attrtypes[MAXATTR];  /* points to attribute info */
 static char	*values[MAXATTR];	/* cooresponding attribute values */
 int		numattr;		/* number of attributes for cur. rel */
+#ifdef OPENLINK_PATCHES
+extern int	fsyncOff;		/* do not fsync the database */
+#endif
 
 #if defined(WIN32) || defined(PORTNAME_next)
 static jmp_buf    Warn_restart;
@@ -198,9 +201,16 @@ void err()
 static void
 usage()
 {
+#ifdef OPENLINK_PATCHES
+    fprintf(stderr,"Usage: postgres -boot [-d] [-C] [-F] [-O] [-Q] [-P portno] [dbName]\n");
+#else
     fprintf(stderr,"Usage: postgres -boot [-d] [-C] [-O] [-Q] [-P portno] [dbName]\n");
+#endif
     fprintf(stderr,"     d: debug mode\n");
     fprintf(stderr,"     C: disable version checking\n");
+#ifdef OPENLINK_PATCHES
+    fprintf(stderr,"     F: turn off fsync\n");
+#endif
     fprintf(stderr,"     O: set BootstrapProcessing mode\n");
     fprintf(stderr,"     P portno: specify port number\n");
 
@@ -256,8 +266,12 @@ BootstrapMain(int argc, char *argv[])
     Quiet = 0;
     Noversion = 0;
     dbName = NULL;
-    
+
+#ifdef OPENLINK_PATCHES
+    while ((flag = getopt(argc, argv, "dCOQP:F")) != EOF) {
+#else
     while ((flag = getopt(argc, argv, "dCOQP")) != EOF) {
+#endif
 	switch (flag) {
 	case 'd':
 	    DebugMode = 1; /* print out debuggin info while parsing */
@@ -273,6 +287,12 @@ BootstrapMain(int argc, char *argv[])
 	    break;
 	case 'P':/* specify port */
 	    portFd = atoi(optarg);
+	    break; 
+#ifdef OPENLINK_PATCHES
+	case 'F':
+	    fsyncOff = 1;
+	    break;
+#endif
 	    break; 
 	default:
 	    usage();

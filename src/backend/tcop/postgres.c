@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.1.1.1 1996/07/09 06:22:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.2 1996/07/15 19:22:17 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -92,6 +92,10 @@ CommandDest whereToSendOutput;
 
 extern int	lockingOff;
 extern int	NBuffers;
+
+#ifdef OPENLINK_PATCHES
+int	fsyncOff = 0;
+#endif
 
 int	dontExecute = 0;
 static int	ShowStats;
@@ -699,7 +703,11 @@ static void usage(char* progname)
     fprintf(stderr, 
 	    "Usage: %s [-B nbufs] [-d lvl] ] [-f plantype] \t[-m portno] [\t -o filename]\n",
 	    progname);
+#ifdef OPENLINK_PATCHES
+    fprintf(stderr,"\t[-P portno] [-t tracetype] [-x opttype] [-bCEiLFNopQSs] [dbname]\n");
+#else
     fprintf(stderr,"\t[-P portno] [-t tracetype] [-x opttype] [-bCEiLNopQSs] [dbname]\n");
+#endif
     fprintf(stderr, "    b: consider bushy plan trees during optimization\n");
     fprintf(stderr, "    B: set number of buffers in buffer pool\n");
     fprintf(stderr, "    C: supress version info\n");
@@ -708,6 +716,9 @@ static void usage(char* progname)
     fprintf(stderr, "    f: forbid plantype generation\n");
     fprintf(stderr, "    i: don't execute the query, just show the plan tree\n");
     fprintf(stderr, "    L: turn off locking\n");
+#ifdef OPENLINK_PATCHES
+    fprintf(stderr, "    F: turn off fsync\n");
+#endif
     fprintf(stderr, "    m: set up a listening backend at portno to support multiple front-ends\n");
     fprintf(stderr, "    M: start as postmaster\n");
     fprintf(stderr, "    N: don't use newline as query delimiter\n");
@@ -804,7 +815,11 @@ PostgresMain(int argc, char *argv[])
 	hostName = hostbuf;
     }
 
+#ifdef OPENLINK_PATCHES
+    while ((flag = getopt(argc, argv, "B:bCd:Ef:iLm:MNo:P:pQSst:x:F")) != EOF)
+#else
     while ((flag = getopt(argc, argv, "B:bCd:Ef:iLm:MNo:P:pQSst:x:")) != EOF)
+#endif
 	switch (flag) {
 	    
 	case 'b':
@@ -888,7 +903,17 @@ PostgresMain(int argc, char *argv[])
 	     */
 	    lockingOff = 1;
 	    break;
-	    
+
+#ifdef OPENLINK_PATCHES
+	case 'F':
+	    /* --------------------
+	     *  turn off fsync
+	     * --------------------
+	     */
+	    fsyncOff = 1;
+	    break;
+#endif
+
 	case 'm':
 	    /* start up a listening backend that can respond to 
 	       multiple front-ends.  (Note:  all the front-end connections
@@ -1195,7 +1220,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.1.1.1 $ $Date: 1996/07/09 06:22:00 $");
+	puts("$Revision: 1.2 $ $Date: 1996/07/15 19:22:17 $");
     }
     
     /* ----------------
