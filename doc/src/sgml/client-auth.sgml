@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.17 2001/08/16 16:24:15 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.18 2001/09/06 03:23:38 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -278,6 +278,27 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
          </para>
         </listitem>
        </varlistentry>
+
+       <varlistentry>
+        <term>pam</term>
+        <listitem>
+         <para>
+          This authentication type operates similar to
+          <firstterm>password</firstterm>, with the main difference that
+          it will use PAM (Pluggable Authentication Modules) as the
+          authentication mechanism. The <replaceable>authentication
+          option</replaceable> following the <literal>pam</> keyword
+          specifies the service name that will be passed to PAM. The
+          default service name is <firstterm>postgresql</firstterm>.
+          For more information about PAM, please read <ulink
+          url="http://www.kernel.org/pub/linux/libs/pam/">Linux-PAM
+          Page</ulink> and <ulink 
+          url="http://www.sun.com/software/solaris/pam/">Solaris-PAM
+          Page</ulink>.
+         </para>
+        </listitem>
+       </varlistentry>
+
       </variablelist>
 
       </para>

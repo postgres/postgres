@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.25 2001/08/24 16:59:10 momjian Exp $
+ * $Id: hba.h,v 1.26 2001/09/06 03:23:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,9 @@
 
 typedef enum UserAuth
 {
+#ifdef USE_PAM
+	uaPAM,
+#endif /* USE_PAM */
 	uaReject,
 	uaKrb4,
 	uaKrb5,

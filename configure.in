@@ -432,7 +432,6 @@ PGAC_ARG_BOOL(with, perl, no, [  --with-perl             build Perl interface an
 AC_MSG_RESULT([$with_perl])
 AC_SUBST(with_perl)
 
-
 #
 # Optionally build Python interface module
 #
@@ -528,6 +527,23 @@ PGAC_ARG_REQ(with, krb-srvnam,
 AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
                    [The name of the PostgreSQL service principal in Kerberos])
 
+
+#
+# PAM
+#
+AC_MSG_CHECKING([whether to build with PAM support])
+PGAC_ARG_OPTARG(with, pam,
+                [  --with-pam[=DIR]        build with PAM support [/usr]],
+                [pam_prefix=/usr],
+                [pam_prefix=$withval],
+[
+  AC_MSG_RESULT([yes])
+  AC_DEFINE([USE_PAM], 1, [Define to build with PAM support])
+
+],
+[AC_MSG_RESULT(no)])
+
+AC_SUBST(with_pam)
 
 
 #
@@ -752,10 +768,13 @@ if test "$with_openssl" = yes ; then
   AC_CHECK_LIB(ssl,    [SSL_library_init], [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
 fi
 
+if test "$with_pam" = yes ; then
+  AC_CHECK_LIB(pam,    [pam_start], [], [AC_MSG_ERROR([library 'pam' is required for PAM])])
+fi
+
 if test "$enable_nls" = yes ; then
   PGAC_CHECK_GETTEXT
 fi
-
 
 ##
 ## Header files
@@ -792,6 +811,10 @@ fi
 if test "$with_openssl" = yes ; then
   AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h> is required for OpenSSL])])
   AC_CHECK_HEADER([openssl/err.h], [], [AC_MSG_ERROR([header file <openssl/err.h> is required for OpenSSL])])
+fi
+
+if test "$with_pam" = yes ; then
+  AC_CHECK_HEADER([security/pam_appl.h], [], [AC_MSG_ERROR([header file <security/pam_appl.h> is required for PAM])])
 fi
 
 

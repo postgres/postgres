@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.64 2001/08/21 15:21:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.65 2001/09/06 03:23:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,24 @@ static int	recv_and_check_passwordv0(Port *port);
 
 char	   *pg_krb_server_keyfile;
 
+#ifdef USE_PAM
+#include <security/pam_appl.h>
+ 
+#define PGSQL_PAM_SERVICE "postgresql"  /* Service name passed to PAM */
+
+static int      CheckPAMAuth(Port *port, char *user, char *password);
+static int      pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
+                struct pam_response **resp, void *appdata_ptr);
+
+static struct pam_conv pam_passw_conv = {
+    &pam_passwd_conv_proc,
+    NULL
+};
+
+static char * pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
+static Port * pam_port_cludge;	 /* Workaround for passing "Port
+				  * *port" into pam_passwd_conv_proc */
+#endif /* USE_PAM */
 
 #ifdef KRB4
 /*----------------------------------------------------------------
@@ -428,6 +446,11 @@ auth_failed(Port *port)
 		case uaPassword:
 			authmethod = "Password";
 			break;
+#ifdef USE_PAM
+		case uaPAM:
+			authmethod = "PAM";
+			break;
+#endif /* USE_PAM */
 	}
 
 	elog(FATAL, "%s authentication failed for user \"%s\"",
@@ -525,15 +548,21 @@ ClientAuthentication(Port *port)
 			status = recv_and_check_password_packet(port);
 			break;
 
-		case uaCrypt:
-			sendAuthRequest(port, AUTH_REQ_CRYPT);
-			status = recv_and_check_password_packet(port);
+                case uaCrypt:
+                        sendAuthRequest(port, AUTH_REQ_CRYPT);
+                        status = recv_and_check_password_packet(port);
+                        break;  
+                                 
+                case uaPassword:
+                        sendAuthRequest(port, AUTH_REQ_PASSWORD);
+                        status = recv_and_check_password_packet(port);
+                        break;
+#ifdef USE_PAM
+		case uaPAM:
+			pam_port_cludge = port;
+			status = CheckPAMAuth(port, port->user, "");
 			break;
-
-		case uaPassword:
-			sendAuthRequest(port, AUTH_REQ_PASSWORD);
-			status = recv_and_check_password_packet(port);
-			break;
+#endif /* USE_PAM */
 
 		case uaTrust:
 			status = STATUS_OK;
@@ -577,7 +606,190 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	pq_flush();
 }
 
+#ifdef USE_PAM
 
+/*
+ * PAM conversation function
+ */
+
+static int
+pam_passwd_conv_proc (int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr)
+{
+	StringInfoData buf;
+	int32 len;
+
+	if (num_msg != 1 || msg[0]->msg_style != PAM_PROMPT_ECHO_OFF) {
+		switch(msg[0]->msg_style) {
+			case PAM_ERROR_MSG:
+				snprintf(PQerrormsg, PQERRORMSG_LENGTH, 
+					"pam_passwd_conv_proc: Error from underlying PAM layer: '%s'\n", msg[0]->msg);
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return PAM_CONV_ERR;
+			default:
+				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+					"pam_passwd_conv_proc: Unexpected PAM conversation %d/'%s'\n", 
+					msg[0]->msg_style, msg[0]->msg);
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return PAM_CONV_ERR;
+		}
+	}
+
+	if (!appdata_ptr) {
+		/* Workaround for Solaris 2.6 where the PAM library is broken
+		 * and does not pass appdata_ptr to the conversation routine
+		 */
+		appdata_ptr = pam_passwd;
+	}
+
+	/* Password wasn't passed to PAM the first time around - let's go
+	 * ask the client to send a password, which we then stuff into
+	 * PAM.
+	 */
+	if(strlen(appdata_ptr) == 0) {
+		sendAuthRequest(pam_port_cludge, AUTH_REQ_PASSWORD);
+	        if (pq_eof() == EOF || pq_getint(&len, 4) == EOF) {
+		        return PAM_CONV_ERR;    /* client didn't want to send password */
+		}
+
+	        initStringInfo(&buf);
+	        pq_getstr(&buf);
+	        if (DebugLvl)
+			fprintf(stderr, "received PAM packet with len=%d, pw=%s\n",
+				len, buf.data);
+
+		if(strlen(buf.data) == 0) {
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH, "pam_passwd_conv_proc: no password\n");
+			fputs(PQerrormsg, stderr);
+			return PAM_CONV_ERR;
+		}
+		appdata_ptr = buf.data;
+	}
+
+	/* Explicitly not using palloc here - PAM will free this memory in
+	 * pam_end()
+	 */
+	*resp = calloc(num_msg, sizeof(struct pam_response));
+	if (!*resp) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH, "pam_passwd_conv_proc: Out of memory!\n");
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
+		if(buf.data)
+			pfree(buf.data);
+        	return PAM_CONV_ERR;
+	}
+
+	(*resp)[0].resp = strdup((char *) appdata_ptr);
+	(*resp)[0].resp_retcode = 0;
+
+	return ((*resp)[0].resp ? PAM_SUCCESS : PAM_CONV_ERR);
+}
+
+
+/*
+ * Check authentication against PAM.
+ */
+static int
+CheckPAMAuth(Port *port, char *user, char *password)
+{
+	int retval;
+	pam_handle_t *pamh = NULL;
+
+	/*
+	 * Apparently, Solaris 2.6 is broken, and needs ugly static 
+	 * variable workaround
+	 */
+	pam_passwd = password;
+
+	/* Set the application data portion of the conversation struct
+	 * This is later used inside the PAM conversation to pass the
+	 * password to the authentication module.
+	 */
+	pam_passw_conv.appdata_ptr = (char*) password;	/* from password above, not allocated */
+
+	/* Optionally, one can set the service name in pg_hba.conf */
+	if(port->auth_arg[0] == '\0') {
+		retval = pam_start(PGSQL_PAM_SERVICE, "pgsql@", &pam_passw_conv, &pamh);
+	} else {
+		retval = pam_start(port->auth_arg, "pgsql@", &pam_passw_conv, &pamh);
+	}
+
+	if (retval != PAM_SUCCESS) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			"CheckPAMAuth: Failed to create PAM authenticator: '%s'\n",
+			pam_strerror(pamh, retval));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);  
+		pam_passwd = NULL;	/* Unset pam_passwd */
+		return STATUS_ERROR;
+	}
+
+	if (retval == PAM_SUCCESS) {
+		retval = pam_set_item(pamh, PAM_USER, user);
+	} else {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			"CheckPAMAuth: pam_set_item(PAM_USER) failed: '%s'\n",
+			pam_strerror(pamh, retval));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);  
+		pam_passwd = NULL;	/* Unset pam_passwd */
+		return STATUS_ERROR;
+	}
+	if (retval == PAM_SUCCESS) {
+		retval = pam_set_item(pamh, PAM_CONV, &pam_passw_conv);
+	} else {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			"CheckPAMAuth: pam_set_item(PAM_CONV) failed: '%s'\n",
+			pam_strerror(pamh, retval));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);  
+		pam_passwd = NULL;	/* Unset pam_passwd */
+		return STATUS_ERROR;
+	}
+	if (retval == PAM_SUCCESS) {
+		retval = pam_authenticate(pamh, 0);
+	} else {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			"CheckPAMAuth: pam_authenticate failed: '%s'\n",
+			pam_strerror(pamh, retval));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);  
+		pam_passwd = NULL;	/* Unset pam_passwd */
+		return STATUS_ERROR;
+	}
+	if (retval == PAM_SUCCESS) {
+		retval = pam_acct_mgmt(pamh, 0);
+	} else {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			"CheckPAMAuth: pam_acct_mgmt failed: '%s'\n",
+			pam_strerror(pamh, retval));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);  
+		pam_passwd = NULL;	/* Unset pam_passwd */
+		return STATUS_ERROR;
+	}
+	if (retval == PAM_SUCCESS) {
+		retval = pam_end(pamh, retval);
+		if(retval != PAM_SUCCESS) {
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				"CheckPAMAuth: Failed to release PAM authenticator: '%s'\n",
+				pam_strerror(pamh, retval));
+			fputs(PQerrormsg, stderr);
+			pqdebug("%s", PQerrormsg);  
+		}
+
+		pam_passwd = NULL;	/* Unset pam_passwd */
+
+		return (retval == PAM_SUCCESS ? STATUS_OK : STATUS_ERROR);
+	} else {
+		return STATUS_ERROR;
+	}
+}
+
+
+
+#endif /* USE_PAM */
 
 /*
  * Called when we have received the password packet.
@@ -670,6 +882,9 @@ map_old_to_new(Port *port, UserAuth old, int status)
 		case uaMD5:
 		case uaCrypt:
 		case uaReject:
+#ifdef USE_PAM
+		case uaPAM:
+#endif /* USE_PAM */
 			status = STATUS_ERROR;
 			break;
 
