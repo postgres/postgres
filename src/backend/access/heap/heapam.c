@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.45 1999/07/02 03:21:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.46 1999/07/09 04:51:27 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -960,7 +960,6 @@ heap_getnext(HeapScanDesc scandesc, int backw)
  *		value, and they are required to BufferRelease() it when they
  *		are done.  If they want to make a copy of it before releasing it,
  *		they can call heap_copytyple().
-
  * ----------------
  */
 void

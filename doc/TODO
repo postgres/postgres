@@ -44,6 +44,7 @@ MISC
 
 * User who can create databases can modify pg_database table
 * Plpgsql does not handle quoted mixed-case identifiers
+* Allow index on tuple greater than 1/2 block size
 
 ENHANCEMENTS
 ------------
