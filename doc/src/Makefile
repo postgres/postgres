@@ -7,11 +7,11 @@ SRCDIR= ../../src
 TAR= tar
 TAREXCLUDE= --exclude=Makefile --exclude='*.sgml'
 
-# Pick up Makefile.custom from the source area
+# Pick up Makefile.global from the source area
 # This is the only resource from the code source area and is optional
 
-ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
-include $(SRCDIR)/Makefile.custom
+ifneq ($(wildcard $(SRCDIR)/Makefile.global), )
+include $(SRCDIR)/Makefile.global
 endif
 
 SRC= admin postgres programmer tutorial user
