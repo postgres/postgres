@@ -1,10 +1,14 @@
-<Chapter id="user-manag">
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.14 2002/08/16 04:47:43 momjian Exp $
+-->
+
+<chapter id="user-manag">
  <title>Database Users and Permissions</title>
 
  <para>
   Managing database users and their privileges is in concept similar
-  to managing users of a Unix operating system, but the details are not
-  identical.
+  to managing the users of a Unix operating system, but the details
+  are not identical.
  </para>
 
  <sect1 id="database-users">
@@ -27,8 +31,8 @@ CREATE USER <replaceable>name</replaceable>
   </para>
 
   <para>
-   For convenience, the shell scripts <filename>createuser</filename>
-   and <filename>dropuser</filename> are provided as wrappers around these SQL
+   For convenience, the shell scripts <application>createuser</application>
+   and <application>dropuser</application> are provided as wrappers around these SQL
    commands.
   </para>
 
@@ -36,18 +40,18 @@ CREATE USER <replaceable>name</replaceable>
    In order to bootstrap the database system, a freshly initialized
    system always contains one predefined user. This user will have the
    fixed id 1, and by default (unless altered when running
-   <command>initdb</command>) it will have the same name as the
-   operating system user that initialized the area (and is presumably
-   being used as the user that runs the server). Customarily, this user
-   will be named <systemitem>postgres</systemitem>. In order to create more
-   users you first have to connect as this initial user.
+   <application>initdb</application>) it will have the same name as
+   the operating system user that initialized the database
+   cluster. Customarily, this user will be named
+   <systemitem>postgres</systemitem>. In order to create more users
+   you first have to connect as this initial user.
   </para>
 
   <para>
    The user name to use for a particular database connection is
    indicated by the client that is initiating the connection request
    in an application-specific fashion. For example, the
-   <command>psql</command> program uses the <option>-U</option>
+   <application>psql</application> program uses the <option>-U</option>
    command line option to indicate the user to connect as. The set of
    database users a given client connection may connect as is
    determined by the client authentication setup, as explained in
@@ -71,7 +75,7 @@ CREATE USER <replaceable>name</replaceable>
        <para>
         A database superuser bypasses all permission checks. Also,
         only a superuser can create new users. To create a database
-        superuser, use <literal>CREATE USER name
+        superuser, use <literal>CREATE USER <replaceable>name</replaceable>
         CREATEUSER</literal>.
        </para>
       </listitem>
@@ -83,8 +87,8 @@ CREATE USER <replaceable>name</replaceable>
        <para>
         A user must be explicitly given permission to create databases
         (except for superusers, since those bypass all permission
-        checks). To create such a user, use <literal>CREATE USER name
-        CREATEDB</literal>.
+        checks). To create such a user, use <literal>CREATE USER
+        <replaceable>name</replaceable> CREATEDB</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -93,11 +97,14 @@ CREATE USER <replaceable>name</replaceable>
       <term>password</term>
       <listitem>
        <para>
-        A password is only significant if password authentication is
-        used for client authentication. Database passwords are separate
-        from operating system passwords. Specify a password upon
-        user creation with <literal>CREATE USER name PASSWORD
-        'string'</literal>.
+        A password is only significant if the client authentication
+        method requires the user to supply a password when connecting
+        to the database. At present, the <option>password</>,
+        <option>md5</>, and <option>crypt</> authentication methods
+        make use of passwords. Database passwords are separate from
+        operating system passwords. Specify a password upon user
+        creation with <literal>CREATE USER
+        <replaceable>name</replaceable> PASSWORD 'string'</literal>. 
        </para>
       </listitem>
      </varlistentry>
@@ -134,26 +141,29 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
 
   <para>
    When a database object is created, it is assigned an owner. The
-   owner is the user that executed the creation statement. There is
-   currently no polished interface for changing the owner of a database
-   object (except for tables, for which <command>ALTER TABLE</> can do it).
-   By default, only an owner (or a superuser) can do anything
-   with the object. In order to allow other users to use it,
-   <firstterm>privileges</firstterm> must be granted.
+   owner is the user that executed the creation statement. To change
+   the owner of a table, index, sequence, or view, use the
+   <command>ALTER TABLE</command> command. By default, only an owner
+   (or a superuser) can do anything with the object. In order to allow
+   other users to use it, <firstterm>privileges</firstterm> must be
+   granted.
   </para>
 
   <para>
-   There are several different privileges: <literal>SELECT</literal>
-   (read), <literal>INSERT</literal> (append), <literal>UPDATE</literal>
-   (write), <literal>DELETE</literal>, <literal>RULE</literal>,
-   <literal>REFERENCES</literal> (foreign key), and
-   <literal>TRIGGER</literal>. (See the <command>GRANT</command> manual
-   page for more detailed information.) The right to modify or destroy
-   an object is always the privilege of the owner only. To assign
-   privileges, the <command>GRANT</command> command is used. So, if
-   <literal>joe</literal> is an existing user, and
-   <literal>accounts</literal> is an existing table, write access can be
-   granted with
+   There are several different privileges: <literal>SELECT</>,
+   <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
+   <literal>RULE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
+   <literal>CREATE</>, <literal>TEMPORARY</>, <literal>EXECUTE</>,
+   <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For more
+   information on the different types of privileges support by
+   <productname>PostgreSQL</productname>, refer to the
+   <command>GRANT</command> reference manual. The right to modify or
+   destroy an object is always the privilege of the owner only. To
+   assign privileges, the <command>GRANT</command> command is
+   used. So, if <literal>joe</literal> is an existing user, and
+   <literal>accounts</literal> is an existing table, the privilege to
+   update the table can be granted with
+
 <programlisting>
 GRANT UPDATE ON accounts TO joe;
 </programlisting>
@@ -210,4 +220,4 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
  </sect1>
 
-</Chapter>
+</chapter>
