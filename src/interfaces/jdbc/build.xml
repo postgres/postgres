@@ -3,7 +3,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver.
 
-  $Id: build.xml,v 1.9 2001/05/16 16:20:52 momjian Exp $
+  $Id: build.xml,v 1.10 2001/05/16 17:09:26 momjian Exp $
 
 -->
 
@@ -120,7 +120,7 @@
     <javac srcdir="${src}" destdir="${dest}">
       <include name="example/**" />
       <exclude name="example/corba/**"/>
-      <exclude name="example/blobtest.java" unless="jdk1.2+" />
+      <exclude name="example/blobtest.java" unless="jdk1.2+"/>
     </javac>
   </target>
 

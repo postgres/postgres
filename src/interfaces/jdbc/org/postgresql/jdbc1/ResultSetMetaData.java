@@ -290,6 +290,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	return 16;
       case Types.VARCHAR:
 	return 0;
+      case Types.NUMERIC:
+	Field f = getField(column);
+	if(f != null)
+        	return ((0xFFFF0000)&f.mod)>>16;
+	else
+		return 0;
       default:
 	return 0;
       }
@@ -321,6 +327,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	return 16;
       case Types.VARCHAR:
 	return 0;
+      case Types.NUMERIC:
+	Field f = getField(column);
+	if(f != null)
+		return (((0x0000FFFF)&f.mod)-4);
+	else
+		return 0;
       default:
 	return 0;
       }

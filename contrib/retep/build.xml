@@ -2,7 +2,7 @@
 
   build file to build the donated retep tools packages
 
-  $Id: build.xml,v 1.5 2001/05/16 16:20:51 momjian Exp $
+  $Id: build.xml,v 1.6 2001/05/16 17:09:25 momjian Exp $
 
 -->
 
@@ -43,6 +43,7 @@
   <target name="compile" depends="checks,prepare,warning" if="jdk1.2+">
     <javac srcdir="${src}" destdir="${dest}">
       <include name="${package}/**" />
+      <exclude name="${package}/**" unless="jdk1.2+" />
     </javac>
   </target>
 
