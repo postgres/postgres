@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.2 1996/08/24 20:49:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.3 1996/10/31 09:08:10 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,7 +367,7 @@ ProcessUtility(Node *parsetree,
 	}
 	break;
       
-    case T_ViewStmt:		/* VIEW */
+    case T_ViewStmt:		/* CREATE VIEW */
 	{
 	    ViewStmt *stmt = (ViewStmt *)parsetree;
 
@@ -377,13 +377,13 @@ ProcessUtility(Node *parsetree,
 	}
 	break;
       
-    case T_ProcedureStmt:	/* FUNCTION */
+    case T_ProcedureStmt:	/* CREATE FUNCTION */
 	commandTag = "CREATE";
 	CHECK_IF_ABORTED();
-	DefineFunction((ProcedureStmt *)parsetree, dest); /* everything */
+	CreateFunction((ProcedureStmt *)parsetree, dest); /* everything */
 	break;
       
-    case T_IndexStmt:
+    case T_IndexStmt:           /* CREATE INDEX */
 	{
 	    IndexStmt *stmt = (IndexStmt *)parsetree;
 
@@ -400,7 +400,7 @@ ProcessUtility(Node *parsetree,
 	}
 	break;
       
-    case T_RuleStmt:
+    case T_RuleStmt:            /* CREATE RULE */
 	{
 	    RuleStmt *stmt = (RuleStmt *)parsetree;
 #ifndef NO_SECURITY
