@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha1.c,v 1.13 2004/05/07 00:24:57 tgl Exp $ */
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha1.c,v 1.14 2004/08/29 16:43:05 tgl Exp $ */
 /*	   $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -102,7 +102,7 @@ sha1_step(struct sha1_ctxt * ctxt)
 #if BYTE_ORDER == LITTLE_ENDIAN
 	struct sha1_ctxt tctxt;
 
-	bcopy(&ctxt->m.b8[0], &tctxt.m.b8[0], 64);
+	memmove(&tctxt.m.b8[0], &ctxt->m.b8[0], 64);
 	ctxt->m.b8[0] = tctxt.m.b8[3];
 	ctxt->m.b8[1] = tctxt.m.b8[2];
 	ctxt->m.b8[2] = tctxt.m.b8[1];
@@ -304,7 +304,7 @@ sha1_loop(struct sha1_ctxt * ctxt, const uint8 *input0, size_t len)
 		gaplen = 64 - gapstart;
 
 		copysiz = (gaplen < len - off) ? gaplen : len - off;
-		bcopy(&input[off], &ctxt->m.b8[gapstart], copysiz);
+		memmove(&ctxt->m.b8[gapstart], &input[off], copysiz);
 		COUNT += copysiz;
 		COUNT %= 64;
 		ctxt->c.b64[0] += copysiz * 8;
@@ -322,7 +322,7 @@ sha1_result(struct sha1_ctxt * ctxt, uint8 *digest0)
 	digest = (uint8 *) digest0;
 	sha1_pad(ctxt);
 #if BYTE_ORDER == BIG_ENDIAN
-	bcopy(&ctxt->h.b8[0], digest, 20);
+	memmove(digest, &ctxt->h.b8[0], 20);
 #else
 	digest[0] = ctxt->h.b8[3];
 	digest[1] = ctxt->h.b8[2];

@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.11 2004/05/07 00:24:57 tgl Exp $	*/
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.12 2004/08/29 16:43:05 tgl Exp $	*/
 /*	   $KAME: md5.c,v 1.3 2000/02/22 14:01:17 itojun Exp $	   */
 
 /*
@@ -155,20 +155,18 @@ md5_loop(md5_ctxt * ctxt, const uint8 *input, unsigned len)
 
 	if (len >= gap)
 	{
-		bcopy((void *) input, (void *) (ctxt->md5_buf + ctxt->md5_i),
-			  gap);
+		memmove(ctxt->md5_buf + ctxt->md5_i, input, gap);
 		md5_calc(ctxt->md5_buf, ctxt);
 
 		for (i = gap; i + MD5_BUFLEN <= len; i += MD5_BUFLEN)
 			md5_calc((uint8 *) (input + i), ctxt);
 
 		ctxt->md5_i = len - i;
-		bcopy((void *) (input + i), (void *) ctxt->md5_buf, ctxt->md5_i);
+		memmove(ctxt->md5_buf, input + i, ctxt->md5_i);
 	}
 	else
 	{
-		bcopy((void *) input, (void *) (ctxt->md5_buf + ctxt->md5_i),
-			  len);
+		memmove(ctxt->md5_buf + ctxt->md5_i, input, len);
 		ctxt->md5_i += len;
 	}
 }
@@ -182,24 +180,21 @@ md5_pad(md5_ctxt * ctxt)
 	gap = MD5_BUFLEN - ctxt->md5_i;
 	if (gap > 8)
 	{
-		bcopy((void *) md5_paddat,
-			  (void *) (ctxt->md5_buf + ctxt->md5_i),
-			  gap - sizeof(ctxt->md5_n));
+		memmove(ctxt->md5_buf + ctxt->md5_i, md5_paddat,
+				gap - sizeof(ctxt->md5_n));
 	}
 	else
 	{
 		/* including gap == 8 */
-		bcopy((void *) md5_paddat, (void *) (ctxt->md5_buf + ctxt->md5_i),
-			  gap);
+		memmove(ctxt->md5_buf + ctxt->md5_i, md5_paddat, gap);
 		md5_calc(ctxt->md5_buf, ctxt);
-		bcopy((void *) (md5_paddat + gap),
-			  (void *) ctxt->md5_buf,
-			  MD5_BUFLEN - sizeof(ctxt->md5_n));
+		memmove(ctxt->md5_buf, md5_paddat + gap,
+				MD5_BUFLEN - sizeof(ctxt->md5_n));
 	}
 
 	/* 8 byte word */
 #if BYTE_ORDER == LITTLE_ENDIAN
-	bcopy(&ctxt->md5_n8[0], &ctxt->md5_buf[56], 8);
+	memmove(&ctxt->md5_buf[56], &ctxt->md5_n8[0], 8);
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
 	ctxt->md5_buf[56] = ctxt->md5_n8[7];
@@ -220,7 +215,7 @@ md5_result(uint8 *digest, md5_ctxt * ctxt)
 {
 	/* 4 byte words */
 #if BYTE_ORDER == LITTLE_ENDIAN
-	bcopy(&ctxt->md5_st8[0], digest, 16);
+	memmove(digest, &ctxt->md5_st8[0], 16);
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
 	digest[0] = ctxt->md5_st8[3];
