@@ -3,8 +3,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-18 07:08+0100\n"
-"PO-Revision-Date: 2004-10-18 14:45+0800\n"
+"POT-Creation-Date: 2004-10-19 01:08+0100\n"
+"PO-Revision-Date: 2004-10-19 10:40+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -67,7 +67,7 @@ msgstr "  --pgxs                顯示外掛程式makefile位置\n"
 
 #: pg_config.c:47
 msgid ""
-"  --configure           show options given to 'configure' script when\n"
+"  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
 "  --configure           顯示編譯PostgreSQL時'configure'命令搞\n"
@@ -98,13 +98,18 @@ msgstr ""
 "\n"
 "執行\"%s --help\"取得更多資訊\n"
 
-#: pg_config.c:73
+#: pg_config.c:75
 #, c-format
 msgid "%s: argument required\n"
 msgstr "%s：不能省略參數\n"
 
-#: pg_config.c:102
+#: pg_config.c:104
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s：無效的參數：%s\n"
+
+#: pg_config.c:113
+#, c-format
+msgid "%s: could not find own executable\n"
+msgstr "%s：找不到執行檔\n"
 
