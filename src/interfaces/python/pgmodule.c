@@ -44,7 +44,7 @@
 #define CASHOID		790
 
 static PyObject *PGError;
-static const char *PyPgVersion = "3.0 beta";
+static const char *PyPgVersion = "2.4";
 
 /* taken from fileobject.c */
 #define BUF(v) PyString_AS_STRING((PyStringObject *)(v))
