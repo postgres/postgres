@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Dec 5 00:47:26 EST 2002
+   Last updated: Mon Dec 16 13:40:20 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -246,7 +246,7 @@
    
     1.7) What is the latest release?
     
-   The latest release of PostgreSQL is version 7.2.3.
+   The latest release of PostgreSQL is version 7.3.
    
    We plan to have major releases every four months.
    
@@ -415,16 +415,12 @@
     2.3) Does PostgreSQL have a graphical user interface?
     
    Yes, there are several graphical interfaces to PostgreSQL available.
-   These include PgAccess http://www.pgaccess.com), PgAdmin II
+   These include PgAccess http://www.pgaccess.org), PgAdmin II
    (http://www.pgadmin.org, Win32-only), RHDB Admin
    (http://sources.redhat.com/rhdb/ ) and Rekall (
    http://www.thekompany.com/products/rekall/, proprietary). There is
    also PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), a web-based
    interface to PostgreSQL.
-   
-   We have a nice graphical user interface called PgAccess which can also
-   be used as a report generator. The Web page is
-   http://www.pgaccess.org/.
    
     2.4) What languages are able to communicate with PostgreSQL?
     
