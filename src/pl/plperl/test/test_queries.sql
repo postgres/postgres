@@ -135,6 +135,29 @@ SELECT perl_record_set();
 SELECT * FROM perl_record_set();
 SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
 
+CREATE OR REPLACE FUNCTION
+perl_out_params(f1 out integer, f2 out text, f3 out text) AS $$
+    return {f2 => 'hello', f1 => 1, f3 => 'world'};
+$$ LANGUAGE plperl;
+
+SELECT perl_out_params();
+SELECT * FROM perl_out_params();
+SELECT (perl_out_params()).f2;
+
+CREATE OR REPLACE FUNCTION
+perl_out_params_set(out f1 integer, out f2 text, out f3 text)
+RETURNS SETOF record AS $$
+    return [
+        { f1 => 1, f2 => 'Hello', f3 =>  'World' },
+        { f1 => 2, f2 => 'Hello', f3 =>  'PostgreSQL' },
+        { f1 => 3, f2 => 'Hello', f3 =>  'PL/Perl' }
+    ];
+$$  LANGUAGE plperl;
+
+SELECT perl_out_params_set();
+SELECT * FROM perl_out_params_set();
+SELECT (perl_out_params_set()).f3;
+
 --
 -- Check behavior with erroneous return values
 --

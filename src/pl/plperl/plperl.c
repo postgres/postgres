@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.70 2005/03/29 00:17:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.71 2005/04/01 19:34:06 tgl Exp $
  *
  **********************************************************************/
 
@@ -409,21 +409,16 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
  * NB: copy the result if needed for any great length of time
  */
 static TupleDesc
-get_function_tupdesc(Oid result_type, ReturnSetInfo *rsinfo)
+get_function_tupdesc(FunctionCallInfo fcinfo)
 {
-	if (result_type == RECORDOID)
-	{
-		/* We must get the information from call context */
-		if (!rsinfo || !IsA(rsinfo, ReturnSetInfo) ||
-			rsinfo->expectedDesc == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("function returning record called in context "
-							"that cannot accept type record")));
-		return rsinfo->expectedDesc;
-	}
-	else				/* ordinary composite type */
-		return lookup_rowtype_tupdesc(result_type, -1);
+	TupleDesc	result;
+
+	if (get_call_result_type(fcinfo, NULL, &result) != TYPEFUNC_COMPOSITE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("function returning record called in context "
+						"that cannot accept type record")));
+	return result;
 }
 
 /**********************************************************************
@@ -897,8 +892,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 			/* Cache a copy of the result's tupdesc and attinmeta */
 			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-			tupdesc = get_function_tupdesc(prodesc->result_oid,
-										(ReturnSetInfo *) fcinfo->resultinfo);
+			tupdesc = get_function_tupdesc(fcinfo);
 			tupdesc = CreateTupleDescCopy(tupdesc);
 			funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 			MemoryContextSwitchTo(oldcontext);
@@ -1003,8 +997,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		/*
 		 * XXX should cache the attinmeta data instead of recomputing
 		 */
-		td = get_function_tupdesc(prodesc->result_oid,
-								  (ReturnSetInfo *) fcinfo->resultinfo);
+		td = get_function_tupdesc(fcinfo);
 		/* td = CreateTupleDescCopy(td); */
 		attinmeta = TupleDescGetAttInMetadata(td);
 
