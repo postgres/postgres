@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.230 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.231 2002/07/20 04:57:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1533,8 +1533,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 			{
-				if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
-					elog(ERROR, "Invalid XVAC in tuple header");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
 					elog(ERROR, "HEAP_MOVED_IN was not expected");
 
@@ -1545,6 +1543,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				 */
 				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 				{
+					if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
+						elog(ERROR, "Invalid XVAC in tuple header");
 					if (keep_tuples == 0)
 						continue;
 					if (chain_tuple_moved)		/* some chains was moved
@@ -2008,7 +2008,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 			/*
 			 * Mark new tuple as moved_in by vacuum and store vacuum XID
-			 * in t_cmin !!!
+			 * in t_cid !!!
 			 */
 			newtup.t_data->t_infomask &=
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
@@ -2034,7 +2034,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 			/*
 			 * Mark old tuple as moved_off by vacuum and store vacuum XID
-			 * in t_cmin !!!
+			 * in t_cid !!!
 			 */
 			tuple.t_data->t_infomask &=
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
@@ -2087,12 +2087,12 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 				if (tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED)
 					continue;
-				if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
-					elog(ERROR, "Invalid XVAC in tuple header (4)");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
 					elog(ERROR, "HEAP_MOVED_IN was not expected (2)");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 				{
+					if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
+						elog(ERROR, "Invalid XVAC in tuple header (4)");
 					/* some chains was moved while */
 					if (chain_tuple_moved)
 					{			/* cleaning this page */
@@ -2116,6 +2116,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						keep_tuples--;
 					}
 				}
+				else
+					elog(ERROR, "HEAP_MOVED_OFF was expected (2)");
 			}
 		}
 
@@ -2225,17 +2227,18 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 			{
+				if (!(tuple.t_data->t_infomask & HEAP_MOVED))
+					elog(ERROR, "HEAP_MOVED_OFF/HEAP_MOVED_IN was expected");
 				if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
 					elog(ERROR, "Invalid XVAC in tuple header (2)");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
 				{
 					tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+					tuple.t_data->t_infomask &= ~HEAP_MOVED;
 					num_tuples++;
 				}
-				else if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
-					tuple.t_data->t_infomask |= HEAP_XMIN_INVALID;
 				else
-					elog(ERROR, "HEAP_MOVED_OFF/HEAP_MOVED_IN was expected");
+					tuple.t_data->t_infomask |= HEAP_XMIN_INVALID;
 			}
 		}
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -2304,15 +2307,15 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 				if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 				{
-					if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
-						elog(ERROR, "Invalid XVAC in tuple header (3)");
 					if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 					{
+						if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
+							elog(ERROR, "Invalid XVAC in tuple header (3)");
 						itemid->lp_flags &= ~LP_USED;
 						num_tuples++;
 					}
 					else
-						elog(ERROR, "HEAP_MOVED_OFF was expected (2)");
+						elog(ERROR, "HEAP_MOVED_OFF was expected (3)");
 				}
 
 			}
