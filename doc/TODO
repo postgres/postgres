@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan 22 15:39:51 EST 2002
+Last updated:		Tue Jan 22 15:49:54 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -372,44 +372,57 @@ VACUUM
 * -Allow ANALYZE to ESTIMATE based on certain random precentage of rows (Tom)
 * Add LAZY VACUUM (Vadim) [performance]
 
-MISCELLANEOUS
+LOCKING
 
-* -Allow compression of log and meta data (Tom)
-* Do async I/O for faster random read-ahead of data
+* Make locking of shared data structures more fine-grained
+* Add code to detect an SMP machine and handle spinlocks accordingly
+* Research use of sched_yield() for spinlock acquisition failure
+* -Improve spinlock code [performance] (Tom)
+
+STARTUP TIME
+
 * Experiment with multi-threaded backend [thread]
-* Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
-  when it is available
-* Use mmap() rather than SYSV shared memory(?) [mmap]
-* Use mmap() to write WAL files (?) [mmap]
-* Improve Subplan list handling
-* Allow Subplans to use efficient joins(hash, merge) with upper variable
-* Improve dynamic memory allocation by introducing tuple-context memory
-  allocation (Tom)
-* -Allow GUC configuration of maximum number of open files (Tom)
-* -Improve statistics storage in pg_class [performance] (Tom)
 * Add connection pooling [pool]
 * Allow persistent backends [persistent]
 * Create a transaction processor to aid in persistent connections and
   connection pooling
-* Allow logging of query durations
-* Add hash for evaluating GROUP BY aggregates
-* -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
+* Do listen() in postmaster and accept() in pre-forked backend
+* Have pre-forked backend pre-connect to last requested database or pass
+  file descriptor to backend pre-forked for matching database
+
+WRITE-AHEAD LOG
+
 * Have after-change WAL write()'s write only modified data to kernel
 * Reduce number of after-change WAL writes; they exist only to gaurd against
   partial page writes
 * Turn off after-change writes if fsync is disabled (?)
-* -Improve spinlock code [performance] (Tom)
-* Do listen() in postmaster and accept() in pre-forked backend
-* Have pre-forked backend pre-connect to last requested database or pass
-  file descriptor to backend pre-forked for matching database
+
+OPTIMIZER/EXECUTOR
+
+* Improve Subplan list handling
+* Allow Subplans to use efficient joins(hash, merge) with upper variable
+* Improve dynamic memory allocation by introducing tuple-context memory
+  allocation (Tom)
+* Add hash for evaluating GROUP BY aggregates
 * Nested FULL OUTER JOINs don't work (Tom)
 * Allow merge and hash joins on expressions not just simple variables (Tom)
 * Add new pg_proc cachable settings to specify whether function can be
   evaluated only once or once per query
 * Change FIXED_CHAR_SEL to 0.20 from 0.04 to give better selectivity (Bruce)
-* Make locking of shared data structures more fine-grained
 * Make IN/NOT IN have similar performance to EXISTS/NOT EXISTS [exists]
-* Add code to detect an SMP machine and handle spinlocks accordingly
+
+MISCELLANEOUS
+
+* -Allow compression of log and meta data (Tom)
+* Do async I/O for faster random read-ahead of data
+* Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
+  when it is available
+* Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
+* -Allow GUC configuration of maximum number of open files (Tom)
+* -Improve statistics storage in pg_class [performance] (Tom)
+* Allow logging of query durations
+* -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
+
 
 SOURCE CODE
 -----------
