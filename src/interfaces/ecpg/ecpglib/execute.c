@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.2 2003/03/18 10:46:39 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.3 2003/03/19 16:05:41 petere Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -838,7 +838,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 			case ECPGt_numeric:
 				{
-					char *str;
+					char *str = NULL;
 					int slen;
 					
 					if (var->arrsize > 1)
