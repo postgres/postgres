@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/contrib/plpgsql/src/Attic/plpgsql.h,v 1.1 1998/08/22 12:38:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.1 1998/08/24 19:14:49 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
