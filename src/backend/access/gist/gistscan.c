@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.40 2001/10/25 05:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.41 2002/03/05 05:30:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,7 @@ static void gistregscan(IndexScanDesc s);
 static void gistdropscan(IndexScanDesc s);
 static void gistadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
-static void adjuststack(GISTSTACK *stk, BlockNumber blkno,
-			OffsetNumber offnum);
+static void adjuststack(GISTSTACK *stk, BlockNumber blkno);
 static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
 		   int op, BlockNumber blkno, OffsetNumber offnum);
 
@@ -340,8 +339,8 @@ gistadjone(IndexScanDesc s,
 
 	if (op == GISTOP_SPLIT)
 	{
-		adjuststack(so->s_stack, blkno, offnum);
-		adjuststack(so->s_markstk, blkno, offnum);
+		adjuststack(so->s_stack, blkno);
+		adjuststack(so->s_markstk, blkno);
 	}
 }
 
@@ -428,8 +427,7 @@ adjustiptr(IndexScanDesc s,
 /*ARGSUSED*/
 static void
 adjuststack(GISTSTACK *stk,
-			BlockNumber blkno,
-			OffsetNumber offnum)
+			BlockNumber blkno)
 {
 	while (stk != (GISTSTACK *) NULL)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.39 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.40 2002/03/05 05:30:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,7 @@ static void rtregscan(IndexScanDesc s);
 static void rtdropscan(IndexScanDesc s);
 static void rtadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		 OffsetNumber offnum);
-static void adjuststack(RTSTACK *stk, BlockNumber blkno,
-			OffsetNumber offnum);
+static void adjuststack(RTSTACK *stk, BlockNumber blkno);
 static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
 		   int op, BlockNumber blkno, OffsetNumber offnum);
 
@@ -337,8 +336,8 @@ rtadjone(IndexScanDesc s,
 
 	if (op == RTOP_SPLIT)
 	{
-		adjuststack(so->s_stack, blkno, offnum);
-		adjuststack(so->s_markstk, blkno, offnum);
+		adjuststack(so->s_stack, blkno);
+		adjuststack(so->s_markstk, blkno);
 	}
 }
 
@@ -425,8 +424,7 @@ adjustiptr(IndexScanDesc s,
 /*ARGSUSED*/
 static void
 adjuststack(RTSTACK *stk,
-			BlockNumber blkno,
-			OffsetNumber offnum)
+			BlockNumber blkno)
 {
 	while (stk != (RTSTACK *) NULL)
 	{

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.89 2002/03/02 21:39:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.90 2002/03/05 05:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,12 +87,10 @@ static OffsetNumber gistwritebuffer(Relation r,
 				Page page,
 				IndexTuple *itup,
 				int len,
-				OffsetNumber off,
-				GISTSTATE *giststate);
+				OffsetNumber off);
 static int gistnospace(Page page,
 			IndexTuple *itvec, int len);
-static IndexTuple *gistreadbuffer(Relation r,
-			   Buffer buffer, int *len);
+static IndexTuple *gistreadbuffer(Buffer buffer, int *len);
 static IndexTuple *gistjoinvector(
 			   IndexTuple *itvec, int *len,
 			   IndexTuple *additvec, int addlen);
@@ -117,7 +115,7 @@ static IndexTuple *gistSplit(Relation r,
 		  int *len,
 		  GISTSTATE *giststate,
 		  InsertIndexResult *res);
-static void gistnewroot(GISTSTATE *giststate, Relation r,
+static void gistnewroot(Relation r,
 			IndexTuple *itup, int len);
 static void GISTInitBuffer(Buffer b, uint32 f);
 static OffsetNumber gistchoose(Relation r, Page p,
@@ -359,11 +357,11 @@ gistinsert(PG_FUNCTION_ARGS)
 
 #ifdef GIST_PAGEADDITEM
 /*
-** Take a compressed entry, and install it on a page.  Since we now know
-** where the entry will live, we decompress it and recompress it using
-** that knowledge (some compression routines may want to fish around
-** on the page, for example, or do something special for leaf nodes.)
-*/
+ * Take a compressed entry, and install it on a page.  Since we now know
+ * where the entry will live, we decompress it and recompress it using
+ * that knowledge (some compression routines may want to fish around
+ * on the page, for example, or do something special for leaf nodes.)
+ */
 static OffsetNumber
 gistPageAddItem(GISTSTATE *giststate,
 				Relation r,
@@ -425,7 +423,7 @@ gistdoinsert(Relation r,
 
 	ret = gistlayerinsert(r, GISTP_ROOT, &instup, &len, res, giststate);
 	if (ret & SPLITED)
-		gistnewroot(giststate, r, instup, len);
+		gistnewroot(r, instup, len);
 
 	for (i = 0; i < len; i++)
 		pfree(instup[i]);
@@ -452,7 +450,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 	if (!(opaque->flags & F_LEAF))
 	{
 		/* internal page, so we must walk on tree */
-		/* len IS equial 1 */
+		/* len IS equal 1 */
 		ItemId		iid;
 		BlockNumber nblkno;
 		ItemPointerData oldtid;
@@ -509,7 +507,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 					oldlen;
 
 		ret |= SPLITED;
-		itvec = gistreadbuffer(r, buffer, &tlen);
+		itvec = gistreadbuffer(buffer, &tlen);
 		itvec = gistjoinvector(itvec, &tlen, (*itup), *len);
 		oldlen = *len;
 		newitup = gistSplit(r, buffer, itvec, &tlen, giststate,
@@ -534,7 +532,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 			FirstOffsetNumber
 			:
 			OffsetNumberNext(PageGetMaxOffsetNumber(page));
-		l = gistwritebuffer(r, page, (*itup), *len, off, giststate);
+		l = gistwritebuffer(r, page, (*itup), *len, off);
 		WriteBuffer(buffer);
 
 		/*
@@ -570,7 +568,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
  */
 static OffsetNumber
 gistwritebuffer(Relation r, Page page, IndexTuple *itup,
-				int len, OffsetNumber off, GISTSTATE *giststate)
+				int len, OffsetNumber off)
 {
 	OffsetNumber l = InvalidOffsetNumber;
 	int			i;
@@ -609,7 +607,7 @@ gistwritebuffer(Relation r, Page page, IndexTuple *itup,
 static int
 gistnospace(Page page, IndexTuple *itvec, int len)
 {
-	int			size = 0;
+	unsigned int			size = 0;
 	int			i;
 
 	for (i = 0; i < len; i++)
@@ -622,7 +620,7 @@ gistnospace(Page page, IndexTuple *itvec, int len)
  * Read buffer into itup vector
  */
 static IndexTuple *
-gistreadbuffer(Relation r, Buffer buffer, int *len /* out */ )
+gistreadbuffer(Buffer buffer, int *len /* out */ )
 {
 	OffsetNumber i,
 				maxoff;
@@ -1365,7 +1363,7 @@ gistSplit(Relation r,
 	{
 		OffsetNumber l;
 
-		l = gistwritebuffer(r, right, rvectup, v.spl_nright, FirstOffsetNumber, giststate);
+		l = gistwritebuffer(r, right, rvectup, v.spl_nright, FirstOffsetNumber);
 		WriteBuffer(rightbuf);
 
 		if (res)
@@ -1398,7 +1396,7 @@ gistSplit(Relation r,
 	{
 		OffsetNumber l;
 
-		l = gistwritebuffer(r, left, lvectup, v.spl_nleft, FirstOffsetNumber, giststate);
+		l = gistwritebuffer(r, left, lvectup, v.spl_nleft, FirstOffsetNumber);
 		if (BufferGetBlockNumber(buffer) != GISTP_ROOT)
 			PageRestoreTempPage(left, p);
 
@@ -1428,7 +1426,7 @@ gistSplit(Relation r,
 }
 
 static void
-gistnewroot(GISTSTATE *giststate, Relation r, IndexTuple *itup, int len)
+gistnewroot(Relation r, IndexTuple *itup, int len)
 {
 	Buffer		b;
 	Page		p;
@@ -1437,7 +1435,7 @@ gistnewroot(GISTSTATE *giststate, Relation r, IndexTuple *itup, int len)
 	GISTInitBuffer(b, 0);
 	p = BufferGetPage(b);
 
-	gistwritebuffer(r, p, itup, len, FirstOffsetNumber, giststate);
+	gistwritebuffer(r, p, itup, len, FirstOffsetNumber);
 	WriteBuffer(b);
 }
 
