@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.39 2000/01/13 18:26:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.40 2000/01/18 05:10:29 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,12 +67,24 @@ SetDatabaseName(const char *name)
 
 #ifndef MULTIBYTE
 /* even if MULTIBYTE is not enabled, this function is neccesary
- * since pg_proc.h has an entry for it.
+ * since pg_proc.h has entries for them.
  */
 const char *
 getdatabaseencoding()
 {
-	elog(ERROR, "MultiByte strings (MB) must be enabled to use this function");
+	elog(ERROR, "MultiByte support must be enabled to use this function");
+	return ("");
+}
+
+const char *pg_encoding_to_char(int encoding)
+{
+	elog(ERROR, "MultiByte support must be enabled to use this function");
+	return ("");
+}
+
+int	pg_char_to_encoding(const char *encoding_string)
+{
+	elog(ERROR, "MultiByte support must be enabled to use this function");
 	return ("");
 }
 

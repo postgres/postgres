@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.113 2000/01/17 00:40:51 tgl Exp $
+ * $Id: pg_proc.h,v 1.114 2000/01/18 05:08:29 ishii Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2110,6 +2110,13 @@ DESCR("sequence set value");
 
 /* for multi-byte support */
 DATA(insert OID = 1039 (  getdatabaseencoding	   PGUID 11 f t f 0 f 19 "0" 100 0 0 100  getdatabaseencoding - ));
+DESCR("encoding name of current database");
+
+DATA(insert OID = 1295 (  pg_char_to_encoding	   PGUID 11 f t f 1 f 23 "19" 100 0 0 100  pg_char_to_encoding - ));
+DESCR("convert encoding name to encoding id");
+
+DATA(insert OID = 1597 (  pg_encoding_to_char	   PGUID 11 f t f 1 f 19 "23" 100 0 0 100  pg_encoding_to_char - ));
+DESCR("convert encoding id to encoding name");
 
 /* System-view support functions */
 DATA(insert OID = 1640 (  pg_get_ruledef	   PGUID 11 f t f 1 f 25 "19" 100 0 0 100  pg_get_ruledef - ));

@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.47 2000/01/13 18:26:15 petere Exp $
+ * $Id: miscadmin.h,v 1.48 2000/01/18 05:08:29 ishii Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -119,10 +119,12 @@ extern char *ExpandDatabasePath(const char *path);
 extern void SetDatabaseName(const char *name);
 extern void SetDatabasePath(const char *path);
 
-/* even if MB is not enabled, this function is neccesary
+/* even if MULTIBYTE is not enabled, this function is neccesary
  * since pg_proc.h does have.
  */
 extern const char *getdatabaseencoding(void);
+extern const char *pg_encoding_to_char(int);
+extern int	pg_char_to_encoding(const char *);
 
 extern char *getpgusername(void);
 extern void SetPgUserName(void);
