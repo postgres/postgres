@@ -22,4 +22,4 @@ $(POSTGRES_IMP):
 
 %$(DLSUFFIX): %.o %$(EXPSUFF)
 	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and installed postgres.imp
-	$(LD) -H512 -bM:SRE -bI:$(libdir)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(CFLAGS_SL)
+	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(libdir)/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(CFLAGS_SL)

@@ -1,13 +1,19 @@
 /*
- * $Id: aix.h,v 1.2 1998/09/01 04:30:51 momjian Exp $
+ * $Id: aix.h,v 1.3 2000/09/29 22:00:43 momjian Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
  * 30159 Hannover, Germany
  */
 
-#ifndef __dlfcn_h__
-#define __dlfcn_h__
+#ifndef PORT_PROTOS_H
+#define PORT_PROTOS_H
+
+#ifdef HAVE_DLOPEN
+
+#include <dlfcn.h>
+
+#else /* HAVE_DLOPEN */
 
 #ifdef __cplusplus
 extern		"C"
@@ -48,9 +54,14 @@ extern		"C"
 
 #endif
 
-#define  pg_dlopen(f)	dlopen(filename, RTLD_LAZY)
-#define  pg_dlsym(h,f)	dlsym(h, f)
-#define  pg_dlclose(h)	dlclose(h)
-#define  pg_dlerror()	dlerror()
+#endif /* HAVE_DLOPEN */
 
-#endif	 /* __dlfcn_h__ */
+#include "fmgr.h"
+#include "utils/dynamic_loader.h"
+
+#define  pg_dlopen(f)	dlopen(f, RTLD_LAZY)
+#define  pg_dlsym	dlsym
+#define  pg_dlclose	dlclose
+#define  pg_dlerror	dlerror
+
+#endif	 /* PORT_PROTOS_H */

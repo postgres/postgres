@@ -14,6 +14,13 @@
 #include "postgres.h"
 #include "dynloader.h"
 
+#ifndef HAVE_DLOPEN
+
+/*
+ * AIX 4.3 and up has dlopen() and friends in -ldl.
+ * A la long, the homebrewn dl*() functions below should be obsolete.
+ */
+
 /*
  * We simulate dlopen() et al. through a call to load. Because AIX has
  * no call to find an exported symbol we read the loader section of the
@@ -601,3 +608,5 @@ findMain(void)
 	free(buf);
 	return ret;
 }
+
+#endif /* HAVE_DLOPEN */

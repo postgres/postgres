@@ -43,7 +43,12 @@ fi
 if [ -z "$2" ]; then
 	echo '#!'
 else
-	echo '#!' $2/$OBJNAME
+	if [ "$2" = "." ]; then
+		# for the base executable (AIX 4.2 and up)
+		echo '#! .'
+	else
+		echo '#!' $2/$OBJNAME
+	fi
 fi
 $NM -Bg $1 | \
 	egrep ' [TDB] ' | \

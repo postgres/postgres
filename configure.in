@@ -716,7 +716,7 @@ fcntl(0, F_SETLK, &lck);],
         ;;
 esac
 
-AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask sysconf waitpid])
+AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask sysconf waitpid dlopen])
 
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
 [AC_TRY_LINK(
