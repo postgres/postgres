@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.64 2000/07/27 03:50:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.65 2000/11/14 23:28:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,15 +100,12 @@ array_in(PG_FUNCTION_ARGS)
 	Oid			element_type = PG_GETARG_OID(1); /* type of an array element */
 	int32		typmod = PG_GETARG_INT32(2); /* typmod for array elements */
 	int			typlen;
-	bool		typbyval,
-				done;
+	bool		typbyval;
 	char		typdelim;
 	Oid			typinput;
 	Oid			typelem;
 	char	   *string_save,
-			   *p,
-			   *q,
-			   *r;
+			   *p;
 	FmgrInfo	inputproc;
 	int			i,
 				nitems;
@@ -120,64 +117,83 @@ array_in(PG_FUNCTION_ARGS)
 				lBound[MAXDIM];
 	char		typalign;
 
+	/* Get info about element type, including its input conversion proc */
 	system_cache_lookup(element_type, true, &typlen, &typbyval, &typdelim,
 						&typelem, &typinput, &typalign);
-
 	fmgr_info(typinput, &inputproc);
 
+	/* Make a modifiable copy of the input */
+	/* XXX why are we allocating an extra 2 bytes here? */
 	string_save = (char *) palloc(strlen(string) + 3);
 	strcpy(string_save, string);
 
-	/* --- read array dimensions  ---------- */
-	p = q = string_save;
-	done = false;
-	for (ndim = 0; !done;)
+	/*
+	 * If the input string starts with dimension info, read and use that.
+	 * Otherwise, we require the input to be in curly-brace style, and we
+	 * prescan the input to determine dimensions.
+	 *
+	 * Dimension info takes the form of one or more [n] or [m:n] items.
+	 * The outer loop iterates once per dimension item.
+	 */
+	p = string_save;
+	ndim = 0;
+	for (;;)
 	{
+		char	   *q;
+		int			ub;
+
+		/*
+		 * Note: we currently allow whitespace between, but not within,
+		 * dimension items.
+		 */
 		while (isspace((int) *p))
 			p++;
-		if (*p == '[')
+		if (*p != '[')
+			break;				/* no more dimension items */
+		p++;
+		if (ndim >= MAXDIM)
+			elog(ERROR, "array_in: more than %d dimensions", MAXDIM);
+		for (q = p; isdigit((int) *q); q++);
+		if (q == p)				/* no digits? */
+			elog(ERROR, "array_in: missing dimension value");
+		if (*q == ':')
 		{
-			p++;
-			if ((r = (char *) strchr(p, ':')) == (char *) NULL)
-				lBound[ndim] = 1;
-			else
-			{
-				*r = '\0';
-				lBound[ndim] = atoi(p);
-				p = r + 1;
-			}
-			for (q = p; isdigit((int) *q); q++);
-			if (*q != ']')
-				elog(ERROR, "array_in: missing ']' in array declaration");
+			/* [m:n] format */
 			*q = '\0';
-			dim[ndim] = atoi(p);
-			if ((dim[ndim] < 0) || (lBound[ndim] < 0))
-				elog(ERROR, "array_in: array dimensions need to be positive");
-			dim[ndim] = dim[ndim] - lBound[ndim] + 1;
-			if (dim[ndim] < 0)
-				elog(ERROR, "array_in: upper_bound cannot be < lower_bound");
+			lBound[ndim] = atoi(p);
 			p = q + 1;
-			ndim++;
+			for (q = p; isdigit((int) *q); q++);
+			if (q == p)			/* no digits? */
+				elog(ERROR, "array_in: missing dimension value");
 		}
 		else
-			done = true;
+		{
+			/* [n] format */
+			lBound[ndim] = 1;
+		}
+		if (*q != ']')
+			elog(ERROR, "array_in: missing ']' in array declaration");
+		*q = '\0';
+		ub = atoi(p);
+		p = q + 1;
+		if (ub < lBound[ndim])
+			elog(ERROR, "array_in: upper_bound cannot be < lower_bound");
+		dim[ndim] = ub - lBound[ndim] + 1;
+		ndim++;
 	}
 
 	if (ndim == 0)
 	{
-		if (*p == '{')
-		{
-			ndim = ArrayCount(p, dim, typdelim);
-			for (i = 0; i < ndim; i++)
-				lBound[i] = 1;
-		}
-		else
+		/* No array dimensions, so intuit dimensions from brace structure */
+		if (*p != '{')
 			elog(ERROR, "array_in: Need to specify dimension");
+		ndim = ArrayCount(p, dim, typdelim);
+		for (i = 0; i < ndim; i++)
+			lBound[i] = 1;
 	}
 	else
 	{
-		while (isspace((int) *p))
-			p++;
+		/* If array dimensions are given, expect '=' operator */
 		if (strncmp(p, ASSGN, strlen(ASSGN)) != 0)
 			elog(ERROR, "array_in: missing assignment operator");
 		p += strlen(ASSGN);
