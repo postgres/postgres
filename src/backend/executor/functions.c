@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.6 1997/08/12 22:52:35 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.7 1997/08/29 09:02:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,9 +365,19 @@ postquel_execute(execution_state  *es,
 Datum
 postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
 {
-    execution_state  *es;
-    Datum            result = 0;
-    FunctionCachePtr fcache = funcNode->func_fcache;
+    execution_state	*es;
+    Datum		result = 0;
+    FunctionCachePtr	fcache = funcNode->func_fcache;
+    CommandId		savedId;
+    
+    /*
+     * Before we start do anything we must save CurrentScanCommandId
+     * to restore it before return to upper Executor. Also, we have to
+     * set CurrentScanCommandId equal to CurrentCommandId.
+     *		- vadim 08/29/97
+     */
+    savedId = GetScanCommandId ();
+    SetScanCommandId (GetCurrentCommandId ());
     
     es = (execution_state *) fcache->func_state;
     if (es == NULL)
@@ -401,22 +411,23 @@ postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
      * If we've gone through every command in this function, we are done.
      */
     if (es == (execution_state *)NULL)
+    {
+	/*
+	 * Reset the execution states to start over again
+	 */
+	es = (execution_state *)fcache->func_state;
+	while (es)
 	{
-	    /*
-	     * Reset the execution states to start over again
-	     */
-	    es = (execution_state *)fcache->func_state;
-	    while (es)
-		{
-		    es->status = F_EXEC_START;
-		    es = es->next;
-		}
-	    /*
-	     * Let caller know we're finished.
-	     */
-	    *isDone = true;
-	    return (fcache->oneResult) ? result : (Datum)NULL;
+	    es->status = F_EXEC_START;
+	    es = es->next;
 	}
+	/*
+	 * Let caller know we're finished.
+	 */
+	*isDone = true;
+    	SetScanCommandId (savedId);
+	return (fcache->oneResult) ? result : (Datum)NULL;
+    }
     /*
      * If we got a result from a command within the function it has
      * to be the final command.  All others shouldn't be returing
@@ -425,5 +436,6 @@ postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
     Assert ( LAST_POSTQUEL_COMMAND(es) );
     *isDone = false;
     
+    SetScanCommandId (savedId);
     return result;
 }
