@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.94.2.1 2002/07/01 07:10:10 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.94.2.2 2002/07/01 15:01:37 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,7 +372,6 @@ cppline			{space}*#(.*\\{space})*.*
 <xq>{xqstop}		{
 						BEGIN(state_before);
 						yylval.str = mm_strdup(literalbuf);
-						printf("MM: %s\n", yylval.str);
 						return SCONST;
 					}
 <xq>{xqdouble}		{ addlitchar('\''); }
