@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.53 2002/09/21 18:39:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.54 2003/01/31 00:31:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1109,6 +1109,7 @@ plpgsql_parse_tripwordtype(char *word)
 	Form_pg_type typeStruct;
 	PLpgSQL_type *typ;
 	char	   *cp[2];
+	char	   *colname[1];
 	int			qualified_att_len;
 	int			numdots = 0;
 	int			i;
@@ -1135,7 +1136,7 @@ plpgsql_parse_tripwordtype(char *word)
 		}
 	}
 
-	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp[0], "plpgsql_parse_dblwordtype"));
+	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp[0], "plpgsql_parse_tripwordtype"));
 	classOid = RangeVarGetRelid(relvar, true);
 	if (!OidIsValid(classOid))
 	{
@@ -1171,7 +1172,10 @@ plpgsql_parse_tripwordtype(char *word)
 	/*
 	 * Fetch the named table field and it's type
 	 */
-	attrtup = SearchSysCacheAttName(classOid, cp[1]);
+	plpgsql_convert_ident(cp[1], colname, 1);
+	attrtup = SearchSysCacheAttName(classOid, colname[0]);
+	pfree(colname[0]);
+
 	if (!HeapTupleIsValid(attrtup))
 	{
 		ReleaseSysCache(classtup);
@@ -1273,7 +1277,7 @@ plpgsql_parse_dblwordrowtype(char *word)
 	memcpy(cp, word, i * sizeof(char));
 
 	/* Lookup the relation */
-	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp, "plpgsql_parse_dblwordtype"));
+	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp, "plpgsql_parse_dblwordrowtype"));
 	classOid = RangeVarGetRelid(relvar, true);
 	if (!OidIsValid(classOid))
 		elog(ERROR, "%s: no such class", cp);
