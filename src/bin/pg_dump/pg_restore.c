@@ -34,6 +34,7 @@
  *
  *
  * IDENTIFICATION
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.18 2001/03/19 02:35:29 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *

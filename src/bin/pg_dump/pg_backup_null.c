@@ -17,6 +17,7 @@
  *
  *
  * IDENTIFICATION
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.4 2001/03/19 02:35:28 pjw Exp $
  *
  * Modifications - 09-Jul-2000 - pjw@rhyme.com.au
  *

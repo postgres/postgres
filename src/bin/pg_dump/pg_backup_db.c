@@ -5,10 +5,17 @@
  *  Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.15 2001/03/19 02:35:28 pjw Exp $
+ *
+ * NOTES
  *
  * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
  *
  *    - Check results of PQ routines more carefully.
+ *
+ * Modifications - 19-Mar-2001 - pjw@rhyme.com.au
+ *
+ *	  - Avoid forcing table name to lower case in FixupBlobXrefs!
  *
  *-------------------------------------------------------------------------
  */
@@ -582,9 +589,6 @@ void FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 	PGresult		*res, *uRes;
 	int				i, n;
 	char			*attr;
-
-	for(i=0 ; i < strlen(tablename) ; i++)
-		tablename[i] = tolower((unsigned char) tablename[i]);
 
 	if (strcmp(tablename, BLOB_XREF_TABLE) == 0)
 		return;

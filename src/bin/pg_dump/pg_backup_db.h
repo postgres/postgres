@@ -1,6 +1,8 @@
 /*
  *	Definitions for pg_backup_db.c
  *
+ *	IDENTIFICATION
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.h,v 1.3 2001/03/19 02:35:28 pjw Exp $
  */
 
 #define BLOB_XREF_TABLE "dump_blob_xref" /* MUST be lower case */

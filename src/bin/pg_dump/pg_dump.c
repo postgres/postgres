@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.194 2001/03/06 04:53:28 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.195 2001/03/19 02:35:29 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -108,7 +108,13 @@
  *      I opted for encoding them except in procedure bodies.
  *	  - Dump relevant parts of sequences only when doing schemaOnly & dataOnly
  *	  - Prevent double-dumping of sequences when dataOnly.
- * 
+ *
+ * Modifications - 19-Mar-2001 - pjw@rhyme.com.au 
+ *
+ *	  - Remove fmtId calls for all ArchiveEntry name fields. This fixes
+ *		quoting problems in trigger enable/disable code for mixed case
+ *		table names, and avoids commands like 'pg_restore -t '"TblA"''
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -649,7 +655,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 				copyStmt = NULL;
 			}
 
-			ArchiveEntry(fout, tblinfo[i].oid, fmtId(tblinfo[i].relname, false),
+			ArchiveEntry(fout, tblinfo[i].oid, tblinfo[i].relname,
 							"TABLE DATA", NULL, "", "", copyStmt, tblinfo[i].usename,
 							dumpFn, dumpCtx);
 		}
@@ -2972,7 +2978,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		else
 			appendPQExpBuffer(q, ");\n");
 
-		ArchiveEntry(fout, tinfo[i].oid, fmtId(tinfo[i].typname, force_quotes), "TYPE", NULL,
+		ArchiveEntry(fout, tinfo[i].oid, tinfo[i].typname, "TYPE", NULL,
 						q->data, delq->data, "", tinfo[i].usename, NULL, NULL);
 
 		/*** Dump Type Comments ***/
@@ -3841,7 +3847,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 			if (!dataOnly) {
 
-				ArchiveEntry(fout, tblinfo[i].oid, fmtId(tblinfo[i].relname, false),
+				ArchiveEntry(fout, tblinfo[i].oid, tblinfo[i].relname,
 								reltypename, NULL, q->data, delq->data, "", tblinfo[i].usename,
 								NULL, NULL);
 
@@ -4374,7 +4380,7 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 						  incby, maxv, minv, cache,
 						  (cycled == 't') ? "cycle" : "");
 
-		ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE", NULL,
+		ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "SEQUENCE", NULL,
 						query->data, delqry->data, "", tbinfo.usename, NULL, NULL);
 	}
 
@@ -4385,7 +4391,7 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 		formatStringLiteral(query, fmtId(tbinfo.relname, force_quotes), CONV_ALL);
 		appendPQExpBuffer(query, ", %d, '%c');\n", last, called);
 
-		ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE SET", NULL,
+		ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "SEQUENCE SET", NULL,
 						query->data, "" /* Del */, "", "", NULL, NULL);
 	}
 

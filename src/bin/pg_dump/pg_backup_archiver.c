@@ -15,6 +15,7 @@
  *
  *
  * IDENTIFICATION
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.21 2001/03/19 02:35:28 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -186,7 +187,7 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 		if (impliedDataOnly)
 		{
 			ropt->dataOnly = impliedDataOnly;
-			ahlog(AH, 1, "Implied data-only restore\n", te->desc, te->name);
+			ahlog(AH, 1, "Implied data-only restore\n");
 		}
     }
 
