@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.320 2003/03/20 05:18:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.321 2003/03/20 06:26:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2415,6 +2415,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_atttypname;
 	int			i_atttypmod;
 	int			i_attstattarget;
+	int			i_attstorage;
+	int			i_typstorage;
 	int			i_attnotnull;
 	int			i_atthasdef;
 	int			i_attisdropped;
@@ -2459,13 +2461,14 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		if (g_fout->remoteVersion >= 70300)
 		{
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, attstattarget, "
-					  "attnotnull, atthasdef, attisdropped, attislocal, "
-			  "pg_catalog.format_type(atttypid,atttypmod) as atttypname "
-							  "from pg_catalog.pg_attribute a "
-							  "where attrelid = '%s'::pg_catalog.oid "
-							  "and attnum > 0::pg_catalog.int2 "
-							  "order by attrelid, attnum",
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, a.attstattarget, a.attstorage, t.typstorage, "
+					  "a.attnotnull, a.atthasdef, a.attisdropped, a.attislocal, "
+			  "pg_catalog.format_type(a.atttypid,a.atttypmod) as atttypname "
+							  "from pg_catalog.pg_attribute a, pg_catalog.pg_type t "
+							  "where a.atttypid = t.oid "
+							  "and a.attrelid = '%s'::pg_catalog.oid "
+							  "and a.attnum > 0::pg_catalog.int2 "
+							  "order by a.attrelid, a.attnum",
 							  tbinfo->oid);
 		}
 		else if (g_fout->remoteVersion >= 70100)
@@ -2475,19 +2478,20 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 * but we don't dump it because we can't tell whether it's
 			 * been explicitly set or was just a default.
 			 */
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, "
-						 "attnotnull, atthasdef, false as attisdropped, null as attislocal, "
-						 "format_type(atttypid,atttypmod) as atttypname "
-							  "from pg_attribute a "
-							  "where attrelid = '%s'::oid "
-							  "and attnum > 0::int2 "
-							  "order by attrelid, attnum",
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, -1 as attstattarget, a.attstorage, t.typstorage, "
+						 "a.attnotnull, a.atthasdef, false as attisdropped, null as attislocal, "
+						 "format_type(a.atttypid,a.atttypmod) as atttypname "
+							  "from pg_attribute a, pg_type t "
+							  "where a.atttypid = t.oid"
+							  "and a.attrelid = '%s'::oid "
+							  "and a.attnum > 0::int2 "
+							  "order by a.attrelid, a.attnum",
 							  tbinfo->oid);
 		}
 		else
 		{
 			/* format_type not available before 7.1 */
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, "
+			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, attstorage, 'p' as typstorage, "
 						 "attnotnull, atthasdef, false as attisdropped, null as attislocal, "
 							  "(select typname from pg_type where oid = atttypid) as atttypname "
 							  "from pg_attribute a "
@@ -2511,6 +2515,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_atttypname = PQfnumber(res, "atttypname");
 		i_atttypmod = PQfnumber(res, "atttypmod");
 		i_attstattarget = PQfnumber(res, "attstattarget");
+		i_attstorage = PQfnumber(res, "attstorage");
+		i_typstorage = PQfnumber(res, "typstorage");
 		i_attnotnull = PQfnumber(res, "attnotnull");
 		i_atthasdef = PQfnumber(res, "atthasdef");
 		i_attisdropped = PQfnumber(res, "attisdropped");
@@ -2521,6 +2527,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tbinfo->atttypnames = (char **) malloc(ntups * sizeof(char *));
 		tbinfo->atttypmod = (int *) malloc(ntups * sizeof(int));
 		tbinfo->attstattarget = (int *) malloc(ntups * sizeof(int));
+		tbinfo->attstorage = (char *) malloc(ntups * sizeof(char));
+		tbinfo->typstorage = (char *) malloc(ntups * sizeof(char));
 		tbinfo->attisdropped = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->attislocal = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->attisserial = (bool *) malloc(ntups * sizeof(bool));
@@ -2537,6 +2545,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
 			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
 			tbinfo->attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
+			tbinfo->attstorage[j] = *(PQgetvalue(res, j, i_attstorage));
+			tbinfo->typstorage[j] = *(PQgetvalue(res, j, i_typstorage));
 			tbinfo->attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
 			tbinfo->attislocal[j] = (PQgetvalue(res, j, i_attislocal)[0] == 't');
 			tbinfo->attisserial[j] = false;		/* fix below */
@@ -5254,6 +5264,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 	int		   *parentIndexes;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
 	char	   *reltypename;
+	char	   *storage;
 	char	   *objoid;
 	const char *((*commentDeps)[]);
 	int			j,
@@ -5566,13 +5577,14 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 
 		appendPQExpBuffer(q, ";\n");
 
-		/*
-		 * Dump per-column statistics information. We only issue an ALTER
-		 * TABLE statement if the attstattarget entry for this column is
-		 * non-negative (i.e. it's not the default value)
-		 */
+		/* Loop dumping statistics and storage statements */
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
+			/*
+			 * Dump per-column statistics information. We only issue an ALTER
+			 * TABLE statement if the attstattarget entry for this column is
+			 * non-negative (i.e. it's not the default value)
+			 */
 			if (tbinfo->attstattarget[j] >= 0 &&
 				!tbinfo->attisdropped[j])
 			{
@@ -5582,6 +5594,39 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 								  fmtId(tbinfo->attnames[j]));
 				appendPQExpBuffer(q, "SET STATISTICS %d;\n",
 								  tbinfo->attstattarget[j]);
+			}
+
+			/*
+			 * Dump per-column storage information.  The statement is only dumped if
+			 * the storage has been changed.
+			 */
+			if(!tbinfo->attisdropped[j] && tbinfo->attstorage[j] != tbinfo->typstorage[j])
+			{
+				switch (tbinfo->attstorage[j]) {
+					case 'p':
+						storage = "PLAIN";
+						break;
+					case 'e':
+						storage = "EXTERNAL";
+						break;
+					case 'm':
+						storage = "MAIN";
+						break;
+					case 'x':
+						storage = "EXTENDED";
+						break;
+					default:
+						storage = NULL;
+				}
+				/* Only dump the statement if it's a storage type we recognize */
+				if (storage != NULL) {
+					appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
+									  fmtId(tbinfo->relname));
+					appendPQExpBuffer(q, "ALTER COLUMN %s ",
+									  fmtId(tbinfo->attnames[j]));
+					appendPQExpBuffer(q, "SET STORAGE %s;\n",
+									  storage);
+				}
 			}
 		}
 	}
