@@ -6,16 +6,18 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.2 1996/11/27 08:15:23 bryanh Exp $
+ * $Id: port-protos.h,v 1.3 1996/12/28 02:11:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
+#include <netinet/in.h>        /* For struct in_addr */
+#include <arpa/inet.h>
+
 #include <dlfcn.h>
 
-#include "config.h"   /* For MAXPATHLEN */
 #include "fmgr.h"			/* for func_ptr */
 #include "utils/dynamic_loader.h"
 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.78 1996/12/26 17:39:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.79 1996/12/28 02:11:37 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -516,6 +516,7 @@ INSTALL= /usr/ucb/install
 # accessing headers in the backend directory.
 CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
 LDADD_BE= -lsocket -lnsl -ll -ldl
+LD_ADD= -lsocket -lnsl
 
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
@@ -610,6 +611,7 @@ ifeq ($(PORTNAME), sparc_solaris)
 CC= gcc
 
 LDADD_BE= -lsocket -lnsl -ll -ldl
+LD_ADD= -lsocket -lnsl
 
 # RANLIB is not used on solaris
 RANLIB= touch

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.42 1996/12/26 22:07:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.43 1996/12/28 02:12:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/param.h>	/* for MAXPATHLEN */
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.5 1996/11/16 05:18:58 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.6 1996/12/28 02:13:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,6 @@
 #include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
-
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 1024
-#endif
 
 #define LO_BUFSIZE        1024
 

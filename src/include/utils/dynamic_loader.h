@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.3 1996/11/26 03:20:17 bryanh Exp $
+ * $Id: dynamic_loader.h,v 1.4 1996/12/28 02:12:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 #define DYNAMIC_LOADER_H
 
 #include <sys/types.h>
+#include <sys/param.h>	/* For MAXPATHLEN */
 
 #include <postgres.h>
 
@@ -21,13 +22,6 @@
 #undef MIN
 #undef MAX
 #endif /* MIN */
-
-#ifdef WIN32
-#define MAXPATHLEN    250
-#endif
-
-#ifdef WIN32
-#endif
 
 /*
  * List of dynamically loaded files.

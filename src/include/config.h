@@ -8,13 +8,6 @@
 
 #define BLCKSZ	8192
 
-/* Found in catalog/catalog.c, but doesn't seem to do anything in there */
-#if !defined(sparc_solaris)
-#ifndef MAXPATHLEN
-#define MAXPATHLEN      80
-#endif
-#endif /* !defined(sparc_solaris) */
-
 #if defined(aix)
 #define TERMIOS_H_LOCATION <termios.h>
 #else
@@ -200,6 +193,9 @@ typedef unsigned char slock_t;
 #  define HAVE_TZSET
 #  define NEED_CBRT
 #  define NEED_ISINF
+#  ifndef MAXPATHLEN
+#  define MAXPATHLEN    250
+#  endif
 #endif /* WIN32 */
 
 #if defined(ultrix4)

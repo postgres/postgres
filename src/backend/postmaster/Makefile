@@ -4,7 +4,7 @@
 #    Makefile for postmaster
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.3 1996/11/09 06:20:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.4 1996/12/28 02:12:04 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,6 +16,17 @@ INCLUDE_OPT = -I.. \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT)
+
+ifeq ($(PORTNAME), sparc_solaris)
+
+ifeq ($(CC), gcc)
+# Until we figure out how to get rid of the warnings in this directory,
+# we must turn off any -Werror that is in CFLAGS now.  These options only
+# exist for the gcc compiler.
+CFLAGS+= -Wno-error
+endif
+
+endif
 
 OBJS = postmaster.o
 
