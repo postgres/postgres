@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.23 2003/01/08 00:22:26 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.24 2003/02/03 14:04:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
   </refsynopsisdivinfo>
   <synopsis>
 FETCH [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
-FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</replaceable> | ALL | LAST | NEXT | PRIOR ]
+FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</replaceable> | ALL | NEXT | PRIOR ]
     { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
   </synopsis>
 
@@ -101,17 +101,6 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
 	  <listitem>
 	   <para>
 	    Retrieve all remaining rows.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>
-	   LAST
-	  </term>
-	  <listitem>
-	   <para>
-	    Same as <literal>ALL</>, but conforms to SQL92 syntax.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -212,7 +201,7 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
    If the number of rows remaining in the cursor is less
    than <replaceable class="PARAMETER">#</replaceable>,
    then only those available are fetched.
-   Substituting the keyword ALL or LAST in place of a number will
+   Substituting the keyword ALL in place of a number will
    cause all remaining rows in the cursor to be retrieved.
    Rows may be fetched in both FORWARD and BACKWARD
    directions. The default direction is FORWARD.
@@ -220,13 +209,13 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
 
   <para>
    The cursor position can be before the first row of the query result, or on
-   any particular row of the result, or after the last row of the result.
+   any particular row of the result.
    When created, a cursor is positioned before the first row.  After fetching
    some rows, the cursor is positioned on the last row retrieved.  A new
    <command>FETCH</command> always steps one row in the specified direction
    (if possible) before beginning to return rows.  If the
    <command>FETCH</command> requests more rows than available, the cursor is
-   left positioned after the last row of the query result (or before the first
+   left positioned on the last row of the query result (or on the first
    row, in the case of a backward fetch).  This will always be the case after
    <command>FETCH ALL</>.
   </para>
@@ -236,7 +225,7 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
      A zero row count requests fetching the current row without moving the
      cursor --- that is, re-fetching the most recently fetched row.
      This will succeed unless the cursor is positioned before the
-     first row or after the last row; in which case, no row is returned.
+     first row; in which case, no row is returned.
     </para>
    </tip>
 

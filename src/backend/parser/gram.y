@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.397 2003/02/02 23:46:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.398 2003/02/03 14:04:24 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -361,7 +361,7 @@ static void doNegateFloat(Value *v);
 
 	KEY
 
-	LANCOMPILER LANGUAGE LAST LEADING LEFT LEVEL LIKE LIMIT
+	LANCOMPILER LANGUAGE LEADING LEFT LEVEL LIKE LIMIT
 	LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P
 
@@ -2713,7 +2713,6 @@ fetch_how_many:
 			Iconst									{ $$ = $1; }
 			| '-' Iconst							{ $$ = - $2; }
 			| ALL									{ $$ = INT_MAX; }
-			| LAST									{ $$ = INT_MAX; }
 			| NEXT									{ $$ = 1; }
 			| PRIOR									{ $$ = -1; }
 		;
@@ -7131,7 +7130,6 @@ unreserved_keyword:
 			| KEY
 			| LANCOMPILER
 			| LANGUAGE
-			| LAST
 			| LEVEL
 			| LISTEN
 			| LOAD
