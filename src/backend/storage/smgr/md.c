@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.45 1999/06/11 02:39:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.46 1999/06/18 16:47:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,11 +674,12 @@ mdnblocks(Relation reln)
 	segno = 0;
 	for (;;)
 	{
-		if (v->mdfd_lstbcnt == RELSEG_SIZE
-			|| (nblocks = _mdnblocks(v->mdfd_vfd, BLCKSZ)) == RELSEG_SIZE)
+		nblocks = _mdnblocks(v->mdfd_vfd, BLCKSZ);
+		if (nblocks > RELSEG_SIZE)
+			elog(FATAL, "segment too big in mdnblocks!");
+		v->mdfd_lstbcnt = nblocks;
+		if (nblocks == RELSEG_SIZE)
 		{
-
-			v->mdfd_lstbcnt = RELSEG_SIZE;
 			segno++;
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
@@ -711,22 +712,55 @@ mdtruncate(Relation reln, int nblocks)
 	MdfdVec    *v;
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	int			curnblk;
+	int			curnblk,
+				i,
+				oldsegno,
+				newsegno,
+				lastsegblocks;
+	MdfdVec			**varray;
 
 	curnblk = mdnblocks(reln);
-	if (curnblk / RELSEG_SIZE > 0)
-	{
-		elog(NOTICE, "Can't truncate multi-segments relation %s",
-			reln->rd_rel->relname.data);
-		return curnblk;
-	}
+	if (nblocks > curnblk)
+		return -1;
+	oldsegno = curnblk / RELSEG_SIZE;
+	newsegno = nblocks / RELSEG_SIZE;
+
 #endif
 
 	fd = RelationGetFile(reln);
 	v = &Md_fdvec[fd];
 
+#ifndef LET_OS_MANAGE_FILESIZE
+	varray = (MdfdVec **)palloc((oldsegno + 1) * sizeof(MdfdVec *));
+	for (i = 0; i <= oldsegno; i++)
+	{
+		if (!v)
+			elog(ERROR,"segment isn't open in mdtruncate!");
+		varray[i] = v;
+		v = v->mdfd_chain;
+	}
+	for (i = oldsegno; i > newsegno; i--)
+	{
+		v = varray[i];
+		if (FileTruncate(v->mdfd_vfd, 0) < 0)
+		{
+			pfree(varray);
+			return -1;
+		}
+		v->mdfd_lstbcnt = 0;
+	}
+	/* Calculate the # of blocks in the last segment */
+	lastsegblocks = nblocks - (newsegno * RELSEG_SIZE);
+	v = varray[i];
+	pfree(varray);
+	if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
+		return -1;
+	v->mdfd_lstbcnt = lastsegblocks;
+#else
 	if (FileTruncate(v->mdfd_vfd, nblocks * BLCKSZ) < 0)
 		return -1;
+	v->mdfd_lstbcnt = nblocks;
+#endif
 
 	return nblocks;
 
