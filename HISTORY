@@ -1,5 +1,40 @@
                                  Release Notes
 
+                                 Release 7.2.1
+
+     Release date: 2002-03-21
+
+   This has a variety of fixes from 7.2.
+
+     ----------------------------------------------------------------------
+
+Migration to version 7.2.1
+
+   A dump/restore is *not* required for those running 7.2.
+
+     ----------------------------------------------------------------------
+
+Changes
+
+ Properly set sequence values after backend crash (Tom)
+ Fix pgaccess kanji-coversion key binding (Tatsuo)
+ Optimizer improvements (Tom)
+ cash I/O improvements (Tom)
+ contrib/btree_gist improvements (Teodor Sigaev)
+ New Russian FAQ
+ Compile fix for missing AuthBlockSig (Heiko)
+ Additional time zones and time zone fixes (Thomas)
+ Allow psql \connect to handle mixed case database and user names (Tom)
+ Return proper OID on command completion even with ON INSERT rules (Tom)
+ Allow COPY FROM to use 8-bit DELIMITERS (Tatsuo)
+ Fix bug in extract/date_part for milliseconds/microseconds (Tatsuo)
+ Improve handling of multiple UNIONs with different lengths (Tom)
+ contrib/tsearch dictionary improvements (Thomas T. Thai, Teodor Sigaev)
+ Fix for array subscripts handling (Tom)
+     
+
+     ----------------------------------------------------------------------
+
                                   Release 7.2
 
      Release date: 2002-02-04
@@ -74,8 +109,8 @@ Migration to version 7.2
      * The date/time value 'current' is no longer available. You will need to
        rewrite your applications.
 
-     * The timestamp(), time(), and inverval() functions are no longer 
-       available.  Instead of timestamp(), use timestamp 'string', or CAST.
+     * The timestamp() function is no longer available.  Use timestamp
+       'string' instead, or CAST.
 
    The SELECT ... LIMIT #,# syntax will be removed in the next release. You
    should change your queries to use separate LIMIT and OFFSET clauses, e.g.
