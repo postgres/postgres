@@ -24,6 +24,7 @@ int	struct_level = 0;
 char	errortext[128];
 static char	*connection = NULL;
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
+static int	initializer = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
 static char     *actual_startline[STRUCT_DEPTH];
@@ -36,12 +37,10 @@ struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 
 struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, {NULL}};
 
-enum errortype {ET_WARN, ET_ERROR, ET_FATAL};
-
 /*
  * Handle parsing errors and warnings
  */
-static void
+void
 mmerror(enum errortype type, char * error)
 {
 
@@ -643,10 +642,8 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %token		SQL_VAR SQL_WHENEVER
 
 /* C token */
-%token		S_ANYTHING S_AUTO S_BOOL S_CHAR S_CONST S_DOUBLE S_ENUM S_EXTERN
-%token		S_FLOAT S_INT S
-%token		S_LONG S_REGISTER S_SHORT S_SIGNED S_STATIC S_STRUCT
-%token		S_UNION S_UNSIGNED S_VARCHAR
+%token		S_ANYTHING S_AUTO S_CONST S_EXTERN
+%token		S_REGISTER S_STATIC S_VOLATILE
 
 /* I need this and don't know where it is defined inside the backend */
 %token		TYPECAST
@@ -814,21 +811,20 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
 %type  <str>    storage_clause opt_initializer c_anything blockstart
 %type  <str>    blockend variable_list variable c_thing c_term
-%type  <str>	opt_pointer cvariable ECPGDisconnect dis_name
+%type  <str>	opt_pointer cvariable ECPGDisconnect dis_name storage_modifier
 %type  <str>	stmt symbol opt_symbol ECPGRelease execstring server_name
 %type  <str>	connection_object opt_server opt_port c_stuff opt_reference
 %type  <str>    user_name opt_user char_variable ora_user ident
 %type  <str>    db_prefix server opt_options opt_connection_name c_list
-%type  <str>	ECPGSetConnection cpp_line s_enum ECPGTypedef c_args
+%type  <str>	ECPGSetConnection cpp_line ECPGTypedef c_args
 %type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
-%type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
-%type  <str>	sql_declaration sql_variable_list sql_variable opt_at
+%type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>    struct_type s_struct declaration declarations variable_declarations
 %type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
 
-%type  <type_enum> simple_type varchar_type
+%type  <type_enum> simple_type signed_type unsigned_type varchar_type
 
-%type  <type>	type ctype
+%type  <type>	type
 
 %type  <action> action
 
@@ -943,7 +939,8 @@ stmt:  AlterTableStmt			{ output_statement($1, 0); }
 						output_statement($1, 0);
 					}
 		| ECPGFree		{
-						fprintf(yyout, "{ ECPGdeallocate(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1); 
+						fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
+
 						whenever_action(2);
 						free($1);
 					}
@@ -1320,9 +1317,9 @@ DEFAULT} */
 		}
 /* ALTER TABLE <name> DROP [COLUMN] <name> {RESTRICT|CASCADE} */
 	| ALTER TABLE relation_name opt_inh_star DROP opt_column ColId
-		drop_behavior
+		/* drop_behavior */
 		{
-			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("drop"), $6, $7, $8);
+			$$ = cat_str(5, make_str("alter table"), $3, $4, make_str("drop"), $6, $7);
 		}
 /* ALTER TABLE <name> ADD CONSTRAINT ... */
 	| ALTER TABLE relation_name opt_inh_star ADD TableConstraint
@@ -2584,21 +2581,21 @@ createdb_opt_location:  LOCATION '=' Sconst	{ $$ = cat2_str(make_str("location =
 createdb_opt_encoding:  ENCODING '=' Sconst  
 			{
 #ifndef MULTIBYTE
-				mmerror(ET_ERROR, "WITH ENCODING is not supported.");
+				mmerror(ET_ERROR, "Multi-byte support is not enabled.");
 #endif
 				$$ = cat2_str(make_str("encoding ="), $3);
 			}
 		| ENCODING '=' Iconst  
 			{
 #ifndef MULTIBYTE
-				mmerror(ET_ERROR, "WITH ENCODING is not supported.");
+				mmerror(ET_ERROR, "Multi-byte support is not enabled.");
 #endif
 				$$ = cat2_str(make_str("encoding ="), $3);
 			}
 		| ENCODING '=' DEFAULT
 			{
 #ifndef MULTIBYTE
-				mmerror(ET_ERROR, "WITH ENCODING is not supported.");
+				mmerror(ET_ERROR, "Multi-byte support is not enabled.");
 #endif
 				$$ = make_str("encoding = default");
 			}
@@ -3405,17 +3402,16 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 				}
 		;
 
-/* SQL92 character data types
+/* 
+ * SQL92 character data types
  * The following implements CHAR() and VARCHAR().
  *								- ay 6/95
  */
 Character:  character '(' Iconst ')'
 				{
-					if (strncasecmp($1, "char", strlen("char")) && strncasecmp($1, "varchar", strlen("varchar")))
-						mmerror(ET_ERROR, "internal parsing error; unrecognized character type");
 					if (atol($3) < 1)
 					{
-						sprintf(errortext, "length for '%s' type must be at least 1",$1);
+						sprintf(errortext, "length for type '%s' type must be at least 1",$1);
 						mmerror(ET_ERROR, errortext);
 					}
 					else if (atol($3) > MaxAttrSize)
@@ -4332,7 +4328,9 @@ ColLabel:  ColId			{ $$ = $1; }
 		| EXPLAIN		{ $$ = make_str("explain"); }
 		| EXTEND		{ $$ = make_str("extend"); }
 		| FALSE_P		{ $$ = make_str("false"); }
+		| FLOAT			{ $$ = make_str("float"); }
 		| FOREIGN		{ $$ = make_str("foreign"); }
+		| GLOBAL		{ $$ = make_str("global"); }
 		| GROUP			{ $$ = make_str("group"); }
 		| LISTEN		{ $$ = make_str("listen"); }
 		| LOAD			{ $$ = make_str("load"); }
@@ -4620,29 +4618,39 @@ variable_declarations:  /* empty */ { $$ = EMPTY; }
 declarations:  declaration { $$ = $1; }
 			| declarations declaration { $$ = cat2_str($1, $2); }
 
-declaration: storage_clause
+declaration: storage_clause storage_modifier
 	{
-		actual_storage[struct_level] = mm_strdup($1);
+		actual_storage[struct_level] = cat2_str(mm_strdup($1), mm_strdup($2));
 		actual_startline[struct_level] = hashline_number();
 	}
 	type
 	{
-		actual_type[struct_level].type_enum = $3.type_enum;
-		actual_type[struct_level].type_dimension = $3.type_dimension;
-		actual_type[struct_level].type_index = $3.type_index;
+		actual_type[struct_level].type_enum = $4.type_enum;
+		actual_type[struct_level].type_dimension = $4.type_dimension;
+		actual_type[struct_level].type_index = $4.type_index;
+
+		/* we do not need the string "varchar" for output */
+		/* so replace it with an empty string */
+		if ($4.type_enum == ECPGt_varchar)
+		{
+			free($4.type_str);
+			$4.type_str=EMPTY;
+		}
 	}
 	variable_list ';'
 	{
- 		$$ = cat_str(5, actual_startline[struct_level], $1, $3.type_str, $5, make_str(";\n"));
+ 		$$ = cat_str(6, actual_startline[struct_level], $1, $2, $4.type_str, $6, make_str(";\n"));
 	}
 
 storage_clause : S_EXTERN	{ $$ = make_str("extern"); }
        | S_STATIC		{ $$ = make_str("static"); }
-       | S_SIGNED		{ $$ = make_str("signed"); }
-       | S_CONST		{ $$ = make_str("const"); }
        | S_REGISTER		{ $$ = make_str("register"); }
        | S_AUTO			{ $$ = make_str("auto"); }
        | /* empty */		{ $$ = EMPTY; }
+
+storage_modifier : S_CONST      { $$ = make_str("const"); }
+       | S_VOLATILE             { $$ = make_str("volatile"); }
+       | /* empty */            { $$ = EMPTY; }
 
 type: simple_type
 		{
@@ -4654,7 +4662,7 @@ type: simple_type
 	| varchar_type
 		{
 			$$.type_enum = ECPGt_varchar;
-			$$.type_str = EMPTY;
+			$$.type_str = make_str("varchar");;
 			$$.type_dimension = -1;
   			$$.type_index = -1;
 		}
@@ -4691,12 +4699,16 @@ type: simple_type
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
 
-enum_type: s_enum '{' c_list '}'
+enum_type: SQL_ENUM opt_symbol enum_definition
 	{
-		$$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
+		$$ = cat_str(3, make_str("enum"), $2, $3);
 	}
-	
-s_enum: S_ENUM opt_symbol	{ $$ = cat2_str(make_str("enum"), $2); }
+	|  SQL_ENUM symbol
+	{
+		$$ = cat2_str(make_str("enum"), $2);
+	}
+
+enum_definition: '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }
 
 struct_type: s_struct '{' variable_declarations '}'
 	{
@@ -4712,38 +4724,64 @@ union_type: s_union '{' variable_declarations '}'
 	    $$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
 	}
 
-s_struct : S_STRUCT opt_symbol
+s_struct: SQL_STRUCT opt_symbol
         {
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
                  mmerror(ET_ERROR, "Too many levels in nested structure definition");
+
+	    /* reset this variable so we see if there was */
+	    /* an initializer specified */
+	    initializer = 0;
+
 	    $$ = cat2_str(make_str("struct"), $2);
 	}
 
-s_union : S_UNION opt_symbol
+s_union: UNION opt_symbol
         {
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
                  mmerror(ET_ERROR, "Too many levels in nested structure definition");
+
+	    /* reset this variable so we see if there was */
+	    /* an initializer specified */
+	    initializer = 0;
+
 	    $$ = cat2_str(make_str("union"), $2);
 	}
 
 opt_symbol: /* empty */ 	{ $$ = EMPTY; }
 	| symbol		{ $$ = $1; }
 
-simple_type: S_SHORT		{ $$ = ECPGt_short; }
-           | S_UNSIGNED S_SHORT { $$ = ECPGt_unsigned_short; }
-	   | S_INT 		{ $$ = ECPGt_int; }
-           | S_UNSIGNED S_INT	{ $$ = ECPGt_unsigned_int; }
-	   | S_LONG		{ $$ = ECPGt_long; }
-           | S_UNSIGNED S_LONG	{ $$ = ECPGt_unsigned_long; }
-           | S_FLOAT		{ $$ = ECPGt_float; }
-           | S_DOUBLE		{ $$ = ECPGt_double; }
-	   | S_BOOL		{ $$ = ECPGt_bool; };
-	   | S_CHAR		{ $$ = ECPGt_char; }
-           | S_UNSIGNED S_CHAR	{ $$ = ECPGt_unsigned_char; }
+simple_type: unsigned_type		{ $$=$1; }
+	|	opt_signed signed_type	{ $$=$2; }
+	;
 
-varchar_type:  S_VARCHAR		{ $$ = ECPGt_varchar; }
+unsigned_type: SQL_UNSIGNED SQL_SHORT 			{ $$ = ECPGt_unsigned_short; }
+		| SQL_UNSIGNED SQL_SHORT SQL_INT	{ $$ = ECPGt_unsigned_short; }
+		| SQL_UNSIGNED 				{ $$ = ECPGt_unsigned_int; }
+		| SQL_UNSIGNED SQL_INT			{ $$ = ECPGt_unsigned_int; }
+		| SQL_UNSIGNED SQL_LONG			{ $$ = ECPGt_unsigned_long; }
+		| SQL_UNSIGNED SQL_LONG SQL_INT		{ $$ = ECPGt_unsigned_long; }
+	        | SQL_UNSIGNED CHAR			{ $$ = ECPGt_unsigned_char; }
+		;
+
+signed_type: SQL_SHORT          { $$ = ECPGt_short; }
+           | SQL_SHORT SQL_INT  { $$ = ECPGt_short; }
+           | SQL_INT            { $$ = ECPGt_int; }
+           | SQL_LONG           { $$ = ECPGt_long; }
+           | SQL_LONG SQL_INT   { $$ = ECPGt_long; }
+           | SQL_BOOL   	{ $$ = ECPGt_bool; };
+           | FLOAT         	{ $$ = ECPGt_float; }
+           | DOUBLE 	        { $$ = ECPGt_double; }
+           | CHAR            	{ $$ = ECPGt_char; }
+	   ;
+
+opt_signed:	SQL_SIGNED
+	|	/* EMPTY */
+	;
+
+varchar_type:  VARCHAR		{ $$ = ECPGt_varchar; }
 
 variable_list: variable 
 	{
@@ -4830,7 +4868,10 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 		}
 
 opt_initializer: /* empty */		{ $$ = EMPTY; }
-	| '=' c_term			{ $$ = cat2_str(make_str("="), $2); }
+	| '=' c_term			{ 
+						initializer = 1;
+						$$ = cat2_str(make_str("="), $2);
+					}
 
 opt_pointer: /* empty */	{ $$ = EMPTY; }
 	| '*'			{ $$ = make_str("*"); }
@@ -4966,19 +5007,24 @@ ECPGSetConnection:  SET SQL_CONNECTION to_equal connection_object
 /*
  * define a new type for embedded SQL
  */
-ECPGTypedef: TYPE_P symbol IS ctype opt_type_array_bounds opt_reference
+ECPGTypedef: TYPE_P symbol IS type opt_type_array_bounds opt_reference
 	{
 		/* add entry to list */
 		struct typedefs *ptr, *this;
 		int dimension = $5.index1;
 		int length = $5.index2;
 
+		if (($4.type_enum == ECPGt_struct ||
+		     $4.type_enum == ECPGt_union) &&
+		    initializer == 1)
+			mmerror(ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
+
 		for (ptr = types; ptr != NULL; ptr = ptr->next)
 		{
 			if (strcmp($2, ptr->name) == 0)
 			{
 			        /* re-definition is a bug */
-				sprintf(errortext, "type %s already defined", $2);
+				sprintf(errortext, "Type %s already defined", $2);
 				mmerror(ET_ERROR, errortext);
 	                }
 		}
@@ -5050,236 +5096,20 @@ opt_type_array_bounds:  '[' ']' opt_type_array_bounds
 opt_reference: SQL_REFERENCE { $$ = make_str("reference"); }
 	| /* empty */ 	     { $$ = EMPTY; }
 
-ctype: CHAR
-	{
-		$$.type_str = make_str("char");
-                $$.type_enum = ECPGt_char;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| VARCHAR
-	{
-		$$.type_str = make_str("varchar");
-                $$.type_enum = ECPGt_varchar;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| FLOAT
-	{
-		$$.type_str = make_str("float");
-                $$.type_enum = ECPGt_float;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| DOUBLE
-	{
-		$$.type_str = make_str("double");
-                $$.type_enum = ECPGt_double;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| opt_signed SQL_INT
-	{
-		$$.type_str = make_str("int");
-       	        $$.type_enum = ECPGt_int;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| SQL_ENUM
-	{
-		$$.type_str = make_str("int");
-       	        $$.type_enum = ECPGt_int;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| opt_signed SQL_SHORT
-	{
-		$$.type_str = make_str("short");
-       	        $$.type_enum = ECPGt_short;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| opt_signed SQL_LONG
-	{
-		$$.type_str = make_str("long");
-       	        $$.type_enum = ECPGt_long;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| SQL_BOOL
-	{
-		$$.type_str = make_str("bool");
-       	        $$.type_enum = ECPGt_bool;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| SQL_UNSIGNED SQL_INT
-	{
-		$$.type_str = make_str("unsigned int");
-       	        $$.type_enum = ECPGt_unsigned_int;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| SQL_UNSIGNED SQL_SHORT
-	{
-		$$.type_str = make_str("unsigned short");
-       	        $$.type_enum = ECPGt_unsigned_short;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| SQL_UNSIGNED SQL_LONG
-	{
-		$$.type_str = make_str("unsigned long");
-       	        $$.type_enum = ECPGt_unsigned_long;
-		$$.type_index = -1;
-		$$.type_dimension = -1;
-	}
-	| SQL_STRUCT
-	{
-		struct_member_list[struct_level++] = NULL;
-		if (struct_level >= STRUCT_DEPTH)
-        		mmerror(ET_ERROR, "Too many levels in nested structure definition");
-	} '{' sql_variable_declarations '}'
-	{
-		ECPGfree_struct_member(struct_member_list[struct_level--]);
-		$$.type_str = cat_str(3, make_str("struct {"), $4, make_str("}"));
-		$$.type_enum = ECPGt_struct;
-                $$.type_index = -1;
-                $$.type_dimension = -1;
-	}
-	| UNION
-	{
-		struct_member_list[struct_level++] = NULL;
-		if (struct_level >= STRUCT_DEPTH)
-        		mmerror(ET_ERROR, "Too many levels in nested structure definition");
-	} '{' sql_variable_declarations '}'
-	{
-		ECPGfree_struct_member(struct_member_list[struct_level--]);
-		$$.type_str = cat_str(3, make_str("union {"), $4, make_str("}"));
-		$$.type_enum = ECPGt_union;
-                $$.type_index = -1;
-                $$.type_dimension = -1;
-	}
-	| symbol
-	{
-		struct typedefs *this = get_typedef($1);
-
-		$$.type_str = mm_strdup($1);
-		$$.type_enum = this->type->type_enum;
-		$$.type_dimension = this->type->type_dimension;
-		$$.type_index = this->type->type_index;
-		struct_member_list[struct_level] = this->struct_member_list;
-	}
-
-opt_signed: SQL_SIGNED | /* empty */
-
-sql_variable_declarations: /* empty */
-	{
-		$$ = EMPTY;
-	}
-	| sql_declaration sql_variable_declarations
-	{
-		$$ = cat2_str($1, $2);
-	}
-	;
-
-sql_declaration: ctype
-	{
-		actual_type[struct_level].type_enum = $1.type_enum;
-		actual_type[struct_level].type_dimension = $1.type_dimension;
-		actual_type[struct_level].type_index = $1.type_index;
-	}
-	sql_variable_list ';'
-	{
-		$$ = cat_str(3, $1.type_str, $3, make_str(";"));
-	}
-
-sql_variable_list: sql_variable 
-	{
-		$$ = $1;
-	}
-	| sql_variable_list ',' sql_variable
-	{
-		$$ = cat_str(3, $1, make_str(","), $3);
-	}
-
-sql_variable: opt_pointer symbol opt_array_bounds
-		{
-			int dimension = $3.index1;
-			int length = $3.index2;
-			struct ECPGtype * type;
-                        char dim[14L];
-
-			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1));
-
-			switch (actual_type[struct_level].type_enum)
-			{
-			   case ECPGt_struct:
-			   case ECPGt_union:
-                               if (dimension < 0)
-                                   type = ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum);
-                               else
-                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum), dimension); 
-
-                               break;
-                           case ECPGt_varchar:
-                               if (dimension == -1)
-                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
-                               else
-                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
-
-                               switch(dimension)
-                               {
-                                  case 0:
-                                      strcpy(dim, "[]");
-                                      break;
-				  case -1:
-                                  case 1:
-                                      *dim = '\0';
-                                      break;
-                                  default:
-                                      sprintf(dim, "[%d]", dimension);
-                                      break;
-                                }
-
-                               break;
-                           case ECPGt_char:
-                           case ECPGt_unsigned_char:
-                               if (dimension == -1)
-                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
-                               else
-                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
-
-                               break;
-                           default:
-			       if (length >= 0)
-                	            mmerror(ET_ERROR, "No multi-dimensional array support for simple data types");
-
-                               if (dimension < 0)
-                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, 1);
-                               else
-                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, 1), dimension);
-
-                               break;
-			}
-
-			if (struct_level == 0)
-				new_variable($2, type);
-			else
-				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]));
-
-			$$ = cat_str(3, $1, $2, $3.str);
-		}
-
 /*
  * define the type of one variable for embedded SQL
  */
-ECPGVar: SQL_VAR symbol IS ctype opt_type_array_bounds opt_reference
+ECPGVar: SQL_VAR symbol IS type opt_type_array_bounds opt_reference
 	{
 		struct variable *p = find_variable($2);
 		int dimension = $5.index1;
 		int length = $5.index2;
 		struct ECPGtype * type;
+
+		if (($4.type_enum == ECPGt_struct ||
+		     $4.type_enum == ECPGt_union) &&
+		    initializer == 1)
+			mmerror(ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
 
 		adjust_array($4.type_enum, &dimension, &length, $4.type_dimension, $4.type_index, strlen($6));
 
@@ -5561,25 +5391,25 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| '-'		{ $$ = make_str("-"); }
 	| '/'		{ $$ = make_str("/"); }
 	| '%'		{ $$ = make_str("%"); }
-	| S_AUTO	{ $$ = make_str("auto"); }
-	| S_BOOL	{ $$ = make_str("bool"); }
-	| S_CHAR	{ $$ = make_str("char"); }
-	| S_CONST	{ $$ = make_str("const"); }
-	| S_DOUBLE	{ $$ = make_str("double"); }
-	| S_ENUM	{ $$ = make_str("enum"); }
-	| S_EXTERN	{ $$ = make_str("extern"); }
-	| S_FLOAT	{ $$ = make_str("float"); }
-        | S_INT		{ $$ = make_str("int"); }
-	| S_LONG	{ $$ = make_str("long"); }
-	| S_REGISTER	{ $$ = make_str("register"); }
-	| S_SHORT	{ $$ = make_str("short"); }
-	| S_SIGNED	{ $$ = make_str("signed"); }
-	| S_STATIC	{ $$ = make_str("static"); }
-        | S_STRUCT	{ $$ = make_str("struct"); }
-        | S_UNION	{ $$ = make_str("union"); }
-	| S_UNSIGNED	{ $$ = make_str("unsigned"); }
-	| S_VARCHAR	{ $$ = make_str("varchar"); }
 	| S_ANYTHING	{ $$ = make_name(); }
+	| S_AUTO	{ $$ = make_str("auto"); }
+	| S_CONST	{ $$ = make_str("const"); }
+	| S_EXTERN	{ $$ = make_str("extern"); }
+	| S_REGISTER	{ $$ = make_str("register"); }
+	| S_STATIC	{ $$ = make_str("static"); }
+	| SQL_BOOL	{ $$ = make_str("bool"); }
+	| SQL_ENUM	{ $$ = make_str("enum"); }
+        | SQL_INT	{ $$ = make_str("int"); }
+	| SQL_LONG	{ $$ = make_str("long"); }
+	| SQL_SHORT	{ $$ = make_str("short"); }
+	| SQL_SIGNED	{ $$ = make_str("signed"); }
+        | SQL_STRUCT	{ $$ = make_str("struct"); }
+	| SQL_UNSIGNED	{ $$ = make_str("unsigned"); }
+	| CHAR		{ $$ = make_str("char"); }
+	| DOUBLE	{ $$ = make_str("double"); }
+	| FLOAT		{ $$ = make_str("float"); }
+        | UNION		{ $$ = make_str("union"); }
+	| VARCHAR	{ $$ = make_str("varchar"); }
         | '['		{ $$ = make_str("["); }
 	| ']'		{ $$ = make_str("]"); }
 /*        | '('		{ $$ = make_str("("); }

@@ -1,0 +1,61 @@
+#include <stdlib.h>
+#include <stdio.h>
+
+EXEC SQL INCLUDE sqlca;
+
+static void ErrorExit (void);
+
+int main (void)
+	{
+	EXEC SQL BEGIN DECLARE SECTION;
+	int			result;
+	int			values[2], i;
+	EXEC SQL END DECLARE SECTION;
+	FILE *dbgs;
+	
+	
+        if ((dbgs = fopen("log", "w")) != NULL)
+                ECPGdebug(1, dbgs);
+
+	EXEC SQL WHENEVER SQLERROR DO ErrorExit();
+	EXEC SQL CONNECT TO 'mm';
+	EXEC SQL CREATE TABLE tab (index int);
+	EXEC SQL INSERT INTO tab(index) values(14);
+	EXEC SQL INSERT INTO tab(index) values(7);
+	EXEC SQL COMMIT;
+
+	EXEC SQL CREATE FUNCTION my_fun () RETURNS int AS
+		'/home/postgres/pgsql/src/interfaces/ecpg.mm/test/stp.so' LANGUAGE 'C';
+	EXEC SQL COMMIT;
+
+	EXEC SQL SELECT index INTO :values FROM tab;
+	for (i = 0; i < 2; i++)
+		printf("tab[%d] = %d\n", i, values[i]);
+
+	EXEC SQL SELECT my_fun () INTO :result;
+	printf ("result = %d\n", result);
+	
+	EXEC SQL DROP TABLE tab;
+	EXEC SQL DROP FUNCTION my_fun ();
+	EXEC SQL COMMIT;
+	EXEC SQL DISCONNECT;
+
+	if (dbgs != NULL)
+                fclose(dbgs);
+	exit (0);
+	}
+
+	
+static void ErrorExit (void)
+	{
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+	
+	sqlprint();
+
+	EXEC SQL DROP TABLE tab;
+	EXEC SQL DROP FUNCTION my_fun ();
+	EXEC SQL COMMIT;
+
+	EXEC SQL DISCONNECT;
+	exit (-1);
+	}

@@ -40,6 +40,7 @@ extern int	yylex(void);
 extern void yyerror(char *);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 extern char *mm_strdup(const char *);
+extern void mmerror(enum errortype, char * );
 ScanKeyword *ScanECPGKeywordLookup(char *);
 ScanKeyword *ScanCKeywordLookup(char *);
 

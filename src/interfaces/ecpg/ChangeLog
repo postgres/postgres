@@ -775,5 +775,21 @@ Mon Jan 17 21:55:40 CET 2000
 	- Synced preproc.y with gram.y.
 	- Changed FETCH syntax using Rene's final patch. Made it more
 	  standard compliant.
+
+Thu Jan 20 10:00:50 CET 2000
+
+	- Synced preproc.y with gram.y.
+
+Fri Jan 21 14:52:27 CET 2000
+
+	- Added more log output to ecpglib.
+
+Thu Jan 27 08:12:05 CET 2000
+
+	- Added another patch by Rene Hogendoorn.
+	- Fixed error messages in pgc.l.
+	- Improved variable parsing.
+	- Synced preproc.y with gram.y.
 	- Set library version to 3.0.10.
 	- Set ecpg version to 2.7.0.
+

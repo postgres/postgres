@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.49 2000/01/26 05:58:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.50 2000/01/27 19:00:39 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					errno = 0;
 					yylval.ival = strtol(literalbuf, &endptr, 2);
 					if (*endptr != '\0' || errno == ERANGE)
-						yyerror("ERROR: Bad binary integer input!");
+						mmerror(ET_ERROR, "Bad binary integer input!");
 					return ICONST;
 				}
 <xh>{xhinside}	|
@@ -268,7 +268,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					errno = 0;
 					yylval.ival = strtol(literalbuf, &endptr, 16);
 					if (*endptr != '\0' || errno == ERANGE)
-						yyerror("ERROR: Bad hexadecimal integer input");
+						mmerror(ET_ERROR, "Bad hexadecimal integer input");
 					return ICONST;
 				}
 
@@ -355,7 +355,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 						errno = 0;
 						yylval.dval = strtod((char *)yytext,&endptr);
 						if (*endptr != '\0' || errno == ERANGE)
-							yyerror("ERROR: Bad float8 input");
+							mmerror(ET_ERROR, "Bad float8 input");
 						return FCONST;
 					}
 					yylval.str = mm_strdup((char*)yytext);
@@ -367,7 +367,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					errno = 0;
 					yylval.dval = strtod((char *)yytext,&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
-						yyerror("ERROR: Bad float input");
+						mmerror(ET_ERROR, "Bad float input");
 					return FCONST;
 				}
 <SQL>:{identifier}(("->"|\.){identifier})*	{
@@ -384,6 +384,13 @@ cppline			{space}*#(.*\\{line_end})*.*
 					for(i = 0; lower_text[i]; i++)
 						if (isascii((unsigned char)lower_text[i]) && isupper(lower_text[i]))
 							lower_text[i] = tolower(lower_text[i]);
+
+					if (i >= NAMEDATALEN)
+					{
+						sprintf(errortext, "Identifier \"%s\" will be truncated to \"%.*s\"", yytext, NAMEDATALEN-1, yytext);
+						mmerror (ET_WARN, errortext);
+                                                yytext[NAMEDATALEN-1] = '\0';
+					}
 
 					keyword = ScanKeywordLookup((char*)lower_text);
 					if (keyword != NULL) {
@@ -509,10 +516,10 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <C,xskip>{exec_sql}{elif}{space_or_nl}*	{	/* pop stack */
 						if ( preproc_tos == 0 ) {
-						    yyerror("ERROR: missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
+						    mmerror(ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
 						}
 						else if ( stacked_if_value[preproc_tos].else_branch ) {
-						    yyerror("ERROR: missing 'EXEC SQL ENDIF;'");
+						    mmerror(ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
 						}
 						else {
 						    preproc_tos--;
@@ -523,7 +530,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <C,xskip>{exec_sql}{else}{space_or_nl}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
 						if ( stacked_if_value[preproc_tos].else_branch ) {
-						    yyerror("ERROR: duplicated 'EXEC SQL ELSE;'");
+						    mmerror(ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
 						}
 						else {
 						    stacked_if_value[preproc_tos].else_branch = TRUE;
@@ -541,7 +548,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					}
 <C,xskip>{exec_sql}{endif}{space_or_nl}*";" { 
 						if ( preproc_tos == 0 ) {
-						    yyerror("ERROR: unmatched 'EXEC SQL ENDIF;'");
+						    mmerror(ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
 						}
 						else {
 						    preproc_tos--;
@@ -559,7 +566,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <xcond>{identifier}{space_or_nl}*";" {
 					if ( preproc_tos >= MAX_NESTED_IF-1 ) {
-					    yyerror("ERROR: too many nested 'EXEC SQL IFDEF' conditions");
+					    mmerror(ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
 					}
 					else {
 					    struct _defines *defptr;
@@ -680,7 +687,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 			  if ( preproc_tos > 0 ) {
 			      preproc_tos = 0;
 
-			      yyerror("ERROR: missing 'EXEC SQL ENDIF;'");
+			      mmerror(ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
 			  }
 
 			  if (yy_buffer == NULL)

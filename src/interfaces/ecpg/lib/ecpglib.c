@@ -9,7 +9,7 @@
    slightly modified)
  */
 
-/* Taken over as part of PostgreSQL by Michael Meskes <meskes@debian.org>
+/* Taken over as part of PostgreSQL by Michael Meskes <meskes@postgresql.org>
    on Feb. 5th, 1998 */
 
 #include <stdio.h>
@@ -724,6 +724,9 @@ ECPGexecute(struct statement * stmt)
 						*((void **) var->pointer) = var->value;
 						add_mem(var->value, stmt->lineno);
 					}
+					
+					
+					ECPGlog("ECPGexecute line %d: TYPE db: %d c: %d\n", stmt->lineno, PQftype(results, act_field), var->type);
 
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 					{
@@ -764,7 +767,7 @@ ECPGexecute(struct statement * stmt)
 								status = false;
 								break;
 						}
-
+						
 						switch (var->type)
 						{
 								long		res;

@@ -138,3 +138,5 @@ struct arguments
 	struct variable *indicator;
 	struct arguments *next;
 };
+
+enum errortype {ET_WARN, ET_ERROR, ET_FATAL};

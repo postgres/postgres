@@ -1,0 +1,16 @@
+EXEC SQL INCLUDE sqlca;
+
+int my_fun (void)
+	{
+	EXEC SQL BEGIN DECLARE SECTION;
+	int			sql_index = 0;
+	EXEC SQL END DECLARE SECTION;	
+
+	EXEC SQL WHENEVER SQLERROR GOTO Error;
+	EXEC SQL SELECT MIN(index) INTO :sql_index FROM tab;
+
+	return (sql_index);
+
+Error:
+	return (sqlca.sqlcode);	
+	}
