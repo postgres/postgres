@@ -347,3 +347,172 @@ numbers in many other, more commonly exercised, code paths.)
 
 ************
 
+From owner-pgsql-hackers@hub.org Tue Jan 25 18:34:14 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA04935
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jan 2000 19:34:13 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id TAA31870;
+	Tue, 25 Jan 2000 19:22:44 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Tue, 25 Jan 2000 19:21:06 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id TAA31364
+	for pgsql-hackers-outgoing; Tue, 25 Jan 2000 19:20:07 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from hu.tm.ee (ppp809.tele2.ee [212.107.37.109])
+	by hub.org (8.9.3/8.9.3) with ESMTP id TAA31158
+	for <pgsql-hackers@postgreSQL.org>; Tue, 25 Jan 2000 19:19:04 -0500 (EST)
+	(envelope-from hannu@tm.ee)
+Received: from tm.ee (localhost [127.0.0.1])
+	by hu.tm.ee (Postfix) with ESMTP
+	id 46B6213469; Wed, 26 Jan 2000 02:25:13 +0200 (EET)
+Message-ID: <388E3EE9.46880647@tm.ee>
+Date: Wed, 26 Jan 2000 02:25:13 +0200
+From: Hannu Krosing <hannu@tm.ee>
+Organization: Trust-O-Matic =?iso-8859-1?Q?O=DC?=
+X-Mailer: Mozilla 4.7 [en] (X11; I; Linux 2.2.13-7mdk i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Don Baccus <dhogaza@pacifier.com>
+Cc: Tom Lane <tgl@sss.pgh.pa.us>,
+        "Ross J. Reedstrom" <reedstrm@wallace.ece.rice.edu>,
+        PostgreSQL Development <pgsql-hackers@postgreSQL.org>
+Subject: Re: Happy column adding (was RE: [HACKERS] Happy columndropping)
+References: <3.0.1.32.20000125113001.00f8acb0@mail.pacifier.com>
+  <20000125114453.E423@rice.edu>
+  <001401bf6704$5ca7e3a0$2801007e@tpf.co.jp>
+  <Pine.GSO.4.02A.10001251152160.11899-100000@Val.DoCS.UU.SE>
+  <3.0.1.32.20000125080125.00f7f160@mail.pacifier.com>
+  <20000125114453.E423@rice.edu>
+  <3.0.1.32.20000125113001.00f8acb0@mail.pacifier.com> <3.0.1.32.20000125151022.00f8c4c0@mail.pacifier.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+Don Baccus wrote:
+> 
+> Ahhh...yes.  I haven't looked at the inheritance code, yet, but I see
+> what you're saying.  I think.  Do child-table columns follow parent-table
+> columns by some chance (in today's absolute column number scheme)?
+> 
+> >If we were willing to hardwire the assumption that DROP COLUMN never
+> >physically drops a column, but only hides it and adjusts logical column
+> >numbers, then the physical column numbers could serve as permanent IDs;
+> >so we'd only need two numbers not three.  This might be good, or not.
+> 
+> Yes.  But if I'm right about how child-table columns are numbered,
+> wouldn't add column still cause a problem, i.e. you'd still have to
+> change their physical column number?
+
+If we allow deleted column as a basic feature of postgres,
+it could be like that 
+
+base:    COL1 | COL2 | COL3 
+child:   COL1 | COL2 | COL3 | COL4
+
+after add column 5 to base table
+
+base:    COL1 | COL2 | COL3 | del4 | COL5 
+child:   COL1 | COL2 | COL3 | COL4 | COL5
+
+after add column 6 to child
+
+base:    COL1 | COL2 | COL3 | del4 | COL5 
+child:   COL1 | COL2 | COL3 | COL4 | COL5 | COL6
+
+after drop column 2 from base table
+
+base:    COL1 | del2 | COL3 | del4 | COL5 
+child:   COL1 | del2 | COL3 | COL4 | COL5 | COL6
+
+dropping column from child table that is not a deleted column in 
+parent is not allowed.
+
+The delN columns are always NULLed on reading tuple and are written as proper 
+null columns (taking up space only in NULL bitmask)
+
+multiple inheritance is tricky and _requires_ unique column ids maybe oids
+from pg_attribute to be doable.
+
+-----------------
+Hannu
+
+************
+
+From owner-pgsql-hackers@hub.org Thu Jan 27 11:48:26 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA25953
+	for <pgman@candle.pha.pa.us>; Thu, 27 Jan 2000 12:48:25 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id MAA22723;
+	Thu, 27 Jan 2000 12:39:27 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Thu, 27 Jan 2000 12:36:16 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id MAA22021
+	for pgsql-hackers-outgoing; Thu, 27 Jan 2000 12:35:23 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from merganser.its.uu.se (merganser.its.uu.se [130.238.6.236])
+	by hub.org (8.9.3/8.9.3) with ESMTP id MAA21886
+	for <pgsql-hackers@postgresql.org>; Thu, 27 Jan 2000 12:34:47 -0500 (EST)
+	(envelope-from peter@localhost.its.uu.se)
+Received: from regulus.its.uu.se ([130.238.7.19]:61911 "EHLO regulus.its.uu.se")
+	by merganser.its.uu.se with ESMTP id <S294955AbQA0ReG>;
+	Thu, 27 Jan 2000 18:34:06 +0100
+Received: from peter (helo=localhost)
+	by regulus.its.uu.se with local-esmtp (Exim 3.02 #2)
+	id 12DsvR-0000HH-00; Thu, 27 Jan 2000 18:41:45 +0100
+Date:   Thu, 27 Jan 2000 18:41:45 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: PostgreSQL Development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] Column ADDing issues 
+In-Reply-To: <15550.948845404@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.21.0001262020480.416-100000@localhost.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: ORr
+
+On 2000-01-25, Tom Lane mentioned:
+
+> > Everything has its order and it's not like the inheritance as such is
+> > broken.
+> 
+> Yes, a whole bunch of stuff is broken after this happens.  Go back and
+> consult the archives --- or maybe Chris Bitmead will fill you in; he's
+> got plenty of scars to show for this set of problems.  (All I recall
+> offhand is that pg_dump and reload can fail to generate a working
+> database.)  The bottom line is that it would be a lot nicer if column c
+> had the same column position in both the parent table and the child
+> table(s).
+
+This should be fixed in pg_dump by infering something via the oids of the
+pg_attribute entries. No need to mess up the backend for it.
+
+Maybe pg_dump should optionally dump schemas in terms of insert into
+pg_something commands rather than actual DDL. ;)
+
+> 
+> I suggest you be very cautious about messing with ALTER TABLE until you
+> understand why inheritance makes it such a headache ;-)
+
+I'm just trying to get the defaults and constraints working. If
+inheritance stays broken the way it previously was, it's beyond my
+powers. But I get the feeling that people rather not alter their tables
+unless they have *perfect* alter table commands. I don't feel like arguing
+with them, they'll just have to do without then.
+
+
+-- 
+Peter Eisentraut                  Sernanders väg 10:115
+peter_e@gmx.net                   75262 Uppsala
+http://yi.org/peter-e/            Sweden
+
+
+
+************
+

@@ -725,11 +725,13 @@ debugging purposes.  Note that a newline terminates the query, not a
 semicolon.  If you have compiled with debugging symbols, you can use a
 debugger to see what is happening.  Because the backend was not started
 from the postmaster, it is not running in an identical environment and
-locking/backend interaction problems may not be duplicated.  Some
-debuggers can attach to an already-running backend; that is the most
-convenient way to diagnose problems in the normal multi-backend
-environment.
-<P>
+locking/backend interaction problems may not be duplicated.<P>
+
+Another method is to start <I>psql</I> in one window, then find the
+<small>PID</small> of the <i>postgres</i> process being used by the
+<i>psql.</i> Use a debugger to attach to the <i>postgres</i>
+<small>PID.</small>  You can set breakpoints in the debugger and issues
+queries from <i>psql.</i>
 
 The postgres program has -s, -A, and -t options that can be very useful
 for debugging and performance measurements.<P>
@@ -1061,7 +1063,11 @@ Similarly, you could retrieve the just-assigned SERIAL value with the <I>currval
 	INSERT INTO person (name) VALUES ('Blaise Pascal');
 	$newID = currval('person_id_seq');
 </PRE>
-Finally, you could use the <A HREF="#4.17">oid</A> returned from the INSERT statement to lookup the default value, though this is probably the least portable approach.  In perl, using DBI with Edmund Mergl's DBD::Pg module, the oid value is made available via $sth->{pg_oid_status} after $sth->execute().
+Finally, you could use the <A HREF="#4.17">oid</A> returned from the
+INSERT statement to lookup the default value, though this is probably
+the least portable approach. In perl, using DBI with Edmund Mergl's
+DBD::Pg module, the oid value is made available via
+$sth-&gt;{pg_oid_status} after $sth-&gt;execute().
 
 <H4><A NAME="4.16.3">4.16.3</A>) Don't currval() and nextval() lead to a race condition with other
 concurrent backend processes?</H4><P>
