@@ -14,6 +14,12 @@
  * The following is set using configure.  
  */
 
+/* Set to 1 if you have <fp_class.h> */
+#undef HAVE_FP_CLASS_H
+
+/* Set to 1 if you have <ieeefp.h> */
+#undef HAVE_IEEEFP_H
+
 /* Set to 1 if you have <arpa/inet.h> */
 #undef HAVE_ARPA_INET_H
 
@@ -52,6 +58,18 @@
 
 /* Set to 1 if you have <dld.h> */
 #undef HAVE_DLD_H
+
+/* Set to 1 if you have fp_class() */
+#undef HAVE_FP_CLASS
+
+/* Set to 1 if you have class() */
+#undef HAVE_CLASS
+
+/* Set to 1 if you have fp_class_d() */
+#undef HAVE_FP_CLASS_D
+
+/* Set to 1 if you have fpclass() */
+#undef HAVE_FPCLASS
 
 /* Set to 1 if you have isinf() */
 #undef HAVE_ISINF
