@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.8 2000/11/29 20:15:58 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.9 2000/12/07 22:37:08 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -1321,7 +1321,7 @@
       <entry>pg_operator.oid</entry>
       <entry>
        If this operator supports merge joins, the operator that sorts
-       the type of the left-hand operand
+       the type of the right-hand operand
       </entry>
      </row>
 
