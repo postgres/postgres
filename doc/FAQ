@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 17 22:48:04 EDT 2002
+   Last updated: Thu Apr 18 00:44:51 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -63,8 +63,8 @@
    4.5) What is the maximum size for a row, a table, and a database?
    4.6) How much database disk space is required to store data from a
    typical text file?
-   4.7) How do I find out what tables or indexes are defined in the
-   database?
+   4.7) How do I find out what tables, indexes, databases, and users are
+   defined?
    4.8) My queries are slow or don't make use of the indexes. Why?
    4.9) How do I see how the query optimizer is evaluating my query?
    4.10) What is an R-tree index?
@@ -697,10 +697,12 @@
    Indexes do not require as much overhead, but do contain the data that
    is being indexed, so they can be large also.
    
-    4.7) How do I find out what tables or indexes are defined in the database?
+    4.7) How do I find out what tables, indexes, databases, and users are
+    defined?
     
    psql has a variety of backslash commands to show such information. Use
-   \? to see them.
+   \? to see them. There are also system tables beginning with pg_ that
+   describe these too. Also, psql -l will list all databases.
    
    Also try the file pgsql/src/tutorial/syscat.source. It illustrates
    many of the SELECTs needed to get information from the database system

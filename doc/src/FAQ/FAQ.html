@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Apr 17 22:48:04 EDT 2002</P>
+    <P>Last updated: Thu Apr 18 00:44:51 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -96,8 +96,8 @@
     table, and a database?<BR>
      <A href="#4.6">4.6</A>) How much database disk space is required
     to store data from a typical text file?<BR>
-     <A href="#4.7">4.7</A>) How do I find out what tables or indexes
-    are defined in the database?<BR>
+     <A href="#4.7">4.7</A>) How do I find out what tables, indexes,
+    databases, and users are defined?<BR>
      <A href="#4.8">4.8</A>) My queries are slow or don't make use of
     the indexes. Why?<BR>
      <A href="#4.9">4.9</A>) How do I see how the query optimizer is
@@ -893,11 +893,13 @@
     <P>Indexes do not require as much overhead, but do contain the data
     that is being indexed, so they can be large also.</P>
 
-    <H4><A name="4.7">4.7</A>) How do I find out what tables or indexes
-    are defined in the database?</H4>
+    <H4><A name="4.7">4.7</A>) How do I find out what tables, indexes,
+    databases, and users are defined?</H4>
 
     <P><I>psql</I> has a variety of backslash commands to show such
-    information. Use \? to see them.</P>
+    information. Use \? to see them.  There are also system tables
+    beginning with <i>pg_</i> that describe these too.  Also, <i>psql
+    -l</i> will list all databases.</P>
 
     <P>Also try the file <I>pgsql/src/tutorial/syscat.source</I>. It
     illustrates many of the <SMALL>SELECT</SMALL>s needed to get
