@@ -10,7 +10,7 @@ import org.postgresql.core.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: PG_Stream.java,v 1.10 2001/07/21 18:52:10 momjian Exp $
+ * $Id: PG_Stream.java,v 1.11 2001/07/30 14:51:19 momjian Exp $
  *
  * This class is used by Connection & PGlobj for communicating with the
  * backend.
@@ -346,8 +346,6 @@ public class PG_Stream
    */
   public void close() throws IOException
   {
-    pg_output.write("X".getBytes());
-    pg_output.flush();
     pg_output.close();
     pg_input.close();
     connection.close();

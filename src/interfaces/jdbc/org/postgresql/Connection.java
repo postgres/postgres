@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.Encoding;
 
 /**
- * $Id: Connection.java,v 1.20 2001/07/21 18:56:17 momjian Exp $
+ * $Id: Connection.java,v 1.21 2001/07/30 14:51:19 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -75,6 +75,11 @@ public abstract class Connection
 
   // Now handle notices as warnings, so things like "show" now work
   public SQLWarning firstWarning = null;
+
+  /**
+   * Cache of the current isolation level
+   */
+  private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
     // The PID an cancellation key we get from the backend process
     public int pid;
@@ -788,7 +793,236 @@ public abstract class Connection
      */
     protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn,java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
 
-    public abstract void close() throws SQLException;
+    /**
+     * In some cases, it is desirable to immediately release a Connection's
+     * database and JDBC resources instead of waiting for them to be
+     * automatically released (cant think why off the top of my head)
+     *
+     * <B>Note:</B> A Connection is automatically closed when it is
+     * garbage collected.  Certain fatal errors also result in a closed
+     * connection.
+     *
+     * @exception SQLException if a database access error occurs
+     */
+    public void close() throws SQLException {
+	if (pg_stream != null) {
+	    try {
+		pg_stream.SendChar('X');
+		pg_stream.flush();
+		pg_stream.close();
+	    } catch (IOException e) {}
+	    pg_stream = null;
+	}
+    }
+
+    /**
+     * A driver may convert the JDBC sql grammar into its system's
+     * native SQL grammar prior to sending it; nativeSQL returns the
+     * native form of the statement that the driver would have sent.
+     *
+     * @param sql a SQL statement that may contain one or more '?'
+     *	parameter placeholders
+     * @return the native form of this statement
+     * @exception SQLException if a database access error occurs
+     */
+    public String nativeSQL(String sql) throws SQLException {
+	return sql;
+    }
+
+    /**
+     * The first warning reported by calls on this Connection is
+     * returned.
+     *
+     * <B>Note:</B> Sebsequent warnings will be changed to this
+     * SQLWarning
+     *
+     * @return the first SQLWarning or null
+     * @exception SQLException if a database access error occurs
+     */
+    public SQLWarning getWarnings() throws SQLException {
+	return firstWarning;
+    }
+
+    /**
+     * After this call, getWarnings returns null until a new warning
+     * is reported for this connection.
+     *
+     * @exception SQLException if a database access error occurs
+     */
+    public void clearWarnings() throws SQLException {
+	firstWarning = null;
+    }
+
+
+    /**
+     * You can put a connection in read-only mode as a hunt to enable
+     * database optimizations
+     *
+     * <B>Note:</B> setReadOnly cannot be called while in the middle
+     * of a transaction
+     *
+     * @param readOnly - true enables read-only mode; false disables it
+     * @exception SQLException if a database access error occurs
+     */
+    public void setReadOnly(boolean readOnly) throws SQLException {
+	this.readOnly = readOnly;
+    }
+
+    /**
+     * Tests to see if the connection is in Read Only Mode.  Note that
+     * we cannot really put the database in read only mode, but we pretend
+     * we can by returning the value of the readOnly flag
+     *
+     * @return true if the connection is read only
+     * @exception SQLException if a database access error occurs
+     */
+    public boolean isReadOnly() throws SQLException {
+	return readOnly;
+    }
+
+    /**
+     * If a connection is in auto-commit mode, than all its SQL
+     * statements will be executed and committed as individual
+     * transactions.  Otherwise, its SQL statements are grouped
+     * into transactions that are terminated by either commit()
+     * or rollback().  By default, new connections are in auto-
+     * commit mode.  The commit occurs when the statement completes
+     * or the next execute occurs, whichever comes first.  In the
+     * case of statements returning a ResultSet, the statement
+     * completes when the last row of the ResultSet has been retrieved
+     * or the ResultSet has been closed.  In advanced cases, a single
+     * statement may return multiple results as well as output parameter
+     * values.  Here the commit occurs when all results and output param
+     * values have been retrieved.
+     *
+     * @param autoCommit - true enables auto-commit; false disables it
+     * @exception SQLException if a database access error occurs
+     */
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+	if (this.autoCommit == autoCommit)
+	    return;
+	if (autoCommit)
+	    ExecSQL("end");
+	else {
+	    ExecSQL("begin");
+	    doIsolationLevel();
+	}
+	this.autoCommit = autoCommit;
+    }
+
+    /**
+     * gets the current auto-commit state
+     *
+     * @return Current state of the auto-commit mode
+     * @exception SQLException (why?)
+     * @see setAutoCommit
+     */
+    public boolean getAutoCommit() throws SQLException {
+	return this.autoCommit;
+    }
+
+    /**
+     * The method commit() makes all changes made since the previous
+     * commit/rollback permanent and releases any database locks currently
+     * held by the Connection.  This method should only be used when
+     * auto-commit has been disabled.  (If autoCommit == true, then we
+     * just return anyhow)
+     *
+     * @exception SQLException if a database access error occurs
+     * @see setAutoCommit
+     */
+    public void commit() throws SQLException {
+	if (autoCommit)
+	    return;
+	ExecSQL("commit");
+	autoCommit = true;
+	ExecSQL("begin");
+	doIsolationLevel();
+	autoCommit = false;
+    }
+
+    /**
+     * The method rollback() drops all changes made since the previous
+     * commit/rollback and releases any database locks currently held by
+     * the Connection.
+     *
+     * @exception SQLException if a database access error occurs
+     * @see commit
+     */
+    public void rollback() throws SQLException {
+	if (autoCommit)
+	    return;
+	ExecSQL("rollback");
+	autoCommit = true;
+	ExecSQL("begin");
+	doIsolationLevel();
+	autoCommit = false;
+    }
+
+    /**
+     * Get this Connection's current transaction isolation mode.
+     *
+     * @return the current TRANSACTION_* mode value
+     * @exception SQLException if a database access error occurs
+     */
+    public int getTransactionIsolation() throws SQLException {
+	clearWarnings();
+	ExecSQL("show xactisolevel");
+
+	SQLWarning warning = getWarnings();
+	if (warning != null) {
+	    String message = warning.getMessage();
+	    clearWarnings();
+	    if (message.indexOf("READ COMMITTED") != -1)
+		return java.sql.Connection.TRANSACTION_READ_COMMITTED;
+	    else if (message.indexOf("READ UNCOMMITTED") != -1)
+		return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED;
+	    else if (message.indexOf("REPEATABLE READ") != -1)
+		return java.sql.Connection.TRANSACTION_REPEATABLE_READ;
+	    else if (message.indexOf("SERIALIZABLE") != -1)
+		return java.sql.Connection.TRANSACTION_SERIALIZABLE;
+	}
+	return java.sql.Connection.TRANSACTION_READ_COMMITTED;
+    }
+
+    /**
+     * You can call this method to try to change the transaction
+     * isolation level using one of the TRANSACTION_* values.
+     *
+     * <B>Note:</B> setTransactionIsolation cannot be called while
+     * in the middle of a transaction
+     *
+     * @param level one of the TRANSACTION_* isolation values with
+     *	the exception of TRANSACTION_NONE; some databases may
+     *	not support other values
+     * @exception SQLException if a database access error occurs
+     * @see java.sql.DatabaseMetaData#supportsTransactionIsolationLevel
+     */
+    public void setTransactionIsolation(int level) throws SQLException {
+	isolationLevel = level;
+	doIsolationLevel();
+    }
+
+    /**
+     * Helper method used by setTransactionIsolation(), commit(), rollback()
+     * and setAutoCommit(). This sets the current isolation level.
+     */
+    protected void doIsolationLevel() throws SQLException {
+	String q = "SET TRANSACTION ISOLATION LEVEL";
+
+	switch(isolationLevel) {
+	    case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+		ExecSQL(q + " READ COMMITTED");
+		return;
+
+	    case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+		ExecSQL(q + " SERIALIZABLE");
+		return;
+
+	    default:
+		throw new PSQLException("postgresql.con.isolevel",new Integer(isolationLevel));
+	}
+    }
 
     /**
      * A sub-space of this Connection's database may be selected by
