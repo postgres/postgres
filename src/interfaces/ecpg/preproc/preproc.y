@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.264 2003/11/08 19:46:27 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.265 2003/11/19 13:18:13 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -966,9 +966,9 @@ DropGroupStmt: DROP GROUP_P UserId
  *****************************************************************************/
 
 CreateSchemaStmt:  CREATE SCHEMA UserId OptSchemaName AUTHORIZATION UserId OptSchemaEltList
-			{ $$ = cat_str(6, make_str("create scheme"), $3, $4, make_str("authorization"), $6, $7); }
+			{ $$ = cat_str(6, make_str("create schema"), $3, $4, make_str("authorization"), $6, $7); }
 		| CREATE SCHEMA ColId OptSchemaEltList
-			{ $$ = cat_str(3, make_str("create scheme"), $3, $4); }
+			{ $$ = cat_str(3, make_str("create schema"), $3, $4); }
 		;
 
 OptSchemaName: ColId		{ $$ = $1; }
