@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.45 1998/12/29 18:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.46 1998/12/29 18:36:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.45 1998/12/29 18:29:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.46 1998/12/29 18:36:29 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -520,20 +520,19 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 
 	do
 	{
-		int expired;
-		
 		MyProc->errType = NO_ERROR;		/* reset flag after deadlock check */
 
 		if (deadlock_checked == false)
-			expired = sleep(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER);
+		{
+			if (sleep(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER)
+				== 0 /* no signal interruption */ )
+			{
+				HandleDeadLock();
+				deadlock_checked = true;
+			}
+		}
 		else
 			pause();
-
-		if (expired == 0 && deadlock_checked == false)
-		{
-			HandleDeadLock();
-			deadlock_checked = true;
-		}
 		
 		/* --------------
 		 * if someone wakes us between SpinRelease and IpcSemaphoreLock,
