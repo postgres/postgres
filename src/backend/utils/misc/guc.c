@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.94 2002/09/10 16:09:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.95 2002/09/12 14:03:45 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -2123,15 +2123,19 @@ flatten_set_variable_args(const char *name, List *args)
 	StringInfoData buf;
 	List	   *l;
 
-	/* Fast path if just DEFAULT */
+	/*
+	 * Fast path if just DEFAULT.  We do not check the variable name in
+	 * this case --- necessary for RESET ALL to work correctly.
+	 */
 	if (args == NIL)
 		return NULL;
 
+	/* Else get flags for the variable */
 	record = find_option(name);
 	if (record == NULL)
-		flags = 0;				/* default assumptions */
-	else
-		flags = record->flags;
+		elog(ERROR, "'%s' is not a valid option name", name);
+
+	flags = record->flags;
 
 	/* Complain if list input and non-list variable */
 	if ((flags & GUC_LIST_INPUT) == 0 &&
