@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.85 2002/12/06 05:00:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.86 2003/01/08 21:40:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,21 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	CatalogUpdateIndexes(pg_type_desc, tup);
 
 	/*
+	 * Create dependencies.  We can/must skip this in bootstrap mode.
+	 */
+	if (!IsBootstrapProcessingMode())
+		GenerateTypeDependencies(typeNamespace,
+								 typoid,
+								 InvalidOid,
+								 0,
+								 InvalidOid,
+								 InvalidOid,
+								 InvalidOid,
+								 InvalidOid,
+								 NULL,
+								 false);
+
+	/*
 	 * clean up and return the type-oid
 	 */
 	heap_freetuple(tup);
@@ -129,7 +144,7 @@ Oid
 TypeCreate(const char *typeName,
 		   Oid typeNamespace,
 		   Oid assignedTypeOid,
-		   Oid relationOid,		/* only for 'c'atalog typeType */
+		   Oid relationOid,		/* only for 'c'atalog types */
 		   char relationKind,	/* ditto */
 		   int16 internalSize,
 		   char typeType,
@@ -149,6 +164,7 @@ TypeCreate(const char *typeName,
 {
 	Relation	pg_type_desc;
 	Oid			typeObjectId;
+	bool		rebuildDeps = false;
 	HeapTuple	tup;
 	char		nulls[Natts_pg_type];
 	char		replaces[Natts_pg_type];
@@ -268,6 +284,8 @@ TypeCreate(const char *typeName,
 		simple_heap_update(pg_type_desc, &tup->t_self, tup);
 
 		typeObjectId = HeapTupleGetOid(tup);
+
+		rebuildDeps = true;		/* get rid of shell type's dependencies */
 	}
 	else
 	{
@@ -290,7 +308,6 @@ TypeCreate(const char *typeName,
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
 	 */
 	if (!IsBootstrapProcessingMode())
-	{
 		GenerateTypeDependencies(typeNamespace,
 								 typeObjectId,
 								 relationOid,
@@ -299,9 +316,10 @@ TypeCreate(const char *typeName,
 								 outputProcedure,
 								 elementType,
 								 baseType,
-								 defaultTypeBin,
-								 false);
-	}
+								 (defaultTypeBin ?
+								  stringToNode(defaultTypeBin) :
+								  (void *) NULL),
+								 rebuildDeps);
 
 	/*
 	 * finish up
@@ -311,26 +329,30 @@ TypeCreate(const char *typeName,
 	return typeObjectId;
 }
 
+/*
+ * GenerateTypeDependencies: build the dependencies needed for a type
+ *
+ * If rebuild is true, we remove existing dependencies and rebuild them
+ * from scratch.  This is needed for ALTER TYPE, and also when replacing
+ * a shell type.
+ *
+ * NOTE: a shell type will have a dependency to its namespace, and no others.
+ */
 void
 GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
-						 Oid relationOid,		/* only for 'c'atalog typeType */
-						 char relationKind,
+						 Oid relationOid,		/* only for 'c'atalog types */
+						 char relationKind,		/* ditto */
 						 Oid inputProcedure,
 						 Oid outputProcedure,
 						 Oid elementType,
 						 Oid baseType,
-						 char *defaultTypeBin,	/* cooked rep */
+						 Node *defaultExpr,
 						 bool rebuild)
 {
 	ObjectAddress myself,
 				referenced;
 
-	/*
-	 * If true, we need to remove all current dependencies that the type
-	 * holds, and rebuild them from scratch.  This allows us to easily 
-	 * implement alter type, and alter domain statements.
-	 */
 	if (rebuild)
 		deleteDependencyRecordsFor(RelOid_pg_type,
 								   typeObjectId);
@@ -350,15 +372,21 @@ GenerateTypeDependencies(Oid typeNamespace,
 	}
 
 	/* Normal dependencies on the I/O functions */
-	referenced.classId = RelOid_pg_proc;
-	referenced.objectId = inputProcedure;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	if (OidIsValid(inputProcedure))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = inputProcedure;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
-	referenced.classId = RelOid_pg_proc;
-	referenced.objectId = outputProcedure;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	if (OidIsValid(outputProcedure))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = outputProcedure;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
 	/*
 	 * If the type is a rowtype for a relation, mark it as internally
@@ -406,10 +434,9 @@ GenerateTypeDependencies(Oid typeNamespace,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
-	/* Dependency on the default expression */
-	if (defaultTypeBin)
-		recordDependencyOnExpr(&myself, stringToNode(defaultTypeBin),
-							   NIL, DEPENDENCY_NORMAL);
+	/* Normal dependency on the default expression. */
+	if (defaultExpr)
+		recordDependencyOnExpr(&myself, defaultExpr, NIL, DEPENDENCY_NORMAL);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.27 2003/01/06 00:31:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.28 2003/01/08 21:40:39 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1012,12 +1012,12 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	GenerateTypeDependencies(typTup->typnamespace,
 							 domainoid,
 							 typTup->typrelid,
-							 InvalidOid,
+							 0,	/* relation kind is n/a */
 							 typTup->typinput,
 							 typTup->typoutput,
 							 typTup->typelem,
 							 typTup->typbasetype,
-							 nodeToString(defaultExpr),
+							 defaultExpr,
 							 true); /* Rebuild is true */
 
 	/* Clean up */
