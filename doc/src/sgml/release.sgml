@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.225 2003/10/30 20:29:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.226 2003/10/30 20:31:24 momjian Exp $
 -->
 
 <appendix id="release">
@@ -488,7 +488,7 @@ required for those wishing to migrate data from any previous release.</para>
    </sect3>
    </listitem>
 <listitem><para>Add ability to print only slow statements using log_min_duration_statement
-  (Christopher)  </par
+  (Christopher)</para>
      <sect3>
      <para>
       This is an often requested debugging feature that allows administrators to
