@@ -7,17 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.22 2001/05/09 19:28:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.23 2001/10/21 03:43:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <grp.h>
 #include <pwd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "postgres.h"
 #include "miscadmin.h"
 
 #ifndef S_IRUSR					/* XXX [TRH] should be in a header */
@@ -32,7 +33,6 @@
 #define S_IXOTH		 ((S_IXUSR)>>6)
 #endif
 
-static int	ValidateBinary(char *path);
 
 /*
  * ValidateBinary -- validate "path" as a POSTMASTER/POSTGRES executable file
@@ -59,14 +59,6 @@ ValidateBinary(char *path)
 	 * XXX if you have a broken system where stat() looks at the symlink
 	 * instead of the underlying file, you lose.
 	 */
-	if (strlen(path) >= MAXPGPATH)
-	{
-		if (DebugLvl > 1)
-			fprintf(stderr, "ValidateBinary: pathname \"%s\" is too long\n",
-					path);
-		return -1;
-	}
-
 	if (stat(path, &buf) < 0)
 	{
 		if (DebugLvl > 1)
@@ -75,7 +67,6 @@ ValidateBinary(char *path)
 		return -1;
 	}
 
-	
 	if ((buf.st_mode & S_IFMT) != S_IFREG)
 	{
 		if (DebugLvl > 1)
@@ -145,9 +136,9 @@ ValidateBinary(char *path)
  * FindExec -- find an absolute path to a valid backend executable
  *
  * The reason we have to work so hard to find an absolute path is that
- * we need to feed the binary the location of its actual executable file,
- * otherwise, we can't do dynamic loading.  It needs a full pathname because
- * we change directories to the /data directory.
+ * on some platforms we can't do dynamic loading unless we know the
+ * executable's location.  Also, we need a full path not a relative
+ * path because we will later change working directory.
  */
 int
 FindExec(char *full_path, const char *argv0, const char *binary_name)
@@ -157,7 +148,6 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 	char	   *path,
 			   *startp,
 			   *endp;
-	int			pathlen;
 
 	/*
 	 * for the postmaster: First try: use the binary that's located in the
@@ -183,7 +173,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 		strcat(buf, argv0);
 		p = strrchr(buf, '/');
 		strcpy(++p, binary_name);
-		if (!ValidateBinary(buf))
+		if (ValidateBinary(buf) == 0)
 		{
 			strncpy(full_path, buf, MAXPGPATH);
 			if (DebugLvl)
@@ -204,9 +194,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 	{
 		if (DebugLvl)
 			fprintf(stderr, "FindExec: searching PATH ...\n");
-		pathlen = strlen(p);
-		path = malloc(pathlen + 1);
-		strcpy(path, p);
+		path = strdup(p);		/* make a modifiable copy */
 		for (startp = path, endp = strchr(path, ':');
 			 startp && *startp;
 			 startp = endp + 1, endp = strchr(startp, ':'))
@@ -217,6 +205,8 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 				*endp = '\0';
 			if (*startp == '/' || !getcwd(buf, MAXPGPATH))
 				buf[0] = '\0';
+			else
+				strcat(buf, "/");
 			strcat(buf, startp);
 			strcat(buf, "/");
 			strcat(buf, binary_name);
