@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.14 2002/12/04 18:14:11 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.15 2002/12/11 04:07:39 momjian Exp $
 
 subdir = src/interfaces/python
 top_builddir = ../../..
@@ -6,7 +6,7 @@ include $(top_builddir)/src/Makefile.global
 
 NAME = _pgmodule
 SO_MAJOR_VERSION = 2
-SO_MINOR_VERSION = 3
+SO_MINOR_VERSION = 4
 OBJS = pgmodule.o
 SHLIB_LINK = $(libpq)
 ifeq ($(PORTNAME), win)
