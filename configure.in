@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.320 2004/03/20 15:39:27 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.321 2004/03/20 16:11:22 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -999,7 +999,6 @@ AC_DEFINE(STRERROR_THREADSAFE, 1, [Define if strerror is not thread safe])
 fi
 if test "$enable_thread_safety" = yes -a "$GETPWUID_THREADSAFE" = yes ; then
 AC_DEFINE(GETPWUID_THREADSAFE, 1, [Define if getpwuid is not thread safe])
-else	PGAC_FUNC_GETPWUID_R_5ARG
 fi
 if test "$enable_thread_safety" = yes -a "$GETHOSTBYNAME_THREADSAFE" = yes ; then
 AC_DEFINE(GETHOSTBYNAME_THREADSAFE, 1, [Define if gethostbyname is not thread safe])
@@ -1013,6 +1012,8 @@ LIBS="$LIBS $THREAD_LIBS"
 AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
+
+PGAC_FUNC_GETPWUID_R_5ARG
 
 else
 # do not use values from template file

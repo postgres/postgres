@@ -13247,65 +13247,6 @@ cat >>confdefs.h <<\_ACEOF
 #define GETPWUID_THREADSAFE 1
 _ACEOF
 
-else	echo "$as_me:$LINENO: checking whether getpwuid_r takes a fifth argument" >&5
-echo $ECHO_N "checking whether getpwuid_r takes a fifth argument... $ECHO_C" >&6
-if test "${pgac_func_getpwuid_r_5arg+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <sys/types.h>
-#include <pwd.h>
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-uid_t uid;
-struct passwd *space;
-char *buf;
-size_t bufsize;
-struct passwd **result;
-getpwuid_r(uid, space, buf, bufsize, result);
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  pgac_func_getpwuid_r_5arg=yes
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-pgac_func_getpwuid_r_5arg=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $pgac_func_getpwuid_r_5arg" >&5
-echo "${ECHO_T}$pgac_func_getpwuid_r_5arg" >&6
-if test x"$pgac_func_getpwuid_r_5arg" = xyes ; then
-
-cat >>confdefs.h <<\_ACEOF
-#define GETPWUID_R_5ARG
-_ACEOF
-
-fi
-
 fi
 if test "$enable_thread_safety" = yes -a "$GETHOSTBYNAME_THREADSAFE" = yes ; then
 
@@ -13400,6 +13341,66 @@ done
 
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
+
+echo "$as_me:$LINENO: checking whether getpwuid_r takes a fifth argument" >&5
+echo $ECHO_N "checking whether getpwuid_r takes a fifth argument... $ECHO_C" >&6
+if test "${pgac_func_getpwuid_r_5arg+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <pwd.h>
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+uid_t uid;
+struct passwd *space;
+char *buf;
+size_t bufsize;
+struct passwd **result;
+getpwuid_r(uid, space, buf, bufsize, result);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_func_getpwuid_r_5arg=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+pgac_func_getpwuid_r_5arg=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $pgac_func_getpwuid_r_5arg" >&5
+echo "${ECHO_T}$pgac_func_getpwuid_r_5arg" >&6
+if test x"$pgac_func_getpwuid_r_5arg" = xyes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define GETPWUID_R_5ARG
+_ACEOF
+
+fi
+
 
 else
 # do not use values from template file
