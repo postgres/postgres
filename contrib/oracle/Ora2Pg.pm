@@ -17,8 +17,13 @@ package Ora2Pg;
 use vars qw($VERSION $PSQL);
 use Carp qw(confess);
 use DBI;
+use POSIX qw(locale_h);
 
-$VERSION = "1.8";
+#set locale to LC_NUMERIC C
+setlocale(LC_NUMERIC,"C");
+
+
+$VERSION = "1.9";
 $PSQL = "psql";
 
 =head1 NAME
@@ -854,7 +859,7 @@ print STDERR "Add triggers definition...\n" if ($self->{debug});
 				# Escaping Single Quotes
 				#$trig->[4] =~ s/'/''/sg;
 
-				$sql_output .= "CREATE FUNCTION pg_fct_\L$trig->[0]\E () RETURNS TRIGGER AS '\n$trig->[4]\n' LANGUAGE 'plpgsql'\n\n";
+				$sql_output .= "CREATE FUNCTION pg_fct_\L$trig->[0]\E () RETURNS OPAQUE AS '\n$trig->[4]\n' LANGUAGE 'plpgsql'\n\n";
 				$sql_output .= "CREATE TRIGGER \L$trig->[0]\E\n\t$trig->[1] $trig->[2] ON \L$trig->[3]\E FOR EACH ROW\n\tEXECUTE PROCEDURE pg_fct_\L$trig->[0]\E();\n\n";
 			}
 		}
@@ -1002,7 +1007,7 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 						if ($self->{type} ne 'COPY') {
 							if ($tt[$i] =~ /(char|date|time|text)/) {
 								$row->[$i] =~ s/'/''/gs;
-								if ($row->[$i]) {
+								if ($row->[$i] ne '') {
 									$row->[$i] = "'$row->[$i]'";
 								} else {
 									$row->[$i] = 'NULL';
@@ -1017,7 +1022,8 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 									}
 								}
 							} else {
-								if (!$row->[$i]) {
+								$row->[$i] =~ s/,/./;
+								if ($row->[$i] eq '') {
 									$row->[$i] = 'NULL';
 								}
 								if ($self->{dbhdest}) {
@@ -1042,7 +1048,10 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 								}
 							}
 						} else {
-							if (!$row->[$i]) {
+							if ($tt[$i] !~ /(char|date|time|text)/) {
+								$row->[$i] =~ s/,/./;
+							}
+							if ($row->[$i] eq '') {
 								$row->[$i] = '\N';
 							}
 							if ($self->{dbhdest}) {
@@ -1228,7 +1237,7 @@ sub _get_data
 	my $tmp = "SELECT ";
 	for my $k (0 .. $#{$name}) {
 		if ( $type->[$k] =~ /(date|time)/) {
-			$str .= "to_char($name->[$k], 'YYYY-MM-DD'),";
+			$str .= "to_char($name->[$k], 'YYYY-MM-DD HH24:MI:SS'),";
 		} else {
 			$str .= "$name->[$k],";
 		}
@@ -1290,8 +1299,8 @@ sub _sql_type
                 'VARCHAR2' => 'varchar',
                 'NVARCHAR2' => 'varchar',
 		# The DATE data type is used to store the date and time information.
-		# Pg type timestamp should match all needs
-                'DATE' => 'timestamp',
+		# Pg type datetime should match all needs
+                'DATE' => 'datetime',
 		# Type LONG is like VARCHAR2 but with up to 2Gb.
 		# PG type text should match all needs or if you want you could use blob
                 'LONG' => 'text', # Character data of variable length
