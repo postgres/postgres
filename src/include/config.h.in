@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.111 2000/03/30 05:29:21 tgl Exp $
+ * $Id: config.h.in,v 1.112 2000/04/14 03:05:35 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -60,26 +60,6 @@
  * RELSEG_SIZE.
  */
 #define RELSEG_SIZE	(0x40000000 / BLCKSZ)
-
-/* Set to 1 if you want to USE_LOCALE */
-#undef USE_LOCALE
-
-/* Set to 1 if you want CYR_RECODE (cyrillic recode) */
-#undef CYR_RECODE
-
-/* Set to 1 if you want to use multibyte characters */
-#undef MULTIBYTE
-
-/* Set to 1 if you want to Enable ASSERT CHECKING */
-#undef USE_ASSERT_CHECKING
-
-/* 
- * DEF_PGPORT is the TCP port number on which the Postmaster listens by
- * default.  This can be overriden by command options, environment variables,
- * and the postconfig hook. (now set by configure script)
- */ 
-
-#undef DEF_PGPORT 
 
 /*
  * As soon as the backend blocks on a lock, it waits this number of seconds
@@ -221,19 +201,46 @@
  */
 #define DEFAULT_MAX_EXPR_DEPTH	10000
 
-/*
- * Leftover cruft for enabling long-since-verified patches.
- * You don't want to touch these.
- */
-#define INDEXSCAN_PATCH 
-#define FUNC_UTIL_PATCH
-
 
 /*
  *------------------------------------------------------------------------
  * Everything past here is set by the configure script.
  *------------------------------------------------------------------------
  */
+
+/* Set to 1 if you want to USE_LOCALE */
+#undef USE_LOCALE
+
+/* Set to 1 if you want CYR_RECODE (cyrillic recode) */
+#undef CYR_RECODE
+
+/* Set to 1 if you want to use multibyte characters */
+#undef MULTIBYTE
+
+/* Set to 1 if you want to Enable ASSERT CHECKING */
+#undef USE_ASSERT_CHECKING
+
+/* 
+ * DEF_PGPORT is the TCP port number on which the Postmaster listens by
+ * default.  This can be overriden by command options, environment variables,
+ * and the postconfig hook. (now set by configure script)
+ */ 
+#undef DEF_PGPORT 
+
+/* Define const as empty if your compiler doesn't grok const. */
+#undef const
+
+/* Define as your compiler's spelling of "inline", or empty if no inline. */
+#undef inline
+
+/* Define signed as empty if your compiler doesn't grok "signed char" etc */
+#undef signed
+
+/* Define volatile as empty if your compiler doesn't grok volatile. */
+#undef volatile
+
+/* Define if your cpp understands the ANSI stringizing operators in macros */
+#undef HAVE_STRINGIZE
 
 /* Set to 1 if you have <arpa/inet.h> */
 #undef HAVE_ARPA_INET_H
@@ -348,6 +355,7 @@
 #undef HAVE_FP_CLASS_H
 #undef HAVE_FP_CLASS_D
 #undef HAVE_CLASS
+
 #undef HAVE_ISINF
 #ifndef HAVE_ISINF
 int isinf(double x);
@@ -507,21 +515,6 @@ extern void srandom(unsigned int seed);
 #undef ALIGNOF_LONG_LONG_INT
 #undef ALIGNOF_DOUBLE
 #undef MAXIMUM_ALIGNOF
-
-/* Define const as empty if your compiler doesn't grok const. */
-#undef const
-
-/* Define as your compiler's spelling of "inline", or empty if no inline. */
-#undef inline
-
-/* Define signed as empty if your compiler doesn't grok "signed char" etc */
-#undef signed
-
-/* Define volatile as empty if your compiler doesn't grok volatile. */
-#undef volatile
-
-/* Define if your cpp understands the ANSI stringizing operators in macros */
-#undef HAVE_STRINGIZE
 
 /* Define as the base type of the last arg to accept */
 #undef SOCKET_SIZE_TYPE
