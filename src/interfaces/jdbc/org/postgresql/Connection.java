@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /**
- * $Id: Connection.java,v 1.27 2001/09/06 03:13:34 momjian Exp $
+ * $Id: Connection.java,v 1.28 2001/09/07 22:17:02 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -749,7 +749,12 @@ public abstract class Connection
 	if (autoCommit)
 	    ExecSQL("end");
 	else {
-	    ExecSQL("begin; " + getIsolationLevelSQL());
+          if (haveMinimumServerVersion("7.1")){
+            ExecSQL("begin;"+getIsolationLevelSQL());
+          }else{
+	    ExecSQL("begin");
+	    ExecSQL(getIsolationLevelSQL());
+          }
 	}
 	this.autoCommit = autoCommit;
     }
@@ -778,7 +783,13 @@ public abstract class Connection
     public void commit() throws SQLException {
 	if (autoCommit)
 	    return;
-	ExecSQL("commit; begin; " + getIsolationLevelSQL());
+	if (haveMinimumServerVersion("7.1")){
+	  ExecSQL("commit;begin;"+getIsolationLevelSQL());
+	}else{
+	  ExecSQL("commit");
+	  ExecSQL("begin");
+	  ExecSQL(getIsolationLevelSQL());
+        }
     }
 
     /**
@@ -792,7 +803,13 @@ public abstract class Connection
     public void rollback() throws SQLException {
 	if (autoCommit)
 	    return;
-	ExecSQL("rollback; begin; " + getIsolationLevelSQL());
+	if (haveMinimumServerVersion("7.1")){
+	  ExecSQL("rollback; begin;"+getIsolationLevelSQL());
+	}else{
+	  ExecSQL("rollback");
+	  ExecSQL("begin");
+	  ExecSQL(getIsolationLevelSQL());
+	}
     }
 
     /**
@@ -878,21 +895,21 @@ public abstract class Connection
 	if (haveMinimumServerVersion("7.1")) {
           return "";
         }
-	String q = "SET TRANSACTION ISOLATION LEVEL";
+	StringBuffer sb = new StringBuffer("SET TRANSACTION ISOLATION LEVEL");
 
 	switch(isolationLevel) {
 	    case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-		q = q + " READ COMMITTED";
+		sb.append(" READ COMMITTED");
                 break;
 
 	    case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-		q = q + " SERIALIZABLE";
+		sb.append(" SERIALIZABLE");
                 break;
 
 	    default:
 		throw new PSQLException("postgresql.con.isolevel",new Integer(isolationLevel));
 	}
-        return q;
+        return sb.toString();
     }
 
     /**
