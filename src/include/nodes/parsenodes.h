@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.247 2003/08/17 19:58:06 tgl Exp $
+ * $Id: parsenodes.h,v 1.248 2003/09/17 04:25:29 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1628,7 +1628,7 @@ typedef struct CreateConversionStmt
 	NodeTag		type;
 	List	   *conversion_name;	/* Name of the conversion */
 	char	   *for_encoding_name;		/* source encoding name */
-	char	   *to_encoding_name;		/* destiname encoding name */
+	char	   *to_encoding_name;		/* destination encoding name */
 	List	   *func_name;		/* qualified conversion function name */
 	bool		def;			/* is this a default conversion? */
 } CreateConversionStmt;
