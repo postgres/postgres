@@ -1622,6 +1622,34 @@ table_for_update(const char *stmt, int *endpos)
 	return !wstmt[0] || isspace((unsigned char) wstmt[0]);
 }
 
+/*----------
+ *	Check if the statement is
+ *	INSERT INTO ... () VALUES ()
+ *	This isn't really a strict check but ...
+ *----------
+ */
+static BOOL
+insert_without_target(const char *stmt, int *endpos)
+{
+	const char *wstmt = stmt;
+
+	while (isspace((unsigned char) *(++wstmt)));
+	if (!*wstmt)
+		return FALSE;
+	if (strnicmp(wstmt, "VALUES", 6))
+		return FALSE;
+	wstmt += 6;
+	if (!wstmt[0] || !isspace((unsigned char) wstmt[0]))
+		return FALSE;
+	while (isspace((unsigned char) *(++wstmt)));
+	if (*wstmt != '(' || *(++wstmt) != ')')
+		return FALSE;
+	wstmt++;
+	*endpos = wstmt - stmt;
+	return !wstmt[0] || isspace((unsigned char) wstmt[0])
+		|| ';' == wstmt[0];
+}
+
 #ifdef MULTIBYTE
 #define		my_strchr(conn, s1,c1) pg_mbschr(conn->ccsc, s1,c1)
 #else
@@ -1963,7 +1991,7 @@ inner_process_tokens(QueryParse *qp, QueryBuild *qb)
 							qb->npos -= qp->declare_pos;
 						}
 					}
-					if (qp->token_len == 3)
+					else if (qp->token_len == 3)
 					{
 						int			endpos;
 
@@ -1983,6 +2011,20 @@ inner_process_tokens(QueryParse *qp, QueryBuild *qb)
 								memmove(qb->query_statement, qb->query_statement + qp->declare_pos, qb->npos - qp->declare_pos);
 								qb->npos -= qp->declare_pos;
 							}
+						}
+					}
+					else if (qp->token_len == 2)
+					{
+						int	endpos;
+
+						if (STMT_TYPE_INSERT == qp->statement_type &&
+							strnicmp(qp->token_save, "()", 2) == 0 &&
+							insert_without_target(&qp->statement[qp->opos], &endpos))
+						{
+							qb->npos -= 2;
+							CVT_APPEND_STR(qb, "DEFAULT VALUES");
+							qp->opos += endpos;
+							return SQL_SUCCESS;
 						}
 					}
 				}

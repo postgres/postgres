@@ -439,7 +439,7 @@ statement_type(char *statement)
 	int			i;
 
 	/* ignore leading whitespace in query string */
-	while (*statement && isspace((unsigned char) *statement))
+	while (*statement && (isspace((unsigned char) *statement) || *statement == '('))
 		statement++;
 
 	for (i = 0; Statement_Type[i].s; i++)

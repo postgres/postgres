@@ -873,6 +873,11 @@ parse_statement(StatementClass *stmt)
 
 	mylog("--------------------------------------------\n");
 	mylog("nfld=%d, ntab=%d\n", irdflds->nfields, stmt->ntab);
+	if (0 == stmt->ntab)
+	{
+		stmt->parse_status = STMT_PARSE_FATAL;
+		return	FALSE;
+	}
 
 	for (i = 0; i < (int) irdflds->nfields; i++)
 	{
