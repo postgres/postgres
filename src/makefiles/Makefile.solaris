@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.4 2000/10/27 23:59:39 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.5 2000/11/04 16:35:55 petere Exp $
 
 AROPT = crs
 
@@ -15,6 +15,11 @@ ifeq ($(GCC), yes)
 CFLAGS_SL = -fPIC
 else
 CFLAGS_SL = -KPIC
+endif
+ifeq ($(GXX), yes)
+CXXFLAGS_SL = -fPIC
+else
+CXXFLAGS_SL = -KPIC
 endif
 
 %.so: %.o

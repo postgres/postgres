@@ -9,13 +9,12 @@ AROPT = crs
 DLSUFFIX = .so
 ifneq ($(GCC), yes)
   ifeq ($(host_os), aix3.2.5)
-    CFLAGS_SL = -e _nostart
+    LDFLAGS_SL = -e _nostart
   endif
   ifeq ($(host_os), aix4.1)
-    CFLAGS_SL = -bnoentry
+    LDFLAGS_SL = -bnoentry
   endif
 endif
-CFLAGS_SL += -lc
 
 
 EXPSUFF= .exp
@@ -35,4 +34,4 @@ $(POSTGRES_IMP):
 
 %$(DLSUFFIX): %.o %$(EXPSUFF)
 	@echo Making shared library $@ from $*.o, $*$(EXPSUFF), and installed postgres.imp
-	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(libdir)/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(CFLAGS_SL)
+	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(libdir)/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(LDFLAGS_SL) -lc

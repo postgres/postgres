@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.31 2000/10/31 19:55:18 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.32 2000/11/04 16:35:54 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,13 +88,13 @@ ifeq ($(enable_shared), yes)
 
 # Try to keep the sections in some kind of order, folks...
 
-# XXX fix Makefile.aix
-ifneq ($(PORTNAME), aix)
-  ifndef cplusplus
-    override CFLAGS	+= $(CFLAGS_SL)
-  else
-    override CXXFLAGS	+= $(CFLAGS_SL)
+ifndef cplusplus
+  override CFLAGS	+= $(CFLAGS_SL)
+else
+  ifndef CXXFLAGS_SL
+    CXXFLAGS_SL = $(CFLAGS_SL)
   endif
+  override CXXFLAGS	+= $(CXXFLAGS_SL)
 endif
 
 
