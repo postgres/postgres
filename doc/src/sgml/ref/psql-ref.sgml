@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.36 2000/08/29 20:02:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.37 2000/09/27 11:56:16 momjian Exp $
 Postgres documentation
 -->
 
@@ -266,7 +266,7 @@ testdb=>
         <term><literal>\copy</literal> <replaceable class="parameter">table</replaceable>
         [ <literal>with oids</literal> ] { <literal>from</literal> | <literal>to</literal> }
 	<replaceable class="parameter">filename</replaceable> | stdin | stdout
-        [ <literal>with delimiters</literal> '<replaceable class="parameter">characters</replaceable>' ]
+        [ <literal>using delimiters</literal> '<replaceable class="parameter">characters</replaceable>' ]
         [ <literal>with null as</literal> '<replaceable class="parameter">string</replaceable>' ]
         </term>
 
