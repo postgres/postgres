@@ -13,8 +13,8 @@
  * its parent level.  When we have only one page on a level, it must be
  * the root -- it can be attached to the btree metapage and we are done.
  *
- * this code is moderately slow (~10% slower) compared to the regular
- * btree (insertion) build code on sorted or well-clustered data.  on
+ * This code is moderately slow (~10% slower) compared to the regular
+ * btree (insertion) build code on sorted or well-clustered data.  On
  * random data, however, the insertion build code is unusable -- the
  * difference on a 60MB heap is a factor of 15 because the random
  * probes into the btree thrash the buffer pool.  (NOTE: the above
@@ -22,25 +22,20 @@
  * not very good external sort implementation that used to exist in
  * this module.  tuplesort.c is almost certainly faster.)
  *
- * this code currently packs the pages to 100% of capacity.  this is
- * not wise, since *any* insertion will cause splitting.  filling to
- * something like the standard 70% steady-state load factor for btrees
- * would probably be better.
- *
- * Another limitation is that we currently load full copies of all keys
- * into upper tree levels.  The leftmost data key in each non-leaf node
- * could be omitted as far as normal btree operations are concerned
- * (see README for more info).  However, because we build the tree from
- * the bottom up, we need that data key to insert into the node's parent.
- * This could be fixed by keeping a spare copy of the minimum key in the
- * state stack, but I haven't time for that right now.
+ * It is not wise to pack the pages entirely full, since then *any*
+ * insertion would cause a split (and not only of the leaf page; the need
+ * for a split would cascade right up the tree).  The steady-state load
+ * factor for btrees is usually estimated at 70%.  We choose to pack leaf
+ * pages to 90% and upper pages to 70%.  This gives us reasonable density
+ * (there aren't many upper pages if the keys are reasonable-size) without
+ * incurring a lot of cascading splits during early insertions.
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.55 2000/07/21 06:42:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.56 2000/07/21 22:14:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,14 +45,6 @@
 #include "access/nbtree.h"
 #include "utils/tuplesort.h"
 
-
-/*
- * turn on debugging output.
- *
- * XXX this code just does a numeric printf of the index key, so it's
- * only really useful for integer keys.
- */
-/*#define FASTBUILD_DEBUG*/
 
 /*
  * Status record for spooling.
@@ -72,13 +59,24 @@ struct BTSpool
 /*
  * Status record for a btree page being built.  We have one of these
  * for each active tree level.
+ *
+ * The reason we need to store a copy of the minimum key is that we'll
+ * need to propagate it to the parent node when this page is linked
+ * into its parent.  However, if the page is not a leaf page, the first
+ * entry on the page doesn't need to contain a key, so we will not have
+ * stored the key itself on the page.  (You might think we could skip
+ * copying the minimum key on leaf pages, but actually we must have a
+ * writable copy anyway because we'll poke the page's address into it
+ * before passing it up to the parent...)
  */
 typedef struct BTPageState
 {
 	Buffer		btps_buf;		/* current buffer & page */
 	Page		btps_page;
+	BTItem		btps_minkey;	/* copy of minimum key (first item) on page */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
-	int			btps_level;
+	int			btps_level;		/* tree level (0 = leaf) */
+	Size		btps_full;		/* "full" if less than this much free space */
 	struct BTPageState *btps_next; /* link to parent level, if any */
 } BTPageState;
 
@@ -90,12 +88,14 @@ typedef struct BTPageState
 	 0)
 
 
-static void _bt_load(Relation index, BTSpool *btspool);
-static void _bt_buildadd(Relation index, BTPageState *state,
-						 BTItem bti, int flags);
-static BTItem _bt_minitem(Page opage, BlockNumber oblkno, int atend);
+static void _bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags);
 static BTPageState *_bt_pagestate(Relation index, int flags, int level);
+static void _bt_slideleft(Relation index, Buffer buf, Page page);
+static void _bt_sortaddtup(Page page, Size itemsize,
+						   BTItem btitem, OffsetNumber itup_off);
+static void _bt_buildadd(Relation index, BTPageState *state, BTItem bti);
 static void _bt_uppershutdown(Relation index, BTPageState *state);
+static void _bt_load(Relation index, BTSpool *btspool);
 
 
 /*
@@ -191,6 +191,35 @@ _bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags)
 }
 
 /*
+ * allocate and initialize a new BTPageState.  the returned structure
+ * is suitable for immediate use by _bt_buildadd.
+ */
+static BTPageState *
+_bt_pagestate(Relation index, int flags, int level)
+{
+	BTPageState *state = (BTPageState *) palloc(sizeof(BTPageState));
+
+	MemSet((char *) state, 0, sizeof(BTPageState));
+
+	/* create initial page */
+	_bt_blnewpage(index, &(state->btps_buf), &(state->btps_page), flags);
+
+	state->btps_minkey = (BTItem) NULL;
+	/* initialize lastoff so first item goes into P_FIRSTKEY */
+	state->btps_lastoff = P_HIKEY;
+	state->btps_level = level;
+	/* set "full" threshold based on level.  See notes at head of file. */
+	if (level > 0)
+		state->btps_full = (PageGetPageSize(state->btps_page) * 3) / 10;
+	else
+		state->btps_full = PageGetPageSize(state->btps_page) / 10;
+	/* no parent level, yet */
+	state->btps_next = (BTPageState *) NULL;
+
+	return state;
+}
+
+/*
  * slide an array of ItemIds back one slot (from P_FIRSTKEY to
  * P_HIKEY, overwriting P_HIKEY).  we need to do this when we discover
  * that we have built an ItemId array in what has turned out to be a
@@ -219,53 +248,49 @@ _bt_slideleft(Relation index, Buffer buf, Page page)
 }
 
 /*
- * allocate and initialize a new BTPageState.  the returned structure
- * is suitable for immediate use by _bt_buildadd.
+ * Add an item to a page being built.
+ *
+ * The main difference between this routine and a bare PageAddItem call
+ * is that this code knows that the leftmost data item on a non-leaf
+ * btree page doesn't need to have a key.  Therefore, it strips such
+ * items down to just the item header.
+ *
+ * This is almost like nbtinsert.c's _bt_pgaddtup(), but we can't use
+ * that because it assumes that P_RIGHTMOST() will return the correct
+ * answer for the page.  Here, we don't know yet if the page will be
+ * rightmost.  Offset P_FIRSTKEY is always the first data key.
  */
-static BTPageState *
-_bt_pagestate(Relation index, int flags, int level)
+static void
+_bt_sortaddtup(Page page,
+			   Size itemsize,
+			   BTItem btitem,
+			   OffsetNumber itup_off)
 {
-	BTPageState *state = (BTPageState *) palloc(sizeof(BTPageState));
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTItemData truncitem;
 
-	MemSet((char *) state, 0, sizeof(BTPageState));
-	_bt_blnewpage(index, &(state->btps_buf), &(state->btps_page), flags);
-	state->btps_lastoff = P_HIKEY;
-	state->btps_next = (BTPageState *) NULL;
-	state->btps_level = level;
+	if (! P_ISLEAF(opaque) && itup_off == P_FIRSTKEY)
+	{
+		memcpy(&truncitem, btitem, sizeof(BTItemData));
+		truncitem.bti_itup.t_info = sizeof(BTItemData);
+		btitem = &truncitem;
+		itemsize = sizeof(BTItemData);
+	}
 
-	return state;
+	if (PageAddItem(page, (Item) btitem, itemsize, itup_off,
+					LP_USED) == InvalidOffsetNumber)
+		elog(FATAL, "btree: failed to add item to the page in _bt_sort");
 }
 
-/*
- * return a copy of the minimum (P_HIKEY or P_FIRSTKEY) item on
- * 'opage'.  the copy is modified to point to 'opage' (as opposed to
- * the page to which the item used to point, e.g., a heap page if
- * 'opage' is a leaf page).
- */
-static BTItem
-_bt_minitem(Page opage, BlockNumber oblkno, int atend)
-{
-	OffsetNumber off;
-	BTItem		obti;
-	BTItem		nbti;
-
-	off = atend ? P_HIKEY : P_FIRSTKEY;
-	obti = (BTItem) PageGetItem(opage, PageGetItemId(opage, off));
-	nbti = _bt_formitem(&(obti->bti_itup));
-	ItemPointerSet(&(nbti->bti_itup.t_tid), oblkno, P_HIKEY);
-
-	return nbti;
-}
-
-/*
- * add an item to a disk page from the sort output.
+/*----------
+ * Add an item to a disk page from the sort output.
  *
- * we must be careful to observe the following restrictions, placed
- * upon us by the conventions in nbtsearch.c:
- * - rightmost pages start data items at P_HIKEY instead of at
- *	 P_FIRSTKEY.
+ * We must be careful to observe the page layout conventions of nbtsearch.c:
+ * - rightmost pages start data items at P_HIKEY instead of at P_FIRSTKEY.
+ * - on non-leaf pages, the key portion of the first item need not be
+ *   stored, we should store only the link.
  *
- * a leaf page being built looks like:
+ * A leaf page being built looks like:
  *
  * +----------------+---------------------------------+
  * | PageHeaderData | linp0 linp1 linp2 ...			  |
@@ -280,16 +305,18 @@ _bt_minitem(Page opage, BlockNumber oblkno, int atend)
  * |		  ... item3 item2 item1 | "special space" |
  * +--------------------------------+-----------------+
  *
- * contrast this with the diagram in bufpage.h; note the mismatch
- * between linps and items.  this is because we reserve linp0 as a
+ * Contrast this with the diagram in bufpage.h; note the mismatch
+ * between linps and items.  This is because we reserve linp0 as a
  * placeholder for the pointer to the "high key" item; when we have
  * filled up the page, we will set linp0 to point to itemN and clear
- * linpN.
+ * linpN.  On the other hand, if we find this is the last (rightmost)
+ * page, we leave the items alone and slide the linp array over.
  *
  * 'last' pointer indicates the last offset added to the page.
+ *----------
  */
 static void
-_bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
+_bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 {
 	Buffer		nbuf;
 	Page		npage;
@@ -321,44 +348,34 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
 			 btisz,
 			 (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) /3 - sizeof(ItemIdData));
 
-	if (pgspc < btisz)
+	if (pgspc < btisz || pgspc < state->btps_full)
 	{
 		/*
-		 * Item won't fit on this page, so finish off the page and
-		 * write it out.
+		 * Item won't fit on this page, or we feel the page is full enough
+		 * already.  Finish off the page and write it out.
 		 */
 		Buffer		obuf = nbuf;
 		Page		opage = npage;
 		ItemId		ii;
 		ItemId		hii;
-		BTItem		nbti;
+		BTItem		obti;
 
-		_bt_blnewpage(index, &nbuf, &npage, flags);
+		/* Create new page */
+		_bt_blnewpage(index, &nbuf, &npage,
+					  (state->btps_level > 0) ? 0 : BTP_LEAF);
 
 		/*
 		 * We copy the last item on the page into the new page, and then
 		 * rearrange the old page so that the 'last item' becomes its high
-		 * key rather than a true data item.
-		 *
-		 * note that since we always copy an item to the new page,
-		 * 'bti' will never be the first data item on the new page.
+		 * key rather than a true data item.  There had better be at least
+		 * two items on the page already, else the page would be empty of
+		 * useful data.  (Hence, we must allow pages to be packed at least
+		 * 2/3rds full; the 70% figure used above is close to minimum.)
 		 */
+		Assert(last_off > P_FIRSTKEY);
 		ii = PageGetItemId(opage, last_off);
-		if (PageAddItem(npage, PageGetItem(opage, ii), ii->lp_len,
-						P_FIRSTKEY, LP_USED) == InvalidOffsetNumber)
-			elog(FATAL, "btree: failed to add item to the page in _bt_sort (1)");
-#ifdef FASTBUILD_DEBUG
-		{
-			bool		isnull;
-			BTItem		tmpbti =
-				(BTItem) PageGetItem(npage, PageGetItemId(npage, P_FIRSTKEY));
-			Datum		d = index_getattr(&(tmpbti->bti_itup), 1,
-										  index->rd_att, &isnull);
-
-			printf("_bt_buildadd: moved <%x> to offset %d at level %d\n",
-				   d, P_FIRSTKEY, state->btps_level);
-		}
-#endif
+		obti = (BTItem) PageGetItem(opage, ii);
+		_bt_sortaddtup(npage, ItemIdGetLength(ii), obti, P_FIRSTKEY);
 
 		/*
 		 * Move 'last' into the high key position on opage
@@ -367,23 +384,6 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
 		*hii = *ii;
 		ii->lp_flags &= ~LP_USED;
 		((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
-
-		/*
-		 * Reset last_off to point to new page
-		 */
-		last_off = PageGetMaxOffsetNumber(npage);
-
-		/*
-		 * set the page (side link) pointers.
-		 */
-		{
-			BTPageOpaque oopaque = (BTPageOpaque) PageGetSpecialPointer(opage);
-			BTPageOpaque nopaque = (BTPageOpaque) PageGetSpecialPointer(npage);
-
-			oopaque->btpo_next = BufferGetBlockNumber(nbuf);
-			nopaque->btpo_prev = BufferGetBlockNumber(obuf);
-			nopaque->btpo_next = P_NONE;
-		}
 
 		/*
 		 * Link the old buffer into its parent, using its minimum key.
@@ -395,34 +395,72 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
 			state->btps_next =
 				_bt_pagestate(index, 0, state->btps_level + 1);
 		}
-		nbti = _bt_minitem(opage, BufferGetBlockNumber(obuf), 0);
-		_bt_buildadd(index, state->btps_next, nbti, 0);
-		pfree((void *) nbti);
+		Assert(state->btps_minkey != NULL);
+		ItemPointerSet(&(state->btps_minkey->bti_itup.t_tid),
+					   BufferGetBlockNumber(obuf), P_HIKEY);
+		_bt_buildadd(index, state->btps_next, state->btps_minkey);
+		pfree((void *) state->btps_minkey);
 
 		/*
-		 * write out the old stuff.  we never want to see it again, so we
-		 * can give up our lock (if we had one; BuildingBtree is set, so
-		 * we aren't locking).
+		 * Save a copy of the minimum key for the new page.  We have to
+		 * copy it off the old page, not the new one, in case we are
+		 * not at leaf level.
+		 */
+		state->btps_minkey = _bt_formitem(&(obti->bti_itup));
+
+		/*
+		 * Set the sibling links for both pages, and parent links too.
+		 *
+		 * It's not necessary to set the parent link at all, because it's
+		 * only used for handling concurrent root splits, but we may as well
+		 * do it as a debugging aid.  Note we set new page's link as well
+		 * as old's, because if the new page turns out to be the last of
+		 * the level, _bt_uppershutdown won't change it.  The links may be
+		 * out of date by the time the build finishes, but that's OK; they
+		 * need only point to a left-sibling of the true parent.  See the
+		 * README file for more info.
+		 */
+		{
+			BTPageOpaque oopaque = (BTPageOpaque) PageGetSpecialPointer(opage);
+			BTPageOpaque nopaque = (BTPageOpaque) PageGetSpecialPointer(npage);
+
+			oopaque->btpo_next = BufferGetBlockNumber(nbuf);
+			nopaque->btpo_prev = BufferGetBlockNumber(obuf);
+			nopaque->btpo_next = P_NONE;
+			oopaque->btpo_parent = nopaque->btpo_parent =
+				BufferGetBlockNumber(state->btps_next->btps_buf);
+		}
+
+		/*
+		 * Write out the old page.  We never want to see it again, so we
+		 * can give up our lock (if we had one; most likely BuildingBtree
+		 * is set, so we aren't locking).
 		 */
 		_bt_wrtbuf(index, obuf);
+
+		/*
+		 * Reset last_off to point to new page
+		 */
+		last_off = P_FIRSTKEY;
+	}
+
+	/*
+	 * If the new item is the first for its page, stash a copy for later.
+	 * Note this will only happen for the first item on a level; on later
+	 * pages, the first item for a page is copied from the prior page
+	 * in the code above.
+	 */
+	if (last_off == P_HIKEY)
+	{
+		Assert(state->btps_minkey == NULL);
+		state->btps_minkey = _bt_formitem(&(bti->bti_itup));
 	}
 
 	/*
 	 * Add the new item into the current page.
 	 */
 	last_off = OffsetNumberNext(last_off);
-	if (PageAddItem(npage, (Item) bti, btisz,
-					last_off, LP_USED) == InvalidOffsetNumber)
-		elog(FATAL, "btree: failed to add item to the page in _bt_sort (2)");
-#ifdef FASTBUILD_DEBUG
-	{
-		bool		isnull;
-		Datum		d = index_getattr(&(bti->bti_itup), 1, index->rd_att, &isnull);
-
-		printf("_bt_buildadd: inserted <%x> at offset %d at level %d\n",
-			   d, last_off, state->btps_level);
-	}
-#endif
+	_bt_sortaddtup(npage, btisz, bti, last_off);
 
 	state->btps_buf = nbuf;
 	state->btps_page = npage;
@@ -436,15 +474,15 @@ static void
 _bt_uppershutdown(Relation index, BTPageState *state)
 {
 	BTPageState *s;
-	BlockNumber blkno;
-	BTPageOpaque opaque;
-	BTItem		bti;
 
 	/*
 	 * Each iteration of this loop completes one more level of the tree.
 	 */
 	for (s = state; s != (BTPageState *) NULL; s = s->btps_next)
 	{
+		BlockNumber blkno;
+		BTPageOpaque opaque;
+
 		blkno = BufferGetBlockNumber(s->btps_buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(s->btps_page);
 
@@ -463,9 +501,12 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		}
 		else
 		{
-			bti = _bt_minitem(s->btps_page, blkno, 0);
-			_bt_buildadd(index, s->btps_next, bti, 0);
-			pfree((void *) bti);
+			Assert(s->btps_minkey != NULL);
+			ItemPointerSet(&(s->btps_minkey->bti_itup.t_tid),
+						   blkno, P_HIKEY);
+			_bt_buildadd(index, s->btps_next, s->btps_minkey);
+			pfree((void *) s->btps_minkey);
+			s->btps_minkey = NULL;
 		}
 
 		/*
@@ -500,11 +541,13 @@ _bt_load(Relation index, BTSpool *btspool)
 		if (state == NULL)
 			state = _bt_pagestate(index, BTP_LEAF, 0);
 
-		_bt_buildadd(index, state, bti, BTP_LEAF);
+		_bt_buildadd(index, state, bti);
+
 		if (should_free)
 			pfree((void *) bti);
 	}
 
+	/* Close down final pages, if we had any data at all */
 	if (state != NULL)
 		_bt_uppershutdown(index, state);
 }
