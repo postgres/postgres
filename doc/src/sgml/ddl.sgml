@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.14 2003/03/25 16:15:35 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.15 2003/05/07 03:41:31 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1537,7 +1537,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     connect to a given database to create objects there.  If you do
     not want to allow that, you can revoke that privilege:
 <programlisting>
-REVOKE CREATE ON public FROM PUBLIC;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 </programlisting>
     (The first <quote>public</quote> is the schema, the second
     <quote>public</quote> means <quote>every user</quote>.  In the
