@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.95 2004/03/22 03:38:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.96 2004/04/06 04:05:17 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -831,7 +831,7 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result;
 
 		printfPQExpBuffer(&buf,
-		  "SELECT i.indisunique, i.indisprimary, a.amname, c2.relname,\n"
+		  "SELECT i.indisunique, i.indisprimary, i.indisclustered, a.amname, c2.relname,\n"
 					  "  pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
 						  "WHERE i.indexrelid = c.oid AND c.oid = '%s' AND c.relam = a.oid\n"
@@ -850,9 +850,10 @@ describeOneTableDetails(const char *schemaname,
 		{
 			char	   *indisunique = PQgetvalue(result, 0, 0);
 			char	   *indisprimary = PQgetvalue(result, 0, 1);
-			char	   *indamname = PQgetvalue(result, 0, 2);
-			char	   *indtable = PQgetvalue(result, 0, 3);
-			char	   *indpred = PQgetvalue(result, 0, 4);
+			char	   *indisclustered = PQgetvalue(result, 0, 2);
+			char	   *indamname = PQgetvalue(result, 0, 3);
+			char	   *indtable = PQgetvalue(result, 0, 4);
+			char	   *indpred = PQgetvalue(result, 0, 5);
 
 			if (strcmp(indisprimary, "t") == 0)
 				printfPQExpBuffer(&tmpbuf, _("PRIMARY KEY, "));
@@ -868,6 +869,9 @@ describeOneTableDetails(const char *schemaname,
 
 			if (strlen(indpred))
 				appendPQExpBuffer(&tmpbuf, _(", predicate (%s)"), indpred);
+
+			if (strcmp(indisclustered, "t") == 0)
+				appendPQExpBuffer(&tmpbuf, _(", CLUSTER"));
 
 			footers = pg_malloc_zero(2 * sizeof(*footers));
 			footers[0] = pg_strdup(tmpbuf.data);
@@ -948,7 +952,7 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.hasindex)
 		{
 			printfPQExpBuffer(&buf,
-					 "SELECT c2.relname, i.indisprimary, i.indisunique, "
+					 "SELECT c2.relname, i.indisprimary, i.indisunique, i.indisclustered, "
 							  "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)\n"
 							  "FROM pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_index i\n"
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
@@ -1080,14 +1084,16 @@ describeOneTableDetails(const char *schemaname,
 							 (strcmp(PQgetvalue(result1, i, 2), "t") == 0
 							  ? _(" UNIQUE,")
 							  : ""));
-
 				/* Everything after "USING" is echoed verbatim */
-				indexdef = PQgetvalue(result1, i, 3);
+				indexdef = PQgetvalue(result1, i, 4);
 				usingpos = strstr(indexdef, " USING ");
 				if (usingpos)
 					indexdef = usingpos + 7;
 
 				appendPQExpBuffer(&buf, " %s", indexdef);
+
+				if (strcmp(PQgetvalue(result1, i, 3), "t") == 0)
+					appendPQExpBuffer(&buf, _(" CLUSTER"));
 
 				footers[count_footers++] = pg_strdup(buf.data);
 			}
