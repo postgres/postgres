@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.114 2004/03/21 22:29:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.115 2004/03/27 18:01:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -634,6 +634,7 @@ exec_command(const char *cmd,
 												   OT_NORMAL, NULL, true);
 
 		expand_tilde(&fname);
+		/* This scrolls off the screen when using /dev/tty */
 		success = saveHistory(fname ? fname : "/dev/tty");
 
 		if (success && !quiet && fname)
