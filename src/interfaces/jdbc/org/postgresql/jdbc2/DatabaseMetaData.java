@@ -1048,7 +1048,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   /**
    * Can statements remain open across commits?  They may, but
    * this driver cannot guarentee that.  In further reflection.
-   * we are talking a Statement object jere, so the answer is
+   * we are talking a Statement object here, so the answer is
    * yes, since the Statement is only a vehicle to ExecSQL()
    *
    * @return true if they always remain open; false otherwise
@@ -2183,6 +2183,81 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
                                                      );
   }
 
+  private Vector importLoop(java.sql.ResultSet keyRelation) throws SQLException {
+    String s,s2;
+    String origTable=null, primTable=new String(""), schema;
+    int i;
+    Vector v;
+
+    s=keyRelation.getString(1);
+    s2=s;
+    System.out.println(s);
+    v=new Vector();
+    for (i=0;;i++) {
+      s=s.substring(s.indexOf("\\000")+4);
+      if (s.compareTo("")==0) {
+	System.out.println();
+	break;
+      }
+      s2=s.substring(0,s.indexOf("\\000"));
+      switch (i) {
+      case 0:
+	origTable=s2;
+	break;
+      case 1:
+	primTable=s2;
+	break;
+      case 2:
+	schema=s2;
+	break;
+      default:
+	v.add(s2);
+      }
+  }
+
+  java.sql.ResultSet rstmp=connection.ExecSQL("select * from "+origTable+" where 1=0");
+  java.sql.ResultSetMetaData origCols=rstmp.getMetaData();
+
+  String stmp;
+  Vector tuples=new Vector();
+  byte tuple[][];
+
+  // the foreign keys are only on even positions in the Vector.
+  for (i=0;i<v.size();i+=2) {
+    stmp=(String)v.elementAt(i);
+
+    for (int j=1;j<=origCols.getColumnCount();j++) {
+      if (stmp.compareTo(origCols.getColumnName(j))==0) {
+	tuple=new byte[14][0];
+
+	for (int k=0;k<14;k++)
+	  tuple[k]=null;
+
+	//PKTABLE_NAME
+	tuple[2]=primTable.getBytes();
+	//PKTABLE_COLUMN
+	stmp=(String)v.elementAt(i+1);
+	tuple[3]=stmp.getBytes();
+	//FKTABLE_NAME
+	tuple[6]=origTable.getBytes();
+	//FKCOLUMN_NAME
+	tuple[7]=origCols.getColumnName(j).getBytes();
+	//KEY_SEQ
+	tuple[8]=Integer.toString(j).getBytes();
+
+	tuples.add(tuple);
+
+	System.out.println(origCols.getColumnName(j)+
+	": "+j+" -> "+primTable+": "+
+	(String)v.elementAt(i+1));
+	break;
+      }
+    }
+  }
+
+  return tuples;
+  }
+
   /**
    * Get a description of the primary key columns that are
    * referenced by a table's foreign key columns (the primary keys
@@ -2236,8 +2311,39 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    // Added by Ola Sundell <ola@miranda.org>
+    // FIXME: error checking galore!
+    java.sql.ResultSet rsret;
+    Field f[]=new Field[14];
+    byte tuple[][];
+
+    f[0]=new Field(connection, "PKTABLE_CAT", iVarcharOid, 32);
+    f[1]=new Field(connection, "PKTABLE_SCHEM", iVarcharOid, 32);
+    f[2]=new Field(connection, "PKTABLE_NAME", iVarcharOid, 32);
+    f[3]=new Field(connection, "PKCOLUMN_NAME", iVarcharOid, 32);
+    f[4]=new Field(connection, "FKTABLE_CAT", iVarcharOid, 32);
+    f[5]=new Field(connection, "FKTABLE_SCHEM", iVarcharOid, 32);
+    f[6]=new Field(connection, "FKTABLE_NAME", iVarcharOid, 32);
+    f[7]=new Field(connection, "FKCOLUMN_NAME", iVarcharOid, 32);
+    f[8]=new Field(connection, "KEY_SEQ", iInt2Oid, 2);
+    f[9]=new Field(connection, "UPDATE_RULE", iInt2Oid, 2);
+    f[10]=new Field(connection, "DELETE_RULE", iInt2Oid, 2);
+    f[11]=new Field(connection, "FK_NAME", iVarcharOid, 32);
+    f[12]=new Field(connection, "PK_NAME", iVarcharOid, 32);
+    f[13]=new Field(connection, "DEFERRABILITY", iInt2Oid, 2);
+
+    java.sql.ResultSet rs=connection.ExecSQL("select t.tgargs "+
+	    "from pg_class as c, pg_trigger as t "+
+	    "where c.relname like '"+table+"' and c.relfilenode=t.tgrelid");
+    Vector tuples=new Vector();
+    
+    while (rs.next()) {
+	    tuples.addAll(importLoop(rs));	
+    }
+
+    rsret=new ResultSet(connection, f, tuples, "OK", 1);
+
+    return rsret;
   }
 
   /**
