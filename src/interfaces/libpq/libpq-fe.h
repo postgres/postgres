@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.93 2003/06/08 17:43:00 tgl Exp $
+ * $Id: libpq-fe.h,v 1.94 2003/06/21 21:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,22 @@ typedef enum
 	PGRES_FATAL_ERROR			/* query failed */
 } ExecStatusType;
 
+typedef enum
+{
+	PQTRANS_IDLE,				/* connection idle */
+	PQTRANS_ACTIVE,				/* command in progress */
+	PQTRANS_INTRANS,			/* idle, within transaction block */
+	PQTRANS_INERROR,			/* idle, within failed transaction */
+	PQTRANS_UNKNOWN				/* cannot determine status */
+} PGTransactionStatusType;
+
+typedef enum
+{
+	PQERRORS_TERSE,				/* single-line error messages */
+	PQERRORS_DEFAULT,			/* recommended style */
+	PQERRORS_VERBOSE			/* all the facts, ma'am */
+} PGVerbosity;
+
 /* PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.
  */
@@ -108,12 +124,13 @@ typedef struct pg_result PGresult;
  */
 typedef struct pgNotify
 {
-	char	   *relname;		/* name of relation containing data */
-	int			be_pid;			/* process id of backend */
+	char	   *relname;		/* notification condition name */
+	int			be_pid;			/* process ID of server process */
+	char	   *extra;			/* notification parameter */
 } PGnotify;
 
-/* PQnoticeProcessor is the function type for the notice-message callback.
- */
+/* Function types for notice-handling callbacks */
+typedef void (*PQnoticeReceiver) (void *arg, const PGresult *res);
 typedef void (*PQnoticeProcessor) (void *arg, const char *message);
 
 /* Print options for PQprint() */
@@ -227,6 +244,10 @@ extern char *PQport(const PGconn *conn);
 extern char *PQtty(const PGconn *conn);
 extern char *PQoptions(const PGconn *conn);
 extern ConnStatusType PQstatus(const PGconn *conn);
+extern PGTransactionStatusType PQtransactionStatus(const PGconn *conn);
+extern const char *PQparameterStatus(const PGconn *conn,
+									 const char *paramName);
+extern int	PQprotocolVersion(const PGconn *conn);
 extern char *PQerrorMessage(const PGconn *conn);
 extern int	PQsocket(const PGconn *conn);
 extern int	PQbackendPID(const PGconn *conn);
@@ -238,42 +259,58 @@ extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
 extern SSL *PQgetssl(PGconn *conn);
 #endif
 
+/* Set verbosity for PQerrorMessage and PQresultErrorMessage */
+extern PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
 
 /* Enable/disable tracing */
 extern void PQtrace(PGconn *conn, FILE *debug_port);
 extern void PQuntrace(PGconn *conn);
 
-/* Override default notice processor */
+/* Override default notice handling routines */
+extern PQnoticeReceiver PQsetNoticeReceiver(PGconn *conn,
+											PQnoticeReceiver proc,
+											void *arg);
 extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
 					 PQnoticeProcessor proc,
 					 void *arg);
 
 /* === in fe-exec.c === */
 
-/* Quoting strings before inclusion in queries. */
-extern size_t PQescapeString(char *to, const char *from, size_t length);
-extern unsigned char *PQescapeBytea(const unsigned char *bintext, size_t binlen,
-			  size_t *bytealen);
-extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
-				size_t *retbuflen);
-extern void PQfreemem(void *ptr);
-
-
 /* Simple synchronous query */
 extern PGresult *PQexec(PGconn *conn, const char *query);
-extern PGnotify *PQnotifies(PGconn *conn);
-/* Exists for backward compatibility.  bjm 2003-03-24 */
-#define PQfreeNotify(ptr) PQfreemem(ptr)
+extern PGresult *PQexecParams(PGconn *conn,
+							  const char *command,
+							  int nParams,
+							  const Oid *paramTypes,
+							  const char * const *paramValues,
+							  const int *paramLengths,
+							  const int *paramFormats,
+							  int resultFormat);
 
 /* Interface for multiple-result or asynchronous queries */
 extern int	PQsendQuery(PGconn *conn, const char *query);
+extern int	PQsendQueryParams(PGconn *conn,
+							  const char *command,
+							  int nParams,
+							  const Oid *paramTypes,
+							  const char * const *paramValues,
+							  const int *paramLengths,
+							  const int *paramFormats,
+							  int resultFormat);
 extern PGresult *PQgetResult(PGconn *conn);
 
 /* Routines for managing an asynchronous query */
 extern int	PQisBusy(PGconn *conn);
 extern int	PQconsumeInput(PGconn *conn);
 
+/* LISTEN/NOTIFY support */
+extern PGnotify *PQnotifies(PGconn *conn);
+
 /* Routines for copy in/out */
+extern int	PQputCopyData(PGconn *conn, const char *buffer, int nbytes);
+extern int	PQputCopyEnd(PGconn *conn, const char *errormsg);
+extern int	PQgetCopyData(PGconn *conn, char **buffer, int async);
+/* Deprecated routines for copy in/out */
 extern int	PQgetline(PGconn *conn, char *string, int length);
 extern int	PQputline(PGconn *conn, const char *string);
 extern int	PQgetlineAsync(PGconn *conn, char *buffer, int bufsize);
@@ -303,11 +340,15 @@ extern PGresult *PQfn(PGconn *conn,
 extern ExecStatusType PQresultStatus(const PGresult *res);
 extern char *PQresStatus(ExecStatusType status);
 extern char *PQresultErrorMessage(const PGresult *res);
+extern char *PQresultErrorField(const PGresult *res, int fieldcode);
 extern int	PQntuples(const PGresult *res);
 extern int	PQnfields(const PGresult *res);
 extern int	PQbinaryTuples(const PGresult *res);
 extern char *PQfname(const PGresult *res, int field_num);
 extern int	PQfnumber(const PGresult *res, const char *field_name);
+extern Oid	PQftable(const PGresult *res, int field_num);
+extern int	PQftablecol(const PGresult *res, int field_num);
+extern int	PQfformat(const PGresult *res, int field_num);
 extern Oid	PQftype(const PGresult *res, int field_num);
 extern int	PQfsize(const PGresult *res, int field_num);
 extern int	PQfmod(const PGresult *res, int field_num);
@@ -322,6 +363,12 @@ extern int	PQgetisnull(const PGresult *res, int tup_num, int field_num);
 /* Delete a PGresult */
 extern void PQclear(PGresult *res);
 
+/* For freeing other alloc'd results, such as PGnotify structs */
+extern void PQfreemem(void *ptr);
+
+/* Exists for backward compatibility.  bjm 2003-03-24 */
+#define PQfreeNotify(ptr) PQfreemem(ptr)
+
 /*
  * Make an empty PGresult with given status (some apps find this
  * useful). If conn is not NULL and status indicates an error, the
@@ -329,26 +376,33 @@ extern void PQclear(PGresult *res);
  */
 extern PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
 
+
+/* Quoting strings before inclusion in queries. */
+extern size_t PQescapeString(char *to, const char *from, size_t length);
+extern unsigned char *PQescapeBytea(const unsigned char *bintext, size_t binlen,
+			  size_t *bytealen);
+extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
+				size_t *retbuflen);
+
+
+
 /* === in fe-print.c === */
 
-extern void
-PQprint(FILE *fout,				/* output stream */
-		const PGresult *res,
-		const PQprintOpt *ps);	/* option structure */
+extern void PQprint(FILE *fout,				/* output stream */
+					const PGresult *res,
+					const PQprintOpt *ps);	/* option structure */
 
 /*
  * really old printing routines
  */
-extern void
-PQdisplayTuples(const PGresult *res,
+extern void PQdisplayTuples(const PGresult *res,
 				FILE *fp,		/* where to send the output */
 				int fillAlign,	/* pad the fields with spaces */
 				const char *fieldSep,	/* field separator */
 				int printHeader,	/* display headers? */
 				int quiet);
 
-extern void
-PQprintTuples(const PGresult *res,
+extern void PQprintTuples(const PGresult *res,
 			  FILE *fout,		/* output stream */
 			  int printAttName, /* print attribute names */
 			  int terseOutput,	/* delimiter bars */

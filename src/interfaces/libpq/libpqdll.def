@@ -97,4 +97,17 @@ EXPORTS
     pg_utf_mblen            @ 93
     PQunescapeBytea         @ 94
     PQfreemem               @ 95
-
+    PQtransactionStatus     @ 96
+    PQparameterStatus       @ 97
+    PQprotocolVersion       @ 98
+    PQsetErrorVerbosity     @ 99
+    PQsetNoticeReceiver     @ 100
+    PQexecParams            @ 101
+    PQsendQueryParams       @ 102
+    PQputCopyData           @ 103
+    PQputCopyEnd            @ 104
+    PQgetCopyData           @ 105
+    PQresultErrorField      @ 106
+    PQftable                @ 107
+    PQftablecol             @ 108
+    PQfformat               @ 109

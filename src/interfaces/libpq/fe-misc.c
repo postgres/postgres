@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.96 2003/06/14 17:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.97 2003/06/21 21:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,7 @@ pqPutnchar(const char *s, size_t len, PGconn *conn)
 }
 
 /*
- * pgGetInt
+ * pqGetInt
  *	read a 2 or 4 byte integer and convert from network byte order
  *	to local byte order
  */
@@ -226,7 +226,7 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			break;
 		default:
 			snprintf(noticeBuf, sizeof(noticeBuf),
-					 libpq_gettext("integer of size %lu not supported by pqGetInt\n"),
+					 libpq_gettext("integer of size %lu not supported by pqGetInt"),
 					 (unsigned long) bytes);
 			PGDONOTICE(conn, noticeBuf);
 			return EOF;
@@ -239,7 +239,7 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 }
 
 /*
- * pgPutInt
+ * pqPutInt
  * write an integer of 2 or 4 bytes, converting from host byte order
  * to network byte order.
  */
@@ -264,7 +264,7 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 			break;
 		default:
 			snprintf(noticeBuf, sizeof(noticeBuf),
-					 libpq_gettext("integer of size %lu not supported by pqPutInt\n"),
+					 libpq_gettext("integer of size %lu not supported by pqPutInt"),
 					 (unsigned long) bytes);
 			PGDONOTICE(conn, noticeBuf);
 			return EOF;
@@ -282,7 +282,7 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
  *
  * Returns 0 on success, EOF if failed to enlarge buffer
  */
-static int
+int
 pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
 {
 	int			newsize = conn->outBufSize;
@@ -748,7 +748,7 @@ pqSendSome(PGconn *conn, int len)
 		if (sent < 0)
 		{
 			/*
-			 * Anything except EAGAIN or EWOULDBLOCK is trouble. If it's
+			 * Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble. If it's
 			 * EPIPE or ECONNRESET, assume we've lost the backend
 			 * connection permanently.
 			 */
@@ -804,25 +804,17 @@ pqSendSome(PGconn *conn, int len)
 
 		if (len > 0)
 		{
-			/* We didn't send it all, wait till we can send more */
-
 			/*
-			 * if the socket is in non-blocking mode we may need to abort
-			 * here and return 1 to indicate that data is still pending.
+			 * We didn't send it all, wait till we can send more.
+			 *
+			 * If the connection is in non-blocking mode we don't wait,
+			 * but return 1 to indicate that data is still pending.
 			 */
-#ifdef USE_SSL
-			/* can't do anything for our SSL users yet */
-			if (conn->ssl == NULL)
+			if (pqIsnonblocking(conn))
 			{
-#endif
-				if (pqIsnonblocking(conn))
-				{
-					result = 1;
-					break;
-				}
-#ifdef USE_SSL
+				result = 1;
+				break;
 			}
-#endif
 
 			if (pqWait(FALSE, TRUE, conn))
 			{

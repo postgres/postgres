@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.28 2003/03/13 01:30:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.29 2003/06/21 21:51:33 tgl Exp $
 -->
 
  <chapter id="largeObjects">
@@ -181,7 +181,8 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
      <function>lo_open</function> returns a large object descriptor
      for later use in <function>lo_read</function>, <function>lo_write</function>,
      <function>lo_lseek</function>, <function>lo_tell</function>, and
-     <function>lo_close</function>.
+     <function>lo_close</function>.  The descriptor is only valid for
+     the duration of the current transaction.
 </para>
 </sect2>
 
@@ -256,6 +257,11 @@ int lo_close(PGconn *conn, int fd);
      <function>lo_open</function>.  On success, <function>lo_close</function>
       returns zero.  On error, the return value is negative.
 </para>
+
+<para>
+     Any large  object  descriptors that remain open at the end of a
+     transaction will be closed automatically.
+</para>
 </sect2>
 
    <sect2>
@@ -295,6 +301,14 @@ INSERT INTO image (name, raster)
 SELECT lo_export(image.raster, '/tmp/motd') FROM image
     WHERE name = 'beautiful image';
 </programlisting>
+</para>
+
+<para>
+These functions read and write files in the server's filesystem, using the
+permissions of the database's owning user.  Therefore, their use is restricted
+to superusers.  (In contrast, the client-side import and export functions
+read and write files in the client's filesystem, using the permissions of
+the client program.  Their use is not restricted.)
 </para>
 </sect1>
 

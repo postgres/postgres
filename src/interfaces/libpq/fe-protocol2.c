@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.1 2003/06/08 17:43:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.2 2003/06/21 21:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 static int	getRowDescriptions(PGconn *conn);
 static int	getAnotherTuple(PGconn *conn, bool binary);
 static int	pqGetErrorNotice2(PGconn *conn, bool isError);
+static void checkXactStatus(PGconn *conn, const char *cmdTag);
 static int	getNotify(PGconn *conn);
 
 
@@ -312,7 +313,7 @@ pqSetenvPoll(PGconn *conn)
 													  val);
 							else
 							{
-								val = pqGetParameterStatus(conn, "server_encoding");
+								val = PQparameterStatus(conn, "server_encoding");
 								if (val && *val)
 									pqSaveParameterStatus(conn, "client_encoding",
 														  val);
@@ -424,7 +425,7 @@ pqParseInput2(PGconn *conn)
 			else
 			{
 				snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-						 libpq_gettext("message type 0x%02x arrived from server while idle\n"),
+						 libpq_gettext("message type 0x%02x arrived from server while idle"),
 						 id);
 				PGDONOTICE(conn, noticeWorkspace);
 				/* Discard the unexpected message; good idea?? */
@@ -447,6 +448,7 @@ pqParseInput2(PGconn *conn)
 													   PGRES_COMMAND_OK);
 					strncpy(conn->result->cmdStatus, conn->workBuffer.data,
 							CMDSTATUS_LEN);
+					checkXactStatus(conn, conn->workBuffer.data);
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'E':		/* error return */
@@ -464,7 +466,7 @@ pqParseInput2(PGconn *conn)
 					if (id != '\0')
 					{
 						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-								 libpq_gettext("unexpected character %c following empty query response (\"I\" message)\n"),
+								 libpq_gettext("unexpected character %c following empty query response (\"I\" message)"),
 								 id);
 						PGDONOTICE(conn, noticeWorkspace);
 					}
@@ -521,7 +523,7 @@ pqParseInput2(PGconn *conn)
 					else
 					{
 						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-								 libpq_gettext("server sent data (\"D\" message) without prior row description (\"T\" message)\n"));
+								 libpq_gettext("server sent data (\"D\" message) without prior row description (\"T\" message)"));
 						PGDONOTICE(conn, noticeWorkspace);
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
@@ -538,7 +540,7 @@ pqParseInput2(PGconn *conn)
 					else
 					{
 						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-								 libpq_gettext("server sent binary data (\"B\" message) without prior row description (\"T\" message)\n"));
+								 libpq_gettext("server sent binary data (\"B\" message) without prior row description (\"T\" message)"));
 						PGDONOTICE(conn, noticeWorkspace);
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
@@ -628,6 +630,9 @@ getRowDescriptions(PGconn *conn)
 
 		result->attDescs[i].name = pqResultStrdup(result,
 												  conn->workBuffer.data);
+		result->attDescs[i].tableid = 0;
+		result->attDescs[i].columnid = 0;
+		result->attDescs[i].format = 0;
 		result->attDescs[i].typid = typid;
 		result->attDescs[i].typlen = typlen;
 		result->attDescs[i].atttypmod = atttypmod;
@@ -674,6 +679,15 @@ getAnotherTuple(PGconn *conn, bool binary)
 		if (conn->curTuple == NULL)
 			goto outOfMemory;
 		MemSet((char *) conn->curTuple, 0, nfields * sizeof(PGresAttValue));
+		/*
+		 * If it's binary, fix the column format indicators.  We assume
+		 * the backend will consistently send either B or D, not a mix.
+		 */
+		if (binary)
+		{
+			for (i = 0; i < nfields; i++)
+				result->attDescs[i].format = 1;
+		}
 	}
 	tup = conn->curTuple;
 
@@ -778,6 +792,8 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 {
 	PGresult   *res;
 	PQExpBufferData workBuf;
+	char	   *startp;
+	char	   *splitp;
 
 	/*
 	 * Since the message might be pretty long, we create a temporary
@@ -801,18 +817,62 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	res->errMsg = pqResultStrdup(res, workBuf.data);
 
 	/*
+	 * Break the message into fields.  We can't do very much here, but we
+	 * can split the severity code off, and remove trailing newlines.  Also,
+	 * we use the heuristic that the primary message extends only to the
+	 * first newline --- anything after that is detail message.  (In some
+	 * cases it'd be better classed as hint, but we can hardly be expected
+	 * to guess that here.)
+	 */
+	while (workBuf.len > 0 && workBuf.data[workBuf.len-1] == '\n')
+		workBuf.data[--workBuf.len] = '\0';
+	splitp = strstr(workBuf.data, ":  ");
+	if (splitp)
+	{
+		/* what comes before the colon is severity */
+		*splitp = '\0';
+		pqSaveMessageField(res, 'S', workBuf.data);
+		startp = splitp + 3;
+	}
+	else
+	{
+		/* can't find a colon?  oh well... */
+		startp = workBuf.data;
+	}
+	splitp = strchr(startp, '\n');
+	if (splitp)
+	{
+		/* what comes before the newline is primary message */
+		*splitp++ = '\0';
+		pqSaveMessageField(res, 'M', startp);
+		/* the rest is detail; strip any leading whitespace */
+		while (*splitp && isspace((unsigned char) *splitp))
+			splitp++;
+		pqSaveMessageField(res, 'D', splitp);
+	}
+	else
+	{
+		/* single-line message, so all primary */
+		pqSaveMessageField(res, 'M', startp);
+	}
+
+	/*
 	 * Either save error as current async result, or just emit the notice.
+	 * Also, if it's an error and we were in a transaction block, assume
+	 * the server has now gone to error-in-transaction state.
 	 */
 	if (isError)
 	{
 		pqClearAsyncResult(conn);
 		conn->result = res;
 		resetPQExpBuffer(&conn->errorMessage);
-		appendPQExpBufferStr(&conn->errorMessage, workBuf.data);
+		appendPQExpBufferStr(&conn->errorMessage, res->errMsg);
+		if (conn->xactStatus == PQTRANS_INTRANS)
+			conn->xactStatus = PQTRANS_INERROR;
 	}
 	else
 	{
-		PGDONOTICE(conn, workBuf.data);
+		(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
 		PQclear(res);
 	}
 
@@ -820,6 +880,37 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	return 0;
 }
 
+/*
+ * checkXactStatus - attempt to track transaction-block status of server
+ *
+ * This is called each time we receive a command-complete message.  By
+ * watching for messages from BEGIN/COMMIT/ROLLBACK commands, we can do
+ * a passable job of tracking the server's xact status.  BUT: this does
+ * not work at all on 7.3 servers with AUTOCOMMIT OFF.  (Man, was that
+ * feature ever a mistake.)  Caveat user.
+ *
+ * The tags known here are all those used as far back as 7.0; is it worth
+ * adding those from even-older servers?
+ */
+static void
+checkXactStatus(PGconn *conn, const char *cmdTag)
+{
+	if (strcmp(cmdTag, "BEGIN") == 0)
+		conn->xactStatus = PQTRANS_INTRANS;
+	else if (strcmp(cmdTag, "COMMIT") == 0)
+		conn->xactStatus = PQTRANS_IDLE;
+	else if (strcmp(cmdTag, "ROLLBACK") == 0)
+		conn->xactStatus = PQTRANS_IDLE;
+	else if (strcmp(cmdTag, "START TRANSACTION") == 0) /* 7.3 only */
+		conn->xactStatus = PQTRANS_INTRANS;
+	/*
+	 * Normally we get into INERROR state by detecting an Error message.
+	 * However, if we see one of these tags then we know for sure the
+	 * server is in abort state ...
+	 */
+	else if (strcmp(cmdTag, "*ABORT STATE*") == 0) /* pre-7.3 only */
+		conn->xactStatus = PQTRANS_INERROR;
+}
 
 /*
  * Attempt to read a Notify response message.
@@ -832,6 +923,7 @@ static int
 getNotify(PGconn *conn)
 {
 	int			be_pid;
+	int			nmlen;
 	PGnotify   *newNotify;
 
 	if (pqGetInt(&be_pid, 4, conn))
@@ -844,17 +936,97 @@ getNotify(PGconn *conn)
 	 * can all be freed at once.  We don't use NAMEDATALEN because we
 	 * don't want to tie this interface to a specific server name length.
 	 */
-	newNotify = (PGnotify *) malloc(sizeof(PGnotify) +
-									strlen(conn->workBuffer.data) +1);
+	nmlen = strlen(conn->workBuffer.data);
+	newNotify = (PGnotify *) malloc(sizeof(PGnotify) + nmlen + 1);
 	if (newNotify)
 	{
 		newNotify->relname = (char *) newNotify + sizeof(PGnotify);
 		strcpy(newNotify->relname, conn->workBuffer.data);
+		/* fake up an empty-string extra field */
+		newNotify->extra = newNotify->relname + nmlen;
 		newNotify->be_pid = be_pid;
 		DLAddTail(conn->notifyList, DLNewElem(newNotify));
 	}
 
 	return 0;
+}
+
+
+/*
+ * PQgetCopyData - read a row of data from the backend during COPY OUT
+ *
+ * If successful, sets *buffer to point to a malloc'd row of data, and
+ * returns row length (always > 0) as result.
+ * Returns 0 if no row available yet (only possible if async is true),
+ * -1 if end of copy (consult PQgetResult), or -2 if error (consult
+ * PQerrorMessage).
+ */
+int
+pqGetCopyData2(PGconn *conn, char **buffer, int async)
+{
+	bool		found;
+	int			msgLength;
+
+	for (;;)
+	{
+		/*
+		 * Do we have a complete line of data?
+		 */
+		conn->inCursor = conn->inStart;
+		found = false;
+		while (conn->inCursor < conn->inEnd)
+		{
+			char		c = conn->inBuffer[conn->inCursor++];
+
+			if (c == '\n')
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			goto nodata;
+		msgLength = conn->inCursor - conn->inStart;
+
+		/*
+		 * If it's the end-of-data marker, consume it, exit COPY_OUT mode,
+		 * and let caller read status with PQgetResult().
+		 */
+		if (msgLength == 3 &&
+			strncmp(&conn->inBuffer[conn->inStart], "\\.\n", 3) == 0)
+		{
+			conn->inStart = conn->inCursor;
+			conn->asyncStatus = PGASYNC_BUSY;
+			return -1;
+		}
+
+		/*
+		 * Pass the line back to the caller.
+		 */
+		*buffer = (char *) malloc(msgLength + 1);
+		if (*buffer == NULL)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("out of memory\n"));
+			return -2;
+		}
+		memcpy(*buffer, &conn->inBuffer[conn->inStart], msgLength);
+		(*buffer)[msgLength] = '\0'; /* Add terminating null */
+
+		/* Mark message consumed */
+		conn->inStart = conn->inCursor;
+
+		return msgLength;
+
+	nodata:
+		/* Don't block if async read requested */
+		if (async)
+			return 0;
+		/* Need to load more data */
+		if (pqWait(TRUE, FALSE, conn) ||
+			pqReadData(conn) < 0)
+			return -2;
+	}
 }
 
 
@@ -1020,7 +1192,7 @@ pqEndcopy2(PGconn *conn)
 	if (conn->errorMessage.len > 0)
 		PGDONOTICE(conn, conn->errorMessage.data);
 
-	PGDONOTICE(conn, libpq_gettext("lost synchronization with server, resetting connection\n"));
+	PGDONOTICE(conn, libpq_gettext("lost synchronization with server, resetting connection"));
 
 	/*
 	 * Users doing non-blocking connections need to handle the reset

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.249 2003/06/20 04:09:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.250 2003/06/21 21:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,6 +176,7 @@ static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
+static void defaultNoticeReceiver(void *arg, const PGresult *res);
 static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
@@ -1804,11 +1805,14 @@ makeEmptyPGconn(void)
 	/* Zero all pointers and booleans */
 	MemSet((char *) conn, 0, sizeof(PGconn));
 
-	conn->noticeHook = defaultNoticeProcessor;
+	conn->noticeHooks.noticeRec = defaultNoticeReceiver;
+	conn->noticeHooks.noticeProc = defaultNoticeProcessor;
 	conn->status = CONNECTION_BAD;
 	conn->asyncStatus = PGASYNC_IDLE;
+	conn->xactStatus = PQTRANS_IDLE;
 	conn->setenv_state = SETENV_STATE_IDLE;
 	conn->client_encoding = PG_SQL_ASCII;
+	conn->verbosity = PQERRORS_DEFAULT;
 	conn->notifyList = DLNewList();
 	conn->sock = -1;
 #ifdef USE_SSL
@@ -1850,7 +1854,6 @@ makeEmptyPGconn(void)
 /*
  * freePGconn
  *	 - free the PGconn data structure
- *
  */
 static void
 freePGconn(PGconn *conn)
@@ -1899,9 +1902,9 @@ freePGconn(PGconn *conn)
 }
 
 /*
-   closePGconn
-	 - properly close a connection to the backend
-*/
+ * closePGconn
+ *	 - properly close a connection to the backend
+ */
 static void
 closePGconn(PGconn *conn)
 {
@@ -2662,6 +2665,41 @@ PQstatus(const PGconn *conn)
 	return conn->status;
 }
 
+PGTransactionStatusType
+PQtransactionStatus(const PGconn *conn)
+{
+	if (!conn || conn->status != CONNECTION_OK)
+		return PQTRANS_UNKNOWN;
+	if (conn->asyncStatus != PGASYNC_IDLE)
+		return PQTRANS_ACTIVE;
+	return conn->xactStatus;
+}
+
+const char *
+PQparameterStatus(const PGconn *conn, const char *paramName)
+{
+	const pgParameterStatus *pstatus;
+
+	if (!conn || !paramName)
+		return NULL;
+	for (pstatus = conn->pstatus; pstatus != NULL; pstatus = pstatus->next)
+	{
+		if (strcmp(pstatus->name, paramName) == 0)
+			return pstatus->value;
+	}
+	return NULL;
+}
+
+int
+PQprotocolVersion(const PGconn *conn)
+{
+	if (!conn)
+		return 0;
+	if (conn->status == CONNECTION_BAD)
+		return 0;
+	return PG_PROTOCOL_MAJOR(conn->pversion);
+}
+
 char *
 PQerrorMessage(const PGconn *conn)
 {
@@ -2731,11 +2769,22 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	return (status);
 }
 
+PGVerbosity
+PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity)
+{
+	PGVerbosity		old;
+
+	if (!conn)
+		return PQERRORS_DEFAULT;
+	old = conn->verbosity;
+	conn->verbosity = verbosity;
+	return old;
+}
+
 void
 PQtrace(PGconn *conn, FILE *debug_port)
 {
-	if (conn == NULL ||
-		conn->status == CONNECTION_BAD)
+	if (conn == NULL)
 		return;
 	PQuntrace(conn);
 	conn->Pfdebug = debug_port;
@@ -2744,7 +2793,6 @@ PQtrace(PGconn *conn, FILE *debug_port)
 void
 PQuntrace(PGconn *conn)
 {
-	/* note: better allow untrace even when connection bad */
 	if (conn == NULL)
 		return;
 	if (conn->Pfdebug)
@@ -2752,6 +2800,23 @@ PQuntrace(PGconn *conn)
 		fflush(conn->Pfdebug);
 		conn->Pfdebug = NULL;
 	}
+}
+
+PQnoticeReceiver
+PQsetNoticeReceiver(PGconn *conn, PQnoticeReceiver proc, void *arg)
+{
+	PQnoticeReceiver old;
+
+	if (conn == NULL)
+		return NULL;
+
+	old = conn->noticeHooks.noticeRec;
+	if (proc)
+	{
+		conn->noticeHooks.noticeRec = proc;
+		conn->noticeHooks.noticeRecArg = arg;
+	}
+	return old;
 }
 
 PQnoticeProcessor
@@ -2762,22 +2827,35 @@ PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 	if (conn == NULL)
 		return NULL;
 
-	old = conn->noticeHook;
+	old = conn->noticeHooks.noticeProc;
 	if (proc)
 	{
-		conn->noticeHook = proc;
-		conn->noticeArg = arg;
+		conn->noticeHooks.noticeProc = proc;
+		conn->noticeHooks.noticeProcArg = arg;
 	}
 	return old;
 }
 
 /*
- * The default notice/error message processor just prints the
+ * The default notice message receiver just gets the standard notice text
+ * and sends it to the notice processor.  This two-level setup exists
+ * mostly for backwards compatibility; perhaps we should deprecate use of
+ * PQsetNoticeProcessor?
+ */
+static void
+defaultNoticeReceiver(void *arg, const PGresult *res)
+{
+	(void) arg;					/* not used */
+	(*res->noticeHooks.noticeProc) (res->noticeHooks.noticeProcArg,
+									PQresultErrorMessage(res));
+}
+
+/*
+ * The default notice message processor just prints the
  * message on stderr.  Applications can override this if they
  * want the messages to go elsewhere (a window, for example).
  * Note that simply discarding notices is probably a bad idea.
  */
-
 static void
 defaultNoticeProcessor(void *arg, const char *message)
 {

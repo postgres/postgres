@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.138 2003/06/12 01:17:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.139 2003/06/21 21:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,10 @@ char	   *const pgresStatus[] = {
 
 
 
+static bool PQsendQueryStart(PGconn *conn);
 static void parseInput(PGconn *conn);
+static bool PQexecStart(PGconn *conn);
+static PGresult *PQexecFinish(PGconn *conn);
 
 
 /* ----------------
@@ -137,16 +140,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->cmdStatus[0] = '\0';
 	result->binary = 0;
 	result->errMsg = NULL;
-	result->errSeverity = NULL;
-	result->errCode = NULL;
-	result->errPrimary = NULL;
-	result->errDetail = NULL;
-	result->errHint = NULL;
-	result->errPosition = NULL;
-	result->errContext = NULL;
-	result->errFilename = NULL;
-	result->errLineno = NULL;
-	result->errFuncname = NULL;
+	result->errFields = NULL;
 	result->null_field[0] = '\0';
 	result->curBlock = NULL;
 	result->curOffset = 0;
@@ -155,8 +149,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	if (conn)
 	{
 		/* copy connection data we might need for operations on PGresult */
-		result->noticeHook = conn->noticeHook;
-		result->noticeArg = conn->noticeArg;
+		result->noticeHooks = conn->noticeHooks;
 		result->client_encoding = conn->client_encoding;
 
 		/* consider copying conn's errorMessage */
@@ -177,9 +170,11 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	else
 	{
 		/* defaults... */
-		result->noticeHook = NULL;
-		result->noticeArg = NULL;
-		result->client_encoding = 0;	/* should be SQL_ASCII */
+		result->noticeHooks.noticeRec = NULL;
+		result->noticeHooks.noticeRecArg = NULL;
+		result->noticeHooks.noticeProc = NULL;
+		result->noticeHooks.noticeProcArg = NULL;
+		result->client_encoding = PG_SQL_ASCII;
 	}
 
 	return result;
@@ -445,6 +440,41 @@ pqPrepareAsyncResult(PGconn *conn)
 }
 
 /*
+ * pqInternalNotice - helper routine for internally-generated notices
+ *
+ * The supplied text is taken as primary message (ie., it should not include
+ * a trailing newline, and should not be more than one line).
+ */
+void
+pqInternalNotice(const PGNoticeHooks *hooks, const char *msgtext)
+{
+	PGresult   *res;
+
+	if (hooks->noticeRec == NULL)
+		return;					/* nobody home? */
+
+	/* Make a PGresult to pass to the notice receiver */
+	res = PQmakeEmptyPGresult(NULL, PGRES_NONFATAL_ERROR);
+	res->noticeHooks = *hooks;
+	/*
+	 * Set up fields of notice.
+	 */
+	pqSaveMessageField(res, 'M', msgtext);
+	pqSaveMessageField(res, 'S', libpq_gettext("NOTICE"));
+	/* XXX should provide a SQLSTATE too? */
+	/*
+	 * Result text is always just the primary message + newline.
+	 */
+	res->errMsg = (char *) pqResultAlloc(res, strlen(msgtext) + 2, FALSE);
+	sprintf(res->errMsg, "%s\n", msgtext);
+	/*
+	 * Pass to receiver, then free it.
+	 */
+	(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+	PQclear(res);
+}
+
+/*
  * pqAddTuple
  *	  add a row pointer to the PGresult structure, growing it if necessary
  *	  Returns TRUE if OK, FALSE if not enough memory to add the row
@@ -484,6 +514,25 @@ pqAddTuple(PGresult *res, PGresAttValue *tup)
 	return TRUE;
 }
 
+/*
+ * pqSaveMessageField - save one field of an error or notice message
+ */
+void
+pqSaveMessageField(PGresult *res, char code, const char *value)
+{
+	PGMessageField *pfield;
+
+	pfield = (PGMessageField *)
+		pqResultAlloc(res,
+					  sizeof(PGMessageField) + strlen(value),
+					  TRUE);
+	if (!pfield)
+		return;					/* out of memory? */
+	pfield->code = code;
+	strcpy(pfield->contents, value);
+	pfield->next = res->errFields;
+	res->errFields = pfield;
+}
 
 /*
  * pqSaveParameterStatus - remember parameter status sent by backend
@@ -543,26 +592,6 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 		StrNCpy(conn->sversion, value, sizeof(conn->sversion));
 }
 
-/*
- * pqGetParameterStatus - fetch parameter value, if available
- *
- * Returns NULL if info not available
- *
- * XXX this probably should be exported for client use
- */
-const char *
-pqGetParameterStatus(PGconn *conn, const char *name)
-{
-	pgParameterStatus *pstatus;
-
-	for (pstatus = conn->pstatus; pstatus != NULL; pstatus = pstatus->next)
-	{
-		if (strcmp(pstatus->name, name) == 0)
-			return pstatus->value;
-	}
-	return NULL;
-}
-
 
 /*
  * PQsendQuery
@@ -574,11 +603,8 @@ pqGetParameterStatus(PGconn *conn, const char *name)
 int
 PQsendQuery(PGconn *conn, const char *query)
 {
-	if (!conn)
+	if (!PQsendQueryStart(conn))
 		return 0;
-
-	/* clear the error string */
-	resetPQExpBuffer(&conn->errorMessage);
 
 	if (!query)
 	{
@@ -586,25 +612,6 @@ PQsendQuery(PGconn *conn, const char *query)
 					libpq_gettext("command string is a null pointer\n"));
 		return 0;
 	}
-
-	/* Don't try to send if we know there's no live connection. */
-	if (conn->status != CONNECTION_OK)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("no connection to the server\n"));
-		return 0;
-	}
-	/* Can't send while already busy, either. */
-	if (conn->asyncStatus != PGASYNC_IDLE)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-			  libpq_gettext("another command is already in progress\n"));
-		return 0;
-	}
-
-	/* initialize async result-accumulation state */
-	conn->result = NULL;
-	conn->curTuple = NULL;
 
 	/* construct the outgoing Query message */
 	if (pqPutMsgStart('Q', false, conn) < 0 ||
@@ -617,7 +624,7 @@ PQsendQuery(PGconn *conn, const char *query)
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're
-	 * unable to send it all; PQconsumeInput() will do any additional flushing
+	 * unable to send it all; PQgetResult() will do any additional flushing
 	 * needed.
 	 */
 	if (pqFlush(conn) < 0)
@@ -629,6 +636,194 @@ PQsendQuery(PGconn *conn, const char *query)
 	/* OK, it's launched! */
 	conn->asyncStatus = PGASYNC_BUSY;
 	return 1;
+}
+
+/*
+ * PQsendQueryParams
+ *		Like PQsendQuery, but use 3.0 protocol so we can pass parameters
+ */
+int
+PQsendQueryParams(PGconn *conn,
+				  const char *command,
+				  int nParams,
+				  const Oid *paramTypes,
+				  const char * const *paramValues,
+				  const int *paramLengths,
+				  const int *paramFormats,
+				  int resultFormat)
+{
+	int			i;
+
+	if (!PQsendQueryStart(conn))
+		return 0;
+
+	/* This isn't gonna work on a 2.0 server */
+	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+				libpq_gettext("function requires at least 3.0 protocol\n"));
+		return 0;
+	}
+
+	if (!command)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("command string is a null pointer\n"));
+		return 0;
+	}
+
+	/*
+	 * We will send Parse, Bind, Describe Portal, Execute, Sync, using
+	 * unnamed statement and portal.
+	 */
+
+	/* construct the Parse message */
+	if (pqPutMsgStart('P', false, conn) < 0 ||
+		pqPuts("", conn) < 0 ||
+		pqPuts(command, conn) < 0)
+		goto sendFailed;
+	if (nParams > 0 && paramTypes)
+	{
+		if (pqPutInt(nParams, 2, conn) < 0)
+			goto sendFailed;
+		for (i = 0; i < nParams; i++)
+		{
+			if (pqPutInt(paramTypes[i], 4, conn) < 0)
+				goto sendFailed;
+		}
+	}
+	else
+	{
+		if (pqPutInt(0, 2, conn) < 0)
+			goto sendFailed;
+	}
+	if (pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/* construct the Bind message */
+	if (pqPutMsgStart('B', false, conn) < 0 ||
+		pqPuts("", conn) < 0 ||
+		pqPuts("", conn) < 0)
+		goto sendFailed;
+	if (nParams > 0 && paramFormats)
+	{
+		if (pqPutInt(nParams, 2, conn) < 0)
+			goto sendFailed;
+		for (i = 0; i < nParams; i++)
+		{
+			if (pqPutInt(paramFormats[i], 2, conn) < 0)
+				goto sendFailed;
+		}
+	}
+	else
+	{
+		if (pqPutInt(0, 2, conn) < 0)
+			goto sendFailed;
+	}
+	if (pqPutInt(nParams, 2, conn) < 0)
+		goto sendFailed;
+	for (i = 0; i < nParams; i++)
+	{
+		if (paramValues && paramValues[i])
+		{
+			int		nbytes;
+
+			if (paramFormats && paramFormats[i] != 0)
+			{
+				/* binary parameter */
+				nbytes = paramLengths[i];
+			}
+			else
+			{
+				/* text parameter, do not use paramLengths */
+				nbytes = strlen(paramValues[i]);
+			}
+			if (pqPutInt(nbytes, 4, conn) < 0 ||
+				pqPutnchar(paramValues[i], nbytes, conn) < 0)
+				goto sendFailed;
+		}
+		else
+		{
+			/* take the param as NULL */
+			if (pqPutInt(-1, 4, conn) < 0)
+				goto sendFailed;
+		}
+	}
+	if (pqPutInt(1, 2, conn) < 0 ||
+		pqPutInt(resultFormat, 2, conn))
+		goto sendFailed;
+	if (pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/* construct the Describe Portal message */
+	if (pqPutMsgStart('D', false, conn) < 0 ||
+		pqPutc('P', conn) < 0 ||
+		pqPuts("", conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/* construct the Execute message */
+	if (pqPutMsgStart('E', false, conn) < 0 ||
+		pqPuts("", conn) < 0 ||
+		pqPutInt(0, 4, conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/* construct the Sync message */
+	if (pqPutMsgStart('S', false, conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/*
+	 * Give the data a push.  In nonblock mode, don't complain if we're
+	 * unable to send it all; PQgetResult() will do any additional flushing
+	 * needed.
+	 */
+	if (pqFlush(conn) < 0)
+		goto sendFailed;
+
+	/* OK, it's launched! */
+	conn->asyncStatus = PGASYNC_BUSY;
+	return 1;
+
+sendFailed:
+	pqHandleSendFailure(conn);
+	return 0;
+}
+
+/*
+ * Common startup code for PQsendQuery and PQsendQueryParams
+ */
+static bool
+PQsendQueryStart(PGconn *conn)
+{
+	if (!conn)
+		return false;
+
+	/* clear the error string */
+	resetPQExpBuffer(&conn->errorMessage);
+
+	/* Don't try to send if we know there's no live connection. */
+	if (conn->status != CONNECTION_OK)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("no connection to the server\n"));
+		return false;
+	}
+	/* Can't send while already busy, either. */
+	if (conn->asyncStatus != PGASYNC_IDLE)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			  libpq_gettext("another command is already in progress\n"));
+		return false;
+	}
+
+	/* initialize async result-accumulation state */
+	conn->result = NULL;
+	conn->curTuple = NULL;
+
+	/* ready to send command message */
+	return true;
 }
 
 /*
@@ -746,8 +941,24 @@ PQgetResult(PGconn *conn)
 	/* If not ready to return something, block until we are. */
 	while (conn->asyncStatus == PGASYNC_BUSY)
 	{
+		int		flushResult;
+
+		/*
+		 * If data remains unsent, send it.  Else we might be waiting
+		 * for the result of a command the backend hasn't even got yet.
+		 */
+		while ((flushResult = pqFlush(conn)) > 0)
+		{
+			if (pqWait(FALSE, TRUE, conn))
+			{
+				flushResult = -1;
+				break;
+			}
+		}
+
 		/* Wait for some more data, and load it. */
-		if (pqWait(TRUE, FALSE, conn) ||
+		if (flushResult ||
+			pqWait(TRUE, FALSE, conn) ||
 			pqReadData(conn) < 0)
 		{
 			/*
@@ -758,6 +969,7 @@ PQgetResult(PGconn *conn)
 			conn->asyncStatus = PGASYNC_IDLE;
 			return pqPrepareAsyncResult(conn);
 		}
+
 		/* Parse it. */
 		parseInput(conn);
 	}
@@ -774,10 +986,16 @@ PQgetResult(PGconn *conn)
 			conn->asyncStatus = PGASYNC_BUSY;
 			break;
 		case PGASYNC_COPY_IN:
-			res = PQmakeEmptyPGresult(conn, PGRES_COPY_IN);
+			if (conn->result && conn->result->resultStatus == PGRES_COPY_IN)
+				res = pqPrepareAsyncResult(conn);
+			else
+				res = PQmakeEmptyPGresult(conn, PGRES_COPY_IN);
 			break;
 		case PGASYNC_COPY_OUT:
-			res = PQmakeEmptyPGresult(conn, PGRES_COPY_OUT);
+			if (conn->result && conn->result->resultStatus == PGRES_COPY_OUT)
+				res = pqPrepareAsyncResult(conn);
+			else
+				res = PQmakeEmptyPGresult(conn, PGRES_COPY_OUT);
 			break;
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
@@ -806,18 +1024,46 @@ PQgetResult(PGconn *conn)
 PGresult *
 PQexec(PGconn *conn, const char *query)
 {
-	PGresult   *result;
-	PGresult   *lastResult;
-	bool		savedblocking;
-
-	/*
-	 * we assume anyone calling PQexec wants blocking behaviour, we force
-	 * the blocking status of the connection to blocking for the duration
-	 * of this function and restore it on return
-	 */
-	savedblocking = pqIsnonblocking(conn);
-	if (PQsetnonblocking(conn, FALSE) == -1)
+	if (!PQexecStart(conn))
 		return NULL;
+	if (!PQsendQuery(conn, query))
+		return NULL;
+	return PQexecFinish(conn);
+}
+
+/*
+ * PQexecParams
+ *		Like PQexec, but use 3.0 protocol so we can pass parameters
+ */
+PGresult *
+PQexecParams(PGconn *conn,
+			 const char *command,
+			 int nParams,
+			 const Oid *paramTypes,
+			 const char * const *paramValues,
+			 const int *paramLengths,
+			 const int *paramFormats,
+			 int resultFormat)
+{
+	if (!PQexecStart(conn))
+		return NULL;
+	if (!PQsendQueryParams(conn, command,
+						   nParams, paramTypes, paramValues, paramLengths,
+						   paramFormats, resultFormat))
+		return NULL;
+	return PQexecFinish(conn);
+}
+
+/*
+ * Common code for PQexec and PQexecParams: prepare to send command
+ */
+static bool
+PQexecStart(PGconn *conn)
+{
+	PGresult   *result;
+
+	if (!conn)
+		return false;
 
 	/*
 	 * Silently discard any prior query result that application didn't
@@ -832,15 +1078,23 @@ PQexec(PGconn *conn, const char *query)
 			PQclear(result);
 			printfPQExpBuffer(&conn->errorMessage,
 				 libpq_gettext("COPY state must be terminated first\n"));
-			/* restore blocking status */
-			goto errout;
+			return false;
 		}
 		PQclear(result);
 	}
 
-	/* OK to send the message */
-	if (!PQsendQuery(conn, query))
-		goto errout;			/* restore blocking status */
+	/* OK to send a command */
+	return true;
+}
+
+/*
+ * Common code for PQexec and PQexecParams: wait for command result
+ */
+static PGresult *
+PQexecFinish(PGconn *conn)
+{
+	PGresult   *result;
+	PGresult   *lastResult;
 
 	/*
 	 * For backwards compatibility, return the last result if there are
@@ -848,7 +1102,7 @@ PQexec(PGconn *conn, const char *query)
 	 * error result.
 	 *
 	 * We have to stop if we see copy in/out, however. We will resume parsing
-	 * when application calls PQendcopy.
+	 * after application performs the data transfer.
 	 */
 	lastResult = NULL;
 	while ((result = PQgetResult(conn)) != NULL)
@@ -874,14 +1128,7 @@ PQexec(PGconn *conn, const char *query)
 			break;
 	}
 
-	if (PQsetnonblocking(conn, savedblocking) == -1)
-		return NULL;
 	return lastResult;
-
-errout:
-	if (PQsetnonblocking(conn, savedblocking) == -1)
-		return NULL;
-	return NULL;
 }
 
 /*
@@ -894,7 +1141,6 @@ errout:
  *
  * the CALLER is responsible for FREE'ing the structure returned
  */
-
 PGnotify *
 PQnotifies(PGconn *conn)
 {
@@ -914,6 +1160,156 @@ PQnotifies(PGconn *conn)
 	event = (PGnotify *) DLE_VAL(e);
 	DLFreeElem(e);
 	return event;
+}
+
+/*
+ * PQputCopyData - send some data to the backend during COPY IN
+ *
+ * Returns 1 if successful, 0 if data could not be sent (only possible
+ * in nonblock mode), or -1 if an error occurs.
+ */
+int
+PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
+{
+	if (!conn)
+		return -1;
+	if (conn->asyncStatus != PGASYNC_COPY_IN)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("no COPY in progress\n"));
+		return -1;
+	}
+	if (nbytes > 0)
+	{
+		/*
+		 * Try to flush any previously sent data in preference to growing
+		 * the output buffer.  If we can't enlarge the buffer enough to hold
+		 * the data, return 0 in the nonblock case, else hard error.
+		 * (For simplicity, always assume 5 bytes of overhead even in
+		 * protocol 2.0 case.)
+		 */
+		if ((conn->outBufSize - conn->outCount - 5) < nbytes)
+		{
+			if (pqFlush(conn) < 0)
+				return -1;
+			if (pqCheckOutBufferSpace(conn->outCount + 5 + nbytes, conn))
+				return pqIsnonblocking(conn) ? 0 : -1;
+		}
+		/* Send the data (too simple to delegate to fe-protocol files) */
+		if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+		{
+			if (pqPutMsgStart('d', false, conn) < 0 ||
+				pqPutnchar(buffer, nbytes, conn) < 0 ||
+				pqPutMsgEnd(conn) < 0)
+				return -1;
+		}
+		else
+		{
+			if (pqPutMsgStart(0, false, conn) < 0 ||
+				pqPutnchar(buffer, nbytes, conn) < 0 ||
+				pqPutMsgEnd(conn) < 0)
+				return -1;
+		}
+	}
+	return 1;
+}
+
+/*
+ * PQputCopyEnd - send EOF indication to the backend during COPY IN
+ *
+ * After calling this, use PQgetResult() to check command completion status.
+ *
+ * Returns 1 if successful, 0 if data could not be sent (only possible
+ * in nonblock mode), or -1 if an error occurs.
+ */
+int
+PQputCopyEnd(PGconn *conn, const char *errormsg)
+{
+	if (!conn)
+		return -1;
+	if (conn->asyncStatus != PGASYNC_COPY_IN)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("no COPY in progress\n"));
+		return -1;
+	}
+	/*
+	 * Send the COPY END indicator.  This is simple enough that we don't
+	 * bother delegating it to the fe-protocol files.
+	 */
+	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+	{
+		if (errormsg)
+		{
+			/* Send COPY FAIL */
+			if (pqPutMsgStart('f', false, conn) < 0 ||
+				pqPuts(errormsg, conn) < 0 ||
+				pqPutMsgEnd(conn) < 0)
+				return -1;
+		}
+		else
+		{
+			/* Send COPY DONE */
+			if (pqPutMsgStart('c', false, conn) < 0 ||
+				pqPutMsgEnd(conn) < 0)
+				return -1;
+		}
+	}
+	else
+	{
+		if (errormsg)
+		{
+			/* Ooops, no way to do this in 2.0 */
+			printfPQExpBuffer(&conn->errorMessage,
+				libpq_gettext("function requires at least 3.0 protocol\n"));
+			return -1;
+		}
+		else
+		{
+			/* Send old-style end-of-data marker */
+			if (pqPutMsgStart(0, false, conn) < 0 ||
+				pqPuts("\\.\n", conn) < 0 ||
+				pqPutMsgEnd(conn) < 0)
+				return -1;
+		}
+	}
+
+	/* Return to active duty */
+	conn->asyncStatus = PGASYNC_BUSY;
+	resetPQExpBuffer(&conn->errorMessage);
+
+	/* Try to flush data */
+	if (pqFlush(conn) < 0)
+		return -1;
+
+	return 1;
+}
+
+/*
+ * PQgetCopyData - read a row of data from the backend during COPY OUT
+ *
+ * If successful, sets *buffer to point to a malloc'd row of data, and
+ * returns row length (always > 0) as result.
+ * Returns 0 if no row available yet (only possible if async is true),
+ * -1 if end of copy (consult PQgetResult), or -2 if error (consult
+ * PQerrorMessage).
+ */
+int
+PQgetCopyData(PGconn *conn, char **buffer, int async)
+{
+	*buffer = NULL;				/* for all failure cases */
+	if (!conn)
+		return -2;
+	if (conn->asyncStatus != PGASYNC_COPY_OUT)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("no COPY in progress\n"));
+		return -2;
+	}
+	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+		return pqGetCopyData3(conn, buffer, async);
+	else
+		return pqGetCopyData2(conn, buffer, async);
 }
 
 /*
@@ -1002,11 +1398,12 @@ PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
 }
 
 /*
- * PQputline -- sends a string to the backend.
+ * PQputline -- sends a string to the backend during COPY IN.
  * Returns 0 if OK, EOF if not.
  *
- * This exists to support "COPY <rel> from stdin".  The backend will ignore
- * the string if not doing COPY.
+ * This is deprecated primarily because the return convention doesn't allow
+ * caller to tell the difference between a hard error and a nonblock-mode
+ * send failure.
  */
 int
 PQputline(PGconn *conn, const char *s)
@@ -1021,33 +1418,21 @@ PQputline(PGconn *conn, const char *s)
 int
 PQputnbytes(PGconn *conn, const char *buffer, int nbytes)
 {
-	if (!conn || conn->sock < 0)
+	if (PQputCopyData(conn, buffer, nbytes) > 0)
+		return 0;
+	else
 		return EOF;
-	if (nbytes > 0)
-	{
-		/* This is too simple to bother with separate subroutines */
-		if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		{
-			if (pqPutMsgStart('d', false, conn) < 0 ||
-				pqPutnchar(buffer, nbytes, conn) < 0 ||
-				pqPutMsgEnd(conn) < 0)
-				return EOF;
-		}
-		else
-		{
-			if (pqPutMsgStart(0, false, conn) < 0 ||
-				pqPutnchar(buffer, nbytes, conn) < 0 ||
-				pqPutMsgEnd(conn) < 0)
-				return EOF;
-		}
-	}
-	return 0;
 }
 
 /*
  * PQendcopy
  *		After completing the data transfer portion of a copy in/out,
  *		the application must call this routine to finish the command protocol.
+ *
+ * When using 3.0 protocol this is deprecated; it's cleaner to use PQgetResult
+ * to get the transfer status.  Note however that when using 2.0 protocol,
+ * recovering from a copy failure often requires a PQreset.  PQendcopy will
+ * take care of that, PQgetResult won't.
  *
  * RETURNS:
  *		0 on success
@@ -1133,7 +1518,7 @@ ExecStatusType
 PQresultStatus(const PGresult *res)
 {
 	if (!res)
-		return PGRES_NONFATAL_ERROR;
+		return PGRES_FATAL_ERROR;
 	return res->resultStatus;
 }
 
@@ -1151,6 +1536,21 @@ PQresultErrorMessage(const PGresult *res)
 	if (!res || !res->errMsg)
 		return "";
 	return res->errMsg;
+}
+
+char *
+PQresultErrorField(const PGresult *res, int fieldcode)
+{
+	PGMessageField *pfield;
+
+	if (!res)
+		return NULL;
+	for (pfield = res->errFields; pfield != NULL; pfield = pfield->next)
+	{
+		if (pfield->code == fieldcode)
+			return pfield->contents;
+	}
+	return NULL;
 }
 
 int
@@ -1191,13 +1591,10 @@ check_field_number(const PGresult *res, int field_num)
 		return FALSE;			/* no way to display error message... */
 	if (field_num < 0 || field_num >= res->numAttributes)
 	{
-		if (res->noticeHook)
-		{
-			snprintf(noticeBuf, sizeof(noticeBuf),
-			   libpq_gettext("column number %d is out of range 0..%d\n"),
-					 field_num, res->numAttributes - 1);
-			PGDONOTICE(res, noticeBuf);
-		}
+		snprintf(noticeBuf, sizeof(noticeBuf),
+				 libpq_gettext("column number %d is out of range 0..%d"),
+				 field_num, res->numAttributes - 1);
+		PGDONOTICE(res, noticeBuf);
 		return FALSE;
 	}
 	return TRUE;
@@ -1213,32 +1610,26 @@ check_tuple_field_number(const PGresult *res,
 		return FALSE;			/* no way to display error message... */
 	if (tup_num < 0 || tup_num >= res->ntups)
 	{
-		if (res->noticeHook)
-		{
-			snprintf(noticeBuf, sizeof(noticeBuf),
-				  libpq_gettext("row number %d is out of range 0..%d\n"),
-					 tup_num, res->ntups - 1);
-			PGDONOTICE(res, noticeBuf);
-		}
+		snprintf(noticeBuf, sizeof(noticeBuf),
+				 libpq_gettext("row number %d is out of range 0..%d"),
+				 tup_num, res->ntups - 1);
+		PGDONOTICE(res, noticeBuf);
 		return FALSE;
 	}
 	if (field_num < 0 || field_num >= res->numAttributes)
 	{
-		if (res->noticeHook)
-		{
-			snprintf(noticeBuf, sizeof(noticeBuf),
-			   libpq_gettext("column number %d is out of range 0..%d\n"),
-					 field_num, res->numAttributes - 1);
-			PGDONOTICE(res, noticeBuf);
-		}
+		snprintf(noticeBuf, sizeof(noticeBuf),
+				 libpq_gettext("column number %d is out of range 0..%d"),
+				 field_num, res->numAttributes - 1);
+		PGDONOTICE(res, noticeBuf);
 		return FALSE;
 	}
 	return TRUE;
 }
 
 /*
-   returns NULL if the field_num is invalid
-*/
+ * returns NULL if the field_num is invalid
+ */
 char *
 PQfname(const PGresult *res, int field_num)
 {
@@ -1251,8 +1642,8 @@ PQfname(const PGresult *res, int field_num)
 }
 
 /*
-   returns -1 on a bad field name
-*/
+ * returns -1 on a bad field name
+ */
 int
 PQfnumber(const PGresult *res, const char *field_name)
 {
@@ -1288,6 +1679,39 @@ PQfnumber(const PGresult *res, const char *field_name)
 	}
 	free(field_case);
 	return -1;
+}
+
+Oid
+PQftable(const PGresult *res, int field_num)
+{
+	if (!check_field_number(res, field_num))
+		return InvalidOid;
+	if (res->attDescs)
+		return res->attDescs[field_num].tableid;
+	else
+		return InvalidOid;
+}
+
+int
+PQftablecol(const PGresult *res, int field_num)
+{
+	if (!check_field_number(res, field_num))
+		return 0;
+	if (res->attDescs)
+		return res->attDescs[field_num].columnid;
+	else
+		return 0;
+}
+
+int
+PQfformat(const PGresult *res, int field_num)
+{
+	if (!check_field_number(res, field_num))
+		return 0;
+	if (res->attDescs)
+		return res->attDescs[field_num].format;
+	else
+		return 0;
 }
 
 Oid
@@ -1332,10 +1756,10 @@ PQcmdStatus(PGresult *res)
 }
 
 /*
-   PQoidStatus -
-	if the last command was an INSERT, return the oid string
-	if not, return ""
-*/
+ * PQoidStatus -
+ *	if the last command was an INSERT, return the oid string
+ *	if not, return ""
+ */
 char *
 PQoidStatus(const PGresult *res)
 {
@@ -1360,10 +1784,10 @@ PQoidStatus(const PGresult *res)
 }
 
 /*
-  PQoidValue -
-	a perhaps preferable form of the above which just returns
-	an Oid type
-*/
+ * PQoidValue -
+ *	a perhaps preferable form of the above which just returns
+ *	an Oid type
+ */
 Oid
 PQoidValue(const PGresult *res)
 {
@@ -1388,13 +1812,13 @@ PQoidValue(const PGresult *res)
 
 
 /*
-   PQcmdTuples -
-	If the last command was an INSERT/UPDATE/DELETE/MOVE/FETCH, return a
-	string containing the number of inserted/affected tuples. If not,
-	return "".
-
-	XXX: this should probably return an int
-*/
+ * PQcmdTuples -
+ *	If the last command was an INSERT/UPDATE/DELETE/MOVE/FETCH, return a
+ *	string containing the number of inserted/affected tuples. If not,
+ *	return "".
+ *
+ *	XXX: this should probably return an int
+ */
 char *
 PQcmdTuples(PGresult *res)
 {
@@ -1426,13 +1850,10 @@ PQcmdTuples(PGresult *res)
 
 	if (*p == 0)
 	{
-		if (res->noticeHook)
-		{
-			snprintf(noticeBuf, sizeof(noticeBuf),
-					 libpq_gettext("could not interpret result from server: %s\n"),
-					 res->cmdStatus);
-			PGDONOTICE(res, noticeBuf);
-		}
+		snprintf(noticeBuf, sizeof(noticeBuf),
+				 libpq_gettext("could not interpret result from server: %s"),
+				 res->cmdStatus);
+		PGDONOTICE(res, noticeBuf);
 		return "";
 	}
 
@@ -1440,15 +1861,9 @@ PQcmdTuples(PGresult *res)
 }
 
 /*
-   PQgetvalue:
-	return the value of field 'field_num' of row 'tup_num'
-
-	If res is binary, then the value returned is NOT a null-terminated
-	ASCII string, but the binary representation in the server's native
-	format.
-
-	if res is not binary, a null-terminated ASCII string is returned.
-*/
+ * PQgetvalue:
+ *	return the value of field 'field_num' of row 'tup_num'
+ */
 char *
 PQgetvalue(const PGresult *res, int tup_num, int field_num)
 {
@@ -1458,11 +1873,8 @@ PQgetvalue(const PGresult *res, int tup_num, int field_num)
 }
 
 /* PQgetlength:
-	 returns the length of a field value in bytes.	If res is binary,
-	 i.e. a result of a binary portal, then the length returned does
-	 NOT include the size field of the varlena.  (The data returned
-	 by PQgetvalue doesn't either.)
-*/
+ *	returns the actual length of a field value in bytes.
+ */
 int
 PQgetlength(const PGresult *res, int tup_num, int field_num)
 {
@@ -1475,8 +1887,8 @@ PQgetlength(const PGresult *res, int tup_num, int field_num)
 }
 
 /* PQgetisnull:
-	 returns the null status of a field value.
-*/
+ *	returns the null status of a field value.
+ */
 int
 PQgetisnull(const PGresult *res, int tup_num, int field_num)
 {
@@ -1489,16 +1901,17 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 }
 
 /* PQsetnonblocking:
-	 sets the PGconn's database connection non-blocking if the arg is TRUE
-	 or makes it non-blocking if the arg is FALSE, this will not protect
-	 you from PQexec(), you'll only be safe when using the non-blocking
-	 API
-	 Needs to be called only on a connected database connection.
-*/
-
+ *	sets the PGconn's database connection non-blocking if the arg is TRUE
+ *	or makes it non-blocking if the arg is FALSE, this will not protect
+ *	you from PQexec(), you'll only be safe when using the non-blocking API.
+ *	Needs to be called only on a connected database connection.
+ */
 int
 PQsetnonblocking(PGconn *conn, int arg)
 {
+	if (!conn || conn->status == CONNECTION_BAD)
+		return -1;
+
 	arg = (arg == TRUE) ? 1 : 0;
 	/* early out if the socket is already in the state requested */
 	if (arg == conn->nonblocking)
@@ -1520,9 +1933,10 @@ PQsetnonblocking(PGconn *conn, int arg)
 	return (0);
 }
 
-/* return the blocking status of the database connection, TRUE == nonblocking,
-	 FALSE == blocking
-*/
+/*
+ * return the blocking status of the database connection
+ *		TRUE == nonblocking, FALSE == blocking
+ */
 int
 PQisnonblocking(const PGconn *conn)
 {

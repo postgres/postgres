@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.1 2003/06/08 17:43:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.2 2003/06/21 21:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,8 @@ static int	getRowDescriptions(PGconn *conn);
 static int	getAnotherTuple(PGconn *conn, int msgLength);
 static int	getParameterStatus(PGconn *conn);
 static int	getNotify(PGconn *conn);
+static int	getCopyStart(PGconn *conn, ExecStatusType copytype);
+static int	getReadyForQuery(PGconn *conn);
 static int	build_startup_packet(const PGconn *conn, char *packet,
 								 const PQEnvironmentOption *options);
 
@@ -171,7 +173,7 @@ pqParseInput3(PGconn *conn)
 			else
 			{
 				snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-						 libpq_gettext("message type 0x%02x arrived from server while idle\n"),
+						 libpq_gettext("message type 0x%02x arrived from server while idle"),
 						 id);
 				PGDONOTICE(conn, noticeWorkspace);
 				/* Discard the unexpected message */
@@ -201,7 +203,7 @@ pqParseInput3(PGconn *conn)
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'Z':		/* backend is ready for new query */
-					if (pqGetc(&conn->xact_status, conn))
+					if (getReadyForQuery(conn))
 						return;
 					conn->asyncStatus = PGASYNC_IDLE;
 					break;
@@ -210,6 +212,11 @@ pqParseInput3(PGconn *conn)
 						conn->result = PQmakeEmptyPGresult(conn,
 													  PGRES_EMPTY_QUERY);
 					conn->asyncStatus = PGASYNC_READY;
+					break;
+				case '1':		/* Parse Complete */
+				case '2':		/* Bind Complete */
+				case '3':		/* Close Complete */
+					/* Nothing to do for these message types */
 					break;
 				case 'S':		/* parameter status */
 					if (getParameterStatus(conn))
@@ -276,17 +283,13 @@ pqParseInput3(PGconn *conn)
 					}
 					break;
 				case 'G':		/* Start Copy In */
-					if (pqGetc(&conn->copy_is_binary, conn))
+					if (getCopyStart(conn, PGRES_COPY_IN))
 						return;
-					/* XXX we currently ignore the rest of the message */
-					conn->inCursor = conn->inStart + 5 + msgLength;
 					conn->asyncStatus = PGASYNC_COPY_IN;
 					break;
 				case 'H':		/* Start Copy Out */
-					if (pqGetc(&conn->copy_is_binary, conn))
+					if (getCopyStart(conn, PGRES_COPY_OUT))
 						return;
-					/* XXX we currently ignore the rest of the message */
-					conn->inCursor = conn->inStart + 5 + msgLength;
 					conn->asyncStatus = PGASYNC_COPY_OUT;
 					conn->copy_already_done = 0;
 					break;
@@ -398,6 +401,9 @@ getRowDescriptions(PGconn *conn)
 		MemSet((char *) result->attDescs, 0, nfields * sizeof(PGresAttDesc));
 	}
 
+	/* result->binary is true only if ALL columns are binary */
+	result->binary = (nfields > 0) ? 1 : 0;
+
 	/* get type info */
 	for (i = 0; i < nfields; i++)
 	{
@@ -430,10 +436,15 @@ getRowDescriptions(PGconn *conn)
 
 		result->attDescs[i].name = pqResultStrdup(result,
 												  conn->workBuffer.data);
+		result->attDescs[i].tableid = tableid;
+		result->attDescs[i].columnid = columnid;
+		result->attDescs[i].format = format;
 		result->attDescs[i].typid = typid;
 		result->attDescs[i].typlen = typlen;
 		result->attDescs[i].atttypmod = atttypmod;
-		/* XXX todo: save tableid/columnid, format too */
+
+		if (format != 1)
+			result->binary = 0;
 	}
 
 	/* Success! */
@@ -503,7 +514,9 @@ getAnotherTuple(PGconn *conn, int msgLength)
 			vlen = 0;
 		if (tup[i].value == NULL)
 		{
-			tup[i].value = (char *) pqResultAlloc(result, vlen + 1, false);
+			bool	isbinary = (result->attDescs[i].format != 0);
+
+			tup[i].value = (char *) pqResultAlloc(result, vlen + 1, isbinary);
 			if (tup[i].value == NULL)
 				goto outOfMemory;
 		}
@@ -553,6 +566,7 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	PGresult   *res;
 	PQExpBufferData workBuf;
 	char		id;
+	const char *val;
 
 	/*
 	 * Make a PGresult to hold the accumulated fields.  We temporarily
@@ -580,68 +594,63 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 			break;				/* terminator found */
 		if (pqGets(&workBuf, conn))
 			goto fail;
-		switch (id)
-		{
-			case 'S':
-				res->errSeverity = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'C':
-				res->errCode = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'M':
-				res->errPrimary = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'D':
-				res->errDetail = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'H':
-				res->errHint = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'P':
-				res->errPosition = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'W':
-				res->errContext = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'F':
-				res->errFilename = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'L':
-				res->errLineno = pqResultStrdup(res, workBuf.data);
-				break;
-			case 'R':
-				res->errFuncname = pqResultStrdup(res, workBuf.data);
-				break;
-			default:
-				/* silently ignore any other field type */
-				break;
-		}
+		pqSaveMessageField(res, id, workBuf.data);
 	}
 
 	/*
 	 * Now build the "overall" error message for PQresultErrorMessage.
-	 *
-	 * XXX this should be configurable somehow.
 	 */
 	resetPQExpBuffer(&workBuf);
-	if (res->errSeverity)
-		appendPQExpBuffer(&workBuf, "%s:  ", res->errSeverity);
-	if (res->errPrimary)
-		appendPQExpBufferStr(&workBuf, res->errPrimary);
-	/* translator: %s represents a digit string */
-	if (res->errPosition)
-		appendPQExpBuffer(&workBuf, libpq_gettext(" at character %s"),
-						  res->errPosition);
+	val = PQresultErrorField(res, 'S');	/* Severity */
+	if (val)
+		appendPQExpBuffer(&workBuf, "%s:  ", val);
+	if (conn->verbosity == PQERRORS_VERBOSE)
+	{
+		val = PQresultErrorField(res, 'C');	/* SQLSTATE Code */
+		if (val)
+			appendPQExpBuffer(&workBuf, "%s: ", val);
+	}
+	val = PQresultErrorField(res, 'M');	/* Primary message */
+	if (val)
+		appendPQExpBufferStr(&workBuf, val);
+	val = PQresultErrorField(res, 'P');	/* Position */
+	if (val)
+	{
+		/* translator: %s represents a digit string */
+		appendPQExpBuffer(&workBuf, libpq_gettext(" at character %s"), val);
+	}
 	appendPQExpBufferChar(&workBuf, '\n');
-	if (res->errDetail)
-		appendPQExpBuffer(&workBuf, libpq_gettext("DETAIL:  %s\n"),
-						  res->errDetail);
-	if (res->errHint)
-		appendPQExpBuffer(&workBuf, libpq_gettext("HINT:  %s\n"),
-						  res->errHint);
-	if (res->errContext)
-		appendPQExpBuffer(&workBuf, libpq_gettext("CONTEXT:  %s\n"),
-						  res->errContext);
+	if (conn->verbosity != PQERRORS_TERSE)
+	{
+		val = PQresultErrorField(res, 'D');	/* Detail */
+		if (val)
+			appendPQExpBuffer(&workBuf, libpq_gettext("DETAIL:  %s\n"), val);
+		val = PQresultErrorField(res, 'H');	/* Hint */
+		if (val)
+			appendPQExpBuffer(&workBuf, libpq_gettext("HINT:  %s\n"), val);
+		val = PQresultErrorField(res, 'W');	/* Where */
+		if (val)
+			appendPQExpBuffer(&workBuf, libpq_gettext("CONTEXT:  %s\n"), val);
+	}
+	if (conn->verbosity == PQERRORS_VERBOSE)
+	{
+		const char *valf;
+		const char *vall;
+
+		valf = PQresultErrorField(res, 'F');	/* File */
+		vall = PQresultErrorField(res, 'L');	/* Line */
+		val = PQresultErrorField(res, 'R');	/* Routine */
+		if (val || valf || vall)
+		{
+			appendPQExpBufferStr(&workBuf, libpq_gettext("LOCATION:  "));
+			if (val)
+				appendPQExpBuffer(&workBuf, libpq_gettext("%s, "), val);
+			if (valf && vall)	/* unlikely we'd have just one */
+				appendPQExpBuffer(&workBuf, libpq_gettext("%s:%s"),
+								  valf, vall);
+			appendPQExpBufferChar(&workBuf, '\n');
+		}
+	}
 
 	/*
 	 * Either save error as current async result, or just emit the notice.
@@ -656,7 +665,9 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	}
 	else
 	{
-		PGDONOTICE(conn, workBuf.data);
+		/* We can cheat a little here and not copy the message. */
+		res->errMsg = workBuf.data;
+		(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
 		PQclear(res);
 	}
 
@@ -710,35 +721,216 @@ static int
 getNotify(PGconn *conn)
 {
 	int			be_pid;
+	char	   *svname;
+	int			nmlen;
+	int			extralen;
 	PGnotify   *newNotify;
 
 	if (pqGetInt(&be_pid, 4, conn))
 		return EOF;
 	if (pqGets(&conn->workBuffer, conn))
 		return EOF;
+	/* must save name while getting extra string */
+	svname = strdup(conn->workBuffer.data);
+	if (!svname)
+		return EOF;
+	if (pqGets(&conn->workBuffer, conn))
+	{
+		free(svname);
+		return EOF;
+	}
 
 	/*
-	 * Store the relation name right after the PQnotify structure so it
+	 * Store the strings right after the PQnotify structure so it
 	 * can all be freed at once.  We don't use NAMEDATALEN because we
 	 * don't want to tie this interface to a specific server name length.
 	 */
-	newNotify = (PGnotify *) malloc(sizeof(PGnotify) +
-									strlen(conn->workBuffer.data) +1);
+	nmlen = strlen(svname);
+	extralen = strlen(conn->workBuffer.data);
+	newNotify = (PGnotify *) malloc(sizeof(PGnotify) + nmlen + extralen + 2);
 	if (newNotify)
 	{
 		newNotify->relname = (char *) newNotify + sizeof(PGnotify);
-		strcpy(newNotify->relname, conn->workBuffer.data);
+		strcpy(newNotify->relname, svname);
+		newNotify->extra = newNotify->relname + nmlen + 1;
+		strcpy(newNotify->extra, conn->workBuffer.data);
 		newNotify->be_pid = be_pid;
 		DLAddTail(conn->notifyList, DLNewElem(newNotify));
 	}
 
-	/* Swallow extra string (not presently used) */
-	if (pqGets(&conn->workBuffer, conn))
+	free(svname);
+	return 0;
+}
+
+/*
+ * getCopyStart - process CopyInResponse or CopyOutResponse message
+ *
+ * parseInput already read the message type and length.
+ */
+static int
+getCopyStart(PGconn *conn, ExecStatusType copytype)
+{
+	PGresult   *result;
+	int			nfields;
+	int			i;
+
+	result = PQmakeEmptyPGresult(conn, copytype);
+
+	if (pqGetc(&conn->copy_is_binary, conn))
+	{
+		PQclear(result);
 		return EOF;
+	}
+	result->binary = conn->copy_is_binary;
+	/* the next two bytes are the number of fields	*/
+	if (pqGetInt(&(result->numAttributes), 2, conn))
+	{
+		PQclear(result);
+		return EOF;
+	}
+	nfields = result->numAttributes;
+
+	/* allocate space for the attribute descriptors */
+	if (nfields > 0)
+	{
+		result->attDescs = (PGresAttDesc *)
+			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
+		MemSet((char *) result->attDescs, 0, nfields * sizeof(PGresAttDesc));
+	}
+
+	for (i = 0; i < nfields; i++)
+	{
+		int			format;
+
+		if (pqGetInt(&format, 2, conn))
+		{
+			PQclear(result);
+			return EOF;
+		}
+
+		/*
+		 * Since pqGetInt treats 2-byte integers as unsigned, we need to
+		 * coerce these results to signed form.
+		 */
+		format = (int) ((int16) format);
+
+		result->attDescs[i].format = format;
+	}
+
+	/* Success! */
+	conn->result = result;
+	return 0;
+}
+
+/*
+ * getReadyForQuery - process ReadyForQuery message
+ */
+static int
+getReadyForQuery(PGconn *conn)
+{
+	char		xact_status;
+
+	if (pqGetc(&xact_status, conn))
+		return EOF;
+	switch (xact_status)
+	{
+		case 'I':
+			conn->xactStatus = PQTRANS_IDLE;
+			break;
+		case 'T':
+			conn->xactStatus = PQTRANS_INTRANS;
+			break;
+		case 'E':
+			conn->xactStatus = PQTRANS_INERROR;
+			break;
+		default:
+			conn->xactStatus = PQTRANS_UNKNOWN;
+			break;
+	}
 
 	return 0;
 }
 
+/*
+ * PQgetCopyData - read a row of data from the backend during COPY OUT
+ *
+ * If successful, sets *buffer to point to a malloc'd row of data, and
+ * returns row length (always > 0) as result.
+ * Returns 0 if no row available yet (only possible if async is true),
+ * -1 if end of copy (consult PQgetResult), or -2 if error (consult
+ * PQerrorMessage).
+ */
+int
+pqGetCopyData3(PGconn *conn, char **buffer, int async)
+{
+	char		id;
+	int			msgLength;
+	int			avail;
+
+	for (;;)
+	{
+		/*
+		 * Do we have the next input message?  To make life simpler for async
+		 * callers, we keep returning 0 until the next message is fully
+		 * available, even if it is not Copy Data.
+		 */
+		conn->inCursor = conn->inStart;
+		if (pqGetc(&id, conn))
+			goto nodata;
+		if (pqGetInt(&msgLength, 4, conn))
+			goto nodata;
+		avail = conn->inEnd - conn->inCursor;
+		if (avail < msgLength - 4)
+			goto nodata;
+
+		/*
+		 * If it's anything except Copy Data, exit COPY_OUT mode and let
+		 * caller read status with PQgetResult().  The normal case is that
+		 * it's Copy Done, but we let parseInput read that.
+		 */
+		if (id != 'd')
+		{
+			conn->asyncStatus = PGASYNC_BUSY;
+			return -1;
+		}
+
+		/*
+		 * Drop zero-length messages (shouldn't happen anyway).  Otherwise
+		 * pass the data back to the caller.
+		 */
+		msgLength -= 4;
+		if (msgLength > 0)
+		{
+			*buffer = (char *) malloc(msgLength + 1);
+			if (*buffer == NULL)
+			{
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("out of memory\n"));
+				return -2;
+			}
+			memcpy(*buffer, &conn->inBuffer[conn->inCursor], msgLength);
+			(*buffer)[msgLength] = '\0'; /* Add terminating null */
+
+			/* Mark message consumed */
+			conn->inStart = conn->inCursor + msgLength;
+
+			return msgLength;
+		}
+
+		/* Empty, so drop it and loop around for another */
+		conn->inStart = conn->inCursor;
+		continue;
+
+	nodata:
+		/* Don't block if async read requested */
+		if (async)
+			return 0;
+		/* Need to load more data */
+		if (pqWait(TRUE, FALSE, conn) ||
+			pqReadData(conn) < 0)
+			return -2;
+	}
+}
 
 /*
  * PQgetline - gets a newline-terminated string from the backend.
@@ -1108,7 +1300,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 					continue;
 				break;
 			case 'Z':			/* backend is ready for new query */
-				if (pqGetc(&conn->xact_status, conn))
+				if (getReadyForQuery(conn))
 					continue;
 				/* consume the message and exit */
 				conn->inStart += 5 + msgLength;

@@ -97,6 +97,20 @@ EXPORTS
     _pg_utf_mblen            @ 93
     _PQunescapeBytea         @ 94
     _PQfreemem               @ 95
+    _PQtransactionStatus     @ 96
+    _PQparameterStatus       @ 97
+    _PQprotocolVersion       @ 98
+    _PQsetErrorVerbosity     @ 99
+    _PQsetNoticeReceiver     @ 100
+    _PQexecParams            @ 101
+    _PQsendQueryParams       @ 102
+    _PQputCopyData           @ 103
+    _PQputCopyEnd            @ 104
+    _PQgetCopyData           @ 105
+    _PQresultErrorField      @ 106
+    _PQftable                @ 107
+    _PQftablecol             @ 108
+    _PQfformat               @ 109
 
 ; Aliases for MS compatible names
     PQconnectdb             = _PQconnectdb            
@@ -194,4 +208,17 @@ EXPORTS
     pg_utf_mblen            = _pg_utf_mblen           
     PQunescapeBytea         = _PQunescapeBytea        
     PQfreemem               = _PQfreemem              
-
+    PQtransactionStatus     = _PQtransactionStatus
+    PQparameterStatus       = _PQparameterStatus
+    PQprotocolVersion       = _PQprotocolVersion
+    PQsetErrorVerbosity     = _PQsetErrorVerbosity
+    PQsetNoticeReceiver     = _PQsetNoticeReceiver
+    PQexecParams            = _PQexecParams
+    PQsendQueryParams       = _PQsendQueryParams
+    PQputCopyData           = _PQputCopyData
+    PQputCopyEnd            = _PQputCopyEnd
+    PQgetCopyData           = _PQgetCopyData
+    PQresultErrorField      = _PQresultErrorField
+    PQftable                = _PQftable
+    PQftablecol             = _PQftablecol
+    PQfformat               = _PQfformat
