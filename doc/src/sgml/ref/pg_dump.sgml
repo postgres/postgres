@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.48 2002/08/18 09:36:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.49 2002/08/27 18:57:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -112,13 +112,13 @@ PostgreSQL documentation
    does not block other users accessing the database (readers or
    writers).
   </para>
+ </refsect1>
 
-  <refsect2 id="pg-dump-options">
-   <title>Options</title>
+ <refsect1 id="pg-dump-options">
+  <title>Options</title>
 
-   <para>
-    <command>pg_dump</command> accepts the following command
-    line arguments.  (Long option forms are only available on some platforms.)
+  <para>
+   The following command-line options are used to control the output format.
 
     <variablelist>
      <varlistentry>
@@ -408,7 +408,9 @@ PostgreSQL documentation
       <term><option>--verbose</></term>
       <listitem>
        <para>
-	Specifies verbose mode.
+	Specifies verbose mode.  This will cause
+	<application>pg_dump</application> to print progress messages
+	to standard error.
        </para>
       </listitem>
      </varlistentry>
@@ -499,13 +501,11 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-
-
     </variablelist>
    </para>
+
    <para>
-    <command>pg_dump</command> also accepts 
-    the following command line arguments for connection parameters:
+    The following command-line options control the database connection parameters.
 
     <variablelist>
      <varlistentry>
@@ -555,8 +555,10 @@ PostgreSQL documentation
      </varlistentry>
     </variablelist>
    </para>
-  </refsect2>
 
+  <para>
+   Long option forms are only available on some platforms.
+  </para>
  </refsect1>
 
  <refsect1>

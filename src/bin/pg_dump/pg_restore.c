@@ -34,13 +34,14 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.38 2002/08/10 16:57:32 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.39 2002/08/27 18:57:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
+#include "dumputils.h"
 
 #include <ctype.h>
 

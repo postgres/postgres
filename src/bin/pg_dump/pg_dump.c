@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.291 2002/08/22 21:35:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.292 2002/08/27 18:57:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@
 #include "pg_dump.h"
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
+#include "dumputils.h"
 
 
 typedef struct _dumpContext
@@ -269,9 +270,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:zZ:V?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:Z:", long_options, &optindex)) != -1)
 #else
-	while ((c = getopt(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:zZ:V?-")) != -1)
+	while ((c = getopt(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:Z:-")) != -1)
 #endif
 
 	{
@@ -477,7 +478,7 @@ main(int argc, char **argv)
 	if (dumpData == true && oids == true)
 	{
 		write_msg(NULL, "INSERT (-d, -D) and OID (-o) options cannot be used together.\n");
-		write_msg(NULL, "(The INSERT command cannot set oids.)\n");
+		write_msg(NULL, "(The INSERT command cannot set OIDs.)\n");
 		exit(1);
 	}
 
@@ -660,9 +661,7 @@ help(const char *progname)
 		"  -h, --host=HOSTNAME      database server host name\n"
 		"  -i, --ignore-version     proceed even when server version mismatches\n"
 		"                           pg_dump version\n"
-		"  -n, --no-quotes          suppress most quotes around identifiers\n"
-		"  -N, --quotes             enable most quotes around identifiers\n"
-		"  -o, --oids               include oids in dump\n"
+		"  -o, --oids               include OIDs in dump\n"
 		"  -O, --no-owner           do not output \\connect commands in plain\n"
 		"                           text format\n"
 		"  -p, --port=PORT          database server port number\n"
@@ -696,9 +695,7 @@ help(const char *progname)
 		"  -h HOSTNAME              database server host name\n"
 		"  -i                       proceed even when server version mismatches\n"
 		"                           pg_dump version\n"
-		"  -n                       suppress most quotes around identifiers\n"
-		"  -N                       enable most quotes around identifiers\n"
-		"  -o                       include oids in dump\n"
+		"  -o                       include OIDs in dump\n"
 		"  -O                       do not output \\connect commands in plain\n"
 		"                           text format\n"
 		"  -p PORT                  database server port number\n"

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.38 2002/08/20 17:54:44 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.39 2002/08/27 18:57:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -13,6 +13,7 @@
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
+#include "dumputils.h"
 
 #include <unistd.h>
 #include <ctype.h>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.31 2002/08/27 03:55:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.32 2002/08/27 18:57:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -12,18 +12,13 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_dumpall</refname>
-  <refpurpose>extract all <productname>PostgreSQL</productname> databases into a script file</refpurpose>
+  <refpurpose>extract a <productname>PostgreSQL</productname> database cluster into a script file</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_dumpall</command>
-   <group><arg>-c</arg><arg>--clean</arg></group>
-   <group><arg>-g</arg><arg>--globals-only</arg></group>
-   <arg>-h <replaceable>host</replaceable></arg>
-   <arg>-p <replaceable>port</replaceable></arg>
-   <arg>-U <replaceable>username</replaceable></arg>
-   <arg>-W</arg>
+   <arg rep="repeat"><replaceable>options</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -66,97 +61,161 @@ PostgreSQL documentation
    The SQL script will be written to the standard output.  Shell
    operators should be used to redirect it into a file.
   </para>
-
-
-  <para>
-  <application>pg_dumpall</application> will need to connect several times to the
-  <productname>PostgreSQL</productname> server, asking for the password each
-  time. It will probably be very convenient to have a PGPASSWORDFILE in that case.
-  </para>
-
  </refsect1>
 
  <refsect1>
   <title>Options</title>
 
-  <para>
-   <application>pg_dumpall</application> accepts the following
-   command line arguments:
+   <para>
+    The following command-line options are used to control the output format.
 
-   <variablelist>
-    <varlistentry>
-     <term>-c, --clean</term>
-     <listitem>
-      <para>
+    <variablelist>
+     <varlistentry>
+      <term>-c, --clean</term>
+      <listitem>
+       <para>
 	Include SQL commands to clean (drop) database objects before
 	recreating them.  (This option is fairly useless, since the
 	output script expects to create the databases themselves;
 	they would always be empty upon creation.)
-      </para>
-     </listitem>
-    </varlistentry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>-g, --globals-only</term>
-     <listitem>
-      <para>
+     <varlistentry>
+      <term><option>-d</option></term>
+      <term><option>--inserts</option></term>
+      <listitem>
+       <para>
+	Dump data as <command>INSERT</command> commands (rather
+	than <command>COPY</command>). This will make restoration very
+	slow, but it makes the output more portable to other RDBMS
+	packages.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-D</option></term>
+      <term><option>--column-inserts</option></term>
+      <term><option>--attribute-inserts</option></term>
+      <listitem>
+       <para>
+	Dump data as <command>INSERT</command> commands with explicit
+	column names (<literal>INSERT INTO
+	<replaceable>table</replaceable>
+	(<replaceable>column</replaceable>, ...) VALUES
+	...</literal>).  This will make restoration very slow,
+	but it is necessary if you desire to rearrange column ordering.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-g, --globals-only</term>
+      <listitem>
+       <para>
 	Only dump global objects (users and groups), no databases.
-      </para>
-     </listitem>
-    </varlistentry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>-h <replaceable>host</replaceable></term>
-     <listitem>
-      <para>
+     <varlistentry>
+      <term><option>-i</></term>
+      <term><option>--ignore-version</></term>
+      <listitem>
+       <para>
+        Ignore version mismatch between
+        <application>pg_dumpall</application> and the database server.
+        Since <application>pg_dumpall</application> knows a great deal
+        about system catalogs, any given version of
+        <application>pg_dumpall</application> is only intended to work
+        with the corresponding release of the database server.  Use
+        this option if you need to override the version check (and if
+        <application>pg_dumpall</application> then fails, don't say
+        you weren't warned).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-o</></term>
+      <term><option>--oids</></term>
+      <listitem>
+       <para>
+	Dump object identifiers (<acronym>OID</acronym>s) for every
+	table.  Use this option if your application references the OID
+	columns in some way (e.g., in a foreign key constraint).
+	Otherwise, this option should not be used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-v</></term>
+      <term><option>--verbose</></term>
+      <listitem>
+       <para>
+	Specifies verbose mode.  This will cause
+	<application>pg_dumpall</application> to print progress
+	messages to standard error.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+  <para>
+   The following command-line options control the database connection parameters.
+
+   <variablelist>
+     <varlistentry>
+      <term>-h <replaceable>host</replaceable></term>
+      <listitem>
+       <para>
 	Specifies the host name of the machine on which the database
 	server is running.  If host begins with a slash, it is used as
 	the directory for the Unix domain socket.  The default is
 	taken from the <envar>PGHOST</envar> environment variable, if
 	set, else a Unix domain socket connection is attempted.
-      </para>
-     </listitem>
-    </varlistentry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>-p <replaceable>port</replaceable></term>
-     <listitem>
-      <para>
+     <varlistentry>
+      <term>-p <replaceable>port</replaceable></term>
+      <listitem>
+       <para>
         The port number on which the server is listening.  Defaults to
         the <envar>PGPORT</envar> environment variable, if set, or a
         compiled-in default.
-      </para>
-     </listitem>
-    </varlistentry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>-U <replaceable>username</replaceable></term>
-     <listitem>
-      <para>
+     <varlistentry>
+      <term>-U <replaceable>username</replaceable></term>
+      <listitem>
+       <para>
         Connect as the given user.
-      </para>
-     </listitem>
-    </varlistentry>
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>-W</term>
-     <listitem>
-      <para>
+     <varlistentry>
+      <term>-W</term>
+      <listitem>
+       <para>
         Force a password prompt.  This should happen automatically if
         the server requires password authentication.
-      </para>
-     </listitem>
-    </varlistentry>
+       </para>
+      </listitem>
+     </varlistentry>
    </variablelist>
   </para>
 
   <para>
-    Any other command line parameters are passed to the underlying
-    <xref linkend="app-pgdump">
-    calls.  This is useful to control some aspects of the output
-    format, but some options such as <option>-f</option>,
-    <option>-F</option>, <option>-t</option>, and <replaceable
-    class="parameter">dbname</replaceable> should be avoided.
+   Long options are only available on some platforms.
   </para>
  </refsect1>
 
@@ -177,6 +236,26 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Since <application>pg_dumpall</application> calls
+   <application>pg_dump</application> internally, some diagnostic
+   messages will refer to <application>pg_dump</application>.
+  </para>
+
+  <para>
+   <application>pg_dumpall</application> will need to connect several
+   times to the <productname>PostgreSQL</productname> server.  If password
+   authentication is configured, it will ask for a password each time. In
+   that case it would be convenient to set up a password file.
+  </para>
+
+  <comment>But where is that password file documented?</comment>
  </refsect1>
 
 
