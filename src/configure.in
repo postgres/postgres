@@ -265,15 +265,15 @@ AC_ARG_WITH(
    USE_PERL=false; AC_MSG_RESULT(disabled)
 )
 
-dnl Verify that postgres is already installed
-dnl per instructions for perl interface installation
-if test "$USE_PERL" = "true"
-then
-	if test ! -x "$prefix"/bin/postgres -a ! -x "$ac_default_prefix"/bin/postgres
-	then	AC_MSG_WARN(perl support disabled; postgres not previously installed)
-		USE_PERL=
-	fi
-fi
+#dnl Verify that postgres is already installed
+#dnl per instructions for perl interface installation
+#if test "$USE_PERL" = "true"
+#then
+#	if test ! -x "$prefix"/bin/postgres -a ! -x "$ac_default_prefix"/bin/postgres
+#	then	AC_MSG_WARN(perl support disabled; postgres not previously installed)
+#		USE_PERL=
+#	fi
+#fi
 export USE_PERL
 
 dnl Unless we specify the command line options

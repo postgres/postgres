@@ -890,13 +890,13 @@ else
 fi
 
 
-if test "$USE_PERL" = "true"
-then
-	if test ! -x "$prefix"/bin/postgres -a ! -x "$ac_default_prefix"/bin/postgres
-	then	echo "configure: warning: perl support disabled; postgres not previously installed" 1>&2
-		USE_PERL=
-	fi
-fi
+#if test "$USE_PERL" = "true"
+#then
+#	if test ! -x "$prefix"/bin/postgres -a ! -x "$ac_default_prefix"/bin/postgres
+#	then	echo "configure: warning: perl support disabled; postgres not previously installed" 1>&2
+#		USE_PERL=
+#	fi
+#fi
 export USE_PERL
 
 echo $ac_n "checking setting ASSERT CHECKING""... $ac_c" 1>&6
