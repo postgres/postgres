@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.27 2001/05/24 00:13:13 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.28 2001/06/18 21:40:06 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -207,6 +207,12 @@ case "$langname" in
 	plperl)
 		lancomp="PL/Perl"
 		trusted="TRUSTED "
+		handler="plperl_call_handler"
+		object="plperl"
+		;;
+	plperlu)
+		lancomp="PL/Perl (untrusted)"
+		trusted=""
 		handler="plperl_call_handler"
 		object="plperl"
 		;;

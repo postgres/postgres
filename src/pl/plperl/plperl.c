@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.21 2001/06/09 02:19:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.22 2001/06/18 21:40:06 momjian Exp $
  *
  **********************************************************************/
 
@@ -95,6 +95,7 @@ typedef struct plperl_proc_desc
 	Oid			arg_out_elem[FUNC_MAX_ARGS];
 	int			arg_out_len[FUNC_MAX_ARGS];
 	int			arg_is_rel[FUNC_MAX_ARGS];
+	bool		lanpltrusted;
 	SV		   *reference;
 }			plperl_proc_desc;
 
@@ -121,7 +122,7 @@ typedef struct plperl_query_desc
 static int	plperl_firstcall = 1;
 static int	plperl_call_level = 0;
 static int	plperl_restart_in_progress = 0;
-static PerlInterpreter *plperl_safe_interp = NULL;
+static PerlInterpreter *plperl_interp = NULL;
 static HV  *plperl_proc_hash = NULL;
 
 #if REALLYHAVEITONTHEBALL
@@ -133,7 +134,7 @@ static Tcl_HashTable *plperl_query_hash = NULL;
  * Forward declarations
  **********************************************************************/
 static void plperl_init_all(void);
-static void plperl_init_safe_interp(void);
+static void plperl_init_interp(void);
 
 Datum		plperl_call_handler(PG_FUNCTION_ARGS);
 
@@ -201,11 +202,11 @@ plperl_init_all(void)
 	/************************************************************
 	 * Destroy the existing safe interpreter
 	 ************************************************************/
-	if (plperl_safe_interp != NULL)
+	if (plperl_interp != NULL)
 	{
-		perl_destruct(plperl_safe_interp);
-		perl_free(plperl_safe_interp);
-		plperl_safe_interp = NULL;
+		perl_destruct(plperl_interp);
+		perl_free(plperl_interp);
+		plperl_interp = NULL;
 	}
 
 	/************************************************************
@@ -229,7 +230,7 @@ plperl_init_all(void)
 	/************************************************************
 	 * Now recreate a new safe interpreter
 	 ************************************************************/
-	plperl_init_safe_interp();
+	plperl_init_interp();
 
 	plperl_firstcall = 0;
 	return;
@@ -237,32 +238,33 @@ plperl_init_all(void)
 
 
 /**********************************************************************
- * plperl_init_safe_interp() - Create the safe Perl interpreter
+ * plperl_init_interp() - Create the safe Perl interpreter
  **********************************************************************/
 static void
-plperl_init_safe_interp(void)
+plperl_init_interp(void)
 {
 
 	char	   *embedding[3] = {
 		"", "-e",
 
 		/*
-		 * no commas between the next 4 please. They are supposed to be
+		 * no commas between the next 5 please. They are supposed to be
 		 * one string
 		 */
 		"require Safe; SPI::bootstrap();"
 		"sub ::mksafefunc { my $x = new Safe; $x->permit_only(':default');$x->permit(':base_math');"
 		"$x->share(qw[&elog &DEBUG &NOTICE &ERROR]);"
 		" return $x->reval(qq[sub { $_[0] }]); }"
+		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] } ]); }"
 	};
 
-	plperl_safe_interp = perl_alloc();
-	if (!plperl_safe_interp)
-		elog(ERROR, "plperl_init_safe_interp(): could not allocate perl interpreter");
+	plperl_interp = perl_alloc();
+	if (!plperl_interp)
+		elog(ERROR, "plperl_init_interp(): could not allocate perl interpreter");
 
-	perl_construct(plperl_safe_interp);
-	perl_parse(plperl_safe_interp, plperl_init_shared_libs, 3, embedding, NULL);
-	perl_run(plperl_safe_interp);
+	perl_construct(plperl_interp);
+	perl_parse(plperl_interp, plperl_init_shared_libs, 3, embedding, NULL);
+	perl_run(plperl_interp);
 
 
 
@@ -336,7 +338,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
  **********************************************************************/
 static
 SV *
-plperl_create_sub(char *s)
+plperl_create_sub(char *s, bool trusted)
 {
 	dSP;
 
@@ -348,7 +350,8 @@ plperl_create_sub(char *s)
 	PUSHMARK(SP);
 	XPUSHs(sv_2mortal(newSVpv(s, 0)));
 	PUTBACK;
-	count = perl_call_pv("mksafefunc", G_SCALAR | G_EVAL | G_KEEPERR);
+	count = perl_call_pv( (trusted?"mksafefunc":"mkunsafefunc"), 
+			     G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
 	if (SvTRUE(ERRSV))
@@ -397,7 +400,7 @@ plperl_create_sub(char *s)
  *
  **********************************************************************/
 
-extern void boot_Opcode _((CV * cv));
+extern void boot_DynaLoader _((CV * cv));
 extern void boot_SPI _((CV * cv));
 
 static void
@@ -405,7 +408,7 @@ plperl_init_shared_libs(void)
 {
 	char	   *file = __FILE__;
 
-	newXS("Opcode::bootstrap", boot_Opcode, file);
+        newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 	newXS("SPI::bootstrap", boot_SPI, file);
 }
 
@@ -529,8 +532,10 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		 * Then we load the procedure into the safe interpreter.
 		 ************************************************************/
 		HeapTuple	procTup;
+		HeapTuple	langTup;
 		HeapTuple	typeTup;
 		Form_pg_proc procStruct;
+        Form_pg_language langStruct;
 		Form_pg_type typeStruct;
 		char	   *proc_source;
 
@@ -540,6 +545,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		prodesc = (plperl_proc_desc *) malloc(sizeof(plperl_proc_desc));
 		prodesc->proname = malloc(strlen(internal_proname) + 1);
 		strcpy(prodesc->proname, internal_proname);
+
 
 		/************************************************************
 		 * Lookup the pg_proc tuple by Oid
@@ -555,6 +561,24 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 				 fcinfo->flinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+		/************************************************************
+		* Lookup the pg_language tuple by Oid
+		************************************************************/
+		langTup = SearchSysCache(LANGOID,
+			ObjectIdGetDatum(procStruct->prolang),
+			0, 0, 0);
+		if (!HeapTupleIsValid(langTup))
+		{
+			free(prodesc->proname);
+			free(prodesc);
+			elog(ERROR, "plperl: cache lookup for language %u failed",
+				procStruct->prolang);
+		}
+		langStruct = (Form_pg_language) GETSTRUCT(langTup);
+
+		prodesc->lanpltrusted = langStruct->lanpltrusted;
+		ReleaseSysCache(langTup);
 
 		/************************************************************
 		 * Get the required information for input conversion of the
@@ -634,7 +658,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		/************************************************************
 		 * Create the procedure in the interpreter
 		 ************************************************************/
-		prodesc->reference = plperl_create_sub(proc_source);
+		prodesc->reference = plperl_create_sub(proc_source, prodesc->lanpltrusted);
 		pfree(proc_source);
 		if (!prodesc->reference)
 		{

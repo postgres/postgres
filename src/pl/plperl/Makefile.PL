@@ -29,33 +29,8 @@ EndOfMakefile
 	exit(0);
 }
 
-
-#
-# get the location of the Opcode module
-#
-my $opcode = '';
-{
-
-	$modname = 'Opcode';
-
-	my $dir;
-	foreach (@INC) {
-		if (-d "$_/auto/$modname") {
-			$dir = "$_/auto/$modname";
-			last;
-		}
-	}
-
-	if (defined $dir) {
-		$opcode = DynaLoader::dl_findfile("-L$dir", $modname);
-	}
-
-}
-
-my $perllib = "-L$Config{archlibexp}/CORE -lperl";
-
 WriteMakefile( 'NAME' => 'plperl', 
-	dynamic_lib => { 'OTHERLDFLAGS' => "$opcode $perllib" } ,
+	dynamic_lib => { 'OTHERLDFLAGS' =>  ldopts() } ,
 	INC => "$ENV{EXTRA_INCLUDES}",
 	XS => { 'SPI.xs' => 'SPI.c' },
 	OBJECT => 'plperl.o eloglvl.o SPI.o',
