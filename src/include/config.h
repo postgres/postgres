@@ -1,5 +1,5 @@
 /* the purpose of this file is to reduce the use of #ifdef's through
- * the code base by those porting the software, an dto facilitate the
+ * the code base by those porting the software, and to facilitate the
  * eventual use of autoconf to build the server 
  */
 
@@ -38,9 +38,6 @@
 
 #if defined(BSD44_derived) || \
     defined(bsdi)
-#  if defined(bsdi)
-#    define SIGJMP_BUF
-#  endif
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
