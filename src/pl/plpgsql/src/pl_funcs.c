@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.25 2003/03/25 03:16:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.26 2003/05/23 04:08:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -472,6 +472,8 @@ plpgsql_stmt_typename(PLpgSQL_stmt * stmt)
 			return "fetch";
 		case PLPGSQL_STMT_CLOSE:
 			return "close";
+		case PLPGSQL_STMT_PERFORM:
+			return "perform";
 	}
 
 	return "unknown";
@@ -504,6 +506,7 @@ static void dump_getdiag(PLpgSQL_stmt_getdiag * stmt);
 static void dump_open(PLpgSQL_stmt_open * stmt);
 static void dump_fetch(PLpgSQL_stmt_fetch * stmt);
 static void dump_close(PLpgSQL_stmt_close * stmt);
+static void dump_perform(PLpgSQL_stmt_perform * stmt);
 static void dump_expr(PLpgSQL_expr * expr);
 
 
@@ -578,6 +581,9 @@ dump_stmt(PLpgSQL_stmt * stmt)
 			break;
 		case PLPGSQL_STMT_CLOSE:
 			dump_close((PLpgSQL_stmt_close *) stmt);
+			break;
+		case PLPGSQL_STMT_PERFORM:
+			dump_perform((PLpgSQL_stmt_perform *) stmt);
 			break;
 		default:
 			elog(ERROR, "plpgsql_dump: unknown cmd_type %d\n", stmt->cmd_type);
@@ -806,6 +812,15 @@ dump_close(PLpgSQL_stmt_close * stmt)
 {
 	dump_ind();
 	printf("CLOSE curvar=%d\n", stmt->curvar);
+}
+
+static void
+dump_perform(PLpgSQL_stmt_perform * stmt)
+{
+	dump_ind();
+	printf("PERFORM expr = ");
+	dump_expr(stmt->expr);
+	printf("\n");
 }
 
 static void
