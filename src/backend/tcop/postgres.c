@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.391 2004/02/17 04:06:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.392 2004/02/17 04:09:26 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -152,7 +152,7 @@ static void start_xact_command(void);
 static void finish_xact_command(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void FloatExceptionHandler(SIGNAL_ARGS);
-static void log_session_end(int code, Datum arg);
+static void log_disconnections(int code, Datum arg);
 
 
 /* ----------------------------------------------------------------
@@ -2447,7 +2447,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * set up handler to log session end.
 		 */
 		if (IsUnderPostmaster && Log_disconnections)
-			on_proc_exit(log_session_end,0);
+			on_proc_exit(log_disconnections,0);
 	}
 
 	/*
@@ -3196,7 +3196,7 @@ ShowUsage(const char *title)
  * on_proc_exit handler to log end of session
  */
 static void 
-log_session_end(int code, Datum arg)
+log_disconnections(int code, Datum arg)
 {
 	Port * port = MyProcPort;
 	struct timeval end;
