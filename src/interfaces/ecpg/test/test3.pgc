@@ -68,7 +68,7 @@ exec sql end declare section;
 			printf(", born %ld", personal.birth.born);
 		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if (ind_married >= 0)
+		if (*ind_married >= 0)
 			printf(", married %10.10s", married->arr);
 		if (ind_children >= 0)
 			printf(", children = %d", children);
@@ -98,7 +98,7 @@ exec sql end declare section;
 			printf(", born %ld", personal.birth.born);
 		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if (ind_married >= 0)
+		if (*ind_married >= 0)
 			printf(", married %10.10s", married->arr);
 		if (ind_children >= 0)
 			printf(", children = %d", children);

@@ -1,5 +1,6 @@
 #include <locale.h>
 #include <string.h>
+#include <stdlib.h>
 
 exec sql whenever sqlerror sqlprint;
 
