@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.28 2000/10/11 21:28:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.29 2000/10/19 23:06:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,24 +91,37 @@ create_temp_relation(const char *relname, HeapTuple pg_class_tuple)
 void
 remove_all_temp_relations(void)
 {
+	/* skip xact start overhead if nothing to do */
+	if (temp_rels == NIL)
+		return;
+
 	AbortOutOfAnyTransaction();
 	StartTransactionCommand();
 
+	/*
+	 * The way this works is that each time through the loop, we delete
+	 * the frontmost entry.  The DROP will call remove_temp_rel_by_relid()
+	 * as a side effect, thereby removing the entry in the temp_rels list.
+	 * So this is not an infinite loop, even though it looks like one.
+	 */
 	while (temp_rels != NIL)
 	{
-		char		relname[NAMEDATALEN];
 		TempTable  *temp_rel = (TempTable *) lfirst(temp_rels);
 
 		if (temp_rel->relkind != RELKIND_INDEX)
 		{
+			char		relname[NAMEDATALEN];
+
 			/* safe from deallocation */
 			strcpy(relname, temp_rel->user_relname);
 			heap_drop_with_catalog(relname, allowSystemTableMods);
 		}
 		else
 			index_drop(temp_rel->relid);
+		/* advance cmd counter to make catalog changes visible */
 		CommandCounterIncrement();
 	}
+
 	CommitTransactionCommand();
 }
 
