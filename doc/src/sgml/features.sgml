@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.12 2002/12/14 00:24:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.13 2003/01/10 11:02:41 petere Exp $
 -->
 
 <appendix id="features">
@@ -738,6 +738,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.12 2002/12/14 00:24:23 pe
         <entry>F031-16</entry>
         <entry>Core</entry>
         <entry>DROP VIEW statement: RESTRICT clause</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F031-19</entry>
+        <entry>Core</entry>
+        <entry>REVOKE statement: RESTRICT clause</entry>
         <entry></entry>
        </row>
        <row>
@@ -1627,12 +1633,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.12 2002/12/14 00:24:23 pe
         <entry>E182</entry>
         <entry>Core</entry>
         <entry>Module language</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F031-19</entry>
-        <entry>Core</entry>
-        <entry>REVOKE statement: RESTRICT clause</entry>
         <entry></entry>
        </row>
        <row>

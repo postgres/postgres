@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.392 2003/01/09 20:50:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.393 2003/01/10 11:02:51 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2751,7 +2751,7 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list
 		;
 
 RevokeStmt: REVOKE opt_revoke_grant_option privileges ON privilege_target
-			FROM grantee_list
+			FROM grantee_list opt_drop_behavior
 				{
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
@@ -2759,6 +2759,10 @@ RevokeStmt: REVOKE opt_revoke_grant_option privileges ON privilege_target
 					n->objtype = ($5)->objtype;
 					n->objects = ($5)->objs;
 					n->grantees = $7;
+
+					if ($8 == DROP_CASCADE)
+						elog(ERROR, "REVOKE ... CASCADE is not implemented");
+
 					$$ = (Node *)n;
 				}
 		;
