@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.58 1996/11/10 02:56:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.59 1996/11/10 17:35:58 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -860,7 +860,7 @@ includedir=	$(HEADERDIR)
 # Flags for CC and LD. (depend on COPT and PROFILE)
 #
 # PostgreSQL should *always* compile with -Wall -Werror enabled
-CFLAGS+=	-Wall -Wmissing-prototypes -Wmissing-declarations #-Werror
+CFLAGS+=	-Wall -Wmissing-prototypes #-Werror
 
 # Globally pass debugging/optimization/profiling flags based
 # on the options selected above.
