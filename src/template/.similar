@@ -37,3 +37,4 @@ sparc-unknown-bsdi4=bsdi_4.0_sparc
 sparc-unknown-linux-gnu=linux_sparc
 mips-pc-linux-gnu=linux_mips
 mipsel-unknown-linux-gnu=linux_mips
+arm-unknown-linux-gnu=linux_arm

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.64 1999/07/15 23:04:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.65 1999/11/06 01:55:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ __asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(_res));
 
 
 
-#if defined(__arm32__)
+#if defined(__arm32__) || defined(__arm__)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
