@@ -705,8 +705,8 @@ Int2 sqlType;
 			set_nullfield_string(&row->tuple[5], pgtype_create_params(stmt, pgType));
 			set_nullfield_int2(&row->tuple[9], pgtype_unsigned(stmt, pgType));
 			set_nullfield_int2(&row->tuple[11], pgtype_auto_increment(stmt, pgType));
-			set_nullfield_int2(&row->tuple[13], pgtype_scale(stmt, pgType));
-			set_nullfield_int2(&row->tuple[14], pgtype_scale(stmt, pgType));
+			set_nullfield_int2(&row->tuple[13], pgtype_scale(stmt, pgType, PG_STATIC));
+			set_nullfield_int2(&row->tuple[14], pgtype_scale(stmt, pgType, PG_STATIC));
 
 			QR_add_tuple(stmt->result, row);
 		}
@@ -1179,8 +1179,9 @@ StatementClass *col_stmt;
 char columns_query[MAX_STATEMENT_LEN];
 RETCODE result;
 char table_owner[MAX_INFO_STRING], table_name[MAX_INFO_STRING], field_name[MAX_INFO_STRING], field_type_name[MAX_INFO_STRING];
-Int2 field_number, result_cols;
-Int4 field_type, the_type, field_length, mod_length;
+Int2 field_number, result_cols, scale;
+Int4 field_type, the_type, field_length, mod_length, precision;
+char useStaticPrecision;
 char not_null[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
 ConnInfo *ci;
 
@@ -1400,7 +1401,7 @@ ConnInfo *ci;
 			set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
 			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
 
-			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type));
+			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type, PG_STATIC));
 			set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
 			set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
 			set_tuplefield_string(&row->tuple[11], "");
@@ -1433,9 +1434,41 @@ ConnInfo *ci;
 			VARCHAR - the length is stored in the pg_attribute.atttypmod field
 			BPCHAR  - the length is also stored as varchar is
 
+			NUMERIC - the scale is stored in atttypmod as follows:
+					precision = ((atttypmod - VARHDRSZ) >> 16) & 0xffff
+					scale     = (atttypmod - VARHDRSZ) & 0xffff
+
+
 		*/
+		qlog("SQLColumns: table='%s',field_name='%s',type=%d,sqltype=%d,name='%s'\n",
+			table_name,field_name,field_type,pgtype_to_sqltype,field_type_name);
+
+		useStaticPrecision = TRUE;
+
+		if (field_type == PG_TYPE_NUMERIC) {
+			if (mod_length >= 4)
+				mod_length -= 4;			// the length is in atttypmod - 4
+
+			if (mod_length >= 0) {
+				useStaticPrecision = FALSE;
+
+				precision = (mod_length >> 16) & 0xffff;
+				scale = mod_length & 0xffff;
+
+				mylog("SQLColumns: field type is NUMERIC: field_type = %d, mod_length=%d, precision=%d, scale=%d\n", field_type, mod_length, precision, scale );
+
+				set_tuplefield_int4(&row->tuple[7], precision + 2);  // sign+dec.point
+				set_tuplefield_int4(&row->tuple[6], precision);
+				set_tuplefield_int4(&row->tuple[12], precision + 2); // sign+dec.point
+				set_nullfield_int2(&row->tuple[8], scale);
+			}
+		}
+
+
         if((field_type == PG_TYPE_VARCHAR) ||
 		   (field_type == PG_TYPE_BPCHAR)) {
+
+			useStaticPrecision = FALSE;
 
 			if (mod_length >= 4)
 				mod_length -= 4;			// the length is in atttypmod - 4
@@ -1445,19 +1478,21 @@ ConnInfo *ci;
 
 			mylog("SQLColumns: field type is VARCHAR,BPCHAR: field_type = %d, mod_length = %d\n", field_type, mod_length);
 
-            set_tuplefield_int4(&row->tuple[7], mod_length);
+			set_tuplefield_int4(&row->tuple[7], mod_length);
 			set_tuplefield_int4(&row->tuple[6], mod_length);
 			set_tuplefield_int4(&row->tuple[12], mod_length);
-        } else {
+			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, field_type, PG_STATIC));
+        } 
+		
+		if (useStaticPrecision) {
 			mylog("SQLColumns: field type is OTHER: field_type = %d, pgtype_length = %d\n", field_type, pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
 
             set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
 			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, field_type, PG_STATIC, PG_STATIC));
 			set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, field_type, PG_STATIC, PG_STATIC));
-
+			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, field_type, PG_STATIC));
         }
 
-		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, field_type));
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, field_type));
 		set_tuplefield_int2(&row->tuple[10], (Int2) (not_null[0] == '1' ? SQL_NO_NULLS : pgtype_nullable(stmt, field_type)));
 		set_tuplefield_string(&row->tuple[11], "");
@@ -1494,7 +1529,7 @@ ConnInfo *ci;
 		set_tuplefield_string(&row->tuple[5], pgtype_to_name(stmt, the_type));
 		set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
 		set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
-		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type));
+		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type, PG_STATIC));
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
 		set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
 		set_tuplefield_string(&row->tuple[11], "");
@@ -1622,7 +1657,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 			set_tuplefield_string(&row->tuple[3], "OID");
 			set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
 			set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
-			set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, PG_TYPE_OID));
+			set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, PG_TYPE_OID, PG_STATIC));
 			set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
 			QR_add_tuple(stmt->result, row);
@@ -1640,7 +1675,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 				set_tuplefield_string(&row->tuple[3], pgtype_to_name(stmt, the_type));
 				set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
 				set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
-				set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, the_type));
+				set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, the_type, PG_STATIC));
 				set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
 				QR_add_tuple(stmt->result, row);

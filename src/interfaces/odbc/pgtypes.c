@@ -130,10 +130,16 @@ Int4 pgType;
 		pgType = PG_TYPE_FLOAT8;
 		break;
 
-	case SQL_INTEGER:
-	case SQL_BIGINT:
-	case SQL_NUMERIC:
 	case SQL_DECIMAL:
+	case SQL_NUMERIC:
+		pgType = PG_TYPE_NUMERIC;
+		break;
+
+	case SQL_BIGINT:
+		pgType = PG_TYPE_INT8;
+		break;
+
+	case SQL_INTEGER:
 		pgType = PG_TYPE_INT4;
 		break;
 
@@ -193,7 +199,6 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_CHAR2:
 	case PG_TYPE_CHAR4:
 	case PG_TYPE_CHAR8:
-	case PG_TYPE_CHAR16:
 	case PG_TYPE_NAME:  		return SQL_CHAR;        
 
 	case PG_TYPE_BPCHAR:		return SQL_CHAR;
@@ -210,6 +215,9 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_OID:
 	case PG_TYPE_XID:
 	case PG_TYPE_INT4:          return SQL_INTEGER;
+
+	case PG_TYPE_INT8:			return SQL_BIGINT;
+	case PG_TYPE_NUMERIC:		return SQL_NUMERIC;
 
 	case PG_TYPE_FLOAT4:        return SQL_REAL;
 	case PG_TYPE_FLOAT8:        return SQL_FLOAT;
@@ -236,6 +244,8 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 Int2 pgtype_to_ctype(StatementClass *stmt, Int4 type)
 {
 	switch(type) {
+	case PG_TYPE_INT8:			return SQL_C_CHAR;
+	case PG_TYPE_NUMERIC:		return SQL_C_CHAR;
 	case PG_TYPE_INT2:          return SQL_C_SSHORT;
 	case PG_TYPE_OID:
 	case PG_TYPE_XID:
@@ -269,7 +279,8 @@ char *pgtype_to_name(StatementClass *stmt, Int4 type)
 	case PG_TYPE_CHAR2:			return "char2";
 	case PG_TYPE_CHAR4:			return "char4";
 	case PG_TYPE_CHAR8:         return "char8";
-	case PG_TYPE_CHAR16:		return "char16";
+	case PG_TYPE_INT8:			return "int8";
+	case PG_TYPE_NUMERIC:		return "numeric";
 	case PG_TYPE_VARCHAR:       return "varchar";
 	case PG_TYPE_BPCHAR:        return "char";
 	case PG_TYPE_TEXT:          return "text";
@@ -297,6 +308,70 @@ char *pgtype_to_name(StatementClass *stmt, Int4 type)
 		/* "unknown" can actually be used in alter table because it is a real PG type! */
 		return "unknown";	
 	}    
+}
+
+Int2
+getNumericScale(StatementClass *stmt, Int4 type, int col)
+{
+Int4 atttypmod;
+QResultClass *result;
+ColumnInfoClass *flds;
+
+mylog("getNumericScale: type=%d, col=%d, unknown = %d\n", type,col);
+
+	if (col < 0)
+		return PG_NUMERIC_MAX_SCALE;
+
+	result = SC_get_Result(stmt);
+
+	/*	Manual Result Sets -- use assigned column width (i.e., from set_tuplefield_string) */
+	if (stmt->manual_result) {
+		flds = result->fields;
+		if (flds)
+			return flds->adtsize[col];
+		else
+			return PG_NUMERIC_MAX_SCALE;
+	}
+
+	atttypmod = QR_get_atttypmod(result, col);
+	if ( atttypmod > -1 )
+		return (atttypmod & 0xffff);
+	else
+		return ( QR_get_display_size(result, col) ? 
+			QR_get_display_size(result, col) : 
+			PG_NUMERIC_MAX_SCALE);
+}
+
+Int4
+getNumericPrecision(StatementClass *stmt, Int4 type, int col)
+{
+Int4 atttypmod;
+QResultClass *result;
+ColumnInfoClass *flds;
+
+mylog("getNumericPrecision: type=%d, col=%d, unknown = %d\n", type,col);
+
+	if (col < 0)
+		return PG_NUMERIC_MAX_PRECISION;
+
+	result = SC_get_Result(stmt);
+
+	/*	Manual Result Sets -- use assigned column width (i.e., from set_tuplefield_string) */
+	if (stmt->manual_result) {
+		flds = result->fields;
+		if (flds)
+			return flds->adtsize[col];
+		else
+			return PG_NUMERIC_MAX_PRECISION;
+	}
+
+	atttypmod = QR_get_atttypmod(result, col);
+	if ( atttypmod > -1 )
+		return (atttypmod >> 16) & 0xffff;
+	else
+		return ( QR_get_display_size(result, col) >= 0 ? 
+			QR_get_display_size(result, col) : 
+			PG_NUMERIC_MAX_PRECISION );
 }
 
 Int4
@@ -362,7 +437,7 @@ mylog("getCharPrecision: type=%d, col=%d, unknown = %d\n", type,col,handle_unkno
 		return p;
 }
 
-/*	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, SQLColumns will 
+/*	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, PG_TYPE_NUMERIC, SQLColumns will 
 	override this length with the atttypmod length from pg_attribute .
 
 	If col >= 0, then will attempt to get the info from the result set.
@@ -377,7 +452,6 @@ Int4 pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unkno
 	case PG_TYPE_CHAR2:			return 2;
 	case PG_TYPE_CHAR4:			return 4;
 	case PG_TYPE_CHAR8:       	return 8;
-	case PG_TYPE_CHAR16:       	return 16;
 
 	case PG_TYPE_NAME:			return NAME_FIELD_SIZE;
 
@@ -386,6 +460,10 @@ Int4 pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unkno
 	case PG_TYPE_OID:
 	case PG_TYPE_XID:
 	case PG_TYPE_INT4:          return 10;
+
+	case PG_TYPE_INT8:			return 19;   /* signed */
+
+	case PG_TYPE_NUMERIC:		return getNumericPrecision(stmt,type,col);
 
 	case PG_TYPE_FLOAT4:        
 	case PG_TYPE_MONEY:			return 7;
@@ -415,6 +493,7 @@ Int4 pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unkno
 
 Int4 pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
+
 	switch(type) {
 	case PG_TYPE_INT2:			return 6;
 
@@ -422,6 +501,10 @@ Int4 pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_un
 	case PG_TYPE_XID:			return 10;
 
 	case PG_TYPE_INT4:			return 11;
+
+	case PG_TYPE_INT8:			return 20;	/* signed: 19 digits + sign */
+
+	case PG_TYPE_NUMERIC:		return getNumericPrecision(stmt,type,col) + 2;
 
 	case PG_TYPE_MONEY:			return 15;	/* ($9,999,999.99) */
 
@@ -440,6 +523,7 @@ Int4 pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_un
 */
 Int4 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
+
 	switch(type) {
 
 	case PG_TYPE_INT2:          return 2;
@@ -447,6 +531,10 @@ Int4 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_
 	case PG_TYPE_OID:
 	case PG_TYPE_XID:
 	case PG_TYPE_INT4:          return 4;
+
+	case PG_TYPE_INT8:			return 20;	/* signed: 19 digits + sign */
+
+	case PG_TYPE_NUMERIC:		return getNumericPrecision(stmt,type,col) + 2;
 
 	case PG_TYPE_FLOAT4:
 	case PG_TYPE_MONEY:			return 4;
@@ -461,13 +549,13 @@ Int4 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_
 	case PG_TYPE_TIMESTAMP:		return 16;
 
 
-	/*	Character types use the default precision */
+	/*	Character types (and NUMERIC) use the default precision */
 	default:	
 		return pgtype_precision(stmt, type, col, handle_unknown_size_as);
     }
 }
 
-Int2 pgtype_scale(StatementClass *stmt, Int4 type)
+Int2 pgtype_scale(StatementClass *stmt, Int4 type, int col)
 {
 	switch(type) {
 
@@ -475,6 +563,7 @@ Int2 pgtype_scale(StatementClass *stmt, Int4 type)
 	case PG_TYPE_OID:
 	case PG_TYPE_XID:
 	case PG_TYPE_INT4:
+	case PG_TYPE_INT8:
 	case PG_TYPE_FLOAT4:
 	case PG_TYPE_FLOAT8:
 	case PG_TYPE_MONEY:
@@ -484,6 +573,8 @@ Int2 pgtype_scale(StatementClass *stmt, Int4 type)
 	case PG_TYPE_ABSTIME:		
 	case PG_TYPE_DATETIME:		
 	case PG_TYPE_TIMESTAMP:		return 0;
+
+	case PG_TYPE_NUMERIC:		return getNumericScale(stmt,type,col);
 
 	default:					return -1;
 	}
@@ -496,6 +587,8 @@ Int2 pgtype_radix(StatementClass *stmt, Int4 type)
     case PG_TYPE_INT2:
     case PG_TYPE_OID:
     case PG_TYPE_INT4:
+	case PG_TYPE_INT8:
+	case PG_TYPE_NUMERIC:
     case PG_TYPE_FLOAT4:
 	case PG_TYPE_MONEY:
     case PG_TYPE_FLOAT8:        return 10;
@@ -521,6 +614,8 @@ Int2 pgtype_auto_increment(StatementClass *stmt, Int4 type)
 	case PG_TYPE_MONEY:
 	case PG_TYPE_BOOL:
 	case PG_TYPE_FLOAT8:
+	case PG_TYPE_INT8:
+	case PG_TYPE_NUMERIC:
 
 	case PG_TYPE_DATE:
 	case PG_TYPE_TIME:			
@@ -540,7 +635,6 @@ Int2 pgtype_case_sensitive(StatementClass *stmt, Int4 type)
 	case PG_TYPE_CHAR2:
 	case PG_TYPE_CHAR4:
     case PG_TYPE_CHAR8:         
-	case PG_TYPE_CHAR16:		
 
     case PG_TYPE_VARCHAR:       
     case PG_TYPE_BPCHAR:
@@ -566,7 +660,6 @@ Int2 pgtype_searchable(StatementClass *stmt, Int4 type)
 	case PG_TYPE_CHAR2:
 	case PG_TYPE_CHAR4:			
 	case PG_TYPE_CHAR8:
-	case PG_TYPE_CHAR16:		
 
 	case PG_TYPE_VARCHAR:       
 	case PG_TYPE_BPCHAR:
@@ -585,6 +678,8 @@ Int2 pgtype_unsigned(StatementClass *stmt, Int4 type)
 
 	case PG_TYPE_INT2:
 	case PG_TYPE_INT4:
+	case PG_TYPE_INT8:
+	case PG_TYPE_NUMERIC:
 	case PG_TYPE_FLOAT4:
 	case PG_TYPE_FLOAT8:
 	case PG_TYPE_MONEY:			return FALSE;
@@ -601,6 +696,8 @@ char *pgtype_literal_prefix(StatementClass *stmt, Int4 type)
 	case PG_TYPE_OID:
 	case PG_TYPE_XID:
 	case PG_TYPE_INT4:
+	case PG_TYPE_INT8:
+	case PG_TYPE_NUMERIC:
 	case PG_TYPE_FLOAT4:
 	case PG_TYPE_FLOAT8:        
 	case PG_TYPE_MONEY:			return NULL;
@@ -617,6 +714,8 @@ char *pgtype_literal_suffix(StatementClass *stmt, Int4 type)
 	case PG_TYPE_OID:
 	case PG_TYPE_XID:
 	case PG_TYPE_INT4:
+	case PG_TYPE_INT8:
+	case PG_TYPE_NUMERIC:
 	case PG_TYPE_FLOAT4:
 	case PG_TYPE_FLOAT8:        
 	case PG_TYPE_MONEY:			return NULL;

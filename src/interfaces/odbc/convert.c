@@ -40,6 +40,7 @@
 #include <math.h>
 #include "convert.h"
 #include "statement.h"
+#include "qresult.h"
 #include "bind.h"
 #include "pgtypes.h"
 #include "lobj.h"
@@ -895,6 +896,30 @@ int lobj_fd, retval;
 
 			}
 			else {
+  
+				/* begin transaction if needed */
+				if(!CC_is_in_trans(stmt->hdbc)) {
+					QResultClass *res;
+					char ok;
+
+					res = CC_send_query(stmt->hdbc, "BEGIN", NULL);
+					if (!res) {
+						stmt->errormsg = "Could not begin (in-line) a transaction";
+						stmt->errornumber = STMT_EXEC_ERROR;
+						SC_log_error(func, "", stmt);
+						return SQL_ERROR;
+					}
+					ok = QR_command_successful(res);
+					QR_Destructor(res);
+					if (!ok) {
+						stmt->errormsg = "Could not begin (in-line) a transaction";
+						stmt->errornumber = STMT_EXEC_ERROR;
+						SC_log_error(func, "", stmt);
+						return SQL_ERROR;
+					}
+
+					CC_set_in_trans(stmt->hdbc);
+				}
 
 				/*	store the oid */
 				lobj_oid = lo_creat(stmt->hdbc, INV_READ | INV_WRITE);
@@ -917,6 +942,30 @@ int lobj_fd, retval;
 				retval = lo_write(stmt->hdbc, lobj_fd, buffer, used);
 
 				lo_close(stmt->hdbc, lobj_fd);
+
+				/* commit transaction if needed */
+				if (!globals.use_declarefetch && CC_is_in_autocommit(stmt->hdbc)) {
+					QResultClass *res;
+					char ok;
+
+					res = CC_send_query(stmt->hdbc, "COMMIT", NULL);
+					if (!res) {
+						stmt->errormsg = "Could not commit (in-line) a transaction";
+						stmt->errornumber = STMT_EXEC_ERROR;
+						SC_log_error(func, "", stmt);
+						return SQL_ERROR;
+					}
+					ok = QR_command_successful(res);
+					QR_Destructor(res);
+					if (!ok) {
+						stmt->errormsg = "Could not commit (in-line) a transaction";
+						stmt->errornumber = STMT_EXEC_ERROR;
+						SC_log_error(func, "", stmt);
+						return SQL_ERROR;
+					}
+
+					CC_set_no_trans(stmt->hdbc);
+				}
 			}
 
 			/*	the oid of the large object -- just put that in for the
@@ -1340,6 +1389,29 @@ BindInfoClass *bindInfo = NULL;
 	*/
 
 	if ( ! bindInfo || bindInfo->data_left == -1) {
+
+		/* begin transaction if needed */
+		if(!CC_is_in_trans(stmt->hdbc)) {
+			QResultClass *res;
+			char ok;
+
+			res = CC_send_query(stmt->hdbc, "BEGIN", NULL);
+			if (!res) {
+				stmt->errormsg = "Could not begin (in-line) a transaction";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				return COPY_GENERAL_ERROR;
+			}
+			ok = QR_command_successful(res);
+			QR_Destructor(res);
+			if (!ok) {
+				stmt->errormsg = "Could not begin (in-line) a transaction";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				return COPY_GENERAL_ERROR;
+			}
+
+			CC_set_in_trans(stmt->hdbc);
+		}
+
 		oid = atoi(value);
 		stmt->lobj_fd = lo_open(stmt->hdbc, oid, INV_READ);
 		if (stmt->lobj_fd < 0) {
@@ -1374,6 +1446,29 @@ BindInfoClass *bindInfo = NULL;
 	retval = lo_read(stmt->hdbc, stmt->lobj_fd, (char *) rgbValue, cbValueMax);
 	if (retval < 0) {
 		lo_close(stmt->hdbc, stmt->lobj_fd);
+
+		/* commit transaction if needed */
+		if (!globals.use_declarefetch && CC_is_in_autocommit(stmt->hdbc)) {
+			QResultClass *res;
+			char ok;
+
+			res = CC_send_query(stmt->hdbc, "COMMIT", NULL);
+			if (!res) {
+				stmt->errormsg = "Could not commit (in-line) a transaction";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				return COPY_GENERAL_ERROR;
+			}
+			ok = QR_command_successful(res);
+			QR_Destructor(res);
+			if (!ok) {
+				stmt->errormsg = "Could not commit (in-line) a transaction";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				return COPY_GENERAL_ERROR;
+			}
+
+			CC_set_no_trans(stmt->hdbc);
+		}
+
 		stmt->lobj_fd = -1;
 
 		stmt->errornumber = STMT_EXEC_ERROR;
@@ -1396,6 +1491,29 @@ BindInfoClass *bindInfo = NULL;
 
 	if (! bindInfo || bindInfo->data_left == 0) {
 		lo_close(stmt->hdbc, stmt->lobj_fd);
+
+		/* commit transaction if needed */
+		if (!globals.use_declarefetch && CC_is_in_autocommit(stmt->hdbc)) {
+			QResultClass *res;
+			char ok;
+
+			res = CC_send_query(stmt->hdbc, "COMMIT", NULL);
+			if (!res) {
+				stmt->errormsg = "Could not commit (in-line) a transaction";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				return COPY_GENERAL_ERROR;
+			}
+			ok = QR_command_successful(res);
+			QR_Destructor(res);
+			if (!ok) {
+				stmt->errormsg = "Could not commit (in-line) a transaction";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				return COPY_GENERAL_ERROR;
+			}
+
+			CC_set_no_trans(stmt->hdbc);
+		}
+
 		stmt->lobj_fd = -1;	/* prevent further reading */
 	}
 

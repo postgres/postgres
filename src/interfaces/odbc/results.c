@@ -320,7 +320,7 @@ RETCODE result;
 	/************************/
     if (pibScale) {
         Int2 scale;
-        scale = pgtype_scale(stmt, fieldtype);
+        scale = pgtype_scale(stmt, fieldtype, icol);
         if(scale == -1) { scale = 0; }
         
         *pibScale = scale;
@@ -521,7 +521,7 @@ int len = 0, value = 0;
 		break;
 
 	case SQL_COLUMN_SCALE:
-		value = pgtype_scale(stmt, field_type);
+		value = pgtype_scale(stmt, field_type, icol);
 		break;
 
 	case SQL_COLUMN_SEARCHABLE:

@@ -517,6 +517,31 @@ int i, retval;
 	/* close the large object */
 	if ( stmt->lobj_fd >= 0) {
 		lo_close(stmt->hdbc, stmt->lobj_fd);
+
+		/* commit transaction if needed */
+		if (!globals.use_declarefetch && CC_is_in_autocommit(stmt->hdbc)) {
+			QResultClass *res;
+			char ok;
+
+			res = CC_send_query(stmt->hdbc, "COMMIT", NULL);
+			if (!res) {
+				stmt->errormsg = "Could not commit (in-line) a transaction";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
+			}
+			ok = QR_command_successful(res);
+			QR_Destructor(res);
+			if (!ok) {
+				stmt->errormsg = "Could not commit (in-line) a transaction";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
+			}
+
+			CC_set_no_trans(stmt->hdbc);
+		}
+
 		stmt->lobj_fd = -1;
 	}
 
@@ -606,6 +631,30 @@ char *buffer;
 
 		/*	Handle Long Var Binary with Large Objects */
 		if ( current_param->SQLType == SQL_LONGVARBINARY) {
+
+			/* begin transaction if needed */
+			if(!CC_is_in_trans(stmt->hdbc)) {
+				QResultClass *res;
+				char ok;
+
+				res = CC_send_query(stmt->hdbc, "BEGIN", NULL);
+				if (!res) {
+					stmt->errormsg = "Could not begin (in-line) a transaction";
+					stmt->errornumber = STMT_EXEC_ERROR;
+					SC_log_error(func, "", stmt);
+					return SQL_ERROR;
+				}
+				ok = QR_command_successful(res);
+				QR_Destructor(res);
+				if (!ok) {
+					stmt->errormsg = "Could not begin (in-line) a transaction";
+					stmt->errornumber = STMT_EXEC_ERROR;
+					SC_log_error(func, "", stmt);
+					return SQL_ERROR;
+				}
+
+				CC_set_in_trans(stmt->hdbc);
+			}
 
 			/*	store the oid */
 			current_param->lobj_oid = lo_creat(stmt->hdbc, INV_READ | INV_WRITE);

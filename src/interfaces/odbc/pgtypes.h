@@ -22,7 +22,7 @@
 #define PG_TYPE_BYTEA        17
 #define PG_TYPE_CHAR         18
 #define PG_TYPE_NAME         19
-#define PG_TYPE_CHAR16       20
+#define PG_TYPE_INT8         20
 #define PG_TYPE_INT2         21
 #define PG_TYPE_INT2VECTOR   22
 #define PG_TYPE_INT4         23
@@ -59,6 +59,7 @@
 #define PG_TYPE_TIME       1083
 #define PG_TYPE_DATETIME   1184
 #define PG_TYPE_TIMESTAMP  1296
+#define PG_TYPE_NUMERIC    1700
 
 /* extern Int4 pgtypes_defined[]; */
 extern Int2 sqlTypes[];
@@ -77,7 +78,7 @@ Int4 pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unkno
 Int4 pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
 Int4 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
 
-Int2 pgtype_scale(StatementClass *stmt, Int4 type);
+Int2 pgtype_scale(StatementClass *stmt, Int4 type, int col);
 Int2 pgtype_radix(StatementClass *stmt, Int4 type);
 Int2 pgtype_nullable(StatementClass *stmt, Int4 type);
 Int2 pgtype_auto_increment(StatementClass *stmt, Int4 type);
