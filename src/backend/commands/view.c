@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.16 1997/11/25 21:59:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.17 1997/11/28 17:27:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,6 +314,6 @@ RemoveView(char *viewName)
 	/*
 	 * now remove the relation.
 	 */
-	heap_destroy(viewName);
+	heap_destroy_with_catalog(viewName);
 	pfree(rname);
 }

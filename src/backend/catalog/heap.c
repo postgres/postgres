@@ -7,16 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.38 1997/11/28 04:39:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.39 1997/11/28 17:26:51 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
- *		heap_create_and_catalog() - Create a cataloged relation
- *		heap_destroy()			- Removes named relation from catalogs
+ *		heap_create_with_catalog() - Create a cataloged relation
+ *		heap_destroy_with_catalog()			- Removes named relation from catalogs
  *
  * NOTES
  *	  this code taken from access/heap/create.c, which contains
- *	  the old heap_create_and_catalogr, amcreate, and amdestroy.
+ *	  the old heap_create_with_catalogr, amcreate, and amdestroy.
  *	  those routines will soon call these routines using the function
  *	  manager,
  *	  just like the poorly named "NewXXX" routines do.	The
@@ -332,7 +332,7 @@ heap_create(char *name,
 
 
 /* ----------------------------------------------------------------
- *		heap_create_and_catalog		- Create a cataloged relation
+ *		heap_create_with_catalog		- Create a cataloged relation
  *
  *		this is done in 6 steps:
  *
@@ -343,7 +343,7 @@ heap_create(char *name,
  *		   preforms a scan to ensure that no relation with the
  *		   same name already exists.
  *
- *		3) heap_create_and_catalogr() is called to create the new relation
+ *		3) heap_create_with_catalogr() is called to create the new relation
  *		   on disk.
  *
  *		4) TypeDefine() is called to define a new type corresponding
@@ -376,7 +376,7 @@ heap_create(char *name,
  *		create new relation
  *		insert new relation into attribute catalog
  *
- *		Should coordinate with heap_create_and_catalogr().	Either
+ *		Should coordinate with heap_create_with_catalogr().	Either
  *		it should not be called or there should be a way to prevent
  *		the relation from being removed at the end of the
  *		transaction if it is successful ('u'/'r' may be enough).
@@ -739,13 +739,13 @@ addNewRelationType(char *typeName, Oid new_rel_oid)
 }
 
 /* --------------------------------
- *		heap_create_and_catalog
+ *		heap_create_with_catalog
  *
  *		creates a new cataloged relation.  see comments above.
  * --------------------------------
  */
 Oid
-heap_create_and_catalog(char relname[],
+heap_create_with_catalog(char relname[],
 						TupleDesc tupdesc)
 {
 	Relation	pg_class_desc;
@@ -830,7 +830,7 @@ heap_create_and_catalog(char relname[],
 
 
 /* ----------------------------------------------------------------
- *		heap_destroy	- removes all record of named relation from catalogs
+ *		heap_destroy_with_catalog	- removes all record of named relation from catalogs
  *
  *		1)	open relation, check for existence, etc.
  *		2)	remove inheritance information
@@ -1246,12 +1246,12 @@ DeletePgTypeTuple(Relation rdesc)
 }
 
 /* --------------------------------
- *		heap_destroy
+ *		heap_destroy_with_catalog
  *
  * --------------------------------
  */
 void
-heap_destroy(char *relname)
+heap_destroy_with_catalog(char *relname)
 {
 	Relation	rdesc;
 	Oid			rid;
@@ -1358,13 +1358,13 @@ heap_destroy(char *relname)
 }
 
 /*
- * heap_destroyr
+ * heap_destroy
  *	  destroy and close temporary relations
  *
  */
 
 void
-heap_destroyr(Relation rdesc)
+heap_destroy(Relation rdesc)
 {
 	ReleaseRelationBuffers(rdesc);
 	if (!(rdesc->rd_istemp) || !(rdesc->rd_tmpunlinked))
@@ -1475,7 +1475,7 @@ DestroyTempRels(void)
 		rdesc = tempRels->rels[i];
 		/* rdesc may be NULL if it has been removed from the list already */
 		if (rdesc)
-			heap_destroyr(rdesc);
+			heap_destroy(rdesc);
 	}
 	free(tempRels->rels);
 	free(tempRels);

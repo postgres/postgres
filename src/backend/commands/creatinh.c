@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.20 1997/11/28 04:39:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.21 1997/11/28 17:27:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ DefineRelation(CreateStmt *stmt)
 		}
 	}
 
-	relationId = heap_create_and_catalog(relname, descriptor);
+	relationId = heap_create_with_catalog(relname, descriptor);
 
 	StoreCatalogInheritance(relationId, inheritList);
 }
@@ -157,7 +157,7 @@ void
 RemoveRelation(char *name)
 {
 	AssertArg(name);
-	heap_destroy(name);
+	heap_destroy_with_catalog(name);
 }
 
 

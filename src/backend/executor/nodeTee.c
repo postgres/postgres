@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.12 1997/11/28 04:40:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.13 1997/11/28 17:27:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 			bufferRel = heap_openr(teeState->tee_bufferRelname);
 		else
 			bufferRel = heap_open(
-				heap_create_and_catalog(teeState->tee_bufferRelname, tupType));
+				heap_create_with_catalog(teeState->tee_bufferRelname, tupType));
 	}
 	else
 	{
@@ -177,7 +177,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 				newoid());
 /*		bufferRel = ExecCreatR(len, tupType, _TEMP_RELATION_ID); */
 		bufferRel = heap_open(
-				heap_create_and_catalog(teeState->tee_bufferRelname, tupType));
+				heap_create_with_catalog(teeState->tee_bufferRelname, tupType));
 	}
 
 	teeState->tee_bufferRel = bufferRel;
@@ -519,7 +519,7 @@ ExecEndTee(Tee *node, Plan *parent)
 		bufferRel = teeState->tee_bufferRel;
 		if (bufferRel)
 		{
-			heap_destroyr(bufferRel);
+			heap_destroy(bufferRel);
 			teeState->tee_bufferRel = NULL;
 			if (teeState->tee_mcxt)
 			{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.8 1997/11/28 04:39:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.9 1997/11/28 17:26:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,10 +178,10 @@ CreateStmt:
 					{
 						Oid id;
 						TupleDesc tupdesc;
-						/* extern Oid heap_create_and_catalog();*/
+						/* extern Oid heap_create_with_catalog();*/
 
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
-						id = heap_create_and_catalog(LexIDStr($3), tupdesc);
+						id = heap_create_with_catalog(LexIDStr($3), tupdesc);
 						if (!Quiet)
 							printf("CREATED relation %s with OID %d\n",
 								   LexIDStr($3), id);

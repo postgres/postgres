@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.23 1997/11/28 04:40:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.24 1997/11/28 17:27:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ inv_create(int flags)
 	 * be located on whatever storage manager the user requested.
 	 */
 
-	heap_create_and_catalog(objname, tupdesc);
+	heap_create_with_catalog(objname, tupdesc);
 
 	/* make the relation visible in this transaction */
 	CommandCounterIncrement();
@@ -283,7 +283,7 @@ inv_destroy(Oid lobjId)
 	if (!RelationIsValid(r) || r->rd_rel->relkind == RELKIND_INDEX)
 		return -1;
 
-	heap_destroy(r->rd_rel->relname.data);
+	heap_destroy_with_catalog(r->rd_rel->relname.data);
 	return 1;
 }
 

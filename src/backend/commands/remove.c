@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.17 1997/11/25 21:59:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.18 1997/11/28 17:27:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ AttributeAndRelationRemove(Oid typeOid)
 			char	   *name;
 
 			name = (((Form_pg_class) GETSTRUCT(tup))->relname).data;
-			heap_destroy(name);
+			heap_destroy_with_catalog(name);
 		}
 	}
 	heap_endscan(sdesc);

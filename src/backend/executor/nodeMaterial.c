@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.10 1997/11/20 23:21:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.11 1997/11/28 17:27:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,7 +319,7 @@ ExecEndMaterial(Material *node)
 	matstate = node->matstate;
 	tempRelation = matstate->mat_TempRelation;
 
-	heap_destroyr(tempRelation);
+	heap_destroy(tempRelation);
 
 	/* ----------------
 	 *	close the temp relation and shut down the scan.

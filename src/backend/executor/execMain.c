@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.34 1997/11/28 04:40:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.35 1997/11/28 17:27:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,7 +572,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				/* fixup to prevent zero-length columns in create */
 				setVarAttrLenForCreateTable(tupdesc, targetList, rangeTable);
 
-				intoRelationId = heap_create_and_catalog(intoName, tupdesc);
+				intoRelationId = heap_create_with_catalog(intoName, tupdesc);
 #ifdef NOT_USED					/* it's copy ... */
 				resetVarAttrLenForCreateTable(tupdesc);
 #endif
