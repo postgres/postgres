@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.310 2004/01/09 04:58:09 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.311 2004/01/19 21:20:05 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -408,23 +408,6 @@ AC_MSG_CHECKING([whether to build Python modules])
 PGAC_ARG_BOOL(with, python, no, [  --with-python           build Python modules (PL/Python)])
 AC_MSG_RESULT([$with_python])
 AC_SUBST(with_python)
-
-#
-# Optionally build the Java/JDBC tools
-#
-AC_MSG_CHECKING([whether to build Java/JDBC tools])
-PGAC_ARG_BOOL(with, java, no, [  --with-java             build JDBC interface and Java tools],
-[AC_MSG_RESULT(yes)
-PGAC_PATH_ANT
-if test -z "$ANT"; then
-  AC_MSG_ERROR([Ant is required to build Java components
-If you have Ant already installed, see config.log for details on the failure.])
-fi
-if "$ANT" -version | egrep -i 'ant version' | sed q | egrep -v ' 1\.[[5-9]]| [[2-9]]\.' >/dev/null ; then
-  AC_MSG_ERROR([Ant version >= 1.5 is required to build Java components])
-fi],
-[AC_MSG_RESULT(no)])
-AC_SUBST(with_java)
 
 #
 # Kerberos 4

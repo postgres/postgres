@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.34 2003/11/29 19:51:37 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.35 2004/01/19 21:20:06 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -49,7 +49,6 @@
 <!entity extend     SYSTEM "extend.sgml">
 <!entity func-ref   SYSTEM "func-ref.sgml">
 <!entity infoschema SYSTEM "information_schema.sgml">
-<!entity jdbc       SYSTEM "jdbc.sgml">
 <!entity libpgeasy  SYSTEM "libpgeasy.sgml">
 <!entity libpq      SYSTEM "libpq.sgml">
 <!entity libpgtcl   SYSTEM "libpgtcl.sgml">

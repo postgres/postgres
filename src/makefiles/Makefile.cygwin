@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.3 2003/11/29 19:52:12 pgsql Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.4 2004/01/19 21:20:06 tgl Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
@@ -31,7 +31,5 @@ endif
 ifneq (,$(findstring src/pl/plpython,$(subdir)))
 override CPPFLAGS+= -DUSE_DL_IMPORT
 endif
-
-override javadir := '$(shell cygpath -w $(javadir))'
 
 sqlmansect = 7

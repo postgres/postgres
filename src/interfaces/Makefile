@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/Makefile,v 1.51 2003/11/29 19:52:08 pgsql Exp $
+# $PostgreSQL: pgsql/src/interfaces/Makefile,v 1.52 2004/01/19 21:20:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,14 +14,10 @@ include $(top_builddir)/src/Makefile.global
 
 DIRS := libpq ecpg 
 
-ALLDIRS := $(DIRS) libpgtcl jdbc
+ALLDIRS := $(DIRS) libpgtcl
 
 ifeq ($(with_tcl), yes)
 DIRS += libpgtcl
-endif
-
-ifeq ($(with_java), yes)
-DIRS += jdbc
 endif
 
 

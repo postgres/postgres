@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.192 2004/01/11 05:46:58 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.193 2004/01/19 21:20:06 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -210,41 +210,6 @@ su - postgres
       If you want to build Tcl or Tk components (clients and the
       PL/Tcl language) you of course need a Tcl installation.
      </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      To build the JDBC driver, you need
-      <application>Ant</application> 1.5 or higher and a
-      <acronym>JDK</acronym>.  <application>Ant</application> is a
-      special tool for building Java-based packages.  It can be
-      downloaded from the <ulink
-      url="http://jakarta.apache.org/ant/index.html"><application>Ant</application>
-      web site</ulink>.
-     </para>
-
-     <para>
-      If you have several Java compilers installed, it depends on the
-      Ant configuration which one gets used.  Precompiled
-      <application>Ant</application> distributions are typically set
-      up to read a file <filename>.antrc</filename> in the current
-      user's home directory for configuration.  For example, to use a
-      different <acronym>JDK</acronym> than the default, this may
-      work:
-<programlisting>
-JAVA_HOME=/usr/local/sun-jdk1.3
-JAVACMD=$JAVA_HOME/bin/java
-</programlisting>
-     </para>
-
-     <note>
-      <para>
-       Do not try to build the driver by calling
-       <command>ant</command> or even <command>javac</command>
-       directly.  This will not work.  Run <command>gmake</command>
-       normally as described below.
-      </para>
-     </note>
     </listitem>
 
     <listitem>
@@ -797,16 +762,6 @@ JAVACMD=$JAVA_HOME/bin/java
          automatically at their well-known locations, but if you want to
          use a different version of Tcl or Tk you can specify the
          directory in which to find them.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--with-java</option></term>
-       <listitem>
-        <para>
-         Build the <acronym>JDBC</acronym> driver and associated Java
-         packages.
         </para>
        </listitem>
       </varlistentry>

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.172 2003/12/19 23:29:15 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.173 2004/01/19 21:20:06 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -111,7 +111,6 @@ override docdir := $(docdir)/postgresql
 endif
 endif
 
-javadir := $(DESTDIR)$(datadir)/java
 localedir := @localedir@
 
 
@@ -121,7 +120,6 @@ localedir := @localedir@
 #
 # Records the choice of the various --enable-xxx and --with-xxx options.
 
-with_java	= @with_java@
 with_perl	= @with_perl@
 with_python	= @with_python@
 with_tcl	= @with_tcl@
@@ -209,7 +207,6 @@ perl_embed_ldflags	= @perl_embed_ldflags@
 
 # Miscellaneous
 
-ANT	= @ANT@
 AWK	= @AWK@
 LN_S	= @LN_S@
 MSGFMT  = @MSGFMT@
