@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.1 1996/08/28 01:58:05 scrappy Exp $
+ * $Id: ipc.h,v 1.2 1996/10/02 20:40:17 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -109,24 +109,7 @@ extern int S_LOCK_FREE(slock_t *lock);
 
 #endif /* HAS_TEST_AND_SET */
 
-/*
- * On architectures for which we have not implemented spinlocks (or
- * cannot do so), we use System V semaphores.  We also use them for 
- * long locks.  For some reason union semun is never defined in the 
- * System V header files so we must do it ourselves.
- *
- * bsdi_2_1 does not need this
- */
-#if defined(sequent) || \
-    defined(PORTNAME_aix) || \
-    defined(PORTNAME_alpha) || \
-    defined(PORTNAME_bsdi) || \
-    defined(PORTNAME_hpux) || \
-    defined(PORTNAME_i386_solaris) || \
-    defined(PORTNAME_sparc_solaris) || \
-    defined(PORTNAME_ultrix4) || \
-    defined(PORTNAME_svr4) || \
-    defined(WIN32)
+#ifdef NEED_UNION_SEMUN
 union semun {
     int val;
     struct semid_ds *buf;
