@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.43 2000/05/28 17:55:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.44 2000/06/14 04:53:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ ProcedureCreate(char *procedureName,
 	Oid			toid;
 	NameData	procname;
 	TupleDesc	tupDesc;
+	Oid		retval;
 
 	/* ----------------
 	 *	sanity checks
@@ -327,5 +328,7 @@ ProcedureCreate(char *procedureName,
 		CatalogCloseIndices(Num_pg_proc_indices, idescs);
 	}
 	heap_close(rel, RowExclusiveLock);
-	return tup->t_data->t_oid;
+	retval = tup->t_data->t_oid;
+	heap_freetuple(tup);
+	return retval;
 }
