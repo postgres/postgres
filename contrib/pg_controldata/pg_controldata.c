@@ -1,87 +1,54 @@
-/* pg_controldata
+/*
+ * pg_controldata
  *
  * reads the data from $PGDATA/global/pg_control
  *
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
-*/
+ * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.2 2001/03/13 01:17:40 tgl Exp $
+ */
+#include "postgres.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "catalog/pg_control.h"
 
-typedef unsigned int uint32;
 
-#include "config.h"
-#include "access/xlogdefs.h"
-
-/*
- * #include "access/xlog.h"
- * #include "c.h"
- */
-
-/* The following definitions are extracted from access/xlog.h and its
- * recursive includes. There is too much initialisation needed if
- * they are included direct. Perhaps someone more knowledgeable can
- * fix that.
- */
-typedef struct crc64
+static const char *
+dbState(DBState state)
 {
-	uint32      crc1;
-	uint32      crc2;
-} crc64;
+	switch (state)
+	{
+		case DB_STARTUP:
+			return "STARTUP";
+		case DB_SHUTDOWNED:
+			return "SHUTDOWNED";
+		case DB_SHUTDOWNING:
+			return "SHUTDOWNING";
+		case DB_IN_RECOVERY:
+			return "IN_RECOVERY";
+		case DB_IN_PRODUCTION:
+			return "IN_PRODUCTION";
+	}
+	return "unrecognized status code";
+}
 
-#define LOCALE_NAME_BUFLEN  128
 
-typedef enum DBState
+int
+main()
 {
-	DB_STARTUP = 0,
-	DB_SHUTDOWNED,
-	DB_SHUTDOWNING,
-	DB_IN_RECOVERY,
-	DB_IN_PRODUCTION
-} DBState;
-
-
-typedef struct ControlFileData
-{
-   crc64    crc;
-   uint32      logId;         /* current log file id */
-   uint32      logSeg;        /* current log file segment (1-based) */
-   struct 
-	XLogRecPtr	checkPoint;    /* last check point record ptr */
-   time_t      time;       /* time stamp of last modification */
-   DBState     state;         /* see enum above */
-
-   /*
-    * this data is used to make sure that configuration of this DB is
-    * compatible with the backend executable
-    */
-   uint32      blcksz;        /* block size for this DB */
-   uint32      relseg_size;   /* blocks per segment of large relation */
-   uint32      catalog_version_no;     /* internal version number */
-   /* active locales --- "C" if compiled without USE_LOCALE: */
-   char     lc_collate[LOCALE_NAME_BUFLEN];
-   char     lc_ctype[LOCALE_NAME_BUFLEN];
-
-   /*
-    * important directory locations
-    */
-   char     archdir[MAXPGPATH];     /* where to move offline log files */
-} ControlFileData;
-
-int main() {
 	ControlFileData ControlFile;
 	int fd;
 	char ControlFilePath[MAXPGPATH];
 	char *DataDir;
-	char tmdt[32];
+	crc64 crc;
+	char pgctime_str[32];
+	char ckpttime_str[32];
 
 	DataDir = getenv("PGDATA");
 	if ( DataDir == NULL ) {
@@ -91,33 +58,77 @@ int main() {
 
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 
-	if ((fd = open(ControlFilePath, O_RDONLY)) == -1) {
+	if ((fd = open(ControlFilePath, O_RDONLY)) == -1)
+	{
 		perror("Failed to open $PGDATA/global/pg_control for reading");
 		exit(2);
 	}
 
-	read(fd, &ControlFile, sizeof(ControlFileData));
-	strftime(tmdt, 32, "%c", localtime(&(ControlFile.time)));
+	if (read(fd, &ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
+	{
+		perror("Failed to read $PGDATA/global/pg_control");
+		exit(2);
+	}
+	close(fd);
 
-	printf("Log file id:                          %u\n"
-	       "Log file segment:                     %u\n"
-			 "Last modified:                        %s\n"
-			 "Database block size:                  %u\n"
-			 "Blocks per segment of large relation: %u\n"
-			 "Catalog version number:               %u\n"
-			 "LC_COLLATE:                           %s\n"
-			 "LC_CTYPE:                             %s\n"
-			 "Log archive directory:                %s\n",
-			 ControlFile.logId,
-			 ControlFile.logSeg,
-			 tmdt,
-			 ControlFile.blcksz,
-			 ControlFile.relseg_size,
-			 ControlFile.catalog_version_no,
-			 ControlFile.lc_collate,
-			 ControlFile.lc_ctype,
-			 ControlFile.archdir);
-	
+	/* Check the CRC. */
+	INIT_CRC64(crc);
+	COMP_CRC64(crc, 
+			   (char*) &ControlFile + sizeof(crc64),
+			   sizeof(ControlFileData) - sizeof(crc64));
+	FIN_CRC64(crc);
+
+	if (!EQ_CRC64(crc, ControlFile.crc))
+		printf("WARNING: Calculated CRC checksum does not match value stored in file.\n"
+			   "Either the file is corrupt, or it has a different layout than this program\n"
+			   "is expecting.  The results below are untrustworthy.\n\n");
+
+	strftime(pgctime_str, 32, "%c",
+			 localtime(&(ControlFile.time)));
+	strftime(ckpttime_str, 32, "%c",
+			 localtime(&(ControlFile.checkPointCopy.time)));
+
+	printf("pg_control version number:            %u\n"
+		   "Catalog version number:               %u\n"
+		   "Database state:                       %s\n"
+		   "pg_control last modified:             %s\n"
+		   "Current log file id:                  %u\n"
+	       "Next log file segment:                %u\n"
+		   "Latest checkpoint location:           %X/%X\n"
+		   "Prior checkpoint location:            %X/%X\n"
+		   "Latest checkpoint's REDO location:    %X/%X\n"
+		   "Latest checkpoint's UNDO location:    %X/%X\n"
+		   "Latest checkpoint's StartUpID:        %u\n"
+		   "Latest checkpoint's NextXID:          %u\n"
+		   "Latest checkpoint's NextOID:          %u\n"
+		   "Time of latest checkpoint:            %s\n"
+		   "Database block size:                  %u\n"
+		   "Blocks per segment of large relation: %u\n"
+		   "LC_COLLATE:                           %s\n"
+		   "LC_CTYPE:                             %s\n",
+
+		   ControlFile.pg_control_version,
+		   ControlFile.catalog_version_no,
+		   dbState(ControlFile.state),
+		   pgctime_str,
+		   ControlFile.logId,
+		   ControlFile.logSeg,
+		   ControlFile.checkPoint.xlogid,
+		   ControlFile.checkPoint.xrecoff,
+		   ControlFile.prevCheckPoint.xlogid,
+		   ControlFile.prevCheckPoint.xrecoff,
+		   ControlFile.checkPointCopy.redo.xlogid,
+		   ControlFile.checkPointCopy.redo.xrecoff,
+		   ControlFile.checkPointCopy.undo.xlogid,
+		   ControlFile.checkPointCopy.undo.xrecoff,
+		   ControlFile.checkPointCopy.ThisStartUpID,
+		   ControlFile.checkPointCopy.nextXid,
+		   ControlFile.checkPointCopy.nextOid,
+		   ckpttime_str,
+		   ControlFile.blcksz,
+		   ControlFile.relseg_size,
+		   ControlFile.lc_collate,
+		   ControlFile.lc_ctype);
+
 	return (0);
 }
-

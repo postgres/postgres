@@ -2,18 +2,31 @@ I had a need to read such things as the backend locale and the catalog
 version number from the current database, and couldn't find any existing
 program to do that.
 
-The attached utility produces this output:
+The attached utility produces output like this:
 
-linda:~$ pg_controldata
-Log file id:                          0
-Log file segment:                     5
-Last modified:                        Wed Feb  7 19:35:47 2001
+$ pg_controldata
+pg_control version number:            71
+Catalog version number:               200101061
+Database state:                       IN_PRODUCTION
+pg_control last modified:             Sat Mar 10 00:07:55 2001
+Current log file id:                  0
+Next log file segment:                9
+Latest checkpoint location:           0/88CAA20
+Prior checkpoint location:            0/70A5D48
+Latest checkpoint's REDO location:    0/88CAA20
+Latest checkpoint's UNDO location:    0/0
+Latest checkpoint's StartUpID:        22
+Latest checkpoint's NextXID:          4711
+Latest checkpoint's NextOID:          444704
+Time of latest checkpoint:            Sat Mar 10 00:07:52 2001
 Database block size:                  8192
 Blocks per segment of large relation: 131072
-Catalog version number:               200101061
-LC_COLLATE:                           en_GB
-LC_CTYPE:                             en_GB
-Log archive directory:                
+LC_COLLATE:                           C
+LC_CTYPE:                             C
+
+
+To access the pg_control file, the program must be run as the Postgres user,
+and PGDATA must be set correctly in its environment.
 
 --
 Oliver Elphick                 <olly@lfix.co.uk>
