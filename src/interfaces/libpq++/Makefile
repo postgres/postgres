@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.3 1996/11/13 10:35:39 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.4 1996/11/14 10:25:54 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ INCLUDE_OPT= \
              -I../include \
              -I$(LIBPQDIR) 
 
-CXXFLAGS+= $(INCLUDE_OPT) -DPOSTPORT='"$(POSTPORT)"'
+CXXFLAGS+= $(INCLUDE_OPT)
 
 ifdef KRBVERS
 CXXFLAGS+= $(KRBFLAGS)

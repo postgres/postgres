@@ -26,30 +26,31 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.12 1996/10/12 07:49:56 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.13 1996/11/14 10:25:33 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
 # ----------------
-#       Set paths from environment or default values.
 #       The _fUnKy_..._sTuFf_ gets set when the script is built (with make)
 #       from parameters set in the make file.
-#       Currently the only thing we look for from the environment is
-#       PGDATA, PGHOST, and PGPORT.  However, we should have environment
-#       variables for all the paths.  
 #
 # ----------------
-[ -z "$PGDATA" ] && { PGDATA=_fUnKy_DATADIR_sTuFf_; export PGDATA; }
-[ -z "$PGPORT" ] && { PGPORT=_fUnKy_POSTPORT_sTuFf_; export PGPORT; }
-[ -z "$PGHOST" ] && { PGHOST=localhost; export PGHOST; }
-BINDIR=_fUnKy_BINDIR_sTuFf_
-LIBDIR=_fUnKy_LIBDIR_sTuFf_
+
 NAMEDATALEN=_fUnKy_NAMEDATALEN_sTuFf_
 OIDNAMELEN=_fUnKy_OIDNAMELEN_sTuFf_
-PATH=$BINDIR:$PATH
-export PATH
 
 CMDNAME=`basename $0`
+
+# Find the default PGLIB directory (the directory that contains miscellaneous 
+# files that are part of Postgres).  The user-written program postconfig
+# outputs variable settings like "PGLIB=/usr/lib/whatever".  If it doesn't
+# output a PGLIB value, then there is no default and the user must
+# specify the pglib option.  Postconfig may not exist, in which case
+# our invocation of it silently fails.
+
+# The x=x below is to satisfy export if postconfig returns nothing.
+
+export x=x $(postconfig 2>/dev/null)
 
 # Set defaults:
 debug=0
@@ -62,45 +63,60 @@ do
 # ${ARG#--username=} is not reliable or available on all platforms
 
     case "$1" in
-	--debug|-d)
-		debug=1
-		echo "Running with debug mode on."
-		;;
-	--noclean|-n)
-		noclean=1
-		echo "Running with noclean mode on.  Mistakes will not be cleaned up."
-		;;
-	--template|-t)
-		template_only=1
-		echo "updating template1 database only."
-		;;
-	--username=*)
-		POSTGRES_SUPERUSERNAME="`echo $1 | sed s/^--username=//`"
-		;;
-	-u)
-		shift
-		POSTGRES_SUPERUSERNAME="$1"
-		;;
-	-u*)
-		POSTGRES_SUPERUSERNAME="`echo $1 | sed s/^-u//`"
-		;;
-	--pgdata=*)
-		PGDATA="`echo $1 | sed s/^--pgdata=//`"
-		;;
-	-r)
-		shift
-		PGDATA="$1"
-		;;
-	-r*)
-		PGDATA="`echo $1 | sed s/^-r//`"
-		;;
-	*)
-		echo "Unrecognized option '$1'.  Syntax is:"
-		echo "initdb [-t | --template] [-d | --debug] [-n | --noclean]" \
-		     "[-u SUPERUSER | --username=SUPERUSER] [-r DATADIR | --pgdata=DATADIR]"
-		exit 100
-	esac
-	shift
+        --debug|-d)
+                debug=1
+                echo "Running with debug mode on."
+                ;;
+        --noclean|-n)
+                noclean=1
+                echo "Running with noclean mode on. "
+                     "Mistakes will not be cleaned up."
+                ;;
+        --template|-t)
+                template_only=1
+                echo "updating template1 database only."
+                ;;
+        --username=*)
+                POSTGRES_SUPERUSERNAME="`echo $1 | sed s/^--username=//`"
+                ;;
+        -u)
+                shift
+                POSTGRES_SUPERUSERNAME="$1"
+                ;;
+        -u*)
+                POSTGRES_SUPERUSERNAME="`echo $1 | sed s/^-u//`"
+                ;;
+        --pgdata=*)
+                PGDATA="`echo $1 | sed s/^--pgdata=//`"
+                ;;
+        -r)
+                shift
+                PGDATA="$1"
+                ;;
+        -r*)
+                PGDATA="`echo $1 | sed s/^-r//`"
+                ;;
+        --pglib=*)
+                PGLIB="`echo $1 | sed s/^--pglib=//`"
+                ;;
+        -l)
+                shift
+                PGLIB="$1"
+                ;;
+        -l*)
+                PGLIB="`echo $1 | sed s/^-l//`"
+                ;;
+
+        *)
+                echo "Unrecognized option '$1'.  Syntax is:"
+                echo "initdb [-t | --template] [-d | --debug]" \
+                     "[-n | --noclean]" \
+                     "[-u SUPERUSER | --username=SUPERUSER]" \
+                     "[-r DATADIR | --pgdata=DATADIR]" \
+                     "[-l LIBDIR | --pglib=LIBDIR]"
+                exit 100
+        esac
+        shift
 done
 
 if [ "$debug" -eq 1 ]; then
@@ -109,9 +125,34 @@ else
     BACKENDARGS="-boot -C -F -Q"
 fi
 
-TEMPLATE=$LIBDIR/local1_template1.bki.source
-GLOBAL=$LIBDIR/global1.bki.source
-PG_HBA_SAMPLE=$LIBDIR/pg_hba.conf.sample
+TEMPLATE=$PGLIB/local1_template1.bki.source
+GLOBAL=$PGLIB/global1.bki.source
+PG_HBA_SAMPLE=$PGLIB/pg_hba.conf.sample
+
+#-------------------------------------------------------------------------
+# Make sure he told us where to find the Postgres files.
+#-------------------------------------------------------------------------
+if [ -z $PGLIB ]; then
+    echo "$CMDNAME does not know where to find the files that make up "
+    echo "Postgres (the PGLIB directory).  You must identify the PGLIB "
+    echo "directory either with a --pglib invocation option, or by "
+    echo "setting the PGLIB environment variable, or by having a program "
+    echo "called 'postconfig' in your search path that sets the PGLIB "
+    echo "environment variable."
+    exit 20
+fi
+
+#-------------------------------------------------------------------------
+# Make sure he told us where to build the database system
+#-------------------------------------------------------------------------
+
+if [ -z $PGDATA ]; then
+    echo "$CMDNAME: You must identify the PGDATA directory, where the data"
+    echo "for this database system will reside.  Do this with either a"
+    echo "--pgdata invocation option or a PGDATA environment variable."
+    echo
+    exit 20
+fi
 
 #-------------------------------------------------------------------------
 # Find the input files
@@ -120,7 +161,9 @@ PG_HBA_SAMPLE=$LIBDIR/pg_hba.conf.sample
 for PREREQ_FILE in $TEMPLATE $GLOBAL $PG_HBA_SAMPLE; do
     if [ ! -f $PREREQ_FILE ]; then 
         echo "$CMDNAME does not find the file '$PREREQ_FILE'."
-        echo "This means Postgres95 is incorrectly installed."
+        echo "This means you have identified an invalid PGLIB directory."
+        echo "You specify a PGLIB directory with a --pglib invocation "
+        echo "option, a PGLIB environment variable, or a postconfig program."
         exit 1
     fi
 done
@@ -157,15 +200,13 @@ fi
 if [ $POSTGRES_SUPERUID -ne `pg_id` -a `pg_id` -ne 0 ]; then 
     echo "Only the unix superuser may initialize a database with a different"
     echo "Postgres superuser.  (You must be able to create files that belong"
-    echo "to the specified Postgres userid)."
+    echo "to the specified unix user)."
     exit 2
 fi
 
 echo "We are initializing the database system with username" \
   "$POSTGRES_SUPERUSERNAME (uid=$POSTGRES_SUPERUID)."   
-echo "Please be aware that Postgres is not secure.  Anyone who can connect"
-echo "to the database can act as user $POSTGRES_SUPERUSERNAME" \
-     "with very little effort."
+echo "This user will own all the files and must also own the server process."
 echo
 
 # -----------------------------------------------------------------------
@@ -182,8 +223,8 @@ if [ -d "$PGDATA" ]; then
         echo "database system already exists."
         echo 
         echo "If you want to create a new database system, either remove "
-        echo "the $PGDATA directory or run initdb with environment variable"
-        echo "PGDATA set to something other than $PGDATA."
+        echo "the $PGDATA directory or run initdb with a --pgdata option "
+        echo "other than $PGDATA."
         exit 1
     fi
 else

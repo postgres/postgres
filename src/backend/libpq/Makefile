@@ -4,7 +4,7 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.3 1996/11/06 08:48:21 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.4 1996/11/14 10:23:51 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,6 @@ INCLUDE_OPT = -I.. \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT)
-CFLAGS+= -DPOSTPORT='"$(POSTPORT)"'
 
 # kerberos flags
 ifdef KRBVERS

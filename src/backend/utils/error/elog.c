@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.10 1996/11/10 03:03:28 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.11 1996/11/14 10:24:22 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,7 @@ DebugFileOpen(void)
     fd = fileno(stderr);
     if (fcntl(fd, F_GETFD, 0) < 0) {
 	sprintf(OutputFileName, "%s/pg.errors.%d",
-		GetPGData(), (int)getpid());
+                DataDir, (int)getpid());
 	fd = open(OutputFileName, O_CREAT|O_APPEND|O_WRONLY, 0666);
     }
 #endif /* WIN32 */    

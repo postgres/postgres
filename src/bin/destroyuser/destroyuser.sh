@@ -8,24 +8,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.4 1996/09/21 06:24:31 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.5 1996/11/14 10:25:19 bryanh Exp $
 #
 # Note - this should NOT be setuid.
 #
 #-------------------------------------------------------------------------
-
-# ----------------
-#       Set paths from environment or default values.
-#       The _fUnKy_..._sTuFf_ gets set when the script is installed
-#       from the default value for this build.
-#       Currently the only thing we look for from the environment is
-#       PGDATA, PGHOST, and PGPORT
-#
-# ----------------
-[ -z "$PGPORT" ] && PGPORT=_fUnKy_POSTPORT_sTuFf_
-[ -z "$PGHOST" ] && PGHOST=localhost
-BINDIR=_fUnKy_BINDIR_sTuFf_
-PATH=$BINDIR:$PATH
 
 CMDNAME=`basename $0`
 
@@ -52,10 +39,25 @@ do
     shift;
 done
 
-AUTHOPT="-a $AUTHSYS"
-[ -z "$AUTHSYS" ] && AUTHOPT=""
+if [-z "$AUTHSYS" ]; then
+  AUTHOPT = ""
+else
+  AUTHOPT = "-a $AUTHSYS"
+fi
 
-PARGS="-tq $AUTHOPT -p $PGPORT -h $PGHOST"
+if [-z "$PGHOST" ]; then
+  PGHOSTOPT = ""
+else
+  PGHOSTOPT = "-h $PGHOST"
+fi
+
+if [-z "$PGPORT" ]; then
+  PGPORTOPT = ""
+else
+  PGPORTOPT = "-p $PGPORT"
+fi
+
+PARGS="-tq $AUTHOPT $PGHOSTOPT $PGPORTOPT
 
 #
 # generate the first part of the actual monitor command

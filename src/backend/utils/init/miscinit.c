@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.2 1996/11/06 10:31:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.3 1996/11/14 10:24:41 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,36 +344,4 @@ SetUserId()
 	     userName, 
 	     UserRelationName);
     UserId = (Oid) ((Form_pg_user) GETSTRUCT(userTup))->usesysid;
-}
-
-/* ----------------
- *	GetPGHome
- *
- *  Get POSTGRESHOME from environment, or return default.
- * ----------------
- */
-char *
-GetPGHome()
-{
-#ifdef USE_ENVIRONMENT
-    char *h;
-    
-    if ((h = getenv("POSTGRESHOME")) != (char *) NULL)
-	return (h);
-#endif /* USE_ENVIRONMENT */
-    return (POSTGRESDIR);    
-
-}
-
-char *
-GetPGData()
-{
-#ifdef USE_ENVIRONMENT
-    char *p;
-    
-    if ((p = getenv("PGDATA")) != (char *) NULL) {
-        return (p);
-    }
-#endif /* USE_ENVIRONMENT */    
-    return (PGDATADIR);
 }

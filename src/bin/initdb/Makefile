@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.2 1996/11/11 13:40:25 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.3 1996/11/14 10:25:22 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,16 +15,12 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 SEDSCRIPT= \
-    -e "s^_fUnKy_BINDIR_sTuFf_^$(BINDIR)^g" \
-    -e "s^_fUnKy_LIBDIR_sTuFf_^$(LIBDIR)^g" \
-    -e "s^_fUnKy_DATADIR_sTuFf_^$(DATADIR)^g" \
     -e "s^_fUnKy_NAMEDATALEN_sTuFf_^$(NAMEDATALEN)^g" \
-    -e "s^_fUnKy_OIDNAMELEN_sTuFf_^$(OIDNAMELEN)^g" \
-    -e "s^_fUnKy_POSTPORT_sTuFf_^$(POSTPORT)^g"
+    -e "s^_fUnKy_OIDNAMELEN_sTuFf_^$(OIDNAMELEN)^g" 
 
 all: initdb
 
-initdb:
+initdb: initdb.sh
 	sed $(SEDSCRIPT) <initdb.sh >initdb
 
 install: initdb

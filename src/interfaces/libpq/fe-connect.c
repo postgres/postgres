@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.18 1996/11/11 12:16:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.19 1996/11/14 10:25:50 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ static void conninfo_free(void);
 
 
 /* ----------
- * Definition of the conninfo parametes and their fallback resources.
+ * Definition of the conninfo parameters and their fallback resources.
  * If Environment-Var and Compiled-in are specified as NULL, no
  * fallback is available. If after all no value can be determined
  * for an option, an error is returned.
@@ -93,7 +93,7 @@ static PQconninfoOption PQconninfoOptions[] = {
     { "host",		"PGHOST",	DefaultHost,	NULL,
     			"Database-Host",		"", 40	},
 
-    { "port",		"PGPORT",	POSTPORT,	NULL,
+    { "port",		"PGPORT",	DEF_PGPORT,	NULL,
     			"Database-Port",		"", 6	},
 
     { "tty",		"PGTTY",	DefaultTty,	NULL,
@@ -192,7 +192,6 @@ PQconnectdb(const char *conninfo)
     conn->Pfdebug = NULL;
     conn->port = NULL;
     conn->notifyList = DLNewList();
-    conn->lobjfuncs = NULL;
 
     conn->pghost    = strdup(conninfo_getval("host"));
     conn->pgport    = strdup(conninfo_getval("port"));
@@ -300,7 +299,6 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
     conn->Pfdebug = NULL;
     conn->port = NULL;
     conn->notifyList = DLNewList();
-    conn->lobjfuncs = NULL;
     
     if (!pghost || pghost[0] == '\0') {
       if (!(tmp = getenv("PGHOST"))) {
@@ -312,7 +310,7 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
     
     if (!pgport || pgport[0] == '\0') {
       if (!(tmp = getenv("PGPORT"))) {
-        tmp = POSTPORT;
+        tmp = DEF_PGPORT;
       }
       conn->pgport = strdup(tmp);
     } else
@@ -521,7 +519,6 @@ freePGconn(PGconn *conn)
   if (conn->dbName) free(conn->dbName);
   if (conn->pguser) free(conn->pguser);
   if (conn->notifyList) DLFreeList(conn->notifyList);
-  if (conn->lobjfuncs) free(conn->lobjfuncs);
   free(conn);
 }
 

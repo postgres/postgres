@@ -159,6 +159,14 @@
 /* OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid) */
 #define OIDNAMELEN  36
 
+/* 
+ * DEF_PGPORT is the TCP port number on which the Postmaster listens by
+ * default.  This can be overriden by command options, environment variables,
+ * and the postconfig hook.
+ */ 
+
+#define DEF_PGPORT "5432"
+
 /* turn this on if you prefer European style dates instead of American
  * style dates
  */

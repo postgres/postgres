@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.16 1996/11/12 11:42:21 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.17 1996/11/14 10:25:48 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ include ../Makefile.global
 # We need the backend directory here for its fmgr.h
 INCLUDE_OPT= -I../include -I../backend
 
-CFLAGS+= $(INCLUDE_OPT) -DPOSTPORT='"$(POSTPORT)"'
+CFLAGS+= $(INCLUDE_OPT) 
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.18 1996/11/11 04:54:51 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.19 1996/11/14 10:24:07 bryanh Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -15,7 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "libpq/pqsignal.h"	/* substitute for <signal.h> */
+#include "libpq/pqsignal.h"     /* substitute for <signal.h> */
 
 #if defined(linux)
 #ifndef __USE_POSIX
@@ -31,9 +31,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <sys/param.h>		/* for MAXHOSTNAMELEN on most */
+#include <sys/param.h>          /* for MAXHOSTNAMELEN on most */
 #ifndef MAXHOSTNAMELEN
-#include <netdb.h>		/* for MAXHOSTNAMELEN on some */
+#include <netdb.h>              /* for MAXHOSTNAMELEN on some */
 #endif
 #include <errno.h>
 #ifdef aix
@@ -49,9 +49,9 @@
 #include "lib/dllist.h"
 
 #include "parser/catalog_utils.h"
-#include "parser/parse_query.h"	    /* for MakeTimeRange() */
+#include "parser/parse_query.h"     /* for MakeTimeRange() */
 #include "commands/async.h"
-#include "tcop/tcopprot.h"	    /* where declarations for this file go */
+#include "tcop/tcopprot.h"          /* where declarations for this file go */
 #include "optimizer/planner.h"
 
 #include "tcop/tcopprot.h"
@@ -86,26 +86,26 @@
 #include "rewrite/rewriteHandler.h" /* for QueryRewrite() */
 
 /* ----------------
- *	global variables
+ *      global variables
  * ----------------
  */
-static bool	DebugPrintPlan = false;
-static bool	DebugPrintParse = false;
-static bool	DebugPrintRewrittenParsetree = false;
-/*static bool	EnableRewrite = true; , never changes why have it*/
+static bool     DebugPrintPlan = false;
+static bool     DebugPrintParse = false;
+static bool     DebugPrintRewrittenParsetree = false;
+/*static bool   EnableRewrite = true; , never changes why have it*/
 CommandDest whereToSendOutput;
 
-extern int	lockingOff;
-extern int	NBuffers;
+extern int      lockingOff;
+extern int      NBuffers;
 
-int	fsyncOff = 0;
+int     fsyncOff = 0;
 
-int	dontExecute = 0;
-static int	ShowStats;
-static bool	IsEmptyQuery = false;
+int     dontExecute = 0;
+static int      ShowStats;
+static bool     IsEmptyQuery = false;
 
-Relation	reldesc;		/* current relation descritor */
-char		relname[80];		/* current relation name */
+Relation        reldesc;                /* current relation descritor */
+char            relname[80];            /* current relation name */
 
 #if defined(WIN32) || defined(next)
 jmp_buf    Warn_restart;
@@ -116,15 +116,15 @@ sigjmp_buf Warn_restart;
 #endif /*defined(WIN32) || defined(next) */
 int InWarn;
 
-extern int	NBuffers;
+extern int      NBuffers;
 
-static int	EchoQuery = 0;		/* default don't echo */
-time_t		tim;
-char 		pg_pathname[256];
-static int	ShowParserStats;
-static int	ShowPlannerStats;
-int		ShowExecutorStats;
-FILE		*StatFp;
+static int      EchoQuery = 0;          /* default don't echo */
+time_t          tim;
+char            pg_pathname[256];
+static int      ShowParserStats;
+static int      ShowPlannerStats;
+int             ShowExecutorStats;
+FILE            *StatFp;
 
 typedef struct frontend {
   bool  fn_connected;
@@ -137,8 +137,8 @@ typedef struct frontend {
 static Dllist* frontendList;
 
 /* ----------------
- *	people who want to use EOF should #define DONTUSENEWLINE in
- *	tcop/tcopdebug.h
+ *      people who want to use EOF should #define DONTUSENEWLINE in
+ *      tcop/tcopdebug.h
  * ----------------
  */
 #ifndef TCOP_DONTUSENEWLINE
@@ -148,8 +148,8 @@ int UseNewLine = 0;  /* Use EOF as query delimiters */
 #endif /* TCOP_DONTUSENEWLINE */
 
 /* ----------------
- *	bushy tree plan flag: if true planner will generate bushy-tree
- *	plans
+ *      bushy tree plan flag: if true planner will generate bushy-tree
+ *      plans
  * ----------------
  */
 int BushyPlanFlag = 0; /* default to false -- consider only left-deep trees */
@@ -162,27 +162,27 @@ int XfuncMode = 0;
 /*
  * ----------------
  *   Note: _exec_repeat_ defaults to 1 but may be changed
- *	   by a DEBUG command.   If you set this to a large
- *	   number N, run a single query, and then set it
- *	   back to 1 and run N queries, you can get an idea
- *	   of how much time is being spent in the parser and
- *	   planner b/c in the first case this overhead only
- *	   happens once.  -cim 6/9/91
+ *         by a DEBUG command.   If you set this to a large
+ *         number N, run a single query, and then set it
+ *         back to 1 and run N queries, you can get an idea
+ *         of how much time is being spent in the parser and
+ *         planner b/c in the first case this overhead only
+ *         happens once.  -cim 6/9/91
  * ----------------
 */
 int _exec_repeat_ = 1;
 
 /* ----------------------------------------------------------------
- *	decls for routines only used in this file
+ *      decls for routines only used in this file
  * ----------------------------------------------------------------
  */
 static char InteractiveBackend(char *inBuf);
-static char SocketBackend(char *inBuf, int multiplexedBackend);
-static char ReadCommand(char *inBuf, int multiplexedBackend);
+static char SocketBackend(char *inBuf, bool multiplexedBackend);
+static char ReadCommand(char *inBuf, bool multiplexedBackend);
 
 
 /* ----------------------------------------------------------------
- *	routines to obtain user input
+ *      routines to obtain user input
  * ----------------------------------------------------------------
  */
 
@@ -195,82 +195,82 @@ static char ReadCommand(char *inBuf, int multiplexedBackend);
 static char
 InteractiveBackend(char *inBuf)
 {
-    char *stuff = inBuf;		/* current place in input buffer */
-    int c;				/* character read from getc() */
-    bool end = false;			/* end-of-input flag */
-    bool backslashSeen = false;		/* have we seen a \ ? */
+    char *stuff = inBuf;                /* current place in input buffer */
+    int c;                              /* character read from getc() */
+    bool end = false;                   /* end-of-input flag */
+    bool backslashSeen = false;         /* have we seen a \ ? */
     
     /* ----------------
-     *	display a prompt and obtain input from the user
+     *  display a prompt and obtain input from the user
      * ----------------
      */
     printf("> ");
     
     for (;;) {
-	if (UseNewLine) {
-	    /* ----------------
-	     *	if we are using \n as a delimiter, then read
-	     *  characters until the \n.
-	     * ----------------
-	     */
-	    while ( (c = getc(stdin)) != EOF) {
-		if (c == '\n') {
-		    if (backslashSeen) {
-			stuff--;
-			continue;
-		    } else {
-			/* keep the newline character */
-			*stuff++ = '\n';
-			*stuff++ = '\0';
-			break;
-		    }
-		} else if (c == '\\')
-		    backslashSeen = true;
-		else
-		    backslashSeen = false;
-		
-		*stuff++ = (char)c;
-	    }
-	    
-	    if (c == EOF)
-		end = true;
-	} else {
-	    /* ----------------
-	     *	otherwise read characters until EOF.
-	     * ----------------
-	     */
-	    while ( (c = getc(stdin)) != EOF )
-		*stuff++ = (char)c;
-	    
-	    if ( stuff == inBuf )
-		end = true;
-	}
-	
-	if (end) {
-	    if (!Quiet) puts("EOF");
-	    IsEmptyQuery = true;
-	    exitpg(0);
-	}
-	
-	/* ----------------
-	 *  otherwise we have a user query so process it.
-	 * ----------------
-	 */
-	break;
+        if (UseNewLine) {
+            /* ----------------
+             *  if we are using \n as a delimiter, then read
+             *  characters until the \n.
+             * ----------------
+             */
+            while ( (c = getc(stdin)) != EOF) {
+                if (c == '\n') {
+                    if (backslashSeen) {
+                        stuff--;
+                        continue;
+                    } else {
+                        /* keep the newline character */
+                        *stuff++ = '\n';
+                        *stuff++ = '\0';
+                        break;
+                    }
+                } else if (c == '\\')
+                    backslashSeen = true;
+                else
+                    backslashSeen = false;
+                
+                *stuff++ = (char)c;
+            }
+            
+            if (c == EOF)
+                end = true;
+        } else {
+            /* ----------------
+             *  otherwise read characters until EOF.
+             * ----------------
+             */
+            while ( (c = getc(stdin)) != EOF )
+                *stuff++ = (char)c;
+            
+            if ( stuff == inBuf )
+                end = true;
+        }
+        
+        if (end) {
+            if (!Quiet) puts("EOF");
+            IsEmptyQuery = true;
+            exitpg(0);
+        }
+        
+        /* ----------------
+         *  otherwise we have a user query so process it.
+         * ----------------
+         */
+        break;
     }
     
     /* ----------------
-     *	if the query echo flag was given, print the query..
+     *  if the query echo flag was given, print the query..
      * ----------------
      */
     if (EchoQuery)
-	printf("query is: %s\n", inBuf);
+        printf("query is: %s\n", inBuf);
     
     return('Q');
 }
 
 /* ----------------
- *  SocketBackend()	Is called for frontend-backend connections
+ *  SocketBackend()     Is called for frontend-backend connections
  *
  *  If the input is a query (case 'Q') then the string entered by
  *  the user is placed in its parameter inBuf.
@@ -282,91 +282,91 @@ InteractiveBackend(char *inBuf)
  */
 
 static char
-SocketBackend(char *inBuf, int multiplexedBackend)
+SocketBackend(char *inBuf, bool multiplexedBackend)
 {
     char qtype[2];
     char result = '\0';
     
     /* ----------------
-     *	get input from the frontend
+     *  get input from the frontend
      * ----------------
      */
     (void) strcpy(qtype, "?");
     if (pq_getnchar(qtype,0,1) == EOF) {
-	/* ------------
-	 *  when front-end applications quits/dies
-	 * ------------
-	 */
-	if (multiplexedBackend) {
-	    return 'X';
-	}
-	else
-	    exitpg(0);
+        /* ------------
+         *  when front-end applications quits/dies
+         * ------------
+         */
+        if (multiplexedBackend) {
+            return 'X';
+        }
+        else
+            exitpg(0);
     }
     
     switch(*qtype) {
-	/* ----------------
-	 *  'Q': user entered a query
-	 * ----------------
-	 */
+        /* ----------------
+         *  'Q': user entered a query
+         * ----------------
+         */
     case 'Q':
-	pq_getstr(inBuf, MAX_PARSE_BUFFER);
-	result = 'Q';
-	break;
-	
-	/* ----------------
-	 *  'F':  calling user/system functions
-	 * ----------------
-	 */
-    case 'F':	
-	pq_getstr(inBuf, MAX_PARSE_BUFFER);/* ignore the rest of the line */
+        pq_getstr(inBuf, MAX_PARSE_BUFFER);
+        result = 'Q';
+        break;
+        
+        /* ----------------
+         *  'F':  calling user/system functions
+         * ----------------
+         */
+    case 'F':   
+        pq_getstr(inBuf, MAX_PARSE_BUFFER);/* ignore the rest of the line */
         result = 'F';
         break;
-	
-	/* ----------------
-	 *  'X':  frontend is exiting
-	 * ----------------
-	 */
+        
+        /* ----------------
+         *  'X':  frontend is exiting
+         * ----------------
+         */
     case 'X':
-	result = 'X';
-	break;
-	
-	/* ----------------
-	 *  otherwise we got garbage from the frontend.
-	 *
-	 *  XXX are we certain that we want to do an elog(FATAL) here?
-	 *      -cim 1/24/90
-	 * ----------------
-	 */
+        result = 'X';
+        break;
+        
+        /* ----------------
+         *  otherwise we got garbage from the frontend.
+         *
+         *  XXX are we certain that we want to do an elog(FATAL) here?
+         *      -cim 1/24/90
+         * ----------------
+         */
     default:
-	elog(FATAL, "Socket command type %c unknown\n", *qtype);
-	break;
+        elog(FATAL, "Socket command type %c unknown\n", *qtype);
+        break;
     }
     return result;
 }
 
 /* ----------------
- *	ReadCommand reads a command from either the frontend or
- *	standard input, places it in inBuf, and returns a char
- *	representing whether the string is a 'Q'uery or a 'F'astpath
- *	call.
+ *      ReadCommand reads a command from either the frontend or
+ *      standard input, places it in inBuf, and returns a char
+ *      representing whether the string is a 'Q'uery or a 'F'astpath
+ *      call.
  * ----------------
  */
 static char
-ReadCommand(char *inBuf, int multiplexedBackend)
+ReadCommand(char *inBuf, bool multiplexedBackend)
 {
     if (IsUnderPostmaster || multiplexedBackend)
-	return SocketBackend(inBuf, multiplexedBackend);
+        return SocketBackend(inBuf, multiplexedBackend);
     else
-	return InteractiveBackend(inBuf);
+        return InteractiveBackend(inBuf);
 }
 
 List *
-pg_plan(char *query_string,	/* string to execute */
-	Oid *typev,		/* argument types */
-	int nargs,		/* number of arguments */
-	QueryTreeList **queryListP,  /* pointer to the parse trees */
-	CommandDest dest)	/* where results should go */
+pg_plan(char *query_string,     /* string to execute */
+        Oid *typev,             /* argument types */
+        int nargs,              /* number of arguments */
+        QueryTreeList **queryListP,  /* pointer to the parse trees */
+        CommandDest dest)       /* where results should go */
 {
     QueryTreeList *querytree_list;
     int i;
@@ -378,17 +378,17 @@ pg_plan(char *query_string,	/* string to execute */
     Query* querytree;
 
     /* ----------------
-     *	(1) parse the request string into a list of parse trees
+     *  (1) parse the request string into a list of parse trees
      * ----------------
      */
     if (ShowParserStats)
-	ResetUsage();
+        ResetUsage();
     
     querytree_list = parser(query_string, typev, nargs);
     
     if (ShowParserStats) {
-	fprintf(stderr, "! Parser Stats:\n");
-	ShowUsage();
+        fprintf(stderr, "! Parser Stats:\n");
+        ShowUsage();
     }
 
     /* new_list holds the rewritten queries */
@@ -397,46 +397,46 @@ pg_plan(char *query_string,	/* string to execute */
     new_list->qtrees = (Query**)malloc(new_list->len * sizeof(Query*));
 
     /* ----------------
-     *	(2) rewrite the queries, as necessary     
+     *  (2) rewrite the queries, as necessary     
      * ----------------
      */
     j = 0; /* counter for the new_list, new_list can be longer than
-	      old list as a result of rewrites */
+              old list as a result of rewrites */
     for (i=0;i<querytree_list->len;i++) {
         querytree = querytree_list->qtrees[i];
-	
+        
 
-	/* don't rewrite utilites */
-	if (querytree->commandType == CMD_UTILITY) {
-	    new_list->qtrees[j++] = querytree;
-	    continue;
-	}
-	
-	if ( DebugPrintParse == true ) {
-	    printf("\ninput string is \"%s\"\n",query_string);
-	    printf("\n---- \tparser outputs :\n");
-	    nodeDisplay(querytree);
-	    printf("\n");
-	}
-	
-	/* rewrite queries (retrieve, append, delete, replace) */
-	rewritten = QueryRewrite(querytree);
-	if (rewritten != NULL) {
-	  int len, k;
-	  len = length(rewritten);
-	  if (len == 1)
-	    new_list->qtrees[j++] = (Query*)lfirst(rewritten); 
-	  else {
-	    /* rewritten queries are longer than original query */
-	    /* grow the new_list to accommodate */
-	    new_list->len += len - 1; /* - 1 because originally we 
-					 allocated one space for the query */
-	    new_list->qtrees = realloc(new_list->qtrees, 
-				       new_list->len * sizeof(Query*));
-	    for (k=0;k<len;k++)
-	      new_list->qtrees[j++] = (Query*)nth(k, rewritten);
-	  }
-	}
+        /* don't rewrite utilites */
+        if (querytree->commandType == CMD_UTILITY) {
+            new_list->qtrees[j++] = querytree;
+            continue;
+        }
+        
+        if ( DebugPrintParse == true ) {
+            printf("\ninput string is \"%s\"\n",query_string);
+            printf("\n---- \tparser outputs :\n");
+            nodeDisplay(querytree);
+            printf("\n");
+        }
+        
+        /* rewrite queries (retrieve, append, delete, replace) */
+        rewritten = QueryRewrite(querytree);
+        if (rewritten != NULL) {
+          int len, k;
+          len = length(rewritten);
+          if (len == 1)
+            new_list->qtrees[j++] = (Query*)lfirst(rewritten); 
+          else {
+            /* rewritten queries are longer than original query */
+            /* grow the new_list to accommodate */
+            new_list->len += len - 1; /* - 1 because originally we 
+                                         allocated one space for the query */
+            new_list->qtrees = realloc(new_list->qtrees, 
+                                       new_list->len * sizeof(Query*));
+            for (k=0;k<len;k++)
+              new_list->qtrees[j++] = (Query*)nth(k, rewritten);
+          }
+        }
     }
     
     /* we're done with the original lists, free it */
@@ -455,83 +455,83 @@ pg_plan(char *query_string,	/* string to execute */
      * ----------------
      */
     for (i=0;i<querytree_list->len;i++) {
-	List *l;
-	List *rt = NULL;
+        List *l;
+        List *rt = NULL;
 
-	querytree = querytree_list->qtrees[i];
+        querytree = querytree_list->qtrees[i];
 
-	/* ----------------
-	 *  utilities don't have time ranges
-	 * ----------------
-	 */
-	if (querytree->commandType == CMD_UTILITY)
-	    continue;
-	
-	rt = querytree->rtable;
-	
-	foreach (l, rt) {
-	    RangeTblEntry *rte = lfirst(l);
-	    TimeRange *timequal = rte->timeRange;
+        /* ----------------
+         *  utilities don't have time ranges
+         * ----------------
+         */
+        if (querytree->commandType == CMD_UTILITY)
+            continue;
+        
+        rt = querytree->rtable;
+        
+        foreach (l, rt) {
+            RangeTblEntry *rte = lfirst(l);
+            TimeRange *timequal = rte->timeRange;
 
-	    if (timequal) {
-		int timecode = (rte->timeRange->endDate == NULL)? 0 : 1;
+            if (timequal) {
+                int timecode = (rte->timeRange->endDate == NULL)? 0 : 1;
 
-		rte->timeQual = makeTimeRange(rte->timeRange->startDate,
-					      rte->timeRange->endDate,
-					      timecode);
-	    }else {
-		rte->timeQual = NULL;
-	    }
-	}
-	
-	/* check for archived relations */
-	plan_archive(rt);
+                rte->timeQual = makeTimeRange(rte->timeRange->startDate,
+                                              rte->timeRange->endDate,
+                                              timecode);
+            }else {
+                rte->timeQual = NULL;
+            }
+        }
+        
+        /* check for archived relations */
+        plan_archive(rt);
     }
     
     if (DebugPrintRewrittenParsetree == true) {
-	printf("\n=================\n");
-	printf("  After Rewriting\n");
-	printf("=================\n");
+        printf("\n=================\n");
+        printf("  After Rewriting\n");
+        printf("=================\n");
 
-	for (i=0; i<querytree_list->len; i++) {
-	    print(querytree_list->qtrees[i]);
-	    printf("\n");
-	}
+        for (i=0; i<querytree_list->len; i++) {
+            print(querytree_list->qtrees[i]);
+            printf("\n");
+        }
     }
     
     for (i=0; i<querytree_list->len;i++) {
         querytree = querytree_list->qtrees[i];
-	
-	/*
-	 *  For each query that isn't a utility invocation,
-	 *  generate a plan.
-	 */
-	
-	if (querytree->commandType != CMD_UTILITY) {
-	    
-	    if (IsAbortedTransactionBlockState()) {
-		/* ----------------
-		 *   the EndCommand() stuff is to tell the frontend
-		 *   that the command ended. -cim 6/1/90
-		 * ----------------
-		 */
-		char *tag = "*ABORT STATE*";
-		EndCommand(tag, dest);
-		
-		elog(NOTICE, "(transaction aborted): %s",
-		     "queries ignored until END");
-		
-		*queryListP = (QueryTreeList*)NULL;
-		return (List*)NULL;
-	    }
-	    
-	    if (ShowPlannerStats) ResetUsage();
-	    plan = planner(querytree);
-	    if (ShowPlannerStats) {
-		fprintf(stderr, "! Planner Stats:\n");
-		ShowUsage();
-	    }
-	    plan_list = lappend(plan_list, plan);
+        
+        /*
+         *  For each query that isn't a utility invocation,
+         *  generate a plan.
+         */
+        
+        if (querytree->commandType != CMD_UTILITY) {
+            
+            if (IsAbortedTransactionBlockState()) {
+                /* ----------------
+                 *   the EndCommand() stuff is to tell the frontend
+                 *   that the command ended. -cim 6/1/90
+                 * ----------------
+                 */
+                char *tag = "*ABORT STATE*";
+                EndCommand(tag, dest);
+                
+                elog(NOTICE, "(transaction aborted): %s",
+                     "queries ignored until END");
+                
+                *queryListP = (QueryTreeList*)NULL;
+                return (List*)NULL;
+            }
+            
+            if (ShowPlannerStats) ResetUsage();
+            plan = planner(querytree);
+            if (ShowPlannerStats) {
+                fprintf(stderr, "! Planner Stats:\n");
+                ShowUsage();
+            }
+            plan_list = lappend(plan_list, plan);
 #ifdef INDEXSCAN_PATCH
             /* ----------------
              *  Print plan if debugging.
@@ -539,44 +539,44 @@ pg_plan(char *query_string,	/* string to execute */
              *  also for queries in functions.  DZ - 27-8-1996
              * ----------------
              */
-	    if ( DebugPrintPlan == true ) {
-		printf("\nPlan is :\n");
-		nodeDisplay(plan);
-		printf("\n");
-	    }
+            if ( DebugPrintPlan == true ) {
+                printf("\nPlan is :\n");
+                nodeDisplay(plan);
+                printf("\n");
+            }
 #endif
-	}
+        }
 #ifdef FUNC_UTIL_PATCH
-	/*
-	 * If the command is an utility append a null plan. This is
-	 * needed to keep the plan_list aligned with the querytree_list
-	 * or the function executor will crash.  DZ - 30-8-1996
-	 */
-	else {
-	    plan_list = lappend(plan_list, NULL);
-	}
+        /*
+         * If the command is an utility append a null plan. This is
+         * needed to keep the plan_list aligned with the querytree_list
+         * or the function executor will crash.  DZ - 30-8-1996
+         */
+        else {
+            plan_list = lappend(plan_list, NULL);
+        }
 #endif
     }
     
     if (queryListP)
-	*queryListP = querytree_list;
+        *queryListP = querytree_list;
     
     return (plan_list);
 }
 
 /* ----------------------------------------------------------------
- *	pg_eval()
- *	
- *	Takes a querystring, runs the parser/utilities or
- *	parser/planner/executor over it as necessary
- *	Begin Transaction Should have been called before this
- *	and CommitTransaction After this is called
- *	This is strictly because we do not allow for nested xactions.
+ *      pg_eval()
+ *      
+ *      Takes a querystring, runs the parser/utilities or
+ *      parser/planner/executor over it as necessary
+ *      Begin Transaction Should have been called before this
+ *      and CommitTransaction After this is called
+ *      This is strictly because we do not allow for nested xactions.
  *
- *	NON-OBVIOUS-RESTRICTIONS
- * 	this function _MUST_ allocate a new "parsetree" each time, 
- * 	since it may be stored in a named portal and should not 
- * 	change its value.
+ *      NON-OBVIOUS-RESTRICTIONS
+ *      this function _MUST_ allocate a new "parsetree" each time, 
+ *      since it may be stored in a named portal and should not 
+ *      change its value.
  *
  * ----------------------------------------------------------------
  */
@@ -589,10 +589,10 @@ pg_eval(char *query_string, char **argv, Oid *typev, int nargs)
 
 void
 pg_eval_dest(char *query_string, /* string to execute */
-	     char **argv,	/* arguments */
-	     Oid *typev,	/* argument types */
-	     int nargs,		/* number of arguments */
-	     CommandDest dest)	/* where results should go */
+             char **argv,       /* arguments */
+             Oid *typev,        /* argument types */
+             int nargs,         /* number of arguments */
+             CommandDest dest)  /* where results should go */
 {
     List *plan_list; 
     Plan *plan;
@@ -605,87 +605,87 @@ pg_eval_dest(char *query_string, /* string to execute */
     
     /* pg_plan could have failed */
     if (querytree_list == NULL)
-	return;
+        return;
 
     for (i=0;i<querytree_list->len;i++) {
-	querytree = querytree_list->qtrees[i];
-	
+        querytree = querytree_list->qtrees[i];
+        
 #ifdef FUNC_UTIL_PATCH
-	/*
-	 * Advance on the plan_list in every case.  Now the plan_list
-	 * has the same length of the querytree_list.  DZ - 30-8-1996
-	 */
-	plan = (Plan *) lfirst(plan_list);
-	plan_list = lnext(plan_list);
+        /*
+         * Advance on the plan_list in every case.  Now the plan_list
+         * has the same length of the querytree_list.  DZ - 30-8-1996
+         */
+        plan = (Plan *) lfirst(plan_list);
+        plan_list = lnext(plan_list);
 #endif
-	if (querytree->commandType == CMD_UTILITY) {
-	    /* ----------------
-	     *   process utility functions (create, destroy, etc..)
-	     *
-	     *   Note: we do not check for the transaction aborted state
-	     *   because that is done in ProcessUtility.
-	     * ----------------
-	     */
-	    if (! Quiet) {
-		time(&tim);
-		printf("\tProcessUtility() at %s\n", ctime(&tim));
-	    }
-	    
-	    ProcessUtility(querytree->utilityStmt, dest);
-	    
-	} else {
+        if (querytree->commandType == CMD_UTILITY) {
+            /* ----------------
+             *   process utility functions (create, destroy, etc..)
+             *
+             *   Note: we do not check for the transaction aborted state
+             *   because that is done in ProcessUtility.
+             * ----------------
+             */
+            if (! Quiet) {
+                time(&tim);
+                printf("\tProcessUtility() at %s\n", ctime(&tim));
+            }
+            
+            ProcessUtility(querytree->utilityStmt, dest);
+            
+        } else {
 #ifndef FUNC_UTIL_PATCH
-	    /*
-	     * Moved before the if.  DZ - 30-8-1996
-	     */
-	    plan = (Plan *) lfirst(plan_list);
-	    plan_list = lnext(plan_list);
+            /*
+             * Moved before the if.  DZ - 30-8-1996
+             */
+            plan = (Plan *) lfirst(plan_list);
+            plan_list = lnext(plan_list);
 #endif
-	    
+            
 #ifdef INDEXSCAN_PATCH
-	    /*
-	     *  Print moved in pg_plan.  DZ - 27-8-1996
-	     */
+            /*
+             *  Print moved in pg_plan.  DZ - 27-8-1996
+             */
 #else
-	    /* ----------------
-	     *	print plan if debugging
-	     * ----------------
-	     */
-	    if ( DebugPrintPlan == true ) {
-		printf("\nPlan is :\n");
-		nodeDisplay(plan);
-		printf("\n");
-	    }
+            /* ----------------
+             *  print plan if debugging
+             * ----------------
+             */
+            if ( DebugPrintPlan == true ) {
+                printf("\nPlan is :\n");
+                nodeDisplay(plan);
+                printf("\n");
+            }
 #endif
-	    
-	    /* ----------------
-	     *   execute the plan
-	     *
-	     */
-	    if (ShowExecutorStats)
-		ResetUsage();
-	    
-	    for (j = 0; j < _exec_repeat_; j++) {
-		if (! Quiet) {
-		    time(&tim);
-		    printf("\tProcessQuery() at %s\n", ctime(&tim));
-		}
-		ProcessQuery(querytree, plan, argv, typev, nargs, dest);
-	    }
-	    
-	    if (ShowExecutorStats) {
-		fprintf(stderr, "! Executor Stats:\n");
-		ShowUsage();
-	    }
-	}
-	/*
-	 *  In a query block, we want to increment the command counter
-	 *  between queries so that the effects of early queries are
-	 *  visible to subsequent ones.
-	 */
-	
-	if (querytree_list)
-	    CommandCounterIncrement();
+            
+            /* ----------------
+             *   execute the plan
+             *
+             */
+            if (ShowExecutorStats)
+                ResetUsage();
+            
+            for (j = 0; j < _exec_repeat_; j++) {
+                if (! Quiet) {
+                    time(&tim);
+                    printf("\tProcessQuery() at %s\n", ctime(&tim));
+                }
+                ProcessQuery(querytree, plan, argv, typev, nargs, dest);
+            }
+            
+            if (ShowExecutorStats) {
+                fprintf(stderr, "! Executor Stats:\n");
+                ShowUsage();
+            }
+        }
+        /*
+         *  In a query block, we want to increment the command counter
+         *  between queries so that the effects of early queries are
+         *  visible to subsequent ones.
+         */
+        
+        if (querytree_list)
+            CommandCounterIncrement();
     }
 
     free(querytree_list->qtrees);
@@ -693,15 +693,15 @@ pg_eval_dest(char *query_string, /* string to execute */
 }
 
 /* --------------------------------
- *	signal handler routines used in PostgresMain()
+ *      signal handler routines used in PostgresMain()
  *
- *	handle_warn() is used to catch kill(getpid(),1) which
- *	occurs when elog(WARN) is called.
+ *      handle_warn() is used to catch kill(getpid(),1) which
+ *      occurs when elog(WARN) is called.
  *
  *      quickdie() occurs when signalled by the postmaster, some backend
  *      has bought the farm we need to stop what we're doing and exit.
  *
- *	die() preforms an orderly cleanup via ExitPostgres()
+ *      die() preforms an orderly cleanup via ExitPostgres()
  * --------------------------------
  */
 
@@ -747,8 +747,8 @@ her exceeded legal ranges or was a divide by zero");
 static void usage(char* progname)
 {
     fprintf(stderr, 
-	    "Usage: %s [-B nbufs] [-d lvl] ] [-f plantype] \t[-m portno] [\t -o filename]\n",
-	    progname);
+            "Usage: %s [-B nbufs] [-d lvl] ] [-f plantype] \t[-m portno] [\t -o filename]\n",
+            progname);
     fprintf(stderr,"\t[-P portno] [-t tracetype] [-x opttype] [-bCEiLFNopQSs] [dbname]\n");
     fprintf(stderr, "    b: consider bushy plan trees during optimization\n");
     fprintf(stderr, "    B: set number of buffers in buffer pool\n");
@@ -774,8 +774,8 @@ static void usage(char* progname)
 }
 
 /* ----------------------------------------------------------------
- *	PostgresMain
- *	  postgres main loop
+ *      PostgresMain
+ *        postgres main loop
  *      all backends, interactive or otherwise start here
  * ----------------------------------------------------------------
  */
@@ -783,10 +783,10 @@ int
 PostgresMain(int argc, char *argv[])
 {
     int    flagC;
-    int	   flagQ;
-    int	   flagS;
-    int	   flagE;
-    int	   flag;
+    int    flagQ;
+    int    flagS;
+    int    flagE;
+    int    flag;
     
     char   *DBName = NULL; 
     int    errs = 0;
@@ -795,7 +795,7 @@ PostgresMain(int argc, char *argv[])
     char   parser_input[MAX_PARSE_BUFFER];
     char *userName;
     
-    int    multiplexedBackend = 0;
+    bool   multiplexedBackend;
     char*  hostName;                /* the host name of the backend server */
     char   hostbuf[MAXHOSTNAMELEN];
     int    serverSock;
@@ -814,12 +814,12 @@ PostgresMain(int argc, char *argv[])
     WSADATA WSAData;
 #endif /* WIN32 */
 
-    extern int	  optind;
-    extern char	  *optarg;
+    extern int    optind;
+    extern char   *optarg;
     extern short  DebugLvl;
     
     /* ----------------
-     * 	register signal handlers.
+     *  register signal handlers.
      * ----------------
      */
     signal(SIGINT, die);
@@ -834,14 +834,15 @@ PostgresMain(int argc, char *argv[])
 #endif /* WIN32 */
     
     /* --------------------
-     *	initialize globals 
+     *  initialize globals 
      * -------------------
      */
     
-    InitGlobals();
+    MasterPid = getpid();
+    DataDir = GetPGData();
 
     /* ----------------
-     *	parse command line arguments
+     *  parse command line arguments
      * ----------------
      */
     flagC = flagQ = flagS = flagE = ShowStats = 0;
@@ -850,58 +851,60 @@ PostgresMain(int argc, char *argv[])
     /* get hostname is either the environment variable PGHOST
        or 'localhost' */
     if (!(hostName = getenv("PGHOST"))) {
-	if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
-	    (void) strcpy(hostbuf, "localhost");
-	hostName = hostbuf;
+        if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
+            (void) strcpy(hostbuf, "localhost");
+        hostName = hostbuf;
     }
 
-    while ((flag = getopt(argc, argv, "B:bCd:Ef:iLm:MNo:P:pQSst:x:F")) != EOF)
-	switch (flag) {
-	    
-	case 'b':
-	    /* ----------------
-	     *	set BushyPlanFlag to true.
-	     * ----------------
-	     */
-	    BushyPlanFlag = 1;
-	    break;
-	case 'B':
-	    /* ----------------
-	     *	specify the size of buffer pool
-	     * ----------------
-	     */
-	    NBuffers = atoi(optarg);
-	    break;
-	    
-	case 'C':
-	    /* ----------------
-	     *	don't print version string (don't know why this is 'C' --mao)
-	     * ----------------
-	     */
-	    flagC = 1;
-	    break;
-	    
-	    /* ----------------
-	     *	-debug mode
-	     * ----------------
-	     */
-	case 'd':
-	    /* DebugMode = true;  */
-	    flagQ = 0;
-	    DebugPrintPlan = true;
-	    DebugPrintParse = true;
-	    DebugPrintRewrittenParsetree = true;
-	    DebugLvl = (short)atoi(optarg);
-	    break;
-	    
-	case 'E':
-	    /* ----------------
-	     *	E - echo the query the user entered
-	     * ----------------
-	     */
-	    flagE = 1;
-	    break;
-	    
+    DataDir = getenv("PGDATA");   /* default */
+    multiplexedBackend = false;   /* default */
+
+    while ((flag = getopt(argc, argv, "B:bCD:d:Ef:iLm:MNo:P:pQSst:x:F")) 
+           != EOF)
+        switch (flag) {
+            
+        case 'b':
+            /* ----------------
+             *  set BushyPlanFlag to true.
+             * ----------------
+             */
+            BushyPlanFlag = 1;
+            break;
+        case 'B':
+            /* ----------------
+             *  specify the size of buffer pool
+             * ----------------
+             */
+            NBuffers = atoi(optarg);
+            break;
+            
+        case 'C':
+            /* ----------------
+             *  don't print version string (don't know why this is 'C' --mao)
+             * ----------------
+             */
+            flagC = 1;
+            break;
+            
+        case 'D':   /* PGDATA directory */
+            DataDir = optarg;
+            
+        case 'd':   /* debug level */
+            flagQ = 0;
+            DebugPrintPlan = true;
+            DebugPrintParse = true;
+            DebugPrintRewrittenParsetree = true;
+            DebugLvl = (short)atoi(optarg);
+            break;
+            
+        case 'E':
+            /* ----------------
+             *  E - echo the query the user entered
+             * ----------------
+             */
+            flagE = 1;
+            break;
+            
         case 'F':
             /* --------------------
              *  turn off fsync
@@ -910,52 +913,52 @@ PostgresMain(int argc, char *argv[])
             fsyncOff = 1;
             break;
 
-	case 'f':
-	    /* -----------------
-	     *    f - forbid generation of certain plans
-	     * -----------------
-	     */
-	    switch (optarg[0]) {
-	    case 's': /* seqscan */
+        case 'f':
+            /* -----------------
+             *    f - forbid generation of certain plans
+             * -----------------
+             */
+            switch (optarg[0]) {
+            case 's': /* seqscan */
                 _enable_seqscan_ = false;
                 break;
-	    case 'i': /* indexscan */
+            case 'i': /* indexscan */
                 _enable_indexscan_ = false;
                 break;
-	    case 'n': /* nestloop */
+            case 'n': /* nestloop */
                 _enable_nestloop_ = false;
                 break;
-	    case 'm': /* mergejoin */
+            case 'm': /* mergejoin */
                 _enable_mergesort_ = false;
                 break;
-	    case 'h': /* hashjoin */
+            case 'h': /* hashjoin */
                 _enable_hashjoin_ = false;
                 break;
-	    default:
+            default:
                 errs++;
-	    }
-	    break;
+            }
+            break;
 
-	case 'i':
-	    dontExecute = 1;
-	    break;
-	    
-	case 'L':
-	    /* --------------------
-	     *  turn off locking
-	     * --------------------
-	     */
-	    lockingOff = 1;
-	    break;
-	    
-	case 'm':
-	    /* start up a listening backend that can respond to 
-	       multiple front-ends.  (Note:  all the front-end connections
-	       are still connected to a single-threaded backend.  Requests
-	       are FCFS.  Everything is in one transaction 
-	       */
-	    multiplexedBackend = 1;
-	    serverPortnum = atoi(optarg);
+        case 'i':
+            dontExecute = 1;
+            break;
+            
+        case 'L':
+            /* --------------------
+             *  turn off locking
+             * --------------------
+             */
+            lockingOff = 1;
+            break;
+            
+        case 'm':
+            /* start up a listening backend that can respond to 
+               multiple front-ends.  (Note:  all the front-end connections
+               are still connected to a single-threaded backend.  Requests
+               are FCFS.  Everything is in one transaction 
+               */
+            multiplexedBackend = true;
+            serverPortnum = atoi(optarg);
 #ifdef WIN32
            /* There was no postmaster started so the shared memory
            ** for the shared memory table hasn't been allocated so
@@ -963,159 +966,168 @@ PostgresMain(int argc, char *argv[])
            */
            _nt_init();
 #endif /* WIN32 */
-	    break;
-	case 'M':
-	    exit(PostmasterMain(argc, argv));
-	    break;
-	case 'N':
-	    /* ----------------
-	     *	N - Don't use newline as a query delimiter
-	     * ----------------
-	     */
-	    UseNewLine = 0;
-	    break;
-	    
-	case 'o':
-	    /* ----------------
-	     *	o - send output (stdout and stderr) to the given file
-	     * ----------------
-	     */
-	    (void) strncpy(OutputFileName, optarg, MAXPGPATH);
-	    break;
-	    
-	case 'p':	/* started by postmaster */
-	    /* ----------------
-	     *	p - special flag passed if backend was forked
-	     *	    by a postmaster.
-	     * ----------------
-	     */
-	    IsUnderPostmaster = true;
-	    break;
-	    
-	case 'P':
-	    /* ----------------
-	     *	P - Use the passed file descriptor number as the port
-	     *    on which to communicate with the user.  This is ONLY
-	     *    useful for debugging when fired up by the postmaster.
-	     * ----------------
-	     */
-	    Portfd = atoi(optarg);
-	    break;
-	    
-	case 'Q':
-	    /* ----------------
-	     *	Q - set Quiet mode (reduce debugging output)
-	     * ----------------
-	     */
-	    flagQ = 1;
-	    break;
-	    
-	case 'S':
-	    /* ----------------
-	     *	S - assume stable main memory
-	     *	    (don't flush all pages at end transaction)
-	     * ----------------
-	     */
-	    flagS = 1;
-	    SetTransactionFlushEnabled(false);
-	    break;
-	    
-	case 's':
-	    /* ----------------
-	     *    s - report usage statistics (timings) after each query
-	     * ----------------
-	     */
-	    ShowStats = 1;
-	    StatFp = stderr;
-	    break;
-	    
-	case 't':
-	    /* ----------------
-	     *	tell postgres to report usage statistics (timings) for
-	     *	each query
-	     *
-	     *	-tpa[rser] = print stats for parser time of each query
-	     *	-tpl[anner] = print stats for planner time of each query
-	     *	-te[xecutor] = print stats for executor time of each query
-	     *	caution: -s can not be used together with -t.
-	     * ----------------
-	     */
-	    StatFp = stderr;
-	    switch (optarg[0]) {
-	    case 'p':  if (optarg[1] == 'a')
-		ShowParserStats = 1;
-	    else if (optarg[1] == 'l')
-		ShowPlannerStats = 1;
-	    else
-		errs++;
-		break;
-	    case 'e':  ShowExecutorStats = 1;   break;
-	    default:   errs++; break;
-	    } 
-	    break;
-	    
-	case 'x':
+            break;
+        case 'M':
+            exit(PostmasterMain(argc, argv));
+            break;
+        case 'N':
+            /* ----------------
+             *  N - Don't use newline as a query delimiter
+             * ----------------
+             */
+            UseNewLine = 0;
+            break;
+            
+        case 'o':
+            /* ----------------
+             *  o - send output (stdout and stderr) to the given file
+             * ----------------
+             */
+            (void) strncpy(OutputFileName, optarg, MAXPGPATH);
+            break;
+            
+        case 'p':       /* started by postmaster */
+            /* ----------------
+             *  p - special flag passed if backend was forked
+             *      by a postmaster.
+             * ----------------
+             */
+            IsUnderPostmaster = true;
+            break;
+            
+        case 'P':
+            /* ----------------
+             *  P - Use the passed file descriptor number as the port
+             *    on which to communicate with the user.  This is ONLY
+             *    useful for debugging when fired up by the postmaster.
+             * ----------------
+             */
+            Portfd = atoi(optarg);
+            break;
+            
+        case 'Q':
+            /* ----------------
+             *  Q - set Quiet mode (reduce debugging output)
+             * ----------------
+             */
+            flagQ = 1;
+            break;
+            
+        case 'S':
+            /* ----------------
+             *  S - assume stable main memory
+             *      (don't flush all pages at end transaction)
+             * ----------------
+             */
+            flagS = 1;
+            SetTransactionFlushEnabled(false);
+            break;
+            
+        case 's':
+            /* ----------------
+             *    s - report usage statistics (timings) after each query
+             * ----------------
+             */
+            ShowStats = 1;
+            StatFp = stderr;
+            break;
+            
+        case 't':
+            /* ----------------
+             *  tell postgres to report usage statistics (timings) for
+             *  each query
+             *
+             *  -tpa[rser] = print stats for parser time of each query
+             *  -tpl[anner] = print stats for planner time of each query
+             *  -te[xecutor] = print stats for executor time of each query
+             *  caution: -s can not be used together with -t.
+             * ----------------
+             */
+            StatFp = stderr;
+            switch (optarg[0]) {
+            case 'p':  if (optarg[1] == 'a')
+                ShowParserStats = 1;
+            else if (optarg[1] == 'l')
+                ShowPlannerStats = 1;
+            else
+                errs++;
+                break;
+            case 'e':  ShowExecutorStats = 1;   break;
+            default:   errs++; break;
+            } 
+            break;
+            
+        case 'x':
 #if 0 /* planner/xfunc.h */
-	    /* control joey hellerstein's expensive function optimization */
-	    if (XfuncMode != 0)
-		{
-		    fprintf(stderr, "only one -x flag is allowed\n");
-		    errs++;
-		    break;
-		}
-	    if (strcmp(optarg, "off") == 0)
-		XfuncMode = XFUNC_OFF;
-	    else if (strcmp(optarg, "nor") == 0)
-		XfuncMode = XFUNC_NOR;
-	    else if (strcmp(optarg, "nopull") == 0)
-		XfuncMode = XFUNC_NOPULL;
-	    else if (strcmp(optarg, "nopm") == 0)
-		XfuncMode = XFUNC_NOPM;
-	    else if (strcmp(optarg, "pullall") == 0)
-		XfuncMode = XFUNC_PULLALL;
-	    else if (strcmp(optarg, "wait") == 0)
-		XfuncMode = XFUNC_WAIT;
-	    else {
-		fprintf(stderr, "use -x {off,nor,nopull,nopm,pullall,wait}\n");
-		errs++;
-	    }
+            /* control joey hellerstein's expensive function optimization */
+            if (XfuncMode != 0)
+                {
+                    fprintf(stderr, "only one -x flag is allowed\n");
+                    errs++;
+                    break;
+                }
+            if (strcmp(optarg, "off") == 0)
+                XfuncMode = XFUNC_OFF;
+            else if (strcmp(optarg, "nor") == 0)
+                XfuncMode = XFUNC_NOR;
+            else if (strcmp(optarg, "nopull") == 0)
+                XfuncMode = XFUNC_NOPULL;
+            else if (strcmp(optarg, "nopm") == 0)
+                XfuncMode = XFUNC_NOPM;
+            else if (strcmp(optarg, "pullall") == 0)
+                XfuncMode = XFUNC_PULLALL;
+            else if (strcmp(optarg, "wait") == 0)
+                XfuncMode = XFUNC_WAIT;
+            else {
+                fprintf(stderr, "use -x {off,nor,nopull,nopm,pullall,wait}\n");
+                errs++;
+            }
 #endif
-	    break;
-	    
-	default:
-	    /* ----------------
-	     *	default: bad command line option
-	     * ----------------
-	     */
-	    errs++;
-	}
+            break;
+            
+        default:
+            /* ----------------
+             *  default: bad command line option
+             * ----------------
+             */
+            errs++;
+        }
     
     /* ----------------
-     *	get user name and pathname and check command line validity
+     *  get user name and pathname and check command line validity
      * ----------------
      */
     SetPgUserName();
     userName = GetPgUserName();
     
     if (FindBackend(pg_pathname, argv[0]) < 0)
-	elog(FATAL, "%s: could not locate executable, bailing out...",
-	     argv[0]);
+        elog(FATAL, "%s: could not locate executable, bailing out...",
+             argv[0]);
     
     if (errs || argc - optind > 1) {
-	usage (argv[0]);
-	exitpg(1);
+        usage (argv[0]);
+        exitpg(1);
     } else if (argc - optind == 1) {
-	DBName = argv[optind];
+        DBName = argv[optind];
     } else if ((DBName = userName) == NULL) {
-	fprintf(stderr, "%s: USER undefined and no database specified\n",
-		argv[0]);
-	exitpg(1);
+        fprintf(stderr, "%s: USER undefined and no database specified\n",
+                argv[0]);
+        exitpg(1);
     }
     
     if (ShowStats && 
-	(ShowParserStats || ShowPlannerStats || ShowExecutorStats)) {
-	fprintf(stderr, "-s can not be used together with -t.\n");
-	exitpg(1);
+        (ShowParserStats || ShowPlannerStats || ShowExecutorStats)) {
+        fprintf(stderr, "-s can not be used together with -t.\n");
+        exitpg(1);
+    }
+
+    if (!DataDir) {
+        fprintf(stderr, "%s does not know where to find the database system "
+                "data.  You must specify the directory that contains the "
+                "database system either by specifying the -D invocation "
+                "option or by setting the PGDATA environment variable.\n\n",
+                argv[0]);
+        exitpg(1);
     }
     
     Noversion = flagC;
@@ -1123,52 +1135,52 @@ PostgresMain(int argc, char *argv[])
     EchoQuery = flagE;
     
     /* ----------------
-     * 	print flags
+     *  print flags
      * ----------------
      */
     if (! Quiet) {
-	puts("\t---debug info---");
-	printf("\tQuiet =        %c\n", Quiet 	  ? 't' : 'f');
-	printf("\tNoversion =    %c\n", Noversion ? 't' : 'f');
-	printf("\tstable    =    %c\n", flagS     ? 't' : 'f');
-	printf("\ttimings   =    %c\n", ShowStats ? 't' : 'f');
-	printf("\tbufsize   =    %d\n", NBuffers);
-	
-	printf("\tquery echo =   %c\n", EchoQuery ? 't' : 'f');
-	printf("\tmultiplexed backend? =  %c\n", multiplexedBackend ? 't' : 'f');
-	printf("\tDatabaseName = [%s]\n", DBName);
-	puts("\t----------------\n");
+        puts("\t---debug info---");
+        printf("\tQuiet =        %c\n", Quiet     ? 't' : 'f');
+        printf("\tNoversion =    %c\n", Noversion ? 't' : 'f');
+        printf("\tstable    =    %c\n", flagS     ? 't' : 'f');
+        printf("\ttimings   =    %c\n", ShowStats ? 't' : 'f');
+        printf("\tbufsize   =    %d\n", NBuffers);
+        
+        printf("\tquery echo =   %c\n", EchoQuery ? 't' : 'f');
+        printf("\tmultiplexed backend? =  %c\n", multiplexedBackend ? 't' : 'f');
+        printf("\tDatabaseName = [%s]\n", DBName);
+        puts("\t----------------\n");
     }
     
     /* ----------------
-     *	initialize portal file descriptors
+     *  initialize portal file descriptors
      * ----------------
      */
     if (IsUnderPostmaster == true) {
-	if (Portfd < 0) {
-	    fprintf(stderr,
-		    "Postmaster flag set: no port number specified, use /dev/null\n");
-	    Portfd = open(NULL_DEV, O_RDWR, 0666);
-	}
-	pq_init(Portfd);
+        if (Portfd < 0) {
+            fprintf(stderr,
+                    "Postmaster flag set: no port number specified, use /dev/null\n");
+            Portfd = open(NULL_DEV, O_RDWR, 0666);
+        }
+        pq_init(Portfd);
     }
 
 #ifdef WIN32
     if ((status = WSAStartup(MAKEWORD(1,1), &WSAData)) == 0)
-	(void) printf("%s\nInitializing WinSock: %s\n", WSAData.szDescription, WSAData.szSystemStatus);
+        (void) printf("%s\nInitializing WinSock: %s\n", WSAData.szDescription, WSAData.szSystemStatus);
     else {
-	fprintf(stderr, "Error initializing WinSock: %d is the err", status);
-	exit(1);
+        fprintf(stderr, "Error initializing WinSock: %d is the err", status);
+        exit(1);
     }
 #endif /* WIN32 */
     
     if (multiplexedBackend) {
       if (serverPortnum == 0 ||
-	  StreamServerPort(hostName, serverPortnum, &serverSock) != STATUS_OK)
-	{
-	  fprintf(stderr, "Postgres: cannot create stream port %d\n", serverPortnum);
-	  exit(1);
-	}
+          StreamServerPort(hostName, serverPortnum, &serverSock) != STATUS_OK)
+        {
+          fprintf(stderr, "Postgres: cannot create stream port %d\n", serverPortnum);
+          exit(1);
+        }
 /*
 {
     char buf[100];
@@ -1183,34 +1195,34 @@ PostgresMain(int argc, char *argv[])
       frontendList = DLNewList();
       /* add the original FrontEnd to the list */
       if (IsUnderPostmaster == true) {
-	FrontEnd *fe = malloc(sizeof(FrontEnd));
+        FrontEnd *fe = malloc(sizeof(FrontEnd));
 
-	FD_SET(Portfd, &basemask);
-	maxFd = Max(serverSock,Portfd) + 1;
+        FD_SET(Portfd, &basemask);
+        maxFd = Max(serverSock,Portfd) + 1;
 
-	fe->fn_connected = true;
-	fe->fn_Pfin = Pfin;
-	fe->fn_Pfout = Pfout;
-	fe->fn_done = false;
-	(fe->fn_port).sock = Portfd;
-	DLAddHead(frontendList, DLNewElem(fe));
-	numFE++;
+        fe->fn_connected = true;
+        fe->fn_Pfin = Pfin;
+        fe->fn_Pfout = Pfout;
+        fe->fn_done = false;
+        (fe->fn_port).sock = Portfd;
+        DLAddHead(frontendList, DLNewElem(fe));
+        numFE++;
       } else {
-	  numFE = 1;
-	  maxFd = serverSock + 1;
+          numFE = 1;
+          maxFd = serverSock + 1;
       }
     }
 
     if (IsUnderPostmaster || multiplexedBackend)
-	whereToSendOutput = Remote;
+        whereToSendOutput = Remote;
     else 
-	whereToSendOutput = Debug;
+        whereToSendOutput = Debug;
     
     SetProcessingMode(InitProcessing);
     
     /* initialize */
     if (! Quiet) {
-	puts("\tInitPostgres()..");
+        puts("\tInitPostgres()..");
     }
  
 #if WIN32
@@ -1220,7 +1232,7 @@ PostgresMain(int argc, char *argv[])
     InitPostgres(DBName);
 
     /* ----------------
-     *	if an exception is encountered, processing resumes here
+     *  if an exception is encountered, processing resumes here
      *  so we abort the current transaction and start a new one.
      *  This must be done after we initialize the slave backends
      *  so that the slaves signal the master to abort the transaction
@@ -1238,26 +1250,26 @@ PostgresMain(int argc, char *argv[])
 #else
     if (setjmp(Warn_restart) != 0) {
 #endif /* WIN32 */
-	InWarn = 1;
+        InWarn = 1;
 
-	time(&tim);
-	
-	if (! Quiet)
-	    printf("\tAbortCurrentTransaction() at %s\n", ctime(&tim));
+        time(&tim);
+        
+        if (! Quiet)
+            printf("\tAbortCurrentTransaction() at %s\n", ctime(&tim));
 
-	memset(parser_input, 0, MAX_PARSE_BUFFER);
-	
-	AbortCurrentTransaction();
+        memset(parser_input, 0, MAX_PARSE_BUFFER);
+        
+        AbortCurrentTransaction();
     }
     InWarn = 0;
     
     /* ----------------
-     *	POSTGRES main processing loop begins here
+     *  POSTGRES main processing loop begins here
      * ----------------
      */
     if (IsUnderPostmaster == false) {
-	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.18 $ $Date: 1996/11/11 04:54:51 $");
+        puts("\nPOSTGRES backend interactive interface");
+        puts("$Revision: 1.19 $ $Date: 1996/11/14 10:24:07 $");
     }
     
     /* ----------------
@@ -1272,183 +1284,183 @@ PostgresMain(int argc, char *argv[])
     for (;;) {
       
       if (multiplexedBackend) {
-	if (numFE == 0) 
-	  break;
+        if (numFE == 0) 
+          break;
 
-	memmove((char *) &rmask, (char *) &basemask, sizeof(fd_set));
-	nSelected = select(maxFd, &rmask,0,0,0);
+        memmove((char *) &rmask, (char *) &basemask, sizeof(fd_set));
+        nSelected = select(maxFd, &rmask,0,0,0);
 
-	if (nSelected < 0) {
+        if (nSelected < 0) {
 
-	  if (errno == EINTR) continue;
-	  fprintf(stderr,"postgres: multiplexed backend select failed\n");
-	  exitpg(1);
-	}
-	if (FD_ISSET(serverSock, &rmask)) {
-	/* new connection pending on our well-known port's socket */
-	  newFE = (FrontEnd*) malloc (sizeof(FrontEnd));
-	  memset(newFE, 0, sizeof(FrontEnd));
-	  newFE->fn_connected = false;
-	  newFE->fn_done = false;
-	  newPort = &(newFE->fn_port);
-	  if (StreamConnection(serverSock,newPort) != STATUS_OK) {
-	    StreamClose(newPort->sock);
-	    newFd = -1;
-	  }
-	  else {
-	    DLAddHead(frontendList, DLNewElem(newFE));
-	    numFE++;
-	    newFd = newPort->sock;
-	    if (newFd >= maxFd) maxFd = newFd + 1;
-	    FD_SET(newFd, &rmask);
-	    FD_SET(newFd, &basemask);
-	    --nSelected;
-	    FD_CLR(serverSock, &rmask);
-	  }
-	  continue;
-	} /* if FD_ISSET(serverSock) */
+          if (errno == EINTR) continue;
+          fprintf(stderr,"postgres: multiplexed backend select failed\n");
+          exitpg(1);
+        }
+        if (FD_ISSET(serverSock, &rmask)) {
+        /* new connection pending on our well-known port's socket */
+          newFE = (FrontEnd*) malloc (sizeof(FrontEnd));
+          memset(newFE, 0, sizeof(FrontEnd));
+          newFE->fn_connected = false;
+          newFE->fn_done = false;
+          newPort = &(newFE->fn_port);
+          if (StreamConnection(serverSock,newPort) != STATUS_OK) {
+            StreamClose(newPort->sock);
+            newFd = -1;
+          }
+          else {
+            DLAddHead(frontendList, DLNewElem(newFE));
+            numFE++;
+            newFd = newPort->sock;
+            if (newFd >= maxFd) maxFd = newFd + 1;
+            FD_SET(newFd, &rmask);
+            FD_SET(newFd, &basemask);
+            --nSelected;
+            FD_CLR(serverSock, &rmask);
+          }
+          continue;
+        } /* if FD_ISSET(serverSock) */
 
         /* if we get here, it means that the serverSocket was not the one
-	   selected.  Instead, one of the front ends was selected.
-	   find which one */
-	curr = DLGetHead(frontendList);
-	while (curr) {
-	  FrontEnd *fe = (FrontEnd*)DLE_VAL(curr);
-	  Port *port = &(fe->fn_port);
+           selected.  Instead, one of the front ends was selected.
+           find which one */
+        curr = DLGetHead(frontendList);
+        while (curr) {
+          FrontEnd *fe = (FrontEnd*)DLE_VAL(curr);
+          Port *port = &(fe->fn_port);
 
-	  /* this is lifted from postmaster.c */
-	  if (FD_ISSET(port->sock, &rmask)) {
-	    if (fe->fn_connected == false) {
-		/* we have a message from a new frontEnd */
-		status = PacketReceive(port, &port->buf, NON_BLOCKING);
-		if (status == STATUS_OK) {
-		  fe->fn_connected = true;
-		  pq_init(port->sock);
-		  fe->fn_Pfin = Pfin;
-		  fe->fn_Pfout = Pfout;
-		}
-		else
-		  fprintf(stderr,"Multiplexed backend: error in reading packets from %d\n", port->sock);
+          /* this is lifted from postmaster.c */
+          if (FD_ISSET(port->sock, &rmask)) {
+            if (fe->fn_connected == false) {
+                /* we have a message from a new frontEnd */
+                status = PacketReceive(port, &port->buf, NON_BLOCKING);
+                if (status == STATUS_OK) {
+                  fe->fn_connected = true;
+                  pq_init(port->sock);
+                  fe->fn_Pfin = Pfin;
+                  fe->fn_Pfout = Pfout;
+                }
+                else
+                  fprintf(stderr,"Multiplexed backend: error in reading packets from %d\n", port->sock);
                }
-	    else  /* we have a query from an existing,  active FrontEnd */
-	      {
-		Pfin = fe->fn_Pfin;
-		Pfout = fe->fn_Pfout;
-		currentFE = fe;
+            else  /* we have a query from an existing,  active FrontEnd */
+              {
+                Pfin = fe->fn_Pfin;
+                Pfout = fe->fn_Pfout;
+                currentFE = fe;
               }
-	    if (fe->fn_done)
-		{
-		    Dlelem *c = curr;
-		    curr = DLGetSucc(curr);
-		    DLRemove(c);
-		}
+            if (fe->fn_done)
+                {
+                    Dlelem *c = curr;
+                    curr = DLGetSucc(curr);
+                    DLRemove(c);
+                }
              break;
-	      }
-	  else
-	    curr = DLGetSucc(curr);
-	}
+              }
+          else
+            curr = DLGetSucc(curr);
+        }
     }
-	/* ----------------
-	 *   (1) read a command. 
-	 * ----------------
-	 */
-	memset(parser_input, 0, MAX_PARSE_BUFFER);
+        /* ----------------
+         *   (1) read a command. 
+         * ----------------
+         */
+        memset(parser_input, 0, MAX_PARSE_BUFFER);
 
-	firstchar = ReadCommand(parser_input, multiplexedBackend);
-	/* process the command */
-	switch (firstchar) {
-	    /* ----------------
-	     *	'F' indicates a fastpath call.
-	     *      XXX HandleFunctionRequest
-	     * ----------------
-	     */
-	case 'F':
-	    IsEmptyQuery = false;
-	    
-	    /* start an xact for this function invocation */
-	    if (! Quiet) {
-		time(&tim);
-		printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
-	    }
-	    
-	    StartTransactionCommand();
-	    HandleFunctionRequest();
-	    break;
-	    
-	    /* ----------------
-	     *	'Q' indicates a user query
-	     * ----------------
-	     */
-	case 'Q':
-	    fflush(stdout);
-	    
-	    if ( parser_input[0] ==  ' ' && parser_input[1] == '\0' ) {
-		/* ----------------
-		 *  if there is nothing in the input buffer, don't bother
-		 *  trying to parse and execute anything..
-		 * ----------------
-		 */
-		IsEmptyQuery = true;
-	    } else {
-		/* ----------------
-		 *  otherwise, process the input string.
-		 * ----------------
-		 */
-	        IsEmptyQuery = false;
-		if (ShowStats)
-		    ResetUsage();
-		
-		/* start an xact for this query */
-		if (! Quiet) {
-		    time(&tim);
-		    printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
-		}
-		StartTransactionCommand();
-		
-		pg_eval(parser_input, (char **) NULL, (Oid *) NULL, 0);
-		
-		if (ShowStats)
-		    ShowUsage();
-	    }
-	    break;
-	    
-	    /* ----------------
-	     *	'X' means that the frontend is closing down the socket
-	     * ----------------
-	     */
-	case 'X':
-	    IsEmptyQuery = true;
+        firstchar = ReadCommand(parser_input, multiplexedBackend);
+        /* process the command */
+        switch (firstchar) {
+            /* ----------------
+             *  'F' indicates a fastpath call.
+             *      XXX HandleFunctionRequest
+             * ----------------
+             */
+        case 'F':
+            IsEmptyQuery = false;
+            
+            /* start an xact for this function invocation */
+            if (! Quiet) {
+                time(&tim);
+                printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
+            }
+            
+            StartTransactionCommand();
+            HandleFunctionRequest();
+            break;
+            
+            /* ----------------
+             *  'Q' indicates a user query
+             * ----------------
+             */
+        case 'Q':
+            fflush(stdout);
+            
+            if ( parser_input[0] ==  ' ' && parser_input[1] == '\0' ) {
+                /* ----------------
+                 *  if there is nothing in the input buffer, don't bother
+                 *  trying to parse and execute anything..
+                 * ----------------
+                 */
+                IsEmptyQuery = true;
+            } else {
+                /* ----------------
+                 *  otherwise, process the input string.
+                 * ----------------
+                 */
+                IsEmptyQuery = false;
+                if (ShowStats)
+                    ResetUsage();
+                
+                /* start an xact for this query */
+                if (! Quiet) {
+                    time(&tim);
+                    printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
+                }
+                StartTransactionCommand();
+                
+                pg_eval(parser_input, (char **) NULL, (Oid *) NULL, 0);
+                
+                if (ShowStats)
+                    ShowUsage();
+            }
+            break;
+            
+            /* ----------------
+             *  'X' means that the frontend is closing down the socket
+             * ----------------
+             */
+        case 'X':
+            IsEmptyQuery = true;
             if (multiplexedBackend) {
                FD_CLR(currentFE->fn_port.sock, &basemask);
-	       currentFE->fn_done = true;
+               currentFE->fn_done = true;
                numFE--;
-	     }
-	    pq_close();
-	    break;
-	    
-	default:
-	    elog(WARN,"unknown frontend message was recieved");
-	}
-	
-	/* ----------------
-	 *   (3) commit the current transaction
-	 *
-	 *   Note: if we had an empty input buffer, then we didn't
-	 *   call pg_eval, so we don't bother to commit this transaction.
-	 * ----------------
-	 */
-	if (! IsEmptyQuery) {
-	    if (! Quiet) {
-		time(&tim);
-		printf("\tCommitTransactionCommand() at %s\n", ctime(&tim));
-	    }
-	    CommitTransactionCommand();
-	    
-	} else {
-	    if (IsUnderPostmaster || multiplexedBackend)
-		NullCommand(Remote);
-	}
-	
+             }
+            pq_close();
+            break;
+            
+        default:
+            elog(WARN,"unknown frontend message was recieved");
+        }
+        
+        /* ----------------
+         *   (3) commit the current transaction
+         *
+         *   Note: if we had an empty input buffer, then we didn't
+         *   call pg_eval, so we don't bother to commit this transaction.
+         * ----------------
+         */
+        if (! IsEmptyQuery) {
+            if (! Quiet) {
+                time(&tim);
+                printf("\tCommitTransactionCommand() at %s\n", ctime(&tim));
+            }
+            CommitTransactionCommand();
+            
+        } else {
+            if (IsUnderPostmaster || multiplexedBackend)
+                NullCommand(Remote);
+        }
+        
 } /* infinite for-loop */
   exitpg(0);
   return 1;
@@ -1487,16 +1499,16 @@ ShowUsage(void)
     memmove((char *)&user, (char *)&r.ru_utime, sizeof(user)); 
     memmove((char *)&sys, (char *)&r.ru_stime,sizeof(sys)); 
     if (elapse_t.tv_usec < Save_t.tv_usec) {
-	elapse_t.tv_sec--;
-	elapse_t.tv_usec += 1000000;
+        elapse_t.tv_sec--;
+        elapse_t.tv_usec += 1000000;
     }
     if (r.ru_utime.tv_usec < Save_r.ru_utime.tv_usec) {
-	r.ru_utime.tv_sec--;
-	r.ru_utime.tv_usec += 1000000;
+        r.ru_utime.tv_sec--;
+        r.ru_utime.tv_usec += 1000000;
     }
     if (r.ru_stime.tv_usec < Save_r.ru_stime.tv_usec) {
-	r.ru_stime.tv_sec--;
-	r.ru_stime.tv_usec += 1000000;
+        r.ru_stime.tv_sec--;
+        r.ru_stime.tv_usec += 1000000;
     }
     
     /*

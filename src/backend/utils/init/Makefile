@@ -4,7 +4,7 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.3 1996/11/12 06:46:40 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.4 1996/11/14 10:24:32 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,9 +16,6 @@ INCLUDE_OPT = -I../.. \
               -I../../../include
 
 CFLAGS += $(INCLUDE_OPT)
-# The following defines really ought to go in config.h 
-CFLAGS += -DPOSTGRESDIR='"$(POSTGRESDIR)"' -DPGDATADIR='"$(DATADIR)"' \
-          -DPOSTPORT='"$(POSTPORT)"'
 
 OBJS = enbl.o findbe.o globals.o miscinit.o postinit.o
 

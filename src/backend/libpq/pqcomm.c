@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.6 1996/11/08 05:56:21 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.7 1996/11/14 10:23:53 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ pq_getport()
     
     if (envport)
 	return(atoi(envport));
-    return(atoi(POSTPORT));
+    return(atoi(DEF_PGPORT));
 }
 
 /* --------------------------------

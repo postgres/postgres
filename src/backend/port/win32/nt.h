@@ -30,7 +30,6 @@ struct sembuf
 
 #define MAXHOSTNAMELEN	12	/* where is the official definition of this? */
 #define MAXPATHLEN _MAX_PATH	/* in winsock.h */
-#define POSTPORT "5432"
 
 /* NT has stricmp not strcasecmp. Which is ANSI? */
 #define strcasecmp(a,b)	_stricmp(a,b)
@@ -46,5 +45,3 @@ struct sembuf
 #define GETNCNT 5
 #define GETVAL 6
 
-#define POSTGRESDIR "d:\\pglite"
-#define PGDATADIR "d:\\pglite\\data"

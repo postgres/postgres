@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/Makefile,v 1.2 1996/11/11 13:39:40 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/Makefile,v 1.3 1996/11/14 10:24:48 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,14 +15,12 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 SEDSCRIPT= \
-    -e "s^_fUnKy_BINDIR_sTuFf_^$(BINDIR)^g" \
-    -e "s^_fUnKy_POSTPORT_sTuFf_^$(POSTPORT)^g" \
     -e "s^_fUnKy_DASH_N_sTuFf_^$(DASH_N)^g" \
     -e "s^_fUnKy_BACKSLASH_C_sTuFf_^$(BACKSLASH_C)^g"
 
 all: createuser
 
-createuser:
+createuser: createuser.sh
 	sed $(SEDSCRIPT) <createuser.sh >createuser
 
 install: createuser

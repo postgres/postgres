@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.2 1996/11/06 10:31:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.3 1996/11/14 10:24:38 bryanh Exp $
  *
  * NOTES
  *    Globals used all over the place should be declared here and not
@@ -99,12 +99,3 @@ char *SharedSystemRelationNames[] = {
     VariableRelationName,
     0
 };
-
-/* set up global variables, pointers, etc. */
-void InitGlobals()
-{
-    MasterPid = getpid();
-    DataDir = GetPGData();
-}
-
-
