@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.39 2002/12/30 17:19:54 tgl Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.40 2003/09/27 19:35:32 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -11,7 +11,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 
-override CPPFLAGS := $(CPPFLAGS) $(TCL_INCLUDE_SPEC)
+override CPPFLAGS += $(TCL_INCLUDE_SPEC)
 
 
 # Find out whether Tcl was built as a shared library --- if not, we
@@ -29,24 +29,7 @@ endif
 endif
 
 
-# The following attempts to figure out what libraries need to be
-# linked with pltcl.  The information comes from the tclConfig.sh
-# file, but it's mostly bogus.  This just might work.
-
-ifneq ($(TCL_SHLIB_LD_LIBS),)
-# link command for a shared lib must mention shared libs it uses
-SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
-else
-ifeq ($(PORTNAME), hpux)
-# link command for a shared lib must mention shared libs it uses,
-# even though Tcl doesn't think so...
-SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
-else
-# link command for a shared lib must NOT mention shared libs it uses
-SHLIB_LINK = $(TCL_LIB_SPEC)
-endif
-endif
-
+SHLIB_LINK = $(BE_DLLLIBS) $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
 
 NAME = pltcl
 SO_MAJOR_VERSION = 2

@@ -3,11 +3,11 @@ AWK= awk
  
 DLSUFFIX = .so
 CFLAGS_SL =
-ifeq (,$(filter $(host_os), darwin1.0 darwin1.1 darwin1.2))
-DARWIN_NAMESPACE_SPEC = -flat_namespace
-endif
+BE_DLLLIBS= -bundle_loader $(top_builddir)/src/backend/postgres
  
+# Rule for building shared libs (currently used only for regression test
+# shlib ... should go away, since this is not really enough knowledge)
 %.so: %.o
-	$(CC) $(DARWIN_NAMESPACE_SPEC) -bundle -undefined suppress -o $@ $<
+	$(CC) -bundle -o $@ $< $(BE_DLLLIBS)
 
 sqlmansect = 7

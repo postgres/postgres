@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.8 2003/09/27 15:32:47 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.9 2003/09/27 19:35:32 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,8 @@ override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include -I$(libpq_srcdi
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
 	connect.o misc.o
 
-SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) $(THREAD_LIBS)
+SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) \
+	$(filter -lssl -lcrypto -lcrypt -lm, $(LIBS)) $(THREAD_LIBS)
 
 all: all-lib
 
