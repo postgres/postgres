@@ -1,4 +1,4 @@
-PostgreSQL 6.0 beta              Thu Dec 26 16:47:43 EST 1996
+PostgreSQL 6.0                   Wed Jan 29 00:19:54 EST 1997
 -------------------------------------------------------------
 
 A dump/restore is required for those wishing to migrate data from
@@ -68,6 +68,7 @@ Allow restriction on who can do backend COPY(Bryan)
 Can shrink tables, pg_time and pg_log(Vadim & Erich)
 Change debug level 2 to print queries only, changed debug heading layout(Bruce)
 Change default decimal constant representation from float4 to float8(Bruce)
+European date format now set when postmaster is started
 Execute lowercase function names if not found with exact case
 Fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) from z'
 Gist now included in the distrubution(Marc)
@@ -79,7 +80,7 @@ Libpq++ improvements
 New options to initdb(Bryan)
 Pg_dump allow dump of oid's(Bruce)
 Pg_dump create indexes after tables are loaded for speed(Bruce)
-Pg_dump(Bruce)
+Pg_dumpall dumps all databases, and the user table
 Pginterface additions for NULL values(Bruce)
 Prevent postmaster from being run as root
 Psql \h and \? is now readable(Bruce)
@@ -94,6 +95,7 @@ Remove compile-time parameters to enable binary distributions(Bryan)
 Reverse meaning of HBA masks(Bryan)
 Secure Authentication of local users(Bryan)
 Speed up vacuum(Vadim)
+Vacuum now had VERBOSE option(Bruce)
 
 Source tree changes
 -------------------

@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Thu Jan  2 11:19:41 EST 1997
+last updated:		Wed Jan 29 00:16:44 EST 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -41,6 +41,9 @@ SELECT on two tables where zero or one table in WHERE and target
 fix system to use oid index using constant without cast to oid
 COUNT on VIEW always returns zero (maybe because there is no oid for views?)
 CREATE VIEW requires super-user priviledge
+SELECT a[1] FROM test fails, it needs test.a[1]
+INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
+pg_database.datdba is oid, should be int4
 
 ENHANCEMENTS
 ------------
@@ -48,9 +51,10 @@ Add full ANSI SQL capabilities
 	add subselects, possibility using temporary SQL functions
 	Implement HAVING clause
 	Implement EXISTS qualifier
-	column constraints (using rules), esp. primary keys
+	column constraints (using rules), PRIMARY KEY during table creation
 	add DEFAULT, RESTRAINT, and CHECK capabilities
 	report "Not implemented" if valid syntax is supplied
+	add NOT NULL to CREATE statement
 	add OUTER joins, left and right
 	make VIEWs updateable where possible
 	add UNIONS, INTERSECTS, SUBTRACTS
@@ -117,6 +121,8 @@ Add upper/lower functions
 -Add table/column/function discription table indexed by oid
 -make all identifiers case-insensitive(Bruce)
 add pg_type attribute to identify types that need length (bpchar, varchar)
+add UNIQUE capability to non-btree indexes
+improve auto-type casting
 
 PERFORMANCE
 -----------
@@ -211,6 +217,7 @@ Allow restriction on who can do backend COPY(Bryan)
 Can shrink tables, pg_time and pg_log(Vadim & Erich)
 Change debug level 2 to print queries only, changed debug heading layout(Bruce)
 Change default decimal constant representation from float4 to float8(Bruce)
+European date format now set when postmaster is started
 Execute lowercase function names if not found with exact case
 Fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) from z'
 Gist now included in the distrubution(Marc)
@@ -222,7 +229,7 @@ Libpq++ improvements
 New options to initdb(Bryan)
 Pg_dump allow dump of oid's(Bruce)
 Pg_dump create indexes after tables are loaded for speed(Bruce)
-Pg_dump(Bruce)
+Pg_dumpall dumps all databases, and the user table
 Pginterface additions for NULL values(Bruce)
 Prevent postmaster from being run as root
 Psql \h and \? is now readable(Bruce)
@@ -237,6 +244,7 @@ Remove compile-time parameters to enable binary distributions(Bryan)
 Reverse meaning of HBA masks(Bryan)
 Secure Authentication of local users(Bryan)
 Speed up vacuum(Vadim)
+Vacuum now had VERBOSE option(Bruce)
 
 Source tree changes
 -------------------
