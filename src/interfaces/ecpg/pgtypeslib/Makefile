@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.6 2003/05/09 16:26:29 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.7 2003/05/10 02:05:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,6 +25,9 @@ all: all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
+
+rint.c: %.c : $(top_srcdir)/src/port/%.c
+	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs install-lib
 
