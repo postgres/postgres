@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.18 1998/12/08 06:18:11 thomas Exp $
+ * $Id: pg_aggregate.h,v 1.19 1998/12/30 19:56:30 wieck Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -95,6 +95,7 @@ DATA(insert OID = 0 ( avg	PGUID float4pl	  float4inc float4div	   700	700  700  
 DATA(insert OID = 0 ( avg	PGUID float8pl	  float8inc float8div	   701	701  701  701 _null_ 0.0 ));
 DATA(insert OID = 0 ( avg	PGUID cash_pl	  float8inc cash_div_flt8  790	790  701  790 _null_ 0.0 ));
 DATA(insert OID = 0 ( avg	PGUID timespan_pl float8inc timespan_div  1186 1186  701 1186 _null_ 0.0 ));
+DATA(insert OID = 0 ( avg	PGUID numeric_add numeric_inc numeric_div 1700 1700 1700 1700 _null_ 0 ));
 
 DATA(insert OID = 0 ( sum	PGUID int8pl			- -   20   20 0   20 _null_ _null_ ));
 DATA(insert OID = 0 ( sum	PGUID int4pl			- -   23   23 0   23 _null_ _null_ ));
@@ -103,6 +104,7 @@ DATA(insert OID = 0 ( sum	PGUID float4pl			- -  700  700 0  700 _null_ _null_ ))
 DATA(insert OID = 0 ( sum	PGUID float8pl			- -  701  701 0  701 _null_ _null_ ));
 DATA(insert OID = 0 ( sum	PGUID cash_pl			- -  790  790 0  790 _null_ _null_ ));
 DATA(insert OID = 0 ( sum	PGUID timespan_pl		- - 1186 1186 0 1186 _null_ _null_ ));
+DATA(insert OID = 0 ( sum	PGUID numeric_add		- - 1700 1700 0 1700 _null_ _null_ ));
 
 DATA(insert OID = 0 ( max	PGUID int8larger		- -   20   20 0   20 _null_ _null_ ));
 DATA(insert OID = 0 ( max	PGUID int4larger		- -   23   23 0   23 _null_ _null_ ));
@@ -116,6 +118,7 @@ DATA(insert OID = 0 ( max	PGUID cashlarger		- -  790  790 0  790 _null_ _null_ )
 DATA(insert OID = 0 ( max	PGUID datetime_larger	- - 1184 1184 0 1184 _null_ _null_ ));
 DATA(insert OID = 0 ( max	PGUID timespan_larger	- - 1186 1186 0 1186 _null_ _null_ ));
 DATA(insert OID = 0 ( max	PGUID text_larger		- -   25   25 0   25 _null_ _null_ ));
+DATA(insert OID = 0 ( max	PGUID numeric_larger	- - 1700 1700 0 1700 _null_ _null_ ));
 
 DATA(insert OID = 0 ( min	PGUID int8smaller		- -   20   20 0   20 _null_ _null_ ));
 DATA(insert OID = 0 ( min	PGUID int4smaller		- -   23   23 0   23 _null_ _null_ ));
@@ -129,6 +132,7 @@ DATA(insert OID = 0 ( min	PGUID cashsmaller		- -  790  790 0  790 _null_ _null_ 
 DATA(insert OID = 0 ( min	PGUID datetime_smaller	- - 1184 1184 0 1184 _null_ _null_ ));
 DATA(insert OID = 0 ( min	PGUID timespan_smaller	- - 1186 1186 0 1186 _null_ _null_ ));
 DATA(insert OID = 0 ( min	PGUID text_smaller		- -   25   25 0   25 _null_ _null_ ));
+DATA(insert OID = 0 ( min	PGUID numeric_smaller	- - 1700 1700 0 1700 _null_ _null_ ));
 
 DATA(insert OID = 0 ( count PGUID - int4inc - 0 0 23 23 _null_ 0 ));
 

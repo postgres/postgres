@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.86 1998/12/13 23:45:22 thomas Exp $
+ * $Id: pg_proc.h,v 1.87 1998/12/30 19:56:32 wieck Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2167,6 +2167,119 @@ DATA(insert OID = 699 (  host					PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "sele
 DESCR("host address");
 DATA(insert OID = 683 (  network				PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "select network_network($1)" - ));
 DESCR("network address");
+
+/* OID's 1700 - 1799 NUMERIC data type */
+DATA(insert OID = 1701 ( numeric_in				PGUID 11 f t f 1 f 1700 "0" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1702 ( numeric_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1703 ( numeric				PGUID 11 f t f 2 f 1700 "1700 23" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1704 ( numeric_abs			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("absolute value");
+DATA(insert OID = 1705 ( abs					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_abs($1)" - ));
+DESCR("absolute value");
+DATA(insert OID = 1706 ( numeric_sign			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("sign of value");
+DATA(insert OID = 1707 ( sign					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_sign($1)" - ));
+DESCR("sign of value");
+DATA(insert OID = 1708 ( numeric_round			PGUID 11 f t f 2 f 1700 "1700 23" 100 0 0 100  foo bar ));
+DESCR("value rounded to 'scale'");
+DATA(insert OID = 1709 ( round					PGUID 14 f t f 2 f 1700 "1700 23" 100 0 0 100  "select numeric_round($1,$2)" - ));
+DESCR("value rounded to 'scale'");
+DATA(insert OID = 1710 ( round					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_round($1,0)" - ));
+DESCR("value rounded to 'scale' of zero");
+DATA(insert OID = 1711 ( numeric_trunc			PGUID 11 f t f 2 f 1700 "1700 23" 100 0 0 100  foo bar ));
+DESCR("value truncated to 'scale'");
+DATA(insert OID = 1712 ( trunc					PGUID 14 f t f 2 f 1700 "1700 23" 100 0 0 100  "select numeric_trunc($1,$2)" - ));
+DESCR("value truncated to 'scale'");
+DATA(insert OID = 1713 ( trunc					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_trunc($1,0)" - ));
+DESCR("value truncated to 'scale' of zero");
+DATA(insert OID = 1714 ( numeric_ceil			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("smallest integer >= value");
+DATA(insert OID = 1715 ( ceil					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_ceil($1)" - ));
+DESCR("smallest integer >= value");
+DATA(insert OID = 1716 ( numeric_floor			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("largest integer <= value");
+DATA(insert OID = 1717 ( floor					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_floor($1)" - ));
+DESCR("largest integer <= value");
+DATA(insert OID = 1718 ( numeric_eq				PGUID 11 f t f 2 f 16 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("equal");
+DATA(insert OID = 1719 ( numeric_ne				PGUID 11 f t f 2 f 16 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("not equal");
+DATA(insert OID = 1720 ( numeric_gt				PGUID 11 f t f 2 f 16 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("greater-than");
+DATA(insert OID = 1721 ( numeric_ge				PGUID 11 f t f 2 f 16 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 1722 ( numeric_lt				PGUID 11 f t f 2 f 16 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("lower-than");
+DATA(insert OID = 1723 ( numeric_le				PGUID 11 f t f 2 f 16 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("lower-than-or-equal");
+DATA(insert OID = 1724 ( numeric_add			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("addition");
+DATA(insert OID = 1725 ( numeric_sub			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("subtract");
+DATA(insert OID = 1726 ( numeric_mul			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("multiply");
+DATA(insert OID = 1727 ( numeric_div			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("divide");
+DATA(insert OID = 1728 ( numeric_mod			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("modulus");
+DATA(insert OID = 1729 ( mod					PGUID 14 f t f 2 f 1700 "1700 1700" 100 0 0 100  "select numeric_mod($1,$2)" - ));
+DESCR("modulus");
+DATA(insert OID = 1730 ( numeric_sqrt			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("square root");
+DATA(insert OID = 1731 ( sqrt					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_sqrt($1)" - ));
+DESCR("square root");
+DATA(insert OID = 1732 ( numeric_exp			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("e raised to the power of n");
+DATA(insert OID = 1733 ( exp					PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_exp($1)" - ));
+DESCR("e raised to the power of n");
+DATA(insert OID = 1734 ( numeric_ln				PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("natural logarithm of n");
+DATA(insert OID = 1735 ( ln						PGUID 14 f t f 1 f 1700 "1700" 100 0 0 100  "select numeric_ln($1)" - ));
+DESCR("natural logarithm of n");
+DATA(insert OID = 1736 ( numeric_log			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("logarithm base m of n");
+DATA(insert OID = 1737 ( log					PGUID 14 f t f 2 f 1700 "1700 1700" 100 0 0 100  "select numeric_log($1,$2)" - ));
+DESCR("logarithm base m of n");
+DATA(insert OID = 1738 ( numeric_power			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("m raised to the power of n");
+DATA(insert OID = 1739 ( power					PGUID 14 f t f 2 f 1700 "1700 1700" 100 0 0 100  "select numeric_power($1,$2)" - ));
+DESCR("m raised to the power of n");
+DATA(insert OID = 1740 ( int4_numeric			PGUID 11 f t f 1 f 1700 "23" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1741 ( numeric				PGUID 14 f t f 1 f 1700 "23" 100 0 0 100  "select int4_numeric($1)" - ));
+DESCR("(internal)");
+DATA(insert OID = 1742 ( float4_numeric			PGUID 11 f t f 1 f 1700 "700" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1743 ( numeric				PGUID 14 f t f 1 f 1700 "700" 100 0 0 100  "select float4_numeric($1)" - ));
+DESCR("(internal)");
+DATA(insert OID = 1744 ( float8_numeric			PGUID 11 f t f 1 f 1700 "701" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1745 ( numeric				PGUID 14 f t f 1 f 1700 "701" 100 0 0 100  "select float8_numeric($1)" - ));
+DESCR("(internal)");
+DATA(insert OID = 1746 ( numeric_int4			PGUID 11 f t f 1 f 23 "1700" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1747 ( int4					PGUID 14 f t f 1 f 23 "1700" 100 0 0 100  "select numeric_int4($1)" - ));
+DESCR("(internal)");
+DATA(insert OID = 1748 ( numeric_float4			PGUID 11 f t f 1 f 700 "1700" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1749 ( float4					PGUID 14 f t f 1 f 700 "1700" 100 0 0 100  "select numeric_float4($1)" - ));
+DESCR("(internal)");
+DATA(insert OID = 1750 ( numeric_float8			PGUID 11 f t f 1 f 701 "1700" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1751 ( float8					PGUID 14 f t f 1 f 701 "1700" 100 0 0 100  "select numeric_float8($1)" - ));
+DESCR("(internal)");
+DATA(insert OID = 1764 ( numeric_inc			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("increment by one");
+DATA(insert OID = 1765 ( numeric_dec			PGUID 11 f t f 1 f 1700 "1700" 100 0 0 100  foo bar ));
+DESCR("decrement by one");
+DATA(insert OID = 1766 ( numeric_smaller		PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("smaller of two numbers");
+DATA(insert OID = 1767 ( numeric_larger			PGUID 11 f t f 2 f 1700 "1700 1700" 100 0 0 100  foo bar ));
+DESCR("larger of two numbers");
+
 
 /*
  * prototypes for functions pg_proc.c

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.72 1998/12/13 23:36:48 thomas Exp $
+ * $Id: builtins.h,v 1.73 1998/12/30 19:56:34 wieck Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -30,6 +30,7 @@
 #include <utils/cash.h>
 #include <utils/inet.h>
 #include <utils/rel.h>
+#include <utils/numeric.h>
 
 /*
  *		Defined in adt/
@@ -560,5 +561,46 @@ bool		macaddr_ne(macaddr * a1, macaddr * a2);
 int4		macaddr_cmp(macaddr * a1, macaddr * a2);
 text	   *macaddr_manuf(macaddr * addr);
 
+/* numeric.c */
+Numeric		numeric_in(char *str, int dummy, int32 typmod);
+char		*numeric_out(Numeric num);
+Numeric		numeric(Numeric num, int32 typmod);
+Numeric		numeric_abs(Numeric num);
+Numeric		numeric_sign(Numeric num);
+Numeric		numeric_round(Numeric num, int32 scale);
+Numeric		numeric_trunc(Numeric num, int32 scale);
+Numeric		numeric_ceil(Numeric num);
+Numeric		numeric_floor(Numeric num);
+bool		numeric_eq(Numeric num1, Numeric num2);
+bool		numeric_ne(Numeric num1, Numeric num2);
+bool		numeric_gt(Numeric num1, Numeric num2);
+bool		numeric_ge(Numeric num1, Numeric num2);
+bool		numeric_lt(Numeric num1, Numeric num2);
+bool		numeric_le(Numeric num1, Numeric num2);
+Numeric		numeric_add(Numeric num1, Numeric num2);
+Numeric		numeric_sub(Numeric num1, Numeric num2);
+Numeric		numeric_mul(Numeric num1, Numeric num2);
+Numeric		numeric_div(Numeric num1, Numeric num2);
+Numeric		numeric_mod(Numeric num1, Numeric num2);
+Numeric		numeric_inc(Numeric num);
+Numeric		numeric_dec(Numeric num);
+Numeric		numeric_smaller(Numeric num1, Numeric num2);
+Numeric		numeric_larger(Numeric num1, Numeric num2);
+Numeric		numeric_sqrt(Numeric num);
+Numeric		numeric_exp(Numeric num);
+Numeric		numeric_ln(Numeric num);
+Numeric		numeric_log(Numeric num1, Numeric num2);
+Numeric		numeric_power(Numeric num1, Numeric num2);
+Numeric		int4_numeric(int32 val);
+int32		numeric_int4(Numeric num);
+Numeric		float4_numeric(float32 val);
+float32		numeric_float4(Numeric num);
+Numeric		float8_numeric(float64 val);
+float64		numeric_float8(Numeric num);
+
 
 #endif	 /* BUILTINS_H */
+
+
+
+

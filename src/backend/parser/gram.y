@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.40 1998/12/18 09:10:32 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.41 1998/12/30 19:56:28 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -46,6 +46,7 @@
 #include "utils/elog.h"
 #include "access/xact.h"
 #include "storage/lmgr.h"
+#include "utils/numeric.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -229,7 +230,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <str>		generic, numeric, character, datetime
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
-%type <str>		opt_float, opt_numeric, opt_decimal
+%type <str>		opt_float
+%type <ival>	opt_numeric, opt_decimal
 %type <boolean>	opt_varying, opt_timezone
 
 %type <ival>	Iconst
@@ -3018,8 +3020,7 @@ generic:  IDENT									{ $$ = $1; }
 
 /* SQL92 numeric data types
  * Check FLOAT() precision limits assuming IEEE floating types.
- * Provide rudimentary DECIMAL() and NUMERIC() implementations
- *  by checking parameters and making sure they match what is possible with INTEGER.
+ * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
  * - thomas 1997-09-18
  */
 Numeric:  FLOAT opt_float
@@ -3036,14 +3037,14 @@ Numeric:  FLOAT opt_float
 		| DECIMAL opt_decimal
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("integer");
+					$$->name = xlateSqlType("numeric");
 					$$->typmod = -1;
 				}
 		| NUMERIC opt_numeric
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("integer");
-					$$->typmod = -1;
+					$$->name = xlateSqlType("numeric");
+					$$->typmod = $2;
 				}
 		;
 
@@ -3052,7 +3053,7 @@ numeric:  FLOAT
 		| DOUBLE PRECISION
 				{	$$ = xlateSqlType("float8"); }
 		| DECIMAL
-				{	$$ = xlateSqlType("decimal"); }
+				{	$$ = xlateSqlType("numeric"); }
 		| NUMERIC
 				{	$$ = xlateSqlType("numeric"); }
 		;
@@ -3076,41 +3077,54 @@ opt_float:  '(' Iconst ')'
 
 opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
-					if ($2 != 9)
-						elog(ERROR,"NUMERIC precision %d must be 9",$2);
-					if ($4 != 0)
-						elog(ERROR,"NUMERIC scale %d must be zero",$4);
+					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
+						elog(ERROR,"NUMERIC precision %d must be beween 1 and %d",
+									$2, NUMERIC_MAX_PRECISION);
+					if ($4 < 0 || $4 > $2)
+						elog(ERROR,"NUMERIC scale %d must be between 0 and precision %d",
+									$4,$2);
+
+					$$ = (($2 << 16) | $4) + VARHDRSZ;
 				}
 		| '(' Iconst ')'
 				{
-					if ($2 != 9)
-						elog(ERROR,"NUMERIC precision %d must be 9",$2);
+					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
+						elog(ERROR,"NUMERIC precision %d must be beween 1 and %d",
+									$2, NUMERIC_MAX_PRECISION);
+
+					$$ = ($2 << 16) + VARHDRSZ;
 				}
 		| /*EMPTY*/
 				{
-					$$ = NULL;
+					$$ = ((NUMERIC_DEFAULT_PRECISION << 16) | NUMERIC_DEFAULT_SCALE) + VARHDRSZ;
 				}
 		;
 
 opt_decimal:  '(' Iconst ',' Iconst ')'
 				{
-					if ($2 > 9)
-						elog(ERROR,"DECIMAL precision %d exceeds implementation limit of 9",$2);
-					if ($4 != 0)
-						elog(ERROR,"DECIMAL scale %d must be zero",$4);
-					$$ = NULL;
+					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
+						elog(ERROR,"DECIMAL precision %d must be beween 1 and %d",
+									$2, NUMERIC_MAX_PRECISION);
+					if ($4 < 0 || $4 > $2)
+						elog(ERROR,"DECIMAL scale %d must be between 0 and precision %d",
+									$4,$2);
+
+					$$ = (($2 << 16) | $4) + VARHDRSZ;
 				}
 		| '(' Iconst ')'
 				{
-					if ($2 > 9)
-						elog(ERROR,"DECIMAL precision %d exceeds implementation limit of 9",$2);
-					$$ = NULL;
+					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
+						elog(ERROR,"DECIMAL precision %d must be beween 1 and %d",
+									$2, NUMERIC_MAX_PRECISION);
+
+					$$ = ($2 << 16) + VARHDRSZ;
 				}
 		| /*EMPTY*/
 				{
-					$$ = NULL;
+					$$ = ((NUMERIC_DEFAULT_PRECISION << 16) | NUMERIC_DEFAULT_SCALE) + VARHDRSZ;
 				}
 		;
+
 
 /* SQL92 character data types
  * The following implements CHAR() and VARCHAR().
