@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.79 2003/02/13 17:04:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.80 2003/04/04 04:50:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ date_in(PG_FUNCTION_ARGS)
 			elog(ERROR, "Unrecognized date external representation '%s'", str);
 	}
 
-	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
+	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 
 	PG_RETURN_DATEADT(date);
 }
@@ -108,7 +108,7 @@ date_out(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-	j2date((date + date2j(2000, 1, 1)),
+	j2date(date + POSTGRES_EPOCH_JDATE,
 		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
 	EncodeDateOnly(tm, DateStyle, buf);
@@ -256,9 +256,10 @@ date_pl_interval(PG_FUNCTION_ARGS)
 
 	if (span->month != 0)
 	{
-		j2date((dateVal + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+		j2date(dateVal + POSTGRES_EPOCH_JDATE,
+			   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 		tm->tm_mon += span->month;
-		dateVal = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+		dateVal = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 	}
 	if (span->time != 0)
 		dateVal += (span->time / 86400e0);
@@ -279,9 +280,10 @@ date_mi_interval(PG_FUNCTION_ARGS)
 
 	if (span->month != 0)
 	{
-		j2date((dateVal + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+		j2date(dateVal + POSTGRES_EPOCH_JDATE,
+			   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 		tm->tm_mon -= span->month;
-		dateVal = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+		dateVal = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 	}
 	if (span->time != 0)
 		dateVal -= (span->time / 86400e0);
@@ -346,7 +348,7 @@ date_timestamptz(PG_FUNCTION_ARGS)
 	struct tm	tt,
 			   *tm = &tt;
 
-	j2date((dateVal + date2j(2000, 1, 1)),
+	j2date(dateVal + POSTGRES_EPOCH_JDATE,
 		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
 	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
@@ -399,7 +401,7 @@ timestamptz_date(PG_FUNCTION_ARGS)
 	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
 		elog(ERROR, "Unable to convert timestamp to date");
 
-	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 
 	PG_RETURN_DATEADT(result);
 }
@@ -431,7 +433,7 @@ abstime_date(PG_FUNCTION_ARGS)
 
 		default:
 			abstime2tm(abstime, &tz, tm, NULL);
-			result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+			result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 			break;
 	}
 

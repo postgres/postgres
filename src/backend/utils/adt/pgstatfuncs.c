@@ -328,18 +328,7 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	if (sec == 0 && usec == 0)
 		PG_RETURN_NULL();
 
-	/*
-	 * This method of converting "Unix time" (sec/usec since epoch) to a
-	 * PostgreSQL timestamp is an ugly hack -- if you fix it, be sure to
-	 * fix the similar hackery in timestamp.c
-	 */
-#ifdef HAVE_INT64_TIMESTAMP
-	result = (((sec - ((date2j(2000, 1, 1) - date2j(1970, 1, 1)) * 86400))
-			   * INT64CONST(1000000)) + usec);
-#else
-	result = (sec + (usec * 1.0e-6) - ((date2j(2000, 1, 1) -
-										date2j(1970, 1, 1)) * 86400));
-#endif
+	result = AbsoluteTimeUsecToTimestampTz(sec, usec);
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.105 2003/03/20 03:34:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.106 2003/04/04 04:50:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,10 +85,7 @@ static int istinterval(char *i_string,
 /* 
  * GetCurrentAbsoluteTime()
  *
- * Get the current system time. Set timezone parameters if not specified
- * elsewhere.  Define HasCTZSet to allow clients to specify the default
- * timezone.
- *
+ * Get the current system time (relative to Unix epoch).
  */
 AbsoluteTime
 GetCurrentAbsoluteTime(void)
@@ -100,11 +97,11 @@ GetCurrentAbsoluteTime(void)
 }
 
 
-/* GetCurrentAbsoluteTimeUsec()
- * Get the current system time.
+/*
+ * GetCurrentAbsoluteTimeUsec()
  *
- * Returns the number of seconds since epoch (January 1 1970 GMT),
- * and returns fractional seconds (as # of microseconds) into *usec.
+ * Get the current system time (relative to Unix epoch), including fractional
+ * seconds expressed as microseconds.
  */
 AbsoluteTime
 GetCurrentAbsoluteTimeUsec(int *usec)
@@ -119,7 +116,31 @@ GetCurrentAbsoluteTimeUsec(int *usec)
 }
 
 
-/* GetCurrentDateTime()
+/*
+ * AbsoluteTimeUsecToTimestampTz()
+ *
+ * Convert system time including microseconds to TimestampTz representation.
+ */
+TimestampTz
+AbsoluteTimeUsecToTimestampTz(AbsoluteTime sec, int usec)
+{
+	TimestampTz result;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	result = ((sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400))
+			  * INT64CONST(1000000)) + usec;
+#else
+	result = sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400)
+		+ (usec / 1000000.0);
+#endif
+
+	return result;
+}
+
+
+/*
+ * GetCurrentDateTime()
+ *
  * Get the transaction start time ("now()") broken down as a struct tm.
  */
 void
@@ -131,13 +152,10 @@ GetCurrentDateTime(struct tm * tm)
 }
 
 /* 
- * GetCurrentAbsoluteTimeUsec()
+ * GetCurrentTimeUsec()
  *
- * Get the current system time. Set timezone parameters if not specified
- * elsewhere.  Define HasCTZSet to allow clients to specify the default
- * timezone.
- *
- * Returns the number of seconds since epoch (January 1 1970 GMT)
+ * Get the transaction start time ("now()") broken down as a struct tm,
+ * including fractional seconds and timezone offset.
  */
 void
 GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec, int *tzp)
@@ -152,7 +170,7 @@ GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec, int *tzp)
 #ifdef HAVE_INT64_TIMESTAMP
 	*fsec = usec;
 #else
-	*fsec = usec * 1.0e-6;
+	*fsec = usec / 1000000.0;
 #endif
 }
 
@@ -307,7 +325,7 @@ tm2abstime(struct tm * tm, int tz)
 		|| tm->tm_sec < 0 || tm->tm_sec > 59)
 		return INVALID_ABSTIME;
 
-	day = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(1970, 1, 1));
+	day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
 
 	/* check for time out of range */
 	if ((day < MIN_DAYNUM) || (day > MAX_DAYNUM))

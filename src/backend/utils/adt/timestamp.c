@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.81 2003/03/20 06:02:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.82 2003/04/04 04:50:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,12 +728,7 @@ now(PG_FUNCTION_ARGS)
 
 	sec = GetCurrentTransactionStartTimeUsec(&usec);
 
-#ifdef HAVE_INT64_TIMESTAMP
-	result = (((sec - ((date2j(2000, 1, 1) - date2j(1970, 1, 1)) * 86400))
-			   * INT64CONST(1000000)) + usec);
-#else
-	result = (sec + (usec * 1.0e-6) - ((date2j(2000, 1, 1) - date2j(1970, 1, 1)) * 86400));
-#endif
+	result = AbsoluteTimeUsecToTimestampTz(sec, usec);
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }
@@ -800,7 +795,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 	struct tm  *tx;
 #endif
 
-	date0 = date2j(2000, 1, 1);
+	date0 = POSTGRES_EPOCH_JDATE;
 
 	/*
 	 * If HasCTZSet is true then we have a brute force time zone
@@ -871,9 +866,9 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			utime = ((dt / INT64CONST(1000000))
-				   + ((date0 - date2j(1970, 1, 1)) * INT64CONST(86400)));
+				   + ((date0 - UNIX_EPOCH_JDATE) * INT64CONST(86400)));
 #else
-			utime = (dt + ((date0 - date2j(1970, 1, 1)) * 86400));
+			utime = (dt + ((date0 - UNIX_EPOCH_JDATE) * 86400));
 #endif
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
@@ -960,7 +955,7 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		return -1;
 
-	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #ifdef HAVE_INT64_TIMESTAMP
 	*result = ((date * INT64CONST(86400000000)) + time);
@@ -2675,7 +2670,7 @@ isoweek2date(int woy, int *year, int *mon, int *mday)
 	day4 = date2j(*year, 1, 4);
 
 	/* day0 == offset to first day of week (Monday) */
-	day0 = (j2day(day4 - 1) % 7);
+	day0 = j2day(day4 - 1);
 
 	dayn = ((woy - 1) * 7) + (day4 - day0);
 
@@ -2701,7 +2696,7 @@ date2isoweek(int year, int mon, int mday)
 	day4 = date2j(year, 1, 4);
 
 	/* day0 == offset to first day of week (Monday) */
-	day0 = (j2day(day4 - 1) % 7);
+	day0 = j2day(day4 - 1);
 
 	/*
 	 * We need the first week containing a Thursday, otherwise this day
@@ -2709,10 +2704,10 @@ date2isoweek(int year, int mon, int mday)
 	 */
 	if (dayn < (day4 - day0))
 	{
-		day4 = date2j((year - 1), 1, 4);
+		day4 = date2j(year - 1, 1, 4);
 
 		/* day0 == offset to first day of week (Monday) */
-		day0 = (j2day(day4 - 1) % 7);
+		day0 = j2day(day4 - 1);
 	}
 
 	result = (((dayn - (day4 - day0)) / 7) + 1);
@@ -2723,10 +2718,10 @@ date2isoweek(int year, int mon, int mday)
 	 */
 	if (result >= 53)
 	{
-		day4 = date2j((year + 1), 1, 4);
+		day4 = date2j(year + 1, 1, 4);
 
 		/* day0 == offset to first day of week (Monday) */
-		day0 = (j2day(day4 - 1) % 7);
+		day0 = j2day(day4 - 1);
 
 		if (dayn >= (day4 - day0))
 			result = (((dayn - (day4 - day0)) / 7) + 1);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.102 2003/02/22 05:57:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.103 2003/04/04 04:50:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -648,6 +648,14 @@ j2date(int jd, int *year, int *month, int *day)
 	return;
 }	/* j2date() */
 
+
+/*
+ * j2day - convert Julian date to day-of-week (0..6 == Sun..Sat)
+ *
+ * Note: various places use the locution j2day(date - 1) to produce a
+ * result according to the convention 0..6 = Mon..Sun.  This is a bit of
+ * a crock, but will work as long as the computation here is just a modulo.
+ */
 int
 j2day(int date)
 {
@@ -1261,7 +1269,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
 								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1),
-								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+									   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1281,7 +1289,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
 								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1),
-								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+									   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1546,8 +1554,7 @@ DetermineLocalTimeZone(struct tm * tm)
 						delta2;
 			time_t		mytime;
 
-			day = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) -
-				   date2j(1970, 1, 1));
+			day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
 			mysec = tm->tm_sec + (tm->tm_min + (day * 24 + tm->tm_hour) * 60) * 60;
 			mytime = (time_t) mysec;
 
@@ -1556,8 +1563,8 @@ DetermineLocalTimeZone(struct tm * tm)
 			 * and reassemble to get a representation of local time.
 			 */
 			tmp = localtime(&mytime);
-			day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
-				   date2j(1970, 1, 1));
+			day = date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
+				UNIX_EPOCH_JDATE;
 			locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
 
 			/*
@@ -1586,8 +1593,8 @@ DetermineLocalTimeZone(struct tm * tm)
 			mysec += delta1;
 			mytime = (time_t) mysec;
 			tmp = localtime(&mytime);
-			day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
-				   date2j(1970, 1, 1));
+			day = date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
+				UNIX_EPOCH_JDATE;
 			locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
 			delta2 = mysec - locsec;
 			if (delta2 != delta1)
@@ -1595,8 +1602,8 @@ DetermineLocalTimeZone(struct tm * tm)
 				mysec += (delta2 - delta1);
 				mytime = (time_t) mysec;
 				tmp = localtime(&mytime);
-				day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
-					   date2j(1970, 1, 1));
+				day = date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
+					UNIX_EPOCH_JDATE;
 				locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
 				delta2 = mysec - locsec;
 			}
@@ -2360,7 +2367,7 @@ DecodeNumber(int flen, char *str, int fmask,
 	{
 		*tmask = (DTK_M(DOY) | DTK_M(MONTH) | DTK_M(DAY));
 		tm->tm_yday = val;
-		j2date((date2j(tm->tm_year, 1, 1) + tm->tm_yday - 1),
+		j2date(date2j(tm->tm_year, 1, 1) + tm->tm_yday - 1,
 			   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	}
 
@@ -3701,6 +3708,9 @@ bool
 CheckDateTokenTables(void)
 {
 	bool		ok = true;
+
+	Assert(UNIX_EPOCH_JDATE == date2j(1970, 1, 1));
+	Assert(POSTGRES_EPOCH_JDATE == date2j(2000, 1, 1));
 
 	ok &= CheckDateTokenTable("datetktbl", datetktbl, szdatetktbl);
 	ok &= CheckDateTokenTable("deltatktbl", deltatktbl, szdeltatktbl);

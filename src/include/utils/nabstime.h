@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.37 2002/09/01 00:58:07 tgl Exp $
+ * $Id: nabstime.h,v 1.38 2003/04/04 04:50:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,6 +157,7 @@ extern Datum timeofday(PG_FUNCTION_ARGS);
 /* non-fmgr-callable support routines */
 extern AbsoluteTime GetCurrentAbsoluteTime(void);
 extern AbsoluteTime GetCurrentAbsoluteTimeUsec(int *usec);
+extern TimestampTz AbsoluteTimeUsecToTimestampTz(AbsoluteTime sec, int usec);
 extern void abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char **tzn);
 
 #endif   /* NABSTIME_H */
