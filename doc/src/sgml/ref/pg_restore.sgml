@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.45 2003/12/06 03:00:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.46 2004/02/17 09:07:16 neilc Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -110,7 +110,7 @@
        <para>
         Create the database before restoring into it.  (When this
         option is used, the database named with <option>-d</option> is
-        used only to issue the initial <literal>CREATE DATABASE</>
+        used only to issue the initial <command>CREATE DATABASE</>
         command.  All data is restored into the database name that
         appears in the archive.)
        </para>
@@ -454,7 +454,7 @@
    internally executes <acronym>SQL</acronym> statements. If you have
    problems running <application>pg_restore</application>, make sure
    you are able to select information from the database using, for
-   example, <application>psql</application>.
+   example, <xref linkend="app-psql">.
   </para>
  </refsect1>
 

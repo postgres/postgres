@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.24 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.25 2004/02/17 09:07:16 neilc Exp $
 -->
 
 <chapter id="user-manag">
@@ -161,8 +161,9 @@ dropuser <replaceable>name</replaceable>
 
     A user's attributes can be modified after creation with
     <command>ALTER USER</command>.<indexterm><primary>ALTER USER</></>
-    See the reference pages for <command>CREATE USER</command> and
-    <command>ALTER USER</command> for details.
+    See the reference pages for the <xref linkend="sql-createuser"
+    endterm="sql-createuser-title"> and <xref linkend="sql-alteruser"
+    endterm="sql-alteruser-title"> commands for details.
    </para>
 
   <para>

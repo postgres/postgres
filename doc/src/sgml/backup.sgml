@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.35 2004/02/03 17:34:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.36 2004/02/17 09:07:16 neilc Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -86,9 +86,9 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
     When your database schema relies on OIDs (for instance as foreign
     keys) you must instruct <application>pg_dump</> to dump the OIDs
     as well. To do this, use the <option>-o</option> command line
-    option.  <quote>Large objects</> are not dumped by default, either.
-    See <application>pg_dump</>'s command reference page if you use
-    large objects.
+    option.  <quote>Large objects</> are not dumped by default,
+    either.  See <xref linkend="app-pgdump">'s reference page if you
+    use large objects.
    </para>
   </important>
 
@@ -260,7 +260,8 @@ cat <replaceable class="parameter">filename</replaceable>* | psql <replaceable c
 pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable class="parameter">filename</replaceable>
 </programlisting>
 
-     See the <application>pg_dump</> and <application>pg_restore</> reference pages for details.
+     See the <xref linkend="app-pgdump"> and <xref
+     linkend="app-pgrestore"> reference pages for details.
     </para>
    </formalpara>
 
@@ -298,8 +299,8 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
    </para>
 
    <para>
-    Please familiarize yourself with the
-    <citerefentry><refentrytitle>pg_dump</></> reference page.
+    Please familiarize yourself with the <xref linkend="app-pgdump">
+    reference page.
    </para>
   </sect2>
  </sect1>
