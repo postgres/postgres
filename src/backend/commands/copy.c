@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.105 2000/04/16 04:27:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.106 2000/05/18 01:52:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,12 +281,8 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
 	/*
 	 * Open and lock the relation, using the appropriate lock type.
-	 *
-	 * Note: AccessExclusive is probably overkill for copying to a relation,
-	 * but that's what the code grabs on the rel's indices.  If this lock
-	 * is relaxed then I think the index locks need relaxed also.
 	 */
-	rel = heap_openr(relname, (from ? AccessExclusiveLock : AccessShareLock));
+	rel = heap_openr(relname, (from ? RowExclusiveLock : AccessShareLock));
 
 	result = pg_aclcheck(relname, UserName, required_access);
 	if (result != ACLCHECK_OK)
@@ -295,6 +291,12 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		elog(ERROR, "You must have Postgres superuser privilege to do a COPY "
 			 "directly to or from a file.  Anyone can COPY to stdout or "
 			 "from stdin.  Psql's \\copy command also works for anyone.");
+	/*
+	 * This restriction is unfortunate, but necessary until the frontend
+	 * COPY protocol is redesigned to be binary-safe...
+	 */
+	if (pipe && binary)
+		elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
 
 	/*
 	 * Set up variables to avoid per-attribute overhead.
