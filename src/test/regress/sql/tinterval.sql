@@ -25,7 +25,7 @@ INSERT INTO TINTERVAL_TBL (f1)
 
 -- test tinterval operators
 
-SELECT '' AS seven, TINTERVAL_TBL.*;
+SELECT '' AS five, TINTERVAL_TBL.*;
 
 -- length ==
 SELECT '' AS one, t.*
