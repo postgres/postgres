@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.11 2003/04/06 22:45:22 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.12 2003/05/06 23:33:52 momjian Exp $
 
 
 # PGAC_PATH_FLEX
@@ -26,7 +26,7 @@ else
       then
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
-          if $pgac_candidate --version | grep '2\.5\.3' >/dev/null 2>&1; then
+          if $pgac_candidate --version | grep ' 2\.5\.3$' >/dev/null 2>&1; then
             pgac_broken_flex=$pgac_candidate
             continue
           fi
