@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.73 2004/09/06 23:33:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.74 2004/09/16 18:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,7 +521,8 @@ TransactionIdIsInProgress(TransactionId xid)
 	bool		locked;
 
 	/*
-	 * Don't bother checking a very old transaction.
+	 * Don't bother checking a transaction older than RecentXmin; it
+	 * could not possibly still be running.
 	 */
 	if (TransactionIdPrecedes(xid, RecentXmin))
 	{
@@ -732,10 +733,19 @@ GetOldestXmin(bool allDbs)
  * This ensures that the set of transactions seen as "running" by the
  * current xact will not change after it takes the snapshot.
  *
- * We also compute the current global xmin (oldest xmin across all running
- * transactions) and save it in RecentGlobalXmin.  This is the same
- * computation done by GetOldestXmin(TRUE).  The xmin value is also stored
- * into RecentXmin.
+ * Note that only top-level XIDs are included in the snapshot.  We can
+ * still apply the xmin and xmax limits to subtransaction XIDs, but we
+ * need to work a bit harder to see if XIDs in [xmin..xmax) are running.
+ *
+ * We also update the following backend-global variables:
+ *		TransactionXmin: the oldest xmin of any snapshot in use in the
+ *			current transaction (this is the same as MyProc->xmin).  This
+ *			is just the xmin computed for the first, serializable snapshot.
+ *		RecentXmin: the xmin computed for the most recent snapshot.  XIDs
+ *			older than this are known not running any more.
+ *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all
+ *			running transactions).  This is the same computation done by
+ *			GetOldestXmin(TRUE).
  *----------
  */
 Snapshot
@@ -750,6 +760,11 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	int			count = 0;
 
 	Assert(snapshot != NULL);
+
+	/* Serializable snapshot must be computed before any other... */
+	Assert(serializable ?
+		   !TransactionIdIsValid(MyProc->xmin) :
+		   TransactionIdIsValid(MyProc->xmin));
 
 	/*
 	 * Allocating space for MaxBackends xids is usually overkill;
@@ -850,12 +865,9 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	}
 
 	if (serializable)
-		MyProc->xmin = xmin;
+		MyProc->xmin = TransactionXmin = xmin;
 
 	LWLockRelease(SInvalLock);
-
-	/* Serializable snapshot must be computed before any other... */
-	Assert(TransactionIdIsValid(MyProc->xmin));
 
 	/*
 	 * Update globalxmin to include actual process xids.  This is a
@@ -865,7 +877,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	if (TransactionIdPrecedes(xmin, globalxmin))
 		globalxmin = xmin;
 
-	/* Update globals for use by VACUUM */
+	/* Update global variables too */
 	RecentGlobalXmin = globalxmin;
 	RecentXmin = xmin;
 

@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.5 2004/08/29 05:06:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.6 2004/09/16 18:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ SubTransGetParent(TransactionId xid)
 	TransactionId parent;
 
 	/* Can't ask about stuff that might not be around anymore */
-	Assert(TransactionIdFollowsOrEquals(xid, RecentXmin));
+	Assert(TransactionIdFollowsOrEquals(xid, TransactionXmin));
 
 	/* Bootstrap and frozen XIDs have no parent */
 	if (!TransactionIdIsNormal(xid))
@@ -129,12 +129,12 @@ SubTransGetParent(TransactionId xid)
  *
  * Returns the topmost transaction of the given transaction id.
  *
- * Because we cannot look back further than RecentXmin, it is possible
+ * Because we cannot look back further than TransactionXmin, it is possible
  * that this function will lie and return an intermediate subtransaction ID
  * instead of the true topmost parent ID.  This is OK, because in practice
  * we only care about detecting whether the topmost parent is still running
  * or is part of a current snapshot's list of still-running transactions.
- * Therefore, any XID before RecentXmin is as good as any other.
+ * Therefore, any XID before TransactionXmin is as good as any other.
  */
 TransactionId
 SubTransGetTopmostTransaction(TransactionId xid)
@@ -143,12 +143,12 @@ SubTransGetTopmostTransaction(TransactionId xid)
 				previousXid = xid;
 
 	/* Can't ask about stuff that might not be around anymore */
-	Assert(TransactionIdFollowsOrEquals(xid, RecentXmin));
+	Assert(TransactionIdFollowsOrEquals(xid, TransactionXmin));
 
 	while (TransactionIdIsValid(parentXid))
 	{
 		previousXid = parentXid;
-		if (TransactionIdPrecedes(parentXid, RecentXmin))
+		if (TransactionIdPrecedes(parentXid, TransactionXmin))
 			break;
 		parentXid = SubTransGetParent(parentXid);
 	}
@@ -312,7 +312,7 @@ ExtendSUBTRANS(TransactionId newestXact)
  * Remove all SUBTRANS segments before the one holding the passed transaction ID
  *
  * This is normally called during checkpoint, with oldestXact being the
- * oldest XMIN of any running transaction.
+ * oldest TransactionXmin of any running transaction.
  */
 void
 TruncateSUBTRANS(TransactionId oldestXact)
