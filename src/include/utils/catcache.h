@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.3 1996/11/04 07:59:39 scrappy Exp $
+ * $Id: catcache.h,v 1.4 1996/11/04 11:51:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,10 @@
 
 /* #define	CACHEDEBUG 	 turns DEBUG elogs on */
 
-#include <utils/rel.h>
-#include <nodes/memnodes.h>
-#include <lib/dllist.h>
 #include <access/htup.h>
+#include <lib/dllist.h>
+#include <nodes/memnodes.h>
+#include <utils/rel.h>
 
 /*
  *	struct catctup:		tuples in the cache.

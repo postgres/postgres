@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.5 1996/11/04 07:46:00 scrappy Exp $
+ * $Id: builtins.h,v 1.6 1996/11/04 11:51:14 scrappy Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -19,9 +19,9 @@
 #define BUILTINS_H
 
 #include <storage/itemptr.h>
-#include <utils/rel.h>
-#include <utils/nabstime.h>
 #include <utils/geo-decls.h>
+#include <utils/nabstime.h>
+#include <utils/rel.h>
 
 /*
  *	Defined in adt/

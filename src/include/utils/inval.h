@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.2 1996/10/31 09:51:21 scrappy Exp $
+ * $Id: inval.h,v 1.3 1996/11/04 11:51:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	INVAL_H
 #define INVAL_H
 
-#include "access/htup.h"
-#include "utils/rel.h"
+#include <access/htup.h>
+#include <utils/rel.h>
 
 extern void DiscardInvalid(void);
 

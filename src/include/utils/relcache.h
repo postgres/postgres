@@ -6,16 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.2 1996/10/31 09:51:30 scrappy Exp $
+ * $Id: relcache.h,v 1.3 1996/11/04 11:51:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	RELCACHE_H
 #define RELCACHE_H
 
-#include <sys/types.h>
-
-#include "utils/rel.h"
+#include <utils/rel.h>
 
 /*
  * relation lookup routines

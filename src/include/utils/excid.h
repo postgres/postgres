@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: excid.h,v 1.2 1996/10/31 09:51:15 scrappy Exp $
+ * $Id: excid.h,v 1.3 1996/11/04 11:51:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	EXCID_H
 #define EXCID_H
 
-#include "utils/exc.h"	/* for Exception */
 
 extern Exception FailedAssertion;
 extern Exception BadState;

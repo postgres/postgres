@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.2 1996/10/31 09:51:29 scrappy Exp $
+ * $Id: portal.h,v 1.3 1996/11/04 11:51:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,13 +25,10 @@
 #ifndef	PORTAL_H
 #define PORTAL_H
 
-
-#include "nodes/execnodes.h"		/* for EState */
-#include "nodes/memnodes.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/plannodes.h"		/* for Plan */
-#include "executor/execdesc.h"
+#include <executor/execdesc.h>
+#include <lib/fstack.h>
+#include <nodes/memnodes.h>
+#include <utils/memutils.h>
 
 typedef struct PortalBlockData {
     AllocSetData	setData;

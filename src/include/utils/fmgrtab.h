@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgrtab.h,v 1.2 1996/10/31 09:51:17 scrappy Exp $
+ * $Id: fmgrtab.h,v 1.3 1996/11/04 11:51:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FMGRTAB_H
 #define FMGRTAB_H
 
-#include "fmgr.h"		/* genearated by Gen_fmgrtab.sh */
 
 typedef struct {
     Oid		proid;

@@ -6,14 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lselect.h,v 1.2 1996/10/31 09:51:23 scrappy Exp $
+ * $Id: lselect.h,v 1.3 1996/11/04 11:51:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	LSELECT_H
 #define	LSELECT_H
 
-#include "access/htup.h"
+#include <stdio.h>
+#include <access/htup.h>
 
 struct	leftist {
     short	lt_dist; 	/* distance to leaf/empty node */
