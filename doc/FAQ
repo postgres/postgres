@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jun 9 10:40:33 EDT 2001
+   Last updated: Mon Jun 11 12:27:44 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -900,9 +900,10 @@ BYTEA           bytea           variable-length byte array (null-safe)
    
     4.19) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()?"
     
-   It is possible you have run out of virtual memory on your system, or
-   your kernel has a low limit for certain resources. Try this before
-   starting the postmaster:
+   If you are running a version older than 7.1, an upgrade may fix the
+   problem. Also it is possible you have run out of virtual memory on
+   your system, or your kernel has a low limit for certain resources. Try
+   this before starting the postmaster:
     ulimit -d 262144
     limit datasize 256m
 

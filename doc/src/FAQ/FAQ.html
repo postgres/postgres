@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Jun  9 10:40:33 EDT 2001</P>
+    <P>Last updated: Mon Jun 11 12:27:44 EDT 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1155,9 +1155,10 @@ BYTEA           bytea           variable-length byte array (null-safe)
      Memory exhausted in AllocSetAlloc()?"</I><BR>
     </H4>
 
-    <P>It is possible you have run out of virtual memory on your
-    system, or your kernel has a low limit for certain resources. Try
-    this before starting the <I>postmaster:</I></P>
+    <P>If you are running a version older than 7.1, an upgrade may fix
+    the problem.  Also it is possible you have run out of virtual memory
+    on your system, or your kernel has a low limit for certain resources.
+    Try this before starting the <I>postmaster:</I></P>
 <PRE>
     ulimit -d 262144
     limit datasize 256m
