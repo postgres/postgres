@@ -1,0 +1,9 @@
+<html>
+<head><title>TODO</title></head>
+<body bgcolor="white">
+In no special order<br>
+<li>allow arrays as function arguments and return values (almost done).
+<li>more and better documentation.
+<li>improve/automate configuration.
+<li>???
+</body>
