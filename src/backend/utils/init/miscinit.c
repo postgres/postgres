@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.127 2004/06/18 06:13:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.128 2004/07/11 23:49:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,10 +207,6 @@ SetDataDir(const char *dir)
 					 errmsg("out of memory")));
 	}
 
-	/*
-	 * Strip any trailing slash.  Not strictly necessary, but avoids
-	 * generating funny-looking paths to individual files.
-	 */
 	canonicalize_path(new);
 
 	if (DataDir)

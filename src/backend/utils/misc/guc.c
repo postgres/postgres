@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.216 2004/07/11 21:48:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.217 2004/07/11 23:49:51 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5441,7 +5441,7 @@ assign_canonical_path(const char *newval, bool doit, GucSource source)
 	if (doit)
 	{
 		/* We have to create a new pointer to force the change */
-		char *canon_val = guc_strdup(FATAL, newval);
+		char *canon_val = guc_strdup(ERROR, newval);
 		canonicalize_path(canon_val);
 		return canon_val;
 	}

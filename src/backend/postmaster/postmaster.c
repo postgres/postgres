@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.408 2004/07/11 21:33:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.409 2004/07/11 23:49:45 momjian Exp $
  *
  * NOTES
  *
@@ -372,7 +372,6 @@ PostmasterMain(int argc, char *argv[])
 	InitializeGUCOptions();
 
 	userPGDATA = getenv("PGDATA");		/* default value */
-	canonicalize_path(userPGDATA);
 	
 	opterr = 1;
 
@@ -524,6 +523,12 @@ PostmasterMain(int argc, char *argv[])
 		write_stderr("Try \"%s --help\" for more information.\n",
 					 progname);
 		ExitPostmaster(1);
+	}
+
+	if (userPGDATA)
+	{
+		userPGDATA = strdup(userPGDATA);
+		canonicalize_path(userPGDATA);
 	}
 
 	if (onlyConfigSpecified(userPGDATA))
