@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.101 2004/09/27 19:16:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.102 2004/10/06 08:20:58 neilc Exp $
  */
 #include "postgres_fe.h"
 
@@ -280,6 +280,9 @@ main(int argc, char *argv[])
 	 */
 	else
 	{
+		if (!options.no_psqlrc)
+			process_psqlrc(argv[0]);
+
 		if (!QUIET() && !pset.notty)
 		{
 			printf(gettext("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"
@@ -302,8 +305,6 @@ main(int argc, char *argv[])
 		SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
 		SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
 
-		if (!options.no_psqlrc)
-			process_psqlrc(argv[0]);
 		if (!pset.notty)
 			initializeInput(options.no_readline ? 0 : 1);
 		if (options.action_string)		/* -f - was used */
