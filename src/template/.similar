@@ -13,3 +13,6 @@ i586-pc-linux-gnu=linux-elf
 i686-pc-linux-gnu=linux-elf
 sparc-unknown-linux-gnu=linux-elf
 alpha-unknown-linux-gnu=linuxalpha
+powerpc-ibm-aix3.2.5=aix_325
+powerpc-ibm-aix4.1.4.0=aix_41
+powerpc-ibm-aix4.1.5.0=aix_41

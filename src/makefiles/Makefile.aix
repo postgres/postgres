@@ -17,8 +17,6 @@ $(POSTGRES_IMP):
 %$(EXPSUFF):
 	$(MKLDEXPORT) $*.o `pwd` > $*$(EXPSUFF)
 
-%.so: %.o %$(EXPSUFF)
+%$(DLSUFFIX): %.o %$(EXPSUFF)
 	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and installed postgres.imp
-	$(LD) -H512 -e _nostart -bM:SRE -bI:$(LIBDIR)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) -lc
-	#41+ $(LD) -H512 -bnoentry -bM:SRE -bI:$(LIBDIR)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) -lc
-	#325 $(LD) -H512 -e _nostart -bM:SRE -bI:$(LIBDIR)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) -lc
+	$(LD) -H512 -bM:SRE -bI:$(LIBDIR)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(CFLAGS_SL)
