@@ -366,3 +366,9 @@ Tue Dec 22 14:16:11 CET 1998
 
 	- Synced preproc.y with gram.y for locking statements.
 	- Set version to 2.4.5
+
+Tue Jan  7 15:19:34 CET 1999
+
+	- Synced preproc.y with gram.y for for-update clause and changes in
+	  handling of numerics
+	- Set version to 2.4.6

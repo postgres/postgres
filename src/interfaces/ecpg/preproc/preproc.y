@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "catalog/catname.h"
+#include "utils/numeric.h"
 
 #include "type.h"
 #include "extern.h"
@@ -648,7 +649,7 @@ output_statement(char * stmt, int mode)
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object OptStmtMulti OptStmtBlock
 %type  <str>    OptStmtList RuleStmt opt_column opt_name oper_argtypes
-%type  <str>    MathOp RemoveFuncStmt aggr_argtype
+%type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt RecipeStmt
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
@@ -2611,9 +2612,18 @@ opt_of:  OF columnList { $$ = make2_str(make1_str("of"), $2); }
 SelectStmt:  SELECT opt_unique res_target_list2
 			 result from_clause where_clause
 			 group_clause having_clause
-			 union_clause sort_clause
+			 union_clause sort_clause for_update_clause
 				{
-					$$ = cat2_str(cat5_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8, $9), $10);
+					$$ = cat3_str(cat5_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8, $9), $10, $11);
+					if (strlen($11) > 0)
+					{
+						if (strlen($9) > 0)
+							yyerror("SELECT FOR UPDATE is not allowed with UNION clause");
+						if (strlen($7) > 0)
+							yyerror("SELECT FOR UPDATE is not allowed with GROUP BY clause");
+						if (strlen($6) > 0)
+							yyerror("SELECT FOR UPDATE is not allowed with HAVING clause");
+					}
 				}
 		;
 
@@ -2721,6 +2731,20 @@ having_clause:  HAVING a_expr
 		| /*EMPTY*/		{ $$ = make1_str(""); }
 		;
 
+for_update_clause:
+	                FOR UPDATE
+                        {
+                                $$ = make1_str("for update");
+                        }
+                |       FOR UPDATE OF va_list
+                        {
+                                $$ = cat2_str(make1_str("for update of"), $4);
+                        }
+                | /* EMPTY */
+                        {
+                                $$ = make1_str("");
+                        }
+                ;
 
 /*****************************************************************************
  *
@@ -2897,8 +2921,7 @@ generic:  ident					{ $$ = $1; }
 
 /* SQL92 numeric data types
  * Check FLOAT() precision limits assuming IEEE floating types.
- * Provide rudimentary DECIMAL() and NUMERIC() implementations
- *  by checking parameters and making sure they match what is possible with INTEGER.
+ * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
  * - thomas 1997-09-18
  */
 Numeric:  FLOAT opt_float
@@ -2945,20 +2968,20 @@ opt_float:  '(' Iconst ')'
 
 opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
-					if (atol($2) != 9) {
-						sprintf(errortext, make1_str("NUMERIC precision %s must be 9"), $2);
+					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
+						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
 						yyerror(errortext);
 					}
-					if (atol($4) != 0) {
-						sprintf(errortext, "NUMERIC scale %s must be zero", $4);
+					if (atol($4) < 0 || atol($4) > atol($2)) {
+						sprintf(errortext, "NUMERIC scale %s must be between 0 and precision %s", $4, $2);
 						yyerror(errortext);
 					}
 					$$ = cat3_str(make2_str(make1_str("("), $2), make1_str(","), make2_str($4, make1_str(")")));
 				}
 		| '(' Iconst ')'
 				{
-					if (atol($2) != 9) {
-						sprintf("NUMERIC precision %s must be 9",$2);
+					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
+						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
 						yyerror(errortext);
 					}
 					$$ = make3_str(make1_str("("), $2, make1_str(")"));
@@ -2971,22 +2994,22 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 
 opt_decimal:  '(' Iconst ',' Iconst ')'
 				{
-					if (atol($2) != 9) {
-						sprintf(errortext, "DECIMAL precision %s exceeds implementation limit of 9", $2);
+					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
+						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
 						yyerror(errortext);
 					}
-					if (atol($4) != 0) {
-						sprintf(errortext, "DECIMAL scale %s must be zero",$4);
-                                                yyerror(errortext);
-                                        }
+					if (atol($4) < 0 || atol($4) > atol($2)) {
+						sprintf(errortext, "NUMERIC scale %s must be between 0 and precision %s", $4, $2);
+						yyerror(errortext);
+					}
 					$$ = cat3_str(make2_str(make1_str("("), $2), make1_str(","), make2_str($4, make1_str(")")));
 				}
 		| '(' Iconst ')'
 				{
-					if (atol($2) != 9) {
-						sprintf(errortext, "DECIMAL precision %s exceeds implementation limit of 9",$2);
-                                                yyerror(errortext);
-                                        }
+					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
+						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
+						yyerror(errortext);
+					}
 					$$ = make3_str(make1_str("("), $2, make1_str(")"));
 				}
 		| /*EMPTY*/
