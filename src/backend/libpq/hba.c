@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.108 2003/07/26 13:50:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.109 2003/08/01 23:24:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -585,14 +585,13 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (*error_p)
 			goto hba_syntax;
 
-		/*
-		 * Disallow auth methods that always need AF_INET sockets to work.
-		 */
+		/* Disallow auth methods that always need TCP/IP sockets to work */
 		if (port->auth_method == uaKrb4 ||
 			port->auth_method == uaKrb5)
 			goto hba_syntax;
 
-		if (port->raddr.addr.ss_family != AF_UNIX)
+		/* Does not match if connection isn't AF_UNIX */
+		if (!IS_AF_UNIX(port->raddr.addr.ss_family))
 			return;
 	}
 	else if (strcmp(token, "host") == 0
@@ -1348,6 +1347,8 @@ ident_inet_done:
  *	Returns either true and the username put into "ident_user",
  *	or false if we were unable to determine the username.
  */
+#ifdef HAVE_UNIX_SOCKETS
+
 static bool
 ident_unix(int sock, char *ident_user)
 {
@@ -1491,6 +1492,7 @@ ident_unix(int sock, char *ident_user)
 #endif
 }
 
+#endif /* HAVE_UNIX_SOCKETS */
 
 
 /*
@@ -1515,10 +1517,14 @@ authident(hbaPort *port)
 			if (!ident_inet(port->raddr, port->laddr, ident_user))
 				return STATUS_ERROR;
 			break;
+
+#ifdef HAVE_UNIX_SOCKETS
 		case AF_UNIX:
 			if (!ident_unix(port->sock, ident_user))
 				return STATUS_ERROR;
 			break;
+#endif
+
 		default:
 			return STATUS_ERROR;
 	}
