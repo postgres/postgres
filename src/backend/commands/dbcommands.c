@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.30 1999/02/13 23:15:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.31 1999/03/15 14:07:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,16 +125,15 @@ destroydb(char *dbname)
 			"delete from pg_database where pg_database.oid = \'%d\'::oid", db_id);
 	pg_exec_query(buf);
 
+	/* drop pages for this database that are in the shared buffer cache */
+	DropBuffers(db_id);
+
 	/*
 	 * remove the data directory. If the DELETE above failed, this will
 	 * not be reached
 	 */
-
 	snprintf(buf, 512, "rm -r %s", path);
 	system(buf);
-
-	/* drop pages for this database that are in the shared buffer cache */
-	DropBuffers(db_id);
 }
 
 static HeapTuple
