@@ -191,7 +191,8 @@ QNX fixes
 Cygwin, Win32 server fixes (Jason Tishler)
 Cygwin, Win32 fixes for TCL, perl, Python, PlPython, psql, libpq, libpq++ (Jason Tishler, Gerhard H?ring, Dmitry Yurtaev, Darko Prenosil, Mikhail Terekhov)
 Remove SEP_CHAR (Bruce)
-GIST index improvements (Oleg Bartunov, Teodor Sigaev, Tom)
+Allow GIST to handle NULLs and multi-key indexes (Oleg Bartunov, Teodor 
+	Sigaev, Tom)
 New contrib/rtree_gist ((Oleg Bartunov, Teodor Sigaev)
 Create temporary files into a separate directory (Bruce)
 Delete orphanded temporary files on postmaster startup (Bruce)
