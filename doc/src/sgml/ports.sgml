@@ -44,20 +44,19 @@
 	<entry>(<ulink url="mailto:maillist@candle.pha.pa.us">Bruce Momjian</ulink></entry>
        </row>
        <row>
+	<entry>Compaq Tru64 5.0</entry>
+	<entry>Alpha</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-11</entry>
+	<entry>(<ulink url="mailto:andrew.mcmurry@astro.uio.no">Andrew McMurry</ulink>)</entry>
+       </row>
+       <row>
 	<entry>DGUX 5.4R4.11</entry>
 	<entry>m88k</entry>
 	<entry>v6.3</entry>
 	<entry>1998-03-01</entry>
 	<entry>v6.4 probably OK. Needs new maintainer.
 	 (<ulink url="mailto:geek+@cmu.edu">Brian E Gallew</ulink>)</entry>
-       </row>
-       <row>
-	<entry>Digital Unix 4.0</entry>
-	<entry>Alpha</entry>
-	<entry>v6.5.3</entry>
-	<entry>1999-11-04</entry>
-	<entry>
-	 (<ulink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ulink>)</entry>
        </row>
        <row>
 	<entry>FreeBSD 4.0</entry>
@@ -69,11 +68,10 @@
        <row>
 	<entry>HPUX</entry>
 	<entry>PA-RISC</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-25</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-12</entry>
 	<entry>Both 9.0x and 10.20
-	 (<ulink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ulink>,
-	 <ulink url="mailto:stanb@awod.com">Stan Brown</ulink>)</entry>
+	 (<ulink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ulink>)</entry>
        </row>
        <row>
 	<entry>IRIX 6.5.6f</entry>
@@ -82,12 +80,6 @@
 	<entry>2000-02-18</entry>
 	<entry>MIPSPro 7.3.1.1m; full N32 build
 	 (<ulink url="hxpro@cinesite.co.uk">Kevin Wheatley</ulink>)</entry>
-	<!--
-       <entry>v6.4</entry>
-       <entry>1998-12-29</entry>
-       <entry>IRIX 5.x is different
-	(<ulink url="mdalphin@amgen.com">Mark Dalphin</ulink>)</entry>
-	-->
        </row>
        <row>
 	<entry>Linux 2.0.x</entry>
@@ -105,22 +97,8 @@
 	<entry>
 	 (<ulink url="mailto:segfault@hardline.org">Mark Knox</ulink>)</entry>
        </row>
-
-       <!--
-       Close enough to linux 2.2.x and glibc2 to not be worth mentioning
-       separately.
-       - thomas 1999-11-06
        <row>
-	<entry>Linux 2.0.x/libc5</entry>
-	<entry>x86</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-27</entry>
-	<entry>(<ulink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ulink>)</entry>
-       </row>
-       -->
-
-       <row>
-	<entry>Linux 2.2.x/glibc2</entry>
+	<entry>Linux 2.2.x</entry>
 	<entry>x86</entry>
 	<entry>v7.0</entry>
 	<entry>2000-03-26</entry>
@@ -129,8 +107,8 @@
        <row>
 	<entry>Linux 2.0.x</entry>
 	<entry>MIPS</entry>
-	<entry>v6.4</entry>
-	<entry>1998-12-16</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-13</entry>
 	<entry>Cobalt Qube
 	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
        </row>
@@ -145,9 +123,15 @@
 	<entry>LinuxPPC R4</entry>
 	<entry>PPC603e</entry>
 	<entry>v7.0</entry>
-	<entry>2000-04-04</entry>
-	<entry>Powerbook 2400c
-	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
+	<entry>2000-04-13</entry>
+	<entry>(<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
+       </row>
+       <row>
+	<entry>mklinux</entry>
+	<entry>PPC750</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-13</entry>
+	<entry>(<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
        </row>
        <row>
 	<entry>NetBSD 1.4</entry>
@@ -156,9 +140,6 @@
 	<entry>2000-04-08</entry>
 	<entry>(<ulink url="mailto:prlw1@newn.cam.ac.uk">Patrick
 	  Welche</ulink>)</entry>
-<!--
-	<entry>(<ulink url="mailto:a.mcmurry1@physics.oxford.ac.uk">Andrew McMurry</ulink>)</entry>
--->
        </row>
        <row>
 	<entry>NetBSD 1.4U</entry>
@@ -171,11 +152,10 @@
        <row>
 	<entry>NetBSD</entry>
 	<entry>m68k</entry>
-	<entry>v6.4.2</entry>
-	<entry>1998-12-28</entry>
-	<entry>Mac SE/30
-	 (Mr. Mutsuki Nakajima,
-	 <ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-10</entry>
+	<entry>Mac 8xx
+	 (<ulink url="mailto:hotz@jpl.nasa.gov">Henry B. Hotz</ulink>)</entry>
        </row>
        <row>
 	<entry>NetBSD-current</entry>
@@ -186,18 +166,18 @@
 	 (<ulink url="mailto:jonb@metronet.com">Jon Buller</ulink>)</entry>
        </row>
        <row>
-	<entry>NetBSD/sparc 1.3H</entry>
+	<entry>NetBSD/sparc</entry>
 	<entry>Sparc</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-27</entry>
-	<entry>(<ulink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ulink>)</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-13</entry>
+	<entry>(<ulink url="mailto:tih@kpnQwest.no">Tom I Helbekkmo</ulink>)</entry>
        </row>
        <row>
 	<entry>NetBSD 1.3</entry>
 	<entry>VAX</entry>
 	<entry>v6.3</entry>
 	<entry>1998-03-01</entry>
-	<entry>(<ulink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ulink>)</entry>
+	<entry>(<ulink url="mailto:tih@kpnQwest.no">Tom I Helbekkmo</ulink>)</entry>
        </row>
        <row>
 	<entry>QNX 4.25</entry>
@@ -224,25 +204,24 @@
        <row>
 	<entry>Solaris</entry>
 	<entry>x86</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-28</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-12</entry>
 	<entry>(<ulink url="mailto:scrappy@hub.org">Marc Fournier</ulink>)</entry>
        </row>
        <row>
-	<entry>Solaris 2.6-2.7</entry>
+	<entry>Solaris 2.5.1-2.7</entry>
 	<entry>Sparc</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-28</entry>
-	<entry>(<ulink url="mailto:szybist@boxhill.com">Tom Szybist</ulink>,
-	 <ulink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ulink>)</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-12</entry>
+	<entry>(<ulink url="mailto:peter_e@gmx.net">Peter Eisentraut</ulink>,
+	 <ulink url="mailto:scrappy@hub.org">Marc Fournier</ulink>)</entry>
        </row>
        <row>
 	<entry>SunOS 4.1.4</entry>
 	<entry>Sparc</entry>
-	<entry>v6.3</entry>
-	<entry>1998-03-01</entry>
-	<entry>Patches submitted
-	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-13</entry>
+	<entry>(<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
        </row>
        <row>
 	<entry>SVR4</entry>
@@ -309,14 +288,6 @@
        </row>
       </thead>
       <tbody>
-       <row>
-	<entry>mklinux DR3</entry>
-	<entry>PPC750</entry>
-	<entry>v6.4</entry>
-	<entry>1998-09-16</entry>
-	<entry>PowerMac 7600; mklinux merged with LinuxPPC
-	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
-       </row>
        <row>
 	<entry>Ultrix</entry>
 	<entry>MIPS,VAX?</entry>
