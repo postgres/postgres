@@ -6,7 +6,6 @@
 #ifndef _ECPGLIB_H
 #define _ECPGLIB_H
 
-#include "postgres_ext.h"
 #include "libpq-fe.h"
 
 #ifndef __BEOS__
