@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.5 1997/08/26 17:00:22 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.6 1997/09/12 21:25:10 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set \(em set run-time parameters for session
@@ -57,7 +57,7 @@ See the GEQO README for more information.
 .if t .ta 0.5i +1.5i +3.0i
 .in 0
 .nf
-	on	- use for statements with 6 or more tables
+	on	- use for statements with 8 or more tables
 	on=10	- use for statements with 10 or more tables
 	off	- do not use the genetic optimizer
 .fi
