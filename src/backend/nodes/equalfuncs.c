@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.24 1999/02/06 17:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.25 1999/02/07 00:52:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,6 +559,105 @@ _equalEState(EState *a, EState *b)
 	return true;
 }
 
+/*
+ * Stuff from parsenodes.h
+ */
+
+static bool
+_equalQuery(Query *a, Query *b)
+{
+	if (a->commandType != b->commandType)
+		return false;
+	if (!equal(a->utilityStmt, b->utilityStmt))
+		return false;
+	if (a->resultRelation != b->resultRelation)
+		return false;
+	if (a->into && b->into) {
+		if (strcmp(a->into, b->into) != 0)
+			return false;
+	} else {
+		if (a->into != b->into)
+			return false;
+	}
+	if (a->isPortal != b->isPortal)
+		return false;
+	if (a->isBinary != b->isBinary)
+		return false;
+	if (a->isTemp != b->isTemp)
+		return false;
+	if (a->unionall != b->unionall)
+		return false;
+	if (a->hasAggs != b->hasAggs)
+		return false;
+	if (a->hasSubLinks != b->hasSubLinks)
+		return false;
+	if (a->uniqueFlag && b->uniqueFlag) {
+		if (strcmp(a->uniqueFlag, b->uniqueFlag) != 0)
+			return false;
+	} else {
+		if (a->uniqueFlag != b->uniqueFlag)
+			return false;
+	}
+	if (!equal(a->sortClause, b->sortClause))
+		return false;
+	if (!equal(a->rtable, b->rtable))
+		return false;
+	if (!equal(a->targetList, b->targetList))
+		return false;
+	if (!equal(a->qual, b->qual))
+		return false;
+	if (!equal(a->rowMark, b->rowMark))
+		return false;
+	if (!equal(a->groupClause, b->groupClause))
+		return false;
+	if (!equal(a->havingQual, b->havingQual))
+		return false;
+	if (!equal(a->intersectClause, b->intersectClause))
+		return false;
+	if (!equal(a->unionClause, b->unionClause))
+		return false;
+	if (!equal(a->limitOffset, b->limitOffset))
+		return false;
+	if (!equal(a->limitCount, b->limitCount))
+		return false;
+
+	/* We do not check the internal-to-the-planner fields
+	 * base_rel_list and join_rel_list.  They might not be
+	 * set yet, and in any case they should be derivable
+	 * from the other fields.
+	 */
+	return true;
+}
+
+static bool
+_equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
+{
+	if (a->relname && b->relname) {
+		if (strcmp(a->relname, b->relname) != 0)
+			return false;
+	} else {
+		if (a->relname != b->relname)
+			return false;
+	}
+	if (a->refname && b->refname) {
+		if (strcmp(a->refname, b->refname) != 0)
+			return false;
+	} else {
+		if (a->refname != b->refname)
+			return false;
+	}
+	if (a->relid != b->relid)
+		return false;
+	if (a->inh != b->inh)
+		return false;
+	if (a->inFromCl != b->inFromCl)
+		return false;
+	if (a->skipAcl != b->skipAcl)
+		return false;
+
+	return true;
+}
+
 static bool
 _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 {
@@ -572,13 +671,10 @@ _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 	return true;
 }
 
-
 /*
- *	equal -- are two lists equal?
- *
- *		This is a comparison by value.	It would be simpler to write it
- *		to be recursive, but it should run faster if we iterate.
+ * Stuff from pg_list.h
  */
+
 static bool
 _equalValue(Value *a, Value *b)
 {
@@ -634,9 +730,6 @@ equal(void *a, void *b)
 			break;
 		case T_Expr:
 			retval = _equalExpr(a, b);
-			break;
-		case T_TargetEntry:
-			retval = _equalTargetEntry(a, b);
 			break;
 		case T_Iter:
 			retval = _equalIter(a, b);
@@ -733,6 +826,15 @@ equal(void *a, void *b)
 				}
 				retval = true;
 			}
+			break;
+		case T_Query:
+			retval = _equalQuery(a, b);
+			break;
+		case T_RangeTblEntry:
+			retval = _equalRangeTblEntry(a, b);
+			break;
+		case T_TargetEntry:
+			retval = _equalTargetEntry(a, b);
 			break;
 		default:
 			elog(NOTICE, "equal: don't know whether nodes of type %d are equal",
