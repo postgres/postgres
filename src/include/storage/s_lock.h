@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.43 1998/07/20 17:45:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.44 1998/08/22 04:24:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,7 @@ tas(volatile slock_t *lock)
 #if defined(NEED_I386_TAS_ASM)
 /* non gcc i386 based things */
 
-#if defined(USE_UNIVEL_CC) || defined(UNIXWARE)
+#if defined(USE_UNIVEL_CC)
 #define TAS(lock)	tas(lock)
 
 asm int 
@@ -203,7 +203,7 @@ tas(slock_t *s_lock)
 	popl	%ebx
 }
 
-#endif /* USE_UNIVEL_CC || UNIXWARE */
+#endif /* USE_UNIVEL_CC */
 
 #endif /* NEED_I386_TAS_ASM */
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.26 1998/07/09 03:29:01 scrappy Exp $
+ * $Id: pqcomm.h,v 1.27 1998/08/22 04:24:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,14 @@ typedef union SockAddr
 
 /* Configure the UNIX socket address for the well known port. */
 
+#if defined(SUN_LEN)
+#define UNIXSOCK_PATH(sun,port) \
+ 	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)), SUN_LEN(&(sun)))
+#else
 #define UNIXSOCK_PATH(sun,port) \
  	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)), \
  	 strlen((sun).sun_path)+ offsetof(struct sockaddr_un, sun_path))
+#endif
 
 /*
  *		We do this because sun_len is in BSD's struct, while others don't.

@@ -5,12 +5,16 @@
 
 #define HAS_TEST_AND_SET
 #define NEED_I386_TAS_ASM
+
 /***************************************
  * Define this if you are compiling with
  * the native UNIXWARE C compiler.
  ***************************************/
-#define UNIXWARE
+#define USE_UNIVEL_CC
+
 typedef unsigned char slock_t;
+
+#define DISABLE_COMPLEX_MACRO
 
 /***************************************************************
  * The following include will get the needed prototype for the 
