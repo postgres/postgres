@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.154 2000/03/12 00:39:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.155 2000/03/12 20:09:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3947,10 +3947,11 @@ character:  CHARACTER opt_varying opt_charset
 					};
 					$$ = type;
 				}
-		| CHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "bpchar"); }
+		| CHAR opt_varying						{ $$ = xlateSqlType($2 ? "varchar": "bpchar"); }
 		| VARCHAR								{ $$ = xlateSqlType("varchar"); }
-		| NATIONAL CHARACTER opt_varying		{ $$ = xlateSqlType($3? "varchar": "bpchar"); }
-		| NCHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "bpchar"); }
+		| NATIONAL CHARACTER opt_varying		{ $$ = xlateSqlType($3 ? "varchar": "bpchar"); }
+		| NATIONAL CHAR opt_varying				{ $$ = xlateSqlType($3 ? "varchar": "bpchar"); }
+		| NCHAR opt_varying						{ $$ = xlateSqlType($2 ? "varchar": "bpchar"); }
 		;
 
 opt_varying:  VARYING							{ $$ = TRUE; }
