@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.122 2002/03/02 21:39:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.123 2002/03/08 00:42:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ BootstrapMain(int argc, char *argv[])
 												 * variable */
 	}
 
-	while ((flag = getopt(argc, argv, "B:dD:Fo:px:")) != -1)
+	while ((flag = getopt(argc, argv, "B:d:D:Fo:px:")) != -1)
 	{
 		switch (flag)
 		{
