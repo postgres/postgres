@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb 22 00:41:52 EST 2002
+Last updated:		Fri Feb 22 11:20:36 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -245,6 +245,7 @@ CLIENTS
 * Have pg_dump -C dump database location and encoding information
 * Allow psql \d to show foreign keys
 * Allow psql \d to show temporary table structure
+* Allow psql to show transaction status if backend protocol changes made
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * Add config file check for $ODBCINI, $HOME/.odbc.ini, installpath/etc/odbc.ini
 * Have pg_dump use ADD PRIMARY KEY after COPY, for performance (Neil Conway)
