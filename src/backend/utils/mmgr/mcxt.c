@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.10 1998/09/01 04:33:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.11 1999/02/06 16:50:26 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,10 +103,11 @@ static struct MemoryContextMethodsData GlobalContextMethodsData = {
  */
 /* extern bool EqualGlobalMemory(); */
 
-static struct GlobalMemory TopGlobalMemoryData = {
+static struct GlobalMemoryData TopGlobalMemoryData = {
 	T_GlobalMemory,				/* NodeTag				tag		  */
 	&GlobalContextMethodsData,	/* ContextMethods		method	  */
-	{{0}},						/* uninitialized OrderedSetData allocSetD */
+	{ NULL, { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }},
+								/* free AllocSet   */
 	"TopGlobal",				/* char* name	   */
 	{0}							/* uninitialized OrderedElemData elemD */
 };
@@ -162,7 +163,7 @@ EnableMemoryContext(bool on)
 
 		/* make TopGlobalMemoryData member of ActiveGlobalMemorySet */
 		OrderedSetInit(ActiveGlobalMemorySet,
-					   offsetof(struct GlobalMemory, elemData));
+					   offsetof(struct GlobalMemoryData, elemData));
 		OrderedElemPushInto(&TopGlobalMemoryData.elemData,
 							ActiveGlobalMemorySet);
 
@@ -371,7 +372,7 @@ CreateGlobalMemory(char *name)	/* XXX MemoryContextName */
 
 	savecxt = MemoryContextSwitchTo(TopMemoryContext);
 
-	context = (GlobalMemory) newNode(sizeof(struct GlobalMemory), T_GlobalMemory);
+	context = (GlobalMemory) newNode(sizeof(struct GlobalMemoryData), T_GlobalMemory);
 	context->method = &GlobalContextMethodsData;
 	context->name = name;		/* assumes name is static */
 	AllocSetInit(&context->setData, DynamicAllocMode, (Size) 0);

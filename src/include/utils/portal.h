@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.10 1998/09/01 04:39:25 momjian Exp $
+ * $Id: portal.h,v 1.11 1999/02/06 16:50:34 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,8 @@ typedef PortalD *Portal;
 struct PortalD
 {
 	char	   *name;			/* XXX PortalName */
-	struct PortalVariableMemory variable;
-	struct PortalHeapMemory heap;
+	struct PortalVariableMemoryData variable;
+	struct PortalHeapMemoryData heap;
 	QueryDesc  *queryDesc;
 	TupleDesc	attinfo;
 	EState	   *state;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.16 1999/02/03 21:17:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.17 1999/02/06 16:50:28 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -811,6 +811,25 @@ PortalDestroy(Portal *portalP)
 	MemoryContextFree((MemoryContext) &portal->variable,
 					  (Pointer) portal->name);
 	AllocSetReset(&portal->variable.setData);	/* XXX log */
+
+	/*
+	 * In the case of a transaction abort it is possible that
+	 * we get called while one of the memory contexts of the portal
+	 * we're destroying is the current memory context.
+	 * 
+	 * Don't know how to handle that cleanly because it is required
+	 * to be in that context right now. This portal struct remains
+	 * allocated in the PortalMemory context until backend dies.
+	 *
+	 * Not happy with that, but it's better to loose some bytes of
+	 * memory than to have the backend dump core.
+	 *
+	 * --- Feb. 04, 1999 Jan Wieck
+	 */
+	if (CurrentMemoryContext == (MemoryContext)PortalGetHeapMemory(portal))
+		return;
+	if (CurrentMemoryContext == (MemoryContext)PortalGetVariableMemory(portal))
+		return;
 
 	if (portal != BlankPortal)
 		MemoryContextFree((MemoryContext) PortalMemory, (Pointer) portal);

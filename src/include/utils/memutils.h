@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.19 1998/12/26 18:15:53 momjian Exp $
+ * $Id: memutils.h,v 1.20 1999/02/06 16:50:33 wieck Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -209,12 +209,40 @@ typedef enum AllocMode
 #define DefaultAllocMode		DynamicAllocMode
 
 /*
+ * AllocBlock --
+ *		Small pieces of memory are taken from bigger blocks of
+ *		memory with a size aligned to a power of two. These
+ *		pieces are not free's separately, instead they are reused
+ *		for the next allocation of a fitting size.
+ */
+typedef struct AllocBlockData {
+	struct AllocSetData			*aset;
+	struct AllocBlockData		*next;
+	char						*freeptr;
+	char						*endptr;
+} AllocBlockData;
+
+typedef AllocBlockData *AllocBlock;
+
+/*
+ * AllocChunk --
+ *		The prefix of each piece of memory in an AllocBlock
+ */
+typedef struct AllocChunkData {
+	void						*aset;
+	Size						size;
+} AllocChunkData;
+
+typedef AllocChunkData *AllocChunk;
+
+/*
  * AllocSet --
  *		Allocation set.
  */
 typedef struct AllocSetData
 {
-	OrderedSetData setData;
+	struct AllocBlockData		*blocks;
+	struct AllocChunkData		*freelist[8];
 	/* Note: this will change in the future to support other modes */
 } AllocSetData;
 

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.70 1999/02/02 03:44:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.71 1999/02/06 16:50:23 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1492,7 +1492,7 @@ ExecRelCheck(Relation rel, HeapTuple tuple)
 
 		res = ExecQual(qual, econtext);
 
-		pfree(qual);
+		freeObject(qual);
 
 		if (!res)
 			return check[i].ccname;

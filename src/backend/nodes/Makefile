@@ -4,7 +4,7 @@
 #    Makefile for nodes
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.6 1998/04/06 00:23:00 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.7 1999/02/06 16:50:24 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,8 +14,8 @@ include ../../Makefile.global
 CFLAGS += -I..
 
 OBJS = nodeFuncs.o nodes.o list.o \
-       copyfuncs.o equalfuncs.o makefuncs.o outfuncs.o readfuncs.o \
-       print.o read.o
+       copyfuncs.o equalfuncs.o freefuncs.o makefuncs.o outfuncs.o \
+       readfuncs.o print.o read.o
 
 all: SUBSYS.o
 
