@@ -1,0 +1,160 @@
+
+=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+Genetic Query Optimization in Database Systems
+=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+
+                  Martin Utesch
+
+           <utesch@aut.tu-freiberg.de>
+
+          Institute of Automatic Control
+        University of Mining and Technology
+                 Freiberg, Germany
+
+                    02/10/1997
+
+
+1.) Query Handling as a Complex Optimization Problem
+====================================================
+
+   Among all relational operators the most difficult one to process and
+optimize is the JOIN. The number of alternative plans to answer a query
+grows exponentially with the number of JOINs included in it. Further
+optimization effort is caused by the support of a variety of *JOIN
+methods* (e.g., nested loop, index scan, merge join in Postgres) to
+process individual JOINs and a diversity of *indices* (e.g., r-tree,
+b-tree, hash in Postgres) as access paths for relations.
+
+   The current Postgres optimizer implementation performs a *near-
+exhaustive search* over the space of alternative strategies. This query
+optimization technique is inadequate to support database application
+domains that evolve the need for extensive queries, such as artifcial
+intelligence.
+
+   The Institute of Automatic Control at the University of Mining and
+Technology Freiberg, Germany encountered the described problems as its
+folks wanted to take the Postgres DBMS as the backend for a decision
+support knowledge based system for the maintenance of an electrical
+power grid. The DBMS needed to handle large JOIN queries for the
+inference machine of the knowledge based system.
+
+   Performance difficulties within exploring the space of possible query
+plans arose the demand for a new optimization technique being developed.
+
+   In the following we propose the implementation of a *Genetic
+Algorithm* as an option for the database query optimization problem.
+
+
+2.) Genetic Algorithms (GA)
+===========================
+
+   The GA is a heuristic optimization method which operates through 
+determined, randomized search. The set of possible solutions for the
+optimization problem is considered as a *population* of *individuals*.
+The degree of adaption of an individual to its environment is specified
+by its *fitness*.
+
+   The coordinates of an individual in the search space are represented
+by *chromosomes*, in essence a set of character strings. A *gene* is a
+subsection of a chromosome which encodes the value of a single parameter
+being optimized. Typical encodings for a gene could be *binary* or
+*integer*.
+
+   Through simulation of the evolutionary operations *recombination*,
+*mutation*, and *selection* new generations of search points are found
+that show a higher average fitness than their ancestors.
+
+   According to the "comp.ai.genetic" FAQ it cannot be stressed too
+strongly that a GA is not a pure random search for a solution to a
+problem. A GA uses stochastic processes, but the result is distinctly
+non-random (better than random). 
+
+Structured Diagram of a GA:
+---------------------------
+
+P(t)    generation of ancestors at a time t
+P''(t)  generation of descendants at a time t
+
++=========================================+
+|>>>>>>>>>>>  Algorithm GA  <<<<<<<<<<<<<<|
++=========================================+
+| INITIALIZE t := 0                       |
++=========================================+
+| INITIALIZE P(t)                         |
++=========================================+
+| evalute FITNESS of P(t)                 |
++=========================================+
+| while not STOPPING CRITERION do         |
+|   +-------------------------------------+
+|   | P'(t)  := RECOMBINATION{P(t)}       |
+|   +-------------------------------------+
+|   | P''(t) := MUTATION{P'(t)}           |
+|   +-------------------------------------+
+|   | P(t+1) := SELECTION{P''(t) + P(t)}  |
+|   +-------------------------------------+
+|   | evalute FITNESS of P''(t)           |
+|   +-------------------------------------+
+|   | t := t + 1                          |
++===+=====================================+
+
+
+3.) Genetic Query Optimization (GEQO) in PostgreSQL
+===================================================
+
+   The GEQO module is intended for the solution of the query
+optimization problem similar to a traveling salesman problem (TSP).
+Possible query plans are encoded as integer strings. Each string
+represents the JOIN order from one relation of the query to the next.
+E. g., the query tree  /\
+                      /\ 2
+                     /\ 3
+                    4  1  is encoded by the integer string '4-1-3-2',
+which means, first join relation '4' and '1', then '3', and
+then '2', where 1, 2, 3, 4 are relids in PostgreSQL.
+
+   Parts of the GEQO module are adapted from D. Whitley's Genitor
+algorithm.
+
+   Specific characteristics of the GEQO implementation in PostgreSQL
+are:
+
+o  usage of a *steady state* GA (replacement of the least fit
+   individuals in a population, not whole-generational replacement)
+   allows fast convergence towards improved query plans. This is
+   essential for query handling with reasonable time;
+
+o  usage of *edge recombination crossover* which is especially suited
+   to keep edge losses low for the solution of the TSP by means of a GA;
+
+o  mutation as genetic operator is deprecated so that no repair
+   mechanisms are needed to generate legal TSP tours.
+
+   The GEQO module gives the following benefits to the PostgreSQL DBMS
+compared to the Postgres query optimizer implementation:
+
+o  handling of large JOIN queries through non-exhaustive search;
+
+o  improved cost size approximation of query plans since no longer
+   plan merging is needed (the GEQO module evaluates the cost for a
+   query plan as an individual).
+
+
+References
+==========
+
+J. Heitk"otter, D. Beasley:
+---------------------------
+   "The Hitch-Hicker's Guide to Evolutionary Computation",
+   FAQ in 'comp.ai.genetic',
+   'ftp://ftp.Germany.EU.net/pub/research/softcomp/EC/Welcome.html'
+
+Z. Fong:
+--------
+   "The Design and Implementation of the Postgres Query Optimizer",
+   file 'planner/Report.ps' in the 'postgres-papers' distribution
+
+R. Elmasri, S. Navathe:
+-----------------------
+   "Fundamentals of Database Systems",
+   The Benjamin/Cummings Pub., Inc.
+
