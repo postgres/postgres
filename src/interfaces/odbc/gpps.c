@@ -36,7 +36,7 @@
 #define FALSE	((BOOL)0)
 #endif
 
-#if HAVE_PARAM_H
+#if HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #else
 #define MAXPATHLEN	255

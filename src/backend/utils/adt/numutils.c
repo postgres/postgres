@@ -10,14 +10,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.32 1999/07/09 03:27:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.33 1999/07/09 17:40:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>				/* for sprintf() */
 #include <errno.h>
 #include <math.h>
-#ifdef HAVE_LIMITS
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
 #include "postgres.h"
@@ -32,19 +32,19 @@
 #define INT_MAX (0x7FFFFFFFL)
 #endif
 #ifndef INT_MIN
-#define INT_MIN (-0x80000000L)
+#define INT_MIN (-INT_MAX-1)
 #endif
 #ifndef SHRT_MAX
 #define SHRT_MAX (0x7FFF)
 #endif
 #ifndef SHRT_MIN
-#define SHRT_MIN (-0x8000)
+#define SHRT_MIN (-SHRT_MAX-1)
 #endif
 #ifndef SCHAR_MAX
 #define SCHAR_MAX (0x7F)
 #endif
 #ifndef SCHAR_MIN
-#define SCHAR_MIN (-0x80)
+#define SCHAR_MIN (-SCHAR_MAX-1)
 #endif
 
 int32
@@ -76,7 +76,7 @@ pg_atoi(char *s, int size, int c)
 	switch (size)
 	{
 		case sizeof(int32):
-#ifdef HAS_LONG_LONG
+#if defined(HAVE_LONG_INT_64) || defined(HAVE_LONG_LONG_INT_64)
 			/* won't get ERANGE on these with 64-bit longs... */
 			if (l < INT_MIN)
 			{
@@ -88,7 +88,7 @@ pg_atoi(char *s, int size, int c)
 				errno = ERANGE;
 				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
-#endif	 /* HAS_LONG_LONG */
+#endif         /* HAVE_LONG_INT_64 or HAVE_LONG_LONG_INT_64 */
 			break;
 		case sizeof(int16):
 			if (l < SHRT_MIN)

@@ -36,6 +36,7 @@ PARSER
 * UNION with LIMIT fails
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
+*  CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
 
 VIEWS
 
@@ -175,6 +176,7 @@ MISC
 * Add PL/Perl(Mark Hollomon)
 * Make postgres user have a password by default
 * Add configure test to check for C++ need for *.h and namespaces
+* Allow BLCKSZ <= 64k, not <= 32k
 
 PERFORMANCE
 -----------
