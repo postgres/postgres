@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.c,v 1.2 2001/05/27 19:06:20 darcy Exp $
+ * $Id: chkpass.c,v 1.3 2001/05/28 15:34:27 darcy Exp $
  * best viewed with tabs set to 4
  */
 
@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #include <postgres.h>
-#include <utils/palloc.h>
+#include <fmgr.h>
 
 /*
  * This type encrypts it's input unless the first character is a colon.
@@ -38,13 +38,14 @@ typedef struct chkpass
  * Various forward declarations:
  */
 
-chkpass	   *chkpass_in(char *str);
-char	   *chkpass_out(chkpass * addr);
-text	   *chkpass_rout(chkpass * addr);
+Datum		chkpass_in(PG_FUNCTION_ARGS);
+Datum		chkpass_out(PG_FUNCTION_ARGS);
+Datum		chkpass_rout(PG_FUNCTION_ARGS);
 
 /* Only equal or not equal make sense */
-bool		chkpass_eq(chkpass * a1, text * a2);
-bool		chkpass_ne(chkpass * a1, text * a2);
+Datum		chkpass_eq(PG_FUNCTION_ARGS);
+Datum		chkpass_ne(PG_FUNCTION_ARGS);
+
 
 /* This function checks that the password is a good one
  * It's just a placeholder for now */
@@ -57,9 +58,11 @@ verify_pass(const char *str)
 /*
  * CHKPASS reader.
  */
-chkpass *
-chkpass_in(char *str)
+PG_FUNCTION_INFO_V1(chkpass_in)
+Datum
+chkpass_in(PG_FUNCTION_ARGS)
 {
+	char       *str = PG_GETARG_CSTRING(0);
 	chkpass	   *result;
 	char		mysalt[4];
 	static bool	random_initialized = false;
@@ -72,14 +75,14 @@ chkpass_in(char *str)
 		result = (chkpass *) palloc(sizeof(chkpass));
 		strncpy(result->password, str + 1, 13);
 		result->password[13] = 0;
-		return (result);
+		return PointerGetDatum(result);
 	}
 
 	if (verify_pass(str) != 0)
 	{
 		elog(ERROR, "chkpass_in: purported CHKPASS \"%s\" is a weak password",
 		     str);
-		return NULL;
+		return PointerGetDatum(NULL);
 	}
 
 	result = (chkpass *) palloc(sizeof(chkpass));
@@ -95,7 +98,7 @@ chkpass_in(char *str)
 	mysalt[2] = 0;				/* technically the terminator is not
 								 * necessary but I like to play safe */
 	strcpy(result->password, crypt(str, mysalt));
-	return (result);
+	return PointerGetDatum(result);
 }
 
 /*
@@ -103,13 +106,15 @@ chkpass_in(char *str)
  * Just like any string but we know it is max 15 (13 plus colon and terminator.)
  */
 
-char *
-chkpass_out(chkpass * password)
+PG_FUNCTION_INFO_V1(chkpass_out)
+Datum
+chkpass_out(PG_FUNCTION_ARGS)
 {
+	chkpass    *password = (chkpass *) PG_GETARG_POINTER(0);
 	char	   *result;
 
 	if (password == NULL)
-		return (NULL);
+		return PointerGetDatum(NULL);
 
 	if ((result = (char *) palloc(16)) != NULL)
 	{
@@ -117,7 +122,7 @@ chkpass_out(chkpass * password)
 		strcpy(result + 1, password->password);
 	}
 
-	return (result);
+	PG_RETURN_CSTRING(result);
 }
 
 
@@ -125,21 +130,23 @@ chkpass_out(chkpass * password)
  * special output function that doesn't output the colon
  */
 
-text *
-chkpass_rout(chkpass *password)
+PG_FUNCTION_INFO_V1(chkpass_rout)
+Datum
+chkpass_rout(PG_FUNCTION_ARGS)
 {
+	chkpass    *password = (chkpass *) PG_GETARG_POINTER(0);
 	text	   *result = NULL;
 
 	if (password == NULL)
-		return (NULL);
+		return PointerGetDatum(NULL);
 
 	if ((result = (text *) palloc(VARHDRSZ + 16)) != NULL)
 	{
 		result->vl_len = VARHDRSZ + strlen(password->password);
-		memcpy(result->vl_dat, password->password, strlen(password->pass
+		memcpy(result->vl_dat, password->password, strlen(password->password));
 	}
 
-	return (result);
+	PG_RETURN_CSTRING(result);
 }
 
 
@@ -147,29 +154,37 @@ chkpass_rout(chkpass *password)
  * Boolean tests
  */
 
-bool
-chkpass_eq(chkpass * a1, text *a2)
+PG_FUNCTION_INFO_V1(chkpass_eq)
+Datum
+chkpass_eq(PG_FUNCTION_ARGS)
 {
-	char	str[10];
-	int		sz = 8;
+	chkpass    *a1 = (chkpass *) PG_GETARG_POINTER(0);
+	text       *a2 = (text *) PG_GETARG_TEXT_P(1);
+	char        str[10];
+	int         sz = 8;
 
-	if (!a1 || !a2) return 0;
+	if (!a1 || !a2)
+		PG_RETURN_BOOL(0);
+
 	if (a2->vl_len < 12) sz = a2->vl_len - 4;
 	strncpy(str, a2->vl_dat, sz);
 	str[sz] = 0;
-	return (strcmp(a1->password, crypt(str, a1->password)) == 0);
+	PG_RETURN_BOOL (strcmp(a1->password, crypt(str, a1->password)) == 0);
 }
 
-bool
-chkpass_ne(chkpass * a1, text *a2)
+PG_FUNCTION_INFO_V1(chkpass_ne)
+Datum
+chkpass_ne(PG_FUNCTION_ARGS)
 {
-	char	str[10];
-	int		sz = 8;
+	chkpass    *a1 = (chkpass *) PG_GETARG_POINTER(0);
+	text       *a2 = (text *) PG_GETARG_TEXT_P(1);
+	char        str[10];
+	int         sz = 8;
 
 	if (!a1 || !a2) return 0;
 	if (a2->vl_len < 12) sz = a2->vl_len - 4;
 	strncpy(str, a2->vl_dat, sz);
 	str[sz] = 0;
-	return (strcmp(a1->password, crypt(str, a1->password)) != 0);
+	PG_RETURN_BOOL (strcmp(a1->password, crypt(str, a1->password)) != 0);
 }
 
