@@ -62,9 +62,9 @@
        <row>
 	<entry>Digital Unix 4.0</entry>
 	<entry>Alpha</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-29</entry>
-	<entry>Minor patchable problems
+	<entry>v6.5.3</entry>
+	<entry>1999-11-04</entry>
+	<entry>
 	 (<ulink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ulink>)</entry>
        </row>
        <row>
@@ -87,11 +87,24 @@
        <row>
 	<entry>linux 2.0.x</entry>
 	<entry>Alpha</entry>
-	<entry>v6.3.2</entry>
-	<entry>1998-04-16</entry>
-	<entry>Mostly successful. Needs work for v6.4.
-	 (<ulink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ulink>)</entry>
+	<entry>v6.5.3</entry>
+	<entry>1999-11-05</entry>
+	<entry>
+	 (<ulink url="mailto:pgsql@rkirkpat.net">Ryan Kirkpatrick</ulink>)</entry>
        </row>
+       <row>
+	<entry>linux 2.2.x</entry>
+	<entry>arm41</entry>
+	<entry>v6.5.3</entry>
+	<entry>1999-11-05</entry>
+	<entry>
+	 (<ulink url="mailto:segfault@hardline.org">Mark Knox</ulink>)</entry>
+       </row>
+
+       <!--
+       Close enough to linux 2.2.x and glibc2 to not be worth mentioning
+       separately.
+       - thomas 1999-11-06
        <row>
 	<entry>linux 2.0.x/libc5</entry>
 	<entry>x86</entry>
@@ -99,12 +112,14 @@
 	<entry>1998-10-27</entry>
 	<entry>(<ulink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ulink>)</entry>
        </row>
+       -->
+
        <row>
-	<entry>linux 2.0.x/glibc2</entry>
+	<entry>linux 2.2.x/glibc2</entry>
 	<entry>x86</entry>
-	<entry>v6.5</entry>
-	<entry>1999-05-24</entry>
-	<entry>(<ulink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ulink>)</entry>
+	<entry>v6.5.3</entry>
+	<entry>1999-11-05</entry>
+	<entry>(<ulink url="mailto:lamar.owen@wgcr.org">Lamar Owens</ulink>)</entry>
        </row>
        <row>
 	<entry>linux 2.0.x</entry>
@@ -145,7 +160,7 @@
 	<entry>(<ulink url="mailto:a.mcmurry1@physics.oxford.ac.uk">Andrew McMurry</ulink>)</entry>
        </row>
        <row>
-	<entry>NetBSD/i386 1.3.2</entry>
+	<entry>NetBSD 1.3.2</entry>
 	<entry>x86</entry>
 	<entry>v6.4</entry>
 	<entry>1998-10-25</entry>
@@ -287,7 +302,7 @@
        <row>
 	<entry>MacOS</entry>
 	<entry>all</entry>
-	<entry>v6.3</entry>
+	<entry>v6.x</entry>
 	<entry>1998-03-01</entry>
 	<entry>Not library compatible; use ODBC/JDBC</entry>
        </row>
@@ -307,6 +322,8 @@
 	<entry>Confirmed with patching; v6.4.x will need TAS spinlock code
 	 (<ulink url="mailto:dlw@seavme.xroads.com">Doug Winterburn</ulink>)</entry>
        </row>
+<!--
+Obsolete afaik. Let's stop mentioning it. - thomas 1999-11-06
        <row>
 	<entry>Ultrix</entry>
 	<entry>MIPS,VAX?</entry>
@@ -314,6 +331,7 @@
 	<entry>1998-03-01</entry>
 	<entry>No recent reports; obsolete?</entry>
        </row>
+-->
       </tbody>
      </tgroup>
     </table>
