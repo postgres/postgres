@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.61 2001/03/22 06:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.62 2001/08/10 15:49:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ TypeCreate(char *typeName,
 	typeObjectId = TypeGet(typeName, &defined);
 	if (OidIsValid(typeObjectId) &&
 		(defined || assignedTypeOid != InvalidOid))
-		elog(ERROR, "TypeCreate: type %s already defined", typeName);
+		elog(ERROR, "type named %s already exists", typeName);
 
 	/*
 	 * if this type has an associated elementType, then we check that it
@@ -314,7 +314,7 @@ TypeCreate(char *typeName,
 	{
 		elementObjectId = TypeGet(elementTypeName, &defined);
 		if (!defined)
-			elog(ERROR, "TypeCreate: type %s is not defined", elementTypeName);
+			elog(ERROR, "type %s does not exist", elementTypeName);
 	}
 
 	/*
@@ -464,7 +464,7 @@ TypeCreate(char *typeName,
 	{
 		/* should not happen given prior test? */
 		if (assignedTypeOid != InvalidOid)
-			elog(ERROR, "TypeCreate: type %s already defined", typeName);
+			elog(ERROR, "type %s already exists", typeName);
 
 		tup = heap_modifytuple(tup,
 							   pg_type_desc,
@@ -530,12 +530,12 @@ TypeRename(const char *oldTypeName, const char *newTypeName)
 							   PointerGetDatum(oldTypeName),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "TypeRename: type \"%s\" not defined", oldTypeName);
+		elog(ERROR, "type %s does not exist", oldTypeName);
 
 	if (SearchSysCacheExists(TYPENAME,
 							 PointerGetDatum(newTypeName),
 							 0, 0, 0))
-		elog(ERROR, "TypeRename: type \"%s\" already defined", newTypeName);
+		elog(ERROR, "type named %s already exists", newTypeName);
 
 	namestrcpy(&(((Form_pg_type) GETSTRUCT(tuple))->typname), newTypeName);
 

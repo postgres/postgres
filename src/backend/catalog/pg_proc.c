@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.56 2001/08/09 18:28:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.57 2001/08/10 15:49:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ ProcedureCreate(char *procedureName,
 									  PointerGetDatum(languageName),
 									  0, 0, 0);
 	if (!OidIsValid(languageObjectId))
-		elog(ERROR, "ProcedureCreate: no such language '%s'", languageName);
+		elog(ERROR, "language '%s' does not exist", languageName);
 
 	parameterCount = 0;
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -93,13 +93,13 @@ ProcedureCreate(char *procedureName,
 		char	   *typnam = TypeNameToInternalName(t);
 
 		if (parameterCount >= FUNC_MAX_ARGS)
-			elog(ERROR, "Procedures cannot take more than %d arguments",
+			elog(ERROR, "functions cannot have more than %d arguments",
 				 FUNC_MAX_ARGS);
 
 		if (strcmp(typnam, "opaque") == 0)
 		{
 			if (languageObjectId == SQLlanguageId)
-				elog(ERROR, "ProcedureCreate: sql functions cannot take type \"opaque\"");
+				elog(ERROR, "SQL functions cannot have arguments of type \"opaque\"");
 			toid = InvalidOid;
 		}
 		else
@@ -107,15 +107,15 @@ ProcedureCreate(char *procedureName,
 			toid = TypeGet(typnam, &defined);
 
 			if (!OidIsValid(toid))
-				elog(ERROR, "ProcedureCreate: arg type '%s' is not defined",
+				elog(ERROR, "argument type %s does not exist",
 					 typnam);
 			if (!defined)
-				elog(NOTICE, "ProcedureCreate: arg type '%s' is only a shell",
+				elog(NOTICE, "argument type %s is only a shell",
 					 typnam);
 		}
 
 		if (t->setof)
-			elog(ERROR, "ProcedureCreate: functions cannot accept set arguments");
+			elog(ERROR, "functions cannot accept set arguments");
 
 		typev[parameterCount++] = toid;
 	}
@@ -126,7 +126,7 @@ ProcedureCreate(char *procedureName,
 							 UInt16GetDatum(parameterCount),
 							 PointerGetDatum(typev),
 							 0))
-		elog(ERROR, "ProcedureCreate: procedure %s already exists with same arguments",
+		elog(ERROR, "function %s already exists with same argument types",
 			 procedureName);
 
 	if (languageObjectId == SQLlanguageId)
@@ -171,7 +171,7 @@ ProcedureCreate(char *procedureName,
 	if (strcmp(returnTypeName, "opaque") == 0)
 	{
 		if (languageObjectId == SQLlanguageId)
-			elog(ERROR, "ProcedureCreate: sql functions cannot return type \"opaque\"");
+			elog(ERROR, "SQL functions cannot return type \"opaque\"");
 		typeObjectId = InvalidOid;
 	}
 	else
@@ -180,15 +180,15 @@ ProcedureCreate(char *procedureName,
 
 		if (!OidIsValid(typeObjectId))
 		{
-			elog(NOTICE, "ProcedureCreate: type '%s' is not yet defined",
+			elog(NOTICE, "ProcedureCreate: type %s is not yet defined",
 				 returnTypeName);
 			typeObjectId = TypeShellMake(returnTypeName);
 			if (!OidIsValid(typeObjectId))
-				elog(ERROR, "ProcedureCreate: could not create type '%s'",
+				elog(ERROR, "could not create type %s",
 					 returnTypeName);
 		}
 		else if (!defined)
-			elog(NOTICE, "ProcedureCreate: return type '%s' is only a shell",
+			elog(NOTICE, "return type %s is only a shell",
 				 returnTypeName);
 	}
 
@@ -236,7 +236,7 @@ ProcedureCreate(char *procedureName,
 			prosrc = procedureName;
 		if (fmgr_internal_function(prosrc) == InvalidOid)
 			elog(ERROR,
-			"ProcedureCreate: there is no builtin function named \"%s\"",
+			"there is no built-in function named \"%s\"",
 				 prosrc);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.172 2001/08/09 18:28:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.173 2001/08/10 15:49:39 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -202,8 +202,8 @@ heap_create(char *relname,
 	 */
 	if (relname && !allow_system_table_mods &&
 		IsSystemRelationName(relname) && IsNormalProcessingMode())
-		elog(ERROR, "Illegal class name '%s'"
-			 "\n\tThe 'pg_' name prefix is reserved for system catalogs",
+		elog(ERROR, "invalid relation name \"%s\"; "
+			 "the 'pg_' name prefix is reserved for system catalogs",
 			 relname);
 
 	/*
@@ -356,8 +356,7 @@ CheckAttributeNames(TupleDesc tupdesc)
 			if (strcmp(NameStr(SysAtt[j]->attname),
 					   NameStr(tupdesc->attrs[i]->attname)) == 0)
 			{
-				elog(ERROR, "Attribute '%s' has a name conflict"
-					 "\n\tName matches an existing system attribute",
+				elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
 					 NameStr(SysAtt[j]->attname));
 			}
 		}
@@ -379,7 +378,7 @@ CheckAttributeNames(TupleDesc tupdesc)
 			if (strcmp(NameStr(tupdesc->attrs[j]->attname),
 					   NameStr(tupdesc->attrs[i]->attname)) == 0)
 			{
-				elog(ERROR, "Attribute '%s' is repeated",
+				elog(ERROR, "column name \"%s\" is duplicated",
 					 NameStr(tupdesc->attrs[j]->attname));
 			}
 		}
@@ -713,8 +712,7 @@ heap_create_with_catalog(char *relname,
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 	if (natts <= 0 || natts > MaxHeapAttributeNumber)
-		elog(ERROR, "Number of attributes is out of range"
-			 "\n\tFrom 1 to %d attributes may be specified",
+		elog(ERROR, "Number of columns is out of range (1 to %d)",
 			 MaxHeapAttributeNumber);
 
 	CheckAttributeNames(tupdesc);
@@ -1072,7 +1070,7 @@ heap_truncate(char *relname)
 	 * anyway).
 	 */
 	if (IsTransactionBlock() && !rel->rd_myxactonly)
-		elog(ERROR, "TRUNCATE TABLE cannot run inside a BEGIN/END block");
+		elog(ERROR, "TRUNCATE TABLE cannot run inside a transaction block");
 
 	/*
 	 * Release any buffers associated with this relation.  If they're
@@ -1225,7 +1223,7 @@ DeleteTypeTuple(Relation rel)
 		heap_endscan(pg_type_scan);
 		heap_close(pg_type_desc, RowExclusiveLock);
 
-		elog(ERROR, "DeleteTypeTuple: att of type %s exists in relation %u",
+		elog(ERROR, "DeleteTypeTuple: column of type %s exists in relation %u",
 			 RelationGetRelationName(rel), relid);
 	}
 	heap_endscan(pg_attribute_scan);
@@ -1638,15 +1636,15 @@ AddRelationRawConstraints(Relation rel,
 		 * Make sure default expr does not refer to any vars.
 		 */
 		if (contain_var_clause(expr))
-			elog(ERROR, "Cannot use attribute(s) in DEFAULT clause");
+			elog(ERROR, "cannot use column references in DEFAULT clause");
 
 		/*
 		 * No subplans or aggregates, either...
 		 */
 		if (contain_subplans(expr))
-			elog(ERROR, "Cannot use subselect in DEFAULT clause");
+			elog(ERROR, "cannot use subselects in DEFAULT clause");
 		if (contain_agg_clause(expr))
-			elog(ERROR, "Cannot use aggregate in DEFAULT clause");
+			elog(ERROR, "cannot use aggregate functions in DEFAULT clause");
 
 		/*
 		 * Check that it will be possible to coerce the expression to the
@@ -1790,23 +1788,23 @@ AddRelationRawConstraints(Relation rel,
 		 * Make sure it yields a boolean result.
 		 */
 		if (exprType(expr) != BOOLOID)
-			elog(ERROR, "CHECK '%s' does not yield boolean result",
+			elog(ERROR, "CHECK constraint expression '%s' does not yield boolean result",
 				 ccname);
 
 		/*
 		 * Make sure no outside relations are referred to.
 		 */
 		if (length(pstate->p_rtable) != 1)
-			elog(ERROR, "Only relation \"%s\" can be referenced in CHECK",
+			elog(ERROR, "Only relation \"%s\" can be referenced in CHECK constraint expression",
 				 relname);
 
 		/*
 		 * No subplans or aggregates, either...
 		 */
 		if (contain_subplans(expr))
-			elog(ERROR, "Cannot use subselect in CHECK clause");
+			elog(ERROR, "cannot use subselect in CHECK constraint expression");
 		if (contain_agg_clause(expr))
-			elog(ERROR, "Cannot use aggregate in CHECK clause");
+			elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
 
 		/*
 		 * Might as well try to reduce any constant expressions.

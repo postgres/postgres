@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.157 2001/07/16 05:06:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.158 2001/08/10 15:49:39 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -111,13 +111,13 @@ GetHeapRelationOid(char *heapRelationName, char *indexRelationName, bool istemp)
 
 	if ((!istemp && OidIsValid(indoid)) ||
 		(istemp && is_temp_rel_name(indexRelationName)))
-		elog(ERROR, "Cannot create index: '%s' already exists",
+		elog(ERROR, "index named \"%s\" already exists",
 			 indexRelationName);
 
 	heapoid = RelnameFindRelid(heapRelationName);
 
 	if (!OidIsValid(heapoid))
-		elog(ERROR, "Cannot create index on '%s': relation does not exist",
+		elog(ERROR, "cannot create index on non-existent relation \"%s\"",
 			 heapRelationName);
 
 	return heapoid;
@@ -237,7 +237,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * here we are indexing on a normal attribute (1...n)
 			 */
 			if (atnum > natts)
-				elog(ERROR, "Cannot create index: attribute %d does not exist",
+				elog(ERROR, "cannot create index: column %d does not exist",
 					 atnum);
 
 			from = heapTupDesc->attrs[AttrNumberGetAttrOffset(atnum)];
@@ -686,7 +686,7 @@ index_create(char *heapRelationName,
 	 */
 	if (indexInfo->ii_NumIndexAttrs < 1 ||
 		indexInfo->ii_NumKeyAttrs < 1)
-		elog(ERROR, "must index at least one attribute");
+		elog(ERROR, "must index at least one column");
 
 	if (heapRelationName && !allow_system_table_mods &&
 		IsSystemRelationName(heapRelationName) && IsNormalProcessingMode())
@@ -1856,7 +1856,7 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	 * of the index's physical file.  Disallow it.
 	 */
 	if (IsTransactionBlock())
-		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
+		elog(ERROR, "REINDEX cannot run inside a transaction block");
 
 	old = SetReindexProcessing(true);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.60 2001/07/15 22:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.61 2001/08/10 15:49:39 petere Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -174,8 +174,8 @@ OperatorGet(char *operatorName,
 		leftObjectId = TypeGet(leftTypeName, &leftDefined);
 
 		if (!OidIsValid(leftObjectId) || !leftDefined)
-			elog(ERROR, "OperatorGet: left type \"%s\" does not exist",
-				 leftTypeName);
+			elog(ERROR, "left type \"%s\" of operator %s does not exist",
+				 leftTypeName, operatorName);
 	}
 
 	if (rightTypeName)
@@ -183,13 +183,13 @@ OperatorGet(char *operatorName,
 		rightObjectId = TypeGet(rightTypeName, &rightDefined);
 
 		if (!OidIsValid(rightObjectId) || !rightDefined)
-			elog(ERROR, "OperatorGet: right type \"%s\" does not exist",
-				 rightTypeName);
+			elog(ERROR, "right type \"%s\" of operator %s does not exist",
+				 rightTypeName, operatorName);
 	}
 
 	if (!((OidIsValid(leftObjectId) && leftDefined) ||
 		  (OidIsValid(rightObjectId) && rightDefined)))
-		elog(ERROR, "OperatorGet: must have at least one argument type");
+		elog(ERROR, "operator %s must have at least one operand type", operatorName);
 
 	/*
 	 * open the pg_operator relation
@@ -330,7 +330,7 @@ OperatorShellMake(char *operatorName,
 
 	if (!((OidIsValid(leftObjectId) && leftDefined) ||
 		  (OidIsValid(rightObjectId) && rightDefined)))
-		elog(ERROR, "OperatorShellMake: no valid argument types??");
+		elog(ERROR, "OperatorShellMake: the operand types are not valid");
 
 	/*
 	 * open pg_operator
@@ -494,7 +494,7 @@ OperatorDef(char *operatorName,
 		leftTypeId = TypeGet(leftTypeName, &leftDefined);
 
 		if (!OidIsValid(leftTypeId) || !leftDefined)
-			elog(ERROR, "OperatorDef: left type \"%s\" does not exist",
+			elog(ERROR, "left type \"%s\" does not exist",
 				 leftTypeName);
 	}
 
@@ -503,13 +503,13 @@ OperatorDef(char *operatorName,
 		rightTypeId = TypeGet(rightTypeName, &rightDefined);
 
 		if (!OidIsValid(rightTypeId) || !rightDefined)
-			elog(ERROR, "OperatorDef: right type \"%s\" does not exist",
+			elog(ERROR, "right type \"%s\" does not exist",
 				 rightTypeName);
 	}
 
 	if (!((OidIsValid(leftTypeId) && leftDefined) ||
 		  (OidIsValid(rightTypeId) && rightDefined)))
-		elog(ERROR, "OperatorDef: must have at least one argument type");
+		elog(ERROR, "operator must have at least one operand type");
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
@@ -717,7 +717,7 @@ OperatorDef(char *operatorName,
 				 */
 				if (j != 0)
 					elog(ERROR,
-						 "OperatorDef: operator can't be its own negator or sort op");
+						 "operator cannot be its own negator or sort operator");
 				selfCommutator = true;
 				values[i++] = ObjectIdGetDatum(InvalidOid);
 			}
@@ -772,7 +772,7 @@ OperatorDef(char *operatorName,
 			simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 		}
 		else
-			elog(ERROR, "OperatorDef: no operator %u", operatorObjectId);
+			elog(ERROR, "OperatorDef: operator %u not found", operatorObjectId);
 
 		heap_endscan(pg_operator_scan);
 	}
@@ -1023,19 +1023,19 @@ OperatorCreate(char *operatorName,
 			   char *rightSortName)
 {
 	if (!leftTypeName && !rightTypeName)
-		elog(ERROR, "OperatorCreate: at least one of leftarg or rightarg must be defined");
+		elog(ERROR, "at least one of leftarg or rightarg must be specified");
 
 	if (!(leftTypeName && rightTypeName))
 	{
 		/* If it's not a binary op, these things mustn't be set: */
 		if (commutatorName)
-			elog(ERROR, "OperatorCreate: only binary operators can have commutators");
+			elog(ERROR, "only binary operators can have commutators");
 		if (joinName)
-			elog(ERROR, "OperatorCreate: only binary operators can have join selectivity");
+			elog(ERROR, "only binary operators can have join selectivity");
 		if (canHash)
-			elog(ERROR, "OperatorCreate: only binary operators can hash");
+			elog(ERROR, "only binary operators can hash");
 		if (leftSortName || rightSortName)
-			elog(ERROR, "OperatorCreate: only binary operators can have sort links");
+			elog(ERROR, "only binary operators can have sort links");
 	}
 
 	/*

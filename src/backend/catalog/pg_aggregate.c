@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.38 2001/03/22 03:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.39 2001/08/10 15:49:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,10 +72,10 @@ AggregateCreate(char *aggName,
 
 	/* sanity checks */
 	if (!aggName)
-		elog(ERROR, "AggregateCreate: no aggregate name supplied");
+		elog(ERROR, "no aggregate name supplied");
 
 	if (!aggtransfnName)
-		elog(ERROR, "AggregateCreate: aggregate must have a transition function");
+		elog(ERROR, "aggregate must have a transition function");
 
 	/*
 	 * Handle the aggregate's base type (input data type).  This can be
@@ -88,7 +88,7 @@ AggregateCreate(char *aggName,
 	if (!OidIsValid(basetype))
 	{
 		if (strcasecmp(aggbasetypeName, "ANY") != 0)
-			elog(ERROR, "AggregateCreate: Type '%s' undefined",
+			elog(ERROR, "data type %s does not exist",
 				 aggbasetypeName);
 		basetype = InvalidOid;
 	}
@@ -99,7 +99,7 @@ AggregateCreate(char *aggName,
 							 ObjectIdGetDatum(basetype),
 							 0, 0))
 		elog(ERROR,
-			 "AggregateCreate: aggregate '%s' with base type '%s' already exists",
+			 "aggregate function \"%s\" with base type %s already exists",
 			 aggName, aggbasetypeName);
 
 	/* handle transtype */
@@ -107,7 +107,7 @@ AggregateCreate(char *aggName,
 							   PointerGetDatum(aggtranstypeName),
 							   0, 0, 0);
 	if (!OidIsValid(transtype))
-		elog(ERROR, "AggregateCreate: Type '%s' undefined",
+		elog(ERROR, "data type %s does not exit",
 			 aggtranstypeName);
 
 	/* handle transfn */
@@ -130,7 +130,7 @@ AggregateCreate(char *aggName,
 	Assert(OidIsValid(transfn));
 	proc = (Form_pg_proc) GETSTRUCT(tup);
 	if (proc->prorettype != transtype)
-		elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
+		elog(ERROR, "return type of transition function %s is not %s",
 			 aggtransfnName, aggtranstypeName);
 
 	/*
@@ -143,7 +143,7 @@ AggregateCreate(char *aggName,
 	{
 		if (basetype != transtype &&
 			!IS_BINARY_COMPATIBLE(basetype, transtype))
-			elog(ERROR, "AggregateCreate: must not omit initval when transfn is strict and transtype is not compatible with input type");
+			elog(ERROR, "must not omit initval when transfn is strict and transtype is not compatible with input type");
 	}
 	ReleaseSysCache(tup);
 
