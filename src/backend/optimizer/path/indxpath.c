@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.31 1998/08/19 02:02:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.32 1998/08/31 07:19:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,10 +340,10 @@ match_index_orclause(RelOptInfo *rel,
 								   index) &&
 			  IsA(get_rightop((Expr *) clause), Const)) ||
 			 (match_index_to_operand(indexkey,
-								   (Expr *) get_leftop((Expr *) clause),
+								   (Expr *) get_rightop((Expr *) clause),
 								   rel,
 								   index) &&
-			 IsA(get_rightop((Expr *) clause), Const))))
+			 IsA(get_leftop((Expr *) clause), Const))))
 		{
 			lfirst(matching_indices) = lcons(index, lfirst(matching_indices));
 		}

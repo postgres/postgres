@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.20 1998/08/10 02:26:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.21 1998/08/31 07:19:56 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -198,9 +198,8 @@ make_funcclause(Func *func, List *funcargs)
 bool
 or_clause(Node *clause)
 {
-	return
-	(clause != NULL &&
-	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OR_EXPR);
+	return clause != NULL &&
+		   nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OR_EXPR);
 }
 
 /*
