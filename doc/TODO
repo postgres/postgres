@@ -236,7 +236,7 @@ DOCUMENTATION
 CHANGES IN THE 6.4.1 RELEASE
 ----------------------------
 Add pg_dump -N flag to force double quotes around identifiers.  This is
-the default.
+	the default
 Fix for NOT in where clause causing crash(Bruce)
 EXPLAIN VERBOSE coredump fix(Vadim)
 Fix shared-library problems on Linux
