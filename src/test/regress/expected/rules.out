@@ -1022,9 +1022,9 @@ QUERY: SELECT * FROM shoelace_log;
 sl_name   |sl_avail|log_who |log_when
 ----------+--------+--------+--------
 sl7       |       6|Al Bundy|epoch   
-sl3       |      10|Al Bundy|epoch   
 sl6       |      20|Al Bundy|epoch   
 sl8       |      21|Al Bundy|epoch   
+sl3       |      10|Al Bundy|epoch   
 (4 rows)
 
 QUERY:     CREATE VIEW shoelace_obsolete AS
