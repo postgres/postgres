@@ -6,11 +6,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.1.1.1 1996/07/09 06:21:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.2 1996/10/31 10:26:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <sys/types.h>
+
 #include "postgres.h"
+
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
 #include "nodes/plannodes.h"

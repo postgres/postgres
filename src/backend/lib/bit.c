@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.1.1.1 1996/07/09 06:21:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.2 1996/10/31 10:26:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,8 @@
 /*
  * utils/memutils.h contains declarations of the functions in this file
  */
+#include "postgres.h"
+
 #include "utils/memutils.h"	
 
 void

@@ -9,12 +9,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.1.1.1 1996/07/09 06:21:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.2 1996/10/31 10:26:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "c.h"
+#include "postgres.h"
+
 #include "lib/dllist.h"
 
 Dllist*
