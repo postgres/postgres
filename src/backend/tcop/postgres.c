@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.179 2000/10/07 04:00:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.180 2000/10/07 14:39:14 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1462,6 +1462,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 	if (IsUnderPostmaster)
 	{
+#ifdef __BEOS__
+		/* Specific beos backend stratup actions */
+		beos_backend_startup(argv[0]);
+#endif
+
 		/* noninteractive case: nothing should be left after switches */
 		if (errs || argc != optind || DBName == NULL)
 		{
@@ -1613,7 +1618,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.179 $ $Date: 2000/10/07 04:00:41 $\n");
+		puts("$Revision: 1.180 $ $Date: 2000/10/07 14:39:14 $\n");
 	}
 
 	/*

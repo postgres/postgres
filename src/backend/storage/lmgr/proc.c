@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.82 2000/10/03 03:11:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.83 2000/10/07 14:39:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.82 2000/10/03 03:11:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.83 2000/10/07 14:39:13 momjian Exp $
  */
 #include "postgres.h"
 
@@ -266,10 +266,8 @@ InitProcess(IPCKey key)
 		 * we might be reusing a semaphore that belongs to a dead backend.
 		 * So be careful and reinitialize its value here.
 		 */
-#ifndef __BEOS__
 		semun.val = IpcSemaphoreDefaultStartValue;
 		semctl(semId, semNum, SETVAL, semun);
-#endif
 
 		IpcSemaphoreLock(semId, semNum, IpcExclusiveLock);
 		MyProc->sem.semId = semId;

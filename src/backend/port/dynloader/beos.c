@@ -8,53 +8,65 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.2 2000/10/03 03:11:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.3 2000/10/07 14:39:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
-#include <kernel/OS.h>
-#include <image.h>
-#include <errno.h>
+#include "utils/dynamic_loader.h"
+#include "utils/elog.h"
 
-#include "dynloader.h"
 
-extern char pg_pathname[];
-
-void *
-beos_dlopen(const char *filename)
+void	   *
+pg_dlopen(char *filename)
 {
-    image_id id = -1;
+	image_id* im; 
+	
+	/* Handle memory allocation to store the Id of the shared object*/
+	im=(image_id*)(malloc(sizeof(image_id)));
+	
+	/* Add-on loading */
+	*im=beos_dl_open(filename);
+			
+	return im;
+}
 
-	if ((id = load_add_on(filename)) < 0)
-		return NULL;
 
-	return (void *) id;
+char	   *
+pg_dlerror()
+{
+	static char errmsg[] = "Load Add-On failed";
+	return errmsg;
+}
+
+PGFunction 
+pg_dlsym(void *handle, char *funcname)
+{
+	PGFunction fpt;
+
+	/* Checking that "Handle" is valid */
+	if ((handle) && ((*(int*)(handle))>=0))
+	{
+		/* Loading symbol */
+		if(get_image_symbol(*((int*)(handle)),funcname,B_SYMBOL_TYPE_TEXT,(void**)&fpt)==B_OK);
+		{
+			return fpt;
+		}
+		elog(NOTICE, "loading symbol '%s' failed ",funcname);
+	}
+	elog(NOTICE, "add-on not loaded correctly");
+	return NULL;
 }
 
 void 
-beos_dlclose(void *handle)
+pg_dlclose(void *handle)
 {
-    image_id id = (image_id) handle;
-    unload_add_on(id);
-    return;
-}
-
-void *
-beos_dlsym(void *handle, const char *name)
-{
-    image_id id = (image_id)handle;
-    void *addr;
-    
-    if (get_image_symbol(id, name, B_SYMBOL_TYPE_ANY, &addr) != B_OK)
-        return NULL;
-    
-    return addr;
-} 
-        
-char *
-beos_dlerror()
-{
-    return (char *)strerror(errno);
+	/* Checking that "Handle" is valid */
+	if ((handle) && ((*(int*)(handle))>=0))
+	{
+		if (beos_dl_close(*(image_id*)handle)!=B_OK)
+			elog(NOTICE, "error while unloading add-on");
+		free(handle);
+	}
 }

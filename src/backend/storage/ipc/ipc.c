@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.51 2000/10/03 03:11:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.52 2000/10/07 14:39:12 momjian Exp $
  *
  * NOTES
  *
@@ -243,17 +243,12 @@ on_exit_reset(void)
 static void
 IPCPrivateSemaphoreKill(int status, int semId)
 {
-/* BeOS has a native sempahore type... */
-#ifndef __BEOS__
 	union semun semun;
 	semun.val = 0;		/* unused */
 
 	if (semctl(semId, 0, IPC_RMID, semun) == -1)
 		elog(NOTICE, "IPCPrivateSemaphoreKill: semctl(%d, 0, IPC_RMID, ...) failed: %s",
 			 semId, strerror(errno));
-#else  /* __BEOS__ */
-    delete_sem(semId);
-#endif /* __BEOS__ */
 }
 
 
@@ -270,18 +265,11 @@ IPCPrivateMemoryKill(int status, int shmId)
 	}
 	else
 	{
-#ifndef __BEOS__
 		if (shmctl(shmId, IPC_RMID, (struct shmid_ds *) NULL) < 0)
   		{
   			elog(NOTICE, "IPCPrivateMemoryKill: shmctl(%d, %d, 0) failed: %m",
   				 shmId, IPC_RMID);
   		}
-#else
-        if (delete_area(shmId) != B_OK)
-        {
-            elog(NOTICE, "IPCPrivateMemoryKill: delete_area(%d) failed", shmId);
-        }
-#endif /* __BEOS__ */
     }
 }
 
@@ -304,7 +292,6 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 				   int removeOnExit)
 {
 	int			semId;
-#ifndef __BEOS__
 	int			i;
 	int			errStatus;
 	u_short		array[IPC_NMAXSEM];
@@ -366,21 +353,6 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 	}
 
 
-#else /* BeOS implementation */
-    char semname[32];
-    sprintf (semname, "pgsql_ipc:%ld", semKey);
-    semId = create_sem(1, semname);
-    if (semId < 0) {
-			fprintf(stderr, "IpcSemaphoreCreate: create_sem(1, %s) failed: %s\n",
-					semname, strerror(errno));
-			return (-1);
-	}
-
-	if (removeOnExit)
-		on_shmem_exit(IPCPrivateSemaphoreKill, (caddr_t) semId);
-
-#endif
-
 #ifdef DEBUG_IPC
 	fprintf(stderr, "IpcSemaphoreCreate returns %d\n", semId);
 	fflush(stdout);
@@ -424,7 +396,6 @@ void
 IpcSemaphoreKill(IpcSemaphoreKey key)
 {
 	int			semId;
-#ifndef __BEOS__ 
 	union semun semun;
 	semun.val = 0;		/* unused */
 
@@ -433,23 +404,6 @@ IpcSemaphoreKill(IpcSemaphoreKey key)
 	semId = semget(key, 0, 0);
 	if (semId != -1)
 		semctl(semId, 0, IPC_RMID, semun);
-#else
-/* first find the semId by looking at sempahore names... */
-    sem_info si;
-    int32 cookie = 0;
-    char semname[32];
-    sprintf(semname, "pgsql_ipc:%ld", key);
-    
-    semId = -1;
-    while (get_next_sem_info(0, &cookie, &si) == B_OK) {
-        if (strcmp(si.name, semname) == 0){
-            semId = si.sem;
-            break;
-        }
-    }
-    if (semId != -1)
-        delete_sem(semId);
-#endif
 }
 
 /****************************************************************************/
@@ -462,7 +416,6 @@ static int	IpcSemaphoreLock_return;
 void
 IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
 {
-#ifndef __BEOS__
 	extern int	errno;
 	int			errStatus;
 	struct sembuf sops;
@@ -495,13 +448,6 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
 				semId, strerror(errno));
 		proc_exit(255);
 	}
-#else
-    if ((IpcSemaphoreLock_return = acquire_sem(semId)) != B_NO_ERROR) {
-        fprintf(stderr, "IpcSempahoreLock: acquire_sem failed on sem_id %d: %s\n",
-            semId, strerror(errno));
-        proc_exit(255);
-    }
-#endif
 }
 
 /****************************************************************************/
@@ -514,7 +460,6 @@ static int	IpcSemaphoreUnlock_return;
 void
 IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
 {
-#ifndef __BEOS__
 	extern int	errno;
 	int			errStatus;
 	struct sembuf sops;
@@ -548,49 +493,28 @@ IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
 				semId, strerror(errno));
 		proc_exit(255);
 	}
-#else
-    if ((IpcSemaphoreUnlock_return = release_sem(semId)) != B_NO_ERROR) {
-        fprintf(stderr, "IpcSempahoreUnlock: release_sem failed on sem_id %d: %s\n",
-            semId, strerror(errno));
-        proc_exit(255);
-    }
-#endif
 }
 
 int
 IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem)
 {
-#ifndef __BEOS__
 	int			semncnt;
 	union semun dummy;			/* for Solaris */
 	dummy.val = 0;		/* unused */
 
 	semncnt = semctl(semId, sem, GETNCNT, dummy);
 	return semncnt;
-#else
-    sem_info si;
-    
-    get_sem_info(semId, &si);
-    return si.count;
-#endif /* __BEOS__ */
 }
 
 int
 IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem)
 {
-#ifndef __BEOS__
 	int			semval;
 	union semun dummy;			/* for Solaris */
 	dummy.val = 0;		/* unused */
 
 	semval = semctl(semId, sem, GETVAL, dummy);
 	return semval;
-#else
-    sem_info si;
-    
-    get_sem_info(semId, &si);
-    return si.count;
-#endif /* __BEOS__ */
 }
 
 /****************************************************************************/
@@ -611,7 +535,6 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 		shmid = PrivateMemoryCreate(memKey, size);
 	}
 	else
-#ifndef __BEOS__
 
 		shmid = shmget(memKey, size, IPC_CREAT | permission);
 
@@ -649,24 +572,6 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 		return IpcMemCreationFailed;
 	}
 
-#else
-
-    {
-        char *addr;
-        uint32 pages = ((size - 1) / B_PAGE_SIZE) +1;
-        char areaname[32];
-        sprintf (areaname, "pgsql_ipc%ld", memKey);
-        
-        shmid = create_area(areaname, (void*)&addr, B_ANY_ADDRESS, pages * B_PAGE_SIZE,
-            B_NO_LOCK, B_READ_AREA|B_WRITE_AREA);   
-    }
-
-    if (shmid < 0) {
-        fprintf(stderr, "IpcMemoryCreate: failed: %s\n",
-            strerror(errno));
-        return IpcMemCreationFailed;
-    }
-#endif /* __BEOS__ */
 
 	/* if (memKey == PrivateIPCKey) */
 	on_shmem_exit(IPCPrivateMemoryKill, (Datum) shmid);
@@ -683,7 +588,6 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 {
 	IpcMemoryId shmid;
 
-#ifndef __BEOS__
 	shmid = shmget(memKey, size, 0);
 
 	if (shmid < 0)
@@ -692,17 +596,6 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 				memKey, size, strerror(errno));
 		return IpcMemIdGetFailed;
 	}
-#else
-    char areaname[32];
-    sprintf(areaname, "pgsql_ipc%ld", memKey);
-    shmid = find_area(areaname);
-    
-    if (shmid == B_NAME_NOT_FOUND){
-        fprintf(stderr, "IpcMemoryIdGet: find_area(%s) failed: %s\n",
-            areaname, strerror(errno));
-        return IpcMemIdGetFailed;
-    }
-#endif /* __BEOS__ */
 
 	return shmid;
 }
@@ -715,10 +608,8 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 static void
 IpcMemoryDetach(int status, char *shmaddr)
 {
-#ifndef __BEOS__
 	if (shmdt(shmaddr) < 0)
 		elog(NOTICE, "IpcMemoryDetach: shmdt(0x%p) failed: %m", shmaddr);
-#endif
 }
 
 /****************************************************************************/
@@ -733,7 +624,6 @@ IpcMemoryAttach(IpcMemoryId memId)
 {
 	char	   *memAddress;
 
-#ifndef __BEOS__
 	if (UsePrivateMemory)
 		memAddress = (char *) PrivateMemoryAttach(memId);
 	else
@@ -746,23 +636,6 @@ IpcMemoryAttach(IpcMemoryId memId)
 				memId, strerror(errno));
 		return IpcMemAttachFailed;
 	}
-#else
-    
-	if (UsePrivateMemory)
-		memAddress = (char *) PrivateMemoryAttach(memId);
-	else
-    {
-        area_info ai;
-        get_area_info(memId, &ai);
-        memAddress = (char *)ai.address;
-    }
-    
-    if (memAddress == (char *)-1) {
-        fprintf(stderr,"IpcMemoryAttach: failed to get area address (%d): %s\n",
-            memId, strerror(errno));
-        return IpcMemAttachFailed;
-    }
-#endif /* __BEOS__ */
 
 	if (!UsePrivateMemory)
 		on_shmem_exit(IpcMemoryDetach, PointerGetDatum(memAddress));
@@ -780,7 +653,6 @@ IpcMemoryKill(IpcMemoryKey memKey)
 {
 	IpcMemoryId shmid;
 
-#ifndef __BEOS__
 	if (!UsePrivateMemory && (shmid = shmget(memKey, 0, 0)) >= 0)
 	{
 		if (shmctl(shmid, IPC_RMID, (struct shmid_ds *) NULL) < 0)
@@ -789,15 +661,6 @@ IpcMemoryKill(IpcMemoryKey memKey)
 				 shmid, IPC_RMID);
 		}
 	}
-#else
-    char areaname[32];
-    sprintf(areaname, "pgsql_ipc%ld", memKey);
-    shmid = find_area(areaname);
-    if (!UsePrivateMemory && shmid > 0) {
-        if (delete_area(shmid) != B_OK)
-            elog(NOTICE, "IpcMemoryKill: deleta_area(%d) failed!", shmid);
-    }
-#endif /* __BEOS__ */
 }
 
 #ifdef HAS_TEST_AND_SET

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.41 2000/10/03 03:11:24 momjian Exp $
+ * $Id: ipc.h,v 1.42 2000/10/07 14:39:17 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -27,11 +27,6 @@
 #include <sys/types.h>
 #ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>			/* For IPC_PRIVATE */
-#else
-/* BeOS doesn't have IPC_PRIVATE so we'll use the value that is set by
- * FreeBSD (1)
- */
-#define IPC_PRIVATE 1
 #endif /* HAVE_SYS_IPC_H */
 
 #include "config.h"

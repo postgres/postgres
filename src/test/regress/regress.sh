@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.53 2000/09/29 17:17:37 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.54 2000/10/07 14:39:20 momjian Exp $
 #
 if [ $# -eq 0 ]; then
 	echo "Syntax: $0 <hostname> [extra-tests]"
@@ -11,7 +11,7 @@ shift
 extratests="$*"
 
 case $hostname in
-	i*86-pc-cygwin* | i386-*-qnx*)
+	i*86-pc-cygwin* | i386-*-qnx* | beos)
  		HOSTLOC="-h localhost"
 		;;
  	*)

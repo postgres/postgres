@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.63 2000/10/03 03:11:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.64 2000/10/07 14:39:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,9 @@ elog(int lev, const char *fmt, ...)
 		sprintf(errorstr_buf, "error %d", errno);
 		errorstr = errorstr_buf;
 	}
+#else
+    errorstr = strerror(errno);
+#endif /* __BEOS__ */
 
 	if (lev == ERROR || lev == FATAL)
 	{
@@ -182,9 +185,6 @@ elog(int lev, const char *fmt, ...)
 			prefix = prefix_buf;
 			break;
 	}
-#else
-    errorstr = strerror(errno);
-#endif /* __BEOS__ */
 
 	timestamp_size = 0;
 	if (Log_timestamp)

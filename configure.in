@@ -82,6 +82,7 @@ nextstep*) template=nextstep ;;
    sysv4*) template=svr4 ;;
  sysv5uw*) template=unixware ;;
   ultrix*) template=ultrix4 ;;
+  beos*) template=beos ;;
 esac
 
   if test x"$template" = x"" ; then

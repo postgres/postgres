@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.24 2000/08/31 16:10:16 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.25 2000/10/07 14:39:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,6 +27,9 @@ OBJS+= @STRTOL@ @STRTOUL@ @SNPRINTF@
 ifeq ($(PORTNAME), qnx4)
 OBJS += getrusage.o qnx4/SUBSYS.o
 endif
+ifeq ($(PORTNAME), beos)
+OBJS += beos/SUBSYS.o
+endif
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
@@ -36,6 +39,9 @@ qnx4/SUBSYS.o: qnx4.dir
 
 qnx4.dir:
 	$(MAKE) -C qnx4 all
+
+beos/SUBSYS.o:
+	$(MAKE) -C beos all
 
 tas.o: tas.s
 	$(CC) $(CFLAGS) -c tas.s

@@ -1,6 +1,8 @@
 MK_NO_LORDER=true
 ifdef ELF_SYSTEM
 LDFLAGS += -Wl,-E
+CPPFLAGS+= -I$(top_srcdir)/src/backend/port/beos
 endif
 %.so: %.o
-	$(LD) -x -Bshareable -o $@ $<
+	ln -fs $(top_srcdir)/src/backend/postgres _APP_
+	$(CC) -nostart -Xlinker -soname=$@ -o $@ _APP_ $<

@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.23 2000/09/17 13:02:29 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.24 2000/10/07 14:39:06 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -198,6 +198,11 @@ ifeq ($(PORTNAME), win)
   shlib			:= $(NAME)$(DLSUFFIX)
 endif
 
+ifeq ($(PORTNAME), beos)
+  install-shlib-dep	:= install-shlib
+  shlib				:= lib$(NAME)$(DLSUFFIX)
+  LDFLAGS_SL		:= -nostart -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86 
+endif
 
 # Note that in what follows, shlib is empty when not building a shared
 # library.
@@ -225,6 +230,7 @@ endif
 endif # not win
 
 ifdef shlib
+ifneq ($(PORTNAME), beos)
 ifneq ($(PORTNAME), win)
 ifneq ($(PORTNAME), aix)
 
@@ -263,6 +269,15 @@ $(top_builddir)/src/utils/dllinit.o: $(top_srcdir)/src/utils/dllinit.c
 	$(MAKE) -C $(top_builddir)/src/utils dllinit.o
 
 endif # PORTNAME == win
+
+else # PORTNAME == beos
+
+# BEOS case
+$(shlib): $(OBJS)
+	ln -fs $(top_srcdir)/src/backend/postgres _APP_
+	$(CC) -Xlinker -soname=$@ $(LDFLAGS_SL) -o $@ _APP_ $(OBJS) $(SHLIB_LINK)
+
+endif # PORTNAME == beos
 endif # shlib
 
 
