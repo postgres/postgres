@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.32 2001/06/17 02:05:20 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.33 2001/08/27 20:03:38 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -150,7 +150,7 @@ cidr_out(PG_FUNCTION_ARGS)
 }
 
 
-Datum
+static Datum
 text_network(text *src, int type)
 {
         int 	len = VARSIZE(src) - VARHDRSZ;
