@@ -44,7 +44,7 @@ SELECT count(*) FROM test_missing_target GROUP BY test_missing_target.c ORDER BY
 --   w/o existing GROUP BY target and w/o existing a different ORDER BY target
 --   failure expected
 SELECT count(*) FROM test_missing_target GROUP BY a ORDER BY b;
-ERROR:  attribute "test_missing_target.b" must be GROUPed or used in an aggregate function
+ERROR:  column "test_missing_target.b" must appear in the GROUP BY clause or be used in an aggregate function
 --   w/o existing GROUP BY target and w/o existing same ORDER BY target
 SELECT count(*) FROM test_missing_target GROUP BY b ORDER BY b;
  count 
@@ -114,7 +114,7 @@ SELECT c, count(*) FROM test_missing_target GROUP BY 1 ORDER BY 1;
 --   group using reference number out of range
 --   failure expected
 SELECT c, count(*) FROM test_missing_target GROUP BY 3;
-ERROR:  GROUP BY position 3 is not in target list
+ERROR:  GROUP BY position 3 is not in select list
 --   group w/o existing GROUP BY and ORDER BY target under ambiguous condition
 --   failure expected
 SELECT count(*) FROM test_missing_target x, test_missing_target y 
@@ -235,7 +235,7 @@ ORDER BY lower(test_missing_target.c);
 --   w/o existing GROUP BY target and w/o existing a different ORDER BY target
 --   failure expected
 SELECT count(a) FROM test_missing_target GROUP BY a ORDER BY b;
-ERROR:  attribute "test_missing_target.b" must be GROUPed or used in an aggregate function
+ERROR:  column "test_missing_target.b" must appear in the GROUP BY clause or be used in an aggregate function
 --   w/o existing GROUP BY target and w/o existing same ORDER BY target
 SELECT count(b) FROM test_missing_target GROUP BY b/2 ORDER BY b/2;
  count 
