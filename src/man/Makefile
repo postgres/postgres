@@ -8,12 +8,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/man/Attic/Makefile,v 1.7 1998/04/06 16:53:05 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/man/Attic/Makefile,v 1.8 1999/06/05 04:15:09 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR=..
 include ../Makefile.global
+
+all:
 
 install:
 	-mkdir $(POSTMANDIR)
@@ -27,7 +29,5 @@ install:
 	cp *.l* $(POSTMANDIR)/manl
 
 clean:
-
-all:
 
 dep depend:
