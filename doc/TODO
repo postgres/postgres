@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 26 00:21:35 EDT 1999
+Last updated:		Tue Oct 26 00:58:06 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -148,7 +148,7 @@ COMMANDS
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
 * Add ALTER TABLE DROP/ALTER COLUMN feature
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
-	NULL specification on table [cluster]
+	NULL specification, indexes, permissions, etc on table[cluster]
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Auto-destroy sequence on DROP of table with SERIAL(Ryan)
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
