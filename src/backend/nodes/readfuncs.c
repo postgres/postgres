@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.26 1998/02/21 16:58:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.27 1998/02/21 18:17:58 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1370,10 +1370,6 @@ _readRangeTblEntry()
 		StrNCpy(local_node->relname, token, length+1);
 	}
 
-	token = lsptok(NULL, &length);		/* eat :inh */
-	token = lsptok(NULL, &length);		/* get :inh */
-	local_node->inh = (token[0] == 't') ? true : false;
-
 	token = lsptok(NULL, &length);		/* eat :refname */
 	token = lsptok(NULL, &length);		/* get :refname */
 	if (length == 0)
@@ -1387,6 +1383,18 @@ _readRangeTblEntry()
 	token = lsptok(NULL, &length);		/* eat :relid */
 	token = lsptok(NULL, &length);		/* get :relid */
 	local_node->relid = strtoul(token,NULL,10);
+
+	token = lsptok(NULL, &length);		/* eat :inh */
+	token = lsptok(NULL, &length);		/* get :inh */
+	local_node->inh = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* eat :inFromCl */
+	token = lsptok(NULL, &length);		/* get :inFromCl */
+	local_node->inFromCl = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* eat :skipAcl */
+	token = lsptok(NULL, &length);		/* get :skipAcl */
+	local_node->skipAcl = (token[0] == 't') ? true : false;
 
 	return (local_node);
 }
