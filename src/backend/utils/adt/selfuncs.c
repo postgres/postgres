@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.29 1999/05/31 19:32:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.30 1999/06/19 00:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,17 +414,29 @@ btreesel(Oid operatorObjectId,
 		 * don't want to miss the benefits of a good selectivity estimate.)
 		 */
 		if (!oprrest)
+		{
+#if 1
+			/*
+			 * XXX temporary fix for 6.5: rtree operators are missing their
+			 * selectivity estimators, so return a default estimate instead.
+			 * Ugh.
+			 */
+			result = (float64) palloc(sizeof(float64data));
+			*result = 0.5;
+#else
 			elog(ERROR,
-				 "Operator %u must have a restriction selectivity estimator to be used in a btree index",
+				 "Operator %u must have a restriction selectivity estimator to be used in an index",
 				 operatorObjectId);
-
-		result = (float64) fmgr(oprrest,
-								(char *) operatorObjectId,
-								(char *) indrelid,
-								(char *) (int) attributeNumber,
-								(char *) constValue,
-								(char *) constFlag,
-								NULL);
+#endif
+		}
+		else
+			result = (float64) fmgr(oprrest,
+									(char *) operatorObjectId,
+									(char *) indrelid,
+									(char *) (int) attributeNumber,
+									(char *) constValue,
+									(char *) constFlag,
+									NULL);
 	}
 
 	if (!PointerIsValid(result))
@@ -473,18 +485,31 @@ btreenpage(Oid operatorObjectId,
 		 * don't want to miss the benefits of a good selectivity estimate.)
 		 */
 		if (!oprrest)
+		{
+#if 1
+			/*
+			 * XXX temporary fix for 6.5: rtree operators are missing their
+			 * selectivity estimators, so return a default estimate instead.
+			 * Ugh.
+			 */
+			tempData = 0.5;
+			temp = &tempData;
+#else
 			elog(ERROR,
-				 "Operator %u must have a restriction selectivity estimator to be used in a btree index",
+				 "Operator %u must have a restriction selectivity estimator to be used in an index",
 				 operatorObjectId);
-
-		temp = (float64) fmgr(oprrest,
-							  (char *) operatorObjectId,
-							  (char *) indrelid,
-							  (char *) (int) attributeNumber,
-							  (char *) constValue,
-							  (char *) constFlag,
-							  NULL);
+#endif
+		}
+		else
+			temp = (float64) fmgr(oprrest,
+								  (char *) operatorObjectId,
+								  (char *) indrelid,
+								  (char *) (int) attributeNumber,
+								  (char *) constValue,
+								  (char *) constFlag,
+								  NULL);
 	}
+
 	atp = SearchSysCacheTuple(RELOID,
 							  ObjectIdGetDatum(indexrelid),
 							  0, 0, 0);
