@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.21 2000/04/16 20:04:51 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.22 2000/07/07 19:24:38 petere Exp $
  */
 #include "postgres.h"
 #include "describe.h"
@@ -44,10 +44,10 @@ describeAggregates(const char *name)
 	 * types ones that work on all
 	 */
 	strcpy(buf,
-		   "SELECT a.aggname AS \"Name\", t.typname AS \"Type\",\n"
+		   "SELECT a.aggname AS \"Name\", format_type(a.aggbasetype, NULL) AS \"Type\",\n"
 		   "  obj_description(a.oid) as \"Description\"\n"
-		   "FROM pg_aggregate a, pg_type t\n"
-		   "WHERE a.aggbasetype = t.oid\n"
+		   "FROM pg_aggregate a\n"
+		   "WHERE a.aggbasetype <> 0\n"
 		);
 
 	if (name)
@@ -149,13 +149,16 @@ describeFunctions(const char *name, bool verbose)
 bool
 describeTypes(const char *name, bool verbose)
 {
-	char		buf[256 + REGEXP_CUTOFF];
+	char		buf[384 + 2 * REGEXP_CUTOFF];
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 
-	strcpy(buf, "SELECT t.typname AS \"Type\"");
+	strcpy(buf, "SELECT format_type(t.oid, NULL) AS \"Type\"");
 	if (verbose)
+	{
+		strcat(buf, ",\n  t.typname AS \"Internal name\"");
 		strcat(buf, ",\n  (CASE WHEN t.typlen = -1 THEN 'var'::text ELSE t.typlen::text END) as \"Size\"");
+	}
 	strcat(buf, ",\n  obj_description(t.oid) as \"Description\"");
 
 	/*
@@ -166,11 +169,14 @@ describeTypes(const char *name, bool verbose)
 
 	if (name)
 	{
-		strcat(buf, "  AND t.typname ~ '^");
+		/* accept either internal or external type name */
+		strcat(buf, "  AND (format_type(t.oid, NULL) ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
-		strcat(buf, "' ");
+		strcat(buf, "' OR t.typname ~ '^");
+		strncat(buf, name, REGEXP_CUTOFF);
+		strcat(buf, "')");
 	}
-	strcat(buf, "ORDER BY t.typname;");
+	strcat(buf, "\nORDER BY \"Type\";");
 
 	res = PSQLexec(buf);
 	if (!res)
@@ -198,18 +204,13 @@ describeOperators(const char *name)
 
 	strcpy(buf,
 		   "SELECT o.oprname AS \"Op\",\n"
-		   "       t1.typname AS \"Left arg\",\n"
-		   "       t2.typname AS \"Right arg\",\n"
-		   "       t0.typname AS \"Result\",\n"
+		   "       format_type(o.oprleft, NULL) AS \"Left arg\",\n"
+		   "       format_type(o.oprright, NULL) AS \"Right arg\",\n"
+		   "       format_type(p.prorettype, NULL) AS \"Result\",\n"
 		   "       obj_description(p.oid) as \"Description\"\n"
-		   "FROM   pg_proc p, pg_type t0,\n"
-		   "       pg_type t1, pg_type t2,\n"
-		   "       pg_operator o\n"
-		   "WHERE  p.prorettype = t0.oid AND\n"
-		   "       RegprocToOid(o.oprcode) = p.oid AND\n"
-		   "       p.pronargs = 2 AND\n"
-		   "       o.oprleft = t1.oid AND\n"
-		   "       o.oprright = t2.oid\n");
+		   "FROM   pg_proc p, pg_operator o\n"
+		   "WHERE  RegprocToOid(o.oprcode) = p.oid AND\n"
+		   "       p.pronargs = 2\n");
 	if (name)
 	{
 		strcat(buf, "  AND o.oprname = '");
@@ -220,14 +221,12 @@ describeOperators(const char *name)
 	strcat(buf, "\nUNION\n\n"
 		   "SELECT o.oprname as \"Op\",\n"
 		   "       ''::name AS \"Left arg\",\n"
-		   "       t1.typname AS \"Right arg\",\n"
-		   "       t0.typname AS \"Result\",\n"
+		   "       format_type(o.oprright, NULL) AS \"Right arg\",\n"
+		   "       format_type(o.oprresult, NULL) AS \"Result\",\n"
 		   "       obj_description(p.oid) as \"Description\"\n"
-		   "FROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
+		   "FROM   pg_operator o, pg_proc p\n"
 		   "WHERE  RegprocToOid(o.oprcode) = p.oid AND\n"
-		   "       o.oprresult = t0.oid AND\n"
-		   "       o.oprkind = 'l' AND\n"
-		   "       o.oprright = t1.oid\n");
+		   "       o.oprkind = 'l'\n");
 	if (name)
 	{
 		strcat(buf, "AND o.oprname = '");
@@ -237,15 +236,13 @@ describeOperators(const char *name)
 
 	strcat(buf, "\nUNION\n\n"
 		   "SELECT o.oprname  as \"Op\",\n"
-		   "       t1.typname AS \"Left arg\",\n"
+		   "       format_type(o.oprleft, NULL) AS \"Left arg\",\n"
 		   "       ''::name AS \"Right arg\",\n"
-		   "       t0.typname AS \"Result\",\n"
+		   "       format_type(o.oprresult, NULL) AS \"Result\",\n"
 		   "       obj_description(p.oid) as \"Description\"\n"
-		   "FROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
+		   "FROM   pg_operator o, pg_proc p\n"
 		   "WHERE  RegprocToOid(o.oprcode) = p.oid AND\n"
-		   "       o.oprresult = t0.oid AND\n"
-		   "       o.oprkind = 'r' AND\n"
-		   "       o.oprleft = t1.oid\n");
+		   "       o.oprkind = 'r'\n");
 	if (name)
 	{
 		strcat(buf, "AND o.oprname = '");
@@ -420,7 +417,7 @@ objectDescription(const char *object)
 
 	/* Type description */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT t.typname as \"Name\", 'type'::text as \"Object\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT format_type(t.oid, NULL) as \"Name\", 'type'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_type t, pg_description d\n"
 		   "WHERE t.oid = d.objoid\n");
 	if (object)
@@ -589,13 +586,13 @@ describeTableDetails(const char *name, bool desc)
 
 
 	/* Get column info */
-	strcpy(buf, "SELECT a.attname, t.typname, a.attlen, a.atttypmod, a.attnotnull, a.atthasdef, a.attnum");
+	strcpy(buf, "SELECT a.attname, format_type(a.atttypid, a.atttypmod), a.attnotnull, a.atthasdef, a.attnum");
 	if (desc)
 		strcat(buf, ", obj_description(a.oid)");
-	strcat(buf, "\nFROM pg_class c, pg_attribute a, pg_type t\n"
+	strcat(buf, "\nFROM pg_class c, pg_attribute a\n"
 		   "WHERE c.relname = '");
 	strncat(buf, name, NAMEDATALEN);
-	strcat(buf, "'\n  AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid\n"
+	strcat(buf, "'\n  AND a.attnum > 0 AND a.attrelid = c.oid\n"
 		   "ORDER BY a.attnum");
 
 	res = PSQLexec(buf);
@@ -628,61 +625,12 @@ describeTableDetails(const char *name, bool desc)
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		int4		attypmod = atoi(PQgetvalue(res, i, 3));
-		const char *attype = PQgetvalue(res, i, 1);
-		const char *typename;
-		bool		isarray = false;
-
 		/* Name */
 		cells[i * cols + 0] = PQgetvalue(res, i, 0);	/* don't free this
 														 * afterwards */
-
 		/* Type */
-		if (attype[0] == '_')
-		{
-			isarray = true;
-			attype++;
-		}
-		/* (convert some internal type names to SQL'ish) */
-		if (strcmp(attype, "int2") == 0)
-			typename = "smallint";
-		else if (strcmp(attype, "int4") == 0)
-			typename = "integer";
-		else if (strcmp(attype, "int8") == 0)
-			typename = "bigint";
-		else if (strcmp(attype, "bool") == 0)
-			typename = "boolean";
-		else
-			typename = attype;
-		/* more might need to be added when date/time types are sorted out */
-
-		cells[i * cols + 1] = xmalloc(NAMEDATALEN + 16);
-		if (strcmp(typename, "bpchar") == 0)
-		{
-			if (attypmod != -1)
-				sprintf(cells[i * cols + 1], "char(%d)", attypmod - VARHDRSZ);
-			else
-				sprintf(cells[i * cols + 1], "char()");
-		}
-		else if (strcmp(typename, "varchar") == 0)
-		{
-			if (attypmod != -1)
-				sprintf(cells[i * cols + 1], "varchar(%d)", attypmod - VARHDRSZ);
-			else
-				sprintf(cells[i * cols + 1], "varchar()");
-		}
-		else if (strcmp(typename, "numeric") == 0)
-		{
-			sprintf(cells[i * cols + 1], "numeric(%d,%d)",
-					((attypmod - VARHDRSZ) >> 16) & 0xffff,
-					(attypmod - VARHDRSZ) & 0xffff);
-		}
-		else
-			strcpy(cells[i * cols + 1], typename);
-
-		if (isarray)
-			strcat(cells[i * cols + 1], "[]");
-
+		cells[i * cols + 1] = PQgetvalue(res, i, 1);	/* don't free this
+														 * either*/
 
 		/* Extra: not null and default */
 		/* (I'm cutting off the 'default' string at 128) */
@@ -690,17 +638,17 @@ describeTableDetails(const char *name, bool desc)
 		{
 			cells[i * cols + 2] = xmalloc(128 + 128);
 			cells[i * cols + 2][0] = '\0';
-			if (strcmp(PQgetvalue(res, i, 4), "t") == 0)
+			if (strcmp(PQgetvalue(res, i, 2), "t") == 0)
 				strcat(cells[i * cols + 2], "not null");
 
 			/* handle "default" here */
-			if (strcmp(PQgetvalue(res, i, 5), "t") == 0)
+			if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
 			{
 				PGresult   *result;
 
 				sprintf(buf, "SELECT substring(d.adsrc for 128) FROM pg_attrdef d, pg_class c\n"
 						"WHERE c.relname = '%s' AND c.oid = d.adrelid AND d.adnum = %s",
-						name, PQgetvalue(res, i, 6));
+						name, PQgetvalue(res, i, 4));
 
 				result = PSQLexec(buf);
 				if (!result)
@@ -721,7 +669,7 @@ describeTableDetails(const char *name, bool desc)
 
 		/* Description */
 		if (desc)
-			cells[i * cols + cols - 1] = PQgetvalue(res, i, 7);
+			cells[i * cols + cols - 1] = PQgetvalue(res, i, 5);
 	}
 
 	/* Make title */
@@ -926,7 +874,6 @@ describeTableDetails(const char *name, bool desc)
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		free(cells[i * cols + 1]);
 		if (tableinfo.relkind == 'r')
 			free(cells[i * cols + 2]);
 	}

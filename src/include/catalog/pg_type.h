@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.91 2000/07/06 05:48:27 tgl Exp $
+ * $Id: pg_type.h,v 1.92 2000/07/07 19:24:41 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,13 +40,13 @@ CATALOG(pg_type) BOOTSTRAP
 {
 	NameData	typname;
 	int4		typowner;
-	int2		typlen;
 
 	/*
 	 * typlen is the number of bytes we use to represent a value of this
 	 * type, e.g. 4 for an int4.  But for a variable length type, typlen
 	 * is -1.
 	 */
+	int2		typlen;
 	int2		typprtlen;
 
 	/*
@@ -60,7 +60,6 @@ CATALOG(pg_type) BOOTSTRAP
 	 * true for type float4, for example.
 	 */
 	bool		typbyval;
-	char		typtype;
 
 	/*
 	 * typtype is 'b' for a basic type and 'c' for a catalog type (ie a
@@ -68,21 +67,26 @@ CATALOG(pg_type) BOOTSTRAP
 	 * in pg_class. (Why do we need an entry in pg_type for classes,
 	 * anyway?)
 	 */
+	char		typtype;
 	bool		typisdefined;
 	char		typdelim;
 	Oid			typrelid;		/* 0 if not a class type */
-	Oid			typelem;
 
 	/*
-	 * typelem is 0 if this is not an array type.  If this is an array
-	 * type, typelem is the OID of the type of the elements of the array
-	 * (it identifies another row in Table pg_type).
+	 * If typelem is not 0 then it identifies another row in pg_type.
+	 * The current type can then be subscripted like an array yielding
+	 * values of type typelem. A non-zero typelem does not guarantee
+	 * this type to be an array type; ordinary fixed-length types can
+	 * also be subscripted (e.g., oidvector). Variable-length types
+	 * can *not* be turned into pseudo-arrays like that. Hence, the
+	 * way to determine whether a type is an array type is typelem !=
+	 * 0 and typlen < 0.
 	 */
+	Oid			typelem;
 	regproc		typinput;
 	regproc		typoutput;
 	regproc		typreceive;
 	regproc		typsend;
-	char		typalign;
 
 	/* ----------------
 	 * typalign is the alignment required when storing a value of this
@@ -106,7 +110,7 @@ CATALOG(pg_type) BOOTSTRAP
 	 * compiler will lay out the field in a struct representing a table row.
 	 * ----------------
 	 */
-	char		typstorage;
+	char		typalign;
 
 	/* ----------------
 	 * typstorage tells if the type is prepared for toasting and what
@@ -118,6 +122,8 @@ CATALOG(pg_type) BOOTSTRAP
 	 * 'm' MAIN       like 'x' but try to keep in main tuple
 	 * ----------------
 	 */
+	char		typstorage;
+
 	text		typdefault;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_type;
 
@@ -168,7 +174,7 @@ DATA(insert OID = 16 (	bool	   PGUID  1   1 t b t \054 0   0 boolin boolout bool
 DESCR("boolean, 'true'/'false'");
 #define BOOLOID			16
 
-DATA(insert OID = 17 (	bytea	   PGUID -1  -1 f b t \054 0  18 byteain byteaout byteain byteaout i p _null_ ));
+DATA(insert OID = 17 (	bytea	   PGUID -1  -1 f b t \054 0  0 byteain byteaout byteain byteaout i p _null_ ));
 DESCR("variable-length string, binary values escaped");
 #define BYTEAOID		17
 
@@ -200,7 +206,7 @@ DATA(insert OID = 24 (	regproc    PGUID  4  16 t b t \054 0   0 regprocin regpro
 DESCR("registered procedure");
 #define REGPROCOID		24
 
-DATA(insert OID = 25 (	text	   PGUID -1  -1 f b t \054 0  18 textin textout textin textout i x _null_ ));
+DATA(insert OID = 25 (	text	   PGUID -1  -1 f b t \054 0  0 textin textout textin textout i x _null_ ));
 DESCR("variable-length string, no limit specified");
 #define TEXTOID			25
 
@@ -261,7 +267,7 @@ DESCR("geometric point '(x, y)'");
 DATA(insert OID = 601 (  lseg	   PGUID 32  48 f b t \054 0 600 lseg_in lseg_out lseg_in lseg_out d p _null_ ));
 DESCR("geometric line segment '(pt1,pt2)'");
 #define LSEGOID			601
-DATA(insert OID = 602 (  path	   PGUID -1  -1 f b t \054 0 600 path_in path_out path_in path_out d p _null_ ));
+DATA(insert OID = 602 (  path	   PGUID -1  -1 f b t \054 0 0 path_in path_out path_in path_out d p _null_ ));
 DESCR("geometric path '(pt1,...)'");
 #define PATHOID			602
 DATA(insert OID = 603 (  box	   PGUID 32 100 f b t \073 0 600 box_in box_out box_in box_out d p _null_ ));
@@ -296,7 +302,7 @@ DESCR("relative, limited-range time interval (Unix delta time)");
 DATA(insert OID = 704 (  tinterval PGUID 12  47 f b t \054 0   0 tintervalin tintervalout tintervalin tintervalout i p _null_ ));
 DESCR("(abstime,abstime), time interval");
 #define TINTERVALOID	704
-DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout textin textout i p _null_ ));
+DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   0 textin textout textin textout i p _null_ ));
 DESCR("");
 #define UNKNOWNOID		705
 
@@ -362,10 +368,10 @@ DATA(insert OID = 1034 (  _aclitem	 PGUID -1 -1 f b t \054 0 1033 array_in array
 DATA(insert OID = 1040 (  _macaddr	 PGUID -1 -1 f b t \054 0  829 array_in array_out array_in array_out i p _null_ ));
 DATA(insert OID = 1041 (  _inet    PGUID -1 -1 f b t \054 0  869 array_in array_out array_in array_out i p _null_ ));
 DATA(insert OID = 651  (  _cidr    PGUID -1 -1 f b t \054 0  650 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	18 bpcharin bpcharout bpcharin bpcharout i p _null_ ));
+DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	0 bpcharin bpcharout bpcharin bpcharout i p _null_ ));
 DESCR("char(length), blank-padded string, fixed storage length");
 #define BPCHAROID		1042
-DATA(insert OID = 1043 ( varchar	 PGUID -1  -1 f b t \054 0	18 varcharin varcharout varcharin varcharout i p _null_ ));
+DATA(insert OID = 1043 ( varchar	 PGUID -1  -1 f b t \054 0	0 varcharin varcharout varcharin varcharout i p _null_ ));
 DESCR("varchar(length), non-blank-padded string, variable storage length");
 #define VARCHAROID		1043
 

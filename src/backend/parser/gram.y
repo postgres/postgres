@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.175 2000/07/03 23:09:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.176 2000/07/07 19:24:35 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5779,6 +5779,8 @@ xlateSqlType(char *name)
 		return "int4";
 	else if (strcmp(name, "smallint") == 0)
 		return "int2";
+	else if (strcmp(name, "bigint") == 0)
+		return "int8";
 	else if ((strcmp(name, "real") == 0)
 			 || (strcmp(name, "float") == 0))
 		return "float8";

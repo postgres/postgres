@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.37 2000/05/29 05:45:20 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.38 2000/07/07 19:24:37 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ endif
 endif
 
 OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o chunk.o \
-	date.o datetime.o datum.o filename.o float.o \
+	date.o datetime.o datum.o filename.o float.o format_type.o \
 	geo_ops.o geo_selfuncs.o int.o int8.o like.o lztext.o \
 	misc.o nabstime.o name.o not_in.o numeric.o numutils.o \
 	oid.o oracle_compat.o \
