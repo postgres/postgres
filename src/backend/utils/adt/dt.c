@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.40 1997/09/08 21:48:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.41 1997/09/20 16:20:29 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ datetime_in(char *str)
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		elog(WARN, "Bad datetime external representation %s", str);
+		elog(WARN, "Bad datetime external representation '%s'", str);
 
 	result = PALLOCTYPE(DateTime);
 
@@ -123,7 +123,7 @@ datetime_in(char *str)
 	{
 		case DTK_DATE:
 			if (tm2datetime(tm, fsec, &tz, result) != 0)
-				elog(WARN, "Datetime out of range %s", str);
+				elog(WARN, "Datetime out of range '%s'", str);
 
 #ifdef DATEDEBUG
 			printf("datetime_in- date is %f\n", *result);
@@ -243,7 +243,7 @@ timespan_in(char *str)
 #if FALSE
 				TIMESPAN_INVALID(span);
 #endif
-				elog(WARN, "Bad timespan external representation %s", str);
+				elog(WARN, "Bad timespan external representation '%s'", str);
 			}
 			break;
 
@@ -1488,7 +1488,7 @@ datetime_trunc(text *units, DateTime *datetime)
 					break;
 
 				default:
-					elog(WARN, "Datetime units %s not supported", lowunits);
+					elog(WARN, "Datetime units '%s' not supported", lowunits);
 					result = NULL;
 			}
 
@@ -1521,7 +1521,7 @@ datetime_trunc(text *units, DateTime *datetime)
 			}
 
 			if (tm2datetime(tm, fsec, &tz, result) != 0)
-				elog(WARN, "Unable to truncate datetime to %s", lowunits);
+				elog(WARN, "Unable to truncate datetime to '%s'", lowunits);
 
 #if FALSE
 		}
@@ -1534,7 +1534,7 @@ datetime_trunc(text *units, DateTime *datetime)
 		}
 		else
 		{
-			elog(WARN, "Datetime units %s not recognized", lowunits);
+			elog(WARN, "Datetime units '%s' not recognized", lowunits);
 			result = NULL;
 		}
 	}
@@ -1631,12 +1631,12 @@ timespan_trunc(text *units, TimeSpan *timespan)
 					break;
 
 				default:
-					elog(WARN, "Timespan units %s not supported", lowunits);
+					elog(WARN, "Timespan units '%s' not supported", lowunits);
 					result = NULL;
 			}
 
 			if (tm2timespan(tm, fsec, result) != 0)
-				elog(WARN, "Unable to truncate timespan to %s", lowunits);
+				elog(WARN, "Unable to truncate timespan to '%s'", lowunits);
 
 		}
 		else
@@ -1660,7 +1660,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 	}
 	else
 	{
-		elog(WARN, "Timespan units %s not recognized", units);
+		elog(WARN, "Timespan units '%s' not recognized", units);
 		result = NULL;
 	}
 
@@ -1782,7 +1782,7 @@ datetime_part(text *units, DateTime *datetime)
 					break;
 
 				default:
-					elog(WARN, "Datetime units %s not supported", lowunits);
+					elog(WARN, "Datetime units '%s' not supported", lowunits);
 					*result = 0;
 			}
 
@@ -1804,14 +1804,14 @@ datetime_part(text *units, DateTime *datetime)
 					break;
 
 				default:
-					elog(WARN, "Datetime units %s not supported", lowunits);
+					elog(WARN, "Datetime units '%s' not supported", lowunits);
 					*result = 0;
 			}
 
 		}
 		else
 		{
-			elog(WARN, "Datetime units %s not recognized", lowunits);
+			elog(WARN, "Datetime units '%s' not recognized", lowunits);
 			*result = 0;
 		}
 	}
@@ -1925,7 +1925,7 @@ timespan_part(text *units, TimeSpan *timespan)
 					break;
 
 				default:
-					elog(WARN, "Timespan units %s not yet supported", units);
+					elog(WARN, "Timespan units '%s' not yet supported", units);
 					result = NULL;
 			}
 
@@ -1949,7 +1949,7 @@ timespan_part(text *units, TimeSpan *timespan)
 	}
 	else
 	{
-		elog(WARN, "Timespan units %s not recognized", units);
+		elog(WARN, "Timespan units '%s' not recognized", units);
 		*result = 0;
 	}
 
@@ -2039,7 +2039,7 @@ datetime_zone(text *zone, DateTime *datetime)
 	}
 	else
 	{
-		elog(WARN, "Time zone %s not recognized", lowzone);
+		elog(WARN, "Time zone '%s' not recognized", lowzone);
 		result = NULL;
 	}
 
@@ -2066,237 +2066,221 @@ datetime_zone(text *zone, DateTime *datetime)
  */
 static datetkn datetktbl[] = {
 /*		text			token	lexval */
-	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
-	{"acsst", DTZ, 63},			/* Cent. Australia */
-	{"acst", TZ, 57},			/* Cent. Australia */
-	{DA_D, ADBC, AD},			/* "ad" for years >= 0 */
-	{"abstime", IGNORE, 0},		/* "abstime" for pre-v6.1 "Invalid
-								 * Abstime" */
-	{"adt", DTZ, NEG(18)},		/* Atlantic Daylight Time */
-	{"aesst", DTZ, 66},			/* E. Australia */
-	{"aest", TZ, 60},			/* Australia Eastern Std Time */
-	{"ahst", TZ, 60},			/* Alaska-Hawaii Std Time */
-	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
-	{"am", AMPM, AM},
-	{"apr", MONTH, 4},
-	{"april", MONTH, 4},
-	{"ast", TZ, NEG(24)},		/* Atlantic Std Time (Canada) */
-	{"at", IGNORE, 0},			/* "at" (throwaway) */
-	{"aug", MONTH, 8},
-	{"august", MONTH, 8},
-	{"awsst", DTZ, 54},			/* W. Australia */
-	{"awst", TZ, 48},			/* W. Australia */
-	{DB_C, ADBC, BC},			/* "bc" for years < 0 */
-	{"bst", TZ, 6},				/* British Summer Time */
-	{"bt", TZ, 18},				/* Baghdad Time */
-	{"cadt", DTZ, 63},			/* Central Australian DST */
-	{"cast", TZ, 57},			/* Central Australian ST */
-	{"cat", TZ, NEG(60)},		/* Central Alaska Time */
-	{"cct", TZ, 48},			/* China Coast */
-	{"cdt", DTZ, NEG(30)},		/* Central Daylight Time */
-	{"cet", TZ, 6},				/* Central European Time */
-	{"cetdst", DTZ, 12},		/* Central European Dayl.Time */
-	{"cst", TZ, NEG(36)},		/* Central Standard Time */
-	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
-	{"dec", MONTH, 12},
-	{"december", MONTH, 12},
-	{"dnt", TZ, 6},				/* Dansk Normal Tid */
-	{"dow", RESERV, DTK_DOW},	/* day of week */
-	{"dst", DTZMOD, 6},
-	{"east", TZ, NEG(60)},		/* East Australian Std Time */
-	{"edt", DTZ, NEG(24)},		/* Eastern Daylight Time */
-	{"eet", TZ, 12},			/* East. Europe, USSR Zone 1 */
-	{"eetdst", DTZ, 18},		/* Eastern Europe */
-	{EPOCH, RESERV, DTK_EPOCH}, /* "epoch" reserved for system epoch time */
+	{EARLY,			RESERV,		DTK_EARLY},		/* "-infinity" reserved for "early time" */
+	{"acsst",		DTZ,		63},			/* Cent. Australia */
+	{"acst",		TZ,			57},			/* Cent. Australia */
+	{DA_D,			ADBC,		AD},			/* "ad" for years >= 0 */
+	{"abstime",		IGNORE,		0},				/* "abstime" for pre-v6.1 "Invalid Abstime" */
+	{"adt",			DTZ,		NEG(18)},		/* Atlantic Daylight Time */
+	{"aesst",		DTZ,		66},			/* E. Australia */
+	{"aest",		TZ,			60},			/* Australia Eastern Std Time */
+	{"ahst",		TZ,			60},			/* Alaska-Hawaii Std Time */
+	{"allballs",	RESERV,		DTK_ZULU},		/* 00:00:00 */
+	{"am",			AMPM,		AM},
+	{"apr",			MONTH,		4},
+	{"april",		MONTH,		4},
+	{"ast",			TZ,			NEG(24)},		/* Atlantic Std Time (Canada) */
+	{"at",			IGNORE,		0},				/* "at" (throwaway) */
+	{"aug",			MONTH,		8},
+	{"august",		MONTH,		8},
+	{"awsst",		DTZ,		54},			/* W. Australia */
+	{"awst",		TZ,			48},			/* W. Australia */
+	{DB_C,			ADBC,		BC},			/* "bc" for years < 0 */
+	{"bst",			TZ,			6},				/* British Summer Time */
+	{"bt",			TZ,			18},			/* Baghdad Time */
+	{"cadt",		DTZ,		63},			/* Central Australian DST */
+	{"cast",		TZ,			57},			/* Central Australian ST */
+	{"cat",			TZ,			NEG(60)},		/* Central Alaska Time */
+	{"cct",			TZ,			48},			/* China Coast */
+	{"cdt",			DTZ,		NEG(30)},		/* Central Daylight Time */
+	{"cet",			TZ,			6},				/* Central European Time */
+	{"cetdst",		DTZ,		12},			/* Central European Dayl.Time */
+	{"cst",			TZ,			NEG(36)},		/* Central Standard Time */
+	{DCURRENT,		RESERV,		DTK_CURRENT},	/* "current" is always now */
+	{"dec",			MONTH,		12},
+	{"december",	MONTH,		12},
+	{"dnt",			TZ,			6},				/* Dansk Normal Tid */
+	{"dow",			RESERV,		DTK_DOW},		/* day of week */
+	{"dst",			DTZMOD,		6},
+	{"east",		TZ,			NEG(60)},		/* East Australian Std Time */
+	{"edt",			DTZ,		NEG(24)},		/* Eastern Daylight Time */
+	{"eet",			TZ,			12},			/* East. Europe, USSR Zone 1 */
+	{"eetdst",		DTZ,		18},			/* Eastern Europe */
+	{EPOCH,			RESERV,		DTK_EPOCH},		/* "epoch" reserved for system epoch time */
 #if USE_AUSTRALIAN_RULES
-	{"est", TZ, 60},			/* Australia Eastern Std Time */
+	{"est",			TZ,			60},			/* Australia Eastern Std Time */
 #else
-	{"est", TZ, NEG(30)},		/* Eastern Standard Time */
+	{"est",			TZ,			NEG(30)},		/* Eastern Standard Time */
 #endif
-	{"feb", MONTH, 2},
-	{"february", MONTH, 2},
-	{"fri", DOW, 5},
-	{"friday", DOW, 5},
-	{"fst", TZ, 6},				/* French Summer Time */
-	{"fwt", DTZ, 12},			/* French Winter Time  */
-	{"gmt", TZ, 0},				/* Greenwish Mean Time */
-	{"gst", TZ, 60},			/* Guam Std Time, USSR Zone 9 */
-	{"hdt", DTZ, NEG(54)},		/* Hawaii/Alaska */
-	{"hmt", DTZ, 18},			/* Hellas ? ? */
-	{"hst", TZ, NEG(60)},		/* Hawaii Std Time */
-	{"idle", TZ, 72},			/* Intl. Date Line, East */
-	{"idlw", TZ, NEG(72)},		/* Intl. Date Line, West */
-	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
-	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for invalid
-										 * time */
-	{"ist", TZ, 12},			/* Israel */
-	{"it", TZ, 22},				/* Iran Time */
-	{"jan", MONTH, 1},
-	{"january", MONTH, 1},
-	{"jst", TZ, 54},			/* Japan Std Time,USSR Zone 8 */
-	{"jt", TZ, 45},				/* Java Time */
-	{"jul", MONTH, 7},
-	{"july", MONTH, 7},
-	{"jun", MONTH, 6},
-	{"june", MONTH, 6},
-	{"kst", TZ, 54},			/* Korea Standard Time */
-	{"ligt", TZ, 60},			/* From Melbourne, Australia */
-	{"mar", MONTH, 3},
-	{"march", MONTH, 3},
-	{"may", MONTH, 5},
-	{"mdt", DTZ, NEG(36)},		/* Mountain Daylight Time */
-	{"mest", DTZ, 12},			/* Middle Europe Summer Time */
-	{"met", TZ, 6},				/* Middle Europe Time */
-	{"metdst", DTZ, 12},		/* Middle Europe Daylight Time */
-	{"mewt", TZ, 6},			/* Middle Europe Winter Time */
-	{"mez", TZ, 6},				/* Middle Europe Zone */
-	{"mon", DOW, 1},
-	{"monday", DOW, 1},
-	{"mst", TZ, NEG(42)},		/* Mountain Standard Time */
-	{"mt", TZ, 51},				/* Moluccas Time */
-	{"ndt", DTZ, NEG(15)},		/* Nfld. Daylight Time */
-	{"nft", TZ, NEG(21)},		/* Newfoundland Standard Time */
-	{"nor", TZ, 6},				/* Norway Standard Time */
-	{"nov", MONTH, 11},
-	{"november", MONTH, 11},
-	{NOW, RESERV, DTK_NOW},		/* current transaction time */
-	{"nst", TZ, NEG(21)},		/* Nfld. Standard Time */
-	{"nt", TZ, NEG(66)},		/* Nome Time */
-	{"nzdt", DTZ, 78},			/* New Zealand Daylight Time */
-	{"nzst", TZ, 72},			/* New Zealand Standard Time */
-	{"nzt", TZ, 72},			/* New Zealand Time */
-	{"oct", MONTH, 10},
-	{"october", MONTH, 10},
-	{"on", IGNORE, 0},			/* "on" (throwaway) */
-	{"pdt", DTZ, NEG(42)},		/* Pacific Daylight Time */
-	{"pm", AMPM, PM},
-	{"pst", TZ, NEG(48)},		/* Pacific Standard Time */
-	{"sadt", DTZ, 63},			/* S. Australian Dayl. Time */
-	{"sast", TZ, 57},			/* South Australian Std Time */
-	{"sat", DOW, 6},
-	{"saturday", DOW, 6},
-	{"sep", MONTH, 9},
-	{"sept", MONTH, 9},
-	{"september", MONTH, 9},
-	{"set", TZ, NEG(6)},		/* Seychelles Time ?? */
-	{"sst", DTZ, 12},			/* Swedish Summer Time */
-	{"sun", DOW, 0},
-	{"sunday", DOW, 0},
-	{"swt", TZ, 6},				/* Swedish Winter Time	*/
-	{"thu", DOW, 4},
-	{"thur", DOW, 4},
-	{"thurs", DOW, 4},
-	{"thursday", DOW, 4},
-	{TODAY, RESERV, DTK_TODAY}, /* midnight */
-	{TOMORROW, RESERV, DTK_TOMORROW},	/* tomorrow midnight */
-	{"tue", DOW, 2},
-	{"tues", DOW, 2},
-	{"tuesday", DOW, 2},
-	{"undefined", RESERV, DTK_INVALID}, /* "undefined" pre-v6.1 invalid
-										 * time */
-	{"ut", TZ, 0},
-	{"utc", TZ, 0},
-	{"wadt", DTZ, 48},			/* West Australian DST */
-	{"wast", TZ, 42},			/* West Australian Std Time */
-	{"wat", TZ, NEG(6)},		/* West Africa Time */
-	{"wdt", DTZ, 54},			/* West Australian DST */
-	{"wed", DOW, 3},
-	{"wednesday", DOW, 3},
-	{"weds", DOW, 3},
-	{"wet", TZ, 0},				/* Western Europe */
-	{"wetdst", DTZ, 6},			/* Western Europe */
-	{"wst", TZ, 48},			/* West Australian Std Time */
-	{"ydt", DTZ, NEG(48)},		/* Yukon Daylight Time */
-	{YESTERDAY, RESERV, DTK_YESTERDAY}, /* yesterday midnight */
-	{"yst", TZ, NEG(54)},		/* Yukon Standard Time */
-	{"zp4", TZ, NEG(24)},		/* GMT +4  hours. */
-	{"zp5", TZ, NEG(30)},		/* GMT +5  hours. */
-	{"zp6", TZ, NEG(36)},		/* GMT +6  hours. */
-	{"z", RESERV, DTK_ZULU},	/* 00:00:00 */
-	{ZULU, RESERV, DTK_ZULU},	/* 00:00:00 */
+	{"feb",			MONTH,		2},
+	{"february",	MONTH,		2},
+	{"fri",			DOW,		5},
+	{"friday",		DOW,		5},
+	{"fst",			TZ,			6},				/* French Summer Time */
+	{"fwt",			DTZ,		12},			/* French Winter Time  */
+	{"gmt",			TZ,			0},				/* Greenwish Mean Time */
+	{"gst",			TZ,			60},			/* Guam Std Time, USSR Zone 9 */
+	{"hdt",			DTZ,		NEG(54)},		/* Hawaii/Alaska */
+	{"hmt",			DTZ,		18},			/* Hellas ? ? */
+	{"hst",			TZ,			NEG(60)},		/* Hawaii Std Time */
+	{"idle",		TZ,			72},			/* Intl. Date Line,	East */
+	{"idlw",		TZ,			NEG(72)},		/* Intl. Date Line,,	est */
+	{LATE,			RESERV,		DTK_LATE},		/* "infinity" reserved for "late time" */
+	{INVALID,		RESERV,		DTK_INVALID},	/* "invalid" reserved for invalid time */
+	{"ist",			TZ,			12},			/* Israel */
+	{"it",			TZ,			22},			/* Iran Time */
+	{"jan",			MONTH,		1},
+	{"january",		MONTH,		1},
+	{"jst",			TZ,			54},			/* Japan Std Time,USSR Zone 8 */
+	{"jt",			TZ,			45},			/* Java Time */
+	{"jul",			MONTH,		7},
+	{"july",		MONTH,		7},
+	{"jun",			MONTH,		6},
+	{"june",		MONTH,		6},
+	{"kst",			TZ,			54},			/* Korea Standard Time */
+	{"ligt",		TZ,			60},			/* From Melbourne, Australia */
+	{"mar",			MONTH,		3},
+	{"march",		MONTH,		3},
+	{"may",			MONTH,		5},
+	{"mdt",			DTZ,		NEG(36)},		/* Mountain Daylight Time */
+	{"mest",		DTZ,		12},			/* Middle Europe Summer Time */
+	{"met",			TZ,			6},				/* Middle Europe Time */
+	{"metdst",		DTZ,		12},			/* Middle Europe Daylight Time */
+	{"mewt",		TZ,			6},				/* Middle Europe Winter Time */
+	{"mez",			TZ,			6},				/* Middle Europe Zone */
+	{"mon",			DOW,		1},
+	{"monday",		DOW,		1},
+	{"mst",			TZ,			NEG(42)},		/* Mountain Standard Time */
+	{"mt",			TZ,			51},			/* Moluccas Time */
+	{"ndt",			DTZ,		NEG(15)},		/* Nfld. Daylight Time */
+	{"nft",			TZ,			NEG(21)},		/* Newfoundland Standard Time */
+	{"nor",			TZ,			6},				/* Norway Standard Time */
+	{"nov",			MONTH,		11},
+	{"november",	MONTH,		11},
+	{NOW,			RESERV,		DTK_NOW},		/* current transaction time */
+	{"nst",			TZ,			NEG(21)},		/* Nfld. Standard Time */
+	{"nt",			TZ,			NEG(66)},		/* Nome Time */
+	{"nzdt",		DTZ,		78},			/* New Zealand Daylight Time */
+	{"nzst",		TZ,			72},			/* New Zealand Standard Time */
+	{"nzt",			TZ,			72},			/* New Zealand Time */
+	{"oct",			MONTH,		10},
+	{"october",		MONTH,		10},
+	{"on",			IGNORE,		0},				/* "on" (throwaway) */
+	{"pdt",			DTZ,		NEG(42)},		/* Pacific Daylight Time */
+	{"pm",			AMPM,		PM},
+	{"pst",			TZ,			NEG(48)},		/* Pacific Standard Time */
+	{"sadt",		DTZ,		63},			/* S. Australian Dayl. Time */
+	{"sast",		TZ,			57},			/* South Australian Std Time */
+	{"sat",			DOW,		6},
+	{"saturday",	DOW,		6},
+	{"sep",			MONTH,		9},
+	{"sept",		MONTH,		9},
+	{"september",	MONTH,		9},
+	{"set",			TZ,			NEG(6)},		/* Seychelles Time ?? */
+	{"sst",			DTZ,		12},			/* Swedish Summer Time */
+	{"sun",			DOW,		0},
+	{"sunday",		DOW,		0},
+	{"swt",			TZ,			6},				/* Swedish Winter Time	*/
+	{"thu",			DOW,		4},
+	{"thur",		DOW,		4},
+	{"thurs",		DOW,		4},
+	{"thursday",	DOW,		4},
+	{TODAY,			RESERV,		DTK_TODAY},		/* midnight */
+	{TOMORROW,		RESERV,		DTK_TOMORROW},	/* tomorrow midnight */
+	{"tue",			DOW,		2},
+	{"tues",		DOW,		2},
+	{"tuesday",		DOW,		2},
+	{"undefined",	RESERV,		DTK_INVALID},	/* "undefined" pre-v6.1 invalid time */
+	{"ut",			TZ,			0},
+	{"utc",			TZ,			0},
+	{"wadt",		DTZ,		48},			/* West Australian DST */
+	{"wast",		TZ,			42},			/* West Australian Std Time */
+	{"wat",			TZ,			NEG(6)},		/* West Africa Time */
+	{"wdt",			DTZ,		54},			/* West Australian DST */
+	{"wed",			DOW,		3},
+	{"wednesday",	DOW,		3},
+	{"weds",		DOW,		3},
+	{"wet",			TZ,			0},				/* Western Europe */
+	{"wetdst",		DTZ,		6},				/* Western Europe */
+	{"wst",			TZ,			48},			/* West Australian Std Time */
+	{"ydt",			DTZ,		NEG(48)},		/* Yukon Daylight Time */
+	{YESTERDAY,		RESERV,		DTK_YESTERDAY},	/* yesterday midnight */
+	{"yst",			TZ,			NEG(54)},		/* Yukon Standard Time */
+	{"zp4",			TZ,			NEG(24)},		/* GMT +4  hours. */
+	{"zp5",			TZ,			NEG(30)},		/* GMT +5  hours. */
+	{"zp6",			TZ,			NEG(36)},		/* GMT +6  hours. */
+	{"z",			RESERV,		DTK_ZULU},		/* 00:00:00 */
+	{ZULU,			RESERV,		DTK_ZULU},		/* 00:00:00 */
 };
 
 static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
 static datetkn deltatktbl[] = {
 /*		text			token	lexval */
-	{"@", IGNORE, 0},			/* postgres relative time prefix */
-	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
-	{"c", UNITS, DTK_CENTURY},	/* "century" relative time units */
-	{"cent", UNITS, DTK_CENTURY},		/* "century" relative time units */
-	{"centuries", UNITS, DTK_CENTURY},	/* "centuries" relative time units */
-	{DCENTURY, UNITS, DTK_CENTURY},		/* "century" relative time units */
-	{"d", UNITS, DTK_DAY},		/* "day" relative time units */
-	{DDAY, UNITS, DTK_DAY},		/* "day" relative time units */
-	{"days", UNITS, DTK_DAY},	/* "days" relative time units */
-	{"dec", UNITS, DTK_DECADE}, /* "decade" relative time units */
-	{"decs", UNITS, DTK_DECADE},/* "decades" relative time units */
-	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative time units */
-	{"decades", UNITS, DTK_DECADE},		/* "decades" relative time units */
-	{"h", UNITS, DTK_HOUR},		/* "hour" relative time units */
-	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative time units */
-	{"hours", UNITS, DTK_HOUR}, /* "hours" relative time units */
-	{"hr", UNITS, DTK_HOUR},	/* "hour" relative time units */
-	{"hrs", UNITS, DTK_HOUR},	/* "hours" relative time units */
-	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for invalid
-										 * time */
-	{"m", UNITS, DTK_MINUTE},	/* "minute" relative time units */
-	{"microsecon", UNITS, DTK_MILLISEC},		/* "microsecond" relative
-												 * time units */
-	{"mil", UNITS, DTK_MILLENIUM},		/* "millenium" relative time units */
-	{"mils", UNITS, DTK_MILLENIUM},		/* "millenia" relative time units */
-	{"millenia", UNITS, DTK_MILLENIUM}, /* "millenia" relative time units */
-	{DMILLENIUM, UNITS, DTK_MILLENIUM}, /* "millenium" relative time units */
-	{"millisecon", UNITS, DTK_MILLISEC},		/* "millisecond" relative
-												 * time units */
-	{"min", UNITS, DTK_MINUTE}, /* "minute" relative time units */
-	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
-	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
-	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative time units */
-	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative time units */
-	{"mon", UNITS, DTK_MONTH},	/* "months" relative time units */
-	{"mons", UNITS, DTK_MONTH}, /* "months" relative time units */
-	{DMONTH, UNITS, DTK_MONTH}, /* "month" relative time units */
-	{"months", UNITS, DTK_MONTH},		/* "months" relative time units */
-	{"ms", UNITS, DTK_MILLISEC},/* "millisecond" relative time units */
-	{"msec", UNITS, DTK_MILLISEC},		/* "millisecond" relative time
-										 * units */
-	{DMILLISEC, UNITS, DTK_MILLISEC},	/* "millisecond" relative time
-										 * units */
-	{"mseconds", UNITS, DTK_MILLISEC},	/* "milliseconds" relative time
-										 * units */
-	{"msecs", UNITS, DTK_MILLISEC},		/* "milliseconds" relative time
-										 * units */
-	{"qtr", UNITS, DTK_QUARTER},/* "quarter" relative time units */
-	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative time units */
-	{"reltime", IGNORE, 0},		/* "reltime" for pre-v6.1 "Undefined
-								 * Reltime" */
-	{"s", UNITS, DTK_SECOND},	/* "second" relative time units */
-	{"sec", UNITS, DTK_SECOND}, /* "second" relative time units */
-	{DSECOND, UNITS, DTK_SECOND},		/* "second" relative time units */
-	{"seconds", UNITS, DTK_SECOND},		/* "seconds" relative time units */
-	{"secs", UNITS, DTK_SECOND},/* "seconds" relative time units */
-	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
-	{"tz", UNITS, DTK_TZ},		/* "timezone" time offset */
-	{"undefined", RESERV, DTK_INVALID}, /* "undefined" pre-v6.1 invalid
-										 * time */
-	{"us", UNITS, DTK_MICROSEC},/* "microsecond" relative time units */
-	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative time
-										 * units */
-	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative time
-										 * units */
-	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative time
-										 * units */
-	{"usecs", UNITS, DTK_MICROSEC},		/* "microseconds" relative time
-										 * units */
-	{"w", UNITS, DTK_WEEK},		/* "week" relative time units */
-	{DWEEK, UNITS, DTK_WEEK},	/* "week" relative time units */
-	{"weeks", UNITS, DTK_WEEK}, /* "weeks" relative time units */
-	{"y", UNITS, DTK_YEAR},		/* "year" relative time units */
-	{DYEAR, UNITS, DTK_YEAR},	/* "year" relative time units */
-	{"years", UNITS, DTK_YEAR}, /* "years" relative time units */
-	{"yr", UNITS, DTK_YEAR},	/* "year" relative time units */
-	{"yrs", UNITS, DTK_YEAR},	/* "years" relative time units */
+	{"@",			IGNORE,		0},				/* postgres relative time prefix */
+	{DAGO,			AGO,		0},				/* "ago" indicates negative time offset */
+	{"c",			UNITS,		DTK_CENTURY},	/* "century" relative time units */
+	{"cent",		UNITS,		DTK_CENTURY},	/* "century" relative time units */
+	{"centuries",	UNITS,		DTK_CENTURY},	/* "centuries" relative time units */
+	{DCENTURY,		UNITS,		DTK_CENTURY},	/* "century" relative time units */
+	{"d",			UNITS,		DTK_DAY},		/* "day" relative time units */
+	{DDAY,			UNITS,		DTK_DAY},		/* "day" relative time units */
+	{"days",		UNITS,		DTK_DAY},		/* "days" relative time units */
+	{"dec",			UNITS,		DTK_DECADE},	/* "decade" relative time units */
+	{"decs",		UNITS,		DTK_DECADE},	/* "decades" relative time units */
+	{DDECADE,		UNITS,		DTK_DECADE},	/* "decade" relative time units */
+	{"decades",		UNITS,		DTK_DECADE},	/* "decades" relative time units */
+	{"h",			UNITS,		DTK_HOUR},		/* "hour" relative time units */
+	{DHOUR,			UNITS,		DTK_HOUR},		/* "hour" relative time units */
+	{"hours",		UNITS,		DTK_HOUR},		/* "hours" relative time units */
+	{"hr",			UNITS,		DTK_HOUR},		/* "hour" relative time units */
+	{"hrs",			UNITS,		DTK_HOUR},		/* "hours" relative time units */
+	{INVALID,		RESERV,		DTK_INVALID},	/* "invalid" reserved for invalid time */
+	{"m",			UNITS,		DTK_MINUTE},	/* "minute" relative time units */
+	{"microsecon",	UNITS,		DTK_MILLISEC},	/* "microsecond" relative time units */
+	{"mil",			UNITS,		DTK_MILLENIUM},	/* "millenium" relative time units */
+	{"mils",		UNITS,		DTK_MILLENIUM},	/* "millenia" relative time units */
+	{"millenia",	UNITS,		DTK_MILLENIUM},	/* "millenia" relative time units */
+	{DMILLENIUM,	UNITS,		DTK_MILLENIUM},	/* "millenium" relative time units */
+	{"millisecon",	UNITS,		DTK_MILLISEC},	/* "millisecond" relative time units */
+	{"min",			UNITS,		DTK_MINUTE},	/* "minute" relative time units */
+	{"mins",		UNITS,		DTK_MINUTE},	/* "minutes" relative time units */
+	{"mins",		UNITS,		DTK_MINUTE},	/* "minutes" relative time units */
+	{DMINUTE,		UNITS,		DTK_MINUTE},	/* "minute" relative time units */
+	{"minutes",		UNITS,		DTK_MINUTE},	/* "minutes" relative time units */
+	{"mon",			UNITS,		DTK_MONTH},		/* "months" relative time units */
+	{"mons",		UNITS,		DTK_MONTH},		/* "months" relative time units */
+	{DMONTH,		UNITS,		DTK_MONTH},		/* "month" relative time units */
+	{"months",		UNITS,		DTK_MONTH},		/* "months" relative time units */
+	{"ms",			UNITS,		DTK_MILLISEC},	/* "millisecond" relative time units */
+	{"msec",		UNITS,		DTK_MILLISEC},	/* "millisecond" relative time units */
+	{DMILLISEC,		UNITS,		DTK_MILLISEC},	/* "millisecond" relative time units */
+	{"mseconds",	UNITS,		DTK_MILLISEC},	/* "milliseconds" relative time units */
+	{"msecs",		UNITS,		DTK_MILLISEC},	/* "milliseconds" relative time units */
+	{"qtr",			UNITS,		DTK_QUARTER},	/* "quarter" relative time units */
+	{DQUARTER,		UNITS,		DTK_QUARTER},	/* "quarter" relative time units */
+	{"reltime",		IGNORE,		0},				/* "reltime" for pre-v6.1 "Undefined Reltime" */
+	{"s",			UNITS,		DTK_SECOND},	/* "second" relative time units */
+	{"sec",			UNITS,		DTK_SECOND},	/* "second" relative time units */
+	{DSECOND,		UNITS,		DTK_SECOND},	/* "second" relative time units */
+	{"seconds",		UNITS,		DTK_SECOND},	/* "seconds" relative time units */
+	{"secs",		UNITS,		DTK_SECOND},	/* "seconds" relative time units */
+	{DTIMEZONE,		UNITS,		DTK_TZ},		/* "timezone" time offset */
+	{"tz",			UNITS,		DTK_TZ},		/* "timezone" time offset */
+	{"undefined",	RESERV,		DTK_INVALID},	/* "undefined" pre-v6.1 invalid time */
+	{"us",			UNITS,		DTK_MICROSEC},	/* "microsecond" relative time units */
+	{"usec",		UNITS,		DTK_MICROSEC},	/* "microsecond" relative time units */
+	{DMICROSEC,		UNITS,		DTK_MICROSEC},	/* "microsecond" relative time units */
+	{"useconds",	UNITS,		DTK_MICROSEC},	/* "microseconds" relative time units */
+	{"usecs",		UNITS,		DTK_MICROSEC},	/* "microseconds" relative time units */
+	{"w",			UNITS,		DTK_WEEK},		/* "week" relative time units */
+	{DWEEK,			UNITS,		DTK_WEEK},		/* "week" relative time units */
+	{"weeks",		UNITS,		DTK_WEEK},		/* "weeks" relative time units */
+	{"y",			UNITS,		DTK_YEAR},		/* "year" relative time units */
+	{DYEAR,			UNITS,		DTK_YEAR},		/* "year" relative time units */
+	{"years",		UNITS,		DTK_YEAR},		/* "years" relative time units */
+	{"yr",			UNITS,		DTK_YEAR},		/* "year" relative time units */
+	{"yrs",			UNITS,		DTK_YEAR},		/* "years" relative time units */
 };
 
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
@@ -3719,7 +3703,6 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 
 #if READ_FORWARD
 	int			is_neg = FALSE;
-
 #endif
 
 	int			fmask = 0,
@@ -3734,7 +3717,7 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 
 	*dtype = DTK_DELTA;
 
-	type = SECOND;
+	type = DTK_SECOND;
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
 	tm->tm_mday = 0;
