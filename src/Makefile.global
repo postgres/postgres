@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.50 1996/11/02 09:49:57 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.51 1996/11/03 06:54:10 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -59,7 +59,7 @@
 #	to change it in Makefile.custom.
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
-PORTNAME=	UNDEFINED
+PORTNAME=	BSD44_derived
 
 # Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
 # compiling to a.out (which means you're using the dld dynamic loading 
@@ -71,13 +71,13 @@ LINUX_ELF= 1
 ifdef SRCDIR
 MKDIR= $(SRCDIR)/mk
 else
-SRCDIR=		/usr/local/postgres95/src
+SRCDIR=		/usr/local/pgsql/src
 endif
 
 # For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
-POSTGRESDIR=	/usr/local/postgres95
+POSTGRESDIR=	/usr/local/pgsql
 
 # POSTGRESLOGIN is the login name of the user who gets special
 # privileges within the database.  By default it is "postgres", but
@@ -861,9 +861,13 @@ includedir=	$(HEADERDIR)
 #
 # Flags for CC and LD. (depend on CDEBUG and PROFILE)
 #
+# PostgreSQL should *always* compile with -Wall -Werror enabled
+CFLAGS+=	-Wall -Werror
 
 # Globally pass debugging/optimization/profiling flags based
 # on the options selected above.
+
+
 ifdef CDEBUG
    CFLAGS+= $(CDEBUG)
    LDFLAGS+= $(CDEBUG)
