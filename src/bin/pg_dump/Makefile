@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.54 2004/10/04 18:05:54 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.55 2004/10/04 20:32:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,6 +21,10 @@ OBJS=	pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o \
 
 EXTRA_OBJS = $(top_builddir)/src/backend/parser/keywords.o
 
+# not sure why MinGW needs this but it prevents a link failure
+ifeq ($(PORTNAME), win32)
+EXTRA_OBJS += $(top_builddir)/src/port/exec.o
+endif
 
 all: submake-libpq submake-libpgport submake-backend pg_dump pg_restore pg_dumpall
 
