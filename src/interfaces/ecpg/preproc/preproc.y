@@ -2687,7 +2687,7 @@ LockStmt:  LOCK_P opt_table relation_name opt_lock
 				}
 		;
 
-opt_lock:  lock_type MODE               { $$ = cat2_str($1, make1_str("mode")); }
+opt_lock:  IN lock_type MODE            { $$ = cat3_str(make1_str("in"), $2, make1_str("mode")); }
                 | /*EMPTY*/             { $$ = make1_str("");}
                 ;
 
