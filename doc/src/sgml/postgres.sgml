@@ -157,8 +157,8 @@ Your name here...
    now becoming available in some commercial databases.
    It provides SQL92/SQL3 language support,
    transaction integrity, and type extensibility.
-   <ProductName>PostgreSQL</ProductName> is a public-domain,
-   open source descendant of this original Berkeley code.
+   <ProductName>PostgreSQL</ProductName> is an
+   open-source descendant of this original Berkeley code.
   </Para>
  </Preface>
 
@@ -320,7 +320,7 @@ Omit index until we have some index entries.
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -330,7 +330,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
 sgml-local-ecat-files:nil
 End:
 -->

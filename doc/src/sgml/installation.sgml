@@ -1,10 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.6 1999/06/04 15:51:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.7 1999/12/06 16:37:11 thomas Exp $
 
 Postgres quick Installation Guide.
 - thomas 1998-10-26
 
 $Log: installation.sgml,v $
+Revision 1.7  1999/12/06 16:37:11  thomas
+Remove references to PostgreSQL as "public-domain" since that has a
+ specific meaning wrt copyright (or lack thereof).
+
 Revision 1.6  1999/06/04 15:51:42  thomas
 Add blurb on new docs in release notes.
 Make minor info and markup changes for v6.5 release.
@@ -122,7 +126,7 @@ Your name here...
  now becoming available in some commercial databases.
 It provides SQL92/SQL3 language support,
  transaction integrity, and type extensibility.
- <productname>PostgreSQL</productname> is a public-domain, open source descendant
+ <productname>PostgreSQL</productname> is an open-source descendant
  of this original Berkeley code.
 </para>
 </preface>

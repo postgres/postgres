@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.19 1999/07/22 15:11:04 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.20 1999/12/06 16:37:11 thomas Exp $
 
 Postgres Programmer's Guide.
 
 $Log: programmer.sgml,v $
+Revision 1.20  1999/12/06 16:37:11  thomas
+Remove references to PostgreSQL as "public-domain" since that has a
+ specific meaning wrt copyright (or lack thereof).
+
 Revision 1.19  1999/07/22 15:11:04  thomas
 Complete merge of all old man page information.
 lisp.sgml is a placeholder for Eric Marsden's upcoming contribution.
@@ -143,8 +147,8 @@ Your name here...
    now becoming available in some commercial databases.
    It provides SQL92/SQL3 language support,
    transaction integrity, and type extensibility.
-   <productname>PostgreSQL</productname> is a public-domain, 
-   open source descendant of this original Berkeley code.
+   <productname>PostgreSQL</productname> is an 
+   open-source descendant of this original Berkeley code.
   </para>
  </preface>
 

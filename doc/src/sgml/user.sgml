@@ -93,7 +93,7 @@ Your name here...
    now becoming available in some commercial databases.
    It provides SQL92/SQL3 language support,
    transaction integrity, and type extensibility.
-   <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
+   <ProductName>PostgreSQL</ProductName> is an open-source descendant
    of this original Berkeley code.
   </Para>
  </Preface>

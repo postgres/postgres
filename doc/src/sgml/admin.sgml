@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.17 1999/09/29 05:18:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.18 1999/12/06 16:37:11 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
 - thomas 1998-10-27
 
 $Log: admin.sgml,v $
+Revision 1.18  1999/12/06 16:37:11  thomas
+Remove references to PostgreSQL as "public-domain" since that has a
+ specific meaning wrt copyright (or lack thereof).
+
 Revision 1.17  1999/09/29 05:18:14  thomas
 Strip out some cvs log info.
 
@@ -110,7 +114,7 @@ Your name here...
    now becoming available in some commercial databases.
    It provides SQL92/SQL3 language support,
    transaction integrity, and type extensibility.
-   <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
+   <ProductName>PostgreSQL</ProductName> is an open-source descendant
    of this original Berkeley code.
   </Para>
  </Preface>

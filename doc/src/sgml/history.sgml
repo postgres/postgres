@@ -98,8 +98,8 @@
    <ulink url="http://http.cs.berkeley.edu/~jolly/">Jolly Chen</ulink>
    added a SQL language interpreter to <productname>Postgres</productname>.
    <productname>Postgres95</productname> was subsequently released to
-   the Web to find its own way in the world as a public-domain,
-   open source descendant of the original <productname>Postgres</productname>
+   the Web to find its own way in the world as an
+   open-source descendant of the original <productname>Postgres</productname>
    Berkeley code.
   </para>
 
