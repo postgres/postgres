@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.3 1997/04/25 18:40:50 scrappy Exp $
+ * $Id: geo_decls.h,v 1.4 1997/05/06 07:24:42 thomas Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -84,7 +84,7 @@ typedef	struct {
 	int32	npts;
 	int32	closed;	/* is this a closed polygon? */
 	int32	dummy;	/* padding to make it double align */
-	Point	p[0];	/* variable length array of POINTs */
+	Point	p[1];	/* variable length array of POINTs */
 } PATH;
 
 
@@ -119,7 +119,7 @@ typedef struct {
 	int32 size;	/* XXX varlena */
 	int32 npts;
 	BOX boundbox;
-	Point p[0];	/* variable length array of POINTs */
+	Point p[1];	/* variable length array of POINTs */
 } POLYGON;
 
 /*---------------------------------------------------------------------
