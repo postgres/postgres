@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.3 1996/07/19 07:00:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.4 1996/07/23 03:35:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,12 +70,12 @@ PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
     char *tmp;
 
     conn = (PGconn*)malloc(sizeof(PGconn));
-    
+
     if (!conn) {
-	fprintf(stderr,"FATAL: pqsetdb() -- unable to allocate memory for a PGconn");
-	return (PGconn*)NULL;
+      fprintf(stderr,"FATAL: PQsetdb() -- unable to allocate memory for a PGconn");
+      return (PGconn*)NULL;
     }
-	
+
     conn->Pfout = NULL;
     conn->Pfin = NULL;
     conn->Pfdebug = NULL;
@@ -90,7 +90,7 @@ PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
     } else
 	conn->pghost = strdup(pghost);
 
-    if (!pgport || pgport == '\0') {
+    if (!pgport || pgport[0] == '\0') {
 	if (!(tmp = getenv("PGPORT"))) {
 	    tmp = POSTPORT;
 	}
@@ -98,7 +98,7 @@ PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
     } else
 	conn->pgport = strdup(pgport);
 
-    if (!pgtty || pgtty == '\0') {
+    if (!pgtty || pgtty[0] == '\0') {
 	if (!(tmp = getenv("PGTTY"))) {
 	    tmp = DefaultTty;
 	}
@@ -106,29 +106,42 @@ PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
     } else
 	conn->pgtty = strdup(pgtty);
 
-    if (!pgoptions || pgoptions == '\0') {
+    if (!pgoptions || pgoptions[0] == '\0') {
 	if (!(tmp = getenv("PGOPTIONS"))) {
 	    tmp = DefaultOption;
 	}
 	conn->pgoptions = strdup(tmp);
     } else
 	conn->pgoptions = strdup(pgoptions);
-
-    if (((tmp = dbName) && (dbName[0] != '\0')) ||
-	((tmp = getenv("PGDATABASE"))))
+#if 0
+    if (!dbName || dbName[0] == '\0') {
+	char errorMessage[ERROR_MSG_LENGTH];
+	if (!(tmp = getenv("PGDATABASE")) &&
+	    !(tmp = fe_getauthname(errorMessage))) {
+	    sprintf(conn->errorMessage,
+		    "FATAL: PQsetdb: Unable to determine a database name!\n");
+/*	    pqdebug("%s", conn->errorMessage); */
+	    conn->dbName = NULL;
+	    return conn;
+	}
 	conn->dbName = strdup(tmp);
-    else {
+    } else
+	conn->dbName = strdup(dbName);
+#endif
+    if (((tmp = dbName) && (dbName[0] != '\0')) ||
+                                              ((tmp = getenv("PGDATABASE")))) {
+      conn->dbName = strdup(tmp);
+    } else {
       char errorMessage[ERROR_MSG_LENGTH];
       if (tmp = fe_getauthname(errorMessage)) {
-	conn->dbName = strdup(tmp);
-	free(tmp);
-      }
-      else {
-	sprintf(conn->errorMessage,
-		"FATAL: PQsetdb: Unable to determine a database name!\n");
-/*	pqdebug("%s", conn->errorMessage); */
-	conn->dbName = NULL;
-	return conn;
+        conn->dbName = strdup(tmp);
+        free(tmp);
+      } else {
+        sprintf(conn->errorMessage,
+              "FATAL: PQsetdb: Unable to determine a database name!\n");
+/*      pqdebug("%s", conn->errorMessage); */
+        conn->dbName = NULL;
+        return conn;
       }
     }
     conn->status = connectDB(conn);
@@ -320,7 +333,7 @@ PQfinish(PGconn *conn)
     fprintf(stderr,"PQfinish() -- pointer to PGconn is null");
   } else {
     if (conn->status == CONNECTION_OK)
-	closePGconn(conn);
+      closePGconn(conn);
     freePGconn(conn);
   }
 }
@@ -404,9 +417,7 @@ startup2PacketBuf(StartupInfo* s, PacketBuf* res)
   strncpy(tmp, s->execFile, sizeof(s->execFile));
   tmp += sizeof(s->execFile);
   strncpy(tmp, s->tty, sizeof(s->execFile));
-
 }
-
 
 /* =========== accessor functions for PGconn ========= */
 char* 
@@ -416,7 +427,6 @@ PQdb(PGconn* conn)
     fprintf(stderr,"PQdb() -- pointer to PGconn is null");
     return (char *)NULL;
   }
-
   return conn->dbName;
 }
 
@@ -438,7 +448,6 @@ PQoptions(PGconn* conn)
     fprintf(stderr,"PQoptions() -- pointer to PGconn is null");
     return (char *)NULL;
   }
-
   return conn->pgoptions;
 }
 
@@ -449,7 +458,6 @@ PQtty(PGconn* conn)
     fprintf(stderr,"PQtty() -- pointer to PGconn is null");
     return (char *)NULL;
   }
-
   return conn->pgtty;
 }
 
@@ -460,7 +468,6 @@ PQport(PGconn* conn)
     fprintf(stderr,"PQport() -- pointer to PGconn is null");
     return (char *)NULL;
   }
-
   return conn->pgport;
 }
 
@@ -471,7 +478,6 @@ PQstatus(PGconn* conn)
     fprintf(stderr,"PQstatus() -- pointer to PGconn is null");
     return CONNECTION_BAD;
   }
-
   return conn->status;
 }
 
@@ -482,7 +488,6 @@ PQerrorMessage(PGconn* conn)
     fprintf(stderr,"PQerrorMessage() -- pointer to PGconn is null");
     return (char *)NULL;
   }
-
   return conn->errorMessage;
 }
 

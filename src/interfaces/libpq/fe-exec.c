@@ -7,18 +7,19 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.4 1996/07/19 06:36:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.5 1996/07/23 03:35:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <signal.h>
 #include <errno.h>
 #include "postgres.h"
 #include "libpq/pqcomm.h"
 #include "libpq-fe.h"
+#include <signal.h>
 
 /* the tuples array in a PGresGroup  has to grow to accommodate the tuples */
 /* returned.  Each time, we grow by this much: */
@@ -39,6 +40,7 @@ static PGresult* makePGresult(PGconn *conn, char *pname);
 static void addTuple(PGresult *res, PGresAttValue *tup);
 static PGresAttValue* getTuple(PGconn *conn, PGresult *res, int binary);
 static PGresult* makeEmptyPGresult(PGconn *conn, ExecStatusType status);
+static void fill(int length, int max, char filler, FILE *fp);
 
 /*
  * PQclear -
@@ -623,13 +625,143 @@ PQendcopy(PGconn *conn)
     }
 }
 
+/* simply send out max-length number of filler characters to fp */
+static void
+fill (int length, int max, char filler, FILE *fp)
+{
+  int count;
+  char filltmp[2];
+
+  filltmp[0] = filler;
+  filltmp[1] = 0;
+  count = max - length;
+  while (count-- >= 0)
+    {
+      fprintf(fp, "%s", filltmp);
+    }
+ }
 
 
 /*
- * print_tuples()
+ * PQdisplayTuples()
+ *
+ * a better version of PQprintTuples()
+ * that can optionally do padding of fields with spaces and use different
+ * field separators 
+ */
+void
+PQdisplayTuples(PGresult *res,
+		FILE *fp,      /* where to send the output */
+		int fillAlign, /* pad the fields with spaces */
+		char *fieldSep,  /* field separator */
+		int printHeader, /* display headers? */
+		int quiet
+		)
+{
+#define DEFAULT_FIELD_SEP " "
+
+    char *pager;
+    int i, j;
+    int nFields;
+    int nTuples;
+    int fLength[MAX_FIELDS];
+    int usePipe = 0;
+    int total_line_length = 0;
+
+    if (fieldSep == NULL)
+	fieldSep == DEFAULT_FIELD_SEP;
+
+    /* Get some useful info about the results */
+    nFields = PQnfields(res);
+    nTuples = PQntuples(res);
+  
+    if (fp == NULL) 
+	fp = stdout;
+
+    /* Zero the initial field lengths */
+    for (j=0  ; j < nFields; j++) {
+      fLength[j] = strlen(PQfname(res,j));
+    }
+    /* Find the max length of each field in the result */
+    /* will be somewhat time consuming for very large results */
+    if (fillAlign) {
+	for (i=0; i < nTuples; i++) {
+	    for (j=0  ; j < nFields; j++) {
+		if (PQgetlength(res,i,j) > fLength[j])
+		    fLength[j] = PQgetlength(res,i,j);
+	    }
+	}
+        for (j=0  ; j < nFields; j++)
+            total_line_length += fLength[j];
+        total_line_length += nFields * strlen(fieldSep) + 2;    /* delimiters */
+    }
+
+    /* Use the pager only if the number of tuples is big enough */
+    pager=getenv("PAGER");
+    if ((nTuples > 20)
+    &&  (fp == stdout)
+    &&  (pager != NULL)
+    &&  isatty(fileno(stdout))
+    &&  (nTuples * (total_line_length / 80 + 1) >= 24
+           - (printHeader != 0) * (total_line_length / 80 + 1) * 2
+           - 1 /* newline at end of tuple list */ - (quiet == 0))) {
+	fp = popen(pager, "w");
+	if (fp) {
+	    usePipe = 1;
+	    signal(SIGPIPE, SIG_IGN);
+	} else {
+	    fp = stdout;
+	}
+    }
+
+    if (printHeader) {
+	/* first, print out the attribute names */
+	for (i=0; i < nFields; i++) {
+	    fputs(PQfname(res,i), fp);
+	    if (fillAlign)
+		fill (strlen (PQfname(res,i)), fLength[i], ' ', fp);
+	    fputs(fieldSep,fp);
+	}
+	fprintf(fp, "\n");
+  
+	/* Underline the attribute names */
+	for (i=0; i < nFields; i++) {
+	    if (fillAlign)
+		fill (0, fLength[i], '-', fp);
+	    fputs(fieldSep,fp);
+	}
+	fprintf(fp, "\n");
+    }
+
+    /* next, print out the instances */
+    for (i=0; i < nTuples; i++) {
+      for (j=0  ; j < nFields; j++) {
+        fprintf(fp, "%s", PQgetvalue(res,i,j));
+	if (fillAlign)
+	    fill (strlen (PQgetvalue(res,i,j)), fLength[j], ' ', fp);
+	fputs(fieldSep,fp);
+      }
+      fprintf(fp, "\n");
+    }
+  
+    if (!quiet)
+	fprintf (fp, "\nQuery returned %d row%s.\n",PQntuples(res),
+		 (PQntuples(res) == 1) ? "" : "s");
+  
+    fflush(fp);
+    if (usePipe) {
+	pclose(fp);
+	signal(SIGPIPE, SIG_DFL);
+    }
+}
+
+
+
+/*
+ * PQprintTuples()
  *
  * This is the routine that prints out the tuples that
- * are returned from the backend.
+ *  are returned from the backend.
  * Right now all columns are of fixed length,
  * this should be changed to allow wrap around for
  * tuples values that are wider.
@@ -728,10 +860,6 @@ PQprint(FILE *fout,
 	char *border=NULL;
         int numFieldName;
 	int fs_len=strlen(po->fieldSep);
-	int total_line_length = 0;
-	int usePipe = 0;
-	char *pager;
-
     	nTups = PQntuples(res);
 	if (!(fieldNames=(char **)calloc(nFields, sizeof (char *))))
 	{
@@ -763,37 +891,7 @@ PQprint(FILE *fout,
 		len+=fs_len;
 		if (len>fieldMaxLen)
 			fieldMaxLen=len;
-		total_line_length += len;
 	}
-
-	total_line_length += nFields * strlen(po->fieldSep) + 1;
-
-	if (fout == NULL) 
- 		fout = stdout;
-	if (fout == stdout) {
-	 	/* try to pipe to the pager program if possible */
-		pager=getenv("PAGER");
-		if (pager != NULL &&
-		   isatty(fileno(stdout)) &&
-		   !po->html3 &&
-		   ((po->expanded && nTups * (nFields+1) >= 24) ||
-		    (!po->expanded && nTups * (total_line_length / 80 + 1) *
-			( 1 + (po->standard != 0)) >=
-			24 -
-			(po->header != 0) * (total_line_length / 80 + 1) * 2
-/*			- 1 */ /* newline at end of tuple list */
-/*			- (quiet == 0)
-*/			)))
-		{
-			fout = popen(pager, "w");
-			if (fout) {
-				usePipe = 1;
-				signal(SIGPIPE, SIG_IGN);
-			} else
-				fout = stdout;
-		}
-	}
-
 	if (!po->expanded && (po->align || po->html3))
 	{
 		if (!(fields=(char **)calloc(nFields*(nTups+1), sizeof(char *))))
@@ -1012,10 +1110,6 @@ efield:
 			fputc('\n', fout);
 		}
 		free(fields);
-	   	if (usePipe) {
-			pclose(fout);
-			signal(SIGPIPE, SIG_DFL);
-    		}
 	}
 	free(fieldMax);
 	free(fieldNotNum);
@@ -1135,17 +1229,14 @@ PQfn(PGconn *conn,
     }
 }
 
-
-
-
 /* ====== accessor funcs for PGresult ======== */
 
 ExecStatusType 
 PQresultStatus(PGresult* res)
 { 
-    if (!res) {	
-	fprintf(stderr, "PQresultStatus() -- pointer to PQresult is null");
-	return PGRES_NONFATAL_ERROR;
+    if (!res) {
+      fprintf(stderr, "PQresultStatus() -- pointer to PQresult is null");
+      return PGRES_NONFATAL_ERROR;
     }
 
     return res->resultStatus; 
@@ -1154,22 +1245,20 @@ PQresultStatus(PGresult* res)
 int 
 PQntuples(PGresult *res) 
 {
-    if (!res) { 
-	fprintf(stderr, "PQntuples() -- pointer to PQresult is null");
-	return (int)NULL; 
+    if (!res) {
+      fprintf(stderr, "PQntuples() -- pointer to PQresult is null");
+      return (int)NULL;
     }
-
     return res->ntups;
 }
 
 int
 PQnfields(PGresult *res) 
 {
-    if (!res) { 
-	fprintf(stderr, "PQnfields() -- pointer to PQresult is null");
-	return (int)NULL;
+    if (!res) {
+      fprintf(stderr, "PQnfields() -- pointer to PQresult is null");
+      return (int)NULL;
     }
-
     return res->numAttributes;
 }
 
@@ -1179,10 +1268,9 @@ PQnfields(PGresult *res)
 char* 
 PQfname(PGresult *res, int field_num) 
 {
-
-    if (!res) { 
-	fprintf(stderr, "PQfname() -- pointer to PQresult is null");
-	return NULL; 
+    if (!res) {
+      fprintf(stderr, "PQfname() -- pointer to PQresult is null");
+      return NULL;
     }
 
     if (field_num > (res->numAttributes - 1))  {
@@ -1205,7 +1293,7 @@ PQfnumber(PGresult *res, char* field_name)
 {
   int i;
 
-  if (!res) { 
+  if (!res) {
     fprintf(stderr, "PQfnumber() -- pointer to PQresult is null");
     return -1;
   }
@@ -1226,9 +1314,9 @@ PQfnumber(PGresult *res, char* field_name)
 Oid
 PQftype(PGresult *res, int field_num) 
 {
-    if (!res) { 
-	fprintf(stderr, "PQftype() -- pointer to PQresult is null");
-	return InvalidOid;
+    if (!res) {
+      fprintf(stderr, "PQftype() -- pointer to PQresult is null");
+      return InvalidOid;
     }
 
     if (field_num > (res->numAttributes - 1))  {
@@ -1245,9 +1333,9 @@ PQftype(PGresult *res, int field_num)
 int2
 PQfsize(PGresult *res, int field_num) 
 {
-    if (!res) { 
-	fprintf(stderr, "PQfsize() -- pointer to PQresult is null");
-	return (int2)NULL;
+    if (!res) {
+      fprintf(stderr, "PQfsize() -- pointer to PQresult is null");
+      return (int2)NULL;
     }
 
     if (field_num > (res->numAttributes - 1))  {
@@ -1262,11 +1350,10 @@ PQfsize(PGresult *res, int field_num)
 }
 
 char* PQcmdStatus(PGresult *res) {
-  if (!res) { 
+  if (!res) {
     fprintf(stderr, "PQcmdStatus() -- pointer to PQresult is null");
     return NULL;
   }
-
   return res->cmdStatus;
 }
 
@@ -1304,18 +1391,17 @@ char* PQoidStatus(PGresult *res) {
 char* 
 PQgetvalue(PGresult *res, int tup_num, int field_num)
 {
-    if (!res) {	
-	fprintf(stderr, "PQgetvalue() -- pointer to PQresult is null");
-	return NULL;
+    if (!res) {
+      fprintf(stderr, "PQgetvalue() -- pointer to PQresult is null");
+      return NULL;
     }
-	
+
     if (tup_num > (res->ntups - 1) ||
 	field_num > (res->numAttributes - 1))  {
 	fprintf(stderr,
 		"PQgetvalue: ERROR! field %d(of %d) of tuple %d(of %d) is not available", 
 		field_num, res->numAttributes - 1, tup_num, res->ntups);
     }
-	
     
     return res->tuples[tup_num][field_num].value;
 }
@@ -1328,8 +1414,8 @@ PQgetvalue(PGresult *res, int tup_num, int field_num)
 int
 PQgetlength(PGresult *res, int tup_num, int field_num)
 {
-    if (!res) { 
-	fprintf(stderr, "PQgetlength() -- pointer to PQresult is null");
+    if (!res) {
+      fprintf(stderr, "PQgetlength() -- pointer to PQresult is null");
         return (int)NULL;
     }
 

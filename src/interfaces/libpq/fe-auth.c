@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.1.1.1 1996/07/09 06:22:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.2 1996/07/23 03:35:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,7 +524,7 @@ fe_getauthname(char* PQerrormsg)
 #endif
     case STARTUP_MSG:
 	{
-	    struct passwd *pw = getpwuid(getuid());
+	    struct passwd *pw = getpwuid(geteuid());
 	    if (pw &&
 		pw->pw_name &&
 		(name = (char *) malloc(strlen(pw->pw_name) + 1))) {
