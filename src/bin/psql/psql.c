@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.179 1999/05/25 16:13:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.180 1999/05/26 20:08:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -876,6 +876,10 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 			else if (strcmp(rtype, "bpchar") == 0 ||
 					 strcmp(rtype, "varchar") == 0)
 				fprintf(fout, "%6i |", atttypmod != -1 ? atttypmod - VARHDRSZ : 0);
+			else if (strcmp(rtype, "numeric") == 0)
+				fprintf(fout, "%3i.%-2i |",
+						((atttypmod - VARHDRSZ) >> 16) & 0xffff,
+						(atttypmod - VARHDRSZ) & 0xffff);
 			else
 			{
 				if (attlen > 0)
