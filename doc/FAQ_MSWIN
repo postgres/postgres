@@ -1,6 +1,7 @@
 How to install PostgreSQL on Windows
 ====================================
-$Date: 2003/11/13 05:06:56 $
+
+$Date: 2003/11/14 18:07:48 $
 
 PostgreSQL requires the appropriate subset of Cygwin DLLs to be 
 installed in order that it functions under Windows.
