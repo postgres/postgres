@@ -123,9 +123,9 @@ QUERY: INSERT INTO DATETIME_TBL VALUES ('Jan 01 17:32:01 2000');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Dec 31 17:32:01 2000');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Jan 01 17:32:01 2001');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 -0097');
-WARN:Bad datetime external representation Feb 16 17:32:01 -0097
+WARN:Bad datetime external representation 'Feb 16 17:32:01 -0097'
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 5097 BC');
-WARN:Datetime out of range Feb 16 17:32:01 5097 BC
+WARN:Datetime out of range 'Feb 16 17:32:01 5097 BC'
 QUERY: SELECT '' AS sixtythree, d1 FROM DATETIME_TBL;
 sixtythree|d1                             
 ----------+-------------------------------

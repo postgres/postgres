@@ -466,7 +466,7 @@ two|circle
 QUERY: SELECT '' AS twentyfour, c1.f1 AS circle, p1.f1 AS point, (p1.f1 <-> c1.f1) AS distance
    FROM CIRCLE_TBL c1, POINT_TBL p1
    WHERE (p1.f1 <-> c1.f1) > 0
-   ORDER BY distance, circle;
+   ORDER BY distance, circle, point using <<;
 twentyfour|circle        |point     |         distance
 ----------+--------------+----------+-----------------
           |<(100,0),100> |(5.1,34.5)|0.976531926977964
@@ -474,8 +474,8 @@ twentyfour|circle        |point     |         distance
           |<(0,0),3>     |(-3,4)    |                2
           |<(100,0),100> |(-3,4)    | 3.07764064044151
           |<(100,0),100> |(-5,-12)  | 5.68348972285122
-          |<(1,3),5>     |(10,10)   | 6.40175425099138
           |<(1,3),5>     |(-10,0)   | 6.40175425099138
+          |<(1,3),5>     |(10,10)   | 6.40175425099138
           |<(0,0),3>     |(-10,0)   |                7
           |<(1,2),3>     |(-10,0)   | 8.18033988749895
           |<(1,2),3>     |(10,10)   |  9.0415945787923

@@ -15,14 +15,14 @@ WARN:Bad abstime external representation 'bad time specifications'
 QUERY: INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["" "infinity"]');
 WARN:Bad abstime external representation ''
-QUERY: SELECT '' AS seven, TINTERVAL_TBL.*;
-seven|f1                                                             
------+---------------------------------------------------------------
-     |["-infinity" "infinity"]                                       
-     |["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
-     |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
-     |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       
-     |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
+QUERY: SELECT '' AS five, TINTERVAL_TBL.*;
+five|f1                                                             
+----+---------------------------------------------------------------
+    |["-infinity" "infinity"]                                       
+    |["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
+    |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
+    |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       
+    |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
 (5 rows)
 
 QUERY: SELECT '' AS one, t.*
@@ -98,10 +98,10 @@ QUERY: SELECT '' AS five, t1.f1, t2.f1
 five|f1                                                             |f1                                                             
 ----+---------------------------------------------------------------+---------------------------------------------------------------
     |["-infinity" "infinity"]                                       |["-infinity" "infinity"]                                       
-    |["Thu Feb 15 12:15:03 1990 PST" "current"]                     |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
     |["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]|["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
     |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       
     |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]|["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
+    |["Thu Feb 15 12:15:03 1990 PST" "current"]                     |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
 (5 rows)
 
 QUERY: SELECT '' AS fourteen, t1.f1 AS interval1, t2.f1 AS interval2
@@ -115,15 +115,15 @@ fourteen|interval1                                                      |interva
         |["-infinity" "infinity"]                                       |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       
         |["-infinity" "infinity"]                                       |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
         |["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]|["-infinity" "infinity"]                                       
-        |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       |["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
         |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       |["-infinity" "infinity"]                                       
-        |["Thu Feb 15 12:15:03 1990 PST" "current"]                     |["-infinity" "infinity"]                                       
-        |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
         |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]|["-infinity" "infinity"]                                       
+        |["Thu Feb 15 12:15:03 1990 PST" "current"]                     |["-infinity" "infinity"]                                       
+        |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       |["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
         |["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]|["epoch" "Mon May 01 00:30:30 1995 PDT"]                       
+        |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
+        |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
         |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]|["epoch" "Mon May 01 00:30:30 1995 PDT"]                       
         |["Thu Feb 15 12:15:03 1990 PST" "current"]                     |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       
-        |["epoch" "Mon May 01 00:30:30 1995 PDT"]                       |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
 (14 rows)
 
 QUERY: SELECT '' AS five, t1.f1
@@ -133,9 +133,9 @@ QUERY: SELECT '' AS five, t1.f1
    ORDER BY t1.f1;
 five|f1                                                             
 ----+---------------------------------------------------------------
-    |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
-    |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
     |["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
+    |["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
+    |["Thu Feb 15 12:15:03 1990 PST" "current"]                     
 (3 rows)
 
 QUERY: SELECT '' AS three, t1.f1
