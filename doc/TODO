@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jul 10 20:26:38 EDT 2004
+Last updated:		Sat Jul 10 20:28:31 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -352,6 +352,7 @@ Fsync
 	o Determine optimal commit_delay value
 * Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
 	o Allow multiple blocks to be written to WAL with one write()
+*  Add an option to sync() before fsync()'ing checkpoint files
 
 
 Cache
