@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.45 2005/01/09 18:58:10 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -39,33 +39,33 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
      <substeps>
       <step>
        <para>
-	If the numeric token contains a colon (<literal>:</>), this is
-	a time string. Include all subsequent digits and colons.
+        If the numeric token contains a colon (<literal>:</>), this is
+        a time string. Include all subsequent digits and colons.
        </para>
       </step>
 
       <step>
        <para>
-	If the numeric token contains a dash (<literal>-</>), slash
-	(<literal>/</>), or two or more dots (<literal>.</>), this is
-	a date string which may have a text month.
+        If the numeric token contains a dash (<literal>-</>), slash
+        (<literal>/</>), or two or more dots (<literal>.</>), this is
+        a date string which may have a text month.
        </para>
       </step>
 
       <step>
        <para>
-	If the token is numeric only, then it is either a single field
-	or an ISO 8601 concatenated date (e.g.,
-	<literal>19990113</literal> for January 13, 1999) or time
-	(e.g., <literal>141516</literal> for 14:15:16).
+        If the token is numeric only, then it is either a single field
+        or an ISO 8601 concatenated date (e.g.,
+        <literal>19990113</literal> for January 13, 1999) or time
+        (e.g., <literal>141516</literal> for 14:15:16).
        </para>
       </step>
 
       <step>
        <para>
-	If the token starts with a plus (<literal>+</>) or minus
-	(<literal>-</>), then it is either a time zone or a special
-	field.
+        If the token starts with a plus (<literal>+</>) or minus
+        (<literal>-</>), then it is either a time zone or a special
+        field.
        </para>
       </step>
      </substeps>
@@ -79,30 +79,30 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
      <substeps>
       <step>
        <para>
-	Do a binary-search table lookup for the token
-	as either a special string (e.g., <literal>today</literal>),
-	day (e.g., <literal>Thursday</literal>),
-	month (e.g., <literal>January</literal>),
-	or noise word (e.g., <literal>at</literal>, <literal>on</literal>).
+        Do a binary-search table lookup for the token
+        as either a special string (e.g., <literal>today</literal>),
+        day (e.g., <literal>Thursday</literal>),
+        month (e.g., <literal>January</literal>),
+        or noise word (e.g., <literal>at</literal>, <literal>on</literal>).
        </para>
 
        <para>
-	Set field values and bit mask for fields.
-	For example, set year, month, day for <literal>today</literal>,
-	and additionally hour, minute, second for <literal>now</literal>.
+        Set field values and bit mask for fields.
+        For example, set year, month, day for <literal>today</literal>,
+        and additionally hour, minute, second for <literal>now</literal>.
        </para>
       </step>
       
       <step>
        <para>
-	If not found, do a similar binary-search table lookup to match
-	the token with a time zone.
+        If not found, do a similar binary-search table lookup to match
+        the token with a time zone.
        </para>
       </step>
 
       <step>
        <para>
-	If still not found, throw an error.
+        If still not found, throw an error.
        </para>
       </step>
      </substeps>
@@ -116,41 +116,41 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
      <substeps>
       <step>
        <para>
-	If there are eight or six digits,
-	and if no other date fields have been previously read, then interpret 
-	as a <quote>concatenated date</quote> (e.g.,
-	<literal>19990118</literal> or <literal>990118</literal>).
-	The interpretation is <literal>YYYYMMDD</> or <literal>YYMMDD</>.
+        If there are eight or six digits,
+        and if no other date fields have been previously read, then interpret 
+        as a <quote>concatenated date</quote> (e.g.,
+        <literal>19990118</literal> or <literal>990118</literal>).
+        The interpretation is <literal>YYYYMMDD</> or <literal>YYMMDD</>.
        </para>
       </step>
 
       <step>
        <para>
-	If the token is three digits
-	and a year has already been read, then interpret as day of year.
+        If the token is three digits
+        and a year has already been read, then interpret as day of year.
        </para>
       </step>
       
       <step>
        <para>
-	If four or six digits and a year has already been read, then
-	interpret as a time (<literal>HHMM</> or <literal>HHMMSS</>).
+        If four or six digits and a year has already been read, then
+        interpret as a time (<literal>HHMM</> or <literal>HHMMSS</>).
        </para>
       </step>
 
       <step>
        <para>
-	If three or more digits and no date fields have yet been found,
-	interpret as a year (this forces yy-mm-dd ordering of the remaining
-	date fields).
+        If three or more digits and no date fields have yet been found,
+        interpret as a year (this forces yy-mm-dd ordering of the remaining
+        date fields).
        </para>
       </step>
 
       <step>
        <para>
         Otherwise the date field ordering is assumed to follow the
-	<varname>DateStyle</> setting: mm-dd-yy, dd-mm-yy, or yy-mm-dd.
-	Throw an error if a month or day field is found to be out of range.
+        <varname>DateStyle</> setting: mm-dd-yy, dd-mm-yy, or yy-mm-dd.
+        Throw an error if a month or day field is found to be out of range.
        </para>
       </step>
      </substeps>
@@ -172,11 +172,11 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
 
       <tip>
        <para>
-	Gregorian years AD 1-99 may be entered by using 4 digits with leading
-	zeros (e.g., <literal>0099</> is AD 99). Previous versions of
-	<productname>PostgreSQL</productname> accepted years with three
-	digits and with single digits, but as of version 7.0 the rules have
-	been tightened up to reduce the possibility of ambiguity.
+        Gregorian years AD 1-99 may be entered by using 4 digits with leading
+        zeros (e.g., <literal>0099</> is AD 99). Previous versions of
+        <productname>PostgreSQL</productname> accepted years with three
+        digits and with single digits, but as of version 7.0 the rules have
+        been tightened up to reduce the possibility of ambiguity.
        </para>
       </tip>
      </para>
@@ -190,117 +190,114 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
 
    <para>
     <xref linkend="datetime-month-table"> shows the tokens that are
-    permissible as abbreviations for the names of the month.
+    recognized as names of months.
    </para>
 
     <table id="datetime-month-table">
-     <title>Month Abbreviations</title>
+     <title>Month Names</title>
      <tgroup cols="2">
       <thead>
        <row>
-	<entry>Month</entry>
-	<entry>Abbreviations</entry>
+        <entry>Month</entry>
+        <entry>Abbreviations</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>April</entry>
-	<entry>Apr</entry>
+        <entry>January</entry>
+        <entry>Jan</entry>
        </row>
        <row>
-	<entry>August</entry>
-	<entry>Aug</entry>
+        <entry>February</entry>
+        <entry>Feb</entry>
        </row>
        <row>
-	<entry>December</entry>
-	<entry>Dec</entry>
+        <entry>March</entry>
+        <entry>Mar</entry>
        </row>
        <row>
-	<entry>February</entry>
-	<entry>Feb</entry>
+        <entry>April</entry>
+        <entry>Apr</entry>
        </row>
        <row>
-	<entry>January</entry>
-	<entry>Jan</entry>
+        <entry>May</entry>
+        <entry></entry>
        </row>
        <row>
-	<entry>July</entry>
-	<entry>Jul</entry>
+        <entry>June</entry>
+        <entry>Jun</entry>
        </row>
        <row>
-	<entry>June</entry>
-	<entry>Jun</entry>
+        <entry>July</entry>
+        <entry>Jul</entry>
        </row>
        <row>
-	<entry>March</entry>
-	<entry>Mar</entry>
+        <entry>August</entry>
+        <entry>Aug</entry>
        </row>
        <row>
-	<entry>November</entry>
-	<entry>Nov</entry>
+        <entry>September</entry>
+        <entry>Sep, Sept</entry>
        </row>
        <row>
-	<entry>October</entry>
-	<entry>Oct</entry>
+        <entry>October</entry>
+        <entry>Oct</entry>
        </row>
        <row>
-	<entry>September</entry>
-	<entry>Sep, Sept</entry>
+        <entry>November</entry>
+        <entry>Nov</entry>
+       </row>
+       <row>
+        <entry>December</entry>
+        <entry>Dec</entry>
        </row>
       </tbody>
      </tgroup>
     </table>
 
-    <note>
-     <para>
-      The month May has no explicit abbreviation, for obvious reasons.
-     </para>
-    </note>
-
     <para>
      <xref linkend="datetime-dow-table"> shows the tokens that are
-     permissible as abbreviations for the names of the days of the
-     week.
+     recognized as names of days of the week.
     </para>
 
      <table id="datetime-dow-table">
-      <title>Day of the Week Abbreviations</title>
+      <title>Day of the Week Names</title>
       <tgroup cols="2">
        <thead>
-	<row>
-	 <entry>Day</entry>
-	 <entry>Abbreviation</entry>
-	</row>
+        <row>
+         <entry>Day</entry>
+         <entry>Abbreviations</entry>
+        </row>
        </thead>
        <tbody>
-	<row>
-	 <entry>Sunday</entry>
-	 <entry>Sun</entry>
-	</row>
-	<row>
-	 <entry>Monday</entry>
-	 <entry>Mon</entry>
-	</row>
-	<row>
-	 <entry>Tuesday</entry>
-	 <entry>Tue, Tues</entry>
-	</row>
-	<row>
-	 <entry>Wednesday</entry>
-	 <entry>Wed, Weds</entry>
-	</row>
-	<row>
-	 <entry>Thursday</entry>
-	 <entry>Thu, Thur, Thurs</entry>
-	</row>
-	<row>
-	 <entry>Friday</entry>
-	 <entry>Fri</entry>
-	</row>
-	<row>
-	 <entry>Saturday</entry>
-	 <entry>Sat</entry>
-	</row>
+        <row>
+         <entry>Sunday</entry>
+         <entry>Sun</entry>
+        </row>
+        <row>
+         <entry>Monday</entry>
+         <entry>Mon</entry>
+        </row>
+        <row>
+         <entry>Tuesday</entry>
+         <entry>Tue, Tues</entry>
+        </row>
+        <row>
+         <entry>Wednesday</entry>
+         <entry>Wed, Weds</entry>
+        </row>
+        <row>
+         <entry>Thursday</entry>
+         <entry>Thu, Thur, Thurs</entry>
+        </row>
+        <row>
+         <entry>Friday</entry>
+         <entry>Fri</entry>
+        </row>
+        <row>
+         <entry>Saturday</entry>
+         <entry>Sat</entry>
+        </row>
        </tbody>
       </tgroup>
      </table>
@@ -315,38 +312,38 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
      <tgroup cols="2">
       <thead>
        <row>
-	<entry>Identifier</entry>
-	<entry>Description</entry>
+        <entry>Identifier</entry>
+        <entry>Description</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry><literal>ABSTIME</literal></entry>
-	<entry>Key word ignored</entry>
+        <entry><literal>ABSTIME</literal></entry>
+        <entry>Ignored</entry>
        </row>
        <row>
-	<entry><literal>AM</literal></entry>
-	<entry>Time is before 12:00</entry>
+        <entry><literal>AM</literal></entry>
+        <entry>Time is before 12:00</entry>
        </row>
        <row>
-	<entry><literal>AT</literal></entry>
-	<entry>Key word ignored</entry>
+        <entry><literal>AT</literal></entry>
+        <entry>Ignored</entry>
        </row>
        <row>
-	<entry><literal>JULIAN</>, <literal>JD</>, <literal>J</></entry>
-	<entry>Next field is Julian Day</entry>
+        <entry><literal>JULIAN</>, <literal>JD</>, <literal>J</></entry>
+        <entry>Next field is Julian Day</entry>
        </row>
        <row>
-	<entry><literal>ON</literal></entry>
-	<entry>Key word ignored</entry>
+        <entry><literal>ON</literal></entry>
+        <entry>Ignored</entry>
        </row>
        <row>
-	<entry><literal>PM</literal></entry>
-	<entry>Time is on or after 12:00</entry>
+        <entry><literal>PM</literal></entry>
+        <entry>Time is on or after 12:00</entry>
        </row>
        <row>
-	<entry><literal>T</literal></entry>
-	<entry>Next field is time</entry>
+        <entry><literal>T</literal></entry>
+        <entry>Next field is time</entry>
        </row>
       </tbody>
      </tgroup>
@@ -370,8 +367,9 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
     <xref linkend="datetime-timezone-input-table"> shows the time zone
     abbreviations recognized by <productname>PostgreSQL</productname>
     in date/time input values.  Note that these names are <emphasis>not</>
-    used for date/time output &mdash; display is driven by the currently
-    selected <xref linkend="guc-timezone"> parameter setting.  (It is
+    necessarily used for date/time output &mdash; output is driven by the
+    official timezone abbreviation(s) associated with the currently selected
+    <xref linkend="guc-timezone"> parameter setting.  (It is
     likely that future releases will make some use of <varname>timezone</>
     for input as well.)
    </para>
@@ -388,426 +386,426 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
      <tgroup cols="3">
       <thead>
        <row>
-	<entry>Time Zone</entry>
-	<entry>Offset from UTC</entry>
-	<entry>Description</entry>
+        <entry>Time Zone</entry>
+        <entry>Offset from UTC</entry>
+        <entry>Description</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>NZDT</entry>
-	<entry>+13:00</entry>
-	<entry>New Zealand Daylight-Saving Time</entry>
+        <entry>NZDT</entry>
+        <entry>+13:00</entry>
+        <entry>New Zealand Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>IDLE</entry>
-	<entry>+12:00</entry>
-	<entry>International Date Line, East</entry>
+        <entry>IDLE</entry>
+        <entry>+12:00</entry>
+        <entry>International Date Line, East</entry>
        </row>
        <row>
-	<entry>NZST</entry>
-	<entry>+12:00</entry>
-	<entry>New Zealand Standard Time</entry>
+        <entry>NZST</entry>
+        <entry>+12:00</entry>
+        <entry>New Zealand Standard Time</entry>
        </row>
        <row>
-	<entry>NZT</entry>
-	<entry>+12:00</entry>
-	<entry>New Zealand Time</entry>
+        <entry>NZT</entry>
+        <entry>+12:00</entry>
+        <entry>New Zealand Time</entry>
        </row>
        <row>
-	<entry>AESST</entry>
-	<entry>+11:00</entry>
-	<entry>Australia Eastern Summer Standard Time</entry>
+        <entry>AESST</entry>
+        <entry>+11:00</entry>
+        <entry>Australia Eastern Summer Standard Time</entry>
        </row>
        <row>
-	<entry>ACSST</entry>
-	<entry>+10:30</entry>
-	<entry>Central Australia Summer Standard Time</entry>
+        <entry>ACSST</entry>
+        <entry>+10:30</entry>
+        <entry>Central Australia Summer Standard Time</entry>
        </row>
        <row>
-	<entry>CADT</entry>
-	<entry>+10:30</entry>
-	<entry>Central Australia Daylight-Saving Time</entry>
+        <entry>CADT</entry>
+        <entry>+10:30</entry>
+        <entry>Central Australia Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>SADT</entry>
-	<entry>+10:30</entry>
-	<entry>South Australian Daylight-Saving Time</entry>
+        <entry>SADT</entry>
+        <entry>+10:30</entry>
+        <entry>South Australian Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>AEST</entry>
-	<entry>+10:00</entry>
-	<entry>Australia Eastern Standard Time</entry>
+        <entry>AEST</entry>
+        <entry>+10:00</entry>
+        <entry>Australia Eastern Standard Time</entry>
        </row>
        <row>
-	<entry>EAST</entry>
-	<entry>+10:00</entry>
-	<entry>East Australian Standard Time</entry>
+        <entry>EAST</entry>
+        <entry>+10:00</entry>
+        <entry>East Australian Standard Time</entry>
        </row>
        <row>
-	<entry>GST</entry>
-	<entry>+10:00</entry>
-	<entry>Guam Standard Time, Russia zone 9</entry>
+        <entry>GST</entry>
+        <entry>+10:00</entry>
+        <entry>Guam Standard Time, Russia zone 9</entry>
        </row>
        <row>
-	<entry>LIGT</entry>
-	<entry>+10:00</entry>
-	<entry>Melbourne, Australia</entry>
+        <entry>LIGT</entry>
+        <entry>+10:00</entry>
+        <entry>Melbourne, Australia</entry>
        </row>
        <row>
-	<entry>SAST</entry>
-	<entry>+09:30</entry>
-	<entry>South Australia Standard Time</entry>
+        <entry>SAST</entry>
+        <entry>+09:30</entry>
+        <entry>South Australia Standard Time</entry>
        </row>
        <row>
-	<entry>CAST</entry>
-	<entry>+09:30</entry>
-	<entry>Central Australia Standard Time</entry>
+        <entry>CAST</entry>
+        <entry>+09:30</entry>
+        <entry>Central Australia Standard Time</entry>
        </row>
        <row>
-	<entry>AWSST</entry>
-	<entry>+09:00</entry>
-	<entry>Australia Western Summer Standard Time</entry>
+        <entry>AWSST</entry>
+        <entry>+09:00</entry>
+        <entry>Australia Western Summer Standard Time</entry>
        </row>
        <row>
-	<entry>JST</entry>
-	<entry>+09:00</entry>
-	<entry>Japan Standard Time, Russia zone 8</entry>
+        <entry>JST</entry>
+        <entry>+09:00</entry>
+        <entry>Japan Standard Time, Russia zone 8</entry>
        </row>
        <row>
-	<entry>KST</entry>
-	<entry>+09:00</entry>
-	<entry>Korea Standard Time</entry>
+        <entry>KST</entry>
+        <entry>+09:00</entry>
+        <entry>Korea Standard Time</entry>
        </row>
        <row>
-	<entry>MHT</entry>
-	<entry>+09:00</entry>
-	<entry>Kwajalein Time</entry>
+        <entry>MHT</entry>
+        <entry>+09:00</entry>
+        <entry>Kwajalein Time</entry>
        </row>
        <row>
-	<entry>WDT</entry>
-	<entry>+09:00</entry>
-	<entry>West Australian Daylight-Saving Time</entry>
+        <entry>WDT</entry>
+        <entry>+09:00</entry>
+        <entry>West Australian Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>MT</entry>
-	<entry>+08:30</entry>
-	<entry>Moluccas Time</entry>
+        <entry>MT</entry>
+        <entry>+08:30</entry>
+        <entry>Moluccas Time</entry>
        </row>
        <row>
-	<entry>AWST</entry>
-	<entry>+08:00</entry>
-	<entry>Australia Western Standard Time</entry>
+        <entry>AWST</entry>
+        <entry>+08:00</entry>
+        <entry>Australia Western Standard Time</entry>
        </row>
        <row>
-	<entry>CCT</entry>
-	<entry>+08:00</entry>
-	<entry>China Coastal Time</entry>
+        <entry>CCT</entry>
+        <entry>+08:00</entry>
+        <entry>China Coastal Time</entry>
        </row>
        <row>
-	<entry>WADT</entry>
-	<entry>+08:00</entry>
-	<entry>West Australian Daylight-Saving Time</entry>
+        <entry>WADT</entry>
+        <entry>+08:00</entry>
+        <entry>West Australian Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>WST</entry>
-	<entry>+08:00</entry>
-	<entry>West Australian Standard Time</entry>
+        <entry>WST</entry>
+        <entry>+08:00</entry>
+        <entry>West Australian Standard Time</entry>
        </row>
        <row>
-	<entry>JT</entry>
-	<entry>+07:30</entry>
-	<entry>Java Time</entry>
+        <entry>JT</entry>
+        <entry>+07:30</entry>
+        <entry>Java Time</entry>
        </row>
        <row>
-	<entry>ALMST</entry>
-	<entry>+07:00</entry>
-	<entry>Almaty Summer Time</entry>
+        <entry>ALMST</entry>
+        <entry>+07:00</entry>
+        <entry>Almaty Summer Time</entry>
        </row>
        <row>
-	<entry>WAST</entry>
-	<entry>+07:00</entry>
-	<entry>West Australian Standard Time</entry>
+        <entry>WAST</entry>
+        <entry>+07:00</entry>
+        <entry>West Australian Standard Time</entry>
        </row>
        <row>
-	<entry>CXT</entry>
-	<entry>+07:00</entry>
-	<entry>Christmas (Island) Time</entry>
+        <entry>CXT</entry>
+        <entry>+07:00</entry>
+        <entry>Christmas (Island) Time</entry>
        </row>
        <row>
-	<entry>MMT</entry>
-	<entry>+06:30</entry>
-	<entry>Myanmar Time</entry>
+        <entry>MMT</entry>
+        <entry>+06:30</entry>
+        <entry>Myanmar Time</entry>
        </row>
        <row>
-	<entry>ALMT</entry>
-	<entry>+06:00</entry>
-	<entry>Almaty Time</entry>
+        <entry>ALMT</entry>
+        <entry>+06:00</entry>
+        <entry>Almaty Time</entry>
        </row>
        <row>
-	<entry>MAWT</entry>
-	<entry>+06:00</entry>
-	<entry>Mawson (Antarctica) Time</entry>
+        <entry>MAWT</entry>
+        <entry>+06:00</entry>
+        <entry>Mawson (Antarctica) Time</entry>
        </row>
        <row>
-	<entry>IOT</entry>
-	<entry>+05:00</entry>
-	<entry>Indian Chagos Time</entry>
+        <entry>IOT</entry>
+        <entry>+05:00</entry>
+        <entry>Indian Chagos Time</entry>
        </row>
        <row>
-	<entry>MVT</entry>
-	<entry>+05:00</entry>
-	<entry>Maldives Island Time</entry>
+        <entry>MVT</entry>
+        <entry>+05:00</entry>
+        <entry>Maldives Island Time</entry>
        </row>
        <row>
-	<entry>TFT</entry>
-	<entry>+05:00</entry>
-	<entry>Kerguelen Time</entry>
+        <entry>TFT</entry>
+        <entry>+05:00</entry>
+        <entry>Kerguelen Time</entry>
        </row>
        <row>
-	<entry>AFT</entry>
-	<entry>+04:30</entry>
-	<entry>Afghanistan Time</entry>
+        <entry>AFT</entry>
+        <entry>+04:30</entry>
+        <entry>Afghanistan Time</entry>
        </row>
        <row>
-	<entry>EAST</entry>
-	<entry>+04:00</entry>
-	<entry>Antananarivo Summer Time</entry>
+        <entry>EAST</entry>
+        <entry>+04:00</entry>
+        <entry>Antananarivo Summer Time</entry>
        </row>
        <row>
-	<entry>MUT</entry>
-	<entry>+04:00</entry>
-	<entry>Mauritius Island Time</entry>
+        <entry>MUT</entry>
+        <entry>+04:00</entry>
+        <entry>Mauritius Island Time</entry>
        </row>
        <row>
-	<entry>RET</entry>
-	<entry>+04:00</entry>
-	<entry>Reunion Island Time</entry>
+        <entry>RET</entry>
+        <entry>+04:00</entry>
+        <entry>Reunion Island Time</entry>
        </row>
        <row>
-	<entry>SCT</entry>
-	<entry>+04:00</entry>
-	<entry>Mahe Island Time</entry>
+        <entry>SCT</entry>
+        <entry>+04:00</entry>
+        <entry>Mahe Island Time</entry>
        </row>
        <row>
-	<entry>IRT, IT</entry>
-	<entry>+03:30</entry>
-	<entry>Iran Time</entry>
+        <entry>IRT, IT</entry>
+        <entry>+03:30</entry>
+        <entry>Iran Time</entry>
        </row>
        <row>
-	<entry>EAT</entry>
-	<entry>+03:00</entry>
-	<entry>Antananarivo, Comoro Time</entry>
+        <entry>EAT</entry>
+        <entry>+03:00</entry>
+        <entry>Antananarivo, Comoro Time</entry>
        </row>
        <row>
-	<entry>BT</entry>
-	<entry>+03:00</entry>
-	<entry>Baghdad Time</entry>
+        <entry>BT</entry>
+        <entry>+03:00</entry>
+        <entry>Baghdad Time</entry>
        </row>
        <row>
-	<entry>EETDST</entry>
-	<entry>+03:00</entry>
-	<entry>Eastern Europe Daylight-Saving Time</entry>
+        <entry>EETDST</entry>
+        <entry>+03:00</entry>
+        <entry>Eastern Europe Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>HMT</entry>
-	<entry>+03:00</entry>
-	<entry>Hellas Mediterranean Time (?)</entry>
+        <entry>HMT</entry>
+        <entry>+03:00</entry>
+        <entry>Hellas Mediterranean Time (?)</entry>
        </row>
        <row>
-	<entry>BDST</entry>
-	<entry>+02:00</entry>
-	<entry>British Double Summer Time</entry>
+        <entry>BDST</entry>
+        <entry>+02:00</entry>
+        <entry>British Double Summer Time</entry>
        </row>
        <row>
-	<entry>CEST</entry>
-	<entry>+02:00</entry>
-	<entry>Central European Summer Time</entry>
+        <entry>CEST</entry>
+        <entry>+02:00</entry>
+        <entry>Central European Summer Time</entry>
        </row>
        <row>
-	<entry>CETDST</entry>
-	<entry>+02:00</entry>
-	<entry>Central European Daylight-Saving Time</entry>
+        <entry>CETDST</entry>
+        <entry>+02:00</entry>
+        <entry>Central European Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>EET</entry>
-	<entry>+02:00</entry>
-	<entry>Eastern European Time, Russia zone 1</entry>
+        <entry>EET</entry>
+        <entry>+02:00</entry>
+        <entry>Eastern European Time, Russia zone 1</entry>
        </row>
        <row>
-	<entry>FWT</entry>
-	<entry>+02:00</entry>
-	<entry>French Winter Time</entry>
+        <entry>FWT</entry>
+        <entry>+02:00</entry>
+        <entry>French Winter Time</entry>
        </row>
        <row>
-	<entry>IST</entry>
-	<entry>+02:00</entry>
-	<entry>Israel Standard Time</entry>
+        <entry>IST</entry>
+        <entry>+02:00</entry>
+        <entry>Israel Standard Time</entry>
        </row>
        <row>
-	<entry>MEST</entry>
-	<entry>+02:00</entry>
-	<entry>Middle European Summer Time</entry>
+        <entry>MEST</entry>
+        <entry>+02:00</entry>
+        <entry>Middle European Summer Time</entry>
        </row>
        <row>
-	<entry>METDST</entry>
-	<entry>+02:00</entry>
-	<entry>Middle Europe Daylight-Saving Time</entry>
+        <entry>METDST</entry>
+        <entry>+02:00</entry>
+        <entry>Middle Europe Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>SST</entry>
-	<entry>+02:00</entry>
-	<entry>Swedish Summer Time</entry>
+        <entry>SST</entry>
+        <entry>+02:00</entry>
+        <entry>Swedish Summer Time</entry>
        </row>
        <row>
-	<entry>BST</entry>
-	<entry>+01:00</entry>
-	<entry>British Summer Time</entry>
+        <entry>BST</entry>
+        <entry>+01:00</entry>
+        <entry>British Summer Time</entry>
        </row>
        <row>
-	<entry>CET</entry>
-	<entry>+01:00</entry>
-	<entry>Central European Time</entry>
+        <entry>CET</entry>
+        <entry>+01:00</entry>
+        <entry>Central European Time</entry>
        </row>
        <row>
-	<entry>DNT</entry>
-	<entry>+01:00</entry>
-	<entry><foreignphrase>Dansk Normal Tid</foreignphrase></entry>
+        <entry>DNT</entry>
+        <entry>+01:00</entry>
+        <entry><foreignphrase>Dansk Normal Tid</foreignphrase></entry>
        </row>
        <row>
-	<entry>FST</entry>
-	<entry>+01:00</entry>
-	<entry>French Summer Time</entry>
+        <entry>FST</entry>
+        <entry>+01:00</entry>
+        <entry>French Summer Time</entry>
        </row>
        <row>
-	<entry>MET</entry>
-	<entry>+01:00</entry>
-	<entry>Middle European Time</entry>
+        <entry>MET</entry>
+        <entry>+01:00</entry>
+        <entry>Middle European Time</entry>
        </row>
        <row>
-	<entry>MEWT</entry>
-	<entry>+01:00</entry>
-	<entry>Middle European Winter Time</entry>
+        <entry>MEWT</entry>
+        <entry>+01:00</entry>
+        <entry>Middle European Winter Time</entry>
        </row>
        <row>
-	<entry>MEZ</entry>
-	<entry>+01:00</entry>
-	<entry><foreignphrase>Mitteleuropäische Zeit</></entry>
+        <entry>MEZ</entry>
+        <entry>+01:00</entry>
+        <entry><foreignphrase>Mitteleuropäische Zeit</></entry>
        </row>
        <row>
-	<entry>NOR</entry>
-	<entry>+01:00</entry>
-	<entry>Norway Standard Time</entry>
+        <entry>NOR</entry>
+        <entry>+01:00</entry>
+        <entry>Norway Standard Time</entry>
        </row>
        <row>
-	<entry>SET</entry>
-	<entry>+01:00</entry>
-	<entry>Seychelles Time</entry>
+        <entry>SET</entry>
+        <entry>+01:00</entry>
+        <entry>Seychelles Time</entry>
        </row>
        <row>
-	<entry>SWT</entry>
-	<entry>+01:00</entry>
-	<entry>Swedish Winter Time</entry>
+        <entry>SWT</entry>
+        <entry>+01:00</entry>
+        <entry>Swedish Winter Time</entry>
        </row>
        <row>
-	<entry>WETDST</entry>
-	<entry>+01:00</entry>
-	<entry>Western European Daylight-Saving Time</entry>
+        <entry>WETDST</entry>
+        <entry>+01:00</entry>
+        <entry>Western European Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>GMT</entry>
-	<entry>00:00</entry>
-	<entry>Greenwich Mean Time</entry>
+        <entry>GMT</entry>
+        <entry>00:00</entry>
+        <entry>Greenwich Mean Time</entry>
        </row>
        <row>
-	<entry>UT</entry>
-	<entry>00:00</entry>
-	<entry>Universal Time</entry>
+        <entry>UT</entry>
+        <entry>00:00</entry>
+        <entry>Universal Time</entry>
        </row>
        <row>
-	<entry>UTC</entry>
-	<entry>00:00</entry>
-	<entry>Universal Coordinated Time</entry>
+        <entry>UTC</entry>
+        <entry>00:00</entry>
+        <entry>Universal Coordinated Time</entry>
        </row>
        <row>
-	<entry>Z</entry>
-	<entry>00:00</entry>
-	<entry>Same as UTC</entry>
+        <entry>Z</entry>
+        <entry>00:00</entry>
+        <entry>Same as UTC</entry>
        </row>
        <row>
-	<entry>ZULU</entry>
-	<entry>00:00</entry>
-	<entry>Same as UTC</entry>
+        <entry>ZULU</entry>
+        <entry>00:00</entry>
+        <entry>Same as UTC</entry>
        </row>
        <row>
-	<entry>WET</entry>
-	<entry>00:00</entry>
-	<entry>Western European Time</entry>
+        <entry>WET</entry>
+        <entry>00:00</entry>
+        <entry>Western European Time</entry>
        </row>
        <row>
-	<entry>WAT</entry>
-	<entry>-01:00</entry>
-	<entry>West Africa Time</entry>
+        <entry>WAT</entry>
+        <entry>-01:00</entry>
+        <entry>West Africa Time</entry>
        </row>
        <row>
-	<entry>FNST</entry>
-	<entry>-01:00</entry>
-	<entry>Fernando de Noronha Summer Time</entry>
+        <entry>FNST</entry>
+        <entry>-01:00</entry>
+        <entry>Fernando de Noronha Summer Time</entry>
        </row>
        <row>
-	<entry>FNT</entry>
-	<entry>-02:00</entry>
-	<entry>Fernando de Noronha Time</entry>
+        <entry>FNT</entry>
+        <entry>-02:00</entry>
+        <entry>Fernando de Noronha Time</entry>
        </row>
        <row>
-	<entry>BRST</entry>
-	<entry>-02:00</entry>
-	<entry>Brasilia Summer Time</entry>
+        <entry>BRST</entry>
+        <entry>-02:00</entry>
+        <entry>Brasilia Summer Time</entry>
        </row>
        <row>
-	<entry>NDT</entry>
-	<entry>-02:30</entry>
-	<entry>Newfoundland Daylight-Saving Time</entry>
+        <entry>NDT</entry>
+        <entry>-02:30</entry>
+        <entry>Newfoundland Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>ADT</entry>
-	<entry>-03:00</entry>
-	<entry>Atlantic Daylight-Saving Time</entry>
+        <entry>ADT</entry>
+        <entry>-03:00</entry>
+        <entry>Atlantic Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>AWT</entry>
-	<entry>-03:00</entry>
-	<entry>(unknown)</entry>
+        <entry>AWT</entry>
+        <entry>-03:00</entry>
+        <entry>(unknown)</entry>
        </row>
        <row>
-	<entry>BRT</entry>
-	<entry>-03:00</entry>
-	<entry>Brasilia Time</entry>
+        <entry>BRT</entry>
+        <entry>-03:00</entry>
+        <entry>Brasilia Time</entry>
        </row>
        <row>
-	<entry>NFT</entry>
-	<entry>-03:30</entry>
-	<entry>Newfoundland Standard Time</entry>
+        <entry>NFT</entry>
+        <entry>-03:30</entry>
+        <entry>Newfoundland Standard Time</entry>
        </row>
        <row>
-	<entry>NST</entry>
-	<entry>-03:30</entry>
-	<entry>Newfoundland Standard Time</entry>
+        <entry>NST</entry>
+        <entry>-03:30</entry>
+        <entry>Newfoundland Standard Time</entry>
        </row>
        <row>
-	<entry>AST</entry>
-	<entry>-04:00</entry>
-	<entry>Atlantic Standard Time (Canada)</entry>
+        <entry>AST</entry>
+        <entry>-04:00</entry>
+        <entry>Atlantic Standard Time (Canada)</entry>
        </row>
        <row>
-	<entry>ACST</entry>
-	<entry>-04:00</entry>
-	<entry>Atlantic/Porto Acre Summer Time</entry>
+        <entry>ACST</entry>
+        <entry>-04:00</entry>
+        <entry>Atlantic/Porto Acre Summer Time</entry>
        </row>
        <row>
-	<entry>EDT</entry>
-	<entry>-04:00</entry>
-	<entry>Eastern Daylight-Saving Time</entry>
+        <entry>EDT</entry>
+        <entry>-04:00</entry>
+        <entry>Eastern Daylight-Saving Time</entry>
        </row>
        <!--
       <row>
@@ -817,19 +815,19 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
       </row>
        -->
        <row>
-	<entry>ACT</entry>
-	<entry>-05:00</entry>
-	<entry>Atlantic/Porto Acre Standard Time</entry>
+        <entry>ACT</entry>
+        <entry>-05:00</entry>
+        <entry>Atlantic/Porto Acre Standard Time</entry>
        </row>
        <row>
-	<entry>CDT</entry>
-	<entry>-05:00</entry>
-	<entry>Central Daylight-Saving Time</entry>
+        <entry>CDT</entry>
+        <entry>-05:00</entry>
+        <entry>Central Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>EST</entry>
-	<entry>-05:00</entry>
-	<entry>Eastern Standard Time</entry>
+        <entry>EST</entry>
+        <entry>-05:00</entry>
+        <entry>Eastern Standard Time</entry>
        </row>
        <!--
       <row>
@@ -839,14 +837,14 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
       </row>
        -->
        <row>
-	<entry>CST</entry>
-	<entry>-06:00</entry>
-	<entry>Central Standard Time</entry>
+        <entry>CST</entry>
+        <entry>-06:00</entry>
+        <entry>Central Standard Time</entry>
        </row>
        <row>
-	<entry>MDT</entry>
-	<entry>-06:00</entry>
-	<entry>Mountain Daylight-Saving Time</entry>
+        <entry>MDT</entry>
+        <entry>-06:00</entry>
+        <entry>Mountain Daylight-Saving Time</entry>
        </row>
        <!--
       <row>
@@ -856,74 +854,74 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
       </row>
        -->
        <row>
-	<entry>MST</entry>
-	<entry>-07:00</entry>
-	<entry>Mountain Standard Time</entry>
+        <entry>MST</entry>
+        <entry>-07:00</entry>
+        <entry>Mountain Standard Time</entry>
        </row>
        <row>
-	<entry>PDT</entry>
-	<entry>-07:00</entry>
-	<entry>Pacific Daylight-Saving Time</entry>
+        <entry>PDT</entry>
+        <entry>-07:00</entry>
+        <entry>Pacific Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>AKDT</entry>
-	<entry>-08:00</entry>
-	<entry>Alaska Daylight-Saving Time</entry>
+        <entry>AKDT</entry>
+        <entry>-08:00</entry>
+        <entry>Alaska Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>PST</entry>
-	<entry>-08:00</entry>
-	<entry>Pacific Standard Time</entry>
+        <entry>PST</entry>
+        <entry>-08:00</entry>
+        <entry>Pacific Standard Time</entry>
        </row>
        <row>
-	<entry>YDT</entry>
-	<entry>-08:00</entry>
-	<entry>Yukon Daylight-Saving Time</entry>
+        <entry>YDT</entry>
+        <entry>-08:00</entry>
+        <entry>Yukon Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>AKST</entry>
-	<entry>-09:00</entry>
-	<entry>Alaska Standard Time</entry>
+        <entry>AKST</entry>
+        <entry>-09:00</entry>
+        <entry>Alaska Standard Time</entry>
        </row>
        <row>
-	<entry>HDT</entry>
-	<entry>-09:00</entry>
-	<entry>Hawaii/Alaska Daylight-Saving Time</entry>
+        <entry>HDT</entry>
+        <entry>-09:00</entry>
+        <entry>Hawaii/Alaska Daylight-Saving Time</entry>
        </row>
        <row>
-	<entry>YST</entry>
-	<entry>-09:00</entry>
-	<entry>Yukon Standard Time</entry>
+        <entry>YST</entry>
+        <entry>-09:00</entry>
+        <entry>Yukon Standard Time</entry>
        </row>
        <row>
-	<entry>MART</entry>
-	<entry>-09:30</entry>
-	<entry>Marquesas Time</entry>
+        <entry>MART</entry>
+        <entry>-09:30</entry>
+        <entry>Marquesas Time</entry>
        </row>
        <row>
-	<entry>AHST</entry>
-	<entry>-10:00</entry>
-	<entry>Alaska/Hawaii Standard Time</entry>
+        <entry>AHST</entry>
+        <entry>-10:00</entry>
+        <entry>Alaska/Hawaii Standard Time</entry>
        </row>
        <row>
-	<entry>HST</entry>
-	<entry>-10:00</entry>
-	<entry>Hawaii Standard Time</entry>
+        <entry>HST</entry>
+        <entry>-10:00</entry>
+        <entry>Hawaii Standard Time</entry>
        </row>
        <row>
-	<entry>CAT</entry>
-	<entry>-10:00</entry>
-	<entry>Central Alaska Time</entry>
+        <entry>CAT</entry>
+        <entry>-10:00</entry>
+        <entry>Central Alaska Time</entry>
        </row>
        <row>
-	<entry>NT</entry>
-	<entry>-11:00</entry>
-	<entry>Nome Time</entry>
+        <entry>NT</entry>
+        <entry>-11:00</entry>
+        <entry>Nome Time</entry>
        </row>
        <row>
-	<entry>IDLW</entry>
-	<entry>-12:00</entry>
-	<entry>International Date Line, West</entry>
+        <entry>IDLW</entry>
+        <entry>-12:00</entry>
+        <entry>International Date Line, West</entry>
        </row>
       </tbody>
      </tgroup>
@@ -954,31 +952,31 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
      <tgroup cols="3">
       <thead>
        <row>
-	<entry>Time Zone</entry>
-	<entry>Offset from UTC</entry>
-	<entry>Description</entry>
+        <entry>Time Zone</entry>
+        <entry>Offset from UTC</entry>
+        <entry>Description</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>ACST</entry>
-	<entry>+09:30</entry>
-	<entry>Central Australia Standard Time</entry>
+        <entry>ACST</entry>
+        <entry>+09:30</entry>
+        <entry>Central Australia Standard Time</entry>
        </row>
        <row>
-	<entry>CST</entry>
-	<entry>+10:30</entry>
-	<entry>Australian Central Standard Time</entry>
+        <entry>CST</entry>
+        <entry>+10:30</entry>
+        <entry>Australian Central Standard Time</entry>
        </row>
        <row>
-	<entry>EST</entry>
-	<entry>+10:00</entry>
-	<entry>Australian Eastern Standard Time</entry>
+        <entry>EST</entry>
+        <entry>+10:00</entry>
+        <entry>Australian Eastern Standard Time</entry>
        </row>
        <row>
-	<entry>SAT</entry>
-	<entry>+09:30</entry>
-	<entry>South Australian Standard Time</entry>
+        <entry>SAT</entry>
+        <entry>+09:30</entry>
+        <entry>South Australian Standard Time</entry>
        </row>
       </tbody>
      </tgroup>
@@ -1010,7 +1008,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.44 2004/12/28 15:25:55 tgl Exp
      <tgroup cols="1">
       <thead>
        <row>
-	<entry>Time Zone</entry>
+        <entry>Time Zone</entry>
        </row>
       </thead>
 <tbody>
