@@ -23,6 +23,12 @@ static char	elsieid[] = "@(#)zic.c	7.115";
 #endif
 
 /*
+ *	This allows zic to compile by just assigning a dummy value.
+ *	pgtz.c references it, but no one uses it from zic.
+ */
+char		my_exec_path[MAXPGPATH] = "";
+
+/*
 ** On some ancient hosts, predicates like `isspace(C)' are defined
 ** only if isascii(C) || C == EOF.  Modern hosts obey the C Standard,
 ** which says they are defined only if C == ((unsigned char) C) || C == EOF.
