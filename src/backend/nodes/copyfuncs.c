@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.58 1999/02/03 20:15:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.59 1999/02/03 21:16:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1104,8 +1104,7 @@ CopyPathFields(Path *from, Path *newnode)
 		{
 			for (len = 0; ordering[len] != 0; len++)
 				;
-			newnode->p_ordering.ord.sortop =
-				(Oid *) palloc(sizeof(Oid) * (len + 1));
+			newnode->p_ordering.ord.sortop = (Oid *) palloc(sizeof(Oid) * (len + 1));
 			for (i = 0; i < len; i++)
 				newnode->p_ordering.ord.sortop[i] = ordering[i];
 			newnode->p_ordering.ord.sortop[len] = 0;

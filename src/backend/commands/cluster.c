@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.36 1999/02/02 03:44:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.37 1999/02/03 21:16:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,22 +257,19 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	 * To do this I get the info from pg_index, re-build the FunctInfo if
 	 * I have to, and add a new index with a temporary name.
 	 */
-	Old_pg_index_Tuple =
-		SearchSysCacheTuple(INDEXRELID,
+	Old_pg_index_Tuple = SearchSysCacheTuple(INDEXRELID,
 							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
 							0, 0, 0);
 
 	Assert(Old_pg_index_Tuple);
 	Old_pg_index_Form = (Form_pg_index) GETSTRUCT(Old_pg_index_Tuple);
 
-	Old_pg_index_relation_Tuple =
-		SearchSysCacheTuple(RELOID,
+	Old_pg_index_relation_Tuple = SearchSysCacheTuple(RELOID,
 							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
 							0, 0, 0);
 
 	Assert(Old_pg_index_relation_Tuple);
-	Old_pg_index_relation_Form =
-		(Form_pg_class) GETSTRUCT(Old_pg_index_relation_Tuple);
+	Old_pg_index_relation_Form = (Form_pg_class) GETSTRUCT(Old_pg_index_relation_Tuple);
 
 	/* Set the name. */
 	NewIndexName = palloc(NAMEDATALEN); /* XXX */
@@ -297,8 +294,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 		FIgetnArgs(finfo) = natts;
 		FIgetProcOid(finfo) = Old_pg_index_Form->indproc;
 
-		pg_proc_Tuple =
-			SearchSysCacheTuple(PROOID,
+		pg_proc_Tuple = SearchSysCacheTuple(PROOID,
 							ObjectIdGetDatum(Old_pg_index_Form->indproc),
 								0, 0, 0);
 
@@ -357,8 +353,7 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 
 		LocalHeapTuple.t_self = ScanResult->heap_iptr;
 		heap_fetch(LocalOldHeap, SnapshotNow, &LocalHeapTuple, &LocalBuffer);
-		OIDNewHeapInsert =
-			heap_insert(LocalNewHeap, &LocalHeapTuple);
+		OIDNewHeapInsert = heap_insert(LocalNewHeap, &LocalHeapTuple);
 		pfree(ScanResult);
 		ReleaseBuffer(LocalBuffer);
 	}

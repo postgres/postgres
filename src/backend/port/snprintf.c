@@ -73,7 +73,7 @@ typedef unsigned long long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.18 1999/01/17 21:44:46 tgl Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.19 1999/02/03 21:17:00 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -380,8 +380,7 @@ int			base,
 	}
 	do
 	{
-		convert[place++] =
-			(caps ? "0123456789ABCDEF" : "0123456789abcdef")
+		convert[place++] = (caps ? "0123456789ABCDEF" : "0123456789abcdef")
 			[uvalue % (unsigned) base];
 		uvalue = (uvalue / (unsigned) base);
 	} while (uvalue);

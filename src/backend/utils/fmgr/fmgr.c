@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.20 1998/09/01 04:33:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.21 1999/02/03 21:17:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,8 +190,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 		switch (language)
 		{
 			case INTERNALlanguageId:
-				finfo->fn_addr =
-					fmgr_lookupByName(procedureStruct->proname.data);
+				finfo->fn_addr = fmgr_lookupByName(procedureStruct->proname.data);
 				if (!finfo->fn_addr)
 					elog(ERROR, "fmgr_info: function %s: not in internal table",
 						 procedureStruct->proname.data);
@@ -342,8 +341,7 @@ fmgr_array_args(Oid procedureId, int nargs, char *args[], bool *isNull)
 	finfo.fn_nargs = nargs;
 
 	/* XXX see WAY_COOL_ORTHOGONAL_FUNCTIONS */
-	return
-		(fmgr_c(&finfo,
+	return (fmgr_c(&finfo,
 				(FmgrValues *) args,
 				isNull));
 }

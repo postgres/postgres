@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.35 1998/12/18 09:10:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.36 1999/02/03 21:16:02 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -131,8 +131,7 @@ PerformPortalFetch(char *name,
 	 */
 	context = MemoryContextSwitchTo((MemoryContext) PortalGetHeapMemory(portal));
 
-	AssertState(context ==
-			 (MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL)));
+	AssertState(context == (MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL)));
 
 	/* ----------------
 	 *	setup "feature" to tell the executor what direction and

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.19 1998/11/27 19:52:27 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.20 1999/02/03 21:17:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,8 +219,7 @@ init_fcache(Oid foid,
 			int			i;
 			List	   *oneArg;
 
-			retval->argOidVect =
-				(Oid *) palloc(retval->nargs * sizeof(Oid));
+			retval->argOidVect = (Oid *) palloc(retval->nargs * sizeof(Oid));
 			argTypes = procedureStruct->proargtypes;
 			memmove(retval->argOidVect,
 					argTypes,

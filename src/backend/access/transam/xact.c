@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.30 1999/02/02 03:44:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.31 1999/02/03 21:15:45 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -191,8 +191,7 @@ TransactionStateData CurrentTransactionStateData = {
 	TBLOCK_DEFAULT				/* transaction block state */
 };
 
-TransactionState CurrentTransactionState =
-&CurrentTransactionStateData;
+TransactionState CurrentTransactionState = &CurrentTransactionStateData;
 
 int	DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int	XactIsoLevel;
@@ -467,8 +466,7 @@ CommandIdIsCurrentCommandId(CommandId cid)
 	if (AMI_OVERRIDE)
 		return false;
 
-	return
-		(cid == s->commandId) ? true : false;
+	return (cid == s->commandId) ? true : false;
 }
 
 bool
@@ -479,8 +477,7 @@ CommandIdGEScanCommandId(CommandId cid)
 	if (AMI_OVERRIDE)
 		return false;
 
-	return
-		(cid >= s->scanCommandId) ? true : false;
+	return (cid >= s->scanCommandId) ? true : false;
 }
 
 
@@ -511,8 +508,7 @@ CommandCounterIncrement()
 		elog(ERROR, "You may only have 2^32-1 commands per transaction");
 	}
 
-	CurrentTransactionStateData.scanCommandId =
-		CurrentTransactionStateData.commandId;
+	CurrentTransactionStateData.scanCommandId = CurrentTransactionStateData.commandId;
 
 	/* make cache changes visible to me */
 	AtCommit_Cache();

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: nodeHash.c,v 1.29 1999/01/17 06:18:19 momjian Exp $
+ *  $Id: nodeHash.c,v 1.30 1999/02/03 21:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,11 +581,9 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	 * ------------------
 	 */
 	if (execConstByVal)
-		bucketno =
-			hashFunc((char *) &keyval, execConstLen) % hashtable->totalbuckets;
+		bucketno = hashFunc((char *) &keyval, execConstLen) % hashtable->totalbuckets;
 	else
-		bucketno =
-			hashFunc((char *) keyval, execConstLen) % hashtable->totalbuckets;
+		bucketno = hashFunc((char *) keyval, execConstLen) % hashtable->totalbuckets;
 #ifdef HJDEBUG
 	if (bucketno >= hashtable->nbuckets)
 		printf("hash(%d) = %d SAVED\n", keyval, bucketno);

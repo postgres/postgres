@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.6 1999/01/27 16:15:22 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.7 1999/02/03 21:17:58 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2540,8 +2540,7 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 									((Param *)(tle->expr))->paramtype;
 						break;
 
-		case T_Const:	expr->plan_simple_type =
-									((Const *)(tle->expr))->consttype;
+		case T_Const:	expr->plan_simple_type = ((Const *)(tle->expr))->consttype;
 						break;
 
 		default:		expr->plan_simple_type = InvalidOid;

@@ -71,8 +71,7 @@ void
 ECPGmake_struct_member(char *name, struct ECPGtype * type, struct ECPGstruct_member ** start)
 {
 	struct ECPGstruct_member *ptr,
-			   *ne =
-	(struct ECPGstruct_member *) mm_alloc(sizeof(struct ECPGstruct_member));
+			   *ne = (struct ECPGstruct_member *) mm_alloc(sizeof(struct ECPGstruct_member));
 
 	ne->name = strdup(name);
 	ne->typ = type;

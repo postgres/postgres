@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.15 1999/02/03 20:15:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.16 1999/02/03 21:16:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,8 +131,7 @@ set_rest_selec(Query *root, List *restrictinfo_list)
 		 */
 		if (valid_or_clause(clausenode) || FLOAT_IS_ZERO(cost_clause))
 		{
-			clausenode->selectivity =
-				compute_clause_selec(root,
+			clausenode->selectivity = compute_clause_selec(root,
 									 (Node *) clausenode->clause,
 									 lcons(makeFloat(cost_clause), NIL));
 		}

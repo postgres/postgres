@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.45 1999/02/03 20:15:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.46 1999/02/03 21:16:18 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -552,8 +552,7 @@ _readIndexScan()
 	_getScan((Scan *) local_node);
 
 	token = lsptok(NULL, &length);		/* eat :indxid */
-	local_node->indxid =
-		toIntList(nodeRead(true));		/* now read it */
+	local_node->indxid = toIntList(nodeRead(true));		/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :indxqual */
 	local_node->indxqual = nodeRead(true);		/* now read it */
@@ -1296,8 +1295,7 @@ _readRelOptInfo()
 	local_node = makeNode(RelOptInfo);
 
 	token = lsptok(NULL, &length);		/* get :relids */
-	local_node->relids =
-		toIntList(nodeRead(true));		/* now read it */
+	local_node->relids = toIntList(nodeRead(true));		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :indexed */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -1477,8 +1475,7 @@ _readPath()
 
 #if 0
 	token = lsptok(NULL, &length);		/* get :p_ordering */
-	local_node->p_ordering =
-		nodeRead(true);			/* now read it */
+	local_node->p_ordering = nodeRead(true);			/* now read it */
 #endif
 
 	token = lsptok(NULL, &length);		/* get :keys */
@@ -1519,8 +1516,7 @@ _readIndexPath()
 	local_node->path.keys = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :indexid */
-	local_node->indexid =
-		toIntList(nodeRead(true));
+	local_node->indexid = toIntList(nodeRead(true));
 
 	token = lsptok(NULL, &length);		/* get :indexqual */
 	local_node->indexqual = nodeRead(true);		/* now read it */
@@ -1589,8 +1585,7 @@ _readJoinPath()
 	local_node->path.outerjoincost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :joinid */
-	local_node->path.joinid =
-		toIntList(nodeRead(true));		/* now read it */
+	local_node->path.joinid = toIntList(nodeRead(true));		/* now read it */
 
 	return local_node;
 }
@@ -1657,8 +1652,7 @@ _readMergePath()
 	local_node->jpath.path.outerjoincost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :joinid */
-	local_node->jpath.path.joinid =
-		toIntList(nodeRead(true));		/* now read it */
+	local_node->jpath.path.joinid = toIntList(nodeRead(true));		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_mergeclauses */
 	local_node->path_mergeclauses = nodeRead(true);		/* now read it */
@@ -1734,8 +1728,7 @@ _readHashPath()
 	local_node->jpath.path.outerjoincost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :joinid */
-	local_node->jpath.path.joinid =
-		toIntList(nodeRead(true));		/* now read it */
+	local_node->jpath.path.joinid = toIntList(nodeRead(true));		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_hashclauses */
 	local_node->path_hashclauses = nodeRead(true);		/* now read it */
@@ -1957,8 +1950,7 @@ _readJoinInfo()
 	local_node = makeNode(JoinInfo);
 
 	token = lsptok(NULL, &length);		/* get :otherrels */
-	local_node->otherrels =
-		toIntList(nodeRead(true));		/* now read it */
+	local_node->otherrels = toIntList(nodeRead(true));		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :jinfo_restrictinfo */
 	local_node->jinfo_restrictinfo = nodeRead(true);		/* now read it */

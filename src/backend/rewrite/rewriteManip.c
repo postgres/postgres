@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.26 1999/01/25 18:02:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.27 1999/02/03 21:17:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,8 +503,7 @@ AddQual(Query *parsetree, Node *qual)
 	if (old == NULL)
 		parsetree->qual = copy;
 	else
-		parsetree->qual =
-			(Node *) make_andclause(makeList(parsetree->qual, copy, -1));
+		parsetree->qual = (Node *) make_andclause(makeList(parsetree->qual, copy, -1));
 }
 
 /* Adds the given havingQual to the one already contained in the parsetree just as
@@ -526,8 +525,7 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 	if (old == NULL)
 		parsetree->havingQual = copy;
 	else
-		parsetree->havingQual =
-			(Node *) make_andclause(makeList(parsetree->havingQual, copy, -1));
+		parsetree->havingQual = (Node *) make_andclause(makeList(parsetree->havingQual, copy, -1));
 }
 
 void

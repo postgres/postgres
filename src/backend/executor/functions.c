@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.21 1998/11/27 19:52:01 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.22 1999/02/03 21:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,8 +135,7 @@ init_execution_state(FunctionCachePtr fcache,
 			int			i;
 			ParamListInfo paramLI;
 
-			paramLI =
-				(ParamListInfo) palloc((nargs + 1) * sizeof(ParamListInfoData));
+			paramLI = (ParamListInfo) palloc((nargs + 1) * sizeof(ParamListInfoData));
 
 			MemSet(paramLI, 0, nargs * sizeof(ParamListInfoData));
 
@@ -272,8 +271,7 @@ copy_function_result(FunctionCachePtr fcache,
 
 		while (i < oldTuple->t_data->t_natts)
 		{
-			funcTd->attrs[i] =
-				(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
+			funcTd->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 			memmove(funcTd->attrs[i],
 					resultTd->attrs[i],
 					ATTRIBUTE_TUPLE_SIZE);

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.19 1998/08/19 02:02:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.20 1999/02/03 21:17:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,8 +245,7 @@ InitLocalBuffer(void)
 		buf->buf_id = -i - 2;
 	}
 
-	LocalRefCount =
-		(long *) malloc(sizeof(long) * NLocBuffer);
+	LocalRefCount = (long *) malloc(sizeof(long) * NLocBuffer);
 	MemSet(LocalRefCount, 0, sizeof(long) * NLocBuffer);
 }
 

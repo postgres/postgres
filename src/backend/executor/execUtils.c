@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.41 1998/12/15 12:46:05 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.42 1999/02/03 21:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,8 +331,7 @@ ExecAssignProjectionInfo(Plan *node, CommonState *commonstate)
 	projInfo = makeNode(ProjectionInfo);
 	projInfo->pi_targetlist = targetList;
 	projInfo->pi_len = len;
-	projInfo->pi_tupValue =
-		(len <= 0) ? NULL : (Datum *) palloc(sizeof(Datum) * len);
+	projInfo->pi_tupValue = (len <= 0) ? NULL : (Datum *) palloc(sizeof(Datum) * len);
 	projInfo->pi_exprContext = commonstate->cs_ExprContext;
 	projInfo->pi_slot = commonstate->cs_ResultTupleSlot;
 

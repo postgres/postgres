@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.23 1998/10/08 18:29:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.24 1999/02/03 21:16:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,8 +219,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 		if (!HeapTupleIsValid(amopTuple))
 			elog(ERROR, "index_info: no amop %d %d %d",
 				 relam, index->indclass[i], amstrategy);
-		info->orderOprs[i] =
-			((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
+		info->orderOprs[i] = ((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
 	}
 	return TRUE;
 }

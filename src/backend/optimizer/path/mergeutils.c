@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.10 1999/02/03 20:15:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.11 1999/02/03 21:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,11 +84,9 @@ group_clauses_by_order(List *restrictinfo_list,
 									   mergeinfo_list);
 			}
 
-			((JoinMethod *) xmergeinfo)->clauses =
-				lcons(clause,
+			((JoinMethod *) xmergeinfo)->clauses = lcons(clause,
 					  ((JoinMethod *) xmergeinfo)->clauses);
-			((JoinMethod *) xmergeinfo)->jmkeys =
-				lcons(keys,
+			((JoinMethod *) xmergeinfo)->jmkeys = lcons(keys,
 					  ((JoinMethod *) xmergeinfo)->jmkeys);
 		}
 	}

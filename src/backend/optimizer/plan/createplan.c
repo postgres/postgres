@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.35 1999/02/03 20:15:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.36 1999/02/03 21:16:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,11 +396,9 @@ create_indexscan_node(IndexPath *best_path,
 						   (List *) copyObject(lfirst(indxqual)));
 	}
 
-	fixed_indxqual =
-		(List *) fix_indxqual_references((Node *) indxqual, (Path *) best_path);
+	fixed_indxqual = (List *) fix_indxqual_references((Node *) indxqual, (Path *) best_path);
 
-	scan_node =
-		make_indexscan(tlist,
+	scan_node = make_indexscan(tlist,
 					   qpqual,
 					   lfirsti(best_path->path.parent->relids),
 					   best_path->indexid,
@@ -470,12 +468,10 @@ create_nestloop_node(JoinPath *best_path,
 			List	   *new_inner_qual = NIL;
 
 			clauses = set_difference(clauses, inner_indxqual);	/* XXX */
-			new_inner_qual =
-				index_outerjoin_references(inner_indxqual,
+			new_inner_qual = index_outerjoin_references(inner_indxqual,
 										   outer_node->targetlist,
 									   ((Scan *) inner_node)->scanrelid);
-			((IndexScan *) inner_node)->indxqual =
-				lcons(new_inner_qual, NIL);
+			((IndexScan *) inner_node)->indxqual = lcons(new_inner_qual, NIL);
 		}
 	}
 	else if (IsA_Join(inner_node))
@@ -533,17 +529,14 @@ create_mergejoin_node(MergePath *best_path,
 												outer_tlist,
 												inner_tlist));
 
-	opcode =
-		get_opcode((best_path->jpath.path.p_ordering.ord.merge)->join_operator);
+	opcode = get_opcode((best_path->jpath.path.p_ordering.ord.merge)->join_operator);
 
 	outer_order = (Oid *) palloc(sizeof(Oid) * 2);
-	outer_order[0] =
-		(best_path->jpath.path.p_ordering.ord.merge)->left_operator;
+	outer_order[0] = (best_path->jpath.path.p_ordering.ord.merge)->left_operator;
 	outer_order[1] = 0;
 
 	inner_order = (Oid *) palloc(sizeof(Oid) * 2);
-	inner_order[0] =
-		(best_path->jpath.path.p_ordering.ord.merge)->right_operator;
+	inner_order[0] = (best_path->jpath.path.p_ordering.ord.merge)->right_operator;
 	inner_order[1] = 0;
 
 	/*
@@ -615,8 +608,7 @@ create_hashjoin_node(HashPath *best_path,
 	 * Separate the hashclauses from the other join qualification clauses
 	 * and set those clauses to contain references to lower attributes.
 	 */
-	qpqual =
-		join_references(set_difference(clauses,
+	qpqual = join_references(set_difference(clauses,
 									   best_path->path_hashclauses),
 						outer_tlist,
 						inner_tlist);
@@ -625,8 +617,7 @@ create_hashjoin_node(HashPath *best_path,
 	 * Now set the references in the hashclauses and rearrange them so
 	 * that the outer variable is always on the left.
 	 */
-	hashclauses =
-		switch_outer(join_references(best_path->path_hashclauses,
+	hashclauses = switch_outer(join_references(best_path->path_hashclauses,
 									 outer_tlist,
 									 inner_tlist));
 
@@ -690,8 +681,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 			 is_funcclause((Node *) get_leftop((Expr *) clause)) &&
 	((Func *) ((Expr *) get_leftop((Expr *) clause))->oper)->funcisindex)
 	{
-		Var		   *newvar =
-		makeVar((Index) lfirsti(index_path->parent->relids),
+		Var		   *newvar = makeVar((Index) lfirsti(index_path->parent->relids),
 				1,				/* func indices have one key */
 				((Func *) ((Expr *) clause)->oper)->functype,
 				-1,
@@ -699,8 +689,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 				(Index) lfirsti(index_path->parent->relids),
 				0);
 
-		return
-			((Node *) make_opclause((Oper *) ((Expr *) clause)->oper,
+		return ((Node *) make_opclause((Oper *) ((Expr *) clause)->oper,
 									newvar,
 									get_rightop((Expr *) clause)));
 
@@ -716,8 +705,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		{
 			subclause = lfirst(i);
 			if (subclause)
-				new_subclauses =
-					lappend(new_subclauses,
+				new_subclauses = lappend(new_subclauses,
 							fix_indxqual_references(subclause,
 													index_path));
 
@@ -751,8 +739,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		{
 			subclause = lfirst(i);
 			if (subclause)
-				new_subclauses =
-					lappend(new_subclauses,
+				new_subclauses = lappend(new_subclauses,
 							fix_indxqual_references(subclause,
 													index_path));
 

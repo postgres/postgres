@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.18 1998/12/15 12:45:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.19 1999/02/03 21:15:45 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -315,8 +315,7 @@ TransBlockNumberGetXidStatus(Relation relation,
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
 
-	return
-		xstatus;
+	return xstatus;
 }
 
 /* --------------------------------

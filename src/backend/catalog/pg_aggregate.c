@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.18 1998/11/27 19:51:50 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.19 1999/02/03 21:15:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,43 +206,29 @@ AggregateCreate(char *aggName,
 	}
 	namestrcpy(&aname, aggName);
 	values[Anum_pg_aggregate_aggname - 1] = NameGetDatum(&aname);
-	values[Anum_pg_aggregate_aggowner - 1] =
-		Int32GetDatum(GetUserId());
-	values[Anum_pg_aggregate_aggtransfn1 - 1] =
-		ObjectIdGetDatum(xfn1);
-	values[Anum_pg_aggregate_aggtransfn2 - 1] =
-		ObjectIdGetDatum(xfn2);
-	values[Anum_pg_aggregate_aggfinalfn - 1] =
-		ObjectIdGetDatum(ffn);
+	values[Anum_pg_aggregate_aggowner - 1] = Int32GetDatum(GetUserId());
+	values[Anum_pg_aggregate_aggtransfn1 - 1] = ObjectIdGetDatum(xfn1);
+	values[Anum_pg_aggregate_aggtransfn2 - 1] = ObjectIdGetDatum(xfn2);
+	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(ffn);
 
-	values[Anum_pg_aggregate_aggbasetype - 1] =
-		ObjectIdGetDatum(xbase);
+	values[Anum_pg_aggregate_aggbasetype - 1] = ObjectIdGetDatum(xbase);
 	if (!OidIsValid(xfn1))
 	{
-		values[Anum_pg_aggregate_aggtranstype1 - 1] =
-			ObjectIdGetDatum(InvalidOid);
-		values[Anum_pg_aggregate_aggtranstype2 - 1] =
-			ObjectIdGetDatum(xret2);
-		values[Anum_pg_aggregate_aggfinaltype - 1] =
-			ObjectIdGetDatum(xret2);
+		values[Anum_pg_aggregate_aggtranstype1 - 1] = ObjectIdGetDatum(InvalidOid);
+		values[Anum_pg_aggregate_aggtranstype2 - 1] = ObjectIdGetDatum(xret2);
+		values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(xret2);
 	}
 	else if (!OidIsValid(xfn2))
 	{
-		values[Anum_pg_aggregate_aggtranstype1 - 1] =
-			ObjectIdGetDatum(xret1);
-		values[Anum_pg_aggregate_aggtranstype2 - 1] =
-			ObjectIdGetDatum(InvalidOid);
-		values[Anum_pg_aggregate_aggfinaltype - 1] =
-			ObjectIdGetDatum(xret1);
+		values[Anum_pg_aggregate_aggtranstype1 - 1] = ObjectIdGetDatum(xret1);
+		values[Anum_pg_aggregate_aggtranstype2 - 1] = ObjectIdGetDatum(InvalidOid);
+		values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(xret1);
 	}
 	else
 	{
-		values[Anum_pg_aggregate_aggtranstype1 - 1] =
-			ObjectIdGetDatum(xret1);
-		values[Anum_pg_aggregate_aggtranstype2 - 1] =
-			ObjectIdGetDatum(xret2);
-		values[Anum_pg_aggregate_aggfinaltype - 1] =
-			ObjectIdGetDatum(fret);
+		values[Anum_pg_aggregate_aggtranstype1 - 1] = ObjectIdGetDatum(xret1);
+		values[Anum_pg_aggregate_aggtranstype2 - 1] = ObjectIdGetDatum(xret2);
+		values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(fret);
 	}
 
 	if (agginitval1)

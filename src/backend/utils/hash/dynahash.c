@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.16 1998/09/01 04:33:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.17 1999/02/03 21:17:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,8 +329,7 @@ init_htab(HTAB *hashp, int nelem)
 	/* allocate a directory */
 	if (!(hashp->dir))
 	{
-		hashp->dir =
-			(SEG_OFFSET *) hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
+		hashp->dir = (SEG_OFFSET *) hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
 		if (!hashp->dir)
 			return -1;
 	}
@@ -850,8 +849,7 @@ bucket_alloc(HTAB *hashp)
 	BUCKET_INDEX tmpIndex,
 				lastIndex;
 
-	bucketSize =
-		sizeof(BUCKET_INDEX) + hashp->hctl->keysize + hashp->hctl->datasize;
+	bucketSize = sizeof(BUCKET_INDEX) + hashp->hctl->keysize + hashp->hctl->datasize;
 
 	/* make sure its aligned correctly */
 	bucketSize += sizeof(long *) - (bucketSize % sizeof(long *));

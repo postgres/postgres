@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.35 1998/10/26 01:00:13 tgl Exp $
+ *	  $Id: fd.c,v 1.36 1999/02/03 21:17:14 momjian Exp $
  *
  * NOTES:
  *
@@ -235,10 +235,8 @@ Delete(File file)
 
 	fileP = &VfdCache[file];
 
-	VfdCache[fileP->lruLessRecently].lruMoreRecently =
-		VfdCache[file].lruMoreRecently;
-	VfdCache[fileP->lruMoreRecently].lruLessRecently =
-		VfdCache[file].lruLessRecently;
+	VfdCache[fileP->lruLessRecently].lruMoreRecently = VfdCache[file].lruMoreRecently;
+	VfdCache[fileP->lruMoreRecently].lruLessRecently = VfdCache[file].lruLessRecently;
 
 	DO_DB(_dump_lru());
 }
@@ -347,8 +345,7 @@ tryAgain:
 		/* seek to the right position */
 		if (vfdP->seekPos != 0L)
 		{
-			returnValue =
-				lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
+			returnValue = lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
 			Assert(returnValue != -1);
 		}
 
@@ -751,8 +748,7 @@ FileSeek(File file, long offset, int whence)
 				return VfdCache[file].seekPos;
 			case SEEK_END:
 				FileAccess(file);
-				returnCode = VfdCache[file].seekPos =
-					lseek(VfdCache[file].fd, offset, whence);
+				returnCode = VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
 				return returnCode;
 			default:
 				elog(ERROR, "FileSeek: invalid whence: %d", whence);
@@ -761,8 +757,7 @@ FileSeek(File file, long offset, int whence)
 	}
 	else
 	{
-		returnCode = VfdCache[file].seekPos =
-			lseek(VfdCache[file].fd, offset, whence);
+		returnCode = VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
 		return returnCode;
 	}
 	/* NOTREACHED */

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.48 1999/02/02 03:45:12 momjian Exp $
+ *	  $Id: psort.c,v 1.49 1999/02/03 21:17:42 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -134,8 +134,7 @@ psort_begin(Sort *node, int nkeys, ScanKey key)
 
 	PS(node)->BytesRead = 0;
 	PS(node)->BytesWritten = 0;
-	PS(node)->treeContext.tupDesc =
-		ExecGetTupType(outerPlan((Plan *) node));
+	PS(node)->treeContext.tupDesc = ExecGetTupType(outerPlan((Plan *) node));
 	PS(node)->treeContext.nKeys = nkeys;
 	PS(node)->treeContext.scanKeys = key;
 	PS(node)->treeContext.sortMem = SortMem * 1024;
@@ -336,8 +335,7 @@ initialrun(Sort *node)
 				for (tp = PS(node)->Tape;
 					 tp - PS(node)->Tape < PS(node)->TapeRange; tp++)
 				{
-					PS(node)->TotalDummy +=
-						(tp->tp_dummy = baseruns
+					PS(node)->TotalDummy += (tp->tp_dummy = baseruns
 						 + (tp + 1)->tp_fib
 						 - tp->tp_fib);
 					tp->tp_fib = baseruns
@@ -945,10 +943,8 @@ psort_end(Sort *node)
 			else if (PS(node)->memtuples)
 				pfree(PS(node)->memtuples);
 
-			NDirectFileRead +=
-				(int) ceil((double) PS(node)->BytesRead / BLCKSZ);
-			NDirectFileWrite +=
-				(int) ceil((double) PS(node)->BytesWritten / BLCKSZ);
+			NDirectFileRead += (int) ceil((double) PS(node)->BytesRead / BLCKSZ);
+			NDirectFileWrite += (int) ceil((double) PS(node)->BytesWritten / BLCKSZ);
 
 			pfree((void *) node->psortstate);
 			node->psortstate = NULL;

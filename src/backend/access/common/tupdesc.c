@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.46 1998/12/14 05:18:30 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.47 1999/02/03 21:15:27 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -115,8 +115,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 	desc->attrs = (Form_pg_attribute *) palloc(size);
 	for (i = 0; i < desc->natts; i++)
 	{
-		desc->attrs[i] =
-			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
+		desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 		memmove(desc->attrs[i],
 				tupdesc->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);
@@ -150,8 +149,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	desc->attrs = (Form_pg_attribute *) palloc(size);
 	for (i = 0; i < desc->natts; i++)
 	{
-		desc->attrs[i] =
-			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
+		desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 		memmove(desc->attrs[i],
 				tupdesc->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.8 1999/02/03 20:15:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.9 1999/02/03 21:16:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,7 @@ group_clauses_by_hashop(List *restrictinfo_list,
 			Var		   *rightop = get_rightop(clause);
 			JoinKey    *keys = (JoinKey *) NULL;
 
-			xhashinfo =
-				match_hashop_hashinfo(hashjoinop, hashinfo_list);
+			xhashinfo = match_hashop_hashinfo(hashjoinop, hashinfo_list);
 
 			if (inner_relid == leftop->varno)
 			{
@@ -89,11 +88,9 @@ group_clauses_by_hashop(List *restrictinfo_list,
 				hashinfo_list = nreverse(hashinfo_list);
 			}
 
-			xhashinfo->jmethod.clauses =
-				lcons(clause, xhashinfo->jmethod.clauses);
+			xhashinfo->jmethod.clauses = lcons(clause, xhashinfo->jmethod.clauses);
 
-			xhashinfo->jmethod.jmkeys =
-				lcons(keys, xhashinfo->jmethod.jmkeys);
+			xhashinfo->jmethod.jmkeys = lcons(keys, xhashinfo->jmethod.jmkeys);
 		}
 	}
 	return hashinfo_list;

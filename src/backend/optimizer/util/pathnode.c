@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.15 1999/02/03 20:15:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.16 1999/02/03 21:16:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,8 +212,7 @@ create_seqscan_path(RelOptInfo * rel)
 	 * copy restrictinfo list into path for expensive function processing --
 	 * JMH, 7/7/92
 	 */
-	pathnode->loc_restrictinfo =
-		(List *) copyObject((Node *) rel->restrictinfo);
+	pathnode->loc_restrictinfo = (List *) copyObject((Node *) rel->restrictinfo);
 
 	if (rel->relids != NULL)
 		relid = lfirsti(rel->relids);
@@ -224,8 +223,7 @@ create_seqscan_path(RelOptInfo * rel)
 #if 0
 	if (XfuncMode != XFUNC_OFF)
 	{
-		pathnode->path_cost +=
-			xfunc_get_path_cost(pathnode);
+		pathnode->path_cost += xfunc_get_path_cost(pathnode);
 	}
 #endif
 	return pathnode;
@@ -266,8 +264,7 @@ create_index_path(Query *root,
 	 * copy restrictinfo list into path for expensive function processing --
 	 * JMH, 7/7/92
 	 */
-	pathnode->path.loc_restrictinfo =
-		set_difference((List *) copyObject((Node *) rel->restrictinfo),
+	pathnode->path.loc_restrictinfo = set_difference((List *) copyObject((Node *) rel->restrictinfo),
 					   (List *) restriction_clauses);
 
 	/*
@@ -301,8 +298,7 @@ create_index_path(Query *root,
 		 */
 /* is the statement above really true?	what about IndexScan as the
    inner of a join? */
-		pathnode->path.path_cost =
-			cost_index(lfirsti(index->relids),
+		pathnode->path.path_cost = cost_index(lfirsti(index->relids),
 					   index->pages,
 					   1.0,
 					   rel->pages,
@@ -314,8 +310,7 @@ create_index_path(Query *root,
 #if 0
 		if (XfuncMode != XFUNC_OFF)
 		{
-			pathnode->path_cost =
-				(pathnode->path_cost +
+			pathnode->path_cost = (pathnode->path_cost +
 				 xfunc_get_path_cost((Path *) pathnode));
 		}
 #endif
@@ -366,8 +361,7 @@ create_index_path(Query *root,
 		/* add in expensive functions cost!  -- JMH, 7/7/92 */
 		if (XfuncMode != XFUNC_OFF)
 		{
-			pathnode->path_cost +=
-				xfunc_get_path_cost((Path *) pathnode);
+			pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
 		}
 #endif
 
@@ -418,17 +412,14 @@ create_nestloop_path(RelOptInfo * joinrel,
 
 	if (keys)
 	{
-		pathnode->path.p_ordering.ordtype =
-			outer_path->p_ordering.ordtype;
+		pathnode->path.p_ordering.ordtype = outer_path->p_ordering.ordtype;
 		if (outer_path->p_ordering.ordtype == SORTOP_ORDER)
 		{
-			pathnode->path.p_ordering.ord.sortop =
-				outer_path->p_ordering.ord.sortop;
+			pathnode->path.p_ordering.ord.sortop = outer_path->p_ordering.ord.sortop;
 		}
 		else
 		{
-			pathnode->path.p_ordering.ord.merge =
-				outer_path->p_ordering.ord.merge;
+			pathnode->path.p_ordering.ord.merge = outer_path->p_ordering.ord.merge;
 		}
 	}
 	else
@@ -437,8 +428,7 @@ create_nestloop_path(RelOptInfo * joinrel,
 		pathnode->path.p_ordering.ord.sortop = NULL;
 	}
 
-	pathnode->path.path_cost =
-		cost_nestloop(outer_path->path_cost,
+	pathnode->path.path_cost = cost_nestloop(outer_path->path_cost,
 					  inner_path->path_cost,
 					  outer_rel->size,
 					  inner_path->parent->size,
@@ -500,8 +490,7 @@ create_mergejoin_path(RelOptInfo * joinrel,
 	pathnode->jpath.path.loc_restrictinfo = NIL;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
-	pathnode->jpath.path.path_cost =
-		cost_mergejoin(outer_path->path_cost,
+	pathnode->jpath.path.path_cost = cost_mergejoin(outer_path->path_cost,
 					   inner_path->path_cost,
 					   outersortkeys,
 					   innersortkeys,
@@ -513,8 +502,7 @@ create_mergejoin_path(RelOptInfo * joinrel,
 #if 0
 	if (XfuncMode != XFUNC_OFF)
 	{
-		pathnode->path_cost +=
-			xfunc_get_path_cost((Path *) pathnode);
+		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
 	}
 #endif
 	return pathnode;
@@ -569,8 +557,7 @@ create_hashjoin_path(RelOptInfo * joinrel,
 	pathnode->path_hashclauses = hashclauses;
 	pathnode->outerhashkeys = outerkeys;
 	pathnode->innerhashkeys = innerkeys;
-	pathnode->jpath.path.path_cost =
-		cost_hashjoin(outer_path->path_cost,
+	pathnode->jpath.path.path_cost = cost_hashjoin(outer_path->path_cost,
 					  inner_path->path_cost,
 					  outerkeys,
 					  innerkeys,
@@ -580,8 +567,7 @@ create_hashjoin_path(RelOptInfo * joinrel,
 #if 0
 	if (XfuncMode != XFUNC_OFF)
 	{
-		pathnode->path_cost +=
-			xfunc_get_path_cost((Path *) pathnode);
+		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
 	}
 #endif
 	return pathnode;

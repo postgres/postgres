@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.41 1999/01/25 18:02:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.42 1999/02/03 21:16:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -882,8 +882,7 @@ ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
 	 *	We don't have operator whose arguments are sets.
 	 ******************
 	 */
-	return
-		ExecMakeFunctionResult((Node *) op, argList, econtext, isNull, &isDone);
+	return ExecMakeFunctionResult((Node *) op, argList, econtext, isNull, &isDone);
 }
 
 /* ----------------------------------------------------------------
@@ -926,8 +925,7 @@ ExecEvalFunc(Expr *funcClause,
 		fcache = func->func_fcache;
 	}
 
-	return
-		ExecMakeFunctionResult((Node *) func, argList, econtext, isNull, isDone);
+	return ExecMakeFunctionResult((Node *) func, argList, econtext, isNull, isDone);
 }
 
 /* ----------------------------------------------------------------
@@ -1642,8 +1640,7 @@ ExecTargetList(List *targetlist,
 	if (nodomains > 64)
 		pfree(null_head);
 
-	return
-		newTuple;
+	return newTuple;
 }
 
 /* ----------------------------------------------------------------

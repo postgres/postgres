@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.167 1999/01/27 01:18:21 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.168 1999/02/03 21:17:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2422,8 +2422,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	{
 		if (pset->prompt)
 			free(pset->prompt);
-		pset->prompt =
-			malloc(strlen(PQdb(pset->db)) + strlen(PROMPT) + 1);
+		pset->prompt = malloc(strlen(PQdb(pset->db)) + strlen(PROMPT) + 1);
 		if (pset->quiet)
 			pset->prompt[0] = '\0';
 		else

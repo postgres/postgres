@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.16 1999/02/03 20:15:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.17 1999/02/03 21:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,11 +203,9 @@ init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininf
 	 * of the outer and inner join relations and then merging the results
 	 * together.
 	 */
-	new_outer_tlist =
-		new_join_tlist(outer_rel->targetlist,	/* XXX 1-based attnos */
+	new_outer_tlist = new_join_tlist(outer_rel->targetlist,	/* XXX 1-based attnos */
 					   inner_rel->relids, 1);
-	new_inner_tlist =
-		new_join_tlist(inner_rel->targetlist,	/* XXX 1-based attnos */
+	new_inner_tlist = new_join_tlist(inner_rel->targetlist,	/* XXX 1-based attnos */
 					   outer_rel->relids,
 					   length(new_outer_tlist) + 1);
 
@@ -243,8 +241,7 @@ init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininf
 			joininfo->inactive = true;
 	}
 
-	joinrel_joininfo_list =
-		new_joininfo_list(append(outer_rel->joininfo, inner_rel->joininfo),
+	joinrel_joininfo_list = new_joininfo_list(append(outer_rel->joininfo, inner_rel->joininfo),
 						intAppend(outer_rel->relids, inner_rel->relids));
 
 	joinrel->joininfo = joinrel_joininfo_list;
@@ -291,8 +288,7 @@ new_join_tlist(List *tlist,
 		if (in_final_tlist)
 		{
 			resdomno += 1;
-			temp_node =
-				lcons(create_tl_element(get_expr(xtl),
+			temp_node = lcons(create_tl_element(get_expr(xtl),
 										resdomno),
 					  NIL);
 			t_list = nconc(t_list, temp_node);
@@ -346,8 +342,7 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 											 current_joininfo_list);
 			if (other_joininfo)
 			{
-				other_joininfo->jinfo_restrictinfo =
-					(List *) LispUnion(joininfo->jinfo_restrictinfo,
+				other_joininfo->jinfo_restrictinfo = (List *) LispUnion(joininfo->jinfo_restrictinfo,
 									   other_joininfo->jinfo_restrictinfo);
 			}
 			else
@@ -425,8 +420,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 				new_joininfo->mergejoinable = mergejoinable;
 				new_joininfo->hashjoinable = hashjoinable;
 				new_joininfo->inactive = false;
-				rel->joininfo =
-					lappend(rel->joininfo, new_joininfo);
+				rel->joininfo = lappend(rel->joininfo, new_joininfo);
 
 				foreach(xsuper_rel, super_rels)
 				{
@@ -435,14 +429,12 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 					if (nonoverlap_rels(super_rel, joinrel))
 					{
 						List	   *new_relids = super_rel->relids;
-						JoinInfo   *other_joininfo =
-						joininfo_member(new_relids,
+						JoinInfo   *other_joininfo = joininfo_member(new_relids,
 										joinrel->joininfo);
 
 						if (other_joininfo)
 						{
-							other_joininfo->jinfo_restrictinfo =
-								(List *) LispUnion(restrict_info,
+							other_joininfo->jinfo_restrictinfo = (List *) LispUnion(restrict_info,
 										other_joininfo->jinfo_restrictinfo);
 						}
 						else
@@ -454,8 +446,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 							new_joininfo->mergejoinable = mergejoinable;
 							new_joininfo->hashjoinable = hashjoinable;
 							new_joininfo->inactive = false;
-							joinrel->joininfo =
-								lappend(joinrel->joininfo,
+							joinrel->joininfo = lappend(joinrel->joininfo,
 										new_joininfo);
 						}
 					}

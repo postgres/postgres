@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.21 1998/10/08 18:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.22 1999/02/03 21:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -870,8 +870,7 @@ ExecCopyTupType(TupleDesc td, int natts)
 	i = 0;
 	while (i < natts)
 		{
-			newTd[i] =
-				(Form_pg_attribute)palloc(sizeof(FormData_pg_attribute));
+			newTd[i] = (Form_pg_attribute)palloc(sizeof(FormData_pg_attribute));
 			memmove(newTd[i], td[i], sizeof(FormData_pg_attribute));
 			i++;
 		}

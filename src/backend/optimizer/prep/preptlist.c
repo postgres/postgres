@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.16 1998/09/01 04:29:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.17 1999/02/03 21:16:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,7 @@ preprocess_targetlist(List *tlist,
 	 * order of the attributes. We also need to fill in the missing
 	 * attributes here.							-ay 10/94
 	 */
-	expanded_tlist =
-		expand_targetlist(tlist, relid, command_type, result_relation);
+	expanded_tlist = expand_targetlist(tlist, relid, command_type, result_relation);
 
 	/* XXX should the fix-opids be this early?? */
 	/* was mapCAR  */
@@ -196,8 +195,7 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 
 		if (matching_old_tl)
 		{
-			matching_old_tl->resdom->resno =
-				new_tle->resdom->resno;
+			matching_old_tl->resdom->resno = new_tle->resdom->resno;
 			t_list = lappend(t_list, matching_old_tl);
 		}
 		else
@@ -307,8 +305,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 					Var		   *temp_var = (Var *) NULL;
 					TargetEntry *temp_list = NULL;
 
-					temp_var =
-						makeVar(rt_index, attno, atttype,
+					temp_var = makeVar(rt_index, attno, atttype,
 								get_atttypmod(relid, attno),
 								0, rt_index, attno);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.21 1998/12/16 11:53:44 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.22 1999/02/03 21:15:41 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -497,8 +497,7 @@ TransactionIdDidCommit(TransactionId transactionId)
 	if (AMI_OVERRIDE)
 		return true;
 
-	return
-		TransactionLogTest(transactionId, XID_COMMIT);
+	return TransactionLogTest(transactionId, XID_COMMIT);
 }
 
 /*
@@ -515,8 +514,7 @@ TransactionIdDidAbort(TransactionId transactionId)
 	if (AMI_OVERRIDE)
 		return false;
 
-	return
-		TransactionLogTest(transactionId, XID_ABORT);
+	return TransactionLogTest(transactionId, XID_ABORT);
 }
 
 /*
@@ -532,8 +530,7 @@ TransactionIdIsInProgress(TransactionId transactionId)
 	if (AMI_OVERRIDE)
 		return false;
 
-	return
-		TransactionLogTest(transactionId, XID_INPROGRESS);
+	return TransactionLogTest(transactionId, XID_INPROGRESS);
 }
  */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.33 1999/01/24 00:28:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.34 1999/02/03 21:16:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,8 +612,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 								p_target = tail_p_target = expandAll(pstate, att->relname,
 									att->relname, &pstate->p_last_resno);
 							else
-								lnext(tail_p_target) =
-									expandAll(pstate, att->relname, att->relname,
+								lnext(tail_p_target) = expandAll(pstate, att->relname, att->relname,
 											  &pstate->p_last_resno);
 							expand_star = true;
 						}

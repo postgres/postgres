@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.18 1998/11/27 19:52:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.19 1999/02/03 21:16:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,8 +359,7 @@ ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent)
 	if (matstate->mat_Flag == false)
 		return;
 
-	matstate->csstate.css_currentScanDesc =
-		ExecReScanR(matstate->csstate.css_currentRelation,
+	matstate->csstate.css_currentScanDesc = ExecReScanR(matstate->csstate.css_currentRelation,
 					matstate->csstate.css_currentScanDesc,
 					node->plan.state->es_direction, 0, NULL);
 

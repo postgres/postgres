@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.11 1999/02/03 20:15:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.12 1999/02/03 21:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,15 +96,13 @@ find_all_join_paths(Query *root, List *joinrels)
 									   outerrel->relids);
 		if (_enable_mergejoin_)
 		{
-			mergeinfo_list =
-				group_clauses_by_order(joinrel->restrictinfo,
+			mergeinfo_list = group_clauses_by_order(joinrel->restrictinfo,
 									   lfirsti(innerrel->relids));
 		}
 
 		if (_enable_hashjoin_)
 		{
-			hashinfo_list =
-				group_clauses_by_hashop(joinrel->restrictinfo,
+			hashinfo_list = group_clauses_by_hashop(joinrel->restrictinfo,
 										lfirsti(innerrel->relids));
 		}
 
@@ -123,8 +121,7 @@ find_all_join_paths(Query *root, List *joinrels)
 		 * explicitly sorted. This may include either nestloops and
 		 * mergejoins where the outer path is already ordered.
 		 */
-		pathlist =
-			add_pathlist(joinrel, pathlist,
+		pathlist = add_pathlist(joinrel, pathlist,
 						 match_unsorted_outer(joinrel,
 											  outerrel,
 											  innerrel,
@@ -139,8 +136,7 @@ find_all_join_paths(Query *root, List *joinrels)
 		 * the actual nestloop nodes were constructed in
 		 * (match-unsorted-outer).
 		 */
-		pathlist =
-			add_pathlist(joinrel, pathlist,
+		pathlist = add_pathlist(joinrel, pathlist,
 						 match_unsorted_inner(joinrel, outerrel,
 											  innerrel,
 											  innerrel->pathlist,
@@ -151,8 +147,7 @@ find_all_join_paths(Query *root, List *joinrels)
 		 * hashed before being joined.
 		 */
 
-		pathlist =
-			add_pathlist(joinrel, pathlist,
+		pathlist = add_pathlist(joinrel, pathlist,
 						 hash_inner_and_outer(joinrel, outerrel,
 											  innerrel, hashinfo_list));
 
@@ -251,22 +246,18 @@ sort_inner_and_outer(RelOptInfo * joinrel,
 	{
 		xmergeinfo = (MInfo *) lfirst(i);
 
-		outerkeys =
-			extract_path_keys(xmergeinfo->jmethod.jmkeys,
+		outerkeys = extract_path_keys(xmergeinfo->jmethod.jmkeys,
 							  outerrel->targetlist,
 							  OUTER);
 
-		innerkeys =
-			extract_path_keys(xmergeinfo->jmethod.jmkeys,
+		innerkeys = extract_path_keys(xmergeinfo->jmethod.jmkeys,
 							  innerrel->targetlist,
 							  INNER);
 
-		merge_pathkeys =
-			new_join_pathkeys(outerkeys, joinrel->targetlist,
+		merge_pathkeys = new_join_pathkeys(outerkeys, joinrel->targetlist,
 							  xmergeinfo->jmethod.clauses);
 
-		temp_node =
-			create_mergejoin_path(joinrel,
+		temp_node = create_mergejoin_path(joinrel,
 								  outerrel->size,
 								  innerrel->size,
 								  outerrel->width,
@@ -342,8 +333,7 @@ match_unsorted_outer(RelOptInfo * joinrel,
 
 		if (outerpath_ordering)
 		{
-			xmergeinfo =
-				match_order_mergeinfo(outerpath_ordering,
+			xmergeinfo = match_order_mergeinfo(outerpath_ordering,
 									  mergeinfo_list);
 		}
 
@@ -355,14 +345,12 @@ match_unsorted_outer(RelOptInfo * joinrel,
 			List	   *keys = xmergeinfo->jmethod.jmkeys;
 			List	   *clauses = xmergeinfo->jmethod.clauses;
 
-			matchedJoinKeys =
-				match_pathkeys_joinkeys(outerpath->keys,
+			matchedJoinKeys = match_pathkeys_joinkeys(outerpath->keys,
 										keys,
 										clauses,
 										OUTER,
 										&matchedJoinClauses);
-			merge_pathkeys =
-				new_join_pathkeys(outerpath->keys,
+			merge_pathkeys = new_join_pathkeys(outerpath->keys,
 								  joinrel->targetlist, clauses);
 		}
 		else
@@ -385,14 +373,12 @@ match_unsorted_outer(RelOptInfo * joinrel,
 		{
 			bool		path_is_cheaper_than_sort;
 			List	   *varkeys = NIL;
-			Path	   *mergeinnerpath =
-			match_paths_joinkeys(matchedJoinKeys,
+			Path	   *mergeinnerpath = match_paths_joinkeys(matchedJoinKeys,
 								 outerpath_ordering,
 								 innerrel->pathlist,
 								 INNER);
 
-			path_is_cheaper_than_sort =
-				(bool) (mergeinnerpath &&
+			path_is_cheaper_than_sort = (bool) (mergeinnerpath &&
 						(mergeinnerpath->path_cost <
 						 (cheapest_inner->path_cost +
 						  cost_sort(matchedJoinKeys,
@@ -401,8 +387,7 @@ match_unsorted_outer(RelOptInfo * joinrel,
 									false))));
 			if (!path_is_cheaper_than_sort)
 			{
-				varkeys =
-					extract_path_keys(matchedJoinKeys,
+				varkeys = extract_path_keys(matchedJoinKeys,
 									  innerrel->targetlist,
 									  INNER);
 			}
@@ -419,8 +404,7 @@ match_unsorted_outer(RelOptInfo * joinrel,
 			else
 				mergeinnerpath = cheapest_inner;
 
-			temp_node =
-				lcons(create_mergejoin_path(joinrel,
+			temp_node = lcons(create_mergejoin_path(joinrel,
 											outerrel->size,
 											innerrel->size,
 											outerrel->width,
@@ -492,8 +476,7 @@ match_unsorted_inner(RelOptInfo * joinrel,
 
 		if (innerpath_ordering)
 		{
-			xmergeinfo =
-				match_order_mergeinfo(innerpath_ordering,
+			xmergeinfo = match_order_mergeinfo(innerpath_ordering,
 									  mergeinfo_list);
 		}
 
@@ -505,8 +488,7 @@ match_unsorted_inner(RelOptInfo * joinrel,
 			List	   *keys = xmergeinfo->jmethod.jmkeys;
 			List	   *cls = xmergeinfo->jmethod.clauses;
 
-			matchedJoinKeys =
-				match_pathkeys_joinkeys(innerpath->keys,
+			matchedJoinKeys = match_pathkeys_joinkeys(innerpath->keys,
 										keys,
 										cls,
 										INNER,
@@ -528,17 +510,14 @@ match_unsorted_inner(RelOptInfo * joinrel,
 
 			if (temp2)
 			{
-				List	   *outerkeys =
-				extract_path_keys(matchedJoinKeys,
+				List	   *outerkeys = extract_path_keys(matchedJoinKeys,
 								  outerrel->targetlist,
 								  OUTER);
-				List	   *merge_pathkeys =
-				new_join_pathkeys(outerkeys,
+				List	   *merge_pathkeys = new_join_pathkeys(outerkeys,
 								  joinrel->targetlist,
 								  clauses);
 
-				temp_node =
-					lcons(create_mergejoin_path(joinrel,
+				temp_node = lcons(create_mergejoin_path(joinrel,
 												outerrel->size,
 												innerrel->size,
 												outerrel->width,
@@ -611,16 +590,13 @@ hash_inner_and_outer(RelOptInfo * joinrel,
 	foreach(i, hashinfo_list)
 	{
 		xhashinfo = (HInfo *) lfirst(i);
-		outerkeys =
-			extract_path_keys(((JoinMethod *) xhashinfo)->jmkeys,
+		outerkeys = extract_path_keys(((JoinMethod *) xhashinfo)->jmkeys,
 							  outerrel->targetlist,
 							  OUTER);
-		innerkeys =
-			extract_path_keys(((JoinMethod *) xhashinfo)->jmkeys,
+		innerkeys = extract_path_keys(((JoinMethod *) xhashinfo)->jmkeys,
 							  innerrel->targetlist,
 							  INNER);
-		hash_pathkeys =
-			new_join_pathkeys(outerkeys,
+		hash_pathkeys = new_join_pathkeys(outerkeys,
 							  joinrel->targetlist,
 							  ((JoinMethod *) xhashinfo)->clauses);
 

@@ -611,8 +611,7 @@ ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 	int			i;
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	SaveTriggerData->tg_event =
-		TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	SaveTriggerData->tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
 	SaveTriggerData->tg_relation = rel;
 	SaveTriggerData->tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
@@ -672,8 +671,7 @@ ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 		return false;
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	SaveTriggerData->tg_event =
-		TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	SaveTriggerData->tg_event = TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
 	SaveTriggerData->tg_relation = rel;
 	SaveTriggerData->tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
@@ -708,8 +706,7 @@ ExecARDeleteTriggers(EState *estate, ItemPointer tupleid)
 	Assert(trigtuple != NULL);
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	SaveTriggerData->tg_event =
-		TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW;
+	SaveTriggerData->tg_event = TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW;
 	SaveTriggerData->tg_relation = rel;
 	SaveTriggerData->tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
@@ -750,8 +747,7 @@ ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 		intuple = newtuple = ExecRemoveJunk(estate->es_junkFilter, newSlot);
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	SaveTriggerData->tg_event =
-		TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	SaveTriggerData->tg_event = TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
 	SaveTriggerData->tg_relation = rel;
 	for (i = 0; i < ntrigs; i++)
 	{
@@ -785,8 +781,7 @@ ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 	Assert(trigtuple != NULL);
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	SaveTriggerData->tg_event =
-		TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW;
+	SaveTriggerData->tg_event = TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW;
 	SaveTriggerData->tg_relation = rel;
 	for (i = 0; i < ntrigs; i++)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.21 1999/02/03 20:15:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.22 1999/02/03 21:16:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,8 +208,7 @@ add_clause_to_rels(Query *root, List *clause)
 		}
 		else
 		{
-			restrictinfo->selectivity =
-				compute_clause_selec(root, (Node *) clause, NIL);
+			restrictinfo->selectivity = compute_clause_selec(root, (Node *) clause, NIL);
 		}
 		rel->restrictinfo = lcons(restrictinfo, rel->restrictinfo);
 	}
@@ -232,8 +231,7 @@ add_clause_to_rels(Query *root, List *clause)
 		}
 		else
 		{
-			restrictinfo->selectivity =
-				compute_clause_selec(root, (Node *) clause, NIL);
+			restrictinfo->selectivity = compute_clause_selec(root, (Node *) clause, NIL);
 		}
 		add_join_info_to_rels(root, restrictinfo, relids);
 		/* we are going to be doing a join, so add var to targetlist */
@@ -272,8 +270,7 @@ add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo, List *join_relid
 
 		joininfo = find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
 									  other_rels);
-		joininfo->jinfo_restrictinfo =
-			lcons(copyObject((void *) restrictinfo), joininfo->jinfo_restrictinfo);
+		joininfo->jinfo_restrictinfo = lcons(copyObject((void *) restrictinfo), joininfo->jinfo_restrictinfo);
 
 	}
 }

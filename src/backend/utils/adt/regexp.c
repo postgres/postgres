@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.20 1998/09/01 04:32:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.21 1999/02/03 21:17:28 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -108,8 +108,7 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 	{
 		for (lru = i = 0; i < rec; i++)
 		{
-			rev[i].cre_lru =
-				(rev[i].cre_lru - rev[oldest].cre_lru) / 2;
+			rev[i].cre_lru = (rev[i].cre_lru - rev[oldest].cre_lru) / 2;
 			if (rev[i].cre_lru > lru)
 				lru = rev[i].cre_lru;
 		}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.22 1998/09/01 04:33:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.23 1999/02/03 21:17:33 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -477,8 +477,7 @@ get_typalign(Oid typid)
 struct varlena *
 get_typdefault(Oid typid)
 {
-	struct varlena *typdefault =
-	(struct varlena *) TypeDefaultRetrieve(typid);
+	struct varlena *typdefault = (struct varlena *) TypeDefaultRetrieve(typid);
 
 	return typdefault;
 }

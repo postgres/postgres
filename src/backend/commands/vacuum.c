@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.93 1999/01/17 06:18:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.94 1999/02/03 21:16:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,8 +434,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			attr_cnt = tcnt;
 		}
 
-		vacrelstats->vacattrstats =
-			(VacAttrStats *) palloc(attr_cnt * sizeof(VacAttrStats));
+		vacrelstats->vacattrstats = (VacAttrStats *) palloc(attr_cnt * sizeof(VacAttrStats));
 
 		for (i = 0; i < attr_cnt; i++)
 		{

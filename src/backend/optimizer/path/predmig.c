@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.14 1999/02/03 20:15:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.15 1999/02/03 21:16:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,13 +256,11 @@ xfunc_llel_chains(Stream root, Stream bottom)
 			 * i.e. it would be lower than the attributes it references.
 			 */
 			Assert(xfunc_num_relids(pathstream) > xfunc_num_relids(tmpstream));
-			progress =
-				xfunc_prdmig_pullup(origstream, tmpstream,
+			progress = xfunc_prdmig_pullup(origstream, tmpstream,
 									(JoinPath) get_pathptr(pathstream));
 		}
 		if (get_downstream(tmpstream))
-			pathstream =
-				(Stream) xfunc_get_downjoin((Stream) get_downstream(tmpstream));
+			pathstream = (Stream) xfunc_get_downjoin((Stream) get_downstream(tmpstream));
 	}
 
 	/* free up origstream */
@@ -526,8 +524,7 @@ xfunc_add_clauses(Stream current)
 	/* first add in the local clauses */
 	foreach(temp, get_loc_restrictinfo((Path) get_pathptr(current)))
 	{
-		topnode =
-			xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
+		topnode = xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
 							   XFUNC_LOCPRD);
 	}
 
@@ -538,8 +535,7 @@ xfunc_add_clauses(Stream current)
 		foreach(temp, get_pathrestrictinfo((JoinPath) get_pathptr(current)))
 		{
 			if (!equal(get_clause((RestrictInfo) lfirst(temp)), primjoin))
-				topnode =
-					xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
+				topnode = xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
 									   XFUNC_JOINPRD);
 		}
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.10 1999/02/03 20:15:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.11 1999/02/03 21:16:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,8 +183,7 @@ get_opnos(List *restrictinfo_list)
 	foreach(i, restrictinfo_list)
 	{
 		temp = (RestrictInfo *) lfirst(i);
-		result =
-			lappendi(result,
+		result = lappendi(result,
 					 (((Oper *) temp->clause->oper)->opno));
 	}
 	return result;

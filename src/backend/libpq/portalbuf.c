@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.11 1998/09/01 03:22:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.12 1999/02/03 21:16:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,8 +249,7 @@ pbuf_addTupleValueLengths(int n)
 char *
 pbuf_addValues(int n)
 {
-	return
-	pbuf_alloc(n);
+	return pbuf_alloc(n);
 }
 
 /* --------------------------------
@@ -515,6 +514,5 @@ pbuf_findFname(GroupBuffer *group,
 			   int field_number)
 {
 	pbuf_checkFnumber(group, field_number);
-	return
-		(group->types[field_number]).name;
+	return (group->types[field_number]).name;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.30 1999/01/29 09:22:58 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.31 1999/02/03 21:16:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,8 +308,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	if (exprCtxt == NULL)
 		exprCtxt = node->scan.scanstate->cstate.cs_ExprContext;
 
-	node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
-		exprCtxt->ecxt_outertuple;
+	node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
 
 	/*
 	 * get the index qualifications and recalculate the appropriate values

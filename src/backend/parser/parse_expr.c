@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.39 1999/01/24 00:28:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.40 1999/02/03 21:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,8 +295,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					foreach(llist, left_expr)
 						lfirst(llist) = transformExpr(pstate, lfirst(llist), precedence);
 
-					if (length(left_expr) !=
-						length(right_expr))
+					if (length(left_expr) != length(right_expr))
 						elog(ERROR, "parser: Subselect has too many or too few fields.");
 
 					if (length(left_expr) > 1 &&
@@ -520,8 +519,7 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 		/* we add the relation name for them */
 		att->relname = rte->refname;
 		att->attrs = lcons(makeString(ident->name), NIL);
-		column_result =
-			(Node *) ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
+		column_result = (Node *) ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
 											 precedence);
 	}
 
@@ -731,8 +729,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int32 atttypmod)
 			break;
 		case FLOAT4OID: /* float4 */
 			{
-				float32		floatVal =
-				DatumGetFloat32(((Const *) expr)->constvalue);
+				float32		floatVal = DatumGetFloat32(((Const *) expr)->constvalue);
 
 				const_string = (char *) palloc(256);
 				string_palloced = true;
@@ -741,8 +738,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int32 atttypmod)
 			}
 		case FLOAT8OID: /* float8 */
 			{
-				float64		floatVal =
-				DatumGetFloat64(((Const *) expr)->constvalue);
+				float64		floatVal = DatumGetFloat64(((Const *) expr)->constvalue);
 
 				const_string = (char *) palloc(256);
 				string_palloced = true;
@@ -756,13 +752,11 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int32 atttypmod)
 					(long) ((Const *) expr)->constvalue);
 			break;
 		case TEXTOID:			/* text */
-			const_string =
-				DatumGetPointer(((Const *) expr)->constvalue);
+			const_string = DatumGetPointer(((Const *) expr)->constvalue);
 			const_string = (char *) textout((struct varlena *) const_string);
 			break;
 		case UNKNOWNOID:		/* unknown */
-			const_string =
-				DatumGetPointer(((Const *) expr)->constvalue);
+			const_string = DatumGetPointer(((Const *) expr)->constvalue);
 			const_string = (char *) textout((struct varlena *) const_string);
 			break;
 		default:

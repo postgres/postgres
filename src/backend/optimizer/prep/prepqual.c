@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.11 1998/10/04 03:30:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.12 1999/02/03 21:16:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,8 +384,7 @@ push_nots(Expr *qual)
 											   0, NULL);
 
 			op->op_fcache = (FunctionCache *) NULL;
-			return
-				(make_opclause(op, get_leftop(qual), get_rightop(qual)));
+			return (make_opclause(op, get_leftop(qual), get_rightop(qual)));
 		}
 		else
 			return make_notclause(qual);
@@ -458,8 +457,7 @@ or_normalize(List *orlist)
 
 	if (new_orlist)
 	{
-		return
-			(or_normalize(lcons(distribute_args(lfirst(new_orlist),
+		return (or_normalize(lcons(distribute_args(lfirst(new_orlist),
 										 ((Expr *) distributable)->args),
 								lnext(new_orlist))));
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.18 1998/10/04 20:19:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.19 1999/02/03 21:15:28 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -336,8 +336,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	{
 		Buffer		prevbuf = _hash_getbuf(rel, prevblkno, HASH_WRITE);
 		Page		prevpage = BufferGetPage(prevbuf);
-		HashPageOpaque prevopaque =
-		(HashPageOpaque) PageGetSpecialPointer(prevpage);
+		HashPageOpaque prevopaque = (HashPageOpaque) PageGetSpecialPointer(prevpage);
 
 		_hash_checkpage(prevpage, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 		Assert(prevopaque->hasho_bucket == bucket);
@@ -348,8 +347,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	{
 		Buffer		nextbuf = _hash_getbuf(rel, nextblkno, HASH_WRITE);
 		Page		nextpage = BufferGetPage(nextbuf);
-		HashPageOpaque nextopaque =
-		(HashPageOpaque) PageGetSpecialPointer(nextpage);
+		HashPageOpaque nextopaque = (HashPageOpaque) PageGetSpecialPointer(nextpage);
 
 		_hash_checkpage(nextpage, LH_OVERFLOW_PAGE);
 		Assert(nextopaque->hasho_bucket == bucket);
@@ -363,8 +361,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	 * element hashm_mapp[bitmappage].
 	 */
 	splitnum = (addr >> SPLITSHIFT);
-	ovflpgno =
-		(splitnum ? metap->SPARES[splitnum - 1] : 0) + (addr & SPLITMASK) - 1;
+	ovflpgno = (splitnum ? metap->SPARES[splitnum - 1] : 0) + (addr & SPLITMASK) - 1;
 
 	if (ovflpgno < metap->LAST_FREED)
 		metap->LAST_FREED = ovflpgno;

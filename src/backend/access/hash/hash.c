@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.23 1998/11/27 19:51:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.24 1999/02/03 21:15:28 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -485,8 +485,7 @@ hashrestrpos(IndexScanDesc scan)
 	/* bump lock on currentMarkData and copy to currentItemData */
 	if (ItemPointerIsValid(&(scan->currentMarkData)))
 	{
-		so->hashso_curbuf =
-			_hash_getbuf(scan->relation,
+		so->hashso_curbuf =_hash_getbuf(scan->relation,
 						 BufferGetBlockNumber(so->hashso_mrkbuf),
 						 HASH_READ);
 

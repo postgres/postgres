@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.29 1998/09/23 04:21:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.30 1999/02/03 21:15:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,8 +293,7 @@ RelationGetStrategy(Relation relation,
 	Assert(StrategyEvaluationIsValid(evaluation));
 	Assert(RegProcedureIsValid(procedure));
 
-	strategyMap =
-		IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
+	strategyMap = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
 									evaluation->maxStrategy,
 									attributeNumber);
 

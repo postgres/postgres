@@ -113,8 +113,7 @@ LPSETUPDLG lpsetupdlg;
                 lpsetupdlg->hwndParent = hwnd;
                 lpsetupdlg->lpszDrvr     = lpszDriver;
                 lpsetupdlg->fNewDSN      = (ODBC_ADD_DSN == fRequest);
-                lpsetupdlg->fDefault     =
-                        !lstrcmpi(lpsetupdlg->ci.dsn, INI_DSN);
+                lpsetupdlg->fDefault     = !lstrcmpi(lpsetupdlg->ci.dsn, INI_DSN);
 
                 // Display the appropriate dialog (if parent window handle supplied)
                 if (hwnd) {

@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.11 1999/01/17 06:18:27 momjian Exp $
+* $Id: geqo_params.c,v 1.12 1999/02/03 21:16:23 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -85,8 +85,7 @@ geqo_params(int string_length)
 
 
 	/* put together the full pathname to the config file */
-	conf_file =
-		(char *) palloc((strlen(DataDir) + strlen(GEQO_FILE) + 2) * sizeof(char));
+	conf_file = (char *) palloc((strlen(DataDir) + strlen(GEQO_FILE) + 2) * sizeof(char));
 
 	sprintf(conf_file, "%s/%s", DataDir, GEQO_FILE);
 

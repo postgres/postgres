@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.33 1999/01/29 09:22:52 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.34 1999/02/03 21:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1200,8 +1200,7 @@ _bt_pgaddtup(Relation rel,
 
 		do
 		{
-			chkitem =
-				(BTItem) PageGetItem(page, PageGetItemId(page, itup_off));
+			chkitem = (BTItem) PageGetItem(page, PageGetItemId(page, itup_off));
 			itup_off = OffsetNumberNext(itup_off);
 		} while (!BTItemSame(chkitem, afteritem));
 	}

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: view.c,v 1.30 1999/02/02 03:44:20 momjian Exp $
+ *  $Id: view.c,v 1.31 1999/02/03 21:16:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,17 +165,13 @@ DefineViewRules(char *viewName, Query *viewParse)
 
 #endif
 
-	retrieve_rule =
-		FormViewRetrieveRule(viewName, viewParse);
+	retrieve_rule = FormViewRetrieveRule(viewName, viewParse);
 
 #ifdef NOTYET
 
-	replace_rule =
-		FormViewReplaceRule(viewName, viewParse);
-	append_rule =
-		FormViewAppendRule(viewName, viewParse);
-	delete_rule =
-		FormViewDeleteRule(viewName, viewParse);
+	replace_rule = FormViewReplaceRule(viewName, viewParse);
+	append_rule = FormViewAppendRule(viewName, viewParse);
+	delete_rule = FormViewDeleteRule(viewName, viewParse);
 
 #endif
 
@@ -233,11 +229,9 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 	 * create the 2 new range table entries and form the new range
 	 * table... CURRENT first, then NEW....
 	 */
-	rt_entry1 =
-		addRangeTableEntry(NULL, (char *) viewName, "*CURRENT*",
+	rt_entry1 = addRangeTableEntry(NULL, (char *) viewName, "*CURRENT*",
 						   FALSE, FALSE);
-	rt_entry2 =
-		addRangeTableEntry(NULL, (char *) viewName, "*NEW*",
+	rt_entry2 = addRangeTableEntry(NULL, (char *) viewName, "*NEW*",
 						   FALSE, FALSE);
 	new_rt = lcons(rt_entry2, old_rt);
 	new_rt = lcons(rt_entry1, new_rt);

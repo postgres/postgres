@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.23 1998/09/07 05:35:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.24 1999/02/03 21:15:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,8 +258,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 		if (init[j])
 		{
 			/* yup, use the appropriate value */
-			test =
-				(long) FMGR_PTR2(&cur->sk_func, cur->sk_argument, xform[j].sk_argument);
+			test = (long) FMGR_PTR2(&cur->sk_func, cur->sk_argument, xform[j].sk_argument);
 			if (test)
 				xform[j].sk_argument = cur->sk_argument;
 			else if (j == (BTEqualStrategyNumber - 1))

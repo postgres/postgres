@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.33 1999/02/02 03:44:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.34 1999/02/03 21:17:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2492,11 +2492,9 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 
 	if (rt_entry_locks != NULL)
 	{
-		List	   *locks =
-		matchLocks(event, rt_entry_locks, result_relation, parsetree);
+		List	   *locks = matchLocks(event, rt_entry_locks, result_relation, parsetree);
 
-		product_queries =
-			fireRules(parsetree,
+		product_queries = fireRules(parsetree,
 					  result_relation,
 					  event,
 					  instead_flag,

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.70 1999/02/02 03:44:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.71 1999/02/03 21:16:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,10 +537,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		if (n_indices > 0)
 		{
 			has_index = true;
-			itupdescArr =
-				(TupleDesc *) palloc(n_indices * sizeof(TupleDesc));
-			pgIndexP =
-				(Form_pg_index *) palloc(n_indices * sizeof(Form_pg_index));
+			itupdescArr = (TupleDesc *) palloc(n_indices * sizeof(TupleDesc));
+			pgIndexP = (Form_pg_index *) palloc(n_indices * sizeof(Form_pg_index));
 			indexNatts = (int *) palloc(n_indices * sizeof(int));
 			finfo = (FuncIndexInfo *) palloc(n_indices * sizeof(FuncIndexInfo));
 			finfoP = (FuncIndexInfo **) palloc(n_indices * sizeof(FuncIndexInfo *));
@@ -549,8 +547,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			for (i = 0; i < n_indices; i++)
 			{
 				itupdescArr[i] = RelationGetDescr(index_rels[i]);
-				pgIndexTup =
-					SearchSysCacheTuple(INDEXRELID,
+				pgIndexTup = SearchSysCacheTuple(INDEXRELID,
 					   ObjectIdGetDatum(RelationGetRelid(index_rels[i])),
 										0, 0, 0);
 				Assert(pgIndexTup);
@@ -689,8 +686,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					done = 1;
 				else
 				{
-					values[i] =
-						(Datum) (*fmgr_faddr(&in_functions[i])) (string,
+					values[i] = (Datum) (*fmgr_faddr(&in_functions[i])) (string,
 															 elements[i],
 															  typmod[i]);
 
@@ -1008,13 +1004,11 @@ GetIndexRelations(Oid main_relation_oid,
 	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
 	{
 
-		index_relation_oid =
-			(Oid) DatumGetInt32(heap_getattr(tuple, 2,
+		index_relation_oid = (Oid) DatumGetInt32(heap_getattr(tuple, 2,
 											 tupDesc, &isnull));
 		if (index_relation_oid == main_relation_oid)
 		{
-			scan->index_rel_oid =
-				(Oid) DatumGetInt32(heap_getattr(tuple,
+			scan->index_rel_oid = (Oid) DatumGetInt32(heap_getattr(tuple,
 												 Anum_pg_index_indexrelid,
 												 tupDesc, &isnull));
 			(*n_indices)++;

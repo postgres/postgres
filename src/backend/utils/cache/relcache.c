@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.56 1999/02/02 03:45:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.57 1999/02/03 21:17:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,25 +713,20 @@ RelationBuildRuleLock(Relation relation)
 
 		rule->ruleId = pg_rewrite_tuple->t_data->t_oid;
 
-		rule->event =
-			(int) heap_getattr(pg_rewrite_tuple,
+		rule->event = (int) heap_getattr(pg_rewrite_tuple,
 							 Anum_pg_rewrite_ev_type, pg_rewrite_tupdesc,
 							   &isnull) - 48;
-		rule->attrno =
-			(int) heap_getattr(pg_rewrite_tuple,
+		rule->attrno = (int) heap_getattr(pg_rewrite_tuple,
 							 Anum_pg_rewrite_ev_attr, pg_rewrite_tupdesc,
 							   &isnull);
-		rule->isInstead =
-			!!heap_getattr(pg_rewrite_tuple,
+		rule->isInstead = !!heap_getattr(pg_rewrite_tuple,
 						   Anum_pg_rewrite_is_instead, pg_rewrite_tupdesc,
 						   &isnull);
 
-		ruleaction =
-			heap_getattr(pg_rewrite_tuple,
+		ruleaction = heap_getattr(pg_rewrite_tuple,
 						 Anum_pg_rewrite_ev_action, pg_rewrite_tupdesc,
 						 &isnull);
-		rule_evqual_string =
-			heap_getattr(pg_rewrite_tuple,
+		rule_evqual_string = heap_getattr(pg_rewrite_tuple,
 						 Anum_pg_rewrite_ev_qual, pg_rewrite_tupdesc,
 						 &isnull);
 
@@ -745,8 +740,7 @@ RelationBuildRuleLock(Relation relation)
 		if (numlocks == maxlocks)
 		{
 			maxlocks *= 2;
-			rules =
-				(RewriteRule **) repalloc(rules, sizeof(RewriteRule *) * maxlocks);
+			rules = (RewriteRule **) repalloc(rules, sizeof(RewriteRule *) * maxlocks);
 		}
 	}
 
@@ -1035,8 +1029,7 @@ formrdesc(char *relationName,
 	if (IsSystemRelationName(relationName))
 	{
 		relation->rd_rel->relowner = 6; /* XXX use sym const */
-		relation->rd_rel->relisshared =
-			IsSharedSystemRelationName(relationName);
+		relation->rd_rel->relisshared = IsSharedSystemRelationName(relationName);
 	}
 	else
 	{
@@ -1056,8 +1049,7 @@ formrdesc(char *relationName,
 	 */
 	for (i = 0; i < natts; i++)
 	{
-		relation->rd_att->attrs[i] =
-			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
+		relation->rd_att->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 
 		MemSet((char *) relation->rd_att->attrs[i], 0,
 			   ATTRIBUTE_TUPLE_SIZE);

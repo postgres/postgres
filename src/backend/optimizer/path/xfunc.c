@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.23 1999/02/03 20:15:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.24 1999/02/03 21:16:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,7 @@ xfunc_trypullup(RelOptInfo rel)
 			for (ever)
 			{
 				/* No, the following should NOT be '=='  !! */
-				if (clausetype =
-					xfunc_shouldpull((Path) get_innerjoinpath(curpath),
+				if (clausetype = xfunc_shouldpull((Path) get_innerjoinpath(curpath),
 									 curpath, INNER, &maxcinfo))
 				{
 
@@ -96,8 +95,7 @@ xfunc_trypullup(RelOptInfo rel)
 			{
 
 				/* No, the following should NOT be '=='  !! */
-				if (clausetype =
-					xfunc_shouldpull((Path) get_outerjoinpath(curpath),
+				if (clausetype = xfunc_shouldpull((Path) get_outerjoinpath(curpath),
 									 curpath, OUTER, &maxcinfo))
 				{
 
@@ -644,8 +642,7 @@ xfunc_width(LispValue clause)
 		{
 			/* Param node projects a complex type */
 			Assert(length(get_param_tlist((Param) clause)) == 1);		/* sanity */
-			retval =
-				xfunc_width((LispValue)
+			retval = xfunc_width((LispValue)
 					  get_expr(lfirst(get_param_tlist((Param) clause))));
 		}
 		else
@@ -696,8 +693,7 @@ xfunc_width(LispValue clause)
 			 * the projected attribute
 			 */
 			Assert(length(get_func_tlist(func)) == 1);	/* sanity */
-			retval =
-				xfunc_width((LispValue)
+			retval = xfunc_width((LispValue)
 							get_expr(lfirst(get_func_tlist(func))));
 			goto exit;
 		}
@@ -774,8 +770,7 @@ xfunc_card_product(Query *queryInfo, Relid relids)
 			foreach(cinfonode, get_restrictinfo(currel))
 			{
 				if (!xfunc_expense(queryInfo, get_clause((RestrictInfo) lfirst(cinfonode))))
-					tuples *=
-						compute_clause_selec(queryInfo,
+					tuples *= compute_clause_selec(queryInfo,
 							  get_clause((RestrictInfo) lfirst(cinfonode)),
 											 LispNil);
 			}
@@ -1240,8 +1235,7 @@ xfunc_disjunct_sort(LispValue clause_list)
 
 	foreach(temp, clause_list)
 		if (or_clause(lfirst(temp)))
-		lnext(lfirst(temp)) =
-			lisp_qsort(lnext(lfirst(temp)), xfunc_disjunct_compare);
+		lnext(lfirst(temp)) = lisp_qsort(lnext(lfirst(temp)), xfunc_disjunct_compare);
 }
 
 

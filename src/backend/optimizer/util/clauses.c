@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.27 1999/01/24 00:28:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.28 1999/02/03 21:16:51 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -83,8 +83,7 @@ make_clause(int type, Node *oper, List *args)
 bool
 is_opclause(Node *clause)
 {
-	return
-	(clause != NULL &&
+	return (clause != NULL &&
 	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OP_EXPR);
 }
 
@@ -144,8 +143,7 @@ get_rightop(Expr *clause)
 static bool
 agg_clause(Node *clause)
 {
-	return
-	(clause != NULL && nodeTag(clause) == T_Aggref);
+	return (clause != NULL && nodeTag(clause) == T_Aggref);
 }
 
 /*****************************************************************************
@@ -161,8 +159,7 @@ agg_clause(Node *clause)
 bool
 is_funcclause(Node *clause)
 {
-	return
-	(clause != NULL &&
+	return (clause != NULL &&
 	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == FUNC_EXPR);
 }
 
@@ -234,8 +231,7 @@ make_orclause(List *orclauses)
 bool
 not_clause(Node *clause)
 {
-	return
-	(clause != NULL &&
+	return (clause != NULL &&
 	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == NOT_EXPR);
 }
 
@@ -283,8 +279,7 @@ get_notclausearg(Expr *notclause)
 bool
 and_clause(Node *clause)
 {
-	return
-	(clause != NULL &&
+	return (clause != NULL &&
 	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == AND_EXPR);
 }
 
@@ -321,8 +316,7 @@ make_andclause(List *andclauses)
 bool
 case_clause(Node *clause)
 {
-	return
-	(clause != NULL &&
+	return (clause != NULL &&
 	 nodeTag(clause) == T_CaseExpr);
 }
 

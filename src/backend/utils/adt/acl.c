@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.31 1998/09/01 04:32:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.32 1999/02/03 21:17:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -445,16 +445,13 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	switch (modechg)
 	{
 		case ACL_MODECHG_ADD:
-			new_aip[dst].ai_mode =
-				old_aip[src].ai_mode | mod_aip->ai_mode;
+			new_aip[dst].ai_mode = old_aip[src].ai_mode | mod_aip->ai_mode;
 			break;
 		case ACL_MODECHG_DEL:
-			new_aip[dst].ai_mode =
-				old_aip[src].ai_mode & ~mod_aip->ai_mode;
+			new_aip[dst].ai_mode = old_aip[src].ai_mode & ~mod_aip->ai_mode;
 			break;
 		case ACL_MODECHG_EQL:
-			new_aip[dst].ai_mode =
-				mod_aip->ai_mode;
+			new_aip[dst].ai_mode = mod_aip->ai_mode;
 			break;
 	}
 

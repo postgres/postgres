@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.11 1998/09/01 04:29:18 momjian Exp $
+ * $Id: geqo_main.c,v 1.12 1999/02/03 21:16:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,8 +189,7 @@ geqo(Query *root)
 		pmx(momma->string, daddy->string, kid->string, pool->string_length);
 #elif defined(CX)
 		/* CYCLE CROSSOVER */
-		cycle_diffs =
-			cx(momma->string, daddy->string, kid->string, pool->string_length, city_table);
+		cycle_diffs = cx(momma->string, daddy->string, kid->string, pool->string_length, city_table);
 		/* mutate the child */
 		if (cycle_diffs == 0)
 		{

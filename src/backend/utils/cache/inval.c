@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.19 1999/02/02 03:45:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.20 1999/02/03 21:17:32 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -117,7 +117,7 @@ LocalInvalidRegister(LocalInvalid invalid,
 	Assert(PointerIsValid(entry));
 
 	((InvalidationUserData *) entry)->dataP[-1] =
-		(InvalidationUserData *) invalid;
+			(InvalidationUserData *) invalid;
 
 	return entry;
 }

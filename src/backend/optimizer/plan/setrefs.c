@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.36 1999/02/03 20:15:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.37 1999/02/03 21:16:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,8 +150,7 @@ set_tempscan_tlist_references(SeqScan *tempscan)
 {
 	Temp	   *temp = (Temp *) ((Plan *) tempscan)->lefttree;
 
-	((Plan *) tempscan)->targetlist =
-		tlist_temp_references(temp->tempid,
+	((Plan *) tempscan)->targetlist = tlist_temp_references(temp->tempid,
 							  ((Plan *) tempscan)->targetlist);
 	set_temp_tlist_references(temp);
 }
@@ -175,8 +174,7 @@ set_temp_tlist_references(Temp *temp)
 	if (source != NULL)
 	{
 		set_tlist_references(source);
-		((Plan *) temp)->targetlist =
-			copy_vars(((Plan *) temp)->targetlist,
+		((Plan *) temp)->targetlist = copy_vars(((Plan *) temp)->targetlist,
 					  (source)->targetlist);
 	}
 	else
@@ -307,8 +305,7 @@ replace_clause_joinvar_refs(Expr *clause,
 		return (List *) clause;
 	else if (and_clause((Node *) clause))
 	{
-		List	   *andclause =
-		replace_subclause_joinvar_refs(((Expr *) clause)->args,
+		List	   *andclause = replace_subclause_joinvar_refs(((Expr *) clause)->args,
 									   outer_tlist,
 									   inner_tlist);
 
@@ -316,8 +313,7 @@ replace_clause_joinvar_refs(Expr *clause,
 	}
 	else if (or_clause((Node *) clause))
 	{
-		List	   *orclause =
-		replace_subclause_joinvar_refs(((Expr *) clause)->args,
+		List	   *orclause = replace_subclause_joinvar_refs(((Expr *) clause)->args,
 									   outer_tlist,
 									   inner_tlist);
 
@@ -351,8 +347,7 @@ replace_clause_joinvar_refs(Expr *clause,
 	}
 	else if (is_funcclause((Node *) clause))
 	{
-		List	   *funcclause =
-		replace_subclause_joinvar_refs(((Expr *) clause)->args,
+		List	   *funcclause = replace_subclause_joinvar_refs(((Expr *) clause)->args,
 									   outer_tlist,
 									   inner_tlist);
 
@@ -361,8 +356,7 @@ replace_clause_joinvar_refs(Expr *clause,
 	}
 	else if (not_clause((Node *) clause))
 	{
-		List	   *notclause =
-		replace_clause_joinvar_refs(get_notclausearg(clause),
+		List	   *notclause = replace_clause_joinvar_refs(get_notclausearg(clause),
 									outer_tlist,
 									inner_tlist);
 
@@ -370,12 +364,10 @@ replace_clause_joinvar_refs(Expr *clause,
 	}
 	else if (is_opclause((Node *) clause))
 	{
-		Var		   *leftvar =
-		(Var *) replace_clause_joinvar_refs((Expr *) get_leftop(clause),
+		Var		   *leftvar = (Var *) replace_clause_joinvar_refs((Expr *) get_leftop(clause),
 											outer_tlist,
 											inner_tlist);
-		Var		   *rightvar =
-		(Var *) replace_clause_joinvar_refs((Expr *) get_rightop(clause),
+		Var		   *rightvar = (Var *) replace_clause_joinvar_refs((Expr *) get_rightop(clause),
 											outer_tlist,
 											inner_tlist);
 
@@ -385,8 +377,7 @@ replace_clause_joinvar_refs(Expr *clause,
 	}
 	else if (is_subplan(clause))
 	{
-		((Expr *) clause)->args =
-			replace_subclause_joinvar_refs(((Expr *) clause)->args,
+		((Expr *) clause)->args = replace_subclause_joinvar_refs(((Expr *) clause)->args,
 										   outer_tlist,
 										   inner_tlist);
 		((SubPlan *) ((Expr *) clause)->oper)->sublink->oper =
@@ -965,8 +956,7 @@ check_having_qual_for_vars(Node *clause, List *targetlist_so_far)
 	}
 	else if (IsA(clause, Aggref))
 	{
-		targetlist_so_far =
-			check_having_qual_for_vars(((Aggref *) clause)->target, targetlist_so_far);
+		targetlist_so_far = check_having_qual_for_vars(((Aggref *) clause)->target, targetlist_so_far);
 		return targetlist_so_far;
 	}
 	else if (IsA(clause, ArrayRef))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.22 1999/01/24 00:28:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.23 1999/02/03 21:16:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,8 +113,7 @@ add_tl_element(RelOptInfo * rel, Var *var)
 									 var->varno,
 									 var->varoattno);
 
-		rel->targetlist =
-			lappend(tlist,
+		rel->targetlist = lappend(tlist,
 					create_tl_element(newvar,
 									  length(tlist) + 1));
 
@@ -462,8 +461,7 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 	}
 	else if (IsA(tlistentry, Iter))
 	{
-		((Iter *) tlistentry)->iterexpr =
-			flatten_tlistentry((Node *) ((Iter *) tlistentry)->iterexpr,
+		((Iter *) tlistentry)->iterexpr = flatten_tlistentry((Node *) ((Iter *) tlistentry)->iterexpr,
 							   flat_tlist);
 		return tlistentry;
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.19 1998/09/01 04:28:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.20 1999/02/03 21:16:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,7 +513,7 @@ ExecMergeJoin(MergeJoin *node)
 				econtext->ecxt_outertuple = outerTupleSlot;
 
 				mergestate->mj_MarkedTupleSlot->ttc_tupleDescriptor =
-					innerTupleSlot->ttc_tupleDescriptor;
+						innerTupleSlot->ttc_tupleDescriptor;
 
 				/* ----------------
 				 *	initialize merge join state to skip inner tuples.

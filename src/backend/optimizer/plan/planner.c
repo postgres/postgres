@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.41 1999/02/03 20:15:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.42 1999/02/03 21:16:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,8 +124,7 @@ union_planner(Query *parse)
 					parse->resultRelation,
 					parse->rtable);
 	}
-	else if ((rt_index =
-			  first_inherit_rt_entry(rangetable)) != -1)
+	else if ((rt_index = first_inherit_rt_entry(rangetable)) != -1)
 	{
 		if (parse->rowMark != NULL)
 			elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
@@ -263,8 +262,7 @@ union_planner(Query *parse)
 		 * get the varno/attno entries to the appropriate references to
 		 * the result tuple of the subplans.
 		 */
-		((Agg *) result_plan)->aggs =
-		  get_agg_tlist_references((Agg *) result_plan); 
+		((Agg *) result_plan)->aggs = get_agg_tlist_references((Agg *) result_plan); 
 
 		/***S*H***/
 		if(parse->havingQual!=NULL) 

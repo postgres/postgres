@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.22 1998/09/01 04:33:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.23 1999/02/03 21:17:35 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -420,8 +420,7 @@ InitCatalogCache()
 
 			Assert(!PointerIsValid((Pointer) SysCache[cacheId]));
 
-			SysCache[cacheId] =
-				InitSysCache(cacheinfo[cacheId].name,
+			SysCache[cacheId] = InitSysCache(cacheinfo[cacheId].name,
 							 cacheinfo[cacheId].indname,
 							 cacheId,
 							 cacheinfo[cacheId].nkeys,
@@ -492,8 +491,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 
 	if (!PointerIsValid(SysCache[cacheId]))
 	{
-		SysCache[cacheId] =
-			InitSysCache(cacheinfo[cacheId].name,
+		SysCache[cacheId] = InitSysCache(cacheinfo[cacheId].name,
 						 cacheinfo[cacheId].indname,
 						 cacheId,
 						 cacheinfo[cacheId].nkeys,
@@ -604,10 +602,8 @@ SearchSysCacheGetAttribute(int cacheId,
 	else if (attributeNumber > 0 &&
 			 attributeNumber <= relation->rd_rel->relnatts)
 	{
-		attributeLength =
-			relation->rd_att->attrs[attributeNumber - 1]->attlen;
-		attributeByValue =
-			relation->rd_att->attrs[attributeNumber - 1]->attbyval;
+		attributeLength = relation->rd_att->attrs[attributeNumber - 1]->attlen;
+		attributeByValue = relation->rd_att->attrs[attributeNumber - 1]->attbyval;
 	}
 	else
 	{

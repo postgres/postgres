@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.37 1999/02/02 03:44:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.38 1999/02/03 21:17:30 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -210,8 +210,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 			else
 				cache->cc_klen[i] = tupdesc->attrs[cache->cc_key[i] - 1]->attlen;
 
-			cache->cc_skey[i].sk_procedure =
-				EQPROC(tupdesc->attrs[cache->cc_key[i] - 1]->atttypid);
+			cache->cc_skey[i].sk_procedure = EQPROC(tupdesc->attrs[cache->cc_key[i] - 1]->atttypid);
 
 			fmgr_info(cache->cc_skey[i].sk_procedure,
 					  &cache->cc_skey[i].sk_func);
@@ -429,8 +428,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 			break;
 	}
 
-	return
-		CatalogCacheComputeHashIndex(cacheInOutP);
+	return CatalogCacheComputeHashIndex(cacheInOutP);
 }
 
 /* --------------------------------

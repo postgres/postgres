@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.53 1999/01/17 06:18:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.54 1999/02/03 21:15:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -855,8 +855,7 @@ gettype(char *type)
 static Form_pg_attribute		/* XXX */
 AllocateAttribute()
 {
-	Form_pg_attribute attribute =
-	(Form_pg_attribute) malloc(ATTRIBUTE_TUPLE_SIZE);
+	Form_pg_attribute attribute = (Form_pg_attribute) malloc(ATTRIBUTE_TUPLE_SIZE);
 
 	if (!PointerIsValid(attribute))
 		elog(FATAL, "AllocateAttribute: malloc failed");

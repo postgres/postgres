@@ -340,8 +340,7 @@ SS_replace_correlation_vars(Node *expr)
 	}
 	else if (IsA(expr, Iter))
 	{
-		((Iter *) expr)->iterexpr =
-			SS_replace_correlation_vars(((Iter *) expr)->iterexpr);
+		((Iter *) expr)->iterexpr = SS_replace_correlation_vars(((Iter *) expr)->iterexpr);
 	}
 	else if (single_node(expr))
 		return expr;
@@ -350,22 +349,18 @@ SS_replace_correlation_vars(Node *expr)
 		((Expr *) expr)->args = (List *)
 			SS_replace_correlation_vars((Node *) ((Expr *) expr)->args);
 	else if (IsA(expr, Aggref))
-		((Aggref *) expr)->target =
-			SS_replace_correlation_vars((Node *) ((Aggref *) expr)->target);
+		((Aggref *) expr)->target = SS_replace_correlation_vars((Node *) ((Aggref *) expr)->target);
 	else if (IsA(expr, ArrayRef))
 	{
 		((ArrayRef *) expr)->refupperindexpr = (List *)
 			SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->refupperindexpr);
 		((ArrayRef *) expr)->reflowerindexpr = (List *)
 			SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->reflowerindexpr);
-		((ArrayRef *) expr)->refexpr =
-			SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->refexpr);
-		((ArrayRef *) expr)->refassgnexpr =
-			SS_replace_correlation_vars(((ArrayRef *) expr)->refassgnexpr);
+		((ArrayRef *) expr)->refexpr = SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->refexpr);
+		((ArrayRef *) expr)->refassgnexpr = SS_replace_correlation_vars(((ArrayRef *) expr)->refassgnexpr);
 	}
 	else if (IsA(expr, TargetEntry))
-		((TargetEntry *) expr)->expr =
-			SS_replace_correlation_vars((Node *) ((TargetEntry *) expr)->expr);
+		((TargetEntry *) expr)->expr = SS_replace_correlation_vars((Node *) ((TargetEntry *) expr)->expr);
 	else if (IsA(expr, SubLink))
 	{
 		List	   *le;

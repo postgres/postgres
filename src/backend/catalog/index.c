@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.68 1999/02/02 03:44:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.69 1999/02/03 21:15:54 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -436,8 +436,7 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
-	indexRelation->rd_am =
-		AccessMethodObjectIdGetForm(amoid);
+	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -802,8 +801,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	newPred = NULL;
 	if (predicate != NULL)
 	{
-		newPred =
-			(Node *) make_orclause(lcons(make_andclause((List *) predicate),
+		newPred = (Node *) make_orclause(lcons(make_andclause((List *) predicate),
 								  lcons(make_andclause((List *) oldPred),
 										NIL)));
 		newPred = (Node *) cnfify((Expr *) newPred, true);

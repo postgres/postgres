@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.15 1999/01/01 04:48:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.16 1999/02/03 21:17:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -883,8 +883,7 @@ StartPortalAllocMode(AllocMode mode, Size limit)
 		FixedStackPush(&context->stackData, context->block);
 
 	/* allocate and initialize new block */
-	context->block =
-		MemoryContextAlloc(
+	context->block = MemoryContextAlloc(
 			  (MemoryContext) PortalHeapMemoryGetVariableMemory(context),
 						   sizeof(HeapMemoryBlockData));
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.8 1998/09/01 04:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.9 1999/02/03 21:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,7 @@ match_pathkeys_joinkeys(List *pathkeys,
 	foreach(i, pathkeys)
 	{
 		pathkey = lfirst(i);
-		matched_joinkey_index =
-			match_pathkey_joinkeys(pathkey, joinkeys, which_subkey);
+		matched_joinkey_index = match_pathkey_joinkeys(pathkey, joinkeys, which_subkey);
 
 		if (matched_joinkey_index != -1)
 		{
@@ -287,8 +286,7 @@ extract_path_keys(List *joinkeys,
 		if (p != NIL)
 			continue;			/* key already in pathkeys */
 
-		pathkeys =
-			lappend(pathkeys, lcons(key, NIL));
+		pathkeys = lappend(pathkeys, lcons(key, NIL));
 	}
 	return pathkeys;
 }
@@ -371,8 +369,7 @@ new_join_pathkey(List *subkeys,
 		subkey = (Var *) lfirst(i);
 		if (subkey == NULL)
 			break;				/* XXX something is wrong */
-		matched_subkeys =
-			new_matching_subkeys(subkey, considered_subkeys,
+		matched_subkeys = new_matching_subkeys(subkey, considered_subkeys,
 								 join_rel_tlist, joinclauses);
 		tlist_key = matching_tlvar(subkey, join_rel_tlist);
 		newly_considered_subkeys = NIL;
@@ -386,8 +383,7 @@ new_join_pathkey(List *subkeys,
 		else
 			newly_considered_subkeys = matched_subkeys;
 
-		considered_subkeys =
-			append(considered_subkeys, newly_considered_subkeys);
+		considered_subkeys = append(considered_subkeys, newly_considered_subkeys);
 
 		t_list = nconc(t_list, newly_considered_subkeys);
 	}
@@ -426,8 +422,7 @@ new_matching_subkeys(Var *subkey,
 	foreach(i, joinclauses)
 	{
 		joinclause = lfirst(i);
-		tlist_other_var =
-			matching_tlvar(other_join_clause_var(subkey, joinclause),
+		tlist_other_var = matching_tlvar(other_join_clause_var(subkey, joinclause),
 						   join_rel_tlist);
 
 		if (tlist_other_var &&

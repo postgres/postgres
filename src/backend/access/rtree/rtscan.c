@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.20 1998/12/15 12:45:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.21 1999/02/03 21:15:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,8 +141,7 @@ rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 		s->opaque = p;
 		if (s->numberOfKeys > 0)
 		{
-			p->s_internalKey =
-				(ScanKey) palloc(sizeof(ScanKeyData) * s->numberOfKeys);
+			p->s_internalKey = (ScanKey) palloc(sizeof(ScanKeyData) * s->numberOfKeys);
 
 			/*
 			 * Scans on internal pages use different operators than they

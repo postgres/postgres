@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.15 1998/09/01 04:28:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.16 1999/02/03 21:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,14 +150,12 @@ exec_append_initialize_next(Append *node)
 
 		if (appendstate->as_junkFilter_list)
 		{
-			estate->es_junkFilter =
-				(JunkFilter *) nth(whichplan,
+			estate->es_junkFilter = (JunkFilter *) nth(whichplan,
 								   appendstate->as_junkFilter_list);
 		}
 		if (appendstate->as_result_relation_info_list)
 		{
-			estate->es_result_relation_info =
-				(RelationInfo *) nth(whichplan,
+			estate->es_result_relation_info = (RelationInfo *) nth(whichplan,
 							  appendstate->as_result_relation_info_list);
 		}
 		result_slot->ttc_whichplan = whichplan;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.36 1998/12/23 14:38:40 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.37 1999/02/03 21:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,8 +463,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			toid = typeTypeId(typenameType(relname));
 			/* replace it in the arg list */
-			lfirst(fargs) =
-				makeVar(vnum, 0, toid, -1, 0, vnum, 0);
+			lfirst(fargs) = makeVar(vnum, 0, toid, -1, 0, vnum, 0);
 		}
 		else if (!attisset)
 		{						/* set functions don't have parameters */
@@ -554,8 +553,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		if (!strcmp(funcname, "*"))
 		{
-			funcnode->func_tlist =
-				expandAll(pstate, relname, refname, curr_resno);
+			funcnode->func_tlist = expandAll(pstate, relname, refname, curr_resno);
 		}
 		else
 		{
@@ -697,8 +695,7 @@ func_get_candidates(char *funcname, int nargs)
 						palloc(8 * sizeof(Oid));
 					MemSet(current_candidate->args, 0, 8 * sizeof(Oid));
 					for (i = 0; i < nargs; i++)
-						current_candidate->args[i] =
-							pgProcP->proargtypes[i];
+						current_candidate->args[i] = pgProcP->proargtypes[i];
 
 					current_candidate->next = candidates;
 					candidates = current_candidate;
@@ -1003,8 +1000,7 @@ func_get_detail(char *funcname,
 				}
 				current_input_typeids = *input_typeid_vector++;
 			}
-			while (current_input_typeids !=
-				   InvalidOid && ncandidates == 0);
+			while (current_input_typeids != InvalidOid && ncandidates == 0);
 		}
 	}
 
@@ -1292,8 +1288,7 @@ make_arguments(ParseState *pstate,
 		 */
 		if (input_typeids[i] == UNKNOWNOID && function_typeids[i] != InvalidOid)
 		{
-			lfirst(current_fargs) =
-				parser_typecast2(lfirst(current_fargs),
+			lfirst(current_fargs) = parser_typecast2(lfirst(current_fargs),
 								 input_typeids[i],
 								 typeidType(function_typeids[i]),
 								 -1);
@@ -1420,8 +1415,7 @@ ParseComplexProjection(ParseState *pstate,
 					}
 					if (RelationIsValid(rd))
 					{
-						func->func_tlist =
-							setup_tlist(funcname, argrelid);
+						func->func_tlist = setup_tlist(funcname, argrelid);
 						iter->itertype = attnumTypeId(rd, attnum);
 						return (Node *) iter;
 					}
@@ -1480,8 +1474,7 @@ ParseComplexProjection(ParseState *pstate,
 					{
 						Expr	   *newexpr;
 
-						funcnode->func_tlist =
-							setup_tlist(funcname, argrelid);
+						funcnode->func_tlist = setup_tlist(funcname, argrelid);
 						funcnode->functype = attnumTypeId(rd, attnum);
 
 						newexpr = makeNode(Expr);

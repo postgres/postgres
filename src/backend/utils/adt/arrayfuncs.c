@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.36 1999/01/17 21:12:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.37 1999/02/03 21:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,8 +196,7 @@ array_in(char *string,			/* input array in external form */
 	if (*p == '{')
 	{
 		/* array not a large object */
-		dataPtr =
-			(char *) _ReadArrayStr(p, nitems, ndim, dim, &inputproc, typelem,
+		dataPtr = (char *) _ReadArrayStr(p, nitems, ndim, dim, &inputproc, typelem,
 							typmod, typdelim, typlen, typbyval, typalign,
 								   &nbytes);
 		nbytes += ARR_OVERHEAD(ndim);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.47 1999/01/24 22:53:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.48 1999/02/03 21:15:27 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -759,8 +759,7 @@ heap_modifytuple(HeapTuple tuple,
 
 		if (repl[attoff] == ' ')
 		{
-			value[attoff] =
-				heap_getattr(tuple,
+			value[attoff] = heap_getattr(tuple,
 							 AttrOffsetGetAttrNumber(attoff),
 							 RelationGetDescr(relation),
 							 &isNull);

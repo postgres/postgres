@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.13 1999/02/03 20:15:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.14 1999/02/03 21:16:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,16 +121,14 @@ create_or_index_paths(Query *root,
 				 * copy restrictinfo list into path for expensive function
 				 * processing	 -- JMH, 7/7/92
 				 */
-				pathnode->path.loc_restrictinfo =
-					set_difference(copyObject((Node *) rel->restrictinfo),
+				pathnode->path.loc_restrictinfo = set_difference(copyObject((Node *) rel->restrictinfo),
 								   lcons(clausenode, NIL));
 
 #if 0							/* fix xfunc */
 				/* add in cost for expensive functions!  -- JMH, 7/7/92 */
 				if (XfuncMode != XFUNC_OFF)
 				{
-					((Path *) pathnode)->path_cost +=
-						xfunc_get_path_cost((Path) pathnode);
+					((Path *) pathnode)->path_cost += xfunc_get_path_cost((Path) pathnode);
 				}
 #endif
 				clausenode->selectivity = (Cost) floatVal(selecs);

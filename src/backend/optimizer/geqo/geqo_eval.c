@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.25 1999/02/03 20:15:24 momjian Exp $
+ * $Id: geqo_eval.c,v 1.26 1999/02/03 21:16:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,11 +269,9 @@ init_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininf
 	 * of the outer and inner join relations and then merging the results
 	 * together.
 	 */
-	new_outer_tlist =
-		new_join_tlist(outer_rel->targetlist,	/* XXX 1-based attnos */
+	new_outer_tlist = new_join_tlist(outer_rel->targetlist,	/* XXX 1-based attnos */
 					   inner_rel->relids, 1);
-	new_inner_tlist =
-		new_join_tlist(inner_rel->targetlist,	/* XXX 1-based attnos */
+	new_inner_tlist = new_join_tlist(inner_rel->targetlist,	/* XXX 1-based attnos */
 					   outer_rel->relids,
 					   length(new_outer_tlist) + 1);
 
@@ -355,8 +353,7 @@ new_join_tlist(List *tlist,
 		if (in_final_tlist)
 		{
 			resdomno += 1;
-			temp_node =
-				lcons(create_tl_element(get_expr(xtl),
+			temp_node = lcons(create_tl_element(get_expr(xtl),
 										resdomno),
 					  NIL);
 			t_list = nconc(t_list, temp_node);
@@ -540,8 +537,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 				new_joininfo->mergejoinable = mergejoinable;
 				new_joininfo->hashjoinable = hashjoinable;
 				new_joininfo->inactive = false;
-				rel->joininfo =
-					lappend(rel->joininfo, new_joininfo);
+				rel->joininfo = lappend(rel->joininfo, new_joininfo);
 
 				foreach(xsuper_rel, super_rels)
 				{
@@ -550,8 +546,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 					if (nonoverlap_rels(super_rel, joinrel))
 					{
 						List	   *new_relids = super_rel->relids;
-						JoinInfo   *other_joininfo =
-						joininfo_member(new_relids,
+						JoinInfo   *other_joininfo = joininfo_member(new_relids,
 										joinrel->joininfo);
 
 						if (other_joininfo)
@@ -569,8 +564,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 							new_joininfo->mergejoinable = mergejoinable;
 							new_joininfo->hashjoinable = hashjoinable;
 							new_joininfo->inactive = false;
-							joinrel->joininfo =
-								lappend(joinrel->joininfo,
+							joinrel->joininfo = lappend(joinrel->joininfo,
 										new_joininfo);
 						}
 					}

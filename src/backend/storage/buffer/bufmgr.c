@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.46 1999/02/02 03:44:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.47 1999/02/03 21:17:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1373,8 +1373,7 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
-	return
-	((relation->rd_myxactonly) ? relation->rd_nblocks :
+	return ((relation->rd_myxactonly) ? relation->rd_nblocks :
 	 smgrnblocks(DEFAULT_SMGR, relation));
 }
 
