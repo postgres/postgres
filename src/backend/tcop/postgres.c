@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.375.2.1 2003/11/24 14:50:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.375.2.2 2004/09/26 00:26:53 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2659,7 +2659,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.375.2.1 $ $Date: 2003/11/24 14:50:02 $\n");
+		puts("$Revision: 1.375.2.2 $ $Date: 2004/09/26 00:26:53 $\n");
 	}
 
 	/*
@@ -2708,6 +2708,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		QueryCancelPending = false;		/* again in case timeout occurred */
 		DisableNotifyInterrupt();
 		debug_query_string = NULL;
+
+		/* Make sure libpq is in a good state */
+		pq_comm_reset();
 
 		/*
 		 * Make sure we are in a valid memory context during recovery.
