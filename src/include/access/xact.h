@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.71 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.72 2004/09/05 23:01:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,10 @@ extern int	DefaultXactIsoLevel;
 extern int	XactIsoLevel;
 
 /*
- * We only implement two distinct levels, so this is a convenience to
- * check which level we're really using internally.
+ * We only implement two isolation levels internally.  This macro should
+ * be used to check which one is selected.
  */
-#define IsXactIsoLevelSerializable ((XactIsoLevel == XACT_REPEATABLE_READ || XactIsoLevel == XACT_SERIALIZABLE))
+#define IsXactIsoLevelSerializable (XactIsoLevel >= XACT_REPEATABLE_READ)
 
 /* Xact read-only state */
 extern bool DefaultXactReadOnly;
