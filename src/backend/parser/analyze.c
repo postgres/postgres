@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.261 2003/02/09 06:56:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.262 2003/02/11 04:13:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1786,6 +1786,11 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * leftmost select and common datatypes of topmost set operation. Also
 	 * make lists of the dummy vars and their names for use in parsing
 	 * ORDER BY.
+	 *
+	 * Note: we use leftmostRTI as the varno of the dummy variables.
+	 * It shouldn't matter too much which RT index they have, as long
+	 * as they have one that corresponds to a real RT entry; else funny
+	 * things may happen when the tree is mashed by rule rewriting.
 	 */
 	qry->targetList = NIL;
 	targetvars = NIL;
@@ -1804,7 +1809,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 							-1,
 							colName,
 							false);
-		expr = (Expr *) makeVar(1,
+		expr = (Expr *) makeVar(leftmostRTI,
 								leftResdom->resno,
 								colType,
 								-1,
@@ -1871,7 +1876,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 									 NULL,
 									 true);
 	jrtr = makeNode(RangeTblRef);
-	jrtr->rtindex = 1;
+	jrtr->rtindex = 1;			/* only entry in dummy rtable */
 
 	sv_rtable = pstate->p_rtable;
 	pstate->p_rtable = makeList1(jrte);
