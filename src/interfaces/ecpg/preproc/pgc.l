@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.54 2000/03/15 19:09:10 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.55 2000/03/18 05:44:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,7 +319,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					return ICONST;
 				}
 
-<xb><<EOF>>            { mmerror(ET_ERROR, "Unterminated hexadecimal integer"); }
+<xh><<EOF>>		{ mmerror(ET_ERROR, "Unterminated hexadecimal integer"); }
 
 {xqstart}			{
 					state_before = YYSTATE;
@@ -355,7 +355,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 <xd>{xdinside}			{
 					addlit(yytext, yyleng);
 				}
-<xq><<EOF>> 	 	        { mmerror(ET_ERROR, "Unterminated quoted identifier"); }
+<xd><<EOF>> 	 	        { mmerror(ET_ERROR, "Unterminated quoted identifier"); }
 <SQL>{typecast}			{ 	return TYPECAST; }
 <SQL>{self}			{ /* 
 				   * We may find a ';' inside a structure
