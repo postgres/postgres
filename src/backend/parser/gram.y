@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.129 2000/01/18 06:12:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.130 2000/01/18 19:08:13 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -156,7 +156,7 @@ static Node *doNegate(Node *n);
 		database_name, access_method_clause, access_method, attr_name,
 		class, index_name, name, func_name, file_name, aggr_argtype
 
-%type <str>		opt_id, opt_portal_name,
+%type <str>		opt_id,
 		all_Op, MathOp, opt_name, opt_unique,
 		OptUseOp, opt_class, SpecialRuleRelation
 
@@ -199,7 +199,7 @@ static Node *doNegate(Node *n);
 				opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
 %type <boolean> opt_cursor
 
-%type <ival>	copy_dirn, def_type, opt_direction, remove_type,
+%type <ival>	copy_dirn, def_type, direction, remove_type,
 		opt_column, event, comment_type, comment_cl,
 		comment_ag, comment_fn, comment_op, comment_tg
 
@@ -1861,7 +1861,7 @@ comment_text:	Sconst { $$ = $1; }
  *
  *****************************************************************************/
 
-FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name
+FetchStmt:	FETCH direction fetch_how_many from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					if ($2 == RELATIVE)
@@ -1877,11 +1877,60 @@ FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name
 					}
 					n->direction = $2;
 					n->howMany = $3;
+					n->portalname = $5;
+					n->ismove = false;
+					$$ = (Node *)n;
+				}
+		| 	FETCH fetch_how_many from_in name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					if ($2 < 0)
+					{
+						n->howMany = -$2;
+						n->direction = BACKWARD;
+					}
+					else
+					{
+						n->direction = FORWARD;
+						n->howMany = $2;
+					}
 					n->portalname = $4;
 					n->ismove = false;
 					$$ = (Node *)n;
 				}
-		|	MOVE opt_direction fetch_how_many opt_portal_name
+		|	FETCH direction from_in name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					if ($2 == RELATIVE)
+					{
+						$2 = FORWARD;
+					}
+					n->direction = $2;
+					n->howMany = 1;
+					n->portalname = $4;
+					n->ismove = false;
+					$$ = (Node *)n;
+				}
+		|	FETCH from_in name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FORWARD;
+					n->howMany = 1;
+					n->portalname = $3;
+					n->ismove = false;
+					$$ = (Node *)n;
+				}
+		|	FETCH name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FORWARD;
+					n->howMany = 1;
+					n->portalname = $2;
+					n->ismove = false;
+					$$ = (Node *)n;
+				}
+
+		|	MOVE direction fetch_how_many from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					if ($3 < 0)
@@ -1891,13 +1940,57 @@ FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name
 					}
 					n->direction = $2;
 					n->howMany = $3;
+					n->portalname = $5;
+					n->ismove = TRUE;
+					$$ = (Node *)n;
+				}
+		|	MOVE fetch_how_many from_in name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					if ($2 < 0)
+					{
+						n->howMany = -$2;
+						n->direction = BACKWARD;
+					}
+					else
+					{
+						n->direction = FORWARD;
+						n->howMany = $2;
+					}
 					n->portalname = $4;
+					n->ismove = TRUE;
+					$$ = (Node *)n;
+				}
+		|	MOVE direction from_in name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = $2;
+					n->howMany = 1;
+					n->portalname = $4;
+					n->ismove = TRUE;
+					$$ = (Node *)n;
+				}
+		|	MOVE from_in name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FORWARD;
+					n->howMany = 1;
+					n->portalname = $3;
+					n->ismove = TRUE;
+					$$ = (Node *)n;
+				}
+		|	MOVE name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = FORWARD;
+					n->howMany = 1;
+					n->portalname = $2;
 					n->ismove = TRUE;
 					$$ = (Node *)n;
 				}
 		;
 
-opt_direction:	FORWARD					{ $$ = FORWARD; }
+direction:	FORWARD					{ $$ = FORWARD; }
 		| BACKWARD						{ $$ = BACKWARD; }
 		| RELATIVE						{ $$ = RELATIVE; }
 		| ABSOLUTE
@@ -1905,7 +1998,6 @@ opt_direction:	FORWARD					{ $$ = FORWARD; }
 				elog(NOTICE,"FETCH/ABSOLUTE not supported, using RELATIVE");
 				$$ = RELATIVE;
 			}
-		| /*EMPTY*/						{ $$ = FORWARD; /* default */ }
 		;
 
 fetch_how_many:  Iconst					{ $$ = $1; }
@@ -1913,13 +2005,11 @@ fetch_how_many:  Iconst					{ $$ = $1; }
 		| ALL							{ $$ = 0; /* 0 means fetch all tuples*/ }
 		| NEXT							{ $$ = 1; }
 		| PRIOR							{ $$ = -1; }
-		| /*EMPTY*/						{ $$ = 1; /*default*/ }
 		;
 
-opt_portal_name:  IN name				{ $$ = $2; }
-		| FROM name						{ $$ = $2; }
-		| /*EMPTY*/						{ $$ = NULL; }
-		;
+from_in:  IN 
+	| FROM
+	;
 
 
 /*****************************************************************************
