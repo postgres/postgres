@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.41 2004/03/31 16:20:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.42 2004/08/10 00:55:03 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -13,8 +13,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.41 2004/03/31 16:20:53 momjian
    field. Each field is interpreted and either assigned a numeric
    value, ignored, or rejected.
    The parser contains internal lookup tables for all textual fields,
-   including months, days of the week, and time
-   zones.
+   including months, days of the week, and time zones.
   </para>
 
   <para>
@@ -161,16 +160,15 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.41 2004/03/31 16:20:53 momjian
      <para>
       If BC has been specified, negate the year and add one for
       internal storage.  (There is no year zero in the Gregorian
-      calendar, so numerically 1 BC becomes year
-      zero.)
+      calendar, so numerically 1 BC becomes year zero.)
      </para>
     </step>
 
     <step>
      <para>
-      If BC was not specified, and if the year field was two digits in length, then
-      adjust the year to four digits. If the field is less than 70, then add 2000,
-      otherwise add 1900.
+      If BC was not specified, and if the year field was two digits in length,
+      then adjust the year to four digits. If the field is less than 70, then
+      add 2000, otherwise add 1900.
 
       <tip>
        <para>
@@ -365,28 +363,17 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.41 2004/03/31 16:20:53 momjian
 
    <indexterm>
     <primary>time zone</primary>
-    <secondary>abbreviations</secondary>
+    <secondary>input abbreviations</secondary>
    </indexterm>
 
    <para>
-    <xref linkend="datetime-timezone-table"> shows the time zone
+    <xref linkend="datetime-timezone-input-table"> shows the time zone
     abbreviations recognized by <productname>PostgreSQL</productname>
-    in date/time input values.
-    <productname>PostgreSQL</productname> uses internal tables
-    for time zone input decoding, since there is no standard
-    operating system interface to provide access to general,
-    cross-time zone information. The underlying operating system
-    <emphasis>is</emphasis> used to provide time zone information for
-    <emphasis>output</emphasis>, however.
-   </para>
-
-   <para>
-    Keep in mind also that the time zone names
-    recognized by <command>SET TIMEZONE</> are operating-system
-    dependent and may have little to do with <xref
-    linkend="datetime-timezone-table">.  For example, some systems
-    recognize values like <literal>'Europe/Rome'</> in <command>SET
-    TIMEZONE</>.
+    in date/time input values.  Note that these names are <emphasis>not</>
+    used for date/time output --- display is driven by the currently
+    selected <xref linkend="guc-timezone"> parameter setting.  (It is
+    likely that future releases will make some use of <varname>timezone</>
+    for input as well.)
    </para>
 
    <para>
@@ -396,8 +383,8 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.41 2004/03/31 16:20:53 momjian
     these might differ.
    </para>
 
-    <table id="datetime-timezone-table">
-     <title>Time Zone Abbreviations</title>
+    <table id="datetime-timezone-input-table">
+     <title>Time Zone Abbreviations for Input</title>
      <tgroup cols="3">
       <thead>
        <row>
@@ -963,7 +950,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.41 2004/03/31 16:20:53 momjian
   </formalpara>
 
     <table id="datetime-oztz-table">
-     <title>Australian Time Zone Abbreviations</title>
+     <title>Australian Time Zone Abbreviations for Input</title>
      <tgroup cols="3">
       <thead>
        <row>
@@ -996,6 +983,1272 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.41 2004/03/31 16:20:53 momjian
       </tbody>
      </tgroup>
     </table>
+
+   <indexterm>
+    <primary>time zone</primary>
+    <secondary>configuration names</secondary>
+   </indexterm>
+
+   <para>
+    <xref linkend="datetime-timezone-set-table"> shows the time zone
+    names recognized by <productname>PostgreSQL</productname> as valid
+    settings for the <xref linkend="guc-timezone"> parameter.  Note that
+    these names are conceptually as well as practically different from
+    the names shown in <xref linkend="datetime-timezone-input-table">:
+    most of these names imply a local daylight-savings time rule, whereas
+    the former names each represent just a fixed offset from UTC.
+   </para>
+
+   <para>
+    In many cases there are several equivalent names for the same zone.
+    These are listed on the same line.  The table is primarily sorted
+    by the name of the principal city of the zone.
+   </para>
+
+    <table id="datetime-timezone-set-table">
+     <title>Time Zone Names for Setting <varname>timezone</></title>
+     <tgroup cols="1">
+      <thead>
+       <row>
+	<entry>Time Zone</entry>
+       </row>
+      </thead>
+<tbody>
+ <row>
+  <entry>Africa/Abidjan</entry>
+ </row>
+ <row>
+  <entry>Africa/Accra</entry>
+ </row>
+ <row>
+  <entry>Africa/Addis_Ababa</entry>
+ </row>
+ <row>
+  <entry>Africa/Algiers</entry>
+ </row>
+ <row>
+  <entry>Africa/Asmera</entry>
+ </row>
+ <row>
+  <entry>Africa/Bamako</entry>
+ </row>
+ <row>
+  <entry>Africa/Bangui</entry>
+ </row>
+ <row>
+  <entry>Africa/Banjul</entry>
+ </row>
+ <row>
+  <entry>Africa/Bissau</entry>
+ </row>
+ <row>
+  <entry>Africa/Blantyre</entry>
+ </row>
+ <row>
+  <entry>Africa/Brazzaville</entry>
+ </row>
+ <row>
+  <entry>Africa/Bujumbura</entry>
+ </row>
+ <row>
+  <entry>Africa/Cairo Egypt</entry>
+ </row>
+ <row>
+  <entry>Africa/Casablanca</entry>
+ </row>
+ <row>
+  <entry>Africa/Ceuta</entry>
+ </row>
+ <row>
+  <entry>Africa/Conakry</entry>
+ </row>
+ <row>
+  <entry>Africa/Dakar</entry>
+ </row>
+ <row>
+  <entry>Africa/Dar_es_Salaam</entry>
+ </row>
+ <row>
+  <entry>Africa/Djibouti</entry>
+ </row>
+ <row>
+  <entry>Africa/Douala</entry>
+ </row>
+ <row>
+  <entry>Africa/El_Aaiun</entry>
+ </row>
+ <row>
+  <entry>Africa/Freetown</entry>
+ </row>
+ <row>
+  <entry>Africa/Gaborone</entry>
+ </row>
+ <row>
+  <entry>Africa/Harare</entry>
+ </row>
+ <row>
+  <entry>Africa/Johannesburg</entry>
+ </row>
+ <row>
+  <entry>Africa/Kampala</entry>
+ </row>
+ <row>
+  <entry>Africa/Khartoum</entry>
+ </row>
+ <row>
+  <entry>Africa/Kigali</entry>
+ </row>
+ <row>
+  <entry>Africa/Kinshasa</entry>
+ </row>
+ <row>
+  <entry>Africa/Lagos</entry>
+ </row>
+ <row>
+  <entry>Africa/Libreville</entry>
+ </row>
+ <row>
+  <entry>Africa/Lome</entry>
+ </row>
+ <row>
+  <entry>Africa/Luanda</entry>
+ </row>
+ <row>
+  <entry>Africa/Lubumbashi</entry>
+ </row>
+ <row>
+  <entry>Africa/Lusaka</entry>
+ </row>
+ <row>
+  <entry>Africa/Malabo</entry>
+ </row>
+ <row>
+  <entry>Africa/Maputo</entry>
+ </row>
+ <row>
+  <entry>Africa/Maseru</entry>
+ </row>
+ <row>
+  <entry>Africa/Mbabane</entry>
+ </row>
+ <row>
+  <entry>Africa/Mogadishu</entry>
+ </row>
+ <row>
+  <entry>Africa/Monrovia</entry>
+ </row>
+ <row>
+  <entry>Africa/Nairobi</entry>
+ </row>
+ <row>
+  <entry>Africa/Ndjamena</entry>
+ </row>
+ <row>
+  <entry>Africa/Niamey</entry>
+ </row>
+ <row>
+  <entry>Africa/Nouakchott</entry>
+ </row>
+ <row>
+  <entry>Africa/Ouagadougou</entry>
+ </row>
+ <row>
+  <entry>Africa/Porto-Novo</entry>
+ </row>
+ <row>
+  <entry>Africa/Sao_Tome</entry>
+ </row>
+ <row>
+  <entry>Africa/Timbuktu</entry>
+ </row>
+ <row>
+  <entry>Africa/Tripoli Libya</entry>
+ </row>
+ <row>
+  <entry>Africa/Tunis</entry>
+ </row>
+ <row>
+  <entry>Africa/Windhoek</entry>
+ </row>
+ <row>
+  <entry>America/Adak America/Atka US/Aleutian</entry>
+ </row>
+ <row>
+  <entry>America/Anchorage SystemV/YST9YDT US/Alaska</entry>
+ </row>
+ <row>
+  <entry>America/Anguilla</entry>
+ </row>
+ <row>
+  <entry>America/Antigua</entry>
+ </row>
+ <row>
+  <entry>America/Araguaina</entry>
+ </row>
+ <row>
+  <entry>America/Aruba</entry>
+ </row>
+ <row>
+  <entry>America/Asuncion</entry>
+ </row>
+ <row>
+  <entry>America/Bahia</entry>
+ </row>
+ <row>
+  <entry>America/Barbados</entry>
+ </row>
+ <row>
+  <entry>America/Belem</entry>
+ </row>
+ <row>
+  <entry>America/Belize</entry>
+ </row>
+ <row>
+  <entry>America/Boa_Vista</entry>
+ </row>
+ <row>
+  <entry>America/Bogota</entry>
+ </row>
+ <row>
+  <entry>America/Boise</entry>
+ </row>
+ <row>
+  <entry>America/Buenos_Aires</entry>
+ </row>
+ <row>
+  <entry>America/Cambridge_Bay</entry>
+ </row>
+ <row>
+  <entry>America/Campo_Grande</entry>
+ </row>
+ <row>
+  <entry>America/Cancun</entry>
+ </row>
+ <row>
+  <entry>America/Caracas</entry>
+ </row>
+ <row>
+  <entry>America/Catamarca</entry>
+ </row>
+ <row>
+  <entry>America/Cayenne</entry>
+ </row>
+ <row>
+  <entry>America/Cayman</entry>
+ </row>
+ <row>
+  <entry>America/Chicago CST6CDT SystemV/CST6CDT US/Central</entry>
+ </row>
+ <row>
+  <entry>America/Chihuahua</entry>
+ </row>
+ <row>
+  <entry>America/Cordoba America/Rosario</entry>
+ </row>
+ <row>
+  <entry>America/Costa_Rica</entry>
+ </row>
+ <row>
+  <entry>America/Cuiaba</entry>
+ </row>
+ <row>
+  <entry>America/Curacao</entry>
+ </row>
+ <row>
+  <entry>America/Danmarkshavn</entry>
+ </row>
+ <row>
+  <entry>America/Dawson</entry>
+ </row>
+ <row>
+  <entry>America/Dawson_Creek</entry>
+ </row>
+ <row>
+  <entry>America/Denver MST7MDT SystemV/MST7MDT US/Mountain America/Shiprock Navajo</entry>
+ </row>
+ <row>
+  <entry>America/Detroit US/Michigan</entry>
+ </row>
+ <row>
+  <entry>America/Dominica</entry>
+ </row>
+ <row>
+  <entry>America/Edmonton Canada/Mountain</entry>
+ </row>
+ <row>
+  <entry>America/Eirunepe</entry>
+ </row>
+ <row>
+  <entry>America/El_Salvador</entry>
+ </row>
+ <row>
+  <entry>America/Ensenada America/Tijuana Mexico/BajaNorte</entry>
+ </row>
+ <row>
+  <entry>America/Fortaleza</entry>
+ </row>
+ <row>
+  <entry>America/Glace_Bay</entry>
+ </row>
+ <row>
+  <entry>America/Godthab</entry>
+ </row>
+ <row>
+  <entry>America/Goose_Bay</entry>
+ </row>
+ <row>
+  <entry>America/Grand_Turk</entry>
+ </row>
+ <row>
+  <entry>America/Grenada</entry>
+ </row>
+ <row>
+  <entry>America/Guadeloupe</entry>
+ </row>
+ <row>
+  <entry>America/Guatemala</entry>
+ </row>
+ <row>
+  <entry>America/Guayaquil</entry>
+ </row>
+ <row>
+  <entry>America/Guyana</entry>
+ </row>
+ <row>
+  <entry>America/Halifax Canada/Atlantic SystemV/AST4ADT</entry>
+ </row>
+ <row>
+  <entry>America/Havana Cuba</entry>
+ </row>
+ <row>
+  <entry>America/Hermosillo</entry>
+ </row>
+ <row>
+  <entry>America/Indiana/Indianapolis America/Indianapolis America/Fort_Wayne EST SystemV/EST5 US/East-Indiana</entry>
+ </row>
+ <row>
+  <entry>America/Indiana/Knox America/Knox_IN US/Indiana-Starke</entry>
+ </row>
+ <row>
+  <entry>America/Indiana/Marengo</entry>
+ </row>
+ <row>
+  <entry>America/Indiana/Vevay</entry>
+ </row>
+ <row>
+  <entry>America/Inuvik</entry>
+ </row>
+ <row>
+  <entry>America/Iqaluit</entry>
+ </row>
+ <row>
+  <entry>America/Jamaica Jamaica</entry>
+ </row>
+ <row>
+  <entry>America/Jujuy</entry>
+ </row>
+ <row>
+  <entry>America/Juneau</entry>
+ </row>
+ <row>
+  <entry>America/Kentucky/Louisville America/Louisville</entry>
+ </row>
+ <row>
+  <entry>America/Kentucky/Monticello</entry>
+ </row>
+ <row>
+  <entry>America/La_Paz</entry>
+ </row>
+ <row>
+  <entry>America/Lima</entry>
+ </row>
+ <row>
+  <entry>America/Los_Angeles PST8PDT SystemV/PST8PDT US/Pacific US/Pacific-New</entry>
+ </row>
+ <row>
+  <entry>America/Maceio</entry>
+ </row>
+ <row>
+  <entry>America/Managua</entry>
+ </row>
+ <row>
+  <entry>America/Manaus Brazil/West</entry>
+ </row>
+ <row>
+  <entry>America/Martinique</entry>
+ </row>
+ <row>
+  <entry>America/Mazatlan Mexico/BajaSur</entry>
+ </row>
+ <row>
+  <entry>America/Mendoza</entry>
+ </row>
+ <row>
+  <entry>America/Menominee</entry>
+ </row>
+ <row>
+  <entry>America/Merida</entry>
+ </row>
+ <row>
+  <entry>America/Mexico_City Mexico/General</entry>
+ </row>
+ <row>
+  <entry>America/Miquelon</entry>
+ </row>
+ <row>
+  <entry>America/Monterrey</entry>
+ </row>
+ <row>
+  <entry>America/Montevideo</entry>
+ </row>
+ <row>
+  <entry>America/Montreal</entry>
+ </row>
+ <row>
+  <entry>America/Montserrat</entry>
+ </row>
+ <row>
+  <entry>America/Nassau</entry>
+ </row>
+ <row>
+  <entry>America/New_York EST5EDT SystemV/EST5EDT US/Eastern</entry>
+ </row>
+ <row>
+  <entry>America/Nipigon</entry>
+ </row>
+ <row>
+  <entry>America/Nome</entry>
+ </row>
+ <row>
+  <entry>America/Noronha Brazil/DeNoronha</entry>
+ </row>
+ <row>
+  <entry>America/North_Dakota/Center</entry>
+ </row>
+ <row>
+  <entry>America/Panama</entry>
+ </row>
+ <row>
+  <entry>America/Pangnirtung</entry>
+ </row>
+ <row>
+  <entry>America/Paramaribo</entry>
+ </row>
+ <row>
+  <entry>America/Phoenix MST SystemV/MST7 US/Arizona</entry>
+ </row>
+ <row>
+  <entry>America/Port-au-Prince</entry>
+ </row>
+ <row>
+  <entry>America/Port_of_Spain</entry>
+ </row>
+ <row>
+  <entry>America/Porto_Acre America/Rio_Branco Brazil/Acre</entry>
+ </row>
+ <row>
+  <entry>America/Porto_Velho</entry>
+ </row>
+ <row>
+  <entry>America/Puerto_Rico SystemV/AST4</entry>
+ </row>
+ <row>
+  <entry>America/Rainy_River</entry>
+ </row>
+ <row>
+  <entry>America/Rankin_Inlet</entry>
+ </row>
+ <row>
+  <entry>America/Recife</entry>
+ </row>
+ <row>
+  <entry>America/Regina Canada/East-Saskatchewan Canada/Saskatchewan SystemV/CST6</entry>
+ </row>
+ <row>
+  <entry>America/Santiago Chile/Continental</entry>
+ </row>
+ <row>
+  <entry>America/Santo_Domingo</entry>
+ </row>
+ <row>
+  <entry>America/Sao_Paulo Brazil/East</entry>
+ </row>
+ <row>
+  <entry>America/Scoresbysund</entry>
+ </row>
+ <row>
+  <entry>America/St_Johns Canada/Newfoundland</entry>
+ </row>
+ <row>
+  <entry>America/St_Kitts</entry>
+ </row>
+ <row>
+  <entry>America/St_Lucia</entry>
+ </row>
+ <row>
+  <entry>America/St_Thomas America/Virgin</entry>
+ </row>
+ <row>
+  <entry>America/St_Vincent</entry>
+ </row>
+ <row>
+  <entry>America/Swift_Current</entry>
+ </row>
+ <row>
+  <entry>America/Tegucigalpa</entry>
+ </row>
+ <row>
+  <entry>America/Thule</entry>
+ </row>
+ <row>
+  <entry>America/Thunder_Bay</entry>
+ </row>
+ <row>
+  <entry>America/Toronto Canada/Eastern</entry>
+ </row>
+ <row>
+  <entry>America/Tortola</entry>
+ </row>
+ <row>
+  <entry>America/Vancouver Canada/Pacific</entry>
+ </row>
+ <row>
+  <entry>America/Whitehorse Canada/Yukon</entry>
+ </row>
+ <row>
+  <entry>America/Winnipeg Canada/Central</entry>
+ </row>
+ <row>
+  <entry>America/Yakutat</entry>
+ </row>
+ <row>
+  <entry>America/Yellowknife</entry>
+ </row>
+ <row>
+  <entry>Antarctica/Casey</entry>
+ </row>
+ <row>
+  <entry>Antarctica/Davis</entry>
+ </row>
+ <row>
+  <entry>Antarctica/DumontDUrville</entry>
+ </row>
+ <row>
+  <entry>Antarctica/Mawson</entry>
+ </row>
+ <row>
+  <entry>Antarctica/McMurdo Antarctica/South_Pole</entry>
+ </row>
+ <row>
+  <entry>Antarctica/Palmer</entry>
+ </row>
+ <row>
+  <entry>Antarctica/Rothera</entry>
+ </row>
+ <row>
+  <entry>Antarctica/Syowa</entry>
+ </row>
+ <row>
+  <entry>Antarctica/Vostok</entry>
+ </row>
+ <row>
+  <entry>Asia/Aden</entry>
+ </row>
+ <row>
+  <entry>Asia/Almaty</entry>
+ </row>
+ <row>
+  <entry>Asia/Amman</entry>
+ </row>
+ <row>
+  <entry>Asia/Anadyr</entry>
+ </row>
+ <row>
+  <entry>Asia/Aqtau</entry>
+ </row>
+ <row>
+  <entry>Asia/Aqtobe</entry>
+ </row>
+ <row>
+  <entry>Asia/Ashgabat Asia/Ashkhabad</entry>
+ </row>
+ <row>
+  <entry>Asia/Baghdad</entry>
+ </row>
+ <row>
+  <entry>Asia/Bahrain</entry>
+ </row>
+ <row>
+  <entry>Asia/Baku</entry>
+ </row>
+ <row>
+  <entry>Asia/Bangkok</entry>
+ </row>
+ <row>
+  <entry>Asia/Beirut</entry>
+ </row>
+ <row>
+  <entry>Asia/Bishkek</entry>
+ </row>
+ <row>
+  <entry>Asia/Brunei</entry>
+ </row>
+ <row>
+  <entry>Asia/Calcutta</entry>
+ </row>
+ <row>
+  <entry>Asia/Choibalsan</entry>
+ </row>
+ <row>
+  <entry>Asia/Chongqing Asia/Chungking</entry>
+ </row>
+ <row>
+  <entry>Asia/Colombo</entry>
+ </row>
+ <row>
+  <entry>Asia/Dacca Asia/Dhaka</entry>
+ </row>
+ <row>
+  <entry>Asia/Damascus</entry>
+ </row>
+ <row>
+  <entry>Asia/Dili</entry>
+ </row>
+ <row>
+  <entry>Asia/Dubai</entry>
+ </row>
+ <row>
+  <entry>Asia/Dushanbe</entry>
+ </row>
+ <row>
+  <entry>Asia/Gaza</entry>
+ </row>
+ <row>
+  <entry>Asia/Harbin</entry>
+ </row>
+ <row>
+  <entry>Asia/Hong_Kong Hongkong</entry>
+ </row>
+ <row>
+  <entry>Asia/Hovd</entry>
+ </row>
+ <row>
+  <entry>Asia/Irkutsk</entry>
+ </row>
+ <row>
+  <entry>Asia/Jakarta</entry>
+ </row>
+ <row>
+  <entry>Asia/Jayapura</entry>
+ </row>
+ <row>
+  <entry>Asia/Jerusalem Asia/Tel_Aviv Israel</entry>
+ </row>
+ <row>
+  <entry>Asia/Kabul</entry>
+ </row>
+ <row>
+  <entry>Asia/Kamchatka</entry>
+ </row>
+ <row>
+  <entry>Asia/Karachi</entry>
+ </row>
+ <row>
+  <entry>Asia/Kashgar</entry>
+ </row>
+ <row>
+  <entry>Asia/Katmandu</entry>
+ </row>
+ <row>
+  <entry>Asia/Krasnoyarsk</entry>
+ </row>
+ <row>
+  <entry>Asia/Kuala_Lumpur</entry>
+ </row>
+ <row>
+  <entry>Asia/Kuching</entry>
+ </row>
+ <row>
+  <entry>Asia/Kuwait</entry>
+ </row>
+ <row>
+  <entry>Asia/Macao Asia/Macau</entry>
+ </row>
+ <row>
+  <entry>Asia/Magadan</entry>
+ </row>
+ <row>
+  <entry>Asia/Makassar Asia/Ujung_Pandang</entry>
+ </row>
+ <row>
+  <entry>Asia/Manila</entry>
+ </row>
+ <row>
+  <entry>Asia/Muscat</entry>
+ </row>
+ <row>
+  <entry>Asia/Nicosia Europe/Nicosia</entry>
+ </row>
+ <row>
+  <entry>Asia/Novosibirsk</entry>
+ </row>
+ <row>
+  <entry>Asia/Omsk</entry>
+ </row>
+ <row>
+  <entry>Asia/Oral</entry>
+ </row>
+ <row>
+  <entry>Asia/Phnom_Penh</entry>
+ </row>
+ <row>
+  <entry>Asia/Pontianak</entry>
+ </row>
+ <row>
+  <entry>Asia/Pyongyang</entry>
+ </row>
+ <row>
+  <entry>Asia/Qatar</entry>
+ </row>
+ <row>
+  <entry>Asia/Qyzylorda</entry>
+ </row>
+ <row>
+  <entry>Asia/Rangoon</entry>
+ </row>
+ <row>
+  <entry>Asia/Riyadh</entry>
+ </row>
+ <row>
+  <entry>Asia/Riyadh87 Mideast/Riyadh87</entry>
+ </row>
+ <row>
+  <entry>Asia/Riyadh88 Mideast/Riyadh88</entry>
+ </row>
+ <row>
+  <entry>Asia/Riyadh89 Mideast/Riyadh89</entry>
+ </row>
+ <row>
+  <entry>Asia/Saigon</entry>
+ </row>
+ <row>
+  <entry>Asia/Sakhalin</entry>
+ </row>
+ <row>
+  <entry>Asia/Samarkand</entry>
+ </row>
+ <row>
+  <entry>Asia/Seoul ROK</entry>
+ </row>
+ <row>
+  <entry>Asia/Shanghai PRC</entry>
+ </row>
+ <row>
+  <entry>Asia/Singapore Singapore</entry>
+ </row>
+ <row>
+  <entry>Asia/Taipei ROC</entry>
+ </row>
+ <row>
+  <entry>Asia/Tashkent</entry>
+ </row>
+ <row>
+  <entry>Asia/Tbilisi</entry>
+ </row>
+ <row>
+  <entry>Asia/Tehran Iran</entry>
+ </row>
+ <row>
+  <entry>Asia/Thimbu Asia/Thimphu</entry>
+ </row>
+ <row>
+  <entry>Asia/Tokyo Japan</entry>
+ </row>
+ <row>
+  <entry>Asia/Ulaanbaatar Asia/Ulan_Bator</entry>
+ </row>
+ <row>
+  <entry>Asia/Urumqi</entry>
+ </row>
+ <row>
+  <entry>Asia/Vientiane</entry>
+ </row>
+ <row>
+  <entry>Asia/Vladivostok</entry>
+ </row>
+ <row>
+  <entry>Asia/Yakutsk</entry>
+ </row>
+ <row>
+  <entry>Asia/Yekaterinburg</entry>
+ </row>
+ <row>
+  <entry>Asia/Yerevan</entry>
+ </row>
+ <row>
+  <entry>Atlantic/Azores</entry>
+ </row>
+ <row>
+  <entry>Atlantic/Bermuda</entry>
+ </row>
+ <row>
+  <entry>Atlantic/Canary</entry>
+ </row>
+ <row>
+  <entry>Atlantic/Cape_Verde</entry>
+ </row>
+ <row>
+  <entry>Atlantic/Faeroe</entry>
+ </row>
+ <row>
+  <entry>Atlantic/Madeira</entry>
+ </row>
+ <row>
+  <entry>Atlantic/Reykjavik Iceland</entry>
+ </row>
+ <row>
+  <entry>Atlantic/South_Georgia</entry>
+ </row>
+ <row>
+  <entry>Atlantic/St_Helena</entry>
+ </row>
+ <row>
+  <entry>Atlantic/Stanley</entry>
+ </row>
+ <row>
+  <entry>Australia/ACT Australia/Canberra Australia/NSW Australia/Sydney</entry>
+ </row>
+ <row>
+  <entry>Australia/Adelaide Australia/South</entry>
+ </row>
+ <row>
+  <entry>Australia/Brisbane Australia/Queensland</entry>
+ </row>
+ <row>
+  <entry>Australia/Broken_Hill Australia/Yancowinna</entry>
+ </row>
+ <row>
+  <entry>Australia/Darwin Australia/North</entry>
+ </row>
+ <row>
+  <entry>Australia/Hobart Australia/Tasmania</entry>
+ </row>
+ <row>
+  <entry>Australia/LHI Australia/Lord_Howe</entry>
+ </row>
+ <row>
+  <entry>Australia/Lindeman</entry>
+ </row>
+ <row>
+  <entry>Australia/Melbourne Australia/Victoria</entry>
+ </row>
+ <row>
+  <entry>Australia/Perth Australia/West</entry>
+ </row>
+ <row>
+  <entry>CET</entry>
+ </row>
+ <row>
+  <entry>EET</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+1</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+2</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+3</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+4</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+5</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+6</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+7</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+8</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+9</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+10</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+11</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT+12</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-1</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-2</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-3</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-4</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-5</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-6</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-7</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-8</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-9</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-10</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-11</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-12</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-13</entry>
+ </row>
+ <row>
+  <entry>Etc/GMT-14</entry>
+ </row>
+ <row>
+  <entry>Europe/Amsterdam</entry>
+ </row>
+ <row>
+  <entry>Europe/Andorra</entry>
+ </row>
+ <row>
+  <entry>Europe/Athens</entry>
+ </row>
+ <row>
+  <entry>Europe/Belfast</entry>
+ </row>
+ <row>
+  <entry>Europe/Belgrade Europe/Ljubljana Europe/Sarajevo Europe/Skopje Europe/Zagreb</entry>
+ </row>
+ <row>
+  <entry>Europe/Berlin</entry>
+ </row>
+ <row>
+  <entry>Europe/Brussels</entry>
+ </row>
+ <row>
+  <entry>Europe/Bucharest</entry>
+ </row>
+ <row>
+  <entry>Europe/Budapest</entry>
+ </row>
+ <row>
+  <entry>Europe/Chisinau Europe/Tiraspol</entry>
+ </row>
+ <row>
+  <entry>Europe/Copenhagen</entry>
+ </row>
+ <row>
+  <entry>Europe/Dublin Eire</entry>
+ </row>
+ <row>
+  <entry>Europe/Gibraltar</entry>
+ </row>
+ <row>
+  <entry>Europe/Helsinki</entry>
+ </row>
+ <row>
+  <entry>Europe/Istanbul Asia/Istanbul Turkey</entry>
+ </row>
+ <row>
+  <entry>Europe/Kaliningrad</entry>
+ </row>
+ <row>
+  <entry>Europe/Kiev</entry>
+ </row>
+ <row>
+  <entry>Europe/Lisbon Portugal</entry>
+ </row>
+ <row>
+  <entry>Europe/London GB GB-Eire</entry>
+ </row>
+ <row>
+  <entry>Europe/Luxembourg</entry>
+ </row>
+ <row>
+  <entry>Europe/Madrid</entry>
+ </row>
+ <row>
+  <entry>Europe/Malta</entry>
+ </row>
+ <row>
+  <entry>Europe/Minsk</entry>
+ </row>
+ <row>
+  <entry>Europe/Monaco</entry>
+ </row>
+ <row>
+  <entry>Europe/Moscow W-SU</entry>
+ </row>
+ <row>
+  <entry>Europe/Oslo Arctic/Longyearbyen Atlantic/Jan_Mayen</entry>
+ </row>
+ <row>
+  <entry>Europe/Paris</entry>
+ </row>
+ <row>
+  <entry>Europe/Prague Europe/Bratislava</entry>
+ </row>
+ <row>
+  <entry>Europe/Riga</entry>
+ </row>
+ <row>
+  <entry>Europe/Rome Europe/San_Marino Europe/Vatican</entry>
+ </row>
+ <row>
+  <entry>Europe/Samara</entry>
+ </row>
+ <row>
+  <entry>Europe/Simferopol</entry>
+ </row>
+ <row>
+  <entry>Europe/Sofia</entry>
+ </row>
+ <row>
+  <entry>Europe/Stockholm</entry>
+ </row>
+ <row>
+  <entry>Europe/Tallinn</entry>
+ </row>
+ <row>
+  <entry>Europe/Tirane</entry>
+ </row>
+ <row>
+  <entry>Europe/Uzhgorod</entry>
+ </row>
+ <row>
+  <entry>Europe/Vaduz</entry>
+ </row>
+ <row>
+  <entry>Europe/Vienna</entry>
+ </row>
+ <row>
+  <entry>Europe/Vilnius</entry>
+ </row>
+ <row>
+  <entry>Europe/Warsaw Poland</entry>
+ </row>
+ <row>
+  <entry>Europe/Zaporozhye</entry>
+ </row>
+ <row>
+  <entry>Europe/Zurich</entry>
+ </row>
+ <row>
+  <entry>Factory</entry>
+ </row>
+ <row>
+  <entry>GMT GMT+0 GMT-0 GMT0 Greenwich Etc/GMT Etc/GMT+0 Etc/GMT-0 Etc/GMT0 Etc/Greenwich</entry>
+ </row>
+ <row>
+  <entry>Indian/Antananarivo</entry>
+ </row>
+ <row>
+  <entry>Indian/Chagos</entry>
+ </row>
+ <row>
+  <entry>Indian/Christmas</entry>
+ </row>
+ <row>
+  <entry>Indian/Cocos</entry>
+ </row>
+ <row>
+  <entry>Indian/Comoro</entry>
+ </row>
+ <row>
+  <entry>Indian/Kerguelen</entry>
+ </row>
+ <row>
+  <entry>Indian/Mahe</entry>
+ </row>
+ <row>
+  <entry>Indian/Maldives</entry>
+ </row>
+ <row>
+  <entry>Indian/Mauritius</entry>
+ </row>
+ <row>
+  <entry>Indian/Mayotte</entry>
+ </row>
+ <row>
+  <entry>Indian/Reunion</entry>
+ </row>
+ <row>
+  <entry>MET</entry>
+ </row>
+ <row>
+  <entry>Pacific/Apia</entry>
+ </row>
+ <row>
+  <entry>Pacific/Auckland NZ</entry>
+ </row>
+ <row>
+  <entry>Pacific/Chatham NZ-CHAT</entry>
+ </row>
+ <row>
+  <entry>Pacific/Easter Chile/EasterIsland</entry>
+ </row>
+ <row>
+  <entry>Pacific/Efate</entry>
+ </row>
+ <row>
+  <entry>Pacific/Enderbury</entry>
+ </row>
+ <row>
+  <entry>Pacific/Fakaofo</entry>
+ </row>
+ <row>
+  <entry>Pacific/Fiji</entry>
+ </row>
+ <row>
+  <entry>Pacific/Funafuti</entry>
+ </row>
+ <row>
+  <entry>Pacific/Galapagos</entry>
+ </row>
+ <row>
+  <entry>Pacific/Gambier SystemV/YST9</entry>
+ </row>
+ <row>
+  <entry>Pacific/Guadalcanal</entry>
+ </row>
+ <row>
+  <entry>Pacific/Guam</entry>
+ </row>
+ <row>
+  <entry>Pacific/Honolulu HST SystemV/HST10 US/Hawaii</entry>
+ </row>
+ <row>
+  <entry>Pacific/Johnston</entry>
+ </row>
+ <row>
+  <entry>Pacific/Kiritimati</entry>
+ </row>
+ <row>
+  <entry>Pacific/Kosrae</entry>
+ </row>
+ <row>
+  <entry>Pacific/Kwajalein Kwajalein</entry>
+ </row>
+ <row>
+  <entry>Pacific/Majuro</entry>
+ </row>
+ <row>
+  <entry>Pacific/Marquesas</entry>
+ </row>
+ <row>
+  <entry>Pacific/Midway</entry>
+ </row>
+ <row>
+  <entry>Pacific/Nauru</entry>
+ </row>
+ <row>
+  <entry>Pacific/Niue</entry>
+ </row>
+ <row>
+  <entry>Pacific/Norfolk</entry>
+ </row>
+ <row>
+  <entry>Pacific/Noumea</entry>
+ </row>
+ <row>
+  <entry>Pacific/Pago_Pago Pacific/Samoa US/Samoa</entry>
+ </row>
+ <row>
+  <entry>Pacific/Palau</entry>
+ </row>
+ <row>
+  <entry>Pacific/Pitcairn SystemV/PST8</entry>
+ </row>
+ <row>
+  <entry>Pacific/Ponape</entry>
+ </row>
+ <row>
+  <entry>Pacific/Port_Moresby</entry>
+ </row>
+ <row>
+  <entry>Pacific/Rarotonga</entry>
+ </row>
+ <row>
+  <entry>Pacific/Saipan</entry>
+ </row>
+ <row>
+  <entry>Pacific/Tahiti</entry>
+ </row>
+ <row>
+  <entry>Pacific/Tarawa</entry>
+ </row>
+ <row>
+  <entry>Pacific/Tongatapu</entry>
+ </row>
+ <row>
+  <entry>Pacific/Truk</entry>
+ </row>
+ <row>
+  <entry>Pacific/Wake</entry>
+ </row>
+ <row>
+  <entry>Pacific/Wallis</entry>
+ </row>
+ <row>
+  <entry>Pacific/Yap</entry>
+ </row>
+ <row>
+  <entry>UCT Etc/UCT</entry>
+ </row>
+ <row>
+  <entry>UTC Universal Zulu Etc/UTC Etc/Universal Etc/Zulu</entry>
+ </row>
+ <row>
+  <entry>WET</entry>
+ </row>
+</tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    In addition to the names listed in the table,
+    <productname>PostgreSQL</productname> will accept time zone names of the
+    form <replaceable>STD</><replaceable>offset</> or
+    <replaceable>STD</><replaceable>offset</><replaceable>DST</>, where
+    <replaceable>STD</> is a zone abbreviation, <replaceable>offset</> is a
+    numeric offset in hours west from UTC, and <replaceable>DST</> is an
+    optional daylight-savings zone abbreviation, assumed to stand for one hour
+    ahead of the given offset.  For example, if <literal>EST5EDT</> were not
+    already a recognized zone name, it would be accepted and would be
+    functionally equivalent to USA East Coast time.  When a daylight-savings
+    zone name is present, it is assumed to be used according to USA time zone
+    rules, so this feature is of limited use outside North America.
+    One should also be wary that this provision can lead to
+    silently accepting bogus input, since there is no check on the
+    reasonableness of the zone abbreviations.  For example,
+    <literal>SET TIMEZONE TO FOOBAR0</> will work, leaving the system
+    effectively using a rather peculiar abbreviation for GMT.
+   </para>
 
   </sect1>
 

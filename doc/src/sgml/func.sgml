@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.216 2004/08/04 21:33:40 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.217 2004/08/10 00:55:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -5027,7 +5027,7 @@ EXTRACT (<replaceable>field</replaceable> FROM <replaceable>source</replaceable>
       <term><literal>century</literal></term>
       <listitem>
        <para>
-        The historical definition of a century.
+        The century
        </para>
 
 <screen>
@@ -5038,20 +5038,19 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
 </screen>
 
        <para>
-        An historical century is a period of 100 years.
-	The first century starts at 0001-01-01 00:00:00 AD, although
-	they did not know at the time. This definition applies to all
-	Gregorian calendar countries. There is no number 0 century, 
-	you go from -1 to 1.
+        The first century starts at 0001-01-01 00:00:00 AD, although
+        they did not know it at the time. This definition applies to all
+        Gregorian calendar countries. There is no century number 0,
+        you go from -1 to 1.
 
-	If you disagree with this, please write your complaint to:
-	Pope, Cathedral Saint-Peter of Roma, Vatican.
+        If you disagree with this, please write your complaint to:
+        Pope, Cathedral Saint-Peter of Roma, Vatican.
        </para>
 
        <para>
-	Compatibility: if you want the previous postgres version of century,
-	just divide the year by 100. Note that with this definition, 
-	century number 0 lasts 200 years.
+        <productname>PostgreSQL</productname> releases before 8.0 did not
+        follow the conventional numbering of centuries, but just returned
+        the year field divided by 100.
        </para>
       </listitem>
      </varlistentry>
@@ -5175,7 +5174,7 @@ SELECT EXTRACT(MICROSECONDS FROM TIME '17:12:28.5');
       <term><literal>millennium</literal></term>
       <listitem>
        <para>
-        The conventional historical millennium.
+        The millennium
        </para>
 
 <screen>
@@ -5184,8 +5183,14 @@ SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
 </screen>
 
        <para>
-        Years in the 1900's are in the second millennium.
-	The third millennium starts January 1, 2001.
+        Years in the 1900s are in the second millennium.
+        The third millennium starts January 1, 2001.
+       </para>
+
+       <para>
+        <productname>PostgreSQL</productname> releases before 8.0 did not
+        follow the conventional numbering of millennia, but just returned
+        the year field divided by 1000.
        </para>
       </listitem>
      </varlistentry>
@@ -5481,6 +5486,11 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
     In these expressions, the desired time zone <replaceable>zone</> can be
     specified either as a text string (e.g., <literal>'PST'</literal>)
     or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
+    In the text case, the available zone names are those shown in
+    <xref linkend="datetime-timezone-input-table">.  (It would be useful
+    to support the more general names shown in
+    <xref linkend="datetime-timezone-set-table">, but this is not yet
+    implemented.)
    </para>
 
    <para>

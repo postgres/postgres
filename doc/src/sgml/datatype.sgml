@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.146 2004/06/16 01:26:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.147 2004/08/10 00:55:02 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1668,6 +1668,11 @@ SELECT b, char_length(b) FROM test2;
         </tbody>
        </tgroup>
       </table>
+
+     <para>
+     Refer to <xref linkend="datetime-appendix"> for a list of
+     time zone names that are recognized for input.
+    </para>
     </sect3>
 
     <sect3>
@@ -1687,9 +1692,11 @@ SELECT b, char_length(b) FROM test2;
 
      <para>
       Valid input for the time stamp types consists of a concatenation
-      of a date and a time, followed by an optional
-      <literal>AD</literal> or <literal>BC</literal>, followed by an
-      optional time zone. Thus
+      of a date and a time, followed by an optional time zone,
+      followed by an optional <literal>AD</literal> or <literal>BC</literal>.
+      (Alternatively, <literal>AD</literal>/<literal>BC</literal> can appear
+      before the time zone, but this is not the preferred ordering.)
+      Thus
 
 <programlisting>
 1999-01-08 04:05:06
@@ -1798,17 +1805,7 @@ January 8 04:05:06 1999 PST
      </indexterm>
 
      <para>
-      The following <acronym>SQL</acronym>-compatible functions can be
-      used as date or time values for the corresponding data type: 
-      <literal>CURRENT_DATE</literal>, <literal>CURRENT_TIME</literal>, 
-      <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>, 
-      <literal>LOCALTIMESTAMP</literal>.  The latter four accept an 
-      optional precision specification.  (See also <xref 
-      linkend="functions-datetime-current">.)
-     </para>
-
-     <para>
-      <productname>PostgreSQL</productname> also supports several
+      <productname>PostgreSQL</productname> supports several
       special date/time input values for convenience, as shown in <xref
       linkend="datatype-datetime-special-table">.  The values
       <literal>infinity</literal> and <literal>-infinity</literal>
@@ -1873,6 +1870,18 @@ January 8 04:05:06 1999 PST
         </tbody>
        </tgroup>
       </table>
+
+     <para>
+      The following <acronym>SQL</acronym>-compatible functions can also
+      be used to obtain the current time value for the corresponding data
+      type:
+      <literal>CURRENT_DATE</literal>, <literal>CURRENT_TIME</literal>, 
+      <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>, 
+      <literal>LOCALTIMESTAMP</literal>.  The latter four accept an 
+      optional precision specification.  (See also <xref 
+      linkend="functions-datetime-current">.)  Note however that these are
+      SQL functions and are <emphasis>not</> recognized as data input strings.
+     </para>
 
     </sect3>
    </sect2>
@@ -1985,12 +1994,12 @@ January 8 04:05:06 1999 PST
     <para>
      <type>interval</type> output looks like the input format, except
      that units like <literal>century</literal> or
-     <literal>wek</literal> are converted to years and days and that
+     <literal>week</literal> are converted to years and days and
      <literal>ago</literal> is converted to an appropriate sign.  In
      ISO mode the output looks like
 
 <programlisting>
-<optional> <replaceable>quantity</> <replaceable>unit</> <optional> ... </> </> <optional> <replaceable>days</> </> <optional> <replaceable>hours</>:<replaceable>minutes</>:<replaceable>sekunden</> </optional>
+<optional> <replaceable>quantity</> <replaceable>unit</> <optional> ... </> </> <optional> <replaceable>days</> </> <optional> <replaceable>hours</>:<replaceable>minutes</>:<replaceable>seconds</> </optional>
 </programlisting>
     </para>
 
@@ -2017,19 +2026,13 @@ January 8 04:05:06 1999 PST
     Time zones, and time-zone conventions, are influenced by
     political decisions, not just earth geometry. Time zones around the
     world became somewhat standardized during the 1900's,
-    but continue to be prone to arbitrary changes.
-    <productname>PostgreSQL</productname> uses your operating
-    system's underlying features to provide output time-zone
-    support, and these systems usually contain information for only
-    the time period 1902 through 2038 (corresponding to the full
-    range of conventional Unix system time).
-    <type>timestamp with time zone</type> and <type>time with time
-     zone</type> will use time zone
-    information only within that year range, and assume that times
-    outside that range are in <acronym>UTC</acronym>.
-    But since time zone support is derived from the underlying operating
-    system time-zone capabilities, it can handle daylight-saving time
-    and other special behavior.
+    but continue to be prone to arbitrary changes, particularly with
+    respect to daylight-savings rules.
+    <productname>PostgreSQL</productname> currently supports daylight-savings
+    rules over the time period 1902 through 2038 (corresponding to the full
+    range of conventional Unix system time).  Times outside that range are
+    taken to be in <quote>standard time</> for the selected time zone, no
+    matter what part of the year they fall in.
    </para>
 
     <para>
@@ -2044,8 +2047,8 @@ January 8 04:05:06 1999 PST
         Although the <type>date</type> type 
         does not have an associated time zone, the
         <type>time</type> type can.
-        Time zones in the real world can have no meaning unless 
-        associated with a date as well as a time
+        Time zones in the real world have little meaning unless 
+        associated with a date as well as a time,
         since the offset may vary through the year with daylight-saving
         time boundaries.
        </para>
@@ -2054,8 +2057,8 @@ January 8 04:05:06 1999 PST
       <listitem>
        <para>
         The default time zone is specified as a constant numeric offset 
-        from <acronym>UTC</>. It is not possible to adapt to daylight-saving
-        time when doing date/time arithmetic across
+        from <acronym>UTC</>. It is therefore not possible to adapt to
+        daylight-saving time when doing date/time arithmetic across
         <acronym>DST</acronym> boundaries.
        </para>
       </listitem>
@@ -2069,34 +2072,45 @@ January 8 04:05:06 1999 PST
      recommend <emphasis>not</emphasis> using the type <type>time with
      time zone</type> (though it is supported by
      <productname>PostgreSQL</productname> for legacy applications and
-     for compatibility with other <acronym>SQL</acronym>
-     implementations).  <productname>PostgreSQL</productname> assumes
+     for compliance with the <acronym>SQL</acronym> standard).
+     <productname>PostgreSQL</productname> assumes
      your local time zone for any type containing only date or time.
     </para>
 
     <para>
-     All dates and times are stored internally in
-     <acronym>UTC</acronym>.  Times are converted to local time
-     on the database server before being sent to the client,
-     hence by default are in the server time zone.
+     All timezone-aware dates and times are stored internally in
+     <acronym>UTC</acronym>.  They are converted to local time
+     in the zone specified by the <xref linkend="guc-timezone"> configuration
+     parameter before being displayed to the client.
     </para>
 
     <para>
-     There are several ways to select the time zone used by the server:
+     The <xref linkend="guc-timezone"> configuration parameter can
+     be set in the file <filename>postgresql.conf</>, or in any of the
+     other standard ways described in <xref linkend="runtime-config">.
+     There are also several special ways to set it:
 
      <itemizedlist>
       <listitem>
        <para>
-        The <envar>TZ</envar> environment variable on the server host
-        is used by the server as the default time zone, if no other is
-        specified.
+        If <varname>timezone</> is not specified in
+        <filename>postgresql.conf</> nor as a postmaster command-line switch,
+        the server attempts to use the value of the <envar>TZ</envar>
+        environment variable as the default time zone.  If <envar>TZ</envar>
+        is not defined or is not any of the time zone names known to
+        <productname>PostgreSQL</productname>, the server attempts to
+        determine the operating system's default time zone by checking the
+        behavior of the C library function <literal>localtime()</>.  The
+        default time zone is selected as the closest match among
+        <productname>PostgreSQL</productname>'s known time zones.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        The <xref linkend="guc-timezone"> configuration parameter can
-        be set in the file <filename>postgresql.conf</>.
+        The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
+        sets the time zone for the session.  This is an alternative spelling
+        of <command>SET TIMEZONE TO</> with a more SQL-spec-compatible syntax.
        </para>
       </listitem>
 
@@ -2108,22 +2122,8 @@ January 8 04:05:06 1999 PST
         command to the server upon connection.
        </para>
       </listitem>
-
-      <listitem>
-       <para>
-        The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
-        sets the time zone for the session.
-       </para>
-      </listitem>
      </itemizedlist>
     </para>
-
-     <note>
-      <para>
-       If an invalid time zone is specified, the time zone becomes
-       <acronym>UTC</acronym> (on most systems anyway).
-      </para>
-     </note>
 
    <para>
     Refer to <xref linkend="datetime-appendix"> for a list of

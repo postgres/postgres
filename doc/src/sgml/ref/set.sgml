@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.85 2004/08/03 20:32:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.86 2004/08/10 00:55:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -158,7 +158,7 @@ SELECT setseed(<replaceable>value</replaceable>);
        for <literal>SET timezone TO <replaceable>value</></>.  The
        syntax <literal>SET TIME ZONE</literal> allows special syntax
        for the time zone specification.  Here are examples of valid
-       values (but note some are accepted only on some platforms):
+       values:
 
        <variablelist>
         <varlistentry>
@@ -166,14 +166,6 @@ SELECT setseed(<replaceable>value</replaceable>);
          <listitem>
           <para>
            The time zone for Berkeley, California.
-          </para>
-         </listitem>
-        </varlistentry>
-        <varlistentry>
-         <term><literal>'Portugal'</literal></term>
-         <listitem>
-          <para>
-           The time zone for Portugal.
           </para>
          </listitem>
         </varlistentry>
@@ -216,7 +208,8 @@ SELECT setseed(<replaceable>value</replaceable>);
        </variablelist>
 
        See <xref linkend="datatype-datetime"> for more information
-       about time zones.
+       about time zones.  Also, <xref linkend="datetime-appendix">
+       has a list of the recognized names for time zones.
       </para>
      </listitem>
     </varlistentry>
@@ -253,15 +246,16 @@ SET datestyle TO postgres, dmy;
   </para>
 
   <para>
-   Set the time zone for Berkeley, California, using quotes to
-   preserve the uppercase spelling of the time zone name:
+   Set the time zone for Berkeley, California:
 <screen>
 SET TIME ZONE 'PST8PDT';
-SELECT current_timestamp AS today;
+</screen>
+  </para>
 
-             today
--------------------------------
- 2003-04-29 15:02:01.218622-07
+  <para>
+   Set the time zone for Italy:
+<screen>
+SET TIME ZONE 'Europe/Rome';
 </screen>
   </para>
  </refsect1>
