@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.45 2002/04/04 04:25:47 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.46 2002/04/25 00:56:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,18 +31,26 @@
 int
 md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 {
-	char	   *passwd,
-			   *valuntil,
+	char	   *passwd = NULL,
+			   *valuntil = NULL,
 			   *crypt_pwd;
 	int			retval = STATUS_ERROR;
 	List	   **line;
-
+	List		*token;
+	
 	if ((line = get_user_line(user)) == NULL)
 		return STATUS_ERROR;
 
-	passwd = lfirst(lnext(lnext(*line)));
-	valuntil = lfirst(lnext(lnext(lnext(*line))));
-
+	/* Skip over line number and username */
+	token = lnext(lnext(*line));
+	if (token)
+	{
+		passwd = lfirst(token);
+		token = lnext(token);
+		if (token)
+			valuntil = lfirst(token);
+	}
+	
 	if (passwd == NULL || *passwd == '\0')
 	{
 		if (passwd)
@@ -120,7 +128,7 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 		AbsoluteTime vuntil,
 					current;
 
-		if (!valuntil || strcmp(valuntil, "\\N") == 0)
+		if (!valuntil)
 			vuntil = INVALID_ABSTIME;
 		else
 			vuntil = DatumGetAbsoluteTime(DirectFunctionCall1(nabstimein,

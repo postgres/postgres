@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.81 2002/04/04 04:25:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.82 2002/04/25 00:56:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,9 +109,6 @@ next_token(FILE *fp, char *buf, const int bufsz)
 		while (c != EOF && c != '\n' &&
 			   (!isblank(c) || in_quote == true))
 		{
-			if (c == '"')
-				in_quote = !in_quote;
-
 			/* skip comments to EOL */
 			if (c == '#' && !in_quote)
 			{
@@ -138,10 +135,13 @@ next_token(FILE *fp, char *buf, const int bufsz)
 				break;
 
 			/* Literal double-quote is two double-quotes */
-			if (c == '"')
+			if (in_quote && c == '"')
 				was_quote = !was_quote;
 			else
 				was_quote = false;
+
+			if (c == '"')
+				in_quote = !in_quote;
 
 			c = getc(fp);
 		}
