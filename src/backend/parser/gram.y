@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.93 1998/01/17 05:01:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.94 1998/01/19 05:06:15 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -48,7 +48,7 @@
 
 static char saved_relname[NAMEDATALEN];  /* need this for complex attributes */
 static bool QueryIsRule = FALSE;
-static Node *saved_In_Expr;
+static List *saved_In_Expr = NIL;
 static Oid	*param_type_info;
 static int	pfunc_num_args;
 extern List *parsetree;
@@ -242,7 +242,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
  */
 
 /* Keywords (in SQL92 reserved words) */
-%token	ACTION, ADD, ALL, ALTER, AND, AS, ASC,
+%token	ACTION, ADD, ALL, ALTER, AND, ANY AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
 		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
@@ -2871,7 +2871,9 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->subLinkType = IN_SUBLINK;
+					n->oper = lcons("=",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
@@ -2879,7 +2881,29 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->subLinkType = NOTIN_SUBLINK;
+					n->oper = lcons("<>",NIL);
+					n->useor = true;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' Op ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons($4,NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' Op ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons($4,NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
@@ -2887,8 +2911,12 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->subLinkType = OPER_SUBLINK;
 					n->oper = lcons($4, NIL);
+					if (strcmp($4,"<>") == 0)
+						n->useor = true;
+					else
+						n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
@@ -3114,17 +3142,13 @@ a_expr:  attr opt_indirection
 					n->args = NIL;
 					$$ = (Node *)n;
 				}
-		/* We probably need to define an "exists" node,
-		 *	since the optimizer could choose to find only one match.
-		 * Perhaps the first implementation could just check for
-		 *	count(*) > 0? - thomas 1997-07-19
-		 */
 		| EXISTS '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
-					n->subLinkType = EXISTS_SUBLINK;
+					n->useor = false;
 					n->oper = NIL;
+					n->subLinkType = EXISTS_SUBLINK;
 					n->subselect = $3;
 					$$ = (Node *)n;
 				}
@@ -3239,25 +3263,51 @@ a_expr:  attr opt_indirection
 						makeA_Expr(OP, "<", $1, $4),
 						makeA_Expr(OP, ">", $1, $6));
 				}
-		| a_expr IN { saved_In_Expr = $1; } '(' in_expr ')'
+		| a_expr IN { saved_In_Expr = lcons($1,saved_In_Expr); } '(' in_expr ')' { saved_In_Expr = lnext(saved_In_Expr); }
 				{
 					if (nodeTag($5) == T_SubLink)
 					{
-						((SubLink *)$5)->lefthand = lcons($1, NIL);
-						((SubLink *)$5)->subLinkType = IN_SUBLINK;
-						$$ = (Node *)$5;
+							SubLink *n = (SubLink *)$5;
+							n->lefthand = lcons($1, NIL);
+							n->oper = lcons("=",NIL);
+							n->useor = false;
+							n->subLinkType = ANY_SUBLINK;
+							$$ = (Node *)n;
 					}
 					else	$$ = $5;
 				}
-		| a_expr NOT IN { saved_In_Expr = $1; } '(' not_in_expr ')'
+		| a_expr NOT IN { saved_In_Expr = lcons($1,saved_In_Expr); } '(' not_in_expr ')' { saved_In_Expr = lnext(saved_In_Expr); }
 				{
 					if (nodeTag($6) == T_SubLink)
 					{
-						((SubLink *)$6)->lefthand = lcons($1, NIL);
-						((SubLink *)$6)->subLinkType = NOTIN_SUBLINK;
-						$$ = (Node *)$6;
+							SubLink *n = (SubLink *)$6;
+							n->lefthand = lcons($1, NIL);
+							n->oper = lcons("<>",NIL);
+							n->useor = false;
+							n->subLinkType = ALL_SUBLINK;
+							$$ = (Node *)n;
 					}
 					else	$$ = $6;
+				}
+		| a_expr Op ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons($2,NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr Op ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons($2,NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
 				}
 		| a_expr AND a_expr
 				{	$$ = makeA_Expr(AND, NULL, $1, $3); }
@@ -3480,10 +3530,10 @@ in_expr:  SubSelect
 		;
 
 in_expr_nodes:  AexprConst
-				{	$$ = makeA_Expr(OP, "=", saved_In_Expr, $1); }
+				{	$$ = makeA_Expr(OP, "=", lfirst(saved_In_Expr), $1); }
 		| in_expr_nodes ',' AexprConst
 				{	$$ = makeA_Expr(OR, NULL, $1,
-						makeA_Expr(OP, "=", saved_In_Expr, $3));
+						makeA_Expr(OP, "=", lfirst(saved_In_Expr), $3));
 				}
 		;
 
@@ -3498,10 +3548,10 @@ not_in_expr:  SubSelect
 		;
 
 not_in_expr_nodes:  AexprConst
-				{	$$ = makeA_Expr(OP, "<>", saved_In_Expr, $1); }
+				{	$$ = makeA_Expr(OP, "<>", lfirst(saved_In_Expr), $1); }
 		| not_in_expr_nodes ',' AexprConst
 				{	$$ = makeA_Expr(AND, NULL, $1,
-						makeA_Expr(OP, "<>", saved_In_Expr, $3));
+						makeA_Expr(OP, "<>", lfirst(saved_In_Expr), $3));
 				}
 		;
 

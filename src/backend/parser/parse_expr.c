@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.7 1998/01/16 23:20:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.8 1998/01/19 05:06:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "nodes/params.h"
 #include "nodes/relation.h"
 #include "parse.h"
+#include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -247,6 +248,42 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				result = ParseFunc(pstate,
 						  fn->funcname, fn->args, &pstate->p_last_resno,
 						  precedence);
+				break;
+			}
+		case T_SubLink:
+			{
+				SubLink			*sublink = (SubLink *) expr;
+				QueryTreeList	*qtree;
+				Query			*subselect;
+
+				qtree = parse_analyze(lcons(sublink->subselect,NIL), pstate);
+				
+				Assert(qtree->len == 1);
+
+				sublink->subselect = (Node *) subselect = qtree->qtrees[0];
+			
+				if (length(sublink->lefthand) !=
+					length(subselect->targetList))
+					elog(ERROR,"Subselect has too many or too few fields.");
+					
+				if (sublink->subLinkType != EXISTS_SUBLINK)
+				{
+					char *op = lfirst(sublink->oper);
+					List *left_expr = sublink->lefthand;
+					List *right_expr = subselect->targetList;
+					List *elist;
+					
+					foreach(elist, left_expr)
+					{
+						Node	   *lexpr = transformExpr(pstate, lfirst(elist), precedence);
+						Node	   *rexpr = lfirst(right_expr);
+						Expr	   *op_expr;						
+
+						op_expr = make_op(op, lexpr, rexpr);
+						sublink->oper = lappend(sublink->oper, op_expr->oper);
+						right_expr = lnext(right_expr);
+					}
+				}
 				break;
 			}
 		default:

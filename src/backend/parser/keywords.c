@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.29 1998/01/05 03:32:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.30 1998/01/19 05:06:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"alter", ALTER},
 	{"analyze", ANALYZE},
 	{"and", AND},
+	{"any", ANY},
 	{"append", APPEND},
 	{"archive", ARCHIVE},
 	{"as", AS},

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.13 1998/01/17 04:53:42 momjian Exp $
+ * $Id: primnodes.h,v 1.14 1998/01/19 05:06:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,8 +281,7 @@ typedef struct Aggreg
  */
 typedef enum SubLinkType
 {
-	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, EXPR_SUBLINK,
-	IN_SUBLINK, NOTIN_SUBLINK, OPER_SUBLINK
+	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, EXPR_SUBLINK
 } SubLinkType;
 
 

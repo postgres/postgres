@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.5 1998/01/17 04:53:46 momjian Exp $
+ * $Id: parse_node.h,v 1.6 1998/01/19 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,11 @@ typedef struct QueryTreeList
 /* state information used during parse analysis */
 typedef struct ParseState
 {
+	struct 		ParseState;
 	int			p_last_resno;
 	List	   *p_rtable;
 	List	   *p_insert_columns;
+	struct ParseState *parentParseState;
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;
 	bool		p_is_insert;
@@ -41,7 +43,7 @@ typedef struct ParseState
 	RangeTblEntry *p_target_rangetblentry;
 } ParseState;
 
-extern ParseState *make_parsestate(void);
+extern ParseState *make_parsestate(ParseState *parentParseState);
 extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
 extern Var *make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id);
 extern ArrayRef   *make_array_ref(Node *expr,
