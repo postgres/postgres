@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.32 1997/05/05 10:01:02 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.33 1997/06/03 01:29:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,8 +627,6 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
     Page page, tempPage = NULL;
     OffsetNumber offnum, maxoff;
     bool pgchanged, tupgone, dobufrel, notup;
-    AbsoluteTime purgetime, expiretime;
-    RelativeTime preservetime;
     char *relname;
     VPageDescr vpc, vp;
     uint32 nvac, ntups, nunused, ncrash, nempg, nnepg, nchpg, nemend;
@@ -637,6 +635,7 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
     Size max_tlen = 0;
     int32 i/*, attr_cnt*/;
     struct rusage ru0, ru1;
+    bool do_shrinking = true;
 
     getrusage(RUSAGE_SELF, &ru0);
 
@@ -646,22 +645,6 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
     relname = (RelationGetRelationName(onerel))->data;
 
     nblocks = RelationGetNumberOfBlocks(onerel);
-
-    /* calculate the purge time: tuples that expired before this time
-       will be archived or deleted */
-    purgetime = GetCurrentTransactionStartTime();
-    expiretime = (AbsoluteTime)onerel->rd_rel->relexpires;
-    preservetime = (RelativeTime)onerel->rd_rel->relpreserved;
-
-    if (RelativeTimeIsValid(preservetime) && (preservetime)) {
-	purgetime -= preservetime;
-	if (AbsoluteTimeIsBackwardCompatiblyValid(expiretime) &&
-	    expiretime > purgetime)
-	    purgetime = expiretime;
-    }
-
-    else if (AbsoluteTimeIsBackwardCompatiblyValid(expiretime))
-	purgetime = expiretime;
 
     vpc = (VPageDescr) palloc (sizeof(VPageDescrData) + MaxOffsetNumber*sizeof(OffsetNumber));
     vpc->vpd_nusd = 0;
@@ -732,31 +715,36 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
 		    ncrash++;
 		    tupgone = true;
 		}
-		else {
-		    elog (MESSAGE_LEVEL, "Rel %.*s: TID %u/%u: InsertTransactionInProgress %u",
+		else
+		{
+		    elog (NOTICE, "Rel %.*s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
 			NAMEDATALEN, relname, blkno, offnum, htup->t_xmin);
+		    do_shrinking = false;
 		}
 	    }
 
-	    if (TransactionIdIsValid((TransactionId)htup->t_xmax)) {
-		if (TransactionIdDidAbort(htup->t_xmax)) {
+	    if (TransactionIdIsValid((TransactionId)htup->t_xmax))
+	    {
+		if (TransactionIdDidAbort(htup->t_xmax))
+		{
 		    StoreInvalidTransactionId(&(htup->t_xmax));
 		    pgchanged = true;
-		} else if (TransactionIdDidCommit(htup->t_xmax)) {
-		    if (!AbsoluteTimeIsBackwardCompatiblyReal(htup->t_tmax)) {
-
-			htup->t_tmax = TransactionIdGetCommitTime(htup->t_xmax);  
-			pgchanged = true;
-		    }
-
-		    /*
-		     *  Reap the dead tuple if its expiration time is
-		     *  before purgetime.
+		}
+		else if (TransactionIdDidCommit(htup->t_xmax))
+		    tupgone = true;
+		else if ( !TransactionIdIsInProgress (htup->t_xmax) ) {
+		    /* 
+		     * Not Aborted, Not Committed, Not in Progress -
+		     * so it from crashed process. - vadim 06/02/97
 		     */
-
-		    if (htup->t_tmax < purgetime) {
-			tupgone = true;
-		    }
+		    StoreInvalidTransactionId(&(htup->t_xmax));
+		    pgchanged = true;
+		}
+		else
+		{
+		    elog (NOTICE, "Rel %.*s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
+			NAMEDATALEN, relname, blkno, offnum, htup->t_xmax);
+		    do_shrinking = false;
 		}
 	    }
 
@@ -880,7 +868,7 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
      * Try to make Fvpl keeping in mind that we can't use free space 
      * of "empty" end-pages and last page if it reapped.
      */
-    if ( Vvpl->vpl_npages - nemend > 0 )
+    if ( do_shrinking && Vvpl->vpl_npages - nemend > 0 )
     {
 	int nusf;		/* blocks usefull for re-using */
 	
