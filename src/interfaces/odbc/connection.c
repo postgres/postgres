@@ -29,6 +29,8 @@
 
 #define STMT_INCREMENT 16  /* how many statement holders to allocate at a time */
 
+#define PRN_NULLCHECK
+
 extern GLOBAL_VALUES globals;
 
 
@@ -1345,9 +1347,13 @@ static char *func = "CC_lookup_lo";
 void
 CC_log_error(char *func, char *desc, ConnectionClass *self)
 {
+#ifdef PRN_NULLCHECK
+#define nullcheck(a) (a ? a : "(NULL)")
+#endif
+
 	if (self) {
-		qlog("CONN ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
-		mylog("CONN ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
+		qlog("CONN ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, nullcheck (self->errormsg));
+		mylog("CONN ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, nullcheck (self->errormsg));
 		qlog("            ------------------------------------------------------------\n");
 		qlog("            henv=%u, conn=%u, status=%u, num_stmts=%d\n", self->henv, self, self->status, self->num_stmts);
 		qlog("            sock=%u, stmts=%u, lobj_type=%d\n", self->sock, self->stmts, self->lobj_type);
@@ -1355,12 +1361,13 @@ CC_log_error(char *func, char *desc, ConnectionClass *self)
 		qlog("            ---------------- Socket Info -------------------------------\n");
 		if (self->sock) {
 		SocketClass *sock = self->sock;
-		qlog("            socket=%d, reverse=%d, errornumber=%d, errormsg='%s'\n", sock->socket, sock->reverse, sock->errornumber, sock->errormsg);
+		qlog("            socket=%d, reverse=%d, errornumber=%d, errormsg='%s'\n", sock->socket, sock->reverse, sock->errornumber, nullcheck(sock->errormsg));
 		qlog("            buffer_in=%u, buffer_out=%u\n", sock->buffer_in, sock->buffer_out);
 		qlog("            buffer_filled_in=%d, buffer_filled_out=%d, buffer_read_in=%d\n", sock->buffer_filled_in, sock->buffer_filled_out, sock->buffer_read_in);
 		}
 	}
 	else
 		qlog("INVALID CONNECTION HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
+#undef PRN_NULLCHECK
 }
 

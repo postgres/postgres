@@ -41,6 +41,7 @@ extern GLOBAL_VALUES globals;
 #define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
 #endif
 #endif
+#define PRN_NULLCHECK
 
 /*	Map sql commands to statement types */
 static struct {
@@ -899,28 +900,31 @@ QueryInfo qi;
 void
 SC_log_error(char *func, char *desc, StatementClass *self)
 {
+#ifdef PRN_NULLCHECK
+#define nullcheck(a) (a ? a : "(NULL)")
+#endif
 	if (self) {
-		qlog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
-		mylog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
+		qlog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, nullcheck(self->errormsg));
+		mylog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, nullcheck(self->errormsg));
 		qlog("                 ------------------------------------------------------------\n");
 		qlog("                 hdbc=%u, stmt=%u, result=%u\n", self->hdbc, self, self->result);
 		qlog("                 manual_result=%d, prepare=%d, internal=%d\n", self->manual_result, self->prepare, self->internal);
 		qlog("                 bindings=%u, bindings_allocated=%d\n", self->bindings, self->bindings_allocated);
 		qlog("                 parameters=%u, parameters_allocated=%d\n", self->parameters, self->parameters_allocated);
-		qlog("                 statement_type=%d, statement='%s'\n", self->statement_type, self->statement);
-		qlog("                 stmt_with_params='%s'\n", self->stmt_with_params);
+		qlog("                 statement_type=%d, statement='%s'\n", self->statement_type, nullcheck(self->statement));
+		qlog("                 stmt_with_params='%s'\n", nullcheck(self->stmt_with_params));
 		qlog("                 data_at_exec=%d, current_exec_param=%d, put_data=%d\n", self->data_at_exec, self->current_exec_param, self->put_data);
 		qlog("                 currTuple=%d, current_col=%d, lobj_fd=%d\n", self->currTuple, self->current_col, self->lobj_fd);
 		qlog("                 maxRows=%d, rowset_size=%d, keyset_size=%d, cursor_type=%d, scroll_concurrency=%d\n", self->options.maxRows, self->options.rowset_size, self->options.keyset_size, self->options.cursor_type, self->options.scroll_concurrency);
-		qlog("                 cursor_name='%s'\n", self->cursor_name);
+		qlog("                 cursor_name='%s'\n", nullcheck(self->cursor_name));
 
 		qlog("                 ----------------QResult Info -------------------------------\n");
 
 		if (self->result) {
 		QResultClass *res = self->result;
 		qlog("                 fields=%u, manual_tuples=%u, backend_tuples=%u, tupleField=%d, conn=%u\n", res->fields, res->manual_tuples, res->backend_tuples, res->tupleField, res->conn);
-		qlog("                 fetch_count=%d, fcount=%d, num_fields=%d, cursor='%s'\n", res->fetch_count, res->fcount, res->num_fields, res->cursor);
-		qlog("                 message='%s', command='%s', notice='%s'\n", res->message, res->command, res->notice);
+		qlog("                 fetch_count=%d, fcount=%d, num_fields=%d, cursor='%s'\n", res->fetch_count, res->fcount, res->num_fields, nullcheck(res->cursor));
+		qlog("                 message='%s', command='%s', notice='%s'\n", nullcheck(res->message), nullcheck(res->command), nullcheck(res->notice));
 		qlog("                 status=%d, inTuples=%d\n", res->status, res->inTuples);
 		}
 	
@@ -929,5 +933,6 @@ SC_log_error(char *func, char *desc, StatementClass *self)
 	}
 	else
 		qlog("INVALID STATEMENT HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
+#undef PRN_NULLCHECK
 }
 
