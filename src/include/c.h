@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.119 2002/04/25 02:56:56 tgl Exp $
+ * $Id: c.h,v 1.120 2002/04/30 19:53:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,7 +420,9 @@ typedef Oid oidvector[INDEX_MAX_KEYS];
 /*
  * We want NameData to have length NAMEDATALEN and int alignment,
  * because that's how the data type 'name' is defined in pg_type.
- * Use a union to make sure the compiler agrees.
+ * Use a union to make sure the compiler agrees.  Note that NAMEDATALEN
+ * must be a multiple of sizeof(int), else sizeof(NameData) will probably
+ * not come out equal to NAMEDATALEN.
  */
 typedef union nameData
 {
