@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.250 2003/12/21 05:23:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.251 2003/12/21 18:06:15 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,16 +10,16 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.250 2003/12/21 05:23:36 momjian
 
    <note>
    <title>Release date</title>
-   <simpara>2003-12-15</simpara>
+   <simpara>2003-12-22</simpara>
    </note>
 
    <para>
-    This has a variety of fixes from 7.4.
+    This release contains a variety of fixes from 7.4.
    </para>
 
 
    <sect2>
-    <title>Migration to version 7.4</title>
+    <title>Migration to version 7.4.1</title>
 
     <para>
      A dump/restore is <emphasis>not</emphasis> required for those
@@ -84,8 +84,8 @@ DROP SCHEMA information_schema CASCADE;
 <listitem><para>Fix for <type>bytea</type> index lookups (Joe)</para></listitem>
 <listitem><para>Fix information schema for bit data types (Peter)</para></listitem>
 <listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
-<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</para></listitem>
-<listitem><para>Make <function>PQescapeBytea</function> and <function>byteaout</function> consistent with each other (Joe)</para>
+<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</quote></para></listitem>
+<listitem><para>Make <function>PQescapeBytea</function> and <function>byteaout</function> consistent with each other (Joe)</para></listitem>
 <listitem><para>Escape <type>bytea</type> output for bytes > 0x7e(Joe)</para>
 <para>
   If different client encodings are used for <type>bytea</type> output and input, it
@@ -95,13 +95,13 @@ DROP SCHEMA information_schema CASCADE;
 </listitem>
 <listitem><para>Added missing <function>SPI_finish()</function> calls to dblink's <function>get_tuple_of_interest()</function> (Joe)</para></listitem>
 <listitem><para>New Czech FAQ</para></listitem>
-<listitem><para>Fix information schema constraint_column_usage for foreign keys (Peter)</para></listitem>
-<listitem><para>Ecpg fixes (Michael)</para></listitem>
-<listitem><para>Fix bug with multiple IN subqueries and joins in the subqueries (Tom)</para></listitem>
-<listitem><para>Alllow COUNT('x') to work (Tom)</para></listitem>
-<listitem><para>Install Informix ecpg include files into separate /informix directory (Peter)</para>
+<listitem><para>Fix information schema view <literal>constraint_column_usage</literal> for foreign keys (Peter)</para></listitem>
+<listitem><para>ECPG fixes (Michael)</para></listitem>
+<listitem><para>Fix bug with multiple <literal>IN</literal> subqueries and joins in the subqueries (Tom)</para></listitem>
+<listitem><para>Alllow <literal>COUNT('x')</literal> to work (Tom)</para></listitem>
+<listitem><para>Install ECPG include files for Informix compatibility into separate directory (Peter)</para>
 <para>
-  Some Informix ecpg include file names conflicted with operating system include files.
+  Some names of ECPG include files for Informix compatibility conflicted with operating system include files.
   By installing them in their own directory, name conflicts have been reduced.
 </para>
 </listitem>
@@ -110,8 +110,8 @@ DROP SCHEMA information_schema CASCADE;
   This release fixes a bug in 7.4 where SSL didn't free all memory it allocated.
 </para>
 </listitem>
-<listitem><para>Prevent pg_service.conf from using service name as default dbname (Bruce)</para></listitem>
-<listitem><para>Fix local 'ident' on FreeBSD (Tom)</para></listitem>
+<listitem><para>Prevent <filename>pg_service.conf</filename> from using service name as default dbname (Bruce)</para></listitem>
+<listitem><para>Fix local ident authentication on FreeBSD (Tom)</para></listitem>
 </itemizedlist>
 
   </sect2>
@@ -1995,7 +1995,7 @@ DROP SCHEMA information_schema CASCADE;
 
 <itemizedlist>
 <listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
-<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</para></listitem>
+<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</quote></para></listitem>
 <listitem><para>Force stats processes to detach from shared memory, ensuring cleaner shutdown</para></listitem>
 <listitem><para>Make PQescapeBytea and byteaout consistent with each other (Joe)</para></listitem>
 <listitem><para>Added missing SPI_finish() calls to dblink's get_tuple_of_interest() (Joe)</para></listitem>
