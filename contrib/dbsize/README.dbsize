@@ -5,8 +5,8 @@ database object:
 	int8 relation_size(text)
 
 	int8 pg_database_size(oid)
-	int8 pg_tablespace_size(oid)
 	int8 pg_relation_size(oid)
+	int8 pg_tablespace_size(oid)
 
 	text pg_size_pretty(int8)
 
@@ -15,40 +15,37 @@ The first two functions:
 	SELECT database_size('template1');
 	SELECT relation_size('pg_class');
 
-take the name of the object, and support databases and tables. Please
-note that relation_size() only reports table file usage and not the
-space used by indexes and toast tables.
-
-Functions using oids are:
+take the name of the object (possibly schema-qualified, for relation_size),
+while these functions take object OIDs:
 	
 	SELECT pg_database_size(1);         -- template1 database
-	SELECT pg_tablespace_size(1663);    -- pg_default tablespace
 	SELECT pg_relation_size(1259);      -- pg_class table size
+	SELECT pg_tablespace_size(1663);    -- pg_default tablespace
 
-pg_relation_size() will report the size of the table, index and toast
-table OIDs, but they must be requested individually. To obtain the total
-size of a table including all helper files you'd have to do something
-like:
+Please note that relation_size and pg_relation_size report only the size of
+the selected relation itself; any subsidiary indexes or toast tables are not
+counted.  To obtain the total size of a table including all helper files
+you'd have to do something like:
 
-XXX This query does not work, syntax error XXX
-	
-	SELECT pg_relation_size(cl.oid) AS tablesize,
-	       CASE WHEN reltoastrelid=0 THEN 0
-	            ELSE pg_relation_size(reltoastrelid) END AS toastsize,
-	       SUM(pg_relation_size(indexrelid)) AS indexsize,
-	       pg_size_pretty(pg_relation_size(cl.oid)
-	                    + pg_relation_size(reltoastrelid)
-	                    + SUM(pg_relation_size(indexrelid))::int8) 
-								AS totalsize
-	  FROM pg_class cl
-	  JOIN pg_index ON cl.oid=indrelid
-	 WHERE relname = 'pg_rewrite'
-	 GROUP BY 1,2
+SELECT *,
+    pg_size_pretty(tablesize+indexsize+toastsize+toastindexsize) AS totalsize
+FROM
+(SELECT pg_relation_size(cl.oid) AS tablesize,
+        COALESCE((SELECT SUM(pg_relation_size(indexrelid))::bigint
+                  FROM pg_index WHERE cl.oid=indrelid), 0) AS indexsize,
+        CASE WHEN reltoastrelid=0 THEN 0
+             ELSE pg_relation_size(reltoastrelid)
+        END AS toastsize,
+        CASE WHEN reltoastrelid=0 THEN 0
+             ELSE pg_relation_size((SELECT reltoastidxid FROM pg_class ct
+                                    WHERE ct.oid = cl.reltoastrelid))
+        END AS toastindexsize
+ FROM pg_class cl
+ WHERE relname = 'foo') ss;
 
 This sample query utilizes the helper function pg_size_pretty(int8),
 which formats the number of bytes into a convenient string using KB, MB,
 GB.  It is also contained in this module.
 
-To install, just run make; make install.  Finally, load the functions
+To install, just run make; make install.  Then load the functions
 into any database using dbsize.sql.
-
