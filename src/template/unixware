@@ -6,3 +6,7 @@ else
 # when the 7.1.3UP3 or later compiler is out, we can do a version check.
   CFLAGS='-O -Kinline,no_host'
 fi
+
+SUPPORTS_THREADS=yes
+THREAD_CFLAGS="-D_REENTRANT -K pthread"
+NEED_REENTRANT_FUNC_NAMES=yes
