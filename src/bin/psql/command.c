@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.102 2003/09/16 17:59:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.103 2003/09/29 16:39:18 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -733,12 +733,9 @@ exec_command(const char *cmd,
 		if (!quiet)
 		{
 			if (pset.timing)
-				puts(gettext(("Timing is on.")));
+				puts(gettext("Timing is on."));
 			else
-			{
-				puts(gettext(("Timing is off.")));
-
-			}
+				puts(gettext("Timing is off."));
 		}
 	}
 
