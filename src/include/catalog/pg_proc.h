@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.58 1998/05/13 03:44:24 momjian Exp $
+ * $Id: pg_proc.h,v 1.59 1998/05/29 13:36:31 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -200,8 +200,8 @@ DESCR("does not match regex., case-sensitive");
 DATA(insert OID = 1257 (  textlen		   PGUID 11 f t f 1 f 23 "25" 100 0 1 0  foo bar ));
 DESCR("length");
 DATA(insert OID = 1258 (  textcat		   PGUID 11 f t f 2 f 25 "25 25" 100 0 1 0	foo bar ));
-DESCR("concat");
-DATA(insert OID = 1377 (  textoctetlen		   PGUID 11 f t f 1 f 23 "25" 100 0 1 0  foo bar ));
+DESCR("concatenate");
+DATA(insert OID = 1377 (  textoctetlen	   PGUID 11 f t f 1 f 23 "25" 100 0 1 0  foo bar ));
 DESCR("octet length");
 DATA(insert OID =  84 (  boolne			   PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  foo bar ));
 DESCR("not equal");
@@ -779,6 +779,15 @@ DATA(insert OID = 373 (  inter_sb		   PGUID 11 f t f 2 f 16 "601 603" 100 0 0 10
 DESCR("");
 
 /* OIDS 400 - 499 */
+
+DATA(insert OID =  406 (  name_text		   PGUID 11 f t f 1 f   25 "19" 100 0 0 100	foo bar ));
+DESCR("convert");
+DATA(insert OID =  407 (  text_name		   PGUID 11 f t f 1 f   19 "25" 100 0 0 100	foo bar ));
+DESCR("convert");
+DATA(insert OID =  408 (  name_bpchar	   PGUID 11 f t f 1 f 1042 "19" 100 0 0 100	foo bar ));
+DESCR("convert");
+DATA(insert OID =  409 (  bpchar_name	   PGUID 11 f t f 1 f   19 "1042" 100 0 0 100	foo bar ));
+DESCR("convert");
 
 DATA(insert OID =  438 (  hashsel		   PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 DESCR("selectivity");
@@ -1450,11 +1459,11 @@ DESCR("does not match regex., case-insensitive");
 
 DATA(insert OID = 1251 (  bpcharlen		   PGUID 11 f t f 1 f 23 "1042" 100 0 0 100  foo bar ));
 DESCR("octet length");
-DATA(insert OID = 1378 (  bpcharoctetlen		   PGUID 11 f t f 1 f 23 "1042" 100 0 0 100  foo bar ));
+DATA(insert OID = 1378 (  bpcharoctetlen   PGUID 11 f t f 1 f 23 "1042" 100 0 0 100  foo bar ));
 DESCR("octet length");
 DATA(insert OID = 1253 (  varcharlen	   PGUID 11 f t f 1 f 23 "1043" 100 0 0 100  foo bar ));
 DESCR("character length");
-DATA(insert OID = 1379 (  varcharoctetlen	   PGUID 11 f t f 1 f 23 "1043" 100 0 0 100  foo bar ));
+DATA(insert OID = 1379 (  varcharoctetlen  PGUID 11 f t f 1 f 23 "1043" 100 0 0 100  foo bar ));
 DESCR("octet length");
 
 DATA(insert OID = 1263 (  text_timespan    PGUID 11 f t f 1 f 1186 "25" 100 0 0 100  foo bar ));
@@ -1609,7 +1618,18 @@ DESCR("boolean test");
 DATA(insert OID = 1393 (  timespan	   PGUID 14 f t f 1 f 1186 "25" 100 0 0 100  "select text_timespan($1)" - ));
 DESCR("convert");
 
-/* reserve OIDs 1370-1399 for additional date/time conversion routines! tgl 97/04/01 */
+DATA(insert OID = 1394 (  name		   PGUID 14 f t f 1 f   19 "25" 100 0 0 100  "select text_name($1)" - ));
+DESCR("convert");
+DATA(insert OID = 1395 (  text		   PGUID 14 f t f 1 f   25 "19" 100 0 0 100  "select name_text($1)" - ));
+DESCR("convert");
+DATA(insert OID = 1396 (  name		   PGUID 14 f t f 1 f   19 "1042" 100 0 0 100  "select bpchar_name($1)" - ));
+DESCR("convert");
+DATA(insert OID = 1397 (  bpchar	   PGUID 14 f t f 1 f 1042 "19" 100 0 0 100  "select name_bpchar($1)" - ));
+DESCR("convert");
+DATA(insert OID = 1398 (  name		   PGUID 14 f t f 1 f   19 "1043" 100 0 0 100  "select text_name($1)" - ));
+DESCR("convert");
+DATA(insert OID = 1399 (  varchar	   PGUID 14 f t f 1 f 1043 "19" 100 0 0 100  "select name_text($1)" - ));
+DESCR("convert");
 
 /* OIDS 1400 - 1499 */
 

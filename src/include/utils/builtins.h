@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.42 1998/05/09 22:45:14 thomas Exp $
+ * $Id: builtins.h,v 1.43 1998/05/29 13:37:29 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -395,6 +395,8 @@ extern char *bpcharout(char *s);
 extern char *bpchar(char *s, int32 slen);
 extern char *char_bpchar(int32 c);
 extern int32 bpchar_char(char *s);
+extern char *name_bpchar(NameData *s);
+extern NameData *bpchar_name(char *s);
 extern bool bpchareq(char *arg1, char *arg2);
 extern bool bpcharne(char *arg1, char *arg2);
 extern bool bpcharlt(char *arg1, char *arg2);
@@ -434,6 +436,8 @@ extern int32 textlen(text *arg);
 extern int32 textoctetlen(text *arg);
 extern int32 textpos(text *arg1, text *arg2);
 extern text *text_substr(text *string, int32 m, int32 n);
+extern text *name_text(NameData *s);
+extern NameData *text_name(text *s);
 
 extern struct varlena *byteain(char *inputText);
 extern char *byteaout(struct varlena * vlena);
