@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.137 2000/01/29 16:58:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.138 2000/02/02 20:54:17 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1501,8 +1501,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 					n->args = $18;
 					n->before = false;
 					n->row = true;
-					n->actions[0] = $6;
-					n->actions[1] = '\0';
+					memcpy (n->actions, $6, 4);
 					n->lang = NULL;		/* unused */
 					n->text = NULL;		/* unused */
 					n->attr = NULL;		/* unused */
