@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.12 2002/02/11 15:19:33 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.13 2002/04/09 18:07:24 momjian Exp $
 #
 # To migrate this to newer versions of PostgreSQL:  
 #	1)  Update the version numbers at the top of the file
@@ -14,8 +14,8 @@
 #set -x
 
 # UPGRADE_VERSION is the expected old database version
-UPGRADE_VERSION="7.1"
-CUR_VERSION="7.2"
+UPGRADE_VERSION="7.2"
+CUR_VERSION="7.3"
 
 # Set this to "Y" to enable this program
 ENABLE="Y"
@@ -75,6 +75,7 @@ fi
 
 # Strip off the trailing directory name and store our data there
 # in the hope we are in the same filesystem so 'mv 'works.
+
 INFODIR=`dirname "$PGDATA"`/pg_upgrade_info
 SAVEDATA="$INFODIR"/data
 
@@ -88,14 +89,8 @@ make_dbobjoidmap()
 			FROM 	pg_class
 			WHERE 	relkind = 'r' OR
 				relkind = 'i' OR
-				relkind = 't'"
-		# Don't move over 7.1 int4 sequences;  use setval() file.
-		# Sequence XIDs changed from 7.2beta4 to beta5;  don't copy them.
-		if [ "$SRC_VERSION" != "7.1" -a \
-		     "$SRC_VERSION" != "7.2" ]
-		then	QUERY="$QUERY OR relkind = 'S';";
-			QUERY="$QUERY;"
-		fi
+				relkind = 'S' OR
+				relkind = 't';"
 
 		psql -d "$DB" -At -F'	' -c "$QUERY" |
 		while read RELNAME_OID
@@ -213,28 +208,7 @@ then
 
 
 	# Dump schema
-	pg_dumpall -s |
-	awk -F'  *' '
-	{
-		# Modify sequences with int8 maximums if we are upgrading from 7.1.
-		if ("'"$SRC_VERSION"'" == "7.1" &&
-		    $1 == "CREATE" &&
-		    $2 == "SEQUENCE" &&
-		    # handle OS rounding
-		    $9 >= 2147483646 &&
-		    $9 <= 2147483648)
-		{
-			for(i=1; i <= NF; i++)
-			{
-				if (i != 9)
-					printf "%s ", $i;
-				else
-					printf "%s ", "9223372036854775807";
-			}
-			print "";
-		}
-		else    print $0;
-	}' > "$INFODIR"/schema
+	pg_dumpall -s > "$INFODIR"/schema
 	if [ $? -ne 0 ]
 	then	echo "Can not dump schema.  Exiting." 1>&2
 		exit 1
@@ -243,32 +217,6 @@ then
 	# Generate mappings for database
 	make_dboidmap > "$INFODIR"/dboidmap || exit "$?"
 	make_dbobjoidmap > "$INFODIR"/dbobjoidmap || exit "$?"
-
-	# Generate setval() script for 7.1 because it has int4 sequences
-	# Sequence XIDs changed from 7.2beta4 to beta5 so we have to recreate them too.
-	# Not required for 7.2beta5 and later, but it can't hurt.
-	if [ "$SRC_VERSION" = "7.1" -o \
-	     "$SRC_VERSION" = "7.2" ]
-	then
-		psql -d template1 -At -c "SELECT datname FROM pg_database" |
-		grep -v '^template0$' |
-		while read DB
-		do
-			# We use awk as a portable way to output a backslash
-			awk 'BEGIN {print "\\connect '"$DB"'"}'
-			psql -d "$DB" -At -c "
-				SELECT 	relname
-				FROM 	pg_class
-				WHERE 	relkind = 'S';" |
-			while read SEQUENCE
-			do
-				VALUE=`psql -d "$DB" -At -c "SELECT last_value 
-								 FROM \"$SEQUENCE\";"`
-				echo "SELECT setval ('$SEQUENCE', $VALUE, true);"
-			done
-		done > "$INFODIR"/setval
-	else	rm -f "$INFODIR"/setval
-	fi
 
 	# Vacuum all databases to remove exipired rows.
 	# We will lose our transaction log file during the upgrade so we
@@ -375,14 +323,7 @@ then	echo "Old version of pg_resetxlog found in path." 1>&2
 	exit 1
 fi
 
-# If the XID is > 2 billion, 7.1 database will have non-frozen XID's in 
-# low numbers, and 7.2 will think they are in the future --- bad.
-
 SRC_XID=`pg_resetxlog -n "$SAVEDATA" | grep "NextXID" | awk -F'  *' '{print $4}'`
-if [ "$SRC_VERSION" = "7.1" -a "$SRC_XID" -gt 2000000000 ]
-then	echo "XID too high for $BASENAME.  Exiting." 1>&2
-	exit 1
-fi
 DST_XID=`pg_resetxlog -n "$PGDATA" | grep "NextXID" | awk -F'  *' '{print $4}'`
 
 # compare locales to make sure they match
@@ -417,16 +358,6 @@ then	echo "There were errors in the input script.  Exiting." 1>&2
 fi
 
 echo "Input script completed, fixing row commit statuses..."
-
-# XXX do we still need this?
-# Now vacuum each result database because our movement of transaction log
-# causes some committed transactions to appear as non-committed
-
-vacuumdb -a
-if [ $? -ne 0 ]
-then	echo "There were errors during VACUUM.  Exiting." 1>&2
-	exit 1
-fi
 
 # Generate mappings for new database
 make_dboidmap > /tmp/$$.dboidmap || exit "$?"
@@ -508,6 +439,11 @@ fi
 rm -r "$PGDATA"/pg_xlog
 mv -f "$SAVEDATA"/pg_xlog "$PGDATA"
 
+# Move over old clog
+
+rm -r "$PGDATA"/pg_clog
+mv -f "$SAVEDATA"/pg_clog "$PGDATA"
+
 # Set last log file id and segment from old database
 
 LOG_ID=`pg_resetxlog -n "$SAVEDATA" | grep "Current log file id:" |
@@ -539,16 +475,14 @@ then	echo "Unable to restart database server.  Exiting." 1>&2
 	exit 1
 fi
 
-# Set sequence values for 7.1-version sequences, which were int4.
+# Now that we have moved the WAL/transaction log files, vacuum again to
+# mark install rows with fixed transaction ids to prevent problems on xid
+# wraparound.
 
-if [ "$SRC_VERSION" = "7.1" -o \
-     "$SRC_VERSION" = "7.2" ]
-then	echo "Set sequence values..."
-	psql -d template1 -At < "$INFODIR"/setval
-	if [ $? -ne 0 ]
-	then	echo "There were errors during int4 sequence restoration.  Exiting." 1>&2
-		exit 1
-	fi
+vacuumdb -a
+if [ $? -ne 0 ]
+then	echo "There were errors during VACUUM.  Exiting." 1>&2
+	exit 1
 fi
 
 echo
