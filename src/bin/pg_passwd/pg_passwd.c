@@ -1,18 +1,21 @@
 /*
  * @(#) pg_passwd.c 1.8 09:13:16 97/07/02		Y. Ichikawa
  */
+#include "postgres.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <strings.h>
+#if defined(HAVE_STRING_H)
+# include <string.h>
+#else
+# include <strings.h>
+#endif
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
 #include <ctype.h>
 #define issaltchar(c)	(isalnum(c) || (c) == '.' || (c) == '/')
 
-#include "postgres.h"
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif

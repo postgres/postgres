@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.37 1998/02/19 14:27:33 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.38 1998/02/24 04:01:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,14 @@
  *		the postgres backend.
  *
  */
+#include "postgres.h"
+
 #include <stdio.h>
-#include <string.h>
-#include <strings.h>
+#if defined(HAVE_STRING_H)
+# include <string.h>
+#else
+# include <strings.h>
+#endif
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -56,13 +61,11 @@
 #endif							/* SOMAXCONN */
 #endif							/* linux */
 
-#include <postgres.h>
-
-#include <miscadmin.h>
-#include <libpq/pqsignal.h>
-#include <libpq/auth.h>
-#include <libpq/libpq.h>		/* where the declarations go */
-#include <storage/ipc.h>
+#include "miscadmin.h"
+#include "libpq/pqsignal.h"
+#include "libpq/auth.h"
+#include "libpq/libpq.h"		/* where the declarations go */
+#include "storage/ipc.h"
 
 /* ----------------
  *		declarations

@@ -2,6 +2,8 @@
 /* (C) Michael Meskes <meskes@debian.org> Feb 5th, 1998 */
 /* Placed under the same copyright as PostgresSQL */
 
+#include "postgres.h"
+
 #include <stdio.h>
 #if HAVE_GETOPT_H
 # include <getopt.h>
@@ -9,7 +11,11 @@
 # include <unistd.h>
 #endif
 #include <stdlib.h>
-#include <strings.h>
+#if defined(HAVE_STRING_H)
+# include <string.h>
+#else
+# include <strings.h>
+#endif
 
 #include "extern.h"
 

@@ -14,6 +14,12 @@
  * The following is set using configure.  
  */
 
+/* Set to 1 if you have <string.h> */
+#undef HAVE_STRING_H
+
+/* Set to 1 if you have <strings.h> */
+#undef HAVE_STRINGS_H
+
 /* Set to 1 if you have <getopt.h> */
 #undef HAVE_GETOPT_H
 
