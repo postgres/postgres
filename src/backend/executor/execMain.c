@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.136 2001/01/24 19:42:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.137 2001/01/27 05:16:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1264,8 +1264,7 @@ ExecAppend(TupleTableSlot *slot,
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW INSERT Triggers */
-	if (resultRelationDesc->trigdesc &&
-		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
+	if (resultRelationDesc->trigdesc)
 		ExecARInsertTriggers(estate, resultRelationDesc, tuple);
 }
 
@@ -1351,8 +1350,7 @@ ldelete:;
 	 */
 
 	/* AFTER ROW DELETE Triggers */
-	if (resultRelationDesc->trigdesc &&
-		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
+	if (resultRelationDesc->trigdesc)
 		ExecARDeleteTriggers(estate, tupleid);
 }
 
@@ -1491,8 +1489,7 @@ lreplace:;
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, true);
 
 	/* AFTER ROW UPDATE Triggers */
-	if (resultRelationDesc->trigdesc &&
-		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0)
+	if (resultRelationDesc->trigdesc)
 		ExecARUpdateTriggers(estate, tupleid, tuple);
 }
 

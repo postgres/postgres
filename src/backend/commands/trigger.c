@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.85 2001/01/24 19:42:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.86 2001/01/27 05:16:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,7 +911,13 @@ ExecBRInsertTriggers(EState *estate, Relation rel, HeapTuple trigtuple)
 void
 ExecARInsertTriggers(EState *estate, Relation rel, HeapTuple trigtuple)
 {
-	DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_INSERT, NULL, trigtuple);
+	/* Must save info if there are any deferred triggers on this rel */
+	if (rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0 ||
+		rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 ||
+		rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
+	{
+		DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_INSERT, NULL, trigtuple);
+	}
 }
 
 bool
@@ -956,10 +962,16 @@ void
 ExecARDeleteTriggers(EState *estate, ItemPointer tupleid)
 {
 	Relation	rel = estate->es_result_relation_info->ri_RelationDesc;
-	HeapTuple	trigtuple = GetTupleForTrigger(estate, tupleid, NULL);
 
-	DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_DELETE, trigtuple, NULL);
-	heap_freetuple(trigtuple);
+	/* Must save info if there are upd/del deferred triggers on this rel */
+	if (rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 ||
+		rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
+	{
+		HeapTuple	trigtuple = GetTupleForTrigger(estate, tupleid, NULL);
+
+		DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_DELETE, trigtuple, NULL);
+		heap_freetuple(trigtuple);
+	}
 }
 
 HeapTuple
@@ -1011,10 +1023,16 @@ void
 ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 {
 	Relation	rel = estate->es_result_relation_info->ri_RelationDesc;
-	HeapTuple	trigtuple = GetTupleForTrigger(estate, tupleid, NULL);
 
-	DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_UPDATE, trigtuple, newtuple);
-	heap_freetuple(trigtuple);
+	/* Must save info if there are upd/del deferred triggers on this rel */
+	if (rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 ||
+		rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
+	{
+		HeapTuple	trigtuple = GetTupleForTrigger(estate, tupleid, NULL);
+
+		DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_UPDATE, trigtuple, newtuple);
+		heap_freetuple(trigtuple);
+	}
 }
 
 
@@ -1225,36 +1243,39 @@ deferredTriggerAddEvent(DeferredTriggerEvent event)
 /* ----------
  * deferredTriggerGetPreviousEvent()
  *
- *	Backward scan the eventlist to find the event a given OLD tuple
+ *	Scan the eventlist to find the event a given OLD tuple
  *	resulted from in the same transaction.
  * ----------
  */
 static DeferredTriggerEvent
 deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
 {
-	DeferredTriggerEvent previous;
-	int			n;
+	DeferredTriggerEvent previous = NULL;
+	List   *dtev;
 
-	for (n = deftrig_n_events - 1; n >= 0; n--)
+	/* Search the list to find the last event affecting this tuple */
+	foreach(dtev, deftrig_events)
 	{
-		previous = (DeferredTriggerEvent) nth(n, deftrig_events);
+		DeferredTriggerEvent prev = (DeferredTriggerEvent) lfirst(dtev);
 
-		if (previous->dte_relid != relid)
+		if (prev->dte_relid != relid)
 			continue;
-		if (previous->dte_event & TRIGGER_DEFERRED_CANCELED)
+		if (prev->dte_event & TRIGGER_DEFERRED_CANCELED)
 			continue;
 
 		if (ItemPointerGetBlockNumber(ctid) ==
-			ItemPointerGetBlockNumber(&(previous->dte_newctid)) &&
+			ItemPointerGetBlockNumber(&(prev->dte_newctid)) &&
 			ItemPointerGetOffsetNumber(ctid) ==
-			ItemPointerGetOffsetNumber(&(previous->dte_newctid)))
-			return previous;
+			ItemPointerGetOffsetNumber(&(prev->dte_newctid)))
+			previous = prev;
 	}
 
-	elog(ERROR,
-		 "deferredTriggerGetPreviousEvent: event for tuple %s not found",
-		 DatumGetCString(DirectFunctionCall1(tidout, PointerGetDatum(ctid))));
-	return NULL;
+	if (previous == NULL)
+		elog(ERROR,
+			 "deferredTriggerGetPreviousEvent: event for tuple %s not found",
+			 DatumGetCString(DirectFunctionCall1(tidout,
+												 PointerGetDatum(ctid))));
+	return previous;
 }
 
 
@@ -1874,6 +1895,11 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
  * DeferredTriggerSaveEvent()
  *
  *	Called by ExecAR...Triggers() to add the event to the queue.
+ *
+ *	NOTE: should be called only if we've determined that an event must
+ *	be added to the queue.  We must save *all* events if there is either
+ *	an UPDATE or a DELETE deferred trigger; see uses of
+ *	deferredTriggerGetPreviousEvent.
  * ----------
  */
 static void
@@ -1896,15 +1922,6 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 			 "DeferredTriggerSaveEvent() called outside of transaction");
 
 	/* ----------
-	 * Check if we're interested in this row at all
-	 * ----------
-	 */
-	ntriggers = rel->trigdesc->n_after_row[event];
-	if (ntriggers <= 0)
-		return;
-	triggers = rel->trigdesc->tg_after_row[event];
-
-	/* ----------
 	 * Get the CTID's of OLD and NEW
 	 * ----------
 	 */
@@ -1923,6 +1940,8 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	 */
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
+	ntriggers = rel->trigdesc->n_after_row[event];
+	triggers = rel->trigdesc->tg_after_row[event];
 	new_size = sizeof(DeferredTriggerEventData) +
 		ntriggers * sizeof(DeferredTriggerEventItem);
 
