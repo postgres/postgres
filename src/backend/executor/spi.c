@@ -17,7 +17,7 @@ typedef struct
 	Portal		portal;			/* portal per procedure */
 	MemoryContext savedcxt;
 	CommandId	savedId;
-} _SPI_connection;
+}			_SPI_connection;
 
 static Portal _SPI_portal = (Portal) NULL;
 static _SPI_connection *_SPI_stack = NULL;
@@ -37,20 +37,24 @@ typedef struct
 	List	   *ptlist;
 	int			nargs;
 	Oid		   *argtypes;
-} _SPI_plan;
+}			_SPI_plan;
 
-static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
-static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
+static int	_SPI_execute(char *src, int tcount, _SPI_plan * plan);
+static int	_SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount);
 
 #if 0
-static void _SPI_fetch(FetchStmt *stmt);
+static void _SPI_fetch(FetchStmt * stmt);
 
 #endif
 static int
-_SPI_execute_plan(_SPI_plan *plan,
+_SPI_execute_plan(_SPI_plan * plan,
 				  char **Values, char *Nulls, int tcount);
 
-static _SPI_plan *_SPI_copy_plan(_SPI_plan *plan, bool local);
+#define _SPI_CPLAN_CURCXT	0
+#define _SPI_CPLAN_PROCXT	1
+#define _SPI_CPLAN_TOPCXT	2
+
+static _SPI_plan *_SPI_copy_plan(_SPI_plan * plan, int location);
 
 static int	_SPI_begin_call(bool execmem);
 static int	_SPI_end_call(bool procmem);
@@ -108,7 +112,7 @@ SPI_connect()
 		if (_SPI_connected <= -1)
 			elog(FATAL, "SPI_connect: some connection(s) expected");
 		_SPI_stack = (_SPI_connection *) realloc(_SPI_stack,
-						 (_SPI_connected + 1) * sizeof(_SPI_connection));
+						 (_SPI_connected + 2) * sizeof(_SPI_connection));
 	}
 
 	/*
@@ -202,13 +206,15 @@ SPI_execp(void *plan, char **Values, char *Nulls, int tcount)
 	if (plan == NULL || tcount < 0)
 		return (SPI_ERROR_ARGUMENT);
 
-	if (((_SPI_plan *) plan)->nargs > 0 &&
-		(Values == NULL || Nulls == NULL))
+	if (((_SPI_plan *) plan)->nargs > 0 && Values == NULL)
 		return (SPI_ERROR_PARAM);
 
 	res = _SPI_begin_call(true);
 	if (res < 0)
 		return (res);
+
+	/* copy plan to current (executor) context */
+	plan = (void *) _SPI_copy_plan(plan, _SPI_CPLAN_CURCXT);
 
 	res = _SPI_execute_plan((_SPI_plan *) plan, Values, Nulls, tcount);
 
@@ -217,7 +223,7 @@ SPI_execp(void *plan, char **Values, char *Nulls, int tcount)
 }
 
 void	   *
-SPI_prepare(char *src, int nargs, Oid *argtypes)
+SPI_prepare(char *src, int nargs, Oid * argtypes)
 {
 	_SPI_plan  *plan;
 
@@ -237,8 +243,8 @@ SPI_prepare(char *src, int nargs, Oid *argtypes)
 
 	SPI_result = _SPI_execute(src, 0, plan);
 
-	if (SPI_result >= 0)		/* copy plan to local space */
-		plan = _SPI_copy_plan(plan, true);
+	if (SPI_result >= 0)		/* copy plan to procedure context */
+		plan = _SPI_copy_plan(plan, _SPI_CPLAN_PROCXT);
 	else
 		plan = NULL;
 
@@ -263,7 +269,7 @@ SPI_saveplan(void *plan)
 	if (SPI_result < 0)
 		return (NULL);
 
-	newplan = _SPI_copy_plan((_SPI_plan *) plan, false);
+	newplan = _SPI_copy_plan((_SPI_plan *) plan, _SPI_CPLAN_TOPCXT);
 
 	_SPI_curid--;
 	SPI_result = 0;
@@ -287,6 +293,27 @@ SPI_fnumber(TupleDesc tupdesc, char *fname)
 	}
 
 	return (SPI_ERROR_NOATTRIBUTE);
+}
+
+char	   *
+SPI_fname(TupleDesc tupdesc, int fnumber)
+{
+
+	SPI_result = 0;
+	if (_SPI_curid + 1 != _SPI_connected)
+	{
+		SPI_result = SPI_ERROR_UNCONNECTED;
+		return (NULL);
+	}
+
+	if (tupdesc->natts < fnumber || fnumber <= 0)
+	{
+		SPI_result = SPI_ERROR_NOATTRIBUTE;
+		return (NULL);
+	}
+
+	return (nameout(&(tupdesc->attrs[fnumber - 1]->attname)));
+
 }
 
 char	   *
@@ -320,7 +347,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 }
 
 char	   *
-SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull)
+SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
 {
 	char	   *val;
 
@@ -457,7 +484,7 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc)
  */
 
 static int
-_SPI_execute(char *src, int tcount, _SPI_plan *plan)
+_SPI_execute(char *src, int tcount, _SPI_plan * plan)
 {
 	QueryTreeList *queryTree_list;
 	List	   *planTree_list;
@@ -554,7 +581,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 }
 
 static int
-_SPI_execute_plan(_SPI_plan *plan, char **Values, char *Nulls, int tcount)
+_SPI_execute_plan(_SPI_plan * plan, char **Values, char *Nulls, int tcount)
 {
 	QueryTreeList *queryTree_list = plan->qtlist;
 	List	   *planTree_list = plan->ptlist;
@@ -606,7 +633,7 @@ _SPI_execute_plan(_SPI_plan *plan, char **Values, char *Nulls, int tcount)
 				{
 					paramLI->kind = PARAM_NUM;
 					paramLI->id = k + 1;
-					paramLI->isnull = (Nulls[k] != 0);
+					paramLI->isnull = (Nulls != NULL && Nulls[k] != 'n');
 					paramLI->value = (Datum) Values[k];
 				}
 				paramLI->kind = PARAM_INVALID;
@@ -625,7 +652,7 @@ _SPI_execute_plan(_SPI_plan *plan, char **Values, char *Nulls, int tcount)
 }
 
 static int
-_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
+_SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
 {
 	Query	   *parseTree;
 	Plan	   *plan;
@@ -692,7 +719,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 		return (SPI_OK_CURSOR);
 	}
 
-	ExecutorRun(queryDesc, state, EXEC_RUN, tcount);
+	ExecutorRun(queryDesc, state, EXEC_FOR, tcount);
 
 	_SPI_current->processed = state->es_processed;
 	if (operation == CMD_SELECT && queryDesc->dest == SPI)
@@ -723,7 +750,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 
 #if 0
 static void
-_SPI_fetch(FetchStmt *stmt)
+_SPI_fetch(FetchStmt * stmt)
 {
 	char	   *name = stmt->portalname;
 	int			feature = (stmt->direction == FORWARD) ? EXEC_FOR : EXEC_BACK;
@@ -864,16 +891,16 @@ _SPI_checktuples(bool isRetrieveIntoRelation)
 }
 
 static _SPI_plan *
-_SPI_copy_plan(_SPI_plan *plan, bool local)
+_SPI_copy_plan(_SPI_plan * plan, int location)
 {
 	_SPI_plan  *newplan;
-	MemoryContext oldcxt;
+	MemoryContext oldcxt = NULL;
 	int			i;
 
-	if (local)
+	if (location == _SPI_CPLAN_PROCXT)
 		oldcxt = MemoryContextSwitchTo((MemoryContext)
 						  PortalGetVariableMemory(_SPI_current->portal));
-	else
+	else if (location == _SPI_CPLAN_TOPCXT)
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 
 	newplan = (_SPI_plan *) palloc(sizeof(_SPI_plan));
@@ -895,7 +922,8 @@ _SPI_copy_plan(_SPI_plan *plan, bool local)
 	else
 		newplan->argtypes = NULL;
 
-	MemoryContextSwitchTo(oldcxt);
+	if (location != _SPI_CPLAN_CURCXT)
+		MemoryContextSwitchTo(oldcxt);
 
 	return (newplan);
 }

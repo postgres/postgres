@@ -19,6 +19,7 @@
 #include "catalog/pg_trigger.h"
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/valid.h"
 #include "access/xact.h"
 #include "storage/lmgr.h"
 #include "storage/bufmgr.h"
@@ -37,13 +38,16 @@ TriggerData *CurrentTriggerData = NULL;
 void		RelationBuildTriggers(Relation relation);
 void		FreeTriggerDesc(Relation relation);
 
-static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
+static void DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger);
+static HeapTuple
+GetTupleForTrigger(Relation relation, ItemPointer tid,
+				   bool before);
 
-extern void fmgr_info(Oid procedureId, func_ptr *function, int *nargs);
+extern void fmgr_info(Oid procedureId, func_ptr * function, int *nargs);
 extern GlobalMemory CacheCxt;
 
 void
-CreateTrigger(CreateTrigStmt *stmt)
+CreateTrigger(CreateTrigStmt * stmt)
 {
 	int16		tgtype;
 	int16		tgattr[8] = {0};
@@ -211,7 +215,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 }
 
 void
-DropTrigger(DropTrigStmt *stmt)
+DropTrigger(DropTrigStmt * stmt)
 {
 	Relation	rel;
 	Relation	tgrel;
@@ -481,7 +485,7 @@ FreeTriggerDesc(Relation relation)
 }
 
 static void
-DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger)
+DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger)
 {
 	uint16	   *n;
 	Trigger  ***t,
@@ -555,21 +559,90 @@ DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger)
 }
 
 HeapTuple
-ExecBRInsertTriggers(Relation rel, HeapTuple tuple)
+ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 {
+	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT];
 	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_INSERT];
-	HeapTuple	newtuple = tuple;
+	HeapTuple	newtuple = trigtuple;
+	HeapTuple	oldtuple;
 	int			nargs;
 	int			i;
 
-	CurrentTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	CurrentTriggerData->tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
-	CurrentTriggerData->tg_relation = rel;
-	CurrentTriggerData->tg_newtuple = NULL;
+	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
+	SaveTriggerData->tg_event =
+		TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	SaveTriggerData->tg_relation = rel;
+	SaveTriggerData->tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
 	{
-		CurrentTriggerData->tg_trigtuple = newtuple;
+		CurrentTriggerData = SaveTriggerData;
+		CurrentTriggerData->tg_trigtuple = oldtuple = newtuple;
+		CurrentTriggerData->tg_trigger = trigger[i];
+		if (trigger[i]->tgfunc == NULL)
+			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
+		newtuple = (HeapTuple) ((*(trigger[i]->tgfunc)) ());
+		if (newtuple == NULL)
+			break;
+		else if (oldtuple != newtuple && oldtuple != trigtuple)
+			pfree(oldtuple);
+	}
+	CurrentTriggerData = NULL;
+	pfree(SaveTriggerData);
+	return (newtuple);
+}
+
+void
+ExecARInsertTriggers(Relation rel, HeapTuple trigtuple)
+{
+	TriggerData *SaveTriggerData;
+	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT];
+	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_INSERT];
+	int			nargs;
+	int			i;
+
+	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
+	SaveTriggerData->tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
+	SaveTriggerData->tg_relation = rel;
+	SaveTriggerData->tg_newtuple = NULL;
+	for (i = 0; i < ntrigs; i++)
+	{
+		CurrentTriggerData = SaveTriggerData;
+		CurrentTriggerData->tg_trigtuple = trigtuple;
+		CurrentTriggerData->tg_trigger = trigger[i];
+		if (trigger[i]->tgfunc == NULL)
+			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
+		(void) ((*(trigger[i]->tgfunc)) ());
+	}
+	CurrentTriggerData = NULL;
+	pfree(SaveTriggerData);
+	return;
+}
+
+bool
+ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
+{
+	TriggerData *SaveTriggerData;
+	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_DELETE];
+	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
+	HeapTuple	trigtuple;
+	HeapTuple	newtuple = NULL;
+	int			nargs;
+	int			i;
+
+	trigtuple = GetTupleForTrigger(rel, tupleid, true);
+	if (trigtuple == NULL)
+		return (false);
+
+	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
+	SaveTriggerData->tg_event =
+		TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	SaveTriggerData->tg_relation = rel;
+	SaveTriggerData->tg_newtuple = NULL;
+	for (i = 0; i < ntrigs; i++)
+	{
+		CurrentTriggerData = SaveTriggerData;
+		CurrentTriggerData->tg_trigtuple = trigtuple;
 		CurrentTriggerData->tg_trigger = trigger[i];
 		if (trigger[i]->tgfunc == NULL)
 			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
@@ -577,42 +650,158 @@ ExecBRInsertTriggers(Relation rel, HeapTuple tuple)
 		if (newtuple == NULL)
 			break;
 	}
-	pfree(CurrentTriggerData);
 	CurrentTriggerData = NULL;
-	return (newtuple);
-}
+	pfree(SaveTriggerData);
+	pfree(trigtuple);
 
-void
-ExecARInsertTriggers(Relation rel, HeapTuple tuple)
-{
-
-	return;
-}
-
-bool
-ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
-{
-
-	return (true);
+	return ((newtuple == NULL) ? false : true);
 }
 
 void
 ExecARDeleteTriggers(Relation rel, ItemPointer tupleid)
 {
+	TriggerData *SaveTriggerData;
+	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE];
+	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_DELETE];
+	HeapTuple	trigtuple;
+	int			nargs;
+	int			i;
 
+	trigtuple = GetTupleForTrigger(rel, tupleid, false);
+	Assert(trigtuple != NULL);
+
+	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
+	SaveTriggerData->tg_event =
+		TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW;
+	SaveTriggerData->tg_relation = rel;
+	SaveTriggerData->tg_newtuple = NULL;
+	for (i = 0; i < ntrigs; i++)
+	{
+		CurrentTriggerData = SaveTriggerData;
+		CurrentTriggerData->tg_trigtuple = trigtuple;
+		CurrentTriggerData->tg_trigger = trigger[i];
+		if (trigger[i]->tgfunc == NULL)
+			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
+		(void) ((*(trigger[i]->tgfunc)) ());
+	}
+	CurrentTriggerData = NULL;
+	pfree(SaveTriggerData);
+	pfree(trigtuple);
 	return;
 }
 
 HeapTuple
-ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple)
+ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 {
+	TriggerData *SaveTriggerData;
+	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
+	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_UPDATE];
+	HeapTuple	trigtuple;
+	HeapTuple	oldtuple;
+	HeapTuple	intuple = newtuple;
+	int			nargs;
+	int			i;
 
-	return (tuple);
+	trigtuple = GetTupleForTrigger(rel, tupleid, true);
+	if (trigtuple == NULL)
+		return (NULL);
+
+	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
+	SaveTriggerData->tg_event =
+		TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	SaveTriggerData->tg_relation = rel;
+	for (i = 0; i < ntrigs; i++)
+	{
+		CurrentTriggerData = SaveTriggerData;
+		CurrentTriggerData->tg_trigtuple = trigtuple;
+		CurrentTriggerData->tg_newtuple = oldtuple = newtuple;
+		CurrentTriggerData->tg_trigger = trigger[i];
+		if (trigger[i]->tgfunc == NULL)
+			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
+		newtuple = (HeapTuple) ((*(trigger[i]->tgfunc)) ());
+		if (newtuple == NULL)
+			break;
+		else if (oldtuple != newtuple && oldtuple != intuple)
+			pfree(oldtuple);
+	}
+	CurrentTriggerData = NULL;
+	pfree(SaveTriggerData);
+	pfree(trigtuple);
+	return (newtuple);
 }
 
 void
-ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple)
+ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 {
+	TriggerData *SaveTriggerData;
+	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE];
+	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_UPDATE];
+	HeapTuple	trigtuple;
+	int			nargs;
+	int			i;
 
+	trigtuple = GetTupleForTrigger(rel, tupleid, false);
+	Assert(trigtuple != NULL);
+
+	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
+	SaveTriggerData->tg_event =
+		TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW;
+	SaveTriggerData->tg_relation = rel;
+	for (i = 0; i < ntrigs; i++)
+	{
+		CurrentTriggerData = SaveTriggerData;
+		CurrentTriggerData->tg_trigtuple = trigtuple;
+		CurrentTriggerData->tg_newtuple = newtuple;
+		CurrentTriggerData->tg_trigger = trigger[i];
+		if (trigger[i]->tgfunc == NULL)
+			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
+		(void) ((*(trigger[i]->tgfunc)) ());
+	}
+	CurrentTriggerData = NULL;
+	pfree(SaveTriggerData);
+	pfree(trigtuple);
 	return;
+}
+
+static HeapTuple
+GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
+{
+	ItemId		lp;
+	HeapTuple	tuple;
+	PageHeader	dp;
+	Buffer		b;
+
+	b = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
+
+	if (!BufferIsValid(b))
+		elog(WARN, "GetTupleForTrigger: failed ReadBuffer");
+
+	dp = (PageHeader) BufferGetPage(b);
+	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
+
+	Assert(ItemIdIsUsed(lp));
+
+	tuple = (HeapTuple) PageGetItem((Page) dp, lp);
+
+	if (before)
+	{
+		if (TupleUpdatedByCurXactAndCmd(tuple))
+		{
+			elog(NOTICE, "GetTupleForTrigger: Non-functional delete/update");
+			ReleaseBuffer(b);
+			return (NULL);
+		}
+
+		if (!(tuple = heap_tuple_satisfies(lp, relation, b, dp,
+										NowTimeQual, 0, (ScanKey) NULL)))
+		{
+			ReleaseBuffer(b);
+			elog(WARN, "GetTupleForTrigger: (am)invalid tid");
+		}
+	}
+
+	tuple = heap_copytuple(tuple);
+	ReleaseBuffer(b);
+
+	return (tuple);
 }
