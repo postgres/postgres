@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.35 1999/02/15 05:21:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.36 1999/02/16 00:41:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,31 +106,6 @@ rels_set_cheapest(List *rel_list)
 	}
 }
 
-#ifdef NOT_USED
-/*
- * merge_rels_with_same_relids
- *	  Given two lists of rel nodes that are already
- *	  pruned, merge them into one pruned rel node list
- *
- * 'rel_list1' and
- * 'rel_list2' are the rel node lists
- *
- * Returns one pruned rel node list
- */
-List *
-merge_rels_with_same_relids(List *rel_list1, List *rel_list2)
-{
-	List	   *xrel = NIL;
-
-	foreach(xrel, rel_list1)
-	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(xrel);
-
-		rel_list2 = merge_rel_with_same_relids(rel, rel_list2);
-	}
-	return append(rel_list1, rel_list2);
-}
-
 /*
  * del_rels_all_bushy_inactive
  *	  If all the joininfo's in a rel node are bushy_inactive,
@@ -175,5 +150,4 @@ del_rels_all_bushy_inactive(List *old_rels)
 	}
 	return temp_list;
 }
-#endif
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.39 1999/02/15 05:49:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.40 1999/02/16 00:40:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,6 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 
 		rels_set_cheapest(joined_rels);
 
-#ifdef NOT_USED
 		if (BushyPlanFlag)
 		{
 			/*
@@ -214,7 +213,6 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 			 */
 			add_rel_to_rel_joininfos(root, joined_rels, rels);
 		}
-#endif
 
 		foreach(x, joined_rels)
 		{
@@ -230,35 +228,28 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 #endif
 		}
 
-#ifdef NOT_USED
 		if (BushyPlanFlag)
 		{
 			/*
 			 * prune rels that have been completely incorporated into new
 			 * join rels
 			 */
-			rels = del_rels_all_bushy_inactive(rels);
+			joined_rels = del_rels_all_bushy_inactive(rels);
 
 			/*
 			 * merge join rels if then contain the same list of base rels
 			 */
-			joined_rels = merge_rels_with_same_relids(joined_rels, rels);
+			merge_rels_with_same_relids(joined_rels);
 		}
-#endif
 		root->join_rel_list = rels = joined_rels;
 	}
 
-#ifdef NOT_USED
 	Assert(BushyPlanFlag || length(rels) == 1);
-#endif
-	Assert(length(rels) == 1);
 
-#ifdef NOT_USED
-	if (BushyPlanFlag)
-		return get_cheapest_complete_rel(rels);
+	if (!BushyPlanFlag)
+		return lfirst(rels);
 	else
-#endif
-	return lfirst(rels);
+		return get_cheapest_complete_rel(rels);
 }
 
 /*****************************************************************************

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.19 1999/02/15 05:28:10 momjian Exp $
+ * $Id: paths.h,v 1.20 1999/02/16 00:41:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,11 +85,13 @@ extern List *make_rels_by_clauseless_joins(RelOptInfo *outer_rel,
 												List *inner_rels);
 extern RelOptInfo *make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo);
 extern List *new_join_tlist(List *tlist, List *other_relids,int first_resdomno);
+extern RelOptInfo *get_cheapest_complete_rel(List *join_rel_list);
 
 /*
  * prototypes for path/prune.c
  */
 extern void merge_rels_with_same_relids(List *rel_list);
 extern void rels_set_cheapest(List *rel_list);
+extern List *del_rels_all_bushy_inactive(List *old_rels);
 
 #endif	 /* PATHS_H */

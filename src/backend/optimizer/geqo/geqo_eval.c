@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.32 1999/02/15 03:22:00 momjian Exp $
+ * $Id: geqo_eval.c,v 1.33 1999/02/16 00:40:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,14 +119,12 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *out
 													   inner_rel->joininfo,
 													   inner_rel->relids)))
 			{
-#ifdef NOT_USED
-				if (BushyPlanFlag)
+				if (!BushyPlanFlag)
+					new_rels = make_rels_by_clauseless_joins(outer_rel,
+												 	lcons(inner_rel,NIL));
+				else
 					new_rels = make_rels_by_clauseless_joins(outer_rel,
 													 lcons(outer_rel,NIL));
-				else
-#endif
-				new_rels = make_rels_by_clauseless_joins(outer_rel,
-												 	lcons(inner_rel,NIL));
 			}
 
 			/* process new_rel->pathlist */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.25 1999/02/15 05:21:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.26 1999/02/16 00:41:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,12 +70,11 @@ make_rels_by_joins(Query *root, List *outer_rels)
 			 * Oops, we have a relation that is not joined to any other
 			 * relation.  Cartesian product time.
 			 */
-#ifdef NOT_USED
-			if (BushyPlanFlag)
-				joins = make_rels_by_clauseless_joins(outer_rel, outer_rels);
+			if (!BushyPlanFlag)
+				joins = make_rels_by_clauseless_joins(outer_rel,
+													  root->base_rel_list);
 			else
-#endif
-			joins = make_rels_by_clauseless_joins(outer_rel, root->base_rel_list);
+				joins = make_rels_by_clauseless_joins(outer_rel, outer_rels);
 		}
 
 		join_list = nconc(join_list, joins);
@@ -137,14 +136,12 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
 											joininfo);
 					}
 				}
-#ifdef NOT_USED
 				else if (BushyPlanFlag)
 				{
 					rel = make_join_rel(outer_rel,
 										get_join_rel(root, unjoined_rels),
 										joininfo);
 				}
-#endif
 				else
 					rel = NULL;
 
@@ -246,10 +243,8 @@ make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
 	if (joininfo)
 	{
 		joinrel->restrictinfo = joininfo->jinfo_restrictinfo;
-#ifdef NOT_USED
 		if (BushyPlanFlag)
 			joininfo->bushy_inactive = true;
-#endif
 	}
 
 	joinrel_joininfo_list = new_joininfo_list(append(outer_rel->joininfo, inner_rel->joininfo),
@@ -471,7 +466,6 @@ add_rel_to_rel_joininfos(Query *root, List *joinrels, List *outerrels)
 	}
 }
 
-#ifdef NOT_USED
 /*
  * get_cheapest_complete_rel
  *	   Find the join relation that includes all the original
@@ -515,7 +509,6 @@ get_cheapest_complete_rel(List *join_rel_list)
 
 	return final_rel;
 }
-#endif
 
 /*
  * add_superrels
