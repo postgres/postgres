@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.74 1999/05/12 07:22:51 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.75 1999/05/17 00:22:07 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2592,7 +2592,7 @@ DeleteStmt:  DELETE FROM relation_name
 				}
 		;
 
-LockStmt:	LOCK_P opt_table relation_name opt_lock
+LockStmt:	LOCK_P opt_table relation_name IN opt_lock
 				{
 					LockStmt *n = makeNode(LockStmt);
 
