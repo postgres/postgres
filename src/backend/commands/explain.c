@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.89.2.1 2002/12/06 19:28:13 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.89.2.2 2002/12/12 16:16:58 tgl Exp $
  *
  */
 
@@ -367,19 +367,28 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
 											  es->rtable);
 				Expr	   *expr;
-				Func	   *funcnode;
-				Oid			funcid;
 				char	   *proname;
 
 				/* Assert it's on a RangeFunction */
 				Assert(rte->rtekind == RTE_FUNCTION);
 
+				/*
+				 * If the expression is still a function call, we can get
+				 * the real name of the function.  Otherwise, punt (this
+				 * can happen if the optimizer simplified away the function
+				 * call, for example).
+				 */
 				expr = (Expr *) rte->funcexpr;
-				funcnode = (Func *) expr->oper;
-				funcid = funcnode->funcid;
+				if (expr && IsA(expr, Expr) && expr->opType == FUNC_EXPR)
+				{
+					Func	   *funcnode = (Func *) expr->oper;
+					Oid			funcid = funcnode->funcid;
 
-				/* We only show the func name, not schema name */
-				proname = get_func_name(funcid);
+					/* We only show the func name, not schema name */
+					proname = get_func_name(funcid);
+				}
+				else
+					proname = rte->eref->aliasname;
 
 				appendStringInfo(str, " on %s",
 								 quote_identifier(proname));
