@@ -1,12 +1,17 @@
-This is B-Tree implementation using GiST for int4 and 
+This is B-Tree implementation using GiST for int4, int8, float4, float8
 timestamp types.
 
 All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 (oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
 for additional information.
 
+NEWS:
+     Feb 5, 2003 - btree_gist now support int8, float4, float8 !
+                   Thank Janko Richter <jankorichter@yahoo.de> for
+                   contribution.
+     
 NOTICE:
-     This version will works only with postgresql version 7.2 and above
+     This version will works only with postgresql version 7.3 and above
      because of changes in interface of function calling and in system
      tables.
 

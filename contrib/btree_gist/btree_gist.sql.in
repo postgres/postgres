@@ -20,6 +20,57 @@ INPUT = int4key_in,
 OUTPUT = int4key_out
 );
 
+-- create type of int8 key
+CREATE FUNCTION int8key_in(cstring)
+RETURNS int8key
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' WITH (isstrict);
+
+CREATE FUNCTION int8key_out(int8key)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' WITH (isstrict);
+
+CREATE TYPE int8key (
+INTERNALLENGTH = 16,
+INPUT = int8key_in,
+OUTPUT = int8key_out
+);
+
+-- create type of float4 key
+CREATE FUNCTION float4key_in(cstring)
+RETURNS float4key
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' WITH (isstrict);
+
+CREATE FUNCTION float4key_out(float4key)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' WITH (isstrict);
+
+CREATE TYPE float4key (
+INTERNALLENGTH = 8,
+INPUT = float4key_in,
+OUTPUT = float4key_out
+);
+
+
+-- create type of float8 key
+CREATE FUNCTION float8key_in(cstring)
+RETURNS float8key
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' WITH (isstrict);
+
+CREATE FUNCTION float8key_out(float8key)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' WITH (isstrict);
+
+CREATE TYPE float8key (
+INTERNALLENGTH = 16,
+INPUT = float8key_in,
+OUTPUT = float8key_out
+);
 
 --
 --
@@ -81,6 +132,178 @@ AS
 	FUNCTION	6	gint4_picksplit (internal, internal),
 	FUNCTION	7	gint4_same (internal, internal, internal),
 	STORAGE		int4key;
+
+--
+--
+--
+-- int8 ops
+--
+--
+--
+-- define the GiST support methods
+CREATE FUNCTION gint8_consistent(internal,int8,int2)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gint8_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gint8_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict);
+
+CREATE FUNCTION gint8_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gint8_union(bytea, internal)
+RETURNS int8key
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gint8_same(int8key, int8key, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+-- Create the operator class
+CREATE OPERATOR CLASS gist_int8_ops
+DEFAULT FOR TYPE int8 USING gist 
+AS
+	OPERATOR	1	< ,
+	OPERATOR	2	<= ,
+	OPERATOR	3	= ,
+	OPERATOR	4	>= ,
+	OPERATOR	5	> ,
+	FUNCTION	1	gint8_consistent (internal, int8, int2),
+	FUNCTION	2	gint8_union (bytea, internal),
+	FUNCTION	3	gint8_compress (internal),
+	FUNCTION	4	btree_decompress (internal),
+	FUNCTION	5	gint8_penalty (internal, internal, internal),
+	FUNCTION	6	gint8_picksplit (internal, internal),
+	FUNCTION	7	gint8_same (int8key, int8key, internal),
+	STORAGE		int8key;
+
+
+--
+--
+--
+-- float4 ops
+--
+--
+--
+-- define the GiST support methods
+CREATE FUNCTION gfloat4_consistent(internal,float4,int2)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gfloat4_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gfloat4_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict);
+
+CREATE FUNCTION gfloat4_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gfloat4_union(bytea, internal)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gfloat4_same(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+-- Create the operator class
+CREATE OPERATOR CLASS gist_float4_ops
+DEFAULT FOR TYPE float4 USING gist 
+AS
+	OPERATOR	1	< ,
+	OPERATOR	2	<= ,
+	OPERATOR	3	= ,
+	OPERATOR	4	>= ,
+	OPERATOR	5	> ,
+	FUNCTION	1	gfloat4_consistent (internal, float4, int2),
+	FUNCTION	2	gfloat4_union (bytea, internal),
+	FUNCTION	3	gfloat4_compress (internal),
+	FUNCTION	4	btree_decompress (internal),
+	FUNCTION	5	gfloat4_penalty (internal, internal, internal),
+	FUNCTION	6	gfloat4_picksplit (internal, internal),
+	FUNCTION	7	gfloat4_same (internal, internal, internal),
+	STORAGE		float4key;
+
+
+
+
+--
+--
+--
+-- float8 ops
+--
+--
+--
+-- define the GiST support methods
+CREATE FUNCTION gfloat8_consistent(internal,float8,int2)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gfloat8_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gfloat8_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict);
+
+CREATE FUNCTION gfloat8_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gfloat8_union(bytea, internal)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gfloat8_same(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+-- Create the operator class
+CREATE OPERATOR CLASS gist_float8_ops
+DEFAULT FOR TYPE float8 USING gist 
+AS
+	OPERATOR	1	< ,
+	OPERATOR	2	<= ,
+	OPERATOR	3	= ,
+	OPERATOR	4	>= ,
+	OPERATOR	5	> ,
+	FUNCTION	1	gfloat8_consistent (internal, float8, int2),
+	FUNCTION	2	gfloat8_union (bytea, internal),
+	FUNCTION	3	gfloat8_compress (internal),
+	FUNCTION	4	btree_decompress (internal),
+	FUNCTION	5	gfloat8_penalty (internal, internal, internal),
+	FUNCTION	6	gfloat8_picksplit (internal, internal),
+	FUNCTION	7	gfloat8_same (internal, internal, internal),
+	STORAGE		float8key;
 
 
 --
