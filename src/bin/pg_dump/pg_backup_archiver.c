@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.59 2002/10/22 19:15:23 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.60 2002/10/25 01:33:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2335,6 +2335,32 @@ ReadHead(ArchiveHandle *AH)
 			write_msg(modulename, "WARNING: invalid creation date in header\n");
 	}
 
+}
+
+
+/*
+ * checkSeek
+ *	  check to see if fseek can be performed.
+ */
+
+bool
+checkSeek(FILE *fp)
+{
+
+	if (fseek(fp, 0, SEEK_CUR) != 0)
+		return false;
+	else if (sizeof(off_t) > sizeof(long))
+	/*
+	 *	At this point, off_t is too large for long, so we return
+	 *	based on whether an off_t version of fseek is available.
+	 */
+#ifdef HAVE_FSEEKO
+		return true;
+#else
+		return false;
+#endif
+	else
+		return true;
 }
 
 

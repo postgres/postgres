@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.20 2002/10/22 19:15:23 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.21 2002/10/25 01:33:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		if (AH->FH == NULL)
 			die_horribly(NULL, modulename, "could not open output file: %s\n", strerror(errno));
 
-		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = checkSeek(AH->FH);
 
 		if (AH->compression < 0 || AH->compression > 9)
 			AH->compression = Z_DEFAULT_COMPRESSION;
@@ -147,7 +147,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		if (AH->FH == NULL)
 			die_horribly(NULL, modulename, "could not open input file: %s\n", strerror(errno));
 
-		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = checkSeek(AH->FH);
 
 		ReadHead(AH);
 		ReadToc(AH);

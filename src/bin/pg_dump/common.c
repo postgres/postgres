@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.71 2002/10/09 16:20:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.72 2002/10/25 01:33:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 		 * attr with the same name, then only dump it if:
 		 *
 		 * - it is NOT NULL and zero parents are NOT NULL
-		 *   OR 
+		 *   OR
 		 * - it has a default value AND the default value does not match
 		 *   all parent default values, or no parents specify a default.
 		 *

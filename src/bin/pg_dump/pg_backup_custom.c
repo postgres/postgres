@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.22 2002/10/22 19:15:23 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.23 2002/10/25 01:33:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		if (!AH->FH)
 			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
 
-		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = checkSeek(AH->FH);
 	}
 	else
 	{
@@ -190,7 +190,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		if (!AH->FH)
 			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
 
-		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = checkSeek(AH->FH);
 
 		ReadHead(AH);
 		ReadToc(AH);

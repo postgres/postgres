@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.48 2002/10/22 19:15:23 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.49 2002/10/25 01:33:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 
 #include "postgres_fe.h"
 
+#include <stdio.h>
 #include <time.h>
 #include <errno.h>
 
@@ -284,6 +285,7 @@ extern void ReadToc(ArchiveHandle *AH);
 extern void WriteDataChunks(ArchiveHandle *AH);
 
 extern int	TocIDRequired(ArchiveHandle *AH, int id, RestoreOptions *ropt);
+extern bool checkSeek(FILE *fp);
 
 /*
  * Mandatory routines for each supported format

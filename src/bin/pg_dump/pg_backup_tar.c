@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.31 2002/10/22 19:15:23 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.32 2002/10/25 01:33:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		 */
 		/* setvbuf(ctx->tarFH, NULL, _IONBF, 0); */
 
-		ctx->hasSeek = (fseeko(ctx->tarFH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = checkSeek(ctx->tarFH);
 
 		if (AH->compression < 0 || AH->compression > 9)
 			AH->compression = Z_DEFAULT_COMPRESSION;
@@ -227,7 +227,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 
 		ctx->tarFHpos = 0;
 
-		ctx->hasSeek = (fseeko(ctx->tarFH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = checkSeek(ctx->tarFH);
 
 		/*
 		 * Forcibly unmark the header as read since we use the lookahead
