@@ -13,7 +13,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.5 2002/08/23 20:45:49 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.6 2002/09/01 23:56:13 davec Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -776,7 +776,10 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
                         }
                         catch (IOException e)
                         {}
-                        pg_stream = null;
+			finally
+			{
+                        	pg_stream = null;
+			}
                 }
         }
 
