@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.29 2004/08/07 20:44:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.30 2004/08/08 21:33:11 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -996,19 +996,12 @@ CREATE TABLE capitals (
 ) INHERITS (cities);
 </programlisting>
 
-   In this case, a row  of  capitals  <firstterm>inherits</firstterm>  all
-   attributes  (name,  population,  and altitude) from its
-   parent, cities.  The type  of  the  attribute  name  is
-   <type>text</type>,  a  native  <productname>PostgreSQL</productname>  type
-   for variable length character strings.  The type of the attribute
-   population is
-   <type>float</type>,  a  native <productname>PostgreSQL</productname> type for double precision
-   floating-point numbers.  State capitals have  an  extra
-   attribute, state, that shows their state.  In <productname>PostgreSQL</productname>,
-   a  table  can inherit from zero or more other tables,
-   and a query can reference either  all  rows  of  a
-   table  or  all  rows of  a  table plus all of its
-   descendants. 
+   In this case, a row of capitals <firstterm>inherits</firstterm> all
+   attributes (name, population, and altitude) from its parent, cities.  State
+   capitals have an extra attribute, state, that shows their state.  In
+   <productname>PostgreSQL</productname>, a table can inherit from zero or
+   more other tables, and a query can reference either all rows of a table or
+   all rows of a table plus all of its descendants.
 
    <note>
     <para>
@@ -1065,6 +1058,32 @@ SELECT name, altitude
    support this <quote>ONLY</quote> notation.
   </para>
 
+  <note>
+   <title>Deprecated</title> 
+   <para>
+     In previous versions of <productname>PostgreSQL</productname>, the
+     default behavior was not to include child tables in queries. This was
+     found to be error prone and is also in violation of the SQL99
+     standard. Under the old syntax, to get the sub-tables you append
+     <literal>*</literal> to the table name.
+     For example
+<programlisting>
+SELECT * from cities*;
+</programlisting>
+     You can still explicitly specify scanning child tables by appending
+     <literal>*</literal>, as well as explicitly specify not scanning child tables by
+     writing <quote>ONLY</quote>.  But beginning in version 7.1, the default
+     behavior for an undecorated table name is to scan its child tables
+     too, whereas before the default was not to do so.  To get the old
+     default behavior, set the configuration option
+     <literal>SQL_Inheritance</literal> to off, e.g.,
+<programlisting>
+SET SQL_Inheritance TO OFF;
+</programlisting>
+     or add a line in your <filename>postgresql.conf</filename> file.
+   </para>
+  </note>
+
   <para>
   In some cases you may wish to know which table a particular row
   originated from. There is a system column called
@@ -1109,39 +1128,51 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
    
   </para>
 
-  <note>
-   <title>Deprecated</title> 
-   <para>
-     In previous versions of <productname>PostgreSQL</productname>, the
-     default behavior was not to include child tables in queries. This was
-     found to be error prone and is also in violation of the SQL99
-     standard. Under the old syntax, to get the sub-tables you append
-     <literal>*</literal> to the table name.
-     For example
-<programlisting>
-SELECT * from cities*;
-</programlisting>
-     You can still explicitly specify scanning child tables by appending
-     <literal>*</literal>, as well as explicitly specify not scanning child tables by
-     writing <quote>ONLY</quote>.  But beginning in version 7.1, the default
-     behavior for an undecorated table name is to scan its child tables
-     too, whereas before the default was not to do so.  To get the old
-     default behavior, set the configuration option
-     <literal>SQL_Inheritance</literal> to off, e.g.,
-<programlisting>
-SET SQL_Inheritance TO OFF;
-</programlisting>
-     or add a line in your <filename>postgresql.conf</filename> file.
-   </para>
-  </note>
-
   <para>
-   A limitation of the inheritance feature is that indexes (including
+   A serious limitation of the inheritance feature is that indexes (including
    unique constraints) and foreign key constraints only apply to single
-   tables, not to their inheritance children.  Thus, in the above example,
-   specifying that another table's column <literal>REFERENCES cities(name)</>
-   would allow the other table to contain city names but not capital names.
-   This deficiency will probably be fixed in some future release.
+   tables, not to their inheritance children.  This is true on both the
+   referencing and referenced sides of a foreign key constraint.  Thus,
+   in the terms of the above example:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      If we declared <structname>cities</>.<structfield>name</> to be
+      <literal>UNIQUE</> or a <literal>PRIMARY KEY</>, this would not stop the
+      <structname>capitals</> table from having rows with names duplicating
+      rows in <structname>cities</>.  And those duplicate rows would by
+      default show up in SELECTs from <structname>cities</>.  In fact, by
+      default <structname>capitals</> would have no unique constraint at all,
+      and so could contain multiple rows with the same name.
+      You could add a unique constraint to <structname>capitals</>, but this
+      would not prevent duplication compared to <structname>cities</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Similarly, if we were to specify that
+      <structname>cities</>.<structfield>name</> <literal>REFERENCES</> some
+      other table, this constraint would not automatically propagate to
+      <structname>capitals</>.  In this case you could work around it by
+      manually adding the same <literal>REFERENCES</> constraint to
+      <structname>capitals</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Specifying that another table's column <literal>REFERENCES
+      cities(name)</> would allow the other table to contain city names, but
+      not capital names.  There is no good workaround for this case.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   These deficiencies will probably be fixed in some future release,
+   but in the meantime considerable care is needed in deciding whether
+   inheritance is useful for your problem.
   </para>
  </sect1>
 
