@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.71 2004/06/02 21:01:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.72 2004/06/02 21:04:40 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -227,7 +227,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
      <para>
       This form removes the most recently used
       <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
-      index specification from the table.
+      index specification from the table.  This affects
+      future cluster operations that don't specify an index.
      </para>
     </listitem>
    </varlistentry>
