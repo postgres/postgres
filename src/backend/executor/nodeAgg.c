@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.116 2003/08/19 01:13:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.116.2.1 2004/03/13 00:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,6 +250,18 @@ initialize_aggregates(AggState *aggstate,
 									  peraggstate->sortOperator,
 									  false);
 		}
+
+		/*
+		 * If we are reinitializing after a group boundary, we have to free
+		 * any prior transValue to avoid memory leakage.  We must check not
+		 * only the isnull flag but whether the pointer is NULL; since
+		 * pergroupstate is initialized with palloc0, the initial condition
+		 * has isnull = 0 and null pointer.
+		 */
+		if (!peraggstate->transtypeByVal &&
+			!pergroupstate->transValueIsNull &&
+			DatumGetPointer(pergroupstate->transValue) != NULL)
+			pfree(DatumGetPointer(pergroupstate->transValue));
 
 		/*
 		 * (Re)set transValue to the initial value.
@@ -1471,6 +1483,12 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 		/* Rebuild an empty hash table */
 		build_hash_table(node);
 		node->table_filled = false;
+	}
+	else
+	{
+		/* Reset the per-group state (in particular, mark transvalues null) */
+		MemSet(node->pergroup, 0,
+			   sizeof(AggStatePerGroupData) * node->numaggs);
 	}
 
 	/*
