@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.118 2003/06/24 22:21:21 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.119 2003/06/25 03:50:52 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -2608,6 +2608,7 @@ SELECT * FROM test1 WHERE a;
 	 <entry>10.1.2.3/32</entry>
 	 <entry>10.1.2.3/32</entry>
          <entry>10.1.2.3/32</entry>
+	</row>
         <row>
 	 <entry>2001:4f8:3:ba::/64</entry>
 	 <entry>2001:4f8:3:ba::/64</entry>
@@ -2622,10 +2623,12 @@ SELECT * FROM test1 WHERE a;
 	 <entry>::ffff:1.2.3.0/120</entry>
 	 <entry>::ffff:1.2.3.0/120</entry>
          <entry>::ffff:1.2.3/120</entry>
+	</row>
 	<row>
 	 <entry>::ffff:1.2.3.0/128</entry>
 	 <entry>::ffff:1.2.3.0/128</entry>
          <entry>::ffff:1.2.3.0/128</entry>
+	</row>
        </tbody>
       </tgroup>
      </table>
