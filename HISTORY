@@ -12,7 +12,9 @@ Overview
 
            Schemas allow users to create objects in their own namespace
            so two people can have the same table with the same name. 
-           There is also a public schema for shared tables.
+           There is also a public schema for shared tables.  Table/index
+           creation can be restricted by removing permissions on the
+           public schema.
 
    DROP COLUMN
 
@@ -175,6 +177,7 @@ Allow views to have default values using ALTER COLUMN ... SET DEFAULT (Neil)
 Fail on INSERTs with column lists that don't supply all column values,
   e.g. INSERT INTO tab (col1, col2) VALUES ('val1');  (Rod)
 Fix for join aliases (Tom)
+Fix for FULL OUTER JOINs (Tom)
 Improve reporting of invalid identifier and location (Tom, Gavin)
 Fix OPEN cursor(args) (Tom)
 Allow 'ctid' to be used in a view and currtid(viewname) (Hiroshi)
@@ -214,6 +217,8 @@ Add CREATE/DROP OPERATOR CLASS (Bill Studenmund, Tom)
 Add ALTER TABLE DROP COLUMN (Christopher)
 Prevent inherited columns from being removed or renamed (Alvaro Herrera)
 Add CREATE OR REPLACE VIEW, CREATE OR REPLACE RULE (Gavin, Neil, Tom)
+Fix foreign key constraints to not error on intermediate db states (Stephan)
+Propagate column or table renaming to foreign key constraints
 
 Utility Commands
 ================
@@ -289,6 +294,8 @@ Add current_database() (Rod)
 Fix cash_words() to not overflow buffer (Tom)
 Add functions replace(), split(), to_hex() (Joe)
 Fix LIKE for bytea as a right-hand argument (Joe)
+Prevent crashes caused by SELECT cash_out(2)
+Triggers are now fired in alphabetical order
 
 Internationalization
 ====================
@@ -338,12 +345,14 @@ Add libpq connection timeout parameter (Denis A Ustimenko)
 
 JDBC
 ====
-jdbc compiles with jdk 1.4 (Dave)
+Allow jdbc to compile with jdk 1.4 (Dave)
+Add jdbc3 support (Barry)
 Allows jdbc to set loglevel by adding ?loglevel=X to the connection URL (Barry)
 Add jdbc Driver.info() message that prints out the version number (Barry)
-Added jdbc updateable result sets
+Add jdbc updateable result sets
+Add jdbc support for callable statements
+Add jdbc query cancel capability
 Add refresh row to jdbc (Dave)
-Add jdbc3 support (Barry)
 Fix jdbc MD5 encryption handling for multibyte servers (Jun Kawai)
 Add JDBC support for prepared statements (Barry)
 
