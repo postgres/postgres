@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.60 2002/10/25 01:33:17 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.61 2002/10/25 03:47:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2347,7 +2347,7 @@ bool
 checkSeek(FILE *fp)
 {
 
-	if (fseek(fp, 0, SEEK_CUR) != 0)
+	if (fseeko(fp, 0, SEEK_CUR) != 0)
 		return false;
 	else if (sizeof(off_t) > sizeof(long))
 	/*
