@@ -369,9 +369,9 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
           SimpleDateFormat df = (SimpleDateFormat) tl_tsdf.get();
           if(df==null) {
             df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            df.setTimeZone(TimeZone.getTimeZone("GMT"));
             tl_tsdf.set(df);
           }
-          df.setTimeZone(TimeZone.getTimeZone("GMT"));
 
           // Use the shared StringBuffer
           synchronized(sbuf) {
