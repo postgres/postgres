@@ -1,5 +1,6 @@
 #include "postgres_fe.h"
 #include <ctype.h>
+#include <limits.h>
 
 #include "extern.h"
 #include "pgtypes_error.h"
