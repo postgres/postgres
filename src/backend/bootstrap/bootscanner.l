@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.35 2004/06/03 02:08:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.36 2004/06/09 19:49:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
 
 
-static int	yyline;  /* keep track of the line number for error reporting */
+static int	yyline = 1;			/* line number for error reporting */
 
 %}
 
@@ -135,7 +135,7 @@ insert			{ return(INSERT_TUPLE); }
 %%
 
 void
-yyerror(const char *str)
+yyerror(const char *message)
 {
-	elog(ERROR, "syntax error at line %d: unexpected token \"%s\"", yyline, str);
+	elog(ERROR, "%s at line %d", message, yyline);
 }
