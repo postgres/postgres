@@ -7,7 +7,7 @@
 #include <sqlca.h>
 
 void
-ECPGraise(int line, int code, char *str)
+ECPGraise(int line, int code, const char *str)
 {
 	sqlca.sqlcode = code;
 
@@ -119,13 +119,15 @@ ECPGraise(int line, int code, char *str)
 			break;
 
 		case ECPG_PGSQL:
+		{
+			int		slen = strlen(str);
 			/* strip trailing newline */
-			if (str[strlen(str) - 1] == '\n')
-				str[strlen(str) - 1] = '\0';
-
+			if (slen > 0 && str[slen - 1] == '\n')
+				slen--;
 			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
-					 "'%s' in line %d.", str, line);
+					 "'%.*s' in line %d.", slen, str, line);
 			break;
+		}
 
 		case ECPG_TRANS:
 			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),

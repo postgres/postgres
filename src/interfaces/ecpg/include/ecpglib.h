@@ -34,7 +34,7 @@ extern		"C"
 							  const char *descriptor, const char *query);
 	bool		ECPGdeallocate_desc(int line, const char *name);
 	bool		ECPGallocate_desc(int line, const char *name);
-	void		ECPGraise(int line, int code, char *str);
+	void		ECPGraise(int line, int code, const char *str);
 	bool		ECPGget_desc_header(int, char *, int *);
 	bool		ECPGget_desc(int, char *, int,...);
 
