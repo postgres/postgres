@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.27 1998/09/11 17:08:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.28 1998/09/14 04:17:40 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,11 +48,11 @@ install:
 	$(MAKE) -C lextest install
 	$(MAKE) -C utils install
 	$(MAKE) -C backend install
-	$(MAKE) -C interfaces install
 	$(MAKE) -C bin install
 ifneq ($(wildcard man), )
 	$(MAKE) -C man install
 endif
+	$(MAKE) -C interfaces install
 	cat ../register.txt
 
 clean:
