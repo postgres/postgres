@@ -1,8 +1,29 @@
+/******************************************************************************
+  These are user-defined functions that can be bound to a Postgres backend
+  and called by Postgres to execute SQL functions of the same name.
+
+  The calling format for these functions is defined by the CREATE FUNCTION
+  SQL statement that binds them to the backend.
+*****************************************************************************/
+
 #include <string.h>
 #include <stdio.h>
 #include "postgres.h"	  /* for char16, etc. */
 #include "utils/palloc.h" /* for palloc */
 #include "libpq-fe.h" /* for TUPLE */
+#include "executor/executor.h"  /* for GetAttributeByName() */
+
+/* The following prototypes declare what we assume the user declares to 
+   Postgres in his CREATE FUNCTION statement.
+*/
+
+int add_one(int arg);
+char16 * concat16(char16 *arg1, char16 *arg2);
+text * copytext(text *t);
+bool c_overpaid(TUPLE t,	/* the current instance of EMP */
+                int4 limit);
+
+
 
 int
 add_one(int arg)

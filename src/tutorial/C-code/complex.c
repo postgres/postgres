@@ -1,3 +1,9 @@
+/******************************************************************************
+  This file contains routines that can be bound to a Postgres backend and
+  called by the backend in the process of processing queries.  The calling
+  format for these routines is dictated by Postgres architecture.
+******************************************************************************/
+
 #include <stdio.h>
 /* do not include libpq-fe.h for backend-loaded functions*/
 /* #include "libpq-fe.h"  */
@@ -10,6 +16,20 @@ typedef struct Complex {
     double	x;
     double	y;
 } Complex;
+
+/* These prototypes declare the requirements that Postgres places on these
+   user written functions.
+*/
+Complex * complex_in(char *str);
+char * complex_out(Complex *complex);
+Complex * complex_add(Complex *a, Complex *b);
+bool complex_abs_lt(Complex *a, Complex *b);
+bool complex_abs_le(Complex *a, Complex *b);
+bool complex_abs_eq(Complex *a, Complex *b);
+bool complex_abs_ge(Complex *a, Complex *b);
+bool complex_abs_gt(Complex *a, Complex *b);
+int4 complex_abs_cmp(Complex *a, Complex *b);
+
 
 /*****************************************************************************
  * Input/Output functions
@@ -48,7 +68,7 @@ complex_out(Complex *complex)
 	return(NULL);
 
     result = (char *) palloc(60);
-    sprintf(result, "(%lg,%lg)", complex->x, complex->y);
+    sprintf(result, "(%g,%g)", complex->x, complex->y);
     return(result);
 }
 
@@ -131,6 +151,7 @@ complex_abs_cmp(Complex *a, Complex *b)
  * POSTGRES crashing, it is impossible to tell whether the bug is in your
  * code or POSTGRES's.
  */
+void test_main(void);
 void
 test_main()
 {
