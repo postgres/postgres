@@ -35,6 +35,11 @@
 /* might be in either frontend or backend */
 #include "postgres_fe.h"
 
+#ifdef ENABLE_THREAD_SAFETY
+#error	The replacement snprintf() is not thread-safe.  \
+Your platform must have a thread-safe snprintf() to compile with threads.
+#endif
+
 #include <sys/ioctl.h>
 #include <sys/param.h>
 
@@ -74,7 +79,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.2 2003/11/29 22:41:31 pgsql Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.3 2004/01/08 17:15:54 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
