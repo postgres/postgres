@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.34 2003/08/31 17:32:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.35 2003/09/11 16:22:42 momjian Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -344,7 +344,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.34 2003/08/31 17:32:18 pe
        </row>
        <row>
 	<entry><literal>PM</literal></entry>
-	<entry>Time is on or after after 12:00</entry>
+	<entry>Time is on or after 12:00</entry>
        </row>
        <row>
 	<entry><literal>T</literal></entry>

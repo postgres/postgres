@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.78 2003/09/10 21:35:55 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.79 2003/09/11 16:22:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -303,12 +303,33 @@ helpSQL(const char *topic, unsigned short int pager)
 	{
 		int			i;
 		bool		help_found = false;
+		FILE	   *output;
 		size_t		len;
-
+		int			nl_count = 0;
+		char		*ch;
+		
 		/* don't care about trailing spaces */
 		len = strlen(topic);
 		while (topic[len - 1] == ' ')
 			len--;
+
+		/* Count newlines for pager */
+		for (i = 0; QL_HELP[i].cmd; i++)
+		{
+			if (strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
+				strcmp(topic, "*") == 0)
+			{
+				nl_count += 5;
+				for (ch = QL_HELP[i].syntax; *ch != '\0'; ch++)
+					if (*ch == '\n')
+						nl_count++;
+				/* If we have an exact match, exit.  Fixes \h SELECT */
+				if (strcasecmp(topic, QL_HELP[i].cmd) == 0)
+					break;
+			}
+		}
+
+		output = PageOutput(nl_count, pager);
 
 		for (i = 0; QL_HELP[i].cmd; i++)
 		{
@@ -316,7 +337,7 @@ helpSQL(const char *topic, unsigned short int pager)
 				strcmp(topic, "*") == 0)
 			{
 				help_found = true;
-				printf(_("Command:     %s\n"
+				fprintf(output, _("Command:     %s\n"
 						 "Description: %s\n"
 						 "Syntax:\n%s\n\n"),
 					 QL_HELP[i].cmd, QL_HELP[i].help, QL_HELP[i].syntax);
@@ -327,7 +348,16 @@ helpSQL(const char *topic, unsigned short int pager)
 		}
 
 		if (!help_found)
-			printf(_("No help available for \"%-.*s\".\nTry \\h with no arguments to see available help.\n"), (int) len, topic);
+			fprintf(output, _("No help available for \"%-.*s\".\nTry \\h with no arguments to see available help.\n"), (int) len, topic);
+
+		/* Only close if we used the pager */
+		if (output != stdout)
+		{
+			pclose(output);
+#ifndef WIN32
+			pqsignal(SIGPIPE, SIG_DFL);
+#endif
+		}
 	}
 }
 
