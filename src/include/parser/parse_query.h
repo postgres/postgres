@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.3 1996/10/31 18:27:54 momjian Exp $
+ * $Id: parse_query.h,v 1.4 1996/10/31 18:33:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ extern Node *parser_typecast(Value *expr, TypeName *typename, int typlen);
 extern Node *parser_typecast2(Node *expr, int exprType, Type tp, int typlen);
 extern Aggreg *ParseAgg(char *aggname, Oid basetype, Node *target);
 extern void handleTargetColname(ParseState *pstate, char **resname,
-					char *refname, char *colname)
+					char *refname, char *colname);
 extern void checkTargetTypes(ParseState *pstate, char *target_colname,
 					char *refname, char *colname);
 
