@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.175 2003/01/06 18:53:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.176 2003/01/08 00:22:26 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+FETCH 0 now re-fetches cursor's current row, per SQL spec
 Revised executor state representation; plan trees are read-only to executor now
 Information schema
 Domains now support CHECK constraints

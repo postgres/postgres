@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.7 2002/12/30 15:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.8 2003/01/08 00:22:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ PortalCleanup(Portal portal)
  *
  *	name: name of portal
  *	forward: forward or backward fetch?
- *	count: # of tuples to fetch
+ *	count: # of tuples to fetch (INT_MAX means "all"; 0 means "refetch")
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
@@ -100,18 +100,15 @@ PerformPortalFetch(char *name,
 		return;
 	}
 
-	/* If zero count, handle specially */
+	/*
+	 * Zero count means to re-fetch the current row, if any (per SQL92)
+	 */
 	if (count == 0)
 	{
-		bool on_row = false;
+		bool	on_row;
 
 		/* Are we sitting on a row? */
-		oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-		queryDesc = PortalGetQueryDesc(portal);
-		estate = queryDesc->estate;
-		if (portal->atStart == false && portal->atEnd == false)
-			on_row = true;
-		MemoryContextSwitchTo(oldcontext);
+		on_row = (portal->atStart == false && portal->atEnd == false);
 
 		if (dest == None)
 		{
@@ -122,25 +119,24 @@ PerformPortalFetch(char *name,
 		}
 		else
 		{
-			/* If we are not on a row, FETCH 0 returns nothing */
-			if (!on_row)
-				return;
-
-			/* Since we are sitting on a row, return the row */
-			/* Back up so we can reread the row */
-			PerformPortalFetch(name, false /* backward */, 1,
-							   None, /* throw away output */
-							   NULL /* do not modify the command tag */);
-
-			/* Set up to fetch one row */
-			count = 1;
-			forward = true;
+			/*
+			 * If we are sitting on a row, back up one so we can re-fetch it.
+			 * If we are not sitting on a row, we still have to start up and
+			 * shut down the executor so that the destination is initialized
+			 * and shut down correctly; so keep going.  Further down in the
+			 * routine, count == 0 means we will retrieve no row.
+			 */
+			if (on_row)
+			{
+				PerformPortalFetch(name, false /* backward */, 1L,
+								   None, /* throw away output */
+								   NULL /* do not modify the command tag */);
+				/* Set up to fetch one row forward */
+				count = 1;
+				forward = true;
+			}
 		}
 	}
-
-	/* Internally, zero count processes all portal rows */
-	if (count == LONG_MAX)
-		count = 0;
 
 	/*
 	 * switch into the portal context
@@ -185,31 +181,45 @@ PerformPortalFetch(char *name,
 	 */
 	if (forward)
 	{
-		if (portal->atEnd)
+		if (portal->atEnd || count == 0)
 			direction = NoMovementScanDirection;
 		else
 			direction = ForwardScanDirection;
 
-		ExecutorRun(queryDesc, direction, (long) count);
+		/* In the executor, zero count processes all portal rows */
+		if (count == INT_MAX)
+			count = 0;
 
-		if (estate->es_processed > 0)
-			portal->atStart = false;	/* OK to back up now */
-		if (count <= 0 || (int) estate->es_processed < count)
-			portal->atEnd = true;		/* we retrieved 'em all */
+		ExecutorRun(queryDesc, direction, count);
+
+		if (direction != NoMovementScanDirection)
+		{
+			if (estate->es_processed > 0)
+				portal->atStart = false;	/* OK to back up now */
+			if (count <= 0 || (long) estate->es_processed < count)
+				portal->atEnd = true;		/* we retrieved 'em all */
+		}
 	}
 	else
 	{
-		if (portal->atStart)
+		if (portal->atStart || count == 0)
 			direction = NoMovementScanDirection;
 		else
 			direction = BackwardScanDirection;
 
-		ExecutorRun(queryDesc, direction, (long) count);
+		/* In the executor, zero count processes all portal rows */
+		if (count == INT_MAX)
+			count = 0;
 
-		if (estate->es_processed > 0)
-			portal->atEnd = false;		/* OK to go forward now */
-		if (count <= 0 || (int) estate->es_processed < count)
-			portal->atStart = true;		/* we retrieved 'em all */
+		ExecutorRun(queryDesc, direction, count);
+
+		if (direction != NoMovementScanDirection)
+		{
+			if (estate->es_processed > 0)
+				portal->atEnd = false;		/* OK to go forward now */
+			if (count <= 0 || (long) estate->es_processed < count)
+				portal->atStart = true;		/* we retrieved 'em all */
+		}
 	}
 
 	/* Return command status if wanted */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.15 2002/12/30 15:31:47 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.16 2003/01/08 00:22:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -13,7 +13,7 @@ PostgreSQL documentation
    MOVE
   </refname>
   <refpurpose>
-   position a cursor on a specified row of a table
+   reposition a cursor
   </refpurpose>
  </refnamediv>                
  <refsynopsisdiv>
@@ -21,9 +21,7 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] 
-    {<replaceable class="PARAMETER">count</replaceable> | LAST }
-    { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
+MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
@@ -35,12 +33,10 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> ]
    Description
   </title>
   <para>
-   <command>MOVE</command> allows a user to move the cursor position a 
-   specified number of rows.
-   <command>MOVE</command> works like the <command>FETCH</command> command,
-   but only positions the cursor and does not return rows.
-   <replaceable class="PARAMETER">LAST</replaceable> moves to the end
-   of the cursor.
+   <command>MOVE</command> allows the user to move the cursor position a 
+   specified number of rows, or all the way to the end or start of the query.
+   <command>MOVE</command> works exactly like the <command>FETCH</command>
+   command, except it only repositions the cursor and does not return rows.
   </para>
   <para>
    Refer to 
