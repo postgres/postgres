@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.6 1999/10/08 04:28:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.7 1999/10/12 13:59:45 thomas Exp $
 Postgres documentation
 -->
 
@@ -134,7 +134,7 @@ postmaster [ -n | -s ] ...
       <term>-l</term>
       <listitem>
        <para>
-	This enables SSL socket communication.  The <term>-i</term> option
+	This enables SSL socket communication.  The <option>-i</option> option
 	is also required.
 	You have to have compiled with SSL enabled to use this option.
        </para>
