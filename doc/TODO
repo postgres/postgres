@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Aug 18 11:10:25 EDT 1999
+Last updated:		Mon Sep  6 23:55:43 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -230,7 +230,7 @@ MISC
 * Update pg_statistic table to remove operator column
 * Allow char() not to use variable-sized header to reduce disk size
 * Do async I/O to do better read-ahead of data
-* Fix memory exhaustion when using many OR's
+* -Fix memory exhaustion when using many OR's
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?)
