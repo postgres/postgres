@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.70 1999/09/04 21:47:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.71 1999/09/06 18:13:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1462,13 +1462,13 @@ RelationCacheInvalidate(bool onlyFlushReferenceCountZero)
 				  onlyFlushReferenceCountZero);
 
 	/*
-	 * nailed-in reldescs will still be in the cache... 7 hardwired heaps
-	 * + 3 hardwired indices == 10 total.
+	 * nailed-in reldescs will still be in the cache... 6 hardwired heaps
+	 * + 3 hardwired indices == 9 total.
 	 */
 	if (!onlyFlushReferenceCountZero)
 	{
-		Assert(RelationNameCache->hctl->nkeys == 10);
-		Assert(RelationIdCache->hctl->nkeys == 10);
+		Assert(RelationNameCache->hctl->nkeys == 9);
+		Assert(RelationIdCache->hctl->nkeys == 9);
 	}
 }
 
@@ -1634,6 +1634,8 @@ RelationInitialize(void)
 	 *	initialize the cache with pre-made relation descriptors
 	 *	for some of the more important system relations.  These
 	 *	relations should always be in the cache.
+	 *
+	 *	NB: if you change this list, fix the count in RelationCacheInvalidate!
 	 * ----------------
 	 */
 	formrdesc(RelationRelationName, Natts_pg_class, Desc_pg_class);
@@ -2058,11 +2060,14 @@ write_irels(void)
 	FileSeek(fd, 0L, SEEK_SET);
 
 	/*
-	 * Build a relation descriptor for pg_attnumind without resort to the
-	 * descriptor cache.  In order to do this, we set ProcessingMode to
-	 * Bootstrap.  The effect of this is to disable indexed relation
-	 * searches -- a necessary step, since we're trying to instantiate the
-	 * index relation descriptors here.
+	 * Build relation descriptors for the critical system indexes without
+	 * resort to the descriptor cache.  In order to do this, we set
+	 * ProcessingMode to Bootstrap.  The effect of this is to disable indexed
+	 * relation searches -- a necessary step, since we're trying to
+	 * instantiate the index relation descriptors here.  Once we have the
+	 * descriptors, nail them into cache so we never lose them.
+	 *
+	 * NB: if you change this list, fix the count in RelationCacheInvalidate!
 	 */
 
 	oldmode = GetProcessingMode();
@@ -2083,7 +2088,9 @@ write_irels(void)
 
 	SetProcessingMode(oldmode);
 
-	/* nail the descriptor in the cache */
+	/*
+	 * Write out the index reldescs to the special cache file.
+	 */
 	for (relno = 0; relno < Num_indices_bootstrap; relno++)
 	{
 		ird = irel[relno];
