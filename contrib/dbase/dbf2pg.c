@@ -7,8 +7,6 @@
 */
 #include "postgres_fe.h"
 
-#define HAVE_ICONV_H			/* should be somewhere else */
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>

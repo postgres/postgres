@@ -97,17 +97,20 @@ dbf2sql(1L)					      dbf2sql(1L)
 	      fied charset. Example:
 	      -F IBM437
 	      Consult  your  system documentation to see the con-
-	      vertions available.
+	      versions available.  This requires iconv to be enabled
+              in the compile.
 
        -T charset_to
 	      Together with -F charset_from  ,	it  converts  the
 	      data   to   the	specified   charset.  Default  is
-	      "ISO-8859-1".
+	      "ISO-8859-1".  This requires iconv to be enabled
+              in the compile.
 
 ENVIRONMENT
        This program is affected by the	environment-variables  as
        used  by  "PostgresSQL."   See  the documentation of Post-
-       gresSQL for more info.  This program requires libiconv.
+       gresSQL for more info.  This program can optionally use iconv 
+       character set conversion routines.
 
 BUGS
        Fields larger than 8192 characters are not  supported  and
