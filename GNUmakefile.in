@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.23 2001/11/21 23:19:25 momjian Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.24 2002/03/29 17:32:48 petere Exp $
 #
 
 subdir =
@@ -31,6 +31,8 @@ clean:
 	$(MAKE) -C doc $@
 	$(MAKE) -C contrib $@
 	$(MAKE) -C src $@
+# Garbage from autoconf:
+	@rm -rf autom4te.cache/
 
 # Important: distclean `src' last, otherwise Makefile.global
 # will be gone too soon.
@@ -39,6 +41,8 @@ distclean maintainer-clean:
 	-$(MAKE) -C contrib $@
 	-$(MAKE) -C src $@
 	-rm -f config.cache config.log config.status GNUmakefile
+# Garbage from autoconf:
+	@rm -rf autom4te.cache/
 
 check: all
 
@@ -46,7 +50,7 @@ check installcheck:
 	$(MAKE) -C src/test $@
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
-	CONFIG_FILES=$@ CONFIG_HEADERS= ./config.status
+	./config.status $@
 
 
 ##########################################################################

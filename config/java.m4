@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Java JDBC Tools
 #
-# $Header: /cvsroot/pgsql/config/Attic/java.m4,v 1.3 2001/07/04 21:22:55 petere Exp $
+# $Header: /cvsroot/pgsql/config/Attic/java.m4,v 1.4 2002/03/29 17:32:54 petere Exp $
 #
 
 
@@ -34,10 +34,10 @@ EOF
     if test $? = 0 && test -f ./conftest.class ; then
       pgac_cv_prog_ant_works=yes
     else
-      echo "configure: failed java program was:" >&AC_FD_CC
-      cat conftest.java >&AC_FD_CC
-      echo "configure: failed build file was:" >&AC_FD_CC
-      cat conftest.xml >&AC_FD_CC
+      echo "configure: failed java program was:" >&AS_MESSAGE_LOG_FD
+      cat conftest.java >&AS_MESSAGE_LOG_FD
+      echo "configure: failed build file was:" >&AS_MESSAGE_LOG_FD
+      cat conftest.xml >&AS_MESSAGE_LOG_FD
       pgac_cv_prog_ant_works=no
     fi
 

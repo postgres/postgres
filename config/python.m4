@@ -1,13 +1,13 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $Header: /cvsroot/pgsql/config/python.m4,v 1.3 2001/07/10 16:33:01 petere Exp $
+# $Header: /cvsroot/pgsql/config/python.m4,v 1.4 2002/03/29 17:32:54 petere Exp $
 #
 
 # PGAC_PATH_PYTHON
 # ----------------
-# Look for Python and set the output variable `PYTHON'
-# to `python' if found, empty otherwise.
+# Look for Python and set the output variable 'PYTHON'
+# to 'python' if found, empty otherwise.
 AC_DEFUN([PGAC_PATH_PYTHON],
 [AC_PATH_PROG(PYTHON, python)
 if test x"$PYTHON" = x""; then

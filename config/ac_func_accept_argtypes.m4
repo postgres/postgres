@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/ac_func_accept_argtypes.m4,v 1.3 2000/11/09 18:18:42 petere Exp $
+# $Header: /cvsroot/pgsql/config/ac_func_accept_argtypes.m4,v 1.4 2002/03/29 17:32:53 petere Exp $
 # This comes from the official Autoconf macro archive at
 # <http://research.cys.de/autoconf-archive/>
 # (I removed the $ before the Id CVS keyword below.)
@@ -37,7 +37,7 @@ dnl
 # which is *not* 'socklen_t *').  If we detect that, then we assume
 # 'int' as the result, because that ought to work best.
 
-AC_DEFUN(AC_FUNC_ACCEPT_ARGTYPES,
+AC_DEFUN([AC_FUNC_ACCEPT_ARGTYPES],
 [AC_MSG_CHECKING([types of arguments for accept()])
  AC_CACHE_VAL(ac_cv_func_accept_arg1,dnl
  [AC_CACHE_VAL(ac_cv_func_accept_arg2,dnl
@@ -67,7 +67,10 @@ extern int accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func
   ])dnl AC_CACHE_VAL
  ])dnl AC_CACHE_VAL
  AC_MSG_RESULT([$ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *])
- AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG1,$ac_cv_func_accept_arg1)
- AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG2,$ac_cv_func_accept_arg2)
- AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG3,$ac_cv_func_accept_arg3)
+ AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG1, $ac_cv_func_accept_arg1,
+                    [Define to the type of arg 1 of 'accept'])
+ AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG2, $ac_cv_func_accept_arg2,
+                    [Define to the type of arg 2 of 'accept'])
+ AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG3, $ac_cv_func_accept_arg3,
+                    [Define to the type of arg 3 of 'accept'])
 ])

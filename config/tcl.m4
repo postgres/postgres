@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/tcl.m4,v 1.2 2000/09/30 10:45:17 petere Exp $
+# $Header: /cvsroot/pgsql/config/tcl.m4,v 1.3 2002/03/29 17:32:54 petere Exp $
 
 # Autoconf macros to check for Tcl related things
 
@@ -33,7 +33,7 @@ fi
 
 if test -z "$TCL_CONFIG_SH"; then
     AC_MSG_RESULT(no)
-    AC_MSG_ERROR([file \`tclConfig.sh' is required for Tcl])
+    AC_MSG_ERROR([file 'tclConfig.sh' is required for Tcl])
 else
     AC_MSG_RESULT([$TCL_CONFIG_SH])
 fi
@@ -67,7 +67,7 @@ fi
 
 if test -z "$TK_CONFIG_SH"; then
     AC_MSG_RESULT(no)
-    AC_MSG_ERROR([file \`tkConfig.sh' is required for Tk])
+    AC_MSG_ERROR([file 'tkConfig.sh' is required for Tk])
 else
     AC_MSG_RESULT([$TK_CONFIG_SH])
 fi

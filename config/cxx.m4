@@ -1,5 +1,5 @@
 # Macros to detect certain C++ features
-# $Header: /cvsroot/pgsql/config/Attic/cxx.m4,v 1.1 2000/06/11 11:39:46 petere Exp $
+# $Header: /cvsroot/pgsql/config/Attic/cxx.m4,v 1.2 2002/03/29 17:32:53 petere Exp $
 
 
 # PGAC_CLASS_STRING
@@ -9,27 +9,25 @@
 # class string exists.  If not, check to make sure that <string.h>
 # defines class `string'.
 AC_DEFUN([PGAC_CLASS_STRING],
-[AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
+[AC_LANG_PUSH(C++)
 AC_CHECK_HEADER(string,
-  [AC_DEFINE(HAVE_CXX_STRING_HEADER)])
-
-if test x"$ac_cv_header_string" != xyes ; then
-  AC_CACHE_CHECK([for class string in <string.h>],
-    [pgac_cv_class_string_in_string_h],
-    [AC_TRY_COMPILE([#include <stdio.h>
+                [AC_DEFINE(HAVE_CXX_STRING_HEADER, 1,
+                           [Define to 1 if you have the C++ <string> header])]
+                [AC_CACHE_CHECK([for class string in <string.h>],
+                                [pgac_cv_class_string_in_string_h],
+[AC_TRY_COMPILE([#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 ],
-      [string foo = "test"],
-      [pgac_cv_class_string_in_string_h=yes],
-      [pgac_cv_class_string_in_string_h=no])])
+                [string foo = "test"],
+                [pgac_cv_class_string_in_string_h=yes],
+                [pgac_cv_class_string_in_string_h=no])])
 
   if test x"$pgac_cv_class_string_in_string_h" != xyes ; then
-    AC_MSG_ERROR([neither <string> nor <string.h> seem to define the C++ class \`string\'])
+    AC_MSG_ERROR([neither <string> nor <string.h> seem to define the C++ class 'string'])
   fi
-fi
-AC_LANG_RESTORE])# PGAC_CLASS_STRING
+])
+AC_LANG_POP(C++)])# PGAC_CLASS_STRING
 
 
 # PGAC_CXX_NAMESPACE_STD
@@ -48,8 +46,7 @@ AC_DEFUN([PGAC_CXX_NAMESPACE_STD],
 AC_CACHE_CHECK([for namespace std in C++],
 pgac_cv_cxx_namespace_std,
 [
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
+AC_LANG_PUSH(C++)
 AC_TRY_COMPILE(
 [#include <stdio.h>
 #include <stdlib.h>
@@ -60,8 +57,8 @@ using namespace std;
 ], [],
 [pgac_cv_cxx_namespace_std=yes],
 [pgac_cv_cxx_namespace_std=no])
-AC_LANG_RESTORE])
+AC_LANG_POP(C++)])
 
 if test $pgac_cv_cxx_namespace_std = yes ; then
-    AC_DEFINE(HAVE_NAMESPACE_STD, 1, [Define to 1 if the C++ compiler understands `using namespace std'])
+    AC_DEFINE(HAVE_NAMESPACE_STD, 1, [Define to 1 if the C++ compiler understands 'using namespace std'])
 fi])# PGAC_CXX_NAMESPACE_STD

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.143 2002/03/13 00:05:02 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.144 2002/03/29 17:32:54 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -29,19 +29,23 @@ all:
 .DELETE_ON_ERROR:
 
 # PostgreSQL version number
-VERSION = @VERSION@
+VERSION = @PACKAGE_VERSION@
 
 # Support for VPATH builds
+vpath_build = @vpath_build@
 abs_top_srcdir = @abs_top_srcdir@
 
-ifndef abs_top_srcdir
+ifneq ($(vpath_build),yes)
 top_srcdir = $(top_builddir)
 srcdir = .
-else
+else # vpath_build = yes
 top_srcdir = $(abs_top_srcdir)
 srcdir = $(top_srcdir)/$(subdir)
 VPATH = $(srcdir)
 endif
+
+# Saved arguments from configure
+configure_args = @configure_args@
 
 
 ##########################################################################
@@ -357,7 +361,7 @@ TAS         = @TAS@
 # write `include $(top_builddir)/src/Makefile.global', not some
 # shortcut thereof.
 $(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_builddir)/config.status
-	cd $(top_builddir) && CONFIG_FILES=src/Makefile.global CONFIG_HEADERS= ./config.status
+	cd $(top_builddir) && ./config.status src/Makefile.global
 
 # Remake pg_config.h from pg_config.h.in if the latter changed.
 # config.status will not change the timestamp on pg_config.h if it
@@ -372,7 +376,7 @@ $(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_
 $(top_builddir)/src/include/pg_config.h: $(top_builddir)/src/include/stamp-h
 
 $(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/pg_config.h.in $(top_builddir)/config.status
-	cd $(top_builddir) && CONFIG_FILES= CONFIG_HEADERS=src/include/pg_config.h ./config.status
+	cd $(top_builddir) && ./config.status src/include/pg_config.h
 
 # When configure changes, rerun configure with the same options as
 # last time. To change configure, you need to run autoconf manually.

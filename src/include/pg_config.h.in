@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.18 2002/02/25 17:11:22 tgl Exp $
+ * $Id: pg_config.h.in,v 1.19 2002/03/29 17:32:55 petere Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -408,8 +408,8 @@
 /* Set to 1 if you have <sys/pstat.h> */
 #undef HAVE_SYS_PSTAT_H
 
-/* Define if string.h and strings.h may both be included */
-#undef STRING_H_WITH_STRINGS_H
+/* Define to 1 if you have strings.h */
+#undef HAVE_STRINGS_H
 
 /* Define if you have the setproctitle function.  */
 #undef HAVE_SETPROCTITLE
@@ -439,13 +439,13 @@
 #undef HAVE_SNPRINTF
 
 /* Set to 1 if your standard system headers declare snprintf() */
-#undef HAVE_SNPRINTF_DECL
+#undef HAVE_DECL_SNPRINTF
 
 /* Set to 1 if you have vsnprintf() in the C library */
 #undef HAVE_VSNPRINTF
 
 /* Set to 1 if your standard system headers declare vsnprintf() */
-#undef HAVE_VSNPRINTF_DECL
+#undef HAVE_DECL_VSNPRINTF
 
 /* Set to 1 if you have strerror() */
 #undef HAVE_STRERROR
@@ -581,9 +581,9 @@ extern void srandom(unsigned int seed);
 #undef HAVE_FDATASYNC
 
 /* Define if the standard header unistd.h declares fdatasync() */
-#undef HAVE_FDATASYNC_DECL
+#undef HAVE_DECL_FDATASYNC
 
-#if defined(HAVE_FDATASYNC) && !defined(HAVE_FDATASYNC_DECL)
+#if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
 extern int fdatasync(int fildes);
 #endif
 

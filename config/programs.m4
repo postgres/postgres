@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.7 2001/08/28 14:59:11 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.8 2002/03/29 17:32:54 petere Exp $
 
 
 # PGAC_PATH_FLEX
@@ -106,7 +106,7 @@ LIBS=$pgac_save_LIBS
 ])[]dnl AC_CACHE_VAL
 
 if test "$pgac_cv_check_readline" != no ; then
-  AC_DEFINE(HAVE_LIBREADLINE)
+  AC_DEFINE(HAVE_LIBREADLINE, 1, [Define if you have a function readline library])
   LIBS="$pgac_cv_check_readline $LIBS"
   AC_MSG_RESULT([yes ($pgac_cv_check_readline)])
 else
