@@ -29,7 +29,7 @@ This program requires the Pg:DBD Perl interface.
 
 Usage:
 
-  upgrade.pl [options] [dbname [username]]
+  adddepend [options] [dbname [username]]
 
 Options:
   -d <dbname>     Specify database name to connect to (default: postgres)
