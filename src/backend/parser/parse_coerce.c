@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.38 2000/03/20 04:02:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.39 2000/03/20 15:42:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,7 +320,6 @@ TypeCategory(Oid inType)
 		case (NAMEOID):
 		case (BPCHAROID):
 		case (VARCHAROID):
-	case (BYTEAOID):
 		case (TEXTOID):
 		case (LZTEXTOID):
 			result = STRING_TYPE;
@@ -551,7 +550,6 @@ PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 				{
 					case (BPCHAROID):
 					case (VARCHAROID):
-		    case (BYTEAOID):
 					case (TEXTOID):
 
 					case (INT2OID):
