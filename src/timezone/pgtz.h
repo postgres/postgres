@@ -6,6 +6,6 @@
 
 
 #define NOID
-#define TZDIR pgwin32_TZDIR()
+#define TZDIR pg_TZDIR()
 
-char *pgwin32_TZDIR(void);
+char	   *pg_TZDIR(void);
