@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.h,v 1.4 2001/08/21 00:42:41 momjian Exp $
+ * $Id: pgcrypto.h,v 1.5 2001/09/23 04:12:44 momjian Exp $
  */
 
 #ifndef _PG_CRYPTO_H
@@ -38,6 +38,7 @@ Datum		pg_digest_exists(PG_FUNCTION_ARGS);
 Datum		pg_hmac(PG_FUNCTION_ARGS);
 Datum		pg_hmac_exists(PG_FUNCTION_ARGS);
 Datum		pg_gen_salt(PG_FUNCTION_ARGS);
+Datum		pg_gen_salt_rounds(PG_FUNCTION_ARGS);
 Datum		pg_crypt(PG_FUNCTION_ARGS);
 Datum		pg_encrypt(PG_FUNCTION_ARGS);
 Datum		pg_decrypt(PG_FUNCTION_ARGS);

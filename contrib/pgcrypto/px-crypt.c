@@ -26,10 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-crypt.c,v 1.1 2001/08/21 01:32:01 momjian Exp $
+ * $Id: px-crypt.c,v 1.2 2001/09/23 04:12:44 momjian Exp $
  */
 
 #include <postgres.h>
+#include "px.h"
 #include "px-crypt.h"
 
 
@@ -62,12 +63,8 @@ run_crypt_bf(const char *psw, const char *salt,
 			char *buf, unsigned len)
 {
 	char	   *res;
-
 	res = _crypt_blowfish_rn(psw, salt, buf, len);
-	if (!res)
-		return NULL;
-	strcpy(buf, res);
-	return buf;
+	return res;
 }
 
 static struct
@@ -128,106 +125,53 @@ px_crypt(const char *psw, const char *salt,
  * salt generators
  */
 
-static int my_rand64()
-{
-	return random() % 64;
-}
-
-static uint
-gen_des_salt(char *buf)
-{
-	buf[0] = px_crypt_a64[my_rand64()];
-	buf[1] = px_crypt_a64[my_rand64()];
-	buf[2] = 0;
-	
-	return 2;
-}
-
-static uint
-gen_xdes_salt(char *buf)
-{
-	strcpy(buf, "_12345678");
-	
-	px_crypt_to64(buf+1, (long)PX_XDES_ROUNDS, 4);
-	px_crypt_to64(buf+5, random(), 4);
-	
-	return 9;
-}
-
-static uint
-gen_md5_salt(char *buf)
-{
-	int i;
-	strcpy(buf, "$1$12345678$");
-	
-	for (i = 0; i < 8; i++)
-		buf[3 + i] = px_crypt_a64[my_rand64()];
-	
-	return 12;
-}
-
-static uint
-gen_bf_salt(char *buf)
-{
-	int i, count;
-	char *s;
-	char saltbuf[16+3];
-	unsigned slen = 16;
-	uint32 *v;
-
-	for (i = 0; i < slen; i++)
-		saltbuf[i] = random() & 255;
-	saltbuf[16] = 0;
-	saltbuf[17] = 0;
-	saltbuf[18] = 0;
-
-	strcpy(buf, "$2a$00$0123456789012345678901");
-
-	count = PX_BF_ROUNDS;
-	buf[4] = '0' + count / 10;
-	buf[5] = '0' + count % 10;
-	
-	s = buf + 7;
-	for (i = 0; i < slen; )
-	{
-		v = (uint32 *)&saltbuf[i];
-		if (i + 3 <= slen)
-			px_crypt_to64(s, *v, 4);
-		else
-			/* slen-i could be 1,2 make it 2,3 */
-			px_crypt_to64(s, *v, slen-i+1);
-		s += 4;
-		i += 3;
-	}
-		
-	s = buf;
-	/*s = _crypt_gensalt_blowfish_rn(count, saltbuf, 16, buf, PX_MAX_CRYPT);*/
-	
-	return s ? strlen(s) : 0;
-}
-
 struct generator {
 	char *name;
-	uint (*gen)(char *buf);
+	char *(*gen)(unsigned long count, const char *input, int size,
+					char *output, int output_size);
+	int input_len;
+	int def_rounds;
+	int min_rounds;
+	int max_rounds;
 };
 
 static struct generator gen_list [] = {
-	{ "des", gen_des_salt },
-	{ "md5", gen_md5_salt },
-	{ "xdes", gen_xdes_salt },
-	{ "bf", gen_bf_salt },
-	{ NULL, NULL }
+	{ "des", _crypt_gensalt_traditional_rn, 2, 0, 0, 0 },
+	{ "md5", _crypt_gensalt_md5_rn, 6, 0, 0, 0 },
+	{ "xdes", _crypt_gensalt_extended_rn, 3, PX_XDES_ROUNDS, 1, 0xFFFFFF },
+	{ "bf", _crypt_gensalt_blowfish_rn, 16, PX_BF_ROUNDS, 4, 31 },
+	{ NULL, NULL, 0, 0, 0 }
 };
 
 uint
-px_gen_salt(const char *salt_type, char *buf)
+px_gen_salt(const char *salt_type, char *buf, int rounds)
 {
-	int i;
+	int i, res;
 	struct generator *g;
+	char *p;
+	char rbuf[16];
+	
 	for (i = 0; gen_list[i].name; i++) {
 		g = &gen_list[i];
-		if (!strcasecmp(g->name, salt_type))
-			return g->gen(buf);
+		if (strcasecmp(g->name, salt_type) != 0)
+			continue;
+
+		if (g->def_rounds) {
+			if (rounds == 0)
+				rounds = g->def_rounds;
+			
+			if (rounds < g->min_rounds || rounds > g->max_rounds)
+				return 0;
+		}
+
+		res = px_get_random_bytes(rbuf, g->input_len);
+		if (res != g->input_len)
+			return 0;
+
+		p = g->gen(rounds, rbuf, g->input_len, buf, PX_MAX_SALT_LEN);
+		memset(rbuf, 0, sizeof(rbuf));
+		
+		return p != NULL ? strlen(p) : 0;
 	}
 
 	return 0;

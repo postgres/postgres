@@ -9,6 +9,13 @@ INSTALLATION
 
 Edit makefile, if you want to use any external library.
 
+NB!  Default randomness source is /dev/urandom device.  If you
+do not have it, you also need to edit Makefile to let pgcrypto
+use either OpenSSL PRNG or libc random() PRNG.  Using libc random()
+is discouraged.
+
+After editing Makefile:
+
 make
 make install
 
@@ -72,6 +79,27 @@ gen_salt(type::text)::text
 
 	When you use --enable-system-crypt then note that system
 	libcrypt may not support them all.
+
+gen_salt(type::text, rounds::int4)::text
+
+	same as above, but lets user specify iteration count
+	for algorithm.  Number is algotithm specific:
+
+	type	default	min	max
+	---------------------------------
+	xdes	725	1	16777215
+	bf	6	4	31
+
+	In case of xdes there is a additional limitation that the
+	count must be a odd number.
+
+	The higher the count, the more time it takes to calculate
+	crypt and therefore the more time to break it.  But beware!
+	With too high count it takes a _very_long_ time to
+	calculate it.
+
+	For maximum security, you should choose the 'bf' crypt
+	and use maximum number of rounds you can still tolerate.
 
 encrypt(data::bytea, key::bytea, type::text)::bytea
 decrypt(data::bytea, key::bytea, type::text)::bytea

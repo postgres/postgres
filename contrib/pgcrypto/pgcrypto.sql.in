@@ -5,10 +5,12 @@
 -- drop function hmac_exists(text);
 -- drop function crypt(text, text);
 -- drop function gen_salt(text);
+-- drop function gen_salt(text, int4);
 -- drop function encrypt(bytea, bytea, text);
 -- drop function decrypt(bytea, bytea, text);
 -- drop function encrypt_iv(bytea, bytea, bytea, text);
 -- drop function decrypt_iv(bytea, bytea, bytea, text);
+-- drop function cipher_exists(text);
 
 
 
@@ -35,6 +37,10 @@ CREATE FUNCTION crypt(text, text) RETURNS text
 CREATE FUNCTION gen_salt(text) RETURNS text
   AS '@MODULE_FILENAME@',
   'pg_gen_salt' LANGUAGE 'C';
+
+CREATE FUNCTION gen_salt(text, int4) RETURNS text
+  AS '@MODULE_FILENAME@',
+  'pg_gen_salt_rounds' LANGUAGE 'C';
 
 CREATE FUNCTION encrypt(bytea, bytea, text) RETURNS bytea
   AS '@MODULE_FILENAME@',

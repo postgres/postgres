@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.8 2001/08/21 00:42:41 momjian Exp $
+ * $Id: pgcrypto.c,v 1.9 2001/09/23 04:12:44 momjian Exp $
  */
 
 #include <postgres.h>
@@ -200,9 +200,44 @@ pg_gen_salt(PG_FUNCTION_ARGS)
 	len = len > PX_MAX_SALT_LEN ? PX_MAX_SALT_LEN : len;
 	memcpy(buf, VARDATA(arg0), len);
 	buf[len] = 0;
-	len = px_gen_salt(buf, buf);
+	len = px_gen_salt(buf, buf, 0);
 	if (len == 0)
 		elog(ERROR, "No such crypt algorithm");
+
+	res = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(res) = len + VARHDRSZ;
+	memcpy(VARDATA(res), buf, len);
+
+	PG_FREE_IF_COPY(arg0, 0);
+
+	PG_RETURN_TEXT_P(res);
+}
+
+/* SQL function: pg_gen_salt(text, int4) returns text */
+PG_FUNCTION_INFO_V1(pg_gen_salt_rounds);
+
+Datum
+pg_gen_salt_rounds(PG_FUNCTION_ARGS)
+{
+	text	   *arg0;
+	int			rounds;
+	uint		len;
+	text	   *res;
+	char		buf[PX_MAX_SALT_LEN + 1];
+
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+
+	arg0 = PG_GETARG_TEXT_P(0);
+	rounds = PG_GETARG_INT32(1);
+
+	len = VARSIZE(arg0) - VARHDRSZ;
+	len = len > PX_MAX_SALT_LEN ? PX_MAX_SALT_LEN : len;
+	memcpy(buf, VARDATA(arg0), len);
+	buf[len] = 0;
+	len = px_gen_salt(buf, buf, rounds);
+	if (len == 0)
+		elog(ERROR, "No such crypt algorithm or bad number of rounds");
 
 	res = (text *) palloc(len + VARHDRSZ);
 	VARATT_SIZEP(res) = len + VARHDRSZ;

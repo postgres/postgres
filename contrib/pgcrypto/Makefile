@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.6 2001/09/16 16:11:09 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.7 2001/09/23 04:12:44 momjian Exp $
 #
 
 subdir = contrib/pgcrypto
@@ -11,6 +11,18 @@ cryptolib = builtin
 
 # either 'builtin', 'system'
 cryptsrc = builtin
+
+# Random source, preferred order:
+# 'dev'      - read from random device
+#
+# 'openssl'  - use openssl PRNG.
+#              Note that currently pgcrypto does not do any
+#              entropy feeding to it
+#              This works ofcouse only with cryptolib = openssl
+#
+# 'silly'    - use libc random() - very weak
+random = dev
+random_dev = \"/dev/urandom\"
 
 ##########################
 
@@ -38,8 +50,19 @@ else
 CRYPTO_CFLAGS += -DPX_SYSTEM_CRYPT
 endif
 
+ifeq ($(random), dev)
+CRYPTO_CFLAGS += -DRAND_DEV=$(random_dev)
+endif
+ifeq ($(random), openssl)
+CRYPTO_CFLAGS += -DRAND_OPENSSL
+endif
+ifeq ($(random), silly)
+CRYPTO_CFLAGS += -DRAND_SILLY
+endif
+
 NAME	:= pgcrypto
-SRCS	+= pgcrypto.c px.c px-hmac.c px-crypt.c misc.c
+SRCS	+= pgcrypto.c px.c px-hmac.c px-crypt.c misc.c \
+		crypt-gensalt.c random.c
 OBJS	:= $(SRCS:.c=.o)
 SHLIB_LINK := $(CRYPTO_LDFLAGS)
 SO_MAJOR_VERSION = 0

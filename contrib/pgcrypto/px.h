@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.h,v 1.1 2001/08/21 01:32:01 momjian Exp $
+ * $Id: px.h,v 1.2 2001/09/23 04:12:44 momjian Exp $
  */
 
 #ifndef __PX_H
@@ -132,6 +132,8 @@ int px_find_digest(const char *name, PX_MD **res);
 int px_find_hmac(const char *name, PX_HMAC **res);
 int px_find_cipher(const char *name, PX_Cipher **res);
 int px_find_combo(const char *name, PX_Combo **res);
+
+int px_get_random_bytes(uint8 *dst, unsigned count);
 
 const char *px_resolve_alias(const PX_Alias *aliases, const char *name);
 

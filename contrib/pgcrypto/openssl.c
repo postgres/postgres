@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openssl.c,v 1.4 2001/08/21 00:42:41 momjian Exp $
+ * $Id: openssl.c,v 1.5 2001/09/23 04:12:44 momjian Exp $
  */
 
 #include <postgres.h>
@@ -35,7 +35,6 @@
 
 #include <openssl/evp.h>
 #include <openssl/blowfish.h>
-/*#include <openssl/crypto.h>*/
 
 static uint
 digest_result_size(PX_MD * h)

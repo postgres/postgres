@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-crypt.h,v 1.1 2001/08/21 01:32:01 momjian Exp $
+ * $Id: px-crypt.h,v 1.2 2001/09/23 04:12:44 momjian Exp $
  */
 
 #ifndef _PX_CRYPT_H
@@ -38,19 +38,22 @@
 /* max salt returned by gen_salt() */
 #define PX_MAX_SALT_LEN     128
 
-/* rounds for xdes salt */
+/* default rounds for xdes salt */
 /* NetBSD bin/passwd/local_passwd.c has (29 * 25)*/
 #define PX_XDES_ROUNDS		(29 * 25)
 
-/* rounds for blowfish salt */
+/* default for blowfish salt */
 #define PX_BF_ROUNDS		6
 
 /*
  * main interface
  */
 char	   *px_crypt(const char *psw, const char *salt, char *buf, unsigned buflen);
-unsigned	px_gen_salt(const char *salt_type, char *dst);
+unsigned	px_gen_salt(const char *salt_type, char *dst, int rounds);
 
+/*
+ * internal functions
+ */
 
 /* misc.c */
 extern void px_crypt_to64(char *s, unsigned long v, int n);
@@ -59,6 +62,15 @@ extern char px_crypt_a64[];
 #define _crypt_to64 px_crypt_to64
 #define _crypt_a64 px_crypt_a64
 
+/* crypt-gensalt.c */
+char *_crypt_gensalt_traditional_rn(unsigned long count,
+	const char *input, int size, char *output, int output_size);
+char *_crypt_gensalt_extended_rn(unsigned long count,
+	const char *input, int size, char *output, int output_size);
+char *_crypt_gensalt_md5_rn(unsigned long count,
+	const char *input, int size, char *output, int output_size);
+char *_crypt_gensalt_blowfish_rn(unsigned long count,
+	const char *input, int size, char *output, int output_size);
 
 #ifndef PX_SYSTEM_CRYPT
 
@@ -66,9 +78,6 @@ extern char px_crypt_a64[];
 /* #define DISABLE_XDES */
 
 /* crypt-blowfish.c */
-char *_crypt_gensalt_blowfish_rn(unsigned long count,
-						   const char *input, int size,
-						   char *output, int output_size);
 char *_crypt_blowfish_rn(const char *key, const char *setting,
 				   char *output, int size);
 
