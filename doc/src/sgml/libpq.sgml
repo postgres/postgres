@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.93 2002/08/17 12:33:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.94 2002/09/02 20:21:32 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1653,9 +1653,8 @@ messages can be detected by calling <function>PQnotifies</function>.
 PGnotify* PQnotifies(PGconn *conn);
 
 typedef struct pgNotify {
-    char relname[NAMEDATALEN];       /* name of relation
-                                      * containing data */
-    int  be_pid;                     /* process id of backend */
+    char *relname;              /* name of relation containing data */
+    int  be_pid;                /* process id of backend */
 } PGnotify;
 </synopsis>
 After processing a <structname>PGnotify</structname> object returned by <function>PQnotifies</function>,
