@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.19 1997/08/21 01:39:25 vadim Exp $
+ * $Id: parsenodes.h,v 1.20 1997/08/22 04:05:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,11 +143,11 @@ typedef enum ConstrType {
     CONSTR_NONE, CONSTR_CHECK		/* type of constaints */
 } ConstrType;
 
-typedef struct ConstaintDef {
+typedef struct ConstraintDef {
     ConstrType		type;
     char		*name;		/* name */
-    char		*expr;		/*  */
-} ConstaintDef;
+    void		*def;		/* definition */
+} ConstraintDef;
 
 /* ----------------------
  *	Create SEQUENCE Statement
