@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.81 2003/09/15 00:26:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.82 2003/09/19 21:04:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,15 +365,9 @@ void
 TruncateRelation(const RangeVar *relation)
 {
 	Relation	rel;
-	Oid			relid;
-	ScanKeyData key;
-	Relation	fkeyRel;
-	SysScanDesc fkeyScan;
-	HeapTuple	tuple;
 
 	/* Grab exclusive lock in preparation for truncate */
 	rel = heap_openrv(relation, AccessExclusiveLock);
-	relid = RelationGetRelid(rel);
 
 	/* Only allow truncate on regular tables */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
@@ -383,7 +377,7 @@ TruncateRelation(const RangeVar *relation)
 						RelationGetRelationName(rel))));
 
 	/* Permissions checks */
-	if (!pg_class_ownercheck(relid, GetUserId()))
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   RelationGetRelationName(rel));
 
@@ -405,35 +399,7 @@ TruncateRelation(const RangeVar *relation)
 	/*
 	 * Don't allow truncate on tables which are referenced by foreign keys
 	 */
-	fkeyRel = heap_openr(ConstraintRelationName, AccessShareLock);
-
-	ScanKeyEntryInitialize(&key, 0,
-						   Anum_pg_constraint_confrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(relid));
-
-	fkeyScan = systable_beginscan(fkeyRel, 0, false,
-								  SnapshotNow, 1, &key);
-
-	/*
-	 * First foreign key found with us as the reference should throw an
-	 * error.
-	 */
-	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
-	{
-		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-
-		if (con->contype == 'f' && con->conrelid != relid)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot truncate a table referenced in a foreign key constraint"),
-					 errdetail("Table \"%s\" references this one via foreign key constraint \"%s\".",
-							   get_rel_name(con->conrelid),
-							   NameStr(con->conname))));
-	}
-
-	systable_endscan(fkeyScan);
-	heap_close(fkeyRel, AccessShareLock);
+	heap_truncate_check_FKs(rel);
 
 	/*
 	 * Do the real work using the same technique as cluster, but without
@@ -3137,11 +3103,28 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 		aclcheck_error(aclresult, ACL_KIND_CLASS,
 					   RelationGetRelationName(rel));
 
-	if (isTempNamespace(RelationGetNamespace(pkrel)) &&
-		!isTempNamespace(RelationGetNamespace(rel)))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot reference temporary table from permanent table constraint")));
+	/*
+	 * Disallow reference from permanent table to temp table or vice versa.
+	 * (The ban on perm->temp is for fairly obvious reasons.  The ban on
+	 * temp->perm is because other backends might need to run the RI triggers
+	 * on the perm table, but they can't reliably see tuples the owning
+	 * backend has created in the temp table, because non-shared buffers
+	 * are used for temp tables.)
+	 */
+	if (isTempNamespace(RelationGetNamespace(pkrel)))
+	{
+		if (!isTempNamespace(RelationGetNamespace(rel)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("cannot reference temporary table from permanent table constraint")));
+	}
+	else
+	{
+		if (isTempNamespace(RelationGetNamespace(rel)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("cannot reference permanent table from temporary table constraint")));
+	}
 
 	/*
 	 * Look up the referencing attributes to make sure they exist, and

@@ -42,7 +42,7 @@ SELECT * FROM truncate_a;
 
 TRUNCATE truncate_a;
 ERROR:  cannot truncate a table referenced in a foreign key constraint
-DETAIL:  Table "truncate_b" references this one via foreign key constraint "$1".
+DETAIL:  Table "truncate_b" references "truncate_a" via foreign key constraint "$1".
 SELECT * FROM truncate_a;
  col1 
 ------

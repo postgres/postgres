@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.251 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.252 2003/09/19 21:04:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1966,9 +1966,11 @@ RelationTruncateIndexes(Oid heapId)
 /*
  *	 heap_truncate
  *
- *	 This routine is used to truncate the data from the
- *	 storage manager of any data within the relation handed
- *	 to this routine.  This is not transaction-safe!
+ *	 This routine deletes all data within the specified relation.
+ *
+ * This is not transaction-safe!  There is another, transaction-safe
+ * implementation in commands/cluster.c.  We now use this only for
+ * ON COMMIT truncation of temporary tables, where it doesn't matter.
  */
 void
 heap_truncate(Oid rid)
@@ -1978,6 +1980,9 @@ heap_truncate(Oid rid)
 
 	/* Open relation for processing, and grab exclusive access on it. */
 	rel = heap_open(rid, AccessExclusiveLock);
+
+	/* Don't allow truncate on tables that are referenced by foreign keys */
+	heap_truncate_check_FKs(rel);
 
 	/*
 	 * Release any buffers associated with this relation.  If they're
@@ -2002,4 +2007,62 @@ heap_truncate(Oid rid)
 	 * Close the relation, but keep exclusive lock on it until commit.
 	 */
 	heap_close(rel, NoLock);
+}
+
+/*
+ * heap_truncate_check_FKs
+ *		Check for foreign keys referencing a relation that's to be truncated
+ *
+ * We disallow such FKs (except self-referential ones) since the whole point
+ * of TRUNCATE is to not scan the individual rows to be thrown away.
+ *
+ * This is split out so it can be shared by both implementations of truncate.
+ * Caller should already hold a suitable lock on the relation.
+ */
+void
+heap_truncate_check_FKs(Relation rel)
+{
+	Oid			relid = RelationGetRelid(rel);
+	ScanKeyData key;
+	Relation	fkeyRel;
+	SysScanDesc fkeyScan;
+	HeapTuple	tuple;
+
+	/*
+	 * Fast path: if the relation has no triggers, it surely has no FKs
+	 * either.
+	 */
+	if (rel->rd_rel->reltriggers == 0)
+		return;
+
+	/*
+	 * Otherwise, must scan pg_constraint.  Right now, this is a seqscan
+	 * because there is no available index on confrelid.
+	 */
+	fkeyRel = heap_openr(ConstraintRelationName, AccessShareLock);
+
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_constraint_confrelid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(relid));
+
+	fkeyScan = systable_beginscan(fkeyRel, NULL, false,
+								  SnapshotNow, 1, &key);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		if (con->contype == CONSTRAINT_FOREIGN && con->conrelid != relid)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot truncate a table referenced in a foreign key constraint"),
+					 errdetail("Table \"%s\" references \"%s\" via foreign key constraint \"%s\".",
+							   get_rel_name(con->conrelid),
+							   RelationGetRelationName(rel),
+							   NameStr(con->conname))));
+	}
+
+	systable_endscan(fkeyScan);
+	heap_close(fkeyRel, AccessShareLock);
 }
