@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.77 1998/07/08 14:33:19 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.78 1998/07/19 05:24:49 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -95,6 +95,7 @@ static void setMaxOid(FILE *fout);
 static char *AddAcl(char *s, const char *add);
 static char *GetPrivledges(char *s);
 static ACL *ParseACL(const char *acls, int *count);
+static void becomeUser(FILE *fout, const char *username);
 
 extern char *optarg;
 extern int	optind,
@@ -110,6 +111,7 @@ int			dumpData;			/* dump data using proper insert strings */
 int			attrNames;			/* put attr names into insert strings */
 int			schemaOnly;
 int			dataOnly;
+int			aclsOption;
 
 char		g_opaque_type[10];	/* name for the opaque type */
 
@@ -142,11 +144,11 @@ usage(const char *progname)
 	fprintf(stderr,
 			"\t -t table    \t\t dump for this table only\n");
 	fprintf(stderr,
+			"\t -u          \t\t use password authentication\n");
+	fprintf(stderr,
 			"\t -v          \t\t verbose\n");
 	fprintf(stderr,
 			"\t -z          \t\t dump ACLs (grant/revoke)\n");
-	fprintf(stderr,
-			"\t -u          \t\t use password authentication\n");
 	fprintf(stderr,
 			"\nIf dbname is not supplied, then the DATABASE environment "
 			"variable value is used.\n");
@@ -435,7 +437,7 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 				if (g_verbose)
 					fprintf(stderr, "%s dumping out schema of sequence '%s' %s\n",
 					 g_comment_start, tblinfo[i].relname, g_comment_end);
-				fprintf(fout, "\\connect - %s\n", tblinfo[i].usename);
+				becomeUser(fout, tblinfo[i].usename);
 				dumpSequence(fout, tblinfo[i]);
 			}
 		}
@@ -457,6 +459,8 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 			if (g_verbose)
 				fprintf(stderr, "%s dumping out the contents of Table '%s' %s\n",
 						g_comment_start, classname, g_comment_end);
+
+			becomeUser(fout, tblinfo[i].usename);
 
 			if (!dumpData)
 				dumpClasses_nodumpData(fout, classname, oids);
@@ -534,8 +538,7 @@ main(int argc, char **argv)
 	const char *pghost = NULL;
 	const char *pgport = NULL;
 	char	   *tablename = NULL;
-	int			oids = 0,
-				acls = 0;
+	int			oids = 0;
 	TableInfo  *tblinfo;
 	int			numTables;
 	char		connect_string[512] = "";
@@ -598,8 +601,8 @@ main(int argc, char **argv)
 			case 'v':			/* verbose */
 				g_verbose = true;
 				break;
-			case 'z':			/* Dump oids */
-				acls = 1;
+			case 'z':			/* Dump ACLs and table ownership info */
+				aclsOption = 1;
 				break;
 			case 'u':
 				use_password = 1;
@@ -657,11 +660,11 @@ main(int argc, char **argv)
 		strcat(connect_string, tmp_string);
 		sprintf(tmp_string, "password=%s ", password);
 		strcat(connect_string, tmp_string);
-		bzero(tmp_string, sizeof(tmp_string));
-		bzero(password, sizeof(password));
+		MemSet(tmp_string, 0, sizeof(tmp_string));
+		MemSet(password, 0, sizeof(password));
 	}
 	g_conn = PQconnectdb(connect_string);
-	bzero(connect_string, sizeof(connect_string));
+	MemSet(connect_string, 0, sizeof(connect_string));
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(g_conn) == CONNECTION_BAD)
 	{
@@ -679,10 +682,10 @@ main(int argc, char **argv)
 		if (g_verbose)
 			fprintf(stderr, "%s last builtin oid is %d %s\n",
 					g_comment_start, g_last_builtin_oid, g_comment_end);
-		tblinfo = dumpSchema(g_fout, &numTables, tablename, acls);
+		tblinfo = dumpSchema(g_fout, &numTables, tablename, aclsOption);
 	}
 	else
-		tblinfo = dumpSchema(NULL, &numTables, tablename, acls);
+		tblinfo = dumpSchema(NULL, &numTables, tablename, aclsOption);
 
 	if (!schemaOnly)
 		dumpClasses(tblinfo, numTables, g_fout, tablename, oids);
@@ -1961,7 +1964,7 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 		if (funcInd != -1)
 			dumpOneFunc(fout, finfo, funcInd, tinfo, numTypes);
 
-		fprintf(fout, "\\connect - %s\n", tinfo[i].usename);
+		becomeUser(fout, tinfo[i].usename);
 
 		sprintf(q,
 				"CREATE TYPE \"%s\" "
@@ -2028,7 +2031,7 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 	else
 		finfo[i].dumped = 1;
 
-	fprintf(fout, "\\connect - %s\n", finfo[i].usename);
+	becomeUser(fout, finfo[i].usename);
 
 	sprintf(q, "CREATE FUNCTION \"%s\" (", finfo[i].proname);
 	for (j = 0; j < finfo[i].nargs; j++)
@@ -2143,7 +2146,7 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 									 oprinfo[i].oprlsortop));
 		}
 
-		fprintf(fout, "\\connect - %s\n", oprinfo[i].usename);
+		becomeUser(fout, oprinfo[i].usename);
 
 		sprintf(q,
 				"CREATE OPERATOR %s "
@@ -2238,7 +2241,7 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 		else
 			comma2[0] = '\0';
 
-		fprintf(fout, "\\connect - %s\n", agginfo[i].usename);
+		becomeUser(fout, agginfo[i].usename);
 
 		sprintf(q, "CREATE AGGREGATE %s ( %s %s%s %s%s %s );\n",
 				agginfo[i].aggname,
@@ -2349,7 +2352,7 @@ ParseACL(const char *acls, int *count)
 	s = strdup(acls);
 
 	/* Setup up public */
-	ParsedAcl[0].user = strdup("Public");
+	ParsedAcl[0].user = NULL;	/* indicates PUBLIC */
 	tok = strtok(s, ",");
 	ParsedAcl[0].privledges = GetPrivledges(strchr(tok, '='));
 
@@ -2397,16 +2400,23 @@ dumpACL(FILE *fout, TableInfo tbinfo)
 
 	/* Revoke Default permissions for PUBLIC */
 	fprintf(fout,
-			"REVOKE ALL on '%s' from PUBLIC;\n",
+			"REVOKE ALL on \"%s\" from PUBLIC;\n",
 			tbinfo.relname);
 
 	for (k = 0; k < l; k++)
 	{
 		if (ACLlist[k].privledges != (char *) NULL)
-			fprintf(fout,
-					"GRANT %s on \"%s\" to \"%s\";\n",
-					ACLlist[k].privledges, tbinfo.relname,
-					ACLlist[k].user);
+		{
+			if (ACLlist[k].user == (char *) NULL)
+				fprintf(fout,
+						"GRANT %s on \"%s\" to PUBLIC;\n",
+						ACLlist[k].privledges, tbinfo.relname);
+			else
+				fprintf(fout,
+						"GRANT %s on \"%s\" to \"%s\";\n",
+						ACLlist[k].privledges, tbinfo.relname,
+						ACLlist[k].user);
+		}
 	}
 }
 
@@ -2437,7 +2447,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			continue;
 		if (!tablename || (!strcmp(tblinfo[i].relname, tablename)))
 		{
-			fprintf(fout, "\\connect - %s\n", tblinfo[i].usename);
+			becomeUser(fout, tblinfo[i].usename);
 			dumpSequence(fout, tblinfo[i]);
 			if (acls)
 				dumpACL(fout, tblinfo[i]);
@@ -2459,7 +2469,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			parentRels = tblinfo[i].parentRels;
 			numParents = tblinfo[i].numParents;
 
-			fprintf(fout, "\\connect - %s\n", tblinfo[i].usename);
+			becomeUser(fout, tblinfo[i].usename);
 
 			sprintf(q, "CREATE TABLE \"%s\" (", fmtId(tblinfo[i].relname));
 			actual_atts = 0;
@@ -2954,8 +2964,30 @@ dumpTriggers(FILE *fout, const char *tablename,
 			continue;
 		for (j = 0; j < tblinfo[i].ntrig; j++)
 		{
-			fprintf(fout, "\\connect - %s\n", tblinfo[i].usename);
+			becomeUser(fout, tblinfo[i].usename);
 			fputs(tblinfo[i].triggers[j], fout);
 		}
 	}
+}
+
+
+/* Issue a psql \connect command to become the specified user.
+ * We want to do this only if we are dumping ACLs,
+ * and only if the new username is different from the last one
+ * (to avoid the overhead of useless backend launches).
+ */
+
+static void becomeUser(FILE *fout, const char *username)
+{
+	static const char *lastusername = "";
+
+	if (! aclsOption)
+		return;
+
+	if (strcmp(lastusername, username) == 0)
+		return;
+
+	fprintf(fout, "\\connect - %s\n", username);
+
+	lastusername = username;
 }

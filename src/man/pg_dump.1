@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dump.1,v 1.11 1998/06/24 13:21:28 momjian Exp $
-.TH PG_DUMP UNIX 1/20/96 PostgreSQL PostgreSQL
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dump.1,v 1.12 1998/07/19 05:24:51 momjian Exp $
+.TH PG_DUMP UNIX 7/15/98 PostgreSQL PostgreSQL
 .SH NAME
 pg_dump - dumps out a Postgres database into a script file
 .SH SYNOPSIS
@@ -36,23 +36,27 @@ port]
 .BR "-t"
 table]
 [\c
+.BR "-u"
+]
+[\c
 .BR "-v"
 ]
 [\c
-.BR "-u"]
+.BR "-z"
+]
 dbname
 .in -5n
 .SH DESCRIPTION
 .IR "pg_dump"
 is a utility for dumping out a 
 Postgres database into a script file containing query commands.  The script
-files are in a ASCII format and can be used to reconstruct the database,
+files are in ASCII format and can be used to reconstruct the database,
 even on other machines and other architectures.  
 .IR "pg_dump" 
 will produce the queries necessary to re-generate all
 user-defined types, functions, tables, indices, aggregates, and
 operators.  In addition, all the data is copied out in ASCII format so
-that it can be readily copied in again, as well, as imported into tools
+that it can be readily copied in again, as well as imported into tools
 for textual editing.
 .PP
 .IR "pg_dump" 
@@ -92,10 +96,13 @@ Dump out only the schema, no data
 Dump for this table only
 .TP
 .BR "-u"
-Use password authentication. Prompts for username and password.
+Use password authentication. Prompts for username and password
 .TP
 .BR "-v" ""
 Specifies verbose mode
+.TP
+.BR "-z" ""
+Include ACLs (grant/revoke commands) and table ownership information
 .PP
 If dbname is not supplied, then the DATABASE environment variable value is used.
 .SH "CAVEATS AND LIMITATIONS"
