@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.8 1996/12/28 02:12:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.9 1997/04/13 17:09:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ ltoa(int32 l, char *a)
 int
 ftoa(double value, char *ascii, int width, int prec1, char format)
 {
-#if defined(BSD44_derived) || \
+#if defined(__FreeBSD__) || \
     defined(bsdi) || \
     defined(bsdi_2_1)
 	char	out[256];
