@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Nov  9 11:50:52 EST 2004
+Last updated:		Tue Nov  9 21:48:31 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -256,7 +256,10 @@ Indexes
   indexes to dynamically create a composite index to match a specific query.
   Each index is a bitmap, and the bitmaps are bitwise AND'ed or OR'ed to be
   combined.  They can index by tid or can be lossy requiring a scan of the
-  heap page to find matching rows.
+  heap page to find matching rows, or perhaps use a mixed solution where
+  tids are recorded for pages with only a few matches and per-page bitmaps
+  are used for more dense pages.  Another idea is to use a 32-bit bitmap
+  for every page and set a bit based on the item number mod(32).
 
 * Allow the creation of on-disk bitmap indexes which can be quickly
   combined with other bitmap indexes
