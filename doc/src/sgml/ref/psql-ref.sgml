@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.114 2004/04/22 14:33:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.115 2004/04/22 17:38:14 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -638,7 +638,7 @@ testdb=>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>\cd</literal> <optional><replaceable>directory</replaceable></optional></term>
+       <term><literal>\cd [ <replaceable>directory</replaceable> ]</literal></term>
        <listitem>
         <para>
 	 Changes the current working directory to
@@ -655,7 +655,7 @@ testdb=>
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\C</literal> [ <replaceable class="parameter">title</replaceable> ]</term>
+        <term><literal>\C [ <replaceable class="parameter">title</replaceable> ]</literal></term>
         <listitem>
         <para>
         Sets the title of any tables being printed as the result of a
@@ -670,7 +670,7 @@ testdb=>
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\connect</literal> (or <literal>\c</literal>) [ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] ]</term>
+        <term><literal>\connect</literal> (or <literal>\c</literal>) <literal>[ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] ]</literal></term>
         <listitem>
         <para>
 	Establishes a connection to a new database and/or under a user
@@ -708,14 +708,14 @@ testdb=>
 	[ ( <replaceable class="parameter">column_list</replaceable> ) ]
         { <literal>from</literal> | <literal>to</literal> }
 	{ <replaceable class="parameter">filename</replaceable> | stdin | stdout | pstdin | pstdout }
-        [ <literal>with</literal> ] 
-            [ <literal>oids</literal> ] 
-            [ <literal>delimiter [as] </literal> '<replaceable class="parameter">character</replaceable>' ]
-            [ <literal>null [as] </literal> '<replaceable class="parameter">string</replaceable>' ]</literal>
-            [ <literal>csv [ quote [as] </literal> '<replaceable class="parameter">character</replaceable>' ]
-                           [ <literal>escape [as] </literal> '<replaceable class="parameter">character</replaceable>' ]
-                           [ <literal>force quote</> <replaceable class="parameter">column_list</replaceable> ]
-                           [ <literal>force not null</> <replaceable class="parameter">column_list</replaceable> ] ]
+        [ with ] 
+            [ oids ] 
+            [ delimiter [ as ] '<replaceable class="parameter">character</replaceable>' ]
+            [ null [ as ] '<replaceable class="parameter">string</replaceable>' ]
+            [ csv [ quote [ as ] '<replaceable class="parameter">character</replaceable>' ]
+            [ escape [ as ] '<replaceable class="parameter">character</replaceable>' ]
+            [ force quote <replaceable class="parameter">column_list</replaceable> ]
+            [ force not null <replaceable class="parameter">column_list</replaceable> ] ]</literal>
         </term>
 
         <listitem>
@@ -777,7 +777,8 @@ testdb=>
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\d</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <term><literal>\d [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\d+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -791,8 +792,10 @@ testdb=>
 	</para>
 
 	<para>
-	The command form <literal>\d+</literal> is identical, but any
-	comments associated with the table columns are shown as well.
+	The command form <literal>\d+</literal> is identical, except that
+	more information is displayed: any comments associated with the
+	columns of the table are shown, as is the presence of OIDs in the
+	table.
 	</para>
 
 	<note>
@@ -808,7 +811,7 @@ testdb=>
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\da</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <term><literal>\da [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -822,7 +825,7 @@ testdb=>
 
 
       <varlistentry>
-        <term><literal>\dc</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <term><literal>\dc [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all available conversions between character-set encodings.
@@ -845,7 +848,7 @@ testdb=>
 
 
       <varlistentry>
-        <term><literal>\dd</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <term><literal>\dd [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Shows the descriptions of objects matching the <replaceable
@@ -866,15 +869,16 @@ testdb=>
         </para>
 
         <para>
-        Descriptions for objects can be created with the
-        <command>COMMENT</command> <acronym>SQL</acronym> command.
-	</para>
+        Descriptions for objects can be created with the <xref
+        linkend="sql-comment" endterm="sql-comment-title">
+        <acronym>SQL</acronym> command.
+       </para>
         </listitem>
       </varlistentry>
 
 
       <varlistentry>
-        <term><literal>\dD</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <term><literal>\dD [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all available domains. If <replaceable
@@ -887,6 +891,7 @@ testdb=>
 
       <varlistentry>
         <term><literal>\df [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\df+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -920,8 +925,9 @@ testdb=>
         <term><literal>\dg [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Lists all database groups or only those that match <replaceable
-        class="parameter">pattern</replaceable>.
+        Lists all database groups. If <replaceable
+        class="parameter">pattern</replaceable> is specified, only
+        those groups whose names match the pattern are listed.
         </para>
         </listitem>
       </varlistentry>
@@ -932,14 +938,16 @@ testdb=>
 
 	<listitem>
 	<para>
-	This is not the actual command name: the letters i, s, t, v, S
-	stand for index, sequence, table, view, and system table,
-	respectively. You can specify any or all of these letters, in any
-	order, to obtain a listing of all the matching objects.  The letter
-	S restricts the listing to system objects; without S, only non-system
-	objects are shown.
-	If <literal>+</literal> is appended to the command name, each object is
-	listed with its associated description, if any.
+	This is not the actual command name: the letters
+	<literal>i</literal>, <literal>s</literal>, <literal>t</literal>,
+	<literal>v</literal>, <literal>S</literal> stand for index,
+	sequence, table, view, and system table, respectively. You can
+	specify any or all of these letters, in any order, to obtain a
+	listing of all the matching objects.  The letter S restricts the
+	listing to system objects; without <literal>S</literal>, only
+	non-system objects are shown.  If <literal>+</literal> is appended
+	to the command name, each object is listed with its associated
+	description, if any.
 	</para>
 
 	<para>
@@ -962,7 +970,7 @@ testdb=>
 
 
       <varlistentry>
-        <term><literal>\dn</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <term><literal>\dn [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -988,7 +996,7 @@ testdb=>
 
 
       <varlistentry>
-        <term><literal>\dp</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <term><literal>\dp [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 	<listitem>
 	<para>
         Produces a list of all available tables, views and sequences with their
@@ -1009,6 +1017,7 @@ testdb=>
 
       <varlistentry>
         <term><literal>\dT [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dT+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all data types or only those that match <replaceable
@@ -1031,7 +1040,7 @@ testdb=>
 
 
       <varlistentry>
-        <term><literal>\edit</literal> (or <literal>\e</literal>) [ <replaceable class="parameter">filename</replaceable> ]</term>
+        <term><literal>\edit</literal> (or <literal>\e</literal>) <literal>[ <replaceable class="parameter">filename</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -1065,7 +1074,7 @@ testdb=>
 
 
       <varlistentry>
-        <term><literal>\echo</literal> <replaceable class="parameter">text</replaceable> [ ... ]</term>
+        <term><literal>\echo <replaceable class="parameter">text</replaceable> [ ... ]</literal></term>
         <listitem>
 	<para>
         Prints the arguments to the standard output, separated by one
@@ -1091,7 +1100,7 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
-        <term><literal>\encoding</literal> [ <replaceable class="parameter">encoding</replaceable> ]</term>
+        <term><literal>\encoding [ <replaceable class="parameter">encoding</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -1103,7 +1112,7 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
-        <term><literal>\f</literal> [ <replaceable class="parameter">string</replaceable> ]</term>
+        <term><literal>\f [ <replaceable class="parameter">string</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -1134,7 +1143,7 @@ Tue Oct 26 21:40:57 CEST 1999
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\help</literal> (or <literal>\h</literal>) [ <replaceable class="parameter">command</replaceable> ]</term>
+        <term><literal>\help</literal> (or <literal>\h</literal>) <literal>[ <replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
         Gives syntax help on the specified <acronym>SQL</acronym>
@@ -1172,7 +1181,7 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
-        <term><literal>\i</literal> <replaceable class="parameter">filename</replaceable></term>
+        <term><literal>\i <replaceable class="parameter">filename</replaceable></literal></term>
         <listitem>
         <para>
         Reads input from the file <replaceable
@@ -1192,18 +1201,19 @@ Tue Oct 26 21:40:57 CEST 1999
 
       <varlistentry>
         <term><literal>\l</literal> (or <literal>\list</literal>)</term>
+        <term><literal>\l+</literal> (or <literal>\list+</literal>)</term>
         <listitem>
         <para>
         List the names, owners, and character set encodings of all the databases in
-        the server.  Append a <literal>+</literal> to the command name to
-        see any descriptions for the databases as well.
+        the server. If <literal>+</literal> is appended to the command
+        name, database descriptions are also displayed.
         </para>
         </listitem>
       </varlistentry>
 
 
       <varlistentry>
-        <term><literal>\lo_export</literal> <replaceable class="parameter">loid</replaceable> <replaceable class="parameter">filename</replaceable></term>
+        <term><literal>\lo_export <replaceable class="parameter">loid</replaceable> <replaceable class="parameter">filename</replaceable></literal></term>
 
 	<listitem>
 	<para>
@@ -1227,7 +1237,7 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
-        <term><literal>\lo_import</literal> <replaceable class="parameter">filename</replaceable> [ <replaceable class="parameter">comment</replaceable> ]</term>
+        <term><literal>\lo_import <replaceable class="parameter">filename</replaceable> [ <replaceable class="parameter">comment</replaceable> ]</literal></term>
 
 	<listitem>
 	<para>
@@ -1266,7 +1276,7 @@ lo_import 152801
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\lo_unlink</literal> <replaceable class="parameter">loid</replaceable></term>
+        <term><literal>\lo_unlink <replaceable class="parameter">loid</replaceable></literal></term>
 
 	<listitem>
 	<para>
@@ -1326,7 +1336,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\pset</literal> <replaceable class="parameter">parameter</replaceable> [ <replaceable class="parameter">value</replaceable> ]</term>
+        <term><literal>\pset <replaceable class="parameter">parameter</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
 
 	<listitem>
 	<para>
@@ -1459,7 +1469,7 @@ lo_import 152801
 	  </varlistentry>
 
 	  <varlistentry>
-	  <term><literal>title</literal> [ <replaceable class="parameter">text</replaceable> ]</term>
+	  <term><literal>title [ <replaceable class="parameter">text</replaceable> ]</literal></term>
 	  <listitem>
 	  <para>
 	  Sets the table title for any subsequently printed tables. This
@@ -1470,7 +1480,7 @@ lo_import 152801
 	  </varlistentry>
 
 	  <varlistentry>
-	  <term><literal>tableattr</literal> (or <literal>T</literal>) [ <replaceable class="parameter">text</replaceable> ]</term>
+	  <term><literal>tableattr</literal> (or <literal>T</literal>) <literal>[ <replaceable class="parameter">text</replaceable> ]</literal></term>
 	  <listitem>
 	  <para>
 	  Allows you to specify any attributes to be placed inside the
@@ -1546,7 +1556,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\qecho</literal> <replaceable class="parameter">text</replaceable> [ ... ] </term>
+        <term><literal>\qecho <replaceable class="parameter">text</replaceable> [ ... ] </literal></term>
         <listitem>
         <para>
 	This command is identical to <command>\echo</command> except
@@ -1568,7 +1578,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\s</literal> [ <replaceable class="parameter">filename</replaceable> ]</term>
+        <term><literal>\s [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
         <listitem>
         <para>
         Print or save the command line history to <replaceable
@@ -1592,7 +1602,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\set</literal> [ <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">value</replaceable> [ ... ]]]</term>
+        <term><literal>\set [ <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">value</replaceable> [ ... ] ] ]</literal></term>
 
 	<listitem>
 	<para>
@@ -1641,7 +1651,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\T</literal> <replaceable class="parameter">table_options</replaceable></term>
+        <term><literal>\T <replaceable class="parameter">table_options</replaceable></literal></term>
         <listitem>
         <para>
         Allows you to specify attributes to be placed within the
@@ -1688,7 +1698,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\z</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <term><literal>\z [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Produces a list of all available tables, views and sequences with their
@@ -1713,7 +1723,7 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\!</literal> [ <replaceable class="parameter">command</replaceable> ]</term>
+        <term><literal>\! [ <replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
         Escapes to a separate Unix shell or executes the Unix command
@@ -1832,6 +1842,10 @@ bar
 
     <variablelist>
       <varlistentry>
+      <indexterm>
+       <primary>autocommit</primary>
+       <secondary>psql</secondary>
+      </indexterm>
         <term><varname>AUTOCOMMIT</varname></term>
 	<listitem>
 	<para>

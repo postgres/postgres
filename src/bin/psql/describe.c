@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.96 2004/04/06 04:05:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.97 2004/04/22 17:38:16 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -549,6 +549,8 @@ objectDescription(const char *pattern)
  *
  * This routine finds the tables to be displayed, and calls
  * describeOneTableDetails for each one.
+ *
+ * verbose: if true, this is \d+
  */
 bool
 describeTableDetails(const char *pattern, bool verbose)
@@ -635,11 +637,12 @@ describeOneTableDetails(const char *schemaname,
 	int			numrows = 0;
 	struct
 	{
-		bool		hasindex;
-		char		relkind;
 		int16		checks;
 		int16		triggers;
+		char		relkind;
+		bool		hasindex;
 		bool		hasrules;
+		bool	    hasoids;
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -652,7 +655,7 @@ describeOneTableDetails(const char *schemaname,
 
 	/* Get general table info */
 	printfPQExpBuffer(&buf,
-	 "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules\n"
+	 "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules, relhasoids\n"
 					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
 					  oid);
 	res = PSQLexec(buf.data, false);
@@ -669,11 +672,12 @@ describeOneTableDetails(const char *schemaname,
 	}
 
 	/* FIXME: check for null pointers here? */
-	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 0), "t") == 0;
-	tableinfo.relkind = *(PQgetvalue(res, 0, 1));
 	tableinfo.checks = atoi(PQgetvalue(res, 0, 2));
 	tableinfo.triggers = atoi(PQgetvalue(res, 0, 3));
+	tableinfo.relkind = *(PQgetvalue(res, 0, 1));
+	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 0), "t") == 0;
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
+	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
 	PQclear(res);
 
 	headers[0] = _("Column");
@@ -1182,6 +1186,14 @@ describeOneTableDetails(const char *schemaname,
 			if (i < inherits_count - 1)
 				appendPQExpBuffer(&buf, ",");
 
+			footers[count_footers++] = pg_strdup(buf.data);
+		}
+
+		if (verbose)
+		{
+			char *s = _("Contains OIDs");
+			printfPQExpBuffer(&buf, "%s: %s", s,
+							  (tableinfo.hasoids ? _("yes") : _("no")));
 			footers[count_footers++] = pg_strdup(buf.data);
 		}
 

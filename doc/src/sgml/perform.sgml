@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.44 2004/04/22 07:02:36 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.45 2004/04/22 17:38:14 neilc Exp $
 -->
 
  <chapter id="performance-tips">
@@ -633,8 +633,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
   <sect2 id="disable-autocommit">
    <title>Disable Autocommit</title>
 
-   <indexterm zone="disable-autocommit">
+   <indexterm>
     <primary>autocommit</primary>
+    <secondary>bulk-loading data</secondary>
    </indexterm>
 
    <para>
