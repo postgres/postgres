@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.56 2000/06/13 07:34:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.57 2000/06/14 05:24:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,7 @@ gistbuild(PG_FUNCTION_ARGS)
 	pfree(nulls);
 	pfree(d);
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 /*
@@ -1149,7 +1149,7 @@ gistdelete(PG_FUNCTION_ARGS)
 
 	WriteBuffer(buf);
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 void

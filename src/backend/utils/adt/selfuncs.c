@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.70 2000/06/09 01:11:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.71 2000/06/14 05:24:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1934,8 +1934,7 @@ genericcostestimate(PG_FUNCTION_ARGS)
 	*indexTotalCost = numIndexPages +
 		(cpu_index_tuple_cost + cost_qual_eval(indexQuals)) * numIndexTuples;
 
-	/* No real return value ... */
-	PG_RETURN_POINTER(NULL);
+	PG_RETURN_VOID();
 }
 
 /*

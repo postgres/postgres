@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.5 2000/06/13 07:35:23 tgl Exp $
+ * $Id: fmgr.h,v 1.6 2000/06/14 05:24:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,9 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
 /* To return a NULL do this: */
 #define PG_RETURN_NULL()  \
 	do { fcinfo->isnull = true; return (Datum) 0; } while (0)
+
+/* A few internal functions return void (which is not the same as NULL!) */
+#define PG_RETURN_VOID()     return (Datum) 0
 
 /* Macros for returning results of standard types */
 

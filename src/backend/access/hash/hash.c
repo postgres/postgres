@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.38 2000/06/13 07:34:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.39 2000/06/14 05:24:35 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -266,7 +266,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	/* all done */
 	BuildingHash = false;
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 /*
@@ -396,7 +396,7 @@ hashrescan(PG_FUNCTION_ARGS)
 				scan->numberOfKeys * sizeof(ScanKeyData));
 	}
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 /*
@@ -433,7 +433,7 @@ hashendscan(PG_FUNCTION_ARGS)
 	/* be tidy */
 	pfree(scan->opaque);
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 /*
@@ -466,7 +466,7 @@ hashmarkpos(PG_FUNCTION_ARGS)
 		scan->currentMarkData = scan->currentItemData;
 	}
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 /*
@@ -499,7 +499,7 @@ hashrestrpos(PG_FUNCTION_ARGS)
 		scan->currentItemData = scan->currentMarkData;
 	}
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 /* stubs */
@@ -515,5 +515,5 @@ hashdelete(PG_FUNCTION_ARGS)
 	/* delete the data from the page */
 	_hash_pagedel(rel, tid);
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }

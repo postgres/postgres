@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.26 2000/06/13 07:34:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.27 2000/06/14 05:24:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,7 @@
 #include "utils/builtins.h"
 
 
-BOX
-		   *
+BOX *
 rt_box_union(BOX *a, BOX *b)
 {
 	BOX		   *n;
@@ -123,7 +122,7 @@ rt_poly_size(PG_FUNCTION_ARGS)
 		*size = (float) (xdim * ydim);
 	}
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 POLYGON    *

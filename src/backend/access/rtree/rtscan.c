@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.33 2000/06/13 07:34:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.34 2000/06/14 05:24:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ rtrescan(PG_FUNCTION_ARGS)
 		}
 	}
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -192,7 +192,7 @@ rtmarkpos(PG_FUNCTION_ARGS)
 	freestack(p->s_markstk);
 	p->s_markstk = o;
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -228,7 +228,7 @@ rtrestrpos(PG_FUNCTION_ARGS)
 	freestack(p->s_stack);
 	p->s_stack = o;
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -249,7 +249,7 @@ rtendscan(PG_FUNCTION_ARGS)
 	rtdropscan(s);
 	/* XXX don't unset read lock -- two-phase locking */
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 static void

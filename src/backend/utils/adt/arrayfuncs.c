@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.57 2000/06/13 07:35:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.58 2000/06/14 05:24:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,7 @@ array_in(PG_FUNCTION_ARGS)
 		retval = (ArrayType *) palloc(sizeof(ArrayType));
 		MemSet(retval, 0, sizeof(ArrayType));
 		*(int32 *) retval = sizeof(ArrayType);
-		return PointerGetDatum(retval);
+		PG_RETURN_POINTER(retval);
 	}
 
 	if (*p == '{')
@@ -238,7 +238,7 @@ array_in(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 	pfree(string_save);
-	return PointerGetDatum(retval);
+	PG_RETURN_POINTER(retval);
 }
 
 /*-----------------------------------------------------------------------------
@@ -621,9 +621,6 @@ array_out(PG_FUNCTION_ARGS)
 				indx[MAXDIM];
 	int			ndim,
 			   *dim;
-
-	if (v == (ArrayType *) NULL)
-		PG_RETURN_CSTRING((char *) NULL);
 
 	if (ARR_IS_LO(v) == true)
 	{

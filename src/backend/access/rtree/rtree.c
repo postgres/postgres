@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.48 2000/06/13 07:34:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.49 2000/06/14 05:24:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,7 @@ rtbuild(PG_FUNCTION_ARGS)
 	pfree(nulls);
 	pfree(d);
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 /*
@@ -1025,7 +1025,7 @@ rtdelete(PG_FUNCTION_ARGS)
 
 	WriteBuffer(buf);
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 static void

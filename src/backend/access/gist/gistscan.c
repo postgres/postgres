@@ -154,7 +154,7 @@ gistrescan(PG_FUNCTION_ARGS)
 			}
 	}
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -190,7 +190,7 @@ gistmarkpos(PG_FUNCTION_ARGS)
 	gistfreestack(p->s_markstk);
 	p->s_markstk = o;
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -226,7 +226,7 @@ gistrestrpos(PG_FUNCTION_ARGS)
 	gistfreestack(p->s_stack);
 	p->s_stack = o;
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -247,7 +247,7 @@ gistendscan(PG_FUNCTION_ARGS)
 	gistdropscan(s);
 	/* XXX don't unset read lock -- two-phase locking */
 
-	PG_RETURN_POINTER(NULL);	/* no real return value */
+	PG_RETURN_VOID();
 }
 
 static void
