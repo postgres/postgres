@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.31 2001/01/24 19:43:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.32 2001/02/16 00:03:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,6 +152,7 @@ find_join_rel(Query *root, Relids relids)
  *
  * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
  *		joined
+ * 'jointype': type of join (inner/outer)
  * 'restrictlist_ptr': result variable.  If not NULL, *restrictlist_ptr
  *		receives the list of RestrictInfo nodes that apply to this
  *		particular pair of joinable relations.
@@ -163,6 +164,7 @@ RelOptInfo *
 get_join_rel(Query *root,
 			 RelOptInfo *outer_rel,
 			 RelOptInfo *inner_rel,
+			 JoinType jointype,
 			 List **restrictlist_ptr)
 {
 	List	   *joinrelids;
@@ -252,7 +254,7 @@ get_join_rel(Query *root,
 	 * Set estimates of the joinrel's size.
 	 */
 	set_joinrel_size_estimates(root, joinrel, outer_rel, inner_rel,
-							   restrictlist);
+							   jointype, restrictlist);
 
 	/*
 	 * Add the joinrel to the query's joinrel list.

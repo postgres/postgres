@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.33 2001/01/24 19:43:26 momjian Exp $
+ * $Id: pathnode.h,v 1.34 2001/02/16 00:03:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,8 +66,10 @@ extern HashPath *create_hashjoin_path(RelOptInfo *joinrel,
  */
 extern RelOptInfo *get_base_rel(Query *root, int relid);
 extern RelOptInfo *make_base_rel(Query *root, int relid);
-extern RelOptInfo *get_join_rel(Query *root, RelOptInfo *outer_rel,
-			 RelOptInfo *inner_rel,
-			 List **restrictlist_ptr);
+extern RelOptInfo *get_join_rel(Query *root,
+								RelOptInfo *outer_rel,
+								RelOptInfo *inner_rel,
+								JoinType jointype,
+								List **restrictlist_ptr);
 
 #endif	 /* PATHNODE_H */
