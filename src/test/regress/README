@@ -11,8 +11,11 @@ Introduction
   functional units and should be easier to run and easier to interpret.
 
   Some properly installed and fully functional PostgreSQL installations
-  can fail these regression tests due to artifacts of the genetic optimizer.
-  See the v6.1-specific release notes in this document for further details.
+  can fail these regression tests due to artifacts of floating point
+  representation and time zone support. The current tests are evaluated
+  using a simple "diff" algorithm, and are sensitive to small system
+  differences. For apparently failed tests, examining the differences
+  may reveal that the differences are not significant.
 
 Preparation
 
@@ -58,17 +61,17 @@ Running the regression test
 
         make all runtest
 
-  Normally, the regression test should be run as the pg_superuser as the
-  'src/test/regress' directory and sub-directories are owned by the
+  Normally, the regression test should be run as the pg_superuser since
+  the 'src/test/regress' directory and sub-directories are owned by the
   pg_superuser. If you run the regression test as another user the
   'src/test/regress' directory tree should be writeable to that user.
 
 Comparing expected/actual output
 
-  The results are in the files in the ./results directory. These
-  results can be compared with results in the ./expected directory
-  using 'diff'. The files might not compare exactly. The following
-  paragraphs attempt to explain the differences.
+  The results are in files in the ./results directory. These results
+  can be compared with results in the ./expected directory using 'diff'.
+  The files might not compare exactly. The following paragraphs attempt
+  to explain the differences.
 
 OID differences
 
@@ -94,6 +97,9 @@ DATE/TIME differences
   most of the date and time results will reflect your local time zone and
   will fail the regression testing.
 
+  There appear to be some systems which do not accept the same syntax for
+  setting the local time zone.
+
 FLOATING POINT differences
 
   Some of the tests involve computing 64-bit (FLOAT8) number from table
@@ -106,6 +112,9 @@ FLOATING POINT differences
   Human eyeball comparison is needed to determine the real significance
   of these differences which are usually 10 places to the right of
   the decimal point.
+
+  Some systems signal errors from pow() and exp() differently from
+  the mechanism expected by the current Postgres code.
 
 POLYGON differences
 
@@ -184,6 +193,17 @@ Current release notes (Thomas.Lockhart@jpl.nasa.gov)
   to differences in implementations of pow() and exp() and the signaling
   mechanisms used for overflow and underflow conditions.
 
-  The "random" results in the random test do not seem to produce random
-  results on my test machine (Linux/gcc/i686).
+  The "random" results in the random test should cause the "random" test
+  to be "failed", since the regression tests are evaluated using a simple
+  diff. However, "random" does not seem to produce random results on my 
+  test machine (Linux/gcc/i686).
 
+Sample timing results
+
+  Timing under Linux 2.0.27 seems to have a roughly 5% variation from run
+  to run, presumably due to the timing vagaries of multitasking systems.
+
+  Time   System
+  06:12  Pentium Pro 180, 32MB, Linux 2.0.27, gcc 2.7.2 -O2 -m486
+  12:06  P-100, 48MB, Linux 2.0.29, gcc
+  39:58  Sparc IPC 32MB, Solaris 2.5, gcc 2.7.2.1 -O -g
