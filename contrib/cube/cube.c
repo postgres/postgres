@@ -73,11 +73,11 @@ bool		cube_right(NDBOX * a, NDBOX * b);
 bool		cube_lt(NDBOX * a, NDBOX * b);
 bool		cube_gt(NDBOX * a, NDBOX * b);
 double	   *cube_distance(NDBOX * a, NDBOX * b);
-int			cube_dim(NDBOX * a);
-double	   *cube_ll_coord(NDBOX * a, int n);
-double	   *cube_ur_coord(NDBOX * a, int n);
+int4			cube_dim(NDBOX * a);
+double	   *cube_ll_coord(NDBOX * a, int4 n);
+double	   *cube_ur_coord(NDBOX * a, int4 n);
 bool		cube_is_point(NDBOX * a);
-NDBOX	   *cube_enlarge(NDBOX * a, double *r, int n);
+NDBOX	   *cube_enlarge(NDBOX * a, double *r, int4 n);
 
 
 /*
@@ -1139,7 +1139,7 @@ cube_is_point(NDBOX * a)
 }
 
 /* Return dimensions in use in the data structure */
-int
+int4
 cube_dim(NDBOX * a)
 {
 	/* Other things will break before unsigned int doesn't fit. */
@@ -1148,7 +1148,7 @@ cube_dim(NDBOX * a)
 
 /* Return a specific normalized LL coordinate */
 double *
-cube_ll_coord(NDBOX * a, int n)
+cube_ll_coord(NDBOX * a, int4 n)
 {
 	double	   *result;
 
@@ -1161,7 +1161,7 @@ cube_ll_coord(NDBOX * a, int n)
 
 /* Return a specific normalized UR coordinate */
 double *
-cube_ur_coord(NDBOX * a, int n)
+cube_ur_coord(NDBOX * a, int4 n)
 {
 	double	   *result;
 
@@ -1174,14 +1174,16 @@ cube_ur_coord(NDBOX * a, int n)
 
 /* Increase or decrease box size by a radius in at least n dimensions. */
 NDBOX *
-cube_enlarge(NDBOX * a, double *r, int n)
+cube_enlarge(NDBOX * a, double *r, int4 n)
 {
 	NDBOX	   *result;
 	int			dim = 0;
 	int			size;
 	int			i,
-				j;
+				j,
+				k;
 
+	if (n > CUBE_MAX_DIM) n = CUBE_MAX_DIM;
 	if (*r > 0 && n > 0)
 		dim = n;
 	if (a->dim > dim)
@@ -1191,17 +1193,17 @@ cube_enlarge(NDBOX * a, double *r, int n)
 	memset(result, 0, size);
 	result->size = size;
 	result->dim = dim;
-	for (i = 0, j = dim; i < a->dim; i++, j++)
+	for (i = 0, j = dim, k = a->dim; i < a->dim; i++, j++, k++)
 	{
-		if (a->x[i] >= a->x[j])
+		if (a->x[i] >= a->x[k])
 		{
-			result->x[i] = a->x[j] - *r;
+			result->x[i] = a->x[k] - *r;
 			result->x[j] = a->x[i] + *r;
 		}
 		else
 		{
 			result->x[i] = a->x[i] - *r;
-			result->x[j] = a->x[j] + *r;
+			result->x[j] = a->x[k] + *r;
 		}
 		if (result->x[i] > result->x[j])
 		{

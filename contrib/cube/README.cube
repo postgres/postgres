@@ -42,7 +42,7 @@ For this to work, make sure that:
   postgres binaries in the PATH.
 
 This only installs the type implementation and documentation.  To make the
-type available in any particular database, do
+type available in any particular database, as a postgres superuser do:
 
 	psql -d databasename < cube.sql
 
@@ -57,6 +57,7 @@ If it fails, examine the file regression.diffs to find out the reason (the
 test code is a direct adaptation of the regression tests from the main
 source tree).
 
+By default the external functions are made executable by anyone.
 
 SYNTAX
 ======
@@ -289,7 +290,9 @@ cube_enlarge(cube, double, int) returns cube
   LL coordinates are decreased by r and UR coordinates are increased by r. If
   a LL coordinate is increased to larger than the corresponding UR coordinate
   (this can only happen when r < 0) than both coordinates are set to their
-  average.
+  average. To make it harder for people to break things there is an effective
+  maximum on the dimension of cubes of 100. This is set in cubedata.h if
+  you need something bigger.
 
 There are a few other potentially useful functions defined in cube.c 
 that vanished from the schema because I stopped using them. Some of 
@@ -329,7 +332,7 @@ selkovjr@mcs.anl.gov
 ------------------------------------------------------------------------
 
 Minor updates to this package were made by Bruno Wolff III <bruno@wolff.to>
-in August of 2002.
+in August/September of 2002.
 
 These include changing the precision from single precision to double
 precision and adding some new functions.

@@ -26,7 +26,7 @@ int cube_yyparse(void *result);
 
 static int delim_count(char *s, char delim);
 static NDBOX * write_box(unsigned int dim, char *str1, char *str2);
-static NDBOX * write_point_as_box(char *s);
+static NDBOX * write_point_as_box(char *s, int dim);
 
 %}
 
@@ -59,6 +59,11 @@ box:
 	      elog(ERROR, "(1) bad cube representation; different point dimensions in (%s) and (%s)\n", $2, $4);
 	      YYABORT;
 	    }
+	    if (dim > CUBE_MAX_DIM) {
+              reset_parse_buffer();
+              elog(ERROR, "(8) bad cube representation; more than %d dimensions\n", CUBE_MAX_DIM);
+              YYABORT;
+            }
 	    
 	    *((void **)result) = write_box( dim, $2, $4 );
     
@@ -82,12 +87,18 @@ box:
 	      elog(ERROR, "(3) bad cube representation; different point dimensions in (%s) and (%s)\n", $1, $3);
 	      YYABORT;
 	    }
+	    if (dim > CUBE_MAX_DIM) {
+              reset_parse_buffer();
+              elog(ERROR, "(8) bad cube representation; more than %d dimensions\n", CUBE_MAX_DIM);
+              YYABORT;
+            }
 	    
 	    *((void **)result) = write_box( dim, $1, $3 );
           }
       |
 
           paren_list {
+            int dim;
 	    int c = parse_buffer_curr_char();
 	    int pos = parse_buffer_pos();
 
@@ -104,12 +115,20 @@ box:
 	      YYABORT;
 	    }
 
-	    *((void **)result) = write_point_as_box($1);
+            dim = delim_count($1, ',') + 1;
+	    if (dim > CUBE_MAX_DIM) {
+              reset_parse_buffer();
+              elog(ERROR, "(8) bad cube representation; more than %d dimensions\n", CUBE_MAX_DIM);
+              YYABORT;
+            }
+
+	    *((void **)result) = write_point_as_box($1, dim);
           }
 
       |
 
           list {
+            int dim;
 	    int c = parse_buffer_curr_char();
 	    int pos = parse_buffer_pos();
 
@@ -126,7 +145,13 @@ box:
 	      YYABORT;
 	    }
 
-	    *((void **)result) = write_point_as_box($1);
+            dim = delim_count($1, ',') + 1;
+	    if (dim > CUBE_MAX_DIM) {
+              reset_parse_buffer();
+              elog(ERROR, "(8) bad cube representation; more than %d dimensions\n", CUBE_MAX_DIM);
+              YYABORT;
+            }
+	    *((void **)result) = write_point_as_box($1, dim);
           }
       ;
 
@@ -224,12 +249,11 @@ write_box(unsigned int dim, char *str1, char *str2)
 }
 
 
-static NDBOX * write_point_as_box(char *str)
+static NDBOX * write_point_as_box(char *str, int dim)
 {
   NDBOX * bp;
   int i, size;
   double x;
-  int dim = delim_count(str, ',') + 1;
   char * s = str;
   
   size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;

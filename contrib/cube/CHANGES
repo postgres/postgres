@@ -1,4 +1,4 @@
-Changes that were made in August 2002.
+Changes that were made in August/September 2002 by Bruno Wolff III.
 
 Note that this was based on a 7.3 development version and changes may not
 directly work with earlier versions.
@@ -6,9 +6,6 @@ directly work with earlier versions.
 I fixed a bug in cubescan.pl that prevented signed numbers with no digits
 before a decimal point from being accepted. This was submitted as a separate
 patch and may already be applied.
-
-I reported but did not fix a potential buffer overrun problem in cube_yyerror
-in cubeparse.y.
 
 cube_inter should really return NULL if the two cubes don't overlap. However
 this requires changing to the new calling sequence and I don't know enough
@@ -42,7 +39,9 @@ larger or smaller coordinate as needed, since swap_corners was doing the
 same thing with the overhead of a function call and memory allocation.
 
 I added memset calls to zero out newly allocated NDBOXes as the documentation
-on functions indicates should be done.
+on functions indicates should be done. This still doesn't allow a hash
+index for equality since there are multiple representations of the
+same cube.
 
 I got rid of a call to cube_same in cube_lt and cube_gt since the test
 was redundant with other checks being made. The call to cube_same would
@@ -93,5 +92,15 @@ I added regression tests for the new functions.
 
 I added documentation for cube_distance and the new functions to README.cube
 as well as making a few other minor changes.
+
+I changed create function to create or replace function in the install
+script.
+
+I limited the number of dimensions allowed in cube_enlarge and cube_in
+to 100 to make it harder for people to mess up the database. The constant
+is defined in cubedata.h and can be increased if you need something larger.
+
+I added grant statements to the install script to make the functions
+executable to everyone.
 
 Bruno Wolff III <bruno@wolff.to>
