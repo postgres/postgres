@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/man/Attic/Makefile,v 1.1 1996/11/19 22:22:15 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/man/Attic/Makefile,v 1.2 1996/11/20 01:54:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,4 +26,7 @@ install-man:
 install:: install-man
 
 clean:
+	# do nothing
+
+all:
 	# do nothing
