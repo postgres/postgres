@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.153 2000/05/29 15:48:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.154 2000/05/29 16:06:37 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -563,6 +563,8 @@ analyze_rel(Oid relid, List *va_cols)
 		return;
 	}
 #endif
+
+	elog(MESSAGE_LEVEL, "Analyzing %s...", RelationGetRelationName(onerel));
 
 	attr_cnt = onerel->rd_att->natts;
 	attr = onerel->rd_att->attrs;
