@@ -7,11 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.c,v 1.2 1996/07/30 07:47:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.c,v 1.3 1996/11/11 05:55:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+
+#include "rlstubs.h"
 
 char *
 readline(char *prompt)
@@ -23,19 +25,19 @@ readline(char *prompt)
 }
 
 int
-write_history()
+write_history(char *dum)
 {
     return 0;
 }
 
 int
-using_history()
+using_history(void)
 {
     return 0;
 }
 
 int
-add_history()
+add_history(char *dum)
 {
     return 0;
 }

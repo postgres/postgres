@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.27 1996/11/10 03:04:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.28 1996/11/11 05:55:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 #include "psqlHelp.h"
 
 #ifdef NOREADLINE
-extern char *readline(char *);  /* in rlstubs.c */
+#include "rlstubs.h"
 #else
 /* from the GNU readline library */
 #ifdef OLD_READLINE
