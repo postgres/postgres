@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Dec 27 00:44:44 EST 2000
+Last updated:		Tue Jan  2 21:23:11 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -308,6 +308,7 @@ SOURCE CODE
 * -Use macros to define NT open() file parameters, remove NT-specific defines
 * -Change CURRENT to OLD internally for rules (Bruce)
 * replace the use of fprint(stderr, ...) with elog() in backend code
+* Allow libedit to be used in place of libreadline
 
 ---------------------------------------------------------------------------
 
