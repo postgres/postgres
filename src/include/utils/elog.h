@@ -7,12 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.18 2000/06/04 15:06:34 petere Exp $
+ * $Id: elog.h,v 1.19 2000/12/03 10:27:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ELOG_H
 #define ELOG_H
+
+#include "miscadmin.h"
 
 #define NOTICE	0				/* random info - no special action */
 #define ERROR	(-1)			/* user error - return to known state */
@@ -26,6 +28,25 @@
 #ifdef ENABLE_SYSLOG
 extern int Use_syslog;
 #endif
+
+/*
+ * If StopIfError > 0 signal handlers don't do
+ * elog(ERROR|FATAL) but remember what action was
+ * required with QueryCancel & ExitAfterAbort
+ */
+extern bool	ExitAfterAbort;
+#define	START_CRIT_CODE		StopIfError++
+#define END_CRIT_CODE		\
+	if (!StopIfError)\
+		elog(STOP, "Not in critical section");\
+	StopIfError--;\
+	if (!StopIfError && QueryCancel)\
+	{\
+		if (ExitAfterAbort)\
+			elog(FATAL, "The system is shutting down");\
+		else\
+			elog(ERROR, "Query was cancelled.");\
+	}
 
 extern bool Log_timestamp;
 extern bool Log_pid;

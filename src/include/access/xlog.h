@@ -3,7 +3,7 @@
  *
  * PostgreSQL transaction log manager
  *
- * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.12 2000/11/30 01:47:32 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.13 2000/12/03 10:27:28 vadim Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -88,6 +88,7 @@ typedef XLogPageHeaderData *XLogPageHeader;
 extern	StartUpID	ThisStartUpID;	/* current SUI */
 extern	bool		InRecovery;
 extern	XLogRecPtr	MyLastRecPtr;
+extern	uint32		StopIfError;
 
 typedef struct RmgrData
 {

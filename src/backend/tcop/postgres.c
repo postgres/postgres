@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.193 2000/11/30 01:27:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.194 2000/12/03 10:27:27 vadim Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -921,6 +921,11 @@ finish_xact_command(void)
 void
 handle_warn(SIGNAL_ARGS)
 {
+	if (StopIfError)
+	{
+		QueryCancel = true;
+		return;
+	}
 	siglongjmp(Warn_restart, 1);
 }
 
@@ -953,14 +958,14 @@ die(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
 
-	/*
-	 * If ERROR/FATAL is in progress...
-	 */
-	if (InError)
+	ExitAfterAbort = true;
+	if (StopIfError)
 	{
-		ExitAfterAbort = true;
+		QueryCancel = true;
 		return;
 	}
+	if (InError)	/* If ERROR/FATAL is in progress... */
+		return;
 	elog(FATAL, "The system is shutting down");
 }
 
@@ -1631,7 +1636,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.193 $ $Date: 2000/11/30 01:27:19 $\n");
+		puts("$Revision: 1.194 $ $Date: 2000/12/03 10:27:27 $\n");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.69 2000/11/30 08:46:21 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.70 2000/12/03 10:27:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -772,6 +772,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * NO ELOG(ERROR) till right sibling is updated.
 	 *
 	 */
+	START_CRIT_CODE;
 	{
 		char				xlbuf[sizeof(xl_btree_split) + 
 			sizeof(CommandId) + sizeof(RelFileNode) + BLCKSZ];
@@ -870,6 +871,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		/* write and release the old right sibling */
 		_bt_wrtbuf(rel, sbuf);
 	}
+	END_CRIT_CODE;
 
 	/* split's done */
 	return rbuf;
@@ -1162,6 +1164,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE,BT_WRITE);
 
 	/* NO ELOG(ERROR) from here till newroot op is logged */
+	START_CRIT_CODE;
 
 	/* set btree special data */
 	rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
@@ -1248,6 +1251,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 		_bt_wrtbuf(rel, metabuf);
 	}
+	END_CRIT_CODE;
 
 	/* write and let go of the new root buffer */
 	_bt_wrtbuf(rel, rootbuf);

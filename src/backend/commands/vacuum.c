@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.175 2000/12/02 19:38:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.176 2000/12/03 10:27:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1418,6 +1418,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					Cpage = BufferGetPage(Cbuf);
 
 					/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
+					START_CRIT_CODE;
 
 					Citemid = PageGetItemId(Cpage,
 							ItemPointerGetOffsetNumber(&(tuple.t_self)));
@@ -1501,6 +1502,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						PageSetLSN(ToPage, recptr);
 						PageSetSUI(ToPage, ThisStartUpID);
 					}
+					END_CRIT_CODE;
 
 					if (((int) destvacpage->blkno) > last_move_dest_block)
 						last_move_dest_block = destvacpage->blkno;
@@ -1624,12 +1626,15 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
 			newtup.t_data->t_infomask |= HEAP_MOVED_IN;
 
+			/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
+			START_CRIT_CODE;
+
 			/* add tuple to the page */
 			newoff = PageAddItem(ToPage, (Item) newtup.t_data, tuple_len,
 								 InvalidOffsetNumber, LP_USED);
 			if (newoff == InvalidOffsetNumber)
 			{
-				elog(ERROR, "\
+				elog(STOP, "\
 failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
 					 (unsigned long)tuple_len, cur_page->blkno, (unsigned long)cur_page->free,
 				 cur_page->offsets_used, cur_page->offsets_free);
@@ -1659,6 +1664,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 				PageSetLSN(ToPage, recptr);
 				PageSetSUI(ToPage, ThisStartUpID);
 			}
+			END_CRIT_CODE;
 
 			cur_page->offsets_used++;
 			num_moved++;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.38 2000/11/30 08:46:22 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.39 2000/12/03 10:27:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 
 int			XLOGbuffers = 8;
 XLogRecPtr	MyLastRecPtr = {0, 0};
-bool		StopIfError = false;
+uint32		StopIfError = 0;
 bool		InRecovery = false;
 StartUpID	ThisStartUpID = 0;
 
@@ -270,6 +270,8 @@ XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 
 		return (RecPtr);
 	}
 
+	START_CRIT_CODE;
+
 	/* obtain xlog insert lock */
 	if (TAS(&(XLogCtl->insert_lck)))	/* busy */
 	{
@@ -496,6 +498,7 @@ nbuf:
 		}
 	}
 
+	END_CRIT_CODE;
 	return (RecPtr);
 }
 
@@ -523,6 +526,9 @@ XLogFlush(XLogRecPtr record)
 		return;
 	if (XLByteLE(record, LgwrResult.Flush))
 		return;
+
+	START_CRIT_CODE;
+
 	WriteRqst = LgwrRqst.Write;
 	for (;;)
 	{
@@ -533,6 +539,7 @@ XLogFlush(XLogRecPtr record)
 			if (XLByteLE(record, LgwrResult.Flush))
 			{
 				S_UNLOCK(&(XLogCtl->info_lck));
+				END_CRIT_CODE;
 				return;
 			}
 			if (XLByteLT(XLogCtl->LgwrRqst.Flush, record))
@@ -578,6 +585,7 @@ XLogFlush(XLogRecPtr record)
 				if (XLByteLE(record, LgwrResult.Flush))
 				{
 					S_UNLOCK(&(XLogCtl->lgwr_lck));
+					END_CRIT_CODE;
 					return;
 				}
 				if (XLByteLT(LgwrResult.Write, WriteRqst))
@@ -587,6 +595,7 @@ XLogFlush(XLogRecPtr record)
 					S_UNLOCK(&(XLogCtl->lgwr_lck));
 					if (XLByteLT(LgwrResult.Flush, record))
 						elog(STOP, "XLogFlush: request is not satisfied");
+					END_CRIT_CODE;
 					return;
 				}
 				break;
@@ -632,6 +641,8 @@ XLogFlush(XLogRecPtr record)
 	XLogCtl->Write.LgwrResult = LgwrResult;
 
 	S_UNLOCK(&(XLogCtl->lgwr_lck));
+
+	END_CRIT_CODE;
 	return;
 
 }
@@ -1519,9 +1530,9 @@ StartupXLOG()
 				LastRec;
 	XLogRecord *record;
 	char		buffer[MAXLOGRECSZ + SizeOfXLogRecord];
-	bool		sie_saved = false;
 
 	elog(LOG, "starting up");
+	StopIfError++;
 
 	XLogCtl->xlblocks = (XLogRecPtr *) (((char *) XLogCtl) + sizeof(XLogCtlData));
 	XLogCtl->pages = ((char *) XLogCtl->xlblocks + sizeof(XLogRecPtr) * XLOGbuffers);
@@ -1628,9 +1639,6 @@ StartupXLOG()
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
 
-		sie_saved = StopIfError;
-		StopIfError = true;
-
 		XLogOpenLogRelation();	/* open pg_log */
 		XLogInitRelationCache();
 
@@ -1729,7 +1737,6 @@ StartupXLOG()
 	if (InRecovery)
 	{
 		CreateCheckPoint(true);
-		StopIfError = sie_saved;
 		XLogCloseRelationCache();
 	}
 	InRecovery = false;
@@ -1742,6 +1749,7 @@ StartupXLOG()
 	XLogCtl->ThisStartUpID = ThisStartUpID;
 
 	elog(LOG, "database system is in production state");
+	StopIfError--;
 
 	return;
 }
@@ -1764,8 +1772,10 @@ ShutdownXLOG()
 {
 	elog(LOG, "shutting down");
 
+	StopIfError++;
 	CreateDummyCaches();
 	CreateCheckPoint(true);
+	StopIfError--;
 
 	elog(LOG, "database system is shut down");
 }
@@ -1787,6 +1797,7 @@ CreateCheckPoint(bool shutdown)
 	if (MyLastRecPtr.xrecoff != 0)
 		elog(ERROR, "CreateCheckPoint: cannot be called inside transaction block");
  
+	START_CRIT_CODE;
 	while (TAS(&(XLogCtl->chkp_lck)))
 	{
 		struct timeval delay = {2, 0};
@@ -1917,6 +1928,7 @@ CreateCheckPoint(bool shutdown)
 	S_UNLOCK(&(XLogCtl->chkp_lck));
 
 	MyLastRecPtr.xrecoff = 0;	/* to avoid commit record */
+	END_CRIT_CODE;
 
 	return;
 }

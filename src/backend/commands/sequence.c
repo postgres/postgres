@@ -295,6 +295,7 @@ nextval(PG_FUNCTION_ARGS)
 	elm->last = result;			/* last returned number */
 	elm->cached = last;			/* last fetched number */
 
+	START_CRIT_CODE;
 	if (logit)
 	{
 		xl_seq_rec	xlrec;
@@ -318,6 +319,7 @@ nextval(PG_FUNCTION_ARGS)
 	Assert(log >= 0);
 	seq->log_cnt = log;			/* how much is logged */
 	seq->is_called = 't';
+	END_CRIT_CODE;
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
@@ -386,6 +388,7 @@ do_setval(char *seqname, int32 next, bool iscalled)
 	elm->cached = next;			/* last cached number */
 
 	/* save info in sequence relation */
+	START_CRIT_CODE;
 	seq->last_value = next;		/* last fetched number */
 	seq->is_called = iscalled ? 't' : 'f';
 	seq->log_cnt = (iscalled) ? 0 : 1;
@@ -403,6 +406,7 @@ do_setval(char *seqname, int32 next, bool iscalled)
 		PageSetLSN(BufferGetPage(buf), recptr);
 		PageSetSUI(BufferGetPage(buf), ThisStartUpID);
 	}
+	END_CRIT_CODE;
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.70 2000/12/01 19:52:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.71 2000/12/03 10:27:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "commands/copy.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#include "miscadmin.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
@@ -159,6 +158,8 @@ elog(int lev, const char *fmt, ...)
 		/* this is probably redundant... */
 		if (IsInitProcessingMode())
 			lev = FATAL;
+		if (StopIfError)
+			lev = STOP;
 	}
 
 	/* choose message prefix and indent level */
