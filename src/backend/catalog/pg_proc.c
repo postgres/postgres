@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.84 2002/08/04 20:00:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.85 2002/08/04 23:49:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,7 +318,7 @@ ProcedureCreate(const char *procedureName,
  * type he claims.
  */
 static void
-checkretval(Oid rettype, char fn_typtype /* XXX FIX ME */, List *queryTreeList)
+checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 {
 	Query	   *parse;
 	int			cmd;
