@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.226 2002/05/24 18:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.227 2002/06/13 19:52:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,6 @@ static TransactionId initialFreezeLimit;
 
 
 /* non-export function prototypes */
-static void vacuum_init(VacuumStmt *vacstmt);
-static void vacuum_shutdown(VacuumStmt *vacstmt);
 static List *getrels(const RangeVar *vacrel, const char *stmttype);
 static void vac_update_dbstats(Oid dbid,
 				   TransactionId vacuumXID,
@@ -160,6 +158,8 @@ static bool enough_space(VacPage vacpage, Size len);
 void
 vacuum(VacuumStmt *vacstmt)
 {
+	MemoryContext anl_context,
+				  old_context;
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
 	List	   *vrl,
 			   *cur;
@@ -178,13 +178,13 @@ vacuum(VacuumStmt *vacstmt)
 	 * user's transaction too, which would certainly not be the desired
 	 * behavior.
 	 */
-	if (IsTransactionBlock())
+	if (vacstmt->vacuum && IsTransactionBlock())
 		elog(ERROR, "%s cannot run inside a BEGIN/END block", stmttype);
 
 	/* Running VACUUM from a function would free the function context */
-	if (!MemoryContextContains(QueryContext, vacstmt))
+	if (vacstmt->vacuum && !MemoryContextContains(QueryContext, vacstmt))
 		elog(ERROR, "%s cannot be executed from a function", stmttype);
-                        
+
 	/*
 	 * Send info about dead objects to the statistics collector
 	 */
@@ -203,13 +203,62 @@ vacuum(VacuumStmt *vacstmt)
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 
+	if (vacstmt->analyze && !vacstmt->vacuum)
+		anl_context = AllocSetContextCreate(QueryContext,
+											"Analyze",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+
 	/* Build list of relations to process (note this lives in vac_context) */
 	vrl = getrels(vacstmt->relation, stmttype);
 
 	/*
-	 * Start up the vacuum cleaner.
+	 *		Formerly, there was code here to prevent more than one VACUUM from
+	 *		executing concurrently in the same database.  However, there's no
+	 *		good reason to prevent that, and manually removing lockfiles after
+	 *		a vacuum crash was a pain for dbadmins.  So, forget about lockfiles,
+	 *		and just rely on the locks we grab on each target table
+	 *		to ensure that there aren't two VACUUMs running on the same table
+	 *		at the same time.
+	 *
+	 *		The strangeness with committing and starting transactions in the
+	 *		init and shutdown routines is due to the fact that the vacuum cleaner
+	 *		is invoked via an SQL command, and so is already executing inside
+	 *		a transaction.	We need to leave ourselves in a predictable state
+	 *		on entry and exit to the vacuum cleaner.  We commit the transaction
+	 *		started in PostgresMain() inside vacuum_init(), and start one in
+	 *		vacuum_shutdown() to match the commit waiting for us back in
+	 *		PostgresMain().
 	 */
-	vacuum_init(vacstmt);
+	if (vacstmt->vacuum)
+	{
+		if (vacstmt->relation == NULL)
+		{
+			/*
+			 * Compute the initially applicable OldestXmin and FreezeLimit
+			 * XIDs, so that we can record these values at the end of the
+			 * VACUUM. Note that individual tables may well be processed with
+			 * newer values, but we can guarantee that no (non-shared)
+			 * relations are processed with older ones.
+			 *
+			 * It is okay to record non-shared values in pg_database, even though
+			 * we may vacuum shared relations with older cutoffs, because only
+			 * the minimum of the values present in pg_database matters.  We
+			 * can be sure that shared relations have at some time been
+			 * vacuumed with cutoffs no worse than the global minimum; for, if
+			 * there is a backend in some other DB with xmin = OLDXMIN that's
+			 * determining the cutoff with which we vacuum shared relations,
+			 * it is not possible for that database to have a cutoff newer
+			 * than OLDXMIN recorded in pg_database.
+			 */
+			vacuum_set_xid_limits(vacstmt, false,
+								  &initialOldestXmin, &initialFreezeLimit);
+		}
+
+		/* matches the StartTransaction in PostgresMain() */
+		CommitTransactionCommand();
+	}
 
 	/*
 	 * Process each selected relation.	We are careful to process each
@@ -225,81 +274,44 @@ vacuum(VacuumStmt *vacstmt)
 		if (vacstmt->vacuum)
 			vacuum_rel(relid, vacstmt, RELKIND_RELATION);
 		if (vacstmt->analyze)
+		{
+			/* If we vacuumed, use new transaction for analyze. */
+			if (vacstmt->vacuum)
+				StartTransactionCommand();
+			else
+				old_context = MemoryContextSwitchTo(anl_context);
+
 			analyze_rel(relid, vacstmt);
+
+			if (vacstmt->vacuum)
+				CommitTransactionCommand();
+			else
+			{
+				MemoryContextResetAndDeleteChildren(anl_context);
+				MemoryContextSwitchTo(old_context);
+			}
+		}
 	}
 
 	/* clean up */
-	vacuum_shutdown(vacstmt);
-}
-
-/*
- *	vacuum_init(), vacuum_shutdown() -- start up and shut down the vacuum cleaner.
- *
- *		Formerly, there was code here to prevent more than one VACUUM from
- *		executing concurrently in the same database.  However, there's no
- *		good reason to prevent that, and manually removing lockfiles after
- *		a vacuum crash was a pain for dbadmins.  So, forget about lockfiles,
- *		and just rely on the locks we grab on each target table
- *		to ensure that there aren't two VACUUMs running on the same table
- *		at the same time.
- *
- *		The strangeness with committing and starting transactions in the
- *		init and shutdown routines is due to the fact that the vacuum cleaner
- *		is invoked via an SQL command, and so is already executing inside
- *		a transaction.	We need to leave ourselves in a predictable state
- *		on entry and exit to the vacuum cleaner.  We commit the transaction
- *		started in PostgresMain() inside vacuum_init(), and start one in
- *		vacuum_shutdown() to match the commit waiting for us back in
- *		PostgresMain().
- */
-static void
-vacuum_init(VacuumStmt *vacstmt)
-{
-	if (vacstmt->vacuum && vacstmt->relation == NULL)
+	if (vacstmt->vacuum)
 	{
+		/* on entry, we are not in a transaction */
+
+		/* matches the CommitTransaction in PostgresMain() */
+		StartTransactionCommand();
+
 		/*
-		 * Compute the initially applicable OldestXmin and FreezeLimit
-		 * XIDs, so that we can record these values at the end of the
-		 * VACUUM. Note that individual tables may well be processed with
-		 * newer values, but we can guarantee that no (non-shared)
-		 * relations are processed with older ones.
-		 *
-		 * It is okay to record non-shared values in pg_database, even though
-		 * we may vacuum shared relations with older cutoffs, because only
-		 * the minimum of the values present in pg_database matters.  We
-		 * can be sure that shared relations have at some time been
-		 * vacuumed with cutoffs no worse than the global minimum; for, if
-		 * there is a backend in some other DB with xmin = OLDXMIN that's
-		 * determining the cutoff with which we vacuum shared relations,
-		 * it is not possible for that database to have a cutoff newer
-		 * than OLDXMIN recorded in pg_database.
+		 * If we did a database-wide VACUUM, update the database's pg_database
+		 * row with info about the transaction IDs used, and try to truncate
+		 * pg_clog.
 		 */
-		vacuum_set_xid_limits(vacstmt, false,
-							  &initialOldestXmin, &initialFreezeLimit);
-	}
-
-	/* matches the StartTransaction in PostgresMain() */
-	CommitTransactionCommand();
-}
-
-static void
-vacuum_shutdown(VacuumStmt *vacstmt)
-{
-	/* on entry, we are not in a transaction */
-
-	/* matches the CommitTransaction in PostgresMain() */
-	StartTransactionCommand();
-
-	/*
-	 * If we did a database-wide VACUUM, update the database's pg_database
-	 * row with info about the transaction IDs used, and try to truncate
-	 * pg_clog.
-	 */
-	if (vacstmt->vacuum && vacstmt->relation == NULL)
-	{
-		vac_update_dbstats(MyDatabaseId,
-						   initialOldestXmin, initialFreezeLimit);
-		vac_truncate_clog(initialOldestXmin, initialFreezeLimit);
+		if (vacstmt->relation == NULL)
+		{
+			vac_update_dbstats(MyDatabaseId,
+							   initialOldestXmin, initialFreezeLimit);
+			vac_truncate_clog(initialOldestXmin, initialFreezeLimit);
+		}
 	}
 
 	/*
@@ -309,6 +321,10 @@ vacuum_shutdown(VacuumStmt *vacstmt)
 	 */
 	MemoryContextDelete(vac_context);
 	vac_context = NULL;
+
+	if (vacstmt->analyze && !vacstmt->vacuum)
+		MemoryContextDelete(anl_context);
+
 }
 
 /*

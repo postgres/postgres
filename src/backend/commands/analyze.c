@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.35 2002/05/24 18:57:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.36 2002/06/13 19:52:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,15 +156,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		elevel = DEBUG1;
 
 	/*
-	 * Begin a transaction for analyzing this relation.
-	 *
-	 * Note: All memory allocated during ANALYZE will live in
-	 * TransactionCommandContext or a subcontext thereof, so it will all
-	 * be released by transaction commit at the end of this routine.
-	 */
-	StartTransactionCommand();
-
-	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
 	 * transaction, so xact.c doesn't issue useless WARNING.
 	 */
@@ -177,10 +168,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	if (!SearchSysCacheExists(RELOID,
 							  ObjectIdGetDatum(relid),
 							  0, 0, 0))
-	{
-		CommitTransactionCommand();
 		return;
-	}
 
 	/*
 	 * Open the class, getting only a read lock on it, and check
@@ -196,7 +184,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			elog(WARNING, "Skipping \"%s\" --- only table or database owner can ANALYZE it",
 				 RelationGetRelationName(onerel));
 		relation_close(onerel, AccessShareLock);
-		CommitTransactionCommand();
 		return;
 	}
 
@@ -211,7 +198,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			elog(WARNING, "Skipping \"%s\" --- can not process indexes, views or special system tables",
 				 RelationGetRelationName(onerel));
 		relation_close(onerel, AccessShareLock);
-		CommitTransactionCommand();
 		return;
 	}
 
@@ -222,7 +208,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		strcmp(RelationGetRelationName(onerel), StatisticRelationName) == 0)
 	{
 		relation_close(onerel, AccessShareLock);
-		CommitTransactionCommand();
 		return;
 	}
 
@@ -283,7 +268,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	if (attr_cnt <= 0)
 	{
 		relation_close(onerel, NoLock);
-		CommitTransactionCommand();
 		return;
 	}
 
@@ -370,9 +354,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * entries we made in pg_statistic.)
 	 */
 	relation_close(onerel, NoLock);
-
-	/* Commit and release working memory */
-	CommitTransactionCommand();
 }
 
 /*
