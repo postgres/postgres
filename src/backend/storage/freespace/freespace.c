@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.38 2005/03/12 05:21:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.39 2005/03/14 20:15:09 momjian Exp $
  *
  *
  * NOTES:
@@ -221,6 +221,8 @@ static HTAB *FreeSpaceMapRelHash;		/* points to (what used to be)
 										 * FSMHeader->relHash */
 
 
+static void CheckFreeSpaceMapStatistics(int elevel, int numRels,
+						double needed);
 static FSMRelation *lookup_fsm_rel(RelFileNode *rel);
 static FSMRelation *create_fsm_rel(RelFileNode *rel);
 static void delete_fsm_rel(FSMRelation *fsmrel);
@@ -711,16 +713,24 @@ PrintFreeSpaceMapStatistics(int elevel)
 			 errdetail("FSM size: %d relations + %d pages = %.0f kB shared memory.",
 					   MaxFSMRelations, MaxFSMPages,
 					   (double) FreeSpaceShmemSize() / 1024.0)));
-    
-	if (numRels == MaxFSMRelations)
-		ereport(NOTICE,
+
+	CheckFreeSpaceMapStatistics(NOTICE, numRels, needed);
+	/* Print to server logs too because is deals with a config variable. */
+	CheckFreeSpaceMapStatistics(LOG, numRels, needed);
+}
+	
+static void
+CheckFreeSpaceMapStatistics(int elevel, int numRels, double needed)
+{
+   	if (numRels == MaxFSMRelations)
+		ereport(elevel,
 			(errmsg("max_fsm_relations(%d) equals the number of relations checked",
 			 MaxFSMRelations),
 			 errhint("You have >= %d relations.\n"
 			 		 "Consider increasing the configuration parameter \"max_fsm_relations\".",
 					 numRels)));
 	else if (needed > MaxFSMPages)
-		ereport(NOTICE,
+		ereport(elevel,
 			(errmsg("the number of page slots needed (%.0f) exceeds max_fsm_pages (%d)",
 			 needed,MaxFSMPages),
 			 errhint("Consider increasing the configuration parameter \"max_fsm_relations\"\n"
