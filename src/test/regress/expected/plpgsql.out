@@ -973,7 +973,7 @@ QUERY: insert into PSlot values ('PS.1st.d6', 'PF1_1', '', 'WS.106.3b');
 QUERY: update PSlot set backlink = 'WS.001.1a' where slotname = 'PS.base.a1';
 QUERY: update PSlot set backlink = 'WS.001.1b' where slotname = 'PS.base.a3';
 QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
+slotname            |roomno  |slotlink            |backlink            
 --------------------+--------+--------------------+--------------------
 WS.001.1a           |001     |                    |PS.base.a1          
 WS.001.1b           |001     |                    |PS.base.a3          
@@ -984,7 +984,7 @@ WS.001.3b           |001     |                    |
 (6 rows)
 
 QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
+slotname            |pfname|slotlink            |backlink            
 --------------------+------+--------------------+--------------------
 PS.base.a1          |PF0_1 |                    |WS.001.1a           
 PS.base.a2          |PF0_1 |                    |                    
@@ -996,7 +996,7 @@ PS.base.a6          |PF0_1 |                    |
 
 QUERY: update PSlot set backlink = 'WS.001.2a' where slotname = 'PS.base.a3';
 QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
+slotname            |roomno  |slotlink            |backlink            
 --------------------+--------+--------------------+--------------------
 WS.001.1a           |001     |                    |PS.base.a1          
 WS.001.1b           |001     |                    |                    
@@ -1007,7 +1007,7 @@ WS.001.3b           |001     |                    |
 (6 rows)
 
 QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
+slotname            |pfname|slotlink            |backlink            
 --------------------+------+--------------------+--------------------
 PS.base.a1          |PF0_1 |                    |WS.001.1a           
 PS.base.a2          |PF0_1 |                    |                    
@@ -1019,7 +1019,7 @@ PS.base.a6          |PF0_1 |                    |
 
 QUERY: update PSlot set backlink = 'WS.001.1b' where slotname = 'PS.base.a2';
 QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
+slotname            |roomno  |slotlink            |backlink            
 --------------------+--------+--------------------+--------------------
 WS.001.1a           |001     |                    |PS.base.a1          
 WS.001.1b           |001     |                    |PS.base.a2          
@@ -1030,7 +1030,7 @@ WS.001.3b           |001     |                    |
 (6 rows)
 
 QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
+slotname            |pfname|slotlink            |backlink            
 --------------------+------+--------------------+--------------------
 PS.base.a1          |PF0_1 |                    |WS.001.1a           
 PS.base.a2          |PF0_1 |                    |WS.001.1b           
@@ -1043,7 +1043,7 @@ PS.base.a6          |PF0_1 |                    |
 QUERY: update WSlot set backlink = 'PS.base.a4' where slotname = 'WS.001.2b';
 QUERY: update WSlot set backlink = 'PS.base.a6' where slotname = 'WS.001.3a';
 QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
+slotname            |roomno  |slotlink            |backlink            
 --------------------+--------+--------------------+--------------------
 WS.001.1a           |001     |                    |PS.base.a1          
 WS.001.1b           |001     |                    |PS.base.a2          
@@ -1054,7 +1054,7 @@ WS.001.3b           |001     |                    |
 (6 rows)
 
 QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
+slotname            |pfname|slotlink            |backlink            
 --------------------+------+--------------------+--------------------
 PS.base.a1          |PF0_1 |                    |WS.001.1a           
 PS.base.a2          |PF0_1 |                    |WS.001.1b           
@@ -1066,7 +1066,7 @@ PS.base.a6          |PF0_1 |                    |WS.001.3a
 
 QUERY: update WSlot set backlink = 'PS.base.a6' where slotname = 'WS.001.3b';
 QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
+slotname            |roomno  |slotlink            |backlink            
 --------------------+--------+--------------------+--------------------
 WS.001.1a           |001     |                    |PS.base.a1          
 WS.001.1b           |001     |                    |PS.base.a2          
@@ -1077,7 +1077,7 @@ WS.001.3b           |001     |                    |PS.base.a6
 (6 rows)
 
 QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
+slotname            |pfname|slotlink            |backlink            
 --------------------+------+--------------------+--------------------
 PS.base.a1          |PF0_1 |                    |WS.001.1a           
 PS.base.a2          |PF0_1 |                    |WS.001.1b           
@@ -1089,7 +1089,7 @@ PS.base.a6          |PF0_1 |                    |WS.001.3b
 
 QUERY: update WSlot set backlink = 'PS.base.a5' where slotname = 'WS.001.3a';
 QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
+slotname            |roomno  |slotlink            |backlink            
 --------------------+--------+--------------------+--------------------
 WS.001.1a           |001     |                    |PS.base.a1          
 WS.001.1b           |001     |                    |PS.base.a2          
@@ -1100,7 +1100,7 @@ WS.001.3b           |001     |                    |PS.base.a6
 (6 rows)
 
 QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
+slotname            |pfname|slotlink            |backlink            
 --------------------+------+--------------------+--------------------
 PS.base.a1          |PF0_1 |                    |WS.001.1a           
 PS.base.a2          |PF0_1 |                    |WS.001.1b           
@@ -1125,7 +1125,7 @@ QUERY: insert into PSlot values ('PS.1st.tb5', 'PF1_2', '', '');
 QUERY: insert into PSlot values ('PS.1st.tb6', 'PF1_2', '', '');
 QUERY: update PField set name = 'PF0_2' where name = 'PF0_X';
 QUERY: select * from PSlot order by slotname;
-slotname            |pfname|            slotlink|backlink            
+slotname            |pfname|slotlink            |backlink            
 --------------------+------+--------------------+--------------------
 PS.1st.a1           |PF1_1 |                    |WS.101.1a           
 PS.1st.a2           |PF1_1 |                    |WS.101.1b           
@@ -1196,7 +1196,7 @@ PS.base.tb6         |PF0_2 |                    |
 (66 rows)
 
 QUERY: select * from WSlot order by slotname;
-slotname            |  roomno|            slotlink|backlink            
+slotname            |roomno  |slotlink            |backlink            
 --------------------+--------+--------------------+--------------------
 WS.001.1a           |001     |                    |PS.base.a1          
 WS.001.1b           |001     |                    |PS.base.a2          
@@ -1315,7 +1315,7 @@ PF0_2 |PS.base.tb6         |Phone line -122               |-
 (12 rows)
 
 QUERY: insert into PField values ('PF1_1', 'should fail due to unique index');
-ERROR:  Cannot insert a duplicate key into a unique index
+ERROR:  Cannot insert a duplicate key into unique index pfield_name
 QUERY: update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
 ERROR:  WS.not.there         does not exists
 QUERY: update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
@@ -1325,7 +1325,7 @@ ERROR:  PS.not.there         does not exists
 QUERY: update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
 ERROR:  illegal slotlink beginning with XX
 QUERY: insert into HSlot values ('HS', 'base.hub1', 1, '');
-ERROR:  Cannot insert a duplicate key into a unique index
+ERROR:  Cannot insert a duplicate key into unique index hslot_name
 QUERY: insert into HSlot values ('HS', 'base.hub1', 20, '');
 ERROR:  no manual manipulation of HSlot
 QUERY: delete from HSlot;
