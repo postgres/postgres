@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.5 1999/07/02 18:09:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.6 1999/07/03 15:43:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,7 @@ remove_all_temp_relations(void)
 	List	   *l,
 			   *next;
 
+	AbortOutOfAnyTransaction();
 	StartTransactionCommand();
 
 	l = temp_rels;
