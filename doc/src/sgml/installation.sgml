@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.221 2004/12/26 23:06:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.222 2005/01/06 10:12:22 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1669,10 +1669,10 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        </row>
        <row>
         <entry><systemitem class="osname">OpenBSD</></entry>
-        <entry><systemitem>Sparc</></entry>
-        <entry>7.4</entry>
-        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-11-01</entry>
-        <entry>3.4</entry>
+        <entry><systemitem>Sparc64</></entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">spoonbill</systemitem>, snapshot 2005-01-06 00:50:05</entry>
+        <entry>3.6</entry>
        </row>
        <row>
         <entry><systemitem class="osname">OpenBSD</></entry>
@@ -1772,7 +1772,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem>x86</></entry>
         <entry>8.0.0</entry>
         <entry>Build farm <systemitem class="systemname">gibbon</systemitem>, snapshot 2004-12-11 01:33:01</entry>
-        <entry>see <filename>doc/FAQ_CYGWIN</filename></entry>
+        <entry>XP Pro; see <filename>doc/FAQ_CYGWIN</filename></entry>
        </row>
       </tbody>
      </tgroup>
