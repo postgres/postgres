@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep 16 21:50:14 EDT 1999
+Last updated:		Fri Sep 17 11:48:23 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -189,6 +189,7 @@ MISC
 * Add configure test to check for C++ need for *.h and namespaces
 * Allow BLCKSZ <= 64k, not <= 32k
 * redesign UNION structures to have separarate target lists
+* Allow multi-level query trees for INSERT INTO ... SELECT
 
 PERFORMANCE
 -----------
@@ -256,6 +257,7 @@ SOURCE CODE
 * Add needed includes and removed unneede include files(Bruce)
 * Make configure --enable-debug add -g on compile line
 * Does Mariposa source contain any other bug fixes?
+* Remove SET KSQO option of OR processing is improved
 
 ---------------------------------------------------------------------------
 
