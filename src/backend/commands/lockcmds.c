@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.5 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.6 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,8 @@ LockTableCommand(LockStmt *lockstmt)
 										  ACL_UPDATE | ACL_DELETE);
 
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, get_rel_name(reloid));
+			aclcheck_error(aclresult, ACL_KIND_CLASS,
+						   get_rel_name(reloid));
 
 		rel = relation_open(reloid, lockstmt->mode);
 

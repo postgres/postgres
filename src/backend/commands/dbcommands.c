@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.118 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.119 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ createdb(const CreatedbStmt *stmt)
 		if (!superuser() && !have_createdb_privilege())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied")));
+					 errmsg("permission denied to create database")));
 	}
 	else
 	{
@@ -189,7 +189,7 @@ createdb(const CreatedbStmt *stmt)
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied")));
+					 errmsg("must be superuser to create database for another user")));
 	}
 
 	/* don't call this in a transaction block */
@@ -239,7 +239,7 @@ createdb(const CreatedbStmt *stmt)
 		if (!superuser() && GetUserId() != src_owner)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission to copy \"%s\" denied",
+					 errmsg("permission denied to copy database \"%s\"",
 							dbtemplate)));
 	}
 
@@ -481,9 +481,8 @@ dropdb(const char *dbname)
 				 errmsg("database \"%s\" does not exist", dbname)));
 
 	if (GetUserId() != db_owner && !superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   dbname);
 
 	/*
 	 * Disallow dropping a DB that is marked istemplate.  This is just to
@@ -633,13 +632,14 @@ RenameDatabase(const char *oldname, const char *newname)
 
 	/* must be owner */
 	if (!pg_database_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, oldname);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   oldname);
 
 	/* must have createdb */
 	if (!have_createdb_privilege())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("permission denied to rename database")));
 
 	/* rename */
 	newtup = heap_copytuple(tup);
@@ -690,9 +690,8 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	if (!(superuser()
 		  || ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					  stmt->dbname);
 
 	MemSet(repl_repl, ' ', sizeof(repl_repl));
 	repl_repl[Anum_pg_database_datconfig - 1] = 'r';

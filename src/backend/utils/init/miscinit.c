@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.109 2003/07/31 18:36:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.110 2003/08/01 00:15:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -620,7 +620,7 @@ SetSessionAuthorization(AclId userid, bool is_superuser)
 		!AuthenticatedUserIsSuperuser)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("permission denied to set session authorization")));
 
 	SetSessionUserId(userid);
 	SetUserId(userid);

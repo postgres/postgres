@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.46 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.47 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,7 @@ RenameLanguage(const char *oldname, const char *newname)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("must be superuser to rename procedural language")));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_language) GETSTRUCT(tup))->lanname), newname);

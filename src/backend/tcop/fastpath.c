@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.65 2003/07/22 19:00:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.66 2003/08/01 00:15:22 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -326,11 +326,13 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 */
 	aclresult = pg_namespace_aclcheck(fip->namespace, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(fip->namespace));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(fip->namespace));
 
 	aclresult = pg_proc_aclcheck(fid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_func_name(fid));
+		aclcheck_error(aclresult, ACL_KIND_PROC,
+					   get_func_name(fid));
 
 	/*
 	 * Set up a query snapshot in case function needs one.

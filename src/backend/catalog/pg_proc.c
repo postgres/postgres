@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.101 2003/07/21 01:59:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.102 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/sets.h"
@@ -219,10 +220,8 @@ ProcedureCreate(const char *procedureName,
 					 errmsg("function \"%s\" already exists with same argument types",
 							procedureName)));
 		if (GetUserId() != oldproc->proowner && !superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("you do not have permission to replace function \"%s\"",
-							procedureName)));
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+						   procedureName);
 
 		/*
 		 * Not okay to change the return type of the existing proc, since

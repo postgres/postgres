@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.282 2003/07/28 00:09:15 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.283 2003/08/01 00:15:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1193,7 +1193,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	aclresult = pg_class_aclcheck(RelationGetRelid(relation), GetUserId(),
 								  ACL_SELECT);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, RelationGetRelationName(relation));
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   RelationGetRelationName(relation));
 
 	tupleDesc = RelationGetDescr(relation);
 	constr = tupleDesc->constr;

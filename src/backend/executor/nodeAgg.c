@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.111 2003/07/21 17:05:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.112 2003/08/01 00:15:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1241,7 +1241,8 @@ ExecInitAgg(Agg *node, EState *estate)
 		aclresult = pg_proc_aclcheck(aggref->aggfnoid, GetUserId(),
 									 ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, get_func_name(aggref->aggfnoid));
+			aclcheck_error(aclresult, ACL_KIND_PROC,
+						   get_func_name(aggref->aggfnoid));
 
 		peraggstate->transfn_oid = transfn_oid = aggform->aggtransfn;
 		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;

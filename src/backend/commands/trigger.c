@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.152 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.153 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/* permission checks */
@@ -158,13 +158,15 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 									  ACL_REFERENCES);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, RelationGetRelationName(rel));
+			aclcheck_error(aclresult, ACL_KIND_CLASS,
+						   RelationGetRelationName(rel));
 		if (constrrelid != InvalidOid)
 		{
 			aclresult = pg_class_aclcheck(constrrelid, GetUserId(),
 										  ACL_REFERENCES);
 			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, get_rel_name(constrrelid));
+				aclcheck_error(aclresult, ACL_KIND_CLASS,
+							   get_rel_name(constrrelid));
 		}
 	}
 	else
@@ -173,7 +175,8 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 									  ACL_TRIGGER);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, RelationGetRelationName(rel));
+			aclcheck_error(aclresult, ACL_KIND_CLASS,
+						   RelationGetRelationName(rel));
 	}
 
 	/*
@@ -481,7 +484,8 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 						trigname, get_rel_name(relid))));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, get_rel_name(relid));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   get_rel_name(relid));
 
 	object.classId = RelationGetRelid(tgrel);
 	object.objectId = HeapTupleGetOid(tup);
@@ -544,7 +548,7 @@ RemoveTriggerById(Oid trigOid)
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*

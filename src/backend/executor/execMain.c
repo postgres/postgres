@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.211 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.212 2003/08/01 00:15:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,7 +387,8 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	{
 		aclcheck_result = CHECK(ACL_SELECT);
 		if (aclcheck_result != ACLCHECK_OK)
-			aclcheck_error(aclcheck_result, get_rel_name(relOid));
+			aclcheck_error(aclcheck_result, ACL_KIND_CLASS,
+						   get_rel_name(relOid));
 	}
 
 	if (rte->checkForWrite)
@@ -416,7 +417,8 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 				break;
 		}
 		if (aclcheck_result != ACLCHECK_OK)
-			aclcheck_error(aclcheck_result, get_rel_name(relOid));
+			aclcheck_error(aclcheck_result, ACL_KIND_CLASS,
+						   get_rel_name(relOid));
 	}
 }
 
@@ -774,7 +776,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
 										  ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, get_namespace_name(namespaceId));
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+						   get_namespace_name(namespaceId));
 
 		/*
 		 * have to copy tupType to get rid of constraints

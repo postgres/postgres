@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.84 2003/07/21 01:59:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.85 2003/08/01 00:15:19 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -223,7 +223,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		if (stmt->is_grant
 			&& !pg_class_ownercheck(relOid, GetUserId())
 			&& pg_class_aclcheck(relOid, GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
-			aclcheck_error(ACLCHECK_NO_PRIV, relvar->relname);
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS, relvar->relname);
 
 		/* Not sensible to grant on an index */
 		if (pg_class_tuple->relkind == RELKIND_INDEX)
@@ -329,7 +329,8 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		if (stmt->is_grant
 			&& pg_database_tuple->datdba != GetUserId()
 			&& pg_database_aclcheck(HeapTupleGetOid(tuple), GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
-			aclcheck_error(ACLCHECK_NO_PRIV, NameStr(pg_database_tuple->datname));
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_DATABASE,
+						   NameStr(pg_database_tuple->datname));
 
 		/*
 		 * If there's no ACL, create a default.
@@ -424,7 +425,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		if (stmt->is_grant
 			&& !pg_proc_ownercheck(oid, GetUserId())
 			&& pg_proc_aclcheck(oid, GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
-			aclcheck_error(ACLCHECK_NO_PRIV,
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_PROC,
 						   NameStr(pg_proc_tuple->proname));
 
 		/*
@@ -525,7 +526,8 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		if (stmt->is_grant
 			&& !superuser()
 			&& pg_language_aclcheck(HeapTupleGetOid(tuple), GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
-			aclcheck_error(ACLCHECK_NO_PRIV, NameStr(pg_language_tuple->lanname));
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
+						   NameStr(pg_language_tuple->lanname));
 
 		/*
 		 * If there's no ACL, create a default.
@@ -619,7 +621,8 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		if (stmt->is_grant
 			&& !pg_namespace_ownercheck(HeapTupleGetOid(tuple), GetUserId())
 			&& pg_namespace_aclcheck(HeapTupleGetOid(tuple), GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
-			aclcheck_error(ACLCHECK_NO_PRIV, nspname);
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_NAMESPACE,
+						   nspname);
 
 		/*
 		 * If there's no ACL, create a default using the
@@ -848,9 +851,59 @@ aclcheck(Acl *acl, AclId userid, AclMode mode)
 
 /*
  * Standardized reporting of aclcheck permissions failures.
+ *
+ * Note: we do not double-quote the %s's below, because many callers
+ * supply strings that might be already quoted.
  */
+
+static const char * const no_priv_msg[MAX_ACL_KIND] =
+{
+	/* ACL_KIND_CLASS */
+	gettext_noop("permission denied for relation %s"),
+	/* ACL_KIND_DATABASE */
+	gettext_noop("permission denied for database %s"),
+	/* ACL_KIND_PROC */
+	gettext_noop("permission denied for function %s"),
+	/* ACL_KIND_OPER */
+	gettext_noop("permission denied for operator %s"),
+	/* ACL_KIND_TYPE */
+	gettext_noop("permission denied for type %s"),
+	/* ACL_KIND_LANGUAGE */
+	gettext_noop("permission denied for language %s"),
+	/* ACL_KIND_NAMESPACE */
+	gettext_noop("permission denied for schema %s"),
+	/* ACL_KIND_OPCLASS */
+	gettext_noop("permission denied for operator class %s"),
+	/* ACL_KIND_CONVERSION */
+	gettext_noop("permission denied for conversion %s")
+};
+
+static const char * const not_owner_msg[MAX_ACL_KIND] =
+{
+	/* ACL_KIND_CLASS */
+	gettext_noop("must be owner of relation %s"),
+	/* ACL_KIND_DATABASE */
+	gettext_noop("must be owner of database %s"),
+	/* ACL_KIND_PROC */
+	gettext_noop("must be owner of function %s"),
+	/* ACL_KIND_OPER */
+	gettext_noop("must be owner of operator %s"),
+	/* ACL_KIND_TYPE */
+	gettext_noop("must be owner of type %s"),
+	/* ACL_KIND_LANGUAGE */
+	gettext_noop("must be owner of language %s"),
+	/* ACL_KIND_NAMESPACE */
+	gettext_noop("must be owner of schema %s"),
+	/* ACL_KIND_OPCLASS */
+	gettext_noop("must be owner of operator class %s"),
+	/* ACL_KIND_CONVERSION */
+	gettext_noop("must be owner of conversion %s")
+};
+
+
 void
-aclcheck_error(AclResult aclerr, const char *objectname)
+aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
+			   const char *objectname)
 {
 	switch (aclerr)
 	{
@@ -860,12 +913,12 @@ aclcheck_error(AclResult aclerr, const char *objectname)
 		case ACLCHECK_NO_PRIV:
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied for \"%s\"", objectname)));
+					 errmsg(no_priv_msg[objectkind], objectname)));
 			break;
 		case ACLCHECK_NOT_OWNER:
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be owner of \"%s\"", objectname)));
+					 errmsg(not_owner_msg[objectkind], objectname)));
 			break;
 		default:
 			elog(ERROR, "unrecognized AclResult: %d", (int) aclerr);

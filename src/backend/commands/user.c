@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.121 2003/07/28 00:09:14 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.122 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -601,7 +601,7 @@ CreateUser(CreateUserStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("must be superuser to create users")));
 
 	if (strcmp(stmt->user, "public") == 0)
 		ereport(ERROR,
@@ -1023,7 +1023,7 @@ DropUser(DropUserStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("must be superuser to drop users")));
 
 	/*
 	 * Scan the pg_shadow relation to find the usesysid of the user to be
@@ -1194,7 +1194,7 @@ RenameUser(const char *oldname, const char *newname)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("must be superuser to rename users")));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_shadow) GETSTRUCT(tup))->usename), newname);
@@ -1307,7 +1307,7 @@ CreateGroup(CreateGroupStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("must be superuser to create groups")));
 
 	if (strcmp(stmt->name, "public") == 0)
 		ereport(ERROR,
@@ -1434,7 +1434,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("must be superuser to alter groups")));
 
 	/*
 	 * Secure exclusive lock to protect our update of the flat group file.
@@ -1678,7 +1678,7 @@ DropGroup(DropGroupStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("must be superuser to drop groups")));
 
 	/*
 	 * Secure exclusive lock to protect our update of the flat group file.
@@ -1742,7 +1742,7 @@ RenameGroup(const char *oldname, const char *newname)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+				 errmsg("must be superuser to rename groups")));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_group) GETSTRUCT(tup))->groname), newname);

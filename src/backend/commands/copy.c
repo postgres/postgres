@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.204 2003/07/22 19:00:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.205 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,7 +730,8 @@ DoCopy(const CopyStmt *stmt)
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  required_access);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, RelationGetRelationName(rel));
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 	if (!pipe && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

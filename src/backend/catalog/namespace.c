@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.54 2003/07/21 01:59:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.55 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1201,7 +1201,8 @@ LookupExplicitNamespace(const char *nspname)
 
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, nspname);
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   nspname);
 
 	return namespaceId;
 }
@@ -1624,7 +1625,7 @@ InitTempTableNamespace(void)
 							 ACL_CREATE_TEMP) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("not authorized to create temp tables in database \"%s\"",
+				 errmsg("permission denied to create temp tables in database \"%s\"",
 						get_database_name(MyDatabaseId))));
 
 	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyBackendId);

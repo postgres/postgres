@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.39 2003/07/20 21:56:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.40 2003/08/01 00:15:19 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -121,7 +121,8 @@ DefineType(List *names, List *parameters)
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(typeNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(typeNamespace));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(typeNamespace));
 
 	/*
 	 * Type names must be one character shorter than other names, allowing
@@ -416,7 +417,8 @@ RemoveType(List *names, DropBehavior behavior)
 	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
 		!pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
 								 GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(typename));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+					   TypeNameToString(typename));
 
 	ReleaseSysCache(tup);
 
@@ -501,7 +503,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	aclresult = pg_namespace_aclcheck(domainNamespace, GetUserId(),
 									  ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(domainNamespace));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(domainNamespace));
 
 	/*
 	 * Domainnames, unlike typenames don't need to account for the '_'
@@ -789,7 +792,8 @@ RemoveDomain(List *names, DropBehavior behavior)
 	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
 		!pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
 								 GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(typename));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+					   TypeNameToString(typename));
 
 	/* Check that this is actually a domain */
 	typtype = ((Form_pg_type) GETSTRUCT(tup))->typtype;
@@ -1726,7 +1730,8 @@ domainOwnerCheck(HeapTuple tup, TypeName *typename)
 
 	/* Permission check: must own type */
 	if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(typename));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+					   TypeNameToString(typename));
 }
 
 /*

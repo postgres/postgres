@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.144 2003/07/29 00:03:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.145 2003/08/01 00:15:23 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2484,7 +2484,7 @@ set_config_option(const char *name, const char *value,
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("\"%s\": permission denied",
+						 errmsg("permission denied to set option \"%s\"",
 								name)));
 				return false;
 			}
@@ -2554,7 +2554,7 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("\"%s\": permission denied",
+								 errmsg("permission denied to set option \"%s\"",
 										name),
 								 errhint("Must be superuser to change this value to false.")));
 						return false;
@@ -2651,7 +2651,7 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("\"%s\": permission denied",
+								 errmsg("permission denied to set option \"%s\"",
 										name),
 								 errhint("Must be superuser to increase this value or set it to zero.")));
 						return false;
@@ -2747,7 +2747,7 @@ set_config_option(const char *name, const char *value,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("\"%s\": permission denied",
+								 errmsg("permission denied to set option \"%s\"",
 										name),
 								 errhint("Must be superuser to increase this value.")));
 						return false;
@@ -2845,7 +2845,7 @@ set_config_option(const char *name, const char *value,
 						{
 							ereport(elevel,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-									 errmsg("\"%s\": permission denied",
+									 errmsg("permission denied to set option \"%s\"",
 											name),
 									 errhint("Must be superuser to increase this value.")));
 							return false;

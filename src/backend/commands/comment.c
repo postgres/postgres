@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.66 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.67 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,7 +295,8 @@ CommentRelation(int objtype, List *relname, char *comment)
 
 	/* Check object security */
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(relation));
 
 	/* Next, verify that the relation type matches the intent */
 
@@ -373,7 +374,8 @@ CommentAttribute(List *qualname, char *comment)
 	/* Check object security */
 
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(relation));
 
 	/* Now, fetch the attribute number from the system cache */
 
@@ -449,7 +451,8 @@ CommentDatabase(List *qualname, char *comment)
 
 	/* Check object security */
 	if (!pg_database_ownercheck(oid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, database);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   database);
 
 	/* Create the comment with the pg_database oid */
 	CreateComments(oid, RelOid_pg_database, 0, comment);
@@ -487,7 +490,8 @@ CommentNamespace(List *qualname, char *comment)
 
 	/* Check object security */
 	if (!pg_namespace_ownercheck(oid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, namespace);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
+					   namespace);
 
 	/* pg_namespace doesn't have a hard-coded OID, so must look it up */
 	classoid = get_system_catalog_relid(NamespaceRelationName);
@@ -600,7 +604,8 @@ CommentRule(List *qualname, char *comment)
 	/* Check object security */
 	aclcheck = pg_class_aclcheck(reloid, GetUserId(), ACL_RULE);
 	if (aclcheck != ACLCHECK_OK)
-		aclcheck_error(aclcheck, rulename);
+		aclcheck_error(aclcheck, ACL_KIND_CLASS,
+					   get_rel_name(reloid));
 
 	/* pg_rewrite doesn't have a hard-coded OID, so must look it up */
 	classoid = get_system_catalog_relid(RewriteRelationName);
@@ -638,7 +643,8 @@ CommentType(List *typename, char *comment)
 	/* Check object security */
 
 	if (!pg_type_ownercheck(oid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(tname));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+					   TypeNameToString(tname));
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -673,7 +679,8 @@ CommentAggregate(List *aggregate, List *arguments, char *comment)
 	/* Next, validate the user's attempt to comment */
 
 	if (!pg_proc_ownercheck(oid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(aggregate));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(aggregate));
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -701,7 +708,8 @@ CommentProc(List *function, List *arguments, char *comment)
 	/* Now, validate the user's ability to comment on this function */
 
 	if (!pg_proc_ownercheck(oid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(function));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(function));
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -731,7 +739,8 @@ CommentOperator(List *opername, List *arguments, char *comment)
 
 	/* Valid user's ability to comment on this operator */
 	if (!pg_oper_ownercheck(oid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(opername));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+					   NameListToString(opername));
 
 	/* pg_operator doesn't have a hard-coded OID, so must look it up */
 	classoid = get_system_catalog_relid(OperatorRelationName);
@@ -777,7 +786,8 @@ CommentTrigger(List *qualname, char *comment)
 	/* Check object security */
 
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(relation));
 
 	/*
 	 * Fetch the trigger tuple from pg_trigger.  There can be only one
@@ -854,7 +864,8 @@ CommentConstraint(List *qualname, char *comment)
 	/* Check object security */
 
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(relation));
 
 	/*
 	 * Fetch the constraint tuple from pg_constraint.  There may be more

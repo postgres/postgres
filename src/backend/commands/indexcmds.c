@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.102 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.103 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,8 @@ DefineIndex(RangeVar *heapRelation,
 		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
 										  ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, get_namespace_name(namespaceId));
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+						   get_namespace_name(namespaceId));
 	}
 
 	/*
@@ -621,13 +622,13 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 		if (!allowSystemTableMods)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("\"%s\" is a system index",
+					 errmsg("permission denied: \"%s\" is a system index",
 							indexRelation->relname),
 					 errhint("Do REINDEX in standalone postgres with -O -P options.")));
 		if (!IsIgnoringSystemIndexes())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("\"%s\" is a system index",
+					 errmsg("permission denied: \"%s\" is a system index",
 							indexRelation->relname),
 					 errhint("Do REINDEX in standalone postgres with -P -O options.")));
 	}
@@ -710,9 +711,8 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 				 errmsg("can only reindex the currently open database")));
 
 	if (!pg_database_ownercheck(MyDatabaseId, GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   dbname);
 
 	if (!allowSystemTableMods)
 		ereport(ERROR,

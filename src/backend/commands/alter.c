@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/alter.c,v 1.3 2003/07/22 19:00:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/alter.c,v 1.4 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ ExecRenameStmt(RenameStmt *stmt)
 													  GetUserId(),
 													  ACL_CREATE);
 					if (aclresult != ACLCHECK_OK)
-						aclcheck_error(aclresult,
+						aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 									   get_namespace_name(namespaceId));
 
 					renamerel(relid, stmt->newname);

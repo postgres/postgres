@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.12 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.13 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,9 +146,8 @@ ConversionDrop(Oid conversionOid, DropBehavior behavior)
 
 	if (!superuser() &&
 		((Form_pg_conversion) GETSTRUCT(tuple))->conowner != GetUserId())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied")));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
+					   NameStr(((Form_pg_conversion) GETSTRUCT(tuple))->conname));
 
 	ReleaseSysCache(tuple);
 

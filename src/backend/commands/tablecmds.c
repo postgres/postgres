@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.75 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.76 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
 										  ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, get_namespace_name(namespaceId));
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+						   get_namespace_name(namespaceId));
 	}
 
 	/*
@@ -382,12 +383,13 @@ TruncateRelation(const RangeVar *relation)
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(relid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -576,7 +578,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		 * demand that creator of a child table own the parent.
 		 */
 		if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER,
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 						   RelationGetRelationName(relation));
 
 		/*
@@ -1139,12 +1141,12 @@ renameatt(Oid myrelid,
 	 * normally, only the owner of a class can change its schema.
 	 */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER,
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   RelationGetRelationName(targetrelation));
 	if (!allowSystemTableMods && IsSystemRelation(targetrelation))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(targetrelation))));
 
 	/*
@@ -1349,7 +1351,7 @@ renamerel(Oid myrelid, const char *newrelname)
 	if (!allowSystemTableMods && IsSystemRelation(targetrelation))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(targetrelation))));
 
 	relkind = targetrelation->rd_rel->relkind;
@@ -1681,12 +1683,13 @@ AlterTableAddColumn(Oid myrelid,
 	 * normally, only the owner of a class can change its schema.
 	 */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -1966,12 +1969,13 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -2109,12 +2113,13 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -2236,12 +2241,13 @@ AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -2341,7 +2347,8 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	/*
 	 * we allow statistics case for system tables
@@ -2349,7 +2356,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	if (*flagType != 'S' && !allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -2506,12 +2513,13 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -2639,12 +2647,13 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -2819,12 +2828,13 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	if (recurse)
@@ -3120,18 +3130,20 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	aclresult = pg_class_aclcheck(RelationGetRelid(pkrel), GetUserId(),
 								  ACL_REFERENCES);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, RelationGetRelationName(pkrel));
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   RelationGetRelationName(pkrel));
 
 	if (!allowSystemTableMods && IsSystemRelation(pkrel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(pkrel))));
 
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  ACL_REFERENCES);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, RelationGetRelationName(rel));
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (isTempNamespace(RelationGetNamespace(pkrel)) &&
 		!isTempNamespace(RelationGetNamespace(rel)))
@@ -3804,12 +3816,13 @@ AlterTableDropConstraint(Oid myrelid, bool recurse,
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -4071,7 +4084,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(relOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	/*
 	 * Toast table is shared if and only if its parent is.

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.111 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.112 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,6 @@ static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 static List *get_indexattr_list(Relation OldHeap, Oid OldIndex);
 static void rebuild_indexes(Oid OIDOldHeap, List *indexes);
 static void swap_relfilenodes(Oid r1, Oid r2);
-static bool check_cluster_permitted(Oid relOid);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
 
@@ -115,10 +114,9 @@ cluster(ClusterStmt *stmt)
 		tableOid = RelationGetRelid(rel);
 
 		/* Check permissions */
-		if (!check_cluster_permitted(tableOid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied")));
+		if (!pg_class_ownercheck(tableOid, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+						   RelationGetRelationName(rel));
 
 		if (stmt->indexname == NULL)
 		{
@@ -279,7 +277,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 			return;
 
 		/* Check that the user still owns the relation */
-		if (!check_cluster_permitted(rvtc->tableOid))
+		if (!pg_class_ownercheck(rvtc->tableOid, GetUserId()))
 			return;
 
 		/*
@@ -851,17 +849,6 @@ swap_relfilenodes(Oid r1, Oid r2)
 }
 
 /*
- * Checks if the user is allowed to cluster (ie, owns) the relation.
- * Superusers are allowed to cluster any table.
- */
-static bool
-check_cluster_permitted(Oid relOid)
-{
-	/* Superusers bypass this check */
-	return pg_class_ownercheck(relOid, GetUserId());
-}
-
-/*
  * Get a list of tables that the current user owns and
  * have indisclustered set.  Return the list in a List * of rvsToCluster
  * with the tableOid and the indexOid on which the table is already
@@ -894,7 +881,8 @@ get_tables_to_cluster(MemoryContext cluster_context)
 	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
-		if (!check_cluster_permitted(index->indrelid))
+
+		if (!pg_class_ownercheck(index->indrelid, GetUserId()))
 			continue;
 
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.83 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.84 2003/08/01 00:15:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	aclresult = pg_class_aclcheck(ev_relid, GetUserId(), ACL_RULE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, RelationGetRelationName(event_relation));
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   RelationGetRelationName(event_relation));
 
 	/*
 	 * No rule actions that modify OLD or NEW

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.98 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.99 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,9 +314,10 @@ AlterSequence(AlterSeqStmt *stmt)
 	/* open and AccessShareLock sequence */
 	init_sequence(stmt->sequence, &elm, &seqrel);
 
-	/* Allow DROP to sequence owner only*/
+	/* allow DROP to sequence owner only */
 	if (!pg_class_ownercheck(elm->relid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, stmt->sequence->relname);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   stmt->sequence->relname);
 
 	/* lock page' buffer and read tuple into new sequence structure */
 	seq = read_info(elm, seqrel, &buf);
@@ -417,7 +418,7 @@ nextval(PG_FUNCTION_ARGS)
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("%s.nextval: permission denied",
+				 errmsg("permission denied for sequence %s",
 						sequence->relname)));
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
@@ -609,7 +610,7 @@ currval(PG_FUNCTION_ARGS)
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("%s.currval: permission denied",
+				 errmsg("permission denied for sequence %s",
 						sequence->relname)));
 
 	if (elm->increment == 0)	/* nextval/read_info were not called */
@@ -652,7 +653,7 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("%s.setval: permission denied",
+				 errmsg("permission denied for sequence %s",
 						sequence->relname)));
 
 	/* lock page' buffer and read tuple */

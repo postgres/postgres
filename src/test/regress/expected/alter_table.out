@@ -617,9 +617,9 @@ drop table atacc1;
 -- alter table / alter column [set/drop] not null tests
 -- try altering system catalogs, should fail
 alter table pg_class alter column relname drop not null;
-ERROR:  "pg_class" is a system catalog
+ERROR:  permission denied: "pg_class" is a system catalog
 alter table pg_class alter relname set not null;
-ERROR:  "pg_class" is a system catalog
+ERROR:  permission denied: "pg_class" is a system catalog
 -- try altering non-existent table, should fail
 alter table non_existent alter column bar set not null;
 ERROR:  relation "non_existent" does not exist
@@ -744,7 +744,7 @@ drop table def_test;
 -- alter table / drop column tests
 -- try altering system catalogs, should fail
 alter table pg_class drop column relname;
-ERROR:  "pg_class" is a system catalog
+ERROR:  permission denied: "pg_class" is a system catalog
 -- try altering non-existent table, should fail
 alter table foo drop column bar;
 ERROR:  relation "foo" does not exist

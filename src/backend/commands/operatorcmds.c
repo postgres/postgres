@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.9 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.10 2003/08/01 00:15:19 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -87,7 +87,8 @@ DefineOperator(List *names, List *parameters)
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(oprNamespace));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(oprNamespace));
 
 	/*
 	 * loop over the definition list and extract the information we need.
@@ -224,7 +225,8 @@ RemoveOperator(RemoveOperStmt *stmt)
 	if (!pg_oper_ownercheck(operOid, GetUserId()) &&
 		!pg_namespace_ownercheck(((Form_pg_operator) GETSTRUCT(tup))->oprnamespace,
 								 GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(operatorName));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+					   NameListToString(operatorName));
 
 	ReleaseSysCache(tup);
 

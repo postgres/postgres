@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.13 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.14 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	 */
 	aclresult = pg_database_aclcheck(MyDatabaseId, saved_userid, ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_database_name(MyDatabaseId));
+		aclcheck_error(aclresult, ACL_KIND_DATABASE,
+					   get_database_name(MyDatabaseId));
 
 	if (!allowSystemTableMods && IsReservedName(schemaName))
 		ereport(ERROR,
@@ -181,7 +182,8 @@ RemoveSchema(List *names, DropBehavior behavior)
 
 	/* Permission check */
 	if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, namespaceName);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
+					   namespaceName);
 
 	/*
 	 * Do the deletion.  Objects contained in the schema are removed by
@@ -255,12 +257,14 @@ RenameSchema(const char *oldname, const char *newname)
 
 	/* must be owner */
 	if (!pg_namespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, oldname);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
+					   oldname);
 
 	/* must have CREATE privilege on database */
 	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_database_name(MyDatabaseId));
+		aclcheck_error(aclresult, ACL_KIND_DATABASE,
+					   get_database_name(MyDatabaseId));
 
 	if (!allowSystemTableMods && IsReservedName(newname))
 		ereport(ERROR,

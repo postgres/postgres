@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.30 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.31 2003/08/01 00:15:19 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -118,7 +118,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
 										  ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, get_namespace_name(namespaceId));
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+						   get_namespace_name(namespaceId));
 		rettype = TypeShellMake(typname, namespaceId);
 		Assert(OidIsValid(rettype));
 	}
@@ -414,7 +415,8 @@ CreateFunction(CreateFunctionStmt *stmt)
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(namespaceId));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(namespaceId));
 
 	/* defaults attributes */
 	isStrict = false;
@@ -447,13 +449,15 @@ CreateFunction(CreateFunctionStmt *stmt)
 
 		aclresult = pg_language_aclcheck(languageOid, GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, NameStr(languageStruct->lanname));
+			aclcheck_error(aclresult, ACL_KIND_LANGUAGE,
+						   NameStr(languageStruct->lanname));
 	}
 	else
 	{
 		/* if untrusted language, must be superuser */
 		if (!superuser())
-			aclcheck_error(ACLCHECK_NO_PRIV, NameStr(languageStruct->lanname));
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
+						   NameStr(languageStruct->lanname));
 	}
 
 	languageValidator = languageStruct->lanvalidator;
@@ -546,7 +550,8 @@ RemoveFunction(RemoveFuncStmt *stmt)
 	if (!pg_proc_ownercheck(funcOid, GetUserId()) &&
 		!pg_namespace_ownercheck(((Form_pg_proc) GETSTRUCT(tup))->pronamespace,
 								 GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(functionName));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(functionName));
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
 		ereport(ERROR,
@@ -681,12 +686,14 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 
 	/* must be owner */
 	if (!pg_proc_ownercheck(procOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(name));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(name));
 
 	/* must have CREATE privilege on namespace */
 	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(namespaceOid));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(namespaceOid));
 
 	/* rename */
 	namestrcpy(&(procForm->proname), newname);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.202 2003/07/22 19:00:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.203 2003/08/01 00:15:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,12 +153,13 @@ CheckDropPermissions(RangeVar *rel, char rightkind)
 	/* Allow DROP to either table owner or schema owner */
 	if (!pg_class_ownercheck(relOid, GetUserId()) &&
 		!pg_namespace_ownercheck(classform->relnamespace, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, rel->relname);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   rel->relname);
 
 	if (!allowSystemTableMods && IsSystemClass(classform))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("\"%s\" is a system catalog",
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						rel->relname)));
 
 	ReleaseSysCache(tuple);
@@ -184,7 +185,8 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
 
 	if (!pg_class_ownercheck(relOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, rel->relname);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   rel->relname);
 
 	if (noCatalogs)
 	{
@@ -192,7 +194,7 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 			IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("\"%s\" is a system catalog",
+					 errmsg("permission denied: \"%s\" is a system catalog",
 							rel->relname)));
 	}
 
@@ -589,7 +591,7 @@ ProcessUtility(Node *parsetree,
 						if (!superuser())
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-									 errmsg("permission denied")));
+									 errmsg("must be superuser to alter owner")));
 						/* get_usesysid raises an error if no such user */
 						AlterTableOwner(relid,
 										get_usesysid(stmt->name));
@@ -651,7 +653,7 @@ ProcessUtility(Node *parsetree,
 						if (!superuser())
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-									 errmsg("permission denied")));
+									 errmsg("must be superuser to alter owner")));
 						/* get_usesysid raises an error if no such user */
 						AlterTypeOwner(stmt->typename,
 									   get_usesysid(stmt->name));
@@ -972,7 +974,7 @@ ProcessUtility(Node *parsetree,
 			if (!superuser())
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied")));
+						 errmsg("must be superuser to do CHECKPOINT")));
 			CreateCheckPoint(false, false);
 			break;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.74 2003/07/20 21:56:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.75 2003/08/01 00:15:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,8 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 							RelationGetRelationName(rel))));
 
 		if (!pg_class_ownercheck(viewOid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+						   RelationGetRelationName(rel));
 
 		/*
 		 * Create a tuple descriptor to compare against the existing view,

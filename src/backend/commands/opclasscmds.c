@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.14 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.15 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(namespaceoid));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(namespaceoid));
 
 	/* Get necessary info about access method */
 	tup = SearchSysCache(AMNAME,
@@ -117,7 +118,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	/* XXX this is unnecessary given the superuser check above */
 	/* Check we have ownership of the datatype */
 	if (!pg_type_ownercheck(typeoid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, format_type_be(typeoid));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+					   format_type_be(typeoid));
 #endif
 
 	/* Storage datatype is optional */
@@ -178,7 +180,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				aclresult = pg_proc_aclcheck(funcOid, GetUserId(),
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
-					aclcheck_error(aclresult, get_func_name(funcOid));
+					aclcheck_error(aclresult, ACL_KIND_PROC,
+								   get_func_name(funcOid));
 				operators[item->number - 1] = operOid;
 				recheck[item->number - 1] = item->recheck;
 				break;
@@ -200,7 +203,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				aclresult = pg_proc_aclcheck(funcOid, GetUserId(),
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
-					aclcheck_error(aclresult, get_func_name(funcOid));
+					aclcheck_error(aclresult, ACL_KIND_PROC,
+								   get_func_name(funcOid));
 				procedures[item->number - 1] = funcOid;
 				break;
 			case OPCLASS_ITEM_STORAGETYPE:
@@ -536,7 +540,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	if (!pg_opclass_ownercheck(opcID, GetUserId()) &&
 		!pg_namespace_ownercheck(((Form_pg_opclass) GETSTRUCT(tuple))->opcnamespace,
 								 GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER,
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPCLASS,
 					   NameListToString(stmt->opclassname));
 
 	ReleaseSysCache(tuple);
@@ -699,12 +703,14 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 
 	/* must be owner */
 	if (!pg_opclass_ownercheck(opcOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(name));
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPCLASS,
+					   NameListToString(name));
 
 	/* must have CREATE privilege on namespace */
 	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(namespaceOid));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(namespaceOid));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_opclass) GETSTRUCT(tup))->opcname), newname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.8 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.9 2003/08/01 00:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,8 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(namespaceId));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(namespaceId));
 
 	/* Check the encoding names */
 	from_encoding = pg_char_to_encoding(from_encoding_name);
@@ -82,7 +83,8 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	/* Check we have EXECUTE rights for the function */
 	aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, NameListToString(func_name));
+		aclcheck_error(aclresult, ACL_KIND_PROC,
+					   NameListToString(func_name));
 
 	/*
 	 * All seem ok, go ahead (possible failure would be a duplicate
@@ -150,13 +152,16 @@ RenameConversion(List *name, const char *newname)
 						newname, get_namespace_name(namespaceOid))));
 
 	/* must be owner */
-    if (!superuser() && ((Form_pg_conversion) GETSTRUCT(tup))->conowner != GetUserId())
-		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(name));
+    if (!superuser() &&
+		((Form_pg_conversion) GETSTRUCT(tup))->conowner != GetUserId())
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
+					   NameListToString(name));
 
 	/* must have CREATE privilege on namespace */
 	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_namespace_name(namespaceOid));
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(namespaceOid));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_conversion) GETSTRUCT(tup))->conname), newname);

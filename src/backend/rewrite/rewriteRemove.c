@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.54 2003/07/25 00:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.55 2003/08/01 00:15:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,8 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior)
 	Assert(eventRelationOid == owningRel);
 	aclresult = pg_class_aclcheck(eventRelationOid, GetUserId(), ACL_RULE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_rel_name(eventRelationOid));
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   get_rel_name(eventRelationOid));
 
 	/*
 	 * Do the deletion
