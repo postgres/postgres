@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.51 2002/07/13 01:02:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.52 2002/07/30 16:35:05 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -34,8 +34,7 @@
  *	 buffer rather than readline's line buffer, which would require
  *	 some major revisions of things.)
  *
- * - Table or attribute names with spaces in it will equally confuse
- *	 it.
+ * - Table or attribute names with spaces in it may confuse it.
  *
  * - Quotes, parenthesis, and other funny characters are not handled
  *	 all that gracefully.
@@ -132,33 +131,33 @@ typedef struct
 } pgsql_thing_t;
 
 pgsql_thing_t words_after_create[] = {
-	{"AGGREGATE", "SELECT distinct proname FROM pg_proc WHERE proisagg AND substr(proname,1,%d)='%s'"},
-	{"DATABASE", "SELECT datname FROM pg_database WHERE substr(datname,1,%d)='%s'"},
-	{"FUNCTION", "SELECT distinct proname FROM pg_proc WHERE substr(proname,1,%d)='%s'"},
-	{"GROUP", "SELECT groname FROM pg_group WHERE substr(groname,1,%d)='%s'"},
-	{"INDEX", "SELECT relname FROM pg_class WHERE relkind='i' and substr(relname,1,%d)='%s'"},
-	{"OPERATOR", NULL},			/* Querying for this is probably not such
-								 * a good idea. */
-	{"RULE", "SELECT rulename FROM pg_rules WHERE substr(rulename,1,%d)='%s'"},
-	{"SEQUENCE", "SELECT relname FROM pg_class WHERE relkind='S' and substr(relname,1,%d)='%s'"},
-	{"TABLE", "SELECT relname FROM pg_class WHERE (relkind='r' or relkind='v') and substr(relname,1,%d)='%s'"},
+	{"AGGREGATE", "SELECT distinct proname FROM pg_catalog.pg_proc WHERE proisagg AND substr(proname,1,%d)='%s'"},
+	{"DATABASE", "SELECT datname FROM pg_catalog.pg_database WHERE substr(datname,1,%d)='%s'"},
+	{"FUNCTION", "SELECT distinct proname FROM pg_catalog.pg_proc WHERE substr(proname,1,%d)='%s'"},
+	{"GROUP", "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
+	{"INDEX", "SELECT relname FROM pg_catalog.pg_class WHERE relkind='i' and substr(relname,1,%d)='%s'"},
+	{"OPERATOR", NULL},			/* Querying for this is probably not such a good idea. */
+	{"RULE", "SELECT rulename FROM pg_catalog.pg_rules WHERE substr(rulename,1,%d)='%s'"},
+	{"SCHEMA", "SELECT nspname FROM pg_catalog.pg_namespace WHERE substr(nspname,1,%d)='%s'"},
+	{"SEQUENCE", "SELECT relname FROM pg_catalog.pg_class WHERE relkind='S' and substr(relname,1,%d)='%s'"},
+	{"TABLE", "SELECT relname FROM pg_catalog.pg_class WHERE (relkind='r' or relkind='v') and substr(relname,1,%d)='%s'"},
 	{"TEMP", NULL},				/* for CREATE TEMP TABLE ... */
-	{"TRIGGER", "SELECT tgname FROM pg_trigger WHERE substr(tgname,1,%d)='%s'"},
-	{"TYPE", "SELECT typname FROM pg_type WHERE substr(typname,1,%d)='%s'"},
+	{"TRIGGER", "SELECT tgname FROM pg_catalog.pg_trigger WHERE substr(tgname,1,%d)='%s'"},
+	{"TYPE", "SELECT typname FROM pg_catalog.pg_type WHERE substr(typname,1,%d)='%s'"},
 	{"UNIQUE", NULL},			/* for CREATE UNIQUE INDEX ... */
-	{"USER", "SELECT usename FROM pg_user WHERE substr(usename,1,%d)='%s'"},
-	{"VIEW", "SELECT viewname FROM pg_views WHERE substr(viewname,1,%d)='%s'"},
+	{"USER", "SELECT usename FROM pg_catalog.pg_user WHERE substr(usename,1,%d)='%s'"},
+	{"VIEW", "SELECT viewname FROM pg_catalog.pg_views WHERE substr(viewname,1,%d)='%s'"},
 	{NULL, NULL}				/* end of list */
 };
 
 
 /* The query to get a list of tables and a list of indexes, which are used at
    various places. */
-#define Query_for_list_of_tables words_after_create[8].query
+#define Query_for_list_of_tables words_after_create[9].query
 #define Query_for_list_of_indexes words_after_create[4].query
 #define Query_for_list_of_databases words_after_create[1].query
-#define Query_for_list_of_attributes "SELECT a.attname FROM pg_attribute a, pg_class c WHERE c.oid = a.attrelid and a.attnum>0 and substr(a.attname,1,%d)='%s' and c.relname='%s'"
-#define Query_for_list_of_users words_after_create[13].query
+#define Query_for_list_of_attributes "SELECT a.attname FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c WHERE c.oid = a.attrelid and a.attnum>0 and substr(a.attname,1,%d)='%s' and c.relname='%s'"
+#define Query_for_list_of_users words_after_create[14].query
 
 /* A couple of macros to ease typing. You can use these to complete the given
    string with
@@ -321,14 +320,13 @@ psql_completion(char *text, int start, int end)
 	/* complete with what you can alter (TABLE, GROUP, USER) */
 	else if (strcasecmp(prev_wd, "ALTER") == 0)
 	{
-		char	   *list_ALTER[] = {"GROUP", "TABLE", "USER", NULL};
+		char	   *list_ALTER[] = {"GROUP", "SCHEMA", "TABLE", "USER", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
 	}
 
 	/*
-	 * If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or
-	 * RENAME
+	 * If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or RENAME
 	 */
 	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "TABLE") == 0)
 	{
@@ -376,7 +374,7 @@ psql_completion(char *text, int start, int end)
 												 * queries. */
 
 		if (snprintf(query_buffer, BUF_SIZE,
-					 "SELECT c1.relname FROM pg_class c1, pg_class c2, pg_index i WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid and c2.relname='%s'",
+					 "SELECT c1.relname FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid and c2.relname='%s'",
 					 prev2_wd) == -1)
 			ERROR_QUERY_TOO_LONG;
 		else
@@ -389,7 +387,7 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev2_wd, "COMMENT") == 0 && strcasecmp(prev_wd, "ON") == 0)
 	{
 		char	   *list_COMMENT[] =
-		{"DATABASE", "INDEX", "RULE", "SEQUENCE", "TABLE", "TYPE", "VIEW",
+		{"DATABASE", "INDEX", "RULE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW",
 		"COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", NULL};
 
 		COMPLETE_WITH_LIST(list_COMMENT);
@@ -433,7 +431,7 @@ psql_completion(char *text, int start, int end)
 	 * Complete INDEX <name> ON <table> with a list of table columns
 	 * (which should really be in parens)
 	 */
-	else if ((strcasecmp(prev4_wd, "INDEX") == 0 && strcasecmp(prev2_wd, "ON") == 0))
+	else if (strcasecmp(prev4_wd, "INDEX") == 0 && strcasecmp(prev2_wd, "ON") == 0)
 		COMPLETE_WITH_ATTR(prev_wd);
 	/* same if you put in USING */
 	else if ((strcasecmp(prev4_wd, "ON") == 0 && strcasecmp(prev2_wd, "USING") == 0))
@@ -564,11 +562,12 @@ psql_completion(char *text, int start, int end)
 
 	/*
 	 * Complete GRANT/REVOKE <sth> ON with a list of tables, views,
-	 * sequences, and indexes
+	 * schema, sequences, and indexes
 	 */
 	else if ((strcasecmp(prev3_wd, "GRANT") == 0 || strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_class WHERE relkind in ('r','i','S','v') and substr(relname,1,%d)='%s'");
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class WHERE relkind in ('r','i','S','v') AND substr(relname,1,%d)='%s' 
+UNION SELECT nspname FROM pg_catalog.pg_namespace;");
 	/* Complete "GRANT * ON * " with "TO" */
 	else if (strcasecmp(prev4_wd, "GRANT") == 0 && strcasecmp(prev2_wd, "ON") == 0)
 		COMPLETE_WITH_CONST("TO");
@@ -588,6 +587,9 @@ psql_completion(char *text, int start, int end)
 	/* Complete INSERT INTO with table names */
 	else if (strcasecmp(prev2_wd, "INSERT") == 0 && strcasecmp(prev_wd, "INTO") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+	/* Complete "INSERT INTO <table> (" with attribute names */
+	else if (rl_line_buffer[start-1]=='(' && strcasecmp(prev3_wd, "INSERT") == 0 && strcasecmp(prev2_wd, "INTO") == 0)
+		COMPLETE_WITH_ATTR(prev_wd);
 
 	/*
 	 * Complete INSERT INTO <table> with "VALUES" or "SELECT" or "DEFAULT
@@ -596,22 +598,47 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev3_wd, "INSERT") == 0 && strcasecmp(prev2_wd, "INTO") == 0)
 	{
 		char	   *list_INSERT[] = {"DEFAULT VALUES", "SELECT", "VALUES", NULL};
-
 		COMPLETE_WITH_LIST(list_INSERT);
 	}
+	/* Complete INSERT INTO <table> (attribs) with "VALUES" or "SELECT" */
+	else if (strcasecmp(prev4_wd, "INSERT") == 0 && strcasecmp(prev3_wd, "INTO") == 0 &&
+			 prev_wd[strlen(prev_wd)-1]==')')
+	{
+		char	   *list_INSERT[] = {"SELECT", "VALUES", NULL};
+		COMPLETE_WITH_LIST(list_INSERT);
+	}
+
 	/* Insert an open parenthesis after "VALUES" */
 	else if (strcasecmp(prev_wd, "VALUES") == 0 && strcasecmp(prev2_wd, "DEFAULT") != 0)
 		COMPLETE_WITH_CONST("(");
 
 /* LOCK */
-	/* Complete with list of tables */
-	else if (strcasecmp(prev_wd, "LOCK") == 0)
+	/* Complete LOCK [TABLE] with a list of tables */
+	else if ((strcasecmp(prev_wd, "LOCK") == 0) ||
+			 (strcasecmp(prev_wd, "TABLE") == 0 && strcasecmp(prev2_wd, "LOCK")))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
-	/* (If you want more with LOCK, you better think about it yourself.) */
+
+	/* For the following, handle the case of a single table only for now */
+
+	/* Complete LOCK [TABLE] <table> with "IN" */
+	else if ((strcasecmp(prev2_wd, "LOCK") == 0 && strcasecmp(prev_wd, "TABLE")) || 
+			 (strcasecmp(prev2_wd, "TABLE") == 0 && strcasecmp(prev3_wd, "LOCK") == 0))
+			COMPLETE_WITH_CONST("IN");
+
+	/* Complete LOCK [TABLE] <table> IN with a lock mode */
+	else if (strcasecmp(prev_wd, "IN") == 0 &&
+			 (strcasecmp(prev3_wd, "LOCK") == 0 ||
+			  (strcasecmp(prev3_wd, "TABLE") == 0 && strcasecmp(prev3_wd, "LOCK"))))
+	{
+			char	   *lock_modes[] = {"ACCESS SHARE MODE", "ROW SHARE MODE", "ROW EXCLUSIVE MODE", 
+										"SHARE UPDATE EXCLUSIVE MODE", "SHARE MODE", "SHARE ROW EXCLUSIVE MODE",
+										"EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE", NULL};
+			COMPLETE_WITH_LIST(lock_modes);
+	}
 
 /* NOTIFY */
 	else if (strcasecmp(prev_wd, "NOTIFY") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_listener WHERE substr(relname,1,%d)='%s'");
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_listener WHERE substr(relname,1,%d)='%s'");
 
 /* REINDEX */
 	else if (strcasecmp(prev_wd, "REINDEX") == 0)
@@ -715,7 +742,7 @@ psql_completion(char *text, int start, int end)
 
 /* UNLISTEN */
 	else if (strcasecmp(prev_wd, "UNLISTEN") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_listener WHERE substr(relname,1,%d)='%s' UNION SELECT '*'::text");
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_listener WHERE substr(relname,1,%d)='%s' UNION SELECT '*'::text");
 
 /* UPDATE */
 	/* If prev. word is UPDATE suggest a list of tables */
@@ -735,9 +762,14 @@ psql_completion(char *text, int start, int end)
 
 /* VACUUM */
 	else if (strcasecmp(prev_wd, "VACUUM") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_class WHERE relkind='r' and substr(relname,1,%d)='%s' UNION SELECT 'FULL'::text UNION SELECT 'ANALYZE'::text");
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class WHERE relkind='r' and substr(relname,1,%d)='%s' UNION SELECT 'FULL'::text UNION SELECT 'ANALYZE'::text");
 	else if (strcasecmp(prev2_wd, "VACUUM") == 0 && (strcasecmp(prev_wd, "FULL") == 0 || strcasecmp(prev_wd, "ANALYZE") == 0))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+
+/* WHERE */
+	/* Simple case of the word before the where being the table name */
+	else if (strcasecmp(prev_wd, "WHERE") == 0) 
+		COMPLETE_WITH_ATTR(prev2_wd);
 
 /* ... FROM ... */
 	else if (strcasecmp(prev_wd, "FROM") == 0)
@@ -1008,15 +1040,14 @@ exec_query(char *query)
 
 /* Return the word (space delimited) before point. Set skip > 0 to skip that
    many words; e.g. skip=1 finds the word before the previous one.
-   TODO: Take account of quotes. (Right now, if you table names contain spaces
-   you're screwed.)
 */
 static char *
 previous_word(int point, int skip)
 {
 	int			i,
 				start = 0,
-				end = -1;
+				end = -1,
+				inquotes=0;
 	char	   *s;
 
 	while (skip-- >= 0)
@@ -1046,9 +1077,12 @@ previous_word(int point, int skip)
 		 * last character before any space going backwards from the end,
 		 * or it's simply character 0
 		 */
-		for (start = end; start > 0; start--)
-			if (rl_line_buffer[start - 1] == ' ')
-				break;
+		for (start = end; start > 0; start--) {
+				if (rl_line_buffer[start] == '"')
+						inquotes = !inquotes;
+				if ((rl_line_buffer[start - 1] == ' ') && inquotes==0)
+						break;
+		}
 
 		point = start;
 	}
