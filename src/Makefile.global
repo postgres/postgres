@@ -7,14 +7,21 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.79 1996/12/28 02:11:37 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.80 1996/12/30 23:19:23 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
-#    variables it sets.  To 
-#    override the default setting, create a Makefile.custom in this
+#    variables it sets.  
+#
+#    To override the default setting, create a Makefile.custom in this
 #    directory and put your defines there. (Makefile.custom is included
-#    near the end of this file.)
+#    near the end of this file).  Sometimes, a variable gets set in
+#    Makefile.global after Makefile.custom has been included, so you can't
+#    simply set that variable in Makefile.custom.  In those cases, there is
+#    often another variable (like CUSTOM_COPT) that you can set in 
+#    Makefile.custom that influences the later setting of the true variable
+#    of interest (like CFLAGS) by Makefile.global.
+#
 #
 #    If you change any of these defines you probably have to 
 #       make clean; make
@@ -133,10 +140,6 @@ OIDNAMELEN= 36
 # Compile libpq++
 #HAVE_Cplusplus= true
 
-# Uncomment out CUSTOM_COPT to generate a debug version
-# This overrides the compiler flags defined later in this file
-#CUSTOM_COPT=-g
-
 # Commenting out CASSERT will make things go a LOT faster, but you will
 # also loose a lot of useful error-checking.
 CASSERT= true
@@ -165,6 +168,11 @@ READLINE_LIB= -L/home/tools/lib -lreadline
 # use the following if your readline has a separate history lib
 #HISTORY_INC= -I/home/tools/include -I/home/tools/include/readline
 #HISTORY_LIB= -L/home/tools/lib -lhistory
+
+# curses is required by readline.  Ncurses has obsoleted curses, and may
+# in fact be what goes by the name "curses" on this system.
+
+CURSES_LIB= -L/home/tools/lib -lcurses
 
 # If you plan to use Kerberos for authentication...
 #

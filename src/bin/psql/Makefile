@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.16 1996/12/04 03:06:16 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.17 1996/12/30 23:19:48 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,13 +26,12 @@ CFLAGS+= $(INCLUDE_OPT)
 ifeq ($(USE_READLINE), true)
    CFLAGS+= $(READLINE_INC) $(HISTORY_INC)
 
-   LIBCURSES=	-lcurses 
-   LD_ADD+= $(READLINE_LIB) $(HISTORY_LIB) $(LIBCURSES)
+   LD_ADD+= $(READLINE_LIB) $(HISTORY_LIB) $(CURSES_LIB)
 
    ifeq ($(PORTNAME), ultrix4)
    LD_ADD+= -ltermcap
    else
-   ifeq ($(PORTNAME), sunos4)
+   ifeq ($(PORTNAME), sparc)
    LD_ADD+= -ltermcap
    else
    ifeq ($(PORTNAME), linux)
