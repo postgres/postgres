@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.126 2003/10/16 04:52:21 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.127 2003/10/22 18:10:53 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1573,10 +1573,6 @@ SELECT b, char_length(b) FROM test2;
 	  <entry><literal>04:05 PM</literal></entry>
 	  <entry>same as 16:05; input hour must be <= 12</entry>
 	 </row>
-	 <row>
-	  <entry><literal>allballs</literal></entry>
-	  <entry>same as 00:00:00</entry>
-	 </row>
 	<row>
 	 <entry>04:05:06.789-8</entry>
 	 <entry>ISO 8601</entry>
@@ -1626,6 +1622,14 @@ SELECT b, char_length(b) FROM test2;
 	 <row>
 	  <entry>-8</entry>
 	  <entry>ISO-8601 offset for PST</entry>
+	 </row>
+	 <row>
+	  <entry>zulu</entry>
+	  <entry>Military abbreviation for GMT</entry>
+	 </row>
+	 <row>
+	  <entry>z</entry>
+	  <entry>Short form of zulu</entry>
 	 </row>
 	</tbody>
        </tgroup>
@@ -1828,7 +1832,7 @@ January 8 04:05:06 1999 PST
 	  <entry>midnight yesterday</entry>
 	 </row>
 	 <row>
-	  <entry><literal>zulu</>, <literal>allballs</>, <literal>z</></entry>
+	  <entry><literal>allballs</literal></entry>
           <entry><type>time</type></entry>
 	  <entry>00:00:00.00 UTC</entry>
 	 </row>
