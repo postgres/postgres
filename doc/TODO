@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Apr 17 23:07:00 EDT 2002
+Last updated:		Wed Apr 17 23:08:43 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -170,7 +170,7 @@ COMMANDS
 --------
 
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* Add BETWEEN ASYMMETRIC/SYMMETRIC
+* Add BETWEEN ASYMMETRIC/SYMMETRIC (Christopher)
 * -Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
 * Disallow TRUNCATE on tables that are involved in referential constraints
@@ -498,6 +498,7 @@ Developers who have claimed items are:
 * Barry is Barry Lind <barry@xythos.com>
 * Billy is Billy G. Allie <Bill.Allie@mug.org>
 * Bruce is Bruce Momjian<pgman@candle.pha.pa.us>
+* Christopher is Christopher Kings-Lynne <chriskl@familyhealth.com.au>
 * D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
 * Dave is Dave Cramer <dave@fastcrypt.com>
 * Edmund is Edmund Mergl <E.Mergl@bawue.de>
