@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.146 2001/10/25 05:49:31 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.147 2001/10/25 14:08:11 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1325,14 +1325,14 @@ _outAConst(StringInfo str, A_Const *node)
 static void
 _outConstraint(StringInfo str, Constraint *node)
 {
-	appendStringInfo(str, " ");
+	appendStringInfo(str, " CONSTRAINT :name ");
 	_outToken(str, node->name);
 	appendStringInfo(str, " :type ");
 
 	switch (node->contype)
 	{
 		case CONSTR_PRIMARY:
-			appendStringInfo(str, "PRIMARY KEY ");
+			appendStringInfo(str, "PRIMARY_KEY :keys ");
 			_outNode(str, node->keys);
 			break;
 
@@ -1351,11 +1351,11 @@ _outConstraint(StringInfo str, Constraint *node)
 			break;
 
 		case CONSTR_NOTNULL:
-			appendStringInfo(str, "NOT NULL");
+			appendStringInfo(str, "NOT_NULL");
 			break;
 
 		case CONSTR_UNIQUE:
-			appendStringInfo(str, "UNIQUE ");
+			appendStringInfo(str, "UNIQUE :keys ");
 			_outNode(str, node->keys);
 			break;
 
@@ -1363,6 +1363,25 @@ _outConstraint(StringInfo str, Constraint *node)
 			appendStringInfo(str, "<unrecognized_constraint>");
 			break;
 	}
+}
+
+static void
+_outFkConstraint(StringInfo str, FkConstraint *node)
+{
+	appendStringInfo(str, " FKCONSTRAINT :constr_name ");
+	_outToken(str, node->constr_name);
+	appendStringInfo(str, " :pktable_name ");
+	_outToken(str, node->pktable_name);
+	appendStringInfo(str, " :fk_attrs ");
+	_outNode(str, node->fk_attrs);
+	appendStringInfo(str, " :pk_attrs ");
+	_outNode(str, node->pk_attrs);
+	appendStringInfo(str, " :match_type ");
+	_outToken(str, node->match_type);
+	appendStringInfo(str, " :actions %d :deferrable %s :initdeferred %s",
+					 node->actions,
+					 booltostr(node->deferrable),
+					 booltostr(node->initdeferred));
 }
 
 static void
@@ -1645,6 +1664,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
+				break;
+			case T_FkConstraint:
+				_outFkConstraint(str, obj);
 				break;
 			case T_CaseExpr:
 				_outCaseExpr(str, obj);
