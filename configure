@@ -1389,7 +1389,7 @@ case $host_os in
     dgux*) template=dgux ;;
  freebsd*) template=freebsd ;;
     hpux*) template=hpux ;;
-    irix*) template=irix5 ;;
+    irix*) template=irix ;;
    linux*) template=linux ;;
    mingw*) template=win32 ;;
   netbsd*) template=netbsd ;;
