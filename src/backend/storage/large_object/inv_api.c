@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.50 1999/02/22 16:46:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.51 1999/03/14 16:08:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,10 @@
  *		For subsequent notes, [PA] is Pascal André <andre@via.ecp.fr>
  */
 
-#define IFREESPC(p)		(PageGetFreeSpace(p) - sizeof(HeapTupleData) - sizeof(struct varlena) - sizeof(int32))
+#define IFREESPC(p)		(PageGetFreeSpace(p) - \
+				 DOUBLEALIGN(offsetof(HeapTupleHeaderData,t_bits)) - \
+				 DOUBLEALIGN(sizeof(struct varlena) + sizeof(int32)) - \
+				 sizeof(double))
 #define IMAXBLK			8092
 #define IMINBLK			512
 
@@ -623,24 +626,25 @@ inv_fetchtup(LargeObjectDesc *obj_desc, HeapTuple tuple, Buffer *buffer)
 		|| obj_desc->offset < obj_desc->lowbyte
 		|| !ItemPointerIsValid(&(obj_desc->htid)))
 	{
+ 		ScanKeyData skey;
+
+		ScanKeyEntryInitialize(&skey, 0x0, 1, F_INT4GE,
+				       Int32GetDatum(obj_desc->offset));
 
 		/* initialize scan key if not done */
 		if (obj_desc->iscan == (IndexScanDesc) NULL)
 		{
-			ScanKeyData skey;
-
 			/*
 			 * As scan index may be prematurely closed (on commit), we
 			 * must use object current offset (was 0) to reinitialize the
 			 * entry [ PA ].
 			 */
-			ScanKeyEntryInitialize(&skey, 0x0, 1, F_INT4GE,
-								   Int32GetDatum(obj_desc->offset));
 			obj_desc->iscan = index_beginscan(obj_desc->index_r,
 								(bool) 0, (uint16) 1,
 								&skey);
-		}
-
+		} else {
+ 			index_rescan(obj_desc->iscan, false, &skey);
+        	}
 		do
 		{
 			res = index_getnext(obj_desc->iscan, ForwardScanDirection);
@@ -673,6 +677,9 @@ inv_fetchtup(LargeObjectDesc *obj_desc, HeapTuple tuple, Buffer *buffer)
 	{
 		tuple->t_self = obj_desc->htid;
 		heap_fetch(obj_desc->heap_r, SnapshotNow, tuple, buffer);
+ 		if (tuple->t_data == NULL) {
+			elog(ERROR, "inv_fetchtup: heap_fetch failed");
+ 		}
 	}
 
 	/*
@@ -744,12 +751,15 @@ inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	nblocks = RelationGetNumberOfBlocks(hr);
 
-	if (nblocks > 0)
+	if (nblocks > 0) {
 		buffer = ReadBuffer(hr, nblocks - 1);
-	else
+		page = BufferGetPage(buffer);
+	}
+	else {
 		buffer = ReadBuffer(hr, P_NEW);
-
-	page = BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
+		PageInit(page, BufferGetPageSize(buffer), 0);
+	}
 
 	/*
 	 * If the last page is too small to hold all the data, and it's too
@@ -864,12 +874,16 @@ inv_wrold(LargeObjectDesc *obj_desc,
 
 		nblocks = RelationGetNumberOfBlocks(hr);
 
-		if (nblocks > 0)
+		if (nblocks > 0) {
 			newbuf = ReadBuffer(hr, nblocks - 1);
-		else
+			newpage = BufferGetPage(newbuf);
+		}
+		else {
 			newbuf = ReadBuffer(hr, P_NEW);
+			newpage = BufferGetPage(newbuf);
+			PageInit(newpage, BufferGetPageSize(newbuf), 0);
+		}
 
-		newpage = BufferGetPage(newbuf);
 		freespc = IFREESPC(newpage);
 
 		/*
@@ -973,6 +987,9 @@ inv_wrold(LargeObjectDesc *obj_desc,
 	WriteBuffer(buffer);
 	if (newbuf != buffer)
 		WriteBuffer(newbuf);
+
+	/* Tuple id is no longer valid */
+	ItemPointerSetInvalid(&(obj_desc->htid));
 
 	/* done */
 	return nwritten;
