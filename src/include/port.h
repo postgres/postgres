@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.52 2004/08/12 18:32:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.53 2004/08/17 14:38:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,8 @@ extern off_t ftello(FILE *stream);
 /*
  *	WIN32 doesn't allow descriptors returned by pipe() to be used in select(),
  *	so for that platform we use socket() instead of pipe().
+ *	There is some inconsistency here because sometimes we require pg*, like
+ *	pgpipe, but in other cases we define rename to pgrename just on Win32.
  */
 #ifndef WIN32
 #define pgpipe(a)			pipe(a)
