@@ -415,8 +415,8 @@ rdatestr (Date d, char *str)
 		return -1210;
 	
 	/* move to user allocated buffer */
-	strcpy(tmp, str);
-	free(str);
+	strcpy(str, tmp);
+	free(tmp);
 	
 	return 0;
 }
@@ -532,6 +532,10 @@ dtsub (Timestamp *ts1, Timestamp *ts2, Interval *iv)
 int
 dttoasc (Timestamp *ts, char *output)
 {
+	char *asctime = PGTYPEStimestamp_to_asc( *ts );
+	
+	strcpy (output, asctime); 
+	free(asctime);
 	return 0;
 }
 
