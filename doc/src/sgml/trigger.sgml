@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.21 2002/03/22 19:20:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.22 2002/04/01 22:36:06 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -374,6 +374,7 @@ typedef struct Trigger
     int16       tgtype;
     bool        tgenabled;
     bool        tgisconstraint;
+    Oid         tgconstrrelid;
     bool        tgdeferrable;
     bool        tginitdeferred;
     int16       tgnargs;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.110 2002/03/31 06:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.111 2002/04/01 22:36:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -544,6 +544,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgtype = pg_trigger->tgtype;
 		build->tgenabled = pg_trigger->tgenabled;
 		build->tgisconstraint = pg_trigger->tgisconstraint;
+		build->tgconstrrelid = pg_trigger->tgconstrrelid;
 		build->tgdeferrable = pg_trigger->tgdeferrable;
 		build->tginitdeferred = pg_trigger->tginitdeferred;
 		build->tgnargs = pg_trigger->tgnargs;
@@ -762,6 +763,8 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 			if (trig1->tgenabled != trig2->tgenabled)
 				return false;
 			if (trig1->tgisconstraint != trig2->tgisconstraint)
+				return false;
+			if (trig1->tgconstrrelid != trig2->tgconstrrelid)
 				return false;
 			if (trig1->tgdeferrable != trig2->tgdeferrable)
 				return false;

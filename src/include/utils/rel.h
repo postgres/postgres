@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.58 2002/03/31 06:26:32 tgl Exp $
+ * $Id: rel.h,v 1.59 2002/04/01 22:36:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,12 +49,14 @@ typedef LockInfoData *LockInfo;
  */
 typedef struct Trigger
 {
-	Oid			tgoid;
+	Oid			tgoid;			/* OID of trigger (pg_trigger row) */
+	/* Remaining fields are copied from pg_trigger, see pg_trigger.h */
 	char	   *tgname;
 	Oid			tgfoid;
 	int16		tgtype;
 	bool		tgenabled;
 	bool		tgisconstraint;
+	Oid			tgconstrrelid;
 	bool		tgdeferrable;
 	bool		tginitdeferred;
 	int16		tgnargs;

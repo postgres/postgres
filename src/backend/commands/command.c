@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.170 2002/04/01 04:35:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.171 2002/04/01 22:36:09 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1639,9 +1639,6 @@ AlterTableAddConstraint(Oid myrelid,
 						!isTempNamespace(RelationGetNamespace(rel)))
 						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
 
-					/* Don't need pkrel open anymore, but hold lock */
-					heap_close(pkrel, NoLock);
-
 					/*
 					 * First we check for limited correctness of the
 					 * constraint.
@@ -1651,34 +1648,30 @@ AlterTableAddConstraint(Oid myrelid,
 					 * referenced relation, and that the column datatypes
 					 * are comparable.
 					 *
-					 * Scan through each tuple, calling the RI_FKey_Match_Ins
+					 * Scan through each tuple, calling RI_FKey_check_ins
 					 * (insert trigger) as if that tuple had just been
 					 * inserted.  If any of those fail, it should
 					 * elog(ERROR) and that's that.
 					 */
-
-					trig.tgoid = 0;
+					MemSet(&trig, 0, sizeof(trig));
+					trig.tgoid = InvalidOid;
 					if (fkconstraint->constr_name)
 						trig.tgname = fkconstraint->constr_name;
 					else
 						trig.tgname = "<unknown>";
-					trig.tgfoid = 0;
-					trig.tgtype = 0;
 					trig.tgenabled = TRUE;
 					trig.tgisconstraint = TRUE;
-					trig.tginitdeferred = FALSE;
+					trig.tgconstrrelid = RelationGetRelid(pkrel);
 					trig.tgdeferrable = FALSE;
+					trig.tginitdeferred = FALSE;
 
 					trig.tgargs = (char **) palloc(
 					 sizeof(char *) * (4 + length(fkconstraint->fk_attrs)
 									   + length(fkconstraint->pk_attrs)));
 
-					if (fkconstraint->constr_name)
-						trig.tgargs[0] = fkconstraint->constr_name;
-					else
-						trig.tgargs[0] = "<unknown>";
-					trig.tgargs[1] = pstrdup(RelationGetRelationName(rel));
-					trig.tgargs[2] = fkconstraint->pktable->relname;
+					trig.tgargs[0] = trig.tgname;
+					trig.tgargs[1] = RelationGetRelationName(rel);
+					trig.tgargs[2] = RelationGetRelationName(pkrel);
 					trig.tgargs[3] = fkconstraint->match_type;
 					count = 4;
 					foreach(list, fkconstraint->fk_attrs)
@@ -1732,6 +1725,9 @@ AlterTableAddConstraint(Oid myrelid,
 					heap_endscan(scan);
 
 					pfree(trig.tgargs);
+
+					heap_close(pkrel, NoLock);
+
 					break;
 				}
 			default:
