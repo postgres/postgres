@@ -2,17 +2,20 @@
 #define PRIVATE_H
 
 /*
-** This file is in the public domain, so clarified as of
-** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
-*/
+ * This file is in the public domain, so clarified as of
+ * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.8 2004/05/21 20:59:10 tgl Exp $
+ */
 
 /*
-** This header is for use ONLY with the time conversion code.
-** There is no guarantee that it will remain unchanged,
-** or that it will remain at all.
-** Do NOT copy it to any system include directory.
-** Thank you!
-*/
+ * This header is for use ONLY with the time conversion code.
+ * There is no guarantee that it will remain unchanged,
+ * or that it will remain at all.
+ * Do NOT copy it to any system include directory.
+ * Thank you!
+ */
 
 #include <limits.h>				/* for CHAR_BIT */
 #include <sys/wait.h>			/* for WIFEXITED and WEXITSTATUS */
@@ -28,32 +31,31 @@
 #define WEXITSTATUS(status) (((status) >> 8) & 0xff)
 #endif   /* !defined WEXITSTATUS */
 
-/* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX.  */
+/* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
 /*
-** SunOS 4.1.1 headers lack EXIT_SUCCESS.
-*/
+ * SunOS 4.1.1 headers lack EXIT_SUCCESS.
+ */
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS	0
 #endif   /* !defined EXIT_SUCCESS */
 
 /*
-** SunOS 4.1.1 headers lack EXIT_FAILURE.
-*/
+ * SunOS 4.1.1 headers lack EXIT_FAILURE.
+ */
 
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE	1
 #endif   /* !defined EXIT_FAILURE */
 
 /*
-** SunOS 4.1.1 libraries lack remove.
-*/
+ * SunOS 4.1.1 libraries lack remove.
+ */
 
 #ifndef remove
 extern int	unlink(const char *filename);
-
 #define remove	unlink
 #endif   /* !defined remove */
 
@@ -92,11 +94,11 @@ extern char *scheck(const char *string, const char *format);
 
 #ifndef INT_STRLEN_MAXIMUM
 /*
-** 302 / 1000 is log10(2.0) rounded up.
-** Subtract one for the sign bit if the type is signed;
-** add one for integer division truncation;
-** add one more for a minus sign if the type is signed.
-*/
+ * 302 / 1000 is log10(2.0) rounded up.
+ * Subtract one for the sign bit if the type is signed;
+ * add one for integer division truncation;
+ * add one more for a minus sign if the type is signed.
+ */
 #define INT_STRLEN_MAXIMUM(type) \
 	((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + 1 + TYPE_SIGNED(type))
 #endif   /* !defined INT_STRLEN_MAXIMUM */
@@ -104,7 +106,7 @@ extern char *scheck(const char *string, const char *format);
 #define _(msgid) (msgid)
 
 /*
-** UNIX was a registered trademark of The Open Group in 2003.
-*/
+ * UNIX was a registered trademark of The Open Group in 2003.
+ */
 
 #endif   /* !defined PRIVATE_H */

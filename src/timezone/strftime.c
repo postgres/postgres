@@ -1,19 +1,22 @@
 /*
-** Copyright (c) 1989 The Regents of the University of California.
-** All rights reserved.
-**
-** Redistribution and use in source and binary forms are permitted
-** provided that the above copyright notice and this paragraph are
-** duplicated in all such forms and that any documentation,
-** advertising materials, and other materials related to such
-** distribution and use acknowledge that the software was developed
-** by the University of California, Berkeley.  The name of the
-** University may not be used to endorse or promote products derived
-** from this software without specific prior written permission.
-** THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
-** IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
-** WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-*/
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms are permitted
+ * provided that the above copyright notice and this paragraph are
+ * duplicated in all such forms and that any documentation,
+ * advertising materials, and other materials related to such
+ * distribution and use acknowledge that the software was developed
+ * by the University of California, Berkeley.  The name of the
+ * University may not be used to endorse or promote products derived
+ * from this software without specific prior written permission.
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.3 2004/05/21 20:59:10 tgl Exp $
+ */
 
 #include "postgres.h"
 
@@ -60,15 +63,19 @@ static const struct lc_time_T C_time_locale = {
 	"%H:%M:%S",
 
 	/*
-	 * * x_fmt * C99 requires this format. * Using just numbers (as here)
-	 * makes Quakers happier; * it's also compatible with SVR4.
+	 * x_fmt
+	 *
+	 * C99 requires this format. Using just numbers (as here)
+	 * makes Quakers happier; it's also compatible with SVR4.
 	 */
 	"%m/%d/%y",
 
 	/*
-	 * * c_fmt * C99 requires this format. * Previously this code used "%D
-	 * %X", but we now conform to C99. * Note that *      "%a %b %d
-	 * %H:%M:%S %Y" * is used by Solaris 2.3.
+	 * c_fmt
+	 *
+	 * C99 requires this format. Previously this code used "%D %X", but we now
+	 * conform to C99. Note that "%a %b %d %H:%M:%S %Y" is used by Solaris
+	 * 2.3.
 	 */
 	"%a %b %e %T %Y",
 
@@ -84,7 +91,8 @@ static const struct lc_time_T C_time_locale = {
 
 static char *_add(const char *, char *, const char *);
 static char *_conv(int, const char *, char *, const char *);
-static char *_fmt(const char *, const struct pg_tm *, char *, const char *, int *);
+static char *_fmt(const char *, const struct pg_tm *, char *,
+				  const char *, int *);
 
 #define IN_NONE 0
 #define IN_SOME 1
@@ -93,7 +101,8 @@ static char *_fmt(const char *, const struct pg_tm *, char *, const char *, int 
 
 
 size_t
-pg_strftime(char *s, size_t maxsize, const char *format, const struct pg_tm * t)
+pg_strftime(char *s, size_t maxsize, const char *format,
+			const struct pg_tm *t)
 {
 	char	   *p;
 	int			warn;
@@ -107,7 +116,8 @@ pg_strftime(char *s, size_t maxsize, const char *format, const struct pg_tm * t)
 }
 
 static char *
-_fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, int *warnp)
+_fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
+	 int *warnp)
 {
 	for (; *format; ++format)
 	{
@@ -147,9 +157,9 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 				case 'C':
 
 					/*
-					 * * %C used to do a... *  _fmt("%a %b %e %X %Y", t); *
-					 * ...whereas now POSIX 1003.2 calls for * something
-					 * completely different. * (ado, 1993-05-24)
+					 * %C used to do a... _fmt("%a %b %e %X %Y", t);
+					 * ...whereas now POSIX 1003.2 calls for something
+					 * completely different. (ado, 1993-05-24)
 					 */
 					pt = _conv((t->tm_year + TM_YEAR_BASE) / 100,
 							   "%02d", pt, ptlim);
@@ -175,10 +185,10 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 				case 'O':
 
 					/*
-					 * * C99 locale modifiers. * The sequences *  %Ec %EC
-					 * %Ex %EX %Ey %EY *  %Od %oe %OH %OI %Om %OM *  %OS
-					 * %Ou %OU %OV %Ow %OW %Oy * are supposed to provide
-					 * alternate * representations.
+					 * C99 locale modifiers. The sequences  %Ec %EC
+					 * %Ex %EX %Ey %EY  %Od %oe %OH %OI %Om %OM  %OS
+					 * %Ou %OU %OV %Ow %OW %Oy are supposed to provide
+					 * alternate representations.
 					 */
 					goto label;
 				case 'e':
@@ -201,12 +211,11 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 				case 'k':
 
 					/*
-					 * * This used to be... *  _conv(t->tm_hour % 12 ? *
-					 * t->tm_hour % 12 : 12, 2, ' '); * ...and has been
-					 * changed to the below to * match SunOS 4.1.1 and
-					 * Arnold Robbins' * strftime version 3.0.  That is,
-					 * "%k" and * "%l" have been swapped. * (ado,
-					 * 1993-05-24)
+					 * This used to be...  _conv(t->tm_hour % 12 ?  t->tm_hour
+					 * % 12 : 12, 2, ' '); ...and has been changed to the
+					 * below to match SunOS 4.1.1 and Arnold Robbins' strftime
+					 * version 3.0.  That is, "%k" and "%l" have been
+					 * swapped. (ado, 1993-05-24)
 					 */
 					pt = _conv(t->tm_hour, "%2d", pt, ptlim);
 					continue;
@@ -222,10 +231,10 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 				case 'l':
 
 					/*
-					 * * This used to be... *  _conv(t->tm_hour, 2, ' '); *
-					 * ...and has been changed to the below to * match
-					 * SunOS 4.1.1 and Arnold Robbin's * strftime version
-					 * 3.0.  That is, "%k" and * "%l" have been swapped. *
+					 * This used to be...  _conv(t->tm_hour, 2, ' ');
+					 * ...and has been changed to the below to match
+					 * SunOS 4.1.1 and Arnold Robbin's strftime version
+					 * 3.0.  That is, "%k" and "%l" have been swapped.
 					 * (ado, 1993-05-24)
 					 */
 					pt = _conv((t->tm_hour % 12) ?
@@ -285,9 +294,9 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 				case 'u':
 
 					/*
-					 * * From Arnold Robbins' strftime version 3.0: * "ISO
-					 * 8601: Weekday as a decimal number * [1 (Monday) -
-					 * 7]" * (ado, 1993-05-24)
+					 * From Arnold Robbins' strftime version 3.0: "ISO 8601:
+					 * Weekday as a decimal number [1 (Monday) - 7]"
+					 * (ado, 1993-05-24)
 					 */
 					pt = _conv((t->tm_wday == 0) ?
 							   DAYSPERWEEK : t->tm_wday,
@@ -297,23 +306,23 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 				case 'G':		/* ISO 8601 year (four digits) */
 				case 'g':		/* ISO 8601 year (two digits) */
 /*
-** From Arnold Robbins' strftime version 3.0:  "the week number of the
-** year (the first Monday as the first day of week 1) as a decimal number
-** (01-53)."
-** (ado, 1993-05-24)
-**
-** From "http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html" by Markus Kuhn:
-** "Week 01 of a year is per definition the first week which has the
-** Thursday in this year, which is equivalent to the week which contains
-** the fourth day of January. In other words, the first week of a new year
-** is the week which has the majority of its days in the new year. Week 01
-** might also contain days from the previous year and the week before week
-** 01 of a year is the last week (52 or 53) of the previous year even if
-** it contains days from the new year. A week starts with Monday (day 1)
-** and ends with Sunday (day 7).  For example, the first week of the year
-** 1997 lasts from 1996-12-30 to 1997-01-05..."
-** (ado, 1996-01-02)
-*/
+ * From Arnold Robbins' strftime version 3.0:  "the week number of the
+ * year (the first Monday as the first day of week 1) as a decimal number
+ * (01-53)."
+ * (ado, 1993-05-24)
+ *
+ * From "http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html" by Markus Kuhn:
+ * "Week 01 of a year is per definition the first week which has the
+ * Thursday in this year, which is equivalent to the week which contains
+ * the fourth day of January. In other words, the first week of a new year
+ * is the week which has the majority of its days in the new year. Week 01
+ * might also contain days from the previous year and the week before week
+ * 01 of a year is the last week (52 or 53) of the previous year even if
+ * it contains days from the new year. A week starts with Monday (day 1)
+ * and ends with Sunday (day 7).  For example, the first week of the year
+ * 1997 lasts from 1996-12-30 to 1997-01-05..."
+ * (ado, 1996-01-02)
+ */
 					{
 						int			year;
 						int			yday;
@@ -334,14 +343,14 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 								DAYSPERNYEAR;
 
 							/*
-							 * * What yday (-3 ... 3) does * the ISO year
+							 * What yday (-3 ... 3) does the ISO year
 							 * begin on?
 							 */
 							bot = ((yday + 11 - wday) %
 								   DAYSPERWEEK) - 3;
 
 							/*
-							 * * What yday does the NEXT * ISO year begin
+							 * What yday does the NEXT ISO year begin
 							 * on?
 							 */
 							top = bot -
@@ -383,8 +392,8 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 				case 'v':
 
 					/*
-					 * * From Arnold Robbins' strftime version 3.0: *
-					 * "date as dd-bbb-YYYY" * (ado, 1993-05-24)
+					 * From Arnold Robbins' strftime version 3.0:
+					 * "date as dd-bbb-YYYY" (ado, 1993-05-24)
 					 */
 					pt = _fmt("%e-%b-%Y", t, pt, ptlim, warnp);
 					continue;
@@ -426,8 +435,8 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 						pt = _add(t->tm_zone, pt, ptlim);
 
 					/*
-					 * * C99 says that %Z must be replaced by the * empty
-					 * string if the time zone is not * determinable.
+					 * C99 says that %Z must be replaced by the empty
+					 * string if the time zone is not determinable.
 					 */
 					continue;
 				case 'z':
@@ -458,8 +467,8 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim, in
 				case '%':
 
 					/*
-					 * * X311J/88-090 (4.12.3.5): if conversion char is *
-					 * undefined, behavior is undefined.  Print out the *
+					 * X311J/88-090 (4.12.3.5): if conversion char is
+					 * undefined, behavior is undefined.  Print out the
 					 * character itself as printf(3) also does.
 					 */
 				default:

@@ -1,3 +1,11 @@
+/*
+ * This file is in the public domain, so clarified as of
+ * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.7 2004/05/21 20:59:10 tgl Exp $
+ */
+
 #include "postgres.h"
 
 #include <locale.h>
@@ -26,13 +34,13 @@
 static char elsieid[] = "@(#)zic.c	7.115";
 
 /*
-** On some ancient hosts, predicates like `isspace(C)' are defined
-** only if isascii(C) || C == EOF.	Modern hosts obey the C Standard,
-** which says they are defined only if C == ((unsigned char) C) || C == EOF.
-** Neither the C Standard nor Posix require that `isascii' exist.
-** For portability, we check both ancient and modern requirements.
-** If isascii is not defined, the isascii check succeeds trivially.
-*/
+ * On some ancient hosts, predicates like `isspace(C)' are defined
+ * only if isascii(C) || C == EOF.	Modern hosts obey the C Standard,
+ * which says they are defined only if C == ((unsigned char) C) || C == EOF.
+ * Neither the C Standard nor Posix require that `isascii' exist.
+ * For portability, we check both ancient and modern requirements.
+ * If isascii is not defined, the isascii check succeeds trivially.
+ */
 #include <ctype.h>
 #ifndef isascii
 #define isascii(x) 1
@@ -67,8 +75,8 @@ struct rule
 };
 
 /*
-**	r_dycode		r_dayofmonth	r_wday
-*/
+ *	r_dycode		r_dayofmonth	r_wday
+ */
 
 #define DC_DOM		0	/* 1..31 */		/* unused */
 #define DC_DOWGEQ	1	/* 1..31 */		/* 0..6 (Sun..Sat) */
@@ -164,8 +172,8 @@ static int	timecnt;
 static int	typecnt;
 
 /*
-** Line codes.
-*/
+ * Line codes.
+ */
 
 #define LC_RULE		0
 #define LC_ZONE		1
@@ -173,8 +181,8 @@ static int	typecnt;
 #define LC_LEAP		3
 
 /*
-** Which fields are which on a Zone line.
-*/
+ * Which fields are which on a Zone line.
+ */
 
 #define ZF_NAME		1
 #define ZF_GMTOFF	2
@@ -188,8 +196,8 @@ static int	typecnt;
 #define ZONE_MAXFIELDS	9
 
 /*
-** Which fields are which on a Zone continuation line.
-*/
+ * Which fields are which on a Zone continuation line.
+ */
 
 #define ZFC_GMTOFF	0
 #define ZFC_RULE	1
@@ -202,8 +210,8 @@ static int	typecnt;
 #define ZONEC_MAXFIELDS 7
 
 /*
-** Which files are which on a Rule line.
-*/
+ * Which files are which on a Rule line.
+ */
 
 #define RF_NAME		1
 #define RF_LOYEAR	2
@@ -217,16 +225,16 @@ static int	typecnt;
 #define RULE_FIELDS 10
 
 /*
-** Which fields are which on a Link line.
-*/
+ * Which fields are which on a Link line.
+ */
 
 #define LF_FROM		1
 #define LF_TO		2
 #define LINK_FIELDS 3
 
 /*
-** Which fields are which on a Leap line.
-*/
+ * Which fields are which on a Leap line.
+ */
 
 #define LP_YEAR		1
 #define LP_MONTH	2
@@ -237,8 +245,8 @@ static int	typecnt;
 #define LEAP_FIELDS 7
 
 /*
-** Year synonyms.
-*/
+ * Year synonyms.
+ */
 
 #define YR_MINIMUM	0
 #define YR_MAXIMUM	1
@@ -360,8 +368,8 @@ static long corr[TZ_MAX_LEAPS];
 static char roll[TZ_MAX_LEAPS];
 
 /*
-** Memory allocation.
-*/
+ * Memory allocation.
+ */
 
 static char *
 memcheck(ptr)
@@ -384,8 +392,8 @@ char	   *const ptr;
 #define ecatalloc(oldp, newp)	memcheck(icatalloc((oldp), (newp)))
 
 /*
-** Error handling.
-*/
+ * Error handling.
+ */
 
 #ifndef HAVE_STRERROR
 static char *
@@ -418,8 +426,8 @@ static void
 error(const char *string)
 {
 	/*
-	 * * Match the format of "cc" to allow sh users to *  zic ... 2>&1 |
-	 * error -t "*" -v * on BSD systems.
+	 * Match the format of "cc" to allow sh users to  zic ... 2>&1 |
+	 * error -t "*" -v on BSD systems.
 	 */
 	(void) fprintf(stderr, _("\"%s\", line %d: %s"),
 				   filename, linenum, string);
@@ -564,7 +572,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < nzones; i = j)
 	{
 		/*
-		 * * Find the next non-continuation zone entry.
+		 * Find the next non-continuation zone entry.
 		 */
 		for (j = i + 1; j < nzones && zones[j].z_name == NULL; ++j)
 			continue;
@@ -572,7 +580,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * * Make links.
+	 * Make links.
 	 */
 	for (i = 0; i < nlinks; ++i)
 	{
@@ -616,7 +624,7 @@ dolink(const char *fromfile, const char *tofile)
 	}
 
 	/*
-	 * * We get to be careful here since * there's a fair chance of root
+	 * We get to be careful here since there's a fair chance of root
 	 * running us.
 	 */
 	if (!itsdir(toname))
@@ -670,11 +678,11 @@ dolink(const char *fromfile, const char *tofile)
 #endif   /* !defined INT_MIN */
 
 /*
-** The tz file format currently allows at most 32-bit quantities.
-** This restriction should be removed before signed 32-bit values
-** wrap around in 2038, but unfortunately this will require a
-** change to the tz file format.
-*/
+ * The tz file format currently allows at most 32-bit quantities.
+ * This restriction should be removed before signed 32-bit values
+ * wrap around in 2038, but unfortunately this will require a
+ * change to the tz file format.
+ */
 
 #define MAX_BITS_IN_FILE	32
 #define TIME_T_BITS_IN_FILE ((TYPE_BIT(time_t) < MAX_BITS_IN_FILE) ? TYPE_BIT(time_t) : MAX_BITS_IN_FILE)
@@ -717,12 +725,12 @@ itsdir(const char *name)
 }
 
 /*
-** Associate sets of rules with zones.
-*/
+ * Associate sets of rules with zones.
+ */
 
 /*
-** Sort by rule name.
-*/
+ * Sort by rule name.
+ */
 
 static int
 rcomp(const void *cp1, const void *cp2)
@@ -800,14 +808,14 @@ associate(void)
 		if (zp->z_nrules == 0)
 		{
 			/*
-			 * * Maybe we have a local standard time offset.
+			 * Maybe we have a local standard time offset.
 			 */
 			eat(zp->z_filename, zp->z_linenum);
 			zp->z_stdoff = gethms(zp->z_rule, _("unruly zone"),
 								  TRUE);
 
 			/*
-			 * * Note, though, that if there's no rule, * a '%s' in the
+			 * Note, though, that if there's no rule, a '%s' in the
 			 * format is a bad thing.
 			 */
 			if (strchr(zp->z_format, '%') != 0)
@@ -927,14 +935,14 @@ infile(const char *name)
 		error(_("expected continuation line not found"));
 }
 
-/*
-** Convert a string of one of the forms
-**	h	-h	hh:mm	-hh:mm	hh:mm:ss	-hh:mm:ss
-** into a number of seconds.
-** A null string maps to zero.
-** Call error with errstring and return zero on errors.
-*/
-
+/*----------
+ * Convert a string of one of the forms
+ *	h	-h	hh:mm	-hh:mm	hh:mm:ss	-hh:mm:ss
+ * into a number of seconds.
+ * A null string maps to zero.
+ * Call error with errstring and return zero on errors.
+ *----------
+ */
 static long
 gethms(const char *string, const char *errstring, const int signable)
 {
@@ -1144,7 +1152,7 @@ inzsub(register char **fields, const int nfields, const int iscont)
 	zones[nzones++] = z;
 
 	/*
-	 * * If there was an UNTIL field on this line, * there's more
+	 * If there was an UNTIL field on this line, there's more
 	 * information about the zone on the next line.
 	 */
 	return hasuntil;
@@ -1302,7 +1310,9 @@ inlink(register char **fields, const int nfields)
 }
 
 static void
-rulesub(register struct rule * rp, const char *loyearp, const char *hiyearp, const char *typep, const char *monthp, const char *dayp, const char *timep)
+rulesub(register struct rule * rp, const char *loyearp, const char *hiyearp,
+		const char *typep, const char *monthp, const char *dayp,
+		const char *timep)
 {
 	register const struct lookup *lp;
 	register const char *cp;
@@ -1346,7 +1356,7 @@ rulesub(register struct rule * rp, const char *loyearp, const char *hiyearp, con
 	ifree(dp);
 
 	/*
-	 * * Year work.
+	 * Year work.
 	 */
 	cp = loyearp;
 	lp = byword(cp, begin_years);
@@ -1428,8 +1438,7 @@ rulesub(register struct rule * rp, const char *loyearp, const char *hiyearp, con
 		min_year = rp->r_loyear;
 
 	/*
-	 * * Day work. * Accept things such as: *  1 *	last-Sunday *  Sun<=20 *
-	 * Sun>=7
+	 * Day work. Accept things such as:  1  last-Sunday  Sun<=20  Sun>=7
 	 */
 	dp = ecpyalloc(dayp);
 	if ((lp = byword(dp, lasts)) != NULL)
@@ -1520,14 +1529,14 @@ writezone(const char *name)
 	unsigned char types[TZ_MAX_TIMES];
 
 	/*
-	 * * Sort.
+	 * Sort.
 	 */
 	if (timecnt > 1)
 		(void) qsort((void *) attypes, (size_t) timecnt,
 					 (size_t) sizeof *attypes, atcomp);
 
 	/*
-	 * * Optimize.
+	 * Optimize.
 	 */
 	{
 		int			fromi;
@@ -1560,7 +1569,7 @@ writezone(const char *name)
 	}
 
 	/*
-	 * * Transfer.
+	 * Transfer.
 	 */
 	for (i = 0; i < timecnt; ++i)
 	{
@@ -1572,7 +1581,7 @@ writezone(const char *name)
 	(void) sprintf(fullname, "%s/%s", directory, name);
 
 	/*
-	 * * Remove old file, if any, to snap links.
+	 * Remove old file, if any, to snap links.
 	 */
 	if (!itsdir(fullname) && remove(fullname) != 0 && errno != ENOENT)
 	{
@@ -1714,14 +1723,14 @@ outzone(const struct zone * zpfirst, const int zonecount)
 	char		startbuf[BUFSIZ];
 
 	/*
-	 * * Now. . .finally. . .generate some useful data!
+	 * Now. . .finally. . .generate some useful data!
 	 */
 	timecnt = 0;
 	typecnt = 0;
 	charcnt = 0;
 
 	/*
-	 * * Thanks to Earl Chew (earl@dnd.icp.nec.com.au) * for noting the
+	 * Thanks to Earl Chew (earl@dnd.icp.nec.com.au) for noting the
 	 * need to unconditionally initialize startttisstd.
 	 */
 	startttisstd = FALSE;
@@ -1729,7 +1738,7 @@ outzone(const struct zone * zpfirst, const int zonecount)
 	for (i = 0; i < zonecount; ++i)
 	{
 		/*
-		 * * A guess that may well be corrected later.
+		 * A guess that may well be corrected later.
 		 */
 		stdoff = 0;
 		zp = &zpfirst[i];
@@ -1764,7 +1773,7 @@ outzone(const struct zone * zpfirst, const int zonecount)
 					break;
 
 				/*
-				 * * Mark which rules to do in the current year. * For
+				 * Mark which rules to do in the current year. For
 				 * those to do, calculate rpytime(rp, year);
 				 */
 				for (j = 0; j < zp->z_nrules; ++j)
@@ -1789,8 +1798,8 @@ outzone(const struct zone * zpfirst, const int zonecount)
 					if (useuntil)
 					{
 						/*
-						 * * Turn untiltime into UTC * assuming the
-						 * current gmtoff and * stdoff values.
+						 * Turn untiltime into UTC assuming the
+						 * current gmtoff and stdoff values.
 						 */
 						untiltime = zp->z_untiltime;
 						if (!zp->z_untilrule.r_todisgmt)
@@ -1802,7 +1811,7 @@ outzone(const struct zone * zpfirst, const int zonecount)
 					}
 
 					/*
-					 * * Find the rule (of those to do, if any) * that
+					 * Find the rule (of those to do, if any) that
 					 * takes effect earliest in the year.
 					 */
 					k = -1;
@@ -1885,7 +1894,7 @@ outzone(const struct zone * zpfirst, const int zonecount)
 		}
 
 		/*
-		 * * Now we may get to set starttime for the next zone line.
+		 * Now we may get to set starttime for the next zone line.
 		 */
 		if (useuntil)
 		{
@@ -1930,7 +1939,8 @@ addtt(const time_t starttime, int type)
 }
 
 static int
-addtype(const long gmtoff, const char *abbr, const int isdst, const int ttisstd, const int ttisgmt)
+addtype(const long gmtoff, const char *abbr, const int isdst,
+		const int ttisstd, const int ttisgmt)
 {
 	register int i,
 				j;
@@ -1952,7 +1962,7 @@ addtype(const long gmtoff, const char *abbr, const int isdst, const int ttisstd,
 	}
 
 	/*
-	 * * See if there's already an entry for this zone type. * If so, just
+	 * See if there's already an entry for this zone type. If so, just
 	 * return its index.
 	 */
 	for (i = 0; i < typecnt; ++i)
@@ -1965,7 +1975,7 @@ addtype(const long gmtoff, const char *abbr, const int isdst, const int ttisstd,
 	}
 
 	/*
-	 * * There isn't one; add a new one, unless there are already too *
+	 * There isn't one; add a new one, unless there are already too
 	 * many.
 	 */
 	if (typecnt >= TZ_MAX_TYPES)
@@ -2031,7 +2041,7 @@ adjleap(void)
 	register long last = 0;
 
 	/*
-	 * * propagate leap seconds forward
+	 * propagate leap seconds forward
 	 */
 	for (i = 0; i < leapcnt; ++i)
 	{
@@ -2107,14 +2117,14 @@ byword(register const char *word, register const struct lookup * table)
 		return NULL;
 
 	/*
-	 * * Look for exact match.
+	 * Look for exact match.
 	 */
 	for (lp = table; lp->l_word != NULL; ++lp)
 		if (ciequal(word, lp->l_word))
 			return lp;
 
 	/*
-	 * * Look for inexact match.
+	 * Look for inexact match.
 	 */
 	foundlp = NULL;
 	for (lp = table; lp->l_word != NULL; ++lp)
@@ -2200,9 +2210,9 @@ tadd(const time_t t1, const long t2)
 }
 
 /*
-** Given a rule, and a year, compute the date - in seconds since January 1,
-** 1970, 00:00 LOCAL time - in that year that the rule refers to.
-*/
+ * Given a rule, and a year, compute the date - in seconds since January 1,
+ * 1970, 00:00 LOCAL time - in that year that the rule refers to.
+ */
 
 static time_t
 rpytime(register const struct rule * rp, register const int wantedy)
@@ -2261,7 +2271,7 @@ rpytime(register const struct rule * rp, register const int wantedy)
 		wday = eitol(EPOCH_WDAY);
 
 		/*
-		 * * Don't trust mod of negative numbers.
+		 * Don't trust mod of negative numbers.
 		 */
 		if (dayoff >= 0)
 			wday = (wday + dayoff) % LDAYSPERWEEK;
@@ -2333,7 +2343,7 @@ mkdirs(char *argname)
 #ifdef WIN32
 
 		/*
-		 * * DOS drive specifier?
+		 * DOS drive specifier?
 		 */
 		if (isalpha((unsigned char) name[0]) &&
 			name[1] == ':' && name[2] == '\0')
@@ -2345,9 +2355,9 @@ mkdirs(char *argname)
 		if (!itsdir(name))
 		{
 			/*
-			 * * It doesn't seem to exist, so we try to create it. *
-			 * Creation may fail because of the directory being * created
-			 * by some other multiprocessor, so we get * to do extra
+			 * It doesn't seem to exist, so we try to create it.
+			 * Creation may fail because of the directory being created
+			 * by some other multiprocessor, so we get to do extra
 			 * checking.
 			 */
 			if (mkdir(name, MKDIR_UMASK) != 0)
@@ -2387,8 +2397,8 @@ eitol(const int i)
 }
 
 /*
-** UNIX was a registered trademark of The Open Group in 2003.
-*/
+ * UNIX was a registered trademark of The Open Group in 2003.
+ */
 
 
 #ifdef WIN32

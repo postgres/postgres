@@ -1,30 +1,32 @@
 #ifndef TZFILE_H
-
 #define TZFILE_H
 
 /*
-** This file is in the public domain, so clarified as of
-** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
-*/
+ * This file is in the public domain, so clarified as of
+ * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/timezone/tzfile.h,v 1.5 2004/05/21 20:59:10 tgl Exp $
+ */
 
 /*
-** This header is for use ONLY with the time conversion code.
-** There is no guarantee that it will remain unchanged,
-** or that it will remain at all.
-** Do NOT copy it to any system include directory.
-** Thank you!
-*/
+ * This header is for use ONLY with the time conversion code.
+ * There is no guarantee that it will remain unchanged,
+ * or that it will remain at all.
+ * Do NOT copy it to any system include directory.
+ * Thank you!
+ */
 
 /*
-** Information about time zone files.
-*/
+ * Information about time zone files.
+ */
 
 #define TZDEFAULT	"localtime"
 #define TZDEFRULES	"posixrules"
 
 /*
-** Each file begins with. . .
-*/
+ * Each file begins with. . .
+ */
 
 #define TZ_MAGIC	"TZif"
 
@@ -42,42 +44,43 @@ struct tzhead
 	char		tzh_charcnt[4]; /* coded number of abbr. chars */
 };
 
-/*
-** . . .followed by. . .
-**
-**	tzh_timecnt (char [4])s		coded transition times a la time(2)
-**	tzh_timecnt (unsigned char)s	types of local time starting at above
-**	tzh_typecnt repetitions of
-**		one (char [4])		coded UTC offset in seconds
-**		one (unsigned char) used to set tm_isdst
-**		one (unsigned char) that's an abbreviation list index
-**	tzh_charcnt (char)s		'\0'-terminated zone abbreviations
-**	tzh_leapcnt repetitions of
-**		one (char [4])		coded leap second transition times
-**		one (char [4])		total correction after above
-**	tzh_ttisstdcnt (char)s		indexed by type; if TRUE, transition
-**					time is standard time, if FALSE,
-**					transition time is wall clock time
-**					if absent, transition times are
-**					assumed to be wall clock time
-**	tzh_ttisgmtcnt (char)s		indexed by type; if TRUE, transition
-**					time is UTC, if FALSE,
-**					transition time is local time
-**					if absent, transition times are
-**					assumed to be local time
-*/
+/*----------
+ * . . .followed by. . .
+ *
+ *	tzh_timecnt (char [4])s		coded transition times a la time(2)
+ *	tzh_timecnt (unsigned char)s	types of local time starting at above
+ *	tzh_typecnt repetitions of
+ *		one (char [4])		coded UTC offset in seconds
+ *		one (unsigned char) used to set tm_isdst
+ *		one (unsigned char) that's an abbreviation list index
+ *	tzh_charcnt (char)s		'\0'-terminated zone abbreviations
+ *	tzh_leapcnt repetitions of
+ *		one (char [4])		coded leap second transition times
+ *		one (char [4])		total correction after above
+ *	tzh_ttisstdcnt (char)s		indexed by type; if TRUE, transition
+ *					time is standard time, if FALSE,
+ *					transition time is wall clock time
+ *					if absent, transition times are
+ *					assumed to be wall clock time
+ *	tzh_ttisgmtcnt (char)s		indexed by type; if TRUE, transition
+ *					time is UTC, if FALSE,
+ *					transition time is local time
+ *					if absent, transition times are
+ *					assumed to be local time
+ *----------
+ */
 
 /*
-** In the current implementation, "tzset()" refuses to deal with files that
-** exceed any of the limits below.
-*/
+ * In the current implementation, "tzset()" refuses to deal with files that
+ * exceed any of the limits below.
+ */
 
 /*
-** The TZ_MAX_TIMES value below is enough to handle a bit more than a
-** year's worth of solar time (corrected daily to the nearest second) or
-** 138 years of Pacific Presidential Election time
-** (where there are three time zone transitions every fourth year).
-*/
+ * The TZ_MAX_TIMES value below is enough to handle a bit more than a
+ * year's worth of solar time (corrected daily to the nearest second) or
+ * 138 years of Pacific Presidential Election time
+ * (where there are three time zone transitions every fourth year).
+ */
 #define TZ_MAX_TIMES	370
 
 #define TZ_MAX_TYPES	256		/* Limited by what (unsigned char)'s can
@@ -127,9 +130,9 @@ struct tzhead
 #define EPOCH_WDAY	TM_THURSDAY
 
 /*
-** Accurate only for the past couple of centuries;
-** that will probably do.
-*/
+ * Accurate only for the past couple of centuries;
+ * that will probably do.
+ */
 
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 

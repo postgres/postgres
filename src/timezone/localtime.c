@@ -1,13 +1,16 @@
 /*
-** This file is in the public domain, so clarified as of
-** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
-*/
+ * This file is in the public domain, so clarified as of
+ * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.6 2004/05/21 20:59:10 tgl Exp $
+ */
 
 /*
-** Leap second handling from Bradley White (bww@k.gp.cs.cmu.edu).
-** POSIX-style TZ environment variable handling from Guy Harris
-** (guy@auspex.com).
-*/
+ * Leap second handling from Bradley White (bww@k.gp.cs.cmu.edu).
+ * POSIX-style TZ environment variable handling from Guy Harris
+ * (guy@auspex.com).
+ */
 
 #include "postgres.h"
 
@@ -19,25 +22,26 @@
 
 
 #ifndef WILDABBR
-/*
-** Someone might make incorrect use of a time zone abbreviation:
-**	1.	They might reference tzname[0] before calling tzset (explicitly
-**		or implicitly).
-**	2.	They might reference tzname[1] before calling tzset (explicitly
-**		or implicitly).
-**	3.	They might reference tzname[1] after setting to a time zone
-**		in which Daylight Saving Time is never observed.
-**	4.	They might reference tzname[0] after setting to a time zone
-**		in which Standard Time is never observed.
-**	5.	They might reference tm.TM_ZONE after calling offtime.
-** What's best to do in the above cases is open to debate;
-** for now, we just set things up so that in any of the five cases
-** WILDABBR is used.  Another possibility:	initialize tzname[0] to the
-** string "tzname[0] used before set", and similarly for the other cases.
-** And another:  initialize tzname[0] to "ERA", with an explanation in the
-** manual page of what this "time zone abbreviation" means (doing this so
-** that tzname[0] has the "normal" length of three characters).
-*/
+/*----------
+ * Someone might make incorrect use of a time zone abbreviation:
+ *	1.	They might reference tzname[0] before calling tzset (explicitly
+ *		or implicitly).
+ *	2.	They might reference tzname[1] before calling tzset (explicitly
+ *		or implicitly).
+ *	3.	They might reference tzname[1] after setting to a time zone
+ *		in which Daylight Saving Time is never observed.
+ *	4.	They might reference tzname[0] after setting to a time zone
+ *		in which Standard Time is never observed.
+ *	5.	They might reference tm.TM_ZONE after calling offtime.
+ * What's best to do in the above cases is open to debate;
+ * for now, we just set things up so that in any of the five cases
+ * WILDABBR is used.  Another possibility:	initialize tzname[0] to the
+ * string "tzname[0] used before set", and similarly for the other cases.
+ * And another:  initialize tzname[0] to "ERA", with an explanation in the
+ * manual page of what this "time zone abbreviation" means (doing this so
+ * that tzname[0] has the "normal" length of three characters).
+ *----------
+ */
 #define WILDABBR	"   "
 #endif   /* !defined WILDABBR */
 
@@ -46,12 +50,12 @@ static char wildabbr[] = "WILDABBR";
 static const char gmt[] = "GMT";
 
 /*
-** The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
-** We default to US rules as of 1999-08-17.
-** POSIX 1003.1 section 8.1.1 says that the default DST rules are
-** implementation dependent; for historical reasons, US rules are a
-** common default.
-*/
+ * The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
+ * We default to US rules as of 1999-08-17.
+ * POSIX 1003.1 section 8.1.1 says that the default DST rules are
+ * implementation dependent; for historical reasons, US rules are a
+ * common default.
+ */
 #define TZDEFRULESTRING ",M4.1.0,M10.5.0"
 
 struct ttinfo
@@ -100,8 +104,8 @@ struct rule
 										 * week */
 
 /*
-** Prototypes for static functions.
-*/
+ * Prototypes for static functions.
+ */
 
 static long detzcode(const char *codep);
 static const char *getzname(const char *strp);
@@ -114,12 +118,20 @@ static void gmtsub(const time_t *timep, long offset, struct pg_tm * tmp);
 static void localsub(const time_t *timep, long offset, struct pg_tm * tmp);
 static int	increment_overflow(int *number, int delta);
 static int	normalize_overflow(int *tensptr, int *unitsptr, int base);
-static time_t time1(struct pg_tm * tmp, void (*funcp) (const time_t *, long, struct pg_tm *), long offset);
-static time_t time2(struct pg_tm * tmp, void (*funcp) (const time_t *, long, struct pg_tm *), long offset, int *okayp);
-static time_t time2sub(struct pg_tm * tmp, void (*funcp) (const time_t *, long, struct pg_tm *), long offset, int *okayp, int do_norm_secs);
-static void timesub(const time_t *timep, long offset, const struct state * sp, struct pg_tm * tmp);
+static time_t time1(struct pg_tm * tmp,
+					void (*funcp) (const time_t *, long, struct pg_tm *),
+					long offset);
+static time_t time2(struct pg_tm * tmp,
+					void (*funcp) (const time_t *, long, struct pg_tm *),
+					long offset, int *okayp);
+static time_t time2sub(struct pg_tm * tmp,
+					   void (*funcp) (const time_t *, long, struct pg_tm *),
+					   long offset, int *okayp, int do_norm_secs);
+static void timesub(const time_t *timep, long offset,
+					const struct state * sp, struct pg_tm * tmp);
 static int	tmcomp(const struct pg_tm * atmp, const struct pg_tm * btmp);
-static time_t transtime(time_t janfirst, int year, const struct rule * rulep, long offset);
+static time_t transtime(time_t janfirst, int year,
+						const struct rule * rulep, long offset);
 static int	tzload(const char *name, struct state * sp);
 static int	tzparse(const char *name, struct state * sp, int lastditch);
 
@@ -134,12 +146,12 @@ static int	lcl_is_set = 0;
 static int	gmt_is_set = 0;
 
 /*
-** Section 4.12.3 of X3.159-1989 requires that
-**	Except for the strftime function, these functions [asctime,
-**	ctime, gmtime, localtime] return values in one of two static
-**	objects: a broken-down time structure and an array of char.
-** Thanks to Paul Eggert (eggert@twinsun.com) for noting this.
-*/
+ * Section 4.12.3 of X3.159-1989 requires that
+ *	Except for the strftime function, these functions [asctime,
+ *	ctime, gmtime, localtime] return values in one of two static
+ *	objects: a broken-down time structure and an array of char.
+ * Thanks to Paul Eggert (eggert@twinsun.com) for noting this.
+ */
 
 static struct pg_tm tm;
 
@@ -184,7 +196,7 @@ tzload(register const char *name, register struct state * sp)
 			(void) strcat(fullname, name);
 
 			/*
-			 * * Set doaccess if '.' (as in "../") shows up in name.
+			 * Set doaccess if '.' (as in "../") shows up in name.
 			 */
 			if (strchr(name, '.') != NULL)
 				doaccess = TRUE;
@@ -313,11 +325,10 @@ static const int year_lengths[2] = {
 };
 
 /*
-** Given a pointer into a time zone string, scan until a character that is not
-** a valid character in a zone name is found.  Return a pointer to that
-** character.
-*/
-
+ * Given a pointer into a time zone string, scan until a character that is not
+ * a valid character in a zone name is found.  Return a pointer to that
+ * character.
+ */
 static const char *
 getzname(register const char *strp)
 {
@@ -330,12 +341,11 @@ getzname(register const char *strp)
 }
 
 /*
-** Given a pointer into a time zone string, extract a number from that string.
-** Check that the number is within a specified range; if it is not, return
-** NULL.
-** Otherwise, return a pointer to the first character not part of the number.
-*/
-
+ * Given a pointer into a time zone string, extract a number from that string.
+ * Check that the number is within a specified range; if it is not, return
+ * NULL.
+ * Otherwise, return a pointer to the first character not part of the number.
+ */
 static const char *
 getnum(register const char *strp, int *nump, const int min, const int max)
 {
@@ -359,22 +369,21 @@ getnum(register const char *strp, int *nump, const int min, const int max)
 }
 
 /*
-** Given a pointer into a time zone string, extract a number of seconds,
-** in hh[:mm[:ss]] form, from the string.
-** If any error occurs, return NULL.
-** Otherwise, return a pointer to the first character not part of the number
-** of seconds.
-*/
-
+ * Given a pointer into a time zone string, extract a number of seconds,
+ * in hh[:mm[:ss]] form, from the string.
+ * If any error occurs, return NULL.
+ * Otherwise, return a pointer to the first character not part of the number
+ * of seconds.
+ */
 static const char *
 getsecs(register const char *strp, long *secsp)
 {
 	int			num;
 
 	/*
-	 * * `HOURSPERDAY * DAYSPERWEEK - 1' allows quasi-Posix rules like *
-	 * "M10.4.6/26", which does not conform to Posix, * but which
-	 * specifies the equivalent of * ``02:00 on the first Sunday on or
+	 * `HOURSPERDAY * DAYSPERWEEK - 1' allows quasi-Posix rules like
+	 * "M10.4.6/26", which does not conform to Posix, but which
+	 * specifies the equivalent of ``02:00 on the first Sunday on or
 	 * after 23 Oct''.
 	 */
 	strp = getnum(strp, &num, 0, HOURSPERDAY * DAYSPERWEEK - 1);
@@ -402,12 +411,11 @@ getsecs(register const char *strp, long *secsp)
 }
 
 /*
-** Given a pointer into a time zone string, extract an offset, in
-** [+-]hh[:mm[:ss]] form, from the string.
-** If any error occurs, return NULL.
-** Otherwise, return a pointer to the first character not part of the time.
-*/
-
+ * Given a pointer into a time zone string, extract an offset, in
+ * [+-]hh[:mm[:ss]] form, from the string.
+ * If any error occurs, return NULL.
+ * Otherwise, return a pointer to the first character not part of the time.
+ */
 static const char *
 getoffset(register const char *strp, long *offsetp)
 {
@@ -429,19 +437,18 @@ getoffset(register const char *strp, long *offsetp)
 }
 
 /*
-** Given a pointer into a time zone string, extract a rule in the form
-** date[/time].  See POSIX section 8 for the format of "date" and "time".
-** If a valid rule is not found, return NULL.
-** Otherwise, return a pointer to the first character not part of the rule.
-*/
-
+ * Given a pointer into a time zone string, extract a rule in the form
+ * date[/time].  See POSIX section 8 for the format of "date" and "time".
+ * If a valid rule is not found, return NULL.
+ * Otherwise, return a pointer to the first character not part of the rule.
+ */
 static const char *
 getrule(const char *strp, register struct rule * rulep)
 {
 	if (*strp == 'J')
 	{
 		/*
-		 * * Julian day.
+		 * Julian day.
 		 */
 		rulep->r_type = JULIAN_DAY;
 		++strp;
@@ -450,7 +457,7 @@ getrule(const char *strp, register struct rule * rulep)
 	else if (*strp == 'M')
 	{
 		/*
-		 * * Month, week, day.
+		 * Month, week, day.
 		 */
 		rulep->r_type = MONTH_NTH_DAY_OF_WEEK;
 		++strp;
@@ -469,7 +476,7 @@ getrule(const char *strp, register struct rule * rulep)
 	else if (is_digit(*strp))
 	{
 		/*
-		 * * Day of year.
+		 * Day of year.
 		 */
 		rulep->r_type = DAY_OF_YEAR;
 		strp = getnum(strp, &rulep->r_day, 0, DAYSPERLYEAR - 1);
@@ -481,7 +488,7 @@ getrule(const char *strp, register struct rule * rulep)
 	if (*strp == '/')
 	{
 		/*
-		 * * Time specified.
+		 * Time specified.
 		 */
 		++strp;
 		strp = getsecs(strp, &rulep->r_time);
@@ -492,13 +499,13 @@ getrule(const char *strp, register struct rule * rulep)
 }
 
 /*
-** Given the Epoch-relative time of January 1, 00:00:00 UTC, in a year, the
-** year, a rule, and the offset from UTC at the time that rule takes effect,
-** calculate the Epoch-relative time that rule takes effect.
-*/
-
+ * Given the Epoch-relative time of January 1, 00:00:00 UTC, in a year, the
+ * year, a rule, and the offset from UTC at the time that rule takes effect,
+ * calculate the Epoch-relative time that rule takes effect.
+ */
 static time_t
-transtime(const time_t janfirst, const int year, register const struct rule * rulep, const long offset)
+transtime(const time_t janfirst, const int year,
+		  register const struct rule * rulep, const long offset)
 {
 	register int leapyear;
 	register time_t value = 0;
@@ -517,10 +524,10 @@ transtime(const time_t janfirst, const int year, register const struct rule * ru
 		case JULIAN_DAY:
 
 			/*
-			 * * Jn - Julian day, 1 == January 1, 60 == March 1 even in
-			 * leap * years. * In non-leap years, or if the day number is
-			 * 59 or less, just * add SECSPERDAY times the day number-1 to
-			 * the time of * January 1, midnight, to get the day.
+			 * Jn - Julian day, 1 == January 1, 60 == March 1 even in
+			 * leap years. In non-leap years, or if the day number is
+			 * 59 or less, just add SECSPERDAY times the day number-1 to
+			 * the time of January 1, midnight, to get the day.
 			 */
 			value = janfirst + (rulep->r_day - 1) * SECSPERDAY;
 			if (leapyear && rulep->r_day >= 60)
@@ -530,8 +537,8 @@ transtime(const time_t janfirst, const int year, register const struct rule * ru
 		case DAY_OF_YEAR:
 
 			/*
-			 * * n - day of year. * Just add SECSPERDAY times the day
-			 * number to the time of * January 1, midnight, to get the
+			 * n - day of year. Just add SECSPERDAY times the day
+			 * number to the time of January 1, midnight, to get the
 			 * day.
 			 */
 			value = janfirst + rulep->r_day * SECSPERDAY;
@@ -540,15 +547,15 @@ transtime(const time_t janfirst, const int year, register const struct rule * ru
 		case MONTH_NTH_DAY_OF_WEEK:
 
 			/*
-			 * * Mm.n.d - nth "dth day" of month m.
+			 * Mm.n.d - nth "dth day" of month m.
 			 */
 			value = janfirst;
 			for (i = 0; i < rulep->r_mon - 1; ++i)
 				value += mon_lengths[leapyear][i] * SECSPERDAY;
 
 			/*
-			 * * Use Zeller's Congruence to get day-of-week of first day
-			 * of * month.
+			 * Use Zeller's Congruence to get day-of-week of first day
+			 * of month.
 			 */
 			m1 = (rulep->r_mon + 9) % 12 + 1;
 			yy0 = (rulep->r_mon <= 2) ? (year - 1) : year;
@@ -560,9 +567,9 @@ transtime(const time_t janfirst, const int year, register const struct rule * ru
 				dow += DAYSPERWEEK;
 
 			/*
-			 * * "dow" is the day-of-week of the first day of the month.
-			 * Get * the day-of-month (zero-origin) of the first "dow" day
-			 * of the * month.
+			 * "dow" is the day-of-week of the first day of the month.
+			 * Get the day-of-month (zero-origin) of the first "dow" day
+			 * of the month.
 			 */
 			d = rulep->r_day - dow;
 			if (d < 0)
@@ -576,25 +583,25 @@ transtime(const time_t janfirst, const int year, register const struct rule * ru
 			}
 
 			/*
-			 * * "d" is the day-of-month (zero-origin) of the day we want.
+			 * "d" is the day-of-month (zero-origin) of the day we want.
 			 */
 			value += d * SECSPERDAY;
 			break;
 	}
 
 	/*
-	 * * "value" is the Epoch-relative time of 00:00:00 UTC on the day in *
-	 * question.  To get the Epoch-relative time of the specified local *
-	 * time on that day, add the transition time and the current offset *
+	 * "value" is the Epoch-relative time of 00:00:00 UTC on the day in
+	 * question.  To get the Epoch-relative time of the specified local
+	 * time on that day, add the transition time and the current offset
 	 * from UTC.
 	 */
 	return value + rulep->r_time + offset;
 }
 
 /*
-** Given a POSIX section 8-style TZ string, fill in the rule tables as
-** appropriate.
-*/
+ * Given a POSIX section 8-style TZ string, fill in the rule tables as
+ * appropriate.
+ */
 
 static int
 tzparse(const char *name, register struct state * sp, const int lastditch)
@@ -672,7 +679,7 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 			sp->typecnt = 2;	/* standard time and DST */
 
 			/*
-			 * * Two transitions per year, from EPOCH_YEAR to 2037.
+			 * Two transitions per year, from EPOCH_YEAR to 2037.
 			 */
 			sp->timecnt = 2 * (2037 - EPOCH_YEAR + 1);
 			if (sp->timecnt > TZ_MAX_TIMES)
@@ -723,7 +730,7 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 				return -1;
 
 			/*
-			 * * Initial values of theirstdoffset and theirdstoffset.
+			 * Initial values of theirstdoffset and theirdstoffset.
 			 */
 			theirstdoffset = 0;
 			for (i = 0; i < sp->timecnt; ++i)
@@ -749,13 +756,13 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 			}
 
 			/*
-			 * * Initially we're assumed to be in standard time.
+			 * Initially we're assumed to be in standard time.
 			 */
 			isdst = FALSE;
 			theiroffset = theirstdoffset;
 
 			/*
-			 * * Now juggle transition times and types * tracking offsets
+			 * Now juggle transition times and types tracking offsets
 			 * as you do.
 			 */
 			for (i = 0; i < sp->timecnt; ++i)
@@ -769,16 +776,16 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 				else
 				{
 					/*
-					 * * If summer time is in effect, and the * transition
-					 * time was not specified as * standard time, add the
-					 * summer time * offset to the transition time; *
-					 * otherwise, add the standard time * offset to the
+					 * If summer time is in effect, and the transition
+					 * time was not specified as standard time, add the
+					 * summer time offset to the transition time;
+					 * otherwise, add the standard time offset to the
 					 * transition time.
 					 */
 
 					/*
-					 * * Transitions from DST to DDST * will effectively
-					 * disappear since * POSIX provides for only one DST *
+					 * Transitions from DST to DDST will effectively
+					 * disappear since POSIX provides for only one DST
 					 * offset.
 					 */
 					if (isdst && !sp->ttis[j].tt_ttisstd)
@@ -800,7 +807,7 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 			}
 
 			/*
-			 * * Finally, fill in ttis. * ttisstd and ttisgmt need not be
+			 * Finally, fill in ttis. ttisstd and ttisgmt need not be
 			 * handled.
 			 */
 			sp->ttis[0].tt_gmtoff = -stdoffset;
@@ -871,14 +878,13 @@ pg_tzset(const char *name)
 }
 
 /*
-** The easy way to behave "as if no library function calls" localtime
-** is to not call it--so we drop its guts into "localsub", which can be
-** freely called.  (And no, the PANS doesn't require the above behavior--
-** but it *is* desirable.)
-**
-** The unused offset argument is for the benefit of mktime variants.
-*/
-
+ * The easy way to behave "as if no library function calls" localtime
+ * is to not call it--so we drop its guts into "localsub", which can be
+ * freely called.  (And no, the PANS doesn't require the above behavior--
+ * but it *is* desirable.)
+ *
+ * The unused offset argument is for the benefit of mktime variants.
+ */
 static void
 localsub(const time_t *timep, const long offset, struct pg_tm * tmp)
 {
@@ -907,15 +913,11 @@ localsub(const time_t *timep, const long offset, struct pg_tm * tmp)
 	}
 	ttisp = &sp->ttis[i];
 
-	/*
-	 * * To get (wrong) behavior that's compatible with System V Release
-	 * 2.0 * you'd replace the statement below with *  t +=
-	 * ttisp->tt_gmtoff; *	timesub(&t, 0L, sp, tmp);
-	 */
 	timesub(&t, ttisp->tt_gmtoff, sp, tmp);
 	tmp->tm_isdst = ttisp->tt_isdst;
 	tmp->tm_zone = &sp->chars[ttisp->tt_abbrind];
 }
+
 
 struct pg_tm *
 pg_localtime(const time_t *timep)
@@ -926,9 +928,8 @@ pg_localtime(const time_t *timep)
 
 
 /*
-** gmtsub is to gmtime as localsub is to localtime.
-*/
-
+ * gmtsub is to gmtime as localsub is to localtime.
+ */
 static void
 gmtsub(const time_t *timep, const long offset, struct pg_tm * tmp)
 {
@@ -940,8 +941,8 @@ gmtsub(const time_t *timep, const long offset, struct pg_tm * tmp)
 	timesub(timep, offset, gmtptr, tmp);
 
 	/*
-	 * * Could get fancy here and deliver something such as * "UTC+xxxx"
-	 * or "UTC-xxxx" if offset is non-zero, * but this is no time for a
+	 * Could get fancy here and deliver something such as "UTC+xxxx"
+	 * or "UTC-xxxx" if offset is non-zero, but this is no time for a
 	 * treasure hunt.
 	 */
 	if (offset != 0)
@@ -959,7 +960,8 @@ pg_gmtime(const time_t *timep)
 
 
 static void
-timesub(const time_t *timep, const long offset, register const struct state * sp, register struct pg_tm * tmp)
+timesub(const time_t *timep, const long offset,
+		register const struct state * sp, register struct pg_tm * tmp)
 {
 	register const struct lsinfo *lp;
 	register long days;
@@ -1004,7 +1006,7 @@ timesub(const time_t *timep, const long offset, register const struct state * sp
 	if (*timep == 0x80000000)
 	{
 		/*
-		 * * A 3B1 muffs the division on the most negative number.
+		 * A 3B1 muffs the division on the most negative number.
 		 */
 		days = -24855;
 		rem = -11648;
@@ -1026,7 +1028,7 @@ timesub(const time_t *timep, const long offset, register const struct state * sp
 	tmp->tm_min = (int) (rem / SECSPERMIN);
 
 	/*
-	 * * A positive leap second requires a special * representation.  This
+	 * A positive leap second requires a special representation.  This
 	 * uses "... ??:59:60" et seq.
 	 */
 	tmp->tm_sec = (int) (rem % SECSPERMIN) + hit;
@@ -1058,20 +1060,20 @@ timesub(const time_t *timep, const long offset, register const struct state * sp
 }
 
 /*
-** Adapted from code provided by Robert Elz, who writes:
-**	The "best" way to do mktime I think is based on an idea of Bob
-**	Kridle's (so its said...) from a long time ago.
-**	[kridle@xinet.com as of 1996-01-16.]
-**	It does a binary search of the time_t space.  Since time_t's are
-**	just 32 bits, its a max of 32 iterations (even at 64 bits it
-**	would still be very reasonable).
-*/
+ * Adapted from code provided by Robert Elz, who writes:
+ *	The "best" way to do mktime I think is based on an idea of Bob
+ *	Kridle's (so its said...) from a long time ago.
+ *	[kridle@xinet.com as of 1996-01-16.]
+ *	It does a binary search of the time_t space.  Since time_t's are
+ *	just 32 bits, its a max of 32 iterations (even at 64 bits it
+ *	would still be very reasonable).
+ */
 
 #define WRONG	(-1)
 
 /*
-** Simplified normalize logic courtesy Paul Eggert (eggert@twinsun.com).
-*/
+ * Simplified normalize logic courtesy Paul Eggert (eggert@twinsun.com).
+ */
 
 static int
 increment_overflow(int *number, int delta)
@@ -1109,7 +1111,10 @@ tmcomp(register const struct pg_tm * atmp, register const struct pg_tm * btmp)
 	return result;
 }
 
-static time_t time2sub(struct pg_tm * tmp, void (*funcp) (const time_t *, long, struct pg_tm *), const long offset, int *okayp, const int do_norm_secs)
+static time_t
+time2sub(struct pg_tm * tmp,
+		 void (*funcp) (const time_t *, long, struct pg_tm *),
+		 const long offset, int *okayp, const int do_norm_secs)
 {
 	register const struct state *sp;
 	register int dir;
@@ -1138,7 +1143,7 @@ static time_t time2sub(struct pg_tm * tmp, void (*funcp) (const time_t *, long, 
 		return WRONG;
 
 	/*
-	 * * Turn yourtm.tm_year into an actual year number for now. * It is
+	 * Turn yourtm.tm_year into an actual year number for now. It is
 	 * converted back to an offset from TM_YEAR_BASE later.
 	 */
 	if (increment_overflow(&yourtm.tm_year, TM_YEAR_BASE))
@@ -1177,10 +1182,10 @@ static time_t time2sub(struct pg_tm * tmp, void (*funcp) (const time_t *, long, 
 	else if (yourtm.tm_year + TM_YEAR_BASE < EPOCH_YEAR)
 	{
 		/*
-		 * * We can't set tm_sec to 0, because that might push the * time
-		 * below the minimum representable time. * Set tm_sec to 59
-		 * instead. * This assumes that the minimum representable time is *
-		 * not in the same minute that a leap second was deleted from, *
+		 * We can't set tm_sec to 0, because that might push the time
+		 * below the minimum representable time. Set tm_sec to 59
+		 * instead. This assumes that the minimum representable time is
+		 * not in the same minute that a leap second was deleted from,
 		 * which is a safer assumption than using 58 would be.
 		 */
 		if (increment_overflow(&yourtm.tm_sec, 1 - SECSPERMIN))
@@ -1195,14 +1200,14 @@ static time_t time2sub(struct pg_tm * tmp, void (*funcp) (const time_t *, long, 
 	}
 
 	/*
-	 * * Divide the search space in half * (this works whether time_t is
+	 * Divide the search space in half (this works whether time_t is
 	 * signed or unsigned).
 	 */
 	bits = TYPE_BIT(time_t) -1;
 
 	/*
-	 * * If time_t is signed, then 0 is just above the median, * assuming
-	 * two's complement arithmetic. * If time_t is unsigned, then (1 <<
+	 * If time_t is signed, then 0 is just above the median, assuming
+	 * two's complement arithmetic. If time_t is unsigned, then (1 <<
 	 * bits) is just above the median.
 	 */
 	t = TYPE_SIGNED(time_t) ? 0 : (((time_t) 1) << bits);
@@ -1226,12 +1231,12 @@ static time_t time2sub(struct pg_tm * tmp, void (*funcp) (const time_t *, long, 
 			break;
 
 		/*
-		 * * Right time, wrong type. * Hunt for right time, right type. *
-		 * It's okay to guess wrong since the guess * gets checked.
+		 * Right time, wrong type. Hunt for right time, right type.
+		 * It's okay to guess wrong since the guess gets checked.
 		 */
 
 		/*
-		 * * The (void *) casts are the benefit of SunOS 3.3 on Sun 2's.
+		 * The (void *) casts are the benefit of SunOS 3.3 on Sun 2's.
 		 */
 		sp = (const struct state *)
 			(((void *) funcp == (void *) localsub) ?
@@ -1253,7 +1258,7 @@ static time_t time2sub(struct pg_tm * tmp, void (*funcp) (const time_t *, long, 
 					continue;
 
 				/*
-				 * * We have a match.
+				 * We have a match.
 				 */
 				t = newt;
 				goto label;
@@ -1271,20 +1276,26 @@ label:
 	return t;
 }
 
-static time_t time2(struct pg_tm * tmp, void (*funcp) (const time_t *, long, struct pg_tm *), const long offset, int *okayp)
+static time_t
+time2(struct pg_tm * tmp,
+	  void (*funcp) (const time_t *, long, struct pg_tm *),
+	  const long offset, int *okayp)
 {
 	time_t		t;
 
 	/*
-	 * * First try without normalization of seconds * (in case tm_sec
-	 * contains a value associated with a leap second). * If that fails,
+	 * First try without normalization of seconds (in case tm_sec
+	 * contains a value associated with a leap second). If that fails,
 	 * try with normalization of seconds.
 	 */
 	t = time2sub(tmp, funcp, offset, okayp, FALSE);
 	return *okayp ? t : time2sub(tmp, funcp, offset, okayp, TRUE);
 }
 
-static time_t time1(struct pg_tm * tmp, void (*funcp) (const time_t *, long, struct pg_tm *), const long offset)
+static time_t
+time1(struct pg_tm * tmp,
+	  void (*funcp) (const time_t *, long, struct pg_tm *),
+	  const long offset)
 {
 	register time_t t;
 	register const struct state *sp;
@@ -1305,14 +1316,14 @@ static time_t time1(struct pg_tm * tmp, void (*funcp) (const time_t *, long, str
 		return t;
 
 	/*
-	 * * We're supposed to assume that somebody took a time of one type *
-	 * and did some math on it that yielded a "struct pg_tm" that's bad. *
-	 * We try to divine the type they started from and adjust to the *
+	 * We're supposed to assume that somebody took a time of one type
+	 * and did some math on it that yielded a "struct pg_tm" that's bad.
+	 * We try to divine the type they started from and adjust to the
 	 * type they need.
 	 */
 
 	/*
-	 * * The (void *) casts are the benefit of SunOS 3.3 on Sun 2's.
+	 * The (void *) casts are the benefit of SunOS 3.3 on Sun 2's.
 	 */
 	sp = (const struct state *) (((void *) funcp == (void *) localsub) ?
 								 lclptr : gmtptr);
