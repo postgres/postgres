@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.88 2002/04/13 01:35:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.89 2002/04/21 18:58:00 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -2642,7 +2642,7 @@ SELECT * FROM test1 WHERE a;
    </para>
 
    <para>
-    IP v6 is not supported, yet.
+    IP v6 is not yet supported.
    </para>
 
 
