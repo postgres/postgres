@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.c,v 1.1.1.1 1996/07/09 06:22:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.c,v 1.2 1996/07/30 07:47:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@ readline(char *prompt)
 {
     static char buf[500];
 
-    printf("%s");
+    printf("%s", prompt);
     return fgets(buf, 500, stdin);
 }
 

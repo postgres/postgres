@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.1.1.1 1996/07/09 06:21:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.2 1996/07/30 07:45:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static TupleDesc InitPlan(CmdType operation, Query *parseTree,
 static void EndPlan(Plan *plan, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 				   Query *parseTree, CmdType operation,
-				   int numberTuples, int direction,
+				   int numberTuples, ScanDirection direction,
 				   void (*printfunc)());
 static void ExecRetrieve(TupleTableSlot *slot, void (*printfunc)(),
 			 Relation intoRelationDesc);
@@ -153,7 +153,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			   parseTree,
 			   operation,
 			   ALL_TUPLES,
-			   EXEC_FRWD,
+			   ForwardScanDirection,
 			   destination);
       break;
     case EXEC_FOR:
@@ -162,7 +162,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			      parseTree,
 			      operation,
 			      count,
-			      EXEC_FRWD,
+			      ForwardScanDirection,
 			      destination);
 	break;
 	
@@ -176,7 +176,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			      parseTree,
 			      operation,
 			      count,
-			      EXEC_BKWD,
+			      BackwardScanDirection,
 			      destination);
 	break;
 	
@@ -191,7 +191,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			     parseTree,
 			     operation,
 			     ONE_TUPLE,
-			     EXEC_FRWD,
+			     ForwardScanDirection,
 			     destination);
 	break;
     default:
@@ -600,7 +600,7 @@ ExecutePlan(EState *estate,
 	    Query *parseTree,
 	    CmdType operation,
 	    int numberTuples,
-	    int direction,
+	    ScanDirection direction,
 	    void (*printfunc)())
 {
     Relation		intoRelationDesc;

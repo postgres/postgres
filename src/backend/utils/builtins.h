@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.1.1.1 1996/07/09 06:22:01 scrappy Exp $
+ * $Id: builtins.h,v 1.2 1996/07/30 07:47:42 scrappy Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -228,7 +228,7 @@ extern POLYGON	*rt_poly_inter();
  in executor/executor.h*/
 
 
-extern int32 pqtest();
+extern int32 pqtest(struct varlena *vlena);
 
 /* arrayfuncs.c */
 #include "utils/array.h"

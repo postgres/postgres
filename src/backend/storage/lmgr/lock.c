@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.1.1.1 1996/07/09 06:21:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.2 1996/07/30 07:47:33 scrappy Exp $
  *
  * NOTES
  *    Outside modules can create a lock table and acquire/release
@@ -101,12 +101,6 @@ static MASK	BITS_ON[MAX_LOCKTYPES];
  * -----------------
  */
 static bool LockingIsDisabled;
-
-/* ------------------
- * from storage/ipc/shmem.c
- * ------------------
- */
-extern HTAB *ShmemInitHash();
 
 /* -------------------
  * map from tableId to the lock table structure

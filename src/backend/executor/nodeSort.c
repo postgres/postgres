@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.1.1.1 1996/07/09 06:21:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.2 1996/07/30 07:45:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ ExecSort(Sort *node)
 	 *  while creating the temporary relation.
 	 * ----------------
 	 */
-	estate->es_direction = EXEC_FRWD;
+	estate->es_direction = ForwardScanDirection;
 	
 	/* ----------------
 	 *   if we couldn't create the temp or current relations then

@@ -6,19 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdefs.h,v 1.1.1.1 1996/07/09 06:21:25 scrappy Exp $
+ * $Id: execdefs.h,v 1.2 1996/07/30 07:45:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECDEFS_H
 #define EXECDEFS_H
-
-/* ----------------
- *	executor scan direction definitions
- * ----------------
- */
-#define EXEC_FRWD		1		/* Scan forward */
-#define EXEC_BKWD		-1		/* Scan backward */
 
 /* ----------------
  *	ExecutePlan() tuplecount definitions
