@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.437 2003/11/06 22:08:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.438 2003/11/21 22:32:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -363,7 +363,7 @@ static void doNegateFloat(Value *v);
 
 	KEY
 
-	LANCOMPILER LANGUAGE LAST_P LEADING LEFT LEVEL LIKE LIMIT
+	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEFT LEVEL LIKE LIMIT
 	LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P
 
@@ -373,7 +373,7 @@ static void doNegateFloat(Value *v);
 	NOCREATEUSER NONE NOT NOTHING NOTIFY NOTNULL NULL_P
 	NULLIF NUMERIC
 
-	OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
+	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
 	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
@@ -2519,11 +2519,15 @@ TruncateStmt:
  *	The COMMENT ON statement can take different forms based upon the type of
  *	the object associated with the comment. The form of the statement is:
  *
- *	COMMENT ON [ [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW ]
- *				 <objname> | AGGREGATE <aggname> (<aggtype>) | FUNCTION
- *		 <funcname> (arg1, arg2, ...) | OPERATOR <op>
- *		 (leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
- *		 <relname> | RULE <rulename> ON <relname> ] IS 'text'
+ *	COMMENT ON [ [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW |
+ *				   CONVERSION | LANGUAGE | OPERATOR CLASS | LARGE OBJECT |
+ *				   CAST ] <objname> |
+ *				 AGGREGATE <aggname> (<aggtype>) |
+ *				 FUNCTION <funcname> (arg1, arg2, ...) |
+ *				 OPERATOR <op> (leftoperand_typ, rightoperand_typ) |
+ *				 TRIGGER <triggername> ON <relname> |
+ *				 RULE <rulename> ON <relname> ]
+ *			   IS 'text'
  *
  *****************************************************************************/
 
@@ -2603,6 +2607,42 @@ CommentStmt:
 					n->comment = $8;
 					$$ = (Node *) n;
 				}
+			| COMMENT ON OPERATOR CLASS any_name USING access_method IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_OPCLASS;
+					n->objname = $5;
+					n->objargs = makeList1(makeString($7));
+					n->comment = $9;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON LARGE_P OBJECT_P NumericOnly IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_LARGEOBJECT;
+					n->objname = makeList1($5);
+					n->objargs = NIL;
+					n->comment = $7;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON CAST '(' Typename AS Typename ')' IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_CAST;
+					n->objname = makeList1($5);
+					n->objargs = makeList1($7);
+					n->comment = $10;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON opt_procedural LANGUAGE any_name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_LANGUAGE;
+					n->objname = $5;
+					n->objargs = NIL;
+					n->comment = $7;
+					$$ = (Node *) n;
+				}				
 		;
 
 comment_type:
@@ -2615,6 +2655,7 @@ comment_type:
 			| DOMAIN_P							{ $$ = OBJECT_TYPE; }
 			| TYPE_P							{ $$ = OBJECT_TYPE; }
 			| VIEW								{ $$ = OBJECT_VIEW; }
+			| CONVERSION_P						{ $$ = OBJECT_CONVERSION; }
 		;
 
 comment_text:
@@ -7365,6 +7406,7 @@ unreserved_keyword:
 			| KEY
 			| LANCOMPILER
 			| LANGUAGE
+			| LARGE_P
 			| LAST_P
 			| LEVEL
 			| LISTEN
@@ -7387,6 +7429,7 @@ unreserved_keyword:
 			| NOCREATEUSER
 			| NOTHING
 			| NOTIFY
+			| OBJECT_P
 			| OF
 			| OIDS
 			| OPERATOR

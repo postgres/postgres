@@ -5,6 +5,10 @@
 
 CREATE TABLE tmp (initial int4);
 
+COMMENT ON TABLE tmp_wrong IS 'table comment';
+COMMENT ON TABLE tmp IS 'table comment';
+COMMENT ON TABLE tmp IS NULL;
+
 ALTER TABLE tmp ADD COLUMN a int4;
 
 ALTER TABLE tmp ADD COLUMN b name;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.29 2003/08/04 23:59:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.30 2003/11/21 22:32:49 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -165,9 +165,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	}
 
 	/* insert description if given */
-	/* XXX don't try to hack pg_description if not superuser */
-	/* XXX ought to replace this with some kind of COMMENT command */
-	if (comment_arg && is_superuser())
+	if (comment_arg)
 	{
 		char	   *cmdbuf;
 		char	   *bufptr;
@@ -177,9 +175,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		if (!cmdbuf)
 			return fail_lo_xact("\\lo_import", own_transaction);
 		sprintf(cmdbuf,
-				"INSERT INTO pg_catalog.pg_description VALUES ('%u', "
-				"'pg_catalog.pg_largeobject'::regclass, "
-				"0, '",
+				"COMMENT ON LARGE OBJECT %u IS '",
 				loid);
 		bufptr = cmdbuf + strlen(cmdbuf);
 		for (i = 0; i < slen; i++)
@@ -188,7 +184,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 				*bufptr++ = '\\';
 			*bufptr++ = comment_arg[i];
 		}
-		strcpy(bufptr, "')");
+		strcpy(bufptr, "'");
 
 		if (!(res = PSQLexec(cmdbuf, false)))
 		{
@@ -219,10 +215,8 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 bool
 do_lo_unlink(const char *loid_arg)
 {
-	PGresult   *res;
 	int			status;
 	Oid			loid = atooid(loid_arg);
-	char		buf[256];
 	bool		own_transaction;
 
 	if (!start_lo_xact("\\lo_unlink", &own_transaction))
@@ -233,20 +227,6 @@ do_lo_unlink(const char *loid_arg)
 	{
 		fputs(PQerrorMessage(pset.db), stderr);
 		return fail_lo_xact("\\lo_unlink", own_transaction);
-	}
-
-	/* remove the comment as well */
-	/* XXX don't try to hack pg_description if not superuser */
-	/* XXX ought to replace this with some kind of COMMENT command */
-	if (is_superuser())
-	{
-		snprintf(buf, sizeof(buf),
-			 "DELETE FROM pg_catalog.pg_description WHERE objoid = '%u' "
-				 "AND classoid = 'pg_catalog.pg_largeobject'::regclass",
-				 loid);
-		if (!(res = PSQLexec(buf, false)))
-			return fail_lo_xact("\\lo_unlink", own_transaction);
-		PQclear(res);
 	}
 
 	if (!finish_lo_xact("\\lo_unlink", own_transaction))

@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.73 2003/11/12 21:15:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.74 2003/11/21 22:32:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_description.h"
+#include "catalog/pg_largeobject.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
@@ -58,6 +59,11 @@ static void CommentProc(List *function, List *arguments, char *comment);
 static void CommentOperator(List *opername, List *arguments, char *comment);
 static void CommentTrigger(List *qualname, char *comment);
 static void CommentConstraint(List *qualname, char *comment);
+static void CommentConversion(List *qualname, char *comment);
+static void CommentLanguage(List *qualname, char *comment);
+static void CommentOpClass(List *qualname, List *arguments, char *comment);
+static void CommentLargeObject(List *qualname, char *comment);
+static void CommentCast(List *qualname, List *arguments, char *comment);
 
 
 /*
@@ -106,6 +112,21 @@ CommentObject(CommentStmt *stmt)
 			break;
 		case OBJECT_CONSTRAINT:
 			CommentConstraint(stmt->objname, stmt->comment);
+			break;
+		case OBJECT_CONVERSION:
+			CommentConversion(stmt->objname, stmt->comment);
+			break;
+		case OBJECT_LANGUAGE:
+			CommentLanguage(stmt->objname, stmt->comment);
+			break;
+		case OBJECT_OPCLASS:
+			CommentOpClass(stmt->objname, stmt->objargs, stmt->comment);
+			break;
+		case OBJECT_LARGEOBJECT:
+			CommentLargeObject(stmt->objname,  stmt->comment);
+			break;
+		case OBJECT_CAST:
+			CommentCast(stmt->objname, stmt->objargs,  stmt->comment);
 			break;
 		default:
 			elog(ERROR, "unrecognized object type: %d",
@@ -592,7 +613,10 @@ CommentRule(List *qualname, char *comment)
 							   PointerGetDatum(rulename),
 							   0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for rule \"%s\"", rulename);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("rule \"%s\" for relation \"%s\" does not exist",
+							rulename, RelationGetRelationName(relation))));
 		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
 		ruleoid = HeapTupleGetOid(tuple);
 		ReleaseSysCache(tuple);
@@ -909,4 +933,298 @@ CommentConstraint(List *qualname, char *comment)
 	/* Done, but hold lock on relation */
 	heap_close(pg_constraint, AccessShareLock);
 	heap_close(relation, NoLock);
+}
+
+/*
+ * CommentConversion --
+ *
+ * This routine is used to add/drop any user-comments a user might
+ * have regarding a CONVERSION. The conversion is specified by name
+ * and, if found, and the user has appropriate permissions, a
+ * comment will be added/dropped using the CreateComments() routine.
+ * The conversion's name and the comment are the parameters to this routine.
+ */
+static void
+CommentConversion(List *qualname, char *comment)
+{
+	Oid			conversionOid;
+	Oid			classoid;
+
+	conversionOid = FindConversionByName(qualname);
+	if (!OidIsValid(conversionOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("conversion \"%s\" does not exist",
+						NameListToString(qualname))));
+
+	/* Check object security */
+	if (!pg_conversion_ownercheck(conversionOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
+					   NameListToString(qualname));
+
+	/* pg_conversion doesn't have a hard-coded OID, so must look it up */
+	classoid = get_system_catalog_relid(ConversionRelationName);
+
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(conversionOid, classoid, 0, comment);
+}
+
+/*
+ * CommentLanguage --
+ *
+ * This routine is used to add/drop any user-comments a user might
+ * have regarding a LANGUAGE. The language is specified by name
+ * and, if found, and the user has appropriate permissions, a
+ * comment will be added/dropped using the CreateComments() routine.
+ * The language's name and the comment are the parameters to this routine.
+ */
+static void
+CommentLanguage(List *qualname, char *comment)
+{
+	Oid			oid;
+	Oid			classoid;
+	char	   *language;
+
+	if (length(qualname) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("language name may not be qualified")));
+	language = strVal(lfirst(qualname));
+
+	oid = GetSysCacheOid(LANGNAME,
+						 CStringGetDatum(language),
+						 0, 0, 0);
+	if (!OidIsValid(oid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("language \"%s\" does not exist", language)));
+
+	/* Check object security */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			   errmsg("must be superuser to comment on procedural language")));
+
+	/* pg_language doesn't have a hard-coded OID, so must look it up */
+	classoid = get_system_catalog_relid(LanguageRelationName);
+
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(oid, classoid, 0, comment);
+}
+
+/*
+ * CommentOpClass --
+ *
+ * This routine is used to allow a user to provide comments on an
+ * operator class. The operator class for commenting is determined by both
+ * its name and its argument list which defines the index method
+ * the operator class is used for. The argument list is expected to contain
+ * a single name (represented as a string Value node).
+ */
+static void
+CommentOpClass(List *qualname, List *arguments, char *comment)
+{
+	char	   *amname;
+	char	   *schemaname;
+	char	   *opcname;
+	Oid			amID;
+	Oid			opcID;
+	Oid			classoid;
+	HeapTuple	tuple;
+
+	Assert(length(arguments) == 1);
+	amname = strVal(lfirst(arguments));
+
+	/*
+	 * Get the access method's OID.
+	 */
+	amID = GetSysCacheOid(AMNAME,
+						  CStringGetDatum(amname),
+						  0, 0, 0);
+	if (!OidIsValid(amID))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist",
+						amname)));
+
+	/*
+	 * Look up the opclass.
+	 */
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(qualname, &schemaname, &opcname);
+
+	if (schemaname)
+	{
+		/* Look in specific schema only */
+		Oid			namespaceId;
+
+		namespaceId = LookupExplicitNamespace(schemaname);
+		tuple = SearchSysCache(CLAAMNAMENSP,
+							   ObjectIdGetDatum(amID),
+							   PointerGetDatum(opcname),
+							   ObjectIdGetDatum(namespaceId),
+							   0);
+	}
+	else
+	{
+		/* Unqualified opclass name, so search the search path */
+		opcID = OpclassnameGetOpcid(amID, opcname);
+		if (!OidIsValid(opcID))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							opcname, amname)));
+		tuple = SearchSysCache(CLAOID,
+							   ObjectIdGetDatum(opcID),
+							   0, 0, 0);
+	}
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+					NameListToString(qualname), amname)));
+
+	opcID = HeapTupleGetOid(tuple);
+
+	/* Permission check: must own opclass */
+	if (!pg_opclass_ownercheck(opcID, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPCLASS,
+					   NameListToString(qualname));
+
+	ReleaseSysCache(tuple);
+
+	/* pg_opclass doesn't have a hard-coded OID, so must look it up */
+	classoid = get_system_catalog_relid(OperatorClassRelationName);
+
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(opcID, classoid, 0, comment);
+}
+
+/*
+ * CommentLargeObject --
+ *
+ * This routine is used to add/drop any user-comments a user might
+ * have regarding a LARGE OBJECT. The large object is specified by OID
+ * and, if found, and the user has appropriate permissions, a
+ * comment will be added/dropped using the CreateComments() routine.
+ * The large object's OID and the comment are the parameters to this routine.
+ */
+static void
+CommentLargeObject(List *qualname, char *comment)
+{
+	Oid			loid;
+	Oid			classoid;
+	Node	   *node; 
+
+	Assert(length(qualname) == 1);
+	node = (Node *) lfirst(qualname);
+
+	switch (nodeTag(node))
+	{
+		case T_Integer:
+			loid = intVal(node);
+			break;
+		case T_Float:
+			/*
+			 * Values too large for int4 will be represented as Float
+			 * constants by the lexer.  Accept these if they are valid
+			 * OID strings.
+			 */
+			loid = DatumGetObjectId(DirectFunctionCall1(oidin,
+										CStringGetDatum(strVal(node))));
+			break;
+		default:
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(node));
+			/* keep compiler quiet */
+			loid = InvalidOid; 
+	}
+
+	/* check that the large object exists */
+	if (!LargeObjectExists(loid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("large object %u does not exist", loid)));
+
+	/* pg_largeobject doesn't have a hard-coded OID, so must look it up */
+	classoid = get_system_catalog_relid(LargeObjectRelationName);
+
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(loid, classoid, 0, comment);	
+}
+
+/*
+ * CommentCast --
+ *
+ * This routine is used to add/drop any user-comments a user might
+ * have regarding a CAST. The cast is specified by source and destination types
+ * and, if found, and the user has appropriate permissions, a
+ * comment will be added/dropped using the CreateComments() routine.
+ * The cast's source type is passed as the "name", the destination type
+ * as the "arguments".
+ */
+static void
+CommentCast(List *qualname, List *arguments, char *comment)
+{
+	TypeName   *sourcetype;
+	TypeName   *targettype;
+	Oid			sourcetypeid;
+	Oid			targettypeid;
+	HeapTuple	tuple;
+	Oid			castOid;
+	Oid			classoid;
+
+	Assert(length(qualname) == 1);
+	sourcetype = (TypeName *) lfirst(qualname);
+	Assert(IsA(sourcetype, TypeName));
+	Assert(length(arguments) == 1);
+	targettype = (TypeName *) lfirst(arguments);
+	Assert(IsA(targettype, TypeName));
+	
+	sourcetypeid = typenameTypeId(sourcetype);
+	if (!OidIsValid(sourcetypeid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("source data type %s does not exist",
+						TypeNameToString(sourcetype))));
+
+	targettypeid = typenameTypeId(targettype);
+	if (!OidIsValid(targettypeid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("target data type %s does not exist",
+						TypeNameToString(targettype))));
+
+	tuple = SearchSysCache(CASTSOURCETARGET,
+						   ObjectIdGetDatum(sourcetypeid),
+						   ObjectIdGetDatum(targettypeid),
+						   0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("cast from type %s to type %s does not exist",
+						TypeNameToString(sourcetype),
+						TypeNameToString(targettype))));
+
+	/* Get the OID of the cast */
+	castOid = HeapTupleGetOid(tuple);
+	
+	/* Permission check */
+	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
+		&& !pg_type_ownercheck(targettypeid, GetUserId()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be owner of type %s or type %s",
+						TypeNameToString(sourcetype),
+						TypeNameToString(targettype))));
+
+	ReleaseSysCache(tuple);
+
+	/* pg_cast doesn't have a hard-coded OID, so must look it up */
+	classoid = get_system_catalog_relid(CastRelationName);
+
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(castOid, classoid, 0, comment);	
 }

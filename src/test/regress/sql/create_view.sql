@@ -19,6 +19,11 @@ CREATE VIEW toyemp AS
    SELECT name, age, location, 12*salary AS annualsal
    FROM emp;
 
+-- Test comments
+COMMENT ON VIEW noview IS 'no view';
+COMMENT ON VIEW toyemp IS 'is a view';
+COMMENT ON VIEW toyemp IS NULL;
+
 --
 -- CREATE OR REPLACE VIEW
 --

@@ -32,6 +32,11 @@ CREATE INDEX iix ON ihighway USING btree (name text_ops);
 
 CREATE INDEX six ON shighway USING btree (name text_ops);
 
+-- test comments
+COMMENT ON INDEX six_wrong IS 'bad index';
+COMMENT ON INDEX six IS 'good index';
+COMMENT ON INDEX six IS NULL;
+
 --
 -- BTREE ascending/descending cases
 --

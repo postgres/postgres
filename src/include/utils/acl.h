@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.63 2003/10/29 22:20:54 tgl Exp $
+ * $Id: acl.h,v 1.64 2003/11/21 22:32:49 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -245,5 +245,6 @@ extern bool pg_proc_ownercheck(Oid proc_oid, AclId userid);
 extern bool pg_namespace_ownercheck(Oid nsp_oid, AclId userid);
 extern bool pg_opclass_ownercheck(Oid opc_oid, AclId userid);
 extern bool pg_database_ownercheck(Oid db_oid, AclId userid);
+extern bool pg_conversion_ownercheck(Oid conv_oid, AclId userid);
 
 #endif   /* ACL_H */

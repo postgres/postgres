@@ -71,6 +71,11 @@ SELECT * FROM get_default_test();
  zippo | 42
 (1 row)
 
+-- Test comments
+COMMENT ON TYPE bad IS 'bad comment';
+ERROR:  type "bad" does not exist
+COMMENT ON TYPE default_test_row IS 'good comment';
+COMMENT ON TYPE default_test_row IS NULL;
 DROP TYPE default_test_row CASCADE;
 NOTICE:  drop cascades to function get_default_test()
 DROP TABLE default_test;

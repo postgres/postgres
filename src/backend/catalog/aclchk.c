@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.93 2003/11/12 21:15:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.94 2003/11/21 22:32:48 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -22,6 +22,7 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_language.h"
@@ -1550,4 +1551,32 @@ pg_database_ownercheck(Oid db_oid, AclId userid)
 	heap_close(pg_database, AccessShareLock);
 
 	return userid == dba;
+}
+
+/*
+ * Ownership check for a conversion (specified by OID).
+ */
+bool
+pg_conversion_ownercheck(Oid conv_oid, AclId userid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	tuple = SearchSysCache(CONOID,
+						   ObjectIdGetDatum(conv_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("conversion with OID %u does not exist", conv_oid)));
+
+	owner_id = ((Form_pg_conversion) GETSTRUCT(tuple))->conowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.23 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.24 2003/11/21 22:32:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -25,12 +25,17 @@ COMMENT ON
   TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable>) |
+  CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>) |
   CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
+  CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
   DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
   DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
   FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1_type</replaceable>, <replaceable class="PARAMETER">arg2_type</replaceable>, ...) |
   INDEX <replaceable class="PARAMETER">object_name</replaceable> |
+  LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
   OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable>, <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
+  OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
   RULE <replaceable class="PARAMETER">rule_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
   SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
@@ -70,7 +75,7 @@ COMMENT ON
    <varlistentry>
     <term><replaceable class="parameter">object_name</replaceable></term>
     <term><replaceable class="parameter">table_name.column_name</replaceable></term>
-    <term><replaceable class="parameter">aggname</replaceable></term>
+    <term><replaceable class="parameter">agg_name</replaceable></term>
     <term><replaceable class="parameter">constraint_name</replaceable></term>
     <term><replaceable class="parameter">func_name</replaceable></term>
     <term><replaceable class="parameter">op</replaceable></term>
@@ -78,12 +83,59 @@ COMMENT ON
     <term><replaceable class="parameter">trigger_name</replaceable></term>
     <listitem>
      <para>
-      The name of the object to be be commented.  Names of tables,
-      aggregates, domains, functions, indexes, operators, sequences,
-      types, and views may be schema-qualified.
+      The name of the object to be commented.  Names of tables,
+      aggregates, domains, functions, indexes, operators, operator classes,
+      sequences, types, and views may be schema-qualified.
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">agg_type</replaceable></term>
+    <listitem>
+     <para>
+      The argument data type of the aggregate function, or
+      <literal>*</literal> if the function accepts any data type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">large_object_oid</replaceable></term>
+    <listitem>
+     <para>
+      The OID of the large object.
+     </para>
+    </listitem>
+   </varlistentry>
+
+    <varlistentry>
+     <term><literal>PROCEDURAL</literal></term>
+
+     <listitem>
+      <para>
+       This is a noise word.
+      </para>
+     </listitem>
+    </varlistentry>
+   
+   <varlistentry>
+     <term><replaceable>sourcetype</replaceable></term>
+     <listitem>
+      <para>
+       The name of the source data type of the cast.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>targettype</replaceable></term>
+     <listitem>
+      <para>
+       The name of the target data type of the cast.
+      </para>
+     </listitem>
+    </varlistentry>
 
    <varlistentry>
     <term><replaceable class="parameter">text</replaceable></term>
@@ -93,11 +145,17 @@ COMMENT ON
      </para>
     </listitem>
    </varlistentry>
+    
   </variablelist>
  </refsect1>
 
  <refsect1>
   <title>Notes</title>
+
+  <para>
+   A comment for a database can only be created in that database,
+   and will only be visible in that database, not in other databases.
+  </para>
 
   <para>
    There is presently no security mechanism for comments: any user
@@ -130,13 +188,18 @@ COMMENT ON TABLE mytable IS NULL;
 
 <programlisting>
 COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
+COMMENT ON CAST (text AS int4) IS 'Allow casts from text to int4';
 COMMENT ON COLUMN my_table.my_column IS 'Employee ID number';
+COMMENT ON CONVERSION my_conv IS 'Conversion to Unicode';
 COMMENT ON DATABASE my_database IS 'Development Database';
 COMMENT ON DOMAIN my_domain IS 'Email Address Domain';
 COMMENT ON FUNCTION my_function (timestamp) IS 'Returns Roman Numeral';
 COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee ID';
+COMMENT ON LANGUAGE plpython IS 'Python support for stored procedures';
+COMMENT ON LARGE OBJECT 346344 IS 'Planning document';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
 COMMENT ON OPERATOR ^ (NONE, text) IS 'This is a prefix operator on text';
+COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';
 COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';
 COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';

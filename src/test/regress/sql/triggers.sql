@@ -44,6 +44,11 @@ create trigger check_fkeys2_pkey_exist
 	execute procedure 
 	check_primary_key ('fkey21', 'fkey22', 'pkeys', 'pkey1', 'pkey2');
 
+-- Test comments
+COMMENT ON TRIGGER check_fkeys2_pkey_bad ON fkeys2 IS 'wrong';
+COMMENT ON TRIGGER check_fkeys2_pkey_exist ON fkeys2 IS 'right';
+COMMENT ON TRIGGER check_fkeys2_pkey_exist ON fkeys2 IS NULL;
+
 --
 -- For pkeys:
 -- 	ON DELETE/UPDATE (pkey1, pkey2) CASCADE:

@@ -50,6 +50,11 @@ CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, 
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, CONSTRAINT constrname FOREIGN KEY(ftest1, ftest2) 
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET NULL ON UPDATE SET NULL);
 
+-- Test comments
+COMMENT ON CONSTRAINT constrname_wrong ON FKTABLE IS 'fk constraint comment';
+COMMENT ON CONSTRAINT constrname ON FKTABLE IS 'fk constraint comment';
+COMMENT ON CONSTRAINT constrname ON FKTABLE IS NULL;
+
 -- Insert test data into PKTABLE
 INSERT INTO PKTABLE VALUES (1, 2, 'Test1');
 INSERT INTO PKTABLE VALUES (1, 3, 'Test1-2');

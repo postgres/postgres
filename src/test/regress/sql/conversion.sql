@@ -16,6 +16,10 @@ CREATE DEFAULT CONVERSION public.mydef FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_
 -- cannot make default conversion with same shcema/for_encoding/to_encoding
 --
 CREATE DEFAULT CONVERSION public.mydef2 FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
+-- test comments
+COMMENT ON CONVERSION myconv_bad IS 'foo';
+COMMENT ON CONVERSION myconv IS 'bar';
+COMMENT ON CONVERSION myconv IS NULL;
 --
 -- drop user defined conversion
 --

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355 2003/10/28 21:05:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.356 2003/11/21 22:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,7 @@ static const char *convertRegProcReference(const char *proc);
 static const char *convertOperatorReference(const char *opr,
 						 OprInfo *g_oprinfo, int numOperators);
 static void dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo);
+static void dumpOneConversion(Archive *fout, ConvInfo *convinfo);
 static void dumpOneAgg(Archive *fout, AggInfo *agginfo);
 static Oid	findLastBuiltinOid_V71(const char *);
 static Oid	findLastBuiltinOid_V70(void);
@@ -1687,6 +1688,79 @@ getOperators(int *numOprs)
 	destroyPQExpBuffer(query);
 
 	return oprinfo;
+}
+
+/*
+ * getConversions:
+ *	  read all conversions in the system catalogs and return them in the
+ * ConvInfo* structure
+ *
+ *	numConversions is set to the number of conversions read in
+ */
+ConvInfo *
+getConversions(int *numConversions)
+{
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	PQExpBuffer query = createPQExpBuffer();
+	ConvInfo *convinfo;
+	int			i_oid;
+	int			i_conname;
+	int			i_connamespace;
+	int			i_usename;
+
+	/* Conversions didn't exist pre-7.3 */
+	if (g_fout->remoteVersion < 70300) {
+		*numConversions = 0;
+		return NULL;
+	}
+
+	/*
+	 * find all conversions, including builtin conversions; we filter out
+	 * system-defined conversions at dump-out time.
+	 */
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema("pg_catalog");
+
+	appendPQExpBuffer(query, "SELECT pg_conversion.oid, conname, "
+					  "connamespace, "
+					  "(select usename from pg_user where conowner = usesysid) as usename "
+					  "from pg_conversion");
+
+	res = PQexec(g_conn, query->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain list of conversions failed: %s", PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	ntups = PQntuples(res);
+	*numConversions = ntups;
+
+	convinfo = (ConvInfo *) malloc(ntups * sizeof(ConvInfo));
+
+	i_oid = PQfnumber(res, "oid");
+	i_conname = PQfnumber(res, "conname");
+	i_connamespace = PQfnumber(res, "connamespace");
+	i_usename = PQfnumber(res, "usename");
+
+	for (i = 0; i < ntups; i++)
+	{
+		convinfo[i].oid = strdup(PQgetvalue(res, i, i_oid));
+		convinfo[i].conname = strdup(PQgetvalue(res, i, i_conname));
+		convinfo[i].connamespace = findNamespace(PQgetvalue(res, i, i_connamespace),
+												convinfo[i].oid);
+		convinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+	}
+
+	PQclear(res);
+
+	destroyPQExpBuffer(query);
+
+	return convinfo;
 }
 
 /*
@@ -3414,6 +3488,7 @@ dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
 				 tinfo->usename, "TYPE", NULL,
 				 q->data, delq->data, NULL, NULL, NULL);
 
+
 	/* Dump Type Comments */
 	resetPQExpBuffer(q);
 
@@ -3614,6 +3689,14 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 					NULL, lanacl, lanoid);
 			free(tmp);
 		}
+
+		/* Dump Proc Lang Comments */
+		resetPQExpBuffer(defqry);
+
+		appendPQExpBuffer(defqry, "LANGUAGE %s", fmtId(lanname));
+		dumpComment(fout, defqry->data,
+					NULL, "",
+					lanoid, "pg_language", 0, NULL);
 	}
 
 	PQclear(res);
@@ -4019,6 +4102,16 @@ dumpCasts(Archive *fout,
 					 "CAST", deps,
 					 defqry->data, delqry->data,
 					 NULL, NULL, NULL);
+
+		/* Dump Cast Comments */
+		resetPQExpBuffer(defqry);
+		appendPQExpBuffer(defqry, "CAST (%s AS %s)",
+						  getFormattedTypeName(castsource, zeroAsNone),
+						  getFormattedTypeName(casttarget, zeroAsNone));
+		dumpComment(fout, defqry->data,
+					NULL, "",
+					castoid, "pg_cast", 0, NULL);
+
 	}
 
 	PQclear(res);
@@ -4490,7 +4583,8 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 	opcintype = PQgetvalue(res, 0, i_opcintype);
 	opckeytype = PQgetvalue(res, 0, i_opckeytype);
 	opcdefault = PQgetvalue(res, 0, i_opcdefault);
-	amname = PQgetvalue(res, 0, i_amname);
+	/* amname will still be needed after we PQclear res */
+	amname = strdup(PQgetvalue(res, 0, i_amname));
 
 	/*
 	 * DROP must be fully qualified in case same name appears in
@@ -4617,11 +4711,145 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 				 q->data, delq->data,
 				 NULL, NULL, NULL);
 
+	/* Dump Operator Class Comments */
+	resetPQExpBuffer(q);
+	appendPQExpBuffer(q, "OPERATOR CLASS %s",
+					  fmtId(opcinfo->opcname));
+	appendPQExpBuffer(q, " USING %s",
+					  fmtId(amname));
+	dumpComment(fout, q->data,
+				NULL, opcinfo->usename,
+				opcinfo->oid, "pg_opclass", 0, NULL);
+
+	free(amname);
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 }
 
+/*
+ * dumpConversions
+ *	  writes out to fout the queries to create all the user-defined conversions
+ */
+void
+dumpConversions(Archive *fout, ConvInfo convinfo[], int numConvs)
+{
+	int			i;
+
+	for (i = 0; i < numConvs; i++)
+	{
+		/* Dump only conversions in dumpable namespaces */
+		if (!convinfo[i].connamespace->dump)
+			continue;
+
+		dumpOneConversion(fout, &convinfo[i]);
+	}
+}
+
+/*
+ * dumpOneConversion
+ *	  write out a single conversion definition
+ */
+static void
+dumpOneConversion(Archive *fout, ConvInfo *convinfo)
+{
+	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer delq = createPQExpBuffer();
+	PQExpBuffer details = createPQExpBuffer();
+	PGresult   *res;
+	int			ntups;
+	int			i_conname;
+	int			i_conforencoding;
+	int			i_contoencoding;
+	int			i_conproc;
+	int			i_condefault;
+	const char *conname;
+	const char *conforencoding;
+	const char *contoencoding;
+	const char *conproc;
+	bool		condefault;
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema(convinfo->connamespace->nspname);
+
+	/* Get conversion-specific details */
+	appendPQExpBuffer(query, "SELECT conname,
+					pg_catalog.pg_encoding_to_char(conforencoding) AS conforencoding,
+					pg_catalog.pg_encoding_to_char(contoencoding) AS contoencoding,
+					conproc, condefault
+				FROM pg_catalog.pg_conversion c
+				WHERE c.oid = '%s'::pg_catalog.oid",
+					convinfo->oid);
+
+	res = PQexec(g_conn, query->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain conversion failed: %s",
+				  PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	/* Expecting a single result only */
+	ntups = PQntuples(res);
+	if (ntups != 1)
+	{
+		write_msg(NULL, "Got %d rows instead of one from: %s",
+				  ntups, query->data);
+		exit_nicely();
+	}
+
+	i_conname = PQfnumber(res, "conname");
+	i_conforencoding = PQfnumber(res, "conforencoding");
+	i_contoencoding = PQfnumber(res, "contoencoding");
+	i_conproc = PQfnumber(res, "conproc");
+	i_condefault = PQfnumber(res, "condefault");
+
+	conname = PQgetvalue(res, 0, i_conname);
+	conforencoding = PQgetvalue(res, 0, i_conforencoding);
+	contoencoding = PQgetvalue(res, 0, i_contoencoding);
+	conproc = PQgetvalue(res, 0, i_conproc);
+	condefault = (PQgetvalue(res, 0, i_condefault)[0] == 't');
+
+	/*
+	 * DROP must be fully qualified in case same name appears in
+	 * pg_catalog
+	 */
+	appendPQExpBuffer(delq, "DROP CONVERSION %s",
+					  fmtId(convinfo->connamespace->nspname));
+	appendPQExpBuffer(delq, ".%s;\n",
+					  fmtId(convinfo->conname));
+
+	appendPQExpBuffer(q, "CREATE %sCONVERSION %s FOR ",
+					(condefault) ? "DEFAULT " : "",	
+					fmtId(convinfo->conname));
+	appendStringLiteral(q, conforencoding, true);
+	appendPQExpBuffer(q, " TO ");
+	appendStringLiteral(q, contoencoding, true);
+	/* regproc is automatically quoted in 7.3 and above */
+	appendPQExpBuffer(q, " FROM %s;\n", conproc);
+	
+	ArchiveEntry(fout, convinfo->oid, convinfo->conname,
+				 convinfo->connamespace->nspname, convinfo->usename,
+				 "CONVERSION", NULL,
+				 q->data, delq->data,
+				 NULL, NULL, NULL);
+
+	/* Dump Conversion Comments */
+	resetPQExpBuffer(q);
+	appendPQExpBuffer(q, "CONVERSION %s", fmtId(convinfo->conname));
+	dumpComment(fout, q->data,
+				convinfo->connamespace->nspname, convinfo->usename,
+				convinfo->oid, "pg_conversion", 0, NULL);
+
+	PQclear(res);
+
+	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
+	destroyPQExpBuffer(details);
+}
 
 /*
  * dumpAggs
@@ -6573,8 +6801,10 @@ dumpRules(Archive *fout, TableInfo *tblinfo, int numTables)
 			/* Dump rule comments */
 
 			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, "RULE %s", fmtId(PQgetvalue(res, i, i_rulename)));
-			appendPQExpBuffer(query, " ON %s", fmtId(tbinfo->relname));
+			appendPQExpBuffer(query, "RULE %s",
+							  fmtId(PQgetvalue(res, i, i_rulename)));
+			appendPQExpBuffer(query, " ON %s",
+							  fmtId(tbinfo->relname));
 			dumpComment(fout, query->data,
 						tbinfo->relnamespace->nspname,
 						tbinfo->usename,

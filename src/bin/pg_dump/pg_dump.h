@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.104 2003/08/08 04:52:21 momjian Exp $
+ * $Id: pg_dump.h,v 1.105 2003/11/21 22:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,14 @@ typedef struct _opclassInfo
 	NamespaceInfo *opcnamespace;	/* link to containing namespace */
 	char	   *usename;
 } OpclassInfo;
+
+typedef struct _convInfo
+{
+	char	   *oid;
+	char	   *conname;
+	NamespaceInfo *connamespace;	/* link to containing namespace */
+	char	   *usename;
+} ConvInfo;
 
 typedef struct _tableInfo
 {
@@ -213,6 +221,7 @@ extern FuncInfo *getFuncs(int *numFuncs);
 extern AggInfo *getAggregates(int *numAggregates);
 extern OprInfo *getOperators(int *numOperators);
 extern OpclassInfo *getOpclasses(int *numOpclasses);
+extern ConvInfo *getConversions(int *numConversions);
 extern TableInfo *getTables(int *numTables);
 extern InhInfo *getInherits(int *numInherits);
 
@@ -230,6 +239,8 @@ extern void dumpAggs(Archive *fout, AggInfo agginfo[], int numAggregates);
 extern void dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators);
 extern void dumpOpclasses(Archive *fout,
 			  OpclassInfo *opcinfo, int numOpclasses);
+extern void dumpConversions(Archive *fout,
+			  ConvInfo *coninfo, int numConversions);
 extern void dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
 		   const bool aclsSkip,
 		   const bool schemaOnly, const bool dataOnly);

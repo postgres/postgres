@@ -18,6 +18,11 @@ CREATE DEFAULT CONVERSION public.mydef FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_
 --
 CREATE DEFAULT CONVERSION public.mydef2 FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
 ERROR:  default conversion for LATIN1 to UNICODE already exists
+-- test comments
+COMMENT ON CONVERSION myconv_bad IS 'foo';
+ERROR:  conversion "myconv_bad" does not exist
+COMMENT ON CONVERSION myconv IS 'bar';
+COMMENT ON CONVERSION myconv IS NULL;
 --
 -- drop user defined conversion
 --

@@ -326,6 +326,10 @@ begin
 end;
 ' language 'plpgsql';
 
+-- Test comments
+COMMENT ON FUNCTION tg_hub_adjustslots_wrong(bpchar, integer, integer) IS 'function with args';
+COMMENT ON FUNCTION tg_hub_adjustslots(bpchar, integer, integer) IS 'function with args';
+COMMENT ON FUNCTION tg_hub_adjustslots(bpchar, integer, integer) IS NULL;
 
 -- ************************************************************
 -- * BEFORE INSERT or UPDATE on HSlot

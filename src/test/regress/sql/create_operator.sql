@@ -32,3 +32,9 @@ CREATE OPERATOR #%# (
    procedure = int4fac 
 );
 
+-- Test comments
+COMMENT ON OPERATOR ###### (int4, NONE) IS 'bad right unary';
+COMMENT ON OPERATOR #%# (int4, NONE) IS 'right unary';
+COMMENT ON OPERATOR #%# (int4, NONE) IS NULL;
+
+

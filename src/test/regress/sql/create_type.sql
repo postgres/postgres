@@ -69,6 +69,11 @@ CREATE FUNCTION get_default_test() RETURNS SETOF default_test_row AS '
 
 SELECT * FROM get_default_test();
 
+-- Test comments
+COMMENT ON TYPE bad IS 'bad comment';
+COMMENT ON TYPE default_test_row IS 'good comment';
+COMMENT ON TYPE default_test_row IS NULL;
+
 DROP TYPE default_test_row CASCADE;
 
 DROP TABLE default_test;

@@ -19,7 +19,10 @@ create rule rtest_v1_upd as on update to rtest_v1 do instead
 	where a = old.a;
 create rule rtest_v1_del as on delete to rtest_v1 do instead
 	delete from rtest_t1 where a = old.a;
-
+-- Test comments
+COMMENT ON RULE rtest_v1_bad ON rtest_v1 IS 'bad rule';
+COMMENT ON RULE rtest_v1_del ON rtest_v1 IS 'delete rule';
+COMMENT ON RULE rtest_v1_del ON rtest_v1 IS NULL;
 --
 -- Tables and rules for the constraint update/delete test
 --

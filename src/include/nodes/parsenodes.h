@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.248 2003/09/17 04:25:29 ishii Exp $
+ * $Id: parsenodes.h,v 1.249 2003/11/21 22:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,6 +686,7 @@ typedef enum ObjectType
 	OBJECT_GROUP,
 	OBJECT_INDEX,
 	OBJECT_LANGUAGE,
+	OBJECT_LARGEOBJECT,
 	OBJECT_OPCLASS,
 	OBJECT_OPERATOR,
 	OBJECT_RULE,
