@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.104 2001/10/25 05:49:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.105 2001/11/12 20:05:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -805,6 +805,37 @@ exprTypmod(Node *expr)
 			break;
 		case T_RelabelType:
 			return ((RelabelType *) expr)->resulttypmod;
+			break;
+		case T_CaseExpr:
+			{
+				/*
+				 * If all the alternatives agree on type/typmod, return
+				 * that typmod, else use -1
+				 */
+				CaseExpr   *cexpr = (CaseExpr *) expr;
+				Oid			casetype = cexpr->casetype;
+				int32		typmod;
+				List	   *arg;
+
+				if (!cexpr->defresult)
+					return -1;
+				if (exprType(cexpr->defresult) != casetype)
+					return -1;
+				typmod = exprTypmod(cexpr->defresult);
+				if (typmod < 0)
+					return -1;	/* no point in trying harder */
+				foreach(arg, cexpr->args)
+				{
+					CaseWhen   *w = (CaseWhen *) lfirst(arg);
+
+					Assert(IsA(w, CaseWhen));
+					if (exprType(w->result) != casetype)
+						return -1;
+					if (exprTypmod(w->result) != typmod)
+						return -1;
+				}
+				return typmod;
+			}
 			break;
 		default:
 			break;
