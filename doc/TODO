@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jun  1 15:52:53 EDT 2002
+Last updated:		Mon Jun  3 13:40:49 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -148,7 +148,8 @@ Indexes
 * Add UNIQUE capability to non-btree indexes
 * Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
-* Certain indexes will not shrink, e.g. oid indexes with many inserts
+* Certain indexes will not shrink, e.g. indexes on ever-increasing
+  columns and indexes with many duplicate keys
 * Use indexes for min() and max() or convert to SELECT col FROM tab ORDER
   BY col DESC LIMIT 1 if appropriate index exists and WHERE clause acceptible
 * Allow LIKE indexing optimization for non-ASCII locales
