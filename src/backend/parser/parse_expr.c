@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.129 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.129.2.1 2002/12/27 20:06:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -912,6 +912,7 @@ exprType(Node *expr)
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "exprType: Cannot get type for untransformed sublink");
 					tent = (TargetEntry *) lfirst(qtree->targetList);
+					Assert(IsA(tent, TargetEntry));
 					type = tent->resdom->restype;
 				}
 				else
@@ -935,6 +936,16 @@ exprType(Node *expr)
 			break;
 		case T_ConstraintTest:
 			type = exprType(((ConstraintTest *) expr)->arg);
+			break;
+		case T_RangeVar:
+			/*
+			 * If someone uses a bare relation name in an expression,
+			 * we will likely first notice a problem here (see comments in
+			 * transformColumnRef()).  Issue an appropriate error message.
+			 */
+			elog(ERROR, "Relation reference \"%s\" cannot be used in an expression",
+				 ((RangeVar *) expr)->relname);
+			type = InvalidOid;	/* keep compiler quiet */
 			break;
 		default:
 			elog(ERROR, "exprType: Do not know how to get type for %d node",
