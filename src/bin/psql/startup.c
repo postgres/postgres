@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.75 2003/07/23 08:47:40 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.76 2003/07/28 00:14:43 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 
 	/* Default values for variables that are used in noninteractive cases */
 	SetVariableBool(pset.vars, "AUTOCOMMIT");
-	SetVariable(pset.vars, "VERBOSE", "default");
+	SetVariable(pset.vars, "VERBOSITY", "default");
 
 	pset.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.15 2003/06/28 00:12:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.16 2003/07/28 00:14:43 tgl Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -42,6 +42,6 @@ extern void SyncVariables(void);
 
 extern void UnsyncVariables(void);
 
-extern void SyncVerboseVariable(void);
+extern void SyncVerbosityVariable(void);
 
 #endif   /* COMMAND_H */

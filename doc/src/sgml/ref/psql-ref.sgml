@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.92 2003/07/27 03:32:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.93 2003/07/28 00:14:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2066,7 +2066,7 @@ bar
       </varlistentry>
 
       <varlistentry>
-        <term><varname>VERBOSE</varname></term>
+        <term><varname>VERBOSITY</varname></term>
 	<listitem>
 	<para>
 	This variable can be set to the values <literal>default</>,
