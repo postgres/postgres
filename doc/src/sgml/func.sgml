@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.43 2000/12/16 19:33:23 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.44 2000/12/17 05:55:26 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -770,7 +770,7 @@
 
   <para>
    There are two separate approaches to pattern matching provided by
-   <productname>Postgres</productname>:  The <acronym>SQL</acronym>
+   <productname>Postgres</productname>:  the <acronym>SQL</acronym>
    <function>LIKE</function> operator and
    <acronym>POSIX</acronym>-style regular expressions.
   </para>
@@ -2562,8 +2562,9 @@ END
   </informalexample>
 
   <para>
-   The data types of all possible <replaceable>result</replaceable>
-   expressions must match.
+   The data types of all the <replaceable>result</replaceable>
+   expressions must be coercible to a single output type.
+   See <xref linkend="typeconv-union-case"> for more detail.
   </para>
 
 <synopsis>

@@ -12,16 +12,17 @@ evaluating mixed-type expressions.
 In many cases a user will not need
 to understand the details of the type conversion mechanism.
 However, the implicit conversions done by <productname>Postgres</productname>
-can affect the apparent results of a query, and these results
+can affect the results of a query.  When necessary, these results
 can be tailored by a user or programmer
 using <emphasis>explicit</emphasis> type coercion.
 </para>
 
 <para>
 This chapter introduces the <productname>Postgres</productname>
- type conversion mechanisms and conventions.
+type conversion mechanisms and conventions.
 Refer to the relevant sections in the User's Guide and Programmer's Guide
-for more information on specific data types and allowed functions and operators.
+for more information on specific data types and allowed functions and
+operators.
 </para>
 
 <para>
@@ -43,12 +44,13 @@ mixed-type expressions to be meaningful, even with user-defined types.
 </para>
 
 <para>
-The <productname>Postgres</productname> scanner/parser decodes lexical elements
-into only five fundamental categories: integers, floats, strings, names, and keywords.
-Most extended types are first tokenized into strings. The <acronym>SQL</acronym>
-language definition allows specifying type names with strings, and this mechanism
-is used by <productname>Postgres</productname>
-to start the parser down the correct path. For example, the query
+The <productname>Postgres</productname> scanner/parser decodes lexical
+elements into only five fundamental categories: integers, floats, strings,
+names, and keywords.  Most extended types are first tokenized into
+strings. The <acronym>SQL</acronym> language definition allows specifying type
+names with strings, and this mechanism can be used in
+<productname>Postgres</productname> to start the parser down the correct
+path. For example, the query
 
 <programlisting>
 tgl=> SELECT text 'Origin' AS "Label", point '(0,0)' AS "Value";
@@ -59,8 +61,9 @@ tgl=> SELECT text 'Origin' AS "Label", point '(0,0)' AS "Value";
 </programlisting>
 
 has two strings, of type <type>text</type> and <type>point</type>.
-If a type is not specified, then the placeholder type <type>unknown</type>
-is assigned initially, to be resolved in later stages as described below.
+If a type is not specified for a string, then the placeholder type
+<firstterm>unknown</firstterm> is assigned initially, to be resolved in later
+stages as described below.
 </para>
 
 <para>
@@ -88,9 +91,13 @@ Function calls
 </term>
 <listitem>
 <para>
-Much of the <productname>Postgres</productname> type system is built around a rich set of
-functions. Function calls have one or more arguments which, for any specific query,
-must be matched to the functions available in the system catalog.
+Much of the <productname>Postgres</productname> type system is built around a
+rich set of functions. Function calls have one or more arguments which, for
+any specific query, must be matched to the functions available in the system
+catalog.  Since <productname>Postgres</productname> permits function
+overloading, the function name alone does not uniquely identify the function
+to be called --- the parser must select the right function based on the data
+types of the supplied arguments.
 </para>
 </listitem>
 </varlistentry>
@@ -100,19 +107,23 @@ Query targets
 </term>
 <listitem>
 <para>
-<acronym>SQL</acronym> INSERT statements place the results of query into a table. The expressions
-in the query must be matched up with, and perhaps converted to, the target columns of the insert.
+<acronym>SQL</acronym> INSERT and UPDATE statements place the results of
+expressions into a table. The expressions in the query must be matched up
+with, and perhaps converted to, the types of the target columns.
 </para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term>
-UNION queries
+UNION and CASE constructs
 </term>
 <listitem>
 <para>
-Since all select results from a UNION SELECT statement must appear in a single set of columns, the types
+Since all select results from a UNION SELECT statement must appear in a single
+set of columns, the types of the results
 of each SELECT clause must be matched up and converted to a uniform set.
+Similarly, the result expressions of a CASE construct must be coerced to
+a common type so that the CASE expression as a whole has a known output type.
 </para>
 </listitem>
 </varlistentry>
@@ -129,7 +140,7 @@ conventions for the <acronym>SQL92</acronym> standard native types such as
 <para>
 The <productname>Postgres</productname> parser uses the convention that all
 type conversion functions take a single argument of the source type and are
-named with the same name as the target type. Any function meeting this
+named with the same name as the target type. Any function meeting these
 criteria is considered to be a valid conversion function, and may be used
 by the parser as such. This simple assumption gives the parser the power
 to explore type conversion possibilities without hardcoding, allowing
@@ -139,19 +150,16 @@ extended user-defined types to use these same features transparently.
 <para>
 An additional heuristic is provided in the parser to allow better guesses
 at proper behavior for <acronym>SQL</acronym> standard types. There are
-five categories of types defined: boolean, string, numeric, geometric,
+several basic <firstterm>type categories</firstterm> defined: boolean,
+numeric, string, bitstring, datetime, timespan, geometric, network,
 and user-defined. Each category, with the exception of user-defined, has
-a "preferred type" which is used to resolve ambiguities in candidates.
-Each "user-defined" type is its own "preferred type", so ambiguous
-expressions (those with multiple candidate parsing solutions)
-with only one user-defined type can resolve to a single best choice, while those with
-multiple user-defined types will remain ambiguous and throw an error.
-</para>
-
-<para>
-Ambiguous expressions which have candidate solutions within only one type category are
-likely to resolve, while ambiguous expressions with candidates spanning multiple
-categories are likely to throw an error and ask for clarification from the user.
+a <firstterm>preferred type</firstterm> which is preferentially selected
+when there is ambiguity.
+In the user-defined category, each type is its own preferred type.
+Ambiguous expressions (those with multiple candidate parsing solutions)
+can often be resolved when there are multiple possible built-in types, but
+they will raise an error when there are multiple choices for user-defined
+types.
 </para>
 
 <sect2>
@@ -207,12 +215,8 @@ should use this new function and will no longer do the implicit conversion using
 <sect1 id="typeconv-oper">
 <title>Operators</title>
 
-<sect2>
-<title>Conversion Procedure</title>
-
 <procedure>
-<title>Operator Evaluation</title>
-
+<title>Operator Type Resolution</title>
 
 <step performance="required">
 <para>
@@ -222,15 +226,10 @@ Check for an exact match in the pg_operator system catalog.
 <substeps>
 <step performance="optional">
 <para>
-If one argument of a binary operator is <type>unknown</type>,
-then assume it is the same type as the other argument.
-</para>
-</step>
-<step performance="required">
-<para>
-Reverse the arguments, and look for an exact match with an operator which
-points to itself as being commutative.
-If found, then reverse the arguments in the parse tree and use this operator.
+If one argument of a binary operator is <type>unknown</type> type,
+then assume it is the same type as the other argument for this check.
+Other cases involving <type>unknown</type> will never find a match at
+this step.
 </para>
 </step>
 </substeps>
@@ -241,46 +240,63 @@ If found, then reverse the arguments in the parse tree and use this operator.
 Look for the best match.
 </para>
 <substeps>
-<step performance="optional">
+<step performance="required">
 <para>
-Make a list of all operators of the same name.
+Make a list of all operators of the same name for which the input types
+match or can be coerced to match.  (<type>unknown</type> literals are
+assumed to be coercible to anything for this purpose.)  If there is only
+one, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-If only one operator is in the list, use it if the input type can be coerced,
-and throw an error if the type cannot be coerced.
+Run through all candidates and keep those with the most exact matches
+on input types.  Keep all candidates if none have any exact matches.
+If only one candidate remains, use it; else continue to the next step.
+</para>
+<step performance="required">
+<para>
+Run through all candidates and keep those with the most exact or
+binary-compatible matches on input types.  Keep all candidates if none have
+any exact or binary-compatible matches.
+If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-Keep all operators with the most explicit matches for types. Keep all if there
-are no explicit matches and move to the next step.
-If only one candidate remains, use it if the type can be coerced.
+Run through all candidates and keep those which accept preferred types at
+the most positions where type coercion will be required.
+Keep all candidates if none accept preferred types.
+If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-If any input arguments are "unknown", categorize the input candidates as
-boolean, numeric, string, geometric, or user-defined. If there is a mix of
-categories, or more than one user-defined type, throw an error because
-the correct choice cannot be deduced without more clues.
-If only one category is present, then assign the "preferred type"
-to the input column which had been previously "unknown".
+If any input arguments are "unknown", check the type categories accepted
+at those argument positions by the remaining candidates.  At each position,
+select "string"
+category if any candidate accepts that category (this bias towards string
+is appropriate since an unknown-type literal does look like a string).
+Otherwise, if all the remaining candidates accept the same type category,
+select that category; otherwise raise an error because
+the correct choice cannot be deduced without more clues.  Also note whether
+any of the candidates accept a preferred datatype within the selected category.
+Now discard operator candidates that do not accept the selected type category;
+furthermore, if any candidate accepts a preferred type at a given argument
+position, discard candidates that accept non-preferred types for that
+argument.
 </para>
 </step>
 <step performance="required">
 <para>
-Choose the candidate with the most exact type matches, and which matches
-the "preferred type" for each column category from the previous step.
-If there is still more than one candidate, or if there are none,
-then throw an error.
+If only one candidate remains, use it.  If no candidate or more than one
+candidate remains,
+then raise an error.
 </para>
 </step>
 </substeps>
 </step>
 </procedure>
-</sect2>
 
 <sect2>
 <title>Examples</title>
@@ -372,17 +388,12 @@ tgl=> SELECT 'abc' || 'def' AS "Unspecified";
 <para>
 In this case there is no initial hint for which type to use, since no types
 are specified in the query. So, the parser looks for all candidate operators
-and finds that all arguments for all the candidates are string types. It chooses
-the "preferred type" for strings, <type>text</type>, for this query.
+and finds that there are candidates accepting both string-category and
+bitstring-category inputs.  Since string category is preferred when available,
+that category is selected, and then the 
+"preferred type" for strings, <type>text</type>, is used as the specific
+type to resolve the unknown literals to.
 </para>
-
-<note>
-<para>
-If a user defines a new type and defines an operator "<literal>||</literal>" to work
-with it, then this query would no longer succeed as written. The parser would
-now have candidate types from two categories, and could not decide which to use.
-</para>
-</note>
 </sect3>
 
 <sect3>
@@ -423,11 +434,13 @@ will try to oblige.
 <title>Functions</title>
 
 <procedure>
-<title>Function Evaluation</title>
+<title>Function Call Type Resolution</title>
 
 <step performance="required">
 <para>
 Check for an exact match in the pg_proc system catalog.
+(Cases involving <type>unknown</type> will never find a match at
+this step.)
 </para></step>
 <step performance="required">
 <para>
@@ -436,38 +449,63 @@ Look for the best match.
 <substeps>
 <step performance="required">
 <para>
-Make a list of all functions of the same name with the same number of arguments.
-</para></step>
+Make a list of all functions of the same name with the same number of
+arguments for which the input types
+match or can be coerced to match.  (<type>unknown</type> literals are
+assumed to be coercible to anything for this purpose.)  If there is only
+one, use it; else continue to the next step.
+</para>
+</step>
 <step performance="required">
 <para>
-If only one function is in the list, use it if the input types can be coerced,
-and throw an error if the types cannot be coerced.
-</para></step>
+Run through all candidates and keep those with the most exact matches
+on input types.  Keep all candidates if none have any exact matches.
+If only one candidate remains, use it; else continue to the next step.
+</para>
 <step performance="required">
 <para>
-Keep all functions with the most explicit matches for types. Keep all if there
-are no explicit matches and move to the next step.
-If only one candidate remains, use it if the type can be coerced.
-</para></step>
+Run through all candidates and keep those with the most exact or
+binary-compatible matches on input types.  Keep all candidates if none have
+any exact or binary-compatible matches.
+If only one candidate remains, use it; else continue to the next step.
+</para>
+</step>
 <step performance="required">
 <para>
-If any input arguments are "unknown", categorize the input candidate arguments as
-boolean, numeric, string, geometric, or user-defined. If there is a mix of
-categories, or more than one user-defined type, throw an error because
-the correct choice cannot be deduced without more clues.
-If only one category is present, then assign the "preferred type"
-to the input column which had been previously "unknown".
-</para></step>
+Run through all candidates and keep those which accept preferred types at
+the most positions where type coercion will be required.
+Keep all candidates if none accept preferred types.
+If only one candidate remains, use it; else continue to the next step.
+</para>
+</step>
 <step performance="required">
 <para>
-Choose the candidate with the most exact type matches, and which matches
-the "preferred type" for each column category from the previous step.
-If there is still more than one candidate, or if there are none,
-then throw an error.
-</para></step>
+If any input arguments are "unknown", check the type categories accepted
+at those argument positions by the remaining candidates.  At each position,
+select "string"
+category if any candidate accepts that category (this bias towards string
+is appropriate since an unknown-type literal does look like a string).
+Otherwise, if all the remaining candidates accept the same type category,
+select that category; otherwise raise an error because
+the correct choice cannot be deduced without more clues.  Also note whether
+any of the candidates accept a preferred datatype within the selected category.
+Now discard operator candidates that do not accept the selected type category;
+furthermore, if any candidate accepts a preferred type at a given argument
+position, discard candidates that accept non-preferred types for that
+argument.
+</para>
+</step>
+<step performance="required">
+<para>
+If only one candidate remains, use it.  If no candidate or more than one
+candidate remains,
+then raise an error.
+</para>
+</step>
 </substeps>
 </step>
 </procedure>
+
 <sect2>
 <title>Examples</title>
 
@@ -539,10 +577,10 @@ tgl=> select substr(text(varchar '1234'), 3);
 </para>
 <note>
 <para>
-There are some heuristics in the parser to optimize the relationship between the
-<type>char</type>, <type>varchar</type>, and <type>text</type> types.
-For this case, <function>substr</function> is called directly with the <type>varchar</type> string
-rather than inserting an explicit conversion call.
+Actually, the parser is aware that <type>text</type> and <type>varchar</type>
+are "binary compatible", meaning that one can be passed to a function that
+accepts the other without doing any physical conversion.  Therefore, no
+explicit type conversion call is really inserted in this case.
 </para>
 </note>
 
@@ -564,6 +602,8 @@ tgl=> select substr(text(1234), 3);
      34
 (1 row)
 </programlisting>
+This succeeds because there is a conversion function text(int4) in the
+system catalog.
 </para>
 </sect3>
 </sect2>
@@ -573,7 +613,7 @@ tgl=> select substr(text(1234), 3);
 <title>Query Targets</title>
 
 <procedure>
-<title>Target Evaluation</title>
+<title>Query Target Type Resolution</title>
 
 <step performance="required">
 <para>
@@ -581,15 +621,21 @@ Check for an exact match with the target.
 </para></step>
 <step performance="required">
 <para>
-Try to coerce the expression directly to the target type if necessary.
+Otherwise, try to coerce the expression to the target type.  This will succeed
+if the two types are known binary-compatible, or if there is a conversion
+function.  If the expression is an unknown-type literal, the contents of
+the literal string will be fed to the input conversion routine for the target
+type.
 </para></step>
 
 <step performance="required">
 <para>
 If the target is a fixed-length type (e.g. <type>char</type> or <type>varchar</type>
-declared with a length) then try to find a sizing function of the same name
-as the type taking two arguments, the first the type name and the second an
-integer length.
+declared with a length) then try to find a sizing function for the target
+type.  A sizing function is a function of the same name as the type,
+taking two arguments of which the first is that type and the second is an
+integer, and returning the same type.  If one is found, it is applied,
+passing the column's declared length as the second parameter.
 </para></step>
 
 </procedure>
@@ -613,32 +659,62 @@ tgl=> SELECT * FROM vv;
   v
 ------
  abcd
-(1 row)                                                                                                    
+(1 row)
 </programlisting>
+
+What's really happened here is that the two unknown literals are resolved
+to text by default, allowing the <literal>||</literal> operator to be
+resolved as text concatenation.  Then the text result of the operator
+is coerced to varchar to match the target column type.  (But, since the
+parser knows that text and varchar are binary-compatible, this coercion
+is implicit and does not insert any real function call.)  Finally, the
+sizing function <literal>varchar(varchar,int4)</literal> is found in the system
+catalogs and applied to the operator's result and the stored column length.
+This type-specific function performs the desired truncation.
 </para>
 </sect3>
 </sect2>
 </sect1>
 
-<sect1 id="typeconv-union">
-<title>UNION Queries</title>
+<sect1 id="typeconv-union-case">
+<title>UNION and CASE Constructs</title>
 
 <para>
-The UNION construct is somewhat different in that it must match up
-possibly dissimilar types to become a single result set.
+The UNION and CASE constructs must match up possibly dissimilar types to
+become a single result set.  The resolution algorithm is applied separately to
+each output column of a UNION.  CASE uses the identical algorithm to match
+up its result expressions.
 </para>
 <procedure>
-<title>UNION Evaluation</title>
+<title>UNION and CASE Type Resolution</title>
 
 <step performance="required">
 <para>
-Check for identical types for all results.
+If all inputs are of type <type>unknown</type>, resolve as type
+<type>text</type> (the preferred type for string category).
+Otherwise, ignore the <type>unknown</type> inputs while choosing the type.
 </para></step>
 
 <step performance="required">
 <para>
-Coerce each result from the UNION clauses to match the type of the
-first SELECT clause or the target column.
+If the non-unknown inputs are not all of the same type category, raise an
+error.
+</para></step>
+
+<step performance="required">
+<para>
+If one or more non-unknown inputs are of a preferred type in that category,
+resolve as that type.
+</para></step>
+
+<step performance="required">
+<para>
+Otherwise, resolve as the type of the first non-unknown input.
+</para></step>
+
+<step performance="required">
+<para>
+Coerce all inputs to the selected type.
 </para></step>
 </procedure>
 
@@ -657,6 +733,7 @@ tgl=> SELECT text 'a' AS "Text" UNION SELECT 'b';
  b
 (2 rows)
 </programlisting>
+Here, the unknown-type literal 'b' will be resolved as type text.
 </para>
 </sect3>
 
@@ -679,43 +756,26 @@ tgl=> SELECT 1.2 AS "Float8" UNION SELECT 1;
 <title>Transposed UNION</title>
 
 <para>
-The types of the union are forced to match the types of
+Here the output type of the union is forced to match the type of
 the first/top clause in the union:
 
 <programlisting>
 tgl=> SELECT 1 AS "All integers"
-tgl-> UNION SELECT '2.2'::float4
-tgl-> UNION SELECT 3.3;
+tgl-> UNION SELECT '2.2'::float4;
  All integers
 --------------
             1
             2
-            3
-(3 rows)
+(2 rows)
 </programlisting>
 </para>
 <para>
-An alternate parser strategy could be to choose the "best" type of the bunch, but
-this is more difficult because of the nice recursion technique used in the
-parser. However, the "best" type is used when selecting <emphasis>into</emphasis>
-a table:
-
-<programlisting>
-tgl=> CREATE TABLE ff (f float);
-CREATE
-tgl=> INSERT INTO ff
-tgl-> SELECT 1
-tgl-> UNION SELECT '2.2'::float4
-tgl-> UNION SELECT 3.3;
-INSERT 0 3
-tgl=> SELECT f AS "Floating point" from ff;
-  Floating point
-------------------
-                1
- 2.20000004768372
-              3.3
-(3 rows)
-</programlisting>
+Since float4 is not a preferred type, the parser sees no reason to select it
+over int4, and instead falls back on the use-the-first-alternative rule.
+This example demonstrates that the preferred-type mechanism doesn't encode
+as much information as we'd like.  Future versions of
+<productname>Postgres</productname> may support a more general notion of
+type preferences.
 </para>
 </sect3>
 </sect2>
