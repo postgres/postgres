@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.24 1998/09/01 04:27:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.25 1998/10/21 16:21:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include <optimizer/planner.h>
 #include <access/xact.h>
 #include <utils/relcache.h>
+#include <rewrite/rewriteHandler.h>
 
 typedef struct ExplainState
 {
@@ -37,6 +38,8 @@ typedef struct ExplainState
 } ExplainState;
 
 static char *Explain_PlanToString(Plan *plan, ExplainState *es);
+static void ExplainOneQuery(Query *query, bool verbose, CommandDest dest);
+
 
 /*
  * ExplainQuery -
@@ -46,11 +49,8 @@ static char *Explain_PlanToString(Plan *plan, ExplainState *es);
 void
 ExplainQuery(Query *query, bool verbose, CommandDest dest)
 {
-	char	   *s = NULL,
-			   *s2;
-	Plan	   *plan;
-	ExplainState *es;
-	int			len;
+	List	*rewritten;
+	List	*l;
 
 	if (IsAbortedTransactionBlockState())
 	{
@@ -63,6 +63,35 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 
 		return;
 	}
+
+	/* Rewrite through rule system */
+	rewritten = QueryRewrite(query);
+
+	/* In the case of an INSTEAD NOTHING, tell at least that */
+	if (rewritten == NIL)
+	{
+		elog(NOTICE, "query rewrites to nothing");
+		return;
+	}
+
+	/* Explain every plan */
+	foreach(l, rewritten)
+		ExplainOneQuery(lfirst(l), verbose, dest);
+}
+
+/*
+ * ExplainOneQuery -
+ *	  print out the execution plan for one query
+ *
+ */
+static void
+ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
+{
+	char	   *s = NULL,
+			   *s2;
+	Plan	   *plan;
+	ExplainState *es;
+	int			len;
 
 	/* plan the queries (XXX we've ignored rewrite!!) */
 	plan = planner(query);
@@ -202,8 +231,13 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			{
 				RangeTblEntry *rte = nth(((Scan *) plan)->scanrelid - 1, es->rtable);
 
-				sprintf(buf, " on %s", rte->refname);
-				appendStringInfo(str, buf);
+				appendStringInfo(str, " on ");
+				if (strcmp(rte->refname, rte->relname) != 0)
+				{
+					sprintf(buf, "%s ", rte->relname);
+					appendStringInfo(str, buf);
+				}
+				appendStringInfo(str, rte->refname);
 			}
 			break;
 		default:
@@ -232,7 +266,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 4, es);
+			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 2, es);
 		}
 		es->rtable = saved_rtable;
 	}

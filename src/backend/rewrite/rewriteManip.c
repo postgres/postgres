@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.21 1998/10/20 17:21:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.22 1998/10/21 16:21:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,221 +32,361 @@ static void ResolveNew(RewriteInfo *info, List *targetlist,
 		   Node **node, int sublevels_up);
 
 
-
+/*
+ * OffsetVarnodes -
+ */
 void
-OffsetVarNodes(Node *node, int offset)
+OffsetVarNodes(Node *node, int offset, int sublevels_up)
 {
 	if (node == NULL)
 		return;
-	switch (nodeTag(node))
-	{
+
+	switch(nodeTag(node)) {
 		case T_TargetEntry:
 			{
-				TargetEntry *tle = (TargetEntry *) node;
+				TargetEntry	*tle = (TargetEntry *)node;
 
-				OffsetVarNodes(tle->expr, offset);
+				OffsetVarNodes(
+						(Node *)(tle->expr),
+						offset,
+						sublevels_up);
 			}
 			break;
+
 		case T_Aggreg:
 			{
-				Aggreg	   *agg = (Aggreg *) node;
+				Aggreg	*agg = (Aggreg *)node;
 
-				OffsetVarNodes(agg->target, offset);
+				OffsetVarNodes(
+						(Node *)(agg->target),
+						offset,
+						sublevels_up);
 			}
 			break;
 
-			/*
-			 * This has to be done to make queries using groupclauses work
-			 * on views
-			 */
 		case T_GroupClause:
 			{
-				GroupClause *group = (GroupClause *) node;
+				GroupClause	*grp = (GroupClause *)node;
 
-				OffsetVarNodes((Node *) (group->entry), offset);
-			}
-			break;
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) node;
-
-				OffsetVarNodes((Node *) expr->args, offset);
-			}
-			break;
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				OffsetVarNodes((Node *) iter->iterexpr, offset);
-			}
-			break;
-		case T_ArrayRef:
-			{
-				ArrayRef	   *ref = (ArrayRef *) node;
-
-				OffsetVarNodes((Node *) ref->refupperindexpr, offset);
-				OffsetVarNodes((Node *) ref->reflowerindexpr, offset);
-				OffsetVarNodes((Node *) ref->refexpr, offset);
-				OffsetVarNodes((Node *) ref->refassgnexpr, offset);
-			}
-			break;
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				var->varno += offset;
-				var->varnoold += offset;
-			}
-			break;
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					OffsetVarNodes(lfirst(l), offset);
-			}
-			break;
-		case T_SubLink:
-			{
-				SubLink    *sublink = (SubLink *) node;
-
-				/*
-				 * We also have to adapt the variables used in
-				 * sublink->lefthand and sublink->oper
-				 */
-				OffsetVarNodes((Node *) (sublink->lefthand), offset);
-
-				/*
-				 * Make sure the first argument of sublink->oper points to
-				 * the same var as sublink->lefthand does otherwise we
-				 * will run into troubles using aggregates (aggno will not
-				 * be set correctly)
-				 */
-				lfirst(((Expr *) lfirst(sublink->oper))->args) =
-					lfirst(sublink->lefthand);
-			}
-			break;
-		default:
-			/* ignore the others */
-			break;
-	}
-}
-
-void
-ChangeVarNodes(Node *node, int old_varno, int new_varno, int sublevels_up)
-{
-	if (node == NULL)
-		return;
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				ChangeVarNodes(tle->expr, old_varno, new_varno, sublevels_up);
-			}
-			break;
-		case T_Aggreg:
-			{
-				Aggreg	   *agg = (Aggreg *) node;
-
-				ChangeVarNodes(agg->target, old_varno, new_varno, sublevels_up);
-			}
-			break;
-
-			/*
-			 * This has to be done to make queries using groupclauses work
-			 * on views
-			 */
-		case T_GroupClause:
-			{
-				GroupClause *group = (GroupClause *) node;
-
-				ChangeVarNodes((Node *) (group->entry), old_varno, new_varno,
-							   sublevels_up);
+				OffsetVarNodes(
+						(Node *)(grp->entry),
+						offset,
+						sublevels_up);
 			}
 			break;
 
 		case T_Expr:
 			{
-				Expr	   *expr = (Expr *) node;
+				Expr	*exp = (Expr *)node;
 
-				ChangeVarNodes((Node *) expr->args, old_varno, new_varno, sublevels_up);
+				OffsetVarNodes(
+						(Node *)(exp->args),
+						offset,
+						sublevels_up);
 			}
 			break;
+
 		case T_Iter:
 			{
-				Iter	   *iter = (Iter *) node;
+				Iter	*iter = (Iter *)node;
 
-				ChangeVarNodes((Node *) iter->iterexpr, old_varno, new_varno, sublevels_up);
+				OffsetVarNodes(
+						(Node *)(iter->iterexpr),
+						offset,
+						sublevels_up);
 			}
 			break;
+
 		case T_ArrayRef:
 			{
-				ArrayRef	   *ref = (ArrayRef *) node;
+				ArrayRef	*ref = (ArrayRef *)node;
 
-				ChangeVarNodes((Node *) ref->refupperindexpr, old_varno, new_varno, sublevels_up);
-				ChangeVarNodes((Node *) ref->reflowerindexpr, old_varno, new_varno, sublevels_up);
-				ChangeVarNodes((Node *) ref->refexpr, old_varno, new_varno, sublevels_up);
-				ChangeVarNodes((Node *) ref->refassgnexpr, old_varno, new_varno, sublevels_up);
+				OffsetVarNodes(
+						(Node *)(ref->refupperindexpr),
+						offset,
+						sublevels_up);
+				OffsetVarNodes(
+						(Node *)(ref->reflowerindexpr),
+						offset,
+						sublevels_up);
+				OffsetVarNodes(
+						(Node *)(ref->refexpr),
+						offset,
+						sublevels_up);
+				OffsetVarNodes(
+						(Node *)(ref->refassgnexpr),
+						offset,
+						sublevels_up);
 			}
 			break;
+
 		case T_Var:
 			{
-				Var		   *var = (Var *) node;
+				Var	*var = (Var *)node;
 
-				if (var->varno == old_varno &&
-					var->varlevelsup == sublevels_up)
-				{
-					var->varno = new_varno;
-					var->varnoold = new_varno;
+				if (var->varlevelsup == sublevels_up) {
+					var->varno += offset;
+					var->varnoold += offset;
 				}
-				if (var->varlevelsup > 0)
-					OffsetVarNodes((Node *) var, 3);
-
 			}
 			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
 		case T_List:
 			{
-				List	   *l;
+				List	*l;
 
-				foreach(l, (List *) node)
-					ChangeVarNodes(lfirst(l), old_varno, new_varno, sublevels_up);
+				foreach (l, (List *)node)
+					OffsetVarNodes(
+							(Node *)lfirst(l),
+							offset,
+							sublevels_up);
 			}
 			break;
+
 		case T_SubLink:
 			{
-				SubLink    *sublink = (SubLink *) node;
-				Query	   *query = (Query *) sublink->subselect;
+				SubLink	*sub = (SubLink *)node;
 
-				ChangeVarNodes((Node *) query->qual, old_varno, new_varno,
-							   sublevels_up + 1);
+				OffsetVarNodes(
+						(Node *)(sub->lefthand),
+						offset,
+						sublevels_up);
 
-				/*
-				 * We also have to adapt the variables used in
-				 * sublink->lefthand and sublink->oper
-				 */
-				ChangeVarNodes((Node *) (sublink->lefthand), old_varno, new_varno,
-							   sublevels_up);
-
-				/*
-				 * Make sure the first argument of sublink->oper points to
-				 * the same var as sublink->lefthand does otherwise we
-				 * will run into troubles using aggregates (aggno will not
-				 * be set correctly
-				 */
-
-				/*
-				 * lfirst(((Expr *) lfirst(sublink->oper))->args) =
-				 * lfirst(sublink->lefthand);
-				 */
+				OffsetVarNodes(
+						(Node *)(sub->subselect),
+						offset,
+						sublevels_up + 1);
 			}
 			break;
-		default:
-			/* ignore the others */
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				OffsetVarNodes(
+						(Node *)(qry->targetList),
+						offset,
+						sublevels_up);
+
+				OffsetVarNodes(
+						(Node *)(qry->qual),
+						offset,
+						sublevels_up);
+
+				OffsetVarNodes(
+						(Node *)(qry->havingQual),
+						offset,
+						sublevels_up);
+
+				OffsetVarNodes(
+						(Node *)(qry->groupClause),
+						offset,
+						sublevels_up);
+			}
 			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in OffsetVarNodes()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
 	}
 }
+
+
+/*
+ * ChangeVarNodes -
+ */
+void
+ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
+{
+	if (node == NULL)
+		return;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				ChangeVarNodes(
+						(Node *)(tle->expr),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Aggreg:
+			{
+				Aggreg	*agg = (Aggreg *)node;
+
+				ChangeVarNodes(
+						(Node *)(agg->target),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_GroupClause:
+			{
+				GroupClause	*grp = (GroupClause *)node;
+
+				ChangeVarNodes(
+						(Node *)(grp->entry),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				ChangeVarNodes(
+						(Node *)(exp->args),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				ChangeVarNodes(
+						(Node *)(iter->iterexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				ChangeVarNodes(
+						(Node *)(ref->refupperindexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+				ChangeVarNodes(
+						(Node *)(ref->reflowerindexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+				ChangeVarNodes(
+						(Node *)(ref->refexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+				ChangeVarNodes(
+						(Node *)(ref->refassgnexpr),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_Var:
+			{
+				Var	*var = (Var *)node;
+
+				if (var->varlevelsup == sublevels_up &&
+						var->varno == rt_index) {
+					var->varno = new_index;
+					var->varnoold = new_index;
+				}
+			}
+			break;
+
+		case T_Param:
+			break;
+
+		case T_Const:
+			break;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node)
+					ChangeVarNodes(
+							(Node *)lfirst(l),
+							rt_index,
+							new_index,
+							sublevels_up);
+			}
+			break;
+
+		case T_SubLink:
+			{
+				SubLink	*sub = (SubLink *)node;
+
+				ChangeVarNodes(
+						(Node *)(sub->lefthand),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				ChangeVarNodes(
+						(Node *)(sub->subselect),
+						rt_index,
+						new_index,
+						sublevels_up + 1);
+			}
+			break;
+
+		case T_Query:
+			{
+				Query	*qry = (Query *)node;
+
+				ChangeVarNodes(
+						(Node *)(qry->targetList),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				ChangeVarNodes(
+						(Node *)(qry->qual),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				ChangeVarNodes(
+						(Node *)(qry->havingQual),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				ChangeVarNodes(
+						(Node *)(qry->groupClause),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in ChangeVarNodes()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+}
+
+
 
 void
 AddQual(Query *parsetree, Node *qual)

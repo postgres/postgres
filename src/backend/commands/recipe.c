@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.24 1998/09/01 04:27:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.25 1998/10/21 16:21:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,8 +350,8 @@ tg_rewriteQuery(TgRecipe * r,
 			 * need to offset the var nodes in the qual and targetlist
 			 * because they are indexed off the original rtable
 			 */
-			OffsetVarNodes((Node *) inputQ->qual, rt_length);
-			OffsetVarNodes((Node *) inputQ->targetList, rt_length);
+			OffsetVarNodes((Node *) inputQ->qual, rt_length, 0);
+			OffsetVarNodes((Node *) inputQ->targetList, rt_length, 0);
 
 			/* append the range tables from the children nodes	*/
 			rtable = nconc(rtable, input_rtable);
