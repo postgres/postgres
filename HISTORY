@@ -462,6 +462,8 @@ Query Changes
        In prior releases, LIMIT/OFFSET could only use constants, not
        expressions.
      * Implement CREATE TABLE AS EXECUTE (Neil, Peter)
+     * Don't lock referenced row when "UPDATE" doesn't change foreign
+       key's value (Jan)
      _________________________________________________________________
    
 Object Manipulation Changes
@@ -938,8 +940,6 @@ Changes
      * Repair sometimes-incorrect computation of StartUpID after a crash
      * Avoid slowness with lots of deferred triggers in one transaction
        (Stephan)
-     * Don't lock referenced row when "UPDATE" doesn't change foreign
-       key's value (Jan)
      * Use "-fPIC" not "-fpic" on Sparc (Tom Callaway)
      * Repair lack of schema-awareness in contrib/reindexdb
      * Fix contrib/intarray error for zero-element result array (Teodor)
