@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.23 2000/10/08 21:13:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.24 2000/10/16 03:25:16 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -660,6 +660,24 @@ su - postgres
         <para>
          <filename>configure</> will check for the required header
          files and libraries to make sure that your <productname>OpenSSL</>
+         installation is sufficient before proceeding.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>--with-openssl=<replaceable>DIRECTORY</></term>
+       <listitem>
+        <para>
+         Build with support for SSL (encrypted) connections. 
+         This requires the OpenSSL library to be installed.
+         The <replaceable>DIRECTORY</> argument specifies the
+         root directory of the OpenSSL installation.
+        </para>
+
+        <para>
+         <filename>configure</> will check for the required header
+         files and libraries to make sure that your OpenSSL
          installation is sufficient before proceeding.
         </para>
        </listitem>

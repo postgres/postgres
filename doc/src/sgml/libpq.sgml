@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.42 2000/10/03 19:16:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.43 2000/10/16 03:25:16 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -174,6 +174,17 @@ PGconn *PQconnectdb(const char *conninfo)
      <listitem>
      <para>
       A file or tty for optional debug output from the backend.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>requiressl</literal></term>
+     <listitem>
+     <para>
+      Set to '1' to require SSL connection to the backend. Libpq
+      will then refuse to connect if the server does not support
+      SSL. Set to '0' (default) to negotiate with server.
      </para>
      </listitem>
     </varlistentry>
@@ -642,6 +653,25 @@ int PQbackendPID(const PGconn *conn);
        Note that the <acronym>PID</acronym> belongs to a process
        executing on the database
        server host, not the local host!
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <function>PQgetssl</function>
+       Returns the SSL structure used in the connection, or NULL
+       if SSL is not in use. 
+       <synopsis>
+SSL *PQgetssl(const PGconn *conn);
+       </synopsis>
+       This structure can be used to verify encryption levels, check
+       server certificate and more. Refer to the OpenSSL documentation
+       for information about this structure.
+      </para>
+      <para>
+       You must define <literal>USE_SSL</literal> in order to get the
+       prototype for this function. Doing this will also 
+       automatically include <filename>ssl.h</filename> from OpenSSL.
       </para>
      </listitem>
 

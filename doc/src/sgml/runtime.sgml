@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.27 2000/10/08 09:25:35 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.28 2000/10/16 03:25:17 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1692,6 +1692,62 @@ openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.p
    and <filename>newkey_no_passphrase.pem</> to
    <filename><replaceable>PGDATA</>/server.key</>. Remove the PRIVATE KEY part
    from the <filename>server.crt</filename> using any text editor.
+  </para>
+ </sect1>
+
+ <sect1 id="ssl">
+  <title>Secure TCP/IP Connection with SSL</title>
+
+  <para>
+   PostgreSQL has native support for connections over SSL to encrypt
+   client/server communications for increased security. This requires
+   <productname>OpenSSL</productname> to be installed on both client
+   and server systems and support enabled at compile-time using
+   the configure script.
+  </para>
+
+  <para>
+   With SSL support compiled in, the Postgres backend can be 
+   started with argument -l to enable SSL connections. 
+   When starting in SSL mode, the postmaster will look for the 
+   files <filename>server.key</filename> and
+   <filename>server.cert</filename> in the <envar>PGDATA</envar>
+   directory. These files should contain the server private key and
+   certificate respectively. If the private key is protected with a 
+   passphrase, the postmaster will prompt for the passphrase and not 
+   start until it has been provided.
+  </para>
+
+  <para>
+   The postmaster will listen for both standard and SSL connections
+   on the same TCP/IP port, and will negotiate with any connecting
+   client wether to use SSL or not. Use the <filename>pg_hba.conf</filename>
+   file to optionally require SSL in order to accept a connection.
+  </para>
+
+  <para>
+   For details on how to create your server private key and certificate,
+   refer to the OpenSSL documentation. A simple self-signed certificate
+   can be used to get started testing, but a certificate signed by a CA
+   (either one of the global CAs or a local one) should be used in 
+   production so the client can verify the servers identity. To create
+   a quick self-signed certificate, use the <filename>CA.pl</filename>
+   script included in OpenSSL:
+<programlisting>
+   CA.pl -newcert
+</programlisting>
+   Fill out the information the script asks for. Make sure to enter
+   the local hostname as Common Name. The script will generate a key
+   which is passphrase protected. To remove the passphrase (required
+   if you want automatic startup of the postmaster), run the command
+<programlisting>
+   openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.pem
+</programlisting>
+   Enter the old passphrase to unlock the existing key. Copy the file
+   <filename>newreq.pem</filename> to <filename>PGDATA/server.cert</filename>
+   and <filename>newkey_no_passphrase.pem</filename> to 
+   <filename>PGDATA/server.key</filename>. Remove the PRIVATE KEY part
+   from the <filename>server.cert</filename> using any text editor.
   </para>
  </sect1>
 
