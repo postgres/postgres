@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.57 1999/05/25 22:41:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.57.2.1 1999/07/29 03:34:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -743,6 +743,37 @@ fix_indxqual_references(Node *clause, Path *index_path)
 			fix_indxqual_references(oldnode->refexpr, index_path);
 		newnode->refassgnexpr =
 			fix_indxqual_references(oldnode->refassgnexpr, index_path);
+
+		return (Node *) newnode;
+	}
+	else if (IsA(clause, CaseExpr))
+	{
+		CaseExpr   *oldnode = (CaseExpr *) clause;
+		CaseExpr   *newnode = makeNode(CaseExpr);
+
+		newnode->casetype = oldnode->casetype;
+		newnode->arg = oldnode->arg;	/* XXX should always be null
+										 * anyway ... */
+		newnode->args = (List *)
+			fix_indxqual_references((Node *) oldnode->args,
+									index_path);
+		newnode->defresult =
+			fix_indxqual_references(oldnode->defresult,
+									index_path);
+
+		return (Node *) newnode;
+	}
+	else if (IsA(clause, CaseWhen))
+	{
+		CaseWhen   *oldnode = (CaseWhen *) clause;
+		CaseWhen   *newnode = makeNode(CaseWhen);
+
+		newnode->expr =
+			fix_indxqual_references(oldnode->expr,
+									index_path);
+		newnode->result =
+			fix_indxqual_references(oldnode->result,
+									index_path);
 
 		return (Node *) newnode;
 	}

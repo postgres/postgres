@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.39 1999/06/06 17:46:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.39.2.1 1999/07/29 03:34:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,6 +706,32 @@ _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 	return true;
 }
 
+static bool
+_equalCaseExpr(CaseExpr *a, CaseExpr *b)
+{
+	if (a->casetype != b->casetype)
+		return false;
+	if (!equal(a->arg, b->arg))
+		return false;
+	if (!equal(a->args, b->args))
+		return false;
+	if (!equal(a->defresult, b->defresult))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalCaseWhen(CaseWhen *a, CaseWhen *b)
+{
+	if (!equal(a->expr, b->expr))
+		return false;
+	if (!equal(a->result, b->result))
+		return false;
+
+	return true;
+}
+
 /*
  * Stuff from pg_list.h
  */
@@ -873,6 +899,12 @@ equal(void *a, void *b)
 			break;
 		case T_TargetEntry:
 			retval = _equalTargetEntry(a, b);
+			break;
+		case T_CaseExpr:
+			retval = _equalCaseExpr(a, b);
+			break;
+		case T_CaseWhen:
+			retval = _equalCaseWhen(a, b);
 			break;
 		default:
 			elog(NOTICE, "equal: don't know whether nodes of type %d are equal",
