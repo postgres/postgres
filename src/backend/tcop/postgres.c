@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.136 1999/10/25 03:07:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.137 1999/11/16 06:13:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -116,6 +116,7 @@ static bool IsEmptyQuery = false;
 /* note: these declarations had better match tcopprot.h */
 DLLIMPORT sigjmp_buf Warn_restart;
 
+bool		Warn_restart_ready = false;
 bool		InError = false;
 bool		ExitAfterAbort = false;
 
@@ -748,7 +749,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
  *		Some backend has bought the farm,
  *		so we need to stop what we're doing and exit.
  *
- *		die() performs an orderly cleanup via ExitPostgres()
+ *		die() performs an orderly cleanup via proc_exit()
  * --------------------------------
  */
 
@@ -771,7 +772,7 @@ quickdie(SIGNAL_ARGS)
 
 
 	/*
-	 * DO NOT ExitPostgres(0) -- we're here because shared memory may be
+	 * DO NOT proc_exit(0) -- we're here because shared memory may be
 	 * corrupted, so we don't want to flush any shared state to stable
 	 * storage.  Just nail the windows shut and get out of town.
 	 */
@@ -1494,14 +1495,16 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.136 $ $Date: 1999/10/25 03:07:48 $\n");
+		puts("$Revision: 1.137 $ $Date: 1999/11/16 06:13:35 $\n");
 	}
 
 	/*
 	 * Initialize the deferred trigger manager
 	 */
 	if (DeferredTriggerInit() != 0)
-		ExitPostgres(1);
+		proc_exit(1);
+
+	SetProcessingMode(NormalProcessing);
 
 	/*
 	 * POSTGRES main processing loop begins here
@@ -1509,8 +1512,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 * If an exception is encountered, processing resumes here
 	 * so we abort the current transaction and start a new one.
 	 */
-
-	SetProcessingMode(NormalProcessing);
 
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
@@ -1524,9 +1525,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		if (ExitAfterAbort)
 		{
 			ProcReleaseLocks();		/* Just to be sure... */
-			ExitPostgres(0);
+			proc_exit(0);
 		}
 	}
+
+	Warn_restart_ready = true;	/* we can now handle elog(ERROR) */
 
 	PG_SETMASK(&UnBlockSig);
 

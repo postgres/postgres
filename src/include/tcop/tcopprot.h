@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.22 1999/10/06 21:58:18 vadim Exp $
+ * $Id: tcopprot.h,v 1.23 1999/11/16 06:13:34 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -37,6 +37,7 @@
 #define siglongjmp longjmp
 #endif
 extern DLLIMPORT sigjmp_buf Warn_restart;
+extern bool Warn_restart_ready;
 extern bool InError;
 extern bool	ExitAfterAbort;
 
