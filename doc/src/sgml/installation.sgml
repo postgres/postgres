@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.17 2000/09/06 19:54:45 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.18 2000/09/17 20:35:27 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -37,50 +37,81 @@ su - postgres
    might wish to consult if you are having trouble.
   </para>
 
-  <formalpara>
-   <title>Compiler</>
-   <para>
-    You need a Standard (<quote>ANSI</>) C compiler. Recent versions
-    of <productname>GCC</> are recommendable, but <productname>PostgreSQL</> is known to
-    build with a wide variety of compilers from different vendors.
-   </para>
-  </formalpara>
-    
-  <formalpara>
-   <title>Make</title>
-   <para>
-    Building <productname>PostgreSQL</> requires <acronym>GNU</> <application>make</>; it
-    will <emphasis>not</> work with other <application>make</>
-    programs. <acronym>GNU</> <application>make</> is often installed
-    under the name <filename>gmake</filename>. This document will
-    always refer to it by that name. (On GNU/Linux systems GNU make is
-    the default tool with the name <filename>make</filename>.) To test
-    for <acronym>GNU</acronym> <application>make</application> enter
+  <para>
+   The following prerequisites exist for building <productname>PostgreSQL</>:
+   <itemizedlist>
+    <listitem>
+     <para>
+      <acronym>GNU</> <application>make</> is required; other
+      <application>make</> programs will <emphasis>not</> work.
+      <acronym>GNU</> <application>make</> is often installed under
+      the name <filename>gmake</filename>; this document will always
+      refer to it by that name. (On GNU/Linux systems GNU make is the
+      default tool with the name <filename>make</>.) To test for
+      <acronym>GNU</acronym> <application>make</application> enter
 <screen>
 <userinput>gmake --version</userinput>
 </screen>
-    If at all possible you should try to use version 3.76.1 or later.
-    If you need to get <acronym>GNU</acronym>
-    <application>make</application>, you can find it at your local
-    <acronym>GNU</acronym> mirror site (see <ulink
-    url="http://www.gnu.org/order/ftp.html">http://www.gnu.org/order/ftp.html</>)
-    or at <ulink
-    url="ftp://ftp.gnu.org/gnu/make">ftp://ftp.gnu.org/gnu/make</ulink>.
-   </para>
-  </formalpara>
+      If at all possible you should use version 3.76.1 or later.
+     </para>
+    </listitem>
 
-  <formalpara>
-   <title>Resources</>
-   <para>
-    Check that you have sufficient disk space. You will need about 30
-    MB for the source tree during compilation and about 5 MB for the
-    installation directory. An empty database takes about 1 MB, later
-    it takes about five times the amount of space that a flat text
-    file with the same data would take. If you are going to run the
-    regression tests you will temporarily need an extra 20 MB. Use the
-    <command>df</command> command to check for disk space.
-   </para>
-  </formalpara>
+    <listitem>
+     <para>
+      You need an <acronym>ISO</>/<acronym>ANSI</> C compiler. Recent
+      versions of <productname>GCC</> are recommendable, but
+      <productname>PostgreSQL</> is known to build with a wide variety
+      of compilers from different vendors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para><application>gzip</></para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The <acronym>GNU</> <productname>Readline</> library for comfortable
+      line editing and command history retrieval will automatically be used
+      if found. You might wish to install it before proceeding, but it is not
+      required.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <application>Flex</> and <application>Bison</> are
+      <emphasis>not</> required when building from a released source
+      package because the output files are pre-generated. You will
+      need these programs only when building from a CVS tree or when
+      the actual scanner and parser definition files were changed. If
+      you need them, be sure to get <application>Flex</> 2.5.4 or
+      later and <application>Bison</> 1.28 or later. Other yacc
+      programs can sometimes be used, but doing so requires extra
+      efforts and is not recommended. Other lex programs will
+      definitely not work.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ 
+  <para>
+   If you need to get a <acronym>GNU</acronym> package, you can find
+   it at your local <acronym>GNU</acronym> mirror site (see <ulink
+   url="http://www.gnu.org/order/ftp.html">http://www.gnu.org/order/ftp.html</>
+   for a list) or at <ulink
+   url="ftp://ftp.gnu.org/gnu/make">ftp://ftp.gnu.org/gnu/make</ulink>.
+  </para>
+
+  <para>
+   Also check that you have sufficient disk space. You will need about
+   30 MB for the source tree during compilation and about 5 MB for the
+   installation directory. An empty database takes about 1 MB, later
+   it takes about five times the amount of space that a flat text file
+   with the same data would take. If you are going to run the
+   regression tests you will temporarily need an extra 20 MB. Use the
+   <command>df</command> command to check for disk space.
+  </para>
  </sect1>
 
 <![%flattext-install-ignore;[
@@ -534,7 +565,9 @@ su - postgres
          <filename>odbcinst.ini</> configuration file. The default is
          <filename>/usr/local/pgsql/etc</filename> or whatever you
          specified as <option>--sysconfdir</option>. A default file
-         will be installed there.
+         will be installed there. If you intend to share the
+         <filename>odbcinst.ini</> file between several ODBC drivers
+         then you may want to use this option.
         </para>
        </listitem>
       </varlistentry>
@@ -623,17 +656,14 @@ su - postgres
      </variablelist>
    </para>
 
-   <formalpara>
-    <title>Environment variables</>
-    <para>
-     You can set the <envar>CC</> environment variable to choose the C
-     compiler to use. If you don't then <filename>configure</> will
-     look for one. For example:
+   <para>
+    You can set the <envar>CC</> environment variable to choose the C
+    compiler to use. If you don't then <filename>configure</> will
+    look for one. For example:
 <screen>
 <userinput>CC=/opt/bin/gcc ./configure</>
 </screen>
-    </para>
-   </formalpara>
+   </para>
     
   </step>
 
@@ -740,19 +770,16 @@ All of PostgreSQL is successfully made. Ready to install.
   </step>
   </procedure>
 
-  <formalpara>
-   <title>Cleanup</>
-   <para>
-    After the installation you can make room by removing the built
-    files from the source tree with the <command>gmake clean</>
-    command. This will preserve the choices made by the configure
-    program, so that you can rebuild everything with <command>gmake</>
-    later on. To reset the source tree to the state in which it was
-    distributed, use <command>gmake distclean</>. If you are going to
-    build for several platforms from the same source tree you must do
-    this and re-configure for each build.
-   </para>
-  </formalpara>  
+  <para>
+   After the installation you can make room by removing the built
+   files from the source tree with the <command>gmake clean</>
+   command. This will preserve the choices made by the configure
+   program, so that you can rebuild everything with <command>gmake</>
+   later on. To reset the source tree to the state in which it was
+   distributed, use <command>gmake distclean</>. If you are going to
+   build for several platforms from the same source tree you must do
+   this and re-configure for each build.
+  </para>
 
  </sect1>
 
@@ -801,6 +828,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
 </screen>
     then this step was necessary.  Simply take care of it then.
    </para>
+
   </sect2>
 
   <sect2>
@@ -1078,7 +1106,7 @@ gunzip -c user.ps.gz \
 	<entry>PA-RISC</entry>
 	<entry>7.0</entry>
 	<entry>2000-04-12, Tom Lane (<email>tgl@sss.pgh.pa.us</>)</entry>
-        <entry></>
+        <entry>See also <filename>doc/FAQ_HPUX</></>
        </row>
        <row>
 	<entry>IRIX 6.5.6f</entry>
@@ -1169,14 +1197,14 @@ gunzip -c user.ps.gz \
 	<entry>x86</entry>
 	<entry>7.0</entry>
 	<entry>2000-04-01, Dr. Andreas Kardos (<email>kardos@repas-aeg.de</>)</entry>
-	<entry></>
+	<entry>See also <filename>doc/FAQ_QNX4</></>
        </row>
        <row>
 	<entry>SCO OpenServer 5</entry>
 	<entry>x86</entry>
 	<entry>6.5</entry>
 	<entry>1999-05-25, Andrew Merrill (<email>andrew@compclass.com</>)</entry>
-	<entry></>
+	<entry>See also <filename>doc/FAQ_SCO</></>
        </row>
        <row>
 	<entry>SCO UnixWare 7</entry>
