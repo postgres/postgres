@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.8 1997/02/14 04:52:59 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.9 1997/03/15 01:23:58 scrappy Exp $
  *
  * NOTES
  *    Outside modules can create a lock table and acquire/release
@@ -54,28 +54,41 @@
 
 #define LOCK_PRINT(where,tag,type)
 #define LOCK_DUMP(where,lock,type)
+#define LOCK_DUMP_AUX(where,lock,type)
 #define XID_PRINT(where,xidentP)
 
 #else /* LOCK_MGR_DEBUG */
 
 int lockDebug = 0;
+unsigned int lock_debug_oid_min = BootstrapObjectIdData;
+static char *lock_types[] = {
+    "NONE",
+    "WRITE",
+    "READ",
+    "WRITE INTENT",
+    "READ INTENT",
+    "EXTEND"
+};
 
 #define LOCK_PRINT(where,tag,type)\
-    if ((lockDebug >= 1) && (tag->relId >= BootstrapObjectIdData)) \
+    if ((lockDebug >= 1) && (tag->relId >= lock_debug_oid_min)) \
         elog(DEBUG, \
-	     "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) type (%d)",where, \
+	     "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) type (%s)",where, \
 	     getpid(),\
 	     tag->relId, tag->dbId, \
 	     ((tag->tupleId.ip_blkid.bi_hi<<16)+\
 	      tag->tupleId.ip_blkid.bi_lo),\
 	     tag->tupleId.ip_posid, \
-	     type);
+	     lock_types[type])
 
 #define LOCK_DUMP(where,lock,type)\
-    if ((lockDebug >= 1) && (lock->tag.relId >= BootstrapObjectIdData)) \
+    if ((lockDebug >= 1) && (lock->tag.relId >= lock_debug_oid_min)) \
+	LOCK_DUMP_AUX(where,lock,type)
+
+#define LOCK_DUMP_AUX(where,lock,type)\
         elog(DEBUG, \
 	     "%s: pid (%d) rel (%d) dbid (%d) tid (%d,%d) nHolding (%d) "\
-	     "holders (%d,%d,%d,%d,%d) type (%d)",where, \
+	     "holders (%d,%d,%d,%d,%d) type (%s)",where, \
 	     getpid(),\
 	     lock->tag.relId, lock->tag.dbId, \
 	     ((lock->tag.tupleId.ip_blkid.bi_hi<<16)+\
@@ -87,12 +100,12 @@ int lockDebug = 0;
 	     lock->holders[3],\
 	     lock->holders[4],\
 	     lock->holders[5],\
-	     type);
+	     lock_types[type])
 
 #define XID_PRINT(where,xidentP)\
     if ((lockDebug >= 2) && \
 	(((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
-	 >= BootstrapObjectIdData)) \
+	 >= lock_debug_oid_min)) \
 	elog(DEBUG,\
 	     "%s: pid (%d) xid (%d) pid (%d) lock (%x) nHolding (%d) "\
 	     "holders (%d,%d,%d,%d,%d)",\
@@ -106,7 +119,7 @@ int lockDebug = 0;
 	     xidentP->holders[2],\
 	     xidentP->holders[3],\
 	     xidentP->holders[4],\
-	     xidentP->holders[5]);
+	     xidentP->holders[5])
 
 #endif /* LOCK_MGR_DEBUG */
 
@@ -755,7 +768,7 @@ WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKT lockt)
      * will not be true if/when people can be deleted from
      * the queue by a SIGINT or something.
      */
-    LOCK_DUMP("WaitOnLock: sleeping on lock", lock, lockt);
+    LOCK_DUMP_AUX("WaitOnLock: sleeping on lock", lock, lockt);
     if (ProcSleep(waitQueue,
 		  ltable->ctl->masterLock,
 		  lockt,
@@ -770,11 +783,12 @@ WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKT lockt)
 	     */
 	    lock->nHolding--;
 	    lock->holders[lockt]--;
-	    LOCK_DUMP("WaitOnLock: aborting on lock", lock, lockt);
+	    LOCK_DUMP_AUX("WaitOnLock: aborting on lock", lock, lockt);
 	    SpinRelease(ltable->ctl->masterLock);
 	    elog(WARN,"WaitOnLock: error on wakeup - Aborting this transaction");
 	}
     
+    LOCK_DUMP_AUX("WaitOnLock: wakeup on lock", lock, lockt);
     return(STATUS_OK);
 }
 
