@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.46 2004/08/10 22:24:06 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.47 2004/09/22 19:11:19 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -510,6 +510,9 @@ fi
 # Create the regression database
 # We use template0 so that any installation-local cruft in template1
 # will not mess up the tests.
+# Note: the reason for checkpointing just after creating the new DB is so
+# that if we get a backend core dump during the tests, WAL replay won't
+# remove the core file.
 # ----------
 
 message "creating database \"$dbname\""
@@ -520,6 +523,7 @@ if [ $? -ne 0 ]; then
 fi
 
 "$bindir/psql" $psql_options -c "\
+checkpoint;
 alter database \"$dbname\" set lc_messages to 'C';
 alter database \"$dbname\" set lc_monetary to 'C';
 alter database \"$dbname\" set lc_numeric to 'C';
