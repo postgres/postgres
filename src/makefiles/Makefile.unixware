@@ -12,7 +12,7 @@ ifeq ($(with_gnu_ld), yes)
 	# the contents of LD_LIBRARY_PATH if it exists.
 	tpath1=$(shell echo $(trpath) | sed -e 's/ *-L/,-rpath,/g')
 ifdef LD_LIBRARY_PATH
-	tpath2 = ,-rpath,tpath+=$(shell echo $(LD_LIBRARY_PATH) | sed -e 's/:/,-rpath,/g')
+	tpath2 = ,-rpath,$(shell echo $(LD_LIBRARY_PATH) | sed -e 's/:/,-rpath,/g')
 endif
 	rpath = -Wl,-rpath,$(libdir)$(tpath)$(tpath2)
 else
