@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.39 2002/10/01 04:09:13 barry Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.40 2002/11/11 07:31:28 barry Exp $
 -->
 
  <chapter id="jdbc">
@@ -684,7 +684,7 @@ CREATE TABLE imagesLO (imgname text, imgOID OID);
 conn.setAutoCommit(false);
 
 // Get the Large Object Manager to perform operations with
-LargeObjectManager lobj = ((org.postgresql.Connection)conn).getLargeObjectAPI();
+LargeObjectManager lobj = ((org.postgresql.PGConnection)conn).getLargeObjectAPI();
 
 //create a new large object
 int oid = lobj.create(LargeObjectManager.READ | LargeObjectManager.WRITE);
@@ -725,7 +725,7 @@ fis.close();
 conn.setAutoCommit(false);
 
 // Get the Large Object Manager to perform operations with
-LargeObjectManager lobj = ((org.postgresql.Connection)conn).getLargeObjectAPI();
+LargeObjectManager lobj = ((org.postgresql.PGConnection)conn).getLargeObjectAPI();
 
 PreparedStatement ps = con.prepareStatement("SELECT imgOID FROM imagesLO WHERE imgname=?");
 ps.setString(1, "myimage.gif");
@@ -774,33 +774,27 @@ ps.close();
 
    <para>
     To access some of the extensions, you need to use some extra
-    methods in the <classname>org.postgresql.Connection</classname>
+    methods in the <classname>org.postgresql.PGConnection</classname>
     class. In this case, you would need to case the return value of
     <function>Driver.getConnection()</function>.  For example:
 <programlisting>
 Connection db = Driver.getConnection(url, username, password);
 // ...
 // later on
-Fastpath fp = ((org.postgresql.Connection)db).getFastpathAPI();
+Fastpath fp = ((org.postgresql.PGConnection)db).getFastpathAPI();
 </programlisting>
    </para>
 
    <sect3>
-    <title>Class <classname>org.postgresql.Connection</classname></title>
+    <title>Class <classname>org.postgresql.PGConnection</classname></title>
 
 <synopsis>
-public class Connection extends Object implements Connection
-
-java.lang.Object
-   |
-   +----org.postgresql.Connection
+public class PGConnection 
 </synopsis>
 
     <para>
      These are the extra methods used to gain access to
-     <productname>PostgreSQL</productname>'s extensions. Methods
-     defined by <classname>java.sql.Connection</classname> are not
-     listed.
+     <productname>PostgreSQL</productname>'s extensions. 
     </para>
 
     <sect4>
@@ -822,7 +816,7 @@ public Fastpath getFastpathAPI() throws SQLException
 <programlisting>
 import org.postgresql.fastpath.*;
 ...
-Fastpath fp = ((org.postgresql.Connection)myconn).getFastpathAPI();
+Fastpath fp = ((org.postgresql.PGConnection)myconn).getFastpathAPI();
 </programlisting>
         where <varname>myconn</> is an open <classname>Connection</> to <productname>PostgreSQL</productname>.
        </para>
@@ -857,7 +851,7 @@ public LargeObjectManager getLargeObjectAPI() throws SQLException
 <programlisting>
 import org.postgresql.largeobject.*;
 ...
-LargeObjectManager lo = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
+LargeObjectManager lo = ((org.postgresql.PGConnection)myconn).getLargeObjectAPI();
 </programlisting>
         where <varname>myconn</> is an open <classname>Connection</> to
         <productname>PostgreSQL</productname>.
@@ -896,7 +890,7 @@ public void addDataType(String type, String name)
         The best way to use this is as follows:
 <programlisting>
  ...
-((org.postgresql.Connection)myconn).addDataType("mytype","my.class.name");
+((org.postgresql.PGConnection)myconn).addDataType("mytype","my.class.name");
  ...
 </programlisting>
         where <varname>myconn</varname> is an open <classname>Connection</> to
@@ -938,12 +932,12 @@ import org.postgresql.fastpath.*;
      Then, in your code, you need to get a
      <classname>FastPath</classname> object:
 <programlisting>
-Fastpath fp = ((org.postgresql.Connection)conn).getFastpathAPI();
+Fastpath fp = ((org.postgresql.PGConnection)conn).getFastpathAPI();
 </programlisting>
      This will return an instance associated with the database
      connection that you can use to issue commands. The casing of
      <classname>Connection</classname> to
-     <classname>org.postgresql.Connection</classname> is required, as
+     <classname>org.postgresql.PGConnection</classname> is required, as
      the <function>getFastpathAPI()</function> is an extension method,
      not part of <acronym>JDBC</acronym>.  Once you have a
      <classname>Fastpath</classname> instance, you can use the
@@ -2322,14 +2316,14 @@ java.lang.Object
     </para>
 
     <para>
-     This class can only be created by org.postgresql.Connection.  To
+     This class can only be created by org.postgresql.PGConnection.  To
      get access to this class, use the following segment of code:
 <programlisting>
 import org.postgresql.largeobject.*;
 Connection  conn;
 LargeObjectManager lobj;
 // ... code that opens a connection ...
-lobj = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
+lobj = ((org.postgresql.PGConnection)myconn).getLargeObjectAPI();
 </programlisting>
     </para>
 
