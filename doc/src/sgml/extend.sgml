@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.28 2004/06/07 04:04:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.29 2004/12/30 03:13:56 tgl Exp $
 -->
 
  <chapter id="extend">
@@ -152,8 +152,8 @@ $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.28 2004/06/07 04:04:47 tgl Exp $
 
     <para>
      Domains can be created using the <acronym>SQL</> command
-     <command>CREATE DOMAIN</command>.  Their creation and use is not
-     discussed in this chapter.
+     <xref linkend="sql-createdomain" endterm="sql-createdomain-title">.
+     Their creation and use is not discussed in this chapter.
     </para>
    </sect2>
 
@@ -221,7 +221,7 @@ $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.28 2004/06/07 04:04:47 tgl Exp $
      Thus, when more than one argument position is declared with a polymorphic
      type, the net effect is that only certain combinations of actual argument
      types are allowed.  For example, a function declared as
-     <literal>foo(anyelement, anyelement)</> will take any two input values,
+     <literal>equal(anyelement, anyelement)</> will take any two input values,
      so long as they are of the same data type.
     </para>
 

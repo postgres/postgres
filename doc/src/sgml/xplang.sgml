@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.26 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.27 2004/12/30 03:13:56 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -29,8 +29,14 @@ $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.26 2003/11/29 19:51:38 pgsql Exp
   <para>
    Writing a handler for a new procedural language is described in
    <xref linkend="plhandler">.  Several procedural languages are
-   available in the standard <productname>PostgreSQL</productname>
+   available in the core <productname>PostgreSQL</productname>
    distribution, which can serve as examples.
+  </para>
+
+  <para>
+   There are additional procedural languages available that are not
+   included in the core distribution. <xref linkend="external-projects">
+   has information about finding them.
   </para>
 
   <sect1 id="xplang-install">

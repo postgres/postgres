@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.90 2004/12/13 18:05:09 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.91 2004/12/30 03:13:56 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -24,7 +24,7 @@ $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.90 2004/12/13 18:05:09 petere Exp
     <listitem>
      <para>
       procedural language functions (functions written in, for
-      example, <application>PL/Tcl</> or <application>PL/pgSQL</>)
+      example, <application>PL/pgSQL</> or <application>PL/Tcl</>)
       (<xref linkend="xfunc-pl">)
      </para>
     </listitem>
@@ -44,9 +44,10 @@ $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.90 2004/12/13 18:05:09 petere Exp
   <para>
    Every kind
    of  function  can take base types, composite types, or
-   combinations of these as arguments (parameters).   In  addition, 
+   combinations of these as arguments (parameters). In addition,
    every kind of function can return a base type or
-   a composite type.
+   a composite type.  Functions may also be defined to return
+   sets of base or composite values.
   </para>
 
   <para>
@@ -64,7 +65,8 @@ $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.90 2004/12/13 18:05:09 petere Exp
 
   <para>
    Throughout this chapter, it can be useful to look at the reference
-   page of the <xref linkend="sql-createfunction"> command to
+   page of the <xref linkend="sql-createfunction"
+   endterm="sql-createfunction-title"> command to
    understand the examples better.  Some examples from this chapter
    can be found in <filename>funcs.sql</filename> and
    <filename>funcs.c</filename> in the <filename>src/tutorial</>
@@ -141,7 +143,7 @@ CREATE FUNCTION one() RETURNS integer AS $$
     SELECT 1 AS result;
 $$ LANGUAGE SQL;
 
--- Alternative syntax:
+-- Alternative syntax for string literal:
 CREATE FUNCTION one() RETURNS integer AS '
     SELECT 1 AS result;
 ' LANGUAGE SQL;
@@ -335,16 +337,16 @@ $$ LANGUAGE SQL;
      <itemizedlist>
       <listitem>
        <para>
-	The select list order in the query must be exactly the same as
-	that in which the columns appear in the table associated
-	with the composite type.  (Naming the columns, as we did above,
-	is irrelevant to the system.)
+        The select list order in the query must be exactly the same as
+        that in which the columns appear in the table associated
+        with the composite type.  (Naming the columns, as we did above,
+        is irrelevant to the system.)
        </para>
       </listitem>
       <listitem>
        <para>
-	You must typecast the expressions to match the
-	definition of the composite type, or you will get errors like this:
+        You must typecast the expressions to match the
+        definition of the composite type, or you will get errors like this:
 <screen>
 <computeroutput>
 ERROR:  function declared to return emp returns varchar instead of text at column 1
@@ -356,15 +358,9 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
     </para>     
 
     <para>
-     A function that returns a row (composite type) can be used as a table
-     function, as described below.  It can also be called in the context
-     of an SQL expression, but only when you
-     extract a single attribute out of the row or pass the entire row into
-     another function that accepts the same composite type.
-    </para>
-
-    <para>
-     This is an example of extracting an attribute out of a row type:
+     When you call a function that returns a row (composite type) in a
+     SQL expression, you might want only one field (attribute) from its
+     result.  You can do that with syntax like this:
 
 <screen>
 SELECT (new_emp()).name;
@@ -374,11 +370,14 @@ SELECT (new_emp()).name;
  None
 </screen>
 
-     We need the extra parentheses to keep the parser from getting confused:
+     The extra parentheses are needed to keep the parser from getting
+     confused.  If you try to do it without them, you get something like this:
 
 <screen>
 SELECT new_emp().name;
 ERROR:  syntax error at or near "." at character 17
+LINE 1: SELECT new_emp().name;
+                        ^
 </screen>
     </para>
 
@@ -412,9 +411,8 @@ SELECT name(emp) AS youngster
     </para>
 
     <para>
-     The other way to use a function returning a row result is to declare a
-     second function accepting a row type argument and pass the
-     result of the first function to it:
+     Another way to use a function returning a row result is to pass the
+     result to another function that accepts the correct row type as input:
 
 <screen>
 CREATE FUNCTION getname(emp) RETURNS text AS $$
@@ -428,6 +426,11 @@ SELECT getname(new_emp());
 (1 row)
 </screen>
     </para>     
+
+    <para>
+     Another way to use a function that returns a composite type is to
+     call it as a table function, as described below.
+    </para>
    </sect2>
 
    <sect2>
@@ -469,7 +472,7 @@ SELECT *, upper(fooname) FROM getfoo(1) AS t1;
 
     <para>
      Note that we only got one row out of the function.  This is because
-     we did not use <literal>SETOF</>.  This is described in the next section.
+     we did not use <literal>SETOF</>.  That is described in the next section.
     </para>
    </sect2>
 
@@ -598,7 +601,7 @@ ERROR:  could not determine "anyarray"/"anyelement" type because input has type 
     </para>
 
     <para>
-     It is permitted to have polymorphic arguments with a deterministic
+     It is permitted to have polymorphic arguments with a fixed
      return type, but the converse is not. For example:
 <screen>
 CREATE FUNCTION is_greater(anyelement, anyelement) RETURNS boolean AS $$
@@ -619,6 +622,201 @@ DETAIL:  A function returning "anyarray" or "anyelement" must have at least one 
 </screen>
     </para>
    </sect2>
+  </sect1>
+
+  <sect1 id="xfunc-overload">
+   <title>Function Overloading</title>
+
+   <indexterm zone="xfunc-overload">
+    <primary>overloading</primary>
+    <secondary>functions</secondary>
+   </indexterm>
+
+   <para>
+    More than one function may be defined with the same SQL name, so long
+    as the arguments they take are different.  In other words,
+    function names can be <firstterm>overloaded</firstterm>.  When a
+    query is executed, the server will determine which function to
+    call from the data types and the number of the provided arguments.
+    Overloading can also be used to simulate functions with a variable
+    number of arguments, up to a finite maximum number.
+   </para>
+
+   <para>
+    When creating a family of overloaded functions, one should be
+    careful not to create ambiguities.  For instance, given the
+    functions
+<programlisting>
+CREATE FUNCTION test(int, real) RETURNS ...
+CREATE FUNCTION test(smallint, double precision) RETURNS ...
+</programlisting>
+    it is not immediately clear which function would be called with
+    some trivial input like <literal>test(1, 1.5)</literal>.  The
+    currently implemented resolution rules are described in
+    <xref linkend="typeconv">, but it is unwise to design a system that subtly
+    relies on this behavior.
+   </para>
+
+   <para>
+    A function that takes a single argument of a composite type should
+    generally not have the same name as any attribute (field) of that type.
+    Recall that <literal>attribute(table)</literal> is considered equivalent
+    to <literal>table.attribute</literal>.  In the case that there is an
+    ambiguity between a function on a composite type and an attribute of
+    the composite type, the attribute will always be used.  It is possible
+    to override that choice by schema-qualifying the function name
+    (that is, <literal>schema.func(table)</literal>) but it's better to
+    avoid the problem by not choosing conflicting names.
+   </para>
+
+   <para>
+    When overloading C-language functions, there is an additional
+    constraint: The C name of each function in the family of
+    overloaded functions must be different from the C names of all
+    other functions, either internal or dynamically loaded.  If this
+    rule is violated, the behavior is not portable.  You might get a
+    run-time linker error, or one of the functions will get called
+    (usually the internal one).  The alternative form of the
+    <literal>AS</> clause for the SQL <command>CREATE
+    FUNCTION</command> command decouples the SQL function name from
+    the function name in the C source code.  For instance,
+<programlisting>
+CREATE FUNCTION test(int) RETURNS int
+    AS '<replaceable>filename</>', 'test_1arg'
+    LANGUAGE C;
+CREATE FUNCTION test(int, int) RETURNS int
+    AS '<replaceable>filename</>', 'test_2arg'
+    LANGUAGE C;
+</programlisting>
+    The names of the C functions here reflect one of many possible conventions.
+   </para>
+  </sect1>
+
+  <sect1 id="xfunc-volatility">
+   <title>Function Volatility Categories</title>
+
+   <indexterm zone="xfunc-volatility">
+    <primary>volatility</primary>
+    <secondary>functions</secondary>
+   </indexterm>
+
+   <para>
+    Every function has a <firstterm>volatility</> classification, with
+    the possibilities being <literal>VOLATILE</>, <literal>STABLE</>, or
+    <literal>IMMUTABLE</>.  <literal>VOLATILE</> is the default if the
+    <command>CREATE FUNCTION</command> command does not specify a category.
+    The volatility category is a promise to the optimizer about the behavior
+    of the function:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      A <literal>VOLATILE</> function can do anything, including modifying
+      the database.  It can return different results on successive calls with
+      the same arguments.  The optimizer makes no assumptions about the
+      behavior of such functions.  A query using a volatile function will
+      re-evaluate the function at every row where its value is needed.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A <literal>STABLE</> function cannot modify the database and is
+      guaranteed to return the same results given the same arguments
+      for all calls within a single surrounding query.  This category
+      allows the optimizer to optimize away multiple calls of the function
+      within a single query.  In particular, it is safe to use an expression
+      containing such a function in an index scan condition.  (Since an
+      index scan will evaluate the comparison value only once, not once at
+      each row, it is not valid to use a <literal>VOLATILE</> function in
+      an index scan condition.)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      An <literal>IMMUTABLE</> function cannot modify the database and is
+      guaranteed to return the same results given the same arguments forever.
+      This category allows the optimizer to pre-evaluate the function when
+      a query calls it with constant arguments.  For example, a query like
+      <literal>SELECT ... WHERE x = 2 + 2</> can be simplified on sight to
+      <literal>SELECT ... WHERE x = 4</>, because the function underlying
+      the integer addition operator is marked <literal>IMMUTABLE</>.
+     </para>
+    </listitem>
+   </itemizedlist>
+   </para>
+
+   <para>
+    For best optimization results, you should label your functions with the
+    strictest volatility category that is valid for them.
+   </para>
+
+   <para>
+    Any function with side-effects <emphasis>must</> be labeled
+    <literal>VOLATILE</>, so that calls to it cannot be optimized away.
+    Even a function with no side-effects needs to be labeled
+    <literal>VOLATILE</> if its value can change within a single query;
+    some examples are <literal>random()</>, <literal>currval()</>,
+    <literal>timeofday()</>.
+   </para>
+
+   <para>
+    There is relatively little difference between <literal>STABLE</> and
+    <literal>IMMUTABLE</> categories when considering simple interactive
+    queries that are planned and immediately executed: it doesn't matter
+    a lot whether a function is executed once during planning or once during
+    query execution startup.  But there is a big difference if the plan is
+    saved and reused later.  Labeling a function <literal>IMMUTABLE</> when
+    it really isn't may allow it to be prematurely folded to a constant during
+    planning, resulting in a stale value being re-used during subsequent uses
+    of the plan.  This is a hazard when using prepared statements or when
+    using function languages that cache plans (such as
+    <application>PL/pgSQL</>).
+   </para>
+
+   <para>
+    Because of the snapshotting behavior of MVCC (see <xref linkend="mvcc">)
+    a function containing only <command>SELECT</> commands can safely be
+    marked <literal>STABLE</>, even if it selects from tables that might be
+    undergoing modifications by concurrent queries.
+    <productname>PostgreSQL</productname> will execute a <literal>STABLE</>
+    function using the snapshot established for the calling query, and so it
+    will see a fixed view of the database throughout that query.
+    Also note
+    that the <function>current_timestamp</> family of functions qualify
+    as stable, since their values do not change within a transaction.
+   </para>
+
+   <para>
+    The same snapshotting behavior is used for <command>SELECT</> commands
+    within <literal>IMMUTABLE</> functions.  It is generally unwise to select
+    from database tables within an <literal>IMMUTABLE</> function at all,
+    since the immutability will be broken if the table contents ever change.
+    However, <productname>PostgreSQL</productname> does not enforce that you
+    do not do that.
+   </para>
+
+   <para>
+    A common error is to label a function <literal>IMMUTABLE</> when its
+    results depend on a configuration parameter.  For example, a function
+    that manipulates timestamps might well have results that depend on the
+    <xref linkend="guc-timezone"> setting.  For safety, such functions should
+    be labeled <literal>STABLE</> instead.
+   </para>
+
+   <note>
+    <para>
+     Before <productname>PostgreSQL</productname> release 8.0, the requirement
+     that <literal>STABLE</> and <literal>IMMUTABLE</> functions cannot modify
+     the database was not enforced by the system.  Release 8.0 enforces it
+     by requiring SQL functions and procedural language functions of these
+     categories to contain no SQL commands other than <command>SELECT</>.
+     (This is not a completely bulletproof test, since such functions could
+     still call <literal>VOLATILE</> functions that modify the database.
+     If you do that, you will find that the <literal>STABLE</> or
+     <literal>IMMUTABLE</> function does not notice the database changes
+     applied by the called function.)
+    </para>
+   </note>
   </sect1>
 
   <sect1 id="xfunc-pl">
@@ -754,7 +952,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
       <para>
        If the name starts with the string <literal>$libdir</literal>,
        that part is replaced by the <productname>PostgreSQL</> package
-	library directory
+        library directory
        name, which is determined at build time.<indexterm><primary>$libdir</></>
       </para>
      </listitem>
@@ -864,17 +1062,17 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
      <itemizedlist>
       <listitem>
        <para>
-	pass by value, fixed-length
+        pass by value, fixed-length
        </para>
       </listitem>
       <listitem>
        <para>
-	pass by reference, fixed-length
+        pass by reference, fixed-length
        </para>
       </listitem>
       <listitem>
        <para>
-	pass by reference, variable-length
+        pass by reference, variable-length
        </para>
       </listitem>
      </itemizedlist>
@@ -993,169 +1191,169 @@ memcpy(destination-&gt;data, buffer, 40);
       <title>Equivalent C Types for Built-In SQL Types</title>
       <tgroup cols="3">
        <thead>
-	<row>
-	 <entry>
-	  SQL Type
-	 </entry>
-	 <entry>
-	  C Type
-	 </entry>
-	 <entry>
-	  Defined In
-	 </entry>
-	</row>
+        <row>
+         <entry>
+          SQL Type
+         </entry>
+         <entry>
+          C Type
+         </entry>
+         <entry>
+          Defined In
+         </entry>
+        </row>
        </thead>
        <tbody>
-	<row>
-	 <entry><type>abstime</type></entry>
-	 <entry><type>AbsoluteTime</type></entry>
-	 <entry><filename>utils/nabstime.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>boolean</type></entry>
-	 <entry><type>bool</type></entry>
-	 <entry><filename>postgres.h</filename> (maybe compiler built-in)</entry>
-	</row>
-	<row>
-	 <entry><type>box</type></entry>
-	 <entry><type>BOX*</type></entry>
-	 <entry><filename>utils/geo_decls.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>bytea</type></entry>
-	 <entry><type>bytea*</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>"char"</type></entry>
-	 <entry><type>char</type></entry>
-	 <entry>(compiler built-in)</entry>
-	</row>
-	<row>
-	 <entry><type>character</type></entry>
-	 <entry><type>BpChar*</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>cid</type></entry>
-	 <entry><type>CommandId</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>date</type></entry>
-	 <entry><type>DateADT</type></entry>
-	 <entry><filename>utils/date.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>smallint</type> (<type>int2</type>)</entry>
-	 <entry><type>int2</type> or <type>int16</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>int2vector</type></entry>
-	 <entry><type>int2vector*</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>integer</type> (<type>int4</type>)</entry>
-	 <entry><type>int4</type> or <type>int32</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>real</type> (<type>float4</type>)</entry>
-	 <entry><type>float4*</type></entry>
-	<entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>double precision</type> (<type>float8</type>)</entry>
-	 <entry><type>float8*</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>interval</type></entry>
-	 <entry><type>Interval*</type></entry>
-	 <entry><filename>utils/timestamp.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>lseg</type></entry>
-	 <entry><type>LSEG*</type></entry>
-	 <entry><filename>utils/geo_decls.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>name</type></entry>
-	 <entry><type>Name</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>oid</type></entry>
-	 <entry><type>Oid</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>oidvector</type></entry>
-	 <entry><type>oidvector*</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>path</type></entry>
-	 <entry><type>PATH*</type></entry>
-	 <entry><filename>utils/geo_decls.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>point</type></entry>
-	 <entry><type>POINT*</type></entry>
-	 <entry><filename>utils/geo_decls.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>regproc</type></entry>
-	 <entry><type>regproc</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>reltime</type></entry>
-	 <entry><type>RelativeTime</type></entry>
-	 <entry><filename>utils/nabstime.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>text</type></entry>
-	 <entry><type>text*</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>tid</type></entry>
-	 <entry><type>ItemPointer</type></entry>
-	 <entry><filename>storage/itemptr.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>time</type></entry>
-	 <entry><type>TimeADT</type></entry>
-	 <entry><filename>utils/date.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>time with time zone</type></entry>
-	 <entry><type>TimeTzADT</type></entry>
-	 <entry><filename>utils/date.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>timestamp</type></entry>
-	 <entry><type>Timestamp*</type></entry>
-	 <entry><filename>utils/timestamp.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>tinterval</type></entry>
-	 <entry><type>TimeInterval</type></entry>
-	 <entry><filename>utils/nabstime.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>varchar</type></entry>
-	 <entry><type>VarChar*</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
-	<row>
-	 <entry><type>xid</type></entry>
-	 <entry><type>TransactionId</type></entry>
-	 <entry><filename>postgres.h</filename></entry>
-	</row>
+        <row>
+         <entry><type>abstime</type></entry>
+         <entry><type>AbsoluteTime</type></entry>
+         <entry><filename>utils/nabstime.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>boolean</type></entry>
+         <entry><type>bool</type></entry>
+         <entry><filename>postgres.h</filename> (maybe compiler built-in)</entry>
+        </row>
+        <row>
+         <entry><type>box</type></entry>
+         <entry><type>BOX*</type></entry>
+         <entry><filename>utils/geo_decls.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>bytea</type></entry>
+         <entry><type>bytea*</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>"char"</type></entry>
+         <entry><type>char</type></entry>
+         <entry>(compiler built-in)</entry>
+        </row>
+        <row>
+         <entry><type>character</type></entry>
+         <entry><type>BpChar*</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>cid</type></entry>
+         <entry><type>CommandId</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>date</type></entry>
+         <entry><type>DateADT</type></entry>
+         <entry><filename>utils/date.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>smallint</type> (<type>int2</type>)</entry>
+         <entry><type>int2</type> or <type>int16</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>int2vector</type></entry>
+         <entry><type>int2vector*</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>integer</type> (<type>int4</type>)</entry>
+         <entry><type>int4</type> or <type>int32</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>real</type> (<type>float4</type>)</entry>
+         <entry><type>float4*</type></entry>
+        <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>double precision</type> (<type>float8</type>)</entry>
+         <entry><type>float8*</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>interval</type></entry>
+         <entry><type>Interval*</type></entry>
+         <entry><filename>utils/timestamp.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>lseg</type></entry>
+         <entry><type>LSEG*</type></entry>
+         <entry><filename>utils/geo_decls.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>name</type></entry>
+         <entry><type>Name</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>oid</type></entry>
+         <entry><type>Oid</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>oidvector</type></entry>
+         <entry><type>oidvector*</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>path</type></entry>
+         <entry><type>PATH*</type></entry>
+         <entry><filename>utils/geo_decls.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>point</type></entry>
+         <entry><type>POINT*</type></entry>
+         <entry><filename>utils/geo_decls.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>regproc</type></entry>
+         <entry><type>regproc</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>reltime</type></entry>
+         <entry><type>RelativeTime</type></entry>
+         <entry><filename>utils/nabstime.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>text</type></entry>
+         <entry><type>text*</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>tid</type></entry>
+         <entry><type>ItemPointer</type></entry>
+         <entry><filename>storage/itemptr.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>time</type></entry>
+         <entry><type>TimeADT</type></entry>
+         <entry><filename>utils/date.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>time with time zone</type></entry>
+         <entry><type>TimeTzADT</type></entry>
+         <entry><filename>utils/date.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>timestamp</type></entry>
+         <entry><type>Timestamp*</type></entry>
+         <entry><filename>utils/timestamp.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>tinterval</type></entry>
+         <entry><type>TimeInterval</type></entry>
+         <entry><filename>utils/nabstime.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>varchar</type></entry>
+         <entry><type>VarChar*</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
+        <row>
+         <entry><type>xid</type></entry>
+         <entry><type>TransactionId</type></entry>
+         <entry><filename>postgres.h</filename></entry>
+        </row>
        </tbody>
       </tgroup>
      </table>
@@ -1567,9 +1765,9 @@ concat_text(PG_FUNCTION_ARGS)
       <listitem>
        <para>
         Always zero the bytes of your structures using
-	<function>memset</function>.  Without this, it's difficult to
-	support hash indexes or hash joins, as you must pick out only
-	the significant bits of your data structure to compute a hash.
+        <function>memset</function>.  Without this, it's difficult to
+        support hash indexes or hash joins, as you must pick out only
+        the significant bits of your data structure to compute a hash.
         Even if you initialize all fields of your structure, there may be
         alignment padding (holes in the structure) that may contain
         garbage values.
@@ -1618,7 +1816,7 @@ concat_text(PG_FUNCTION_ARGS)
 &dfunc;
 
    <sect2 id="xfunc-c-pgxs">
-    <title>Extension build infrastructure</title>
+    <title>Extension Building Infrastructure</title>
 
    <indexterm zone="xfunc-c-pgxs">
     <primary>pgxs</primary>
@@ -1868,14 +2066,14 @@ c_overpaid(PG_FUNCTION_ARGS)
     HeapTupleHeader  t = PG_GETARG_HEAPTUPLEHEADER(0);
     int32            limit = PG_GETARG_INT32(1);
     bool isnull;
-    int32 salary;
+    Datum salary;
 
-    salary = DatumGetInt32(GetAttributeByName(t, "salary", &amp;isnull));
+    salary = GetAttributeByName(t, "salary", &amp;isnull);
     if (isnull)
         PG_RETURN_BOOL(false);
     /* Alternatively, we might prefer to do PG_RETURN_NULL() for null salary. */
 
-    PG_RETURN_BOOL(salary &gt; limit);
+    PG_RETURN_BOOL(DatumGetInt32(salary) &gt; limit);
 }
 </programlisting>
     </para>
@@ -1890,7 +2088,10 @@ c_overpaid(PG_FUNCTION_ARGS)
      return parameter that tells whether  the  attribute
      is  null.   <function>GetAttributeByName</function> returns a <type>Datum</type>
      value that you can convert to the proper data type by using the
-     appropriate <function>DatumGet<replaceable>XXX</replaceable>()</function> macro.
+     appropriate <function>DatumGet<replaceable>XXX</replaceable>()</function>
+     macro.  Note that the return value is meaningless if the null flag is
+     set; always check the null flag before trying to do anything with the
+     result.
     </para>
 
     <para>
@@ -2222,7 +2423,7 @@ testpassbyval(PG_FUNCTION_ARGS)
      /* stuff done only on the first call of the function */
      if (SRF_IS_FIRSTCALL())
      {
-        MemoryContext	oldcontext;
+        MemoryContext   oldcontext;
 
         /* create a function context for cross-call persistence */
         funcctx = SRF_FIRSTCALL_INIT();
@@ -2391,196 +2592,6 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
      since the code is not bothering to test for a null input.
     </para>
    </sect2>
-  </sect1>
-
-  <sect1 id="xfunc-overload">
-   <title>Function Overloading</title>
-
-   <indexterm zone="xfunc-overload">
-    <primary>overloading</primary>
-    <secondary>functions</secondary>
-   </indexterm>
-
-   <para>
-    More than one function may be defined with the same SQL name, so long
-    as the arguments they take are different.  In other words,
-    function names can be <firstterm>overloaded</firstterm>.  When a
-    query is executed, the server will determine which function to
-    call from the data types and the number of the provided arguments.
-    Overloading can also be used to simulate functions with a variable
-    number of arguments, up to a finite maximum number.
-   </para>
-
-   <para>
-    When creating a family of overloaded functions, one should be
-    careful not to create ambiguities.  For instance, given the
-    functions
-<programlisting>
-CREATE FUNCTION test(int, real) RETURNS ...
-CREATE FUNCTION test(smallint, double precision) RETURNS ...
-</programlisting>
-    it is not immediately clear which function would be called with
-    some trivial input like <literal>test(1, 1.5)</literal>.  The
-    currently implemented resolution rules are described in
-    <xref linkend="typeconv">, but it is unwise to design a system that subtly
-    relies on this behavior.
-   </para>
-
-   <para>
-    A function that takes a single argument of a composite type should
-    generally not have the same name as any attribute (field) of that type.
-    Recall that <literal>attribute(table)</literal> is considered equivalent
-    to <literal>table.attribute</literal>.  In the case that there is an
-    ambiguity between a function on a composite type and an attribute of
-    the composite type, the attribute will always be used.  It is possible
-    to override that choice by schema-qualifying the function name
-    (that is, <literal>schema.func(table)</literal>) but it's better to
-    avoid the problem by not choosing conflicting names.
-   </para>
-
-   <para>
-    When overloading C-language functions, there is an additional
-    constraint: The C name of each function in the family of
-    overloaded functions must be different from the C names of all
-    other functions, either internal or dynamically loaded.  If this
-    rule is violated, the behavior is not portable.  You might get a
-    run-time linker error, or one of the functions will get called
-    (usually the internal one).  The alternative form of the
-    <literal>AS</> clause for the SQL <command>CREATE
-    FUNCTION</command> command decouples the SQL function name from
-    the function name in the C source code.  For instance,
-<programlisting>
-CREATE FUNCTION test(int) RETURNS int
-    AS '<replaceable>filename</>', 'test_1arg'
-    LANGUAGE C;
-CREATE FUNCTION test(int, int) RETURNS int
-    AS '<replaceable>filename</>', 'test_2arg'
-    LANGUAGE C;
-</programlisting>
-    The names of the C functions here reflect one of many possible conventions.
-   </para>
-  </sect1>
-
-  <sect1 id="xfunc-volatility">
-   <title>Function Volatility Categories</title>
-
-   <indexterm zone="xfunc-volatility">
-    <primary>volatility</primary>
-    <secondary>functions</secondary>
-   </indexterm>
-
-   <para>
-    Every function has a <firstterm>volatility</> classification, with
-    the possibilities being <literal>VOLATILE</>, <literal>STABLE</>, or
-    <literal>IMMUTABLE</>.  <literal>VOLATILE</> is the default if the
-    <command>CREATE FUNCTION</command> command does not specify a category.
-    The volatility category is a promise to the optimizer about the behavior
-    of the function:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      A <literal>VOLATILE</> function can do anything, including modifying
-      the database.  It can return different results on successive calls with
-      the same arguments.  The optimizer makes no assumptions about the
-      behavior of such functions.  A query using a volatile function will
-      re-evaluate the function at every row where its value is needed.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      A <literal>STABLE</> function cannot modify the database and is
-      guaranteed to return the same results given the same arguments
-      for all calls within a single surrounding query.  This category
-      allows the optimizer to optimize away multiple calls of the function
-      within a single query.  In particular, it is safe to use an expression
-      containing such a function in an index scan condition.  (Since an
-      index scan will evaluate the comparison value only once, not once at
-      each row, it is not valid to use a <literal>VOLATILE</> function in
-      an index scan condition.)
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      An <literal>IMMUTABLE</> function cannot modify the database and is
-      guaranteed to return the same results given the same arguments forever.
-      This category allows the optimizer to pre-evaluate the function when
-      a query calls it with constant arguments.  For example, a query like
-      <literal>SELECT ... WHERE x = 2 + 2</> can be simplified on sight to
-      <literal>SELECT ... WHERE x = 4</>, because the function underlying
-      the integer addition operator is marked <literal>IMMUTABLE</>.
-     </para>
-    </listitem>
-   </itemizedlist>
-   </para>
-
-   <para>
-    For best optimization results, you should label your functions with the
-    strictest volatility category that is valid for them.
-   </para>
-
-   <para>
-    Any function with side-effects <emphasis>must</> be labeled
-    <literal>VOLATILE</>, so that calls to it cannot be optimized away.
-    Even a function with no side-effects needs to be labeled
-    <literal>VOLATILE</> if its value can change within a single query;
-    some examples are <literal>random()</>, <literal>currval()</>,
-    <literal>timeofday()</>.
-   </para>
-
-   <para>
-    There is relatively little difference between <literal>STABLE</> and
-    <literal>IMMUTABLE</> categories when considering simple interactive
-    queries that are planned and immediately executed: it doesn't matter
-    a lot whether a function is executed once during planning or once during
-    query execution startup.  But there is a big difference if the plan is
-    saved and reused later.  Labeling a function <literal>IMMUTABLE</> when
-    it really isn't may allow it to be prematurely folded to a constant during
-    planning, resulting in a stale value being re-used during subsequent uses
-    of the plan.  This is a hazard when using prepared statements or when
-    using function languages that cache plans (such as
-    <application>PL/pgSQL</>).
-   </para>
-
-   <para>
-    Because of the snapshotting behavior of MVCC (see <xref linkend="mvcc">)
-    a function containing only <command>SELECT</> commands can safely be
-    marked <literal>STABLE</>, even if it selects from tables that might be
-    undergoing modifications by concurrent queries.
-    <productname>PostgreSQL</productname> will execute a <literal>STABLE</>
-    function using the snapshot established for the calling query, and so it
-    will see a fixed view of the database throughout that query.
-    Also note
-    that the <function>current_timestamp</> family of functions qualify
-    as stable, since their values do not change within a transaction.
-   </para>
-
-   <para>
-    The same snapshotting behavior is used for <command>SELECT</> commands
-    within <literal>IMMUTABLE</> functions.  It is generally unwise to select
-    from database tables within an <literal>IMMUTABLE</> function at all,
-    since the immutability will be broken if the table contents ever change.
-    However, <productname>PostgreSQL</productname> does not enforce that you
-    do not do that.
-   </para>
-
-   <para>
-    A common error is to label a function <literal>IMMUTABLE</> when its
-    results depend on a configuration parameter.  For example, a function
-    that manipulates timestamps might well have results that depend on the
-    <xref linkend="guc-timezone"> setting.  For safety, such functions should
-    be labeled <literal>STABLE</> instead.
-   </para>
-
-   <note>
-    <para>
-     Before <productname>PostgreSQL</productname> release 8.0, the requirement
-     that <literal>STABLE</> and <literal>IMMUTABLE</> functions cannot modify
-     the database was not enforced by the system.  Release 8.0 enforces it
-     by requiring SQL functions and procedural language functions of these
-     categories to contain no SQL commands other than <command>SELECT</>.
-    </para>
-   </note>
   </sect1>
 
 <!-- Keep this comment at the end of the file

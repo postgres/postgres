@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.36 2004/11/15 06:32:14 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.37 2004/12/30 03:13:56 tgl Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -104,19 +104,19 @@
     <ListItem>
     <Para>
         The range table is a list of relations that are used in the query.
-	In a <command>SELECT</command> statement these are the relations given after
-	the <literal>FROM</literal> key word.
+        In a <command>SELECT</command> statement these are the relations given after
+        the <literal>FROM</literal> key word.
     </Para>
 
     <Para>
         Every range table entry identifies a table or view and tells
-	by which name it is called in the other parts of the query.
-	In the query tree, the range table entries are referenced by
-	number rather than by name, so here it doesn't matter if there
-	are duplicate names as it would in an <Acronym>SQL</Acronym>
-	statement. This can happen after the range tables of rules
-	have been merged in. The examples in this chapter will not have
-	this situation.
+        by which name it is called in the other parts of the query.
+        In the query tree, the range table entries are referenced by
+        number rather than by name, so here it doesn't matter if there
+        are duplicate names as it would in an <Acronym>SQL</Acronym>
+        statement. This can happen after the range tables of rules
+        have been merged in. The examples in this chapter will not have
+        this situation.
     </Para>
     </ListItem>
     </VarListEntry>
@@ -128,21 +128,21 @@
     <ListItem>
     <Para>
         This is an index into the range table that identifies the
-	relation where the results of the query go.
+        relation where the results of the query go.
     </Para>
 
     <Para>
-	<command>SELECT</command> queries normally don't have a result
-	relation. The special case of a <command>SELECT INTO</command> is
-	mostly identical to a <command>CREATE TABLE</command> followed by a
-	<literal>INSERT ... SELECT</literal> and is not discussed
-	separately here.
+        <command>SELECT</command> queries normally don't have a result
+        relation. The special case of a <command>SELECT INTO</command> is
+        mostly identical to a <command>CREATE TABLE</command> followed by a
+        <literal>INSERT ... SELECT</literal> and is not discussed
+        separately here.
     </Para>
 
     <Para>
         For <command>INSERT</command>, <command>UPDATE</command>, and
-	<command>DELETE</command> commands, the result relation is the table
-	(or view!) where the changes take effect.
+        <command>DELETE</command> commands, the result relation is the table
+        (or view!) where the changes are to take effect.
     </Para>
     </ListItem>
     </VarListEntry>
@@ -167,39 +167,39 @@
 
     <Para>
         <command>DELETE</command> commands don't need a target list
-	because they don't produce any result. In fact, the planner will
-	add a special <acronym>CTID</> entry to the empty target list, but
-	this is after the rule system and will be discussed later; for the
-	rule system, the target list is empty.
+        because they don't produce any result. In fact, the planner will
+        add a special <acronym>CTID</> entry to the empty target list, but
+        this is after the rule system and will be discussed later; for the
+        rule system, the target list is empty.
     </Para>
 
     <Para>
         For <command>INSERT</command> commands, the target list describes
-	the new rows that should go into the result relation. It consists of the
-	expressions in the <literal>VALUES</> clause or the ones from the
-	<command>SELECT</command> clause in <literal>INSERT
-	... SELECT</literal>.  The first step of the rewrite process adds
-	target list entries for any columns that were not assigned to by
-	the original command but have defaults.  Any remaining columns (with
-	neither a given value nor a default) will be filled in by the
-	planner with a constant null expression.
+        the new rows that should go into the result relation. It consists of the
+        expressions in the <literal>VALUES</> clause or the ones from the
+        <command>SELECT</command> clause in <literal>INSERT
+        ... SELECT</literal>.  The first step of the rewrite process adds
+        target list entries for any columns that were not assigned to by
+        the original command but have defaults.  Any remaining columns (with
+        neither a given value nor a default) will be filled in by the
+        planner with a constant null expression.
     </Para>
 
     <Para>
         For <command>UPDATE</command> commands, the target list
-	describes the new rows that should replace the old ones. In the
-	rule system, it contains just the expressions from the <literal>SET
-	column = expression</literal> part of the command.  The planner will handle
-	missing columns by inserting expressions that copy the values from
-	the old row into the new one. And it will add the special
-	<acronym>CTID</> entry just as for <command>DELETE</command>, too.
+        describes the new rows that should replace the old ones. In the
+        rule system, it contains just the expressions from the <literal>SET
+        column = expression</literal> part of the command.  The planner will handle
+        missing columns by inserting expressions that copy the values from
+        the old row into the new one. And it will add the special
+        <acronym>CTID</> entry just as for <command>DELETE</command>, too.
     </Para>
 
     <Para>
         Every entry in the target list contains an expression that can
-	be a constant value, a variable pointing to a column of one
-	of the relations in the range table, a parameter, or an expression
-	tree made of function calls, constants, variables, operators, etc.
+        be a constant value, a variable pointing to a column of one
+        of the relations in the range table, a parameter, or an expression
+        tree made of function calls, constants, variables, operators, etc.
     </Para>
     </ListItem>
     </VarListEntry>
@@ -211,12 +211,12 @@
     <ListItem>
     <Para>
         The query's qualification is an expression much like one of
-	those contained in the target list entries. The result value of
-	this expression is a Boolean that tells whether the operation
-	(<command>INSERT</command>, <command>UPDATE</command>,
-	<command>DELETE</command>, or <command>SELECT</command>) for the
-	final result row should be executed or not. It corresponds to the <literal>WHERE</> clause
-	of an <Acronym>SQL</Acronym> statement.
+        those contained in the target list entries. The result value of
+        this expression is a Boolean that tells whether the operation
+        (<command>INSERT</command>, <command>UPDATE</command>,
+        <command>DELETE</command>, or <command>SELECT</command>) for the
+        final result row should be executed or not. It corresponds to the <literal>WHERE</> clause
+        of an <Acronym>SQL</Acronym> statement.
     </Para>
     </ListItem>
     </VarListEntry>
@@ -228,17 +228,17 @@
     <ListItem>
     <Para>
         The query's join tree shows the structure of the <literal>FROM</> clause.
-	For a simple query like <literal>SELECT ... FROM a, b, c</literal>, the join tree is just
-	a list of the <literal>FROM</> items, because we are allowed to join them in
-	any order.  But when <literal>JOIN</> expressions, particularly outer joins,
-	are used, we have to join in the order shown by the joins.
-	In that case, the join tree shows the structure of the <literal>JOIN</> expressions.  The
-	restrictions associated with particular <literal>JOIN</> clauses (from <literal>ON</> or
-	<literal>USING</> expressions) are stored as qualification expressions attached
-	to those join-tree nodes.  It turns out to be convenient to store
-	the top-level <literal>WHERE</> expression as a qualification attached to the
-	top-level join-tree item, too.  So really the join tree represents
-	both the <literal>FROM</> and <literal>WHERE</> clauses of a <command>SELECT</command>.
+        For a simple query like <literal>SELECT ... FROM a, b, c</literal>, the join tree is just
+        a list of the <literal>FROM</> items, because we are allowed to join them in
+        any order.  But when <literal>JOIN</> expressions, particularly outer joins,
+        are used, we have to join in the order shown by the joins.
+        In that case, the join tree shows the structure of the <literal>JOIN</> expressions.  The
+        restrictions associated with particular <literal>JOIN</> clauses (from <literal>ON</> or
+        <literal>USING</> expressions) are stored as qualification expressions attached
+        to those join-tree nodes.  It turns out to be convenient to store
+        the top-level <literal>WHERE</> expression as a qualification attached to the
+        top-level join-tree item, too.  So really the join tree represents
+        both the <literal>FROM</> and <literal>WHERE</> clauses of a <command>SELECT</command>.
     </Para>
     </ListItem>
     </VarListEntry>
@@ -250,10 +250,10 @@
     <ListItem>
     <Para>
         The other parts of the query tree like the <literal>ORDER BY</>
-	clause aren't of interest here. The rule system
-	substitutes some entries there while applying rules, but that
-	doesn't have much to do with the fundamentals of the rule
-	system.
+        clause aren't of interest here. The rule system
+        substitutes some entries there while applying rules, but that
+        doesn't have much to do with the fundamentals of the rule
+        system.
     </Para>
     </ListItem>
     </VarListEntry>
@@ -322,7 +322,7 @@ CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
     Currently, there can be only one action in an <literal>ON SELECT</> rule, and it must
     be an unconditional <command>SELECT</> action that is <literal>INSTEAD</>. This restriction was
     required to make rules safe enough to open them for ordinary users, and
-    it restricts <literal>ON SELECT</> rules to real view rules.
+    it restricts <literal>ON SELECT</> rules to act like views.
 </Para>
 
 <Para>
@@ -695,29 +695,29 @@ UPDATE t1 SET b = t2.b WHERE t1.a = t2.a;
 
     <ItemizedList>
         <ListItem>
-	<Para>
-	    The range tables contain entries for the tables <literal>t1</> and <literal>t2</>.
-	</Para>
+        <Para>
+            The range tables contain entries for the tables <literal>t1</> and <literal>t2</>.
+        </Para>
         </ListItem>
 
         <ListItem>
-	<Para>
-	    The target lists contain one variable that points to column
-	    <literal>b</> of the range table entry for table <literal>t2</>.
-	</Para>
+        <Para>
+            The target lists contain one variable that points to column
+            <literal>b</> of the range table entry for table <literal>t2</>.
+        </Para>
         </ListItem>
 
         <ListItem>
-	<Para>
-	    The qualification expressions compare the columns <literal>a</> of both
-	    range-table entries for equality.
-	</Para>
+        <Para>
+            The qualification expressions compare the columns <literal>a</> of both
+            range-table entries for equality.
+        </Para>
         </ListItem>
 
         <ListItem>
-	<Para>
-	    The join trees show a simple join between <literal>t1</> and <literal>t2</>.
-	</Para>
+        <Para>
+            The join trees show a simple join between <literal>t1</> and <literal>t2</>.
+        </Para>
         </ListItem>
     </ItemizedList>
    </para>
@@ -860,34 +860,34 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 
     <ItemizedList>
         <ListItem>
-	<Para>
-	    They are allowed to have no action.
-	</Para>
-	</ListItem>
+        <Para>
+            They are allowed to have no action.
+        </Para>
+        </ListItem>
 
         <ListItem>
-	<Para>
-	    They can have multiple actions.
-	</Para>
-	</ListItem>
+        <Para>
+            They can have multiple actions.
+        </Para>
+        </ListItem>
 
         <ListItem>
-	<Para>
-	    They can be <literal>INSTEAD</> or <literal>ALSO</> (default).
-	</Para>
-	</ListItem>
+        <Para>
+            They can be <literal>INSTEAD</> or <literal>ALSO</> (default).
+        </Para>
+        </ListItem>
 
         <ListItem>
-	<Para>
-	    The pseudorelations <literal>NEW</> and <literal>OLD</> become useful.
-	</Para>
-	</ListItem>
+        <Para>
+            The pseudorelations <literal>NEW</> and <literal>OLD</> become useful.
+        </Para>
+        </ListItem>
 
         <ListItem>
-	<Para>
-	    They can have rule qualifications.
-	</Para>
-	</ListItem>
+        <Para>
+            They can have rule qualifications.
+        </Para>
+        </ListItem>
     </ItemizedList>
 
     Second, they don't modify the query tree in place. Instead they
@@ -1875,14 +1875,15 @@ GRANT SELECT ON phone_number TO secretary;
 </Para>
 
 <Para>
-    For the things that can be implemented by both,
-    it depends on the usage of the database, which is the best.
+    For the things that can be implemented by both, which is best
+    depends on the usage of the database.
     A trigger is fired for any affected row once. A rule manipulates
-    the query tree or generates an additional one. So if many
+    the query or generates an additional query. So if many
     rows are affected in one statement, a rule issuing one extra
-    command would usually do a better job than a trigger that is
+    command is likely to be faster than a trigger that is
     called for every single row and must execute its operations
-    many times.
+    many times.  However, the trigger approach is conceptually far
+    simpler than the rule approach, and is easier for novices to get right.
 </Para>
 
 <Para>

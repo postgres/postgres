@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.38 2004/12/13 18:05:09 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.39 2004/12/30 03:13:56 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -59,6 +59,15 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.38 2004/12/13 18:05:09 petere E
    </para>
 
    <para>
+    Statement-level <quote>before</> triggers naturally fire before the
+    statement starts to do anything, while statement-level <quote>after</>
+    triggers fire at the very end of the statement.  Row-level <quote>before</>
+    triggers fire immediately before a particular row is operated on,
+    while row-level <quote>after</> triggers fire at the end of the statement
+    (but before any statement-level <quote>after</> triggers).
+   </para>
+
+   <para>
     Trigger functions invoked by per-statement triggers should always
     return <symbol>NULL</symbol>. Trigger functions invoked by per-row
     triggers can return a table row (a value of
@@ -111,6 +120,21 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.38 2004/12/13 18:05:09 petere E
    </para>
 
    <para>
+    Typically, row before triggers are used for checking or
+    modifying the data that will be inserted or updated.  For example,
+    a before trigger might be used to insert the current time into a
+    timestamp column, or to check that two elements of the row are
+    consistent. Row after triggers are most sensibly
+    used to propagate the updates to other tables, or make consistency
+    checks against other tables.  The reason for this division of labor is
+    that an after trigger can be certain it is seeing the final value of the
+    row, while a before trigger cannot; there might be other before triggers
+    firing after it.  If you have no specific reason to make a trigger before
+    or after, the before case is more efficient, since the information about
+    the operation doesn't have to be saved until end of statement.
+   </para>
+
+   <para>
     If a trigger function executes SQL commands then these
     commands may fire triggers again. This is known as cascading
     triggers.  There is no direct limitation on the number of cascade
@@ -138,6 +162,20 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.38 2004/12/13 18:05:09 petere E
     transaction table for example. It could also be used to track
     last-update events if defined as an <command>UPDATE</command>
     trigger.
+   </para>
+
+   <para>
+    Each programming language that supports triggers has its own method
+    for making the trigger input data available to the trigger function.
+    This input data includes the type of trigger event (e.g.,
+    <command>INSERT</command> or <command>UPDATE</command>) as well as any
+    arguments that were listed in <command>CREATE TRIGGER</>.
+    For a row-level trigger, the input data also includes the
+    <varname>NEW</varname> row for <command>INSERT</command> and
+    <command>UPDATE</command> triggers, and/or the <varname>OLD</varname> row
+    for <command>UPDATE</command> and <command>DELETE</command> triggers.
+    Statement-level triggers do not currently have any way to examine the
+    individual row(s) modified by the statement.
    </para>
 
   </sect1>
@@ -277,73 +315,73 @@ typedef struct TriggerData
       <term><structfield>tg_event</></term>
       <listitem>
        <para>
-	Describes the event for which the function is called. You may use the
-	following macros to examine <literal>tg_event</literal>:
+        Describes the event for which the function is called. You may use the
+        following macros to examine <literal>tg_event</literal>:
 
-	<variablelist>
-	 <varlistentry>
-	  <term><literal>TRIGGER_FIRED_BEFORE(tg_event)</literal></term>
-	  <listitem>
-	   <para>
-	    Returns true if the trigger fired before the operation.
-	   </para>
-	  </listitem>
-	 </varlistentry>
+        <variablelist>
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_BEFORE(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger fired before the operation.
+           </para>
+          </listitem>
+         </varlistentry>
 
-	 <varlistentry>
-	  <term><literal>TRIGGER_FIRED_AFTER(tg_event)</literal></term>
-	  <listitem>
-	   <para>
-	    Returns true if the trigger fired after the operation.
-	   </para>
-	  </listitem>
-	 </varlistentry>
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_AFTER(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger fired after the operation.
+           </para>
+          </listitem>
+         </varlistentry>
 
-	 <varlistentry>
-	  <term><literal>TRIGGER_FIRED_FOR_ROW(tg_event)</literal></term>
-	  <listitem>
-	   <para>
-	    Returns true if the trigger fired for a row-level event.
-	   </para>
-	  </listitem>
-	 </varlistentry>
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_FOR_ROW(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger fired for a row-level event.
+           </para>
+          </listitem>
+         </varlistentry>
 
-	 <varlistentry>
-	  <term><literal>TRIGGER_FIRED_FOR_STATEMENT(tg_event)</literal></term>
-	  <listitem>
-	   <para>
-	    Returns true if the trigger fired for a statement-level event.
-	   </para>
-	  </listitem>
-	 </varlistentry>
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_FOR_STATEMENT(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger fired for a statement-level event.
+           </para>
+          </listitem>
+         </varlistentry>
 
-	 <varlistentry>
-	  <term><literal>TRIGGER_FIRED_BY_INSERT(tg_event)</literal></term>
-	  <listitem>
-	   <para>
-	    Returns true if the trigger was fired by an <command>INSERT</command> command.
-	   </para>
-	  </listitem>
-	 </varlistentry>
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_BY_INSERT(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger was fired by an <command>INSERT</command> command.
+           </para>
+          </listitem>
+         </varlistentry>
 
-	 <varlistentry>
-	  <term><literal>TRIGGER_FIRED_BY_UPDATE(tg_event)</literal></term>
-	  <listitem>
-	   <para>
-	    Returns true if the trigger was fired by an <command>UPDATE</command> command.
-	   </para>
-	  </listitem>
-	 </varlistentry>
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_BY_UPDATE(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger was fired by an <command>UPDATE</command> command.
+           </para>
+          </listitem>
+         </varlistentry>
 
-	 <varlistentry>
-	  <term><literal>TRIGGER_FIRED_BY_DELETE(tg_event)</literal></term>
-	  <listitem>
-	   <para>
-	    Returns true if the trigger was fired by a <command>DELETE</command> command.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_BY_DELETE(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger was fired by a <command>DELETE</command> command.
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
        </para>
       </listitem>
      </varlistentry>
@@ -352,15 +390,15 @@ typedef struct TriggerData
       <term><structfield>tg_relation</></term>
       <listitem>
        <para>
-	A pointer to a structure describing the relation that the trigger fired for.
-	Look at <filename>utils/rel.h</> for details about
-	this structure.  The most interesting things are
-	<literal>tg_relation->rd_att</> (descriptor of the relation
-	tuples) and <literal>tg_relation->rd_rel->relname</>
-	(relation name; the type is not <type>char*</> but
-	<type>NameData</>; use
-	<literal>SPI_getrelname(tg_relation)</> to get a <type>char*</> if you
-	need a copy of the name).
+        A pointer to a structure describing the relation that the trigger fired for.
+        Look at <filename>utils/rel.h</> for details about
+        this structure.  The most interesting things are
+        <literal>tg_relation->rd_att</> (descriptor of the relation
+        tuples) and <literal>tg_relation->rd_rel->relname</>
+        (relation name; the type is not <type>char*</> but
+        <type>NameData</>; use
+        <literal>SPI_getrelname(tg_relation)</> to get a <type>char*</> if you
+        need a copy of the name).
        </para>
       </listitem>
      </varlistentry>
@@ -369,13 +407,13 @@ typedef struct TriggerData
       <term><structfield>tg_trigtuple</></term>
       <listitem>
        <para>
-	A pointer to the row for which the trigger was fired. This is
-	the row being inserted, updated, or deleted.  If this trigger
-	was fired for an <command>INSERT</command> or
-	<command>DELETE</command> then this is what you should return
-	to from the function if you don't want to replace the row with
-	a different one (in the case of <command>INSERT</command>) or
-	skip the operation.
+        A pointer to the row for which the trigger was fired. This is
+        the row being inserted, updated, or deleted.  If this trigger
+        was fired for an <command>INSERT</command> or
+        <command>DELETE</command> then this is what you should return
+        from the function if you don't want to replace the row with
+        a different one (in the case of <command>INSERT</command>) or
+        skip the operation.
        </para>
       </listitem>
      </varlistentry>
@@ -384,13 +422,13 @@ typedef struct TriggerData
       <term><structfield>tg_newtuple</></term>
       <listitem>
        <para>
-	A pointer to the new version of the row, if the trigger was
-	fired for an <command>UPDATE</command>, and <symbol>NULL</> if
-	it is for an <command>INSERT</command> or a
-	<command>DELETE</command>. This is what you have to return
-	from the function if the event is an <command>UPDATE</command>
-	and you don't want to replace this row by a different one or
-	skip the operation.
+        A pointer to the new version of the row, if the trigger was
+        fired for an <command>UPDATE</command>, and <symbol>NULL</> if
+        it is for an <command>INSERT</command> or a
+        <command>DELETE</command>. This is what you have to return
+        from the function if the event is an <command>UPDATE</command>
+        and you don't want to replace this row by a different one or
+        skip the operation.
        </para>
       </listitem>
      </varlistentry>
@@ -399,8 +437,8 @@ typedef struct TriggerData
       <term><structfield>tg_trigger</></term>
       <listitem>
        <para>
-	A pointer to a structure of type <structname>Trigger</>,
-	defined in <filename>utils/rel.h</>:
+        A pointer to a structure of type <structname>Trigger</>,
+        defined in <filename>utils/rel.h</>:
 
 <programlisting>
 typedef struct Trigger

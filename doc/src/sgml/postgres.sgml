@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.71 2004/12/29 23:36:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.72 2004/12/30 03:13:56 tgl Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
@@ -192,18 +192,19 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.71 2004/12/29 23:36:47 tgl Exp
     user-defined functions, data types, triggers, etc.  These are
     advanced topics which should probably be approached only after all
     the other user documentation about <productname>PostgreSQL</> has
-    been understood.  This part also describes the server-side
+    been understood.  Later chapters in this part describe the server-side
     programming languages available in the
     <productname>PostgreSQL</productname> distribution as well as
-    general issues concerning server-side programming languages.  This
-    information is only useful to readers that have read at least the
-    first few chapters of this part.
+    general issues concerning server-side programming languages.  It
+    is essential to read at least the earlier sections of <xref
+    linkend="extend"> (covering functions) before diving into the
+    material about server-side programming languages.
    </para>
   </partintro>
 
   &extend;
-  &rules;
   &trigger;
+  &rules;
 
   &xplang;
   &plsql;
