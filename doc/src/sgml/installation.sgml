@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.173 2003/10/27 15:35:10 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.174 2003/10/29 13:42:55 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1725,8 +1725,9 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-        <entry>5.1</entry>
+	 5.1 Peter Eisentraut (<email>peter_e@gmx.net</email>),
+	 4.0 Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
+        <entry></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">UnixWare</></entry>
