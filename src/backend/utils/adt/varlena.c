@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.2 1996/07/19 06:08:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.3 1996/07/19 07:14:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,8 +197,6 @@ textout(struct varlena *vlena)
 
 
 /* ========== PUBLIC ROUTINES ========== */
-
-/* 
 
 /*
  * textlen -
