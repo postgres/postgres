@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.16 2001/09/13 15:55:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.17 2001/09/13 18:17:44 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-CREATETRIGGER">
+ <docinfo>
+  <date>2001-09-13</date>
+ </docinfo>
+
  <refmeta>
   <refentrytitle id="SQL-CREATETRIGGER-TITLE">CREATE TRIGGER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -134,78 +138,55 @@ CREATE
    <citetitle>PostgreSQL Programmer's Guide</citetitle>  for  more
    information.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-CREATETRIGGER-3">
-   <refsect2info>
-    <date>1998-09-21</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <command>CREATE TRIGGER</command> is a <productname>Postgres</productname>
-    language extension.
-   </para>
-   <para>
-    Only the relation owner may create a trigger on this relation.
-   </para>
-   <para>
-    As of the current release, STATEMENT triggers are not implemented.
-   </para>
-   <para>
-    Refer to <command>DROP TRIGGER</command> for information on how to 
-    remove triggers.
-   </para>   
-  </refsect2>
+ <refsect1 id="SQL-CREATETRIGGER-notes">
+  <title>Notes</title>
+
+  <para>
+   To create a trigger on a table, the user must have the
+   <literal>TRIGGER</literal> privilege on the table.
+  </para>
+
+  <para>
+   As of the current release, <literal>STATEMENT</literal> triggers are not implemented.
+  </para>
+
+  <para>
+   Refer to the <xref linkend="sql-droptrigger"> command for
+   information on how to remove triggers.
+  </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-CREATETRIGGER-2">
-  <title>
-   Usage
-  </title>
+  <title>Examples</title>
+
   <para>
    Check if the specified distributor code exists in the distributors
    table before appending or updating a row in the table films:
 
-   <programlisting>
+<programlisting>
 CREATE TRIGGER if_dist_exists
     BEFORE INSERT OR UPDATE ON films FOR EACH ROW
     EXECUTE PROCEDURE check_primary_key ('did', 'distributors', 'did');
-   </programlisting>
+</programlisting>
   </para>
+
   <para>
    Before cancelling a distributor or updating its code, remove every
    reference to the table films:
-   <programlisting>
+<programlisting>
 CREATE TRIGGER if_film_exists 
     BEFORE DELETE OR UPDATE ON distributors FOR EACH ROW
     EXECUTE PROCEDURE check_foreign_key (1, 'CASCADE', 'did', 'films', 'did');
-   </programlisting>
+</programlisting>
   </para>
- </refsect1>
 
- <refsect1 id="R1-SQL-CREATETRIGGER-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-CREATETRIGGER-4">
-   <refsect2info>
-    <date>1998-09-21</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
+  <para>
+   The second example can also be done by using a foreign key,
+   constraint as in:
 
-   <para>
-    There is no <command>CREATE TRIGGER</command> in <acronym>SQL92</acronym>.
-   </para>
-
-   <para>
-    The second example above may also be done by using a FOREIGN KEY
-    constraint as in:
-
-    <programlisting>
+<programlisting>
 CREATE TABLE distributors (
     did      DECIMAL(3),
     name     VARCHAR(40),
@@ -213,9 +194,84 @@ CREATE TABLE distributors (
     FOREIGN KEY(did) REFERENCES films
     ON UPDATE CASCADE ON DELETE CASCADE  
 );
-    </programlisting>
-   </para>
-  </refsect2>
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="SQL-CREATETRIGGER-compatibility">
+  <title>Compatibility</title>
+  
+  <variablelist>
+   <varlistentry>
+    <term>SQL92</term>
+    <listitem>
+     <para>
+      There is no <command>CREATE TRIGGER</command> statement in <acronym>SQL92</acronym>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SQL99</term>
+    <listitem>
+     <para>
+      The <command>CREATE TRIGGER</command> statement in
+      <productname>PostgreSQL</productname> implements a subset of the
+      SQL99 standard.  The following functionality is missing:
+      <itemizedlist>
+       <listitem>
+        <para>
+         SQL99 allows triggers to fire on updates to specific columns
+         (e.g., <literal>AFTER UPDATE OF col1, col2</literal>).
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         SQL99 allows you to define aliases for the <quote>old</quote>
+         and <quote>new</quote> rows or tables for use in the definiton
+         of the triggered action (e.g., <literal>CREATE TRIGGER ... ON
+         tablename REFERENCING OLD ROW AS somename NEW ROW AS
+         othername ...</literal>).  Since
+         <productname>PostgreSQL</productname> allows trigger
+         procedures to be written in any number of user-defined
+         languages, access to the data is handled in a
+         language-specific way.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <productname>PostgreSQL</productname> only has row-level
+         triggers, no statement-level triggers.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <productname>PostgreSQL</productname> only allows the
+         execution of a stored procedure for the triggered action.
+         SQL99 allows the execution of a number of other SQL commands,
+         such as <command>CREATE TABLE</command> as triggered action.
+         This limitation is not hard to work around by creating a
+         stored procedure that executes these commands.
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-droptrigger"></member>
+   <member><citetitle>PostgreSQL Programmer's Guide</citetitle></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

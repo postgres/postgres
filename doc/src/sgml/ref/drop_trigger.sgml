@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.7 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.8 2001/09/13 18:17:44 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-DROPTRIGGER">
+ <docinfo>
+  <date>2001-09-13</date>
+ </docinfo>
+
  <refmeta>
   <refentrytitle id="SQL-DROPTRIGGER-TITLE">
    DROP TRIGGER
@@ -101,58 +105,58 @@ ERROR: DropTrigger: there is no trigger <replaceable class="PARAMETER">name</rep
   <para>
    <command>DROP TRIGGER</command> will remove all references to an existing
    trigger definition. To execute this command the current
-   user must be the owner of the trigger.
+   user must be the owner of the table for which the trigger is defined.
   </para>
-
-  <refsect2 id="R2-SQL-DROPTRIGGER-3">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <command>DROP TRIGGER</command> is a <productname>Postgres</productname>
-    language extension.
-   </para>
-   <para>
-    Refer to <command>CREATE TRIGGER</command> for
-    information on how to create triggers.
-   </para>
-  </refsect2>
  </refsect1>
-  
- <refsect1 id="R1-SQL-DROPTRIGGER-2">
-  <title>
-   Usage
-  </title>
+
+ <refsect1 id="SQL-DROPTRIGGER-examples">
+  <title>Examples</title>
+
   <para>
    Destroy the <literal>if_dist_exists</literal> trigger
    on table <literal>films</literal>:
 
-   <programlisting>
+<programlisting>
 DROP TRIGGER if_dist_exists ON films;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-DROPTRIGGER-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1 id="SQL-DROPTRIGGER-compatibility">
+  <title>Compatibility</title>
   
-  <refsect2 id="R2-SQL-DROPTRIGGER-4">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>DROP TRIGGER</command> statement in
-    <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <variablelist>
+   <varlistentry>
+    <term>SQL92</term>
+    <listitem>
+     <para>
+      There is no <command>DROP TRIGGER</command> statement in
+      <acronym>SQL92</acronym>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SQL99</term>
+    <listitem>
+     <para>
+      The <command>DROP TRIGGER</command> statement in
+      <productname>PostgreSQL</productname> is incompatible with
+      SQL99.  In SQL99, trigger names are not local to tables, so the
+      command is simply <literal>DROP TRIGGER
+      <replaceable>name</replaceable></literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtrigger"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 
