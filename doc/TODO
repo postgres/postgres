@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 15 17:33:59 EDT 2002
+Last updated:		Wed Oct 16 23:58:16 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -223,6 +223,7 @@ Commands
 	  allow error codes to be specified; requires savepoints or can
 	  not be run in a multi-statement transaction
 	o -Generate failure on short COPY lines rather than pad NULLs
+	o Allow copy to understand \x as hex
 
 * CURSOR
 	o Allow BINARY option to SELECT, just like DECLARE
