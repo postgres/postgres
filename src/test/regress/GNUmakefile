@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.1 1997/01/21 01:27:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.2 1997/04/05 21:24:06 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,6 +45,8 @@ OUTFILES= stud_emp.data onek.data regress.out aportal.out
 # prepare to run the test (including clean-up after the last run)
 #
 all: $(INFILES)
+	cd input; gmake all; cd ..
+	cd output; gmake all; cd ..
 	rm -f $(OUTFILES)
 
 #

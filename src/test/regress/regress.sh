@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.4 1997/04/05 11:58:35 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.5 1997/04/05 21:24:11 scrappy Exp $
 #
 if [ -d ./obj ]; then
 	cd ./obj
@@ -29,9 +29,9 @@ fi
 echo =============== running regression queries ... =================
 for i in `cat sql/tests`
 do
-	echo -n ${i} ..
-	$FRONTEND regression < sql/${i}.sql 2>&1 | tee output/${i}.out
-	if [ `diff expected/${i}.out output/${i}.out | wc -l` -ne 0 ]
+	echo -n "${i} .. "
+	$FRONTEND regression < sql/${i}.sql > results/${i}.out 2>&1
+	if [ `diff expected/${i}.out results/${i}.out | wc -l` -ne 0 ]
 	then
 		echo failed
 	else

@@ -1,3 +1,7 @@
+create_function
+create_type
+create_table
+create_misc
 reltime
 abstime
 boolean

@@ -1,0 +1,49 @@
+QUERY: CREATE FUNCTION circle_in(opaque)
+   RETURNS circle
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';
+NOTICE:ProcedureCreate: type 'circle' is not yet defined
+QUERY: CREATE FUNCTION circle_out(opaque)
+   RETURNS opaque
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';
+QUERY: CREATE FUNCTION hobbies(person)
+   RETURNS setof hobbies_r
+   AS 'select * from hobbies_r where person = $1.name'
+   LANGUAGE 'sql';
+QUERY: CREATE FUNCTION hobby_construct(text, text)
+   RETURNS hobbies_r
+   AS 'select $1 as name, $2 as hobby'
+   LANGUAGE 'sql';
+QUERY: CREATE FUNCTION equipment(hobbies_r)
+   RETURNS setof equipment_r
+   AS 'select * from equipment_r where hobby = $1.name'
+   LANGUAGE 'sql';
+QUERY: CREATE FUNCTION user_relns()
+   RETURNS setof name
+   AS 'select relname
+       from pg_class
+       where relname !~ ''pg_.*'' and
+             relkind <> ''i'' '
+   LANGUAGE 'sql';
+QUERY: CREATE FUNCTION pt_in_circle(point, circle)
+   RETURNS int4
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';
+QUERY: CREATE FUNCTION overpaid(emp)
+   RETURNS bool
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';
+QUERY: CREATE FUNCTION boxarea(box)
+   RETURNS int4
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';
+QUERY: CREATE FUNCTION interpt_pp(path, path)
+   RETURNS point
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';
+QUERY: CREATE FUNCTION reverse_c16(char16)
+   RETURNS char16
+   AS '_CWD_/regress_DLSUFFIX_'
+   LANGUAGE 'c';
+QUERY: LOAD '_CWD_/regress_DLSUFFIX_';
