@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.122 2004/07/15 03:56:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.123 2004/08/13 14:47:23 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -375,7 +375,8 @@ exec_command(const char *cmd,
 			fname = psql_scan_slash_option(scan_state,
 										   OT_NORMAL, NULL, true);
 			expand_tilde(&fname);
-			canonicalize_path(fname);
+			if (fname)
+				canonicalize_path(fname);
 			status = do_edit(fname, query_buf) ? CMD_NEWEDIT : CMD_ERROR;
 			free(fname);
 		}
