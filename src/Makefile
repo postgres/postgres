@@ -5,9 +5,8 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.12 1996/11/19 02:43:46 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.12.2.1 1996/12/10 03:29:41 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
