@@ -1,0 +1,126 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.1 1998/10/27 06:11:08 thomas Exp $
+
+Postgres quick Installation Guide.
+thomas 1998-10-26
+
+$Log: installation.sgml,v $
+Revision 1.1  1998/10/27 06:11:08  thomas
+First cut at standalone installation guide to replace INSTALL text source.
+
+
+-->
+
+<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+
+<!entity about    SYSTEM "about.sgml">
+<!entity history  SYSTEM "history.sgml">
+<!entity info     SYSTEM "info.sgml">
+<!entity legal    SYSTEM "legal.sgml">
+<!entity notation SYSTEM "notation.sgml">
+<!entity y2k      SYSTEM "y2k.sgml">
+
+<!entity intro-ag SYSTEM "intro-ag.sgml">
+<!entity install  SYSTEM "install.sgml">
+<!entity options  SYSTEM "pg_options.sgml">
+<!entity ports    SYSTEM "ports.sgml">
+<!entity recovery SYSTEM "recovery.sgml">
+<!entity regress  SYSTEM "regress.sgml">
+<!entity release  SYSTEM "release.sgml">
+<!entity runtime  SYSTEM "runtime.sgml">
+<!entity start-ag SYSTEM "start-ag.sgml">
+
+<!entity biblio   SYSTEM "biblio.sgml">
+]>
+
+<Book Id="installation">
+
+<!-- Title information -->
+
+<Title>PostgreSQL Administrator's Guide</Title>
+<BookInfo>
+    <ReleaseInfo>Covering v6.3 for general release</ReleaseInfo>
+    <BookBiblio>
+    <AuthorGroup>
+      <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
+    </AuthorGroup>
+<!-- editor in authorgroup is not supported
+    <AuthorGroup>
+-->
+      <Editor>
+        <FirstName>Thomas</FirstName>
+        <SurName>Lockhart</SurName>
+        <Affiliation>
+          <OrgName>Caltech/JPL</OrgName>
+        </Affiliation>
+      </Editor>
+<!--
+    </AuthorGroup>
+-->
+ 
+<!--
+    <AuthorInitials>TGL</AuthorInitials>
+-->
+
+    <Date>(last updated 1998-02-23)</Date>
+    </BookBiblio>
+
+<LegalNotice>
+<Para>
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 by the Postgres Global Development Group.
+</Para>
+</LegalNotice>
+
+</BookInfo>
+
+<!--
+<TOC> </TOC>
+<LOT> </LOT>
+-->
+
+<!--
+<Dedication>
+<Para>
+Your name here...
+</Para>
+</Dedication>
+-->
+
+<Preface>
+<Title>Summary</Title>
+
+<Para>
+<ProductName>Postgres</ProductName>, 
+ developed originally in the UC Berkeley Computer Science Department,
+ pioneered many of the object-relational concepts
+ now becoming available in some commercial databases.
+It provides SQL92/SQL3 language support,
+ transaction integrity, and type extensibility.
+ <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
+ of this original Berkeley code.
+</Para>
+</Preface>
+
+<chapter id="intro">
+<title>Introduction</title>
+
+<para>
+This installation procedure makes some assumptions about the desired configuration
+and runtime environment for your system. This may be adequate for many installations,
+and is almost certainly adequate for a first installation. But you may want to
+do an initial installation up to the point of unpacking the source tree
+and installing documentation, and then print or browse the 
+<citetitle>Administrator's Guide</citetitle>.
+
+</chapter>
+
+&ports;
+&install;
+&release;
+
+<!--
+<INDEX> </INDEX>
+-->
+
+</Book>
+
