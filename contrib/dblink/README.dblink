@@ -3,7 +3,9 @@
  *
  * Functions returning results from a remote database
  *
- * Copyright (c) Joseph Conway <mail@joeconway.com>, 2001, 2002,
+ * Joe Conway <mail@joeconway.com>
+ *
+ * Copyright (c) 2001, 2002 by PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  * 
  * Permission to use, copy, modify, and distribute this software and its
@@ -25,13 +27,36 @@
  *
  */
 
-
-Version 0.4 (7 April, 2002):
-  Functions allowing remote database INSERT/UPDATE/DELETE/SELECT, and
-  various utility functions.
-  Tested under Linux (Red Hat 7.2) and PostgreSQL 7.2 and 7.3devel
+Version 0.5 (25 August, 2002):
+  Major overhaul to work with new backend "table function" capability. Removed
+  dblink_strtok() and dblink_replace() functions because they are now
+  available as backend functions (split() and replace() respectively).
+  Tested under Linux (Red Hat 7.3) and PostgreSQL 7.3devel. This version
+  is no longer backwards portable to PostgreSQL 7.2.
 
 Release Notes:
+  Version 0.5
+    - dblink now supports use directly as a table function; this is the new
+      preferred usage going forward
+    - Use of dblink_tok is now deprecated; original form of dblink is also
+      deprecated. They _will_ be removed in the next version.
+    - dblink_last_oid is also deprecated; use dblink_exec() which returns
+      the command status as a single row, single column result.
+    - Original dblink, dblink_tok, and dblink_last_oid are commented out in
+      dblink.sql; remove the comments to use the deprecated functions.
+    - dblink_strtok() and dblink_replace() functions were removed. Use
+      split() and replace() respectively (new backend functions in
+      PostgreSQL 7.3) instead.
+    - New functions: dblink_exec() for non-SELECT queries; dblink_connect()
+      opens connection that persists for duration of a backend;
+      dblink_disconnect() closes a persistent connection; dblink_open()
+      opens a cursor; dblink_fetch() fetches results from an open cursor.
+      dblink_close() closes a cursor.
+    - New test suite: dblink_check.sh, dblink.test.sql,
+      dblink.test.expected.out. Execute dblink_check.sh from the same
+      directory as the other two files. Output is dblink.test.out and
+      dblink.test.diff. Note that dblink.test.sql is a good source
+      of example usage.
 
   Version 0.4
     - removed cursor wrap around input sql to allow for remote
@@ -59,16 +84,48 @@ Installation:
 
   installs following functions into database template1:
 
-     dblink(text,text) RETURNS setof int
-       - returns a resource id for results from remote query
-     dblink_tok(int,int) RETURNS text
-       - extracts and returns individual field results
-     dblink_strtok(text,text,int) RETURNS text
-       - extracts and returns individual token from delimited text
+     connection
+     ------------
+     dblink_connect(text) RETURNS text
+       - opens a connection that will persist for duration of current
+         backend or until it is disconnected
+     dblink_disconnect() RETURNS text
+       - disconnects a persistent connection
+
+     cursor
+     ------------
+     dblink_open(text,text) RETURNS text
+       - opens a cursor using connection already opened with dblink_connect()
+         that will persist for duration of current backend or until it is
+         closed
+     dblink_fetch(text, int) RETURNS setof record
+       - fetches data from an already opened cursor
+     dblink_close(text) RETURNS text
+       - closes a cursor
+
+     query
+     ------------
+     dblink(text,text) RETURNS setof record
+       - returns a set of results from remote SELECT query
+         (Note: comment out in dblink.sql to use deprecated version)
+     dblink(text) RETURNS setof record
+       - returns a set of results from remote SELECT query, using connection
+         already opened with dblink_connect()
+
+     execute
+     ------------
+     dblink_exec(text, text) RETURNS text
+       - executes an INSERT/UPDATE/DELETE query remotely
+     dblink_exec(text) RETURNS text
+       - executes an INSERT/UPDATE/DELETE query remotely, using connection
+         already opened with dblink_connect()
+
+     misc
+     ------------
+     dblink_current_query() RETURNS text
+       - returns the current query string
      dblink_get_pkey(text) RETURNS setof text
        - returns the field names of a relation's primary key fields
-     dblink_last_oid(int) RETURNS oid
-       - returns the last inserted oid
      dblink_build_sql_insert(text,int2vector,int2,_text,_text) RETURNS text
        - builds an insert statement using a local tuple, replacing the
          selection key field values with alternate supplied values
@@ -78,338 +135,30 @@ Installation:
      dblink_build_sql_update(text,int2vector,int2,_text,_text) RETURNS text
        - builds an update statement using a local tuple, replacing the
          selection key field values with alternate supplied values
-     dblink_current_query() RETURNS text
-       - returns the current query string
-     dblink_replace(text,text,text) RETURNS text
-       - replace all occurences of substring-a in the input-string 
-         with substring-b
 
-Documentation
-==================================================================
-Name
+  Not installed by default
+     deprecated
+     ------------
+     dblink(text,text) RETURNS setof int
+       - *DEPRECATED* returns a resource id for results from remote query
+         (Note: must uncomment in dblink.sql to use)
+     dblink_tok(int,int) RETURNS text
+       - *DEPRECATED* extracts and returns individual field results; used
+         only in conjunction with the *DEPRECATED* form of dblink
+         (Note: must uncomment in dblink.sql to use)
+     dblink_last_oid(int) RETURNS oid
+       - *DEPRECATED* returns the last inserted oid
 
-dblink -- Returns a resource id for a data set from a remote database
+Documentation:
 
-Synopsis
-
-dblink(text connstr, text sql)
-
-Inputs
-
-  connstr
-
-    standard libpq format connection srting, 
-    e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
-
-  sql
-
-    sql statement that you wish to execute on the remote host
-    e.g. "select * from pg_class"
-
-Outputs
-
-  Returns setof int (res_id)
-
-Example usage
-
-  select dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
-               ,'select f1, f2 from mytable');
-
+  See the following files:
+     doc/connection
+     doc/cursor
+     doc/query
+     doc/execute
+     doc/misc
+     doc/deprecated
 
 ==================================================================
-
-Name
-
-dblink_tok -- Returns individual select field results from a dblink remote query
-
-Synopsis
-
-dblink_tok(int res_id, int fnumber)
-
-Inputs
-
-  res_id
-
-    a resource id returned by a call to dblink()
-
-  fnumber
-
-    the ordinal position (zero based) of the field to be returned from the dblink result set
-
-Outputs
-
-  Returns text
-
-Example usage
-
-  select dblink_tok(t1.dblink_p,0) as f1, dblink_tok(t1.dblink_p,1) as f2
-  from (select dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
-                     ,'select f1, f2 from mytable') as dblink_p) as t1;
-
-
-==================================================================
-
-A more convenient way to use dblink may be to create a view:
-
- create view myremotetable as
- select dblink_tok(t1.dblink_p,0) as f1, dblink_tok(t1.dblink_p,1) as f2
- from (select dblink('hostaddr=127.0.0.1 port=5432 dbname=template1 user=postgres password=postgres'
-                    ,'select proname, prosrc from pg_proc') as dblink_p) as t1;
-
-Then you can simply write:
-
-   select f1, f2 from myremotetable where f1 like 'bytea%';
-
-==================================================================
-Name
-
-dblink_strtok -- Extracts and returns individual token from delimited text
-
-Synopsis
-
-dblink_strtok(text inputstring, text delimiter, int posn) RETURNS text
-
-Inputs
-
-  inputstring
-
-    any string you want to parse a token out of;
-    e.g. 'f=1&g=3&h=4'
-
-  delimiter
-
-    a single character to use as the delimiter;
-    e.g. '&' or '='
-
-  posn
-
-    the position of the token of interest, 0 based;
-    e.g. 1
-
-Outputs
-
-  Returns text
-
-Example usage
-
-test=# select dblink_strtok(dblink_strtok('f=1&g=3&h=4','&',1),'=',1);
- dblink_strtok
----------------
- 3
-(1 row)
-
-==================================================================
-Name
-
-dblink_get_pkey -- returns the field names of a relation's primary
-                   key fields
-
-Synopsis
-
-dblink_get_pkey(text relname) RETURNS setof text
-
-Inputs
-
-  relname
-
-    any relation name;
-    e.g. 'foobar'
-
-Outputs
-
-  Returns setof text -- one row for each primary key field, in order of
-                        precedence
-
-Example usage
-
-test=# select dblink_get_pkey('foobar');
- dblink_get_pkey
------------------
- f1
- f2
- f3
- f4
- f5
-(5 rows)
-
-
-==================================================================
-Name
-
-dblink_last_oid -- Returns last inserted oid
-
-Synopsis
-
-dblink_last_oid(int res_id) RETURNS oid
-
-Inputs
-
-  res_id
-
-    any resource id returned by dblink function;
-
-Outputs
-
-  Returns oid of last inserted tuple
-
-Example usage
-
-test=# select dblink_last_oid(dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
-               ,'insert into mytable (f1, f2) values (1,2)'));
-
- dblink_last_oid
-----------------
- 16553
-(1 row)
-
-
-==================================================================
-Name
-
-dblink_build_sql_insert -- builds an insert statement using a local
-                           tuple, replacing the selection key field
-                           values with alternate supplied values
-dblink_build_sql_delete -- builds a delete statement using supplied
-                           values for selection key field values
-dblink_build_sql_update -- builds an update statement using a local
-                           tuple, replacing the selection key field
-                           values with alternate supplied values
-
-
-Synopsis
-
-dblink_build_sql_insert(text relname
-                         ,int2vector primary_key_attnums
-                         ,int2 num_primary_key_atts
-                         ,_text src_pk_att_vals_array
-                         ,_text tgt_pk_att_vals_array) RETURNS text
-dblink_build_sql_delete(text relname
-                         ,int2vector primary_key_attnums
-                         ,int2 num_primary_key_atts
-                         ,_text tgt_pk_att_vals_array) RETURNS text
-dblink_build_sql_update(text relname
-                         ,int2vector primary_key_attnums
-                         ,int2 num_primary_key_atts
-                         ,_text src_pk_att_vals_array
-                         ,_text tgt_pk_att_vals_array) RETURNS text
-
-Inputs
-
-  relname
-
-    any relation name;
-    e.g. 'foobar'
-
-  primary_key_attnums
-
-    vector of primary key attnums (1 based, see pg_index.indkey);
-    e.g. '1 2'
-
-  num_primary_key_atts
-
-    number of primary key attnums in the vector; e.g. 2
-
-  src_pk_att_vals_array
-
-    array of primary key values, used to look up the local matching
-    tuple, the values of which are then used to construct the SQL
-    statement
-
-  tgt_pk_att_vals_array
-
-    array of primary key values, used to replace the local tuple
-    values in the SQL statement
-
-Outputs
-
-  Returns text -- requested SQL statement
-
-Example usage
-
-test=# select dblink_build_sql_insert('foo','1 2',2,'{"1", "a"}','{"1", "b''a"}');
-             dblink_build_sql_insert
---------------------------------------------------
- INSERT INTO foo(f1,f2,f3) VALUES('1','b''a','1')
-(1 row)
-
-test=# select dblink_build_sql_delete('MyFoo','1 2',2,'{"1", "b"}');
-           dblink_build_sql_delete
----------------------------------------------
- DELETE FROM "MyFoo" WHERE f1='1' AND f2='b'
-(1 row)
-
-test=# select dblink_build_sql_update('foo','1 2',2,'{"1", "a"}','{"1", "b"}');
-                   dblink_build_sql_update
--------------------------------------------------------------
- UPDATE foo SET f1='1',f2='b',f3='1' WHERE f1='1' AND f2='b'
-(1 row)
-
-
-==================================================================
-Name
-
-dblink_current_query -- returns the current query string
-
-Synopsis
-
-dblink_current_query () RETURNS text
-
-Inputs
-
-  None
-
-Outputs
-
-  Returns text -- a copy of the currently executing query
-
-Example usage
-
-test=# select dblink_current_query() from (select dblink('dbname=template1','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
-                                                                dblink_current_query
------------------------------------------------------------------------------------------------------------------------------------------------------
- select dblink_current_query() from (select dblink('dbname=template1','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
-(1 row)
-
-
-==================================================================
-Name
-
-dblink_replace -- replace all occurences of substring-a in the
-                  input-string with substring-b
-
-Synopsis
-
-dblink_replace(text input-string, text substring-a, text substring-b) RETURNS text
-
-Inputs
-
-  input-string
-
-    the starting string, before replacement of substring-a
-
-  substring-a
-
-    the substring to find and replace
-
-  substring-b
-
-    the substring to be substituted in place of substring-a
-
-Outputs
-
-  Returns text -- a copy of the starting string, but with all occurences of
-                  substring-a replaced with substring-b
-
-Example usage
-
-test=# select dblink_replace('12345678901234567890','56','hello');
-       dblink_replace
-----------------------------
- 1234hello78901234hello7890
-(1 row)
-
-==================================================================
-
-
 -- Joe Conway
 

@@ -48,7 +48,7 @@ dbase -
 
 dblink -
 	Allows remote query execution
-	by Joe Conway <joe.conway@mail.com>
+	by Joe Conway <mail@joeconway.com>
 
 dbmirror -
 	Replication server
@@ -73,7 +73,7 @@ fulltextindex -
 
 fuzzystrmatch -
 	Levenshtein, metaphone, and soundex fuzzy string matching
-	by Joe Conway <joseph.conway@home.com>, Joel Burton <jburton@scw.org>
+	by Joe Conway <mail@joeconway.com>, Joel Burton <jburton@scw.org>
 
 intagg -
 	Integer aggregator
