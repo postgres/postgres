@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.19 2000/03/07 23:01:43 momjian Exp $
+ *	$Id: network.c,v 1.20 2000/03/08 01:44:37 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -18,7 +18,7 @@
 #include "postgres.h"
 #include "utils/builtins.h"
 
-static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits1, int bits2);
+static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits);
 
 /*
  *	Access macros.	Add IPV6 support.
@@ -137,7 +137,7 @@ network_lt(inet *a1, inet *a2)
 		return FALSE;
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
-		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1), ip_bits(a2));
+		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2));
 
 		return ((order < 0) || ((order == 0) && (ip_bits(a1) < ip_bits(a2))));
 	}
@@ -166,7 +166,7 @@ network_eq(inet *a1, inet *a2)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) == ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1), ip_bits(a2)) == 0));
+		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0));
 	}
 	else
 	{
@@ -192,7 +192,7 @@ network_gt(inet *a1, inet *a2)
 		return FALSE;
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
-		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1), ip_bits(a2));
+		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2));
 
 		return ((order > 0) || ((order == 0) && (ip_bits(a1) > ip_bits(a2))));
 	}
@@ -222,7 +222,7 @@ network_sub(inet *a1, inet *a2)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) > ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1), ip_bits(a2)) == 0));
+		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0));
 	}
 	else
 	{
@@ -242,7 +242,7 @@ network_subeq(inet *a1, inet *a2)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) >= ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1), ip_bits(a2)) == 0));
+		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0));
 	}
 	else
 	{
@@ -262,7 +262,7 @@ network_sup(inet *a1, inet *a2)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) < ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1), ip_bits(a2)) == 0));
+		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0));
 	}
 	else
 	{
@@ -282,7 +282,7 @@ network_supeq(inet *a1, inet *a2)
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
 		return ((ip_bits(a1) <= ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1), ip_bits(a2)) == 0));
+		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0));
 	}
 	else
 	{
@@ -476,16 +476,13 @@ network_netmask(inet *ip)
  */
 
 static int
-v4bitncmp(unsigned int a1, unsigned int a2, int bits1, int bits2)
+v4bitncmp(unsigned int a1, unsigned int a2, int bits)
 {
 	unsigned long mask = 0;
-	int			i, bits;
-
-	bits=(bits1 < bits2) ? bits1 : bits2;
+	int			i;
 
 	for (i = 0; i < bits; i++)
 		mask = (mask >> 1) | 0x80000000;
-
 	a1 = ntohl(a1);
 	a2 = ntohl(a2);
 	if ((a1 & mask) < (a2 & mask))
