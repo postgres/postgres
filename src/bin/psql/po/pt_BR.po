@@ -4,10 +4,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-14 16:02-0200\n"
-"PO-Revision-Date: 2003-11-14 16:21-0200\n"
+"POT-Creation-Date: 2004-02-04 18:57-0200\n"
+"PO-Revision-Date: 2004-02-04 19:06-0200\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <euler@ufgnet.ufg.br>\n"
+"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov."
+"br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -67,7 +68,7 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s\".\n"
 
 #: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
-#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
+#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:338 describe.c:51
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
@@ -396,7 +397,7 @@ msgstr "  -X              não lê o arquivo de inicialização (~/.psqlrc)"
 
 #: help.c:99
 msgid "  --help          show this help, then exit"
-msgstr "  --help          mostra esta ajuda e sai"
+msgstr "  --help          mostra essa ajuda e sai"
 
 #: help.c:100
 msgid "  --version       output version information, then exit"
@@ -700,7 +701,7 @@ msgstr "  \\dc [MODELO]  lista conversões\n"
 
 #: help.c:215
 msgid "  \\dC            list casts\n"
-msgstr "  \\dC           lista moldes (casts)\n"
+msgstr "  \\dC           lista conversões de tipos (casts)\n"
 
 #: help.c:216
 msgid "  \\dd [PATTERN]  show comment for object\n"
@@ -883,7 +884,7 @@ msgstr "Descrição"
 msgid "Large objects"
 msgstr "Objetos Grandes"
 
-#: mainloop.c:206
+#: mainloop.c:203
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Use \"\\q\" para sair do %s.\n"
@@ -1193,6 +1194,11 @@ msgstr "único, "
 msgid "for table \"%s.%s\""
 msgstr "para tabela \"%s.%s\""
 
+#: describe.c:895
+#, c-format
+msgid ", predicate %s"
+msgstr ", predicado %s"
+
 #: describe.c:929
 #, c-format
 msgid ""
@@ -1350,7 +1356,7 @@ msgstr "Implícito?"
 
 #: describe.c:1562
 msgid "List of casts"
-msgstr "Lista de moldes"
+msgstr "Lista de conversões de tipos (casts)"
 
 #: describe.c:1603
 msgid "List of schemas"
@@ -1751,7 +1757,7 @@ msgstr ""
 
 #: sql_help.h:117
 msgid "define a new cast"
-msgstr "define um novo molde (cast)"
+msgstr "define uma nova conversão de tipo (cast)"
 
 #: sql_help.h:118
 msgid ""
@@ -2013,8 +2019,8 @@ msgstr "define uma nova tabela"
 #: sql_help.h:174
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
-"    { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
-"[, ... ] ]\n"
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"[ ... ] ]\n"
 "    | table_constraint\n"
 "    | LIKE parent_table [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
@@ -2047,7 +2053,7 @@ msgid ""
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nome_tabela (\n"
 "    { nome_coluna tipo_dado [ DEFAULT expressão_padrão ] [ restrição_coluna "
-"[, ... ] ]\n"
+"[ ... ] ]\n"
 "    | restrição_tabela\n"
 "    | LIKE tabela_pai [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
@@ -2185,7 +2191,7 @@ msgstr ""
 
 #: sql_help.h:197
 msgid "deallocate a prepared statement"
-msgstr "desaloca um comando preparado"
+msgstr "desaloca uma setença preparada"
 
 #: sql_help.h:198
 msgid "DEALLOCATE [ PREPARE ] plan_name"
@@ -2223,7 +2229,7 @@ msgstr "DROP AGGREGATE nome ( tipo ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:213
 msgid "remove a cast"
-msgstr "remove um molde (cast)"
+msgstr "remove uma conversão de tipo (cast)"
 
 #: sql_help.h:214
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
@@ -2375,7 +2381,7 @@ msgstr "END [ WORK | TRANSACTION ]"
 
 #: sql_help.h:289
 msgid "execute a prepared statement"
-msgstr "executa um comando preparado"
+msgstr "executa uma sentença preparada"
 
 #: sql_help.h:290
 msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
@@ -2383,11 +2389,11 @@ msgstr "EXECUTE nome_plan [ (parâmetro [, ...] ) ]"
 
 #: sql_help.h:293
 msgid "show the execution plan of a statement"
-msgstr "mostra o plano de execução de um comando"
+msgstr "mostra o plano de execução de uma sentença"
 
 #: sql_help.h:294
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
-msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] comando"
+msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] sentença"
 
 #: sql_help.h:297
 msgid "retrieve rows from a query using a cursor"
@@ -2556,11 +2562,11 @@ msgstr "NOTIFY nome"
 
 #: sql_help.h:329
 msgid "prepare a statement for execution"
-msgstr "prepara um comando para execução"
+msgstr "prepara uma sentença para execução"
 
 #: sql_help.h:330
 msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
-msgstr "PREPARE nome_plan [ (tipo_dado [, ...] ) ] AS comando"
+msgstr "PREPARE nome_plan [ (tipo_dado [, ...] ) ] AS sentença"
 
 #: sql_help.h:333
 msgid "rebuild indexes"
@@ -2778,24 +2784,18 @@ msgstr "ajusta as características da transação atual"
 #: sql_help.h:370
 msgid ""
 "SET TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]\n"
-"\n"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
+"READ ONLY ]\n"
 "SET SESSION CHARACTERISTICS AS TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
+"READ ONLY ]"
 msgstr ""
 "SET TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]\n"
-"\n"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
+"READ ONLY ]\n"
 "SET SESSION CHARACTERISTICS AS TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
+"READ ONLY ]"
 
 #: sql_help.h:373
 msgid "show the value of a run-time parameter"
@@ -2811,15 +2811,11 @@ msgstr ""
 
 #: sql_help.h:378
 msgid ""
-"START TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] "
+"[ READ WRITE | READ ONLY ]"
 msgstr ""
-"START TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] "
+"[ READ WRITE | READ ONLY ]"
 
 #: sql_help.h:381
 msgid "empty a table"
