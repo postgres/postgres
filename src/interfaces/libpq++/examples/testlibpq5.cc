@@ -99,4 +99,5 @@ main()
     // Deallocate memory allocated for the Polygon structure
     free(pval);
   }
+  return 0;
 }

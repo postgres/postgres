@@ -56,4 +56,5 @@ main()
   
   // Drop the test table
   data.Exec("DROP TABLE foo");
+  return 0;
 }

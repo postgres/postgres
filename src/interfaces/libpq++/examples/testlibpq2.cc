@@ -53,4 +53,5 @@ int main()
 
   // close the portal
   data.Exec("CLOSE myportal");
+  return 0;
 }

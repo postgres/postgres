@@ -62,6 +62,7 @@ int main()
 
   // End the transaction
   data.Exec("END");
+  return 0;
 }
   
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlo.cc,v 1.6 2000/04/22 22:15:48 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlo.cc,v 1.7 2000/04/25 21:00:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,4 +46,5 @@ int main(int argc, char **argv)
     cout << "Exporting large object to file \"" << out_filename << "\"..." << endl;
     object.Export(out_filename);
     object.Exec("END"); // WHY DOES IT CORE DUMP HERE ???
+    return 0;
 }
