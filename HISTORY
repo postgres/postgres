@@ -32,7 +32,7 @@ Changes
  contrib/tsearch dictionary improvements, see README.tsearch for
    an additional installation step (Thomas T. Thai, Teodor Sigaev)
  Fix for array subscripts handling (Tom)
-     
+ Allow CREATE TABLE AS ... SELECT in PL/PgSQL (Tom)
 
      ----------------------------------------------------------------------
 
