@@ -313,7 +313,7 @@ Allow pgsql to work on newer Cygwin snapshots(Dan)
 New catalog version number (Tom)
 Add Linux ARM.
 Rename heap_replace to heap_update
-Update for QNX (Kardos, Dr. Andrea)
+Update for QNX (Kardos, Dr. Andreas)
 New platform-specific regression handling (Tom)
 Rename oid8 -> oidvector and int28 -> int2vector (Bruce)
 Included all yacc and lex files into the distribution (Peter E.)
