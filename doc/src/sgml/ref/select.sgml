@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.35 2000/12/12 05:07:59 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.36 2001/01/08 21:30:37 tgl Exp $
 Postgres documentation
 -->
 
@@ -616,7 +616,12 @@ SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
     <programlisting>
 SELECT name FROM distributors ORDER BY code;
     </programlisting>
-
+    A limitation of this feature is that an ORDER BY clause applying to the
+    result of a UNION, INTERSECT, or EXCEPT query may only specify an output
+    column name or number, not an expression.
+   </para>
+    
+   <para>
     Note that if an ORDER BY item is a simple name that matches both
     a result column name and an input column name, ORDER BY will interpret
     it as the result column name.  This is the opposite of the choice that
