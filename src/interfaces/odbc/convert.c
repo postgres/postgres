@@ -1402,6 +1402,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 			}
 			opos = end - old_statement; /* positioned at the last } */
 			new_statement = stmt->stmt_with_params;
+			if (isalnum(end[1]))
+				CVT_APPEND_CHAR(' ');
 			continue;
 		}
 		/* End of a procedure call */
@@ -2015,7 +2017,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	char valnts[1024], params[1024];
 	char key[33], *end;
 	const char *valptr;
-	UInt4	vlen, prtlen, input_consumed, param_consumed;
+	UInt4	vlen, prtlen, input_consumed, param_consumed, extra_len;
 	Int4	param_pos[16][2];
  
 	valptr = value;
@@ -2042,6 +2044,20 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	*input_resume = valptr + vlen; /* resume from the last } */
 	mylog("%s: key='%s', val='%s'\n", func, key, valnts);
      
+	extra_len = 0;
+	if (isalnum(result[-1])) /* Avoid the concatenation of the function name with the previous word. Aceto */
+	{
+		if (1 >= maxLen)
+		{
+			mylog("%s %d bytes buffer overflow\n", func, maxLen);
+			return CONVERT_ESCAPE_OVERFLOW;
+		}
+		*result = ' ';
+		result++;
+		*result = '\0';
+		maxLen--;
+		extra_len++;
+	}
 	if (strcmp(key, "d") == 0)
 	{
 		/* Literal; return the escape part adding type cast */
@@ -2185,7 +2201,7 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 	}
      
 	if (count)
-		*count = prtlen;
+		*count = prtlen + extra_len;
 	if (prtlen < 0 || prtlen >= maxLen) /* buffer overflow */
 	{
 		mylog("%s %d bytes buffer overflow\n", func, maxLen);

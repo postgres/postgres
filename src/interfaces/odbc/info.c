@@ -9,7 +9,7 @@
  * API functions:	SQLGetInfo, SQLGetTypeInfo, SQLGetFunctions,
  *					SQLTables, SQLColumns, SQLStatistics, SQLSpecialColumns,
  *					SQLPrimaryKeys, SQLForeignKeys,
- *					SQLProcedureColumns(NI), SQLProcedures(NI),
+ *					SQLProcedureColumns(NI), SQLProcedures,
  *					SQLTablePrivileges(NI), SQLColumnPrivileges(NI)
  *
  * Comments:		See "notice.txt" for copyright and license information.
@@ -3783,6 +3783,8 @@ PGAPI_TablePrivileges(
 	extend_bindings(stmt, result_cols);
 
 	/* set the field names */
+	stmt->manual_result = TRUE;
+	stmt->result = QR_Constructor();
 	QR_set_num_fields(stmt->result, result_cols);
 	QR_set_field_info(stmt->result, 0, "TABLE_CAT", PG_TYPE_TEXT, MAX_INFO_STRING);
 	QR_set_field_info(stmt->result, 1, "TABLE_SCHEM", PG_TYPE_TEXT, MAX_INFO_STRING);
