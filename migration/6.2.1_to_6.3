@@ -6,5 +6,10 @@ on the permissions set on the underlying tables.  For this reason, you will
 have to set permissions on your views if you want anything but the default
 permissions.
 
+6.3 has had its default permissions on a table set such that unless you 
+are the owner, when a table is created, other users of the system won't 
+have access to them.  You *must* do a 'GRANT' for each table you wish open
+to other ppl.  
+
 Those migrating from earlier 1.* releases should first upgrade to 1.09
 because the COPY output format was improved from the 1.02 release.
