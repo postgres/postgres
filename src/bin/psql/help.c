@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.13 2000/01/26 05:57:44 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.14 2000/01/26 16:10:01 momjian Exp $
  */
 #include <c.h>
 #include "help.h"
@@ -105,7 +105,7 @@ usage(void)
 	/* Display default port */
 	env = getenv("PGPORT");
 	printf("  -p <port>       Specify database server port (default: %s)\n",
-           env ? env : "hardwired");
+	   env ? env : "hardwired");
 
 	puts(  "  -P var[=arg]    Set printing option 'var' to 'arg' (see \\pset command)");
 	puts(  "  -q              Run quietly (no messages, only query output)");
@@ -192,7 +192,7 @@ slashUsage(void)
 	/* if you add/remove a line here, change the row test above */
 	fprintf(fout, " \\?             help\n");
 	fprintf(fout, " \\c[onnect] [dbname|- [user|?]]\n"
-                  "                 connect to new database (currently '%s')\n", PQdb(pset.db));
+		  "                 connect to new database (currently '%s')\n", PQdb(pset.db));
 	fprintf(fout, " \\copy ...      perform SQL COPY with data stream to the client machine");
 	fprintf(fout, " \\copyright     show PostgreSQL usage and distribution terms\n");
 	fprintf(fout, " \\d <table>     describe table (or view, index, sequence)\n");
@@ -209,7 +209,7 @@ slashUsage(void)
 	fprintf(fout, " \\i <fname>     read and execute queries from filename\n");
 	fprintf(fout, " \\l             list all databases\n");
 	fprintf(fout, " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
-                  "                 large object operations\n");
+		  "                 large object operations\n");
 	fprintf(fout, " \\o [fname]     send all query results to <fname>, or |pipe\n");
 	fprintf(fout, " \\p             show the content of the current query buffer\n");
 	fprintf(fout, " \\pset [opt]    set table output options\n");
@@ -304,11 +304,10 @@ print_copyright(void)
 {
 	puts(
 		 "PostgreSQL Data Base Management System\n\n"
-		 "Copyright(c) 1996 - 9 PostgreSQL Global Development Group\n\n"
+	 "Portions Copyright (c) 1996-2000, PostgreSQL, Inc\n\n"
 		 "This software is based on Postgres95, formerly known as Postgres, which\n"
 		 "contains the following notice:\n\n"
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
-	  "Portions Copyright(c) 1994 - 7 Regents of the University of California\n\n"
+	 "Portions Copyright(c) 1994 - 7 Regents of the University of California\n\n"
 		 "Permission to use, copy, modify, and distribute this software and its\n"
 		 "documentation for any purpose, without fee, and without a written agreement\n"
 		 "is hereby granted, provided that the above copyright notice and this paragraph\n"

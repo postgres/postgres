@@ -1,7 +1,9 @@
 PostgreSQL Data Base Management System (formerly known as Postgres, then
 as Postgres95).
 
-Copyright (c) 1994-7 Regents of the University of California
+Portions Copyright 2000 by PostgreSQL Global Development Team
+
+Portions Copyright (c) 1994-7 Regents of the University of California
 
 Permission to use, copy, modify, and distribute this software and its
 documentation for any purpose, without fee, and without a written agreement
