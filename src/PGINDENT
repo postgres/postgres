@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# This can format all PostgreSQL *.c and *.h files,
+# excluding libpq++, *.y, and *.l files.
+#
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 entab </dev/null >/dev/null
 if [ "$?" -ne 0 ]
