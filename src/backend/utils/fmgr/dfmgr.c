@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.4 1996/11/27 08:16:07 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.5 1997/02/13 09:54:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,9 @@
 #include "nodes/pg_list.h"
 
 #include "port-protos.h"     	/* system specific function prototypes */
+#ifdef __ultrix
+#include <dl.h>
+#endif
 
 #include "catalog/catname.h"
 #include "utils/syscache.h"

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.4 1997/01/16 06:32:17 bryanh Exp $
+ * $Id: port-protos.h,v 1.5 1997/02/13 09:53:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,11 @@ extern char *fcvt(double, int, int*, int*);
 #define pg_dlsym(h, f)	((func_ptr)dl_sym(h, f))
 #define pg_dlclose(h)	dl_close(h)
 #define	pg_dlerror()	dl_error()
+extern int dl_init(char *);
 
 /* port.c */
+
+extern int syscall();
 
 extern void init_address_fixup(void);
 
@@ -44,6 +47,7 @@ extern char* strdup(char const*);
    backend/port/inet_aton.h
 */
 
+struct in_addr;
 int
 inet_aton(const char *cp, struct in_addr *addr);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/port.c,v 1.1.1.1 1996/07/09 06:21:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/port.c,v 1.2 1997/02/13 09:53:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <sys/sysmips.h>
 
 #include "c.h"
+#include "port-protos.h"
 
 void
 init_address_fixup()
