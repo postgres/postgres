@@ -15,11 +15,13 @@ docs/faq.html
 [訳注：
         日本語版製作についてのメモは最後尾へ移動しました。
 
-        日本語版のこの文書は "User's Lounge" の "Collection of FAQs" の
-        "Japanese" という見出しのところにあります。
-        (http://www.PostgreSQL.org/docs/faq-japanese.html)
+        日本語版のこの文書は 本家 "User's Lounge" の "Collection of FAQs" の
+        "Japanese" という見出しのところにあります。また、以下のサイトにも
+        あります。
+                http://www.rccm.co.jp/~juk/pgsql/
+                http://www.linux.or.jp/JF/
 
-        この和訳についてお気づきの点は(juk@jp.postgresql.org)までメールでお寄せ下さい。
+        この和訳についてお気づきの点は(juk@postgresql.jp)までメールでお寄せ下さい。
 ]
 
 
@@ -231,6 +233,20 @@ PostgreSQLは ODBC クライアントとも通信できます。
 FAQ_MSWINあるいはウェブサイトにある MS Windows FAQ をご覧下さい。Microsoft の素
 のプラットホームに移植する計画はありません。
 
+
+[訳注：
+
+Win32ネイティーブ版(Win32 Native version)
+
+          Windows-Native サーバー & クライアントパッケージが斉藤さんにより
+        維持管理されています。
+            http://hp.vector.co.jp/authors/VA023283/PostgreSQL.html
+        (Windows-Native Server&Client Package for PostgreSQL by Hiroshi Saito)
+            http://hp.vector.co.jp/authors/VA023283/PostgreSQLe.html
+
+
+]
+
 1.5) PostgreSQL はどこから入手できますか？
 
 PostgreSQL の元の anonymous ftp サイトです：
@@ -299,7 +315,7 @@ PostgreSQL' "$USER" irc.phoenix.net/ を使います。
           1999年7月23日、日本PostgreSQLユーザー会(にほん ぽすとぐれす ゆーざー かい)、略称JPUGが設立されました。
         JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場です。
         正会員の会費は無料ですが、会員の積極的な貢献が会の運営を助けています。詳しくは、JPUGのWeb サイト:
-                http://www.jp.postgresql.org/
+                http://www.postgresql.jp/
         をご覧ください。会員登録も可能となっています。
           1990年代中ごろより、ポストグレスの日本語メーリング・リストを石井 達夫さんが主催しています。詳細は、
                 http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html
@@ -1188,8 +1204,8 @@ PostgreSQLがデータベース仕様のシステムカタログを読み込むためで、そこには、たと
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2001年11月17日
-  翻訳者:       桑村 潤 (Jun Kuwamura <juk@jp.postgresql.org>)
+  最終更新日:   2001年12月10日
+  翻訳者:       桑村 潤 (Jun Kuwamura <juk@postgresql.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
@@ -1218,5 +1234,5 @@ PostgreSQLがデータベース仕様のシステムカタログを読み込むためで、そこには、たと
         http://www.linux.or.jp/JF/(PostgreSQL-FAQ.j)
         http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/
 
-  なお、この和訳に関するご意見は(juk@jp.postgresql.org)までお寄せ下さい。
+  なお、この和訳に関するご意見は(juk@postgresql.jp)までお寄せ下さい。
 ]
