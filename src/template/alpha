@@ -1,4 +1,4 @@
-AROPT:cq
+AROPT:crs
 # NOFIXADE disallows unaligned access.
 #   on Ultrix and OSF/1 it invokes an explicit syscall.
 #   on HP-UX it turns off certain compiler options.

@@ -1,4 +1,4 @@
-AROPT:cq
+AROPT:crs
 BACKEND:-I$(SRCDIR)/backend/port/univel
 SHARED_LIB:-fPIC
 ALL:-DHAVE_RUSAGE -m486 -Dsvr4

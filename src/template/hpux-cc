@@ -1,4 +1,4 @@
-AROPT:cq
+AROPT:crs
 BACKEND:-W l,-E -Ae -DNOFIXADE
 SHARED_LIB:+z
 ALL:

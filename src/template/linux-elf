@@ -1,4 +1,4 @@
-AROPT:cq
+AROPT:crs
 BACKEND:
 SHARED_LIB:-fpic
 ALL:

@@ -1,4 +1,4 @@
-AROPT:cq
+AROPT:crs
 BACKEND:-I$(SRCDIR)/backend/port/sparc_solaris
 SHARED_LIB:-K PIC
 ALL:
