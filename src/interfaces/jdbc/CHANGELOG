@@ -1,3 +1,9 @@
+Wed Jan 31 08:46:00 GMT 2001 peter@retep.org.uk
+        - Some minor additions to Statement to make our own extensions more
+          portable.
+        - Statement.close() will now call ResultSet.close() rather than just
+          dissasociating with it.
+
 Tue Jan 30 22:24:00 GMT 2001 peter@retep.org.uk
         - Fixed bug where Statement.setMaxRows() was a global setting. Now
           limited to just itself.

@@ -9,7 +9,7 @@
   <property category="sys" name="CheckStable" value="1" />
   <property category="sys" name="Company" value="" />
   <property category="sys" name="Copyright" value="Copyright (c) 2001" />
-  <property category="sys" name="DefaultPackage" value="org.postgresql.largeobject" />
+  <property category="sys" name="DefaultPackage" value="org.postgresql" />
   <property category="sys" name="Description" value="" />
   <property category="sys" name="DocPath" value="doc" />
   <property category="sys" name="ExcludeClassEnabled" value="0" />

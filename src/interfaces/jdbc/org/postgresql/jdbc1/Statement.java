@@ -90,7 +90,13 @@ public class Statement implements java.sql.Statement
 	 */
 	public void close() throws SQLException
 	{
-		result = null;
+          // Force the ResultSet to close
+          java.sql.ResultSet rs = getResultSet();
+          if(rs!=null)
+            rs.close();
+
+          // Disasociate it from us (For Garbage Collection)
+          result = null;
 	}
 
 	/**
@@ -327,4 +333,18 @@ public class Statement implements java.sql.Statement
        return null;
      return ((org.postgresql.ResultSet)result).getStatusString();
    }
+
+    /**
+     * New in 7.1: Returns the Last inserted oid. This should be used, rather
+     * than the old method using getResultSet, which for executeUpdate returns
+     * null.
+     * @return OID of last insert
+     */
+    public int getInsertedOID() throws SQLException
+    {
+      if(result!=null)
+        return ((org.postgresql.ResultSet)result).getInsertedOID();
+      return 0;
+    }
+
 }

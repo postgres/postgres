@@ -22,7 +22,7 @@ import org.postgresql.util.*;
  * @see java.sql.Statement
  * @see ResultSet
  */
-public class Statement implements java.sql.Statement
+public class Statement extends org.postgresql.Statement implements java.sql.Statement
 {
     Connection connection;		// The connection who created us
     java.sql.ResultSet result = null;	// The current results
@@ -95,7 +95,13 @@ public class Statement implements java.sql.Statement
 	 */
 	public void close() throws SQLException
 	{
-		result = null;
+          // Force the ResultSet to close
+          java.sql.ResultSet rs = getResultSet();
+          if(rs!=null)
+            rs.close();
+
+          // Disasociate it from us (For Garbage Collection)
+          result = null;
 	}
 
 	/**
