@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.72 2003/11/29 22:41:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.73 2004/01/06 04:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,6 +166,7 @@ typedef struct IndexScan
 	List	   *indxqualorig;	/* the same in original form */
 	List	   *indxstrategy;	/* list of sublists of strategy numbers */
 	List	   *indxsubtype;	/* list of sublists of strategy subtypes */
+	List	   *indxlossy;		/* list of sublists of lossy flags (ints) */
 	ScanDirection indxorderdir;	/* forward or backward or don't care */
 } IndexScan;
 

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.273 2004/01/05 05:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.274 2004/01/06 04:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,17 @@ _copyIndexScan(IndexScan *from)
 			newsubtype = lappend(newsubtype, listCopy(lfirst(tmp)));
 		}
 		newnode->indxsubtype = newsubtype;
+	}
+	/* this can become COPY_NODE_FIELD when intlists are normal objects: */
+	{
+		List	*newstrat = NIL;
+		List    *tmp;
+
+		foreach(tmp, from->indxlossy)
+		{
+			newstrat = lappend(newstrat, listCopy(lfirst(tmp)));
+		}
+		newnode->indxlossy = newstrat;
 	}
 	COPY_SCALAR_FIELD(indxorderdir);
 

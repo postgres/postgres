@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.228 2004/01/05 23:39:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.229 2004/01/06 04:31:01 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -354,6 +354,16 @@ _outIndexScan(StringInfo str, IndexScan *node)
 		foreach(tmp, node->indxsubtype)
 		{
 			_outOidList(str, lfirst(tmp));
+		}
+	}
+	/* this can become WRITE_NODE_FIELD when intlists are normal objects: */
+	{
+		List    *tmp;
+
+		appendStringInfo(str, " :indxlossy ");
+		foreach(tmp, node->indxlossy)
+		{
+			_outIntList(str, lfirst(tmp));
 		}
 	}
 	WRITE_ENUM_FIELD(indxorderdir, ScanDirection);

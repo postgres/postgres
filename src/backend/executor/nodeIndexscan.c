@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.88 2003/12/30 20:05:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.89 2004/01/06 04:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,9 @@ IndexNext(IndexScanState *node)
 	ExprContext *econtext;
 	ScanDirection direction;
 	IndexScanDescPtr scanDescs;
+	List	  **lossyQuals;
 	IndexScanDesc scandesc;
+	List	   *lossyQual;
 	Index		scanrelid;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
@@ -120,6 +122,7 @@ IndexNext(IndexScanState *node)
 			direction = ForwardScanDirection;
 	}
 	scanDescs = node->iss_ScanDescs;
+	lossyQuals = node->iss_LossyQuals;
 	numIndices = node->iss_NumIndices;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
@@ -188,6 +191,8 @@ IndexNext(IndexScanState *node)
 	while (indexNumber < numIndices)
 	{
 		scandesc = scanDescs[node->iss_IndexPtr];
+		lossyQual = lossyQuals[node->iss_IndexPtr];
+
 		while ((tuple = index_getnext(scandesc, direction)) != NULL)
 		{
 			/*
@@ -200,6 +205,22 @@ IndexNext(IndexScanState *node)
 						   slot,	/* slot to store in */
 						   scandesc->xs_cbuf,	/* buffer containing tuple */
 						   false);		/* don't pfree */
+
+			/*
+			 * If any of the index operators involved in this scan are lossy,
+			 * recheck them by evaluating the original operator clauses.
+			 */
+			if (lossyQual)
+			{
+				econtext->ecxt_scantuple = slot;
+				ResetExprContext(econtext);
+				if (!ExecQual(lossyQual, econtext, false))
+				{
+					/* Fails lossy op, so drop it and loop back for another */
+					ExecClearTuple(slot);
+					continue;
+				}
+			}
 
 			/*
 			 * If it's a multiple-index scan, make sure not to double-report
@@ -615,6 +636,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	List	   *indxqual;
 	List	   *indxstrategy;
 	List	   *indxsubtype;
+	List	   *indxlossy;
 	List	   *indxid;
 	int			i;
 	int			numIndices;
@@ -623,6 +645,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	int		   *numScanKeys;
 	RelationPtr indexDescs;
 	IndexScanDescPtr scanDescs;
+	List	  **lossyQuals;
 	ExprState ***runtimeKeyInfo;
 	bool		have_runtime_keys;
 	RangeTblEntry *rtentry;
@@ -680,6 +703,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	indexstate->iss_RuntimeKeysReady = false;
 	indexstate->iss_RelationDescs = NULL;
 	indexstate->iss_ScanDescs = NULL;
+	indexstate->iss_LossyQuals = NULL;
 
 	/*
 	 * get the index node information
@@ -699,6 +723,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	scanKeys = (ScanKey *) palloc(numIndices * sizeof(ScanKey));
 	indexDescs = (RelationPtr) palloc(numIndices * sizeof(Relation));
 	scanDescs = (IndexScanDescPtr) palloc(numIndices * sizeof(IndexScanDesc));
+	lossyQuals = (List **) palloc0(numIndices * sizeof(List *));
 
 	/*
 	 * initialize space for runtime key info (may not be needed)
@@ -712,11 +737,13 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	indxqual = node->indxqual;
 	indxstrategy = node->indxstrategy;
 	indxsubtype = node->indxsubtype;
+	indxlossy = node->indxlossy;
 	for (i = 0; i < numIndices; i++)
 	{
 		List	   *quals;
 		List	   *strategies;
 		List	   *subtypes;
+		List	   *lossyflags;
 		int			n_keys;
 		ScanKey		scan_keys;
 		ExprState **run_keys;
@@ -728,6 +755,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		indxstrategy = lnext(indxstrategy);
 		subtypes = lfirst(indxsubtype);
 		indxsubtype = lnext(indxsubtype);
+		lossyflags = lfirst(indxlossy);
+		indxlossy = lnext(indxlossy);
 		n_keys = length(quals);
 		scan_keys = (n_keys <= 0) ? (ScanKey) NULL :
 			(ScanKey) palloc(n_keys * sizeof(ScanKeyData));
@@ -747,6 +776,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			AttrNumber	varattno;		/* att number used in scan */
 			StrategyNumber strategy;	/* op's strategy number */
 			Oid			subtype;		/* op's strategy subtype */
+			int			lossy;			/* op's recheck flag */
 			RegProcedure opfuncid;		/* operator proc id used in scan */
 			Datum		scanvalue;		/* value used in scan (if const) */
 
@@ -759,6 +789,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			strategies = lnext(strategies);
 			subtype = lfirsto(subtypes);
 			subtypes = lnext(subtypes);
+			lossy = lfirsti(lossyflags);
+			lossyflags = lnext(lossyflags);
 
 			if (!IsA(clause, OpExpr))
 				elog(ERROR, "indxqual is not an OpExpr");
@@ -839,6 +871,20 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 								   subtype,		/* strategy subtype */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
+
+			/*
+			 * If this operator is lossy, add its indxqualorig expression
+			 * to the list of quals to recheck.  The nth() calls here could
+			 * be avoided by chasing the lists in parallel to all the other
+			 * lists, but since lossy operators are very uncommon, it's
+			 * probably a waste of time to do so.
+			 */
+			if (lossy)
+			{
+				lossyQuals[i] = lappend(lossyQuals[i],
+										nth(j,
+											(List *) nth(i, indexstate->indxqualorig)));
+			}
 		}
 
 		/*
@@ -928,6 +974,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 
 	indexstate->iss_RelationDescs = indexDescs;
 	indexstate->iss_ScanDescs = scanDescs;
+	indexstate->iss_LossyQuals = lossyQuals;
 
 	/*
 	 * Initialize result tuple type and projection info.

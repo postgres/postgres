@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.99 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.100 2004/01/06 04:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,8 +362,8 @@ set_join_references(Join *join, List *rtable)
 
 				/*
 				 * We must fix the inner qpqual too, if it has join
-				 * clauses (this could happen if the index is lossy: some
-				 * indxquals may get rechecked as qpquals).
+				 * clauses (this could happen if special operators are
+				 * involved: some indxquals may get rechecked as qpquals).
 				 */
 				if (NumRelids((Node *) inner_plan->qual) > 1)
 					inner_plan->qual = join_references(inner_plan->qual,

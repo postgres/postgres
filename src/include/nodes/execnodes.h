@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.109 2003/12/18 22:23:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.110 2004/01/06 04:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -776,6 +776,7 @@ typedef ScanState SeqScanState;
  *		RuntimeKeysReady   true if runtime Skeys have been computed
  *		RelationDescs	   ptr to array of relation descriptors
  *		ScanDescs		   ptr to array of scan descriptors
+ *		LossyQuals		   ptr to array of qual lists for lossy operators
  *		DupHash			   hashtable for recognizing dups in multiple scan
  *		MaxHash			   max # entries we will allow in hashtable
  * ----------------
@@ -795,6 +796,7 @@ typedef struct IndexScanState
 	bool		iss_RuntimeKeysReady;
 	RelationPtr iss_RelationDescs;
 	IndexScanDescPtr iss_ScanDescs;
+	List	  **iss_LossyQuals;
 	HTAB	   *iss_DupHash;
 	long		iss_MaxHash;
 } IndexScanState;

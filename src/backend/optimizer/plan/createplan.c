@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.164 2004/01/05 23:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.165 2004/01/06 04:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,16 +62,16 @@ static HashJoin *create_hashjoin_plan(Query *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static void fix_indxqual_references(List *indexquals, IndexPath *index_path,
 						List **fixed_indexquals,
-						List **recheck_indexquals,
 						List **indxstrategy,
-						List **indxsubtype);
+						List **indxsubtype,
+						List **indxlossy);
 static void fix_indxqual_sublist(List *indexqual,
 					 Relids baserelids, int baserelid,
 					 IndexOptInfo *index,
 					 List **fixed_quals,
-					 List **recheck_quals,
 					 List **strategy,
-					 List **subtype);
+					 List **subtype,
+					 List **lossy);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
 					 IndexOptInfo *index,
 					 Oid *opclass);
@@ -82,7 +82,7 @@ static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig,
-			   List *indxstrategy, List *indxsubtype,
+			   List *indxstrategy, List *indxsubtype, List *indxlossy,
 			   ScanDirection indexscandir);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tideval);
@@ -718,9 +718,9 @@ create_indexscan_plan(Query *root,
 	Expr	   *indxqual_or_expr = NULL;
 	List	   *stripped_indxquals;
 	List	   *fixed_indxquals;
-	List	   *recheck_indxquals;
 	List	   *indxstrategy;
 	List	   *indxsubtype;
+	List	   *indxlossy;
 	FastList	indexids;
 	List	   *i;
 	IndexScan  *scan_plan;
@@ -735,8 +735,8 @@ create_indexscan_plan(Query *root,
 	 * value is just the rel's baserestrictinfo list).  We must add these
 	 * clauses to scan_clauses to ensure they get checked.  In most cases
 	 * we will remove the join clauses again below, but if a join clause
-	 * contains a lossy or special operator, we need to make sure it gets
-	 * into scan_clauses.
+	 * contains a special operator, we need to make sure it gets into the
+	 * scan_clauses.
 	 */
 	if (best_path->isjoininner)
 	{
@@ -780,22 +780,19 @@ create_indexscan_plan(Query *root,
 
 	/*
 	 * The qpqual list must contain all restrictions not automatically
-	 * handled by the index.  Normally the predicates in the indexquals are
-	 * checked fully by the index, but if the index is "lossy" for a
-	 * particular operator (as signaled by the amopreqcheck flag in
-	 * pg_amop), then we need to double-check that predicate in qpqual,
-	 * because the index may return more tuples than match the predicate.
-	 *
-	 * Since the indexquals were generated from the restriction clauses given
-	 * by scan_clauses, there will normally be duplications between the lists.
-	 * We get rid of the duplicates, then add back if lossy.
+	 * handled by the index.  All the predicates in the indexquals will
+	 * be checked (either by the index itself, or by nodeIndexscan.c), but
+	 * if there are any "special" operators involved then they must be
+	 * added to qpqual.  The upshot is that qpquals must contain scan_clauses
+	 * minus whatever appears in indxquals.
 	 */
 	if (length(indxquals) > 1)
 	{
 		/*
 		 * Build an expression representation of the indexqual, expanding
 		 * the implicit OR and AND semantics of the first- and
-		 * second-level lists.
+		 * second-level lists.  (The odds that this will exactly match any
+		 * scan_clause are not great; perhaps we need more smarts here.)
 		 */
 		indxqual_or_expr = make_expr_from_indexclauses(indxquals);
 		qpqual = set_difference(scan_clauses, makeList1(indxqual_or_expr));
@@ -814,34 +811,11 @@ create_indexscan_plan(Query *root,
 	/*
 	 * The executor needs a copy with the indexkey on the left of each
 	 * clause and with index attr numbers substituted for table ones. This
-	 * pass also looks for "lossy" operators.
+	 * pass also gets strategy info and looks for "lossy" operators.
 	 */
 	fix_indxqual_references(indxquals, best_path,
-							&fixed_indxquals, &recheck_indxquals,
-							&indxstrategy, &indxsubtype);
-
-	/*
-	 * If there were any "lossy" operators, need to add back the
-	 * appropriate qual clauses to the qpqual.	When there is just one
-	 * indexscan being performed (ie, we have simple AND semantics), we
-	 * can just add the lossy clauses themselves to qpqual.  If we have
-	 * OR-of-ANDs, we'd better add the entire original indexquals to make
-	 * sure that the semantics are correct.
-	 */
-	if (recheck_indxquals != NIL)
-	{
-		if (indxqual_or_expr)
-		{
-			/* Better do a deep copy of the original scanclauses */
-			qpqual = lappend(qpqual, copyObject(indxqual_or_expr));
-		}
-		else
-		{
-			/* Subroutine already copied quals, so just append to list */
-			Assert(length(recheck_indxquals) == 1);
-			qpqual = nconc(qpqual, (List *) lfirst(recheck_indxquals));
-		}
-	}
+							&fixed_indxquals,
+							&indxstrategy, &indxsubtype, &indxlossy);
 
 	/* Finally ready to build the plan node */
 	scan_plan = make_indexscan(tlist,
@@ -852,6 +826,7 @@ create_indexscan_plan(Query *root,
 							   stripped_indxquals,
 							   indxstrategy,
 							   indxsubtype,
+							   indxlossy,
 							   best_path->indexscandir);
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
@@ -1197,76 +1172,64 @@ create_hashjoin_plan(Query *root,
  *	  Adjust indexqual clauses to the form the executor's indexqual
  *	  machinery needs, and check for recheckable (lossy) index conditions.
  *
- * We have five tasks here:
+ * We have four tasks here:
  *	* Remove RestrictInfo nodes from the input clauses.
  *	* Index keys must be represented by Var nodes with varattno set to the
  *	  index's attribute number, not the attribute number in the original rel.
  *	* If the index key is on the right, commute the clause to put it on the
  *	  left.  (Someday the executor might not need this, but for now it does.)
- *	* If the indexable operator is marked 'amopreqcheck' in pg_amop, then
- *	  the index is "lossy" for this operator: it may return more tuples than
- *	  actually satisfy the operator condition.	For each such operator, we
- *	  must add (the original form of) the indexqual clause to the "qpquals"
- *	  of the indexscan node, where the operator will be re-evaluated to
- *	  ensure it passes.
- *	* We must construct lists of operator strategy numbers and subtypes for
- *	  the top-level operators of each index clause.
+ *	* We must construct lists of operator strategy numbers, subtypes, and
+ *	  recheck (lossy-operator) flags for the top-level operators of each
+ *	  index clause.
  *
- * Both the input list and the output lists have the form of lists of sublists
- * of qual clauses --- the top-level list has one entry for each indexscan
- * to be performed.  The semantics are OR-of-ANDs.  Note however that the
- * input list contains RestrictInfos, while the output lists do not.
+ * Both the input list and the "fixed" output list have the form of lists of
+ * sublists of qual clauses --- the top-level list has one entry for each
+ * indexscan to be performed.  The semantics are OR-of-ANDs.  Note however
+ * that the input list contains RestrictInfos, while the output list doesn't.
  *
  * fixed_indexquals receives a modified copy of the indexqual list --- the
  * original is not changed.  Note also that the copy shares no substructure
  * with the original; this is needed in case there is a subplan in it (we need
  * two separate copies of the subplan tree, or things will go awry).
  *
- * recheck_indexquals similarly receives a copy of whichever clauses
- * need rechecking.
- *
  * indxstrategy receives a list of integer sublists of strategy numbers.
  * indxsubtype receives a list of OID sublists of strategy subtypes.
+ * indxlossy receives a list of integer sublists of lossy-operator booleans.
  */
 static void
 fix_indxqual_references(List *indexquals, IndexPath *index_path,
-						List **fixed_indexquals, List **recheck_indexquals,
-						List **indxstrategy, List **indxsubtype)
+						List **fixed_indexquals,
+						List **indxstrategy,
+						List **indxsubtype,
+						List **indxlossy)
 {
-	FastList	fixed_quals;
-	FastList	recheck_quals;
 	Relids		baserelids = index_path->path.parent->relids;
 	int			baserelid = index_path->path.parent->relid;
 	List	   *ixinfo = index_path->indexinfo;
 	List	   *i;
 
-	FastListInit(&fixed_quals);
-	FastListInit(&recheck_quals);
+	*fixed_indexquals = NIL;
 	*indxstrategy = NIL;
 	*indxsubtype = NIL;
+	*indxlossy = NIL;
 	foreach(i, indexquals)
 	{
 		List	   *indexqual = lfirst(i);
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
 		List	   *fixed_qual;
-		List	   *recheck_qual;
 		List	   *strategy;
 		List	   *subtype;
+		List	   *lossy;
 
 		fix_indxqual_sublist(indexqual, baserelids, baserelid, index,
-							 &fixed_qual, &recheck_qual,
-							 &strategy, &subtype);
-		FastAppend(&fixed_quals, fixed_qual);
-		if (recheck_qual != NIL)
-			FastAppend(&recheck_quals, recheck_qual);
+							 &fixed_qual, &strategy, &subtype, &lossy);
+		*fixed_indexquals = lappend(*fixed_indexquals, fixed_qual);
 		*indxstrategy = lappend(*indxstrategy, strategy);
 		*indxsubtype = lappend(*indxsubtype, subtype);
+		*indxlossy = lappend(*indxlossy, lossy);
 
 		ixinfo = lnext(ixinfo);
 	}
-
-	*fixed_indexquals = FastListValue(&fixed_quals);
-	*recheck_indexquals = FastListValue(&recheck_quals);
 }
 
 /*
@@ -1274,34 +1237,30 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
  *
  * For each qual clause, commute if needed to put the indexkey operand on the
  * left, and then fix its varattno.  (We do not need to change the other side
- * of the clause.)	Also change the operator if necessary, check for
- * lossy index behavior, and determine the operator's strategy number and
- * subtype number.
+ * of the clause.)  Then determine the operator's strategy number and subtype
+ * number, and check for lossy index behavior.
  *
  * Returns four lists:
  *		the list of fixed indexquals
- *		the list (usually empty) of original clauses that must be rechecked
- *			as qpquals because the index is lossy for this operator type
  *		the integer list of strategy numbers
  *		the OID list of strategy subtypes
+ *		the integer list of lossiness flags (1/0)
  */
 static void
 fix_indxqual_sublist(List *indexqual,
 					 Relids baserelids, int baserelid,
 					 IndexOptInfo *index,
 					 List **fixed_quals,
-					 List **recheck_quals,
 					 List **strategy,
-					 List **subtype)
+					 List **subtype,
+					 List **lossy)
 {
-	FastList	fixed_qual;
-	FastList	recheck_qual;
 	List	   *i;
 
-	FastListInit(&fixed_qual);
-	FastListInit(&recheck_qual);
+	*fixed_quals = NIL;
 	*strategy = NIL;
 	*subtype = NIL;
+	*lossy = NIL;
 	foreach(i, indexqual)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
@@ -1344,29 +1303,20 @@ fix_indxqual_sublist(List *indexqual,
 													   index,
 													   &opclass);
 
-		FastAppend(&fixed_qual, newclause);
+		*fixed_quals = lappend(*fixed_quals, newclause);
 
 		/*
-		 * Look up the operator in the operator class to get its strategy
-		 * numbers and the recheck indicator.  This also double-checks that
-		 * we found an operator matching the index.
+		 * Look up the (possibly commuted) operator in the operator class to
+		 * get its strategy numbers and the recheck indicator.  This also
+		 * double-checks that we found an operator matching the index.
 		 */
 		get_op_opclass_properties(newclause->opno, opclass,
 								  &stratno, &stratsubtype, &recheck);
 
 		*strategy = lappendi(*strategy, stratno);
 		*subtype = lappendo(*subtype, stratsubtype);
-
-		/*
-		 * If index is lossy for this operator, add (a copy of) original form
-		 * of clause to recheck list.
-		 */
-		if (recheck)
-			FastAppend(&recheck_qual, copyObject((Node *) clause));
+		*lossy = lappendi(*lossy, (int) recheck);
 	}
-
-	*fixed_quals = FastListValue(&fixed_qual);
-	*recheck_quals = FastListValue(&recheck_qual);
 }
 
 static Node *
@@ -1612,6 +1562,7 @@ make_indexscan(List *qptlist,
 			   List *indxqualorig,
 			   List *indxstrategy,
 			   List *indxsubtype,
+			   List *indxlossy,
 			   ScanDirection indexscandir)
 {
 	IndexScan  *node = makeNode(IndexScan);
@@ -1628,6 +1579,7 @@ make_indexscan(List *qptlist,
 	node->indxqualorig = indxqualorig;
 	node->indxstrategy = indxstrategy;
 	node->indxsubtype = indxsubtype;
+	node->indxlossy = indxlossy;
 	node->indxorderdir = indexscandir;
 
 	return node;

@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.121 2004/01/05 23:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.122 2004/01/06 04:31:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,10 +384,6 @@ cost_index(Path *path, Query *root,
 	 * some of the indexquals are join clauses and shouldn't be
 	 * subtracted. Rather than work out exactly how much to subtract, we
 	 * don't subtract anything.
-	 *
-	 * XXX For a lossy index, not all the quals will be removed and so we
-	 * really shouldn't subtract their costs; but detecting that seems
-	 * more expensive than it's worth.
 	 */
 	startup_cost += baserel->baserestrictcost.startup;
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
@@ -397,6 +393,7 @@ cost_index(Path *path, Query *root,
 		QualCost	index_qual_cost;
 
 		cost_qual_eval(&index_qual_cost, indexQuals);
+		/* any startup cost still has to be paid ... */
 		cpu_per_tuple -= index_qual_cost.per_tuple;
 	}
 
