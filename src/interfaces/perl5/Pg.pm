@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Pg.pm,v 1.9 2001/05/11 01:46:33 momjian Exp $
+# $Id: Pg.pm,v 1.10 2001/09/10 04:19:19 momjian Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #
@@ -93,7 +93,6 @@ require 5.002;
 	PGRES_NONFATAL_ERROR
 	PGRES_FATAL_ERROR
 	PGRES_INV_SMGRMASK
-	PGRES_INV_ARCHIVE
 	PGRES_INV_WRITE
 	PGRES_INV_READ
 	PGRES_InvalidOid
@@ -621,7 +620,6 @@ Creates a new large object. $mode is a bit-mask describing
 different attributes of the new object. Use the following constants: 
 
   - PGRES_INV_SMGRMASK
-  - PGRES_INV_ARCHIVE
   - PGRES_INV_WRITE
   - PGRES_INV_READ
 

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.16 2000/12/03 20:45:40 tgl Exp $ with patch for NULs
+ * $Id: Pg.xs,v 1.17 2001/09/10 04:19:19 momjian Exp $ with patch for NULs
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -71,8 +71,6 @@ int arg; {
 	return 1;
 	if (strEQ(name, "PGRES_INV_SMGRMASK"))
 	return 0x0000ffff;
-	if (strEQ(name, "PGRES_INV_ARCHIVE"))
-	return 0x00010000;
 	if (strEQ(name, "PGRES_INV_WRITE"))
 	return 0x00020000;
 	if (strEQ(name, "PGRES_INV_READ"))
