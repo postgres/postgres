@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.14 1996/07/29 20:58:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.15 1996/07/31 02:11:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ usage(char *progname)
   fprintf(stderr,"\t -q                      run quietly (no messages, no prompts)\n");
   fprintf(stderr,"\t -s                      single step mode (prompts for each query)\n");
   fprintf(stderr,"\t -S                      single line mode (i.e. query terminated by newline)\n");
-  fprintf(stderr,"\t -t                      turn off printing of attribute headers\n");
+  fprintf(stderr,"\t -t                      turn off printing of headings and row count\n");
   fprintf(stderr,"\t -T html                 set html3.0 table command options (cf. -H)\n");
   fprintf(stderr,"\t -x                      turn on expanded output (field names on left)\n");
   exit(1);
@@ -128,33 +128,30 @@ char *on(bool f)
 static void
 slashUsage(PsqlSettings *ps)
 {
+  fprintf(stderr,"\t \\?           -- help\n");
   fprintf(stderr,"\t \\a           -- toggle field-alignment (currenty %s)\n", on(ps->opt.align));
   fprintf(stderr,"\t \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption? ps->opt.caption: "");
   fprintf(stderr,"\t \\c <dbname>  -- connect to new database (currently '%s')\n", PQdb(ps->db));
-  fprintf(stderr,"\t \\d [<table>] -- list tables in database or columns in <table>\n");
-  fprintf(stderr,"\t \\d *         -- list tables in database and columns in all tables\n");
-  fprintf(stderr,"\t \\e [<fname>] -- edit the current query buffer or <fname>\n");
+  fprintf(stderr,"\t \\d [<table>] -- list tables in database or columns in <table>,* for all\n");
+  fprintf(stderr,"\t \\e [<fname>] -- edit the current query buffer or <fname>, \E execute too\n");
   fprintf(stderr,"\t \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
   fprintf(stderr,"\t \\g [<fname>] -- send query to backend [and place results in <fname>]\n");
   fprintf(stderr,"\t \\g |<cmd>    -- send query to backend and pipe results into <cmd>\n");
-  fprintf(stderr,"\t \\h [<cmd>]   -- help on syntax of sql commands\n");
-  fprintf(stderr,"\t \\h *         -- complete description of all sql commands\n");
+  fprintf(stderr,"\t \\h [<cmd>]   -- help on syntax of sql commands, * for all commands\n");
   fprintf(stderr,"\t \\H           -- toggle html3 output (currently %s)\n", on(ps->opt.html3));
   fprintf(stderr,"\t \\i <fname>   -- read and execute queries from filename\n");
   fprintf(stderr,"\t \\l           -- list all databases\n");
-  fprintf(stderr,"\t \\m           -- toggle monitor-like type-setting (currently %s)\n", on(ps->opt.standard));
+  fprintf(stderr,"\t \\m           -- toggle monitor-like table display (currently %s)\n", on(ps->opt.standard));
   fprintf(stderr,"\t \\o [<fname>] -- send all query results to <fname> or stdout\n");
   fprintf(stderr,"\t \\o |<cmd>    -- pipe all query results through <cmd>\n");
   fprintf(stderr,"\t \\p           -- print the current query buffer\n");
   fprintf(stderr,"\t \\q           -- quit\n");
-  fprintf(stderr,"\t \\r [<fname>] -- edit <fname> then execute on save\n");
+  fprintf(stderr,"\t \\r           -- reset(clear) the query buffer\n");
   fprintf(stderr,"\t \\s [<fname>] -- print history or save it in <fname>\n");
-  fprintf(stderr,"\t \\t           -- toggle table output header (currently %s)\n", on(ps->opt.header));
+  fprintf(stderr,"\t \\t           -- toggle table headings and row count (currently %s)\n", on(ps->opt.header));
   fprintf(stderr,"\t \\T [<html>]  -- set html3.0 <table ...> options (currently '%s')\n", ps->opt.tableOpt? ps->opt.tableOpt: "");
   fprintf(stderr,"\t \\x           -- toggle expanded output (currently %s)\n", on(ps->opt.expanded));
-  fprintf(stderr,"\t \\z           -- zorch current query buffer (i.e clear it)\n");
   fprintf(stderr,"\t \\! [<cmd>]   -- shell escape or command\n");
-  fprintf(stderr,"\t \\?           -- help\n");
 }
 
 PGresult *
@@ -624,7 +621,7 @@ HandleSlashCmds(PsqlSettings *settings,
       decode(optarg);
   }
   switch (line[1])
-    {
+  {
     case 'a': /* toggles to align fields on output */
         toggle(settings, &settings->opt.align, "field alignment");
 	break;
@@ -641,7 +638,7 @@ HandleSlashCmds(PsqlSettings *settings,
 		}
 	break;
     case 'c':  /* \c means connect to new database */
-      {
+    {
 	  char *dbname=PQdb(settings->db);
 	  if (!optarg) {
 	      fprintf(stderr,"\\c must be followed by a database name\n");
@@ -687,7 +684,7 @@ HandleSlashCmds(PsqlSettings *settings,
  	}
  	break;
     case 'e':
-      {
+    {
 	int fd;
 	char tmp[64];
 	char *fname;
@@ -743,7 +740,46 @@ HandleSlashCmds(PsqlSettings *settings,
 	if (query[strlen(query)-1]==';')
 		return 0;
 	break;
-      }
+    }
+    case 'E':
+    {
+	FILE *fd;
+	static char *lastfile;
+	struct stat st, st2;
+	if (optarg)
+	{
+		if (lastfile)
+			free(lastfile);
+		lastfile=malloc(strlen(optarg+1));
+		if (!lastfile)
+		{
+			perror("malloc");
+			exit(1);
+		}
+		strcpy(lastfile, optarg);
+	} else if (!lastfile)
+		{
+	  		  fprintf(stderr,"\\r must be followed by a file name initially\n");
+			  break;
+		}
+	stat(lastfile, &st);
+	editFile(lastfile);
+	if ((stat(lastfile, &st2) == -1) || ((fd = fopen(lastfile, "r")) == NULL))
+	  {
+	    perror(lastfile);
+	    break;
+	  }
+	if (st2.st_mtime==st.st_mtime)
+	{
+		if (!settings->quiet)
+			fprintf(stderr, "warning: %s not modified. query not executed\n", lastfile);
+		fclose(fd);
+		break;
+	}
+	MainLoop(settings, fd);
+	fclose(fd);
+	break;
+    }
     case 'f':
     {
         char *fs=DEFAULT_FIELD_SEP;
@@ -760,12 +796,12 @@ HandleSlashCmds(PsqlSettings *settings,
 		fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
 	break;
     }
-  case 'g':  /* \g means send query */
+    case 'g':  /* \g means send query */
       settings->gfname = optarg;
       status = 0;     
       break;
     case 'h':
-      {
+    {
 	char *cmd;
 	int i, numCmds;
 	int all_help = 0;
@@ -811,7 +847,7 @@ HandleSlashCmds(PsqlSettings *settings,
 	    printf("command not found,  try \\h with no arguments to see available help\n");
 	}
 	break;
-      }
+    }
     case 'i':     /* \i is include file */
       {
 	FILE *fd;
@@ -829,7 +865,7 @@ HandleSlashCmds(PsqlSettings *settings,
 	MainLoop(settings, fd);
 	fclose(fd);
 	break;
-      }
+    }
     case 'l':     /* \l is list database */
       listAllDbs(settings);
       break;
@@ -850,45 +886,11 @@ HandleSlashCmds(PsqlSettings *settings,
     case 'q': /* \q is quit */
       status = 2;
       break;
-    case 'r':
-    {
-	FILE *fd;
-	static char *lastfile;
-	struct stat st, st2;
-	if (optarg)
-	{
-		if (lastfile)
-			free(lastfile);
-		lastfile=malloc(strlen(optarg+1));
-		if (!lastfile)
-		{
-			perror("malloc");
-			exit(1);
-		}
-		strcpy(lastfile, optarg);
-	} else if (!lastfile)
-		{
-	  		  fprintf(stderr,"\\r must be followed by a file name initially\n");
-			  break;
-		}
-	stat(lastfile, &st);
-	editFile(lastfile);
-	if ((stat(lastfile, &st2) == -1) || ((fd = fopen(lastfile, "r")) == NULL))
-	  {
-	    perror(lastfile);
-	    break;
-	  }
-	if (st2.st_mtime==st.st_mtime)
-	{
-		if (!settings->quiet)
-			fprintf(stderr, "warning: %s not modified. query not executed\n", lastfile);
-		fclose(fd);
-		break;
-	}
-	MainLoop(settings, fd);
-	fclose(fd);
-	break;
-      }
+    case 'r': /* reset(clear) the buffer */
+      query[0]='\0';
+      if (!settings->quiet)
+      	  fprintf(stderr, "buffer reset(cleared)\n");
+      break;
     case 's': /* \s is save history to a file */
 	if (!optarg)
 		optarg="/dev/tty";
@@ -913,7 +915,7 @@ HandleSlashCmds(PsqlSettings *settings,
       }
       break;
     case 't': /* toggle headers */
-      toggle(settings, &settings->opt.header, "output headers");
+      toggle(settings, &settings->opt.header, "output headings and row count");
       break;
     case 'T': /* define html <table ...> option */
     	if (settings->opt.tableOpt)
@@ -929,11 +931,6 @@ HandleSlashCmds(PsqlSettings *settings,
 	break;
     case 'x':
       toggle(settings, &settings->opt.expanded, "expanded table representation");
-      break;
-    case 'z': /* zorch buffer */
-      query[0]='\0';
-      if (!settings->quiet)
-      	  fprintf(stderr, "zorched current query buffer\n");
       break;
     case '!':
       if (!optarg) {
