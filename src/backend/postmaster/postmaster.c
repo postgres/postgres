@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.88 1998/06/15 19:29:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.89 1998/06/18 03:43:59 momjian Exp $
  *
  * NOTES
  *
@@ -955,11 +955,10 @@ CleanupProc(int pid,
 	}
 
 	/*
-	 * ------------------------- If a backend dies in an ugly way (i.e.
+	 * If a backend dies in an ugly way (i.e.
 	 * exit status not 0) then we must signal all other backends to
 	 * quickdie.  If exit status is zero we assume everything is hunky
 	 * dory and simply remove the backend from the active backend list.
-	 * -------------------------
 	 */
 	if (!exitstatus)
 	{
@@ -1021,7 +1020,7 @@ CleanupProc(int pid,
 	}
 
 	/*
-	 * ------------- Quasi_exit means run all of the on_exitpg routines
+	 * Quasi_exit means run all of the on_exitpg routines
 	 * but don't acutally call exit().  The on_exit list of routines to do
 	 * is also truncated.
 	 *
@@ -1030,7 +1029,7 @@ CleanupProc(int pid,
 	 * requested and received a connection and I have forked off another
 	 * backend.  This prevents me from reinitializing shared stuff more
 	 * than once for the set of backends that caused the failure and were
-	 * killed off. ----------------
+	 * killed off.
 	 */
 	if (ActiveBackends == TRUE && Reinit)
 	{
