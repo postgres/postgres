@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.4 1996/10/31 09:48:59 scrappy Exp $
+ * $Id: pqcomm.h,v 1.5 1996/11/05 07:41:13 scrappy Exp $
  *
  * NOTES
  *    Some of this should move to libpq.h
@@ -18,12 +18,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-
-#ifdef WIN32
-#include <winsock.h>
-#else
 #include <netinet/in.h>
-#endif /* WIN32 */
 
 
 /*
