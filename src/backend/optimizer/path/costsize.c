@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.88 2002/06/26 21:58:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.89 2002/07/04 15:23:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1092,6 +1092,7 @@ cost_qual_eval_walker(Node *node, Cost *total)
 		switch (expr->opType)
 		{
 			case OP_EXPR:
+			case DISTINCT_EXPR:
 			case FUNC_EXPR:
 				*total += cpu_operator_cost;
 				break;

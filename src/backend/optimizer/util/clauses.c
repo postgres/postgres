@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.101 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.102 2002/07/04 15:23:58 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -71,6 +71,7 @@ make_clause(int type, Node *oper, List *args)
 			expr->typeOid = BOOLOID;
 			break;
 		case OP_EXPR:
+		case DISTINCT_EXPR:
 			expr->typeOid = ((Oper *) oper)->opresulttype;
 			break;
 		case FUNC_EXPR:
@@ -107,7 +108,8 @@ is_opclause(Node *clause)
 {
 	return (clause != NULL &&
 			IsA(clause, Expr) &&
-			((Expr *) clause)->opType == OP_EXPR);
+			((((Expr *) clause)->opType == OP_EXPR) ||
+			 ((Expr *) clause)->opType == DISTINCT_EXPR));
 }
 
 /*
@@ -458,7 +460,7 @@ pull_agg_clause_walker(Node *node, List **listptr)
 
 /*
  * expression_returns_set
- *	  Test whethe an expression returns a set result.
+ *	  Test whether an expression returns a set result.
  *
  * Because we use expression_tree_walker(), this can also be applied to
  * whole targetlists; it'll produce TRUE if any one of the tlist items
@@ -482,6 +484,7 @@ expression_returns_set_walker(Node *node, void *context)
 		switch (expr->opType)
 		{
 			case OP_EXPR:
+			case DISTINCT_EXPR:
 				if (((Oper *) expr->oper)->opretset)
 					return true;
 				/* else fall through to check args */
@@ -757,6 +760,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 		switch (expr->opType)
 		{
 			case OP_EXPR:
+			case DISTINCT_EXPR:
 				if (op_volatile(((Oper *) expr->oper)->opno) != PROVOLATILE_IMMUTABLE)
 					return true;
 				break;
@@ -806,6 +810,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 		switch (expr->opType)
 		{
 			case OP_EXPR:
+			case DISTINCT_EXPR:
 				if (op_volatile(((Oper *) expr->oper)->opno) == PROVOLATILE_VOLATILE)
 					return true;
 				break;
@@ -1138,7 +1143,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 		 * expression_tree_mutator directly rather than recursing to self.
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
-										  eval_const_expressions_mutator,
+												eval_const_expressions_mutator,
 												(void *) context);
 
 		switch (expr->opType)
@@ -1159,6 +1164,97 @@ eval_const_expressions_mutator(Node *node, void *context)
 				 * args
 				 */
 				break;
+			case DISTINCT_EXPR:
+				{
+					List *arg;
+					bool has_null_input = false;
+					bool all_null_input = true;
+					bool has_nonconst_input = false;
+
+					/*
+					 * Check for constant inputs and especially constant-NULL inputs.
+					 */
+					Assert(length(args) == 2);
+					foreach(arg, args)
+					{
+						if (IsA(lfirst(arg), Const))
+						{
+							has_null_input |= ((Const *) lfirst(arg))->constisnull;
+							all_null_input &= ((Const *) lfirst(arg))->constisnull;
+						}
+						else
+						{
+							has_nonconst_input = true;
+						}
+					}
+					/* all nulls? then not distinct */
+					if (all_null_input)
+						return MAKEBOOLCONST(false, false);
+
+					/* one null? then distinct */
+					if (has_null_input)
+						return MAKEBOOLCONST(true, false);
+
+					/* all constants? then optimize this out */
+					if (!has_nonconst_input)
+					{
+						Oid			result_typeid;
+						int16		resultTypLen;
+						bool		resultTypByVal;
+						ExprContext *econtext;
+						Datum		const_val;
+						bool		const_is_null;
+
+						Oper	   *oper = (Oper *) expr->oper;
+						replace_opid(oper);		/* OK to scribble on input to this extent */
+						result_typeid = oper->opresulttype;
+
+						/*
+						 * OK, looks like we can simplify this operator/function.
+						 *
+						 * We use the executor's routine ExecEvalExpr() to avoid duplication of
+						 * code and ensure we get the same result as the executor would get.
+						 *
+						 * Build a new Expr node containing the already-simplified arguments. The
+						 * only other setup needed here is the replace_opid() that we already
+						 * did for the OP_EXPR case.
+						 */
+						newexpr = makeNode(Expr);
+						newexpr->typeOid = expr->typeOid;
+						newexpr->opType = expr->opType;
+						newexpr->oper = expr->oper;
+						newexpr->args = args;
+
+						/* Get info needed about result datatype */
+						get_typlenbyval(result_typeid, &resultTypLen, &resultTypByVal);
+
+						/*
+						 * It is OK to pass a dummy econtext because none of the
+						 * ExecEvalExpr() code used in this situation will use econtext.  That
+						 * might seem fortuitous, but it's not so unreasonable --- a constant
+						 * expression does not depend on context, by definition, n'est ce pas?
+						 */
+						econtext = MakeExprContext(NULL, CurrentMemoryContext);
+
+						const_val = ExecEvalExprSwitchContext((Node *) newexpr, econtext,
+															  &const_is_null, NULL);
+
+						/* Must copy result out of sub-context used by expression eval */
+						if (!const_is_null)
+							const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
+
+						FreeExprContext(econtext);
+						pfree(newexpr);
+
+						/*
+						 * Make the constant result node.
+						 */
+						return (Node *) makeConst(result_typeid, resultTypLen,
+												  const_val, const_is_null,
+												  resultTypByVal, false, false);
+					}
+					break;
+				}
 			case OR_EXPR:
 				{
 

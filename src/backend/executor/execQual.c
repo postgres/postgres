@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.94 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.95 2002/07/04 15:23:29 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,8 @@ static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
+			 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalDistinct(Expr *opClause, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
@@ -832,6 +834,7 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 
 /* ----------------------------------------------------------------
  *		ExecEvalOper
+ *		ExecEvalDistinct
  *		ExecEvalFunc
  *
  *		Evaluate the functional result of a list of arguments by calling the
@@ -876,6 +879,80 @@ ExecEvalOper(Expr *opClause,
 
 	return ExecMakeFunctionResult(fcache, argList, econtext,
 								  isNull, isDone);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalDistinct
+ *
+ * IS DISTINCT FROM must evaluate arguments to determine whether
+ * they are NULL; if either is NULL then the result is already
+ * known. If neither is NULL, then proceed to evaluate the
+ * function. Note that this is *always* derived from the equals
+ * operator, but since we've already evaluated the arguments
+ * we can not simply reuse ExecEvalOper() or ExecEvalFunc().
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalDistinct(Expr *opClause,
+				 ExprContext *econtext,
+				 bool *isNull,
+				 ExprDoneCond *isDone)
+{
+	bool result;
+	FunctionCachePtr fcache;
+	FunctionCallInfoData fcinfo;
+	ExprDoneCond argDone;
+	Oper	   *op;
+	List	   *argList;
+
+	/*
+	 * we extract the oid of the function associated with the op and then
+	 * pass the work onto ExecMakeFunctionResult which evaluates the
+	 * arguments and returns the result of calling the function on the
+	 * evaluated arguments.
+	 */
+	op = (Oper *) opClause->oper;
+	argList = opClause->args;
+
+	/*
+	 * get the fcache from the Oper node. If it is NULL, then initialize
+	 * it
+	 */
+	fcache = op->op_fcache;
+	if (fcache == NULL)
+	{
+		fcache = init_fcache(op->opid, length(argList),
+							 econtext->ecxt_per_query_memory);
+		op->op_fcache = fcache;
+	}
+	Assert(fcache->func.fn_retset == FALSE);
+
+	/* Need to prep callinfo structure */
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	fcinfo.flinfo = &(fcache->func);
+	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
+	Assert(fcinfo->nargs == 2);
+
+	if (fcinfo.argnull[0] && fcinfo.argnull[1])
+	{
+		/* Both NULL? Then is not distinct... */
+		result = FALSE;
+	}
+	else if (fcinfo.argnull[0] || fcinfo.argnull[1])
+	{
+		/* One is NULL? Then is distinct... */
+		result = TRUE;
+	}
+	else
+	{
+		fcinfo.isnull = false;
+		result = FunctionCallInvoke(&fcinfo);
+		*isNull = fcinfo.isnull;
+
+		result = (!DatumGetBool(result));
+	}
+
+	return BoolGetDatum(result);
 }
 
 /* ----------------------------------------------------------------
@@ -1366,6 +1443,10 @@ ExecEvalExpr(Node *expression,
 						break;
 					case NOT_EXPR:
 						retDatum = ExecEvalNot(expr, econtext, isNull);
+						break;
+					case DISTINCT_EXPR:
+						retDatum = ExecEvalDistinct(expr, econtext,
+													isNull, isDone);
 						break;
 					case SUBPLAN_EXPR:
 						retDatum = ExecSubPlan((SubPlan *) expr->oper,

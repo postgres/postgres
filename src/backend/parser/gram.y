@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.335 2002/07/01 15:27:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.336 2002/07/04 15:23:59 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -90,7 +90,11 @@ static Node *makeIntConst(int val);
 static Node *makeFloatConst(char *str);
 static Node *makeAConst(Value *v);
 static Node *makeRowExpr(List *opr, List *largs, List *rargs);
+static Node *makeDistinctExpr(List *largs, List *rargs);
+static Node *makeRowNullTest(NullTestType test, List *args);
 static DefElem *makeDefElem(char *name, Node *arg);
+static A_Const *makeBoolConst(bool state);
+static FuncCall *makeOverlaps(List *largs, List *rargs);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *forUpdate,
@@ -265,10 +269,9 @@ static void doNegateFloat(Value *v);
 %type <node>	columnDef
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause, insert_column_item,
-				a_expr, b_expr, c_expr, AexprConst,
+				a_expr, b_expr, c_expr, r_expr, AexprConst,
 				in_expr, having_clause, func_table
-%type <list>	row_descriptor, row_list, in_expr_nodes
-%type <node>	row_expr
+%type <list>	row, row_descriptor, row_list, in_expr_nodes
 %type <node>	case_expr, case_arg, when_clause, case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
@@ -386,7 +389,7 @@ static void doNegateFloat(Value *v);
 	SYSID,
 
 	TABLE, TEMP, TEMPLATE, TEMPORARY, THEN, TIME, TIMESTAMP,
-	TO, TOAST, TRAILING, TRANSACTION, TRIGGER, TRIM, TRUE_P,
+	TO, TOAST, TRAILING, TRANSACTION, TREAT, TRIGGER, TRIM, TRUE_P,
 	TRUNCATE, TRUSTED, TYPE_P,
 
 	UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UNLISTEN, UNTIL,
@@ -426,7 +429,7 @@ static void doNegateFloat(Value *v);
 %nonassoc	LIKE ILIKE SIMILAR
 %nonassoc	ESCAPE
 %nonassoc	OVERLAPS
-%nonassoc	BETWEEN
+%nonassoc	BETWEEN DISTINCT
 %nonassoc	IN_P
 %left		POSTFIXOP		/* dummy for postfix Op rules */
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
@@ -5072,83 +5075,114 @@ opt_interval:
 
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
- *	with singleton expressions.
+ *	with singleton expressions. Use SQL99's ROW keyword to allow rows of
+ *  one element.
  */
-row_expr:	'(' row_descriptor ')' IN_P select_with_parens
+r_expr:  row IN_P select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
+					n->lefthand = $1;
 					n->oper = (List *) makeSimpleA_Expr(OP, "=", NULL, NULL);
 					n->useor = FALSE;
 					n->subLinkType = ANY_SUBLINK;
-					n->subselect = $5;
+					n->subselect = $3;
 					$$ = (Node *)n;
 				}
-			| '(' row_descriptor ')' NOT IN_P select_with_parens
+			| row NOT IN_P select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
+					n->lefthand = $1;
 					n->oper = (List *) makeSimpleA_Expr(OP, "<>", NULL, NULL);
 					n->useor = TRUE;
 					n->subLinkType = ALL_SUBLINK;
-					n->subselect = $6;
+					n->subselect = $4;
 					$$ = (Node *)n;
 				}
-			| '(' row_descriptor ')' qual_all_Op sub_type select_with_parens
+			| row qual_all_Op sub_type select_with_parens
 			%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = (List *) makeA_Expr(OP, $4, NULL, NULL);
-					if (strcmp(strVal(llast($4)), "<>") == 0)
+					n->lefthand = $1;
+					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
+					if (strcmp(strVal(llast($2)), "<>") == 0)
 						n->useor = TRUE;
 					else
 						n->useor = FALSE;
-					n->subLinkType = $5;
-					n->subselect = $6;
+					n->subLinkType = $3;
+					n->subselect = $4;
 					$$ = (Node *)n;
 				}
-			| '(' row_descriptor ')' qual_all_Op select_with_parens
+			| row qual_all_Op select_with_parens
 			%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->oper = (List *) makeA_Expr(OP, $4, NULL, NULL);
-					if (strcmp(strVal(llast($4)), "<>") == 0)
+					n->lefthand = $1;
+					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
+					if (strcmp(strVal(llast($2)), "<>") == 0)
 						n->useor = TRUE;
 					else
 						n->useor = FALSE;
 					n->subLinkType = MULTIEXPR_SUBLINK;
-					n->subselect = $5;
+					n->subselect = $3;
 					$$ = (Node *)n;
 				}
-			| '(' row_descriptor ')' qual_all_Op '(' row_descriptor ')'
+			| row qual_all_Op row
 			%prec Op
 				{
-					$$ = makeRowExpr($4, $2, $6);
+					$$ = makeRowExpr($2, $1, $3);
 				}
-			| '(' row_descriptor ')' OVERLAPS '(' row_descriptor ')'
+			| row IS NULL_P
 				{
-					FuncCall *n = makeNode(FuncCall);
-					List *largs = $2;
-					List *rargs = $6;
-					n->funcname = SystemFuncName("overlaps");
-					if (length(largs) == 1)
-						largs = lappend(largs, $2);
-					else if (length(largs) != 2)
-						elog(ERROR, "Wrong number of parameters"
-							 " on left side of OVERLAPS expression");
-					if (length(rargs) == 1)
-						rargs = lappend(rargs, $6);
-					else if (length(rargs) != 2)
-						elog(ERROR, "Wrong number of parameters"
-							 " on right side of OVERLAPS expression");
-					n->args = nconc(largs, rargs);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
+					$$ = makeRowNullTest(IS_NULL, $1);
+				}
+			| row IS NOT NULL_P
+				{
+					$$ = makeRowNullTest(IS_NOT_NULL, $1);
+				}
+			| row OVERLAPS row
+				{
+					$$ = (Node *)makeOverlaps($1, $3);
+				}
+			| row IS DISTINCT FROM row
+				{
+					/* IS DISTINCT FROM has the following rules for non-array types:
+					 * a) the row lengths must be equal
+					 * b) if both rows are zero-length, then they are not distinct
+					 * c) if any element is distinct, the rows are distinct
+					 * The rules for an element being distinct:
+					 * a) if the elements are both NULL, then they are not distinct
+					 * b) if the elements compare to be equal, then they are not distinct
+					 * c) otherwise, they are distinct
+					 */
+					List *largs = $1;
+					List *rargs = $5;
+					/* lengths don't match? then complain */
+					if (length(largs) != length(rargs))
+					{
+						elog(ERROR, "Unequal number of entries in row expression");
+					}
+					/* both are zero-length rows? then they are not distinct */
+					else if (length(largs) <= 0)
+					{
+						$$ = (Node *)makeBoolConst(FALSE);
+					}
+					/* otherwise, we need to compare each element */
+					else
+					{
+						$$ = (Node *)makeDistinctExpr(largs, rargs);
+					}
 				}
 		;
+
+/* Explicit row production.
+ * SQL99 allows an optional ROW keyword, so we can now do single-element productions
+ * without conflicting with the parenthesized a_expr production.
+ */
+row:  ROW '(' row_descriptor ')'					{ $$ = $3; }
+			| ROW '(' a_expr ')'					{ $$ = makeList1($3); }
+			| ROW '(' ')'							{ $$ = NULL; }
+			| '(' row_descriptor ')'				{ $$ = $2; }
+;
 
 row_descriptor:
 			row_list ',' a_expr						{ $$ = lappend($1, $3); }
@@ -5356,8 +5390,6 @@ a_expr:		c_expr									{ $$ = $1; }
 			 * Allow two SQL extensions
 			 *	a ISNULL
 			 *	a NOTNULL
-			 * NOTE: this is not yet fully SQL-compatible, since SQL92
-			 * allows a row constructor as argument, not just a scalar.
 			 */
 			| a_expr ISNULL
 				{
@@ -5387,15 +5419,6 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->nulltesttype = IS_NOT_NULL;
 					$$ = (Node *)n;
 				}
-			/* IS TRUE, IS FALSE, etc used to be function calls
-			 *	but let's make them expressions to allow the optimizer
-			 *	a chance to eliminate them if a_expr is a constant string.
-			 * - thomas 1997-12-22
-			 *
-			 *	Created BooleanTest Node type, and changed handling
-			 *	for NULL inputs
-			 * - jec 2001-06-18
-			 */
 			| a_expr IS TRUE_P
 				{
 					BooleanTest *b = makeNode(BooleanTest);
@@ -5438,6 +5461,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					b->booltesttype = IS_NOT_UNKNOWN;
 					$$ = (Node *)b;
 				}
+			| a_expr IS DISTINCT FROM a_expr			%prec DISTINCT
+				{ $$ = (Node *) makeSimpleA_Expr(DISTINCT, "=", $1, $5); }
 			| a_expr BETWEEN b_expr AND b_expr			%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AND, NIL,
@@ -5457,8 +5482,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					{
 							SubLink *n = (SubLink *)$3;
 							n->lefthand = makeList1($1);
-							n->oper = (List *) makeSimpleA_Expr(OP, "=",
-																NULL, NULL);
+							n->oper = (List *) makeSimpleA_Expr(OP, "=", NULL, NULL);
 							n->useor = FALSE;
 							n->subLinkType = ANY_SUBLINK;
 							$$ = (Node *)n;
@@ -5470,8 +5494,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						foreach(l, (List *) $3)
 						{
 							Node *cmp;
-							cmp = (Node *) makeSimpleA_Expr(OP, "=",
-															$1, lfirst(l));
+							cmp = (Node *) makeSimpleA_Expr(OP, "=", $1, lfirst(l));
 							if (n == NULL)
 								n = cmp;
 							else
@@ -5487,8 +5510,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					{
 						SubLink *n = (SubLink *)$4;
 						n->lefthand = makeList1($1);
-						n->oper = (List *) makeSimpleA_Expr(OP, "<>",
-															NULL, NULL);
+						n->oper = (List *) makeSimpleA_Expr(OP, "<>", NULL, NULL);
 						n->useor = FALSE;
 						n->subLinkType = ALL_SUBLINK;
 						$$ = (Node *)n;
@@ -5500,8 +5522,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						foreach(l, (List *) $4)
 						{
 							Node *cmp;
-							cmp = (Node *) makeSimpleA_Expr(OP, "<>",
-															$1, lfirst(l));
+							cmp = (Node *) makeSimpleA_Expr(OP, "<>", $1, lfirst(l));
 							if (n == NULL)
 								n = cmp;
 							else
@@ -5520,7 +5541,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
-			| row_expr
+			| r_expr
 				{ $$ = $1; }
 		;
 
@@ -5573,6 +5594,8 @@ b_expr:		c_expr
 				{ $$ = (Node *) makeA_Expr(OP, $1, NULL, $2); }
 			| b_expr qual_Op					%prec POSTFIXOP
 				{ $$ = (Node *) makeA_Expr(OP, $2, $1, NULL); }
+			| b_expr IS DISTINCT FROM b_expr	%prec Op
+				{ $$ = (Node *) makeSimpleA_Expr(DISTINCT, "=", $1, $5); }
 		;
 
 /*
@@ -5606,8 +5629,6 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->indirection = $5;
 					$$ = (Node *)n;
 				}
-			| CAST '(' a_expr AS Typename ')'
-				{ $$ = makeTypeCast($3, $5); }
 			| case_expr
 				{ $$ = $1; }
 			| func_name '(' ')'
@@ -5908,6 +5929,8 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
+			| CAST '(' a_expr AS Typename ')'
+				{ $$ = makeTypeCast($3, $5); }
 			| EXTRACT '(' extract_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -5951,6 +5974,22 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+			| TREAT '(' a_expr AS Typename ')'
+				{
+					/* TREAT(expr AS target) converts expr of a particular type to target,
+					 * which is defined to be a subtype of the original expression.
+					 * In SQL99, this is intended for use with structured UDTs,
+					 * but let's make this a generally useful form allowing stronger
+					 * coersions than are handled by implicit casting.
+					 */
+					FuncCall *n = makeNode(FuncCall);
+					/* Convert SystemTypeName() to SystemFuncName() even though
+					 * at the moment they result in the same thing.
+					 */
+					n->funcname = SystemFuncName(((Value *)llast($5->names))->val.str);
+					n->args = makeList1($3);
 					$$ = (Node *)n;
 				}
 			| TRIM '(' BOTH trim_list ')'
@@ -6505,19 +6544,11 @@ AexprConst: Iconst
 				}
 			| TRUE_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "t";
-					n->typename = SystemTypeName("bool");
-					$$ = (Node *)n;
+					$$ = (Node *)makeBoolConst(TRUE);
 				}
 			| FALSE_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "f";
-					n->typename = SystemTypeName("bool");
-					$$ = (Node *)n;
+					$$ = (Node *)makeBoolConst(FALSE);
 				}
 			| NULL_P
 				{
@@ -6707,7 +6738,6 @@ unreserved_keyword:
 			| RETURNS
 			| REVOKE
 			| ROLLBACK
-			| ROW
 			| RULE
 			| SCHEMA
 			| SCROLL
@@ -6792,6 +6822,7 @@ col_name_keyword:
 			| OVERLAY
 			| POSITION
 			| REAL
+			| ROW
 			| SETOF
 			| SMALLINT
 			| SUBSTRING
@@ -6903,6 +6934,7 @@ reserved_keyword:
 			| THEN
 			| TO
 			| TRAILING
+			| TREAT
 			| TRUE_P
 			| UNION
 			| UNIQUE
@@ -7028,6 +7060,19 @@ makeDefElem(char *name, Node *arg)
 	return f;
 }
 
+/* makeBoolConst()
+ * Create an A_Const node and initialize to a boolean constant.
+ */
+static A_Const *
+makeBoolConst(bool state)
+{
+	A_Const *n = makeNode(A_Const);
+	n->val.type = T_String;
+	n->val.val.str = (state? "t": "f");
+	n->typename = SystemTypeName("bool");
+	return n;
+}
+
 /* makeRowExpr()
  * Generate separate operator nodes for a single row descriptor expression.
  * Perhaps this should go deeper in the parser someday...
@@ -7082,8 +7127,90 @@ makeRowExpr(List *opr, List *largs, List *rargs)
 	return expr;
 }
 
+/* makeDistinctExpr()
+ * Generate separate operator nodes for a single row descriptor expression.
+ * Same comments as for makeRowExpr().
+ */
+static Node *
+makeDistinctExpr(List *largs, List *rargs)
+{
+	Node *expr = NULL;
+	Node *larg, *rarg;
+
+	if (length(largs) != length(rargs))
+		elog(ERROR, "Unequal number of entries in row expression");
+
+	if (lnext(largs) != NIL)
+		expr = makeDistinctExpr(lnext(largs), lnext(rargs));
+
+	larg = lfirst(largs);
+	rarg = lfirst(rargs);
+
+	if (expr == NULL)
+		expr = (Node *) makeSimpleA_Expr(DISTINCT, "=", larg, rarg);
+	else
+		expr = (Node *) makeA_Expr(OR, NIL, expr,
+								   (Node *) makeSimpleA_Expr(DISTINCT, "=",
+															 larg, rarg));
+
+	return expr;
+}
+
+/* makeRowNullTest()
+ * Generate separate operator nodes for a single row descriptor test.
+ */
+static Node *
+makeRowNullTest(NullTestType test, List *args)
+{
+	Node *expr = NULL;
+	Node *arg;
+	NullTest *n;
+
+	if (lnext(args) != NIL)
+		expr = makeRowNullTest(test, lnext(args));
+
+	arg = lfirst(args);
+
+	n = makeNode(NullTest);
+	n->arg = arg;
+	n->nulltesttype = test;
+
+	if (expr == NULL)
+		expr = (Node *)n;
+	else if (test == IS_NOT_NULL)
+		expr = (Node *) makeA_Expr(OR, NIL, expr, (Node *)n);
+	else
+		expr = (Node *) makeA_Expr(AND, NIL, expr, (Node *)n);
+
+	return expr;
+}
+
+/* makeOverlaps()
+ * Create and populate a FuncCall node to support the OVERLAPS operator.
+ */
+static FuncCall *
+makeOverlaps(List *largs, List *rargs)
+{
+	FuncCall *n = makeNode(FuncCall);
+	n->funcname = SystemFuncName("overlaps");
+	if (length(largs) == 1)
+		largs = lappend(largs, largs);
+	else if (length(largs) != 2)
+		elog(ERROR, "Wrong number of parameters"
+			 " on left side of OVERLAPS expression");
+	if (length(rargs) == 1)
+		rargs = lappend(rargs, rargs);
+	else if (length(rargs) != 2)
+		elog(ERROR, "Wrong number of parameters"
+			 " on right side of OVERLAPS expression");
+	n->args = nconc(largs, rargs);
+	n->agg_star = FALSE;
+	n->agg_distinct = FALSE;
+	return n;
+}
+
 /* findLeftmostSelect()
- *		Find the leftmost component SelectStmt in a set-operation parsetree.
+ * Find the leftmost component SelectStmt in a set-operation parsetree.
  */
 static SelectStmt *
 findLeftmostSelect(SelectStmt *node)
@@ -7095,7 +7222,7 @@ findLeftmostSelect(SelectStmt *node)
 }
 
 /* insertSelectOptions()
- *		Insert ORDER BY, etc into an already-constructed SelectStmt.
+ * Insert ORDER BY, etc into an already-constructed SelectStmt.
  *
  * This routine is just to avoid duplicating code in SelectStmt productions.
  */
@@ -7147,7 +7274,7 @@ makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
 }
 
 /* SystemFuncName()
- *	Build a properly-qualified reference to a built-in function.
+ * Build a properly-qualified reference to a built-in function.
  */
 List *
 SystemFuncName(char *name)
@@ -7156,7 +7283,7 @@ SystemFuncName(char *name)
 }
 
 /* SystemTypeName()
- *	Build a properly-qualified reference to a built-in type.
+ * Build a properly-qualified reference to a built-in type.
  *
  * typmod is defaulted, but may be changed afterwards by caller.
  */
@@ -7170,7 +7297,7 @@ SystemTypeName(char *name)
 	return n;
 }
 
-/*
+/* parser_init()
  * Initialize to parse one query string
  */
 void
@@ -7185,7 +7312,7 @@ parser_init(Oid *typev, int nargs)
 	pfunc_num_args = nargs;
 }
 
-/*
+/* param_type()
  * Fetch a parameter type previously passed to parser_init
  */
 Oid
@@ -7196,7 +7323,7 @@ param_type(int t)
 	return param_type_info[t - 1];
 }
 
-/*
+/* exprIsNullConstant()
  * Test whether an a_expr is a plain NULL constant or not.
  */
 bool
@@ -7213,8 +7340,8 @@ exprIsNullConstant(Node *arg)
 	return FALSE;
 }
 
-/*
- * doNegate --- handle negation of a numeric constant.
+/* doNegate()
+ * Handle negation of a numeric constant.
  *
  * Formerly, we did this here because the optimizer couldn't cope with
  * indexquals that looked like "var = -4" --- it wants "var = const"

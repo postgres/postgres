@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.123 2002/06/20 20:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.124 2002/07/04 15:23:54 thomas Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -804,6 +804,8 @@ _readExpr(void)
 	token = pg_strtok(&length); /* get opType */
 	if (strncmp(token, "op", 2) == 0)
 		local_node->opType = OP_EXPR;
+	else if (strncmp(token, "distinct", 8) == 0)
+		local_node->opType = DISTINCT_EXPR;
 	else if (strncmp(token, "func", 4) == 0)
 		local_node->opType = FUNC_EXPR;
 	else if (strncmp(token, "or", 2) == 0)

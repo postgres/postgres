@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.160 2002/06/20 20:29:29 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.161 2002/07/04 15:23:53 thomas Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -718,6 +718,9 @@ _outExpr(StringInfo str, Expr *node)
 	{
 		case OP_EXPR:
 			opstr = "op";
+			break;
+		case DISTINCT_EXPR:
+			opstr = "distinct";
 			break;
 		case FUNC_EXPR:
 			opstr = "func";

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.108 2002/06/13 03:40:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.109 2002/07/04 15:24:07 thomas Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1624,6 +1624,21 @@ get_rule_expr(Node *node, deparse_context *context)
 				{
 					case OP_EXPR:
 						get_oper_expr(expr, context);
+						break;
+
+					case DISTINCT_EXPR:
+						appendStringInfoChar(buf, '(');
+						Assert(length(args) == 2);
+						{
+							/* binary operator */
+							Node   *arg1 = (Node *) lfirst(args);
+							Node   *arg2 = (Node *) lsecond(args);
+
+							get_rule_expr(arg1, context);
+							appendStringInfo(buf, " IS DISTINCT FROM ");
+							get_rule_expr(arg2, context);
+						}
+						appendStringInfoChar(buf, ')');
 						break;
 
 					case FUNC_EXPR:

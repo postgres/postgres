@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.119 2002/06/20 20:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.120 2002/07/04 15:24:01 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,6 +271,17 @@ transformExpr(ParseState *pstate, Node *expr)
 							result = (Node *) expr;
 						}
 						break;
+					case DISTINCT:
+						{
+							Node	   *lexpr = transformExpr(pstate,
+															  a->lexpr);
+							Node	   *rexpr = transformExpr(pstate,
+															  a->rexpr);
+							result = (Node *) make_op(a->name,
+													  lexpr,
+													  rexpr);
+							((Expr *)result)->opType = DISTINCT_EXPR;
+						}
 				}
 				break;
 			}

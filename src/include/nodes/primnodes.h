@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.64 2002/06/20 20:29:51 momjian Exp $
+ * $Id: primnodes.h,v 1.65 2002/07/04 15:24:11 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,8 @@ typedef struct RangeVar
  */
 typedef enum OpType
 {
-	OP_EXPR, FUNC_EXPR, OR_EXPR, AND_EXPR, NOT_EXPR, SUBPLAN_EXPR
+	OP_EXPR, DISTINCT_EXPR, FUNC_EXPR,
+	OR_EXPR, AND_EXPR, NOT_EXPR, SUBPLAN_EXPR
 } OpType;
 
 typedef struct Expr

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.117 2002/06/22 02:04:45 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.118 2002/07/04 15:24:01 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"toast", TOAST},
 	{"trailing", TRAILING},
 	{"transaction", TRANSACTION},
+	{"treat", TREAT},
 	{"trigger", TRIGGER},
 	{"trim", TRIM},
 	{"true", TRUE_P},
