@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-O2 -g
+CFLAGS:-O2
 SHARED_LIB:
 ALL:
 SRCH_INC:/usr/local/include

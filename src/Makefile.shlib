@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.15 1999/09/27 20:54:56 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.16 1999/10/13 11:38:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -274,3 +274,6 @@ endif
 
 clean-shlib:
 	rm -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX)
+ifeq ($(PORTNAME), win)
+	rm -rf $(NAME).def
+endif

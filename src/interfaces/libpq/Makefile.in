@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.48 1999/10/11 17:47:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.49 1999/10/13 11:38:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,9 +88,6 @@ install-headers: libpq-fe.h libpq-int.h
 clean: clean-shlib
 	rm -f lib$(NAME).a $(OBJS)
 	rm -f dllist.c common.c wchar.c conv.c big5.c
-ifeq ($(PORTNAME), win)
-	rm -f pq.def
-endif
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
