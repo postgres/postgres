@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.15 1996/10/25 19:57:43 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.16 1996/10/29 19:08:46 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -42,7 +42,7 @@
 #	linux		-	Intel x86 on Linux 1.2 and Linux ELF
 #				(For non-ELF Linux, you need to comment out 
 #				"LINUX_ELF=1" in src/mk/port/postgres.mk.linux)
-#	BSD44_derived	-	OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
+#	
 #       bsdi            -       BSD/OS 2.0 and 2.01
 #       bsdi_2_1        -       BSD/OS 2.1
 #	aix		-	IBM on AIX 3.2.5
@@ -60,7 +60,7 @@
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
 # 
-PORTNAME=	BSD44_derived
+PORTNAME=	UNDEFINED
 
 # SRCDIR specifies where the source files are. 
 SRCDIR=		/usr/local/postgres95/src
