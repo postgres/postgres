@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.53 1999/09/24 00:24:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.54 1999/09/28 11:41:03 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -632,7 +632,7 @@ RecordTransactionCommit()
 	 */
 	if (SharedBufferChanged)
 	{
-		FlushBufferPool(!TransactionFlushEnabled());
+		FlushBufferPool();
 		if (leak)
 			ResetBufferPool();
 
@@ -646,7 +646,7 @@ RecordTransactionCommit()
 		 *	Now write the log info to the disk too.
 		 */
 		leak = BufferPoolCheckLeak();
-		FlushBufferPool(!TransactionFlushEnabled());
+		FlushBufferPool();
 	}
 
 	if (leak)

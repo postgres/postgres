@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include "postgres.h"
 #include "access/xlog.h"
@@ -1376,12 +1377,10 @@ CreateCheckPoint(bool shutdown)
 	/* Get REDO record ptr */
 	while (!TAS(&(XLogCtl->insert_lck)))
 	{
-		struct timeval delay;
+		struct timeval delay = {0, 5000};
 
 		if (shutdown)
 			elog(STOP, "XLog insert lock is busy while data base is shutting down");
-		delay.tv_sec = 0;
-		delay.tv_usec = 0;
 		(void) select(0, NULL, NULL, NULL, &delay);
 	}
 	freespace = ((char*) Insert->currpage) + BLCKSZ - Insert->currpos;
@@ -1408,7 +1407,7 @@ CreateCheckPoint(bool shutdown)
 	checkPoint.nextOid = ShmemVariableCache->nextOid;
 	SpinRelease(OidGenLockId);
 
-	FlushBufferPool(false);
+	FlushBufferPool();
 
 	/* Get UNDO record ptr */
 

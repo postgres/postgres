@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.63 1999/09/24 00:24:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.64 1999/09/28 11:41:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1240,13 +1240,10 @@ relname=%s, blockNum=%d, flags=0x%x, refcount=%d %d)",
  * ------------------------------------------------
  */
 void
-FlushBufferPool(int StableMainMemoryFlag)
+FlushBufferPool(void)
 {
-	if (!StableMainMemoryFlag)
-	{
-		BufferSync();
-		smgrcommit();
-	}
+	BufferSync();
+	smgrcommit();
 }
 
 /*

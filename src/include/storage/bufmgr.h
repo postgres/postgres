@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.31 1999/09/24 00:25:27 tgl Exp $
+ * $Id: bufmgr.h,v 1.32 1999/09/28 11:40:53 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ extern void PrintBufferUsage(FILE *statfp);
 extern void ResetBufferUsage(void);
 extern void ResetBufferPool(void);
 extern int	BufferPoolCheckLeak(void);
-extern void FlushBufferPool(int StableMainMemoryFlag);
+extern void FlushBufferPool(void);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
 extern int	FlushRelationBuffers(Relation rel, BlockNumber block,

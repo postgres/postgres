@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.49 1999/09/24 00:24:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.50 1999/09/28 11:41:09 vadim Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -541,8 +541,10 @@ InitPostgres(char *name)		/* database name */
 	 */
 	InitLocalBuffer();
 
+#ifndef XLOG
 	if (!TransactionFlushEnabled())
 		on_shmem_exit(FlushBufferPool, (caddr_t) NULL);
+#endif
 
 	/* ----------------
 	 *	initialize the database id used for system caches and lock tables

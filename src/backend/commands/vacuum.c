@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.121 1999/09/24 00:24:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.122 1999/09/28 11:41:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1703,9 +1703,9 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 		 * flush buffers and record status of current transaction as
 		 * committed, and continue. - vadim 11/13/96
 		 */
-		FlushBufferPool(!TransactionFlushEnabled());
+		FlushBufferPool();
 		TransactionIdCommit(myXID);
-		FlushBufferPool(!TransactionFlushEnabled());
+		FlushBufferPool();
 	}
 
 	/*
@@ -1899,12 +1899,10 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages)
 			 vacrelstats->num_pages, nblocks);
 
 		/*
-		 * we have to flush "empty" end-pages (if changed, but who knows
-		 * it) before truncation
-		 *
-		 * XXX wouldn't passing 'true' to FlushRelationBuffers do the job?
+		 * We have to flush "empty" end-pages (if changed, but who knows it)
+		 * before truncation
 		 */
-		FlushBufferPool(!TransactionFlushEnabled());
+		FlushBufferPool();
 
 		i = FlushRelationBuffers(onerel, nblocks, false);
 		if (i < 0)
