@@ -135,3 +135,15 @@ be NOT NULL.
 
    To CREATE FUNCTION use insert_username.sql (will be made by gmake from
 insert_username.source).
+
+
+5. moddatetime.c - function for maintaining a modification datetime stamp.
+
+   You have to create a BEFORE UPDATE trigger using the function moddatetime().
+One argument must be given, that is the name of the field that is of type 
+datetime that is to be used as the modification time stamp.
+
+   There is an example in moddatetime.example.
+	
+   To CREATE FUNCTION use moddatetime.sql ( will be made by gmake from 
+moddatetime.source).
