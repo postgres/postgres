@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.118 2003/06/26 11:37:05 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.119 2003/07/25 05:42:27 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@ static int		literalalloc;			/* current allocated buffer size */
 #define startlit()	(literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
 static void addlitchar (unsigned char);
-static void string_unput (char *);
 static void parse_include (void);
 
 char *token_start;
@@ -721,9 +720,7 @@ cppline			{space}*#(.*\\{space})+.*
 						}
 						else
 						{
-							string_unput("define ");
-							/* remove the "define " part of the text */
-							yytext[1] = '\0';
+							yyless(1);
 							return (S_ANYTHING);
 						}
 					}
@@ -732,14 +729,12 @@ cppline			{space}*#(.*\\{space})+.*
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
-					  	BEGIN(incl);
+						  BEGIN(incl);
 					  }
 					  else
 					  {
-					  	string_unput("include ");
-						/* remove the "include " part of the text */
-						yytext[1] = '\0';
-						return (S_ANYTHING);
+						  yyless(1);
+						  return (S_ANYTHING);
 					  }
 					}
 <C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = TRUE; BEGIN(xcond); }
@@ -747,15 +742,13 @@ cppline			{space}*#(.*\\{space})+.*
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
-					  	ifcond = TRUE;
-						BEGIN(xcond);
+						  ifcond = TRUE;
+						  BEGIN(xcond);
 					  }
 					  else
 					  {
-					  	string_unput("ifdef ");
-						/* remove the "ifdef " part of the text */
-						yytext[1] = '\0';
-						return (S_ANYTHING);
+						  yyless(1);
+						  return (S_ANYTHING);
 					  }
 					}
 <C,xskip>{exec_sql}{ifndef}{space}* { ifcond = FALSE; BEGIN(xcond); }
@@ -763,15 +756,13 @@ cppline			{space}*#(.*\\{space})+.*
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
-					  	ifcond = FALSE;
-						BEGIN(xcond);
+						  ifcond = FALSE;
+						  BEGIN(xcond);
 					  }
 					  else
 					  {
-					  	string_unput("ifndef ");
-						/* remove the "ifndef " part of the text */
-						yytext[1] = '\0';
-						return (S_ANYTHING);
+						  yyless(1);
+						  return (S_ANYTHING);
 					  }
 					}
 <C,xskip>{exec_sql}{elif}{space}*	{	/* pop stack */
@@ -801,10 +792,8 @@ cppline			{space}*#(.*\\{space})+.*
 					  }
 					  else
 					  {
-					  	string_unput("elif ");
-						/* remove the "elif " part of the text */
-						yytext[1] = '\0';
-						return (S_ANYTHING);
+						  yyless(1);
+						  return (S_ANYTHING);
 					  }
 					}
 
@@ -845,10 +834,8 @@ cppline			{space}*#(.*\\{space})+.*
 					  }
 					  else
 					  {
-					  	string_unput("else ");
-						/* remove the "else " part of the text */
-						yytext[1] = '\0';
-						return (S_ANYTHING);
+						  yyless(1);
+						  return (S_ANYTHING);
 					  }
 					}
 <C,xskip>{exec_sql}{endif}{space}*";" {
@@ -878,10 +865,8 @@ cppline			{space}*#(.*\\{space})+.*
 					  }
 					  else
 					  {
-					  	string_unput("endif ");
-						/* remove the "endif " part of the text */
-						yytext[1] = '\0';
-						return (S_ANYTHING);
+						  yyless(1);
+						  return (S_ANYTHING);
 					  }
 					}
 
@@ -1043,16 +1028,6 @@ addlitchar(unsigned char ychar)
 	literalbuf[literallen] = ychar;
 	literallen += 1;
 	literalbuf[literallen] = '\0';
-}
-
-/* put string back on stack */
-static void 
-string_unput (char *string)
-{
-	int i;
-	
-	for (i = strlen(string)-1; i>=0; i--)
-		unput(string[i]);
 }
 
 static void
