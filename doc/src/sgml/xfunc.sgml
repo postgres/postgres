@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.93 2005/01/07 22:40:46 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.94 2005/01/07 23:08:44 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -449,6 +449,31 @@ SELECT name(emp) AS youngster FROM emp WHERE age(emp) &lt; 30;
  Andy
 </screen>
     </para>
+
+    <tip>
+     <para>
+      The equivalence between functional notation and attribute notation
+      makes it possible to use functions on composite types to emulate
+      <quote>computed fields</>.
+      <indexterm>
+       <primary>computed field</primary>
+      </indexterm>
+      <indexterm>
+       <primary>field</primary>
+       <secondary>computed</secondary>
+      </indexterm>
+      For example, using the previous definition
+      for <literal>double_salary(emp)</>, we can write
+
+<screen>
+SELECT emp.name, emp.double_salary FROM emp;
+</screen>
+
+      An application using this wouldn't need to be directly aware that
+      <literal>double_salary</> isn't a real column of the table.
+      (You can also emulate computed fields with views.)
+     </para>
+    </tip>
 
     <para>
      Another way to use a function returning a row result is to pass the
