@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.15 1999/05/17 00:25:33 tgl Exp $
+* $Id: geqo_params.c,v 1.16 1999/05/22 19:29:01 tgl Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -168,6 +168,9 @@ geqo_params(int string_length)
 						effort = MEDIUM_EFFORT;
 					else if (strcmp(buf, HIGH) == 0)
 						effort = HIGH_EFFORT;
+					/* undocumented extension: specify effort numerically */
+					else if (isdigit(buf[0]))
+						effort = atoi(buf);
 				}
 
 			}
