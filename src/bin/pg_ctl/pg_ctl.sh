@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.19 2001/03/18 20:27:11 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.20 2001/04/21 11:23:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -299,37 +299,33 @@ if [ $op = "start" -o $op = "restart" ];then
 	oldpid=`sed -n 1p $PIDFILE`
     fi
 
-    unset logopt
-    if [ -n "$logfile" ]; then
-        logopt='</dev/null >>$logfile 2>&1'
-    else
-        # when starting without log file, redirect stderr to stdout, so
-        # pg_ctl can be invoked with >$logfile and still have pg_ctl's
-        # stderr on the terminal.
-        logopt='</dev/null 2>&1'
-    fi
-
     # no -o given
     if [ -z "$POSTOPTS" ];then
 	if [ $op = "start" ];then
 	    # if we are in start mode, then look for postmaster.opts.default
 	    if [ -f $DEFPOSTOPTS ]; then
-		POSTOPTS=`cat $DEFPOSTOPTS`
+		eval set X "`cat $DEFPOSTOPTS`"; shift
 	    fi
-	    POSTOPTS="-D $PGDATA $POSTOPTS"
 	else
 	    # if we are in restart mode, then look for postmaster.opts
-	    set X `cat $POSTOPTSFILE`
-	    shift
+	    eval set X "`cat $POSTOPTSFILE`"; shift
             po_path=$1
             shift
-	    POSTOPTS=$@
 	fi
     else # -o given
-        POSTOPTS="-D $PGDATA $POSTOPTS"
+        eval set X "$POSTOPTS"; shift
     fi
 
-    eval '$po_path' '$POSTOPTS' $logopt '&'
+    set X -D "$PGDATA" ${1+"$@"}; shift
+
+    if [ -n "$logfile" ]; then
+        "$po_path" "$@" </dev/null >>$logfile 2>&1 &
+    else
+        # when starting without log file, redirect stderr to stdout, so
+        # pg_ctl can be invoked with >$logfile and still have pg_ctl's
+        # stderr on the terminal.
+        "$po_path" "$@" </dev/null 2>&1 &
+    fi
 
     # if had an old lockfile, check to see if we were able to start
     if [ -n "$oldpid" ];then
