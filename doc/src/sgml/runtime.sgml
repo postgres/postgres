@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.14 2000/07/15 21:35:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.15 2000/07/16 14:47:57 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -846,11 +846,39 @@ env PGOPTIONS='--geqo=off' psql
       <term>FSYNC (<type>boolean</type>)</term>
       <listitem>
        <para>
-        When this is on (default), an <function>fsync()</function>
-        call is done after each transaction. Turning this off
-        increases performance but an operating system crash or power
-        outage might cause data corruption. (Note that a crash of
-        <productname>Postgres</productname> itself is not affected.)
+        If this is option is on, the <productname>Postgres</> backend
+        will use the <function>fsync()</> system call in several
+        places to make sure that updates are physically written to
+        disk and will not hang around in the write caches. This
+        increases the chance that a database installation will still
+        be usable after a operating system or hardware crashes by a
+        large amount. (Crashes of the database server itself do
+        <emphasis>not</> affect this consideration.)
+       </para>
+
+       <para>
+        However, this operation severely slows down
+        <productname>Postgres</>, because at all those points it has
+        to block and wait for the operating system to flush the
+        buffers. Without <function>fsync</>, the operating system is
+        allowed to do its best in buffering, sorting, and delaying
+        writes, so this can be a <emphasis>very</> big perfomance
+        increase. However, if the system crashes, parts of the data of
+        a transaction that has already been committed -- according to
+        the information on disk -- will still hang around in memory.
+        Inconsistent data (i.e., data corruption) is therefore likely
+        to occur.
+       </para>
+
+       <para>
+        This option is the subject of an eternal debate in the
+        <productname>Postgres</> user and developer communities. Some
+        always leave it off, some turn it off only for bulk loads,
+        where there is a clear restart point if something goes wrong,
+        some leave it on just to be on the safe side. Because it is
+        the safe side, on is also the default. If you trust your
+        operating system, your utility company, and your hardware, you
+        might want to disable it.
        </para>
       </listitem>
      </varlistentry>
