@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Nov 19 13:10:23 EST 2001
+Last updated:		Mon Nov 19 15:02:16 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -387,6 +387,7 @@ SOURCE CODE
 * Make one version of simple_prompt() in code (Bruce, Tom)
 * Compile in syslog functionaility by default(?)
 * Modify regression tests to prevent failures do to minor numeric rounding
+* Remove USING clause from pg_get_indexdef() if index is btree (Bruce)
 
 ---------------------------------------------------------------------------
 
