@@ -147,7 +147,7 @@ class pgdbTypeCache:
 			return self.__type_cache[oid]
 		except:
 			self.__source.execute(
-				"SELECT typname, typprtlen, typlen "
+				"SELECT typname, typlen "
 				"FROM pg_type WHERE oid = %s" % oid
 			)
 			res = self.__source.fetch(1)[0]
@@ -155,7 +155,7 @@ class pgdbTypeCache:
 			# have to be prepended by the caller.
 			res = (
 				res[0],
-				string.atoi(res[1]), string.atoi(res[2]),
+				-1, string.atoi(res[1]),
 				None, None, None
 			)
 			self.__type_cache[oid] = res
