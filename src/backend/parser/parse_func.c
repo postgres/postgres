@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.9 1998/01/27 15:34:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.10 1998/02/02 02:12:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,7 +728,7 @@ func_get_detail(char *funcname,
 							 funcname);
 						elog(NOTICE, "that satisfies the given argument types. you will have to");
 						elog(NOTICE, "retype your query using explicit typecasts.");
-						func_error("", funcname, nargs, oid_array);
+						func_error("func_get_detail", funcname, nargs, oid_array);
 					}
 					else
 					{
@@ -758,7 +758,7 @@ func_get_detail(char *funcname,
 				elog(ERROR, "no such attribute or function \"%s\"",
 					 funcname);
 		}
-		func_error("", funcname, nargs, oid_array);
+		func_error("func_get_detail", funcname, nargs, oid_array);
 	}
 	else
 	{
