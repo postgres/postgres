@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.1 2004/04/30 04:09:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.2 2004/04/30 14:24:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include "tzfile.h"
 
 
-#ifdef WIN32
 static char tzdir[MAXPGPATH];
 static int done_tzdir = 0;
 char *pgwin32_TZDIR(void) {
@@ -23,8 +22,12 @@ char *pgwin32_TZDIR(void) {
 	if (done_tzdir)
 		return tzdir;
 
+#ifndef WIN32
+	StrNCpy(tzdir,PKGLIBDIR, MAXPGPATH);
+#else
 	if (GetModuleFileName(NULL,tzdir,MAXPGPATH) == 0)
 		return NULL;
+#endif
 	
 	canonicalize_path(tzdir);
 	if ((p = last_path_separator(tzdir)) == NULL)
@@ -32,11 +35,8 @@ char *pgwin32_TZDIR(void) {
 	else
 		*p = '\0';
 	
-	strcat(tzdir,"/../share/timezone");
+	strcat(tzdir,"/../timezone");
 
 	done_tzdir=1;
 	return tzdir;
 }
-#else
-#error pgwin32_TZDIR not implemented on non win32 yet!
-#endif
