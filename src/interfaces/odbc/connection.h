@@ -29,12 +29,12 @@
 
 typedef enum
 {
-	CONN_NOT_CONNECTED,			/* Connection has not been established */
-	CONN_CONNECTED,				/* Connection is up and has been
-								 * established */
-	CONN_DOWN,					/* Connection is broken */
-	CONN_EXECUTING				/* the connection is currently executing a
-								 * statement */
+	CONN_NOT_CONNECTED,		/* Connection has not been established */
+	CONN_CONNECTED,			/* Connection is up and has been
+							 * established */
+	CONN_DOWN,				/* Connection is broken */
+	CONN_EXECUTING			/* the connection is currently executing a
+							 * statement */
 } CONN_Status;
 
 /*	These errors have general sql error state */

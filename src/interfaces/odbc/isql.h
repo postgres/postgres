@@ -30,11 +30,11 @@ typedef signed short RETCODE;
 #define SQL_MAX_DSN_LENGTH	32
 
 /* return code */
-#define SQL_INVALID_HANDLE	(-2)
-#define SQL_ERROR			(-1)
-#define SQL_SUCCESS			0
-#define SQL_SUCCESS_WITH_INFO	   1
-#define SQL_NO_DATA_FOUND	100
+#define SQL_INVALID_HANDLE		(-2)
+#define SQL_ERROR				(-1)
+#define SQL_SUCCESS				0
+#define SQL_SUCCESS_WITH_INFO	1
+#define SQL_NO_DATA_FOUND		100
 
 /* standard SQL datatypes (agree with ANSI type numbering) */
 #define SQL_CHAR			1
