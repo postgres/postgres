@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.108 2002/08/25 17:20:01 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.109 2002/08/30 01:01:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,11 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
-#include "catalog/pg_database.h"
-#include "catalog/pg_shadow.h"
-#include "catalog/pg_group.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_group.h"
+#include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
@@ -1398,6 +1399,7 @@ IdListToArray(List *members)
 	newarray = palloc(ARR_OVERHEAD(1) + nmembers * sizeof(int32));
 	newarray->size = ARR_OVERHEAD(1) + nmembers * sizeof(int32);
 	newarray->flags = 0;
+	newarray->elemtype = INT4OID;
 	ARR_NDIM(newarray) = 1;		/* one dimensional array */
 	ARR_LBOUND(newarray)[0] = 1;	/* axis starts at one */
 	ARR_DIMS(newarray)[0] = nmembers; /* axis is this long */
@@ -1424,6 +1426,7 @@ IdArrayToList(IdList *oldarray)
 		return NIL;
 
 	Assert(ARR_NDIM(oldarray) == 1);
+	Assert(ARR_ELEMTYPE(oldarray) == INT4OID);
 
 	hibound = ARR_DIMS(oldarray)[0];
 
@@ -1431,7 +1434,7 @@ IdArrayToList(IdList *oldarray)
 	{
 		int32		sysid;
 
-		sysid = ((int *) ARR_DATA_PTR(oldarray))[i];
+		sysid = ((int32 *) ARR_DATA_PTR(oldarray))[i];
 		/* filter out any duplicates --- probably a waste of time */
 		if (!intMember(sysid, newlist))
 			newlist = lappendi(newlist, sysid);
