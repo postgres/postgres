@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.248 2004/03/09 23:15:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.249 2004/03/12 00:56:00 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1530,10 +1530,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Controls the tradeoff between planning time and query plan
-        efficiency in GEQO. Valid values for this variable range
-        from 1 to 10; the default is 5. Larger values increasee the
-        time spent doing query planning, but increase the likelyhood
-        that an efficient query plan will be chosen.
+        efficiency in GEQO. This variable must be an integer in the
+        range from 1 to 10. The default value is 5. Larger values
+        increase the time spent doing query planning, but also
+        increase the likelyhood that an efficient query plan will be
+        chosen.
        </para>
 
        <para>
