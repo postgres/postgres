@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.3 2000/01/20 23:00:39 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.4 2000/03/25 14:25:31 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,11 +30,11 @@ ifeq ($(USE_PERL), true)
 endif
 
 plperl/Makefile: plperl/Makefile.PL
-	cd plperl && $(PERL) Makefile.PL
+	cd plperl && $(PERL) Makefile.PL POLLUTE=1
 
 install-plperl: plperl/Makefile
 	$(MAKE) -C plperl clean
-	cd plperl && POSTGRES_HOME="$(POSTGRESDIR)" $(PERL) Makefile.PL
+	cd plperl && POSTGRES_HOME="$(POSTGRESDIR)" $(PERL) Makefile.PL POLLUTE=1
 	$(MAKE) -C plperl all
 	-@if [ -w `sed -n -e 's/^ *INSTALLSITELIB *= *//p' plperl/Makefile` ]; then \
 		$(MAKE) $(MFLAGS) -C plperl install; \

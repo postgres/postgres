@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.31 1999/12/16 01:25:15 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.32 2000/03/25 14:25:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ ifeq ($(USE_ODBC), true)
 endif
 
 perl5/Makefile: perl5/Makefile.PL
-	cd perl5 && $(PERL) Makefile.PL
+	cd perl5 && $(PERL) Makefile.PL POLLUTE=1
 
 install-perl5: perl5/Makefile
 	$(MAKE) -C perl5 clean
