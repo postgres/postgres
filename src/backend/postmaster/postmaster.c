@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.321 2003/05/03 05:13:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.322 2003/05/06 23:34:55 momjian Exp $
  *
  * NOTES
  *
@@ -97,6 +97,7 @@
 #include "nodes/nodes.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "access/xlog.h"
@@ -2214,6 +2215,9 @@ BackendFinalize(Port *port)
 	int			ac;
 	char		debugbuf[32];
 	char		protobuf[32];
+#ifdef EXEC_BACKEND
+	char		pbuf[NAMEDATALEN + 256];
+#endif
 	int			i;
 	int			status;
 	struct timeval now;
@@ -2434,8 +2438,14 @@ BackendFinalize(Port *port)
 	 * database to use.  -p marks the end of secure switches.
 	 */
 	av[ac++] = "-p";
+#ifdef EXEC_BACKEND
+	Assert(UsedShmemSegID != 0);
+	/* database name at the end because it might contain commas */
+	snprintf(pbuf, NAMEDATALEN + 256, "%d,%d,%s", port->sock, UsedShmemSegID, port->database_name);
+	av[ac++] = pbuf;
+#else
 	av[ac++] = port->database_name;
-
+#endif
 	/*
 	 * Pass the (insecure) option switches from the connection request.
 	 * (It's OK to mangle port->cmdline_options now.)
@@ -2712,6 +2722,9 @@ SSDataBase(int xlop)
 		int			ac = 0;
 		char		nbbuf[32];
 		char		xlbuf[32];
+#ifdef EXEC_BACKEND
+		char		pbuf[NAMEDATALEN + 256];
+#endif
 
 #ifdef LINUX_PROFILE
 		setitimer(ITIMER_PROF, &prof_itimer, NULL);
@@ -2762,7 +2775,14 @@ SSDataBase(int xlop)
 		av[ac++] = xlbuf;
 
 		av[ac++] = "-p";
+#ifdef EXEC_BACKEND
+		Assert(UsedShmemSegID != 0);
+		/* database name at the end because it might contain commas */
+		snprintf(pbuf, NAMEDATALEN + 256, "%d,%s", UsedShmemSegID, "template1");
+		av[ac++] = pbuf;
+#else
 		av[ac++] = "template1";
+#endif
 
 		av[ac] = (char *) NULL;
 

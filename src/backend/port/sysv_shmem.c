@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.7 2003/04/24 21:24:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.8 2003/05/06 23:34:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,12 +34,14 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 
-
-typedef uint32 IpcMemoryKey;	/* shared memory key passed to shmget(2) */
 typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
 #define IPCProtection	(0600)	/* access/modify by user only */
 
+
+#ifdef EXEC_BACKEND
+IpcMemoryKey UsedShmemSegID = 0;
+#endif
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -300,10 +302,14 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
-	/* Loop till we find a free IPC key */
-	NextShmemSegID = port * 1000;
+#ifdef EXEC_BACKEND
+	if (UsedShmemSegID != 0)
+		NextShmemSegID = UsedShmemSegID;
+	else
+#endif
+		NextShmemSegID = port * 1000 + 1;
 
-	for (NextShmemSegID++;; NextShmemSegID++)
+	for (;;NextShmemSegID++)
 	{
 		IpcMemoryId shmid;
 
@@ -394,6 +400,11 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	 */
 	hdr->totalsize = size;
 	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+
+#ifdef EXEC_BACKEND
+	if (!makePrivate && UsedShmemSegID == 0)
+		UsedShmemSegID = NextShmemSegID;
+#endif
 
 	return hdr;
 }

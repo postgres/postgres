@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.154 2003/05/06 05:15:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.155 2003/05/06 23:34:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
+#include "storage/pg_shmem.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
@@ -252,7 +253,7 @@ BootstrapMain(int argc, char *argv[])
 												 * variable */
 	}
 
-	while ((flag = getopt(argc, argv, "B:d:D:Fo:px:")) != -1)
+	while ((flag = getopt(argc, argv, "B:d:D:Fo:p:x:")) != -1)
 	{
 		switch (flag)
 		{
@@ -283,8 +284,19 @@ BootstrapMain(int argc, char *argv[])
 				xlogop = atoi(optarg);
 				break;
 			case 'p':
+			{
 				/* indicates fork from postmaster */
+				char *p;
+#ifdef EXEC_BACKEND
+				sscanf(optarg, "%d,", &UsedShmemSegID);
+				p = strchr(optarg, ',');
+				if (p)
+					dbname = strdup(p+1);
+#else
+				dbname = strdup(optarg);
+#endif
 				break;
+			}
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -292,14 +304,16 @@ BootstrapMain(int argc, char *argv[])
 				usage();
 				break;
 		}
-	}							/* while */
+	}
 
-	if (argc - optind != 1)
+	if (!dbname && argc - optind == 1)
+	{
+		dbname = argv[optind];
+		optind++;
+	}
+	if (!dbname || argc != optind)
 		usage();
 
-	dbname = argv[optind];
-
-	Assert(dbname);
 
 	if (IsUnderPostmaster && ExecBackend && MyProc /* ordinary backend */)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.337 2003/05/06 21:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.338 2003/05/06 23:34:55 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -51,6 +51,7 @@
 #include "rewrite/rewriteHandler.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
+#include "storage/pg_shmem.h"
 #include "storage/proc.h"
 #include "tcop/fastpath.h"
 #include "tcop/pquery.h"
@@ -2024,7 +2025,18 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 */
 				if (secure)
 				{
+					char *p;
+#ifdef EXEC_BACKEND
+					sscanf(optarg, "%d,%d,", &MyProcPort->sock, &UsedShmemSegID);
+					/* Grab dbname as last param */
+					p = strchr(optarg, ',');
+					if (p)
+						p = strchr(p+1, ',');
+					if (p)					
+						dbname = strdup(p+1);
+#else
 					dbname = strdup(optarg);
+#endif
 					secure = false;		/* subsequent switches are NOT
 										 * secure */
 					ctx = PGC_BACKEND;
@@ -2381,7 +2393,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.337 $ $Date: 2003/05/06 21:51:41 $\n");
+		puts("$Revision: 1.338 $ $Date: 2003/05/06 23:34:55 $\n");
 	}
 
 	/*

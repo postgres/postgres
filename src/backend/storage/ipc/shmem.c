@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.67 2002/09/04 20:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.68 2003/05/06 23:34:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,8 +365,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, NULL);
 			LWLockRelease(ShmemIndexLock);
 
-			elog(WARNING, "ShmemInitStruct: cannot allocate '%s'",
-				 name);
+			elog(WARNING, "ShmemInitStruct: cannot allocate '%s'", name);
 			*foundPtr = FALSE;
 			return NULL;
 		}
