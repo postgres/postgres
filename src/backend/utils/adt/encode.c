@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.2 2001/09/14 17:46:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.3 2001/09/30 22:03:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <ctype.h>
+
 #include "utils/builtins.h"
 
 
@@ -38,24 +39,25 @@ binary_encode(PG_FUNCTION_ARGS)
 	Datum		name = PG_GETARG_DATUM(1);
 	text	   *result;
 	char	   *namebuf;
-	int		namelen, datalen, resultlen, res;
+	int			datalen, resultlen, res;
 	struct pg_encoding *enc;
 
 	datalen = VARSIZE(data) - VARHDRSZ;
-	namelen = VARSIZE(name) - VARHDRSZ;
 
-	namebuf = (char *)DirectFunctionCall1(textout, name);
+	namebuf = DatumGetCString(DirectFunctionCall1(textout, name));
 
 	enc = pg_find_encoding(namebuf);
 	if (enc == NULL)
-		elog(ERROR, "No such encoding");
+		elog(ERROR, "No such encoding as '%s'", namebuf);
 
 	resultlen = enc->encode_len(VARDATA(data), datalen);
 	result = palloc(VARHDRSZ + resultlen);
 
 	res = enc->encode(VARDATA(data), datalen, VARDATA(result));
+
+	/* Make this FATAL 'cause we've trodden on memory ... */
 	if (res > resultlen)
-		elog(ERROR, "Overflow - encode estimate too small");
+		elog(FATAL, "Overflow - encode estimate too small");
 
 	VARATT_SIZEP(result) = VARHDRSZ + res;
 
@@ -69,24 +71,25 @@ binary_decode(PG_FUNCTION_ARGS)
 	Datum		name = PG_GETARG_DATUM(1);
 	bytea	   *result;
 	char		*namebuf;
-	int			namelen, datalen, resultlen, res;
+	int			datalen, resultlen, res;
 	struct pg_encoding *enc;
 
 	datalen = VARSIZE(data) - VARHDRSZ;
-	namelen = VARSIZE(name) - VARHDRSZ;
 
-	namebuf = (char *)DirectFunctionCall1(textout, name);
+	namebuf = DatumGetCString(DirectFunctionCall1(textout, name));
 
 	enc = pg_find_encoding(namebuf);
 	if (enc == NULL)
-		elog(ERROR, "No such encoding");
+		elog(ERROR, "No such encoding as '%s'", namebuf);
 
 	resultlen = enc->decode_len(VARDATA(data), datalen);
 	result = palloc(VARHDRSZ + resultlen);
 
 	res = enc->decode(VARDATA(data), datalen, VARDATA(result));
+
+	/* Make this FATAL 'cause we've trodden on memory ... */
 	if (res > resultlen)
-		elog(ERROR, "Overflow - decode estimate too small");
+		elog(FATAL, "Overflow - decode estimate too small");
 
 	VARATT_SIZEP(result) = VARHDRSZ + res;
 
@@ -339,14 +342,12 @@ esc_encode(const uint8 *src, unsigned srclen, uint8 *dst)
 {
 	const uint8	   *end = src + srclen;
 	uint8			*rp = dst;
-	int				val;
 	int				len = 0;
 
 	while (src < end)
 	{
 		if (*src == '\0')
 		{
-			val = *src;
 			rp[0] = '\\';
 			rp[1] = '0';
 			rp[2] = '0';
@@ -356,7 +357,6 @@ esc_encode(const uint8 *src, unsigned srclen, uint8 *dst)
 		}
 		else if (*src == '\\')
 		{
-			val = *src;
 			rp[0] = '\\';
 			rp[1] = '\\';
 			rp += 2;
@@ -370,7 +370,6 @@ esc_encode(const uint8 *src, unsigned srclen, uint8 *dst)
 
 		src++;
 	}
-	*rp = '\0';
 
 	return len;
 }
@@ -380,7 +379,6 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 {
 	const uint8		*end = src + srclen;
 	uint8			*rp = dst;
-	int				val;
 	int				len = 0;
 
 	while (src < end)
@@ -389,11 +387,13 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 		{
 			*rp++ = *src++;
 		}
-		else if	( (src[0] == '\\') &&
+		else if	( src+3 < end &&
 					(src[1] >= '0' && src[1] <= '3') &&
 					(src[2] >= '0' && src[2] <= '7') &&
 					(src[3] >= '0' && src[3] <= '7') )
 		{
+			int				val;
+
 			val = VAL(src[1]);
 			val <<= 3;
 			val += VAL(src[2]);
@@ -401,7 +401,7 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 			*rp++ = val + VAL(src[3]);
 			src += 4;
 		}
-		else if ( (src[0] == '\\') &&
+		else if ( src+1 < end &&
 					(src[1] == '\\') )
 		{
 			*rp++ = '\\';
@@ -418,6 +418,7 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 
 		len++;
 	}
+
 	return len;
 }
 
@@ -439,11 +440,6 @@ esc_enc_len(const uint8 *src, unsigned srclen)
 		src++;
 	}
 
-	/*
-	 * Allow for null terminator
-	 */
-	len++;
-
 	return len;
 }
 
@@ -459,7 +455,7 @@ esc_dec_len(const uint8 *src, unsigned srclen)
 		{
 			src++;
 		}
-		else if	( (src[0] == '\\') &&
+		else if	( src+3 < end &&
 					(src[1] >= '0' && src[1] <= '3') &&
 					(src[2] >= '0' && src[2] <= '7') &&
 					(src[3] >= '0' && src[3] <= '7') )
@@ -469,7 +465,7 @@ esc_dec_len(const uint8 *src, unsigned srclen)
 			 */
 			src += 4;
 		}
-		else if ( (src[0] == '\\') &&
+		else if ( src+1 < end &&
 					(src[1] == '\\') )
 		{
 			/*
@@ -510,7 +506,7 @@ pg_find_encoding(const char *name)
 	int i;
 
 	for (i = 0; enclist[i].name; i++)
-		if (!strcasecmp(enclist[i].name, name))
+		if (strcasecmp(enclist[i].name, name) == 0)
 			return &enclist[i].enc;
 
 	return NULL;
