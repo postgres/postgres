@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/reset.l,v 1.4 1998/06/24 13:21:29 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/reset.l,v 1.5 1998/10/14 02:36:43 momjian Exp $
 .TH RESET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 reset - restore run-time parameters for session to default values
@@ -32,7 +32,6 @@ tgl=> reset GEQO;
 RESET VARIABLE
 .fi
 .SH "SEE ALSO"
-pgbuiltin(3),
 set(l),
 show(l).
 .SH BUGS

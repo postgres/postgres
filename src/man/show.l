@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/show.l,v 1.4 1998/06/24 13:21:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/show.l,v 1.5 1998/10/14 02:36:45 momjian Exp $
 .TH SHOW SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 show - show run-time parameters for session
@@ -34,7 +34,6 @@ NOTICE:GEQO is ON
 SHOW VARIABLE
 .fi
 .SH "SEE ALSO"
-pgbuiltin(3),
 reset(l),
 set(l).
 .SH BUGS

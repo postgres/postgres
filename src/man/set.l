@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.9 1998/06/24 13:21:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.10 1998/10/14 02:36:44 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -24,9 +24,6 @@ is enclosed in single-quotes.
 .PP
 .IR DateStyle
 determines the output format for the date and time data types.
-See
-.IR pgbuiltin(3)
-for more information on available styles.
 
 .ce 1
 \fBDateStyle Values\fR
@@ -105,7 +102,6 @@ set GEQO to 'on=4'
 set GEQO to 'off'
 .fi
 .SH "SEE ALSO"
-pgbuiltin(3),
 reset(l),
 show(l).
 .SH BUGS
