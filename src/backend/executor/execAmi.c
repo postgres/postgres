@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.65 2002/11/30 05:21:01 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.66 2002/12/05 15:50:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,12 +19,12 @@
 #include "executor/instrument.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
+#include "executor/nodeFunctionscan.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexscan.h"
-#include "executor/nodeTidscan.h"
 #include "executor/nodeLimit.h"
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
@@ -35,14 +35,12 @@
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/nodeSubqueryscan.h"
-#include "executor/nodeFunctionscan.h"
+#include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
 
 
 /* ----------------------------------------------------------------
  *		ExecReScan
- *
- *		XXX this should be extended to cope with all the node types..
  *
  *		takes the new expression context as an argument, so that
  *		index scans needn't have their scan keys updated separately
@@ -50,30 +48,32 @@
  * ----------------------------------------------------------------
  */
 void
-ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScan(PlanState *node, ExprContext *exprCtxt)
 {
+	/* If collecting timing stats, update them */
 	if (node->instrument)
 		InstrEndLoop(node->instrument);
 
-	if (node->chgParam != NULL) /* Wow! */
+	/* If we have changed parameters, propagate that info */
+	if (node->chgParam != NIL)
 	{
 		List	   *lst;
 
 		foreach(lst, node->initPlan)
 		{
-			Plan	   *splan = ((SubPlan *) lfirst(lst))->plan;
+			PlanState  *splan = ((SubPlanState *) lfirst(lst))->planstate;
 
-			if (splan->extParam != NULL)		/* don't care about child
+			if (splan->plan->extParam != NIL)	/* don't care about child
 												 * locParam */
 				SetChangedParamList(splan, node->chgParam);
-			if (splan->chgParam != NULL)
-				ExecReScanSetParamPlan((SubPlan *) lfirst(lst), node);
+			if (splan->chgParam != NIL)
+				ExecReScanSetParamPlan((SubPlanState *) lfirst(lst), node);
 		}
 		foreach(lst, node->subPlan)
 		{
-			Plan	   *splan = ((SubPlan *) lfirst(lst))->plan;
+			PlanState  *splan = ((SubPlanState *) lfirst(lst))->planstate;
 
-			if (splan->extParam != NULL)
+			if (splan->plan->extParam != NIL)
 				SetChangedParamList(splan, node->chgParam);
 		}
 		/* Well. Now set chgParam for left/right trees. */
@@ -85,76 +85,76 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
-			ExecSeqReScan((SeqScan *) node, exprCtxt, parent);
+		case T_ResultState:
+			ExecReScanResult((ResultState *) node, exprCtxt);
 			break;
 
-		case T_IndexScan:
-			ExecIndexReScan((IndexScan *) node, exprCtxt, parent);
+		case T_AppendState:
+			ExecReScanAppend((AppendState *) node, exprCtxt);
 			break;
 
-		case T_TidScan:
-			ExecTidReScan((TidScan *) node, exprCtxt, parent);
+		case T_SeqScanState:
+			ExecSeqReScan((SeqScanState *) node, exprCtxt);
 			break;
 
-		case T_SubqueryScan:
-			ExecSubqueryReScan((SubqueryScan *) node, exprCtxt, parent);
+		case T_IndexScanState:
+			ExecIndexReScan((IndexScanState *) node, exprCtxt);
 			break;
 
-		case T_FunctionScan:
-			ExecFunctionReScan((FunctionScan *) node, exprCtxt, parent);
+		case T_TidScanState:
+			ExecTidReScan((TidScanState *) node, exprCtxt);
 			break;
 
-		case T_Material:
-			ExecMaterialReScan((Material *) node, exprCtxt, parent);
+		case T_SubqueryScanState:
+			ExecSubqueryReScan((SubqueryScanState *) node, exprCtxt);
 			break;
 
-		case T_NestLoop:
-			ExecReScanNestLoop((NestLoop *) node, exprCtxt, parent);
+		case T_FunctionScanState:
+			ExecFunctionReScan((FunctionScanState *) node, exprCtxt);
 			break;
 
-		case T_HashJoin:
-			ExecReScanHashJoin((HashJoin *) node, exprCtxt, parent);
+		case T_NestLoopState:
+			ExecReScanNestLoop((NestLoopState *) node, exprCtxt);
 			break;
 
-		case T_Hash:
-			ExecReScanHash((Hash *) node, exprCtxt, parent);
+		case T_MergeJoinState:
+			ExecReScanMergeJoin((MergeJoinState *) node, exprCtxt);
 			break;
 
-		case T_Agg:
-			ExecReScanAgg((Agg *) node, exprCtxt, parent);
+		case T_HashJoinState:
+			ExecReScanHashJoin((HashJoinState *) node, exprCtxt);
 			break;
 
-		case T_Group:
-			ExecReScanGroup((Group *) node, exprCtxt, parent);
+		case T_MaterialState:
+			ExecMaterialReScan((MaterialState *) node, exprCtxt);
 			break;
 
-		case T_Result:
-			ExecReScanResult((Result *) node, exprCtxt, parent);
+		case T_SortState:
+			ExecReScanSort((SortState *) node, exprCtxt);
 			break;
 
-		case T_Unique:
-			ExecReScanUnique((Unique *) node, exprCtxt, parent);
+		case T_GroupState:
+			ExecReScanGroup((GroupState *) node, exprCtxt);
 			break;
 
-		case T_SetOp:
-			ExecReScanSetOp((SetOp *) node, exprCtxt, parent);
+		case T_AggState:
+			ExecReScanAgg((AggState *) node, exprCtxt);
 			break;
 
-		case T_Limit:
-			ExecReScanLimit((Limit *) node, exprCtxt, parent);
+		case T_UniqueState:
+			ExecReScanUnique((UniqueState *) node, exprCtxt);
 			break;
 
-		case T_Sort:
-			ExecReScanSort((Sort *) node, exprCtxt, parent);
+		case T_HashState:
+			ExecReScanHash((HashState *) node, exprCtxt);
 			break;
 
-		case T_MergeJoin:
-			ExecReScanMergeJoin((MergeJoin *) node, exprCtxt, parent);
+		case T_SetOpState:
+			ExecReScanSetOp((SetOpState *) node, exprCtxt);
 			break;
 
-		case T_Append:
-			ExecReScanAppend((Append *) node, exprCtxt, parent);
+		case T_LimitState:
+			ExecReScanLimit((LimitState *) node, exprCtxt);
 			break;
 
 		default:
@@ -163,10 +163,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 			return;
 	}
 
-	if (node->chgParam != NULL)
+	if (node->chgParam != NIL)
 	{
 		freeList(node->chgParam);
-		node->chgParam = NULL;
+		node->chgParam = NIL;
 	}
 }
 
@@ -176,37 +176,37 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
  * Marks the current scan position.
  */
 void
-ExecMarkPos(Plan *node)
+ExecMarkPos(PlanState *node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
-			ExecSeqMarkPos((SeqScan *) node);
+		case T_SeqScanState:
+			ExecSeqMarkPos((SeqScanState *) node);
 			break;
 
-		case T_IndexScan:
-			ExecIndexMarkPos((IndexScan *) node);
+		case T_IndexScanState:
+			ExecIndexMarkPos((IndexScanState *) node);
 			break;
 
-		case T_TidScan:
-			ExecTidMarkPos((TidScan *) node);
+		case T_TidScanState:
+			ExecTidMarkPos((TidScanState *) node);
 			break;
 
-		case T_FunctionScan:
-			ExecFunctionMarkPos((FunctionScan *) node);
+		case T_FunctionScanState:
+			ExecFunctionMarkPos((FunctionScanState *) node);
 			break;
 
-		case T_Material:
-			ExecMaterialMarkPos((Material *) node);
+		case T_MaterialState:
+			ExecMaterialMarkPos((MaterialState *) node);
 			break;
 
-		case T_Sort:
-			ExecSortMarkPos((Sort *) node);
+		case T_SortState:
+			ExecSortMarkPos((SortState *) node);
 			break;
 
 		default:
 			/* don't make hard error unless caller asks to restore... */
-			elog(LOG, "ExecMarkPos: node type %d not supported",
+			elog(DEBUG1, "ExecMarkPos: node type %d not supported",
 				 nodeTag(node));
 			break;
 	}
@@ -218,32 +218,32 @@ ExecMarkPos(Plan *node)
  * restores the scan position previously saved with ExecMarkPos()
  */
 void
-ExecRestrPos(Plan *node)
+ExecRestrPos(PlanState *node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
-			ExecSeqRestrPos((SeqScan *) node);
+		case T_SeqScanState:
+			ExecSeqRestrPos((SeqScanState *) node);
 			break;
 
-		case T_IndexScan:
-			ExecIndexRestrPos((IndexScan *) node);
+		case T_IndexScanState:
+			ExecIndexRestrPos((IndexScanState *) node);
 			break;
 
-		case T_TidScan:
-			ExecTidRestrPos((TidScan *) node);
+		case T_TidScanState:
+			ExecTidRestrPos((TidScanState *) node);
 			break;
 
-		case T_FunctionScan:
-			ExecFunctionRestrPos((FunctionScan *) node);
+		case T_FunctionScanState:
+			ExecFunctionRestrPos((FunctionScanState *) node);
 			break;
 
-		case T_Material:
-			ExecMaterialRestrPos((Material *) node);
+		case T_MaterialState:
+			ExecMaterialRestrPos((MaterialState *) node);
 			break;
 
-		case T_Sort:
-			ExecSortRestrPos((Sort *) node);
+		case T_SortState:
+			ExecSortRestrPos((SortState *) node);
 			break;
 
 		default:
@@ -258,6 +258,7 @@ ExecRestrPos(Plan *node)
  *
  * XXX Ideally, all plan node types would support mark/restore, and this
  * wouldn't be needed.  For now, this had better match the routines above.
+ * But note the test is on Plan nodetype, not PlanState nodetype.
  */
 bool
 ExecSupportsMarkRestore(NodeTag plantype)

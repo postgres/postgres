@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.90 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.91 2002/12/05 15:50:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ DisplayTupleCount(FILE *statfp)
  * ----------------
  */
 void
-ExecAssignExprContext(EState *estate, CommonState *commonstate)
+ExecAssignExprContext(EState *estate, PlanState *planstate)
 {
 	ExprContext *econtext = makeNode(ExprContext);
 
@@ -166,7 +166,7 @@ ExecAssignExprContext(EState *estate, CommonState *commonstate)
 	econtext->ecxt_aggnulls = NULL;
 	econtext->ecxt_callbacks = NULL;
 
-	commonstate->cs_ExprContext = econtext;
+	planstate->ps_ExprContext = econtext;
 }
 
 /* ----------------
@@ -259,10 +259,10 @@ MakePerTupleExprContext(EState *estate)
  * ----------------
  */
 void
-ExecAssignResultType(CommonState *commonstate,
+ExecAssignResultType(PlanState *planstate,
 					 TupleDesc tupDesc, bool shouldFree)
 {
-	TupleTableSlot *slot = commonstate->cs_ResultTupleSlot;
+	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
 
 	ExecSetSlotDescriptor(slot, tupDesc, shouldFree);
 }
@@ -272,15 +272,15 @@ ExecAssignResultType(CommonState *commonstate,
  * ----------------
  */
 void
-ExecAssignResultTypeFromOuterPlan(Plan *node, CommonState *commonstate)
+ExecAssignResultTypeFromOuterPlan(PlanState *planstate)
 {
-	Plan	   *outerPlan;
+	PlanState  *outerPlan;
 	TupleDesc	tupDesc;
 
-	outerPlan = outerPlan(node);
+	outerPlan = outerPlanState(planstate);
 	tupDesc = ExecGetTupType(outerPlan);
 
-	ExecAssignResultType(commonstate, tupDesc, false);
+	ExecAssignResultType(planstate, tupDesc, false);
 }
 
 /* ----------------
@@ -288,7 +288,7 @@ ExecAssignResultTypeFromOuterPlan(Plan *node, CommonState *commonstate)
  * ----------------
  */
 void
-ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
+ExecAssignResultTypeFromTL(PlanState *planstate)
 {
 	ResultRelInfo *ri;
 	bool		hasoid = false;
@@ -311,7 +311,7 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 	 * each of the child plans of the topmost Append plan.	So, this is
 	 * ugly but it works, for now ...
 	 */
-	ri = node->state->es_result_relation_info;
+	ri = planstate->state->es_result_relation_info;
 	if (ri != NULL)
 	{
 		Relation	rel = ri->ri_RelationDesc;
@@ -320,8 +320,13 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 			hasoid = rel->rd_rel->relhasoids;
 	}
 
-	tupDesc = ExecTypeFromTL(node->targetlist, hasoid);
-	ExecAssignResultType(commonstate, tupDesc, true);
+	/*
+	 * XXX Some plan nodes don't bother to set up planstate->targetlist,
+	 * so use the underlying plan's targetlist instead.  This will probably
+	 * need to be fixed later.
+	 */
+	tupDesc = ExecTypeFromTL(planstate->plan->targetlist, hasoid);
+	ExecAssignResultType(planstate, tupDesc, true);
 }
 
 /* ----------------
@@ -329,9 +334,9 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
  * ----------------
  */
 TupleDesc
-ExecGetResultType(CommonState *commonstate)
+ExecGetResultType(PlanState *planstate)
 {
-	TupleTableSlot *slot = commonstate->cs_ResultTupleSlot;
+	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
 
 	return slot->ttc_tupleDescriptor;
 }
@@ -342,23 +347,23 @@ ExecGetResultType(CommonState *commonstate)
  * ----------------
  */
 void
-ExecAssignProjectionInfo(Plan *node, CommonState *commonstate)
+ExecAssignProjectionInfo(PlanState *planstate)
 {
 	ProjectionInfo *projInfo;
 	List	   *targetList;
 	int			len;
 
-	targetList = node->targetlist;
+	targetList = planstate->targetlist;
 	len = ExecTargetListLength(targetList);
 
 	projInfo = makeNode(ProjectionInfo);
 	projInfo->pi_targetlist = targetList;
 	projInfo->pi_len = len;
 	projInfo->pi_tupValue = (len <= 0) ? NULL : (Datum *) palloc(sizeof(Datum) * len);
-	projInfo->pi_exprContext = commonstate->cs_ExprContext;
-	projInfo->pi_slot = commonstate->cs_ResultTupleSlot;
+	projInfo->pi_exprContext = planstate->ps_ExprContext;
+	projInfo->pi_slot = planstate->ps_ResultTupleSlot;
 
-	commonstate->cs_ProjInfo = projInfo;
+	planstate->ps_ProjInfo = projInfo;
 }
 
 
@@ -367,7 +372,7 @@ ExecAssignProjectionInfo(Plan *node, CommonState *commonstate)
  * ----------------
  */
 void
-ExecFreeProjectionInfo(CommonState *commonstate)
+ExecFreeProjectionInfo(PlanState *planstate)
 {
 	ProjectionInfo *projInfo;
 
@@ -375,7 +380,7 @@ ExecFreeProjectionInfo(CommonState *commonstate)
 	 * get projection info.  if NULL then this node has none so we just
 	 * return.
 	 */
-	projInfo = commonstate->cs_ProjInfo;
+	projInfo = planstate->ps_ProjInfo;
 	if (projInfo == NULL)
 		return;
 
@@ -386,7 +391,7 @@ ExecFreeProjectionInfo(CommonState *commonstate)
 		pfree(projInfo->pi_tupValue);
 
 	pfree(projInfo);
-	commonstate->cs_ProjInfo = NULL;
+	planstate->ps_ProjInfo = NULL;
 }
 
 /* ----------------
@@ -394,7 +399,7 @@ ExecFreeProjectionInfo(CommonState *commonstate)
  * ----------------
  */
 void
-ExecFreeExprContext(CommonState *commonstate)
+ExecFreeExprContext(PlanState *planstate)
 {
 	ExprContext *econtext;
 
@@ -402,7 +407,7 @@ ExecFreeExprContext(CommonState *commonstate)
 	 * get expression context.	if NULL then this node has none so we just
 	 * return.
 	 */
-	econtext = commonstate->cs_ExprContext;
+	econtext = planstate->ps_ExprContext;
 	if (econtext == NULL)
 		return;
 
@@ -416,7 +421,7 @@ ExecFreeExprContext(CommonState *commonstate)
 	 */
 	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
 	pfree(econtext);
-	commonstate->cs_ExprContext = NULL;
+	planstate->ps_ExprContext = NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -434,9 +439,9 @@ ExecFreeExprContext(CommonState *commonstate)
  * ----------------
  */
 TupleDesc
-ExecGetScanType(CommonScanState *csstate)
+ExecGetScanType(ScanState *scanstate)
 {
-	TupleTableSlot *slot = csstate->css_ScanTupleSlot;
+	TupleTableSlot *slot = scanstate->ss_ScanTupleSlot;
 
 	return slot->ttc_tupleDescriptor;
 }
@@ -446,10 +451,10 @@ ExecGetScanType(CommonScanState *csstate)
  * ----------------
  */
 void
-ExecAssignScanType(CommonScanState *csstate,
+ExecAssignScanType(ScanState *scanstate,
 				   TupleDesc tupDesc, bool shouldFree)
 {
-	TupleTableSlot *slot = csstate->css_ScanTupleSlot;
+	TupleTableSlot *slot = scanstate->ss_ScanTupleSlot;
 
 	ExecSetSlotDescriptor(slot, tupDesc, shouldFree);
 }
@@ -459,15 +464,15 @@ ExecAssignScanType(CommonScanState *csstate,
  * ----------------
  */
 void
-ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
+ExecAssignScanTypeFromOuterPlan(ScanState *scanstate)
 {
-	Plan	   *outerPlan;
+	PlanState  *outerPlan;
 	TupleDesc	tupDesc;
 
-	outerPlan = outerPlan(node);
+	outerPlan = outerPlanState(scanstate);
 	tupDesc = ExecGetTupType(outerPlan);
 
-	ExecAssignScanType(csstate, tupDesc, false);
+	ExecAssignScanType(scanstate, tupDesc, false);
 }
 
 
@@ -718,7 +723,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 }
 
 void
-SetChangedParamList(Plan *node, List *newchg)
+SetChangedParamList(PlanState *node, List *newchg)
 {
 	List	   *nl;
 
@@ -727,8 +732,8 @@ SetChangedParamList(Plan *node, List *newchg)
 		int			paramId = lfirsti(nl);
 
 		/* if this node doesn't depend on a param ... */
-		if (!intMember(paramId, node->extParam) &&
-			!intMember(paramId, node->locParam))
+		if (!intMember(paramId, node->plan->extParam) &&
+			!intMember(paramId, node->plan->locParam))
 			continue;
 		/* if this param is already in list of changed ones ... */
 		if (intMember(paramId, node->chgParam))

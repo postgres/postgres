@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.125 2002/11/30 05:21:03 tgl Exp $
+ * $Id: nodes.h,v 1.126 2002/12/05 15:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,43 +18,84 @@
  * The first field of every node is NodeTag. Each node created (with makeNode)
  * will have one of the following tags as the value of its first field.
  *
- * Note that the number of the node tags are not contiguous. We left holes
+ * Note that the numbers of the node tags are not contiguous. We left holes
  * here so that we can add more tags without changing the existing enum's.
+ * (Since node tag numbers never exist outside backend memory, there's no
+ * real harm in renumbering, it just costs a full rebuild ...)
  */
 typedef enum NodeTag
 {
 	T_Invalid = 0,
 
 	/*
+	 * TAGS FOR EXECUTOR NODES (execnodes.h)
+	 */
+	T_IndexInfo = 10,
+	T_ResultRelInfo,
+	T_TupleTableSlot,
+	T_ExprContext,
+	T_ProjectionInfo,
+	T_JunkFilter,
+	T_EState,
+
+	/*
 	 * TAGS FOR PLAN NODES (plannodes.h)
 	 */
-	T_Plan = 10,
+	T_Plan = 100,
 	T_Result,
 	T_Append,
 	T_Scan,
 	T_SeqScan,
 	T_IndexScan,
+	T_TidScan,
+	T_SubqueryScan,
+	T_FunctionScan,
 	T_Join,
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
-	T_Limit,
 	T_Material,
 	T_Sort,
+	T_Group,
 	T_Agg,
 	T_Unique,
 	T_Hash,
 	T_SetOp,
-	T_Group,
+	T_Limit,
 	T_SubPlan,
-	T_TidScan,
-	T_SubqueryScan,
-	T_FunctionScan,
+
+	/*
+	 * TAGS FOR PLAN STATE NODES (execnodes.h)
+	 *
+	 * These should correspond one-to-one with Plan node types.
+	 */
+	T_PlanState = 200,
+	T_ResultState,
+	T_AppendState,
+	T_ScanState,
+	T_SeqScanState,
+	T_IndexScanState,
+	T_TidScanState,
+	T_SubqueryScanState,
+	T_FunctionScanState,
+	T_JoinState,
+	T_NestLoopState,
+	T_MergeJoinState,
+	T_HashJoinState,
+	T_MaterialState,
+	T_SortState,
+	T_GroupState,
+	T_AggState,
+	T_UniqueState,
+	T_HashState,
+	T_SetOpState,
+	T_LimitState,
+	T_SubPlanState,
 
 	/*
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
 	 */
-	T_Resdom = 100,
+	T_Resdom = 300,
 	T_Fjoin,
 	T_Expr,
 	T_Var,
@@ -74,7 +115,7 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR PLANNER NODES (relation.h)
 	 */
-	T_RelOptInfo = 200,
+	T_RelOptInfo = 400,
 	T_IndexOptInfo,
 	T_Path,
 	T_IndexPath,
@@ -91,47 +132,15 @@ typedef enum NodeTag
 	T_InnerIndexscanInfo,
 
 	/*
-	 * TAGS FOR EXECUTOR NODES (execnodes.h)
-	 */
-	T_IndexInfo = 300,
-	T_ResultRelInfo,
-	T_TupleTableSlot,
-	T_ExprContext,
-	T_ProjectionInfo,
-	T_JunkFilter,
-	T_EState,
-	T_CommonState,
-	T_ResultState,
-	T_AppendState,
-	T_CommonScanState,
-	T_ScanState,
-	T_IndexScanState,
-	T_JoinState,
-	T_NestLoopState,
-	T_MergeJoinState,
-	T_HashJoinState,
-	T_MaterialState,
-	T_AggState,
-	T_GroupState,
-	T_SortState,
-	T_UniqueState,
-	T_HashState,
-	T_TidScanState,
-	T_SubqueryScanState,
-	T_SetOpState,
-	T_LimitState,
-	T_FunctionScanState,
-
-	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
 	 */
-	T_MemoryContext = 400,
+	T_MemoryContext = 500,
 	T_AllocSetContext,
 
 	/*
 	 * TAGS FOR VALUE NODES (pg_list.h)
 	 */
-	T_Value = 500,
+	T_Value = 600,
 	T_List,
 	T_Integer,
 	T_Float,
@@ -142,7 +151,7 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
 	 */
-	T_Query = 600,
+	T_Query = 700,
 	T_InsertStmt,
 	T_DeleteStmt,
 	T_UpdateStmt,
@@ -208,7 +217,7 @@ typedef enum NodeTag
 	T_ExecuteStmt,
 	T_DeallocateStmt,
 
-	T_A_Expr = 700,
+	T_A_Expr = 800,
 	T_ColumnRef,
 	T_ParamRef,
 	T_A_Const,
@@ -248,7 +257,7 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)
 	 */
-	T_TriggerData = 800,		/* in commands/trigger.h */
+	T_TriggerData = 900,		/* in commands/trigger.h */
 	T_ReturnSetInfo				/* in nodes/execnodes.h */
 
 } NodeTag;

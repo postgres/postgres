@@ -7,21 +7,21 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSeqscan.h,v 1.15 2002/06/20 20:29:49 momjian Exp $
+ * $Id: nodeSeqscan.h,v 1.16 2002/12/05 15:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODESEQSCAN_H
 #define NODESEQSCAN_H
 
-#include "nodes/plannodes.h"
+#include "nodes/execnodes.h"
 
-extern TupleTableSlot *ExecSeqScan(SeqScan *node);
-extern bool ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsSeqScan(SeqScan *node);
-extern void ExecEndSeqScan(SeqScan *node);
-extern void ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent);
-extern void ExecSeqMarkPos(SeqScan *node);
-extern void ExecSeqRestrPos(SeqScan *node);
+extern SeqScanState *ExecInitSeqScan(SeqScan *node, EState *estate);
+extern TupleTableSlot *ExecSeqScan(SeqScanState *node);
+extern void ExecEndSeqScan(SeqScanState *node);
+extern void ExecSeqMarkPos(SeqScanState *node);
+extern void ExecSeqRestrPos(SeqScanState *node);
+extern void ExecSeqReScan(SeqScanState *node, ExprContext *exprCtxt);
 
 #endif   /* NODESEQSCAN_H */

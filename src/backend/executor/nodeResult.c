@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.21 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.22 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,34 +60,29 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecResult(Result *node)
+ExecResult(ResultState *node)
 {
-	ResultState *resstate;
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *resultSlot;
-	Plan	   *outerPlan;
+	PlanState   *outerPlan;
 	ExprContext *econtext;
 	ExprDoneCond isDone;
 
-	/*
-	 * initialize the result node's state
-	 */
-	resstate = node->resstate;
-	econtext = resstate->cstate.cs_ExprContext;
+	econtext = node->ps.ps_ExprContext;
 
 	/*
 	 * check constant qualifications like (2 > 1), if not already done
 	 */
-	if (resstate->rs_checkqual)
+	if (node->rs_checkqual)
 	{
 		bool		qualResult = ExecQual((List *) node->resconstantqual,
 										  econtext,
 										  false);
 
-		resstate->rs_checkqual = false;
-		if (qualResult == false)
+		node->rs_checkqual = false;
+		if (!qualResult)
 		{
-			resstate->rs_done = true;
+			node->rs_done = true;
 			return NULL;
 		}
 	}
@@ -97,13 +92,13 @@ ExecResult(Result *node)
 	 * scan tuple (because there is a function-returning-set in the
 	 * projection expressions).  If so, try to project another one.
 	 */
-	if (resstate->cstate.cs_TupFromTlist)
+	if (node->ps.ps_TupFromTlist)
 	{
-		resultSlot = ExecProject(resstate->cstate.cs_ProjInfo, &isDone);
+		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
 		if (isDone == ExprMultipleResult)
 			return resultSlot;
 		/* Done with that source tuple... */
-		resstate->cstate.cs_TupFromTlist = false;
+		node->ps.ps_TupFromTlist = false;
 	}
 
 	/*
@@ -119,9 +114,9 @@ ExecResult(Result *node)
 	 * called, OR that we failed the constant qual check. Either way, now
 	 * we are through.
 	 */
-	while (!resstate->rs_done)
+	while (!node->rs_done)
 	{
-		outerPlan = outerPlan(node);
+		outerPlan = outerPlanState(node);
 
 		if (outerPlan != NULL)
 		{
@@ -129,12 +124,12 @@ ExecResult(Result *node)
 			 * retrieve tuples from the outer plan until there are no
 			 * more.
 			 */
-			outerTupleSlot = ExecProcNode(outerPlan, (Plan *) node);
+			outerTupleSlot = ExecProcNode(outerPlan);
 
 			if (TupIsNull(outerTupleSlot))
 				return NULL;
 
-			resstate->cstate.cs_OuterTupleSlot = outerTupleSlot;
+			node->ps.ps_OuterTupleSlot = outerTupleSlot;
 
 			/*
 			 * XXX gross hack. use outer tuple as scan tuple for
@@ -149,7 +144,7 @@ ExecResult(Result *node)
 			 * if we don't have an outer plan, then we are just generating
 			 * the results from a constant target list.  Do it only once.
 			 */
-			resstate->rs_done = true;
+			node->rs_done = true;
 		}
 
 		/*
@@ -157,11 +152,11 @@ ExecResult(Result *node)
 		 * unless the projection produces an empty set, in which case we
 		 * must loop back to see if there are more outerPlan tuples.
 		 */
-		resultSlot = ExecProject(resstate->cstate.cs_ProjInfo, &isDone);
+		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
 
 		if (isDone != ExprEndResult)
 		{
-			resstate->cstate.cs_TupFromTlist = (isDone == ExprMultipleResult);
+			node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
 			return resultSlot;
 		}
 	}
@@ -177,42 +172,51 @@ ExecResult(Result *node)
  *		(child nodes).
  * ----------------------------------------------------------------
  */
-bool
-ExecInitResult(Result *node, EState *estate, Plan *parent)
+ResultState *
+ExecInitResult(Result *node, EState *estate)
 {
 	ResultState *resstate;
 
 	/*
-	 * assign execution state to node
-	 */
-	node->plan.state = estate;
-
-	/*
-	 * create new ResultState for node
+	 * create state structure
 	 */
 	resstate = makeNode(ResultState);
+	resstate->ps.plan = (Plan *) node;
+	resstate->ps.state = estate;
+
 	resstate->rs_done = false;
 	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
-	node->resstate = resstate;
 
 	/*
 	 * Miscellaneous initialization
 	 *
 	 * create expression context for node
 	 */
-	ExecAssignExprContext(estate, &resstate->cstate);
+	ExecAssignExprContext(estate, &resstate->ps);
 
 #define RESULT_NSLOTS 1
 
 	/*
 	 * tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &resstate->cstate);
+	ExecInitResultTupleSlot(estate, &resstate->ps);
 
 	/*
-	 * then initialize children
+	 * initialize child expressions
 	 */
-	ExecInitNode(outerPlan(node), estate, (Plan *) node);
+	resstate->ps.targetlist = (List *)
+		ExecInitExpr((Node *) node->plan.targetlist,
+					 (PlanState *) resstate);
+	resstate->ps.qual = (List *)
+		ExecInitExpr((Node *) node->plan.qual,
+					 (PlanState *) resstate);
+	resstate->resconstantqual = ExecInitExpr(node->resconstantqual,
+											 (PlanState *) resstate);
+
+	/*
+	 * initialize child nodes
+	 */
+	outerPlanState(resstate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
 	 * we don't use inner plan
@@ -222,10 +226,10 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
 	/*
 	 * initialize tuple type and projection info
 	 */
-	ExecAssignResultTypeFromTL((Plan *) node, &resstate->cstate);
-	ExecAssignProjectionInfo((Plan *) node, &resstate->cstate);
+	ExecAssignResultTypeFromTL(&resstate->ps);
+	ExecAssignProjectionInfo(&resstate->ps);
 
-	return TRUE;
+	return resstate;
 }
 
 int
@@ -241,49 +245,37 @@ ExecCountSlotsResult(Result *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndResult(Result *node)
+ExecEndResult(ResultState *node)
 {
-	ResultState *resstate;
-
-	resstate = node->resstate;
-
 	/*
 	 * Free the projection info
-	 *
-	 * Note: we don't ExecFreeResultType(resstate) because the rule manager
-	 * depends on the tupType returned by ExecMain().  So for now, this is
-	 * freed at end-transaction time.  -cim 6/2/91
 	 */
-	ExecFreeProjectionInfo(&resstate->cstate);
-	ExecFreeExprContext(&resstate->cstate);
-
-	/*
-	 * shut down subplans
-	 */
-	ExecEndNode(outerPlan(node), (Plan *) node);
+	ExecFreeProjectionInfo(&node->ps);
+	ExecFreeExprContext(&node->ps);
 
 	/*
 	 * clean out the tuple table
 	 */
-	ExecClearTuple(resstate->cstate.cs_ResultTupleSlot);
-	pfree(resstate);
-	node->resstate = NULL;		/* XXX - new for us - er1p */
+	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+
+	/*
+	 * shut down subplans
+	 */
+	ExecEndNode(outerPlanState(node));
 }
 
 void
-ExecReScanResult(Result *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScanResult(ResultState *node, ExprContext *exprCtxt)
 {
-	ResultState *resstate = node->resstate;
-
-	resstate->rs_done = false;
-	resstate->cstate.cs_TupFromTlist = false;
-	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
+	node->rs_done = false;
+	node->ps.ps_TupFromTlist = false;
+	node->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((Plan *) node)->lefttree &&
-		((Plan *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((PlanState *) node)->lefttree &&
+		((PlanState *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 }

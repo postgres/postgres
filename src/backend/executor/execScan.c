@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.21 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.22 2002/12/05 15:50:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,10 +44,9 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecScan(Scan *node,
+ExecScan(ScanState *node,
 		 ExecScanAccessMtd accessMtd)	/* function returning a tuple */
 {
-	CommonScanState *scanstate;
 	EState	   *estate;
 	ExprContext *econtext;
 	List	   *qual;
@@ -57,23 +56,22 @@ ExecScan(Scan *node,
 	/*
 	 * Fetch data from node
 	 */
-	estate = node->plan.state;
-	scanstate = node->scanstate;
-	econtext = scanstate->cstate.cs_ExprContext;
-	qual = node->plan.qual;
+	estate = node->ps.state;
+	econtext = node->ps.ps_ExprContext;
+	qual = node->ps.qual;
 
 	/*
 	 * Check to see if we're still projecting out tuples from a previous
 	 * scan tuple (because there is a function-returning-set in the
 	 * projection expressions).  If so, try to project another one.
 	 */
-	if (scanstate->cstate.cs_TupFromTlist)
+	if (node->ps.ps_TupFromTlist)
 	{
-		resultSlot = ExecProject(scanstate->cstate.cs_ProjInfo, &isDone);
+		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
 		if (isDone == ExprMultipleResult)
 			return resultSlot;
 		/* Done with that source tuple... */
-		scanstate->cstate.cs_TupFromTlist = false;
+		node->ps.ps_TupFromTlist = false;
 	}
 
 	/*
@@ -104,7 +102,7 @@ ExecScan(Scan *node,
 		if (TupIsNull(slot))
 		{
 			return ExecStoreTuple(NULL,
-								  scanstate->cstate.cs_ProjInfo->pi_slot,
+								  node->ps.ps_ProjInfo->pi_slot,
 								  InvalidBuffer,
 								  true);
 		}
@@ -130,10 +128,10 @@ ExecScan(Scan *node,
 			 * return it --- unless we find we can project no tuples from
 			 * this scan tuple, in which case continue scan.
 			 */
-			resultSlot = ExecProject(scanstate->cstate.cs_ProjInfo, &isDone);
+			resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
 			if (isDone != ExprEndResult)
 			{
-				scanstate->cstate.cs_TupFromTlist = (isDone == ExprMultipleResult);
+				node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
 				return resultSlot;
 			}
 		}

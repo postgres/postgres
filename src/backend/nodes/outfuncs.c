@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.185 2002/11/30 05:21:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.186 2002/12/05 15:50:35 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
  *	  have an output function defined here (as well as an input function
  *	  in readfuncs.c).  For use in debugging, we also provide output
- *	  functions for nodes that appear in raw parsetrees and plan trees.
+ *	  functions for nodes that appear in raw parsetrees, path, and plan trees.
  *	  These nodes however need not have input functions.
  *
  *-------------------------------------------------------------------------
@@ -24,10 +24,8 @@
 #include <ctype.h>
 
 #include "lib/stringinfo.h"
-#include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
-#include "nodes/primnodes.h"
 #include "nodes/relation.h"
 #include "parser/parse.h"
 #include "utils/datum.h"
@@ -385,11 +383,9 @@ _outPlanInfo(StringInfo str, Plan *node)
 	WRITE_NODE_FIELD(qual);
 	WRITE_NODE_FIELD(lefttree);
 	WRITE_NODE_FIELD(righttree);
+	WRITE_NODE_FIELD(initPlan);
 	WRITE_INTLIST_FIELD(extParam);
 	WRITE_INTLIST_FIELD(locParam);
-	/* chgParam is execution state too */
-	WRITE_NODE_FIELD(initPlan);
-	/* we don't write subPlan; reader must reconstruct list */
 	WRITE_INT_FIELD(nParamExec);
 }
 
@@ -482,7 +478,6 @@ _outTidScan(StringInfo str, TidScan *node)
 
 	_outScanInfo(str, (Scan *) node);
 
-	WRITE_BOOL_FIELD(needRescan);
 	WRITE_NODE_FIELD(tideval);
 }
 
@@ -930,6 +925,8 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 
 /*
  * print the basic stuff of all nodes that inherit from Path
+ *
+ * Note we do NOT print the parent, else we'd be in infinite recursion
  */
 static void
 _outPathInfo(StringInfo str, Path *node)
@@ -986,7 +983,6 @@ _outTidPath(StringInfo str, TidPath *node)
 	_outPathInfo(str, (Path *) node);
 
 	WRITE_NODE_FIELD(tideval);
-	WRITE_INTLIST_FIELD(unjoined_relids);
 }
 
 static void

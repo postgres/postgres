@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.50 2002/11/29 21:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.51 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,12 +38,13 @@
  *		Return one tuple for each group of matching input tuples.
  */
 TupleTableSlot *
-ExecGroup(Group *node)
+ExecGroup(GroupState *node)
 {
-	GroupState *grpstate;
 	EState	   *estate;
 	ExprContext *econtext;
 	TupleDesc	tupdesc;
+	int			numCols;
+	AttrNumber *grpColIdx;
 	HeapTuple	outerTuple = NULL;
 	HeapTuple	firsttuple;
 	TupleTableSlot *outerslot;
@@ -53,12 +54,13 @@ ExecGroup(Group *node)
 	/*
 	 * get state info from node
 	 */
-	grpstate = node->grpstate;
-	if (grpstate->grp_done)
+	if (node->grp_done)
 		return NULL;
-	estate = node->plan.state;
-	econtext = node->grpstate->csstate.cstate.cs_ExprContext;
-	tupdesc = ExecGetScanType(&grpstate->csstate);
+	estate = node->ss.ps.state;
+	econtext = node->ss.ps.ps_ExprContext;
+	tupdesc = ExecGetScanType(&node->ss);
+	numCols = ((Group *) node->ss.ps.plan)->numCols;
+	grpColIdx = ((Group *) node->ss.ps.plan)->grpColIdx;
 
 	/*
 	 * We need not call ResetExprContext here because execTuplesMatch will
@@ -67,16 +69,16 @@ ExecGroup(Group *node)
 
 	/* If we don't already have first tuple of group, fetch it */
 	/* this should occur on the first call only */
-	firsttuple = grpstate->grp_firstTuple;
+	firsttuple = node->grp_firstTuple;
 	if (firsttuple == NULL)
 	{
-		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
+		outerslot = ExecProcNode(outerPlanState(node));
 		if (TupIsNull(outerslot))
 		{
-			grpstate->grp_done = TRUE;
+			node->grp_done = TRUE;
 			return NULL;
 		}
-		grpstate->grp_firstTuple = firsttuple =
+		node->grp_firstTuple = firsttuple =
 			heap_copytuple(outerslot->val);
 	}
 
@@ -85,10 +87,10 @@ ExecGroup(Group *node)
 	 */
 	for (;;)
 	{
-		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
+		outerslot = ExecProcNode(outerPlanState(node));
 		if (TupIsNull(outerslot))
 		{
-			grpstate->grp_done = TRUE;
+			node->grp_done = TRUE;
 			outerTuple = NULL;
 			break;
 		}
@@ -100,8 +102,8 @@ ExecGroup(Group *node)
 		 */
 		if (!execTuplesMatch(firsttuple, outerTuple,
 							 tupdesc,
-							 node->numCols, node->grpColIdx,
-							 grpstate->eqfunctions,
+							 numCols, grpColIdx,
+							 node->eqfunctions,
 							 econtext->ecxt_per_tuple_memory))
 			break;
 	}
@@ -111,18 +113,18 @@ ExecGroup(Group *node)
 	 * group, and store it in the result tuple slot.
 	 */
 	ExecStoreTuple(firsttuple,
-				   grpstate->csstate.css_ScanTupleSlot,
+				   node->ss.ss_ScanTupleSlot,
 				   InvalidBuffer,
 				   false);
-	econtext->ecxt_scantuple = grpstate->csstate.css_ScanTupleSlot;
-	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
+	econtext->ecxt_scantuple = node->ss.ss_ScanTupleSlot;
+	projInfo = node->ss.ps.ps_ProjInfo;
 	resultSlot = ExecProject(projInfo, NULL);
 
 	/* save first tuple of next group, if we are not done yet */
-	if (!grpstate->grp_done)
+	if (!node->grp_done)
 	{
 		heap_freetuple(firsttuple);
-		grpstate->grp_firstTuple = heap_copytuple(outerTuple);
+		node->grp_firstTuple = heap_copytuple(outerTuple);
 	}
 
 	return resultSlot;
@@ -135,65 +137,69 @@ ExecGroup(Group *node)
  *	planner and initializes its outer subtree
  * -----------------
  */
-bool
-ExecInitGroup(Group *node, EState *estate, Plan *parent)
+GroupState *
+ExecInitGroup(Group *node, EState *estate)
 {
 	GroupState *grpstate;
-	Plan	   *outerPlan;
-
-	/*
-	 * assign the node's execution state
-	 */
-	node->plan.state = estate;
 
 	/*
 	 * create state structure
 	 */
 	grpstate = makeNode(GroupState);
-	node->grpstate = grpstate;
+	grpstate->ss.ps.plan = (Plan *) node;
+	grpstate->ss.ps.state = estate;
 	grpstate->grp_firstTuple = NULL;
 	grpstate->grp_done = FALSE;
 
 	/*
 	 * create expression context
 	 */
-	ExecAssignExprContext(estate, &grpstate->csstate.cstate);
+	ExecAssignExprContext(estate, &grpstate->ss.ps);
 
 #define GROUP_NSLOTS 2
 
 	/*
 	 * tuple table initialization
 	 */
-	ExecInitScanTupleSlot(estate, &grpstate->csstate);
-	ExecInitResultTupleSlot(estate, &grpstate->csstate.cstate);
+	ExecInitScanTupleSlot(estate, &grpstate->ss);
+	ExecInitResultTupleSlot(estate, &grpstate->ss.ps);
 
 	/*
-	 * initializes child nodes
+	 * initialize child expressions
 	 */
-	outerPlan = outerPlan(node);
-	ExecInitNode(outerPlan, estate, (Plan *) node);
+	grpstate->ss.ps.targetlist = (List *)
+		ExecInitExpr((Node *) node->plan.targetlist,
+					 (PlanState *) grpstate);
+	grpstate->ss.ps.qual = (List *)
+		ExecInitExpr((Node *) node->plan.qual,
+					 (PlanState *) grpstate);
+
+	/*
+	 * initialize child nodes
+	 */
+	outerPlanState(grpstate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
 	 * initialize tuple type.
 	 */
-	ExecAssignScanTypeFromOuterPlan((Plan *) node, &grpstate->csstate);
+	ExecAssignScanTypeFromOuterPlan(&grpstate->ss);
 
 	/*
 	 * Initialize tuple type for both result and scan. This node does no
 	 * projection
 	 */
-	ExecAssignResultTypeFromTL((Plan *) node, &grpstate->csstate.cstate);
-	ExecAssignProjectionInfo((Plan *) node, &grpstate->csstate.cstate);
+	ExecAssignResultTypeFromTL(&grpstate->ss.ps);
+	ExecAssignProjectionInfo(&grpstate->ss.ps);
 
 	/*
 	 * Precompute fmgr lookup data for inner loop
 	 */
 	grpstate->eqfunctions =
-		execTuplesMatchPrepare(ExecGetScanType(&grpstate->csstate),
+		execTuplesMatchPrepare(ExecGetScanType(&grpstate->ss),
 							   node->numCols,
 							   node->grpColIdx);
 
-	return TRUE;
+	return grpstate;
 }
 
 int
@@ -208,43 +214,38 @@ ExecCountSlotsGroup(Group *node)
  * -----------------------
  */
 void
-ExecEndGroup(Group *node)
+ExecEndGroup(GroupState *node)
 {
-	GroupState *grpstate;
-	Plan	   *outerPlan;
+	PlanState  *outerPlan;
 
-	grpstate = node->grpstate;
+	ExecFreeProjectionInfo(&node->ss.ps);
+	ExecFreeExprContext(&node->ss.ps);
 
-	ExecFreeProjectionInfo(&grpstate->csstate.cstate);
-	ExecFreeExprContext(&grpstate->csstate.cstate);
-
-	outerPlan = outerPlan(node);
-	ExecEndNode(outerPlan, (Plan *) node);
+	outerPlan = outerPlanState(node);
+	ExecEndNode(outerPlan);
 
 	/* clean up tuple table */
-	ExecClearTuple(grpstate->csstate.css_ScanTupleSlot);
-	if (grpstate->grp_firstTuple != NULL)
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+	if (node->grp_firstTuple != NULL)
 	{
-		heap_freetuple(grpstate->grp_firstTuple);
-		grpstate->grp_firstTuple = NULL;
+		heap_freetuple(node->grp_firstTuple);
+		node->grp_firstTuple = NULL;
 	}
 }
 
 void
-ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScanGroup(GroupState *node, ExprContext *exprCtxt)
 {
-	GroupState *grpstate = node->grpstate;
-
-	grpstate->grp_done = FALSE;
-	if (grpstate->grp_firstTuple != NULL)
+	node->grp_done = FALSE;
+	if (node->grp_firstTuple != NULL)
 	{
-		heap_freetuple(grpstate->grp_firstTuple);
-		grpstate->grp_firstTuple = NULL;
+		heap_freetuple(node->grp_firstTuple);
+		node->grp_firstTuple = NULL;
 	}
 
-	if (((Plan *) node)->lefttree &&
-		((Plan *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((PlanState *) node)->lefttree &&
+		((PlanState *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 }
 
 /*****************************************************************************

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.11 2002/11/22 22:10:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.12 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "executor/executor.h"
 #include "executor/nodeLimit.h"
 
-static void recompute_limits(Limit *node);
+static void recompute_limits(LimitState *node);
 
 
 /* ----------------------------------------------------------------
@@ -35,26 +35,24 @@ static void recompute_limits(Limit *node);
  * ----------------------------------------------------------------
  */
 TupleTableSlot *				/* return: a tuple or NULL */
-ExecLimit(Limit *node)
+ExecLimit(LimitState *node)
 {
-	LimitState *limitstate;
 	ScanDirection direction;
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
-	Plan	   *outerPlan;
+	PlanState  *outerPlan;
 
 	/*
 	 * get information from the node
 	 */
-	limitstate = node->limitstate;
-	direction = node->plan.state->es_direction;
-	outerPlan = outerPlan((Plan *) node);
-	resultTupleSlot = limitstate->cstate.cs_ResultTupleSlot;
+	direction = node->ps.state->es_direction;
+	outerPlan = outerPlanState(node);
+	resultTupleSlot = node->ps.ps_ResultTupleSlot;
 
 	/*
 	 * The main logic is a simple state machine.
 	 */
-	switch (limitstate->lstate)
+	switch (node->lstate)
 	{
 		case LIMIT_INITIAL:
 			/*
@@ -71,9 +69,9 @@ ExecLimit(Limit *node)
 			/*
 			 * Check for empty window; if so, treat like empty subplan.
 			 */
-			if (limitstate->count <= 0 && !limitstate->noCount)
+			if (node->count <= 0 && !node->noCount)
 			{
-				limitstate->lstate = LIMIT_EMPTY;
+				node->lstate = LIMIT_EMPTY;
 				return NULL;
 			}
 			/*
@@ -81,24 +79,24 @@ ExecLimit(Limit *node)
 			 */
 			for (;;)
 			{
-				slot = ExecProcNode(outerPlan, (Plan *) node);
+				slot = ExecProcNode(outerPlan);
 				if (TupIsNull(slot))
 				{
 					/*
 					 * The subplan returns too few tuples for us to produce
 					 * any output at all.
 					 */
-					limitstate->lstate = LIMIT_EMPTY;
+					node->lstate = LIMIT_EMPTY;
 					return NULL;
 				}
-				limitstate->subSlot = slot;
-				if (++limitstate->position > limitstate->offset)
+				node->subSlot = slot;
+				if (++node->position > node->offset)
 					break;
 			}
 			/*
 			 * Okay, we have the first tuple of the window.
 			 */
-			limitstate->lstate = LIMIT_INWINDOW;
+			node->lstate = LIMIT_INWINDOW;
 			break;
 
 		case LIMIT_EMPTY:
@@ -117,23 +115,23 @@ ExecLimit(Limit *node)
 				 * advancing the subplan or the position variable; but
 				 * change the state machine state to record having done so.
 				 */
-				if (!limitstate->noCount &&
-					limitstate->position >= limitstate->offset + limitstate->count)
+				if (!node->noCount &&
+					node->position >= node->offset + node->count)
 				{
-					limitstate->lstate = LIMIT_WINDOWEND;
+					node->lstate = LIMIT_WINDOWEND;
 					return NULL;
 				}
 				/*
 				 * Get next tuple from subplan, if any.
 				 */
-				slot = ExecProcNode(outerPlan, (Plan *) node);
+				slot = ExecProcNode(outerPlan);
 				if (TupIsNull(slot))
 				{
-					limitstate->lstate = LIMIT_SUBPLANEOF;
+					node->lstate = LIMIT_SUBPLANEOF;
 					return NULL;
 				}
-				limitstate->subSlot = slot;
-				limitstate->position++;
+				node->subSlot = slot;
+				node->position++;
 			}
 			else
 			{
@@ -141,19 +139,19 @@ ExecLimit(Limit *node)
 				 * Backwards scan, so check for stepping off start of window.
 				 * As above, change only state-machine status if so.
 				 */
-				if (limitstate->position <= limitstate->offset + 1)
+				if (node->position <= node->offset + 1)
 				{
-					limitstate->lstate = LIMIT_WINDOWSTART;
+					node->lstate = LIMIT_WINDOWSTART;
 					return NULL;
 				}
 				/*
 				 * Get previous tuple from subplan; there should be one!
 				 */
-				slot = ExecProcNode(outerPlan, (Plan *) node);
+				slot = ExecProcNode(outerPlan);
 				if (TupIsNull(slot))
 					elog(ERROR, "ExecLimit: subplan failed to run backwards");
-				limitstate->subSlot = slot;
-				limitstate->position--;
+				node->subSlot = slot;
+				node->position--;
 			}
 			break;
 
@@ -164,11 +162,11 @@ ExecLimit(Limit *node)
 			 * Backing up from subplan EOF, so re-fetch previous tuple;
 			 * there should be one!  Note previous tuple must be in window.
 			 */
-			slot = ExecProcNode(outerPlan, (Plan *) node);
+			slot = ExecProcNode(outerPlan);
 			if (TupIsNull(slot))
 				elog(ERROR, "ExecLimit: subplan failed to run backwards");
-			limitstate->subSlot = slot;
-			limitstate->lstate = LIMIT_INWINDOW;
+			node->subSlot = slot;
+			node->lstate = LIMIT_INWINDOW;
 			/* position does not change 'cause we didn't advance it before */
 			break;
 
@@ -179,8 +177,8 @@ ExecLimit(Limit *node)
 			 * Backing up from window end: simply re-return the last
 			 * tuple fetched from the subplan.
 			 */
-			slot = limitstate->subSlot;
-			limitstate->lstate = LIMIT_INWINDOW;
+			slot = node->subSlot;
+			node->lstate = LIMIT_INWINDOW;
 			/* position does not change 'cause we didn't advance it before */
 			break;
 
@@ -191,14 +189,14 @@ ExecLimit(Limit *node)
 			 * Advancing after having backed off window start: simply
 			 * re-return the last tuple fetched from the subplan.
 			 */
-			slot = limitstate->subSlot;
-			limitstate->lstate = LIMIT_INWINDOW;
+			slot = node->subSlot;
+			node->lstate = LIMIT_INWINDOW;
 			/* position does not change 'cause we didn't change it before */
 			break;
 
 		default:
 			elog(ERROR, "ExecLimit: impossible state %d",
-				 (int) limitstate->lstate);
+				 (int) node->lstate);
 			slot = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -220,55 +218,54 @@ ExecLimit(Limit *node)
  * This is also a handy place to reset the current-position state info.
  */
 static void
-recompute_limits(Limit *node)
+recompute_limits(LimitState *node)
 {
-	LimitState *limitstate = node->limitstate;
-	ExprContext *econtext = limitstate->cstate.cs_ExprContext;
+	ExprContext *econtext = node->ps.ps_ExprContext;
 	bool		isNull;
 
 	if (node->limitOffset)
 	{
-		limitstate->offset =
+		node->offset =
 			DatumGetInt32(ExecEvalExprSwitchContext(node->limitOffset,
 													econtext,
 													&isNull,
 													NULL));
 		/* Interpret NULL offset as no offset */
 		if (isNull)
-			limitstate->offset = 0;
-		else if (limitstate->offset < 0)
-			limitstate->offset = 0;
+			node->offset = 0;
+		else if (node->offset < 0)
+			node->offset = 0;
 	}
 	else
 	{
 		/* No OFFSET supplied */
-		limitstate->offset = 0;
+		node->offset = 0;
 	}
 
 	if (node->limitCount)
 	{
-		limitstate->noCount = false;
-		limitstate->count =
+		node->noCount = false;
+		node->count =
 			DatumGetInt32(ExecEvalExprSwitchContext(node->limitCount,
 													econtext,
 													&isNull,
 													NULL));
 		/* Interpret NULL count as no count (LIMIT ALL) */
 		if (isNull)
-			limitstate->noCount = true;
-		else if (limitstate->count < 0)
-			limitstate->count = 0;
+			node->noCount = true;
+		else if (node->count < 0)
+			node->count = 0;
 	}
 	else
 	{
 		/* No COUNT supplied */
-		limitstate->count = 0;
-		limitstate->noCount = true;
+		node->count = 0;
+		node->noCount = true;
 	}
 
 	/* Reset position to start-of-scan */
-	limitstate->position = 0;
-	limitstate->subSlot = NULL;
+	node->position = 0;
+	node->subSlot = NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -278,22 +275,19 @@ recompute_limits(Limit *node)
  *		the node's subplan.
  * ----------------------------------------------------------------
  */
-bool							/* return: initialization status */
-ExecInitLimit(Limit *node, EState *estate, Plan *parent)
+LimitState *
+ExecInitLimit(Limit *node, EState *estate)
 {
 	LimitState *limitstate;
 	Plan	   *outerPlan;
 
 	/*
-	 * assign execution state to node
-	 */
-	node->plan.state = estate;
-
-	/*
-	 * create new LimitState for node
+	 * create state structure
 	 */
 	limitstate = makeNode(LimitState);
-	node->limitstate = limitstate;
+	limitstate->ps.plan = (Plan *) node;
+	limitstate->ps.state = estate;
+
 	limitstate->lstate = LIMIT_INITIAL;
 
 	/*
@@ -302,29 +296,37 @@ ExecInitLimit(Limit *node, EState *estate, Plan *parent)
 	 * Limit nodes never call ExecQual or ExecProject, but they need an
 	 * exprcontext anyway to evaluate the limit/offset parameters in.
 	 */
-	ExecAssignExprContext(estate, &limitstate->cstate);
+	ExecAssignExprContext(estate, &limitstate->ps);
+
+	/*
+	 * initialize child expressions
+	 */
+	limitstate->limitOffset = ExecInitExpr(node->limitOffset,
+										   (PlanState *) limitstate);
+	limitstate->limitCount = ExecInitExpr(node->limitCount,
+										  (PlanState *) limitstate);
 
 #define LIMIT_NSLOTS 1
 
 	/*
 	 * Tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &limitstate->cstate);
+	ExecInitResultTupleSlot(estate, &limitstate->ps);
 
 	/*
 	 * then initialize outer plan
 	 */
-	outerPlan = outerPlan((Plan *) node);
-	ExecInitNode(outerPlan, estate, (Plan *) node);
+	outerPlan = outerPlan(node);
+	outerPlanState(limitstate) = ExecInitNode(outerPlan, estate);
 
 	/*
 	 * limit nodes do no projections, so initialize projection info for
 	 * this node appropriately
 	 */
-	ExecAssignResultTypeFromOuterPlan((Plan *) node, &limitstate->cstate);
-	limitstate->cstate.cs_ProjInfo = NULL;
+	ExecAssignResultTypeFromOuterPlan(&limitstate->ps);
+	limitstate->ps.ps_ProjInfo = NULL;
 
-	return TRUE;
+	return limitstate;
 }
 
 int
@@ -343,33 +345,29 @@ ExecCountSlotsLimit(Limit *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndLimit(Limit *node)
+ExecEndLimit(LimitState *node)
 {
-	LimitState *limitstate = node->limitstate;
+	ExecFreeExprContext(&node->ps);
 
-	ExecFreeExprContext(&limitstate->cstate);
-
-	ExecEndNode(outerPlan((Plan *) node), (Plan *) node);
+	ExecEndNode(outerPlanState(node));
 
 	/* clean up tuple table */
-	ExecClearTuple(limitstate->cstate.cs_ResultTupleSlot);
+	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 }
 
 
 void
-ExecReScanLimit(Limit *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScanLimit(LimitState *node, ExprContext *exprCtxt)
 {
-	LimitState *limitstate = node->limitstate;
-
 	/* resetting lstate will force offset/limit recalculation */
-	limitstate->lstate = LIMIT_INITIAL;
+	node->lstate = LIMIT_INITIAL;
 
-	ExecClearTuple(limitstate->cstate.cs_ResultTupleSlot);
+	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((Plan *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((PlanState *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 }

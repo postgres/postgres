@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.71 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.72 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 #define LEFT_OP			1
 #define RIGHT_OP		2
 
-static TupleTableSlot *IndexNext(IndexScan *node);
+static TupleTableSlot *IndexNext(IndexScanState *node);
 
 /* ----------------------------------------------------------------
  *		IndexNext
@@ -65,15 +65,14 @@ static TupleTableSlot *IndexNext(IndexScan *node);
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-IndexNext(IndexScan *node)
+IndexNext(IndexScanState *node)
 {
 	EState	   *estate;
-	CommonScanState *scanstate;
-	IndexScanState *indexstate;
 	ExprContext *econtext;
 	ScanDirection direction;
 	IndexScanDescPtr scanDescs;
 	IndexScanDesc scandesc;
+	Index		scanrelid;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
 	int			numIndices;
@@ -83,21 +82,20 @@ IndexNext(IndexScan *node)
 	/*
 	 * extract necessary information from index scan node
 	 */
-	estate = node->scan.plan.state;
+	estate = node->ss.ps.state;
 	direction = estate->es_direction;
-	if (ScanDirectionIsBackward(node->indxorderdir))
+	if (ScanDirectionIsBackward(((IndexScan *) node->ss.ps.plan)->indxorderdir))
 	{
 		if (ScanDirectionIsForward(direction))
 			direction = BackwardScanDirection;
 		else if (ScanDirectionIsBackward(direction))
 			direction = ForwardScanDirection;
 	}
-	scanstate = node->scan.scanstate;
-	indexstate = node->indxstate;
-	scanDescs = indexstate->iss_ScanDescs;
-	numIndices = indexstate->iss_NumIndices;
-	econtext = scanstate->cstate.cs_ExprContext;
-	slot = scanstate->css_ScanTupleSlot;
+	scanDescs = node->iss_ScanDescs;
+	numIndices = node->iss_NumIndices;
+	econtext = node->ss.ps.ps_ExprContext;
+	slot = node->ss.ss_ScanTupleSlot;
+	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
 
 	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
@@ -106,15 +104,15 @@ IndexNext(IndexScan *node)
 	 * switching in Init/ReScan plan...
 	 */
 	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
+		estate->es_evTuple[scanrelid - 1] != NULL)
 	{
 		List	   *qual;
 
 		ExecClearTuple(slot);
-		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
+		if (estate->es_evTupleNull[scanrelid - 1])
 			return slot;		/* return empty slot */
 
-		ExecStoreTuple(estate->es_evTuple[node->scan.scanrelid - 1],
+		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
 					   slot, InvalidBuffer, false);
 
 		/* Does the tuple meet any of the OR'd indxqual conditions? */
@@ -131,7 +129,7 @@ IndexNext(IndexScan *node)
 			slot->val = NULL;
 
 		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[node->scan.scanrelid - 1] = true;
+		estate->es_evTupleNull[scanrelid - 1] = true;
 
 		return slot;
 	}
@@ -144,24 +142,24 @@ IndexNext(IndexScan *node)
 	bBackward = ScanDirectionIsBackward(direction);
 	if (bBackward)
 	{
-		indexNumber = numIndices - indexstate->iss_IndexPtr - 1;
+		indexNumber = numIndices - node->iss_IndexPtr - 1;
 		if (indexNumber < 0)
 		{
 			indexNumber = 0;
-			indexstate->iss_IndexPtr = numIndices - 1;
+			node->iss_IndexPtr = numIndices - 1;
 		}
 	}
 	else
 	{
-		if ((indexNumber = indexstate->iss_IndexPtr) < 0)
+		if ((indexNumber = node->iss_IndexPtr) < 0)
 		{
 			indexNumber = 0;
-			indexstate->iss_IndexPtr = 0;
+			node->iss_IndexPtr = 0;
 		}
 	}
 	while (indexNumber < numIndices)
 	{
-		scandesc = scanDescs[indexstate->iss_IndexPtr];
+		scandesc = scanDescs[node->iss_IndexPtr];
 		while ((tuple = index_getnext(scandesc, direction)) != NULL)
 		{
 			/*
@@ -181,7 +179,7 @@ IndexNext(IndexScan *node)
 			 * We do this by passing the tuple through ExecQual and
 			 * checking for failure with all previous qualifications.
 			 */
-			if (indexstate->iss_IndexPtr > 0)
+			if (node->iss_IndexPtr > 0)
 			{
 				bool		prev_matches = false;
 				int			prev_index;
@@ -191,7 +189,7 @@ IndexNext(IndexScan *node)
 				ResetExprContext(econtext);
 				qual = node->indxqualorig;
 				for (prev_index = 0;
-					 prev_index < indexstate->iss_IndexPtr;
+					 prev_index < node->iss_IndexPtr;
 					 prev_index++)
 				{
 					if (ExecQual((List *) lfirst(qual), econtext, false))
@@ -216,9 +214,9 @@ IndexNext(IndexScan *node)
 		{
 			indexNumber++;
 			if (bBackward)
-				indexstate->iss_IndexPtr--;
+				node->iss_IndexPtr--;
 			else
-				indexstate->iss_IndexPtr++;
+				node->iss_IndexPtr++;
 		}
 	}
 
@@ -251,21 +249,19 @@ IndexNext(IndexScan *node)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecIndexScan(IndexScan *node)
+ExecIndexScan(IndexScanState *node)
 {
-	IndexScanState *indexstate = node->indxstate;
-
 	/*
 	 * If we have runtime keys and they've not already been set up, do it
 	 * now.
 	 */
-	if (indexstate->iss_RuntimeKeyInfo && !indexstate->iss_RuntimeKeysReady)
-		ExecReScan((Plan *) node, NULL, NULL);
+	if (node->iss_RuntimeKeyInfo && !node->iss_RuntimeKeysReady)
+		ExecReScan((PlanState *) node, NULL);
 
 	/*
 	 * use IndexNext as access method
 	 */
-	return ExecScan(&node->scan, (ExecScanAccessMtd) IndexNext);
+	return ExecScan(&node->ss, (ExecScanAccessMtd) IndexNext);
 }
 
 /* ----------------------------------------------------------------
@@ -280,28 +276,27 @@ ExecIndexScan(IndexScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
+ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 {
 	EState	   *estate;
-	IndexScanState *indexstate;
 	ExprContext *econtext;
 	int			numIndices;
 	IndexScanDescPtr scanDescs;
 	ScanKey    *scanKeys;
 	int		  **runtimeKeyInfo;
 	int		   *numScanKeys;
+	Index		scanrelid;
 	int			i;
 	int			j;
 
-	estate = node->scan.plan.state;
-	indexstate = node->indxstate;
-	econtext = indexstate->iss_RuntimeContext;	/* context for runtime
-												 * keys */
-	numIndices = indexstate->iss_NumIndices;
-	scanDescs = indexstate->iss_ScanDescs;
-	scanKeys = indexstate->iss_ScanKeys;
-	runtimeKeyInfo = indexstate->iss_RuntimeKeyInfo;
-	numScanKeys = indexstate->iss_NumScanKeys;
+	estate = node->ss.ps.state;
+	econtext = node->iss_RuntimeContext;	/* context for runtime keys */
+	numIndices = node->iss_NumIndices;
+	scanDescs = node->iss_ScanDescs;
+	scanKeys = node->iss_ScanKeys;
+	runtimeKeyInfo = node->iss_RuntimeKeyInfo;
+	numScanKeys = node->iss_NumScanKeys;
+	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
 
 	if (econtext)
 	{
@@ -315,7 +310,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 			ExprContext *stdecontext;
 
 			econtext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-			stdecontext = node->scan.scanstate->cstate.cs_ExprContext;
+			stdecontext = node->ss.ps.ps_ExprContext;
 			stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
 		}
 
@@ -392,22 +387,22 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 			}
 		}
 
-		indexstate->iss_RuntimeKeysReady = true;
+		node->iss_RuntimeKeysReady = true;
 	}
 
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
+		estate->es_evTuple[scanrelid - 1] != NULL)
 	{
-		estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
+		estate->es_evTupleNull[scanrelid - 1] = false;
 		return;
 	}
 
 	/* reset index scans */
-	if (ScanDirectionIsBackward(node->indxorderdir))
-		indexstate->iss_IndexPtr = numIndices;
+	if (ScanDirectionIsBackward(((IndexScan *) node->ss.ps.plan)->indxorderdir))
+		node->iss_IndexPtr = numIndices;
 	else
-		indexstate->iss_IndexPtr = -1;
+		node->iss_IndexPtr = -1;
 
 	for (i = 0; i < numIndices; i++)
 	{
@@ -427,13 +422,10 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
  * ----------------------------------------------------------------
  */
 void
-ExecEndIndexScan(IndexScan *node)
+ExecEndIndexScan(IndexScanState *node)
 {
-	CommonScanState *scanstate;
-	IndexScanState *indexstate;
 	int		  **runtimeKeyInfo;
 	ScanKey    *scanKeys;
-	List	   *indxqual;
 	int		   *numScanKeys;
 	int			numIndices;
 	Relation	relation;
@@ -441,32 +433,25 @@ ExecEndIndexScan(IndexScan *node)
 	IndexScanDescPtr indexScanDescs;
 	int			i;
 
-	scanstate = node->scan.scanstate;
-	indexstate = node->indxstate;
-	indxqual = node->indxqual;
-	runtimeKeyInfo = indexstate->iss_RuntimeKeyInfo;
+	runtimeKeyInfo = node->iss_RuntimeKeyInfo;
 
 	/*
 	 * extract information from the node
 	 */
-	numIndices = indexstate->iss_NumIndices;
-	scanKeys = indexstate->iss_ScanKeys;
-	numScanKeys = indexstate->iss_NumScanKeys;
-	indexRelationDescs = indexstate->iss_RelationDescs;
-	indexScanDescs = indexstate->iss_ScanDescs;
-	relation = scanstate->css_currentRelation;
+	numIndices = node->iss_NumIndices;
+	scanKeys = node->iss_ScanKeys;
+	numScanKeys = node->iss_NumScanKeys;
+	indexRelationDescs = node->iss_RelationDescs;
+	indexScanDescs = node->iss_ScanDescs;
+	relation = node->ss.ss_currentRelation;
 
 	/*
 	 * Free the projection info and the scan attribute info
-	 *
-	 * Note: we don't ExecFreeResultType(scanstate) because the rule manager
-	 * depends on the tupType returned by ExecMain().  So for now, this is
-	 * freed at end-transaction time.  -cim 6/2/91
 	 */
-	ExecFreeProjectionInfo(&scanstate->cstate);
-	ExecFreeExprContext(&scanstate->cstate);
-	if (indexstate->iss_RuntimeContext)
-		FreeExprContext(indexstate->iss_RuntimeContext);
+	ExecFreeProjectionInfo(&node->ss.ps);
+	ExecFreeExprContext(&node->ss.ps);
+	if (node->iss_RuntimeContext)
+		FreeExprContext(node->iss_RuntimeContext);
 
 	/*
 	 * close the index relations
@@ -514,12 +499,11 @@ ExecEndIndexScan(IndexScan *node)
 	/*
 	 * clear out tuple table slots
 	 */
-	ExecClearTuple(scanstate->cstate.cs_ResultTupleSlot);
-	ExecClearTuple(scanstate->css_ScanTupleSlot);
-	pfree(scanstate);
-	pfree(indexstate->iss_RelationDescs);
-	pfree(indexstate->iss_ScanDescs);
-	pfree(indexstate);
+	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+	pfree(node->iss_RelationDescs);
+	pfree(node->iss_ScanDescs);
+	pfree(node);
 }
 
 /* ----------------------------------------------------------------
@@ -531,21 +515,16 @@ ExecEndIndexScan(IndexScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecIndexMarkPos(IndexScan *node)
+ExecIndexMarkPos(IndexScanState *node)
 {
-	IndexScanState *indexstate;
 	IndexScanDescPtr indexScanDescs;
 	IndexScanDesc scanDesc;
 	int			indexPtr;
 
-	indexstate = node->indxstate;
-	indexPtr = indexstate->iss_MarkIndexPtr = indexstate->iss_IndexPtr;
-	indexScanDescs = indexstate->iss_ScanDescs;
+	indexPtr = node->iss_MarkIndexPtr = node->iss_IndexPtr;
+	indexScanDescs = node->iss_ScanDescs;
 	scanDesc = indexScanDescs[indexPtr];
 
-#ifdef NOT_USED
-	IndexScanMarkPosition(scanDesc);
-#endif
 	index_markpos(scanDesc);
 }
 
@@ -560,21 +539,16 @@ ExecIndexMarkPos(IndexScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecIndexRestrPos(IndexScan *node)
+ExecIndexRestrPos(IndexScanState *node)
 {
-	IndexScanState *indexstate;
 	IndexScanDescPtr indexScanDescs;
 	IndexScanDesc scanDesc;
 	int			indexPtr;
 
-	indexstate = node->indxstate;
-	indexPtr = indexstate->iss_IndexPtr = indexstate->iss_MarkIndexPtr;
-	indexScanDescs = indexstate->iss_ScanDescs;
+	indexPtr = node->iss_IndexPtr = node->iss_MarkIndexPtr;
+	indexScanDescs = node->iss_ScanDescs;
 	scanDesc = indexScanDescs[indexPtr];
 
-#ifdef NOT_USED
-	IndexScanRestorePosition(scanDesc);
-#endif
 	index_restrpos(scanDesc);
 }
 
@@ -597,11 +571,10 @@ ExecIndexRestrPos(IndexScan *node)
  *		  estate: the execution state initialized in InitPlan.
  * ----------------------------------------------------------------
  */
-bool
-ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
+IndexScanState *
+ExecInitIndexScan(IndexScan *node, EState *estate)
 {
 	IndexScanState *indexstate;
-	CommonScanState *scanstate;
 	List	   *indxqual;
 	List	   *indxid;
 	List	   *listscan;
@@ -620,45 +593,52 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	Relation	currentRelation;
 
 	/*
-	 * assign execution state to node
+	 * create state structure
 	 */
-	node->scan.plan.state = estate;
-
-	/*
-	 * Part 1)	initialize scan state
-	 *
-	 * create new CommonScanState for node
-	 */
-	scanstate = makeNode(CommonScanState);
-	node->scan.scanstate = scanstate;
+	indexstate = makeNode(IndexScanState);
+	indexstate->ss.ps.plan = (Plan *) node;
+	indexstate->ss.ps.state = estate;
 
 	/*
 	 * Miscellaneous initialization
 	 *
 	 * create expression context for node
 	 */
-	ExecAssignExprContext(estate, &scanstate->cstate);
+	ExecAssignExprContext(estate, &indexstate->ss.ps);
+
+	/*
+	 * initialize child expressions
+	 */
+	indexstate->ss.ps.targetlist = (List *)
+		ExecInitExpr((Node *) node->scan.plan.targetlist,
+					 (PlanState *) indexstate);
+	indexstate->ss.ps.qual = (List *)
+		ExecInitExpr((Node *) node->scan.plan.qual,
+					 (PlanState *) indexstate);
+	indexstate->indxqual = (List *)
+		ExecInitExpr((Node *) node->indxqual,
+					 (PlanState *) indexstate);
+	indexstate->indxqualorig = (List *)
+		ExecInitExpr((Node *) node->indxqualorig,
+					 (PlanState *) indexstate);
 
 #define INDEXSCAN_NSLOTS 2
 
 	/*
 	 * tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &scanstate->cstate);
-	ExecInitScanTupleSlot(estate, scanstate);
+	ExecInitResultTupleSlot(estate, &indexstate->ss.ps);
+	ExecInitScanTupleSlot(estate, &indexstate->ss);
 
 	/*
 	 * initialize projection info.	result type comes from scan desc
 	 * below..
 	 */
-	ExecAssignProjectionInfo((Plan *) node, &scanstate->cstate);
+	ExecAssignProjectionInfo(&indexstate->ss.ps);
 
 	/*
-	 * Part 2)	initialize index scan state
-	 *
-	 * create new IndexScanState for node
+	 * Initialize index-specific scan state
 	 */
-	indexstate = makeNode(IndexScanState);
 	indexstate->iss_NumIndices = 0;
 	indexstate->iss_IndexPtr = -1;
 	indexstate->iss_ScanKeys = NULL;
@@ -668,8 +648,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indexstate->iss_RuntimeKeysReady = false;
 	indexstate->iss_RelationDescs = NULL;
 	indexstate->iss_ScanDescs = NULL;
-
-	node->indxstate = indexstate;
 
 	/*
 	 * get the index node information
@@ -836,7 +814,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				{
 					/* treat Param like a constant */
 					scanvalue = ExecEvalParam((Param *) leftop,
-										scanstate->cstate.cs_ExprContext,
+										indexstate->ss.ps.ps_ExprContext,
 											  &isnull);
 					if (isnull)
 						flags |= SK_ISNULL;
@@ -911,7 +889,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				{
 					/* treat Param like a constant */
 					scanvalue = ExecEvalParam((Param *) rightop,
-										scanstate->cstate.cs_ExprContext,
+										indexstate->ss.ps.ps_ExprContext,
 											  &isnull);
 					if (isnull)
 						flags |= SK_ISNULL;
@@ -976,12 +954,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 */
 	if (have_runtime_keys)
 	{
-		ExprContext *stdecontext = scanstate->cstate.cs_ExprContext;
+		ExprContext *stdecontext = indexstate->ss.ps.ps_ExprContext;
 
-		ExecAssignExprContext(estate, &scanstate->cstate);
+		ExecAssignExprContext(estate, &indexstate->ss.ps);
 		indexstate->iss_RuntimeKeyInfo = runtimeKeyInfo;
-		indexstate->iss_RuntimeContext = scanstate->cstate.cs_ExprContext;
-		scanstate->cstate.cs_ExprContext = stdecontext;
+		indexstate->iss_RuntimeContext = indexstate->ss.ps.ps_ExprContext;
+		indexstate->ss.ps.ps_ExprContext = stdecontext;
 	}
 	else
 	{
@@ -1008,14 +986,14 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	if (!RelationGetForm(currentRelation)->relhasindex)
 		elog(ERROR, "indexes of the relation %u was inactivated", reloid);
 
-	scanstate->css_currentRelation = currentRelation;
-	scanstate->css_currentScanDesc = NULL;		/* no heap scan here */
+	indexstate->ss.ss_currentRelation = currentRelation;
+	indexstate->ss.ss_currentScanDesc = NULL;		/* no heap scan here */
 
 	/*
 	 * get the scan type from the relation descriptor.
 	 */
-	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation), false);
-	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
+	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation), false);
+	ExecAssignResultTypeFromTL(&indexstate->ss.ps);
 
 	/*
 	 * open the index relations and initialize relation and scan
@@ -1043,7 +1021,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	/*
 	 * all done.
 	 */
-	return TRUE;
+	return indexstate;
 }
 
 int

@@ -3,27 +3,28 @@
  * copyfuncs.c
  *	  Copy functions for Postgres tree nodes.
  *
- * NOTE: a general convention when copying or comparing plan nodes is
- * that we ignore the executor state subnode.  We do not need to look
- * at it because no current uses of copyObject() or equal() need to
- * deal with already-executing plan trees.	By leaving the state subnodes
- * out, we avoid needing to write copy/compare routines for all the
- * different executor state node types.
+ * NOTE: we currently support copying all node types found in parse and
+ * plan trees.  We do not support copying executor state trees; there
+ * is no need for that, and no point in maintaining all the code that
+ * would be needed.  We also do not support copying Path trees, mainly
+ * because the circular linkages between RelOptInfo and Path nodes can't
+ * be handled easily in a simple depth-first traversal.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.225 2002/11/30 05:21:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.226 2002/12/05 15:50:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "optimizer/clauses.h"
-#include "optimizer/planmain.h"
+#include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
+#include "nodes/relation.h"
 #include "utils/datum.h"
 
 
@@ -56,15 +57,6 @@
 		Size	_size = (sz); \
 		newnode->fldname = palloc(_size); \
 		memcpy(newnode->fldname, from->fldname, _size); \
-	} while (0)
-
-/* Special hack for fixing subplan lists of Plan nodes (ick) */
-#define FIX_SUBPLAN_LINKS(subplanfldname, fldname) \
-	do { \
-		if (from->subplanfldname != NIL) \
-			newnode->subplanfldname = \
-				nconc(newnode->subplanfldname, \
-					  pull_subplans((Node *) (newnode->fldname))); \
 	} while (0)
 
 
@@ -119,19 +111,13 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	COPY_SCALAR_FIELD(total_cost);
 	COPY_SCALAR_FIELD(plan_rows);
 	COPY_SCALAR_FIELD(plan_width);
-	/* execution state is NOT copied */
 	COPY_NODE_FIELD(targetlist);
 	COPY_NODE_FIELD(qual);
 	COPY_NODE_FIELD(lefttree);
 	COPY_NODE_FIELD(righttree);
+	COPY_NODE_FIELD(initPlan);
 	COPY_INTLIST_FIELD(extParam);
 	COPY_INTLIST_FIELD(locParam);
-	COPY_INTLIST_FIELD(chgParam);
-	COPY_NODE_FIELD(initPlan);
-	/* subPlan list must point to subplans in the new subtree, not the old */
-	newnode->subPlan = NIL;
-	FIX_SUBPLAN_LINKS(subPlan, targetlist);
-	FIX_SUBPLAN_LINKS(subPlan, qual);
 	COPY_SCALAR_FIELD(nParamExec);
 }
 
@@ -169,9 +155,6 @@ _copyResult(Result *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(resconstantqual);
-
-	/* subPlan list must point to subplans in the new subtree, not the old */
-	FIX_SUBPLAN_LINKS(plan.subPlan, resconstantqual);
 
 	return newnode;
 }
@@ -266,10 +249,6 @@ _copyIndexScan(IndexScan *from)
 	COPY_NODE_FIELD(indxqualorig);
 	COPY_SCALAR_FIELD(indxorderdir);
 
-	/* subPlan list must point to subplans in the new subtree, not the old */
-	FIX_SUBPLAN_LINKS(scan.plan.subPlan, indxqual);
-	FIX_SUBPLAN_LINKS(scan.plan.subPlan, indxqualorig);
-
 	return newnode;
 }
 
@@ -289,11 +268,7 @@ _copyTidScan(TidScan *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_SCALAR_FIELD(needRescan);
 	COPY_NODE_FIELD(tideval);
-
-	/* subPlan list must point to subplans in the new subtree, not the old */
-	FIX_SUBPLAN_LINKS(scan.plan.subPlan, tideval);
 
 	return newnode;
 }
@@ -348,9 +323,6 @@ CopyJoinFields(Join *from, Join *newnode)
 
 	COPY_SCALAR_FIELD(jointype);
 	COPY_NODE_FIELD(joinqual);
-
-	/* subPlan list must point to subplans in the new subtree, not the old */
-	FIX_SUBPLAN_LINKS(plan.subPlan, joinqual);
 }
 
 
@@ -406,9 +378,6 @@ _copyMergeJoin(MergeJoin *from)
 	 */
 	COPY_NODE_FIELD(mergeclauses);
 
-	/* subPlan list must point to subplans in the new subtree, not the old */
-	FIX_SUBPLAN_LINKS(join.plan.subPlan, mergeclauses);
-
 	return newnode;
 }
 
@@ -429,9 +398,6 @@ _copyHashJoin(HashJoin *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(hashclauses);
-
-	/* subPlan list must point to subplans in the new subtree, not the old */
-	FIX_SUBPLAN_LINKS(join.plan.subPlan, hashclauses);
 
 	return newnode;
 }
@@ -531,6 +497,27 @@ _copyUnique(Unique *from)
 }
 
 /*
+ * _copyHash
+ */
+static Hash *
+_copyHash(Hash *from)
+{
+	Hash	   *newnode = makeNode(Hash);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(hashkeys);
+
+	return newnode;
+}
+
+/*
  * _copySetOp
  */
 static SetOp *
@@ -576,29 +563,6 @@ _copyLimit(Limit *from)
 	return newnode;
 }
 
-/*
- * _copyHash
- */
-static Hash *
-_copyHash(Hash *from)
-{
-	Hash	   *newnode = makeNode(Hash);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyPlanFields((Plan *) from, (Plan *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(hashkeys);
-
-	/* XXX could the hashkeys contain subplans?  Not at present... */
-
-	return newnode;
-}
-
 static SubPlan *
 _copySubPlan(SubPlan *from)
 {
@@ -610,10 +574,6 @@ _copySubPlan(SubPlan *from)
 	COPY_INTLIST_FIELD(setParam);
 	COPY_INTLIST_FIELD(parParam);
 	COPY_NODE_FIELD(sublink);
-
-	/* do not copy execution state */
-	newnode->needShutdown = false;
-	newnode->curTuple = NULL;
 
 	return newnode;
 }
@@ -933,312 +893,10 @@ _copyArrayRef(ArrayRef *from)
 /* ****************************************************************
  *						relation.h copy functions
  *
- * XXX the code to copy RelOptInfo and Path nodes is really completely bogus,
- * because it makes no attempt to deal with multiple links from RelOptInfo
- * to Paths, nor with back-links from Paths to their parent RelOptInfo.
- * Currently, since we never actually try to copy a RelOptInfo, this is okay.
+ * We don't support copying RelOptInfo, IndexOptInfo, or Path nodes.
+ * There are some subsidiary structs that are useful to copy, though.
  * ****************************************************************
  */
-
-/*
- * _copyRelOptInfo
- */
-static RelOptInfo *
-_copyRelOptInfo(RelOptInfo *from)
-{
-	RelOptInfo *newnode = makeNode(RelOptInfo);
-
-	COPY_SCALAR_FIELD(reloptkind);
-	COPY_INTLIST_FIELD(relids);
-	COPY_SCALAR_FIELD(rows);
-	COPY_SCALAR_FIELD(width);
-	COPY_NODE_FIELD(targetlist);
-	COPY_NODE_FIELD(pathlist);
-	/* XXX cheapest-path fields should point to members of pathlist? */
-	COPY_NODE_FIELD(cheapest_startup_path);
-	COPY_NODE_FIELD(cheapest_total_path);
-	COPY_SCALAR_FIELD(pruneable);
-	COPY_SCALAR_FIELD(rtekind);
-	COPY_NODE_FIELD(indexlist);
-	COPY_SCALAR_FIELD(pages);
-	COPY_SCALAR_FIELD(tuples);
-	COPY_NODE_FIELD(subplan);
-	COPY_SCALAR_FIELD(joinrti);
-	COPY_INTLIST_FIELD(joinrteids);
-	COPY_NODE_FIELD(baserestrictinfo);
-	COPY_SCALAR_FIELD(baserestrictcost);
-	COPY_INTLIST_FIELD(outerjoinset);
-	COPY_NODE_FIELD(joininfo);
-	COPY_INTLIST_FIELD(index_outer_relids);
-	COPY_NODE_FIELD(index_inner_paths);
-
-	return newnode;
-}
-
-/*
- * _copyIndexOptInfo
- */
-static IndexOptInfo *
-_copyIndexOptInfo(IndexOptInfo *from)
-{
-	IndexOptInfo *newnode = makeNode(IndexOptInfo);
-
-	COPY_SCALAR_FIELD(indexoid);
-	COPY_SCALAR_FIELD(pages);
-	COPY_SCALAR_FIELD(tuples);
-	COPY_SCALAR_FIELD(ncolumns);
-	COPY_SCALAR_FIELD(nkeys);
-
-	if (from->classlist)
-	{
-		/* copy the trailing zero too */
-		COPY_POINTER_FIELD(classlist, (from->ncolumns + 1) * sizeof(Oid));
-	}
-
-	if (from->indexkeys)
-	{
-		/* copy the trailing zero too */
-		COPY_POINTER_FIELD(indexkeys, (from->nkeys + 1) * sizeof(int));
-	}
-
-	if (from->ordering)
-	{
-		/* copy the trailing zero too */
-		COPY_POINTER_FIELD(ordering, (from->ncolumns + 1) * sizeof(Oid));
-	}
-
-	COPY_SCALAR_FIELD(relam);
-	COPY_SCALAR_FIELD(amcostestimate);
-	COPY_SCALAR_FIELD(indproc);
-	COPY_NODE_FIELD(indpred);
-	COPY_SCALAR_FIELD(unique);
-	COPY_INTLIST_FIELD(outer_relids);
-	COPY_NODE_FIELD(inner_paths);
-
-	return newnode;
-}
-
-/*
- * CopyPathFields
- *
- *		This function copies the fields of the Path node.  It is used by
- *		all the copy functions for classes which inherit from Path.
- */
-static void
-CopyPathFields(Path *from, Path *newnode)
-{
-	/*
-	 * Modify the next line, since it causes the copying to cycle (i.e.
-	 * the parent points right back here! -- JMH, 7/7/92. Old version:
-	 * COPY_NODE_FIELD(parent);
-	 */
-	COPY_SCALAR_FIELD(parent);
-
-	COPY_SCALAR_FIELD(startup_cost);
-	COPY_SCALAR_FIELD(total_cost);
-	COPY_SCALAR_FIELD(pathtype);
-	COPY_NODE_FIELD(pathkeys);
-}
-
-/*
- * _copyPath
- */
-static Path *
-_copyPath(Path *from)
-{
-	Path	   *newnode = makeNode(Path);
-
-	CopyPathFields(from, newnode);
-
-	return newnode;
-}
-
-/*
- * _copyIndexPath
- */
-static IndexPath *
-_copyIndexPath(IndexPath *from)
-{
-	IndexPath  *newnode = makeNode(IndexPath);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyPathFields((Path *) from, (Path *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(indexinfo);
-	COPY_NODE_FIELD(indexqual);
-	COPY_SCALAR_FIELD(indexscandir);
-	COPY_SCALAR_FIELD(rows);
-
-	return newnode;
-}
-
-/*
- * _copyTidPath
- */
-static TidPath *
-_copyTidPath(TidPath *from)
-{
-	TidPath    *newnode = makeNode(TidPath);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyPathFields((Path *) from, (Path *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(tideval);
-	COPY_INTLIST_FIELD(unjoined_relids);
-
-	return newnode;
-}
-
-/*
- * _copyAppendPath
- */
-static AppendPath *
-_copyAppendPath(AppendPath *from)
-{
-	AppendPath *newnode = makeNode(AppendPath);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyPathFields((Path *) from, (Path *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(subpaths);
-
-	return newnode;
-}
-
-/*
- * _copyResultPath
- */
-static ResultPath *
-_copyResultPath(ResultPath *from)
-{
-	ResultPath    *newnode = makeNode(ResultPath);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyPathFields((Path *) from, (Path *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(subpath);
-	COPY_NODE_FIELD(constantqual);
-
-	return newnode;
-}
-
-/*
- * _copyMaterialPath
- */
-static MaterialPath *
-_copyMaterialPath(MaterialPath *from)
-{
-	MaterialPath    *newnode = makeNode(MaterialPath);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyPathFields((Path *) from, (Path *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(subpath);
-
-	return newnode;
-}
-
-/*
- * CopyJoinPathFields
- *
- *		This function copies the fields of the JoinPath node.  It is used by
- *		all the copy functions for classes which inherit from JoinPath.
- */
-static void
-CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
-{
-	CopyPathFields((Path *) from, (Path *) newnode);
-
-	COPY_SCALAR_FIELD(jointype);
-	COPY_NODE_FIELD(outerjoinpath);
-	COPY_NODE_FIELD(innerjoinpath);
-	COPY_NODE_FIELD(joinrestrictinfo);
-}
-
-/*
- * _copyNestPath
- */
-static NestPath *
-_copyNestPath(NestPath *from)
-{
-	NestPath   *newnode = makeNode(NestPath);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
-
-	return newnode;
-}
-
-/*
- * _copyMergePath
- */
-static MergePath *
-_copyMergePath(MergePath *from)
-{
-	MergePath  *newnode = makeNode(MergePath);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(path_mergeclauses);
-	COPY_NODE_FIELD(outersortkeys);
-	COPY_NODE_FIELD(innersortkeys);
-
-	return newnode;
-}
-
-/*
- * _copyHashPath
- */
-static HashPath *
-_copyHashPath(HashPath *from)
-{
-	HashPath   *newnode = makeNode(HashPath);
-
-	/*
-	 * copy node superclass fields
-	 */
-	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
-
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(path_hashclauses);
-
-	return newnode;
-}
 
 /*
  * _copyPathKeyItem
@@ -1297,21 +955,6 @@ _copyJoinInfo(JoinInfo *from)
 
 	COPY_INTLIST_FIELD(unjoined_relids);
 	COPY_NODE_FIELD(jinfo_restrictinfo);
-
-	return newnode;
-}
-
-/*
- * _copyInnerIndexscanInfo
- */
-static InnerIndexscanInfo *
-_copyInnerIndexscanInfo(InnerIndexscanInfo *from)
-{
-	InnerIndexscanInfo   *newnode = makeNode(InnerIndexscanInfo);
-
-	COPY_INTLIST_FIELD(other_relids);
-	COPY_SCALAR_FIELD(isouterjoin);
-	COPY_NODE_FIELD(best_innerpath);
 
 	return newnode;
 }
@@ -1737,7 +1380,8 @@ _copyQuery(Query *from)
 	/*
 	 * We do not copy the planner internal fields: base_rel_list,
 	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys,
-	 * hasJoinRTEs.  Not entirely clear if this is right?
+	 * hasJoinRTEs.  That would get us into copying RelOptInfo/Path
+	 * trees, which we don't want to do.
 	 */
 
 	return newnode;
@@ -2683,14 +2327,14 @@ copyObject(void *from)
 		case T_Unique:
 			retval = _copyUnique(from);
 			break;
+		case T_Hash:
+			retval = _copyHash(from);
+			break;
 		case T_SetOp:
 			retval = _copySetOp(from);
 			break;
 		case T_Limit:
 			retval = _copyLimit(from);
-			break;
-		case T_Hash:
-			retval = _copyHash(from);
 			break;
 		case T_SubPlan:
 			retval = _copySubPlan(from);
@@ -2757,39 +2401,6 @@ copyObject(void *from)
 			/*
 			 * RELATION NODES
 			 */
-		case T_RelOptInfo:
-			retval = _copyRelOptInfo(from);
-			break;
-		case T_IndexOptInfo:
-			retval = _copyIndexOptInfo(from);
-			break;
-		case T_Path:
-			retval = _copyPath(from);
-			break;
-		case T_IndexPath:
-			retval = _copyIndexPath(from);
-			break;
-		case T_TidPath:
-			retval = _copyTidPath(from);
-			break;
-		case T_AppendPath:
-			retval = _copyAppendPath(from);
-			break;
-		case T_ResultPath:
-			retval = _copyResultPath(from);
-			break;
-		case T_MaterialPath:
-			retval = _copyMaterialPath(from);
-			break;
-		case T_NestPath:
-			retval = _copyNestPath(from);
-			break;
-		case T_MergePath:
-			retval = _copyMergePath(from);
-			break;
-		case T_HashPath:
-			retval = _copyHashPath(from);
-			break;
 		case T_PathKeyItem:
 			retval = _copyPathKeyItem(from);
 			break;
@@ -2798,9 +2409,6 @@ copyObject(void *from)
 			break;
 		case T_JoinInfo:
 			retval = _copyJoinInfo(from);
-			break;
-		case T_InnerIndexscanInfo:
-			retval = _copyInnerIndexscanInfo(from);
 			break;
 
 			/*

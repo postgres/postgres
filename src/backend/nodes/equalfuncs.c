@@ -3,30 +3,30 @@
  * equalfuncs.c
  *	  Equality functions to compare node trees.
  *
- * NOTE: a general convention when copying or comparing plan nodes is
- * that we ignore the executor state subnode.  We do not need to look
- * at it because no current uses of copyObject() or equal() need to
- * deal with already-executing plan trees.	By leaving the state subnodes
- * out, we avoid needing to write copy/compare routines for all the
- * different executor state node types.
+ * NOTE: we currently support comparing all node types found in parse
+ * trees.  We do not support comparing executor state trees; there
+ * is no need for that, and no point in maintaining all the code that
+ * would be needed.  We also do not support comparing Path trees, mainly
+ * because the circular linkages between RelOptInfo and Path nodes can't
+ * be handled easily in a simple depth-first traversal.
  *
- * Currently, in fact, equal() doesn't know how to compare Plan nodes
- * at all, let alone their executor-state subnodes.  This will probably
- * need to be fixed someday, but presently there is no need to compare
- * plan trees.
+ * Currently, in fact, equal() doesn't know how to compare Plan trees
+ * either.  This might need to be fixed someday.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.170 2002/11/30 05:21:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.171 2002/12/05 15:50:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "nodes/params.h"
+#include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
@@ -370,147 +370,6 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
  */
 
 static bool
-_equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
-{
-	/*
-	 * We treat RelOptInfos as equal if they refer to the same base rels
-	 * joined in the same order.  Is this appropriate/sufficient?
-	 */
-	COMPARE_INTLIST_FIELD(relids);
-
-	return true;
-}
-
-static bool
-_equalIndexOptInfo(IndexOptInfo *a, IndexOptInfo *b)
-{
-	/*
-	 * We treat IndexOptInfos as equal if they refer to the same index. Is
-	 * this sufficient?
-	 */
-	COMPARE_SCALAR_FIELD(indexoid);
-
-	return true;
-}
-
-static bool
-_equalPath(Path *a, Path *b)
-{
-	/* This is safe only because _equalRelOptInfo is incomplete... */
-	COMPARE_NODE_FIELD(parent);
-	/*
-	 * do not check path costs, since they may not be set yet, and being
-	 * float values there are roundoff error issues anyway...
-	 */
-	COMPARE_SCALAR_FIELD(pathtype);
-	COMPARE_NODE_FIELD(pathkeys);
-
-	return true;
-}
-
-static bool
-_equalIndexPath(IndexPath *a, IndexPath *b)
-{
-	if (!_equalPath((Path *) a, (Path *) b))
-		return false;
-	COMPARE_NODE_FIELD(indexinfo);
-	COMPARE_NODE_FIELD(indexqual);
-	COMPARE_SCALAR_FIELD(indexscandir);
-
-	/*
-	 * Skip 'rows' because of possibility of floating-point roundoff
-	 * error. It should be derivable from the other fields anyway.
-	 */
-	return true;
-}
-
-static bool
-_equalTidPath(TidPath *a, TidPath *b)
-{
-	if (!_equalPath((Path *) a, (Path *) b))
-		return false;
-	COMPARE_NODE_FIELD(tideval);
-	COMPARE_INTLIST_FIELD(unjoined_relids);
-
-	return true;
-}
-
-static bool
-_equalAppendPath(AppendPath *a, AppendPath *b)
-{
-	if (!_equalPath((Path *) a, (Path *) b))
-		return false;
-	COMPARE_NODE_FIELD(subpaths);
-
-	return true;
-}
-
-static bool
-_equalResultPath(ResultPath *a, ResultPath *b)
-{
-	if (!_equalPath((Path *) a, (Path *) b))
-		return false;
-	COMPARE_NODE_FIELD(subpath);
-	COMPARE_NODE_FIELD(constantqual);
-
-	return true;
-}
-
-static bool
-_equalMaterialPath(MaterialPath *a, MaterialPath *b)
-{
-	if (!_equalPath((Path *) a, (Path *) b))
-		return false;
-	COMPARE_NODE_FIELD(subpath);
-
-	return true;
-}
-
-static bool
-_equalJoinPath(JoinPath *a, JoinPath *b)
-{
-	if (!_equalPath((Path *) a, (Path *) b))
-		return false;
-	COMPARE_SCALAR_FIELD(jointype);
-	COMPARE_NODE_FIELD(outerjoinpath);
-	COMPARE_NODE_FIELD(innerjoinpath);
-	COMPARE_NODE_FIELD(joinrestrictinfo);
-
-	return true;
-}
-
-static bool
-_equalNestPath(NestPath *a, NestPath *b)
-{
-	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
-		return false;
-
-	return true;
-}
-
-static bool
-_equalMergePath(MergePath *a, MergePath *b)
-{
-	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
-		return false;
-	COMPARE_NODE_FIELD(path_mergeclauses);
-	COMPARE_NODE_FIELD(outersortkeys);
-	COMPARE_NODE_FIELD(innersortkeys);
-
-	return true;
-}
-
-static bool
-_equalHashPath(HashPath *a, HashPath *b)
-{
-	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
-		return false;
-	COMPARE_NODE_FIELD(path_hashclauses);
-
-	return true;
-}
-
-static bool
 _equalPathKeyItem(PathKeyItem *a, PathKeyItem *b)
 {
 	COMPARE_NODE_FIELD(key);
@@ -543,16 +402,6 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 {
 	COMPARE_INTLIST_FIELD(unjoined_relids);
 	COMPARE_NODE_FIELD(jinfo_restrictinfo);
-
-	return true;
-}
-
-static bool
-_equalInnerIndexscanInfo(InnerIndexscanInfo *a, InnerIndexscanInfo *b)
-{
-	COMPARE_INTLIST_FIELD(other_relids);
-	COMPARE_SCALAR_FIELD(isouterjoin);
-	COMPARE_NODE_FIELD(best_innerpath);
 
 	return true;
 }
@@ -1711,39 +1560,6 @@ equal(void *a, void *b)
 			retval = _equalJoinExpr(a, b);
 			break;
 
-		case T_RelOptInfo:
-			retval = _equalRelOptInfo(a, b);
-			break;
-		case T_IndexOptInfo:
-			retval = _equalIndexOptInfo(a, b);
-			break;
-		case T_Path:
-			retval = _equalPath(a, b);
-			break;
-		case T_IndexPath:
-			retval = _equalIndexPath(a, b);
-			break;
-		case T_TidPath:
-			retval = _equalTidPath(a, b);
-			break;
-		case T_AppendPath:
-			retval = _equalAppendPath(a, b);
-			break;
-		case T_ResultPath:
-			retval = _equalResultPath(a, b);
-			break;
-		case T_MaterialPath:
-			retval = _equalMaterialPath(a, b);
-			break;
-		case T_NestPath:
-			retval = _equalNestPath(a, b);
-			break;
-		case T_MergePath:
-			retval = _equalMergePath(a, b);
-			break;
-		case T_HashPath:
-			retval = _equalHashPath(a, b);
-			break;
 		case T_PathKeyItem:
 			retval = _equalPathKeyItem(a, b);
 			break;
@@ -1752,9 +1568,6 @@ equal(void *a, void *b)
 			break;
 		case T_JoinInfo:
 			retval = _equalJoinInfo(a, b);
-			break;
-		case T_InnerIndexscanInfo:
-			retval = _equalInnerIndexscanInfo(a, b);
 			break;
 
 		case T_List:

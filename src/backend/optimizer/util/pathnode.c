@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.82 2002/11/30 05:21:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.83 2002/12/05 15:50:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,9 +385,7 @@ create_tidscan_path(Query *root, RelOptInfo *rel, List *tideval)
 	pathnode->path.pathtype = T_TidScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;
-	pathnode->tideval = copyObject(tideval);	/* is copy really
-												 * necessary? */
-	pathnode->unjoined_relids = NIL;
+	pathnode->tideval = tideval;
 
 	cost_tidscan(&pathnode->path, root, rel, tideval);
 

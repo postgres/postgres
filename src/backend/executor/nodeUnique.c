@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.34 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.35 2002/12/05 15:50:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
  * NOTES
  *		Assumes tuples returned from subplan arrive in
  *		sorted order.
- *
  */
 
 #include "postgres.h"
@@ -39,21 +38,20 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *				/* return: a tuple or NULL */
-ExecUnique(Unique *node)
+ExecUnique(UniqueState *node)
 {
-	UniqueState *uniquestate;
+	Unique	   *plannode = (Unique *) node->ps.plan;
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
-	Plan	   *outerPlan;
+	PlanState  *outerPlan;
 	TupleDesc	tupDesc;
 
 	/*
 	 * get information from the node
 	 */
-	uniquestate = node->uniquestate;
-	outerPlan = outerPlan((Plan *) node);
-	resultTupleSlot = uniquestate->cstate.cs_ResultTupleSlot;
-	tupDesc = ExecGetResultType(&uniquestate->cstate);
+	outerPlan = outerPlanState(node);
+	resultTupleSlot = node->ps.ps_ResultTupleSlot;
+	tupDesc = ExecGetResultType(&node->ps);
 
 	/*
 	 * now loop, returning only non-duplicate tuples. We assume that the
@@ -64,14 +62,14 @@ ExecUnique(Unique *node)
 		/*
 		 * fetch a tuple from the outer subplan
 		 */
-		slot = ExecProcNode(outerPlan, (Plan *) node);
+		slot = ExecProcNode(outerPlan);
 		if (TupIsNull(slot))
 			return NULL;
 
 		/*
 		 * Always return the first tuple from the subplan.
 		 */
-		if (uniquestate->priorTuple == NULL)
+		if (node->priorTuple == NULL)
 			break;
 
 		/*
@@ -79,11 +77,11 @@ ExecUnique(Unique *node)
 		 * match.  If so then we loop back and fetch another new tuple
 		 * from the subplan.
 		 */
-		if (!execTuplesMatch(slot->val, uniquestate->priorTuple,
+		if (!execTuplesMatch(slot->val, node->priorTuple,
 							 tupDesc,
-							 node->numCols, node->uniqColIdx,
-							 uniquestate->eqfunctions,
-							 uniquestate->tempContext))
+							 plannode->numCols, plannode->uniqColIdx,
+							 node->eqfunctions,
+							 node->tempContext))
 			break;
 	}
 
@@ -99,11 +97,11 @@ ExecUnique(Unique *node)
 	 * handling in execMain.c).  We assume that the caller will no longer
 	 * be interested in the current tuple after he next calls us.
 	 */
-	if (uniquestate->priorTuple != NULL)
-		heap_freetuple(uniquestate->priorTuple);
-	uniquestate->priorTuple = heap_copytuple(slot->val);
+	if (node->priorTuple != NULL)
+		heap_freetuple(node->priorTuple);
+	node->priorTuple = heap_copytuple(slot->val);
 
-	ExecStoreTuple(uniquestate->priorTuple,
+	ExecStoreTuple(node->priorTuple,
 				   resultTupleSlot,
 				   InvalidBuffer,
 				   false);		/* tuple does not belong to slot */
@@ -118,22 +116,18 @@ ExecUnique(Unique *node)
  *		the node's subplan.
  * ----------------------------------------------------------------
  */
-bool							/* return: initialization status */
-ExecInitUnique(Unique *node, EState *estate, Plan *parent)
+UniqueState *
+ExecInitUnique(Unique *node, EState *estate)
 {
 	UniqueState *uniquestate;
-	Plan	   *outerPlan;
 
 	/*
-	 * assign execution state to node
-	 */
-	node->plan.state = estate;
-
-	/*
-	 * create new UniqueState for node
+	 * create state structure
 	 */
 	uniquestate = makeNode(UniqueState);
-	node->uniquestate = uniquestate;
+	uniquestate->ps.plan = (Plan *) node;
+	uniquestate->ps.state = estate;
+
 	uniquestate->priorTuple = NULL;
 
 	/*
@@ -155,30 +149,29 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 	/*
 	 * Tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &uniquestate->cstate);
+	ExecInitResultTupleSlot(estate, &uniquestate->ps);
 
 	/*
 	 * then initialize outer plan
 	 */
-	outerPlan = outerPlan((Plan *) node);
-	ExecInitNode(outerPlan, estate, (Plan *) node);
+	outerPlanState(uniquestate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
 	 * unique nodes do no projections, so initialize projection info for
 	 * this node appropriately
 	 */
-	ExecAssignResultTypeFromOuterPlan((Plan *) node, &uniquestate->cstate);
-	uniquestate->cstate.cs_ProjInfo = NULL;
+	ExecAssignResultTypeFromOuterPlan(&uniquestate->ps);
+	uniquestate->ps.ps_ProjInfo = NULL;
 
 	/*
 	 * Precompute fmgr lookup data for inner loop
 	 */
 	uniquestate->eqfunctions =
-		execTuplesMatchPrepare(ExecGetResultType(&uniquestate->cstate),
+		execTuplesMatchPrepare(ExecGetResultType(&uniquestate->ps),
 							   node->numCols,
 							   node->uniqColIdx);
 
-	return TRUE;
+	return uniquestate;
 }
 
 int
@@ -197,41 +190,36 @@ ExecCountSlotsUnique(Unique *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndUnique(Unique *node)
+ExecEndUnique(UniqueState *node)
 {
-	UniqueState *uniquestate = node->uniquestate;
-
-	ExecEndNode(outerPlan((Plan *) node), (Plan *) node);
-
-	MemoryContextDelete(uniquestate->tempContext);
-
 	/* clean up tuple table */
-	ExecClearTuple(uniquestate->cstate.cs_ResultTupleSlot);
-	if (uniquestate->priorTuple != NULL)
+	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+	if (node->priorTuple != NULL)
 	{
-		heap_freetuple(uniquestate->priorTuple);
-		uniquestate->priorTuple = NULL;
+		heap_freetuple(node->priorTuple);
+		node->priorTuple = NULL;
 	}
+
+	ExecEndNode(outerPlanState(node));
+
+	MemoryContextDelete(node->tempContext);
 }
 
 
 void
-ExecReScanUnique(Unique *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScanUnique(UniqueState *node, ExprContext *exprCtxt)
 {
-	UniqueState *uniquestate = node->uniquestate;
-
-	ExecClearTuple(uniquestate->cstate.cs_ResultTupleSlot);
-	if (uniquestate->priorTuple != NULL)
+	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+	if (node->priorTuple != NULL)
 	{
-		heap_freetuple(uniquestate->priorTuple);
-		uniquestate->priorTuple = NULL;
+		heap_freetuple(node->priorTuple);
+		node->priorTuple = NULL;
 	}
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((Plan *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
-
+	if (((PlanState *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 }

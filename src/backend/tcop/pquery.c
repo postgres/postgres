@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.56 2002/11/18 01:17:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.57 2002/12/05 15:50:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,15 +23,16 @@
 #include "utils/ps_status.h"
 
 
-/* ----------------------------------------------------------------
- *		CreateQueryDesc
- * ----------------------------------------------------------------
+/*
+ * CreateQueryDesc
  */
 QueryDesc *
 CreateQueryDesc(Query *parsetree,
 				Plan *plantree,
 				CommandDest dest,
-				const char *portalName)
+				const char *portalName,
+				ParamListInfo params,
+				bool doInstrument)
 {
 	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
 
@@ -40,54 +41,15 @@ CreateQueryDesc(Query *parsetree,
 	qd->plantree = plantree;	/* plan */
 	qd->dest = dest;			/* output dest */
 	qd->portalName = portalName;	/* name, if dest is a portal */
-	qd->tupDesc = NULL;			/* until set by ExecutorStart */
+	qd->params = params;		/* parameter values passed into query */
+	qd->doInstrument = doInstrument; /* instrumentation wanted? */
+
+	/* null these fields until set by ExecutorStart */
+	qd->tupDesc = NULL;
+	qd->estate = NULL;
+	qd->planstate = NULL;
 
 	return qd;
-}
-
-/* ----------------------------------------------------------------
- *		CreateExecutorState
- *
- *		Note: this may someday take parameters -cim 9/18/89
- * ----------------------------------------------------------------
- */
-EState *
-CreateExecutorState(void)
-{
-	EState	   *state;
-
-	/*
-	 * create a new executor state
-	 */
-	state = makeNode(EState);
-
-	/*
-	 * initialize the Executor State structure
-	 */
-	state->es_direction = ForwardScanDirection;
-	state->es_range_table = NIL;
-
-	state->es_result_relations = NULL;
-	state->es_num_result_relations = 0;
-	state->es_result_relation_info = NULL;
-
-	state->es_junkFilter = NULL;
-
-	state->es_into_relation_descriptor = NULL;
-
-	state->es_param_list_info = NULL;
-	state->es_param_exec_vals = NULL;
-
-	state->es_tupleTable = NULL;
-
-	state->es_query_cxt = CurrentMemoryContext;
-
-	state->es_per_tuple_exprcontext = NULL;
-
-	/*
-	 * return the executor state structure
-	 */
-	return state;
 }
 
 /* ----------------
@@ -147,8 +109,6 @@ ProcessQuery(Query *parsetree,
 	Portal		portal = NULL;
 	MemoryContext oldContext = NULL;
 	QueryDesc  *queryDesc;
-	EState	   *state;
-	TupleDesc	attinfo;
 
 	/*
 	 * Check for special-case destinations
@@ -193,7 +153,7 @@ ProcessQuery(Query *parsetree,
 
 		/*
 		 * We stay in portal's memory context for now, so that query desc,
-		 * EState, and plan startup info are also allocated in the portal
+		 * exec state, and plan startup info are also allocated in the portal
 		 * context.
 		 */
 	}
@@ -201,17 +161,12 @@ ProcessQuery(Query *parsetree,
 	/*
 	 * Now we can create the QueryDesc object.
 	 */
-	queryDesc = CreateQueryDesc(parsetree, plan, dest, intoName);
-
-	/*
-	 * create a default executor state.
-	 */
-	state = CreateExecutorState();
+	queryDesc = CreateQueryDesc(parsetree, plan, dest, intoName, NULL, false);
 
 	/*
 	 * call ExecStart to prepare the plan for execution
 	 */
-	attinfo = ExecutorStart(queryDesc, state);
+	ExecutorStart(queryDesc);
 
 	/*
 	 * If retrieve into portal, stop now; we do not run the plan until a
@@ -219,11 +174,8 @@ ProcessQuery(Query *parsetree,
 	 */
 	if (isRetrieveIntoPortal)
 	{
-		PortalSetQuery(portal,
-					   queryDesc,
-					   attinfo,
-					   state,
-					   PortalCleanup);
+		/* Arrange to shut down the executor if portal is dropped */
+		PortalSetQuery(portal, queryDesc, PortalCleanup);
 
 		/* Now we can return to caller's memory context. */
 		MemoryContextSwitchTo(oldContext);
@@ -239,7 +191,7 @@ ProcessQuery(Query *parsetree,
 	 * Now we get to the important call to ExecutorRun() where we actually
 	 * run the plan..
 	 */
-	ExecutorRun(queryDesc, state, ForwardScanDirection, 0L);
+	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
 	/*
 	 * Build command completion status string, if caller wants one.
@@ -254,20 +206,20 @@ ProcessQuery(Query *parsetree,
 				strcpy(completionTag, "SELECT");
 				break;
 			case CMD_INSERT:
-				if (state->es_processed == 1)
-					lastOid = state->es_lastoid;
+				if (queryDesc->estate->es_processed == 1)
+					lastOid = queryDesc->estate->es_lastoid;
 				else
 					lastOid = InvalidOid;
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-						 "INSERT %u %u", lastOid, state->es_processed);
+						 "INSERT %u %u", lastOid, queryDesc->estate->es_processed);
 				break;
 			case CMD_UPDATE:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-						 "UPDATE %u", state->es_processed);
+						 "UPDATE %u", queryDesc->estate->es_processed);
 				break;
 			case CMD_DELETE:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-						 "DELETE %u", state->es_processed);
+						 "DELETE %u", queryDesc->estate->es_processed);
 				break;
 			default:
 				strcpy(completionTag, "???");
@@ -278,5 +230,5 @@ ProcessQuery(Query *parsetree,
 	/*
 	 * Now, we close down all the scans and free allocated resources.
 	 */
-	ExecutorEnd(queryDesc, state);
+	ExecutorEnd(queryDesc);
 }

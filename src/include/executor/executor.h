@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.80 2002/12/01 20:27:32 tgl Exp $
+ * $Id: executor.h,v 1.81 2002/12/05 15:50:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define EXECUTOR_H
 
 #include "executor/execdesc.h"
+
 
 /* ----------------
  *		TupIsNull
@@ -30,9 +31,9 @@
 /*
  * prototypes from functions in execAmi.c
  */
-extern void ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent);
-extern void ExecMarkPos(Plan *node);
-extern void ExecRestrPos(Plan *node);
+extern void ExecReScan(PlanState *node, ExprContext *exprCtxt);
+extern void ExecMarkPos(PlanState *node);
+extern void ExecRestrPos(PlanState *node);
 extern bool ExecSupportsMarkRestore(NodeTag plantype);
 
 /*
@@ -49,10 +50,12 @@ extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
 /*
  * prototypes from functions in execMain.c
  */
-extern TupleDesc ExecutorStart(QueryDesc *queryDesc, EState *estate);
-extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc, EState *estate,
+extern void ExecutorStart(QueryDesc *queryDesc);
+extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count);
-extern void ExecutorEnd(QueryDesc *queryDesc, EState *estate);
+extern void ExecutorEnd(QueryDesc *queryDesc);
+extern EState *CreateExecutorState(void);
+extern void ExecCheckRTPerms(List *rangeTable, CmdType operation);
 extern void ExecConstraints(const char *caller, ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
@@ -61,11 +64,11 @@ extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
 /*
  * prototypes from functions in execProcnode.c
  */
-extern bool ExecInitNode(Plan *node, EState *estate, Plan *parent);
-extern TupleTableSlot *ExecProcNode(Plan *node, Plan *parent);
+extern PlanState *ExecInitNode(Plan *node, EState *estate);
+extern TupleTableSlot *ExecProcNode(PlanState *node);
 extern int	ExecCountSlotsNode(Plan *node);
-extern void ExecEndNode(Plan *node, Plan *parent);
-extern TupleDesc ExecGetTupType(Plan *node);
+extern void ExecEndNode(PlanState *node);
+extern TupleDesc ExecGetTupType(PlanState *node);
 
 /*
  * prototypes from functions in execQual.c
@@ -89,6 +92,7 @@ extern Datum ExecEvalExpr(Node *expression, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 extern Datum ExecEvalExprSwitchContext(Node *expression, ExprContext *econtext,
 						  bool *isNull, ExprDoneCond *isDone);
+extern Node *ExecInitExpr(Node *node, PlanState *parent);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
 extern int	ExecCleanTargetListLength(List *targetlist);
@@ -98,9 +102,9 @@ extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo,
 /*
  * prototypes from functions in execScan.c
  */
-typedef TupleTableSlot *(*ExecScanAccessMtd) (Scan *node);
+typedef TupleTableSlot *(*ExecScanAccessMtd) (ScanState *node);
 
-extern TupleTableSlot *ExecScan(Scan *node, ExecScanAccessMtd accessMtd);
+extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd);
 
 /*
  * prototypes from functions in execTuples.c
@@ -117,14 +121,13 @@ extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
 extern void ExecSetSlotDescriptor(TupleTableSlot *slot,
 					  TupleDesc tupdesc, bool shouldFree);
 extern void ExecSetSlotDescriptorIsNew(TupleTableSlot *slot, bool isNew);
-extern void ExecInitResultTupleSlot(EState *estate, CommonState *commonstate);
-extern void ExecInitScanTupleSlot(EState *estate,
-					  CommonScanState *commonscanstate);
+extern void ExecInitResultTupleSlot(EState *estate, PlanState *planstate);
+extern void ExecInitScanTupleSlot(EState *estate, ScanState *scanstate);
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate);
 extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
 					  TupleDesc tupType);
 extern TupleDesc ExecTypeFromTL(List *targetList, bool hasoid);
-extern void SetChangedParamList(Plan *node, List *newchg);
+extern void SetChangedParamList(PlanState *node, List *newchg);
 
 typedef struct TupOutputState
 {
@@ -155,21 +158,19 @@ extern void end_tup_output(TupOutputState *tstate);
  * prototypes from functions in execUtils.c
  */
 extern void ResetTupleCount(void);
-extern void ExecAssignExprContext(EState *estate, CommonState *commonstate);
-extern void ExecAssignResultType(CommonState *commonstate,
+extern void ExecAssignExprContext(EState *estate, PlanState *planstate);
+extern void ExecAssignResultType(PlanState *planstate,
 					 TupleDesc tupDesc, bool shouldFree);
-extern void ExecAssignResultTypeFromOuterPlan(Plan *node,
-								  CommonState *commonstate);
-extern void ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate);
-extern TupleDesc ExecGetResultType(CommonState *commonstate);
-extern void ExecAssignProjectionInfo(Plan *node, CommonState *commonstate);
-extern void ExecFreeProjectionInfo(CommonState *commonstate);
-extern void ExecFreeExprContext(CommonState *commonstate);
-extern TupleDesc ExecGetScanType(CommonScanState *csstate);
-extern void ExecAssignScanType(CommonScanState *csstate,
+extern void ExecAssignResultTypeFromOuterPlan(PlanState *planstate);
+extern void ExecAssignResultTypeFromTL(PlanState *planstate);
+extern TupleDesc ExecGetResultType(PlanState *planstate);
+extern void ExecAssignProjectionInfo(PlanState *planstate);
+extern void ExecFreeProjectionInfo(PlanState *planstate);
+extern void ExecFreeExprContext(PlanState *planstate);
+extern TupleDesc ExecGetScanType(ScanState *scanstate);
+extern void ExecAssignScanType(ScanState *scanstate,
 				   TupleDesc tupDesc, bool shouldFree);
-extern void ExecAssignScanTypeFromOuterPlan(Plan *node,
-								CommonScanState *csstate);
+extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
 
 extern ExprContext *MakeExprContext(TupleTableSlot *slot,
 				MemoryContext queryContext);

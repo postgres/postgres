@@ -7,19 +7,19 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeResult.h,v 1.15 2002/06/20 20:29:49 momjian Exp $
+ * $Id: nodeResult.h,v 1.16 2002/12/05 15:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODERESULT_H
 #define NODERESULT_H
 
-#include "nodes/plannodes.h"
+#include "nodes/execnodes.h"
 
-extern TupleTableSlot *ExecResult(Result *node);
-extern bool ExecInitResult(Result *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsResult(Result *node);
-extern void ExecEndResult(Result *node);
-extern void ExecReScanResult(Result *node, ExprContext *exprCtxt, Plan *parent);
+extern ResultState *ExecInitResult(Result *node, EState *estate);
+extern TupleTableSlot *ExecResult(ResultState *node);
+extern void ExecEndResult(ResultState *node);
+extern void ExecReScanResult(ResultState *node, ExprContext *exprCtxt);
 
 #endif   /* NODERESULT_H */

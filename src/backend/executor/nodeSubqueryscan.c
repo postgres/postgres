@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.13 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.14 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 #include "parser/parsetree.h"
 #include "tcop/pquery.h"
 
-static TupleTableSlot *SubqueryNext(SubqueryScan *node);
+static TupleTableSlot *SubqueryNext(SubqueryScanState *node);
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -48,9 +48,8 @@ static TupleTableSlot *SubqueryNext(SubqueryScan *node);
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-SubqueryNext(SubqueryScan *node)
+SubqueryNext(SubqueryScanState *node)
 {
-	SubqueryScanState *subquerystate;
 	EState	   *estate;
 	ScanDirection direction;
 	TupleTableSlot *slot;
@@ -58,8 +57,7 @@ SubqueryNext(SubqueryScan *node)
 	/*
 	 * get information from the estate and scan state
 	 */
-	estate = node->scan.plan.state;
-	subquerystate = (SubqueryScanState *) node->scan.scanstate;
+	estate = node->ss.ps.state;
 	direction = estate->es_direction;
 
 	/*
@@ -70,11 +68,11 @@ SubqueryNext(SubqueryScan *node)
 	/*
 	 * get the next tuple from the sub-query
 	 */
-	subquerystate->sss_SubEState->es_direction = direction;
+	node->sss_SubEState->es_direction = direction;
 
-	slot = ExecProcNode(node->subplan, (Plan *) node);
+	slot = ExecProcNode(node->subplan);
 
-	subquerystate->csstate.css_ScanTupleSlot = slot;
+	node->ss.ss_ScanTupleSlot = slot;
 
 	return slot;
 }
@@ -90,20 +88,20 @@ SubqueryNext(SubqueryScan *node)
  */
 
 TupleTableSlot *
-ExecSubqueryScan(SubqueryScan *node)
+ExecSubqueryScan(SubqueryScanState *node)
 {
 	/*
 	 * use SubqueryNext as access method
 	 */
-	return ExecScan(&node->scan, (ExecScanAccessMtd) SubqueryNext);
+	return ExecScan(&node->ss, (ExecScanAccessMtd) SubqueryNext);
 }
 
 /* ----------------------------------------------------------------
  *		ExecInitSubqueryScan
  * ----------------------------------------------------------------
  */
-bool
-ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
+SubqueryScanState *
+ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 {
 	SubqueryScanState *subquerystate;
 	RangeTblEntry *rte;
@@ -112,33 +110,39 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 	/*
 	 * SubqueryScan should not have any "normal" children.
 	 */
-	Assert(outerPlan((Plan *) node) == NULL);
-	Assert(innerPlan((Plan *) node) == NULL);
+	Assert(outerPlan(node) == NULL);
+	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * assign the node's execution state
-	 */
-	node->scan.plan.state = estate;
-
-	/*
-	 * create new SubqueryScanState for node
+	 * create state structure
 	 */
 	subquerystate = makeNode(SubqueryScanState);
-	node->scan.scanstate = (CommonScanState *) subquerystate;
+	subquerystate->ss.ps.plan = (Plan *) node;
+	subquerystate->ss.ps.state = estate;
 
 	/*
 	 * Miscellaneous initialization
 	 *
 	 * create expression context for node
 	 */
-	ExecAssignExprContext(estate, &subquerystate->csstate.cstate);
+	ExecAssignExprContext(estate, &subquerystate->ss.ps);
+
+	/*
+	 * initialize child expressions
+	 */
+	subquerystate->ss.ps.targetlist = (List *)
+		ExecInitExpr((Node *) node->scan.plan.targetlist,
+					 (PlanState *) subquerystate);
+	subquerystate->ss.ps.qual = (List *)
+		ExecInitExpr((Node *) node->scan.plan.qual,
+					 (PlanState *) subquerystate);
 
 #define SUBQUERYSCAN_NSLOTS 1
 
 	/*
 	 * tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &subquerystate->csstate.cstate);
+	ExecInitResultTupleSlot(estate, &subquerystate->ss.ps);
 
 	/*
 	 * initialize subquery
@@ -157,20 +161,20 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 	sp_estate->es_tupleTable =
 		ExecCreateTupleTable(ExecCountSlotsNode(node->subplan) + 10);
 	sp_estate->es_snapshot = estate->es_snapshot;
+	sp_estate->es_instrument = estate->es_instrument;
 
-	if (!ExecInitNode(node->subplan, sp_estate, (Plan *) node))
-		return false;
+	subquerystate->subplan = ExecInitNode(node->subplan, sp_estate);
 
-	subquerystate->csstate.css_ScanTupleSlot = NULL;
-	subquerystate->csstate.cstate.cs_TupFromTlist = false;
+	subquerystate->ss.ss_ScanTupleSlot = NULL;
+	subquerystate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * initialize tuple type
 	 */
-	ExecAssignResultTypeFromTL((Plan *) node, &subquerystate->csstate.cstate);
-	ExecAssignProjectionInfo((Plan *) node, &subquerystate->csstate.cstate);
+	ExecAssignResultTypeFromTL(&subquerystate->ss.ps);
+	ExecAssignProjectionInfo(&subquerystate->ss.ps);
 
-	return TRUE;
+	return subquerystate;
 }
 
 int
@@ -191,42 +195,31 @@ ExecCountSlotsSubqueryScan(SubqueryScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSubqueryScan(SubqueryScan *node)
+ExecEndSubqueryScan(SubqueryScanState *node)
 {
-	SubqueryScanState *subquerystate;
-
-	/*
-	 * get information from node
-	 */
-	subquerystate = (SubqueryScanState *) node->scan.scanstate;
-
 	/*
 	 * Free the projection info and the scan attribute info
-	 *
-	 * Note: we don't ExecFreeResultType(subquerystate) because the rule
-	 * manager depends on the tupType returned by ExecMain().  So for now,
-	 * this is freed at end-transaction time.  -cim 6/2/91
 	 */
-	ExecFreeProjectionInfo(&subquerystate->csstate.cstate);
-	ExecFreeExprContext(&subquerystate->csstate.cstate);
-
-	/*
-	 * close down subquery
-	 */
-	ExecEndNode(node->subplan, (Plan *) node);
-
-	/*
-	 * clean up subquery's tuple table
-	 */
-	subquerystate->csstate.css_ScanTupleSlot = NULL;
-	ExecDropTupleTable(subquerystate->sss_SubEState->es_tupleTable, true);
-
-	/* XXX we seem to be leaking the sub-EState... */
+	ExecFreeProjectionInfo(&node->ss.ps);
+	ExecFreeExprContext(&node->ss.ps);
 
 	/*
 	 * clean out the upper tuple table
 	 */
-	ExecClearTuple(subquerystate->csstate.cstate.cs_ResultTupleSlot);
+	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+
+	/*
+	 * close down subquery
+	 */
+	ExecEndNode(node->subplan);
+
+	/*
+	 * clean up subquery's tuple table
+	 */
+	node->ss.ss_ScanTupleSlot = NULL;
+	ExecDropTupleTable(node->sss_SubEState->es_tupleTable, true);
+
+	/* XXX we seem to be leaking the sub-EState... */
 }
 
 /* ----------------------------------------------------------------
@@ -236,27 +229,25 @@ ExecEndSubqueryScan(SubqueryScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecSubqueryReScan(SubqueryScan *node, ExprContext *exprCtxt, Plan *parent)
+ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 {
-	SubqueryScanState *subquerystate;
 	EState	   *estate;
 
-	subquerystate = (SubqueryScanState *) node->scan.scanstate;
-	estate = node->scan.plan.state;
+	estate = node->ss.ps.state;
 
 	/*
 	 * ExecReScan doesn't know about my subplan, so I have to do
 	 * changed-parameter signaling myself.
 	 */
-	if (node->scan.plan.chgParam != NULL)
-		SetChangedParamList(node->subplan, node->scan.plan.chgParam);
+	if (node->ss.ps.chgParam != NULL)
+		SetChangedParamList(node->subplan, node->ss.ps.chgParam);
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
 	if (node->subplan->chgParam == NULL)
-		ExecReScan(node->subplan, NULL, (Plan *) node);
+		ExecReScan(node->subplan, NULL);
 
-	subquerystate->csstate.css_ScanTupleSlot = NULL;
+	node->ss.ss_ScanTupleSlot = NULL;
 }

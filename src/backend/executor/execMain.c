@@ -12,10 +12,9 @@
  *	ExecutorRun() and ExecutorEnd()
  *
  *	These three procedures are the external interfaces to the executor.
- *	In each case, the query descriptor and the execution state is required
- *	as arguments
+ *	In each case, the query descriptor is required as an argument.
  *
- *	ExecutorStart() must be called at the beginning of any execution of any
+ *	ExecutorStart() must be called at the beginning of execution of any
  *	query plan and ExecutorEnd() should always be called at the end of
  *	execution of a plan.
  *
@@ -27,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.189 2002/12/05 04:04:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.190 2002/12/05 15:50:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,16 +47,13 @@
 
 
 /* decls for local routines only used within this module */
-static TupleDesc InitPlan(CmdType operation,
-		 Query *parseTree,
-		 Plan *plan,
-		 EState *estate);
+static void InitPlan(QueryDesc *queryDesc);
 static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  List *rangeTable,
 				  CmdType operation);
-static void EndPlan(Plan *plan, EState *estate);
-static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
+static void EndPlan(PlanState *planstate, EState *estate);
+static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,
@@ -73,11 +69,6 @@ static void ExecUpdate(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
-static void ExecCheckQueryPerms(CmdType operation, Query *parseTree,
-					Plan *plan);
-static void ExecCheckPlanPerms(Plan *plan, List *rangeTable,
-				   CmdType operation);
-static void ExecCheckRTPerms(List *rangeTable, CmdType operation);
 static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
 
 /* end of local decls */
@@ -89,25 +80,39 @@ static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
  *		This routine must be called at the beginning of any execution of any
  *		query plan
  *
- *		returns a TupleDesc which describes the attributes of the tuples to
- *		be returned by the query.  (Same value is saved in queryDesc)
+ * Takes a QueryDesc previously created by CreateQueryDesc (it's not real
+ * clear why we bother to separate the two functions, but...).  The tupDesc
+ * field of the QueryDesc is filled in to describe the tuples that will be
+ * returned, and the internal fields (estate and planstate) are set up.
  *
+ * XXX this will change soon:
  * NB: the CurrentMemoryContext when this is called must be the context
  * to be used as the per-query context for the query plan.	ExecutorRun()
  * and ExecutorEnd() must be called in this same memory context.
  * ----------------------------------------------------------------
  */
-TupleDesc
-ExecutorStart(QueryDesc *queryDesc, EState *estate)
+void
+ExecutorStart(QueryDesc *queryDesc)
 {
-	TupleDesc	result;
+	EState	   *estate;
 
-	/* sanity checks */
+	/* sanity checks: queryDesc must not be started already */
 	Assert(queryDesc != NULL);
+	Assert(queryDesc->estate == NULL);
+
+	/*
+	 * Build EState, fill with parameters from queryDesc
+	 */
+	estate = CreateExecutorState();
+	queryDesc->estate = estate;
+
+	estate->es_param_list_info = queryDesc->params;
 
 	if (queryDesc->plantree->nParamExec > 0)
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc0(queryDesc->plantree->nParamExec * sizeof(ParamExecData));
+
+	estate->es_instrument = queryDesc->doInstrument;
 
 	/*
 	 * Make our own private copy of the current query snapshot data.
@@ -119,16 +124,9 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 	estate->es_snapshot = CopyQuerySnapshot();
 
 	/*
-	 * Initialize the plan
+	 * Initialize the plan state tree
 	 */
-	result = InitPlan(queryDesc->operation,
-					  queryDesc->parsetree,
-					  queryDesc->plantree,
-					  estate);
-
-	queryDesc->tupDesc = result;
-
-	return result;
+	InitPlan(queryDesc);
 }
 
 /* ----------------------------------------------------------------
@@ -150,11 +148,11 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecutorRun(QueryDesc *queryDesc, EState *estate,
+ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
 {
 	CmdType		operation;
-	Plan	   *plan;
+	EState	   *estate;
 	CommandDest dest;
 	DestReceiver *destfunc;
 	TupleTableSlot *result;
@@ -169,7 +167,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate,
 	 * feature.
 	 */
 	operation = queryDesc->operation;
-	plan = queryDesc->plantree;
+	estate = queryDesc->estate;
 	dest = queryDesc->dest;
 
 	/*
@@ -189,7 +187,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate,
 		result = NULL;
 	else
 		result = ExecutePlan(estate,
-							 plan,
+							 queryDesc->planstate,
 							 operation,
 							 count,
 							 direction,
@@ -211,12 +209,16 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate,
  * ----------------------------------------------------------------
  */
 void
-ExecutorEnd(QueryDesc *queryDesc, EState *estate)
+ExecutorEnd(QueryDesc *queryDesc)
 {
+	EState	   *estate;
+
 	/* sanity checks */
 	Assert(queryDesc != NULL);
 
-	EndPlan(queryDesc->plantree, estate);
+	estate = queryDesc->estate;
+
+	EndPlan(queryDesc->planstate, estate);
 
 	if (estate->es_snapshot != NULL)
 	{
@@ -235,97 +237,55 @@ ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 
 
 /*
- * ExecCheckQueryPerms
- *		Check access permissions for all relations referenced in a query.
+ * CreateExecutorState
  */
-static void
-ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
+EState *
+CreateExecutorState(void)
 {
-	/*
-	 * Check RTEs in the query's primary rangetable.
-	 */
-	ExecCheckRTPerms(parseTree->rtable, operation);
+	EState	   *state;
 
 	/*
-	 * Search for subplans and APPEND nodes to check their rangetables.
+	 * create a new executor state
 	 */
-	ExecCheckPlanPerms(plan, parseTree->rtable, operation);
+	state = makeNode(EState);
+
+	/*
+	 * initialize the Executor State structure
+	 */
+	state->es_direction = ForwardScanDirection;
+	state->es_range_table = NIL;
+
+	state->es_result_relations = NULL;
+	state->es_num_result_relations = 0;
+	state->es_result_relation_info = NULL;
+
+	state->es_junkFilter = NULL;
+
+	state->es_into_relation_descriptor = NULL;
+
+	state->es_param_list_info = NULL;
+	state->es_param_exec_vals = NULL;
+
+	state->es_tupleTable = NULL;
+
+	state->es_query_cxt = CurrentMemoryContext;
+
+	state->es_instrument = false;
+
+	state->es_per_tuple_exprcontext = NULL;
+
+	/*
+	 * return the executor state structure
+	 */
+	return state;
 }
 
-/*
- * ExecCheckPlanPerms
- *		Recursively scan the plan tree to check access permissions in
- *		subplans.
- */
-static void
-ExecCheckPlanPerms(Plan *plan, List *rangeTable, CmdType operation)
-{
-	List	   *subp;
-
-	if (plan == NULL)
-		return;
-
-	/* Check subplans, which we assume are plain SELECT queries */
-
-	foreach(subp, plan->initPlan)
-	{
-		SubPlan    *subplan = (SubPlan *) lfirst(subp);
-
-		ExecCheckRTPerms(subplan->rtable, CMD_SELECT);
-		ExecCheckPlanPerms(subplan->plan, subplan->rtable, CMD_SELECT);
-	}
-	foreach(subp, plan->subPlan)
-	{
-		SubPlan    *subplan = (SubPlan *) lfirst(subp);
-
-		ExecCheckRTPerms(subplan->rtable, CMD_SELECT);
-		ExecCheckPlanPerms(subplan->plan, subplan->rtable, CMD_SELECT);
-	}
-
-	/* Check lower plan nodes */
-
-	ExecCheckPlanPerms(plan->lefttree, rangeTable, operation);
-	ExecCheckPlanPerms(plan->righttree, rangeTable, operation);
-
-	/* Do node-type-specific checks */
-
-	switch (nodeTag(plan))
-	{
-		case T_SubqueryScan:
-			{
-				SubqueryScan *scan = (SubqueryScan *) plan;
-				RangeTblEntry *rte;
-
-				/* Recursively check the subquery */
-				rte = rt_fetch(scan->scan.scanrelid, rangeTable);
-				Assert(rte->rtekind == RTE_SUBQUERY);
-				ExecCheckQueryPerms(operation, rte->subquery, scan->subplan);
-				break;
-			}
-		case T_Append:
-			{
-				Append	   *app = (Append *) plan;
-				List	   *appendplans;
-
-				foreach(appendplans, app->appendplans)
-				{
-					ExecCheckPlanPerms((Plan *) lfirst(appendplans),
-									   rangeTable,
-									   operation);
-				}
-				break;
-			}
-
-		default:
-			break;
-	}
-}
 
 /*
  * ExecCheckRTPerms
  *		Check access permissions for all relations listed in a range table.
  */
-static void
+void
 ExecCheckRTPerms(List *rangeTable, CmdType operation)
 {
 	List	   *lp;
@@ -350,11 +310,18 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	AclResult	aclcheck_result;
 
 	/*
-	 * Only plain-relation RTEs need to be checked here.  Subquery RTEs
-	 * will be checked when ExecCheckPlanPerms finds the SubqueryScan
-	 * node, and function RTEs are checked by init_fcache when the
-	 * function is prepared for execution.	Join and special RTEs need no
-	 * checks.
+	 * If it's a subquery, recursively examine its rangetable.
+	 */
+	if (rte->rtekind == RTE_SUBQUERY)
+	{
+		ExecCheckRTPerms(rte->subquery->rtable, operation);
+		return;
+	}
+
+	/*
+	 * Otherwise, only plain-relation RTEs need to be checked here.
+	 * Function RTEs are checked by init_fcache when the function is prepared
+	 * for execution. Join and special RTEs need no checks.
 	 */
 	if (rte->rtekind != RTE_RELATION)
 		return;
@@ -367,7 +334,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	 *
 	 * Note: GetUserId() is presently fast enough that there's no harm in
 	 * calling it separately for each RTE.	If that stops being true, we
-	 * could call it once in ExecCheckQueryPerms and pass the userid down
+	 * could call it once in ExecCheckRTPerms and pass the userid down
 	 * from there.	But for now, no need for the extra clutter.
 	 */
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
@@ -428,7 +395,8 @@ typedef struct execRowMark
 
 typedef struct evalPlanQual
 {
-	Plan	   *plan;
+	Plan	   *plan;			/* XXX temporary */
+	PlanState  *planstate;
 	Index		rti;
 	EState		estate;
 	struct evalPlanQual *free;
@@ -441,17 +409,24 @@ typedef struct evalPlanQual
  *		and start up the rule manager
  * ----------------------------------------------------------------
  */
-static TupleDesc
-InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
+static void
+InitPlan(QueryDesc *queryDesc)
 {
+	CmdType		operation = queryDesc->operation;
+	Query *parseTree = queryDesc->parsetree;
+	Plan *plan = queryDesc->plantree;
+	EState *estate = queryDesc->estate;
+	PlanState  *planstate;
 	List	   *rangeTable;
 	Relation	intoRelationDesc;
 	TupleDesc	tupType;
 
 	/*
-	 * Do permissions checks.
+	 * Do permissions checks.  It's sufficient to examine the query's
+	 * top rangetable here --- subplan RTEs will be checked during
+	 * ExecInitSubPlan().
 	 */
-	ExecCheckQueryPerms(operation, parseTree, plan);
+	ExecCheckRTPerms(parseTree->rtable, operation);
 
 	/*
 	 * get information from query descriptor
@@ -575,14 +550,14 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	 * query tree.	This opens files, allocates storage and leaves us
 	 * ready to start processing tuples.
 	 */
-	ExecInitNode(plan, estate, NULL);
+	planstate = ExecInitNode(plan, estate);
 
 	/*
 	 * Get the tuple descriptor describing the type of tuples to return.
 	 * (this is especially important if we are creating a relation with
 	 * "SELECT INTO")
 	 */
-	tupType = ExecGetTupType(plan);		/* tuple descriptor */
+	tupType = ExecGetTupType(planstate);
 
 	/*
 	 * Initialize the junk filter if needed. SELECT and INSERT queries
@@ -627,26 +602,29 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			 */
 			if (parseTree->resultRelations != NIL)
 			{
-				List	   *subplans;
+				PlanState **appendplans;
+				int			as_nplans;
 				ResultRelInfo *resultRelInfo;
+				int			i;
 
 				/* Top plan had better be an Append here. */
 				Assert(IsA(plan, Append));
 				Assert(((Append *) plan)->isTarget);
-				subplans = ((Append *) plan)->appendplans;
-				Assert(length(subplans) == estate->es_num_result_relations);
+				Assert(IsA(planstate, AppendState));
+				appendplans = ((AppendState *) planstate)->appendplans;
+				as_nplans = ((AppendState *) planstate)->as_nplans;
+				Assert(as_nplans == estate->es_num_result_relations);
 				resultRelInfo = estate->es_result_relations;
-				while (subplans != NIL)
+				for (i = 0; i < as_nplans; i++)
 				{
-					Plan	   *subplan = (Plan *) lfirst(subplans);
+					PlanState  *subplan = appendplans[i];
 					JunkFilter *j;
 
-					j = ExecInitJunkFilter(subplan->targetlist,
+					j = ExecInitJunkFilter(subplan->plan->targetlist,
 										   ExecGetTupType(subplan),
 							  ExecAllocTableSlot(estate->es_tupleTable));
 					resultRelInfo->ri_junkFilter = j;
 					resultRelInfo++;
-					subplans = lnext(subplans);
 				}
 
 				/*
@@ -661,7 +639,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				/* Normal case with just one JunkFilter */
 				JunkFilter *j;
 
-				j = ExecInitJunkFilter(plan->targetlist,
+				j = ExecInitJunkFilter(planstate->plan->targetlist,
 									   tupType,
 							  ExecAllocTableSlot(estate->es_tupleTable));
 				estate->es_junkFilter = j;
@@ -755,7 +733,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 	estate->es_into_relation_descriptor = intoRelationDesc;
 
-	return tupType;
+	queryDesc->tupDesc = tupType;
+	queryDesc->planstate = planstate;
 }
 
 /*
@@ -816,11 +795,11 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 /* ----------------------------------------------------------------
  *		EndPlan
  *
- *		Cleans up the query plan -- closes files and free up storages
+ *		Cleans up the query plan -- closes files and frees up storage
  * ----------------------------------------------------------------
  */
 static void
-EndPlan(Plan *plan, EState *estate)
+EndPlan(PlanState *planstate, EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
 	int			i;
@@ -835,7 +814,7 @@ EndPlan(Plan *plan, EState *estate)
 	/*
 	 * shut down the node-type-specific query processing
 	 */
-	ExecEndNode(plan, NULL);
+	ExecEndNode(planstate);
 
 	/*
 	 * destroy the executor "tuple" table.
@@ -902,7 +881,7 @@ EndPlan(Plan *plan, EState *estate)
  */
 static TupleTableSlot *
 ExecutePlan(EState *estate,
-			Plan *plan,
+			PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,
@@ -964,10 +943,10 @@ lnext:	;
 		{
 			slot = EvalPlanQualNext(estate);
 			if (TupIsNull(slot))
-				slot = ExecProcNode(plan, NULL);
+				slot = ExecProcNode(planstate);
 		}
 		else
-			slot = ExecProcNode(plan, NULL);
+			slot = ExecProcNode(planstate);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
@@ -1765,7 +1744,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
 			Assert(oldepq->rti != 0);
 			/* stop execution */
-			ExecEndNode(epq->plan, NULL);
+			ExecEndNode(epq->planstate);
 			ExecDropTupleTable(epqstate->es_tupleTable, true);
 			epqstate->es_tupleTable = NULL;
 			heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
@@ -1793,10 +1772,8 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 
 			/*
 			 * Each stack level has its own copy of the plan tree.	This
-			 * is wasteful, but necessary as long as plan nodes point to
-			 * exec state nodes rather than vice versa.  Note that
-			 * copyfuncs.c doesn't attempt to copy the exec state nodes,
-			 * which is a good thing in this situation.
+			 * is wasteful, but necessary until plan trees are fully
+			 * read-only.
 			 */
 			newepq->plan = copyObject(estate->es_origPlan);
 
@@ -1858,7 +1835,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	if (endNode)
 	{
 		/* stop execution */
-		ExecEndNode(epq->plan, NULL);
+		ExecEndNode(epq->planstate);
 		ExecDropTupleTable(epqstate->es_tupleTable, true);
 		epqstate->es_tupleTable = NULL;
 	}
@@ -1886,7 +1863,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	epqstate->es_tupleTable =
 		ExecCreateTupleTable(estate->es_tupleTable->size);
 
-	ExecInitNode(epq->plan, epqstate, NULL);
+	epq->planstate = ExecInitNode(epq->plan, epqstate);
 
 	return EvalPlanQualNext(estate);
 }
@@ -1902,7 +1879,7 @@ EvalPlanQualNext(EState *estate)
 	Assert(epq->rti != 0);
 
 lpqnext:;
-	slot = ExecProcNode(epq->plan, NULL);
+	slot = ExecProcNode(epq->planstate);
 
 	/*
 	 * No more tuples for this PQ. Continue previous one.
@@ -1910,7 +1887,7 @@ lpqnext:;
 	if (TupIsNull(slot))
 	{
 		/* stop execution */
-		ExecEndNode(epq->plan, NULL);
+		ExecEndNode(epq->planstate);
 		ExecDropTupleTable(epqstate->es_tupleTable, true);
 		epqstate->es_tupleTable = NULL;
 		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
@@ -1951,7 +1928,7 @@ EndEvalPlanQual(EState *estate)
 	for (;;)
 	{
 		/* stop execution */
-		ExecEndNode(epq->plan, NULL);
+		ExecEndNode(epq->planstate);
 		ExecDropTupleTable(epqstate->es_tupleTable, true);
 		epqstate->es_tupleTable = NULL;
 		if (epqstate->es_evTuple[epq->rti - 1] != NULL)

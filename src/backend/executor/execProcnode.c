@@ -5,23 +5,23 @@
  *	 "get a tuple", and "cleanup" routines for the given node type.
  *	 If the node has children, then it will presumably call ExecInitNode,
  *	 ExecProcNode, or ExecEndNode on its subnodes and do the appropriate
- *	 processing..
+ *	 processing.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.30 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.31 2002/12/05 15:50:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 INTERFACE ROUTINES
+ *		ExecCountSlotsNode -	count tuple slots needed by plan tree
  *		ExecInitNode	-		initialize a plan node and its subplans
  *		ExecProcNode	-		get a tuple by executing the plan node
  *		ExecEndNode		-		shut down a plan node and its subplans
- *		ExecCountSlotsNode -	count tuple slots needed by plan tree
  *		ExecGetTupType	-		get result tuple type of a plan node
  *
  *	 NOTES
@@ -53,10 +53,12 @@
  *	  * ExecInitNode() notices that it is looking at a nest loop and
  *		as the code below demonstrates, it calls ExecInitNestLoop().
  *		Eventually this calls ExecInitNode() on the right and left subplans
- *		and so forth until the entire plan is initialized.
+ *		and so forth until the entire plan is initialized.  The result
+ *		of ExecInitNode() is a plan state tree built with the same structure
+ *		as the underlying plan tree.
  *
- *	  * Then when ExecRun() is called, it calls ExecutePlan() which
- *		calls ExecProcNode() repeatedly on the top node of the plan.
+ *	  * Then when ExecRun() is called, it calls ExecutePlan() which calls
+ *		ExecProcNode() repeatedly on the top node of the plan state tree.
  *		Each time this happens, ExecProcNode() will end up calling
  *		ExecNestLoop(), which calls ExecProcNode() on its subplans.
  *		Each of these subplans is a sequential scan so ExecSeqScan() is
@@ -73,7 +75,6 @@
  *		ExecInitNode(), ExecProcNode() and ExecEndNode() dispatch
  *		their work to the appopriate node support routines which may
  *		in turn call these routines themselves on their subplans.
- *
  */
 #include "postgres.h"
 
@@ -81,11 +82,11 @@
 #include "executor/instrument.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
+#include "executor/nodeFunctionscan.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexscan.h"
-#include "executor/nodeTidscan.h"
 #include "executor/nodeLimit.h"
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
@@ -96,7 +97,7 @@
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/nodeSubqueryscan.h"
-#include "executor/nodeFunctionscan.h"
+#include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"
@@ -109,32 +110,23 @@
  *
  *		Initial States:
  *		  'node' is the plan produced by the query planner
+ *		  'estate' is the shared execution state for the query tree
  *
- *		returns TRUE/FALSE on whether the plan was successfully initialized
+ *		Returns a PlanState node corresponding to the given Plan node.
  * ------------------------------------------------------------------------
  */
-bool
-ExecInitNode(Plan *node, EState *estate, Plan *parent)
+PlanState *
+ExecInitNode(Plan *node, EState *estate)
 {
-	bool		result;
+	PlanState  *result;
+	List	   *subps;
 	List	   *subp;
 
 	/*
 	 * do nothing when we get to the end of a leaf on tree.
 	 */
 	if (node == NULL)
-		return FALSE;
-
-	/* Set up instrumentation for this node if the parent has it */
-	if (!node->instrument && parent && parent->instrument)
-		node->instrument = InstrAlloc();
-
-	foreach(subp, node->initPlan)
-	{
-		result = ExecInitSubPlan((SubPlan *) lfirst(subp), estate, node);
-		if (result == FALSE)
-			return FALSE;
-	}
+		return NULL;
 
 	switch (nodeTag(node))
 	{
@@ -142,104 +134,124 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 			 * control nodes
 			 */
 		case T_Result:
-			result = ExecInitResult((Result *) node, estate, parent);
+			result = (PlanState *) ExecInitResult((Result *) node, estate);
 			break;
 
 		case T_Append:
-			result = ExecInitAppend((Append *) node, estate, parent);
+			result = (PlanState *) ExecInitAppend((Append *) node, estate);
 			break;
 
 			/*
 			 * scan nodes
 			 */
 		case T_SeqScan:
-			result = ExecInitSeqScan((SeqScan *) node, estate, parent);
+			result = (PlanState *) ExecInitSeqScan((SeqScan *) node, estate);
 			break;
 
 		case T_IndexScan:
-			result = ExecInitIndexScan((IndexScan *) node, estate, parent);
+			result = (PlanState *) ExecInitIndexScan((IndexScan *) node, estate);
 			break;
 
 		case T_TidScan:
-			result = ExecInitTidScan((TidScan *) node, estate, parent);
+			result = (PlanState *) ExecInitTidScan((TidScan *) node, estate);
 			break;
 
 		case T_SubqueryScan:
-			result = ExecInitSubqueryScan((SubqueryScan *) node, estate,
-										  parent);
+			result = (PlanState *) ExecInitSubqueryScan((SubqueryScan *) node, estate);
 			break;
 
 		case T_FunctionScan:
-			result = ExecInitFunctionScan((FunctionScan *) node, estate,
-										  parent);
+			result = (PlanState *) ExecInitFunctionScan((FunctionScan *) node, estate);
 			break;
 
 			/*
 			 * join nodes
 			 */
 		case T_NestLoop:
-			result = ExecInitNestLoop((NestLoop *) node, estate, parent);
+			result = (PlanState *) ExecInitNestLoop((NestLoop *) node, estate);
 			break;
 
 		case T_MergeJoin:
-			result = ExecInitMergeJoin((MergeJoin *) node, estate, parent);
-			break;
-
-		case T_Hash:
-			result = ExecInitHash((Hash *) node, estate, parent);
+			result = (PlanState *) ExecInitMergeJoin((MergeJoin *) node, estate);
 			break;
 
 		case T_HashJoin:
-			result = ExecInitHashJoin((HashJoin *) node, estate, parent);
+			result = (PlanState *) ExecInitHashJoin((HashJoin *) node, estate);
 			break;
 
 			/*
 			 * materialization nodes
 			 */
 		case T_Material:
-			result = ExecInitMaterial((Material *) node, estate, parent);
+			result = (PlanState *) ExecInitMaterial((Material *) node, estate);
 			break;
 
 		case T_Sort:
-			result = ExecInitSort((Sort *) node, estate, parent);
-			break;
-
-		case T_Unique:
-			result = ExecInitUnique((Unique *) node, estate, parent);
-			break;
-
-		case T_SetOp:
-			result = ExecInitSetOp((SetOp *) node, estate, parent);
-			break;
-
-		case T_Limit:
-			result = ExecInitLimit((Limit *) node, estate, parent);
+			result = (PlanState *) ExecInitSort((Sort *) node, estate);
 			break;
 
 		case T_Group:
-			result = ExecInitGroup((Group *) node, estate, parent);
+			result = (PlanState *) ExecInitGroup((Group *) node, estate);
 			break;
 
 		case T_Agg:
-			result = ExecInitAgg((Agg *) node, estate, parent);
+			result = (PlanState *) ExecInitAgg((Agg *) node, estate);
+			break;
+
+		case T_Unique:
+			result = (PlanState *) ExecInitUnique((Unique *) node, estate);
+			break;
+
+		case T_Hash:
+			result = (PlanState *) ExecInitHash((Hash *) node, estate);
+			break;
+
+		case T_SetOp:
+			result = (PlanState *) ExecInitSetOp((SetOp *) node, estate);
+			break;
+
+		case T_Limit:
+			result = (PlanState *) ExecInitLimit((Limit *) node, estate);
 			break;
 
 		default:
 			elog(ERROR, "ExecInitNode: node type %d unsupported",
 				 (int) nodeTag(node));
-			result = FALSE;
+			result = NULL;		/* keep compiler quiet */
 			break;
 	}
 
-	if (result != FALSE)
+	/*
+	 * Initialize any initPlans present in this node.  The planner put
+	 * them in a separate list for us.
+	 */
+	subps = NIL;
+	foreach(subp, node->initPlan)
 	{
-		foreach(subp, node->subPlan)
-		{
-			result = ExecInitSubPlan((SubPlan *) lfirst(subp), estate, node);
-			if (result == FALSE)
-				return FALSE;
-		}
+		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+
+		Assert(IsA(subplan, SubPlan));
+		subps = lappend(subps, ExecInitSubPlan(subplan, estate));
 	}
+	result->initPlan = subps;
+
+	/*
+	 * Initialize any subPlans present in this node.  These were found
+	 * by ExecInitExpr during initialization of the PlanState.
+	 */
+	subps = NIL;
+	foreach(subp, result->subPlan)
+	{
+		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+
+		Assert(IsA(subplan, SubPlan));
+		subps = lappend(subps, ExecInitSubPlan(subplan, estate));
+	}
+	result->subPlan = subps;
+
+	/* Set up instrumentation for this node if requested */
+	if (estate->es_instrument)
+		result->instrument = InstrAlloc();
 
 	return result;
 }
@@ -248,12 +260,11 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 /* ----------------------------------------------------------------
  *		ExecProcNode
  *
- *		Initial States:
- *		  the query tree must be initialized once by calling ExecInit.
+ *		Execute the given node to return a(nother) tuple.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcNode(Plan *node, Plan *parent)
+ExecProcNode(PlanState *node)
 {
 	TupleTableSlot *result;
 
@@ -265,8 +276,8 @@ ExecProcNode(Plan *node, Plan *parent)
 	if (node == NULL)
 		return NULL;
 
-	if (node->chgParam != NULL) /* something changed */
-		ExecReScan(node, NULL, parent); /* let ReScan handle this */
+	if (node->chgParam != NIL)	/* something changed */
+		ExecReScan(node, NULL); /* let ReScan handle this */
 
 	if (node->instrument)
 		InstrStartNode(node->instrument);
@@ -276,85 +287,85 @@ ExecProcNode(Plan *node, Plan *parent)
 			/*
 			 * control nodes
 			 */
-		case T_Result:
-			result = ExecResult((Result *) node);
+		case T_ResultState:
+			result = ExecResult((ResultState *) node);
 			break;
 
-		case T_Append:
-			result = ExecProcAppend((Append *) node);
+		case T_AppendState:
+			result = ExecProcAppend((AppendState *) node);
 			break;
 
 			/*
 			 * scan nodes
 			 */
-		case T_SeqScan:
-			result = ExecSeqScan((SeqScan *) node);
+		case T_SeqScanState:
+			result = ExecSeqScan((SeqScanState *) node);
 			break;
 
-		case T_IndexScan:
-			result = ExecIndexScan((IndexScan *) node);
+		case T_IndexScanState:
+			result = ExecIndexScan((IndexScanState *) node);
 			break;
 
-		case T_TidScan:
-			result = ExecTidScan((TidScan *) node);
+		case T_TidScanState:
+			result = ExecTidScan((TidScanState *) node);
 			break;
 
-		case T_SubqueryScan:
-			result = ExecSubqueryScan((SubqueryScan *) node);
+		case T_SubqueryScanState:
+			result = ExecSubqueryScan((SubqueryScanState *) node);
 			break;
 
-		case T_FunctionScan:
-			result = ExecFunctionScan((FunctionScan *) node);
+		case T_FunctionScanState:
+			result = ExecFunctionScan((FunctionScanState *) node);
 			break;
 
 			/*
 			 * join nodes
 			 */
-		case T_NestLoop:
-			result = ExecNestLoop((NestLoop *) node);
+		case T_NestLoopState:
+			result = ExecNestLoop((NestLoopState *) node);
 			break;
 
-		case T_MergeJoin:
-			result = ExecMergeJoin((MergeJoin *) node);
+		case T_MergeJoinState:
+			result = ExecMergeJoin((MergeJoinState *) node);
 			break;
 
-		case T_Hash:
-			result = ExecHash((Hash *) node);
-			break;
-
-		case T_HashJoin:
-			result = ExecHashJoin((HashJoin *) node);
+		case T_HashJoinState:
+			result = ExecHashJoin((HashJoinState *) node);
 			break;
 
 			/*
 			 * materialization nodes
 			 */
-		case T_Material:
-			result = ExecMaterial((Material *) node);
+		case T_MaterialState:
+			result = ExecMaterial((MaterialState *) node);
 			break;
 
-		case T_Sort:
-			result = ExecSort((Sort *) node);
+		case T_SortState:
+			result = ExecSort((SortState *) node);
 			break;
 
-		case T_Unique:
-			result = ExecUnique((Unique *) node);
+		case T_GroupState:
+			result = ExecGroup((GroupState *) node);
 			break;
 
-		case T_SetOp:
-			result = ExecSetOp((SetOp *) node);
+		case T_AggState:
+			result = ExecAgg((AggState *) node);
 			break;
 
-		case T_Limit:
-			result = ExecLimit((Limit *) node);
+		case T_UniqueState:
+			result = ExecUnique((UniqueState *) node);
 			break;
 
-		case T_Group:
-			result = ExecGroup((Group *) node);
+		case T_HashState:
+			result = ExecHash((HashState *) node);
 			break;
 
-		case T_Agg:
-			result = ExecAgg((Agg *) node);
+		case T_SetOpState:
+			result = ExecSetOp((SetOpState *) node);
+			break;
+
+		case T_LimitState:
+			result = ExecLimit((LimitState *) node);
 			break;
 
 		default:
@@ -370,10 +381,16 @@ ExecProcNode(Plan *node, Plan *parent)
 	return result;
 }
 
+/*
+ * ExecCountSlotsNode - count up the number of tuple table slots needed
+ *
+ * Note that this scans a Plan tree, not a PlanState tree, because we
+ * haven't built the PlanState tree yet ...
+ */
 int
 ExecCountSlotsNode(Plan *node)
 {
-	if (node == (Plan *) NULL)
+	if (node == NULL)
 		return 0;
 
 	switch (nodeTag(node))
@@ -414,9 +431,6 @@ ExecCountSlotsNode(Plan *node)
 		case T_MergeJoin:
 			return ExecCountSlotsMergeJoin((MergeJoin *) node);
 
-		case T_Hash:
-			return ExecCountSlotsHash((Hash *) node);
-
 		case T_HashJoin:
 			return ExecCountSlotsHashJoin((HashJoin *) node);
 
@@ -429,8 +443,17 @@ ExecCountSlotsNode(Plan *node)
 		case T_Sort:
 			return ExecCountSlotsSort((Sort *) node);
 
+		case T_Group:
+			return ExecCountSlotsGroup((Group *) node);
+
+		case T_Agg:
+			return ExecCountSlotsAgg((Agg *) node);
+
 		case T_Unique:
 			return ExecCountSlotsUnique((Unique *) node);
+
+		case T_Hash:
+			return ExecCountSlotsHash((Hash *) node);
 
 		case T_SetOp:
 			return ExecCountSlotsSetOp((SetOp *) node);
@@ -438,17 +461,12 @@ ExecCountSlotsNode(Plan *node)
 		case T_Limit:
 			return ExecCountSlotsLimit((Limit *) node);
 
-		case T_Group:
-			return ExecCountSlotsGroup((Group *) node);
-
-		case T_Agg:
-			return ExecCountSlotsAgg((Agg *) node);
-
 		default:
 			elog(ERROR, "ExecCountSlotsNode: node type %d unsupported",
 				 (int) nodeTag(node));
 			break;
 	}
+
 	return 0;
 }
 
@@ -464,7 +482,7 @@ ExecCountSlotsNode(Plan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndNode(Plan *node, Plan *parent)
+ExecEndNode(PlanState *node)
 {
 	List	   *subp;
 
@@ -474,14 +492,19 @@ ExecEndNode(Plan *node, Plan *parent)
 	if (node == NULL)
 		return;
 
+	if (node->instrument)
+		InstrEndLoop(node->instrument);
+
+	/* Clean up initPlans and subPlans */
 	foreach(subp, node->initPlan)
-		ExecEndSubPlan((SubPlan *) lfirst(subp));
+		ExecEndSubPlan((SubPlanState *) lfirst(subp));
 	foreach(subp, node->subPlan)
-		ExecEndSubPlan((SubPlan *) lfirst(subp));
-	if (node->chgParam != NULL)
+		ExecEndSubPlan((SubPlanState *) lfirst(subp));
+
+	if (node->chgParam != NIL)
 	{
 		freeList(node->chgParam);
-		node->chgParam = NULL;
+		node->chgParam = NIL;
 	}
 
 	switch (nodeTag(node))
@@ -489,85 +512,85 @@ ExecEndNode(Plan *node, Plan *parent)
 			/*
 			 * control nodes
 			 */
-		case T_Result:
-			ExecEndResult((Result *) node);
+		case T_ResultState:
+			ExecEndResult((ResultState *) node);
 			break;
 
-		case T_Append:
-			ExecEndAppend((Append *) node);
+		case T_AppendState:
+			ExecEndAppend((AppendState *) node);
 			break;
 
 			/*
 			 * scan nodes
 			 */
-		case T_SeqScan:
-			ExecEndSeqScan((SeqScan *) node);
+		case T_SeqScanState:
+			ExecEndSeqScan((SeqScanState *) node);
 			break;
 
-		case T_IndexScan:
-			ExecEndIndexScan((IndexScan *) node);
+		case T_IndexScanState:
+			ExecEndIndexScan((IndexScanState *) node);
 			break;
 
-		case T_TidScan:
-			ExecEndTidScan((TidScan *) node);
+		case T_TidScanState:
+			ExecEndTidScan((TidScanState *) node);
 			break;
 
-		case T_SubqueryScan:
-			ExecEndSubqueryScan((SubqueryScan *) node);
+		case T_SubqueryScanState:
+			ExecEndSubqueryScan((SubqueryScanState *) node);
 			break;
 
-		case T_FunctionScan:
-			ExecEndFunctionScan((FunctionScan *) node);
+		case T_FunctionScanState:
+			ExecEndFunctionScan((FunctionScanState *) node);
 			break;
 
 			/*
 			 * join nodes
 			 */
-		case T_NestLoop:
-			ExecEndNestLoop((NestLoop *) node);
+		case T_NestLoopState:
+			ExecEndNestLoop((NestLoopState *) node);
 			break;
 
-		case T_MergeJoin:
-			ExecEndMergeJoin((MergeJoin *) node);
+		case T_MergeJoinState:
+			ExecEndMergeJoin((MergeJoinState *) node);
 			break;
 
-		case T_Hash:
-			ExecEndHash((Hash *) node);
-			break;
-
-		case T_HashJoin:
-			ExecEndHashJoin((HashJoin *) node);
+		case T_HashJoinState:
+			ExecEndHashJoin((HashJoinState *) node);
 			break;
 
 			/*
 			 * materialization nodes
 			 */
-		case T_Material:
-			ExecEndMaterial((Material *) node);
+		case T_MaterialState:
+			ExecEndMaterial((MaterialState *) node);
 			break;
 
-		case T_Sort:
-			ExecEndSort((Sort *) node);
+		case T_SortState:
+			ExecEndSort((SortState *) node);
 			break;
 
-		case T_Unique:
-			ExecEndUnique((Unique *) node);
+		case T_GroupState:
+			ExecEndGroup((GroupState *) node);
 			break;
 
-		case T_SetOp:
-			ExecEndSetOp((SetOp *) node);
+		case T_AggState:
+			ExecEndAgg((AggState *) node);
 			break;
 
-		case T_Limit:
-			ExecEndLimit((Limit *) node);
+		case T_UniqueState:
+			ExecEndUnique((UniqueState *) node);
 			break;
 
-		case T_Group:
-			ExecEndGroup((Group *) node);
+		case T_HashState:
+			ExecEndHash((HashState *) node);
 			break;
 
-		case T_Agg:
-			ExecEndAgg((Agg *) node);
+		case T_SetOpState:
+			ExecEndSetOp((SetOpState *) node);
+			break;
+
+		case T_LimitState:
+			ExecEndLimit((LimitState *) node);
 			break;
 
 		default:
@@ -575,9 +598,6 @@ ExecEndNode(Plan *node, Plan *parent)
 				 (int) nodeTag(node));
 			break;
 	}
-
-	if (node->instrument)
-		InstrEndLoop(node->instrument);
 }
 
 
@@ -592,7 +612,7 @@ ExecEndNode(Plan *node, Plan *parent)
  * ----------------------------------------------------------------
  */
 TupleDesc
-ExecGetTupType(Plan *node)
+ExecGetTupType(PlanState *node)
 {
 	TupleTableSlot *slot;
 
@@ -601,147 +621,147 @@ ExecGetTupType(Plan *node)
 
 	switch (nodeTag(node))
 	{
-		case T_Result:
+		case T_ResultState:
 			{
-				ResultState *resstate = ((Result *) node)->resstate;
+				ResultState *resstate = (ResultState *) node;
 
-				slot = resstate->cstate.cs_ResultTupleSlot;
+				slot = resstate->ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_SeqScan:
+		case T_AppendState:
 			{
-				CommonScanState *scanstate = ((SeqScan *) node)->scanstate;
+				AppendState *appendstate = (AppendState *) node;
 
-				slot = scanstate->cstate.cs_ResultTupleSlot;
+				slot = appendstate->ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_NestLoop:
+		case T_SeqScanState:
 			{
-				NestLoopState *nlstate = ((NestLoop *) node)->nlstate;
+				SeqScanState *scanstate = (SeqScanState *) node;
 
-				slot = nlstate->jstate.cs_ResultTupleSlot;
+				slot = scanstate->ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_Append:
+		case T_IndexScanState:
 			{
-				AppendState *appendstate = ((Append *) node)->appendstate;
+				IndexScanState *scanstate = (IndexScanState *) node;
 
-				slot = appendstate->cstate.cs_ResultTupleSlot;
+				slot = scanstate->ss.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_IndexScan:
+		case T_TidScanState:
 			{
-				CommonScanState *scanstate = ((IndexScan *) node)->scan.scanstate;
+				TidScanState *scanstate = (TidScanState *) node;
 
-				slot = scanstate->cstate.cs_ResultTupleSlot;
+				slot = scanstate->ss.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_TidScan:
+		case T_SubqueryScanState:
 			{
-				CommonScanState *scanstate = ((TidScan *) node)->scan.scanstate;
+				SubqueryScanState *scanstate = (SubqueryScanState *) node;
 
-				slot = scanstate->cstate.cs_ResultTupleSlot;
+				slot = scanstate->ss.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_SubqueryScan:
+		case T_FunctionScanState:
 			{
-				CommonScanState *scanstate = ((SubqueryScan *) node)->scan.scanstate;
+				FunctionScanState *scanstate = (FunctionScanState *) node;
 
-				slot = scanstate->cstate.cs_ResultTupleSlot;
+				slot = scanstate->ss.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_FunctionScan:
+		case T_NestLoopState:
 			{
-				CommonScanState *scanstate = ((FunctionScan *) node)->scan.scanstate;
+				NestLoopState *nlstate = (NestLoopState *) node;
 
-				slot = scanstate->cstate.cs_ResultTupleSlot;
+				slot = nlstate->js.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_Material:
+		case T_MergeJoinState:
 			{
-				MaterialState *matstate = ((Material *) node)->matstate;
+				MergeJoinState *mergestate = (MergeJoinState *) node;
 
-				slot = matstate->csstate.css_ScanTupleSlot;
+				slot = mergestate->js.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_Sort:
+		case T_HashJoinState:
 			{
-				SortState  *sortstate = ((Sort *) node)->sortstate;
+				HashJoinState *hashjoinstate = (HashJoinState *) node;
 
-				slot = sortstate->csstate.css_ScanTupleSlot;
+				slot = hashjoinstate->js.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_Agg:
+		case T_MaterialState:
 			{
-				AggState   *aggstate = ((Agg *) node)->aggstate;
+				MaterialState *matstate = (MaterialState *) node;
 
-				slot = aggstate->csstate.cstate.cs_ResultTupleSlot;
+				slot = matstate->ss.ss_ScanTupleSlot;
 			}
 			break;
 
-		case T_Group:
+		case T_SortState:
 			{
-				GroupState *grpstate = ((Group *) node)->grpstate;
+				SortState  *sortstate = (SortState *) node;
 
-				slot = grpstate->csstate.cstate.cs_ResultTupleSlot;
+				slot = sortstate->ss.ss_ScanTupleSlot;
 			}
 			break;
 
-		case T_Hash:
+		case T_GroupState:
 			{
-				HashState  *hashstate = ((Hash *) node)->hashstate;
+				GroupState *grpstate = (GroupState *) node;
 
-				slot = hashstate->cstate.cs_ResultTupleSlot;
+				slot = grpstate->ss.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_Unique:
+		case T_AggState:
 			{
-				UniqueState *uniquestate = ((Unique *) node)->uniquestate;
+				AggState   *aggstate = (AggState *) node;
 
-				slot = uniquestate->cstate.cs_ResultTupleSlot;
+				slot = aggstate->ss.ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_SetOp:
+		case T_UniqueState:
 			{
-				SetOpState *setopstate = ((SetOp *) node)->setopstate;
+				UniqueState *uniquestate = (UniqueState *) node;
 
-				slot = setopstate->cstate.cs_ResultTupleSlot;
+				slot = uniquestate->ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_Limit:
+		case T_HashState:
 			{
-				LimitState *limitstate = ((Limit *) node)->limitstate;
+				HashState  *hashstate = (HashState *) node;
 
-				slot = limitstate->cstate.cs_ResultTupleSlot;
+				slot = hashstate->ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_MergeJoin:
+		case T_SetOpState:
 			{
-				MergeJoinState *mergestate = ((MergeJoin *) node)->mergestate;
+				SetOpState *setopstate = (SetOpState *) node;
 
-				slot = mergestate->jstate.cs_ResultTupleSlot;
+				slot = setopstate->ps.ps_ResultTupleSlot;
 			}
 			break;
 
-		case T_HashJoin:
+		case T_LimitState:
 			{
-				HashJoinState *hashjoinstate = ((HashJoin *) node)->hashjoinstate;
+				LimitState *limitstate = (LimitState *) node;
 
-				slot = hashjoinstate->jstate.cs_ResultTupleSlot;
+				slot = limitstate->ps.ps_ResultTupleSlot;
 			}
 			break;
 

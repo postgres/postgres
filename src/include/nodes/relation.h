@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.72 2002/11/30 05:21:03 tgl Exp $
+ * $Id: relation.h,v 1.73 2002/12/05 15:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,8 +377,7 @@ typedef struct IndexPath
 typedef struct TidPath
 {
 	Path		path;
-	List	   *tideval;			/* qual(s) involving CTID = something */
-	Relids		unjoined_relids;	/* some rels not yet part of my Path */
+	List	   *tideval;		/* qual(s) involving CTID = something */
 } TidPath;
 
 /*

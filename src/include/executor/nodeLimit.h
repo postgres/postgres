@@ -7,19 +7,19 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeLimit.h,v 1.6 2002/06/20 20:29:49 momjian Exp $
+ * $Id: nodeLimit.h,v 1.7 2002/12/05 15:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODELIMIT_H
 #define NODELIMIT_H
 
-#include "nodes/plannodes.h"
+#include "nodes/execnodes.h"
 
-extern TupleTableSlot *ExecLimit(Limit *node);
-extern bool ExecInitLimit(Limit *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsLimit(Limit *node);
-extern void ExecEndLimit(Limit *node);
-extern void ExecReScanLimit(Limit *node, ExprContext *exprCtxt, Plan *parent);
+extern LimitState *ExecInitLimit(Limit *node, EState *estate);
+extern TupleTableSlot *ExecLimit(LimitState *node);
+extern void ExecEndLimit(LimitState *node);
+extern void ExecReScanLimit(LimitState *node, ExprContext *exprCtxt);
 
 #endif   /* NODELIMIT_H */

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.71 2002/11/30 21:25:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.72 2002/12/05 15:50:39 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3583,7 +3583,6 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	if (plan->lefttree != NULL ||
 		plan->righttree != NULL ||
 		plan->initPlan != NULL ||
-		plan->subPlan != NULL ||
 		plan->qual != NULL ||
 		((Result *) plan)->resconstantqual != NULL)
 		return;

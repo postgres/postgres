@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.60 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.61 2002/12/05 15:50:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,9 @@
 
 
 /*
- * We have an execution_state record for each query in a function.
+ * We have an execution_state record for each query in a function.  Each
+ * record contains a querytree and plantree for its query.  If the query
+ * is currently in F_EXEC_RUN state then there's a QueryDesc too.
  */
 typedef enum
 {
@@ -37,10 +39,11 @@ typedef enum
 
 typedef struct local_es
 {
-	QueryDesc  *qd;
-	EState	   *estate;
 	struct local_es *next;
 	ExecStatus	status;
+	Query	   *query;
+	Plan	   *plan;
+	QueryDesc  *qd;				/* null unless status == RUN */
 } execution_state;
 
 #define LAST_POSTQUEL_COMMAND(es) ((es)->next == (execution_state *) NULL)
@@ -62,6 +65,8 @@ typedef struct
 								 * we end execution of the function and
 								 * free stuff */
 
+	ParamListInfo paramLI;		/* Param list representing current args */
+
 	/* head of linked list of execution_state records */
 	execution_state *func_state;
 } SQLFunctionCache;
@@ -73,10 +78,11 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 static execution_state *init_execution_state(char *src,
 					 Oid *argOidVect, int nargs);
 static void init_sql_fcache(FmgrInfo *finfo);
-static void postquel_start(execution_state *es);
+static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es);
 static void postquel_end(execution_state *es);
-static void postquel_sub_params(execution_state *es, FunctionCallInfo fcinfo);
+static void postquel_sub_params(SQLFunctionCachePtr fcache,
+								FunctionCallInfo fcinfo);
 static Datum postquel_execute(execution_state *es,
 				 FunctionCallInfo fcinfo,
 				 SQLFunctionCachePtr fcache);
@@ -101,7 +107,6 @@ init_execution_state(char *src, Oid *argOidVect, int nargs)
 		Query	   *queryTree = lfirst(qtl_item);
 		Plan	   *planTree;
 		execution_state *newes;
-		EState	   *estate;
 
 		planTree = pg_plan_query(queryTree);
 
@@ -113,29 +118,9 @@ init_execution_state(char *src, Oid *argOidVect, int nargs)
 
 		newes->next = NULL;
 		newes->status = F_EXEC_START;
-		newes->qd = CreateQueryDesc(queryTree, planTree, None, NULL);
-		newes->estate = estate = CreateExecutorState();
-
-		if (nargs > 0)
-		{
-			int			i;
-			ParamListInfo paramLI;
-
-			paramLI = (ParamListInfo) palloc0((nargs + 1) * sizeof(ParamListInfoData));
-
-			estate->es_param_list_info = paramLI;
-
-			for (i = 0; i < nargs; paramLI++, i++)
-			{
-				paramLI->kind = PARAM_NUM;
-				paramLI->id = i + 1;
-				paramLI->isnull = false;
-				paramLI->value = (Datum) NULL;
-			}
-			paramLI->kind = PARAM_INVALID;
-		}
-		else
-			estate->es_param_list_info = (ParamListInfo) NULL;
+		newes->query = queryTree;
+		newes->plan = planTree;
+		newes->qd = NULL;
 
 		preves = newes;
 	}
@@ -219,6 +204,10 @@ init_sql_fcache(FmgrInfo *finfo)
 	else
 		fcache->funcSlot = NULL;
 
+	/*
+	 * Parse and plan the queries.  We need the argument info to pass
+	 * to the parser.
+	 */
 	nargs = procedureStruct->pronargs;
 
 	if (nargs > 0)
@@ -252,15 +241,18 @@ init_sql_fcache(FmgrInfo *finfo)
 
 
 static void
-postquel_start(execution_state *es)
+postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 {
-	/*
-	 * Do nothing for utility commands. (create, destroy...)  DZ -
-	 * 30-8-1996
-	 */
-	if (es->qd->operation == CMD_UTILITY)
-		return;
-	ExecutorStart(es->qd, es->estate);
+	Assert(es->qd == NULL);
+	es->qd = CreateQueryDesc(es->query, es->plan,
+							 None, NULL,
+							 fcache->paramLI, false);
+
+	/* Utility commands don't need Executor. */
+	if (es->qd->operation != CMD_UTILITY)
+		ExecutorStart(es->qd);
+
+	es->status = F_EXEC_RUN;
 }
 
 static TupleTableSlot *
@@ -282,40 +274,52 @@ postquel_getnext(execution_state *es)
 	/* If it's not the last command, just run it to completion */
 	count = (LAST_POSTQUEL_COMMAND(es)) ? 1L : 0L;
 
-	return ExecutorRun(es->qd, es->estate, ForwardScanDirection, count);
+	return ExecutorRun(es->qd, ForwardScanDirection, count);
 }
 
 static void
 postquel_end(execution_state *es)
 {
-	/*
-	 * Do nothing for utility commands. (create, destroy...)  DZ -
-	 * 30-8-1996
-	 */
-	if (es->qd->operation == CMD_UTILITY)
-		return;
-	ExecutorEnd(es->qd, es->estate);
+	/* Utility commands don't need Executor. */
+	if (es->qd->operation != CMD_UTILITY)
+		ExecutorEnd(es->qd);
+
+	pfree(es->qd);
+	es->qd = NULL;
+
+	es->status = F_EXEC_DONE;
 }
 
+/* Build ParamListInfo array representing current arguments */
 static void
-postquel_sub_params(execution_state *es, FunctionCallInfo fcinfo)
+postquel_sub_params(SQLFunctionCachePtr fcache,
+					FunctionCallInfo fcinfo)
 {
-	EState	   *estate;
 	ParamListInfo paramLI;
+	int			nargs = fcinfo->nargs;
 
-	estate = es->estate;
-	paramLI = estate->es_param_list_info;
-
-	while (paramLI->kind != PARAM_INVALID)
+	if (nargs > 0)
 	{
-		if (paramLI->kind == PARAM_NUM)
+		int			i;
+
+		paramLI = (ParamListInfo) palloc0((nargs + 1) * sizeof(ParamListInfoData));
+
+		for (i = 0; i < nargs; i++)
 		{
-			Assert(paramLI->id <= fcinfo->nargs);
-			paramLI->value = fcinfo->arg[paramLI->id - 1];
-			paramLI->isnull = fcinfo->argnull[paramLI->id - 1];
+			paramLI[i].kind = PARAM_NUM;
+			paramLI[i].id = i + 1;
+			paramLI[i].value = fcinfo->arg[i];
+			paramLI[i].isnull = fcinfo->argnull[i];
 		}
-		paramLI++;
+		paramLI[nargs].kind = PARAM_INVALID;
 	}
+	else
+		paramLI = (ParamListInfo) NULL;
+
+	if (fcache->paramLI)
+		pfree(fcache->paramLI);
+
+	fcache->paramLI = paramLI;
 }
 
 static TupleTableSlot *
@@ -359,27 +363,14 @@ postquel_execute(execution_state *es,
 	TupleTableSlot *slot;
 	Datum		value;
 
-	/*
-	 * It's more right place to do it (before
-	 * postquel_start->ExecutorStart). Now
-	 * ExecutorStart->ExecInitIndexScan->ExecEvalParam works ok. (But
-	 * note: I HOPE we can do it here). - vadim 01/22/97
-	 */
-	if (fcinfo->nargs > 0)
-		postquel_sub_params(es, fcinfo);
-
 	if (es->status == F_EXEC_START)
-	{
-		postquel_start(es);
-		es->status = F_EXEC_RUN;
-	}
+		postquel_start(es, fcache);
 
 	slot = postquel_getnext(es);
 
 	if (TupIsNull(slot))
 	{
 		postquel_end(es);
-		es->status = F_EXEC_DONE;
 		fcinfo->isnull = true;
 
 		/*
@@ -438,10 +429,7 @@ postquel_execute(execution_state *es,
 		 * execution now.
 		 */
 		if (!fcinfo->flinfo->fn_retset)
-		{
 			postquel_end(es);
-			es->status = F_EXEC_DONE;
-		}
 
 		return value;
 	}
@@ -471,7 +459,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
 
 	/*
-	 * Initialize fcache and execution state if first time through.
+	 * Initialize fcache (build plans) if first time through.
 	 */
 	fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
 	if (fcache == NULL)
@@ -480,6 +468,13 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
 	}
 	es = fcache->func_state;
+
+	/*
+	 * Convert params to appropriate format if starting a fresh execution.
+	 * (If continuing execution, we can re-use prior params.)
+	 */
+	if (es && es->status == F_EXEC_START)
+		postquel_sub_params(fcache, fcinfo);
 
 	/*
 	 * Find first unfinished query in function.
@@ -506,7 +501,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	if (es == (execution_state *) NULL)
 	{
 		/*
-		 * Reset the execution states to start over again
+		 * Reset the execution states to start over again on next call.
 		 */
 		es = fcache->func_state;
 		while (es)

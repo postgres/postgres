@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.83 2002/11/30 21:25:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.84 2002/12/05 15:50:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@ typedef struct
 } replace_vars_with_subplan_refs_context;
 
 static void fix_expr_references(Plan *plan, Node *node);
+static bool fix_expr_references_walker(Node *node, void *context);
 static void set_join_references(Join *join, List *rtable);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static Node *join_references_mutator(Node *node,
@@ -66,8 +67,6 @@ static bool fix_opids_walker(Node *node, void *context);
  *	  for the convenience of the executor.	We update Vars in upper plan nodes
  *	  to refer to the outputs of their subplans, and we compute regproc OIDs
  *	  for operators (ie, we look up the function that implements each op).
- *	  We must also build lists of all the subplan nodes present in each
- *	  plan node's expression trees.
  *
  *	  set_plan_references recursively traverses the whole plan tree.
  *
@@ -80,12 +79,6 @@ set_plan_references(Plan *plan, List *rtable)
 
 	if (plan == NULL)
 		return;
-
-	/*
-	 * We must rebuild the plan's list of subplan nodes, since we are
-	 * copying/mutating its expression trees.
-	 */
-	plan->subPlan = NIL;
 
 	/*
 	 * Plan-type-specific fixes
@@ -107,6 +100,8 @@ set_plan_references(Plan *plan, List *rtable)
 		case T_TidScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan,
+								(Node *) ((TidScan *) plan)->tideval);
 			break;
 		case T_SubqueryScan:
 			{
@@ -175,9 +170,9 @@ set_plan_references(Plan *plan, List *rtable)
 			 * unmodified input tuples).  The optimizer is lazy about
 			 * creating really valid targetlists for them.	Best to just
 			 * leave the targetlist alone.	In particular, we do not want
-			 * to pull a subplan list for them, since we will likely end
-			 * up with duplicate list entries for subplans that also
-			 * appear in lower levels of the plan tree!
+			 * to process subplans for them, since we will likely end
+			 * up reprocessing subplans that also appear in lower levels
+			 * of the plan tree!
 			 */
 			break;
 		case T_Agg:
@@ -206,7 +201,7 @@ set_plan_references(Plan *plan, List *rtable)
 			 * Append, like Sort et al, doesn't actually evaluate its
 			 * targetlist or quals, and we haven't bothered to give it its
 			 * own tlist copy.	So, don't fix targetlist/qual. But do
-			 * recurse into subplans.
+			 * recurse into child plans.
 			 */
 			foreach(pl, ((Append *) plan)->appendplans)
 				set_plan_references((Plan *) lfirst(pl), rtable);
@@ -218,24 +213,19 @@ set_plan_references(Plan *plan, List *rtable)
 	}
 
 	/*
-	 * Now recurse into subplans, if any
+	 * Now recurse into child plans and initplans, if any
 	 *
-	 * NOTE: it is essential that we recurse into subplans AFTER we set
+	 * NOTE: it is essential that we recurse into child plans AFTER we set
 	 * subplan references in this plan's tlist and quals.  If we did the
 	 * reference-adjustments bottom-up, then we would fail to match this
 	 * plan's var nodes against the already-modified nodes of the
-	 * subplans.
+	 * children.  Fortunately, that consideration doesn't apply to SubPlan
+	 * nodes; else we'd need two passes over the expression trees.
 	 */
 	set_plan_references(plan->lefttree, rtable);
 	set_plan_references(plan->righttree, rtable);
-	foreach(pl, plan->initPlan)
-	{
-		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
-		Assert(IsA(sp, SubPlan));
-		set_plan_references(sp->plan, sp->rtable);
-	}
-	foreach(pl, plan->subPlan)
+	foreach(pl, plan->initPlan)
 	{
 		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
@@ -249,13 +239,38 @@ set_plan_references(Plan *plan, List *rtable)
  *	  Do final cleanup on expressions (targetlists or quals).
  *
  * This consists of looking up operator opcode info for Oper nodes
- * and adding subplans to the Plan node's list of contained subplans.
+ * and recursively performing set_plan_references on SubPlans.
+ *
+ * The Plan argument is currently unused, but might be needed again someday.
  */
 static void
 fix_expr_references(Plan *plan, Node *node)
 {
-	fix_opids(node);
-	plan->subPlan = nconc(plan->subPlan, pull_subplans(node));
+	/* This tree walk requires no special setup, so away we go... */
+	fix_expr_references_walker(node, NULL);
+}
+
+static bool
+fix_expr_references_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Expr))
+	{
+		Expr   *expr = (Expr *) node;
+
+		if (expr->opType == OP_EXPR ||
+			expr->opType == DISTINCT_EXPR)
+			replace_opid((Oper *) expr->oper);
+		else if (expr->opType == SUBPLAN_EXPR)
+		{
+			SubPlan	   *sp = (SubPlan *) expr->oper;
+
+			Assert(IsA(sp, SubPlan));
+			set_plan_references(sp->plan, sp->rtable);
+		}
+	}
+	return expression_tree_walker(node, fix_expr_references_walker, context);
 }
 
 /*

@@ -7,52 +7,15 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.61 2002/11/30 00:08:22 tgl Exp $
+ * $Id: plannodes.h,v 1.62 2002/12/05 15:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PLANNODES_H
 #define PLANNODES_H
 
-#include "nodes/execnodes.h"
-
-/* ----------------------------------------------------------------
- *	Executor State types are used in the plannode structures
- *	so we have to include their definitions too.
- *
- *		Node Type				node information used by executor
- *
- * control nodes
- *
- *		Result					ResultState				resstate;
- *		Append					AppendState				appendstate;
- *
- * scan nodes
- *
- *		Scan ***				CommonScanState			scanstate;
- *		IndexScan				IndexScanState			indxstate;
- *		SubqueryScan			SubqueryScanState		subquerystate;
- *		FunctionScan			FunctionScanState		functionstate;
- *
- *		  (*** nodes which inherit Scan also inherit scanstate)
- *
- * join nodes
- *
- *		NestLoop				NestLoopState			nlstate;
- *		MergeJoin				MergeJoinState			mergestate;
- *		HashJoin				HashJoinState			hashjoinstate;
- *
- * materialize nodes
- *
- *		Material				MaterialState			matstate;
- *		Sort					SortState				sortstate;
- *		Unique					UniqueState				uniquestate;
- *		SetOp					SetOpState				setopstate;
- *		Limit					LimitState				limitstate;
- *		Hash					HashState				hashstate;
- *
- * ----------------------------------------------------------------
- */
+#include "access/sdir.h"
+#include "nodes/primnodes.h"
 
 
 /* ----------------------------------------------------------------
@@ -62,45 +25,47 @@
 
 /* ----------------
  *		Plan node
+ *
+ * All plan nodes "derive" from the Plan structure by having the
+ * Plan structure as the first field.  This ensures that everything works
+ * when nodes are cast to Plan's.  (node pointers are frequently cast to Plan*
+ * when passed around generically in the executor)
+ *
+ * We never actually instantiate any Plan nodes; this is just the common
+ * abstract superclass for all Plan-type nodes.
  * ----------------
  */
-
 typedef struct Plan
 {
 	NodeTag		type;
 
-	/* estimated execution costs for plan (see costsize.c for more info) */
+	/*
+	 * estimated execution costs for plan (see costsize.c for more info)
+	 */
 	Cost		startup_cost;	/* cost expended before fetching any
 								 * tuples */
 	Cost		total_cost;		/* total cost (assuming all tuples
 								 * fetched) */
 
 	/*
-	 * planner's estimate of result size (note: LIMIT, if any, is not
-	 * considered in setting plan_rows)
+	 * planner's estimate of result size of this plan step
 	 */
 	double		plan_rows;		/* number of rows plan is expected to emit */
 	int			plan_width;		/* average row width in bytes */
 
 	/*
-	 * execution state data.  Having Plan point to this, rather than the
-	 * other way round, is 100% bogus.
+	 * Common structural data for all Plan types.
 	 */
-	EState	   *state;			/* at execution time, state's of
-								 * individual nodes point to one EState
-								 * for the whole top-level plan */
-
-	struct Instrumentation *instrument; /* Optional runtime stats for this
-										 * plan node */
+	List	   *targetlist;		/* target list to be computed at this node */
+	List	   *qual;			/* implicitly-ANDed qual conditions */
+	struct Plan *lefttree;		/* input plan tree(s) */
+	struct Plan *righttree;
+	List	   *initPlan;		/* Init Plan nodes (un-correlated expr
+								 * subselects) */
 
 	/*
-	 * Common structural data for all Plan types.  XXX chgParam is runtime
-	 * data and should be in the EState, not here.
+	 * Information for management of parameter-change-driven rescanning
 	 */
-	List	   *targetlist;
-	List	   *qual;			/* implicitly-ANDed qual conditions */
-	struct Plan *lefttree;
-	struct Plan *righttree;
 	List	   *extParam;		/* indices of _all_ _external_ PARAM_EXEC
 								 * for this plan in global
 								 * es_param_exec_vals. Params from
@@ -108,10 +73,6 @@ typedef struct Plan
 								 * included, but their execParam-s are
 								 * here!!! */
 	List	   *locParam;		/* someones from setParam-s */
-	List	   *chgParam;		/* list of changed ones from the above */
-	List	   *initPlan;		/* Init Plan nodes (un-correlated expr
-								 * subselects) */
-	List	   *subPlan;		/* Other SubPlan nodes */
 
 	/*
 	 * We really need in some TopPlan node to store range table and
@@ -134,20 +95,6 @@ typedef struct Plan
 #define outerPlan(node)			(((Plan *)(node))->lefttree)
 
 
-/*
- * ===============
- * Top-level nodes
- * ===============
- */
-
-/*
- * all plan nodes "derive" from the Plan structure by having the
- * Plan structure as the first field.  This ensures that everything works
- * when nodes are cast to Plan's.  (node pointers are frequently cast to Plan*
- * when passed around generically in the executor)
- */
-
-
 /* ----------------
  *	 Result node -
  *		If no outer plan, evaluate a variable-free targetlist.
@@ -163,7 +110,6 @@ typedef struct Result
 {
 	Plan		plan;
 	Node	   *resconstantqual;
-	ResultState *resstate;
 } Result;
 
 /* ----------------
@@ -182,7 +128,6 @@ typedef struct Append
 	Plan		plan;
 	List	   *appendplans;
 	bool		isTarget;
-	AppendState *appendstate;
 } Append;
 
 /*
@@ -194,7 +139,6 @@ typedef struct Scan
 {
 	Plan		plan;
 	Index		scanrelid;		/* relid is index into the range table */
-	CommonScanState *scanstate;
 } Scan;
 
 /* ----------------
@@ -214,7 +158,6 @@ typedef struct IndexScan
 	List	   *indxqual;
 	List	   *indxqualorig;
 	ScanDirection indxorderdir;
-	IndexScanState *indxstate;
 } IndexScan;
 
 /* ----------------
@@ -224,9 +167,7 @@ typedef struct IndexScan
 typedef struct TidScan
 {
 	Scan		scan;
-	bool		needRescan;
 	List	   *tideval;
-	TidScanState *tidstate;
 } TidScan;
 
 /* ----------------
@@ -257,7 +198,6 @@ typedef struct FunctionScan
 {
 	Scan		scan;
 	/* no other fields needed at present */
-	/* scan.scanstate actually points at a FunctionScanState node */
 } FunctionScan;
 
 /*
@@ -296,7 +236,6 @@ typedef struct Join
 typedef struct NestLoop
 {
 	Join		join;
-	NestLoopState *nlstate;
 } NestLoop;
 
 /* ----------------
@@ -307,7 +246,6 @@ typedef struct MergeJoin
 {
 	Join		join;
 	List	   *mergeclauses;
-	MergeJoinState *mergestate;
 } MergeJoin;
 
 /* ----------------
@@ -318,8 +256,39 @@ typedef struct HashJoin
 {
 	Join		join;
 	List	   *hashclauses;
-	HashJoinState *hashjoinstate;
 } HashJoin;
+
+/* ----------------
+ *		materialization node
+ * ----------------
+ */
+typedef struct Material
+{
+	Plan		plan;
+} Material;
+
+/* ----------------
+ *		sort node
+ * ----------------
+ */
+typedef struct Sort
+{
+	Plan		plan;
+	int			keycount;
+} Sort;
+
+/* ---------------
+ *	 group node -
+ *		Used for queries with GROUP BY (but no aggregates) specified.
+ *		The input must be presorted according to the grouping columns.
+ * ---------------
+ */
+typedef struct Group
+{
+	Plan		plan;
+	int			numCols;		/* number of grouping columns */
+	AttrNumber *grpColIdx;		/* their indexes in the target list */
+} Group;
 
 /* ---------------
  *		aggregate node
@@ -349,43 +318,7 @@ typedef struct Agg
 	int			numCols;		/* number of grouping columns */
 	AttrNumber *grpColIdx;		/* their indexes in the target list */
 	long		numGroups;		/* estimated number of groups in input */
-	AggState   *aggstate;
 } Agg;
-
-/* ---------------
- *	 group node -
- *		Used for queries with GROUP BY (but no aggregates) specified.
- *		The input must be presorted according to the grouping columns.
- * ---------------
- */
-typedef struct Group
-{
-	Plan		plan;
-	int			numCols;		/* number of grouping columns */
-	AttrNumber *grpColIdx;		/* their indexes in the target list */
-	GroupState *grpstate;
-} Group;
-
-/* ----------------
- *		materialization node
- * ----------------
- */
-typedef struct Material
-{
-	Plan		plan;
-	MaterialState *matstate;
-} Material;
-
-/* ----------------
- *		sort node
- * ----------------
- */
-typedef struct Sort
-{
-	Plan		plan;
-	int			keycount;
-	SortState  *sortstate;
-} Sort;
 
 /* ----------------
  *		unique node
@@ -397,8 +330,17 @@ typedef struct Unique
 	int			numCols;		/* number of columns to check for
 								 * uniqueness */
 	AttrNumber *uniqColIdx;		/* indexes into the target list */
-	UniqueState *uniquestate;
 } Unique;
+
+/* ----------------
+ *		hash build node
+ * ----------------
+ */
+typedef struct Hash
+{
+	Plan		plan;
+	List	   *hashkeys;
+} Hash;
 
 /* ----------------
  *		setop node
@@ -420,7 +362,6 @@ typedef struct SetOp
 								 * duplicate-ness */
 	AttrNumber *dupColIdx;		/* indexes into the target list */
 	AttrNumber	flagColIdx;
-	SetOpState *setopstate;
 } SetOp;
 
 /* ----------------
@@ -432,44 +373,13 @@ typedef struct Limit
 	Plan		plan;
 	Node	   *limitOffset;	/* OFFSET parameter, or NULL if none */
 	Node	   *limitCount;		/* COUNT parameter, or NULL if none */
-	LimitState *limitstate;
 } Limit;
-
-/* ----------------
- *		hash build node
- * ----------------
- */
-typedef struct Hash
-{
-	Plan		plan;
-	List	   *hashkeys;
-	HashState  *hashstate;
-} Hash;
-
-#ifdef NOT_USED
-/* -------------------
- *		Tee node information
- *
- *	  leftParent :				the left parent of this node
- *	  rightParent:				the right parent of this node
- * -------------------
-*/
-typedef struct Tee
-{
-	Plan		plan;
-	Plan	   *leftParent;
-	Plan	   *rightParent;
-	TeeState   *teestate;
-	char	   *teeTableName;	/* the name of the table to materialize
-								 * the tee into */
-	List	   *rtentries;		/* the range table for the plan below the
-								 * Tee may be different than the parent
-								 * plans */
-}	Tee;
-#endif
 
 /* ---------------------
  *		SubPlan node
+ *
+ * XXX Perhaps does not belong in this file?  It's not really a Plan node.
+ * Should we make it inherit from Plan anyway?
  * ---------------------
  */
 typedef struct SubPlan
@@ -489,12 +399,7 @@ typedef struct SubPlan
 								 * about what to do with subselect's
 								 * results */
 
-	/*
-	 * Remaining fields are working state for executor; not used in
-	 * planning
-	 */
-	bool		needShutdown;	/* TRUE = need to shutdown subplan */
-	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
+	struct SubPlanState *pstate; /* XXX TEMPORARY HACK */
 } SubPlan;
 
 #endif   /* PLANNODES_H */

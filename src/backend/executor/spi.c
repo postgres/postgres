@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.78 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.79 2002/12/05 15:50:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
 static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
-static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
+static int	_SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount);
 
 static int _SPI_execute_plan(_SPI_plan *plan,
 				  Datum *Values, char *Nulls, int tcount);
@@ -705,9 +705,8 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 	List	   *ptlist = spiplan->ptlist;
 	Query	   *queryTree;
 	Plan	   *planTree;
+	ParamListInfo paramLI;
 	QueryDesc  *queryDesc;
-	EState	   *eState;
-	TupleDesc	attinfo;
 	MemoryContext oldcontext;
 	Portal		portal;
 	char		portalname[64];
@@ -774,28 +773,21 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 	queryTree->into->relname = pstrdup(name);
 	queryTree->isBinary = false;
 
-	/* Create the QueryDesc object and the executor state */
-	queryDesc = CreateQueryDesc(queryTree, planTree, SPI, NULL);
-	eState = CreateExecutorState();
-
-	/* If the plan has parameters, put them into the executor state */
+	/* If the plan has parameters, set them up */
 	if (spiplan->nargs > 0)
 	{
-		ParamListInfo paramLI;
-
 		paramLI = (ParamListInfo) palloc0((spiplan->nargs + 1) *
-										 sizeof(ParamListInfoData));
+										  sizeof(ParamListInfoData));
 
-		eState->es_param_list_info = paramLI;
-		for (k = 0; k < spiplan->nargs; paramLI++, k++)
+		for (k = 0; k < spiplan->nargs; k++)
 		{
-			paramLI->kind = PARAM_NUM;
-			paramLI->id = k + 1;
-			paramLI->isnull = (Nulls && Nulls[k] == 'n');
-			if (paramLI->isnull)
+			paramLI[k].kind = PARAM_NUM;
+			paramLI[k].id = k + 1;
+			paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
+			if (paramLI[k].isnull)
 			{
 				/* nulls just copy */
-				paramLI->value = Values[k];
+				paramLI[k].value = Values[k];
 			}
 			else
 			{
@@ -805,20 +797,24 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 
 				get_typlenbyval(spiplan->argtypes[k],
 								&paramTypLen, &paramTypByVal);
-				paramLI->value = datumCopy(Values[k],
-										   paramTypByVal, paramTypLen);
+				paramLI[k].value = datumCopy(Values[k],
+											 paramTypByVal, paramTypLen);
 			}
 		}
-		paramLI->kind = PARAM_INVALID;
+		paramLI[k].kind = PARAM_INVALID;
 	}
 	else
-		eState->es_param_list_info = NULL;
+		paramLI = NULL;
+
+	/* Create the QueryDesc object */
+	queryDesc = CreateQueryDesc(queryTree, planTree, SPI, NULL,
+								paramLI, false);
 
 	/* Start the executor */
-	attinfo = ExecutorStart(queryDesc, eState);
+	ExecutorStart(queryDesc);
 
-	/* Put all the objects into the portal */
-	PortalSetQuery(portal, queryDesc, attinfo, eState, PortalCleanup);
+	/* Arrange to shut down the executor if portal is dropped */
+	PortalSetQuery(portal, queryDesc, PortalCleanup);
 
 	/* Switch back to the callers memory context */
 	MemoryContextSwitchTo(oldcontext);
@@ -1042,7 +1038,6 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 			Plan	   *planTree;
 			bool		canSetResult;
 			QueryDesc  *qdesc;
-			EState	   *state;
 
 			planTree = pg_plan_query(queryTree);
 			plan_list = lappend(plan_list, planTree);
@@ -1089,9 +1084,9 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 			else if (plan == NULL)
 			{
 				qdesc = CreateQueryDesc(queryTree, planTree,
-										canSetResult ? SPI : None, NULL);
-				state = CreateExecutorState();
-				res = _SPI_pquery(qdesc, state, canSetResult ? tcount : 0);
+										canSetResult ? SPI : None,
+										NULL, NULL, false);
+				res = _SPI_pquery(qdesc, true, canSetResult ? tcount : 0);
 				if (res < 0)
 					return res;
 				CommandCounterIncrement();
@@ -1099,8 +1094,9 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 			else
 			{
 				qdesc = CreateQueryDesc(queryTree, planTree,
-										canSetResult ? SPI : None, NULL);
-				res = _SPI_pquery(qdesc, NULL, 0);
+										canSetResult ? SPI : None,
+										NULL, NULL, false);
+				res = _SPI_pquery(qdesc, false, 0);
 				if (res < 0)
 					return res;
 			}
@@ -1152,7 +1148,6 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 			Plan	   *planTree;
 			bool		canSetResult;
 			QueryDesc  *qdesc;
-			EState	   *state;
 
 			planTree = lfirst(plan_list);
 			plan_list = lnext(plan_list);
@@ -1183,30 +1178,31 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 			}
 			else
 			{
-				qdesc = CreateQueryDesc(queryTree, planTree,
-										canSetResult ? SPI : None, NULL);
-				state = CreateExecutorState();
+				ParamListInfo paramLI;
+
 				if (nargs > 0)
 				{
-					ParamListInfo paramLI;
 					int			k;
 
 					paramLI = (ParamListInfo)
 						palloc0((nargs + 1) * sizeof(ParamListInfoData));
 
-					state->es_param_list_info = paramLI;
-					for (k = 0; k < plan->nargs; paramLI++, k++)
+					for (k = 0; k < plan->nargs; k++)
 					{
-						paramLI->kind = PARAM_NUM;
-						paramLI->id = k + 1;
-						paramLI->isnull = (Nulls && Nulls[k] == 'n');
-						paramLI->value = Values[k];
+						paramLI[k].kind = PARAM_NUM;
+						paramLI[k].id = k + 1;
+						paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
+						paramLI[k].value = Values[k];
 					}
-					paramLI->kind = PARAM_INVALID;
+					paramLI[k].kind = PARAM_INVALID;
 				}
 				else
-					state->es_param_list_info = NULL;
-				res = _SPI_pquery(qdesc, state, canSetResult ? tcount : 0);
+					paramLI = NULL;
+
+				qdesc = CreateQueryDesc(queryTree, planTree,
+										canSetResult ? SPI : None,
+										NULL, paramLI, false);
+				res = _SPI_pquery(qdesc, true, canSetResult ? tcount : 0);
 				if (res < 0)
 					return res;
 				CommandCounterIncrement();
@@ -1218,7 +1214,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 }
 
 static int
-_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
+_SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 {
 	Query	   *parseTree = queryDesc->parsetree;
 	int			operation = queryDesc->operation;
@@ -1262,7 +1258,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 			return SPI_ERROR_OPUNKNOWN;
 	}
 
-	if (state == NULL)			/* plan preparation, don't execute */
+	if (!runit)					/* plan preparation, don't execute */
 		return res;
 
 #ifdef SPI_EXECUTOR_STATS
@@ -1270,20 +1266,20 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 		ResetUsage();
 #endif
 
-	ExecutorStart(queryDesc, state);
+	ExecutorStart(queryDesc);
 
 	/*
 	 * Don't work currently --- need to rearrange callers so that we
-	 * prepare the portal before doing CreateExecutorState() etc. See
+	 * prepare the portal before doing ExecutorStart() etc. See
 	 * pquery.c for the correct order of operations.
 	 */
 	if (isRetrieveIntoPortal)
 		elog(FATAL, "SPI_select: retrieve into portal not implemented");
 
-	ExecutorRun(queryDesc, state, ForwardScanDirection, (long) tcount);
+	ExecutorRun(queryDesc, ForwardScanDirection, (long) tcount);
 
-	_SPI_current->processed = state->es_processed;
-	save_lastoid = state->es_lastoid;
+	_SPI_current->processed = queryDesc->estate->es_processed;
+	save_lastoid = queryDesc->estate->es_lastoid;
 
 	if (operation == CMD_SELECT && queryDesc->dest == SPI)
 	{
@@ -1291,7 +1287,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 			elog(FATAL, "SPI_select: # of processed tuples check failed");
 	}
 
-	ExecutorEnd(queryDesc, state);
+	ExecutorEnd(queryDesc);
 
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
@@ -1342,7 +1338,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 	querydesc = PortalGetQueryDesc(portal);
-	estate = PortalGetState(portal);
+	estate = querydesc->estate;
 
 	/* Save the queries command destination and set it to SPI (for fetch) */
 	/* or None (for move) */
@@ -1357,7 +1353,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 		else
 			direction = ForwardScanDirection;
 
-		ExecutorRun(querydesc, estate, direction, (long) count);
+		ExecutorRun(querydesc, direction, (long) count);
 
 		if (estate->es_processed > 0)
 			portal->atStart = false;	/* OK to back up now */
@@ -1371,7 +1367,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 		else
 			direction = BackwardScanDirection;
 
-		ExecutorRun(querydesc, estate, direction, (long) count);
+		ExecutorRun(querydesc, direction, (long) count);
 
 		if (estate->es_processed > 0)
 			portal->atEnd = false;		/* OK to go forward now */

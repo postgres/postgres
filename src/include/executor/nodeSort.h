@@ -7,21 +7,21 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSort.h,v 1.15 2002/06/20 20:29:49 momjian Exp $
+ * $Id: nodeSort.h,v 1.16 2002/12/05 15:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODESORT_H
 #define NODESORT_H
 
-#include "nodes/plannodes.h"
+#include "nodes/execnodes.h"
 
-extern TupleTableSlot *ExecSort(Sort *node);
-extern bool ExecInitSort(Sort *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsSort(Sort *node);
-extern void ExecEndSort(Sort *node);
-extern void ExecSortMarkPos(Sort *node);
-extern void ExecSortRestrPos(Sort *node);
-extern void ExecReScanSort(Sort *node, ExprContext *exprCtxt, Plan *parent);
+extern SortState *ExecInitSort(Sort *node, EState *estate);
+extern TupleTableSlot *ExecSort(SortState *node);
+extern void ExecEndSort(SortState *node);
+extern void ExecSortMarkPos(SortState *node);
+extern void ExecSortRestrPos(SortState *node);
+extern void ExecReScanSort(SortState *node, ExprContext *exprCtxt);
 
 #endif   /* NODESORT_H */

@@ -3,18 +3,15 @@
  * portal.h
  *	  POSTGRES portal definitions.
  *
+ * A portal is an abstraction which represents the execution state of
+ * a running query (specifically, a CURSOR).
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.35 2002/09/04 20:31:45 momjian Exp $
+ * $Id: portal.h,v 1.36 2002/12/05 15:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
- */
-/*
- * Note:
- *		A portal is an abstraction which represents the execution state of
- * a running query (specifically, a CURSOR).
  */
 #ifndef PORTAL_H
 #define PORTAL_H
@@ -30,8 +27,6 @@ typedef struct PortalData
 	char	   *name;			/* Portal's name */
 	MemoryContext heap;			/* subsidiary memory */
 	QueryDesc  *queryDesc;		/* Info about query associated with portal */
-	TupleDesc	attinfo;
-	EState	   *state;			/* Execution state of query */
 	bool		atStart;		/* T => fetch backwards is not allowed */
 	bool		atEnd;			/* T => fetch forwards is not allowed */
 	void		(*cleanup) (Portal);	/* Cleanup routine (optional) */
@@ -47,8 +42,6 @@ typedef struct PortalData
  * Access macros for Portal ... use these in preference to field access.
  */
 #define PortalGetQueryDesc(portal)	((portal)->queryDesc)
-#define PortalGetTupleDesc(portal)	((portal)->attinfo)
-#define PortalGetState(portal)		((portal)->state)
 #define PortalGetHeapMemory(portal) ((portal)->heap)
 
 /*
@@ -64,7 +57,6 @@ extern Portal CreatePortal(char *name);
 extern void PortalDrop(Portal portal);
 extern Portal GetPortalByName(char *name);
 extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc,
-			   TupleDesc attinfo, EState *state,
-			   void (*cleanup) (Portal portal));
+						   void (*cleanup) (Portal portal));
 
 #endif   /* PORTAL_H */

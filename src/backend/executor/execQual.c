@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.112 2002/12/01 20:27:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.113 2002/12/05 15:50:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1766,7 +1766,8 @@ ExecEvalExpr(Node *expression,
 													isNull, isDone);
 						break;
 					case SUBPLAN_EXPR:
-						retDatum = ExecSubPlan((SubPlan *) expr->oper,
+						/* XXX temporary hack to find exec state node */
+						retDatum = ExecSubPlan(((SubPlan *) expr->oper)->pstate,
 											   expr->args, econtext,
 											   isNull);
 						break;
@@ -1847,6 +1848,169 @@ ExecEvalExprSwitchContext(Node *expression,
 	retDatum = ExecEvalExpr(expression, econtext, isNull, isDone);
 	MemoryContextSwitchTo(oldContext);
 	return retDatum;
+}
+
+
+/*
+ * ExecInitExpr: prepare an expression tree for execution
+ *
+ *	'node' is the root of the expression tree to examine
+ *	'parent' is the PlanState node that owns the expression,
+ *		or NULL if we are preparing an expression that is not associated
+ *		with a plan.  (If so, it can't have Aggrefs or SubPlans.)
+ *
+ * Soon this will generate an expression state tree paralleling the given
+ * expression tree.  Right now, it just searches the expression tree for
+ * Aggref and SubPlan nodes.
+ */
+Node *
+ExecInitExpr(Node *node, PlanState *parent)
+{
+	List	   *temp;
+
+	if (node == NULL)
+		return NULL;
+	switch (nodeTag(node))
+	{
+		case T_Var:
+			break;
+		case T_Const:
+			break;
+		case T_Param:
+			break;
+		case T_Aggref:
+			if (parent && IsA(parent, AggState))
+			{
+				AggState   *aggstate = (AggState *) parent;
+				int			naggs;
+
+				aggstate->aggs = lcons(node, aggstate->aggs);
+				naggs = ++aggstate->numaggs;
+
+				ExecInitExpr(((Aggref *) node)->target, parent);
+
+				/*
+				 * Complain if the aggregate's argument contains any
+				 * aggregates; nested agg functions are semantically
+				 * nonsensical.  (This probably was caught earlier,
+				 * but we defend against it here anyway.)
+				 */
+				if (naggs != aggstate->numaggs)
+					elog(ERROR, "Aggregate function calls may not be nested");
+			}
+			else
+				elog(ERROR, "ExecInitExpr: Aggref not expected here");
+			break;
+		case T_ArrayRef:
+			{
+				ArrayRef   *aref = (ArrayRef *) node;
+
+				ExecInitExpr((Node *) aref->refupperindexpr, parent);
+				ExecInitExpr((Node *) aref->reflowerindexpr, parent);
+				ExecInitExpr(aref->refexpr, parent);
+				ExecInitExpr(aref->refassgnexpr, parent);
+			}
+			break;
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				switch (expr->opType)
+				{
+					case OP_EXPR:
+						break;
+					case FUNC_EXPR:
+						break;
+					case OR_EXPR:
+						break;
+					case AND_EXPR:
+						break;
+					case NOT_EXPR:
+						break;
+					case DISTINCT_EXPR:
+						break;
+					case SUBPLAN_EXPR:
+						if (parent)
+						{
+							SubLink *sublink = ((SubPlan *) expr->oper)->sublink;
+
+							/*
+							 * Here we just add the SubPlan nodes to
+							 * parent->subPlan.  Later they will be expanded
+							 * to SubPlanState nodes.
+							 */
+							parent->subPlan = lcons(expr->oper,
+													parent->subPlan);
+
+							/* Must recurse into oper list too */
+							Assert(IsA(sublink, SubLink));
+							if (sublink->lefthand)
+								elog(ERROR, "ExecInitExpr: sublink has not been transformed");
+							ExecInitExpr((Node *) sublink->oper, parent);
+						}
+						else
+							elog(ERROR, "ExecInitExpr: SubPlan not expected here");
+						break;
+					default:
+						elog(ERROR, "ExecInitExpr: unknown expression type %d",
+							 expr->opType);
+						break;
+				}
+				/* for all Expr node types, examine args list */
+				ExecInitExpr((Node *) expr->args, parent);
+			}
+			break;
+		case T_FieldSelect:
+			ExecInitExpr(((FieldSelect *) node)->arg, parent);
+			break;
+		case T_RelabelType:
+			ExecInitExpr(((RelabelType *) node)->arg, parent);
+			break;
+		case T_CaseExpr:
+			{
+				CaseExpr   *caseexpr = (CaseExpr *) node;
+
+				foreach(temp, caseexpr->args)
+				{
+					CaseWhen   *when = (CaseWhen *) lfirst(temp);
+
+					Assert(IsA(when, CaseWhen));
+					ExecInitExpr(when->expr, parent);
+					ExecInitExpr(when->result, parent);
+				}
+				/* caseexpr->arg should be null, but we'll check it anyway */
+				ExecInitExpr(caseexpr->arg, parent);
+				ExecInitExpr(caseexpr->defresult, parent);
+			}
+			break;
+		case T_NullTest:
+			ExecInitExpr(((NullTest *) node)->arg, parent);
+			break;
+		case T_BooleanTest:
+			ExecInitExpr(((BooleanTest *) node)->arg, parent);
+			break;
+		case T_ConstraintTest:
+			ExecInitExpr(((ConstraintTest *) node)->arg, parent);
+			ExecInitExpr(((ConstraintTest *) node)->check_expr, parent);
+			break;
+		case T_ConstraintTestValue:
+			break;
+		case T_List:
+			foreach(temp, (List *) node)
+			{
+				ExecInitExpr((Node *) lfirst(temp), parent);
+			}
+			break;
+		case T_TargetEntry:
+			ExecInitExpr(((TargetEntry *) node)->expr, parent);
+			break;
+		default:
+			elog(ERROR, "ExecInitExpr: unknown expression type %d",
+				 nodeTag(node));
+			break;
+	}
+
+	return node;
 }
 
 

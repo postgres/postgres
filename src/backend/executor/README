@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/executor/README,v 1.1 2001/05/15 00:35:50 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/executor/README,v 1.2 2002/12/05 15:50:30 tgl Exp $
 
 The Postgres Executor
 ---------------------
@@ -37,6 +37,27 @@ tuple.  DELETE is similar to UPDATE except that only a CTID need be
 delivered by the plan tree.
 
 XXX a great deal more documentation needs to be written here...
+
+
+Plan Trees and State Trees
+--------------------------
+
+The plan tree delivered by the planner contains a tree of Plan nodes (struct
+types derived from struct Plan).  Each Plan node may have expression trees
+associated with it, to represent its target list, qualification conditions,
+etc.  During executor startup we build a parallel tree of identical structure
+containing executor state nodes --- every plan and expression node type has
+a corresponding executor state node type.  Each node in the state tree has a
+pointer to its corresponding node in the plan tree, plus executor state data
+as needed to implement that node type.  This arrangement allows the plan
+tree to be completely read-only as far as the executor is concerned: all data
+that is modified during execution is in the state tree.  Read-only plan trees
+make life much simpler for plan caching and reuse.
+
+Altogether there are four classes of nodes used in these trees: Plan nodes,
+their corresponding PlanState nodes, Expr nodes, and their corresponding
+ExprState nodes.  (Actually, there are also List nodes, which are used as
+"glue" in all four kinds of tree.)
 
 
 EvalPlanQual (READ COMMITTED update checking)

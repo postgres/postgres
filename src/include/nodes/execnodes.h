@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.81 2002/11/30 00:08:20 tgl Exp $
+ * $Id: execnodes.h,v 1.82 2002/12/05 15:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,11 @@
 #define EXECNODES_H
 
 #include "access/relscan.h"
-#include "access/sdir.h"
 #include "executor/hashjoin.h"
 #include "executor/tuptable.h"
 #include "fmgr.h"
 #include "nodes/params.h"
-#include "nodes/primnodes.h"
+#include "nodes/plannodes.h"
 #include "utils/tuplestore.h"
 
 
@@ -316,6 +315,8 @@ typedef struct EState
 	List	   *es_rowMark;		/* not good place, but there is no other */
 	MemoryContext es_query_cxt; /* per-query context in which EState lives */
 
+	bool		es_instrument;	/* true requests runtime instrumentation */
+
 	/*
 	 * this ExprContext is for per-output-tuple operations, such as
 	 * constraint checks and index-value computations.	It will be reset
@@ -332,98 +333,101 @@ typedef struct EState
 	bool		es_useEvalPlan;
 } EState;
 
-/* ----------------
- *		Executor Type information needed by plannodes.h
- *
- *|		Note: the bogus classes CommonState and CommonScanState exist only
- *|			  because our inheritance system only allows single inheritance
- *|			  and we have to have unique slot names.  Hence two or more
- *|			  classes which want to have a common slot must ALL inherit
- *|			  the slot from some other class.  (This is a big hack to
- *|			  allow our classes to share slot names..)
- *|
- *|		Example:
- *|			  the class Result and the class NestLoop nodes both want
- *|			  a slot called "OuterTuple" so they both have to inherit
- *|			  it from some other class.  In this case they inherit
- *|			  it from CommonState.	"CommonState" and "CommonScanState" are
- *|			  the best names I could come up with for this sort of
- *|			  stuff.
- *|
- *|			  As a result, many classes have extra slots which they
- *|			  don't use.  These slots are denoted (unused) in the
- *|			  comment preceding the class definition.	If you
- *|			  comes up with a better idea of a way of doing things
- *|			  along these lines, then feel free to make your idea
- *|			  known to me.. -cim 10/15/89
- * ----------------
- */
 
 /* ----------------------------------------------------------------
- *				 Common Executor State Information
+ *				 Executor State Information
  * ----------------------------------------------------------------
  */
 
 /* ----------------
- *	 CommonState information
+ *		PlanState node
  *
- *		Superclass for all executor node-state object types.
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's expression-evaluation context
- *		ProjInfo		   info this node uses to form tuple projections
- *		TupFromTlist	   state flag used by some node types (why kept here?)
+ * We never actually instantiate any PlanState nodes; this is just the common
+ * abstract superclass for all PlanState-type nodes.
  * ----------------
  */
-typedef struct CommonState
+typedef struct PlanState
 {
-	NodeTag		type;			/* its first field is NodeTag */
-	TupleTableSlot *cs_OuterTupleSlot;
-	TupleTableSlot *cs_ResultTupleSlot;
-	ExprContext *cs_ExprContext;
-	ProjectionInfo *cs_ProjInfo;
-	bool		cs_TupFromTlist;
-} CommonState;
+	NodeTag		type;
 
+	Plan	   *plan;			/* associated Plan node */
 
-/* ----------------------------------------------------------------
- *				 Control Node State Information
- * ----------------------------------------------------------------
+	EState	   *state;			/* at execution time, state's of
+								 * individual nodes point to one EState
+								 * for the whole top-level plan */
+
+	struct Instrumentation *instrument; /* Optional runtime stats for this
+										 * plan node */
+
+	/*
+	 * Common structural data for all Plan types.  These links to subsidiary
+	 * state trees parallel links in the associated plan tree (except for
+	 * the subPlan list, which does not exist in the plan tree).
+	 */
+	List	   *targetlist;		/* target list to be computed at this node */
+	List	   *qual;			/* implicitly-ANDed qual conditions */
+	struct PlanState *lefttree;	/* input plan tree(s) */
+	struct PlanState *righttree;
+	List	   *initPlan;		/* Init SubPlanState nodes (un-correlated
+								 * expr subselects) */
+	List	   *subPlan;		/* SubPlanState nodes in my expressions */
+
+	/*
+	 * State for management of parameter-change-driven rescanning
+	 */
+	List	   *chgParam;		/* integer list of IDs of changed Params */
+
+	/*
+	 * Other run-time state needed by most if not all node types.
+	 */
+	TupleTableSlot *ps_OuterTupleSlot; /* slot for current "outer" tuple */
+	TupleTableSlot *ps_ResultTupleSlot;	/* slot for my result tuples */
+	ExprContext *ps_ExprContext; /* node's expression-evaluation context */
+	ProjectionInfo *ps_ProjInfo; /* info for doing tuple projection */
+	bool		ps_TupFromTlist; /* state flag for processing set-valued
+								  * functions in targetlist */
+} PlanState;
+
+/* ----------------
+ *	these are are defined to avoid confusion problems with "left"
+ *	and "right" and "inner" and "outer".  The convention is that
+ *	the "left" plan is the "outer" plan and the "right" plan is
+ *	the inner plan, but these make the code more readable.
+ * ----------------
  */
+#define innerPlanState(node)		(((PlanState *)(node))->righttree)
+#define outerPlanState(node)		(((PlanState *)(node))->lefttree)
+
 
 /* ----------------
  *	 ResultState information
- *
- *		done			   flag which tells us to quit when we
- *						   have already returned a constant tuple.
  * ----------------
  */
 typedef struct ResultState
 {
-	CommonState cstate;			/* its first field is NodeTag */
-	bool		rs_done;
-	bool		rs_checkqual;
+	PlanState	ps;				/* its first field is NodeTag */
+	Node	   *resconstantqual;
+	bool		rs_done;		/* are we done? */
+	bool		rs_checkqual;	/* do we need to check the qual? */
 } ResultState;
 
 /* ----------------
  *	 AppendState information
  *
+ *		nplans			how many plans are in the list
  *		whichplan		which plan is being executed (0 .. n-1)
  *		firstplan		first plan to execute (usually 0)
  *		lastplan		last plan to execute (usually n-1)
- *		nplans			how many plans are in the list
- *		initialized		array of ExecInitNode() results
  * ----------------
  */
 typedef struct AppendState
 {
-	CommonState cstate;			/* its first field is NodeTag */
+	PlanState	ps;				/* its first field is NodeTag */
+	PlanState **appendplans;	/* array of PlanStates for my inputs */
+	int			as_nplans;
 	int			as_whichplan;
 	int			as_firstplan;
 	int			as_lastplan;
-	int			as_nplans;
-	bool	   *as_initialized;
 } AppendState;
 
 /* ----------------------------------------------------------------
@@ -432,9 +436,9 @@ typedef struct AppendState
  */
 
 /* ----------------
- *	 CommonScanState information
+ *	 ScanState information
  *
- *		CommonScanState extends CommonState for node types that represent
+ *		ScanState extends PlanState for node types that represent
  *		scans of an underlying relation.  It can also be used for nodes
  *		that scan the output of an underlying plan node --- in that case,
  *		only ScanTupleSlot is actually useful, and it refers to the tuple
@@ -445,26 +449,22 @@ typedef struct AppendState
  *		ScanTupleSlot	   pointer to slot in tuple table holding scan tuple
  * ----------------
  */
-typedef struct CommonScanState
+typedef struct ScanState
 {
-	CommonState cstate;			/* its first field is NodeTag */
-	Relation	css_currentRelation;
-	HeapScanDesc css_currentScanDesc;
-	TupleTableSlot *css_ScanTupleSlot;
-} CommonScanState;
+	PlanState	ps;				/* its first field is NodeTag */
+	Relation	ss_currentRelation;
+	HeapScanDesc ss_currentScanDesc;
+	TupleTableSlot *ss_ScanTupleSlot;
+} ScanState;
 
 /*
- * SeqScan uses a bare CommonScanState as its state item, since it needs
+ * SeqScan uses a bare ScanState as its state node, since it needs
  * no additional fields.
  */
+typedef ScanState SeqScanState;
 
 /* ----------------
  *	 IndexScanState information
- *
- *		Note that an IndexScan node *also* has a CommonScanState state item.
- *		IndexScanState stores the info needed specifically for indexing.
- *		There's probably no good reason why this is a separate node type
- *		rather than an extension of CommonScanState.
  *
  *		NumIndices		   number of indices in this scan
  *		IndexPtr		   current index in use
@@ -479,7 +479,9 @@ typedef struct CommonScanState
  */
 typedef struct IndexScanState
 {
-	NodeTag		type;
+	ScanState	ss;				/* its first field is NodeTag */
+	List	   *indxqual;
+	List	   *indxqualorig;
 	int			iss_NumIndices;
 	int			iss_IndexPtr;
 	int			iss_MarkIndexPtr;
@@ -495,10 +497,6 @@ typedef struct IndexScanState
 /* ----------------
  *	 TidScanState information
  *
- *		Note that a TidScan node *also* has a CommonScanState state item.
- *		There's probably no good reason why this is a separate node type
- *		rather than an extension of CommonScanState.
- *
  *		NumTids		   number of tids in this scan
  *		TidPtr		   current tid in use
  *		TidList		   evaluated item pointers
@@ -506,7 +504,7 @@ typedef struct IndexScanState
  */
 typedef struct TidScanState
 {
-	NodeTag		type;
+	ScanState	ss;				/* its first field is NodeTag */
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	int			tss_MarkTidPtr;
@@ -526,7 +524,8 @@ typedef struct TidScanState
  */
 typedef struct SubqueryScanState
 {
-	CommonScanState csstate;	/* its first field is NodeTag */
+	ScanState	ss;				/* its first field is NodeTag */
+	PlanState  *subplan;
 	EState	   *sss_SubEState;
 } SubqueryScanState;
 
@@ -538,12 +537,12 @@ typedef struct SubqueryScanState
  *
  *		tupdesc				expected return tuple description
  *		tuplestorestate		private state of tuplestore.c
- *		funcexpr			function expression being evaluated
+ *		funcexpr			state for function expression being evaluated
  * ----------------
  */
 typedef struct FunctionScanState
 {
-	CommonScanState csstate;	/* its first field is NodeTag */
+	ScanState	ss;				/* its first field is NodeTag */
 	TupleDesc	tupdesc;
 	Tuplestorestate *tuplestorestate;
 	Node	   *funcexpr;
@@ -557,11 +556,15 @@ typedef struct FunctionScanState
 /* ----------------
  *	 JoinState information
  *
- *		Superclass for state items of join nodes.
- *		Currently this is the same as CommonState.
+ *		Superclass for state nodes of join plans.
  * ----------------
  */
-typedef CommonState JoinState;
+typedef struct JoinState
+{
+	PlanState	ps;
+	JoinType	jointype;
+	List	   *joinqual;		/* JOIN quals (in addition to ps.qual) */
+} JoinState;
 
 /* ----------------
  *	 NestLoopState information
@@ -573,7 +576,7 @@ typedef CommonState JoinState;
  */
 typedef struct NestLoopState
 {
-	JoinState	jstate;			/* its first field is NodeTag */
+	JoinState	js;				/* its first field is NodeTag */
 	bool		nl_NeedNewOuter;
 	bool		nl_MatchedOuter;
 	TupleTableSlot *nl_NullInnerTupleSlot;
@@ -596,7 +599,8 @@ typedef struct NestLoopState
  */
 typedef struct MergeJoinState
 {
-	JoinState	jstate;			/* its first field is NodeTag */
+	JoinState	js;				/* its first field is NodeTag */
+	List	   *mergeclauses;
 	List	   *mj_OuterSkipQual;
 	List	   *mj_InnerSkipQual;
 	int			mj_JoinState;
@@ -630,7 +634,8 @@ typedef struct MergeJoinState
  */
 typedef struct HashJoinState
 {
-	JoinState	jstate;			/* its first field is NodeTag */
+	JoinState	js;				/* its first field is NodeTag */
+	List	   *hashclauses;
 	HashJoinTable hj_HashTable;
 	int			hj_CurBucketNo;
 	HashJoinTuple hj_CurTuple;
@@ -656,23 +661,46 @@ typedef struct HashJoinState
  *		materialize nodes are used to materialize the results
  *		of a subplan into a temporary file.
  *
- *		csstate.css_ScanTupleSlot refers to output of underlying plan.
+ *		ss.ss_ScanTupleSlot refers to output of underlying plan.
  *
  *		tuplestorestate		private state of tuplestore.c
  * ----------------
  */
 typedef struct MaterialState
 {
-	CommonScanState csstate;	/* its first field is NodeTag */
+	ScanState	ss;				/* its first field is NodeTag */
 	void	   *tuplestorestate;
 } MaterialState;
 
+/* ----------------
+ *	 SortState information
+ * ----------------
+ */
+typedef struct SortState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	bool		sort_Done;		/* sort completed yet? */
+	void	   *tuplesortstate;	/* private state of tuplesort.c */
+} SortState;
+
 /* ---------------------
- *	AggregateState information
+ *	GroupState information
+ * -------------------------
+ */
+typedef struct GroupState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
+	HeapTuple	grp_firstTuple;	/* copy of first tuple of current group */
+	bool		grp_done;		/* indicates completion of Group scan */
+} GroupState;
+
+/* ---------------------
+ *	AggState information
  *
- *	csstate.css_ScanTupleSlot refers to output of underlying plan.
+ *	ss.ss_ScanTupleSlot refers to output of underlying plan.
  *
- *	Note: csstate.cstate.cs_ExprContext contains ecxt_aggvalues and
+ *	Note: ss.ps.ps_ExprContext contains ecxt_aggvalues and
  *	ecxt_aggnulls arrays, which hold the computed agg values for the current
  *	input group during evaluation of an Agg node's output tuple(s).  We
  *	create a second ExprContext, tmpcontext, in which to evaluate input
@@ -687,7 +715,7 @@ typedef struct AggHashTableData *AggHashTable;
 
 typedef struct AggState
 {
-	CommonScanState csstate;	/* its first field is NodeTag */
+	ScanState	ss;				/* its first field is NodeTag */
 	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
 	int			numaggs;		/* length of list (could be zero!) */
 	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
@@ -705,32 +733,6 @@ typedef struct AggState
 	int			next_hash_bucket; /* next chain */
 } AggState;
 
-/* ---------------------
- *	GroupState information
- * -------------------------
- */
-typedef struct GroupState
-{
-	CommonScanState csstate;	/* its first field is NodeTag */
-	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
-	HeapTuple	grp_firstTuple;	/* copy of first tuple of current group */
-	bool		grp_done;		/* indicates completion of Group scan */
-} GroupState;
-
-/* ----------------
- *	 SortState information
- *
- *		sort_Done		indicates whether sort has been performed yet
- *		tuplesortstate	private state of tuplesort.c
- * ----------------
- */
-typedef struct SortState
-{
-	CommonScanState csstate;	/* its first field is NodeTag */
-	bool		sort_Done;
-	void	   *tuplesortstate;
-} SortState;
-
 /* ----------------
  *	 UniqueState information
  *
@@ -744,11 +746,21 @@ typedef struct SortState
  */
 typedef struct UniqueState
 {
-	CommonState cstate;			/* its first field is NodeTag */
+	PlanState	ps;				/* its first field is NodeTag */
 	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
 	HeapTuple	priorTuple;		/* most recently returned tuple, or NULL */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 } UniqueState;
+
+/* ----------------
+ *	 HashState information
+ * ----------------
+ */
+typedef struct HashState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+	HashJoinTable hashtable;	/* hash table for the hashjoin */
+} HashState;
 
 /* ----------------
  *	 SetOpState information
@@ -761,7 +773,7 @@ typedef struct UniqueState
  */
 typedef struct SetOpState
 {
-	CommonState cstate;			/* its first field is NodeTag */
+	PlanState	ps;				/* its first field is NodeTag */
 	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
 	bool		subplan_done;	/* has subplan returned EOF? */
 	long		numLeft;		/* number of left-input dups of cur group */
@@ -794,7 +806,9 @@ typedef enum
 
 typedef struct LimitState
 {
-	CommonState cstate;			/* its first field is NodeTag */
+	PlanState	ps;				/* its first field is NodeTag */
+	Node	   *limitOffset;	/* OFFSET parameter, or NULL if none */
+	Node	   *limitCount;		/* COUNT parameter, or NULL if none */
 	long		offset;			/* current OFFSET value */
 	long		count;			/* current COUNT, if any */
 	bool		noCount;		/* if true, ignore count */
@@ -803,46 +817,16 @@ typedef struct LimitState
 	TupleTableSlot *subSlot;	/* tuple last obtained from subplan */
 } LimitState;
 
-
-/* ----------------
- *	 HashState information
- *
- *		hashtable			hash table for the hashjoin
- * ----------------
+/* ---------------------
+ *	 SubPlanState information
+ * ---------------------
  */
-typedef struct HashState
+typedef struct SubPlanState
 {
-	CommonState cstate;			/* its first field is NodeTag */
-	HashJoinTable hashtable;
-} HashState;
-
-#ifdef NOT_USED
-/* -----------------------
- *	TeeState information
- *	  leftPlace  :	  next item in the queue unseen by the left parent
- *	  rightPlace :	  next item in the queue unseen by the right parent
- *	  lastPlace  :	  last item in the queue
- *	  bufferRelname :  name of the relation used as the buffer queue
- *	  bufferRel		:  the relation used as the buffer queue
- *	  mcxt			:  for now, tee's have their own memory context
- *					   may be cleaned up later if portals are cleaned up
- *
- * initially, a Tee starts with [left/right]Place variables set to	-1.
- * on cleanup, queue is free'd when both leftPlace and rightPlace = -1
- * -------------------------
-*/
-typedef struct TeeState
-{
-	CommonState cstate;			/* its first field is NodeTag */
-	int			tee_leftPlace,
-				tee_rightPlace,
-				tee_lastPlace;
-	char	   *tee_bufferRelname;
-	Relation	tee_bufferRel;
-	MemoryContext tee_mcxt;
-	HeapScanDesc tee_leftScanDesc,
-				tee_rightScanDesc;
-}	TeeState;
-#endif
+	PlanState	ps;				/* its first field is NodeTag */
+	PlanState  *planstate;		/* subselect plan's state tree */
+	bool		needShutdown;	/* TRUE = need to shutdown subplan */
+	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
+} SubPlanState;
 
 #endif   /* EXECNODES_H */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.126 2002/11/30 05:21:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.127 2002/12/05 15:50:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -601,9 +601,6 @@ create_tidscan_plan(TidPath *best_path, List *tlist, List *scan_clauses)
 							 scan_clauses,
 							 scan_relid,
 							 best_path->tideval);
-
-	if (best_path->unjoined_relids)
-		scan_plan->needRescan = true;
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
 
@@ -1302,13 +1299,11 @@ make_seqscan(List *qptlist,
 	Plan	   *plan = &node->plan;
 
 	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scanrelid = scanrelid;
-	node->scanstate = (CommonScanState *) NULL;
 
 	return node;
 }
@@ -1326,7 +1321,6 @@ make_indexscan(List *qptlist,
 	Plan	   *plan = &node->scan.plan;
 
 	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
@@ -1336,7 +1330,6 @@ make_indexscan(List *qptlist,
 	node->indxqual = indxqual;
 	node->indxqualorig = indxqualorig;
 	node->indxorderdir = indexscandir;
-	node->scan.scanstate = (CommonScanState *) NULL;
 
 	return node;
 }
@@ -1351,16 +1344,12 @@ make_tidscan(List *qptlist,
 	Plan	   *plan = &node->scan.plan;
 
 	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
-	node->tideval = copyObject(tideval);		/* XXX do we really need a
-												 * copy? */
-	node->needRescan = false;
-	node->scan.scanstate = (CommonScanState *) NULL;
+	node->tideval = tideval;
 
 	return node;
 }
@@ -1375,14 +1364,12 @@ make_subqueryscan(List *qptlist,
 	Plan	   *plan = &node->scan.plan;
 
 	copy_plan_costsize(plan, subplan);
-	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
 	node->subplan = subplan;
-	node->scan.scanstate = (CommonScanState *) NULL;
 
 	return node;
 }
@@ -1396,13 +1383,11 @@ make_functionscan(List *qptlist,
 	Plan	   *plan = &node->scan.plan;
 
 	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
-	node->scan.scanstate = (CommonScanState *) NULL;
 
 	return node;
 }
@@ -1430,7 +1415,6 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 		if (plan->plan_width < subplan->plan_width)
 			plan->plan_width = subplan->plan_width;
 	}
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = NULL;
@@ -1453,7 +1437,6 @@ make_nestloop(List *tlist,
 	Plan	   *plan = &node->join.plan;
 
 	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
@@ -1477,7 +1460,6 @@ make_hashjoin(List *tlist,
 	Plan	   *plan = &node->join.plan;
 
 	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
@@ -1502,7 +1484,6 @@ make_hash(List *tlist, List *hashkeys, Plan *lefttree)
 	 * input plan; this only affects EXPLAIN display not decisions.
 	 */
 	plan->startup_cost = plan->total_cost;
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NULL;
 	plan->lefttree = lefttree;
@@ -1525,7 +1506,6 @@ make_mergejoin(List *tlist,
 	Plan	   *plan = &node->join.plan;
 
 	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = otherclauses;
 	plan->lefttree = lefttree;
@@ -1557,7 +1537,6 @@ make_sort(Query *root, List *tlist, Plan *lefttree, int keycount)
 			  lefttree->plan_width);
 	plan->startup_cost = sort_path.startup_cost;
 	plan->total_cost = sort_path.total_cost;
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
@@ -1646,7 +1625,6 @@ make_material(List *tlist, Plan *lefttree)
 	Plan	   *plan = &node->plan;
 
 	/* cost should be inserted by caller */
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
@@ -1690,7 +1668,6 @@ make_agg(Query *root, List *tlist, List *qual,
 	else
 		plan->plan_rows = numGroups;
 
-	plan->state = (EState *) NULL;
 	plan->qual = qual;
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
@@ -1726,7 +1703,6 @@ make_group(Query *root,
 	/* One output tuple per estimated result group */
 	plan->plan_rows = numGroups;
 
-	plan->state = (EState *) NULL;
 	plan->qual = NULL;
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
@@ -1765,7 +1741,6 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 	 * if he has a better idea.
 	 */
 
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
@@ -1824,7 +1799,6 @@ make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
 	if (plan->plan_rows < 1)
 		plan->plan_rows = 1;
 
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
@@ -1905,7 +1879,6 @@ make_limit(List *tlist, Plan *lefttree,
 		}
 	}
 
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
@@ -1935,13 +1908,11 @@ make_result(List *tlist,
 		plan->plan_width = 0;	/* XXX try to be smarter? */
 	}
 
-	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = subplan;
 	plan->righttree = NULL;
 	node->resconstantqual = resconstantqual;
-	node->resstate = NULL;
 
 	return node;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.50 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.51 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,30 +62,27 @@
 #include "executor/nodeAppend.h"
 #include "parser/parsetree.h"
 
-static bool exec_append_initialize_next(Append *node);
+static bool exec_append_initialize_next(AppendState *appendstate);
 
 
 /* ----------------------------------------------------------------
  *		exec_append_initialize_next
  *
- *		Sets up the append node state (i.e. the append state node)
- *		for the "next" scan.
+ *		Sets up the append state node for the "next" scan.
  *
  *		Returns t iff there is a "next" scan to process.
  * ----------------------------------------------------------------
  */
 static bool
-exec_append_initialize_next(Append *node)
+exec_append_initialize_next(AppendState *appendstate)
 {
 	EState	   *estate;
-	AppendState *appendstate;
 	int			whichplan;
 
 	/*
 	 * get information from the append node
 	 */
-	estate = node->plan.state;
-	appendstate = node->appendstate;
+	estate = appendstate->ps.state;
 	whichplan = appendstate->as_whichplan;
 
 	if (whichplan < appendstate->as_firstplan)
@@ -116,7 +113,7 @@ exec_append_initialize_next(Append *node)
 		 * If we are controlling the target relation, select the proper
 		 * active ResultRelInfo and junk filter for this target.
 		 */
-		if (node->isTarget)
+		if (((Append *) appendstate->ps.plan)->isTarget)
 		{
 			Assert(whichplan < estate->es_num_result_relations);
 			estate->es_result_relation_info =
@@ -132,9 +129,7 @@ exec_append_initialize_next(Append *node)
 /* ----------------------------------------------------------------
  *		ExecInitAppend
  *
- *		Begins all of the subscans of the append node, storing the
- *		scan structures in the 'initialized' vector of the append-state
- *		structure.
+ *		Begin all of the subscans of the append node.
  *
  *	   (This is potentially wasteful, since the entire result of the
  *		append node may not be scanned, but this way all of the
@@ -146,36 +141,31 @@ exec_append_initialize_next(Append *node)
  *		subplan that corresponds to the target relation being checked.
  * ----------------------------------------------------------------
  */
-bool
-ExecInitAppend(Append *node, EState *estate, Plan *parent)
+AppendState *
+ExecInitAppend(Append *node, EState *estate)
 {
-	AppendState *appendstate;
+	AppendState *appendstate = makeNode(AppendState);
+	PlanState **appendplanstates;
 	int			nplans;
-	List	   *appendplans;
-	bool	   *initialized;
 	int			i;
 	Plan	   *initNode;
 
 	CXT1_printf("ExecInitAppend: context is %d\n", CurrentMemoryContext);
 
 	/*
-	 * assign execution state to node and get information for append state
+	 * Set up empty vector of subplan states
 	 */
-	node->plan.state = estate;
+	nplans = length(node->appendplans);
 
-	appendplans = node->appendplans;
-	nplans = length(appendplans);
-
-	initialized = (bool *) palloc0(nplans * sizeof(bool));
+	appendplanstates = (PlanState **) palloc0(nplans * sizeof(PlanState *));
 
 	/*
 	 * create new AppendState for our append node
 	 */
-	appendstate = makeNode(AppendState);
+	appendstate->ps.plan = (Plan *) node;
+	appendstate->ps.state = estate;
+	appendstate->appendplans = appendplanstates;
 	appendstate->as_nplans = nplans;
-	appendstate->as_initialized = initialized;
-
-	node->appendstate = appendstate;
 
 	/*
 	 * Do we want to scan just one subplan?  (Special case for
@@ -212,36 +202,36 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	 * append nodes still have Result slots, which hold pointers to
 	 * tuples, so we have to initialize them.
 	 */
-	ExecInitResultTupleSlot(estate, &appendstate->cstate);
+	ExecInitResultTupleSlot(estate, &appendstate->ps);
 
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
-	 * results into the array "initialized".  Note we *must* set
+	 * results into the array "appendplans".  Note we *must* set
 	 * estate->es_result_relation_info correctly while we initialize each
 	 * sub-plan; ExecAssignResultTypeFromTL depends on that!
 	 */
 	for (i = appendstate->as_firstplan; i <= appendstate->as_lastplan; i++)
 	{
 		appendstate->as_whichplan = i;
-		exec_append_initialize_next(node);
+		exec_append_initialize_next(appendstate);
 
-		initNode = (Plan *) nth(i, appendplans);
-		initialized[i] = ExecInitNode(initNode, estate, (Plan *) node);
+		initNode = (Plan *) nth(i, node->appendplans);
+		appendplanstates[i] = ExecInitNode(initNode, estate);
 	}
 
 	/*
 	 * initialize tuple type
 	 */
-	ExecAssignResultTypeFromTL((Plan *) node, &appendstate->cstate);
-	appendstate->cstate.cs_ProjInfo = NULL;
+	ExecAssignResultTypeFromTL(&appendstate->ps);
+	appendstate->ps.ps_ProjInfo = NULL;
 
 	/*
 	 * return the result from the first subplan's initialization
 	 */
 	appendstate->as_whichplan = appendstate->as_firstplan;
-	exec_append_initialize_next(node);
+	exec_append_initialize_next(appendstate);
 
-	return TRUE;
+	return appendstate;
 }
 
 int
@@ -264,13 +254,11 @@ ExecCountSlotsAppend(Append *node)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcAppend(Append *node)
+ExecProcAppend(AppendState *node)
 {
 	EState	   *estate;
-	AppendState *appendstate;
 	int			whichplan;
-	List	   *appendplans;
-	Plan	   *subnode;
+	PlanState  *subnode;
 	TupleTableSlot *result;
 	TupleTableSlot *result_slot;
 	ScanDirection direction;
@@ -278,25 +266,20 @@ ExecProcAppend(Append *node)
 	/*
 	 * get information from the node
 	 */
-	appendstate = node->appendstate;
-	estate = node->plan.state;
+	estate = node->ps.state;
 	direction = estate->es_direction;
-	appendplans = node->appendplans;
-	whichplan = appendstate->as_whichplan;
-	result_slot = appendstate->cstate.cs_ResultTupleSlot;
+	whichplan = node->as_whichplan;
+	result_slot = node->ps.ps_ResultTupleSlot;
 
 	/*
 	 * figure out which subplan we are currently processing
 	 */
-	subnode = (Plan *) nth(whichplan, appendplans);
-
-	if (subnode == NULL)
-		elog(DEBUG1, "ExecProcAppend: subnode is NULL");
+	subnode = node->appendplans[whichplan];
 
 	/*
 	 * get a tuple from the subplan
 	 */
-	result = ExecProcNode(subnode, (Plan *) node);
+	result = ExecProcNode(subnode);
 
 	if (!TupIsNull(result))
 	{
@@ -316,9 +299,9 @@ ExecProcAppend(Append *node)
 		 * try processing again (recursively)
 		 */
 		if (ScanDirectionIsForward(direction))
-			appendstate->as_whichplan++;
+			node->as_whichplan++;
 		else
-			appendstate->as_whichplan--;
+			node->as_whichplan--;
 
 		/*
 		 * return something from next node or an empty slot if all of our
@@ -343,65 +326,56 @@ ExecProcAppend(Append *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndAppend(Append *node)
+ExecEndAppend(AppendState *node)
 {
-	EState	   *estate;
-	AppendState *appendstate;
+	PlanState **appendplans;
 	int			nplans;
-	List	   *appendplans;
-	bool	   *initialized;
 	int			i;
 
 	/*
 	 * get information from the node
 	 */
-	appendstate = node->appendstate;
-	estate = node->plan.state;
 	appendplans = node->appendplans;
-	nplans = appendstate->as_nplans;
-	initialized = appendstate->as_initialized;
+	nplans = node->as_nplans;
 
 	/*
-	 * shut down each of the subscans
+	 * shut down each of the subscans (that we've initialized)
 	 */
 	for (i = 0; i < nplans; i++)
 	{
-		if (initialized[i])
-			ExecEndNode((Plan *) nth(i, appendplans), (Plan *) node);
+		if (appendplans[i])
+			ExecEndNode(appendplans[i]);
 	}
 }
 
 void
-ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScanAppend(AppendState *node, ExprContext *exprCtxt)
 {
-	AppendState *appendstate = node->appendstate;
 	int			i;
 
-	for (i = appendstate->as_firstplan; i <= appendstate->as_lastplan; i++)
+	for (i = node->as_firstplan; i <= node->as_lastplan; i++)
 	{
-		Plan	   *subnode;
-
-		subnode = (Plan *) nth(i, node->appendplans);
+		PlanState *subnode = node->appendplans[i];
 
 		/*
 		 * ExecReScan doesn't know about my subplans, so I have to do
 		 * changed-parameter signaling myself.
 		 */
-		if (node->plan.chgParam != NULL)
-			SetChangedParamList(subnode, node->plan.chgParam);
+		if (node->ps.chgParam != NIL)
+			SetChangedParamList(subnode, node->ps.chgParam);
 
 		/*
 		 * if chgParam of subnode is not null then plan will be re-scanned
 		 * by first ExecProcNode.
 		 */
-		if (subnode->chgParam == NULL)
+		if (subnode->chgParam == NIL)
 		{
 			/* make sure estate is correct for this subnode (needed??) */
-			appendstate->as_whichplan = i;
+			node->as_whichplan = i;
 			exec_append_initialize_next(node);
-			ExecReScan(subnode, exprCtxt, (Plan *) node);
+			ExecReScan(subnode, exprCtxt);
 		}
 	}
-	appendstate->as_whichplan = appendstate->as_firstplan;
+	node->as_whichplan = node->as_firstplan;
 	exec_append_initialize_next(node);
 }

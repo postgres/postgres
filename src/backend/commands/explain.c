@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.93 2002/11/13 00:39:46 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.94 2002/12/05 15:50:30 tgl Exp $
  *
  */
 
@@ -34,17 +34,19 @@ typedef struct ExplainState
 {
 	/* options */
 	bool		printCost;		/* print cost */
-	bool		printNodes;		/* do nodeToString() instead */
-	bool		printAnalyze;		/* print actual times */
+	bool		printNodes;		/* do nodeToString() too */
+	bool		printAnalyze;	/* print actual times */
 	/* other states */
 	List	   *rtable;			/* range table */
 } ExplainState;
 
-static StringInfo Explain_PlanToString(Plan *plan, ExplainState *es);
 static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
 				TupOutputState *tstate);
-static void explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
-				int indent, ExplainState *es);
+static double elapsed_time(struct timeval *starttime);
+static void explain_outNode(StringInfo str,
+							Plan *plan, PlanState *planstate,
+							Plan *outer_plan,
+							int indent, ExplainState *es);
 static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 			   int scanrelid, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es);
@@ -116,8 +118,11 @@ static void
 ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 {
 	Plan	   *plan;
+	QueryDesc  *queryDesc;
 	ExplainState *es;
+	StringInfo	str;
 	double		totaltime = 0;
+	struct timeval starttime;
 
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
@@ -136,41 +141,34 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	if (plan == NULL)
 		return;
 
+	/* We don't support DECLARE CURSOR here */
+	Assert(!query->isPortal);
+
+	gettimeofday(&starttime, NULL);
+
+	/* Create a QueryDesc requesting no output */
+	queryDesc = CreateQueryDesc(query, plan, None, NULL, NULL,
+								stmt->analyze);
+
+	/* call ExecutorStart to prepare the plan for execution */
+	ExecutorStart(queryDesc);
+
 	/* Execute the plan for statistics if asked for */
 	if (stmt->analyze)
 	{
-		struct timeval starttime;
-		struct timeval endtime;
+		/* run the plan */
+		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
-		/*
-		 * Set up the instrumentation for the top node. This will cascade
-		 * during plan initialisation
-		 */
-		plan->instrument = InstrAlloc();
+		/* We can't clean up 'till we're done printing the stats... */
 
-		gettimeofday(&starttime, NULL);
-		ProcessQuery(query, plan, None, NULL);
-		CommandCounterIncrement();
-		gettimeofday(&endtime, NULL);
-
-		endtime.tv_sec -= starttime.tv_sec;
-		endtime.tv_usec -= starttime.tv_usec;
-		while (endtime.tv_usec < 0)
-		{
-			endtime.tv_usec += 1000000;
-			endtime.tv_sec--;
-		}
-		totaltime = (double) endtime.tv_sec +
-			(double) endtime.tv_usec / 1000000.0;
+		totaltime += elapsed_time(&starttime);
 	}
 
 	es = (ExplainState *) palloc0(sizeof(ExplainState));
 
 	es->printCost = true;		/* default */
-
-	if (stmt->verbose)
-		es->printNodes = true;
-
+	es->printNodes = stmt->verbose;
+	es->printAnalyze = stmt->analyze;
 	es->rtable = query->rtable;
 
 	if (es->printNodes)
@@ -193,33 +191,73 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 		}
 	}
 
+	str = makeStringInfo();
+
 	if (es->printCost)
 	{
-		StringInfo	str;
+		explain_outNode(str, plan, queryDesc->planstate,
+						NULL, 0, es);
+	}
 
-		str = Explain_PlanToString(plan, es);
+	/*
+	 * Close down the query and free resources.  Include time for this
+	 * in the total runtime.
+	 */
+	gettimeofday(&starttime, NULL);
+
+	ExecutorEnd(queryDesc);
+	CommandCounterIncrement();
+
+	totaltime += elapsed_time(&starttime);
+
+	if (es->printCost)
+	{
 		if (stmt->analyze)
 			appendStringInfo(str, "Total runtime: %.2f msec\n",
 							 1000.0 * totaltime);
 		do_text_output_multiline(tstate, str->data);
-		pfree(str->data);
-		pfree(str);
 	}
 
+	pfree(str->data);
+	pfree(str);
 	pfree(es);
 }
 
+/* Compute elapsed time in seconds since given gettimeofday() timestamp */
+static double
+elapsed_time(struct timeval *starttime)
+{
+	struct timeval endtime;
+
+	gettimeofday(&endtime, NULL);
+
+	endtime.tv_sec -= starttime->tv_sec;
+	endtime.tv_usec -= starttime->tv_usec;
+	while (endtime.tv_usec < 0)
+	{
+		endtime.tv_usec += 1000000;
+		endtime.tv_sec--;
+	}
+	return (double) endtime.tv_sec +
+		(double) endtime.tv_usec / 1000000.0;
+}
 
 /*
  * explain_outNode -
  *	  converts a Plan node into ascii string and appends it to 'str'
+ *
+ * planstate points to the executor state node corresponding to the plan node.
+ * We need this to get at the instrumentation data (if any) as well as the
+ * list of subplans.
  *
  * outer_plan, if not null, references another plan node that is the outer
  * side of a join with the current node.  This is only interesting for
  * deciphering runtime keys of an inner indexscan.
  */
 static void
-explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
+explain_outNode(StringInfo str,
+				Plan *plan, PlanState *planstate,
+				Plan *outer_plan,
 				int indent, ExplainState *es)
 {
 	List	   *l;
@@ -410,18 +448,23 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 						 plan->startup_cost, plan->total_cost,
 						 plan->plan_rows, plan->plan_width);
 
-		if (plan->instrument && plan->instrument->nloops > 0)
+		/*
+		 * We have to forcibly clean up the instrumentation state because
+		 * we haven't done ExecutorEnd yet.  This is pretty grotty ...
+		 */
+		InstrEndLoop(planstate->instrument);
+
+		if (planstate->instrument && planstate->instrument->nloops > 0)
 		{
-			double		nloops = plan->instrument->nloops;
+			double		nloops = planstate->instrument->nloops;
 
 			appendStringInfo(str, " (actual time=%.2f..%.2f rows=%.0f loops=%.0f)",
-							 1000.0 * plan->instrument->startup / nloops,
-							 1000.0 * plan->instrument->total / nloops,
-							 plan->instrument->ntuples / nloops,
-							 plan->instrument->nloops);
-			es->printAnalyze = true;
+							 1000.0 * planstate->instrument->startup / nloops,
+							 1000.0 * planstate->instrument->total / nloops,
+							 planstate->instrument->ntuples / nloops,
+							 planstate->instrument->nloops);
 		}
-		else if( es->printAnalyze )
+		else if (es->printAnalyze)
 		{
 			appendStringInfo(str, " (never executed)");
 		}
@@ -538,6 +581,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 	if (plan->initPlan)
 	{
 		List	   *saved_rtable = es->rtable;
+		List	   *pslist = planstate->initPlan;
 		List	   *lst;
 
 		for (i = 0; i < indent; i++)
@@ -545,12 +589,18 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 		appendStringInfo(str, "  InitPlan\n");
 		foreach(lst, plan->initPlan)
 		{
-			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
+			SubPlan	   *subplan = (SubPlan *) lfirst(lst);
+			SubPlanState *subplanstate = (SubPlanState *) lfirst(pslist);
+
+			es->rtable = subplan->rtable;
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, NULL,
+			explain_outNode(str, subplan->plan,
+							subplanstate->planstate,
+							NULL,
 							indent + 4, es);
+			pslist = lnext(pslist);
 		}
 		es->rtable = saved_rtable;
 	}
@@ -561,7 +611,10 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  ->  ");
-		explain_outNode(str, outerPlan(plan), NULL, indent + 3, es);
+		explain_outNode(str, outerPlan(plan),
+						outerPlanState(planstate),
+						NULL,
+						indent + 3, es);
 	}
 
 	/* righttree */
@@ -570,15 +623,20 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  ->  ");
-		explain_outNode(str, innerPlan(plan), outerPlan(plan),
+		explain_outNode(str, innerPlan(plan),
+						innerPlanState(planstate),
+						outerPlan(plan),
 						indent + 3, es);
 	}
 
 	if (IsA(plan, Append))
 	{
 		Append	   *appendplan = (Append *) plan;
+		AppendState *appendstate = (AppendState *) planstate;
 		List	   *lst;
+		int			j;
 
+		j = 0;
 		foreach(lst, appendplan->appendplans)
 		{
 			Plan	   *subnode = (Plan *) lfirst(lst);
@@ -587,13 +645,18 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "  ->  ");
 
-			explain_outNode(str, subnode, NULL, indent + 3, es);
+			explain_outNode(str, subnode,
+							appendstate->appendplans[j],
+							NULL,
+							indent + 3, es);
+			j++;
 		}
 	}
 
 	if (IsA(plan, SubqueryScan))
 	{
 		SubqueryScan *subqueryscan = (SubqueryScan *) plan;
+		SubqueryScanState *subquerystate = (SubqueryScanState *) planstate;
 		Plan	   *subnode = subqueryscan->subplan;
 		RangeTblEntry *rte = rt_fetch(subqueryscan->scan.scanrelid,
 									  es->rtable);
@@ -606,13 +669,16 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  ->  ");
 
-		explain_outNode(str, subnode, NULL, indent + 3, es);
+		explain_outNode(str, subnode,
+						subquerystate->subplan,
+						NULL,
+						indent + 3, es);
 
 		es->rtable = saved_rtable;
 	}
 
 	/* subPlan-s */
-	if (plan->subPlan)
+	if (planstate->subPlan)
 	{
 		List	   *saved_rtable = es->rtable;
 		List	   *lst;
@@ -620,27 +686,22 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  SubPlan\n");
-		foreach(lst, plan->subPlan)
+		foreach(lst, planstate->subPlan)
 		{
-			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
+			SubPlanState *sps = (SubPlanState *) lfirst(lst);
+			SubPlan *sp = (SubPlan *) sps->ps.plan;
+
+			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, NULL,
+			explain_outNode(str, sp->plan,
+							sps->planstate,
+							NULL,
 							indent + 4, es);
 		}
 		es->rtable = saved_rtable;
 	}
-}
-
-static StringInfo
-Explain_PlanToString(Plan *plan, ExplainState *es)
-{
-	StringInfo	str = makeStringInfo();
-
-	if (plan != NULL)
-		explain_outNode(str, plan, NULL, 0, es);
-	return str;
 }
 
 /*

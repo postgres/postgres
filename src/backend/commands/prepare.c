@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.8 2002/11/15 00:47:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.9 2002/12/05 15:50:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static void InitQueryHashTable(void);
 static void StoreQuery(const char *stmt_name, List *query_list,
 		   List *plan_list, List *argtype_list);
 static QueryHashEntry *FetchQuery(const char *plan_name);
-static void RunQuery(QueryDesc *qdesc, EState *state);
+static void RunQuery(QueryDesc *qdesc);
 
 
 /*
@@ -151,15 +151,12 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 		else
 		{
 			QueryDesc  *qdesc;
-			EState	   *state;
 
 			if (log_executor_stats)
 				ResetUsage();
 
-			qdesc = CreateQueryDesc(query, plan, outputDest, NULL);
-			state = CreateExecutorState();
-
-			state->es_param_list_info = paramLI;
+			qdesc = CreateQueryDesc(query, plan, outputDest, NULL,
+									paramLI, false);
 
 			if (stmt->into)
 			{
@@ -170,7 +167,7 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 				qdesc->dest = None;
 			}
 
-			RunQuery(qdesc, state);
+			RunQuery(qdesc);
 
 			if (log_executor_stats)
 				ShowUsage("EXECUTOR STATISTICS");
@@ -334,15 +331,11 @@ FetchQueryParams(const char *plan_name)
  * Actually execute a prepared query.
  */
 static void
-RunQuery(QueryDesc *qdesc, EState *state)
+RunQuery(QueryDesc *qdesc)
 {
-	TupleDesc	tupdesc;
-
-	tupdesc = ExecutorStart(qdesc, state);
-
-	ExecutorRun(qdesc, state, state->es_direction, 0L);
-
-	ExecutorEnd(qdesc, state);
+	ExecutorStart(qdesc);
+	ExecutorRun(qdesc, ForwardScanDirection, 0L);
+	ExecutorEnd(qdesc);
 }
 
 /*

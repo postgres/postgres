@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.4 2002/11/13 00:44:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.5 2002/12/05 15:50:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,10 @@
 
 /*
  * PortalCleanup
+ *
+ * Clean up a portal when it's dropped.  Since this mainly exists to run
+ * ExecutorEnd(), it should not be set as the cleanup hook until we have
+ * called ExecutorStart() on the portal's query.
  */
 void
 PortalCleanup(Portal portal)
@@ -43,7 +47,7 @@ PortalCleanup(Portal portal)
 	/*
 	 * tell the executor to shutdown the query
 	 */
-	ExecutorEnd(PortalGetQueryDesc(portal), PortalGetState(portal));
+	ExecutorEnd(PortalGetQueryDesc(portal));
 
 	/*
 	 * switch back to previous context
@@ -116,7 +120,7 @@ PerformPortalFetch(char *name,
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 	queryDesc = PortalGetQueryDesc(portal);
-	estate = PortalGetState(portal);
+	estate = queryDesc->estate;
 
 	/*
 	 * If the requested destination is not the same as the query's
@@ -158,7 +162,7 @@ PerformPortalFetch(char *name,
 		else
 			direction = ForwardScanDirection;
 
-		ExecutorRun(queryDesc, estate, direction, (long) count);
+		ExecutorRun(queryDesc, direction, (long) count);
 
 		if (estate->es_processed > 0)
 			portal->atStart = false;	/* OK to back up now */
@@ -172,7 +176,7 @@ PerformPortalFetch(char *name,
 		else
 			direction = BackwardScanDirection;
 
-		ExecutorRun(queryDesc, estate, direction, (long) count);
+		ExecutorRun(queryDesc, direction, (long) count);
 
 		if (estate->es_processed > 0)
 			portal->atEnd = false;		/* OK to go forward now */

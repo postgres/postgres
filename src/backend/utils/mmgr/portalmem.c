@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.49 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.50 2002/12/05 15:50:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,26 +149,15 @@ GetPortalByName(char *name)
 /*
  * PortalSetQuery
  *		Attaches a "query" to portal.
- *
- * Exceptions:
- *		BadState if called when disabled.
- *		BadArg if portal is invalid.
- *		BadArg if queryDesc is "invalid."
- *		BadArg if state is "invalid."
  */
 void
 PortalSetQuery(Portal portal,
 			   QueryDesc *queryDesc,
-			   TupleDesc attinfo,
-			   EState *state,
 			   void (*cleanup) (Portal portal))
 {
 	AssertArg(PortalIsValid(portal));
-	AssertArg(IsA((Node *) state, EState));
 
 	portal->queryDesc = queryDesc;
-	portal->attinfo = attinfo;
-	portal->state = state;
 	portal->atStart = true;		/* Allow fetch forward only */
 	portal->atEnd = false;
 	portal->cleanup = cleanup;
@@ -212,8 +201,6 @@ CreatePortal(char *name)
 
 	/* initialize portal query */
 	portal->queryDesc = NULL;
-	portal->attinfo = NULL;
-	portal->state = NULL;
 	portal->atStart = true;		/* disallow fetches until query is set */
 	portal->atEnd = true;
 	portal->cleanup = NULL;

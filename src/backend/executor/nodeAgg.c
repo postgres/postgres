@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.97 2002/11/29 21:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.98 2002/12/05 15:50:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,11 +212,12 @@ static void finalize_aggregate(AggState *aggstate,
 							   AggStatePerAgg peraggstate,
 							   AggStatePerGroup pergroupstate,
 							   Datum *resultVal, bool *resultIsNull);
-static void build_hash_table(Agg *node);
-static AggHashEntry lookup_hash_entry(Agg *node, TupleTableSlot *slot);
-static TupleTableSlot *agg_retrieve_direct(Agg *node);
-static void agg_fill_hash_table(Agg *node);
-static TupleTableSlot *agg_retrieve_hash_table(Agg *node);
+static void build_hash_table(AggState *aggstate);
+static AggHashEntry lookup_hash_entry(AggState *aggstate,
+									  TupleTableSlot *slot);
+static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
+static void agg_fill_hash_table(AggState *aggstate);
+static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
 static Datum GetAggInitVal(Datum textInitVal, Oid transtype);
 
 
@@ -521,7 +522,7 @@ finalize_aggregate(AggState *aggstate,
 {
 	MemoryContext oldContext;
 
-	oldContext = MemoryContextSwitchTo(aggstate->csstate.cstate.cs_ExprContext->ecxt_per_tuple_memory);
+	oldContext = MemoryContextSwitchTo(aggstate->ss.ps.ps_ExprContext->ecxt_per_tuple_memory);
 
 	/*
 	 * Apply the agg's finalfn if one is provided, else return transValue.
@@ -572,9 +573,9 @@ finalize_aggregate(AggState *aggstate,
  * The hash table always lives in the aggcontext memory context.
  */
 static void
-build_hash_table(Agg *node)
+build_hash_table(AggState *aggstate)
 {
-	AggState   *aggstate = node->aggstate;
+	Agg			   *node = (Agg *) aggstate->ss.ps.plan;
 	AggHashTable	hashtable;
 	Size			tabsize;
 
@@ -596,9 +597,9 @@ build_hash_table(Agg *node)
  * When called, CurrentMemoryContext should be the per-query context.
  */
 static AggHashEntry
-lookup_hash_entry(Agg *node, TupleTableSlot *slot)
+lookup_hash_entry(AggState *aggstate, TupleTableSlot *slot)
 {
-	AggState   *aggstate = node->aggstate;
+	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
 	AggHashTable hashtable = aggstate->hashtable;
 	MemoryContext	tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	HeapTuple	tuple = slot->val;
@@ -684,16 +685,14 @@ lookup_hash_entry(Agg *node, TupleTableSlot *slot)
  *	  the result tuple.
  */
 TupleTableSlot *
-ExecAgg(Agg *node)
+ExecAgg(AggState *node)
 {
-	AggState   *aggstate = node->aggstate;
-
-	if (aggstate->agg_done)
+	if (node->agg_done)
 		return NULL;
 
-	if (node->aggstrategy == AGG_HASHED)
+	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{
-		if (!aggstate->table_filled)
+		if (!node->table_filled)
 			agg_fill_hash_table(node);
 		return agg_retrieve_hash_table(node);
 	}
@@ -707,10 +706,10 @@ ExecAgg(Agg *node)
  * ExecAgg for non-hashed case
  */
 static TupleTableSlot *
-agg_retrieve_direct(Agg *node)
+agg_retrieve_direct(AggState *aggstate)
 {
-	AggState   *aggstate;
-	Plan	   *outerPlan;
+	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
+	PlanState  *outerPlan;
 	ExprContext *econtext;
 	ExprContext *tmpcontext;
 	ProjectionInfo *projInfo;
@@ -726,22 +725,21 @@ agg_retrieve_direct(Agg *node)
 	/*
 	 * get state info from node
 	 */
-	aggstate = node->aggstate;
-	outerPlan = outerPlan(node);
+	outerPlan = outerPlanState(aggstate);
 	/* econtext is the per-output-tuple expression context */
-	econtext = aggstate->csstate.cstate.cs_ExprContext;
+	econtext = aggstate->ss.ps.ps_ExprContext;
 	aggvalues = econtext->ecxt_aggvalues;
 	aggnulls = econtext->ecxt_aggnulls;
 	/* tmpcontext is the per-input-tuple expression context */
 	tmpcontext = aggstate->tmpcontext;
-	projInfo = aggstate->csstate.cstate.cs_ProjInfo;
+	projInfo = aggstate->ss.ps.ps_ProjInfo;
 	peragg = aggstate->peragg;
 	pergroup = aggstate->pergroup;
-	firstSlot = aggstate->csstate.css_ScanTupleSlot;
+	firstSlot = aggstate->ss.ss_ScanTupleSlot;
 
 	/*
 	 * We loop retrieving groups until we find one matching
-	 * node->plan.qual
+	 * aggstate->ss.ps.qual
 	 */
 	do
 	{
@@ -754,7 +752,7 @@ agg_retrieve_direct(Agg *node)
 		 */
 		if (aggstate->grp_firstTuple == NULL)
 		{
-			outerslot = ExecProcNode(outerPlan, (Plan *) node);
+			outerslot = ExecProcNode(outerPlan);
 			if (!TupIsNull(outerslot))
 			{
 				/*
@@ -810,7 +808,7 @@ agg_retrieve_direct(Agg *node)
 				/* Reset per-input-tuple context after each tuple */
 				ResetExprContext(tmpcontext);
 
-				outerslot = ExecProcNode(outerPlan, (Plan *) node);
+				outerslot = ExecProcNode(outerPlan);
 				if (TupIsNull(outerslot))
 				{
 					/* no more outer-plan tuples available */
@@ -917,7 +915,7 @@ agg_retrieve_direct(Agg *node)
 		 * Otherwise, return the tuple.
 		 */
 	}
-	while (!ExecQual(node->plan.qual, econtext, false));
+	while (!ExecQual(aggstate->ss.ps.qual, econtext, false));
 
 	return resultSlot;
 }
@@ -926,10 +924,9 @@ agg_retrieve_direct(Agg *node)
  * ExecAgg for hashed case: phase 1, read input and build hash table
  */
 static void
-agg_fill_hash_table(Agg *node)
+agg_fill_hash_table(AggState *aggstate)
 {
-	AggState   *aggstate;
-	Plan	   *outerPlan;
+	PlanState  *outerPlan;
 	ExprContext *tmpcontext;
 	AggHashEntry	entry;
 	TupleTableSlot *outerslot;
@@ -937,8 +934,7 @@ agg_fill_hash_table(Agg *node)
 	/*
 	 * get state info from node
 	 */
-	aggstate = node->aggstate;
-	outerPlan = outerPlan(node);
+	outerPlan = outerPlanState(aggstate);
 	/* tmpcontext is the per-input-tuple expression context */
 	tmpcontext = aggstate->tmpcontext;
 
@@ -948,14 +944,14 @@ agg_fill_hash_table(Agg *node)
 	 */
 	for (;;)
 	{
-		outerslot = ExecProcNode(outerPlan, (Plan *) node);
+		outerslot = ExecProcNode(outerPlan);
 		if (TupIsNull(outerslot))
 			break;
 		/* set up for advance_aggregates call */
 		tmpcontext->ecxt_scantuple = outerslot;
 
 		/* Find or build hashtable entry for this tuple's group */
-		entry = lookup_hash_entry(node, outerslot);
+		entry = lookup_hash_entry(aggstate, outerslot);
 
 		/* Advance the aggregates */
 		advance_aggregates(aggstate, entry->pergroup);
@@ -974,9 +970,8 @@ agg_fill_hash_table(Agg *node)
  * ExecAgg for hashed case: phase 2, retrieving groups from hash table
  */
 static TupleTableSlot *
-agg_retrieve_hash_table(Agg *node)
+agg_retrieve_hash_table(AggState *aggstate)
 {
-	AggState   *aggstate;
 	ExprContext *econtext;
 	ProjectionInfo *projInfo;
 	Datum	   *aggvalues;
@@ -992,19 +987,18 @@ agg_retrieve_hash_table(Agg *node)
 	/*
 	 * get state info from node
 	 */
-	aggstate = node->aggstate;
 	/* econtext is the per-output-tuple expression context */
-	econtext = aggstate->csstate.cstate.cs_ExprContext;
+	econtext = aggstate->ss.ps.ps_ExprContext;
 	aggvalues = econtext->ecxt_aggvalues;
 	aggnulls = econtext->ecxt_aggnulls;
-	projInfo = aggstate->csstate.cstate.cs_ProjInfo;
+	projInfo = aggstate->ss.ps.ps_ProjInfo;
 	peragg = aggstate->peragg;
 	hashtable = aggstate->hashtable;
-	firstSlot = aggstate->csstate.css_ScanTupleSlot;
+	firstSlot = aggstate->ss.ss_ScanTupleSlot;
 
 	/*
-	 * We loop retrieving groups until we find one matching
-	 * node->plan.qual
+	 * We loop retrieving groups until we find one satisfying
+	 * aggstate->ss.ps.qual
 	 */
 	do
 	{
@@ -1071,7 +1065,7 @@ agg_retrieve_hash_table(Agg *node)
 		 * Otherwise, return the tuple.
 		 */
 	}
-	while (!ExecQual(node->plan.qual, econtext, false));
+	while (!ExecQual(aggstate->ss.ps.qual, econtext, false));
 
 	return resultSlot;
 }
@@ -1083,8 +1077,8 @@ agg_retrieve_hash_table(Agg *node)
  *	planner and initializes its outer subtree
  * -----------------
  */
-bool
-ExecInitAgg(Agg *node, EState *estate, Plan *parent)
+AggState *
+ExecInitAgg(Agg *node, EState *estate)
 {
 	AggState   *aggstate;
 	AggStatePerAgg peragg;
@@ -1095,15 +1089,14 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	List	   *alist;
 
 	/*
-	 * assign the node's execution state
-	 */
-	node->plan.state = estate;
-
-	/*
 	 * create state structure
 	 */
 	aggstate = makeNode(AggState);
-	node->aggstate = aggstate;
+	aggstate->ss.ps.plan = (Plan *) node;
+	aggstate->ss.ps.state = estate;
+
+	aggstate->aggs = NIL;
+	aggstate->numaggs = 0;
 	aggstate->eqfunctions = NULL;
 	aggstate->peragg = NULL;
 	aggstate->agg_done = false;
@@ -1112,37 +1105,13 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	aggstate->hashtable = NULL;
 
 	/*
-	 * find aggregates in targetlist and quals
-	 *
-	 * Note: pull_agg_clauses also checks that no aggs contain other agg
-	 * calls in their arguments.  This would make no sense under SQL
-	 * semantics anyway (and it's forbidden by the spec).  Because that is
-	 * true, we don't need to worry about evaluating the aggs in any
-	 * particular order.
-	 */
-	aggstate->aggs = nconc(pull_agg_clause((Node *) node->plan.targetlist),
-						   pull_agg_clause((Node *) node->plan.qual));
-	aggstate->numaggs = numaggs = length(aggstate->aggs);
-	if (numaggs <= 0)
-	{
-		/*
-		 * This is not an error condition: we might be using the Agg node just
-		 * to do hash-based grouping.  Even in the regular case,
-		 * constant-expression simplification could optimize away all of the
-		 * Aggrefs in the targetlist and qual.  So keep going, but force local
-		 * copy of numaggs positive so that palloc()s below don't choke.
-		 */
-		numaggs = 1;
-	}
-
-	/*
 	 * Create expression contexts.  We need two, one for per-input-tuple
 	 * processing and one for per-output-tuple processing.  We cheat a little
 	 * by using ExecAssignExprContext() to build both.
 	 */
-	ExecAssignExprContext(estate, &aggstate->csstate.cstate);
-	aggstate->tmpcontext = aggstate->csstate.cstate.cs_ExprContext;
-	ExecAssignExprContext(estate, &aggstate->csstate.cstate);
+	ExecAssignExprContext(estate, &aggstate->ss.ps);
+	aggstate->tmpcontext = aggstate->ss.ps.ps_ExprContext;
+	ExecAssignExprContext(estate, &aggstate->ss.ps);
 
 	/*
 	 * We also need a long-lived memory context for holding hashtable
@@ -1163,14 +1132,64 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	/*
 	 * tuple table initialization
 	 */
-	ExecInitScanTupleSlot(estate, &aggstate->csstate);
-	ExecInitResultTupleSlot(estate, &aggstate->csstate.cstate);
+	ExecInitScanTupleSlot(estate, &aggstate->ss);
+	ExecInitResultTupleSlot(estate, &aggstate->ss.ps);
+
+	/*
+	 * initialize child expressions
+	 *
+	 * Note: ExecInitExpr finds Aggrefs for us, and also checks that no aggs
+	 * contain other agg calls in their arguments.  This would make no sense
+	 * under SQL semantics anyway (and it's forbidden by the spec).  Because
+	 * that is true, we don't need to worry about evaluating the aggs in any
+	 * particular order.
+	 */
+	aggstate->ss.ps.targetlist = (List *)
+		ExecInitExpr((Node *) node->plan.targetlist,
+					 (PlanState *) aggstate);
+	aggstate->ss.ps.qual = (List *)
+		ExecInitExpr((Node *) node->plan.qual,
+					 (PlanState *) aggstate);
+
+	/*
+	 * initialize child nodes
+	 */
+	outerPlan = outerPlan(node);
+	outerPlanState(aggstate) = ExecInitNode(outerPlan, estate);
+
+	/*
+	 * initialize source tuple type.
+	 */
+	ExecAssignScanTypeFromOuterPlan(&aggstate->ss);
+
+	/*
+	 * Initialize result tuple type and projection info.
+	 */
+	ExecAssignResultTypeFromTL(&aggstate->ss.ps);
+	ExecAssignProjectionInfo(&aggstate->ss.ps);
+
+	/*
+	 * get the count of aggregates in targetlist and quals
+	 */
+	numaggs = aggstate->numaggs;
+	Assert(numaggs == length(aggstate->aggs));
+	if (numaggs <= 0)
+	{
+		/*
+		 * This is not an error condition: we might be using the Agg node just
+		 * to do hash-based grouping.  Even in the regular case,
+		 * constant-expression simplification could optimize away all of the
+		 * Aggrefs in the targetlist and qual.  So keep going, but force local
+		 * copy of numaggs positive so that palloc()s below don't choke.
+		 */
+		numaggs = 1;
+	}
 
 	/*
 	 * Set up aggregate-result storage in the output expr context, and also
 	 * allocate my private per-agg working storage
 	 */
-	econtext = aggstate->csstate.cstate.cs_ExprContext;
+	econtext = aggstate->ss.ps.ps_ExprContext;
 	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numaggs);
 	econtext->ecxt_aggnulls = (bool *) palloc0(sizeof(bool) * numaggs);
 
@@ -1179,7 +1198,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 
 	if (node->aggstrategy == AGG_HASHED)
 	{
-		build_hash_table(node);
+		build_hash_table(aggstate);
 		aggstate->table_filled = false;
 	}
 	else
@@ -1191,29 +1210,12 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	}
 
 	/*
-	 * initialize child nodes
-	 */
-	outerPlan = outerPlan(node);
-	ExecInitNode(outerPlan, estate, (Plan *) node);
-
-	/*
-	 * initialize source tuple type.
-	 */
-	ExecAssignScanTypeFromOuterPlan((Plan *) node, &aggstate->csstate);
-
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL((Plan *) node, &aggstate->csstate.cstate);
-	ExecAssignProjectionInfo((Plan *) node, &aggstate->csstate.cstate);
-
-	/*
 	 * If we are grouping, precompute fmgr lookup data for inner loop
 	 */
 	if (node->numCols > 0)
 	{
 		aggstate->eqfunctions =
-			execTuplesMatchPrepare(ExecGetScanType(&aggstate->csstate),
+			execTuplesMatchPrepare(ExecGetScanType(&aggstate->ss),
 								   node->numCols,
 								   node->grpColIdx);
 	}
@@ -1330,7 +1332,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		ReleaseSysCache(aggTuple);
 	}
 
-	return TRUE;
+	return aggstate;
 }
 
 static Datum
@@ -1372,84 +1374,82 @@ ExecCountSlotsAgg(Agg *node)
 }
 
 void
-ExecEndAgg(Agg *node)
+ExecEndAgg(AggState *node)
 {
-	AggState   *aggstate = node->aggstate;
-	Plan	   *outerPlan;
+	PlanState  *outerPlan;
 	int			aggno;
 
 	/* Make sure we have closed any open tuplesorts */
-	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
+	for (aggno = 0; aggno < node->numaggs; aggno++)
 	{
-		AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
+		AggStatePerAgg peraggstate = &node->peragg[aggno];
 
 		if (peraggstate->sortstate)
 			tuplesort_end(peraggstate->sortstate);
 	}
 
-	ExecFreeProjectionInfo(&aggstate->csstate.cstate);
+	ExecFreeProjectionInfo(&node->ss.ps);
 
 	/*
 	 * Free both the expr contexts.
 	 */
-	ExecFreeExprContext(&aggstate->csstate.cstate);
-	aggstate->csstate.cstate.cs_ExprContext = aggstate->tmpcontext;
-	ExecFreeExprContext(&aggstate->csstate.cstate);
+	ExecFreeExprContext(&node->ss.ps);
+	node->ss.ps.ps_ExprContext = node->tmpcontext;
+	ExecFreeExprContext(&node->ss.ps);
 
-	MemoryContextDelete(aggstate->aggcontext);
+	MemoryContextDelete(node->aggcontext);
 
-	outerPlan = outerPlan(node);
-	ExecEndNode(outerPlan, (Plan *) node);
+	outerPlan = outerPlanState(node);
+	ExecEndNode(outerPlan);
 
 	/* clean up tuple table */
-	ExecClearTuple(aggstate->csstate.css_ScanTupleSlot);
-	if (aggstate->grp_firstTuple != NULL)
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+	if (node->grp_firstTuple != NULL)
 	{
-		heap_freetuple(aggstate->grp_firstTuple);
-		aggstate->grp_firstTuple = NULL;
+		heap_freetuple(node->grp_firstTuple);
+		node->grp_firstTuple = NULL;
 	}
 }
 
 void
-ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 {
-	AggState   *aggstate = node->aggstate;
-	ExprContext *econtext = aggstate->csstate.cstate.cs_ExprContext;
+	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 	int			aggno;
 
 	/* Make sure we have closed any open tuplesorts */
-	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
+	for (aggno = 0; aggno < node->numaggs; aggno++)
 	{
-		AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
+		AggStatePerAgg peraggstate = &node->peragg[aggno];
 
 		if (peraggstate->sortstate)
 			tuplesort_end(peraggstate->sortstate);
 		peraggstate->sortstate = NULL;
 	}
 
-	aggstate->agg_done = false;
-	if (aggstate->grp_firstTuple != NULL)
+	node->agg_done = false;
+	if (node->grp_firstTuple != NULL)
 	{
-		heap_freetuple(aggstate->grp_firstTuple);
-		aggstate->grp_firstTuple = NULL;
+		heap_freetuple(node->grp_firstTuple);
+		node->grp_firstTuple = NULL;
 	}
-	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * aggstate->numaggs);
-	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * aggstate->numaggs);
+	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
+	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
 
-	MemoryContextReset(aggstate->aggcontext);
+	MemoryContextReset(node->aggcontext);
 
-	if (node->aggstrategy == AGG_HASHED)
+	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{
 		build_hash_table(node);
-		aggstate->table_filled = false;
+		node->table_filled = false;
 	}
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((Plan *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((PlanState *) node)->lefttree->chgParam == NIL)
+		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 }
 
 /*

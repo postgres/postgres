@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.13 2002/12/01 20:27:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.14 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include "utils/lsyscache.h"
 
 
-static TupleTableSlot *FunctionNext(FunctionScan *node);
+static TupleTableSlot *FunctionNext(FunctionScanState *node);
 static bool tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2);
 
 /* ----------------------------------------------------------------
@@ -48,24 +48,22 @@ static bool tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2);
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-FunctionNext(FunctionScan *node)
+FunctionNext(FunctionScanState *node)
 {
 	TupleTableSlot *slot;
 	EState	   *estate;
 	ScanDirection direction;
 	Tuplestorestate *tuplestorestate;
-	FunctionScanState *scanstate;
 	bool		should_free;
 	HeapTuple	heapTuple;
 
 	/*
 	 * get information from the estate and scan state
 	 */
-	scanstate = (FunctionScanState *) node->scan.scanstate;
-	estate = node->scan.plan.state;
+	estate = node->ss.ps.state;
 	direction = estate->es_direction;
 
-	tuplestorestate = scanstate->tuplestorestate;
+	tuplestorestate = node->tuplestorestate;
 
 	/*
 	 * If first time through, read all tuples from function and put them
@@ -74,13 +72,13 @@ FunctionNext(FunctionScan *node)
 	 */
 	if (tuplestorestate == NULL)
 	{
-		ExprContext *econtext = scanstate->csstate.cstate.cs_ExprContext;
+		ExprContext *econtext = node->ss.ps.ps_ExprContext;
 		TupleDesc	funcTupdesc;
 
-		scanstate->tuplestorestate = tuplestorestate =
-			ExecMakeTableFunctionResult(scanstate->funcexpr,
+		node->tuplestorestate = tuplestorestate =
+			ExecMakeTableFunctionResult(node->funcexpr,
 										econtext,
-										scanstate->tupdesc,
+										node->tupdesc,
 										&funcTupdesc);
 
 		/*
@@ -89,14 +87,14 @@ FunctionNext(FunctionScan *node)
 		 * well do it always.
 		 */
 		if (funcTupdesc &&
-			tupledesc_mismatch(scanstate->tupdesc, funcTupdesc))
+			tupledesc_mismatch(node->tupdesc, funcTupdesc))
 			elog(ERROR, "Query-specified return tuple and actual function return tuple do not match");
 	}
 
 	/*
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
-	slot = scanstate->csstate.css_ScanTupleSlot;
+	slot = node->ss.ss_ScanTupleSlot;
 	if (tuplestorestate)
 		heapTuple = tuplestore_getheaptuple(tuplestorestate,
 									   ScanDirectionIsForward(direction),
@@ -121,20 +119,20 @@ FunctionNext(FunctionScan *node)
  */
 
 TupleTableSlot *
-ExecFunctionScan(FunctionScan *node)
+ExecFunctionScan(FunctionScanState *node)
 {
 	/*
 	 * use FunctionNext as access method
 	 */
-	return ExecScan(&node->scan, (ExecScanAccessMtd) FunctionNext);
+	return ExecScan(&node->ss, (ExecScanAccessMtd) FunctionNext);
 }
 
 /* ----------------------------------------------------------------
  *		ExecInitFunctionScan
  * ----------------------------------------------------------------
  */
-bool
-ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
+FunctionScanState *
+ExecInitFunctionScan(FunctionScan *node, EState *estate)
 {
 	FunctionScanState *scanstate;
 	RangeTblEntry *rte;
@@ -145,34 +143,40 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 	/*
 	 * FunctionScan should not have any children.
 	 */
-	Assert(outerPlan((Plan *) node) == NULL);
-	Assert(innerPlan((Plan *) node) == NULL);
-
-	/*
-	 * assign the node's execution state
-	 */
-	node->scan.plan.state = estate;
+	Assert(outerPlan(node) == NULL);
+	Assert(innerPlan(node) == NULL);
 
 	/*
 	 * create new ScanState for node
 	 */
 	scanstate = makeNode(FunctionScanState);
-	node->scan.scanstate = &scanstate->csstate;
+	scanstate->ss.ps.plan = (Plan *) node;
+	scanstate->ss.ps.state = estate;
 
 	/*
 	 * Miscellaneous initialization
 	 *
 	 * create expression context for node
 	 */
-	ExecAssignExprContext(estate, &scanstate->csstate.cstate);
+	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
 #define FUNCTIONSCAN_NSLOTS 2
 
 	/*
 	 * tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &scanstate->csstate.cstate);
-	ExecInitScanTupleSlot(estate, &scanstate->csstate);
+	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
+	ExecInitScanTupleSlot(estate, &scanstate->ss);
+
+	/*
+	 * initialize child expressions
+	 */
+	scanstate->ss.ps.targetlist = (List *)
+		ExecInitExpr((Node *) node->scan.plan.targetlist,
+					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual = (List *)
+		ExecInitExpr((Node *) node->scan.plan.qual,
+					 (PlanState *) scanstate);
 
 	/*
 	 * get info about function
@@ -230,7 +234,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 		elog(ERROR, "Unknown kind of return type specified for function");
 
 	scanstate->tupdesc = tupdesc;
-	ExecSetSlotDescriptor(scanstate->csstate.css_ScanTupleSlot,
+	ExecSetSlotDescriptor(scanstate->ss.ss_ScanTupleSlot,
 						  tupdesc, false);
 
 	/*
@@ -239,15 +243,15 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 	scanstate->tuplestorestate = NULL;
 	scanstate->funcexpr = rte->funcexpr;
 
-	scanstate->csstate.cstate.cs_TupFromTlist = false;
+	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * initialize tuple type
 	 */
-	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->csstate.cstate);
-	ExecAssignProjectionInfo((Plan *) node, &scanstate->csstate.cstate);
+	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
+	ExecAssignProjectionInfo(&scanstate->ss.ps);
 
-	return TRUE;
+	return scanstate;
 }
 
 int
@@ -265,39 +269,26 @@ ExecCountSlotsFunctionScan(FunctionScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndFunctionScan(FunctionScan *node)
+ExecEndFunctionScan(FunctionScanState *node)
 {
-	FunctionScanState *scanstate;
-	EState	   *estate;
-
-	/*
-	 * get information from node
-	 */
-	scanstate = (FunctionScanState *) node->scan.scanstate;
-	estate = node->scan.plan.state;
-
 	/*
 	 * Free the projection info and the scan attribute info
-	 *
-	 * Note: we don't ExecFreeResultType(scanstate) because the rule manager
-	 * depends on the tupType returned by ExecMain().  So for now, this is
-	 * freed at end-transaction time.  -cim 6/2/91
 	 */
-	ExecFreeProjectionInfo(&scanstate->csstate.cstate);
-	ExecFreeExprContext(&scanstate->csstate.cstate);
+	ExecFreeProjectionInfo(&node->ss.ps);
+	ExecFreeExprContext(&node->ss.ps);
 
 	/*
 	 * clean out the tuple table
 	 */
-	ExecClearTuple(scanstate->csstate.cstate.cs_ResultTupleSlot);
-	ExecClearTuple(scanstate->csstate.css_ScanTupleSlot);
+	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
 	 * Release tuplestore resources
 	 */
-	if (scanstate->tuplestorestate != NULL)
-		tuplestore_end(scanstate->tuplestorestate);
-	scanstate->tuplestorestate = NULL;
+	if (node->tuplestorestate != NULL)
+		tuplestore_end(node->tuplestorestate);
+	node->tuplestorestate = NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -307,19 +298,15 @@ ExecEndFunctionScan(FunctionScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecFunctionMarkPos(FunctionScan *node)
+ExecFunctionMarkPos(FunctionScanState *node)
 {
-	FunctionScanState *scanstate;
-
-	scanstate = (FunctionScanState *) node->scan.scanstate;
-
 	/*
 	 * if we haven't materialized yet, just return.
 	 */
-	if (!scanstate->tuplestorestate)
+	if (!node->tuplestorestate)
 		return;
 
-	tuplestore_markpos(scanstate->tuplestorestate);
+	tuplestore_markpos(node->tuplestorestate);
 }
 
 /* ----------------------------------------------------------------
@@ -329,19 +316,15 @@ ExecFunctionMarkPos(FunctionScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecFunctionRestrPos(FunctionScan *node)
+ExecFunctionRestrPos(FunctionScanState *node)
 {
-	FunctionScanState *scanstate;
-
-	scanstate = (FunctionScanState *) node->scan.scanstate;
-
 	/*
 	 * if we haven't materialized yet, just return.
 	 */
-	if (!scanstate->tuplestorestate)
+	if (!node->tuplestorestate)
 		return;
 
-	tuplestore_restorepos(scanstate->tuplestorestate);
+	tuplestore_restorepos(node->tuplestorestate);
 }
 
 /* ----------------------------------------------------------------
@@ -351,21 +334,14 @@ ExecFunctionRestrPos(FunctionScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecFunctionReScan(FunctionScan *node, ExprContext *exprCtxt, Plan *parent)
+ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 {
-	FunctionScanState *scanstate;
-
-	/*
-	 * get information from node
-	 */
-	scanstate = (FunctionScanState *) node->scan.scanstate;
-
-	ExecClearTuple(scanstate->csstate.cstate.cs_ResultTupleSlot);
+	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
 	/*
 	 * If we haven't materialized yet, just return.
 	 */
-	if (!scanstate->tuplestorestate)
+	if (!node->tuplestorestate)
 		return;
 
 	/*
@@ -374,13 +350,13 @@ ExecFunctionReScan(FunctionScan *node, ExprContext *exprCtxt, Plan *parent)
 	 * whether the function expression contains parameters and/or is
 	 * marked volatile.  FIXME soon.
 	 */
-	if (node->scan.plan.chgParam != NULL)
+	if (node->ss.ps.chgParam != NULL)
 	{
-		tuplestore_end(scanstate->tuplestorestate);
-		scanstate->tuplestorestate = NULL;
+		tuplestore_end(node->tuplestorestate);
+		node->tuplestorestate = NULL;
 	}
 	else
-		tuplestore_rescan(scanstate->tuplestorestate);
+		tuplestore_rescan(node->tuplestorestate);
 }
 
 

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.6 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.7 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,28 +44,27 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *				/* return: a tuple or NULL */
-ExecSetOp(SetOp *node)
+ExecSetOp(SetOpState *node)
 {
-	SetOpState *setopstate;
+	SetOp	   *plannode = (SetOp *) node->ps.plan;
 	TupleTableSlot *resultTupleSlot;
-	Plan	   *outerPlan;
+	PlanState  *outerPlan;
 	TupleDesc	tupDesc;
 
 	/*
 	 * get information from the node
 	 */
-	setopstate = node->setopstate;
-	outerPlan = outerPlan((Plan *) node);
-	resultTupleSlot = setopstate->cstate.cs_ResultTupleSlot;
-	tupDesc = ExecGetResultType(&setopstate->cstate);
+	outerPlan = outerPlanState(node);
+	resultTupleSlot = node->ps.ps_ResultTupleSlot;
+	tupDesc = ExecGetResultType(&node->ps);
 
 	/*
 	 * If the previously-returned tuple needs to be returned more than
 	 * once, keep returning it.
 	 */
-	if (setopstate->numOutput > 0)
+	if (node->numOutput > 0)
 	{
-		setopstate->numOutput--;
+		node->numOutput--;
 		return resultTupleSlot;
 	}
 
@@ -88,15 +87,15 @@ ExecSetOp(SetOp *node)
 		/*
 		 * fetch a tuple from the outer subplan, unless we already did.
 		 */
-		if (setopstate->cstate.cs_OuterTupleSlot == NULL &&
-			!setopstate->subplan_done)
+		if (node->ps.ps_OuterTupleSlot == NULL &&
+			!node->subplan_done)
 		{
-			setopstate->cstate.cs_OuterTupleSlot =
-				ExecProcNode(outerPlan, (Plan *) node);
-			if (TupIsNull(setopstate->cstate.cs_OuterTupleSlot))
-				setopstate->subplan_done = true;
+			node->ps.ps_OuterTupleSlot =
+				ExecProcNode(outerPlan);
+			if (TupIsNull(node->ps.ps_OuterTupleSlot))
+				node->subplan_done = true;
 		}
-		inputTupleSlot = setopstate->cstate.cs_OuterTupleSlot;
+		inputTupleSlot = node->ps.ps_OuterTupleSlot;
 
 		if (TupIsNull(resultTupleSlot))
 		{
@@ -104,18 +103,18 @@ ExecSetOp(SetOp *node)
 			 * First of group: save a copy in result slot, and reset
 			 * duplicate-counters for new group.
 			 */
-			if (setopstate->subplan_done)
+			if (node->subplan_done)
 				return NULL;	/* no more tuples */
 			ExecStoreTuple(heap_copytuple(inputTupleSlot->val),
 						   resultTupleSlot,
 						   InvalidBuffer,
 						   true);		/* free copied tuple at
 										 * ExecClearTuple */
-			setopstate->numLeft = 0;
-			setopstate->numRight = 0;
+			node->numLeft = 0;
+			node->numRight = 0;
 			endOfGroup = false;
 		}
-		else if (setopstate->subplan_done)
+		else if (node->subplan_done)
 		{
 			/*
 			 * Reached end of input, so finish processing final group
@@ -131,9 +130,9 @@ ExecSetOp(SetOp *node)
 			if (execTuplesMatch(inputTupleSlot->val,
 								resultTupleSlot->val,
 								tupDesc,
-								node->numCols, node->dupColIdx,
-								setopstate->eqfunctions,
-								setopstate->tempContext))
+								plannode->numCols, plannode->dupColIdx,
+								node->eqfunctions,
+								node->tempContext))
 				endOfGroup = false;
 			else
 				endOfGroup = true;
@@ -146,37 +145,37 @@ ExecSetOp(SetOp *node)
 			 * Decide how many copies (if any) to emit.  This logic is
 			 * straight from the SQL92 specification.
 			 */
-			switch (node->cmd)
+			switch (plannode->cmd)
 			{
 				case SETOPCMD_INTERSECT:
-					if (setopstate->numLeft > 0 && setopstate->numRight > 0)
-						setopstate->numOutput = 1;
+					if (node->numLeft > 0 && node->numRight > 0)
+						node->numOutput = 1;
 					else
-						setopstate->numOutput = 0;
+						node->numOutput = 0;
 					break;
 				case SETOPCMD_INTERSECT_ALL:
-					setopstate->numOutput =
-						(setopstate->numLeft < setopstate->numRight) ?
-						setopstate->numLeft : setopstate->numRight;
+					node->numOutput =
+						(node->numLeft < node->numRight) ?
+						node->numLeft : node->numRight;
 					break;
 				case SETOPCMD_EXCEPT:
-					if (setopstate->numLeft > 0 && setopstate->numRight == 0)
-						setopstate->numOutput = 1;
+					if (node->numLeft > 0 && node->numRight == 0)
+						node->numOutput = 1;
 					else
-						setopstate->numOutput = 0;
+						node->numOutput = 0;
 					break;
 				case SETOPCMD_EXCEPT_ALL:
-					setopstate->numOutput =
-						(setopstate->numLeft < setopstate->numRight) ?
-						0 : (setopstate->numLeft - setopstate->numRight);
+					node->numOutput =
+						(node->numLeft < node->numRight) ?
+						0 : (node->numLeft - node->numRight);
 					break;
 				default:
 					elog(ERROR, "ExecSetOp: bogus command code %d",
-						 (int) node->cmd);
+						 (int) plannode->cmd);
 					break;
 			}
 			/* Fall out of for-loop if we have tuples to emit */
-			if (setopstate->numOutput > 0)
+			if (node->numOutput > 0)
 				break;
 			/* Else flag that we have no current tuple, and loop around */
 			ExecClearTuple(resultTupleSlot);
@@ -191,16 +190,16 @@ ExecSetOp(SetOp *node)
 			bool		isNull;
 
 			flag = DatumGetInt32(heap_getattr(inputTupleSlot->val,
-											  node->flagColIdx,
+											  plannode->flagColIdx,
 											  tupDesc,
 											  &isNull));
 			Assert(!isNull);
 			if (flag)
-				setopstate->numRight++;
+				node->numRight++;
 			else
-				setopstate->numLeft++;
+				node->numLeft++;
 			/* Set flag to fetch a new input tuple, and loop around */
-			setopstate->cstate.cs_OuterTupleSlot = NULL;
+			node->ps.ps_OuterTupleSlot = NULL;
 		}
 	}
 
@@ -208,8 +207,8 @@ ExecSetOp(SetOp *node)
 	 * If we fall out of loop, then we need to emit at least one copy of
 	 * resultTuple.
 	 */
-	Assert(setopstate->numOutput > 0);
-	setopstate->numOutput--;
+	Assert(node->numOutput > 0);
+	node->numOutput--;
 	return resultTupleSlot;
 }
 
@@ -220,23 +219,19 @@ ExecSetOp(SetOp *node)
  *		the node's subplan.
  * ----------------------------------------------------------------
  */
-bool							/* return: initialization status */
-ExecInitSetOp(SetOp *node, EState *estate, Plan *parent)
+SetOpState *
+ExecInitSetOp(SetOp *node, EState *estate)
 {
 	SetOpState *setopstate;
-	Plan	   *outerPlan;
 
 	/*
-	 * assign execution state to node
-	 */
-	node->plan.state = estate;
-
-	/*
-	 * create new SetOpState for node
+	 * create state structure
 	 */
 	setopstate = makeNode(SetOpState);
-	node->setopstate = setopstate;
-	setopstate->cstate.cs_OuterTupleSlot = NULL;
+	setopstate->ps.plan = (Plan *) node;
+	setopstate->ps.state = estate;
+
+	setopstate->ps.ps_OuterTupleSlot = NULL;
 	setopstate->subplan_done = false;
 	setopstate->numOutput = 0;
 
@@ -259,30 +254,29 @@ ExecInitSetOp(SetOp *node, EState *estate, Plan *parent)
 	/*
 	 * Tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &setopstate->cstate);
+	ExecInitResultTupleSlot(estate, &setopstate->ps);
 
 	/*
 	 * then initialize outer plan
 	 */
-	outerPlan = outerPlan((Plan *) node);
-	ExecInitNode(outerPlan, estate, (Plan *) node);
+	outerPlanState(setopstate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
 	 * setop nodes do no projections, so initialize projection info for
 	 * this node appropriately
 	 */
-	ExecAssignResultTypeFromOuterPlan((Plan *) node, &setopstate->cstate);
-	setopstate->cstate.cs_ProjInfo = NULL;
+	ExecAssignResultTypeFromOuterPlan(&setopstate->ps);
+	setopstate->ps.ps_ProjInfo = NULL;
 
 	/*
 	 * Precompute fmgr lookup data for inner loop
 	 */
 	setopstate->eqfunctions =
-		execTuplesMatchPrepare(ExecGetResultType(&setopstate->cstate),
+		execTuplesMatchPrepare(ExecGetResultType(&setopstate->ps),
 							   node->numCols,
 							   node->dupColIdx);
 
-	return TRUE;
+	return setopstate;
 }
 
 int
@@ -301,34 +295,30 @@ ExecCountSlotsSetOp(SetOp *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSetOp(SetOp *node)
+ExecEndSetOp(SetOpState *node)
 {
-	SetOpState *setopstate = node->setopstate;
-
-	ExecEndNode(outerPlan((Plan *) node), (Plan *) node);
-
-	MemoryContextDelete(setopstate->tempContext);
-
 	/* clean up tuple table */
-	ExecClearTuple(setopstate->cstate.cs_ResultTupleSlot);
-	setopstate->cstate.cs_OuterTupleSlot = NULL;
+	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+	node->ps.ps_OuterTupleSlot = NULL;
+
+	ExecEndNode(outerPlanState(node));
+
+	MemoryContextDelete(node->tempContext);
 }
 
 
 void
-ExecReScanSetOp(SetOp *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScanSetOp(SetOpState *node, ExprContext *exprCtxt)
 {
-	SetOpState *setopstate = node->setopstate;
-
-	ExecClearTuple(setopstate->cstate.cs_ResultTupleSlot);
-	setopstate->cstate.cs_OuterTupleSlot = NULL;
-	setopstate->subplan_done = false;
-	setopstate->numOutput = 0;
+	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+	node->ps.ps_OuterTupleSlot = NULL;
+	node->subplan_done = false;
+	node->numOutput = 0;
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((Plan *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((PlanState *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 }

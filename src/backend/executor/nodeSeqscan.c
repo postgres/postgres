@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.38 2002/11/30 05:21:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.39 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,9 +29,8 @@
 #include "executor/nodeSeqscan.h"
 #include "parser/parsetree.h"
 
-static Oid InitScanRelation(SeqScan *node, EState *estate,
-				 CommonScanState *scanstate);
-static TupleTableSlot *SeqNext(SeqScan *node);
+static void InitScanRelation(SeqScanState *node, EState *estate);
+static TupleTableSlot *SeqNext(SeqScanState *node);
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -44,11 +43,11 @@ static TupleTableSlot *SeqNext(SeqScan *node);
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
-SeqNext(SeqScan *node)
+SeqNext(SeqScanState *node)
 {
 	HeapTuple	tuple;
 	HeapScanDesc scandesc;
-	CommonScanState *scanstate;
+	Index		scanrelid;
 	EState	   *estate;
 	ScanDirection direction;
 	TupleTableSlot *slot;
@@ -56,11 +55,11 @@ SeqNext(SeqScan *node)
 	/*
 	 * get information from the estate and scan state
 	 */
-	estate = node->plan.state;
-	scanstate = node->scanstate;
-	scandesc = scanstate->css_currentScanDesc;
+	estate = node->ps.state;
+	scandesc = node->ss_currentScanDesc;
+	scanrelid = ((SeqScan *) node->ps.plan)->scanrelid;
 	direction = estate->es_direction;
-	slot = scanstate->css_ScanTupleSlot;
+	slot = node->ss_ScanTupleSlot;
 
 	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
@@ -69,13 +68,13 @@ SeqNext(SeqScan *node)
 	 * switching in Init/ReScan plan...
 	 */
 	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[node->scanrelid - 1] != NULL)
+		estate->es_evTuple[scanrelid - 1] != NULL)
 	{
 		ExecClearTuple(slot);
-		if (estate->es_evTupleNull[node->scanrelid - 1])
+		if (estate->es_evTupleNull[scanrelid - 1])
 			return slot;		/* return empty slot */
 
-		ExecStoreTuple(estate->es_evTuple[node->scanrelid - 1],
+		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
 					   slot, InvalidBuffer, false);
 
 		/*
@@ -85,7 +84,7 @@ SeqNext(SeqScan *node)
 		 */
 
 		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[node->scanrelid - 1] = true;
+		estate->es_evTupleNull[scanrelid - 1] = true;
 		return (slot);
 	}
 
@@ -124,12 +123,12 @@ SeqNext(SeqScan *node)
  */
 
 TupleTableSlot *
-ExecSeqScan(SeqScan *node)
+ExecSeqScan(SeqScanState *node)
 {
 	/*
 	 * use SeqNext as access method
 	 */
-	return ExecScan(node, (ExecScanAccessMtd) SeqNext);
+	return ExecScan((ScanState *) node, (ExecScanAccessMtd) SeqNext);
 }
 
 /* ----------------------------------------------------------------
@@ -139,9 +138,8 @@ ExecSeqScan(SeqScan *node)
  *		subplans of scans.
  * ----------------------------------------------------------------
  */
-static Oid
-InitScanRelation(SeqScan *node, EState *estate,
-				 CommonScanState *scanstate)
+static void
+InitScanRelation(SeqScanState *node, EState *estate)
 {
 	Index		relid;
 	List	   *rangeTable;
@@ -156,7 +154,7 @@ InitScanRelation(SeqScan *node, EState *estate,
 	 *
 	 * We acquire AccessShareLock for the duration of the scan.
 	 */
-	relid = node->scanrelid;
+	relid = ((SeqScan *) node->ps.plan)->scanrelid;
 	rangeTable = estate->es_range_table;
 	rtentry = rt_fetch(relid, rangeTable);
 	reloid = rtentry->relid;
@@ -168,12 +166,10 @@ InitScanRelation(SeqScan *node, EState *estate,
 									 0,
 									 NULL);
 
-	scanstate->css_currentRelation = currentRelation;
-	scanstate->css_currentScanDesc = currentScanDesc;
+	node->ss_currentRelation = currentRelation;
+	node->ss_currentScanDesc = currentScanDesc;
 
-	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation), false);
-
-	return reloid;
+	ExecAssignScanType(node, RelationGetDescr(currentRelation), false);
 }
 
 
@@ -181,59 +177,64 @@ InitScanRelation(SeqScan *node, EState *estate,
  *		ExecInitSeqScan
  * ----------------------------------------------------------------
  */
-bool
-ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
+SeqScanState *
+ExecInitSeqScan(SeqScan *node, EState *estate)
 {
-	CommonScanState *scanstate;
-	Oid			reloid;
+	SeqScanState *scanstate;
 
 	/*
 	 * Once upon a time it was possible to have an outerPlan of a SeqScan,
 	 * but not any more.
 	 */
-	Assert(outerPlan((Plan *) node) == NULL);
-	Assert(innerPlan((Plan *) node) == NULL);
+	Assert(outerPlan(node) == NULL);
+	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * assign the node's execution state
+	 * create state structure
 	 */
-	node->plan.state = estate;
-
-	/*
-	 * create new CommonScanState for node
-	 */
-	scanstate = makeNode(CommonScanState);
-	node->scanstate = scanstate;
+	scanstate = makeNode(SeqScanState);
+	scanstate->ps.plan = (Plan *) node;
+	scanstate->ps.state = estate;
 
 	/*
 	 * Miscellaneous initialization
 	 *
 	 * create expression context for node
 	 */
-	ExecAssignExprContext(estate, &scanstate->cstate);
+	ExecAssignExprContext(estate, &scanstate->ps);
+
+	/*
+	 * initialize child expressions
+	 */
+	scanstate->ps.targetlist = (List *)
+		ExecInitExpr((Node *) node->plan.targetlist,
+					 (PlanState *) scanstate);
+	scanstate->ps.qual = (List *)
+		ExecInitExpr((Node *) node->plan.qual,
+					 (PlanState *) scanstate);
 
 #define SEQSCAN_NSLOTS 2
 
 	/*
 	 * tuple table initialization
 	 */
-	ExecInitResultTupleSlot(estate, &scanstate->cstate);
+	ExecInitResultTupleSlot(estate, &scanstate->ps);
 	ExecInitScanTupleSlot(estate, scanstate);
 
 	/*
 	 * initialize scan relation
 	 */
-	reloid = InitScanRelation(node, estate, scanstate);
+	InitScanRelation(scanstate, estate);
 
-	scanstate->cstate.cs_TupFromTlist = false;
+	scanstate->ps.ps_TupFromTlist = false;
 
 	/*
 	 * initialize tuple type
 	 */
-	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
-	ExecAssignProjectionInfo((Plan *) node, &scanstate->cstate);
+	ExecAssignResultTypeFromTL(&scanstate->ps);
+	ExecAssignProjectionInfo(&scanstate->ps);
 
-	return TRUE;
+	return scanstate;
 }
 
 int
@@ -251,33 +252,33 @@ ExecCountSlotsSeqScan(SeqScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSeqScan(SeqScan *node)
+ExecEndSeqScan(SeqScanState *node)
 {
-	CommonScanState *scanstate;
 	Relation	relation;
 	HeapScanDesc scanDesc;
 
 	/*
 	 * get information from node
 	 */
-	scanstate = node->scanstate;
-	relation = scanstate->css_currentRelation;
-	scanDesc = scanstate->css_currentScanDesc;
+	relation = node->ss_currentRelation;
+	scanDesc = node->ss_currentScanDesc;
 
 	/*
 	 * Free the projection info and the scan attribute info
-	 *
-	 * Note: we don't ExecFreeResultType(scanstate) because the rule manager
-	 * depends on the tupType returned by ExecMain().  So for now, this is
-	 * freed at end-transaction time.  -cim 6/2/91
 	 */
-	ExecFreeProjectionInfo(&scanstate->cstate);
-	ExecFreeExprContext(&scanstate->cstate);
+	ExecFreeProjectionInfo(&node->ps);
+	ExecFreeExprContext(&node->ps);
 
 	/*
 	 * close heap scan
 	 */
 	heap_endscan(scanDesc);
+
+	/*
+	 * clean out the tuple table
+	 */
+	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+	ExecClearTuple(node->ss_ScanTupleSlot);
 
 	/*
 	 * close the heap relation.
@@ -288,12 +289,6 @@ ExecEndSeqScan(SeqScan *node)
 	 * locking, however.)
 	 */
 	heap_close(relation, NoLock);
-
-	/*
-	 * clean out the tuple table
-	 */
-	ExecClearTuple(scanstate->cstate.cs_ResultTupleSlot);
-	ExecClearTuple(scanstate->css_ScanTupleSlot);
 }
 
 /* ----------------------------------------------------------------
@@ -308,24 +303,24 @@ ExecEndSeqScan(SeqScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
+ExecSeqReScan(SeqScanState *node, ExprContext *exprCtxt)
 {
-	CommonScanState *scanstate;
 	EState	   *estate;
+	Index		scanrelid;
 	HeapScanDesc scan;
 
-	scanstate = node->scanstate;
-	estate = node->plan.state;
+	estate = node->ps.state;
+	scanrelid = ((SeqScan *) node->ps.plan)->scanrelid;
 
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[node->scanrelid - 1] != NULL)
+		estate->es_evTuple[scanrelid - 1] != NULL)
 	{
-		estate->es_evTupleNull[node->scanrelid - 1] = false;
+		estate->es_evTupleNull[scanrelid - 1] = false;
 		return;
 	}
 
-	scan = scanstate->css_currentScanDesc;
+	scan = node->ss_currentScanDesc;
 
 	heap_rescan(scan,			/* scan desc */
 				NULL);			/* new scan keys */
@@ -338,13 +333,11 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqMarkPos(SeqScan *node)
+ExecSeqMarkPos(SeqScanState *node)
 {
-	CommonScanState *scanstate;
 	HeapScanDesc scan;
 
-	scanstate = node->scanstate;
-	scan = scanstate->css_currentScanDesc;
+	scan = node->ss_currentScanDesc;
 	heap_markpos(scan);
 }
 
@@ -355,12 +348,10 @@ ExecSeqMarkPos(SeqScan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecSeqRestrPos(SeqScan *node)
+ExecSeqRestrPos(SeqScanState *node)
 {
-	CommonScanState *scanstate;
 	HeapScanDesc scan;
 
-	scanstate = node->scanstate;
-	scan = scanstate->css_currentScanDesc;
+	scan = node->ss_currentScanDesc;
 	heap_restrpos(scan);
 }

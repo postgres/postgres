@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.58 2002/11/30 05:21:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.59 2002/12/05 15:50:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
+#include "nodes/params.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/planmain.h"
@@ -297,7 +298,7 @@ make_subplan(SubLink *slink)
 			switch (nodeTag(plan))
 			{
 				case T_SeqScan:
-					if (plan->initPlan || plan->subPlan)
+					if (plan->initPlan)
 						use_material = true;
 					else
 					{
@@ -453,20 +454,13 @@ convert_sublink_opers(SubLink *slink, List *targetlist,
 }
 
 /*
- * finalize_primnode: build lists of subplans and params appearing
- * in the given expression tree.  NOTE: items are added to lists passed in,
- * so caller must initialize lists to NIL before first call!
- *
- * Note: the subplan list that is constructed here and assigned to the
- * plan's subPlan field will be replaced with an up-to-date list in
- * set_plan_references().  We could almost dispense with building this
- * subplan list at all; I believe the only place that uses it is the
- * check in make_subplan to see whether a subselect has any subselects.
+ * finalize_primnode: build lists of params appearing
+ * in the given expression tree.  NOTE: items are added to list passed in,
+ * so caller must initialize list to NIL before first call!
  */
 
 typedef struct finalize_primnode_results
 {
-	List	   *subplans;		/* List of subplans found in expr */
 	List	   *paramids;		/* List of PARAM_EXEC paramids found */
 } finalize_primnode_results;
 
@@ -491,8 +485,6 @@ finalize_primnode(Node *node, finalize_primnode_results *results)
 		SubPlan    *subplan = (SubPlan *) ((Expr *) node)->oper;
 		List	   *lst;
 
-		/* Add subplan to subplans list */
-		results->subplans = lappend(results->subplans, subplan);
 		/* Check extParam list for params to add to paramids */
 		foreach(lst, subplan->plan->extParam)
 		{
@@ -595,18 +587,16 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	if (plan == NULL)
 		return NIL;
 
-	results.subplans = NIL;		/* initialize lists to NIL */
-	results.paramids = NIL;
+	results.paramids = NIL;		/* initialize list to NIL */
 
 	/*
 	 * When we call finalize_primnode, results.paramids lists are
 	 * automatically merged together.  But when recursing to self, we have
 	 * to do it the hard way.  We want the paramids list to include params
-	 * in subplans as well as at this level. (We don't care about finding
-	 * subplans of subplans, though.)
+	 * in subplans as well as at this level.
 	 */
 
-	/* Find params and subplans in targetlist and qual */
+	/* Find params in targetlist and qual */
 	finalize_primnode((Node *) plan->targetlist, &results);
 	finalize_primnode((Node *) plan->qual, &results);
 
@@ -624,8 +614,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
 
 			/*
 			 * we need not look at indxqualorig, since it will have the
-			 * same param references as indxqual, and we aren't really
-			 * concerned yet about having a complete subplan list.
+			 * same param references as indxqual.
 			 */
 			break;
 
@@ -704,7 +693,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
 				 nodeTag(plan));
 	}
 
-	/* Process left and right subplans, if any */
+	/* Process left and right child plans, if any */
 	results.paramids = set_unioni(results.paramids,
 								  SS_finalize_plan(plan->lefttree,
 												   rtable));
@@ -712,7 +701,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
 								  SS_finalize_plan(plan->righttree,
 												   rtable));
 
-	/* Now we have all the paramids and subplans */
+	/* Now we have all the paramids */
 
 	foreach(lst, results.paramids)
 	{
@@ -733,7 +722,6 @@ SS_finalize_plan(Plan *plan, List *rtable)
 
 	plan->extParam = extParam;
 	plan->locParam = locParam;
-	plan->subPlan = results.subplans;
 
 	return results.paramids;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.68 2002/11/30 00:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.69 2002/12/05 15:50:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,11 +40,10 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecHash(Hash *node)
+ExecHash(HashState *node)
 {
 	EState	   *estate;
-	HashState  *hashstate;
-	Plan	   *outerNode;
+	PlanState  *outerNode;
 	List	   *hashkeys;
 	HashJoinTable hashtable;
 	TupleTableSlot *slot;
@@ -55,12 +54,10 @@ ExecHash(Hash *node)
 	/*
 	 * get state info from node
 	 */
+	estate = node->ps.state;
+	outerNode = outerPlanState(node);
 
-	hashstate = node->hashstate;
-	estate = node->plan.state;
-	outerNode = outerPlan(node);
-
-	hashtable = hashstate->hashtable;
+	hashtable = node->hashtable;
 	if (hashtable == NULL)
 		elog(ERROR, "ExecHash: hash table is NULL.");
 
@@ -79,15 +76,15 @@ ExecHash(Hash *node)
 	/*
 	 * set expression context
 	 */
-	hashkeys = node->hashkeys;
-	econtext = hashstate->cstate.cs_ExprContext;
+	hashkeys = ((Hash *) node->ps.plan)->hashkeys;
+	econtext = node->ps.ps_ExprContext;
 
 	/*
 	 * get all inner tuples and insert into the hash table (or temp files)
 	 */
 	for (;;)
 	{
-		slot = ExecProcNode(outerNode, (Plan *) node);
+		slot = ExecProcNode(outerNode);
 		if (TupIsNull(slot))
 			break;
 		econtext->ecxt_innertuple = slot;
@@ -108,24 +105,19 @@ ExecHash(Hash *node)
  *		Init routine for Hash node
  * ----------------------------------------------------------------
  */
-bool
-ExecInitHash(Hash *node, EState *estate, Plan *parent)
+HashState *
+ExecInitHash(Hash *node, EState *estate)
 {
 	HashState  *hashstate;
-	Plan	   *outerPlan;
 
 	SO_printf("ExecInitHash: initializing hash node\n");
-
-	/*
-	 * assign the node's execution state
-	 */
-	node->plan.state = estate;
 
 	/*
 	 * create state structure
 	 */
 	hashstate = makeNode(HashState);
-	node->hashstate = hashstate;
+	hashstate->ps.plan = (Plan *) node;
+	hashstate->ps.state = estate;
 	hashstate->hashtable = NULL;
 
 	/*
@@ -133,29 +125,38 @@ ExecInitHash(Hash *node, EState *estate, Plan *parent)
 	 *
 	 * create expression context for node
 	 */
-	ExecAssignExprContext(estate, &hashstate->cstate);
+	ExecAssignExprContext(estate, &hashstate->ps);
 
 #define HASH_NSLOTS 1
 
 	/*
 	 * initialize our result slot
 	 */
-	ExecInitResultTupleSlot(estate, &hashstate->cstate);
+	ExecInitResultTupleSlot(estate, &hashstate->ps);
 
 	/*
-	 * initializes child nodes
+	 * initialize child expressions
 	 */
-	outerPlan = outerPlan(node);
-	ExecInitNode(outerPlan, estate, (Plan *) node);
+	hashstate->ps.targetlist = (List *)
+		ExecInitExpr((Node *) node->plan.targetlist,
+					 (PlanState *) hashstate);
+	hashstate->ps.qual = (List *)
+		ExecInitExpr((Node *) node->plan.qual,
+					 (PlanState *) hashstate);
+
+	/*
+	 * initialize child nodes
+	 */
+	outerPlanState(hashstate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
 	 * initialize tuple type. no need to initialize projection info
 	 * because this node doesn't do projections
 	 */
-	ExecAssignResultTypeFromOuterPlan((Plan *) node, &hashstate->cstate);
-	hashstate->cstate.cs_ProjInfo = NULL;
+	ExecAssignResultTypeFromOuterPlan(&hashstate->ps);
+	hashstate->ps.ps_ProjInfo = NULL;
 
-	return TRUE;
+	return hashstate;
 }
 
 int
@@ -173,28 +174,22 @@ ExecCountSlotsHash(Hash *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndHash(Hash *node)
+ExecEndHash(HashState *node)
 {
-	HashState  *hashstate;
-	Plan	   *outerPlan;
-
-	/*
-	 * get info from the hash state
-	 */
-	hashstate = node->hashstate;
+	PlanState  *outerPlan;
 
 	/*
 	 * free projection info.  no need to free result type info because
 	 * that came from the outer plan...
 	 */
-	ExecFreeProjectionInfo(&hashstate->cstate);
-	ExecFreeExprContext(&hashstate->cstate);
+	ExecFreeProjectionInfo(&node->ps);
+	ExecFreeExprContext(&node->ps);
 
 	/*
 	 * shut down the subplan
 	 */
-	outerPlan = outerPlan(node);
-	ExecEndNode(outerPlan, (Plan *) node);
+	outerPlan = outerPlanState(node);
+	ExecEndNode(outerPlan);
 }
 
 
@@ -758,12 +753,12 @@ ExecHashTableReset(HashJoinTable hashtable, long ntuples)
 }
 
 void
-ExecReScanHash(Hash *node, ExprContext *exprCtxt, Plan *parent)
+ExecReScanHash(HashState *node, ExprContext *exprCtxt)
 {
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((Plan *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((PlanState *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 }
