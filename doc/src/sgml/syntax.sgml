@@ -711,6 +711,7 @@ sqrt(emp.salary)
 
     <simplelist>
      <member><replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable>)</member>
+     <member><replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable>)</member>
      <member><replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable>)</member>
      <member><replaceable>aggregate_name</replaceable> ( * )</member>
     </simplelist>
@@ -723,7 +724,8 @@ sqrt(emp.salary)
     <para>
      The first form of aggregate expression invokes the aggregate across all
      input rows for which the given expression yields a non-null value.
-     The second form invokes the aggregate for all distinct non-null values
+     The second form is the same as the first, since ALL is the default.
+     The third form invokes the aggregate for all distinct non-null values
      of the expression found in the input rows.  The last form invokes the
      aggregate once for each input row regardless of null or non-null values;
      since no particular input value is specified, it is generally only useful
