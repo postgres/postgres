@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.344 2003/08/08 01:21:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.345 2003/08/28 18:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -588,6 +588,7 @@ main(int argc, char **argv)
 	MoveToEnd(g_fout, "BLOBS");
 	MoveToEnd(g_fout, "INDEX");
 	MoveToEnd(g_fout, "CONSTRAINT");
+	MoveToEnd(g_fout, "FK CONSTRAINT");
 	MoveToEnd(g_fout, "TRIGGER");
 	MoveToEnd(g_fout, "RULE");
 	MoveToEnd(g_fout, "SEQUENCE SET");
@@ -6039,6 +6040,8 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
  *
  * Dump out constraints after all table creation statements in
  * an alter table format.  Currently handles foreign keys only.
+ * (Unique and primary key constraints are handled with indexes,
+ * while check constraints are merged into the table definition.)
  *
  * XXX Potentially wrap in a 'SET CONSTRAINTS OFF' block so that
  * the current table data is not processed
@@ -6130,7 +6133,7 @@ dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
 						 conName,
 						 tbinfo->relnamespace->nspname,
 						 tbinfo->usename,
-						 "CONSTRAINT", NULL,
+						 "FK CONSTRAINT", NULL,
 						 query->data, delqry->data,
 						 NULL, NULL, NULL);
 
