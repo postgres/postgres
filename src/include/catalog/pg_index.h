@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.8 1998/09/01 04:34:58 momjian Exp $
+ * $Id: pg_index.h,v 1.9 1998/09/06 04:49:51 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -78,7 +78,7 @@ typedef FormData_pg_index *Form_pg_index;
 #define Anum_pg_index_indisclustered	6
 #define Anum_pg_index_indislossy		7
 #define Anum_pg_index_indhaskeytype		8
-#define Anum_pg_index_indisunique		8
+#define Anum_pg_index_indisunique		9
 #define Anum_pg_index_indpred			10
 
 #endif	 /* PG_INDEX_H */
