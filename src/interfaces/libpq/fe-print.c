@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.20 1999/02/13 23:22:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.21 1999/04/25 18:16:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,7 +504,7 @@ PQmblen(unsigned char *s)
 	int			encoding = -1;
 
 	str = getenv("PGCLIENTENCODING");
-	if (str && *str != NULL)
+	if (str && *str != '\0')
 		encoding = pg_char_to_encoding(str);
 	if (encoding < 0)
 		encoding = MULTIBYTE;
