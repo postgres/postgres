@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.188 2002/07/18 04:41:45 momjian Exp $
+ * $Id: parsenodes.h,v 1.189 2002/07/18 04:42:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,7 +185,7 @@ typedef struct BetweenExpr
 	Node	   *rexpr;			/* Second bound */
 	bool		not;			/* Do we want inverse? */
 	bool		symmetric;		/* True if SYMMETRIC, false if ASYMMETRIC */
-	Oid			typeId;			/* Information abotu common type */
+	Oid			typeId;			/* Information about common type */
 	int16		typeLen;
 	bool		typeByVal;
 	Expr	   *gthan;
