@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 20 01:12:40 EDT 2002
+Last updated:		Thu Aug 22 00:47:19 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -87,6 +87,7 @@ Data Types
 * Add function to return compressed length of TOAST data values (Tom)
 * -Add GUC parameter for DATESTYLE
 * Allow INET subnet tests using non-constants
+* Allow bytea to handle LIKE with non-TEXT patterns
 
 
 * CONVERSION
