@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.1 2004/06/24 21:02:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.2 2004/08/28 21:00:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,8 @@ int
 pgwin32_is_admin(void)
 {
 	HANDLE AccessToken;
-	UCHAR InfoBuffer[1024];
-	PTOKEN_GROUPS Groups = (PTOKEN_GROUPS)InfoBuffer; 
+	char *InfoBuffer = NULL;
+	PTOKEN_GROUPS Groups;
 	DWORD InfoBufferSize;
 	PSID AdministratorsSid;
 	PSID PowerUsersSid;
@@ -41,8 +41,30 @@ pgwin32_is_admin(void)
 		exit(1);
 	}
 
+	if (GetTokenInformation(AccessToken,TokenGroups,NULL,0,&InfoBufferSize))
+	{
+		write_stderr("failed to get token information - got zero size!\n");
+		exit(1);
+	}
+
+	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+	{
+		write_stderr("failed to get token information: %d\n",
+					 (int)GetLastError());
+		exit(1);
+	}
+
+	InfoBuffer = malloc(InfoBufferSize);
+	if (!InfoBuffer)
+	{
+		write_stderr("failed to allocate %i bytes for token information!\n",
+					 (int)InfoBufferSize);
+		exit(1);
+	}
+	Groups = (PTOKEN_GROUPS)InfoBuffer; 
+
 	if (!GetTokenInformation(AccessToken,TokenGroups,InfoBuffer,
-							 1024, &InfoBufferSize))
+							 InfoBufferSize, &InfoBufferSize))
 	{
 		write_stderr("failed to get token information: %d\n",
 					 (int)GetLastError());
@@ -81,6 +103,7 @@ pgwin32_is_admin(void)
 		}
 	}
 	
+	free(InfoBuffer);
 	FreeSid(AdministratorsSid);
 	FreeSid(PowerUsersSid);
 	return success;
