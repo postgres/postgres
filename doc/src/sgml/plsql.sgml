@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.24 2001/03/17 18:08:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.25 2001/03/23 22:07:50 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2407,13 +2407,6 @@ WITH (isstrict, iscachable);
      This function should probably be integrated into the core.
     </comment>
 
-    <para>
-     The third function (that takes 4 parameters) is implemented in
-     PL/Tcl but I plan on porting it to PL/pgSQL so in case we want to
-     include it in OpenACS we don't need to require PL/Tcl. Plus
-     PL/pgSQL should be more efficient.
-    </para>
-
 <programlisting>
 --
 -- instr functions that mimic Oracle's counterpart
@@ -2424,127 +2417,128 @@ WITH (isstrict, iscachable);
 -- not passed, assume 1 (search starts at first character).
 --
 -- by Roberto Mello (rmello@fslc.usu.edu)
+-- modified by Robert Gaszewski (graszew@poland.com)
 -- Licensed under the GPL v2 or later.
 --
 
-DROP FUNCTION instr(varchar, varchar);
-CREATE FUNCTION instr(varchar, varchar) RETURNS integer AS '
+DROP FUNCTION instr(varchar,varchar);
+CREATE FUNCTION instr(varchar,varchar) RETURNS integer AS '
 DECLARE
     pos integer;
 BEGIN
-    pos:= instr($1, $2, 1);
+    pos:= instr($1,$2,1);
     RETURN pos;
 END;
-' LANGUAGE 'plpgsql';
+' language 'plpgsql';
 
-DROP FUNCTION instr(varchar, varchar, integer);
-CREATE FUNCTION instr(varchar, varchar, integer) RETURNS integer AS '
+
+DROP FUNCTION instr(varchar,varchar,integer);
+CREATE FUNCTION instr(varchar,varchar,integer) RETURNS integer AS '
 DECLARE
     string ALIAS FOR $1;
     string_to_search ALIAS FOR $2;
     beg_index ALIAS FOR $3;
     pos integer NOT NULL DEFAULT 0;
-    ending integer;
     temp_str varchar;
     beg integer;
     length integer;
-    temp_int integer;
+    ss_length integer;
 BEGIN
     IF beg_index > 0 THEN
-        -- Get substring from 1 to beg_index
 
-        temp_str := substring(string FROM beg_index); 
-        pos := position(string_to_search IN temp_str);
+       temp_str := substring(string FROM beg_index);
+       pos := position(string_to_search IN temp_str);
+
+       IF pos = 0 THEN
+	         RETURN 0;
+	     ELSE
+	         RETURN pos + beg_index - 1;
+	     END IF;
+    ELSE
+       ss_length := char_length(string_to_search);
+       length := char_length(string);
+       beg := length + beg_index - ss_length + 2;
+
+       WHILE beg > 0 LOOP
+
+           temp_str := substring(string FROM beg FOR ss_length);
+	         pos := position(string_to_search IN temp_str);
+
+	         IF pos > 0 THEN
+		           RETURN beg;
+	         END IF;
+
+	         beg := beg - 1;
+       END LOOP;
+       RETURN 0;
+    END IF;
+END;
+' language 'plpgsql';
+
+--
+-- Written by Robert Gaszewski (graszew@poland.com)
+-- Licensed under the GPL v2 or later.
+--
+DROP FUNCTION instr(varchar,varchar,integer,integer);
+CREATE FUNCTION instr(varchar,varchar,integer,integer) RETURNS integer AS '
+DECLARE
+    string ALIAS FOR $1;
+    string_to_search ALIAS FOR $2;
+    beg_index ALIAS FOR $3;
+    occur_index ALIAS FOR $4;
+    pos integer NOT NULL DEFAULT 0;
+    occur_number integer NOT NULL DEFAULT 0;
+    temp_str varchar;
+    beg integer;
+    i integer;
+    length integer;
+    ss_length integer;
+BEGIN
+    IF beg_index > 0 THEN
+        beg := beg_index;
+        temp_str := substring(string FROM beg_index);
+
+        FOR i IN 1..occur_index LOOP
+            pos := position(string_to_search IN temp_str);
+
+            IF i = 1 THEN
+                beg := beg + pos - 1;
+            ELSE
+                beg := beg + pos;
+            END IF;
+
+            temp_str := substring(string FROM beg + 1);
+        END LOOP;
 
         IF pos = 0 THEN
             RETURN 0;
         ELSE
-            RETURN pos + beg_index - 1;
+            RETURN beg;
         END IF;
-
     ELSE
+        ss_length := char_length(string_to_search);
         length := char_length(string);
+        beg := length + beg_index - ss_length + 2;
 
-        IF beg_index = -1 THEN
-            ending := length;
-            beg := ending;
-            temp_int := 1;
-        ELSE
-            ending := length - abs(beg_index);
-            beg := ending;
-            temp_int := ending - beg;
-        END IF;
-
-        WHILE pos = 0 AND beg &lt;&gt; 1 LOOP
-
-            temp_str := substring(string FROM beg FOR temp_int);
+        WHILE beg > 0 LOOP
+            temp_str := substring(string FROM beg FOR ss_length);
             pos := position(string_to_search IN temp_str);
 
-            -- Keep moving left
+            IF pos > 0 THEN
+                occur_number := occur_number + 1;
+
+                IF occur_number = occur_index THEN
+                    RETURN beg;
+                END IF;
+            END IF;
 
             beg := beg - 1;
-            temp_int := (ending - beg) + 1;
         END LOOP;
-    END IF;
 
-    IF pos = 0 THEN
         RETURN 0;
-    ELSE
-        RETURN beg + 1;
     END IF;
 END;
-' LANGUAGE 'plpgsql';
-
---
--- The next one (where all four params are passed) is in PL/Tcl
--- because I had no more patience to do it in PL/pgSQL.
--- It'd probably be faster in PL/pgSQL (that being the reason why
--- I implemented the first two functions in PL/pgSQL) so someday I'll do it.
---
-
-DROP FUNCTION instr(varchar, varchar, integer, integer);
-CREATE FUNCTION instr(varchar, varchar, integer, integer) RETURNS integer AS '
-    set string1 $1
-    set string2 $2
-    set n $3
-    set m $4
-
-    if { $n > 0 } {
-        set pos [string first $string2 $string1 [expr $n -1]]
-        if { $pos < 0 } {
-            return 0
-        } else {
-            for { set i 1 } { $i < $m } { incr i } {
-                set pos [string first $string2 $string1 [expr $pos + 1]]
-                if { $pos < 0 } {
-                    return 0
-                }
-            }
-        }
-    }
-
-    if { $n < 0 } {
-        set pos [string last $string2 $string1 [expr [string length $string1] + $n]]
-
-        if { $pos < 0 } {
-            return 0
-        } else {
-            for { set i 1 } { $i < $m } { incr i } {
-                # n is negative so we add
-                set pos [string last $string2 $string1 [expr $pos - 1]]
-                if { $pos < 0 } {
-                    return 0
-                }
-            }
-        }
-    }
-
-    if { $pos < 0 } {
-        return 0
-    } else {
-        return [expr $pos + 1]
-    }
-' LANGUAGE 'pltcl';
+' language 'plpgsql';
 </programlisting>
    </sect3>
   </sect2>
