@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.302 2004/10/22 00:25:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.303 2004/10/24 22:43:56 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1167,6 +1167,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.302 2004/10/22 00:25:18 tgl Exp
       inside a transaction block (<command>BEGIN</command> block); it
       must be able to commit and start a new transaction for each
       table.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>REINDEX</command> does not exclusively lock the index's
+      parent table anymore
+     </para>
+     <para>
+      The index itself is still exclusively locked, but readers of the
+      table can continue if they are not using the particular index
+      being rebuilt.
      </para>
     </listitem>
 
