@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.4 2003/12/24 22:05:06 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.5 2004/01/04 14:50:13 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -2018,7 +2018,7 @@ opt_grant_grant_option:  WITH GRANT OPTION
 opt_revoke_grant_option: GRANT OPTION FOR
 		{
 			mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported REVOKE/GRANT OPTION FOR will be passed to backend");
-			$$ = make_str("with grant option");
+			$$ = make_str("grant option for");
 		}
 		| /*EMPTY*/ 	{ $$ = EMPTY; }
 		;
