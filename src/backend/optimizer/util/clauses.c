@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.65 2000/04/12 17:15:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.66 2000/04/16 01:55:45 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -790,7 +790,8 @@ default_results:
 
 	other = (*flag == 0) ? left : right;
 
-	if (IsA(other, Const))
+	if (IsA(other, Const) &&
+		!((Const *) other)->constisnull)
 	{
 		*constval = ((Const *) other)->constvalue;
 		*flag |= SEL_CONSTANT;
