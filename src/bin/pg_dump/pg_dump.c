@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.343 2003/08/07 21:11:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.344 2003/08/08 01:21:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3696,9 +3696,9 @@ format_function_signature(FuncInfo *finfo, bool honor_quotes)
 
 	initPQExpBuffer(&fn);
 	if (honor_quotes)
-		appendPQExpBuffer(&fn, "%s (", fmtId(finfo->proname));
+		appendPQExpBuffer(&fn, "%s(", fmtId(finfo->proname));
 	else
-		appendPQExpBuffer(&fn, "%s (", finfo->proname);
+		appendPQExpBuffer(&fn, "%s(", finfo->proname);
 	for (j = 0; j < finfo->nargs; j++)
 	{
 		char	   *typname;
@@ -6005,7 +6005,7 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 	if (!schemaOnly)
 	{
 		resetPQExpBuffer(query);
-		appendPQExpBuffer(query, "SELECT pg_catalog.setval (");
+		appendPQExpBuffer(query, "SELECT pg_catalog.setval(");
 		appendStringLiteral(query, fmtId(tbinfo->relname), true);
 		appendPQExpBuffer(query, ", %s, %s);\n",
 						  last, (called ? "true" : "false"));
@@ -6382,10 +6382,10 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 
 			/* In 7.3, result of regproc is already quoted */
 			if (g_fout->remoteVersion >= 70300)
-				appendPQExpBuffer(query, "EXECUTE PROCEDURE %s (",
+				appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
 								  tgfname);
 			else
-				appendPQExpBuffer(query, "EXECUTE PROCEDURE %s (",
+				appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
 								  fmtId(tgfname));
 			for (findx = 0; findx < tgnargs; findx++)
 			{
