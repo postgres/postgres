@@ -7,10 +7,10 @@ anything but an empty database, such as template1; else it's likely to
 be very slow.
 
 Run on an empty database, it returns the system join relationships (shown
-below for 7.4).  Note that unexpected matches may indicate bogus entries
+below for 8.0).  Note that unexpected matches may indicate bogus entries
 in system tables --- don't accept a peculiar match without question.
 In particular, a field shown as joining to more than one target table is
-probably messed up.  In 7.4, the *only* fields that should join to more
+probably messed up.  In 8.0, the *only* fields that should join to more
 than one target are pg_description.objoid, pg_depend.objid, and
 pg_depend.refobjid.  (Running make_oidjoins_check is an easy way to spot
 fields joining to more than one table, BTW.)
@@ -26,11 +26,11 @@ revision in the patterns of cross-links between system tables.
 (Ideally we'd just regenerate the script as part of the regression
 tests themselves, but that seems too slow...)
 
-NOTE: in 7.4, make_oidjoins_check produces one bogus join check:
+NOTE: in 8.0, make_oidjoins_check produces one bogus join check:
 Join pg_catalog.pg_class.relfilenode => pg_catalog.pg_class.oid
 This is an artifact and should not be added to the oidjoins regress test.
 Also beware of any claim that pg_database.datlastsysoid joins to anything;
-this does not actually happen in 7.4, but it did happen before and might
+this does not actually happen in 8.0, but it did happen before and might
 happen again in future, depending on what operation initdb does last.
 
 ---------------------------------------------------------------------------
@@ -51,8 +51,10 @@ Join pg_catalog.pg_am.ambulkdelete => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_am.amvacuumcleanup => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_am.amcostestimate => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_amop.amopclaid => pg_catalog.pg_opclass.oid
+Join pg_catalog.pg_amop.amopsubtype => pg_catalog.pg_type.oid
 Join pg_catalog.pg_amop.amopopr => pg_catalog.pg_operator.oid
 Join pg_catalog.pg_amproc.amopclaid => pg_catalog.pg_opclass.oid
+Join pg_catalog.pg_amproc.amprocsubtype => pg_catalog.pg_type.oid
 Join pg_catalog.pg_amproc.amproc => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_attribute.attrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_attribute.atttypid => pg_catalog.pg_type.oid
@@ -62,12 +64,14 @@ Join pg_catalog.pg_cast.castfunc => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_class.relnamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_class.reltype => pg_catalog.pg_type.oid
 Join pg_catalog.pg_class.relam => pg_catalog.pg_am.oid
+Join pg_catalog.pg_class.reltablespace => pg_catalog.pg_tablespace.oid
 Join pg_catalog.pg_class.reltoastrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_class.reltoastidxid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_constraint.connamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_constraint.contypid => pg_catalog.pg_type.oid
 Join pg_catalog.pg_conversion.connamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_conversion.conproc => pg_catalog.pg_proc.oid
+Join pg_catalog.pg_database.dattablespace => pg_catalog.pg_tablespace.oid
 Join pg_catalog.pg_depend.classid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_depend.refclassid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_description.classoid => pg_catalog.pg_class.oid

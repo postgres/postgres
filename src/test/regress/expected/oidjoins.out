@@ -233,6 +233,14 @@ WHERE	relam != 0 AND
 ------+-------
 (0 rows)
 
+SELECT	ctid, reltablespace 
+FROM	pg_catalog.pg_class fk 
+WHERE	reltablespace != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_tablespace pk WHERE pk.oid = fk.reltablespace);
+ ctid | reltablespace 
+------+---------------
+(0 rows)
+
 SELECT	ctid, reltoastrelid 
 FROM	pg_catalog.pg_class fk 
 WHERE	reltoastrelid != 0 AND 
@@ -279,6 +287,14 @@ WHERE	conproc != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.conproc);
  ctid | conproc 
 ------+---------
+(0 rows)
+
+SELECT	ctid, dattablespace 
+FROM	pg_catalog.pg_database fk 
+WHERE	dattablespace != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_tablespace pk WHERE pk.oid = fk.dattablespace);
+ ctid | dattablespace 
+------+---------------
 (0 rows)
 
 SELECT	ctid, classid 

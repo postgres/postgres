@@ -117,6 +117,10 @@ SELECT	ctid, relam
 FROM	pg_catalog.pg_class fk 
 WHERE	relam != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_am pk WHERE pk.oid = fk.relam);
+SELECT	ctid, reltablespace 
+FROM	pg_catalog.pg_class fk 
+WHERE	reltablespace != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_tablespace pk WHERE pk.oid = fk.reltablespace);
 SELECT	ctid, reltoastrelid 
 FROM	pg_catalog.pg_class fk 
 WHERE	reltoastrelid != 0 AND 
@@ -141,6 +145,10 @@ SELECT	ctid, conproc
 FROM	pg_catalog.pg_conversion fk 
 WHERE	conproc != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.conproc);
+SELECT	ctid, dattablespace 
+FROM	pg_catalog.pg_database fk 
+WHERE	dattablespace != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_tablespace pk WHERE pk.oid = fk.dattablespace);
 SELECT	ctid, classid 
 FROM	pg_catalog.pg_depend fk 
 WHERE	classid != 0 AND 
