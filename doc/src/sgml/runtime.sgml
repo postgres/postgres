@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.131 2002/08/30 22:18:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.132 2002/09/01 23:26:06 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -928,7 +928,6 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term><varname>DEBUG_PRINT_QUERY</varname> (<type>boolean</type>)</term>
       <term><varname>DEBUG_PRINT_PARSE</varname> (<type>boolean</type>)</term>
       <term><varname>DEBUG_PRINT_REWRITTEN</varname> (<type>boolean</type>)</term>
       <term><varname>DEBUG_PRINT_PLAN</varname> (<type>boolean</type>)</term>
@@ -993,6 +992,26 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <term><varname>LOG_STATEMENT</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Prints each query received.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>LOG_DURATION</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Prints the duration of every completed query.  To use this option, 
+        enable LOG_STATEMENT and LOG_PID so you can link the original query
+        to the duration using the process id.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>LOG_TIMESTAMP</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1003,7 +1022,7 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term><varname>SHOW_QUERY_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>SHOW_STATEMENT_STATS</varname> (<type>boolean</type>)</term>
       <term><varname>SHOW_PARSER_STATS</varname> (<type>boolean</type>)</term>
       <term><varname>SHOW_PLANNER_STATS</varname> (<type>boolean</type>)</term>
       <term><varname>SHOW_EXECUTOR_STATS</varname> (<type>boolean</type>)</term>
@@ -2072,7 +2091,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </row>
        <row>
         <entry><option>-s</option></entry>
-        <entry><literal>show_query_stats = on</></entry>
+        <entry><literal>show_statement_stats = on</></entry>
         <entry>*</entry>
        </row>
        <row>

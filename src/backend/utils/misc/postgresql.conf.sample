@@ -102,7 +102,7 @@
 #geqo = true
 #geqo_selection_bias = 2.0	# range 1.5-2.0
 #geqo_threshold = 11
-#geqo_pool_size = 0		# default based on tables in query, 
+#geqo_pool_size = 0		# default based on tables in statement, 
 				# range 128-1024
 #geqo_effort = 1
 #geqo_generations = 0
@@ -122,10 +122,11 @@
 #silent_mode = false
 
 #log_connections = false
-#log_timestamp = false
 #log_pid = false
+#log_statement = false
+#log_duration = false
+#log_timestamp = false
 
-#debug_print_query = false
 #debug_print_parse = false
 #debug_print_rewritten = false
 #debug_print_plan = false
@@ -151,7 +152,7 @@
 #show_parser_stats = false
 #show_planner_stats = false
 #show_executor_stats = false
-#show_query_stats = false
+#show_statement_stats = false
 
 # requires BTREE_BUILD_STATS
 #show_btree_build_stats = false

@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.20 2002/07/30 16:20:03 momjian Exp $
+ * $Id: guc.h,v 1.21 2002/09/01 23:26:06 momjian Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -100,7 +100,8 @@ extern void ProcessGUCArray(ArrayType *array, GucSource source);
 extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *value);
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 
-extern bool Debug_print_query;
+extern bool Log_statement;
+extern bool Log_duration;
 extern bool Debug_print_plan;
 extern bool Debug_print_parse;
 extern bool Debug_print_rewritten;
@@ -109,7 +110,7 @@ extern bool Debug_pretty_print;
 extern bool Show_parser_stats;
 extern bool Show_planner_stats;
 extern bool Show_executor_stats;
-extern bool Show_query_stats;
+extern bool Show_statement_stats;
 extern bool Show_btree_build_stats;
 
 extern bool Explain_pretty_print;

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.89 2002/08/30 22:18:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.90 2002/09/01 23:26:06 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -77,7 +77,8 @@ static const char *assign_facility(const char *facility,
 #ifdef USE_ASSERT_CHECKING
 bool		assert_enabled = true;
 #endif
-bool		Debug_print_query = false;
+bool		Log_statement = false;
+bool		Log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
 bool		Debug_print_rewritten = false;
@@ -86,7 +87,7 @@ bool		Debug_pretty_print = false;
 bool		Show_parser_stats = false;
 bool		Show_planner_stats = false;
 bool		Show_executor_stats = false;
-bool		Show_query_stats = false;	/* this is sort of all three above
+bool		Show_statement_stats = false;	/* this is sort of all three above
 										 * together */
 bool		Show_btree_build_stats = false;
 
@@ -362,7 +363,11 @@ static struct config_bool
 #endif
 
 	{
-		{ "debug_print_query", PGC_USERSET }, &Debug_print_query,
+		{ "log_statement", PGC_USERSET }, &Log_statement,
+		false, NULL, NULL
+	},
+	{
+		{ "log_duration", PGC_USERSET }, &Log_duration,
 		false, NULL, NULL
 	},
 	{
@@ -395,7 +400,7 @@ static struct config_bool
 		false, NULL, NULL
 	},
 	{
-		{ "show_query_stats", PGC_USERSET }, &Show_query_stats,
+		{ "show_statement_stats", PGC_USERSET }, &Show_statement_stats,
 		false, NULL, NULL
 	},
 #ifdef BTREE_BUILD_STATS
