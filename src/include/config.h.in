@@ -276,7 +276,7 @@
  * search.
  * For further information see README.GEQO <utesch@aut.tu-freiberg.de>.
  */
-/*#define GEQO */ /* backend/optimizer/path/allpaths.c */
+#define GEQO /* backend/optimizer/path/allpaths.c */
 
 /*
  * Define this if you want psql to _always_ ask for a username and a password
