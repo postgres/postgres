@@ -247,6 +247,9 @@ Section 1: General Questions
    There is also an IRC channel on EFNet, channel #PostgreSQL. I use the
    unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net
    
+   Commerical support for PostgreSQL is available at
+   http://www.pgsql.com/
+   
   1.6) Latest release of PostgreSQL
   
    The latest release of PostgreSQL is version 6.5.
