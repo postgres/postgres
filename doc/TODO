@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun May 27 12:31:21 EDT 2001
+Last updated:		Mon May 28 00:28:27 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -180,7 +180,7 @@ CLIENTS
   ORDER BY direction
 * have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
-* allow psql \d to show primary and foreign keys
+* allow psql \d to show foreign keys
 * allow psql \d to show temporary table structure
 * add XML interface capability
 * Remove <=6.3 version compatibility in ODBC?
