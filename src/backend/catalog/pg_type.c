@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.52 2000/06/13 07:34:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.53 2000/07/03 23:09:28 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,8 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	values[i++] = (Datum) InvalidOid;	/* 12 */
 	values[i++] = (Datum) InvalidOid;	/* 13 */
 	values[i++] = (Datum) InvalidOid;	/* 14 */
-	values[i++] = (Datum) 'i';	/* 15 */
+	values[i++] = (Datum) 'p';			/* 15 */
+	values[i++] = (Datum) 'i';			/* 16 */
 
 	/*
 	 * ... and fill typdefault with a bogus value
@@ -287,7 +288,8 @@ TypeCreate(char *typeName,
 		   char *elementTypeName,
 		   char *defaultTypeValue,		/* internal rep */
 		   bool passedByValue,
-		   char alignment)
+		   char alignment,
+		   char storage)
 {
 	int			i,
 				j;
@@ -449,10 +451,16 @@ TypeCreate(char *typeName,
 	values[i++] = (Datum) alignment;	/* 15 */
 
 	/* ----------------
+	 *	set default storage for TOAST
+	 * ----------------
+	 */
+	values[i++] = (Datum) storage; /* 16 */
+
+	/* ----------------
 	 *	initialize the default value for this type.
 	 * ----------------
 	 */
-	values[i] = (Datum) textin(PointerIsValid(defaultTypeValue)	/* 16 */
+	values[i] = (Datum) textin(PointerIsValid(defaultTypeValue)	/* 17 */
 							   ? defaultTypeValue : "-"); /* XXX default
 														   * typdefault */
 

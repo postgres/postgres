@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.65 2000/05/30 00:49:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.66 2000/07/03 23:09:10 wieck Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -434,23 +434,16 @@ TupleDescInitEntry(TupleDesc desc,
 
 		att->attlen = typeLen(t);
 		att->attbyval = typeByVal(t);
-		att->attstorage = 'p';
 	}
 	else
 	{
 		att->attlen = typeForm->typlen;
 		att->attbyval = typeForm->typbyval;
 /*
- * This will enable ALL variable size attributes of user
- * relations for automatic move off into "secondary" relation.
- * Jan
+ * Default to the types storage
  */
 #ifdef TUPLE_TOASTER_ACTIVE
-#ifdef TUPLE_TOASTER_ALL_TYPES
-		att->attstorage = (att->attlen == -1) ? 'e' : 'p';
-#else
-		att->attstorage = 'p';
-#endif
+		att->attstorage = typeForm->typstorage;
 #else
 		att->attstorage = 'p';
 #endif

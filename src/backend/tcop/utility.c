@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.89 2000/06/04 01:44:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.90 2000/07/03 23:09:46 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,6 +359,9 @@ ProcessUtility(Node *parsetree,
 						break;
 					case 'X':	/* DROP CONSTRAINT */
 						AlterTableDropConstraint(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
+						break;
+					case 'E':	/* CREATE TOAST TABLE */
+						AlterTableCreateToastTable(stmt->relname);
 						break;
 					default:	/* oops */
 						elog(ERROR, "T_AlterTableStmt: unknown subtype");

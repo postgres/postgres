@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.21 2000/04/12 17:15:50 momjian Exp $
+ *	$Id: network.c,v 1.22 2000/07/03 23:09:52 wieck Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -61,7 +61,7 @@ network_in(char *src, int type)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "could not parse \"%s\"", src);
 
-	VARSIZE(dst) = VARHDRSZ
+	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 	ip_bits(dst) = bits;
@@ -346,7 +346,7 @@ network_host(inet *ip)
 	if (ret == NULL)
 		elog(ERROR, "unable to allocate memory in network_host()");
 
-	VARSIZE(ret) = len;
+	VARATT_SIZEP(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
 }
@@ -396,7 +396,7 @@ network_broadcast(inet *ip)
 	if (ret == NULL)
 		elog(ERROR, "unable to allocate memory in network_broadcast()");
 
-	VARSIZE(ret) = len;
+	VARATT_SIZEP(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
 }
@@ -429,7 +429,7 @@ network_network(inet *ip)
 	if (ret == NULL)
 		elog(ERROR, "unable to allocate memory in network_network()");
 
-	VARSIZE(ret) = len;
+	VARATT_SIZEP(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
 }
@@ -466,7 +466,7 @@ network_netmask(inet *ip)
 	if (ret == NULL)
 		elog(ERROR, "unable to allocate memory in network_netmask()");
 
-	VARSIZE(ret) = len;
+	VARATT_SIZEP(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
 }

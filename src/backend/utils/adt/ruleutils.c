@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.54 2000/06/13 07:35:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.55 2000/07/03 23:09:52 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -181,7 +181,7 @@ pg_get_ruledef(NameData *rname)
 		if (SPI_finish() != SPI_OK_FINISH)
 			elog(ERROR, "get_ruledef: SPI_finish() failed");
 		ruledef = SPI_palloc(VARHDRSZ + 1);
-		VARSIZE(ruledef) = VARHDRSZ + 1;
+		VARATT_SIZEP(ruledef) = VARHDRSZ + 1;
 		VARDATA(ruledef)[0] = '-';
 		return ruledef;
 	}
@@ -197,7 +197,7 @@ pg_get_ruledef(NameData *rname)
 	make_ruledef(&buf, ruletup, rulettc);
 	len = buf.len + VARHDRSZ;
 	ruledef = SPI_palloc(len);
-	VARSIZE(ruledef) = len;
+	VARATT_SIZEP(ruledef) = len;
 	memcpy(VARDATA(ruledef), buf.data, buf.len);
 	pfree(buf.data);
 
@@ -296,7 +296,7 @@ pg_get_viewdef(NameData *rname)
 	}
 	len = buf.len + VARHDRSZ;
 	ruledef = SPI_palloc(len);
-	VARSIZE(ruledef) = len;
+	VARATT_SIZEP(ruledef) = len;
 	memcpy(VARDATA(ruledef), buf.data, buf.len);
 	pfree(buf.data);
 
@@ -530,7 +530,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	 */
 	len = buf.len + VARHDRSZ;
 	indexdef = SPI_palloc(len);
-	VARSIZE(indexdef) = len;
+	VARATT_SIZEP(indexdef) = len;
 	memcpy(VARDATA(indexdef), buf.data, buf.len);
 	pfree(buf.data);
 	pfree(keybuf.data);

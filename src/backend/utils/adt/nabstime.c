@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.70 2000/06/27 18:08:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.71 2000/07/03 23:09:52 wieck Exp $
  *
  * NOTES
  *
@@ -1945,7 +1945,7 @@ timeofday(PG_FUNCTION_ARGS)
 
 	len = VARHDRSZ + strlen(buf);
 	result = (text *) palloc(len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	memcpy(VARDATA(result), buf, strlen(buf));
 	PG_RETURN_TEXT_P(result);
 }

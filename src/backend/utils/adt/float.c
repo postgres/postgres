@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.61 2000/06/14 18:17:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.62 2000/07/03 23:09:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -953,7 +953,7 @@ float8_text(float64 num)
 
 	result = palloc(len);
 
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
@@ -998,7 +998,7 @@ float4_text(float32 num)
 
 	result = palloc(len);
 
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);

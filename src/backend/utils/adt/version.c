@@ -5,7 +5,7 @@
  *
  * IDENTIFICATION
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.10 2000/07/02 15:20:51 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.11 2000/07/03 23:09:54 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@ version(void)
 	int			n = strlen(PG_VERSION_STR) + VARHDRSZ;
 	text	   *ret = (text *) palloc(n);
 
-	VARSIZE(ret) = n;
+	VARATT_SIZEP(ret) = n;
 	memcpy(VARDATA(ret), PG_VERSION_STR, strlen(PG_VERSION_STR));
 
 	return ret;

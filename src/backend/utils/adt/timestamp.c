@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.30 2000/06/19 03:54:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.31 2000/07/03 23:09:53 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1375,7 +1375,7 @@ timestamp_text(PG_FUNCTION_ARGS)
 
 	result = palloc(len);
 
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
@@ -1430,7 +1430,7 @@ interval_text(PG_FUNCTION_ARGS)
 
 	result = palloc(len);
 
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
@@ -2101,7 +2101,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 		result = palloc(len);
 
-		VARSIZE(result) = len;
+		VARATT_SIZEP(result) = len;
 		memmove(VARDATA(result), buf, (len - VARHDRSZ));
 	}
 	else

@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.25 2000/06/13 07:35:07 tgl Exp $
+ *	$Id: oracle_compat.c,v 1.26 2000/07/03 23:09:52 wieck Exp $
  *
  */
 
@@ -37,7 +37,7 @@ lower(text *string)
 		return string;
 
 	ret = (text *) palloc(VARSIZE(string));
-	VARSIZE(ret) = VARSIZE(string);
+	VARATT_SIZEP(ret) = VARSIZE(string);
 
 	ptr = VARDATA(string);
 	ptr_ret = VARDATA(ret);
@@ -75,7 +75,7 @@ upper(text *string)
 		return string;
 
 	ret = (text *) palloc(VARSIZE(string));
-	VARSIZE(ret) = VARSIZE(string);
+	VARATT_SIZEP(ret) = VARSIZE(string);
 
 	ptr = VARDATA(string);
 	ptr_ret = VARDATA(ret);
@@ -115,7 +115,7 @@ initcap(text *string)
 		return string;
 
 	ret = (text *) palloc(VARSIZE(string));
-	VARSIZE(ret) = VARSIZE(string);
+	VARATT_SIZEP(ret) = VARSIZE(string);
 
 	ptr = VARDATA(string);
 	ptr_ret = VARDATA(ret);
@@ -169,7 +169,7 @@ lpad(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(string1);
 
 	ret = (text *) palloc(VARHDRSZ + len);
-	VARSIZE(ret) = VARHDRSZ + len;
+	VARATT_SIZEP(ret) = VARHDRSZ + len;
 
 	ptr2 = VARDATA(string2);
 	ptr_ret = VARDATA(ret);
@@ -224,7 +224,7 @@ rpad(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(string1);
 
 	ret = (text *) palloc(VARHDRSZ + len);
-	VARSIZE(ret) = VARHDRSZ + len;
+	VARATT_SIZEP(ret) = VARHDRSZ + len;
 
 	n = VARSIZE(string1) - VARHDRSZ;
 	ptr1 = VARDATA(string1);
@@ -316,7 +316,7 @@ btrim(text *string, text *set)
 	++m;
 
 	ret = (text *) palloc(VARHDRSZ + m);
-	VARSIZE(ret) = VARHDRSZ + m;
+	VARATT_SIZEP(ret) = VARHDRSZ + m;
 	memcpy(VARDATA(ret), ptr, m);
 
 	return ret;
@@ -374,7 +374,7 @@ ltrim(text *string, text *set)
 	++m;
 
 	ret = (text *) palloc(VARHDRSZ + m);
-	VARSIZE(ret) = VARHDRSZ + m;
+	VARATT_SIZEP(ret) = VARHDRSZ + m;
 
 	memcpy(VARDATA(ret), ptr, m);
 
@@ -434,7 +434,7 @@ rtrim(text *string, text *set)
 	++m;
 
 	ret = (text *) palloc(VARHDRSZ + m);
-	VARSIZE(ret) = VARHDRSZ + m;
+	VARATT_SIZEP(ret) = VARHDRSZ + m;
 #ifdef NOT_USED
 	memcpy(VARDATA(ret), ptr - VARSIZE(ret) + m, m);
 #endif
@@ -528,7 +528,7 @@ translate(text *string, text *from, text *to)
 		}
 	}
 
-	VARSIZE(result) = retlen + VARHDRSZ;
+	VARATT_SIZEP(result) = retlen + VARHDRSZ;
 
 	/*
 	 * There may be some wasted space in the result if deletions occurred,
@@ -560,7 +560,7 @@ ichar(PG_FUNCTION_ARGS)
 	text	   *result;
 
 	result = (text *) palloc(VARHDRSZ + 1);
-	VARSIZE(result) = VARHDRSZ + 1;
+	VARATT_SIZEP(result) = VARHDRSZ + 1;
 	*VARDATA(result) = (char) cvalue;
 
 	PG_RETURN_TEXT_P(result);
@@ -586,7 +586,7 @@ repeat(PG_FUNCTION_ARGS)
 
 	result = (text *) palloc(tlen);
 
-	VARSIZE(result) = tlen;
+	VARATT_SIZEP(result) = tlen;
 	cp = VARDATA(result);
 	for (i = 0; i < count; i++)
 	{

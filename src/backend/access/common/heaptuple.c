@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.63 2000/07/02 22:00:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.64 2000/07/03 23:09:10 wieck Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -119,7 +119,11 @@ DataFill(char *data,
 		{
 			case -1:
 				*infomask |= HEAP_HASVARLENA;
-				data_length = VARSIZE(DatumGetPointer(value[i]));
+				if (VARATT_IS_EXTERNAL(value[i]))
+					*infomask |= HEAP_HASEXTERNAL;
+				if (VARATT_IS_COMPRESSED(value[i]))
+					*infomask |= HEAP_HASCOMPRESSED;
+				data_length = VARATT_SIZE(DatumGetPointer(value[i]));
 				memmove(data, DatumGetPointer(value[i]), data_length);
 				break;
 			case sizeof(char):
@@ -816,7 +820,7 @@ heap_freetuple(HeapTuple htup)
 	if (htup->t_data != NULL)
 		if (htup->t_datamcxt != NULL && (char *) (htup->t_data) !=
 			((char *) htup + HEAPTUPLESIZE))
-			elog(NOTICE, "TELL Jan Wieck: heap_freetuple() found separate t_data");
+			pfree(htup->t_data);
 
 	pfree(htup);
 }

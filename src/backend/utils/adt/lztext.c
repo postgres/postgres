@@ -1,7 +1,7 @@
 /* ----------
  * lztext.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.7 2000/05/30 00:49:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.8 2000/07/03 23:09:52 wieck Exp $
  *
  *	Text type with internal LZ compressed representation. Uses the
  *	standard PostgreSQL compression method.
@@ -34,8 +34,6 @@ lztextin(char *str)
 {
 	lztext	   *result;
 	int32		rawsize;
-	lztext	   *tmp;
-	int			tmp_size;
 
 	/* ----------
 	 * Handle NULL
@@ -44,35 +42,11 @@ lztextin(char *str)
 	if (str == NULL)
 		return NULL;
 
-	/* ----------
-	 * Determine input size and maximum output Datum size
-	 * ----------
-	 */
 	rawsize = strlen(str);
-	tmp_size = PGLZ_MAX_OUTPUT(rawsize);
+	result  = (lztext *)palloc(VARHDRSZ + rawsize);
 
-	/* ----------
-	 * Allocate a temporary result and compress into it
-	 * ----------
-	 */
-	tmp = (lztext *) palloc(tmp_size);
-	pglz_compress(str, rawsize, tmp, NULL);
-
-	/* ----------
-	 * If we miss less than 25% bytes at the end of the temp value,
-	 * so be it. Therefore we save a palloc()/memcpy()/pfree()
-	 * sequence.
-	 * ----------
-	 */
-	if (tmp_size - tmp->varsize < 256 ||
-		tmp_size - tmp->varsize < tmp_size / 4)
-		result = tmp;
-	else
-	{
-		result = (lztext *) palloc(tmp->varsize);
-		memcpy(result, tmp, tmp->varsize);
-		pfree(tmp);
-	}
+	VARATT_SIZEP(result) = VARHDRSZ + rawsize;
+	memcpy(VARATT_DATA(result), str, rawsize);
 
 	return result;
 }
@@ -88,6 +62,8 @@ char *
 lztextout(lztext *lz)
 {
 	char	   *result;
+	void	   *tmp;
+	int32		rawsize;
 
 	/* ----------
 	 * Handle NULL
@@ -101,25 +77,15 @@ lztextout(lztext *lz)
 		return result;
 	}
 
-	/* ----------
-	 * Allocate the result string - the required size is remembered
-	 * in the lztext header so we don't need a temporary buffer or
-	 * have to diddle with realloc's.
-	 * ----------
-	 */
-	result = (char *) palloc(PGLZ_RAW_SIZE(lz) + 1);
+	VARATT_GETPLAIN(lz, tmp);
 
-	/* ----------
-	 * Decompress and add terminating ZERO
-	 * ----------
-	 */
-	pglz_decompress(lz, result);
-	result[lz->rawsize] = '\0';
+	rawsize = VARATT_SIZE(tmp) - VARHDRSZ;
+	result  = (char *)palloc(rawsize + 1);
+	memcpy(result, VARATT_DATA(tmp), rawsize);
+	result[rawsize] = '\0';
 
-	/* ----------
-	 * Return the result
-	 * ----------
-	 */
+	VARATT_FREE(lz, tmp);
+
 	return result;
 }
 
@@ -167,7 +133,13 @@ lztextlen(lztext *lz)
 	 * without multibyte support, it's the remembered rawsize
 	 * ----------
 	 */
-	return PGLZ_RAW_SIZE(lz);
+	if (!VARATT_IS_EXTENDED(lz))
+	    return VARATT_SIZE(lz) - VARHDRSZ;
+
+    if (VARATT_IS_EXTERNAL(lz))
+	    return lz->va_content.va_external.va_rawsize;
+
+	return lz->va_content.va_compressed.va_rawsize;
 #endif
 }
 
@@ -189,11 +161,10 @@ lztextoctetlen(lztext *lz)
 	if (lz == NULL)
 		return 0;
 
-	/* ----------
-	 * Return the varsize minus the VARSIZE field itself.
-	 * ----------
-	 */
-	return VARSIZE(lz) - VARHDRSZ;
+	if (!VARATT_IS_EXTERNAL(lz))
+	    return VARATT_SIZE(lz) - VARHDRSZ;
+
+	return lz->va_content.va_external.va_extsize;
 }
 
 
@@ -208,9 +179,6 @@ text_lztext(text *txt)
 {
 	lztext	   *result;
 	int32		rawsize;
-	lztext	   *tmp;
-	int			tmp_size;
-	char	   *str;
 
 	/* ----------
 	 * Handle NULL
@@ -220,35 +188,13 @@ text_lztext(text *txt)
 		return NULL;
 
 	/* ----------
-	 * Determine input size and eventually tuple size
+	 * Copy the entire attribute
 	 * ----------
 	 */
 	rawsize = VARSIZE(txt) - VARHDRSZ;
-	str = VARDATA(txt);
-	tmp_size = PGLZ_MAX_OUTPUT(rawsize);
-
-	/* ----------
-	 * Allocate a temporary result and compress into it
-	 * ----------
-	 */
-	tmp = (lztext *) palloc(tmp_size);
-	pglz_compress(str, rawsize, tmp, NULL);
-
-	/* ----------
-	 * If we miss less than 25% bytes at the end of the temp value,
-	 * so be it. Therefore we save a palloc()/memcpy()/pfree()
-	 * sequence.
-	 * ----------
-	 */
-	if (tmp_size - tmp->varsize < 256 ||
-		tmp_size - tmp->varsize < tmp_size / 4)
-		result = tmp;
-	else
-	{
-		result = (lztext *) palloc(tmp->varsize);
-		memcpy(result, tmp, tmp->varsize);
-		pfree(tmp);
-	}
+	result  = (lztext *)palloc(rawsize + VARHDRSZ);
+	VARATT_SIZEP(result) = rawsize + VARHDRSZ;
+	memcpy(VARATT_DATA(result), VARATT_DATA(txt), rawsize);
 
 	return result;
 }
@@ -264,6 +210,8 @@ text *
 lztext_text(lztext *lz)
 {
 	text	   *result;
+	lztext	   *tmp;
+	int32		rawsize;
 
 	/* ----------
 	 * Handle NULL
@@ -272,19 +220,14 @@ lztext_text(lztext *lz)
 	if (lz == NULL)
 		return NULL;
 
-	/* ----------
-	 * Allocate and initialize the text result
-	 * ----------
-	 */
-	result = (text *) palloc(PGLZ_RAW_SIZE(lz) + VARHDRSZ + 1);
-	VARSIZE(result) = lz->rawsize + VARHDRSZ;
+	VARATT_GETPLAIN(lz, tmp);
+	
+	rawsize = VARATT_SIZE(tmp) - VARHDRSZ;
+	result  = (text *)palloc(rawsize + VARHDRSZ);
+	VARATT_SIZEP(result) = rawsize + VARHDRSZ;
+	memcpy(VARATT_DATA(result), VARATT_DATA(tmp), rawsize);
 
-	/* ----------
-	 * Decompress directly into the text data area.
-	 * ----------
-	 */
-	VARDATA(result)[lz->rawsize] = 0;
-	pglz_decompress(lz, VARDATA(result));
+	VARATT_FREE(lz, tmp);
 
 	return result;
 }
@@ -322,43 +265,32 @@ lztext_cmp(lztext *lz1, lztext *lz2)
 
 #else							/* !USE_LOCALE */
 
-	PGLZ_DecompState ds1;
-	PGLZ_DecompState ds2;
-	int			c1;
-	int			c2;
-	int32		result = (int32) 0;
+	int		result;
+	char   *p1 = NULL;
+	char   *p2 = NULL;
+	int		size1;
+	int		size2;
 
 	if (lz1 == NULL || lz2 == NULL)
-		return (int32) 0;
+		return 0;
 
-	pglz_decomp_init(&ds1, lz1);
-	pglz_decomp_init(&ds2, lz2);
+	VARATT_GETPLAIN(lz1, p1);
+	VARATT_GETPLAIN(lz2, p2);
 
-	for (;;)
-	{
-		c1 = pglz_decomp_getchar(&ds1);
-		c2 = pglz_decomp_getchar(&ds2);
+    size1 = VARATT_SIZE(p1) - VARHDRSZ;
+    size2 = VARATT_SIZE(p2) - VARHDRSZ;
+    result = memcmp(VARATT_DATA(p1), VARATT_DATA(p2),
+                (size1 < size2) ? size1 : size2);
+    if (result == 0)
+    {
+        if (size1 > size2)
+            result = 1;
+        else if (size1 < size2)
+            result = -1;
+    }
 
-		if (c1 == EOF)
-		{
-			if (c2 != EOF)
-				result = (int32) -1;
-			break;
-		}
-		else
-		{
-			if (c2 == EOF)
-				result = (int32) 1;
-		}
-		if (c1 != c2)
-		{
-			result = (int32) (c1 - c2);
-			break;
-		}
-	}
-
-	pglz_decomp_end(&ds1);
-	pglz_decomp_end(&ds2);
+    VARATT_FREE(lz2, p2);
+    VARATT_FREE(lz1, p1);
 
 	return result;
 

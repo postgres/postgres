@@ -9,9 +9,9 @@
  *
  * IDENTIFICATION
 <<<<<<< keywords.c
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.77 2000/06/12 19:40:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.78 2000/07/03 23:09:43 wieck Exp $
 =======
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.77 2000/06/12 19:40:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.78 2000/07/03 23:09:43 wieck Exp $
 >>>>>>> 1.73
  *
  *-------------------------------------------------------------------------
@@ -245,6 +245,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"timezone_hour", TIMEZONE_HOUR},
 	{"timezone_minute", TIMEZONE_MINUTE},
 	{"to", TO},
+	{"toast", TOAST},
 	{"trailing", TRAILING},
 	{"transaction", TRANSACTION},
 	{"trigger", TRIGGER},

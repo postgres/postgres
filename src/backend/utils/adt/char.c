@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.28 2000/06/05 07:28:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.29 2000/07/03 23:09:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ char_text(PG_FUNCTION_ARGS)
 	char		arg1 = PG_GETARG_CHAR(0);
 	text	   *result = palloc(VARHDRSZ + 1);
 
-	VARSIZE(result) = VARHDRSZ + 1;
+	VARATT_SIZEP(result) = VARHDRSZ + 1;
 	*(VARDATA(result)) = arg1;
 
 	PG_RETURN_TEXT_P(result);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.66 2000/06/19 03:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.67 2000/07/03 23:09:53 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ bpcharin(PG_FUNCTION_ARGS)
 		len = atttypmod - VARHDRSZ;
 
 	result = (BpChar *) palloc(atttypmod);
-	VARSIZE(result) = atttypmod;
+	VARATT_SIZEP(result) = atttypmod;
 	r = VARDATA(result);
 	for (i = 0; i < len; i++, r++, s++)
 	{
@@ -154,7 +154,7 @@ bpchar(PG_FUNCTION_ARGS)
 #endif
 
 	result = (BpChar *) palloc(len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	r = VARDATA(result);
 
 #ifdef MULTIBYTE
@@ -248,7 +248,7 @@ char_bpchar(PG_FUNCTION_ARGS)
 
 	result = (BpChar *) palloc(VARHDRSZ + 1);
 
-	VARSIZE(result) = VARHDRSZ + 1;
+	VARATT_SIZEP(result) = VARHDRSZ + 1;
 	*(VARDATA(result)) = c;
 
 	PG_RETURN_BPCHAR_P(result);
@@ -317,7 +317,7 @@ name_bpchar(NameData *s)
 
 	result = (char *) palloc(VARHDRSZ + len);
 	strncpy(VARDATA(result), NameStr(*s), len);
-	VARSIZE(result) = len + VARHDRSZ;
+	VARATT_SIZEP(result) = len + VARHDRSZ;
 
 	return result;
 }	/* name_bpchar() */
@@ -348,7 +348,7 @@ varcharin(PG_FUNCTION_ARGS)
 		len = atttypmod;		/* clip the string at max length */
 
 	result = (VarChar *) palloc(len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	memcpy(VARDATA(result), s, len - VARHDRSZ);
 
 #ifdef CYR_RECODE
@@ -407,7 +407,7 @@ varchar(PG_FUNCTION_ARGS)
 #endif
 
 	result = (VarChar *) palloc(slen);
-	VARSIZE(result) = slen;
+	VARATT_SIZEP(result) = slen;
 	memcpy(VARDATA(result), VARDATA(s), len);
 
 	PG_RETURN_VARCHAR_P(result);

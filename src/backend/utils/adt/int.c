@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.38 2000/06/14 18:17:44 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.39 2000/07/03 23:09:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,7 @@ int2_text(PG_FUNCTION_ARGS)
 	text	   *result = (text *) palloc(7+VARHDRSZ); /* sign,5 digits, '\0' */
 
 	itoa((int) arg1, VARDATA(result));
-	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -294,7 +294,7 @@ int4_text(PG_FUNCTION_ARGS)
 	text	   *result = (text *) palloc(12+VARHDRSZ); /* sign,10 digits,'\0' */
 
 	ltoa(arg1, VARDATA(result));
-	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
 	PG_RETURN_TEXT_P(result);
 }
 

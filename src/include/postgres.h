@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.42 2000/06/28 03:32:56 tgl Exp $
+ * $Id: postgres.h,v 1.43 2000/07/03 23:09:56 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,12 @@ struct varlena
 	char		vl_dat[1];
 };
 
+#define TUPLE_TOASTER_ACTIVE
+
+#ifndef TUPLE_TOASTER_ACTIVE
 #define VARSIZE(PTR)	(((struct varlena *)(PTR))->vl_len)
 #define VARDATA(PTR)	(((struct varlena *)(PTR))->vl_dat)
+#endif
 #define VARHDRSZ		((int32) sizeof(int32))
 
 /*
@@ -89,8 +93,6 @@ typedef struct varlena VarChar;	/* var-length char, ie SQL varchar(n) */
  * Proposed new layout for variable length attributes
  * DO NOT USE YET - Jan
  */
-#undef TUPLE_TOASTER_ACTIVE
-#undef TUPLE_TOASTER_ALL_TYPES
 
 #ifdef TUPLE_TOASTER_ACTIVE
 typedef struct varattrib
@@ -102,14 +104,17 @@ typedef struct varattrib
 		struct
 		{
 			int32		va_rawsize;		/* Plain data size */
+			char		va_data[1];		/* Compressed data */
 		}			va_compressed;		/* Compressed stored attribute */
 
 		struct
 		{
 			int32		va_rawsize;		/* Plain data size */
+			int32		va_extsize;		/* External saved size */
 			Oid			va_valueid;		/* Unique identifier of value */
-			Oid			va_longrelid;	/* RelID where to find chunks */
-			Oid			va_rowid;		/* Main tables row Oid */
+			Oid			va_toastrelid;	/* RelID where to find chunks */
+			Oid			va_toastidxid;	/* Main tables row Oid */
+			Oid			va_rowid;		/* Referencing row Oid */
 			int16		va_attno;		/* Main tables attno */
 		}			va_external;/* External stored attribute */
 
@@ -117,14 +122,18 @@ typedef struct varattrib
 	}			va_content;
 }			varattrib;
 
-#define VARATT_FLAG_EXTERNAL	0x8000
-#define VARATT_FLAG_COMPRESSED	0x4000
-#define VARATT_MASK_FLAGS		0xc000
-#define VARATT_MASK_SIZE		0x3fff
+#define VARATT_FLAG_EXTERNAL	0x80000000
+#define VARATT_FLAG_COMPRESSED	0x40000000
+#define VARATT_MASK_FLAGS		0xc0000000
+#define VARATT_MASK_SIZE		0x3fffffff
 
 #define VARATT_SIZEP(_PTR)	(((varattrib *)(_PTR))->va_header)
 #define VARATT_SIZE(PTR)	(VARATT_SIZEP(PTR) & VARATT_MASK_SIZE)
 #define VARATT_DATA(PTR)	(((varattrib *)(PTR))->va_content.va_data)
+#define VARATT_CDATA(PTR)	(((varattrib *)(PTR))->va_content.va_compressed.va_data)
+
+#define VARSIZE(__PTR)		VARATT_SIZE(__PTR)
+#define VARDATA(__PTR)		VARATT_DATA(__PTR)
 
 #define VARATT_IS_EXTENDED(PTR)		\
 				((VARATT_SIZEP(PTR) & VARATT_MASK_FLAGS) != 0)
@@ -142,12 +151,12 @@ typedef struct varattrib
 extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
 
 #define VARATT_GETPLAIN(_ARG,_VAR) {								\
-				if (VARATTR_IS_EXTENDED(_ARG))						\
+				if (VARATT_IS_EXTENDED(_ARG))						\
 					(_VAR) = (void *)heap_tuple_untoast_attr(_ARG); \
 				else												\
-					(_VAR) = (_ARG);								\
+					(_VAR) = (void *)(_ARG);						\
 			}
-#define VARATT_FREE(_ARG,VAR) do {									\
+#define VARATT_FREE(_ARG,_VAR) do {									\
 				if ((void *)(_VAR) != (void *)(_ARG))				\
 					pfree((void *)(_VAR));							\
 			} while (0)

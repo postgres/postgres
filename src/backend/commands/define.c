@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.43 2000/05/28 17:55:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.44 2000/07/03 23:09:33 wieck Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -597,6 +597,7 @@ DefineType(char *typeName, List *parameters)
 	char	   *shadow_type;
 	List	   *pl;
 	char		alignment = 'i';/* default alignment */
+	char		storage = 'p'; /* default storage in TOAST */
 
 	/*
 	 * Type names can only be 15 characters long, so that the shadow type
@@ -650,6 +651,24 @@ DefineType(char *typeName, List *parameters)
 					 a);
 			}
 		}
+		else if (!strcasecmp(defel->defname, "storage"))
+		{
+			char	   *a = defGetString(defel);
+
+			if (!strcasecmp(a, "plain"))
+				storage = 'p';
+			else if (!strcasecmp(a, "external"))
+				storage = 'e';
+			else if (!strcasecmp(a, "extended"))
+				storage = 'x';
+			else if (!strcasecmp(a, "main"))
+				storage = 'm';
+			else
+			{
+				elog(ERROR, "DefineType: \"%s\" storage not recognized",
+					 a);
+			}
+		}
 		else
 		{
 			elog(NOTICE, "DefineType: attribute \"%s\" not recognized",
@@ -664,6 +683,9 @@ DefineType(char *typeName, List *parameters)
 		elog(ERROR, "Define: \"input\" unspecified");
 	if (outputName == NULL)
 		elog(ERROR, "Define: \"output\" unspecified");
+
+	if (internalLength != -1 && storage != 'p')
+		elog(ERROR, "Define: fixed size types must have storage PLAIN");
 
 	/* ----------------
 	 *	now have TypeCreate do all the real work.
@@ -682,7 +704,8 @@ DefineType(char *typeName, List *parameters)
 			   elemName,		/* element type name */
 			   defaultValue,	/* default type value */
 			   byValue,			/* passed by value */
-			   alignment);
+			   alignment,
+			   storage);		/* TOAST strategy */
 
 	/* ----------------
 	 *	When we create a true type (as opposed to a complex type)
@@ -704,7 +727,8 @@ DefineType(char *typeName, List *parameters)
 			   typeName,		/* element type name */
 			   defaultValue,	/* default type value */
 			   false,			/* never passed by value */
-			   alignment);
+			   alignment,
+			   'p');			/* ARRAY doesn't support TOAST yet */
 
 	pfree(shadow_type);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.60 2000/06/14 18:17:45 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.61 2000/07/03 23:09:54 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ textin(char *inputText)
 
 	len = strlen(inputText) + VARHDRSZ;
 	result = (text *) palloc(len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 
 	memmove(VARDATA(result), inputText, len - VARHDRSZ);
 
@@ -288,7 +288,7 @@ textcat(text *t1, text *t2)
 	result = palloc(len);
 
 	/* Set size of result string... */
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 
 	/* Fill data field of result string... */
 	ptr = VARDATA(result);
@@ -374,7 +374,7 @@ text_substr(PG_FUNCTION_ARGS)
 #endif
 
 	ret = (text *) palloc(VARHDRSZ + n);
-	VARSIZE(ret) = VARHDRSZ + n;
+	VARATT_SIZEP(ret) = VARHDRSZ + n;
 
 	memcpy(VARDATA(ret), VARDATA(string) + m, n);
 
@@ -842,7 +842,7 @@ name_text(NameData *s)
 
 	result = palloc(VARHDRSZ + len);
 	strncpy(VARDATA(result), NameStr(*s), len);
-	VARSIZE(result) = len + VARHDRSZ;
+	VARATT_SIZEP(result) = len + VARHDRSZ;
 
 	return result;
 }	/* name_text() */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.36 2000/06/14 18:17:45 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.37 2000/07/03 23:09:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ oid_text(PG_FUNCTION_ARGS)
 
 	result = (text *) palloc(len);
 
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 	pfree(str);
 

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Id: mac.c,v 1.14 1999/12/16 01:30:49 momjian Exp $
+ *	$Id: mac.c,v 1.15 2000/07/03 23:09:52 wieck Exp $
  */
 
 
@@ -314,14 +314,14 @@ macaddr_manuf(macaddr *addr)
 	{
 		result = palloc(VARHDRSZ + 1);
 		memset(result, 0, VARHDRSZ + 1);
-		VARSIZE(result) = VARHDRSZ + 1;
+		VARATT_SIZEP(result) = VARHDRSZ + 1;
 	}
 	else
 	{
 		length = strlen(manuf->name) + 1;
 		result = palloc(length + VARHDRSZ);
 		memset(result, 0, length + VARHDRSZ);
-		VARSIZE(result) = length + VARHDRSZ;
+		VARATT_SIZEP(result) = length + VARHDRSZ;
 		memcpy(VARDATA(result), manuf->name, length);
 	}
 	return result;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.59 2000/06/14 18:17:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.60 2000/07/03 23:09:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -813,7 +813,7 @@ array_dims(PG_FUNCTION_ARGS)
 		sprintf(p, "[%d:%d]", lb[i], dimv[i] + lb[i] - 1);
 		p += strlen(p);
 	}
-	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -1151,7 +1151,7 @@ array_set(ArrayType *array,
 							  Int32GetDatum(SEEK_SET))) < 0)
 			return array;
 		v = (struct varlena *) palloc(elmlen + VARHDRSZ);
-		VARSIZE(v) = elmlen + VARHDRSZ;
+		VARATT_SIZEP(v) = elmlen + VARHDRSZ;
 		ArrayCastAndSet(dataValue, elmbyval, elmlen, VARDATA(v));
 #ifdef LOARRAY
 		if (DatumGetInt32(DirectFunctionCall2(lowrite,

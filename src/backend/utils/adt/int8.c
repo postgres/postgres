@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.21 2000/06/14 18:17:44 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.22 2000/07/03 23:09:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,7 +581,7 @@ int8_text(PG_FUNCTION_ARGS)
 
 	result = (text *) palloc(VARHDRSZ + len);
 
-	VARSIZE(result) = len + VARHDRSZ;
+	VARATT_SIZEP(result) = len + VARHDRSZ;
 	memcpy(VARDATA(result), s, len);
 
 	pfree(s);

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.17 2000/07/03 16:01:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.18 2000/07/03 23:09:50 wieck Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -2526,7 +2526,7 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	result = (text *) palloc(len + 1 + VARHDRSZ);
 
 	strcpy(VARDATA(result), VARDATA(result_tmp));
-	VARSIZE(result) = len + VARHDRSZ;
+	VARATT_SIZEP(result) = len + VARHDRSZ;
 	pfree(result_tmp);
 
 	PG_RETURN_TEXT_P(result);
@@ -3987,7 +3987,7 @@ do { \
 	result		= (text *) palloc( len + 1 + VARHDRSZ);		\
 									\
 	strcpy( VARDATA(result), VARDATA(result_tmp));			\
-	VARSIZE(result) = len + VARHDRSZ;				\
+	VARATT_SIZEP(result) = len + VARHDRSZ;				\
 	pfree(result_tmp);						\
 } while(0)
 

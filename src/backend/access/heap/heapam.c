@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.75 2000/07/03 02:54:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.76 2000/07/03 23:09:16 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1299,6 +1299,17 @@ heap_insert(Relation relation, HeapTuple tup)
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 
+#ifdef TUPLE_TOASTER_ACTIVE
+	/* ----------
+	 * If the new tuple is too big for storage or contains already
+	 * toasted attributes from some other relation, invoke the toaster.
+	 * ----------
+	 */
+    if (HeapTupleHasExtended(tup) ||
+				(MAXALIGN(tup->t_len) > (MaxTupleSize / 4)))
+		heap_tuple_toast_attrs(relation, tup, NULL);
+#endif
+
 	/* Find buffer for this tuple */
 	buffer = RelationGetBufferForTuple(relation, tup->t_len, InvalidBuffer);
 
@@ -1328,8 +1339,8 @@ heap_insert(Relation relation, HeapTuple tup)
 	}
 #endif
 
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	if (IsSystemRelationName(RelationGetRelationName(relation)))
 		RelationMark4RollbackHeapTuple(relation, tup);
@@ -1440,6 +1451,16 @@ l1:
 	tp.t_data->t_cmax = GetCurrentCommandId();
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+
+#ifdef TUPLE_TOASTER_ACTIVE
+	/* ----------
+	 * If the relation has toastable attributes, we need to delete
+	 * no longer needed items there too.
+	 * ----------
+	 */
+	if (HeapTupleHasExtended(&tp))
+		heap_tuple_toast_attrs(relation, NULL, &(tp));
+#endif
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
@@ -1558,6 +1579,19 @@ l2:
 	oldtup.t_data->t_cmax = GetCurrentCommandId();
 	oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+
+#ifdef TUPLE_TOASTER_ACTIVE
+	/* ----------
+	 * If this relation is enabled for toasting, let the toaster
+	 * delete not any longer needed entries and create new ones to
+	 * make the new tuple fit again.
+	 * ----------
+	 */
+	if (HeapTupleHasExtended(&oldtup) || 
+			HeapTupleHasExtended(newtup) ||
+			(MAXALIGN(newtup->t_len) > (MaxTupleSize / 4)))
+		heap_tuple_toast_attrs(relation, newtup, &oldtup);
+#endif
 
 	/* record address of new tuple in t_ctid of old one */
 	oldtup.t_data->t_ctid = newtup->t_self;

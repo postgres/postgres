@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.56 2000/06/05 07:28:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.57 2000/07/03 23:09:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 		else
 			strcat(VARDATA(result), "- ");
 	}
-	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
 	PG_RETURN_TEXT_P(result);
 }
 

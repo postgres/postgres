@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.42 2000/06/15 04:10:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.43 2000/07/03 23:09:46 wieck Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -349,7 +349,7 @@ HandleFunctionRequest()
 				p = palloc(argsize + VARHDRSZ + 1);	/* Added +1 to solve
 													 * memory leak - Peter
 													 * 98 Jan 6 */
-				VARSIZE(p) = argsize + VARHDRSZ;
+				VARATT_SIZEP(p) = argsize + VARHDRSZ;
 				if (pq_getbytes(VARDATA(p), argsize))
 					return EOF;
 			}

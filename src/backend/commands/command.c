@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.81 2000/06/28 03:31:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.82 2000/07/03 23:09:33 wieck Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -35,6 +35,7 @@
 #include "catalog/pg_index.h"
 #include "parser/parse.h"
 #endif	 /* _DROP_COLUMN_HACK__ */
+#include "access/genam.h"
 
 
 /* --------------------------------
@@ -438,7 +439,7 @@ AlterTableAddColumn(const char *relationName,
 		attribute->attbyval = tform->typbyval;
 		attribute->attnelems = attnelems;
 		attribute->attisset = (bool) (tform->typtype == 'c');
-		attribute->attstorage = 'p';
+		attribute->attstorage = tform->typstorage;
 		attribute->attalign = tform->typalign;
 		attribute->attnotnull = false;
 		attribute->atthasdef = (colDef->raw_default != NULL ||
@@ -1166,6 +1167,159 @@ AlterTableDropConstraint(const char *relationName,
 						 int behavior)
 {
 	elog(ERROR, "ALTER TABLE / DROP CONSTRAINT is not implemented");
+}
+
+
+
+/*
+ * ALTER TABLE CREATE TOAST TABLE
+ */
+void
+AlterTableCreateToastTable(const char *relationName)
+{
+	Relation			rel;
+	Oid					myrelid;
+	HeapTuple			reltup;
+	TupleDesc			tupdesc;
+	Form_pg_attribute  *att;
+	Relation			class_rel;
+	Relation			ridescs[Num_pg_class_indices];
+	Oid					toast_relid = 2;
+	Oid					toast_idxid = 2;
+	bool				has_toastable_attrs = false;
+	bool				old_allow;
+	int					i;
+
+	char				toast_relname[NAMEDATALEN];
+	char				toast_idxname[NAMEDATALEN];
+	char				tmp_query[1024];
+	Relation			toast_rel;
+
+	/*
+	 * permissions checking.  this would normally be done in utility.c,
+	 * but this particular routine is recursive.
+	 *
+	 * normally, only the owner of a class can change its schema.
+	 */
+/*
+	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
+*/
+#ifndef NO_SECURITY
+	if (!pg_ownercheck(UserName, relationName, RELNAME))
+		elog(ERROR, "ALTER TABLE: permission denied");
+#endif
+
+	/*
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
+	 */
+	rel = heap_openr(relationName, RowExclusiveLock);
+	myrelid = RelationGetRelid(rel);
+
+	/*
+	 * Check if there are any toastable attributes on the table
+	 */
+	tupdesc = rel->rd_att;
+	att = tupdesc->attrs;
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		if (att[i]->attstorage != 'p')
+		{
+			has_toastable_attrs = true;
+			break;
+		}
+	}
+
+	if (!has_toastable_attrs)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" has no toastable attributes",
+				relationName);
+
+	/*
+	 * Get the pg_class tuple for the relation
+	 */
+	reltup = SearchSysCacheTuple(RELNAME,
+									 PointerGetDatum(relationName),
+									 0, 0, 0);
+
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
+			 relationName);
+
+	/*
+	 * XXX is the following check sufficient?
+	 */
+	if (((Form_pg_class) GETSTRUCT(reltup))->relkind != RELKIND_RELATION)
+	{
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+				relationName);
+	}
+
+	if (((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid != InvalidOid)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" already has a toast table",
+				relationName);
+
+	/*
+	 * Create the toast table and it's index
+	 * This is bad and ugly, because we need to override
+	 * allowSystemTableMods in order to keep the toast
+	 * table- and index-name out of the users namespace.
+	 */
+	sprintf(toast_relname, "pg_toast_%d", myrelid);
+	sprintf(toast_idxname, "pg_toast_%d_idx", myrelid);
+
+	old_allow = allowSystemTableMods;
+	allowSystemTableMods = true;
+
+	sprintf(tmp_query, "create table \"%s\" (chunk_id oid, chunk_seq int4, chunk_data text)",
+			toast_relname);
+	pg_exec_query_dest(tmp_query, None, CurrentMemoryContext);
+
+	sprintf(tmp_query, "create index \"%s\" on \"%s\" (chunk_id)",
+			toast_idxname, toast_relname);
+	pg_exec_query_dest(tmp_query, None, CurrentMemoryContext);
+
+	allowSystemTableMods = old_allow;
+
+	/*
+	 * Get the OIDs of the newly created objects
+	 */
+	toast_rel = heap_openr(toast_relname, NoLock);
+	toast_relid = RelationGetRelid(toast_rel);
+	heap_close(toast_rel, NoLock);
+	toast_rel = index_openr(toast_idxname);
+	toast_idxid = RelationGetRelid(toast_rel);
+	index_close(toast_rel);
+
+	/*
+	 * Get the pg_class tuple for the relation
+	 */
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
+	reltup = SearchSysCacheTupleCopy(RELNAME,
+									 PointerGetDatum(relationName),
+									 0, 0, 0);
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
+			 relationName);
+
+	/*
+	 * Store the toast table- and index-Oid's in the relation tuple
+	 */
+	((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid = toast_relid;
+	((Form_pg_class) GETSTRUCT(reltup))->reltoastidxid = toast_idxid;
+	heap_update(class_rel, &reltup->t_self, reltup, NULL);
+
+	/* keep catalog indices current */
+	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
+	CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, reltup);
+	CatalogCloseIndices(Num_pg_class_indices, ridescs);
+
+	heap_freetuple(reltup);
+
+	heap_close(rel, NoLock);
+	heap_close(class_rel, NoLock);
 }
 
 

@@ -4,7 +4,7 @@
  *	  Functions for the built-in type bit() and varying bit().
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.3 2000/06/15 03:32:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.4 2000/07/03 23:09:53 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ zpbit_in(char *s, int dummy, int32 atttypmod)
 	result = (bits8 *) palloc(len);
 	/* set to 0 so that *r is always initialised and strin is zero-padded */
 	memset(result, 0, len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = atttypmod;
 
 	/*
@@ -353,7 +353,7 @@ varbit_in(char *s, int dummy, int32 atttypmod)
 	result = (bits8 *) palloc(len);
 	/* set to 0 so that *r is always initialised and strin is zero-padded */
 	memset(result, 0, len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = bitlen;
 
 	/*
@@ -561,7 +561,7 @@ bitcat(bits8 *arg1, bits8 *arg2)
 	bytelen = VARBITDATALEN(bitlen1 + bitlen2);
 
 	result = (bits8 *) palloc(bytelen * sizeof(bits8));
-	VARSIZE(result) = bytelen;
+	VARATT_SIZEP(result) = bytelen;
 	VARBITLEN(result) = bitlen1 + bitlen2;
 	/* Copy the first bitstring in */
 	memcpy(VARBITS(result), VARBITS(arg1), VARBITBYTES(arg1));
@@ -625,7 +625,7 @@ bitsubstr(bits8 *arg, int32 s, int32 l)
 		len = VARBITDATALEN(0);
 		result = (bits8 *) palloc(len);
 		VARBITLEN(result) = 0;
-		VARSIZE(result) = len;
+		VARATT_SIZEP(result) = len;
 	}
 	else
 	{
@@ -638,7 +638,7 @@ bitsubstr(bits8 *arg, int32 s, int32 l)
 		len = VARBITDATALEN(rbitlen);
 		result = (bits8 *) palloc(len);
 		VARBITLEN(result) = rbitlen;
-		VARSIZE(result) = len;
+		VARATT_SIZEP(result) = len;
 		len -= VARHDRSZ + VARBITHDRSZ;
 		/* Are we copying from a byte boundary? */
 		if ((s1 - 1) % BITSPERBYTE == 0)
@@ -691,7 +691,7 @@ bitand(bits8 *arg1, bits8 *arg2)
 
 	len = Min(VARSIZE(arg1), VARSIZE(arg2));
 	result = (bits8 *) palloc(len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = Min(VARBITLEN(arg1), VARBITLEN(arg2));
 
 	p1 = (bits8 *) VARBITS(arg1);
@@ -725,7 +725,7 @@ bitor(bits8 *arg1, bits8 *arg2)
 
 	len = Min(VARSIZE(arg1), VARSIZE(arg2));
 	result = (bits8 *) palloc(len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = Min(VARBITLEN(arg1), VARBITLEN(arg2));
 
 	p1 = (bits8 *) VARBITS(arg1);
@@ -761,7 +761,7 @@ bitxor(bits8 *arg1, bits8 *arg2)
 
 	len = Min(VARSIZE(arg1), VARSIZE(arg2));
 	result = (bits8 *) palloc(len);
-	VARSIZE(result) = len;
+	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = Min(VARBITLEN(arg1), VARBITLEN(arg2));
 
 	p1 = (bits8 *) VARBITS(arg1);
@@ -792,7 +792,7 @@ bitnot(bits8 *arg)
 		return (bool) 0;
 
 	result = (bits8 *) palloc(VARSIZE(arg));
-	VARSIZE(result) = VARSIZE(arg);
+	VARATT_SIZEP(result) = VARSIZE(arg);
 	VARBITLEN(result) = VARBITLEN(arg);
 
 	p = (bits8 *) VARBITS(arg);
@@ -828,7 +828,7 @@ bitshiftleft(bits8 *arg, int shft)
 		return bitshiftright(arg, -shft);
 
 	result = (bits8 *) palloc(VARSIZE(arg));
-	VARSIZE(result) = VARSIZE(arg);
+	VARATT_SIZEP(result) = VARSIZE(arg);
 	VARBITLEN(result) = VARBITLEN(arg);
 	r = (bits8 *) VARBITS(result);
 
@@ -879,7 +879,7 @@ bitshiftright(bits8 *arg, int shft)
 		return bitshiftleft(arg, -shft);
 
 	result = (bits8 *) palloc(VARSIZE(arg));
-	VARSIZE(result) = VARSIZE(arg);
+	VARATT_SIZEP(result) = VARSIZE(arg);
 	VARBITLEN(result) = VARBITLEN(arg);
 	r = (bits8 *) VARBITS(result);
 

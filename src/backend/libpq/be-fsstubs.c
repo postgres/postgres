@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.47 2000/06/28 03:31:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.48 2000/07/03 23:09:37 wieck Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -331,7 +331,7 @@ loread(PG_FUNCTION_ARGS)
 
 	retval = (struct varlena *) palloc(VARHDRSZ + len);
 	totalread = lo_read(fd, VARDATA(retval), len);
-	VARSIZE(retval) = totalread + VARHDRSZ;
+	VARATT_SIZEP(retval) = totalread + VARHDRSZ;
 
 	PG_RETURN_POINTER(retval);
 }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.174 2000/06/22 22:31:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.175 2000/07/03 23:09:41 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -350,7 +350,7 @@ static void doNegateFloat(Value *v);
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
 		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID,
-		TEMP, TRUNCATE, TRUSTED, 
+		TEMP, TOAST, TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -929,6 +929,14 @@ AlterTableStmt:
 					n->inh = $4 || SQL_inheritance;
 					n->name = $7;
 					n->behavior = $8;
+					$$ = (Node *)n;
+				}
+/* ALTER TABLE <name> CREATE TOAST TABLE */
+		| ALTER TABLE relation_name CREATE TOAST TABLE
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->subtype = 'E';
+					n->relname = $3;
 					$$ = (Node *)n;
 				}
 		;
@@ -5460,6 +5468,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| TEMPORARY						{ $$ = "temporary"; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
 		| TIMEZONE_MINUTE				{ $$ = "timezone_minute"; }
+		| TOAST							{ $$ = "toast"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }

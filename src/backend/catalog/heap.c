@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.136 2000/07/02 22:00:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.137 2000/07/03 23:09:27 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -730,7 +730,8 @@ AddNewRelationType(char *typeName, Oid new_rel_oid)
 							  NULL,		/* array element type - irrelevent */
 							  "-",		/* default type value */
 							  (bool) 1, /* passed by value */
-							  'i');		/* default alignment */
+							  'i',		/* default alignment */
+							  'p');		/* Not TOASTable */
 }
 
 /* --------------------------------
@@ -1423,6 +1424,7 @@ heap_drop_with_catalog(const char *relname)
 	Relation	rel;
 	Oid			rid;
 	bool		istemp = (get_temp_rel_by_username(relname) != NULL);
+	bool		has_toasttable;
 
 	/* ----------------
 	 *	Open and lock the relation.
@@ -1521,6 +1523,11 @@ heap_drop_with_catalog(const char *relname)
 	rel->rd_unlinked = true;
 
 	/*
+	 * Remember if there is a toast relation for below
+	 */
+	has_toasttable = rel->rd_rel->reltoastrelid != InvalidOid;
+
+	/*
 	 * Close relcache entry, but *keep* AccessExclusiveLock on the
 	 * relation until transaction commit.  This ensures no one else will
 	 * try to do something with the doomed relation.
@@ -1535,6 +1542,20 @@ heap_drop_with_catalog(const char *relname)
 
 	if (istemp)
 		remove_temp_relation(rid);
+
+	if (has_toasttable)
+	{
+		char	toast_relname[NAMEDATALEN];
+		bool	old_allow;
+
+		old_allow = allowSystemTableMods;
+		allowSystemTableMods = true;
+
+		sprintf(toast_relname, "pg_toast_%d", rid);
+		heap_drop_with_catalog(toast_relname);
+
+		allowSystemTableMods = old_allow;
+	}
 }
 
 
