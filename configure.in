@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.280.2.5 2003/09/08 01:55:52 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.280.2.6 2003/09/12 02:04:40 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1245,11 +1245,5 @@ AC_CONFIG_HEADERS([src/include/pg_config.h],
 # Update timestamp for pg_config.h (see Makefile.global)
 echo >src/include/stamp-h
 ])
-
-# touch files to flex/bison not needed
-cat UPDATED | grep '^\./' | while read FILE
-do
-	touch $srcdir/"$FILE"
-done
 
 AC_OUTPUT
