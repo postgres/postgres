@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.193 2003/06/17 23:12:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.194 2003/06/19 23:22:40 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,8 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Dollar sign ($) is no longer allowed in operator names
+Dollar sign ($) can be a non-first character in identifiers
 Precision in FLOAT(p) is now interpreted as bits, not decimal digits
 Functional indexes have been generalized into expressional indexes
 CHAR(n) to TEXT conversion automatically strips trailing blanks

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.78 2003/06/06 15:04:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.79 2003/06/19 23:22:40 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -109,10 +109,15 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     (<literal>a</literal>-<literal>z</literal>, but also letters with
     diacritical marks and non-Latin letters) or an underscore
     (<literal>_</literal>).  Subsequent characters in an identifier or
-    key word can be letters, digits
-    (<literal>0</literal>-<literal>9</literal>), or underscores,
-    although the SQL standard will not define a key word that contains
-    digits or starts or ends with an underscore.
+    key word can be letters, underscores, digits
+    (<literal>0</literal>-<literal>9</literal>), or dollar signs
+    (<literal>$</>).  Note that dollar signs are not allowed in identifiers
+    according to the letter of the SQL standard, so their use may render
+    applications less portable.
+    The SQL standard will not define a key word that contains
+    digits or starts or ends with an underscore, so identifiers of this
+    form are safe against possible conflict with future extensions of the
+    standard.
    </para>
 
    <para>
@@ -478,18 +483,11 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     An operator is a sequence of up to <symbol>NAMEDATALEN</symbol>-1
     (63 by default) characters from the following list:
 <literallayout>
-+ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $
++ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ?
 </literallayout>
 
     There are a few restrictions on operator names, however:
     <itemizedlist>
-     <listitem>
-      <para>
-       <literal>$</> (dollar) cannot be a single-character operator, although it
-       can be part of a multiple-character operator name.
-      </para>
-     </listitem>
-
      <listitem>
       <para>
        <literal>--</literal> and <literal>/*</literal> cannot appear
@@ -503,7 +501,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
        A multiple-character operator name cannot end in <literal>+</> or <literal>-</>,
        unless the name also contains at least one of these characters:
 <literallayout>
-~ ! @ # % ^ &amp; | ` ? $
+~ ! @ # % ^ &amp; | ` ?
 </literallayout>
        For example, <literal>@-</literal> is an allowed operator name,
        but <literal>*-</literal> is not.  This restriction allows
@@ -539,9 +537,9 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <listitem>
      <para>
       A dollar sign (<literal>$</literal>) followed by digits is used
-      to represent the positional parameters in the body of a function
+      to represent a positional parameter in the body of a function
       definition or a prepared statement.  In other contexts the
-      dollar sign may be part of an operator name.
+      dollar sign may be part of an identifier.
      </para>
     </listitem>
 
@@ -965,9 +963,12 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    <title>Positional Parameters</title>
 
    <para>
-    A positional parameter reference is used to indicate a parameter
+    A positional parameter reference is used to indicate a value
     that is supplied externally to an SQL statement.  Parameters are
-    used in SQL function definitions and in prepared queries.
+    used in SQL function definitions and in prepared queries.  Some
+    client libraries also support specifying data values separately
+    from the SQL command string, in which case parameters are used to
+    refer to the out-of-line data values.
     The form of a parameter reference is:
 <synopsis>
 $<replaceable>number</replaceable>

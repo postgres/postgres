@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.27 2003/06/17 04:35:03 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.28 2003/06/19 23:22:40 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -72,12 +72,14 @@ int	plpgsql_SpaceScanned = 0;
 %x	IN_STRING IN_COMMENT
 
 digit			[0-9]
-letter			[\200-\377_A-Za-z]
-letter_or_digit	[\200-\377_A-Za-z0-9]
+ident_start		[A-Za-z\200-\377_]
+ident_cont		[A-Za-z\200-\377_0-9\$]
 
 quoted_ident	(\"[^\"]*\")+
 
-identifier		({letter}{letter_or_digit}*|{quoted_ident})
+identifier		({ident_start}{ident_cont}*|{quoted_ident})
+
+param			\${digit}+
 
 space			[ \t\n\r\f]
 
@@ -197,28 +199,28 @@ dump			{ return O_DUMP;			}
 {identifier}{space}*\.{space}*{identifier}{space}*%ROWTYPE	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_dblwordrowtype(yytext); }
-\${digit}+						{
+{param}							{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_word(yytext); }
-\${digit}+{space}*\.{space}*{identifier}	{
+{param}{space}*\.{space}*{identifier}	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_dblword(yytext); }
-\${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{
+{param}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_tripword(yytext); }
-\${digit}+{space}*%TYPE			{
+{param}{space}*%TYPE			{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_wordtype(yytext); }
-\${digit}+{space}*\.{space}*{identifier}{space}*%TYPE	{
+{param}{space}*\.{space}*{identifier}{space}*%TYPE	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_dblwordtype(yytext); }
-\${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{
+{param}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_tripwordtype(yytext); }
-\${digit}+{space}*%ROWTYPE		{
+{param}{space}*%ROWTYPE		{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_wordrowtype(yytext); }
-\${digit}+{space}*\.{space}*{identifier}{space}*%ROWTYPE	{
+{param}{space}*\.{space}*{identifier}{space}*%ROWTYPE	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	return plpgsql_parse_dblwordrowtype(yytext); }
 
