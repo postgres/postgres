@@ -1,5 +1,16 @@
-To report a bug, please complete the following form and send it by
-email to bugs@postgreSQL.org.
+If PostgreSQL failed to compile on your computer or you found a bug that
+is likely to be specific to one platform then please fill out this form
+and e-mail it to pgsql-ports@postgresql.org.
+
+To report any other bug, fill out the form below and e-mail it to
+pgsql-bugs@postgresql.org.
+
+If you not only found the problem but solved it and generated a patch
+then e-mail it to pgsql-patches@postgresql.org instead.  Please use the
+command "diff -c" to generate the patch.
+
+You may also enter a bug report at http://www.postgresql.org/ instead of
+e-mail-ing this form.
 
 ============================================================================
                         POSTGRESQL BUG REPORT TEMPLATE
@@ -14,11 +25,11 @@ System Configuration
 ---------------------
   Architecture (example: Intel Pentium)  	:
 
-  Operating System (example: Linux 1.3.42 ELF) 	:
+  Operating System (example: Linux 2.0.26 ELF) 	:
 
   PostgreSQL version (example: PostgreSQL-6.1)  :   PostgreSQL-6.1
 
-  Compiler used (example:  gcc 2.7.0)		:
+  Compiler used (example:  gcc 2.7.2)		:
 
 
 Please enter a FULL description of your problem:
@@ -38,4 +49,5 @@ concise reproducible example, if at all possible:
 
 If you know how this problem might be fixed, list the solution below:
 ---------------------------------------------------------------------
+
 

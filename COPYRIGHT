@@ -1,7 +1,7 @@
+PostgreSQL Data Base Management System (formerly known as Postgres, then
+as Postgres95).
 
-PostgreSQL Data Base Management System (formally known as Postgres95)
-
-Copyright (c) 1994-6 Regents of the University of California
+Copyright (c) 1994-7 Regents of the University of California
 
 Permission to use, copy, modify, and distribute this software and its
 documentation for any purpose, without fee, and without a written agreement
@@ -19,4 +19,3 @@ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
 ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-

@@ -13,9 +13,10 @@ terms of the the copyright below:
 
 ------------------------------------------------------------------------
 
-POSTGRES95 Data Base Management System
+POSTGRES95 Data Base Management System (formerly known as Postgres, then
+as Postgres95).
 
-Copyright (c) 1994-6 Regents of the University of California
+Copyright (c) 1994-7 Regents of the University of California
 
 Permission to use, copy, modify, and distribute this software and its
 documentation for any purpose, without fee, and without a written agreement
