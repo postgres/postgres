@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.19 2001/08/24 18:08:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.20 2001/08/26 17:04:02 momjian Exp $
 -->
 
  <chapter id="ecpg">
@@ -805,6 +805,53 @@ exec sql disconnect [<replaceable>connection target</replaceable>];
        </listitem>
       </varlistentry>
 
+      <!--WARNING: FROM HERE ON THE TEXT IS OUTDATED!-->
+      <varlistentry>
+       <term>Open cursor statement</term>
+       <listitem>
+	<para>
+	 An open cursor statement looks like:
+	 <programlisting>
+exec sql open <replaceable>cursor</replaceable>;
+	 </programlisting>
+	 and is ignore and not copied from the output.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>Commit statement</term>
+       <listitem>
+	<para>
+	 A commit statement looks like
+	 <programlisting>
+exec sql commit;
+	 </programlisting>
+	 and is translated on the output to
+	 <programlisting>
+ECPGcommit(__LINE__);
+	 </programlisting>
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>Rollback statement</term>
+       <listitem>
+	<para>
+	 A rollback statement looks like
+	 <programlisting>
+exec sql rollback;
+	 </programlisting>
+	 and is translated on the output to
+	 <programlisting>
+ECPGrollback(__LINE__);
+	 </programlisting>
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <!--STARTING HERE IT IS OKAY AGAIN!-->
       <varlistentry>
        <term>Other statements</term>
        <listitem>
