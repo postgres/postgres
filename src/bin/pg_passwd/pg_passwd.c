@@ -19,14 +19,23 @@ extern char *crypt(const char *, const char *);
 
 #endif
 
-#define PG_PASSWD_LEN 13		/* not including null */
+/*
+ * We assume that the output of crypt(3) is always 13 characters,
+ * and that at most 8 characters can usefully be sent to it.
+ *
+ * Postgres usernames are assumed to be less than NAMEDATALEN chars long.
+ */
+#define CLEAR_PASSWD_LEN 8			/* not including null */
+#define CRYPTED_PASSWD_LEN 13		/* not including null */
 
 const char * progname;
 
 static void usage(void);
 static void read_pwd_file(char *filename);
 static void write_pwd_file(char *filename, char *bkname);
-static void encrypt_pwd(char key[9], char salt[3], char passwd[PG_PASSWD_LEN+1]);
+static void encrypt_pwd(char key[CLEAR_PASSWD_LEN+1],
+						char salt[3],
+						char passwd[CRYPTED_PASSWD_LEN+1]);
 static void prompt_for_username(char *username);
 static void prompt_for_password(char *prompt, char *password);
 
@@ -94,7 +103,9 @@ try_again:
 	}
 
 	/* read all the entries */
-	for (npwds = 0; npwds < MAXPWDS && fgets(line, 512, fp) != NULL; ++npwds)
+	for (npwds = 0;
+		 npwds < MAXPWDS && fgets(line, sizeof(line), fp) != NULL;
+		 ++npwds)
 	{
 		int			l;
 		char	   *p,
@@ -123,13 +134,13 @@ try_again:
 		}
 		pwds[npwds].uname = strdup(p);
 
-		/* check duplicate */
+		/* check for duplicate user name */
 		for (i = 0; i < npwds; ++i)
 		{
 			if (strcmp(pwds[i].uname, pwds[npwds].uname) == 0)
 			{
-				fprintf(stderr, "Duplicated entry: %s\n",
-						pwds[npwds].uname);
+				fprintf(stderr, "Duplicate username %s in entry %d\n",
+						pwds[npwds].uname, npwds+1);
 				exit(1);
 			}
 		}
@@ -143,7 +154,7 @@ try_again:
 			if (q != NULL)
 				*(q++) = '\0';
 
-			if (strlen(p) != PG_PASSWD_LEN && strcmp(p, "+")!=0)
+			if (strlen(p) != CRYPTED_PASSWD_LEN && strcmp(p, "+") != 0)
 			{
 				fprintf(stderr, "%s:%d: warning: invalid password length\n",
 						filename, npwds + 1);
@@ -209,11 +220,13 @@ link_again:
 }
 
 static void
-encrypt_pwd(char key[9], char salt[3], char passwd[PG_PASSWD_LEN + 1])
+encrypt_pwd(char key[CLEAR_PASSWD_LEN+1],
+			char salt[3],
+			char passwd[CRYPTED_PASSWD_LEN+1])
 {
 	int			n;
 
-	/* get encrypted password */
+	/* select a salt, if not already given */
 	if (salt[0] == '\0')
 	{
 		srand(time(NULL));
@@ -229,32 +242,16 @@ encrypt_pwd(char key[9], char salt[3], char passwd[PG_PASSWD_LEN + 1])
 		salt[1] = n;
 		salt[2] = '\0';
 	}
+
+	/* get encrypted password */
 	strcpy(passwd, crypt(key, salt));
 
+#ifdef PG_PASSWD_DEBUG
 	/* show it */
-
-	/*
-	 * fprintf(stderr, "key = %s, salt = %s, password = %s\n", key, salt,
-	 * passwd);
-	 */
-}
-
-#ifdef NOT_USED
-static int
-check_pwd(char key[9], char passwd[PG_PASSWD_LEN + 1])
-{
-	char		shouldbe[PG_PASSWD_LEN + 1];
-	char		salt[3];
-
-	salt[0] = passwd[0];
-	salt[1] = passwd[1];
-	salt[2] = '\0';
-	encrypt_pwd(key, salt, shouldbe);
-
-	return strncmp(shouldbe, passwd, PG_PASSWD_LEN) == 0 ? 1 : 0;
-}
-
+	fprintf(stderr, "key = %s, salt = %s, password = %s\n",
+			key, salt, passwd);
 #endif
+}
 
 static void
 prompt_for_username(char *username)
@@ -263,7 +260,7 @@ prompt_for_username(char *username)
 
 	printf("Username: ");
 	fflush(stdout);
-	if (fgets(username, 9, stdin) == NULL)
+	if (fgets(username, NAMEDATALEN, stdin) == NULL)
 		username[0] = '\0';
 
 	length = strlen(username);
@@ -295,16 +292,19 @@ prompt_for_password(char *prompt, char *password)
 
 #endif
 
-	printf(prompt);
-	fflush(stdout);
 #ifdef HAVE_TERMIOS_H
 	tcgetattr(0, &t);
 	t_orig = t;
 	t.c_lflag &= ~ECHO;
 	tcsetattr(0, TCSADRAIN, &t);
 #endif
-	if (fgets(password, 9, stdin) == NULL)
+
+	printf(prompt);
+	fflush(stdout);
+
+	if (fgets(password, CLEAR_PASSWD_LEN+1, stdin) == NULL)
 		password[0] = '\0';
+
 #ifdef HAVE_TERMIOS_H
 	tcsetattr(0, TCSADRAIN, &t_orig);
 #endif
@@ -332,13 +332,13 @@ prompt_for_password(char *prompt, char *password)
 int
 main(int argc, char *argv[])
 {
-	static char bkname[MAXPGPATH];
 	char       *filename;
-	char		username[9];
+	char		bkname[MAXPGPATH];
+	char		username[NAMEDATALEN];
 	char		salt[3];
-	char		key[9],
-				key2[9];
-	char		e_passwd[PG_PASSWD_LEN + 1];
+	char		key[CLEAR_PASSWD_LEN + 1],
+				key2[CLEAR_PASSWD_LEN + 1];
+	char		e_passwd[CRYPTED_PASSWD_LEN + 1];
 	int			i;
 
 	progname = argv[0];
@@ -376,7 +376,7 @@ main(int argc, char *argv[])
 	prompt_for_username(username);
 	prompt_for_password("New password: ", key);
 	prompt_for_password("Re-enter new password: ", key2);
-	if (strncmp(key, key2, 8) != 0)
+	if (strcmp(key, key2) != 0)
 	{
 		fprintf(stderr, "Password mismatch\n");
 		exit(1);
@@ -397,7 +397,7 @@ main(int argc, char *argv[])
 	{							/* did not exist */
 		if (npwds == MAXPWDS)
 		{
-			fprintf(stderr, "Cannot handle so may entries\n");
+			fprintf(stderr, "Cannot handle so many entries\n");
 			exit(1);
 		}
 		pwds[npwds].uname = strdup(username);
