@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.172 2004/05/30 23:40:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.173 2004/06/01 04:47:45 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -846,24 +846,21 @@ is_pseudo_constant_clause_relids(Node *clause, Relids relids)
 List *
 pull_constant_clauses(List *quals, List **constantQual)
 {
-	FastList	constqual,
-				restqual;
+	List	   *constqual = NIL,
+			   *restqual = NIL;
 	ListCell   *q;
-
-	FastListInit(&constqual);
-	FastListInit(&restqual);
 
 	foreach(q, quals)
 	{
 		Node	   *qual = (Node *) lfirst(q);
 
 		if (is_pseudo_constant_clause(qual))
-			FastAppend(&constqual, qual);
+			constqual = lappend(constqual, qual);
 		else
-			FastAppend(&restqual, qual);
+			restqual = lappend(restqual, qual);
 	}
-	*constantQual = FastListValue(&constqual);
-	return FastListValue(&restqual);
+	*constantQual = constqual;
+	return restqual;
 }
 
 
@@ -1411,7 +1408,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		CaseExpr   *caseexpr = (CaseExpr *) node;
 		CaseExpr   *newcase;
 		Node	   *newarg;
-		FastList	newargs;
+		List	   *newargs;
 		Node	   *defresult;
 		Const	   *const_input;
 		ListCell   *arg;
@@ -1421,7 +1418,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 												active_fns);
 
 		/* Simplify the WHEN clauses */
-		FastListInit(&newargs);
+		newargs = NIL;
 		foreach(arg, caseexpr->args)
 		{
 			/* Simplify this alternative's condition and result */
@@ -1434,7 +1431,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			if (casewhen->expr == NULL ||
 				!IsA(casewhen->expr, Const))
 			{
-				FastAppend(&newargs, casewhen);
+				newargs = lappend(newargs, casewhen);
 				continue;
 			}
 			const_input = (Const *) casewhen->expr;
@@ -1446,13 +1443,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			 * Found a TRUE condition.	If it's the first (un-dropped)
 			 * alternative, the CASE reduces to just this alternative.
 			 */
-			if (FastListValue(&newargs) == NIL)
+			if (newargs == NIL)
 				return (Node *) casewhen->result;
 
 			/*
 			 * Otherwise, add it to the list, and drop all the rest.
 			 */
-			FastAppend(&newargs, casewhen);
+			newargs = lappend(newargs, casewhen);
 			break;
 		}
 
@@ -1464,13 +1461,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 * If no non-FALSE alternatives, CASE reduces to the default
 		 * result
 		 */
-		if (FastListValue(&newargs) == NIL)
+		if (newargs == NIL)
 			return defresult;
 		/* Otherwise we need a new CASE node */
 		newcase = makeNode(CaseExpr);
 		newcase->casetype = caseexpr->casetype;
 		newcase->arg = (Expr *) newarg;
-		newcase->args = FastListValue(&newargs);
+		newcase->args = newargs;
 		newcase->defresult = (Expr *) defresult;
 		return (Node *) newcase;
 	}
@@ -1479,10 +1476,10 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		ArrayExpr  *arrayexpr = (ArrayExpr *) node;
 		ArrayExpr  *newarray;
 		bool		all_const = true;
-		FastList	newelems;
+		List	   *newelems;
 		ListCell   *element;
 
-		FastListInit(&newelems);
+		newelems = NIL;
 		foreach(element, arrayexpr->elements)
 		{
 			Node	   *e;
@@ -1491,13 +1488,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 											   active_fns);
 			if (!IsA(e, Const))
 				all_const = false;
-			FastAppend(&newelems, e);
+			newelems = lappend(newelems, e);
 		}
 
 		newarray = makeNode(ArrayExpr);
 		newarray->array_typeid = arrayexpr->array_typeid;
 		newarray->element_typeid = arrayexpr->element_typeid;
-		newarray->elements = FastListValue(&newelems);
+		newarray->elements = newelems;
 		newarray->multidims = arrayexpr->multidims;
 
 		if (all_const)
@@ -1510,10 +1507,10 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	{
 		CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 		CoalesceExpr *newcoalesce;
-		FastList	newargs;
+		List	   *newargs;
 		ListCell   *arg;
 
-		FastListInit(&newargs);
+		newargs = NIL;
 		foreach(arg, coalesceexpr->args)
 		{
 			Node	   *e;
@@ -1530,15 +1527,15 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			{
 				if (((Const *) e)->constisnull)
 					continue;	/* drop null constant */
-				if (FastListValue(&newargs) == NIL)
+				if (newargs == NIL)
 					return e;	/* first expr */
 			}
-			FastAppend(&newargs, e);
+			newargs = lappend(newargs, e);
 		}
 
 		newcoalesce = makeNode(CoalesceExpr);
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
-		newcoalesce->args = FastListValue(&newargs);
+		newcoalesce->args = newargs;
 		return (Node *) newcoalesce;
 	}
 	if (IsA(node, FieldSelect))
@@ -2971,16 +2968,17 @@ expression_tree_mutator(Node *node,
 				 * NOTE: this would fail badly on a list with integer
 				 * elements!
 				 */
-				FastList	resultlist;
+				List	   *resultlist;
 				ListCell   *temp;
 
-				FastListInit(&resultlist);
+				resultlist = NIL;
 				foreach(temp, (List *) node)
 				{
-					FastAppend(&resultlist,
-							   mutator((Node *) lfirst(temp), context));
+					resultlist = lappend(resultlist,
+										 mutator((Node *) lfirst(temp),
+												 context));
 				}
-				return (Node *) FastListValue(&resultlist);
+				return (Node *) resultlist;
 			}
 			break;
 		case T_FromExpr:
@@ -3063,7 +3061,7 @@ query_tree_mutator(Query *query,
 				   void *context,
 				   int flags)
 {
-	FastList	newrt;
+	List	   *newrt;
 	ListCell   *rt;
 
 	Assert(query != NULL && IsA(query, Query));
@@ -3083,7 +3081,7 @@ query_tree_mutator(Query *query,
 	MUTATE(query->limitOffset, query->limitOffset, Node *);
 	MUTATE(query->limitCount, query->limitCount, Node *);
 	MUTATE(query->in_info_list, query->in_info_list, List *);
-	FastListInit(&newrt);
+	newrt = NIL;
 	foreach(rt, query->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
@@ -3113,9 +3111,9 @@ query_tree_mutator(Query *query,
 				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);
 				break;
 		}
-		FastAppend(&newrt, newrte);
+		newrt = lappend(newrt, newrte);
 	}
-	query->rtable = FastListValue(&newrt);
+	query->rtable = newrt;
 	return query;
 }
 

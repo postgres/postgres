@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.59 2004/05/30 23:40:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.60 2004/06/01 04:47:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,19 +243,13 @@ best_or_subclause_indexes(Query *root,
 						  RelOptInfo *rel,
 						  List *subclauses)
 {
-	FastList	infos;
-	FastList	clauses;
-	FastList	quals;
-	Cost		path_startup_cost;
-	Cost		path_total_cost;
+	List	   *infos = NIL;
+	List	   *clauses = NIL;
+	List	   *quals = NIL;
+	Cost		path_startup_cost = 0;
+	Cost		path_total_cost = 0;
 	ListCell   *slist;
 	IndexPath  *pathnode;
-
-	FastListInit(&infos);
-	FastListInit(&clauses);
-	FastListInit(&quals);
-	path_startup_cost = 0;
-	path_total_cost = 0;
 
 	/* Gather info for each OR subclause */
 	foreach(slist, subclauses)
@@ -273,9 +267,9 @@ best_or_subclause_indexes(Query *root,
 									 &best_startup_cost, &best_total_cost))
 			return NULL;		/* failed to match this subclause */
 
-		FastAppend(&infos, best_indexinfo);
-		FastAppend(&clauses, best_indexclauses);
-		FastAppend(&quals, best_indexquals);
+		infos = lappend(infos, best_indexinfo);
+		clauses = lappend(clauses, best_indexclauses);
+		quals = lappend(quals, best_indexquals);
 		/*
 		 * Path startup_cost is the startup cost for the first index scan only;
 		 * startup costs for later scans will be paid later on, so they just
@@ -303,9 +297,9 @@ best_or_subclause_indexes(Query *root,
 	 */
 	pathnode->path.pathkeys = NIL;
 
-	pathnode->indexinfo = FastListValue(&infos);
-	pathnode->indexclauses = FastListValue(&clauses);
-	pathnode->indexquals = FastListValue(&quals);
+	pathnode->indexinfo = infos;
+	pathnode->indexclauses = clauses;
+	pathnode->indexquals = quals;
 
 	/* It's not an innerjoin path. */
 	pathnode->isjoininner = false;

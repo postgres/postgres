@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.43 2004/05/30 23:40:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.44 2004/06/01 04:47:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,8 @@
 
 
 static Node *flatten_andors_mutator(Node *node, void *context);
-static void flatten_andors_and_walker(FastList *out_list, List *andlist);
-static void flatten_andors_or_walker(FastList *out_list, List *orlist);
 static List *pull_ands(List *andlist);
-static void pull_ands_walker(FastList *out_list, List *andlist);
 static List *pull_ors(List *orlist);
-static void pull_ors_walker(FastList *out_list, List *orlist);
 static Expr *find_nots(Expr *qual);
 static Expr *push_nots(Expr *qual);
 static Expr *find_duplicate_ors(Expr *qual);
@@ -122,55 +118,53 @@ flatten_andors_mutator(Node *node, void *context)
 
 		if (bexpr->boolop == AND_EXPR)
 		{
-			FastList	out_list;
+			List	   *out_list = NIL;
+			ListCell   *arg;
 
-			FastListInit(&out_list);
-			flatten_andors_and_walker(&out_list, bexpr->args);
-			return (Node *) make_andclause(FastListValue(&out_list));
+			foreach(arg, bexpr->args)
+			{
+				Node	   *subexpr = flatten_andors((Node *) lfirst(arg));
+
+				/*
+				 * Note: we can destructively concat the subexpression's
+				 * arglist because we know the recursive invocation of
+				 * flatten_andors will have built a new arglist not shared
+				 * with any other expr. Otherwise we'd need a list_copy here.
+				 */
+				if (and_clause(subexpr))
+					out_list = list_concat(out_list,
+										   ((BoolExpr *) subexpr)->args);
+				else
+					out_list = lappend(out_list, subexpr);
+			}
+			return (Node *) make_andclause(out_list);
 		}
 		if (bexpr->boolop == OR_EXPR)
 		{
-			FastList	out_list;
+			List	   *out_list = NIL;
+			ListCell   *arg;
 
-			FastListInit(&out_list);
-			flatten_andors_or_walker(&out_list, bexpr->args);
-			return (Node *) make_orclause(FastListValue(&out_list));
+			foreach(arg, bexpr->args)
+			{
+				Node	   *subexpr = flatten_andors((Node *) lfirst(arg));
+
+				/*
+				 * Note: we can destructively concat the subexpression's
+				 * arglist because we know the recursive invocation of
+				 * flatten_andors will have built a new arglist not shared
+				 * with any other expr. Otherwise we'd need a list_copy here.
+				 */
+				if (or_clause(subexpr))
+					out_list = list_concat(out_list,
+										   ((BoolExpr *) subexpr)->args);
+				else
+					out_list = lappend(out_list, subexpr);
+			}
+			return (Node *) make_orclause(out_list);
 		}
 		/* else it's a NOT clause, fall through */
 	}
 	return expression_tree_mutator(node, flatten_andors_mutator, context);
-}
-
-static void
-flatten_andors_and_walker(FastList *out_list, List *andlist)
-{
-	ListCell   *arg;
-
-	foreach(arg, andlist)
-	{
-		Node	   *subexpr = (Node *) lfirst(arg);
-
-		if (and_clause(subexpr))
-			flatten_andors_and_walker(out_list, ((BoolExpr *) subexpr)->args);
-		else
-			FastAppend(out_list, flatten_andors(subexpr));
-	}
-}
-
-static void
-flatten_andors_or_walker(FastList *out_list, List *orlist)
-{
-	ListCell   *arg;
-
-	foreach(arg, orlist)
-	{
-		Node	   *subexpr = (Node *) lfirst(arg);
-
-		if (or_clause(subexpr))
-			flatten_andors_or_walker(out_list, ((BoolExpr *) subexpr)->args);
-		else
-			FastAppend(out_list, flatten_andors(subexpr));
-	}
 }
 
 /*
@@ -183,27 +177,26 @@ flatten_andors_or_walker(FastList *out_list, List *orlist)
 static List *
 pull_ands(List *andlist)
 {
-	FastList	out_list;
-
-	FastListInit(&out_list);
-	pull_ands_walker(&out_list, andlist);
-	return FastListValue(&out_list);
-}
-
-static void
-pull_ands_walker(FastList *out_list, List *andlist)
-{
+	List	   *out_list = NIL;
 	ListCell   *arg;
 
 	foreach(arg, andlist)
 	{
 		Node	   *subexpr = (Node *) lfirst(arg);
 
+		/*
+		 * Note: we can destructively concat the subexpression's arglist
+		 * because we know the recursive invocation of pull_ands will have
+		 * built a new arglist not shared with any other expr. Otherwise
+		 * we'd need a list_copy here.
+		 */
 		if (and_clause(subexpr))
-			pull_ands_walker(out_list, ((BoolExpr *) subexpr)->args);
+			out_list = list_concat(out_list,
+								   pull_ands(((BoolExpr *) subexpr)->args));
 		else
-			FastAppend(out_list, subexpr);
+			out_list = lappend(out_list, subexpr);
 	}
+	return out_list;
 }
 
 /*
@@ -216,27 +209,26 @@ pull_ands_walker(FastList *out_list, List *andlist)
 static List *
 pull_ors(List *orlist)
 {
-	FastList	out_list;
-
-	FastListInit(&out_list);
-	pull_ors_walker(&out_list, orlist);
-	return FastListValue(&out_list);
-}
-
-static void
-pull_ors_walker(FastList *out_list, List *orlist)
-{
+	List	   *out_list = NIL;
 	ListCell   *arg;
 
 	foreach(arg, orlist)
 	{
 		Node	   *subexpr = (Node *) lfirst(arg);
 
+		/*
+		 * Note: we can destructively concat the subexpression's arglist
+		 * because we know the recursive invocation of pull_ors will have
+		 * built a new arglist not shared with any other expr. Otherwise
+		 * we'd need a list_copy here.
+		 */
 		if (or_clause(subexpr))
-			pull_ors_walker(out_list, ((BoolExpr *) subexpr)->args);
+			out_list = list_concat(out_list,
+								   pull_ors(((BoolExpr *) subexpr)->args));
 		else
-			FastAppend(out_list, subexpr);
+			out_list = lappend(out_list, subexpr);
 	}
+	return out_list;
 }
 
 
@@ -257,23 +249,21 @@ find_nots(Expr *qual)
 
 	if (and_clause((Node *) qual))
 	{
-		FastList	t_list;
+		List	   *t_list = NIL;
 		ListCell   *temp;
 
-		FastListInit(&t_list);
 		foreach(temp, ((BoolExpr *) qual)->args)
-			FastAppend(&t_list, find_nots(lfirst(temp)));
-		return make_andclause(pull_ands(FastListValue(&t_list)));
+			t_list = lappend(t_list, find_nots(lfirst(temp)));
+		return make_andclause(pull_ands(t_list));
 	}
 	else if (or_clause((Node *) qual))
 	{
-		FastList	t_list;
+		List	   *t_list = NIL;
 		ListCell   *temp;
 
-		FastListInit(&t_list);
 		foreach(temp, ((BoolExpr *) qual)->args)
-			FastAppend(&t_list, find_nots(lfirst(temp)));
-		return make_orclause(pull_ors(FastListValue(&t_list)));
+			t_list = lappend(t_list, find_nots(lfirst(temp)));
+		return make_orclause(pull_ors(t_list));
 	}
 	else if (not_clause((Node *) qual))
 		return push_nots(get_notclausearg(qual));
@@ -323,23 +313,21 @@ push_nots(Expr *qual)
 		 * i.e., swap AND for OR and negate all the subclauses.
 		 *--------------------
 		 */
-		FastList	t_list;
+		List	   *t_list = NIL;
 		ListCell   *temp;
 
-		FastListInit(&t_list);
 		foreach(temp, ((BoolExpr *) qual)->args)
-			FastAppend(&t_list, push_nots(lfirst(temp)));
-		return make_orclause(pull_ors(FastListValue(&t_list)));
+			t_list = lappend(t_list, push_nots(lfirst(temp)));
+		return make_orclause(pull_ors(t_list));
 	}
 	else if (or_clause((Node *) qual))
 	{
-		FastList	t_list;
+		List	   *t_list = NIL;
 		ListCell   *temp;
 
-		FastListInit(&t_list);
 		foreach(temp, ((BoolExpr *) qual)->args)
-			FastAppend(&t_list, push_nots(lfirst(temp)));
-		return make_andclause(pull_ands(FastListValue(&t_list)));
+			t_list = lappend(t_list, push_nots(lfirst(temp)));
+		return make_andclause(pull_ands(t_list));
 	}
 	else if (not_clause((Node *) qual))
 	{

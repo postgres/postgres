@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.93 2004/05/30 23:40:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.94 2004/06/01 04:47:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,11 +192,9 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 	Index		varno = rel->relid;
 	RangeTblEntry *rte = rt_fetch(varno, root->rtable);
 	Relation	relation;
-	FastList	tlist;
+	List	   *tlist = NIL;
 	int			attrno,
 				numattrs;
-
-	FastListInit(&tlist);
 
 	Assert(rte->rtekind == RTE_RELATION);
 
@@ -211,11 +209,11 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 		if (att_tup->attisdropped)
 		{
 			/* found a dropped col, so punt */
-			FastListInit(&tlist);
+			tlist = NIL;
 			break;
 		}
 
-		FastAppend(&tlist,
+		tlist = lappend(tlist,
 				   create_tl_element(makeVar(varno,
 											 attrno,
 											 att_tup->atttypid,
@@ -226,7 +224,7 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 
 	heap_close(relation, AccessShareLock);
 
-	return FastListValue(&tlist);
+	return tlist;
 }
 
 /*

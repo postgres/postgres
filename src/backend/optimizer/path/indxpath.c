@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.160 2004/05/30 23:40:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.161 2004/06/01 04:47:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,7 +237,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
 static List *
 group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 {
-	FastList	clausegroup_list;
+	List	   *clausegroup_list = NIL;
 	List	   *restrictinfo_list = rel->baserestrictinfo;
 	int			indexcol = 0;
 	Oid		   *classes = index->classlist;
@@ -245,14 +245,12 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 	if (restrictinfo_list == NIL)
 		return NIL;
 
-	FastListInit(&clausegroup_list);
 	do
 	{
 		Oid			curClass = classes[0];
-		FastList	clausegroup;
+		List	   *clausegroup = NIL;
 		ListCell   *l;
 
-		FastListInit(&clausegroup);
 		foreach(l, restrictinfo_list)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
@@ -262,24 +260,24 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 										 indexcol,
 										 curClass,
 										 rinfo))
-				FastAppend(&clausegroup, rinfo);
+				clausegroup = lappend(clausegroup, rinfo);
 		}
 
 		/*
 		 * If no clauses match this key, we're done; we don't want to look
 		 * at keys to its right.
 		 */
-		if (FastListValue(&clausegroup) == NIL)
+		if (clausegroup == NIL)
 			break;
 
-		FastAppend(&clausegroup_list, FastListValue(&clausegroup));
+		clausegroup_list = lappend(clausegroup_list, clausegroup);
 
 		indexcol++;
 		classes++;
 
 	} while (!DoneMatchingIndexKeys(classes));
 
-	return FastListValue(&clausegroup_list);
+	return clausegroup_list;
 }
 
 /*
@@ -301,20 +299,17 @@ group_clauses_by_indexkey_for_join(Query *root,
 								   Relids outer_relids,
 								   JoinType jointype, bool isouterjoin)
 {
-	FastList	clausegroup_list;
+	List	   *clausegroup_list = NIL;
 	bool		jfound = false;
 	int			indexcol = 0;
 	Oid		   *classes = index->classlist;
 
-	FastListInit(&clausegroup_list);
 	do
 	{
 		Oid			curClass = classes[0];
-		FastList	clausegroup;
+		List	   *clausegroup = NIL;
 		int			numsources;
 		ListCell   *l;
-
-		FastListInit(&clausegroup);
 
 		/*
 		 * We can always use plain restriction clauses for the rel.  We scan
@@ -337,11 +332,11 @@ group_clauses_by_indexkey_for_join(Query *root,
 										 indexcol,
 										 curClass,
 										 rinfo))
-				FastAppend(&clausegroup, rinfo);
+				clausegroup = lappend(clausegroup, rinfo);
 		}
 
 		/* found anything in base restrict list? */
-		numsources = (FastListValue(&clausegroup) != NIL) ? 1 : 0;
+		numsources = (clausegroup != NIL) ? 1 : 0;
 
 		/* Look for joinclauses that are usable with given outer_relids */
 		foreach(l, rel->joininfo)
@@ -367,7 +362,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 												  curClass,
 												  rinfo))
 				{
-					FastAppend(&clausegroup, rinfo);
+					clausegroup = lappend(clausegroup, rinfo);
 					if (!jfoundhere)
 					{
 						jfoundhere = true;
@@ -384,22 +379,19 @@ group_clauses_by_indexkey_for_join(Query *root,
 		 */
 		if (numsources > 1)
 		{
-			List	   *nl;
-
-			nl = remove_redundant_join_clauses(root,
-											 FastListValue(&clausegroup),
-											   jointype);
-			FastListFromList(&clausegroup, nl);
+			clausegroup = remove_redundant_join_clauses(root,
+														clausegroup,
+														jointype);
 		}
 
 		/*
 		 * If no clauses match this key, we're done; we don't want to look
 		 * at keys to its right.
 		 */
-		if (FastListValue(&clausegroup) == NIL)
+		if (clausegroup == NIL)
 			break;
 
-		FastAppend(&clausegroup_list, FastListValue(&clausegroup));
+		clausegroup_list = lappend(clausegroup_list, clausegroup);
 
 		indexcol++;
 		classes++;
@@ -410,7 +402,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 	if (!jfound)
 		return NIL;
 
-	return FastListValue(&clausegroup_list);
+	return clausegroup_list;
 }
 
 
@@ -438,19 +430,16 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 								 IndexOptInfo *index,
 								 Expr *orsubclause)
 {
-	FastList	clausegroup_list;
+	List	   *clausegroup_list = NIL;
 	bool		matched = false;
 	int			indexcol = 0;
 	Oid		   *classes = index->classlist;
 
-	FastListInit(&clausegroup_list);
 	do
 	{
 		Oid			curClass = classes[0];
-		FastList	clausegroup;
+		List	   *clausegroup = NIL;
 		ListCell   *item;
-
-		FastListInit(&clausegroup);
 
 		/* Try to match the OR subclause to the index key */
 		if (IsA(orsubclause, RestrictInfo))
@@ -459,7 +448,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 										 indexcol, curClass,
 										 (RestrictInfo *) orsubclause))
 			{
-				FastAppend(&clausegroup, orsubclause);
+				clausegroup = lappend(clausegroup, orsubclause);
 				matched = true;
 			}
 		}
@@ -474,7 +463,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 											 indexcol, curClass,
 											 subsubclause))
 				{
-					FastAppend(&clausegroup, subsubclause);
+					clausegroup = lappend(clausegroup, subsubclause);
 					matched = true;
 				}
 			}
@@ -487,7 +476,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 		 * XXX should we always search the top-level list?  Slower but
 		 * could sometimes yield a better plan.
 		 */
-		if (FastListValue(&clausegroup) == NIL)
+		if (clausegroup == NIL)
 		{
 			foreach(item, rel->baserestrictinfo)
 			{
@@ -496,7 +485,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 				if (match_clause_to_indexcol(rel, index,
 											 indexcol, curClass,
 											 rinfo))
-					FastAppend(&clausegroup, rinfo);
+					clausegroup = lappend(clausegroup, rinfo);
 			}
 		}
 
@@ -504,10 +493,10 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 		 * If still no clauses match this key, we're done; we don't want
 		 * to look at keys to its right.
 		 */
-		if (FastListValue(&clausegroup) == NIL)
+		if (clausegroup == NIL)
 			break;
 
-		FastAppend(&clausegroup_list, FastListValue(&clausegroup));
+		clausegroup_list = lappend(clausegroup_list, clausegroup);
 
 		indexcol++;
 		classes++;
@@ -517,7 +506,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 	if (!matched)
 		return NIL;
 
-	return FastListValue(&clausegroup_list);
+	return clausegroup_list;
 }
 
 
@@ -2011,14 +2000,13 @@ match_special_index_operator(Expr *clause, Oid opclass,
 List *
 expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 {
-	FastList	resultquals;
+	List	   *resultquals = NIL;
 	ListCell   *clausegroup_item;
 	Oid		   *classes = index->classlist;
 
 	if (clausegroups == NIL)
 		return NIL;
 
-	FastListInit(&resultquals);
 	clausegroup_item = list_head(clausegroups);
 	do
 	{
@@ -2029,17 +2017,18 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-			FastConc(&resultquals,
-					 expand_indexqual_condition(rinfo, curClass));
+			resultquals = list_concat(resultquals,
+									  expand_indexqual_condition(rinfo,
+																 curClass));
 		}
 
 		clausegroup_item = lnext(clausegroup_item);
 		classes++;
 	} while (clausegroup_item != NULL && !DoneMatchingIndexKeys(classes));
 
-	Assert(clausegroup_item == NULL);	/* else more groups than indexkeys... */
+	Assert(clausegroup_item == NULL);	/* else more groups than indexkeys */
 
-	return FastListValue(&resultquals);
+	return resultquals;
 }
 
 /*
