@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.40 2003/09/18 20:30:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.41 2003/10/16 17:38:01 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -487,7 +487,8 @@ PostgreSQL documentation
    all clients to terminate before quitting, the second will
    forcefully disconnect all clients, and the third will quit
    immediately without proper shutdown, resulting in a recovery run
-   during restart.
+   during restart.   The <literal>SIGHUP</literal> signal will 
+   reload the server configuration files.
   </para>
 
   <para>

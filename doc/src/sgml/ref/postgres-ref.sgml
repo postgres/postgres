@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.37 2003/09/24 18:54:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.38 2003/10/16 17:38:01 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -370,12 +370,12 @@ PostgreSQL documentation
   </para>
 
   <para>
-   To tell <command>postgres</command> to reread the configuration file,
+   To tell <command>postgres</command> to reload the configuration files,
    send a <literal>SIGHUP</literal> signal.  Normally it's best to
    <literal>SIGHUP</literal> the <command>postmaster</command> instead;
    the <command>postmaster</command> will in turn <literal>SIGHUP</literal>
    each of its children.  But in some cases it might be desirable to have only
-   one <command>postgres</command> process reread the configuration file.
+   one <command>postgres</command> process reload the configuration files.
   </para>
 
   <para>
