@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.28 2002/06/20 20:29:51 momjian Exp $
+ * $Id: geqo.h,v 1.29 2002/07/20 04:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 /* GEQO debug flag */
 /*
  #define GEQO_DEBUG
-*/
+ */
 
 /* recombination mechanism */
 /*

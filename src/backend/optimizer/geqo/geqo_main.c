@@ -1,13 +1,13 @@
 /*------------------------------------------------------------------------
  *
  * geqo_main.c
- *	  solution of the query optimization problem
+ *	  solution to the query optimization problem
  *	  by means of a Genetic Algorithm (GA)
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.31 2002/06/20 20:29:29 momjian Exp $
+ * $Id: geqo_main.c,v 1.32 2002/07/20 04:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 
 #include "optimizer/geqo.h"
 #include "optimizer/geqo_misc.h"
+#include "optimizer/geqo_mutation.h"
 #include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_selection.h"
 
@@ -45,7 +46,6 @@ int			Geqo_random_seed;
 
 static int	gimme_pool_size(int nr_rel);
 static int	gimme_number_generations(int pool_size, int effort);
-
 
 /* define edge recombination crossover [ERX] per default */
 #if !defined(ERX) && \
@@ -120,30 +120,30 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	daddy = alloc_chromo(pool->string_length);
 
 #if defined (ERX)
-	elog(LOG, "geqo_main: using edge recombination crossover [ERX]");
+	elog(DEBUG1, "geqo_main: using edge recombination crossover [ERX]");
 /* allocate edge table memory */
 	edge_table = alloc_edge_table(pool->string_length);
 #elif defined(PMX)
-	elog(LOG, "geqo_main: using partially matched crossover [PMX]");
+	elog(DEBUG1, "geqo_main: using partially matched crossover [PMX]");
 /* allocate chromosome kid memory */
 	kid = alloc_chromo(pool->string_length);
 #elif defined(CX)
-	elog(LOG, "geqo_main: using cycle crossover [CX]");
+	elog(DEBUG1, "geqo_main: using cycle crossover [CX]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(PX)
-	elog(LOG, "geqo_main: using position crossover [PX]");
+	elog(DEBUG1, "geqo_main: using position crossover [PX]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(OX1)
-	elog(LOG, "geqo_main: using order crossover [OX1]");
+	elog(DEBUG1, "geqo_main: using order crossover [OX1]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(OX2)
-	elog(LOG, "geqo_main: using order crossover [OX2]");
+	elog(DEBUG1, "geqo_main: using order crossover [OX2]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
@@ -155,19 +155,13 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 
 	for (generation = 0; generation < number_generations; generation++)
 	{
-
-		/* SELECTION */
-		geqo_selection(momma, daddy, pool, Geqo_selection_bias);		/* using linear bias
-																		 * function */
-
-
+		/* SELECTION: using linear bias function */
+		geqo_selection(momma, daddy, pool, Geqo_selection_bias);
 
 #if defined (ERX)
 		/* EDGE RECOMBINATION CROSSOVER */
 		difference = gimme_edge_table(momma->string, daddy->string, pool->string_length, edge_table);
 
-		/* let the kid grow in momma's womb (storage) for nine months ;-) */
-		/* sleep(23328000) -- har har har */
 		kid = momma;
 
 		/* are there any edge failures ? */
@@ -209,7 +203,7 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 			print_gen(stdout, pool, generation);
 #endif
 
-	}							/* end of iterative optimization */
+	}
 
 
 #if defined(ERX) && defined(GEQO_DEBUG)
@@ -289,14 +283,7 @@ gimme_pool_size(int nr_rel)
 	double		size;
 
 	if (Geqo_pool_size != 0)
-	{
-		if (Geqo_pool_size < MIN_GEQO_POOL_SIZE)
-			return MIN_GEQO_POOL_SIZE;
-		else if (Geqo_pool_size > MAX_GEQO_POOL_SIZE)
-			return MAX_GEQO_POOL_SIZE;
-		else
-			return Geqo_pool_size;
-	}
+		return Geqo_pool_size;
 
 	size = pow(2.0, nr_rel + 1.0);
 
