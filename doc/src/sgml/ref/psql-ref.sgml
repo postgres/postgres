@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.45 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.46 2001/02/03 19:09:46 petere Exp $
 Postgres documentation
 -->
 
@@ -1502,11 +1502,14 @@ Access permissions for database "test"
       <term>-v, --variable, --set <replaceable class="parameter">assignment</replaceable></term>
       <listitem>
       <para>
-      Performs a variable assignment, like the <command>\set</command> internal command.
-      Note that you must separate name and value, if any, by an equal sign on the command
-      line. To unset a variable, leave off the equal sign. These assignments are done
-      during a very early state of start-up, so variables reserved for internal purposes
-      might get overwritten later.
+      Performs a variable assignment, like the <command>\set</command>
+      internal command.  Note that you must separate name and value,
+      if any, by an equal sign on the command line. To unset a
+      variable, leave off the equal sign.  To just set a variable
+      without a value, use the equal sign but leave off the value.
+      These assignments are done during a very early stage of
+      start-up, so variables reserved for internal purposes might get
+      overwritten later.
       </para>
       </listitem>
     </varlistentry>
