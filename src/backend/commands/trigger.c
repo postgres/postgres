@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.57 2000/02/04 18:49:31 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.58 2000/02/04 23:45:04 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,6 +372,13 @@ RelationRemoveTriggers(Relation rel)
 
 	heap_endscan(tgscan);
 
+	/* ----------
+	 * Need to bump it here so the following doesn't see
+	 * the already deleted triggers again for a self-referencing
+	 * table.
+	 * ----------
+	 */
+	CommandCounterIncrement();
 
 	/* ----------
 	 * Also drop all constraint triggers referencing this relation
@@ -388,6 +395,7 @@ RelationRemoveTriggers(Relation rel)
 		DropTrigStmt	stmt;
 
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(tup);
+
 		refrel = heap_open(pg_trigger->tgrelid, NoLock);
 
 		stmt.relname = pstrdup(RelationGetRelationName(refrel));
