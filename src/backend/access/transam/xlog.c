@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.41 2000/12/11 18:02:25 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.42 2000/12/11 19:27:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -940,7 +940,6 @@ MoveOfflineLogs(char *archdir, uint32 _logId, uint32 _logSeg)
 			continue;
 		if (strcmp(xlde->d_name, lastoff) > 0)
 		{
-			elog(DEBUG, "MoveOfflineLogs: skip %s", xlde->d_name);
 			errno = 0;
 			continue;
 		}
