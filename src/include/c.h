@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.170 2004/09/10 15:20:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.171 2004/09/10 15:51:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@
 
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
-#if !defined(WIN32) || !defined(__CYGWIN__)
+#if !defined(WIN32) && !defined(__CYGWIN__)
 #include "pg_config_os.h"		/* must be before any system header files */
 #endif
 #include "postgres_ext.h"
