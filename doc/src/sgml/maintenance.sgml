@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.15 2002/06/22 04:08:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.16 2002/06/23 03:37:12 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -55,8 +55,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.15 2002/06/22 04:08:07
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname>'s <command>VACUUM</> command must be
-   run on a regular basis for several reasons:
+   <productname>PostgreSQL</productname>'s <command>VACUUM</> command
+   must be run on a regular basis for several reasons:
 
     <orderedlist>
      <listitem>
@@ -100,26 +100,27 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.15 2002/06/22 04:08:07
    </indexterm>
 
    <para>
-    In normal <productname>PostgreSQL</productname> operation, an <command>UPDATE</> or
-    <command>DELETE</> of a row does not immediately remove the old <firstterm>tuple</>
-    (version of the row).  This approach is necessary to gain the benefits
-    of multiversion concurrency control (see the <citetitle>User's Guide</>):
-    the tuple must not be deleted while 
-    it is still potentially visible to other transactions.  But eventually,
-    an outdated or deleted tuple is no longer of interest to any transaction.
-    The space it occupies must be reclaimed for reuse by new tuples, to avoid
-    infinite growth of disk space requirements.  This is done by running
-    <command>VACUUM</>.
+    In normal <productname>PostgreSQL</productname> operation, an
+    <command>UPDATE</> or <command>DELETE</> of a row does not
+    immediately remove the old <firstterm>tuple</> (version of the row).
+    This approach is necessary to gain the benefits of multiversion
+    concurrency control (see the <citetitle>User's Guide</>): the tuple
+    must not be deleted while it is still potentially visible to other
+    transactions. But eventually, an outdated or deleted tuple is no
+    longer of interest to any transaction. The space it occupies must be
+    reclaimed for reuse by new tuples, to avoid infinite growth of disk
+    space requirements. This is done by running <command>VACUUM</>.
    </para>
 
    <para>
     Clearly, a table that receives frequent updates or deletes will need
-    to be vacuumed more often than tables that are seldom updated.  It may
-    be useful to set up periodic <application>cron</> tasks that vacuum only selected tables,
-    skipping tables that are known not to change often.  This is only likely
-    to be helpful if you have both large heavily-updated tables and large
-    seldom-updated tables --- the extra cost of vacuuming a small table
-    isn't enough to be worth worrying about.
+    to be vacuumed more often than tables that are seldom updated. It
+    may be useful to set up periodic <application>cron</> tasks that
+    vacuum only selected tables, skipping tables that are known not to
+    change often. This is only likely to be helpful if you have both
+    large heavily-updated tables and large seldom-updated tables --- the
+    extra cost of vacuuming a small table isn't enough to be worth
+    worrying about.
    </para>
 
    <para>
@@ -174,18 +175,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.15 2002/06/22 04:08:07
 
    <para>
     As with vacuuming for space recovery, frequent updates of statistics
-    are more useful for heavily-updated tables than for seldom-updated ones.
-    But even for a heavily-updated table, there may be no need for
-    statistics updates if the statistical distribution of the data is not
-    changing much.  A simple rule of thumb is to think about how much
+    are more useful for heavily-updated tables than for seldom-updated
+    ones. But even for a heavily-updated table, there may be no need for
+    statistics updates if the statistical distribution of the data is
+    not changing much. A simple rule of thumb is to think about how much
     the minimum and maximum values of the columns in the table change.
-    For example, a <type>timestamp</type> column that contains the time of row update
-    will have a constantly-increasing maximum value as rows are added and
-    updated; such a column will probably need more frequent statistics
-    updates than, say, a column containing URLs for pages accessed on a
-    website.  The URL column may receive changes just as often, but the
-    statistical distribution of its values probably changes relatively
-    slowly.
+    For example, a <type>timestamp</type> column that contains the time
+    of row update will have a constantly-increasing maximum value as
+    rows are added and updated; such a column will probably need more
+    frequent statistics updates than, say, a column containing URLs for
+    pages accessed on a website. The URL column may receive changes just
+    as often, but the statistical distribution of its values probably
+    changes relatively slowly.
    </para>
 
    <para>
@@ -247,42 +248,45 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.15 2002/06/22 04:08:07
 
    <para>
     Prior to <productname>PostgreSQL</productname> 7.2, the only defense
-    against XID wraparound was to re-<command>initdb</> at least every 4 billion
-    transactions.  This of course was not very satisfactory for high-traffic
-    sites, so a better solution has been devised.  The new approach allows an
-    installation to remain up indefinitely, without <command>initdb</> or any sort of
-    restart.  The price is this maintenance requirement:
-    <emphasis>every table in the database must be vacuumed at least once every
-    billion transactions</emphasis>.
+    against XID wraparound was to re-<command>initdb</> at least every 4
+    billion transactions. This of course was not very satisfactory for
+    high-traffic sites, so a better solution has been devised. The new
+    approach allows an installation to remain up indefinitely, without
+    <command>initdb</> or any sort of restart. The price is this
+    maintenance requirement: <emphasis>every table in the database must
+    be vacuumed at least once every billion transactions</emphasis>.
    </para>
 
    <para>
-    In practice this isn't an onerous requirement, but since the consequences
-    of failing to meet it can be complete data loss (not just wasted disk
-    space or slow performance), some special provisions have been made to help
-    database administrators keep track of the time since the last
-    <command>VACUUM</>.  The remainder of this section gives the details.
+    In practice this isn't an onerous requirement, but since the
+    consequences of failing to meet it can be complete data loss (not
+    just wasted disk space or slow performance), some special provisions
+    have been made to help database administrators keep track of the
+    time since the last <command>VACUUM</>. The remainder of this
+    section gives the details.
    </para>
 
    <para>
-    The new approach to XID comparison distinguishes two special XIDs, numbers
-    1 and 2 (<literal>BootstrapXID</> and <literal>FrozenXID</>).  These two
-    XIDs are always considered older than every normal XID.  Normal XIDs (those
-    greater than 2) are compared using modulo-2<superscript>31</> arithmetic.  This means
+    The new approach to XID comparison distinguishes two special XIDs,
+    numbers 1 and 2 (<literal>BootstrapXID</> and
+    <literal>FrozenXID</>). These two XIDs are always considered older
+    than every normal XID. Normal XIDs (those greater than 2) are
+    compared using modulo-2<superscript>31</> arithmetic. This means
     that for every normal XID, there are two billion XIDs that are
-    <quote>older</> and two billion that are <quote>newer</>; another way to
-    say it is that the normal XID space is circular with no endpoint.
-    Therefore, once a tuple has been created with a particular normal XID, the
-    tuple will appear to be <quote>in the past</> for the next two billion 
-    transactions, no matter which normal XID we are talking about.  If the
-    tuple still exists after more than two billion transactions, it will
-    suddenly appear to be in the future.  To prevent data loss, old tuples
-    must be reassigned the XID <literal>FrozenXID</> sometime before they reach
-    the two-billion-transactions-old mark.  Once they are assigned this
-    special XID, they will appear to be <quote>in the past</> to all normal
-    transactions regardless of wraparound issues, and so such tuples will be
-    good until deleted, no matter how long that is.  This reassignment of
-    XID is handled by <command>VACUUM</>.
+    <quote>older</> and two billion that are <quote>newer</>; another
+    way to say it is that the normal XID space is circular with no
+    endpoint. Therefore, once a tuple has been created with a particular
+    normal XID, the tuple will appear to be <quote>in the past</> for
+    the next two billion transactions, no matter which normal XID we are
+    talking about. If the tuple still exists after more than two billion
+    transactions, it will suddenly appear to be in the future. To
+    prevent data loss, old tuples must be reassigned the XID
+    <literal>FrozenXID</> sometime before they reach the
+    two-billion-transactions-old mark. Once they are assigned this
+    special XID, they will appear to be <quote>in the past</> to all
+    normal transactions regardless of wraparound issues, and so such
+    tuples will be good until deleted, no matter how long that is. This
+    reassignment of XID is handled by <command>VACUUM</>.
    </para>
 
    <para>
@@ -346,21 +350,22 @@ VACUUM
    <para>
     <command>VACUUM</> with the <command>FREEZE</> option uses a more
     aggressive freezing policy: tuples are frozen if they are old enough
-    to be considered good by all open transactions.  In particular, if
-    a <command>VACUUM FREEZE</> is performed in an otherwise-idle database,
-    it is guaranteed that <emphasis>all</> tuples in that database will be
-    frozen.  Hence, as long as the database is not modified in any way, it
-    will not need subsequent vacuuming to avoid transaction ID wraparound
-    problems.  This technique is used by <filename>initdb</> to prepare the
-    <filename>template0</> database.  It should also be used to prepare any
-    user-created databases that are to be marked <literal>datallowconn</> =
-    <literal>false</> in <filename>pg_database</>, since there isn't any
-    convenient way to vacuum a database that you can't connect to.  Note
-    that <command>VACUUM</command>'s automatic warning message about unvacuumed databases will
-    ignore  <filename>pg_database</> entries with <literal>datallowconn</> =
-    <literal>false</>, so as to avoid giving false warnings about these
-    databases; therefore it's up to you to ensure that such databases are
-    frozen correctly.
+    to be considered good by all open transactions. In particular, if a
+    <command>VACUUM FREEZE</> is performed in an otherwise-idle
+    database, it is guaranteed that <emphasis>all</> tuples in that
+    database will be frozen. Hence, as long as the database is not
+    modified in any way, it will not need subsequent vacuuming to avoid
+    transaction ID wraparound problems. This technique is used by
+    <filename>initdb</> to prepare the <filename>template0</> database.
+    It should also be used to prepare any user-created databases that
+    are to be marked <literal>datallowconn</> = <literal>false</> in
+    <filename>pg_database</>, since there isn't any convenient way to
+    vacuum a database that you can't connect to. Note that
+    <command>VACUUM</command>'s automatic warning message about
+    unvacuumed databases will ignore <filename>pg_database</> entries
+    with <literal>datallowconn</> = <literal>false</>, so as to avoid
+    giving false warnings about these databases; therefore it's up to
+    you to ensure that such databases are frozen correctly.
    </para>
 
   </sect2>
@@ -375,13 +380,20 @@ VACUUM
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> is unable to reuse index pages
-   in some cases. The problem is that if indexed rows are deleted, those
-   indexes pages can only be reused by rows with similar values. In
-   cases where low indexed rows are deleted and newly inserted rows have
-   high values, disk space used by the index will grow indefinately, even
-   if <command>VACUUM</> is run frequently.
-   TO BE COMPLETED 2002-06-22 bjm
+   <productname>PostgreSQL</productname> is unable to reuse btree index
+   pages in certain cases. The problem is that if indexed rows are
+   deleted, those index pages can only be reused by rows with similar
+   values. For example, if indexed rows are deleted and newly
+   inserted/updated rows have much higher values, the new rows can't use
+   the index space made available by the deleted rows. Instead, such
+   new rows must be placed on new index pages. In such cases, disk
+   space used by the index will grow indefinately, even if
+   <command>VACUUM</> is run frequently.
+  </para>
+  <para>
+   As a solution, you can use the <command>REINDEX</> command
+   periodically to discard pages used by deleted rows. There is also
+   <filename>contrib/reindex</> which can reindex an entire database.
   </para>
  </sect1>
 
@@ -404,31 +416,32 @@ VACUUM
   </para>
 
   <para>
-   If you simply direct the postmaster's <systemitem>stderr</> into a file, the only way
-   to truncate the log file is to stop and restart the postmaster.  This
-   may be OK for development setups but you won't want to run a production
-   server that way.
+   If you simply direct the postmaster's <systemitem>stderr</> into a
+   file, the only way to truncate the log file is to stop and restart
+   the postmaster. This may be OK for development setups but you won't
+   want to run a production server that way.
   </para>
 
   <para>
-   The simplest production-grade approach to managing log output is to send it
-   all to <application>syslog</> and let <application>syslog</> deal with file
-   rotation.  To do this, make sure <productname>PostgreSQL</> was built with
-   the <option>--enable-syslog</> configure option, and set
-   <literal>syslog</> to 2
-   (log to syslog only) in <filename>postgresql.conf</>.
-   Then you can send a <literal>SIGHUP</literal> signal to the
-   <application>syslog</> daemon whenever you want to force it to start
-   writing a new log file.
+   The simplest production-grade approach to managing log output is to
+   send it all to <application>syslog</> and let <application>syslog</>
+   deal with file rotation. To do this, make sure
+   <productname>PostgreSQL</> was built with the
+   <option>--enable-syslog</> configure option, and set
+   <literal>syslog</> to 2 (log to syslog only) in
+   <filename>postgresql.conf</>. Then you can send a
+   <literal>SIGHUP</literal> signal to the <application>syslog</> daemon
+   whenever you want to force it to start writing a new log file.
   </para>
 
   <para>
    On many systems, however, syslog is not very reliable, particularly
    with large log messages; it may truncate or drop messages just when
-   you need them the most.  You may find it more useful to pipe the
-   <application>postmaster</>'s <systemitem>stderr</> to some type of log rotation script.
-   If you start the postmaster with <application>pg_ctl</>, then the
-   postmaster's <systemitem>stderr</> is already redirected to <systemitem>stdout</>, so you just need a
+   you need them the most. You may find it more useful to pipe the
+   <application>postmaster</>'s <systemitem>stderr</> to some type of
+   log rotation script. If you start the postmaster with
+   <application>pg_ctl</>, then the postmaster's <systemitem>stderr</>
+   is already redirected to <systemitem>stdout</>, so you just need a
    pipe command:
    
 <screen>
