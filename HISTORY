@@ -104,7 +104,7 @@ Migration to version 7.3
 
 Changes
 
-2002-09-23
+2002-10-23
 
 Server Operation
 ================
@@ -134,6 +134,7 @@ Make WITHOUT OID actually save four bytes per row (Manfred Koizar)
 Add GUC default_statistics_target variable to specify ANALYZE buckets (Neil)
 Use local buffer cache for temporary tables so no WAL overhead (Tom)
 Improve free space map performance on large tables (Stephen Marshall, Tom)
+Improved WAL write concurrency (Tom)
 
 Privileges
 ==========
@@ -226,6 +227,7 @@ Fix foreign key constraints to not error on intermediate db states (Stephan)
 Propagate column or table renaming to foreign key constraints
 Add CREATE OR REPLACE VIEW (Gavin, Neil, Tom)
 Add CREATE OR REPLACE RULE (Gavin, Neil, Tom)
+Have rules execute alphabetically, returning more accurate values (Tom)
 
 Utility Commands
 ================
@@ -254,7 +256,7 @@ Fix CLUSTER to preserve all table attributes (Alvaro Herrera)
 New pg_settings table to view/modify GUC settings (Joe)
 Add smart quoting, portability improvements to pg_dump output (Peter)
 Dump serial columns out as SERIAL (Tom)
-Enable large file support, >2G for pg_dump (Peter)
+Enable large file support, >2G for pg_dump (Peter, Philip Warner, Bruce)
 Disallow TRUNCATE on tables that are involved in referential constraints (Rod)
 Have TRUNCATE also auto-truncate the toast table of the relation (Tom)
 Add clusterdb utility that will auto-cluster an entire database based on
@@ -262,6 +264,8 @@ Add clusterdb utility that will auto-cluster an entire database based on
 Overhaul pg_dumpall (Peter)
 Allow REINDEX of TOAST tables (Tom)
 Implemented START TRANSACTION, per SQL99 (Neil)
+Fix rare index corruption when a page split affects bulk delete (Tom)
+Fix ALTER TABLE ... ADD COLUMN for inheritance (Alvaro Herrera)
 
 Data Types and Functions
 ========================
@@ -337,6 +341,7 @@ Overhaul the PL/pgSQL FOUND variable to be more Oracle-compatible (Tom, Neil)
 Allow PL/pgSQL to handle quoted identifiers (Tom)
 Allow set-returning PL/pgSQL functions (Neil)
 Make PL/pgSQL schema-aware (Joe)
+Remove some memory leaks (Nigel J. Andrews, Tom)
 
 Psql
 ====
@@ -350,6 +355,7 @@ Allow psql \d to show temporary table structure (Tom)
 Allow psql \d to show foreign keys (Rod)
 Fix \? to honor \pset pager (Bruce)
 Have psql reports its version number on startup (Tom)
+Allow \copy to specify column names (Tom)
 
 Libpq
 =====
@@ -411,6 +417,7 @@ AIX SMP hang fix (Tomoyuki Niijima)
 Fix pre-1970 date handling on newer glibc libraries (Tom)
 Fix PowerPC SMP locking (Tom)
 Prevent gcc -ffast-math from being used (Tom)
+Bison >= 1.50 now required for developer builds
 
 Source Code
 ===========
