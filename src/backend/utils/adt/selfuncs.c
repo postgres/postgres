@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.170 2005/01/28 20:34:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.171 2005/02/01 23:07:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2043,6 +2043,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 		GroupVarInfo *varinfo1 = (GroupVarInfo *) linitial(varinfos);
 		RelOptInfo *rel = varinfo1->rel;
 		double		reldistinct = varinfo1->ndistinct;
+		double		relmaxndistinct = reldistinct;
 		int			relvarcount = 1;
 		List	   *newvarinfos = NIL;
 
@@ -2057,6 +2058,8 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 			if (varinfo2->rel == varinfo1->rel)
 			{
 				reldistinct *= varinfo2->ndistinct;
+				if (relmaxndistinct < varinfo2->ndistinct)
+					relmaxndistinct = varinfo2->ndistinct;
 				relvarcount++;
 			}
 			else
@@ -2075,12 +2078,23 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 			/*
 			 * Clamp to size of rel, or size of rel / 10 if multiple Vars.
 			 * The fudge factor is because the Vars are probably correlated
-			 * but we don't know by how much.
+			 * but we don't know by how much.  We should never clamp to less
+			 * than the largest ndistinct value for any of the Vars, though,
+			 * since there will surely be at least that many groups.
 			 */
 			double		clamp = rel->tuples;
 
 			if (relvarcount > 1)
+			{
 				clamp *= 0.1;
+				if (clamp < relmaxndistinct)
+				{
+					clamp = relmaxndistinct;
+					/* for sanity in case some ndistinct is too large: */
+					if (clamp > rel->tuples)
+						clamp = rel->tuples;
+				}
+			}
 			if (reldistinct > clamp)
 				reldistinct = clamp;
 
