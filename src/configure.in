@@ -3,34 +3,34 @@ AC_INIT(backend/access/common/heaptuple.c)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
 
 AC_CANONICAL_HOST
-need_tas=no
+
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
           sparc) os=sparc_solaris need_tas=yes ;;
            i386) os=i386_solaris need_tas=yes ;;
         esac ;;
-   sunos*) os=sunos4 ;;
-     aux*) os=aux ;;
-   linux*) os=linux ;;
-    bsdi*) os=bsdi ;;
- freebsd*|netbsd*|openbsd*) os=bsd ;;
-    dgux*) os=dgux;;
-     aix*) os=aix ;;
-nextstep*) os=nextstep;;
-  ultrix*) os=ultrix4;;
-    irix*) os=irix5;;
+   sunos*) os=sunos4 need_tas=no ;;
+     aux*) os=aux need_tas=no ;;
+   linux*) os=linux need_tas=no ;;
+    bsdi*) os=bsdi need_tas=no ;;
+ freebsd*|netbsd*|openbsd*) os=bsd need_tas=no ;;
+    dgux*) os=dgux need_tas=no ;;
+     aix*) os=aix need_tas=no ;;
+nextstep*) os=nextstep need_tas=no ;;
+  ultrix*) os=ultrix4 need_tas=no ;;
+    irix*) os=irix5 need_tas=no ;;
     hpux*) os=hpux need_tas=yes ;;
-     osf*) os=alpha;;
-     sco*) os=sco;;
- machten*) os=machten;;
-  cygwin*) os=win;;
+     osf*) os=alpha need_tas=no ;;
+     sco*) os=sco need_tas=no ;;
+ machten*) os=machten need_tas=no ;;
+  cygwin*) os=win need_tas=no ;;
  sysv4.2*) 
        case "$host_vendor" in
-               univel) os=univel;;
-                    *) os=unknown;;
+               univel) os=univel need_tas=no ;;
+                    *) os=unknown need_tas=no ;;
        esac ;;
-   sysv4*) os=svr4;;
+   sysv4*) os=svr4 need_tas=no ;;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
@@ -49,6 +49,7 @@ then
 	TAS=tas.o
 	AC_SUBST(TAS) 
 fi
+
 PORTNAME=${os}
 AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
 AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
