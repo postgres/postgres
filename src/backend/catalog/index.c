@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.88 1999/09/04 22:00:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.89 1999/09/05 17:43:47 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -23,6 +23,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
+#include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
@@ -1106,6 +1107,17 @@ index_destroy(Oid indexId)
 	userindexRelation = index_open(indexId);
 
 	/* ----------------
+	 *	We do not allow DROP INDEX within a transaction block, because
+	 *	if the transaction is later rolled back there would be no way to
+	 *	undo the unlink of the relation's physical file.  The sole exception
+	 *	is for relations created in the current transaction, since the post-
+	 *	abort state would be that they don't exist anyway.
+	 * ----------------
+	 */
+	if (IsTransactionBlock() && ! userindexRelation->rd_myxactonly)
+		elog(ERROR, "Cannot destroy index within a transaction block");
+
+	/* ----------------
 	 * fix RELATION relation
 	 * ----------------
 	 */
@@ -1164,7 +1176,7 @@ index_destroy(Oid indexId)
 	ReleaseRelationBuffers(userindexRelation);
 
 	if (smgrunlink(DEFAULT_SMGR, userindexRelation) != SM_SUCCESS)
-		elog(ERROR, "amdestroyr: unlink: %m");
+		elog(ERROR, "index_destroy: unlink: %m");
 
 	index_close(userindexRelation);
 	RelationForgetRelation(RelationGetRelid(userindexRelation));

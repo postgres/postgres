@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.94 1999/09/04 22:00:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.95 1999/09/05 17:43:47 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -30,6 +30,7 @@
 #include "miscadmin.h"
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
@@ -1232,7 +1233,7 @@ heap_destroy_with_catalog(char *relname)
 	bool		istemp = (get_temp_rel_by_name(relname) != NULL);
 
 	/* ----------------
-	 *	first open the relation.  if the relation does exist,
+	 *	first open the relation.  if the relation doesn't exist,
 	 *	heap_openr() returns NULL.
 	 * ----------------
 	 */
@@ -1252,6 +1253,17 @@ heap_destroy_with_catalog(char *relname)
 		!allowSystemTableMods && IsSystemRelationName(RelationGetRelationName(rel)->data))
 		elog(ERROR, "System relation '%s' cannot be destroyed",
 			 &rel->rd_rel->relname);
+
+	/* ----------------
+	 *	We do not allow DROP TABLE within a transaction block, because
+	 *	if the transaction is later rolled back there would be no way to
+	 *	undo the unlink of the relation's physical file.  The sole exception
+	 *	is for relations created in the current transaction, since the post-
+	 *	abort state would be that they don't exist anyway.
+	 * ----------------
+	 */
+	if (IsTransactionBlock() && ! rel->rd_myxactonly)
+		elog(ERROR, "Cannot destroy relation within a transaction block");
 
 	/* ----------------
 	 *	remove inheritance information
@@ -1307,17 +1319,10 @@ heap_destroy_with_catalog(char *relname)
 	 */
 	ReleaseRelationBuffers(rel);
 
-	/* ----------------
-	 *	flush the relation from the relcache
-	 * ----------------
-	 * Does nothing!!! Flushing moved below.	- vadim 06/04/97
-	RelationIdInvalidateRelationCacheByRelationId(rel->rd_id);
-	 */
-
 	RemoveConstraints(rel);
 
 	/* ----------------
-	 *	unlink the relation and finish up.
+	 *	unlink the relation's physical file and finish up.
 	 * ----------------
 	 */
 	if (!(rel->rd_isnoname) || !(rel->rd_nonameunlinked))
@@ -1329,6 +1334,10 @@ heap_destroy_with_catalog(char *relname)
 
 	heap_close(rel);
 
+	/* ----------------
+	 *	flush the relation from the relcache
+	 * ----------------
+	 */
 	RelationForgetRelation(rid);
 }
 
