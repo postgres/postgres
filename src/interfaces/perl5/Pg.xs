@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.2 1997/06/02 19:42:03 mergl Exp $
+ * $Id: Pg.xs,v 1.3 1997/09/17 20:46:21 mergl Exp $
  *
  * Copyright (c) 1997  Edmund Mergl
  *
@@ -10,20 +10,8 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#ifdef bool
-#undef bool
-#endif
-
-#ifdef DEBUG
-#undef DEBUG
-#endif
-
-#ifdef ABORT
-#undef ABORT
-#endif
-
-#include "postgres.h"
 #include "libpq-fe.h"
+
 
 typedef struct pg_conn* PG_conn;
 typedef struct pg_result* PG_result;
@@ -375,7 +363,7 @@ PQftype(res, field_num)
 	int	field_num
 
 
-int2
+short
 PQfsize(res, field_num)
 	PGresult *	res
 	int	field_num
@@ -393,6 +381,18 @@ PQoidStatus(res)
 		const char *GAGA;
 	CODE:
 		GAGA = PQoidStatus(res);
+		RETVAL = (char *)GAGA;
+	OUTPUT:
+		RETVAL
+
+
+char *
+PQcmdTuples(res)
+	PGresult *	res
+	PREINIT:
+		const char *GAGA;
+	CODE:
+		GAGA = PQcmdTuples(res);
 		RETVAL = (char *)GAGA;
 	OUTPUT:
 		RETVAL
@@ -872,7 +872,7 @@ PQftype(res, field_num)
 	int	field_num
 
 
-int2
+short
 PQfsize(res, field_num)
 	PG_result	res
 	int	field_num
@@ -890,6 +890,18 @@ PQoidStatus(res)
 		const char *GAGA;
 	CODE:
 		GAGA = PQoidStatus(res);
+		RETVAL = (char *)GAGA;
+	OUTPUT:
+		RETVAL
+
+
+char *
+PQcmdTuples(res)
+	PG_result	res
+	PREINIT:
+		const char *GAGA;
+	CODE:
+		GAGA = PQcmdTuples(res);
 		RETVAL = (char *)GAGA;
 	OUTPUT:
 		RETVAL

@@ -1,11 +1,11 @@
-ApachePg.pl
 Changes
 MANIFEST
 Makefile.PL
 Pg.pm
 Pg.xs
 README
+eg/ApachePg.pl
+eg/example.newstyle
+eg/example.oldstyle
 test.pl
-test.pl.newstyle
-test.pl.oldstyle
 typemap

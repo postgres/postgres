@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Pg.pm,v 1.2 1997/06/02 19:42:01 mergl Exp $
+# $Id: Pg.pm,v 1.3 1997/09/17 20:46:21 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -15,7 +15,7 @@ use vars qw($VERSION @ISA @EXPORT $AUTOLOAD);
 require Exporter;
 require DynaLoader;
 require AutoLoader;
-require 5.003;
+require 5.002;
 
 @ISA = qw(Exporter DynaLoader);
 
@@ -50,6 +50,7 @@ require 5.003;
 	PQfsize
 	PQcmdStatus
 	PQoidStatus
+	PQcmdTuples
 	PQgetvalue
 	PQgetlength
 	PQgetisnull
@@ -83,7 +84,7 @@ require 5.003;
 	PGRES_InvalidOid
 );
 
-$VERSION = '1.6.1';
+$Pg::VERSION = '1.6.2';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -140,7 +141,7 @@ __END__
 
 =head1 NAME
 
-Pg - Perl extension for PostgreSQL
+Pg - Perl5 extension for PostgreSQL
 
 
 =head1 SYNOPSIS
@@ -194,7 +195,7 @@ to an object goes away.
 =head2 old style
 
 All functions and constants are imported into the calling 
-packages namespace. In order to to get a uniform naming, 
+packages name-space. In order to to get a uniform naming, 
 all functions start with 'PQ' (e.g. PQlo_open) and all 
 constants start with 'PGRES_' (e.g. PGRES_CONNECTION_OK). 
 
@@ -245,7 +246,7 @@ fields of this structure.
 
 Opens a new connection to the backend. You may use an empty string for
 any argument, in which case first the environment is checked and then 
-hardcoded defaults are used. The connection identifier $conn ( a pointer 
+hard-coded defaults are used. The connection identifier $conn ( a pointer 
 to the PGconn structure ) must be used in subsequent commands for unique 
 identification. Before using $conn you should call $conn->status to ensure, 
 that the connection was properly made. Use the methods below to access 
@@ -374,7 +375,7 @@ methods you can access almost all fields of this structure.
 
 Use the functions below to access the contents of the PGresult structure.
 
-    $ntups = $result->ntuples
+    $ntuples = $result->ntuples
 
 Returns the number of tuples in the query result.
 
@@ -430,12 +431,21 @@ command executed:
 
     $cmdStatus = $result->cmdStatus
 
-Returns the command status of the last query command.
+Returns the command status of the last query command. 
+In case of DELETE it returns also the number of deleted tuples. 
+In case of INSERT it returns also the OID of the inserted 
+tuple followed by 1 (the number of affected tuples).
+
 
     $oid = $result->oidStatus
 
 In case the last query was an INSERT command it returns the oid of the 
 inserted tuple. 
+
+    $oid = $result->cmdTuples
+
+In case the last query was an INSERT or DELETE command it returns the 
+number of affected tuples. 
 
     $result->printTuples($fout, $printAttName, $terseOutput, $width)
 
@@ -462,13 +472,13 @@ Frees all memory of the given result.
 
 These functions provide file-oriented access to user data. 
 The large object interface is modeled after the Unix file 
-system interface with analogues of open, close, read, write, 
+system interface with analogies of open, close, read, write, 
 lseek, tell. In order to get a consistent naming, all function 
 names have been prepended with 'PQ' (old style only). 
 
     $lobjId = $conn->lo_creat($mode)
 
-Creates a new large object. $mode is a bitmask describing 
+Creates a new large object. $mode is a bit-mask describing 
 different attributes of the new object. Use the following constants: 
 
   - PGRES_INV_SMGRMASK
@@ -529,6 +539,6 @@ Returns -1 upon failure, 1 otherwise.
 
 =head1 SEE ALSO
 
-libpq(3), large_objects(3).
+L<libpq>, L<large_objects>
 
 =cut
