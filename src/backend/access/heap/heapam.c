@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.161 2004/01/07 18:56:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.162 2004/01/16 20:51:30 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1091,16 +1091,13 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
 	tup->t_tableOid = relation->rd_id;
 
-#ifdef TUPLE_TOASTER_ACTIVE
-
 	/*
 	 * If the new tuple is too big for storage or contains already toasted
-	 * attributes from some other relation, invoke the toaster.
+	 * out-of-line attributes from some other relation, invoke the toaster.
 	 */
-	if (HeapTupleHasExtended(tup) ||
+	if (HeapTupleHasExternal(tup) ||
 		(MAXALIGN(tup->t_len) > TOAST_TUPLE_THRESHOLD))
 		heap_tuple_toast_attrs(relation, tup, NULL);
-#endif
 
 	/* Find buffer to insert this tuple into */
 	buffer = RelationGetBufferForTuple(relation, tup->t_len, InvalidBuffer);
@@ -1352,17 +1349,14 @@ l1:
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
-#ifdef TUPLE_TOASTER_ACTIVE
-
 	/*
-	 * If the relation has toastable attributes, we need to delete no
-	 * longer needed items there too.  We have to do this before
-	 * WriteBuffer because we need to look at the contents of the tuple,
-	 * but it's OK to release the context lock on the buffer first.
+	 * If the tuple has toasted out-of-line attributes, we need to delete
+	 * those items too.  We have to do this before WriteBuffer because we need
+	 * to look at the contents of the tuple, but it's OK to release the
+	 * context lock on the buffer first.
 	 */
-	if (HeapTupleHasExtended(&tp))
-		heap_tuple_toast_attrs(relation, NULL, &(tp));
-#endif
+	if (HeapTupleHasExternal(&tp))
+		heap_tuple_toast_attrs(relation, NULL, &tp);
 
 	pgstat_count_heap_delete(&relation->pgstat_info);
 
@@ -1572,11 +1566,11 @@ l2:
 	 * implement UNDO and will re-use transaction IDs after postmaster
 	 * startup.
 	 *
-	 * We need to invoke the toaster if there are already any toasted values
-	 * present, or if the new tuple is over-threshold.
+	 * We need to invoke the toaster if there are already any out-of-line
+	 * toasted values present, or if the new tuple is over-threshold.
 	 */
-	need_toast = (HeapTupleHasExtended(&oldtup) ||
-				  HeapTupleHasExtended(newtup) ||
+	need_toast = (HeapTupleHasExternal(&oldtup) ||
+				  HeapTupleHasExternal(newtup) ||
 				  (MAXALIGN(newtup->t_len) > TOAST_TUPLE_THRESHOLD));
 
 	newtupsize = MAXALIGN(newtup->t_len);
