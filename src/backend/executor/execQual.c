@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.5 1996/10/07 19:53:15 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.6 1996/10/10 00:18:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,10 +235,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
     	(attnum - 1 <= tuple_type->natts - 1 &&
      	 tuple_type->attrs[attnum-1] != NULL &&
          variable->vartype == tuple_type->attrs[attnum-1]->atttypid))
-    
-      /*
-       * If the attribute number is invalid, then we are supposed to
-           variable->vartype == tuple_type->attrs[attnum-1]->atttypid)
     
     /*
      * If the attribute number is invalid, then we are supposed to
