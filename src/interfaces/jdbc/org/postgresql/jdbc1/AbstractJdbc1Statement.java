@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.13 2002/11/14 05:35:45 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.14 2002/11/20 07:34:32 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -47,7 +47,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	private String[] m_origSqlFragments;
 	private String[] m_executeSqlFragments;
 	protected Object[] m_binds = new Object[0];
-	private String[] m_bindTypes = new String[0];
+	protected String[] m_bindTypes = new String[0];
 	private String m_statementName = null;
 	private boolean m_useServerPrepare = false;
 	private static int m_preparedCount = 1;

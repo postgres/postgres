@@ -157,11 +157,19 @@ public class BatchExecuteTest extends TestCase
 		pstmt.executeBatch();
 		assertCol1HasValue(7);
 
-		con.commit();
+		//now test to see that we can still use the statement after the execute
+		pstmt.setInt(1, 3);
+		pstmt.addBatch();
 		assertCol1HasValue(7);
 
+		pstmt.executeBatch();
+		assertCol1HasValue(10);
+
+		con.commit();
+		assertCol1HasValue(10);
+
 		con.rollback();
-		assertCol1HasValue(7);
+		assertCol1HasValue(10);
 
 		pstmt.close();
 	}
