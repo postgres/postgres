@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.215 2002/08/02 18:15:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.216 2002/08/02 21:54:34 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1027,6 +1027,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 {
 	Relation	attrdef_rel;
 	Relation	attr_rel;
+	Relation	myrel;
 	ScanKeyData scankeys[1];
 	SysScanDesc scan;
 	HeapTuple	tuple;
@@ -1036,6 +1037,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 	/* Grab an appropriate lock on the pg_attrdef relation */
 	attrdef_rel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 
+	/* Find the pg_attrdef tuple */
 	ScanKeyEntryInitialize(&scankeys[0], 0x0,
 						   ObjectIdAttributeNumber, F_OIDEQ,
 						   ObjectIdGetDatum(attrdefId));
@@ -1051,6 +1053,10 @@ RemoveAttrDefaultById(Oid attrdefId)
 	myrelid = ((Form_pg_attrdef) GETSTRUCT(tuple))->adrelid;
 	myattnum = ((Form_pg_attrdef) GETSTRUCT(tuple))->adnum;
 
+	/* Get an exclusive lock on the relation owning the attribute */
+	myrel = heap_open(myrelid, AccessExclusiveLock);
+
+	/* Now we can delete the pg_attrdef row */
 	simple_heap_delete(attrdef_rel, &tuple->t_self);
 
 	systable_endscan(scan);
@@ -1081,7 +1087,14 @@ RemoveAttrDefaultById(Oid attrdefId)
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
 	}
 
+	/*
+	 * Our update of the pg_attribute row will force a relcache rebuild,
+	 * so there's nothing else to do here.
+	 */
 	heap_close(attr_rel, RowExclusiveLock);
+
+	/* Keep lock on attribute's rel until end of xact */
+	heap_close(myrel, NoLock);
 }
 
 /* ----------------------------------------------------------------
