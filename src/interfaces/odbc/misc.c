@@ -13,16 +13,15 @@
  */
 
 #include <stdio.h>
-#include <windows.h>
-#include <sql.h>
+#include <varargs.h>
 
 #include "psqlodbc.h"
+
 
 extern GLOBAL_VALUES globals;
 
 
 #ifdef MY_LOG
-#include <varargs.h>
 
 void
 mylog(va_alist)
@@ -52,7 +51,6 @@ static FILE *LOGFP = 0;
 
 
 #ifdef Q_LOG
-#include <varargs.h>
 
 void qlog(va_alist)
 va_dcl
@@ -78,10 +76,17 @@ static FILE *LOGFP = 0;
 }
 #endif
 
+/*  Undefine these because windows.h will redefine and cause a warning */
+#undef va_start
+#undef va_end
 
+
+#include <windows.h>
+#include <sql.h>
+ 
 /*	returns STRCPY_FAIL, STRCPY_TRUNCATED, or #bytes copied (not including null term) */
 int 
-my_strcpy(char *dst, size_t dst_len, char *src, size_t src_len)
+my_strcpy(char *dst, int dst_len, char *src, int src_len)
 {
 	if (dst_len <= 0)
 		return STRCPY_FAIL;
@@ -90,18 +95,10 @@ my_strcpy(char *dst, size_t dst_len, char *src, size_t src_len)
 		dst[0] = '\0';
 		return STRCPY_NULL;	
 	}
+	else if (src_len == SQL_NTS)
+		src_len = strlen(src);
 
-	else if (src_len == SQL_NTS) {
-		if (src_len < dst_len)
-			strcpy(dst, src);
-		else {
-			memcpy(dst, src, dst_len-1);
-			dst[dst_len-1] = '\0';	/* truncated */
-			return STRCPY_TRUNCATED;
-		}
-	}
-
-	else if (src_len <= 0)
+	if (src_len <= 0)
 		return STRCPY_FAIL;
 
 	else {	
@@ -123,9 +120,9 @@ my_strcpy(char *dst, size_t dst_len, char *src, size_t src_len)
 // the destination string if src has len characters or more.
 // instead, I want it to copy up to len-1 characters and always
 // terminate the destination string.
-char *strncpy_null(char *dst, const char *src, size_t len)
+char *strncpy_null(char *dst, const char *src, int len)
 {
-unsigned int i;
+int i;
 
 
 	if (NULL != dst) {

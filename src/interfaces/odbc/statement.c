@@ -25,6 +25,23 @@
 
 extern GLOBAL_VALUES globals;
 
+/*	Map sql commands to statement types */
+static struct {
+	int  type;
+	char *s;
+} Statement_Type[] = {
+	{ STMT_TYPE_SELECT, "SELECT" },
+	{ STMT_TYPE_INSERT, "INSERT" },
+	{ STMT_TYPE_UPDATE, "UPDATE" },
+	{ STMT_TYPE_DELETE, "DELETE" },
+	{ STMT_TYPE_CREATE, "CREATE" },
+	{ STMT_TYPE_ALTER,  "ALTER"  },
+	{ STMT_TYPE_DROP,   "DROP"   },
+	{ STMT_TYPE_GRANT,  "GRANT"  },
+	{ STMT_TYPE_REVOKE, "REVOKE" },
+	{      0,            NULL    }
+};
+
 
 RETCODE SQL_API SQLAllocStmt(HDBC      hdbc,
                              HSTMT FAR *phstmt)
@@ -133,6 +150,9 @@ StatementClass *rv;
 		rv->prepare = FALSE;
 		rv->status = STMT_ALLOCATED;
 		rv->maxRows = 0;			// driver returns all rows
+		rv->rowset_size = 1;
+		rv->scroll_concurrency = SQL_CONCUR_READ_ONLY;
+		rv->cursor_type = SQL_CURSOR_FORWARD_ONLY;
 		rv->errormsg = NULL;
 		rv->errornumber = 0;
 		rv->errormsg_created = FALSE;
@@ -144,10 +164,14 @@ StatementClass *rv;
 		rv->parameters_allocated = 0;
 		rv->parameters = 0;
 		rv->currTuple = -1;
+		rv->current_col = -1;
 		rv->result = 0;
 		rv->data_at_exec = -1;
 		rv->current_exec_param = -1;
 		rv->put_data = FALSE;
+		rv->lobj_fd = -1;
+		rv->internal = FALSE;
+		rv->cursor_name[0] = '\0';
 	}
 	return rv;
 }
@@ -183,6 +207,8 @@ SC_Destructor(StatementClass *self)
 
 	free(self);
 
+	mylog("SC_Destructor: EXIT\n");
+
 	return TRUE;
 }
 
@@ -193,6 +219,8 @@ void
 SC_free_params(StatementClass *self, char option)
 {
 int i;
+
+	mylog("SC_free_params:  ENTER, self=%d\n", self);
 
 	if( ! self->parameters)
 		return;
@@ -220,25 +248,22 @@ int i;
 		self->parameters = NULL;
 		self->parameters_allocated = 0;
 	}
+
+	mylog("SC_free_params:  EXIT\n");
 }
+
+
 
 int 
 statement_type(char *statement)
 {
-	if(strnicmp(statement, "SELECT", 6) == 0)
-		return STMT_TYPE_SELECT;
+int i;
 
-	else if(strnicmp(statement, "INSERT", 6) == 0)
-		return STMT_TYPE_INSERT;
+	for (i = 0; Statement_Type[i].s; i++)
+		if ( ! strnicmp(statement, Statement_Type[i].s, strlen(Statement_Type[i].s)))
+			return Statement_Type[i].type;
 
-	else if(strnicmp(statement, "UPDATE", 6) == 0)
-		return STMT_TYPE_UPDATE;
-
-	else if(strnicmp(statement, "DELETE", 6) == 0)
-		return STMT_TYPE_DELETE;
-
-	else
-		return STMT_TYPE_OTHER;
+	return STMT_TYPE_OTHER;
 }
 
 /*	Called from SQLPrepare if STMT_PREMATURE, or
@@ -298,11 +323,16 @@ ConnectionClass *conn;
 	}
 
 	self->status = STMT_READY;
+	self->manual_result = FALSE;	// very important
+
 	self->currTuple = -1;
+	self->current_col = -1;
 
 	self->errormsg = NULL;
 	self->errornumber = 0;
 	self->errormsg_created = FALSE;
+
+	self->lobj_fd = -1;
 
 	//	Free any data at exec params before the statement is executed
 	//	again.  If not, then there will be a memory leak when
@@ -428,8 +458,8 @@ Int2 oldstatus, numcols;
 	/*	The reason is because we can't use declare/fetch cursors without
 		starting a transaction first.
 	*/
+	if ( ! CC_is_in_trans(conn) && (globals.use_declarefetch || STMT_UPDATE(self))) {
 
-	if ( ! CC_is_in_trans(conn))	{
 		mylog("   about to begin a transaction on statement = %u\n", self);
 		res = CC_send_query(conn, "BEGIN", NULL, NULL);
 		if ( ! res) {
@@ -465,24 +495,24 @@ Int2 oldstatus, numcols;
 	//	in copy_statement...
 	if (self->statement_type == STMT_TYPE_SELECT) {
 
-		char cursor[32];
-		char fetch[64];
+		char fetch[128];
 
-		sprintf(cursor, "C%u", self);
-
-		mylog("       Sending SELECT statement on stmt=%u\n", self);
+		mylog("       Sending SELECT statement on stmt=%u, cursor_name='%s'\n", self, self->cursor_name);
 
 		/*	send the declare/select */
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL, NULL);
-		if (self->result != NULL) {
+
+		if (globals.use_declarefetch && self->result != NULL) {
 			/*	That worked, so now send the fetch to start getting data back */
-			sprintf(fetch, "fetch %d in %s", globals.fetch_max, cursor);
+			sprintf(fetch, "fetch %d in %s", globals.fetch_max, self->cursor_name);
 			
 			//	Save the cursor in the result for later use
-			self->result = CC_send_query( conn, fetch, NULL, cursor);
+			self->result = CC_send_query( conn, fetch, NULL, self->cursor_name);
 		}
 
 		mylog("     done sending the query:\n");
+
+
 		
 	}
 	else  { // not a SELECT statement so don't use a cursor 		 
@@ -490,7 +520,7 @@ Int2 oldstatus, numcols;
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL, NULL);
 		
 		//	If we are in autocommit, we must send the commit.
-		if (CC_is_in_autocommit(conn)) {
+		if (CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
 			CC_send_query(conn, "COMMIT", NULL, NULL);
 			CC_set_no_trans(conn);
 		}
@@ -512,6 +542,7 @@ Int2 oldstatus, numcols;
 			self->errornumber = was_nonfatal ? STMT_INFO_ONLY : STMT_ERROR_TAKEN_FROM_BACKEND;
 		
 		self->currTuple = -1; /* set cursor before the first tuple in the list */
+		self->current_col = -1;
 		
 		/* see if the query did return any result columns */
 		numcols = QR_NumResultCols(self->result);
@@ -527,10 +558,20 @@ Int2 oldstatus, numcols;
 		}
 		
 	} else {		/* Bad Error -- The error message will be in the Connection */
-		
-		self->errornumber = STMT_EXEC_ERROR;
-		self->errormsg = "Error while executing the query";
 
+		if (self->statement_type == STMT_TYPE_CREATE) {
+			self->errornumber = STMT_CREATE_TABLE_ERROR;
+			self->errormsg = "Error creating the table";
+			/*	This would allow the table to already exists, thus appending
+				rows to it.  BUT, if the table didn't have the same attributes,
+				it would fail.
+				return SQL_SUCCESS_WITH_INFO;
+			*/
+		}
+		else {
+			self->errornumber = STMT_EXEC_ERROR;
+			self->errormsg = "Error while executing the query";
+		}
 		CC_abort(conn);
 	}
 

@@ -183,12 +183,14 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 		if (self->cursor)
 			free(self->cursor);
 
-		if ( ! cursor || cursor[0] == '\0') {
-			self->status = PGRES_INTERNAL_ERROR;
-			QR_set_message(self, "Internal Error -- no cursor for fetch");
-			return FALSE;
+		if ( globals.use_declarefetch) {
+			if (! cursor || cursor[0] == '\0') {
+				self->status = PGRES_INTERNAL_ERROR;
+				QR_set_message(self, "Internal Error -- no cursor for fetch");
+				return FALSE;
+			}
+			self->cursor = strdup(cursor);
 		}
-		self->cursor = strdup(cursor);
 
 		//	Read the field attributes.
 		//	$$$$ Should do some error control HERE! $$$$
@@ -205,6 +207,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 		mylog("QR_fetch_tuples: past CI_read_fields: num_fields = %d\n", self->num_fields);
 
 		/* allocate memory for the tuple cache */
+		mylog("MALLOC: fetch_max = %d, size = %d\n", globals.fetch_max, self->num_fields * sizeof(TupleField) * globals.fetch_max);
 		self->backend_tuples = (TupleField *) malloc(self->num_fields * sizeof(TupleField) * globals.fetch_max);
 		if ( ! self->backend_tuples) {
 			self->status = PGRES_FATAL_ERROR; 
@@ -232,24 +235,23 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 	}
 }
 
-//	Close the cursor and end the transaction
+//	Close the cursor and end the transaction (if no cursors left)
 //	We only close cursor/end the transaction if a cursor was used.
 int
 QR_close(QResultClass *self)
 {
 QResultClass *res;
 
-	if (self->conn && self->cursor) {
+	if (globals.use_declarefetch && self->conn && self->cursor) {
 		char buf[64];
 
-		sprintf(buf, "close %s; END", self->cursor);
-
+		sprintf(buf, "close %s", self->cursor);
 		mylog("QResult: closing cursor: '%s'\n", buf);
 
 		res = CC_send_query(self->conn, buf, NULL, NULL);
-		CC_set_no_trans(self->conn);
 
 		self->inTuples = FALSE;
+
 		free(self->cursor);
 		self->cursor = NULL;
 
@@ -257,6 +259,21 @@ QResultClass *res;
 			self->status = PGRES_FATAL_ERROR;
 			QR_set_message(self, "Error closing cursor.");
 			return FALSE;
+		}
+
+		/*	End the transaction if there are no cursors left on this conn */
+		if (CC_cursor_count(self->conn) == 0) {
+			mylog("QResult: END transaction on conn=%u\n", self->conn);
+
+			res = CC_send_query(self->conn, "END", NULL, NULL);
+
+			CC_set_no_trans(self->conn);
+
+			if (res == NULL) {
+				self->status = PGRES_FATAL_ERROR;
+				QR_set_message(self, "Error ending transaction.");
+				return FALSE;
+			}
 		}
 
 	}
@@ -301,6 +318,13 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 		if ( ! self->inTuples) {
 			char fetch[128];
 
+			if ( ! globals.use_declarefetch) {
+				mylog("next_tuple: ALL_ROWS: done, fcount = %d, fetch_count = %d\n", fcount, fetch_count);
+				self->tupleField = NULL;
+				self->status = PGRES_END_TUPLES;
+				return -1;	/* end of tuples */
+			}
+
 			sprintf(fetch, "fetch %d in %s", globals.fetch_max, self->cursor);
 
 			mylog("next_tuple: sending actual fetch (%d) query '%s'\n", globals.fetch_max, fetch);
@@ -336,65 +360,81 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 
 		id = SOCK_get_char(sock);
 		switch (id) {
-			case 'T': /* Tuples within tuples cannot be handled */
-			  self->status = PGRES_BAD_RESPONSE;
-			  QR_set_message(self, "Tuples within tuples cannot be handled");
-			  return FALSE;
-			case 'B': /* Tuples in binary format */
-			case 'D': /* Tuples in ASCII format  */
-			  if ( ! QR_read_tuple(self, (char) (id == 0))) {
-				 self->status = PGRES_BAD_RESPONSE;
-				 QR_set_message(self, "Error reading the tuple");
-				 return FALSE;
-			  }
+		case 'T': /* Tuples within tuples cannot be handled */
+			self->status = PGRES_BAD_RESPONSE;
+			QR_set_message(self, "Tuples within tuples cannot be handled");
+			return FALSE;
+		case 'B': /* Tuples in binary format */
+		case 'D': /* Tuples in ASCII format  */
 
-			  self->fcount++;
-			  break;	// continue reading
+			if ( ! globals.use_declarefetch && self->fcount > 0 && ! (self->fcount % globals.fetch_max)) {
+				size_t old_size = self->fcount * self->num_fields * sizeof(TupleField);
+				mylog("REALLOC: old_size = %d\n", old_size);
 
-
-			case 'C': /* End of tuple list */
-			  SOCK_get_string(sock, cmdbuffer, MAX_MESSAGE_LEN);
-			  QR_set_command(self, cmdbuffer);
-
-			  mylog("end of tuple list -- setting inUse to false: this = %u\n", self);
-
-				self->inTuples = FALSE;
-				if (self->fcount > 0) {
-
-					qlog("    [ fetched %d rows ]\n", self->fcount);
-					mylog("_next_tuple: 'C' fetch_max && fcount = %d\n", self->fcount);
-
-					/*  set to first row */
-					self->tupleField = the_tuples;
-					return TRUE;
-				} 
-				else { //	We are surely done here (we read 0 tuples)
-					qlog("    [ fetched 0 rows ]\n");
-					mylog("_next_tuple: 'C': DONE (fcount == 0)\n");
-					return -1;	/* end of tuples */
+				self->backend_tuples = (TupleField *) realloc(self->backend_tuples, old_size + (self->num_fields * sizeof(TupleField) * globals.fetch_max));
+				if ( ! self->backend_tuples) {
+					self->status = PGRES_FATAL_ERROR; 
+					QR_set_message(self, "Out of memory while reading tuples.");
+					return FALSE;
 				}
+			}
 
-			case 'E': /* Error */
-			  SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
-			  QR_set_message(self, msgbuffer);
-			  self->status = PGRES_FATAL_ERROR;
- 			  CC_set_no_trans(self->conn);
-				qlog("ERROR from backend in next_tuple: '%s'\n", msgbuffer);
+			if ( ! QR_read_tuple(self, (char) (id == 0))) {
+				self->status = PGRES_BAD_RESPONSE;
+				QR_set_message(self, "Error reading the tuple");
+				return FALSE;
+			}
+			
+			self->fcount++;
+			break;	// continue reading
 
-			  return FALSE;
 
-			case 'N': /* Notice */
-			  SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
-			  QR_set_message(self, msgbuffer);
-			  self->status = PGRES_NONFATAL_ERROR;
-				qlog("NOTICE from backend in next_tuple: '%s'\n", msgbuffer);
-			  continue;
+		case 'C': /* End of tuple list */
+			SOCK_get_string(sock, cmdbuffer, MAX_MESSAGE_LEN);
+			QR_set_command(self, cmdbuffer);
 
-			default: /* this should only happen if the backend dumped core */
-			  QR_set_message(self, "Unexpected result from backend. It probably crashed");
-			  self->status = PGRES_FATAL_ERROR;
- 			  CC_set_no_trans(self->conn);
-			  return FALSE;
+			mylog("end of tuple list -- setting inUse to false: this = %u\n", self);
+
+			self->inTuples = FALSE;
+			if (self->fcount > 0) {
+
+				qlog("    [ fetched %d rows ]\n", self->fcount);
+				mylog("_next_tuple: 'C' fetch_max && fcount = %d\n", self->fcount);
+
+				/*  set to first row */
+				self->tupleField = self->backend_tuples;	// the_tuples;
+				return TRUE;
+			} 
+			else { //	We are surely done here (we read 0 tuples)
+				qlog("    [ fetched 0 rows ]\n");
+				mylog("_next_tuple: 'C': DONE (fcount == 0)\n");
+				return -1;	/* end of tuples */
+			}
+
+		case 'E': /* Error */
+			SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
+			QR_set_message(self, msgbuffer);
+			self->status = PGRES_FATAL_ERROR;
+
+			if ( ! strncmp(msgbuffer, "FATAL", 5))
+				CC_set_no_trans(self->conn);
+
+			qlog("ERROR from backend in next_tuple: '%s'\n", msgbuffer);
+
+			return FALSE;
+
+		case 'N': /* Notice */
+			SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
+			QR_set_message(self, msgbuffer);
+			self->status = PGRES_NONFATAL_ERROR;
+			qlog("NOTICE from backend in next_tuple: '%s'\n", msgbuffer);
+			continue;
+
+		default: /* this should only happen if the backend dumped core */
+			QR_set_message(self, "Unexpected result from backend. It probably crashed");
+			self->status = PGRES_FATAL_ERROR;
+			CC_set_no_trans(self->conn);
+			return FALSE;
 		}
 	}
 	return TRUE;
@@ -413,6 +453,7 @@ Int4 len;
 char *buffer;
 int num_fields = self->num_fields;	// speed up access
 SocketClass *sock = CC_get_socket(self->conn);
+ColumnInfoClass *flds;
 
 
 	/* set the current row to read the fields into */
@@ -455,6 +496,17 @@ SocketClass *sock = CC_get_socket(self->conn);
 
 			this_tuplefield[field_lf].len = len;
 			this_tuplefield[field_lf].value = buffer;
+
+			/*	This can be used to set the longest length of the column for any
+				row in the tuple cache.  It would not be accurate for varchar and
+				text fields to use this since a tuple cache is only 100 rows.
+				Bpchar can be handled since the strlen of all rows is fixed,
+				assuming there are not 100 nulls in a row!
+			*/
+
+			flds = self->fields;
+			if (flds->display_size[field_lf] < len)
+				flds->display_size[field_lf] = len;
 		}
 		/*
 		Now adjust for the next bit to be scanned in the

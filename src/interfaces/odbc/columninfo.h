@@ -17,14 +17,18 @@ struct ColumnInfoClass_ {
 	char	**name;				/* list of type names */
 	Oid		*adtid;				/* list of type ids */
 	Int2	*adtsize;			/* list type sizes */
+	Int2	*display_size;		/* the display size (longest row) */
 };
 
-#define CI_get_num_fields(self)    (self->num_fields)
-#define CI_get_oid(self, col)		(self->adtid[col])
-
+#define CI_get_num_fields(self)			(self->num_fields)
+#define CI_get_oid(self, col)			(self->adtid[col])
+#define CI_get_fieldname(self, col)		(self->name[col])
+#define CI_get_fieldsize(self, col)		(self->adtsize[col])
+#define CI_get_display_size(self, col)	(self->display_size[col])
 
 ColumnInfoClass *CI_Constructor();
 void CI_Destructor(ColumnInfoClass *self);
+void CI_free_memory(ColumnInfoClass *self);
 char CI_read_fields(ColumnInfoClass *self, SocketClass *sock);
 
 /* functions for setting up the fields from within the program, */
@@ -33,8 +37,5 @@ void CI_set_num_fields(ColumnInfoClass *self, int new_num_fields);
 void CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name, 
                        Oid new_adtid, Int2 new_adtsize);
 
-char *CI_get_fieldname(ColumnInfoClass *self, Int2 which);
-Int2 CI_get_fieldsize(ColumnInfoClass *self, Int2 which);
-void CI_free_memory(ColumnInfoClass *self);
 
 #endif

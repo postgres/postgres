@@ -33,6 +33,9 @@
 #include "misc.h"
 #include "pgtypes.h"
 
+
+extern GLOBAL_VALUES globals;
+
 //      -       -       -       -       -       -       -       -       -
 
 RETCODE SQL_API SQLGetInfo(
@@ -192,7 +195,10 @@ char *p;
         // this tag doesn't seem to be in ODBC 2.0, and it conflicts
         // with a valid tag (SQL_TIMEDATE_ADD_INTERVALS).
 
-		p = CC_get_database(conn);
+		/*	Returning the database name causes problems in MS Query.
+			It generates query like: "SELECT DISTINCT a FROM byronncrap3 crap3"
+		*/
+		p = "";    // CC_get_database(conn);
 		if (pcbInfoValue) *pcbInfoValue = strlen(p);
 		strncpy_null((char *)rgbInfoValue, p, (size_t)cbInfoValueMax);
 		break;
@@ -224,8 +230,6 @@ char *p;
         break;
 
     case SQL_DRIVER_ODBC_VER:
-        /* I think we should return 02.00--at least, that is the version of the */
-        /* spec I'm currently referring to. */
         if (pcbInfoValue) *pcbInfoValue = 5;
         strncpy_null((char *)rgbInfoValue, "02.00", (size_t)cbInfoValueMax);
         break;
@@ -245,12 +249,11 @@ char *p;
 
     case SQL_FETCH_DIRECTION: /* ODBC 1.0 */
         // which fetch directions are supported? (bitmask)
-        // I guess these apply to SQLExtendedFetch?
-        *((DWORD *)rgbInfoValue) = SQL_FETCH_NEXT ||
-                                   SQL_FETCH_FIRST ||
-                                   SQL_FETCH_LAST ||
-                                   SQL_FETCH_PRIOR ||
-                                   SQL_FETCH_ABSOLUTE;
+        *((DWORD *)rgbInfoValue) = globals.use_declarefetch ? 0 : (SQL_FD_FETCH_NEXT |
+                                   SQL_FD_FETCH_FIRST |
+                                   SQL_FD_FETCH_LAST |
+                                   SQL_FD_FETCH_PRIOR |
+                                   SQL_FD_FETCH_ABSOLUTE);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -326,7 +329,7 @@ char *p;
 
     case SQL_MAX_COLUMN_NAME_LEN: /* ODBC 1.0 */
         // maximum length of a column name
-        *((WORD *)rgbInfoValue) = 0;
+        *((WORD *)rgbInfoValue) = 32;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -349,7 +352,6 @@ char *p;
         break;
 
     case SQL_MAX_COLUMNS_IN_SELECT: /* ODBC 2.0 */
-        // I think you get the idea by now
         *((WORD *)rgbInfoValue) = 0;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
@@ -360,7 +362,7 @@ char *p;
         break;
 
     case SQL_MAX_CURSOR_NAME_LEN: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = 0;
+        *((WORD *)rgbInfoValue) = 32;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -395,7 +397,7 @@ char *p;
 
     case SQL_MAX_ROW_SIZE_INCLUDES_LONG: /* ODBC 2.0 */
         // does the preceding value include LONGVARCHAR and LONGVARBINARY
-        // fields?
+        // fields?   Well, it does include longvarchar, but not longvarbinary.
         *pcbInfoValue = 1;
         strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
         break;
@@ -407,7 +409,7 @@ char *p;
         break;
 
     case SQL_MAX_TABLE_NAME_LEN: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = 0;
+        *((WORD *)rgbInfoValue) = 32;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -424,7 +426,7 @@ char *p;
     case SQL_MULT_RESULT_SETS: /* ODBC 1.0 */
         // do we support multiple result sets?
         if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
+        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
         break;
 
     case SQL_MULTIPLE_ACTIVE_TXN: /* ODBC 1.0 */
@@ -460,7 +462,7 @@ char *p;
         break;
 
     case SQL_ODBC_API_CONFORMANCE: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = SQL_OAC_LEVEL1; /* well, almost */
+        *((WORD *)rgbInfoValue) = SQL_OAC_LEVEL1;
         if(pcbInfoValue) { *pcbInfoValue = 2; }
         break;
 
@@ -572,22 +574,23 @@ char *p;
         break;
 
     case SQL_ROW_UPDATES: /* ODBC 1.0 */
-        // not quite sure what this means
+        //  Driver doesn't support keyset-driven or mixed cursors, so
+		//	not much point in saying row updates are supported
         if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
+        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
         break;
 
     case SQL_SCROLL_CONCURRENCY: /* ODBC 1.0 */
-        // what concurrency options are supported? (bitmask)
-        // taking a guess here
-        *((DWORD *)rgbInfoValue) = SQL_SCCO_OPT_ROWVER;
+        // what concurrency options are supported BY THE CURSOR? (bitmask)
+        *((DWORD *)rgbInfoValue) = (SQL_SCCO_READ_ONLY);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
     case SQL_SCROLL_OPTIONS: /* ODBC 1.0 */
         // what options are supported for scrollable cursors? (bitmask)
-        // not too sure about this one, either...
-        *((DWORD *)rgbInfoValue) = SQL_SO_KEYSET_DRIVEN;
+		// for declare/fetch, only FORWARD scrolling is allowed
+		// otherwise, the result set is STATIC (to SQLExtendedFetch for example)
+        *((DWORD *)rgbInfoValue) = globals.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -623,8 +626,14 @@ char *p;
 
     case SQL_STRING_FUNCTIONS: /* ODBC 1.0 */
         // what string functions exist? (bitmask)
-        // not sure if any of these exist, either
-        *((DWORD *)rgbInfoValue) = 0;
+        *((DWORD *)rgbInfoValue) = (SQL_FN_STR_CONCAT |
+			                        SQL_FN_STR_LCASE | 
+									SQL_FN_STR_LENGTH | 
+									SQL_FN_STR_LOCATE | 
+									SQL_FN_STR_LTRIM | 
+									SQL_FN_STR_RTRIM |
+									SQL_FN_STR_SUBSTRING |
+									SQL_FN_STR_UCASE);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -666,7 +675,7 @@ char *p;
 
     case SQL_TIMEDATE_FUNCTIONS: /* ODBC 1.0 */
         // what time and date functions are supported? (bitmask)
-        *((DWORD *)rgbInfoValue) = 0;
+        *((DWORD *)rgbInfoValue) = (SQL_FN_TD_NOW);
         if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
@@ -751,30 +760,30 @@ Int4 type;
     // cycle through the types
     for(i=0, type = pgtypes_defined[0]; type; type = pgtypes_defined[++i]) {
 
-		if(fSqlType == SQL_ALL_TYPES || fSqlType == pgtype_to_sqltype(type)) {
+		if(fSqlType == SQL_ALL_TYPES || fSqlType == pgtype_to_sqltype(stmt, type)) {
 
 			row = (TupleNode *)malloc(sizeof(TupleNode) + (15 - 1)*sizeof(TupleField));
 
 			/*	These values can't be NULL */
-			set_tuplefield_string(&row->tuple[0], pgtype_to_name(type));
-			set_tuplefield_int2(&row->tuple[1], pgtype_to_sqltype(type));
-			set_tuplefield_int2(&row->tuple[6], pgtype_nullable(type));
-			set_tuplefield_int2(&row->tuple[7], pgtype_case_sensitive(type));
-			set_tuplefield_int2(&row->tuple[8], pgtype_searchable(type));
-			set_tuplefield_int2(&row->tuple[10], pgtype_money(type));
+			set_tuplefield_string(&row->tuple[0], pgtype_to_name(stmt, type));
+			set_tuplefield_int2(&row->tuple[1], pgtype_to_sqltype(stmt, type));
+			set_tuplefield_int2(&row->tuple[6], pgtype_nullable(stmt, type));
+			set_tuplefield_int2(&row->tuple[7], pgtype_case_sensitive(stmt, type));
+			set_tuplefield_int2(&row->tuple[8], pgtype_searchable(stmt, type));
+			set_tuplefield_int2(&row->tuple[10], pgtype_money(stmt, type));
 
 			/*	Localized data-source dependent data type name (always NULL) */
 			set_tuplefield_null(&row->tuple[12]);	
 
 			/*	These values can be NULL */
-			set_nullfield_int4(&row->tuple[2], pgtype_precision(type));
-			set_nullfield_string(&row->tuple[3], pgtype_literal_prefix(type));
-			set_nullfield_string(&row->tuple[4], pgtype_literal_suffix(type));
-			set_nullfield_string(&row->tuple[5], pgtype_create_params(type));
-			set_nullfield_int2(&row->tuple[9], pgtype_unsigned(type));
-			set_nullfield_int2(&row->tuple[11], pgtype_auto_increment(type));
-			set_nullfield_int2(&row->tuple[13], pgtype_scale(type));
-			set_nullfield_int2(&row->tuple[14], pgtype_scale(type));
+			set_nullfield_int4(&row->tuple[2], pgtype_precision(stmt, type, PG_STATIC, PG_STATIC));
+			set_nullfield_string(&row->tuple[3], pgtype_literal_prefix(stmt, type));
+			set_nullfield_string(&row->tuple[4], pgtype_literal_suffix(stmt, type));
+			set_nullfield_string(&row->tuple[5], pgtype_create_params(stmt, type));
+			set_nullfield_int2(&row->tuple[9], pgtype_unsigned(stmt, type));
+			set_nullfield_int2(&row->tuple[11], pgtype_auto_increment(stmt, type));
+			set_nullfield_int2(&row->tuple[13], pgtype_scale(stmt, type));
+			set_nullfield_int2(&row->tuple[14], pgtype_scale(stmt, type));
 
 			QR_add_tuple(stmt->result, row);
 		}
@@ -782,6 +791,7 @@ Int4 type;
 
     stmt->status = STMT_FINISHED;
     stmt->currTuple = -1;
+	stmt->current_col = -1;
 
     return SQL_SUCCESS;
 }
@@ -826,12 +836,12 @@ RETCODE SQL_API SQLGetFunctions(
         pfExists[SQL_API_SQLFREECONNECT]      = TRUE;
         pfExists[SQL_API_SQLFREEENV]          = TRUE;
         pfExists[SQL_API_SQLFREESTMT]         = TRUE;
-        pfExists[SQL_API_SQLGETCURSORNAME]    = FALSE;
+        pfExists[SQL_API_SQLGETCURSORNAME]    = TRUE;
         pfExists[SQL_API_SQLNUMRESULTCOLS]    = TRUE;
         pfExists[SQL_API_SQLPREPARE]          = TRUE;  // complete?
         pfExists[SQL_API_SQLROWCOUNT]         = TRUE;
-        pfExists[SQL_API_SQLSETCURSORNAME]    = FALSE;
-        pfExists[SQL_API_SQLSETPARAM]         = FALSE;
+        pfExists[SQL_API_SQLSETCURSORNAME]    = TRUE;
+        pfExists[SQL_API_SQLSETPARAM]         = FALSE; // odbc 1.0
         pfExists[SQL_API_SQLTRANSACT]         = TRUE;
 
         // ODBC level 1 functions
@@ -840,11 +850,9 @@ RETCODE SQL_API SQLGetFunctions(
         pfExists[SQL_API_SQLDRIVERCONNECT]    = TRUE;
         pfExists[SQL_API_SQLGETCONNECTOPTION] = TRUE;  // partial
         pfExists[SQL_API_SQLGETDATA]          = TRUE;
-        pfExists[SQL_API_SQLGETFUNCTIONS]     = TRUE;  // sadly,  I still
-                                                       // had to think about
-                                                       // this one
+        pfExists[SQL_API_SQLGETFUNCTIONS]     = TRUE;                                                       
         pfExists[SQL_API_SQLGETINFO]          = TRUE;
-        pfExists[SQL_API_SQLGETSTMTOPTION]    = TRUE;  // very partial
+        pfExists[SQL_API_SQLGETSTMTOPTION]    = TRUE;  // partial
         pfExists[SQL_API_SQLGETTYPEINFO]      = TRUE;
         pfExists[SQL_API_SQLPARAMDATA]        = TRUE;
         pfExists[SQL_API_SQLPUTDATA]          = TRUE;
@@ -858,11 +866,11 @@ RETCODE SQL_API SQLGetFunctions(
         pfExists[SQL_API_SQLBROWSECONNECT]    = FALSE;
         pfExists[SQL_API_SQLCOLUMNPRIVILEGES] = FALSE;
         pfExists[SQL_API_SQLDATASOURCES]      = FALSE;  // only implemented by DM
-        pfExists[SQL_API_SQLDESCRIBEPARAM]    = FALSE;
-        pfExists[SQL_API_SQLDRIVERS]          = FALSE;
-        pfExists[SQL_API_SQLEXTENDEDFETCH]    = TRUE;   // partial?
+        pfExists[SQL_API_SQLDESCRIBEPARAM]    = TRUE;
+        pfExists[SQL_API_SQLDRIVERS]          = FALSE;  // only implemented by DM
+        pfExists[SQL_API_SQLEXTENDEDFETCH]    = globals.use_declarefetch ? FALSE : TRUE;
         pfExists[SQL_API_SQLFOREIGNKEYS]      = TRUE;
-        pfExists[SQL_API_SQLMORERESULTS]      = TRUE;
+        pfExists[SQL_API_SQLMORERESULTS]      = FALSE;
         pfExists[SQL_API_SQLNATIVESQL]        = TRUE;
         pfExists[SQL_API_SQLNUMPARAMS]        = TRUE;
         pfExists[SQL_API_SQLPARAMOPTIONS]     = FALSE;
@@ -870,7 +878,7 @@ RETCODE SQL_API SQLGetFunctions(
         pfExists[SQL_API_SQLPROCEDURECOLUMNS] = FALSE;
         pfExists[SQL_API_SQLPROCEDURES]       = FALSE;
         pfExists[SQL_API_SQLSETPOS]           = FALSE;
-        pfExists[SQL_API_SQLSETSCROLLOPTIONS] = FALSE;
+        pfExists[SQL_API_SQLSETSCROLLOPTIONS] = FALSE;	// odbc 1.0
         pfExists[SQL_API_SQLTABLEPRIVILEGES]  = FALSE;
 #endif
     } else {
@@ -894,12 +902,12 @@ RETCODE SQL_API SQLGetFunctions(
         case SQL_API_SQLFREECONNECT:      *pfExists = TRUE; break;
         case SQL_API_SQLFREEENV:          *pfExists = TRUE; break;
         case SQL_API_SQLFREESTMT:         *pfExists = TRUE; break;
-        case SQL_API_SQLGETCURSORNAME:    *pfExists = FALSE; break;
+        case SQL_API_SQLGETCURSORNAME:    *pfExists = TRUE; break;
         case SQL_API_SQLNUMRESULTCOLS:    *pfExists = TRUE; break;
         case SQL_API_SQLPREPARE:          *pfExists = TRUE; break;
         case SQL_API_SQLROWCOUNT:         *pfExists = TRUE; break;
-        case SQL_API_SQLSETCURSORNAME:    *pfExists = FALSE; break;
-        case SQL_API_SQLSETPARAM:         *pfExists = FALSE; break;
+        case SQL_API_SQLSETCURSORNAME:    *pfExists = TRUE; break;
+        case SQL_API_SQLSETPARAM:         *pfExists = FALSE; break; // odbc 1.0
         case SQL_API_SQLTRANSACT:         *pfExists = TRUE; break;
 
             // ODBC level 1 functions
@@ -910,7 +918,7 @@ RETCODE SQL_API SQLGetFunctions(
         case SQL_API_SQLGETDATA:          *pfExists = TRUE; break;
         case SQL_API_SQLGETFUNCTIONS:     *pfExists = TRUE; break;
         case SQL_API_SQLGETINFO:          *pfExists = TRUE; break;
-        case SQL_API_SQLGETSTMTOPTION:    *pfExists = TRUE; break;  // very partial
+        case SQL_API_SQLGETSTMTOPTION:    *pfExists = TRUE; break;  // partial
         case SQL_API_SQLGETTYPEINFO:      *pfExists = TRUE; break;
         case SQL_API_SQLPARAMDATA:        *pfExists = TRUE; break;
         case SQL_API_SQLPUTDATA:          *pfExists = TRUE; break;
@@ -924,11 +932,11 @@ RETCODE SQL_API SQLGetFunctions(
         case SQL_API_SQLBROWSECONNECT:    *pfExists = FALSE; break;
         case SQL_API_SQLCOLUMNPRIVILEGES: *pfExists = FALSE; break;
         case SQL_API_SQLDATASOURCES:      *pfExists = FALSE; break;  // only implemented by DM
-        case SQL_API_SQLDESCRIBEPARAM:    *pfExists = FALSE; break;
-        case SQL_API_SQLDRIVERS:          *pfExists = FALSE; break;
-        case SQL_API_SQLEXTENDEDFETCH:    *pfExists = TRUE; break;   // partial?
+        case SQL_API_SQLDESCRIBEPARAM:    *pfExists = TRUE; break;
+        case SQL_API_SQLDRIVERS:          *pfExists = FALSE; break;  // only implemented by DM
+        case SQL_API_SQLEXTENDEDFETCH:    *pfExists = globals.use_declarefetch ? FALSE : TRUE; break;
         case SQL_API_SQLFOREIGNKEYS:      *pfExists = TRUE; break;
-        case SQL_API_SQLMORERESULTS:      *pfExists = TRUE; break;
+        case SQL_API_SQLMORERESULTS:      *pfExists = FALSE; break;
         case SQL_API_SQLNATIVESQL:        *pfExists = TRUE; break;
         case SQL_API_SQLNUMPARAMS:        *pfExists = TRUE; break;
         case SQL_API_SQLPARAMOPTIONS:     *pfExists = FALSE; break;
@@ -936,7 +944,7 @@ RETCODE SQL_API SQLGetFunctions(
         case SQL_API_SQLPROCEDURECOLUMNS: *pfExists = FALSE; break;
         case SQL_API_SQLPROCEDURES:       *pfExists = FALSE; break;
         case SQL_API_SQLSETPOS:           *pfExists = FALSE; break;
-        case SQL_API_SQLSETSCROLLOPTIONS: *pfExists = FALSE; break;
+        case SQL_API_SQLSETSCROLLOPTIONS: *pfExists = FALSE; break;	// odbc 1.0
         case SQL_API_SQLTABLEPRIVILEGES:  *pfExists = FALSE; break;
         }
 #endif
@@ -965,8 +973,14 @@ HSTMT htbl_stmt;
 RETCODE result;
 char *tableType;
 char tables_query[MAX_STATEMENT_LEN];
-char table_name[MAX_INFO_STRING], table_owner[MAX_INFO_STRING];
-SDWORD table_name_len, table_owner_len;
+char table_name[MAX_INFO_STRING], table_owner[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
+SDWORD table_name_len, table_owner_len, relhasrules_len;
+ConnInfo *ci;
+char *prefix[32], prefixes[MEDIUM_REGISTRY_LEN];
+char *table_type[32], table_types[MAX_INFO_STRING];
+char show_system_tables, show_regular_tables, show_views;
+char regular_table, view, systable;
+int i;
 
 mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 
@@ -975,6 +989,8 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
+
+	ci = &stmt->hdbc->connInfo;
 
 	result = SQLAllocStmt( stmt->hdbc, &htbl_stmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
@@ -988,20 +1004,72 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	//	Create the query to find out the tables
 	// **********************************************************************
 
-	strcpy(tables_query, "select relname, usename from pg_class, pg_user where relkind = 'r' ");
+	strcpy(tables_query, "select relname, usename, relhasrules from pg_class, pg_user where relkind = 'r' ");
 
 	my_strcat(tables_query, " and usename like '%.*s'", szTableOwner, cbTableOwner);
 	my_strcat(tables_query, " and relname like '%.*s'", szTableName, cbTableName);
 
+
+	//	Parse the extra systable prefix 
+	strcpy(prefixes, globals.extra_systable_prefixes);
+	i = 0;
+	prefix[i] = strtok(prefixes, ";");
+	while (prefix[i] && i<32) {
+		prefix[++i] = strtok(NULL, ";");
+	}
+
+	/*	Parse the desired table types to return */
+	show_system_tables = FALSE;
+	show_regular_tables = FALSE;
+	show_views = FALSE;
+
 	//	make_string mallocs memory
 	tableType = make_string(szTableType, cbTableType, NULL);
-	if (tableType && ! strstr(tableType, "SYSTEM TABLE")) 	// is SYSTEM TABLE not present?
-		strcat(tables_query, " and relname not like '" POSTGRES_SYS_PREFIX "%' and relname not like '" INSIGHT_SYS_PREFIX "%'");
-
-	if (tableType)
+	if (tableType) {
+		strcpy(table_types, tableType);
 		free(tableType);
+		i = 0;
+		table_type[i] = strtok(table_types, ",");
+		while (table_type[i] && i<32) {
+			table_type[++i] = strtok(NULL, ",");
+		}
 
-	strcat(tables_query, " and relname !~ '^Inv[0-9]+' and int4out(usesysid) = int4out(relowner) order by relname");
+		/*	Check for desired table types to return */
+		i = 0;
+		while (table_type[i]) {
+			if ( strstr(table_type[i], "SYSTEM TABLE"))
+				show_system_tables = TRUE;
+			else if ( strstr(table_type[i], "TABLE"))
+				show_regular_tables = TRUE;
+			else if ( strstr(table_type[i], "VIEW"))
+				show_views = TRUE;
+
+			i++;
+		}
+
+	}
+
+	/*  If not interested in SYSTEM TABLES then filter them out
+		to save some time on the query.  If treating system tables
+		as regular tables, then dont filter either.
+	*/
+	if ( ! atoi(ci->show_system_tables) && ! show_system_tables) {
+		strcat(tables_query, " and relname !~ '^" POSTGRES_SYS_PREFIX);
+
+		/*	Also filter out user-defined system table types */
+		i = 0;
+		while(prefix[i]) {
+			strcat(tables_query, "|^");
+			strcat(tables_query, prefix[i]);
+			i++;
+		}
+
+		strcat(tables_query, "'");
+	}
+
+
+	/*	filter out large objects unconditionally (they are not system tables) and match users */
+	strcat(tables_query, " and relname !~ '^xinv[0-9]+' and int4out(usesysid) = int4out(relowner) order by relname");
 
 	// **********************************************************************
 
@@ -1024,6 +1092,14 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 
     result = SQLBindCol(htbl_stmt, 2, SQL_C_CHAR,
                         table_owner, MAX_INFO_STRING, &table_owner_len);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = tbl_stmt->errormsg;
+		stmt->errornumber = tbl_stmt->errornumber;
+		SQLFreeStmt(htbl_stmt, SQL_DROP);
+        return SQL_ERROR;
+    }
+    result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
+                        relhasrules, MAX_INFO_STRING, &relhasrules_len);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
@@ -1054,33 +1130,63 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
     // add the tuples
 	result = SQLFetch(htbl_stmt);
 	while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
-		row = (TupleNode *)malloc(sizeof(TupleNode) + (5 - 1) * sizeof(TupleField));
 
-		set_tuplefield_string(&row->tuple[0], "");
+		/*	Determine if this table name is a system table.
+			If treating system tables as regular tables, then 
+			no need to do this test.
+		*/		
+		systable = FALSE;
+		if( ! atoi(ci->show_system_tables)) {
 
-        // I have to hide the table owner from Access, otherwise it
-        // insists on referring to the table as 'owner.table'.
-        // (this is valid according to the ODBC SQL grammar, but
-        // Postgres won't support it.)
-        // set_tuplefield_string(&row->tuple[1], table_owner);
+			if ( strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0)
+				systable = TRUE;
 
-		set_tuplefield_string(&row->tuple[1], "");
-		set_tuplefield_string(&row->tuple[2], table_name);
-
-		mylog("SQLTables: table_name = '%s'\n", table_name);
-
-        // careful: this is case-sensitive
-		if(strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0 || 
-			strncmp(table_name, INSIGHT_SYS_PREFIX, strlen(INSIGHT_SYS_PREFIX)) == 0) {
-			set_tuplefield_string(&row->tuple[3], "SYSTEM TABLE");
-		} else {
-			set_tuplefield_string(&row->tuple[3], "TABLE");
+			else {			/* Check extra system table prefixes */
+				i = 0;
+				while (prefix[i]) {
+					mylog("table_name='%s', prefix[%d]='%s'\n", table_name, i, prefix[i]);
+					if (strncmp(table_name, prefix[i], strlen(prefix[i])) == 0) {
+						systable = TRUE;
+						break;
+					}
+					i++;
+				}
+			}
 		}
 
-		set_tuplefield_string(&row->tuple[4], "");
+		/*	Determine if the table name is a view */
+		view = (relhasrules[0] == '1');
 
-		QR_add_tuple(stmt->result, row);
+		/*	It must be a regular table */
+		regular_table = ( ! systable && ! view);
 
+
+		/*	Include the row in the result set if meets all criteria */
+		/*	NOTE: Unsupported table types (i.e., LOCAL TEMPORARY, ALIAS, etc)
+					will return nothing */
+		if ( (systable && show_system_tables) ||
+			 (view && show_views) || 
+			 (regular_table && show_regular_tables)) {
+
+			row = (TupleNode *)malloc(sizeof(TupleNode) + (5 - 1) * sizeof(TupleField));
+
+			set_tuplefield_string(&row->tuple[0], "");
+
+			// I have to hide the table owner from Access, otherwise it
+			// insists on referring to the table as 'owner.table'.
+			// (this is valid according to the ODBC SQL grammar, but
+			// Postgres won't support it.)
+			// set_tuplefield_string(&row->tuple[1], table_owner);
+
+			mylog("SQLTables: table_name = '%s'\n", table_name);
+
+			set_tuplefield_string(&row->tuple[1], "");
+			set_tuplefield_string(&row->tuple[2], table_name);
+			set_tuplefield_string(&row->tuple[3], systable ? "SYSTEM TABLE" : (view ? "VIEW" : "TABLE"));
+			set_tuplefield_string(&row->tuple[4], "");
+
+			QR_add_tuple(stmt->result, row);
+		}
 		result = SQLFetch(htbl_stmt);
     }
 	if(result != SQL_NO_DATA_FOUND) {
@@ -1096,6 +1202,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 
     // set up the current tuple pointer for SQLFetch
 	stmt->currTuple = -1;
+	stmt->current_col = -1;
 
 	SQLFreeStmt(htbl_stmt, SQL_DROP);
 	mylog("SQLTables(): EXIT,  stmt=%u\n", stmt);
@@ -1125,6 +1232,9 @@ Int4 field_type;
 SDWORD table_owner_len, table_name_len, field_name_len,
     field_type_len, field_type_name_len, field_number_len,
 	field_length_len, mod_length_len;
+ConnInfo *ci;
+
+
 
 mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
@@ -1134,12 +1244,14 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
+	ci = &stmt->hdbc->connInfo;
+
 	// **********************************************************************
 	//	Create the query to find out the columns (Note: pre 6.3 did not have the atttypmod field)
 	// **********************************************************************
 	sprintf(columns_query, "select u.usename, c.relname, a.attname, a.atttypid,t.typname, a.attnum, a.attlen, %s from pg_user u, pg_class c, pg_attribute a, pg_type t where "
 		"int4out(u.usesysid) = int4out(c.relowner) and c.oid= a.attrelid and a.atttypid = t.oid and (a.attnum > 0)",
-		PROTOCOL_62(&(stmt->hdbc->connInfo)) ? "a.attlen" : "a.atttypmod");
+		PROTOCOL_62(ci) ? "a.attlen" : "a.atttypmod");
 
 	my_strcat(columns_query, " and c.relname like '%.*s'", szTableName, cbTableName);
 	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
@@ -1266,7 +1378,43 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     QR_set_field_info(stmt->result, 10, "NULLABLE", PG_TYPE_INT2, 2);
     QR_set_field_info(stmt->result, 11, "REMARKS", PG_TYPE_TEXT, 254);
 
-    result = SQLFetch(hcol_stmt);
+	
+	result = SQLFetch(hcol_stmt);
+
+	/*	Only show oid if option AND there are other columns AND 
+		its not being called by SQLStatistics .
+		Always show OID if its a system table
+	*/
+
+	if (result != SQL_ERROR && ! stmt->internal &&
+		(atoi(ci->show_oid_column) || strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0)) {
+
+		/*	For OID fields */
+		row = (TupleNode *)malloc(sizeof(TupleNode) +
+								  (12 - 1) * sizeof(TupleField));
+
+		set_tuplefield_string(&row->tuple[0], "");
+		// see note in SQLTables()
+		//      set_tuplefield_string(&row->tuple[1], table_owner);
+		set_tuplefield_string(&row->tuple[1], "");
+		set_tuplefield_string(&row->tuple[2], table_name);
+		set_tuplefield_string(&row->tuple[3], "oid");
+		set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, PG_TYPE_OID));
+		set_tuplefield_string(&row->tuple[5], "OID");
+
+		set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, PG_TYPE_OID, PG_STATIC,
+		PG_STATIC));
+		set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, PG_TYPE_OID, PG_STATIC,
+		PG_STATIC));
+
+		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, PG_TYPE_OID));
+		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, PG_TYPE_OID));
+		set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
+		set_tuplefield_string(&row->tuple[11], "");
+
+		QR_add_tuple(stmt->result, row);
+	}
+
     while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
         row = (TupleNode *)malloc(sizeof(TupleNode) +
                                   (12 - 1) * sizeof(TupleField));
@@ -1277,14 +1425,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
         set_tuplefield_string(&row->tuple[1], "");
         set_tuplefield_string(&row->tuple[2], table_name);
         set_tuplefield_string(&row->tuple[3], field_name);
-
-		/*	Replace an unknown postgres type with SQL_CHAR type */
-		/*	Leave the field_type_name with "unknown" */
-		if (pgtype_to_sqltype(field_type) == PG_UNKNOWN)
-	        set_tuplefield_int2(&row->tuple[4], SQL_CHAR);
-		else
-	        set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(field_type));
-
+        set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, field_type));
         set_tuplefield_string(&row->tuple[5], field_type_name);
 
 
@@ -1292,36 +1433,32 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
 			VARCHAR - the length is stored in the pg_attribute.atttypmod field
 			BPCHAR  - the length is also stored as varchar is
-			NAME    - the length is fixed and stored in pg_attribute.attlen field (32 on my system)
 
 		*/
         if((field_type == PG_TYPE_VARCHAR) ||
-		   (field_type == PG_TYPE_NAME) ||
 		   (field_type == PG_TYPE_BPCHAR)) {
 
-			if (field_type == PG_TYPE_NAME)
-				mod_length = field_length;	// the length is in attlen
-			else if (mod_length >= 4)
+			if (mod_length >= 4)
 				mod_length -= 4;			// the length is in atttypmod - 4
 
-			if (mod_length > MAX_VARCHAR_SIZE || mod_length <= 0)
-				mod_length = MAX_VARCHAR_SIZE;
+			if (mod_length > globals.max_varchar_size || mod_length <= 0)
+				mod_length = globals.max_varchar_size;
 
-			mylog("SQLColumns: field type is VARCHAR,NAME: field_type = %d, mod_length = %d\n", field_type, mod_length);
+			mylog("SQLColumns: field type is VARCHAR,BPCHAR: field_type = %d, mod_length = %d\n", field_type, mod_length);
 
             set_tuplefield_int4(&row->tuple[7], mod_length);
 			set_tuplefield_int4(&row->tuple[6], mod_length);
         } else {
-			mylog("SQLColumns: field type is OTHER: field_type = %d, pgtype_length = %d\n", field_type, pgtype_length(field_type));
+			mylog("SQLColumns: field type is OTHER: field_type = %d, pgtype_length = %d\n", field_type, pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
 
-            set_tuplefield_int4(&row->tuple[7], pgtype_length(field_type));
-			set_tuplefield_int4(&row->tuple[6], pgtype_precision(field_type));
+            set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, field_type, PG_STATIC, PG_STATIC));
 
         }
 
-		set_nullfield_int2(&row->tuple[8], pgtype_scale(field_type));
-		set_nullfield_int2(&row->tuple[9], pgtype_radix(field_type));
-		set_tuplefield_int2(&row->tuple[10], pgtype_nullable(field_type));
+		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, field_type));
+		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, field_type));
+		set_tuplefield_int2(&row->tuple[10], pgtype_nullable(stmt, field_type));
 		set_tuplefield_string(&row->tuple[11], "");
 
         QR_add_tuple(stmt->result, row);
@@ -1341,6 +1478,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
+	stmt->current_col = -1;
 
 	SQLFreeStmt(hcol_stmt, SQL_DROP);
 	mylog("SQLColumns(): EXIT,  stmt=%u\n", stmt);
@@ -1383,16 +1521,15 @@ mylog("**** SQLSpecialColumns(): ENTER,  stmt=%u\n", stmt);
 
     /* use the oid value for the rowid */
     if(fColType == SQL_BEST_ROWID) {
-
         row = (TupleNode *)malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
 
         set_tuplefield_int2(&row->tuple[0], SQL_SCOPE_SESSION);
         set_tuplefield_string(&row->tuple[1], "oid");
-        set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(PG_TYPE_OID));
+        set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(stmt, PG_TYPE_OID));
         set_tuplefield_string(&row->tuple[3], "OID");
-        set_tuplefield_int4(&row->tuple[4], pgtype_precision(PG_TYPE_OID));
-        set_tuplefield_int4(&row->tuple[5], pgtype_length(PG_TYPE_OID));
-        set_tuplefield_int2(&row->tuple[6], pgtype_scale(PG_TYPE_OID));
+        set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
+        set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
+        set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, PG_TYPE_OID));
         set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
 
         QR_add_tuple(stmt->result, row);
@@ -1405,6 +1542,7 @@ mylog("**** SQLSpecialColumns(): ENTER,  stmt=%u\n", stmt);
 
     stmt->status = STMT_FINISHED;
     stmt->currTuple = -1;
+	stmt->current_col = -1;
 
 	mylog("SQLSpecialColumns(): EXIT,  stmt=%u\n", stmt);
     return SQL_SUCCESS;
@@ -1428,6 +1566,7 @@ RETCODE result;
 char *table_name;
 char index_name[MAX_INFO_STRING];
 short fields_vector[8];
+char isunique[10], isclustered[10];
 SDWORD index_name_len, fields_vector_len;
 TupleNode *row;
 int i;
@@ -1438,6 +1577,8 @@ char **column_names = 0;
 Int4 column_name_len;
 int total_columns = 0;
 char error = TRUE;
+ConnInfo *ci;
+char buf[256];
 
 mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
 
@@ -1447,6 +1588,8 @@ mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
 
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
+
+	ci = &stmt->hdbc->connInfo;
 
     stmt->result = QR_Constructor();
     if(!stmt->result) {
@@ -1475,114 +1618,178 @@ mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
     QR_set_field_info(stmt->result, 11, "PAGES", PG_TYPE_INT4, 4);
     QR_set_field_info(stmt->result, 12, "FILTER_CONDITION", PG_TYPE_TEXT, MAX_INFO_STRING);
 
-    // there are no unique indexes in postgres, so return nothing
-    // if those are requested
-    if(fUnique != SQL_INDEX_UNIQUE) {
-        // only use the table name... the owner should be redundant, and
-        // we never use qualifiers.
-		table_name = make_string(szTableName, cbTableName, NULL);
-		if ( ! table_name) {
-            stmt->errormsg = "No table name passed to SQLStatistics.";
-            stmt->errornumber = STMT_INTERNAL_ERROR;
-            return SQL_ERROR;
-        }
 
-		// we need to get a list of the field names first,
-		// so we can return them later.
-		result = SQLAllocStmt( stmt->hdbc, &hcol_stmt);
-		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-			stmt->errormsg = "SQLAllocStmt failed in SQLStatistics for columns.";
-			stmt->errornumber = STMT_NO_MEMORY_ERROR;
-			goto SEEYA;
-		}
+    // only use the table name... the owner should be redundant, and
+    // we never use qualifiers.
+	table_name = make_string(szTableName, cbTableName, NULL);
+	if ( ! table_name) {
+        stmt->errormsg = "No table name passed to SQLStatistics.";
+        stmt->errornumber = STMT_INTERNAL_ERROR;
+        return SQL_ERROR;
+    }
 
-		col_stmt = (StatementClass *) hcol_stmt;
+	// we need to get a list of the field names first,
+	// so we can return them later.
+	result = SQLAllocStmt( stmt->hdbc, &hcol_stmt);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = "SQLAllocStmt failed in SQLStatistics for columns.";
+		stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		goto SEEYA;
+	}
 
-		result = SQLColumns(hcol_stmt, "", 0, "", 0, 
-					table_name, (SWORD) strlen(table_name), "", 0);
-		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-				stmt->errormsg = col_stmt->errormsg;        // "SQLColumns failed in SQLStatistics.";
-				stmt->errornumber = col_stmt->errornumber;  // STMT_EXEC_ERROR;
-				SQLFreeStmt(hcol_stmt, SQL_DROP);
-				goto SEEYA;
-		}
-		result = SQLBindCol(hcol_stmt, 4, SQL_C_CHAR,
-					column_name, MAX_INFO_STRING, &column_name_len);
-		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-			stmt->errormsg = col_stmt->errormsg;
-			stmt->errornumber = col_stmt->errornumber;
+	col_stmt = (StatementClass *) hcol_stmt;
+
+	/*	"internal" prevents SQLColumns from returning the oid if it is being shown.
+		This would throw everything off.
+	*/
+	col_stmt->internal = TRUE;
+	result = SQLColumns(hcol_stmt, "", 0, "", 0, 
+				table_name, (SWORD) strlen(table_name), "", 0);
+	col_stmt->internal = FALSE;
+
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = col_stmt->errormsg;        // "SQLColumns failed in SQLStatistics.";
+			stmt->errornumber = col_stmt->errornumber;  // STMT_EXEC_ERROR;
 			SQLFreeStmt(hcol_stmt, SQL_DROP);
 			goto SEEYA;
+	}
+	result = SQLBindCol(hcol_stmt, 4, SQL_C_CHAR,
+				column_name, MAX_INFO_STRING, &column_name_len);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = col_stmt->errormsg;
+		stmt->errornumber = col_stmt->errornumber;
+		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		goto SEEYA;
 
-		}
+	}
+
+	result = SQLFetch(hcol_stmt);
+	while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
+		total_columns++;
+
+		column_names = 
+		(char **)realloc(column_names, 
+				 total_columns * sizeof(char *));
+		column_names[total_columns-1] = 
+		(char *)malloc(strlen(column_name)+1);
+		strcpy(column_names[total_columns-1], column_name);
+
+		mylog("SQLStatistics: column_name = '%s'\n", column_name);
 
 		result = SQLFetch(hcol_stmt);
-		while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
-			total_columns++;
-
-			column_names = 
-			(char **)realloc(column_names, 
-					 total_columns * sizeof(char *));
-			column_names[total_columns-1] = 
-			(char *)malloc(strlen(column_name)+1);
-			strcpy(column_names[total_columns-1], column_name);
-
-			result = SQLFetch(hcol_stmt);
-		}
-		if(result != SQL_NO_DATA_FOUND || total_columns == 0) {
-				stmt->errormsg = SC_create_errormsg(hcol_stmt); // "Couldn't get column names in SQLStatistics.";
-				stmt->errornumber = col_stmt->errornumber;
-				SQLFreeStmt(hcol_stmt, SQL_DROP);
-   				goto SEEYA;
-
-		}
-		
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
-
-        // get a list of indexes on this table
-        result = SQLAllocStmt( stmt->hdbc, &hindx_stmt);
-        if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-			stmt->errormsg = "SQLAllocStmt failed in SQLStatistics for indices.";
-			stmt->errornumber = STMT_NO_MEMORY_ERROR;
-			goto SEEYA;
-
-        }
-		indx_stmt = (StatementClass *) hindx_stmt;
-
-		sprintf(index_query, "select c.relname, i.indkey from pg_index i, pg_class c, pg_class d where c.oid = i.indexrelid and d.relname = '%s' and d.oid = i.indrelid", 
-			table_name);
-
-        result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
-        if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-			stmt->errormsg = SC_create_errormsg(hindx_stmt); // "Couldn't execute index query (w/SQLExecDirect) in SQLStatistics.";
-			stmt->errornumber = indx_stmt->errornumber;
-			SQLFreeStmt(hindx_stmt, SQL_DROP);
-  			goto SEEYA;
-
-        }
-
-        result = SQLBindCol(hindx_stmt, 1, SQL_C_CHAR,
-                            index_name, MAX_INFO_STRING, &index_name_len);
-        if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-			stmt->errormsg = indx_stmt->errormsg; // "Couldn't bind column in SQLStatistics.";
-			stmt->errornumber = indx_stmt->errornumber;
-			SQLFreeStmt(hindx_stmt, SQL_DROP);
+	}
+	if(result != SQL_NO_DATA_FOUND || total_columns == 0) {
+			stmt->errormsg = SC_create_errormsg(hcol_stmt); // "Couldn't get column names in SQLStatistics.";
+			stmt->errornumber = col_stmt->errornumber;
+			SQLFreeStmt(hcol_stmt, SQL_DROP);
    			goto SEEYA;
 
-        }
-        // bind the vector column
-        result = SQLBindCol(hindx_stmt, 2, SQL_C_DEFAULT,
-                            fields_vector, 16, &fields_vector_len);
-        if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-			stmt->errormsg = indx_stmt->errormsg;  // "Couldn't bind column in SQLStatistics.";
-			stmt->errornumber = indx_stmt->errornumber;
-			SQLFreeStmt(hindx_stmt, SQL_DROP);
-			goto SEEYA;
+	}
+	
+	SQLFreeStmt(hcol_stmt, SQL_DROP);
 
-        }
+    // get a list of indexes on this table
+    result = SQLAllocStmt( stmt->hdbc, &hindx_stmt);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = "SQLAllocStmt failed in SQLStatistics for indices.";
+		stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		goto SEEYA;
 
-        result = SQLFetch(hindx_stmt);
-        while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
+    }
+	indx_stmt = (StatementClass *) hindx_stmt;
+
+	sprintf(index_query, "select c.relname, i.indkey, i.indisunique, i.indisclustered from pg_index i, pg_class c, pg_class d where c.oid = i.indexrelid and d.relname = '%s' and d.oid = i.indrelid", 
+		table_name);
+
+    result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = SC_create_errormsg(hindx_stmt); // "Couldn't execute index query (w/SQLExecDirect) in SQLStatistics.";
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+  		goto SEEYA;
+
+    }
+
+    // bind the index name column
+    result = SQLBindCol(hindx_stmt, 1, SQL_C_CHAR,
+                        index_name, MAX_INFO_STRING, &index_name_len);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = indx_stmt->errormsg; // "Couldn't bind column in SQLStatistics.";
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+   		goto SEEYA;
+
+    }
+    // bind the vector column
+    result = SQLBindCol(hindx_stmt, 2, SQL_C_DEFAULT,
+                        fields_vector, 16, &fields_vector_len);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = indx_stmt->errormsg;  // "Couldn't bind column in SQLStatistics.";
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		goto SEEYA;
+
+    }
+    // bind the "is unique" column
+    result = SQLBindCol(hindx_stmt, 3, SQL_C_CHAR,
+                        isunique, sizeof(isunique), NULL);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = indx_stmt->errormsg;  // "Couldn't bind column in SQLStatistics.";
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		goto SEEYA;
+    }
+
+    // bind the "is clustered" column
+    result = SQLBindCol(hindx_stmt, 4, SQL_C_CHAR,
+                        isclustered, sizeof(isclustered), NULL);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errormsg = indx_stmt->errormsg;  // "Couldn't bind column in SQLStatistics.";
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		goto SEEYA;
+
+    }
+
+	/*	fake index of OID */
+	if (atoi(ci->show_oid_column) && atoi(ci->fake_oid_index)) {
+		row = (TupleNode *)malloc(sizeof(TupleNode) + 
+					  (13 - 1) * sizeof(TupleField));
+
+		// no table qualifier
+		set_tuplefield_string(&row->tuple[0], "");
+		// don't set the table owner, else Access tries to use it
+		set_tuplefield_string(&row->tuple[1], "");
+		set_tuplefield_string(&row->tuple[2], table_name);
+
+		// non-unique index?
+		set_tuplefield_int2(&row->tuple[3], (Int2) (globals.unique_index ? FALSE : TRUE));
+		
+		// no index qualifier
+		set_tuplefield_string(&row->tuple[4], "");
+
+		sprintf(buf, "%s_idx_fake_oid", table_name);
+		set_tuplefield_string(&row->tuple[5], buf);
+
+		// Clustered index?  I think non-clustered should be type OTHER not HASHED
+		set_tuplefield_int2(&row->tuple[6], (Int2) SQL_INDEX_OTHER);
+		set_tuplefield_int2(&row->tuple[7], (Int2) 1);
+
+		set_tuplefield_string(&row->tuple[8], "oid");
+		set_tuplefield_string(&row->tuple[9], "A");
+		set_tuplefield_null(&row->tuple[10]);
+		set_tuplefield_null(&row->tuple[11]);
+		set_tuplefield_null(&row->tuple[12]);
+
+		QR_add_tuple(stmt->result, row);
+	}
+
+    result = SQLFetch(hindx_stmt);
+    while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
+
+		//	If only requesting unique indexs, then just return those.
+		if (fUnique == SQL_INDEX_ALL || 
+			(fUnique == SQL_INDEX_UNIQUE && atoi(isunique))) {
 			i = 0;
 			// add a row in this table for each field in the index
 			while(i < 8 && fields_vector[i] != 0) {
@@ -1596,24 +1803,32 @@ mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
 				set_tuplefield_string(&row->tuple[1], "");
 				set_tuplefield_string(&row->tuple[2], table_name);
 
-				// Postgres95 indices always allow non-unique values.
-				set_tuplefield_int2(&row->tuple[3], TRUE);
+				// non-unique index?
+				if (globals.unique_index)
+					set_tuplefield_int2(&row->tuple[3], (Int2) (atoi(isunique) ? FALSE : TRUE));
+				else
+					set_tuplefield_int2(&row->tuple[3], TRUE);
 				
 				// no index qualifier
 				set_tuplefield_string(&row->tuple[4], "");
 				set_tuplefield_string(&row->tuple[5], index_name);
 
-				// check this--what does it mean for an index
-				// to be clustered?  (none of mine seem to be--
-				// we can and probably should find this out from
-				// the pg_index table)
-				set_tuplefield_int2(&row->tuple[6], SQL_INDEX_HASHED);
+				// Clustered index?  I think non-clustered should be type OTHER not HASHED
+				set_tuplefield_int2(&row->tuple[6], (Int2) (atoi(isclustered) ? SQL_INDEX_CLUSTERED : SQL_INDEX_OTHER));
 				set_tuplefield_int2(&row->tuple[7], (Int2) (i+1));
 
-				if(fields_vector[i] < 0 || fields_vector[i] > total_columns)
+				if(fields_vector[i] == OID_ATTNUM) {
+					set_tuplefield_string(&row->tuple[8], "oid");
+					mylog("SQLStatistics: column name = oid\n");
+				}
+				else if(fields_vector[i] < 0 || fields_vector[i] > total_columns) {
 					set_tuplefield_string(&row->tuple[8], "UNKNOWN");
-				else
+					mylog("SQLStatistics: column name = UNKNOWN\n");
+				}
+				else {
 					set_tuplefield_string(&row->tuple[8], column_names[fields_vector[i]-1]);
+					mylog("SQLStatistics: column name = '%s'\n", column_names[fields_vector[i]-1]);
+				}
 
 				set_tuplefield_string(&row->tuple[9], "A");
 				set_tuplefield_null(&row->tuple[10]);
@@ -1622,19 +1837,19 @@ mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
 
 				QR_add_tuple(stmt->result, row);
 				i++;
-		    }
+			}
+		}
 
-            result = SQLFetch(hindx_stmt);
-        }
-        if(result != SQL_NO_DATA_FOUND) {
-			stmt->errormsg = SC_create_errormsg(hindx_stmt); // "SQLFetch failed in SQLStatistics.";
-			stmt->errornumber = indx_stmt->errornumber;
-			SQLFreeStmt(hindx_stmt, SQL_DROP);
-			goto SEEYA;
-        }
-
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+        result = SQLFetch(hindx_stmt);
     }
+    if(result != SQL_NO_DATA_FOUND) {
+		stmt->errormsg = SC_create_errormsg(hindx_stmt); // "SQLFetch failed in SQLStatistics.";
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		goto SEEYA;
+    }
+
+	SQLFreeStmt(hindx_stmt, SQL_DROP);
 
     // also, things need to think that this statement is finished so
     // the results can be retrieved.
@@ -1642,6 +1857,7 @@ mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
 
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
+	stmt->current_col = -1;
 
 	error = FALSE;
 
@@ -1672,6 +1888,7 @@ RETCODE SQL_API SQLColumnPrivileges(
                                     UCHAR FAR *  szColumnName,
                                     SWORD        cbColumnName)
 {
+/*	Neither Access or Borland care about this. */
     return SQL_ERROR;
 }
 
@@ -1702,7 +1919,7 @@ int nk = 0;
 	tbl_stmt = (StatementClass *) htbl_stmt;
 
 	tables_query[0] = '\0';
-	if ( ! my_strcat(tables_query, "select distinct on attnum a2.attname, a2.attnum from pg_attribute a1, pg_attribute a2, pg_class c, pg_index i where c.relname = '%.*s_key' AND c.oid = i.indexrelid AND a1.attrelid = c.oid AND a2.attrelid = c.oid AND (i.indkey[0] = a1.attnum OR i.indkey[1] = a1.attnum OR i.indkey[2] = a1.attnum OR i.indkey[3] = a1.attnum OR i.indkey[4] = a1.attnum OR i.indkey[5] = a1.attnum OR i.indkey[6] = a1.attnum OR i.indkey[7] = a1.attnum) order by a2.attnum",
+	if ( ! my_strcat(tables_query, "select distinct on attnum a2.attname, a2.attnum from pg_attribute a1, pg_attribute a2, pg_class c, pg_index i where c.relname = '%.*s_pkey' AND c.oid = i.indexrelid AND a1.attrelid = c.oid AND a2.attrelid = c.oid AND (i.indkey[0] = a1.attnum OR i.indkey[1] = a1.attnum OR i.indkey[2] = a1.attnum OR i.indkey[3] = a1.attnum OR i.indkey[4] = a1.attnum OR i.indkey[5] = a1.attnum OR i.indkey[6] = a1.attnum OR i.indkey[7] = a1.attnum) order by a2.attnum",
 			szTableName, cbTableName)) {
 
 		stmt->errormsg = "No Table specified to getPrimaryKeyString.";
@@ -1883,6 +2100,7 @@ mylog("**** SQLPrimaryKeys(): ENTER, stmt=%u\n", stmt);
 
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
+	stmt->current_col = -1;
 
 	mylog("SQLPrimaryKeys(): EXIT, stmt=%u\n", stmt);
     return SQL_SUCCESS;
@@ -2134,6 +2352,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
 
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
+	stmt->current_col = -1;
 
 	mylog("SQLForeignKeys(): EXIT, stmt=%u\n", stmt);
     return SQL_SUCCESS;

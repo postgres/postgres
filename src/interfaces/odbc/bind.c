@@ -79,6 +79,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 			stmt->parameters[i].precision = 0;
 			stmt->parameters[i].scale = 0;
 			stmt->parameters[i].data_at_exec = FALSE;
+			stmt->parameters[i].lobj_oid = 0;
 			stmt->parameters[i].EXEC_used = NULL;
 			stmt->parameters[i].EXEC_buffer = NULL;
 		}
@@ -114,6 +115,8 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	else
 		stmt->parameters[ipar].data_at_exec = FALSE;
 
+	mylog("SQLBindParamater: ipar = %d, *pcbValue = %d, data_at_exec = %d\n", 
+		ipar, pcbValue ? *pcbValue: -777, stmt->parameters[ipar].data_at_exec);
 
 	return SQL_SUCCESS;
 }
@@ -188,6 +191,8 @@ mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 		stmt->bindings[icol].buffer     = rgbValue;
 		stmt->bindings[icol].used       = pcbValue;
 		stmt->bindings[icol].returntype = fCType;
+
+		mylog("       bound buffer[%d] = %u\n", icol, stmt->bindings[icol].buffer);
 	}
 
 	return SQL_SUCCESS;
@@ -228,7 +233,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 		*pibScale = stmt->parameters[ipar].scale;
 
 	if(pfNullable)
-		*pfNullable = pgtype_nullable(stmt->parameters[ipar].paramType);
+		*pfNullable = pgtype_nullable(stmt, stmt->parameters[ipar].paramType);
 
 	return SQL_SUCCESS;
 }
@@ -247,37 +252,25 @@ RETCODE SQL_API SQLParamOptions(
 
 //      -       -       -       -       -       -       -       -       -
 
-//      Returns the number of parameter markers.
+//      Returns the number of parameters in an SQL statement
 
 RETCODE SQL_API SQLNumParams(
         HSTMT      hstmt,
         SWORD  FAR *pcpar)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
-unsigned int i;
 
-	// I guess this is the number of actual parameter markers
-	// in the statement, not the number of parameters that are bound.
-	// why does this have to be driver-specific?
 
 	if(!stmt)
 		return SQL_INVALID_HANDLE;
 
-	if(!stmt->statement) {
-		// no statement has been allocated
-		*pcpar = 0;
-		stmt->errormsg = "SQLNumParams called with no statement ready.";
-		stmt->errornumber = STMT_SEQUENCE_ERROR;
-		return SQL_ERROR;
-	} else {
-		*pcpar = 0;
-		for(i=0; i < strlen(stmt->statement); i++) {
-			if(stmt->statement[i] == '?')
-				(*pcpar)++;
-		}
+	//	If the statement does not have parameters, it should just return 0.
 
-		return SQL_SUCCESS;
+	if (pcpar) {
+		*pcpar = stmt->parameters_allocated;
 	}
+
+	return SQL_SUCCESS;
 }
 
 /********************************************************************
@@ -309,7 +302,7 @@ extend_bindings(StatementClass *stmt, int num_columns)
 BindInfoClass *new_bindings;
 int i;
 
-	mylog("in extend_bindings\n");
+mylog("in extend_bindings: stmt=%u, bindings_allocated=%d, num_columns=%d\n", stmt, stmt->bindings_allocated, num_columns);
 
 	/* if we have too few, allocate room for more, and copy the old */
 	/* entries into the new structure */
@@ -325,6 +318,7 @@ int i;
 		}
 
 		stmt->bindings = new_bindings;		// null indicates error
+		stmt->bindings_allocated = num_columns;
 
     } else {
 	/* if we have too many, make sure the extra ones are emptied out */

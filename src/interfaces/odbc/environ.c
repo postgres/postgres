@@ -113,6 +113,10 @@ int status;
                     strcpy(szSqlState, "08S01");
                     // communication link failure
                     break;
+                case STMT_CREATE_TABLE_ERROR:
+                    strcpy(szSqlState, "S0001");
+                    // table already exists
+                    break;
                 case STMT_STATUS_ERROR:
                 case STMT_SEQUENCE_ERROR:
                     strcpy(szSqlState, "S1010");
@@ -158,6 +162,12 @@ int status;
                     break;
                 case STMT_OPTION_VALUE_CHANGED:
                     strcpy(szSqlState, "01S02");
+                    break;
+				case STMT_INVALID_CURSOR_NAME:
+                    strcpy(szSqlState, "34000");
+                    break;
+				case STMT_NO_CURSOR_NAME:
+                    strcpy(szSqlState, "S1015");
                     break;
                 default:
                     strcpy(szSqlState, "S1000");

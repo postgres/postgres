@@ -42,7 +42,7 @@ void qlog();	/* prototype */
 #endif
 
 void remove_newlines(char *string);
-char *strncpy_null(char *dst, const char *src, size_t len);
+char *strncpy_null(char *dst, const char *src, int len);
 char *trim(char *string);
 char *make_string(char *s, int len, char *buf);
 char *my_strcat(char *buf, char *fmt, char *s, int len);
@@ -53,6 +53,6 @@ char *my_strcat(char *buf, char *fmt, char *s, int len);
 #define STRCPY_TRUNCATED	-1
 #define STRCPY_NULL			-2
 
-int my_strcpy(char *dst, size_t dst_len, char *src, size_t src_len);
+int my_strcpy(char *dst, int dst_len, char *src, int src_len);
 
 #endif

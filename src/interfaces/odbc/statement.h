@@ -45,18 +45,26 @@ typedef enum {
 #define STMT_RESTRICTED_DATA_TYPE_ERROR 14
 #define STMT_INVALID_CURSOR_STATE_ERROR 15
 #define STMT_OPTION_VALUE_CHANGED 16
-
+#define STMT_CREATE_TABLE_ERROR 17
+#define STMT_NO_CURSOR_NAME 18
+#define STMT_INVALID_CURSOR_NAME 19
 
 /* statement types */
-#define STMT_TYPE_SELECT     0
-#define STMT_TYPE_INSERT     1
-#define STMT_TYPE_UPDATE     2
-#define STMT_TYPE_DELETE     3
-#define STMT_TYPE_OTHER      4
-#define STMT_TYPE_UNKNOWN  666  // 'unknown' means we don't have the statement yet,
-                                // or haven't looked at it to see what type it is.
-                                // 'other' means we looked, but couldn't tell.
+enum {
+	STMT_TYPE_UNKNOWN = -2,
+	STMT_TYPE_OTHER = -1,
+	STMT_TYPE_SELECT = 0,
+	STMT_TYPE_INSERT,
+	STMT_TYPE_UPDATE,
+	STMT_TYPE_DELETE,
+	STMT_TYPE_CREATE,
+	STMT_TYPE_ALTER,
+	STMT_TYPE_DROP,
+	STMT_TYPE_GRANT,
+	STMT_TYPE_REVOKE,
+};
 
+#define STMT_UPDATE(stmt)	(stmt->statement_type > STMT_TYPE_SELECT)
 
 /********	Statement Handle	***********/
 struct StatementClass_ {
@@ -68,6 +76,9 @@ struct StatementClass_ {
     char *errormsg;
     int errornumber;
 	int maxRows;
+	int rowset_size;
+	int cursor_type;
+	int scroll_concurrency;
 
     /* information on bindings */
     BindInfoClass *bindings;	/* array to store the binding information */
@@ -78,6 +89,8 @@ struct StatementClass_ {
     ParameterInfoClass *parameters;
 
 	Int4 currTuple;
+	int  current_col;			/* current column for GetData -- used to handle multiple calls */
+	int  lobj_fd;				/* fd of the current large object */
 
     char *statement;			/* if non--null pointer to the SQL statement that has been executed */
 
@@ -91,6 +104,9 @@ struct StatementClass_ {
 	char manual_result;			/* Is the statement result manually built? */
 	char prepare;				/* is this statement a prepared statement or direct */
 
+	char internal;				/* Is this statement being called internally? */
+
+	char cursor_name[32];
 	char stmt_with_params[65536 /* MAX_STATEMENT_LEN */];		/* statement after parameter substitution */
 
 };

@@ -26,14 +26,16 @@
 #include <odbcinst.h>
 #include "resource.h"
 
+#include "dlg_specific.h"
+
 /* prototypes */
 BOOL FAR PASCAL dconn_FDriverConnectProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 RETCODE dconn_DoDialog(HWND hwnd, ConnInfo *ci);
 void dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci);
 
-
 extern HINSTANCE NEAR s_hModule;               /* Saved module handle. */
 extern GLOBAL_VALUES globals;
+
 
 RETCODE SQL_API SQLDriverConnect(
                                  HDBC      hdbc,
@@ -67,10 +69,10 @@ char password_required = FALSE;
 	//	If the ConnInfo in the hdbc is missing anything,
 	//	this function will fill them in from the registry (assuming
 	//	of course there is a DSN given -- if not, it does nothing!)
-	CC_DSN_info(conn, CONN_DONT_OVERWRITE);
+	getDSNinfo(ci, CONN_DONT_OVERWRITE);
 
 	//	Fill in any default parameters if they are not there.
-	CC_set_defaults(conn);
+	getDSNdefaults(ci);
 
 dialog:
 	ci->focus_password = password_required;
@@ -119,19 +121,7 @@ dialog:
 
 		//	return the completed string to the caller.
 
-		char got_dsn = (ci->dsn[0] != '\0');
-
-		sprintf(connect_string, "%s=%s;DATABASE=%s;SERVER=%s;PORT=%s;UID=%s;READONLY=%s;PWD=%s;PROTOCOL=%s;CONNSETTINGS=%s", 
-			got_dsn ? "DSN" : "DRIVER", 
-			got_dsn ? ci->dsn : ci->driver,
-			ci->database,
-			ci->server,
-			ci->port,
-			ci->username,
-			ci->readonly,
-			ci->password,
-			ci->protocol,
-			ci->conn_settings);
+		makeConnectString(connect_string, ci);
 
 		if(pcbConnStrOut) {
 			*pcbConnStrOut = strlen(connect_string);
@@ -169,7 +159,7 @@ int dialog_result;
 mylog("dconn_DoDialog: ci = %u\n", ci);
 
 	if(hwnd) {
-		dialog_result = DialogBoxParam(s_hModule, MAKEINTRESOURCE(DRIVERCONNDIALOG),
+		dialog_result = DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_CONFIG),
 									hwnd, dconn_FDriverConnectProc, (LPARAM) ci);
 		if(!dialog_result || (dialog_result == -1)) {
 			return SQL_NO_DATA_FOUND;
@@ -188,34 +178,37 @@ BOOL FAR PASCAL dconn_FDriverConnectProc(
                                          WPARAM  wParam,
                                          LPARAM  lParam)
 {
-static ConnInfo *ci;
+ConnInfo *ci;
 
 	switch (wMsg) {
 	case WM_INITDIALOG:
-		ci = (ConnInfo *) lParam;		// Save the ConnInfo for the "OK"
+		ci = (ConnInfo *) lParam;		
 
-		SetDlgItemText(hdlg, SERVER_EDIT, ci->server);
-		SetDlgItemText(hdlg, DATABASE_EDIT, ci->database);
-		SetDlgItemText(hdlg, USERNAME_EDIT, ci->username);
-		SetDlgItemText(hdlg, PASSWORD_EDIT, ci->password);
-		SetDlgItemText(hdlg, PORT_EDIT, ci->port);
-		CheckDlgButton(hdlg, READONLY_EDIT, atoi(ci->readonly));
+		/*	Change the caption for the setup dialog */
+		SetWindowText(hdlg, "PostgreSQL Connection");
 
-		CheckDlgButton(hdlg, PG62_EDIT, PROTOCOL_62(ci));
+		SetWindowText(GetDlgItem(hdlg, IDC_DATASOURCE), "Connection");
 
-		/*	The driver connect dialog box allows manipulating this global variable */
-		CheckDlgButton(hdlg, COMMLOG_EDIT, globals.commlog);
+		/*	Hide the DSN and description fields */
+		ShowWindow(GetDlgItem(hdlg, IDC_DSNAMETEXT), SW_HIDE);
+		ShowWindow(GetDlgItem(hdlg, IDC_DSNAME), SW_HIDE);
+		ShowWindow(GetDlgItem(hdlg, IDC_DESCTEXT), SW_HIDE);
+		ShowWindow(GetDlgItem(hdlg, IDC_DESC), SW_HIDE);
+
+		SetWindowLong(hdlg, DWL_USER, lParam);// Save the ConnInfo for the "OK"
+
+		SetDlgStuff(hdlg, ci);
 
 		if (ci->database[0] == '\0')		
 			;	/* default focus */
 		else if (ci->server[0] == '\0')
-			SetFocus(GetDlgItem(hdlg, SERVER_EDIT));
+			SetFocus(GetDlgItem(hdlg, IDC_SERVER));
 		else if (ci->port[0] == '\0')
-			SetFocus(GetDlgItem(hdlg, PORT_EDIT));
+			SetFocus(GetDlgItem(hdlg, IDC_PORT));
 		else if (ci->username[0] == '\0')
-			SetFocus(GetDlgItem(hdlg, USERNAME_EDIT));
+			SetFocus(GetDlgItem(hdlg, IDC_USER));
 		else if (ci->focus_password)
-			SetFocus(GetDlgItem(hdlg, PASSWORD_EDIT));
+			SetFocus(GetDlgItem(hdlg, IDC_PASSWORD));
 
 		break; 
 
@@ -223,26 +216,30 @@ static ConnInfo *ci;
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
 		case IDOK:
 
-			GetDlgItemText(hdlg, SERVER_EDIT, ci->server, sizeof(ci->server));
-			GetDlgItemText(hdlg, DATABASE_EDIT, ci->database, sizeof(ci->database));
-  			GetDlgItemText(hdlg, USERNAME_EDIT, ci->username, sizeof(ci->username));
-			GetDlgItemText(hdlg, PASSWORD_EDIT, ci->password, sizeof(ci->password));
-			GetDlgItemText(hdlg, PORT_EDIT, ci->port, sizeof(ci->port));
+			ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
 
-			sprintf(ci->readonly, "%d", IsDlgButtonChecked(hdlg, READONLY_EDIT));
+			GetDlgStuff(hdlg, ci);
 
-			if (IsDlgButtonChecked(hdlg, PG62_EDIT))
-				strcpy(ci->protocol, PG62);
-			else
-				ci->protocol[0] = '\0';
-
-			/*	The driver connect dialog box allows manipulating this global variable */
-			globals.commlog = IsDlgButtonChecked(hdlg, COMMLOG_EDIT);
-			updateGlobals();
 
 		case IDCANCEL:
 			EndDialog(hdlg, GET_WM_COMMAND_ID(wParam, lParam) == IDOK);
 			return TRUE;
+
+		case IDC_DRIVER:
+
+			DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
+									hdlg, driver_optionsProc, (LPARAM) NULL);
+
+
+			break;
+
+		case IDC_DATASOURCE:
+
+			ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
+			DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
+									hdlg, ds_optionsProc, (LPARAM) ci);
+
+			break;
 		}
 	}
 
@@ -286,42 +283,12 @@ char *strtok_arg;
 		if( !attribute || !value)
 			continue;          
 
-		/*********************************************************/
-		/*               PARSE ATTRIBUTES                        */
-		/*********************************************************/
-		if(stricmp(attribute, "DSN") == 0)
-			strcpy(ci->dsn, value);
-
-		else if(stricmp(attribute, "driver") == 0)
-			strcpy(ci->driver, value);
-
-		else if(stricmp(attribute, "uid") == 0)
-			strcpy(ci->username, value);
-
-		else if(stricmp(attribute, "pwd") == 0)
-			strcpy(ci->password, value);
-
-		else if ((stricmp(attribute, "server") == 0) ||
-					(stricmp(attribute, "servername") == 0))
-			strcpy(ci->server, value);
-
-		else if(stricmp(attribute, "port") == 0)
-			strcpy(ci->port, value);
-
-		else if(stricmp(attribute, "database") == 0)
-			strcpy(ci->database, value);
-
-		else if (stricmp(attribute, "readonly") == 0)
-			strcpy(ci->readonly, value);
-
-		else if (stricmp(attribute, "protocol") == 0)
-			strcpy(ci->protocol, value);
-
-		else if (stricmp(attribute, "connsettings") == 0)
-			strcpy(ci->conn_settings, value);
+		//	Copy the appropriate value to the conninfo 
+		copyAttributes(ci, attribute, value);
 
 	}
 
 
 	free(our_connect_string);
 }
+

@@ -12,6 +12,7 @@
 
 #include <windows.h>
 #include <sql.h>
+#include <sqlext.h>
 #include "psqlodbc.h"
 
 typedef enum {
@@ -119,6 +120,7 @@ typedef struct _StartupPacket6_2
 */
 typedef struct {
 	char	dsn[MEDIUM_REGISTRY_LEN];
+	char	desc[MEDIUM_REGISTRY_LEN];
 	char	driver[MEDIUM_REGISTRY_LEN];
 	char	server[MEDIUM_REGISTRY_LEN];
 	char	database[MEDIUM_REGISTRY_LEN];
@@ -128,11 +130,16 @@ typedef struct {
 	char	protocol[SMALL_REGISTRY_LEN];
 	char	port[SMALL_REGISTRY_LEN];
 	char	readonly[SMALL_REGISTRY_LEN];	
+//	char	unknown_sizes[SMALL_REGISTRY_LEN];
+	char	fake_oid_index[SMALL_REGISTRY_LEN];
+	char	show_oid_column[SMALL_REGISTRY_LEN];
+	char	show_system_tables[SMALL_REGISTRY_LEN];
 	char	focus_password;
 } ConnInfo;
 
 /*	Macro to determine is the connection using 6.2 protocol? */
 #define PROTOCOL_62(conninfo_)		(strncmp((conninfo_)->protocol, PG62, strlen(PG62)) == 0)
+
 
 
 /*******	The Connection handle	************/
@@ -145,6 +152,7 @@ struct ConnectionClass_ {
 	StatementClass	**stmts;
 	int				num_stmts;
 	SocketClass		*sock;
+	int				lobj_type;
 	char			transact_status;		/* Is a transaction is currently in progress */
 	char			errormsg_created;		/* has an informative error msg been created?  */
 };
@@ -167,10 +175,9 @@ struct ConnectionClass_ {
 /*	prototypes */
 ConnectionClass *CC_Constructor();
 char CC_Destructor(ConnectionClass *self);
+int CC_cursor_count(ConnectionClass *self);
 char CC_cleanup(ConnectionClass *self);
 char CC_abort(ConnectionClass *self);
-void CC_DSN_info(ConnectionClass *self, char overwrite);
-void CC_set_defaults(ConnectionClass *self);
 char CC_connect(ConnectionClass *self, char do_password);
 char CC_add_statement(ConnectionClass *self, StatementClass *stmt);
 char CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
@@ -178,6 +185,8 @@ char CC_get_error(ConnectionClass *self, int *number, char **message);
 QResultClass *CC_send_query(ConnectionClass *self, char *query, QResultClass *result_in, char *cursor);
 void CC_clear_error(ConnectionClass *self);
 char *CC_create_errormsg(ConnectionClass *self);
+int CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);
 char CC_send_settings(ConnectionClass *self);
+void CC_lookup_lo(ConnectionClass *conn);
 
 #endif

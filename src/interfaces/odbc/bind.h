@@ -34,8 +34,9 @@ struct ParameterInfoClass_ {
 	Int2 SQLType;
 	UInt4 precision;
 	Int2 scale;
-	Int4 *EXEC_used;
-	char *EXEC_buffer;
+	Oid  lobj_oid;
+	Int4 *EXEC_used;		/* amount of data OR the oid of the large object */
+	char *EXEC_buffer;		/* the data or the FD of the large object */
 	char data_at_exec;
 };
 

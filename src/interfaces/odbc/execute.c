@@ -24,6 +24,7 @@
 #include "qresult.h"
 #include "convert.h"
 #include "bind.h"
+#include "lobj.h"
 
 
 //      Perform a Prepare on the SQL statement
@@ -36,72 +37,29 @@ StatementClass *self = (StatementClass *) hstmt;
 	if ( ! self)
 		return SQL_INVALID_HANDLE;
     
-  /* CC: According to the ODBC specs it is valid to call SQLPrepare mulitple times. In that case,
-         the bound SQL statement is replaced by the new one */
+	/*	According to the ODBC specs it is valid to call SQLPrepare mulitple times.
+		In that case, the bound SQL statement is replaced by the new one 
+	*/
 
-	switch (self->status) {
+	switch(self->status) {
 	case STMT_PREMATURE:
 		mylog("**** SQLPrepare: STMT_PREMATURE, recycle\n");
-
 		SC_recycle_statement(self); /* recycle the statement, but do not remove parameter bindings */
+		break;
 
-		/* NO Break! -- Contiue the same way as with a newly allocated statement ! */
+	case STMT_FINISHED:
+		mylog("**** SQLPrepare: STMT_FINISHED, recycle\n");
+		SC_recycle_statement(self); /* recycle the statement, but do not remove parameter bindings */
+		break;
 
 	case STMT_ALLOCATED:
-		// it is not really necessary to do any conversion of the statement
-		// here--just copy it, and deal with it when it's ready to be
-		// executed.
 		mylog("**** SQLPrepare: STMT_ALLOCATED, copy\n");
-
-		self->statement = make_string(szSqlStr, cbSqlStr, NULL);
-		if ( ! self->statement) {
-			self->errornumber = STMT_NO_MEMORY_ERROR;
-			self->errormsg = "No memory available to store statement";
-			return SQL_ERROR;
-		}
-
-		self->statement_type = statement_type(self->statement);
-
-		//	Check if connection is readonly (only selects are allowed)
-		if ( CC_is_readonly(self->hdbc) && self->statement_type != STMT_TYPE_SELECT ) {
-			self->errornumber = STMT_EXEC_ERROR;
-			self->errormsg = "Connection is readonly, only select statements are allowed.";
-			return SQL_ERROR;
-		}
-
-		self->prepare = TRUE;
 		self->status = STMT_READY;
+		break;
 
-		return SQL_SUCCESS;
-    
-	case STMT_READY:  /* SQLPrepare has already been called -- Just changed the SQL statement that is assigned to the handle */
+	case STMT_READY:
 		mylog("**** SQLPrepare: STMT_READY, change SQL\n");
-
-		if (self->statement)
-			free(self->statement);
-
-		self->statement = make_string(szSqlStr, cbSqlStr, NULL);
-		if ( ! self->statement) {
-			self->errornumber = STMT_NO_MEMORY_ERROR;
-			self->errormsg = "No memory available to store statement";
-			return SQL_ERROR;
-		}
-
-		self->prepare = TRUE;
-		self->statement_type = statement_type(self->statement);
-
-		//	Check if connection is readonly (only selects are allowed)
-		if ( CC_is_readonly(self->hdbc) && self->statement_type != STMT_TYPE_SELECT ) {
-			self->errornumber = STMT_EXEC_ERROR;
-			self->errormsg = "Connection is readonly, only select statements are allowed.";
-			return SQL_ERROR;
-		}
-
-		return SQL_SUCCESS;
-                            
-	case STMT_FINISHED:
-		mylog("**** SQLPrepare: STMT_FINISHED\n");
-		/* No BREAK:  continue as with STMT_EXECUTING */
+		break;
 
 	case STMT_EXECUTING:
 		mylog("**** SQLPrepare: STMT_EXECUTING, error!\n");
@@ -116,6 +74,30 @@ StatementClass *self = (StatementClass *) hstmt;
 		self->errormsg = "An Internal Error has occured -- Unknown statement status.";
 		return SQL_ERROR;
 	}
+
+	if (self->statement)
+		free(self->statement);
+
+	self->statement = make_string(szSqlStr, cbSqlStr, NULL);
+	if ( ! self->statement) {
+		self->errornumber = STMT_NO_MEMORY_ERROR;
+		self->errormsg = "No memory available to store statement";
+		return SQL_ERROR;
+	}
+
+	self->prepare = TRUE;
+	self->statement_type = statement_type(self->statement);
+
+	//	Check if connection is readonly (only selects are allowed)
+	if ( CC_is_readonly(self->hdbc) && STMT_UPDATE(self)) {
+		self->errornumber = STMT_EXEC_ERROR;
+		self->errormsg = "Connection is readonly, only select statements are allowed.";
+		return SQL_ERROR;
+	}
+
+	return SQL_SUCCESS;
+
+
 }
 
 //      -       -       -       -       -       -       -       -       -
@@ -150,7 +132,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	stmt->statement_type = statement_type(stmt->statement);
 
 	//	Check if connection is readonly (only selects are allowed)
-	if ( CC_is_readonly(stmt->hdbc) && stmt->statement_type != STMT_TYPE_SELECT ) {
+	if ( CC_is_readonly(stmt->hdbc) && STMT_UPDATE(stmt)) {
 		stmt->errornumber = STMT_EXEC_ERROR;
 		stmt->errormsg = "Connection is readonly, only select statements are allowed.";
 		return SQL_ERROR;
@@ -378,6 +360,9 @@ int i, retval;
 	if ( ! stmt)
 		return SQL_INVALID_HANDLE;
 
+	mylog("SQLParamData, enter: data_at_exec=%d, params_alloc=%d\n", 
+		stmt->data_at_exec, stmt->parameters_allocated);
+
 	if (stmt->data_at_exec < 0) {
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		stmt->errormsg = "No execution-time parameters for this statement";
@@ -390,22 +375,37 @@ int i, retval;
 		return SQL_ERROR;
 	}
 
+	/* close the large object */
+	if ( stmt->lobj_fd >= 0) {
+		lo_close(stmt->hdbc, stmt->lobj_fd);
+		stmt->lobj_fd = -1;
+	}
+
+
 	/*	Done, now copy the params and then execute the statement */
 	if (stmt->data_at_exec == 0) {
 		retval = copy_statement_with_parameters(stmt);
 		if (retval != SQL_SUCCESS)
 			return retval;
 
+		stmt->current_exec_param = -1;
+
 		return SC_execute(stmt);
 	}
 
+	/*	Set beginning param;  if first time SQLParamData is called , start at 0.
+		Otherwise, start at the last parameter + 1.
+	*/
+	i = stmt->current_exec_param >= 0 ? stmt->current_exec_param+1 : 0;
+
 	/*	At least 1 data at execution parameter, so Fill in the token value */
-	for (i = 0; i < stmt->parameters_allocated; i++) {
+	for ( ; i < stmt->parameters_allocated; i++) {
 		if (stmt->parameters[i].data_at_exec == TRUE) {
 			stmt->data_at_exec--;
 			stmt->current_exec_param = i;
 			stmt->put_data = FALSE;
 			*prgbValue = stmt->parameters[i].buffer;	/* token */
+			break;
 		}
 	}
 
@@ -423,9 +423,9 @@ RETCODE SQL_API SQLPutData(
         SDWORD  cbValue)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
+int old_pos, retval;
+ParameterInfoClass *current_param;
 char *buffer;
-SDWORD *used;
-int old_pos;
 
 
 	if ( ! stmt)
@@ -438,94 +438,137 @@ int old_pos;
 		return SQL_ERROR;
 	}
 
+	current_param = &(stmt->parameters[stmt->current_exec_param]);
+
 	if ( ! stmt->put_data) {	/* first call */
 
 		mylog("SQLPutData: (1) cbValue = %d\n", cbValue);
 
 		stmt->put_data = TRUE;
 
-		used = (SDWORD *) malloc(sizeof(SDWORD));
-		if ( ! used) {
+		current_param->EXEC_used = (SDWORD *) malloc(sizeof(SDWORD));
+		if ( ! current_param->EXEC_used) {
 			stmt->errornumber = STMT_NO_MEMORY_ERROR;
 			stmt->errormsg = "Out of memory in SQLPutData (1)";
 			return SQL_ERROR;
 		}
 
-		*used = cbValue;
-		stmt->parameters[stmt->current_exec_param].EXEC_used = used;
+		*current_param->EXEC_used = cbValue;
 
 		if (cbValue == SQL_NULL_DATA)
 			return SQL_SUCCESS;
 
-		if (cbValue == SQL_NTS) {
-			buffer = strdup(rgbValue);
-			if ( ! buffer) {
-				stmt->errornumber = STMT_NO_MEMORY_ERROR;
-				stmt->errormsg = "Out of memory in SQLPutData (2)";
-				return SQL_ERROR;
-			}
-		}
-		else {
-			buffer = malloc(cbValue + 1);
-			if ( ! buffer) {
-				stmt->errornumber = STMT_NO_MEMORY_ERROR;
-				stmt->errormsg = "Out of memory in SQLPutData (2)";
-				return SQL_ERROR;
-			}
-			memcpy(buffer, rgbValue, cbValue);
-			buffer[cbValue] = '\0';
-		}
 
-		stmt->parameters[stmt->current_exec_param].EXEC_buffer = buffer;
+		/*	Handle Long Var Binary with Large Objects */
+		if ( current_param->SQLType == SQL_LONGVARBINARY) {
+
+			/*	store the oid */
+			current_param->lobj_oid = lo_creat(stmt->hdbc, INV_READ | INV_WRITE);
+			if (current_param->lobj_oid == 0) {
+				stmt->errornumber = STMT_EXEC_ERROR;
+				stmt->errormsg = "Couldnt create large object.";
+				return SQL_ERROR;
+			}
+
+			/*	major hack -- to allow convert to see somethings there */
+			/*					have to modify convert to handle this better */
+			current_param->EXEC_buffer = (char *) &current_param->lobj_oid;
+
+			/*	store the fd */
+			stmt->lobj_fd = lo_open(stmt->hdbc, current_param->lobj_oid, INV_WRITE);
+			if ( stmt->lobj_fd < 0) {
+				stmt->errornumber = STMT_EXEC_ERROR;
+				stmt->errormsg = "Couldnt open large object for writing.";
+				return SQL_ERROR;
+			}
+
+			retval = lo_write(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValue);
+			mylog("lo_write: cbValue=%d, wrote %d bytes\n", cbValue, retval);
+
+		}
+		else {	/* for handling text fields and small binaries */
+
+			if (cbValue == SQL_NTS) {
+				current_param->EXEC_buffer = strdup(rgbValue);
+				if ( ! current_param->EXEC_buffer) {
+					stmt->errornumber = STMT_NO_MEMORY_ERROR;
+					stmt->errormsg = "Out of memory in SQLPutData (2)";
+					return SQL_ERROR;
+				}
+			}
+			else {
+				current_param->EXEC_buffer = malloc(cbValue + 1);
+				if ( ! current_param->EXEC_buffer) {
+					stmt->errornumber = STMT_NO_MEMORY_ERROR;
+					stmt->errormsg = "Out of memory in SQLPutData (2)";
+					return SQL_ERROR;
+				}
+				memcpy(current_param->EXEC_buffer, rgbValue, cbValue);
+				current_param->EXEC_buffer[cbValue] = '\0';
+			}
+		}
 	}
 
 	else {	/* calling SQLPutData more than once */
 
 		mylog("SQLPutData: (>1) cbValue = %d\n", cbValue);
 
-		used = stmt->parameters[stmt->current_exec_param].EXEC_used;
-		buffer = stmt->parameters[stmt->current_exec_param].EXEC_buffer;
+		if (current_param->SQLType == SQL_LONGVARBINARY) {
 
-		if (cbValue == SQL_NTS) {
-			buffer = realloc(buffer, strlen(buffer) + strlen(rgbValue) + 1);
-			if ( ! buffer) {
-				stmt->errornumber = STMT_NO_MEMORY_ERROR;
-				stmt->errormsg = "Out of memory in SQLPutData (3)";
-				return SQL_ERROR;
+			/* the large object fd is in EXEC_buffer */
+			retval = lo_write(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValue);
+			mylog("lo_write(2): cbValue = %d, wrote %d bytes\n", cbValue, retval);
+
+			*current_param->EXEC_used += cbValue;
+
+		} else {
+
+			buffer = current_param->EXEC_buffer;
+
+			if (cbValue == SQL_NTS) {
+				buffer = realloc(buffer, strlen(buffer) + strlen(rgbValue) + 1);
+				if ( ! buffer) {
+					stmt->errornumber = STMT_NO_MEMORY_ERROR;
+					stmt->errormsg = "Out of memory in SQLPutData (3)";
+					return SQL_ERROR;
+				}
+				strcat(buffer, rgbValue);
+
+				mylog("       cbValue = SQL_NTS: strlen(buffer) = %d\n", strlen(buffer));
+
+				*current_param->EXEC_used = cbValue;
+
+				/*	reassign buffer incase realloc moved it */
+				current_param->EXEC_buffer = buffer;
+
 			}
-			strcat(buffer, rgbValue);
+			else if (cbValue > 0) {
 
-			mylog("       cbValue = SQL_NTS: strlen(buffer) = %d\n", strlen(buffer));
+				old_pos = *current_param->EXEC_used;
 
-			*used = cbValue;
+				*current_param->EXEC_used += cbValue;
+
+				mylog("        cbValue = %d, old_pos = %d, *used = %d\n", cbValue, old_pos, *current_param->EXEC_used);
+
+				/* dont lose the old pointer in case out of memory */
+				buffer = realloc(current_param->EXEC_buffer, *current_param->EXEC_used + 1);
+				if ( ! buffer) {
+					stmt->errornumber = STMT_NO_MEMORY_ERROR;
+					stmt->errormsg = "Out of memory in SQLPutData (3)";
+					return SQL_ERROR;
+				}
+
+				memcpy(&buffer[old_pos], rgbValue, cbValue);
+				buffer[*current_param->EXEC_used] = '\0';
+
+				/*	reassign buffer incase realloc moved it */
+				current_param->EXEC_buffer = buffer;
+				
+			}
+			else
+				return SQL_ERROR;
 
 		}
-		else if (cbValue > 0) {
-
-			old_pos = *used;
-
-			*used += cbValue;
-
-			mylog("        cbValue = %d, old_pos = %d, *used = %d\n", cbValue, old_pos, *used);
-
-			buffer = realloc(buffer, *used + 1);
-			if ( ! buffer) {
-				stmt->errornumber = STMT_NO_MEMORY_ERROR;
-				stmt->errormsg = "Out of memory in SQLPutData (3)";
-				return SQL_ERROR;
-			}
-
-			memcpy(&buffer[old_pos], rgbValue, cbValue);
-			buffer[*used] = '\0';
-
-		}
-		else
-			return SQL_ERROR;
-		
-
-		/*	reassign buffer incase realloc moved it */
-		stmt->parameters[stmt->current_exec_param].EXEC_buffer = buffer;
-
 	}
 
 

@@ -27,6 +27,26 @@
 #include "statement.h"
 #include "bind.h"
 #include "pgtypes.h"
+#include "lobj.h"
+#include "connection.h"
+
+extern GLOBAL_VALUES globals;
+
+/*	How to map ODBC scalar functions {fn func(args)} to Postgres */
+/*	This is just a simple substitution */
+char *mapFuncs[][2] = {   
+	{ "CONCAT",      "textcat" },
+	{ "LCASE",       "lower"   },
+	{ "LOCATE",      "strpos"  },
+	{ "LENGTH",      "textlen" },
+	{ "LTRIM",       "ltrim"   },
+	{ "RTRIM",       "rtrim"   },
+	{ "SUBSTRING",   "substr"  },
+	{ "UCASE",       "upper"   },
+	{ "NOW",         "now"     },
+	{    0,             0      }
+};
+
 
 /********		A Guide for date/time/timestamp conversions    **************
 
@@ -47,23 +67,23 @@
 
 /*	This is called by SQLFetch() */
 int
-copy_and_convert_field_bindinfo(Int4 field_type, void *value, BindInfoClass *bic)
+copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col)
 {
-	return copy_and_convert_field(field_type, value, (Int2)bic->returntype, (PTR)bic->buffer,
-                                (SDWORD)bic->buflen, (SDWORD *)bic->used);
+BindInfoClass *bic = &(stmt->bindings[col]);
+
+	return copy_and_convert_field(stmt, field_type, value, (Int2)bic->returntype, (PTR)bic->buffer,
+                                (SDWORD)bic->buflen, (SDWORD *)bic->used, FALSE);
 }
 
 /*	This is called by SQLGetData() */
 int
-copy_and_convert_field(Int4 field_type, void *value, Int2 fCType, PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue)
+copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType, 
+					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue, char multiple)
 {
-Int4 len = 0, nf;
-char day[4], mon[4], tz[4];
+Int4 len = 0;
 SIMPLE_TIME st;
 time_t t = time(NULL);
 struct tm *tim;
-int bool;
-
 
 	memset(&st, 0, sizeof(SIMPLE_TIME));
 
@@ -72,8 +92,6 @@ int bool;
 	st.m = tim->tm_mon + 1;
 	st.d = tim->tm_mday;
 	st.y = tim->tm_year + 1900;
-
-	bool = 0;
 
 	mylog("copy_and_convert: field_type = %d, fctype = %d, value = '%s', cbValueMax=%d\n", field_type, fCType, value, cbValueMax);
     if(value) {
@@ -88,7 +106,7 @@ int bool;
 		switch(field_type) {
 		/*  $$$ need to add parsing for date/time/timestamp strings in PG_TYPE_CHAR,VARCHAR $$$ */
 		case PG_TYPE_DATE:
-			sscanf(value, "%2d-%2d-%4d", &st.m, &st.d, &st.y);
+			sscanf(value, "%4d-%2d-%2d", &st.y, &st.m, &st.d);
 			break;
 
 		case PG_TYPE_TIME:
@@ -98,12 +116,8 @@ int bool;
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 			if (strnicmp(value, "invalid", 7) != 0) {
-				nf = sscanf(value, "%3s %3s %2d %2d:%2d:%2d %4d %3s", &day, &mon, &st.d, &st.hh, &st.mm, &st.ss, &st.y, &tz);
+				sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);
 
-				if (nf == 7 || nf == 8) {
-					/* convert month name to month number */
-					st.m = monthToNumber(mon);
-				}
 			} else {	/* The timestamp is invalid so set something conspicuous, like the epoch */
 				t = 0;
 				tim = localtime(&t);
@@ -118,10 +132,10 @@ int bool;
 
 		case PG_TYPE_BOOL: {		/* change T/F to 1/0 */
 			char *s = (char *) value;
-			if (s[0] == 'T' || s[0] == 't' || s[0] == '1') 
-				bool = 1;
-			else
-				bool = 0;
+			if (s[0] == 'T' || s[0] == 't') 
+				s[0] = '1';
+			else 
+				s[0] = '0';
 			}
 			break;
 
@@ -149,11 +163,20 @@ int bool;
 			return COPY_OK;		/* dont go any further or the data will be trashed */
 							}
 
+		/* This is a large object OID, which is used to store LONGVARBINARY objects. */
+		case PG_TYPE_LO:
+
+			return convert_lo( stmt, value, fCType, rgbValue, cbValueMax, pcbValue, multiple);
+
+		default:
+
+			if (field_type == stmt->hdbc->lobj_type)	/* hack until permanent type available */
+				return convert_lo( stmt, value, fCType, rgbValue, cbValueMax, pcbValue, multiple);
 		}
 
 		/*  Change default into something useable */
 		if (fCType == SQL_C_DEFAULT) {
-			fCType = pgtype_to_ctype(field_type);
+			fCType = pgtype_to_ctype(stmt, field_type);
 
 			mylog("copy_and_convert, SQL_C_DEFAULT: fCType = %d\n", fCType);
 		}
@@ -165,20 +188,20 @@ int bool;
 			switch(field_type) {
 			case PG_TYPE_DATE:
 		        len = 11;
-				if (cbValueMax > len)
+				if (cbValueMax >= len)
 					sprintf((char *)rgbValue, "%.4d-%.2d-%.2d", st.y, st.m, st.d);
 				break;
 
 			case PG_TYPE_TIME:
 				len = 9;
-				if (cbValueMax > len)
+				if (cbValueMax >= len)
 					sprintf((char *)rgbValue, "%.2d:%.2d:%.2d", st.hh, st.mm, st.ss);
 				break;
 
 			case PG_TYPE_ABSTIME:
 			case PG_TYPE_DATETIME:
 				len = 19;
-				if (cbValueMax > len)
+				if (cbValueMax >= len)
 					sprintf((char *) rgbValue, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d", 
 						st.y, st.m, st.d, st.hh, st.mm, st.ss);
 				break;
@@ -186,7 +209,7 @@ int bool;
 			case PG_TYPE_BOOL:
 				len = 1;
 				if (cbValueMax > len) {
-					strcpy((char *) rgbValue, bool ? "1" : "0");
+					strcpy((char *) rgbValue, value);
 					mylog("PG_TYPE_BOOL: rgbValue = '%s'\n", rgbValue);
 				}
 				break;
@@ -250,7 +273,7 @@ int bool;
 			case SQL_C_BIT:
 				len = 1;
 				if (cbValueMax >= len || field_type == PG_TYPE_BOOL) {
-					*((UCHAR *)rgbValue) = (UCHAR) bool;
+					*((UCHAR *)rgbValue) = atoi(value);
 					mylog("SQL_C_BIT: val = %d, cb = %d, rgb=%d\n", atoi(value), cbValueMax, *((UCHAR *)rgbValue));
 				}
 				break;
@@ -307,6 +330,7 @@ int bool;
                 break;
 
 			case SQL_C_BINARY:	
+
 				//	truncate if necessary
 				//	convert octal escapes to bytes
 				len = convert_from_pgbinary(value, rgbValue, cbValueMax);
@@ -366,8 +390,9 @@ char *new_statement = stmt->stmt_with_params;
 SIMPLE_TIME st;
 time_t t = time(NULL);
 struct tm *tim;
-SDWORD FAR *used;
+SDWORD used;
 char *buffer, *buf;
+char in_quote = FALSE;
 
 
 	if ( ! old_statement)
@@ -382,11 +407,13 @@ char *buffer, *buf;
 	st.d = tim->tm_mday;
 	st.y = tim->tm_year + 1900;
 
-
+	/*	If the application hasn't set a cursor name, then generate one */
+	if ( stmt->cursor_name[0] == '\0')
+		sprintf(stmt->cursor_name, "SQL_CUR%u", stmt);
 
 	//	For selects, prepend a declare cursor to the statement
-	if (stmt->statement_type == STMT_TYPE_SELECT) {
-		sprintf(new_statement, "declare C%u cursor for ", stmt);
+	if (stmt->statement_type == STMT_TYPE_SELECT && globals.use_declarefetch) {
+		sprintf(new_statement, "declare %s cursor for ", stmt->cursor_name);
 		npos = strlen(new_statement);
 	}
 	else {
@@ -419,18 +446,33 @@ char *buffer, *buf;
 				memcpy(&new_statement[npos], esc, strlen(esc));
 				npos += strlen(esc);
 			}
+			else {		/* its not a valid literal so just copy */
+				*end = '}';	
+				new_statement[npos++] = old_statement[opos];
+				continue;
+			}
 
-			opos += end - begin + 2;
+			opos += end - begin + 1;
 
 			*end = '}';
 
 			continue;
 		}
 
-		else if (old_statement[opos] != '?') {		// a regular character
+		/*	Can you have parameter markers inside of quotes?  I dont think so.
+			All the queries I've seen expect the driver to put quotes if needed.
+		*/
+		else if (old_statement[opos] == '?' && !in_quote)
+			;	/* ok */
+		else {
+			if (old_statement[opos] == '\'')
+				in_quote = (in_quote ? FALSE : TRUE);
+
 			new_statement[npos++] = old_statement[opos];
 			continue;
 		}
+
+
 
 		/****************************************************/
 		/*       Its a '?' parameter alright                */
@@ -443,16 +485,16 @@ char *buffer, *buf;
 
 		/*	Assign correct buffers based on data at exec param or not */
 		if ( stmt->parameters[param_number].data_at_exec) {
-			used = stmt->parameters[param_number].EXEC_used;
+			used = stmt->parameters[param_number].EXEC_used ? *stmt->parameters[param_number].EXEC_used : SQL_NTS;
 			buffer = stmt->parameters[param_number].EXEC_buffer;
 		}
 		else {
-			used = stmt->parameters[param_number].used;
+			used = stmt->parameters[param_number].used ? *stmt->parameters[param_number].used : SQL_NTS;
 			buffer = stmt->parameters[param_number].buffer;
 		}
 
 		/*	Handle NULL parameter data */
-		if (used && *used == SQL_NULL_DATA) {
+		if (used == SQL_NULL_DATA) {
 			strcpy(&new_statement[npos], "NULL");
 			npos += 4;
 			continue;
@@ -535,7 +577,7 @@ char *buffer, *buf;
 		case SQL_C_BIT: {
 			int i = *((UCHAR *) buffer);
 			
-			sprintf(param_string, "'%s'", i ? "t" : "f");
+			sprintf(param_string, "%d", i ? 1 : 0);
 			break;
 						}
 
@@ -593,7 +635,7 @@ char *buffer, *buf;
 
 			/* it was a SQL_C_CHAR */
 			if (buf) {
-				convert_returns(buf, &new_statement[npos], used ? *used : SQL_NTS);
+				convert_special_chars(buf, &new_statement[npos], used);
 				npos += strlen(&new_statement[npos]);
 			}
 
@@ -605,9 +647,11 @@ char *buffer, *buf;
 
 			/* it was date,time,timestamp -- use m,d,y,hh,mm,ss */
 			else {
-				char *buf = convert_time(&st);
-				strcpy(&new_statement[npos], buf);
-				npos += strlen(buf);
+				sprintf(tmp, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d",
+					st.y, st.m, st.d, st.hh, st.mm, st.ss);
+
+				strcpy(&new_statement[npos], tmp);
+				npos += strlen(tmp);
 			}
 
 			new_statement[npos++] = '\'';	/*    Close Quote */
@@ -615,20 +659,20 @@ char *buffer, *buf;
 			break;
 
 		case SQL_DATE:
-			if (buf && used) {  /* copy char data to time */
-				my_strcpy(cbuf, sizeof(cbuf), buf, *used);
+			if (buf) {  /* copy char data to time */
+				my_strcpy(cbuf, sizeof(cbuf), buf, used);
 				parse_datetime(cbuf, &st);
 			}
 
-			sprintf(tmp, "'%.2d-%.2d-%.4d'", st.m, st.d, st.y);
+			sprintf(tmp, "'%.4d-%.2d-%.2d'", st.y, st.m, st.d);
 
 			strcpy(&new_statement[npos], tmp);
 			npos += strlen(tmp);
 			break;
 
 		case SQL_TIME:
-			if (buf && used) {  /* copy char data to time */
-				my_strcpy(cbuf, sizeof(cbuf), buf, *used);
+			if (buf) {  /* copy char data to time */
+				my_strcpy(cbuf, sizeof(cbuf), buf, used);
 				parse_datetime(cbuf, &st);
 			}
 
@@ -638,39 +682,61 @@ char *buffer, *buf;
 			npos += strlen(tmp);
 			break;
 
-		case SQL_TIMESTAMP: {
-			char *tbuf;
+		case SQL_TIMESTAMP:
 
-			if (buf && used) {
-				my_strcpy(cbuf, sizeof(cbuf), buf, *used);
+			if (buf) {
+				my_strcpy(cbuf, sizeof(cbuf), buf, used);
 				parse_datetime(cbuf, &st);
 			}
 
-			tbuf = convert_time(&st);
+			sprintf(tmp, "'%.4d-%.2d-%.2d %.2d:%.2d:%.2d'",
+				st.y, st.m, st.d, st.hh, st.mm, st.ss);
 
-			sprintf(&new_statement[npos], "'%s'", tbuf);
-			npos += strlen(tbuf) + 2;
+			strcpy(&new_statement[npos], tmp);
+			npos += strlen(tmp);
 
 			break;
-							}
 
 		case SQL_BINARY:
-		case SQL_VARBINARY:
-		case SQL_LONGVARBINARY:		/* non-ascii characters should be converted to octal */
-
+		case SQL_VARBINARY:			/* non-ascii characters should be converted to octal */
 			new_statement[npos++] = '\'';	/*    Open Quote */
 
-			mylog("SQL_LONGVARBINARY: about to call convert_to_pgbinary, *used = %d\n", *used);
+			mylog("SQL_LONGVARBINARY: about to call convert_to_pgbinary, used = %d\n", used);
 
-			npos += convert_to_pgbinary(buf, &new_statement[npos], *used);
+			npos += convert_to_pgbinary(buf, &new_statement[npos], used);
 
 			new_statement[npos++] = '\'';	/*    Close Quote */
 			
 			break;
-
-		default:		/* a numeric type */
+		case SQL_LONGVARBINARY:		
+			/*	the oid of the large object -- just put that in for the
+				parameter marker -- the data has already been sent to the large object
+			*/
+			sprintf(param_string, "%d", stmt->parameters[param_number].lobj_oid);
 			strcpy(&new_statement[npos], param_string);
 			npos += strlen(param_string);
+
+			break;
+
+		//	because of no conversion operator for bool and int4, SQL_BIT
+		//	must be quoted (0 or 1 is ok to use inside the quotes)
+
+		default:		/* a numeric type or SQL_BIT */
+			if (param_sqltype == SQL_BIT)
+				new_statement[npos++] = '\'';	/*    Open Quote */
+
+			if (buf) {
+				my_strcpy(&new_statement[npos], sizeof(stmt->stmt_with_params) - npos, buf, used);
+				npos += strlen(&new_statement[npos]);
+			}
+			else {
+				strcpy(&new_statement[npos], param_string);
+				npos += strlen(param_string);
+			}
+
+			if (param_sqltype == SQL_BIT)
+				new_statement[npos++] = '\'';	/*    Close Quote */
+
 			break;
 
 		}
@@ -683,29 +749,47 @@ char *buffer, *buf;
 	return SQL_SUCCESS;
 }
 
+char *
+mapFunction(char *func)
+{
+int i;
+
+	for (i = 0; mapFuncs[i][0]; i++)
+		if ( ! stricmp(mapFuncs[i][0], func))
+			return mapFuncs[i][1];
+
+	return NULL;
+}
 
 //	This function returns a pointer to static memory!
 char *
 convert_escape(char *value)
 {
 char key[32], val[256];
-static char escape[256];
-SIMPLE_TIME st;
+static char escape[1024];
+char func[32], the_rest[1024];
+char *mapFunc;
 
-	sscanf(value, "%[^'] '%[^']'", key, val);
+	sscanf(value, "%s %[^\r]", key, val);
 
 	mylog("convert_escape: key='%s', val='%s'\n", key, val);
 
-	if ( ! strncmp(key, "d", 1)) {
-		sscanf(val, "%4d-%2d-%2d", &st.y, &st.m, &st.d);
-		sprintf(escape, "'%.2d-%.2d-%.4d'", st.m, st.d, st.y);
-		
-	} else if (! strncmp(key, "t", 1)) {
-		sprintf(escape, "'%s'", val);
+	if ( ! strcmp(key, "d") ||
+		 ! strcmp(key, "t") ||
+		 ! strcmp(key, "ts")) {
 
-	} else if (! strncmp(key, "ts", 2)) {
-		sscanf(val, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);
-		strcpy(escape, convert_time(&st));
+		strcpy(escape, val);
+	}
+	else if ( ! strcmp(key, "fn")) {
+		sscanf(val, "%[^(]%[^\r]", func, the_rest);
+		mapFunc = mapFunction(func);
+		if ( ! mapFunc)
+			return NULL;
+		else {
+			strcpy(escape, mapFunc);
+			strcat(escape, the_rest);
+		}
+
 	}
 	else {
 		return NULL;
@@ -713,40 +797,6 @@ SIMPLE_TIME st;
 
 	return escape;
 
-}
-
-
-int
-monthToNumber(char *mon)
-{
-int m = 0;
-
-	if ( ! stricmp(mon, "Jan"))
-		m = 1;
-	else if ( ! stricmp(mon, "Feb"))
-		m = 2;
-	else if ( ! stricmp(mon, "Mar"))
-		m = 3;
-	else if ( ! stricmp(mon, "Apr"))
-		m = 4;
-	else if ( ! stricmp(mon, "May"))
-		m = 5;
-	else if ( ! stricmp(mon, "Jun"))
-		m = 6;
-	else if ( ! stricmp(mon, "Jul"))
-		m = 7;
-	else if ( ! stricmp(mon, "Aug"))
-		m = 8;
-	else if ( ! stricmp(mon, "Sep"))
-		m = 9;
-	else if ( ! stricmp(mon, "Oct"))
-		m = 10;
-	else if ( ! stricmp(mon, "Nov"))
-		m = 11;
-	else if ( ! stricmp(mon, "Dec"))
-		m = 12;
-
-	return m;
 }
 
 
@@ -767,39 +817,7 @@ size_t i = 0, out = 0;
 	return s;
 }
 
-/*	Convert a discrete time into a localized string */
-char *
-convert_time(SIMPLE_TIME *st)
-{
-struct tm tim;
-static char buf[1024];
 
-mylog("convert_time: m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d\n",
-	  st->m, st->d, st->y, st->hh, st->mm, st->ss);
-
-	memset(&tim, 0, sizeof(tim));
-
-	tim.tm_mon = st->m - 1;
-	tim.tm_mday = st->d;
-	tim.tm_year = st->y - 1900;
-	tim.tm_hour = st->hh;
-	tim.tm_min = st->mm;
-	tim.tm_sec = st->ss;
-
-	/*	Dont bother trying to figure out the day of week because
-		postgres will determine it correctly.  However, the timezone
-		should be taken into account. $$$$
-	*/
-
-	//  tim.tm_isdst = _daylight;
-
-	strftime(buf, sizeof(buf), "%b %d %H:%M:%S %Y", 
-		&tim);
-
-mylog("convert_time: buf = '%s'\n", buf);
-
-	return buf;
-}
 
 /*	This function parses a character string for date/time info and fills in SIMPLE_TIME */
 /*	It does not zero out SIMPLE_TIME in case it is desired to initialize it with a value */
@@ -869,7 +887,7 @@ char *p;
 
 	p[0] = '\0';
 
-	for (i = 0; i < strlen(si) && out < max-2; i++) {
+	for (i = 0; i < strlen(si) && out < max; i++) {
 		if (si[i] == '\n') {
 			p[out++] = '\r';
 			p[out++] = '\n';
@@ -881,9 +899,11 @@ char *p;
 	return p;
 }
 
-/*	Change carriage-return/linefeed to just linefeed */
+/*	Change carriage-return/linefeed to just linefeed 
+	Plus, escape any special characters.
+*/
 char *
-convert_returns(char *si, char *dst, int used)
+convert_special_chars(char *si, char *dst, int used)
 {
 size_t i = 0, out = 0, max;
 static char sout[TEXT_FIELD_SIZE+5];
@@ -904,13 +924,16 @@ char *p;
 	for (i = 0; i < max; i++) {
 		if (si[i] == '\r' && i+1 < strlen(si) && si[i+1] == '\n') 
 			continue;
-		else
-			p[out++] = si[i];
+		if (si[i] == '\'')
+			p[out++] = '\\';
+
+		p[out++] = si[i];
 	}
 	p[out] = '\0';
 	return p;
 }
 
+/*	!!! Need to implement this function !!!  */
 int
 convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax)
 {
@@ -993,3 +1016,67 @@ int i, o=0;
 	return o;
 }
 
+
+/*	1. get oid (from 'value')
+	2. open the large object
+	3. read from the large object (handle multiple GetData)
+	4. close when read less than requested?  -OR-
+		lseek/read each time
+		handle case where application receives truncated and
+		decides not to continue reading.
+
+	CURRENTLY, ONLY LONGVARBINARY is handled, since that is the only
+	data type currently mapped to a PG_TYPE_LO.  But, if any other types
+	are desired to map to a large object (PG_TYPE_LO), then that would 
+	need to be handled here.  For example, LONGVARCHAR could possibly be
+	mapped to PG_TYPE_LO someday, instead of PG_TYPE_TEXT as it is now.
+*/
+int
+convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue, 
+		   SDWORD cbValueMax, SDWORD *pcbValue, char multiple)
+{
+Oid oid;
+int retval;
+
+	/*	if this is the first call for this column,
+		open the large object for reading 
+	*/
+	if ( ! multiple) {
+		oid = atoi(value);
+		stmt->lobj_fd = lo_open(stmt->hdbc, oid, INV_READ);
+		if (stmt->lobj_fd < 0) {
+			stmt->errornumber = STMT_EXEC_ERROR;
+			stmt->errormsg = "Couldnt open large object for writing.";
+			return COPY_GENERAL_ERROR;
+		}
+	}
+
+	if (stmt->lobj_fd < 0)
+		return COPY_NO_DATA_FOUND;
+
+	retval = lo_read(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValueMax);
+	if (retval < 0) {
+		lo_close(stmt->hdbc, stmt->lobj_fd);
+		stmt->lobj_fd = -1;
+
+		stmt->errornumber = STMT_EXEC_ERROR;
+		stmt->errormsg = "Error reading from large object.";
+		return COPY_GENERAL_ERROR;
+	}
+	else if (retval < cbValueMax)  {	/* success, all done */
+		lo_close(stmt->hdbc, stmt->lobj_fd);
+		stmt->lobj_fd = -1;	/* prevent further reading */
+
+		if (pcbValue)
+			*pcbValue = retval;
+
+		return COPY_OK;
+	}
+	else {	/* retval == cbVaueMax -- assume truncated */
+		if (pcbValue)
+			*pcbValue = SQL_NO_TOTAL;
+
+		return COPY_RESULT_TRUNCATED;
+
+	}
+}

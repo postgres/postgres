@@ -13,6 +13,7 @@
 #include "psqlodbc.h"
 #include <windows.h>
 #include <sql.h>
+#include <sqlext.h>
 
 #define ENV_ALLOC_ERROR 1
 

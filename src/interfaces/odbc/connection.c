@@ -18,6 +18,8 @@
 #include "socket.h"
 #include "statement.h"
 #include "qresult.h"
+#include "lobj.h"
+#include "dlg_specific.h"
 #include <stdio.h>
 #include <odbcinst.h>
 
@@ -25,6 +27,7 @@
 
 extern GLOBAL_VALUES globals;
 
+// void CC_test(ConnectionClass *self);
 
 RETCODE SQL_API SQLAllocConnect(
                                 HENV     henv,
@@ -70,25 +73,28 @@ RETCODE SQL_API SQLConnect(
                            SWORD     cbAuthStr)
 {
 ConnectionClass *conn = (ConnectionClass *) hdbc;
+ConnInfo *ci;
 
 	if ( ! conn) 
 		return SQL_INVALID_HANDLE;
 
-	make_string(szDSN, cbDSN, conn->connInfo.dsn);
+	ci = &conn->connInfo;
+
+	make_string(szDSN, cbDSN, ci->dsn);
 
 	/*	get the values for the DSN from the registry */
-	CC_DSN_info(conn, CONN_OVERWRITE);
+	getDSNinfo(ci, CONN_OVERWRITE);
 	
 	/*	override values from DSN info with UID and authStr(pwd) 
 		This only occurs if the values are actually there.
 	*/
-	make_string(szUID, cbUID, conn->connInfo.username);
-	make_string(szAuthStr, cbAuthStr, conn->connInfo.password);
+	make_string(szUID, cbUID, ci->username);
+	make_string(szAuthStr, cbAuthStr, ci->password);
 
 	/* fill in any defaults */
-	CC_set_defaults(conn);
+	getDSNdefaults(ci);
 
-	qlog("conn = %u, SQLConnect(DSN='%s', UID='%s', PWD='%s')\n", conn->connInfo.dsn, conn->connInfo.username, conn->connInfo.password);
+	qlog("conn = %u, SQLConnect(DSN='%s', UID='%s', PWD='%s')\n", ci->dsn, ci->username, ci->password);
 
 	if ( CC_connect(conn, FALSE) <= 0)
 		//	Error messages are filled in
@@ -207,6 +213,7 @@ ConnectionClass *rv;
 
 		rv->num_stmts = STMT_INCREMENT;
 
+		rv->lobj_type = PG_TYPE_LO;
     } 
     return rv;
 }
@@ -237,6 +244,26 @@ CC_Destructor(ConnectionClass *self)
 	mylog("exit CC_Destructor\n");
 
 	return 1;
+}
+
+/*	Return how many cursors are opened on this connection */
+int
+CC_cursor_count(ConnectionClass *self)
+{
+StatementClass *stmt;
+int i, count = 0;
+
+	mylog("CC_cursor_count: self=%u, num_stmts=%d\n", self, self->num_stmts);
+
+	for (i = 0; i < self->num_stmts; i++) {
+		stmt = self->stmts[i];
+		if (stmt && stmt->result && stmt->result->cursor)
+			count++;
+	}
+
+	mylog("CC_cursor_count: returning %d\n", count);
+
+	return count;
 }
 
 void 
@@ -316,69 +343,6 @@ StatementClass *stmt;
 	return TRUE;
 }
 
-void
-CC_set_defaults(ConnectionClass *self)
-{
-ConnInfo *ci = &(self->connInfo);
-
-	if (ci->port[0] == '\0')
-		strcpy(ci->port, DEFAULT_PORT);
-
-	if (ci->readonly[0] == '\0')
-		strcpy(ci->readonly, DEFAULT_READONLY);
-}
-
-void 
-CC_DSN_info(ConnectionClass *self, char overwrite)
-{
-ConnInfo *ci = &(self->connInfo);
-char *DSN = ci->dsn;
-
-	//	If a driver keyword was present, then dont use a DSN and return.
-	//	If DSN is null and no driver, then use the default datasource.
-	if ( DSN[0] == '\0') {
-		if ( ci->driver[0] != '\0')
-			return;
-		else
-			strcpy(DSN, "DEFAULT");
-	}
-
-	//	Proceed with getting info for the given DSN.
-	if ( ci->server[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_SERVER, "", ci->server, sizeof(ci->server), ODBC_INI);
-
-	if ( ci->database[0] == '\0' || overwrite)
-	    SQLGetPrivateProfileString(DSN, INI_DATABASE, "", ci->database, sizeof(ci->database), ODBC_INI);
-
-	if ( ci->username[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_USER, "", ci->username, sizeof(ci->username), ODBC_INI);
-
-	if ( ci->password[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_PASSWORD, "", ci->password, sizeof(ci->password), ODBC_INI);
-
-	if ( ci->port[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_PORT, "", ci->port, sizeof(ci->port), ODBC_INI);
-
-	if ( ci->readonly[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_READONLY, "", ci->readonly, sizeof(ci->readonly), ODBC_INI);
-
-	if ( ci->protocol[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_PROTOCOL, "", ci->protocol, sizeof(ci->protocol), ODBC_INI);
-
-	if ( ci->conn_settings[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_CONNSETTINGS, "", ci->conn_settings, sizeof(ci->conn_settings), ODBC_INI);
-
-	qlog("conn=%u, DSN info(DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',readonly='%s',protocol='%s',conn_settings='%s')\n", 
-		self, DSN, 
-		ci->server,
-		ci->database,
-		ci->username,
-		ci->password,
-		ci->port,
-		ci->readonly,
-		ci->protocol,
-		ci->conn_settings);
-}
 
 
 char 
@@ -399,6 +363,24 @@ char salt[2];
 		sock = self->sock;		/* already connected, just authenticate */
 
 	else {
+
+		qlog("Global Options: fetch=%d, socket=%d, unknown_sizes=%d, max_varchar_size=%d, max_longvarchar_size=%d\n",
+			globals.fetch_max, 
+			globals.socket_buffersize, 
+			globals.unknown_sizes, 
+			globals.max_varchar_size, 
+			globals.max_longvarchar_size);
+		qlog("                disable_optimizer=%d, unique_index=%d, use_declarefetch=%d\n",
+			globals.disable_optimizer,
+			globals.unique_index,
+			globals.use_declarefetch);
+		qlog("                text_as_longvarchar=%d, unknowns_as_longvarchar=%d, bools_as_char=%d\n",
+			globals.text_as_longvarchar, 
+			globals.unknowns_as_longvarchar, 
+			globals.bools_as_char);
+		qlog("                extra_systable_prefixes='%s', conn_settings='%s'\n",
+			globals.extra_systable_prefixes, 
+			globals.conn_settings);
 
 		if (self->status != CONN_NOT_CONNECTED) {
 			self->errormsg = "Already connected.";
@@ -595,8 +577,12 @@ char salt[2];
 	/*******   Send any initial settings  *********/
 	/**********************************************/
 
-	CC_send_settings(self);
+	if ( ! CC_send_settings(self))
+		return 0;
 
+	CC_lookup_lo(self);		/* a hack to get the oid of our large object oid type */
+
+//	CC_test(self);
 
 	CC_clear_error(self);	/* clear any initial command errors */
 	self->status = CONN_CONNECTED;
@@ -825,6 +811,13 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 					SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 					mylog("send_query: read command '%s'\n", cmdbuffer);
 					clear = (cmdbuffer[0] == 'I');
+
+					if (cmdbuffer[0] == 'N')
+						qlog("NOTICE from backend during send_query: '%s'\n", &cmdbuffer[1]);
+					else if (cmdbuffer[0] == 'E')
+						qlog("ERROR from backend during send_query: '%s'\n", &cmdbuffer[1]);
+					else if (cmdbuffer[0] == 'C')
+						qlog("Command response: '%s'\n", &cmdbuffer[1]);
 				}
 
 				mylog("send_query: returning res = %u\n", res);
@@ -926,18 +919,171 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 	}
 }
 
+int
+CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *args, int nargs)
+{
+char id, c, done;
+SocketClass *sock = self->sock;
+static char msgbuffer[MAX_MESSAGE_LEN+1];
+int i;
+
+	mylog("send_function(): conn=%u, fnid=%d, result_is_int=%d, nargs=%d\n", self, fnid, result_is_int, nargs);
+//	qlog("conn=%u, func=%d\n", self, fnid);
+
+	if (SOCK_get_errcode(sock) != 0) {
+		self->errornumber = CONNECTION_COULD_NOT_SEND;
+		self->errormsg = "Could not send function to backend";
+		CC_set_no_trans(self);
+		return FALSE;
+	}
+
+	SOCK_put_string(sock, "F ");
+	if (SOCK_get_errcode(sock) != 0) {
+		self->errornumber = CONNECTION_COULD_NOT_SEND;
+		self->errormsg = "Could not send function to backend";
+		CC_set_no_trans(self);
+		return FALSE;
+	}
+
+	SOCK_put_int(sock, fnid, 4); 
+	SOCK_put_int(sock, nargs, 4); 
+
+
+	mylog("send_function: done sending function\n");
+
+	for (i = 0; i < nargs; ++i) {
+
+		mylog("  arg[%d]: len = %d, isint = %d, integer = %d, ptr = %u\n", 
+			i, args[i].len, args[i].isint, args[i].u.integer, args[i].u.ptr);
+
+		SOCK_put_int(sock, args[i].len, 4);
+		if (args[i].isint) 
+			SOCK_put_int(sock, args[i].u.integer, 4);
+		else
+			SOCK_put_n_char(sock, (char *) args[i].u.ptr, args[i].len);
+
+
+	}
+
+	mylog("    done sending args\n");
+
+	SOCK_flush_output(sock);
+	mylog("  after flush output\n");
+
+	done = FALSE;
+	while ( ! done) {
+		id = SOCK_get_char(sock);
+		mylog("   got id = %c\n", id);
+
+		switch(id) {
+		case 'V':
+			done = TRUE;
+			break;		/* ok */
+
+		case 'N':
+			SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
+			mylog("send_function(V): 'N' - %s\n", msgbuffer);
+			/*	continue reading */
+			break;
+
+		case 'E':
+			SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
+			self->errormsg = msgbuffer;
+
+			mylog("send_function(V): 'E' - %s\n", self->errormsg);
+			qlog("ERROR from backend during send_function: '%s'\n", self->errormsg);
+
+			return FALSE;
+
+		default:
+			self->errornumber = CONNECTION_BACKEND_CRAZY;
+			self->errormsg = "Unexpected protocol character from backend";
+			CC_set_no_trans(self);
+
+			mylog("send_function: error - %s\n", self->errormsg);
+			return FALSE;
+		}
+	}
+
+	id = SOCK_get_char(sock);
+	for (;;) {
+		switch (id) {
+		case 'G':	/* function returned properly */
+			mylog("  got G!\n");
+
+			*actual_result_len = SOCK_get_int(sock, 4);
+			mylog("  actual_result_len = %d\n", *actual_result_len);
+
+			if (result_is_int)
+				*((int *) result_buf) = SOCK_get_int(sock, 4);
+			else
+				SOCK_get_n_char(sock, (char *) result_buf, *actual_result_len);
+
+			mylog("  after get result\n");
+
+			c = SOCK_get_char(sock);	/* get the last '0' */
+
+			mylog("   after get 0\n");
+
+			return TRUE;
+
+		case 'E':
+			SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
+			self->errormsg = msgbuffer;
+
+			mylog("send_function(G): 'E' - %s\n", self->errormsg);
+			qlog("ERROR from backend during send_function: '%s'\n", self->errormsg);
+
+			return FALSE;
+
+		case 'N':
+			SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
+
+			mylog("send_function(G): 'N' - %s\n", msgbuffer);
+			qlog("NOTICE from backend during send_function: '%s'\n", msgbuffer);
+
+			continue;		// dont return a result -- continue reading
+
+		case '0':	/* empty result */
+			return TRUE;
+
+		default:
+			self->errornumber = CONNECTION_BACKEND_CRAZY;
+			self->errormsg = "Unexpected protocol character from backend";
+			CC_set_no_trans(self);
+
+			mylog("send_function: error - %s\n", self->errormsg);
+			return FALSE;
+		}
+	}
+}
+
 char
 CC_send_settings(ConnectionClass *self)
 {
 char ini_query[MAX_MESSAGE_LEN];
 ConnInfo *ci = &(self->connInfo);
-QResultClass *res;
+// QResultClass *res;
+HSTMT hstmt;
+StatementClass *stmt;
+RETCODE result;
+SWORD cols = 0;
+
+	result = SQLAllocStmt( self, &hstmt);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		return FALSE;
+	}
+	stmt = (StatementClass *) hstmt;
 
 	ini_query[0] = '\0';
 
-	/*	Turn on/off genetic optimizer based on global flag */
-	if (globals.optimizer[0] != '\0')
-		sprintf(ini_query, "set geqo to '%s'", globals.optimizer);
+	/*	Set the Datestyle to the format the driver expects it to be in */
+	sprintf(ini_query, "set DateStyle to 'ISO'");
+
+	/*	Disable genetic optimizer based on global flag */
+	if (globals.disable_optimizer)
+		sprintf(&ini_query[strlen(ini_query)], "%sset geqo to 'OFF'", 
+			ini_query[0] != '\0' ? "; " : "");
 
 	/*	Global settings */
 	if (globals.conn_settings[0] != '\0')
@@ -954,26 +1100,88 @@ QResultClass *res;
 	if (ini_query[0] != '\0') {
 		mylog("Sending Initial Connection query: '%s'\n", ini_query);
 
-		res = CC_send_query(self, ini_query, NULL, NULL);
-		if (res && QR_get_status(res) != PGRES_FATAL_ERROR) {
-			mylog("Initial Query response: '%s'\n", QR_get_notice(res));
+		result = SQLExecDirect(hstmt, ini_query, SQL_NTS);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			SQLFreeStmt(hstmt, SQL_DROP);
+			return FALSE;
 		}
 
-		if ( res == NULL || 
-			QR_get_status(res) == PGRES_BAD_RESPONSE ||
-			QR_get_status(res) == PGRES_FATAL_ERROR || 
-			QR_get_status(res) == PGRES_INTERNAL_ERROR) {
+		SQLFreeStmt(hstmt, SQL_DROP);
 
-			self->errornumber = CONNECTION_COULD_NOT_SEND;
-			self->errormsg = "Error sending ConnSettings";
-			if (res)
-				QR_Destructor(res);
-			return 0;
-		}
-
-		if (res)
-			QR_Destructor(res);
 	}
 	return TRUE;
 }
+
+/*	This function is just a hack to get the oid of our Large Object oid type.
+	If a real Large Object oid type is made part of Postgres, this function
+	will go away and the define 'PG_TYPE_LO' will be updated.
+*/
+void
+CC_lookup_lo(ConnectionClass *self) 
+{
+HSTMT hstmt;
+StatementClass *stmt;
+RETCODE result;
+
+	result = SQLAllocStmt( self, &hstmt);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		return;
+	}
+	stmt = (StatementClass *) hstmt;
+
+	result = SQLExecDirect(hstmt, "select oid from pg_type where typname='" \
+		PG_TYPE_LO_NAME \
+		"'", SQL_NTS);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		SQLFreeStmt(hstmt, SQL_DROP);
+		return;
+	}
+
+	result = SQLFetch(hstmt);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		SQLFreeStmt(hstmt, SQL_DROP);
+		return;
+	}
+
+	result = SQLGetData(hstmt, 1, SQL_C_SLONG, &self->lobj_type, sizeof(self->lobj_type), NULL);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		SQLFreeStmt(hstmt, SQL_DROP);
+		return;
+	}
+
+	mylog("Got the large object oid: %d\n", self->lobj_type);
+	qlog("    [ Large Object oid = %d ]\n", self->lobj_type);
+
+	result = SQLFreeStmt(hstmt, SQL_DROP);
+}
+
+/*
+void
+CC_test(ConnectionClass *self)
+{
+HSTMT hstmt1;
+RETCODE result;
+SDWORD pcbValue;
+UDWORD pcrow;
+UWORD rgfRowStatus;
+char buf[255];
+
+	result = SQLAllocStmt( self, &hstmt1);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		return;
+	}
+
+	result = SQLExtendedFetch(hstmt1, SQL_FETCH_ABSOLUTE, -2, &pcrow, &rgfRowStatus);
+	SQLGetData(hstmt1, 1, SQL_C_CHAR, buf, sizeof(buf), &pcbValue);
+	qlog("FETCH_ABSOLUTE, -2: result=%d, Col1 = '%s'\n", result, buf);
+
+	result = SQLFetch(hstmt1);
+	while (result != SQL_NO_DATA_FOUND) {
+		result = SQLFetch(hstmt1);
+		qlog("fetch on stmt1\n");
+	}
+	SQLFreeStmt(hstmt1, SQL_DROP);
+
+}
+*/
 

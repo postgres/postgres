@@ -29,6 +29,7 @@ ColumnInfoClass *rv;
 		rv->name = NULL;
 		rv->adtid = NULL;
 		rv->adtsize = NULL;
+		rv->display_size = NULL;
 	}
 
 	return rv;
@@ -98,6 +99,7 @@ int num_fields = self->num_fields;
 	free(self->name);
 	free(self->adtid);
 	free(self->adtsize);
+	free(self->display_size);
 }
 
 void
@@ -110,6 +112,7 @@ CI_set_num_fields(ColumnInfoClass *self, int new_num_fields)
 	self->name = (char **) malloc (sizeof(char *) * self->num_fields);
 	self->adtid = (Oid *) malloc (sizeof(Oid) * self->num_fields);
 	self->adtsize = (Int2 *) malloc (sizeof(Int2) * self->num_fields);
+	self->display_size = (Int2 *) malloc(sizeof(Int2) * self->num_fields);
 }
 
 void
@@ -126,34 +129,7 @@ CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name,
 	self->name[field_num] = strdup(new_name);  
 	self->adtid[field_num] = new_adtid;
 	self->adtsize[field_num] = new_adtsize;
-}
 
-char *
-CI_get_fieldname(ColumnInfoClass *self, Int2 which)
-{
-char *rv = NULL;
-    
-	if ( ! self->name)
-		return NULL;
-
-	if ((which >= 0) && (which < self->num_fields))
-		rv = self->name[which];
-
-	return rv;
-}
-
-
-Int2
-CI_get_fieldsize(ColumnInfoClass *self, Int2 which)
-{
-Int2 rv = 0;
-
-	if ( ! self->adtsize)
-		return 0;
-
-	if ((which >= 0) && (which < self->num_fields))
-		rv = self->adtsize[which];
-
-	return rv;
+	self->display_size[field_num] = 0;
 }
 

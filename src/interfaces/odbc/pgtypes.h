@@ -10,10 +10,13 @@
 #ifndef __PGTYPES_H__
 #define __PGTYPES_H__
 
+#include "psqlodbc.h"
+
 /* the type numbers are defined by the OID's of the types' rows */
 /* in table pg_type */
 
-#define PG_UNKNOWN			-666	/* returned only from pgtype_to_sqltype() */
+
+// #define PG_TYPE_LO			???? 	/* waiting for permanent type */
 
 #define PG_TYPE_BOOL         16
 #define PG_TYPE_BYTEA        17
@@ -58,22 +61,30 @@
 
 extern Int4 pgtypes_defined[];
 
-Int2 pgtype_to_sqltype(Int4 type);
-Int2 pgtype_to_ctype(Int4 type);
-char *pgtype_to_name(Int4 type);
-Int4 pgtype_precision(Int4 type);
-Int4 pgtype_length(Int4 type);
-Int2 pgtype_scale(Int4 type);
-Int2 pgtype_radix(Int4 type);
-Int2 pgtype_nullable(Int4 type);
-Int2 pgtype_auto_increment(Int4 type);
-Int2 pgtype_case_sensitive(Int4 type);
-Int2 pgtype_money(Int4 type);
-Int2 pgtype_searchable(Int4 type);
-Int2 pgtype_unsigned(Int4 type);
-char *pgtype_literal_prefix(Int4 type);
-char *pgtype_literal_suffix(Int4 type);
-char *pgtype_create_params(Int4 type);
+/*	Defines for pgtype_precision */
+#define PG_STATIC		-1	
+
+
+Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type);
+Int2 pgtype_to_ctype(StatementClass *stmt, Int4 type);
+char *pgtype_to_name(StatementClass *stmt, Int4 type);
+
+/*	These functions can use static numbers or result sets(col parameter) */
+Int4 pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4 pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+Int4 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
+
+Int2 pgtype_scale(StatementClass *stmt, Int4 type);
+Int2 pgtype_radix(StatementClass *stmt, Int4 type);
+Int2 pgtype_nullable(StatementClass *stmt, Int4 type);
+Int2 pgtype_auto_increment(StatementClass *stmt, Int4 type);
+Int2 pgtype_case_sensitive(StatementClass *stmt, Int4 type);
+Int2 pgtype_money(StatementClass *stmt, Int4 type);
+Int2 pgtype_searchable(StatementClass *stmt, Int4 type);
+Int2 pgtype_unsigned(StatementClass *stmt, Int4 type);
+char *pgtype_literal_prefix(StatementClass *stmt, Int4 type);
+char *pgtype_literal_suffix(StatementClass *stmt, Int4 type);
+char *pgtype_create_params(StatementClass *stmt, Int4 type);
 
 Int2 sqltype_to_default_ctype(Int2 sqltype);
 

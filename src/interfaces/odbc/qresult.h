@@ -65,15 +65,18 @@ struct QResultClass_ {
 /*	These functions are for retrieving data from the qresult */
 #define QR_get_value_manual(self, tupleno, fieldno)	(TL_get_fieldval(self->manual_tuples, tupleno, fieldno))
 #define QR_get_value_backend(self, fieldno)			(self->tupleField[fieldno].value) 
+#define QR_get_value_backend_row(self, tupleno, fieldno) \
+	((self->backend_tuples + (tupleno * self->num_fields))[fieldno].value)
 
 /*	These functions are used by both manual and backend results */
 #define QR_NumResultCols(self)				(CI_get_num_fields(self->fields))
 #define QR_get_fieldname(self, fieldno_)	(CI_get_fieldname(self->fields, fieldno_))
 #define QR_get_fieldsize(self, fieldno_)	(CI_get_fieldsize(self->fields, fieldno_))    
+#define QR_get_display_size(self, fieldno_)	(CI_get_display_size(self->fields, fieldno_))    
 #define QR_get_field_type(self, fieldno_)   (CI_get_oid(self->fields, fieldno_))
 
 /*	These functions are used only for manual result sets */
-#define QR_get_num_tuples(self)				(self->manual_tuples ? TL_get_num_tuples(self->manual_tuples) : 0)
+#define QR_get_num_tuples(self)				(self->manual_tuples ? TL_get_num_tuples(self->manual_tuples) : self->fcount)
 #define QR_add_tuple(self, new_tuple)		(TL_add_tuple(self->manual_tuples, new_tuple))
 #define QR_set_field_info(self, field_num, name, adtid, adtsize)  (CI_set_field_info(self->fields, field_num, name, adtid, adtsize))
 

@@ -77,6 +77,7 @@ SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname)
 {
 struct hostent *host;
 struct sockaddr_in sadr;
+unsigned long iaddr;
 
 	if (self->socket != -1) {
 		self->errornumber = SOCKET_ALREADY_CONNECTED;
@@ -84,15 +85,24 @@ struct sockaddr_in sadr;
 		return 0;
 	}
 
-	host = gethostbyname(hostname);
-	if (host == NULL) {
-		self->errornumber = SOCKET_HOST_NOT_FOUND;
-		self->errormsg = "Could not resolve hostname.";
-		return 0;
-	}
-
 	memset((char *)&sadr, 0, sizeof(sadr));
-	memcpy(&(sadr.sin_addr), host->h_addr, host->h_length);
+
+	/*	If it is a valid IP address, use it.
+		Otherwise use hostname lookup. 
+	*/
+	iaddr = inet_addr(hostname);
+	if (iaddr == INADDR_NONE) {
+		host = gethostbyname(hostname);
+		if (host == NULL) {
+			self->errornumber = SOCKET_HOST_NOT_FOUND;
+			self->errormsg = "Could not resolve hostname.";
+			return 0;
+		}
+		memcpy(&(sadr.sin_addr), host->h_addr, host->h_length);
+	}
+	else
+		memcpy(&(sadr.sin_addr), (struct in_addr *) &iaddr, sizeof(iaddr));
+
 	sadr.sin_family = AF_INET;
 	sadr.sin_port = htons(port);
 

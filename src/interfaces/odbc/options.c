@@ -16,9 +16,14 @@
 #include "psqlodbc.h"
 #include <windows.h>
 #include <sql.h>
+#include <sqlext.h>
 #include "environ.h"
 #include "connection.h"
 #include "statement.h"
+
+
+extern GLOBAL_VALUES globals;
+
 
 /* Implements only SQL_AUTOCOMMIT */
 RETCODE SQL_API SQLSetConnectOption(
@@ -81,58 +86,6 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 
 //      -       -       -       -       -       -       -       -       -
 
-RETCODE SQL_API SQLSetStmtOption(
-        HSTMT   hstmt,
-        UWORD   fOption,
-        UDWORD  vParam)
-{
-StatementClass *stmt = (StatementClass *) hstmt;
-
-    // thought we could fake Access out by just returning SQL_SUCCESS
-    // all the time, but it tries to set a huge value for SQL_MAX_LENGTH
-    // and expects the driver to reduce it to the real value
-
-    if( ! stmt) {
-        return SQL_INVALID_HANDLE;
-    }
-
-    switch(fOption) {
-    case SQL_QUERY_TIMEOUT:
-		mylog("SetStmtOption: vParam = %d\n", vParam);
-		/*
-		stmt->errornumber = STMT_OPTION_VALUE_CHANGED;
-		stmt->errormsg = "Query Timeout:  value changed to 0";
-		return SQL_SUCCESS_WITH_INFO;
-		*/
-		return SQL_SUCCESS;
-        break;
-    case SQL_MAX_LENGTH:
-/* CC: Some apps consider returning SQL_SUCCESS_WITH_INFO to be an error */
-/* so if we're going to return SQL_SUCCESS, we better not set an */
-/* error message.  (otherwise, if a subsequent function call returns */
-/* SQL_ERROR without setting a message, things can get confused.) */
-
-      /*
-        stmt->errormsg = "Requested value changed.";
-        stmt->errornumber = STMT_OPTION_VALUE_CHANGED;
-       */
-
-        return SQL_SUCCESS;
-        break;
-	case SQL_MAX_ROWS:
-		mylog("SetStmtOption(): SQL_MAX_ROWS = %d, returning success\n", vParam);
-		stmt->maxRows = vParam;
-		return SQL_SUCCESS;
-		break;
-    default:
-        return SQL_ERROR;
-    }
-
-    return SQL_SUCCESS;
-}
-
-//      -       -       -       -       -       -       -       -       -
-
 /* This function just can tell you whether you are in Autcommit mode or not */
 RETCODE SQL_API SQLGetConnectOption(
         HDBC    hdbc,
@@ -141,31 +94,126 @@ RETCODE SQL_API SQLGetConnectOption(
 {
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 
-    if (! conn) 
-       return SQL_INVALID_HANDLE;
+	if (! conn) 
+		return SQL_INVALID_HANDLE;
 
-    switch (fOption) {
-      case SQL_AUTOCOMMIT:
-      /* CC 28.05.96: Do not set fOption, but pvParam */
-        *((UDWORD *)pvParam) = (UDWORD)( CC_is_in_autocommit(conn) ?
-                                        SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF);
-      break;
-      /* we don't use qualifiers */
-    case SQL_CURRENT_QUALIFIER:
-      if(pvParam) {
-	strcpy(pvParam, "");
-      }
-      break;
-    default:
-        conn->errormsg = "This option is currently unsupported by the driver";
-        conn->errornumber = CONN_UNSUPPORTED_OPTION;
-        return SQL_ERROR;
-      break;
+	switch (fOption) {
+	case SQL_AUTOCOMMIT:
+		*((UDWORD *)pvParam) = (UDWORD)( CC_is_in_autocommit(conn) ?
+						SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF);
+		break;
 
-    }    
+	/* don't use qualifiers */
+	case SQL_CURRENT_QUALIFIER:
+		if(pvParam)
+			strcpy(pvParam, "");
 
-    return SQL_SUCCESS;
+		break;
+
+	default:
+		conn->errormsg = "This option is currently unsupported by the driver";
+		conn->errornumber = CONN_UNSUPPORTED_OPTION;
+		return SQL_ERROR;
+		break;
+
+	}    
+
+	return SQL_SUCCESS;
 }
+
+//      -       -       -       -       -       -       -       -       -
+
+RETCODE SQL_API SQLSetStmtOption(
+        HSTMT   hstmt,
+        UWORD   fOption,
+        UDWORD  vParam)
+{
+StatementClass *stmt = (StatementClass *) hstmt;
+char changed = FALSE;
+
+    // thought we could fake Access out by just returning SQL_SUCCESS
+    // all the time, but it tries to set a huge value for SQL_MAX_LENGTH
+    // and expects the driver to reduce it to the real value
+
+	if( ! stmt)
+		return SQL_INVALID_HANDLE;
+
+	switch(fOption) {
+	case SQL_QUERY_TIMEOUT:
+		mylog("SetStmtOption: vParam = %d\n", vParam);
+		//	"0" returned in SQLGetStmtOption
+		break;
+
+	case SQL_MAX_LENGTH:
+		//	"4096" returned in SQLGetStmtOption
+		break;
+
+	case SQL_MAX_ROWS:
+		mylog("SetStmtOption(): SQL_MAX_ROWS = %d, returning success\n", vParam);
+		stmt->maxRows = vParam;
+		return SQL_SUCCESS;
+		break;
+
+	case SQL_ROWSET_SIZE:
+		mylog("SetStmtOption(): SQL_ROWSET_SIZE = %d\n", vParam);
+
+		stmt->rowset_size = 1;		// only support 1 row at a time
+		if (vParam != 1) 
+			changed = TRUE;
+
+		break;
+
+	case SQL_CONCURRENCY:
+		//	positioned update isn't supported so cursor concurrency is read-only
+		mylog("SetStmtOption(): SQL_CONCURRENCY = %d\n", vParam);
+
+		stmt->scroll_concurrency = SQL_CONCUR_READ_ONLY;
+		if (vParam != SQL_CONCUR_READ_ONLY)
+			changed = TRUE;
+
+		break;
+		
+	case SQL_CURSOR_TYPE:
+		//	if declare/fetch, then type can only be forward.
+		//	otherwise, it can only be forward or static.
+		mylog("SetStmtOption(): SQL_CURSOR_TYPE = %d\n", vParam);
+
+		if (globals.use_declarefetch) {
+			stmt->cursor_type = SQL_CURSOR_FORWARD_ONLY;
+			if (vParam != SQL_CURSOR_FORWARD_ONLY) 
+				changed = TRUE;
+		}
+		else {
+			if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC)
+				stmt->cursor_type = vParam;		// valid type
+			else {
+				stmt->cursor_type = SQL_CURSOR_STATIC;
+				changed = TRUE;
+			}
+		}
+
+		break;
+
+	case SQL_SIMULATE_CURSOR:
+		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		stmt->errormsg = "Simulated positioned update/delete not supported";
+		return SQL_ERROR;
+
+    default:
+		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		stmt->errormsg = "Driver does not support this statement option";
+        return SQL_ERROR;
+    }
+
+	if (changed) {
+		stmt->errormsg = "Requested value changed.";
+		stmt->errornumber = STMT_OPTION_VALUE_CHANGED;
+		return SQL_SUCCESS_WITH_INFO;
+	}
+	else
+		return SQL_SUCCESS;
+}
+
 
 //      -       -       -       -       -       -       -       -       -
 
@@ -180,31 +228,54 @@ StatementClass *stmt = (StatementClass *) hstmt;
     // all the time, but it tries to set a huge value for SQL_MAX_LENGTH
     // and expects the driver to reduce it to the real value
 
-    if( ! stmt) {
-        return SQL_INVALID_HANDLE;
-    }
+	if( ! stmt)
+		return SQL_INVALID_HANDLE;
 
-    switch(fOption) {
-    case SQL_QUERY_TIMEOUT:
-        // how long we wait on a query before returning to the
-        // application (0 == forever)
-        *((SDWORD *)pvParam) = 0;
-        break;
-    case SQL_MAX_LENGTH:
-        // what is the maximum length that will be returned in
-        // a single column
-        *((SDWORD *)pvParam) = 4096;
-        break;
+	switch(fOption) {
+	case SQL_QUERY_TIMEOUT:
+		// how long we wait on a query before returning to the
+		// application (0 == forever)
+		*((SDWORD *)pvParam) = 0;
+		break;
+
+	case SQL_MAX_LENGTH:
+		// what is the maximum length that will be returned in
+		// a single column
+		*((SDWORD *)pvParam) = 4096;
+		break;
+
 	case SQL_MAX_ROWS:
 		*((SDWORD *)pvParam) = stmt->maxRows;
 		mylog("GetSmtOption: MAX_ROWS, returning %d\n", stmt->maxRows);
-
 		break;
-    default:
-        return SQL_ERROR;
-    }
 
-    return SQL_SUCCESS;
+	case SQL_ROWSET_SIZE:
+		mylog("GetStmtOption(): SQL_ROWSET_SIZE\n");
+		*((SDWORD *)pvParam) = stmt->rowset_size;
+		break;
+
+	case SQL_CONCURRENCY:
+		mylog("GetStmtOption(): SQL_CONCURRENCY\n");
+		*((SDWORD *)pvParam) = stmt->scroll_concurrency;
+		break;
+
+	case SQL_CURSOR_TYPE:
+		mylog("GetStmtOption(): SQL_CURSOR_TYPE\n");
+		*((SDWORD *)pvParam) = stmt->cursor_type;
+		break;
+
+	case SQL_SIMULATE_CURSOR:
+		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		stmt->errormsg = "Simulated positioned update/delete not supported";
+		return SQL_ERROR;
+
+	default:
+		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		stmt->errormsg = "Driver does not support this statement option";
+		return SQL_ERROR;
+	}
+
+	return SQL_SUCCESS;
 }
 
 //      -       -       -       -       -       -       -       -       -
