@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.66 1999/07/30 00:44:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.67 1999/08/09 01:01:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,11 @@ static MergeJoin *create_mergejoin_node(MergePath *best_path, List *tlist,
 static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
-static Node *fix_indxqual_references(Node *clause, Path *index_path);
+static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
+static List *fix_one_indxqual_sublist(List *indexqual, IndexPath *index_path,
+									  Form_pg_index index);
+static Node *fix_one_indxqual_operand(Node *node, IndexPath *index_path,
+									  Form_pg_index index);
 static Noname *make_noname(List *tlist, List *pathkeys, Oid *operators,
 			Plan *plan_node, int nonametype);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
@@ -393,8 +397,7 @@ create_indexscan_node(IndexPath *best_path,
 	indxqual = fix_opids(indxqual);
 
 	/* The executor needs a copy with index attrs substituted for table ones */
-	fixed_indxqual = (List *) fix_indxqual_references((Node *) indxqual,
-													  (Path *) best_path);
+	fixed_indxqual = fix_indxqual_references(indxqual, best_path);
 
 	scan_node = make_indexscan(tlist,
 							   qpqual,
@@ -457,24 +460,26 @@ create_nestloop_node(NestPath *best_path,
 		 * the inner(index) scan's qualification so that the var nodes
 		 * refer to the proper outer join relation attributes.
 		 *
-		 * XXX Re-moving index clauses doesn't work properly: 1.
+		 * XXX Removing index clauses doesn't work properly: 1.
 		 * fix_indxqual_references may change varattno-s in
 		 * inner_indxqual; 2. clauses may be commuted I havn't time to fix
 		 * it at the moment.   - vadim 04/24/97
 		 */
 		if (found)
 		{
-			List	   *new_inner_qual = NIL;
+			List	   *new_inner_qual;
 
 			clauses = set_difference(clauses, inner_indxqual);	/* XXX */
-			new_inner_qual = index_outerjoin_references(inner_indxqual,
-												  outer_node->targetlist,
-									   ((Scan *) inner_node)->scanrelid);
+			/* only refs to outer vars get changed in the inner indexqual */
+			new_inner_qual = join_references(inner_indxqual,
+											 outer_tlist,
+											 NIL);
 			((IndexScan *) inner_node)->indxqual = lcons(new_inner_qual, NIL);
 		}
 	}
 	else if (IsA_Join(inner_node))
 	{
+		/* Materialize the inner join for speed reasons */
 		inner_node = (Plan *) make_noname(inner_tlist,
 										  NIL,
 										  NULL,
@@ -629,159 +634,141 @@ create_hashjoin_node(HashPath *best_path,
 
 /*
  * fix_indxqual_references
- *	Adjust a qual clause to refer to an index instead of the original relation.
+ *	Adjust indexqual clauses to refer to index attributes instead of the
+ *	attributes of the original relation.
  *
- * Returns a modified copy of the given clause --- the original is not changed.
+ * This code used to be entirely bogus for multi-index scans.  Now it keeps
+ * track of which index applies to each subgroup of index qual clauses...
+ *
+ * Returns a modified copy of the indexqual list --- the original is not
+ * changed.
  */
 
-static Node *
-fix_indxqual_references(Node *clause, Path *index_path)
+static List *
+fix_indxqual_references(List *indexquals, IndexPath *index_path)
 {
-	if (clause == NULL)
-		return NULL;
-	else if (IsA(clause, Var))
+	List	   *fixed_quals = NIL;
+	List	   *indexids = index_path->indexid;
+	List	   *i;
+
+	foreach(i, indexquals)
 	{
-		if (lfirsti(index_path->parent->relids) == ((Var *) clause)->varno)
-		{
-			Node	   *newclause;
-			int			pos = 0;
-			int			varatt = ((Var *) clause)->varattno;
-			int		   *indexkeys = ((IndexPath *) index_path)->indexkeys;
+		List	   *indexqual = lfirst(i);
+		Oid			indexid = lfirsti(indexids);
+		HeapTuple	indexTuple;
+		Form_pg_index index;
 
-			if (indexkeys)
-			{
-				while (indexkeys[pos] != 0)
-				{
-					if (varatt == indexkeys[pos])
-						break;
-					pos++;
-				}
-			}
-			newclause = copyObject(clause);
-			((Var *) newclause)->varattno = pos + 1;
-			return newclause;
-		}
-		/* The Var is not part of the indexed relation, leave it alone */
-		return copyObject(clause);
+		indexTuple = SearchSysCacheTuple(INDEXRELID,
+										 ObjectIdGetDatum(indexid),
+										 0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "fix_indxqual_references: index %u not found",
+				 indexid);
+		index = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		fixed_quals = lappend(fixed_quals,
+							  fix_one_indxqual_sublist(indexqual,
+													   index_path,
+													   index));
+
+		indexids = lnext(indexids);
 	}
-	else if (single_node(clause))
-		return copyObject(clause);
-	else if (is_opclause(clause) &&
-			 is_funcclause((Node *) get_leftop((Expr *) clause)) &&
-	((Func *) ((Expr *) get_leftop((Expr *) clause))->oper)->funcisindex)
-	{
-
-		/*
-		 * This looks pretty seriously wrong to me, but I'm not sure what
-		 * it's supposed to be doing ... tgl 5/99
-		 */
-		Var		   *newvar = makeVar((Index) lfirsti(index_path->parent->relids),
-									 1, /* func indices have one key */
-							((Func *) ((Expr *) clause)->oper)->functype,
-									 -1,
-									 0,
-							 (Index) lfirsti(index_path->parent->relids),
-									 0);
-
-		return ((Node *) make_opclause((Oper *) ((Expr *) clause)->oper,
-									   newvar,
-									   get_rightop((Expr *) clause)));
-
-	}
-	else if (IsA(clause, Expr))
-	{
-		Expr	   *expr = (Expr *) clause;
-		List	   *new_subclauses = NIL;
-		List	   *i;
-
-		foreach(i, expr->args)
-		{
-			Node	   *subclause = lfirst(i);
-
-			new_subclauses = lappend(new_subclauses,
-									 fix_indxqual_references(subclause,
-															 index_path));
-		}
-
-		return (Node *) make_clause(expr->opType, expr->oper, new_subclauses);
-	}
-	else if (IsA(clause, List))
-	{
-		List	   *new_subclauses = NIL;
-		List	   *i;
-
-		foreach(i, (List *) clause)
-		{
-			Node	   *subclause = lfirst(i);
-
-			new_subclauses = lappend(new_subclauses,
-									 fix_indxqual_references(subclause,
-															 index_path));
-		}
-
-		return (Node *) new_subclauses;
-	}
-	else if (IsA(clause, ArrayRef))
-	{
-		ArrayRef   *oldnode = (ArrayRef *) clause;
-		ArrayRef   *newnode = makeNode(ArrayRef);
-
-		newnode->refattrlength = oldnode->refattrlength;
-		newnode->refelemlength = oldnode->refelemlength;
-		newnode->refelemtype = oldnode->refelemtype;
-		newnode->refelembyval = oldnode->refelembyval;
-		newnode->refupperindexpr = (List *)
-			fix_indxqual_references((Node *) oldnode->refupperindexpr,
-									index_path);
-		newnode->reflowerindexpr = (List *)
-			fix_indxqual_references((Node *) oldnode->reflowerindexpr,
-									index_path);
-		newnode->refexpr =
-			fix_indxqual_references(oldnode->refexpr, index_path);
-		newnode->refassgnexpr =
-			fix_indxqual_references(oldnode->refassgnexpr, index_path);
-
-		return (Node *) newnode;
-	}
-	else if (IsA(clause, CaseExpr))
-	{
-		CaseExpr   *oldnode = (CaseExpr *) clause;
-		CaseExpr   *newnode = makeNode(CaseExpr);
-
-		newnode->casetype = oldnode->casetype;
-		newnode->arg = oldnode->arg;	/* XXX should always be null
-										 * anyway ... */
-		newnode->args = (List *)
-			fix_indxqual_references((Node *) oldnode->args,
-									index_path);
-		newnode->defresult =
-			fix_indxqual_references(oldnode->defresult,
-									index_path);
-
-		return (Node *) newnode;
-	}
-	else if (IsA(clause, CaseWhen))
-	{
-		CaseWhen   *oldnode = (CaseWhen *) clause;
-		CaseWhen   *newnode = makeNode(CaseWhen);
-
-		newnode->expr =
-			fix_indxqual_references(oldnode->expr,
-									index_path);
-		newnode->result =
-			fix_indxqual_references(oldnode->result,
-									index_path);
-
-		return (Node *) newnode;
-	}
-	else
-	{
-		elog(ERROR, "fix_indxqual_references: Cannot handle node type %d",
-			 nodeTag(clause));
-		return NULL;
-	}
+	return fixed_quals;
 }
 
+/*
+ * Fix the sublist of indexquals to be used in a particular scan.
+ *
+ * All that we need to do is change the left or right operand of the top-level
+ * operator of each qual clause.  Those are the only places that the index
+ * attribute can appear in a valid indexqual.  The other side of the indexqual
+ * might be a complex function of joined rels; we do not need or want to
+ * alter such an expression.
+ */
+static List *
+fix_one_indxqual_sublist(List *indexqual, IndexPath *index_path,
+						 Form_pg_index index)
+{
+	List	   *fixed_qual = NIL;
+	List	   *i;
+
+	foreach(i, indexqual)
+	{
+		Node	   *clause = lfirst(i);
+		List	   *args;
+		Expr	   *newclause;
+
+		if (!is_opclause(clause))
+			elog(ERROR, "fix_one_indxqual_sublist: indexqual clause is not opclause");
+
+		/* Copy enough structure to allow replacing left or right operand */
+		args = listCopy(((Expr *) clause)->args);
+		newclause = make_clause(((Expr *) clause)->opType,
+								((Expr *) clause)->oper,
+								args);
+
+		lfirst(args) = fix_one_indxqual_operand(lfirst(args),
+												index_path,
+												index);
+		if (lnext(args))
+			lfirst(lnext(args)) = fix_one_indxqual_operand(lfirst(lnext(args)),
+														   index_path,
+														   index);
+
+		fixed_qual = lappend(fixed_qual, newclause);
+	}
+	return fixed_qual;
+}
+
+static Node *
+fix_one_indxqual_operand(Node *node, IndexPath *index_path,
+						 Form_pg_index index)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		if (((Var *) node)->varno == lfirsti(index_path->path.parent->relids))
+		{
+			int			varatt = ((Var *) node)->varattno;
+			int			pos;
+
+			for (pos = 0; pos < INDEX_MAX_KEYS; pos++)
+			{
+				if (index->indkey[pos] == varatt)
+				{
+					Node	   *newnode = copyObject(node);
+					((Var *) newnode)->varattno = pos + 1;
+					return newnode;
+				}
+			}
+			/*
+			 * We should never see a reference to an attribute of the indexed
+			 * relation that is not one of the indexed attributes.
+			 */
+			elog(ERROR, "fix_one_indxqual_operand: failed to find index pos of index attribute");
+		}
+		/*
+		 * The Var is not part of the indexed relation, leave it alone.
+		 * This would normally only occur when looking at the other side
+		 * of a join indexqual.
+		 */
+		return node;
+	}
+
+	/*
+	 * Note: currently, there is no need for us to do anything here for
+	 * functional indexes.  If nodeIndexscan.c sees a func clause as the left
+	 * or right-hand toplevel operand of an indexqual, it assumes that that is
+	 * a reference to the functional index's value and makes the appropriate
+	 * substitution.  (It would be cleaner to make the substitution here, I
+	 * think --- suspect this issue if a join clause involving a function call
+	 * misbehaves...)
+	 */
+
+	/* return the unmodified node */
+	return node;
+}
 
 /*
  * switch_outer
@@ -794,14 +781,13 @@ static List *
 switch_outer(List *clauses)
 {
 	List	   *t_list = NIL;
-	Expr	   *temp;
 	List	   *i;
-	Expr	   *clause;
-	Node	   *op;
 
 	foreach(i, clauses)
 	{
-		clause = lfirst(i);
+		Expr	   *clause = lfirst(i);
+		Node	   *op;
+
 		Assert(is_opclause((Node *) clause));
 		op = (Node *) get_rightop(clause);
 		Assert(op != (Node *) NULL);
@@ -810,12 +796,13 @@ switch_outer(List *clauses)
 		Assert(IsA(op, Var));
 		if (var_is_outer((Var *) op))
 		{
-
 			/*
 			 * Duplicate just enough of the structure to allow commuting
 			 * the clause without changing the original list.  Could use
 			 * copyObject, but a complete deep copy is overkill.
 			 */
+			Expr	   *temp;
+
 			temp = make_clause(clause->opType, clause->oper,
 							   lcons(get_leftop(clause),
 									 lcons(get_rightop(clause),
