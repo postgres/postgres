@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.52 1999/02/06 20:27:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.53 1999/02/07 19:02:19 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -132,7 +132,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
 		UpdateStmt, InsertStmt, select_w_o_sort, SelectStmt, NotifyStmt, DeleteStmt, 
 		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
-		CreateUserStmt, AlterUserStmt, DropUserStmt
+		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt
 
 %type <str>	opt_database1, opt_database2, location, encoding
 
@@ -163,7 +163,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		result, relation_name_list, OptTableElementList,
 		OptInherit, definition,
 		opt_with, func_args, func_args_list,
-		oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
+		oper_argtypes, RuleActionList, RuleActionBlock, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_list, opt_array_bounds, nest_array_bounds,
@@ -2058,7 +2058,7 @@ opt_column:  COLUMN						{ $$ = COLUMN; }
 RuleStmt:  CREATE RULE name AS
 		   { QueryIsRule=TRUE; }
 		   ON event TO event_object where_clause
-		   DO opt_instead OptStmtList
+		   DO opt_instead RuleActionList
 				{
 					RuleStmt *n = makeNode(RuleStmt);
 					n->rulename = $3;
@@ -2071,32 +2071,29 @@ RuleStmt:  CREATE RULE name AS
 				}
 		;
 
-OptStmtList:  NOTHING					{ $$ = NIL; }
-		| OptimizableStmt				{ $$ = lcons($1, NIL); }
-		| '[' OptStmtBlock ']'			{ $$ = $2; }
-/***S*I*D***/
-/* We comment this out because it produces a shift / reduce conflict 
- * with the select_w_o_sort rule */
-/*		| '(' OptStmtBlock ')'			{ $$ = $2; } */
+RuleActionList:  NOTHING				{ $$ = NIL; }
+		| SelectStmt					{ $$ = lcons($1, NIL); }
+		| RuleActionStmt				{ $$ = lcons($1, NIL); }
+		| '[' RuleActionBlock ']'		{ $$ = $2; }
+		| '(' RuleActionBlock ')'		{ $$ = $2; } 
 		;
 
-OptStmtBlock:  OptStmtMulti
-				{  $$ = $1; }
-		| OptimizableStmt
-				{ $$ = lcons($1, NIL); }
+RuleActionBlock:  RuleActionMulti		{  $$ = $1; }
+		| RuleActionStmt				{ $$ = lcons($1, NIL); }
 		;
 
-OptStmtMulti:  OptStmtMulti OptimizableStmt ';'
+RuleActionMulti:  RuleActionMulti RuleActionStmt
 				{  $$ = lappend($1, $2); }
-/***S*I***/
-/* We comment the next rule because it seems to be redundant
- * and produces 16 shift/reduce conflicts with the new SelectStmt rule
- * needed for EXCEPT and INTERSECT. So far I did not notice any
- * violations by removing the rule! */
-/* 		| OptStmtMulti OptimizableStmt
-				{  $$ = lappend($1, $2); } */
-		| OptimizableStmt ';'
+		| RuleActionMulti RuleActionStmt ';'
+				{  $$ = lappend($1, $2); }
+		| RuleActionStmt ';'
 				{ $$ = lcons($1, NIL); }
+		;
+
+RuleActionStmt:	InsertStmt
+		| UpdateStmt
+		| DeleteStmt
+		| NotifyStmt
 		;
 
 event_object:  relation_name '.' attr_name

@@ -24,26 +24,26 @@ create rule rtest_v1_del as on delete to rtest_v1 do instead
 -- Tables and rules for the constraint update/delete test
 --
 -- Note:
--- 	psql prevents from putting colons into brackets as
--- 	required for multi action rules. So we define single
--- 	rules for each action required for now
+-- 	Now that we have multiple action rule support, we check
+-- 	both possible syntaxes to define them (The last action
+--  can but must not have a semicolon at the end).
 --
 create table rtest_system (sysname text, sysdesc text);
 create table rtest_interface (sysname text, ifname text);
 create table rtest_person (pname text, pdesc text);
 create table rtest_admin (pname text, sysname text);
 
-create rule rtest_sys_upd1 as on update to rtest_system do 
+create rule rtest_sys_upd as on update to rtest_system do (
 	update rtest_interface set sysname = new.sysname 
 		where sysname = current.sysname;
-create rule rtest_sys_upd2 as on update to rtest_system do 
 	update rtest_admin set sysname = new.sysname 
-		where sysname = current.sysname;
+		where sysname = current.sysname
+	);
 
-create rule rtest_sys_del1 as on delete to rtest_system do
+create rule rtest_sys_del as on delete to rtest_system do (
 	delete from rtest_interface where sysname = current.sysname;
-create rule rtest_sys_del2 as on delete to rtest_system do
 	delete from rtest_admin where sysname = current.sysname;
+	);
 
 create rule rtest_pers_upd as on update to rtest_person do 
 	update rtest_admin set pname = new.pname where pname = current.pname;

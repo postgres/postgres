@@ -13,16 +13,16 @@ QUERY: create table rtest_system (sysname text, sysdesc text);
 QUERY: create table rtest_interface (sysname text, ifname text);
 QUERY: create table rtest_person (pname text, pdesc text);
 QUERY: create table rtest_admin (pname text, sysname text);
-QUERY: create rule rtest_sys_upd1 as on update to rtest_system do
+QUERY: create rule rtest_sys_upd as on update to rtest_system do (
 	update rtest_interface set sysname = new.sysname
 		where sysname = current.sysname;
-QUERY: create rule rtest_sys_upd2 as on update to rtest_system do
 	update rtest_admin set sysname = new.sysname
-		where sysname = current.sysname;
-QUERY: create rule rtest_sys_del1 as on delete to rtest_system do
+		where sysname = current.sysname
+	);
+QUERY: create rule rtest_sys_del as on delete to rtest_system do (
 	delete from rtest_interface where sysname = current.sysname;
-QUERY: create rule rtest_sys_del2 as on delete to rtest_system do
 	delete from rtest_admin where sysname = current.sysname;
+	);
 QUERY: create rule rtest_pers_upd as on update to rtest_person do
 	update rtest_admin set pname = new.pname where pname = current.pname;
 QUERY: create rule rtest_pers_del as on delete to rtest_person do
