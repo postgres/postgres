@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.77 2003/09/04 15:10:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.78 2003/09/14 17:25:54 tgl Exp $
  *
  **********************************************************************/
 
@@ -156,7 +156,7 @@ static Datum pltcl_func_handler(PG_FUNCTION_ARGS);
 
 static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS);
 
-static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, bool is_trigger);
+static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid);
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[]);
@@ -462,7 +462,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	sigjmp_buf	save_restart;
 
 	/* Find or compile the function */
-	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, false);
+	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, InvalidOid);
 
 	if (prodesc->lanpltrusted)
 		interp = pltcl_safe_interp;
@@ -648,7 +648,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	sigjmp_buf	save_restart;
 
 	/* Find or compile the function */
-	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, true);
+	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid,
+									 RelationGetRelid(trigdata->tg_relation));
 
 	if (prodesc->lanpltrusted)
 		interp = pltcl_safe_interp;
@@ -956,13 +957,17 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 
 /**********************************************************************
  * compile_pltcl_function	- compile (or hopefully just look up) function
+ *
+ * tgreloid is the OID of the relation when compiling a trigger, or zero
+ * (InvalidOid) when compiling a plain function.
  **********************************************************************/
 static pltcl_proc_desc *
-compile_pltcl_function(Oid fn_oid, bool is_trigger)
+compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 {
+	bool		is_trigger = OidIsValid(tgreloid);
 	HeapTuple	procTup;
 	Form_pg_proc procStruct;
-	char		internal_proname[64];
+	char		internal_proname[128];
 	Tcl_HashEntry *hashent;
 	pltcl_proc_desc *prodesc = NULL;
 	Tcl_Interp *interp;
@@ -986,7 +991,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 				 "__PLTcl_proc_%u", fn_oid);
 	else
 		snprintf(internal_proname, sizeof(internal_proname),
-				 "__PLTcl_proc_%u_trigger", fn_oid);
+				 "__PLTcl_proc_%u_trigger_%u", fn_oid, tgreloid);
 
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
