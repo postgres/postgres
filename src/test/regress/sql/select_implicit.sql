@@ -1,3 +1,11 @@
+--
+-- select_implicit.sql
+--
+-- Test cases for queries with ordering terms missing from the target list.
+-- This used to be called "junkfilter.sql".
+-- The parser uses the term "resjunk" to handle these cases.
+-- - thomas 1998-07-09
+
 -- load test data
 CREATE TABLE test_missing_target (a int, b int, c char(8));
 INSERT INTO test_missing_target VALUES (0, 1, 'XXXX');
@@ -26,7 +34,8 @@ SELECT count(*) FROM test_missing_target GROUP BY a ORDER BY b;
 SELECT count(*) FROM test_missing_target GROUP BY b ORDER BY b;
 
 --   w/ existing GROUP BY target using a relation name in target
-SELECT test_missing_target.b, count(*) FROM test_missing_target GROUP BY b ORDER BY b;
+SELECT test_missing_target.b, count(*)
+  FROM test_missing_target GROUP BY b ORDER BY b;
 
 --   w/o existing GROUP BY target
 SELECT c FROM test_missing_target ORDER BY a;
@@ -69,6 +78,6 @@ FROM test_missing_target x, test_missing_target y
 SELECT * FROM test_missing_target2;
 
 --   Cleanup
-drop table test_missing_target;
-drop table test_missing_target2;
+DROP TABLE test_missing_target;
+DROP TABLE test_missing_target2;
 
