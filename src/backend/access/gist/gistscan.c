@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.35 2001/05/31 18:16:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.36 2001/06/09 18:16:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,13 +83,8 @@ gistrescan(PG_FUNCTION_ARGS)
 	/*
 	 * Clear all the pointers.
 	 */
-
-	ItemPointerSetInvalid(&s->previousItemData);
 	ItemPointerSetInvalid(&s->currentItemData);
-	ItemPointerSetInvalid(&s->nextItemData);
-	ItemPointerSetInvalid(&s->previousMarkData);
 	ItemPointerSetInvalid(&s->currentMarkData);
-	ItemPointerSetInvalid(&s->nextMarkData);
 
 	/*
 	 * Set flags.

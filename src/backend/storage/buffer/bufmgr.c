@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.111 2001/05/12 19:58:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.112 2001/06/09 18:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,43 +96,6 @@ static int	ReleaseBufferWithBufferLock(Buffer buffer);
 static int	BufferReplace(BufferDesc *bufHdr);
 void		PrintBufferDescs(void);
 
-/* ---------------------------------------------------
- * RelationGetBufferWithBuffer
- *		see if the given buffer is what we want
- *		if yes, we don't need to bother the buffer manager
- * ---------------------------------------------------
- */
-Buffer
-RelationGetBufferWithBuffer(Relation relation,
-							BlockNumber blockNumber,
-							Buffer buffer)
-{
-	BufferDesc *bufHdr;
-
-	if (BufferIsValid(buffer))
-	{
-		if (!BufferIsLocal(buffer))
-		{
-			bufHdr = &BufferDescriptors[buffer - 1];
-			SpinAcquire(BufMgrLock);
-			if (bufHdr->tag.blockNum == blockNumber &&
-				RelFileNodeEquals(bufHdr->tag.rnode, relation->rd_node))
-			{
-				SpinRelease(BufMgrLock);
-				return buffer;
-			}
-			return ReadBufferInternal(relation, blockNumber, false, true);
-		}
-		else
-		{
-			bufHdr = &LocalBufferDescriptors[-buffer - 1];
-			if (bufHdr->tag.blockNum == blockNumber &&
-				RelFileNodeEquals(bufHdr->tag.rnode, relation->rd_node))
-				return buffer;
-		}
-	}
-	return ReadBufferInternal(relation, blockNumber, false, false);
-}
 
 /*
  * ReadBuffer -- returns a buffer containing the requested
@@ -141,7 +104,8 @@ RelationGetBufferWithBuffer(Relation relation,
  *		allocate a new block.
  *
  * Returns: the buffer number for the buffer containing
- *		the block read or NULL on an error.
+ *		the block read, or NULL on an error.  If successful,
+ *		the returned buffer has been pinned.
  *
  * Assume when this function is called, that reln has been
  *		opened already.
@@ -300,8 +264,8 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 }
 
 /*
- * BufferAlloc -- Get a buffer from the buffer pool but dont
- *		read it.
+ * BufferAlloc -- Get a buffer from the buffer pool but don't
+ *		read it.  If successful, the returned buffer is pinned.
  *
  * Returns: descriptor for buffer
  *
@@ -684,6 +648,11 @@ WriteNoReleaseBuffer(Buffer buffer)
  * Note: it is OK to pass buffer = InvalidBuffer, indicating that no old
  * buffer actually needs to be released.  This case is the same as ReadBuffer
  * except for the isExtend option.
+ *
+ * Also, if the passed buffer is valid and already contains the desired block
+ * number, we simply return it without ever acquiring the spinlock at all.
+ * Since the passed buffer must be pinned, it's OK to examine its block
+ * number without getting the lock first.
  */
 Buffer
 ReleaseAndReadBuffer(Buffer buffer,
@@ -698,12 +667,19 @@ ReleaseAndReadBuffer(Buffer buffer,
 		if (BufferIsLocal(buffer))
 		{
 			Assert(LocalRefCount[-buffer - 1] > 0);
+			bufHdr = &LocalBufferDescriptors[-buffer - 1];
+			if (bufHdr->tag.blockNum == blockNum &&
+				RelFileNodeEquals(bufHdr->tag.rnode, relation->rd_node))
+				return buffer;
 			LocalRefCount[-buffer - 1]--;
 		}
 		else
 		{
-			bufHdr = &BufferDescriptors[buffer - 1];
 			Assert(PrivateRefCount[buffer - 1] > 0);
+			bufHdr = &BufferDescriptors[buffer - 1];
+			if (bufHdr->tag.blockNum == blockNum &&
+				RelFileNodeEquals(bufHdr->tag.rnode, relation->rd_node))
+				return buffer;
 			if (PrivateRefCount[buffer - 1] > 1)
 				PrivateRefCount[buffer - 1]--;
 			else
@@ -1002,7 +978,7 @@ BufferPoolCheckLeak()
 			BufferDesc *buf = &(BufferDescriptors[i - 1]);
 
 			elog(NOTICE,
-				 "Buffer Leak: [%03d] (freeNext=%ld, freePrev=%ld, \
+				 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, \
 relname=%s, blockNum=%d, flags=0x%x, refcount=%d %ld)",
 				 i - 1, buf->freeNext, buf->freePrev,
 				 buf->blind.relname, buf->tag.blockNum, buf->flags,
@@ -1396,7 +1372,7 @@ PrintBufferDescs()
 		SpinAcquire(BufMgrLock);
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			elog(DEBUG, "[%02d] (freeNext=%ld, freePrev=%ld, relname=%s, \
+			elog(DEBUG, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
 blockNum=%d, flags=0x%x, refcount=%d %ld)",
 				 i, buf->freeNext, buf->freePrev,
 				 buf->blind.relname, buf->tag.blockNum, buf->flags,
@@ -1426,7 +1402,7 @@ PrintPinnedBufs()
 	for (i = 0; i < NBuffers; ++i, ++buf)
 	{
 		if (PrivateRefCount[i] > 0)
-			elog(NOTICE, "[%02d] (freeNext=%ld, freePrev=%ld, relname=%s, \
+			elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
 blockNum=%d, flags=0x%x, refcount=%d %ld)\n",
 				 i, buf->freeNext, buf->freePrev, buf->blind.relname,
 				 buf->tag.blockNum, buf->flags,
@@ -1719,7 +1695,7 @@ IncrBufferRefCount_Debug(char *file, int line, Buffer buffer)
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "PIN(Incr) %ld relname = %s, blockNum = %d, \
+		fprintf(stderr, "PIN(Incr) %d relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
 				buffer, buf->blind.relname, buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
@@ -1737,7 +1713,7 @@ ReleaseBuffer_Debug(char *file, int line, Buffer buffer)
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "UNPIN(Rel) %ld relname = %s, blockNum = %d, \
+		fprintf(stderr, "UNPIN(Rel) %d relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
 				buffer, buf->blind.relname, buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
@@ -1765,7 +1741,7 @@ ReleaseAndReadBuffer_Debug(char *file,
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "UNPIN(Rel&Rd) %ld relname = %s, blockNum = %d, \
+		fprintf(stderr, "UNPIN(Rel&Rd) %d relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
 				buffer, buf->blind.relname, buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
@@ -1774,7 +1750,7 @@ refcount = %ld, file: %s, line: %d\n",
 	{
 		BufferDesc *buf = &BufferDescriptors[b - 1];
 
-		fprintf(stderr, "PIN(Rel&Rd) %ld relname = %s, blockNum = %d, \
+		fprintf(stderr, "PIN(Rel&Rd) %d relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
 				b, buf->blind.relname, buf->tag.blockNum,
 				PrivateRefCount[b - 1], file, line);
@@ -2057,7 +2033,7 @@ LockBuffer(Buffer buffer, int mode)
 		{
 			S_UNLOCK(&(buf->cntx_lock));
 			RESUME_INTERRUPTS();
-			elog(ERROR, "UNLockBuffer: buffer %lu is not locked", buffer);
+			elog(ERROR, "UNLockBuffer: buffer %d is not locked", buffer);
 		}
 	}
 	else if (mode == BUFFER_LOCK_SHARE)

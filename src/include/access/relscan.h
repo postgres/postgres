@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.20 2001/01/24 19:43:19 momjian Exp $
+ * $Id: relscan.h,v 1.21 2001/06/09 18:16:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,25 +16,16 @@
 
 #include "utils/tqual.h"
 
-typedef ItemPointerData MarkData;
 
 typedef struct HeapScanDescData
 {
 	Relation	rs_rd;			/* pointer to relation descriptor */
-	HeapTupleData rs_ptup;		/* previous tuple in scan */
-	HeapTupleData rs_ctup;		/* current tuple in scan */
-	HeapTupleData rs_ntup;		/* next tuple in scan */
-	Buffer		rs_pbuf;		/* previous buffer in scan */
-	Buffer		rs_cbuf;		/* current buffer in scan */
-	Buffer		rs_nbuf;		/* next buffer in scan */
-	ItemPointerData rs_mptid;	/* marked previous tid */
-	ItemPointerData rs_mctid;	/* marked current tid */
-	ItemPointerData rs_mntid;	/* marked next tid */
-	ItemPointerData rs_mcd;		/* marked current delta XXX ??? */
+	HeapTupleData rs_ctup;		/* current tuple in scan, if any */
+	Buffer		rs_cbuf;		/* current buffer in scan, if any */
+	/* NB: if rs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
+	ItemPointerData rs_mctid;	/* marked tid, if any */
 	Snapshot	rs_snapshot;	/* snapshot to see */
-	bool		rs_atend;		/* restart scan at end? */
-	uint16		rs_cdelta;		/* current delta in chain */
-	uint16		rs_nkeys;		/* number of attributes in keys */
+	uint16		rs_nkeys;		/* number of scan keys to select tuples */
 	ScanKey		rs_key;			/* key descriptors */
 } HeapScanDescData;
 
@@ -43,21 +34,23 @@ typedef HeapScanDescData *HeapScanDesc;
 typedef struct IndexScanDescData
 {
 	Relation	relation;		/* relation descriptor */
-	void	   *opaque;			/* am-specific slot */
-	ItemPointerData previousItemData;	/* previous index pointer */
+	void	   *opaque;			/* access-method-specific info */
 	ItemPointerData currentItemData;	/* current index pointer */
-	ItemPointerData nextItemData;		/* next index pointer */
-	MarkData	previousMarkData;		/* marked previous pointer */
-	MarkData	currentMarkData;/* marked current  pointer */
-	MarkData	nextMarkData;	/* marked next pointer */
+	ItemPointerData	currentMarkData;	/* marked current pointer */
 	uint8		flags;			/* scan position flags */
 	bool		scanFromEnd;	/* restart scan at end? */
-	uint16		numberOfKeys;	/* number of key attributes */
-	ScanKey		keyData;		/* key descriptor */
+	uint16		numberOfKeys;	/* number of scan keys to select tuples */
+	ScanKey		keyData;		/* key descriptors */
 	FmgrInfo	fn_getnext;		/* cached lookup info for am's getnext fn */
 } IndexScanDescData;
 
 typedef IndexScanDescData *IndexScanDesc;
+
+/* IndexScanDesc flag bits (none of these are actually used currently) */
+#define ScanUnmarked			0x01
+#define ScanUncheckedPrevious	0x02
+#define ScanUncheckedNext		0x04
+
 
 /* ----------------
  *		IndexScanDescPtr is used in the executor where we have to

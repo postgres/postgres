@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.36 2001/03/22 03:59:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.37 2001/06/09 18:16:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,13 +85,8 @@ rtrescan(PG_FUNCTION_ARGS)
 	/*
 	 * Clear all the pointers.
 	 */
-
-	ItemPointerSetInvalid(&s->previousItemData);
 	ItemPointerSetInvalid(&s->currentItemData);
-	ItemPointerSetInvalid(&s->nextItemData);
-	ItemPointerSetInvalid(&s->previousMarkData);
 	ItemPointerSetInvalid(&s->currentMarkData);
-	ItemPointerSetInvalid(&s->nextMarkData);
 
 	/*
 	 * Set flags.

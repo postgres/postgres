@@ -7,29 +7,28 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf.h,v 1.8 2001/01/24 19:43:27 momjian Exp $
+ * $Id: buf.h,v 1.9 2001/06/09 18:16:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BUF_H
 #define BUF_H
 
-#define InvalidBuffer	(0)
-#define UnknownBuffer	(-99999)
+/*
+ * Buffer identifiers.
+ *
+ * Zero is invalid, positive is the index of a shared buffer (1..NBuffers),
+ * negative is the index of a local buffer (-1 .. -NLocBuffer).
+ */
+typedef int Buffer;
 
-typedef long Buffer;
+#define InvalidBuffer	0
 
 /*
  * BufferIsInvalid
  *		True iff the buffer is invalid.
  */
 #define BufferIsInvalid(buffer) ((buffer) == InvalidBuffer)
-
-/*
- * BufferIsUnknown
- *		True iff the buffer is unknown.
- */
-#define BufferIsUnknown(buffer) ((buffer) == UnknownBuffer)
 
 /*
  * BufferIsLocal

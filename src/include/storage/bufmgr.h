@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.51 2001/05/12 19:58:28 tgl Exp $
+ * $Id: bufmgr.h,v 1.52 2001/06/09 18:16:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,10 +74,6 @@ extern long *LocalRefCount;
  * BufferIsValid
  *		True iff the given buffer number is valid (either as a shared
  *		or local buffer).
- *
- * Note:
- *		BufferIsValid(InvalidBuffer) is False.
- *		BufferIsValid(UnknownBuffer) is False.
  *
  * Note: For a long time this was defined the same as BufferIsPinned,
  * that is it would say False if you didn't hold a pin on the buffer.
@@ -158,8 +154,6 @@ extern long *LocalRefCount;
 /*
  * prototypes for functions in bufmgr.c
  */
-extern Buffer RelationGetBufferWithBuffer(Relation relation,
-							BlockNumber blockNumber, Buffer buffer);
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern int	WriteBuffer(Buffer buffer);
 extern int	WriteNoReleaseBuffer(Buffer buffer);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.26 2001/01/24 19:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.27 2001/06/09 18:16:56 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -107,12 +107,8 @@ RelationGetIndexScan(Relation relation,
 	scan->opaque = NULL;
 	scan->numberOfKeys = numberOfKeys;
 
-	ItemPointerSetInvalid(&scan->previousItemData);
 	ItemPointerSetInvalid(&scan->currentItemData);
-	ItemPointerSetInvalid(&scan->nextItemData);
-	ItemPointerSetInvalid(&scan->previousMarkData);
 	ItemPointerSetInvalid(&scan->currentMarkData);
-	ItemPointerSetInvalid(&scan->nextMarkData);
 
 	/*
 	 * mark cached function lookup data invalid; it will be set on first
@@ -176,9 +172,7 @@ IndexScanRestart(IndexScanDesc scan,
 	if (!IndexScanIsValid(scan))
 		elog(ERROR, "IndexScanRestart: invalid scan");
 
-	ItemPointerSetInvalid(&scan->previousItemData);
 	ItemPointerSetInvalid(&scan->currentItemData);
-	ItemPointerSetInvalid(&scan->nextItemData);
 
 	if (RelationGetNumberOfBlocks(scan->relation) == 0)
 		scan->flags = ScanUnmarked;
@@ -213,37 +207,7 @@ IndexScanRestart(IndexScanDesc scan,
 void
 IndexScanMarkPosition(IndexScanDesc scan)
 {
-	RetrieveIndexResult result;
-
-	if (scan->flags & ScanUncheckedPrevious)
-	{
-		result = index_getnext(scan, BackwardScanDirection);
-
-		if (result != NULL)
-		{
-			scan->previousItemData = result->index_iptr;
-			pfree(result);
-		}
-		else
-			ItemPointerSetInvalid(&scan->previousItemData);
-	}
-	else if (scan->flags & ScanUncheckedNext)
-	{
-		result = (RetrieveIndexResult)
-			index_getnext(scan, ForwardScanDirection);
-
-		if (result != NULL)
-		{
-			scan->nextItemData = result->index_iptr;
-			pfree(result);
-		}
-		else
-			ItemPointerSetInvalid(&scan->nextItemData);
-	}
-
-	scan->previousMarkData = scan->previousItemData;
 	scan->currentMarkData = scan->currentItemData;
-	scan->nextMarkData = scan->nextItemData;
 
 	scan->flags = 0x0;			/* XXX should have a symbolic name */
 }
@@ -269,9 +233,7 @@ IndexScanRestorePosition(IndexScanDesc scan)
 	if (scan->flags & ScanUnmarked)
 		elog(ERROR, "IndexScanRestorePosition: no mark to restore");
 
-	scan->previousItemData = scan->previousMarkData;
 	scan->currentItemData = scan->currentMarkData;
-	scan->nextItemData = scan->nextMarkData;
 
 	scan->flags = 0x0;			/* XXX should have a symbolic name */
 }

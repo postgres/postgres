@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.117 2001/05/17 15:55:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.118 2001/06/09 18:16:55 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
- *		heapgettup		- fetch next heap tuple from a scan
  *		heap_open		- open a heap relation by relationId
  *		heap_openr		- open a heap relation by name
  *		heap_open[r]_nofail - same, but return NULL on failure instead of elog
@@ -33,60 +32,20 @@
  *	  the POSTGRES heap access method used for all POSTGRES
  *	  relations.
  *
- * OLD COMMENTS
- *		struct relscan hints:  (struct should be made AM independent?)
- *
- *		rs_ctid is the tid of the last tuple returned by getnext.
- *		rs_ptid and rs_ntid are the tids of the previous and next tuples
- *		returned by getnext, respectively.	NULL indicates an end of
- *		scan (either direction); NON indicates an unknow value.
- *
- *		possible combinations:
- *		rs_p	rs_c	rs_n			interpretation
- *		NULL	NULL	NULL			empty scan
- *		NULL	NULL	NON				at begining of scan
- *		NULL	NULL	t1				at begining of scan (with cached tid)
- *		NON		NULL	NULL			at end of scan
- *		t1		NULL	NULL			at end of scan (with cached tid)
- *		NULL	t1		NULL			just returned only tuple
- *		NULL	t1		NON				just returned first tuple
- *		NULL	t1		t2				returned first tuple (with cached tid)
- *		NON		t1		NULL			just returned last tuple
- *		t2		t1		NULL			returned last tuple (with cached tid)
- *		t1		t2		NON				in the middle of a forward scan
- *		NON		t2		t1				in the middle of a reverse scan
- *		ti		tj		tk				in the middle of a scan (w cached tid)
- *
- *		Here NULL is ...tup == NULL && ...buf == InvalidBuffer,
- *		and NON is ...tup == NULL && ...buf == UnknownBuffer.
- *
- *		Currently, the NONTID values are not cached with their actual
- *		values by getnext.	Values may be cached by markpos since it stores
- *		all three tids.
- *
- *		NOTE:  the calls to elog() must stop.  Should decide on an interface
- *		between the general and specific AM calls.
- *
- *		XXX probably do not need a free tuple routine for heaps.
- *		Huh?  Free tuple is not necessary for tuples returned by scans, but
- *		is necessary for tuples which are returned by
- *		RelationGetTupleByItemPointer. -hirohama
- *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/heapam.h"
 #include "access/hio.h"
 #include "access/tuptoaster.h"
 #include "access/valid.h"
+#include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
 
-#include "access/xlogutils.h"
 
 XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
 			  Buffer newbuf, HeapTuple newtup);
@@ -116,7 +75,6 @@ initscan(HeapScanDesc scan,
 		 unsigned nkeys,
 		 ScanKey key)
 {
-
 	/*
 	 * Make sure we have up-to-date idea of number of blocks in relation.
 	 * It is sufficient to do this once at scan start, since any tuples
@@ -125,50 +83,12 @@ initscan(HeapScanDesc scan,
 	 */
 	relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
 
-	if (relation->rd_nblocks == 0)
-	{
-
-		/*
-		 * relation is empty
-		 */
-		scan->rs_ntup.t_datamcxt = scan->rs_ctup.t_datamcxt =
-			scan->rs_ptup.t_datamcxt = NULL;
-		scan->rs_ntup.t_data = scan->rs_ctup.t_data =
-			scan->rs_ptup.t_data = NULL;
-		scan->rs_nbuf = scan->rs_cbuf = scan->rs_pbuf = InvalidBuffer;
-	}
-	else if (atend)
-	{
-
-		/*
-		 * reverse scan
-		 */
-		scan->rs_ntup.t_datamcxt = scan->rs_ctup.t_datamcxt = NULL;
-		scan->rs_ntup.t_data = scan->rs_ctup.t_data = NULL;
-		scan->rs_nbuf = scan->rs_cbuf = InvalidBuffer;
-		scan->rs_ptup.t_datamcxt = NULL;
-		scan->rs_ptup.t_data = NULL;
-		scan->rs_pbuf = UnknownBuffer;
-	}
-	else
-	{
-
-		/*
-		 * forward scan
-		 */
-		scan->rs_ctup.t_datamcxt = scan->rs_ptup.t_datamcxt = NULL;
-		scan->rs_ctup.t_data = scan->rs_ptup.t_data = NULL;
-		scan->rs_cbuf = scan->rs_pbuf = InvalidBuffer;
-		scan->rs_ntup.t_datamcxt = NULL;
-		scan->rs_ntup.t_data = NULL;
-		scan->rs_nbuf = UnknownBuffer;
-	}							/* invalid too */
+	scan->rs_ctup.t_datamcxt = NULL;
+	scan->rs_ctup.t_data = NULL;
+	scan->rs_cbuf = InvalidBuffer;
 
 	/* we don't have a marked position... */
-	ItemPointerSetInvalid(&(scan->rs_mptid));
 	ItemPointerSetInvalid(&(scan->rs_mctid));
-	ItemPointerSetInvalid(&(scan->rs_mntid));
-	ItemPointerSetInvalid(&(scan->rs_mcd));
 
 	/*
 	 * copy the scan key, if appropriate
@@ -178,61 +98,21 @@ initscan(HeapScanDesc scan,
 }
 
 /* ----------------
- *		unpinscan - code common to heap_rescan and heap_endscan
- * ----------------
- */
-static void
-unpinscan(HeapScanDesc scan)
-{
-	if (BufferIsValid(scan->rs_pbuf))
-		ReleaseBuffer(scan->rs_pbuf);
-
-	/*
-	 * Scan will pin buffer once for each non-NULL tuple pointer (ptup,
-	 * ctup, ntup), so they have to be unpinned multiple times.
-	 */
-	if (BufferIsValid(scan->rs_cbuf))
-		ReleaseBuffer(scan->rs_cbuf);
-
-	if (BufferIsValid(scan->rs_nbuf))
-		ReleaseBuffer(scan->rs_nbuf);
-
-	/*
-	 * we don't bother to clear rs_pbuf etc --- caller must reinitialize
-	 * them if scan descriptor is not being deleted.
-	 */
-}
-
-/* ------------------------------------------
- *		nextpage
- *
- *		figure out the next page to scan after the current page
- *		taking into account of possible adjustment of degrees of
- *		parallelism
- * ------------------------------------------
- */
-static int
-nextpage(int page, int dir)
-{
-	return (dir < 0) ? page - 1 : page + 1;
-}
-
-/* ----------------
  *		heapgettup - fetch next heap tuple
  *
  *		routine used by heap_getnext() which does most of the
  *		real work in scanning tuples.
  *
- *		The scan routines handle their own buffer lock/unlocking, so
- *		there is no reason to request the buffer number unless
- *		to want to perform some other operation with the result,
- *		like pass it to another function.
+ *		The passed-in *buffer must be either InvalidBuffer or the pinned
+ *		current page of the scan.  If we have to move to another page,
+ *		we will unpin this buffer (if valid).  On return, *buffer is either
+ *		InvalidBuffer or the ID of a pinned buffer.
  * ----------------
  */
 static void
 heapgettup(Relation relation,
-		   HeapTuple tuple,
 		   int dir,
+		   HeapTuple tuple,
 		   Buffer *buffer,
 		   Snapshot snapshot,
 		   int nkeys,
@@ -245,14 +125,15 @@ heapgettup(Relation relation,
 	int			lines;
 	OffsetNumber lineoff;
 	int			linesleft;
-	ItemPointer tid = (tuple->t_data == NULL) ?
-	(ItemPointer) NULL : &(tuple->t_self);
+	ItemPointer tid;
 
 	/*
 	 * increment access statistics
 	 */
 	IncrHeapAccessStat(local_heapgettup);
 	IncrHeapAccessStat(global_heapgettup);
+
+	tid = (tuple->t_data == NULL) ? (ItemPointer) NULL : &(tuple->t_self);
 
 	/*
 	 * debugging stuff
@@ -280,7 +161,10 @@ heapgettup(Relation relation,
 #endif	 /* !defined(HEAPDEBUGALL) */
 
 	if (!ItemPointerIsValid(tid))
+	{
 		Assert(!PointerIsValid(tid));
+		tid = NULL;
+	}
 
 	tuple->t_tableOid = relation->rd_id;
 
@@ -289,6 +173,9 @@ heapgettup(Relation relation,
 	 */
 	if (!(pages = relation->rd_nblocks))
 	{
+		if (BufferIsValid(*buffer))
+			ReleaseBuffer(*buffer);
+		*buffer = InvalidBuffer;
 		tuple->t_datamcxt = NULL;
 		tuple->t_data = NULL;
 		return;
@@ -299,22 +186,23 @@ heapgettup(Relation relation,
 	 */
 	if (!dir)
 	{
-
 		/*
-		 * ``no movement'' scan direction
+		 * ``no movement'' scan direction: refetch same tuple
 		 */
-		/* assume it is a valid TID XXX */
-		if (ItemPointerIsValid(tid) == false)
+		if (tid == NULL)
 		{
+			if (BufferIsValid(*buffer))
+				ReleaseBuffer(*buffer);
 			*buffer = InvalidBuffer;
 			tuple->t_datamcxt = NULL;
 			tuple->t_data = NULL;
 			return;
 		}
-		*buffer = RelationGetBufferWithBuffer(relation,
-										  ItemPointerGetBlockNumber(tid),
-											  *buffer);
 
+		*buffer = ReleaseAndReadBuffer(*buffer,
+									   relation,
+									   ItemPointerGetBlockNumber(tid),
+									   false);
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 
@@ -333,12 +221,9 @@ heapgettup(Relation relation,
 	}
 	else if (dir < 0)
 	{
-
 		/*
 		 * reverse scan direction
 		 */
-		if (ItemPointerIsValid(tid) == false)
-			tid = NULL;
 		if (tid == NULL)
 		{
 			page = pages - 1;	/* final page */
@@ -349,12 +234,18 @@ heapgettup(Relation relation,
 		}
 		if (page < 0)
 		{
+			if (BufferIsValid(*buffer))
+				ReleaseBuffer(*buffer);
 			*buffer = InvalidBuffer;
+			tuple->t_datamcxt = NULL;
 			tuple->t_data = NULL;
 			return;
 		}
 
-		*buffer = RelationGetBufferWithBuffer(relation, page, *buffer);
+		*buffer = ReleaseAndReadBuffer(*buffer,
+									   relation,
+									   page,
+									   false);
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 
@@ -376,11 +267,10 @@ heapgettup(Relation relation,
 	}
 	else
 	{
-
 		/*
 		 * forward scan direction
 		 */
-		if (ItemPointerIsValid(tid) == false)
+		if (tid == NULL)
 		{
 			page = 0;			/* first page */
 			lineoff = FirstOffsetNumber;		/* first offnum */
@@ -394,14 +284,18 @@ heapgettup(Relation relation,
 
 		if (page >= pages)
 		{
+			if (BufferIsValid(*buffer))
+				ReleaseBuffer(*buffer);
 			*buffer = InvalidBuffer;
 			tuple->t_datamcxt = NULL;
 			tuple->t_data = NULL;
 			return;
 		}
-		/* page and lineoff now reference the physically next tid */
 
-		*buffer = RelationGetBufferWithBuffer(relation, page, *buffer);
+		*buffer = ReleaseAndReadBuffer(*buffer,
+									   relation,
+									   page,
+									   false);
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
 
@@ -409,6 +303,8 @@ heapgettup(Relation relation,
 
 		dp = (Page) BufferGetPage(*buffer);
 		lines = PageGetMaxOffsetNumber(dp);
+		/* page and lineoff now reference the physically next tid */
+
 	}
 
 	/* 'dir' is now non-zero */
@@ -469,13 +365,13 @@ heapgettup(Relation relation,
 
 		/*
 		 * if we get here, it means we've exhausted the items on this page
-		 * and it's time to move to the next..
+		 * and it's time to move to the next.
 		 */
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
-		page = nextpage(page, dir);
+		page = (dir < 0) ? (page - 1) : (page + 1);
 
 		/*
-		 * return NULL if we've exhausted all the pages..
+		 * return NULL if we've exhausted all the pages
 		 */
 		if (page < 0 || page >= pages)
 		{
@@ -487,10 +383,13 @@ heapgettup(Relation relation,
 			return;
 		}
 
-		*buffer = ReleaseAndReadBuffer(*buffer, relation, page, false);
-
+		*buffer = ReleaseAndReadBuffer(*buffer,
+									   relation,
+									   page,
+									   false);
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");
+
 		LockBuffer(*buffer, BUFFER_LOCK_SHARE);
 		dp = (Page) BufferGetPage(*buffer);
 		lines = PageGetMaxOffsetNumber((Page) dp);
@@ -766,7 +665,6 @@ heap_beginscan(Relation relation,
 	scan = (HeapScanDesc) palloc(sizeof(HeapScanDescData));
 
 	scan->rs_rd = relation;
-	scan->rs_atend = atend;
 	scan->rs_snapshot = snapshot;
 	scan->rs_nkeys = (short) nkeys;
 
@@ -793,7 +691,6 @@ heap_rescan(HeapScanDesc scan,
 			bool scanFromEnd,
 			ScanKey key)
 {
-
 	/*
 	 * increment access statistics
 	 */
@@ -803,12 +700,12 @@ heap_rescan(HeapScanDesc scan,
 	/*
 	 * unpin scan buffers
 	 */
-	unpinscan(scan);
+	if (BufferIsValid(scan->rs_cbuf))
+		ReleaseBuffer(scan->rs_cbuf);
 
 	/*
 	 * reinitialize scan descriptor
 	 */
-	scan->rs_atend = scanFromEnd;
 	initscan(scan, scan->rs_rd, scanFromEnd, scan->rs_nkeys, key);
 }
 
@@ -822,7 +719,6 @@ heap_rescan(HeapScanDesc scan,
 void
 heap_endscan(HeapScanDesc scan)
 {
-
 	/*
 	 * increment access statistics
 	 */
@@ -834,7 +730,8 @@ heap_endscan(HeapScanDesc scan)
 	/*
 	 * unpin scan buffers
 	 */
-	unpinscan(scan);
+	if (BufferIsValid(scan->rs_cbuf))
+		ReleaseBuffer(scan->rs_cbuf);
 
 	/*
 	 * decrement relation reference count and free scan descriptor storage
@@ -862,38 +759,20 @@ elog(DEBUG, "heap_getnext([%s,nkeys=%d],backw=%d) called", \
 	 RelationGetRelationName(scan->rs_rd), scan->rs_nkeys, backw)
 
 #define HEAPDEBUG_2 \
-	 elog(DEBUG, "heap_getnext called with backw (no tracing yet)")
-
-#define HEAPDEBUG_3 \
-	 elog(DEBUG, "heap_getnext returns NULL at end")
-
-#define HEAPDEBUG_4 \
-	 elog(DEBUG, "heap_getnext valid buffer UNPIN'd")
-
-#define HEAPDEBUG_5 \
-	 elog(DEBUG, "heap_getnext next tuple was cached")
-
-#define HEAPDEBUG_6 \
 	 elog(DEBUG, "heap_getnext returning EOS")
 
-#define HEAPDEBUG_7 \
+#define HEAPDEBUG_3 \
 	 elog(DEBUG, "heap_getnext returning tuple");
 #else
 #define HEAPDEBUG_1
 #define HEAPDEBUG_2
 #define HEAPDEBUG_3
-#define HEAPDEBUG_4
-#define HEAPDEBUG_5
-#define HEAPDEBUG_6
-#define HEAPDEBUG_7
 #endif	 /* !defined(HEAPDEBUGALL) */
 
 
 HeapTuple
-heap_getnext(HeapScanDesc scandesc, int backw)
+heap_getnext(HeapScanDesc scan, int backw)
 {
-	HeapScanDesc scan = scandesc;
-
 	/*
 	 * increment access statistics
 	 */
@@ -908,165 +787,45 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 	if (scan == NULL)
 		elog(ERROR, "heap_getnext: NULL relscan");
 
-	/*
-	 * initialize return buffer to InvalidBuffer
-	 */
-
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
 	if (backw)
 	{
-
 		/*
 		 * handle reverse scan
 		 */
-		HEAPDEBUG_2;			/* heap_getnext called with backw */
-
-		if (scan->rs_ptup.t_data == scan->rs_ctup.t_data &&
-			BufferIsInvalid(scan->rs_pbuf))
-			return NULL;
-
-		/*
-		 * Copy the "current" tuple/buffer to "next". Pin/unpin the
-		 * buffers accordingly
-		 */
-		if (scan->rs_nbuf != scan->rs_cbuf)
-		{
-			if (BufferIsValid(scan->rs_nbuf))
-				ReleaseBuffer(scan->rs_nbuf);
-			if (BufferIsValid(scan->rs_cbuf))
-				IncrBufferRefCount(scan->rs_cbuf);
-		}
-		scan->rs_ntup = scan->rs_ctup;
-		scan->rs_nbuf = scan->rs_cbuf;
-
-		if (scan->rs_ptup.t_data != NULL)
-		{
-			if (scan->rs_cbuf != scan->rs_pbuf)
-			{
-				if (BufferIsValid(scan->rs_cbuf))
-					ReleaseBuffer(scan->rs_cbuf);
-				if (BufferIsValid(scan->rs_pbuf))
-					IncrBufferRefCount(scan->rs_pbuf);
-			}
-			scan->rs_ctup = scan->rs_ptup;
-			scan->rs_cbuf = scan->rs_pbuf;
-		}
-		else
-		{						/* NONTUP */
-
-			/*
-			 * Don't release scan->rs_cbuf at this point, because
-			 * heapgettup doesn't increase PrivateRefCount if it is
-			 * already set. On a backward scan, both rs_ctup and rs_ntup
-			 * usually point to the same buffer page, so
-			 * PrivateRefCount[rs_cbuf] should be 2 (or more, if for
-			 * instance ctup is stored in a TupleTableSlot).  - 01/09/94
-			 */
-
-			heapgettup(scan->rs_rd,
-					   &(scan->rs_ctup),
-					   -1,
-					   &(scan->rs_cbuf),
-					   scan->rs_snapshot,
-					   scan->rs_nkeys,
-					   scan->rs_key);
-		}
+		heapgettup(scan->rs_rd,
+				   -1,
+				   &(scan->rs_ctup),
+				   &(scan->rs_cbuf),
+				   scan->rs_snapshot,
+				   scan->rs_nkeys,
+				   scan->rs_key);
 
 		if (scan->rs_ctup.t_data == NULL && !BufferIsValid(scan->rs_cbuf))
 		{
-			if (BufferIsValid(scan->rs_pbuf))
-				ReleaseBuffer(scan->rs_pbuf);
-			scan->rs_ptup.t_datamcxt = NULL;
-			scan->rs_ptup.t_data = NULL;
-			scan->rs_pbuf = InvalidBuffer;
+			HEAPDEBUG_2;		/* heap_getnext returning EOS */
 			return NULL;
 		}
-
-		if (BufferIsValid(scan->rs_pbuf))
-			ReleaseBuffer(scan->rs_pbuf);
-		scan->rs_ptup.t_datamcxt = NULL;
-		scan->rs_ptup.t_data = NULL;
-		scan->rs_pbuf = UnknownBuffer;
-
 	}
 	else
 	{
-
 		/*
 		 * handle forward scan
 		 */
-		if (scan->rs_ctup.t_data == scan->rs_ntup.t_data &&
-			BufferIsInvalid(scan->rs_nbuf))
-		{
-			HEAPDEBUG_3;		/* heap_getnext returns NULL at end */
-			return NULL;
-		}
-
-		/*
-		 * Copy the "current" tuple/buffer to "previous". Pin/unpin the
-		 * buffers accordingly
-		 */
-		if (scan->rs_pbuf != scan->rs_cbuf)
-		{
-			if (BufferIsValid(scan->rs_pbuf))
-				ReleaseBuffer(scan->rs_pbuf);
-			if (BufferIsValid(scan->rs_cbuf))
-				IncrBufferRefCount(scan->rs_cbuf);
-		}
-		scan->rs_ptup = scan->rs_ctup;
-		scan->rs_pbuf = scan->rs_cbuf;
-
-		if (scan->rs_ntup.t_data != NULL)
-		{
-			if (scan->rs_cbuf != scan->rs_nbuf)
-			{
-				if (BufferIsValid(scan->rs_cbuf))
-					ReleaseBuffer(scan->rs_cbuf);
-				if (BufferIsValid(scan->rs_nbuf))
-					IncrBufferRefCount(scan->rs_nbuf);
-			}
-			scan->rs_ctup = scan->rs_ntup;
-			scan->rs_cbuf = scan->rs_nbuf;
-			HEAPDEBUG_5;		/* heap_getnext next tuple was cached */
-		}
-		else
-		{						/* NONTUP */
-
-			/*
-			 * Don't release scan->rs_cbuf at this point, because
-			 * heapgettup doesn't increase PrivateRefCount if it is
-			 * already set. On a forward scan, both rs_ctup and rs_ptup
-			 * usually point to the same buffer page, so
-			 * PrivateRefCount[rs_cbuf] should be 2 (or more, if for
-			 * instance ctup is stored in a TupleTableSlot).  - 01/09/93
-			 */
-
-			heapgettup(scan->rs_rd,
-					   &(scan->rs_ctup),
-					   1,
-					   &scan->rs_cbuf,
-					   scan->rs_snapshot,
-					   scan->rs_nkeys,
-					   scan->rs_key);
-		}
+		heapgettup(scan->rs_rd,
+				   1,
+				   &(scan->rs_ctup),
+				   &(scan->rs_cbuf),
+				   scan->rs_snapshot,
+				   scan->rs_nkeys,
+				   scan->rs_key);
 
 		if (scan->rs_ctup.t_data == NULL && !BufferIsValid(scan->rs_cbuf))
 		{
-			if (BufferIsValid(scan->rs_nbuf))
-				ReleaseBuffer(scan->rs_nbuf);
-			scan->rs_ntup.t_datamcxt = NULL;
-			scan->rs_ntup.t_data = NULL;
-			scan->rs_nbuf = InvalidBuffer;
-			HEAPDEBUG_6;		/* heap_getnext returning EOS */
+			HEAPDEBUG_2;		/* heap_getnext returning EOS */
 			return NULL;
 		}
-
-		if (BufferIsValid(scan->rs_nbuf))
-			ReleaseBuffer(scan->rs_nbuf);
-		scan->rs_ntup.t_datamcxt = NULL;
-		scan->rs_ntup.t_data = NULL;
-		scan->rs_nbuf = UnknownBuffer;
 	}
 
 	/*
@@ -1074,7 +833,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 	 * to the proper return buffer and return the tuple.
 	 */
 
-	HEAPDEBUG_7;				/* heap_getnext returning tuple */
+	HEAPDEBUG_3;				/* heap_getnext returning tuple */
 
 	return ((scan->rs_ctup.t_data == NULL) ? NULL : &(scan->rs_ctup));
 }
@@ -1987,7 +1746,6 @@ l3:
 void
 heap_markpos(HeapScanDesc scan)
 {
-
 	/*
 	 * increment access statistics
 	 */
@@ -1996,47 +1754,10 @@ heap_markpos(HeapScanDesc scan)
 
 	/* Note: no locking manipulations needed */
 
-	if (scan->rs_ptup.t_data == NULL &&
-		BufferIsUnknown(scan->rs_pbuf))
-	{							/* == NONTUP */
-		scan->rs_ptup = scan->rs_ctup;
-		heapgettup(scan->rs_rd,
-				   &(scan->rs_ptup),
-				   -1,
-				   &scan->rs_pbuf,
-				   scan->rs_snapshot,
-				   scan->rs_nkeys,
-				   scan->rs_key);
-
-	}
-	else if (scan->rs_ntup.t_data == NULL &&
-			 BufferIsUnknown(scan->rs_nbuf))
-	{							/* == NONTUP */
-		scan->rs_ntup = scan->rs_ctup;
-		heapgettup(scan->rs_rd,
-				   &(scan->rs_ntup),
-				   1,
-				   &scan->rs_nbuf,
-				   scan->rs_snapshot,
-				   scan->rs_nkeys,
-				   scan->rs_key);
-	}
-
-	/*
-	 * Should not unpin the buffer pages.  They may still be in use.
-	 */
-	if (scan->rs_ptup.t_data != NULL)
-		scan->rs_mptid = scan->rs_ptup.t_self;
-	else
-		ItemPointerSetInvalid(&scan->rs_mptid);
 	if (scan->rs_ctup.t_data != NULL)
 		scan->rs_mctid = scan->rs_ctup.t_self;
 	else
 		ItemPointerSetInvalid(&scan->rs_mctid);
-	if (scan->rs_ntup.t_data != NULL)
-		scan->rs_mntid = scan->rs_ntup.t_self;
-	else
-		ItemPointerSetInvalid(&scan->rs_mntid);
 }
 
 /* ----------------
@@ -2047,10 +1768,6 @@ heap_markpos(HeapScanDesc scan)
  *		extended via insert, then the next call to heaprestrpos will set
  *		cause the added tuples to be visible when the scan continues.
  *		Problems also arise if the TID's are rearranged!!!
- *
- *		Now pins buffer once for each valid tuple pointer (rs_ptup,
- *		rs_ctup, rs_ntup) referencing it.
- *		 - 01/13/94
  *
  * XXX	might be better to do direct access instead of
  *		using the generality of heapgettup().
@@ -2063,7 +1780,6 @@ heap_markpos(HeapScanDesc scan)
 void
 heap_restrpos(HeapScanDesc scan)
 {
-
 	/*
 	 * increment access statistics
 	 */
@@ -2074,31 +1790,12 @@ heap_restrpos(HeapScanDesc scan)
 
 	/* Note: no locking manipulations needed */
 
-	unpinscan(scan);
-
-	/* force heapgettup to pin buffer for each loaded tuple */
-	scan->rs_pbuf = InvalidBuffer;
+	/*
+	 * unpin scan buffers
+	 */
+	if (BufferIsValid(scan->rs_cbuf))
+		ReleaseBuffer(scan->rs_cbuf);
 	scan->rs_cbuf = InvalidBuffer;
-	scan->rs_nbuf = InvalidBuffer;
-
-	if (!ItemPointerIsValid(&scan->rs_mptid))
-	{
-		scan->rs_ptup.t_datamcxt = NULL;
-		scan->rs_ptup.t_data = NULL;
-	}
-	else
-	{
-		scan->rs_ptup.t_self = scan->rs_mptid;
-		scan->rs_ptup.t_datamcxt = NULL;
-		scan->rs_ptup.t_data = (HeapTupleHeader) 0x1;	/* for heapgettup */
-		heapgettup(scan->rs_rd,
-				   &(scan->rs_ptup),
-				   0,
-				   &(scan->rs_pbuf),
-				   false,
-				   0,
-				   (ScanKey) NULL);
-	}
 
 	if (!ItemPointerIsValid(&scan->rs_mctid))
 	{
@@ -2111,29 +1808,10 @@ heap_restrpos(HeapScanDesc scan)
 		scan->rs_ctup.t_datamcxt = NULL;
 		scan->rs_ctup.t_data = (HeapTupleHeader) 0x1;	/* for heapgettup */
 		heapgettup(scan->rs_rd,
+				   0,
 				   &(scan->rs_ctup),
-				   0,
 				   &(scan->rs_cbuf),
-				   false,
-				   0,
-				   (ScanKey) NULL);
-	}
-
-	if (!ItemPointerIsValid(&scan->rs_mntid))
-	{
-		scan->rs_ntup.t_datamcxt = NULL;
-		scan->rs_ntup.t_data = NULL;
-	}
-	else
-	{
-		scan->rs_ntup.t_datamcxt = NULL;
-		scan->rs_ntup.t_self = scan->rs_mntid;
-		scan->rs_ntup.t_data = (HeapTupleHeader) 0x1;	/* for heapgettup */
-		heapgettup(scan->rs_rd,
-				   &(scan->rs_ntup),
-				   0,
-				   &scan->rs_nbuf,
-				   false,
+				   scan->rs_snapshot,
 				   0,
 				   (ScanKey) NULL);
 	}
