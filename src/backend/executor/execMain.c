@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.142 2001/05/27 20:48:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.143 2001/06/01 02:41:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -830,6 +830,8 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_NumIndices = 0;
 	resultRelInfo->ri_IndexRelationDescs = NULL;
 	resultRelInfo->ri_IndexRelationInfo = NULL;
+	resultRelInfo->ri_TrigDesc = resultRelationDesc->trigdesc;
+	resultRelInfo->ri_TrigFunctions = NULL;
 	resultRelInfo->ri_ConstraintExprs = NULL;
 	resultRelInfo->ri_junkFilter = NULL;
 
@@ -1232,12 +1234,12 @@ ExecAppend(TupleTableSlot *slot,
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW INSERT Triggers */
-	if (resultRelationDesc->trigdesc &&
-	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+	if (resultRelInfo->ri_TrigDesc &&
+		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 	{
 		HeapTuple	newtuple;
 
-		newtuple = ExecBRInsertTriggers(estate, resultRelationDesc, tuple);
+		newtuple = ExecBRInsertTriggers(estate, resultRelInfo, tuple);
 
 		if (newtuple == NULL)	/* "do nothing" */
 			return;
@@ -1283,8 +1285,8 @@ ExecAppend(TupleTableSlot *slot,
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW INSERT Triggers */
-	if (resultRelationDesc->trigdesc)
-		ExecARInsertTriggers(estate, resultRelationDesc, tuple);
+	if (resultRelInfo->ri_TrigDesc)
+		ExecARInsertTriggers(estate, resultRelInfo, tuple);
 }
 
 /* ----------------------------------------------------------------
@@ -1311,12 +1313,12 @@ ExecDelete(TupleTableSlot *slot,
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW DELETE Triggers */
-	if (resultRelationDesc->trigdesc &&
-	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
+	if (resultRelInfo->ri_TrigDesc &&
+		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
 	{
 		bool		dodelete;
 
-		dodelete = ExecBRDeleteTriggers(estate, tupleid);
+		dodelete = ExecBRDeleteTriggers(estate, resultRelInfo, tupleid);
 
 		if (!dodelete)			/* "do nothing" */
 			return;
@@ -1370,8 +1372,8 @@ ldelete:;
 	 */
 
 	/* AFTER ROW DELETE Triggers */
-	if (resultRelationDesc->trigdesc)
-		ExecARDeleteTriggers(estate, tupleid);
+	if (resultRelInfo->ri_TrigDesc)
+		ExecARDeleteTriggers(estate, resultRelInfo, tupleid);
 }
 
 /* ----------------------------------------------------------------
@@ -1418,12 +1420,13 @@ ExecReplace(TupleTableSlot *slot,
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
 	/* BEFORE ROW UPDATE Triggers */
-	if (resultRelationDesc->trigdesc &&
-	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
+	if (resultRelInfo->ri_TrigDesc &&
+		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
 		HeapTuple	newtuple;
 
-		newtuple = ExecBRUpdateTriggers(estate, tupleid, tuple);
+		newtuple = ExecBRUpdateTriggers(estate, resultRelInfo,
+										tupleid, tuple);
 
 		if (newtuple == NULL)	/* "do nothing" */
 			return;
@@ -1519,8 +1522,8 @@ lreplace:;
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, true);
 
 	/* AFTER ROW UPDATE Triggers */
-	if (resultRelationDesc->trigdesc)
-		ExecARUpdateTriggers(estate, tupleid, tuple);
+	if (resultRelInfo->ri_TrigDesc)
+		ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple);
 }
 
 static char *

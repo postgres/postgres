@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.26 2001/03/22 04:00:43 momjian Exp $
+ * $Id: trigger.h,v 1.27 2001/06/01 02:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,15 +90,25 @@ extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 extern bool equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2);
 
 extern HeapTuple ExecBRInsertTriggers(EState *estate,
-					 Relation rel, HeapTuple tuple);
+									  ResultRelInfo *relinfo,
+									  HeapTuple trigtuple);
 extern void ExecARInsertTriggers(EState *estate,
-					 Relation rel, HeapTuple tuple);
-extern bool ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid);
-extern void ExecARDeleteTriggers(EState *estate, ItemPointer tupleid);
-extern HeapTuple ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid,
-					 HeapTuple tuple);
-extern void ExecARUpdateTriggers(EState *estate, ItemPointer tupleid,
-					 HeapTuple tuple);
+								 ResultRelInfo *relinfo,
+								 HeapTuple trigtuple);
+extern bool ExecBRDeleteTriggers(EState *estate,
+								 ResultRelInfo *relinfo,
+								 ItemPointer tupleid);
+extern void ExecARDeleteTriggers(EState *estate,
+								 ResultRelInfo *relinfo,
+								 ItemPointer tupleid);
+extern HeapTuple ExecBRUpdateTriggers(EState *estate,
+									  ResultRelInfo *relinfo,
+									  ItemPointer tupleid,
+									  HeapTuple newtuple);
+extern void ExecARUpdateTriggers(EState *estate,
+								 ResultRelInfo *relinfo,
+								 ItemPointer tupleid,
+								 HeapTuple newtuple);
 
 
 /* ----------

@@ -366,7 +366,6 @@ typedef struct Trigger
     Oid         tgoid;
     char       *tgname;
     Oid         tgfoid;
-    FmgrInfo    tgfunc;
     int16       tgtype;
     bool        tgenabled;
     bool        tgisconstraint;

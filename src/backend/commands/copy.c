@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.137 2001/05/27 09:59:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.138 2001/06/01 02:41:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,6 +636,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 	resultRelInfo = makeNode(ResultRelInfo);
 	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
 	resultRelInfo->ri_RelationDesc = rel;
+	resultRelInfo->ri_TrigDesc = rel->trigdesc;
 
 	ExecOpenIndices(resultRelInfo);
 
@@ -868,12 +869,12 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 		skip_tuple = false;
 
 		/* BEFORE ROW INSERT Triggers */
-		if (rel->trigdesc &&
-			rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+		if (resultRelInfo->ri_TrigDesc &&
+			resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 		{
 			HeapTuple	newtuple;
 
-			newtuple = ExecBRInsertTriggers(estate, rel, tuple);
+			newtuple = ExecBRInsertTriggers(estate, resultRelInfo, tuple);
 
 			if (newtuple == NULL)		/* "do nothing" */
 				skip_tuple = true;
@@ -903,8 +904,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 			/* AFTER ROW INSERT Triggers */
-			if (rel->trigdesc)
-				ExecARInsertTriggers(estate, rel, tuple);
+			if (resultRelInfo->ri_TrigDesc)
+				ExecARInsertTriggers(estate, resultRelInfo, tuple);
 		}
 
 		for (i = 0; i < attr_count; i++)

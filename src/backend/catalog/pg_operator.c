@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.58 2001/05/20 20:28:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.59 2001/06/01 02:41:35 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -71,12 +71,13 @@ static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
  *
  *		performs a scan on pg_operator for an operator tuple
  *		with given name and left/right type oids.
- * ----------------------------------------------------------------
+ *
  *	  pg_operator_desc	-- reldesc for pg_operator
  *	  operatorName		-- name of operator to fetch
  *	  leftObjectId		-- left data type oid of operator to fetch
  *	  rightObjectId		-- right data type oid of operator to fetch
  *	  defined			-- set TRUE if defined (not a shell)
+ * ----------------------------------------------------------------
  */
 static Oid
 OperatorGetWithOpenRelation(Relation pg_operator_desc,
@@ -88,26 +89,23 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	HeapScanDesc pg_operator_scan;
 	Oid			operatorObjectId;
 	HeapTuple	tup;
-
-	static ScanKeyData opKey[3] = {
-		{0, Anum_pg_operator_oprname, F_NAMEEQ},
-		{0, Anum_pg_operator_oprleft, F_OIDEQ},
-		{0, Anum_pg_operator_oprright, F_OIDEQ},
-	};
-
-	fmgr_info(F_NAMEEQ, &opKey[0].sk_func);
-	fmgr_info(F_OIDEQ, &opKey[1].sk_func);
-	fmgr_info(F_OIDEQ, &opKey[2].sk_func);
-	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
-	opKey[1].sk_nargs = opKey[1].sk_func.fn_nargs;
-	opKey[2].sk_nargs = opKey[2].sk_func.fn_nargs;
+	ScanKeyData	opKey[3];
 
 	/*
 	 * form scan key
 	 */
-	opKey[0].sk_argument = PointerGetDatum(operatorName);
-	opKey[1].sk_argument = ObjectIdGetDatum(leftObjectId);
-	opKey[2].sk_argument = ObjectIdGetDatum(rightObjectId);
+	ScanKeyEntryInitialize(&opKey[0], 0x0,
+						   Anum_pg_operator_oprname,
+						   F_NAMEEQ,
+						   PointerGetDatum(operatorName));
+	ScanKeyEntryInitialize(&opKey[1], 0x0,
+						   Anum_pg_operator_oprleft,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(leftObjectId));
+	ScanKeyEntryInitialize(&opKey[2], 0x0,
+						   Anum_pg_operator_oprright,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(rightObjectId));
 
 	/*
 	 * begin the scan
@@ -451,7 +449,6 @@ OperatorDef(char *operatorName,
 	int			i,
 				j;
 	Relation	pg_operator_desc;
-
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
 	char		nulls[Natts_pg_operator];
@@ -471,19 +468,7 @@ OperatorDef(char *operatorName,
 	int			nargs;
 	NameData	oname;
 	TupleDesc	tupDesc;
-
-	static ScanKeyData opKey[3] = {
-		{0, Anum_pg_operator_oprname, F_NAMEEQ},
-		{0, Anum_pg_operator_oprleft, F_OIDEQ},
-		{0, Anum_pg_operator_oprright, F_OIDEQ},
-	};
-
-	fmgr_info(F_NAMEEQ, &opKey[0].sk_func);
-	fmgr_info(F_OIDEQ, &opKey[1].sk_func);
-	fmgr_info(F_OIDEQ, &opKey[2].sk_func);
-	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
-	opKey[1].sk_nargs = opKey[1].sk_func.fn_nargs;
-	opKey[2].sk_nargs = opKey[2].sk_func.fn_nargs;
+	ScanKeyData	opKey[3];
 
 	operatorObjectId = OperatorGet(operatorName,
 								   leftTypeName,
@@ -753,12 +738,21 @@ OperatorDef(char *operatorName,
 	 */
 	if (operatorObjectId)
 	{
-		opKey[0].sk_argument = PointerGetDatum(operatorName);
-		opKey[1].sk_argument = ObjectIdGetDatum(leftTypeId);
-		opKey[2].sk_argument = ObjectIdGetDatum(rightTypeId);
-
 		/* Make sure we can see the shell even if it is new in current cmd */
 		CommandCounterIncrement();
+
+		ScanKeyEntryInitialize(&opKey[0], 0x0,
+							   Anum_pg_operator_oprname,
+							   F_NAMEEQ,
+							   PointerGetDatum(operatorName));
+		ScanKeyEntryInitialize(&opKey[1], 0x0,
+							   Anum_pg_operator_oprleft,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(leftTypeId));
+		ScanKeyEntryInitialize(&opKey[2], 0x0,
+							   Anum_pg_operator_oprright,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(rightTypeId));
 
 		pg_operator_scan = heap_beginscan(pg_operator_desc,
 										  0,
@@ -789,7 +783,6 @@ OperatorDef(char *operatorName,
 
 		heap_insert(pg_operator_desc, tup);
 		operatorObjectId = tup->t_data->t_oid;
-
 	}
 
 	if (RelationGetForm(pg_operator_desc)->relhasindex)
@@ -841,17 +834,11 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	char		nulls[Natts_pg_operator];
 	char		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
-
-	static ScanKeyData opKey[1] = {
-		{0, ObjectIdAttributeNumber, F_OIDEQ},
-	};
-
-	fmgr_info(F_OIDEQ, &opKey[0].sk_func);
-	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
+	ScanKeyData	opKey[1];
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
-		values[i] = (Datum) NULL;
+		values[i] = (Datum) 0;
 		replaces[i] = ' ';
 		nulls[i] = ' ';
 	}
@@ -865,7 +852,10 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	 */
 	CommandCounterIncrement();
 
-	opKey[0].sk_argument = ObjectIdGetDatum(commId);
+	ScanKeyEntryInitialize(&opKey[0], 0x0,
+						   ObjectIdAttributeNumber,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(commId));
 
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
@@ -992,7 +982,6 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	}
 
 	heap_endscan(pg_operator_scan);
-
 
 	heap_close(pg_operator_desc, RowExclusiveLock);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.135 2001/05/30 14:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.136 2001/06/01 02:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1161,19 +1161,20 @@ IndexedAccessMethodInitialize(Relation relation)
 	int			natts;
 	Size		stratSize;
 	Size		supportSize;
-	uint16		relamstrategies;
-	uint16		relamsupport;
+	uint16		amstrategies;
+	uint16		amsupport;
 
 	natts = relation->rd_rel->relnatts;
-	relamstrategies = relation->rd_am->amstrategies;
-	stratSize = AttributeNumberGetIndexStrategySize(natts, relamstrategies);
+	amstrategies = relation->rd_am->amstrategies;
+	amsupport = relation->rd_am->amsupport;
+
+	stratSize = AttributeNumberGetIndexStrategySize(natts, amstrategies);
 	strategy = (IndexStrategy) MemoryContextAlloc(CacheMemoryContext,
 												  stratSize);
 
-	relamsupport = relation->rd_am->amsupport;
-	if (relamsupport > 0)
+	if (amsupport > 0)
 	{
-		supportSize = natts * (relamsupport * sizeof(RegProcedure));
+		supportSize = natts * (amsupport * sizeof(RegProcedure));
 		support = (RegProcedure *) MemoryContextAlloc(CacheMemoryContext,
 													  supportSize);
 	}
@@ -1182,9 +1183,9 @@ IndexedAccessMethodInitialize(Relation relation)
 
 	IndexSupportInitialize(strategy, support,
 						   &relation->rd_uniqueindex,
-						   relation->rd_att->attrs[0]->attrelid,
+						   RelationGetRelid(relation),
 						   relation->rd_rel->relam,
-						   relamstrategies, relamsupport, natts);
+						   amstrategies, amsupport, natts);
 
 	RelationSetIndexSupport(relation, strategy, support);
 }
@@ -1212,26 +1213,22 @@ formrdesc(char *relationName,
 
 	/*
 	 * allocate new relation desc
-	 *
 	 */
 	relation = (Relation) palloc(sizeof(RelationData));
 	MemSet((char *) relation, 0, sizeof(RelationData));
 
 	/*
 	 * don't open the unix file yet..
-	 *
 	 */
 	relation->rd_fd = -1;
 
 	/*
 	 * initialize reference count
-	 *
 	 */
 	RelationSetReferenceCount(relation, 1);
 
 	/*
 	 * all entries built with this routine are nailed-in-cache
-	 *
 	 */
 	relation->rd_isnailed = true;
 
@@ -1241,7 +1238,6 @@ formrdesc(char *relationName,
 	 * The data we insert here is pretty incomplete/bogus, but it'll serve to
 	 * get us launched.  RelationCacheInitializePhase2() will read the
 	 * real data from pg_class and replace what we've done here.
-	 *
 	 */
 	relation->rd_rel = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 	MemSet(relation->rd_rel, 0, CLASS_TUPLE_SIZE);
@@ -1266,13 +1262,11 @@ formrdesc(char *relationName,
 
 	/*
 	 * initialize attribute tuple form
-	 *
 	 */
 	relation->rd_att = CreateTemplateTupleDesc(natts);
 
 	/*
 	 * initialize tuple desc info
-	 *
 	 */
 	for (i = 0; i < natts; i++)
 	{
@@ -1283,14 +1277,12 @@ formrdesc(char *relationName,
 	}
 
 	/*
-	 * initialize relation id
-	 *
+	 * initialize relation id from info in att array (my, this is ugly)
 	 */
 	RelationGetRelid(relation) = relation->rd_att->attrs[0]->attrelid;
 
 	/*
 	 * initialize the relation's lock manager and RelFileNode information
-	 *
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
 
@@ -1303,7 +1295,6 @@ formrdesc(char *relationName,
 
 	/*
 	 * initialize the rel-has-index flag, using hardwired knowledge
-	 *
 	 */
 	relation->rd_rel->relhasindex = false;
 
@@ -1322,7 +1313,6 @@ formrdesc(char *relationName,
 
 	/*
 	 * add new reldesc to relcache
-	 *
 	 */
 	RelationCacheInsert(relation);
 }
@@ -2755,9 +2745,7 @@ init_irels(void)
 		{
 			fmgr_info(SMD(i).sk_procedure,
 					  &(SMD(i).sk_func));
-			SMD(i).sk_nargs = SMD(i).sk_func.fn_nargs;
 		}
-
 
 		/*
 		 * use a real field called rd_istrat instead of the bogosity of

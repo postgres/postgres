@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.52 2001/05/19 09:28:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.53 2001/06/01 02:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,15 @@ fmgr_lookupByName(const char *name)
 /*
  * This routine fills a FmgrInfo struct, given the OID
  * of the function to be called.
+ *
+ * The caller's CurrentMemoryContext is used as the fn_mcxt of the info
+ * struct; this means that any subsidiary data attached to the info struct
+ * (either by fmgr_info itself, or later on by a function call handler)
+ * will be allocated in that context.  The caller must ensure that this
+ * context is at least as long-lived as the info struct itself.  This is
+ * not a problem in typical cases where the info struct is on the stack or
+ * in freshly-palloc'd space, but one must take extra care when the info
+ * struct is in a long-lived table.
  */
 void
 fmgr_info(Oid functionId, FmgrInfo *finfo)
@@ -124,8 +133,9 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	char	   *prosrc;
 
 	/*
-	 * fn_oid *must* be filled in last.  Code may assume that is fn_oid is valid,
-	 * the whole struct is valid.  Some FmgrInfo struct's do survive elogs.
+	 * fn_oid *must* be filled in last.  Some code assumes that if fn_oid is
+	 * valid, the whole struct is valid.  Some FmgrInfo struct's do survive
+	 * elogs.
 	 */
 	finfo->fn_oid = InvalidOid;
 	finfo->fn_extra = NULL;
@@ -133,10 +143,8 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 
 	if ((fbp = fmgr_isbuiltin(functionId)) != NULL)
 	{
-
 		/*
-		 * Fast path for builtin functions: don't bother consulting
-		 * pg_proc
+		 * Fast path for builtin functions: don't bother consulting pg_proc
 		 */
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
@@ -171,7 +179,6 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	switch (procedureStruct->prolang)
 	{
 		case INTERNALlanguageId:
-
 			/*
 			 * For an ordinary builtin function, we should never get here
 			 * because the isbuiltin() search above will have succeeded.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.45 2001/03/22 04:01:14 momjian Exp $
+ * $Id: rel.h,v 1.46 2001/06/01 02:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,13 +47,11 @@ typedef LockInfoData *LockInfo;
  * Likewise, this struct really belongs to trigger.h, but for convenience
  * we put it here.
  */
-
 typedef struct Trigger
 {
 	Oid			tgoid;
 	char	   *tgname;
 	Oid			tgfoid;
-	FmgrInfo	tgfunc;
 	int16		tgtype;
 	bool		tgenabled;
 	bool		tgisconstraint;
@@ -66,16 +64,23 @@ typedef struct Trigger
 
 typedef struct TriggerDesc
 {
-	/* index data to identify which triggers are which */
-	uint16		n_before_statement[4];
-	uint16		n_before_row[4];
-	uint16		n_after_row[4];
-	uint16		n_after_statement[4];
-	Trigger   **tg_before_statement[4];
-	Trigger   **tg_before_row[4];
-	Trigger   **tg_after_row[4];
-	Trigger   **tg_after_statement[4];
-	/* the actual array of triggers is here */
+	/*
+	 * Index data to identify which triggers are which.  Since each trigger
+	 * can appear in more than one class, for each class we provide a list
+	 * of integer indexes into the triggers array.
+	 */
+#define TRIGGER_NUM_EVENT_CLASSES  4
+
+	uint16		n_before_statement[TRIGGER_NUM_EVENT_CLASSES];
+	uint16		n_before_row[TRIGGER_NUM_EVENT_CLASSES];
+	uint16		n_after_row[TRIGGER_NUM_EVENT_CLASSES];
+	uint16		n_after_statement[TRIGGER_NUM_EVENT_CLASSES];
+	int		   *tg_before_statement[TRIGGER_NUM_EVENT_CLASSES];
+	int		   *tg_before_row[TRIGGER_NUM_EVENT_CLASSES];
+	int		   *tg_after_row[TRIGGER_NUM_EVENT_CLASSES];
+	int		   *tg_after_statement[TRIGGER_NUM_EVENT_CLASSES];
+
+	/* The actual array of triggers is here */
 	Trigger    *triggers;
 	int			numtriggers;
 } TriggerDesc;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.50 2001/05/30 19:53:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.51 2001/06/01 02:41:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,6 +458,8 @@ RelationInvokeStrategy(Relation relation,
 
 /* ----------------
  *		OperatorRelationFillScanKeyEntry
+ *
+ * Initialize a ScanKey entry given already-opened pg_operator relation.
  * ----------------
  */
 static void
@@ -498,6 +500,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 			 operatorObjectId);
 	}
 
+	MemSet(entry, 0, sizeof(*entry));
 	entry->sk_flags = 0;
 	entry->sk_procedure = ((Form_pg_operator) GETSTRUCT(tuple))->oprcode;
 
@@ -511,14 +514,29 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 		"OperatorRelationFillScanKeyEntry: no procedure for operator %u",
 			 operatorObjectId);
 
-	fmgr_info(entry->sk_procedure, &entry->sk_func);
-	entry->sk_nargs = entry->sk_func.fn_nargs;
+	/*
+	 * Formerly we initialized entry->sk_func here, but that's a waste of
+	 * time because ScanKey entries in strategy maps are never actually
+	 * used to invoke the operator.  Furthermore, to do that we'd have to
+	 * worry about setting the proper memory context (the map is probably
+	 * not allocated in the current memory context!)
+	 */
 }
 
 
 /*
  * IndexSupportInitialize
  *		Initializes an index strategy and associated support procedures.
+ *
+ * Data is returned into *indexStrategy, *indexSupport, and *isUnique,
+ * all of which are objects allocated by the caller.
+ *
+ * The primary input keys are indexObjectId and accessMethodObjectId.
+ * The caller also passes maxStrategyNumber, maxSupportNumber, and
+ * maxAttributeNumber, since these indicate the size of the indexStrategy
+ * and indexSupport arrays it has allocated --- but in practice these
+ * numbers must always match those obtainable from the system catalog
+ * entries for the index and access method.
  */
 void
 IndexSupportInitialize(IndexStrategy indexStrategy,
@@ -578,7 +596,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		if (!OidIsValid(iform->indkey[attIndex]))
 		{
 			if (attIndex == InvalidAttrNumber)
-				elog(ERROR, "IndexSupportInitialize: no pg_index tuple");
+				elog(ERROR, "IndexSupportInitialize: bogus pg_index tuple");
 			break;
 		}
 
@@ -637,6 +655,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		heap_close(relation, AccessShareLock);
 	}
 
+	/* Now load the strategy information for the index operators */
 	ScanKeyEntryInitialize(&entry[0], 0,
 						   Anum_pg_amop_amopid,
 						   F_OIDEQ,
@@ -644,7 +663,8 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 	ScanKeyEntryInitialize(&entry[1], 0,
 						   Anum_pg_amop_amopclaid,
-						   F_OIDEQ, 0);
+						   F_OIDEQ,
+						   0);	/* will fill below */
 
 	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
 	operatorRelation = heap_openr(OperatorRelationName, AccessShareLock);
@@ -670,9 +690,11 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			Form_pg_amop aform;
 
 			aform = (Form_pg_amop) GETSTRUCT(tuple);
+			strategy = aform->amopstrategy;
+			Assert(strategy > 0 && strategy <= maxStrategyNumber);
 			OperatorRelationFillScanKeyEntry(operatorRelation,
 											 aform->amopopr,
-				   StrategyMapGetScanKeyEntry(map, aform->amopstrategy));
+				   StrategyMapGetScanKeyEntry(map, strategy));
 		}
 
 		heap_endscan(scan);

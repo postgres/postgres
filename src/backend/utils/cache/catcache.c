@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.77 2001/03/22 03:59:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.78 2001/06/01 02:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,7 +205,6 @@ CatalogCacheInitializeCache(CatCache *cache)
 	/*
 	 * switch to the cache context so our allocations do not vanish at the
 	 * end of a transaction
-	 *
 	 */
 	if (!CacheMemoryContext)
 		CreateCacheMemoryContext();
@@ -214,13 +213,11 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 	/*
 	 * copy the relcache's tuple descriptor to permanent cache storage
-	 *
 	 */
 	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
 
 	/*
 	 * return to the caller's memory context and close the rel
-	 *
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
@@ -231,7 +228,6 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 	/*
 	 * initialize cache's key information
-	 *
 	 */
 	for (i = 0; i < cache->cc_nkeys; ++i)
 	{
@@ -255,9 +251,23 @@ CatalogCacheInitializeCache(CatCache *cache)
 		 */
 		cache->cc_skey[i].sk_procedure = EQPROC(keytype);
 
+		/*
+		 * Note: to avoid any possible leakage of scan temporary data into
+		 * the cache context, we do not switch into CacheMemoryContext while
+		 * calling fmgr_info here.  Instead set fn_mcxt on return.  This
+		 * would fail to work correctly if fmgr_info allocated any subsidiary
+		 * data structures to attach to the FmgrInfo record; but it doesn't
+		 * do so for built-in functions, and all the comparator functions
+		 * for system caches should most assuredly be built-in functions.
+		 * Currently there's no real need to fix fn_mcxt either, but let's do
+		 * that anyway just to make sure it's not pointing to a dead context
+		 * later on.
+		 */
+
 		fmgr_info(cache->cc_skey[i].sk_procedure,
 				  &cache->cc_skey[i].sk_func);
-		cache->cc_skey[i].sk_nargs = cache->cc_skey[i].sk_func.fn_nargs;
+
+		cache->cc_skey[i].sk_func.fn_mcxt = CacheMemoryContext;
 
 		/* Initialize sk_attno suitably for HeapKeyTest() and heap scans */
 		cache->cc_skey[i].sk_attno = cache->cc_key[i];
@@ -270,7 +280,6 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 	/*
 	 * mark this cache fully initialized
-	 *
 	 */
 	cache->cc_tupdesc = tupdesc;
 }
@@ -705,7 +714,6 @@ InitCatCache(int id,
  *		certain system indexes that support critical syscaches.
  *		We can't use an indexscan to fetch these, else we'll get into
  *		infinite recursion.  A plain heap scan will work, however.
- *
  */
 static bool
 IndexScanOK(CatCache *cache, ScanKey cur_skey)

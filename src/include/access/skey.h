@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.14 2001/01/24 19:43:19 momjian Exp $
+ * $Id: skey.h,v 1.15 2001/06/01 02:41:36 tgl Exp $
  *
  *
  * Note:
@@ -25,18 +25,18 @@ typedef struct ScanKeyData
 	bits16		sk_flags;		/* flags */
 	AttrNumber	sk_attno;		/* domain number */
 	RegProcedure sk_procedure;	/* procedure OID */
-	FmgrInfo	sk_func;
-	int32		sk_nargs;
+	FmgrInfo	sk_func;		/* fmgr call info for procedure */
 	Datum		sk_argument;	/* data to compare */
 } ScanKeyData;
 
 typedef ScanKeyData *ScanKey;
 
+/* ScanKeyData flags */
+#define SK_ISNULL		0x1		/* sk_argument is NULL */
+#define SK_UNARY		0x2		/* unary function (currently unsupported) */
+#define SK_NEGATE		0x4		/* negate function result */
+#define SK_COMMUTE		0x8		/* commute function (not fully supported) */
 
-#define SK_ISNULL		0x1
-#define SK_UNARY		0x2
-#define SK_NEGATE		0x4
-#define SK_COMMUTE		0x8
 
 #define ScanUnmarked			0x01
 #define ScanUncheckedPrevious	0x02

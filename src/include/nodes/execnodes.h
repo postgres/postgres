@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.60 2001/05/27 20:48:51 tgl Exp $
+ * $Id: execnodes.h,v 1.61 2001/06/01 02:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,16 +198,18 @@ typedef struct JunkFilter
 /* ----------------
  *	  ResultRelInfo information
  *
- *		whenever we update an existing relation, we have to
- *		update indices on the relation.  The ResultRelInfo class
- *		is used to hold all the information on result relations,
- *		including indices.. -cim 10/15/89
+ *		Whenever we update an existing relation, we have to
+ *		update indices on the relation, and perhaps also fire triggers.
+ *		The ResultRelInfo class is used to hold all the information needed
+ *		about a result relation, including indices.. -cim 10/15/89
  *
  *		RangeTableIndex			result relation's range table index
  *		RelationDesc			relation descriptor for result relation
  *		NumIndices				# of indices existing on result relation
  *		IndexRelationDescs		array of relation descriptors for indices
  *		IndexRelationInfo		array of key/attr info for indices
+ *		TrigDesc				triggers to be fired, if any
+ *		TrigFunctions			cached lookup info for trigger functions
  *		ConstraintExprs			array of constraint-checking expressions
  *		junkFilter				for removing junk attributes from tuples
  * ----------------
@@ -220,6 +222,8 @@ typedef struct ResultRelInfo
 	int			ri_NumIndices;
 	RelationPtr ri_IndexRelationDescs;
 	IndexInfo **ri_IndexRelationInfo;
+	TriggerDesc *ri_TrigDesc;
+	FmgrInfo   *ri_TrigFunctions;
 	List	  **ri_ConstraintExprs;
 	JunkFilter *ri_junkFilter;
 } ResultRelInfo;

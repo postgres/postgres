@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.49 2001/05/31 18:16:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.50 2001/06/01 02:41:35 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -232,7 +232,7 @@ index_beginscan(Relation relation,
 				uint16 numberOfKeys,
 				ScanKey key)
 {
-	IndexScanDesc scandesc;
+	IndexScanDesc scan;
 	RegProcedure procedure;
 
 	RELATION_CHECKS;
@@ -249,14 +249,22 @@ index_beginscan(Relation relation,
 	 */
 	LockRelation(relation, AccessShareLock);
 
-	scandesc = (IndexScanDesc)
+	scan = (IndexScanDesc)
 		DatumGetPointer(OidFunctionCall4(procedure,
 										 PointerGetDatum(relation),
 										 BoolGetDatum(scanFromEnd),
 										 UInt16GetDatum(numberOfKeys),
 										 PointerGetDatum(key)));
 
-	return scandesc;
+	/*
+	 * We want to look up the amgettuple procedure just once per scan,
+	 * not once per index_getnext call.  So do it here and save
+	 * the fmgr info result in the scan descriptor.
+	 */
+	GET_SCAN_PROCEDURE(beginscan, amgettuple);
+	fmgr_info(procedure, &scan->fn_getnext);
+
+	return scan;
 }
 
 /* ----------------
@@ -346,18 +354,8 @@ index_getnext(IndexScanDesc scan,
 	SCAN_CHECKS;
 
 	/*
-	 * Look up the access procedure only once per scan.
-	 */
-	if (scan->fn_getnext.fn_oid == InvalidOid)
-	{
-		RegProcedure procedure;
-
-		GET_SCAN_PROCEDURE(getnext, amgettuple);
-		fmgr_info(procedure, &scan->fn_getnext);
-	}
-
-	/*
 	 * have the am's gettuple proc do all the work.
+	 * index_beginscan already set up fn_getnext.
 	 */
 	result = (RetrieveIndexResult)
 		DatumGetPointer(FunctionCall2(&scan->fn_getnext,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.18 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.19 2001/06/01 02:41:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,11 +40,13 @@ ScanKeyEntrySetIllegal(ScanKey entry)
 	entry->sk_flags = 0;		/* just in case... */
 	entry->sk_attno = InvalidAttrNumber;
 	entry->sk_procedure = 0;	/* should be InvalidRegProcedure */
+	entry->sk_func.fn_oid = InvalidOid;
+	entry->sk_argument = (Datum) 0;
 }
 
 /*
  * ScanKeyEntryInitialize
- *		Initializes an scan key entry.
+ *		Initializes a scan key entry.
  *
  * Note:
  *		Assumes the scan key entry is valid.
@@ -64,7 +66,6 @@ ScanKeyEntryInitialize(ScanKey entry,
 	entry->sk_procedure = procedure;
 	entry->sk_argument = argument;
 	fmgr_info(procedure, &entry->sk_func);
-	entry->sk_nargs = entry->sk_func.fn_nargs;
 
 	Assert(ScanKeyEntryIsLegal(entry));
 }

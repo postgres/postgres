@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.152 2001/05/30 20:52:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.153 2001/06/01 02:41:35 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -722,6 +722,9 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 
 /* ----------------------------------------------------------------
  *		InitIndexStrategy
+ *
+ * XXX this is essentially the same as relcache.c's
+ * IndexedAccessMethodInitialize(), and probably ought to be merged with it.
  * ----------------------------------------------------------------
  */
 void
@@ -733,18 +736,16 @@ InitIndexStrategy(int numatts,
 	RegProcedure *support;
 	uint16		amstrategies;
 	uint16		amsupport;
-	Oid			attrelid;
 	Size		strsize;
 
 	/*
 	 * get information from the index relation descriptor
 	 */
-	attrelid = indexRelation->rd_att->attrs[0]->attrelid;
 	amstrategies = indexRelation->rd_am->amstrategies;
 	amsupport = indexRelation->rd_am->amsupport;
 
 	/*
-	 * get the size of the strategy
+	 * compute the size of the strategy array
 	 */
 	strsize = AttributeNumberGetIndexStrategySize(numatts, amstrategies);
 
@@ -779,7 +780,8 @@ InitIndexStrategy(int numatts,
 
 	IndexSupportInitialize(strategy, support,
 						   &indexRelation->rd_uniqueindex,
-						   attrelid, accessMethodObjectId,
+						   RelationGetRelid(indexRelation),
+						   accessMethodObjectId,
 						   amstrategies, amsupport, numatts);
 
 	/*
