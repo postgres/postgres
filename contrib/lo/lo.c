@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.10 2001/10/28 06:25:40 momjian Exp $
+ *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.11 2001/12/07 04:18:31 inoue Exp $
  *
  */
 
@@ -176,7 +176,7 @@ lo_manage(PG_FUNCTION_ARGS)
 		char	   *orig = SPI_getvalue(trigtuple, tupdesc, attnum);
 		char	   *newv = SPI_getvalue(newtuple, tupdesc, attnum);
 
-		if ((orig != newv && (orig == NULL || newv == NULL)) || (orig != NULL && newv != NULL && strcmp(orig, newv)))
+		if (orig != NULL && (newv == NULL || strcmp(orig, newv)))
 			DirectFunctionCall1(lo_unlink,
 								ObjectIdGetDatum(atooid(orig)));
 
