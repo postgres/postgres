@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Jul 21 09:46:40 EDT 2004
+Last updated:		Thu Jul 22 07:49:22 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -277,7 +277,7 @@ Clients
 * -Allow pg_dump to dump CREATE CONVERSION (Christopher)
 * Allow libpq to return information about prepared queries
 * -Make pg_restore continue after errors, so it acts more like pg_dump scripts
-* Have psql show more information about sequences
+* -Have psql show more information about sequences
 * Allow pg_dumpall to use non-text output formats
 * Have pg_dump use multi-statement transactions for INSERT dumps
 * Move psql backslash database information into the backend, use mnemonic
