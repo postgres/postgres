@@ -1,6 +1,6 @@
 PostgreSQL için Sýkça Sorulan Sorular (SSS)
 
-Son güncelleme : 26 Temmuz 2004 Pazartesi - 16:05:26
+Son güncelleme : 09 Kasým 2004 Salý - 12:02:27
 
 Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -132,20 +132,9 @@ Genel olarak, modern bir Unix-uyumlu platform PostgreSQL'i çalýþtýracaktýr. Ayrý
 bakabilirsiniz.
 1.4) Hangi Unix olmayan uyarlamalarý bulunmaktadýr?
 
-Ýstemci
-
-libpq C kütüphanesini, psql ve diger arabirimleri ve binary dosyalarý, MS Windows ortamlarýnda çalýsmasý için 
-derlemeniz mümkündür. Bu örnekte istemcide MS Windows çalýþýyor ve desteklenen Unix platformlarýndan birinde çalýþan 
-PostgreSQL sunucuna TCP/IP ile baðlanmaktadýr. Daðýtým içindeki win31.mak dosyasý ile, Win32 libpg kütüphanesi ve psql 
-yaratabilirsiniz. PostgreSQL ayný zamanda ODBC istemcileri ile haberleþebilmektedir.
-
-Sunucu
-
-Veritabaný sunucusu Cygwin kullanarak Windows NT, 2K ya da XP üzerinde çalýþtýrýlabilir. Dagýtým içindeki 
-pgsql/doc/FAQ_MSWIN dosyasýný ya da web sitemizdeki MS Windows FAQ'u inceleyebilirsiniz.
-
-Doðal Windows NT/2000/XP portu için þu anda çalýþmalar devam etmektedir. Windows sürümü hakkýnda güncel bilgi için, 
-http://techdocs.postgresql.org/guides/Windows adresini ziyaret edebilirsiniz.
+PostgreSQL 8.0 sürümü ile , PostgreSQL artýk Win2000, WinXP ve Win2003 gibi Microsoft Windows NT tabanlý iþletim 
+sistemlerinde doðal olarak çalýþmaya baþlamýþtýr. Paketlenmiþ bir  kurulum programý, http://pgfoundry.org/projects/pginstaller
+adresinden indirilebilir.
 
 Ayrýca, http://forge.novell.com adresinde Novell Netware 6 portu bulunmaktadýr.
 1.5) PostgreSQL'i nereden indirebilirim?
@@ -200,9 +189,9 @@ http://www.postgresql.org/users-lounge/commercial-support.html
 adresinden ulaþbilirsiniz.
 1.7) En son sürüm nedir?
 
-PostgreSQL'in son sürümü 7.3.3'tür.
+PostgreSQL'in son sürümü 7.4.6'dýr.
 
-Her 4 ayda major release çýkarýlmasý planlanmaktadýr.
+Her 6-8 ayda ana sürüm çýkarýlmasý planlanmaktadýr.
 1.8) Hangi belgelere ulaþabilirim?
 
 Daðýtýmýn içinde, kitapçýklar, kitapçýk sayfalarý ve bazý küçük örnekler verilmektedir. /doc dizinine bakýnýz. Ayrýca, 
@@ -297,7 +286,7 @@ Bir açýk kaynak kodlu proje için, kaliteli altyapý çok önemlidir. Bu altyapý, pr
 ilerlemesini hýzlandýrýr.
 
 Tabii ki bu altyapý ucuz deðildir. Ýþlerin yürümesi için çeþitli yýlýk ve anlýk harcamalarýmýz olmaktadýr. Eðer siz ya 
-da þirketinizin bu çabamýza baðýþta bulunabilecek parasý varsa, lütfen http://www.pgsql.com/pg_goodies adresine gidiniz 
+da þirketinizin bu çabamýza baðýþta bulunabilecek parasý varsa, lütfen http://store.pgsql.com adresine gidiniz 
 ve baðýþta, hibede bulununuz.
 
 Web sayfasýnýn 'PostgreSQL Inc.' den bahsetmesine raðmen, "katkýda bulunanlar" (contributors) maddesi sadece PostgreSQL 

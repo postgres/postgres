@@ -17,7 +17,7 @@
 <body bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
 
 <h1>PostgreSQL için Sýkça Sorulan Sorular (SSS)</h1>
-<p>Son güncelleme : 26 Temmuz 2004  Pazartesi - 16:05:26</p>
+<p>Son güncelleme : 09 Kasým 2004 Salý - 12:02:27</p>
 <p>Current maintainer: Bruce Momjian
 (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br></p>
 <p>Çevirenler : Devrim Gündüz (<a href="mailto:devrim@tdmsoft.com">devrim@tdmsoft.com</a>)<br>Nicholas Morris Tufar 
@@ -187,20 +187,11 @@ adreslerinde görülebilir.</p>
 		Ayrýntýlý bilgi için kurulum belgelerine bakabilirsiniz.</p>
 		
 		<h4><a name="1.4">1.4</a>) Hangi Unix olmayan uyarlamalarý bulunmaktadýr?</h4>
-		<p><strong>Ýstemci</strong></p>
-		<p><code>libpq C</code> kütüphanesini, psql ve diger arabirimleri ve binary dosyalarý,
-		MS Windows ortamlarýnda çalýsmasý için derlemeniz mümkündür. Bu örnekte  istemcide
-		MS Windows çalýþýyor ve desteklenen Unix platformlarýndan birinde çalýþan PostgreSQL
-		sunucuna TCP/IP ile baðlanmaktadýr. Daðýtým içindeki <code>win31.mak</code> dosyasý ile,
-		<code>Win32 libpg</code> kütüphanesi ve psql yaratabilirsiniz. PostgreSQL ayný
-		zamanda <i>ODBC</i> istemcileri ile haberleþebilmektedir.</p>
-		<p><strong>Sunucu</strong></p>
-		<p>Veritabaný sunucusu <code>Cygwin</code> kullanarak Windows NT, 2K ya da
-		XP üzerinde çalýþtýrýlabilir. Dagýtým içindeki <code>pgsql/doc/FAQ_MSWIN</code>
-		dosyasýný ya da web sitemizdeki MS Windows FAQ'u inceleyebilirsiniz.</p>
-		<p>Doðal Windows NT/2000/XP portu için þu anda çalýþmalar devam etmektedir. Windows sürümü  
-		hakkýnda güncel bilgi için, http://techdocs.postgresql.org/guides/Windows adresini 
-		ziyaret edebilirsiniz.</p>
+	        <P>PostgreSQL 8.0 sürümü ile , PostgreSQL artýk Win2000, WinXP ve Win2003 gibi Microsoft 
+		Windows NT tabanlý iþletim sistemlerinde doðal olarak çalýþmaya baþlamýþtýr. Paketlenmiþ bir
+		kurulum programý, <a href="http://pgfoundry.org/projects/pginstaller">http://pgfoundry.org/projects/pginstaller</a>. adresinden 
+		indirilebilir.
+
 		<p>Ayrýca, http://forge.novell.com adresinde Novell Netware 6 portu bulunmaktadýr.</p>
 		
 		<h4><a name="1.5">1.5</a>) PostgreSQL'i nereden indirebilirim?</h4>
@@ -236,8 +227,8 @@ adreslerinde görülebilir.</p>
 		<p>adresinden ulaþbilirsiniz.</p>
 		
 		<h4><a name="1.7">1.7</a>) En son sürüm nedir?</h4>
-		<p>PostgreSQL'in son sürümü 7.3.3'tür.</p>
-		<p>Her 4 ayda <i>major release</i> çýkarýlmasý planlanmaktadýr.</p>
+		<p>PostgreSQL'in son sürümü 7.4.6'dýr.</p>
+		<p>Her 6-8 ayda <i>ana sürüm</i> çýkarýlmasý planlanmaktadýr.</p>
 
 		<h4><a name="1.8">1.8</a>) Hangi belgelere ulaþabilirim?</h4>
 		<p>Daðýtýmýn içinde, kitapçýklar, kitapçýk sayfalarý ve bazý küçük örnekler verilmektedir.
@@ -338,7 +329,7 @@ adreslerinde görülebilir.</p>
 		<p>Tabii ki bu altyapý ucuz deðildir. Ýþlerin yürümesi için çeþitli yýlýk ve anlýk 
 		harcamalarýmýz olmaktadýr. Eðer siz ya da þirketinizin bu çabamýza baðýþta
 		bulunabilecek parasý varsa, lütfen
-		<i><a href="http://www.pgsql.com/pg_goodies">http://www.pgsql.com/pg_goodies</a></i>
+		<i><a href="http://store.pgsql.com/">http://store.pgsql.com/</a></i>
 		adresine gidiniz ve baðýþta, hibede bulununuz.</p>
 		<p>Web sayfasýnýn 'PostgreSQL Inc.' den bahsetmesine raðmen, "katkýda bulunanlar" 
 		(<i>contributors</i>) maddesi sadece PostgreSQL projesini desteklemek içindir ve
