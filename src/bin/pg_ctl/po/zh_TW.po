@@ -5,11 +5,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "POT-Creation-Date: 2004-07-29 19:16-0300\n"
-"PO-Revision-Date: 2004-07-30 12:27+0800\n"
+"PO-Revision-Date: 2004-08-01 13:21+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=Big5\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: pg_ctl.c:184
@@ -17,22 +17,22 @@ msgstr ""
 #: pg_ctl.c:1230
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: °O¾ĞÅé¥ÎºÉ\n"
+msgstr "%s: è¨˜æ†¶é«”ç”¨ç›¡\n"
 
 #: pg_ctl.c:431
 #, c-format
 msgid "%s: Another postmaster may be running. Trying to start postmaster anyway.\n"
-msgstr "%s: ¥i¯à¦³¥t¤@­Ópostmaster¥¿¦b°õ¦æ¡A¹Á¸Õ±j¨î±Ò°Êpostmaster¡C\n"
+msgstr "%s: å¯èƒ½æœ‰å¦ä¸€å€‹postmasteræ­£åœ¨åŸ·è¡Œï¼Œå˜—è©¦å¼·åˆ¶å•Ÿå‹•postmasterã€‚\n"
 
 #: pg_ctl.c:449
 #, c-format
 msgid "%s: cannot read %s\n"
-msgstr "%s: µLªkÅª¨ú %s\n"
+msgstr "%s: ç„¡æ³•è®€å– %s\n"
 
 #: pg_ctl.c:455
 #, c-format
 msgid "%s: option file %s must have exactly 1 line\n"
-msgstr "%s: ¿ï¶µÀÉ %s ¥u¯à¦³¤@¦æ¸ê®Æ\n"
+msgstr "%s: é¸é …æª” %s åªèƒ½æœ‰ä¸€è¡Œè³‡æ–™\n"
 
 #: pg_ctl.c:497
 #, c-format
@@ -40,8 +40,8 @@ msgid ""
 "The program \"postmaster\" is needed by %s but was not found in the same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"%s »İ­n\"postmaster\"µ{¦¡¡A¦ı¬O¦b»P\"%s\"¬Û¦Pªº¥Ø¿ı¤¤§ä¤£¨ì¡C\n"
-"ÀË¬d§Aªº¦w¸Ë¡C\n"
+"%s éœ€è¦\"postmaster\"ç¨‹å¼ï¼Œä½†æ˜¯åœ¨èˆ‡\"%s\"ç›¸åŒçš„ç›®éŒ„ä¸­æ‰¾ä¸åˆ°ã€‚\n"
+"æª¢æŸ¥ä½ çš„å®‰è£ã€‚\n"
 
 #: pg_ctl.c:503
 #, c-format
@@ -49,12 +49,12 @@ msgid ""
 "The program \"postmaster\" was found by %s but was not the same version as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"%s ¤w§ä¨ìµ{¦¡\"postmaster\"¡A¦ı¬O»P \"%s\"ª©¥»¤£²Å¡C\n"
-"½ĞÀË¬d§Aªº¦w¸Ë¡C\n"
+"%s å·²æ‰¾åˆ°ç¨‹å¼\"postmaster\"ï¼Œä½†æ˜¯èˆ‡ \"%s\"ç‰ˆæœ¬ä¸ç¬¦ã€‚\n"
+"è«‹æª¢æŸ¥ä½ çš„å®‰è£ã€‚\n"
 
 #: pg_ctl.c:514
 msgid "Unable to run the postmaster binary\n"
-msgstr "µLªk°õ¦æpostmaster°õ¦æÀÉ\n"
+msgstr "ç„¡æ³•åŸ·è¡ŒpostmasteråŸ·è¡Œæª”\n"
 
 #: pg_ctl.c:524
 #, c-format
@@ -62,167 +62,167 @@ msgid ""
 "%s: cannot start postmaster\n"
 "Examine the log output\n"
 msgstr ""
-"%s: µLªk±Ò°Êpostmaster\n"
-"½ĞÀË¬dlog¿é¥X\n"
+"%s: ç„¡æ³•å•Ÿå‹•postmaster\n"
+"è«‹æª¢æŸ¥logè¼¸å‡º\n"
 
 #: pg_ctl.c:535
 msgid "waiting for postmaster to start..."
-msgstr "µ¥«İpostmaster±Ò°Ê..."
+msgstr "ç­‰å¾…postmasterå•Ÿå‹•..."
 
 #: pg_ctl.c:540
 msgid "could not start postmaster\n"
-msgstr "µLªk±Ò°Êpostmaster\n"
+msgstr "ç„¡æ³•å•Ÿå‹•postmaster\n"
 
 #: pg_ctl.c:542
 msgid ""
 "done\n"
 "postmaster started\n"
 msgstr ""
-"§¹¦¨\n"
-"postmaster¤w¸g±Ò°Ê\n"
+"å®Œæˆ\n"
+"postmasterå·²ç¶“å•Ÿå‹•\n"
 
 #: pg_ctl.c:545
 msgid "postmaster starting\n"
-msgstr "postmaster¥¿¦b±Ò°Ê\n"
+msgstr "postmasteræ­£åœ¨å•Ÿå‹•\n"
 
 #: pg_ctl.c:560
 #: pg_ctl.c:639
 #: pg_ctl.c:709
 #, c-format
 msgid "%s: could not find %s\n"
-msgstr "%s: §ä¤£¨ì %s\n"
+msgstr "%s: æ‰¾ä¸åˆ° %s\n"
 
 #: pg_ctl.c:561
 #: pg_ctl.c:710
 msgid "Is postmaster running?\n"
-msgstr "postmaster¬O§_¥¿¦b°õ¦æ¡H\n"
+msgstr "postmasteræ˜¯å¦æ­£åœ¨åŸ·è¡Œï¼Ÿ\n"
 
 #: pg_ctl.c:567
 #, c-format
 msgid "%s: cannot stop postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s: µLªk°±¤îpostmaster¡Apostgres¥¿¦b°õ¦æ(PID: %ld)\n"
+msgstr "%s: ç„¡æ³•åœæ­¢postmasterï¼Œpostgresæ­£åœ¨åŸ·è¡Œ(PID: %ld)\n"
 
 #: pg_ctl.c:575
 #: pg_ctl.c:656
 #, c-format
 msgid "stop signal failed (PID: %ld): %s\n"
-msgstr "stop«H¸¹¥¢±Ñ(PID: %ld): %s\n"
+msgstr "stopä¿¡è™Ÿå¤±æ•—(PID: %ld): %s\n"
 
 #: pg_ctl.c:583
 msgid "postmaster shutting down\n"
-msgstr "postmaster¥¿¦bÃö³¬\n"
+msgstr "postmasteræ­£åœ¨é—œé–‰\n"
 
 #: pg_ctl.c:590
 #: pg_ctl.c:663
 msgid "waiting for postmaster to shut down..."
-msgstr "µ¥«İpostmasterÃö³¬..."
+msgstr "ç­‰å¾…postmasteré—œé–‰..."
 
 #: pg_ctl.c:612
 #: pg_ctl.c:687
 msgid " failed\n"
-msgstr "¥¢±Ñ\n"
+msgstr "å¤±æ•—\n"
 
 #: pg_ctl.c:614
 #: pg_ctl.c:689
 #, c-format
 msgid "%s: postmaster does not shut down\n"
-msgstr "%s: postmasterµLªkÃö³¬\n"
+msgstr "%s: postmasterç„¡æ³•é—œé–‰\n"
 
 #: pg_ctl.c:618
 #: pg_ctl.c:694
 msgid "done\n"
-msgstr "§¹¦¨\n"
+msgstr "å®Œæˆ\n"
 
 #: pg_ctl.c:620
 #: pg_ctl.c:696
 msgid "postmaster stopped\n"
-msgstr "postmaster°±¤î°õ¦æ\n"
+msgstr "postmasteråœæ­¢åŸ·è¡Œ\n"
 
 #: pg_ctl.c:640
 msgid ""
 "Is postmaster running?\n"
 "starting postmaster anyway\n"
 msgstr ""
-"postmaster¬O§_¥¿¦b°õ¦æ¡H\n"
-"±j¨î±Ò°Êpostmaster\n"
+"postmasteræ˜¯å¦æ­£åœ¨åŸ·è¡Œï¼Ÿ\n"
+"å¼·åˆ¶å•Ÿå‹•postmaster\n"
 
 #: pg_ctl.c:647
 #, c-format
 msgid "%s: cannot restart postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s: µLªk­«·s±Ò°Êpostmaster¡Apostgres¥¿¦b°õ¦æ(PID: %ld)\n"
+msgstr "%s: ç„¡æ³•é‡æ–°å•Ÿå‹•postmasterï¼Œpostgresæ­£åœ¨åŸ·è¡Œ(PID: %ld)\n"
 
 #: pg_ctl.c:650
 #: pg_ctl.c:719
 msgid "Please terminate postgres and try again.\n"
-msgstr "½Ğµ²§ôpostgresµM«á¦A¸Õ¤@¦¸¡C\n"
+msgstr "è«‹çµæŸpostgresç„¶å¾Œå†è©¦ä¸€æ¬¡ã€‚\n"
 
 #: pg_ctl.c:716
 #, c-format
 msgid "%s: cannot reload postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s: µLªk­«·s¸ü¤Jpostmaster¡A postgres¥¿¦b°õ¦æ(PID: %ld)\n"
+msgstr "%s: ç„¡æ³•é‡æ–°è¼‰å…¥postmasterï¼Œ postgresæ­£åœ¨åŸ·è¡Œ(PID: %ld)\n"
 
 #: pg_ctl.c:725
 #, c-format
 msgid "reload signal failed (PID: %ld): %s\n"
-msgstr "reload«H¸¹¥¢±Ñ(PID: %ld): %s\n"
+msgstr "reloadä¿¡è™Ÿå¤±æ•—(PID: %ld): %s\n"
 
 #: pg_ctl.c:731
 msgid "postmaster signaled\n"
-msgstr "¤w³qª¾postmaster\n"
+msgstr "å·²é€šçŸ¥postmaster\n"
 
 #: pg_ctl.c:746
 #, c-format
 msgid "%s: postmaster or postgres not running\n"
-msgstr "%s: postmaster©Îpostgres©|¥¼°õ¦æ\n"
+msgstr "%s: postmasteræˆ–postgreså°šæœªåŸ·è¡Œ\n"
 
 #: pg_ctl.c:752
 #, c-format
 msgid "%s: a standalone backend \"postgres\" is running (PID: %ld)\n"
-msgstr "%s: ¤@­Ó¿W¥ß«áºİ\"postgres\"¥¿¦b°õ¦æ(PID: %ld)\n"
+msgstr "%s: ä¸€å€‹ç¨ç«‹å¾Œç«¯\"postgres\"æ­£åœ¨åŸ·è¡Œ(PID: %ld)\n"
 
 #: pg_ctl.c:758
 #, c-format
 msgid "%s: postmaster is running (PID: %ld)\n"
-msgstr "%s: postmaster¥¿¦b°õ¦æ(PID: %ld)\n"
+msgstr "%s: postmasteræ­£åœ¨åŸ·è¡Œ(PID: %ld)\n"
 
 #: pg_ctl.c:774
 #, c-format
 msgid "signal %d failed (PID: %ld): %s\n"
-msgstr "«H¸¹ %d ¥¢±Ñ(PID: %ld): %s\n"
+msgstr "ä¿¡è™Ÿ %d å¤±æ•—(PID: %ld): %s\n"
 
 #: pg_ctl.c:801
 msgid "Unable to find exe"
-msgstr "§ä¤£¨ì°õ¦æÀÉ"
+msgstr "æ‰¾ä¸åˆ°åŸ·è¡Œæª”"
 
 #: pg_ctl.c:844
 #: pg_ctl.c:875
 msgid "Unable to open service manager\n"
-msgstr "µLªk¶}±ÒªA°ÈºŞ²z­û\n"
+msgstr "ç„¡æ³•é–‹å•Ÿæœå‹™ç®¡ç†å“¡\n"
 
 #: pg_ctl.c:850
 #, c-format
 msgid "Service \"%s\" already registered\n"
-msgstr "ªA°È\"%s\"¤w¸g³Qµù¥U\n"
+msgstr "æœå‹™\"%s\"å·²ç¶“è¢«è¨»å†Š\n"
 
 #: pg_ctl.c:861
 #, c-format
 msgid "Unable to register service \"%s\" [%d]\n"
-msgstr "µLªkµù¥UªA°È\"%s\" [%d]\n"
+msgstr "ç„¡æ³•è¨»å†Šæœå‹™\"%s\" [%d]\n"
 
 #: pg_ctl.c:881
 #, c-format
 msgid "Service \"%s\" not registered\n"
-msgstr "ªA°È\"%s\"¥¼³Qµù¥U\n"
+msgstr "æœå‹™\"%s\"æœªè¢«è¨»å†Š\n"
 
 #: pg_ctl.c:888
 #, c-format
 msgid "Unable to open service \"%s\" [%d]\n"
-msgstr "µLªk¶}±ÒªA°È\"%s\" [%d]\n"
+msgstr "ç„¡æ³•é–‹å•Ÿæœå‹™\"%s\" [%d]\n"
 
 #: pg_ctl.c:894
 #, c-format
 msgid "Unable to unregister service \"%s\" [%d]\n"
-msgstr "µLªk²¾°£ªA°È\"%s\" [%d]\n"
+msgstr "ç„¡æ³•ç§»é™¤æœå‹™\"%s\" [%d]\n"
 
 #: pg_ctl.c:1012
 #, c-format
@@ -231,7 +231,7 @@ msgid ""
 "Try \"%s --help\" for more information.\n"
 msgstr ""
 "\n"
-"°õ¦æ\"%s --help\"¥HÅã¥Ü§ó¦h¸ê°T¡C\n"
+"åŸ·è¡Œ\"%s --help\"ä»¥é¡¯ç¤ºæ›´å¤šè³‡è¨Šã€‚\n"
 
 #: pg_ctl.c:1020
 #, c-format
@@ -240,100 +240,100 @@ msgid ""
 "report the status of a PostgreSQL server, or kill a PostgreSQL process\n"
 "\n"
 msgstr ""
-"%s ¥i¥H¥Î¨Ó±Ò°Ê¡B°±¤î¡B­«·s±Ò°Ê¡B­«·s¸ü¤J³]©wÀÉ¡B\n"
-"³ø§iPostgreSQL¦øªA¾¹ª¬ºA¡A©Î¬O±ş±¼PostgreSQL¦æµ{\n"
+"%s å¯ä»¥ç”¨ä¾†å•Ÿå‹•ã€åœæ­¢ã€é‡æ–°å•Ÿå‹•ã€é‡æ–°è¼‰å…¥è¨­å®šæª”ã€\n"
+"å ±å‘ŠPostgreSQLä¼ºæœå™¨ç‹€æ…‹ï¼Œæˆ–æ˜¯æ®ºæ‰PostgreSQLè¡Œç¨‹\n"
 "\n"
 
 #: pg_ctl.c:1022
 msgid "Usage:\n"
-msgstr "¨Ï¥Î¤èªk:\n"
+msgstr "ä½¿ç”¨æ–¹æ³•:\n"
 
 #: pg_ctl.c:1023
 #, c-format
 msgid "  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-msgstr "  %s start   [-w] [-D ¸ê®Æ¥Ø¿ı] [-s] [-l ÀÉ¦W] [-o \"¿ï¶µ\"]\n"
+msgstr "  %s start   [-w] [-D è³‡æ–™ç›®éŒ„] [-s] [-l æª”å] [-o \"é¸é …\"]\n"
 
 #: pg_ctl.c:1024
 #, c-format
 msgid "  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-msgstr "  %s stop    [-W] [-D ¸ê®Æ¥Ø¿ı] [-s] [-m Ãö³¬¼Ò¦¡]\n"
+msgstr "  %s stop    [-W] [-D è³‡æ–™ç›®éŒ„] [-s] [-m é—œé–‰æ¨¡å¼]\n"
 
 #: pg_ctl.c:1025
 #, c-format
 msgid "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
-msgstr "  %s restart [-w] [-D ¸ê®Æ¥Ø¿ı] [-s] [-m Ãö³¬¼Ò¦¡] [-o \"¿ï¶µ\"]\n"
+msgstr "  %s restart [-w] [-D è³‡æ–™ç›®éŒ„] [-s] [-m é—œé–‰æ¨¡å¼] [-o \"é¸é …\"]\n"
 
 #: pg_ctl.c:1026
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
-msgstr "  %s reload  [-D ¸ê®Æ¥Ø¿ı] [-s]\n"
+msgstr "  %s reload  [-D è³‡æ–™ç›®éŒ„] [-s]\n"
 
 #: pg_ctl.c:1027
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
-msgstr "  %s status  [-D ¸ê®Æ¥Ø¿ı]\n"
+msgstr "  %s status  [-D è³‡æ–™ç›®éŒ„]\n"
 
 #: pg_ctl.c:1028
 #, c-format
 msgid "  %s kill    SIGNALNAME PROCESSID\n"
-msgstr "  %s kill    «H¸¹¦WºÙ ¦æµ{ID\n"
+msgstr "  %s kill    ä¿¡è™Ÿåç¨± è¡Œç¨‹ID\n"
 
 #: pg_ctl.c:1030
 #, c-format
 msgid "  %s register   [-N servicename] [-U username] [-P password] [-D DATADIR] [-o \"OPTIONS\"]\n"
-msgstr "  %s register   [-N ªA°È¦WºÙ] [-U ¨Ï¥ÎªÌ] [-P ±K½X] [-D ¸ê®Æ¥Ø¿ı] [-o \"¿ï¶µ\"]\n"
+msgstr "  %s register   [-N æœå‹™åç¨±] [-U ä½¿ç”¨è€…] [-P å¯†ç¢¼] [-D è³‡æ–™ç›®éŒ„] [-o \"é¸é …\"]\n"
 
 #: pg_ctl.c:1031
 #, c-format
 msgid "  %s unregister [-N servicename]\n"
-msgstr "  %s unregister [-N ªA°È¦WºÙ]\n"
+msgstr "  %s unregister [-N æœå‹™åç¨±]\n"
 
 #: pg_ctl.c:1033
 msgid "Common options:\n"
-msgstr "¤@¯ë¿ï¶µ:\n"
+msgstr "ä¸€èˆ¬é¸é …:\n"
 
 #: pg_ctl.c:1034
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata ¸ê®Æ¥Ø¿ı  ¦s©ñ¸ê®Æ®wªº¥Ø¿ı\n"
+msgstr "  -D, --pgdata è³‡æ–™ç›®éŒ„  å­˜æ”¾è³‡æ–™åº«çš„ç›®éŒ„\n"
 
 #: pg_ctl.c:1035
 msgid "  -s, --silent only print errors, no informational messages\n"
-msgstr "  -s, --silent ¥uÅã¥Ü¿ù»~¡A¤£Åã¥Ü¨ä¥¦°T®§\n"
+msgstr "  -s, --silent åªé¡¯ç¤ºéŒ¯èª¤ï¼Œä¸é¡¯ç¤ºå…¶å®ƒè¨Šæ¯\n"
 
 #: pg_ctl.c:1037
 msgid "  -N       service name with which to register PostgreSQL server\n"
-msgstr "  -N       ¥Î¨Óµù¥UPostgreSQL¦øªA¾¹ªºªA°È¦WºÙ\n"
+msgstr "  -N       ç”¨ä¾†è¨»å†ŠPostgreSQLä¼ºæœå™¨çš„æœå‹™åç¨±\n"
 
 #: pg_ctl.c:1038
 msgid "  -P       password of account to register PostgreSQL server\n"
-msgstr "  -P       ¥Î¨Óµù¥UPostgreSQL¦øªA¾¹ªº±K½X\n"
+msgstr "  -P       ç”¨ä¾†è¨»å†ŠPostgreSQLä¼ºæœå™¨çš„å¯†ç¢¼\n"
 
 #: pg_ctl.c:1039
 msgid "  -U       user name of account to register PostgreSQL server\n"
-msgstr "  -U       ¥Î¨Óµù¥UPostgreSQL¦øªA¾¹ªº±b¸¹\n"
+msgstr "  -U       ç”¨ä¾†è¨»å†ŠPostgreSQLä¼ºæœå™¨çš„å¸³è™Ÿ\n"
 
 #: pg_ctl.c:1041
 msgid "  -w           wait until operation completes\n"
-msgstr "  -w           µ¥«İ¾Ş§@§¹¦¨\n"
+msgstr "  -w           ç­‰å¾…æ“ä½œå®Œæˆ\n"
 
 #: pg_ctl.c:1042
 msgid "  -W           do not wait until operation completes\n"
-msgstr "  -W           ¤£µ¥«İ¾Ş§@§¹¦¨\n"
+msgstr "  -W           ä¸ç­‰å¾…æ“ä½œå®Œæˆ\n"
 
 #: pg_ctl.c:1043
 msgid "  --help       show this help, then exit\n"
-msgstr "  --help       Åã¥Ü³o¥÷»¡©úµM«áµ²§ô\n"
+msgstr "  --help       é¡¯ç¤ºé€™ä»½èªªæ˜ç„¶å¾ŒçµæŸ\n"
 
 #: pg_ctl.c:1044
 msgid "  --version    output version information, then exit\n"
-msgstr "  --version    Åã¥Üª©¥»¸ê°TµM«áµ²§ô\n"
+msgstr "  --version    é¡¯ç¤ºç‰ˆæœ¬è³‡è¨Šç„¶å¾ŒçµæŸ\n"
 
 #: pg_ctl.c:1045
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
-"(¹w³]¬OÃö³¬®É¦Ó«D±Ò°Ê©Î­«·s±Ò°Ê®Éµ¥«İ¡C)\n"
+"(é è¨­æ˜¯é—œé–‰æ™‚è€Œéå•Ÿå‹•æˆ–é‡æ–°å•Ÿå‹•æ™‚ç­‰å¾…ã€‚)\n"
 "\n"
 
 #: pg_ctl.c:1046
@@ -341,48 +341,48 @@ msgid ""
 "If the -D option is omitted, the environment variable PGDATA is used.\n"
 "\n"
 msgstr ""
-"¿ï¶µ -D ¤w¸g¨ú®ø¡A§ï¥ÎÀô¹ÒÅÜ¼ÆPGDATA¡C\n"
+"é¸é … -D å·²ç¶“å–æ¶ˆï¼Œæ”¹ç”¨ç’°å¢ƒè®Šæ•¸PGDATAã€‚\n"
 "\n"
 
 #: pg_ctl.c:1047
 msgid "Options for start or restart:\n"
-msgstr "±Ò°Ê©Î­«·s±Ò°Ê¥i¥Î¿ï¶µ:\n"
+msgstr "å•Ÿå‹•æˆ–é‡æ–°å•Ÿå‹•å¯ç”¨é¸é …:\n"
 
 #: pg_ctl.c:1048
 msgid ""
 "  -l, --log FILENAME      write (or append) server log to FILENAME.  The\n"
 "                          use of this option is highly recommended.\n"
-msgstr "  -l, --log ÀÉ¦W          ±N¦øªA¾¹log¼g¤JÀÉ®×¡A«ØÄ³¨Ï¥Î¡C\n"
+msgstr "  -l, --log æª”å          å°‡ä¼ºæœå™¨logå¯«å…¥æª”æ¡ˆï¼Œå»ºè­°ä½¿ç”¨ã€‚\n"
 
 #: pg_ctl.c:1050
 msgid ""
 "  -o OPTIONS              command line options to pass to the postmaster\n"
 "                          (PostgreSQL server executable)\n"
-msgstr "  -o ¿ï¶µ                 ¶Çµ¹postmaster(PostgreSQL¦øªA¾¹°õ¦æÀÉ)ªº©R¥O¦C¿ï¶µ\n"
+msgstr "  -o é¸é …                 å‚³çµ¦postmaster(PostgreSQLä¼ºæœå™¨åŸ·è¡Œæª”)çš„å‘½ä»¤åˆ—é¸é …\n"
 
 #: pg_ctl.c:1052
 msgid ""
 "  -p PATH-TO-POSTMASTER   normally not necessary\n"
 "\n"
 msgstr ""
-"  -p postmasterªº¸ô®|     ³q±`¤£»İ­n\n"
+"  -p postmasterçš„è·¯å¾‘     é€šå¸¸ä¸éœ€è¦\n"
 "\n"
 
 #: pg_ctl.c:1053
 msgid "Options for stop or restart:\n"
-msgstr "°±¤î©Î­«·s±Ò°Ê¥i¥Î¿ï¶µ:\n"
+msgstr "åœæ­¢æˆ–é‡æ–°å•Ÿå‹•å¯ç”¨é¸é …:\n"
 
 #: pg_ctl.c:1054
 msgid ""
 "  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'\n"
 "\n"
 msgstr ""
-"  -m Ãö³¬¼Ò¦¡        ¥i¥H¬O'smart'¡B'fast'©Î'immediate'\n"
+"  -m é—œé–‰æ¨¡å¼        å¯ä»¥æ˜¯'smart'ã€'fast'æˆ–'immediate'\n"
 "\n"
 
 #: pg_ctl.c:1055
 msgid "Allowed signal names for kill:\n"
-msgstr "kill¥i¥H¨Ï¥Îªº«H¸¹¦WºÙ:\n"
+msgstr "killå¯ä»¥ä½¿ç”¨çš„ä¿¡è™Ÿåç¨±:\n"
 
 #: pg_ctl.c:1056
 msgid ""
@@ -392,64 +392,65 @@ msgstr ""
 
 #: pg_ctl.c:1057
 msgid "Shutdown modes are:\n"
-msgstr "Ãö³¬¼Ò¦¡:\n"
+msgstr "é—œé–‰æ¨¡å¼:\n"
 
 #: pg_ctl.c:1058
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr "  smart       ¦b©Ò¦³¥Î¤áºİÂ_½u«áÃö³¬\n"
+msgstr "  smart       åœ¨æ‰€æœ‰ç”¨æˆ¶ç«¯æ–·ç·šå¾Œé—œé–‰\n"
 
 #: pg_ctl.c:1059
 msgid "  fast        quit directly, with proper shutdown\n"
-msgstr "  fast        ª½±µ¥¿±`Ãö³¬\n"
+msgstr "  fast        ç›´æ¥æ­£å¸¸é—œé–‰\n"
 
 #: pg_ctl.c:1060
 msgid ""
 "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
 "\n"
 msgstr ""
-"  immediate   ¥ß§YÃö³¬¡A·|¾É­P¤U¦¸±Ò°Ê®É»İ­n´_­ìµ{§Ç\n"
+"  immediate   ç«‹å³é—œé–‰ï¼Œæœƒå°è‡´ä¸‹æ¬¡å•Ÿå‹•æ™‚éœ€è¦å¾©åŸç¨‹åº\n"
 "\n"
 
 #: pg_ctl.c:1061
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "¦^³ø¿ù»~¦Ü <pgsql-bugs@postgresql.org>¡C\n"
+msgstr "å›å ±éŒ¯èª¤è‡³ <pgsql-bugs@postgresql.org>ã€‚\n"
 
 #: pg_ctl.c:1086
 #, c-format
 msgid "%s: invalid shutdown mode %s\n"
-msgstr "%s: µL®ÄªºÃö³¬¼Ò¦¡ %s\n"
+msgstr "%s: ç„¡æ•ˆçš„é—œé–‰æ¨¡å¼ %s\n"
 
 #: pg_ctl.c:1119
 #, c-format
 msgid "%s: invalid signal \"%s\"\n"
-msgstr "%s: µL®Äªº«H¸¹\"%s\"\n"
+msgstr "%s: ç„¡æ•ˆçš„ä¿¡è™Ÿ\"%s\"\n"
 
 #: pg_ctl.c:1246
 #, c-format
 msgid "%s: invalid option %s\n"
-msgstr "%s: µL®Äªº¿ï¶µ %s\n"
+msgstr "%s: ç„¡æ•ˆçš„é¸é … %s\n"
 
 #: pg_ctl.c:1257
 #, c-format
 msgid "%s: extra operation mode %s\n"
-msgstr "%s: ¦h¾lªº¾Ş§@¼Ò¦¡ %s\n"
+msgstr "%s: å¤šé¤˜çš„æ“ä½œæ¨¡å¼ %s\n"
 
 #: pg_ctl.c:1276
 #, c-format
 msgid "%s: invalid kill syntax\n"
-msgstr "%s: µL®Äªºkill»yªk\n"
+msgstr "%s: ç„¡æ•ˆçš„killèªæ³•\n"
 
 #: pg_ctl.c:1294
 #, c-format
 msgid "%s: invalid operation mode %s\n"
-msgstr "%s: µL®Äªº¾Ş§@¼Ò¦¡ %s\n"
+msgstr "%s: ç„¡æ•ˆçš„æ“ä½œæ¨¡å¼ %s\n"
 
 #: pg_ctl.c:1304
 #, c-format
 msgid "%s: no operation specified\n"
-msgstr "%s: ¥¼«ü©w¾Ş§@¤è¦¡\n"
+msgstr "%s: æœªæŒ‡å®šæ“ä½œæ–¹å¼\n"
 
 #: pg_ctl.c:1320
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr "%s: ¥¼«ü©w¸ê®Æ¥Ø¿ı©M³]©wÀô¹ÒÅÜ¼ÆPGDATA\n"
+msgstr "%s: æœªæŒ‡å®šè³‡æ–™ç›®éŒ„å’Œè¨­å®šç’°å¢ƒè®Šæ•¸PGDATA\n"
+

@@ -1,390 +1,1709 @@
 # Traditional Chinese translation for pg_dump.
-# Translated and modified from Simplified Chinese translation.
-# Zhenbang Wei <forth@zbwei.net>, 2001.
+# 2004-07-30 Zhenbang Wei <forth@zbwei.net>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.2\n"
-"POT-Creation-Date: 2001-11-29 01:07+1100\n"
-"PO-Revision-Date: 2001-10-24 01:00:00+0800\n"
+"Project-Id-Version: PostgreSQL 7.5\n"
+"POT-Creation-Date: 2004-07-29 19:16-0300\n"
+"PO-Revision-Date: 2004-08-01 13:22+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=Big5\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_dump.c:136
+#: pg_dump.c:363
+#: pg_restore.c:225
+msgid "User name: "
+msgstr "使用者名稱: "
+
+#: pg_dump.c:399
+#: pg_dumpall.c:238
+#: pg_restore.c:252
+#, c-format
+msgid "%s: invalid -X option -- %s\n"
+msgstr "%s: 無效的 -X 選項 -- %s\n"
+
+#: pg_dump.c:401
+#: pg_dump.c:415
+#: pg_dump.c:424
+#: pg_dumpall.c:240
+#: pg_dumpall.c:249
+#: pg_dumpall.c:266
+#: pg_restore.c:254
+#: pg_restore.c:264
+#: pg_restore.c:281
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "執行'%s --help'以顯示更多資訊。\n"
+
+#: pg_dump.c:422
+#: pg_dumpall.c:264
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 過多命令列參數(第一個是\"%s\")\n"
+
+#: pg_dump.c:435
+msgid "options \"schema only\" (-s) and \"data only\" (-a) cannot be used together\n"
+msgstr "選項\"schema only\" (-s)和\"data only\" (-a)不能一起使用\n"
+
+#: pg_dump.c:441
+msgid "options \"clean\" (-c) and \"data only\" (-a) cannot be used together\n"
+msgstr "選項\"clean\" (-c) and \"data only\" (-a)不能一起使用\n"
+
+#: pg_dump.c:447
+msgid "large-object output not supported for a single table\n"
+msgstr "不支援單一資料表備份large-object\n"
+
+#: pg_dump.c:448
+#: pg_dump.c:455
+msgid "use a full dump instead\n"
+msgstr "改用完整備份\n"
+
+#: pg_dump.c:454
+msgid "large-object output not supported for a single schema\n"
+msgstr "不支援單一schema備份large-object\n"
+
+#: pg_dump.c:461
+msgid "INSERT (-d, -D) and OID (-o) options cannot be used together\n"
+msgstr "INSERT (-d, -D)和OID (-o)選項不能一起使用\n"
+
+#: pg_dump.c:462
+msgid "(The INSERT command cannot set OIDs.)\n"
+msgstr "(INSERT命令不能設定OID。)\n"
+
+#: pg_dump.c:468
+msgid "large-object output is not supported for plain-text dump files\n"
+msgstr "不支援對純文字檔案備份large-object\n"
+
+#: pg_dump.c:469
+msgid "(Use a different output format.)\n"
+msgstr "(使用不同的備份格式。)\n"
+
+#: pg_dump.c:498
+#, c-format
+msgid "invalid output format \"%s\" specified\n"
+msgstr "無效的備份格式\"%s\"被指定\n"
+
+#: pg_dump.c:504
+#, c-format
+msgid "could not open output file \"%s\" for writing\n"
+msgstr "無法開啟並寫入備份檔\"%s\"\n"
+
+#: pg_backup_db.c:48
+#: pg_dump.c:515
+#, c-format
+msgid "could not parse version string \"%s\"\n"
+msgstr "無法解讀版本字串\"%s\"\n"
+
+#: pg_dump.c:551
+#, c-format
+msgid "last built-in OID is %u\n"
+msgstr "最後的內建OID是 %u\n"
+
+#: pg_dump.c:663
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
 "\n"
 msgstr ""
-"%s �N��Ʈw��X���¤�r�ɮשάO�䥦�榡�C\n"
+"%s 將資料庫備份成純文字檔案或是其它格式。\n"
 "\n"
 
-#: pg_dump.c:137
-msgid "Usage:"
-msgstr "�ϥΪk:"
+#: pg_dump.c:664
+#: pg_dumpall.c:311
+#: pg_restore.c:354
+msgid "Usage:\n"
+msgstr "使用方法:\n"
 
-#: pg_dump.c:138
+#: pg_dump.c:665
 #, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [選項]... [資料庫名稱]\n"
+
+#: pg_dump.c:667
+#: pg_dumpall.c:314
+#: pg_restore.c:357
 msgid ""
-"  %s [options] dbname\n"
 "\n"
+"General options:\n"
 msgstr ""
-"  %s [�ﶵ] ��Ʈw�W��\n"
 "\n"
+"一般選項:\n"
 
-#: pg_dump.c:139
-msgid "Options:"
-msgstr "�ﶵ:"
+#: pg_dump.c:668
+#: pg_restore.c:359
+msgid "  -f, --file=FILENAME      output file name\n"
+msgstr "  -f, --file=FILENAME      備份檔名\n"
 
-#: pg_dump.c:143
+#: pg_dump.c:669
+msgid "  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"
+msgstr "  -F, --format=c|t|p       備份格式(custom, tar, plain text)\n"
+
+#: pg_dump.c:670
 msgid ""
-"  -a, --data-only          dump only the data, not the schema\n"
-"  -b, --blobs              include large objects in dump\n"
-"  -c, --clean              clean (drop) schema prior to create\n"
-"  -C, --create             include commands to create database in dump\n"
-"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
-"  -D, --column-inserts     dump data as INSERT commands with column names\n"
-"  -f, --file=FILENAME      output file name\n"
-"  -F, --format {c|t|p}     output file format (custom, tar, plain text)\n"
-"  -h, --host=HOSTNAME      database server host name\n"
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dump version\n"
-"  -n, --no-quotes          suppress most quotes around identifiers\n"
-"  -N, --quotes             enable most quotes around identifiers\n"
-"  -o, --oids               include oids in dump\n"
-"  -O, --no-owner           do not output \\connect commands in plain\n"
-"                           text format\n"
-"  -p, --port=PORT          database server port number\n"
-"  -R, --no-reconnect       disable ALL reconnections to the database in\n"
-"                           plain text format\n"
-"  -s, --schema-only        dump only the schema, no data\n"
+msgstr "  -i, --ignore-version     伺服器版本和pg_dump版本不符時繼續執行\n"
+
+#: pg_dump.c:672
+#: pg_restore.c:363
+msgid "  -v, --verbose            verbose mode\n"
+msgstr "  -v, --verbose            顯示詳細執行訊息\n"
+
+#: pg_dump.c:673
+msgid "  -Z, --compress=0-9       compression level for compressed formats\n"
+msgstr "  -Z, --compress=0-9       指定壓縮格式的壓縮率\n"
+
+#: pg_dump.c:674
+#: pg_dumpall.c:317
+#: pg_restore.c:364
+msgid "  --help                   show this help, then exit\n"
+msgstr "  --help                   顯示這份說明然後結束\n"
+
+#: pg_dump.c:675
+#: pg_dumpall.c:318
+#: pg_restore.c:365
+msgid "  --version                output version information, then exit\n"
+msgstr "  --version                顯示版本資訊然後結束\n"
+
+#: pg_dump.c:677
+#: pg_dumpall.c:319
+#: pg_restore.c:367
+msgid ""
+"\n"
+"Options controlling the output content:\n"
+msgstr ""
+"\n"
+"控制備份內容的選項:\n"
+
+#: pg_dump.c:678
+#: pg_dumpall.c:320
+msgid "  -a, --data-only          dump only the data, not the schema\n"
+msgstr "  -a, --data-only          只備份資料，不備份schema\n"
+
+#: pg_dump.c:679
+msgid "  -b, --blobs              include large objects in dump\n"
+msgstr "  -b, --blobs              備份large object\n"
+
+#: pg_dump.c:680
+#: pg_restore.c:369
+msgid "  -c, --clean              clean (drop) schema prior to create\n"
+msgstr "  -c, --clean              建立schema前先清理(刪除)schema\n"
+
+#: pg_dump.c:681
+msgid "  -C, --create             include commands to create database in dump\n"
+msgstr "  -C, --create             將建立資料庫的命令加入備份檔\n"
+
+#: pg_dump.c:682
+#: pg_dumpall.c:322
+msgid "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
+msgstr "  -d, --inserts            將資料備份成INSERT命令，不使用COPY命令\n"
+
+#: pg_dump.c:683
+#: pg_dumpall.c:323
+msgid "  -D, --column-inserts     dump data as INSERT commands with column names\n"
+msgstr "  -D, --column-inserts     將資料備份成包含欄位名稱的INSERT命令\n"
+
+#: pg_dump.c:684
+msgid "  -n, --schema=SCHEMA      dump the named schema only\n"
+msgstr "  -n, --schema=SCHEMA     只備份指定的schema\n"
+
+#: pg_dump.c:685
+#: pg_dumpall.c:325
+msgid "  -o, --oids               include OIDs in dump\n"
+msgstr "  -o, --oids               備份OID\n"
+
+#: pg_dump.c:686
+msgid ""
+"  -O, --no-owner           do not output commands to set object ownership\n"
+"                           in plain text format\n"
+msgstr "  -O, --no-owner           不備份物件的擁有關係至純文字格式\n"
+
+#: pg_dump.c:688
+#: pg_dumpall.c:327
+msgid "  -s, --schema-only        dump only the schema, no data\n"
+msgstr "  -s, --schema-only        只備份schema，不備份資料\n"
+
+#: pg_dump.c:689
+msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use in\n"
 "                           plain text format\n"
-"  -t, --table=TABLE        dump this table only (* for all)\n"
-"  -U, --username=NAME      connect as specified database user\n"
-"  -v, --verbose            verbose mode\n"
-"  -W, --password           force password prompt (should happen "
-"automatically)\n"
-"  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
-"  -X use-set-session-authorization, --use-set-session-authorization\n"
-"                           output SET SESSION AUTHORIZATION commands rather\n"
-"                           than \\connect commands\n"
-"  -Z, --compress {0-9}     compression level for compressed formats\n"
-msgstr ""
-"  -a, --data-only          �u��X��ơA���]�A�j��\n"
-"  -b, --blobs              �b��X���]�t���O�� BLOB �����\n"
-"  -c, --clean              �b�إߤ��e�M�z(�R��)�j��\n"
-"  -C, --create             ��X�إ߸�Ʈw�����O\n"
-"  -d, --inserts            �N��ƥH INSERT ���Φ���X�A�ӫD COPY ���O���Φ�\n"
-"  -D, --column-inserts     �N��ƥH�a�����W�٪� INSERT �Φ���X\n"
-"  -f, --file=�ɮצW��      ��X�ɮצW��\n"
-"  -F, --format {c|t|p}     ��X�ɮ׮榡(�۩w�Btar�B�¤�r)\n"
-"  -h, --host=�D���W��      ��Ʈw���A���D���W��\n"
-"  -i, --ignore-version     �Y�Ϧ��A�������M pg_dump �������ŦX�]�~�����\n"
-"  -n, --no-quotes          ����b�ХܲŸ��P��ϥΤ޸�\n"
-"  -N, --quotes             �i�H�b�ХܲŸ��P��ϥΤ޸�\n"
-"  -o, --oids               �b��X���]�A oid\n"
-"  -O, --no-owner           �b�¤�r�榡�����n�]�A \\connect ���O\n"
-"  -p, --port=��          ��Ʈw���A����\n"
-"  -R, --no-reconnect       �b�¤�r�榡�������Ҧ��P��Ʈw�����s�s��\n"
-"  -s, --schema-only        �u��X��ƪ��j���A����X���\n"
-"  -S, --superuser=�W��     ���w�b�¤�r�Ҧ����ϥΪ��W�ŨϥΪ�\n"
-"  -t, --table=��ƪ��W��   �u��X�o�Ӹ�ƪ� (* ���ܿ�X�Ҧ���ƪ�)\n"
-"  -U, --username=�W��      �H���w����Ʈw�ϥΪ̳s��\n"
-"  -v, --verbose            �ԲӼҦ�\n"
-"  -W, --password           �j��K�X�߰� (���Ӧ۰ʸ߰�)\n"
-"  -x, --no-privileges      ����X�v�� (grant/revoke)\n"
-"  -X use-set-session-authorization, --use-set-session-authorization\n"
-"                           ��X SET SESSION AUTHORIZATION ���O�Ӥ��O\n"
-"                           \\connect ���O\n"
-"  -Z, --compress {0-9}     ���Y�榡�����Y����\n"
+msgstr "  -S, --superuser=NAME     指定純文字格式使用的管理者名稱\n"
 
-#: pg_dump.c:177
-msgid ""
-"  -a                       dump only the data, not the schema\n"
-"  -b                       include large objects in dump\n"
-"  -c                       clean (drop) schema prior to create\n"
-"  -C                       include commands to create database in dump\n"
-"  -d                       dump data as INSERT, rather than COPY, commands\n"
-"  -D                       dump data as INSERT commands with column names\n"
-"  -f FILENAME              output file name\n"
-"  -F {c|t|p}               output file format (custom, tar, plain text)\n"
-"  -h HOSTNAME              database server host name\n"
-"  -i                       proceed even when server version mismatches\n"
-"                           pg_dump version\n"
-"  -n                       suppress most quotes around identifiers\n"
-"  -N                       enable most quotes around identifiers\n"
-"  -o                       include oids in dump\n"
-"  -O                       do not output \\connect commands in plain\n"
-"                           text format\n"
-"  -p PORT                  database server port number\n"
-"  -R                       disable ALL reconnections to the database in\n"
-"                           plain text format\n"
-"  -s                       dump only the schema, no data\n"
-"  -S NAME                  specify the superuser user name to use in\n"
-"                           plain text format\n"
-"  -t TABLE                 dump this table only (* for all)\n"
-"  -U NAME                  connect as specified database user\n"
-"  -v                       verbose mode\n"
-"  -W                       force password prompt (should happen "
-"automatically)\n"
-"  -x                       do not dump privileges (grant/revoke)\n"
-"  -X use-set-session-authorization\n"
-"                           output SET SESSION AUTHORIZATION commands rather\n"
-"                           than \\connect commands\n"
-"  -Z {0-9}                 compression level for compressed formats\n"
-msgstr ""
-"  -a                       �u��X��ơA���]�A�j��\n"
-"  -b                       �b��X���]�t���O�� BLOB �����\n"
-"  -c                       �b�إߤ��e�M�z(�R��)�j��\n"
-"  -C                       �b��X���]�A�إ߸�Ʈw�����O\n"
-"  -d                       �N��ƥH INSERT �Φ���X�A�ӫD COPY ���O\n"
-"  -D                       �N��ƥH�a���W�٪� INSERT ���O�Φ���X\n"
-"  -f �ɮצW��              ��X�ɮצW��\n"
-"  -F {c|t|p}               ��X�ɮ׮榡(�۩w�Btar�B�¤�r)\n"
-"  -h �D���W��              ��Ʈw���A���D���W��\n"
-"  -i                       �Y�Ϧ��A�������M pg_dump �������ŦX�]�~�����\n"
-"  -n                       ����b�ХܲŸ��P��ϥΤ޸�\n"
-"  -N                       �i�H�b�ХܲŸ��P��ϥΤ޸�\n"
-"  -o                       �b��X���]�A oid\n"
-"  -O                       �b�¤�r�榡������X \\connect ���O\n"
-"  -p ��                  ��Ʈw���A����\n"
-"  -R                       �b�¤�r�榡�������Ҧ��P��Ʈw�����s�s��\n"
-"  -s                       �u��X�j���A���]�A���\n"
-"  -S �W��                  ���w�b�¤�r�榡���ϥΪ��W�ŨϥΪ�\n"
-"  -t ��ƪ�                �u��X�o�Ӹ�ƪ� (* ���ܥ�����ƪ�)\n"
-"  -U �W��                  �H���w����Ʈw�ϥΪ̳s��\n"
-"  -v                       �ԲӼҦ�\n"
-"  -W                       �j��K�X�߰� (���Ӧ۰ʸ߰�)\n"
-"  -x                       ����X�v�� (grant/revoke)\n"
-"  -X use-set-session-authorization\n"
-"                           ��X SET SESSION AUTHORIZATION ���O, �Ӥ��O\n"
-"                           \\connect ���O\n"
-"  -Z {0-9}                 ���Y�榡�����Y����\n"
+#: pg_dump.c:691
+msgid "  -t, --table=TABLE        dump the named table only\n"
+msgstr "  -t, --table=TABLE        只備份指定的資料表\n"
 
-#: pg_dump.c:210
+#: pg_dump.c:692
+#: pg_dumpall.c:329
+msgid "  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
+msgstr "  -x, --no-privileges      不備份權限設定(grant/revoke)\n"
+
+#: pg_dump.c:693
+#: pg_dumpall.c:330
 msgid ""
-"If no database name is not supplied, then the PGDATABASE environment\n"
+"  -X disable-dollar-quoting, --disable-dollar-quoting\n"
+"                           disable dollar quoting, use SQL standard quoting\n"
+msgstr ""
+"  -X disable-dollar-quoting, --disable-dollar-quoting\n"
+"                           關閉dollar quoting，使用SQL標準quoting\n"
+
+#: pg_dump.c:695
+#: pg_dumpall.c:332
+#: pg_restore.c:383
+msgid ""
+"  -X disable-triggers, --disable-triggers\n"
+"                           disable triggers during data-only restore\n"
+msgstr ""
+"  -X disable-triggers, --disable-triggers\n"
+"                           還原data-only備份時關閉trigger\n"
+
+#: pg_dump.c:697
+#: pg_dumpall.c:334
+#: pg_restore.c:385
+msgid ""
+"  -X use-set-session-authorization, --use-set-session-authorization\n"
+"                           use SESSION AUTHORIZATION commands instead of\n"
+"                           OWNER TO commands\n"
+msgstr ""
+"  -X use-set-session-authorization, --use-set-session-authorization\n"
+"                           用SESSION AUTHORIZATION命令取代\n"
+"                           OWNER TO命令\n"
+
+#: pg_dump.c:701
+#: pg_dumpall.c:338
+#: pg_restore.c:389
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"連線選項:\n"
+
+#: pg_dump.c:702
+#: pg_dumpall.c:339
+#: pg_restore.c:390
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr "  -h, --host=主機名稱      資料庫伺服器主機或socket目錄\n"
+
+#: pg_dump.c:703
+#: pg_dumpall.c:340
+#: pg_restore.c:391
+msgid "  -p, --port=PORT          database server port number\n"
+msgstr "  -p, --port=埠號          資料庫伺服器埠號\n"
+
+#: pg_dump.c:704
+#: pg_dumpall.c:341
+#: pg_restore.c:392
+msgid "  -U, --username=NAME      connect as specified database user\n"
+msgstr "  -U, --username=NAME      以指定的資料庫使用者連線\n"
+
+#: pg_dump.c:705
+#: pg_dumpall.c:342
+#: pg_restore.c:393
+msgid "  -W, --password           force password prompt (should happen automatically)\n"
+msgstr "  -W, --password           強制詢問密碼(應該會自動詢問)\n"
+
+#: pg_dump.c:707
+msgid ""
+"\n"
+"If no database name is supplied, then the PGDATABASE environment\n"
 "variable value is used.\n"
 "\n"
-"Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
-"�p�G�S�����Ѹ�Ʈw�W�١A�h�ϥ� PGDATABASE �����ܼơC\n"
 "\n"
-"�V <pgsql-bugs@postgresql.org> ���i����."
+"如果沒有提供資料庫名稱，則使用環境變數PGDATABASE。\n"
+"\n"
 
-#: pg_dump.c:874 pg_restore.c:263
-msgid "User name: "
-msgstr "�ϥΪ̦W��: "
+#: pg_dump.c:709
+#: pg_dumpall.c:345
+#: pg_restore.c:396
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "回報錯誤至<pgsql-bugs@postgresql.org>。\n"
 
-#: pg_dump.c:906 pg_restore.c:288
+#: pg_backup_archiver.c:1195
+#: pg_dump.c:717
+msgid "*** aborted because of error\n"
+msgstr "*** 因為發生錯誤而中止\n"
+
+#: pg_dump.c:799
 #, c-format
-msgid "%s: invalid -X option -- %s\n"
-msgstr "%s: �L�Ī� -X �ﶵ -- %s\n"
+msgid "dumping contents of table %s\n"
+msgstr "備份資料表 %s\n"
 
-#: pg_dump.c:908 pg_dump.c:930 pg_restore.c:290 pg_restore.c:302
+#: pg_dump.c:911
 #, c-format
-msgid "Try '%s --help' for more information.\n"
-msgstr "��J '%s --help' �H��ܧ�h�T���C\n"
+msgid "SQL command to dump the contents of table \"%s\" failed: PQendcopy() failed.\n"
+msgstr "備分資料表\"%s\"的SQL命令失敗: PQendcopy()失敗。\n"
 
-#: pg_dump.c:919
+#: pg_dump.c:912
+#: pg_dump.c:8009
 #, c-format
-msgid ""
-"%s was compiled without support for long options.\n"
-"Use --help for help on invocation options.\n"
+msgid "Error message from server: %s"
+msgstr "收到伺服器的錯誤訊息: %s"
+
+#: pg_dump.c:913
+#: pg_dump.c:8010
+#, c-format
+msgid "The command was: %s\n"
+msgstr "命令是: %s\n"
+
+#: pg_dump.c:1182
+msgid "saving database definition\n"
+msgstr "儲存資料庫定義\n"
+
+#: pg_dump.c:1228
+#, c-format
+msgid "missing pg_database entry for database \"%s\"\n"
+msgstr "資料庫\"%s\"中沒有pg_database\n"
+
+#: pg_dump.c:1235
+#, c-format
+msgid "query returned more than one (%d) pg_database entry for database \"%s\"\n"
+msgstr "查詢傳回一個以上(%d)的pg_database於資料庫\"%s\"\n"
+
+#: pg_dump.c:1343
+msgid "saving encoding\n"
+msgstr "儲存編碼\n"
+
+#: pg_dump.c:1393
+msgid "saving large objects\n"
+msgstr "儲存large object\n"
+
+#: pg_dump.c:1426
+#, c-format
+msgid "dumpBlobs(): could not open large object: %s"
+msgstr "dumpBlobs(): 無法開啟large object: %s"
+
+#: pg_dump.c:1439
+#, c-format
+msgid "dumpBlobs(): error reading large object: %s"
+msgstr "dumpBlobs(): 無法讀取large object: %s"
+
+#: pg_dump.c:1573
+#, c-format
+msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
+msgstr "警告：schema \"%s\"的擁有者無效\n"
+
+#: pg_dump.c:1590
+#, c-format
+msgid "specified schema \"%s\" does not exist\n"
+msgstr "指定的schema \"%s\"不存在\n"
+
+#: pg_dump.c:1627
+#, c-format
+msgid "schema with OID %u does not exist\n"
+msgstr "OID為%u的schema不存在\n"
+
+#: pg_dump.c:1812
+#, c-format
+msgid "WARNING: owner of data type \"%s\" appears to be invalid\n"
+msgstr "警告：data type \"%s\"的擁有者無效\n"
+
+#: pg_dump.c:1910
+#, c-format
+msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
+msgstr "警告：operator \"%s\"的擁有者無效\n"
+
+#: pg_dump.c:2075
+#, c-format
+msgid "WARNING: owner of operator class \"%s\" appears to be invalid\n"
+msgstr "警告：operator class \"%s\"的擁有者無效\n"
+
+#: pg_dump.c:2179
+#, c-format
+msgid "WARNING: owner of aggregate function \"%s\" appears to be invalid\n"
+msgstr "警告：aggregate function \"%s\"的擁有者無效\n"
+
+#: pg_dump.c:2312
+#, c-format
+msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
+msgstr "警告：函式\"%s\"的擁有者無效\n"
+
+#: pg_dump.c:2590
+#, c-format
+msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
+msgstr "警告：資料表\"%s\"的擁有者無效\n"
+
+#: pg_dump.c:2608
+#, c-format
+msgid "specified table \"%s\" does not exist\n"
+msgstr "指定的資料表\"%s\"不存在\n"
+
+#: pg_dump.c:2714
+#, c-format
+msgid "reading indexes for table \"%s\"\n"
+msgstr "讀取資料表\"%s\"的索引\n"
+
+#: pg_dump.c:2921
+#, c-format
+msgid "reading foreign key constraints for table \"%s\"\n"
+msgstr "為資料表\"%s\"讀取外鍵constraints\n"
+
+#: pg_dump.c:3196
+#, c-format
+msgid "reading triggers for table \"%s\"\n"
+msgstr "為資料表\"%s\"讀取triggers\n"
+
+#: pg_dump.c:3268
+#, c-format
+msgid "expected %d triggers on table \"%s\" but found %d\n"
+msgstr "預期有 %d 個triggers在資料表\"%s\"，但是找到 %d 個\n"
+
+#: pg_dump.c:3313
+#, c-format
+msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n"
 msgstr ""
-"%s �sĶ�ɥ��[�J���ﶵ�䴩�C\n"
-"�� --help ��ܿﶵ�������C\n"
 
-#: pg_dump.c:938
+#: pg_dump.c:3613
 #, c-format
-msgid ""
-"%s: too many command line options (first is '%s')\n"
-"Try '%s --help' for more information.\n"
-msgstr ""
-"%s: ���O�ѼƹL�h (�Ĥ@�ӬO '%s')\n"
-"��J '%s --help' ��ܧ�h�T���C\n"
+msgid "finding the columns and types of table \"%s\"\n"
+msgstr "尋找資料表\"%s\"的欄位和型別\n"
 
-#: pg_backup_archiver.c:106
+#: pg_dump.c:3699
+#, c-format
+msgid "invalid column numbering in table \"%s\"\n"
+msgstr "無效的欄位編號於資料表\"%s\"\n"
+
+#: pg_dump.c:3733
+#, c-format
+msgid "finding default expressions of table \"%s\"\n"
+msgstr "尋找資料表\"%s\"的預設expressions\n"
+
+#: pg_dump.c:3816
+#, c-format
+msgid "invalid adnum value %d for table \"%s\"\n"
+msgstr "無效的adnum值 %d 於資料表\"%s\"\n"
+
+#: pg_dump.c:3834
+#, c-format
+msgid "finding check constraints for table \"%s\"\n"
+msgstr "尋找資料表\"%s\"的check constraints\n"
+
+#: pg_dump.c:3898
+#, c-format
+msgid "expected %d check constraints on table \"%s\" but found %d\n"
+msgstr "預期有 %d 個check constraints在資料表\"%s\"上，但是找到 %d 個\n"
+
+#: pg_dump.c:3900
+msgid "(The system catalogs might be corrupted.)\n"
+msgstr "(系統catalog可能已經損壞。)\n"
+
+#: pg_dump.c:4586
+#: pg_dump.c:4751
+#: pg_dump.c:5151
+#: pg_dump.c:5535
+#: pg_dump.c:5832
+#: pg_dump.c:6032
+#: pg_dump.c:6215
+#, c-format
+msgid "Got %d rows instead of one from: %s"
+msgstr "從到 %d 筆資料，而非一筆來自: %s"
+
+#: pg_dump.c:4859
+#, c-format
+msgid "query yielded no rows: %s\n"
+msgstr "放棄查詢，沒有資料: %s\n"
+
+#: pg_dump.c:5206
+msgid "WARNING: could not parse proargnames array\n"
+msgstr "警告：無法解讀proargnames陣列\n"
+
+#: pg_dump.c:5243
+#, c-format
+msgid "unrecognized provolatile value for function \"%s\"\n"
+msgstr "無法識別函式\"%s\"的provolatile值\n"
+
+#: pg_dump.c:5757
+#, c-format
+msgid "WARNING: could not find operator with OID %s\n"
+msgstr "警告：找不到OID為%s的operator\n"
+
+#: pg_dump.c:6243
+#, c-format
+msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
+msgstr "警告：此資料庫版本無法正確備份aggregate function %s，予以忽略\n"
+
+#: pg_dump.c:6375
+#, c-format
+msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
+msgstr "無法解讀ACL清單(%s)於物件\"%s\" (%s)\n"
+
+#: pg_dump.c:6468
+#, c-format
+msgid "query to obtain definition of view \"%s\" returned no data\n"
+msgstr "用來取得view \"%s\"定義的查詢未傳回資料\n"
+
+#: pg_dump.c:6471
+#, c-format
+msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
+msgstr "用來取得view \"%s\"定義的查詢傳回一筆以上的定義\n"
+
+#: pg_dump.c:6480
+#, c-format
+msgid "definition of view \"%s\" appears to be empty (length zero)\n"
+msgstr "view \"%s\"的定義似乎是空的(長度為0)\n"
+
+#: pg_dump.c:6787
+#, c-format
+msgid "invalid column number %d for table \"%s\"\n"
+msgstr "無效的欄位編號 %d 於資料表\"%s\"\n"
+
+#: pg_dump.c:6888
+#, c-format
+msgid "missing index for constraint %s\n"
+msgstr "找不到constraint %s 的索引\n"
+
+#: pg_dump.c:7044
+msgid "unexpected constraint type\n"
+msgstr "預期外的constraint型別\n"
+
+#: pg_dump.c:7086
+msgid "inserted invalid OID\n"
+msgstr "插入無效的OID\n"
+
+#: pg_dump.c:7092
+#, c-format
+msgid "maximum system OID is %u\n"
+msgstr "最大的系統OID是%u\n"
+
+#: pg_dump.c:7133
+msgid "missing pg_database entry for this database\n"
+msgstr "資料庫中沒有pg_database\n"
+
+#: pg_dump.c:7138
+msgid "found more than one pg_database entry for this database\n"
+msgstr "資料庫中發現一個以上的pg_database\n"
+
+#: pg_dump.c:7170
+msgid "could not find entry for pg_indexes in pg_class\n"
+msgstr "pg_class中找不到pg_indexes\n"
+
+#: pg_dump.c:7175
+msgid "found more than one entry for pg_indexes in pg_class\n"
+msgstr "pg_class中發現一個以上的pg_indexes\n"
+
+#: pg_dump.c:7224
+#, c-format
+msgid "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
+msgstr "取得sequence \"%s\"資料的查詢傳回 %d 筆資料(預期是 1)\n"
+
+#: pg_dump.c:7233
+#, c-format
+msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
+msgstr "取得sequence \"%s\"資料的查詢傳回名稱\"%s\"\n"
+
+#: pg_dump.c:7468
+#, c-format
+msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
+msgstr ""
+
+#: pg_dump.c:7574
+#, c-format
+msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
+msgstr "取得rule \"%s\"於資料表\"%s\"的查詢失敗: 傳回錯誤的筆數"
+
+#: pg_dump.c:7641
+msgid "fetching dependency data\n"
+msgstr "讀取依存資料\n"
+
+#: pg_dump.c:7817
+#, c-format
+msgid "query yielded %d rows instead of one: %s\n"
+msgstr "查詢放棄 %d 筆記錄，而非一筆: %s\n"
+
+#: pg_dump.c:8004
+msgid "SQL command failed\n"
+msgstr "SQL命令失敗\n"
+
+#: common.c:99
+msgid "reading schemas\n"
+msgstr "讀取schemas\n"
+
+#: common.c:103
+msgid "reading user-defined functions\n"
+msgstr "讀取使用者自定函式\n"
+
+#: common.c:108
+msgid "reading user-defined types\n"
+msgstr "讀取使用者自定型別\n"
+
+#: common.c:113
+msgid "reading procedural languages\n"
+msgstr "讀取程序語言\n"
+
+#: common.c:117
+msgid "reading user-defined aggregate functions\n"
+msgstr "讀取使用者自定aggregate function\n"
+
+#: common.c:121
+msgid "reading user-defined operators\n"
+msgstr "讀取使用者自定operator\n"
+
+#: common.c:125
+msgid "reading user-defined operator classes\n"
+msgstr "讀取使用者自定operator classe\n"
+
+#: common.c:129
+msgid "reading user-defined conversions\n"
+msgstr "讀取使用者自定conversion\n"
+
+#: common.c:133
+msgid "reading user-defined tables\n"
+msgstr "讀取使用者自定table\n"
+
+#: common.c:137
+msgid "reading table inheritance information\n"
+msgstr "讀取資料表繼承資訊\n"
+
+#: common.c:141
+msgid "reading rewrite rules\n"
+msgstr "讀取rewrite rule\n"
+
+#: common.c:145
+msgid "reading type casts\n"
+msgstr "讀取type cast\n"
+
+#: common.c:150
+msgid "finding inheritance relationships\n"
+msgstr "尋找繼承關係\n"
+
+#: common.c:154
+msgid "reading column info for interesting tables\n"
+msgstr "讀取複雜資料表的欄位資訊\n"
+
+#: common.c:158
+msgid "flagging inherited columns in subtables\n"
+msgstr "標記子資料表所繼承的欄位\n"
+
+#: common.c:162
+msgid "reading indexes\n"
+msgstr "讀取索引\n"
+
+#: common.c:166
+msgid "reading constraints\n"
+msgstr "讀取constraint\n"
+
+#: common.c:170
+msgid "reading triggers\n"
+msgstr "讀取trigger\n"
+
+#: common.c:421
+#: common.c:553
+#: common.c:587
+#: pg_backup_archiver.c:602
+#: pg_backup_archiver.c:946
+#: pg_backup_archiver.c:1060
+#: pg_backup_archiver.c:1469
+#: pg_backup_archiver.c:1619
+#: pg_backup_archiver.c:1652
+#: pg_backup_custom.c:141
+#: pg_backup_custom.c:146
+#: pg_backup_custom.c:152
+#: pg_backup_custom.c:167
+#: pg_backup_custom.c:544
+#: pg_backup_db.c:152
+#: pg_backup_db.c:228
+#: pg_backup_files.c:112
+#: pg_backup_tar.c:168
+#: pg_backup_tar.c:960
+msgid "out of memory\n"
+msgstr "記憶體用盡\n"
+
+#: common.c:728
+#, c-format
+msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
+msgstr ""
+
+#: common.c:770
+msgid "could not parse numeric array: too many numbers\n"
+msgstr "無法解讀數字陣列: 過多數字\n"
+
+#: common.c:785
+msgid "could not parse numeric array: invalid character in number\n"
+msgstr "無法解讀數字陣列: 數字包含無效字元\n"
+
+#: pg_backup_archiver.c:45
 msgid "archiver"
-msgstr "�k��"
+msgstr "壓縮器"
 
-#: pg_backup_custom.c:105
+#: pg_backup_archiver.c:126
+msgid "could not close output archive file\n"
+msgstr "無法關閉備份檔\n"
+
+#: pg_backup_archiver.c:152
+msgid "-C and -c are incompatible options\n"
+msgstr "-C 和 -c 選項不可以同時使用\n"
+
+#: pg_backup_archiver.c:159
+msgid "connecting to database for restore\n"
+msgstr "連線至資料庫以進行還原\n"
+
+#: pg_backup_archiver.c:161
+msgid "direct database connections are not supported in pre-1.3 archives\n"
+msgstr "直接連線至資料庫在pre-1.3備份檔不被支援\n"
+
+#: pg_backup_archiver.c:198
+msgid "implied data-only restore\n"
+msgstr "使用data-only還原\n"
+
+#: pg_backup_archiver.c:227
+#, c-format
+msgid "dropping %s %s\n"
+msgstr "刪除 %s %s\n"
+
+#: pg_backup_archiver.c:251
+#: pg_backup_archiver.c:253
+#, c-format
+msgid "warning from original dump file: %s\n"
+msgstr "來自備份檔的警告訊息: %s\n"
+
+#: pg_backup_archiver.c:260
+#, c-format
+msgid "creating %s %s\n"
+msgstr "建立 %s %s\n"
+
+#: pg_backup_archiver.c:268
+#, c-format
+msgid "connecting to new database \"%s\" as user \"%s\"\n"
+msgstr "連線到新的資料庫\"%s\"以使用者\"%s\"\n"
+
+#: pg_backup_archiver.c:293
+msgid "cannot restore from compressed archive (not configured for compression support)\n"
+msgstr "無法從被壓縮的備份檔還原(未設定壓縮支援)\n"
+
+#: pg_backup_archiver.c:313
+msgid "WARNING: skipping large-object restoration\n"
+msgstr "警告：跳過large-object還原\n"
+
+#: pg_backup_archiver.c:323
+#, c-format
+msgid "restoring data for table \"%s\"\n"
+msgstr "還原資料表\"%s\"的資料\n"
+
+#: pg_backup_archiver.c:355
+#: pg_backup_archiver.c:440
+#, c-format
+msgid "fixing up large-object cross-reference for \"%s\"\n"
+msgstr "為\"%s\"修正large-object交叉參考\n"
+
+#: pg_backup_archiver.c:366
+#, c-format
+msgid "executing %s %s\n"
+msgstr "執行 %s %s\n"
+
+#: pg_backup_archiver.c:386
+#, c-format
+msgid "setting owner and acl for %s %s\n"
+msgstr "為 %s %s 設定擁有者和acl\n"
+
+#: pg_backup_archiver.c:502
+msgid "disabling triggers\n"
+msgstr "關閉trigger\n"
+
+#: pg_backup_archiver.c:541
+msgid "enabling triggers\n"
+msgstr "啟用trigger\n"
+
+#: pg_backup_archiver.c:576
+msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n"
+msgstr "內部錯誤 -- 不能在DataDumper之外的函式呼叫WriteData\n"
+
+#: pg_backup_archiver.c:709
+msgid "large-object output not supported in chosen format\n"
+msgstr "所選擇的格式不支援備份large-object\n"
+
+#: pg_backup_archiver.c:749
+#: pg_backup_archiver.c:837
+msgid "committing large-object transactions\n"
+msgstr "確認large-object交易\n"
+
+#: pg_backup_archiver.c:759
+#, c-format
+msgid "restored %d large objects\n"
+msgstr "已備份 %d large objects\n"
+
+#: pg_backup_archiver.c:776
+msgid "cannot restore large objects without a database connection\n"
+msgstr "沒有資料庫連線無法還原large objects\n"
+
+#: pg_backup_archiver.c:790
+msgid "starting large-object transactions\n"
+msgstr "開始large-object交易\n"
+
+#: pg_backup_archiver.c:798
+msgid "could not create large object\n"
+msgstr "無法建立large object\n"
+
+#: pg_backup_archiver.c:800
+#, c-format
+msgid "restoring large object with OID %u as %u\n"
+msgstr "將large object的OID %u還原成 %u\n"
+
+#: pg_backup_archiver.c:806
+msgid "could not open large object\n"
+msgstr "無法開啟large object\n"
+
+#: pg_backup_archiver.c:821
+#, c-format
+msgid "wrote remaining %lu bytes of large-object data (result = %lu)\n"
+msgstr "寫入large object剩餘的 %lu 個位元組(結果=%lu)\n"
+
+#: pg_backup_archiver.c:824
+#: pg_backup_archiver.c:1117
+#, c-format
+msgid "could not write to large object (result: %lu, expected: %lu)\n"
+msgstr "無法寫至large object(結果: %lu，預期: %lu)\n"
+
+#: pg_backup_archiver.c:870
+msgid "could not open TOC file\n"
+msgstr "無法開啟TOC檔案\n"
+
+#: pg_backup_archiver.c:891
+#, c-format
+msgid "WARNING: line ignored: %s\n"
+msgstr "警告：忽略行: %s\n"
+
+#: pg_backup_archiver.c:898
+#, c-format
+msgid "could not find entry for ID %d\n"
+msgstr "找不到ID為 %d 的entry\n"
+
+#: pg_backup_archiver.c:908
+#: pg_backup_files.c:156
+#: pg_backup_files.c:439
+#, c-format
+msgid "could not close TOC file: %s\n"
+msgstr "無法關閉TOC檔案: %s\n"
+
+#: pg_backup_archiver.c:1008
+#: pg_backup_files.c:130
+#, c-format
+msgid "could not open output file: %s\n"
+msgstr "無法開啟備份檔: %s\n"
+
+#: pg_backup_archiver.c:1024
+#, c-format
+msgid "could not close output file: %s\n"
+msgstr "無法關閉備份檔: %s\n"
+
+#: pg_backup_archiver.c:1113
+#, c-format
+msgid "wrote %lu bytes of large object data (result = %lu)\n"
+msgstr "寫入 %lu 個位元組的large object(結果=%lu)\n"
+
+#: pg_backup_archiver.c:1135
+msgid "could not write to compressed archive\n"
+msgstr "無法寫入壓縮檔\n"
+
+#: pg_backup_archiver.c:1143
+msgid "could not write to custom output routine\n"
+msgstr "無法寫入自定備份函式\n"
+
+#: pg_backup_archiver.c:1158
+#, c-format
+msgid "could not write to output file (%lu != %lu)\n"
+msgstr "無法寫入備份檔(%lu != %lu)\n"
+
+#: pg_backup_archiver.c:1362
+#, c-format
+msgid "Unexpected data offset flag %d\n"
+msgstr "預期外的資料位移旗標 %d\n"
+
+#: pg_backup_archiver.c:1375
+msgid "file offset in dump file is too large\n"
+msgstr "備份檔的檔案位移太大\n"
+
+#: pg_backup_archiver.c:1487
+msgid "attempting to ascertain archive format\n"
+msgstr "嘗試確認備份檔格式\n"
+
+#: pg_backup_archiver.c:1507
+#: pg_backup_files.c:148
+#, c-format
+msgid "could not open input file: %s\n"
+msgstr "無法開啟輸入檔: %s\n"
+
+#: pg_backup_archiver.c:1514
+#, c-format
+msgid "could not read input file: %s\n"
+msgstr "無法讀取輸入檔: %s\n"
+
+#: pg_backup_archiver.c:1516
+#, c-format
+msgid "input file is too short (read %lu, expected 5)\n"
+msgstr "輸入檔太小(讀到 %lu，預期 5)\n"
+
+#: pg_backup_archiver.c:1569
+msgid "input file does not appear to be a valid archive (too short?)\n"
+msgstr "輸入檔似乎不是正確的備份檔(太小？)\n"
+
+#: pg_backup_archiver.c:1572
+msgid "input file does not appear to be a valid archive\n"
+msgstr "輸入檔似乎不是正確的備份檔\n"
+
+#: pg_backup_archiver.c:1590
+#, c-format
+msgid "read %lu bytes into lookahead buffer\n"
+msgstr "讀取 %lu 個位元組進入lookahead緩衝區\n"
+
+#: pg_backup_archiver.c:1597
+#, c-format
+msgid "could not close the input file after reading header: %s\n"
+msgstr "讀取header後無法關閉輸入檔: %s\n"
+
+#: pg_backup_archiver.c:1614
+#, c-format
+msgid "allocating AH for %s, format %d\n"
+msgstr "為 %s 配置AH，格式 %d\n"
+
+#: pg_backup_archiver.c:1668
+#, c-format
+msgid "archive format is %d\n"
+msgstr "備份檔格式是 %d\n"
+
+#: pg_backup_archiver.c:1696
+#, c-format
+msgid "unrecognized file format \"%d\"\n"
+msgstr "無法識別的檔案格式\"%d\"\n"
+
+#: pg_backup_archiver.c:1823
+#, c-format
+msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
+msgstr "entry ID %d 超過範圍 -- 也許是TOC損壞\n"
+
+#: pg_backup_archiver.c:1905
+#, c-format
+msgid "read TOC entry %d (ID %d) for %s %s\n"
+msgstr ""
+
+#: pg_backup_archiver.c:2064
+#, c-format
+msgid "could not set session user to \"%s\": %s"
+msgstr "無法將session使用者設為\"%s\": %s"
+
+#: pg_backup_archiver.c:2427
+msgid "WARNING: requested compression not available in this installation -- archive will be uncompressed\n"
+msgstr "警告：程式不支援要求使用的壓縮法 -- 備份檔將不會被壓縮\n"
+
+#: pg_backup_archiver.c:2460
+msgid "did not find magic string in file header\n"
+msgstr "檔頭中找不到magic string\n"
+
+#: pg_backup_archiver.c:2474
+#, c-format
+msgid "unsupported version (%d.%d) in file header\n"
+msgstr "不支援的版本(%d.%d)在檔案header\n"
+
+#: pg_backup_archiver.c:2479
+#, c-format
+msgid "sanity check on integer size (%lu) failed\n"
+msgstr "整數大小(%lu)的完整性檢查失敗\n"
+
+#: pg_backup_archiver.c:2483
+msgid "WARNING: archive was made on a machine with larger integers, some operations may fail\n"
+msgstr "警告：備份檔是在支援更大整數的機器上產生的，某些操作可能失敗\n"
+
+#: pg_backup_archiver.c:2493
+#, c-format
+msgid "expected format (%d) differs from format found in file (%d)\n"
+msgstr "預期的格式(%d)與檔案中找到的格式(%d)不同\n"
+
+#: pg_backup_archiver.c:2509
+msgid "WARNING: archive is compressed, but this installation does not support compression -- no data will be available\n"
+msgstr "警告：備份檔已被壓縮，但是程式不支援壓縮功能 -- 無法讀取資料\n"
+
+#: pg_backup_archiver.c:2527
+msgid "WARNING: invalid creation date in header\n"
+msgstr "警告：header中有非法的建立日期\n"
+
+#: pg_backup_custom.c:97
 msgid "custom archiver"
-msgstr "�۩w�k��"
+msgstr "自定壓縮器"
 
-#: pg_backup_db.c:40
+#: pg_backup_custom.c:180
+#: pg_backup_custom.c:191
+#, c-format
+msgid "could not open archive file \"%s\": %s\n"
+msgstr "無法開啟備份檔\"%s\": %s\n"
+
+#: pg_backup_custom.c:389
+msgid "invalid OID for large object\n"
+msgstr "非法的large object OID\n"
+
+#: pg_backup_custom.c:447
+msgid "Dumping a specific TOC data block out of order is not supported without ID on this input stream (fseek required)\n"
+msgstr "沒有ID的輸入串流(需要fseek)不支援不依順序備份指定的TOC資料區塊\n"
+
+#: pg_backup_custom.c:462
+#, c-format
+msgid "unrecognized data block type (%d) while searching archive\n"
+msgstr "尋找備份檔時發現無法識別的資料區塊型別(%d)\n"
+
+#: pg_backup_custom.c:473
+#, c-format
+msgid "error during file seek: %s\n"
+msgstr "檔案seek發生錯誤: %s\n"
+
+#: pg_backup_custom.c:480
+#, c-format
+msgid "found unexpected block ID (%d) when reading data -- expected %d\n"
+msgstr "讀取資料時發現預期外的區塊ID(%d) -- 預期是 %d\n"
+
+#: pg_backup_custom.c:491
+msgid "large objects cannot be loaded without a database connection\n"
+msgstr "沒有資料庫連線，無法讀取large objects\n"
+
+#: pg_backup_custom.c:497
+#, c-format
+msgid "unrecognized data block type %d while restoring archive\n"
+msgstr "還原備份檔時無法識別資料區塊類型 %d\n"
+
+#: pg_backup_custom.c:531
+#: pg_backup_custom.c:893
+#, c-format
+msgid "could not initialize compression library: %s\n"
+msgstr "無法初始化壓縮程式庫: %s\n"
+
+#: pg_backup_custom.c:553
+#: pg_backup_custom.c:676
+#, c-format
+msgid "could not read data block -- expected %lu, got %lu\n"
+msgstr "無法讀取資料區塊 -- 預期是 %lu，實際是 %lu\n"
+
+#: pg_backup_custom.c:571
+#: pg_backup_custom.c:601
+#, c-format
+msgid "could not uncompress data: %s\n"
+msgstr "無法解壓縮資料: %s\n"
+
+#: pg_backup_custom.c:607
+#, c-format
+msgid "could not close compression library: %s\n"
+msgstr "無法關閉壓縮程式庫: %s\n"
+
+#: pg_backup_custom.c:704
+#, c-format
+msgid "could not write byte: %s\n"
+msgstr "無法寫入位元組: %s\n"
+
+#: pg_backup_custom.c:748
+#: pg_backup_files.c:414
+#, c-format
+msgid "write error in _WriteBuf (%lu != %lu)\n"
+msgstr "發生寫入錯誤於_WriteBuf (%lu != %lu)\n"
+
+#: pg_backup_custom.c:819
+#, c-format
+msgid "could not close archive file: %s\n"
+msgstr "無法關閉備份檔: %s\n"
+
+#: pg_backup_custom.c:842
+msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
+msgstr "警告：ftell與預期位置不符 -- 已使用ftell\n"
+
+#: pg_backup_custom.c:925
+#, c-format
+msgid "could not compress data: %s\n"
+msgstr "無法壓縮資料: %s\n"
+
+#: pg_backup_custom.c:945
+msgid "could not write compressed chunk\n"
+msgstr "無法寫入已壓縮資料\n"
+
+#: pg_backup_custom.c:959
+msgid "could not write uncompressed chunk\n"
+msgstr "無法寫入解壓縮資料\n"
+
+#: pg_backup_custom.c:1005
+#, c-format
+msgid "could not close compression stream: %s\n"
+msgstr "無法關閉壓縮串流: %s\n"
+
+#: pg_backup_db.c:31
 msgid "archiver (db)"
-msgstr "�k�� (db)"
+msgstr "壓縮器(db)"
 
-#: pg_backup_db.c:334 pg_backup_db.c:367 pg_backup_db.c:428 pg_backup_db.c:457
+#: pg_backup_db.c:64
+msgid "could not get server_version from libpq\n"
+msgstr "無法從libpq取得server_version\n"
+
+#: pg_backup_db.c:74
+#, c-format
+msgid "server version: %s; %s version: %s\n"
+msgstr "伺服器版本: %s; %s 版本: %s\n"
+
+#: pg_backup_db.c:77
+msgid "proceeding despite version mismatch\n"
+msgstr "忽略版本差異繼續執行\n"
+
+#: pg_backup_db.c:79
+msgid "aborting because of version mismatch  (Use the -i option to proceed anyway.)\n"
+msgstr "因版本不符中止執行(可用 -i 選項強制執行。)\n"
+
+#: pg_backup_db.c:146
+#, c-format
+msgid "connecting to database \"%s\" as user \"%s\"\n"
+msgstr "連線至資料庫\"%s\"以使用者\"%s\"\n"
+
+#: pg_backup_db.c:150
+#: pg_backup_db.c:183
+#: pg_backup_db.c:226
+#: pg_backup_db.c:255
+#: pg_dumpall.c:887
+#: pg_dumpall.c:913
 msgid "Password: "
-msgstr "�K�X: "
+msgstr "密碼: "
 
-#: pg_backup_files.c:77
+#: pg_backup_db.c:162
+msgid "failed to reconnect to database\n"
+msgstr "重新連線至資料庫失敗\n"
+
+#: pg_backup_db.c:186
+#, c-format
+msgid "could not reconnect to database: %s"
+msgstr "無法重新連線至資料庫: %s"
+
+#: pg_backup_db.c:222
+msgid "already connected to a database\n"
+msgstr "已經連線至資料庫\n"
+
+#: pg_backup_db.c:245
+msgid "failed to connect to database\n"
+msgstr "連線至資料庫失敗\n"
+
+#: pg_backup_db.c:264
+#, c-format
+msgid "connection to database \"%s\" failed: %s"
+msgstr "連線至資料庫\"%s\"失敗: %s"
+
+#: pg_backup_db.c:279
+#, c-format
+msgid "%s"
+msgstr ""
+
+#: pg_backup_db.c:307
+#, c-format
+msgid "%s: no result from server\n"
+msgstr "%s: 伺服器未傳回結果\n"
+
+#: pg_backup_db.c:314
+msgid "COPY command executed in non-primary connection\n"
+msgstr "COPY命令未在主要連線被執行\n"
+
+#: pg_backup_db.c:393
+msgid "error returned by PQputline\n"
+msgstr "PQputline傳回錯誤\n"
+
+#: pg_backup_db.c:404
+msgid "error returned by PQendcopy\n"
+msgstr "PQendcopy傳回錯誤\n"
+
+#: pg_backup_db.c:448
+msgid "could not execute query"
+msgstr "無法執行查詢"
+
+#: pg_backup_db.c:583
+#, c-format
+msgid "could not find OID columns of table \"%s\": %s"
+msgstr "資料表\"%s\"中找不到OID欄位: %s"
+
+#: pg_backup_db.c:589
+#, c-format
+msgid "no OID type columns in table %s\n"
+msgstr "資料表 %s 中沒有OID型別的欄位\n"
+
+#: pg_backup_db.c:603
+#, c-format
+msgid "fixing large object cross-references for %s.%s\n"
+msgstr "為 %s.%s 修正large object交叉參考\n"
+
+#: pg_backup_db.c:642
+#, c-format
+msgid "SQL: %s\n"
+msgstr ""
+
+#: pg_backup_db.c:647
+#, c-format
+msgid "could not update column \"%s\" of table \"%s\": %s"
+msgstr "無法更新欄位\"%s\"於資料表\"%s\": %s"
+
+#: pg_backup_db.c:652
+#, c-format
+msgid "error while updating column \"%s\" of table \"%s\": %s"
+msgstr "更新欄位\"%s\"錯誤於資料表\"%s\": %s"
+
+#: pg_backup_db.c:675
+msgid "creating table for large object cross-references\n"
+msgstr "為large object交叉參考建立資料表\n"
+
+#: pg_backup_db.c:678
+msgid "could not create large object cross-reference table"
+msgstr "無法建立large object交叉參考資料表"
+
+#: pg_backup_db.c:688
+msgid "creating index for large object cross-references\n"
+msgstr "為large object交叉參考建立索引\n"
+
+#: pg_backup_db.c:692
+msgid "could not create index on large object cross-reference table"
+msgstr "無法在large object交叉參考資料表建立索引"
+
+#: pg_backup_db.c:705
+msgid "could not create large object cross-reference entry"
+msgstr "無法建立large object交叉參考entry"
+
+#: pg_backup_db.c:717
+msgid "could not start database transaction"
+msgstr "無法開始資料庫交易"
+
+#: pg_backup_db.c:731
+msgid "could not start transaction for large object cross-references"
+msgstr "無法為large object交叉參考開始交易"
+
+#: pg_backup_db.c:744
+msgid "could not commit database transaction"
+msgstr "無法確認資料庫交易"
+
+#: pg_backup_db.c:757
+msgid "could not commit transaction for large object cross-references"
+msgstr "為法為large object交叉參考確認交易"
+
+#: pg_backup_files.c:69
 msgid "file archiver"
-msgstr "�ɮ��k��"
+msgstr "檔案壓縮器"
 
-#: pg_backup_tar.c:103
+#: pg_backup_files.c:120
+msgid ""
+"WARNING:\n"
+"  This format is for demonstration purposes; it is not intended for\n"
+"  normal use. Files will be written in the current working directory.\n"
+msgstr ""
+"警告：\n"
+"  這種格式僅用於示範，不是用來做一般備份，檔案會被\n"
+"  寫至目前的工作目錄\n"
+
+#: pg_backup_files.c:246
+msgid "could not open data file for output\n"
+msgstr "無法開啟資料檔做輸出\n"
+
+#: pg_backup_files.c:266
+msgid "could not close data file\n"
+msgstr "無法開啟資料檔\n"
+
+#: pg_backup_files.c:290
+msgid "could not open data file for input\n"
+msgstr "無法開啟資料檔做輸入\n"
+
+#: pg_backup_files.c:299
+msgid "could not close data file after reading\n"
+msgstr "讀取後無法開啟資料檔\n"
+
+#: pg_backup_files.c:362
+#, c-format
+msgid "could not open large object TOC for input: %s\n"
+msgstr "無法開啟large object TOC做輸入: %s\n"
+
+#: pg_backup_files.c:375
+#: pg_backup_files.c:545
+#, c-format
+msgid "could not close large object TOC file: %s\n"
+msgstr "無法開啟large object TOC檔: %s\n"
+
+#: pg_backup_files.c:387
+msgid "could not write byte\n"
+msgstr "無法寫入位元組\n"
+
+#: pg_backup_files.c:473
+#, c-format
+msgid "could not open large object TOC for output: %s\n"
+msgstr "無法開啟large object TOC做輸出: %s\n"
+
+#: pg_backup_files.c:493
+#: pg_backup_tar.c:884
+#, c-format
+msgid "invalid OID for large object (%u)\n"
+msgstr "非法的large object OID (%u)\n"
+
+#: pg_backup_files.c:512
+msgid "could not open large object file\n"
+msgstr "無法開啟large object檔\n"
+
+#: pg_backup_files.c:527
+msgid "could not close large object file\n"
+msgstr "無法關閉large object檔\n"
+
+#: pg_backup_null.c:55
+msgid "this format cannot be read\n"
+msgstr "無法讀取此種備份格式\n"
+
+#: pg_backup_tar.c:105
 msgid "tar archiver"
-msgstr "tar �k��"
+msgstr "tar壓縮器"
 
-#: pg_restore.c:383
+#: pg_backup_tar.c:183
+#, c-format
+msgid "could not open TOC file for output: %s\n"
+msgstr "無法開啟TOC檔以輸出: %s\n"
+
+#: pg_backup_tar.c:208
+msgid "compression not supported by tar output format\n"
+msgstr "tar備份格式不支援壓縮\n"
+
+#: pg_backup_tar.c:220
+#, c-format
+msgid "could not open TOC file for input: %s\n"
+msgstr "無法開啟TOC檔以讀取: %s\n"
+
+#: pg_backup_tar.c:341
+#, c-format
+msgid "could not find file %s in archive\n"
+msgstr "備份檔中找不到檔案 %s\n"
+
+#: pg_backup_tar.c:352
+msgid "compression support is disabled in this format\n"
+msgstr "此種備份格式的壓縮支援被關閉\n"
+
+#: pg_backup_tar.c:367
+#, c-format
+msgid "could not generate temporary file name: %s\n"
+msgstr "無法產生暫存檔名稱: %s\n"
+
+#: pg_backup_tar.c:376
+msgid "could not open temporary file\n"
+msgstr "無法開啟暫存檔\n"
+
+#: pg_backup_tar.c:406
+msgid "could not close tar member\n"
+msgstr "無法關閉tar成員\n"
+
+#: pg_backup_tar.c:506
+msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
+msgstr "內部錯誤 -- tarReadRaw()中未指定th或fh\n"
+
+#: pg_backup_tar.c:510
+#, c-format
+msgid "requested %d bytes, got %d from lookahead and %d from file\n"
+msgstr "要求 %d 個位元組，但是從lookahead緩衝區得到 %d，從檔案得到 %d\n"
+
+#: pg_backup_tar.c:549
+#, c-format
+msgid "could not write to tar member (wrote %lu, attempted %lu)\n"
+msgstr "無法寫入tar成員(已寫入 %lu，企圖寫入 %lu)\n"
+
+#: pg_backup_tar.c:638
+#, c-format
+msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
+msgstr "非法的COPY敘述 -- 在字串\"%s\"中找不到\"copy\"\n"
+
+#: pg_backup_tar.c:656
+#, c-format
+msgid "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n"
+msgstr ""
+
+#: pg_backup_tar.c:692
+#, c-format
+msgid "restoring large object OID %u\n"
+msgstr "還原large object OID %u\n"
+
+#: pg_backup_tar.c:829
+msgid "could not write null block at end of tar archive\n"
+msgstr "無法在tar備份檔寫入空區塊\n"
+
+#: pg_backup_tar.c:1023
+msgid "archive member too large for tar format\n"
+msgstr "tar格式中的備份檔成員太大\n"
+
+#: pg_backup_tar.c:1033
+#, c-format
+msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
+msgstr "write error appending to tar archive (wrote %lu, attempted %lu)\n"
+
+#: pg_backup_tar.c:1039
+#, c-format
+msgid "could not close tar member: %s\n"
+msgstr "無法關閉tar成員: %s\n"
+
+#: pg_backup_tar.c:1048
+#, c-format
+msgid "actual file length (%s) does not match expected (%s)\n"
+msgstr "實際檔案大小(%s)與預期大小(%s)不符\n"
+
+#: pg_backup_tar.c:1056
+msgid "could not output padding at end of tar member\n"
+msgstr "無法輸出填充內容至tar成員之後\n"
+
+#: pg_backup_tar.c:1085
+#, c-format
+msgid "moving from position %s to next member at file position %s\n"
+msgstr "從位置 %s 移至位於檔案位置 %s 的下一個成員\n"
+
+#: pg_backup_tar.c:1096
+#, c-format
+msgid "now at file position %s\n"
+msgstr "目前在檔案位置 %s\n"
+
+#: pg_backup_tar.c:1105
+#: pg_backup_tar.c:1132
+#, c-format
+msgid "could not find header for file %s in tar archive\n"
+msgstr "tar備份檔中找不到檔案 %s 的header\n"
+
+#: pg_backup_tar.c:1116
+#, c-format
+msgid "skipping tar member %s\n"
+msgstr "跳過tar成員 %s\n"
+
+#: pg_backup_tar.c:1120
+#, c-format
+msgid "dumping data out of order is not supported in this archive format: %s is required, but comes before %s in the archive file.\n"
+msgstr "此種備份格式不支援不依順序備分: 需要 %s，但是要在備份檔的 %s 之前。\n"
+
+#: pg_backup_tar.c:1168
+#, c-format
+msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
+msgstr "實際檔案位置(%s)與預期位置(%s)不符\n"
+
+#: pg_backup_tar.c:1183
+#, c-format
+msgid "incomplete tar header found (%lu bytes)\n"
+msgstr "發現不完整的tar header(%lu bytes)\n"
+
+#: pg_backup_tar.c:1218
+#, c-format
+msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
+msgstr ""
+
+#: pg_backup_tar.c:1228
+#, c-format
+msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
+msgstr "在 %s 發現損壞的tar header(預期是 %d，計算得到 %d) 檔案位置 %s\n"
+
+#: pg_backup_tar.c:1321
+msgid "could not write tar header\n"
+msgstr "無法寫入tar header\n"
+
+#: pg_restore.c:279
+#, c-format
+msgid "%s: cannot specify both -d and -f output\n"
+msgstr "%s: 不能同時使用-d和-f進行備份\n"
+
+#: pg_restore.c:339
+#, c-format
+msgid "WARNING, errors ignored on restore: %d\n"
+msgstr "警告，還原時忽略錯誤: %d\n"
+
+#: pg_restore.c:353
 #, c-format
 msgid ""
 "%s restores a PostgreSQL database from an archive created by pg_dump.\n"
 "\n"
-"Usage:\n"
-"  %s [options] [file]\n"
-"\n"
-"Options:\n"
 msgstr ""
-"%s �q�@���k�ɤ��٭�@�ӥ� pg_dump �إߪ� PostgreSQL ��Ʈw�C\n"
+"%s 從pg_dump所建立的壓縮檔還原PostgreSQL資料庫。\n"
 "\n"
-"�Ϊk:\n"
-"  %s [�ﶵ] [�ɮ�]\n"
-"\n"
-"�ﶵ:\n"
 
-#: pg_restore.c:389
+#: pg_restore.c:355
+#, c-format
+msgid "  %s [OPTION]... [FILE]\n"
+msgstr "  %s [選項]... [檔名]\n"
+
+#: pg_restore.c:358
+msgid "  -d, --dbname=NAME        output database name\n"
+msgstr "  -d, --dbname=NAME        指定資料庫名稱\n"
+
+#: pg_restore.c:360
+msgid "  -F, --format=c|t         specify backup file format\n"
+msgstr "  -F, --format=c|t         指定備份檔格式\n"
+
+#: pg_restore.c:361
+msgid "  -i, --ignore-version     proceed even when server version mismatches\n"
+msgstr "  -i, --ignore-version     伺服器版本不符時繼續執行\n"
+
+#: pg_restore.c:362
+msgid "  -l, --list               print summarized TOC of the archive\n"
+msgstr "  -l, --list               顯示備份檔的TOC資訊\n"
+
+#: pg_restore.c:368
+msgid "  -a, --data-only          restore only the data, no schema\n"
+msgstr "  -a, --data-only          只還原資料，不還原schema\n"
+
+#: pg_restore.c:370
+msgid "  -C, --create             issue commands to create the database\n"
+msgstr "  -C, --create             執行建立資料庫的命令\n"
+
+#: pg_restore.c:371
+msgid "  -I, --index=NAME         restore named index\n"
+msgstr "  -I, --index=NAME         只還原指定的索引\n"
+
+#: pg_restore.c:372
 msgid ""
-"  -a, --data-only          restore only the data, no schema\n"
-"  -c, --clean              clean (drop) schema prior to create\n"
-"  -C, --create             issue commands to create the database\n"
-"  -d, --dbname=NAME        output database name\n"
-"  -f, --file=FILENAME      output file name\n"
-"  -F, --format={c|t}       specify backup file format\n"
-"  -h, --host=HOSTNAME      server host name\n"
-"  -i, --index=NAME         restore named index\n"
-"  -l, --list               print summarized TOC of the archive\n"
 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 "                           output from this file\n"
-"  -N, --orig-order         restore in original dump order\n"
-"  -o, --oid-order          restore in OID order\n"
-"  -O, --no-owner           do not reconnect to database to match\n"
-"                           object owner\n"
-"  -p, --port=PORT          server port number\n"
-"  -P, --function=NAME      restore named function\n"
-"  -r, --rearrange          rearrange output to put indexes etc. at end\n"
-"  -R, --no-reconnect       disallow ALL reconnections to the database\n"
-"  -s, --schema-only        restore only the schema, no data\n"
+msgstr "  -L, --use-list=FILENAME  從這個檔案取得還原的順序\n"
+
+#: pg_dumpall.c:326
+#: pg_restore.c:374
+msgid "  -O, --no-owner           do not output commands to set object ownership\n"
+msgstr "  -O, --no-owner           忽略設定物件擁有關係的命令\n"
+
+#: pg_restore.c:375
+msgid ""
+"  -P, --function=NAME(args)\n"
+"                           restore named function\n"
+msgstr ""
+"  -P, --function=NAME(args)\n"
+"                           還原指定的函式\n"
+
+#: pg_restore.c:377
+msgid "  -s, --schema-only        restore only the schema, no data\n"
+msgstr "  -s, --schema-only        只還原schema，不還原資料\n"
+
+#: pg_restore.c:378
+msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use for\n"
 "                           disabling triggers\n"
-"  -t, --table=NAME         restore named table\n"
-"  -T, --trigger=NAME       restore named trigger\n"
-"  -U, --username=NAME      connect as specified database user\n"
-"  -v, --verbose            verbose mode\n"
-"  -W, --password           force password prompt (should happen "
-"automatically)\n"
-"  -x, --no-privileges      skip restoration of access privileges "
-"(grant/revoke)\n"
-"  -X use-set-session-authorization, --use-set-session-authorization\n"
-"                           use SET SESSION AUTHORIZATION commands instead\n"
-"                           of reconnecting, if possible\n"
-msgstr ""
-"  -a, --data-only          �u�٭��ơA���]�A�j��\n"
-"  -c, --clean              �b�إߤ��e�M�z(�R��)�j��\n"
-"  -C, --create             �o�X�إ߸�Ʈw�����O\n"
-"  -d, --dbname=�W��        ���w��Ʈw�W��\n"
-"  -f, --file=�ɮצW��      TOC ��X�ɮצW��(�Ѩ� -l)\n"
-"  -F, --format={c|t}       ���w�ƥ��ɮ׮榡\n"
-"  -h, --host=HOSTNAME      �A�Ⱦ��D���W\n"
-"  -i, --index=�W��         �٭���w������\n"
-"  -l, --list               ���k�ɿ�X���n TOC\n"
-"  -L, --use-list=�ɮצW��  �ϥ��ɮפ����ؿ��@����X�ɪ��ƧǤ�k\n"
-"  -N, --orig-order         ���ӭ�l����X�����٭�\n"
-"  -o, --oid-order          ���� oid �����٭�\n"
-"  -O, --no-owner           ���n���F�ŦX����Ҧ��̦ӭ��s�s����Ʈw\n"
-"  -p, --port=��          ���A���ݰ�\n"
-"  -P, --function=�W��      �٭���w���禡\n"
-"  -r, --rearrange          ���ƿ�X�A�N���޵��m�󥽺�\n"
-"  -R, --no-reconnect       �T��Ҧ��P��Ʈw�����s�s��\n"
-"  -s, --schema-only        �u�٭�j���A���٭���\n"
-"  -S, --superuser=�W��     ���w�i�H�T��Ĳ�o���W�ŨϥΪ�\n"
-"  -t, --table=�W��         �٭���w����ƪ�\n"
-"  -T, --trigger=�W��       �٭���w��Ĳ�o\n"
-"  -U, --username=�W��      �H���w����Ʈw�ϥΪ̳s��\n"
-"  -v, --verbose            �ԲӼҦ�\n"
-"  -W, --password           �j��K�X�߰� (���Ӧ۰ʸ߰�)\n"
-"  -x, --no-privileges      �����s���v��(grant/revoke)���٭�\n"
-"  -X use-set-session-authorization, --use-set-session-authorization\n"
-"                           ���i��� SET SESSION AUTHORIZATION ���O�Ӥ��O\n"
-"                           ���s�s��\n"
+msgstr "  -S, --superuser=NAME     指定用來關閉trigger的管理者名稱\n"
 
-#: pg_restore.c:425
+#: pg_restore.c:380
+msgid "  -t, --table=NAME         restore named table\n"
+msgstr "  -t, --table=NAME         還原指定的資料表\n"
+
+#: pg_restore.c:381
+msgid "  -T, --trigger=NAME       restore named trigger\n"
+msgstr "  -T, --trigger=NAME       還原指定的trigger\n"
+
+#: pg_restore.c:382
+msgid "  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"
+msgstr "  -x, --no-privileges      不還原存取權限(grant/revoke)\n"
+
+#: pg_restore.c:395
 msgid ""
-"  -a                       restore only the data, no schema\n"
-"  -c                       clean (drop) schema prior to create\n"
-"  -C                       issue commands to create the database\n"
-"  -d NAME                  output database name\n"
-"  -f FILENAME              output file name\n"
-"  -F {c|t}                 specify backup file format\n"
-"  -h HOSTNAME              server host name\n"
-"  -i NAME                  restore named index\n"
-"  -l                       print summarized TOC of the archive\n"
-"  -L FILENAME              use specified table of contents for ordering\n"
-"                           output from this file\n"
-"  -N                       restore in original dump order\n"
-"  -o                       restore in OID order\n"
-"  -O                       do not reconnect to database to match\n"
-"                           object owner\n"
-"  -p PORT                  server port number\n"
-"  -P NAME                  restore named function\n"
-"  -r                       rearrange output to put indexes etc. at end\n"
-"  -R                       disallow ALL reconnections to the database\n"
-"  -s                       restore only the schema, no data\n"
-"  -S NAME                  specify the superuser user name to use for\n"
-"                           disabling triggers\n"
-"  -t NAME                  restore named table\n"
-"  -T NAME                  restore named trigger\n"
-"  -U NAME                  connect as specified database user\n"
-"  -v                       verbose mode\n"
-"  -W                       force password prompt (should happen "
-"automatically)\n"
-"  -x                       skip restoration of access privileges "
-"(grant/revoke)\n"
-"  -X use-set-session-authorization\n"
-"                           use SET SESSION AUTHORIZATION commands instead\n"
-"                           of reconnecting, if possible\n"
+"\n"
+"If no input file name is supplied, then standard input is used.\n"
+"\n"
 msgstr ""
-"  -a                       �u�٭��ơA���٭�j��\n"
-"  -c                       �إߤ��e�M�z(�R��)�j��\n"
-"  -C                       �o�X�إ߸�Ʈw�����O\n"
-"  -d �W��                  ���w��Ʈw�W��\n"
-"  -f �ɮצW��              TOC ��X�ɮצW�� (�Ѩ� -l)\n"
-"  -F {c|t}                 ���w�ƥ��ɮ׮榡\n"
-"  -h �D���W��              ���A���D���W��\n"
-"  -i �W�r                  ��_���w����\n"
-"  -l                       �����ɮ׿�X���n TOC (�ؿ�)\n"
-"  -L �ɮצW��              �ϥ��ɮפ����ؿ��@����X�ɪ��ƧǤ�k\n"
-"  -N                       �H��l����X�����٭�\n"
-"  -o                       �H oid �������٭�\n"
-"  -O                       ���n���F�ŦX����Ҧ��̦ӭ��s�s����Ʈw\n"
-"  -p ��                  ���A����\n"
-"  -P �W��                  �٭���w���禡\n"
-"  -r                       ���s�ƦC��X�A����޵���쥽��\n"
-"  -R                       �T��Ҧ��P��Ʈw�����s�s��\n"
-"  -s                       �u�٭�j���A���٭���\n"
-"  -S �W��                  ���w�i�H�T��Ĳ�o���W�ŨϥΪ�\n"
-"  -t �W��                  �٭���w����ƪ�\n"
-"  -T �W��                  �٭���w��Ĳ�o\n"
-"  -U �W��                  �H���w����Ʈw�ϥΪ̳s��\n"
-"  -v                       �ԲӼҦ�\n"
-"  -W                       �j��K�X�߰� (���Ӧ۰ʸ߰�)\n"
-"  -x                       �����s���v�� (grant/reovke) ���٭�\n"
-"  -X use-set-session-authorization\n"
-"                           ���i��ϥ� SET SESSION AUTHORIZATION "
-"���O�A�Ӥ��O\n"
-"                           ���s�s��\n"
+"\n"
+"如果沒有提供檔案名稱則使用標準輸入。\n"
+"\n"
 
-#: pg_restore.c:458
-msgid "If no input file name is supplied, then standard input is used.\n"
-msgstr "�p�G�S�������ɮצW�٫h�ϥμзǿ�J�C\n"
+#: pg_dumpall.c:143
+#, c-format
+msgid ""
+"The program \"pg_dump\" is needed by %s but was not found in the same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"%s 需要\"pg_dump\"程式，但是在與\"%s\"相同的目錄中找不到。\n"
+"請檢查你的安裝。\n"
 
-#: pg_restore.c:459
-msgid "Report bugs to <pgsql-bugs@postgresql.org>."
-msgstr "�V <pgsql-bugs@postgresql.org> �^�����~�C"
+#: pg_dumpall.c:149
+#, c-format
+msgid ""
+"The program \"pg_dump\" was found by %s but was not the same version as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"%s 已找到\"pg_dump\"程式，但是與\"%s\"版本不符。\n"
+"請檢查你的安裝。\n"
+
+#: pg_dumpall.c:310
+#, c-format
+msgid ""
+"%s extracts a PostgreSQL database cluster into an SQL script file.\n"
+"\n"
+msgstr ""
+"%s 讀取PostgreSQL資料庫cluster寫成SQL命令稿檔案。\n"
+"\n"
+
+#: pg_dumpall.c:312
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [選項]...\n"
+
+#: pg_dumpall.c:315
+msgid ""
+"  -i, --ignore-version     proceed even when server version mismatches\n"
+"                           pg_dumpall version\n"
+msgstr "  -i, --ignore-version     伺服器版本和pg_dumpall版本不符時繼續執行\n"
+
+#: pg_dumpall.c:321
+msgid "  -c, --clean              clean (drop) databases prior to create\n"
+msgstr "  -c, --clean              建立資料庫前先清理(刪除)\n"
+
+#: pg_dumpall.c:324
+msgid "  -g, --globals-only       dump only global objects, no databases\n"
+msgstr "  -g, --globals-only       只備分全域物件，不備份資料庫\n"
+
+#: pg_dumpall.c:328
+msgid "  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"
+msgstr "  -S, --superuser=NAME     指定用來備份的管理者名稱\n"
+
+#: pg_dumpall.c:344
+msgid ""
+"\n"
+"The SQL script will be written to the standard output.\n"
+"\n"
+msgstr ""
+"\n"
+"SQL命令稿會被寫至標準輸出。\n"
+"\n"
+
+#: pg_dumpall.c:539
+#, c-format
+msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
+msgstr "%s: 無法解讀ACL清單(%s)，tablespace是\"%s\"\n"
+
+#: pg_dumpall.c:671
+#, c-format
+msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
+msgstr "%s: 無法解讀ACL清單(%s)，資料庫是\"%s\"\n"
+
+#: pg_dumpall.c:817
+#, c-format
+msgid "%s: dumping database \"%s\"...\n"
+msgstr "%s: 備份資料庫\"%s\"...\n"
+
+#: pg_dumpall.c:823
+#, c-format
+msgid "%s: pg_dump failed on database \"%s\", exiting\n"
+msgstr "%s: pg_dump處理資料庫\"%s\"失敗，結束\n"
+
+#: pg_dumpall.c:859
+#, c-format
+msgid "%s: running \"%s\"\n"
+msgstr "%s: 正在執行\"%s\"\n"
+
+#: pg_dumpall.c:900
+#, c-format
+msgid "%s: could not connect to database \"%s\"\n"
+msgstr "%s: 無法連線至資料庫\"%s\"\n"
+
+#: pg_dumpall.c:923
+#, c-format
+msgid "%s: could not connect to database \"%s\": %s\n"
+msgstr "%s: 無法連線至資料庫\"%s\": %s\n"
+
+#: pg_dumpall.c:931
+#, c-format
+msgid "%s: could not get server version\n"
+msgstr "%s: 無法取得伺服器版本\n"
+
+#: pg_dumpall.c:937
+#, c-format
+msgid "%s: could not parse server version \"%s\"\n"
+msgstr "%s: 無法解讀伺服器版本\"%s\"\n"
+
+#: pg_dumpall.c:956
+#, c-format
+msgid "%s: executing %s\n"
+msgstr "%s: 執行 %s\n"
+
+#: pg_dumpall.c:962
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: 查詢失敗: %s"
+
+#: pg_dumpall.c:963
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: 查詢是: %s\n"
 

@@ -5,88 +5,88 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "POT-Creation-Date: 2004-07-29 01:12-0300\n"
-"PO-Revision-Date: 2004-07-29 17:58+0800\n"
+"PO-Revision-Date: 2004-08-01 13:21+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=Big5\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: fe-auth.c:232
 #, c-format
 msgid "Kerberos 4 error: %s\n"
-msgstr "Kerberos 4 ¿ù»~: %s\n"
+msgstr "Kerberos 4 éŒ¯èª¤: %s\n"
 
 #: fe-auth.c:394
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
-msgstr "µLªk±N socket ³]¬°ªı¾×¼Ò¦¡: %s\n"
+msgstr "ç„¡æ³•å°‡ socket è¨­ç‚ºé˜»æ“‹æ¨¡å¼: %s\n"
 
 #: fe-auth.c:411
 #: fe-auth.c:415
 #, c-format
 msgid "Kerberos 5 authentication rejected: %*s\n"
-msgstr "kerberos 5 »{ÃÒ³Q©Úµ´: %*s\n"
+msgstr "kerberos 5 èªè­‰è¢«æ‹’çµ•: %*s\n"
 
 #: fe-auth.c:441
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
-msgstr "µLªk±N socket ÁÙ­ì¬°«Dªı¾×¼Ò¦¡: %s\n"
+msgstr "ç„¡æ³•å°‡ socket é‚„åŸç‚ºéé˜»æ“‹æ¨¡å¼: %s\n"
 
 #: fe-auth.c:508
 msgid "SCM_CRED authentication method not supported\n"
-msgstr "¤£¤ä´© SCM_CRED »{ÃÒ¤è¦¡\n"
+msgstr "ä¸æ”¯æ´ SCM_CRED èªè­‰æ–¹å¼\n"
 
 #: fe-auth.c:600
 msgid "Kerberos 4 authentication failed\n"
-msgstr "Kerberos 4 »{ÃÒ¥¢±Ñ\n"
+msgstr "Kerberos 4 èªè­‰å¤±æ•—\n"
 
 #: fe-auth.c:608
 msgid "Kerberos 4 authentication not supported\n"
-msgstr "¤£¤ä´© Kerberos 4 »{ÃÒ¤è¦¡\n"
+msgstr "ä¸æ”¯æ´ Kerberos 4 èªè­‰æ–¹å¼\n"
 
 #: fe-auth.c:619
 msgid "Kerberos 5 authentication failed\n"
-msgstr "Kerberos 5 »{ÃÒ¥¢±Ñ\n"
+msgstr "Kerberos 5 èªè­‰å¤±æ•—\n"
 
 #: fe-auth.c:627
 msgid "Kerberos 5 authentication not supported\n"
-msgstr "¤£¤ä´© Kerberos 5 »{ÃÒ¤è¦¡\n"
+msgstr "ä¸æ”¯æ´ Kerberos 5 èªè­‰æ–¹å¼\n"
 
 #: fe-auth.c:655
 #, c-format
 msgid "authentication method %u not supported\n"
-msgstr "¤£¤ä´© %u »{ÃÒ¤è¦¡\n"
+msgstr "ä¸æ”¯æ´ %u èªè­‰æ–¹å¼\n"
 
 #: fe-auth.c:692
 #, c-format
 msgid "invalid authentication service name \"%s\", ignored\n"
-msgstr "©¿²¤«Dªkªº»{ÃÒªA°È¦WºÙ \"%s\"\n"
+msgstr "å¿½ç•¥éæ³•çš„èªè­‰æœå‹™åç¨± \"%s\"\n"
 
 #: fe-auth.c:764
 #, c-format
 msgid "fe_getauthname: invalid authentication system: %d\n"
-msgstr "fe_getauthname: µL®Äªº»{ÃÒ¨t²Î: %d\n"
+msgstr "fe_getauthname: ç„¡æ•ˆçš„èªè­‰ç³»çµ±: %d\n"
 
 #: fe-connect.c:452
 #, c-format
 msgid "invalid sslmode value: \"%s\"\n"
-msgstr "µL®Äªº sslmode: \"%s\"\n"
+msgstr "ç„¡æ•ˆçš„ sslmode: \"%s\"\n"
 
 #: fe-connect.c:472
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
-msgstr "½sÄ¶®É¥¼¥[¤JSSL¤ä´©¡AµL®Äªºsllmode­È\"%s\"\n"
+msgstr "ç·¨è­¯æ™‚æœªåŠ å…¥SSLæ”¯æ´ï¼Œç„¡æ•ˆçš„sllmodeå€¼\"%s\"\n"
 
 #: fe-connect.c:783
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
-msgstr "µLªk±N socket ³]©w¬°«Dªı¾×¼Ò¦¡: %s\n"
+msgstr "ç„¡æ³•å°‡ socket è¨­å®šç‚ºéé˜»æ“‹æ¨¡å¼: %s\n"
 
 #: fe-connect.c:810
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
-msgstr "µLªk±N socket ³]©w¬° TCP µL©µ¿ğ¼Ò¦¡: %s\n"
+msgstr "ç„¡æ³•å°‡ socket è¨­å®šç‚º TCP ç„¡å»¶é²æ¨¡å¼: %s\n"
 
 #: fe-connect.c:841
 #, c-format
@@ -95,9 +95,9 @@ msgid ""
 "\tIs the server running locally and accepting\n"
 "\tconnections on Unix domain socket \"%s\"?\n"
 msgstr ""
-"µLªk³s½u¨ì¦øªA¾¹: %s\n"
-"\t¦øªA¾¹¬O§_¦b¥»¦a°õ¦æ¨Ã¥B¦b Unix domain socket\n"
-"\t\"%s\"¤W·Ç³Æ±µ¨ü³s½u¡H\n"
+"ç„¡æ³•é€£ç·šåˆ°ä¼ºæœå™¨: %s\n"
+"\tä¼ºæœå™¨æ˜¯å¦åœ¨æœ¬åœ°åŸ·è¡Œä¸¦ä¸”åœ¨ Unix domain socket\n"
+"\t\"%s\"ä¸Šæº–å‚™æ¥å—é€£ç·šï¼Ÿ\n"
 
 #: fe-connect.c:853
 #, c-format
@@ -106,43 +106,43 @@ msgid ""
 "\tIs the server running on host \"%s\" and accepting\n"
 "\tTCP/IP connections on port %s?\n"
 msgstr ""
-"µLªk³s½u¨ì¦øªA¾¹¡G%s\n"
-"\t¦øªA¾¹¬O§_¦b¥D¾÷\"%s\"¤W°õ¦æ¨Ã¥B·Ç³Æ±µ¨ü¦b\n"
-"\t°ğ¸¹ %s ¤Wªº TCP/IP ³s½u¡H\n"
+"ç„¡æ³•é€£ç·šåˆ°ä¼ºæœå™¨ï¼š%s\n"
+"\tä¼ºæœå™¨æ˜¯å¦åœ¨ä¸»æ©Ÿ\"%s\"ä¸ŠåŸ·è¡Œä¸¦ä¸”æº–å‚™æ¥å—åœ¨\n"
+"\tåŸ è™Ÿ %s ä¸Šçš„ TCP/IP é€£ç·šï¼Ÿ\n"
 
 #: fe-connect.c:945
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
-msgstr "µLªk±N¥D¾÷¦WºÙ\"%s\"Âà´«¦¨¦ì§}: %s\n"
+msgstr "ç„¡æ³•å°‡ä¸»æ©Ÿåç¨±\"%s\"è½‰æ›æˆä½å€: %s\n"
 
 #: fe-connect.c:949
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr "µLªk±NUnix-domain socket¸ô®|\"%s\"Âà´«¦¨¦ì§}: %s\n"
+msgstr "ç„¡æ³•å°‡Unix-domain socketè·¯å¾‘\"%s\"è½‰æ›æˆä½å€: %s\n"
 
 #: fe-connect.c:1153
 msgid "invalid connection state, probably indicative of memory corruption\n"
-msgstr "µL®Äªº³s½uª¬ºA¡A¥i¯à¬O°O¾ĞÅé¤¤ªº¸ê®Æ³Q¯}Ãa\n"
+msgstr "ç„¡æ•ˆçš„é€£ç·šç‹€æ…‹ï¼Œå¯èƒ½æ˜¯è¨˜æ†¶é«”ä¸­çš„è³‡æ–™è¢«ç ´å£\n"
 
 #: fe-connect.c:1196
 #, c-format
 msgid "could not create socket: %s\n"
-msgstr "µLªk«Ø¥ß socket: %s\n"
+msgstr "ç„¡æ³•å»ºç«‹ socket: %s\n"
 
 #: fe-connect.c:1307
 #, c-format
 msgid "could not get socket error status: %s\n"
-msgstr "µLªk¨ú±o socket ªº¿ù»~ª¬ºA: %s\n"
+msgstr "ç„¡æ³•å–å¾— socket çš„éŒ¯èª¤ç‹€æ…‹: %s\n"
 
 #: fe-connect.c:1346
 #, c-format
 msgid "could not get client address from socket: %s\n"
-msgstr "µLªk±q socket ¨ú±o«È¤áºİ¦ì§}: %s\n"
+msgstr "ç„¡æ³•å¾ socket å–å¾—å®¢æˆ¶ç«¯ä½å€: %s\n"
 
 #: fe-connect.c:1391
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
-msgstr "µLªk¶Ç°e SSL ¥æ½Í«Ê¥]: %s\n"
+msgstr "ç„¡æ³•å‚³é€ SSL äº¤è«‡å°åŒ…: %s\n"
 
 #: fe-connect.c:1413
 #: fe-connect.c:2536
@@ -150,223 +150,223 @@ msgstr "µLªk¶Ç°e SSL ¥æ½Í«Ê¥]: %s\n"
 #: fe-connect.c:3112
 #: fe-lobj.c:548
 msgid "out of memory\n"
-msgstr "°O¾ĞÅé¥ÎºÉ\n"
+msgstr "è¨˜æ†¶é«”ç”¨ç›¡\n"
 
 #: fe-connect.c:1426
 #, c-format
 msgid "could not send startup packet: %s\n"
-msgstr "µLªk¶Ç°e±Ò°Ê«Ê¥]: %s\n"
+msgstr "ç„¡æ³•å‚³é€å•Ÿå‹•å°åŒ…: %s\n"
 
 #: fe-connect.c:1466
 #, c-format
 msgid "could not receive server response to SSL negotiation packet: %s\n"
-msgstr "¦¬¤£¨ì¦øªA¾¹¹ï SSL ¥æ½Í«Ê¥]ªº¦^À³: %s\n"
+msgstr "æ”¶ä¸åˆ°ä¼ºæœå™¨å° SSL äº¤è«‡å°åŒ…çš„å›æ‡‰: %s\n"
 
 #: fe-connect.c:1485
 #: fe-connect.c:1502
 msgid "server does not support SSL, but SSL was required\n"
-msgstr "¦øªA¾¹¤£¤ä´© SSL¡A¦ı¬O³Q­n¨D¨Ï¥Î SSL\n"
+msgstr "ä¼ºæœå™¨ä¸æ”¯æ´ SSLï¼Œä½†æ˜¯è¢«è¦æ±‚ä½¿ç”¨ SSL\n"
 
 #: fe-connect.c:1518
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
-msgstr "¦¬¨ìµL®Äªº SSL ¥æ½Í¦^À³: %c\n"
+msgstr "æ”¶åˆ°ç„¡æ•ˆçš„ SSL äº¤è«‡å›æ‡‰: %c\n"
 
 #: fe-connect.c:1575
 #: fe-connect.c:1607
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
-msgstr "´Á«İ¨Ó¦Û¦øªA¾¹ªº»{ÃÒ½Ğ¨D¡A¦ı¬O¦¬¨ì %c\n"
+msgstr "æœŸå¾…ä¾†è‡ªä¼ºæœå™¨çš„èªè­‰è«‹æ±‚ï¼Œä½†æ˜¯æ”¶åˆ° %c\n"
 
 #: fe-connect.c:1843
 msgid "unexpected message from server during startup\n"
-msgstr "±Ò°Ê¹Lµ{¤¤¦¬¨ì¨Ó¦Û¦øªA¾¹ªº«D¹w´Á°T®§\n"
+msgstr "å•Ÿå‹•éç¨‹ä¸­æ”¶åˆ°ä¾†è‡ªä¼ºæœå™¨çš„éé æœŸè¨Šæ¯\n"
 
 #: fe-connect.c:1913
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
-msgstr "µL®Äªº³s½uª¬ºA %c¡A¥i¯à¬O°O¾ĞÅé¤¤ªº¸ê®Æ³Q¯}Ãa\n"
+msgstr "ç„¡æ•ˆçš„é€£ç·šç‹€æ…‹ %cï¼Œå¯èƒ½æ˜¯è¨˜æ†¶é«”ä¸­çš„è³‡æ–™è¢«ç ´å£\n"
 
 #: fe-connect.c:2584
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
-msgstr "¦b³s½u¸ê°T¦r¦ê¸Ìªº \"%s\" «á­±¯Ê¤Ö \"=\"\n"
+msgstr "åœ¨é€£ç·šè³‡è¨Šå­—ä¸²è£¡çš„ \"%s\" å¾Œé¢ç¼ºå°‘ \"=\"\n"
 
 #: fe-connect.c:2633
 msgid "unterminated quoted string in connection info string\n"
-msgstr "³s½u¸ê°T¦r¦ê¤¤¦³¥¼µ²§ôªº¤Ş¸¹\n"
+msgstr "é€£ç·šè³‡è¨Šå­—ä¸²ä¸­æœ‰æœªçµæŸçš„å¼•è™Ÿ\n"
 
 #: fe-connect.c:2667
 #, c-format
 msgid "invalid connection option \"%s\"\n"
-msgstr "µL®Äªº³s½u¿ï¶µ \"%s\"\n"
+msgstr "ç„¡æ•ˆçš„é€£ç·šé¸é … \"%s\"\n"
 
 #: fe-connect.c:2879
 msgid "connection pointer is NULL\n"
-msgstr "³s½u«ü¼Ğ¬O NULL\n"
+msgstr "é€£ç·šæŒ‡æ¨™æ˜¯ NULL\n"
 
 #: fe-connect.c:3130
 #, c-format
 msgid "WARNING: Password file %s has world or group read access; permission should be u=rw (0600)\n"
-msgstr "Äµ§i¡G±K½XÀÉ%s¥i¥H³Q¨ä¥L¤H©Î¸s²Õ¦s¨ú¡AÀ³¸Ó±NÅv­­³]¬°u=rw(0600)\n"
+msgstr "è­¦å‘Šï¼šå¯†ç¢¼æª”%så¯ä»¥è¢«å…¶ä»–äººæˆ–ç¾¤çµ„å­˜å–ï¼Œæ‡‰è©²å°‡æ¬Šé™è¨­ç‚ºu=rw(0600)\n"
 
 #: fe-exec.c:484
 msgid "NOTICE"
-msgstr "ª`·N"
+msgstr "æ³¨æ„"
 
 #: fe-exec.c:653
 #: fe-exec.c:705
 msgid "command string is a null pointer\n"
-msgstr "©R¥O¦r¦ê¬O¤@­ÓªÅ«ü¼Ğ\n"
+msgstr "å‘½ä»¤å­—ä¸²æ˜¯ä¸€å€‹ç©ºæŒ‡æ¨™\n"
 
 #: fe-exec.c:740
 msgid "statement name is a null pointer\n"
-msgstr "±Ô­z¦WºÙ¬O¤@­ÓªÅ«ü¼Ğ\n"
+msgstr "æ•˜è¿°åç¨±æ˜¯ä¸€å€‹ç©ºæŒ‡æ¨™\n"
 
 #: fe-exec.c:771
 msgid "no connection to the server\n"
-msgstr "¨S¦³³s½u¨ì¦øªA¾¹\n"
+msgstr "æ²’æœ‰é€£ç·šåˆ°ä¼ºæœå™¨\n"
 
 #: fe-exec.c:778
 msgid "another command is already in progress\n"
-msgstr "¥t¥~¤@±ø©R¥O¥¿¦b°õ¦æ¤¤\n"
+msgstr "å¦å¤–ä¸€æ¢å‘½ä»¤æ­£åœ¨åŸ·è¡Œä¸­\n"
 
 #: fe-exec.c:814
 #: fe-exec.c:1465
 msgid "function requires at least protocol version 3.0\n"
-msgstr "¨ç¦¡»İ­n3.0ª©¥H¤Wªº¨ó©w\n"
+msgstr "å‡½å¼éœ€è¦3.0ç‰ˆä»¥ä¸Šçš„å”å®š\n"
 
 #: fe-exec.c:1116
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
-msgstr "«D¹w´Áªº asyncStatus: %d\n"
+msgstr "éé æœŸçš„ asyncStatus: %d\n"
 
 #: fe-exec.c:1221
 msgid "COPY terminated by new PQexec"
-msgstr "COPY³Q·sªºPQexec¤¤Â_"
+msgstr "COPYè¢«æ–°çš„PQexecä¸­æ–·"
 
 #: fe-exec.c:1229
 msgid "COPY IN state must be terminated first\n"
-msgstr "¥²¶·¥ıµ²§ô COPY IN ª¬ºA\n"
+msgstr "å¿…é ˆå…ˆçµæŸ COPY IN ç‹€æ…‹\n"
 
 #: fe-exec.c:1249
 msgid "COPY OUT state must be terminated first\n"
-msgstr "¥²¶·¥ıµ²§ô COPY OUT ª¬ºA\n"
+msgstr "å¿…é ˆå…ˆçµæŸ COPY OUT ç‹€æ…‹\n"
 
 #: fe-exec.c:1358
 #: fe-exec.c:1423
 #: fe-exec.c:1507
 msgid "no COPY in progress\n"
-msgstr "¨S¦³°õ¦æ¤¤ªº COPY ©R¥O\n"
+msgstr "æ²’æœ‰åŸ·è¡Œä¸­çš„ COPY å‘½ä»¤\n"
 
 #: fe-exec.c:1699
 msgid "connection in wrong state\n"
-msgstr "³s½u³B©ó¿ù»~ªºª¬ºA\n"
+msgstr "é€£ç·šè™•æ–¼éŒ¯èª¤çš„ç‹€æ…‹\n"
 
 #: fe-exec.c:1730
 msgid "invalid ExecStatusType code"
-msgstr "µL®Äªº ExecStatusType ¥N½X"
+msgstr "ç„¡æ•ˆçš„ ExecStatusType ä»£ç¢¼"
 
 #: fe-exec.c:1794
 #: fe-exec.c:1817
 #, c-format
 msgid "column number %d is out of range 0..%d"
-msgstr "¦C¸¹ %d ¶W¥X¤F½d³ò 0..%d"
+msgstr "åˆ—è™Ÿ %d è¶…å‡ºäº†ç¯„åœ 0..%d"
 
 #: fe-exec.c:1810
 #, c-format
 msgid "row number %d is out of range 0..%d"
-msgstr "¦æ¸¹ %d ¶W¥X¤F½d³ò 0..%d"
+msgstr "è¡Œè™Ÿ %d è¶…å‡ºäº†ç¯„åœ 0..%d"
 
 #: fe-exec.c:2094
 #, c-format
 msgid "could not interpret result from server: %s"
-msgstr "µLªk¸ÑÅª¨Ó¦Û¦øªA¾¹ªºµ²ªG: %s"
+msgstr "ç„¡æ³•è§£è®€ä¾†è‡ªä¼ºæœå™¨çš„çµæœ: %s"
 
 #: fe-lobj.c:402
 #: fe-lobj.c:487
 #, c-format
 msgid "could not open file \"%s\": %s\n"
-msgstr "µLªk¶}±ÒÀÉ®× \"%s\": %s\n"
+msgstr "ç„¡æ³•é–‹å•Ÿæª”æ¡ˆ \"%s\": %s\n"
 
 #: fe-lobj.c:414
 #, c-format
 msgid "could not create large object for file \"%s\"\n"
-msgstr "µLªk¬°ÀÉ®× \"%s\" «Ø¥ß large object\n"
+msgstr "ç„¡æ³•ç‚ºæª”æ¡ˆ \"%s\" å»ºç«‹ large object\n"
 
 #: fe-lobj.c:424
 #: fe-lobj.c:474
 #, c-format
 msgid "could not open large object %u\n"
-msgstr "µLªk¶}±Ò large object %u\n"
+msgstr "ç„¡æ³•é–‹å•Ÿ large object %u\n"
 
 #: fe-lobj.c:439
 #, c-format
 msgid "error while reading file \"%s\"\n"
-msgstr "Åª¨úÀÉ®× \"%s\" ®Éµo¥Í¿ù»~\n"
+msgstr "è®€å–æª”æ¡ˆ \"%s\" æ™‚ç™¼ç”ŸéŒ¯èª¤\n"
 
 #: fe-lobj.c:502
 #: fe-lobj.c:515
 #, c-format
 msgid "error while writing to file \"%s\"\n"
-msgstr "¼g¤JÀÉ®× \"%s\" ®Éµo¥Í¿ù»~\n"
+msgstr "å¯«å…¥æª”æ¡ˆ \"%s\" æ™‚ç™¼ç”ŸéŒ¯èª¤\n"
 
 #: fe-lobj.c:593
 msgid "query to initialize large object functions did not return data\n"
-msgstr "ªì©l¤Æ¤j«¬ª«¥ó¨ç¦¡ªº¬d¸ß¨S¦³¶Ç¦^¸ê®Æ\n"
+msgstr "åˆå§‹åŒ–å¤§å‹ç‰©ä»¶å‡½å¼çš„æŸ¥è©¢æ²’æœ‰å‚³å›è³‡æ–™\n"
 
 #: fe-lobj.c:631
 msgid "cannot determine OID of function lo_open\n"
-msgstr "µLªk§PÂ_¨ç¦¡ lo_open ªº OID\n"
+msgstr "ç„¡æ³•åˆ¤æ–·å‡½å¼ lo_open çš„ OID\n"
 
 #: fe-lobj.c:638
 msgid "cannot determine OID of function lo_close\n"
-msgstr "µLªk§PÂ_¨ç¦¡ lo_close ªº OID\n"
+msgstr "ç„¡æ³•åˆ¤æ–·å‡½å¼ lo_close çš„ OID\n"
 
 #: fe-lobj.c:645
 msgid "cannot determine OID of function lo_creat\n"
-msgstr "µLªk§PÂ_¨ç¦¡ lo_creat ªº OID\n"
+msgstr "ç„¡æ³•åˆ¤æ–·å‡½å¼ lo_creat çš„ OID\n"
 
 #: fe-lobj.c:652
 msgid "cannot determine OID of function lo_unlink\n"
-msgstr "µLªk§PÂ_¨ç¦¡ lo_unlink ªº OID\n"
+msgstr "ç„¡æ³•åˆ¤æ–·å‡½å¼ lo_unlink çš„ OID\n"
 
 #: fe-lobj.c:659
 msgid "cannot determine OID of function lo_lseek\n"
-msgstr "µLªk§PÂ_¨ç¦¡ lo_lseek ªº OID\n"
+msgstr "ç„¡æ³•åˆ¤æ–·å‡½å¼ lo_lseek çš„ OID\n"
 
 #: fe-lobj.c:666
 msgid "cannot determine OID of function lo_tell\n"
-msgstr "µLªk§PÂ_¨ç¦¡ lo_tell ªº OID\n"
+msgstr "ç„¡æ³•åˆ¤æ–·å‡½å¼ lo_tell çš„ OID\n"
 
 #: fe-lobj.c:673
 msgid "cannot determine OID of function loread\n"
-msgstr "µLªk§PÂ_¨ç¦¡ loread ªº OID\n"
+msgstr "ç„¡æ³•åˆ¤æ–·å‡½å¼ loread çš„ OID\n"
 
 #: fe-lobj.c:680
 msgid "cannot determine OID of function lowrite\n"
-msgstr "µLªk§PÂ_¨ç¦¡ lowrite ªº OID\n"
+msgstr "ç„¡æ³•åˆ¤æ–·å‡½å¼ lowrite çš„ OID\n"
 
 #: fe-misc.c:228
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
-msgstr "pgGetInt ¤£¤ä´©¤j¤p¬° %lu ªº¾ã¼Æ "
+msgstr "pgGetInt ä¸æ”¯æ´å¤§å°ç‚º %lu çš„æ•´æ•¸ "
 
 #: fe-misc.c:264
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
-msgstr "pgPutInt ¤£¤ä´©¤j¤p¬° %lu ªº¾ã¼Æ"
+msgstr "pgPutInt ä¸æ”¯æ´å¤§å°ç‚º %lu çš„æ•´æ•¸"
 
 #: fe-misc.c:544
 #: fe-misc.c:748
 msgid "connection not open\n"
-msgstr "³s±µ¥¼¶}±Ò\n"
+msgstr "é€£æ¥æœªé–‹å•Ÿ\n"
 
 #: fe-misc.c:610
 #: fe-misc.c:701
 #, c-format
 msgid "could not receive data from server: %s\n"
-msgstr "µLªk±q¦øªA¾¹±µ¦¬¸ê®Æ: %s\n"
+msgstr "ç„¡æ³•å¾ä¼ºæœå™¨æ¥æ”¶è³‡æ–™: %s\n"
 
 #: fe-misc.c:718
 #: fe-misc.c:786
@@ -375,145 +375,145 @@ msgid ""
 "\tThis probably means the server terminated abnormally\n"
 "\tbefore or while processing the request.\n"
 msgstr ""
-"¦øªA¾¹·N¥~¦a¤¤Â_¤F³s½u\n"
-"\t¥i¯à¬O¦øªA¾¹¦b³B²z½Ğ¨D¤§«e\n"
-"\t©ÎªÌ¥¿¦b³B²z½Ğ¨Dªº®É­Ô¤£¥¿±`¤¤¤î\n"
+"ä¼ºæœå™¨æ„å¤–åœ°ä¸­æ–·äº†é€£ç·š\n"
+"\tå¯èƒ½æ˜¯ä¼ºæœå™¨åœ¨è™•ç†è«‹æ±‚ä¹‹å‰\n"
+"\tæˆ–è€…æ­£åœ¨è™•ç†è«‹æ±‚çš„æ™‚å€™ä¸æ­£å¸¸ä¸­æ­¢\n"
 
 #: fe-misc.c:803
 #, c-format
 msgid "could not send data to server: %s\n"
-msgstr "µLªk¦V¦øªA¾¹¶Ç°e¸ê®Æ: %s\n"
+msgstr "ç„¡æ³•å‘ä¼ºæœå™¨å‚³é€è³‡æ–™: %s\n"
 
 #: fe-misc.c:922
 msgid "timeout expired\n"
-msgstr "µo¥Í·U®É\n"
+msgstr "ç™¼ç”Ÿæ„ˆæ™‚\n"
 
 #: fe-misc.c:967
 msgid "socket not open\n"
-msgstr "socket ¥¼¶}±Ò\n"
+msgstr "socket æœªé–‹å•Ÿ\n"
 
 #: fe-misc.c:990
 #, c-format
 msgid "select() failed: %s\n"
-msgstr "select() ¥¢±Ñ: %s\n"
+msgstr "select() å¤±æ•—: %s\n"
 
 #: fe-secure.c:260
 #, c-format
 msgid "could not establish SSL connection: %s\n"
-msgstr "µLªk«Ø¥ß SSL ³s½u: %s\n"
+msgstr "ç„¡æ³•å»ºç«‹ SSL é€£ç·š: %s\n"
 
 #: fe-secure.c:323
 #: fe-secure.c:403
 #: fe-secure.c:1022
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
-msgstr "SSL SYSCALL¿ù»~: %s\n"
+msgstr "SSL SYSCALLéŒ¯èª¤: %s\n"
 
 #: fe-secure.c:328
 #: fe-secure.c:408
 #: fe-secure.c:1026
 msgid "SSL SYSCALL error: EOF detected\n"
-msgstr "SSL SYSCALL¿ù»~: µo²{EOF\n"
+msgstr "SSL SYSCALLéŒ¯èª¤: ç™¼ç¾EOF\n"
 
 #: fe-secure.c:339
 #: fe-secure.c:418
 #: fe-secure.c:1034
 #, c-format
 msgid "SSL error: %s\n"
-msgstr "SSL ¿ù»~: %s\n"
+msgstr "SSL éŒ¯èª¤: %s\n"
 
 #: fe-secure.c:349
 #: fe-secure.c:428
 #: fe-secure.c:1042
 msgid "unrecognized SSL error code\n"
-msgstr "µLªkÃÑ§OªºSSL¿ù»~½X\n"
+msgstr "ç„¡æ³•è­˜åˆ¥çš„SSLéŒ¯èª¤ç¢¼\n"
 
 #: fe-secure.c:490
 #, c-format
 msgid "error querying socket: %s\n"
-msgstr "¸ß°İ socket µo¥Í¿ù»~: %s\n"
+msgstr "è©¢å• socket ç™¼ç”ŸéŒ¯èª¤: %s\n"
 
 #: fe-secure.c:518
 #, c-format
 msgid "could not get information about host (%s): %s\n"
-msgstr "µLªk¨ú±oÃö©ó¥D¾÷(%s)ªº¸ê°T: %s\n"
+msgstr "ç„¡æ³•å–å¾—é—œæ–¼ä¸»æ©Ÿ(%s)çš„è³‡è¨Š: %s\n"
 
 #: fe-secure.c:537
 msgid "unsupported protocol\n"
-msgstr "¤£³Q¤ä´©ªº¨ó©w\n"
+msgstr "ä¸è¢«æ”¯æ´çš„å”å®š\n"
 
 #: fe-secure.c:559
 #, c-format
 msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
-msgstr "¦øªA¾¹ªºcommon name \"%s\" µLªk¸ÑªR¦¨¦ì§}%ld.%ld.%ld.%ld\n"
+msgstr "ä¼ºæœå™¨çš„common name \"%s\" ç„¡æ³•è§£ææˆä½å€%ld.%ld.%ld.%ld\n"
 
 #: fe-secure.c:566
 #, c-format
 msgid "server common name \"%s\" does not resolve to peer address\n"
-msgstr "¦øªA¾¹ªºcommon name \"%s\" µLªk¸ÑªR¦¨¦ì§}\n"
+msgstr "ä¼ºæœå™¨çš„common name \"%s\" ç„¡æ³•è§£ææˆä½å€\n"
 
 #: fe-secure.c:749
 msgid "could not get user information\n"
-msgstr "µLªk¨ú±o¨Ï¥ÎªÌªº¸ê°T\n"
+msgstr "ç„¡æ³•å–å¾—ä½¿ç”¨è€…çš„è³‡è¨Š\n"
 
 #: fe-secure.c:761
 #, c-format
 msgid "could not open certificate (%s): %s\n"
-msgstr "µLªk¶}±Ò¾ÌÃÒ(%s): %s\n"
+msgstr "ç„¡æ³•é–‹å•Ÿæ†‘è­‰(%s): %s\n"
 
 #: fe-secure.c:769
 #, c-format
 msgid "could not read certificate (%s): %s\n"
-msgstr "µLªkÅª¨ú¾ÌÃÒ(%s): %s\n"
+msgstr "ç„¡æ³•è®€å–æ†‘è­‰(%s): %s\n"
 
 #: fe-secure.c:783
 #, c-format
 msgid "certificate present, but not private key (%s)\n"
-msgstr "¥u¦³¾ÌÃÒ¡A¨S¦³¨pÆ_(%s)\n"
+msgstr "åªæœ‰æ†‘è­‰ï¼Œæ²’æœ‰ç§é‘°(%s)\n"
 
 #: fe-secure.c:792
 #, c-format
 msgid "private key (%s) has wrong permissions\n"
-msgstr "¨pÆ_(%s)Åv­­¿ù»~\n"
+msgstr "ç§é‘°(%s)æ¬Šé™éŒ¯èª¤\n"
 
 #: fe-secure.c:799
 #, c-format
 msgid "could not open private key file (%s): %s\n"
-msgstr "µLªk¶}±Ò¨pÆ_ÀÉ®×(%s): %s\n"
+msgstr "ç„¡æ³•é–‹å•Ÿç§é‘°æª”æ¡ˆ(%s): %s\n"
 
 #: fe-secure.c:808
 #, c-format
 msgid "private key (%s) changed during execution\n"
-msgstr "¨pÆ_(%s)¦b°õ¦æ¹Lµ{³Q§ïÅÜ\n"
+msgstr "ç§é‘°(%s)åœ¨åŸ·è¡Œéç¨‹è¢«æ”¹è®Š\n"
 
 #: fe-secure.c:816
 #, c-format
 msgid "could not read private key (%s): %s\n"
-msgstr "µLªkÅª¨ú¨pÆ_(%s): %s\n"
+msgstr "ç„¡æ³•è®€å–ç§é‘°(%s): %s\n"
 
 #: fe-secure.c:830
 #, c-format
 msgid "certificate/private key mismatch (%s): %s\n"
-msgstr "¾ÌÃÒ/¨pÆ_¤£²Å(%s): %s\n"
+msgstr "æ†‘è­‰/ç§é‘°ä¸ç¬¦(%s): %s\n"
 
 #: fe-secure.c:909
 #, c-format
 msgid "could not create SSL context: %s\n"
-msgstr "µLªk«Ø¥ß SSL context: %s\n"
+msgstr "ç„¡æ³•å»ºç«‹ SSL context: %s\n"
 
 #: fe-secure.c:953
 #: fe-secure.c:962
 #, c-format
 msgid "could not read root certificate list (%s): %s\n"
-msgstr "µLªkÅª¨ú®Ú¾ÌÃÒ²M³æ(%s): %s\n"
+msgstr "ç„¡æ³•è®€å–æ ¹æ†‘è­‰æ¸…å–®(%s): %s\n"
 
 #: fe-secure.c:1061
 #, c-format
 msgid "certificate could not be validated: %s\n"
-msgstr "µLªkÅçÃÒ¾ÌÃÒ: %s\n"
+msgstr "ç„¡æ³•é©—è­‰æ†‘è­‰: %s\n"
 
 #: fe-secure.c:1074
 #, c-format
 msgid "certificate could not be obtained: %s\n"
-msgstr "µLªk¨ú±o¾ÌÃÒ: %s\n"
+msgstr "ç„¡æ³•å–å¾—æ†‘è­‰: %s\n"
 
