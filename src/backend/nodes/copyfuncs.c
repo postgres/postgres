@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.12 1997/09/13 11:45:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.13 1997/09/19 06:52:49 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,6 +477,28 @@ _copySort(Sort *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, sortstate);
+
+	return newnode;
+}
+
+
+/* ----------------
+ *		_copyGroup
+ * ----------------
+ */
+static Group *
+_copyGroup(Group *from)
+{
+	Group	   *newnode = makeNode(Group);
+	
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+	CopyTempFields((Temp *) from, (Temp *) newnode);
+	
+	newnode->tuplePerGroup = from->tuplePerGroup;
+	newnode->numCols = from->numCols;
+	newnode->grpColIdx = palloc (from->numCols * sizeof (AttrNumber));
+	memcpy (newnode->grpColIdx, from->grpColIdx, from->numCols * sizeof (AttrNumber));
+	Node_Copy(from, newnode, grpstate);
 
 	return newnode;
 }
@@ -1645,6 +1667,9 @@ copyObject(void *from)
 			break;
 		case T_Sort:
 			retval = _copySort(from);
+			break;
+		case T_Group:
+			retval = _copyGroup(from);
 			break;
 		case T_Agg:
 			retval = _copyAgg(from);
