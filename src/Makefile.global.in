@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.108 2000/11/03 20:27:40 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.109 2000/11/04 16:39:02 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -27,10 +27,6 @@ all:
 # Delete target files if the command fails after it has
 # started to update the file.
 .DELETE_ON_ERROR:
-
-# Do not let 'make' delete intermediate files.  This might have been
-# a sensible idea, but it's too buggy.
-.SECONDARY:
 
 # PostgreSQL version number
 VERSION = @VERSION@
