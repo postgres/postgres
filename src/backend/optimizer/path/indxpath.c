@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.19 1998/07/31 15:10:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.20 1998/08/01 22:12:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "access/nbtree.h"
 #include "catalog/catname.h"
 #include "catalog/pg_amop.h"
+#include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "nodes/makefuncs.h"
@@ -77,10 +78,7 @@ create_index_paths(Query *root, RelOptInfo *rel, RelOptInfo *index,
 				   List *clausegroup_list, bool join);
 static List *add_index_paths(List *indexpaths, List *new_indexpaths);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
-static bool SingleAttributeIndex(RelOptInfo *index);
 
-/* If Spyros can use a constant PRS2_BOOL_TYPEID, I can use this */
-#define BOOL_TYPEID ((Oid) 16)
 
 /*
  * find-index-paths--
@@ -121,91 +119,82 @@ find_index_paths(Query *root,
 	List	   *joinclausegroups = NIL;
 	List	   *joinpaths = NIL;
 	List	   *retval = NIL;
-
-	if (indices == NIL)
-		return (NULL);
-
-	index = (RelOptInfo *) lfirst(indices);
-
-	retval = find_index_paths(root,
-							  rel,
-							  lnext(indices),
-							  clauseinfo_list,
-							  joininfo_list);
-
-	/* If this is a partial index, return if it fails the predicate test */
-	if (index->indpred != NIL)
-		if (!pred_test(index->indpred, clauseinfo_list, joininfo_list))
-			return retval;
-
-	/*
-	 * 1. If this index has only one key, try matching it against
-	 * subclauses of an 'or' clause.  The fields of the clauseinfo nodes
-	 * are marked with lists of the matching indices no path are actually
-	 * created.
-	 *
-	 * XXX NOTE:  Currently btrees dos not support indices with > 1 key, so
-	 * the following test will always be true for now but we have decided
-	 * not to support index-scans on disjunction . -- lp
-	 */
-	if (SingleAttributeIndex(index))
+	List	   *ilist;
+	
+	foreach(ilist, indices)
 	{
+		index = (RelOptInfo *) lfirst(ilist);
+	
+		/* If this is a partial index, return if it fails the predicate test */
+		if (index->indpred != NIL)
+			if (!pred_test(index->indpred, clauseinfo_list, joininfo_list))
+				continue;
+	
+		/*
+		 * 1. Try matching the index against subclauses of an 'or' clause.
+		 * The fields of the clauseinfo nodes are marked with lists of the
+		 * matching indices.  No path are actually created.  We currently
+		 * only look to match the first key.  We don't find multi-key index
+		 * cases where an AND matches the first key, and the OR matches the
+		 * second key.
+		 */
 		match_index_orclauses(rel,
-							  index,
-							  index->indexkeys[0],
-							  index->classlist[0],
-							  clauseinfo_list);
+								  index,
+								  index->indexkeys[0],
+								  index->classlist[0],
+								  clauseinfo_list);
+		}
+	
+		/*
+		 * 2. If the keys of this index match any of the available restriction
+		 * clauses, then create pathnodes corresponding to each group of
+		 * usable clauses.
+		 */
+		scanclausegroups = group_clauses_by_indexkey(rel,
+													 index,
+													 index->indexkeys,
+													 index->classlist,
+													 clauseinfo_list);
+	
+		scanpaths = NIL;
+		if (scanclausegroups != NIL)
+			scanpaths = create_index_paths(root,
+										   rel,
+										   index,
+										   scanclausegroups,
+										   false);
+	
+		/*
+		 * 3. If this index can be used with any join clause, then create
+		 * pathnodes for each group of usable clauses.	An index can be used
+		 * with a join clause if its ordering is useful for a mergejoin, or if
+		 * the index can possibly be used for scanning the inner relation of a
+		 * nestloop join.
+		 */
+		joinclausegroups = indexable_joinclauses(rel, index, joininfo_list, clauseinfo_list);
+		joinpaths = NIL;
+	
+		if (joinclausegroups != NIL)
+		{
+			List	   *new_join_paths = create_index_paths(root, rel,
+															index,
+															joinclausegroups,
+															true);
+			List	   *innerjoin_paths = index_innerjoin(root, rel, joinclausegroups, index);
+	
+			rel->innerjoin = nconc(rel->innerjoin, innerjoin_paths);
+			joinpaths = new_join_paths;
+		}
+	
+		/*
+		 * Some sanity checks to make sure that the indexpath is valid.
+		 */
+		if (joinpaths != NULL)
+			retval = add_index_paths(joinpaths, retval);
+		if (scanpaths != NULL)
+			retval = add_index_paths(scanpaths, retval);
 	}
-
-	/*
-	 * 2. If the keys of this index match any of the available restriction
-	 * clauses, then create pathnodes corresponding to each group of
-	 * usable clauses.
-	 */
-	scanclausegroups = group_clauses_by_indexkey(rel,
-												 index,
-												 index->indexkeys,
-												 index->classlist,
-												 clauseinfo_list);
-
-	scanpaths = NIL;
-	if (scanclausegroups != NIL)
-		scanpaths = create_index_paths(root,
-									   rel,
-									   index,
-									   scanclausegroups,
-									   false);
-
-	/*
-	 * 3. If this index can be used with any join clause, then create
-	 * pathnodes for each group of usable clauses.	An index can be used
-	 * with a join clause if its ordering is useful for a mergejoin, or if
-	 * the index can possibly be used for scanning the inner relation of a
-	 * nestloop join.
-	 */
-	joinclausegroups = indexable_joinclauses(rel, index, joininfo_list, clauseinfo_list);
-	joinpaths = NIL;
-
-	if (joinclausegroups != NIL)
-	{
-		List	   *new_join_paths = create_index_paths(root, rel,
-														index,
-														joinclausegroups,
-														true);
-		List	   *innerjoin_paths = index_innerjoin(root, rel, joinclausegroups, index);
-
-		rel->innerjoin = nconc(rel->innerjoin, innerjoin_paths);
-		joinpaths = new_join_paths;
-	}
-
-	/*
-	 * Some sanity checks to make sure that the indexpath is valid.
-	 */
-	if (joinpaths != NULL)
-		retval = add_index_paths(joinpaths, retval);
-	if (scanpaths != NULL)
-		retval = add_index_paths(scanpaths, retval);
-
+	
 	return retval;
 
 }
@@ -297,7 +286,7 @@ match_index_to_operand(int indexkey,
  *	  (1) the operator within the subclause can be used with one
  *				of the index's operator classes, and
  *	  (2) there is a usable key that matches the variable within a
- *				sargable clause.
+ *				searchable clause.
  *
  * 'or-clauses' are the remaining subclauses within the 'or' clause
  * 'other-matching-indices' is the list of information on other indices
@@ -322,30 +311,31 @@ match_index_orclause(RelOptInfo *rel,
 	List	   *matched_indices = other_matching_indices;
 	List	   *index_list = NIL;
 	List	   *clist;
-	List	   *ind;
 
-	if (!matched_indices)
-		matched_indices = lcons(NIL, NIL);
-
-	for (clist = or_clauses, ind = matched_indices;
-		 clist;
-		 clist = lnext(clist), ind = lnext(ind))
+	foreach(clist, or_clauses)
 	{
 		clause = lfirst(clist);
 		if (is_opclause(clause) &&
 			op_class(((Oper *) ((Expr *) clause)->oper)->opno,
 					 xclass, index->relam) &&
-			match_index_to_operand(indexkey,
+			((match_index_to_operand(indexkey,
 								   (Expr *) get_leftop((Expr *) clause),
 								   rel,
 								   index) &&
-			IsA(get_rightop((Expr *) clause), Const))
+			  IsA(get_rightop((Expr *) clause), Const)) ||
+			 (match_index_to_operand(indexkey,
+								   (Expr *) get_leftop((Expr *) clause),
+								   rel,
+								   index) &&
+			 IsA(get_rightop((Expr *) clause), Const))))
 		{
-
 			matched_indices = lcons(index, matched_indices);
-			index_list = lappend(index_list,
-								 matched_indices);
 		}
+		index_list = lappend(index_list, matched_indices);
+
+		/* for the first index, we are creating the indexids list */
+		if (matched_indices)
+			matched_indices = lnext(matched_indices);
 	}
 	return (index_list);
 
@@ -1061,7 +1051,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	 */
 	test_oper = makeOper(test_op,		/* opno */
 						 InvalidOid,	/* opid */
-						 BOOL_TYPEID,	/* opresulttype */
+						 BOOLOID,	/* opresulttype */
 						 0,		/* opsize */
 						 NULL); /* op_fcache */
 	replace_opid(test_oper);
@@ -1176,7 +1166,8 @@ extract_restrict_clauses(List *clausegroup)
  *
  */
 static List *
-index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list, RelOptInfo *index)
+index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
+				RelOptInfo *index)
 {
 	List	   *clausegroup = NIL;
 	List	   *cg_list = NIL;
@@ -1365,30 +1356,4 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 	}
 
 	return true;
-}
-
-static bool
-SingleAttributeIndex(RelOptInfo *index)
-{
-
-	/*
-	 * return false for now as I don't know if we support index scans on
-	 * disjunction and the code doesn't work
-	 */
-	return (false);
-
-#if 0
-
-	/*
-	 * Non-functional indices.
-	 */
-	if (index->indproc == InvalidOid)
-		return (index->indexkeys[0] != 0 &&
-				index->indexkeys[1] == 0);
-
-	/*
-	 * We have a functional index which is a single attr index
-	 */
-	return true;
-#endif
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.7 1998/07/18 04:22:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.8 1998/08/01 22:12:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,11 @@ create_or_index_paths(Query *root,
 					  RelOptInfo *rel, List *clauses)
 {
 	List	   *t_list = NIL;
+	List	   *clist;
 
-	if (clauses != NIL)
+	foreach(clist, clauses)
 	{
-		CInfo	   *clausenode = (CInfo *) (lfirst(clauses));
+		CInfo	   *clausenode = (CInfo *) (lfirst(clist));
 
 		/*
 		 * Check to see if this clause is an 'or' clause, and, if so,
@@ -77,8 +78,11 @@ create_or_index_paths(Query *root,
 			index_list = clausenode->indexids;
 			foreach(temp, index_list)
 			{
-				if (!temp)
+				if (!lfirst(temp))
+				{
 					index_flag = false;
+					break;
+				}
 			}
 			if (index_flag)
 			{					/* used to be a lisp every function */
@@ -100,8 +104,7 @@ create_or_index_paths(Query *root,
 
 				pathnode->path.pathtype = T_IndexScan;
 				pathnode->path.parent = rel;
-				pathnode->indexqual =
-					lcons(clausenode, NIL);
+				pathnode->indexqual = lcons(clausenode, NIL);
 				pathnode->indexid = indexids;
 				pathnode->path.path_cost = cost;
 
@@ -110,9 +113,8 @@ create_or_index_paths(Query *root,
 				 * processing	 -- JMH, 7/7/92
 				 */
 				pathnode->path.locclauseinfo =
-					set_difference(clauses,
-								   copyObject((Node *)
-											  rel->clauseinfo));
+					set_difference(copyObject((Node *)rel->clauseinfo),
+								   lcons(clausenode,NIL));
 
 #if 0							/* fix xfunc */
 				/* add in cost for expensive functions!  -- JMH, 7/7/92 */
@@ -123,12 +125,8 @@ create_or_index_paths(Query *root,
 				}
 #endif
 				clausenode->selectivity = (Cost) floatVal(selecs);
-				t_list =
-					lcons(pathnode,
-					   create_or_index_paths(root, rel, lnext(clauses)));
+				t_list = lappend(t_list, pathnode);
 			}
-			else
-				t_list = create_or_index_paths(root, rel, lnext(clauses));
 		}
 	}
 
@@ -167,32 +165,28 @@ best_or_subclause_indices(Query *root,
 						  Cost *cost,	/* return value */
 						  List **selecs)		/* return value */
 {
-	if (subclauses == NIL)
-	{
-		*indexids = nreverse(examined_indexids);
-		*cost = subcost;
-		*selecs = nreverse(selectivities);
-	}
-	else
+	List *slist;
+	
+	foreach (slist, subclauses)
 	{
 		int			best_indexid;
 		Cost		best_cost;
 		Cost		best_selec;
 
-		best_or_subclause_index(root, rel, lfirst(subclauses), lfirst(indices),
+		best_or_subclause_index(root, rel, lfirst(slist), lfirst(indices),
 								&best_indexid, &best_cost, &best_selec);
+								
+		examined_indexids = lappendi(examined_indexids, best_indexid);
+		subcost += best_cost;
+		selectivities = lappend(selectivities, makeFloat(best_selec));
 
-		best_or_subclause_indices(root,
-								  rel,
-								  lnext(subclauses),
-								  lnext(indices),
-								  lconsi(best_indexid, examined_indexids),
-								  subcost + best_cost,
-							 lcons(makeFloat(best_selec), selectivities),
-								  indexids,
-								  cost,
-								  selecs);
+		indices = lnext(indices);
 	}
+
+	*indexids = examined_indexids;
+	*cost = subcost;
+	*selecs = selectivities;
+
 	return;
 }
 
@@ -219,20 +213,21 @@ best_or_subclause_index(Query *root,
 						Cost *retCost,	/* return value */
 						Cost *retSelec) /* return value */
 {
-	if (indices != NIL)
+	List *ilist;
+	bool first_run = true;
+	
+	foreach (ilist, indices)
 	{
+		RelOptInfo		   *index = (RelOptInfo *) lfirst(ilist);
+		
 		Datum		value;
 		int			flag = 0;
 		Cost		subcost;
-		RelOptInfo		   *index = (RelOptInfo *) lfirst(indices);
 		AttrNumber	attno = (get_leftop(subclause))->varattno;
 		Oid			opno = ((Oper *) subclause->oper)->opno;
 		bool		constant_on_right = non_null((Expr *) get_rightop(subclause));
 		float		npages,
 					selec;
-		int			subclause_indexid;
-		Cost		subclause_cost;
-		Cost		subclause_selec;
 
 		if (constant_on_right)
 			value = ((Const *) get_rightop(subclause))->constvalue;
@@ -242,6 +237,7 @@ best_or_subclause_index(Query *root,
 			flag = (_SELEC_IS_CONSTANT_ || _SELEC_CONSTANT_RIGHT_);
 		else
 			flag = _SELEC_CONSTANT_RIGHT_;
+
 		index_selectivity(lfirsti(index->relids),
 						  index->classlist,
 						  lconsi(opno, NIL),
@@ -262,26 +258,22 @@ best_or_subclause_index(Query *root,
 							 index->pages,
 							 index->tuples,
 							 false);
-		best_or_subclause_index(root,
-								rel,
-								subclause,
-								lnext(indices),
-								&subclause_indexid,
-								&subclause_cost,
-								&subclause_selec);
 
-		if (subclause_indexid == 0 || subcost < subclause_cost)
+		if (first_run || subcost < *retCost)
 		{
 			*retIndexid = lfirsti(index->relids);
 			*retCost = subcost;
 			*retSelec = selec;
+			first_run = false;
 		}
-		else
-		{
-			*retIndexid = 0;
-			*retCost = 0.0;
-			*retSelec = 0.0;
-		}
+	}
+
+	/* we didn't get any indexes, so zero return values */
+	if (first_run)
+	{
+		*retIndexid = 0;
+		*retCost = 0.0;
+		*retSelec = 0.0;
 	}
 	return;
 }

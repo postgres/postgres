@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.9 1998/07/18 04:22:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.10 1998/08/01 22:12:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,19 +159,8 @@ set_rest_selec(Query *root, List *clauseinfo_list)
 Cost
 compute_clause_selec(Query *root, Node *clause, List *or_selectivities)
 {
-	if (!is_opclause(clause))
-	{
-
-		/*
-		 * if it's not an operator clause, then it is a boolean clause
-		 * -jolly
-		 */
-
-		/*
-		 * Boolean variables get a selectivity of 1/2.
-		 */
-		return (0.1);
-	}
+    if (is_opclause (clause))
+	    return compute_selec(root, lcons(clause,NIL), or_selectivities);
 	else if (not_clause(clause))
 	{
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.33 1998/06/15 19:28:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.34 1998/08/01 22:12:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1349,8 +1349,6 @@ ExecQual(List *qual, ExprContext *econtext)
 
 	foreach(clause, qual)
 	{
-	 
-	  
 		result = ExecQualClause((Node *) lfirst(clause), econtext);
 		if (result == true)
 			break;

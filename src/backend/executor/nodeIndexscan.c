@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.19 1998/07/27 19:37:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.20 1998/08/01 22:12:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,6 @@ IndexNext(IndexScan *node)
 	IndexScanState *indexstate;
 	ScanDirection	direction;
 	Snapshot		snapshot;
-	int			indexPtr;
 	IndexScanDescPtr scanDescs;
 	IndexScanDesc scandesc;
 	Relation	heapRelation;
@@ -95,7 +94,8 @@ IndexNext(IndexScan *node)
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
 	Buffer		buffer = InvalidBuffer;
-
+	int			numIndices;
+	
 	/* ----------------
 	 *	extract necessary information from index scan node
 	 * ----------------
@@ -105,54 +105,66 @@ IndexNext(IndexScan *node)
 	snapshot = estate->es_snapshot;
 	scanstate = node->scan.scanstate;
 	indexstate = node->indxstate;
-	indexPtr = indexstate->iss_IndexPtr;
 	scanDescs = indexstate->iss_ScanDescs;
-	scandesc = scanDescs[indexPtr];
 	heapRelation = scanstate->css_currentRelation;
-
+	numIndices = indexstate->iss_NumIndices;
 	slot = scanstate->css_ScanTupleSlot;
 
 	/* ----------------
 	 *	ok, now that we have what we need, fetch an index tuple.
-	 * ----------------
-	 */
-
-	/* ----------------
 	 *	if scanning this index succeeded then return the
 	 *	appropriate heap tuple.. else return NULL.
 	 * ----------------
 	 */
-	while ((result = index_getnext(scandesc, direction)) != NULL)
+	while (indexstate->iss_IndexPtr < numIndices)
 	{
-		tuple = heap_fetch(heapRelation, snapshot, 
-							&result->heap_iptr, &buffer);
-		/* be tidy */
-		pfree(result);
+		scandesc = scanDescs[indexstate->iss_IndexPtr];
+		while ((result = index_getnext(scandesc, direction)) != NULL)
+		{
+			tuple = heap_fetch(heapRelation, snapshot,
+								&result->heap_iptr, &buffer);
+			/* be tidy */
+			pfree(result);
 
-		if (tuple != NULL)
-		{
-			/* ----------------
-		 	 *	store the scanned tuple in the scan tuple slot of
-		 	 *	the scan state.  Eventually we will only do this and not
-		 	 *	return a tuple.  Note: we pass 'false' because tuples
-		 	 *	returned by amgetnext are pointers onto disk pages and
-		 	 *	were not created with palloc() and so should not be pfree()'d.
-		 	 * ----------------
-		 	 */
-			ExecStoreTuple(tuple,		/* tuple to store */
-							slot,		/* slot to store in */
-							buffer,		/* buffer associated with tuple  */
-							false);		/* don't pfree */
-	
-			return slot;
-		}
-		else
-		{
+			if (tuple != NULL)
+			{
+				bool		prev_matches = false;
+				int			prev_index;
+
+				/* ----------------
+			 	 *	store the scanned tuple in the scan tuple slot of
+			 	 *	the scan state.  Eventually we will only do this and not
+			 	 *	return a tuple.  Note: we pass 'false' because tuples
+			 	 *	returned by amgetnext are pointers onto disk pages and
+			 	 *	were not created with palloc() and so should not be pfree()'d.
+			 	 * ----------------
+			 	 */
+				ExecStoreTuple(tuple,		/* tuple to store */
+								slot,		/* slot to store in */
+								buffer,		/* buffer associated with tuple  */
+								false);		/* don't pfree */
+ 
+				for (prev_index = 0; prev_index < indexstate->iss_IndexPtr;
+																prev_index++)
+				{
+					if (ExecQual(nth(prev_index, node->indxqual),
+						scanstate->cstate.cs_ExprContext))
+					{
+						prev_matches = true;
+						break;
+					}
+				}
+				if (!prev_matches)
+					return slot;
+				else
+					ExecClearTuple(slot);
+			}
 			if (BufferIsValid(buffer))
 				ReleaseBuffer(buffer);
 		}
+		if (indexstate->iss_IndexPtr < numIndices)
+			indexstate->iss_IndexPtr++;
 	}
-
 	/* ----------------
 	 *	if we get here it means the index scan failed so we
 	 *	are at the end of the scan..
@@ -218,7 +230,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	int			i;
 
 	Pointer    *runtimeKeyInfo;
-	int			indexPtr;
 	int		   *numScanKeys;
 	List	   *indxqual;
 	List	   *qual;
@@ -238,69 +249,62 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	numIndices = indexstate->iss_NumIndices;
 	scanDescs = indexstate->iss_ScanDescs;
 	scanKeys = indexstate->iss_ScanKeys;
-
 	runtimeKeyInfo = (Pointer *) indexstate->iss_RuntimeKeyInfo;
+	indxqual = node->indxqual;
+	numScanKeys = indexstate->iss_NumScanKeys;
+	indexstate->iss_IndexPtr = 0;
+	
+	/* it's possible in subselects */
+	if (exprCtxt == NULL)
+		exprCtxt = node->scan.scanstate->cstate.cs_ExprContext;
 
-	if (runtimeKeyInfo != NULL)
-	{
-
-		/*
-		 * get the index qualifications and recalculate the appropriate
-		 * values
-		 */
-		indexPtr = indexstate->iss_IndexPtr;
-		indxqual = node->indxqual;
-		qual = nth(indexPtr, indxqual);
-		numScanKeys = indexstate->iss_NumScanKeys;
-		n_keys = numScanKeys[indexPtr];
-		run_keys = (int *) runtimeKeyInfo[indexPtr];
-		scan_keys = (ScanKey) scanKeys[indexPtr];
+	if (exprCtxt != NULL)
+		node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
+			exprCtxt->ecxt_outertuple;
 		
-		/* it's possible in subselects */
-		if (exprCtxt == NULL)
-			exprCtxt = node->scan.scanstate->cstate.cs_ExprContext;
-		
-		for (j = 0; j < n_keys; j++)
-		{
-
-			/*
-			 * If we have a run-time key, then extract the run-time
-			 * expression and evaluate it with respect to the current
-			 * outer tuple.  We then stick the result into the scan key.
-			 */
-			if (run_keys[j] != NO_OP)
-			{
-				clause = nth(j, qual);
-				scanexpr = (run_keys[j] == RIGHT_OP) ?
-					(Node *) get_rightop(clause) : (Node *) get_leftop(clause);
-
-				/*
-				 * pass in isDone but ignore it.  We don't iterate in
-				 * quals
-				 */
-				scanvalue = (Datum)
-					ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
-				scan_keys[j].sk_argument = scanvalue;
-				if (isNull)
-					scan_keys[j].sk_flags |= SK_ISNULL;
-				else
-					scan_keys[j].sk_flags &= ~SK_ISNULL;
-			}
-		}
-	}
-
 	/*
-	 * rescans all indices
-	 *
-	 * note: AMrescan assumes only one scan key.  This may have to change if
-	 * we ever decide to support multiple keys.
+	 * get the index qualifications and recalculate the appropriate
+	 * values
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
-		sdesc = scanDescs[i];
-		skey = scanKeys[i];
-		index_rescan(sdesc, direction, skey);
-	}
+		if (runtimeKeyInfo && runtimeKeyInfo[i] != NULL)
+		{
+			qual = nth(i, indxqual);
+			n_keys = numScanKeys[i];
+			run_keys = (int *) runtimeKeyInfo[i];
+			scan_keys = (ScanKey) scanKeys[i];
+		
+			for (j = 0; j < n_keys; j++)
+			{
+				/*
+				 * If we have a run-time key, then extract the run-time
+				 * expression and evaluate it with respect to the current
+				 * outer tuple.  We then stick the result into the scan key.
+				 */
+				if (run_keys[j] != NO_OP)
+				{
+					clause = nth(j, qual);
+					scanexpr = (run_keys[j] == RIGHT_OP) ?
+						(Node *) get_rightop(clause) : (Node *) get_leftop(clause);
+	
+					/*
+					 * pass in isDone but ignore it.  We don't iterate in
+					 * quals
+					 */
+					scanvalue = (Datum)
+						ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
+					scan_keys[j].sk_argument = scanvalue;
+					if (isNull)
+						scan_keys[j].sk_flags |= SK_ISNULL;
+					else
+						scan_keys[j].sk_flags &= ~SK_ISNULL;
+				}
+			}
+			sdesc = scanDescs[i];
+			skey = scanKeys[i];
+			index_rescan(sdesc, direction, skey);
+		}
 
 	/* ----------------
 	 *	perhaps return something meaningful
@@ -322,19 +326,23 @@ ExecEndIndexScan(IndexScan *node)
 {
 	CommonScanState *scanstate;
 	IndexScanState *indexstate;
+	Pointer    *runtimeKeyInfo;
 	ScanKey    *scanKeys;
+	int		   *numScanKeys;
 	int			numIndices;
 	int			i;
 
 	scanstate = node->scan.scanstate;
 	indexstate = node->indxstate;
-
+	runtimeKeyInfo = (Pointer *) indexstate->iss_RuntimeKeyInfo;
+	
 	/* ----------------
 	 *	extract information from the node
 	 * ----------------
 	 */
 	numIndices = indexstate->iss_NumIndices;
 	scanKeys = indexstate->iss_ScanKeys;
+	numScanKeys = indexstate->iss_NumScanKeys;
 
 	/* ----------------
 	 *	Free the projection info and the scan attribute info
@@ -362,7 +370,24 @@ ExecEndIndexScan(IndexScan *node)
 		if (scanKeys[i] != NULL)
 			pfree(scanKeys[i]);
 	}
+	pfree(scanKeys);
+	pfree(numScanKeys);
 
+	if (runtimeKeyInfo)
+	{	
+		for (i = 0; i < numIndices; i++)
+		{
+			List	   *qual;
+			int			n_keys;
+
+			qual = nth(i, indxqual);
+			n_keys = length(qual);
+			if (n_keys > 0)
+				pfree(runtimeKeyInfo[i]);
+		}
+		pfree(runtimeKeyInfo);
+	}
+	
 	/* ----------------
 	 *	clear out tuple table slots
 	 * ----------------
@@ -430,7 +455,7 @@ ExecIndexRestrPos(IndexScan *node)
 
 /* ----------------------------------------------------------------
  *		ExecInitIndexScan
- *
+  *
  *		Initializes the index scan's state information, creates
  *		scan keys, and opens the base and index relations.
  *
@@ -886,20 +911,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	if (have_runtime_keys)
 		indexstate->iss_RuntimeKeyInfo = (Pointer) runtimeKeyInfo;
 	else
-	{
 		indexstate->iss_RuntimeKeyInfo = NULL;
-		for (i = 0; i < numIndices; i++)
-		{
-			List	   *qual;
-			int			n_keys;
-
-			qual = nth(i, indxqual);
-			n_keys = length(qual);
-			if (n_keys > 0)
-				pfree(runtimeKeyInfo[i]);
-		}
-		pfree(runtimeKeyInfo);
-	}
 
 	/* ----------------
 	 *	get the range table and direction information
@@ -991,6 +1003,5 @@ int
 ExecCountSlotsIndexScan(IndexScan *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-	ExecCountSlotsNode(innerPlan((Plan *) node)) +
-	INDEXSCAN_NSLOTS;
+		   ExecCountSlotsNode(innerPlan((Plan *) node)) + INDEXSCAN_NSLOTS;
 }

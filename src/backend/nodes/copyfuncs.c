@@ -1,4 +1,4 @@
-/*-------------------------------------------------------------------------
+ /*-------------------------------------------------------------------------
  *
  * copyfuncs.c--
  *	  Copy functions for Postgres tree nodes.
@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.44 1998/07/18 04:22:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.45 1998/08/01 22:12:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -990,16 +990,16 @@ _copyArrayRef(ArrayRef *from)
  */
 
 /* ----------------
- *		_copyRel
+ *		_copyRelOptInfo
  * ----------------
  */
 /*
- ** when you change this, also make sure to fix up xfunc_copyRel in
+ ** when you change this, also make sure to fix up xfunc_copyRelOptInfo in
  ** planner/path/xfunc.c accordingly!!!
  **			-- JMH, 8/2/93
  */
 static RelOptInfo *
-_copyRel(RelOptInfo *from)
+_copyRelOptInfo(RelOptInfo *from)
 {
 	RelOptInfo		   *newnode = makeNode(RelOptInfo);
 	int			i,
@@ -1735,7 +1735,7 @@ copyObject(void *from)
 			 * RELATION NODES
 			 */
 		case T_RelOptInfo:
-			retval = _copyRel(from);
+			retval = _copyRelOptInfo(from);
 			break;
 		case T_Path:
 			retval = _copyPath(from);

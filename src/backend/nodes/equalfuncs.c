@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.16 1998/02/26 04:32:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.17 1998/08/01 22:12:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,6 +300,19 @@ _equalCInfo(CInfo *a, CInfo *b)
 		return (false);
 	return (equal((a->indexids),
 				  (b->indexids)));
+}
+
+/*
+ * RelOptInfo is a subclass of Node.
+ */
+static bool
+_equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
+{
+	Assert(IsA(a, RelOptInfo));
+	Assert(IsA(b, RelOptInfo));
+
+	return (equal((a->relids),
+				  (b->relids)));
 }
 
 static bool
@@ -662,6 +675,9 @@ equal(void *a, void *b)
 			break;
 		case T_CInfo:
 			retval = _equalCInfo(a, b);
+			break;
+		case T_RelOptInfo:
+			retval = _equalRelOptInfo(a, b);
 			break;
 		case T_JoinMethod:
 			retval = _equalJoinMethod(a, b);
