@@ -49,9 +49,8 @@ typedef unsigned char uch;
 #define	NDEBUG	/* no assertions please */
 #endif
 #endif
-#include <assert.h>
 
 /* for old systems with bcopy() but no memmove() */
-#if defined(PORTNAME_sparc)
+#if !defined(HAVE_MEMMOVE)
 #define	memmove(d, s, c)	bcopy(s, d, c)
 #endif
