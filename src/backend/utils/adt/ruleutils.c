@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.86 2001/10/25 05:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.87 2001/11/19 19:51:20 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2054,11 +2054,9 @@ get_func_expr(Expr *expr, deparse_context *context)
 		/*
 		 * Show typename with appropriate length decoration. Note that
 		 * since exprIsLengthCoercion succeeded, the function's output
-		 * type is the right thing to use.
-		 *
-		 * XXX In general it is incorrect to quote the result of
-		 * format_type_with_typemod, but are there any special cases where
-		 * we should do so?
+		 * type is the right thing to report.  Also note we don't need
+		 * to quote the result of format_type_with_typemod: it takes
+		 * care of double-quoting any identifier that needs it.
 		 */
 		typdesc = format_type_with_typemod(procStruct->prorettype,
 										   coercedTypmod);
