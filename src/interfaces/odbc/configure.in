@@ -250,8 +250,8 @@ AC_SUBST(CFLAGS)
 AC_SUBST(DLSUFFIX)
 AC_SUBST(DL_LIB)
 
-INSTALLPATH="/usr/ucb:$PATH"
-AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install, NONE, $INSTALLPATH)
+INSTALLPATH="`echo /usr/ucb:$PATH | sed 's/:/ /g'`"
+AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install, NONE, $INSTALLPATH )
 if test $INSTALL = "NONE"
 then
    echo "- No Install Script found - aborting."
@@ -261,18 +261,29 @@ fi
 INSTLOPTS="-m 444"
 INSTL_EXE_OPTS="-m 555"
 INSTL_LIB_OPTS="-m 644"
+INSTL_SHLIB_OPTS="-m 644"
 
+dnl HPUX wants shared libs to be mode 555.
+case "$host_os" in
+ hpux*)
+	INSTL_SHLIB_OPTS="-m 555" ;;
+esac
+
+dnl These flavors of install need -c to install by copy rather than move.
+dnl install by move is fatal because it removes stuff from the source tree!
 case "`basename $INSTALL`" in
- install|installbsd|scoinst)
+ install|installbsd|scoinst|install-sh)
 	INSTLOPTS="-c $INSTLOPTS"
 	INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
-	INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS";;
+	INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
+	INSTL_SHLIB_OPTS="-c $INSTL_SHLIB_OPTS";;
 esac
 
 echo "- Using $INSTALL"
 AC_SUBST(INSTALL)
 AC_SUBST(INSTLOPTS)
 AC_SUBST(INSTL_LIB_OPTS)
+AC_SUBST(INSTL_SHLIB_OPTS)
 AC_SUBST(INSTL_EXE_OPTS)
 
 dnl Check the option to echo to inhibit newlines.

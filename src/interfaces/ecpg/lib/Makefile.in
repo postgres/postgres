@@ -72,24 +72,43 @@ ifeq ($(PORTNAME), unixware)
   CFLAGS += $(CFLAGS_SL)
 endif
 
+ifeq ($(PORTNAME), hpux)
+  install-shlib-dep	:= install-shlib
+  shlib				:= lib$(NAME).sl
+  LDFLAGS_SL		:= -b
+  CFLAGS			+= $(CFLAGS_SL)
+endif
+
 all: lib$(NAME).a $(shlib)
 
-$(shlib): ecpglib.sho.o typename.sho.o
-	$(LD) $(LDFLAGS_SL) -o $@ ecpglib.sho.o typename.sho.o
+$(shlib): ecpglib.o typename.o
+	$(LD) $(LDFLAGS_SL) -o $@ ecpglib.o typename.o
 
 clean:
-	rm -f *.o *.sho *.a core a.out *~ $(shlib) lib$(NAME)$(DLSUFFIX)
+	rm -f *.o *.a core a.out *~ $(shlib) lib$(NAME)$(DLSUFFIX)
 
 dep depend:
 
-install: lib$(NAME).a $(shlib) $(install-shlib-dep)
-	$(INSTALL) $(INSTLOPTS) lib$(NAME).a $(LIBDIR)
+.PHONY: install install-libecpg install-shlib
 
-install-shlib:
-	$(INSTALL) $(INSTLOPTS) $(shlib) $(LIBDIR)
-	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX)
- 
+install: install-libecpg $(install-shlib-dep)
+
+install-libecpg: lib$(NAME).a
+	$(INSTALL) $(INSTL_LIB_OPTS) lib$(NAME).a $(LIBDIR)/lib$(NAME).a
+
+install-shlib: $(shlib)
+	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
+	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
+		cd $(LIBDIR); \
+		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
+		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
+	fi
+	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
+		cd $(LIBDIR); \
+		rm -f lib$(NAME)$(DLSUFFIX); \
+		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
+	fi
+
 
 uninstall::
 	rm -f $(LIBDIR)/lib$(NAME).a $(LIBDIR)/$(shlib)
@@ -103,8 +122,3 @@ ecpglib.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
 	$(CC) $(CFLAGS) -I../include $(PQ_INCLUDE) -c $< -o $@
 typename.o : typename.c ../include/ecpgtype.h
 	$(CC) $(CFLAGS) -I../include $(PQ_INCLUDE) -c $< -o $@
-
-ecpglib.sho : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
-	$(CC) $(CFLAGS) $(CFLAGS_SL) -I../include $(PQ_INCLUDE) -c $< -o $@
-typename.sho : typename.c ../include/ecpgtype.h
-	$(CC) $(CFLAGS) $(CFLAGS_SL) -I../include $(PQ_INCLUDE) -c $< -o $@

@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.8 1998/10/17 23:33:23 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.9 1998/10/18 19:41:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ ifeq ($(TCL_SHARED_BUILD),1)
 all: $(INFILES)
 
 install: all
-	$(INSTALL) $(INSTL_LIB_OPTS) $(DLOBJS) $(LIBDIR)/$(DLOBJS)
+	$(INSTALL) $(INSTL_SHLIB_OPTS) $(DLOBJS) $(LIBDIR)/$(DLOBJS)
 
 else
 

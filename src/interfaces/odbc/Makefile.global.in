@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/Makefile.global.in,v 1.2 1998/10/09 07:04:50 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/Makefile.global.in,v 1.3 1998/10/18 19:40:56 tgl Exp $
 #
 # NOTES
 #    This is derived from the main Postgres makefile.
@@ -102,6 +102,7 @@ RANLIB= @RANLIB@
 INSTLOPTS= @INSTLOPTS@
 INSTL_EXE_OPTS= @INSTL_EXE_OPTS@
 INSTL_LIB_OPTS= @INSTL_LIB_OPTS@
+INSTL_SHLIB_OPTS= @INSTL_SHLIB_OPTS@
 
 ##############################################################################
 #

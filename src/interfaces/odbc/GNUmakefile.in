@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.5 1998/10/14 16:09:32 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.6 1998/10/18 19:40:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
@@ -25,17 +25,24 @@ FIND= @find@
 TAR= @tar@
 SPLIT= @split@
 
-install-shlib-dep := install-shlib
-shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+# Shared library stuff
+shlib := 
+install-shlib-dep :=
 
 ifeq ($(PORTNAME), linux)
+  install-shlib-dep := install-shlib
+  shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL = -shared -soname lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL += -Bsymbolic $(LDFLAGS) -lc -lm
+  CFLAGS += $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
+    install-shlib-dep := install-shlib
+    shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     LDFLAGS_SL = -x -Bshareable -Bforcearchive $(LDFLAGS)
+    CFLAGS += $(CFLAGS_SL)
   endif
 endif
 
@@ -55,16 +62,15 @@ CFLAGS += -I. @DEFS@
 all: libpsqlodbc.a $(shlib)
 
 libpsqlodbc.a: $(OBJECTS)
-	$(AR) $(AROPT) libpsqlodbc.a $(OBJS)
+	$(AR) $(AROPT) libpsqlodbc.a $(OBJECTS)
 	$(RANLIB) libpsqlodbc.a
 
 $(shlib): $(OBJECTS)
 	$(LD) $(LDFLAGS_SL) $(OBJECTS) \
 	-o $(shlib) $(LIBS)
 
-.PHONY: beforeinstall-headers
-
-.PHONY: install
+.PHONY: beforeinstall-headers install-headers
+.PHONY: install install-libpsqlodbc install-ini install-shlib
 
 install: $(HEADERDIR) $(LIBDIR) $(ODBCINST) install-headers \
 	install-libpsqlodbc install-ini $(install-shlib-dep)
@@ -84,11 +90,17 @@ install-libpsqlodbc: libpsqlodbc.a
 	$(INSTALL) $(INSTL_LIB_OPTS) libpsqlodbc.a $(LIBDIR)/lib$(NAME).a
 
 install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
-	rm -f $(LIBDIR)/lib$(NAME)$(DLSUFFIX)
-	rm -f $(LIBDIR)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX)
+	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
+	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
+		cd $(LIBDIR); \
+		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
+		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
+	fi
+	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
+		cd $(LIBDIR); \
+		rm -f lib$(NAME)$(DLSUFFIX); \
+		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
+	fi
 
 install-ini: odbcinst.ini
 	$(INSTALL) $(INSTL_LIB_OPTS) odbcinst.ini $(ODBCINST)

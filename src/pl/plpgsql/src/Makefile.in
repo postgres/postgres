@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.8 1998/10/12 01:23:29 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.9 1998/10/18 19:40:58 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -113,7 +113,7 @@ clean:
 	rm -f *.o y.tab.h pl.tab.h pl_gram.c gram.c pl_scan.c scan.c
 
 install: all
-	$(INSTALL) $(INSTL_LIB_OPTS) $(DLOBJ) $(DESTDIR)$(LIBDIR)/$(DLOBJ)
+	$(INSTALL) $(INSTL_SHLIB_OPTS) $(DLOBJ) $(DESTDIR)$(LIBDIR)/$(DLOBJ)
 
 $(DLOBJ):	$(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS)

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.31 1998/10/14 16:12:54 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.32 1998/10/18 19:40:54 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(LIBPQ)
 
 .PHONY: beforeinstall-headers install-headers
-.PHONY: install install-libpgtcl
+.PHONY: install install-libpgtcl install-shlib
 
 install: install-headers install-libpgtcl $(install-shlib-dep)
 
@@ -144,14 +144,20 @@ install-libpgtcl: lib$(NAME).a
 	$(INSTALL) $(INSTL_LIB_OPTS) lib$(NAME).a $(LIBDIR)/lib$(NAME).a
 
 install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) \
-		$(LIBDIR)/$(shlib)
-	rm -f $(LIBDIR)/lib$(NAME)$(DLSUFFIX)
-	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX)
+	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
+	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
+		cd $(LIBDIR); \
+		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
+		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
+	fi
+	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
+		cd $(LIBDIR); \
+		rm -f lib$(NAME)$(DLSUFFIX); \
+		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
+	fi
 
 .PHONY: clean
 clean: 
-	rm -f $(OBJS) $(shlib) lib$(NAME).a lib$(NAME)$(DLSUFFIX)
+	rm -f $(OBJS) $(shlib) lib$(NAME).a
 
 dep depend:
