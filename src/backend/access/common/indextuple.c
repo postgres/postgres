@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.9 1996/11/03 08:16:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.10 1996/11/03 10:57:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,11 @@
 #include "access/tupmacs.h"
 #include "utils/palloc.h"
 
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
 
 static Size IndexInfoFindDataOffset(unsigned short t_info);
 
