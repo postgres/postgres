@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.9 1996/10/04 20:16:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.10 1996/10/04 20:32:07 scrappy Exp $
  *
  * NOTES
  *
@@ -404,7 +404,7 @@ ServerLoop(void)
     int		serverFd = ServerSock;
     fd_set	rmask, basemask;
     int		nSockets, nSelected, status, newFd;
-    Dlelem   *prev, *curr;
+    Dlelem   *next, *curr;
 /*    int orgsigmask = sigblock(0); */
     sigset_t oldsigmask, newsigmask;
     
@@ -541,10 +541,11 @@ ServerLoop(void)
 		}
 		FD_CLR(port->sock, &basemask);
 		StreamClose(port->sock);
-		prev = DLGetPred(curr);
+		next = DLGetPred(curr);
 		DLRemove(curr);
 		DLFreeElem(curr);
-		curr = 0;
+		curr = next;
+                continue;
 	    }
 	    curr = DLGetSucc(curr);
 	}
