@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.13 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.14 2000/12/16 22:44:47 tgl Exp $
 Genetic Optimizer
 -->
 
@@ -49,7 +49,7 @@ Genetic Optimizer
     grows exponentially with the number of <command>join</command>s included in it. Further
     optimization effort is caused by the support of a variety of
     <firstterm>join methods</firstterm>
-    (e.g., nested loop, index scan, merge join in <productname>Postgres</productname>) to
+    (e.g., nested loop, hash join, merge join in <productname>Postgres</productname>) to
     process individual <command>join</command>s and a diversity of
     <firstterm>indices</firstterm> (e.g., r-tree,
     b-tree, hash in <productname>Postgres</productname>) as access paths for relations.
@@ -57,8 +57,8 @@ Genetic Optimizer
 
    <para>
     The current <productname>Postgres</productname> optimizer
-    implementation performs a <firstterm>near-
-     exhaustive search</firstterm> over the space of alternative strategies. This query
+    implementation performs a <firstterm>near-exhaustive search</firstterm>
+    over the space of alternative strategies. This query 
     optimization technique is inadequate to support database application
     domains that involve the need for extensive queries, such as artificial
     intelligence.
@@ -74,8 +74,8 @@ Genetic Optimizer
    </para>
 
    <para>
-    Performance difficulties within exploring the space of possible query
-    plans arose the demand for a new optimization technique being developed.
+    Performance difficulties in exploring the space of possible query
+    plans created the demand for a new optimization technique being developed.
    </para>
 
    <para>
@@ -88,10 +88,11 @@ Genetic Optimizer
    <title>Genetic Algorithms (<acronym>GA</acronym>)</title>
 
    <para>
-    The <acronym>GA</acronym> is a heuristic optimization method which operates through 
+    The <acronym>GA</acronym> is a heuristic optimization method which
+    operates through
     determined, randomized search. The set of possible solutions for the
     optimization problem is considered as a
-    <firstterm>erm>popula</firstterm>erm> of <firstterm>individuals</firstterm>.
+    <firstterm>population</firstterm> of <firstterm>individuals</firstterm>.
     The degree of adaption of an individual to its environment is specified
     by its <firstterm>fitness</firstterm>.
    </para>
@@ -167,7 +168,8 @@ P''(t)  generation of descendants at a time t
     </programlisting>
     is encoded by the integer string '4-1-3-2',
     which means, first join relation '4' and '1', then '3', and
-    then '2', where 1, 2, 3, 4 are relids in <productname>Postgres</productname>.
+    then '2', where 1, 2, 3, 4 are relids within the
+    <productname>Postgres</productname> optimizer.
    </para>
 
    <para>
@@ -192,9 +194,10 @@ P''(t)  generation of descendants at a time t
 
      <listitem>
       <para>
-       Usage of <firstterm>edge recombination crossover</firstterm> which is especially suited
+       Usage of <firstterm>edge recombination crossover</firstterm> which is
+       especially suited
        to keep edge losses low for the solution of the
-       <acronym>cro</acronym>cronym> by means of a <acronym>GA</acronym>;
+       <acronym>TSP</acronym> by means of a <acronym>GA</acronym>;
       </para>
      </listitem>
 
@@ -208,40 +211,19 @@ P''(t)  generation of descendants at a time t
    </para>
 
    <para>
-    The <acronym>GEQO</acronym> module gives the following benefits to
-    the <productname>Postgres</productname> DBMS
-    compared to the <productname>Postgres</productname> query optimizer implementation:
-
-    <itemizedlist spacing="compact" mark="bullet">
-     <listitem>
-      <para>
-       Handling of large <command>join</command> queries through non-exhaustive search;
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Improved cost size approximation of query plans since no longer
-       plan merging is needed (the <acronym>GEQO</acronym> module evaluates the cost for a
-       query plan as an individual).
-      </para>
-     </listitem>
-    </itemizedlist>
+    The <acronym>GEQO</acronym> module allows
+    the <productname>Postgres</productname> query optimizer to
+    support large <command>join</command> queries effectively through
+    non-exhaustive search.
    </para>
 
-  </sect1>
-
-  <sect1 id="geqo-future">
+  <sect2 id="geqo-future">
    <title>Future Implementation Tasks for
     <productname>PostgreSQL</> <acronym>GEQO</acronym></title>
 
-   <sect2>
-    <title>Basic Improvements</title>
-
-    <sect3>
-     <title>Improve genetic algorithm parameter settings</title>
-
      <para>
+      Work is still needed to improve the genetic algorithm parameter
+      settings.
       In file <filename>backend/optimizer/geqo/geqo_params.c</filename>, routines
       <function>gimme_pool_size</function> and <function>gimme_number_generations</function>,
       we have to find a compromise for the parameter settings
@@ -259,37 +241,8 @@ P''(t)  generation of descendants at a time t
        </listitem>
       </itemizedlist>
      </para>
-    </sect3>
 
-    <sect3>
-     <title>Find better solution for integer overflow</title>
-
-     <para>
-      In file <filename>backend/optimizer/geqo/geqo_eval.c</filename>, routine
-      <function>geqo_joinrel_size</function>,
-      the present hack for MAXINT overflow is to set the <productname>Postgres</productname> integer
-      value of <structfield>rel->size</structfield> to its logarithm.
-      Modifications of <structname>Rel</structname> in <filename>backend/nodes/relation.h</filename> will
-      surely have severe impacts on the whole <productname>Postgres</productname> implementation.
-     </para>
-    </sect3>
-
-    <sect3>
-     <title>Find solution for exhausted memory</title>
-
-     <para>
-      Memory exhaustion may occur with more than 10 relations involved in a query.
-      In file <filename>backend/optimizer/geqo/geqo_eval.c</filename>, routine
-      <function>gimme_tree</function> is recursively called.
-      Maybe I forgot something to be freed correctly, but I dunno what.
-      Of course the <structname>rel</structname> data structure of the
-      <command>join</command> keeps growing and
-      growing the more relations are packed into it.
-      Suggestions are welcome :-(
-     </para>
-    </sect3>
    </sect2>
-
 
    <bibliography id="geqo-biblio">
     <title>
