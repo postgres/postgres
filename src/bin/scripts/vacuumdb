@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.13 2000/11/25 19:05:44 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.14 2001/01/08 20:32:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -145,7 +145,7 @@ if [ "$alldb" ]; then
 	dbname=`${PATHNAME}psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`
 
 elif [ -z "$dbname" ]; then
-	echo "$CMDNAME: missing required argument database name" 1>&2
+	echo "$CMDNAME: missing required argument: database name" 1>&2
         echo "Try '$CMDNAME -?' for help." 1>&2
 	exit 1
 fi
@@ -154,11 +154,10 @@ for db in $dbname
 do
         [ "$alldb" -a "$quiet" -ne 1 ] && echo "Vacuuming $db"
 	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "VACUUM $verbose $analyze $table" -d $db
+	if [ $? -ne 0 ]; then
+	    echo "$CMDNAME: vacuum $table $db failed" 1>&2
+	    exit 1
+	fi
 done
-
-if [ $? -ne 0 ]; then
-	echo "$CMDNAME: vacuum failed" 1>&2
-	exit 1
-fi
 
 exit 0
