@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.40 2000/08/01 18:29:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.41 2000/09/22 15:34:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,28 +592,33 @@ reset_random_seed(void)
 void
 SetPGVariable(const char *name, const char *value)
 {
+	char	   *mvalue = value ? pstrdup(value) : ((char*) NULL);
+
     /*
      * Special cases ought to be removed and handled separately
      * by TCOP
      */
     if (strcasecmp(name, "datestyle")==0)
-        parse_date(pstrdup(value));
+        parse_date(mvalue);
     else if (strcasecmp(name, "timezone")==0)
-        parse_timezone(pstrdup(value));
+        parse_timezone(mvalue);
     else if (strcasecmp(name, "DefaultXactIsoLevel")==0)
-        parse_DefaultXactIsoLevel(pstrdup(value));
+        parse_DefaultXactIsoLevel(mvalue);
     else if (strcasecmp(name, "XactIsoLevel")==0)
-        parse_XactIsoLevel(pstrdup(value));
+        parse_XactIsoLevel(mvalue);
 #ifdef MULTIBYTE
     else if (strcasecmp(name, "client_encoding")==0)
-        parse_client_encoding(pstrdup(value));
+        parse_client_encoding(mvalue);
     else if (strcasecmp(name, "server_encoding")==0)
-        parse_server_encoding(pstrdup(value));
+        parse_server_encoding(mvalue);
 #endif
     else if (strcasecmp(name, "random_seed")==0)
-        parse_random_seed(pstrdup(value));
+        parse_random_seed(mvalue);
     else
         SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET);
+
+	if (mvalue)
+		pfree(mvalue);
 }
 
 
