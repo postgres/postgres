@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 25 01:22:48 EST 2002
+Last updated:		Mon Feb 25 13:48:22 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -262,6 +262,7 @@ CLIENTS
 	o Implement cancel() method on Statement
 	o Use cursors implicitly to avoid large results (see setCursorName())
         o Add support for CallableStatements
+	o Add LISTEN/NOTIFY support to the JDBC driver (Barry)
 
 * ECPG
 	o Implement set descriptor, using descriptor
@@ -477,9 +478,11 @@ SOURCE CODE
 
 Developers who have claimed items are:
 --------------------------------------
+* Barry is Barry Lind <barry@xythos.com>
 * Billy is Billy G. Allie <Bill.Allie@mug.org>
 * Bruce is Bruce Momjian<pgman@candle.pha.pa.us>
 * D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
+* Dave is Dave Cramer <dave@fastcrypt.com>
 * Edmund is Edmund Mergl <E.Mergl@bawue.de>
 * Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
