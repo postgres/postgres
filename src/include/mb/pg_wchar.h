@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.53 2004/12/02 22:14:38 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.54 2004/12/02 22:37:14 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -16,6 +16,14 @@
  * The pg_wchar
  */
 typedef unsigned int pg_wchar;
+
+
+/*
+ * The UTF types
+ */
+typedef unsigned int	UTF32;  /* at least 32 bits */
+typedef unsigned short	UTF16;  /* at least 16 bits */
+typedef unsigned char	UTF8;   /* typically 8 bits */
 
 /*
  * various definitions for EUC
@@ -339,5 +347,7 @@ extern void latin2mic(unsigned char *l, unsigned char *p, int len, int lc);
 extern void mic2latin(unsigned char *mic, unsigned char *p, int len, int lc);
 extern void latin2mic_with_table(unsigned char *l, unsigned char *p, int len, int lc, unsigned char *tab);
 extern void mic2latin_with_table(unsigned char *mic, unsigned char *p, int len, int lc, unsigned char *tab);
+
+extern bool isLegalUTF8(const UTF8 *source, int len);
 
 #endif   /* PG_WCHAR_H */
