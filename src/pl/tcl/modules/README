@@ -1,0 +1,22 @@
+
+    The module support over the unknown command requires, that
+    the PL/Tcl call handler is compiled with -DPLTCL_UNKNOWN_SUPPORT.
+
+    Regular Tcl scripts of any size (over 8K :-) can be loaded into
+    the table pltcl_modules using the pltcl_loadmod script. The script
+    checks the modules that the procedure names don't overwrite
+    existing ones before doing anything. They also check for global
+    variables created at load time.
+
+    All procedures defined in the module files are automatically
+    added to the table pltcl_modfuncs. This table is used by the
+    unknown procedure to determine if an unknown command can be
+    loaded by sourcing a module. In that case the unknonw procedure
+    will silently source in the module and reexecute the original
+    command that invoked unknown.
+
+    I know, thist readme should be more explanatory - but time.
+
+
+Jan
+

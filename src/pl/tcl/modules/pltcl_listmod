@@ -1,0 +1,122 @@
+#!/bin/sh
+# Start tclsh \
+exec tclsh "$0" $@
+
+#
+# Code still has to be documented
+#
+
+#load /usr/local/pgsql/lib/libpgtcl.so
+package require Pgtcl
+
+
+#
+# Check for minimum arguments
+#
+if {$argc < 1} {
+    puts stderr ""
+    puts stderr "usage: pltcl_listmod dbname \[options\] \[modulename \[...\]\]"
+    puts stderr ""
+    puts stderr "options:"
+    puts stderr "    -host hostname"
+    puts stderr "    -port portnumber"
+    puts stderr ""
+    exit 1
+}
+
+#
+# Remember database name and initialize options
+#
+set dbname [lindex $argv 0]
+set options ""
+set errors 0
+set opt ""
+set val ""
+
+set i 1
+while {$i < $argc} {
+    if {[string compare [string index [lindex $argv $i] 0] "-"] != 0} {
+        break;
+    }
+
+    set opt [lindex $argv $i]
+    incr i
+    if {$i >= $argc} {
+        puts stderr "no value given for option $opt"
+	incr errors
+	continue
+    }
+    set val [lindex $argv $i]
+    incr i
+
+    switch -- $opt {
+        -host {
+	    append options "-host \"$val\" "
+	}
+	-port {
+	    append options "-port $val "
+	}
+	default {
+	    puts stderr "unknown option '$opt'"
+	    incr errors
+	}
+    }
+}
+
+#
+# Final syntax check
+#
+if {$errors > 0} {
+    puts stderr ""
+    puts stderr "usage: pltcl_listmod dbname \[options\] \[modulename \[...\]\]"
+    puts stderr ""
+    puts stderr "options:"
+    puts stderr "    -host hostname"
+    puts stderr "    -port portnumber"
+    puts stderr ""
+    exit 1
+}
+
+proc listmodule {conn modname} {
+    set xname $modname
+    regsub -all {\\} $xname {\\} xname
+    regsub -all {'}  $xname {''} xname
+
+    set found 0
+    pg_select $conn "select * from pltcl_modules where modname = '$xname'" \
+    MOD {
+        set found 1
+	break;
+    }
+
+    if {!$found} {
+        puts "Module $modname not found in pltcl_modules"
+	puts ""
+	return
+    }
+
+    puts "Module $modname defines procedures:"
+    pg_select $conn "select funcname from pltcl_modfuncs \
+	    where modname = '$xname' order by funcname" FUNC {
+        puts "    $FUNC(funcname)"
+    }
+    puts ""
+}
+
+set conn [eval pg_connect $dbname $options]
+
+if {$i == $argc} {
+    pg_select $conn "select distinct modname from pltcl_modules	\
+    		order by modname"	\
+    		MOD {
+        listmodule $conn $MOD(modname)
+    }
+} else {
+    while {$i < $argc} {
+        listmodule $conn [lindex $argv $i]
+	incr i
+    }
+}
+
+pg_disconnect $conn
+

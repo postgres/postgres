@@ -1,0 +1,502 @@
+#!/bin/sh
+# Start tclsh \
+exec tclsh "$0" $@
+
+#
+# Code still has to be documented
+#
+
+#load /usr/local/pgsql/lib/libpgtcl.so
+package require Pgtcl
+
+
+#
+# Check for minimum arguments
+#
+if {$argc < 2} {
+    puts stderr ""
+    puts stderr "usage: pltcl_loadmod dbname \[options\] file \[...\]"
+    puts stderr ""
+    puts stderr "options:"
+    puts stderr "    -host hostname"
+    puts stderr "    -port portnumber"
+    puts stderr ""
+    exit 1
+}
+
+#
+# Remember database name and initialize options
+#
+set dbname [lindex $argv 0]
+set options ""
+set errors 0
+set opt ""
+set val ""
+
+set i 1
+while {$i < $argc} {
+    if {[string compare [string index [lindex $argv $i] 0] "-"] != 0} {
+        break;
+    }
+
+    set opt [lindex $argv $i]
+    incr i
+    if {$i >= $argc} {
+        puts stderr "no value given for option $opt"
+	incr errors
+	continue
+    }
+    set val [lindex $argv $i]
+    incr i
+
+    switch -- $opt {
+        -host {
+	    append options "-host \"$val\" "
+	}
+	-port {
+	    append options "-port $val "
+	}
+	default {
+	    puts stderr "unknown option '$opt'"
+	    incr errors
+	}
+    }
+}
+
+#
+# Final syntax check
+#
+if {$i >= $argc || $errors > 0} {
+    puts stderr ""
+    puts stderr "usage: pltcl_loadmod dbname \[options\] file \[...\]"
+    puts stderr ""
+    puts stderr "options:"
+    puts stderr "    -host hostname"
+    puts stderr "    -port portnumber"
+    puts stderr ""
+    exit 1
+}
+
+
+proc __PLTcl_loadmod_check_table {conn tabname expnames exptypes} {
+    set attrs [expr [llength $expnames] - 1]
+    set error 0
+    set found 0
+
+    pg_select $conn "select C.relname, A.attname, A.attnum, T.typname 	\
+    		from pg_class C, pg_attribute A, pg_type T		\
+		where C.relname = '$tabname'				\
+		  and A.attrelid = C.oid				\
+		  and A.attnum > 0					\
+		  and T.oid = A.atttypid				\
+		order by attnum" tup {
+
+	incr found
+	set i $tup(attnum)
+
+	if {$i > $attrs} {
+	    puts stderr "Table $tabname has extra field '$tup(attname)'"
+	    incr error
+	    continue
+	}
+
+	set xname [lindex $expnames $i]
+	set xtype [lindex $exptypes $i]
+
+	if {[string compare $tup(attname) $xname] != 0} {
+	    puts stderr "Attribute $i of $tabname has wrong name"
+	    puts stderr "    got '$tup(attname)' expected '$xname'"
+	    incr error
+	}
+	if {[string compare $tup(typname) $xtype] != 0} {
+	    puts stderr "Attribute $i of $tabname has wrong type"
+	    puts stderr "    got '$tup(typname)' expected '$xtype'"
+	    incr error
+	}
+    }
+
+    if {$found == 0} {
+        return 0
+    }
+
+    if {$found < $attrs} {
+	incr found
+	set miss [lrange $expnames $found end]
+        puts "Table $tabname doesn't have field(s) $miss"
+	incr error
+    }
+
+    if {$error > 0} {
+        return 2
+    }
+
+    return 1
+}
+
+
+proc __PLTcl_loadmod_check_tables {conn} {
+    upvar #0	__PLTcl_loadmod_status	status
+
+    set error 0
+
+    set names {{} modname modseq modsrc}
+    set types {{} name int2 text}
+
+    switch [__PLTcl_loadmod_check_table $conn pltcl_modules $names $types] {
+        0 {
+	    set status(create_table_modules) 1
+	}
+	1 {
+	    set status(create_table_modules) 0
+	}
+	2 {
+	    puts "Error(s) in table pltcl_modules"
+	    incr error
+	}
+    }
+
+    set names {{} funcname modname}
+    set types {{} name name}
+
+    switch [__PLTcl_loadmod_check_table $conn pltcl_modfuncs $names $types] {
+        0 {
+	    set status(create_table_modfuncs) 1
+	}
+	1 {
+	    set status(create_table_modfuncs) 0
+	}
+	2 {
+	    puts "Error(s) in table pltcl_modfuncs"
+	    incr error
+	}
+    }
+
+    if {$status(create_table_modfuncs) && !$status(create_table_modules)} {
+        puts stderr "Table pltcl_modfuncs doesn't exist but pltcl_modules does"
+	puts stderr "Either both tables must be present or none."
+	incr error
+    }
+
+    if {$status(create_table_modules) && !$status(create_table_modfuncs)} {
+        puts stderr "Table pltcl_modules doesn't exist but pltcl_modfuncs does"
+	puts stderr "Either both tables must be present or none."
+	incr error
+    }
+
+    if {$error} {
+        puts stderr ""
+	puts stderr "Abort"
+	exit 1
+    }
+
+    if {!$status(create_table_modules)} {
+        __PLTcl_loadmod_read_current $conn
+    }
+}
+
+
+proc __PLTcl_loadmod_read_current {conn} {
+    upvar #0	__PLTcl_loadmod_status		status
+    upvar #0	__PLTcl_loadmod_modsrc		modsrc
+    upvar #0	__PLTcl_loadmod_funclist	funcs
+    upvar #0	__PLTcl_loadmod_globlist	globs
+
+    set errors 0
+
+    set curmodlist ""
+    pg_select $conn "select distinct modname from pltcl_modules" mtup {
+	set mname $mtup(modname);
+        lappend curmodlist $mname
+    }
+
+    foreach mname $curmodlist {
+	set srctext ""
+        pg_select $conn "select * from pltcl_modules		\
+		where modname = '$mname'			\
+		order by modseq" tup {
+	    append srctext $tup(modsrc)
+        }
+
+	if {[catch {
+	        __PLTcl_loadmod_analyze 			\
+			"Current $mname"			\
+			$mname					\
+			$srctext new_globals new_functions
+	    }]} {
+	    incr errors
+        }
+	set modsrc($mname) $srctext
+	set funcs($mname) $new_functions
+	set globs($mname) $new_globals
+    }
+
+    if {$errors} {
+        puts stderr ""
+        puts stderr "Abort"
+	exit 1
+    }
+}
+
+
+proc __PLTcl_loadmod_analyze {modinfo modname srctext v_globals v_functions} {
+    upvar 1	$v_globals new_g
+    upvar 1	$v_functions new_f
+    upvar #0	__PLTcl_loadmod_allfuncs	allfuncs
+    upvar #0	__PLTcl_loadmod_allglobs	allglobs
+
+    set errors 0
+
+    set old_g [info globals]
+    set old_f [info procs]
+    set new_g ""
+    set new_f ""
+
+    if {[catch {
+	    uplevel #0 "$srctext"
+        } msg]} {
+        puts "$modinfo: $msg"
+	incr errors
+    }
+
+    set cur_g [info globals]
+    set cur_f [info procs]
+
+    foreach glob $cur_g {
+        if {[lsearch -exact $old_g $glob] >= 0} {
+	    continue
+	}
+	if {[info exists allglobs($glob)]} {
+	    puts stderr "$modinfo: Global $glob previously used in module $allglobs($glob)"
+	    incr errors
+	} else {
+	    set allglobs($glob) $modname
+	}
+	lappend new_g $glob
+	uplevel #0 unset $glob
+    }
+    foreach func $cur_f {
+        if {[lsearch -exact $old_f $func] >= 0} {
+	    continue
+	}
+	if {[info exists allfuncs($func)]} {
+	    puts stderr "$modinfo: Function $func previously defined in module $allfuncs($func)"
+	    incr errors
+	} else {
+	    set allfuncs($func) $modname
+	}
+	lappend new_f $func
+	rename $func {}
+    }
+
+    if {$errors} {
+        return -code error
+    }
+    #puts "globs in $modname: $new_g"
+    #puts "funcs in $modname: $new_f"
+}
+
+
+proc __PLTcl_loadmod_create_tables {conn} {
+    upvar #0	__PLTcl_loadmod_status	status
+
+    if {$status(create_table_modules)} {
+        if {[catch {
+	        set res [pg_exec $conn				\
+		    "create table pltcl_modules (		\
+		        modname	name,				\
+			modseq	int2,				\
+			modsrc	text);"]
+	    } msg]} {
+	    puts stderr "Error creating table pltcl_modules"
+	    puts stderr "    $msg"
+	    exit 1
+	}
+        if {[catch {
+	        set res [pg_exec $conn				\
+		    "create index pltcl_modules_i 		\
+		        on pltcl_modules using btree		\
+			(modname name_ops);"]
+	    } msg]} {
+	    puts stderr "Error creating index pltcl_modules_i"
+	    puts stderr "    $msg"
+	    exit 1
+	}
+	puts "Table pltcl_modules created"
+	pg_result $res -clear
+    }
+
+    if {$status(create_table_modfuncs)} {
+        if {[catch {
+	        set res [pg_exec $conn				\
+		    "create table pltcl_modfuncs (		\
+		        funcname name,				\
+			modname	 name);"]
+	    } msg]} {
+	    puts stderr "Error creating table pltcl_modfuncs"
+	    puts stderr "    $msg"
+	    exit 1
+	}
+        if {[catch {
+	        set res [pg_exec $conn				\
+		    "create index pltcl_modfuncs_i 		\
+		        on pltcl_modfuncs using hash		\
+			(funcname name_ops);"]
+	    } msg]} {
+	    puts stderr "Error creating index pltcl_modfuncs_i"
+	    puts stderr "    $msg"
+	    exit 1
+	}
+	puts "Table pltcl_modfuncs created"
+	pg_result $res -clear
+    }
+}
+
+
+proc __PLTcl_loadmod_read_new {conn} {
+    upvar #0	__PLTcl_loadmod_status		status
+    upvar #0	__PLTcl_loadmod_modsrc		modsrc
+    upvar #0	__PLTcl_loadmod_funclist	funcs
+    upvar #0	__PLTcl_loadmod_globlist	globs
+    upvar #0	__PLTcl_loadmod_allfuncs	allfuncs
+    upvar #0	__PLTcl_loadmod_allglobs	allglobs
+    upvar #0	__PLTcl_loadmod_modlist		modlist
+
+    set errors 0
+
+    set new_modlist ""
+    foreach modfile $modlist {
+        set modname [file rootname [file tail $modfile]]
+	if {[catch {
+	        set fid [open $modfile "r"]
+	    } msg]} {
+	    puts stderr $msg
+	    incr errors
+	    continue
+        }
+	set srctext [read $fid]
+	close $fid
+
+	if {[info exists modsrc($modname)]} {
+	    if {[string compare $modsrc($modname) $srctext] == 0} {
+	        puts "Module $modname unchanged - ignored"
+		continue
+	    }
+	    foreach func $funcs($modname) {
+	        unset allfuncs($func)
+	    }
+	    foreach glob $globs($modname) {
+	        unset allglobs($glob)
+	    }
+	    unset funcs($modname)
+	    unset globs($modname)
+	    set modsrc($modname) $srctext
+	    lappend new_modlist $modname
+	} else {
+	    set modsrc($modname) $srctext
+	    lappend new_modlist $modname
+	}
+
+	if {[catch {
+	        __PLTcl_loadmod_analyze "New/updated $modname"	\
+			$modname $srctext new_globals new_funcs
+	    }]} {
+	    incr errors
+	}
+
+	set funcs($modname) $new_funcs
+	set globs($modname) $new_globals
+    }
+
+    if {$errors} {
+        puts stderr ""
+        puts stderr "Abort"
+	exit 1
+    }
+
+    set modlist $new_modlist
+}
+
+
+proc __PLTcl_loadmod_load_modules {conn} {
+    upvar #0	__PLTcl_loadmod_modsrc		modsrc
+    upvar #0	__PLTcl_loadmod_funclist	funcs
+    upvar #0	__PLTcl_loadmod_modlist		modlist
+
+    set errors 0
+
+    foreach modname $modlist {
+	set xname [__PLTcl_loadmod_quote $modname]
+
+        pg_result [pg_exec $conn "begin;"] -clear
+
+	pg_result [pg_exec $conn 				\
+		"delete from pltcl_modules where modname = '$xname'"] -clear
+	pg_result [pg_exec $conn 				\
+		"delete from pltcl_modfuncs where modname = '$xname'"] -clear
+
+	foreach func $funcs($modname) {
+	    set xfunc [__PLTcl_loadmod_quote $func]
+	    pg_result [							\
+	        pg_exec $conn "insert into pltcl_modfuncs values (	\
+			'$xfunc', '$xname')"				\
+	    ] -clear
+	}
+	set i 0
+	set srctext $modsrc($modname)
+	while {[string compare $srctext ""] != 0} {
+	    set xpart [string range $srctext 0 3999]
+	    set xpart [__PLTcl_loadmod_quote $xpart]
+	    set srctext [string range $srctext 4000 end]
+
+	    pg_result [							\
+	    	pg_exec $conn "insert into pltcl_modules values (	\
+			'$xname', $i, '$xpart')"			\
+	    ] -clear
+	}
+
+        pg_result [pg_exec $conn "commit;"] -clear
+
+	puts "Successfully loaded/updated module $modname"
+    }
+}
+
+
+proc __PLTcl_loadmod_quote {s} {
+    regsub -all {\\} $s {\\\\} s
+    regsub -all {'}  $s {''} s
+    return $s
+}
+
+
+set __PLTcl_loadmod_modlist [lrange $argv $i end]
+set __PLTcl_loadmod_modsrc(dummy) ""
+set __PLTcl_loadmod_funclist(dummy) ""
+set __PLTcl_loadmod_globlist(dummy) ""
+set __PLTcl_loadmod_allfuncs(dummy) ""
+set __PLTcl_loadmod_allglobs(dummy) ""
+
+unset __PLTcl_loadmod_modsrc(dummy)
+unset __PLTcl_loadmod_funclist(dummy)
+unset __PLTcl_loadmod_globlist(dummy)
+unset __PLTcl_loadmod_allfuncs(dummy)
+unset __PLTcl_loadmod_allglobs(dummy)
+
+
+puts ""
+
+set __PLTcl_loadmod_conn [eval pg_connect $dbname $options]
+
+unset i dbname options errors opt val
+
+__PLTcl_loadmod_check_tables $__PLTcl_loadmod_conn
+
+__PLTcl_loadmod_read_new $__PLTcl_loadmod_conn
+
+__PLTcl_loadmod_create_tables $__PLTcl_loadmod_conn
+__PLTcl_loadmod_load_modules $__PLTcl_loadmod_conn
+
+pg_disconnect $__PLTcl_loadmod_conn
+
+puts ""
+
+
