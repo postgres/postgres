@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.91 2002/01/20 22:19:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.92 2002/01/25 02:39:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2554,13 +2554,13 @@ PostgreSQL documentation
 
        <row>
         <entry> <literal>-</literal> </entry>
-        <entry><type>date</type> '2001-09-28' + <type>interval</type> '1 hour'</entry>
+        <entry><type>date</type> '2001-09-28' - <type>interval</type> '1 hour'</entry>
         <entry><type>timestamp</type> '2001-09-27 23:00'</entry>
        </row>
 
        <row>
         <entry> <literal>-</literal> </entry>
-        <entry><type>time</type> '05:00' + <type>interval</type> '2 hours'</entry>
+        <entry><type>time</type> '05:00' - <type>interval</type> '2 hours'</entry>
         <entry><type>time</type> '03:00'</entry>
        </row>
 
