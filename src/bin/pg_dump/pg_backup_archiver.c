@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.2 2003/02/01 22:07:14 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.3 2003/03/09 19:38:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 					 * Maybe we can't do BLOBS, so check if this node is
 					 * for BLOBS
 					 */
-					if ((strcmp(te->desc, "BLOBS") == 0) && !_canRestoreBlobs(AH))
+					if ((strcmp(te->desc, "BLOBS") == 0) &&
+						!_canRestoreBlobs(AH))
 					{
 						ahprintf(AH, "--\n-- SKIPPED \n--\n\n");
 
@@ -445,6 +446,10 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	if (!ropt->dataOnly || !ropt->disable_triggers)
 		return;
 
+	/* Don't do it for the BLOBS TocEntry, either */
+	if (te && strcmp(te->desc, "BLOBS") == 0)
+		return;
+
 	oldUser = strdup(AH->currUser);
 	oldSchema = strdup(AH->currSchema);
 
@@ -506,6 +511,10 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 
 	/* This hack is only needed in a data-only restore */
 	if (!ropt->dataOnly || !ropt->disable_triggers)
+		return;
+
+	/* Don't do it for the BLOBS TocEntry, either */
+	if (te && strcmp(te->desc, "BLOBS") == 0)
 		return;
 
 	oldUser = strdup(AH->currUser);
