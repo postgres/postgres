@@ -727,7 +727,13 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       case Types.VARBINARY:
 	return getBytes(columnIndex);   
       default:
-        return connection.getObject(field.getPGType(), getString(columnIndex));
+        String type = field.getPGType();
+        // if the backend doesn't know the type then coerce to String
+        if (type.equals("unknown")){
+           return getString(columnIndex);
+        }else{
+           return connection.getObject(field.getPGType(), getString(columnIndex));
+        }
       }
   }
 
