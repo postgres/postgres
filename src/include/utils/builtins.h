@@ -6,12 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.44 1998/06/16 06:41:51 momjian Exp $
+ * $Id: builtins.h,v 1.45 1998/07/08 14:10:30 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
  *	  Under no circumstances should it ever be included before
  *	  including fmgr.h!
+ * fmgr.h does not seem to include this file, so don't know where this
+ *  comment came from. Backend code must include this stuff explicitly
+ *  as far as I can tell...
+ * - thomas 1998-06-08
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +26,7 @@
 #include <utils/geo_decls.h>
 #include <utils/datetime.h>
 #include <utils/nabstime.h>
+#include <utils/int8.h>
 #include <utils/cash.h>
 #include <utils/rel.h>
 
