@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.12 1997/04/24 20:00:45 scrappy Exp $
+ * $Id: c.h,v 1.13 1997/05/17 16:25:57 mergl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -700,7 +700,7 @@ extern int ExceptionalCondition(char *conditionName,
  *	form is used by assert and the exception handling stuff
  * ----------------
  */
-extern char *form(char *fmt, ...);
+extern char *form(const char *fmt, ...);
 
 
 
