@@ -888,5 +888,11 @@ Thu Mar 30 11:11:13 CEST 2000
 Fri Mar 31 08:25:58 CEST 2000
 
 	- Synced preproc.y with gram.y.
+
+Mon Apr  3 21:20:27 CEST 2000
+
+	- Made sure pointers are correctly inserted by libecpg. My thanks go
+	  to Jan Urbanek <jan@urbanek.cz> for findin many bugs before the
+	  release. 
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

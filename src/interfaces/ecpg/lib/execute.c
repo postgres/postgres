@@ -317,12 +317,17 @@ ECPGexecute(struct statement * stmt)
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%d,", ((short *) var->value)[element]);
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%hd,", ((short *) var->value)[element]);
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%hd", *((short *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -331,12 +336,17 @@ ECPGexecute(struct statement * stmt)
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%d,", ((int *) var->value)[element]);
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%d,", ((int *) var->value)[element]);
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%d", *((int *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -345,12 +355,17 @@ ECPGexecute(struct statement * stmt)
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%d,", ((unsigned short *) var->value)[element]);
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%hu,", ((unsigned short *) var->value)[element]);
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%hu", *((unsigned short *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -359,12 +374,17 @@ ECPGexecute(struct statement * stmt)
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%d,", ((unsigned int *) var->value)[element]);
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%u,", ((unsigned int *) var->value)[element]);
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%u", *((unsigned int *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -372,13 +392,18 @@ ECPGexecute(struct statement * stmt)
 				case ECPGt_long:
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
-
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%ld,", ((long *) var->value)[element]);
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%ld,", ((long *) var->value)[element]);
+						
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%ld", *((long *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -387,12 +412,17 @@ ECPGexecute(struct statement * stmt)
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%ld,", ((unsigned long *) var->value)[element]);
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%lu,", ((unsigned long *) var->value)[element]);
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%lu", *((unsigned long *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -401,12 +431,17 @@ ECPGexecute(struct statement * stmt)
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((float *) var->value)[element]);
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((float *) var->value)[element]);
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%.14g", *((float *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -415,12 +450,17 @@ ECPGexecute(struct statement * stmt)
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((double *) var->value)[element]);
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((double *) var->value)[element]);
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%.14g", *((double *) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -429,12 +469,17 @@ ECPGexecute(struct statement * stmt)
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
-					sprintf(mallocedval, "%s", (var->arrsize > 1) ? "'{" : ""); 
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{")); 
 						
-					for (element = 0; element < var->arrsize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
 						
-					sprintf(mallocedval + strlen(mallocedval) - 1, "%s", (var->arrsize > 1) ? "}'" : ""); 
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+					}
+					else
+						sprintf(mallocedval, "%c,", (*((char *) var->value)) ? 't' : 'f');
 
 					tobeinserted = mallocedval;
 					break;
@@ -814,7 +859,7 @@ ECPGdo(int lineno, const char *connection_name, char *query, ...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.2 2000/03/17 23:26:31 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.3 2000/04/03 19:34:25 meskes Exp $
  */
 
 PGconn *ECPG_internal_get_connection(char *name);
