@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.17 1999/07/15 23:04:23 momjian Exp $
+ * $Id: portal.h,v 1.18 1999/09/09 16:25:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,7 @@ extern Portal CreatePortal(char *name);
 extern void PortalDestroy(Portal *portalP);
 extern void StartPortalAllocMode(AllocMode mode, Size limit);
 extern void EndPortalAllocMode(void);
+extern void PortalResetHeapMemory(Portal portal);
 extern PortalVariableMemory PortalGetVariableMemory(Portal portal);
 extern PortalHeapMemory PortalGetHeapMemory(Portal portal);
 

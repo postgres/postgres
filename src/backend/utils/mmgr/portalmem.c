@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.28 1999/07/17 20:18:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.29 1999/09/09 16:25:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,6 @@
 static void CollectNamedPortals(Portal *portalP, int destroy);
 static Portal PortalHeapMemoryGetPortal(PortalHeapMemory context);
 static PortalVariableMemory PortalHeapMemoryGetVariableMemory(PortalHeapMemory context);
-static void PortalResetHeapMemory(Portal portal);
 static Portal PortalVariableMemoryGetPortal(PortalVariableMemory context);
 
 /* ----------------
@@ -838,7 +837,7 @@ PortalDestroy(Portal *portalP)
  *		BadArg if mode is invalid.
  * ----------------
  */
-static void
+void
 PortalResetHeapMemory(Portal portal)
 {
 	PortalHeapMemory context;
