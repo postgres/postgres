@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.219 2002/08/06 02:36:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.220 2002/08/11 21:17:34 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -198,7 +198,8 @@ SystemAttributeByName(const char *attname, bool relhasoids)
  *		Remove the system relation specific code to elsewhere eventually.
  *
  * If storage_create is TRUE then heap_storage_create is called here,
- * else caller must call heap_storage_create later.
+ * else caller must call heap_storage_create later (or not at all,
+ * if the relation doesn't need physical storage).
  * ----------------------------------------------------------------
  */
 Relation
@@ -291,7 +292,7 @@ heap_create(const char *relname,
 									 nailme);
 
 	/*
-	 * have the storage manager create the relation.
+	 * have the storage manager create the relation's disk file, if wanted.
 	 */
 	if (storage_create)
 		heap_storage_create(rel);
@@ -684,20 +685,21 @@ heap_create_with_catalog(const char *relname,
 	tupdesc->tdhasoid = BoolToHasOid(relhasoids);
 	
 	/*
-	 * Tell heap_create not to create a physical file; we'll do that below
-	 * after all our catalog updates are done.	(This isn't really
-	 * necessary anymore, but we may as well avoid the cycles of creating
-	 * and deleting the file in case we fail.)
+	 * Create the relcache entry (mostly dummy at this point) and the
+	 * physical disk file.  (If we fail further down, it's the smgr's
+	 * responsibility to remove the disk file again.)
+	 *
+	 * NB: create a physical file only if it's not a view.
 	 */
 	new_rel_desc = heap_create(relname,
 							   relnamespace,
 							   tupdesc,
 							   shared_relation,
-							   false,
+							   (relkind != RELKIND_VIEW),
 							   allow_system_table_mods);
 
 	/* Fetch the relation OID assigned by heap_create */
-	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
+	new_rel_oid = RelationGetRelid(new_rel_desc);
 
 	/* Assign an OID for the relation's tuple type */
 	new_type_oid = newoid();
@@ -760,12 +762,6 @@ heap_create_with_catalog(const char *relname,
 	 * In particular, there are not yet constraints and defaults anywhere.
 	 */
 	StoreConstraints(new_rel_desc, tupdesc);
-
-	/*
-	 * We create the disk file for this relation here
-	 */
-	if (relkind != RELKIND_VIEW)
-		heap_storage_create(new_rel_desc);
 
 	/*
 	 * ok, the relation has been cataloged, so close our relations and

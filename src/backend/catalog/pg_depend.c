@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.4 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.5 2002/08/11 21:17:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,15 +121,16 @@ recordMultipleDependencies(const ObjectAddress *depender,
 
 /*
  * deleteDependencyRecordsFor -- delete all records with given depender
- * classId/objectId.
+ * classId/objectId.  Returns the number of records deleted.
  *
  * This is used when redefining an existing object.  Links leading to the
  * object do not change, and links leading from it will be recreated
  * (possibly with some differences from before).
  */
-void
+long
 deleteDependencyRecordsFor(Oid classId, Oid objectId)
 {
+	long			count = 0;
 	Relation		depRel;
 	ScanKeyData		key[2];
 	SysScanDesc		scan;
@@ -150,11 +151,14 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId)
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		simple_heap_delete(depRel, &tup->t_self);
+		count++;
 	}
 
 	systable_endscan(scan);
 
 	heap_close(depRel, RowExclusiveLock);
+
+	return count;
 }
 
 /*

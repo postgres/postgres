@@ -8,6 +8,7 @@ CREATE TABLE clstr_tst_s (rf_a SERIAL PRIMARY KEY,
 CREATE TABLE clstr_tst (a SERIAL PRIMARY KEY,
 	b INT,
 	c TEXT,
+	d TEXT,
 	CONSTRAINT clstr_tst_con FOREIGN KEY (b) REFERENCES clstr_tst_s);
 
 CREATE INDEX clstr_tst_b ON clstr_tst (b);
@@ -55,24 +56,26 @@ INSERT INTO clstr_tst (b, c) VALUES (15, 'quince');
 INSERT INTO clstr_tst (b, c) VALUES (7, 'siete');
 INSERT INTO clstr_tst (b, c) VALUES (16, 'dieciseis');
 INSERT INTO clstr_tst (b, c) VALUES (8, 'ocho');
-INSERT INTO clstr_tst (b, c) VALUES (6, 'seis');
+-- This entry is needed to test that TOASTED values are copied correctly.
+INSERT INTO clstr_tst (b, c, d) VALUES (6, 'seis', repeat('xyzzy', 100000));
 
 CLUSTER clstr_tst_c ON clstr_tst;
 
-SELECT * from clstr_tst;
-SELECT * from clstr_tst ORDER BY a;
-SELECT * from clstr_tst ORDER BY b;
-SELECT * from clstr_tst ORDER BY c;
+SELECT a,b,c,substring(d for 30), length(d) from clstr_tst;
+SELECT a,b,c,substring(d for 30), length(d) from clstr_tst ORDER BY a;
+SELECT a,b,c,substring(d for 30), length(d) from clstr_tst ORDER BY b;
+SELECT a,b,c,substring(d for 30), length(d) from clstr_tst ORDER BY c;
 
 -- Verify that inheritance link still works
 INSERT INTO clstr_tst_inh VALUES (0, 100, 'in child table');
-SELECT * from clstr_tst;
+SELECT a,b,c,substring(d for 30), length(d) from clstr_tst;
 
 -- Verify that foreign key link still works
 INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
 
-SELECT conname FROM pg_constraint WHERE conrelid=(SELECT oid FROM pg_class
-	WHERE relname='clstr_tst');
+SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass;
 
 
-SELECT relname FROM pg_class WHERE relname LIKE 'clstr_tst%' ORDER BY relname;
+SELECT relname, relkind,
+    EXISTS(SELECT 1 FROM pg_class WHERE oid = c.reltoastrelid) AS hastoast
+FROM pg_class c WHERE relname LIKE 'clstr_tst%' ORDER BY relname;

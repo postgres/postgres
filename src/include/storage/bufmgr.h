@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.62 2002/08/06 02:36:35 tgl Exp $
+ * $Id: bufmgr.h,v 1.63 2002/08/11 21:17:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,6 +161,7 @@ extern void AtEOXact_Buffers(bool isCommit);
 extern void FlushBufferPool(void);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
+extern void RelationUpdateNumberOfBlocks(Relation relation);
 extern int	FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock);
 extern void DropRelationBuffers(Relation rel);
 extern void DropRelFileNodeBuffers(RelFileNode rnode, bool istemp);

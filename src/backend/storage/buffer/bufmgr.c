@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.128 2002/08/06 02:36:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.129 2002/08/11 21:17:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1038,11 +1038,6 @@ BufferReplace(BufferDesc *bufHdr)
  * RelationGetNumberOfBlocks
  *		Determines the current number of pages in the relation.
  *		Side effect: relation->rd_nblocks is updated.
- *
- * Note:
- *		XXX may fail for huge relations.
- *		XXX should be elsewhere.
- *		XXX maybe should be hidden
  */
 BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
@@ -1059,6 +1054,23 @@ RelationGetNumberOfBlocks(Relation relation)
 	else if (!relation->rd_isnew && !relation->rd_istemp)
 		relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
 	return relation->rd_nblocks;
+}
+
+/*
+ * RelationUpdateNumberOfBlocks
+ *		Forcibly update relation->rd_nblocks.
+ *
+ * If the relcache drops an entry for a temp relation, it must call this
+ * routine after recreating the relcache entry, so that rd_nblocks is
+ * re-sync'd with reality.  See RelationGetNumberOfBlocks.
+ */
+void
+RelationUpdateNumberOfBlocks(Relation relation)
+{
+	if (relation->rd_rel->relkind == RELKIND_VIEW)
+		relation->rd_nblocks = 0;
+	else
+		relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
 }
 
 /* ---------------------------------------------------------------------

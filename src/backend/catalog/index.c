@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.188 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.189 2002/08/11 21:17:34 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -578,14 +578,18 @@ index_create(Oid heapRelationId,
 
 	indexTupDesc->tdhasoid = WITHOUTOID;
 	/*
-	 * create the index relation (but don't create storage yet)
+	 * create the index relation's relcache entry and physical disk file.
+	 * (If we fail further down, it's the smgr's responsibility to remove
+	 * the disk file again.)
 	 */
 	indexRelation = heap_create(indexRelationName,
 								namespaceId,
 								indexTupDesc,
 								shared_relation,
-								false,
+								true,
 								allow_system_table_mods);
+
+	/* Fetch the relation OID assigned by heap_create */
 	indexoid = RelationGetRelid(indexRelation);
 
 	/*
@@ -610,11 +614,6 @@ index_create(Oid heapRelationId,
 	 * store index's pg_class entry
 	 */
 	UpdateRelationRelation(indexRelation);
-
-	/*
-	 * We create the disk file for this relation here
-	 */
-	heap_storage_create(indexRelation);
 
 	/*
 	 * now update the object id's of all the attribute tuple forms in the

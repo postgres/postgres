@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.171 2002/08/06 02:36:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.172 2002/08/11 21:17:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,11 +860,12 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 
 	/*
 	 * normal relations are not nailed into the cache; nor can a pre-existing
-	 * relation be new or temp.
+	 * relation be new.  It could be temp though.  (Actually, it could be new
+	 * too, but it's okay to forget that fact if forced to flush the entry.)
 	 */
 	relation->rd_isnailed = false;
 	relation->rd_isnew = false;
-	relation->rd_istemp = false;
+	relation->rd_istemp = isTempNamespace(relation->rd_rel->relnamespace);
 
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
@@ -909,12 +910,22 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	relation->rd_fd = -1;
 
 	/*
-	 * insert newly created relation into proper relcaches, restore memory
-	 * context and return the new reldesc.
+	 * Insert newly created relation into relcache hash tables.
 	 */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	RelationCacheInsert(relation);
 	MemoryContextSwitchTo(oldcxt);
+
+	/*
+	 * If it's a temp rel, RelationGetNumberOfBlocks will assume that
+	 * rd_nblocks is correct.  Must forcibly update the block count when
+	 * creating the relcache entry.  But if we are doing a rebuild, don't
+	 * do this yet; leave it to RelationClearRelation to do at the end.
+	 * (Otherwise, an elog in RelationUpdateNumberOfBlocks would leave us
+	 * with inconsistent relcache state.)
+	 */
+	if (relation->rd_istemp && oldrelation == NULL)
+		RelationUpdateNumberOfBlocks(relation);
 
 	return relation;
 }
@@ -1601,8 +1612,7 @@ RelationClose(Relation relation)
 
 #ifdef RELCACHE_FORCE_RELEASE
 	if (RelationHasReferenceCountZero(relation) &&
-		!relation->rd_isnew &&
-		!relation->rd_istemp)
+		!relation->rd_isnew)
 		RelationClearRelation(relation, false);
 #endif
 }
@@ -1733,19 +1743,15 @@ RelationClearRelation(Relation relation, bool rebuild)
 	{
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count
-		 * and new/temp flags.  Also attempt to preserve the tupledesc,
-		 * rewrite rules, and trigger substructures in place. Furthermore
-		 * we save/restore rd_nblocks (in case it is a new/temp relation)
-		 * *and* call RelationGetNumberOfBlocks (in case it isn't).
+		 * and rd_isnew flag.  Also attempt to preserve the tupledesc,
+		 * rewrite rules, and trigger substructures in place.
 		 */
 		int			old_refcnt = relation->rd_refcnt;
 		bool		old_isnew = relation->rd_isnew;
-		bool		old_istemp = relation->rd_istemp;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
 		TriggerDesc *old_trigdesc = relation->trigdesc;
-		BlockNumber old_nblocks = relation->rd_nblocks;
 		RelationBuildDescInfo buildinfo;
 
 		buildinfo.infotype = INFO_RELID;
@@ -1764,7 +1770,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 		}
 		RelationSetReferenceCount(relation, old_refcnt);
 		relation->rd_isnew = old_isnew;
-		relation->rd_istemp = old_istemp;
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{
 			FreeTupleDesc(relation->rd_att);
@@ -1791,13 +1796,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 		}
 		else
 			FreeTriggerDesc(old_trigdesc);
-		relation->rd_nblocks = old_nblocks;
 
 		/*
-		 * this is kind of expensive, but I think we must do it in case
-		 * relation has been truncated...
+		 * Update rd_nblocks.  This is kind of expensive, but I think we must
+		 * do it in case relation has been truncated... we definitely must
+		 * do it if the rel is new or temp, since RelationGetNumberOfBlocks
+		 * will subsequently assume that the block count is correct.
 		 */
-		relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
+		RelationUpdateNumberOfBlocks(relation);
 	}
 }
 
@@ -1811,18 +1817,19 @@ RelationFlushRelation(Relation relation)
 {
 	bool		rebuild;
 
-	if (relation->rd_isnew || relation->rd_istemp)
+	if (relation->rd_isnew)
 	{
 		/*
-		 * New and temp relcache entries must always be rebuilt, not
-		 * flushed; else we'd forget those two important status bits.
+		 * New relcache entries are always rebuilt, not flushed; else we'd
+		 * forget the "new" status of the relation, which is a useful
+		 * optimization to have.
 		 */
 		rebuild = true;
 	}
 	else
 	{
 		/*
-		 * Nonlocal rels can be dropped from the relcache if not open.
+		 * Pre-existing rels can be dropped from the relcache if not open.
 		 */
 		rebuild = !RelationHasReferenceCountZero(relation);
 	}
@@ -1921,7 +1928,7 @@ RelationCacheInvalidate(void)
 
 		relcacheInvalsReceived++;
 
-		if (RelationHasReferenceCountZero(relation) && !relation->rd_istemp)
+		if (RelationHasReferenceCountZero(relation))
 		{
 			/* Delete this entry immediately */
 			RelationClearRelation(relation, false);
@@ -1965,7 +1972,10 @@ AtEOXact_RelationCache(bool commit)
 		 *
 		 * During commit, reset the flag to false, since we are now out of the
 		 * creating transaction.  During abort, simply delete the relcache
-		 * entry --- it isn't interesting any longer.
+		 * entry --- it isn't interesting any longer.  (NOTE: if we have
+		 * forgotten the isnew state of a new relation due to a forced cache
+		 * flush, the entry will get deleted anyway by shared-cache-inval
+		 * processing of the aborted pg_class insertion.)
 		 */
 		if (relation->rd_isnew)
 		{
