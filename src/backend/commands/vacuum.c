@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.100 1999/05/01 19:09:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.101 1999/05/09 14:00:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1350,7 +1350,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					 */
 					ToPage = BufferGetPage(cur_buffer);
 					/* if this page was not used before - clean it */
-					if (!PageIsEmpty(ToPage) && vtmove[i].cleanVpd)
+					if (!PageIsEmpty(ToPage) && vtmove[ti].cleanVpd)
 						vc_vacpage(ToPage, vtmove[ti].vpd);
 					heap_copytuple_with_tuple(&tuple, &newtup);
 					RelationInvalidateHeapTuple(onerel, &tuple);
@@ -1369,7 +1369,7 @@ moving chain: failed to add item with len = %u to page %u",
 					newitemid = PageGetItemId(ToPage, newoff);
 					pfree(newtup.t_data);
 					newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
-					ItemPointerSet(&(newtup.t_self), vtmove[i].vpd->vpd_blkno, newoff);
+					ItemPointerSet(&(newtup.t_self), vtmove[ti].vpd->vpd_blkno, newoff);
 					/*
 					 * Set t_ctid pointing to itself for last tuple in
 					 * chain and to next tuple in chain otherwise.
