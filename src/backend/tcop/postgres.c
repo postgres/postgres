@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.320 2003/03/24 18:33:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.321 2003/04/17 22:26:01 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1612,6 +1612,26 @@ PostgresMain(int argc, char *argv[], const char *username)
 		SetConfigOption("debug_print_rewritten", "true", ctx, gucsource);
 
 	/*
+	 * Process any additional GUC variable settings passed in startup packet.
+	 */
+	if (MyProcPort != NULL)
+	{
+		List   *gucopts = MyProcPort->guc_options;
+
+		while (gucopts)
+		{
+			char	   *name,
+					   *value;
+
+			name = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+			value = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+			SetConfigOption(name, value, PGC_BACKEND, PGC_S_CLIENT);
+		}
+	}
+
+	/*
 	 * Post-processing for command line options.
 	 */
 	if (log_statement_stats &&
@@ -1795,7 +1815,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.320 $ $Date: 2003/03/24 18:33:52 $\n");
+		puts("$Revision: 1.321 $ $Date: 2003/04/17 22:26:01 $\n");
 	}
 
 	/*

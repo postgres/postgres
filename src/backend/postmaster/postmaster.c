@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.310 2003/04/06 22:45:22 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.311 2003/04/17 22:26:01 tgl Exp $
  *
  * NOTES
  *
@@ -105,11 +105,10 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "bootstrap/bootstrap.h"
-
 #include "pgstat.h"
 
+
 #define INVALID_SOCK	(-1)
-#define ARGV_SIZE	64
 
 #ifdef HAVE_SIGPROCMASK
 sigset_t	UnBlockSig,
@@ -1114,10 +1113,11 @@ initMasks(fd_set *rmask, fd_set *wmask)
 static int
 ProcessStartupPacket(Port *port, bool SSLdone)
 {
-	StartupPacket *packet;
 	enum CAC_state cac;
 	int32		len;
 	void	   *buf;
+	ProtocolVersion proto;
+	MemoryContext oldcontext;
 
 	if (pq_getbytes((char *) &len, 4) == EOF)
 	{
@@ -1128,11 +1128,20 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	len = ntohl(len);
 	len -= 4;
 
-	if (len < sizeof(ProtocolVersion) || len > sizeof(StartupPacket))
+	if (len < (int32) sizeof(ProtocolVersion) ||
+		len > MAX_STARTUP_PACKET_LENGTH)
 		elog(FATAL, "invalid length of startup packet");
 
-	/* Ensure we see zeroes for any bytes not sent */
-	buf = palloc0(sizeof(StartupPacket));
+	/*
+	 * Allocate at least the size of an old-style startup packet, plus one
+	 * extra byte, and make sure all are zeroes.  This ensures we will have
+	 * null termination of all strings, in both fixed- and variable-length
+	 * packet layouts.
+	 */
+	if (len <= (int32) sizeof(StartupPacket))
+		buf = palloc0(sizeof(StartupPacket) + 1);
+	else
+		buf = palloc0(len + 1);
 
 	if (pq_getbytes(buf, len) == EOF)
 	{
@@ -1140,21 +1149,19 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		return STATUS_ERROR;
 	}
 
-	packet = buf;
-
 	/*
 	 * The first field is either a protocol version number or a special
 	 * request code.
 	 */
-	port->proto = ntohl(packet->protoVersion);
+	port->proto = proto = ntohl(*((ProtocolVersion *) buf));
 
-	if (port->proto == CANCEL_REQUEST_CODE)
+	if (proto == CANCEL_REQUEST_CODE)
 	{
-		processCancelRequest(port, packet);
+		processCancelRequest(port, buf);
 		return 127;				/* XXX */
 	}
 
-	if (port->proto == NEGOTIATE_SSL_CODE && !SSLdone)
+	if (proto == NEGOTIATE_SSL_CODE && !SSLdone)
 	{
 		char		SSLok;
 
@@ -1187,38 +1194,112 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	/* Check we can handle the protocol the frontend is using. */
 
-	if (PG_PROTOCOL_MAJOR(port->proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
-		PG_PROTOCOL_MAJOR(port->proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
-		(PG_PROTOCOL_MAJOR(port->proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
-		 PG_PROTOCOL_MINOR(port->proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
-		elog(FATAL, "unsupported frontend protocol");
+	if (PG_PROTOCOL_MAJOR(proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
+		PG_PROTOCOL_MAJOR(proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
+		(PG_PROTOCOL_MAJOR(proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
+		 PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
+		elog(FATAL, "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u",
+			 PG_PROTOCOL_MAJOR(proto), PG_PROTOCOL_MINOR(proto),
+			 PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST),
+			 PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST),
+			 PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST));
 
 	/*
-	 * Get the parameters from the startup packet as C strings.  The
-	 * packet destination was cleared first so a short packet has zeros
-	 * silently added.
+	 * XXX temporary for 3.0 protocol development: we are using the minor
+	 * number as a test-version number.  Insist it match exactly so people
+	 * don't get burnt by using yesterday's libpq with today's server.
+	 * XXX this must go away before release!!!
 	 */
-	StrNCpy(port->database, packet->database, sizeof(port->database));
-	StrNCpy(port->user, packet->user, sizeof(port->user));
-	StrNCpy(port->options, packet->options, sizeof(port->options));
-	StrNCpy(port->tty, packet->tty, sizeof(port->tty));
-
-	/* The database defaults to the user name. */
-	if (port->database[0] == '\0')
-		StrNCpy(port->database, packet->user, sizeof(port->database));
+	if (PG_PROTOCOL_MAJOR(proto) == 3 &&
+		PG_PROTOCOL_MINOR(proto) != PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST))
+		elog(FATAL, "Your development libpq is out of sync with the server");
 
 	/*
-	 * Truncate given database and user names to length of a Postgres
-	 * name.  This avoids lookup failures when overlength names are given.
+	 * Now fetch parameters out of startup packet and save them into the
+	 * Port structure.  All data structures attached to the Port struct
+	 * must be allocated in TopMemoryContext so that they won't disappear
+	 * when we pass them to PostgresMain (see DoBackend).  We need not worry
+	 * about leaking this storage on failure, since we aren't in the postmaster
+	 * process anymore.
 	 */
-	if ((int) sizeof(port->database) >= NAMEDATALEN)
-		port->database[NAMEDATALEN - 1] = '\0';
-	if ((int) sizeof(port->user) >= NAMEDATALEN)
-		port->user[NAMEDATALEN - 1] = '\0';
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
+	if (PG_PROTOCOL_MAJOR(proto) >= 3)
+	{
+		int32	offset = sizeof(ProtocolVersion);
+
+		/*
+		 * Scan packet body for name/option pairs.  We can assume any
+		 * string beginning within the packet body is null-terminated,
+		 * thanks to zeroing extra byte above.
+		 */
+		port->guc_options = NIL;
+
+		while (offset < len)
+		{
+			char   *nameptr = ((char *) buf) + offset;
+			int32	valoffset;
+			char   *valptr;
+
+			if (*nameptr == '\0')
+				break;			/* found packet terminator */
+			valoffset = offset + strlen(nameptr) + 1;
+			if (valoffset >= len)
+				break;			/* missing value, will complain below */
+			valptr = ((char *) buf) + valoffset;
+
+			if (strcmp(nameptr, "database") == 0)
+				port->database_name = pstrdup(valptr);
+			else if (strcmp(nameptr, "user") == 0)
+				port->user_name = pstrdup(valptr);
+			else if (strcmp(nameptr, "options") == 0)
+				port->cmdline_options = pstrdup(valptr);
+			else
+			{
+				/* Assume it's a generic GUC option */
+				port->guc_options = lappend(port->guc_options,
+											pstrdup(nameptr));
+				port->guc_options = lappend(port->guc_options,
+											pstrdup(valptr));
+			}
+			offset = valoffset + strlen(valptr) + 1;
+		}
+		/*
+		 * If we didn't find a packet terminator exactly at the end of the
+		 * given packet length, complain.
+		 */
+		if (offset != len-1)
+			elog(FATAL, "invalid startup packet layout: expected terminator as last byte");
+	}
+	else
+	{
+		/*
+		 * Get the parameters from the old-style, fixed-width-fields startup
+		 * packet as C strings.  The packet destination was cleared first so a
+		 * short packet has zeros silently added.  We have to be prepared to
+		 * truncate the pstrdup result for oversize fields, though.
+		 */
+		StartupPacket *packet = (StartupPacket *) buf;
+
+		port->database_name = pstrdup(packet->database);
+		if (strlen(port->database_name) > sizeof(packet->database))
+			port->database_name[sizeof(packet->database)] = '\0';
+		port->user_name = pstrdup(packet->user);
+		if (strlen(port->user_name) > sizeof(packet->user))
+			port->user_name[sizeof(packet->user)] = '\0';
+		port->cmdline_options = pstrdup(packet->options);
+		if (strlen(port->cmdline_options) > sizeof(packet->options))
+			port->cmdline_options[sizeof(packet->options)] = '\0';
+		port->guc_options = NIL;
+	}
 
 	/* Check a user name was given. */
-	if (port->user[0] == '\0')
+	if (port->user_name == NULL || port->user_name[0] == '\0')
 		elog(FATAL, "no PostgreSQL user name specified in startup packet");
+
+	/* The database defaults to the user name. */
+	if (port->database_name == NULL || port->database_name[0] == '\0')
+		port->database_name = pstrdup(port->user_name);
 
 	if (Db_user_namespace)
 	{
@@ -1228,18 +1309,34 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		 * string or they may fake as a local user of another database
 		 * attaching to this database.
 		 */
-		if (strchr(port->user, '@') == port->user + strlen(port->user) - 1)
-			*strchr(port->user, '@') = '\0';
+		if (strchr(port->user_name, '@') ==
+			port->user_name + strlen(port->user_name) - 1)
+			*strchr(port->user_name, '@') = '\0';
 		else
 		{
 			/* Append '@' and dbname */
-			char		hold_user[SM_DATABASE_USER + 1];
+			char	   *db_user;
 
-			snprintf(hold_user, SM_DATABASE_USER + 1, "%s@%s", port->user,
-					 port->database);
-			strcpy(port->user, hold_user);
+			db_user = palloc(strlen(port->user_name) +
+							 strlen(port->database_name) + 2);
+			sprintf(db_user, "%s@%s", port->user_name, port->database_name);
+			port->user_name = db_user;
 		}
 	}
+
+	/*
+	 * Truncate given database and user names to length of a Postgres
+	 * name.  This avoids lookup failures when overlength names are given.
+	 */
+	if (strlen(port->database_name) >= NAMEDATALEN)
+		port->database_name[NAMEDATALEN - 1] = '\0';
+	if (strlen(port->user_name) >= NAMEDATALEN)
+		port->user_name[NAMEDATALEN - 1] = '\0';
+
+	/*
+	 * Done putting stuff in TopMemoryContext.
+	 */
+	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * If we're going to reject the connection due to database state, say
@@ -2076,13 +2173,11 @@ static int
 DoBackend(Port *port)
 {
 	char	   *remote_host;
-	char	   *av[ARGV_SIZE * 2];
-	int			ac = 0;
-	char		debugbuf[ARGV_SIZE];
-	char		protobuf[ARGV_SIZE];
-	char		dbbuf[ARGV_SIZE];
-	char		optbuf[ARGV_SIZE];
-	char		ttybuf[ARGV_SIZE];
+	char	  **av;
+	int			maxac;
+	int			ac;
+	char		debugbuf[32];
+	char		protobuf[32];
 	int			i;
 	int			status;
 	struct timeval now;
@@ -2225,7 +2320,7 @@ DoBackend(Port *port)
 	 * title for ps.  It's good to do this as early as possible in
 	 * startup.
 	 */
-	init_ps_display(port->user, port->database, remote_host);
+	init_ps_display(port->user_name, port->database_name, remote_host);
 	set_ps_display("authentication");
 
 	/*
@@ -2243,7 +2338,7 @@ DoBackend(Port *port)
 
 	if (Log_connections)
 		elog(LOG, "connection authorized: user=%s database=%s",
-			 port->user, port->database);
+			 port->user_name, port->database_name);
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
@@ -2260,8 +2355,20 @@ DoBackend(Port *port)
 	 * The layout of the command line is
 	 *		postgres [secure switches] -p databasename [insecure switches]
 	 * where the switches after -p come from the client request.
+	 *
+	 * The maximum possible number of commandline arguments that could come
+	 * from ExtraOptions or port->cmdline_options is (strlen + 1) / 2; see
+	 * split_opts().
 	 * ----------------
 	 */
+	maxac = 10;					/* for fixed args supplied below */
+	maxac += (strlen(ExtraOptions) + 1) / 2;
+	if (port->cmdline_options)
+		maxac += (strlen(port->cmdline_options) + 1) / 2;
+
+	av = (char **) MemoryContextAlloc(TopMemoryContext,
+									  maxac * sizeof(char *));
+	ac = 0;
 
 	av[ac++] = "postgres";
 
@@ -2270,7 +2377,7 @@ DoBackend(Port *port)
 	 */
 	if (debug_flag > 0)
 	{
-		sprintf(debugbuf, "-d%d", debug_flag);
+		snprintf(debugbuf, sizeof(debugbuf), "-d%d", debug_flag);
 		av[ac++] = debugbuf;
 	}
 
@@ -2283,7 +2390,7 @@ DoBackend(Port *port)
 	split_opts(av, &ac, ExtraOptions);
 
 	/* Tell the backend what protocol the frontend is using. */
-	sprintf(protobuf, "-v%u", port->proto);
+	snprintf(protobuf, sizeof(protobuf), "-v%u", port->proto);
 	av[ac++] = protobuf;
 
 	/*
@@ -2291,38 +2398,25 @@ DoBackend(Port *port)
 	 * database to use.  -p marks the end of secure switches.
 	 */
 	av[ac++] = "-p";
-
-	StrNCpy(dbbuf, port->database, ARGV_SIZE);
-	av[ac++] = dbbuf;
+	av[ac++] = port->database_name;
 
 	/*
 	 * Pass the (insecure) option switches from the connection request.
+	 * (It's OK to mangle port->cmdline_options now.)
 	 */
-	StrNCpy(optbuf, port->options, ARGV_SIZE);
-	split_opts(av, &ac, optbuf);
-
-	/*
-	 * Pass the (insecure) debug output file request.
-	 *
-	 * NOTE: currently, this is useless code, since the backend will not
-	 * honor an insecure -o switch.  I left it here since the backend
-	 * could be modified to allow insecure -o, given adequate checking
-	 * that the specified filename is something safe to write on.
-	 */
-	if (port->tty[0])
-	{
-		StrNCpy(ttybuf, port->tty, ARGV_SIZE);
-		av[ac++] = "-o";
-		av[ac++] = ttybuf;
-	}
+	if (port->cmdline_options)
+		split_opts(av, &ac, port->cmdline_options);
 
 	av[ac] = (char *) NULL;
+
+	Assert(ac < maxac);
 
 	/*
 	 * Release postmaster's working memory context so that backend can
 	 * recycle the space.  Note this does not trash *MyProcPort, because
 	 * ConnCreate() allocated that space with malloc() ... else we'd need
-	 * to copy the Port data here.
+	 * to copy the Port data here.  Also, subsidiary data such as the
+	 * username isn't lost either; see ProcessStartupPacket().
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
 	MemoryContextDelete(PostmasterContext);
@@ -2339,7 +2433,7 @@ DoBackend(Port *port)
 	ClientAuthInProgress = false;		/* client_min_messages is active
 										 * now */
 
-	return (PostgresMain(ac, av, port->user));
+	return (PostgresMain(ac, av, port->user_name));
 }
 
 /*
@@ -2578,11 +2672,10 @@ SSDataBase(int xlop)
 	if ((pid = fork()) == 0)	/* child */
 	{
 		const char *statmsg;
-		char	   *av[ARGV_SIZE * 2];
+		char	   *av[10];
 		int			ac = 0;
-		char		nbbuf[ARGV_SIZE];
-		char		dbbuf[ARGV_SIZE];
-		char		xlbuf[ARGV_SIZE];
+		char		nbbuf[32];
+		char		xlbuf[32];
 
 #ifdef LINUX_PROFILE
 		setitimer(ITIMER_PROF, &prof_itimer, NULL);
@@ -2626,18 +2719,18 @@ SSDataBase(int xlop)
 		/* Set up command-line arguments for subprocess */
 		av[ac++] = "postgres";
 
-		sprintf(nbbuf, "-B%d", NBuffers);
+		snprintf(nbbuf, sizeof(nbbuf), "-B%d", NBuffers);
 		av[ac++] = nbbuf;
 
-		sprintf(xlbuf, "-x%d", xlop);
+		snprintf(xlbuf, sizeof(xlbuf), "-x%d", xlop);
 		av[ac++] = xlbuf;
 
 		av[ac++] = "-p";
-
-		StrNCpy(dbbuf, "template1", ARGV_SIZE);
-		av[ac++] = dbbuf;
+		av[ac++] = "template1";
 
 		av[ac] = (char *) NULL;
+
+		Assert(ac < lengthof(av));
 
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.60 2002/10/16 02:55:30 momjian Exp $
+ * $Id: libpq-int.h,v 1.61 2003/04/17 22:26:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
  * pqcomm.h describe what the backend knows, not what libpq knows.
  */
 
-#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(2,0)
+#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,100) /* XXX temporary value */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -181,8 +181,6 @@ typedef enum
 /* PGSetenvStatusType defines the state of the PQSetenv state machine */
 typedef enum
 {
-	SETENV_STATE_OPTION_SEND,	/* About to send an Environment Option */
-	SETENV_STATE_OPTION_WAIT,	/* Waiting for above send to complete  */
 	SETENV_STATE_ENCODINGS_SEND,	/* About to send an "encodings" query */
 	SETENV_STATE_ENCODINGS_WAIT,	/* Waiting for query to complete	  */
 	SETENV_STATE_IDLE
@@ -274,7 +272,6 @@ struct pg_conn
 
 	/* Status for sending environment info.  Used during PQSetenv only. */
 	PGSetenvStatusType setenv_state;
-	const struct EnvironmentOptions *next_eo;
 
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
@@ -312,7 +309,8 @@ extern char *const pgresStatus[];
 
 /* === in fe-connect.c === */
 
-extern int	pqPacketSend(PGconn *conn, const char *buf, size_t len);
+extern int	pqPacketSend(PGconn *conn, char pack_type,
+						 const void *buf, size_t buf_len);
 
 /* === in fe-exec.c === */
 

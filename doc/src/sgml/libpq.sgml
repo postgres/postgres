@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.117 2003/03/25 16:15:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.118 2003/04/17 22:26:00 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -193,7 +193,7 @@ PGconn *PQconnectdb(const char *conninfo);
      <term><literal>tty</literal></term>
      <listitem>
      <para>
-      A file or <acronym>TTY</acronym> for optional debug output from the server.
+      Ignored (formerly, this specified where to send server debug output).
      </para>
      </listitem>
     </varlistentry>
@@ -669,6 +669,9 @@ char *PQport(const PGconn *conn);
 <listitem>
 <para>
          Returns the debug <acronym>TTY</acronym> of the connection.
+	 (This is obsolete, since the server no longer pays attention
+	 to the <acronym>TTY</acronym> setting, but the function remains
+	 for backwards compatibility.)
 <synopsis>
 char *PQtty(const PGconn *conn);
 </synopsis>
@@ -2365,12 +2368,6 @@ the <productname>PostgreSQL</productname> server.
 </listitem>
 <listitem>
 <para>
-<envar>PGTTY</envar> sets the file or <acronym>TTY</> on which  debugging  
-messages from the server are displayed.
-</para>
-</listitem>
-<listitem>
-<para>
 <envar>PGREQUIRESSL</envar> sets whether or not the connection must be
 made over <acronym>SSL</acronym>. If set to
 <quote>1</quote>, <application>libpq</>
@@ -2678,7 +2675,7 @@ main()
     pgport = NULL;              /* port of the backend server */
     pgoptions = NULL;           /* special options to start up the backend
                                  * server */
-    pgtty = NULL;               /* debugging tty for the backend server */
+    pgtty = NULL;               /* unused */
     dbName = "template1";
 
     /* make a connection to the database */
@@ -2826,7 +2823,7 @@ main()
     pgport = NULL;              /* port of the backend server */
     pgoptions = NULL;           /* special options to start up the backend
                                  * server */
-    pgtty = NULL;               /* debugging tty for the backend server */
+    pgtty = NULL;               /* unused */
     dbName = getenv("USER");    /* change this to the name of your test
                                  * database */
 
@@ -2950,7 +2947,7 @@ main()
     pgport = NULL;              /* port of the backend server */
     pgoptions = NULL;           /* special options to start up the backend
                                  * server */
-    pgtty = NULL;               /* debugging tty for the backend server */
+    pgtty = NULL;               /* unused */
 
     dbName = getenv("USER");    /* change this to the name of your test
                                  * database */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.231 2003/04/04 20:42:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.232 2003/04/17 22:26:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,9 +63,6 @@ inet_aton(const char *cp, struct in_addr * inp)
 }
 #endif
 
-
-#define NOTIFYLIST_INITIAL_SIZE 10
-#define NOTIFYLIST_GROWBY 10
 
 #define PGPASSFILE ".pgpass"
 
@@ -128,6 +125,10 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"port", "PGPORT", DEF_PGPORT_STR, NULL,
 	"Database-Port", "", 6},
 
+	/*
+	 * "tty" is no longer used either, but keep it present for backwards
+	 * compatibility.
+	 */
 	{"tty", "PGTTY", DefaultTty, NULL,
 	"Backend-Debug-TTY", "D", 40},
 
@@ -182,12 +183,13 @@ static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
+static int	build_startup_packet(const PGconn *conn, char *packet);
 static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
-char	   *pwdfMatchesString(char *buf, char *token);
-char *PasswordFromFile(char *hostname, char *port, char *dbname,
-				 char *username);
+static char *pwdfMatchesString(char *buf, char *token);
+static char *PasswordFromFile(char *hostname, char *port, char *dbname,
+							  char *username);
 
 /*
  *		Connecting to a Database
@@ -396,7 +398,7 @@ PQconndefaults(void)
  *				   is NULL or a null string.
  *
  *	  PGTTY		   identifies tty to which to send messages if <pgtty> argument
- *				   is NULL or a null string.
+ *				   is NULL or a null string.  (No longer used by backend.)
  *
  *	  PGOPTIONS    identifies connection options if <pgoptions> argument is
  *				   NULL or a null string.
@@ -792,10 +794,6 @@ connectDBStart(PGconn *conn)
 {
 	int			portnum;
 	char		portstr[64];
-#ifdef USE_SSL
-	StartupPacket np;			/* Used to negotiate SSL connection */
-	char		SSLok;
-#endif
 	struct addrinfo *addrs = NULL;
 	struct addrinfo *addr_cur = NULL;
 	struct addrinfo hint;
@@ -980,9 +978,11 @@ retry1:
 	/* Attempt to negotiate SSL usage */
 	if (conn->allow_ssl_try)
 	{
-		memset((char *) &np, 0, sizeof(np));
-		np.protoVersion = htonl(NEGOTIATE_SSL_CODE);
-		if (pqPacketSend(conn, (char *) &np, sizeof(StartupPacket)) != STATUS_OK)
+		ProtocolVersion pv;
+		char		SSLok;
+
+		pv = htonl(NEGOTIATE_SSL_CODE);
+		if (pqPacketSend(conn, 0, &pv, sizeof(ProtocolVersion)) != STATUS_OK)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 			libpq_gettext("could not send SSL negotiation packet: %s\n"),
@@ -1284,22 +1284,21 @@ keep_going:						/* We will come back to here until there
 
 		case CONNECTION_MADE:
 			{
-				StartupPacket sp;
+				char   *startpacket;
+				int		packetlen;
 
 				/*
-				 * Initialize the startup packet.
+				 * Build the startup packet.
 				 */
-
-				MemSet((char *) &sp, 0, sizeof(StartupPacket));
-
-				sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LIBPQ);
-
-				strncpy(sp.user, conn->pguser, SM_USER);
-				strncpy(sp.database, conn->dbName, SM_DATABASE);
-				strncpy(sp.tty, conn->pgtty, SM_TTY);
-
-				if (conn->pgoptions)
-					strncpy(sp.options, conn->pgoptions, SM_OPTIONS);
+				packetlen = build_startup_packet(conn, NULL);
+				startpacket = (char *) malloc(packetlen);
+				if (!startpacket)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("out of memory\n"));
+					goto error_return;
+				}
+				packetlen = build_startup_packet(conn, startpacket);
 
 				/*
 				 * Send the startup packet.
@@ -1307,15 +1306,16 @@ keep_going:						/* We will come back to here until there
 				 * Theoretically, this could block, but it really shouldn't
 				 * since we only got here if the socket is write-ready.
 				 */
-
-				if (pqPacketSend(conn, (char *) &sp,
-								 sizeof(StartupPacket)) != STATUS_OK)
+				if (pqPacketSend(conn, 0, startpacket, packetlen) != STATUS_OK)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 					libpq_gettext("could not send startup packet: %s\n"),
 									  SOCK_STRERROR(SOCK_ERRNO));
+					free(startpacket);
 					goto error_return;
 				}
+
+				free(startpacket);
 
 				conn->status = CONNECTION_AWAITING_RESPONSE;
 				return PGRES_POLLING_READING;
@@ -1576,7 +1576,6 @@ PQsetenvStart(PGconn *conn)
 		return false;
 
 	conn->setenv_state = SETENV_STATE_ENCODINGS_SEND;
-	conn->next_eo = EnvironmentOptions;
 
 	return true;
 }
@@ -1600,7 +1599,6 @@ PQsetenvPoll(PGconn *conn)
 	{
 			/* These are reading states */
 		case SETENV_STATE_ENCODINGS_WAIT:
-		case SETENV_STATE_OPTION_WAIT:
 			{
 				/* Load waiting data */
 				int			n = pqReadData(conn);
@@ -1615,7 +1613,6 @@ PQsetenvPoll(PGconn *conn)
 
 			/* These are writing states, so we just proceed. */
 		case SETENV_STATE_ENCODINGS_SEND:
-		case SETENV_STATE_OPTION_SEND:
 			break;
 
 			/* Should we raise an error if called when not active? */
@@ -1669,7 +1666,7 @@ PQsetenvPoll(PGconn *conn)
 						conn->client_encoding = encoding;
 
 						/* Move on to setting the environment options */
-						conn->setenv_state = SETENV_STATE_OPTION_SEND;
+						conn->setenv_state = SETENV_STATE_IDLE;
 					}
 					break;
 				}
@@ -1708,76 +1705,7 @@ PQsetenvPoll(PGconn *conn)
 						 * NULL result indicates that the query is
 						 * finished
 						 */
-						/* Move on to setting the environment options */
-						conn->setenv_state = SETENV_STATE_OPTION_SEND;
-					}
-					break;
-				}
-
-			case SETENV_STATE_OPTION_SEND:
-				{
-					/* Send an Environment Option */
-					char		setQuery[100];	/* note length limits in
-												 * sprintf's below */
-
-					if (conn->next_eo->envName)
-					{
-						const char *val;
-
-						if ((val = getenv(conn->next_eo->envName)))
-						{
-							if (strcasecmp(val, "default") == 0)
-								sprintf(setQuery, "SET %s = %.60s",
-										conn->next_eo->pgName, val);
-							else
-								sprintf(setQuery, "SET %s = '%.60s'",
-										conn->next_eo->pgName, val);
-#ifdef CONNECTDEBUG
-							printf("Use environment variable %s to send %s\n",
-								   conn->next_eo->envName, setQuery);
-#endif
-							if (!PQsendQuery(conn, setQuery))
-								goto error_return;
-
-							conn->setenv_state = SETENV_STATE_OPTION_WAIT;
-						}
-						else
-							conn->next_eo++;
-					}
-					else
-					{
-						/* No more options to send, so we are done. */
 						conn->setenv_state = SETENV_STATE_IDLE;
-					}
-					break;
-				}
-
-			case SETENV_STATE_OPTION_WAIT:
-				{
-					if (PQisBusy(conn))
-						return PGRES_POLLING_READING;
-
-					res = PQgetResult(conn);
-
-					if (res)
-					{
-						if (PQresultStatus(res) != PGRES_COMMAND_OK)
-						{
-							PQclear(res);
-							goto error_return;
-						}
-						PQclear(res);
-						/* Keep reading until PQgetResult returns NULL */
-					}
-					else
-					{
-						/*
-						 * NULL result indicates that the query is
-						 * finished
-						 */
-						/* Send the next option */
-						conn->next_eo++;
-						conn->setenv_state = SETENV_STATE_OPTION_SEND;
 					}
 					break;
 				}
@@ -2225,24 +2153,34 @@ cancel_errReturn:
 
 /*
  * pqPacketSend() -- send a single-packet message.
- * this is like PacketSend(), defined in backend/libpq/pqpacket.c
+ *
+ * pack_type: the single-byte message type code.  (Pass zero for startup
+ * packets, which have no message type code.)
+ *
+ * buf, buf_len: contents of message.  The given length includes only what
+ * is in buf; the message type and message length fields are added here.
  *
  * RETURNS: STATUS_ERROR if the write fails, STATUS_OK otherwise.
  * SIDE_EFFECTS: may block.
 */
 int
-pqPacketSend(PGconn *conn, const char *buf, size_t len)
+pqPacketSend(PGconn *conn, char pack_type,
+			 const void *buf, size_t buf_len)
 {
-	/* Send the total packet size. */
-
-	if (pqPutInt(4 + len, 4, conn))
+	/* Send the message type. */
+	if (pack_type != 0)
+		if (pqPutc(pack_type, conn))
+			return STATUS_ERROR;
+			
+	/* Send the (self-inclusive) message length word. */
+	if (pqPutInt(buf_len + 4, 4, conn))
 		return STATUS_ERROR;
 
-	/* Send the packet itself. */
-
-	if (pqPutnchar(buf, len, conn))
+	/* Send the message body. */
+	if (pqPutnchar(buf, buf_len, conn))
 		return STATUS_ERROR;
 
+	/* Flush to ensure backend gets it. */
 	if (pqFlush(conn))
 		return STATUS_ERROR;
 
@@ -2661,6 +2599,87 @@ PQconninfoFree(PQconninfoOption *connOptions)
 }
 
 
+/*
+ * Build a startup packet given a filled-in PGconn structure.
+ *
+ * We need to figure out how much space is needed, then fill it in.
+ * To avoid duplicate logic, this routine is called twice: the first time
+ * (with packet == NULL) just counts the space needed, the second time
+ * (with packet == allocated space) fills it in.  Return value is the number
+ * of bytes used.
+ */
+static int
+build_startup_packet(const PGconn *conn, char *packet)
+{
+	int		packet_len = 0;
+	const struct EnvironmentOptions *next_eo;
+
+	/* Protocol version comes first. */
+	if (packet)
+	{
+		ProtocolVersion pv = htonl(PG_PROTOCOL_LIBPQ);
+
+		memcpy(packet + packet_len, &pv, sizeof(ProtocolVersion));
+	}
+	packet_len += sizeof(ProtocolVersion);
+
+	/* Add user name, database name, options */
+	if (conn->pguser)
+	{
+		if (packet)
+			strcpy(packet + packet_len, "user");
+		packet_len += strlen("user") + 1;
+		if (packet)
+			strcpy(packet + packet_len, conn->pguser);
+		packet_len += strlen(conn->pguser) + 1;
+	}
+	if (conn->dbName)
+	{
+		if (packet)
+			strcpy(packet + packet_len, "database");
+		packet_len += strlen("database") + 1;
+		if (packet)
+			strcpy(packet + packet_len, conn->dbName);
+		packet_len += strlen(conn->dbName) + 1;
+	}
+	if (conn->pgoptions)
+	{
+		if (packet)
+			strcpy(packet + packet_len, "options");
+		packet_len += strlen("options") + 1;
+		if (packet)
+			strcpy(packet + packet_len, conn->pgoptions);
+		packet_len += strlen(conn->pgoptions) + 1;
+	}
+
+	/* Add any environment-driven GUC settings needed */
+	for (next_eo = EnvironmentOptions; next_eo->envName; next_eo++)
+	{
+		const char *val;
+
+		if ((val = getenv(next_eo->envName)) != NULL)
+		{
+			if (strcasecmp(val, "default") != 0)
+			{
+				if (packet)
+					strcpy(packet + packet_len, next_eo->pgName);
+				packet_len += strlen(next_eo->pgName) + 1;
+				if (packet)
+					strcpy(packet + packet_len, val);
+				packet_len += strlen(val) + 1;
+			}
+		}
+	}
+
+	/* Add trailing terminator */
+	if (packet)
+		packet[packet_len] = '\0';
+	packet_len++;
+
+	return packet_len;
+}
+
+
 /* =========== accessor functions for PGconn ========= */
 char *
 PQdb(const PGconn *conn)
@@ -2850,9 +2869,11 @@ defaultNoticeProcessor(void *arg, const char *message)
 	fprintf(stderr, "%s", message);
 }
 
-/* returns a pointer to the next token or NULL if the current
- * token doesn't match */
-char *
+/*
+ * returns a pointer to the next token or NULL if the current
+ * token doesn't match
+ */
+static char *
 pwdfMatchesString(char *buf, char *token)
 {
 	char	   *tbuf,
@@ -2889,7 +2910,7 @@ pwdfMatchesString(char *buf, char *token)
 }
 
 /* Get a password from the password file. Return value is malloc'd. */
-char *
+static char *
 PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 {
 	FILE	   *fp;

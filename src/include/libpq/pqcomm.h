@@ -9,14 +9,13 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.75 2003/01/06 09:58:36 petere Exp $
+ * $Id: pqcomm.h,v 1.76 2003/04/17 22:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PQCOMM_H
 #define PQCOMM_H
 
-#include <sys/types.h>
 #ifdef WIN32
 #include <winsock.h>
 /* workaround for clashing defines of "ERROR" */
@@ -93,7 +92,7 @@ typedef union SockAddr
  * functionality).
  *
  * If a backend supports version m.n of the protocol it must actually support
- * versions m.0..n].  Backend support for version m-1 can be dropped after a
+ * versions m.[0..n].  Backend support for version m-1 can be dropped after a
  * `reasonable' length of time.
  *
  * A frontend isn't required to support anything other than the current
@@ -107,27 +106,26 @@ typedef union SockAddr
 /* The earliest and latest frontend/backend protocol version supported. */
 
 #define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(1,0)
-#define PG_PROTOCOL_LATEST	PG_PROTOCOL(2,0)
+#define PG_PROTOCOL_LATEST		PG_PROTOCOL(3,100) /* XXX temporary value */
+
+typedef uint32 ProtocolVersion; /* FE/BE protocol version number */
+
+typedef ProtocolVersion MsgType;
+
 
 /*
- * All packets sent to the postmaster start with the length.  This is omitted
- * from the different packet definitions specified below.
+ * Packet lengths are 4 bytes in network byte order.
+ *
+ * The initial length is omitted from the packet layouts appearing below.
  */
 
 typedef uint32 PacketLen;
 
 
 /*
- * Startup message parameters sizes.  These must not be changed without changing
- * the protocol version.  These are all strings that are '\0' terminated only if
- * there is room.
- */
-
-/*
- * FIXME: remove the fixed size limitations on the database name, user
- * name, and options fields and use a variable length field instead. The
- * actual limits on database & user name will then be NAMEDATALEN, which
- * can be changed without changing the FE/BE protocol. -neilc,2002/08/27
+ * Old-style startup packet layout with fixed-width fields.  This is used in
+ * protocol 1.0 and 2.0, but not in later versions.  Note that the fields
+ * in this layout are '\0' terminated only if there is room.
  */
 
 #define SM_DATABASE		64
@@ -137,11 +135,6 @@ typedef uint32 PacketLen;
 #define SM_OPTIONS		64
 #define SM_UNUSED		64
 #define SM_TTY			64
-
-typedef uint32 ProtocolVersion; /* Fe/Be protocol version number */
-
-typedef ProtocolVersion MsgType;
-
 
 typedef struct StartupPacket
 {
@@ -156,7 +149,16 @@ typedef struct StartupPacket
 
 extern bool Db_user_namespace;
 
-/* These are the authentication requests sent by the backend. */
+/*
+ * In protocol 3.0 and later, the startup packet length is not fixed, but
+ * we set an arbitrary limit on it anyway.  This is just to prevent simple
+ * denial-of-service attacks via sending enough data to run the server
+ * out of memory.
+ */
+#define MAX_STARTUP_PACKET_LENGTH 10000
+
+
+/* These are the authentication request codes sent by the backend. */
 
 #define AUTH_REQ_OK			0	/* User is authenticated  */
 #define AUTH_REQ_KRB4		1	/* Kerberos V4 */
@@ -169,12 +171,12 @@ extern bool Db_user_namespace;
 typedef uint32 AuthRequest;
 
 
-/* A client can also send a cancel-current-operation request to the postmaster.
+/*
+ * A client can also send a cancel-current-operation request to the postmaster.
  * This is uglier than sending it directly to the client's backend, but it
  * avoids depending on out-of-band communication facilities.
- */
-
-/* The cancel request code must not match any protocol version number
+ *
+ * The cancel request code must not match any protocol version number
  * we're ever likely to use.  This random choice should do.
  */
 #define CANCEL_REQUEST_CODE PG_PROTOCOL(1234,5678)

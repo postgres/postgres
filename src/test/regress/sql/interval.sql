@@ -2,7 +2,7 @@
 -- INTERVAL
 --
 
-SET DATESTYLE = DEFAULT;
+SET DATESTYLE = 'ISO';
 
 -- check acceptance of "time zone style"
 SELECT INTERVAL '01:00' AS "One hour";

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.51 2002/12/05 18:52:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.52 2003/04/17 22:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,15 +87,19 @@ md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 				/* pg_shadow plain, double-encrypt */
 				char	   *crypt_pwd2 = palloc(MD5_PASSWD_LEN + 1);
 
-				if (!EncryptMD5(shadow_pass, port->user, strlen(port->user),
+				if (!EncryptMD5(shadow_pass,
+								port->user_name,
+								strlen(port->user_name),
 								crypt_pwd2))
 				{
 					pfree(crypt_pwd);
 					pfree(crypt_pwd2);
 					return STATUS_ERROR;
 				}
-				if (!EncryptMD5(crypt_pwd2 + strlen("md5"), port->md5Salt,
-								sizeof(port->md5Salt), crypt_pwd))
+				if (!EncryptMD5(crypt_pwd2 + strlen("md5"),
+								port->md5Salt,
+								sizeof(port->md5Salt),
+								crypt_pwd))
 				{
 					pfree(crypt_pwd);
 					pfree(crypt_pwd2);
@@ -117,7 +121,9 @@ md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 			{
 				/* Encrypt user-supplied password to match MD5 in pg_shadow */
 				crypt_client_pass = palloc(MD5_PASSWD_LEN + 1);
-				if (!EncryptMD5(client_pass, port->user, strlen(port->user),
+				if (!EncryptMD5(client_pass,
+								port->user_name,
+								strlen(port->user_name),
 								crypt_client_pass))
 				{
 					pfree(crypt_client_pass);

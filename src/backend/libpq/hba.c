@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.98 2003/04/13 04:07:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.99 2003/04/17 22:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,14 +471,16 @@ check_db(char *dbname, char *user, char *param_str)
 
 /*
  *	Scan the rest of a host record (after the mask field)
- *	and return the interpretation of it as *userauth_p, auth_arg, and
+ *	and return the interpretation of it as *userauth_p, *auth_arg_p, and
  *	*error_p.  line points to the next token of the line.
  */
 static void
-parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
+parse_hba_auth(List *line, UserAuth *userauth_p, char **auth_arg_p,
 			   bool *error_p)
 {
 	char	   *token;
+
+	*auth_arg_p = NULL;
 
 	if (!line)
 		*error_p = true;
@@ -514,11 +516,10 @@ parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
 	if (!*error_p)
 	{
 		/* Get the authentication argument token, if any */
-		if (!line)
-			auth_arg[0] = '\0';
-		else
+		if (line)
 		{
-			StrNCpy(auth_arg, lfirst(line), MAX_AUTH_ARG - 1);
+			token = lfirst(line);
+			*auth_arg_p = pstrdup(token);
 			/* If there is more on the line, it is an error */
 			if (lnext(line))
 				*error_p = true;
@@ -570,7 +571,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 
 		/* Read the rest of the line. */
-		parse_hba_auth(line, &port->auth_method, port->auth_arg, error_p);
+		parse_hba_auth(line, &port->auth_method, &port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 
@@ -642,7 +643,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
-		parse_hba_auth(line, &port->auth_method, port->auth_arg, error_p);
+		parse_hba_auth(line, &port->auth_method, &port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 
@@ -654,9 +655,9 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	else
 		goto hba_syntax;
 
-	if (!check_db(port->database, port->user, db))
+	if (!check_db(port->database_name, port->user_name, db))
 		return;
-	if (!check_user(port->user, user))
+	if (!check_user(port->user_name, user))
 		return;
 
 	/* Success */
@@ -946,7 +947,7 @@ check_ident_usermap(const char *usermap_name,
 	bool		found_entry = false,
 				error = false;
 
-	if (usermap_name[0] == '\0')
+	if (usermap_name == NULL || usermap_name[0] == '\0')
 	{
 		elog(LOG, "check_ident_usermap: hba configuration file does not "
 		   "have the usermap field filled in in the entry that pertains "
@@ -1387,7 +1388,7 @@ authident(hbaPort *port)
 			return STATUS_ERROR;
 	}
 
-	if (check_ident_usermap(port->auth_arg, port->user, ident_user))
+	if (check_ident_usermap(port->auth_arg, port->user_name, ident_user))
 		return STATUS_OK;
 	else
 		return STATUS_ERROR;

@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.32 2002/04/04 04:25:54 momjian Exp $
+ * $Id: hba.h,v 1.33 2003/04/17 22:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@
 
 #define IDENT_PORT 113
  /* Standard TCP port number for Ident service.  Assigned by IANA */
-
-#define MAX_AUTH_ARG	80		/* Max size of an authentication arg */
 
 typedef enum UserAuth
 {

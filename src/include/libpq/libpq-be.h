@@ -11,14 +11,12 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.34 2002/08/29 03:22:01 tgl Exp $
+ * $Id: libpq-be.h,v 1.35 2003/04/17 22:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LIBPQ_BE_H
 #define LIBPQ_BE_H
-
-#include <sys/types.h>
 
 #include "libpq/hba.h"
 #include "libpq/pqcomm.h"
@@ -32,29 +30,36 @@
 /*
  * This is used by the postmaster in its communication with frontends.	It
  * contains all state information needed during this communication before the
- * backend is run.
+ * backend is run.  The Port structure is kept in malloc'd memory and is
+ * still available when a backend is running (see MyProcPort).  The data
+ * it points to must also be malloc'd, or else palloc'd in TopMemoryContext,
+ * so that it survives into PostgresMain execution!
  */
 
 typedef struct Port
 {
 	int			sock;			/* File descriptor */
+	ProtocolVersion proto;		/* FE/BE protocol version */
 	SockAddr	laddr;			/* local addr (postmaster) */
 	SockAddr	raddr;			/* remote addr (client) */
-	char		md5Salt[4];		/* Password salt */
-	char		cryptSalt[2];	/* Password salt */
 
 	/*
-	 * Information that needs to be held during the fe/be authentication
-	 * handshake.
+	 * Information that needs to be saved from the startup packet and passed
+	 * into backend execution.  "char *" fields are NULL if not set.
+	 * guc_options points to a List of alternating option names and values.
 	 */
+	char	   *database_name;
+	char	   *user_name;
+	char	   *cmdline_options;
+	List	   *guc_options;
 
-	ProtocolVersion proto;
-	char		database[SM_DATABASE + 1];
-	char		user[SM_DATABASE_USER + 1];
-	char		options[SM_OPTIONS + 1];
-	char		tty[SM_TTY + 1];
-	char		auth_arg[MAX_AUTH_ARG];
+	/*
+	 * Information that needs to be held during the authentication cycle.
+	 */
 	UserAuth	auth_method;
+	char	   *auth_arg;
+	char		md5Salt[4];		/* Password salt */
+	char		cryptSalt[2];	/* Password salt */
 
 	/*
 	 * SSL structures
