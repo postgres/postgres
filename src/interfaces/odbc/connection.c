@@ -822,7 +822,8 @@ QResultClass *
 CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 {
 QResultClass *result_in, *res = NULL;
-char id, swallow;
+char swallow;
+int id;
 SocketClass *sock = self->sock;
 static char msgbuffer[MAX_MESSAGE_LEN+1];
 char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont need static
