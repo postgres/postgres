@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.153 2000/12/22 19:21:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.154 2000/12/22 23:12:03 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -801,7 +801,7 @@ heap_create_with_catalog(char *relname,
 
 	/* temp tables can mask non-temp tables */
 	if ((!istemp && RelnameFindRelid(relname)) ||
-		(istemp && get_temp_rel_by_username(relname) != NULL))
+		(istemp && is_temp_rel_name(relname)))
 		elog(ERROR, "Relation '%s' already exists", relname);
 
 	if (istemp)
@@ -813,7 +813,7 @@ heap_create_with_catalog(char *relname,
 	}
 
 	/* ----------------
-	 *	get_temp_rel_by_username() couldn't check the simultaneous
+	 *	RelnameFindRelid couldn't detect simultaneous
 	 *	creation. Uniqueness will be really checked by unique
 	 *	indexes of system tables but we couldn't check it here.
 	 *	We have to postpone creating the disk file for this
@@ -1404,7 +1404,7 @@ heap_drop_with_catalog(const char *relname,
 	Relation	rel;
 	Oid			rid;
 	bool		has_toasttable;
-	bool		istemp = (get_temp_rel_by_username(relname) != NULL);
+	bool		istemp = is_temp_rel_name(relname);
 	int			i;
 
 	/* ----------------

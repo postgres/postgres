@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.178 2000/12/22 00:51:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.179 2000/12/22 23:12:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,8 +274,8 @@ getrels(NameData *VacRelP)
 		char	   *nontemp_relname;
 
 		/* We must re-map temp table names bjm 2000-04-06 */
-		if ((nontemp_relname =
-			 get_temp_rel_by_username(NameStr(*VacRelP))) == NULL)
+		nontemp_relname = get_temp_rel_by_username(NameStr(*VacRelP));
+		if (nontemp_relname == NULL)
 			nontemp_relname = NameStr(*VacRelP);
 
 		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relname,

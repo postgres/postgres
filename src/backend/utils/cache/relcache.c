@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.120 2000/12/09 20:32:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.121 2000/12/22 23:12:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1526,7 +1526,7 @@ RelationNameGetRelation(const char *relationName)
 	 * ----------------
 	 */
 	temprelname = get_temp_rel_by_username(relationName);
-	if (temprelname)
+	if (temprelname != NULL)
 		relationName = temprelname;
 
 	/* ----------------

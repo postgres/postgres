@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.113 2000/12/05 19:57:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.114 2000/12/22 23:12:05 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1237,10 +1237,9 @@ AlterTableAddConstraint(char *relationName,
 			int			i;
 			bool		found = false;
 
-			if (get_temp_rel_by_username(fkconstraint->pktable_name)!=NULL &&
-				get_temp_rel_by_username(relationName)==NULL) {
+			if (is_temp_rel_name(fkconstraint->pktable_name) &&
+				!is_temp_rel_name(relationName))
 				elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
-			}
 
 			/*
 			 * Grab an exclusive lock on the pk table, so that someone

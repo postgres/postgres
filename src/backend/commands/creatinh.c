@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.68 2000/12/14 00:41:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.69 2000/12/22 23:12:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,9 @@
 #include "catalog/pg_type.h"
 #include "commands/creatinh.h"
 #include "miscadmin.h"
-#include "utils/syscache.h"
 #include "optimizer/clauses.h"
+#include "utils/syscache.h"
+#include "utils/temprel.h"
 
 /* ----------------
  *		local stuff
@@ -34,7 +35,7 @@
 
 static int checkAttrExists(const char *attributeName,
 				const char *attributeType, List *schema);
-static List *MergeAttributes(List *schema, List *supers,
+static List *MergeAttributes(List *schema, List *supers, bool istemp,
 							 List **supOids, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
@@ -71,7 +72,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 *	including inherited attributes.
 	 * ----------------
 	 */
-	schema = MergeAttributes(schema, stmt->inhRelnames,
+	schema = MergeAttributes(schema, stmt->inhRelnames, stmt->istemp,
 							 &inheritOids, &old_constraints);
 
 	numberOfAttributes = length(schema);
@@ -283,6 +284,7 @@ change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
  * 'schema' is the column/attribute definition for the table. (It's a list
  *		of ColumnDef's.) It is destructively changed.
  * 'supers' is a list of names (as Value objects) of parent relations.
+ * 'istemp' is TRUE if we are creating a temp relation.
  *
  * Output arguments:
  * 'supOids' receives an integer list of the OIDs of the parent relations.
@@ -311,7 +313,7 @@ change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
  *						   stud_emp {7:percent}
  */
 static List *
-MergeAttributes(List *schema, List *supers,
+MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr)
 {
 	List	   *entry;
@@ -378,6 +380,9 @@ MergeAttributes(List *schema, List *supers,
 
 		if (relation->rd_rel->relkind != RELKIND_RELATION)
 			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table", name);
+		/* Permanent rels cannot inherit from temporary ones */
+		if (!istemp && is_temp_rel_name(name))
+			elog(ERROR, "CREATE TABLE: cannot inherit from temp relation \"%s\"", name);
 
 		parentOids = lappendi(parentOids, relation->rd_id);
 		setRelhassubclassInRelation(relation->rd_id, true);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.31 2000/11/16 22:30:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.32 2000/12/22 23:12:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,13 +152,19 @@ rename_temp_relation(const char *oldname,
 			continue;			/* ignore non-matching entries */
 
 		/* We are renaming a temp table --- is it OK to do so? */
-		if (get_temp_rel_by_username(newname) != NULL)
+		if (is_temp_rel_name(newname))
 			elog(ERROR, "Cannot rename temp table \"%s\": temp table \"%s\" already exists",
 				 oldname, newname);
 
 		/*
 		 * Create a new mapping entry and mark the old one deleted in this
 		 * xact.  One of these entries will be deleted at xact end.
+		 *
+		 * NOTE: the new mapping entry is inserted into the list just after
+		 * the old one.  We could alternatively insert it before the old one,
+		 * but that'd take more code.  It does need to be in one spot or the
+		 * other, to ensure that deletion of temp rels happens in the right
+		 * order during remove_all_temp_relations().
 		 */
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
@@ -168,7 +174,7 @@ rename_temp_relation(const char *oldname,
 		StrNCpy(NameStr(new_temp_rel->user_relname), newname, NAMEDATALEN);
 		new_temp_rel->created_in_cur_xact = true;
 
-		temp_rels = lcons(new_temp_rel, temp_rels);
+		lnext(l) = lcons(new_temp_rel, lnext(l));
 
 		temp_rel->deleted_in_cur_xact = true;
 
@@ -178,7 +184,7 @@ rename_temp_relation(const char *oldname,
 	}
 
 	/* Old name does not match any temp table name, what about new? */
-	if (get_temp_rel_by_username(newname) != NULL)
+	if (is_temp_rel_name(newname))
 		elog(ERROR, "Cannot rename \"%s\" to \"%s\": a temp table by that name already exists",
 			 oldname, newname);
 
@@ -205,7 +211,8 @@ remove_all_temp_relations(void)
 	 * Scan the list and delete all entries not already deleted.
 	 * We need not worry about list entries getting deleted from under us,
 	 * because remove_temp_rel_by_relid() doesn't remove entries, only
-	 * mark them dead.
+	 * mark them dead.  Note that entries will be deleted in reverse order
+	 * of creation --- that's critical for cases involving inheritance.
 	 */
 	foreach(l, temp_rels)
 	{
@@ -286,7 +293,8 @@ AtEOXact_temp_relations(bool isCommit)
 /*
  * Map user name to physical name --- returns NULL if no entry.
  *
- * This is the normal way to test whether a name is a temp table name.
+ * This also supports testing whether a name is a temp table name;
+ * see is_temp_rel_name() macro.
  */
 char *
 get_temp_rel_by_username(const char *user_relname)
