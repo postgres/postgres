@@ -98,6 +98,7 @@ main(int argc, char **argv)
 	settings.queryFout = stdout;
 	settings.popt.topt.fieldSep = strdup(DEFAULT_FIELD_SEP);
 	settings.popt.topt.border = 1;
+	settings.popt.topt.pager = 1;
 
 	SetVariable(settings.vars, "prompt1", DEFAULT_PROMPT1);
 	SetVariable(settings.vars, "prompt2", DEFAULT_PROMPT2);
