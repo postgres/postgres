@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.41 2001/10/04 15:47:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.42 2001/10/04 15:48:37 momjian Exp $
  *
  **********************************************************************/
 
@@ -1372,7 +1372,9 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	 * Call elog(), restore the original restart address
 	 * and return to the caller (if not catched)
 	 ************************************************************/
-	elog(level, argv[2]);
+	UTF_BEGIN;
+	elog(level, UTF_U2E(argv[2]));
+	UTF_END;
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	return TCL_OK;
 }
