@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.202 2002/11/15 15:47:44 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.203 2002/11/27 08:30:27 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1089,7 +1089,7 @@ opt_using:	USING		{ $$ = make_str("using"); }
 /*****************************************************************************
  *
  *		QUERY :
- *				CREATE relname
+ *				CREATE TABLE relname
  *
  *****************************************************************************/
 
@@ -1444,6 +1444,8 @@ TriggerOneEvent:  INSERT	{ $$ = make_str("insert"); }
 
 TriggerForSpec:  FOR TriggerForOpt TriggerForType
 			{ $$ = cat_str(3, make_str("for"), $2, $3); }
+		| /* EMPTY */
+			{ $$ = EMPTY; }
 		;
 
 TriggerForOpt:	EACH		{ $$ = make_str("each"); }
@@ -2307,9 +2309,9 @@ CreateConversionStmt:
 /*****************************************************************************
  *
  *		QUERY:
- *				cluster <index_name> on <qualified_name>
+ *			       cluster <index_name> on <qualified_name>
  *                             cluster <qualified_name>
- *                             cluster ALL
+ *                             cluster
  *
  *****************************************************************************/
 
@@ -2317,8 +2319,8 @@ ClusterStmt:  CLUSTER index_name ON qualified_name
 			{ $$ = cat_str(4, make_str("cluster"), $2, make_str("on"), $4); }
 	| CLUSTER qualified_name
 			{ $$ = cat2_str(make_str("cluster"), $2); }
-	| CLUSTER ALL
-			{ $$ = make_str("cluster all"); }
+	| CLUSTER
+			{ $$ = make_str("cluster"); }
 	;
 
 
