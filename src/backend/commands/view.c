@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.50 2000/10/26 17:04:12 tgl Exp $
+ *	$Id: view.c,v 1.51 2000/12/21 17:36:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,12 +156,12 @@ FormViewRetrieveRule(char *viewName, Query *viewParse)
 static void
 DefineViewRules(char *viewName, Query *viewParse)
 {
-	RuleStmt   *retrieve_rule = NULL;
+	RuleStmt   *retrieve_rule;
 
 #ifdef NOTYET
-	RuleStmt   *replace_rule = NULL;
-	RuleStmt   *append_rule = NULL;
-	RuleStmt   *delete_rule = NULL;
+	RuleStmt   *replace_rule;
+	RuleStmt   *append_rule;
+	RuleStmt   *delete_rule;
 
 #endif
 
@@ -198,16 +198,11 @@ DefineViewRules(char *viewName, Query *viewParse)
  * Of course we must also increase the 'varnos' of all the Var nodes
  * by 2...
  *
- * These extra RT entries are not actually used in the query, obviously.
- * We add them so that views look the same as ON SELECT rules ---
- * the rule rewriter assumes that ALL rules have OLD and NEW RTEs.
- *
- * NOTE: these are destructive changes. It would be difficult to
- * make a complete copy of the parse tree and make the changes
- * in the copy.
+ * These extra RT entries are not actually used in the query,
+ * except for run-time permission checking.
  *---------------------------------------------------------------
  */
-static void
+static Query *
 UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 {
 	List	   *new_rt;
@@ -215,7 +210,17 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 			   *rt_entry2;
 
 	/*
-	 * create the 2 new range table entries and form the new range
+	 * Make a copy of the given parsetree.  It's not so much that we
+	 * don't want to scribble on our input, it's that the parser has
+	 * a bad habit of outputting multiple links to the same subtree
+	 * for constructs like BETWEEN, and we mustn't have OffsetVarNodes
+	 * increment the varno of a Var node twice.  copyObject will expand
+	 * any multiply-referenced subtree into multiple copies.
+	 */
+	viewParse = (Query *) copyObject(viewParse);
+
+	/*
+	 * Create the 2 new range table entries and form the new range
 	 * table... OLD first, then NEW....
 	 */
 	rt_entry1 = addRangeTableEntry(NULL, viewName,
@@ -230,16 +235,14 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 
 	new_rt = lcons(rt_entry1, lcons(rt_entry2, viewParse->rtable));
 
-	/*
-	 * Now the tricky part.... Update the range table in place... Be
-	 * careful here, or hell breaks loooooooooooooOOOOOOOOOOOOOOOOOOSE!
-	 */
 	viewParse->rtable = new_rt;
 
 	/*
-	 * now offset all var nodes by 2, and jointree RT indexes too.
+	 * Now offset all var nodes by 2, and jointree RT indexes too.
 	 */
 	OffsetVarNodes((Node *) viewParse, 2, 0);
+
+	return viewParse;
 }
 
 /*-------------------------------------------------------------------
@@ -257,15 +260,11 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 void
 DefineView(char *viewName, Query *viewParse)
 {
-	List	   *viewTlist;
-
-	viewTlist = viewParse->targetList;
-
 	/*
 	 * Create the "view" relation NOTE: if it already exists, the xact
 	 * will be aborted.
 	 */
-	DefineVirtualRelation(viewName, viewTlist);
+	DefineVirtualRelation(viewName, viewParse->targetList);
 
 	/*
 	 * The relation we have just created is not visible to any other
@@ -276,11 +275,13 @@ DefineView(char *viewName, Query *viewParse)
 
 	/*
 	 * The range table of 'viewParse' does not contain entries for the
-	 * "OLD" and "NEW" relations. So... add them! NOTE: we make the
-	 * update in place! After this call 'viewParse' will never be what it
-	 * used to be...
+	 * "OLD" and "NEW" relations. So... add them!
 	 */
-	UpdateRangeTableOfViewParse(viewName, viewParse);
+	viewParse = UpdateRangeTableOfViewParse(viewName, viewParse);
+
+	/*
+	 * Now create the rules associated with the view.
+	 */
 	DefineViewRules(viewName, viewParse);
 }
 
