@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.117 2002/04/30 01:24:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.118 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	/*
 	 * Insert tuple into pg_trigger.
 	 */
-	heap_insert(tgrel, tuple);
+	simple_heap_insert(tgrel, tuple);
 	CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
 	CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
 	CatalogCloseIndices(Num_pg_trigger_indices, idescs);
@@ -1183,7 +1183,8 @@ GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
 		*newSlot = NULL;
 		tuple.t_self = *tid;
 ltrmark:;
-		test = heap_mark4update(relation, &tuple, &buffer);
+		test = heap_mark4update(relation, &tuple, &buffer,
+								GetCurrentCommandId());
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:

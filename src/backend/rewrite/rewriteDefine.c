@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.71 2002/05/20 23:51:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.72 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,9 +88,7 @@ InsertRule(char *rulname,
 						 values,
 						 nulls);
 
-	heap_insert(pg_rewrite_desc, tup);
-
-	rewriteObjectId = tup->t_data->t_oid;
+	rewriteObjectId = simple_heap_insert(pg_rewrite_desc, tup);
 
 	if (RelationGetForm(pg_rewrite_desc)->relhasindex)
 	{

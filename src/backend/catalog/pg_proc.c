@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.72 2002/05/18 13:47:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.73 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,7 +298,7 @@ ProcedureCreate(const char *procedureName,
 		nulls[Anum_pg_proc_proacl-1] = 'n';
 
 		tup = heap_formtuple(tupDesc, values, nulls);
-		heap_insert(rel, tup);
+		simple_heap_insert(rel, tup);
 	}
 
 	/* Need to update indices for either the insert or update case */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.85 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.86 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,7 @@ Async_Listen(char *relname, int pid)
 	values[i++] = (Datum) 0;	/* no notifies pending */
 
 	tuple = heap_formtuple(RelationGetDescr(lRel), values, nulls);
-	heap_insert(lRel, tuple);
+	simple_heap_insert(lRel, tuple);
 
 #ifdef NOT_USED					/* currently there are no indexes */
 	if (RelationGetForm(lRel)->relhasindex)

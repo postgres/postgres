@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.178 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.179 2002/05/21 22:05:53 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -327,7 +327,7 @@ UpdateRelationRelation(Relation indexRelation)
 	 * sure would be embarrassing to do this sort of thing in polite company.
 	 */
 	tuple->t_data->t_oid = RelationGetRelid(indexRelation);
-	heap_insert(pg_class, tuple);
+	simple_heap_insert(pg_class, tuple);
 
 	/*
 	 * During normal processing, we need to make sure that the system
@@ -408,7 +408,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 								   ATTRIBUTE_TUPLE_SIZE,
 								   (void *) indexTupDesc->attrs[i]);
 
-		heap_insert(pg_attribute, new_tuple);
+		simple_heap_insert(pg_attribute, new_tuple);
 
 		if (hasind)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, pg_attribute, new_tuple);
@@ -500,7 +500,7 @@ UpdateIndexRelation(Oid indexoid,
 	/*
 	 * insert the tuple into the pg_index
 	 */
-	heap_insert(pg_index, tuple);
+	simple_heap_insert(pg_index, tuple);
 
 	/*
 	 * add index tuples for it
@@ -1010,7 +1010,8 @@ LockClassinfoForUpdate(Oid relid, HeapTuple rtup,
 		ItemPointerData tidsave;
 
 		ItemPointerCopy(&(rtup->t_self), &tidsave);
-		test = heap_mark4update(relationRelation, rtup, buffer);
+		test = heap_mark4update(relationRelation, rtup, buffer,
+								GetCurrentCommandId());
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:

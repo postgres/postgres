@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.102 2002/05/20 23:51:42 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.103 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -596,7 +596,7 @@ CreateUser(CreateUserStmt *stmt)
 	/*
 	 * Insert new record in the pg_shadow table
 	 */
-	heap_insert(pg_shadow_rel, tuple);
+	simple_heap_insert(pg_shadow_rel, tuple);
 
 	/*
 	 * Update indexes
@@ -1213,9 +1213,9 @@ CreateGroup(CreateGroupStmt *stmt)
 	tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
 
 	/*
-	 * Insert a new record in the pg_group_table
+	 * Insert a new record in the pg_group table
 	 */
-	heap_insert(pg_group_rel, tuple);
+	simple_heap_insert(pg_group_rel, tuple);
 
 	/*
 	 * Update indexes

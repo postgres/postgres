@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.45 2002/03/02 23:35:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.46 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,6 +397,9 @@ GetSnapshotData(bool serializable)
 	Assert(TransactionIdIsValid(MyProc->xmin));
 
 	snapshot->xcnt = count;
+
+	snapshot->curcid = GetCurrentCommandId();
+
 	return snapshot;
 }
 

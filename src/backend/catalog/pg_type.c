@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.70 2002/03/29 19:06:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.71 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,8 +102,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
 	 */
-	heap_insert(pg_type_desc, tup);
-	typoid = tup->t_data->t_oid;
+	typoid = simple_heap_insert(pg_type_desc, tup);
 
 	if (RelationGetForm(pg_type_desc)->relhasindex)
 	{
@@ -286,9 +285,7 @@ TypeCreate(const char *typeName,
 		/* preassign tuple Oid, if one was given */
 		tup->t_data->t_oid = assignedTypeOid;
 
-		heap_insert(pg_type_desc, tup);
-
-		typeObjectId = tup->t_data->t_oid;
+		typeObjectId = simple_heap_insert(pg_type_desc, tup);
 	}
 
 	/* Update indices (not necessary if bootstrapping) */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.50 2002/05/12 20:10:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.51 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -465,7 +465,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	SQLFunctionCachePtr fcache;
 	execution_state *es;
 	Datum		result = 0;
-	CommandId	savedId;
 
 	/*
 	 * Switch to context in which the fcache lives.  This ensures that
@@ -473,14 +472,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 * sub-executor is responsible for deleting per-tuple information.
 	 */
 	oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
-
-	/*
-	 * Before we start do anything we must save CurrentScanCommandId to
-	 * restore it before return to upper Executor. Also, we have to set
-	 * CurrentScanCommandId equal to CurrentCommandId. - vadim 08/29/97
-	 */
-	savedId = GetScanCommandId();
-	SetScanCommandId(GetCurrentCommandId());
 
 	/*
 	 * Initialize fcache and execution state if first time through.
@@ -514,11 +505,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			break;
 		es = es->next;
 	}
-
-	/*
-	 * Restore outer command ID.
-	 */
-	SetScanCommandId(savedId);
 
 	/*
 	 * If we've gone through every command in this function, we are done.

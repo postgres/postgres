@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.1 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.2 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,6 @@ PerformPortalFetch(char *name,
 	EState	   *estate;
 	MemoryContext oldcontext;
 	ScanDirection direction;
-	CommandId	savedId;
 	bool		temp_desc = false;
 
 	/* initialize completion status in case of early exit */
@@ -132,14 +131,6 @@ PerformPortalFetch(char *name,
 	}
 
 	/*
-	 * Restore the scanCommandId that was current when the cursor was
-	 * opened.  This ensures that we see the same tuples throughout the
-	 * execution of the cursor.
-	 */
-	savedId = GetScanCommandId();
-	SetScanCommandId(PortalGetCommandId(portal));
-
-	/*
 	 * Determine which direction to go in, and check to see if we're
 	 * already at the end of the available tuples in that direction.  If
 	 * so, set the direction to NoMovement to avoid trying to fetch any
@@ -184,11 +175,6 @@ PerformPortalFetch(char *name,
 		snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %u",
 				 (dest == None) ? "MOVE" : "FETCH",
 				 estate->es_processed);
-
-	/*
-	 * Restore outer command ID.
-	 */
-	SetScanCommandId(savedId);
 
 	/*
 	 * Clean up and switch back to old context.

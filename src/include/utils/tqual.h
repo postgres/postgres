@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.38 2002/01/16 20:29:02 tgl Exp $
+ * $Id: tqual.h,v 1.39 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ typedef struct SnapshotData
 	uint32		xcnt;			/* # of xact ids in xip[] */
 	TransactionId *xip;			/* array of xact IDs in progress */
 	/* note: all ids in xip[] satisfy xmin <= xip[i] < xmax */
+	CommandId	curcid;			/* in my xact, CID < curcid are visible */
 	ItemPointerData tid;		/* required for Dirty snapshot -:( */
 } SnapshotData;
 
@@ -104,7 +105,8 @@ extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple);
 extern bool HeapTupleSatisfiesToast(HeapTupleHeader tuple);
 extern bool HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple,
 						   Snapshot snapshot);
-extern int	HeapTupleSatisfiesUpdate(HeapTuple tuple);
+extern int	HeapTupleSatisfiesUpdate(HeapTuple tuple,
+									 CommandId curcid);
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 						 TransactionId OldestXmin);
 

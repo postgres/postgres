@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.31 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.32 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	tupDesc = rel->rd_att;
 	tup = heap_formtuple(tupDesc, values, nulls);
 
-	heap_insert(rel, tup);
+	simple_heap_insert(rel, tup);
 
 	if (RelationGetForm(rel)->relhasindex)
 	{

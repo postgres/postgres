@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.32 2002/02/14 15:24:10 tgl Exp $
+ * $Id: portal.h,v 1.33 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@ typedef struct PortalData
 	MemoryContext heap;			/* subsidiary memory */
 	QueryDesc  *queryDesc;		/* Info about query associated with portal */
 	TupleDesc	attinfo;
-	CommandId	commandId;		/* Command counter value for query */
 	EState	   *state;			/* Execution state of query */
 	bool		atStart;		/* T => fetch backwards is not allowed */
 	bool		atEnd;			/* T => fetch forwards is not allowed */
@@ -49,7 +48,6 @@ typedef struct PortalData
  */
 #define PortalGetQueryDesc(portal)	((portal)->queryDesc)
 #define PortalGetTupleDesc(portal)	((portal)->attinfo)
-#define PortalGetCommandId(portal)	((portal)->commandId)
 #define PortalGetState(portal)		((portal)->state)
 #define PortalGetHeapMemory(portal)	((portal)->heap)
 

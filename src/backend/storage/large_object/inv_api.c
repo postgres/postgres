@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.91 2002/05/20 23:51:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.92 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -555,7 +555,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			newtup = heap_formtuple(obj_desc->heap_r->rd_att, values, nulls);
-			heap_insert(obj_desc->heap_r, newtup);
+			simple_heap_insert(obj_desc->heap_r, newtup);
 			if (write_indices)
 				CatalogIndexInsert(idescs, Num_pg_largeobject_indices,
 								   obj_desc->heap_r, newtup);

@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.47 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.48 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	{
 		newtuple = heap_formtuple(RelationGetDescr(description),
 								  values, nulls);
-		heap_insert(description, newtuple);
+		simple_heap_insert(description, newtuple);
 	}
 
 	/* Update indexes, if necessary */

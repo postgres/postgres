@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.74 2002/05/20 23:51:43 tgl Exp $
+ * $Id: heapam.h,v 1.75 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,16 +156,23 @@ extern void heap_fetch(Relation relation, Snapshot snapshot,
 					   HeapTuple tuple, Buffer *userbuf,
 					   PgStat_Info *pgstat_info);
 
-extern ItemPointer heap_get_latest_tid(Relation relation, Snapshot snapshot, ItemPointer tid);
+extern ItemPointer heap_get_latest_tid(Relation relation, Snapshot snapshot,
+									   ItemPointer tid);
 extern void setLastTid(const ItemPointer tid);
-extern Oid	heap_insert(Relation relation, HeapTuple tup);
-extern int	heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid);
+
+extern Oid	heap_insert(Relation relation, HeapTuple tup, CommandId cid);
+extern int	heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid,
+						CommandId cid);
 extern int heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
-			ItemPointer ctid);
-extern int	heap_mark4update(Relation relation, HeapTuple tup, Buffer *userbuf);
+					   ItemPointer ctid, CommandId cid);
+extern int	heap_mark4update(Relation relation, HeapTuple tup,
+							 Buffer *userbuf, CommandId cid);
+
+extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);
 extern void simple_heap_update(Relation relation, ItemPointer otid,
 				   HeapTuple tup);
+
 extern void heap_markpos(HeapScanDesc scan);
 extern void heap_restrpos(HeapScanDesc scan);
 

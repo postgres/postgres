@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.69 2002/04/15 05:22:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.70 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,11 +106,7 @@ SPI_connect(void)
 	/* ... and switch to procedure's context */
 	_SPI_current->savedcxt = MemoryContextSwitchTo(_SPI_current->procCxt);
 
-	_SPI_current->savedId = GetScanCommandId();
-	SetScanCommandId(GetCurrentCommandId());
-
 	return SPI_OK_CONNECT;
-
 }
 
 int
@@ -128,8 +124,6 @@ SPI_finish(void)
 	/* Release memory used in procedure call */
 	MemoryContextDelete(_SPI_current->execCxt);
 	MemoryContextDelete(_SPI_current->procCxt);
-
-	SetScanCommandId(_SPI_current->savedId);
 
 	/*
 	 * After _SPI_begin_call _SPI_connected == _SPI_curid. Now we are
@@ -1233,7 +1227,6 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	EState	   *estate;
 	MemoryContext oldcontext;
 	ScanDirection direction;
-	CommandId	savedId;
 	CommandDest olddest;
 
 	/* Check that the portal is valid */
@@ -1259,14 +1252,6 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	/* or None (for move) */
 	olddest = querydesc->dest;
 	querydesc->dest = dest;
-
-	/*
-	 * Restore the scanCommandId that was current when the cursor was
-	 * opened.  This ensures that we see the same tuples throughout the
-	 * execution of the cursor.
-	 */
-	savedId = GetScanCommandId();
-	SetScanCommandId(PortalGetCommandId(portal));
 
 	/* Run the executor like PerformPortalFetch and remember states */
 	if (forward)
@@ -1299,11 +1284,6 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	}
 
 	_SPI_current->processed = estate->es_processed;
-
-	/*
-	 * Restore outer command ID.
-	 */
-	SetScanCommandId(savedId);
 
 	/* Restore the old command destination and switch back to callers */
 	/* memory context */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.15 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.16 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -821,7 +821,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 
 		tuple = heap_formtuple(desc, datum, nullarr);
 
-		heap_insert(relation, tuple);
+		simple_heap_insert(relation, tuple);
 
 		if (RelationGetForm(relation)->relhasindex)
 		{
@@ -1673,7 +1673,7 @@ AlterTableAddColumn(Oid myrelid,
 
 	ReleaseSysCache(typeTuple);
 
-	heap_insert(attrdesc, attributeTuple);
+	simple_heap_insert(attrdesc, attributeTuple);
 
 	/* Update indexes on pg_attribute */
 	if (RelationGetForm(attrdesc)->relhasindex)
@@ -2890,7 +2890,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	classtuple.t_self = reltup->t_self;
 	ReleaseSysCache(reltup);
 
-	switch (heap_mark4update(class_rel, &classtuple, &buffer))
+	switch (heap_mark4update(class_rel, &classtuple, &buffer,
+							 GetCurrentCommandId()))
 	{
 		case HeapTupleSelfUpdated:
 		case HeapTupleMayBeUpdated:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.11 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.12 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ LargeObjectCreate(Oid loid)
 	/*
 	 * Insert it
 	 */
-	heap_insert(pg_largeobject, ntup);
+	simple_heap_insert(pg_largeobject, ntup);
 
 	/*
 	 * Update indices

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.80 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.81 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		 */
 		HeapTuple	copiedTuple = heap_copytuple(LocalHeapTuple);
 
-		heap_insert(LocalNewHeap, copiedTuple);
+		simple_heap_insert(LocalNewHeap, copiedTuple);
 		heap_freetuple(copiedTuple);
 
 		CHECK_FOR_INTERRUPTS();

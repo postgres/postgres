@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.154 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.155 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -947,7 +947,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 			/*
 			 * OK, store the tuple and create index entries for it
 			 */
-			heap_insert(rel, tuple);
+			simple_heap_insert(rel, tuple);
 
 			if (resultRelInfo->ri_NumIndices > 0)
 				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);

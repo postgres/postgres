@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.90 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.91 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,7 @@ createdb(const char *dbname, const char *dbowner,
 	tuple->t_data->t_oid = dboid;		/* override heap_insert's OID
 										 * selection */
 
-	heap_insert(pg_database_rel, tuple);
+	simple_heap_insert(pg_database_rel, tuple);
 
 	/*
 	 * Update indexes

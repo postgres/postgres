@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.29 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.30 2002/05/21 22:05:53 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -911,7 +911,7 @@ toast_save_datum(Relation rel, Datum value)
 		if (!HeapTupleIsValid(toasttup))
 			elog(ERROR, "Failed to build TOAST tuple");
 
-		heap_insert(toastrel, toasttup);
+		simple_heap_insert(toastrel, toasttup);
 
 		/*
 		 * Create the index entry.	We cheat a little here by not using

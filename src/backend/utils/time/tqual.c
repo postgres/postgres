@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.50 2002/05/06 02:39:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.51 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 		}
 		else if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
-			if (CommandIdGEScanCommandId(tuple->t_cmin))
+			if (tuple->t_cmin >= GetCurrentCommandId())
 				return false;	/* inserted after scan started */
 
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
@@ -249,7 +249,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 				return true;
 
-			if (CommandIdGEScanCommandId(tuple->t_cmax))
+			if (tuple->t_cmax >= GetCurrentCommandId())
 				return true;	/* deleted after scan started */
 			else
 				return false;	/* deleted before scan started */
@@ -280,7 +280,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 	{
 		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 			return true;
-		if (CommandIdGEScanCommandId(tuple->t_cmax))
+		if (tuple->t_cmax >= GetCurrentCommandId())
 			return true;		/* deleted after scan started */
 		else
 			return false;		/* deleted before scan started */
@@ -363,10 +363,12 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
  * HeapTupleSatisfiesUpdate
  *
  *	Same logic as HeapTupleSatisfiesNow, but returns a more detailed result
- *	code, since UPDATE needs to know more than "is it visible?".
+ *	code, since UPDATE needs to know more than "is it visible?".  Also,
+ *	tuples of my own xact are tested against the passed CommandId not
+ *	CurrentCommandId.
  */
 int
-HeapTupleSatisfiesUpdate(HeapTuple htuple)
+HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 {
 	HeapTupleHeader tuple = htuple->t_data;
 
@@ -409,7 +411,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple)
 		}
 		else if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
-			if (CommandIdGEScanCommandId(tuple->t_cmin))
+			if (tuple->t_cmin >= curcid)
 				return HeapTupleInvisible;		/* inserted after scan
 												 * started */
 
@@ -421,7 +423,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple)
 			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 				return HeapTupleMayBeUpdated;
 
-			if (CommandIdGEScanCommandId(tuple->t_cmax))
+			if (tuple->t_cmax >= curcid)
 				return HeapTupleSelfUpdated;	/* updated after scan
 												 * started */
 			else
@@ -454,7 +456,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple)
 	{
 		if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 			return HeapTupleMayBeUpdated;
-		if (CommandIdGEScanCommandId(tuple->t_cmax))
+		if (tuple->t_cmax >= curcid)
 			return HeapTupleSelfUpdated;		/* updated after scan
 												 * started */
 		else
@@ -677,7 +679,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 		}
 		else if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
-			if (CommandIdGEScanCommandId(tuple->t_cmin))
+			if (tuple->t_cmin >= snapshot->curcid)
 				return false;	/* inserted after scan started */
 
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
@@ -688,7 +690,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 				return true;
 
-			if (CommandIdGEScanCommandId(tuple->t_cmax))
+			if (tuple->t_cmax >= snapshot->curcid)
 				return true;	/* deleted after scan started */
 			else
 				return false;	/* deleted before scan started */
@@ -730,7 +732,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 	{
 		if (TransactionIdIsCurrentTransactionId(tuple->t_xmax))
 		{
-			if (CommandIdGEScanCommandId(tuple->t_cmax))
+			if (tuple->t_cmax >= snapshot->curcid)
 				return true;	/* deleted after scan started */
 			else
 				return false;	/* deleted before scan started */
@@ -950,6 +952,7 @@ SetQuerySnapshot(void)
 	{
 		free(QuerySnapshot->xip);
 		free(QuerySnapshot);
+		QuerySnapshot = NULL;
 	}
 
 	if (XactIsoLevel == XACT_SERIALIZABLE)

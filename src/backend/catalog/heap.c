@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.200 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.201 2002/05/21 22:05:53 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -440,7 +440,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 							 ATTRIBUTE_TUPLE_SIZE,
 							 (void *) *dpp);
 
-		heap_insert(rel, tup);
+		simple_heap_insert(rel, tup);
 
 		if (hasindex)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
@@ -474,7 +474,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 			/* attStruct->attstattarget = 0; */
 			/* attStruct->attcacheoff = -1; */
 
-			heap_insert(rel, tup);
+			simple_heap_insert(rel, tup);
 
 			if (hasindex)
 				CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
@@ -574,7 +574,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 	/*
 	 * finally insert the new tuple and free it.
 	 */
-	heap_insert(pg_class_desc, tup);
+	simple_heap_insert(pg_class_desc, tup);
 
 	if (!IsIgnoringSystemIndexes())
 	{
@@ -1308,7 +1308,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 												 CStringGetDatum(adsrc));
 	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 	tuple = heap_formtuple(adrel->rd_att, values, nulls);
-	heap_insert(adrel, tuple);
+	simple_heap_insert(adrel, tuple);
 	CatalogOpenIndices(Num_pg_attrdef_indices, Name_pg_attrdef_indices,
 					   idescs);
 	CatalogIndexInsert(idescs, Num_pg_attrdef_indices, adrel, tuple);
@@ -1388,7 +1388,7 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 												 CStringGetDatum(ccsrc));
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
 	tuple = heap_formtuple(rcrel->rd_att, values, nulls);
-	heap_insert(rcrel, tuple);
+	simple_heap_insert(rcrel, tuple);
 	CatalogOpenIndices(Num_pg_relcheck_indices, Name_pg_relcheck_indices,
 					   idescs);
 	CatalogIndexInsert(idescs, Num_pg_relcheck_indices, rcrel, tuple);

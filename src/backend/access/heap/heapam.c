@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.134 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.135 2002/05/21 22:05:53 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1059,15 +1059,14 @@ heap_get_latest_tid(Relation relation,
 	return tid;
 }
 
-/* ----------------
- *		heap_insert		- insert tuple into a heap
+/*
+ *	heap_insert		- insert tuple into a heap
  *
- *		The assignment of t_min (and thus the others) should be
- *		removed eventually.
- * ----------------
+ * The new tuple is stamped with current transaction ID and the specified
+ * command ID.
  */
 Oid
-heap_insert(Relation relation, HeapTuple tup)
+heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 {
 	Buffer		buffer;
 
@@ -1093,8 +1092,9 @@ heap_insert(Relation relation, HeapTuple tup)
 	}
 
 	TransactionIdStore(GetCurrentTransactionId(), &(tup->t_data->t_xmin));
-	tup->t_data->t_cmin = GetCurrentCommandId();
+	tup->t_data->t_cmin = cid;
 	StoreInvalidTransactionId(&(tup->t_data->t_xmax));
+	tup->t_data->t_cmax = FirstCommandId;
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 	tup->t_tableOid = relation->rd_id;
@@ -1179,13 +1179,27 @@ heap_insert(Relation relation, HeapTuple tup)
 }
 
 /*
+ *	simple_heap_insert - insert a tuple
+ *
+ * Currently, this routine differs from heap_insert only in supplying
+ * a default command ID.  But it should be used rather than using
+ * heap_insert directly in most places where we are modifying system catalogs.
+ */
+Oid
+simple_heap_insert(Relation relation, HeapTuple tup)
+{
+	return heap_insert(relation, tup, GetCurrentCommandId());
+}
+
+/*
  *	heap_delete		- delete a tuple
  *
  * NB: do not call this directly unless you are prepared to deal with
  * concurrent-update conditions.  Use simple_heap_delete instead.
  */
 int
-heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
+heap_delete(Relation relation, ItemPointer tid,
+			ItemPointer ctid, CommandId cid)
 {
 	ItemId		lp;
 	HeapTupleData tp;
@@ -1215,7 +1229,7 @@ heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 	tp.t_tableOid = relation->rd_id;
 
 l1:
-	result = HeapTupleSatisfiesUpdate(&tp);
+	result = HeapTupleSatisfiesUpdate(&tp, cid);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1265,7 +1279,7 @@ l1:
 	START_CRIT_SECTION();
 	/* store transaction information of xact deleting the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tp.t_data->t_xmax));
-	tp.t_data->t_cmax = GetCurrentCommandId();
+	tp.t_data->t_cmax = cid;
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 	/* XLOG stuff */
@@ -1336,7 +1350,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 	ItemPointerData ctid;
 	int			result;
 
-	result = heap_delete(relation, tid, &ctid);
+	result = heap_delete(relation, tid, &ctid, GetCurrentCommandId());
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -1356,7 +1370,6 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 			elog(ERROR, "Unknown status %u from heap_delete", result);
 			break;
 	}
-
 }
 
 /*
@@ -1367,7 +1380,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  */
 int
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
-			ItemPointer ctid)
+			ItemPointer ctid, CommandId cid)
 {
 	ItemId		lp;
 	HeapTupleData oldtup;
@@ -1407,7 +1420,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 */
 
 l2:
-	result = HeapTupleSatisfiesUpdate(&oldtup);
+	result = HeapTupleSatisfiesUpdate(&oldtup, cid);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1457,7 +1470,7 @@ l2:
 	/* Fill in OID and transaction status data for newtup */
 	newtup->t_data->t_oid = oldtup.t_data->t_oid;
 	TransactionIdStore(GetCurrentTransactionId(), &(newtup->t_data->t_xmin));
-	newtup->t_data->t_cmin = GetCurrentCommandId();
+	newtup->t_data->t_cmin = cid;
 	StoreInvalidTransactionId(&(newtup->t_data->t_xmax));
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
@@ -1496,7 +1509,7 @@ l2:
 
 		TransactionIdStore(GetCurrentTransactionId(),
 						   &(oldtup.t_data->t_xmax));
-		oldtup.t_data->t_cmax = GetCurrentCommandId();
+		oldtup.t_data->t_cmax = cid;
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 									   HEAP_XMAX_INVALID |
 									   HEAP_MARKED_FOR_UPDATE);
@@ -1588,7 +1601,7 @@ l2:
 	{
 		TransactionIdStore(GetCurrentTransactionId(),
 						   &(oldtup.t_data->t_xmax));
-		oldtup.t_data->t_cmax = GetCurrentCommandId();
+		oldtup.t_data->t_cmax = cid;
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 									   HEAP_XMAX_INVALID |
 									   HEAP_MARKED_FOR_UPDATE);
@@ -1653,7 +1666,7 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 	ItemPointerData ctid;
 	int			result;
 
-	result = heap_update(relation, otid, tup, &ctid);
+	result = heap_update(relation, otid, tup, &ctid, GetCurrentCommandId());
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -1679,7 +1692,8 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
  *	heap_mark4update		- mark a tuple for update
  */
 int
-heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
+heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
+				 CommandId cid)
 {
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
@@ -1704,7 +1718,7 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
 	tuple->t_len = ItemIdGetLength(lp);
 
 l3:
-	result = HeapTupleSatisfiesUpdate(tuple);
+	result = HeapTupleSatisfiesUpdate(tuple, cid);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1758,7 +1772,7 @@ l3:
 
 	/* store transaction information of xact marking the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tuple->t_data->t_xmax));
-	tuple->t_data->t_cmax = GetCurrentCommandId();
+	tuple->t_data->t_cmax = cid;
 	tuple->t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
 	tuple->t_data->t_infomask |= HEAP_MARKED_FOR_UPDATE;
 
@@ -2400,9 +2414,8 @@ _heap_unlock_tuple(void *data)
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	if (!TransactionIdEquals(htup->t_xmax, GetCurrentTransactionId()) ||
-		htup->t_cmax != GetCurrentCommandId())
-		elog(PANIC, "_heap_unlock_tuple: invalid xmax/cmax in rollback");
+	if (!TransactionIdEquals(htup->t_xmax, GetCurrentTransactionId()))
+		elog(PANIC, "_heap_unlock_tuple: invalid xmax in rollback");
 	htup->t_infomask &= ~HEAP_XMAX_UNLOGGED;
 	htup->t_infomask |= HEAP_XMAX_INVALID;
 	UnlockAndWriteBuffer(buffer);

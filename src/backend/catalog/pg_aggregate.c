@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.46 2002/05/18 13:47:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.47 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ AggregateCreate(const char *aggName,
 	tupDesc = aggdesc->rd_att;
 
 	tup = heap_formtuple(tupDesc, values, nulls);
-	heap_insert(aggdesc, tup);
+	simple_heap_insert(aggdesc, tup);
 
 	if (RelationGetForm(aggdesc)->relhasindex)
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.42 2002/04/01 03:34:27 tgl Exp $
+ * $Id: xact.h,v 1.43 2002/05/21 22:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ typedef struct TransactionStateData
 {
 	TransactionId transactionIdData;
 	CommandId	commandId;
-	CommandId	scanCommandId;
 	AbsoluteTime startTime;
 	int			startTimeUsec;
 	int			state;
@@ -101,13 +100,10 @@ extern bool IsTransactionState(void);
 extern bool IsAbortedTransactionBlockState(void);
 extern TransactionId GetCurrentTransactionId(void);
 extern CommandId GetCurrentCommandId(void);
-extern CommandId GetScanCommandId(void);
-extern void SetScanCommandId(CommandId);
 extern AbsoluteTime GetCurrentTransactionStartTime(void);
 extern AbsoluteTime GetCurrentTransactionStartTimeUsec(int *usec);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern bool CommandIdIsCurrentCommandId(CommandId cid);
-extern bool CommandIdGEScanCommandId(CommandId cid);
 extern void CommandCounterIncrement(void);
 extern void StartTransactionCommand(void);
 extern void CommitTransactionCommand(void);

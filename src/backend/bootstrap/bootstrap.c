@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.130 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.131 2002/05/21 22:05:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -680,7 +680,7 @@ InsertOneTuple(Oid objectid)
 
 	if (objectid != (Oid) 0)
 		tuple->t_data->t_oid = objectid;
-	heap_insert(boot_reldesc, tuple);
+	simple_heap_insert(boot_reldesc, tuple);
 	heap_freetuple(tuple);
 	elog(DEBUG3, "row inserted");
 

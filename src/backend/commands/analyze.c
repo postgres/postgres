@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.33 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.34 2002/05/21 22:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1787,7 +1787,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		{
 			/* No, insert new tuple */
 			stup = heap_formtuple(sd->rd_att, values, nulls);
-			heap_insert(sd, stup);
+			simple_heap_insert(sd, stup);
 		}
 
 		/* update indices too */
