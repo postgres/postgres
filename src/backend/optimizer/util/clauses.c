@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.143 2003/07/01 00:04:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.144 2003/07/01 19:07:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -30,6 +30,7 @@
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_expr.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -1719,6 +1720,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	char		result_typtype;
+	bool		polymorphic = false;
+	Oid			argtypes[FUNC_MAX_ARGS];
 	char	   *src;
 	Datum		tmp;
 	bool		isNull;
@@ -1731,7 +1734,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	int		   *usecounts;
 	List	   *arg;
 	int			i;
-	int			j;
 
 	/*
 	 * Forget it if the function is not SQL-language or has other
@@ -1743,17 +1745,15 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		funcform->pronargs != length(args))
 		return NULL;
 
-	/* Forget it if declared return type is not base or domain */
+	/* Forget it if declared return type is not base, domain, or polymorphic */
 	result_typtype = get_typtype(funcform->prorettype);
 	if (result_typtype != 'b' &&
 		result_typtype != 'd')
-		return NULL;
-
-	/* Forget it if any declared argument type is polymorphic */
-	for (j = 0; j < funcform->pronargs; j++)
 	{
-		if (funcform->proargtypes[j] == ANYARRAYOID ||
-			funcform->proargtypes[j] == ANYELEMENTOID)
+		if (funcform->prorettype == ANYARRAYOID ||
+			funcform->prorettype == ANYELEMENTOID)
+			polymorphic = true;
+		else
 			return NULL;
 	}
 
@@ -1764,6 +1764,18 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	/* Check permission to call function (fail later, if not) */
 	if (pg_proc_aclcheck(funcid, GetUserId(), ACL_EXECUTE) != ACLCHECK_OK)
 		return NULL;
+
+	/* Check for polymorphic arguments, and substitute actual arg types */
+	memcpy(argtypes, funcform->proargtypes, FUNC_MAX_ARGS * sizeof(Oid));
+	for (i = 0; i < funcform->pronargs; i++)
+	{
+		if (argtypes[i] == ANYARRAYOID ||
+			argtypes[i] == ANYELEMENTOID)
+		{
+			polymorphic = true;
+			argtypes[i] = exprType((Node *) nth(i, args));
+		}
+	}
 
 	/*
 	 * Make a temporary memory context, so that we don't leak all the
@@ -1797,8 +1809,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		goto fail;
 
 	querytree_list = parse_analyze(lfirst(raw_parsetree_list),
-								   funcform->proargtypes,
-								   funcform->pronargs);
+								   argtypes, funcform->pronargs);
 
 	if (length(querytree_list) != 1)
 		goto fail;
@@ -1828,6 +1839,18 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		goto fail;
 
 	newexpr = (Node *) ((TargetEntry *) lfirst(querytree->targetList))->expr;
+
+	/*
+	 * If the function has any arguments declared as polymorphic types,
+	 * then it wasn't type-checked at definition time; must do so now.
+	 * (This will raise an error if wrong, but that's okay since the
+	 * function would fail at runtime anyway.  Note we do not try this
+	 * until we have verified that no rewriting was needed; that's probably
+	 * not important, but let's be careful.)
+	 */
+	if (polymorphic)
+		check_sql_fn_retval(result_type, get_typtype(result_type),
+							querytree_list);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a
