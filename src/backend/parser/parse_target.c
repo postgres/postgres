@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.16 1998/06/15 19:28:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.17 1998/07/08 14:04:11 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,67 +30,169 @@
 #include "utils/syscache.h"
 
 
-static List *expandAllTables(ParseState *pstate);
-static char *figureColname(Node *expr, Node *resval);
+static List *ExpandAllTables(ParseState *pstate);
+static char *FigureColname(Node *expr, Node *resval);
 static TargetEntry *
-make_targetlist_expr(ParseState *pstate,
-					 char *colname,
-					 Node *expr,
-					 List *arrayRef);
+MakeTargetlistExpr(ParseState *pstate,
+				   char *colname,
+				   Node *expr,
+				   List *arrayRef);
 Node *
-size_target_expr(ParseState *pstate,
-				 Node *expr,
-				 Oid attrtype,
-				 int16 attrtypmod);
+SizeTargetExpr(ParseState *pstate,
+			   Node *expr,
+			   Oid attrtype,
+			   int16 attrtypmod);
 
 
-/*
- *   transformTargetId - transforms an Ident Node to a Target Entry
- *   Created this a function to allow the ORDER/GROUP BY clause be able 
- *   to construct a TargetEntry from an Ident.
+/* transformTargetIdent()
+ * Transforms an Ident Node to a Target Entry
+ * Created this function to allow the ORDER/GROUP BY clause to be able 
+ *  to construct a TargetEntry from an Ident.
  *
- *   resjunk = TRUE will hide the target entry in the final result tuple.
- *        daveh@insightdist.com     5/20/98
+ * resjunk = TRUE will hide the target entry in the final result tuple.
+ *      daveh@insightdist.com     5/20/98
+ *
+ * Added more conversion logic to match up types from source to target.
+ * - thomas 1998-06-02
  */
-void
-transformTargetId(ParseState *pstate,
-				Node *node,
-				TargetEntry *tent,
-				char *resname,
-				int16 resjunk)
+TargetEntry *
+transformTargetIdent(ParseState *pstate,
+#if FALSE
+					 Ident *ident,
+#else
+					 Node *node,
+#endif
+					 TargetEntry *tent,
+					 char **resname,
+					 char *refname,
+					 char *colname,
+					 int16 resjunk)
 {
-	Node   *expr;
-	Oid	type_id;
-	int16	type_mod;
+	Node   *expr = NULL;
+	Oid		attrtype_target;
+
+
+	if (pstate->p_is_insert)
+	{
+		if (pstate->p_insert_columns != NIL)
+		{
+			Ident      *id = lfirst(pstate->p_insert_columns);
+
+			*resname = id->name;
+			pstate->p_insert_columns = lnext(pstate->p_insert_columns);
+		}
+		else
+			elog(ERROR, "insert: more expressions than target columns");
+	}
+
+	if (pstate->p_is_insert || pstate->p_is_update)
+	{
+		Oid         attrtype_id;
+		int         resdomno_id,
+					resdomno_target;
+		RangeTblEntry *rte;
+		char	   *target_colname;
+		int16		attrtypmod,
+					attrtypmod_target;
+
+		target_colname = *resname;
+
+		if (target_colname == NULL || colname == NULL)
+			return (tent);
+
+		if (refname != NULL)
+			rte = refnameRangeTableEntry(pstate, refname);
+		else
+		{
+			rte = colnameRangeTableEntry(pstate, colname);
+			if (rte == (RangeTblEntry *) NULL)
+				elog(ERROR, "attribute %s not found", colname);
+			refname = rte->refname;
+		}
+
+		resdomno_id = get_attnum(rte->relid, colname);
+		attrtype_id = get_atttype(rte->relid, resdomno_id);
+		attrtypmod = get_atttypmod(rte->relid, resdomno_id);
+
+		resdomno_target = attnameAttNum(pstate->p_target_relation, target_colname);
+		attrtype_target = attnumTypeId(pstate->p_target_relation, resdomno_target);
+		attrtypmod_target = get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target);
+
+#ifdef PARSEDEBUG
+printf("transformTargetIdent- transform type %d to %d\n",
+ attrtype_id, attrtype_target);
+#endif
+		if ((attrtype_id != attrtype_target)
+		 || ((attrtypmod_target >= 0) && (attrtypmod_target != attrtypmod)))
+		{
+			if (can_coerce_type(1, &attrtype_id, &attrtype_target))
+			{
+				expr = coerce_type(pstate, node, attrtype_id, attrtype_target);
+				expr = transformExpr(pstate, expr, EXPR_COLUMN_FIRST);
+				tent = MakeTargetlistExpr(pstate, *resname, expr, FALSE);
+				expr = tent->expr;
+			}
+			else
+			{
+#if TRUE
+				elog(ERROR, "Unable to convert %s to %s for column %s",
+					 typeidTypeName(attrtype_id), typeidTypeName(attrtype_target),
+					 target_colname);
+#else
+				elog(ERROR, "Type or size of %s(%d) does not match target column %s(%d)",
+					 colname, attrtypmod, target_colname, attrtypmod_target);
+#endif
+			}
+		}
+	}
 
 	/*
 	 * here we want to look for column names only, not
 	 * relation names (even though they can be stored in
 	 * Ident nodes, too)
 	 */
-	expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
-	type_id = exprType(expr);
-	if (nodeTag(expr) == T_Var)
-		type_mod = ((Var *) expr)->vartypmod;
-	else
-		type_mod = -1;
-	tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
-							  (Oid) type_id,
-							  type_mod,
-							  resname,
-							  (Index) 0,
-							  (Oid) 0,
-							  resjunk);
+	if (expr == NULL)
+	{
+		char   *name;
+		int16	type_mod;
 
-	tent->expr = expr;
-	return;
-}
+		name = ((*resname != NULL)? *resname: colname);
+
+#ifdef PARSEDEBUG
+printf("transformTargetIdent- call transformIdent()\n");
+#endif
+#if FALSE
+		expr = transformIdent(pstate, (Node *) ident, EXPR_COLUMN_FIRST);
+#else
+		expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
+#endif
+
+		attrtype_target = exprType(expr);
+		if (nodeTag(expr) == T_Var)
+			type_mod = ((Var *) expr)->vartypmod;
+		else
+			type_mod = -1;
+
+#ifdef PARSEDEBUG
+printf("transformTargetIdent- attrtype_target = %d; type_mod = %d\n", attrtype_target, type_mod);
+#endif
+
+		tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
+								  (Oid) attrtype_target,
+								  type_mod,
+								  name,
+								  (Index) 0,
+								  (Oid) 0,
+								  resjunk);
+		tent->expr = expr;
+	}
+
+	return (tent);
+} /* transformTargetIdent() */
 
 
-
-/*
- * transformTargetList -
- *	  turns a list of ResTarget's into a list of TargetEntry's
+/* transformTargetList()
+ * Turns a list of ResTarget's into a list of TargetEntry's.
  */
 List *
 transformTargetList(ParseState *pstate, List *targetlist)
@@ -100,20 +202,23 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 	while (targetlist != NIL)
 	{
-		ResTarget  *res = (ResTarget *) lfirst(targetlist);
-		TargetEntry *tent = makeNode(TargetEntry);
+		ResTarget	*res = (ResTarget *) lfirst(targetlist);
+		TargetEntry	*tent = makeNode(TargetEntry);
 
 		switch (nodeTag(res->val))
 		{
 			case T_Ident:
 				{
 					char	   *identname;
+#if FALSE
 					char	   *resname;
+#endif
 
+#ifdef PARSEDEBUG
+printf("transformTargetList: decode T_Ident\n");
+#endif
 					identname = ((Ident *) res->val)->name;
-					handleTargetColname(pstate, &res->name, NULL, identname);
-					resname = (res->name) ? res->name : identname;
-					transformTargetId(pstate, (Node*)res->val, tent, resname, FALSE);
+					tent = transformTargetIdent(pstate, (Node *)res->val, tent, &res->name, NULL, identname, FALSE);
 					break;
 				}
 			case T_ParamNo:
@@ -121,8 +226,11 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			case T_A_Const:
 			case T_A_Expr:
 				{
-					Node	   *expr = transformExpr(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
+					Node	*expr = transformExpr(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
 
+#ifdef PARSEDEBUG
+printf("transformTargetList: decode T_Expr\n");
+#endif
 					handleTargetColname(pstate, &res->name, NULL, NULL);
 					/* note indirection has not been transformed */
 					if (pstate->p_is_insert && res->indirection != NIL)
@@ -183,9 +291,9 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						constval = makeNode(Value);
 						constval->type = T_String;
 						constval->val.str = save_str;
-						tent = make_targetlist_expr(pstate, res->name,
-													(Node *) make_const(constval),
-													NULL);
+						tent = MakeTargetlistExpr(pstate, res->name,
+												  (Node *) make_const(constval),
+												  NULL);
 						pfree(save_str);
 					}
 					else
@@ -201,7 +309,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 							 * at the yacc grammar for why a name can be
 							 * missing. -ay
 							 */
-							colname = figureColname(expr, res->val);
+							colname = FigureColname(expr, res->val);
 						}
 						if (res->indirection)
 						{
@@ -217,8 +325,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 							}
 						}
 						res->name = colname;
-						tent = make_targetlist_expr(pstate, res->name, expr,
-													res->indirection);
+						tent = MakeTargetlistExpr(pstate, res->name, expr,
+												  res->indirection);
 					}
 					break;
 				}
@@ -240,9 +348,9 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					if (att->relname != NULL && !strcmp(att->relname, "*"))
 					{
 						if (tail_p_target == NIL)
-							p_target = tail_p_target = expandAllTables(pstate);
+							p_target = tail_p_target = ExpandAllTables(pstate);
 						else
-							lnext(tail_p_target) = expandAllTables(pstate);
+							lnext(tail_p_target) = ExpandAllTables(pstate);
 
 						while (lnext(tail_p_target) != NIL)
 							/* make sure we point to the last target entry */
@@ -291,6 +399,9 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					 * Target item is fully specified: ie.
 					 * relation.attribute
 					 */
+#ifdef PARSEDEBUG
+printf("transformTargetList: decode T_Attr\n");
+#endif
 					result = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno, EXPR_COLUMN_FIRST);
 					handleTargetColname(pstate, &res->name, att->relname, attrname);
 					if (att->indirection != NIL)
@@ -348,15 +459,15 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 
 Node *
-coerce_target_expr(ParseState *pstate,
-				   Node *expr,
-				   Oid type_id,
-				   Oid attrtype)
+CoerceTargetExpr(ParseState *pstate,
+				 Node *expr,
+				 Oid type_id,
+				 Oid attrtype)
 {
 	if (can_coerce_type(1, &type_id, &attrtype))
 	{
 #ifdef PARSEDEBUG
-printf("parse_target: coerce type from %s to %s\n",
+printf("CoerceTargetExpr: coerce type from %s to %s\n",
  typeidTypeName(type_id), typeidTypeName(attrtype));
 #endif
 		expr = coerce_type(pstate, expr, type_id, attrtype);
@@ -368,7 +479,7 @@ printf("parse_target: coerce type from %s to %s\n",
 	{
 		Oid text_id = TEXTOID;
 #ifdef PARSEDEBUG
-printf("parse_target: try coercing from %s to %s via text\n",
+printf("CoerceTargetExpr: try coercing from %s to %s via text\n",
  typeidTypeName(type_id), typeidTypeName(attrtype));
 #endif
 		if (type_id == TEXTOID)
@@ -385,18 +496,18 @@ printf("parse_target: try coercing from %s to %s via text\n",
 		expr = NULL;
 
 	return expr;
-} /* coerce_target_expr() */
+} /* CoerceTargetExpr() */
 
 
-/* size_target_expr()
+/* SizeTargetExpr()
  * Apparently going to a fixed-length string?
  * Then explicitly size for storage...
  */
 Node *
-size_target_expr(ParseState *pstate,
-				 Node *expr,
-				 Oid attrtype,
-				 int16 attrtypmod)
+SizeTargetExpr(ParseState *pstate,
+			   Node *expr,
+			   Oid attrtype,
+			   int16 attrtypmod)
 {
 	int			i;
 	HeapTuple	ftup;
@@ -407,7 +518,7 @@ size_target_expr(ParseState *pstate,
 	A_Const	   *cons;
 
 #ifdef PARSEDEBUG
-printf("parse_target: ensure target fits storage\n");
+printf("SizeTargetExpr: ensure target fits storage\n");
 #endif
 	funcname = typeidTypeName(attrtype);
 	oid_array[0] = attrtype;
@@ -415,7 +526,7 @@ printf("parse_target: ensure target fits storage\n");
 	for (i = 2; i < 8; i++) oid_array[i] = InvalidOid;
 
 #ifdef PARSEDEBUG
-printf("parse_target: look for conversion function %s(%s,%s)\n",
+printf("SizeTargetExpr: look for conversion function %s(%s,%s)\n",
  funcname, typeidTypeName(attrtype), typeidTypeName(INT4OID));
 #endif
 
@@ -429,7 +540,7 @@ printf("parse_target: look for conversion function %s(%s,%s)\n",
 	if (HeapTupleIsValid(ftup))
 	{
 #ifdef PARSEDEBUG
-printf("parse_target: found conversion function for sizing\n");
+printf("SizeTargetExpr: found conversion function for sizing\n");
 #endif
 		func = makeNode(FuncCall);
 		func->funcname = funcname;
@@ -444,25 +555,24 @@ printf("parse_target: found conversion function for sizing\n");
 #ifdef PARSEDEBUG
 	else
 	{
-printf("parse_target: no conversion function for sizing\n");
+printf("SizeTargetExpr: no conversion function for sizing\n");
 	}
 #endif
 
 	return expr;
-} /* size_target_expr() */
+} /* SizeTargetExpr() */
 
 
-/* make_targetlist_expr()
- * Make a TargetEntry from an expression
- *
- * arrayRef is a list of transformed A_Indices
+/* MakeTargetlistExpr()
+ * Make a TargetEntry from an expression.
+ * arrayRef is a list of transformed A_Indices.
  *
  * For type mismatches between expressions and targets, use the same
  *  techniques as for function and operator type coersion.
  * - thomas 1998-05-08
  */
 static TargetEntry *
-make_targetlist_expr(ParseState *pstate,
+MakeTargetlistExpr(ParseState *pstate,
 					 char *colname,
 					 Node *expr,
 					 List *arrayRef)
@@ -478,7 +588,7 @@ make_targetlist_expr(ParseState *pstate,
 	Resdom	   *resnode;
 
 	if (expr == NULL)
-		elog(ERROR, "make_targetlist_expr: invalid use of NULL expression");
+		elog(ERROR, "MakeTargetlistExpr: invalid use of NULL expression");
 
 	type_id = exprType(expr);
 	if (nodeTag(expr) == T_Var)
@@ -515,28 +625,26 @@ make_targetlist_expr(ParseState *pstate,
 				else
 					typelem = attrtype;
 
-				expr = coerce_target_expr(pstate, expr, type_id, typelem);
+				expr = CoerceTargetExpr(pstate, expr, type_id, typelem);
 
 				if (!HeapTupleIsValid(expr))
-				{
 					elog(ERROR, "parser: attribute '%s' is of type '%s'"
 						 " but expression is of type '%s'"
 						 "\n\tYou will need to rewrite or cast the expression",
 						 colname,
 						 typeidTypeName(attrtype),
 						 typeidTypeName(type_id));
-				}
 			}
 
 #ifdef PARSEDEBUG
-printf("parse_target: attrtypmod is %d\n", (int4) attrtypmod);
+printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
 #endif
 
 			/* Apparently going to a fixed-length string?
 			 * Then explicitly size for storage...
 			 */
 			if (attrtypmod > 0)
-				expr = size_target_expr(pstate, expr, attrtype, attrtypmod);
+				expr = SizeTargetExpr(pstate, expr, attrtype, attrtypmod);
 		}
 
 		if (arrayRef != NIL)
@@ -583,8 +691,8 @@ printf("parse_target: attrtypmod is %d\n", (int4) attrtypmod);
 		attrtype = type_id;
 		attrtypmod = type_mod;
 	}
-	tent = makeNode(TargetEntry);
 
+	tent = makeNode(TargetEntry);
 	resnode = makeResdom((AttrNumber) resdomno,
 						 (Oid) attrtype,
 						 attrtypmod,
@@ -597,7 +705,7 @@ printf("parse_target: attrtypmod is %d\n", (int4) attrtypmod);
 	tent->expr = expr;
 
 	return tent;
-} /* make_targetlist_expr() */
+} /* MakeTargetlistExpr() */
 
 
 /*
@@ -656,12 +764,12 @@ makeTargetNames(ParseState *pstate, List *cols)
 }
 
 /*
- * expandAllTables -
+ * ExpandAllTables -
  *	  turns '*' (in the target list) into a list of attributes
  *	   (of all relations in the range table)
  */
 static List *
-expandAllTables(ParseState *pstate)
+ExpandAllTables(ParseState *pstate)
 {
 	List	   *target = NIL;
 	List	   *legit_rtable = NIL;
@@ -720,13 +828,13 @@ expandAllTables(ParseState *pstate)
 }
 
 /*
- * figureColname -
+ * FigureColname -
  *	  if the name of the resulting column is not specified in the target
  *	  list, we have to guess.
  *
  */
 static char *
-figureColname(Node *expr, Node *resval)
+FigureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.30 1998/06/15 19:28:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.31 1998/07/08 14:04:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,6 +312,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 		case T_Expr:
 		case T_Var:
 		case T_Const:
+/* T_Param comes from implicit function calls in INSERT/VALUE statements.
+ * - thomas 1998-06-11
+ */
+		case T_Param:
 			{
 				result = (Node *) expr;
 				break;

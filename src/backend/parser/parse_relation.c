@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.11 1998/02/26 04:33:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.12 1998/07/08 14:04:11 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_relation.h"
+#include "parser/parse_coerce.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -371,9 +372,8 @@ attnumTypeId(Relation rd, int attid)
 	return (rd->rd_att->attrs[attid - 1]->atttypid);
 }
 
-/*
- * handleTargetColname -
- *	  use column names from insert
+/* handleTargetColname()
+ * Use column names from insert.
  */
 void
 handleTargetColname(ParseState *pstate, char **resname,
@@ -395,9 +395,8 @@ handleTargetColname(ParseState *pstate, char **resname,
 		checkTargetTypes(pstate, *resname, refname, colname);
 }
 
-/*
- * checkTargetTypes -
- *	  checks value and target column types
+/* checkTargetTypes()
+ * Checks value and target column types.
  */
 static void
 checkTargetTypes(ParseState *pstate, char *target_colname,
@@ -432,6 +431,27 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 	resdomno_target = attnameAttNum(pstate->p_target_relation, target_colname);
 	attrtype_target = attnumTypeId(pstate->p_target_relation, resdomno_target);
 
+#if FALSE
+	if ((attrtype_id != attrtype_target)
+	 || (get_atttypmod(rte->relid, resdomno_id) !=
+		 get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target)))
+	{
+		if (can_coerce_type(1, &attrtype_id, &attrtype_target))
+		{
+			Node *expr = coerce_type(pstate, expr, attrtype_id, attrtype_target);
+
+			elog(ERROR, "Type %s(%d) can be coerced to match target column %s(%d)",
+				 colname, get_atttypmod(rte->relid, resdomno_id),
+				 target_colname, get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
+		}
+		else
+		{
+			elog(ERROR, "Type or size of %s(%d) does not match target column %s(%d)",
+				 colname, get_atttypmod(rte->relid, resdomno_id),
+				 target_colname, get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target));
+		}
+	}
+#else
 	if (attrtype_id != attrtype_target)
 		elog(ERROR, "Type of %s does not match target column %s",
 			 colname, target_colname);
@@ -446,5 +466,5 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 		get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target))
 		elog(ERROR, "Length of %s is longer than length of target column %s",
 			 colname, target_colname);
-
+#endif
 }

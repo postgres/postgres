@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.12 1998/05/09 23:22:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.13 1998/07/08 14:04:09 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -204,8 +204,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <ival>	sub_type
 %type <list>	OptCreateAs, CreateAsList
 %type <node>	CreateAsElement
-%type <value>	NumConst
-%type <value>	IntegerOnly
+%type <value>	NumericOnly, FloatOnly, IntegerOnly
 %type <attr>	event_object, attr
 %type <sortgroupby>		groupby
 %type <sortgroupby>		sortby
@@ -1180,6 +1179,20 @@ OptSeqElem:  CACHE IntegerOnly
 				}
 		;
 
+NumericOnly:  FloatOnly					{ $$ = $1; }
+			| IntegerOnly				{ $$ = $1; }
+
+FloatOnly:  FCONST
+				{
+					$$ = makeFloat($1);
+				}
+			| '-' FCONST
+				{
+					$$ = makeFloat($2);
+					$$->val.dval = - $$->val.dval;
+				}
+		;
+
 IntegerOnly:  Iconst
 				{
 					$$ = makeInteger($1);
@@ -1384,7 +1397,7 @@ def_elem:  def_name '=' def_arg
 
 def_arg:  ColId							{  $$ = (Node *)makeString($1); }
 		| all_Op						{  $$ = (Node *)makeString($1); }
-		| NumConst						{  $$ = (Node *)$1; /* already a Value */ }
+		| NumericOnly					{  $$ = (Node *)$1; }
 		| Sconst						{  $$ = (Node *)makeString($1); }
 		| SETOF ColId
 				{
@@ -4440,10 +4453,6 @@ ParamNo:  PARAM
 					$$ = makeNode(ParamNo);
 					$$->number = $1;
 				}
-		;
-
-NumConst:  Iconst						{ $$ = makeInteger($1); }
-		| FCONST						{ $$ = makeFloat($1); }
 		;
 
 Iconst:  ICONST							{ $$ = $1; };

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.2 1998/05/29 14:00:20 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.3 1998/07/08 14:04:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,7 @@ TypeCategory(Oid inType)
 
 		case (INT2OID):
 		case (INT4OID):
+		case (INT8OID):
 		case (FLOAT4OID):
 		case (FLOAT8OID):
 		case (CASHOID):
@@ -387,6 +388,7 @@ PromoteTypeToNext(Oid inType)
 			break;
 
 		case (INT4OID):
+		case (INT8OID):
 		case (FLOAT4OID):
 			result = FLOAT8OID;
 			break;

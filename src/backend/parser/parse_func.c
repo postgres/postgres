@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.19 1998/06/15 19:28:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.20 1998/07/08 14:04:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	Oid		   *true_oid_array;
 	Node	   *retval;
 	bool		retset;
-	bool		exists;
 	bool		attisset = false;
 	Oid			toid = (Oid) 0;
 	Expr	   *expr;
@@ -370,16 +369,18 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		rettype = toid;
 		retset = true;
 		true_oid_array = oid_array;
-		exists = true;
 	}
 	else
 	{
+		bool exists;
+
 		exists = func_get_detail(funcname, nargs, oid_array, &funcid,
 								 &rettype, &retset, &true_oid_array);
-	}
+		if (!exists)
+			elog(ERROR, "No such function '%s' with the specified attributes",
+				 funcname);
 
-	if (!exists)
-		elog(ERROR, "No such attribute or function '%s'", funcname);
+	}
 
 	/* got it */
 	funcnode = makeNode(Func);

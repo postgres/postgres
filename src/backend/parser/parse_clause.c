@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.18 1998/06/05 03:49:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.19 1998/07/08 14:04:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,28 +198,30 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 		List   *p_target = tlist;
 		TargetEntry *tent = makeNode(TargetEntry);
 		
-
 		if (sortgroupby->range)  {
-			Attr *missingTarget = (Attr *)makeNode(Attr);
-			missingTarget->type = T_Attr;
+			Attr *missingAttr = (Attr *)makeNode(Attr);
+			missingAttr->type = T_Attr;
 
-			missingTarget->relname = palloc(strlen(sortgroupby->range) + 1);
-			strcpy(missingTarget->relname, sortgroupby->range);
+			missingAttr->relname = palloc(strlen(sortgroupby->range) + 1);
+			strcpy(missingAttr->relname, sortgroupby->range);
 
-			missingTarget->attrs = lcons(makeString(sortgroupby->name), NIL);
+			missingAttr->attrs = lcons(makeString(sortgroupby->name), NIL);
 
-			transformTargetId(pstate, (Node*)missingTarget, tent, sortgroupby->name, TRUE);
+			tent = transformTargetIdent(pstate, (Node *)missingAttr, tent,
+										&missingAttr->relname, NULL,
+										missingAttr->relname, TRUE);
 		}
 		else  {
-			Ident *missingTarget = (Ident *)makeNode(Ident);
-			missingTarget->type = T_Ident;
+			Ident *missingIdent = (Ident *)makeNode(Ident);
+			missingIdent->type = T_Ident;
 
-			missingTarget->name = palloc(strlen(sortgroupby->name) + 1);
-			strcpy(missingTarget->name, sortgroupby->name);
+			missingIdent->name = palloc(strlen(sortgroupby->name) + 1);
+			strcpy(missingIdent->name, sortgroupby->name);
 
-			transformTargetId(pstate, (Node*)missingTarget, tent, sortgroupby->name, TRUE);
+			tent = transformTargetIdent(pstate, (Node *)missingIdent, tent,
+										&missingIdent->name, NULL,
+										missingIdent->name, TRUE);
 		}
-
 
 		/* Add to the end of the target list */
 		while (lnext(p_target) != NIL)  {
@@ -457,7 +459,7 @@ transformUnionClause(List *unionClause, List *targetlist)
 					Node *expr;
 
 					expr = ((TargetEntry *)lfirst(next_target))->expr;
-					expr = coerce_target_expr(NULL, expr, itype, otype);
+					expr = CoerceTargetExpr(NULL, expr, itype, otype);
 					if (expr == NULL)
 					{
 						elog(ERROR,"Unable to transform %s to %s"
