@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.42 2000/12/17 11:22:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.43 2000/12/21 19:08:05 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1823,26 +1823,31 @@ set semsys:seminfo_semmsl=32
   <para>
    For details on how to create your server private key and certificate,
    refer to the <productname>OpenSSL</> documentation. A simple self-signed
-   certificate can be used to get started testing, but a certificate signed
+   certificate can be used to get started for testing, but a certificate signed
    by a CA (either one of the global CAs or a local one) should be used in 
    production so the client can verify the servers identity. To create
-   a quick self-signed certificate, use the <filename>CA.pl</filename>
-   script included in OpenSSL:
-<programlisting>
-CA.pl -newcert
-</programlisting>
-   Fill out the information the script asks for. Make sure to enter
-   the local host name as Common Name. The script will generate a key
-   that is passphrase protected. To remove the passphrase (required
-   if you want automatic start-up of the postmaster), run the command
-<programlisting>
-openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.pem
-</programlisting>
-   Enter the old passphrase to unlock the existing key. Copy the file
-   <filename>newreq.pem</> to <filename><replaceable>PGDATA</>/server.crt</>
-   and <filename>newkey_no_passphrase.pem</> to
-   <filename><replaceable>PGDATA</>/server.key</>. Remove the PRIVATE KEY part
-   from the <filename>server.crt</filename> using any text editor.
+   a quick self-signed certificate, use the following OpenSSL command:
+    <programlisting>
+     openssl req -new -text -out cert.req
+    </programlisting>
+   Fill out the information that openssl asks for. Make sure that you enter
+   the local host name as Common Name; the challenge password can be
+	left blank. The script will generate a key that is passphrase protected;
+	it will not accept a pass phrase that is less than four characters long.
+	To remove the passphrase (as you must if you want automatic start-up of
+	the postmaster), run the commands
+    <programlisting>
+     mv privkey.pem cert.pem.pw
+     openssl rsa -in cert.pem.pw -out cert.pem 
+    </programlisting>
+   Enter the old passphrase to unlock the existing key. Now do
+    </programlisting>
+     openssl req -x509 -in cert.req -text -key cert.pem -out cert.cert
+     cp cert.pem $PGDATA/server.key
+     cp cert.cert $PGDATA/server.crt
+    </programlisting>
+   to turn the certificate into a self-signed certificate and to copy the
+	key and certificate to where the postmaster will look for them.
   </para>
  </sect1>
 
