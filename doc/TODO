@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep 13 23:21:33 EDT 2001
+Last updated:		Sun Sep 23 00:08:16 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -88,7 +88,7 @@ MULTILANGUAGE SUPPORT
 * Add NCHAR (as distinguished from ordinary varchar),
 * Allow LOCALE on a per-column basis, default to ASCII
 * Support multiple simultaneous character sets, per SQL92
-* -Reject character sequences those are not valid in their charset
+* -Reject character sequences those are not valid in their charset (Tatsuo)
 * Make functions more multi-byte aware, e.g. trim()
 * -Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes (Tatsuo)
 * Allow setting database character set without multibyte enabled
@@ -137,10 +137,10 @@ INDEXES
 SYSTEM TABLES
 
 * -Add unique indexes to pg_shadow.usename and pg_shadow.usesysid or
-  switch to pg_shadow.oid as user id
-* -Add unique indexes on pg_database
+  switch to pg_shadow.oid as user id (Tom)
+* -Add unique indexes on pg_database (Tom)
 * -Check all system tables and add unique indexes as needed (Tom)
-* -Remove pg_listener index
+* -Remove pg_listener index (Tom)
 * -Remove unused pg_variable, pg_inheritproc, pg_ipl tables (Bruce)
 
 COMMANDS
@@ -149,7 +149,7 @@ COMMANDS
 * -Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow RULE recompilation
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
-* Change LIMIT val,val to offset,limit to match MySQL
+* -Change LIMIT val,val to offset,limit to match MySQL (Bruce)
 * Allow LIMIT/OFFSET to use expressions
 * Allow PL/PgSQL's RAISE function to take expressions
 * Change PL/PgSQL to use palloc() instead of malloc()
@@ -167,7 +167,6 @@ COMMANDS
 	o ALTER TABLE ADD PRIMARY KEY (Christopher Kings-Lynne)
 	o ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
 	o ALTER TABLE table ADD COLUMN column SERIAL doesn't create sequence
-
 * CLUSTER
 	o cluster all tables at once
 	o prevent lose of indexes, permissions, inheritance
@@ -229,7 +228,7 @@ REFERENTIAL INTEGRITY
   deferredTriggerGetPreviousEvent or "change violation" [foreign]
 * Allow user to control trigger firing order
 * Change foreign key constraint for array -> element to mean element
-   in array
+  in array
 
 DEPENDENCY CHECKING
 
@@ -248,7 +247,7 @@ TRANSACTIONS
 * Allow autocommit so always in a transaction block
 * Overhaul bufmgr/lockmgr/transaction manager
 * Allow nested transactions / savepoints [transactions]
-* Handle transaction rollover (Tom) [transactions]
+* -Handle transaction rollover (Tom) [transactions]
 
 EXOTIC FEATURES
 
@@ -264,11 +263,10 @@ EXOTIC FEATURES
 
 MISCELLANEOUS
 
-* Increase identifier length(NAMEDATALEN) if small performance hit
+* Increase identifier length (NAMEDATALEN) if small performance hit
 * -Populate backend status area and write program to dump status data (Jan)
 * -Put sort files in their own directory (Bruce)
 * Show location of syntax error in query [yacc]
-* Add sed-like regular expression search/replace capability
 * Change representation of whole-tuple parameters to functions
 
 
@@ -299,7 +297,7 @@ VACUUM
 
 MISCELLANEOUS
 
-* Allow compression of log and meta data
+* -Allow compression of log and meta data (Tom)
 * Do async I/O to do better read-ahead of data
 * Experiment with multi-threaded backend [thread]
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
@@ -324,30 +322,29 @@ MISCELLANEOUS
 	o wakeup sleeper or sleep for less than one clock tick
 	o spin for lock on multi-cpu machines, yield on single cpu machines
 	o read/write locks
-* Add queue of backends waiting for spinlock
 
 SOURCE CODE
 -----------
 * Add use of 'const' for variables in source tree
 * Does Mariposa source contain any other bug fixes?
-* Convert remaining fprintf(stderr,...)/perror() to elog()
+* -Convert remaining fprintf(stderr,...)/perror() to elog() (Peter E)
 * Fix problems with libpq non-blocking/async code [async]
 * -Merge global and template BKI files (Tom)
 * Fix username/password length limits in all areas, e.g. pg_passwd
-* Remove compile-time upper limit on number of backends (MAXBACKENDS) (Tom)
+* -Remove compile-time upper limit on number of backends (MAXBACKENDS) (Tom)
 * Make sure all block numbers are unsigned to increase maximum table size
 * Use BlockNumber rather than int where appropriate
 * Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
 * HOLDER/HOLDERTAB rename to PROCLOCKLINK/PROCLOCKLINKTAG (Tom)
 * Add version file format stamp to heap and other table types
-* Make elog(LOG) in WAL its own output type, distinct from DEBUG
+* -Make elog(LOG) in WAL its own output type, distinct from DEBUG (Peter E)
 * Rename some /contrib modules from pg* to pg_*
-* Move some things from /contrib into main tree, like soundex
+* Move some things from /contrib into main tree, like fuzzystrmatch
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Allow ps status display to work on Solaris/SVr4-based systems
 * -Decide on spelling of indexes/indices (Peter E)
-* Add mention of VACUUM, log rotation to Administrator's Guide
+* -Add mention of VACUUM, log rotation to Administrator's Guide (Tom, Bruce)
 
 ---------------------------------------------------------------------------
 
