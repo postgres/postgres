@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.90 2004/07/15 03:56:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.91 2004/08/07 03:36:07 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -310,9 +310,9 @@ helpSQL(const char *topic, unsigned short int pager)
 		int			nl_count = 0;
 		char		*ch;
 
-		/* don't care about trailing spaces */
+		/* don't care about trailing spaces or semicolons */
 		len = strlen(topic);
-		while (topic[len - 1] == ' ')
+		while (topic[len - 1] == ' ' || topic[len - 1] == ';')
 			len--;
 
 		/* Count newlines for pager */
