@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.15 1997/09/18 20:22:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.16 1997/09/20 16:15:34 thomas Exp $
  */
 
 #include <stdio.h>
@@ -366,11 +366,11 @@ cash_mi(Cash *c1, Cash *c2)
 }								/* cash_mi() */
 
 
-/* cash_mul()
- * Multiply cash by floating point number.
+/* cash_mul_flt8()
+ * Multiply cash by float8.
  */
 Cash	   *
-cash_mul(Cash *c, float8 *f)
+cash_mul_flt8(Cash *c, float8 *f)
 {
 	Cash	   *result;
 
@@ -383,17 +383,27 @@ cash_mul(Cash *c, float8 *f)
 	*result = ((*f) * (*c));
 
 	return (result);
-}								/* cash_mul() */
+}								/* cash_mul_flt8() */
 
 
-/* cash_div()
- * Divide cash by floating point number.
+/* flt8_mul_cash()
+ * Multiply float8 by cash.
+ */
+Cash	   *
+flt8_mul_cash(float8 *f, Cash *c)
+{
+	return (cash_mul_flt8(c, f));
+}								/* flt8_mul_cash() */
+
+
+/* cash_div_flt8()
+ * Divide cash by float8.
  *
  * XXX Don't know if rounding or truncating is correct behavior.
  * Round for now. - tgl 97/04/15
  */
 Cash	   *
-cash_div(Cash *c, float8 *f)
+cash_div_flt8(Cash *c, float8 *f)
 {
 	Cash	   *result;
 
@@ -409,7 +419,174 @@ cash_div(Cash *c, float8 *f)
 	*result = rint(*c / *f);
 
 	return (result);
-}								/* cash_div() */
+}								/* cash_div_flt8() */
+
+/* cash_mul_flt4()
+ * Multiply cash by float4.
+ */
+Cash	   *
+cash_mul_flt4(Cash *c, float4 *f)
+{
+	Cash	   *result;
+
+	if (!PointerIsValid(f) || !PointerIsValid(c))
+		return (NULL);
+
+	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+		elog(WARN, "Memory allocation failed, can't multiply cash", NULL);
+
+	*result = ((*f) * (*c));
+
+	return (result);
+}								/* cash_mul_flt4() */
+
+
+/* flt4_mul_cash()
+ * Multiply float4 by float4.
+ */
+Cash	   *
+flt4_mul_cash(float4 *f, Cash *c)
+{
+	return (cash_mul_flt4(c, f));
+}								/* flt4_mul_cash() */
+
+
+/* cash_div_flt4()
+ * Divide cash by float4.
+ *
+ * XXX Don't know if rounding or truncating is correct behavior.
+ * Round for now. - tgl 97/04/15
+ */
+Cash	   *
+cash_div_flt4(Cash *c, float4 *f)
+{
+	Cash	   *result;
+
+	if (!PointerIsValid(f) || !PointerIsValid(c))
+		return (NULL);
+
+	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+		elog(WARN, "Memory allocation failed, can't divide cash", NULL);
+
+	if (*f == 0.0)
+		elog(WARN, "cash_div:  divide by 0.0 error");
+
+	*result = rint(*c / *f);
+
+	return (result);
+}								/* cash_div_flt4() */
+
+
+/* cash_mul_int4()
+ * Multiply cash by int4.
+ */
+Cash	   *
+cash_mul_int4(Cash *c, int4 i)
+{
+	Cash	   *result;
+
+	if (!PointerIsValid(c))
+		return (NULL);
+
+	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+		elog(WARN, "Memory allocation failed, can't multiply cash", NULL);
+
+	*result = ((i) * (*c));
+
+	return (result);
+}								/* cash_mul_int4() */
+
+
+/* int4_mul_cash()
+ * Multiply int4 by cash.
+ */
+Cash	   *
+int4_mul_cash(int4 i, Cash *c)
+{
+	return (cash_mul_int4(c, i));
+}								/* int4_mul_cash() */
+
+
+/* cash_div_int4()
+ * Divide cash by 4-byte integer.
+ *
+ * XXX Don't know if rounding or truncating is correct behavior.
+ * Round for now. - tgl 97/04/15
+ */
+Cash	   *
+cash_div_int4(Cash *c, int4 i)
+{
+	Cash	   *result;
+
+	if (!PointerIsValid(c))
+		return (NULL);
+
+	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+		elog(WARN, "Memory allocation failed, can't divide cash", NULL);
+
+	if (i == 0)
+		elog(WARN, "cash_idiv:  divide by 0 error");
+
+	*result = rint(*c / i);
+
+	return (result);
+}								/* cash_div_int4() */
+
+
+/* cash_mul_int2()
+ * Multiply cash by int2.
+ */
+Cash	   *
+cash_mul_int2(Cash *c, int2 s)
+{
+	Cash	   *result;
+
+	if (!PointerIsValid(c))
+		return (NULL);
+
+	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+		elog(WARN, "Memory allocation failed, can't multiply cash", NULL);
+
+	*result = ((s) * (*c));
+
+	return (result);
+}								/* cash_mul_int2() */
+
+
+/* int2_mul_cash()
+ * Multiply int2 by cash.
+ */
+Cash	   *
+int2_mul_cash(int2 s, Cash *c)
+{
+	return (cash_mul_int2(c, s));
+}								/* int2_mul_cash() */
+
+
+/* cash_div_int2()
+ * Divide cash by int2.
+ *
+ * XXX Don't know if rounding or truncating is correct behavior.
+ * Round for now. - tgl 97/04/15
+ */
+Cash	   *
+cash_div_int2(Cash *c, int2 s)
+{
+	Cash	   *result;
+
+	if (!PointerIsValid(c))
+		return (NULL);
+
+	if (!PointerIsValid(result = PALLOCTYPE(Cash)))
+		elog(WARN, "Memory allocation failed, can't divide cash", NULL);
+
+	if (s == 0)
+		elog(WARN, "cash_div:  divide by 0 error");
+
+	*result = rint(*c / s);
+
+	return (result);
+}								/* cash_div_int2() */
 
 
 /* cashlarger()
