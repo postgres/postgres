@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.80 2002/03/29 19:06:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.81 2002/04/02 08:51:52 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,10 +373,6 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 		{
 			ResTarget	   *col = makeNode(ResTarget);
 
-#ifdef	_DROP_COLUMN_HACK__
-			if (COLUMN_IS_DROPPED(attr[i]))
-				continue;
-#endif   /* _DROP_COLUMN_HACK__ */
 			col->name = pstrdup(NameStr(attr[i]->attname));
 			col->indirection = NIL;
 			col->val = NULL;

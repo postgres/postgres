@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.50 2002/03/20 19:44:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.51 2002/04/02 08:51:51 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,11 +198,6 @@ expand_targetlist(List *tlist, int command_type,
 					new_expr = build_column_default(rel, attrno);
 					break;
 				case CMD_UPDATE:
-#ifdef	_DROP_COLUMN_HACK__
-					if (COLUMN_IS_DROPPED(att_tup))
-						new_expr = (Node *) makeNullConst(atttype);
-					else
-#endif   /* _DROP_COLUMN_HACK__ */
 						new_expr = (Node *) makeVar(result_relation,
 													attrno,
 													atttype,

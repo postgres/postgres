@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.66 2002/03/26 19:15:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.67 2002/04/02 08:51:51 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -854,11 +854,6 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 		for (varattno = 0; varattno < maxattrs; varattno++)
 		{
 			Form_pg_attribute attr = rel->rd_att->attrs[varattno];
-
-#ifdef	_DROP_COLUMN_HACK__
-			if (COLUMN_IS_DROPPED(attr))
-				continue;
-#endif   /* _DROP_COLUMN_HACK__ */
 
 			if (colnames)
 			{
