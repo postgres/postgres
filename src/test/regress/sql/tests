@@ -1,10 +1,12 @@
 boolean
 char
-char16
 char2
 char4
 char8
+char16
+varchar
 text
+strings
 int2
 int4
 oid
@@ -56,5 +58,4 @@ btree_index
 hash_index
 select_views
 alter_table
-purge
 portals_p2

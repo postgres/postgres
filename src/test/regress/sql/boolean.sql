@@ -1,7 +1,7 @@
 --
 -- boolean.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/boolean.sql,v 1.4 1997/10/25 06:02:33 thomas Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/sql/boolean.sql,v 1.5 1997/12/01 02:45:59 thomas Exp $
 --
 
 --
@@ -72,11 +72,10 @@ INSERT INTO BOOLTBL2 (f1) VALUES ('False'::bool);
 
 INSERT INTO BOOLTBL2 (f1) VALUES ('FALSE'::bool);
 
--- this is now an invalid expression
--- pre-v6.3 this evaluated to false - thomas 1997-10-23
+-- This is now an invalid expression
+-- For pre-v6.3 this evaluated to false - thomas 1997-10-23
 INSERT INTO BOOLTBL2 (f1) 
    VALUES ('XXX'::bool);  
-
 
 -- BOOLTBL2 should be full of false's at this point 
 SELECT '' AS f_4, BOOLTBL2.*;
@@ -97,6 +96,33 @@ SELECT '' AS ff_4, BOOLTBL1.*, BOOLTBL2.*
 SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
    WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool
    ORDER BY BOOLTBL1.f1, BOOLTBL2.f1;
+
+--
+-- SQL92 syntax - thomas 1997-11-30
+--
+
+SELECT '' AS "True", BOOLTBL1.* 
+   FROM BOOLTBL1
+   WHERE f1 IS TRUE;
+
+SELECT '' AS "Not False", BOOLTBL1.* 
+   FROM BOOLTBL1
+   WHERE f1 IS NOT FALSE;
+
+SELECT '' AS "False", BOOLTBL1.* 
+   FROM BOOLTBL1
+   WHERE f1 IS FALSE;
+
+SELECT '' AS "Not True", BOOLTBL1.* 
+   FROM BOOLTBL1
+   WHERE f1 IS NOT TRUE;
+
+--
+-- Clean up
+-- Many tables are retained by the regression test, but these do not seem
+--  particularly useful so just get rid of them for now.
+--  - thomas 1997-11-30
+--
 
 DROP TABLE  BOOLTBL1;
 

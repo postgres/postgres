@@ -70,7 +70,7 @@ DROP TABLE temp;
 -- the wolf bug - schema mods caused inconsistent row descriptors 
 CREATE TABLE temp (
 	initial 	int4
-) ARCHIVE = light;
+);
 
 ALTER TABLE temp ADD COLUMN a int4;
 
@@ -132,7 +132,7 @@ INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',
 	'1/3', '1,char16', '{1.0,2.0,3.0,4.0}', '{1.0,2.0,3.0,4.0}', '{1,2,3,4}');
 
-SELECT * FROM temp[,];
+SELECT * FROM temp;
 
 DROP TABLE temp;
 

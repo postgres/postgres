@@ -3,6 +3,17 @@
 -- all inputs are SILENTLY truncated at 1 character
 --
 
+-- fixed-length by value
+-- internally passed by value if <= 4 bytes in storage
+-- Not sure why this is a really useful test,
+--  but this test has been here forever. - thomas 1997-11-30
+
+SELECT 'c'::char = 'c'::char AS true;
+
+--
+-- Build a table for testing
+--
+
 CREATE TABLE CHAR_TBL(f1 char);
 
 INSERT INTO CHAR_TBL (f1) VALUES ('a');
@@ -50,4 +61,17 @@ SELECT '' AS two, c.*
    WHERE c.f1 >= 'a';
 
 DROP TABLE CHAR_TBL;
+
+--
+-- Now test longer arrays of char
+--
+
+CREATE TABLE CHAR_TBL(f1 char(4));
+
+INSERT INTO CHAR_TBL (f1) VALUES ('a');
+INSERT INTO CHAR_TBL (f1) VALUES ('ab');
+INSERT INTO CHAR_TBL (f1) VALUES ('abcd');
+INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
+
+SELECT '' AS four, CHAR_TBL.*;
 

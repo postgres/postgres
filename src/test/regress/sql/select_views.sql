@@ -3,9 +3,10 @@
 --
 -- test the views defined in create.source
 --
-SELECT * from street;
+SELECT * FROM street;
 
-SELECT * from iexit;
+SELECT * FROM iexit
+	ORDER BY 1, 2;
 
-SELECT * from toyemp where name='sharon';
+SELECT * FROM toyemp WHERE name = 'sharon';
 

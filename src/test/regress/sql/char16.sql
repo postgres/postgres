@@ -3,6 +3,15 @@
 -- all inputs are silently truncated at 16 characters
 --
 
+-- fixed-length by reference
+SELECT 'char 16 string'::char16 = 'char 16 string'::char16 AS "True";
+
+SELECT 'char 16 string'::char16 = 'char 16 string '::char16 AS "False";
+
+--
+--
+--
+
 CREATE TABLE CHAR16_TBL(f1 char16);
 
 INSERT INTO CHAR16_TBL(f1) VALUES ('ABCDEFGHIJKLMNOP');
