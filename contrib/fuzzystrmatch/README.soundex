@@ -7,15 +7,25 @@ United States Census in 1880, 1900, and 1910, but it has little use
 beyond English names (or the English pronunciation of names), and
 it is not a linguistic tool.
 
+When comparing two soundex values to determine similarity, the
+difference function reports how close the match is on a scale
+from zero to four, with zero being no match and four being an
+exact match.
+
 The following are some usage examples:
 
 SELECT soundex('hello world!');
+
+SELECT soundex('Anne'), soundex('Ann'), difference('Anne', 'Ann');
+SELECT soundex('Anne'), soundex('Andrew'), difference('Anne', 'Andrew');
+SELECT soundex('Anne'), soundex('Margaret'), difference('Anne', 'Margaret');
 
 CREATE TABLE s (nm text)\g
 
 insert into s values ('john')\g
 insert into s values ('joan')\g
 insert into s values ('wobbly')\g
+insert into s values ('jack')\g
 
 select * from s
 where soundex(nm) = soundex('john')\g
@@ -58,5 +68,10 @@ FROM s
 WHERE text_sx_eq(nm,'john')\g
 
 SELECT *
-from s
-where s.nm #= 'john';
+FROM s
+WHERE s.nm #= 'john';
+
+SELECT *
+FROM s
+WHERE difference(s.nm, 'john') > 2;
+

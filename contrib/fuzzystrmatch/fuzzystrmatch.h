@@ -60,6 +60,7 @@
 extern Datum levenshtein(PG_FUNCTION_ARGS);
 extern Datum metaphone(PG_FUNCTION_ARGS);
 extern Datum soundex(PG_FUNCTION_ARGS);
+extern Datum difference(PG_FUNCTION_ARGS);
 
 /*
  * Soundex

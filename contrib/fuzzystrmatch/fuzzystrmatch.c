@@ -755,3 +755,23 @@ _soundex(const char *instr, char *outstr)
 		++count;
 	}
 }
+
+PG_FUNCTION_INFO_V1(difference);
+
+Datum
+difference(PG_FUNCTION_ARGS)
+{
+	char sndx1[SOUNDEX_LEN+1], sndx2[SOUNDEX_LEN+1];
+	int i, result;
+
+	_soundex(_textout(PG_GETARG_TEXT_P(0)), sndx1);
+	_soundex(_textout(PG_GETARG_TEXT_P(1)), sndx2);
+
+	result = 0;
+	for (i=0; i<SOUNDEX_LEN; i++) {
+		if (sndx1[i] == sndx2[i])
+			result++;
+	}
+
+	PG_RETURN_INT32(result);
+}

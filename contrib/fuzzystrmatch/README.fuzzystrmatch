@@ -33,6 +33,10 @@
  * Folded existing soundex contrib into this one. Renamed text_soundex() (C function)
  * to soundex() for consistency.
  *
+ * difference()
+ * ------------
+ * Return the difference between two strings' soundex values.  Kris Jurka
+ *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
  * is hereby granted, provided that the above copyright notice and this

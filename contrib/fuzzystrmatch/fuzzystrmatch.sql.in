@@ -1,28 +1,30 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-CREATE FUNCTION levenshtein (text,text)
-RETURNS int
+CREATE FUNCTION levenshtein (text,text) RETURNS int
 AS 'MODULE_PATHNAME','levenshtein'
-LANGUAGE 'C' WITH (iscachable, isstrict);
+LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION metaphone (text,int)
-RETURNS text
+CREATE FUNCTION metaphone (text,int) RETURNS text
 AS 'MODULE_PATHNAME','metaphone'
-LANGUAGE 'C' WITH (iscachable, isstrict);
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION soundex(text) RETURNS text
 AS 'MODULE_PATHNAME', 'soundex'
-LANGUAGE 'C' WITH (iscachable, isstrict);
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION text_soundex(text) RETURNS text
 AS 'MODULE_PATHNAME', 'soundex'
-LANGUAGE 'C';
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION difference(text,text) RETURNS int
+AS 'MODULE_PATHNAME', 'difference'
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION dmetaphone (text) RETURNS text 
-LANGUAGE C IMMUTABLE STRICT
-AS 'MODULE_PATHNAME', 'dmetaphone';
+AS 'MODULE_PATHNAME', 'dmetaphone'
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION dmetaphone_alt (text) RETURNS text 
-LANGUAGE C IMMUTABLE STRICT
-AS 'MODULE_PATHNAME', 'dmetaphone_alt';
+AS 'MODULE_PATHNAME', 'dmetaphone_alt'
+LANGUAGE C IMMUTABLE STRICT;
