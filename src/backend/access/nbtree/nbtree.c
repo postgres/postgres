@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.115 2004/05/08 19:09:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.116 2004/05/31 19:24:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -784,8 +784,6 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 		}
 		if (new_pages != num_pages)
 		{
-			int			i;
-
 			/*
 			 * Okay to truncate.
 			 *
@@ -795,9 +793,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			 * blocks we aren't deleting, but it's the closest thing in
 			 * bufmgr's API.
 			 */
-			i = FlushRelationBuffers(rel, new_pages);
-			if (i < 0)
-				elog(ERROR, "FlushRelationBuffers returned %d", i);
+			FlushRelationBuffers(rel, new_pages);
 
 			/*
 			 * Do the physical truncation.

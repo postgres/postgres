@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.278 2004/05/26 04:41:12 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.279 2004/05/31 19:24:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1031,9 +1031,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 			 * tuples have correct on-row commit status on disk (see
 			 * bufmgr.c's comments for FlushRelationBuffers()).
 			 */
-			i = FlushRelationBuffers(onerel, vacrelstats->rel_pages);
-			if (i < 0)
-				elog(ERROR, "FlushRelationBuffers returned %d", i);
+			FlushRelationBuffers(onerel, vacrelstats->rel_pages);
 		}
 	}
 
@@ -2542,9 +2540,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	 * tuples have correct on-row commit status on disk (see bufmgr.c's
 	 * comments for FlushRelationBuffers()).
 	 */
-	i = FlushRelationBuffers(onerel, blkno);
-	if (i < 0)
-		elog(ERROR, "FlushRelationBuffers returned %d", i);
+	FlushRelationBuffers(onerel, blkno);
 
 	/* truncate relation, if needed */
 	if (blkno < nblocks)
@@ -2606,9 +2602,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 	Assert(vacrelstats->rel_pages >= vacuum_pages->empty_end_pages);
 	relblocks = vacrelstats->rel_pages - vacuum_pages->empty_end_pages;
 
-	i = FlushRelationBuffers(onerel, relblocks);
-	if (i < 0)
-		elog(ERROR, "FlushRelationBuffers returned %d", i);
+	FlushRelationBuffers(onerel, relblocks);
 
 	/* truncate relation if there are some empty end-pages */
 	if (vacuum_pages->empty_end_pages > 0)

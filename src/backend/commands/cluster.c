@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.124 2004/05/26 04:41:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.125 2004/05/31 19:24:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -660,7 +660,6 @@ swap_relfilenodes(Oid r1, Oid r2)
 	Form_pg_class relform1,
 				relform2;
 	Oid			swaptemp;
-	int			i;
 	CatalogIndexState indstate;
 
 	/* We need writable copies of both pg_class tuples. */
@@ -687,15 +686,11 @@ swap_relfilenodes(Oid r1, Oid r2)
 	 * forget about'em.  (XXX this might not be necessary anymore?)
 	 */
 	rel = relation_open(r1, NoLock);
-	i = FlushRelationBuffers(rel, 0);
-	if (i < 0)
-		elog(ERROR, "FlushRelationBuffers returned %d", i);
+	FlushRelationBuffers(rel, 0);
 	relation_close(rel, NoLock);
 
 	rel = relation_open(r2, NoLock);
-	i = FlushRelationBuffers(rel, 0);
-	if (i < 0)
-		elog(ERROR, "FlushRelationBuffers returned %d", i);
+	FlushRelationBuffers(rel, 0);
 	relation_close(rel, NoLock);
 
 	/*

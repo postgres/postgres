@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.167 2004/05/31 03:48:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.168 2004/05/31 19:24:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1287,9 +1287,7 @@ PrintPinnedBufs(void)
  *
  *		This function writes all dirty pages of a relation out to disk.
  *		Furthermore, pages that have blocknumber >= firstDelBlock are
- *		actually removed from the buffer pool.	An error code is returned
- *		if we fail to dump a dirty buffer or if we find one of
- *		the target pages is pinned into the cache.
+ *		actually removed from the buffer pool.
  *
  *		This is called by DROP TABLE to clear buffers for the relation
  *		from the buffer pool.  Note that we must write dirty buffers,
@@ -1319,13 +1317,11 @@ PrintPinnedBufs(void)
  *		to still be present in the cache due to failure of an earlier
  *		transaction.  So, must flush dirty buffers without complaint.
  *
- *		Returns: 0 - Ok, -1 - FAILED TO CLEAR DIRTY BIT, -2 - PINNED
- *
  *		XXX currently it sequentially searches the buffer pool, should be
  *		changed to more clever ways of searching.
  * --------------------------------------------------------------------
  */
-int
+void
 FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 {
 	int			i;
@@ -1364,18 +1360,15 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 					error_context_stack = errcontext.previous;
 				}
 				if (LocalRefCount[i] > 0)
-				{
-					elog(WARNING, "FlushRelationBuffers(\"%s\" (local), %u): block %u is referenced (%d)",
+					elog(ERROR, "FlushRelationBuffers(\"%s\" (local), %u): block %u is referenced (%d)",
 						 RelationGetRelationName(rel), firstDelBlock,
 						 bufHdr->tag.blockNum, LocalRefCount[i]);
-					return (-2);
-				}
 				if (bufHdr->tag.blockNum >= firstDelBlock)
 					bufHdr->tag.rnode.relNode = InvalidOid;
 			}
 		}
 
-		return 0;
+		return;
 	}
 
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
@@ -1403,31 +1396,21 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				}
 				UnpinBuffer(bufHdr);
 				if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
-				{
-					LWLockRelease(BufMgrLock);
-					elog(WARNING, "FlushRelationBuffers(\"%s\", %u): block %u was re-dirtied",
+					elog(ERROR, "FlushRelationBuffers(\"%s\", %u): block %u was re-dirtied",
 						 RelationGetRelationName(rel), firstDelBlock,
 						 bufHdr->tag.blockNum);
-					return -1;
-				}
 			}
 			if (bufHdr->refcount != 0)
-			{
-				LWLockRelease(BufMgrLock);
-				elog(WARNING, "FlushRelationBuffers(\"%s\", %u): block %u is referenced (private %d, global %u)",
+				elog(ERROR, "FlushRelationBuffers(\"%s\", %u): block %u is referenced (private %d, global %u)",
 					 RelationGetRelationName(rel), firstDelBlock,
 					 bufHdr->tag.blockNum,
 					 PrivateRefCount[i], bufHdr->refcount);
-				return -2;
-			}
 			if (bufHdr->tag.blockNum >= firstDelBlock)
 				StrategyInvalidateBuffer(bufHdr);
 		}
 	}
 
 	LWLockRelease(BufMgrLock);
-
-	return 0;
 }
 
 /*

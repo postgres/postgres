@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.81 2004/05/31 03:48:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.82 2004/05/31 19:24:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ extern void FlushBufferPool(void);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
 extern void RelationTruncate(Relation rel, BlockNumber nblocks);
-extern int	FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock);
+extern void FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock);
 extern void DropRelationBuffers(Relation rel);
 extern void DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,
 								   BlockNumber firstDelBlock);
