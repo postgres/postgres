@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.49 2005/03/07 04:30:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.50 2005/03/12 06:28:17 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -344,47 +344,47 @@ initdb --locale=sv_SE
         </row>
         <row>
          <entry><literal>MULE_INTERNAL</literal></entry>
-         <entry>Mule internal code</entry>
+         <entry>Mule internal code (Multi-lingual Emacs)</entry>
         </row>
         <row>
          <entry><literal>LATIN1</literal></entry>
-         <entry>ISO 8859-1/<acronym>ECMA</> 94 (Latin alphabet no.1)</entry>
+         <entry>ISO 8859-1/<acronym>ECMA</> 94 (Western European)</entry>
         </row>
         <row>
          <entry><literal>LATIN2</literal></entry>
-         <entry>ISO 8859-2/<acronym>ECMA</> 94 (Latin alphabet no.2)</entry>
+         <entry>ISO 8859-2/<acronym>ECMA</> 94 (Central European)</entry>
         </row>
         <row>
          <entry><literal>LATIN3</literal></entry>
-         <entry>ISO 8859-3/<acronym>ECMA</> 94 (Latin alphabet no.3)</entry>
+         <entry>ISO 8859-3/<acronym>ECMA</> 94 (South European)</entry>
         </row>
         <row>
          <entry><literal>LATIN4</literal></entry>
-         <entry>ISO 8859-4/<acronym>ECMA</> 94 (Latin alphabet no.4)</entry>
+         <entry>ISO 8859-4/<acronym>ECMA</> 94 (North European)</entry>
         </row>
         <row>
          <entry><literal>LATIN5</literal></entry>
-         <entry>ISO 8859-9/<acronym>ECMA</> 128 (Latin alphabet no.5)</entry>
+         <entry>ISO 8859-9/<acronym>ECMA</> 128 (Turkish)</entry>
         </row>
         <row>
          <entry><literal>LATIN6</literal></entry>
-         <entry>ISO 8859-10/<acronym>ECMA</> 144 (Latin alphabet no.6)</entry>
+         <entry>ISO 8859-10/<acronym>ECMA</> 144 (Nordic)</entry>
         </row>
         <row>
          <entry><literal>LATIN7</literal></entry>
-         <entry>ISO 8859-13 (Latin alphabet no.7)</entry>
+         <entry>ISO 8859-13 (Baltic)</entry>
         </row>
         <row>
          <entry><literal>LATIN8</literal></entry>
-         <entry>ISO 8859-14 (Latin alphabet no.8)</entry>
+         <entry>ISO 8859-14 (Celtic)</entry>
         </row>
         <row>
          <entry><literal>LATIN9</literal></entry>
-         <entry>ISO 8859-15 (Latin alphabet no.9)</entry>
+         <entry>ISO 8859-15 (LATIN1 with Euro and accents)</entry>
         </row>
         <row>
          <entry><literal>LATIN10</literal></entry>
-         <entry>ISO 8859-16/<acronym>ASRO</> SR 14111 (Latin alphabet no.10)</entry>
+         <entry>ISO 8859-16/<acronym>ASRO</> SR 14111 (Romanian)</entry>
         </row>
         <row>
          <entry><literal>ISO_8859_5</literal></entry>
@@ -404,11 +404,11 @@ initdb --locale=sv_SE
         </row>
         <row>
          <entry><literal>KOI8</literal></entry>
-         <entry><acronym>KOI</acronym>8-R(U)</entry>
+         <entry><acronym>KOI</acronym>8-R(U) (Cyrillic)</entry>
         </row>
         <row>
          <entry><literal>WIN866</literal></entry>
-         <entry>Windows CP866</entry>
+         <entry>Windows CP866 (Cyrillic)</entry>
         </row>
         <row>
          <entry><literal>WIN874</literal></entry>
@@ -416,11 +416,11 @@ initdb --locale=sv_SE
         </row>
         <row>
          <entry><literal>WIN1250</literal></entry>
-         <entry>Windows CP1250</entry>
+         <entry>Windows CP1250 (Central European)</entry>
         </row>
         <row>
          <entry><literal>WIN1251</literal></entry>
-         <entry>Windows CP1251</entry>
+         <entry>Windows CP1251 (Cyrillic)</entry>
         </row>
         <row>
          <entry><literal>WIN1256</literal></entry>
@@ -880,6 +880,18 @@ RESET client_encoding;
     <para>
      These are good sources to start learning about various kinds of encoding
      systems.
+
+     <variablelist>
+      <varlistentry>
+       <term><ulink url="http://www.i18ngurus.com/docs/984813247.html"></ulink></term>
+
+       <listitem>
+        <para>
+         An extensive collection of documents about character sets, encodings,
+         and code pages.
+        </para>
+       </listitem>
+      </varlistentry>
 
      <variablelist>
       <varlistentry>
