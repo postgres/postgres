@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Aug 22 23:10:41 EDT 2002
+Last updated:		Sat Aug 24 07:24:53 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -78,7 +78,7 @@ Data Types
 * -Add domain capability (Rod Taylor)
 * Add IPv6 capability to INET/CIDR types
 * Remove Money type, add money formatting for decimal type
-* SELECT cash_out(2) crashes because of opaque
+* -SELECT cash_out(2) crashes because of opaque
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Functions returning sets do not totally work
 * Change factorial to return a numeric
