@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Mar 14 14:28:37 EST 2001
+Last updated:		Tue Mar 20 14:56:07 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -271,6 +271,7 @@ PERFORMANCE
 * -Allow transaction commits with rollback with no-fsync performance
   (Vadim)
 * Delay fsync() when other backends are about to commit too [fsync]
+	* Determine optimal commit_delay value
 
 INDEXES
 
@@ -353,6 +354,7 @@ SOURCE CODE
 * HOLDER/HOLDERTAB reanme to PROCLOCKLINK/PROCLOCKLINKTAG (Tom)
 * Correct CRC WAL code to be a real CRC64 algorithm
 * Add version file format stamp to heap and other table types
+* Make elog(LOG) in WAL its own output type, distinct from DEBUG
 
 ---------------------------------------------------------------------------
 
