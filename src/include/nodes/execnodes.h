@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.13 1998/02/13 03:45:22 vadim Exp $
+ * $Id: execnodes.h,v 1.14 1998/02/18 12:41:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,10 +586,10 @@ typedef struct AggState
  */
 typedef struct GroupState
 {
-	CommonScanState csstate;	/* its first field is NodeTag */
-	bool		grp_useLastTuple;		/* last tuple not processed yet */
+	CommonScanState csstate;		/* its first field is NodeTag */
+	bool		grp_useFirstTuple;	/* first tuple not processed yet */
 	bool		grp_done;
-	TupleTableSlot *grp_lastSlot;
+	HeapTuple	grp_firstTuple;
 } GroupState;
 
 /* ----------------
