@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.21 2001/03/22 04:01:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.22 2001/09/10 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 int
 Pgtcl_Init(Tcl_Interp *interp)
 {
+	double tclversion;
 
 	/*
 	 * finish off the ChannelType struct.  Much easier to do it here then
@@ -38,6 +39,13 @@ Pgtcl_Init(Tcl_Interp *interp)
 #if HAVE_TCL_GETFILEPROC
 	Pg_ConnType.getFileProc = PgGetFileProc;
 #endif
+
+	/*
+	 * Tcl versions >= 8.1 use UTF-8 for their internal string representation.
+	 * Therefore PGCLIENTENCODING must be set to UNICODE for these versions.
+	 */
+	Tcl_GetDouble(interp, Tcl_GetVar(interp, "tcl_version", TCL_GLOBAL_ONLY), &tclversion);
+	if (tclversion >= 8.1) setenv("PGCLIENTENCODING", "UNICODE", 1);
 
 	/* register all pgtcl commands */
 	Tcl_CreateCommand(interp,
