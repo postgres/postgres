@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.219 2003/10/29 20:38:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.220 2003/10/29 22:54:01 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
- <sect1 id="release-devel">
+ <sect1 id="release-7-4">
   <title>Release 7.4</title>
 
 <sect2><title>Overview</title>
@@ -26,33 +26,103 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.219 2003/10/29 20:38:19 mo
   </footnote>
 </para>
 
-<para> Improved GROUP BY processing by using hash buckets</para>
+<para> Improved GROUP BY processing by using hash buckets
+  <footnote>
+  <para>
+   In previous releases, GROUP BY totals were accumulated by
+   sequentially scanning the list of groups looking for a match;
+   the 7.4 code places GROUP BY values in hash buckets so the
+   proper match can be found much quicker.  This is particularly
+   significant in speeding up queries that have a large
+   number of distinct GROUP BY values.
+  </para>
+  </footnote>
+</para>
 
-<para> New multi-key hash join capability</para>
+<para> New multi-key hash join capability
+   <footnote>
+   <para>
+    In previous releases, hash joins could only occur on single-column
+    joins.  This release allows multi-column hash joins.
+   </para>
+   </footnote>
+   </para>
 
-<para> ANSI joins are now better optimized</para>
+<para> ANSI joins are now better optimized
+   <footnote>
+   <para>
+    Prior releases evaluated ANSI join syntax only in the order
+    specified by the query;  7.4 allows full optimization of
+    queries using ANSI join syntax, meaning the optimizer considers
+    all possible join orderings and chooses the most efficient.
+   </para>
+   </footnote>
+   </para>
 
-<para> Faster and more powerful regular expression code</para>
+<para> Faster and more powerful regular expression code
+   <footnote>
+   <para>
+    The entire regular expression module has been replaced with a new
+    version by Henry Spencer, originally written for TCL.  The code
+    greatly improves performance and supports several flavors
+    of regular expressions.
+   </para>
+   </footnote>
+   </para>
 
-<para> Function-inlining for simple SQL functions</para></glossdef>
+<para> Function-inlining for simple SQL functions
+   <footnote>
+   <para>
+    Simple SQL functions can now be inlined by including their SQL
+    in the main query.  This improves performance by preventing
+    repeated calls to the SQL function --- this allows simple
+    SQL functions to behave like macros.
+   </para>
+   </footnote>
+   </para></glossdef>
 </glossentry>
 
 <glossentry> <glossterm> IPv6</glossterm>
 
 <glossdef><para> Full support for IPv6 connections and IPv6 address
-data types</para></glossdef>
+data types
+   <footnote>
+   <para>
+    Prior releases allowed only IPv6 connections and IP data types only
+    supported IPv4 addresses. This release adds full IPv6 support in
+    both of these areas.
+   </para>
+   </footnote>
+   </para></glossdef>
 </glossentry>
 
 <glossentry><glossterm> SSL</glossterm>
 
 <glossdef><para> Major improvements in SSL performance and
-reliability</para></glossdef>
+reliability
+   <footnote>
+   <para>
+    Several people very familiar with the SSL API have overhauled our
+    SSL code to improve SSL key negotiation and error recovery.
+   </para>
+   </footnote>
+   </para></glossdef>
 </glossentry>
 
 <glossentry><glossterm> Index Growth Prevention</glossterm>
 
 <glossdef><para> Allow free space map to efficiently reuse empty index
-pages, and other free space management improvements.</para></glossdef>
+pages, and other free space management improvements.
+   <footnote>
+   <para>
+    In prior releases, index pages that were left empty because of
+    deleted rows could only be reused by rows with index values similar
+    to the original rows indexed on that page. In 7.4, VACUUM records
+    empty index pages and allows them to be used for any future index 
+    rows.
+   </para>
+   </footnote>
+   </para></glossdef>
 </glossentry>
 
 <glossentry><glossterm> Standards Compliance</glossterm>
@@ -83,17 +153,40 @@ reporting verbosity, and cleaner startup packets.</para></glossdef>
 <glossentry><glossterm> Threads</glossterm>
 
 <glossdef><para> libpq and ecpg are now fully thread-safe with
---enable-thread-safety</para></glossdef>
+--enable-thread-safety
+   <footnote>
+   <para>
+    While prior libpq releases already supported threads, this release
+    improves thread safety by fixing some non-thread-safe code that
+    was used in the database connection routines.
+   </para>
+   </footnote>
+   </para></glossdef>
 </glossentry>
 
 <glossentry><glossterm> Contrib</glossterm>
 
 <glossdef><para> New version of full text indexing (tsearch2)</para>
 
-<para> New autovacuum tool</para>
+<para> New autovacuum tool
+   <footnote>
+   <para>
+    This new tool monitors the database statistics tables for
+    INSERT/UPDATE/DELETE activity and automatically vacuums tables when
+    needed.
+   </para>
+   </footnote>
+   </para>
 
 <para> Array handling has been improved and moved into the main
-server</para></glossdef>
+server
+   <footnote>
+   <para>
+    Many array limitations have been removed and they behave more like
+    fully-supported data types.
+   </para>
+   </footnote>
+   </para></glossdef>
 </glossentry>
 </glosslist></para></sect2>
 
@@ -105,30 +198,98 @@ required for those wishing to migrate data from any previous release.</para>
 <para>   Observe the following incompatibilities:
 <itemizedlist>
      <listitem><para> The server-side autocommit setting was removed and reimplemented
-       in client applications and languages.</para></listitem>
+       in client applications and languages.
+          <footnote>
+	  <para>
+	   Server-side autocommit was causing too many problems with
+	   languages and applications that wanted to control their own 
+	   autocommit behavior so autocommit was removed from the server
+	   and added to individual client API's as appropriate.
+	  </para>
+	  </footnote>
+	  </para></listitem>
      <listitem><para> Error message wording has changed substantially in this release,
        and error codes have been added.</para></listitem>
      <listitem><para> ANSI inner joins may behave differently because they are now better optimized</para></listitem>
-     <listitem><para> A number of server variables have been renamed for clarity</para></listitem>
-     <listitem><para> MOVE/FETCH 0 now does nothing</para></listitem>
+     <listitem><para> A number of server variables have been renamed for
+     clarity, primarily those related to logging</para></listitem>
+     <listitem><para> MOVE/FETCH 0 now does nothing
+        <footnote>
+	<para>
+	 In prior releases, FETCH 0 would fetch all remaining rows, and
+	 MOVE 0 would move to the end of the cursor.
+	</para>
+	</footnote>
+	</para></listitem>
      <listitem><para> MOVE/FETCH now returns the actual number of rows moved/fetched, or zero
-        if at the beginning/end of the cursor</para></listitem>
-     <listitem><para> COPY now can process carriage-return/line-feed and carriage-return
-       terminated files.  Literal carriage-returns and line-feeds are no
+        if at the beginning/end of the cursor
+	   <footnote>
+	   <para>
+	    Prior releases would return the tuple count passed to the
+	    command, not the actual number of rows FETCHed or MOVEd.
+	   </para>
+	   </footnote>
+	   </para></listitem>
+     <listitem><para> COPY now can process carriage-return and
+           carriage-return/line-feed end-of-line terminated files.</para></listitem>
+     <listitem><para>Literal carriage-returns and line-feeds are no
        longer accepted as data values;  use \r and \n instead.</para></listitem>
      <listitem><para> Trailing spaces are now trimmed when converting
 	from <type>CHAR(n)</type> to
        <type>VARCHAR(n)</type> / <type>TEXT</type></para></listitem>
      <listitem><para> <function>FLOAT(p)</function> now measures 'p' in bits, not digits</para></listitem>
-     <listitem><para> Ambiguous date values now must match the ordering specified by DateStyle</para></listitem>
+     <listitem><para> Ambiguous date values now must match the ordering specified by DateStyle
+        <footnote>
+	<para>
+	 In prior releases, a date of <literal>10/20/03</> was
+	 interpreted as a date in October even if the
+	 <varname>DateStyle</> specified the day should be first. In
+	 7.4, <varname>DateStyle</> is honored when converting such
+	 values and will throw an error if the date is invalid for the
+	 current <varname>DateStyle</>.
+	</para>
+	</footnote>
+	</para></listitem>
      <listitem><para> The <function>oidrand()</function>, <function>oidsrand()</function>,
-	and <function>userfntest()</function> functions have been removed.</para></listitem>
+	and <function>userfntest()</function> functions have been removed.
+	   <footnote>
+	   <para>
+	    These functions were determined to be no longer useful.
+	   </para>
+	   </footnote>
+	   </para></listitem>
      <listitem><para> <literal>'now'</literal> will no longer work as a column default; <function>now()</> or
-        <function>CURRENT_TIMESTAMP</> should be used instead</para></listitem>
+        <function>CURRENT_TIMESTAMP</> should be used instead
+	   <footnote>
+	   <para>
+	    In prior releases, there was special code so the string
+	    <literal>'now'</literal> was interpreted at
+	    <command>INSERT</> time and not at table creation time, but
+	    this work around didn't cover all cases.  Release 7.4
+	    now requires that defaults be defined properly using the
+	    <function>now()</> or the special value
+	    <function>CURRENT_TIMESTAMP</>. These will work in all
+	    situations.
+	   </para>
+	   </footnote>
+	   </para></listitem>
      <listitem><para> <literal>'today'</literal> will no longer work as a column default; <function>CURRENT_DATE</> 
-        should be used instead</para></listitem>
+        should be used instead
+	   <footnote>
+	   <para>
+	    Same description as above.
+	   </para>
+	   </footnote>
+	   </para></listitem>
      <listitem><para> Dollar sign (<literal>$</>) is no longer allowed in operator names</para></listitem>
-     <listitem><para> Dollar sign (<literal>$</>) can be a non-first character in identifiers</para></listitem>
+     <listitem><para> Dollar sign (<literal>$</>) can be a non-first character in identifiers
+        <footnote>
+	<para>
+	 This was done to improve compatibility with other database
+	 systems.
+	</para>
+	</footnote>
+	</para></listitem>
 </itemizedlist></para></sect2>
 
 <sect2> <title> Changes </title>
@@ -137,7 +298,13 @@ required for those wishing to migrate data from any previous release.</para>
 <itemizedlist>
 <listitem><para>Allow IPv6 server connections (Nigel Kukard, Johan Jordaan, Bruce, Tom, Kurt
   Roeckx, Andrew Dunstan)</para></listitem>
-<listitem><para>Fix SSL to handle errors cleanly (Nathan Mueller)</para></listitem>
+<listitem><para>Fix SSL to handle errors cleanly (Nathan Mueller)
+   <footnote>
+   <para>
+    In prior releases, 
+   </para>
+   </footnote>
+   </para></listitem>
 <listitem><para>SSL protocol security and performance improvements (Sean Chittenden)</para></listitem>
 <listitem><para>Print lock information when a deadlock is detected (Tom)</para></listitem>
 <listitem><para>Update <filename>/tmp</filename> socket mod. times regularly to avoid their removal (Tom)</para></listitem>
