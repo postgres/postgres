@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.77 2003/05/28 16:03:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.78 2003/06/27 16:55:22 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -963,7 +963,10 @@ describeOneTableDetails(const char *schemaname,
 							  oid);
 			result2 = PSQLexec(buf.data, false);
 			if (!result2)
+			{
+				PQclear(result1);
 				goto error_return;
+			}
 			else
 				check_count = PQntuples(result2);
 		}
@@ -978,7 +981,11 @@ describeOneTableDetails(const char *schemaname,
 							  oid);
 			result3 = PSQLexec(buf.data, false);
 			if (!result3)
+			{
+				PQclear(result1);
+				PQclear(result2);
 				goto error_return;
+			}
 			else
 				rule_count = PQntuples(result3);
 		}
@@ -998,7 +1005,12 @@ describeOneTableDetails(const char *schemaname,
 							  oid);
 			result4 = PSQLexec(buf.data, false);
 			if (!result4)
+			{
+				PQclear(result1);
+				PQclear(result2);
+				PQclear(result3);
 				goto error_return;
+			}
 			else
 				trigger_count = PQntuples(result4);
 		}
@@ -1014,7 +1026,13 @@ describeOneTableDetails(const char *schemaname,
 							  oid);
 			result5 = PSQLexec(buf.data, false);
 			if (!result5)
+			{
+				PQclear(result1);
+				PQclear(result2);
+				PQclear(result3);
+				PQclear(result4);
 				goto error_return;
+			}
 			else
 				foreignkey_count = PQntuples(result5);
 		}

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.25 2003/04/18 23:38:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.26 2003/06/27 16:55:23 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -78,6 +78,7 @@ handle_transaction(void)
 	}
 
 	PQsetNoticeProcessor(pset.db, old_notice_hook, NULL);
+	PQclear(res);
 	return true;
 }
 
@@ -324,6 +325,7 @@ do_lo_unlink(const char *loid_arg)
 			}
 			return false;
 		}
+		PQclear(res);
 	}
 
 	if (own_transaction)
