@@ -98,6 +98,7 @@
 #endif
 
 #if defined(i386_solaris) 
+#  define USE_LIMITS_H
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  define NEED_ISINF 
@@ -172,6 +173,7 @@
 #endif
 
 #if defined(sparc_solaris)
+#  define USE_LIMITS_H
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  define NEED_ISINF 

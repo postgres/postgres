@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.9 1997/01/13 03:54:15 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.10 1997/01/22 04:41:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 # define MAXINT        INT_MAX
 #else
 # if defined(USE_LIMITS_H)
-#  include <machine/limits.h>
+#  include <limits.h>
 #  define MAXINT	INT_MAX
 # else
 #  ifdef USE_VALUES_H
