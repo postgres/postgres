@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.20 2001/08/24 16:59:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.21 2001/08/24 19:59:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -129,7 +129,7 @@ get_prompt(promptStatus_t status)
 							if (*p == 'm')
 								buf[strcspn(buf, ".")] = '\0';
 						}
-#ifndef HAVE_UNIX_SOCKETS
+#ifdef HAVE_UNIX_SOCKETS
 						/* UNIX socket */
 						else
 						{
