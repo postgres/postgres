@@ -175,7 +175,6 @@ fi
 
 dnl We have read the default value of USE_LOCALE from the template
 dnl file.  We have a further option of using
-dnl	--disable-locale	to explicitly disable it
 dnl	--enable-locale		to explicitly enable it
 dnl It defaults to disabled
 AC_MSG_CHECKING(setting USE_LOCALE)
@@ -187,8 +186,6 @@ AC_ARG_ENABLE(
 )
 
 dnl We exclude cyrillic recode support unless we override it with
-dnl --enable-recode
-dnl	--disable-recode	to explicitly disable it
 dnl	--enable-recode		to explicitly enable it
 dnl It defaults to disabled
 AC_MSG_CHECKING(setting CYR_RECODE)
@@ -280,11 +277,8 @@ fi
 export USE_PERL
 
 dnl Unless we specify the command line options
-dnl	--disable cassert	to explicitly disable it
 dnl	--enable cassert	to explicitly enable it
-dnl If you do not explicitly do it, it defaults to disabled - we
-dnl should make the default enabled for the development cycle
-dnl We need some explanatory text here.
+dnl If you do not explicitly do it, it defaults to disabled
 AC_MSG_CHECKING(setting ASSERT CHECKING)
 AC_ARG_ENABLE(
    cassert,
