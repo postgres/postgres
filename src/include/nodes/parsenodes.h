@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.99 2000/02/15 20:49:24 tgl Exp $
+ * $Id: parsenodes.h,v 1.100 2000/02/18 09:29:44 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,6 +721,19 @@ typedef struct ConstraintsSetStmt
 	List		*constraints;
 	bool		deferred;
 } ConstraintsSetStmt;
+
+/* ----------------------
+ *		REINDEX Statement
+ * ----------------------
+ */
+typedef struct ReindexStmt
+{
+	NodeTag		type;
+	int		reindexType;		/* INDEX|TABLE|DATABASE */
+	const	char   *name;			/* name to reindex */
+	bool		force;
+	bool		all;
+} ReindexStmt;
 
 
 /*****************************************************************************

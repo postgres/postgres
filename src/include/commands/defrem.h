@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.18 2000/01/26 05:58:00 momjian Exp $
+ * $Id: defrem.h,v 1.19 2000/02/18 09:29:49 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,9 @@ extern void ExtendIndex(char *indexRelationName,
 			Expr *predicate,
 			List *rangetable);
 extern void RemoveIndex(char *name);
+extern void ReindexIndex(const char *indexRelationName, bool force);
+extern void ReindexTable(const char *relationName, bool force);
+extern void ReindexDatabase(const char *databaseName, bool force, bool all);
 
 /*
  * prototypes in define.c

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.43 2000/01/26 05:57:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.44 2000/02/18 09:28:58 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,33 @@ unsigned char RecodeBackTable[128];
 
 ProcessingMode Mode = InitProcessing;
 
+/* ----------------------------------------------------------------
+ *		ignoring system indexes support stuff
+ * ----------------------------------------------------------------
+ */
+
+static bool	isIgnoringSystemIndexes = false;
+
+/*
+ * IsIgnoringSystemIndexes
+ *		True if ignoring system indexes.
+ */
+bool
+IsIgnoringSystemIndexes()
+{
+	return isIgnoringSystemIndexes;
+}
+
+/*
+ * IgnoreSystemIndexes
+ *	Set true or false whether PostgreSQL ignores system indexes.
+ *
+ */
+void
+IgnoreSystemIndexes(bool mode)
+{
+	isIgnoringSystemIndexes = mode;
+}
 
 /* ----------------------------------------------------------------
  *				database path / name support stuff

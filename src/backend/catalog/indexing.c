@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.58 2000/01/26 05:56:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.59 2000/02/18 09:28:41 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,8 @@ CatalogOpenIndices(int nIndices, char **names, Relation *idescs)
 {
 	int			i;
 
+	if (IsIgnoringSystemIndexes())
+		return;
 	for (i = 0; i < nIndices; i++)
 		idescs[i] = index_openr(names[i]);
 }
@@ -104,6 +106,8 @@ CatalogCloseIndices(int nIndices, Relation *idescs)
 {
 	int			i;
 
+	if (IsIgnoringSystemIndexes())
+		return;
 	for (i = 0; i < nIndices; i++)
 		index_close(idescs[i]);
 }
@@ -131,6 +135,8 @@ CatalogIndexInsert(Relation *idescs,
 			   *finfoP;
 	int			i;
 
+	if (IsIgnoringSystemIndexes())
+		return;
 	heapDescriptor = RelationGetDescr(heapRelation);
 
 	for (i = 0; i < nIndices; i++)

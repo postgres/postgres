@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.60 2000/02/04 03:16:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.61 2000/02/18 09:28:53 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	 */
 	if (cache->cc_indname != NULL && cache->indexId == InvalidOid)
 	{
-		if (RelationGetForm(relation)->relhasindex)
+		if (!IsIgnoringSystemIndexes() && RelationGetForm(relation)->relhasindex)
 		{
 
 			/*
@@ -817,14 +817,19 @@ SearchSelfReferences(struct catcache * cache)
 
 		if (!OidIsValid(indexSelfOid))
 		{
+			ScanKeyData	key;
+			HeapScanDesc	sd;
 			/* Find oid of pg_index_indexrelid_index */
 			rel = heap_openr(RelationRelationName, AccessShareLock);
-			ntp = ClassNameIndexScan(rel, IndexRelidIndex);
+			ScanKeyEntryInitialize(&key, 0, Anum_pg_class_relname,
+					F_NAMEEQ, PointerGetDatum(IndexRelidIndex));
+			sd = heap_beginscan(rel, false, SnapshotNow, 1, &key);
+			ntp = heap_getnext(sd, 0);
 			if (!HeapTupleIsValid(ntp))
 				elog(ERROR, "SearchSelfReferences: %s not found in %s",
 					IndexRelidIndex, RelationRelationName);
 			indexSelfOid = ntp->t_data->t_oid;
-			heap_freetuple(ntp);
+			heap_endscan(sd);
 			heap_close(rel, AccessShareLock);
 		}
 		/* Looking for something other than pg_index_indexrelid_index? */
@@ -1031,7 +1036,7 @@ SearchSysCache(struct catcache * cache,
 	CACHE1_elog(DEBUG, "SearchSysCache: performing scan");
 
 	if ((RelationGetForm(relation))->relhasindex
-		&& !IsBootstrapProcessingMode())
+		&& !IsIgnoringSystemIndexes())
 	{
 		/* ----------
 		 *	Switch back to old memory context so memory not freed

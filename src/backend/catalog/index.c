@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.104 2000/01/26 05:56:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.105 2000/02/18 09:28:41 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -44,6 +44,7 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
+#include "utils/inval.h"
 
 /*
  * macros used in guessing how many tuples are on a page.
@@ -75,6 +76,17 @@ static void DefaultBuild(Relation heapRelation, Relation indexRelation,
 		Datum *parameter, FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
 static Oid IndexGetRelation(Oid indexId);
 
+static bool	reindexing = false;
+extern bool	SetReindexProcessing(bool reindexmode)
+{
+	bool	old = reindexing;
+	reindexing = reindexmode;
+	return old;
+}
+extern bool	IsReindexProcessing(void)
+{
+	return reindexing;
+}
 /* ----------------------------------------------------------------
  *	  sysatts is a structure containing attribute tuple forms
  *	  for system attributes (numbered -1, -2, ...).  This really
@@ -484,7 +496,7 @@ UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 	 * just before exiting.
 	 */
 
-	if (!IsBootstrapProcessingMode())
+	if (!IsIgnoringSystemIndexes())
 	{
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, tuple);
@@ -569,7 +581,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 							 (char *) (indexRelation->rd_att->attrs[0]));
 
 	hasind = false;
-	if (!IsBootstrapProcessingMode() && pg_attribute->rd_rel->relhasindex)
+	if (!IsIgnoringSystemIndexes() && pg_attribute->rd_rel->relhasindex)
 	{
 		hasind = true;
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
@@ -758,7 +770,7 @@ UpdateIndexRelation(Oid indexoid,
 	 *	insert the index tuple into the pg_index
 	 * ----------------
 	 */
-	if (!IsBootstrapProcessingMode())
+	if (!IsIgnoringSystemIndexes())
 	{
 		CatalogOpenIndices(Num_pg_index_indices, Name_pg_index_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_index_indices, pg_index, tuple);
@@ -956,6 +968,7 @@ index_create(char *heapRelationName,
 	 *	check parameters
 	 * ----------------
 	 */
+	SetReindexProcessing(false);
 	if (numatts < 1)
 		elog(ERROR, "must index at least one attribute");
 
@@ -1271,12 +1284,217 @@ FormIndexDatum(int numberOfAttributes,
 }
 
 
+/* --------------------------------------------
+ *		Lock class info for update
+ * --------------------------------------------
+ */
+static
+bool LockClassinfoForUpdate(Oid relid, HeapTuple rtup, Buffer *buffer, bool confirmCommitted)
+{
+	HeapTuple	classTuple;
+	Form_pg_class	pgcform;
+	bool		test;
+	Relation	relationRelation;
+
+	classTuple = SearchSysCacheTuple(RELOID, PointerGetDatum(relid),
+							0, 0, 0);
+	if (!HeapTupleIsValid(classTuple))
+		return false;
+	rtup->t_self = classTuple->t_self;
+	pgcform = (Form_pg_class) GETSTRUCT(classTuple);
+	relationRelation = heap_openr(RelationRelationName, RowShareLock);
+	test = heap_mark4update(relationRelation, rtup, buffer);
+	switch (test)
+	{
+		case HeapTupleSelfUpdated:
+		case HeapTupleMayBeUpdated:
+			break;
+		default:
+			elog(ERROR, "LockStatsForUpdate couldn't lock relid %u", relid);
+			return false;
+	}
+	RelationInvalidateHeapTuple(relationRelation, rtup);
+	if (confirmCommitted)
+	{
+		HeapTupleHeader	th = rtup->t_data;
+		if (!(th->t_infomask & HEAP_XMIN_COMMITTED))
+			elog(ERROR, "The tuple isn't committed");
+		if (th->t_infomask & HEAP_XMAX_COMMITTED)
+			if (!(th->t_infomask & HEAP_MARKED_FOR_UPDATE))
+				elog(ERROR, "The tuple is already deleted");
+	}
+	heap_close(relationRelation, NoLock);
+	return true;
+}
+
+/* ---------------------------------------------
+ *		Indexes of the relation active ?
+ * ---------------------------------------------
+ */
+bool IndexesAreActive(Oid relid, bool confirmCommitted)
+{
+	HeapTupleData	tuple;
+	Relation	indexRelation;
+	Buffer		buffer;
+	HeapScanDesc	scan;
+	ScanKeyData	entry;
+	bool		isactive;
+
+	if (!LockClassinfoForUpdate(relid, &tuple, &buffer, confirmCommitted))
+		elog(ERROR, "IndexesAreActive couldn't lock %u", relid);
+	if (((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_RELATION)
+		elog(ERROR, "relation %u isn't an relation", relid); 
+	isactive = ((Form_pg_class) GETSTRUCT(&tuple))->relhasindex;
+	ReleaseBuffer(buffer);
+	if (isactive)
+		return isactive;
+	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,
+			F_OIDEQ, ObjectIdGetDatum(relid));
+	scan = heap_beginscan(indexRelation, false, SnapshotNow,
+					1, &entry);
+	if (!heap_getnext(scan, 0))
+		isactive = true;
+	heap_endscan(scan);
+	heap_close(indexRelation, NoLock);
+	return isactive;
+}
+
+/* ----------------
+ *		set relhasindex of pg_class in place
+ * ----------------
+ */
+void
+setRelhasindexInplace(Oid relid, bool hasindex, bool immediate)
+{
+	Relation	whichRel;
+	Relation	pg_class;
+	HeapTuple	tuple;
+	Form_pg_class	rd_rel;
+	HeapScanDesc	pg_class_scan = NULL;
+
+	/* ----------------
+	 * This routine handles updates for only the heap relation
+	 * hasindex. In order to guarantee that we're able to *see* the index
+	 * relation tuple, we bump the command counter id here.
+	 * ----------------
+	 */
+	CommandCounterIncrement();
+
+	/* ----------------
+	 * CommandCounterIncrement() flushes invalid cache entries, including
+	 * those for the heap and index relations for which we're updating
+	 * statistics.	Now that the cache is flushed, it's safe to open the
+	 * relation again.	We need the relation open in order to figure out
+	 * how many blocks it contains.
+	 * ----------------
+	 */
+
+	whichRel = heap_open(relid, ShareLock);
+
+	if (!RelationIsValid(whichRel))
+		elog(ERROR, "setRelhasindexInplace: cannot open relation id %u", relid);
+
+	/* ----------------
+	 * Find the RELATION relation tuple for the given relation.
+	 * ----------------
+	 */
+	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
+	if (!RelationIsValid(pg_class))
+		elog(ERROR, "setRelhasindexInplace: could not open RELATION relation");
+
+	if (!IsIgnoringSystemIndexes())
+	{
+		tuple = SearchSysCacheTupleCopy(RELOID,
+													ObjectIdGetDatum(relid), 0, 0, 0);
+	}
+	else
+	{
+		ScanKeyData key[1];
+
+		ScanKeyEntryInitialize(&key[0], 0,
+							   ObjectIdAttributeNumber,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(relid));
+
+		pg_class_scan = heap_beginscan(pg_class, 0, SnapshotNow, 1, key);
+		tuple = heap_getnext(pg_class_scan, 0);
+	}
+
+	if (!HeapTupleIsValid(tuple))
+	{
+		if (pg_class_scan)
+			heap_endscan(pg_class_scan);
+		heap_close(pg_class, RowExclusiveLock);
+		elog(ERROR, "setRelhasindexInplace: cannot scan RELATION relation");
+	}
+	/*
+	 * Confirm that target tuple is locked by this transaction
+	 * in case of immedaite updation.
+	 */
+	if (immediate)
+	{
+		HeapTupleHeader	th = tuple->t_data;
+		if (!(th->t_infomask & HEAP_XMIN_COMMITTED))
+			elog(ERROR, "Immediate hasindex updation can be done only for committed tuples %x", th->t_infomask);
+		if (th->t_infomask & HEAP_XMAX_INVALID)
+			elog(ERROR, "Immediate hasindex updation can be done only for locked tuples %x", th->t_infomask);
+		if (th->t_infomask & HEAP_XMAX_COMMITTED)
+			elog(ERROR, "Immediate hasindex updation can be done only for locked tuples %x", th->t_infomask);
+		if (!(th->t_infomask & HEAP_MARKED_FOR_UPDATE))
+			elog(ERROR, "Immediate hasindex updation can be done only for locked tuples %x", th->t_infomask);
+		if (!(TransactionIdIsCurrentTransactionId(th->t_xmax)))
+			elog(ERROR, "The updating tuple is already locked by another backend");
+	}
+
+	/*
+	 * We shouldn't have to do this, but we do...  Modify the reldesc in
+	 * place with the new values so that the cache contains the latest
+	 * copy.
+	 */
+	whichRel->rd_rel->relhasindex = hasindex;
+
+	/* ----------------
+	 *	Update hasindex in pg_class.
+	 * ----------------
+	 */
+	if (pg_class_scan)
+	{
+
+		if (!IsBootstrapProcessingMode())
+			ImmediateInvalidateSharedHeapTuple(pg_class, tuple);
+		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
+		rd_rel->relhasindex = hasindex;
+		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
+	}
+	else
+	{
+		HeapTupleData	htup;
+		Buffer		buffer;
+
+		htup.t_self = tuple->t_self;
+		heap_fetch(pg_class, SnapshotNow, &htup, &buffer);
+		ImmediateInvalidateSharedHeapTuple(pg_class, tuple);
+		rd_rel = (Form_pg_class) GETSTRUCT(&htup);
+		rd_rel->relhasindex = hasindex;
+		WriteBuffer(buffer);
+	}
+
+	if (!pg_class_scan)
+		heap_freetuple(tuple);
+	else
+		heap_endscan(pg_class_scan);
+
+	heap_close(pg_class, NoLock);
+	heap_close(whichRel, NoLock);
+}
+
 /* ----------------
  *		UpdateStats
  * ----------------
  */
 void
-UpdateStats(Oid relid, long reltuples, bool hasindex)
+UpdateStats(Oid relid, long reltuples, bool inplace)
 {
 	Relation	whichRel;
 	Relation	pg_class;
@@ -1289,7 +1507,8 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	Datum		values[Natts_pg_class];
 	char		nulls[Natts_pg_class];
 	char		replace[Natts_pg_class];
-	HeapScanDesc pg_class_scan = NULL;
+	HeapScanDesc	pg_class_scan = NULL;
+	bool		in_place_upd;
 
 	/* ----------------
 	 * This routine handles updates for both the heap and index relation
@@ -1327,7 +1546,8 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	if (!RelationIsValid(pg_class))
 		elog(ERROR, "UpdateStats: could not open RELATION relation");
 
-	if (!IsBootstrapProcessingMode())
+	in_place_upd = (inplace || IsBootstrapProcessingMode());
+	if (!in_place_upd)
 	{
 		tuple = SearchSysCacheTupleCopy(RELOID,
 										ObjectIdGetDatum(relid),
@@ -1348,7 +1568,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 
 	if (!HeapTupleIsValid(tuple))
 	{
-		if (IsBootstrapProcessingMode())
+		if (pg_class_scan)
 			heap_endscan(pg_class_scan);
 		heap_close(pg_class, RowExclusiveLock);
 		elog(ERROR, "UpdateStats: cannot scan RELATION relation");
@@ -1389,7 +1609,6 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	 * place with the new values so that the cache contains the latest
 	 * copy.
 	 */
-	whichRel->rd_rel->relhasindex = hasindex;
 	whichRel->rd_rel->relpages = relpages;
 	whichRel->rd_rel->reltuples = reltuples;
 
@@ -1397,17 +1616,18 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	 *	Update statistics in pg_class.
 	 * ----------------
 	 */
-	if (IsBootstrapProcessingMode())
+	if (in_place_upd)
 	{
 
 		/*
 		 * At bootstrap time, we don't need to worry about concurrency or
 		 * visibility of changes, so we cheat.
 		 */
+		if (!IsBootstrapProcessingMode())
+			ImmediateInvalidateSharedHeapTuple(pg_class, tuple);
 		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 		rd_rel->relpages = relpages;
 		rd_rel->reltuples = reltuples;
-		rd_rel->relhasindex = hasindex;
 		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
 	}
 	else
@@ -1425,18 +1645,18 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		values[Anum_pg_class_relpages - 1] = (Datum) relpages;
 		replace[Anum_pg_class_reltuples - 1] = 'r';
 		values[Anum_pg_class_reltuples - 1] = (Datum) reltuples;
-		replace[Anum_pg_class_relhasindex - 1] = 'r';
-		values[Anum_pg_class_relhasindex - 1] = CharGetDatum(hasindex);
-
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
 		heap_update(pg_class, &tuple->t_self, newtup, NULL);
-		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
-		CatalogCloseIndices(Num_pg_class_indices, idescs);
+		if (!IsIgnoringSystemIndexes())
+		{
+			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
+			CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
+			CatalogCloseIndices(Num_pg_class_indices, idescs);
+		}
 		heap_freetuple(newtup);
 	}
 
-	if (!IsBootstrapProcessingMode())
+	if (!pg_class_scan)
 		heap_freetuple(tuple);
 	else
 		heap_endscan(pg_class_scan);
@@ -1668,16 +1888,18 @@ DefaultBuild(Relation heapRelation,
 	{
 		Oid		hrelid = RelationGetRelid(heapRelation);
 		Oid		irelid = RelationGetRelid(indexRelation);
+		bool		inplace = IsReindexProcessing();
 
 		heap_close(heapRelation, NoLock);
 		index_close(indexRelation);
-		UpdateStats(hrelid, reltuples, true);
-		UpdateStats(irelid, indtuples, false);
+		UpdateStats(hrelid, reltuples, inplace);
+		UpdateStats(irelid, indtuples, inplace);
 		if (oldPred != NULL)
 		{
 			if (indtuples == reltuples)
 				predicate = NULL;
-			UpdateIndexPredicate(irelid, oldPred, predicate);
+			if (!inplace)
+				UpdateIndexPredicate(irelid, oldPred, predicate);
 		}
 	}
 }
@@ -1825,4 +2047,227 @@ IndexIsUniqueNoCache(Oid indexId)
 	heap_endscan(scandesc);
 	heap_close(pg_index, AccessShareLock);
 	return isunique;
+}
+
+
+/* ---------------------------------
+ * activate_index -- activate/deactivate the specified index.
+ *		Note that currelntly PostgreSQL doesn't hold the
+ *		status per index
+ * ---------------------------------
+ */
+bool
+activate_index(Oid indexId, bool activate)
+{
+	if (!activate)	/* Currently does nothing */
+		return true;
+	return reindex_index(indexId, false);
+}
+ 
+/* --------------------------------
+ * reindex_index - This routine is used to recreate an index
+ * --------------------------------
+ */
+bool
+reindex_index(Oid indexId, bool force)
+{
+	Relation	iRel, indexRelation, heapRelation;
+	ScanKeyData	entry;
+	HeapScanDesc	scan;
+	HeapTuple	indexTuple, procTuple, classTuple;
+	Form_pg_index	index;
+	Oid		heapId, procId, accessMethodId;
+	Node		*oldPred = NULL;
+	PredInfo	*predInfo;
+	List		*cnfPred = NULL;
+	AttrNumber	*attributeNumberA;
+	FuncIndexInfo	fInfo, *funcInfo = NULL;
+	int		i, numberOfAttributes;
+	char		*predString;
+	bool		old;
+
+	old = SetReindexProcessing(true);
+	/* Scan pg_index to find indexes on heapRelation */
+	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indexrelid, F_OIDEQ,
+						   ObjectIdGetDatum(indexId));
+	scan = heap_beginscan(indexRelation, false, SnapshotNow, 1, &entry);
+	indexTuple = heap_getnext(scan, 0);
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "reindex_index index %d tuple is invalid", indexId);
+
+	/*
+	 * For the index, fetch index attributes so we can apply index_build
+	 */
+	index = (Form_pg_index) GETSTRUCT(indexTuple);
+	heapId = index->indrelid;
+	procId = index->indproc;
+
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
+	{
+		if (index->indkey[i] == InvalidAttrNumber)
+			break;
+	}
+	numberOfAttributes = i;
+
+	/* If a valid where predicate, compute predicate Node */
+	if (VARSIZE(&index->indpred) != 0)
+	{
+		predString = fmgr(F_TEXTOUT, &index->indpred);
+		oldPred = stringToNode(predString);
+		pfree(predString);
+	}
+	predInfo = (PredInfo *) palloc(sizeof(PredInfo));
+	predInfo->pred = (Node *) cnfPred;
+	predInfo->oldPred = oldPred;
+
+	/* Assign Index keys to attributes array */
+	attributeNumberA = (AttrNumber *) palloc(numberOfAttributes * sizeof(AttrNumber));
+	for (i = 0; i < numberOfAttributes; i++)
+		attributeNumberA[i] = index->indkey[i];
+
+	/* If this is a procedural index, initialize our FuncIndexInfo */
+	if (procId != InvalidOid)
+	{
+		funcInfo = &fInfo;
+		FIsetnArgs(funcInfo, numberOfAttributes);
+		procTuple = SearchSysCacheTuple(PROCOID, ObjectIdGetDatum(procId),
+										0, 0, 0);
+		if (!HeapTupleIsValid(procTuple))
+			elog(ERROR, "RelationTruncateIndexes: index procedure not found");
+		namecpy(&(funcInfo->funcName),
+				&(((Form_pg_proc) GETSTRUCT(procTuple))->proname));
+		FIsetProcOid(funcInfo, procTuple->t_data->t_oid);
+	}
+
+	/* Fetch the classTuple associated with this index */
+	classTuple = SearchSysCacheTupleCopy(RELOID, ObjectIdGetDatum(indexId), 0, 0, 0);
+	if (!HeapTupleIsValid(classTuple))
+		elog(ERROR, "RelationTruncateIndexes: index access method not found");
+	accessMethodId = ((Form_pg_class) GETSTRUCT(classTuple))->relam;
+
+	/* Open our index relation */
+	iRel = index_open(indexId);
+	if (iRel == NULL)
+		elog(ERROR, "reindex_index: can't open index relation");
+	heapRelation = heap_open(heapId, ExclusiveLock);
+	if (heapRelation == NULL)
+		elog(ERROR, "reindex_index: can't open heap relation");
+
+	/* Obtain exclusive lock on it, just to be sure */
+	LockRelation(iRel, AccessExclusiveLock);
+
+	/*
+	 * Release any buffers associated with this index.  If they're dirty,
+	 * they're just dropped without bothering to flush to disk.
+	 */
+	ReleaseRelationBuffers(iRel);
+	if (FlushRelationBuffers(iRel, (BlockNumber) 0, false) < 0)
+		elog(ERROR, "reindex_index: unable to flush index from buffer pool");
+
+	/* Now truncate the actual data and set blocks to zero */
+	smgrtruncate(DEFAULT_SMGR, iRel, 0);
+	iRel->rd_nblocks = 0;
+
+	/* Initialize the index and rebuild */
+	InitIndexStrategy(numberOfAttributes, iRel, accessMethodId);
+	index_build(heapRelation, iRel, numberOfAttributes,
+			attributeNumberA, 0, NULL, funcInfo, predInfo);
+
+	/*
+	 * index_build will close both the heap and index relations
+	 * (but not give up the locks we hold on them).  That's fine
+	 * for the index, but we need to open the heap again.  We need
+	 * no new lock, since this backend still has the exclusive lock
+	 * grabbed by heap_truncate.
+	 */
+	iRel = index_open(indexId);
+	Assert(iRel != NULL);
+
+	/* Complete the scan and close pg_index */
+	heap_endscan(scan);
+	heap_close(indexRelation, AccessShareLock);
+	SetReindexProcessing(old);
+	return true;
+}
+
+/*
+ * ----------------------------
+ * activate_indexes_of_a_table  
+ *	activate/deactivate indexes of the specified table.
+ * ----------------------------
+ */
+bool
+activate_indexes_of_a_table(Oid relid, bool activate)
+{
+	if (IndexesAreActive(relid, true))
+	{
+		if (!activate)
+			setRelhasindexInplace(relid, false, true);
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if (activate)
+			reindex_relation(relid, false);
+		else
+		{
+			return false;
+		}	
+	}
+	return true;
+}
+/* --------------------------------
+ * reindex_relation - This routine is used to recreate indexes
+ * of a relation.
+ * --------------------------------
+ */
+bool
+reindex_relation(Oid relid, bool force)
+{
+	Relation	indexRelation;
+	ScanKeyData	entry;
+	HeapScanDesc	scan;
+	HeapTuple	indexTuple;
+	bool		old, reindexed;
+
+	old = SetReindexProcessing(true);
+	if (IndexesAreActive(relid, true))
+	{
+		if (!force)
+		{
+			SetReindexProcessing(old);
+			return false;
+		}
+		activate_indexes_of_a_table(relid, false);
+	}
+
+	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,
+			F_OIDEQ, ObjectIdGetDatum(relid));
+	scan = heap_beginscan(indexRelation, false, SnapshotNow,
+					1, &entry);
+	reindexed = false;
+	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
+	{
+		Form_pg_index	index = (Form_pg_index) GETSTRUCT(indexTuple);
+		if (activate_index(index->indexrelid, true))
+			reindexed = true;
+		else
+		{
+			reindexed = false;
+			break;
+		}
+	}
+	heap_endscan(scan);
+	heap_close(indexRelation, AccessShareLock);
+	if (reindexed)
+	{
+		setRelhasindexInplace(relid, true, false);
+	}
+	SetReindexProcessing(old);
+	return true;
 }

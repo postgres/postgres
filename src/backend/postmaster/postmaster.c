@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.135 2000/01/26 05:56:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.136 2000/02/18 09:28:44 inoue Exp $
  *
  * NOTES
  *
@@ -430,6 +430,7 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
+	IgnoreSystemIndexes(false);
 	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:ilm:MN:no:p:Ss")) != EOF)
 	{
 		switch (opt)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.138 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.139 2000/02/18 09:29:37 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
 #endif
 
 
-bool		VacuumRunning = false;
+bool		CommonSpecialPortalInUse = false;
 
 static Portal vc_portal;
 
@@ -99,6 +99,53 @@ static bool vc_enough_space(VPageDescr vpd, Size len);
 static char *vc_show_rusage(struct rusage * ru0);
 
 
+/*
+ * This routines handle a special cross-transaction portal.
+ * However it is automatically closed in case of abort. 
+ */
+void CommonSpecialPortalOpen(void)
+{
+	char	   *pname;
+
+	/*
+	 * Create a portal for safe memory across transactions. We need to
+	 * palloc the name space for it because our hash function expects the
+	 * name to be on a longword boundary.  CreatePortal copies the name to
+	 * safe storage for us.
+	 */
+	pname = pstrdup(VACPNAME);
+	vc_portal = CreatePortal(pname);
+	pfree(pname);
+
+	/*
+	 * Set flag to indicate that vc_portal must be removed after an error.
+	 * This global variable is checked in the transaction manager on xact
+	 * abort, and the routine CommonSpecialPortalClose() is called if
+	 * necessary.
+	 */
+	CommonSpecialPortalInUse = true;
+}
+
+void CommonSpecialPortalClose(void)
+{
+	/* Clear flag first, to avoid recursion if PortalDrop elog's */
+	CommonSpecialPortalInUse = false;
+
+	/*
+	 * Release our portal for cross-transaction memory.
+	 */
+	PortalDrop(&vc_portal);
+}
+
+PortalVariableMemory CommonSpecialPortalGetMemory(void)
+{
+	return PortalGetVariableMemory(vc_portal);
+}
+bool CommonSpecialPortalIsOpen(void)
+{
+	return CommonSpecialPortalInUse;
+} 
+ 
 void
 vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 {
@@ -136,7 +183,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 		strcpy(NameStr(VacRel), vacrel);
 
 	/* must also copy the column list, if any, to safe storage */
-	pmem = PortalGetVariableMemory(vc_portal);
+	pmem = CommonSpecialPortalGetMemory();
 	old = MemoryContextSwitchTo((MemoryContext) pmem);
 	foreach(le, va_spec)
 	{
@@ -179,24 +226,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 static void
 vc_init()
 {
-	char	   *pname;
-
-	/*
-	 * Create a portal for safe memory across transactions. We need to
-	 * palloc the name space for it because our hash function expects the
-	 * name to be on a longword boundary.  CreatePortal copies the name to
-	 * safe storage for us.
-	 */
-	pname = pstrdup(VACPNAME);
-	vc_portal = CreatePortal(pname);
-	pfree(pname);
-
-	/*
-	 * Set flag to indicate that vc_portal must be removed after an error.
-	 * This global variable is checked in the transaction manager on xact
-	 * abort, and the routine vc_abort() is called if necessary.
-	 */
-	VacuumRunning = true;
+	CommonSpecialPortalOpen();
 
 	/* matches the StartTransaction in PostgresMain() */
 	CommitTransactionCommand();
@@ -219,28 +249,10 @@ vc_shutdown()
 	 */
 	unlink(RELCACHE_INIT_FILENAME);
 
-	/*
-	 * Release our portal for cross-transaction memory.
-	 */
-	PortalDrop(&vc_portal);
-
-	/* okay, we're done */
-	VacuumRunning = false;
+	CommonSpecialPortalClose();
 
 	/* matches the CommitTransaction in PostgresMain() */
 	StartTransactionCommand();
-}
-
-void
-vc_abort()
-{
-	/* Clear flag first, to avoid recursion if PortalDrop elog's */
-	VacuumRunning = false;
-
-	/*
-	 * Release our portal for cross-transaction memory.
-	 */
-	PortalDrop(&vc_portal);
 }
 
 /*
@@ -302,7 +314,7 @@ vc_getrels(NameData *VacRelP)
 							   F_CHAREQ, CharGetDatum('r'));
 	}
 
-	portalmem = PortalGetVariableMemory(vc_portal);
+	portalmem = CommonSpecialPortalGetMemory();
 	vrl = cur = (VRelList) NULL;
 
 	rel = heap_openr(RelationRelationName, AccessShareLock);
@@ -379,6 +391,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	int32		nindices,
 				i;
 	VRelStats  *vacrelstats;
+	bool	   reindex = false;
 
 	StartTransactionCommand();
 
@@ -552,17 +565,31 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	GetXmaxRecent(&XmaxRecent);
 
 	/* scan it */
+	reindex = false;
 	vacuum_pages.vpl_num_pages = fraged_pages.vpl_num_pages = 0;
 	vc_scanheap(vacrelstats, onerel, &vacuum_pages, &fraged_pages);
+	if (IsIgnoringSystemIndexes() && IsSystemRelationName(RelationGetRelationName(onerel)))
+		reindex = true;
 
 	/* Now open indices */
+	nindices = 0;
 	Irel = (Relation *) NULL;
 	vc_getindices(vacrelstats->relid, &nindices, &Irel);
-
+	if (!Irel)
+		reindex = false;
+	else if (!RelationGetForm(onerel)->relhasindex)
+		reindex = true;
 	if (nindices > 0)
 		vacrelstats->hasindex = true;
 	else
 		vacrelstats->hasindex = false;
+	if (reindex)
+	{
+		for (i = 0; i < nindices; i++)
+			index_close(Irel[i]);
+		Irel = (Relation *) NULL;
+		activate_indexes_of_a_table(relid, false);
+	}
 
 	/* Clean/scan index relation(s) */
 	if (Irel != (Relation *) NULL)
@@ -590,6 +617,8 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 												 * vacuum_pages list */
 			vc_vacheap(vacrelstats, onerel, &vacuum_pages);
 	}
+	if (reindex)
+		activate_indexes_of_a_table(relid, true);
 
 	/* ok - free vacuum_pages list of reaped pages */
 	if (vacuum_pages.vpl_num_pages > 0)

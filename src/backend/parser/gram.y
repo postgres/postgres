@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.143 2000/02/16 17:24:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.144 2000/02/18 09:29:40 inoue Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -124,7 +124,7 @@ static Node *doNegate(Node *n);
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, UnlistenStmt, LockStmt, OptimizableStmt,
-		ProcedureStmt, RemoveAggrStmt, RemoveOperStmt,
+		ProcedureStmt, ReindexStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 		CreatedbStmt, DropdbStmt, VacuumStmt, CursorStmt, SubSelect,
@@ -141,7 +141,7 @@ static Node *doNegate(Node *n);
 %type <ival>    createdb_opt_encoding
 
 %type <ival>	opt_lock, lock_type
-%type <boolean>	opt_lmode
+%type <boolean>	opt_lmode, opt_force
 
 %type <ival>    user_createdb_clause, user_createuser_clause
 %type <str>		user_passwd_clause
@@ -211,7 +211,7 @@ static Node *doNegate(Node *n);
 				opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
 %type <boolean> opt_cursor
 
-%type <ival>	copy_dirn, def_type, direction, remove_type,
+%type <ival>	copy_dirn, def_type, direction, reindex_type, remove_type,
 		opt_column, event, comment_type, comment_cl,
 		comment_ag, comment_fn, comment_op, comment_tg
 
@@ -339,13 +339,13 @@ static Node *doNegate(Node *n);
 		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
-		FORWARD, FUNCTION, HANDLER,
+		FORCE, FORWARD, FUNCTION, HANDLER,
 		INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
 		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P,
 		MAXVALUE, MINVALUE, MODE, MOVE,
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
-		RENAME, RESET, RETURNS, ROW, RULE,
+		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID,
 		TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
@@ -440,6 +440,7 @@ stmt :	AlterTableStmt
 		| UnlistenStmt
 		| LockStmt
 		| ProcedureStmt
+		| ReindexStmt
 		| RemoveAggrStmt
 		| RemoveOperStmt
 		| RemoveFuncStmt
@@ -2442,6 +2443,35 @@ oper_argtypes:	name
 				{ $$ = makeList(NULL, makeString($3), -1); }
 		| name ',' NONE			/* right unary */
 				{ $$ = makeList(makeString($1), NULL, -1); }
+		;
+
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *
+ *		REINDEX type <typename> [FORCE] [ALL]
+ *
+ *****************************************************************************/
+
+ReindexStmt:  REINDEX reindex_type name opt_force
+				{
+					ReindexStmt *n = makeNode(ReindexStmt);
+					if (IsTransactionBlock())
+						elog(ERROR,"REINDEX command could only be used outside begin/end transaction blocks");
+					n->reindexType = $2;
+					n->name = $3;
+					n->force = $4;
+					$$ = (Node *)n;
+				}
+		;
+
+reindex_type:	INDEX									{  $$ = INDEX; }
+		| TABLE									{  $$ = TABLE; }
+		| DATABASE								{  $$ = DATABASE; }
+		;
+opt_force:	FORCE									{  $$ = TRUE; }
+		| /* EMPTY */								{  $$ = FALSE; }
 		;
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.21 2000/01/26 05:58:38 momjian Exp $
+ * $Id: portal.h,v 1.22 2000/02/18 09:30:16 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,10 @@ extern void EndPortalAllocMode(void);
 extern void PortalResetHeapMemory(Portal portal);
 extern PortalVariableMemory PortalGetVariableMemory(Portal portal);
 extern PortalHeapMemory PortalGetHeapMemory(Portal portal);
+extern void CommonSpecialPortalOpen(void);
+extern void CommonSpecialPortalClose(void);
+extern PortalVariableMemory CommonSpecialPortalGetMemory(void);
+extern bool CommonSpecialPortalIsOpen(void);
 
 /* estimate of the maximum number of open portals a user would have,
  * used in initially sizing the PortalHashTable in	EnablePortalManager()

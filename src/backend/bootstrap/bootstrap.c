@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.79 2000/01/26 05:56:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.80 2000/02/18 09:28:39 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,6 +292,7 @@ BootstrapMain(int argc, char *argv[])
 		dbName = argv[optind];
 
 	SetProcessingMode(BootstrapProcessing);
+	IgnoreSystemIndexes(true);
 
 	if (!DataDir)
 	{

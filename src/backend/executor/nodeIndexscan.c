@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.46 2000/02/05 23:19:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.47 2000/02/18 09:29:57 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1048,6 +1048,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				  &currentRelation,		/* return: rel desc */
 				  (Pointer *) &currentScanDesc);		/* return: scan desc */
 
+if (!RelationGetForm(currentRelation)->relhasindex)
+{
+	elog(ERROR, "indexes of the relation %u was inactivated", reloid);
+}
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = currentScanDesc;
 

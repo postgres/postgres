@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.82 2000/01/29 16:58:38 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.83 2000/02/18 09:29:31 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -846,6 +846,61 @@ ProcessUtility(Node *parsetree,
             DropGroup((DropGroupStmt *) parsetree);
             break;
 
+		case T_ReindexStmt:
+			{
+				ReindexStmt *stmt = (ReindexStmt *) parsetree;
+
+				PS_SET_STATUS(commandTag = "REINDEX");
+				CHECK_IF_ABORTED();
+
+				switch (stmt->reindexType)
+				{
+					case INDEX:
+						relname = stmt->name;
+						if (IsSystemRelationName(relname))
+						{
+							if (!allowSystemTableMods && IsSystemRelationName(relname))
+							elog(ERROR, "class \"%s\" is a system catalog index",
+								 relname);
+							if (!IsIgnoringSystemIndexes())
+								elog(ERROR, "class \"%s\" is a system catalog index",
+								 relname);
+						}
+#ifndef NO_SECURITY
+						if (!pg_ownercheck(userName, relname, RELNAME))
+							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+#endif
+						ReindexIndex(relname, stmt->force);
+						break;
+					case TABLE:
+						relname = stmt->name;
+						if (IsSystemRelationName(relname))
+						{
+							if (!allowSystemTableMods && IsSystemRelationName(relname))
+							elog(ERROR, "class \"%s\" is a system catalog index",
+								 relname);
+							if (!IsIgnoringSystemIndexes())
+								elog(ERROR, "class \"%s\" is a system catalog index",
+								 relname);
+						}
+#ifndef NO_SECURITY
+						if (!pg_ownercheck(userName, relname, RELNAME))
+							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+#endif
+						ReindexTable(relname, stmt->force);
+						break;
+					case DATABASE:
+						relname = stmt->name;
+						if (!allowSystemTableMods)
+							elog(ERROR, "-O option is needed");
+						if (!IsIgnoringSystemIndexes())
+							elog(ERROR, "-P option is needed");
+						ReindexDatabase(relname, stmt->force, false);
+						break;
+				}
+				break;
+			}
+			break;
 			/*
 			 * ******************************** default ********************************
 			 *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.48 2000/01/26 05:57:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.49 2000/02/18 09:28:56 inoue Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -39,6 +39,7 @@
 #include "catalog/pg_type.h"
 #include "utils/catcache.h"
 #include "utils/temprel.h"
+#include "miscadmin.h"
 
 extern bool AMI_OVERRIDE;		/* XXX style */
 
@@ -395,6 +396,11 @@ static struct cachedesc cacheinfo[] = {
 
 static struct catcache *SysCache[lengthof(cacheinfo)];
 static int32 SysCacheSize = lengthof(cacheinfo);
+static bool  CacheInitialized = false;
+extern bool  IsCacheInitialized(void)
+{
+	return CacheInitialized;
+}
 
 
 /*
@@ -442,6 +448,7 @@ InitCatalogCache()
 
 		}
 	}
+	CacheInitialized = true;
 }
 
 /*

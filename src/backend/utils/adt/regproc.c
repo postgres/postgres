@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.51 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.52 2000/02/18 09:28:48 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ regprocin(char *pro_name_or_oid)
 	if (pro_name_or_oid[0] == '-' && pro_name_or_oid[1] == '\0')
 		return InvalidOid;
 
-	if (!IsBootstrapProcessingMode())
+	if (!IsIgnoringSystemIndexes())
 	{
 
 		/*

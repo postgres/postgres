@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.66 2000/02/15 03:26:38 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.67 2000/02/18 09:29:40 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"fetch", FETCH},
 	{"float", FLOAT},
 	{"for", FOR},
+	{"force", FORCE},
 	{"foreign", FOREIGN},
 	{"forward", FORWARD},
 	{"from", FROM},
@@ -196,6 +197,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"public", PUBLIC},
 	{"read", READ},
 	{"references", REFERENCES},
+	{"reindex", REINDEX},
 	{"relative", RELATIVE},
 	{"rename", RENAME},
 	{"reset", RESET},

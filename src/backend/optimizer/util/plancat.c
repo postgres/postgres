@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.48 2000/02/17 03:39:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.49 2000/02/18 09:30:09 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
 #include "utils/syscache.h"
+#include "catalog/catalog.h"
+#include "miscadmin.h"
 
 
 /*
@@ -55,7 +57,10 @@ relation_info(Query *root, Index relid,
 			 relationObjectId);
 	relation = (Form_pg_class) GETSTRUCT(relationTuple);
 
-	*hasindex = (relation->relhasindex) ? true : false;
+	if (IsIgnoringSystemIndexes() && IsSystemRelationName(NameStr(relation->relname)))
+		*hasindex = false;
+	else
+		*hasindex = (relation->relhasindex) ? true : false;
 	*pages = relation->relpages;
 	*tuples = relation->reltuples;
 }

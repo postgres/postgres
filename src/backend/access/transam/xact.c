@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.60 2000/01/29 16:58:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.61 2000/02/18 09:30:20 inoue Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -147,6 +147,7 @@
 
 #include "access/nbtree.h"
 #include "catalog/heap.h"
+#include "catalog/index.h"
 #include "commands/async.h"
 #include "commands/sequence.h"
 #include "commands/vacuum.h"
@@ -850,6 +851,7 @@ StartTransaction()
 	 */
 	s->state = TRANS_START;
 
+	SetReindexProcessing(false);
 	/* ----------------
 	 *	generate a new transaction id
 	 * ----------------
@@ -1046,8 +1048,8 @@ AbortTransaction()
 	AtAbort_Notify();
 	CloseSequences();
 	AtEOXact_portals();
-	if (VacuumRunning)
-		vc_abort();
+	if (CommonSpecialPortalIsOpen())
+		CommonSpecialPortalClose();
 	RecordTransactionAbort();
 	RelationPurgeLocalRelation(false);
 	DropNoNameRels();

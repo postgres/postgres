@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.20 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.21 2000/02/18 09:29:37 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,12 +17,15 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_shadow.h"
 #include "commands/defrem.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
@@ -30,6 +33,9 @@
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+#include "miscadmin.h"	/* ReindexDatabase() */
+#include "utils/portal.h" /* ReindexDatabase() */
+#include "catalog/catalog.h" /* ReindexDatabase() */
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 
@@ -149,6 +155,8 @@ DefineIndex(char *heapRelationName,
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}
 
+	if (!IsBootstrapProcessingMode() && !IndexesAreActive(relationId, false))
+		elog(ERROR, "existent indexes are inactive. REINDEX first");
 	if (IsFuncIndex(attributeList))
 	{
 		IndexElem  *funcIndex = lfirst(attributeList);
@@ -195,6 +203,7 @@ DefineIndex(char *heapRelationName,
 			 classObjectId, parameterCount, parameterA, (Node *) cnfPred,
 					 lossy, unique, primary);
 	}
+	setRelhasindexInplace(relationId, true, false);
 }
 
 
@@ -569,4 +578,164 @@ RemoveIndex(char *name)
 	}
 
 	index_drop(tuple->t_data->t_oid);
+}
+
+/*
+ * Reindex
+ *		Recreate an index.
+ *
+ * Exceptions:
+ *		"ERROR" if index nonexistent.
+ *		...
+ */
+void
+ReindexIndex(const char *name, bool force /* currently unused */)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCacheTuple(RELNAME,
+								PointerGetDatum(name),
+								0, 0, 0);
+
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "index \"%s\" nonexistent", name);
+
+	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
+	{
+		elog(ERROR, "relation \"%s\" is of type \"%c\"",
+			 name,
+			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
+	}
+
+	reindex_index(tuple->t_data->t_oid, force);
+}
+
+/*
+ * ReindexTable
+ *		Recreate indexes of a table.
+ *
+ * Exceptions:
+ *		"ERROR" if table nonexistent.
+ *		...
+ */
+void
+ReindexTable(const char *name, bool force)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCacheTuple(RELNAME,
+								PointerGetDatum(name),
+								0, 0, 0);
+
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "table \"%s\" nonexistent", name);
+
+	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION)
+	{
+		elog(ERROR, "relation \"%s\" is of type \"%c\"",
+			 name,
+			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
+	}
+
+	reindex_relation(tuple->t_data->t_oid, force);
+}
+
+/*
+ * ReindexDatabase
+ *		Recreate indexes of a database.
+ *
+ * Exceptions:
+ *		"ERROR" if table nonexistent.
+ *		...
+ */
+extern Oid MyDatabaseId;
+void
+ReindexDatabase(const char *dbname, bool force, bool all)
+{
+	Relation	relation, relationRelation;
+	HeapTuple	usertuple, dbtuple, tuple;
+	HeapScanDesc	scan;
+	int4		user_id, db_owner;
+	bool		superuser;
+	Oid		db_id;
+	char		*username;
+	ScanKeyData	scankey;
+	PortalVariableMemory	pmem;
+	MemoryContext	old;
+	int		relcnt, relalc, i, oncealc = 200;
+	Oid		*relids = (Oid *) NULL;
+
+	AssertArg(dbname);
+
+	username = GetPgUserName();
+	usertuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(username),
+				0, 0, 0);
+	if (!HeapTupleIsValid(usertuple))
+		elog(ERROR, "Current user '%s' is invalid.", username);
+	user_id = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesysid;
+	superuser = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesuper;
+
+	relation = heap_openr(DatabaseRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&scankey, 0, Anum_pg_database_datname,
+			F_NAMEEQ, NameGetDatum(dbname));
+	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scankey);
+	dbtuple = heap_getnext(scan, 0);
+	if (!HeapTupleIsValid(dbtuple))
+		elog(ERROR, "Database '%s' doesn't exist", dbname);
+	db_id = dbtuple->t_data->t_oid;
+	db_owner = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
+	heap_endscan(scan);
+	if (user_id != db_owner && !superuser)
+		elog(ERROR, "REINDEX DATABASE: Permission denied.");
+
+	if (db_id != MyDatabaseId)
+		elog(ERROR, "REINDEX DATABASE: Can be executed only on the currently open database.");
+
+	heap_close(relation, NoLock);
+	/** reindex_database(db_id, force, !all); **/
+
+	CommonSpecialPortalOpen();
+	pmem = CommonSpecialPortalGetMemory();
+	relationRelation = heap_openr(RelationRelationName, AccessShareLock);
+	scan = heap_beginscan(relationRelation, false, SnapshotNow, 0, NULL);
+	relcnt = relalc = 0;
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	{
+		if (!all)
+		{
+			if (!IsSystemRelationName(NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname)))
+				continue;
+			if (((Form_pg_class) GETSTRUCT(tuple))->relhasrules)
+				continue;
+		}
+		if (((Form_pg_class) GETSTRUCT(tuple))->relkind == RELKIND_RELATION)
+		{
+			old = MemoryContextSwitchTo((MemoryContext) pmem);
+			if (relcnt == 0)
+			{
+				relalc = oncealc;
+				relids = palloc(sizeof(Oid) * relalc);
+			}
+			else if (relcnt >= relalc)
+			{
+				relalc *= 2;
+				relids = repalloc(relids, sizeof(Oid) * relalc);
+			}
+			MemoryContextSwitchTo(old);
+			relids[relcnt] = tuple->t_data->t_oid;
+			relcnt++;
+		}
+	}
+	heap_endscan(scan);
+	heap_close(relationRelation, AccessShareLock);
+
+	CommitTransactionCommand();
+	for (i = 0; i < relcnt; i++)
+	{
+		StartTransactionCommand();
+		reindex_relation(relids[i], force);
+		CommitTransactionCommand();
+	}
+	CommonSpecialPortalClose();
+	StartTransactionCommand();
 }

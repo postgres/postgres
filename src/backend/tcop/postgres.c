@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.141 2000/01/26 05:57:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.142 2000/02/18 09:29:27 inoue Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -963,7 +963,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	optind = 1;					/* reset after postmaster's usage */
 
 	while ((flag = getopt(argc, argv,
-						  "A:B:CD:d:EeFf:iK:LNOo:p:QS:sT:t:v:W:x:"))
+						  "A:B:CD:d:EeFf:iK:LNOPo:p:QS:sT:t:v:W:x:"))
 		   != EOF)
 		switch (flag)
 		{
@@ -1114,6 +1114,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 */
 				if (secure)		/* XXX safe to allow from client??? */
 					allowSystemTableMods = true;
+				break;
+
+			case 'P':
+				/* --------------------
+				 *	ignore system indexes
+				 * --------------------
+				 */
+				if (secure)		/* XXX safe to allow from client??? */
+					IgnoreSystemIndexes(true);
 				break;
 
 			case 'o':
@@ -1516,7 +1525,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.141 $ $Date: 2000/01/26 05:57:07 $\n");
+		puts("$Revision: 1.142 $ $Date: 2000/02/18 09:29:27 $\n");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.89 2000/01/31 04:35:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.90 2000/02/18 09:28:55 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,6 +229,7 @@ static void IndexedAccessMethodInitialize(Relation relation);
 static void AttrDefaultFetch(Relation relation);
 static void RelCheckFetch(Relation relation);
 
+static bool	criticalRelcacheBuild = false;
 /* ----------------------------------------------------------------
  *		RelationIdGetRelation() and RelationNameGetRelation()
  *						support functions
@@ -254,7 +255,7 @@ ScanPgRelation(RelationBuildDescInfo buildinfo)
 	 * can, and do.
 	 */
 
-	if (IsBootstrapProcessingMode())
+	if (IsIgnoringSystemIndexes() || !criticalRelcacheBuild)
 		return scan_pg_rel_seq(buildinfo);
 	else
 		return scan_pg_rel_ind(buildinfo);
@@ -424,10 +425,48 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 	 * can, and do.
 	 */
 
-	if (IsBootstrapProcessingMode())
+	if (IsIgnoringSystemIndexes() || !criticalRelcacheBuild)
 		build_tupdesc_seq(buildinfo, relation, natts);
 	else
 		build_tupdesc_ind(buildinfo, relation, natts);
+}
+
+static void
+SetConstrOfRelation(Relation relation, TupleConstr *constr, int ndef, AttrDefault *attrdef)
+{
+	if (constr->has_not_null || ndef > 0 || relation->rd_rel->relchecks)
+	{
+		relation->rd_att->constr = constr;
+
+		if (ndef > 0)			/* DEFAULTs */
+		{
+			if (ndef < relation->rd_rel->relnatts)
+				constr->defval = (AttrDefault *)
+					repalloc(attrdef, ndef * sizeof(AttrDefault));
+			else
+				constr->defval = attrdef;
+			constr->num_defval = ndef;
+			AttrDefaultFetch(relation);
+		}
+		else
+			constr->num_defval = 0;
+
+		if (relation->rd_rel->relchecks > 0)	/* CHECKs */
+		{
+			constr->num_check = relation->rd_rel->relchecks;
+			constr->check = (ConstrCheck *) palloc(constr->num_check *
+												   sizeof(ConstrCheck));
+			MemSet(constr->check, 0, constr->num_check * sizeof(ConstrCheck));
+			RelCheckFetch(relation);
+		}
+		else
+			constr->num_check = 0;
+	}
+	else
+	{
+		pfree(constr);
+		relation->rd_att->constr = NULL;
+	}
 }
 
 static void
@@ -441,7 +480,11 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	Form_pg_attribute attp;
 	ScanKeyData key;
 	int			need;
+	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
+	AttrDefault *attrdef = NULL;
+	int		ndef = 0;
 
+	constr->has_not_null = false;
 	/* ----------------
 	 *	form a scan key
 	 * ----------------
@@ -478,6 +521,23 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 					(char *) attp,
 					ATTRIBUTE_TUPLE_SIZE);
 			need--;
+			/* Update if this attribute have a constraint */
+			if (attp->attnotnull)
+				constr->has_not_null = true;
+
+			if (attp->atthasdef)
+			{
+				if (attrdef == NULL)
+				{
+					attrdef = (AttrDefault *) palloc(relation->rd_rel->relnatts *
+												 	sizeof(AttrDefault));
+					MemSet(attrdef, 0,
+					   relation->rd_rel->relnatts * sizeof(AttrDefault));
+				}
+				attrdef[ndef].adnum = attp->attnum;
+				attrdef[ndef].adbin = NULL;
+				ndef++;
+			}
 		}
 		pg_attribute_tuple = heap_getnext(pg_attribute_scan, 0);
 	}
@@ -492,6 +552,8 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 */
 	heap_endscan(pg_attribute_scan);
 	heap_close(pg_attribute_desc, AccessShareLock);
+
+	SetConstrOfRelation(relation, constr, ndef, attrdef);
 }
 
 static void
@@ -549,39 +611,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 
 	heap_close(attrel, AccessShareLock);
 
-	if (constr->has_not_null || ndef > 0 || relation->rd_rel->relchecks)
-	{
-		relation->rd_att->constr = constr;
-
-		if (ndef > 0)			/* DEFAULTs */
-		{
-			if (ndef < relation->rd_rel->relnatts)
-				constr->defval = (AttrDefault *)
-					repalloc(attrdef, ndef * sizeof(AttrDefault));
-			else
-				constr->defval = attrdef;
-			constr->num_defval = ndef;
-			AttrDefaultFetch(relation);
-		}
-		else
-			constr->num_defval = 0;
-
-		if (relation->rd_rel->relchecks > 0)	/* CHECKs */
-		{
-			constr->num_check = relation->rd_rel->relchecks;
-			constr->check = (ConstrCheck *) palloc(constr->num_check *
-												   sizeof(ConstrCheck));
-			MemSet(constr->check, 0, constr->num_check * sizeof(ConstrCheck));
-			RelCheckFetch(relation);
-		}
-		else
-			constr->num_check = 0;
-	}
-	else
-	{
-		pfree(constr);
-		relation->rd_att->constr = NULL;
-	}
+	SetConstrOfRelation(relation, constr, ndef, attrdef);
 
 }
 
@@ -1806,16 +1836,19 @@ AttrDefaultFetch(Relation relation)
 	AttrDefault *attrdef = relation->rd_att->constr->defval;
 	int			ndef = relation->rd_att->constr->num_defval;
 	Relation	adrel;
-	Relation	irel;
+	Relation	irel = (Relation) NULL;
 	ScanKeyData skey;
 	HeapTupleData tuple;
+	HeapTuple	htup;
 	Form_pg_attrdef adform;
-	IndexScanDesc sd;
+	IndexScanDesc	sd = (IndexScanDesc) NULL;
+	HeapScanDesc	adscan = (HeapScanDesc) NULL;
 	RetrieveIndexResult indexRes;
 	struct varlena *val;
 	bool		isnull;
 	int			found;
 	int			i;
+	bool		hasindex;
 
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
@@ -1824,8 +1857,14 @@ AttrDefaultFetch(Relation relation)
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	adrel = heap_openr(AttrDefaultRelationName, AccessShareLock);
-	irel = index_openr(AttrDefaultIndex);
-	sd = index_beginscan(irel, false, 1, &skey);
+	hasindex = (adrel->rd_rel->relhasindex && !IsIgnoringSystemIndexes());
+	if (hasindex)
+	{
+		irel = index_openr(AttrDefaultIndex);
+		sd = index_beginscan(irel, false, 1, &skey);
+	}
+	else
+		adscan = heap_beginscan(adrel, false, SnapshotNow, 1, &skey); 
 	tuple.t_datamcxt = NULL;
 	tuple.t_data = NULL;
 
@@ -1833,17 +1872,27 @@ AttrDefaultFetch(Relation relation)
 	{
 		Buffer		buffer;
 
-		indexRes = index_getnext(sd, ForwardScanDirection);
-		if (!indexRes)
-			break;
+		if (hasindex)
+		{
+			indexRes = index_getnext(sd, ForwardScanDirection);
+			if (!indexRes)
+				break;
 
-		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(adrel, SnapshotNow, &tuple, &buffer);
-		pfree(indexRes);
-		if (tuple.t_data == NULL)
-			continue;
+			tuple.t_self = indexRes->heap_iptr;
+			heap_fetch(adrel, SnapshotNow, &tuple, &buffer);
+			pfree(indexRes);
+			if (tuple.t_data == NULL)
+				continue;
+			htup = &tuple;
+		}
+		else
+		{
+			htup = heap_getnext(adscan, 0);
+			if (!HeapTupleIsValid(htup))
+				break;
+		}
 		found++;
-		adform = (Form_pg_attrdef) GETSTRUCT(&tuple);
+		adform = (Form_pg_attrdef) GETSTRUCT(htup);
 		for (i = 0; i < ndef; i++)
 		{
 			if (adform->adnum != attrdef[i].adnum)
@@ -1853,7 +1902,7 @@ AttrDefaultFetch(Relation relation)
 				NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 
-			val = (struct varlena *) fastgetattr(&tuple,
+			val = (struct varlena *) fastgetattr(htup,
 												 Anum_pg_attrdef_adbin,
 												 adrel->rd_att, &isnull);
 			if (isnull)
@@ -1863,7 +1912,8 @@ AttrDefaultFetch(Relation relation)
 			attrdef[i].adbin = textout(val);
 			break;
 		}
-		ReleaseBuffer(buffer);
+		if (hasindex)
+			ReleaseBuffer(buffer);
 
 		if (i >= ndef)
 			elog(NOTICE, "AttrDefaultFetch: unexpected record found for attr %d in rel %s",
@@ -1875,8 +1925,13 @@ AttrDefaultFetch(Relation relation)
 		elog(NOTICE, "AttrDefaultFetch: %d record not found for rel %s",
 			 ndef - found, RelationGetRelationName(relation));
 
-	index_endscan(sd);
-	index_close(irel);
+	if (hasindex)
+	{
+		index_endscan(sd);
+		index_close(irel);
+	}
+	else
+		heap_endscan(adscan);
 	heap_close(adrel, AccessShareLock);
 }
 
@@ -1886,15 +1941,18 @@ RelCheckFetch(Relation relation)
 	ConstrCheck *check = relation->rd_att->constr->check;
 	int			ncheck = relation->rd_att->constr->num_check;
 	Relation	rcrel;
-	Relation	irel;
+	Relation	irel = (Relation)NULL;
 	ScanKeyData skey;
 	HeapTupleData tuple;
-	IndexScanDesc sd;
+	HeapTuple	htup;
+	IndexScanDesc	sd = (IndexScanDesc)NULL;
+	HeapScanDesc	rcscan = (HeapScanDesc)NULL;
 	RetrieveIndexResult indexRes;
 	Name		rcname;
 	struct varlena *val;
 	bool		isnull;
 	int			found;
+	bool		hasindex;
 
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
@@ -1903,8 +1961,14 @@ RelCheckFetch(Relation relation)
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	rcrel = heap_openr(RelCheckRelationName, AccessShareLock);
-	irel = index_openr(RelCheckIndex);
-	sd = index_beginscan(irel, false, 1, &skey);
+	hasindex = (rcrel->rd_rel->relhasindex && !IsIgnoringSystemIndexes());
+	if (hasindex)
+	{
+		irel = index_openr(RelCheckIndex);
+		sd = index_beginscan(irel, false, 1, &skey);
+	}
+	else
+		rcscan = heap_beginscan(rcrel, false, SnapshotNow, 1, &skey);
 	tuple.t_datamcxt = NULL;
 	tuple.t_data = NULL;
 
@@ -1912,27 +1976,37 @@ RelCheckFetch(Relation relation)
 	{
 		Buffer		buffer;
 
-		indexRes = index_getnext(sd, ForwardScanDirection);
-		if (!indexRes)
-			break;
+		if (hasindex)
+		{
+			indexRes = index_getnext(sd, ForwardScanDirection);
+			if (!indexRes)
+				break;
 
-		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(rcrel, SnapshotNow, &tuple, &buffer);
-		pfree(indexRes);
-		if (tuple.t_data == NULL)
-			continue;
+			tuple.t_self = indexRes->heap_iptr;
+			heap_fetch(rcrel, SnapshotNow, &tuple, &buffer);
+			pfree(indexRes);
+			if (tuple.t_data == NULL)
+				continue;
+			htup = &tuple;
+		}
+		else
+		{
+			htup = heap_getnext(rcscan, 0);
+			if (!HeapTupleIsValid(htup))
+				break;
+		}
 		if (found == ncheck)
 			elog(ERROR, "RelCheckFetch: unexpected record found for rel %s",
 				 RelationGetRelationName(relation));
 
-		rcname = (Name) fastgetattr(&tuple,
+		rcname = (Name) fastgetattr(htup,
 									Anum_pg_relcheck_rcname,
 									rcrel->rd_att, &isnull);
 		if (isnull)
 			elog(ERROR, "RelCheckFetch: rcname IS NULL for rel %s",
 				 RelationGetRelationName(relation));
 		check[found].ccname = pstrdup(NameStr(*rcname));
-		val = (struct varlena *) fastgetattr(&tuple,
+		val = (struct varlena *) fastgetattr(htup,
 											 Anum_pg_relcheck_rcbin,
 											 rcrel->rd_att, &isnull);
 		if (isnull)
@@ -1940,15 +2014,21 @@ RelCheckFetch(Relation relation)
 				 RelationGetRelationName(relation));
 		check[found].ccbin = textout(val);
 		found++;
-		ReleaseBuffer(buffer);
+		if (hasindex)
+			ReleaseBuffer(buffer);
 	}
 
 	if (found < ncheck)
 		elog(ERROR, "RelCheckFetch: %d record not found for rel %s",
 			 ncheck - found, RelationGetRelationName(relation));
 
-	index_endscan(sd);
-	index_close(irel);
+	if (hasindex)
+	{
+		index_endscan(sd);
+		index_close(irel);
+	}
+	else
+		heap_endscan(rcscan);
 	heap_close(rcrel, AccessShareLock);
 }
 
@@ -2148,6 +2228,7 @@ init_irels(void)
 
 		RelationCacheInsert(ird);
 	}
+	criticalRelcacheBuild = true;
 }
 
 static void
@@ -2162,7 +2243,6 @@ write_irels(void)
 	Form_pg_class relform;
 	IndexStrategy strat;
 	RegProcedure *support;
-	ProcessingMode oldmode;
 	int			i;
 	int			relno;
 	RelationBuildDescInfo bi;
@@ -2186,8 +2266,13 @@ write_irels(void)
 	 * descriptors, nail them into cache so we never lose them.
 	 */
 
+	/* Removed the following ProcessingMode change -- inoue
+	 * At this point
+	 * 1) Catalog Cache isn't initialized
+	 * 2) Relation Cache for the following critical indexes aren't built
 	oldmode = GetProcessingMode();
 	SetProcessingMode(BootstrapProcessing);
+	 */
 
 	bi.infotype = INFO_RELNAME;
 	bi.i.info_name = AttributeRelidNumIndex;
@@ -2202,7 +2287,10 @@ write_irels(void)
 	irel[2] = RelationBuildDesc(bi, NULL);
 	irel[2]->rd_isnailed = true;
 
+	criticalRelcacheBuild = true;
+	/* Removed the following ProcessingMode -- inoue 
 	SetProcessingMode(oldmode);
+	 */
 
 	/*
 	 * Write out the index reldescs to the special cache file.

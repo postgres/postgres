@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.21 2000/01/26 05:57:56 momjian Exp $
+ * $Id: index.h,v 1.22 2000/02/18 09:29:19 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,11 @@ extern void FormIndexDatum(int numberOfAttributes,
 			   TupleDesc heapDescriptor, Datum *datum,
 			   char *nullv, FuncIndexInfoPtr fInfo);
 
-extern void UpdateStats(Oid relid, long reltuples, bool hasindex);
+extern void UpdateStats(Oid relid, long reltuples, bool inplace);
+extern bool IndexesAreActive(Oid relid, bool comfirmCommitted);
+extern void setRelhasindexInplace(Oid relid, bool hasindex, bool immediate);
+extern bool SetReindexProcessing(bool processing);
+extern bool IsReindexProcessing(void);
 
 extern void FillDummyExprContext(ExprContext *econtext, TupleTableSlot *slot,
 					 TupleDesc tupdesc, Buffer buffer);
@@ -60,4 +64,8 @@ extern void index_build(Relation heapRelation, Relation indexRelation,
 extern bool IndexIsUnique(Oid indexId);
 extern bool IndexIsUniqueNoCache(Oid indexId);
 
+extern bool activate_index(Oid indexId, bool activate);
+extern bool reindex_index(Oid indexId, bool force);
+extern bool activate_indexes_of_a_table(Oid relid, bool activate);
+extern bool reindex_relation(Oid relid, bool force);
 #endif	 /* INDEX_H */
