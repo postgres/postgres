@@ -6,6 +6,14 @@
    and <productname>Postgres</productname>.
   </para>
 
+  <para>
+   Some white papers and technical reports from the original
+   <productname>Postgres</productname> development team
+   are available at
+   <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/">
+    http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/</ulink>
+  </para>
+
   <bibliodiv>
    <title><acronym>SQL</acronym> Reference Books</title>
    <para>Reference texts for <acronym>SQL</acronym> features.</para>
@@ -839,7 +847,7 @@ http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-17.pdf
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -849,7 +857,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
 sgml-local-ecat-files:nil
 End:
 -->
