@@ -1,0 +1,326 @@
+PostgreSQL 7.0.1 multi-byte (MB) support README	  May 20 2000
+
+						Tatsuo Ishii
+						ishii@postgresql.org
+		  http://www.sra.co.jp/people/t-ishii/PostgreSQL/
+
+[註] 1. 感謝石井達夫 (Tatsuo Ishii) 先生!
+     2. 註釋部份原文所無, 中譯若有錯誤, 請聯絡 cch@cc.kmu.edu.tw
+
+
+0. 簡介
+
+MB 支援是為了讓 PostgreSQL 能處理多位元組字元 (multi-byte character),
+例如: EUC (Extended Unix Code), Unicode (統一碼) 和 Mule internal code
+(多國語言內碼). 在 MB 的支援下, 你可以在正規表示式 (regexp), LIKE 及
+其他一些函式中使用多位元組字元. 預設的編碼系統可取決於你安裝 PostgreSQL
+時的 initdb(1) 命令, 亦可由 createdb(1) 命令或建立資料庫的 SQL 命令決定.
+所以你可以有多個不同編碼系統的資料庫.
+
+MB 支援也解決了一些 8 位元單位元組字元集 (包含 ISO-8859-1) 的相關問題,
+(我並沒有說所有的相關問題都解決了, 我只是確認了迴歸測試執行成功,
+而一些法語字元在 MB 修補下可以使用. 如果你在使用 8 位元字元時發現了
+任何問題, 請通知我)
+
+1. 如何使用
+
+編譯 PostgreSQL 前, 執行 configure 時使用 multibyte 的選項
+
+	% ./configure --enable-multibyte[=encoding_system]
+	% ./configure --enable-multibyte[=編碼系統]
+
+其中的編碼系統可以指定為下面其中之一:
+
+	SQL_ASCII		ASCII
+	EUC_JP			Japanese EUC
+	EUC_CN			Chinese EUC
+	EUC_KR			Korean EUC
+	EUC_TW			Taiwan EUC
+	UNICODE			Unicode(UTF-8)
+	MULE_INTERNAL		Mule internal
+	LATIN1			ISO 8859-1 English and some European languages
+	LATIN2			ISO 8859-2 English and some European languages
+	LATIN3			ISO 8859-3 English and some European languages
+	LATIN4			ISO 8859-4 English and some European languages
+	LATIN5			ISO 8859-5 English and some European languages
+	KOI8			KOI8-R
+	WIN			Windows CP1251
+	ALT			Windows CP866
+
+例如:
+
+	% ./configure --enable-multibyte=EUC_JP
+
+如果省略指定編碼系統, 那麼預設值就是 SQL_ASCII.
+
+2. 如何設定編碼
+
+initdb 命令定義 PostgresSQL 安裝後的預設編碼, 例如:
+
+	% initdb -E EUC_JP
+
+將預設的編碼設定為 EUC_JP (Extended Unix Code for Japanese), 如果你喜歡
+較長的字串, 你也可以用 "--encoding" 而不用 "-E". 如果沒有使用 -E 或
+--encoding 的選項, 那麼編繹時的設定會成為預設值.
+
+你可以建立使用不同編碼的資料庫:
+
+	% createdb -E EUC_KR korean
+
+這個命令會建立一個叫做 "korean" 的資料庫, 而其採用 EUC_KR 編碼.
+另外有一個方法, 是使用 SQL 命令, 也可以達到同樣的目的:
+
+	CREATE DATABASE korean WITH ENCODING = 'EUC_KR';
+
+在 pg_database 系統規格表 (system catalog) 中有一個 "encoding" 的欄位,
+就是用來紀錄一個資料庫的編碼. 你可以用 psql -l 或進入 psql 後用 \l 的
+命令來查看資料庫採用何種編碼:
+
+$ psql -l
+            List of databases
+   Database    |  Owner  |   Encoding    
+---------------+---------+---------------
+ euc_cn        | t-ishii | EUC_CN
+ euc_jp        | t-ishii | EUC_JP
+ euc_kr        | t-ishii | EUC_KR
+ euc_tw        | t-ishii | EUC_TW
+ mule_internal | t-ishii | MULE_INTERNAL
+ regression    | t-ishii | SQL_ASCII
+ template1     | t-ishii | EUC_JP
+ test          | t-ishii | EUC_JP
+ unicode       | t-ishii | UNICODE
+(9 rows)
+
+3. 前端與後端編碼的自動轉換
+
+[註: 前端泛指客戶端的程式, 可能是 psql 命令解譯器, 或採用 libpq 的 C 
+程式, Perl 程式, 或者是透過 ODBC 的視窗應用程式. 而後端就是指 PostgreSQL
+資料庫的伺服程式]
+
+PostgreSQL 支援某些編碼在前端與後端間做自動轉換: [註: 這裡所謂的自動
+轉換是指你在前端及後端所宣告採用的編碼不同, 但只要 PostgreSQL 支援這
+兩種編碼間的轉換, 那麼它會幫你在存取前做轉換]
+
+  encoding of backend			available encoding of frontend
+  --------------------------------------------------------------------
+	EUC_JP				EUC_JP, SJIS
+  
+	EUC_TW				EUC_TW, BIG5
+  
+  	LATIN2				LATIN2, WIN1250
+  
+	LATIN5				LATIN5, WIN, ALT
+  
+	MULE_INTERNAL			EUC_JP, SJIS, EUC_KR, EUC_CN, 
+					EUC_TW, BIG5, LATIN1 to LATIN5, 
+					WIN, ALT, WIN1250
+
+在啟動自動編碼轉換之前, 你必須告訴 PostgreSQL 你要在前端採用何種編碼.
+有好幾個方法可以達到這個目的:
+
+o 在 psql 命令解譯器中使用 \encoding 這個命令
+
+\encoding 這個命令可以讓你馬上切換前端編碼, 例如, 你要將前端編碼切換為 SJIS,
+那麼請打:
+
+	\encoding SJIS
+
+o 使用 libpq [註: PostgreSQL 資料庫的 C API 程式庫] 的函式
+
+psql 的 \encoding 命令其實只是去呼叫 PQsetClientEncoding() 這個函式來達到目的.
+
+  int PQsetClientEncoding(PGconn *conn, const char *encoding)
+
+上式中 conn 這個參數代表一個對後端的連線, encoding 這個參數要放你想用的編碼,
+假如它成功地設定了編碼, 便會傳回 0 值, 失敗的話傳回 -1. 至於目前連線的編碼可
+利用以下函式查知:
+
+  int PQclientEncoding(const PGconn *conn)
+
+這裡要注意的是: 這個函式傳回的是編碼的代號 (encoding id, 是個整數值),
+而不是編碼的名稱字串 (如 "EUC_JP"), 如果你要由編碼代號得知編碼名稱,
+必須呼叫:
+
+char *pg_encoding_to_char(int encoding_id)
+
+o 使用 PGCLIENTENCODING 這個環境變數
+
+如果前端底設定了 PGCLIENTENCODING 這一個環境變數, 那麼後端會做編碼自動轉換.
+
+[註] PostgreSQL 7.0.0 ~ 7.0.3 有個 bug -- 不認這個環境變數
+
+o 使用 SET CLIENT_ENCODING TO 這個 SQL 的命令
+
+要設定前端的編碼可以用以下這個 SQL 命令:
+
+	SET CLIENT_ENCODING TO 'encoding';
+
+你也可以使用 SQL92 的語法 "SET NAMES" 達到同樣的目的:
+
+	SET NAMES 'encoding';
+
+查詢目前的前端編碼可以用以下這個 SQL 命令:
+
+	SHOW CLIENT_ENCODING;
+
+切換為原來預設的編碼, 用以下這個 SQL 命令:
+
+	RESET CLIENT_ENCODING;
+
+[註] 使用 psql 命令解譯器時, 建議不要用這個方法, 請用 \encoding
+
+4. 關於 Unicode (統一碼)
+
+統一碼和其他編碼間的轉換可能要在 7.1 版後才會實現.
+
+5. 如果無法轉換會發生什麼事?
+
+假設你在後端選擇了 EUC_JP 這個編碼, 前端使用 LATIN1, (某些日文字元無法轉換成 
+LATIN1) 在這個狀況下, 某個字元若不能轉成 LATIN1 字元集, 就會被轉成以下的型式:
+
+	(十六進位值)
+
+6. 參考資料
+
+These are good sources to start learning various kind of encoding
+systems.
+
+ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf
+	Detailed explanations of EUC_JP, EUC_CN, EUC_KR, EUC_TW
+	appear in section 3.2.
+
+Unicode: http://www.unicode.org/
+	The homepage of UNICODE.
+
+	RFC 2044
+	UTF-8 is defined here.
+
+5. History
+
+May 20, 2000
+	* SJIS UDC (NEC selection IBM kanji) support contributed
+	  by Eiji Tokuya
+	* Changes above will appear in 7.0.1
+
+Mar 22, 2000
+	* Add new libpq functions PQsetClientEncoding, PQclientEncoding
+	* ./configure --with-mb=EUC_JP
+	  now deprecated. use 
+	  ./configure --enable-multibyte=EUC_JP
+	  instead
+  	* Add SQL_ASCII regression test case
+	* Add SJIS User Defined Character (UDC) support
+	* All of above will appear in 7.0
+
+July 11, 1999
+	* Add support for WIN1250 (Windows Czech) as a client encoding
+	  (contributed by Pavel Behal)
+	* fix some compiler warnings (contributed by Tomoaki Nishiyama)
+
+Mar 23, 1999
+	* Add support for KOI8(KOI8-R), WIN(CP1251), ALT(CP866)
+	  (thanks Oleg Broytmann for testing)
+	* Fix problem with MB and locale
+
+Jan 26, 1999
+	* Add support for Big5 for fronend encoding
+	  (you need to create a database with EUC_TW to use Big5)
+	* Add regression test case for EUC_TW
+	  (contributed by Jonah Kuo <jonahkuo@mail.ttn.com.tw>)
+
+Dec 15, 1998
+	* Bugs related to SQL_ASCII support fixed
+
+Nov 5, 1998
+	* 6.4 release. In this version, pg_database has "encoding"
+	  column that represents the database encoding
+
+Jul 22, 1998
+	* determine encoding at initdb/createdb rather than compile time
+	* support for PGCLIENTENCODING when issuing COPY command
+	* support for SQL92 syntax "SET NAMES"
+	* support for LATIN2-5
+	* add UNICODE regression test case
+	* new test suite for MB
+	* clean up source files
+
+Jun 5, 1998
+	* add support for the encoding translation between the backend
+	  and the frontend
+	* new command SET CLIENT_ENCODING etc. added
+	* add support for LATIN1 character set
+	* enhance 8 bit cleaness
+
+April 21, 1998 some enhancements/fixes
+	* character_length(), position(), substring() are now aware of 
+	  multi-byte characters
+	* add octet_length()
+	* add --with-mb option to configure
+	* new regression tests for EUC_KR
+  	  (contributed by "Soonmyung. Hong" <hong@lunaris.hanmesoft.co.kr>)
+	* add some test cases to the EUC_JP regression test
+	* fix problem in regress/regress.sh in case of System V
+	* fix toupper(), tolower() to handle 8bit chars
+
+Mar 25, 1998 MB PL2 is incorporated into PostgreSQL 6.3.1
+
+Mar 10, 1998 PL2 released
+	* add regression test for EUC_JP, EUC_CN and MULE_INTERNAL
+	* add an English document (this file)
+	* fix problems concerning 8-bit single byte characters
+
+Mar 1, 1998 PL1 released
+
+Appendix:
+
+[Here is a good documentation explaining how to use WIN1250 on
+Windows/ODBC from Pavel Behal. Please note that Installation step 1)
+is not necceary in 6.5.1 -- Tatsuo]
+
+Version: 0.91 for PgSQL 6.5
+Author: Pavel Behal
+Revised by: Tatsuo Ishii
+Email: behal@opf.slu.cz
+Licence: The Same as PostgreSQL
+
+Sorry for my Eglish and C code, I'm not native :-)
+
+!!!!!!!!!!!!!!!!!!!!!!!!! NO WARRANTY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Instalation:
+------------
+1) Change three affected files in source directories 
+    (I don't have time to create proper patch diffs, I don't know how)
+2) Compile with enabled locale and multibyte set to LATIN2
+3) Setup properly your instalation, do not forget to create locale
+   variables in your profile (environment). Ex. (may not be exactly true):
+	LC_ALL=cs_CZ.ISO8859-2
+	LC_COLLATE=cs_CZ.ISO8859-2
+	LC_CTYPE=cs_CZ.ISO8859-2
+	LC_MONETARY=cs_CZ.ISO8859-2
+	LC_NUMERIC=cs_CZ.ISO8859-2
+	LC_TIME=cs_CZ.ISO8859-2
+4) You have to start the postmaster with locales set!
+5) Try it with Czech language, it have to sort
+5) Install ODBC driver for PgSQL into your M$ Windows
+6) Setup properly your data source. Include this line in your ODBC
+   configuration dialog in field "Connect Settings:" :
+	SET CLIENT_ENCODING = 'WIN1250';
+7) Now try it again, but in Windows with ODBC.
+
+Description:
+------------
+- Depends on proper system locales, tested with RH6.0 and Slackware 3.6,
+  with cs_CZ.iso8859-2 loacle
+- Never try to set-up server multibyte database encoding to WIN1250,
+  always use LATIN2 instead. There is not WIN1250 locale in Unix
+- WIN1250 encoding is useable only for M$W ODBC clients. The characters are
+  on thy fly re-coded, to be displayed and stored back properly
+ 
+Important:
+----------
+- it reorders your sort order depending on your LC_... setting, so don't be
+  confused with regression tests, they don't use locale
+- "ch" is corectly sorted only in some newer locales (Ex. RH6.0)
+- you have to insert money as '162,50' (with comma in aphostrophes!)
+- not tested properly
