@@ -1692,6 +1692,11 @@ Sun Oct 19 15:20:16 CEST 2003
 Mon Oct 20 14:53:40 CEST 2003
 
 	- Install dummy sqlda.h file.
+	
+Sun Oct 26 10:47:05 CET 2003
+
+	- Fixed bug with indicators when storage for the
+	  string is dynamically allocated
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
