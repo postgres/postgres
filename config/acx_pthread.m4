@@ -99,7 +99,6 @@ for flag in $acx_pthread_flags; do
                 if test x"$acx_pthread_config" = xno; then continue; fi
                 tryPTHREAD_CFLAGS="`pthread-config --cflags`"
                 tryPTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
-                fi
                 ;;
 
                 *)
