@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb  4 15:43:49 EST 2002
+Last updated:		Mon Feb  4 15:49:34 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -25,7 +25,6 @@ URGENT
 	o queries across databases or servers (two-phase commit)
 	o http://gborg.postgresql.org/project/pgreplication/projdisplay.php
 * Point-in-time data recovery using backup and write-ahead log
-* Allow row re-use with automatic vacuum (Tom)
 
 
 REPORTING
@@ -353,7 +352,7 @@ VACUUM
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
 * Add LAZY VACUUM (Vadim) [performance]
-
+* Provide automatic scheduling of background vacuum (Tom)
 
 LOCKING
 -------
