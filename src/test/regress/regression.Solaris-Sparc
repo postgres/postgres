@@ -1,6 +1,6 @@
 
 *** expected/float8.out	Mon Oct 12 16:56:31 1998
---- results/float8.out	Tue Oct 13 17:20:46 1998
+--- results/float8.out	Tue Oct 27 16:34:22 1998
 ***************
 *** 195,209 ****
   QUERY: SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 < '0.0' ;
@@ -30,7 +30,7 @@
 ----------------------
 
 *** expected/geometry.out	Mon Oct 12 16:56:34 1998
---- results/geometry.out	Tue Oct 13 17:20:57 1998
+--- results/geometry.out	Tue Oct 27 16:34:32 1998
 ***************
 *** 112,118 ****
         |(-5,-12)  |[(10,-10),(-3,-4)]           |(-1.60487804878049,-4.64390243902439)
@@ -172,7 +172,7 @@
 ----------------------
 
 *** expected/abstime.out	Mon Oct 12 16:56:25 1998
---- results/abstime.out	Tue Oct 13 17:21:04 1998
+--- results/abstime.out	Tue Oct 27 16:34:40 1998
 ***************
 *** 22,28 ****
        |current                     
@@ -355,7 +355,7 @@
 ----------------------
 
 *** expected/tinterval.out	Mon Oct 12 16:56:57 1998
---- results/tinterval.out	Tue Oct 13 17:21:05 1998
+--- results/tinterval.out	Tue Oct 27 16:34:41 1998
 ***************
 *** 19,25 ****
   five|f1                                                             
@@ -505,7 +505,7 @@
 ----------------------
 
 *** expected/horology.out	Mon Oct 12 16:56:40 1998
---- results/horology.out	Tue Oct 13 17:21:08 1998
+--- results/horology.out	Tue Oct 27 16:34:44 1998
 ***************
 *** 430,436 ****
     ORDER BY abstime;
@@ -747,27 +747,8 @@
 
 ----------------------
 
-*** expected/random.out	Mon Oct 12 16:56:50 1998
---- results/random.out	Tue Oct 13 17:24:27 1998
-***************
-*** 19,23 ****
-    WHERE random NOT BETWEEN 80 AND 120;
-  random
-  ------
-! (0 rows)
-  
---- 19,24 ----
-    WHERE random NOT BETWEEN 80 AND 120;
-  random
-  ------
-!    121
-! (1 row)
-  
-
-----------------------
-
 *** expected/rules.out	Mon Oct 12 16:56:51 1998
---- results/rules.out	Tue Oct 13 17:25:33 1998
+--- results/rules.out	Tue Oct 27 16:39:39 1998
 ***************
 *** 315,322 ****
   pname |sysname
