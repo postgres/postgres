@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.12 1997/09/07 04:38:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.13 1997/09/08 02:20:31 momjian Exp $
  *
  * NOTES
  *	  initam should be moved someplace else.
@@ -28,7 +28,7 @@
 #include <string.h>
 #endif
 
-static void		InitHeapAccessStatistics(void);
+static void InitHeapAccessStatistics(void);
 
 /* ----------------
  *		InitHeapAccessStatistics
@@ -39,7 +39,7 @@ HeapAccessStatistics heap_access_stats = (HeapAccessStatistics) NULL;
 static void
 InitHeapAccessStatistics()
 {
-	MemoryContext	oldContext;
+	MemoryContext oldContext;
 	HeapAccessStatistics stats;
 
 	/* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.2 1997/09/07 04:43:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.3 1997/09/08 02:24:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,15 +50,15 @@ best_or_subclause_index(Query * root, Rel * rel, Expr * subclause,
  * Returns a list of these index path nodes.
  *
  */
-List		   *
+List	   *
 create_or_index_paths(Query * root,
 					  Rel * rel, List * clauses)
 {
-	List		   *t_list = NIL;
+	List	   *t_list = NIL;
 
 	if (clauses != NIL)
 	{
-		CInfo		   *clausenode = (CInfo *) (lfirst(clauses));
+		CInfo	   *clausenode = (CInfo *) (lfirst(clauses));
 
 		/*
 		 * Check to see if this clause is an 'or' clause, and, if so,
@@ -70,9 +70,9 @@ create_or_index_paths(Query * root,
 		if (valid_or_clause(clausenode) &&
 			clausenode->indexids)
 		{
-			List		   *temp = NIL;
-			List		   *index_list = NIL;
-			bool			index_flag = true;
+			List	   *temp = NIL;
+			List	   *index_list = NIL;
+			bool		index_flag = true;
 
 			index_list = clausenode->indexids;
 			foreach(temp, index_list)
@@ -82,10 +82,10 @@ create_or_index_paths(Query * root,
 			}
 			if (index_flag)
 			{					/* used to be a lisp every function */
-				IndexPath	   *pathnode = makeNode(IndexPath);
-				List		   *indexids;
-				Cost			cost;
-				List		   *selecs;
+				IndexPath  *pathnode = makeNode(IndexPath);
+				List	   *indexids;
+				Cost		cost;
+				List	   *selecs;
 
 				best_or_subclause_indices(root,
 										  rel,
@@ -177,9 +177,9 @@ best_or_subclause_indices(Query * root,
 	}
 	else
 	{
-		int				best_indexid;
-		Cost			best_cost;
-		Cost			best_selec;
+		int			best_indexid;
+		Cost		best_cost;
+		Cost		best_selec;
 
 		best_or_subclause_index(root, rel, lfirst(subclauses), lfirst(indices),
 								&best_indexid, &best_cost, &best_selec);
@@ -223,18 +223,18 @@ best_or_subclause_index(Query * root,
 {
 	if (indices != NIL)
 	{
-		Datum			value;
-		int				flag = 0;
-		Cost			subcost;
-		Rel			   *index = (Rel *) lfirst(indices);
-		AttrNumber		attno = (get_leftop(subclause))->varattno;
-		Oid				opno = ((Oper *) subclause->oper)->opno;
-		bool			constant_on_right = non_null((Expr *) get_rightop(subclause));
-		float			npages,
-						selec;
-		int				subclause_indexid;
-		Cost			subclause_cost;
-		Cost			subclause_selec;
+		Datum		value;
+		int			flag = 0;
+		Cost		subcost;
+		Rel		   *index = (Rel *) lfirst(indices);
+		AttrNumber	attno = (get_leftop(subclause))->varattno;
+		Oid			opno = ((Oper *) subclause->oper)->opno;
+		bool		constant_on_right = non_null((Expr *) get_rightop(subclause));
+		float		npages,
+					selec;
+		int			subclause_indexid;
+		Cost		subclause_cost;
+		Cost		subclause_selec;
 
 		if (constant_on_right)
 		{

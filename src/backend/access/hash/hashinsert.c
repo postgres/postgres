@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.9 1997/09/07 04:37:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.10 1997/09/08 02:20:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,15 +32,15 @@ static OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey 
 InsertIndexResult
 _hash_doinsert(Relation rel, HashItem hitem)
 {
-	Buffer			buf;
-	Buffer			metabuf;
-	BlockNumber		blkno;
-	HashMetaPage	metap;
-	IndexTuple		itup;
+	Buffer		buf;
+	Buffer		metabuf;
+	BlockNumber blkno;
+	HashMetaPage metap;
+	IndexTuple	itup;
 	InsertIndexResult res;
-	ScanKey			itup_scankey;
-	int				natts;
-	Page			page;
+	ScanKey		itup_scankey;
+	int			natts;
+	Page		page;
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
@@ -101,7 +101,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
  *		we will have dropped both the pin and the write lock on the buffer.
  *
  */
-static			InsertIndexResult
+static InsertIndexResult
 _hash_insertonpg(Relation rel,
 				 Buffer buf,
 				 int keysz,
@@ -110,15 +110,15 @@ _hash_insertonpg(Relation rel,
 				 Buffer metabuf)
 {
 	InsertIndexResult res;
-	Page			page;
-	BlockNumber		itup_blkno;
-	OffsetNumber	itup_off;
-	int				itemsz;
-	HashPageOpaque	pageopaque;
-	bool			do_expand = false;
-	Buffer			ovflbuf;
-	HashMetaPage	metap;
-	Bucket			bucket;
+	Page		page;
+	BlockNumber itup_blkno;
+	OffsetNumber itup_off;
+	int			itemsz;
+	HashPageOpaque pageopaque;
+	bool		do_expand = false;
+	Buffer		ovflbuf;
+	HashMetaPage metap;
+	Bucket		bucket;
 
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	_hash_checkpage((Page) metap, LH_META_PAGE);
@@ -218,7 +218,7 @@ _hash_insertonpg(Relation rel,
  *		write lock and reference associated with the page's buffer.  It is
  *		an error to call pgaddtup() without a write lock and reference.
  */
-static			OffsetNumber
+static OffsetNumber
 _hash_pgaddtup(Relation rel,
 			   Buffer buf,
 			   int keysz,
@@ -226,8 +226,8 @@ _hash_pgaddtup(Relation rel,
 			   Size itemsize,
 			   HashItem hitem)
 {
-	OffsetNumber	itup_off;
-	Page			page;
+	OffsetNumber itup_off;
+	Page		page;
 
 	page = BufferGetPage(buf);
 	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);

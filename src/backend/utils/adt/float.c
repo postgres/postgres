@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.18 1997/09/07 04:50:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.19 1997/09/08 02:30:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,36 +81,36 @@
  /* NS3.3 has conflicting declarations of these in <math.h> */
 
 #ifndef atof
-extern double	atof(const char *p);
+extern double atof(const char *p);
 
 #endif
 
 #ifndef HAVE_CBRT
 #define cbrt my_cbrt
-static double	cbrt(double x);
+static double cbrt(double x);
 
 #else
 #if !defined(nextstep)
-extern double	cbrt(double x);
+extern double cbrt(double x);
 
 #endif
 #endif
 
 #ifndef HAVE_RINT
 #define rint my_rint
-static double	rint(double x);
+static double rint(double x);
 
 #else
-extern double	rint(double x);
+extern double rint(double x);
 
 #endif
 
 #ifndef HAVE_ISINF
 #define isinf my_isinf
-static int		isinf(double x);
+static int	isinf(double x);
 
 #else
-extern int		isinf(double x);
+extern int	isinf(double x);
 
 #endif
 
@@ -203,9 +203,9 @@ CheckFloat8Val(double val)
 float32
 float4in(char *num)
 {
-	float32			result = (float32) palloc(sizeof(float32data));
-	double			val;
-	char		   *endptr;
+	float32		result = (float32) palloc(sizeof(float32data));
+	double		val;
+	char	   *endptr;
 
 	errno = 0;
 	val = strtod(num, &endptr);
@@ -227,10 +227,10 @@ float4in(char *num)
  *		float4out		- converts a float4 number to a string
  *						  using a standard output format
  */
-char		   *
+char	   *
 float4out(float32 num)
 {
-	char		   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
+	char	   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
 
 	if (!num)
 		return strcpy(ascii, "(null)");
@@ -250,9 +250,9 @@ float4out(float32 num)
 float64
 float8in(char *num)
 {
-	float64			result = (float64) palloc(sizeof(float64data));
-	double			val;
-	char		   *endptr;
+	float64		result = (float64) palloc(sizeof(float64data));
+	double		val;
+	char	   *endptr;
 
 	errno = 0;
 	val = strtod(num, &endptr);
@@ -269,10 +269,10 @@ float8in(char *num)
  *		float8out		- converts float8 number to a string
  *						  using a standard output format
  */
-char		   *
+char	   *
 float8out(float64 num)
 {
-	char		   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);
+	char	   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);
 
 	if (!num)
 		return strcpy(ascii, "(null)");
@@ -301,8 +301,8 @@ float8out(float64 num)
 float32
 float4abs(float32 arg1)
 {
-	float32			result;
-	double			val;
+	float32		result;
+	double		val;
 
 	if (!arg1)
 		return (float32) NULL;
@@ -322,8 +322,8 @@ float4abs(float32 arg1)
 float32
 float4um(float32 arg1)
 {
-	float32			result;
-	double			val;
+	float32		result;
+	double		val;
 
 	if (!arg1)
 		return (float32) NULL;
@@ -339,7 +339,7 @@ float4um(float32 arg1)
 float32
 float4larger(float32 arg1, float32 arg2)
 {
-	float32			result;
+	float32		result;
 
 	if (!arg1 || !arg2)
 		return (float32) NULL;
@@ -353,7 +353,7 @@ float4larger(float32 arg1, float32 arg2)
 float32
 float4smaller(float32 arg1, float32 arg2)
 {
-	float32			result;
+	float32		result;
 
 	if (!arg1 || !arg2)
 		return (float32) NULL;
@@ -376,8 +376,8 @@ float4smaller(float32 arg1, float32 arg2)
 float64
 float8abs(float64 arg1)
 {
-	float64			result;
-	double			val;
+	float64		result;
+	double		val;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -397,8 +397,8 @@ float8abs(float64 arg1)
 float64
 float8um(float64 arg1)
 {
-	float64			result;
-	double			val;
+	float64		result;
+	double		val;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -414,7 +414,7 @@ float8um(float64 arg1)
 float64
 float8larger(float64 arg1, float64 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -428,7 +428,7 @@ float8larger(float64 arg1, float64 arg2)
 float64
 float8smaller(float64 arg1, float64 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -456,8 +456,8 @@ float8smaller(float64 arg1, float64 arg2)
 float32
 float4pl(float32 arg1, float32 arg2)
 {
-	float32			result;
-	double			val;
+	float32		result;
+	double		val;
 
 	if (!arg1 || !arg2)
 		return (float32) NULL;
@@ -474,8 +474,8 @@ float4pl(float32 arg1, float32 arg2)
 float32
 float4mi(float32 arg1, float32 arg2)
 {
-	float32			result;
-	double			val;
+	float32		result;
+	double		val;
 
 	if (!arg1 || !arg2)
 		return (float32) NULL;
@@ -491,8 +491,8 @@ float4mi(float32 arg1, float32 arg2)
 float32
 float4mul(float32 arg1, float32 arg2)
 {
-	float32			result;
-	double			val;
+	float32		result;
+	double		val;
 
 	if (!arg1 || !arg2)
 		return (float32) NULL;
@@ -508,8 +508,8 @@ float4mul(float32 arg1, float32 arg2)
 float32
 float4div(float32 arg1, float32 arg2)
 {
-	float32			result;
-	double			val;
+	float32		result;
+	double		val;
 
 	if (!arg1 || !arg2)
 		return (float32) NULL;
@@ -528,7 +528,7 @@ float4div(float32 arg1, float32 arg2)
 float32
 float4inc(float32 arg1)
 {
-	double			val;
+	double		val;
 
 	if (!arg1)
 		return (float32) NULL;
@@ -549,8 +549,8 @@ float4inc(float32 arg1)
 float64
 float8pl(float64 arg1, float64 arg2)
 {
-	float64			result;
-	double			val;
+	float64		result;
+	double		val;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -566,8 +566,8 @@ float8pl(float64 arg1, float64 arg2)
 float64
 float8mi(float64 arg1, float64 arg2)
 {
-	float64			result;
-	double			val;
+	float64		result;
+	double		val;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -583,8 +583,8 @@ float8mi(float64 arg1, float64 arg2)
 float64
 float8mul(float64 arg1, float64 arg2)
 {
-	float64			result;
-	double			val;
+	float64		result;
+	double		val;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -600,8 +600,8 @@ float8mul(float64 arg1, float64 arg2)
 float64
 float8div(float64 arg1, float64 arg2)
 {
-	float64			result;
-	double			val;
+	float64		result;
+	double		val;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -620,7 +620,7 @@ float8div(float64 arg1, float64 arg2)
 float64
 float8inc(float64 arg1)
 {
-	double			val;
+	double		val;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -765,7 +765,7 @@ float8ge(float64 arg1, float64 arg2)
 float64
 ftod(float32 num)
 {
-	float64			result;
+	float64		result;
 
 	if (!num)
 		return (float64) NULL;
@@ -783,7 +783,7 @@ ftod(float32 num)
 float32
 dtof(float64 num)
 {
-	float32			result;
+	float32		result;
 
 	if (!num)
 		return (float32) NULL;
@@ -803,7 +803,7 @@ dtof(float64 num)
 int32
 dtoi4(float64 num)
 {
-	int32			result;
+	int32		result;
 
 	if (!num)
 		elog(WARN, "dtoi4:  unable to convert null", NULL);
@@ -822,7 +822,7 @@ dtoi4(float64 num)
 int16
 dtoi2(float64 num)
 {
-	int16			result;
+	int16		result;
 
 	if (!num)
 		elog(WARN, "dtoi2:  unable to convert null", NULL);
@@ -841,7 +841,7 @@ dtoi2(float64 num)
 float64
 i4tod(int32 num)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 
@@ -856,7 +856,7 @@ i4tod(int32 num)
 float64
 i2tod(int16 num)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 
@@ -871,7 +871,7 @@ i2tod(int16 num)
 int32
 ftoi4(float32 num)
 {
-	int32			result;
+	int32		result;
 
 	if (!num)
 		elog(WARN, "ftoi4:  unable to convert null", NULL);
@@ -890,7 +890,7 @@ ftoi4(float32 num)
 int16
 ftoi2(float32 num)
 {
-	int16			result;
+	int16		result;
 
 	if (!num)
 		elog(WARN, "ftoi2:  unable to convert null", NULL);
@@ -909,7 +909,7 @@ ftoi2(float32 num)
 float32
 i4tof(int32 num)
 {
-	float32			result;
+	float32		result;
 
 	result = (float32) palloc(sizeof(float32data));
 
@@ -924,7 +924,7 @@ i4tof(int32 num)
 float32
 i2tof(int16 num)
 {
-	float32			result;
+	float32		result;
 
 	result = (float32) palloc(sizeof(float32data));
 
@@ -945,8 +945,8 @@ i2tof(int16 num)
 float64
 dround(float64 arg1)
 {
-	float64			result;
-	double			tmp;
+	float64		result;
+	double		tmp;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -969,8 +969,8 @@ dround(float64 arg1)
 float64
 dtrunc(float64 arg1)
 {
-	float64			result;
-	double			tmp;
+	float64		result;
+	double		tmp;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -992,8 +992,8 @@ dtrunc(float64 arg1)
 float64
 dsqrt(float64 arg1)
 {
-	float64			result;
-	double			tmp;
+	float64		result;
+	double		tmp;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -1012,8 +1012,8 @@ dsqrt(float64 arg1)
 float64
 dcbrt(float64 arg1)
 {
-	float64			result;
-	double			tmp;
+	float64		result;
+	double		tmp;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -1032,9 +1032,9 @@ dcbrt(float64 arg1)
 float64
 dpow(float64 arg1, float64 arg2)
 {
-	float64			result;
-	double			tmp1,
-					tmp2;
+	float64		result;
+	double		tmp1,
+				tmp2;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1065,8 +1065,8 @@ dpow(float64 arg1, float64 arg2)
 float64
 dexp(float64 arg1)
 {
-	float64			result;
-	double			tmp;
+	float64		result;
+	double		tmp;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -1097,8 +1097,8 @@ dexp(float64 arg1)
 float64
 dlog1(float64 arg1)
 {
-	float64			result;
-	double			tmp;
+	float64		result;
+	double		tmp;
 
 	if (!arg1)
 		return (float64) NULL;
@@ -1132,7 +1132,7 @@ dlog1(float64 arg1)
 float64
 float48pl(float32 arg1, float64 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1147,7 +1147,7 @@ float48pl(float32 arg1, float64 arg2)
 float64
 float48mi(float32 arg1, float64 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1162,7 +1162,7 @@ float48mi(float32 arg1, float64 arg2)
 float64
 float48mul(float32 arg1, float64 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1177,7 +1177,7 @@ float48mul(float32 arg1, float64 arg2)
 float64
 float48div(float32 arg1, float64 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1201,7 +1201,7 @@ float48div(float32 arg1, float64 arg2)
 float64
 float84pl(float64 arg1, float32 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1216,7 +1216,7 @@ float84pl(float64 arg1, float32 arg2)
 float64
 float84mi(float64 arg1, float32 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1232,7 +1232,7 @@ float64
 float84mul(float64 arg1, float32 arg2)
 {
 
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1247,7 +1247,7 @@ float84mul(float64 arg1, float32 arg2)
 float64
 float84div(float64 arg1, float32 arg2)
 {
-	float64			result;
+	float64		result;
 
 	if (!arg1 || !arg2)
 		return (float64) NULL;
@@ -1415,8 +1415,8 @@ static const double
 #else
 static double
 #endif
-				one = 1.0,
-				TWO52[2] = {
+			one = 1.0,
+			TWO52[2] = {
 	4.50359962737049600000e+15, /* 0x43300000, 0x00000000 */
 	-4.50359962737049600000e+15,/* 0xC3300000, 0x00000000 */
 };
@@ -1427,18 +1427,18 @@ rint(double x)
 #else
 static double
 rint(x)
-double			x;
+double		x;
 
 #endif
 {
-	int				i0,
-					n0,
-					j0,
-					sx;
-	unsigned		i,
-					i1;
-	double			w,
-					t;
+	int			i0,
+				n0,
+				j0,
+				sx;
+	unsigned	i,
+				i1;
+	double		w,
+				t;
 
 	n0 = (*((int *) &one) >> 29) ^ 1;
 	i0 = *(n0 + (int *) &x);
@@ -1505,10 +1505,10 @@ double			x;
 static
 double
 cbrt(x)
-double			x;
+double		x;
 {
-	int				isneg = (x < 0.0);
-	double			tmpres = pow(fabs(x), (double) 1.0 / (double) 3.0);
+	int			isneg = (x < 0.0);
+	double		tmpres = pow(fabs(x), (double) 1.0 / (double) 3.0);
 
 	return (isneg ? -tmpres : tmpres);
 }
@@ -1525,9 +1525,9 @@ double			x;
 
 static int
 isinf(x)
-double			x;
+double		x;
 {
-	int				fpclass = class(x);
+	int			fpclass = class(x);
 
 	if (fpclass == FP_PLUS_INF)
 		return (1);
@@ -1542,9 +1542,9 @@ double			x;
 #include <fp_class.h>
 static int
 isinf(x)
-double			x;
+double		x;
 {
-	int				fpclass = fp_class_d(x);
+	int			fpclass = fp_class_d(x);
 
 	if (fpclass == FP_POS_INF)
 		return (1);
@@ -1559,9 +1559,9 @@ double			x;
 #include <fp_class.h>
 static int
 isinf(x)
-double			x;
+double		x;
 {
-	int				fpclass = fp_class(x);
+	int			fpclass = fp_class(x);
 
 	if (fpclass == FP_POS_INF)
 		return (1);
@@ -1577,19 +1577,19 @@ double			x;
 #include <ieeefp.h>
 static int
 isinf(d)
-double			d;
+double		d;
 {
-	fpclass_t		type = fpclass(d);
+	fpclass_t	type = fpclass(d);
 
 	switch (type)
 	{
-	case FP_SNAN:
-	case FP_QNAN:
-	case FP_NINF:
-	case FP_PINF:
-		return (1);
-	default:
-		break;
+		case FP_SNAN:
+		case FP_QNAN:
+		case FP_NINF:
+		case FP_PINF:
+			return (1);
+		default:
+			break;
 	}
 
 	return (0);
@@ -1601,19 +1601,19 @@ double			d;
 #include <ieeefp.h>
 static int
 isinf(d)
-double			d;
+double		d;
 {
-	fpclass_t		type = fpclass(d);
+	fpclass_t	type = fpclass(d);
 
 	switch (type)
 	{
-	case FP_SNAN:
-	case FP_QNAN:
-	case FP_NINF:
-	case FP_PINF:
-		return (1);
-	default:
-		break;
+		case FP_SNAN:
+		case FP_QNAN:
+		case FP_NINF:
+		case FP_PINF:
+			return (1);
+		default:
+			break;
 	}
 
 	return (0);

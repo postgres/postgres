@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.8 1997/09/07 04:50:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.9 1997/09/08 02:30:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,10 @@ charin(char *ch)
 /*
  *		charout			- converts 'x' to "x"
  */
-char		   *
+char	   *
 charout(int32 ch)
 {
-	char		   *result = (char *) palloc(2);
+	char	   *result = (char *) palloc(2);
 
 	result[0] = (char) ch;
 	result[1] = '\0';
@@ -59,7 +59,7 @@ charout(int32 ch)
 int32
 cidin(char *s)
 {
-	CommandId		c;
+	CommandId	c;
 
 	if (s == NULL)
 		c = 0;
@@ -75,11 +75,11 @@ cidin(char *s)
  *		NOTE: we must no use 'charout' because cid might be a non
  *		printable character...
  */
-char		   *
+char	   *
 cidout(int32 c)
 {
-	char		   *result;
-	CommandId		c2;
+	char	   *result;
+	CommandId	c2;
 
 	/*
 	 * cid is a number between 0 .. 2^16-1, therefore we need at most 6
@@ -98,10 +98,10 @@ cidout(int32 c)
  *		Note:
  *				Currently if strlen(s) < 14, the extra chars are nulls
  */
-char		   *
+char	   *
 char16in(char *s)
 {
-	char		   *result;
+	char	   *result;
 
 	if (s == NULL)
 		return (NULL);
@@ -113,10 +113,10 @@ char16in(char *s)
 /*
  *		char16out		- converts internal reprsentation to "..."
  */
-char		   *
+char	   *
 char16out(char *s)
 {
-	char		   *result = (char *) palloc(17);
+	char	   *result = (char *) palloc(17);
 
 	if (s == NULL)
 	{
@@ -133,48 +133,59 @@ char16out(char *s)
  *	 PUBLIC ROUTINES														 *
  *****************************************************************************/
 
-bool			chareq(int8 arg1, int8 arg2)
+bool
+chareq(int8 arg1, int8 arg2)
 {
 	return (arg1 == arg2);
 }
-bool			charne(int8 arg1, int8 arg2)
+bool
+charne(int8 arg1, int8 arg2)
 {
 	return (arg1 != arg2);
 }
-bool			charlt(int8 arg1, int8 arg2)
+bool
+charlt(int8 arg1, int8 arg2)
 {
 	return ((uint8) arg1 < (uint8) arg2);
 }
-bool			charle(int8 arg1, int8 arg2)
+bool
+charle(int8 arg1, int8 arg2)
 {
 	return ((uint8) arg1 <= (uint8) arg2);
 }
-bool			chargt(int8 arg1, int8 arg2)
+bool
+chargt(int8 arg1, int8 arg2)
 {
 	return ((uint8) arg1 > (uint8) arg2);
 }
-bool			charge(int8 arg1, int8 arg2)
+bool
+charge(int8 arg1, int8 arg2)
 {
 	return ((uint8) arg1 >= (uint8) arg2);
 }
-int8			charpl(int8 arg1, int8 arg2)
+int8
+charpl(int8 arg1, int8 arg2)
 {
 	return (arg1 + arg2);
 }
-int8			charmi(int8 arg1, int8 arg2)
+int8
+charmi(int8 arg1, int8 arg2)
 {
 	return (arg1 - arg2);
 }
-int8			charmul(int8 arg1, int8 arg2)
+int8
+charmul(int8 arg1, int8 arg2)
 {
 	return (arg1 * arg2);
 }
-int8			chardiv(int8 arg1, int8 arg2)
+int8
+chardiv(int8 arg1, int8 arg2)
 {
 	return (arg1 / arg2);
 }
 
-bool			cideq(int8 arg1, int8 arg2)
+bool
+cideq(int8 arg1, int8 arg2)
 {
 	return (arg1 == arg2);
 }
@@ -248,7 +259,7 @@ char16ge(char *arg1, char *arg2)
 uint16
 char2in(char *s)
 {
-	uint16			res;
+	uint16		res;
 
 	if (s == NULL)
 		return (0);
@@ -257,10 +268,10 @@ char2in(char *s)
 	return (res);
 }
 
-char		   *
+char	   *
 char2out(uint16 s)
 {
-	char		   *result = (char *) palloc(3);
+	char	   *result = (char *) palloc(3);
 
 	strNcpy(result, (char *) &s, 2);
 
@@ -313,7 +324,7 @@ char2cmp(uint16 a, uint16 b)
 uint32
 char4in(char *s)
 {
-	uint32			res;
+	uint32		res;
 
 	if (s == NULL)
 		return (0);
@@ -323,11 +334,11 @@ char4in(char *s)
 	return (res);
 }
 
-char		   *
+char	   *
 char4out(s)
-uint32			s;
+uint32		s;
 {
-	char		   *result = (char *) palloc(5);
+	char	   *result = (char *) palloc(5);
 
 	strNcpy(result, (char *) &s, 4);
 
@@ -377,10 +388,10 @@ char4cmp(uint32 a, uint32 b)
 }
 
 /* ============================== char8 ============================== */
-char		   *
+char	   *
 char8in(char *s)
 {
-	char		   *result;
+	char	   *result;
 
 	if (s == NULL)
 		return ((char *) NULL);
@@ -390,10 +401,10 @@ char8in(char *s)
 	return (result);
 }
 
-char		   *
+char	   *
 char8out(char *s)
 {
-	char		   *result = (char *) palloc(9);
+	char	   *result = (char *) palloc(9);
 
 	if (s == NULL)
 	{

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prs2lock.h,v 1.5 1997/09/07 05:00:32 momjian Exp $
+ * $Id: prs2lock.h,v 1.6 1997/09/08 02:38:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,13 @@
  */
 typedef struct RewriteRule
 {
-	Oid				ruleId;
-	CmdType			event;
-	AttrNumber		attrno;
-	Node		   *qual;
-	List		   *actions;
-	bool			isInstead;
-}				RewriteRule;
+	Oid			ruleId;
+	CmdType		event;
+	AttrNumber	attrno;
+	Node	   *qual;
+	List	   *actions;
+	bool		isInstead;
+}			RewriteRule;
 
 /*
  * RuleLock -
@@ -38,8 +38,8 @@ typedef struct RewriteRule
  */
 typedef struct RuleLock
 {
-	int				numLocks;
-	RewriteRule   **rules;
-}				RuleLock;
+	int			numLocks;
+	RewriteRule **rules;
+}			RuleLock;
 
 #endif							/* REWRITE_H */

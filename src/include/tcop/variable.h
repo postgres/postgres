@@ -2,7 +2,7 @@
  * Headers for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements
  *
- * $Id: variable.h,v 1.5 1997/09/07 05:02:01 momjian Exp $
+ * $Id: variable.h,v 1.6 1997/09/08 02:39:21 momjian Exp $
  *
  */
 
@@ -16,14 +16,14 @@ struct PGVariables
 {
 	struct
 	{
-		bool			euro;
+		bool		euro;
 		enum DateFormat format;
-	}				date;
+	}			date;
 };
 
 extern struct PGVariables PGVariables;
 
 /*-----------------------------------------------------------------------*/
-bool			SetPGVariable(const char *, const char *);
-bool			GetPGVariable(const char *);
-bool			ResetPGVariable(const char *);
+bool		SetPGVariable(const char *, const char *);
+bool		GetPGVariable(const char *);
+bool		ResetPGVariable(const char *);

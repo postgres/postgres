@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.16 1997/09/07 04:37:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.17 1997/09/08 02:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 Oid
 typtoout(Oid type)
 {
-	HeapTuple		typeTuple;
+	HeapTuple	typeTuple;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type),
@@ -52,7 +52,7 @@ typtoout(Oid type)
 Oid
 gettypelem(Oid type)
 {
-	HeapTuple		typeTuple;
+	HeapTuple	typeTuple;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type),
@@ -73,13 +73,13 @@ gettypelem(Oid type)
 void
 printtup(HeapTuple tuple, TupleDesc typeinfo)
 {
-	int				i,
-					j,
-					k;
-	char		   *outputstr,
-				   *attr;
-	bool			isnull;
-	Oid				typoutput;
+	int			i,
+				j,
+				k;
+	char	   *outputstr,
+			   *attr;
+	bool		isnull;
+	Oid			typoutput;
 
 	/* ----------------
 	 *	tell the frontend to expect new tuple data
@@ -158,8 +158,8 @@ printatt(unsigned attributeId,
 void
 showatts(char *name, TupleDesc tupleDesc)
 {
-	int				i;
-	int				natts = tupleDesc->natts;
+	int			i;
+	int			natts = tupleDesc->natts;
 	AttributeTupleForm *attinfo = tupleDesc->attrs;
 
 	puts(name);
@@ -175,11 +175,11 @@ showatts(char *name, TupleDesc tupleDesc)
 void
 debugtup(HeapTuple tuple, TupleDesc typeinfo)
 {
-	register int	i;
-	char		   *attr,
-				   *value;
-	bool			isnull;
-	Oid				typoutput;
+	register int i;
+	char	   *attr,
+			   *value;
+	bool		isnull;
+	Oid			typoutput;
 
 	for (i = 0; i < tuple->t_natts; ++i)
 	{
@@ -209,11 +209,11 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
 void
 printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 {
-	int				i,
-					j,
-					k;
-	char		   *attr;
-	bool			isnull;
+	int			i,
+				j,
+				k;
+	char	   *attr;
+	bool		isnull;
 
 	/* ----------------
 	 *	tell the frontend to expect new tuple data
@@ -254,7 +254,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 #endif
 	for (i = 0; i < tuple->t_natts; ++i)
 	{
-		int32			len = typeinfo->attrs[i]->attlen;
+		int32		len = typeinfo->attrs[i]->attlen;
 
 		attr = heap_getattr(tuple, InvalidBuffer, i + 1, typeinfo, &isnull);
 		if (!isnull)
@@ -269,7 +269,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 				pq_putnchar(VARDATA(attr), len);
 #ifdef IPORTAL_DEBUG
 				{
-					char		   *d = VARDATA(attr);
+					char	   *d = VARDATA(attr);
 
 					fprintf(stderr, "length %d data %x%x%x%x\n",
 							len, *d, *(d + 1), *(d + 2), *(d + 3));
@@ -281,25 +281,25 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 				/* fixed size */
 				if (typeinfo->attrs[i]->attbyval)
 				{
-					int8			i8;
-					int16			i16;
-					int32			i32;
+					int8		i8;
+					int16		i16;
+					int32		i32;
 
 					pq_putint(len, sizeof(int32));
 					switch (len)
 					{
-					case sizeof(int8):
-						i8 = DatumGetChar(attr);
-						pq_putnchar((char *) &i8, len);
-						break;
-					case sizeof(int16):
-						i16 = DatumGetInt16(attr);
-						pq_putnchar((char *) &i16, len);
-						break;
-					case sizeof(int32):
-						i32 = DatumGetInt32(attr);
-						pq_putnchar((char *) &i32, len);
-						break;
+						case sizeof(int8):
+							i8 = DatumGetChar(attr);
+							pq_putnchar((char *) &i8, len);
+							break;
+						case sizeof(int16):
+							i16 = DatumGetInt16(attr);
+							pq_putnchar((char *) &i16, len);
+							break;
+						case sizeof(int32):
+							i32 = DatumGetInt32(attr);
+							pq_putnchar((char *) &i32, len);
+							break;
 					}
 #ifdef IPORTAL_DEBUG
 					fprintf(stderr, "byval length %d data %d\n", len, attr);

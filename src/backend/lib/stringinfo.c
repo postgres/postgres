@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.4 1997/09/07 04:42:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.5 1997/09/08 02:23:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,8 @@
 StringInfo
 makeStringInfo()
 {
-	StringInfo		res;
-	long			size;
+	StringInfo	res;
+	long		size;
 
 	res = (StringInfo) palloc(sizeof(StringInfoData));
 	if (res == NULL)
@@ -72,9 +72,9 @@ makeStringInfo()
 void
 appendStringInfo(StringInfo str, char *buffer)
 {
-	int				buflen,
-					newlen;
-	char		   *s;
+	int			buflen,
+				newlen;
+	char	   *s;
 
 	Assert((str != NULL));
 

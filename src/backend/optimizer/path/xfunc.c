@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.4 1997/09/07 04:43:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.5 1997/09/08 02:24:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,13 +62,13 @@ xfunc_card_unreferenced(Query * queryInfo,
 void
 xfunc_trypullup(Rel rel)
 {
-	LispValue		y;			/* list ptr */
-	CInfo			maxcinfo;	/* The CInfo to pull up, as calculated by
+	LispValue	y;				/* list ptr */
+	CInfo		maxcinfo;		/* The CInfo to pull up, as calculated by
 								 * xfunc_shouldpull() */
-	JoinPath		curpath;	/* current path in list */
-	int				progress;	/* has progress been made this time
+	JoinPath	curpath;		/* current path in list */
+	int			progress;		/* has progress been made this time
 								 * through? */
-	int				clausetype;
+	int			clausetype;
 
 	do
 	{
@@ -153,17 +153,16 @@ xfunc_shouldpull(Query * queryInfo,
 				 CInfo * maxcinfopt)	/* Out: pointer to clause to
 										 * pullup */
 {
-	LispValue		clauselist,
-					tmplist;	/* lists of clauses */
-	CInfo			maxcinfo;	/* clause to pullup */
-	LispValue		primjoinclause		/* primary join clause */
+	LispValue	clauselist,
+				tmplist;		/* lists of clauses */
+	CInfo		maxcinfo;		/* clause to pullup */
+	LispValue	primjoinclause	/* primary join clause */
 	= xfunc_primary_join(parentpath);
-	Cost			tmprank,
-					maxrank = (-1 * MAXFLOAT);	/* ranks of clauses */
-	Cost			joinselec = 0;		/* selectivity of the join
-										 * predicate */
-	Cost			joincost = 0;		/* join cost + primjoinclause cost */
-	int				retval = XFUNC_LOCPRD;
+	Cost		tmprank,
+				maxrank = (-1 * MAXFLOAT);		/* ranks of clauses */
+	Cost		joinselec = 0;	/* selectivity of the join predicate */
+	Cost		joincost = 0;	/* join cost + primjoinclause cost */
+	int			retval = XFUNC_LOCPRD;
 
 	clauselist = get_locclauseinfo(childpath);
 
@@ -275,11 +274,11 @@ xfunc_pullup(Query * queryInfo,
 			 int whichchild,	/* whether child is INNER or OUTER of join */
 			 int clausetype)	/* whether clause to pull is join or local */
 {
-	Path			newkid;
-	Rel				newrel;
-	Cost			pulled_selec;
-	Cost			cost;
-	CInfo			newinfo;
+	Path		newkid;
+	Rel			newrel;
+	Cost		pulled_selec;
+	Cost		cost;
+	CInfo		newinfo;
 
 	/* remove clause from childpath */
 	newkid = (Path) copyObject((Node) childpath);
@@ -363,8 +362,8 @@ xfunc_pullup(Query * queryInfo,
 Cost
 xfunc_rank(Query * queryInfo, LispValue clause)
 {
-	Cost			selec = compute_clause_selec(queryInfo, clause, LispNil);
-	Cost			cost = xfunc_expense(queryInfo, clause);
+	Cost		selec = compute_clause_selec(queryInfo, clause, LispNil);
+	Cost		cost = xfunc_expense(queryInfo, clause);
 
 	if (cost == 0)
 		if (selec > 1)
@@ -381,13 +380,13 @@ xfunc_rank(Query * queryInfo, LispValue clause)
  */
 Cost
 xfunc_expense(Query * queryInfo, clause)
-LispValue		clause;
+LispValue	clause;
 {
-	Cost			cost = xfunc_local_expense(clause);
+	Cost		cost = xfunc_local_expense(clause);
 
 	if (cost)
 	{
-		Count			card = xfunc_card_unreferenced(queryInfo, clause, LispNil);
+		Count		card = xfunc_card_unreferenced(queryInfo, clause, LispNil);
 
 		if (card)
 			cost /= card;
@@ -403,15 +402,15 @@ LispValue		clause;
 Cost
 xfunc_join_expense(Query * queryInfo, JoinPath path, int whichchild)
 {
-	LispValue		primjoinclause = xfunc_primary_join(path);
+	LispValue	primjoinclause = xfunc_primary_join(path);
 
 	/*
 	 * * the second argument to xfunc_card_unreferenced reflects all the *
 	 * relations involved in the join clause, i.e. all the relids in the
 	 * Rel * of the join clause
 	 */
-	Count			card = 0;
-	Cost			cost = xfunc_expense_per_tuple(path, whichchild);
+	Count		card = 0;
+	Cost		cost = xfunc_expense_per_tuple(path, whichchild);
 
 	card = xfunc_card_unreferenced(queryInfo,
 								   primjoinclause,
@@ -432,8 +431,8 @@ xfunc_join_expense(Query * queryInfo, JoinPath path, int whichchild)
 Cost
 xfunc_local_expense(LispValue clause)
 {
-	Cost			cost = 0;	/* running expense */
-	LispValue		tmpclause;
+	Cost		cost = 0;		/* running expense */
+	LispValue	tmpclause;
 
 	/* First handle the base case */
 	if (IsA(clause, Const) || IsA(clause, Var) || IsA(clause, Param))
@@ -484,15 +483,15 @@ xfunc_local_expense(LispValue clause)
 Cost
 xfunc_func_expense(LispValue node, LispValue args)
 {
-	HeapTuple		tupl;		/* the pg_proc tuple for each function */
-	Form_pg_proc	proc;		/* a data structure to hold the pg_proc
+	HeapTuple	tupl;			/* the pg_proc tuple for each function */
+	Form_pg_proc proc;			/* a data structure to hold the pg_proc
 								 * tuple */
-	int				width = 0;	/* byte width of the field referenced by
+	int			width = 0;		/* byte width of the field referenced by
 								 * each clause */
-	RegProcedure	funcid;		/* ID of function associate with node */
-	Cost			cost = 0;	/* running expense */
-	LispValue		tmpclause;
-	LispValue		operand;	/* one operand of an operator */
+	RegProcedure funcid;		/* ID of function associate with node */
+	Cost		cost = 0;		/* running expense */
+	LispValue	tmpclause;
+	LispValue	operand;		/* one operand of an operator */
 
 	if (IsA(node, Oper))
 	{
@@ -517,15 +516,15 @@ xfunc_func_expense(LispValue node, LispValue args)
 	 */
 	if (proc->prolang == SQLlanguageId)
 	{
-		LispValue		tmpplan;
-		List			planlist;
+		LispValue	tmpplan;
+		List		planlist;
 
 		if (IsA(node, Oper) || get_func_planlist((Func) node) == LispNil)
 		{
-			Oid			   *argOidVect; /* vector of argtypes */
-			char		   *pq_src;		/* text of PQ function */
-			int				nargs;		/* num args to PQ function */
-			QueryTreeList  *queryTree_list;		/* dummy variable */
+			Oid		   *argOidVect;		/* vector of argtypes */
+			char	   *pq_src; /* text of PQ function */
+			int			nargs;	/* num args to PQ function */
+			QueryTreeList *queryTree_list;		/* dummy variable */
 
 			/*
 			 * * plan the function, storing it in the Func node for later *
@@ -599,10 +598,10 @@ xfunc_func_expense(LispValue node, LispValue args)
 int
 xfunc_width(LispValue clause)
 {
-	Relation		rd;			/* Relation Descriptor */
-	HeapTuple		tupl;		/* structure to hold a cached tuple */
-	TypeTupleForm	type;		/* structure to hold a type tuple */
-	int				retval = 0;
+	Relation	rd;				/* Relation Descriptor */
+	HeapTuple	tupl;			/* structure to hold a cached tuple */
+	TypeTupleForm type;			/* structure to hold a type tuple */
+	int			retval = 0;
 
 	if (IsA(clause, Const))
 	{
@@ -695,7 +694,7 @@ xfunc_width(LispValue clause)
 	}
 	else if (fast_is_funcclause(clause))
 	{
-		Func			func = (Func) get_function(clause);
+		Func		func = (Func) get_function(clause);
 
 		if (get_func_tlist(func) != LispNil)
 		{
@@ -735,13 +734,13 @@ exit:
  ** User may pass in referenced list, if they know it (useful
  ** for joins).
  */
-static			Count
+static Count
 xfunc_card_unreferenced(Query * queryInfo,
 						LispValue clause, Relid referenced)
 {
-	Relid			unreferenced,
-					allrelids = LispNil;
-	LispValue		temp;
+	Relid		unreferenced,
+				allrelids = LispNil;
+	LispValue	temp;
 
 	/* find all relids of base relations referenced in query */
 	foreach(temp, queryInfo->base_relation_list_)
@@ -766,11 +765,11 @@ xfunc_card_unreferenced(Query * queryInfo,
 Count
 xfunc_card_product(Query * queryInfo, Relid relids)
 {
-	LispValue		cinfonode;
-	LispValue		temp;
-	Rel				currel;
-	Cost			tuples;
-	Count			retval = 0;
+	LispValue	cinfonode;
+	LispValue	temp;
+	Rel			currel;
+	Cost		tuples;
+	Count		retval = 0;
 
 	foreach(temp, relids)
 	{
@@ -808,8 +807,8 @@ xfunc_card_product(Query * queryInfo, Relid relids)
 List
 xfunc_find_references(LispValue clause)
 {
-	List			retval = (List) LispNil;
-	LispValue		tmpclause;
+	List		retval = (List) LispNil;
+	LispValue	tmpclause;
 
 	/* Base cases */
 	if (IsA(clause, Var))
@@ -870,12 +869,12 @@ xfunc_find_references(LispValue clause)
 LispValue
 xfunc_primary_join(JoinPath pathnode)
 {
-	LispValue		joinclauselist = get_pathclauseinfo(pathnode);
-	CInfo			mincinfo;
-	LispValue		tmplist;
-	LispValue		minclause = LispNil;
-	Cost			minrank,
-					tmprank;
+	LispValue	joinclauselist = get_pathclauseinfo(pathnode);
+	CInfo		mincinfo;
+	LispValue	tmplist;
+	LispValue	minclause = LispNil;
+	Cost		minrank,
+				tmprank;
 
 	if (IsA(pathnode, MergePath))
 	{
@@ -932,9 +931,9 @@ xfunc_primary_join(JoinPath pathnode)
 Cost
 xfunc_get_path_cost(Query * queryInfo, Path pathnode)
 {
-	Cost			cost = 0;
-	LispValue		tmplist;
-	Cost			selec = 1.0;
+	Cost		cost = 0;
+	LispValue	tmplist;
+	Cost		selec = 1.0;
 
 	/*
 	 * * first add in the expensive local function costs. * We ensure that
@@ -1025,12 +1024,12 @@ xfunc_get_path_cost(Query * queryInfo, Path pathnode)
 Cost
 xfunc_total_path_cost(JoinPath pathnode)
 {
-	Cost			cost = xfunc_get_path_cost((Path) pathnode);
+	Cost		cost = xfunc_get_path_cost((Path) pathnode);
 
 	Assert(IsA(pathnode, JoinPath));
 	if (IsA(pathnode, MergePath))
 	{
-		MergePath		mrgnode = (MergePath) pathnode;
+		MergePath	mrgnode = (MergePath) pathnode;
 
 		cost += cost_mergesort(get_path_cost((Path) get_outerjoinpath(mrgnode)),
 						get_path_cost((Path) get_innerjoinpath(mrgnode)),
@@ -1049,7 +1048,7 @@ xfunc_total_path_cost(JoinPath pathnode)
 	}
 	else if (IsA(pathnode, HashPath))
 	{
-		HashPath		hashnode = (HashPath) pathnode;
+		HashPath	hashnode = (HashPath) pathnode;
 
 		cost += cost_hashjoin(get_path_cost((Path) get_outerjoinpath(hashnode)),
 					   get_path_cost((Path) get_innerjoinpath(hashnode)),
@@ -1105,10 +1104,10 @@ xfunc_total_path_cost(JoinPath pathnode)
 Cost
 xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
 {
-	Rel				outerrel = get_parent((Path) get_outerjoinpath(joinnode));
-	Rel				innerrel = get_parent((Path) get_innerjoinpath(joinnode));
-	Count			outerwidth = get_width(outerrel);
-	Count			outers_per_page = ceil(BLCKSZ / (outerwidth + sizeof(HeapTupleData)));
+	Rel			outerrel = get_parent((Path) get_outerjoinpath(joinnode));
+	Rel			innerrel = get_parent((Path) get_innerjoinpath(joinnode));
+	Count		outerwidth = get_width(outerrel);
+	Count		outers_per_page = ceil(BLCKSZ / (outerwidth + sizeof(HeapTupleData)));
 
 	if (IsA(joinnode, HashPath))
 	{
@@ -1150,8 +1149,8 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 			  Rel rel,			/* rel it's being pulled from */
 			  int varno)		/* whether rel is INNER or OUTER of join */
 {
-	LispValue		tmpclause;	/* temporary variable */
-	TargetEntry    *tle;		/* tlist member corresponding to var */
+	LispValue	tmpclause;		/* temporary variable */
+	TargetEntry *tle;			/* tlist member corresponding to var */
 
 
 	if (IsA(clause, Const) || IsA(clause, Param))
@@ -1205,11 +1204,11 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 int
 xfunc_cinfo_compare(void *arg1, void *arg2)
 {
-	CInfo			info1 = *(CInfo *) arg1;
-	CInfo			info2 = *(CInfo *) arg2;
+	CInfo		info1 = *(CInfo *) arg1;
+	CInfo		info2 = *(CInfo *) arg2;
 
-	LispValue		clause1 = (LispValue) get_clause(info1),
-					clause2 = (LispValue) get_clause(info2);
+	LispValue	clause1 = (LispValue) get_clause(info1),
+				clause2 = (LispValue) get_clause(info2);
 
 	return (xfunc_clause_compare((void *) &clause1, (void *) &clause2));
 }
@@ -1222,10 +1221,10 @@ xfunc_cinfo_compare(void *arg1, void *arg2)
 int
 xfunc_clause_compare(void *arg1, void *arg2)
 {
-	LispValue		clause1 = *(LispValue *) arg1;
-	LispValue		clause2 = *(LispValue *) arg2;
-	Cost			rank1,		/* total xfunc rank of clause1 */
-					rank2;		/* total xfunc rank of clause2 */
+	LispValue	clause1 = *(LispValue *) arg1;
+	LispValue	clause2 = *(LispValue *) arg2;
+	Cost		rank1,			/* total xfunc rank of clause1 */
+				rank2;			/* total xfunc rank of clause2 */
 
 	rank1 = xfunc_rank(clause1);
 	rank2 = xfunc_rank(clause2);
@@ -1247,7 +1246,7 @@ xfunc_clause_compare(void *arg1, void *arg2)
 void
 xfunc_disjunct_sort(LispValue clause_list)
 {
-	LispValue		temp;
+	LispValue	temp;
 
 	foreach(temp, clause_list)
 		if (or_clause(lfirst(temp)))
@@ -1264,14 +1263,14 @@ xfunc_disjunct_sort(LispValue clause_list)
 int
 xfunc_disjunct_compare(Query * queryInfo, void *arg1, void *arg2)
 {
-	LispValue		disjunct1 = *(LispValue *) arg1;
-	LispValue		disjunct2 = *(LispValue *) arg2;
-	Cost			cost1,		/* total cost of disjunct1 */
-					cost2,		/* total cost of disjunct2 */
-					selec1,
-					selec2;
-	Cost			rank1,
-					rank2;
+	LispValue	disjunct1 = *(LispValue *) arg1;
+	LispValue	disjunct2 = *(LispValue *) arg2;
+	Cost		cost1,			/* total cost of disjunct1 */
+				cost2,			/* total cost of disjunct2 */
+				selec1,
+				selec2;
+	Cost		rank1,
+				rank2;
 
 	cost1 = xfunc_expense(queryInfo, disjunct1);
 	cost2 = xfunc_expense(queryInfo, disjunct2);
@@ -1310,12 +1309,12 @@ xfunc_disjunct_compare(Query * queryInfo, void *arg1, void *arg2)
 int
 xfunc_func_width(RegProcedure funcid, LispValue args)
 {
-	Relation		rd;			/* Relation Descriptor */
-	HeapTuple		tupl;		/* structure to hold a cached tuple */
-	Form_pg_proc	proc;		/* structure to hold the pg_proc tuple */
-	TypeTupleForm	type;		/* structure to hold the pg_type tuple */
-	LispValue		tmpclause;
-	int				retval;
+	Relation	rd;				/* Relation Descriptor */
+	HeapTuple	tupl;			/* structure to hold a cached tuple */
+	Form_pg_proc proc;			/* structure to hold the pg_proc tuple */
+	TypeTupleForm type;			/* structure to hold the pg_type tuple */
+	LispValue	tmpclause;
+	int			retval;
 
 	/* lookup function and find its return type */
 	Assert(RegProcedureIsValid(funcid));
@@ -1370,9 +1369,9 @@ exit:
 int
 xfunc_tuple_width(Relation rd)
 {
-	int				i;
-	int				retval = 0;
-	TupleDesc		tdesc = RelationGetTupleDescriptor(rd);
+	int			i;
+	int			retval = 0;
+	TupleDesc	tdesc = RelationGetTupleDescriptor(rd);
 
 	for (i = 0; i < tdesc->natts; i++)
 	{
@@ -1392,7 +1391,7 @@ xfunc_tuple_width(Relation rd)
 int
 xfunc_num_join_clauses(JoinPath path)
 {
-	int				num = length(get_pathclauseinfo(path));
+	int			num = length(get_pathclauseinfo(path));
 
 	if (IsA(path, MergePath))
 		return (num + length(get_path_mergeclauses((MergePath) path)));
@@ -1409,9 +1408,9 @@ xfunc_num_join_clauses(JoinPath path)
 LispValue
 xfunc_LispRemove(LispValue foo, List bar)
 {
-	LispValue		temp = LispNil;
-	LispValue		result = LispNil;
-	int				sanity = false;
+	LispValue	temp = LispNil;
+	LispValue	result = LispNil;
+	int			sanity = false;
 
 	for (temp = bar; !null(temp); temp = lnext(temp))
 		if (!equal((Node) (foo), (Node) (lfirst(temp))))
@@ -1439,7 +1438,7 @@ xfunc_LispRemove(LispValue foo, List bar)
 bool
 xfunc_copyrel(Rel from, Rel * to)
 {
-	Rel				newnode;
+	Rel			newnode;
 
 	Pointer(*alloc) () = palloc;
 

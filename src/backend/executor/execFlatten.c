@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.3 1997/09/07 04:41:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.4 1997/09/08 02:22:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ ExecEvalIter(Iter * iterNode,
 			 bool * resultIsNull,
 			 bool * iterIsDone)
 {
-	Node		   *expression;
+	Node	   *expression;
 
 	expression = iterNode->iterexpr;
 
@@ -66,13 +66,13 @@ ExecEvalFjoin(TargetEntry * tlist,
 {
 
 #ifdef SETS_FIXED
-	bool			isDone;
-	int				curNode;
-	List		   *tlistP;
+	bool		isDone;
+	int			curNode;
+	List	   *tlistP;
 
-	Fjoin		   *fjNode = tlist->fjoin;
-	DatumPtr		resVect = fjNode->fj_results;
-	BoolPtr			alwaysDone = fjNode->fj_alwaysDone;
+	Fjoin	   *fjNode = tlist->fjoin;
+	DatumPtr	resVect = fjNode->fj_results;
+	BoolPtr		alwaysDone = fjNode->fj_alwaysDone;
 
 	if (fj_isDone)
 		*fj_isDone = false;
@@ -90,7 +90,7 @@ ExecEvalFjoin(TargetEntry * tlist,
 		curNode = 1;
 		foreach(tlistP, lnext(tlist))
 		{
-			TargetEntry    *tle = lfirst(tlistP);
+			TargetEntry *tle = lfirst(tlistP);
 
 			resVect[curNode] = ExecEvalIter((Iter *) tle->expr,
 											econtext,
@@ -181,19 +181,19 @@ ExecEvalFjoin(TargetEntry * tlist,
 }
 
 #ifdef SETS_FIXED
-static			bool
+static bool
 FjoinBumpOuterNodes(TargetEntry * tlist,
 					ExprContext * econtext,
 					DatumPtr results,
 					char *nulls)
 {
-	bool			funcIsDone = true;
-	Fjoin		   *fjNode = tlist->fjoin;
-	char		   *alwaysDone = fjNode->fj_alwaysDone;
-	List		   *outerList = lnext(tlist);
-	List		   *trailers = lnext(tlist);
-	int				trailNode = 1;
-	int				curNode = 1;
+	bool		funcIsDone = true;
+	Fjoin	   *fjNode = tlist->fjoin;
+	char	   *alwaysDone = fjNode->fj_alwaysDone;
+	List	   *outerList = lnext(tlist);
+	List	   *trailers = lnext(tlist);
+	int			trailNode = 1;
+	int			curNode = 1;
 
 	/*
 	 * Run through list of functions until we get to one that isn't yet
@@ -201,7 +201,7 @@ FjoinBumpOuterNodes(TargetEntry * tlist,
 	 */
 	while ((funcIsDone == true) && (outerList != NIL))
 	{
-		TargetEntry    *tle = lfirst(outerList);
+		TargetEntry *tle = lfirst(outerList);
 
 		if (alwaysDone[curNode] == true)
 			nulls[curNode] = 'n';
@@ -232,7 +232,7 @@ FjoinBumpOuterNodes(TargetEntry * tlist,
 	trailNode = 1;
 	while (trailNode != curNode - 1)
 	{
-		TargetEntry    *tle = lfirst(trailers);
+		TargetEntry *tle = lfirst(trailers);
 
 		if (alwaysDone[trailNode] != true)
 			results[trailNode] = ExecEvalIter((Iter) tle->expr,

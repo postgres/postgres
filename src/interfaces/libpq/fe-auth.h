@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.4 1997/09/07 05:03:21 momjian Exp $
+ * $Id: fe-auth.h,v 1.5 1997/09/08 02:40:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ extern int
 fe_sendauth(MsgType msgtype, Port * port, const char *hostname,
 			const char *user, const char *password,
 			const char *PQerromsg);
-extern void		fe_setauthsvc(const char *name, char *PQerrormsg);
+extern void fe_setauthsvc(const char *name, char *PQerrormsg);
 
 #define PG_KRB4_VERSION "PGVER4.1"		/* at most KRB_SENDAUTH_VLEN chars */
 #define PG_KRB5_VERSION "PGVER5.1"

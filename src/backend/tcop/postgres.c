@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.43 1997/09/07 04:49:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.44 1997/09/08 02:29:48 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -90,65 +90,65 @@
 #include "libpq/pqsignal.h"
 #include "rewrite/rewriteHandler.h"		/* for QueryRewrite() */
 
-static void		quickdie(SIGNAL_ARGS);
+static void quickdie(SIGNAL_ARGS);
 
 /* ----------------
  *		global variables
  * ----------------
  */
-static bool		DebugPrintQuery = false;
-static bool		DebugPrintPlan = false;
-static bool		DebugPrintParse = false;
-static bool		DebugPrintRewrittenParsetree = false;
+static bool DebugPrintQuery = false;
+static bool DebugPrintPlan = false;
+static bool DebugPrintParse = false;
+static bool DebugPrintRewrittenParsetree = false;
 
 /*static bool	EnableRewrite = true; , never changes why have it*/
-CommandDest		whereToSendOutput;
+CommandDest whereToSendOutput;
 
 #ifdef LOCK_MGR_DEBUG
-extern int		lockDebug;
+extern int	lockDebug;
 
 #endif
-extern int		lockingOff;
-extern int		NBuffers;
+extern int	lockingOff;
+extern int	NBuffers;
 
-int				dontExecute = 0;
-static int		ShowStats;
-static bool		IsEmptyQuery = false;
+int			dontExecute = 0;
+static int	ShowStats;
+static bool IsEmptyQuery = false;
 
-char			relname[80];	/* current relation name */
+char		relname[80];		/* current relation name */
 
 #if defined(nextstep)
-jmp_buf			Warn_restart;
+jmp_buf		Warn_restart;
 
 #define sigsetjmp(x,y)	setjmp(x)
 #define siglongjmp longjmp
 #else
-sigjmp_buf		Warn_restart;
+sigjmp_buf	Warn_restart;
 
 #endif							/* defined(nextstep) */
-int				InWarn;
+int			InWarn;
 
-extern int		NBuffers;
+extern int	NBuffers;
 
-static int		EchoQuery = 0;	/* default don't echo */
-time_t			tim;
-char			pg_pathname[256];
-static int		ShowParserStats;
-static int		ShowPlannerStats;
-int				ShowExecutorStats;
-FILE		   *StatFp;
+static int	EchoQuery = 0;		/* default don't echo */
+time_t		tim;
+char		pg_pathname[256];
+static int	ShowParserStats;
+static int	ShowPlannerStats;
+int			ShowExecutorStats;
+FILE	   *StatFp;
 
 typedef struct frontend
 {
-	bool			fn_connected;
-	Port			fn_port;
-	FILE		   *fn_Pfin;	/* the input fd */
-	FILE		   *fn_Pfout;	/* the output fd */
-	bool			fn_done;	/* set after the frontend closes its
+	bool		fn_connected;
+	Port		fn_port;
+	FILE	   *fn_Pfin;		/* the input fd */
+	FILE	   *fn_Pfout;		/* the output fd */
+	bool		fn_done;		/* set after the frontend closes its
 								 * connection */
-}				FrontEnd;
+}			FrontEnd;
 
-static Dllist  *frontendList;
+static Dllist *frontendList;
 
 /* ----------------
  *		people who want to use EOF should #define DONTUSENEWLINE in
@@ -156,11 +156,11 @@ static Dllist  *frontendList;
  * ----------------
  */
 #ifndef TCOP_DONTUSENEWLINE
-int				UseNewLine = 1; /* Use newlines query delimiters (the
+int			UseNewLine = 1;		/* Use newlines query delimiters (the
 								 * default) */
 
 #else
-int				UseNewLine = 0; /* Use EOF as query delimiters */
+int			UseNewLine = 0;		/* Use EOF as query delimiters */
 
 #endif							/* TCOP_DONTUSENEWLINE */
 
@@ -169,13 +169,13 @@ int				UseNewLine = 0; /* Use EOF as query delimiters */
  *		plans
  * ----------------
  */
-int				BushyPlanFlag = 0;		/* default to false -- consider
-										 * only left-deep trees */
+int			BushyPlanFlag = 0;	/* default to false -- consider only
+								 * left-deep trees */
 
 /*
 ** Flags for expensive function optimization -- JMH 3/9/92
 */
-int				XfuncMode = 0;
+int			XfuncMode = 0;
 
 /*
  * ----------------
@@ -188,15 +188,15 @@ int				XfuncMode = 0;
  *		   happens once.  -cim 6/9/91
  * ----------------
 */
-int				_exec_repeat_ = 1;
+int			_exec_repeat_ = 1;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
  * ----------------------------------------------------------------
  */
-static char		InteractiveBackend(char *inBuf);
-static char		SocketBackend(char *inBuf, bool multiplexedBackend);
-static char		ReadCommand(char *inBuf, bool multiplexedBackend);
+static char InteractiveBackend(char *inBuf);
+static char SocketBackend(char *inBuf, bool multiplexedBackend);
+static char ReadCommand(char *inBuf, bool multiplexedBackend);
 
 
 /* ----------------------------------------------------------------
@@ -213,10 +213,10 @@ static char		ReadCommand(char *inBuf, bool multiplexedBackend);
 static char
 InteractiveBackend(char *inBuf)
 {
-	char		   *stuff = inBuf;		/* current place in input buffer */
-	int				c;			/* character read from getc() */
-	bool			end = false;/* end-of-input flag */
-	bool			backslashSeen = false;		/* have we seen a \ ? */
+	char	   *stuff = inBuf;	/* current place in input buffer */
+	int			c;				/* character read from getc() */
+	bool		end = false;	/* end-of-input flag */
+	bool		backslashSeen = false;	/* have we seen a \ ? */
 
 	/* ----------------
 	 *	display a prompt and obtain input from the user
@@ -314,8 +314,8 @@ InteractiveBackend(char *inBuf)
 static char
 SocketBackend(char *inBuf, bool multiplexedBackend)
 {
-	char			qtype[2];
-	char			result = '\0';
+	char		qtype[2];
+	char		result = '\0';
 
 	/* ----------------
 	 *	get input from the frontend
@@ -338,43 +338,43 @@ SocketBackend(char *inBuf, bool multiplexedBackend)
 
 	switch (*qtype)
 	{
-		/* ----------------
-		 *	'Q': user entered a query
-		 * ----------------
-		 */
-	case 'Q':
-		pq_getstr(inBuf, MAX_PARSE_BUFFER);
-		result = 'Q';
-		break;
+			/* ----------------
+			 *	'Q': user entered a query
+			 * ----------------
+			 */
+		case 'Q':
+			pq_getstr(inBuf, MAX_PARSE_BUFFER);
+			result = 'Q';
+			break;
 
-		/* ----------------
-		 *	'F':  calling user/system functions
-		 * ----------------
-		 */
-	case 'F':
-		pq_getstr(inBuf, MAX_PARSE_BUFFER);		/* ignore the rest of the
+			/* ----------------
+			 *	'F':  calling user/system functions
+			 * ----------------
+			 */
+		case 'F':
+			pq_getstr(inBuf, MAX_PARSE_BUFFER); /* ignore the rest of the
 												 * line */
-		result = 'F';
-		break;
+			result = 'F';
+			break;
 
-		/* ----------------
-		 *	'X':  frontend is exiting
-		 * ----------------
-		 */
-	case 'X':
-		result = 'X';
-		break;
+			/* ----------------
+			 *	'X':  frontend is exiting
+			 * ----------------
+			 */
+		case 'X':
+			result = 'X';
+			break;
 
-		/* ----------------
-		 *	otherwise we got garbage from the frontend.
-		 *
-		 *	XXX are we certain that we want to do an elog(FATAL) here?
-		 *		-cim 1/24/90
-		 * ----------------
-		 */
-	default:
-		elog(FATAL, "Socket command type %c unknown\n", *qtype);
-		break;
+			/* ----------------
+			 *	otherwise we got garbage from the frontend.
+			 *
+			 *	XXX are we certain that we want to do an elog(FATAL) here?
+			 *		-cim 1/24/90
+			 * ----------------
+			 */
+		default:
+			elog(FATAL, "Socket command type %c unknown\n", *qtype);
+			break;
 	}
 	return result;
 }
@@ -395,21 +395,21 @@ ReadCommand(char *inBuf, bool multiplexedBackend)
 		return InteractiveBackend(inBuf);
 }
 
-List		   *
+List	   *
 pg_plan(char *query_string,		/* string to execute */
 		Oid * typev,			/* argument types */
 		int nargs,				/* number of arguments */
 		QueryTreeList ** queryListP,	/* pointer to the parse trees */
 		CommandDest dest)		/* where results should go */
 {
-	QueryTreeList  *querytree_list;
-	int				i;
-	List		   *plan_list = NIL;
-	Plan		   *plan;
-	int				j;
-	QueryTreeList  *new_list;
-	List		   *rewritten = NIL;
-	Query		   *querytree;
+	QueryTreeList *querytree_list;
+	int			i;
+	List	   *plan_list = NIL;
+	Plan	   *plan;
+	int			j;
+	QueryTreeList *new_list;
+	List	   *rewritten = NIL;
+	Query	   *querytree;
 
 	/* ----------------
 	 *	(1) parse the request string into a list of parse trees
@@ -468,8 +468,8 @@ pg_plan(char *query_string,		/* string to execute */
 		rewritten = QueryRewrite(querytree);
 		if (rewritten != NULL)
 		{
-			int				len,
-							k;
+			int			len,
+						k;
 
 			len = length(rewritten);
 			if (len == 1)
@@ -506,8 +506,8 @@ pg_plan(char *query_string,		/* string to execute */
 	 */
 	for (i = 0; i < querytree_list->len; i++)
 	{
-		List		   *l;
-		List		   *rt = NULL;
+		List	   *l;
+		List	   *rt = NULL;
 
 		querytree = querytree_list->qtrees[i];
 
@@ -522,12 +522,12 @@ pg_plan(char *query_string,		/* string to execute */
 
 		foreach(l, rt)
 		{
-			RangeTblEntry  *rte = lfirst(l);
-			TimeRange	   *timequal = rte->timeRange;
+			RangeTblEntry *rte = lfirst(l);
+			TimeRange  *timequal = rte->timeRange;
 
 			if (timequal)
 			{
-				int				timecode = (rte->timeRange->endDate == NULL) ? 0 : 1;
+				int			timecode = (rte->timeRange->endDate == NULL) ? 0 : 1;
 
 				rte->timeQual = makeTimeRange(rte->timeRange->startDate,
 											  rte->timeRange->endDate,
@@ -573,7 +573,7 @@ pg_plan(char *query_string,		/* string to execute */
 				 *	 that the command ended. -cim 6/1/90
 				 * ----------------
 				 */
-				char		   *tag = "*ABORT STATE*";
+				char	   *tag = "*ABORT STATE*";
 
 				EndCommand(tag, dest);
 
@@ -658,12 +658,12 @@ pg_eval_dest(char *query_string,/* string to execute */
 			 int nargs,			/* number of arguments */
 			 CommandDest dest)	/* where results should go */
 {
-	List		   *plan_list;
-	Plan		   *plan;
-	Query		   *querytree;
-	int				i,
-					j;
-	QueryTreeList  *querytree_list;
+	List	   *plan_list;
+	Plan	   *plan;
+	Query	   *querytree;
+	int			i,
+				j;
+	QueryTreeList *querytree_list;
 
 	/* plan the queries */
 	plan_list = pg_plan(query_string, typev, nargs, &querytree_list, dest);
@@ -865,41 +865,41 @@ usage(char *progname)
 int
 PostgresMain(int argc, char *argv[])
 {
-	int				flagC;
-	int				flagQ;
-	int				flagE;
-	int				flagEu;
-	int				flag;
+	int			flagC;
+	int			flagQ;
+	int			flagE;
+	int			flagEu;
+	int			flag;
 
-	char		   *DBName = NULL;
-	int				errs = 0;
+	char	   *DBName = NULL;
+	int			errs = 0;
 
-	char			firstchar;
-	char			parser_input[MAX_PARSE_BUFFER];
-	char		   *userName;
+	char		firstchar;
+	char		parser_input[MAX_PARSE_BUFFER];
+	char	   *userName;
 
-	bool			multiplexedBackend;
-	char		   *hostName;	/* the host name of the backend server */
-	char			hostbuf[MAXHOSTNAMELEN];
-	int				serverSock;
-	int				serverPortnum = 0;
-	int				nSelected;	/* number of descriptors ready from
+	bool		multiplexedBackend;
+	char	   *hostName;		/* the host name of the backend server */
+	char		hostbuf[MAXHOSTNAMELEN];
+	int			serverSock;
+	int			serverPortnum = 0;
+	int			nSelected;		/* number of descriptors ready from
 								 * select(); */
-	int				maxFd = 0;	/* max file descriptor + 1 */
-	fd_set			rmask,
-					basemask;
-	FrontEnd	   *newFE,
-				   *currentFE = NULL;
-	int				numFE = 0;	/* keep track of number of active
+	int			maxFd = 0;		/* max file descriptor + 1 */
+	fd_set		rmask,
+				basemask;
+	FrontEnd   *newFE,
+			   *currentFE = NULL;
+	int			numFE = 0;		/* keep track of number of active
 								 * frontends */
-	Port		   *newPort;
-	int				newFd;
-	Dlelem		   *curr;
-	int				status;
+	Port	   *newPort;
+	int			newFd;
+	Dlelem	   *curr;
+	int			status;
 
-	extern int		optind;
-	extern char    *optarg;
-	extern short	DebugLvl;
+	extern int	optind;
+	extern char *optarg;
+	extern short DebugLvl;
 
 	/* ----------------
 	 *	register signal handlers.
@@ -950,256 +950,261 @@ PostgresMain(int argc, char *argv[])
 		switch (flag)
 		{
 
-		case 'b':
-			/* ----------------
-			 *	set BushyPlanFlag to true.
-			 * ----------------
-			 */
-			BushyPlanFlag = 1;
-			break;
-		case 'B':
-			/* ----------------
-			 *	specify the size of buffer pool
-			 * ----------------
-			 */
-			NBuffers = atoi(optarg);
-			break;
-
-		case 'C':
-			/* ----------------
-			 *	don't print version string (don't know why this is 'C' --mao)
-			 * ----------------
-			 */
-			flagC = 1;
-			break;
-
-		case 'D':				/* PGDATA directory */
-			DataDir = optarg;
-
-		case 'd':				/* debug level */
-			flagQ = 0;
-			DebugLvl = (short) atoi(optarg);
-			if (DebugLvl > 1)
-				DebugPrintQuery = true;
-			if (DebugLvl > 2)
-			{
-				DebugPrintParse = true;
-				DebugPrintPlan = true;
-				DebugPrintRewrittenParsetree = true;
-			}
-			break;
-
-		case 'E':
-			/* ----------------
-			 *	E - echo the query the user entered
-			 * ----------------
-			 */
-			flagE = 1;
-			break;
-
-		case 'e':
-			/* --------------------------
-			 * Use european date formats.
-			 * --------------------------
-			 */
-			flagEu = 1;
-			break;
-
-		case 'F':
-			/* --------------------
-			 *	turn off fsync
-			 * --------------------
-			 */
-			fsyncOff = 1;
-			break;
-
-		case 'f':
-			/* -----------------
-			 *	  f - forbid generation of certain plans
-			 * -----------------
-			 */
-			switch (optarg[0])
-			{
-			case 's':			/* seqscan */
-				_enable_seqscan_ = false;
+			case 'b':
+				/* ----------------
+				 *	set BushyPlanFlag to true.
+				 * ----------------
+				 */
+				BushyPlanFlag = 1;
 				break;
-			case 'i':			/* indexscan */
-				_enable_indexscan_ = false;
+			case 'B':
+				/* ----------------
+				 *	specify the size of buffer pool
+				 * ----------------
+				 */
+				NBuffers = atoi(optarg);
 				break;
-			case 'n':			/* nestloop */
-				_enable_nestloop_ = false;
+
+			case 'C':
+				/* ----------------
+				 *	don't print version string (don't know why this is 'C' --mao)
+				 * ----------------
+				 */
+				flagC = 1;
 				break;
-			case 'm':			/* mergejoin */
-				_enable_mergesort_ = false;
+
+			case 'D':			/* PGDATA directory */
+				DataDir = optarg;
+
+			case 'd':			/* debug level */
+				flagQ = 0;
+				DebugLvl = (short) atoi(optarg);
+				if (DebugLvl > 1)
+					DebugPrintQuery = true;
+				if (DebugLvl > 2)
+				{
+					DebugPrintParse = true;
+					DebugPrintPlan = true;
+					DebugPrintRewrittenParsetree = true;
+				}
 				break;
-			case 'h':			/* hashjoin */
-				_enable_hashjoin_ = false;
+
+			case 'E':
+				/* ----------------
+				 *	E - echo the query the user entered
+				 * ----------------
+				 */
+				flagE = 1;
 				break;
-			default:
-				errs++;
-			}
-			break;
 
-		case 'i':
-			dontExecute = 1;
-			break;
-
-		case 'K':
-#ifdef LOCK_MGR_DEBUG
-			lockDebug = atoi(optarg);
-#else
-			fprintf(stderr, "Lock debug not compiled in\n");
-#endif
-			break;
-
-		case 'L':
-			/* --------------------
-			 *	turn off locking
-			 * --------------------
-			 */
-			lockingOff = 1;
-			break;
-
-		case 'm':
-
-			/*
-			 * start up a listening backend that can respond to multiple
-			 * front-ends.	(Note:	all the front-end connections are
-			 * still connected to a single-threaded backend.  Requests are
-			 * FCFS.  Everything is in one transaction
-			 */
-			multiplexedBackend = true;
-			serverPortnum = atoi(optarg);
-			break;
-		case 'M':
-			exit(PostmasterMain(argc, argv));
-			break;
-		case 'N':
-			/* ----------------
-			 *	N - Don't use newline as a query delimiter
-			 * ----------------
-			 */
-			UseNewLine = 0;
-			break;
-
-		case 'o':
-			/* ----------------
-			 *	o - send output (stdout and stderr) to the given file
-			 * ----------------
-			 */
-			strNcpy(OutputFileName, optarg, MAXPGPATH);
-			break;
-
-		case 'p':				/* started by postmaster */
-			/* ----------------
-			 *	p - special flag passed if backend was forked
-			 *		by a postmaster.
-			 * ----------------
-			 */
-			IsUnderPostmaster = true;
-			break;
-
-		case 'P':
-			/* ----------------
-			 *	P - Use the passed file descriptor number as the port
-			 *	  on which to communicate with the user.  This is ONLY
-			 *	  useful for debugging when fired up by the postmaster.
-			 * ----------------
-			 */
-			Portfd = atoi(optarg);
-			break;
-
-		case 'Q':
-			/* ----------------
-			 *	Q - set Quiet mode (reduce debugging output)
-			 * ----------------
-			 */
-			flagQ = 1;
-			break;
-
-		case 'S':
-			/* ----------------
-			 *	S - amount of sort memory to use in 1k bytes
-			 * ----------------
-			 */
-			SortMem = atoi(optarg);
-			break;
-
-		case 's':
-			/* ----------------
-			 *	  s - report usage statistics (timings) after each query
-			 * ----------------
-			 */
-			ShowStats = 1;
-			StatFp = stderr;
-			break;
-
-		case 't':
-			/* ----------------
-			 *	tell postgres to report usage statistics (timings) for
-			 *	each query
-			 *
-			 *	-tpa[rser] = print stats for parser time of each query
-			 *	-tpl[anner] = print stats for planner time of each query
-			 *	-te[xecutor] = print stats for executor time of each query
-			 *	caution: -s can not be used together with -t.
-			 * ----------------
-			 */
-			StatFp = stderr;
-			switch (optarg[0])
-			{
-			case 'p':
-				if (optarg[1] == 'a')
-					ShowParserStats = 1;
-				else if (optarg[1] == 'l')
-					ShowPlannerStats = 1;
-				else
-					errs++;
-				break;
 			case 'e':
-				ShowExecutorStats = 1;
+				/* --------------------------
+				 * Use european date formats.
+				 * --------------------------
+				 */
+				flagEu = 1;
 				break;
-			default:
-				errs++;
-				break;
-			}
-			break;
 
-		case 'x':
-#if 0							/* planner/xfunc.h */
-			/* control joey hellerstein's expensive function optimization */
-			if (XfuncMode != 0)
-			{
-				fprintf(stderr, "only one -x flag is allowed\n");
-				errs++;
+			case 'F':
+				/* --------------------
+				 *	turn off fsync
+				 * --------------------
+				 */
+				fsyncOff = 1;
 				break;
-			}
-			if (strcmp(optarg, "off") == 0)
-				XfuncMode = XFUNC_OFF;
-			else if (strcmp(optarg, "nor") == 0)
-				XfuncMode = XFUNC_NOR;
-			else if (strcmp(optarg, "nopull") == 0)
-				XfuncMode = XFUNC_NOPULL;
-			else if (strcmp(optarg, "nopm") == 0)
-				XfuncMode = XFUNC_NOPM;
-			else if (strcmp(optarg, "pullall") == 0)
-				XfuncMode = XFUNC_PULLALL;
-			else if (strcmp(optarg, "wait") == 0)
-				XfuncMode = XFUNC_WAIT;
-			else
-			{
-				fprintf(stderr, "use -x {off,nor,nopull,nopm,pullall,wait}\n");
-				errs++;
-			}
+
+			case 'f':
+				/* -----------------
+				 *	  f - forbid generation of certain plans
+				 * -----------------
+				 */
+				switch (optarg[0])
+				{
+					case 's':	/* seqscan */
+						_enable_seqscan_ = false;
+						break;
+					case 'i':	/* indexscan */
+						_enable_indexscan_ = false;
+						break;
+					case 'n':	/* nestloop */
+						_enable_nestloop_ = false;
+						break;
+					case 'm':	/* mergejoin */
+						_enable_mergesort_ = false;
+						break;
+					case 'h':	/* hashjoin */
+						_enable_hashjoin_ = false;
+						break;
+					default:
+						errs++;
+				}
+				break;
+
+			case 'i':
+				dontExecute = 1;
+				break;
+
+			case 'K':
+#ifdef LOCK_MGR_DEBUG
+				lockDebug = atoi(optarg);
+#else
+				fprintf(stderr, "Lock debug not compiled in\n");
 #endif
-			break;
+				break;
 
-		default:
-			/* ----------------
-			 *	default: bad command line option
-			 * ----------------
-			 */
-			errs++;
+			case 'L':
+				/* --------------------
+				 *	turn off locking
+				 * --------------------
+				 */
+				lockingOff = 1;
+				break;
+
+			case 'm':
+
+				/*
+				 * start up a listening backend that can respond to
+				 * multiple front-ends.  (Note:  all the front-end
+				 * connections are still connected to a single-threaded
+				 * backend.  Requests are FCFS.  Everything is in one
+				 * transaction
+				 */
+				multiplexedBackend = true;
+				serverPortnum = atoi(optarg);
+				break;
+			case 'M':
+				exit(PostmasterMain(argc, argv));
+				break;
+			case 'N':
+				/* ----------------
+				 *	N - Don't use newline as a query delimiter
+				 * ----------------
+				 */
+				UseNewLine = 0;
+				break;
+
+			case 'o':
+				/* ----------------
+				 *	o - send output (stdout and stderr) to the given file
+				 * ----------------
+				 */
+				strNcpy(OutputFileName, optarg, MAXPGPATH);
+				break;
+
+			case 'p':			/* started by postmaster */
+				/* ----------------
+				 *	p - special flag passed if backend was forked
+				 *		by a postmaster.
+				 * ----------------
+				 */
+				IsUnderPostmaster = true;
+				break;
+
+			case 'P':
+				/* ----------------
+				 *	P - Use the passed file descriptor number as the port
+				 *	  on which to communicate with the user.  This is ONLY
+				 *	  useful for debugging when fired up by the postmaster.
+				 * ----------------
+				 */
+				Portfd = atoi(optarg);
+				break;
+
+			case 'Q':
+				/* ----------------
+				 *	Q - set Quiet mode (reduce debugging output)
+				 * ----------------
+				 */
+				flagQ = 1;
+				break;
+
+			case 'S':
+				/* ----------------
+				 *	S - amount of sort memory to use in 1k bytes
+				 * ----------------
+				 */
+				SortMem = atoi(optarg);
+				break;
+
+			case 's':
+				/* ----------------
+				 *	  s - report usage statistics (timings) after each query
+				 * ----------------
+				 */
+				ShowStats = 1;
+				StatFp = stderr;
+				break;
+
+			case 't':
+				/* ----------------
+				 *	tell postgres to report usage statistics (timings) for
+				 *	each query
+				 *
+				 *	-tpa[rser] = print stats for parser time of each query
+				 *	-tpl[anner] = print stats for planner time of each query
+				 *	-te[xecutor] = print stats for executor time of each query
+				 *	caution: -s can not be used together with -t.
+				 * ----------------
+				 */
+				StatFp = stderr;
+				switch (optarg[0])
+				{
+					case 'p':
+						if (optarg[1] == 'a')
+							ShowParserStats = 1;
+						else if (optarg[1] == 'l')
+							ShowPlannerStats = 1;
+						else
+							errs++;
+						break;
+					case 'e':
+						ShowExecutorStats = 1;
+						break;
+					default:
+						errs++;
+						break;
+				}
+				break;
+
+			case 'x':
+#if 0							/* planner/xfunc.h */
+
+				/*
+				 * control joey hellerstein's expensive function
+				 * optimization
+				 */
+				if (XfuncMode != 0)
+				{
+					fprintf(stderr, "only one -x flag is allowed\n");
+					errs++;
+					break;
+				}
+				if (strcmp(optarg, "off") == 0)
+					XfuncMode = XFUNC_OFF;
+				else if (strcmp(optarg, "nor") == 0)
+					XfuncMode = XFUNC_NOR;
+				else if (strcmp(optarg, "nopull") == 0)
+					XfuncMode = XFUNC_NOPULL;
+				else if (strcmp(optarg, "nopm") == 0)
+					XfuncMode = XFUNC_NOPM;
+				else if (strcmp(optarg, "pullall") == 0)
+					XfuncMode = XFUNC_PULLALL;
+				else if (strcmp(optarg, "wait") == 0)
+					XfuncMode = XFUNC_WAIT;
+				else
+				{
+					fprintf(stderr, "use -x {off,nor,nopull,nopm,pullall,wait}\n");
+					errs++;
+				}
+#endif
+				break;
+
+			default:
+				/* ----------------
+				 *	default: bad command line option
+				 * ----------------
+				 */
+				errs++;
 		}
 
 	/* ----------------
@@ -1309,7 +1314,7 @@ PostgresMain(int argc, char *argv[])
 		/* add the original FrontEnd to the list */
 		if (IsUnderPostmaster == true)
 		{
-			FrontEnd	   *fe = malloc(sizeof(FrontEnd));
+			FrontEnd   *fe = malloc(sizeof(FrontEnd));
 
 			FD_SET(Portfd, &basemask);
 			maxFd = Max(serverSock, Portfd) + 1;
@@ -1380,7 +1385,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.43 $ $Date: 1997/09/07 04:49:33 $");
+		puts("$Revision: 1.44 $ $Date: 1997/09/08 02:29:48 $");
 	}
 
 	/* ----------------
@@ -1447,8 +1452,8 @@ PostgresMain(int argc, char *argv[])
 			curr = DLGetHead(frontendList);
 			while (curr)
 			{
-				FrontEnd	   *fe = (FrontEnd *) DLE_VAL(curr);
-				Port		   *port = &(fe->fn_port);
+				FrontEnd   *fe = (FrontEnd *) DLE_VAL(curr);
+				Port	   *port = &(fe->fn_port);
 
 				/* this is lifted from postmaster.c */
 				if (FD_ISSET(port->sock, &rmask))
@@ -1476,7 +1481,7 @@ PostgresMain(int argc, char *argv[])
 					}
 					if (fe->fn_done)
 					{
-						Dlelem		   *c = curr;
+						Dlelem	   *c = curr;
 
 						curr = DLGetSucc(curr);
 						DLRemove(c);
@@ -1497,83 +1502,83 @@ PostgresMain(int argc, char *argv[])
 		/* process the command */
 		switch (firstchar)
 		{
-			/* ----------------
-			 *	'F' indicates a fastpath call.
-			 *		XXX HandleFunctionRequest
-			 * ----------------
-			 */
-		case 'F':
-			IsEmptyQuery = false;
-
-			/* start an xact for this function invocation */
-			if (!Quiet)
-			{
-				time(&tim);
-				printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
-			}
-
-			StartTransactionCommand();
-			HandleFunctionRequest();
-			break;
-
-			/* ----------------
-			 *	'Q' indicates a user query
-			 * ----------------
-			 */
-		case 'Q':
-			fflush(stdout);
-
-			if (strspn(parser_input, " \t\n") == strlen(parser_input))
-			{
 				/* ----------------
-				 *	if there is nothing in the input buffer, don't bother
-				 *	trying to parse and execute anything..
+				 *	'F' indicates a fastpath call.
+				 *		XXX HandleFunctionRequest
 				 * ----------------
 				 */
-				IsEmptyQuery = true;
-			}
-			else
-			{
-				/* ----------------
-				 *	otherwise, process the input string.
-				 * ----------------
-				 */
+			case 'F':
 				IsEmptyQuery = false;
-				if (ShowStats)
-					ResetUsage();
 
-				/* start an xact for this query */
+				/* start an xact for this function invocation */
 				if (!Quiet)
 				{
 					time(&tim);
 					printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
 				}
+
 				StartTransactionCommand();
+				HandleFunctionRequest();
+				break;
 
-				pg_eval(parser_input, (char **) NULL, (Oid *) NULL, 0);
+				/* ----------------
+				 *	'Q' indicates a user query
+				 * ----------------
+				 */
+			case 'Q':
+				fflush(stdout);
 
-				if (ShowStats)
-					ShowUsage();
-			}
-			break;
+				if (strspn(parser_input, " \t\n") == strlen(parser_input))
+				{
+					/* ----------------
+					 *	if there is nothing in the input buffer, don't bother
+					 *	trying to parse and execute anything..
+					 * ----------------
+					 */
+					IsEmptyQuery = true;
+				}
+				else
+				{
+					/* ----------------
+					 *	otherwise, process the input string.
+					 * ----------------
+					 */
+					IsEmptyQuery = false;
+					if (ShowStats)
+						ResetUsage();
 
-			/* ----------------
-			 *	'X' means that the frontend is closing down the socket
-			 * ----------------
-			 */
-		case 'X':
-			IsEmptyQuery = true;
-			if (multiplexedBackend)
-			{
-				FD_CLR(currentFE->fn_port.sock, &basemask);
-				currentFE->fn_done = true;
-				numFE--;
-			}
-			pq_close();
-			break;
+					/* start an xact for this query */
+					if (!Quiet)
+					{
+						time(&tim);
+						printf("\tStartTransactionCommand() at %s\n", ctime(&tim));
+					}
+					StartTransactionCommand();
 
-		default:
-			elog(WARN, "unknown frontend message was recieved");
+					pg_eval(parser_input, (char **) NULL, (Oid *) NULL, 0);
+
+					if (ShowStats)
+						ShowUsage();
+				}
+				break;
+
+				/* ----------------
+				 *	'X' means that the frontend is closing down the socket
+				 * ----------------
+				 */
+			case 'X':
+				IsEmptyQuery = true;
+				if (multiplexedBackend)
+				{
+					FD_CLR(currentFE->fn_port.sock, &basemask);
+					currentFE->fn_done = true;
+					numFE--;
+				}
+				pq_close();
+				break;
+
+			default:
+				elog(WARN, "unknown frontend message was recieved");
 		}
 
 		/* ----------------
@@ -1610,8 +1615,8 @@ PostgresMain(int argc, char *argv[])
 #include <sys/resource.h>
 #endif							/* HAVE_GETRUSAGE */
 
-struct rusage	Save_r;
-struct timeval	Save_t;
+struct rusage Save_r;
+struct timeval Save_t;
 
 void
 ResetUsage(void)
@@ -1627,11 +1632,11 @@ ResetUsage(void)
 void
 ShowUsage(void)
 {
-	struct timeval	user,
-					sys;
-	struct timeval	elapse_t;
+	struct timeval user,
+				sys;
+	struct timeval elapse_t;
 	struct timezone tz;
-	struct rusage	r;
+	struct rusage r;
 
 	getrusage(RUSAGE_SELF, &r);
 	gettimeofday(&elapse_t, &tz);

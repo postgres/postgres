@@ -6,7 +6,7 @@
 *	 PX operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, L Davis, ed)
 *
-* $Id: geqo_px.c,v 1.2 1997/09/07 04:43:20 momjian Exp $
+* $Id: geqo_px.c,v 1.3 1997/09/08 02:24:07 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -62,11 +62,11 @@ void
 px(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene, City * city_table)
 {
 
-	int				num_positions;
-	int				i,
-					pos,
-					tour2_index,
-					offspring_index;
+	int			num_positions;
+	int			i,
+				pos,
+				tour2_index,
+				offspring_index;
 
 	/* initialize city table */
 	for (i = 1; i <= num_gene; i++)

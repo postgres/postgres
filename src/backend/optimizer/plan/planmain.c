@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.5 1997/09/07 04:44:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.6 1997/09/08 02:24:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,10 @@
 #include "utils/mcxt.h"
 #include "utils/lsyscache.h"
 
-static Plan    *subplanner(Query * root, List * flat_tlist, List * qual);
-static Result  *make_result(List * tlist, Node * resconstantqual, Plan * subplan);
+static Plan *subplanner(Query * root, List * flat_tlist, List * qual);
+static Result *make_result(List * tlist, Node * resconstantqual, Plan * subplan);
 
-static Plan    *
+static Plan *
 make_groupPlan(List ** tlist, bool tuplePerGroup,
 			   List * groupClause, Plan * subplan);
 
@@ -62,17 +62,17 @@ make_groupPlan(List ** tlist, bool tuplePerGroup,
  *
  *	  Returns a query plan.
  */
-Plan		   *
+Plan	   *
 query_planner(Query * root,
 			  int command_type,
 			  List * tlist,
 			  List * qual)
 {
-	List		   *constant_qual = NIL;
-	List		   *flattened_tlist = NIL;
-	List		   *level_tlist = NIL;
-	Plan		   *subplan = (Plan *) NULL;
-	Agg			   *aggplan = NULL;
+	List	   *constant_qual = NIL;
+	List	   *flattened_tlist = NIL;
+	List	   *level_tlist = NIL;
+	Plan	   *subplan = (Plan *) NULL;
+	Agg		   *aggplan = NULL;
 
 	/*
 	 * A command without a target list or qualification is an error,
@@ -132,36 +132,36 @@ query_planner(Query * root,
 
 		switch (command_type)
 		{
-		case CMD_SELECT:
-		case CMD_INSERT:
-			return ((Plan *) make_result(tlist,
-										 (Node *) constant_qual,
-										 (Plan *) NULL));
-			break;
+			case CMD_SELECT:
+			case CMD_INSERT:
+				return ((Plan *) make_result(tlist,
+											 (Node *) constant_qual,
+											 (Plan *) NULL));
+				break;
 
-		case CMD_DELETE:
-		case CMD_UPDATE:
-			{
-				SeqScan		   *scan = make_seqscan(tlist,
+			case CMD_DELETE:
+			case CMD_UPDATE:
+				{
+					SeqScan    *scan = make_seqscan(tlist,
 													(List *) NULL,
 													root->resultRelation,
 													(Plan *) NULL);
 
-				if (constant_qual != NULL)
-				{
-					return ((Plan *) make_result(tlist,
-												 (Node *) constant_qual,
-												 (Plan *) scan));
+					if (constant_qual != NULL)
+					{
+						return ((Plan *) make_result(tlist,
+												  (Node *) constant_qual,
+													 (Plan *) scan));
+					}
+					else
+					{
+						return ((Plan *) scan);
+					}
 				}
-				else
-				{
-					return ((Plan *) scan);
-				}
-			}
-			break;
+				break;
 
-		default:
-			return ((Plan *) NULL);
+			default:
+				return ((Plan *) NULL);
 		}
 	}
 
@@ -180,7 +180,7 @@ query_planner(Query * root,
 	 */
 	if (root->groupClause != NULL)
 	{
-		bool			tuplePerGroup;
+		bool		tuplePerGroup;
 
 		/*
 		 * decide whether how many tuples per group the Group node needs
@@ -223,7 +223,7 @@ query_planner(Query * root,
 	 */
 	if (constant_qual)
 	{
-		Plan		   *plan;
+		Plan	   *plan;
 
 		plan = (Plan *) make_result(tlist,
 									(Node *) constant_qual,
@@ -277,13 +277,13 @@ query_planner(Query * root,
  *	 Returns a subplan.
  *
  */
-static Plan    *
+static Plan *
 subplanner(Query * root,
 		   List * flat_tlist,
 		   List * qual)
 {
-	Rel			   *final_relation;
-	List		   *final_relation_list;
+	Rel		   *final_relation;
+	List	   *final_relation_list;
 
 	/*
 	 * Initialize the targetlist and qualification, adding entries to
@@ -323,7 +323,7 @@ subplanner(Query * root,
 	if (XfuncMode != XFUNC_OFF && XfuncMode != XFUNC_NOPM &&
 		XfuncMode != XFUNC_NOPULL && !final_relation->pruneable)
 	{
-		List		   *pathnode;
+		List	   *pathnode;
 
 		foreach(pathnode, final_relation->pathlist)
 		{
@@ -353,13 +353,13 @@ subplanner(Query * root,
  *
  *****************************************************************************/
 
-static Result  *
+static Result *
 make_result(List * tlist,
 			Node * resconstantqual,
 			Plan * subplan)
 {
-	Result		   *node = makeNode(Result);
-	Plan		   *plan = &node->plan;
+	Result	   *node = makeNode(Result);
+	Plan	   *plan = &node->plan;
 
 	tlist = generate_fjoin(tlist);
 	plan->cost = 0.0;
@@ -377,25 +377,25 @@ make_result(List * tlist,
  *
  *****************************************************************************/
 
-static Plan    *
+static Plan *
 make_groupPlan(List ** tlist,
 			   bool tuplePerGroup,
 			   List * groupClause,
 			   Plan * subplan)
 {
-	List		   *sort_tlist;
-	List		   *sl,
-				   *gl;
-	List		   *glc = listCopy(groupClause);
-	List		   *otles = NIL;/* list of removed non-GroupBy entries */
-	List		   *otlvars = NIL;		/* list of var in them */
-	int				otlvcnt;
-	Sort		   *sortplan;
-	Group		   *grpplan;
-	int				numCols;
-	AttrNumber	   *grpColIdx;
-	int				keyno = 1;
-	int				last_resno = 1;
+	List	   *sort_tlist;
+	List	   *sl,
+			   *gl;
+	List	   *glc = listCopy(groupClause);
+	List	   *otles = NIL;	/* list of removed non-GroupBy entries */
+	List	   *otlvars = NIL;	/* list of var in them */
+	int			otlvcnt;
+	Sort	   *sortplan;
+	Group	   *grpplan;
+	int			numCols;
+	AttrNumber *grpColIdx;
+	int			keyno = 1;
+	int			last_resno = 1;
 
 	numCols = length(groupClause);
 	grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
@@ -412,12 +412,12 @@ make_groupPlan(List ** tlist,
 	 */
 	foreach(sl, sort_tlist)
 	{
-		Resdom		   *resdom = NULL;
-		TargetEntry    *te = (TargetEntry *) lfirst(sl);
+		Resdom	   *resdom = NULL;
+		TargetEntry *te = (TargetEntry *) lfirst(sl);
 
 		foreach(gl, glc)
 		{
-			GroupClause    *grpcl = (GroupClause *) lfirst(gl);
+			GroupClause *grpcl = (GroupClause *) lfirst(gl);
 
 			if (grpcl->entry->resdom->resno == te->resdom->resno)
 			{
@@ -463,7 +463,7 @@ make_groupPlan(List ** tlist,
 	otlvcnt = length(otlvars);
 	foreach(gl, otlvars)
 	{
-		Var			   *v = (Var *) lfirst(gl);
+		Var		   *v = (Var *) lfirst(gl);
 
 		if (tlist_member(v, sort_tlist) == NULL)
 		{
@@ -490,15 +490,15 @@ make_groupPlan(List ** tlist,
 	 */
 	foreach(sl, sort_tlist)
 	{
-		TargetEntry    *te = (TargetEntry *) lfirst(sl);
-		Resdom		   *resdom = te->resdom;
-		Node		   *expr = te->expr;
+		TargetEntry *te = (TargetEntry *) lfirst(sl);
+		Resdom	   *resdom = te->resdom;
+		Node	   *expr = te->expr;
 
 		if (IsA(expr, Var))
 		{
 #if 0							/* subplanVar->resdom->resno expected to
 								 * be = te->resdom->resno */
-			TargetEntry    *subplanVar;
+			TargetEntry *subplanVar;
 
 			subplanVar = match_varid((Var *) expr, subplan->targetlist);
 			((Var *) expr)->varattno = subplanVar->resdom->resno;
@@ -533,12 +533,12 @@ make_groupPlan(List ** tlist,
 	sort_tlist = NIL;			/* to be new parent TL */
 	foreach(gl, *tlist)
 	{
-		List		   *temp = NIL;
-		TargetEntry    *te = (TargetEntry *) lfirst(gl);
+		List	   *temp = NIL;
+		TargetEntry *te = (TargetEntry *) lfirst(gl);
 
 		foreach(temp, otles)	/* Is it removed non-GroupBy entry ? */
 		{
-			TargetEntry    *ote = (TargetEntry *) lfirst(temp);
+			TargetEntry *ote = (TargetEntry *) lfirst(temp);
 
 			if (ote->resdom->resno == te->resdom->resno)
 			{
@@ -548,7 +548,7 @@ make_groupPlan(List ** tlist,
 		}
 		if (temp == NIL)		/* It's "our" TLE - we're to return */
 		{						/* it from Sort/Group plans */
-			TargetEntry    *my = (TargetEntry *) lfirst(sl);	/* get it */
+			TargetEntry *my = (TargetEntry *) lfirst(sl);		/* get it */
 
 			sl = sl->next;		/* prepare for the next "our" */
 			my = copyObject(my);

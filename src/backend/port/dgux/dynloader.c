@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dgux/Attic/dynloader.c,v 1.2 1997/09/07 04:45:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dgux/Attic/dynloader.c,v 1.3 1997/09/08 02:26:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,12 +19,12 @@
 #include "utils/elog.h"
 #include "fmgr.h"
 
-extern char		pg_pathname[];
+extern char pg_pathname[];
 
-void		   *
+void	   *
 pg_dlopen(char *filename)
 {
-	static int		dl_initialized = 0;
+	static int	dl_initialized = 0;
 
 	/*
 	 * initializes the dynamic loader with the executable's pathname.
@@ -73,8 +73,8 @@ pg_dlopen(char *filename)
 			}
 			if (dld_undefined_sym_count > 0)
 			{
-				int				count = dld_undefined_sym_count;
-				char		  **list = dld_list_undefined_sym();
+				int			count = dld_undefined_sym_count;
+				char	  **list = dld_list_undefined_sym();
 
 				/* list the undefined symbols, if any */
 				elog(NOTICE, "dld: Undefined:");
@@ -94,7 +94,7 @@ pg_dlopen(char *filename)
 	return (void *) strdup(filename);
 }
 
-char		   *
+char	   *
 pg_dlerror()
 {
 	return dld_strerror(dld_errno);

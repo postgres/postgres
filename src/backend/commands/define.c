@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.14 1997/09/07 04:40:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.15 1997/09/08 02:22:09 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -53,8 +53,8 @@
 #include <tcop/dest.h>
 #include <catalog/pg_user.h>
 
-static char    *defGetString(DefElem * def);
-static int		defGetTypeLength(DefElem * def);
+static char *defGetString(DefElem * def);
+static int	defGetTypeLength(DefElem * def);
 
 #define DEFAULT_TYPDELIM		','
 
@@ -66,7 +66,7 @@ case_translate_language_name(const char *input, char *output)
   Translate the input language name to lower case, except if it's C,
   translate to upper case.
 --------------------------------------------------------------------------*/
-	int				i;
+	int			i;
 
 	for (i = 0; i < NAMEDATALEN && input[i] != '\0'; ++i)
 		output[i] = tolower(input[i]);
@@ -90,7 +90,7 @@ compute_return_type(const Node * returnType,
 	if (nodeTag(returnType) == T_TypeName)
 	{
 		/* a set of values */
-		TypeName	   *setType = (TypeName *) returnType;
+		TypeName   *setType = (TypeName *) returnType;
 
 		*prorettype_p = setType->name;
 		*returnsSet_p = true;
@@ -116,7 +116,7 @@ compute_full_attributes(const List * parameters, int32 * byte_pct_p,
 
   These are the full parameters of a C or internal function.
 ---------------------------------------------------------------------------*/
-	List		   *pl;
+	List	   *pl;
 
 	/* the defaults */
 	*byte_pct_p = BYTE_PCT;
@@ -126,7 +126,7 @@ compute_full_attributes(const List * parameters, int32 * byte_pct_p,
 
 	foreach(pl, (List *) parameters)
 	{
-		ParamString    *param = (ParamString *) lfirst(pl);
+		ParamString *param = (ParamString *) lfirst(pl);
 
 		if (strcasecmp(param->name, "iscachable") == 0)
 		{
@@ -153,8 +153,8 @@ compute_full_attributes(const List * parameters, int32 * byte_pct_p,
 		{
 			if (sscanf(param->val, "%d", perbyte_cpu_p) == 0)
 			{
-				int				count;
-				char		   *ptr;
+				int			count;
+				char	   *ptr;
 
 				for (count = 0, ptr = param->val; *ptr != '\0'; ptr++)
 					if (*ptr == '!')
@@ -166,8 +166,8 @@ compute_full_attributes(const List * parameters, int32 * byte_pct_p,
 		{
 			if (sscanf(param->val, "%d", percall_cpu_p) == 0)
 			{
-				int				count;
-				char		   *ptr;
+				int			count;
+				char	   *ptr;
 
 				for (count = 0, ptr = param->val; *ptr != '\0'; ptr++)
 					if (*ptr == '!')
@@ -212,16 +212,16 @@ interpret_AS_clause(const char languageName[], const char as[],
 void
 CreateFunction(ProcedureStmt * stmt, CommandDest dest)
 {
-	char		   *probin_str;
+	char	   *probin_str;
 
 	/* pathname of executable file that executes this function, if any */
-	char		   *prosrc_str;
+	char	   *prosrc_str;
 
 	/* SQL that executes this function, if any */
-	char		   *prorettype;
+	char	   *prorettype;
 
 	/* Type of return value (or member of set of values) from function */
-	char			languageName[NAMEDATALEN];
+	char		languageName[NAMEDATALEN];
 
 	/*
 	 * name of language of function, with case adjusted: "C", "internal",
@@ -232,12 +232,12 @@ CreateFunction(ProcedureStmt * stmt, CommandDest dest)
 	 * The following are attributes of the function, as expressed in the
 	 * CREATE FUNCTION statement, where applicable.
 	 */
-	int32			byte_pct,
-					perbyte_cpu,
-					percall_cpu,
-					outin_ratio;
-	bool			canCache;
-	bool			returnsSet;
+	int32		byte_pct,
+				perbyte_cpu,
+				percall_cpu,
+				outin_ratio;
+	bool		canCache;
+	bool		returnsSet;
 
 	/* The function returns a set of values, as opposed to a singleton. */
 
@@ -317,30 +317,29 @@ void
 DefineOperator(char *oprName,
 			   List * parameters)
 {
-	uint16			precedence = 0;		/* operator precedence */
-	bool			canHash = false;	/* operator hashes */
-	bool			isLeftAssociative = true;	/* operator is left
+	uint16		precedence = 0; /* operator precedence */
+	bool		canHash = false;/* operator hashes */
+	bool		isLeftAssociative = true;		/* operator is left
 												 * associative */
-	char		   *functionName = NULL;		/* function for operator */
-	char		   *typeName1 = NULL;	/* first type name */
-	char		   *typeName2 = NULL;	/* second type name */
-	char		   *commutatorName = NULL;		/* optional commutator
-												 * operator name */
-	char		   *negatorName = NULL; /* optional negator operator name */
-	char		   *restrictionName = NULL;		/* optional restrict. sel.
-												 * procedure */
-	char		   *joinName = NULL;	/* optional join sel. procedure
+	char	   *functionName = NULL;	/* function for operator */
+	char	   *typeName1 = NULL;		/* first type name */
+	char	   *typeName2 = NULL;		/* second type name */
+	char	   *commutatorName = NULL;	/* optional commutator operator
 										 * name */
-	char		   *sortName1 = NULL;	/* optional first sort operator */
-	char		   *sortName2 = NULL;	/* optional second sort operator */
-	List		   *pl;
+	char	   *negatorName = NULL;		/* optional negator operator name */
+	char	   *restrictionName = NULL; /* optional restrict. sel.
+										 * procedure */
+	char	   *joinName = NULL;/* optional join sel. procedure name */
+	char	   *sortName1 = NULL;		/* optional first sort operator */
+	char	   *sortName2 = NULL;		/* optional second sort operator */
+	List	   *pl;
 
 	/*
 	 * loop over the definition list and extract the information we need.
 	 */
 	foreach(pl, parameters)
 	{
-		DefElem		   *defel = (DefElem *) lfirst(pl);
+		DefElem    *defel = (DefElem *) lfirst(pl);
 
 		if (!strcasecmp(defel->defname, "leftarg"))
 		{
@@ -465,19 +464,19 @@ void
 DefineAggregate(char *aggName, List * parameters)
 
 {
-	char		   *stepfunc1Name = NULL;
-	char		   *stepfunc2Name = NULL;
-	char		   *finalfuncName = NULL;
-	char		   *baseType = NULL;
-	char		   *stepfunc1Type = NULL;
-	char		   *stepfunc2Type = NULL;
-	char		   *init1 = NULL;
-	char		   *init2 = NULL;
-	List		   *pl;
+	char	   *stepfunc1Name = NULL;
+	char	   *stepfunc2Name = NULL;
+	char	   *finalfuncName = NULL;
+	char	   *baseType = NULL;
+	char	   *stepfunc1Type = NULL;
+	char	   *stepfunc2Type = NULL;
+	char	   *init1 = NULL;
+	char	   *init2 = NULL;
+	List	   *pl;
 
 	foreach(pl, parameters)
 	{
-		DefElem		   *defel = (DefElem *) lfirst(pl);
+		DefElem    *defel = (DefElem *) lfirst(pl);
 
 		/*
 		 * sfunc1
@@ -573,19 +572,19 @@ DefineAggregate(char *aggName, List * parameters)
 void
 DefineType(char *typeName, List * parameters)
 {
-	int16			internalLength = 0; /* int2 */
-	int16			externalLength = 0; /* int2 */
-	char		   *elemName = NULL;
-	char		   *inputName = NULL;
-	char		   *outputName = NULL;
-	char		   *sendName = NULL;
-	char		   *receiveName = NULL;
-	char		   *defaultValue = NULL;		/* Datum */
-	bool			byValue = false;
-	char			delimiter = DEFAULT_TYPDELIM;
-	char		   *shadow_type;
-	List		   *pl;
-	char			alignment = 'i';	/* default alignment */
+	int16		internalLength = 0;		/* int2 */
+	int16		externalLength = 0;		/* int2 */
+	char	   *elemName = NULL;
+	char	   *inputName = NULL;
+	char	   *outputName = NULL;
+	char	   *sendName = NULL;
+	char	   *receiveName = NULL;
+	char	   *defaultValue = NULL;	/* Datum */
+	bool		byValue = false;
+	char		delimiter = DEFAULT_TYPDELIM;
+	char	   *shadow_type;
+	List	   *pl;
+	char		alignment = 'i';/* default alignment */
 
 	/*
 	 * Type names can only be 15 characters long, so that the shadow type
@@ -599,7 +598,7 @@ DefineType(char *typeName, List * parameters)
 
 	foreach(pl, parameters)
 	{
-		DefElem		   *defel = (DefElem *) lfirst(pl);
+		DefElem    *defel = (DefElem *) lfirst(pl);
 
 		if (!strcasecmp(defel->defname, "internallength"))
 		{
@@ -623,7 +622,7 @@ DefineType(char *typeName, List * parameters)
 		}
 		else if (!strcasecmp(defel->defname, "delimiter"))
 		{
-			char		   *p = defGetString(defel);
+			char	   *p = defGetString(defel);
 
 			delimiter = p[0];
 		}
@@ -645,7 +644,7 @@ DefineType(char *typeName, List * parameters)
 		}
 		else if (!strcasecmp(defel->defname, "alignment"))
 		{
-			char		   *a = defGetString(defel);
+			char	   *a = defGetString(defel);
 
 			if (!strcasecmp(a, "double"))
 			{
@@ -720,7 +719,7 @@ DefineType(char *typeName, List * parameters)
 	pfree(shadow_type);
 }
 
-static char    *
+static char *
 defGetString(DefElem * def)
 {
 	if (nodeTag(def->arg) != T_String)

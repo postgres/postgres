@@ -8,7 +8,7 @@
 #define __dlfcn_h__
 
 #ifdef __cplusplus
-extern			"C"
+extern		"C"
 {
 #endif
 
@@ -25,20 +25,20 @@ extern			"C"
  */
 	struct dl_info
 	{
-		void			(*init) (void);
-		void			(*fini) (void);
+		void		(*init) (void);
+		void		(*fini) (void);
 	};
 
 #if __STDC__ || defined(_IBMR2)
-	void		   *dlopen(const char *path, int mode);
-	void		   *dlsym(void *handle, const char *symbol);
-	char		   *dlerror(void);
-	int				dlclose(void *handle);
+	void	   *dlopen(const char *path, int mode);
+	void	   *dlsym(void *handle, const char *symbol);
+	char	   *dlerror(void);
+	int			dlclose(void *handle);
 #else
-	void		   *dlopen();
-	void		   *dlsym();
-	char		   *dlerror();
-	int				dlclose();
+	void	   *dlopen();
+	void	   *dlsym();
+	char	   *dlerror();
+	int			dlclose();
 #endif
 
 #ifdef __cplusplus

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.7 1997/09/07 04:55:39 momjian Exp $
+ * $Id: postgres.h,v 1.8 1997/09/08 02:33:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,22 +47,22 @@
  * ----------------------------------------------------------------
  */
 
-typedef int16	int2;
-typedef int32	int4;
-typedef float	float4;
-typedef double	float8;
+typedef int16 int2;
+typedef int32 int4;
+typedef float float4;
+typedef double float8;
 
-typedef int4	aclitem;
+typedef int4 aclitem;
 
 #define InvalidOid		0
 #define OidIsValid(objectId)  ((bool) (objectId != InvalidOid))
 
 /* unfortunately, both regproc and RegProcedure are used */
-typedef Oid		regproc;
-typedef Oid		RegProcedure;
+typedef Oid regproc;
+typedef Oid RegProcedure;
 
 /* ptr to func returning (char *) */
-typedef char   *((*func_ptr) ());
+typedef char *((*func_ptr) ());
 
 
 #define RegProcedureIsValid(p)	OidIsValid(p)
@@ -77,8 +77,8 @@ typedef char   *((*func_ptr) ());
  */
 struct varlena
 {
-	int32			vl_len;
-	char			vl_dat[1];
+	int32		vl_len;
+	char		vl_dat[1];
 };
 
 #define VARSIZE(PTR)	(((struct varlena *)(PTR))->vl_len)
@@ -90,8 +90,8 @@ typedef struct varlena text;
 
 typedef struct char8
 {
-	char			data[8];
-}				char8;
+	char		data[8];
+}			char8;
 
 /* ----------------
  *		char16
@@ -99,18 +99,18 @@ typedef struct char8
  */
 typedef struct char16
 {
-	char			data[16];
-}				char16;
+	char		data[16];
+}			char16;
 
 typedef char16 *Char16;
 
-typedef int2	int28[8];
-typedef Oid		oid8[8];
+typedef int2 int28[8];
+typedef Oid oid8[8];
 
 typedef struct nameData
 {
-	char			data[NAMEDATALEN];
-}				NameData;
+	char		data[NAMEDATALEN];
+}			NameData;
 typedef NameData *Name;
 
 /* ----------------
@@ -121,9 +121,9 @@ typedef NameData *Name;
  */
 typedef struct OidInt4Data
 {
-	Oid				oi_oid;
-	int32			oi_int4;
-}				OidInt4Data;
+	Oid			oi_oid;
+	int32		oi_int4;
+}			OidInt4Data;
 
 typedef struct OidInt4Data *OidInt4;
 
@@ -135,9 +135,9 @@ typedef struct OidInt4Data *OidInt4;
  */
 typedef struct OidInt2Data
 {
-	Oid				oi_oid;
-	int16			oi_int2;
-}				OidInt2Data;
+	Oid			oi_oid;
+	int16		oi_int2;
+}			OidInt2Data;
 
 typedef struct OidInt2Data *OidInt2;
 
@@ -149,9 +149,9 @@ typedef struct OidInt2Data *OidInt2;
  */
 typedef struct OidNameData
 {
-	Oid				id;
-	NameData		name;
-}				OidNameData;
+	Oid			id;
+	NameData	name;
+}			OidNameData;
 
 typedef struct OidNameData *OidName;
 
@@ -160,10 +160,10 @@ typedef struct OidNameData *OidName;
  * ----------------------------------------------------------------
  */
 
-typedef uint32	TransactionId;
+typedef uint32 TransactionId;
 
 #define InvalidTransactionId	0
-typedef uint16	CommandId;
+typedef uint16 CommandId;
 
 #define FirstCommandId	0
 

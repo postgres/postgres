@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.4 1997/09/07 04:37:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.5 1997/09/08 02:20:13 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -36,10 +36,10 @@ hashint4(uint32 key)
 uint32
 hashfloat4(float32 keyp)
 {
-	int				len;
-	int				loop;
-	uint32			h;
-	char		   *kp = (char *) keyp;
+	int			len;
+	int			loop;
+	uint32		h;
+	char	   *kp = (char *) keyp;
 
 	len = sizeof(float32data);
 
@@ -55,25 +55,25 @@ hashfloat4(float32 keyp)
 
 		switch (len & (8 - 1))
 		{
-		case 0:
-			do
-			{					/* All fall throughs */
-				HASH4;
-		case 7:
-				HASH4;
-		case 6:
-				HASH4;
-		case 5:
-				HASH4;
-		case 4:
-				HASH4;
-		case 3:
-				HASH4;
-		case 2:
-				HASH4;
-		case 1:
-				HASH4;
-			} while (--loop);
+			case 0:
+				do
+				{				/* All fall throughs */
+					HASH4;
+			case 7:
+					HASH4;
+			case 6:
+					HASH4;
+			case 5:
+					HASH4;
+			case 4:
+					HASH4;
+			case 3:
+					HASH4;
+			case 2:
+					HASH4;
+			case 1:
+					HASH4;
+				} while (--loop);
 		}
 	}
 	return (h);
@@ -83,10 +83,10 @@ hashfloat4(float32 keyp)
 uint32
 hashfloat8(float64 keyp)
 {
-	int				len;
-	int				loop;
-	uint32			h;
-	char		   *kp = (char *) keyp;
+	int			len;
+	int			loop;
+	uint32		h;
+	char	   *kp = (char *) keyp;
 
 	len = sizeof(float64data);
 
@@ -102,25 +102,25 @@ hashfloat8(float64 keyp)
 
 		switch (len & (8 - 1))
 		{
-		case 0:
-			do
-			{					/* All fall throughs */
-				HASH4;
-		case 7:
-				HASH4;
-		case 6:
-				HASH4;
-		case 5:
-				HASH4;
-		case 4:
-				HASH4;
-		case 3:
-				HASH4;
-		case 2:
-				HASH4;
-		case 1:
-				HASH4;
-			} while (--loop);
+			case 0:
+				do
+				{				/* All fall throughs */
+					HASH4;
+			case 7:
+					HASH4;
+			case 6:
+					HASH4;
+			case 5:
+					HASH4;
+			case 4:
+					HASH4;
+			case 3:
+					HASH4;
+			case 2:
+					HASH4;
+			case 1:
+					HASH4;
+				} while (--loop);
 		}
 	}
 	return (h);
@@ -137,8 +137,8 @@ hashoid(Oid key)
 uint32
 hashchar(char key)
 {
-	int				len;
-	uint32			h;
+	int			len;
+	uint32		h;
 
 	len = sizeof(char);
 
@@ -156,9 +156,9 @@ hashchar(char key)
 uint32
 hashchar2(uint16 intkey)
 {
-	uint32			h;
-	int				len;
-	char		   *key = (char *) &intkey;
+	uint32		h;
+	int			len;
+	char	   *key = (char *) &intkey;
 
 	h = 0;
 	len = sizeof(uint16);
@@ -173,9 +173,9 @@ hashchar2(uint16 intkey)
 uint32
 hashchar4(uint32 intkey)
 {
-	uint32			h;
-	int				len;
-	char		   *key = (char *) &intkey;
+	uint32		h;
+	int			len;
+	char	   *key = (char *) &intkey;
 
 	h = 0;
 	len = sizeof(uint32);
@@ -190,8 +190,8 @@ hashchar4(uint32 intkey)
 uint32
 hashchar8(char *key)
 {
-	uint32			h;
-	int				len;
+	uint32		h;
+	int			len;
 
 	h = 0;
 	len = sizeof(char8);
@@ -206,9 +206,9 @@ hashchar8(char *key)
 uint32
 hashname(NameData * n)
 {
-	uint32			h;
-	int				len;
-	char		   *key;
+	uint32		h;
+	int			len;
+	char	   *key;
 
 	key = n->data;
 
@@ -226,8 +226,8 @@ hashname(NameData * n)
 uint32
 hashchar16(char *key)
 {
-	uint32			h;
-	int				len;
+	uint32		h;
+	int			len;
 
 	h = 0;
 	len = sizeof(char16);
@@ -254,10 +254,10 @@ hashchar16(char *key)
 uint32
 hashtext(struct varlena * key)
 {
-	int				keylen;
-	char		   *keydata;
-	uint32			n;
-	int				loop;
+	int			keylen;
+	char	   *keydata;
+	uint32		n;
+	int			loop;
 
 	keydata = VARDATA(key);
 	keylen = VARSIZE(key);
@@ -274,25 +274,25 @@ hashtext(struct varlena * key)
 
 		switch (keylen & (8 - 1))
 		{
-		case 0:
-			do
-			{					/* All fall throughs */
-				HASHC;
-		case 7:
-				HASHC;
-		case 6:
-				HASHC;
-		case 5:
-				HASHC;
-		case 4:
-				HASHC;
-		case 3:
-				HASHC;
-		case 2:
-				HASHC;
-		case 1:
-				HASHC;
-			} while (--loop);
+			case 0:
+				do
+				{				/* All fall throughs */
+					HASHC;
+			case 7:
+					HASHC;
+			case 6:
+					HASHC;
+			case 5:
+					HASHC;
+			case 4:
+					HASHC;
+			case 3:
+					HASHC;
+			case 2:
+					HASHC;
+			case 1:
+					HASHC;
+				} while (--loop);
 		}
 	}
 	return (n);

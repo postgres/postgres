@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.5 1997/09/07 04:49:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.6 1997/09/08 02:29:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,10 @@
 
 typedef struct MMCacheTag
 {
-	Oid				mmct_dbid;
-	Oid				mmct_relid;
-	BlockNumber		mmct_blkno;
-}				MMCacheTag;
+	Oid			mmct_dbid;
+	Oid			mmct_relid;
+	BlockNumber mmct_blkno;
+}			MMCacheTag;
 
 /*
  *	Shared-memory hash table for main memory relations contains
@@ -49,9 +49,9 @@ typedef struct MMCacheTag
 
 typedef struct MMHashEntry
 {
-	MMCacheTag		mmhe_tag;
-	int				mmhe_bufno;
-}				MMHashEntry;
+	MMCacheTag	mmhe_tag;
+	int			mmhe_bufno;
+}			MMHashEntry;
 
 /*
  * MMRelTag -- Unique identifier for each relation that is stored in the
@@ -60,9 +60,9 @@ typedef struct MMHashEntry
 
 typedef struct MMRelTag
 {
-	Oid				mmrt_dbid;
-	Oid				mmrt_relid;
-}				MMRelTag;
+	Oid			mmrt_dbid;
+	Oid			mmrt_relid;
+}			MMRelTag;
 
 /*
  *	Shared-memory hash table for # blocks in main memory relations contains
@@ -71,31 +71,31 @@ typedef struct MMRelTag
 
 typedef struct MMRelHashEntry
 {
-	MMRelTag		mmrhe_tag;
-	int				mmrhe_nblocks;
-}				MMRelHashEntry;
+	MMRelTag	mmrhe_tag;
+	int			mmrhe_nblocks;
+}			MMRelHashEntry;
 
 #define MMNBUFFERS		10
 #define MMNRELATIONS	2
 
-SPINLOCK		MMCacheLock;
-extern bool		IsPostmaster;
-extern Oid		MyDatabaseId;
+SPINLOCK	MMCacheLock;
+extern bool IsPostmaster;
+extern Oid	MyDatabaseId;
 
-static int	   *MMCurTop;
-static int	   *MMCurRelno;
+static int *MMCurTop;
+static int *MMCurRelno;
 static MMCacheTag *MMBlockTags;
-static char    *MMBlockCache;
-static HTAB    *MMCacheHT;
-static HTAB    *MMRelCacheHT;
+static char *MMBlockCache;
+static HTAB *MMCacheHT;
+static HTAB *MMRelCacheHT;
 
 int
 mminit()
 {
-	char		   *mmcacheblk;
-	int				mmsize = 0;
-	bool			found;
-	HASHCTL			info;
+	char	   *mmcacheblk;
+	int			mmsize = 0;
+	bool		found;
+	HASHCTL		info;
 
 	SpinAcquire(MMCacheLock);
 
@@ -169,8 +169,8 @@ int
 mmcreate(Relation reln)
 {
 	MMRelHashEntry *entry;
-	bool			found;
-	MMRelTag		tag;
+	bool		found;
+	MMRelTag	tag;
 
 	SpinAcquire(MMCacheLock);
 
@@ -217,12 +217,12 @@ mmcreate(Relation reln)
 int
 mmunlink(Relation reln)
 {
-	int				i;
-	Oid				reldbid;
-	MMHashEntry    *entry;
+	int			i;
+	Oid			reldbid;
+	MMHashEntry *entry;
 	MMRelHashEntry *rentry;
-	bool			found;
-	MMRelTag		rtag;
+	bool		found;
+	MMRelTag	rtag;
 
 	if (reln->rd_rel->relisshared)
 		reldbid = (Oid) 0;
@@ -277,13 +277,13 @@ int
 mmextend(Relation reln, char *buffer)
 {
 	MMRelHashEntry *rentry;
-	MMHashEntry    *entry;
-	int				i;
-	Oid				reldbid;
-	int				offset;
-	bool			found;
-	MMRelTag		rtag;
-	MMCacheTag		tag;
+	MMHashEntry *entry;
+	int			i;
+	Oid			reldbid;
+	int			offset;
+	bool		found;
+	MMRelTag	rtag;
+	MMCacheTag	tag;
 
 	if (reln->rd_rel->relisshared)
 		reldbid = (Oid) 0;
@@ -380,10 +380,10 @@ mmclose(Relation reln)
 int
 mmread(Relation reln, BlockNumber blocknum, char *buffer)
 {
-	MMHashEntry    *entry;
-	bool			found;
-	int				offset;
-	MMCacheTag		tag;
+	MMHashEntry *entry;
+	bool		found;
+	int			offset;
+	MMCacheTag	tag;
 
 	if (reln->rd_rel->relisshared)
 		tag.mmct_dbid = (Oid) 0;
@@ -427,10 +427,10 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 int
 mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 {
-	MMHashEntry    *entry;
-	bool			found;
-	int				offset;
-	MMCacheTag		tag;
+	MMHashEntry *entry;
+	bool		found;
+	int			offset;
+	MMCacheTag	tag;
 
 	if (reln->rd_rel->relisshared)
 		tag.mmct_dbid = (Oid) 0;
@@ -500,10 +500,10 @@ mmblindwrt(char *dbstr,
 int
 mmnblocks(Relation reln)
 {
-	MMRelTag		rtag;
+	MMRelTag	rtag;
 	MMRelHashEntry *rentry;
-	bool			found;
-	int				nblocks;
+	bool		found;
+	int			nblocks;
 
 	if (reln->rd_rel->relisshared)
 		rtag.mmrt_dbid = (Oid) 0;
@@ -565,10 +565,10 @@ mmabort()
 int
 MMShmemSize()
 {
-	int				size = 0;
-	int				nbuckets;
-	int				nsegs;
-	int				tmp;
+	int			size = 0;
+	int			nbuckets;
+	int			nsegs;
+	int			tmp;
 
 	/*
 	 * first compute space occupied by the (dbid,relid,blkno) hash table

@@ -27,12 +27,12 @@
  * Can't get much more obvious than this.  Might need to replace localtime()
  * on older systems...
  */
-static char    *
+static char *
 Sysfunc_system_date(void)
 {
-	time_t			cur_time_secs;
-	struct tm	   *cur_time_expanded;
-	static char		buf[12];	/* Just for safety, y'understand... */
+	time_t		cur_time_secs;
+	struct tm  *cur_time_expanded;
+	static char buf[12];		/* Just for safety, y'understand... */
 
 	time(&cur_time_secs);
 	cur_time_expanded = localtime(&cur_time_secs);
@@ -46,12 +46,12 @@ Sysfunc_system_date(void)
 	return &buf[0];
 }
 
-static char    *
+static char *
 Sysfunc_system_time(void)
 {
-	time_t			cur_time_secs;
-	struct tm	   *cur_time_expanded;
-	static char		buf[10];	/* Just for safety, y'understand... */
+	time_t		cur_time_secs;
+	struct tm  *cur_time_expanded;
+	static char buf[10];		/* Just for safety, y'understand... */
 
 	time(&cur_time_secs);
 	cur_time_expanded = localtime(&cur_time_secs);
@@ -61,7 +61,7 @@ Sysfunc_system_time(void)
 	return &buf[0];
 }
 
-char		   *
+char	   *
 SystemFunctionHandler(char *funct)
 {
 	if (!strcmp(funct, "SYS_DATE"))

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.7 1997/09/07 04:45:03 momjian Exp $
+ * $Id: port-protos.h,v 1.8 1997/09/08 02:25:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,9 @@
 #define		   pg_dlclose	   BSD44_derived_dlclose
 #define		   pg_dlerror	   BSD44_derived_dlerror
 
-char		   *BSD44_derived_dlerror(void);
-void		   *BSD44_derived_dlopen(const char *filename, int num);
-void		   *BSD44_derived_dlsym(void *handle, const char *name);
-void			BSD44_derived_dlclose(void *handle);
+char	   *BSD44_derived_dlerror(void);
+void	   *BSD44_derived_dlopen(const char *filename, int num);
+void	   *BSD44_derived_dlsym(void *handle, const char *name);
+void		BSD44_derived_dlclose(void *handle);
 
 #endif							/* PORT_PROTOS_H */

@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_log.h,v 1.3 1997/09/07 04:56:55 momjian Exp $
+ * $Id: pg_log.h,v 1.4 1997/09/08 02:35:18 momjian Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code
@@ -29,7 +29,7 @@
 
 CATALOG(pg_log) BOOTSTRAP
 {
-	Oid				logfoo;
+	Oid			logfoo;
 } FormData_pg_log;
 
 typedef FormData_pg_log *Form_pg_log;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.4 1997/09/07 04:44:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.5 1997/09/08 02:25:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,35 +34,35 @@
  *		XXX assumes varno's are always integers, which shouldn't be true...
  *		(though it currently is, see primnodes.h)
  */
-List		   *
+List	   *
 pull_varnos(Node * me)
 {
-	List		   *i,
-				   *result = NIL;
+	List	   *i,
+			   *result = NIL;
 
 	if (me == NULL)
 		return (NIL);
 
 	switch (nodeTag(me))
 	{
-	case T_List:
-		foreach(i, (List *) me)
-		{
-			result = nconc(result, pull_varnos(lfirst(i)));
-		}
-		break;
-	case T_ArrayRef:
-		foreach(i, ((ArrayRef *) me)->refupperindexpr)
-			result = nconc(result, pull_varnos(lfirst(i)));
-		foreach(i, ((ArrayRef *) me)->reflowerindexpr)
-			result = nconc(result, pull_varnos(lfirst(i)));
-		result = nconc(result, pull_varnos(((ArrayRef *) me)->refassgnexpr));
-		break;
-	case T_Var:
-		result = lconsi(((Var *) me)->varno, NIL);
-		break;
-	default:
-		break;
+		case T_List:
+			foreach(i, (List *) me)
+			{
+				result = nconc(result, pull_varnos(lfirst(i)));
+			}
+			break;
+		case T_ArrayRef:
+			foreach(i, ((ArrayRef *) me)->refupperindexpr)
+				result = nconc(result, pull_varnos(lfirst(i)));
+			foreach(i, ((ArrayRef *) me)->reflowerindexpr)
+				result = nconc(result, pull_varnos(lfirst(i)));
+			result = nconc(result, pull_varnos(((ArrayRef *) me)->refassgnexpr));
+			break;
+		case T_Var:
+			result = lconsi(((Var *) me)->varno, NIL);
+			break;
+		default:
+			break;
 	}
 	return (result);
 }
@@ -87,7 +87,7 @@ contain_var_clause(Node * clause)
 		return FALSE;
 	else if (or_clause(clause))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((Expr *) clause)->args)
 		{
@@ -98,7 +98,7 @@ contain_var_clause(Node * clause)
 	}
 	else if (is_funcclause(clause))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((Expr *) clause)->args)
 		{
@@ -109,7 +109,7 @@ contain_var_clause(Node * clause)
 	}
 	else if (IsA(clause, ArrayRef))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((ArrayRef *) clause)->refupperindexpr)
 		{
@@ -143,10 +143,10 @@ contain_var_clause(Node * clause)
  *
  *	  Returns list of varnodes found.
  */
-List		   *
+List	   *
 pull_var_clause(Node * clause)
 {
-	List		   *retval = NIL;
+	List	   *retval = NIL;
 
 	if (clause == NULL)
 		return (NIL);
@@ -158,14 +158,14 @@ pull_var_clause(Node * clause)
 		retval = NIL;
 	else if (or_clause(clause))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((Expr *) clause)->args)
 			retval = nconc(retval, pull_var_clause(lfirst(temp)));
 	}
 	else if (is_funcclause(clause))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((Expr *) clause)->args)
 			retval = nconc(retval, pull_var_clause(lfirst(temp)));
@@ -176,7 +176,7 @@ pull_var_clause(Node * clause)
 	}
 	else if (IsA(clause, ArrayRef))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((ArrayRef *) clause)->refupperindexpr)
 			retval = nconc(retval, pull_var_clause(lfirst(temp)));

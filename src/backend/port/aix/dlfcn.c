@@ -24,9 +24,9 @@
 
 typedef struct
 {
-	char		   *name;		/* the symbols's name */
-	void		   *addr;		/* its relocated virtual address */
-}				Export, *ExportPtr;
+	char	   *name;			/* the symbols's name */
+	void	   *addr;			/* its relocated virtual address */
+}			Export, *ExportPtr;
 
 /*
  * xlC uses the following structure to list its constructors and
@@ -34,24 +34,24 @@ typedef struct
  */
 typedef struct
 {
-	void			(*init) (void);		/* call static constructors */
-	void			(*term) (void);		/* call static destructors */
-}				Cdtor, *CdtorPtr;
+	void		(*init) (void); /* call static constructors */
+	void		(*term) (void); /* call static destructors */
+}			Cdtor, *CdtorPtr;
 
 /*
  * The void * handle returned from dlopen is actually a ModulePtr.
  */
 typedef struct Module
 {
-	struct Module  *next;
-	char		   *name;		/* module name for refcounting */
-	int				refCnt;		/* the number of references */
-	void		   *entry;		/* entry point from load */
+	struct Module *next;
+	char	   *name;			/* module name for refcounting */
+	int			refCnt;			/* the number of references */
+	void	   *entry;			/* entry point from load */
 	struct dl_info *info;		/* optional init/terminate functions */
-	CdtorPtr		cdtors;		/* optional C++ constructors */
-	int				nExports;	/* the number of exports found */
-	ExportPtr		exports;	/* the array of exports */
-}				Module, *ModulePtr;
+	CdtorPtr	cdtors;			/* optional C++ constructors */
+	int			nExports;		/* the number of exports found */
+	ExportPtr	exports;		/* the array of exports */
+}			Module, *ModulePtr;
 
 /*
  * We keep a list of all loaded modules to be able to call the fini
@@ -63,20 +63,20 @@ static ModulePtr modList;
  * The last error from one of the dl* routines is kept in static
  * variables here. Each error is returned only once to the caller.
  */
-static char		errbuf[BUFSIZ];
-static int		errvalid;
+static char errbuf[BUFSIZ];
+static int	errvalid;
 
-extern char    *strdup(const char *);
-static void		caterr(char *);
-static int		readExports(ModulePtr);
-static void		terminate(void);
-static void    *findMain(void);
+extern char *strdup(const char *);
+static void caterr(char *);
+static int	readExports(ModulePtr);
+static void terminate(void);
+static void *findMain(void);
 
-void		   *
+void	   *
 dlopen(const char *path, int mode)
 {
 	register ModulePtr mp;
-	static void    *mainModule;
+	static void *mainModule;
 
 	/*
 	 * Upon the first call register a terminate handler that will close
@@ -134,13 +134,13 @@ dlopen(const char *path, int mode)
 		 */
 		if (errno == ENOEXEC)
 		{
-			char		   *tmp[BUFSIZ / sizeof(char *)];
+			char	   *tmp[BUFSIZ / sizeof(char *)];
 
 			if (loadquery(L_GETMESSAGES, tmp, sizeof(tmp)) == -1)
 				strcpy(errbuf, strerror(errno));
 			else
 			{
-				char		  **p;
+				char	  **p;
 
 				for (p = tmp; *p; p++)
 					caterr(*p);
@@ -221,46 +221,46 @@ dlopen(const char *path, int mode)
 static void
 caterr(char *s)
 {
-	register char  *p = s;
+	register char *p = s;
 
 	while (*p >= '0' && *p <= '9')
 		p++;
 	switch (atoi(s))
 	{
-	case L_ERROR_TOOMANY:
-		strcat(errbuf, "to many errors");
-		break;
-	case L_ERROR_NOLIB:
-		strcat(errbuf, "can't load library");
-		strcat(errbuf, p);
-		break;
-	case L_ERROR_UNDEF:
-		strcat(errbuf, "can't find symbol");
-		strcat(errbuf, p);
-		break;
-	case L_ERROR_RLDBAD:
-		strcat(errbuf, "bad RLD");
-		strcat(errbuf, p);
-		break;
-	case L_ERROR_FORMAT:
-		strcat(errbuf, "bad exec format in");
-		strcat(errbuf, p);
-		break;
-	case L_ERROR_ERRNO:
-		strcat(errbuf, strerror(atoi(++p)));
-		break;
-	default:
-		strcat(errbuf, s);
-		break;
+		case L_ERROR_TOOMANY:
+			strcat(errbuf, "to many errors");
+			break;
+		case L_ERROR_NOLIB:
+			strcat(errbuf, "can't load library");
+			strcat(errbuf, p);
+			break;
+		case L_ERROR_UNDEF:
+			strcat(errbuf, "can't find symbol");
+			strcat(errbuf, p);
+			break;
+		case L_ERROR_RLDBAD:
+			strcat(errbuf, "bad RLD");
+			strcat(errbuf, p);
+			break;
+		case L_ERROR_FORMAT:
+			strcat(errbuf, "bad exec format in");
+			strcat(errbuf, p);
+			break;
+		case L_ERROR_ERRNO:
+			strcat(errbuf, strerror(atoi(++p)));
+			break;
+		default:
+			strcat(errbuf, s);
+			break;
 	}
 }
 
-void		   *
+void	   *
 dlsym(void *handle, const char *symbol)
 {
 	register ModulePtr mp = (ModulePtr) handle;
 	register ExportPtr ep;
-	register int	i;
+	register int i;
 
 	/*
 	 * Could speed up the search, but I assume that one assigns the result
@@ -275,7 +275,7 @@ dlsym(void *handle, const char *symbol)
 	return NULL;
 }
 
-char		   *
+char	   *
 dlerror(void)
 {
 	if (errvalid)
@@ -290,7 +290,7 @@ int
 dlclose(void *handle)
 {
 	register ModulePtr mp = (ModulePtr) handle;
-	int				result;
+	int			result;
 	register ModulePtr mp1;
 
 	if (--mp->refCnt > 0)
@@ -312,7 +312,7 @@ dlclose(void *handle)
 	if (mp->exports)
 	{
 		register ExportPtr ep;
-		register int	i;
+		register int i;
 
 		for (ep = mp->exports, i = mp->nExports; i; i--, ep++)
 			if (ep->name)
@@ -348,20 +348,20 @@ terminate(void)
 static int
 readExports(ModulePtr mp)
 {
-	LDFILE		   *ldp = NULL;
-	SCNHDR			sh,
-					shdata;
-	LDHDR		   *lhp;
-	char		   *ldbuf;
-	LDSYM		   *ls;
-	int				i;
-	ExportPtr		ep;
+	LDFILE	   *ldp = NULL;
+	SCNHDR		sh,
+				shdata;
+	LDHDR	   *lhp;
+	char	   *ldbuf;
+	LDSYM	   *ls;
+	int			i;
+	ExportPtr	ep;
 
 	if ((ldp = ldopen(mp->name, ldp)) == NULL)
 	{
 		struct ld_info *lp;
-		char		   *buf;
-		int				size = 4 * 1024;
+		char	   *buf;
+		int			size = 4 * 1024;
 
 		if (errno != ENOENT)
 		{
@@ -522,8 +522,8 @@ readExports(ModulePtr mp)
 	ls = (LDSYM *) (ldbuf + LDHDRSZ);
 	for (i = lhp->l_nsyms; i; i--, ls++)
 	{
-		char		   *symname;
-		char			tmpsym[SYMNMLEN + 1];
+		char	   *symname;
+		char		tmpsym[SYMNMLEN + 1];
 
 		if (!LDR_EXPORT(*ls))
 			continue;
@@ -555,14 +555,14 @@ readExports(ModulePtr mp)
  * Find the main modules entry point. This is used as export pointer
  * for loadbind() to be able to resolve references to the main part.
  */
-static void    *
+static void *
 findMain(void)
 {
 	struct ld_info *lp;
-	char		   *buf;
-	int				size = 4 * 1024;
-	int				i;
-	void		   *ret;
+	char	   *buf;
+	int			size = 4 * 1024;
+	int			i;
+	void	   *ret;
 
 	if ((buf = malloc(size)) == NULL)
 	{

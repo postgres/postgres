@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.11 1997/09/07 04:48:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.12 1997/09/08 02:28:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,23 +70,23 @@
 
 /* shared memory global variables */
 
-unsigned long	ShmemBase = 0;	/* start and end address of shared memory */
+unsigned long ShmemBase = 0;	/* start and end address of shared memory */
 static unsigned long ShmemEnd = 0;
 static unsigned long ShmemSize = 0;		/* current size (and default) */
 
-SPINLOCK		ShmemLock;		/* lock for shared memory allocation */
+SPINLOCK	ShmemLock;			/* lock for shared memory allocation */
 
-SPINLOCK		BindingLock;	/* lock for binding table access */
+SPINLOCK	BindingLock;		/* lock for binding table access */
 
 static unsigned long *ShmemFreeStart = NULL;	/* pointer to the OFFSET
 												 * of first free shared
 												 * memory */
 static unsigned long *ShmemBindingTabOffset = NULL;		/* start of the binding
 														 * table (for bootstrap) */
-static int		ShmemBootstrap = FALSE; /* flag becomes true when shared
+static int	ShmemBootstrap = FALSE;		/* flag becomes true when shared
 										 * mem is created by POSTMASTER */
 
-static HTAB    *BindingTable = NULL;
+static HTAB *BindingTable = NULL;
 
 /* ---------------------
  * ShmemBindingTabReset() - Resets the binding table to NULL....
@@ -142,15 +142,15 @@ ShmemCreate(unsigned int key, unsigned int size)
 int
 InitShmem(unsigned int key, unsigned int size)
 {
-	Pointer			sharedRegion;
-	unsigned long	currFreeSpace;
+	Pointer		sharedRegion;
+	unsigned long currFreeSpace;
 
-	HASHCTL			info;
-	int				hash_flags;
-	BindingEnt	   *result,
-					item;
-	bool			found;
-	IpcMemoryId		shmid;
+	HASHCTL		info;
+	int			hash_flags;
+	BindingEnt *result,
+				item;
+	bool		found;
+	IpcMemoryId shmid;
 
 	/* if zero key, use default memory size */
 	if (size)
@@ -223,8 +223,8 @@ InitShmem(unsigned int key, unsigned int size)
 
 	/*
 	 * Now, check the binding table for an entry to the binding table.	If
-	 * there is an entry there, someone else created the table.
-	 * Otherwise, we did and we have to initialize it.
+	 * there is an entry there, someone else created the table. Otherwise,
+	 * we did and we have to initialize it.
 	 */
 	memset(item.key, 0, BTABLE_KEYSIZE);
 	strncpy(item.key, "BindingTable", BTABLE_KEYSIZE);
@@ -276,11 +276,11 @@ InitShmem(unsigned int key, unsigned int size)
  *		of space.  Has to return a real pointer in order
  *		to be compatable with malloc().
  */
-long		   *
+long	   *
 ShmemAlloc(unsigned long size)
 {
-	unsigned long	tmpFree;
-	long		   *newSpace;
+	unsigned long tmpFree;
+	long	   *newSpace;
 
 	/*
 	 * ensure space is word aligned.
@@ -338,15 +338,15 @@ ShmemIsValid(unsigned long addr)
  * table at once.  Use SpinAlloc() to create a spinlock
  * for the structure before creating the structure itself.
  */
-HTAB		   *
+HTAB	   *
 ShmemInitHash(char *name,		/* table string name for binding */
 			  long init_size,	/* initial size */
 			  long max_size,	/* max size of the table */
 			  HASHCTL * infoP,	/* info about key and bucket size */
 			  int hash_flags)	/* info about infoP */
 {
-	bool			found;
-	long		   *location;
+	bool		found;
+	long	   *location;
 
 	/*
 	 * shared memory hash tables have a fixed max size so that the control
@@ -402,9 +402,9 @@ ShmemInitHash(char *name,		/* table string name for binding */
 bool
 ShmemPIDLookup(int pid, SHMEM_OFFSET * locationPtr)
 {
-	BindingEnt	   *result,
-					item;
-	bool			found;
+	BindingEnt *result,
+				item;
+	bool		found;
 
 	Assert(BindingTable);
 	memset(item.key, 0, BTABLE_KEYSIZE);
@@ -448,10 +448,10 @@ ShmemPIDLookup(int pid, SHMEM_OFFSET * locationPtr)
 SHMEM_OFFSET
 ShmemPIDDestroy(int pid)
 {
-	BindingEnt	   *result,
-					item;
-	bool			found;
-	SHMEM_OFFSET	location = 0;
+	BindingEnt *result,
+				item;
+	bool		found;
+	SHMEM_OFFSET location = 0;
 
 	Assert(BindingTable);
 
@@ -496,12 +496,12 @@ ShmemPIDDestroy(int pid)
  *		the object is already in the binding table (hence, already
  *		initialized).
  */
-long		   *
+long	   *
 ShmemInitStruct(char *name, unsigned long size, bool * foundPtr)
 {
-	BindingEnt	   *result,
-					item;
-	long		   *structPtr;
+	BindingEnt *result,
+				item;
+	long	   *structPtr;
 
 	strncpy(item.key, name, BTABLE_KEYSIZE);
 	item.location = BAD_LOCATION;
@@ -512,7 +512,7 @@ ShmemInitStruct(char *name, unsigned long size, bool * foundPtr)
 	{
 		/* Assert() is a macro now. substitutes inside quotes. */
 #ifndef NO_ASSERT_CHECKING
-		char		   *strname = "BindingTable";
+		char	   *strname = "BindingTable";
 
 #endif
 
@@ -613,8 +613,8 @@ ShmemInitStruct(char *name, unsigned long size, bool * foundPtr)
 bool
 TransactionIdIsInProgress(TransactionId xid)
 {
-	BindingEnt	   *result;
-	PROC		   *proc;
+	BindingEnt *result;
+	PROC	   *proc;
 
 	Assert(BindingTable);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.12 1997/09/07 04:39:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.13 1997/09/08 02:21:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include <catalog/pg_proc.h>
 #include <executor/execdebug.h>
 
-extern int		NIndexTupleProcessed;
+extern int	NIndexTupleProcessed;
 
 
 #ifndef HAVE_MEMMOVE
@@ -35,14 +35,14 @@ extern int		NIndexTupleProcessed;
 ScanKey
 _bt_mkscankey(Relation rel, IndexTuple itup)
 {
-	ScanKey			skey;
-	TupleDesc		itupdesc;
-	int				natts;
-	int				i;
-	Datum			arg;
-	RegProcedure	proc;
-	bool			null;
-	bits16			flag;
+	ScanKey		skey;
+	TupleDesc	itupdesc;
+	int			natts;
+	int			i;
+	Datum		arg;
+	RegProcedure proc;
+	bool		null;
+	bits16		flag;
 
 	natts = rel->rd_rel->relnatts;
 	itupdesc = RelationGetTupleDescriptor(rel);
@@ -78,7 +78,7 @@ _bt_freeskey(ScanKey skey)
 void
 _bt_freestack(BTStack stack)
 {
-	BTStack			ostack;
+	BTStack		ostack;
 
 	while (stack != (BTStack) NULL)
 	{
@@ -99,18 +99,18 @@ _bt_freestack(BTStack stack)
 void
 _bt_orderkeys(Relation relation, BTScanOpaque so)
 {
-	ScanKey			xform;
-	ScanKeyData    *cur;
-	StrategyMap		map;
-	int				nbytes;
-	long			test;
-	int				i,
-					j;
-	int				init[BTMaxStrategyNumber + 1];
-	ScanKey			key;
-	uint16			numberOfKeys = so->numberOfKeys;
-	uint16			new_numberOfKeys = 0;
-	AttrNumber		attno = 1;
+	ScanKey		xform;
+	ScanKeyData *cur;
+	StrategyMap map;
+	int			nbytes;
+	long		test;
+	int			i,
+				j;
+	int			init[BTMaxStrategyNumber + 1];
+	ScanKey		key;
+	uint16		numberOfKeys = so->numberOfKeys;
+	uint16		new_numberOfKeys = 0;
+	AttrNumber	attno = 1;
 
 	if (numberOfKeys < 1)
 		return;
@@ -169,8 +169,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			 */
 			if (init[BTEqualStrategyNumber - 1])
 			{
-				ScanKeyData    *eq,
-							   *chk;
+				ScanKeyData *eq,
+						   *chk;
 
 				eq = &xform[BTEqualStrategyNumber - 1];
 				for (j = BTMaxStrategyNumber; --j >= 0;)
@@ -192,8 +192,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			if (init[BTLessStrategyNumber - 1]
 				&& init[BTLessEqualStrategyNumber - 1])
 			{
-				ScanKeyData    *lt,
-							   *le;
+				ScanKeyData *lt,
+						   *le;
 
 				lt = &xform[BTLessStrategyNumber - 1];
 				le = &xform[BTLessEqualStrategyNumber - 1];
@@ -216,8 +216,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			if (init[BTGreaterStrategyNumber - 1]
 				&& init[BTGreaterEqualStrategyNumber - 1])
 			{
-				ScanKeyData    *gt,
-							   *ge;
+				ScanKeyData *gt,
+						   *ge;
 
 				gt = &xform[BTGreaterStrategyNumber - 1];
 				ge = &xform[BTGreaterEqualStrategyNumber - 1];
@@ -288,10 +288,10 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 BTItem
 _bt_formitem(IndexTuple itup)
 {
-	int				nbytes_btitem;
-	BTItem			btitem;
-	Size			tuplen;
-	extern Oid		newoid();
+	int			nbytes_btitem;
+	BTItem		btitem;
+	Size		tuplen;
+	extern Oid	newoid();
 
 	/*
 	 * see comments in btbuild
@@ -318,7 +318,7 @@ _bt_formitem(IndexTuple itup)
 bool
 _bt_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
-	BTScanOpaque	so;
+	BTScanOpaque so;
 
 	so = (BTScanOpaque) scan->opaque;
 	if (so->numberOfKeys > 0)
@@ -334,7 +334,7 @@ _bt_checkqual(IndexScanDesc scan, IndexTuple itup)
 bool
 _bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz)
 {
-	BTScanOpaque	so;
+	BTScanOpaque so;
 
 	so = (BTScanOpaque) scan->opaque;
 	if (keysz > 0 && so->numberOfKeys >= keysz)
@@ -349,13 +349,13 @@ _bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz)
 bool
 _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size * keysok)
 {
-	BTScanOpaque	so = (BTScanOpaque) scan->opaque;
-	Size			keysz = so->numberOfKeys;
-	TupleDesc		tupdesc;
-	ScanKey			key;
-	Datum			datum;
-	bool			isNull;
-	int				test;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	Size		keysz = so->numberOfKeys;
+	TupleDesc	tupdesc;
+	ScanKey		key;
+	Datum		datum;
+	bool		isNull;
+	int			test;
 
 	*keysok = 0;
 	if (keysz == 0)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.5 1997/09/07 04:53:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.6 1997/09/08 02:31:21 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -52,12 +52,12 @@
 #include "storage/large_object.h"
 #include "catalog/pg_listener.h"
 
-extern bool		AMI_OVERRIDE;	/* XXX style */
+extern bool AMI_OVERRIDE;		/* XXX style */
 
 #include "utils/syscache.h"
 #include "catalog/indexing.h"
 
-typedef			HeapTuple(*ScanFunc) ();
+typedef		HeapTuple(*ScanFunc) ();
 
 /* ----------------
  *		Warning:  cacheinfo[] below is changed, then be sure and
@@ -321,7 +321,7 @@ static struct cachedesc cacheinfo[] = {
 
 static struct catcache *SysCache[
 								 lengthof(cacheinfo)];
-static int32	SysCacheSize = lengthof(cacheinfo);
+static int32 SysCacheSize = lengthof(cacheinfo);
 
 
 /*
@@ -344,7 +344,7 @@ zerocaches()
 void
 InitCatalogCache()
 {
-	int				cacheId;	/* XXX type */
+	int			cacheId;		/* XXX type */
 
 	if (!AMI_OVERRIDE)
 	{
@@ -456,7 +456,7 @@ SearchSysCacheStruct(int cacheId,		/* cache selection code */
 					 Datum key3,
 					 Datum key4)
 {
-	HeapTuple		tp;
+	HeapTuple	tp;
 
 	if (!PointerIsValid(returnStruct))
 	{
@@ -480,7 +480,7 @@ SearchSysCacheStruct(int cacheId,		/* cache selection code */
  *
  * [callers all assume this returns a (struct varlena *). -ay 10/94]
  */
-void		   *
+void	   *
 SearchSysCacheGetAttribute(int cacheId,
 						   AttrNumber attributeNumber,
 						   Datum key1,
@@ -488,14 +488,14 @@ SearchSysCacheGetAttribute(int cacheId,
 						   Datum key3,
 						   Datum key4)
 {
-	HeapTuple		tp;
-	char		   *cacheName;
-	Relation		relation;
-	int32			attributeLength,
-					attributeByValue;
-	bool			isNull;
-	char		   *attributeValue;
-	void		   *returnValue;
+	HeapTuple	tp;
+	char	   *cacheName;
+	Relation	relation;
+	int32		attributeLength,
+				attributeByValue;
+	bool		isNull;
+	char	   *attributeValue;
+	void	   *returnValue;
 
 	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
 	cacheName = cacheinfo[cacheId].name;
@@ -556,8 +556,8 @@ SearchSysCacheGetAttribute(int cacheId,
 	}
 	else
 	{
-		char		   *tmp;
-		int				size = (attributeLength < 0)
+		char	   *tmp;
+		int			size = (attributeLength < 0)
 		? VARSIZE((struct varlena *) attributeValue)	/* variable length */
 		: attributeLength;		/* fixed length */
 
@@ -583,16 +583,16 @@ SearchSysCacheGetAttribute(int cacheId,
  * [identical to get_typdefault, expecting a (struct varlena *) as ret val.
  *	some day, either of the functions should be removed		 -ay 10/94]
  */
-void		   *
+void	   *
 TypeDefaultRetrieve(Oid typId)
 {
-	HeapTuple		typeTuple;
-	TypeTupleForm	type;
-	int32			typByVal,
-					typLen;
+	HeapTuple	typeTuple;
+	TypeTupleForm type;
+	int32		typByVal,
+				typLen;
 	struct varlena *typDefault;
-	int32			dataSize;
-	void		   *returnValue;
+	int32		dataSize;
+	void	   *returnValue;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(typId),
@@ -631,25 +631,25 @@ TypeDefaultRetrieve(Oid typId)
 
 	if (typByVal)
 	{
-		int8			i8;
-		int16			i16;
-		int32			i32;
+		int8		i8;
+		int16		i16;
+		int32		i32;
 
 		if (dataSize == typLen)
 		{
 			switch (typLen)
 			{
-			case sizeof(int8):
-				memmove((char *) &i8, VARDATA(typDefault), sizeof(int8));
-				i32 = i8;
-				break;
-			case sizeof(int16):
-				memmove((char *) &i16, VARDATA(typDefault), sizeof(int16));
-				i32 = i16;
-				break;
-			case sizeof(int32):
-				memmove((char *) &i32, VARDATA(typDefault), sizeof(int32));
-				break;
+				case sizeof(int8):
+					memmove((char *) &i8, VARDATA(typDefault), sizeof(int8));
+					i32 = i8;
+					break;
+				case sizeof(int16):
+					memmove((char *) &i16, VARDATA(typDefault), sizeof(int16));
+					i32 = i16;
+					break;
+				case sizeof(int32):
+					memmove((char *) &i32, VARDATA(typDefault), sizeof(int32));
+					break;
 			}
 			returnValue = (void *) i32;
 		}

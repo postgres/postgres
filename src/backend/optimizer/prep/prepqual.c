@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.4 1997/09/07 04:44:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.5 1997/09/08 02:24:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,17 +24,17 @@
 
 #include "utils/lsyscache.h"
 
-static Expr    *pull_args(Expr * qual);
-static List    *pull_ors(List * orlist);
-static List    *pull_ands(List * andlist);
-static Expr    *find_nots(Expr * qual);
-static Expr    *push_nots(Expr * qual);
-static Expr    *normalize(Expr * qual);
-static List    *or_normalize(List * orlist);
-static List    *distribute_args(List * item, List * args);
-static List    *qualcleanup(Expr * qual);
-static List    *remove_ands(Expr * qual);
-static List    *remove_duplicates(List * list);
+static Expr *pull_args(Expr * qual);
+static List *pull_ors(List * orlist);
+static List *pull_ands(List * andlist);
+static Expr *find_nots(Expr * qual);
+static Expr *push_nots(Expr * qual);
+static Expr *normalize(Expr * qual);
+static List *or_normalize(List * orlist);
+static List *distribute_args(List * item, List * args);
+static List *qualcleanup(Expr * qual);
+static List *remove_ands(Expr * qual);
+static List *remove_duplicates(List * list);
 
 /*
  * preprocess-qualification--
@@ -47,10 +47,10 @@ static List    *remove_duplicates(List * list);
  *		preprocess-qualification simply converts the qual in conjunctive
  *		normal form  (see cnfify() below )
  */
-List		   *
+List	   *
 preprocess_qualification(Expr * qual, List * tlist, List ** existentialQualPtr)
 {
-	List		   *cnf_qual = cnfify(qual, true);
+	List	   *cnf_qual = cnfify(qual, true);
 
 /*
 	List *existential_qual =
@@ -100,10 +100,10 @@ preprocess_qualification(Expr * qual, List * tlist, List ** existentialQualPtr)
  *		and from the rule manager (removeAndFlag = false).
  *
  */
-List		   *
+List	   *
 cnfify(Expr * qual, bool removeAndFlag)
 {
-	Expr		   *newqual = NULL;
+	Expr	   *newqual = NULL;
 
 	if (qual != NULL)
 	{
@@ -133,7 +133,7 @@ cnfify(Expr * qual, bool removeAndFlag)
  * Returns the modified qualification.
  *
  */
-static Expr    *
+static Expr *
 pull_args(Expr * qual)
 {
 	if (qual == NULL)
@@ -148,8 +148,8 @@ pull_args(Expr * qual)
 	}
 	else if (and_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, pull_args(lfirst(temp)));
@@ -157,8 +157,8 @@ pull_args(Expr * qual)
 	}
 	else if (or_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, pull_args(lfirst(temp)));
@@ -181,7 +181,7 @@ pull_args(Expr * qual)
  *
  * Returns the modified list.
  */
-static List    *
+static List *
 pull_ors(List * orlist)
 {
 	if (orlist == NIL)
@@ -189,7 +189,7 @@ pull_ors(List * orlist)
 
 	if (or_clause(lfirst(orlist)))
 	{
-		List		   *args = ((Expr *) lfirst(orlist))->args;
+		List	   *args = ((Expr *) lfirst(orlist))->args;
 
 		return (pull_ors(nconc(copyObject((Node *) args),
 							   copyObject((Node *) lnext(orlist)))));
@@ -207,7 +207,7 @@ pull_ors(List * orlist)
  *
  * Returns the modified list.
  */
-static List    *
+static List *
 pull_ands(List * andlist)
 {
 	if (andlist == NIL)
@@ -215,7 +215,7 @@ pull_ands(List * andlist)
 
 	if (and_clause(lfirst(andlist)))
 	{
-		List		   *args = ((Expr *) lfirst(andlist))->args;
+		List	   *args = ((Expr *) lfirst(andlist))->args;
 
 		return (pull_ands(nconc(copyObject((Node *) args),
 								copyObject((Node *) lnext(andlist)))));
@@ -236,7 +236,7 @@ pull_ands(List * andlist)
  * Returns the modified qualification.
  *
  */
-static Expr    *
+static Expr *
 find_nots(Expr * qual)
 {
 	if (qual == NULL)
@@ -251,8 +251,8 @@ find_nots(Expr * qual)
 	}
 	else if (and_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
 		{
@@ -263,8 +263,8 @@ find_nots(Expr * qual)
 	}
 	else if (or_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
 		{
@@ -285,7 +285,7 @@ find_nots(Expr * qual)
  * Returns the modified qualification.
  *
  */
-static Expr    *
+static Expr *
 push_nots(Expr * qual)
 {
 	if (qual == NULL)
@@ -298,15 +298,15 @@ push_nots(Expr * qual)
 	 */
 	if (is_opclause((Node *) qual))
 	{
-		Oper		   *oper = (Oper *) ((Expr *) qual)->oper;
-		Oid				negator = get_negator(oper->opno);
+		Oper	   *oper = (Oper *) ((Expr *) qual)->oper;
+		Oid			negator = get_negator(oper->opno);
 
 		if (negator)
 		{
-			Oper		   *op = (Oper *) makeOper(negator,
-												   InvalidOid,
-												   oper->opresulttype,
-												   0, NULL);
+			Oper	   *op = (Oper *) makeOper(negator,
+											   InvalidOid,
+											   oper->opresulttype,
+											   0, NULL);
 
 			op->op_fcache = (FunctionCache *) NULL;
 			return
@@ -325,8 +325,8 @@ push_nots(Expr * qual)
 		 * ("NOT" B)) ("NOT" ("OR" A B)) => ("AND" ("NOT" A) ("NOT" B))
 		 * i.e., continue negating down through the clause's descendants.
 		 */
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
 		{
@@ -336,8 +336,8 @@ push_nots(Expr * qual)
 	}
 	else if (or_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
 		{
@@ -372,7 +372,7 @@ push_nots(Expr * qual)
  * Returns the modified qualification.
  *
  */
-static Expr    *
+static Expr *
 normalize(Expr * qual)
 {
 	if (qual == NULL)
@@ -380,7 +380,7 @@ normalize(Expr * qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		Expr		   *expr = (Expr *) qual;
+		Expr	   *expr = (Expr *) qual;
 
 		return (make_clause(expr->opType, expr->oper,
 							lcons(normalize((Expr *) get_leftop(qual)),
@@ -389,8 +389,8 @@ normalize(Expr * qual)
 	}
 	else if (and_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
 
 		foreach(temp, qual->args)
 		{
@@ -401,9 +401,9 @@ normalize(Expr * qual)
 	else if (or_clause((Node *) qual))
 	{
 		/* XXX - let form, maybe incorrect */
-		List		   *orlist = NIL;
-		List		   *temp = NIL;
-		bool			has_andclause = FALSE;
+		List	   *orlist = NIL;
+		List	   *temp = NIL;
+		bool		has_andclause = FALSE;
 
 		foreach(temp, qual->args)
 		{
@@ -437,12 +437,12 @@ normalize(Expr * qual)
  * Returns the modified list.
  *
  */
-static List    *
+static List *
 or_normalize(List * orlist)
 {
-	List		   *distributable = NIL;
-	List		   *new_orlist = NIL;
-	List		   *temp = NIL;
+	List	   *distributable = NIL;
+	List	   *new_orlist = NIL;
+	List	   *temp = NIL;
 
 	if (orlist == NIL)
 		return NIL;
@@ -476,13 +476,13 @@ or_normalize(List * orlist)
  * Returns an 'and' clause.
  *
  */
-static List    *
+static List *
 distribute_args(List * item, List * args)
 {
-	List		   *or_list = NIL;
-	List		   *n_list = NIL;
-	List		   *temp = NIL;
-	List		   *t_list = NIL;
+	List	   *or_list = NIL;
+	List	   *n_list = NIL;
+	List	   *temp = NIL;
+	List	   *t_list = NIL;
 
 	if (args == NULL)
 		return (item);
@@ -506,7 +506,7 @@ distribute_args(List * item, List * args)
  * Returns the modified qualfication.
  *
  */
-static List    *
+static List *
 qualcleanup(Expr * qual)
 {
 	if (qual == NULL)
@@ -521,9 +521,9 @@ qualcleanup(Expr * qual)
 	}
 	else if (and_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
-		List		   *new_and_args = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
+		List	   *new_and_args = NIL;
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, qualcleanup(lfirst(temp)));
@@ -537,9 +537,9 @@ qualcleanup(Expr * qual)
 	}
 	else if (or_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
-		List		   *t_list = NIL;
-		List		   *new_or_args = NIL;
+		List	   *temp = NIL;
+		List	   *t_list = NIL;
+		List	   *new_or_args = NIL;
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, qualcleanup(lfirst(temp)));
@@ -567,10 +567,10 @@ qualcleanup(Expr * qual)
  * RETURNS : qual
  * MODIFIES: qual
  */
-static List    *
+static List *
 remove_ands(Expr * qual)
 {
-	List		   *t_list = NIL;
+	List	   *t_list = NIL;
 
 	if (qual == NULL)
 		return (NIL);
@@ -583,7 +583,7 @@ remove_ands(Expr * qual)
 	}
 	else if (and_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
+		List	   *temp = NIL;
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, remove_ands(lfirst(temp)));
@@ -591,7 +591,7 @@ remove_ands(Expr * qual)
 	}
 	else if (or_clause((Node *) qual))
 	{
-		List		   *temp = NIL;
+		List	   *temp = NIL;
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, remove_ands(lfirst(temp)));
@@ -620,7 +620,7 @@ remove_ands(Expr * qual)
  *
  */
 #ifdef NOT_USED
-static List    *
+static List *
 update_relations(List * tlist)
 {
 	return (NIL);
@@ -634,13 +634,13 @@ update_relations(List * tlist)
  *
  *****************************************************************************/
 
-static List    *
+static List *
 remove_duplicates(List * list)
 {
-	List		   *i;
-	List		   *j;
-	List		   *result = NIL;
-	bool			there_exists_duplicate = false;
+	List	   *i;
+	List	   *j;
+	List	   *result = NIL;
+	bool		there_exists_duplicate = false;
 
 	if (length(list) == 1)
 		return (list);

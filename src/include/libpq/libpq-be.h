@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.5 1997/09/07 04:58:20 momjian Exp $
+ * $Id: libpq-be.h,v 1.6 1997/09/08 02:37:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,24 +30,24 @@
  */
 
 /* in be-dumpdata.c */
-extern void		be_portalinit(void);
-extern void		be_portalpush(PortalEntry * entry);
+extern void be_portalinit(void);
+extern void be_portalpush(PortalEntry * entry);
 extern PortalEntry *be_portalpop(void);
 extern PortalEntry *be_currentportal(void);
 extern PortalEntry *be_newportal(void);
 extern void
 be_typeinit(PortalEntry * entry, TupleDesc attrs,
 			int natts);
-extern void		be_printtup(HeapTuple tuple, TupleDesc typeinfo);
+extern void be_printtup(HeapTuple tuple, TupleDesc typeinfo);
 
 
 /* in be-pqexec.c */
-extern char    *
+extern char *
 PQfn(int fnid, int *result_buf, int result_len, int result_is_int,
 	 PQArgBlock * args, int nargs);
-extern char    *PQexec(char *query);
-extern int		pqtest_PQexec(char *q);
-extern int		pqtest_PQfn(char *q);
-extern int32	pqtest(struct varlena * vlena);
+extern char *PQexec(char *query);
+extern int	pqtest_PQexec(char *q);
+extern int	pqtest_PQfn(char *q);
+extern int32 pqtest(struct varlena * vlena);
 
 #endif							/* LIBPQ_BE_H */

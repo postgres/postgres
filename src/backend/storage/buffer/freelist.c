@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.5 1997/09/07 04:48:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.6 1997/09/08 02:28:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ AddBufferToFreelist(BufferDesc * bf)
 void
 PinBuffer(BufferDesc * buf)
 {
-	long			b;
+	long		b;
 
 	/* Assert (buf->refcount < 25); */
 
@@ -119,7 +119,7 @@ PinBuffer_Debug(char *file, int line, BufferDesc * buf)
 	PinBuffer(buf);
 	if (ShowPinTrace)
 	{
-		Buffer			buffer = BufferDescriptorGetBuffer(buf);
+		Buffer		buffer = BufferDescriptorGetBuffer(buf);
 
 		fprintf(stderr, "PIN(Pin) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
@@ -138,7 +138,7 @@ refcount = %ld, file: %s, line: %d\n",
 void
 UnpinBuffer(BufferDesc * buf)
 {
-	long			b = BufferDescriptorGetBuffer(buf) - 1;
+	long		b = BufferDescriptorGetBuffer(buf) - 1;
 
 	Assert(buf->refcount);
 	Assert(PrivateRefCount[b] > 0);
@@ -165,7 +165,7 @@ UnpinBuffer_Debug(char *file, int line, BufferDesc * buf)
 	UnpinBuffer(buf);
 	if (ShowPinTrace)
 	{
-		Buffer			buffer = BufferDescriptorGetBuffer(buf);
+		Buffer		buffer = BufferDescriptorGetBuffer(buf);
 
 		fprintf(stderr, "UNPIN(Unpin) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
@@ -180,10 +180,10 @@ refcount = %ld, file: %s, line: %d\n",
  * GetFreeBuffer() -- get the 'next' buffer from the freelist.
  *
  */
-BufferDesc	   *
+BufferDesc *
 GetFreeBuffer()
 {
-	BufferDesc	   *buf;
+	BufferDesc *buf;
 
 	if (Free_List_Descriptor == SharedFreeList->freeNext)
 	{
@@ -242,8 +242,8 @@ InitFreeList(bool init)
 void
 DBG_FreeListCheck(int nfree)
 {
-	int				i;
-	BufferDesc	   *buf;
+	int			i;
+	BufferDesc *buf;
 
 	buf = &(BufferDescriptors[SharedFreeList->freeNext]);
 	for (i = 0; i < nfree; i++, buf = &(BufferDescriptors[buf->freeNext]))
@@ -291,7 +291,7 @@ DBG_FreeListCheck(int nfree)
 static void
 PrintBufferFreeList()
 {
-	BufferDesc	   *buf;
+	BufferDesc *buf;
 
 	if (SharedFreeList->freeNext == Free_List_Descriptor)
 	{
@@ -302,7 +302,7 @@ PrintBufferFreeList()
 	buf = &(BufferDescriptors[SharedFreeList->freeNext]);
 	for (;;)
 	{
-		int				i = (buf - BufferDescriptors);
+		int			i = (buf - BufferDescriptors);
 
 		printf("[%-2d] (%s, %d) flags=0x%x, refcnt=%d %ld, nxt=%ld prv=%ld)\n",
 			   i, buf->sb_relname, buf->tag.blockNum,

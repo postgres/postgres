@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.8 1997/09/07 04:55:54 momjian Exp $
+ * $Id: hash.h,v 1.9 1997/09/08 02:34:08 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -39,10 +39,10 @@
  * macro OADDR_OF(S, O) where S is the splitnumber and O is the page
  * offset.
  */
-typedef uint32	Bucket;
-typedef bits16	OverflowPageAddress;
-typedef uint32	SplitNumber;
-typedef uint32	PageOffset;
+typedef uint32 Bucket;
+typedef bits16 OverflowPageAddress;
+typedef uint32 SplitNumber;
+typedef uint32 PageOffset;
 
 /* A valid overflow address will always have a page offset >= 1 */
 #define InvalidOvflAddress		0
@@ -77,13 +77,12 @@ typedef uint32	PageOffset;
 
 typedef struct HashPageOpaqueData
 {
-	bits16			hasho_flag; /* is this page a bucket or ovfl */
-	Bucket			hasho_bucket;		/* bucket number this pg belongs
-										 * to */
+	bits16		hasho_flag;		/* is this page a bucket or ovfl */
+	Bucket		hasho_bucket;	/* bucket number this pg belongs to */
 	OverflowPageAddress hasho_oaddr;	/* ovfl address of this ovfl pg */
-	BlockNumber		hasho_nextblkno;	/* next ovfl blkno */
-	BlockNumber		hasho_prevblkno;	/* previous ovfl (or bucket) blkno */
-}				HashPageOpaqueData;
+	BlockNumber hasho_nextblkno;/* next ovfl blkno */
+	BlockNumber hasho_prevblkno;/* previous ovfl (or bucket) blkno */
+}			HashPageOpaqueData;
 
 typedef HashPageOpaqueData *HashPageOpaque;
 
@@ -97,9 +96,9 @@ typedef HashPageOpaqueData *HashPageOpaque;
 
 typedef struct HashScanOpaqueData
 {
-	Buffer			hashso_curbuf;
-	Buffer			hashso_mrkbuf;
-}				HashScanOpaqueData;
+	Buffer		hashso_curbuf;
+	Buffer		hashso_mrkbuf;
+}			HashScanOpaqueData;
 
 typedef HashScanOpaqueData *HashScanOpaque;
 
@@ -140,31 +139,28 @@ typedef HashScanOpaqueData *HashScanOpaque;
 
 typedef struct HashMetaPageData
 {
-	PageHeaderData	hashm_phdr; /* pad for page header (do not use) */
-	uint32			hashm_magic;/* magic no. for hash tables */
-	uint32			hashm_version;		/* version ID */
-	uint32			hashm_nkeys;/* number of keys stored in the table */
-	uint16			hashm_ffactor;		/* fill factor */
-	uint16			hashm_bsize;/* bucket size (bytes) - must be a power
+	PageHeaderData hashm_phdr;	/* pad for page header (do not use) */
+	uint32		hashm_magic;	/* magic no. for hash tables */
+	uint32		hashm_version;	/* version ID */
+	uint32		hashm_nkeys;	/* number of keys stored in the table */
+	uint16		hashm_ffactor;	/* fill factor */
+	uint16		hashm_bsize;	/* bucket size (bytes) - must be a power
 								 * of 2 */
-	uint16			hashm_bshift;		/* bucket shift */
-	uint16			hashm_bmsize;		/* bitmap array size (bytes) -
-										 * must be a power of 2 */
-	uint32			hashm_maxbucket;	/* ID of maximum bucket in use */
-	uint32			hashm_highmask;		/* mask to modulo into entire
-										 * table */
-	uint32			hashm_lowmask;		/* mask to modulo into lower half
-										 * of table */
-	uint32			hashm_ovflpoint;	/* pageno. from which ovflpgs
-										 * being allocated */
-	uint32			hashm_lastfreed;	/* last ovflpage freed */
-	uint32			hashm_nmaps;/* Initial number of bitmaps */
-	uint32			hashm_spares[NCACHED];		/* spare pages available
-												 * at splitpoints */
-	BlockNumber		hashm_mapp[NCACHED];		/* blknumbers of ovfl page
-												 * maps */
-	RegProcedure	hashm_procid;		/* hash procedure id from pg_proc */
-}				HashMetaPageData;
+	uint16		hashm_bshift;	/* bucket shift */
+	uint16		hashm_bmsize;	/* bitmap array size (bytes) - must be a
+								 * power of 2 */
+	uint32		hashm_maxbucket;/* ID of maximum bucket in use */
+	uint32		hashm_highmask; /* mask to modulo into entire table */
+	uint32		hashm_lowmask;	/* mask to modulo into lower half of table */
+	uint32		hashm_ovflpoint;/* pageno. from which ovflpgs being
+								 * allocated */
+	uint32		hashm_lastfreed;/* last ovflpage freed */
+	uint32		hashm_nmaps;	/* Initial number of bitmaps */
+	uint32		hashm_spares[NCACHED];	/* spare pages available at
+										 * splitpoints */
+	BlockNumber hashm_mapp[NCACHED];	/* blknumbers of ovfl page maps */
+	RegProcedure hashm_procid;	/* hash procedure id from pg_proc */
+}			HashMetaPageData;
 
 typedef HashMetaPageData *HashMetaPage;
 
@@ -179,12 +175,12 @@ typedef HashMetaPageData *HashMetaPage;
 #define NKEYS			hashm_nkeys
 #define SPARES			hashm_spares
 
-extern bool		BuildingHash;
+extern bool BuildingHash;
 
 typedef struct HashItemData
 {
-	IndexTupleData	hash_itup;
-}				HashItemData;
+	IndexTupleData hash_itup;
+}			HashItemData;
 
 typedef HashItemData *HashItem;
 
@@ -256,32 +252,32 @@ extern void
 hashbuild(Relation heap, Relation index, int natts,
 		  AttrNumber * attnum, IndexStrategy istrat, uint16 pcount,
 		  Datum * params, FuncIndexInfo * finfo, PredInfo * predInfo);
-extern InsertIndexResult
+extern		InsertIndexResult
 hashinsert(Relation rel, Datum * datum, char *nulls,
 		   ItemPointer ht_ctid, Relation heapRel);
-extern char    *hashgettuple(IndexScanDesc scan, ScanDirection dir);
-extern char    *
+extern char *hashgettuple(IndexScanDesc scan, ScanDirection dir);
+extern char *
 hashbeginscan(Relation rel, bool fromEnd, uint16 keysz,
 			  ScanKey scankey);
-extern void		hashrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey);
-extern void		hashendscan(IndexScanDesc scan);
-extern void		hashmarkpos(IndexScanDesc scan);
-extern void		hashrestrpos(IndexScanDesc scan);
-extern void		hashdelete(Relation rel, ItemPointer tid);
+extern void hashrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey);
+extern void hashendscan(IndexScanDesc scan);
+extern void hashmarkpos(IndexScanDesc scan);
+extern void hashrestrpos(IndexScanDesc scan);
+extern void hashdelete(Relation rel, ItemPointer tid);
 
 /* hashfunc.c */
-extern uint32	hashint2(int16 key);
-extern uint32	hashint4(uint32 key);
-extern uint32	hashfloat4(float32 keyp);
-extern uint32	hashfloat8(float64 keyp);
-extern uint32	hashoid(Oid key);
-extern uint32	hashchar(char key);
-extern uint32	hashchar2(uint16 intkey);
-extern uint32	hashchar4(uint32 intkey);
-extern uint32	hashchar8(char *key);
-extern uint32	hashchar16(char *key);
-extern uint32	hashtext(struct varlena * key);
-extern uint32	hashname(NameData * n);
+extern uint32 hashint2(int16 key);
+extern uint32 hashint4(uint32 key);
+extern uint32 hashfloat4(float32 keyp);
+extern uint32 hashfloat8(float64 keyp);
+extern uint32 hashoid(Oid key);
+extern uint32 hashchar(char key);
+extern uint32 hashchar2(uint16 intkey);
+extern uint32 hashchar4(uint32 intkey);
+extern uint32 hashchar8(char *key);
+extern uint32 hashchar16(char *key);
+extern uint32 hashtext(struct varlena * key);
+extern uint32 hashname(NameData * n);
 
 /* private routines */
 
@@ -290,9 +286,9 @@ extern InsertIndexResult _hash_doinsert(Relation rel, HashItem hitem);
 
 
 /* hashovfl.c */
-extern Buffer	_hash_addovflpage(Relation rel, Buffer * metabufp, Buffer buf);
-extern Buffer	_hash_freeovflpage(Relation rel, Buffer ovflbuf);
-extern int32
+extern Buffer _hash_addovflpage(Relation rel, Buffer * metabufp, Buffer buf);
+extern Buffer _hash_freeovflpage(Relation rel, Buffer ovflbuf);
+extern		int32
 _hash_initbitmap(Relation rel, HashMetaPage metap, int32 pnum,
 				 int32 nbits, int32 ndx);
 extern void
@@ -301,23 +297,23 @@ _hash_squeezebucket(Relation rel, HashMetaPage metap,
 
 
 /* hashpage.c */
-extern void		_hash_metapinit(Relation rel);
-extern Buffer	_hash_getbuf(Relation rel, BlockNumber blkno, int access);
-extern void		_hash_relbuf(Relation rel, Buffer buf, int access);
-extern void		_hash_wrtbuf(Relation rel, Buffer buf);
-extern void		_hash_wrtnorelbuf(Relation rel, Buffer buf);
-extern Page
+extern void _hash_metapinit(Relation rel);
+extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno, int access);
+extern void _hash_relbuf(Relation rel, Buffer buf, int access);
+extern void _hash_wrtbuf(Relation rel, Buffer buf);
+extern void _hash_wrtnorelbuf(Relation rel, Buffer buf);
+extern		Page
 _hash_chgbufaccess(Relation rel, Buffer * bufp, int from_access,
 				   int to_access);
-extern void		_hash_pageinit(Page page, Size size);
-extern void		_hash_pagedel(Relation rel, ItemPointer tid);
-extern void		_hash_expandtable(Relation rel, Buffer metabuf);
+extern void _hash_pageinit(Page page, Size size);
+extern void _hash_pagedel(Relation rel, ItemPointer tid);
+extern void _hash_expandtable(Relation rel, Buffer metabuf);
 
 
 /* hashscan.c */
-extern void		_hash_regscan(IndexScanDesc scan);
-extern void		_hash_dropscan(IndexScanDesc scan);
-extern void		_hash_adjscans(Relation rel, ItemPointer tid);
+extern void _hash_regscan(IndexScanDesc scan);
+extern void _hash_dropscan(IndexScanDesc scan);
+extern void _hash_adjscans(Relation rel, ItemPointer tid);
 
 
 /* hashsearch.c */
@@ -326,20 +322,20 @@ _hash_search(Relation rel, int keysz, ScanKey scankey,
 			 Buffer * bufP, HashMetaPage metap);
 extern RetrieveIndexResult _hash_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _hash_first(IndexScanDesc scan, ScanDirection dir);
-extern bool
+extern		bool
 _hash_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir,
 		   Buffer metabuf);
 
 
 /* hashutil.c */
-extern ScanKey
+extern		ScanKey
 _hash_mkscankey(Relation rel, IndexTuple itup,
 				HashMetaPage metap);
-extern void		_hash_freeskey(ScanKey skey);
-extern bool		_hash_checkqual(IndexScanDesc scan, IndexTuple itup);
+extern void _hash_freeskey(ScanKey skey);
+extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);
 extern HashItem _hash_formitem(IndexTuple itup);
-extern Bucket	_hash_call(Relation rel, HashMetaPage metap, Datum key);
-extern uint32	_hash_log2(uint32 num);
-extern void		_hash_checkpage(Page page, int flags);
+extern Bucket _hash_call(Relation rel, HashMetaPage metap, Datum key);
+extern uint32 _hash_log2(uint32 num);
+extern void _hash_checkpage(Page page, int flags);
 
 #endif							/* HASH_H */

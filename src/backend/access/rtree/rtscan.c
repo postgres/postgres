@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.11 1997/09/07 04:39:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.12 1997/09/08 02:21:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
 
 
 /* routines defined and used here */
-static void		rtregscan(IndexScanDesc s);
-static void		rtdropscan(IndexScanDesc s);
+static void rtregscan(IndexScanDesc s);
+static void rtdropscan(IndexScanDesc s);
 static void
 rtadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		 OffsetNumber offnum);
@@ -52,9 +52,9 @@ adjustiptr(IndexScanDesc s, ItemPointer iptr,
 
 typedef struct RTScanListData
 {
-	IndexScanDesc	rtsl_scan;
+	IndexScanDesc rtsl_scan;
 	struct RTScanListData *rtsl_next;
-}				RTScanListData;
+}			RTScanListData;
 
 typedef RTScanListData *RTScanList;
 
@@ -67,7 +67,7 @@ rtbeginscan(Relation r,
 			uint16 nkeys,
 			ScanKey key)
 {
-	IndexScanDesc	s;
+	IndexScanDesc s;
 
 	RelationSetLockForRead(r);
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
@@ -80,8 +80,8 @@ void
 rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 {
 	RTreeScanOpaque p;
-	RegProcedure	internal_proc;
-	int				i;
+	RegProcedure internal_proc;
+	int			i;
 
 	if (!IndexScanIsValid(s))
 	{
@@ -177,9 +177,9 @@ void
 rtmarkpos(IndexScanDesc s)
 {
 	RTreeScanOpaque p;
-	RTSTACK		   *o,
-				   *n,
-				   *tmp;
+	RTSTACK    *o,
+			   *n,
+			   *tmp;
 
 	s->currentMarkData = s->currentItemData;
 	p = (RTreeScanOpaque) s->opaque;
@@ -210,9 +210,9 @@ void
 rtrestrpos(IndexScanDesc s)
 {
 	RTreeScanOpaque p;
-	RTSTACK		   *o,
-				   *n,
-				   *tmp;
+	RTSTACK    *o,
+			   *n,
+			   *tmp;
 
 	s->currentItemData = s->currentMarkData;
 	p = (RTreeScanOpaque) s->opaque;
@@ -260,7 +260,7 @@ rtendscan(IndexScanDesc s)
 static void
 rtregscan(IndexScanDesc s)
 {
-	RTScanList		l;
+	RTScanList	l;
 
 	l = (RTScanList) palloc(sizeof(RTScanListData));
 	l->rtsl_scan = s;
@@ -271,8 +271,8 @@ rtregscan(IndexScanDesc s)
 static void
 rtdropscan(IndexScanDesc s)
 {
-	RTScanList		l;
-	RTScanList		prev;
+	RTScanList	l;
+	RTScanList	prev;
 
 	prev = (RTScanList) NULL;
 
@@ -297,8 +297,8 @@ rtdropscan(IndexScanDesc s)
 void
 rtadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum)
 {
-	RTScanList		l;
-	Oid				relid;
+	RTScanList	l;
+	Oid			relid;
 
 	relid = r->rd_id;
 	for (l = RTScans; l != (RTScanList) NULL; l = l->rtsl_next)
@@ -352,7 +352,7 @@ adjustiptr(IndexScanDesc s,
 		   BlockNumber blkno,
 		   OffsetNumber offnum)
 {
-	OffsetNumber	curoff;
+	OffsetNumber curoff;
 	RTreeScanOpaque so;
 
 	if (ItemPointerIsValid(iptr))
@@ -364,39 +364,43 @@ adjustiptr(IndexScanDesc s,
 
 			switch (op)
 			{
-			case RTOP_DEL:
-				/* back up one if we need to */
-				if (curoff >= offnum)
-				{
+				case RTOP_DEL:
+					/* back up one if we need to */
+					if (curoff >= offnum)
+					{
 
-					if (curoff > FirstOffsetNumber)
-					{
-						/* just adjust the item pointer */
-						ItemPointerSet(iptr, blkno, OffsetNumberPrev(curoff));
-					}
-					else
-					{
-						/* remember that we're before the current tuple */
-						ItemPointerSet(iptr, blkno, FirstOffsetNumber);
-						if (iptr == &(s->currentItemData))
-							so->s_flags |= RTS_CURBEFORE;
+						if (curoff > FirstOffsetNumber)
+						{
+							/* just adjust the item pointer */
+							ItemPointerSet(iptr, blkno, OffsetNumberPrev(curoff));
+						}
 						else
-							so->s_flags |= RTS_MRKBEFORE;
+						{
+
+							/*
+							 * remember that we're before the current
+							 * tuple
+							 */
+							ItemPointerSet(iptr, blkno, FirstOffsetNumber);
+							if (iptr == &(s->currentItemData))
+								so->s_flags |= RTS_CURBEFORE;
+							else
+								so->s_flags |= RTS_MRKBEFORE;
+						}
 					}
-				}
-				break;
+					break;
 
-			case RTOP_SPLIT:
-				/* back to start of page on split */
-				ItemPointerSet(iptr, blkno, FirstOffsetNumber);
-				if (iptr == &(s->currentItemData))
-					so->s_flags &= ~RTS_CURBEFORE;
-				else
-					so->s_flags &= ~RTS_MRKBEFORE;
-				break;
+				case RTOP_SPLIT:
+					/* back to start of page on split */
+					ItemPointerSet(iptr, blkno, FirstOffsetNumber);
+					if (iptr == &(s->currentItemData))
+						so->s_flags &= ~RTS_CURBEFORE;
+					else
+						so->s_flags &= ~RTS_MRKBEFORE;
+					break;
 
-			default:
-				elog(WARN, "Bad operation in rtree scan adjust: %d", op);
+				default:
+					elog(WARN, "Bad operation in rtree scan adjust: %d", op);
 			}
 		}
 	}

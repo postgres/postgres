@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.6 1997/09/07 04:54:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.7 1997/09/08 02:32:05 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -25,7 +25,7 @@
 #include <string.h>
 #endif
 
-static void		AllocPointerDump(AllocPointer pointer);
+static void AllocPointerDump(AllocPointer pointer);
 static int
 AllocSetIterate(AllocSet set,
 				void (*function) (AllocPointer pointer));
@@ -45,8 +45,8 @@ AllocSetIterate(AllocSet set,
 typedef struct AllocElemData
 {
 	OrderedElemData elemData;	/* elem in AllocSet */
-	Size			size;
-}				AllocElemData;
+	Size		size;
+}			AllocElemData;
 
 typedef AllocElemData *AllocElem;
 
@@ -125,7 +125,7 @@ AllocSetInit(AllocSet set, AllocMode mode, Size limit)
 void
 AllocSetReset(AllocSet set)
 {
-	AllocPointer	pointer;
+	AllocPointer pointer;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -139,7 +139,7 @@ AllocSetReset(AllocSet set)
 void
 AllocSetReset_debug(char *file, int line, AllocSet set)
 {
-	AllocPointer	pointer;
+	AllocPointer pointer;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -181,7 +181,7 @@ AllocSetContains(AllocSet set, AllocPointer pointer)
 AllocPointer
 AllocSetAlloc(AllocSet set, Size size)
 {
-	AllocElem		alloc;
+	AllocElem	alloc;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -214,7 +214,7 @@ AllocSetAlloc(AllocSet set, Size size)
 void
 AllocSetFree(AllocSet set, AllocPointer pointer)
 {
-	AllocElem		alloc;
+	AllocElem	alloc;
 
 	/* AssertArg(AllocSetIsValid(set)); */
 	/* AssertArg(AllocPointerIsValid(pointer)); */
@@ -244,8 +244,8 @@ AllocSetFree(AllocSet set, AllocPointer pointer)
 AllocPointer
 AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
 {
-	AllocPointer	newPointer;
-	AllocElem		alloc;
+	AllocPointer newPointer;
+	AllocElem	alloc;
 
 	/* AssertArg(AllocSetIsValid(set)); */
 	/* AssertArg(AllocPointerIsValid(pointer)); */
@@ -287,8 +287,8 @@ static int
 AllocSetIterate(AllocSet set,
 				void (*function) (AllocPointer pointer))
 {
-	int				count = 0;
-	AllocPointer	pointer;
+	int			count = 0;
+	AllocPointer pointer;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -311,8 +311,8 @@ AllocSetIterate(AllocSet set,
 int
 AllocSetCount(AllocSet set)
 {
-	int				count = 0;
-	AllocPointer	pointer;
+	int			count = 0;
+	AllocPointer pointer;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -338,10 +338,10 @@ AllocSetCount(AllocSet set)
  * Note:
  *		Assumes set is valid.
  */
-static			AllocPointer
+static AllocPointer
 AllocSetGetFirst(AllocSet set)
 {
-	AllocElem		alloc;
+	AllocElem	alloc;
 
 	alloc = (AllocElem) OrderedSetGetHead(&set->setData);
 
@@ -360,10 +360,10 @@ AllocSetGetFirst(AllocSet set)
  * Note:
  *		Assumes pointer is valid.
  */
-static			AllocPointer
+static AllocPointer
 AllocPointerGetNext(AllocPointer pointer)
 {
-	AllocElem		alloc;
+	AllocElem	alloc;
 
 	alloc = (AllocElem)
 		OrderedElemGetSuccessor(&AllocPointerGetAllocElem(pointer)->elemData);
@@ -398,7 +398,7 @@ AllocPointerDump(AllocPointer pointer)
 void
 AllocSetDump(AllocSet set)
 {
-	int				count;
+	int			count;
 
 	count = AllocSetIterate(set, AllocPointerDump);
 	printf("\ttotal %d allocations\n", count);

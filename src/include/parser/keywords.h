@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: keywords.h,v 1.2 1997/09/07 04:59:34 momjian Exp $
+ * $Id: keywords.h,v 1.3 1997/09/08 02:38:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,11 @@
 
 typedef struct ScanKeyword
 {
-	char		   *name;
-	int				value;
-}				ScanKeyword;
+	char	   *name;
+	int			value;
+}			ScanKeyword;
 
 extern ScanKeyword *ScanKeywordLookup(char *text);
-extern char    *AtomValueGetString(int atomval);
+extern char *AtomValueGetString(int atomval);
 
 #endif							/* KEYWORDS_H */

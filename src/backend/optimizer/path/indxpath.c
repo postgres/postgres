@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.9 1997/09/07 04:43:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.10 1997/09/08 02:24:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,37 +52,37 @@ match_index_orclauses(Rel * rel, Rel * index, int indexkey,
 static bool
 match_index_to_operand(int indexkey, Expr * operand,
 					   Rel * rel, Rel * index);
-static List    *
+static List *
 match_index_orclause(Rel * rel, Rel * index, int indexkey,
 		   int xclass, List * or_clauses, List * other_matching_indices);
-static List    *
+static List *
 group_clauses_by_indexkey(Rel * rel, Rel * index,
 				  int *indexkeys, Oid * classes, List * clauseinfo_list);
-static List    *
+static List *
 group_clauses_by_ikey_for_joins(Rel * rel, Rel * index,
 								int *indexkeys, Oid * classes, List * join_cinfo_list, List * restr_cinfo_list);
-static CInfo   *
+static CInfo *
 match_clause_to_indexkey(Rel * rel, Rel * index, int indexkey,
 						 int xclass, CInfo * clauseInfo, bool join);
 static bool
 pred_test(List * predicate_list, List * clauseinfo_list,
 		  List * joininfo_list);
-static bool		one_pred_test(Expr * predicate, List * clauseinfo_list);
-static bool		one_pred_clause_expr_test(Expr * predicate, Node * clause);
-static bool		one_pred_clause_test(Expr * predicate, Node * clause);
-static bool		clause_pred_clause_test(Expr * predicate, Node * clause);
-static List    *
+static bool one_pred_test(Expr * predicate, List * clauseinfo_list);
+static bool one_pred_clause_expr_test(Expr * predicate, Node * clause);
+static bool one_pred_clause_test(Expr * predicate, Node * clause);
+static bool clause_pred_clause_test(Expr * predicate, Node * clause);
+static List *
 indexable_joinclauses(Rel * rel, Rel * index,
 					  List * joininfo_list, List * clauseinfo_list);
-static List    *
+static List *
 index_innerjoin(Query * root, Rel * rel,
 				List * clausegroup_list, Rel * index);
-static List    *
+static List *
 create_index_paths(Query * root, Rel * rel, Rel * index,
 				   List * clausegroup_list, bool join);
-static List    *add_index_paths(List * indexpaths, List * new_indexpaths);
-static bool		function_index_operand(Expr * funcOpnd, Rel * rel, Rel * index);
-static bool		SingleAttributeIndex(Rel * index);
+static List *add_index_paths(List * indexpaths, List * new_indexpaths);
+static bool function_index_operand(Expr * funcOpnd, Rel * rel, Rel * index);
+static bool SingleAttributeIndex(Rel * index);
 
 /* If Spyros can use a constant PRS2_BOOL_TYPEID, I can use this */
 #define BOOL_TYPEID ((Oid) 16)
@@ -113,19 +113,19 @@ static bool		SingleAttributeIndex(Rel * index);
  * Returns a list of index nodes.
  *
  */
-List		   *
+List	   *
 find_index_paths(Query * root,
 				 Rel * rel,
 				 List * indices,
 				 List * clauseinfo_list,
 				 List * joininfo_list)
 {
-	List		   *scanclausegroups = NIL;
-	List		   *scanpaths = NIL;
-	Rel			   *index = (Rel *) NULL;
-	List		   *joinclausegroups = NIL;
-	List		   *joinpaths = NIL;
-	List		   *retval = NIL;
+	List	   *scanclausegroups = NIL;
+	List	   *scanpaths = NIL;
+	Rel		   *index = (Rel *) NULL;
+	List	   *joinclausegroups = NIL;
+	List	   *joinpaths = NIL;
+	List	   *retval = NIL;
 
 	if (indices == NIL)
 		return (NULL);
@@ -193,11 +193,11 @@ find_index_paths(Query * root,
 
 	if (joinclausegroups != NIL)
 	{
-		List		   *new_join_paths = create_index_paths(root, rel,
-															index,
+		List	   *new_join_paths = create_index_paths(root, rel,
+														index,
 														joinclausegroups,
-															true);
-		List		   *innerjoin_paths = index_innerjoin(root, rel, joinclausegroups, index);
+														true);
+		List	   *innerjoin_paths = index_innerjoin(root, rel, joinclausegroups, index);
 
 		rel->innerjoin = nconc(rel->innerjoin, innerjoin_paths);
 		joinpaths = new_join_paths;
@@ -246,8 +246,8 @@ match_index_orclauses(Rel * rel,
 					  int xclass,
 					  List * clauseinfo_list)
 {
-	CInfo		   *clauseinfo = (CInfo *) NULL;
-	List		   *i = NIL;
+	CInfo	   *clauseinfo = (CInfo *) NULL;
+	List	   *i = NIL;
 
 	foreach(i, clauseinfo_list)
 	{
@@ -275,7 +275,7 @@ match_index_orclauses(Rel * rel,
  *	  and the operand on the rhs of a restriction clause.  Now check
  *	  for functional indices as well.
  */
-static			bool
+static bool
 match_index_to_operand(int indexkey,
 					   Expr * operand,
 					   Rel * rel,
@@ -315,7 +315,7 @@ match_index_to_operand(int indexkey,
  * 'or-clauses', d,e,f match the second subclause, no indices
  * match the third, g,h match the fourth, etc.
  */
-static List    *
+static List *
 match_index_orclause(Rel * rel,
 					 Rel * index,
 					 int indexkey,
@@ -323,11 +323,11 @@ match_index_orclause(Rel * rel,
 					 List * or_clauses,
 					 List * other_matching_indices)
 {
-	Node		   *clause = NULL;
-	List		   *matched_indices = other_matching_indices;
-	List		   *index_list = NIL;
-	List		   *clist;
-	List		   *ind;
+	Node	   *clause = NULL;
+	List	   *matched_indices = other_matching_indices;
+	List	   *index_list = NIL;
+	List	   *clist;
+	List	   *ind;
 
 	if (!matched_indices)
 		matched_indices = lcons(NIL, NIL);
@@ -397,32 +397,32 @@ match_index_orclause(Rel * rel,
  * returned for an index with 2 keys.
  *
  */
-static List    *
+static List *
 group_clauses_by_indexkey(Rel * rel,
 						  Rel * index,
 						  int *indexkeys,
 						  Oid * classes,
 						  List * clauseinfo_list)
 {
-	List		   *curCinfo = NIL;
-	CInfo		   *matched_clause = (CInfo *) NULL;
-	List		   *clausegroup = NIL;
-	int				curIndxKey;
-	Oid				curClass;
+	List	   *curCinfo = NIL;
+	CInfo	   *matched_clause = (CInfo *) NULL;
+	List	   *clausegroup = NIL;
+	int			curIndxKey;
+	Oid			curClass;
 
 	if (clauseinfo_list == NIL)
 		return NIL;
 
 	while (!DoneMatchingIndexKeys(indexkeys, index))
 	{
-		List		   *tempgroup = NIL;
+		List	   *tempgroup = NIL;
 
 		curIndxKey = indexkeys[0];
 		curClass = classes[0];
 
 		foreach(curCinfo, clauseinfo_list)
 		{
-			CInfo		   *temp = (CInfo *) lfirst(curCinfo);
+			CInfo	   *temp = (CInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -459,7 +459,7 @@ group_clauses_by_indexkey(Rel * rel,
  *		- vadim 03/18/97
  *
  */
-static List    *
+static List *
 group_clauses_by_ikey_for_joins(Rel * rel,
 								Rel * index,
 								int *indexkeys,
@@ -467,26 +467,26 @@ group_clauses_by_ikey_for_joins(Rel * rel,
 								List * join_cinfo_list,
 								List * restr_cinfo_list)
 {
-	List		   *curCinfo = NIL;
-	CInfo		   *matched_clause = (CInfo *) NULL;
-	List		   *clausegroup = NIL;
-	int				curIndxKey;
-	Oid				curClass;
-	bool			jfound = false;
+	List	   *curCinfo = NIL;
+	CInfo	   *matched_clause = (CInfo *) NULL;
+	List	   *clausegroup = NIL;
+	int			curIndxKey;
+	Oid			curClass;
+	bool		jfound = false;
 
 	if (join_cinfo_list == NIL)
 		return NIL;
 
 	while (!DoneMatchingIndexKeys(indexkeys, index))
 	{
-		List		   *tempgroup = NIL;
+		List	   *tempgroup = NIL;
 
 		curIndxKey = indexkeys[0];
 		curClass = classes[0];
 
 		foreach(curCinfo, join_cinfo_list)
 		{
-			CInfo		   *temp = (CInfo *) lfirst(curCinfo);
+			CInfo	   *temp = (CInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -502,7 +502,7 @@ group_clauses_by_ikey_for_joins(Rel * rel,
 		}
 		foreach(curCinfo, restr_cinfo_list)
 		{
-			CInfo		   *temp = (CInfo *) lfirst(curCinfo);
+			CInfo	   *temp = (CInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -582,7 +582,7 @@ group_clauses_by_ikey_for_joins(Rel * rel,
  * NOTE:  returns nil if clause is an or_clause.
  *
  */
-static CInfo   *
+static CInfo *
 match_clause_to_indexkey(Rel * rel,
 						 Rel * index,
 						 int indexkey,
@@ -590,12 +590,12 @@ match_clause_to_indexkey(Rel * rel,
 						 CInfo * clauseInfo,
 						 bool join)
 {
-	Expr		   *clause = clauseInfo->clause;
-	Var			   *leftop,
-				   *rightop;
-	Oid				join_op = InvalidOid;
-	Oid				restrict_op = InvalidOid;
-	bool			isIndexable = false;
+	Expr	   *clause = clauseInfo->clause;
+	Var		   *leftop,
+			   *rightop;
+	Oid			join_op = InvalidOid;
+	Oid			restrict_op = InvalidOid;
+	bool		isIndexable = false;
 
 	if (or_clause((Node *) clause) ||
 		not_clause((Node *) clause) || single_node((Node *) clause))
@@ -719,12 +719,12 @@ match_clause_to_indexkey(Rel * rel,
  *	  succeed whenever possible (assuming the predicate has been
  *	  successfully cnfify()-ed). --Nels, Jan '93
  */
-static			bool
+static bool
 pred_test(List * predicate_list, List * clauseinfo_list, List * joininfo_list)
 {
-	List		   *pred,
-				   *items,
-				   *item;
+	List	   *pred,
+			   *items,
+			   *item;
 
 	/*
 	 * Note: if Postgres tried to optimize queries by forming equivalence
@@ -770,11 +770,11 @@ pred_test(List * predicate_list, List * clauseinfo_list, List * joininfo_list)
  *	  Does the "predicate inclusion test" for one conjunct of a predicate
  *	  expression.
  */
-static			bool
+static bool
 one_pred_test(Expr * predicate, List * clauseinfo_list)
 {
-	CInfo		   *clauseinfo;
-	List		   *item;
+	CInfo	   *clauseinfo;
+	List	   *item;
 
 	Assert(predicate != NULL);
 	foreach(item, clauseinfo_list)
@@ -793,11 +793,11 @@ one_pred_test(Expr * predicate, List * clauseinfo_list)
  *	  Does the "predicate inclusion test" for a general restriction-clause
  *	  expression.
  */
-static			bool
+static bool
 one_pred_clause_expr_test(Expr * predicate, Node * clause)
 {
-	List		   *items,
-				   *item;
+	List	   *items,
+			   *item;
 
 	if (is_opclause(clause))
 		return one_pred_clause_test(predicate, clause);
@@ -840,11 +840,11 @@ one_pred_clause_expr_test(Expr * predicate, Node * clause)
  *	  Does the "predicate inclusion test" for one conjunct of a predicate
  *	  expression for a simple restriction clause.
  */
-static			bool
+static bool
 one_pred_clause_test(Expr * predicate, Node * clause)
 {
-	List		   *items,
-				   *item;
+	List	   *items,
+			   *item;
 
 	if (is_opclause((Node *) predicate))
 		return clause_pred_clause_test(predicate, clause);
@@ -903,7 +903,7 @@ one_pred_clause_test(Expr * predicate, Node * clause)
  * this test should always be considered false.
  */
 
-StrategyNumber	BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
+StrategyNumber BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
 	{2, 2, 0, 0, 0},
 	{1, 2, 0, 0, 0},
 	{1, 2, 3, 4, 5},
@@ -922,29 +922,29 @@ StrategyNumber	BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
  *	  Eventually, rtree operators could also be handled by defining an
  *	  appropriate "RT_implic_table" array.
  */
-static			bool
+static bool
 clause_pred_clause_test(Expr * predicate, Node * clause)
 {
-	Var			   *pred_var,
-				   *clause_var;
-	Const		   *pred_const,
-				   *clause_const;
-	Oid				pred_op,
-					clause_op,
-					test_op;
-	Oid				opclass_id;
-	StrategyNumber	pred_strategy,
-					clause_strategy,
-					test_strategy;
-	Oper		   *test_oper;
-	Expr		   *test_expr;
-	bool			test_result,
-					isNull;
-	Relation		relation;
-	HeapScanDesc	scan;
-	HeapTuple		tuple;
-	ScanKeyData		entry[3];
-	Form_pg_amop	form;
+	Var		   *pred_var,
+			   *clause_var;
+	Const	   *pred_const,
+			   *clause_const;
+	Oid			pred_op,
+				clause_op,
+				test_op;
+	Oid			opclass_id;
+	StrategyNumber pred_strategy,
+				clause_strategy,
+				test_strategy;
+	Oper	   *test_oper;
+	Expr	   *test_expr;
+	bool		test_result,
+				isNull;
+	Relation	relation;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	ScanKeyData entry[3];
+	Form_pg_amop form;
 
 	pred_var = (Var *) get_leftop(predicate);
 	pred_const = (Const *) get_rightop(predicate);
@@ -1120,14 +1120,14 @@ clause_pred_clause_test(Expr * predicate, Node * clause)
  *		when a key is in both join & restriction clauses. - vadim 03/18/97
  *
  */
-static List    *
+static List *
 indexable_joinclauses(Rel * rel, Rel * index,
 					  List * joininfo_list, List * clauseinfo_list)
 {
-	JInfo		   *joininfo = (JInfo *) NULL;
-	List		   *cg_list = NIL;
-	List		   *i = NIL;
-	List		   *clausegroups = NIL;
+	JInfo	   *joininfo = (JInfo *) NULL;
+	List	   *cg_list = NIL;
+	List	   *i = NIL;
+	List	   *clausegroups = NIL;
 
 	foreach(i, joininfo_list)
 	{
@@ -1145,7 +1145,7 @@ indexable_joinclauses(Rel * rel, Rel * index,
 
 		if (clausegroups != NIL)
 		{
-			List		   *clauses = lfirst(clausegroups);
+			List	   *clauses = lfirst(clausegroups);
 
 			((CInfo *) lfirst(clauses))->cinfojoinid =
 				joininfo->otherrels;
@@ -1165,15 +1165,15 @@ indexable_joinclauses(Rel * rel, Rel * index,
  *	  This routine returns the restriction clauses only.
  */
 #ifdef NOT_USED
-static List    *
+static List *
 extract_restrict_clauses(List * clausegroup)
 {
-	List		   *restrict_cls = NIL;
-	List		   *l;
+	List	   *restrict_cls = NIL;
+	List	   *l;
 
 	foreach(l, clausegroup)
 	{
-		CInfo		   *cinfo = lfirst(l);
+		CInfo	   *cinfo = lfirst(l);
 
 		if (!join_clause_p((Node *) cinfo->clause))
 		{
@@ -1196,21 +1196,21 @@ extract_restrict_clauses(List * clausegroup)
  * Returns a list of index pathnodes.
  *
  */
-static List    *
+static List *
 index_innerjoin(Query * root, Rel * rel, List * clausegroup_list, Rel * index)
 {
-	List		   *clausegroup = NIL;
-	List		   *cg_list = NIL;
-	List		   *i = NIL;
-	IndexPath	   *pathnode = (IndexPath *) NULL;
-	Cost			temp_selec;
-	float			temp_pages;
+	List	   *clausegroup = NIL;
+	List	   *cg_list = NIL;
+	List	   *i = NIL;
+	IndexPath  *pathnode = (IndexPath *) NULL;
+	Cost		temp_selec;
+	float		temp_pages;
 
 	foreach(i, clausegroup_list)
 	{
-		List		   *attnos,
-					   *values,
-					   *flags;
+		List	   *attnos,
+				   *values,
+				   *flags;
 
 		clausegroup = lfirst(i);
 		pathnode = makeNode(IndexPath);
@@ -1281,24 +1281,24 @@ index_innerjoin(Query * root, Rel * rel, List * clausegroup_list, Rel * index)
  * Returns a list of new index path nodes.
  *
  */
-static List    *
+static List *
 create_index_paths(Query * root,
 				   Rel * rel,
 				   Rel * index,
 				   List * clausegroup_list,
 				   bool join)
 {
-	List		   *clausegroup = NIL;
-	List		   *ip_list = NIL;
-	List		   *i = NIL;
-	List		   *j = NIL;
-	IndexPath	   *temp_path;
+	List	   *clausegroup = NIL;
+	List	   *ip_list = NIL;
+	List	   *i = NIL;
+	List	   *j = NIL;
+	IndexPath  *temp_path;
 
 	foreach(i, clausegroup_list)
 	{
-		CInfo		   *clauseinfo;
-		List		   *temp_node = NIL;
-		bool			temp = true;
+		CInfo	   *clauseinfo;
+		List	   *temp_node = NIL;
+		bool		temp = true;
 
 		clausegroup = lfirst(i);
 
@@ -1324,21 +1324,21 @@ create_index_paths(Query * root,
 	return (ip_list);
 }
 
-static List    *
+static List *
 add_index_paths(List * indexpaths, List * new_indexpaths)
 {
 	return append(indexpaths, new_indexpaths);
 }
 
-static			bool
+static bool
 function_index_operand(Expr * funcOpnd, Rel * rel, Rel * index)
 {
-	Oid				heapRelid = (Oid) lfirsti(rel->relids);
-	Func		   *function;
-	List		   *funcargs;
-	int			   *indexKeys = index->indexkeys;
-	List		   *arg;
-	int				i;
+	Oid			heapRelid = (Oid) lfirsti(rel->relids);
+	Func	   *function;
+	List	   *funcargs;
+	int		   *indexKeys = index->indexkeys;
+	List	   *arg;
+	int			i;
 
 	/*
 	 * sanity check, make sure we know what we're dealing with here.
@@ -1390,7 +1390,7 @@ function_index_operand(Expr * funcOpnd, Rel * rel, Rel * index)
 	return true;
 }
 
-static			bool
+static bool
 SingleAttributeIndex(Rel * index)
 {
 

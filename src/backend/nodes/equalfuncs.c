@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.7 1997/09/07 04:42:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.8 1997/09/08 02:23:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 #include "utils/elog.h"
 #include "storage/itemptr.h"
 
-static bool		equali(List * a, List * b);
+static bool equali(List * a, List * b);
 
 /*
  *	Stuff from primnodes.h
@@ -35,7 +35,7 @@ static bool		equali(List * a, List * b);
 /*
  *	Resdom is a subclass of Node.
  */
-static			bool
+static bool
 _equalResdom(Resdom * a, Resdom * b)
 {
 	if (a->resno != b->resno)
@@ -54,10 +54,10 @@ _equalResdom(Resdom * a, Resdom * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalFjoin(Fjoin * a, Fjoin * b)
 {
-	int				nNodes;
+	int			nNodes;
 
 	if (a->fj_initialized != b->fj_initialized)
 		return (false);
@@ -78,7 +78,7 @@ _equalFjoin(Fjoin * a, Fjoin * b)
 /*
  *	Expr is a subclass of Node.
  */
-static			bool
+static bool
 _equalExpr(Expr * a, Expr * b)
 {
 	if (a->opType != b->opType)
@@ -91,13 +91,13 @@ _equalExpr(Expr * a, Expr * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalIter(Iter * a, Iter * b)
 {
 	return (equal(a->iterexpr, b->iterexpr));
 }
 
-static			bool
+static bool
 _equalStream(Stream * a, Stream * b)
 {
 	if (a->clausetype != b->clausetype)
@@ -120,7 +120,7 @@ _equalStream(Stream * a, Stream * b)
 /*
  *	Var is a subclass of Expr.
  */
-static			bool
+static bool
 _equalVar(Var * a, Var * b)
 {
 	if (a->varno != b->varno)
@@ -137,7 +137,7 @@ _equalVar(Var * a, Var * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalArray(Array * a, Array * b)
 {
 	if (a->arrayelemtype != b->arrayelemtype)
@@ -153,7 +153,7 @@ _equalArray(Array * a, Array * b)
 	return (TRUE);
 }
 
-static			bool
+static bool
 _equalArrayRef(ArrayRef * a, ArrayRef * b)
 {
 	if (a->refelemtype != b->refelemtype)
@@ -176,7 +176,7 @@ _equalArrayRef(ArrayRef * a, ArrayRef * b)
 /*
  *	Oper is a subclass of Expr.
  */
-static			bool
+static bool
 _equalOper(Oper * a, Oper * b)
 {
 	if (a->opno != b->opno)
@@ -190,7 +190,7 @@ _equalOper(Oper * a, Oper * b)
 /*
  *	Const is a subclass of Expr.
  */
-static			bool
+static bool
 _equalConst(Const * a, Const * b)
 {
 
@@ -213,7 +213,7 @@ _equalConst(Const * a, Const * b)
 /*
  *	Param is a subclass of Expr.
  */
-static			bool
+static bool
 _equalParam(Param * a, Param * b)
 {
 	if (a->paramkind != b->paramkind)
@@ -225,26 +225,26 @@ _equalParam(Param * a, Param * b)
 
 	switch (a->paramkind)
 	{
-	case PARAM_NAMED:
-	case PARAM_NEW:
-	case PARAM_OLD:
-		if (strcmp(a->paramname, b->paramname) != 0)
-			return (false);
-		break;
-	case PARAM_NUM:
-		if (a->paramid != b->paramid)
-			return (false);
-		break;
-	case PARAM_INVALID:
+		case PARAM_NAMED:
+		case PARAM_NEW:
+		case PARAM_OLD:
+			if (strcmp(a->paramname, b->paramname) != 0)
+				return (false);
+			break;
+		case PARAM_NUM:
+			if (a->paramid != b->paramid)
+				return (false);
+			break;
+		case PARAM_INVALID:
 
-		/*
-		 * XXX: Hmmm... What are we supposed to return in this case ??
-		 */
-		return (true);
-		break;
-	default:
-		elog(WARN, "_equalParam: Invalid paramkind value: %d",
-			 a->paramkind);
+			/*
+			 * XXX: Hmmm... What are we supposed to return in this case ??
+			 */
+			return (true);
+			break;
+		default:
+			elog(WARN, "_equalParam: Invalid paramkind value: %d",
+				 a->paramkind);
 	}
 
 	return (true);
@@ -253,7 +253,7 @@ _equalParam(Param * a, Param * b)
 /*
  *	Func is a subclass of Expr.
  */
-static			bool
+static bool
 _equalFunc(Func * a, Func * b)
 {
 	if (a->funcid != b->funcid)
@@ -275,7 +275,7 @@ _equalFunc(Func * a, Func * b)
 /*
  * CInfo is a subclass of Node.
  */
-static			bool
+static bool
 _equalCInfo(CInfo * a, CInfo * b)
 {
 	Assert(IsA(a, CInfo));
@@ -297,7 +297,7 @@ _equalCInfo(CInfo * a, CInfo * b)
 				  (b->indexids)));
 }
 
-static			bool
+static bool
 _equalJoinMethod(JoinMethod * a, JoinMethod * b)
 {
 	Assert(IsA(a, JoinMethod));
@@ -312,7 +312,7 @@ _equalJoinMethod(JoinMethod * a, JoinMethod * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalPath(Path * a, Path * b)
 {
 	if (a->pathtype != b->pathtype)
@@ -325,7 +325,7 @@ _equalPath(Path * a, Path * b)
 	 */
 	if (a->p_ordering.ordtype == SORTOP_ORDER)
 	{
-		int				i = 0;
+		int			i = 0;
 
 		if (a->p_ordering.ord.sortop == NULL ||
 			b->p_ordering.ord.sortop == NULL)
@@ -367,7 +367,7 @@ _equalPath(Path * a, Path * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalIndexPath(IndexPath * a, IndexPath * b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
@@ -379,7 +379,7 @@ _equalIndexPath(IndexPath * a, IndexPath * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalJoinPath(JoinPath * a, JoinPath * b)
 {
 	Assert(IsA_JoinPath(a));
@@ -396,7 +396,7 @@ _equalJoinPath(JoinPath * a, JoinPath * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalMergePath(MergePath * a, MergePath * b)
 {
 	Assert(IsA(a, MergePath));
@@ -413,7 +413,7 @@ _equalMergePath(MergePath * a, MergePath * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalHashPath(HashPath * a, HashPath * b)
 {
 	Assert(IsA(a, HashPath));
@@ -430,7 +430,7 @@ _equalHashPath(HashPath * a, HashPath * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalJoinKey(JoinKey * a, JoinKey * b)
 {
 	Assert(IsA(a, JoinKey));
@@ -443,7 +443,7 @@ _equalJoinKey(JoinKey * a, JoinKey * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalMergeOrder(MergeOrder * a, MergeOrder * b)
 {
 	if (a == (MergeOrder *) NULL && b == (MergeOrder *) NULL)
@@ -464,7 +464,7 @@ _equalMergeOrder(MergeOrder * a, MergeOrder * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalHInfo(HInfo * a, HInfo * b)
 {
 	Assert(IsA(a, HInfo));
@@ -478,7 +478,7 @@ _equalHInfo(HInfo * a, HInfo * b)
 /* XXX	This equality function is a quick hack, should be
  *		fixed to compare all fields.
  */
-static			bool
+static bool
 _equalIndexScan(IndexScan * a, IndexScan * b)
 {
 	Assert(IsA(a, IndexScan));
@@ -499,7 +499,7 @@ _equalIndexScan(IndexScan * a, IndexScan * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalJInfo(JInfo * a, JInfo * b)
 {
 	Assert(IsA(a, JInfo));
@@ -522,7 +522,7 @@ _equalJInfo(JInfo * a, JInfo * b)
 /*
  *	EState is a subclass of Node.
  */
-static			bool
+static bool
 _equalEState(EState * a, EState * b)
 {
 	if (a->es_direction != b->es_direction)
@@ -537,7 +537,7 @@ _equalEState(EState * a, EState * b)
 	return (true);
 }
 
-static			bool
+static bool
 _equalTargetEntry(TargetEntry * a, TargetEntry * b)
 {
 	if (!equal(a->resdom, b->resdom))
@@ -557,7 +557,7 @@ _equalTargetEntry(TargetEntry * a, TargetEntry * b)
  *		This is a comparison by value.	It would be simpler to write it
  *		to be recursive, but it should run faster if we iterate.
  */
-static			bool
+static bool
 _equalValue(Value * a, Value * b)
 {
 	if (a->type != b->type)
@@ -565,14 +565,14 @@ _equalValue(Value * a, Value * b)
 
 	switch (a->type)
 	{
-	case T_String:
-		return strcmp(a->val.str, b->val.str);
-	case T_Integer:
-		return (a->val.ival == b->val.ival);
-	case T_Float:
-		return (a->val.dval == b->val.dval);
-	default:
-		break;
+		case T_String:
+			return strcmp(a->val.str, b->val.str);
+		case T_Integer:
+			return (a->val.ival == b->val.ival);
+		case T_Float:
+			return (a->val.dval == b->val.dval);
+		default:
+			break;
 	}
 
 	return (true);
@@ -585,7 +585,7 @@ _equalValue(Value * a, Value * b)
 bool
 equal(void *a, void *b)
 {
-	bool			retval = false;
+	bool		retval = false;
 
 	if (a == b)
 		return (true);
@@ -604,112 +604,112 @@ equal(void *a, void *b)
 
 	switch (nodeTag(a))
 	{
-	case T_Resdom:
-		retval = _equalResdom(a, b);
-		break;
-	case T_Fjoin:
-		retval = _equalFjoin(a, b);
-		break;
-	case T_Expr:
-		retval = _equalExpr(a, b);
-		break;
-	case T_TargetEntry:
-		retval = _equalTargetEntry(a, b);
-		break;
-	case T_Iter:
-		retval = _equalIter(a, b);
-		break;
-	case T_Stream:
-		retval = _equalStream(a, b);
-		break;
-	case T_Var:
-		retval = _equalVar(a, b);
-		break;
-	case T_Array:
-		retval = _equalArray(a, b);
-		break;
-	case T_ArrayRef:
-		retval = _equalArrayRef(a, b);
-		break;
-	case T_Oper:
-		retval = _equalOper(a, b);
-		break;
-	case T_Const:
-		retval = _equalConst(a, b);
-		break;
-	case T_Param:
-		retval = _equalParam(a, b);
-		break;
-	case T_Func:
-		retval = _equalFunc(a, b);
-		break;
-	case T_CInfo:
-		retval = _equalCInfo(a, b);
-		break;
-	case T_JoinMethod:
-		retval = _equalJoinMethod(a, b);
-		break;
-	case T_Path:
-		retval = _equalPath(a, b);
-		break;
-	case T_IndexPath:
-		retval = _equalIndexPath(a, b);
-		break;
-	case T_JoinPath:
-		retval = _equalJoinPath(a, b);
-		break;
-	case T_MergePath:
-		retval = _equalMergePath(a, b);
-		break;
-	case T_HashPath:
-		retval = _equalHashPath(a, b);
-		break;
-	case T_JoinKey:
-		retval = _equalJoinKey(a, b);
-		break;
-	case T_MergeOrder:
-		retval = _equalMergeOrder(a, b);
-		break;
-	case T_HInfo:
-		retval = _equalHInfo(a, b);
-		break;
-	case T_IndexScan:
-		retval = _equalIndexScan(a, b);
-		break;
-	case T_JInfo:
-		retval = _equalJInfo(a, b);
-		break;
-	case T_EState:
-		retval = _equalEState(a, b);
-		break;
-	case T_Integer:
-	case T_String:
-	case T_Float:
-		retval = _equalValue(a, b);
-		break;
-	case T_List:
-		{
-			List		   *la = (List *) a;
-			List		   *lb = (List *) b;
-			List		   *l;
-
-			if (a == NULL && b == NULL)
-				return (true);
-			if (length(a) != length(b))
-				return (false);
-			foreach(l, la)
+		case T_Resdom:
+			retval = _equalResdom(a, b);
+			break;
+		case T_Fjoin:
+			retval = _equalFjoin(a, b);
+			break;
+		case T_Expr:
+			retval = _equalExpr(a, b);
+			break;
+		case T_TargetEntry:
+			retval = _equalTargetEntry(a, b);
+			break;
+		case T_Iter:
+			retval = _equalIter(a, b);
+			break;
+		case T_Stream:
+			retval = _equalStream(a, b);
+			break;
+		case T_Var:
+			retval = _equalVar(a, b);
+			break;
+		case T_Array:
+			retval = _equalArray(a, b);
+			break;
+		case T_ArrayRef:
+			retval = _equalArrayRef(a, b);
+			break;
+		case T_Oper:
+			retval = _equalOper(a, b);
+			break;
+		case T_Const:
+			retval = _equalConst(a, b);
+			break;
+		case T_Param:
+			retval = _equalParam(a, b);
+			break;
+		case T_Func:
+			retval = _equalFunc(a, b);
+			break;
+		case T_CInfo:
+			retval = _equalCInfo(a, b);
+			break;
+		case T_JoinMethod:
+			retval = _equalJoinMethod(a, b);
+			break;
+		case T_Path:
+			retval = _equalPath(a, b);
+			break;
+		case T_IndexPath:
+			retval = _equalIndexPath(a, b);
+			break;
+		case T_JoinPath:
+			retval = _equalJoinPath(a, b);
+			break;
+		case T_MergePath:
+			retval = _equalMergePath(a, b);
+			break;
+		case T_HashPath:
+			retval = _equalHashPath(a, b);
+			break;
+		case T_JoinKey:
+			retval = _equalJoinKey(a, b);
+			break;
+		case T_MergeOrder:
+			retval = _equalMergeOrder(a, b);
+			break;
+		case T_HInfo:
+			retval = _equalHInfo(a, b);
+			break;
+		case T_IndexScan:
+			retval = _equalIndexScan(a, b);
+			break;
+		case T_JInfo:
+			retval = _equalJInfo(a, b);
+			break;
+		case T_EState:
+			retval = _equalEState(a, b);
+			break;
+		case T_Integer:
+		case T_String:
+		case T_Float:
+			retval = _equalValue(a, b);
+			break;
+		case T_List:
 			{
-				if (!equal(lfirst(l), lfirst(lb)))
+				List	   *la = (List *) a;
+				List	   *lb = (List *) b;
+				List	   *l;
+
+				if (a == NULL && b == NULL)
+					return (true);
+				if (length(a) != length(b))
 					return (false);
-				lb = lnext(lb);
+				foreach(l, la)
+				{
+					if (!equal(lfirst(l), lfirst(lb)))
+						return (false);
+					lb = lnext(lb);
+				}
+				retval = true;
 			}
-			retval = true;
-		}
-		break;
-	default:
-		elog(NOTICE, "equal: don't know whether nodes of type %d are equal",
-			 nodeTag(a));
-		break;
+			break;
+		default:
+			elog(NOTICE, "equal: don't know whether nodes of type %d are equal",
+				 nodeTag(a));
+			break;
 	}
 
 	return retval;
@@ -721,12 +721,12 @@ equal(void *a, void *b)
  *
  * XXX temp hack. needs something like T_IntList
  */
-static			bool
+static bool
 equali(List * a, List * b)
 {
-	List		   *la = (List *) a;
-	List		   *lb = (List *) b;
-	List		   *l;
+	List	   *la = (List *) a;
+	List	   *lb = (List *) b;
+	List	   *l;
 
 	if (a == NULL && b == NULL)
 		return (true);

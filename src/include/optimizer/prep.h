@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.3 1997/09/07 04:59:18 momjian Exp $
+ * $Id: prep.h,v 1.4 1997/09/08 02:37:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,21 +19,21 @@
 /*
  * prototypes for archive.h
  */
-extern void		plan_archive(List * rt);
-extern List    *find_archive_rels(Oid relid);
+extern void plan_archive(List * rt);
+extern List *find_archive_rels(Oid relid);
 
 /*
  * prototypes for prepqual.h
  */
-extern List    *
+extern List *
 preprocess_qualification(Expr * qual, List * tlist,
 						 List ** existentialQualPtr);
-extern List    *cnfify(Expr * qual, bool removeAndFlag);
+extern List *cnfify(Expr * qual, bool removeAndFlag);
 
 /*
  * prototypes for preptlist.h
  */
-extern List    *
+extern List *
 preprocess_targetlist(List * tlist, int command_type,
 					  Index result_relation, List * range_table);
 
@@ -43,13 +43,13 @@ preprocess_targetlist(List * tlist, int command_type,
 typedef enum UnionFlag
 {
 	INHERITS_FLAG, ARCHIVE_FLAG, VERSION_FLAG
-}				UnionFlag;
+}			UnionFlag;
 
-extern List    *
+extern List *
 find_all_inheritors(List * unexamined_relids,
 					List * examined_relids);
-extern int		first_matching_rt_entry(List * rangetable, UnionFlag flag);
-extern Append  *
+extern int	first_matching_rt_entry(List * rangetable, UnionFlag flag);
+extern Append *
 plan_union_queries(Index rt_index, Query * parse,
 				   UnionFlag flag);
 

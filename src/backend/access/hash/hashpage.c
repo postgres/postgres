@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.10 1997/09/07 04:38:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.11 1997/09/08 02:20:18 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -38,9 +38,9 @@
 #include <string.h>
 #endif
 
-static void		_hash_setpagelock(Relation rel, BlockNumber blkno, int access);
-static void		_hash_unsetpagelock(Relation rel, BlockNumber blkno, int access);
-static void		_hash_splitpage(Relation rel, Buffer metabuf, Bucket obucket, Bucket nbucket);
+static void _hash_setpagelock(Relation rel, BlockNumber blkno, int access);
+static void _hash_unsetpagelock(Relation rel, BlockNumber blkno, int access);
+static void _hash_splitpage(Relation rel, Buffer metabuf, Bucket obucket, Bucket nbucket);
 
 /*
  *	We use high-concurrency locking on hash indices.  There are two cases in
@@ -68,16 +68,16 @@ static void		_hash_splitpage(Relation rel, Buffer metabuf, Bucket obucket, Bucke
 void
 _hash_metapinit(Relation rel)
 {
-	HashMetaPage	metap;
-	HashPageOpaque	pageopaque;
-	Buffer			metabuf;
-	Buffer			buf;
-	Page			pg;
-	int				nbuckets;
-	uint32			nelem;		/* number elements */
-	uint32			lg2nelem;	/* _hash_log2(nelem)   */
-	uint32			nblocks;
-	uint16			i;
+	HashMetaPage metap;
+	HashPageOpaque pageopaque;
+	Buffer		metabuf;
+	Buffer		buf;
+	Page		pg;
+	int			nbuckets;
+	uint32		nelem;			/* number elements */
+	uint32		lg2nelem;		/* _hash_log2(nelem)   */
+	uint32		nblocks;
+	uint16		i;
 
 	/* can't be sharing this with anyone, now... */
 	if (USELOCKING)
@@ -188,7 +188,7 @@ _hash_metapinit(Relation rel)
 Buffer
 _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 {
-	Buffer			buf;
+	Buffer		buf;
 
 	if (blkno == P_NEW)
 	{
@@ -196,14 +196,14 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 	}
 	switch (access)
 	{
-	case HASH_WRITE:
-	case HASH_READ:
-		_hash_setpagelock(rel, blkno, access);
-		break;
-	default:
-		elog(WARN, "_hash_getbuf: invalid access (%d) on new blk: %s",
-			 access, RelationGetRelationName(rel));
-		break;
+		case HASH_WRITE:
+		case HASH_READ:
+			_hash_setpagelock(rel, blkno, access);
+			break;
+		default:
+			elog(WARN, "_hash_getbuf: invalid access (%d) on new blk: %s",
+				 access, RelationGetRelationName(rel));
+			break;
 	}
 	buf = ReadBuffer(rel, blkno);
 
@@ -217,19 +217,19 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 void
 _hash_relbuf(Relation rel, Buffer buf, int access)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = BufferGetBlockNumber(buf);
 
 	switch (access)
 	{
-	case HASH_WRITE:
-	case HASH_READ:
-		_hash_unsetpagelock(rel, blkno, access);
-		break;
-	default:
-		elog(WARN, "_hash_relbuf: invalid access (%d) on blk %x: %s",
-			 access, blkno, RelationGetRelationName(rel));
+		case HASH_WRITE:
+		case HASH_READ:
+			_hash_unsetpagelock(rel, blkno, access);
+			break;
+		default:
+			elog(WARN, "_hash_relbuf: invalid access (%d) on blk %x: %s",
+				 access, blkno, RelationGetRelationName(rel));
 	}
 
 	ReleaseBuffer(buf);
@@ -245,7 +245,7 @@ _hash_relbuf(Relation rel, Buffer buf, int access)
 void
 _hash_wrtbuf(Relation rel, Buffer buf)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = BufferGetBlockNumber(buf);
 	WriteBuffer(buf);
@@ -262,7 +262,7 @@ _hash_wrtbuf(Relation rel, Buffer buf)
 void
 _hash_wrtnorelbuf(Relation rel, Buffer buf)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = BufferGetBlockNumber(buf);
 	WriteNoReleaseBuffer(buf);
@@ -274,22 +274,22 @@ _hash_chgbufaccess(Relation rel,
 				   int from_access,
 				   int to_access)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = BufferGetBlockNumber(*bufp);
 
 	switch (from_access)
 	{
-	case HASH_WRITE:
-		_hash_wrtbuf(rel, *bufp);
-		break;
-	case HASH_READ:
-		_hash_relbuf(rel, *bufp, from_access);
-		break;
-	default:
-		elog(WARN, "_hash_chgbufaccess: invalid access (%d) on blk %x: %s",
-			 from_access, blkno, RelationGetRelationName(rel));
-		break;
+		case HASH_WRITE:
+			_hash_wrtbuf(rel, *bufp);
+			break;
+		case HASH_READ:
+			_hash_relbuf(rel, *bufp, from_access);
+			break;
+		default:
+			elog(WARN, "_hash_chgbufaccess: invalid access (%d) on blk %x: %s",
+				 from_access, blkno, RelationGetRelationName(rel));
+			break;
 	}
 	*bufp = _hash_getbuf(rel, blkno, to_access);
 	return (BufferGetPage(*bufp));
@@ -328,16 +328,16 @@ _hash_setpagelock(Relation rel,
 
 		switch (access)
 		{
-		case HASH_WRITE:
-			RelationSetSingleWLockPage(rel, &iptr);
-			break;
-		case HASH_READ:
-			RelationSetSingleRLockPage(rel, &iptr);
-			break;
-		default:
-			elog(WARN, "_hash_setpagelock: invalid access (%d) on blk %x: %s",
-				 access, blkno, RelationGetRelationName(rel));
-			break;
+			case HASH_WRITE:
+				RelationSetSingleWLockPage(rel, &iptr);
+				break;
+			case HASH_READ:
+				RelationSetSingleRLockPage(rel, &iptr);
+				break;
+			default:
+				elog(WARN, "_hash_setpagelock: invalid access (%d) on blk %x: %s",
+					 access, blkno, RelationGetRelationName(rel));
+				break;
 		}
 	}
 }
@@ -355,16 +355,16 @@ _hash_unsetpagelock(Relation rel,
 
 		switch (access)
 		{
-		case HASH_WRITE:
-			RelationUnsetSingleWLockPage(rel, &iptr);
-			break;
-		case HASH_READ:
-			RelationUnsetSingleRLockPage(rel, &iptr);
-			break;
-		default:
-			elog(WARN, "_hash_unsetpagelock: invalid access (%d) on blk %x: %s",
-				 access, blkno, RelationGetRelationName(rel));
-			break;
+			case HASH_WRITE:
+				RelationUnsetSingleWLockPage(rel, &iptr);
+				break;
+			case HASH_READ:
+				RelationUnsetSingleRLockPage(rel, &iptr);
+				break;
+			default:
+				elog(WARN, "_hash_unsetpagelock: invalid access (%d) on blk %x: %s",
+					 access, blkno, RelationGetRelationName(rel));
+				break;
 		}
 	}
 }
@@ -372,13 +372,13 @@ _hash_unsetpagelock(Relation rel,
 void
 _hash_pagedel(Relation rel, ItemPointer tid)
 {
-	Buffer			buf;
-	Buffer			metabuf;
-	Page			page;
-	BlockNumber		blkno;
-	OffsetNumber	offno;
-	HashMetaPage	metap;
-	HashPageOpaque	opaque;
+	Buffer		buf;
+	Buffer		metabuf;
+	Page		page;
+	BlockNumber blkno;
+	OffsetNumber offno;
+	HashMetaPage metap;
+	HashPageOpaque opaque;
 
 	blkno = ItemPointerGetBlockNumber(tid);
 	offno = ItemPointerGetOffsetNumber(tid);
@@ -414,10 +414,10 @@ _hash_pagedel(Relation rel, ItemPointer tid)
 void
 _hash_expandtable(Relation rel, Buffer metabuf)
 {
-	HashMetaPage	metap;
-	Bucket			old_bucket;
-	Bucket			new_bucket;
-	uint32			spare_ndx;
+	HashMetaPage metap;
+	Bucket		old_bucket;
+	Bucket		new_bucket;
+	uint32		spare_ndx;
 
 /*	  elog(DEBUG, "_hash_expandtable: expanding..."); */
 
@@ -472,26 +472,26 @@ _hash_splitpage(Relation rel,
 				Bucket obucket,
 				Bucket nbucket)
 {
-	Bucket			bucket;
-	Buffer			obuf;
-	Buffer			nbuf;
-	Buffer			ovflbuf;
-	BlockNumber		oblkno;
-	BlockNumber		nblkno;
-	bool			null;
-	Datum			datum;
-	HashItem		hitem;
-	HashPageOpaque	oopaque;
-	HashPageOpaque	nopaque;
-	HashMetaPage	metap;
-	IndexTuple		itup;
-	int				itemsz;
-	OffsetNumber	ooffnum;
-	OffsetNumber	noffnum;
-	OffsetNumber	omaxoffnum;
-	Page			opage;
-	Page			npage;
-	TupleDesc		itupdesc;
+	Bucket		bucket;
+	Buffer		obuf;
+	Buffer		nbuf;
+	Buffer		ovflbuf;
+	BlockNumber oblkno;
+	BlockNumber nblkno;
+	bool		null;
+	Datum		datum;
+	HashItem	hitem;
+	HashPageOpaque oopaque;
+	HashPageOpaque nopaque;
+	HashMetaPage metap;
+	IndexTuple	itup;
+	int			itemsz;
+	OffsetNumber ooffnum;
+	OffsetNumber noffnum;
+	OffsetNumber omaxoffnum;
+	Page		opage;
+	Page		npage;
+	TupleDesc	itupdesc;
 
 /*	  elog(DEBUG, "_hash_splitpage: splitting %d into %d,%d",
 		 obucket, obucket, nbucket);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.11 1997/09/07 04:55:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.12 1997/09/08 02:33:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,12 +30,12 @@
 /* MODIFIES the string passed in and returns the head of it */
 
 #ifdef NOT_USED
-static char    *
+static char *
 leftTrim(char *s)
 {
-	char		   *s2 = s;
-	int				shift = 0;
-	int				j = 0;
+	char	   *s2 = s;
+	int			shift = 0;
+	int			j = 0;
 
 	while (isspace(*s))
 	{
@@ -53,10 +53,10 @@ leftTrim(char *s)
 
 #endif
 
-char		   *
+char	   *
 rightTrim(char *s)
 {
-	char		   *sEnd;
+	char	   *sEnd;
 
 	sEnd = s + strlen(s) - 1;
 	while (sEnd >= s && isspace(*sEnd))
@@ -69,7 +69,7 @@ rightTrim(char *s)
 }
 
 #ifdef NOT_USED
-static char    *
+static char *
 doubleTrim(char *s)
 {
 	strcpy(s, leftTrim(rightTrim(s)));
@@ -82,18 +82,18 @@ doubleTrim(char *s)
 void
 testStringUtils()
 {
-	static char    *tests[] = {" goodbye  \n",	/* space on both ends */
+	static char *tests[] = {" goodbye  \n",		/* space on both ends */
 		"hello world",			/* no spaces to trim */
 		"",						/* empty string */
 		"a",					/* string with one char */
 		" ",					/* string with one whitespace */
 	NULL_STR};
 
-	int				i = 0;
+	int			i = 0;
 
 	while (tests[i] != NULL_STR)
 	{
-		char		   *t;
+		char	   *t;
 
 		t = strdup(tests[i]);
 		printf("leftTrim(%s) = ", t);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.5 1997/09/07 04:44:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.6 1997/09/08 02:25:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/catalog_utils.h"
 
-static Node    *flatten_tlistentry(Node * tlistentry, List * flat_tlist);
+static Node *flatten_tlistentry(Node * tlistentry, List * flat_tlist);
 
 /*****************************************************************************
  *	---------- RELATION node target list routines ----------
@@ -44,12 +44,12 @@ static Node    *flatten_tlistentry(Node * tlistentry, List * flat_tlist);
  *			 var = valid var-node
  *			 targetlist = valid sequence
  */
-TargetEntry    *
+TargetEntry *
 tlistentry_member(Var * var, List * targetlist)
 {
 	if (var)
 	{
-		List		   *temp = NIL;
+		List	   *temp = NIL;
 
 		foreach(temp, targetlist)
 		{
@@ -69,10 +69,10 @@ tlistentry_member(Var * var, List * targetlist)
  * REQUIRES: "test" operates on lispval unions,
  *
  */
-Expr		   *
+Expr	   *
 matching_tlvar(Var * var, List * targetlist)
 {
-	TargetEntry    *tlentry;
+	TargetEntry *tlentry;
 
 	tlentry = tlistentry_member(var, targetlist);
 	if (tlentry)
@@ -96,7 +96,7 @@ matching_tlvar(Var * var, List * targetlist)
 void
 add_tl_element(Rel * rel, Var * var)
 {
-	Expr		   *oldvar = (Expr *) NULL;
+	Expr	   *oldvar = (Expr *) NULL;
 
 	oldvar = matching_tlvar(var, rel->targetlist);
 
@@ -105,12 +105,12 @@ add_tl_element(Rel * rel, Var * var)
 	 */
 	if (oldvar == NULL)
 	{
-		List		   *tlist = rel->targetlist;
-		Var			   *newvar = makeVar(var->varno,
-										 var->varattno,
-										 var->vartype,
-										 var->varno,
-										 var->varoattno);
+		List	   *tlist = rel->targetlist;
+		Var		   *newvar = makeVar(var->varno,
+									 var->varattno,
+									 var->vartype,
+									 var->varno,
+									 var->varoattno);
 
 		rel->targetlist =
 			lappend(tlist,
@@ -129,10 +129,10 @@ add_tl_element(Rel * rel, Var * var)
  * RETURNS:  newly created tlist-entry
  * CREATES:  new targetlist entry (always).
  */
-TargetEntry    *
+TargetEntry *
 create_tl_element(Var * var, int resdomno)
 {
-	TargetEntry    *tlelement = makeNode(TargetEntry);
+	TargetEntry *tlelement = makeNode(TargetEntry);
 
 	tlelement->resdom =
 		makeResdom(resdomno,
@@ -152,7 +152,7 @@ create_tl_element(Var * var, int resdomno)
  *	  Returns the targetlist elements from a relation tlist.
  *
  */
-List		   *
+List	   *
 get_actual_tlist(List * tlist)
 {
 
@@ -160,8 +160,8 @@ get_actual_tlist(List * tlist)
 	 * this function is not making sense. - ay 10/94
 	 */
 #if 0
-	List		   *element = NIL;
-	List		   *result = NIL;
+	List	   *element = NIL;
+	List	   *result = NIL;
 
 	if (tlist == NULL)
 	{
@@ -199,12 +199,12 @@ get_actual_tlist(List * tlist)
  * Returns the resdom entry of the matching var node.
  *
  */
-Resdom		   *
+Resdom	   *
 tlist_member(Var * var, List * tlist)
 {
-	List		   *i = NIL;
-	TargetEntry    *temp_tle = (TargetEntry *) NULL;
-	TargetEntry    *tl_elt = (TargetEntry *) NULL;
+	List	   *i = NIL;
+	TargetEntry *temp_tle = (TargetEntry *) NULL;
+	TargetEntry *tl_elt = (TargetEntry *) NULL;
 
 	if (var)
 	{
@@ -229,12 +229,12 @@ tlist_member(Var * var, List * tlist)
 /*
  *	 Routine to get the resdom out of a targetlist.
  */
-Resdom		   *
+Resdom	   *
 tlist_resdom(List * tlist, Resdom * resnode)
 {
-	Resdom		   *resdom = (Resdom *) NULL;
-	List		   *i = NIL;
-	TargetEntry    *temp_tle = (TargetEntry *) NULL;
+	Resdom	   *resdom = (Resdom *) NULL;
+	List	   *i = NIL;
+	TargetEntry *temp_tle = (TargetEntry *) NULL;
 
 	foreach(i, tlist)
 	{
@@ -264,18 +264,18 @@ tlist_resdom(List * tlist, Resdom * resnode)
  * [what used to be varid is now broken up into two fields varnoold and
  *	varoattno. Also, nested attnos are long gone. - ay 2/95]
  */
-TargetEntry    *
+TargetEntry *
 match_varid(Var * test_var, List * tlist)
 {
-	List		   *tl;
-	Oid				type_var;
+	List	   *tl;
+	Oid			type_var;
 
 	type_var = (Oid) test_var->vartype;
 
 	foreach(tl, tlist)
 	{
-		TargetEntry    *entry;
-		Var			   *tlvar;
+		TargetEntry *entry;
+		Var		   *tlvar;
 
 		entry = lfirst(tl);
 		tlvar = get_expr(entry);
@@ -310,15 +310,15 @@ match_varid(Var * test_var, List * tlist)
  * Returns the resulting target list.
  *
  */
-List		   *
+List	   *
 new_unsorted_tlist(List * targetlist)
 {
-	List		   *new_targetlist = (List *) copyObject((Node *) targetlist);
-	List		   *x = NIL;
+	List	   *new_targetlist = (List *) copyObject((Node *) targetlist);
+	List	   *x = NIL;
 
 	foreach(x, new_targetlist)
 	{
-		TargetEntry    *tle = (TargetEntry *) lfirst(x);
+		TargetEntry *tle = (TargetEntry *) lfirst(x);
 
 		tle->resdom->reskey = 0;
 		tle->resdom->reskeyop = (Oid) 0;
@@ -338,18 +338,18 @@ new_unsorted_tlist(List * targetlist)
  * Returns a new target list.
  *
  */
-List		   *
+List	   *
 copy_vars(List * target, List * source)
 {
-	List		   *result = NIL;
-	List		   *src = NIL;
-	List		   *dest = NIL;
+	List	   *result = NIL;
+	List	   *src = NIL;
+	List	   *dest = NIL;
 
 	for (src = source, dest = target; src != NIL &&
 		 dest != NIL; src = lnext(src), dest = lnext(dest))
 	{
-		TargetEntry    *temp = MakeTLE(((TargetEntry *) lfirst(dest))->resdom,
-									   (Node *) get_expr(lfirst(src)));
+		TargetEntry *temp = MakeTLE(((TargetEntry *) lfirst(dest))->resdom,
+									(Node *) get_expr(lfirst(src)));
 
 		result = lappend(result, temp);
 	}
@@ -366,18 +366,18 @@ copy_vars(List * target, List * source)
  * Returns the "flattened" new target list.
  *
  */
-List		   *
+List	   *
 flatten_tlist(List * tlist)
 {
-	int				last_resdomno = 1;
-	List		   *new_tlist = NIL;
-	List		   *tlist_vars = NIL;
-	List		   *temp;
+	int			last_resdomno = 1;
+	List	   *new_tlist = NIL;
+	List	   *tlist_vars = NIL;
+	List	   *temp;
 
 	foreach(temp, tlist)
 	{
-		TargetEntry    *temp_entry = NULL;
-		List		   *vars;
+		TargetEntry *temp_entry = NULL;
+		List	   *vars;
 
 		temp_entry = lfirst(temp);
 		vars = pull_var_clause((Node *) get_expr(temp_entry));
@@ -389,11 +389,11 @@ flatten_tlist(List * tlist)
 
 	foreach(temp, tlist_vars)
 	{
-		Var			   *var = lfirst(temp);
+		Var		   *var = lfirst(temp);
 
 		if (!(tlist_member(var, new_tlist)))
 		{
-			Resdom		   *r;
+			Resdom	   *r;
 
 			r = makeResdom(last_resdomno,
 						   var->vartype,
@@ -422,15 +422,15 @@ flatten_tlist(List * tlist)
  * Returns the modified actual target list.
  *
  */
-List		   *
+List	   *
 flatten_tlist_vars(List * full_tlist, List * flat_tlist)
 {
-	List		   *x = NIL;
-	List		   *result = NIL;
+	List	   *x = NIL;
+	List	   *result = NIL;
 
 	foreach(x, full_tlist)
 	{
-		TargetEntry    *tle = lfirst(x);
+		TargetEntry *tle = lfirst(x);
 
 		result =
 			lappend(result,
@@ -453,7 +453,7 @@ flatten_tlist_vars(List * full_tlist, List * flat_tlist)
  * Returns the (modified) target_list entry from the target list.
  *
  */
-static Node    *
+static Node *
 flatten_tlistentry(Node * tlistentry, List * flat_tlist)
 {
 	if (tlistentry == NULL)
@@ -486,9 +486,9 @@ flatten_tlistentry(Node * tlistentry, List * flat_tlist)
 	}
 	else if (is_funcclause(tlistentry))
 	{
-		Expr		   *expr = (Expr *) tlistentry;
-		List		   *temp_result = NIL;
-		List		   *elt = NIL;
+		Expr	   *expr = (Expr *) tlistentry;
+		List	   *temp_result = NIL;
+		List	   *elt = NIL;
 
 		foreach(elt, expr->args)
 			temp_result = lappend(temp_result,
@@ -506,9 +506,9 @@ flatten_tlistentry(Node * tlistentry, List * flat_tlist)
 	}
 	else if (IsA(tlistentry, ArrayRef))
 	{
-		ArrayRef	   *aref = (ArrayRef *) tlistentry;
-		List		   *temp = NIL;
-		List		   *elt = NIL;
+		ArrayRef   *aref = (ArrayRef *) tlistentry;
+		List	   *temp = NIL;
+		List	   *elt = NIL;
 
 		foreach(elt, aref->refupperindexpr)
 			temp = lappend(temp, flatten_tlistentry(lfirst(elt), flat_tlist));
@@ -529,11 +529,11 @@ flatten_tlistentry(Node * tlistentry, List * flat_tlist)
 	}
 	else
 	{
-		Expr		   *expr = (Expr *) tlistentry;
-		Var			   *left =
+		Expr	   *expr = (Expr *) tlistentry;
+		Var		   *left =
 		(Var *) flatten_tlistentry((Node *) get_leftop(expr),
 								   flat_tlist);
-		Var			   *right =
+		Var		   *right =
 		(Var *) flatten_tlistentry((Node *) get_rightop(expr),
 								   flat_tlist);
 
@@ -543,17 +543,17 @@ flatten_tlistentry(Node * tlistentry, List * flat_tlist)
 }
 
 
-TargetEntry    *
+TargetEntry *
 MakeTLE(Resdom * resdom, Node * expr)
 {
-	TargetEntry    *rt = makeNode(TargetEntry);
+	TargetEntry *rt = makeNode(TargetEntry);
 
 	rt->resdom = resdom;
 	rt->expr = expr;
 	return rt;
 }
 
-Var			   *
+Var		   *
 get_expr(TargetEntry * tle)
 {
 	Assert(tle != NULL);
@@ -576,17 +576,17 @@ get_expr(TargetEntry * tle)
 void
 AddGroupAttrToTlist(List * tlist, List * grpCl)
 {
-	List		   *gl;
-	int				last_resdomno = length(tlist) + 1;
+	List	   *gl;
+	int			last_resdomno = length(tlist) + 1;
 
 	foreach(gl, grpCl)
 	{
-		GroupClause    *gc = (GroupClause *) lfirst(gl);
-		Var			   *var = gc->grpAttr;
+		GroupClause *gc = (GroupClause *) lfirst(gl);
+		Var		   *var = gc->grpAttr;
 
 		if (!(tlist_member(var, tlist)))
 		{
-			Resdom		   *r;
+			Resdom	   *r;
 
 			r = makeResdom(last_resdomno,
 						   var->vartype,
@@ -608,9 +608,9 @@ AddGroupAttrToTlist(List * tlist, List * grpCl)
 int
 exec_tlist_length(List * targetlist)
 {
-	int				len;
-	List		   *tl;
-	TargetEntry    *curTle;
+	int			len;
+	List	   *tl;
+	TargetEntry *curTle;
 
 	len = 0;
 	foreach(tl, targetlist)

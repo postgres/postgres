@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.5 1997/09/07 04:42:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.6 1997/09/08 02:23:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,8 +55,8 @@
 #include <libpq/libpq.h>		/* where the declarations go */
 #include <utils/exc.h>
 
-PortalEntry   **portals = (PortalEntry **) NULL;
-size_t			portals_array_size = 0;
+PortalEntry **portals = (PortalEntry **) NULL;
+size_t		portals_array_size = 0;
 
 /* portals array memory is malloc'd instead of using MemoryContexts */
 /* since it will be used by both front and backend programs*/
@@ -72,9 +72,9 @@ size_t			portals_array_size = 0;
 static void
 portals_realloc(size_t size)
 {
-	size_t			oldsize;
-	int				i;
-	PortalEntry   **newp;
+	size_t		oldsize;
+	int			i;
+	PortalEntry **newp;
 
 	oldsize = portals_array_size;
 
@@ -106,7 +106,7 @@ portals_realloc(size_t size)
 caddr_t
 pbuf_alloc(size_t size)
 {
-	caddr_t			addr;
+	caddr_t		addr;
 
 	if (size <= 0)
 		libpq_raise(&MemoryError, form("Invalid argument to pbuf_alloc()."));
@@ -139,10 +139,10 @@ pbuf_free(caddr_t pointer)
  *		pbuf_addPortal - Allocate a new portal buffer
  * --------------------------------
  */
-PortalBuffer   *
+PortalBuffer *
 pbuf_addPortal()
 {
-	PortalBuffer   *portal;
+	PortalBuffer *portal;
 
 	portal = (PortalBuffer *)
 		pbuf_alloc(sizeof(PortalBuffer));
@@ -159,11 +159,11 @@ pbuf_addPortal()
  *		pbuf_addGroup - Add a new tuple group to the portal
  * --------------------------------
  */
-GroupBuffer    *
+GroupBuffer *
 pbuf_addGroup(PortalBuffer * portal)
 {
-	GroupBuffer    *group,
-				   *group1;
+	GroupBuffer *group,
+			   *group1;
 
 	group = (GroupBuffer *)
 		pbuf_alloc(sizeof(GroupBuffer));
@@ -191,10 +191,10 @@ pbuf_addGroup(PortalBuffer * portal)
  *		pbuf_addTypes - Allocate n type blocks
  * --------------------------------
  */
-TypeBlock	   *
+TypeBlock  *
 pbuf_addTypes(int n)
 {
-	TypeBlock	   *types;
+	TypeBlock  *types;
 
 	types = (TypeBlock *)
 		pbuf_alloc(n * sizeof(TypeBlock));
@@ -206,10 +206,10 @@ pbuf_addTypes(int n)
  *		pbuf_addTuples - Allocate a tuple block
  * --------------------------------
  */
-TupleBlock	   *
+TupleBlock *
 pbuf_addTuples()
 {
-	TupleBlock	   *tuples;
+	TupleBlock *tuples;
 
 	tuples = (TupleBlock *)
 		pbuf_alloc(sizeof(TupleBlock));
@@ -224,7 +224,7 @@ pbuf_addTuples()
  *		pbuf_addTuple - Allocate a tuple of n fields (attributes)
  * --------------------------------
  */
-char		  **
+char	  **
 pbuf_addTuple(int n)
 {
 	return (char **)
@@ -235,7 +235,7 @@ pbuf_addTuple(int n)
  *		pbuf_addTupleValueLengths - Allocate a tuple of n lengths (attributes)
  * --------------------------------
  */
-int			   *
+int		   *
 pbuf_addTupleValueLengths(int n)
 {
 	return (int *)
@@ -246,7 +246,7 @@ pbuf_addTupleValueLengths(int n)
  *		pbuf_addValues - Allocate n bytes for a value
  * --------------------------------
  */
-char		   *
+char	   *
 pbuf_addValues(int n)
 {
 	return
@@ -257,7 +257,7 @@ pbuf_addValues(int n)
  *		pbuf_addEntry - Allocate a portal entry
  * --------------------------------
  */
-PortalEntry    *
+PortalEntry *
 pbuf_addEntry()
 {
 	return (PortalEntry *)
@@ -299,8 +299,8 @@ pbuf_freeTuples(TupleBlock * tuples,
 				int no_tuples,
 				int no_fields)
 {
-	int				i,
-					j;
+	int			i,
+				j;
 
 	if (no_tuples > TupleBlockSize)
 	{
@@ -363,7 +363,7 @@ pbuf_freePortal(PortalBuffer * portal)
 int
 pbuf_getIndex(char *pname)
 {
-	int				i;
+	int			i;
 
 	if (portals)
 	{
@@ -391,10 +391,10 @@ pbuf_setportalinfo(PortalEntry * entry, char *pname)
  *		pbuf_setup - Set up a portal for dumping data
  * --------------------------------
  */
-PortalEntry    *
+PortalEntry *
 pbuf_setup(char *pname)
 {
-	int				i;
+	int			i;
 
 	if (!portals)				/* the portals array has not been
 								 * allocated yet */
@@ -435,7 +435,7 @@ pbuf_setup(char *pname)
 void
 pbuf_close(char *pname)
 {
-	int				i;
+	int			i;
 
 	if ((i = pbuf_getIndex(pname)) == -1)
 		libpq_raise(&PortalError, form("Portal %s does not exist.", pname));
@@ -448,11 +448,11 @@ pbuf_close(char *pname)
  *		pbuf_findGroup - Return the group given the group_index
  * --------------------------------
  */
-GroupBuffer    *
+GroupBuffer *
 pbuf_findGroup(PortalBuffer * portal,
 			   int group_index)
 {
-	GroupBuffer    *group;
+	GroupBuffer *group;
 
 	group = portal->groups;
 	while (group_index > 0 && group != NULL)
@@ -476,8 +476,8 @@ int
 pbuf_findFnumber(GroupBuffer * group,
 				 char *field_name)
 {
-	TypeBlock	   *types;
-	int				i;
+	TypeBlock  *types;
+	int			i;
 
 	types = group->types;
 
@@ -510,7 +510,7 @@ pbuf_checkFnumber(GroupBuffer * group,
  *		pbuf_findFname - Find the field name given the field index
  * --------------------------------
  */
-char		   *
+char	   *
 pbuf_findFname(GroupBuffer * group,
 			   int field_number)
 {

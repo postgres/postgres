@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.3 1997/09/07 04:48:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.4 1997/09/08 02:28:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,52 +26,52 @@
  * if we find at least one such match, we return true
  * otherwise, we return false
  */
-static			bool
+static bool
 nodeThisLockWasTriggered(Node * node, int varno, AttrNumber attnum)
 {
 	if (node == NULL)
 		return FALSE;
 	switch (nodeTag(node))
 	{
-	case T_Var:
-		{
-			Var			   *var = (Var *) node;
-
-			if (varno == var->varno &&
-				(attnum == var->varattno || attnum == -1))
-				return TRUE;
-		}
-		break;
-	case T_Expr:
-		{
-			Expr		   *expr = (Expr *) node;
-
-			return
-				nodeThisLockWasTriggered((Node *) expr->args, varno, attnum);
-		}
-		break;
-	case T_TargetEntry:
-		{
-			TargetEntry    *tle = (TargetEntry *) node;
-
-			return
-				nodeThisLockWasTriggered(tle->expr, varno, attnum);
-		}
-		break;
-	case T_List:
-		{
-			List		   *l;
-
-			foreach(l, (List *) node)
+		case T_Var:
 			{
-				if (nodeThisLockWasTriggered(lfirst(l), varno, attnum))
+				Var		   *var = (Var *) node;
+
+				if (varno == var->varno &&
+					(attnum == var->varattno || attnum == -1))
 					return TRUE;
 			}
-			return FALSE;
-		}
-		break;
-	default:
-		break;
+			break;
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				return
+					nodeThisLockWasTriggered((Node *) expr->args, varno, attnum);
+			}
+			break;
+		case T_TargetEntry:
+			{
+				TargetEntry *tle = (TargetEntry *) node;
+
+				return
+					nodeThisLockWasTriggered(tle->expr, varno, attnum);
+			}
+			break;
+		case T_List:
+			{
+				List	   *l;
+
+				foreach(l, (List *) node)
+				{
+					if (nodeThisLockWasTriggered(lfirst(l), varno, attnum))
+						return TRUE;
+				}
+				return FALSE;
+			}
+			break;
+		default:
+			break;
 	}
 	return (FALSE);
 }
@@ -82,7 +82,7 @@ nodeThisLockWasTriggered(Node * node, int varno, AttrNumber attnum)
  *	   against the attnum if we find at least one such match, we return true
  *	   otherwise, we return false
  */
-static			bool
+static bool
 thisLockWasTriggered(int varno,
 					 AttrNumber attnum,
 					 Query * parsetree)
@@ -97,15 +97,15 @@ thisLockWasTriggered(int varno,
  * matchLocks -
  *	  match the list of locks and returns the matching rules
  */
-List		   *
+List	   *
 matchLocks(CmdType event,
 		   RuleLock * rulelocks,
 		   int varno,
 		   Query * parsetree)
 {
-	List		   *real_locks = NIL;
-	int				nlocks;
-	int				i;
+	List	   *real_locks = NIL;
+	int			nlocks;
+	int			i;
 
 	Assert(rulelocks != NULL);	/* we get called iff there is some lock */
 	Assert(parsetree != NULL);
@@ -122,7 +122,7 @@ matchLocks(CmdType event,
 
 	for (i = 0; i < nlocks; i++)
 	{
-		RewriteRule    *oneLock = rulelocks->rules[i];
+		RewriteRule *oneLock = rulelocks->rules[i];
 
 		if (oneLock->event == event)
 		{

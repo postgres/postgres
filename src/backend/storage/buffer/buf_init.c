@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.11 1997/09/07 04:48:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.12 1997/09/08 02:28:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,33 +43,33 @@
  *	deallocations in a circular buffer in shared memory.
  */
 #ifdef	BMTRACE
-bmtrace		   *TraceBuf;
-long		   *CurTraceBuf;
+bmtrace    *TraceBuf;
+long	   *CurTraceBuf;
 
 #define BMT_LIMIT		200
 #endif							/* BMTRACE */
-int				ShowPinTrace = 0;
+int			ShowPinTrace = 0;
 
-int				NBuffers = NDBUFS;		/* NDBUFS defined in miscadmin.h */
-int				Data_Descriptors;
-int				Free_List_Descriptor;
-int				Lookup_List_Descriptor;
-int				Num_Descriptors;
+int			NBuffers = NDBUFS;	/* NDBUFS defined in miscadmin.h */
+int			Data_Descriptors;
+int			Free_List_Descriptor;
+int			Lookup_List_Descriptor;
+int			Num_Descriptors;
 
-BufferDesc	   *BufferDescriptors;
-BufferBlock		BufferBlocks;
+BufferDesc *BufferDescriptors;
+BufferBlock BufferBlocks;
 
 #ifndef HAS_TEST_AND_SET
-long		   *NWaitIOBackendP;
+long	   *NWaitIOBackendP;
 
 #endif
 
 extern IpcSemaphoreId WaitIOSemId;
 
-long		   *PrivateRefCount;/* also used in freelist.c */
-long		   *LastRefCount;	/* refcounts of last ExecMain level */
-long		   *CommitInfoNeedsSave;	/* to write buffers where we have
-										 * filled in */
+long	   *PrivateRefCount;	/* also used in freelist.c */
+long	   *LastRefCount;		/* refcounts of last ExecMain level */
+long	   *CommitInfoNeedsSave;/* to write buffers where we have filled
+								 * in */
 
  /* t_tmin (or t_tmax)						 */
 
@@ -124,14 +124,14 @@ long		   *CommitInfoNeedsSave;	/* to write buffers where we have
  *
  */
 
-SPINLOCK		BufMgrLock;
+SPINLOCK	BufMgrLock;
 
-long int		ReadBufferCount;
-long int		ReadLocalBufferCount;
-long int		BufferHitCount;
-long int		LocalBufferHitCount;
-long int		BufferFlushCount;
-long int		LocalBufferFlushCount;
+long int	ReadBufferCount;
+long int	ReadLocalBufferCount;
+long int	BufferHitCount;
+long int	LocalBufferHitCount;
+long int	BufferFlushCount;
+long int	LocalBufferFlushCount;
 
 
 /*
@@ -143,9 +143,9 @@ long int		LocalBufferFlushCount;
 void
 InitBufferPool(IPCKey key)
 {
-	bool			foundBufs,
-					foundDescs;
-	int				i;
+	bool		foundBufs,
+				foundDescs;
+	int			i;
 
 	/* check padding of BufferDesc and BufferHdr */
 
@@ -189,7 +189,7 @@ InitBufferPool(IPCKey key)
 
 #ifndef HAS_TEST_AND_SET
 	{
-		bool			foundNWaitIO;
+		bool		foundNWaitIO;
 
 		NWaitIOBackendP = (long *) ShmemInitStruct("#Backends Waiting IO",
 												   sizeof(long),
@@ -208,8 +208,8 @@ InitBufferPool(IPCKey key)
 	}
 	else
 	{
-		BufferDesc	   *buf;
-		unsigned long	block;
+		BufferDesc *buf;
+		unsigned long block;
 
 		buf = BufferDescriptors;
 		block = (unsigned long) BufferBlocks;
@@ -249,7 +249,7 @@ InitBufferPool(IPCKey key)
 
 #ifndef HAS_TEST_AND_SET
 	{
-		int				status;
+		int			status;
 
 		WaitIOSemId = IpcSemaphoreCreate(IPCKeyGetWaitIOSemaphoreKey(key),
 										 1, IPCProtection, 0, 1, &status);
@@ -270,10 +270,10 @@ InitBufferPool(IPCKey key)
 int
 BufferShmemSize()
 {
-	int				size = 0;
-	int				nbuckets;
-	int				nsegs;
-	int				tmp;
+	int			size = 0;
+	int			nbuckets;
+	int			nsegs;
+	int			tmp;
 
 	nbuckets = 1 << (int) my_log2((NBuffers - 1) / DEF_FFACTOR + 1);
 	nsegs = 1 << (int) my_log2((nbuckets - 1) / DEF_SEGSIZE + 1);

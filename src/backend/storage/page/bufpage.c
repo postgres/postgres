@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.9 1997/09/07 04:49:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.10 1997/09/08 02:29:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ static void
 PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
 									   char *location, Size size);
 
-static bool		PageManagerShuffle = true;		/* default is shuffle mode */
+static bool PageManagerShuffle = true;	/* default is shuffle mode */
 
 /* ----------------------------------------------------------------
  *						Page support functions
@@ -44,7 +44,7 @@ static bool		PageManagerShuffle = true;		/* default is shuffle mode */
 void
 PageInit(Page page, Size pageSize, Size specialSize)
 {
-	PageHeader		p = (PageHeader) page;
+	PageHeader	p = (PageHeader) page;
 
 	Assert(pageSize == BLCKSZ);
 	Assert(pageSize >
@@ -98,16 +98,16 @@ PageAddItem(Page page,
 			OffsetNumber offsetNumber,
 			ItemIdFlags flags)
 {
-	register		i;
-	Size			alignedSize;
-	Offset			lower;
-	Offset			upper;
-	ItemId			itemId;
-	ItemId			fromitemId,
-					toitemId;
-	OffsetNumber	limit;
+	register	i;
+	Size		alignedSize;
+	Offset		lower;
+	Offset		upper;
+	ItemId		itemId;
+	ItemId		fromitemId,
+				toitemId;
+	OffsetNumber limit;
 
-	bool			shuffled = false;
+	bool		shuffled = false;
 
 	/*
 	 * Find first unallocated offsetNumber
@@ -185,10 +185,10 @@ PageAddItem(Page page,
 Page
 PageGetTempPage(Page page, Size specialSize)
 {
-	Size			pageSize;
-	Size			size;
-	Page			temp;
-	PageHeader		thdr;
+	Size		pageSize;
+	Size		size;
+	Page		temp;
+	PageHeader	thdr;
 
 	pageSize = PageGetPageSize(page);
 
@@ -219,7 +219,7 @@ PageGetTempPage(Page page, Size specialSize)
 void
 PageRestoreTempPage(Page tempPage, Page oldPage)
 {
-	Size			pageSize;
+	Size		pageSize;
 
 	pageSize = PageGetPageSize(tempPage);
 	memmove((char *) oldPage, (char *) tempPage, pageSize);
@@ -238,8 +238,8 @@ PageRestoreTempPage(Page tempPage, Page oldPage)
 OffsetNumber
 PageGetMaxOffsetNumber(Page page)
 {
-	LocationIndex	low;
-	OffsetNumber	i;
+	LocationIndex low;
+	OffsetNumber i;
 
 	low = ((PageHeader) page)->pd_lower;
 	i = (low - (sizeof(PageHeaderData) - sizeof(ItemIdData)))
@@ -254,8 +254,8 @@ PageGetMaxOffsetNumber(Page page)
  */
 struct itemIdSortData
 {
-	int				offsetindex;/* linp array index */
-	ItemIdData		itemiddata;
+	int			offsetindex;	/* linp array index */
+	ItemIdData	itemiddata;
 };
 
 static int
@@ -278,14 +278,14 @@ itemidcompare(void *itemidp1, void *itemidp2)
 void
 PageRepairFragmentation(Page page)
 {
-	int				i;
+	int			i;
 	struct itemIdSortData *itemidbase,
-				   *itemidptr;
-	ItemId			lp;
-	int				nline,
-					nused;
-	Offset			upper;
-	Size			alignedSize;
+			   *itemidptr;
+	ItemId		lp;
+	int			nline,
+				nused;
+	Offset		upper;
+	Size		alignedSize;
 
 	nline = (int16) PageGetMaxOffsetNumber(page);
 	nused = 0;
@@ -359,7 +359,7 @@ PageRepairFragmentation(Page page)
 Size
 PageGetFreeSpace(Page page)
 {
-	Size			space;
+	Size		space;
 
 
 	space = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
@@ -400,13 +400,13 @@ PageManagerModeSet(PageManagerMode mode)
 void
 PageIndexTupleDelete(Page page, OffsetNumber offnum)
 {
-	PageHeader		phdr;
-	char		   *addr;
-	ItemId			tup;
-	Size			size;
-	char		   *locn;
-	int				nbytes;
-	int				offidx;
+	PageHeader	phdr;
+	char	   *addr;
+	ItemId		tup;
+	Size		size;
+	char	   *locn;
+	int			nbytes;
+	int			offidx;
 
 	phdr = (PageHeader) page;
 
@@ -478,8 +478,8 @@ PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
 									   char *location,
 									   Size size)
 {
-	int				i;
-	unsigned		offset;
+	int			i;
+	unsigned	offset;
 
 	/* location is an index into the page... */
 	offset = (unsigned) (location - (char *) phdr);

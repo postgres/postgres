@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.8 1997/09/07 05:02:05 momjian Exp $
+ * $Id: acl.h,v 1.9 1997/09/08 02:39:24 momjian Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -29,14 +29,14 @@
  * AclId		system identifier for the user, group, etc.
  *				XXX currently UNIX uid for users...
  */
-typedef uint32	AclId;
+typedef uint32 AclId;
 
 #define ACL_ID_WORLD	0		/* XXX only idtype should be checked */
 
 /*
  * AclIdType	tag that describes if the AclId is a user, group, etc.
  */
-typedef uint8	AclIdType;
+typedef uint8 AclIdType;
 
 #define ACL_IDTYPE_WORLD		0x00
 #define ACL_IDTYPE_UID			0x01	/* user id - from pg_user */
@@ -48,7 +48,7 @@ typedef uint8	AclIdType;
  *				XXX should probably also stuff the modechg cruft in the
  *					high bits, too.
  */
-typedef uint8	AclMode;
+typedef uint8 AclMode;
 
 #define ACL_NO			0		/* no permissions */
 #define ACL_AP			(1<<0)	/* append */
@@ -71,10 +71,10 @@ typedef uint8	AclMode;
  */
 typedef struct AclItem
 {
-	AclId			ai_id;
-	AclIdType		ai_idtype;
-	AclMode			ai_mode;
-}				AclItem;
+	AclId		ai_id;
+	AclIdType	ai_idtype;
+	AclMode		ai_mode;
+}			AclItem;
 
 /* Note: if the size of AclItem changes,
    change the aclitem typlen in pg_type.h */
@@ -125,7 +125,7 @@ typedef ArrayType IdList;
 #define ACLCHECK_NOT_OWNER		  3
 
 /* warning messages.  set these in aclchk.c. */
-extern char    *aclcheck_error_strings[];
+extern char *aclcheck_error_strings[];
 
 /*
  * Enable ACL execution tracing and table dumps
@@ -135,12 +135,12 @@ extern char    *aclcheck_error_strings[];
 /*
  * routines used internally (parser, etc.)
  */
-extern Acl	   *aclownerdefault(AclId ownerid);
-extern Acl	   *acldefault(void);
-extern Acl	   *aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg);
+extern Acl *aclownerdefault(AclId ownerid);
+extern Acl *acldefault(void);
+extern Acl *aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg);
 
-extern char    *aclmakepriv(char *old_privlist, char new_priv);
-extern char    *aclmakeuser(char *user_type, char *user);
+extern char *aclmakepriv(char *old_privlist, char new_priv);
+extern char *aclmakeuser(char *user_type, char *user);
 extern ChangeACLStmt *
 makeAclStmt(char *privs, List * rel_list, char *grantee,
 			char grant_or_revoke);
@@ -148,27 +148,27 @@ makeAclStmt(char *privs, List * rel_list, char *grantee,
 /*
  * exported routines (from acl.c)
  */
-extern Acl	   *makeacl(int n);
+extern Acl *makeacl(int n);
 extern AclItem *aclitemin(char *s);
-extern char    *aclitemout(AclItem * aip);
-extern Acl	   *aclinsert(Acl * old_acl, AclItem * mod_aip);
-extern Acl	   *aclremove(Acl * old_acl, AclItem * mod_aip);
-extern int32	aclcontains(Acl * acl, AclItem * aip);
+extern char *aclitemout(AclItem * aip);
+extern Acl *aclinsert(Acl * old_acl, AclItem * mod_aip);
+extern Acl *aclremove(Acl * old_acl, AclItem * mod_aip);
+extern int32 aclcontains(Acl * acl, AclItem * aip);
 
 /*
  * prototypes for functions in aclchk.c
  */
-extern void		ChangeAcl(char *relname, AclItem * mod_aip, unsigned modechg);
-extern AclId	get_grosysid(char *groname);
-extern char    *get_groname(AclId grosysid);
+extern void ChangeAcl(char *relname, AclItem * mod_aip, unsigned modechg);
+extern AclId get_grosysid(char *groname);
+extern char *get_groname(AclId grosysid);
 
 /* XXX move these elsewhere -pma */
-extern int32	pg_aclcheck(char *relname, char *usename, AclMode mode);
-extern int32	pg_ownercheck(char *usename, char *value, int cacheid);
-extern int32
+extern int32 pg_aclcheck(char *relname, char *usename, AclMode mode);
+extern int32 pg_ownercheck(char *usename, char *value, int cacheid);
+extern		int32
 pg_func_ownercheck(char *usename, char *funcname,
 				   int nargs, Oid * arglist);
-extern int32
+extern		int32
 pg_aggr_ownercheck(char *usename, char *aggname,
 				   Oid basetypeID);
 

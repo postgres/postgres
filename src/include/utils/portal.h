@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.5 1997/09/07 05:02:51 momjian Exp $
+ * $Id: portal.h,v 1.6 1997/09/08 02:39:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,9 @@
 
 typedef struct PortalBlockData
 {
-	AllocSetData	setData;
-	FixedItemData	itemData;
-}				PortalBlockData;
+	AllocSetData setData;
+	FixedItemData itemData;
+}			PortalBlockData;
 
 typedef PortalBlockData *PortalBlock;
 
@@ -43,13 +43,13 @@ typedef PortalD *Portal;
 
 struct PortalD
 {
-	char		   *name;		/* XXX PortalName */
+	char	   *name;			/* XXX PortalName */
 	struct PortalVariableMemory variable;
 	struct PortalHeapMemory heap;
-	QueryDesc	   *queryDesc;
-	TupleDesc		attinfo;
-	EState		   *state;
-	void			(*cleanup) (Portal);
+	QueryDesc  *queryDesc;
+	TupleDesc	attinfo;
+	EState	   *state;
+	void		(*cleanup) (Portal);
 };
 
 /*
@@ -63,21 +63,21 @@ struct PortalD
  */
 #define VACPNAME		"<vacuum>"
 
-extern bool		PortalNameIsSpecial(char *pname);
-extern void		AtEOXact_portals(void);
-extern void		EnablePortalManager(bool on);
-extern Portal	GetPortalByName(char *name);
-extern Portal	BlankPortalAssignName(char *name);
+extern bool PortalNameIsSpecial(char *pname);
+extern void AtEOXact_portals(void);
+extern void EnablePortalManager(bool on);
+extern Portal GetPortalByName(char *name);
+extern Portal BlankPortalAssignName(char *name);
 extern void
 PortalSetQuery(Portal portal, QueryDesc * queryDesc,
 			   TupleDesc attinfo, EState * state,
 			   void (*cleanup) (Portal portal));
 extern QueryDesc *PortalGetQueryDesc(Portal portal);
-extern EState  *PortalGetState(Portal portal);
-extern Portal	CreatePortal(char *name);
-extern void		PortalDestroy(Portal * portalP);
-extern void		StartPortalAllocMode(AllocMode mode, Size limit);
-extern void		EndPortalAllocMode(void);
+extern EState *PortalGetState(Portal portal);
+extern Portal CreatePortal(char *name);
+extern void PortalDestroy(Portal * portalP);
+extern void StartPortalAllocMode(AllocMode mode, Size limit);
+extern void EndPortalAllocMode(void);
 extern PortalVariableMemory PortalGetVariableMemory(Portal portal);
 extern PortalHeapMemory PortalGetHeapMemory(Portal portal);
 

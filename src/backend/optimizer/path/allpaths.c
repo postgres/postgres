@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.11 1997/09/07 04:43:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.12 1997/09/08 02:24:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,17 +34,17 @@
 #include "optimizer/geqo.h"
 
 #ifdef GEQO
-bool			_use_geqo_ = true;
+bool		_use_geqo_ = true;
 
 #else
-bool			_use_geqo_ = false;
+bool		_use_geqo_ = false;
 
 #endif
-int32			_use_geqo_rels_ = GEQO_RELS;
+int32		_use_geqo_rels_ = GEQO_RELS;
 
 
-static void		find_rel_paths(Query * root, List * rels);
-static List    *find_join_paths(Query * root, List * outer_rels, int levels_left);
+static void find_rel_paths(Query * root, List * rels);
+static List *find_join_paths(Query * root, List * outer_rels, int levels_left);
 
 /*
  * find-paths--
@@ -53,10 +53,10 @@ static List    *find_join_paths(Query * root, List * outer_rels, int levels_left
  *
  * 'rels' is the list of single relation entries appearing in the query
  */
-List		   *
+List	   *
 find_paths(Query * root, List * rels)
 {
-	int				levels_left;
+	int			levels_left;
 
 	/*
 	 * Set the number of join (not nesting) levels yet to be processed.
@@ -104,15 +104,15 @@ find_paths(Query * root, List * rels)
 static void
 find_rel_paths(Query * root, List * rels)
 {
-	List		   *temp;
-	Rel			   *rel;
-	List		   *lastpath;
+	List	   *temp;
+	Rel		   *rel;
+	List	   *lastpath;
 
 	foreach(temp, rels)
 	{
-		List		   *sequential_scan_list;
-		List		   *rel_index_scan_list;
-		List		   *or_index_scan_list;
+		List	   *sequential_scan_list;
+		List	   *rel_index_scan_list;
+		List	   *or_index_scan_list;
 
 		rel = (Rel *) lfirst(temp);
 		sequential_scan_list = lcons(create_seqscan_path(rel),
@@ -171,12 +171,12 @@ find_rel_paths(Query * root, List * rels)
  * Returns the final level of join relations, i.e., the relation that is
  * the result of joining all the original relations togehter.
  */
-static List    *
+static List *
 find_join_paths(Query * root, List * outer_rels, int levels_left)
 {
-	List		   *x;
-	List		   *new_rels;
-	Rel			   *rel;
+	List	   *x;
+	List	   *new_rels;
+	Rel		   *rel;
 
 	/*******************************************
 	 * genetic query optimizer entry point	   *
@@ -283,12 +283,12 @@ find_join_paths(Query * root, List * outer_rels, int levels_left)
 static void
 print_joinclauses(Query * root, List * clauses)
 {
-	List		   *l;
-	extern void		print_expr(Node * expr, List * rtable);		/* in print.c */
+	List	   *l;
+	extern void print_expr(Node * expr, List * rtable); /* in print.c */
 
 	foreach(l, clauses)
 	{
-		CInfo		   *c = lfirst(l);
+		CInfo	   *c = lfirst(l);
 
 		print_expr((Node *) c->clause, root->rtable);
 		if (lnext(l))
@@ -299,88 +299,88 @@ print_joinclauses(Query * root, List * clauses)
 static void
 print_path(Query * root, Path * path, int indent)
 {
-	char		   *ptype = NULL;
-	JoinPath	   *jp;
-	bool			join = false;
-	int				i;
+	char	   *ptype = NULL;
+	JoinPath   *jp;
+	bool		join = false;
+	int			i;
 
 	for (i = 0; i < indent; i++)
 		printf("\t");
 
 	switch (nodeTag(path))
 	{
-	case T_Path:
-		ptype = "SeqScan";
-		join = false;
-		break;
-	case T_IndexPath:
-		ptype = "IdxScan";
-		join = false;
-		break;
-	case T_JoinPath:
-		ptype = "Nestloop";
-		join = true;
-		break;
-	case T_MergePath:
-		ptype = "MergeJoin";
-		join = true;
-		break;
-	case T_HashPath:
-		ptype = "HashJoin";
-		join = true;
-		break;
-	default:
-		break;
+		case T_Path:
+			ptype = "SeqScan";
+			join = false;
+			break;
+		case T_IndexPath:
+			ptype = "IdxScan";
+			join = false;
+			break;
+		case T_JoinPath:
+			ptype = "Nestloop";
+			join = true;
+			break;
+		case T_MergePath:
+			ptype = "MergeJoin";
+			join = true;
+			break;
+		case T_HashPath:
+			ptype = "HashJoin";
+			join = true;
+			break;
+		default:
+			break;
 	}
 	if (join)
 	{
-		int				size = path->parent->size;
+		int			size = path->parent->size;
 
 		jp = (JoinPath *) path;
 		printf("%s size=%d cost=%f\n", ptype, size, path->path_cost);
 		switch (nodeTag(path))
 		{
-		case T_MergePath:
-		case T_HashPath:
-			for (i = 0; i < indent + 1; i++)
-				printf("\t");
-			printf("   clauses=(");
-			print_joinclauses(root,
-							  ((JoinPath *) path)->pathclauseinfo);
-			printf(")\n");
+			case T_MergePath:
+			case T_HashPath:
+				for (i = 0; i < indent + 1; i++)
+					printf("\t");
+				printf("   clauses=(");
+				print_joinclauses(root,
+								  ((JoinPath *) path)->pathclauseinfo);
+				printf(")\n");
 
-			if (nodeTag(path) == T_MergePath)
-			{
-				MergePath	   *mp = (MergePath *) path;
-
-				if (mp->outersortkeys || mp->innersortkeys)
+				if (nodeTag(path) == T_MergePath)
 				{
-					for (i = 0; i < indent + 1; i++)
-						printf("\t");
-					printf("   sortouter=%d sortinner=%d\n",
-						   ((mp->outersortkeys) ? 1 : 0),
-						   ((mp->innersortkeys) ? 1 : 0));
+					MergePath  *mp = (MergePath *) path;
+
+					if (mp->outersortkeys || mp->innersortkeys)
+					{
+						for (i = 0; i < indent + 1; i++)
+							printf("\t");
+						printf("   sortouter=%d sortinner=%d\n",
+							   ((mp->outersortkeys) ? 1 : 0),
+							   ((mp->innersortkeys) ? 1 : 0));
+					}
 				}
-			}
-			break;
-		default:
-			break;
+				break;
+			default:
+				break;
 		}
 		print_path(root, jp->outerjoinpath, indent + 1);
 		print_path(root, jp->innerjoinpath, indent + 1);
 	}
 	else
 	{
-		int				size = path->parent->size;
-		int				relid = lfirsti(path->parent->relids);
+		int			size = path->parent->size;
+		int			relid = lfirsti(path->parent->relids);
 
 		printf("%s(%d) size=%d cost=%f",
 			   ptype, relid, size, path->path_cost);
 
 		if (nodeTag(path) == T_IndexPath)
 		{
-			List		   *k,
-						   *l;
+			List	   *k,
+					   *l;
 
 			printf(" keys=");
 			foreach(k, path->keys)
@@ -388,7 +388,7 @@ print_path(Query * root, Path * path, int indent)
 				printf("(");
 				foreach(l, lfirst(k))
 				{
-					Var			   *var = lfirst(l);
+					Var		   *var = lfirst(l);
 
 					printf("%d.%d", var->varnoold, var->varoattno);
 					if (lnext(l))
@@ -406,7 +406,7 @@ print_path(Query * root, Path * path, int indent)
 static void
 debug_print_rel(Query * root, Rel * rel)
 {
-	List		   *l;
+	List	   *l;
 
 	printf("(");
 	foreach(l, rel->relids)

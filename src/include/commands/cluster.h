@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: cluster.h,v 1.3 1997/09/07 04:57:21 momjian Exp $
+ * $Id: cluster.h,v 1.4 1997/09/08 02:35:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,6 @@
 /*
  * functions
  */
-extern void		cluster(char oldrelname[], char oldindexname[]);
+extern void cluster(char oldrelname[], char oldindexname[]);
 
 #endif							/* CLUSTER_H */

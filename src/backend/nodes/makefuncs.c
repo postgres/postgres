@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.3 1997/09/07 04:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.4 1997/09/08 02:23:39 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -27,14 +27,14 @@
  * makeOper -
  *	  creates an Oper node
  */
-Oper		   *
+Oper	   *
 makeOper(Oid opno,
 		 Oid opid,
 		 Oid opresulttype,
 		 int opsize,
 		 FunctionCachePtr op_fcache)
 {
-	Oper		   *oper = makeNode(Oper);
+	Oper	   *oper = makeNode(Oper);
 
 	oper->opno = opno;
 	oper->opid = opid;
@@ -49,14 +49,14 @@ makeOper(Oid opno,
  *	  creates a Var node
  *
  */
-Var			   *
+Var		   *
 makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
 		Index varnoold,
 		AttrNumber varoattno)
 {
-	Var			   *var = makeNode(Var);
+	Var		   *var = makeNode(Var);
 
 	var->varno = varno;
 	var->varattno = varattno;
@@ -71,7 +71,7 @@ makeVar(Index varno,
  * makeResdom -
  *	  creates a Resdom (Result Domain) node
  */
-Resdom		   *
+Resdom	   *
 makeResdom(AttrNumber resno,
 		   Oid restype,
 		   int reslen,
@@ -80,7 +80,7 @@ makeResdom(AttrNumber resno,
 		   Oid reskeyop,
 		   int resjunk)
 {
-	Resdom		   *resdom = makeNode(Resdom);
+	Resdom	   *resdom = makeNode(Resdom);
 
 	resdom->resno = resno;
 	resdom->restype = restype;
@@ -96,7 +96,7 @@ makeResdom(AttrNumber resno,
  * makeConst -
  *	  creates a Const node
  */
-Const		   *
+Const	   *
 makeConst(Oid consttype,
 		  Size constlen,
 		  Datum constvalue,
@@ -105,7 +105,7 @@ makeConst(Oid consttype,
 		  bool constisset,
 		  bool constiscast)
 {
-	Const		   *cnst = makeNode(Const);
+	Const	   *cnst = makeNode(Const);
 
 	cnst->consttype = consttype;
 	cnst->constlen = constlen;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.5 1997/09/07 04:44:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.6 1997/09/08 02:24:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,20 +33,20 @@
 #include "optimizer/var.h"
 #include "optimizer/tlist.h"
 
-static void		set_join_tlist_references(Join * join);
-static void		set_tempscan_tlist_references(SeqScan * tempscan);
-static void		set_temp_tlist_references(Temp * temp);
-static List    *
+static void set_join_tlist_references(Join * join);
+static void set_tempscan_tlist_references(SeqScan * tempscan);
+static void set_temp_tlist_references(Temp * temp);
+static List *
 replace_clause_joinvar_refs(Expr * clause,
 							List * outer_tlist, List * inner_tlist);
-static List    *
+static List *
 replace_subclause_joinvar_refs(List * clauses,
 							   List * outer_tlist, List * inner_tlist);
-static Var	   *replace_joinvar_refs(Var * var, List * outer_tlist, List * inner_tlist);
-static List    *tlist_temp_references(Oid tempid, List * tlist);
-static void		replace_result_clause(List * clause, List * subplanTargetList);
-static bool		OperandIsInner(Node * opnd, int inner_relid);
-static void		replace_agg_clause(Node * expr, List * targetlist);
+static Var *replace_joinvar_refs(Var * var, List * outer_tlist, List * inner_tlist);
+static List *tlist_temp_references(Oid tempid, List * tlist);
+static void replace_result_clause(List * clause, List * subplanTargetList);
+static bool OperandIsInner(Node * opnd, int inner_relid);
+static void replace_agg_clause(Node * expr, List * targetlist);
 
 /*****************************************************************************
  *
@@ -94,7 +94,7 @@ set_tlist_references(Plan * plan)
 	}
 	else if (IsA(plan, Choose))
 	{
-		List		   *x;
+		List	   *x;
 
 		foreach(x, ((Choose *) plan)->chooseplanlist)
 		{
@@ -122,19 +122,19 @@ set_tlist_references(Plan * plan)
 static void
 set_join_tlist_references(Join * join)
 {
-	Plan		   *outer = ((Plan *) join)->lefttree;
-	Plan		   *inner = ((Plan *) join)->righttree;
-	List		   *new_join_targetlist = NIL;
-	TargetEntry    *temp = (TargetEntry *) NULL;
-	List		   *entry = NIL;
-	List		   *inner_tlist = NULL;
-	List		   *outer_tlist = NULL;
-	TargetEntry    *xtl = (TargetEntry *) NULL;
-	List		   *qptlist = ((Plan *) join)->targetlist;
+	Plan	   *outer = ((Plan *) join)->lefttree;
+	Plan	   *inner = ((Plan *) join)->righttree;
+	List	   *new_join_targetlist = NIL;
+	TargetEntry *temp = (TargetEntry *) NULL;
+	List	   *entry = NIL;
+	List	   *inner_tlist = NULL;
+	List	   *outer_tlist = NULL;
+	TargetEntry *xtl = (TargetEntry *) NULL;
+	List	   *qptlist = ((Plan *) join)->targetlist;
 
 	foreach(entry, qptlist)
 	{
-		List		   *joinvar;
+		List	   *joinvar;
 
 		xtl = (TargetEntry *) lfirst(entry);
 		inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
@@ -167,7 +167,7 @@ set_join_tlist_references(Join * join)
 static void
 set_tempscan_tlist_references(SeqScan * tempscan)
 {
-	Temp		   *temp = (Temp *) ((Plan *) tempscan)->lefttree;
+	Temp	   *temp = (Temp *) ((Plan *) tempscan)->lefttree;
 
 	((Plan *) tempscan)->targetlist =
 		tlist_temp_references(temp->tempid,
@@ -189,7 +189,7 @@ set_tempscan_tlist_references(SeqScan * tempscan)
 static void
 set_temp_tlist_references(Temp * temp)
 {
-	Plan		   *source = ((Plan *) temp)->lefttree;
+	Plan	   *source = ((Plan *) temp)->lefttree;
 
 	if (source != NULL)
 	{
@@ -217,7 +217,7 @@ set_temp_tlist_references(Temp * temp)
  * Returns the new join clauses.
  *
  */
-List		   *
+List	   *
 join_references(List * clauses,
 				List * outer_tlist,
 				List * inner_tlist)
@@ -243,15 +243,15 @@ join_references(List * clauses,
  * Returns the new list of clauses.
  *
  */
-List		   *
+List	   *
 index_outerjoin_references(List * inner_indxqual,
 						   List * outer_tlist,
 						   Index inner_relid)
 {
-	List		   *t_list = NIL;
-	Expr		   *temp = NULL;
-	List		   *t_clause = NIL;
-	Expr		   *clause = NULL;
+	List	   *t_list = NIL;
+	Expr	   *temp = NULL;
+	List	   *t_clause = NIL;
+	Expr	   *clause = NULL;
 
 	foreach(t_clause, inner_indxqual)
 	{
@@ -262,7 +262,7 @@ index_outerjoin_references(List * inner_indxqual,
 		 */
 		if (OperandIsInner((Node *) get_rightop(clause), inner_relid))
 		{
-			Var			   *joinvar = (Var *)
+			Var		   *joinvar = (Var *)
 			replace_clause_joinvar_refs((Expr *) get_leftop(clause),
 										outer_tlist,
 										NIL);
@@ -275,7 +275,7 @@ index_outerjoin_references(List * inner_indxqual,
 		else
 		{
 			/* inner scan on left */
-			Var			   *joinvar = (Var *)
+			Var		   *joinvar = (Var *)
 			replace_clause_joinvar_refs((Expr *) get_rightop(clause),
 										outer_tlist,
 										NIL);
@@ -306,12 +306,12 @@ index_outerjoin_references(List * inner_indxqual,
  * Returns the new join clause.
  *
  */
-static List    *
+static List *
 replace_clause_joinvar_refs(Expr * clause,
 							List * outer_tlist,
 							List * inner_tlist)
 {
-	List		   *temp = NULL;
+	List	   *temp = NULL;
 
 	if (IsA(clause, Var))
 	{
@@ -330,7 +330,7 @@ replace_clause_joinvar_refs(Expr * clause,
 	}
 	else if (or_clause((Node *) clause))
 	{
-		List		   *orclause =
+		List	   *orclause =
 		replace_subclause_joinvar_refs(((Expr *) clause)->args,
 									   outer_tlist,
 									   inner_tlist);
@@ -339,7 +339,7 @@ replace_clause_joinvar_refs(Expr * clause,
 	}
 	else if (IsA(clause, ArrayRef))
 	{
-		ArrayRef	   *aref = (ArrayRef *) clause;
+		ArrayRef   *aref = (ArrayRef *) clause;
 
 		temp = replace_subclause_joinvar_refs(aref->refupperindexpr,
 											  outer_tlist,
@@ -365,7 +365,7 @@ replace_clause_joinvar_refs(Expr * clause,
 	}
 	else if (is_funcclause((Node *) clause))
 	{
-		List		   *funcclause =
+		List	   *funcclause =
 		replace_subclause_joinvar_refs(((Expr *) clause)->args,
 									   outer_tlist,
 									   inner_tlist);
@@ -375,7 +375,7 @@ replace_clause_joinvar_refs(Expr * clause,
 	}
 	else if (not_clause((Node *) clause))
 	{
-		List		   *notclause =
+		List	   *notclause =
 		replace_clause_joinvar_refs(get_notclausearg(clause),
 									outer_tlist,
 									inner_tlist);
@@ -384,11 +384,11 @@ replace_clause_joinvar_refs(Expr * clause,
 	}
 	else if (is_opclause((Node *) clause))
 	{
-		Var			   *leftvar =
+		Var		   *leftvar =
 		(Var *) replace_clause_joinvar_refs((Expr *) get_leftop(clause),
 											outer_tlist,
 											inner_tlist);
-		Var			   *rightvar =
+		Var		   *rightvar =
 		(Var *) replace_clause_joinvar_refs((Expr *) get_rightop(clause),
 											outer_tlist,
 											inner_tlist);
@@ -401,14 +401,14 @@ replace_clause_joinvar_refs(Expr * clause,
 	return NULL;
 }
 
-static List    *
+static List *
 replace_subclause_joinvar_refs(List * clauses,
 							   List * outer_tlist,
 							   List * inner_tlist)
 {
-	List		   *t_list = NIL;
-	List		   *temp = NIL;
-	List		   *clause = NIL;
+	List	   *t_list = NIL;
+	List	   *temp = NIL;
+	List	   *clause = NIL;
 
 	foreach(clause, clauses)
 	{
@@ -420,10 +420,10 @@ replace_subclause_joinvar_refs(List * clauses,
 	return (t_list);
 }
 
-static Var	   *
+static Var *
 replace_joinvar_refs(Var * var, List * outer_tlist, List * inner_tlist)
 {
-	Resdom		   *outer_resdom = (Resdom *) NULL;
+	Resdom	   *outer_resdom = (Resdom *) NULL;
 
 	outer_resdom = tlist_member(var, outer_tlist);
 
@@ -437,7 +437,7 @@ replace_joinvar_refs(Var * var, List * outer_tlist, List * inner_tlist)
 	}
 	else
 	{
-		Resdom		   *inner_resdom;
+		Resdom	   *inner_resdom;
 
 		inner_resdom = tlist_member(var, inner_tlist);
 		if (inner_resdom != NULL && IsA(inner_resdom, Resdom))
@@ -466,18 +466,18 @@ replace_joinvar_refs(Var * var, List * outer_tlist, List * inner_tlist)
  * Returns new target list
  *
  */
-static List    *
+static List *
 tlist_temp_references(Oid tempid,
 					  List * tlist)
 {
-	List		   *t_list = NIL;
-	TargetEntry    *temp = (TargetEntry *) NULL;
-	TargetEntry    *xtl = NULL;
-	List		   *entry;
+	List	   *t_list = NIL;
+	TargetEntry *temp = (TargetEntry *) NULL;
+	TargetEntry *xtl = NULL;
+	List	   *entry;
 
 	foreach(entry, tlist)
 	{
-		AttrNumber		oattno;
+		AttrNumber	oattno;
 
 		xtl = lfirst(entry);
 		if (IsA(get_expr(xtl), Var))
@@ -513,12 +513,12 @@ tlist_temp_references(Oid tempid,
 void
 set_result_tlist_references(Result * resultNode)
 {
-	Plan		   *subplan;
-	List		   *resultTargetList;
-	List		   *subplanTargetList;
-	List		   *t;
-	TargetEntry    *entry;
-	Expr		   *expr;
+	Plan	   *subplan;
+	List	   *resultTargetList;
+	List	   *subplanTargetList;
+	List	   *t;
+	TargetEntry *entry;
+	Expr	   *expr;
 
 	resultTargetList = ((Plan *) resultNode)->targetlist;
 
@@ -564,9 +564,9 @@ replace_result_clause(List * clause,
 					  List * subplanTargetList) /* target list of the
 												 * subplan */
 {
-	List		   *t;
-	List		   *subClause;
-	TargetEntry    *subplanVar;
+	List	   *t;
+	List	   *subClause;
+	TargetEntry *subplanVar;
 
 	if (IsA(clause, Var))
 	{
@@ -598,7 +598,7 @@ replace_result_clause(List * clause,
 	}
 	else if (IsA(clause, ArrayRef))
 	{
-		ArrayRef	   *aref = (ArrayRef *) clause;
+		ArrayRef   *aref = (ArrayRef *) clause;
 
 		/*
 		 * This is an arrayref. Recursively call this routine for its
@@ -646,7 +646,7 @@ replace_result_clause(List * clause,
 }
 
 static
-bool
+			bool
 OperandIsInner(Node * opnd, int inner_relid)
 {
 
@@ -663,7 +663,7 @@ OperandIsInner(Node * opnd, int inner_relid)
 	}
 	if (is_funcclause(opnd))
 	{
-		List		   *firstArg = lfirst(((Expr *) opnd)->args);
+		List	   *firstArg = lfirst(((Expr *) opnd)->args);
 
 		if (IsA(firstArg, Var) &&
 			(inner_relid == ((Var *) firstArg)->varno))
@@ -688,16 +688,16 @@ OperandIsInner(Node * opnd, int inner_relid)
 void
 set_agg_tlist_references(Agg * aggNode)
 {
-	List		   *aggTargetList;
-	List		   *subplanTargetList;
-	List		   *tl;
+	List	   *aggTargetList;
+	List	   *subplanTargetList;
+	List	   *tl;
 
 	aggTargetList = aggNode->plan.targetlist;
 	subplanTargetList = aggNode->plan.lefttree->targetlist;
 
 	foreach(tl, aggTargetList)
 	{
-		TargetEntry    *tle = lfirst(tl);
+		TargetEntry *tle = lfirst(tl);
 
 		replace_agg_clause(tle->expr, subplanTargetList);
 	}
@@ -706,9 +706,9 @@ set_agg_tlist_references(Agg * aggNode)
 void
 set_agg_agglist_references(Agg * aggNode)
 {
-	List		   *subplanTargetList;
-	Aggreg		  **aggs;
-	int				i;
+	List	   *subplanTargetList;
+	Aggreg	  **aggs;
+	int			i;
 
 	aggs = aggNode->aggs;
 	subplanTargetList = aggNode->plan.lefttree->targetlist;
@@ -722,8 +722,8 @@ set_agg_agglist_references(Agg * aggNode)
 static void
 replace_agg_clause(Node * clause, List * subplanTargetList)
 {
-	List		   *t;
-	TargetEntry    *subplanVar;
+	List	   *t;
+	TargetEntry *subplanVar;
 
 	if (IsA(clause, Var))
 	{
@@ -757,7 +757,7 @@ replace_agg_clause(Node * clause, List * subplanTargetList)
 	}
 	else if (IsA(clause, ArrayRef))
 	{
-		ArrayRef	   *aref = (ArrayRef *) clause;
+		ArrayRef   *aref = (ArrayRef *) clause;
 
 		/*
 		 * This is an arrayref. Recursively call this routine for its
@@ -781,8 +781,8 @@ replace_agg_clause(Node * clause, List * subplanTargetList)
 		 * This is an operator. Recursively call this routine for both its
 		 * left and right operands
 		 */
-		Node		   *left = (Node *) get_leftop((Expr *) clause);
-		Node		   *right = (Node *) get_rightop((Expr *) clause);
+		Node	   *left = (Node *) get_leftop((Expr *) clause);
+		Node	   *right = (Node *) get_rightop((Expr *) clause);
 
 		if (left != (Node *) NULL)
 			replace_agg_clause(left, subplanTargetList);

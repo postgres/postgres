@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.10 1997/09/07 04:38:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.11 1997/09/08 02:20:49 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -36,8 +36,8 @@
 #include <string.h>
 #endif
 
-static void		_bt_setpagelock(Relation rel, BlockNumber blkno, int access);
-static void		_bt_unsetpagelock(Relation rel, BlockNumber blkno, int access);
+static void _bt_setpagelock(Relation rel, BlockNumber blkno, int access);
+static void _bt_unsetpagelock(Relation rel, BlockNumber blkno, int access);
 
 #define BTREE_METAPAGE	0
 #define BTREE_MAGIC		0x053162
@@ -50,18 +50,18 @@ static void		_bt_unsetpagelock(Relation rel, BlockNumber blkno, int access);
 
 typedef struct BTMetaPageData
 {
-	uint32			btm_magic;
-	uint32			btm_version;
-	BlockNumber		btm_root;
+	uint32		btm_magic;
+	uint32		btm_version;
+	BlockNumber btm_root;
 #ifdef BTREE_VERSION_1
-	int32			btm_level;
+	int32		btm_level;
 #endif
-}				BTMetaPageData;
+}			BTMetaPageData;
 
 #define BTPageGetMeta(p) \
 	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])
 
-extern bool		BuildingBtree;
+extern bool BuildingBtree;
 
 /*
  *	We use high-concurrency locking on btrees.	There are two cases in
@@ -85,11 +85,11 @@ extern bool		BuildingBtree;
 void
 _bt_metapinit(Relation rel)
 {
-	Buffer			buf;
-	Page			pg;
-	int				nblocks;
-	BTMetaPageData	metad;
-	BTPageOpaque	op;
+	Buffer		buf;
+	Page		pg;
+	int			nblocks;
+	BTMetaPageData metad;
+	BTPageOpaque op;
 
 	/* can't be sharing this with anyone, now... */
 	if (USELOCKING)
@@ -131,11 +131,11 @@ _bt_metapinit(Relation rel)
 void
 _bt_checkmeta(Relation rel)
 {
-	Buffer			metabuf;
-	Page			metap;
+	Buffer		metabuf;
+	Page		metap;
 	BTMetaPageData *metad;
-	BTPageOpaque	op;
-	int				nblocks;
+	BTPageOpaque op;
+	int			nblocks;
 
 	/* if the relation is empty, this is init time; don't complain */
 	if ((nblocks = RelationGetNumberOfBlocks(rel)) == 0)
@@ -187,13 +187,13 @@ _bt_checkmeta(Relation rel)
 Buffer
 _bt_getroot(Relation rel, int access)
 {
-	Buffer			metabuf;
-	Page			metapg;
-	BTPageOpaque	metaopaque;
-	Buffer			rootbuf;
-	Page			rootpg;
-	BTPageOpaque	rootopaque;
-	BlockNumber		rootblkno;
+	Buffer		metabuf;
+	Page		metapg;
+	BTPageOpaque metaopaque;
+	Buffer		rootbuf;
+	Page		rootpg;
+	BTPageOpaque rootopaque;
+	BlockNumber rootblkno;
 	BTMetaPageData *metad;
 
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
@@ -319,8 +319,8 @@ _bt_getroot(Relation rel, int access)
 Buffer
 _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 {
-	Buffer			buf;
-	Page			page;
+	Buffer		buf;
+	Page		page;
 
 	/*
 	 * If we want a new block, we can't set a lock of the appropriate type
@@ -359,7 +359,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 void
 _bt_relbuf(Relation rel, Buffer buf, int access)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = BufferGetBlockNumber(buf);
 
@@ -382,7 +382,7 @@ _bt_relbuf(Relation rel, Buffer buf, int access)
 void
 _bt_wrtbuf(Relation rel, Buffer buf)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = BufferGetBlockNumber(buf);
 	WriteBuffer(buf);
@@ -399,7 +399,7 @@ _bt_wrtbuf(Relation rel, Buffer buf)
 void
 _bt_wrtnorelbuf(Relation rel, Buffer buf)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = BufferGetBlockNumber(buf);
 	WriteNoReleaseBuffer(buf);
@@ -439,9 +439,9 @@ _bt_pageinit(Page page, Size size)
 void
 _bt_metaproot(Relation rel, BlockNumber rootbknum, int level)
 {
-	Buffer			metabuf;
-	Page			metap;
-	BTPageOpaque	metaopaque;
+	Buffer		metabuf;
+	Page		metap;
+	BTPageOpaque metaopaque;
 	BTMetaPageData *metad;
 
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
@@ -473,18 +473,18 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, int level)
 Buffer
 _bt_getstackbuf(Relation rel, BTStack stack, int access)
 {
-	Buffer			buf;
-	BlockNumber		blkno;
-	OffsetNumber	start,
-					offnum,
-					maxoff;
-	OffsetNumber	i;
-	Page			page;
-	ItemId			itemid;
-	BTItem			item;
-	BTPageOpaque	opaque;
-	BTItem			item_save;
-	int				item_nbytes;
+	Buffer		buf;
+	BlockNumber blkno;
+	OffsetNumber start,
+				offnum,
+				maxoff;
+	OffsetNumber i;
+	Page		page;
+	ItemId		itemid;
+	BTItem		item;
+	BTPageOpaque opaque;
+	BTItem		item_save;
+	int			item_nbytes;
 
 	blkno = stack->bts_blkno;
 	buf = _bt_getbuf(rel, blkno, access);
@@ -603,10 +603,10 @@ _bt_unsetpagelock(Relation rel, BlockNumber blkno, int access)
 void
 _bt_pagedel(Relation rel, ItemPointer tid)
 {
-	Buffer			buf;
-	Page			page;
-	BlockNumber		blkno;
-	OffsetNumber	offno;
+	Buffer		buf;
+	Page		page;
+	BlockNumber blkno;
+	OffsetNumber offno;
 
 	blkno = ItemPointerGetBlockNumber(tid);
 	offno = ItemPointerGetOffsetNumber(tid);

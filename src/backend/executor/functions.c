@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.8 1997/09/07 04:41:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.9 1997/09/08 02:22:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,15 +44,15 @@
 typedef enum
 {
 	F_EXEC_START, F_EXEC_RUN, F_EXEC_DONE
-}				ExecStatus;
+}			ExecStatus;
 
 typedef struct local_es
 {
-	QueryDesc	   *qd;
-	EState		   *estate;
+	QueryDesc  *qd;
+	EState	   *estate;
 	struct local_es *next;
-	ExecStatus		status;
-}				execution_state;
+	ExecStatus	status;
+}			execution_state;
 
 #define LAST_POSTQUEL_COMMAND(es) ((es)->next == (execution_state *)NULL)
 
@@ -62,7 +62,7 @@ static execution_state *
 init_execution_state(FunctionCachePtr fcache,
 					 char *args[]);
 static TupleTableSlot *postquel_getnext(execution_state * es);
-static void		postquel_end(execution_state * es);
+static void postquel_end(execution_state * es);
 static void
 postquel_sub_params(execution_state * es, int nargs,
 					char *args[], bool * nullV);
@@ -77,10 +77,10 @@ ProjectAttribute(TupleDesc TD,
 				 HeapTuple tup,
 				 bool * isnullP)
 {
-	Datum			val,
-					valueP;
-	Var			   *attrVar = (Var *) tlist->expr;
-	AttrNumber		attrno = attrVar->varattno;
+	Datum		val,
+				valueP;
+	Var		   *attrVar = (Var *) tlist->expr;
+	AttrNumber	attrno = attrVar->varattno;
 
 
 	val = PointerGetDatum(heap_getattr(tup,
@@ -105,10 +105,10 @@ init_execution_state(FunctionCachePtr fcache,
 	execution_state *newes;
 	execution_state *nextes;
 	execution_state *preves;
-	QueryTreeList  *queryTree_list;
-	int				i;
-	List		   *planTree_list;
-	int				nargs;
+	QueryTreeList *queryTree_list;
+	int			i;
+	List	   *planTree_list;
+	int			nargs;
 
 	nargs = fcache->nargs;
 
@@ -122,9 +122,9 @@ init_execution_state(FunctionCachePtr fcache,
 
 	for (i = 0; i < queryTree_list->len; i++)
 	{
-		EState		   *estate;
-		Query		   *queryTree = (Query *) (queryTree_list->qtrees[i]);
-		Plan		   *planTree = lfirst(planTree_list);
+		EState	   *estate;
+		Query	   *queryTree = (Query *) (queryTree_list->qtrees[i]);
+		Plan	   *planTree = lfirst(planTree_list);
 
 		if (!nextes)
 			nextes = (execution_state *) palloc(sizeof(execution_state));
@@ -140,8 +140,8 @@ init_execution_state(FunctionCachePtr fcache,
 
 		if (nargs > 0)
 		{
-			int				i;
-			ParamListInfo	paramLI;
+			int			i;
+			ParamListInfo paramLI;
 
 			paramLI =
 				(ParamListInfo) palloc((nargs + 1) * sizeof(ParamListInfoData));
@@ -171,7 +171,7 @@ init_execution_state(FunctionCachePtr fcache,
 	return newes;
 }
 
-static			TupleDesc
+static TupleDesc
 postquel_start(execution_state * es)
 {
 #ifdef FUNC_UTIL_PATCH
@@ -191,7 +191,7 @@ postquel_start(execution_state * es)
 static TupleTableSlot *
 postquel_getnext(execution_state * es)
 {
-	int				feature;
+	int			feature;
 
 #ifdef FUNC_UTIL_PATCH
 	if (es->qd->operation == CMD_UTILITY)
@@ -236,8 +236,8 @@ postquel_sub_params(execution_state * es,
 					char *args[],
 					bool * nullV)
 {
-	ParamListInfo	paramLI;
-	EState		   *estate;
+	ParamListInfo paramLI;
+	EState	   *estate;
 
 	estate = es->estate;
 	paramLI = estate->es_param_list_info;
@@ -259,9 +259,9 @@ copy_function_result(FunctionCachePtr fcache,
 					 TupleTableSlot * resultSlot)
 {
 	TupleTableSlot *funcSlot;
-	TupleDesc		resultTd;
-	HeapTuple		newTuple;
-	HeapTuple		oldTuple;
+	TupleDesc	resultTd;
+	HeapTuple	newTuple;
+	HeapTuple	oldTuple;
 
 	Assert(!TupIsNull(resultSlot));
 	oldTuple = resultSlot->val;
@@ -279,8 +279,8 @@ copy_function_result(FunctionCachePtr fcache,
 	 */
 	if (TupIsNull(funcSlot))
 	{
-		int				i = 0;
-		TupleDesc		funcTd = funcSlot->ttc_tupleDescriptor;
+		int			i = 0;
+		TupleDesc	funcTd = funcSlot->ttc_tupleDescriptor;
 
 		while (i < oldTuple->t_natts)
 		{
@@ -298,7 +298,7 @@ copy_function_result(FunctionCachePtr fcache,
 	return ExecStoreTuple(newTuple, funcSlot, InvalidBuffer, true);
 }
 
-static			Datum
+static Datum
 postquel_execute(execution_state * es,
 				 FunctionCachePtr fcache,
 				 List * fTlist,
@@ -306,7 +306,7 @@ postquel_execute(execution_state * es,
 				 bool * isNull)
 {
 	TupleTableSlot *slot;
-	Datum			value;
+	Datum		value;
 
 #ifdef INDEXSCAN_PATCH
 
@@ -360,8 +360,8 @@ postquel_execute(execution_state * es,
 		resSlot = copy_function_result(fcache, slot);
 		if (fTlist != NIL)
 		{
-			HeapTuple		tup;
-			TargetEntry    *tle = lfirst(fTlist);
+			HeapTuple	tup;
+			TargetEntry *tle = lfirst(fTlist);
 
 			tup = resSlot->val;
 			value = ProjectAttribute(resSlot->ttc_tupleDescriptor,
@@ -401,9 +401,9 @@ Datum
 postquel_function(Func * funcNode, char **args, bool * isNull, bool * isDone)
 {
 	execution_state *es;
-	Datum			result = 0;
+	Datum		result = 0;
 	FunctionCachePtr fcache = funcNode->func_fcache;
-	CommandId		savedId;
+	CommandId	savedId;
 
 	/*
 	 * Before we start do anything we must save CurrentScanCommandId to

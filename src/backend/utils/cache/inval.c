@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.5 1997/09/07 04:53:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.6 1997/09/08 02:31:12 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -32,11 +32,11 @@
 #include "utils/syscache.h"		/* XXX to support the hacks below */
 
 static InvalidationEntry InvalidationEntryAllocate(uint16 size);
-static void		LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ());
+static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ());
 static LocalInvalid
 LocalInvalidRegister(LocalInvalid invalid,
 					 InvalidationEntry entry);
-static void		getmyrelids(void);
+static void getmyrelids(void);
 
 
 /* ----------------
@@ -45,28 +45,28 @@ static void		getmyrelids(void);
  */
 typedef struct CatalogInvalidationData
 {
-	Index			cacheId;
-	Index			hashIndex;
+	Index		cacheId;
+	Index		hashIndex;
 	ItemPointerData pointerData;
-}				CatalogInvalidationData;
+}			CatalogInvalidationData;
 
 typedef struct RelationInvalidationData
 {
-	Oid				relationId;
-	Oid				objectId;
-}				RelationInvalidationData;
+	Oid			relationId;
+	Oid			objectId;
+}			RelationInvalidationData;
 
 typedef union AnyInvalidation
 {
 	CatalogInvalidationData catalog;
 	RelationInvalidationData relation;
-}				AnyInvalidation;
+}			AnyInvalidation;
 
 typedef struct InvalidationMessageData
 {
-	char			kind;
+	char		kind;
 	AnyInvalidation any;
-}				InvalidationMessageData;
+}			InvalidationMessageData;
 
 typedef InvalidationMessageData *InvalidationMessage;
 
@@ -75,12 +75,12 @@ typedef InvalidationMessageData *InvalidationMessage;
  * ----------------
  */
 static LocalInvalid Invalid = EmptyLocalInvalid;		/* XXX global */
-static bool		RefreshWhenInvalidate = false;
+static bool RefreshWhenInvalidate = false;
 
-Oid				MyRelationRelationId = InvalidOid;
-Oid				MyAttributeRelationId = InvalidOid;
-Oid				MyAMRelationId = InvalidOid;
-Oid				MyAMOPRelationId = InvalidOid;
+Oid			MyRelationRelationId = InvalidOid;
+Oid			MyAttributeRelationId = InvalidOid;
+Oid			MyAMRelationId = InvalidOid;
+Oid			MyAMOPRelationId = InvalidOid;
 
 #define ValidateHacks() \
 	if (!OidIsValid(MyRelationRelationId)) getmyrelids()
@@ -95,7 +95,7 @@ Oid				MyAMOPRelationId = InvalidOid;
  *				Allocates an invalidation entry.
  * --------------------------------
  */
-static			InvalidationEntry
+static InvalidationEntry
 InvalidationEntryAllocate(uint16 size)
 {
 	InvalidationEntryData *entryDataP;
@@ -111,7 +111,7 @@ InvalidationEntryAllocate(uint16 size)
  *		   Returns a new local cache invalidation state containing a new entry.
  * --------------------------------
  */
-static			LocalInvalid
+static LocalInvalid
 LocalInvalidRegister(LocalInvalid invalid,
 					 InvalidationEntry entry)
 {
@@ -248,7 +248,7 @@ RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
 static void
 getmyrelids()
 {
-	HeapTuple		tuple;
+	HeapTuple	tuple;
 
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(RelationRelationName),
@@ -391,26 +391,26 @@ InvalidationMessageRegisterSharedInvalid(InvalidationMessage message)
 
 	switch (message->kind)
 	{
-	case 'c':					/* cached system catalog tuple */
-		InvalidationMessageRegisterSharedInvalid_DEBUG1;
+		case 'c':				/* cached system catalog tuple */
+			InvalidationMessageRegisterSharedInvalid_DEBUG1;
 
-		RegisterSharedInvalid(message->any.catalog.cacheId,
-							  message->any.catalog.hashIndex,
-							  &message->any.catalog.pointerData);
-		break;
+			RegisterSharedInvalid(message->any.catalog.cacheId,
+								  message->any.catalog.hashIndex,
+								  &message->any.catalog.pointerData);
+			break;
 
-	case 'r':					/* cached relation descriptor */
-		InvalidationMessageRegisterSharedInvalid_DEBUG2;
+		case 'r':				/* cached relation descriptor */
+			InvalidationMessageRegisterSharedInvalid_DEBUG2;
 
-		RegisterSharedInvalid(message->any.relation.relationId,
-							  message->any.relation.objectId,
-							  (ItemPointer) NULL);
-		break;
+			RegisterSharedInvalid(message->any.relation.relationId,
+								  message->any.relation.objectId,
+								  (ItemPointer) NULL);
+			break;
 
-	default:
-		elog(FATAL,
-			 "InvalidationMessageRegisterSharedInvalid: `%c' kind",
-			 message->kind);
+		default:
+			elog(FATAL,
+				 "InvalidationMessageRegisterSharedInvalid: `%c' kind",
+				 message->kind);
 	}
 }
 
@@ -441,23 +441,23 @@ InvalidationMessageCacheInvalidate(InvalidationMessage message)
 
 	switch (message->kind)
 	{
-	case 'c':					/* cached system catalog tuple */
-		InvalidationMessageCacheInvalidate_DEBUG1;
+		case 'c':				/* cached system catalog tuple */
+			InvalidationMessageCacheInvalidate_DEBUG1;
 
-		CatalogCacheIdInvalidate(message->any.catalog.cacheId,
-								 message->any.catalog.hashIndex,
-								 &message->any.catalog.pointerData);
-		break;
+			CatalogCacheIdInvalidate(message->any.catalog.cacheId,
+									 message->any.catalog.hashIndex,
+									 &message->any.catalog.pointerData);
+			break;
 
-	case 'r':					/* cached relation descriptor */
-		InvalidationMessageCacheInvalidate_DEBUG2;
+		case 'r':				/* cached relation descriptor */
+			InvalidationMessageCacheInvalidate_DEBUG2;
 
-		/* XXX ignore this--is this correct ??? */
-		break;
+			/* XXX ignore this--is this correct ??? */
+			break;
 
-	default:
-		elog(FATAL, "InvalidationMessageCacheInvalidate: `%c' kind",
-			 message->kind);
+		default:
+			elog(FATAL, "InvalidationMessageCacheInvalidate: `%c' kind",
+				 message->kind);
 	}
 }
 
@@ -470,8 +470,8 @@ RelationInvalidateRelationCache(Relation relation,
 								HeapTuple tuple,
 								void (*function) ())
 {
-	Oid				relationId;
-	Oid				objectId = (Oid) 0;
+	Oid			relationId;
+	Oid			objectId = (Oid) 0;
 
 	/* ----------------
 	 *	get the relation object id

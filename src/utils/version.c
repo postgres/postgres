@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.7 1997/09/07 05:04:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.8 1997/09/08 02:41:22 momjian Exp $
  *
  * NOTES
  *		XXX eventually, should be able to handle version identifiers
@@ -62,9 +62,9 @@ ValidatePgVersion(const char *path, char **reason_p)
 	fill it with a text string explaining how it isn't compatible (or why
 	we can't tell), and return a pointer to that space as <*reason_p>.
 -----------------------------------------------------------------------------*/
-	int				fd;
-	char			version[4];
-	char			full_path[MAXPGPATH + 1];
+	int			fd;
+	char		version[4];
+	char		full_path[MAXPGPATH + 1];
 
 	PathSetVersionFilePath(path, full_path);
 
@@ -117,9 +117,9 @@ SetPgVersion(const char *path, char **reason_p)
   and return a pointer to that storage as <*reason_p>.	If we succeed,
   return *reason_p = NULL.
 ---------------------------------------------------------------------------*/
-	int				fd;
-	char			version[4];
-	char			full_path[MAXPGPATH + 1];
+	int			fd;
+	char		version[4];
+	char		full_path[MAXPGPATH + 1];
 
 	PathSetVersionFilePath(path, full_path);
 
@@ -133,7 +133,7 @@ SetPgVersion(const char *path, char **reason_p)
 	}
 	else
 	{
-		int				rc;		/* return code from some function we call */
+		int			rc;			/* return code from some function we call */
 
 		version[0] = '0' + PG_RELEASE;
 		version[1] = '.';

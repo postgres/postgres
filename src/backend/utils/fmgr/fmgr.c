@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.4 1997/09/07 04:53:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.5 1997/09/08 02:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,14 +29,14 @@
 #include "utils/elog.h"
 
 
-char		   *
+char	   *
 fmgr_c(func_ptr user_fn,
 	   Oid func_id,
 	   int n_arguments,
 	   FmgrValues * values,
 	   bool * isNull)
 {
-	char		   *returnValue = (char *) NULL;
+	char	   *returnValue = (char *) NULL;
 
 
 	if (user_fn == (func_ptr) NULL)
@@ -52,63 +52,64 @@ fmgr_c(func_ptr user_fn,
 
 	switch (n_arguments)
 	{
-	case 0:
-		returnValue = (*user_fn) ();
-		break;
-	case 1:
-		/* NullValue() uses isNull to check if args[0] is NULL */
-		returnValue = (*user_fn) (values->data[0], isNull);
-		break;
-	case 2:
-		returnValue = (*user_fn) (values->data[0], values->data[1]);
-		break;
-	case 3:
-		returnValue = (*user_fn) (values->data[0], values->data[1],
-								  values->data[2]);
-		break;
-	case 4:
-		returnValue = (*user_fn) (values->data[0], values->data[1],
-								  values->data[2], values->data[3]);
-		break;
-	case 5:
-		returnValue = (*user_fn) (values->data[0], values->data[1],
-								  values->data[2], values->data[3],
-								  values->data[4]);
-		break;
-	case 6:
-		returnValue = (*user_fn) (values->data[0], values->data[1],
-								  values->data[2], values->data[3],
-								  values->data[4], values->data[5]);
-		break;
-	case 7:
-		returnValue = (*user_fn) (values->data[0], values->data[1],
-								  values->data[2], values->data[3],
-								  values->data[4], values->data[5],
-								  values->data[6]);
-		break;
-	case 8:
-		returnValue = (*user_fn) (values->data[0], values->data[1],
-								  values->data[2], values->data[3],
-								  values->data[4], values->data[5],
-								  values->data[6], values->data[7]);
-		break;
-	case 9:
+		case 0:
+			returnValue = (*user_fn) ();
+			break;
+		case 1:
+			/* NullValue() uses isNull to check if args[0] is NULL */
+			returnValue = (*user_fn) (values->data[0], isNull);
+			break;
+		case 2:
+			returnValue = (*user_fn) (values->data[0], values->data[1]);
+			break;
+		case 3:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2]);
+			break;
+		case 4:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3]);
+			break;
+		case 5:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4]);
+			break;
+		case 6:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5]);
+			break;
+		case 7:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6]);
+			break;
+		case 8:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7]);
+			break;
+		case 9:
 
-		/*
-		 * XXX Note that functions with >8 arguments can only be called
-		 * from inside the system, not from the user level, since the
-		 * catalogs only store 8 argument types for user type-checking!
-		 */
-		returnValue = (*user_fn) (values->data[0], values->data[1],
-								  values->data[2], values->data[3],
-								  values->data[4], values->data[5],
-								  values->data[6], values->data[7],
-								  values->data[8]);
-		break;
-	default:
-		elog(WARN, "fmgr_c: function %d: too many arguments (%d > %d)",
-			 func_id, n_arguments, MAXFMGRARGS);
-		break;
+			/*
+			 * XXX Note that functions with >8 arguments can only be
+			 * called from inside the system, not from the user level,
+			 * since the catalogs only store 8 argument types for user
+			 * type-checking!
+			 */
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8]);
+			break;
+		default:
+			elog(WARN, "fmgr_c: function %d: too many arguments (%d > %d)",
+				 func_id, n_arguments, MAXFMGRARGS);
+			break;
 	}
 	return (returnValue);
 }
@@ -116,11 +117,11 @@ fmgr_c(func_ptr user_fn,
 void
 fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 {
-	func_ptr		user_fn = NULL;
-	FmgrCall	   *fcp;
-	HeapTuple		procedureTuple;
+	func_ptr	user_fn = NULL;
+	FmgrCall   *fcp;
+	HeapTuple	procedureTuple;
 	FormData_pg_proc *procedureStruct;
-	Oid				language;
+	Oid			language;
 
 	if (!(fcp = fmgr_isbuiltin(procedureId)))
 	{
@@ -143,22 +144,22 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 		language = procedureStruct->prolang;
 		switch (language)
 		{
-		case INTERNALlanguageId:
-			user_fn = fmgr_lookupByName(procedureStruct->proname.data);
-			if (!user_fn)
-				elog(WARN, "fmgr_info: function %s: not in internal table",
-					 procedureStruct->proname.data);
-			break;
-		case ClanguageId:
-			user_fn = fmgr_dynamic(procedureId, nargs);
-			break;
-		case SQLlanguageId:
-			user_fn = (func_ptr) NULL;
-			*nargs = procedureStruct->pronargs;
-			break;
-		default:
-			elog(WARN, "fmgr_info: function %d: unknown language %d",
-				 procedureId, language);
+			case INTERNALlanguageId:
+				user_fn = fmgr_lookupByName(procedureStruct->proname.data);
+				if (!user_fn)
+					elog(WARN, "fmgr_info: function %s: not in internal table",
+						 procedureStruct->proname.data);
+				break;
+			case ClanguageId:
+				user_fn = fmgr_dynamic(procedureId, nargs);
+				break;
+			case SQLlanguageId:
+				user_fn = (func_ptr) NULL;
+				*nargs = procedureStruct->pronargs;
+				break;
+			default:
+				elog(WARN, "fmgr_info: function %d: unknown language %d",
+					 procedureId, language);
 		}
 	}
 	else
@@ -180,15 +181,15 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
  *		Returns the return value of the invoked function if succesful,
  *		0 if unsuccessful.
  */
-char		   *
+char	   *
 fmgr(Oid procedureId,...)
 {
-	va_list			pvar;
-	register		i;
-	int				pronargs;
-	FmgrValues		values;
-	func_ptr		user_fn;
-	bool			isNull = false;
+	va_list		pvar;
+	register	i;
+	int			pronargs;
+	FmgrValues	values;
+	func_ptr	user_fn;
+	bool		isNull = false;
 
 	va_start(pvar, procedureId);
 
@@ -218,14 +219,14 @@ fmgr(Oid procedureId,...)
  * func_ptr, func_id, n_arguments, args...
  */
 #ifdef NOT_USED
-char		   *
+char	   *
 fmgr_ptr(func_ptr user_fn, Oid func_id,...)
 {
-	va_list			pvar;
-	register		i;
-	int				n_arguments;
-	FmgrValues		values;
-	bool			isNull = false;
+	va_list		pvar;
+	register	i;
+	int			n_arguments;
+	FmgrValues	values;
+	bool		isNull = false;
 
 	va_start(pvar, func_id);
 	n_arguments = va_arg(pvar, int);
@@ -250,11 +251,11 @@ fmgr_ptr(func_ptr user_fn, Oid func_id,...)
  * function pointer field to FuncIndexInfo, it will be replace by calls
  * to fmgr_c().
  */
-char		   *
+char	   *
 fmgr_array_args(Oid procedureId, int nargs, char *args[], bool * isNull)
 {
-	func_ptr		user_fn;
-	int				true_arguments;
+	func_ptr	user_fn;
+	int			true_arguments;
 
 	fmgr_info(procedureId, &user_fn, &true_arguments);
 

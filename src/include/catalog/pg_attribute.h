@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.15 1997/09/07 04:56:41 momjian Exp $
+ * $Id: pg_attribute.h,v 1.16 1997/09/08 02:35:02 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,9 +40,9 @@
  */
 CATALOG(pg_attribute) BOOTSTRAP
 {
-	Oid				attrelid;
-	NameData		attname;
-	Oid				atttypid;
+	Oid			attrelid;
+	NameData	attname;
+	Oid			atttypid;
 
 	/*
 	 * atttypid is the OID of the instance in Catalog Class pg_type that
@@ -51,15 +51,15 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 * attalign attributes of this instance, so they had better match or
 	 * Postgres will fail.
 	 */
-	float4			attdisbursion;
-	int2			attlen;
+	float4		attdisbursion;
+	int2		attlen;
 
 	/*
 	 * attlen is a copy of the typlen field from pg_type for this
 	 * attribute.  See atttypid above.	See struct TypeTupleFormData for
 	 * definition.
 	 */
-	int2			attnum;
+	int2		attnum;
 
 	/*
 	 * attnum is the "attribute number" for the attribute:	A value that
@@ -74,8 +74,8 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 *
 	 * Note that (attnum - 1) is often used as the index to an array.
 	 */
-	int4			attnelems;
-	int4			attcacheoff;
+	int4		attnelems;
+	int4		attcacheoff;
 
 	/*
 	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes
@@ -84,25 +84,25 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 * tuple descriptor, we may then update attcacheoff in the copies.
 	 * This speeds up the attribute walking process.
 	 */
-	bool			attbyval;
+	bool		attbyval;
 
 	/*
 	 * attbyval is a copy of the typbyval field from pg_type for this
 	 * attribute.  See atttypid above.	See struct TypeTupleFormData for
 	 * definition.
 	 */
-	bool			attisset;
-	char			attalign;
+	bool		attisset;
+	char		attalign;
 
 	/*
 	 * attalign is a copy of the typalign field from pg_type for this
 	 * attribute.  See atttypid above.	See struct TypeTupleFormData for
 	 * definition.
 	 */
-	bool			attnotnull;
+	bool		attnotnull;
 
 	/* This flag represents the "NOT NULL" constraint */
-	bool			atthasdef;
+	bool		atthasdef;
 
 	/* Has DEFAULT value or not */
 } FormData_pg_attribute;

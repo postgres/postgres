@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.30 1997/09/07 04:40:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.31 1997/09/08 02:22:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,33 +42,33 @@
 
 
 /* non-export function prototypes */
-static void		CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim);
-static void		CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim);
-static Oid		GetOutputFunction(Oid type);
-static Oid		GetTypeElement(Oid type);
-static Oid		GetInputFunction(Oid type);
-static Oid		IsTypeByVal(Oid type);
+static void CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim);
+static void CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim);
+static Oid	GetOutputFunction(Oid type);
+static Oid	GetTypeElement(Oid type);
+static Oid	GetInputFunction(Oid type);
+static Oid	IsTypeByVal(Oid type);
 static void
 GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
 				  Relation ** index_rels);
 
 #ifdef COPY_PATCH
-static void		CopyReadNewline(FILE * fp, int *newline);
-static char    *CopyReadAttribute(FILE * fp, bool * isnull, char *delim, int *newline);
+static void CopyReadNewline(FILE * fp, int *newline);
+static char *CopyReadAttribute(FILE * fp, bool * isnull, char *delim, int *newline);
 
 #else
-static char    *CopyReadAttribute(FILE * fp, bool * isnull, char *delim);
+static char *CopyReadAttribute(FILE * fp, bool * isnull, char *delim);
 
 #endif
-static void		CopyAttributeOut(FILE * fp, char *string, char *delim);
-static int		CountTuples(Relation relation);
+static void CopyAttributeOut(FILE * fp, char *string, char *delim);
+static int	CountTuples(Relation relation);
 
-extern FILE    *Pfout,
-			   *Pfin;
+extern FILE *Pfout,
+		   *Pfin;
 
 #ifdef COPY_DEBUG
-static int		lineno;
+static int	lineno;
 
 #endif
 
@@ -107,11 +107,11 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
   the class.
 ----------------------------------------------------------------------------*/
 
-	FILE		   *fp;
-	Relation		rel;
-	extern char    *UserName;	/* defined in global.c */
-	const AclMode	required_access = from ? ACL_WR : ACL_RD;
-	int				result;
+	FILE	   *fp;
+	Relation	rel;
+	extern char *UserName;		/* defined in global.c */
+	const AclMode required_access = from ? ACL_WR : ACL_RD;
+	int			result;
 
 	rel = heap_openr(relname);
 	if (rel == NULL)
@@ -169,7 +169,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			}
 			else
 			{
-				mode_t			oumask; /* Pre-existing umask value */
+				mode_t		oumask;		/* Pre-existing umask value */
 
 				oumask = umask((mode_t) 0);
 				fp = AllocateFile(filename, "w");
@@ -199,19 +199,19 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 static void
 CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 {
-	HeapTuple		tuple;
-	HeapScanDesc	scandesc;
+	HeapTuple	tuple;
+	HeapScanDesc scandesc;
 
-	int32			attr_count,
-					i;
+	int32		attr_count,
+				i;
 	AttributeTupleForm *attr;
-	func_ptr	   *out_functions;
-	int				dummy;
-	Oid				out_func_oid;
-	Oid			   *elements;
-	Datum			value;
-	bool			isnull;		/* The attribute we are copying is null */
-	char		   *nulls;
+	func_ptr   *out_functions;
+	int			dummy;
+	Oid			out_func_oid;
+	Oid		   *elements;
+	Datum		value;
+	bool		isnull;			/* The attribute we are copying is null */
+	char	   *nulls;
 
 	/*
 	 * <nulls> is a (dynamically allocated) array with one character per
@@ -220,9 +220,9 @@ CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 	 *
 	 * <nulls> is meaningful only if we are doing a binary copy.
 	 */
-	char		   *string;
-	int32			ntuples;
-	TupleDesc		tupDesc;
+	char	   *string;
+	int32		ntuples;
+	TupleDesc	tupDesc;
 
 	scandesc = heap_beginscan(rel, 0, NULL, 0, NULL);
 
@@ -311,8 +311,8 @@ CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 
 		if (binary)
 		{
-			int32			null_ct = 0,
-							length;
+			int32		null_ct = 0,
+						length;
 
 			for (i = 0; i < attr_count; i++)
 			{
@@ -358,54 +358,54 @@ CopyTo(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 static void
 CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 {
-	HeapTuple		tuple;
-	AttrNumber		attr_count;
+	HeapTuple	tuple;
+	AttrNumber	attr_count;
 	AttributeTupleForm *attr;
-	func_ptr	   *in_functions;
-	int				i,
-					dummy;
-	Oid				in_func_oid;
-	Datum		   *values;
-	char		   *nulls,
-				   *index_nulls;
-	bool		   *byval;
-	bool			isnull;
-	bool			has_index;
-	int				done = 0;
-	char		   *string = NULL,
-				   *ptr;
-	Relation	   *index_rels;
-	int32			len,
-					null_ct,
-					null_id;
-	int32			ntuples,
-					tuples_read = 0;
-	bool			reading_to_eof = true;
-	Oid			   *elements;
-	FuncIndexInfo  *finfo,
-				  **finfoP = NULL;
-	TupleDesc	   *itupdescArr;
-	HeapTuple		pgIndexTup;
+	func_ptr   *in_functions;
+	int			i,
+				dummy;
+	Oid			in_func_oid;
+	Datum	   *values;
+	char	   *nulls,
+			   *index_nulls;
+	bool	   *byval;
+	bool		isnull;
+	bool		has_index;
+	int			done = 0;
+	char	   *string = NULL,
+			   *ptr;
+	Relation   *index_rels;
+	int32		len,
+				null_ct,
+				null_id;
+	int32		ntuples,
+				tuples_read = 0;
+	bool		reading_to_eof = true;
+	Oid		   *elements;
+	FuncIndexInfo *finfo,
+			  **finfoP = NULL;
+	TupleDesc  *itupdescArr;
+	HeapTuple	pgIndexTup;
 	IndexTupleForm *pgIndexP = NULL;
-	int			   *indexNatts = NULL;
-	char		   *predString;
-	Node		  **indexPred = NULL;
-	TupleDesc		rtupdesc;
-	ExprContext    *econtext = NULL;
+	int		   *indexNatts = NULL;
+	char	   *predString;
+	Node	  **indexPred = NULL;
+	TupleDesc	rtupdesc;
+	ExprContext *econtext = NULL;
 
 #ifndef OMIT_PARTIAL_INDEX
-	TupleTable		tupleTable;
+	TupleTable	tupleTable;
 	TupleTableSlot *slot = NULL;
 
 #endif
-	int				natts;
-	AttrNumber	   *attnumP;
-	Datum		   *idatum;
-	int				n_indices;
+	int			natts;
+	AttrNumber *attnumP;
+	Datum	   *idatum;
+	int			n_indices;
 	InsertIndexResult indexRes;
-	TupleDesc		tupDesc;
-	Oid				loaded_oid;
-	bool			skip_tuple = false;
+	TupleDesc	tupDesc;
+	Oid			loaded_oid;
+	bool		skip_tuple = false;
 
 	tupDesc = RelationGetTupleDescriptor(rel);
 	attr = tupDesc->attrs;
@@ -541,7 +541,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 		if (!binary)
 		{
 #ifdef COPY_PATCH
-			int				newline = 0;
+			int			newline = 0;
 
 #endif
 #ifdef COPY_DEBUG
@@ -647,58 +647,58 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 
 						switch (attr[i]->attlen)
 						{
-						case sizeof(char):
-							values[i] = (Datum) * (unsigned char *) ptr;
-							ptr += sizeof(char);
-							break;
-						case sizeof(short):
-							ptr = (char *) SHORTALIGN(ptr);
-							values[i] = (Datum) * (unsigned short *) ptr;
-							ptr += sizeof(short);
-							break;
-						case sizeof(int32):
-							ptr = (char *) INTALIGN(ptr);
-							values[i] = (Datum) * (uint32 *) ptr;
-							ptr += sizeof(int32);
-							break;
-						default:
-							elog(WARN, "COPY BINARY: impossible size!");
-							break;
+							case sizeof(char):
+								values[i] = (Datum) * (unsigned char *) ptr;
+								ptr += sizeof(char);
+								break;
+							case sizeof(short):
+								ptr = (char *) SHORTALIGN(ptr);
+								values[i] = (Datum) * (unsigned short *) ptr;
+								ptr += sizeof(short);
+								break;
+							case sizeof(int32):
+								ptr = (char *) INTALIGN(ptr);
+								values[i] = (Datum) * (uint32 *) ptr;
+								ptr += sizeof(int32);
+								break;
+							default:
+								elog(WARN, "COPY BINARY: impossible size!");
+								break;
 						}
 					}
 					else if (nulls[i] != 'n')
 					{
 						switch (attr[i]->attlen)
 						{
-						case -1:
-							if (attr[i]->attalign == 'd')
-								ptr = (char *) DOUBLEALIGN(ptr);
-							else
+							case -1:
+								if (attr[i]->attalign == 'd')
+									ptr = (char *) DOUBLEALIGN(ptr);
+								else
+									ptr = (char *) INTALIGN(ptr);
+								values[i] = (Datum) ptr;
+								ptr += *(uint32 *) ptr;
+								break;
+							case sizeof(char):
+								values[i] = (Datum) ptr;
+								ptr += attr[i]->attlen;
+								break;
+							case sizeof(short):
+								ptr = (char *) SHORTALIGN(ptr);
+								values[i] = (Datum) ptr;
+								ptr += attr[i]->attlen;
+								break;
+							case sizeof(int32):
 								ptr = (char *) INTALIGN(ptr);
-							values[i] = (Datum) ptr;
-							ptr += *(uint32 *) ptr;
-							break;
-						case sizeof(char):
-							values[i] = (Datum) ptr;
-							ptr += attr[i]->attlen;
-							break;
-						case sizeof(short):
-							ptr = (char *) SHORTALIGN(ptr);
-							values[i] = (Datum) ptr;
-							ptr += attr[i]->attlen;
-							break;
-						case sizeof(int32):
-							ptr = (char *) INTALIGN(ptr);
-							values[i] = (Datum) ptr;
-							ptr += attr[i]->attlen;
-							break;
-						default:
-							if (attr[i]->attalign == 'd')
-								ptr = (char *) DOUBLEALIGN(ptr);
-							else
-								ptr = (char *) LONGALIGN(ptr);
-							values[i] = (Datum) ptr;
-							ptr += attr[i]->attlen;
+								values[i] = (Datum) ptr;
+								ptr += attr[i]->attlen;
+								break;
+							default:
+								if (attr[i]->attalign == 'd')
+									ptr = (char *) DOUBLEALIGN(ptr);
+								else
+									ptr = (char *) LONGALIGN(ptr);
+								values[i] = (Datum) ptr;
+								ptr += attr[i]->attlen;
 						}
 					}
 				}
@@ -721,7 +721,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 		if (rel->trigdesc &&
 			rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 		{
-			HeapTuple		newtuple;
+			HeapTuple	newtuple;
 
 			newtuple = ExecBRInsertTriggers(rel, tuple);
 
@@ -743,7 +743,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 
 			if (rel->rd_att->constr)
 			{
-				HeapTuple		newtuple;
+				HeapTuple	newtuple;
 
 				newtuple = ExecConstraints("CopyFrom", rel, tuple);
 
@@ -826,10 +826,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 
 
 
-static			Oid
+static Oid
 GetOutputFunction(Oid type)
 {
-	HeapTuple		typeTuple;
+	HeapTuple	typeTuple;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type),
@@ -842,10 +842,10 @@ GetOutputFunction(Oid type)
 	return (InvalidOid);
 }
 
-static			Oid
+static Oid
 GetTypeElement(Oid type)
 {
-	HeapTuple		typeTuple;
+	HeapTuple	typeTuple;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type),
@@ -859,10 +859,10 @@ GetTypeElement(Oid type)
 	return (InvalidOid);
 }
 
-static			Oid
+static Oid
 GetInputFunction(Oid type)
 {
-	HeapTuple		typeTuple;
+	HeapTuple	typeTuple;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type),
@@ -875,10 +875,10 @@ GetInputFunction(Oid type)
 	return (InvalidOid);
 }
 
-static			Oid
+static Oid
 IsTypeByVal(Oid type)
 {
-	HeapTuple		typeTuple;
+	HeapTuple	typeTuple;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type),
@@ -902,24 +902,24 @@ IsTypeByVal(Oid type)
 
 typedef struct rel_list
 {
-	Oid				index_rel_oid;
+	Oid			index_rel_oid;
 	struct rel_list *next;
-}				RelationList;
+}			RelationList;
 
 static void
 GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
 				  Relation ** index_rels)
 {
-	RelationList   *head,
-				   *scan;
-	Relation		pg_index_rel;
-	HeapScanDesc	scandesc;
-	Oid				index_relation_oid;
-	HeapTuple		tuple;
-	TupleDesc		tupDesc;
-	int				i;
-	bool			isnull;
+	RelationList *head,
+			   *scan;
+	Relation	pg_index_rel;
+	HeapScanDesc scandesc;
+	Oid			index_relation_oid;
+	HeapTuple	tuple;
+	TupleDesc	tupDesc;
+	int			i;
+	bool		isnull;
 
 	pg_index_rel = heap_openr(IndexRelationName);
 	scandesc = heap_beginscan(pg_index_rel, 0, NULL, 0, NULL);
@@ -978,10 +978,10 @@ GetIndexRelations(Oid main_relation_oid,
 /*
    returns 1 is c is in s
 */
-static			bool
+static bool
 inString(char c, char *s)
 {
-	int				i;
+	int			i;
 
 	if (s)
 	{
@@ -1026,17 +1026,17 @@ CopyReadNewline(FILE * fp, int *newline)
  * can be used as standard input.
  */
 
-static char    *
+static char *
 #ifdef COPY_PATCH
 CopyReadAttribute(FILE * fp, bool * isnull, char *delim, int *newline)
 #else
 CopyReadAttribute(FILE * fp, bool * isnull, char *delim)
 #endif
 {
-	static char		attribute[EXT_ATTLEN];
-	char			c;
-	int				done = 0;
-	int				i = 0;
+	static char attribute[EXT_ATTLEN];
+	char		c;
+	int			done = 0;
+	int			i = 0;
 
 #ifdef COPY_PATCH
 	/* if last delimiter was a newline return a NULL attribute */
@@ -1064,26 +1064,33 @@ CopyReadAttribute(FILE * fp, bool * isnull, char *delim)
 				return (NULL);
 			switch (c)
 			{
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-				{
-					int				val;
-
-					val = VALUE(c);
-					c = getc(fp);
-					if (ISOCTAL(c))
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
 					{
-						val = (val << 3) + VALUE(c);
+						int			val;
+
+						val = VALUE(c);
 						c = getc(fp);
 						if (ISOCTAL(c))
 						{
 							val = (val << 3) + VALUE(c);
+							c = getc(fp);
+							if (ISOCTAL(c))
+							{
+								val = (val << 3) + VALUE(c);
+							}
+							else
+							{
+								if (feof(fp))
+									return (NULL);
+								ungetc(c, fp);
+							}
 						}
 						else
 						{
@@ -1091,44 +1098,37 @@ CopyReadAttribute(FILE * fp, bool * isnull, char *delim)
 								return (NULL);
 							ungetc(c, fp);
 						}
+						c = val & 0377;
 					}
-					else
-					{
-						if (feof(fp))
-							return (NULL);
-						ungetc(c, fp);
-					}
-					c = val & 0377;
-				}
-				break;
-			case 'b':
-				c = '\b';
-				break;
-			case 'f':
-				c = '\f';
-				break;
-			case 'n':
-				c = '\n';
-				break;
-			case 'r':
-				c = '\r';
-				break;
-			case 't':
-				c = '\t';
-				break;
-			case 'v':
-				c = '\v';
-				break;
-			case 'N':
-				attribute[0] = '\0';	/* just to be safe */
-				*isnull = (bool) true;
-				break;
-			case '.':
-				c = getc(fp);
-				if (c != '\n')
-					elog(WARN, "CopyReadAttribute - end of record marker corrupted");
-				return (NULL);
-				break;
+					break;
+				case 'b':
+					c = '\b';
+					break;
+				case 'f':
+					c = '\f';
+					break;
+				case 'n':
+					c = '\n';
+					break;
+				case 'r':
+					c = '\r';
+					break;
+				case 't':
+					c = '\t';
+					break;
+				case 'v':
+					c = '\v';
+					break;
+				case 'N':
+					attribute[0] = '\0';		/* just to be safe */
+					*isnull = (bool) true;
+					break;
+				case '.':
+					c = getc(fp);
+					if (c != '\n')
+						elog(WARN, "CopyReadAttribute - end of record marker corrupted");
+					return (NULL);
+					break;
 			}
 		}
 		else if (inString(c, delim) || c == '\n')
@@ -1153,9 +1153,9 @@ CopyReadAttribute(FILE * fp, bool * isnull, char *delim)
 static void
 CopyAttributeOut(FILE * fp, char *string, char *delim)
 {
-	char			c;
-	int				is_array = false;
-	int				len = strlen(string);
+	char		c;
+	int			is_array = false;
+	int			len = strlen(string);
 
 	/* XXX - This is a kludge, we should check the data type */
 	if (len && (string[0] == '{') && (string[len - 1] == '}'))
@@ -1194,10 +1194,10 @@ CopyAttributeOut(FILE * fp, char *string, char *delim)
 static int
 CountTuples(Relation relation)
 {
-	HeapScanDesc	scandesc;
-	HeapTuple		tuple;
+	HeapScanDesc scandesc;
+	HeapTuple	tuple;
 
-	int				i;
+	int			i;
 
 	scandesc = heap_beginscan(relation, 0, NULL, 0, NULL);
 

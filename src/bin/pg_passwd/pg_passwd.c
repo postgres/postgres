@@ -19,18 +19,18 @@
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
 #else
-extern char    *crypt(const char *, const char *);
+extern char *crypt(const char *, const char *);
 
 #endif
 
-char		   *comname;
-void			usage(FILE * stream);
-void			read_pwd_file(char *filename);
-void			write_pwd_file(char *filename, char *bkname);
-void			encrypt_pwd(char key[9], char salt[3], char passwd[14]);
-int				check_pwd(char key[9], char passwd[14]);
-void			prompt_for_username(char *username);
-void			prompt_for_password(char *prompt, char *password);
+char	   *comname;
+void		usage(FILE * stream);
+void		read_pwd_file(char *filename);
+void		write_pwd_file(char *filename, char *bkname);
+void		encrypt_pwd(char key[9], char salt[3], char passwd[14]);
+int			check_pwd(char key[9], char passwd[14]);
+void		prompt_for_username(char *username);
+void		prompt_for_password(char *prompt, char *password);
 
 void
 usage(FILE * stream)
@@ -40,24 +40,24 @@ usage(FILE * stream)
 
 typedef struct
 {
-	char		   *uname;
-	char		   *pwd;
-	char		   *rest;
-}				pg_pwd;
+	char	   *uname;
+	char	   *pwd;
+	char	   *rest;
+}			pg_pwd;
 
 #define MAXPWDS 1024
 
-pg_pwd			pwds[MAXPWDS];
-int				npwds = 0;
+pg_pwd		pwds[MAXPWDS];
+int			npwds = 0;
 
 
 void
 read_pwd_file(char *filename)
 {
-	FILE		   *fp;
-	static char		line[512];
-	static char		ans[128];
-	int				i;
+	FILE	   *fp;
+	static char line[512];
+	static char ans[128];
+	int			i;
 
 try_again:
 	fp = fopen(filename, "r");
@@ -70,19 +70,19 @@ try_again:
 			fgets(ans, 128, stdin);
 			switch (ans[0])
 			{
-			case 'y':
-			case 'Y':
-				fp = fopen(filename, "w");
-				if (fp == NULL)
-				{
-					perror(filename);
+				case 'y':
+				case 'Y':
+					fp = fopen(filename, "w");
+					if (fp == NULL)
+					{
+						perror(filename);
+						exit(1);
+					}
+					fclose(fp);
+					goto try_again;
+				default:
+					/* cannot continue */
 					exit(1);
-				}
-				fclose(fp);
-				goto try_again;
-			default:
-				/* cannot continue */
-				exit(1);
 			}
 		}
 		else
@@ -95,9 +95,9 @@ try_again:
 	/* read all the entries */
 	for (npwds = 0; npwds < MAXPWDS && fgets(line, 512, fp) != NULL; ++npwds)
 	{
-		int				l;
-		char		   *p,
-					   *q;
+		int			l;
+		char	   *p,
+				   *q;
 
 		l = strlen(line);
 		if (line[l - 1] == '\n')
@@ -168,8 +168,8 @@ try_again:
 void
 write_pwd_file(char *filename, char *bkname)
 {
-	FILE		   *fp;
-	int				i;
+	FILE	   *fp;
+	int			i;
 
 	/* make the backup file */
 link_again:
@@ -210,12 +210,12 @@ link_again:
 void
 encrypt_pwd(char key[9], char salt[3], char passwd[14])
 {
-	int				n;
+	int			n;
 
 	/* get encrypted password */
 	if (salt[0] == '\0')
 	{
-		struct timeval	tm;
+		struct timeval tm;
 
 		gettimeofday(&tm, NULL);
 		srand(tm.tv_sec ? tm.tv_sec : 1);
@@ -244,8 +244,8 @@ encrypt_pwd(char key[9], char salt[3], char passwd[14])
 int
 check_pwd(char key[9], char passwd[14])
 {
-	char			shouldbe[14];
-	char			salt[3];
+	char		shouldbe[14];
+	char		salt[3];
 
 	salt[0] = passwd[0];
 	salt[1] = passwd[1];
@@ -258,7 +258,7 @@ check_pwd(char key[9], char passwd[14])
 void
 prompt_for_username(char *username)
 {
-	int				length;
+	int			length;
 
 	printf("Username: ");
 	fgets(username, 9, stdin);
@@ -267,7 +267,7 @@ prompt_for_username(char *username)
 	/* skip rest of the line */
 	if (length > 0 && username[length - 1] != '\n')
 	{
-		static char		buf[512];
+		static char buf[512];
 
 		do
 		{
@@ -281,11 +281,11 @@ prompt_for_username(char *username)
 void
 prompt_for_password(char *prompt, char *password)
 {
-	int				length;
+	int			length;
 
 #ifdef HAVE_TERMIOS_H
-	struct termios	t_orig,
-					t;
+	struct termios t_orig,
+				t;
 
 #endif
 
@@ -305,7 +305,7 @@ prompt_for_password(char *prompt, char *password)
 	/* skip rest of the line */
 	if (length > 0 && password[length - 1] != '\n')
 	{
-		static char		buf[512];
+		static char buf[512];
 
 		do
 		{
@@ -321,13 +321,13 @@ prompt_for_password(char *prompt, char *password)
 int
 main(int argc, char *argv[])
 {
-	static char		bkname[512];
-	char			username[9];
-	char			salt[3];
-	char			key[9],
-					key2[9];
-	char			e_passwd[14];
-	int				i;
+	static char bkname[512];
+	char		username[9];
+	char		salt[3];
+	char		key[9],
+				key2[9];
+	char		e_passwd[14];
+	int			i;
 
 	comname = argv[0];
 	if (argc != 2)

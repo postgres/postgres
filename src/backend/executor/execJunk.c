@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.6 1997/09/07 04:41:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.7 1997/09/08 02:22:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,24 +60,24 @@
  * Initialize the Junk filter.
  *-------------------------------------------------------------------------
  */
-JunkFilter	   *
+JunkFilter *
 ExecInitJunkFilter(List * targetList)
 {
-	JunkFilter	   *junkfilter;
-	List		   *cleanTargetList;
-	int				len,
-					cleanLength;
-	TupleDesc		tupType,
-					cleanTupType;
-	List		   *t;
-	TargetEntry    *tle;
-	Resdom		   *resdom,
-				   *cleanResdom;
-	int				resjunk;
-	AttrNumber		cleanResno;
-	AttrNumber	   *cleanMap;
-	Size			size;
-	Node		   *expr;
+	JunkFilter *junkfilter;
+	List	   *cleanTargetList;
+	int			len,
+				cleanLength;
+	TupleDesc	tupType,
+				cleanTupType;
+	List	   *t;
+	TargetEntry *tle;
+	Resdom	   *resdom,
+			   *cleanResdom;
+	int			resjunk;
+	AttrNumber	cleanResno;
+	AttrNumber *cleanMap;
+	Size		size;
+	Node	   *expr;
 
 	/* ---------------------
 	 * First find the "clean" target list, i.e. all the entries
@@ -91,7 +91,7 @@ ExecInitJunkFilter(List * targetList)
 
 	foreach(t, targetList)
 	{
-		TargetEntry    *rtarget = lfirst(t);
+		TargetEntry *rtarget = lfirst(t);
 
 		if (rtarget->resdom != NULL)
 		{
@@ -120,11 +120,11 @@ ExecInitJunkFilter(List * targetList)
 		else
 		{
 #ifdef SETS_FIXED
-			List		   *fjListP;
-			Fjoin		   *cleanFjoin;
-			List		   *cleanFjList;
-			List		   *fjList = lfirst(t);
-			Fjoin		   *fjNode = (Fjoin *) tl_node(fjList);
+			List	   *fjListP;
+			Fjoin	   *cleanFjoin;
+			List	   *cleanFjList;
+			List	   *fjList = lfirst(t);
+			Fjoin	   *fjNode = (Fjoin *) tl_node(fjList);
 
 			cleanFjoin = (Fjoin) copyObject((Node) fjNode);
 			cleanFjList = lcons(cleanFjoin, NIL);
@@ -139,7 +139,7 @@ ExecInitJunkFilter(List * targetList)
 
 			foreach(fjListP, lnext(fjList))
 			{
-				TargetEntry    *tle = lfirst(fjListP);
+				TargetEntry *tle = lfirst(fjListP);
 
 				resdom = tle->resdom;
 				expr = tle->expr;
@@ -189,7 +189,7 @@ ExecInitJunkFilter(List * targetList)
 		cleanResno = 1;
 		foreach(t, targetList)
 		{
-			TargetEntry    *tle = lfirst(t);
+			TargetEntry *tle = lfirst(t);
 
 			if (tle->resdom != NULL)
 			{
@@ -205,9 +205,9 @@ ExecInitJunkFilter(List * targetList)
 			else
 			{
 #ifdef SETS_FIXED
-				List			fjListP;
-				List			fjList = lfirst(t);
-				Fjoin			fjNode = (Fjoin) lfirst(fjList);
+				List		fjListP;
+				List		fjList = lfirst(t);
+				Fjoin		fjNode = (Fjoin) lfirst(fjList);
 
 				/* what the hell is this????? */
 				resdom = (Resdom) lfirst(get_fj_innerNode(fjNode));
@@ -219,7 +219,7 @@ ExecInitJunkFilter(List * targetList)
 #ifdef SETS_FIXED
 				foreach(fjListP, lnext(fjList))
 				{
-					TargetEntry    *tle = lfirst(fjListP);
+					TargetEntry *tle = lfirst(fjListP);
 
 					resdom = tle->resdom;
 					cleanMap[cleanResno - 1] = resdom->resno;
@@ -270,14 +270,14 @@ ExecGetJunkAttribute(JunkFilter * junkfilter,
 					 Datum * value,
 					 bool * isNull)
 {
-	List		   *targetList;
-	List		   *t;
-	Resdom		   *resdom;
-	AttrNumber		resno;
-	char		   *resname;
-	int				resjunk;
-	TupleDesc		tupType;
-	HeapTuple		tuple;
+	List	   *targetList;
+	List	   *t;
+	Resdom	   *resdom;
+	AttrNumber	resno;
+	char	   *resname;
+	int			resjunk;
+	TupleDesc	tupType;
+	HeapTuple	tuple;
 
 	/* ---------------------
 	 * first look in the junkfilter's target list for
@@ -289,7 +289,7 @@ ExecGetJunkAttribute(JunkFilter * junkfilter,
 
 	foreach(t, targetList)
 	{
-		TargetEntry    *tle = lfirst(t);
+		TargetEntry *tle = lfirst(t);
 
 		resdom = tle->resdom;
 		resname = resdom->resname;
@@ -330,19 +330,19 @@ ExecGetJunkAttribute(JunkFilter * junkfilter,
 HeapTuple
 ExecRemoveJunk(JunkFilter * junkfilter, TupleTableSlot * slot)
 {
-	HeapTuple		tuple;
-	HeapTuple		cleanTuple;
-	AttrNumber	   *cleanMap;
-	TupleDesc		cleanTupType;
-	TupleDesc		tupType;
-	int				cleanLength;
-	bool			isNull;
-	int				i;
-	Size			size;
-	Datum		   *values;
-	char		   *nulls;
-	Datum			values_array[64];
-	char			nulls_array[64];
+	HeapTuple	tuple;
+	HeapTuple	cleanTuple;
+	AttrNumber *cleanMap;
+	TupleDesc	cleanTupType;
+	TupleDesc	tupType;
+	int			cleanLength;
+	bool		isNull;
+	int			i;
+	Size		size;
+	Datum	   *values;
+	char	   *nulls;
+	Datum		values_array[64];
+	char		nulls_array[64];
 
 	/* ----------------
 	 *	get info from the slot and the junk filter
@@ -391,7 +391,7 @@ ExecRemoveJunk(JunkFilter * junkfilter, TupleTableSlot * slot)
 	 */
 	for (i = 0; i < cleanLength; i++)
 	{
-		Datum			d = (Datum)
+		Datum		d = (Datum)
 		heap_getattr(tuple, InvalidBuffer, cleanMap[i], tupType, &isNull);
 
 		values[i] = d;

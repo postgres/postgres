@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.3 1997/09/07 04:44:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.4 1997/09/08 02:24:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,13 +33,13 @@
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 
-static List    *
+static List *
 expand_targetlist(List * tlist, Oid relid, int command_type,
 				  Index result_relation);
-static List    *
+static List *
 replace_matching_resname(List * new_tlist,
 						 List * old_tlist);
-static List    *
+static List *
 new_relation_targetlist(Oid relid, Index rt_index,
 						NodeTag node_type);
 
@@ -54,16 +54,16 @@ new_relation_targetlist(Oid relid, Index rt_index,
  *
  *	  Returns the new targetlist.
  */
-List		   *
+List	   *
 preprocess_targetlist(List * tlist,
 					  int command_type,
 					  Index result_relation,
 					  List * range_table)
 {
-	List		   *expanded_tlist = NIL;
-	Oid				relid = InvalidOid;
-	List		   *t_list = NIL;
-	List		   *temp = NIL;
+	List	   *expanded_tlist = NIL;
+	Oid			relid = InvalidOid;
+	List	   *t_list = NIL;
+	List	   *temp = NIL;
 
 	if (result_relation >= 1 && command_type != CMD_SELECT)
 	{
@@ -82,7 +82,7 @@ preprocess_targetlist(List * tlist,
 	/* was mapCAR  */
 	foreach(temp, expanded_tlist)
 	{
-		TargetEntry    *tle = lfirst(temp);
+		TargetEntry *tle = lfirst(temp);
 
 		if (tle->expr)
 			fix_opid(tle->expr);
@@ -101,9 +101,9 @@ preprocess_targetlist(List * tlist,
 	 */
 	if (command_type == CMD_UPDATE || command_type == CMD_DELETE)
 	{
-		TargetEntry    *ctid;
-		Resdom		   *resdom;
-		Var			   *var;
+		TargetEntry *ctid;
+		Resdom	   *resdom;
+		Var		   *var;
 
 		resdom = makeResdom(length(t_list) + 1,
 							27,
@@ -143,29 +143,29 @@ preprocess_targetlist(List * tlist,
  *
  * Returns the expanded target list, sorted in resno order.
  */
-static List    *
+static List *
 expand_targetlist(List * tlist,
 				  Oid relid,
 				  int command_type,
 				  Index result_relation)
 {
-	NodeTag			node_type = T_Invalid;
+	NodeTag		node_type = T_Invalid;
 
 	switch (command_type)
 	{
-	case CMD_INSERT:
-		node_type = (NodeTag) T_Const;
-		break;
-	case CMD_UPDATE:
-		node_type = (NodeTag) T_Var;
-		break;
+		case CMD_INSERT:
+			node_type = (NodeTag) T_Const;
+			break;
+		case CMD_UPDATE:
+			node_type = (NodeTag) T_Var;
+			break;
 	}
 
 	if (node_type != T_Invalid)
 	{
-		List		   *ntlist = new_relation_targetlist(relid,
-														 result_relation,
-														 node_type);
+		List	   *ntlist = new_relation_targetlist(relid,
+													 result_relation,
+													 node_type);
 
 		return (replace_matching_resname(ntlist, tlist));
 	}
@@ -177,21 +177,21 @@ expand_targetlist(List * tlist,
 }
 
 
-static List    *
+static List *
 replace_matching_resname(List * new_tlist, List * old_tlist)
 {
-	List		   *temp,
-				   *i;
-	List		   *t_list = NIL;
+	List	   *temp,
+			   *i;
+	List	   *t_list = NIL;
 
 	foreach(i, new_tlist)
 	{
-		TargetEntry    *new_tle = (TargetEntry *) lfirst(i);
-		TargetEntry    *matching_old_tl = NULL;
+		TargetEntry *new_tle = (TargetEntry *) lfirst(i);
+		TargetEntry *matching_old_tl = NULL;
 
 		foreach(temp, old_tlist)
 		{
-			TargetEntry    *old_tle = (TargetEntry *) lfirst(temp);
+			TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
 
 			old_tle = lfirst(temp);
 			if (!strcmp(old_tle->resdom->resname,
@@ -228,9 +228,9 @@ replace_matching_resname(List * new_tlist, List * old_tlist)
 	 */
 	foreach(temp, old_tlist)
 	{
-		TargetEntry    *old_tle,
-					   *new_tl;
-		Resdom		   *newresno;
+		TargetEntry *old_tle,
+				   *new_tl;
+		Resdom	   *newresno;
 
 		old_tle = lfirst(temp);
 		if (old_tle->resdom->resno < 0)
@@ -253,15 +253,15 @@ replace_matching_resname(List * new_tlist, List * old_tlist)
  *
  *	  Returns the new targetlist.
  */
-static List    *
+static List *
 new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 {
-	AttrNumber		attno;
-	List		   *t_list = NIL;
-	char		   *attname;
-	Oid				atttype = 0;
-	int16			typlen = 0;
-	bool			attisset = false;
+	AttrNumber	attno;
+	List	   *t_list = NIL;
+	char	   *attname;
+	Oid			atttype = 0;
+	int16		typlen = 0;
+	bool		attisset = false;
 
 /*	  Oid type_id; */
 /*	  type_id = RelationIdGetTypeId(relid); */
@@ -287,59 +287,59 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 
 		switch (node_type)
 		{
-		case T_Const:
-			{
-				struct varlena *typedefault = get_typdefault(atttype);
-				int				temp = 0;
-				Const		   *temp2 = (Const *) NULL;
-				TargetEntry    *temp3 = (TargetEntry *) NULL;
+			case T_Const:
+				{
+					struct varlena *typedefault = get_typdefault(atttype);
+					int			temp = 0;
+					Const	   *temp2 = (Const *) NULL;
+					TargetEntry *temp3 = (TargetEntry *) NULL;
 
-				if (typedefault == NULL)
-					temp = 0;
-				else
-					temp = typlen;
+					if (typedefault == NULL)
+						temp = 0;
+					else
+						temp = typlen;
 
-				temp2 = makeConst(atttype,
-								  temp,
-								  (Datum) typedefault,
+					temp2 = makeConst(atttype,
+									  temp,
+									  (Datum) typedefault,
 								(typedefault == (struct varlena *) NULL),
-				/* XXX this is bullshit */
-								  false,
-								  false,		/* not a set */
-								  false);
+					/* XXX this is bullshit */
+									  false,
+									  false,	/* not a set */
+									  false);
 
-				temp3 = MakeTLE(makeResdom(attno,
-										   atttype,
-										   typlen,
-										   attname,
-										   0,
-										   (Oid) 0,
-										   0),
-								(Node *) temp2);
-				t_list = lappend(t_list, temp3);
-				break;
-			}
-		case T_Var:
-			{
-				Var			   *temp_var = (Var *) NULL;
-				TargetEntry    *temp_list = NULL;
-
-				temp_var =
-					makeVar(rt_index, attno, atttype, rt_index, attno);
-
-				temp_list = MakeTLE(makeResdom(attno,
+					temp3 = MakeTLE(makeResdom(attno,
 											   atttype,
 											   typlen,
 											   attname,
 											   0,
 											   (Oid) 0,
 											   0),
-									(Node *) temp_var);
-				t_list = lappend(t_list, temp_list);
+									(Node *) temp2);
+					t_list = lappend(t_list, temp3);
+					break;
+				}
+			case T_Var:
+				{
+					Var		   *temp_var = (Var *) NULL;
+					TargetEntry *temp_list = NULL;
+
+					temp_var =
+						makeVar(rt_index, attno, atttype, rt_index, attno);
+
+					temp_list = MakeTLE(makeResdom(attno,
+												   atttype,
+												   typlen,
+												   attname,
+												   0,
+												   (Oid) 0,
+												   0),
+										(Node *) temp_var);
+					t_list = lappend(t_list, temp_list);
+					break;
+				}
+			default:			/* do nothing */
 				break;
-			}
-		default:				/* do nothing */
-			break;
 		}
 	}
 

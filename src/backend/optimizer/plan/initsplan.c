@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.6 1997/09/07 04:44:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.7 1997/09/08 02:24:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,16 +33,16 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 
-extern int		Quiet;
+extern int	Quiet;
 
-static void		add_clause_to_rels(Query * root, List * clause);
+static void add_clause_to_rels(Query * root, List * clause);
 static void
 add_join_clause_info_to_rels(Query * root, CInfo * clauseinfo,
 							 List * join_relids);
-static void		add_vars_to_rels(Query * root, List * vars, List * join_relids);
+static void add_vars_to_rels(Query * root, List * vars, List * join_relids);
 
 static MergeOrder *mergesortop(Expr * clause);
-static Oid		hashjoinop(Expr * clause);
+static Oid	hashjoinop(Expr * clause);
 
 
 /*****************************************************************************
@@ -63,13 +63,13 @@ static Oid		hashjoinop(Expr * clause);
 void
 initialize_base_rels_list(Query * root, List * tlist)
 {
-	List		   *tlist_vars = NIL;
-	List		   *l = NIL;
-	List		   *tvar = NIL;
+	List	   *tlist_vars = NIL;
+	List	   *l = NIL;
+	List	   *tvar = NIL;
 
 	foreach(l, tlist)
 	{
-		TargetEntry    *entry = (TargetEntry *) lfirst(l);
+		TargetEntry *entry = (TargetEntry *) lfirst(l);
 
 		tlist_vars = append(tlist_vars, pull_var_clause(entry->expr));
 	}
@@ -77,9 +77,9 @@ initialize_base_rels_list(Query * root, List * tlist)
 	/* now, the target list only contains Var nodes */
 	foreach(tvar, tlist_vars)
 	{
-		Var			   *var;
-		Index			varno;
-		Rel			   *result;
+		Var		   *var;
+		Index		varno;
+		Rel		   *result;
 
 		var = (Var *) lfirst(tvar);
 		varno = var->varno;
@@ -100,16 +100,16 @@ initialize_base_rels_list(Query * root, List * tlist)
 void
 add_missing_vars_to_base_rels(Query * root, List * tlist)
 {
-	List		   *l;
-	int				varno;
+	List	   *l;
+	int			varno;
 
 	varno = 1;
 	foreach(l, root->rtable)
 	{
-		RangeTblEntry  *rte = (RangeTblEntry *) lfirst(l);
-		List		   *relids;
-		Rel			   *result;
-		Var			   *var;
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		List	   *relids;
+		Rel		   *result;
+		Var		   *var;
 
 		relids = lconsi(varno, NIL);
 		if (rte->inFromCl &&
@@ -147,7 +147,7 @@ add_missing_vars_to_base_rels(Query * root, List * tlist)
 void
 initialize_base_rels_jinfo(Query * root, List * clauses)
 {
-	List		   *clause;
+	List	   *clause;
 
 	foreach(clause, clauses)
 	{
@@ -168,9 +168,9 @@ initialize_base_rels_jinfo(Query * root, List * clauses)
 static void
 add_clause_to_rels(Query * root, List * clause)
 {
-	List		   *relids;
-	List		   *vars;
-	CInfo		   *clauseinfo = makeNode(CInfo);
+	List	   *relids;
+	List	   *vars;
+	CInfo	   *clauseinfo = makeNode(CInfo);
 
 	/*
 	 * Retrieve all relids and vars contained within the clause.
@@ -189,7 +189,7 @@ add_clause_to_rels(Query * root, List * clause)
 
 	if (length(relids) == 1)
 	{
-		Rel			   *rel = get_base_rel(root, lfirsti(relids));
+		Rel		   *rel = get_base_rel(root, lfirsti(relids));
 
 		/*
 		 * There is only one relation participating in 'clause', so
@@ -261,13 +261,13 @@ add_clause_to_rels(Query * root, List * clause)
 static void
 add_join_clause_info_to_rels(Query * root, CInfo * clauseinfo, List * join_relids)
 {
-	List		   *join_relid;
+	List	   *join_relid;
 
 	foreach(join_relid, join_relids)
 	{
-		JInfo		   *joininfo;
-		List		   *other_rels = NIL;
-		List		   *rel;
+		JInfo	   *joininfo;
+		List	   *other_rels = NIL;
+		List	   *rel;
 
 		foreach(rel, join_relids)
 		{
@@ -302,10 +302,10 @@ add_join_clause_info_to_rels(Query * root, CInfo * clauseinfo, List * join_relid
 static void
 add_vars_to_rels(Query * root, List * vars, List * join_relids)
 {
-	Var			   *var;
-	List		   *temp = NIL;
-	Rel			   *rel = (Rel *) NULL;
-	TargetEntry    *tlistentry;
+	Var		   *var;
+	List	   *temp = NIL;
+	Rel		   *rel = (Rel *) NULL;
+	TargetEntry *tlistentry;
 
 	foreach(temp, vars)
 	{
@@ -336,13 +336,13 @@ add_vars_to_rels(Query * root, List * vars, List * join_relids)
 void
 initialize_join_clause_info(List * rel_list)
 {
-	List		   *x,
-				   *y,
-				   *z;
-	Rel			   *rel;
-	JInfo		   *joininfo;
-	CInfo		   *clauseinfo;
-	Expr		   *clause;
+	List	   *x,
+			   *y,
+			   *z;
+	Rel		   *rel;
+	JInfo	   *joininfo;
+	CInfo	   *clauseinfo;
+	Expr	   *clause;
 
 	foreach(x, rel_list)
 	{
@@ -356,8 +356,8 @@ initialize_join_clause_info(List * rel_list)
 				clause = clauseinfo->clause;
 				if (join_clause_p((Node *) clause))
 				{
-					MergeOrder	   *sortop = (MergeOrder *) NULL;
-					Oid				hashop = (Oid) NULL;
+					MergeOrder *sortop = (MergeOrder *) NULL;
+					Oid			hashop = (Oid) NULL;
 
 					if (_enable_mergesort_)
 						sortop = mergesortop(clause);
@@ -389,9 +389,9 @@ initialize_join_clause_info(List * rel_list)
 static MergeOrder *
 mergesortop(Expr * clause)
 {
-	Oid				leftOp,
-					rightOp;
-	bool			sortable;
+	Oid			leftOp,
+				rightOp;
+	bool		sortable;
 
 	sortable = op_mergesortable(((Oper *) clause->oper)->opno,
 								(get_leftop(clause))->vartype,
@@ -401,7 +401,7 @@ mergesortop(Expr * clause)
 
 	if (sortable)
 	{
-		MergeOrder	   *morder = makeNode(MergeOrder);
+		MergeOrder *morder = makeNode(MergeOrder);
 
 		morder->join_operator = ((Oper *) clause->oper)->opno;
 		morder->left_operator = leftOp;
@@ -420,7 +420,7 @@ mergesortop(Expr * clause)
  *	  hashjoinable, i.e., both operands are single vars and the operator is
  *	  a hashjoinable operator.
  */
-static			Oid
+static Oid
 hashjoinop(Expr * clause)
 {
 	return (op_hashjoinable(((Oper *) clause->oper)->opno,

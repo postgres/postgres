@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.20 1997/09/07 04:37:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.21 1997/09/08 02:19:56 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -42,8 +42,8 @@
 TupleDesc
 CreateTemplateTupleDesc(int natts)
 {
-	uint32			size;
-	TupleDesc		desc;
+	uint32		size;
+	TupleDesc	desc;
 
 	/* ----------------
 	 *	sanity checks
@@ -77,7 +77,7 @@ CreateTemplateTupleDesc(int natts)
 TupleDesc
 CreateTupleDesc(int natts, AttributeTupleForm * attrs)
 {
-	TupleDesc		desc;
+	TupleDesc	desc;
 
 	/* ----------------
 	 *	sanity checks
@@ -105,9 +105,9 @@ CreateTupleDesc(int natts, AttributeTupleForm * attrs)
 TupleDesc
 CreateTupleDescCopy(TupleDesc tupdesc)
 {
-	TupleDesc		desc;
-	int				i,
-					size;
+	TupleDesc	desc;
+	int			i,
+				size;
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->natts = tupdesc->natts;
@@ -139,10 +139,10 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 TupleDesc
 CreateTupleDescCopyConstr(TupleDesc tupdesc)
 {
-	TupleDesc		desc;
-	TupleConstr    *constr = tupdesc->constr;
-	int				i,
-					size;
+	TupleDesc	desc;
+	TupleConstr *constr = tupdesc->constr;
+	int			i,
+				size;
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->natts = tupdesc->natts;
@@ -158,7 +158,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	}
 	if (constr)
 	{
-		TupleConstr    *cpy = (TupleConstr *) palloc(sizeof(TupleConstr));
+		TupleConstr *cpy = (TupleConstr *) palloc(sizeof(TupleConstr));
 
 		cpy->has_not_null = constr->has_not_null;
 
@@ -201,7 +201,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 void
 FreeTupleDesc(TupleDesc tupdesc)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < tupdesc->natts; i++)
 		pfree(tupdesc->attrs[i]);
@@ -210,7 +210,7 @@ FreeTupleDesc(TupleDesc tupdesc)
 	{
 		if (tupdesc->constr->num_defval > 0)
 		{
-			AttrDefault    *attrdef = tupdesc->constr->defval;
+			AttrDefault *attrdef = tupdesc->constr->defval;
 
 			for (i = tupdesc->constr->num_defval - 1; i >= 0; i--)
 			{
@@ -223,7 +223,7 @@ FreeTupleDesc(TupleDesc tupdesc)
 		}
 		if (tupdesc->constr->num_check > 0)
 		{
-			ConstrCheck    *check = tupdesc->constr->check;
+			ConstrCheck *check = tupdesc->constr->check;
 
 			for (i = tupdesc->constr->num_check - 1; i >= 0; i--)
 			{
@@ -258,8 +258,8 @@ TupleDescInitEntry(TupleDesc desc,
 				   int attdim,
 				   bool attisset)
 {
-	HeapTuple		tuple;
-	TypeTupleForm	typeForm;
+	HeapTuple	tuple;
+	TypeTupleForm typeForm;
 	AttributeTupleForm att;
 
 	/* ----------------
@@ -378,7 +378,7 @@ TupleDescInitEntry(TupleDesc desc,
 	   */
 	if (attisset)
 	{
-		Type			t = type("oid");
+		Type		t = type("oid");
 
 		att->attlen = tlen(t);
 		att->attbyval = tbyval(t);
@@ -411,7 +411,7 @@ TupleDescMakeSelfReference(TupleDesc desc,
 						   char *relname)
 {
 	AttributeTupleForm att;
-	Type			t = type("oid");
+	Type		t = type("oid");
 
 	att = desc->attrs[attnum - 1];
 	att->atttypid = TypeShellMake(relname);
@@ -439,17 +439,17 @@ TupleDescMakeSelfReference(TupleDesc desc,
 TupleDesc
 BuildDescForRelation(List * schema, char *relname)
 {
-	int				natts;
-	AttrNumber		attnum;
-	List		   *p;
-	TupleDesc		desc;
-	AttrDefault    *attrdef = NULL;
-	TupleConstr    *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
-	char		   *attname;
-	char		   *typename;
-	int				attdim;
-	int				ndef = 0;
-	bool			attisset;
+	int			natts;
+	AttrNumber	attnum;
+	List	   *p;
+	TupleDesc	desc;
+	AttrDefault *attrdef = NULL;
+	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
+	char	   *attname;
+	char	   *typename;
+	int			attdim;
+	int			ndef = 0;
+	bool		attisset;
 
 	/* ----------------
 	 *	allocate a new tuple descriptor
@@ -465,8 +465,8 @@ BuildDescForRelation(List * schema, char *relname)
 
 	foreach(p, schema)
 	{
-		ColumnDef	   *entry;
-		List		   *arry;
+		ColumnDef  *entry;
+		List	   *arry;
 
 		/* ----------------
 		 *		for each entry in the list, get the name and type

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.10 1997/09/07 04:39:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.11 1997/09/08 02:21:18 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -63,7 +63,7 @@ TransComputeBlockNumber(Relation relation,		/* relation to test */
 														 * test */
 						BlockNumber * blockNumberOutP)
 {
-	long			itemsPerBlock = 0;
+	long		itemsPerBlock = 0;
 
 	/* ----------------
 	 *	we calculate the block number of our transaction
@@ -108,17 +108,17 @@ TransComputeBlockNumber(Relation relation,		/* relation to test */
  */
 
 #ifdef NOT_USED
-static			XidStatus
+static XidStatus
 TransBlockGetLastTransactionIdStatus(Block tblock,
 									 TransactionId baseXid,
 									 TransactionId * returnXidP)
 {
-	Index			index;
-	Index			maxIndex;
-	bits8			bit1;
-	bits8			bit2;
-	BitIndex		offset;
-	XidStatus		xstatus;
+	Index		index;
+	Index		maxIndex;
+	bits8		bit1;
+	bits8		bit2;
+	BitIndex	offset;
+	XidStatus	xstatus;
 
 	/* ----------------
 	 *	sanity check
@@ -188,14 +188,14 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
  * --------------------------------
  */
 
-static			XidStatus
+static XidStatus
 TransBlockGetXidStatus(Block tblock,
 					   TransactionId transactionId)
 {
-	Index			index;
-	bits8			bit1;
-	bits8			bit2;
-	BitIndex		offset;
+	Index		index;
+	bits8		bit1;
+	bits8		bit2;
+	BitIndex	offset;
 
 	/* ----------------
 	 *	sanity check
@@ -245,8 +245,8 @@ TransBlockSetXidStatus(Block tblock,
 					   TransactionId transactionId,
 					   XidStatus xstatus)
 {
-	Index			index;
-	BitIndex		offset;
+	Index		index;
+	BitIndex	offset;
 
 	/* ----------------
 	 *	sanity check
@@ -275,23 +275,23 @@ TransBlockSetXidStatus(Block tblock,
 	 */
 	switch (xstatus)
 	{
-	case XID_COMMIT:			/* set 10 */
-		BitArraySetBit((BitArray) tblock, offset);
-		BitArrayClearBit((BitArray) tblock, offset + 1);
-		break;
-	case XID_ABORT:				/* set 01 */
-		BitArrayClearBit((BitArray) tblock, offset);
-		BitArraySetBit((BitArray) tblock, offset + 1);
-		break;
-	case XID_INPROGRESS:		/* set 00 */
-		BitArrayClearBit((BitArray) tblock, offset);
-		BitArrayClearBit((BitArray) tblock, offset + 1);
-		break;
-	default:
-		elog(NOTICE,
-			 "TransBlockSetXidStatus: invalid status: %d (ignored)",
-			 xstatus);
-		break;
+		case XID_COMMIT:		/* set 10 */
+			BitArraySetBit((BitArray) tblock, offset);
+			BitArrayClearBit((BitArray) tblock, offset + 1);
+			break;
+		case XID_ABORT: /* set 01 */
+			BitArrayClearBit((BitArray) tblock, offset);
+			BitArraySetBit((BitArray) tblock, offset + 1);
+			break;
+		case XID_INPROGRESS:	/* set 00 */
+			BitArrayClearBit((BitArray) tblock, offset);
+			BitArrayClearBit((BitArray) tblock, offset + 1);
+			break;
+		default:
+			elog(NOTICE,
+				 "TransBlockSetXidStatus: invalid status: %d (ignored)",
+				 xstatus);
+			break;
 	}
 }
 
@@ -302,12 +302,12 @@ TransBlockSetXidStatus(Block tblock,
  *		specified transaction id in the trans block.
  * --------------------------------
  */
-static			AbsoluteTime
+static AbsoluteTime
 TransBlockGetCommitTime(Block tblock,
 						TransactionId transactionId)
 {
-	Index			index;
-	AbsoluteTime   *timeArray;
+	Index		index;
+	AbsoluteTime *timeArray;
 
 	/* ----------------
 	 *	sanity check
@@ -348,8 +348,8 @@ TransBlockSetCommitTime(Block tblock,
 						TransactionId transactionId,
 						AbsoluteTime commitTime)
 {
-	Index			index;
-	AbsoluteTime   *timeArray;
+	Index		index;
+	AbsoluteTime *timeArray;
 
 	/* ----------------
 	 *	sanity check
@@ -394,10 +394,10 @@ TransBlockNumberGetXidStatus(Relation relation,
 							 TransactionId xid,
 							 bool * failP)
 {
-	Buffer			buffer;		/* buffer associated with block */
-	Block			block;		/* block containing xstatus */
-	XidStatus		xstatus;	/* recorded status of xid */
-	bool			localfail;	/* bool used if failP = NULL */
+	Buffer		buffer;			/* buffer associated with block */
+	Block		block;			/* block containing xstatus */
+	XidStatus	xstatus;		/* recorded status of xid */
+	bool		localfail;		/* bool used if failP = NULL */
 
 	/* ----------------
 	 *	SOMEDAY place a read lock on the log relation
@@ -451,9 +451,9 @@ TransBlockNumberSetXidStatus(Relation relation,
 							 XidStatus xstatus,
 							 bool * failP)
 {
-	Buffer			buffer;		/* buffer associated with block */
-	Block			block;		/* block containing xstatus */
-	bool			localfail;	/* bool used if failP = NULL */
+	Buffer		buffer;			/* buffer associated with block */
+	Block		block;			/* block containing xstatus */
+	bool		localfail;		/* bool used if failP = NULL */
 
 	/* ----------------
 	 *	SOMEDAY gain exclusive access to the log relation
@@ -504,10 +504,10 @@ TransBlockNumberGetCommitTime(Relation relation,
 							  TransactionId xid,
 							  bool * failP)
 {
-	Buffer			buffer;		/* buffer associated with block */
-	Block			block;		/* block containing commit time */
-	bool			localfail;	/* bool used if failP = NULL */
-	AbsoluteTime	xtime;		/* commit time */
+	Buffer		buffer;			/* buffer associated with block */
+	Block		block;			/* block containing commit time */
+	bool		localfail;		/* bool used if failP = NULL */
+	AbsoluteTime xtime;			/* commit time */
 
 	/* ----------------
 	 *	SOMEDAY place a read lock on the time relation
@@ -565,9 +565,9 @@ TransBlockNumberSetCommitTime(Relation relation,
 							  AbsoluteTime xtime,
 							  bool * failP)
 {
-	Buffer			buffer;		/* buffer associated with block */
-	Block			block;		/* block containing commit time */
-	bool			localfail;	/* bool used if failP = NULL */
+	Buffer		buffer;			/* buffer associated with block */
+	Block		block;			/* block containing commit time */
+	bool		localfail;		/* bool used if failP = NULL */
 
 	/* ----------------
 	 *	SOMEDAY gain exclusive access to the time relation
@@ -620,11 +620,11 @@ TransGetLastRecordedTransaction(Relation relation,
 														 * id */
 								bool * failP)
 {
-	BlockNumber		blockNumber;/* block number */
-	Buffer			buffer;		/* buffer associated with block */
-	Block			block;		/* block containing xid status */
-	BlockNumber		n;			/* number of blocks in the relation */
-	TransactionId	baseXid;
+	BlockNumber blockNumber;	/* block number */
+	Buffer		buffer;			/* buffer associated with block */
+	Block		block;			/* block containing xid status */
+	BlockNumber n;				/* number of blocks in the relation */
+	TransactionId baseXid;
 
 	(*failP) = false;
 

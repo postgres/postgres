@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.5 1997/09/07 04:56:14 momjian Exp $
+ * $Id: strat.h,v 1.6 1997/09/08 02:34:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,50 +16,51 @@
 
 #include <access/skey.h>
 
-typedef uint16	StrategyNumber;
+typedef uint16 StrategyNumber;
 
 #define InvalidStrategy 0
 
 typedef struct StrategyTransformMapData
 {
-	StrategyNumber	strategy[1];/* VARIABLE LENGTH ARRAY */
-}				StrategyTransformMapData;		/* VARIABLE LENGTH
+	StrategyNumber strategy[1]; /* VARIABLE LENGTH ARRAY */
+}			StrategyTransformMapData;	/* VARIABLE LENGTH
 
-												 * STRUCTURE */
+										 *
+										 * STRUCTURE */
 
 typedef StrategyTransformMapData *StrategyTransformMap;
 
 typedef struct StrategyOperatorData
 {
-	StrategyNumber	strategy;
-	bits16			flags;		/* scan qualification flags h/skey.h */
-}				StrategyOperatorData;
+	StrategyNumber strategy;
+	bits16		flags;			/* scan qualification flags h/skey.h */
+}			StrategyOperatorData;
 
 typedef StrategyOperatorData *StrategyOperator;
 
 typedef struct StrategyTermData
 {								/* conjunctive term */
-	uint16			degree;
+	uint16		degree;
 	StrategyOperatorData operatorData[1];		/* VARIABLE LENGTH */
-}				StrategyTermData;		/* VARIABLE LENGTH STRUCTURE */
+}			StrategyTermData;	/* VARIABLE LENGTH STRUCTURE */
 
 typedef StrategyTermData *StrategyTerm;
 
 typedef struct StrategyExpressionData
 {								/* disjunctive normal form */
-	StrategyTerm	term[1];	/* VARIABLE LENGTH ARRAY */
-}				StrategyExpressionData; /* VARIABLE LENGTH STRUCTURE */
+	StrategyTerm term[1];		/* VARIABLE LENGTH ARRAY */
+}			StrategyExpressionData;		/* VARIABLE LENGTH STRUCTURE */
 
 typedef StrategyExpressionData *StrategyExpression;
 
 typedef struct StrategyEvaluationData
 {
-	StrategyNumber	maxStrategy;
+	StrategyNumber maxStrategy;
 	StrategyTransformMap negateTransform;
 	StrategyTransformMap commuteTransform;
 	StrategyTransformMap negateCommuteTransform;
 	StrategyExpression expression[12];	/* XXX VARIABLE LENGTH */
-}				StrategyEvaluationData; /* VARIABLE LENGTH STRUCTURE */
+}			StrategyEvaluationData;		/* VARIABLE LENGTH STRUCTURE */
 
 typedef StrategyEvaluationData *StrategyEvaluation;
 
@@ -78,15 +79,15 @@ typedef StrategyEvaluationData *StrategyEvaluation;
 
 typedef struct StrategyMapData
 {
-	ScanKeyData		entry[1];	/* VARIABLE LENGTH ARRAY */
-}				StrategyMapData;/* VARIABLE LENGTH STRUCTURE */
+	ScanKeyData entry[1];		/* VARIABLE LENGTH ARRAY */
+}			StrategyMapData;	/* VARIABLE LENGTH STRUCTURE */
 
 typedef StrategyMapData *StrategyMap;
 
 typedef struct IndexStrategyData
 {
 	StrategyMapData strategyMapData[1]; /* VARIABLE LENGTH ARRAY */
-}				IndexStrategyData;		/* VARIABLE LENGTH STRUCTURE */
+}			IndexStrategyData;	/* VARIABLE LENGTH STRUCTURE */
 
 typedef IndexStrategyData *IndexStrategy;
 

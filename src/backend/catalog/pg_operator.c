@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.12 1997/09/07 04:40:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.13 1997/09/08 02:21:48 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -66,7 +66,7 @@ OperatorDef(char *operatorName,
 			bool canHash,
 			char *leftSortName,
 			char *rightSortName);
-static void		OperatorUpd(Oid baseId, Oid commId, Oid negId);
+static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
 
 /* ----------------------------------------------------------------
  *		OperatorGetWithOpenRelation
@@ -79,15 +79,15 @@ static void		OperatorUpd(Oid baseId, Oid commId, Oid negId);
  *	  leftObjectId		-- left oid of operator to fetch
  *	  rightObjectId		-- right oid of operator to fetch
  */
-static			Oid
+static Oid
 OperatorGetWithOpenRelation(Relation pg_operator_desc,
 							const char *operatorName,
 							Oid leftObjectId,
 							Oid rightObjectId)
 {
-	HeapScanDesc	pg_operator_scan;
-	Oid				operatorObjectId;
-	HeapTuple		tup;
+	HeapScanDesc pg_operator_scan;
+	Oid			operatorObjectId;
+	HeapTuple	tup;
 
 	static ScanKeyData opKey[3] = {
 		{0, Anum_pg_operator_oprname, NameEqualRegProcedure},
@@ -145,18 +145,18 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
  *		and left and right type names.
  * ----------------------------------------------------------------
  */
-static			Oid
+static Oid
 OperatorGet(char *operatorName,
 			char *leftTypeName,
 			char *rightTypeName)
 {
-	Relation		pg_operator_desc;
+	Relation	pg_operator_desc;
 
-	Oid				operatorObjectId;
-	Oid				leftObjectId = InvalidOid;
-	Oid				rightObjectId = InvalidOid;
-	bool			leftDefined = false;
-	bool			rightDefined = false;
+	Oid			operatorObjectId;
+	Oid			leftObjectId = InvalidOid;
+	Oid			rightObjectId = InvalidOid;
+	bool		leftDefined = false;
+	bool		rightDefined = false;
 
 	/* ----------------
 	 *	look up the operator types.
@@ -216,18 +216,18 @@ OperatorGet(char *operatorName,
  *
  * ----------------------------------------------------------------
  */
-static			Oid
+static Oid
 OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 								  char *operatorName,
 								  Oid leftObjectId,
 								  Oid rightObjectId)
 {
-	register int	i;
-	HeapTuple		tup;
-	Datum			values[Natts_pg_operator];
-	char			nulls[Natts_pg_operator];
-	Oid				operatorObjectId;
-	TupleDesc		tupDesc;
+	register int i;
+	HeapTuple	tup;
+	Datum		values[Natts_pg_operator];
+	char		nulls[Natts_pg_operator];
+	Oid			operatorObjectId;
+	TupleDesc	tupDesc;
 
 	/* ----------------
 	 *	initialize our nulls[] and values[] arrays
@@ -300,18 +300,18 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
  *		to the caller.
  * ----------------------------------------------------------------
  */
-static			Oid
+static Oid
 OperatorShellMake(char *operatorName,
 				  char *leftTypeName,
 				  char *rightTypeName)
 {
-	Relation		pg_operator_desc;
-	Oid				operatorObjectId;
+	Relation	pg_operator_desc;
+	Oid			operatorObjectId;
 
-	Oid				leftObjectId = InvalidOid;
-	Oid				rightObjectId = InvalidOid;
-	bool			leftDefined = false;
-	bool			rightDefined = false;
+	Oid			leftObjectId = InvalidOid;
+	Oid			rightObjectId = InvalidOid;
+	bool		leftDefined = false;
+	bool		rightDefined = false;
 
 	/* ----------------
 	 *	get the left and right type oid's for this operator
@@ -450,29 +450,29 @@ OperatorDef(char *operatorName,
 			char *leftSortName,
 			char *rightSortName)
 {
-	register		i,
-					j;
-	Relation		pg_operator_desc;
+	register	i,
+				j;
+	Relation	pg_operator_desc;
 
-	HeapScanDesc	pg_operator_scan;
-	HeapTuple		tup;
-	Buffer			buffer;
+	HeapScanDesc pg_operator_scan;
+	HeapTuple	tup;
+	Buffer		buffer;
 	ItemPointerData itemPointerData;
-	char			nulls[Natts_pg_operator];
-	char			replaces[Natts_pg_operator];
-	Datum			values[Natts_pg_operator];
-	Oid				other_oid = 0;
-	Oid				operatorObjectId;
-	Oid				leftTypeId = InvalidOid;
-	Oid				rightTypeId = InvalidOid;
-	Oid				commutatorId = InvalidOid;
-	Oid				negatorId = InvalidOid;
-	bool			leftDefined = false;
-	bool			rightDefined = false;
-	char		   *name[4];
-	Oid				typeId[8];
-	int				nargs;
-	TupleDesc		tupDesc;
+	char		nulls[Natts_pg_operator];
+	char		replaces[Natts_pg_operator];
+	Datum		values[Natts_pg_operator];
+	Oid			other_oid = 0;
+	Oid			operatorObjectId;
+	Oid			leftTypeId = InvalidOid;
+	Oid			rightTypeId = InvalidOid;
+	Oid			commutatorId = InvalidOid;
+	Oid			negatorId = InvalidOid;
+	bool		leftDefined = false;
+	bool		rightDefined = false;
+	char	   *name[4];
+	Oid			typeId[8];
+	int			nargs;
+	TupleDesc	tupDesc;
 
 	static ScanKeyData opKey[3] = {
 		{0, Anum_pg_operator_oprname, NameEqualRegProcedure},
@@ -765,15 +765,15 @@ OperatorDef(char *operatorName,
 static void
 OperatorUpd(Oid baseId, Oid commId, Oid negId)
 {
-	register		i;
-	Relation		pg_operator_desc;
-	HeapScanDesc	pg_operator_scan;
-	HeapTuple		tup;
-	Buffer			buffer;
+	register	i;
+	Relation	pg_operator_desc;
+	HeapScanDesc pg_operator_scan;
+	HeapTuple	tup;
+	Buffer		buffer;
 	ItemPointerData itemPointerData;
-	char			nulls[Natts_pg_operator];
-	char			replaces[Natts_pg_operator];
-	Datum			values[Natts_pg_operator];
+	char		nulls[Natts_pg_operator];
+	char		replaces[Natts_pg_operator];
+	Datum		values[Natts_pg_operator];
 
 	static ScanKeyData opKey[1] = {
 		{0, ObjectIdAttributeNumber, ObjectIdEqualRegProcedure},
@@ -985,11 +985,11 @@ OperatorCreate(char *operatorName,
 			   char *leftSortName,
 			   char *rightSortName)
 {
-	Oid				commObjectId,
-					negObjectId;
-	Oid				leftSortObjectId,
-					rightSortObjectId;
-	int				definedOK;
+	Oid			commObjectId,
+				negObjectId;
+	Oid			leftSortObjectId,
+				rightSortObjectId;
+	int			definedOK;
 
 	if (!leftTypeName && !rightTypeName)
 		elog(WARN, "OperatorCreate : at least one of leftarg or rightarg must be defined");

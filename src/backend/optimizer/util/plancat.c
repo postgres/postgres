@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.7 1997/09/07 04:44:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.8 1997/09/08 02:25:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,9 +59,9 @@ void
 relation_info(Query * root, Index relid,
 			  bool * hasindex, int *pages, int *tuples)
 {
-	HeapTuple		relationTuple;
-	Form_pg_class	relation;
-	Oid				relationObjectId;
+	HeapTuple	relationTuple;
+	Form_pg_class relation;
+	Oid			relationObjectId;
 
 	relationObjectId = getrelid(relid, root->rtable);
 	relationTuple = SearchSysCacheTuple(RELOID,
@@ -103,14 +103,14 @@ relation_info(Query * root, Index relid,
 bool
 index_info(Query * root, bool first, int relid, IdxInfoRetval * info)
 {
-	register		i;
-	HeapTuple		indexTuple,
-					amopTuple;
-	IndexTupleForm	index;
-	Relation		indexRelation;
-	uint16			amstrategy;
-	Oid				relam;
-	Oid				indrelid;
+	register	i;
+	HeapTuple	indexTuple,
+				amopTuple;
+	IndexTupleForm index;
+	Relation	indexRelation;
+	uint16		amstrategy;
+	Oid			relam;
+	Oid			indrelid;
 
 	static Relation relation = (Relation) NULL;
 	static HeapScanDesc scan = (HeapScanDesc) NULL;
@@ -183,7 +183,7 @@ index_info(Query * root, bool first, int relid, IdxInfoRetval * info)
 		 * which is all within a command, so the automatic pfree at end of
 		 * transaction should be ok.
 		 */
-		char		   *predString;
+		char	   *predString;
 
 		predString = fmgr(F_TEXTOUT, &index->indpred);
 		info->indpred = (Node *) stringToNode(predString);
@@ -256,15 +256,15 @@ index_selectivity(Oid indid,
 				  float *idxPages,
 				  float *idxSelec)
 {
-	Oid			   *opno_array;
-	int			   *attno_array,
-				   *flag_array;
-	char		  **value_array;
-	int				i = 0;
-	List		   *xopno,
-				   *xattno,
-				   *value,
-				   *flag;
+	Oid		   *opno_array;
+	int		   *attno_array,
+			   *flag_array;
+	char	  **value_array;
+	int			i = 0;
+	List	   *xopno,
+			   *xattno,
+			   *value,
+			   *flag;
 
 	if (length(opnos) != nkeys || length(attnos) != nkeys ||
 		length(values) != nkeys || length(flags) != nkeys)
@@ -339,7 +339,7 @@ restriction_selectivity(Oid functionObjectId,
 						char *constValue,
 						int32 constFlag)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) fmgr(functionObjectId,
 							(char *) operatorObjectId,
@@ -378,7 +378,7 @@ join_selectivity(Oid functionObjectId,
 				 Oid relationObjectId2,
 				 AttrNumber attributeNumber2)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) fmgr(functionObjectId,
 							(char *) operatorObjectId,
@@ -403,18 +403,18 @@ join_selectivity(Oid functionObjectId,
  * Returns a LISP list containing the OIDs of all relations which
  * inherits from the relation with OID 'inhparent'.
  */
-List		   *
+List	   *
 find_inheritance_children(Oid inhparent)
 {
 	static ScanKeyData key[1] = {
 		{0, Anum_pg_inherits_inhparent, F_OIDEQ}
 	};
 
-	HeapTuple		inheritsTuple;
-	Relation		relation;
-	HeapScanDesc	scan;
-	List		   *list = NIL;
-	Oid				inhrelid;
+	HeapTuple	inheritsTuple;
+	Relation	relation;
+	HeapScanDesc scan;
+	List	   *list = NIL;
+	Oid			inhrelid;
 
 	fmgr_info(F_OIDEQ, &key[0].sk_func, &key[0].sk_nargs);
 
@@ -439,18 +439,18 @@ find_inheritance_children(Oid inhparent)
  * Returns a LISP list containing the OIDs of all relations which are
  * base relations of the relation with OID 'verrelid'.
  */
-List		   *
+List	   *
 VersionGetParents(Oid verrelid)
 {
 	static ScanKeyData key[1] = {
 		{0, Anum_pg_version_verrelid, F_OIDEQ}
 	};
 
-	HeapTuple		versionTuple;
-	Relation		relation;
-	HeapScanDesc	scan;
-	Oid				verbaseid;
-	List		   *list = NIL;
+	HeapTuple	versionTuple;
+	Relation	relation;
+	HeapScanDesc scan;
+	Oid			verbaseid;
+	List	   *list = NIL;
 
 	fmgr_info(F_OIDEQ, &key[0].sk_func, &key[0].sk_nargs);
 	relation = heap_openr(VersionRelationName);
@@ -512,21 +512,21 @@ IndexSelectivity(Oid indexrelid,
 				 float *idxPages,
 				 float *idxSelec)
 {
-	register		i,
-					n;
-	HeapTuple		indexTuple,
-					amopTuple,
-					indRel;
-	IndexTupleForm	index;
-	Form_pg_amop	amop;
-	Oid				indclass;
-	float64data		npages,
-					select;
-	float64			amopnpages,
-					amopselect;
-	Oid				relam;
-	bool			nphack = false;
-	float64data		fattr_select = 1.0;
+	register	i,
+				n;
+	HeapTuple	indexTuple,
+				amopTuple,
+				indRel;
+	IndexTupleForm index;
+	Form_pg_amop amop;
+	Oid			indclass;
+	float64data npages,
+				select;
+	float64		amopnpages,
+				amopselect;
+	Oid			relam;
+	bool		nphack = false;
+	float64data fattr_select = 1.0;
 
 	indRel = SearchSysCacheTuple(RELOID,
 								 ObjectIdGetDatum(indexrelid),

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.16 1997/09/07 04:38:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.17 1997/09/08 02:20:28 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -96,7 +96,7 @@
 #include <string.h>
 #endif
 
-static bool		ImmediateInvalidation;
+static bool ImmediateInvalidation;
 
 /* ----------------------------------------------------------------
  *						 heap support routines
@@ -210,7 +210,7 @@ nextpage(int page, int dir)
  *		real work in scanning tuples.
  * ----------------
  */
-static			HeapTuple
+static HeapTuple
 heapgettup(Relation relation,
 		   ItemPointer tid,
 		   int dir,
@@ -219,14 +219,14 @@ heapgettup(Relation relation,
 		   int nkeys,
 		   ScanKey key)
 {
-	ItemId			lpp;
-	Page			dp;
-	int				page;
-	int				pages;
-	int				lines;
-	HeapTuple		rtup;
-	OffsetNumber	lineoff;
-	int				linesleft;
+	ItemId		lpp;
+	Page		dp;
+	int			page;
+	int			pages;
+	int			lines;
+	HeapTuple	rtup;
+	OffsetNumber lineoff;
+	int			linesleft;
 
 	/* ----------------
 	 *	increment access statistics
@@ -432,7 +432,7 @@ heapgettup(Relation relation,
 			if ((rtup = heap_tuple_satisfies(lpp, relation, *b, (PageHeader) dp,
 										  timeQual, nkeys, key)) != NULL)
 			{
-				ItemPointer		iptr = &(rtup->t_ctid);
+				ItemPointer iptr = &(rtup->t_ctid);
 
 				if (ItemPointerGetBlockNumber(iptr) != page)
 				{
@@ -541,7 +541,7 @@ SetHeapAccessMethodImmediateInvalidation(bool on)
 Relation
 heap_open(Oid relationId)
 {
-	Relation		r;
+	Relation	r;
 
 	/* ----------------
 	 *	increment access statistics
@@ -570,7 +570,7 @@ heap_open(Oid relationId)
 Relation
 heap_openr(char *relationName)
 {
-	Relation		r;
+	Relation	r;
 
 	/* ----------------
 	 *	increment access statistics
@@ -621,7 +621,7 @@ heap_beginscan(Relation relation,
 			   unsigned nkeys,
 			   ScanKey key)
 {
-	HeapScanDesc	sdesc;
+	HeapScanDesc sdesc;
 
 	/* ----------------
 	 *	increment access statistics
@@ -808,7 +808,7 @@ heap_getnext(HeapScanDesc scandesc,
 			 Buffer * b)
 {
 	register HeapScanDesc sdesc = scandesc;
-	Buffer			localb;
+	Buffer		localb;
 
 	/* ----------------
 	 *	increment access statistics
@@ -880,7 +880,7 @@ heap_getnext(HeapScanDesc scandesc,
 		}
 		else
 		{						/* NONTUP */
-			ItemPointer		iptr;
+			ItemPointer iptr;
 
 			iptr = (sdesc->rs_ctup != NULL) ?
 				&(sdesc->rs_ctup->t_ctid) : (ItemPointer) NULL;
@@ -967,7 +967,7 @@ heap_getnext(HeapScanDesc scandesc,
 		}
 		else
 		{						/* NONTUP */
-			ItemPointer		iptr;
+			ItemPointer iptr;
 
 			iptr = (sdesc->rs_ctup != NULL) ?
 				&sdesc->rs_ctup->t_ctid : (ItemPointer) NULL;
@@ -1035,11 +1035,11 @@ heap_fetch(Relation relation,
 		   ItemPointer tid,
 		   Buffer * b)
 {
-	ItemId			lp;
-	Buffer			buffer;
-	PageHeader		dp;
-	HeapTuple		tuple;
-	OffsetNumber	offnum;
+	ItemId		lp;
+	Buffer		buffer;
+	PageHeader	dp;
+	HeapTuple	tuple;
+	OffsetNumber offnum;
 
 	/* ----------------
 	 *	increment access statistics
@@ -1203,10 +1203,10 @@ heap_insert(Relation relation, HeapTuple tup)
 int
 heap_delete(Relation relation, ItemPointer tid)
 {
-	ItemId			lp;
-	HeapTuple		tp;
-	PageHeader		dp;
-	Buffer			b;
+	ItemId		lp;
+	HeapTuple	tp;
+	PageHeader	dp;
+	Buffer		b;
 
 	/* ----------------
 	 *	increment access statistics
@@ -1313,10 +1313,10 @@ heap_delete(Relation relation, ItemPointer tid)
 int
 heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 {
-	ItemId			lp;
-	HeapTuple		tp;
-	Page			dp;
-	Buffer			buffer;
+	ItemId		lp;
+	HeapTuple	tp;
+	Page		dp;
+	Buffer		buffer;
 
 	/* ----------------
 	 *	increment access statistics

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.3 1997/09/07 04:44:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.4 1997/09/08 02:24:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +35,11 @@
  * exists.
  *
  */
-JInfo		   *
+JInfo	   *
 joininfo_member(List * join_relids, List * joininfo_list)
 {
-	List		   *i = NIL;
-	List		   *other_rels = NIL;
+	List	   *i = NIL;
+	List	   *other_rels = NIL;
 
 	foreach(i, joininfo_list)
 	{
@@ -61,11 +61,11 @@ joininfo_member(List * join_relids, List * joininfo_list)
  * Returns a joininfo node.
  *
  */
-JInfo		   *
+JInfo	   *
 find_joininfo_node(Rel * this_rel, List * join_relids)
 {
-	JInfo		   *joininfo = joininfo_member(join_relids,
-											   this_rel->joininfo);
+	JInfo	   *joininfo = joininfo_member(join_relids,
+										   this_rel->joininfo);
 
 	if (joininfo == NULL)
 	{
@@ -88,12 +88,12 @@ find_joininfo_node(Rel * this_rel, List * join_relids)
  * Returns the other var node in the joinclause if it is, nil if not.
  *
  */
-Var			   *
+Var		   *
 other_join_clause_var(Var * var, Expr * clause)
 {
-	Var			   *retval;
-	Var			   *l,
-				   *r;
+	Var		   *retval;
+	Var		   *l,
+			   *r;
 
 	retval = (Var *) NULL;
 

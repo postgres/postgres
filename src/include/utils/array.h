@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.5 1997/09/07 05:02:07 momjian Exp $
+ * $Id: array.h,v 1.6 1997/09/08 02:39:26 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -26,10 +26,10 @@
 
 typedef struct
 {
-	int				size;		/* total array size (in bytes) */
-	int				ndim;		/* # of dimensions */
-	int				flags;		/* implementation flags */
-}				ArrayType;
+	int			size;			/* total array size (in bytes) */
+	int			ndim;			/* # of dimensions */
+	int			flags;			/* implementation flags */
+}			ArrayType;
 
 /*
  * bitmask of ArrayType flags field:
@@ -99,7 +99,7 @@ typedef struct
 
 /* #if defined(irix5) */
 /* #define RETURN_NULL {*isNull = true; return(0); }*/
- /* #else*//* irix5 */
+ /* #else *//* irix5 */
 #define RETURN_NULL {*isNull = true; return(0); }
  /* #endif *//* irix5 */
 #define NAME_LEN	30
@@ -107,35 +107,35 @@ typedef struct
 
 typedef struct
 {
-	char			lo_name[NAME_LEN];
-	int				C[MAXDIM];
-}				CHUNK_INFO;
+	char		lo_name[NAME_LEN];
+	int			C[MAXDIM];
+}			CHUNK_INFO;
 
 /*
  * prototypes for functions defined in arrayfuncs.c
  */
-extern char    *array_in(char *string, Oid element_type);
-extern char    *array_out(ArrayType * v, Oid element_type);
-extern char    *array_dims(ArrayType * v, bool * isNull);
-extern Datum
+extern char *array_in(char *string, Oid element_type);
+extern char *array_out(ArrayType * v, Oid element_type);
+extern char *array_dims(ArrayType * v, bool * isNull);
+extern		Datum
 array_ref(ArrayType * array, int n, int indx[], int reftype,
 		  int elmlen, int arraylen, bool * isNull);
-extern Datum
+extern		Datum
 array_clip(ArrayType * array, int n, int upperIndx[],
 		   int lowerIndx[], int reftype, int len, bool * isNull);
-extern char    *
+extern char *
 array_set(ArrayType * array, int n, int indx[], char *dataPtr,
 		  int reftype, int elmlen, int arraylen, bool * isNull);
-extern char    *
+extern char *
 array_assgn(ArrayType * array, int n, int upperIndx[],
 			int lowerIndx[], ArrayType * newArr, int reftype,
 			int len, bool * isNull);
-extern int		array_eq(ArrayType * array1, ArrayType * array2);
+extern int	array_eq(ArrayType * array1, ArrayType * array2);
 extern int
 _LOtransfer(char **destfd, int size, int nitems, char **srcfd,
 			int isSrcLO, int isDestLO);
 
-extern char    *_array_newLO(int *fd, int flag);
+extern char *_array_newLO(int *fd, int flag);
 
 
 /*
@@ -143,20 +143,20 @@ extern char    *_array_newLO(int *fd, int flag);
  * [these names seem to be too generic. Add prefix for arrays? -- AY]
  */
 
-extern int		GetOffset(int n, int dim[], int lb[], int indx[]);
-extern int		getNitems(int n, int a[]);
-extern int		compute_size(int st[], int endp[], int n, int base);
-extern void		mda_get_offset_values(int n, int dist[], int PC[], int span[]);
-extern void		mda_get_range(int n, int span[], int st[], int endp[]);
-extern void		mda_get_prod(int n, int range[], int P[]);
-extern int		tuple2linear(int n, int tup[], int scale[]);
-extern void		array2chunk_coord(int n, int C[], int a_coord[], int c_coord[]);
-extern int		next_tuple(int n, int curr[], int span[]);
+extern int	GetOffset(int n, int dim[], int lb[], int indx[]);
+extern int	getNitems(int n, int a[]);
+extern int	compute_size(int st[], int endp[], int n, int base);
+extern void mda_get_offset_values(int n, int dist[], int PC[], int span[]);
+extern void mda_get_range(int n, int span[], int st[], int endp[]);
+extern void mda_get_prod(int n, int range[], int P[]);
+extern int	tuple2linear(int n, int tup[], int scale[]);
+extern void array2chunk_coord(int n, int C[], int a_coord[], int c_coord[]);
+extern int	next_tuple(int n, int curr[], int span[]);
 
 /*
  * prototypes for functions defined in chunk.c
  */
-extern char    *
+extern char *
 _ChunkArray(int fd, FILE * afd, int ndim, int dim[], int baseSize,
 			int *nbytes, char *chunkfile);
 extern int

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.5 1997/09/07 04:50:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.6 1997/09/08 02:30:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,10 +50,10 @@ int2in(char *num)
 /*
  *		int2out			- converts short to "num"
  */
-char		   *
+char	   *
 int2out(int16 sh)
 {
-	char		   *result;
+	char	   *result;
 
 	result = (char *) palloc(7);/* assumes sign, 5 digits, '\0' */
 	itoa((int) sh, result);
@@ -66,11 +66,11 @@ int2out(int16 sh)
  *		Note:
  *				Fills any nonexistent digits with NULLs.
  */
-int16		   *
+int16	   *
 int28in(char *shs)
 {
-	register		int16(*result)[];
-	int				nums;
+	register	int16(*result)[];
+	int			nums;
 
 	if (shs == NULL)
 		return (NULL);
@@ -95,13 +95,13 @@ int28in(char *shs)
 /*
  *		int28out		- converts internal form to "num num ..."
  */
-char		   *
+char	   *
 int28out(int16(*shs)[])
 {
-	register int	num;
+	register int num;
 	register int16 *sp;
-	register char  *rp;
-	char		   *result;
+	register char *rp;
+	char	   *result;
 
 	if (shs == NULL)
 	{
@@ -130,11 +130,11 @@ int28out(int16(*shs)[])
  *		Note:
  *				Fills any nonexistent digits with NULLs.
  */
-int32		   *
+int32	   *
 int44in(char *input_string)
 {
-	int32		   *foo = (int32 *) palloc(4 * sizeof(int32));
-	register int	i = 0;
+	int32	   *foo = (int32 *) palloc(4 * sizeof(int32));
+	register int i = 0;
 
 	i = sscanf(input_string,
 			   "%d, %d, %d, %d",
@@ -151,16 +151,16 @@ int44in(char *input_string)
 /*
  *		int28out		- converts internal form to "num num ..."
  */
-char		   *
+char	   *
 int44out(int32 an_array[])
 {
-	int				temp = 4;
-	char		   *output_string = NULL;
-	int				i;
+	int			temp = 4;
+	char	   *output_string = NULL;
+	int			i;
 
 	if (temp > 0)
 	{
-		char		   *walk;
+		char	   *walk;
 
 		output_string = (char *) palloc(16 * temp);		/* assume 15 digits +
 														 * sign */
@@ -194,10 +194,10 @@ int4in(char *num)
 /*
  *		int4out			- converts int4 to "num"
  */
-char		   *
+char	   *
 int4out(int32 l)
 {
-	char		   *result;
+	char	   *result;
 
 	result = (char *) palloc(12);		/* assumes sign, 10 digits, '\0' */
 	ltoa(l, result);
@@ -243,108 +243,133 @@ i4toi2(int32 arg1)
  *		intgt			- returns 1 iff arg1 > arg2
  *		intge			- returns 1 iff arg1 >= arg2
  */
-bool			int4eq(int32 arg1, int32 arg2)
+bool
+int4eq(int32 arg1, int32 arg2)
 {
 	return (arg1 == arg2);
 }
-bool			int4ne(int32 arg1, int32 arg2)
+bool
+int4ne(int32 arg1, int32 arg2)
 {
 	return (arg1 != arg2);
 }
-bool			int4lt(int32 arg1, int32 arg2)
+bool
+int4lt(int32 arg1, int32 arg2)
 {
 	return (arg1 < arg2);
 }
-bool			int4le(int32 arg1, int32 arg2)
+bool
+int4le(int32 arg1, int32 arg2)
 {
 	return (arg1 <= arg2);
 }
-bool			int4gt(int32 arg1, int32 arg2)
+bool
+int4gt(int32 arg1, int32 arg2)
 {
 	return (arg1 > arg2);
 }
-bool			int4ge(int32 arg1, int32 arg2)
+bool
+int4ge(int32 arg1, int32 arg2)
 {
 	return (arg1 >= arg2);
 }
 
-bool			int2eq(int16 arg1, int16 arg2)
+bool
+int2eq(int16 arg1, int16 arg2)
 {
 	return (arg1 == arg2);
 }
-bool			int2ne(int16 arg1, int16 arg2)
+bool
+int2ne(int16 arg1, int16 arg2)
 {
 	return (arg1 != arg2);
 }
-bool			int2lt(int16 arg1, int16 arg2)
+bool
+int2lt(int16 arg1, int16 arg2)
 {
 	return (arg1 < arg2);
 }
-bool			int2le(int16 arg1, int16 arg2)
+bool
+int2le(int16 arg1, int16 arg2)
 {
 	return (arg1 <= arg2);
 }
-bool			int2gt(int16 arg1, int16 arg2)
+bool
+int2gt(int16 arg1, int16 arg2)
 {
 	return (arg1 > arg2);
 }
-bool			int2ge(int16 arg1, int16 arg2)
+bool
+int2ge(int16 arg1, int16 arg2)
 {
 	return (arg1 >= arg2);
 }
 
-bool			int24eq(int32 arg1, int32 arg2)
+bool
+int24eq(int32 arg1, int32 arg2)
 {
 	return (arg1 == arg2);
 }
-bool			int24ne(int32 arg1, int32 arg2)
+bool
+int24ne(int32 arg1, int32 arg2)
 {
 	return (arg1 != arg2);
 }
-bool			int24lt(int32 arg1, int32 arg2)
+bool
+int24lt(int32 arg1, int32 arg2)
 {
 	return (arg1 < arg2);
 }
-bool			int24le(int32 arg1, int32 arg2)
+bool
+int24le(int32 arg1, int32 arg2)
 {
 	return (arg1 <= arg2);
 }
-bool			int24gt(int32 arg1, int32 arg2)
+bool
+int24gt(int32 arg1, int32 arg2)
 {
 	return (arg1 > arg2);
 }
-bool			int24ge(int32 arg1, int32 arg2)
+bool
+int24ge(int32 arg1, int32 arg2)
 {
 	return (arg1 >= arg2);
 }
 
-bool			int42eq(int32 arg1, int32 arg2)
+bool
+int42eq(int32 arg1, int32 arg2)
 {
 	return (arg1 == arg2);
 }
-bool			int42ne(int32 arg1, int32 arg2)
+bool
+int42ne(int32 arg1, int32 arg2)
 {
 	return (arg1 != arg2);
 }
-bool			int42lt(int32 arg1, int32 arg2)
+bool
+int42lt(int32 arg1, int32 arg2)
 {
 	return (arg1 < arg2);
 }
-bool			int42le(int32 arg1, int32 arg2)
+bool
+int42le(int32 arg1, int32 arg2)
 {
 	return (arg1 <= arg2);
 }
-bool			int42gt(int32 arg1, int32 arg2)
+bool
+int42gt(int32 arg1, int32 arg2)
 {
 	return (arg1 > arg2);
 }
-bool			int42ge(int32 arg1, int32 arg2)
+bool
+int42ge(int32 arg1, int32 arg2)
 {
 	return (arg1 >= arg2);
 }
 
 
-bool			keyfirsteq(int16 * arg1, int16 arg2)
+bool
+keyfirsteq(int16 * arg1, int16 arg2)
 {
 	return (*arg1 == arg2);
 }
@@ -355,86 +380,106 @@ bool			keyfirsteq(int16 * arg1, int16 arg2)
  *		int[24]mul		- returns arg1 * arg2
  *		int[24]div		- returns arg1 / arg2
  */
-int32			int4um(int32 arg)
+int32
+int4um(int32 arg)
 {
 	return (-arg);
 }
-int32			int4pl(int32 arg1, int32 arg2)
+int32
+int4pl(int32 arg1, int32 arg2)
 {
 	return (arg1 + arg2);
 }
-int32			int4mi(int32 arg1, int32 arg2)
+int32
+int4mi(int32 arg1, int32 arg2)
 {
 	return (arg1 - arg2);
 }
-int32			int4mul(int32 arg1, int32 arg2)
+int32
+int4mul(int32 arg1, int32 arg2)
 {
 	return (arg1 * arg2);
 }
-int32			int4div(int32 arg1, int32 arg2)
+int32
+int4div(int32 arg1, int32 arg2)
 {
 	return (arg1 / arg2);
 }
-int32			int4inc(int32 arg)
+int32
+int4inc(int32 arg)
 {
 	return (arg + (int32) 1);
 }
 
-int16			int2um(int16 arg)
+int16
+int2um(int16 arg)
 {
 	return (-arg);
 }
-int16			int2pl(int16 arg1, int16 arg2)
+int16
+int2pl(int16 arg1, int16 arg2)
 {
 	return (arg1 + arg2);
 }
-int16			int2mi(int16 arg1, int16 arg2)
+int16
+int2mi(int16 arg1, int16 arg2)
 {
 	return (arg1 - arg2);
 }
-int16			int2mul(int16 arg1, int16 arg2)
+int16
+int2mul(int16 arg1, int16 arg2)
 {
 	return (arg1 * arg2);
 }
-int16			int2div(int16 arg1, int16 arg2)
+int16
+int2div(int16 arg1, int16 arg2)
 {
 	return (arg1 / arg2);
 }
-int16			int2inc(int16 arg)
+int16
+int2inc(int16 arg)
 {
 	return (arg + (int16) 1);
 }
 
-int32			int24pl(int32 arg1, int32 arg2)
+int32
+int24pl(int32 arg1, int32 arg2)
 {
 	return (arg1 + arg2);
 }
-int32			int24mi(int32 arg1, int32 arg2)
+int32
+int24mi(int32 arg1, int32 arg2)
 {
 	return (arg1 - arg2);
 }
-int32			int24mul(int32 arg1, int32 arg2)
+int32
+int24mul(int32 arg1, int32 arg2)
 {
 	return (arg1 * arg2);
 }
-int32			int24div(int32 arg1, int32 arg2)
+int32
+int24div(int32 arg1, int32 arg2)
 {
 	return (arg1 / arg2);
 }
 
-int32			int42pl(int32 arg1, int32 arg2)
+int32
+int42pl(int32 arg1, int32 arg2)
 {
 	return (arg1 + arg2);
 }
-int32			int42mi(int32 arg1, int32 arg2)
+int32
+int42mi(int32 arg1, int32 arg2)
 {
 	return (arg1 - arg2);
 }
-int32			int42mul(int32 arg1, int32 arg2)
+int32
+int42mul(int32 arg1, int32 arg2)
 {
 	return (arg1 * arg2);
 }
-int32			int42div(int32 arg1, int32 arg2)
+int32
+int42div(int32 arg1, int32 arg2)
 {
 	return (arg1 / arg2);
 }
@@ -442,19 +487,23 @@ int32			int42div(int32 arg1, int32 arg2)
 /*
  *		int[24]mod		- returns arg1 mod arg2
  */
-int32			int4mod(int32 arg1, int32 arg2)
+int32
+int4mod(int32 arg1, int32 arg2)
 {
 	return (arg1 % arg2);
 }
-int32			int2mod(int16 arg1, int16 arg2)
+int32
+int2mod(int16 arg1, int16 arg2)
 {
 	return (arg1 % arg2);
 }
-int32			int24mod(int32 arg1, int32 arg2)
+int32
+int24mod(int32 arg1, int32 arg2)
 {
 	return (arg1 % arg2);
 }
-int32			int42mod(int32 arg1, int32 arg2)
+int32
+int42mod(int32 arg1, int32 arg2)
 {
 	return (arg1 % arg2);
 }
@@ -465,7 +514,7 @@ int32			int42mod(int32 arg1, int32 arg2)
 int32
 int4fac(int32 arg1)
 {
-	int32			result;
+	int32		result;
 
 	if (arg1 < 1)
 		result = 0;
@@ -478,7 +527,7 @@ int4fac(int32 arg1)
 int32
 int2fac(int16 arg1)
 {
-	int16			result;
+	int16		result;
 
 	if (arg1 < 1)
 		result = 0;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.5 1997/09/07 04:56:01 momjian Exp $
+ * $Id: ibit.h,v 1.6 1997/09/08 02:34:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,9 @@
 
 typedef struct IndexAttributeBitMapData
 {
-	char			bits[(MaxIndexAttributeNumber + MaxBitsPerByte - 1)
-						 /				 MaxBitsPerByte];
-}				IndexAttributeBitMapData;
+	char		bits[(MaxIndexAttributeNumber + MaxBitsPerByte - 1)
+					 /			 MaxBitsPerByte];
+}			IndexAttributeBitMapData;
 
 typedef IndexAttributeBitMapData *IndexAttributeBitMap;
 

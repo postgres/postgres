@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_parg.h,v 1.4 1997/09/07 04:57:01 momjian Exp $
+ * $Id: pg_parg.h,v 1.5 1997/09/08 02:35:21 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -33,10 +33,10 @@
  */
 CATALOG(pg_parg)
 {
-	Oid				parproid;
-	int2			parnum;
-	char			parbound;
-	Oid				partype;
+	Oid			parproid;
+	int2		parnum;
+	char		parbound;
+	Oid			partype;
 } FormData_pg_parg;
 
 /* ----------------

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.17 1997/09/07 04:57:12 momjian Exp $
+ * $Id: pg_type.h,v 1.18 1997/09/08 02:35:32 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -39,17 +39,17 @@
  */
 CATALOG(pg_type) BOOTSTRAP
 {
-	NameData		typname;
-	Oid				typowner;
-	int2			typlen;
+	NameData	typname;
+	Oid			typowner;
+	int2		typlen;
 
 	/*
 	 * typlen is the number of bytes we use to represent a value of this
 	 * type, e.g. 4 for an int4.  But for a variable length type, typlen
 	 * is -1.
 	 */
-	int2			typprtlen;
-	bool			typbyval;
+	int2		typprtlen;
+	bool		typbyval;
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value
@@ -70,11 +70,11 @@ CATALOG(pg_type) BOOTSTRAP
 	 * with the declared length, and typbyval is used somewhere. - tgl
 	 * 97/03/20)
 	 */
-	char			typtype;
-	bool			typisdefined;
-	char			typdelim;
-	Oid				typrelid;
-	Oid				typelem;
+	char		typtype;
+	bool		typisdefined;
+	char		typdelim;
+	Oid			typrelid;
+	Oid			typelem;
 
 	/*
 	 * typelem is NULL if this is not an array type.  If this is an array
@@ -84,11 +84,11 @@ CATALOG(pg_type) BOOTSTRAP
 	 * (Note that zero ("0") rather than _null_ is used in the declarations.
 	 * - tgl 97/03/20)
 	 */
-	regproc			typinput;
-	regproc			typoutput;
-	regproc			typreceive;
-	regproc			typsend;
-	char			typalign;
+	regproc		typinput;
+	regproc		typoutput;
+	regproc		typreceive;
+	regproc		typsend;
+	char		typalign;
 
 	/*
 	 * typalign is the alignment required when storing a value of this
@@ -105,7 +105,7 @@ CATALOG(pg_type) BOOTSTRAP
 	 * (This might actually be flexible depending on machine architecture,
 	 * but I doubt it - BRYANH 96.08).
 	 */
-	text			typdefault; /* VARIABLE LENGTH FIELD */
+	text		typdefault;		/* VARIABLE LENGTH FIELD */
 } TypeTupleFormData;
 
 /* ----------------
@@ -326,9 +326,9 @@ DATA(insert OID = 1296 ( timestamp	 PGUID	4  19 t b t \054 0	0 timestamp_in time
 /*
  * prototypes for functions in pg_type.c
  */
-extern Oid		TypeGet(char *typeName, bool * defined);
-extern Oid		TypeShellMake(char *typeName);
-extern Oid
+extern Oid	TypeGet(char *typeName, bool * defined);
+extern Oid	TypeShellMake(char *typeName);
+extern		Oid
 TypeCreate(char *typeName,
 		   Oid relationOid,
 		   int16 internalSize,
@@ -342,8 +342,8 @@ TypeCreate(char *typeName,
 		   char *elementTypeName,
 		   char *defaultTypeValue,
 		   bool passedByValue, char alignment);
-extern void		TypeRename(char *oldTypeName, char *newTypeName);
-extern char    *makeArrayTypeName(char *typeName);
+extern void TypeRename(char *oldTypeName, char *newTypeName);
+extern char *makeArrayTypeName(char *typeName);
 
 
 #endif							/* PG_TYPE_H */

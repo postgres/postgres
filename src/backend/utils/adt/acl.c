@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.14 1997/09/07 04:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.15 1997/09/08 02:30:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,10 @@
 #include "utils/syscache.h"
 #include "miscadmin.h"
 
-static char    *getid(char *s, char *n);
-static int32	aclitemeq(AclItem * a1, AclItem * a2);
-static int32	aclitemgt(AclItem * a1, AclItem * a2);
-static char    *aclparse(char *s, AclItem * aip, unsigned *modechg);
+static char *getid(char *s, char *n);
+static int32 aclitemeq(AclItem * a1, AclItem * a2);
+static int32 aclitemgt(AclItem * a1, AclItem * a2);
+static char *aclparse(char *s, AclItem * aip, unsigned *modechg);
 
 #define ACL_IDTYPE_GID_KEYWORD	"group"
 #define ACL_IDTYPE_UID_KEYWORD	"user"
@@ -41,11 +41,11 @@ static char    *aclparse(char *s, AclItem * aip, unsigned *modechg);
  *		- loads the identifier into 'name'.  (If no identifier is found, 'name'
  *		  contains an empty string).
  */
-static char    *
+static char *
 getid(char *s, char *n)
 {
-	unsigned		len;
-	char		   *id;
+	unsigned	len;
+	char	   *id;
 
 	Assert(s && n);
 
@@ -82,11 +82,11 @@ getid(char *s, char *n)
  *		  UID/GID, id type identifier and mode type values.
  *		- loads 'modechg' with the mode change flag.
  */
-static char    *
+static char *
 aclparse(char *s, AclItem * aip, unsigned *modechg)
 {
-	HeapTuple		htp;
-	char			name[NAMEDATALEN];
+	HeapTuple	htp;
+	char		name[NAMEDATALEN];
 
 	Assert(s && aip && modechg);
 
@@ -113,18 +113,18 @@ aclparse(char *s, AclItem * aip, unsigned *modechg)
 
 	switch (*s)
 	{
-	case ACL_MODECHG_ADD_CHR:
-		*modechg = ACL_MODECHG_ADD;
-		break;
-	case ACL_MODECHG_DEL_CHR:
-		*modechg = ACL_MODECHG_DEL;
-		break;
-	case ACL_MODECHG_EQL_CHR:
-		*modechg = ACL_MODECHG_EQL;
-		break;
-	default:
-		elog(WARN, "aclparse: mode change flag must use \"%s\"",
-			 ACL_MODECHG_STR);
+		case ACL_MODECHG_ADD_CHR:
+			*modechg = ACL_MODECHG_ADD;
+			break;
+		case ACL_MODECHG_DEL_CHR:
+			*modechg = ACL_MODECHG_DEL;
+			break;
+		case ACL_MODECHG_EQL_CHR:
+			*modechg = ACL_MODECHG_EQL;
+			break;
+		default:
+			elog(WARN, "aclparse: mode change flag must use \"%s\"",
+				 ACL_MODECHG_STR);
 	}
 
 	aip->ai_mode = ACL_NO;
@@ -132,39 +132,39 @@ aclparse(char *s, AclItem * aip, unsigned *modechg)
 	{
 		switch (*s)
 		{
-		case ACL_MODE_AP_CHR:
-			aip->ai_mode |= ACL_AP;
-			break;
-		case ACL_MODE_RD_CHR:
-			aip->ai_mode |= ACL_RD;
-			break;
-		case ACL_MODE_WR_CHR:
-			aip->ai_mode |= ACL_WR;
-			break;
-		case ACL_MODE_RU_CHR:
-			aip->ai_mode |= ACL_RU;
-			break;
-		default:
-			elog(WARN, "aclparse: mode flags must use \"%s\"",
-				 ACL_MODE_STR);
+			case ACL_MODE_AP_CHR:
+				aip->ai_mode |= ACL_AP;
+				break;
+			case ACL_MODE_RD_CHR:
+				aip->ai_mode |= ACL_RD;
+				break;
+			case ACL_MODE_WR_CHR:
+				aip->ai_mode |= ACL_WR;
+				break;
+			case ACL_MODE_RU_CHR:
+				aip->ai_mode |= ACL_RU;
+				break;
+			default:
+				elog(WARN, "aclparse: mode flags must use \"%s\"",
+					 ACL_MODE_STR);
 		}
 	}
 
 	switch (aip->ai_idtype)
 	{
-	case ACL_IDTYPE_UID:
-		htp = SearchSysCacheTuple(USENAME, PointerGetDatum(name),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(htp))
-			elog(WARN, "aclparse: non-existent user \"%s\"", name);
-		aip->ai_id = ((Form_pg_user) GETSTRUCT(htp))->usesysid;
-		break;
-	case ACL_IDTYPE_GID:
-		aip->ai_id = get_grosysid(name);
-		break;
-	case ACL_IDTYPE_WORLD:
-		aip->ai_id = ACL_ID_WORLD;
-		break;
+		case ACL_IDTYPE_UID:
+			htp = SearchSysCacheTuple(USENAME, PointerGetDatum(name),
+									  0, 0, 0);
+			if (!HeapTupleIsValid(htp))
+				elog(WARN, "aclparse: non-existent user \"%s\"", name);
+			aip->ai_id = ((Form_pg_user) GETSTRUCT(htp))->usesysid;
+			break;
+		case ACL_IDTYPE_GID:
+			aip->ai_id = get_grosysid(name);
+			break;
+		case ACL_IDTYPE_WORLD:
+			aip->ai_id = ACL_ID_WORLD;
+			break;
 	}
 
 #ifdef ACLDEBUG_TRACE
@@ -181,11 +181,11 @@ aclparse(char *s, AclItem * aip, unsigned *modechg)
  * RETURNS:
  *		the new Acl
  */
-Acl			   *
+Acl		   *
 makeacl(int n)
 {
-	Acl			   *new_acl;
-	Size			size;
+	Acl		   *new_acl;
+	Size		size;
 
 	if (n < 0)
 		elog(WARN, "makeacl: invalid size: %d\n", n);
@@ -209,11 +209,11 @@ makeacl(int n)
  * RETURNS:
  *		the new AclItem
  */
-AclItem		   *
+AclItem    *
 aclitemin(char *s)
 {
-	unsigned		modechg;
-	AclItem		   *aip;
+	unsigned	modechg;
+	AclItem    *aip;
 
 	if (!s)
 		elog(WARN, "aclitemin: null string");
@@ -239,18 +239,18 @@ aclitemin(char *s)
  * RETURNS:
  *		the new string
  */
-char		   *
+char	   *
 aclitemout(AclItem * aip)
 {
-	register char  *p;
-	char		   *out;
-	HeapTuple		htp;
-	unsigned		i;
-	static AclItem	default_aclitem = {ACL_ID_WORLD,
+	register char *p;
+	char	   *out;
+	HeapTuple	htp;
+	unsigned	i;
+	static AclItem default_aclitem = {ACL_ID_WORLD,
 		ACL_IDTYPE_WORLD,
 	ACL_WORLD_DEFAULT};
-	extern char    *int2out();
-	char		   *tmpname;
+	extern char *int2out();
+	char	   *tmpname;
 
 	if (!aip)
 		aip = &default_aclitem;
@@ -262,33 +262,33 @@ aclitemout(AclItem * aip)
 
 	switch (aip->ai_idtype)
 	{
-	case ACL_IDTYPE_UID:
-		htp = SearchSysCacheTuple(USESYSID, ObjectIdGetDatum(aip->ai_id),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(htp))
-		{
-			char		   *tmp = int2out(aip->ai_id);
+		case ACL_IDTYPE_UID:
+			htp = SearchSysCacheTuple(USESYSID, ObjectIdGetDatum(aip->ai_id),
+									  0, 0, 0);
+			if (!HeapTupleIsValid(htp))
+			{
+				char	   *tmp = int2out(aip->ai_id);
 
-			elog(NOTICE, "aclitemout: usesysid %d not found",
-				 aip->ai_id);
-			strcat(p, tmp);
-			pfree(tmp);
-		}
-		else
-			strncat(p, (char *) &((Form_pg_user)
-								  GETSTRUCT(htp))->usename,
-					sizeof(NameData));
-		break;
-	case ACL_IDTYPE_GID:
-		strcat(p, "group ");
-		tmpname = get_groname(aip->ai_id);
-		strncat(p, tmpname, NAMEDATALEN);
-		break;
-	case ACL_IDTYPE_WORLD:
-		break;
-	default:
-		elog(WARN, "aclitemout: bad ai_idtype: %d", aip->ai_idtype);
-		break;
+				elog(NOTICE, "aclitemout: usesysid %d not found",
+					 aip->ai_id);
+				strcat(p, tmp);
+				pfree(tmp);
+			}
+			else
+				strncat(p, (char *) &((Form_pg_user)
+									  GETSTRUCT(htp))->usename,
+						sizeof(NameData));
+			break;
+		case ACL_IDTYPE_GID:
+			strcat(p, "group ");
+			tmpname = get_groname(aip->ai_id);
+			strncat(p, tmpname, NAMEDATALEN);
+			break;
+		case ACL_IDTYPE_WORLD:
+			break;
+		default:
+			elog(WARN, "aclitemout: bad ai_idtype: %d", aip->ai_idtype);
+			break;
 	}
 	while (*p)
 		++p;
@@ -311,7 +311,7 @@ aclitemout(AclItem * aip)
  * RETURNS:
  *		a boolean value indicating = or >
  */
-static			int32
+static int32
 aclitemeq(AclItem * a1, AclItem * a2)
 {
 	if (!a1 && !a2)
@@ -321,7 +321,7 @@ aclitemeq(AclItem * a1, AclItem * a2)
 	return (a1->ai_idtype == a2->ai_idtype && a1->ai_id == a2->ai_id);
 }
 
-static			int32
+static int32
 aclitemgt(AclItem * a1, AclItem * a2)
 {
 	if (a1 && !a2)
@@ -332,11 +332,11 @@ aclitemgt(AclItem * a1, AclItem * a2)
 			(a1->ai_idtype == a2->ai_idtype && a1->ai_id > a2->ai_id));
 }
 
-Acl			   *
+Acl		   *
 aclownerdefault(AclId ownerid)
 {
-	Acl			   *acl;
-	AclItem		   *aip;
+	Acl		   *acl;
+	AclItem    *aip;
 
 	acl = makeacl(2);
 	aip = ACL_DAT(acl);
@@ -349,11 +349,11 @@ aclownerdefault(AclId ownerid)
 	return (acl);
 }
 
-Acl			   *
+Acl		   *
 acldefault(void)
 {
-	Acl			   *acl;
-	AclItem		   *aip;
+	Acl		   *acl;
+	AclItem    *aip;
 
 	acl = makeacl(1);
 	aip = ACL_DAT(acl);
@@ -363,15 +363,15 @@ acldefault(void)
 	return (acl);
 }
 
-Acl			   *
+Acl		   *
 aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg)
 {
-	Acl			   *new_acl;
-	AclItem		   *old_aip,
-				   *new_aip;
-	unsigned		src,
-					dst,
-					num;
+	Acl		   *new_acl;
+	AclItem    *old_aip,
+			   *new_aip;
+	unsigned	src,
+				dst,
+				num;
 
 	if (!old_acl || ACL_NUM(old_acl) < 1)
 	{
@@ -435,18 +435,18 @@ aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg)
 	}
 	switch (modechg)
 	{
-	case ACL_MODECHG_ADD:
-		new_aip[dst].ai_mode =
-			old_aip[src].ai_mode | mod_aip->ai_mode;
-		break;
-	case ACL_MODECHG_DEL:
-		new_aip[dst].ai_mode =
-			old_aip[src].ai_mode & ~mod_aip->ai_mode;
-		break;
-	case ACL_MODECHG_EQL:
-		new_aip[dst].ai_mode =
-			mod_aip->ai_mode;
-		break;
+		case ACL_MODECHG_ADD:
+			new_aip[dst].ai_mode =
+				old_aip[src].ai_mode | mod_aip->ai_mode;
+			break;
+		case ACL_MODECHG_DEL:
+			new_aip[dst].ai_mode =
+				old_aip[src].ai_mode & ~mod_aip->ai_mode;
+			break;
+		case ACL_MODECHG_EQL:
+			new_aip[dst].ai_mode =
+				mod_aip->ai_mode;
+			break;
 	}
 
 	/*
@@ -458,7 +458,7 @@ aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg)
 	{
 		if (new_aip[dst].ai_mode == 0)
 		{
-			int				i;
+			int			i;
 
 			for (i = dst + 1; i < num; i++)
 			{
@@ -480,21 +480,21 @@ aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg)
  * aclinsert
  *
  */
-Acl			   *
+Acl		   *
 aclinsert(Acl * old_acl, AclItem * mod_aip)
 {
 	return (aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL));
 }
 
-Acl			   *
+Acl		   *
 aclremove(Acl * old_acl, AclItem * mod_aip)
 {
-	Acl			   *new_acl;
-	AclItem		   *old_aip,
-				   *new_aip;
-	unsigned		dst,
-					old_num,
-					new_num;
+	Acl		   *new_acl;
+	AclItem    *old_aip,
+			   *new_aip;
+	unsigned	dst,
+				old_num,
+				new_num;
 
 	if (!old_acl || ACL_NUM(old_acl) < 1)
 	{
@@ -549,9 +549,9 @@ aclremove(Acl * old_acl, AclItem * mod_aip)
 int32
 aclcontains(Acl * acl, AclItem * aip)
 {
-	unsigned		i,
-					num;
-	AclItem		   *aidat;
+	unsigned	i,
+				num;
+	AclItem    *aidat;
 
 	if (!acl || !aip || ((num = ACL_NUM(acl)) < 1))
 		return (0);
@@ -574,12 +574,12 @@ aclcontains(Acl * acl, AclItem * aip)
  * the CALLER is reponsible for free'ing the string returned
  */
 
-char		   *
+char	   *
 aclmakepriv(char *old_privlist, char new_priv)
 {
-	char		   *priv;
-	int				i;
-	int				l;
+	char	   *priv;
+	int			i;
+	int			l;
 
 	Assert(strlen(old_privlist) < 5);
 	priv = malloc(5); /* at most "rwaR" */ ;
@@ -628,10 +628,10 @@ aclmakepriv(char *old_privlist, char new_priv)
  * the CALLER is responsible for freeing the memory allocated
  */
 
-char		   *
+char	   *
 aclmakeuser(char *user_type, char *user)
 {
-	char		   *user_list;
+	char	   *user_list;
 
 	user_list = malloc(strlen(user) + 3);
 	sprintf(user_list, "%s %s", user_type, user);
@@ -652,12 +652,12 @@ aclmakeuser(char *user_type, char *user)
  * then calling aclparse;
  */
 
-ChangeACLStmt  *
+ChangeACLStmt *
 makeAclStmt(char *privileges, List * rel_list, char *grantee,
 			char grant_or_revoke)
 {
-	ChangeACLStmt  *n = makeNode(ChangeACLStmt);
-	char			str[MAX_PARSE_BUFFER];
+	ChangeACLStmt *n = makeNode(ChangeACLStmt);
+	char		str[MAX_PARSE_BUFFER];
 
 	n->aclitem = (AclItem *) palloc(sizeof(AclItem));
 	/* the grantee string is "G <group_name>", "U  <user_name>", or "ALL" */

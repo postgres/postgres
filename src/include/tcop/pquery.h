@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.5 1997/09/07 05:01:49 momjian Exp $
+ * $Id: pquery.h,v 1.6 1997/09/08 02:39:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@ extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
 								  CommandDest dest);
 
 */
-extern EState  *CreateExecutorState(void);
+extern EState *CreateExecutorState(void);
 
 
 extern void

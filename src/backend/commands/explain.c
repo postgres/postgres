@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.11 1997/09/07 04:40:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.12 1997/09/08 02:22:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +28,13 @@
 typedef struct ExplainState
 {
 	/* options */
-	bool			printCost;	/* print cost */
-	bool			printNodes; /* do nodeToString() instead */
+	bool		printCost;		/* print cost */
+	bool		printNodes;		/* do nodeToString() instead */
 	/* other states */
-	List		   *rtable;		/* range table */
-}				ExplainState;
+	List	   *rtable;			/* range table */
+}			ExplainState;
 
-static char    *Explain_PlanToString(Plan * plan, ExplainState * es);
+static char *Explain_PlanToString(Plan * plan, ExplainState * es);
 
 /*
  * ExplainQuery -
@@ -44,15 +44,15 @@ static char    *Explain_PlanToString(Plan * plan, ExplainState * es);
 void
 ExplainQuery(Query * query, bool verbose, CommandDest dest)
 {
-	char		   *s = NULL,
-				   *s2;
-	Plan		   *plan;
-	ExplainState   *es;
-	int				len;
+	char	   *s = NULL,
+			   *s2;
+	Plan	   *plan;
+	ExplainState *es;
+	int			len;
 
 	if (IsAbortedTransactionBlockState())
 	{
-		char		   *tag = "*ABORT STATE*";
+		char	   *tag = "*ABORT STATE*";
 
 		EndCommand(tag, dest);
 
@@ -118,9 +118,9 @@ ExplainQuery(Query * query, bool verbose, CommandDest dest)
 static void
 explain_outNode(StringInfo str, Plan * plan, int indent, ExplainState * es)
 {
-	char		   *pname;
-	char			buf[1000];
-	int				i;
+	char	   *pname;
+	char		buf[1000];
+	int			i;
 
 	if (plan == NULL)
 	{
@@ -130,51 +130,51 @@ explain_outNode(StringInfo str, Plan * plan, int indent, ExplainState * es)
 
 	switch (nodeTag(plan))
 	{
-	case T_Result:
-		pname = "Result";
-		break;
-	case T_Append:
-		pname = "Append";
-		break;
-	case T_NestLoop:
-		pname = "Nested Loop";
-		break;
-	case T_MergeJoin:
-		pname = "Merge Join";
-		break;
-	case T_HashJoin:
-		pname = "Hash Join";
-		break;
-	case T_SeqScan:
-		pname = "Seq Scan";
-		break;
-	case T_IndexScan:
-		pname = "Index Scan";
-		break;
-	case T_Temp:
-		pname = "Temp Scan";
-		break;
-	case T_Sort:
-		pname = "Sort";
-		break;
-	case T_Group:
-		pname = "Group";
-		break;
-	case T_Agg:
-		pname = "Aggregate";
-		break;
-	case T_Unique:
-		pname = "Unique";
-		break;
-	case T_Hash:
-		pname = "Hash";
-		break;
-	case T_Tee:
-		pname = "Tee";
-		break;
-	default:
-		pname = "";
-		break;
+		case T_Result:
+			pname = "Result";
+			break;
+		case T_Append:
+			pname = "Append";
+			break;
+		case T_NestLoop:
+			pname = "Nested Loop";
+			break;
+		case T_MergeJoin:
+			pname = "Merge Join";
+			break;
+		case T_HashJoin:
+			pname = "Hash Join";
+			break;
+		case T_SeqScan:
+			pname = "Seq Scan";
+			break;
+		case T_IndexScan:
+			pname = "Index Scan";
+			break;
+		case T_Temp:
+			pname = "Temp Scan";
+			break;
+		case T_Sort:
+			pname = "Sort";
+			break;
+		case T_Group:
+			pname = "Group";
+			break;
+		case T_Agg:
+			pname = "Aggregate";
+			break;
+		case T_Unique:
+			pname = "Unique";
+			break;
+		case T_Hash:
+			pname = "Hash";
+			break;
+		case T_Tee:
+			pname = "Tee";
+			break;
+		default:
+			pname = "";
+			break;
 	}
 
 	for (i = 0; i < indent; i++)
@@ -183,18 +183,18 @@ explain_outNode(StringInfo str, Plan * plan, int indent, ExplainState * es)
 	appendStringInfo(str, pname);
 	switch (nodeTag(plan))
 	{
-	case T_SeqScan:
-	case T_IndexScan:
-		if (((Scan *) plan)->scanrelid > 0)
-		{
-			RangeTblEntry  *rte = nth(((Scan *) plan)->scanrelid - 1, es->rtable);
+		case T_SeqScan:
+		case T_IndexScan:
+			if (((Scan *) plan)->scanrelid > 0)
+			{
+				RangeTblEntry *rte = nth(((Scan *) plan)->scanrelid - 1, es->rtable);
 
-			sprintf(buf, " on %s", rte->refname);
-			appendStringInfo(str, buf);
-		}
-		break;
-	default:
-		break;
+				sprintf(buf, " on %s", rte->refname);
+				appendStringInfo(str, buf);
+			}
+			break;
+		default:
+			break;
 	}
 	if (es->printCost)
 	{
@@ -224,11 +224,11 @@ explain_outNode(StringInfo str, Plan * plan, int indent, ExplainState * es)
 	return;
 }
 
-static char    *
+static char *
 Explain_PlanToString(Plan * plan, ExplainState * es)
 {
-	StringInfo		str;
-	char		   *s;
+	StringInfo	str;
+	char	   *s;
 
 	if (plan == NULL)
 		return "";

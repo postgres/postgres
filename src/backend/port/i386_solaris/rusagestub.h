@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rusagestub.h,v 1.2 1997/09/07 04:46:04 momjian Exp $
+ * $Id: rusagestub.h,v 1.3 1997/09/08 02:26:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,10 @@
 
 struct rusage
 {
-	struct timeval	ru_utime;	/* user time used */
-	struct timeval	ru_stime;	/* system time used */
+	struct timeval ru_utime;	/* user time used */
+	struct timeval ru_stime;	/* system time used */
 };
 
-extern int		getrusage(int who, struct rusage * rusage);
+extern int	getrusage(int who, struct rusage * rusage);
 
 #endif							/* RUSAGESTUB_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.3 1997/09/07 05:04:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.4 1997/09/08 02:40:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,12 @@
 Oid
 importFile(PGconn * conn, char *filename)
 {
-	Oid				lobjId;
-	int				lobj_fd;
-	char			buf[BUFSIZE];
-	int				nbytes,
-					tmp;
-	int				fd;
+	Oid			lobjId;
+	int			lobj_fd;
+	char		buf[BUFSIZE];
+	int			nbytes,
+				tmp;
+	int			fd;
 
 	/*
 	 * open the file to be read in
@@ -73,10 +73,10 @@ importFile(PGconn * conn, char *filename)
 void
 pickout(PGconn * conn, Oid lobjId, int start, int len)
 {
-	int				lobj_fd;
-	char		   *buf;
-	int				nbytes;
-	int				nread;
+	int			lobj_fd;
+	char	   *buf;
+	int			nbytes;
+	int			nread;
 
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
@@ -103,11 +103,11 @@ pickout(PGconn * conn, Oid lobjId, int start, int len)
 void
 overwrite(PGconn * conn, Oid lobjId, int start, int len)
 {
-	int				lobj_fd;
-	char		   *buf;
-	int				nbytes;
-	int				nwritten;
-	int				i;
+	int			lobj_fd;
+	char	   *buf;
+	int			nbytes;
+	int			nwritten;
+	int			i;
 
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
@@ -142,11 +142,11 @@ overwrite(PGconn * conn, Oid lobjId, int start, int len)
 void
 exportFile(PGconn * conn, Oid lobjId, char *filename)
 {
-	int				lobj_fd;
-	char			buf[BUFSIZE];
-	int				nbytes,
-					tmp;
-	int				fd;
+	int			lobj_fd;
+	char		buf[BUFSIZE];
+	int			nbytes,
+				tmp;
+	int			fd;
 
 	/*
 	 * create an inversion "object"
@@ -197,12 +197,12 @@ exit_nicely(PGconn * conn)
 int
 main(int argc, char **argv)
 {
-	char		   *in_filename,
-				   *out_filename;
-	char		   *database;
-	Oid				lobjOid;
-	PGconn		   *conn;
-	PGresult	   *res;
+	char	   *in_filename,
+			   *out_filename;
+	char	   *database;
+	Oid			lobjOid;
+	PGconn	   *conn;
+	PGresult   *res;
 
 	if (argc != 4)
 	{

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datum.h,v 1.3 1997/09/07 05:02:17 momjian Exp $
+ * $Id: datum.h,v 1.4 1997/09/08 02:39:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,26 +38,26 @@
  * datumGetSize
  * find the "real" length of a datum
  */
-extern Size		datumGetSize(Datum value, Oid type, bool byVal, Size len);
+extern Size datumGetSize(Datum value, Oid type, bool byVal, Size len);
 
 /*---------------
  * datumCopy
  * make a copy of a datum.
  */
-extern Datum	datumCopy(Datum value, Oid type, bool byVal, Size len);
+extern Datum datumCopy(Datum value, Oid type, bool byVal, Size len);
 
 /*---------------
  * datumFree
  * free space that *might* have been palloced by "datumCopy"
  */
-extern void		datumFree(Datum value, Oid type, bool byVal, Size len);
+extern void datumFree(Datum value, Oid type, bool byVal, Size len);
 
 /*---------------
  * datumIsEqual
  * return true if thwo datums are equal, false otherwise.
  * XXX : See comments in the code for restrictions!
  */
-extern bool
+extern		bool
 datumIsEqual(Datum value1, Datum value2, Oid type,
 			 bool byVal, Size len);
 

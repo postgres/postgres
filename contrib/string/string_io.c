@@ -45,15 +45,15 @@
  *		representation of data.
  */
 
-char		   *
+char	   *
 string_output(char *data, int size)
 {
 	register unsigned char c,
-				   *p,
-				   *r,
-				   *result;
-	register int	l,
-					len;
+			   *p,
+			   *r,
+			   *result;
+	register int l,
+				len;
 
 	if (data == NULL)
 	{
@@ -74,23 +74,23 @@ string_output(char *data, int size)
 	{
 		switch (*p)
 		{
-		case '\\':
-		case '"':
-		case '{':
-		case '}':
-		case '\b':
-		case '\f':
-		case '\n':
-		case '\r':
-		case '\t':
-		case '\v':
-			len++;
-			break;
-		default:
-			if (NOTPRINTABLE(*p))
-			{
-				len += 3;
-			}
+			case '\\':
+			case '"':
+			case '{':
+			case '}':
+			case '\b':
+			case '\f':
+			case '\n':
+			case '\r':
+			case '\t':
+			case '\v':
+				len++;
+				break;
+			default:
+				if (NOTPRINTABLE(*p))
+				{
+					len += 3;
+				}
 		}
 	}
 	len++;
@@ -101,53 +101,53 @@ string_output(char *data, int size)
 	{
 		switch (c)
 		{
-		case '\\':
-		case '"':
-		case '{':
-		case '}':
-			*r++ = '\\';
-			*r++ = c;
-			break;
-		case '\b':
-			*r++ = '\\';
-			*r++ = 'b';
-			break;
-		case '\f':
-			*r++ = '\\';
-			*r++ = 'f';
-			break;
-		case '\n':
-			*r++ = '\\';
-			*r++ = 'n';
-			break;
-		case '\r':
-			*r++ = '\\';
-			*r++ = 'r';
-			break;
-		case '\t':
-			*r++ = '\\';
-			*r++ = 't';
-			break;
-		case '\v':
-			*r++ = '\\';
-			*r++ = 'v';
-			break;
-		default:
-			if (NOTPRINTABLE(c))
-			{
-				*r = '\\';
-				r += 3;
-				*r-- = DIGIT(c & 07);
-				c >>= 3;
-				*r-- = DIGIT(c & 07);
-				c >>= 3;
-				*r = DIGIT(c & 03);
-				r += 3;
-			}
-			else
-			{
+			case '\\':
+			case '"':
+			case '{':
+			case '}':
+				*r++ = '\\';
 				*r++ = c;
-			}
+				break;
+			case '\b':
+				*r++ = '\\';
+				*r++ = 'b';
+				break;
+			case '\f':
+				*r++ = '\\';
+				*r++ = 'f';
+				break;
+			case '\n':
+				*r++ = '\\';
+				*r++ = 'n';
+				break;
+			case '\r':
+				*r++ = '\\';
+				*r++ = 'r';
+				break;
+			case '\t':
+				*r++ = '\\';
+				*r++ = 't';
+				break;
+			case '\v':
+				*r++ = '\\';
+				*r++ = 'v';
+				break;
+			default:
+				if (NOTPRINTABLE(c))
+				{
+					*r = '\\';
+					r += 3;
+					*r-- = DIGIT(c & 07);
+					c >>= 3;
+					*r-- = DIGIT(c & 07);
+					c >>= 3;
+					*r = DIGIT(c & 03);
+					r += 3;
+				}
+				else
+				{
+					*r++ = c;
+				}
 		}
 	}
 	*r = '\0';
@@ -181,13 +181,13 @@ string_output(char *data, int size)
  *		a pointer to the new string or the header.
  */
 
-char		   *
+char	   *
 string_input(char *str, int size, int hdrsize, int *rtn_size)
 {
 	register unsigned char *p,
-				   *r;
-	unsigned char  *result;
-	int				len;
+			   *r;
+	unsigned char *result;
+	int			len;
 
 	if ((str == NULL) || (hdrsize < 0))
 	{
@@ -247,48 +247,48 @@ string_input(char *str, int size, int hdrsize, int *rtn_size)
 		{
 			switch (c = *p++)
 			{
-			case '\0':
-				p--;
-				break;
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-				c = VALUE(c);
-				if (isdigit(*p))
-				{
-					c = (c << 3) + VALUE(*p++);
-				}
-				if (isdigit(*p))
-				{
-					c = (c << 3) + VALUE(*p++);
-				}
-				*r++ = c;
-				break;
-			case 'b':
-				*r++ = '\b';
-				break;
-			case 'f':
-				*r++ = '\f';
-				break;
-			case 'n':
-				*r++ = '\n';
-				break;
-			case 'r':
-				*r++ = '\r';
-				break;
-			case 't':
-				*r++ = '\t';
-				break;
-			case 'v':
-				*r++ = '\v';
-				break;
-			default:
-				*r++ = c;
+				case '\0':
+					p--;
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+					c = VALUE(c);
+					if (isdigit(*p))
+					{
+						c = (c << 3) + VALUE(*p++);
+					}
+					if (isdigit(*p))
+					{
+						c = (c << 3) + VALUE(*p++);
+					}
+					*r++ = c;
+					break;
+				case 'b':
+					*r++ = '\b';
+					break;
+				case 'f':
+					*r++ = '\f';
+					break;
+				case 'n':
+					*r++ = '\n';
+					break;
+				case 'r':
+					*r++ = '\r';
+					break;
+				case 't':
+					*r++ = '\t';
+					break;
+				case 'v':
+					*r++ = '\v';
+					break;
+				default:
+					*r++ = c;
 			}
 		}
 		else
@@ -300,10 +300,10 @@ string_input(char *str, int size, int hdrsize, int *rtn_size)
 	return ((char *) result);
 }
 
-char		   *
+char	   *
 c_charout(int32 c)
 {
-	char			str[2];
+	char		str[2];
 
 	str[0] = (char) c;
 	str[1] = '\0';
@@ -311,25 +311,25 @@ c_charout(int32 c)
 	return (string_output(str, 1));
 }
 
-char		   *
+char	   *
 c_char2out(uint16 s)
 {
 	return (string_output((char *) &s, 2));
 }
 
-char		   *
+char	   *
 c_char4out(uint32 s)
 {
 	return (string_output((char *) &s, 4));
 }
 
-char		   *
+char	   *
 c_char8out(char *s)
 {
 	return (string_output(s, 8));
 }
 
-char		   *
+char	   *
 c_char16out(char *s)
 {
 	return (string_output(s, 16));
@@ -339,11 +339,11 @@ c_char16out(char *s)
  * This can be used for text, bytea, SET and unknown data types
  */
 
-char		   *
+char	   *
 c_textout(struct varlena * vlena)
 {
-	int				len = 0;
-	char		   *s = NULL;
+	int			len = 0;
+	char	   *s = NULL;
 
 	if (vlena)
 	{
@@ -357,10 +357,10 @@ c_textout(struct varlena * vlena)
  * This can be used for varchar and bpchar strings
  */
 
-char		   *
+char	   *
 c_varcharout(char *s)
 {
-	int				len;
+	int			len;
 
 	if (s)
 	{
@@ -375,7 +375,7 @@ struct varlena *
 c_textin(char *str)
 {
 	struct varlena *result;
-	int				len;
+	int			len;
 
 	if (str == NULL)
 	{
@@ -388,7 +388,7 @@ c_textin(char *str)
 	return (result);
 }
 
-char		   *
+char	   *
 c_char16in(char *str)
 {
 	return (string_input(str, 16, 0, NULL));

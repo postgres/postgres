@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.9 1997/09/07 04:50:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.10 1997/09/08 02:31:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ eqsel(Oid opid,
 	  char *value,
 	  int32 flag)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	if (NONVALUE(attno) || NONVALUE(relid))
@@ -77,7 +77,7 @@ neqsel(Oid opid,
 	   char *value,
 	   int32 flag)
 {
-	float64			result;
+	float64		result;
 
 	result = eqsel(opid, relid, attno, value, flag);
 	*result = 1.0 - *result;
@@ -95,14 +95,14 @@ intltsel(Oid opid,
 		 int32 value,
 		 int32 flag)
 {
-	float64			result;
-	char		   *highchar,
-				   *lowchar;
-	long			val,
-					high,
-					low,
-					top,
-					bottom;
+	float64		result;
+	char	   *highchar,
+			   *lowchar;
+	long		val,
+				high,
+				low,
+				top,
+				bottom;
 
 	result = (float64) palloc(sizeof(float64data));
 	if (NONVALUE(attno) || NONVALUE(relid))
@@ -122,7 +122,7 @@ intltsel(Oid opid,
 		if ((flag & SEL_RIGHT && val < low) ||
 			(!(flag & SEL_RIGHT) && val > high))
 		{
-			float32data		nvals;
+			float32data nvals;
 
 			nvals = getattdisbursion(relid, (int) attno);
 			if (nvals == 0)
@@ -167,8 +167,8 @@ intgtsel(Oid opid,
 		 int32 value,
 		 int32 flag)
 {
-	float64			result;
-	int				notflag;
+	float64		result;
+	int			notflag;
 
 	if (flag & 0)
 		notflag = flag & ~SEL_RIGHT;
@@ -188,10 +188,10 @@ eqjoinsel(Oid opid,
 		  Oid relid2,
 		  AttrNumber attno2)
 {
-	float64			result;
-	float32data		num1,
-					num2,
-					max;
+	float64		result;
+	float32data num1,
+				num2,
+				max;
 
 	result = (float64) palloc(sizeof(float64data));
 	if (NONVALUE(attno1) || NONVALUE(relid1) ||
@@ -220,7 +220,7 @@ neqjoinsel(Oid opid,
 		   Oid relid2,
 		   AttrNumber attno2)
 {
-	float64			result;
+	float64		result;
 
 	result = eqjoinsel(opid, relid1, attno1, relid2, attno2);
 	*result = 1.0 - *result;
@@ -237,7 +237,7 @@ intltjoinsel(Oid opid,
 			 Oid relid2,
 			 AttrNumber attno2)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 3.0;
@@ -254,7 +254,7 @@ intgtjoinsel(Oid opid,
 			 Oid relid2,
 			 AttrNumber attno2)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 3.0;
@@ -275,12 +275,12 @@ intgtjoinsel(Oid opid,
  *				more efficient.  However, the cast will not work
  *				for gethilokey which accesses stahikey in struct statistic.
  */
-static			float32data
+static float32data
 getattdisbursion(Oid relid, AttrNumber attnum)
 {
-	HeapTuple		atp;
-	float32data		nvals;
-	int32			ntuples;
+	HeapTuple	atp;
+	float32data nvals;
+	int32		ntuples;
 
 	atp = SearchSysCacheTuple(ATTNUM,
 							  ObjectIdGetDatum(relid),
@@ -342,8 +342,8 @@ gethilokey(Oid relid,
 		{0, Anum_pg_statistic_staattnum, F_INT2EQ},
 		{0, Anum_pg_statistic_staop, F_OIDEQ}
 	};
-	bool			isnull;
-	HeapTuple		tuple;
+	bool		isnull;
+	HeapTuple	tuple;
 
 	rdesc = heap_openr(StatisticRelationName);
 
@@ -392,8 +392,8 @@ btreesel(Oid operatorObjectId,
 		 int32 nIndexKeys,
 		 Oid indexrelid)
 {
-	float64			result;
-	float64data		resultData;
+	float64		result;
+	float64data resultData;
 
 	if (FunctionalSelectivity(nIndexKeys, attributeNumber))
 	{
@@ -434,11 +434,11 @@ btreenpage(Oid operatorObjectId,
 		   int32 nIndexKeys,
 		   Oid indexrelid)
 {
-	float64			temp,
-					result;
-	float64data		tempData;
-	HeapTuple		atp;
-	int				npage;
+	float64		temp,
+				result;
+	float64data tempData;
+	HeapTuple	atp;
+	int			npage;
 
 	if (FunctionalSelectivity(nIndexKeys, attributeNumber))
 	{
@@ -486,10 +486,10 @@ hashsel(Oid operatorObjectId,
 		Oid indexrelid)
 {
 
-	float64			result;
-	float64data		resultData;
-	HeapTuple		atp;
-	int				ntuples;
+	float64		result;
+	float64data resultData;
+	HeapTuple	atp;
+	int			ntuples;
 
 	if (FunctionalSelectivity(nIndexKeys, attributeNumber))
 	{
@@ -549,12 +549,12 @@ hashnpage(Oid operatorObjectId,
 		  int32 nIndexKeys,
 		  Oid indexrelid)
 {
-	float64			temp,
-					result;
-	float64data		tempData;
-	HeapTuple		atp;
-	int				npage;
-	int				ntuples;
+	float64		temp,
+				result;
+	float64data tempData;
+	HeapTuple	atp;
+	int			npage;
+	int			ntuples;
 
 	atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(indexrelid),
 							  0, 0, 0);

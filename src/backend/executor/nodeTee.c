@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.7 1997/09/07 04:41:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.8 1997/09/08 02:22:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,12 +47,12 @@
 bool
 ExecInitTee(Tee * node, EState * currentEstate, Plan * parent)
 {
-	TeeState	   *teeState;
-	Plan		   *outerPlan;
-	int				len;
-	Relation		bufferRel;
-	TupleDesc		tupType;
-	EState		   *estate;
+	TeeState   *teeState;
+	Plan	   *outerPlan;
+	int			len;
+	Relation	bufferRel;
+	TupleDesc	tupType;
+	EState	   *estate;
 
 	/*
 	 * it is possible that the Tee has already been initialized since it
@@ -154,7 +154,7 @@ ExecInitTee(Tee * node, EState * currentEstate, Plan * parent)
 
 	if (node->teeTableName[0] != '\0')
 	{
-		Relation		r;
+		Relation	r;
 
 		teeState->tee_bufferRelname = pstrdup(node->teeTableName);
 
@@ -168,7 +168,7 @@ ExecInitTee(Tee * node, EState * currentEstate, Plan * parent)
 			bufferRel = heap_openr(teeState->tee_bufferRelname);
 		else
 			bufferRel = heap_open(heap_create(teeState->tee_bufferRelname,
-											   /*FIX */ NULL,
+											   /* FIX */ NULL,
 											  'n',
 											  DEFAULT_SMGR,
 											  tupType));
@@ -232,10 +232,10 @@ ExecCountSlotsTee(Tee * node)
 static void
 initTeeScanDescs(Tee * node)
 {
-	TeeState	   *teeState;
-	Relation		bufferRel;
-	ScanDirection	dir;
-	MemoryContext	orig;
+	TeeState   *teeState;
+	Relation	bufferRel;
+	ScanDirection dir;
+	MemoryContext orig;
 
 	teeState = node->teestate;
 	if (teeState->tee_leftScanDesc && teeState->tee_rightScanDesc)
@@ -292,20 +292,20 @@ initTeeScanDescs(Tee * node)
 TupleTableSlot *
 ExecTee(Tee * node, Plan * parent)
 {
-	EState		   *estate;
-	TeeState	   *teeState;
-	int				leftPlace,
-					rightPlace,
-					lastPlace;
-	int				branch;
+	EState	   *estate;
+	TeeState   *teeState;
+	int			leftPlace,
+				rightPlace,
+				lastPlace;
+	int			branch;
 	TupleTableSlot *result;
 	TupleTableSlot *slot;
-	Plan		   *childNode;
-	ScanDirection	dir;
-	HeapTuple		heapTuple;
-	Relation		bufferRel;
-	HeapScanDesc	scanDesc;
-	Buffer			buffer;
+	Plan	   *childNode;
+	ScanDirection dir;
+	HeapTuple	heapTuple;
+	Relation	bufferRel;
+	HeapScanDesc scanDesc;
+	Buffer		buffer;
 
 	estate = ((Plan *) node)->state;
 	teeState = node->teestate;
@@ -369,7 +369,7 @@ ExecTee(Tee * node, Plan * parent)
 				 * move the scandesc forward so we don't re-read this
 				 * tuple later
 				 */
-				HeapTuple		throwAway;
+				HeapTuple	throwAway;
 
 				/* Buffer buffer; */
 				throwAway = heap_getnext(scanDesc,
@@ -446,9 +446,9 @@ void
 ExecTeeReScan(Tee * node, ExprContext * exprCtxt, Plan * parent)
 {
 
-	EState		   *estate;
-	TeeState	   *teeState;
-	ScanDirection	dir;
+	EState	   *estate;
+	TeeState   *teeState;
+	ScanDirection dir;
 
 	estate = ((Plan *) node)->state;
 	teeState = node->teestate;
@@ -492,13 +492,13 @@ ExecTeeReScan(Tee * node, ExprContext * exprCtxt, Plan * parent)
 void
 ExecEndTee(Tee * node, Plan * parent)
 {
-	EState		   *estate;
-	TeeState	   *teeState;
-	int				leftPlace,
-					rightPlace,
-					lastPlace;
-	Relation		bufferRel;
-	MemoryContext	orig;
+	EState	   *estate;
+	TeeState   *teeState;
+	int			leftPlace,
+				rightPlace,
+				lastPlace;
+	Relation	bufferRel;
+	MemoryContext orig;
 
 	estate = ((Plan *) node)->state;
 	teeState = node->teestate;

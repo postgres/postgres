@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.13 1997/09/07 04:40:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.14 1997/09/08 02:22:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,19 +39,19 @@
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 
 /* non-export function prototypes */
-static void		CheckPredicate(List * predList, List * rangeTable, Oid baseRelOid);
+static void CheckPredicate(List * predList, List * rangeTable, Oid baseRelOid);
 static void
 CheckPredExpr(Node * predicate, List * rangeTable,
 			  Oid baseRelOid);
 static void
-				CheckPredClause(Expr * predicate, List * rangeTable, Oid baseRelOid);
+			CheckPredClause(Expr * predicate, List * rangeTable, Oid baseRelOid);
 static void
 FuncIndexArgs(IndexElem * funcIndex, AttrNumber * attNumP,
 			  Oid * argTypes, Oid * opOidP, Oid relId);
 static void
 NormIndexAttrs(List * attList, AttrNumber * attNumP,
 			   Oid * opOidP, Oid relId);
-static char    *GetDefaultOpClass(Oid atttypid);
+static char *GetDefaultOpClass(Oid atttypid);
 
 /*
  * DefineIndex --
@@ -76,18 +76,18 @@ DefineIndex(char *heapRelationName,
 			Expr * predicate,
 			List * rangetable)
 {
-	Oid			   *classObjectId;
-	Oid				accessMethodId;
-	Oid				relationId;
-	int				numberOfAttributes;
-	AttrNumber	   *attributeNumberA;
-	HeapTuple		tuple;
-	uint16			parameterCount = 0;
-	Datum		   *parameterA = NULL;
-	FuncIndexInfo	fInfo;
-	List		   *cnfPred = NULL;
-	bool			lossy = FALSE;
-	List		   *pl;
+	Oid		   *classObjectId;
+	Oid			accessMethodId;
+	Oid			relationId;
+	int			numberOfAttributes;
+	AttrNumber *attributeNumberA;
+	HeapTuple	tuple;
+	uint16		parameterCount = 0;
+	Datum	   *parameterA = NULL;
+	FuncIndexInfo fInfo;
+	List	   *cnfPred = NULL;
+	bool		lossy = FALSE;
+	List	   *pl;
 
 	/*
 	 * Handle attributes
@@ -138,7 +138,7 @@ DefineIndex(char *heapRelationName,
 	 */
 	foreach(pl, parameterList)
 	{
-		ParamString    *param = (ParamString *) lfirst(pl);
+		ParamString *param = (ParamString *) lfirst(pl);
 
 		if (!strcasecmp(param->name, "islossy"))
 			lossy = TRUE;
@@ -162,8 +162,8 @@ DefineIndex(char *heapRelationName,
 
 	if (IsFuncIndex(attributeList))
 	{
-		IndexElem	   *funcIndex = lfirst(attributeList);
-		int				nargs;
+		IndexElem  *funcIndex = lfirst(attributeList);
+		int			nargs;
 
 		nargs = length(funcIndex->args);
 		if (nargs > INDEX_MAX_KEYS)
@@ -225,23 +225,23 @@ DefineIndex(char *heapRelationName,
 void
 ExtendIndex(char *indexRelationName, Expr * predicate, List * rangetable)
 {
-	Oid			   *classObjectId;
-	Oid				accessMethodId;
-	Oid				indexId,
-					relationId;
-	Oid				indproc;
-	int				numberOfAttributes;
-	AttrNumber	   *attributeNumberA;
-	HeapTuple		tuple;
-	FuncIndexInfo	fInfo;
-	FuncIndexInfo  *funcInfo = NULL;
-	IndexTupleForm	index;
-	Node		   *oldPred = NULL;
-	List		   *cnfPred = NULL;
-	PredInfo	   *predInfo;
-	Relation		heapRelation;
-	Relation		indexRelation;
-	int				i;
+	Oid		   *classObjectId;
+	Oid			accessMethodId;
+	Oid			indexId,
+				relationId;
+	Oid			indproc;
+	int			numberOfAttributes;
+	AttrNumber *attributeNumberA;
+	HeapTuple	tuple;
+	FuncIndexInfo fInfo;
+	FuncIndexInfo *funcInfo = NULL;
+	IndexTupleForm index;
+	Node	   *oldPred = NULL;
+	List	   *cnfPred = NULL;
+	PredInfo   *predInfo;
+	Relation	heapRelation;
+	Relation	indexRelation;
+	int			i;
 
 	/*
 	 * compute index relation id and access method id
@@ -283,7 +283,7 @@ ExtendIndex(char *indexRelationName, Expr * predicate, List * rangetable)
 
 	if (VARSIZE(&index->indpred) != 0)
 	{
-		char		   *predString;
+		char	   *predString;
 
 		predString = fmgr(F_TEXTOUT, &index->indpred);
 		oldPred = stringToNode(predString);
@@ -366,7 +366,7 @@ ExtendIndex(char *indexRelationName, Expr * predicate, List * rangetable)
 static void
 CheckPredicate(List * predList, List * rangeTable, Oid baseRelOid)
 {
-	List		   *item;
+	List	   *item;
 
 	foreach(item, predList)
 	{
@@ -377,8 +377,8 @@ CheckPredicate(List * predList, List * rangeTable, Oid baseRelOid)
 static void
 CheckPredExpr(Node * predicate, List * rangeTable, Oid baseRelOid)
 {
-	List		   *clauses = NIL,
-				   *clause;
+	List	   *clauses = NIL,
+			   *clause;
 
 	if (is_opclause(predicate))
 	{
@@ -401,8 +401,8 @@ CheckPredExpr(Node * predicate, List * rangeTable, Oid baseRelOid)
 static void
 CheckPredClause(Expr * predicate, List * rangeTable, Oid baseRelOid)
 {
-	Var			   *pred_var;
-	Const		   *pred_const;
+	Var		   *pred_var;
+	Const	   *pred_const;
 
 	pred_var = (Var *) get_leftop(predicate);
 	pred_const = (Const *) get_rightop(predicate);
@@ -427,8 +427,8 @@ FuncIndexArgs(IndexElem * funcIndex,
 			  Oid * opOidP,
 			  Oid relId)
 {
-	List		   *rest;
-	HeapTuple		tuple;
+	List	   *rest;
+	HeapTuple	tuple;
 	AttributeTupleForm att;
 
 	tuple = SearchSysCacheTuple(CLANAME,
@@ -449,7 +449,7 @@ FuncIndexArgs(IndexElem * funcIndex,
 	 */
 	for (rest = funcIndex->args; rest != NIL; rest = lnext(rest))
 	{
-		char		   *arg;
+		char	   *arg;
 
 		arg = strVal(lfirst(rest));
 
@@ -475,8 +475,8 @@ NormIndexAttrs(List * attList,	/* list of IndexElem's */
 			   Oid * opOidP,
 			   Oid relId)
 {
-	List		   *rest;
-	HeapTuple		tuple;
+	List	   *rest;
+	HeapTuple	tuple;
 
 	/*
 	 * process attributeList
@@ -484,7 +484,7 @@ NormIndexAttrs(List * attList,	/* list of IndexElem's */
 
 	for (rest = attList; rest != NIL; rest = lnext(rest))
 	{
-		IndexElem	   *attribute;
+		IndexElem  *attribute;
 		AttributeTupleForm attform;
 
 		attribute = lfirst(rest);
@@ -531,10 +531,10 @@ NormIndexAttrs(List * attList,	/* list of IndexElem's */
 	}
 }
 
-static char    *
+static char *
 GetDefaultOpClass(Oid atttypid)
 {
-	HeapTuple		tuple;
+	HeapTuple	tuple;
 
 	tuple = SearchSysCacheTuple(CLADEFTYPE,
 								ObjectIdGetDatum(atttypid),
@@ -559,7 +559,7 @@ GetDefaultOpClass(Oid atttypid)
 void
 RemoveIndex(char *name)
 {
-	HeapTuple		tuple;
+	HeapTuple	tuple;
 
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(name),

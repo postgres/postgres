@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.4 1997/09/07 04:55:58 momjian Exp $
+ * $Id: htup.h,v 1.5 1997/09/08 02:34:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,36 +29,36 @@
 typedef struct HeapTupleData
 {
 
-	unsigned int	t_len;		/* length of entire tuple */
+	unsigned int t_len;			/* length of entire tuple */
 
 	ItemPointerData t_ctid;		/* current TID of this tuple */
 
 	ItemPointerData t_chain;	/* replaced tuple TID */
 
-	Oid				t_oid;		/* OID of this tuple -- 4 bytes */
+	Oid			t_oid;			/* OID of this tuple -- 4 bytes */
 
-	CommandId		t_cmin;		/* insert CID stamp -- 2 bytes each */
-	CommandId		t_cmax;		/* delete CommandId stamp */
+	CommandId	t_cmin;			/* insert CID stamp -- 2 bytes each */
+	CommandId	t_cmax;			/* delete CommandId stamp */
 
-	TransactionId	t_xmin;		/* insert XID stamp -- 4 bytes each */
-	TransactionId	t_xmax;		/* delete XID stamp */
+	TransactionId t_xmin;		/* insert XID stamp -- 4 bytes each */
+	TransactionId t_xmax;		/* delete XID stamp */
 
-	AbsoluteTime	t_tmin;		/* time stamps -- 4 bytes each */
-	AbsoluteTime	t_tmax;
+	AbsoluteTime t_tmin;		/* time stamps -- 4 bytes each */
+	AbsoluteTime t_tmax;
 
-	int16			t_natts;	/* number of attributes */
-	char			t_vtype;	/* not used - padding */
+	int16		t_natts;		/* number of attributes */
+	char		t_vtype;		/* not used - padding */
 
-	char			t_infomask; /* whether tuple as null or variable
+	char		t_infomask;		/* whether tuple as null or variable
 								 * length attributes */
 
-	uint8			t_hoff;		/* sizeof tuple header */
+	uint8		t_hoff;			/* sizeof tuple header */
 
-	bits8			t_bits[MinHeapTupleBitmapSize / 8];
+	bits8		t_bits[MinHeapTupleBitmapSize / 8];
 	/* bit map of domains */
 
 	/* MORE DATA FOLLOWS AT END OF STRUCT */
-}				HeapTupleData;
+}			HeapTupleData;
 
 typedef HeapTupleData *HeapTuple;
 

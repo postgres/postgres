@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.19 1997/09/07 04:44:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.20 1997/09/08 02:25:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,18 +42,18 @@ static void
 checkTargetTypes(ParseState * pstate, char *target_colname,
 				 char *refname, char *colname);
 
-Oid			   *param_type_info;
-int				pfunc_num_args;
+Oid		   *param_type_info;
+int			pfunc_num_args;
 
 /* given refname, return a pointer to the range table entry */
-RangeTblEntry  *
+RangeTblEntry *
 refnameRangeTableEntry(List * rtable, char *refname)
 {
-	List		   *temp;
+	List	   *temp;
 
 	foreach(temp, rtable)
 	{
-		RangeTblEntry  *rte = lfirst(temp);
+		RangeTblEntry *rte = lfirst(temp);
 
 		if (!strcmp(rte->refname, refname))
 			return rte;
@@ -65,13 +65,13 @@ refnameRangeTableEntry(List * rtable, char *refname)
 int
 refnameRangeTablePosn(List * rtable, char *refname)
 {
-	int				index;
-	List		   *temp;
+	int			index;
+	List	   *temp;
 
 	index = 1;
 	foreach(temp, rtable)
 	{
-		RangeTblEntry  *rte = lfirst(temp);
+		RangeTblEntry *rte = lfirst(temp);
 
 		if (!strcmp(rte->refname, refname))
 			return index;
@@ -83,12 +83,12 @@ refnameRangeTablePosn(List * rtable, char *refname)
 /*
  * returns range entry if found, else NULL
  */
-RangeTblEntry  *
+RangeTblEntry *
 colnameRangeTableEntry(ParseState * pstate, char *colname)
 {
-	List		   *et;
-	List		   *rtable;
-	RangeTblEntry  *rte_result;
+	List	   *et;
+	List	   *rtable;
+	RangeTblEntry *rte_result;
 
 	if (pstate->p_is_rule)
 		rtable = lnext(lnext(pstate->p_rtable));
@@ -98,7 +98,7 @@ colnameRangeTableEntry(ParseState * pstate, char *colname)
 	rte_result = NULL;
 	foreach(et, rtable)
 	{
-		RangeTblEntry  *rte = lfirst(et);
+		RangeTblEntry *rte = lfirst(et);
 
 		/* only entries on outer(non-function?) scope */
 		if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
@@ -123,15 +123,15 @@ colnameRangeTableEntry(ParseState * pstate, char *colname)
  * put new entry in pstate p_rtable structure, or return pointer
  * if pstate null
 */
-RangeTblEntry  *
+RangeTblEntry *
 addRangeTableEntry(ParseState * pstate,
 				   char *relname,
 				   char *refname,
 				   bool inh, bool inFromCl,
 				   TimeRange * timeRange)
 {
-	Relation		relation;
-	RangeTblEntry  *rte = makeNode(RangeTblEntry);
+	Relation	relation;
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
 
 	if (pstate != NULL &&
 		refnameRangeTableEntry(pstate->p_rtable, refname) != NULL)
@@ -179,18 +179,18 @@ addRangeTableEntry(ParseState * pstate,
  *	  makes a list of attributes
  *	  assumes reldesc caching works
  */
-List		   *
+List	   *
 expandAll(ParseState * pstate, char *relname, char *refname, int *this_resno)
 {
-	Relation		rdesc;
-	List		   *te_tail = NIL,
-				   *te_head = NIL;
-	Var			   *varnode;
-	int				varattno,
-					maxattrs;
-	Oid				type_id;
-	int				type_len;
-	RangeTblEntry  *rte;
+	Relation	rdesc;
+	List	   *te_tail = NIL,
+			   *te_head = NIL;
+	Var		   *varnode;
+	int			varattno,
+				maxattrs;
+	Oid			type_id;
+	int			type_len;
+	RangeTblEntry *rte;
 
 	rte = refnameRangeTableEntry(pstate->p_rtable, refname);
 	if (rte == NULL)
@@ -208,9 +208,9 @@ expandAll(ParseState * pstate, char *relname, char *refname, int *this_resno)
 
 	for (varattno = 0; varattno <= maxattrs - 1; varattno++)
 	{
-		char		   *attrname;
-		char		   *resname = NULL;
-		TargetEntry    *te = makeNode(TargetEntry);
+		char	   *attrname;
+		char	   *resname = NULL;
+		TargetEntry *te = makeNode(TargetEntry);
 
 		attrname = pstrdup((rdesc->rd_att->attrs[varattno]->attname).data);
 		varnode = (Var *) make_var(pstate, refname, attrname, &type_id);
@@ -248,58 +248,58 @@ makeTimeRange(char *datestring1,
 			  char *datestring2,
 			  int timecode)		/* 0 = snapshot , 1 = timerange */
 {
-	TimeQual		qual = NULL;
-	AbsoluteTime	t1,
-					t2;
+	TimeQual	qual = NULL;
+	AbsoluteTime t1,
+				t2;
 
 	switch (timecode)
 	{
-	case 0:
-		if (datestring1 == NULL)
-		{
-			elog(WARN, "MakeTimeRange: bad snapshot arg");
-		}
-		t1 = nabstimein(datestring1);
-		if (!AbsoluteTimeIsValid(t1))
-		{
-			elog(WARN, "bad snapshot time: \"%s\"",
-				 datestring1);
-		}
-		qual = TimeFormSnapshotTimeQual(t1);
-		break;
-	case 1:
-		if (datestring1 == NULL)
-		{
-			t1 = NOSTART_ABSTIME;
-		}
-		else
-		{
+		case 0:
+			if (datestring1 == NULL)
+			{
+				elog(WARN, "MakeTimeRange: bad snapshot arg");
+			}
 			t1 = nabstimein(datestring1);
 			if (!AbsoluteTimeIsValid(t1))
 			{
-				elog(WARN,
-					 "bad range start time: \"%s\"",
+				elog(WARN, "bad snapshot time: \"%s\"",
 					 datestring1);
 			}
-		}
-		if (datestring2 == NULL)
-		{
-			t2 = NOEND_ABSTIME;
-		}
-		else
-		{
-			t2 = nabstimein(datestring2);
-			if (!AbsoluteTimeIsValid(t2))
+			qual = TimeFormSnapshotTimeQual(t1);
+			break;
+		case 1:
+			if (datestring1 == NULL)
 			{
-				elog(WARN,
-					 "bad range end time: \"%s\"",
-					 datestring2);
+				t1 = NOSTART_ABSTIME;
 			}
-		}
-		qual = TimeFormRangedTimeQual(t1, t2);
-		break;
-	default:
-		elog(WARN, "MakeTimeRange: internal parser error");
+			else
+			{
+				t1 = nabstimein(datestring1);
+				if (!AbsoluteTimeIsValid(t1))
+				{
+					elog(WARN,
+						 "bad range start time: \"%s\"",
+						 datestring1);
+				}
+			}
+			if (datestring2 == NULL)
+			{
+				t2 = NOEND_ABSTIME;
+			}
+			else
+			{
+				t2 = nabstimein(datestring2);
+				if (!AbsoluteTimeIsValid(t2))
+				{
+					elog(WARN,
+						 "bad range end time: \"%s\"",
+						 datestring2);
+				}
+			}
+			qual = TimeFormRangedTimeQual(t1, t2);
+			break;
+		default:
+			elog(WARN, "MakeTimeRange: internal parser error");
 	}
 	return qual;
 }
@@ -319,16 +319,16 @@ disallow_setop(char *op, Type optype, Node * operand)
 	}
 }
 
-static Node    *
+static Node *
 make_operand(char *opname,
 			 Node * tree,
 			 Oid orig_typeId,
 			 Oid true_typeId)
 {
-	Node		   *result;
-	Type			true_type;
-	Datum			val;
-	Oid				infunc;
+	Node	   *result;
+	Type		true_type;
+	Datum		val;
+	Oid			infunc;
 
 	if (tree != NULL)
 	{
@@ -337,7 +337,7 @@ make_operand(char *opname,
 		disallow_setop(opname, true_type, result);
 		if (true_typeId != orig_typeId)
 		{						/* must coerce */
-			Const		   *con = (Const *) result;
+			Const	   *con = (Const *) result;
 
 			Assert(nodeTag(result) == T_Const);
 			val = (Datum) textout((struct varlena *)
@@ -358,7 +358,7 @@ make_operand(char *opname,
 	}
 	else
 	{
-		Const		   *con = makeNode(Const);
+		Const	   *con = makeNode(Const);
 
 		con->consttype = true_typeId;
 		con->constlen = 0;
@@ -373,17 +373,17 @@ make_operand(char *opname,
 }
 
 
-Expr		   *
+Expr	   *
 make_op(char *opname, Node * ltree, Node * rtree)
 {
-	Oid				ltypeId,
-					rtypeId;
-	Operator		temp;
+	Oid			ltypeId,
+				rtypeId;
+	Operator	temp;
 	OperatorTupleForm opform;
-	Oper		   *newop;
-	Node		   *left,
-				   *right;
-	Expr		   *result;
+	Oper	   *newop;
+	Node	   *left,
+			   *right;
+	Expr	   *result;
 
 	if (rtree == NULL)
 	{
@@ -409,10 +409,10 @@ make_op(char *opname, Node * ltree, Node * rtree)
 	}
 	else
 	{
-		char		   *outstr;
-		Oid				infunc,
-						outfunc;
-		Type			newtype;
+		char	   *outstr;
+		Oid			infunc,
+					outfunc;
+		Type		newtype;
 
 #define CONVERTABLE_TYPE(t) (	(t) == INT2OID || \
 								(t) == INT4OID || \
@@ -495,9 +495,9 @@ make_op(char *opname, Node * ltree, Node * rtree)
 Oid
 find_atttype(Oid relid, char *attrname)
 {
-	int				attid;
-	Oid				vartype;
-	Relation		rd;
+	int			attid;
+	Oid			vartype;
+	Relation	rd;
 
 	rd = heap_open(relid);
 	if (!RelationIsValid(rd))
@@ -524,15 +524,15 @@ find_atttype(Oid relid, char *attrname)
 }
 
 
-Var			   *
+Var		   *
 make_var(ParseState * pstate, char *refname, char *attrname, Oid * type_id)
 {
-	Var			   *varnode;
-	int				vnum,
-					attid;
-	Oid				vartypeid;
-	Relation		rd;
-	RangeTblEntry  *rte;
+	Var		   *varnode;
+	int			vnum,
+				attid;
+	Oid			vartypeid;
+	Relation	rd;
+	RangeTblEntry *rte;
 
 	rte = refnameRangeTableEntry(pstate->p_rtable, refname);
 	if (rte == NULL)
@@ -567,18 +567,18 @@ make_var(ParseState * pstate, char *refname, char *attrname, Oid * type_id)
  *
  *	indirection is a list of A_Indices
  */
-ArrayRef	   *
+ArrayRef   *
 make_array_ref(Node * expr,
 			   List * indirection)
 {
-	Oid				typearray;
-	HeapTuple		type_tuple;
-	TypeTupleForm	type_struct_array,
-					type_struct_element;
-	ArrayRef	   *aref;
-	Oid				reftype;
-	List		   *upperIndexpr = NIL;
-	List		   *lowerIndexpr = NIL;
+	Oid			typearray;
+	HeapTuple	type_tuple;
+	TypeTupleForm type_struct_array,
+				type_struct_element;
+	ArrayRef   *aref;
+	Oid			reftype;
+	List	   *upperIndexpr = NIL;
+	List	   *lowerIndexpr = NIL;
 
 	typearray = exprType(expr);
 
@@ -611,7 +611,7 @@ make_array_ref(Node * expr,
 
 	while (indirection != NIL)
 	{
-		A_Indices	   *ind = lfirst(indirection);
+		A_Indices  *ind = lfirst(indirection);
 
 		if (ind->lidx)
 		{
@@ -649,18 +649,18 @@ make_array_ref(Node * expr,
 	return aref;
 }
 
-ArrayRef	   *
+ArrayRef   *
 make_array_set(Expr * target_expr,
 			   List * upperIndexpr,
 			   List * lowerIndexpr,
 			   Expr * expr)
 {
-	Oid				typearray;
-	HeapTuple		type_tuple;
-	TypeTupleForm	type_struct_array;
-	TypeTupleForm	type_struct_element;
-	ArrayRef	   *aref;
-	Oid				reftype;
+	Oid			typearray;
+	HeapTuple	type_tuple;
+	TypeTupleForm type_struct_array;
+	TypeTupleForm type_struct_element;
+	ArrayRef   *aref;
+	Oid			reftype;
 
 	typearray = exprType((Node *) target_expr);
 
@@ -723,48 +723,49 @@ make_array_set(Expr * target_expr,
  *
  * eventually, produces a "const" lisp-struct as per nodedefs.cl
  */
-Const		   *
+Const	   *
 make_const(Value * value)
 {
-	Type			tp;
-	Datum			val;
-	Const		   *con;
+	Type		tp;
+	Datum		val;
+	Const	   *con;
 
 	switch (nodeTag(value))
 	{
-	case T_Integer:
-		tp = type("int4");
-		val = Int32GetDatum(intVal(value));
-		break;
+		case T_Integer:
+			tp = type("int4");
+			val = Int32GetDatum(intVal(value));
+			break;
 
-	case T_Float:
-		{
-			float64			dummy;
+		case T_Float:
+			{
+				float64		dummy;
 
-			tp = type("float8");
+				tp = type("float8");
 
-			dummy = (float64) palloc(sizeof(float64data));
-			*dummy = floatVal(value);
+				dummy = (float64) palloc(sizeof(float64data));
+				*dummy = floatVal(value);
 
-			val = Float64GetDatum(dummy);
-		}
-		break;
+				val = Float64GetDatum(dummy);
+			}
+			break;
 
-	case T_String:
-		tp = type("unknown");	/* unknown for now, will be type coerced */
-		val = PointerGetDatum(textin(strVal(value)));
-		break;
+		case T_String:
+			tp = type("unknown");		/* unknown for now, will be type
+										 * coerced */
+			val = PointerGetDatum(textin(strVal(value)));
+			break;
 
-	case T_Null:
-	default:
-		{
-			if (nodeTag(value) != T_Null)
-				elog(NOTICE, "unknown type : %d\n", nodeTag(value));
+		case T_Null:
+		default:
+			{
+				if (nodeTag(value) != T_Null)
+					elog(NOTICE, "unknown type : %d\n", nodeTag(value));
 
-			/* null const */
-			con = makeConst(0, 0, (Datum) NULL, true, false, false, false);
-			return con;
-		}
+				/* null const */
+				con = makeConst(0, 0, (Datum) NULL, true, false, false, false);
+				return con;
+			}
 	}
 
 	con = makeConst(typeid(tp),
@@ -811,7 +812,7 @@ handleTargetColname(ParseState * pstate, char **resname,
 	{
 		if (pstate->p_insert_columns != NIL)
 		{
-			Ident		   *id = lfirst(pstate->p_insert_columns);
+			Ident	   *id = lfirst(pstate->p_insert_columns);
 
 			*resname = id->name;
 			pstate->p_insert_columns = lnext(pstate->p_insert_columns);
@@ -831,12 +832,12 @@ static void
 checkTargetTypes(ParseState * pstate, char *target_colname,
 				 char *refname, char *colname)
 {
-	Oid				attrtype_id,
-					attrtype_target;
-	int				resdomno_id,
-					resdomno_target;
-	Relation		rd;
-	RangeTblEntry  *rte;
+	Oid			attrtype_id,
+				attrtype_target;
+	int			resdomno_id,
+				resdomno_target;
+	Relation	rd;
+	RangeTblEntry *rte;
 
 	if (target_colname == NULL || colname == NULL)
 		return;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.8 1997/09/07 04:49:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.9 1997/09/08 02:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,20 +38,20 @@
 
 #include "commands/command.h"
 
-static char    *CreateOperationTag(int operationType);
-static void		ProcessQueryDesc(QueryDesc * queryDesc);
+static char *CreateOperationTag(int operationType);
+static void ProcessQueryDesc(QueryDesc * queryDesc);
 
 
 /* ----------------------------------------------------------------
  *		CreateQueryDesc
  * ----------------------------------------------------------------
  */
-QueryDesc	   *
+QueryDesc  *
 CreateQueryDesc(Query * parsetree,
 				Plan * plantree,
 				CommandDest dest)
 {
-	QueryDesc	   *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
+	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
 
 	qd->operation = parsetree->commandType;		/* operation */
 	qd->parsetree = parsetree;	/* parse tree */
@@ -66,12 +66,12 @@ CreateQueryDesc(Query * parsetree,
  *		Note: this may someday take parameters -cim 9/18/89
  * ----------------------------------------------------------------
  */
-EState		   *
+EState	   *
 CreateExecutorState(void)
 {
-	EState		   *state;
-	extern int		NBuffers;
-	long		   *refcount;
+	EState	   *state;
+	extern int	NBuffers;
+	long	   *refcount;
 
 	/* ----------------
 	 *	create a new executor state
@@ -114,30 +114,30 @@ CreateExecutorState(void)
  *		query operation.
  * ----------------------------------------------------------------
  */
-static char    *
+static char *
 CreateOperationTag(int operationType)
 {
-	char		   *tag;
+	char	   *tag;
 
 	switch (operationType)
 	{
-	case CMD_SELECT:
-		tag = "SELECT";
-		break;
-	case CMD_INSERT:
-		tag = "INSERT";
-		break;
-	case CMD_DELETE:
-		tag = "DELETE";
-		break;
-	case CMD_UPDATE:
-		tag = "UPDATE";
-		break;
-	default:
-		elog(DEBUG, "CreateOperationTag: unknown operation type %d",
-			 operationType);
-		tag = NULL;
-		break;
+		case CMD_SELECT:
+			tag = "SELECT";
+			break;
+		case CMD_INSERT:
+			tag = "INSERT";
+			break;
+		case CMD_DELETE:
+			tag = "DELETE";
+			break;
+		case CMD_UPDATE:
+			tag = "UPDATE";
+			break;
+		default:
+			elog(DEBUG, "CreateOperationTag: unknown operation type %d",
+				 operationType);
+			tag = NULL;
+			break;
 	}
 
 	return tag;
@@ -156,8 +156,8 @@ ProcessPortal(char *portalName,
 			  TupleDesc attinfo,
 			  CommandDest dest)
 {
-	Portal			portal;
-	MemoryContext	portalContext;
+	Portal		portal;
+	MemoryContext portalContext;
 
 	/* ----------------
 	 *	 convert the current blank portal into the user-specified
@@ -205,17 +205,17 @@ ProcessPortal(char *portalName,
 static void
 ProcessQueryDesc(QueryDesc * queryDesc)
 {
-	Query		   *parseTree;
-	Plan		   *plan;
-	int				operation;
-	char		   *tag;
-	EState		   *state;
-	TupleDesc		attinfo;
+	Query	   *parseTree;
+	Plan	   *plan;
+	int			operation;
+	char	   *tag;
+	EState	   *state;
+	TupleDesc	attinfo;
 
-	bool			isRetrieveIntoPortal;
-	bool			isRetrieveIntoRelation;
-	char		   *intoName = NULL;
-	CommandDest		dest;
+	bool		isRetrieveIntoPortal;
+	bool		isRetrieveIntoRelation;
+	char	   *intoName = NULL;
+	CommandDest dest;
 
 	/* ----------------
 	 *	get info from the query desc
@@ -362,9 +362,9 @@ ProcessQuery(Query * parsetree,
 			 int nargs,
 			 CommandDest dest)
 {
-	QueryDesc	   *queryDesc;
-	extern int		dontExecute;/* from postgres.c */
-	extern void		print_plan(Plan * p, Query * parsetree);	/* from print.c */
+	QueryDesc  *queryDesc;
+	extern int	dontExecute;	/* from postgres.c */
+	extern void print_plan(Plan * p, Query * parsetree);		/* from print.c */
 
 	queryDesc = CreateQueryDesc(parsetree, plan, dest);
 

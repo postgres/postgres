@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/qsort.c,v 1.3 1997/09/07 04:42:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/qsort.c,v 1.4 1997/09/08 02:23:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char		sccsid[] = "@(#)qsort.c	5.9 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)qsort.c	5.9 (Berkeley) 2/23/91";
 
 #endif							/* LIBC_SCCS and not lint */
 
@@ -67,8 +67,8 @@ static char		sccsid[] = "@(#)qsort.c	5.9 (Berkeley) 2/23/91";
  */
 #define THRESH	4
 
-static void		insertion_sort(char *bot, int nmemb, int size, int (*compar) ());
-static void		quick_sort(char *bot, int nmemb, int size, int (*compar) ());
+static void insertion_sort(char *bot, int nmemb, int size, int (*compar) ());
+static void quick_sort(char *bot, int nmemb, int size, int (*compar) ());
 
 void
 pg_qsort(void *bot,
@@ -129,15 +129,15 @@ pg_qsort(void *bot,
 static void
 quick_sort(char *bot, int nmemb, int size, int (*compar) ())
 {
-	register int	cnt;
+	register int cnt;
 	register u_char ch;
-	register char  *top,
-				   *mid,
-				   *t1,
-				   *t2;
-	register int	n1,
-					n2;
-	char		   *bsv;
+	register char *top,
+			   *mid,
+			   *t1,
+			   *t2;
+	register int n1,
+				n2;
+	char	   *bsv;
 
 	/* bot and nmemb must already be set. */
 partition:
@@ -277,13 +277,13 @@ swap:	SWAP(bot, replace);
 static void
 insertion_sort(char *bot, int nmemb, int size, int (*compar) ())
 {
-	register int	cnt;
+	register int cnt;
 	register u_char ch;
-	register char  *s1,
-				   *s2,
-				   *t1,
-				   *t2,
-				   *top;
+	register char *s1,
+			   *s2,
+			   *t1,
+			   *t2,
+			   *top;
 
 	/*
 	 * A simple insertion sort (see Knuth, Vol. 3, page 81, Algorithm S).

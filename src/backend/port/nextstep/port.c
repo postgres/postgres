@@ -12,9 +12,9 @@
 void
 putenv(char *name)
 {
-	extern char   **environ;
-	static int		was_mallocated = 0;
-	int				size;
+	extern char **environ;
+	static int	was_mallocated = 0;
+	int			size;
 
 	/* Compute the size of environ array including the final NULL */
 	for (size = 1; environ[size++];)
@@ -22,8 +22,8 @@ putenv(char *name)
 
 	if (!was_mallocated)
 	{
-		char		  **tmp = environ;
-		int				i;
+		char	  **tmp = environ;
+		int			i;
 
 		was_mallocated = 1;
 		environ = malloc(size * sizeof(char *));
@@ -36,7 +36,7 @@ putenv(char *name)
 	environ[size] = NULL;
 }
 
-char		   *
+char	   *
 strdup(const char *string)
 {
 	return strcpy(malloc(strlen(string) + 1), string);
@@ -56,7 +56,7 @@ sigemptyset(int *set)
 	return (*set = 0);
 }
 
-char		   *
+char	   *
 getcwd(char *buf, size_t size)
 {
 	return getwd(buf);

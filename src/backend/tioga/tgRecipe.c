@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.4 1997/09/07 04:49:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.5 1997/09/08 02:30:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,13 +44,13 @@ static Arr_TgString *TextArray2ArrTgString(char *str);
 	  "select * from Edge e where e.belongsTo = '%s'"
 
 /* static functions only used here */
-static void		fillTgElement(TgElement * elem, PortalBuffer * pbuf, int tupno);
-static void		fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer * pbuf, int tupno);
+static void fillTgElement(TgElement * elem, PortalBuffer * pbuf, int tupno);
+static void fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer * pbuf, int tupno);
 static TgRecipe *fillTgRecipe(PortalBuffer * pbuf, int tupno);
-static void		lookupEdges(TgRecipe * r, char *name);
-static void		fillAllNodes(TgRecipe * r, char *name);
-static void		fillAllElements(TgRecipe * r, char *name);
-static TgNode  *
+static void lookupEdges(TgRecipe * r, char *name);
+static void fillAllNodes(TgRecipe * r, char *name);
+static void fillAllElements(TgRecipe * r, char *name);
+static TgNode *
 connectTee(TgRecipe * r, TgNodePtr fromNode, TgNodePtr toNode,
 		   int fromPort, int toPort);
 
@@ -62,15 +62,15 @@ connectTee(TgRecipe * r, TgNodePtr fromNode, TgNodePtr toNode,
  * always returns a valid Arr_TgString.  It could be a newly initialized one with
  * zero elements
  */
-Arr_TgString   *
+Arr_TgString *
 TextArray2ArrTgString(char *str)
 {
-	Arr_TgString   *result;
+	Arr_TgString *result;
 
-	char		   *beginQuote;
-	char		   *endQuote;
-	int				nextlen;
-	char		   *word;
+	char	   *beginQuote;
+	char	   *endQuote;
+	int			nextlen;
+	char	   *word;
 
 	result = newArr_TgString();
 
@@ -123,12 +123,12 @@ findElemInRecipe()
    XXX Currently, this is done by linear search.  Change to using a hash table.
 -------------------------------------- */
 
-TgElement	   *
+TgElement  *
 findElemInRecipe(TgRecipe * r, char *elemName)
 {
-	int				i;
+	int			i;
 	Arr_TgElementPtr *arr = r->elements;
-	TgElement	   *e;
+	TgElement  *e;
 
 	for (i = 0; i < arr->num; i++)
 	{
@@ -147,12 +147,12 @@ findNodeInRecipe()
    XXX Currently, this is done by linear search.  Change to using a hash table.
 -------------------------------------- */
 
-TgNode		   *
+TgNode	   *
 findNodeInRecipe(TgRecipe * r, char *nodeName)
 {
-	int				i;
-	Arr_TgNodePtr  *arr = r->allNodes;
-	TgNode		   *n;
+	int			i;
+	Arr_TgNodePtr *arr = r->allNodes;
+	TgNode	   *n;
 
 	for (i = 0; i < arr->num; i++)
 	{
@@ -176,16 +176,16 @@ fillTgNode
 void
 fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer * pbuf, int tupno)
 {
-	char		   *nodeType;
-	char		   *nodeElem;
-	char		   *locString;	/* ascii string rep of the point */
-	static int		attnums_initialized = 0;
-	static int		nodeName_attnum;
-	static int		nodeElem_attnum;
-	static int		nodeType_attnum;
-	static int		loc_attnum;
-	TgNodePtr		BlankNodePtr;
-	int				i;
+	char	   *nodeType;
+	char	   *nodeElem;
+	char	   *locString;		/* ascii string rep of the point */
+	static int	attnums_initialized = 0;
+	static int	nodeName_attnum;
+	static int	nodeElem_attnum;
+	static int	nodeType_attnum;
+	static int	loc_attnum;
+	TgNodePtr	BlankNodePtr;
+	int			i;
 
 	if (!attnums_initialized)
 	{
@@ -211,8 +211,8 @@ fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer * pbuf, int tupno)
 	}
 	else
 	{
-		float			x,
-						y;
+		float		x,
+					y;
 
 		sscanf(locString, "(%f, %f)", &x, &y);
 		node->loc.x = x;
@@ -261,21 +261,21 @@ fillTgElement
 void
 fillTgElement(TgElement * elem, PortalBuffer * pbuf, int tupno)
 {
-	char		   *srcLang,
-				   *elemType;
-	static int		attnums_initialized = 0;
-	static int		elemName_attnum;
-	static int		elemType_attnum;
-	static int		inPorts_attnum;
-	static int		inTypes_attnum;
-	static int		outPorts_attnum;
-	static int		outTypes_attnum;
-	static int		doc_attnum;
-	static int		keywords_attnum;
-	static int		icon_attnum;
-	static int		srcLang_attnum;
-	static int		src_attnum;
-	static int		owner_attnum;
+	char	   *srcLang,
+			   *elemType;
+	static int	attnums_initialized = 0;
+	static int	elemName_attnum;
+	static int	elemType_attnum;
+	static int	inPorts_attnum;
+	static int	inTypes_attnum;
+	static int	outPorts_attnum;
+	static int	outTypes_attnum;
+	static int	doc_attnum;
+	static int	keywords_attnum;
+	static int	icon_attnum;
+	static int	srcLang_attnum;
+	static int	src_attnum;
+	static int	owner_attnum;
 
 	if (!attnums_initialized)
 	{
@@ -351,25 +351,25 @@ lookupEdges -
 void
 lookupEdges(TgRecipe * r, char *name)
 {
-	char			qbuf[MAX_QBUF_LENGTH];
-	int				i;
-	char		   *pqres;
-	char		   *pbufname;
-	PortalBuffer   *pbuf;
-	int				ntups;
-	int				fromNode_attnum;
-	int				fromPort_attnum;
-	int				toPort_attnum;
-	int				toNode_attnum;
-	char		   *toNode,
-				   *fromNode;
-	char		   *toPortStr,
-				   *fromPortStr;
-	int				toPort,
-					fromPort;
+	char		qbuf[MAX_QBUF_LENGTH];
+	int			i;
+	char	   *pqres;
+	char	   *pbufname;
+	PortalBuffer *pbuf;
+	int			ntups;
+	int			fromNode_attnum;
+	int			fromPort_attnum;
+	int			toPort_attnum;
+	int			toNode_attnum;
+	char	   *toNode,
+			   *fromNode;
+	char	   *toPortStr,
+			   *fromPortStr;
+	int			toPort,
+				fromPort;
 
-	TgNodePtr		fromNodePtr,
-					toNodePtr;
+	TgNodePtr	fromNodePtr,
+				toNodePtr;
 
 	sprintf(qbuf, Q_LOOKUP_EDGES_IN_RECIPE, name);
 	pqres = PQexec(qbuf);
@@ -434,7 +434,7 @@ lookupEdges(TgRecipe * r, char *name)
 		 */
 		if (fromNodePtr->outNodes->val[fromPort - 1] != NULL)
 		{
-			TgNodePtr		tn;
+			TgNodePtr	tn;
 
 			tn = connectTee(r, fromNodePtr, toNodePtr, fromPort, toPort);
 			addArr_TgNodePtr(r->allNodes, &tn);
@@ -456,15 +456,15 @@ lookupEdges(TgRecipe * r, char *name)
 
    returns the teeNode created
 */
-static TgNode  *
+static TgNode *
 connectTee(TgRecipe * r, TgNodePtr fromNode, TgNodePtr toNode,
 		   int fromPort, int toPort)
 {
-	TgNodePtr		origToNode;
-	TgNodePtr		tn;
-	TgNodePtr		BlankNodePtr;
-	int				origToPort;
-	int				i;
+	TgNodePtr	origToNode;
+	TgNodePtr	tn;
+	TgNodePtr	BlankNodePtr;
+	int			origToPort;
+	int			i;
 
 	/* the toNode formerly pointed to */
 	origToNode = fromNode->outNodes->val[fromPort - 1];
@@ -527,14 +527,14 @@ fillAllNodes
 void
 fillAllNodes(TgRecipe * r, char *name)
 {
-	char			qbuf[MAX_QBUF_LENGTH];
-	int				i;
-	char		   *pqres;
-	char		   *pbufname;
-	PortalBuffer   *pbuf;
-	int				ntups;
-	TgElement	   *elem;
-	TgNode		   *node;
+	char		qbuf[MAX_QBUF_LENGTH];
+	int			i;
+	char	   *pqres;
+	char	   *pbufname;
+	PortalBuffer *pbuf;
+	int			ntups;
+	TgElement  *elem;
+	TgNode	   *node;
 
 	/* 1) fill out the elements that are in the recipe */
 	sprintf(qbuf, Q_RETRIEVE_ELEMENTS_IN_RECIPE, name);
@@ -585,13 +585,13 @@ fillAllElements
 void
 fillAllElements(TgRecipe * r, char *name)
 {
-	char			qbuf[MAX_QBUF_LENGTH];
-	int				i;
-	char		   *pqres;
-	char		   *pbufname;
-	PortalBuffer   *pbuf;
-	int				ntups;
-	TgElement	   *elem;
+	char		qbuf[MAX_QBUF_LENGTH];
+	int			i;
+	char	   *pqres;
+	char	   *pbufname;
+	PortalBuffer *pbuf;
+	int			ntups;
+	TgElement  *elem;
 
 	sprintf(qbuf, Q_RETRIEVE_ELEMENTS_IN_RECIPE, name);
 	pqres = PQexec(qbuf);
@@ -620,12 +620,12 @@ fillTgRecipe
 	takes a query result in the PortalBuffer containing a Recipe
 	and converts it to a C TgRecipe strcture
   ------------------------------------ */
-TgRecipe	   *
+TgRecipe   *
 fillTgRecipe(PortalBuffer * pbuf, int tupno)
 {
-	TgRecipe	   *r;
-	int				i,
-					j;
+	TgRecipe   *r;
+	int			i,
+				j;
 
 	/* 1) set up the recipe structure */
 	r = (TgRecipe *) malloc(sizeof(TgRecipe));
@@ -665,7 +665,7 @@ fillTgRecipe(PortalBuffer * pbuf, int tupno)
 	/* tee nodes are nodes with the node type TG_TEE_NODE */
 	for (i = 0; i < r->allNodes->num; i++)
 	{
-		TgNode		   *nptr = r->allNodes->val[i];
+		TgNode	   *nptr = r->allNodes->val[i];
 
 		if (nptr->nodeType == TG_EYE_NODE)
 			addArr_TgNodePtr(r->eyes, &nptr);
@@ -693,15 +693,15 @@ fillTgRecipe(PortalBuffer * pbuf, int tupno)
 retrieveRecipe
    find the recipe with the given name
   ------------------------------------ */
-TgRecipe	   *
+TgRecipe   *
 retrieveRecipe(char *name)
 {
-	char			qbuf[MAX_QBUF_LENGTH];
-	TgRecipe	   *recipe;
-	char		   *pqres;
-	char		   *pbufname;
-	PortalBuffer   *pbuf;
-	int				ntups;
+	char		qbuf[MAX_QBUF_LENGTH];
+	TgRecipe   *recipe;
+	char	   *pqres;
+	char	   *pbufname;
+	PortalBuffer *pbuf;
+	int			ntups;
 
 	sprintf(qbuf, Q_RETRIEVE_RECIPE_BYNAME, name);
 
@@ -755,8 +755,8 @@ copyTgRecipePtr(TgRecipePtr * from, TgRecipePtr * to)
 void
 copyTgString(TgString * from, TgString * to)
 {
-	TgString		fromTgString = *from;
-	TgString		toTgString;
+	TgString	fromTgString = *from;
+	TgString	toTgString;
 
 	toTgString = (TgString) malloc(strlen(fromTgString) + 1);
 	strcpy(toTgString, fromTgString);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.8 1997/09/07 04:53:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.9 1997/09/08 02:31:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,14 +64,14 @@
 /*
  * Private function prototypes
  */
-static long    *DynaHashAlloc(unsigned int size);
-static void		DynaHashFree(Pointer ptr);
-static uint32	call_hash(HTAB * hashp, char *k, int len);
+static long *DynaHashAlloc(unsigned int size);
+static void DynaHashFree(Pointer ptr);
+static uint32 call_hash(HTAB * hashp, char *k, int len);
 static SEG_OFFSET seg_alloc(HTAB * hashp);
-static int		bucket_alloc(HTAB * hashp);
-static int		dir_realloc(HTAB * hashp);
+static int	bucket_alloc(HTAB * hashp);
+static int	dir_realloc(HTAB * hashp);
 
-typedef long   *((*dhalloc_ptr) ());
+typedef long *((*dhalloc_ptr) ());
 
 #ifndef FRONTEND
 /* ----------------
@@ -89,9 +89,9 @@ typedef long   *((*dhalloc_ptr) ());
  *	   do the latter -cim 1/19/91
  * ----------------
  */
-GlobalMemory	DynaHashCxt = (GlobalMemory) NULL;
+GlobalMemory DynaHashCxt = (GlobalMemory) NULL;
 
-static long    *
+static long *
 DynaHashAlloc(unsigned int size)
 {
 	if (!DynaHashCxt)
@@ -122,9 +122,9 @@ DynaHashFree(Pointer ptr)
  * ----------------
  */
 
-static int		expand_table(HTAB * hashp);
-static int		hdefault(HTAB * hashp);
-static int		init_htab(HTAB * hashp, int nelem);
+static int	expand_table(HTAB * hashp);
+static int	hdefault(HTAB * hashp);
+static int	init_htab(HTAB * hashp, int nelem);
 
 
 /*
@@ -146,19 +146,19 @@ static int		init_htab(HTAB * hashp, int nelem);
   ( ((unsigned long) ptr) - ((unsigned long) (hp)->segbase) )
 
 #if HASH_STATISTICS
-static long		hash_accesses,
-				hash_collisions,
-				hash_expansions;
+static long hash_accesses,
+			hash_collisions,
+			hash_expansions;
 
 #endif
 
 /************************** CREATE ROUTINES **********************/
 
-HTAB		   *
+HTAB	   *
 hash_create(int nelem, HASHCTL * info, int flags)
 {
-	register HHDR  *hctl;
-	HTAB		   *hashp;
+	register HHDR *hctl;
+	HTAB	   *hashp;
 
 
 	hashp = (HTAB *) MEM_ALLOC((unsigned long) sizeof(HTAB));
@@ -269,7 +269,7 @@ hash_create(int nelem, HASHCTL * info, int flags)
 static int
 hdefault(HTAB * hashp)
 {
-	HHDR		   *hctl;
+	HHDR	   *hctl;
 
 	memset(hashp->hctl, 0, sizeof(HHDR));
 
@@ -303,10 +303,10 @@ static int
 init_htab(HTAB * hashp, int nelem)
 {
 	register SEG_OFFSET *segp;
-	register int	nbuckets;
-	register int	nsegs;
-	int				l2;
-	HHDR		   *hctl;
+	register int nbuckets;
+	register int nsegs;
+	int			l2;
+	HHDR	   *hctl;
 
 	hctl = hashp->hctl;
 
@@ -388,13 +388,13 @@ hash_destroy(HTAB * hashp)
 	if (hashp != NULL)
 	{
 		register SEG_OFFSET segNum;
-		SEGMENT			segp;
-		int				nsegs = hashp->hctl->nsegs;
-		int				j;
-		BUCKET_INDEX   *elp,
-						p,
-						q;
-		ELEMENT		   *curr;
+		SEGMENT		segp;
+		int			nsegs = hashp->hctl->nsegs;
+		int			j;
+		BUCKET_INDEX *elp,
+					p,
+					q;
+		ELEMENT    *curr;
 
 		for (segNum = 0; nsegs > 0; nsegs--, segNum++)
 		{
@@ -440,12 +440,12 @@ hash_stats(char *where, HTAB * hashp)
 
 /*******************************SEARCH ROUTINES *****************************/
 
-static			uint32
+static uint32
 call_hash(HTAB * hashp, char *k, int len)
 {
-	long			hash_val,
-					bucket;
-	HHDR		   *hctl;
+	long		hash_val,
+				bucket;
+	HHDR	   *hctl;
 
 	hctl = hashp->hctl;
 	hash_val = hashp->hash(k, len);
@@ -469,28 +469,28 @@ call_hash(HTAB * hashp, char *k, int len)
  *		foundPtr is TRUE if we found an element in the table
  *		(FALSE if we entered one).
  */
-long		   *
+long	   *
 hash_search(HTAB * hashp,
 			char *keyPtr,
 			HASHACTION action,	/* HASH_FIND / HASH_ENTER / HASH_REMOVE
 								 * HASH_FIND_SAVE / HASH_REMOVE_SAVED */
 			bool * foundPtr)
 {
-	uint32			bucket;
-	long			segment_num;
-	long			segment_ndx;
-	SEGMENT			segp;
+	uint32		bucket;
+	long		segment_num;
+	long		segment_ndx;
+	SEGMENT		segp;
 	register ELEMENT *curr;
-	HHDR		   *hctl;
-	BUCKET_INDEX	currIndex;
-	BUCKET_INDEX   *prevIndexPtr;
-	char		   *destAddr;
+	HHDR	   *hctl;
+	BUCKET_INDEX currIndex;
+	BUCKET_INDEX *prevIndexPtr;
+	char	   *destAddr;
 	static struct State
 	{
-		ELEMENT		   *currElem;
-		BUCKET_INDEX	currIndex;
-		BUCKET_INDEX   *prevIndex;
-	}				saveState;
+		ELEMENT    *currElem;
+		BUCKET_INDEX currIndex;
+		BUCKET_INDEX *prevIndex;
+	}			saveState;
 
 	Assert((hashp && keyPtr));
 	Assert((action == HASH_FIND) || (action == HASH_REMOVE) || (action == HASH_ENTER) || (action == HASH_FIND_SAVE) || (action == HASH_REMOVE_SAVED));
@@ -553,46 +553,46 @@ hash_search(HTAB * hashp,
 	*foundPtr = (bool) (currIndex != INVALID_INDEX);
 	switch (action)
 	{
-	case HASH_ENTER:
-		if (currIndex != INVALID_INDEX)
-			return (&(curr->key));
-		break;
-	case HASH_REMOVE:
-	case HASH_REMOVE_SAVED:
-		if (currIndex != INVALID_INDEX)
-		{
-			Assert(hctl->nkeys > 0);
-			hctl->nkeys--;
+		case HASH_ENTER:
+			if (currIndex != INVALID_INDEX)
+				return (&(curr->key));
+			break;
+		case HASH_REMOVE:
+		case HASH_REMOVE_SAVED:
+			if (currIndex != INVALID_INDEX)
+			{
+				Assert(hctl->nkeys > 0);
+				hctl->nkeys--;
 
-			/* add the bucket to the freelist for this table.  */
-			*prevIndexPtr = curr->next;
-			curr->next = hctl->freeBucketIndex;
-			hctl->freeBucketIndex = currIndex;
+				/* add the bucket to the freelist for this table.  */
+				*prevIndexPtr = curr->next;
+				curr->next = hctl->freeBucketIndex;
+				hctl->freeBucketIndex = currIndex;
 
-			/*
-			 * better hope the caller is synchronizing access to this
-			 * element, because someone else is going to reuse it the next
-			 * time something is added to the table
-			 */
-			return (&(curr->key));
-		}
-		return ((long *) TRUE);
-	case HASH_FIND:
-		if (currIndex != INVALID_INDEX)
-			return (&(curr->key));
-		return ((long *) TRUE);
-	case HASH_FIND_SAVE:
-		if (currIndex != INVALID_INDEX)
-		{
-			saveState.currElem = curr;
-			saveState.prevIndex = prevIndexPtr;
-			saveState.currIndex = currIndex;
-			return (&(curr->key));
-		}
-		return ((long *) TRUE);
-	default:
-		/* can't get here */
-		return (NULL);
+				/*
+				 * better hope the caller is synchronizing access to this
+				 * element, because someone else is going to reuse it the
+				 * next time something is added to the table
+				 */
+				return (&(curr->key));
+			}
+			return ((long *) TRUE);
+		case HASH_FIND:
+			if (currIndex != INVALID_INDEX)
+				return (&(curr->key));
+			return ((long *) TRUE);
+		case HASH_FIND_SAVE:
+			if (currIndex != INVALID_INDEX)
+			{
+				saveState.currElem = curr;
+				saveState.prevIndex = prevIndexPtr;
+				saveState.currIndex = currIndex;
+				return (&(curr->key));
+			}
+			return ((long *) TRUE);
+		default:
+			/* can't get here */
+			return (NULL);
 	}
 
 	/*
@@ -653,16 +653,16 @@ hash_search(HTAB * hashp,
  *			   return TRUE in the end.
  *
  */
-long		   *
+long	   *
 hash_seq(HTAB * hashp)
 {
-	static uint32	curBucket = 0;
+	static uint32 curBucket = 0;
 	static BUCKET_INDEX curIndex;
-	ELEMENT		   *curElem;
-	long			segment_num;
-	long			segment_ndx;
-	SEGMENT			segp;
-	HHDR		   *hctl;
+	ELEMENT    *curElem;
+	long		segment_num;
+	long		segment_ndx;
+	SEGMENT		segp;
+	HHDR	   *hctl;
 
 	if (hashp == NULL)
 	{
@@ -723,20 +723,20 @@ hash_seq(HTAB * hashp)
 static int
 expand_table(HTAB * hashp)
 {
-	HHDR		   *hctl;
-	SEGMENT			old_seg,
-					new_seg;
-	long			old_bucket,
-					new_bucket;
-	long			new_segnum,
-					new_segndx;
-	long			old_segnum,
-					old_segndx;
-	ELEMENT		   *chain;
-	BUCKET_INDEX   *old,
-				   *newbi;
+	HHDR	   *hctl;
+	SEGMENT		old_seg,
+				new_seg;
+	long		old_bucket,
+				new_bucket;
+	long		new_segnum,
+				new_segndx;
+	long		old_segnum,
+				old_segndx;
+	ELEMENT    *chain;
+	BUCKET_INDEX *old,
+			   *newbi;
 	register BUCKET_INDEX chainIndex,
-					nextIndex;
+				nextIndex;
 
 #ifdef HASH_STATISTICS
 	hash_expansions++;
@@ -811,10 +811,10 @@ expand_table(HTAB * hashp)
 static int
 dir_realloc(HTAB * hashp)
 {
-	register char  *p;
-	char		  **p_ptr;
-	long			old_dirsize;
-	long			new_dirsize;
+	register char *p;
+	char	  **p_ptr;
+	long		old_dirsize;
+	long		new_dirsize;
 
 
 	if (hashp->hctl->max_dsize != NO_MAX_DSIZE)
@@ -840,11 +840,11 @@ dir_realloc(HTAB * hashp)
 }
 
 
-static			SEG_OFFSET
+static SEG_OFFSET
 seg_alloc(HTAB * hashp)
 {
-	SEGMENT			segp;
-	SEG_OFFSET		segOffset;
+	SEGMENT		segp;
+	SEG_OFFSET	segOffset;
 
 
 	segp = (SEGMENT) hashp->alloc((unsigned long)
@@ -868,11 +868,11 @@ seg_alloc(HTAB * hashp)
 static int
 bucket_alloc(HTAB * hashp)
 {
-	int				i;
-	ELEMENT		   *tmpBucket;
-	long			bucketSize;
-	BUCKET_INDEX	tmpIndex,
-					lastIndex;
+	int			i;
+	ELEMENT    *tmpBucket;
+	long		bucketSize;
+	BUCKET_INDEX tmpIndex,
+				lastIndex;
 
 	bucketSize =
 		sizeof(BUCKET_INDEX) + hashp->hctl->keysize + hashp->hctl->datasize;
@@ -918,8 +918,8 @@ bucket_alloc(HTAB * hashp)
 int
 my_log2(long num)
 {
-	int				i = 1;
-	int				limit;
+	int			i = 1;
+	int			limit;
 
 	for (i = 0, limit = 1; limit < num; limit = 2 * limit, i++);
 	return (i);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.6 1997/09/07 04:48:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.7 1997/09/08 02:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
 #include "storage/bufmgr.h"
 #include "access/transam.h"		/* for AmiTransactionId */
 
-static void		LRelIdAssign(LRelId * lRelId, Oid dbId, Oid relId);
+static void LRelIdAssign(LRelId * lRelId, Oid dbId, Oid relId);
 
 /* ----------------
  *
@@ -67,9 +67,9 @@ static void		LRelIdAssign(LRelId * lRelId, Oid dbId, Oid relId);
 
 #define TupleLevelLockLimit		10
 
-extern Oid		MyDatabaseId;
+extern Oid	MyDatabaseId;
 
-static LRelId	VariableRelationLRelId = {
+static LRelId VariableRelationLRelId = {
 	RelOid_pg_variable,
 	InvalidOid
 };
@@ -93,7 +93,7 @@ elog(NOTICE, "RelationGetLRelId(%s) invalid lockInfo", \
 LRelId
 RelationGetLRelId(Relation relation)
 {
-	LockInfo		linfo;
+	LockInfo	linfo;
 
 	/* ----------------
 	 *	sanity checks
@@ -199,11 +199,11 @@ LRelIdContainsMyDatabaseId(LRelId lRelId)
 void
 RelationInitLockInfo(Relation relation)
 {
-	LockInfo		info;
-	char		   *relname;
-	Oid				relationid;
-	bool			processingVariable;
-	extern Oid		MyDatabaseId;		/* XXX use include */
+	LockInfo	info;
+	char	   *relname;
+	Oid			relationid;
+	bool		processingVariable;
+	extern Oid	MyDatabaseId;	/* XXX use include */
 	extern GlobalMemory CacheCxt;
 
 	/* ----------------
@@ -228,7 +228,7 @@ RelationInitLockInfo(Relation relation)
 	 */
 	if (!PointerIsValid(info))
 	{
-		MemoryContext	oldcxt;
+		MemoryContext oldcxt;
 
 		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 		info = (LockInfo) palloc(sizeof(LockInfoData));
@@ -366,7 +366,7 @@ elog(DEBUG, "RelationSetLockForRead(%s[%d,%d]) called", \
 void
 RelationSetLockForRead(Relation relation)
 {
-	LockInfo		linfo;
+	LockInfo	linfo;
 
 	/* ----------------
 	 *	sanity checks
@@ -416,7 +416,7 @@ elog(DEBUG, "RelationUnsetLockForRead(%s[%d,%d]) called", \
 void
 RelationUnsetLockForRead(Relation relation)
 {
-	LockInfo		linfo;
+	LockInfo	linfo;
 
 	/* ----------------
 	 *	sanity check
@@ -462,7 +462,7 @@ elog(DEBUG, "RelationSetLockForWrite(%s[%d,%d]) called", \
 void
 RelationSetLockForWrite(Relation relation)
 {
-	LockInfo		linfo;
+	LockInfo	linfo;
 
 	/* ----------------
 	 *	sanity checks
@@ -512,7 +512,7 @@ elog(DEBUG, "RelationUnsetLockForWrite(%s[%d,%d]) called", \
 void
 RelationUnsetLockForWrite(Relation relation)
 {
-	LockInfo		linfo;
+	LockInfo	linfo;
 
 	/* ----------------
 	 *	sanity checks
@@ -560,8 +560,8 @@ elog(DEBUG, "RelationSetLockForTupleRead(%s[%d,%d], 0x%x) called", \
 void
 RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
 {
-	LockInfo		linfo;
-	TransactionId	curXact;
+	LockInfo	linfo;
+	TransactionId curXact;
 
 	/* ----------------
 	 *	sanity checks

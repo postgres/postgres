@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.36 1997/09/07 05:03:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.37 1997/09/08 02:40:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,14 +30,14 @@
 
 
 #ifdef TIOCGWINSZ
-struct winsize	screen_size;
+struct winsize screen_size;
 
 #else
 struct winsize
 {
-	int				ws_row;
-	int				ws_col;
-}				screen_size;
+	int			ws_row;
+	int			ws_col;
+}			screen_size;
 
 #endif
 
@@ -46,7 +46,7 @@ struct winsize
 #define TUPARR_GROW_BY 100
 
 /* keep this in same order as ExecStatusType in pgtclCmds.h */
-const char	   *pgresStatus[] = {
+const char *pgresStatus[] = {
 	"PGRES_EMPTY_QUERY",
 	"PGRES_COMMAND_OK",
 	"PGRES_TUPLES_OK",
@@ -57,11 +57,11 @@ const char	   *pgresStatus[] = {
 
 
 static PGresult *makePGresult(PGconn * conn, char *pname);
-static void		addTuple(PGresult * res, PGresAttValue * tup);
+static void addTuple(PGresult * res, PGresAttValue * tup);
 static PGresAttValue *getTuple(PGconn * conn, PGresult * res, int binary);
 static PGresult *makeEmptyPGresult(PGconn * conn, ExecStatusType status);
-static void		fill(int length, int max, char filler, FILE * fp);
-static char    *
+static void fill(int length, int max, char filler, FILE * fp);
+static char *
 do_header(FILE * fout, PQprintOpt * po, const int nFields,
 		  int fieldMax[], char *fieldNames[], unsigned char fieldNotNum[],
 		  const int fs_len, PGresult * res);
@@ -74,8 +74,8 @@ do_header(FILE * fout, PQprintOpt * po, const int nFields,
 void
 PQclear(PGresult * res)
 {
-	int				i,
-					j;
+	int			i,
+				j;
 
 	if (!res)
 		return;
@@ -116,7 +116,7 @@ PQclear(PGresult * res)
 static PGresult *
 makeEmptyPGresult(PGconn * conn, ExecStatusType status)
 {
-	PGresult	   *result;
+	PGresult   *result;
 
 	result = (PGresult *) malloc(sizeof(PGresult));
 
@@ -142,22 +142,22 @@ makeEmptyPGresult(PGconn * conn, ExecStatusType status)
 static PGresAttValue *
 getTuple(PGconn * conn, PGresult * result, int binary)
 {
-	char			bitmap[MAX_FIELDS]; /* the backend sends us a bitmap
+	char		bitmap[MAX_FIELDS];		/* the backend sends us a bitmap
 										 * of  */
 
 	/* which attributes are null */
-	int				bitmap_index = 0;
-	int				i;
-	int				nbytes;		/* the number of bytes in bitmap  */
-	char			bmap;		/* One byte of the bitmap */
-	int				bitcnt = 0; /* number of bits examined in current byte */
-	int				vlen;		/* length of the current field value */
-	FILE		   *pfin = conn->Pfin;
-	FILE		   *pfdebug = conn->Pfdebug;
+	int			bitmap_index = 0;
+	int			i;
+	int			nbytes;			/* the number of bytes in bitmap  */
+	char		bmap;			/* One byte of the bitmap */
+	int			bitcnt = 0;		/* number of bits examined in current byte */
+	int			vlen;			/* length of the current field value */
+	FILE	   *pfin = conn->Pfin;
+	FILE	   *pfdebug = conn->Pfdebug;
 
-	PGresAttValue  *tup;
+	PGresAttValue *tup;
 
-	int				nfields = result->numAttributes;
+	int			nfields = result->numAttributes;
 
 	result->binary = binary;
 
@@ -264,16 +264,16 @@ addTuple(PGresult * res, PGresAttValue * tup)
 static PGresult *
 makePGresult(PGconn * conn, char *pname)
 {
-	PGresult	   *result;
-	int				id;
-	int				nfields;
-	int				i;
-	int				done = 0;
+	PGresult   *result;
+	int			id;
+	int			nfields;
+	int			i;
+	int			done = 0;
 
-	PGresAttValue  *newTup;
+	PGresAttValue *newTup;
 
-	FILE		   *pfin = conn->Pfin;
-	FILE		   *pfdebug = conn->Pfdebug;
+	FILE	   *pfin = conn->Pfin;
+	FILE	   *pfdebug = conn->Pfdebug;
 
 	result = makeEmptyPGresult(conn, PGRES_TUPLES_OK);
 
@@ -299,9 +299,9 @@ makePGresult(PGconn * conn, char *pname)
 	/* get type info */
 	for (i = 0; i < nfields; i++)
 	{
-		char			typName[MAX_MESSAGE_LEN];
-		int				adtid;
-		int				adtsize;
+		char		typName[MAX_MESSAGE_LEN];
+		int			adtid;
+		int			adtsize;
 
 		if (pqGets(typName, MAX_MESSAGE_LEN, pfin, pfdebug) ||
 			pqGetInt(&adtid, 4, pfin, pfdebug) ||
@@ -325,57 +325,57 @@ makePGresult(PGconn * conn, char *pname)
 	{
 		switch (id)
 		{
-		case 'T':				/* a new row group */
-			sprintf(conn->errorMessage,
-					"makePGresult() -- "
-					"is not equipped to handle multiple row groups.\n");
-			goto makePGresult_badResponse_return;
-		case 'B':				/* a row in binary format */
-		case 'D':				/* a row in ASCII format */
-			newTup = getTuple(conn, result, (id == 'B'));
-			if (newTup == NULL)
+			case 'T':			/* a new row group */
+				sprintf(conn->errorMessage,
+						"makePGresult() -- "
+					 "is not equipped to handle multiple row groups.\n");
 				goto makePGresult_badResponse_return;
-			addTuple(result, newTup);
-			break;
-		case 'C':				/* end of portal row stream */
-			{
-				char			command[MAX_MESSAGE_LEN];
+			case 'B':			/* a row in binary format */
+			case 'D':			/* a row in ASCII format */
+				newTup = getTuple(conn, result, (id == 'B'));
+				if (newTup == NULL)
+					goto makePGresult_badResponse_return;
+				addTuple(result, newTup);
+				break;
+			case 'C':			/* end of portal row stream */
+				{
+					char		command[MAX_MESSAGE_LEN];
 
-				pqGets(command, MAX_MESSAGE_LEN, pfin, pfdebug);		/* read command tag */
-				done = 1;
-			}
-			break;
-		case 'E':				/* errors */
-			if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1)
-			{
-				sprintf(conn->errorMessage,
-						"Error return detected from backend, "
-						"but error message cannot be read");
-			}
-			result->resultStatus = PGRES_FATAL_ERROR;
-			return result;
-			break;
-		case 'N':				/* notices from the backend */
-			if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1)
-			{
-				sprintf(conn->errorMessage,
-						"Notice return detected from backend, "
-						"but error message cannot be read");
-			}
-			else
-				/* XXXX send Notices to stderr for now */
-				fprintf(stderr, "%s\n", conn->errorMessage);
-			break;
-		default:				/* uh-oh this should never happen but
+					pqGets(command, MAX_MESSAGE_LEN, pfin, pfdebug);	/* read command tag */
+					done = 1;
+				}
+				break;
+			case 'E':			/* errors */
+				if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1)
+				{
+					sprintf(conn->errorMessage,
+							"Error return detected from backend, "
+							"but error message cannot be read");
+				}
+				result->resultStatus = PGRES_FATAL_ERROR;
+				return result;
+				break;
+			case 'N':			/* notices from the backend */
+				if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1)
+				{
+					sprintf(conn->errorMessage,
+							"Notice return detected from backend, "
+							"but error message cannot be read");
+				}
+				else
+					/* XXXX send Notices to stderr for now */
+					fprintf(stderr, "%s\n", conn->errorMessage);
+				break;
+			default:			/* uh-oh this should never happen but
 								 * frequently does when the backend dumps
 								 * core */
-			sprintf(conn->errorMessage,
-					"FATAL:  unrecognized data from the backend.  "
-					"It probably dumped core.\n");
-			fprintf(stderr, conn->errorMessage);
-			result->resultStatus = PGRES_FATAL_ERROR;
-			return result;
-			break;
+				sprintf(conn->errorMessage,
+						"FATAL:  unrecognized data from the backend.  "
+						"It probably dumped core.\n");
+				fprintf(stderr, conn->errorMessage);
+				result->resultStatus = PGRES_FATAL_ERROR;
+				return result;
+				break;
 		}
 		if (!done)
 			id = getc(pfin);
@@ -411,32 +411,32 @@ process_response_from_backend(FILE * pfin, FILE * pfout, FILE * pfdebug,
 							  PGresult ** result_p, char *const reason)
 {
 
-	int				id;
+	int			id;
 
 	/*
 	 * The protocol character received from the backend.  The protocol
 	 * character is the first character in the backend's response to our
 	 * query.  It defines the nature of the response.
 	 */
-	PGnotify	   *newNotify;
-	bool			done;
+	PGnotify   *newNotify;
+	bool		done;
 
 	/* We're all done with the query and ready to return the result. */
-	int				emptiesSent;
+	int			emptiesSent;
 
 	/*
 	 * Number of empty queries we have sent in order to flush out multiple
 	 * responses, less the number of corresponding responses we have
 	 * received.
 	 */
-	int				errors;
+	int			errors;
 
 	/*
 	 * If an error is received, we must still drain out the empty queries
 	 * sent. So we need another flag.
 	 */
-	char			cmdStatus[MAX_MESSAGE_LEN];
-	char			pname[MAX_MESSAGE_LEN];		/* portal name */
+	char		cmdStatus[MAX_MESSAGE_LEN];
+	char		pname[MAX_MESSAGE_LEN]; /* portal name */
 
 	/*
 	 * loop because multiple messages, especially NOTICES, can come back
@@ -470,82 +470,95 @@ process_response_from_backend(FILE * pfin, FILE * pfout, FILE * pfdebug,
 		{
 			switch (id)
 			{
-			case 'A':
-				newNotify = (PGnotify *) malloc(sizeof(PGnotify));
-				pqGetInt(&(newNotify->be_pid), 4, pfin, pfdebug);
-				pqGets(newNotify->relname, NAMEDATALEN, pfin, pfdebug);
-				DLAddTail(conn->notifyList, DLNewElem(newNotify));
-
-				/*
-				 * async messages are piggy'ed back on other messages, so
-				 * we stay in the while loop for other messages
-				 */
-				break;
-			case 'C':			/* portal query command, no rows returned */
-				if (pqGets(cmdStatus, MAX_MESSAGE_LEN, pfin, pfdebug) == 1)
-				{
-					sprintf(reason,
-							"PQexec() -- query command completed, "
-					  "but return message from backend cannot be read.");
-					*result_p = (PGresult *) NULL;
-					done = true;
-				}
-				else
-				{
+				case 'A':
+					newNotify = (PGnotify *) malloc(sizeof(PGnotify));
+					pqGetInt(&(newNotify->be_pid), 4, pfin, pfdebug);
+					pqGets(newNotify->relname, NAMEDATALEN, pfin, pfdebug);
+					DLAddTail(conn->notifyList, DLNewElem(newNotify));
 
 					/*
-					 * since backend may produce more than one result for
-					 * some commands need to poll until clear send an
-					 * empty query down, and keep reading out of the pipe
-					 * until an 'I' is received.
+					 * async messages are piggy'ed back on other messages,
+					 * so we stay in the while loop for other messages
 					 */
-					pqPuts("Q ", pfout, pfdebug);		/* send an empty query */
-
-					/*
-					 * Increment a flag and process messages in the usual
-					 * way because there may be async notifications
-					 * pending.  DZ - 31-8-1996
-					 */
-					emptiesSent++;
-				}
-				break;
-			case 'E':			/* error return */
-				if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1)
-				{
-					(void) sprintf(reason,
-					   "PQexec() -- error return detected from backend, "
-						"but attempt to read the error message failed.");
-				}
-				*result_p = (PGresult *) NULL;
-				errors++;
-				if (emptiesSent == 0)
-				{
-					done = true;
-				}
-				break;
-			case 'I':
-				{				/* empty query */
-					/* read and throw away the closing '\0' */
-					int				c;
-
-					if ((c = pqGetc(pfin, pfdebug)) != '\0')
+					break;
+				case 'C':		/* portal query command, no rows returned */
+					if (pqGets(cmdStatus, MAX_MESSAGE_LEN, pfin, pfdebug) == 1)
 					{
-						fprintf(stderr, "error!, unexpected character %c following 'I'\n", c);
+						sprintf(reason,
+								"PQexec() -- query command completed, "
+								"but return message from backend cannot be read.");
+						*result_p = (PGresult *) NULL;
+						done = true;
 					}
-					if (emptiesSent)
+					else
 					{
-						if (--emptiesSent == 0)
-						{		/* is this the last one? */
 
-							/*
-							 * If this is the result of a portal query
-							 * command set the command status and message
-							 * accordingly.  DZ - 31-8-1996
-							 */
+						/*
+						 * since backend may produce more than one result
+						 * for some commands need to poll until clear send
+						 * an empty query down, and keep reading out of
+						 * the pipe until an 'I' is received.
+						 */
+						pqPuts("Q ", pfout, pfdebug);	/* send an empty query */
+
+						/*
+						 * Increment a flag and process messages in the
+						 * usual way because there may be async
+						 * notifications pending.  DZ - 31-8-1996
+						 */
+						emptiesSent++;
+					}
+					break;
+				case 'E':		/* error return */
+					if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1)
+					{
+						(void) sprintf(reason,
+						"PQexec() -- error return detected from backend, "
+						"but attempt to read the error message failed.");
+					}
+					*result_p = (PGresult *) NULL;
+					errors++;
+					if (emptiesSent == 0)
+					{
+						done = true;
+					}
+					break;
+				case 'I':
+					{			/* empty query */
+						/* read and throw away the closing '\0' */
+						int			c;
+
+						if ((c = pqGetc(pfin, pfdebug)) != '\0')
+						{
+							fprintf(stderr, "error!, unexpected character %c following 'I'\n", c);
+						}
+						if (emptiesSent)
+						{
+							if (--emptiesSent == 0)
+							{	/* is this the last one? */
+
+								/*
+								 * If this is the result of a portal query
+								 * command set the command status and
+								 * message accordingly.  DZ - 31-8-1996
+								 */
+								if (!errors)
+								{
+									*result_p = makeEmptyPGresult(conn, PGRES_COMMAND_OK);
+									strncpy((*result_p)->cmdStatus, cmdStatus, CMDSTATUS_LEN - 1);
+								}
+								else
+								{
+									*result_p = (PGresult *) NULL;
+								}
+								done = true;
+							}
+						}
+						else
+						{
 							if (!errors)
 							{
-								*result_p = makeEmptyPGresult(conn, PGRES_COMMAND_OK);
-								strncpy((*result_p)->cmdStatus, cmdStatus, CMDSTATUS_LEN - 1);
+								*result_p = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
 							}
 							else
 							{
@@ -554,62 +567,50 @@ process_response_from_backend(FILE * pfin, FILE * pfout, FILE * pfdebug,
 							done = true;
 						}
 					}
-					else
+					break;
+				case 'N':		/* notices from the backend */
+					if (pqGets(reason, ERROR_MSG_LENGTH, pfin, pfdebug) == 1)
 					{
-						if (!errors)
-						{
-							*result_p = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
-						}
-						else
-						{
-							*result_p = (PGresult *) NULL;
-						}
+						sprintf(reason,
+							 "PQexec() -- Notice detected from backend, "
+								"but attempt to read the notice failed.");
+						*result_p = (PGresult *) NULL;
 						done = true;
 					}
-				}
-				break;
-			case 'N':			/* notices from the backend */
-				if (pqGets(reason, ERROR_MSG_LENGTH, pfin, pfdebug) == 1)
-				{
+					else
+
+						/*
+						 * Should we really be doing this?	These notices
+						 * are not important enough for us to presume to
+						 * put them on stderr.	Maybe the caller should
+						 * decide whether to put them on stderr or not.
+						 * BJH 96.12.27
+						 */
+						fprintf(stderr, "%s", reason);
+					break;
+				case 'P':		/* synchronous (normal) portal */
+					pqGets(pname, MAX_MESSAGE_LEN, pfin, pfdebug);		/* read in portal name */
+					break;
+				case 'T':		/* actual row results: */
+					*result_p = makePGresult(conn, pname);
+					done = true;
+					break;
+				case 'D':		/* copy command began successfully */
+					*result_p = makeEmptyPGresult(conn, PGRES_COPY_IN);
+					done = true;
+					break;
+				case 'B':		/* copy command began successfully */
+					*result_p = makeEmptyPGresult(conn, PGRES_COPY_OUT);
+					done = true;
+					break;
+				default:
 					sprintf(reason,
-							"PQexec() -- Notice detected from backend, "
-							"but attempt to read the notice failed.");
+					"unknown protocol character '%c' read from backend.  "
+					"(The protocol character is the first character the "
+							"backend sends in response to a query it receives).\n",
+							id);
 					*result_p = (PGresult *) NULL;
 					done = true;
-				}
-				else
-
-					/*
-					 * Should we really be doing this?	These notices are
-					 * not important enough for us to presume to put them
-					 * on stderr.  Maybe the caller should decide whether
-					 * to put them on stderr or not.  BJH 96.12.27
-					 */
-					fprintf(stderr, "%s", reason);
-				break;
-			case 'P':			/* synchronous (normal) portal */
-				pqGets(pname, MAX_MESSAGE_LEN, pfin, pfdebug);	/* read in portal name */
-				break;
-			case 'T':			/* actual row results: */
-				*result_p = makePGresult(conn, pname);
-				done = true;
-				break;
-			case 'D':			/* copy command began successfully */
-				*result_p = makeEmptyPGresult(conn, PGRES_COPY_IN);
-				done = true;
-				break;
-			case 'B':			/* copy command began successfully */
-				*result_p = makeEmptyPGresult(conn, PGRES_COPY_OUT);
-				done = true;
-				break;
-			default:
-				sprintf(reason,
-				   "unknown protocol character '%c' read from backend.  "
-					"(The protocol character is the first character the "
-				  "backend sends in response to a query it receives).\n",
-						id);
-				*result_p = (PGresult *) NULL;
-				done = true;
 			}					/* switch on protocol character */
 		}						/* if character was received */
 	}							/* while not done */
@@ -628,11 +629,11 @@ process_response_from_backend(FILE * pfin, FILE * pfout, FILE * pfdebug,
  *
  */
 
-PGresult	   *
+PGresult   *
 PQexec(PGconn * conn, const char *query)
 {
-	PGresult	   *result;
-	char			buffer[MAX_MESSAGE_LEN];
+	PGresult   *result;
+	char		buffer[MAX_MESSAGE_LEN];
 
 	if (!conn)
 		return NULL;
@@ -690,10 +691,10 @@ PQexec(PGconn * conn, const char *query)
  * the CALLER is responsible for FREE'ing the structure returned
  */
 
-PGnotify	   *
+PGnotify   *
 PQnotifies(PGconn * conn)
 {
-	Dlelem		   *e;
+	Dlelem	   *e;
 
 	if (!conn)
 		return NULL;
@@ -728,7 +729,7 @@ PQnotifies(PGconn * conn)
 int
 PQgetline(PGconn * conn, char *s, int maxlen)
 {
-	int				c = '\0';
+	int			c = '\0';
 
 	if (!conn)
 		return EOF;
@@ -784,9 +785,9 @@ PQputline(PGconn * conn, const char *s)
 int
 PQendcopy(PGconn * conn)
 {
-	FILE		   *pfin,
-				   *pfdebug;
-	bool			valid = true;
+	FILE	   *pfin,
+			   *pfdebug;
+	bool		valid = true;
 
 	if (!conn)
 		return (int) NULL;
@@ -796,7 +797,7 @@ PQendcopy(PGconn * conn)
 
 	if (pqGetc(pfin, pfdebug) == 'C')
 	{
-		char			command[MAX_MESSAGE_LEN];
+		char		command[MAX_MESSAGE_LEN];
 
 		pqGets(command, MAX_MESSAGE_LEN, pfin, pfdebug);		/* read command tag */
 	}
@@ -820,8 +821,8 @@ PQendcopy(PGconn * conn)
 static void
 fill(int length, int max, char filler, FILE * fp)
 {
-	int				count;
-	char			filltmp[2];
+	int			count;
+	char		filltmp[2];
 
 	filltmp[0] = filler;
 	filltmp[1] = 0;
@@ -847,11 +848,11 @@ PQdisplayTuples(PGresult * res,
 {
 #define DEFAULT_FIELD_SEP " "
 
-	int				i,
-					j;
-	int				nFields;
-	int				nTuples;
-	int				fLength[MAX_FIELDS];
+	int			i,
+				j;
+	int			nFields;
+	int			nTuples;
+	int			fLength[MAX_FIELDS];
 
 	if (fieldSep == NULL)
 		fieldSep = DEFAULT_FIELD_SEP;
@@ -941,13 +942,13 @@ PQprintTuples(PGresult * res,
 								 * width */
 )
 {
-	int				nFields;
-	int				nTups;
-	int				i,
-					j;
-	char			formatString[80];
+	int			nFields;
+	int			nTups;
+	int			i,
+				j;
+	char		formatString[80];
 
-	char		   *tborder = NULL;
+	char	   *tborder = NULL;
 
 	nFields = PQnfields(res);
 	nTups = PQntuples(res);
@@ -964,7 +965,7 @@ PQprintTuples(PGresult * res,
 
 		if (!TerseOutput)
 		{
-			int				width;
+			int			width;
 
 			width = nFields * 14;
 			tborder = malloc(width + 1);
@@ -996,7 +997,7 @@ PQprintTuples(PGresult * res,
 		{
 			for (j = 0; j < nFields; j++)
 			{
-				char		   *pval = PQgetvalue(res, i, j);
+				char	   *pval = PQgetvalue(res, i, j);
 
 				fprintf(fout, formatString,
 						TerseOutput ? "" : "|",
@@ -1022,11 +1023,11 @@ do_field(PQprintOpt * po, PGresult * res,
 )
 {
 
-	char		   *pval,
-				   *p,
-				   *o;
-	int				plen;
-	bool			skipit;
+	char	   *pval,
+			   *p,
+			   *o;
+	int			plen;
+	bool		skipit;
 
 	plen = PQgetlength(res, i, j);
 	pval = PQgetvalue(res, i, j);
@@ -1062,7 +1063,7 @@ do_field(PQprintOpt * po, PGresult * res,
 		*o = '\0';
 		if (!po->expanded && (po->align || po->html3))
 		{
-			int				n = strlen(buf);
+			int			n = strlen(buf);
 
 			if (n > fieldMax[j])
 				fieldMax[j] = n;
@@ -1112,23 +1113,23 @@ do_field(PQprintOpt * po, PGresult * res,
 }
 
 
-static char    *
+static char *
 do_header(FILE * fout, PQprintOpt * po, const int nFields, int fieldMax[],
 		  char *fieldNames[], unsigned char fieldNotNum[],
 		  const int fs_len, PGresult * res)
 {
 
-	int				j;			/* for loop index */
-	char		   *border = NULL;
+	int			j;				/* for loop index */
+	char	   *border = NULL;
 
 	if (po->html3)
 		fputs("<tr>", fout);
 	else
 	{
-		int				j;		/* for loop index */
-		int				tot = 0;
-		int				n = 0;
-		char		   *p = NULL;
+		int			j;			/* for loop index */
+		int			tot = 0;
+		int			n = 0;
+		char	   *p = NULL;
 
 		for (; n < nFields; n++)
 			tot += fieldMax[n] + fs_len + (po->standard ? 2 : 0);
@@ -1143,19 +1144,19 @@ do_header(FILE * fout, PQprintOpt * po, const int nFields, int fieldMax[],
 		p = border;
 		if (po->standard)
 		{
-			char		   *fs = po->fieldSep;
+			char	   *fs = po->fieldSep;
 
 			while (*fs++)
 				*p++ = '+';
 		}
 		for (j = 0; j < nFields; j++)
 		{
-			int				len;
+			int			len;
 
 			for (len = fieldMax[j] + (po->standard ? 2 : 0); len--; *p++ = '-');
 			if (po->standard || (j + 1) < nFields)
 			{
-				char		   *fs = po->fieldSep;
+				char	   *fs = po->fieldSep;
 
 				while (*fs++)
 					*p++ = '+';
@@ -1169,7 +1170,7 @@ do_header(FILE * fout, PQprintOpt * po, const int nFields, int fieldMax[],
 		fputs(po->fieldSep, fout);
 	for (j = 0; j < nFields; j++)
 	{
-		char		   *s = PQfname(res, j);
+		char	   *s = PQfname(res, j);
 
 		if (po->html3)
 		{
@@ -1178,7 +1179,7 @@ do_header(FILE * fout, PQprintOpt * po, const int nFields, int fieldMax[],
 		}
 		else
 		{
-			int				n = strlen(s);
+			int			n = strlen(s);
 
 			if (n > fieldMax[j])
 				fieldMax[j] = n;
@@ -1206,7 +1207,7 @@ output_row(FILE * fout, PQprintOpt * po, const int nFields, char *fields[],
 		   const int row_index)
 {
 
-	int				field_index;/* for loop index */
+	int			field_index;	/* for loop index */
 
 	if (po->html3)
 		fputs("<tr>", fout);
@@ -1214,7 +1215,7 @@ output_row(FILE * fout, PQprintOpt * po, const int nFields, char *fields[],
 		fputs(po->fieldSep, fout);
 	for (field_index = 0; field_index < nFields; field_index++)
 	{
-		char		   *p = fields[row_index * nFields + field_index];
+		char	   *p = fields[row_index * nFields + field_index];
 
 		if (po->html3)
 			fprintf(fout, "<td align=%s>%s</td>",
@@ -1261,28 +1262,27 @@ PQprint(FILE * fout,
 		PQprintOpt * po
 )
 {
-	int				nFields;
+	int			nFields;
 
 	nFields = PQnfields(res);
 
 	if (nFields > 0)
 	{							/* only print rows with at least 1 field.  */
-		int				i,
-						j;
-		int				nTups;
-		int			   *fieldMax = NULL;		/* in case we don't use
-												 * them */
-		unsigned char  *fieldNotNum = NULL;
-		char		   *border = NULL;
-		char		  **fields = NULL;
-		char		  **fieldNames;
-		int				fieldMaxLen = 0;
-		int				numFieldName;
-		int				fs_len = strlen(po->fieldSep);
-		int				total_line_length = 0;
-		int				usePipe = 0;
-		char		   *pagerenv;
-		char			buf[8192 * 2 + 1];
+		int			i,
+					j;
+		int			nTups;
+		int		   *fieldMax = NULL;	/* in case we don't use them */
+		unsigned char *fieldNotNum = NULL;
+		char	   *border = NULL;
+		char	  **fields = NULL;
+		char	  **fieldNames;
+		int			fieldMaxLen = 0;
+		int			numFieldName;
+		int			fs_len = strlen(po->fieldSep);
+		int			total_line_length = 0;
+		int			usePipe = 0;
+		char	   *pagerenv;
+		char		buf[8192 * 2 + 1];
 
 		nTups = PQntuples(res);
 		if (!(fieldNames = (char **) calloc(nFields, sizeof(char *))))
@@ -1306,8 +1306,8 @@ PQprint(FILE * fout,
 			;
 		for (j = 0; j < nFields; j++)
 		{
-			int				len;
-			char		   *s =
+			int			len;
+			char	   *s =
 			(j < numFieldName && po->fieldName[j][0]) ?
 			po->fieldName[j] : PQfname(res, j);
 
@@ -1386,11 +1386,11 @@ PQprint(FILE * fout,
 			}
 			else
 			{
-				int				len = 0;
+				int			len = 0;
 
 				for (j = 0; j < nFields; j++)
 				{
-					char		   *s = fieldNames[j];
+					char	   *s = fieldNames[j];
 
 					fputs(s, fout);
 					len += strlen(s) + fs_len;
@@ -1501,7 +1501,7 @@ PQprint(FILE * fout,
  * ----------------
  */
 
-PGresult	   *
+PGresult   *
 PQfn(PGconn * conn,
 	 int fnid,
 	 int *result_buf,
@@ -1510,11 +1510,11 @@ PQfn(PGconn * conn,
 	 PQArgBlock * args,
 	 int nargs)
 {
-	FILE		   *pfin,
-				   *pfout,
-				   *pfdebug;
-	int				id;
-	int				i;
+	FILE	   *pfin,
+			   *pfout,
+			   *pfdebug;
+	int			id;
+	int			i;
 
 	if (!conn)
 		return NULL;
@@ -1561,47 +1561,47 @@ PQfn(PGconn * conn,
 	id = pqGetc(pfin, pfdebug);
 	for (;;)
 	{
-		int				c;
+		int			c;
 
 		switch (id)
 		{
-		case 'G':				/* function returned properly */
-			pqGetInt(actual_result_len, 4, pfin, pfdebug);
-			if (result_is_int)
-			{
-				pqGetInt(result_buf, 4, pfin, pfdebug);
-			}
-			else
-			{
-				pqGetnchar((char *) result_buf, *actual_result_len,
-						   pfin, pfdebug);
-			}
-			c = pqGetc(pfin, pfdebug);	/* get the last '0' */
-			return makeEmptyPGresult(conn, PGRES_COMMAND_OK);
-		case 'E':
-			sprintf(conn->errorMessage,
-					"PQfn: returned an error");
-			return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
-		case 'N':
-			/* print notice and go back to processing return values */
-			if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug)
-				== 1)
-			{
+			case 'G':			/* function returned properly */
+				pqGetInt(actual_result_len, 4, pfin, pfdebug);
+				if (result_is_int)
+				{
+					pqGetInt(result_buf, 4, pfin, pfdebug);
+				}
+				else
+				{
+					pqGetnchar((char *) result_buf, *actual_result_len,
+							   pfin, pfdebug);
+				}
+				c = pqGetc(pfin, pfdebug);		/* get the last '0' */
+				return makeEmptyPGresult(conn, PGRES_COMMAND_OK);
+			case 'E':
 				sprintf(conn->errorMessage,
+						"PQfn: returned an error");
+				return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+			case 'N':
+				/* print notice and go back to processing return values */
+				if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug)
+					== 1)
+				{
+					sprintf(conn->errorMessage,
 					  "Notice return detected from backend, but message "
-						"cannot be read");
-			}
-			else
-				fprintf(stderr, "%s\n", conn->errorMessage);
-			/* keep iterating */
-			break;
-		case '0':				/* no return value */
-			return makeEmptyPGresult(conn, PGRES_COMMAND_OK);
-		default:
-			/* The backend violates the protocol. */
-			sprintf(conn->errorMessage,
-					"FATAL: PQfn: protocol error: id=%x\n", id);
-			return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+							"cannot be read");
+				}
+				else
+					fprintf(stderr, "%s\n", conn->errorMessage);
+				/* keep iterating */
+				break;
+			case '0':			/* no return value */
+				return makeEmptyPGresult(conn, PGRES_COMMAND_OK);
+			default:
+				/* The backend violates the protocol. */
+				sprintf(conn->errorMessage,
+						"FATAL: PQfn: protocol error: id=%x\n", id);
+				return makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 		}
 	}
 }
@@ -1645,7 +1645,7 @@ PQnfields(PGresult * res)
 /*
    returns NULL if the field_num is invalid
 */
-char		   *
+char	   *
 PQfname(PGresult * res, int field_num)
 {
 	if (!res)
@@ -1675,7 +1675,7 @@ PQfname(PGresult * res, int field_num)
 int
 PQfnumber(PGresult * res, const char *field_name)
 {
-	int				i;
+	int			i;
 
 	if (!res)
 	{
@@ -1743,7 +1743,7 @@ PQfsize(PGresult * res, int field_num)
 		return 0;
 }
 
-char		   *
+char	   *
 PQcmdStatus(PGresult * res)
 {
 	if (!res)
@@ -1759,8 +1759,8 @@ PQcmdStatus(PGresult * res)
 	if the last command was an INSERT, return the oid string
 	if not, return ""
 */
-static char		oidStatus[32] = {0};
-const char	   *
+static char oidStatus[32] = {0};
+const char *
 PQoidStatus(PGresult * res)
 {
 	if (!res)
@@ -1775,8 +1775,8 @@ PQoidStatus(PGresult * res)
 
 	if (strncmp(res->cmdStatus, "INSERT", 6) == 0)
 	{
-		char		   *p = res->cmdStatus + 7;
-		char		   *e;
+		char	   *p = res->cmdStatus + 7;
+		char	   *e;
 
 		for (e = p; *e != ' ' && *e;)
 			e++;
@@ -1790,7 +1790,7 @@ PQoidStatus(PGresult * res)
 	if the last command was an INSERT/UPDATE/DELETE, return number
 	of inserted/affected tuples, if not, return ""
 */
-const char	   *
+const char *
 PQcmdTuples(PGresult * res)
 {
 	if (!res)
@@ -1806,7 +1806,7 @@ PQcmdTuples(PGresult * res)
 		strncmp(res->cmdStatus, "DELETE", 6) == 0 ||
 		strncmp(res->cmdStatus, "UPDATE", 6) == 0)
 	{
-		char		   *p = res->cmdStatus + 6;
+		char	   *p = res->cmdStatus + 6;
 
 		if (*p == 0)
 		{
@@ -1840,7 +1840,7 @@ PQcmdTuples(PGresult * res)
 
 	if res is not binary, a null-terminated ASCII string is returned.
 */
-char		   *
+char	   *
 PQgetvalue(PGresult * res, int tup_num, int field_num)
 {
 	if (!res)

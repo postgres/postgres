@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.4 1997/09/07 04:48:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.5 1997/09/08 02:28:56 momjian Exp $
  *
  * NOTES
  *
@@ -76,8 +76,8 @@ SHMQueueElemInit(SHM_QUEUE * queue)
 void
 SHMQueueDelete(SHM_QUEUE * queue)
 {
-	SHM_QUEUE	   *nextElem = (SHM_QUEUE *) MAKE_PTR((queue)->next);
-	SHM_QUEUE	   *prevElem = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
+	SHM_QUEUE  *nextElem = (SHM_QUEUE *) MAKE_PTR((queue)->next);
+	SHM_QUEUE  *prevElem = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
 
 	Assert(SHM_PTR_VALID(queue));
 	Assert(SHM_PTR_VALID(nextElem));
@@ -99,10 +99,10 @@ SHMQueueDelete(SHM_QUEUE * queue)
 void
 dumpQ(SHM_QUEUE * q, char *s)
 {
-	char			elem[16];
-	char			buf[1024];
-	SHM_QUEUE	   *start = q;
-	int				count = 0;
+	char		elem[16];
+	char		buf[1024];
+	SHM_QUEUE  *start = q;
+	int			count = 0;
 
 	sprintf(buf, "q prevs: %x", MAKE_OFFSET(q));
 	q = (SHM_QUEUE *) MAKE_PTR(q->prev);
@@ -154,8 +154,8 @@ dumpQ(SHM_QUEUE * q, char *s)
 void
 SHMQueueInsertHD(SHM_QUEUE * queue, SHM_QUEUE * elem)
 {
-	SHM_QUEUE	   *prevPtr = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
-	SHMEM_OFFSET	elemOffset = MAKE_OFFSET(elem);
+	SHM_QUEUE  *prevPtr = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
+	SHMEM_OFFSET elemOffset = MAKE_OFFSET(elem);
 
 	Assert(SHM_PTR_VALID(queue));
 	Assert(SHM_PTR_VALID(elem));
@@ -179,8 +179,8 @@ SHMQueueInsertHD(SHM_QUEUE * queue, SHM_QUEUE * elem)
 void
 SHMQueueInsertTL(SHM_QUEUE * queue, SHM_QUEUE * elem)
 {
-	SHM_QUEUE	   *nextPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
-	SHMEM_OFFSET	elemOffset = MAKE_OFFSET(elem);
+	SHM_QUEUE  *nextPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
+	SHMEM_OFFSET elemOffset = MAKE_OFFSET(elem);
 
 	Assert(SHM_PTR_VALID(queue));
 	Assert(SHM_PTR_VALID(elem));
@@ -224,7 +224,7 @@ SHMQueueInsertTL(SHM_QUEUE * queue, SHM_QUEUE * elem)
 void
 SHMQueueFirst(SHM_QUEUE * queue, Pointer * nextPtrPtr, SHM_QUEUE * nextQueue)
 {
-	SHM_QUEUE	   *elemPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
+	SHM_QUEUE  *elemPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
 
 	Assert(SHM_PTR_VALID(queue));
 	*nextPtrPtr = (Pointer) (((unsigned long) *nextPtrPtr) +

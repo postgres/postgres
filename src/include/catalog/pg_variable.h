@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_variable.h,v 1.3 1997/09/07 04:57:15 momjian Exp $
+ * $Id: pg_variable.h,v 1.4 1997/09/08 02:35:34 momjian Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code
@@ -29,7 +29,7 @@
 
 CATALOG(pg_variable) BOOTSTRAP
 {
-	Oid				varfoo;
+	Oid			varfoo;
 } FormData_pg_variable;
 
 typedef FormData_pg_variable *Form_pg_variable;

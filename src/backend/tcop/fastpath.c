@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.5 1997/09/07 04:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.6 1997/09/08 02:29:47 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -128,14 +128,14 @@ SendFunctionResult(Oid fid,		/* function id */
  */
 struct fp_info
 {
-	Oid				funcid;
-	int				nargs;
-	bool			argbyval[MAXFMGRARGS];
-	int32			arglen[MAXFMGRARGS];		/* signed (for varlena) */
-	bool			retbyval;
-	int32			retlen;		/* signed (for varlena) */
-	TransactionId	xid;
-	CommandId		cid;
+	Oid			funcid;
+	int			nargs;
+	bool		argbyval[MAXFMGRARGS];
+	int32		arglen[MAXFMGRARGS];	/* signed (for varlena) */
+	bool		retbyval;
+	int32		retlen;			/* signed (for varlena) */
+	TransactionId xid;
+	CommandId	cid;
 };
 
 /*
@@ -184,13 +184,13 @@ valid_fp_info(Oid func_id, struct fp_info * fip)
 static void
 update_fp_info(Oid func_id, struct fp_info * fip)
 {
-	Oid			   *argtypes;	/* an oid8 */
-	Oid				rettype;
-	HeapTuple		func_htp,
-					type_htp;
-	TypeTupleForm	tp;
-	Form_pg_proc	pp;
-	int				i;
+	Oid		   *argtypes;		/* an oid8 */
+	Oid			rettype;
+	HeapTuple	func_htp,
+				type_htp;
+	TypeTupleForm tp;
+	Form_pg_proc pp;
+	int			i;
 
 	Assert(OidIsValid(func_id));
 	Assert(fip != (struct fp_info *) NULL);
@@ -272,14 +272,14 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 int
 HandleFunctionRequest()
 {
-	Oid				fid;
-	int				argsize;
-	int				nargs;
-	char		   *arg[8];
-	char		   *retval;
-	int				i;
-	uint32			palloced;
-	char		   *p;
+	Oid			fid;
+	int			argsize;
+	int			nargs;
+	char	   *arg[8];
+	char	   *retval;
+	int			i;
+	uint32		palloced;
+	char	   *p;
 	struct fp_info *fip;
 
 	fid = (Oid) pq_getint(4);	/* function oid */

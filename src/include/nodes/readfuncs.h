@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: readfuncs.h,v 1.3 1997/09/07 04:58:48 momjian Exp $
+ * $Id: readfuncs.h,v 1.4 1997/09/08 02:37:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,12 @@
 /*
  * prototypes for functions in read.c (the lisp token parser)
  */
-extern char    *lsptok(char *string, int *length);
-extern void    *nodeRead(bool read_car_only);
+extern char *lsptok(char *string, int *length);
+extern void *nodeRead(bool read_car_only);
 
 /*
  * prototypes for functions in readfuncs.c
  */
-extern Node    *parsePlanString(void);
+extern Node *parsePlanString(void);
 
 #endif							/* READFUNCS_H */

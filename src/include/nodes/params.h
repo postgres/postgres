@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.4 1997/09/07 04:58:40 momjian Exp $
+ * $Id: params.h,v 1.5 1997/09/08 02:37:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,15 +75,15 @@
 
 typedef struct ParamListInfoData
 {
-	int				kind;
-	char		   *name;
-	AttrNumber		id;
-	Oid				type;
-	Size			length;
-	bool			isnull;
-	bool			byval;
-	Datum			value;
-}				ParamListInfoData;
+	int			kind;
+	char	   *name;
+	AttrNumber	id;
+	Oid			type;
+	Size		length;
+	bool		isnull;
+	bool		byval;
+	Datum		value;
+}			ParamListInfoData;
 
 typedef ParamListInfoData *ParamListInfo;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.4 1997/09/07 04:43:09 momjian Exp $
+ * $Id: geqo_main.c,v 1.5 1997/09/08 02:23:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,42 +63,42 @@
  *	  similar to a constrained Traveling Salesman Problem (TSP)
  */
 
-Rel			   *
+Rel		   *
 geqo(Query * root)
 {
-	int				generation;
-	Chromosome	   *momma;
-	Chromosome	   *daddy;
-	Chromosome	   *kid;
+	int			generation;
+	Chromosome *momma;
+	Chromosome *daddy;
+	Chromosome *kid;
 
 #if defined(ERX)
-	Edge		   *edge_table; /* list of edges */
-	int				edge_failures = 0;
-	float			difference;
+	Edge	   *edge_table;		/* list of edges */
+	int			edge_failures = 0;
+	float		difference;
 
 #endif
 
 #if defined(CX) || defined(PX) || defined(OX1) || defined(OX2)
-	City		   *city_table; /* list of cities */
+	City	   *city_table;		/* list of cities */
 
 #endif
 
 #if defined(CX)
-	int				cycle_diffs = 0;
-	int				mutations = 0;
+	int			cycle_diffs = 0;
+	int			mutations = 0;
 
 #endif
 
 
-	int				number_of_rels;
+	int			number_of_rels;
 
-	Pool		   *pool;
-	int				pool_size,
-					number_generations,
-					status_interval;
+	Pool	   *pool;
+	int			pool_size,
+				number_generations,
+				status_interval;
 
-	Gene		   *best_tour;
-	Rel			   *best_rel;
+	Gene	   *best_tour;
+	Rel		   *best_rel;
 
 /*	Plan *best_plan; */
 

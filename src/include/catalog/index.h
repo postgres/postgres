@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.6 1997/09/07 04:56:31 momjian Exp $
+ * $Id: index.h,v 1.7 1997/09/08 02:34:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,11 +18,11 @@
 #include <access/itup.h>
 #include <access/funcindex.h>
 
-extern			Form_pg_am
-				AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId);
+extern		Form_pg_am
+			AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId);
 
 extern void
-				UpdateIndexPredicate(Oid indexoid, Node * oldPred, Node * predicate);
+			UpdateIndexPredicate(Oid indexoid, Node * oldPred, Node * predicate);
 
 extern void
 InitIndexStrategy(int numatts,
@@ -44,7 +44,7 @@ index_create(char *heapRelationName,
 			 bool islossy,
 			 bool unique);
 
-extern void		index_destroy(Oid indexId);
+extern void index_destroy(Oid indexId);
 
 extern void
 FormIndexDatum(int numberOfAttributes,
@@ -52,7 +52,7 @@ FormIndexDatum(int numberOfAttributes,
 			   TupleDesc heapDescriptor, Buffer buffer, Datum * datum,
 			   char *nullv, FuncIndexInfoPtr fInfo);
 
-extern void		UpdateStats(Oid relid, long reltuples, bool hasindex);
+extern void UpdateStats(Oid relid, long reltuples, bool hasindex);
 
 extern void
 FillDummyExprContext(ExprContext * econtext, TupleTableSlot * slot,
@@ -64,7 +64,7 @@ index_build(Relation heapRelation, Relation indexRelation,
 	  uint16 parameterCount, Datum * parameter, FuncIndexInfo * funcInfo,
 			PredInfo * predInfo);
 
-extern bool		IndexIsUnique(Oid indexId);
-extern bool		IndexIsUniqueNoCache(Oid indexId);
+extern bool IndexIsUnique(Oid indexId);
+extern bool IndexIsUniqueNoCache(Oid indexId);
 
 #endif							/* INDEX_H */

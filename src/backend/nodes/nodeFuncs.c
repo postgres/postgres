@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.4 1997/09/07 04:42:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.5 1997/09/08 02:23:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "nodes/nodeFuncs.h"
 #include "utils/lsyscache.h"
 
-static bool		var_is_inner(Var * var);
+static bool var_is_inner(Var * var);
 
 /*
  * single_node -
@@ -63,7 +63,7 @@ var_is_outer(Var * var)
 	return ((bool) (var->varno == OUTER));
 }
 
-static			bool
+static bool
 var_is_inner(Var * var)
 {
 	return ((bool) (var->varno == INNER));
@@ -89,7 +89,7 @@ var_is_rel(Var * var)
  *		Returns the modified oper node.
  *
  */
-Oper		   *
+Oper	   *
 replace_opid(Oper * oper)
 {
 	oper->opid = get_opcode(oper->opno);

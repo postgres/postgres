@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.9 1997/09/07 04:50:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.10 1997/09/08 02:30:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,11 @@
 #include <miscadmin.h>
 #include "utils/builtins.h"		/* where function declarations go */
 
-char		   *
+char	   *
 filename_in(char *file)
 {
-	char		   *str;
-	int				ind = 0;
+	char	   *str;
+	int			ind = 0;
 
 	/*
 	 * XXX - HACK CITY --- REDO should let the shell do expansions
@@ -41,8 +41,8 @@ filename_in(char *file)
 		{
 			/* Home directory */
 
-			char		   *userName;
-			struct passwd  *pw;
+			char	   *userName;
+			struct passwd *pw;
 
 			userName = GetPgUserName();
 
@@ -59,10 +59,10 @@ filename_in(char *file)
 		else
 		{
 			/* Someone else's directory */
-			char			name[16],
-						   *p;
-			struct passwd  *pw;
-			int				len;
+			char		name[16],
+					   *p;
+			struct passwd *pw;
+			int			len;
 
 			if ((p = (char *) strchr(file, '/')) == NULL)
 			{
@@ -89,10 +89,10 @@ filename_in(char *file)
 	}
 	else if (file[0] == '$')
 	{							/* $POSTGRESHOME, etc.	expand it. */
-		char			environment[80],
-					   *envirp,
-					   *p;
-		int				len;
+		char		environment[80],
+				   *envirp,
+				   *p;
+		int			len;
 
 		if ((p = (char *) strchr(file, '/')) == NULL)
 		{
@@ -123,10 +123,10 @@ filename_in(char *file)
 	return (str);
 }
 
-char		   *
+char	   *
 filename_out(char *s)
 {
-	char		   *ret;
+	char	   *ret;
 
 	if (!s)
 		return ((char *) NULL);

@@ -2,7 +2,7 @@
 #include <streams/streams.h>
 #include <stdlib.h>
 
-static char    *lastError = NULL;
+static char *lastError = NULL;
 
 static NXStream *
 OpenError()
@@ -20,9 +20,9 @@ CloseError(NXStream * s)
 static void
 TransferError(NXStream * s)
 {
-	char		   *buffer;
-	int				len,
-					maxlen;
+	char	   *buffer;
+	int			len,
+				maxlen;
 
 	if (lastError)
 		free(lastError);
@@ -31,13 +31,13 @@ TransferError(NXStream * s)
 	strcpy(lastError, buffer);
 }
 
-void		   *
+void	   *
 next_dlopen(char *name)
 {
-	int				rld_success;
-	NXStream	   *errorStream;
-	char		   *result = NULL;
-	char		  **p;
+	int			rld_success;
+	NXStream   *errorStream;
+	char	   *result = NULL;
+	char	  **p;
 
 	errorStream = OpenError();
 	p = calloc(2, sizeof(void *));
@@ -60,12 +60,12 @@ next_dlclose(void *handle)
 	return 0;
 }
 
-void		   *
+void	   *
 next_dlsym(void *handle, char *symbol)
 {
-	NXStream	   *errorStream = OpenError();
-	char			symbuf[1024];
-	unsigned long	symref = 0;
+	NXStream   *errorStream = OpenError();
+	char		symbuf[1024];
+	unsigned long symref = 0;
 
 	sprintf(symbuf, "_%s", symbol);
 	if (!rld_lookup(errorStream, symbuf, &symref))
@@ -74,7 +74,7 @@ next_dlsym(void *handle, char *symbol)
 	return (void *) symref;
 }
 
-char		   *
+char	   *
 next_dlerror(void)
 {
 	return lastError;

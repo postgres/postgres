@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.5 1997/09/07 04:42:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.6 1997/09/08 02:22:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ FixedStackInit(FixedStack stack, Offset offset)
 Pointer
 FixedStackPop(FixedStack stack)
 {
-	Pointer			pointer;
+	Pointer		pointer;
 
 	AssertArg(FixedStackIsValid(stack));
 
@@ -75,7 +75,7 @@ FixedStackPop(FixedStack stack)
 void
 FixedStackPush(FixedStack stack, Pointer pointer)
 {
-	FixedItem		item = FixedStackGetItem(stack, pointer);
+	FixedItem	item = FixedStackGetItem(stack, pointer);
 
 	AssertArg(FixedStackIsValid(stack));
 	AssertArg(PointerIsValid(pointer));
@@ -96,11 +96,11 @@ FixedStackPush(FixedStack stack, Pointer pointer)
  *		BadArg if stack is invalid.
  *		BadArg if pointer is invalid.
  */
-static			bool
+static bool
 FixedStackContains(FixedStack stack, Pointer pointer)
 {
-	FixedItem		next;
-	FixedItem		item;
+	FixedItem	next;
+	FixedItem	item;
 
 	AssertArg(FixedStackIsValid(stack));
 	AssertArg(PointerIsValid(pointer));
@@ -135,7 +135,7 @@ FixedStackGetTop(FixedStack stack)
 Pointer
 FixedStackGetNext(FixedStack stack, Pointer pointer)
 {
-	FixedItem		item;
+	FixedItem	item;
 
 	/* AssertArg(FixedStackIsValid(stack)); */
 	/* AssertArg(PointerIsValid(pointer)); */

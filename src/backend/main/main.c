@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.8 1997/09/07 04:42:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.9 1997/09/08 02:23:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ echo \"postmaster -B 256 >/var/log/pglog 2>&1 &\" | su - postgres\n\n"
 int
 main(int argc, char *argv[])
 {
-	int				len;
+	int			len;
 
 #ifdef USE_LOCALE
 	setlocale(LC_CTYPE, "");	/* take locale information from an

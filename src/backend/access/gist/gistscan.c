@@ -27,8 +27,8 @@
 #endif
 
 /* routines defined and used here */
-static void		gistregscan(IndexScanDesc s);
-static void		gistdropscan(IndexScanDesc s);
+static void gistregscan(IndexScanDesc s);
+static void gistdropscan(IndexScanDesc s);
 static void
 gistadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
@@ -51,9 +51,9 @@ adjustiptr(IndexScanDesc s, ItemPointer iptr,
 
 typedef struct GISTScanListData
 {
-	IndexScanDesc	gsl_scan;
+	IndexScanDesc gsl_scan;
 	struct GISTScanListData *gsl_next;
-}				GISTScanListData;
+}			GISTScanListData;
 
 typedef GISTScanListData *GISTScanList;
 
@@ -66,7 +66,7 @@ gistbeginscan(Relation r,
 			  uint16 nkeys,
 			  ScanKey key)
 {
-	IndexScanDesc	s;
+	IndexScanDesc s;
 
 	RelationSetLockForRead(r);
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
@@ -78,8 +78,8 @@ gistbeginscan(Relation r,
 void
 gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 {
-	GISTScanOpaque	p;
-	int				i;
+	GISTScanOpaque p;
+	int			i;
 
 	if (!IndexScanIsValid(s))
 	{
@@ -173,10 +173,10 @@ gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 void
 gistmarkpos(IndexScanDesc s)
 {
-	GISTScanOpaque	p;
-	GISTSTACK	   *o,
-				   *n,
-				   *tmp;
+	GISTScanOpaque p;
+	GISTSTACK  *o,
+			   *n,
+			   *tmp;
 
 	s->currentMarkData = s->currentItemData;
 	p = (GISTScanOpaque) s->opaque;
@@ -206,10 +206,10 @@ gistmarkpos(IndexScanDesc s)
 void
 gistrestrpos(IndexScanDesc s)
 {
-	GISTScanOpaque	p;
-	GISTSTACK	   *o,
-				   *n,
-				   *tmp;
+	GISTScanOpaque p;
+	GISTSTACK  *o,
+			   *n,
+			   *tmp;
 
 	s->currentItemData = s->currentMarkData;
 	p = (GISTScanOpaque) s->opaque;
@@ -239,7 +239,7 @@ gistrestrpos(IndexScanDesc s)
 void
 gistendscan(IndexScanDesc s)
 {
-	GISTScanOpaque	p;
+	GISTScanOpaque p;
 
 	p = (GISTScanOpaque) s->opaque;
 
@@ -257,7 +257,7 @@ gistendscan(IndexScanDesc s)
 static void
 gistregscan(IndexScanDesc s)
 {
-	GISTScanList	l;
+	GISTScanList l;
 
 	l = (GISTScanList) palloc(sizeof(GISTScanListData));
 	l->gsl_scan = s;
@@ -268,8 +268,8 @@ gistregscan(IndexScanDesc s)
 static void
 gistdropscan(IndexScanDesc s)
 {
-	GISTScanList	l;
-	GISTScanList	prev;
+	GISTScanList l;
+	GISTScanList prev;
 
 	prev = (GISTScanList) NULL;
 
@@ -294,8 +294,8 @@ gistdropscan(IndexScanDesc s)
 void
 gistadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum)
 {
-	GISTScanList	l;
-	Oid				relid;
+	GISTScanList l;
+	Oid			relid;
 
 	relid = r->rd_id;
 	for (l = GISTScans; l != (GISTScanList) NULL; l = l->gsl_next)
@@ -321,7 +321,7 @@ gistadjone(IndexScanDesc s,
 		   BlockNumber blkno,
 		   OffsetNumber offnum)
 {
-	GISTScanOpaque	so;
+	GISTScanOpaque so;
 
 	adjustiptr(s, &(s->currentItemData), op, blkno, offnum);
 	adjustiptr(s, &(s->currentMarkData), op, blkno, offnum);
@@ -349,8 +349,8 @@ adjustiptr(IndexScanDesc s,
 		   BlockNumber blkno,
 		   OffsetNumber offnum)
 {
-	OffsetNumber	curoff;
-	GISTScanOpaque	so;
+	OffsetNumber curoff;
+	GISTScanOpaque so;
 
 	if (ItemPointerIsValid(iptr))
 	{
@@ -361,39 +361,43 @@ adjustiptr(IndexScanDesc s,
 
 			switch (op)
 			{
-			case GISTOP_DEL:
-				/* back up one if we need to */
-				if (curoff >= offnum)
-				{
+				case GISTOP_DEL:
+					/* back up one if we need to */
+					if (curoff >= offnum)
+					{
 
-					if (curoff > FirstOffsetNumber)
-					{
-						/* just adjust the item pointer */
-						ItemPointerSet(iptr, blkno, OffsetNumberPrev(curoff));
-					}
-					else
-					{
-						/* remember that we're before the current tuple */
-						ItemPointerSet(iptr, blkno, FirstOffsetNumber);
-						if (iptr == &(s->currentItemData))
-							so->s_flags |= GS_CURBEFORE;
+						if (curoff > FirstOffsetNumber)
+						{
+							/* just adjust the item pointer */
+							ItemPointerSet(iptr, blkno, OffsetNumberPrev(curoff));
+						}
 						else
-							so->s_flags |= GS_MRKBEFORE;
+						{
+
+							/*
+							 * remember that we're before the current
+							 * tuple
+							 */
+							ItemPointerSet(iptr, blkno, FirstOffsetNumber);
+							if (iptr == &(s->currentItemData))
+								so->s_flags |= GS_CURBEFORE;
+							else
+								so->s_flags |= GS_MRKBEFORE;
+						}
 					}
-				}
-				break;
+					break;
 
-			case GISTOP_SPLIT:
-				/* back to start of page on split */
-				ItemPointerSet(iptr, blkno, FirstOffsetNumber);
-				if (iptr == &(s->currentItemData))
-					so->s_flags &= ~GS_CURBEFORE;
-				else
-					so->s_flags &= ~GS_MRKBEFORE;
-				break;
+				case GISTOP_SPLIT:
+					/* back to start of page on split */
+					ItemPointerSet(iptr, blkno, FirstOffsetNumber);
+					if (iptr == &(s->currentItemData))
+						so->s_flags &= ~GS_CURBEFORE;
+					else
+						so->s_flags &= ~GS_MRKBEFORE;
+					break;
 
-			default:
-				elog(WARN, "Bad operation in GiST scan adjust: %d", op);
+				default:
+					elog(WARN, "Bad operation in GiST scan adjust: %d", op);
 			}
 		}
 	}

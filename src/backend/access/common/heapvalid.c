@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.17 1997/09/07 04:37:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.18 1997/09/08 02:19:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,9 @@ heap_keytest(HeapTuple t,
 			 int nkeys,
 			 ScanKey keys)
 {
-	bool			isnull;
-	Datum			atp;
-	int				test;
+	bool		isnull;
+	Datum		atp;
+	int			test;
 
 	for (; nkeys--; keys++)
 	{
@@ -101,11 +101,11 @@ heap_tuple_satisfies(ItemId itemId,
 					 int nKeys,
 					 ScanKey key)
 {
-	HeapTuple		tuple,
-					result;
-	bool			res;
-	TransactionId	old_tmin,
-					old_tmax;
+	HeapTuple	tuple,
+				result;
+	bool		res;
+	TransactionId old_tmin,
+				old_tmax;
 
 	if (!ItemIdIsUsed(itemId))
 		return NULL;

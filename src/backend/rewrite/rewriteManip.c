@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.5 1997/09/07 04:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.6 1997/09/08 02:28:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 
-static void		ResolveNew(RewriteInfo * info, List * targetlist, Node ** node);
+static void ResolveNew(RewriteInfo * info, List * targetlist, Node ** node);
 
 
 
@@ -39,41 +39,41 @@ OffsetVarNodes(Node * node, int offset)
 		return;
 	switch (nodeTag(node))
 	{
-	case T_TargetEntry:
-		{
-			TargetEntry    *tle = (TargetEntry *) node;
-
-			OffsetVarNodes(tle->expr, offset);
-		}
-		break;
-	case T_Expr:
-		{
-			Expr		   *expr = (Expr *) node;
-
-			OffsetVarNodes((Node *) expr->args, offset);
-		}
-		break;
-	case T_Var:
-		{
-			Var			   *var = (Var *) node;
-
-			var->varno += offset;
-			var->varnoold += offset;
-		}
-		break;
-	case T_List:
-		{
-			List		   *l;
-
-			foreach(l, (List *) node)
+		case T_TargetEntry:
 			{
-				OffsetVarNodes(lfirst(l), offset);
+				TargetEntry *tle = (TargetEntry *) node;
+
+				OffsetVarNodes(tle->expr, offset);
 			}
-		}
-		break;
-	default:
-		/* ignore the others */
-		break;
+			break;
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				OffsetVarNodes((Node *) expr->args, offset);
+			}
+			break;
+		case T_Var:
+			{
+				Var		   *var = (Var *) node;
+
+				var->varno += offset;
+				var->varnoold += offset;
+			}
+			break;
+		case T_List:
+			{
+				List	   *l;
+
+				foreach(l, (List *) node)
+				{
+					OffsetVarNodes(lfirst(l), offset);
+				}
+			}
+			break;
+		default:
+			/* ignore the others */
+			break;
 	}
 }
 
@@ -84,52 +84,52 @@ ChangeVarNodes(Node * node, int old_varno, int new_varno)
 		return;
 	switch (nodeTag(node))
 	{
-	case T_TargetEntry:
-		{
-			TargetEntry    *tle = (TargetEntry *) node;
-
-			ChangeVarNodes(tle->expr, old_varno, new_varno);
-		}
-		break;
-	case T_Expr:
-		{
-			Expr		   *expr = (Expr *) node;
-
-			ChangeVarNodes((Node *) expr->args, old_varno, new_varno);
-		}
-		break;
-	case T_Var:
-		{
-			Var			   *var = (Var *) node;
-
-			if (var->varno == old_varno)
+		case T_TargetEntry:
 			{
-				var->varno = new_varno;
-				var->varnoold = new_varno;
-			}
-		}
-		break;
-	case T_List:
-		{
-			List		   *l;
+				TargetEntry *tle = (TargetEntry *) node;
 
-			foreach(l, (List *) node)
-			{
-				ChangeVarNodes(lfirst(l), old_varno, new_varno);
+				ChangeVarNodes(tle->expr, old_varno, new_varno);
 			}
-		}
-		break;
-	default:
-		/* ignore the others */
-		break;
+			break;
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				ChangeVarNodes((Node *) expr->args, old_varno, new_varno);
+			}
+			break;
+		case T_Var:
+			{
+				Var		   *var = (Var *) node;
+
+				if (var->varno == old_varno)
+				{
+					var->varno = new_varno;
+					var->varnoold = new_varno;
+				}
+			}
+			break;
+		case T_List:
+			{
+				List	   *l;
+
+				foreach(l, (List *) node)
+				{
+					ChangeVarNodes(lfirst(l), old_varno, new_varno);
+				}
+			}
+			break;
+		default:
+			/* ignore the others */
+			break;
 	}
 }
 
 void
 AddQual(Query * parsetree, Node * qual)
 {
-	Node		   *copy,
-				   *old;
+	Node	   *copy,
+			   *old;
 
 	if (qual == NULL)
 		return;
@@ -146,7 +146,7 @@ AddQual(Query * parsetree, Node * qual)
 void
 AddNotQual(Query * parsetree, Node * qual)
 {
-	Node		   *copy;
+	Node	   *copy;
 
 	if (qual == NULL)
 		return;
@@ -156,10 +156,10 @@ AddNotQual(Query * parsetree, Node * qual)
 	AddQual(parsetree, copy);
 }
 
-static Node    *
+static Node *
 make_null(Oid type)
 {
-	Const		   *c = makeNode(Const);
+	Const	   *c = makeNode(Const);
 
 	c->consttype = type;
 	c->constlen = get_typlen(type);
@@ -172,15 +172,15 @@ make_null(Oid type)
 void
 FixResdomTypes(List * tlist)
 {
-	List		   *i;
+	List	   *i;
 
 	foreach(i, tlist)
 	{
-		TargetEntry    *tle = lfirst(i);
+		TargetEntry *tle = lfirst(i);
 
 		if (nodeTag(tle->expr) == T_Var)
 		{
-			Var			   *var = (Var *) tle->expr;
+			Var		   *var = (Var *) tle->expr;
 
 			tle->resdom->restype = var->vartype;
 			tle->resdom->reslen = get_typlen(var->vartype);
@@ -188,14 +188,14 @@ FixResdomTypes(List * tlist)
 	}
 }
 
-static Node    *
+static Node *
 FindMatchingNew(List * tlist, int attno)
 {
-	List		   *i;
+	List	   *i;
 
 	foreach(i, tlist)
 	{
-		TargetEntry    *tle = lfirst(i);
+		TargetEntry *tle = lfirst(i);
 
 		if (tle->resdom->resno == attno)
 		{
@@ -205,15 +205,15 @@ FindMatchingNew(List * tlist, int attno)
 	return NULL;
 }
 
-static Node    *
+static Node *
 FindMatchingTLEntry(List * tlist, char *e_attname)
 {
-	List		   *i;
+	List	   *i;
 
 	foreach(i, tlist)
 	{
-		TargetEntry    *tle = lfirst(i);
-		char		   *resname;
+		TargetEntry *tle = lfirst(i);
+		char	   *resname;
 
 		resname = tle->resdom->resname;
 		if (!strcmp(e_attname, resname))
@@ -225,60 +225,60 @@ FindMatchingTLEntry(List * tlist, char *e_attname)
 static void
 ResolveNew(RewriteInfo * info, List * targetlist, Node ** nodePtr)
 {
-	Node		   *node = *nodePtr;
+	Node	   *node = *nodePtr;
 
 	if (node == NULL)
 		return;
 
 	switch (nodeTag(node))
 	{
-	case T_TargetEntry:
-		ResolveNew(info, targetlist, &((TargetEntry *) node)->expr);
-		break;
-	case T_Expr:
-		ResolveNew(info, targetlist, (Node **) (&(((Expr *) node)->args)));
-		break;
-	case T_Var:
-		{
-			int				this_varno = (int) ((Var *) node)->varno;
-			Node		   *n;
-
-			if (this_varno == info->new_varno)
+		case T_TargetEntry:
+			ResolveNew(info, targetlist, &((TargetEntry *) node)->expr);
+			break;
+		case T_Expr:
+			ResolveNew(info, targetlist, (Node **) (&(((Expr *) node)->args)));
+			break;
+		case T_Var:
 			{
-				n = FindMatchingNew(targetlist,
-									((Var *) node)->varattno);
-				if (n == NULL)
+				int			this_varno = (int) ((Var *) node)->varno;
+				Node	   *n;
+
+				if (this_varno == info->new_varno)
 				{
-					if (info->event == CMD_UPDATE)
+					n = FindMatchingNew(targetlist,
+										((Var *) node)->varattno);
+					if (n == NULL)
 					{
-						((Var *) node)->varno = info->current_varno;
-						((Var *) node)->varnoold = info->current_varno;
+						if (info->event == CMD_UPDATE)
+						{
+							((Var *) node)->varno = info->current_varno;
+							((Var *) node)->varnoold = info->current_varno;
+						}
+						else
+						{
+							*nodePtr = make_null(((Var *) node)->vartype);
+						}
 					}
 					else
 					{
-						*nodePtr = make_null(((Var *) node)->vartype);
+						*nodePtr = n;
 					}
 				}
-				else
-				{
-					*nodePtr = n;
-				}
+				break;
 			}
-			break;
-		}
-	case T_List:
-		{
-			List		   *l;
-
-			foreach(l, (List *) node)
+		case T_List:
 			{
-				ResolveNew(info, targetlist, (Node **) & (lfirst(l)));
+				List	   *l;
+
+				foreach(l, (List *) node)
+				{
+					ResolveNew(info, targetlist, (Node **) & (lfirst(l)));
+				}
+				break;
 			}
+		default:
+			/* ignore the others */
 			break;
-		}
-	default:
-		/* ignore the others */
-		break;
 	}
 }
 
@@ -299,86 +299,86 @@ nodeHandleRIRAttributeRule(Node ** nodePtr,
 						   int *modified,
 						   int *badsql)
 {
-	Node		   *node = *nodePtr;
+	Node	   *node = *nodePtr;
 
 	if (node == NULL)
 		return;
 	switch (nodeTag(node))
 	{
-	case T_List:
-		{
-			List		   *i;
-
-			foreach(i, (List *) node)
+		case T_List:
 			{
-				nodeHandleRIRAttributeRule((Node **) (&(lfirst(i))), rtable,
+				List	   *i;
+
+				foreach(i, (List *) node)
+				{
+					nodeHandleRIRAttributeRule((Node **) (&(lfirst(i))), rtable,
+										  targetlist, rt_index, attr_num,
+											   modified, badsql);
+				}
+			}
+			break;
+		case T_TargetEntry:
+			{
+				TargetEntry *tle = (TargetEntry *) node;
+
+				nodeHandleRIRAttributeRule(&tle->expr, rtable, targetlist,
+								   rt_index, attr_num, modified, badsql);
+			}
+			break;
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				nodeHandleRIRAttributeRule((Node **) (&(expr->args)), rtable,
 										   targetlist, rt_index, attr_num,
 										   modified, badsql);
 			}
-		}
-		break;
-	case T_TargetEntry:
-		{
-			TargetEntry    *tle = (TargetEntry *) node;
-
-			nodeHandleRIRAttributeRule(&tle->expr, rtable, targetlist,
-								   rt_index, attr_num, modified, badsql);
-		}
-		break;
-	case T_Expr:
-		{
-			Expr		   *expr = (Expr *) node;
-
-			nodeHandleRIRAttributeRule((Node **) (&(expr->args)), rtable,
-									   targetlist, rt_index, attr_num,
-									   modified, badsql);
-		}
-		break;
-	case T_Var:
-		{
-			int				this_varno = (int) ((Var *) node)->varno;
-			NameData		name_to_look_for;
-
-			memset(name_to_look_for.data, 0, NAMEDATALEN);
-
-			if (this_varno == rt_index &&
-				((Var *) node)->varattno == attr_num)
+			break;
+		case T_Var:
 			{
-				if (((Var *) node)->vartype == 32)
-				{				/* HACK */
-					*nodePtr = make_null(((Var *) node)->vartype);
+				int			this_varno = (int) ((Var *) node)->varno;
+				NameData	name_to_look_for;
+
+				memset(name_to_look_for.data, 0, NAMEDATALEN);
+
+				if (this_varno == rt_index &&
+					((Var *) node)->varattno == attr_num)
+				{
+					if (((Var *) node)->vartype == 32)
+					{			/* HACK */
+						*nodePtr = make_null(((Var *) node)->vartype);
+						*modified = TRUE;
+						*badsql = TRUE;
+						break;
+					}
+					else
+					{
+						namestrcpy(&name_to_look_for,
+								(char *) get_attname(getrelid(this_varno,
+															  rtable),
+													 attr_num));
+					}
+				}
+				if (name_to_look_for.data[0])
+				{
+					Node	   *n;
+
+					n = FindMatchingTLEntry(targetlist, (char *) &name_to_look_for);
+					if (n == NULL)
+					{
+						*nodePtr = make_null(((Var *) node)->vartype);
+					}
+					else
+					{
+						*nodePtr = n;
+					}
 					*modified = TRUE;
-					*badsql = TRUE;
-					break;
-				}
-				else
-				{
-					namestrcpy(&name_to_look_for,
-							   (char *) get_attname(getrelid(this_varno,
-															 rtable),
-													attr_num));
 				}
 			}
-			if (name_to_look_for.data[0])
-			{
-				Node		   *n;
-
-				n = FindMatchingTLEntry(targetlist, (char *) &name_to_look_for);
-				if (n == NULL)
-				{
-					*nodePtr = make_null(((Var *) node)->vartype);
-				}
-				else
-				{
-					*nodePtr = n;
-				}
-				*modified = TRUE;
-			}
-		}
-		break;
-	default:
-		/* ignore the others */
-		break;
+			break;
+		default:
+			/* ignore the others */
+			break;
 	}
 }
 
@@ -410,69 +410,69 @@ nodeHandleViewRule(Node ** nodePtr,
 				   int rt_index,
 				   int *modified)
 {
-	Node		   *node = *nodePtr;
+	Node	   *node = *nodePtr;
 
 	if (node == NULL)
 		return;
 
 	switch (nodeTag(node))
 	{
-	case T_List:
-		{
-			List		   *l;
-
-			foreach(l, (List *) node)
+		case T_List:
 			{
-				nodeHandleViewRule((Node **) (&(lfirst(l))),
+				List	   *l;
+
+				foreach(l, (List *) node)
+				{
+					nodeHandleViewRule((Node **) (&(lfirst(l))),
+									   rtable, targetlist,
+									   rt_index, modified);
+				}
+			}
+			break;
+		case T_TargetEntry:
+			{
+				TargetEntry *tle = (TargetEntry *) node;
+
+				nodeHandleViewRule(&(tle->expr), rtable, targetlist,
+								   rt_index, modified);
+			}
+			break;
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				nodeHandleViewRule((Node **) (&(expr->args)),
 								   rtable, targetlist,
 								   rt_index, modified);
 			}
-		}
-		break;
-	case T_TargetEntry:
-		{
-			TargetEntry    *tle = (TargetEntry *) node;
-
-			nodeHandleViewRule(&(tle->expr), rtable, targetlist,
-							   rt_index, modified);
-		}
-		break;
-	case T_Expr:
-		{
-			Expr		   *expr = (Expr *) node;
-
-			nodeHandleViewRule((Node **) (&(expr->args)),
-							   rtable, targetlist,
-							   rt_index, modified);
-		}
-		break;
-	case T_Var:
-		{
-			Var			   *var = (Var *) node;
-			int				this_varno = var->varno;
-			Node		   *n;
-
-			if (this_varno == rt_index)
-			{
-				n = FindMatchingTLEntry(targetlist,
-										get_attname(getrelid(this_varno,
-															 rtable),
-													var->varattno));
-				if (n == NULL)
-				{
-					*nodePtr = make_null(((Var *) node)->vartype);
-				}
-				else
-				{
-					*nodePtr = n;
-				}
-				*modified = TRUE;
-			}
 			break;
-		}
-	default:
-		/* ignore the others */
-		break;
+		case T_Var:
+			{
+				Var		   *var = (Var *) node;
+				int			this_varno = var->varno;
+				Node	   *n;
+
+				if (this_varno == rt_index)
+				{
+					n = FindMatchingTLEntry(targetlist,
+										 get_attname(getrelid(this_varno,
+															  rtable),
+													 var->varattno));
+					if (n == NULL)
+					{
+						*nodePtr = make_null(((Var *) node)->vartype);
+					}
+					else
+					{
+						*nodePtr = n;
+					}
+					*modified = TRUE;
+				}
+				break;
+			}
+		default:
+			/* ignore the others */
+			break;
 	}
 }
 

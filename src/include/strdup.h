@@ -5,4 +5,4 @@
    The Postgres strdup() is in src/utils/strdup.c.
 */
 
-extern char    *strdup(char const *);
+extern char *strdup(char const *);

@@ -13,10 +13,10 @@
 int
 main(int argc, char **argv)
 {
-	char			query[4000];
-	int				row = 0;
-	int				count;
-	char			line[4000];
+	char		query[4000];
+	int			row = 0;
+	int			count;
+	char		line[4000];
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);

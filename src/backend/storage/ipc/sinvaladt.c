@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.6 1997/09/07 04:48:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.7 1997/09/08 02:29:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,19 +49,19 @@
  * ----------------
  */
 #ifdef HAS_TEST_AND_SET
-int				SharedInvalidationLockId;
+int			SharedInvalidationLockId;
 
 #else
-IpcSemaphoreId	SharedInvalidationSemaphore;
+IpcSemaphoreId SharedInvalidationSemaphore;
 
 #endif
 
-SISeg		   *shmInvalBuffer;
+SISeg	   *shmInvalBuffer;
 extern BackendId MyBackendId;
 
-static void		CleanupInvalidationState(int status, SISeg * segInOutP);
+static void CleanupInvalidationState(int status, SISeg * segInOutP);
 static BackendId SIAssignBackendId(SISeg * segInOutP, BackendTag backendTag);
-static int		SIGetNumEntries(SISeg * segP);
+static int	SIGetNumEntries(SISeg * segP);
 
 /************************************************************************/
 /* SISetActiveProcess(segP, backendId)	set the backend status active	*/
@@ -85,8 +85,8 @@ SISetActiveProcess(SISeg * segInOutP, BackendId backendId)
 int
 SIBackendInit(SISeg * segInOutP)
 {
-	LRelId			LtCreateRelId();
-	TransactionId	LMITransactionIdCopy();
+	LRelId		LtCreateRelId();
+	TransactionId LMITransactionIdCopy();
 
 	Assert(MyBackendTag > 0);
 
@@ -108,11 +108,11 @@ SIBackendInit(SISeg * segInOutP)
  *		SIAssignBackendId
  * ----------------
  */
-static			BackendId
+static BackendId
 SIAssignBackendId(SISeg * segInOutP, BackendTag backendTag)
 {
-	Index			index;
-	ProcState	   *stateP;
+	Index		index;
+	ProcState  *stateP;
 
 	stateP = NULL;
 
@@ -211,12 +211,12 @@ CleanupInvalidationState(int status,	/* XXX */
 static SISegOffsets *
 SIComputeSize(int *segSize)
 {
-	int				A,
-					B,
-					a,
-					b,
-					totalSize;
-	SISegOffsets   *oP;
+	int			A,
+				B,
+				a,
+				b,
+				totalSize;
+	SISegOffsets *oP;
 
 	A = 0;
 	a = SizeSISeg;				/* offset to first data entry */
@@ -245,7 +245,7 @@ SISetStartEntrySection(SISeg * segP, Offset offset)
 /************************************************************************/
 /* SIGetStartEntrySection(segP)		- returnss the offset				*/
 /************************************************************************/
-static			Offset
+static Offset
 SIGetStartEntrySection(SISeg * segP)
 {
 	return (segP->startEntrySection);
@@ -273,7 +273,7 @@ SISetEndEntryChain(SISeg * segP, Offset offset)
 /************************************************************************/
 /* SIGetEndEntryChain(segP)		- returnss the offset					*/
 /************************************************************************/
-static			Offset
+static Offset
 SIGetEndEntryChain(SISeg * segP)
 {
 	return (segP->endEntryChain);
@@ -291,7 +291,7 @@ SISetStartEntryChain(SISeg * segP, Offset offset)
 /************************************************************************/
 /* SIGetStartEntryChain(segP)	- returns  the offset					*/
 /************************************************************************/
-static			Offset
+static Offset
 SIGetStartEntryChain(SISeg * segP)
 {
 	return (segP->startEntryChain);
@@ -300,7 +300,7 @@ SIGetStartEntryChain(SISeg * segP)
 /************************************************************************/
 /* SISetNumEntries(segP, num)	sets the current nuber of entries		*/
 /************************************************************************/
-static			bool
+static bool
 SISetNumEntries(SISeg * segP, int num)
 {
 	if (num <= MAXNUMMESSAGES)
@@ -327,7 +327,7 @@ SIGetNumEntries(SISeg * segP)
 /************************************************************************/
 /* SISetMaxNumEntries(segP, num)	sets the maximal number of entries	*/
 /************************************************************************/
-static			bool
+static bool
 SISetMaxNumEntries(SISeg * segP, int num)
 {
 	if (num <= MAXNUMMESSAGES)
@@ -354,7 +354,7 @@ SIGetProcStateLimit(SISeg * segP, int i)
 /************************************************************************/
 /* SIIncNumEntries(segP, num)	increments the current nuber of entries */
 /************************************************************************/
-static			bool
+static bool
 SIIncNumEntries(SISeg * segP, int num)
 {
 	if ((segP->numEntries + num) <= MAXNUMMESSAGES)
@@ -371,7 +371,7 @@ SIIncNumEntries(SISeg * segP, int num)
 /************************************************************************/
 /* SIDecNumEntries(segP, num)	decrements the current nuber of entries */
 /************************************************************************/
-static			bool
+static bool
 SIDecNumEntries(SISeg * segP, int num)
 {
 	if ((segP->numEntries - num) >= 0)
@@ -397,7 +397,7 @@ SISetStartFreeSpace(SISeg * segP, Offset offset)
 /************************************************************************/
 /* SIGetStartFreeSpace(segP)  - returns the offset						*/
 /************************************************************************/
-static			Offset
+static Offset
 SIGetStartFreeSpace(SISeg * segP)
 {
 	return (segP->startFreeSpace);
@@ -411,8 +411,8 @@ SIGetStartFreeSpace(SISeg * segP)
 static SISegEntry *
 SIGetFirstDataEntry(SISeg * segP)
 {
-	SISegEntry	   *eP;
-	Offset			startChain;
+	SISegEntry *eP;
+	Offset		startChain;
 
 	startChain = SIGetStartEntryChain(segP);
 
@@ -432,8 +432,8 @@ SIGetFirstDataEntry(SISeg * segP)
 static SISegEntry *
 SIGetLastDataEntry(SISeg * segP)
 {
-	SISegEntry	   *eP;
-	Offset			endChain;
+	SISegEntry *eP;
+	Offset		endChain;
 
 	endChain = SIGetEndEntryChain(segP);
 
@@ -452,7 +452,7 @@ SIGetLastDataEntry(SISeg * segP)
 static SISegEntry *
 SIGetNextDataEntry(SISeg * segP, Offset offset)
 {
-	SISegEntry	   *eP;
+	SISegEntry *eP;
 
 	if (offset == InvalidOffset)
 		return (NULL);
@@ -471,8 +471,8 @@ static SISegEntry *
 SIGetNthDataEntry(SISeg * segP,
 				  int n)		/* must range from 1 to MaxMessages */
 {
-	SISegEntry	   *eP;
-	int				i;
+	SISegEntry *eP;
+	int			i;
 
 	if (n <= 0)
 		return (NULL);
@@ -490,7 +490,7 @@ SIGetNthDataEntry(SISeg * segP,
 /************************************************************************/
 /* SIEntryOffset(segP, entryP)	 returns the offset for an pointer		*/
 /************************************************************************/
-static			Offset
+static Offset
 SIEntryOffset(SISeg * segP, SISegEntry * entryP)
 {
 	/* relative to B !! */
@@ -506,9 +506,9 @@ SIEntryOffset(SISeg * segP, SISegEntry * entryP)
 bool
 SISetDataEntry(SISeg * segP, SharedInvalidData * data)
 {
-	Offset			offsetToNewData;
-	SISegEntry	   *eP,
-				   *lastP;
+	Offset		offsetToNewData;
+	SISegEntry *eP,
+			   *lastP;
 
 	if (!SIIncNumEntries(segP, 1))
 		return (false);			/* no space */
@@ -545,7 +545,7 @@ SISetDataEntry(SISeg * segP, SharedInvalidData * data)
 static void
 SIDecProcLimit(SISeg * segP, int num)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < MaxBackendId; i++)
 	{
@@ -570,7 +570,7 @@ SIDecProcLimit(SISeg * segP, int num)
 bool
 SIDelDataEntry(SISeg * segP)
 {
-	SISegEntry	   *e1P;
+	SISegEntry *e1P;
 
 	if (!SIDecNumEntries(segP, 1))
 	{
@@ -602,7 +602,7 @@ SIDelDataEntry(SISeg * segP)
 void
 SISetProcStateInvalid(SISeg * segP)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < MaxBackendId; i++)
 	{
@@ -630,8 +630,8 @@ SIReadEntryData(SISeg * segP,
 				void (*invalFunction) (),
 				void (*resetFunction) ())
 {
-	int				i = 0;
-	SISegEntry	   *data;
+	int			i = 0;
+	SISegEntry *data;
 
 	Assert(segP->procState[backendId - 1].tag == MyBackendTag);
 
@@ -675,9 +675,9 @@ SIReadEntryData(SISeg * segP,
 void
 SIDelExpiredDataEntries(SISeg * segP)
 {
-	int				min,
-					i,
-					h;
+	int			min,
+				i,
+				h;
 
 	min = 9999999;
 	for (i = 0; i < MaxBackendId; i++)
@@ -711,10 +711,10 @@ SIDelExpiredDataEntries(SISeg * segP)
 static void
 SISegInit(SISeg * segP)
 {
-	SISegOffsets   *oP;
-	int				segSize,
-					i;
-	SISegEntry	   *eP;
+	SISegOffsets *oP;
+	int			segSize,
+				i;
+	SISegEntry *eP;
 
 	oP = SIComputeSize(&segSize);
 	/* set sempahore ids in the segment */
@@ -771,12 +771,12 @@ SISegmentKill(int key)			/* the corresponding key for the segment */
 /* SISegmentGet(key, size)	- get a shared segment of size <size>		*/
 /*				  returns a segment id									*/
 /************************************************************************/
-static			IpcMemoryId
+static IpcMemoryId
 SISegmentGet(int key,			/* the corresponding key for the segment */
 			 int size,			/* size of segment in bytes				 */
 			 bool create)
 {
-	IpcMemoryId		shmid;
+	IpcMemoryId shmid;
 
 	if (create)
 	{
@@ -811,10 +811,10 @@ SISegmentAttach(IpcMemoryId shmid)
 int
 SISegmentInit(bool killExistingSegment, IPCKey key)
 {
-	SISegOffsets   *oP;
-	int				segSize;
-	IpcMemoryId		shmId;
-	bool			create;
+	SISegOffsets *oP;
+	int			segSize;
+	IpcMemoryId shmId;
+	bool		create;
 
 	if (killExistingSegment)
 	{

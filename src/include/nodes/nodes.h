@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.12 1997/09/07 04:58:39 momjian Exp $
+ * $Id: nodes.h,v 1.13 1997/09/08 02:37:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ typedef enum NodeTag
 	T_SortClause,
 	T_GroupClause,
 	T_SubSelect
-}				NodeTag;
+}			NodeTag;
 
 /*
  * The first field of a node of any type is gauranteed to be the NodeTag.
@@ -219,8 +219,8 @@ typedef enum NodeTag
  */
 typedef struct Node
 {
-	NodeTag			type;
-}				Node;
+	NodeTag		type;
+}			Node;
 
 #define nodeTag(_node_)			((Node*)_node_)->type
 
@@ -253,30 +253,30 @@ typedef struct Node
 /*
  * nodes/nodes.c
  */
-extern Node    *newNode(Size size, NodeTag tag);
+extern Node *newNode(Size size, NodeTag tag);
 
 /*
  * nodes/{outfuncs.c,print.c}
  */
 #define nodeDisplay		pprint
 
-extern char    *nodeToString(void *obj);
-extern void		print(void *obj);
+extern char *nodeToString(void *obj);
+extern void print(void *obj);
 
 /*
  * nodes/{readfuncs.c,read.c}
  */
-extern void    *stringToNode(char *str);
+extern void *stringToNode(char *str);
 
 /*
  * nodes/copyfuncs.c
  */
-extern void    *copyObject(void *obj);
+extern void *copyObject(void *obj);
 
 /*
  * nodes/equalfuncs.c
  */
-extern bool		equal(void *a, void *b);
+extern bool equal(void *a, void *b);
 
 
 /* ----------------
@@ -284,7 +284,7 @@ extern bool		equal(void *a, void *b);
  *		-cim 6/3/90
  * ----------------
  */
-typedef float	Cost;
+typedef float Cost;
 
 /*
  * CmdType -
@@ -303,7 +303,7 @@ typedef enum CmdType
 	CMD_NOTIFY,
 	CMD_UTILITY					/* cmds like create, destroy, copy,
 								 * vacuum, etc. */
-}				CmdType;
+}			CmdType;
 
 
 #endif							/* NODES_H */

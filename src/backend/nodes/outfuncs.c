@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.7 1997/09/07 04:42:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.8 1997/09/08 02:23:41 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -45,8 +45,8 @@
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 
-static void		_outDatum(StringInfo str, Datum value, Oid type);
-static void		_outNode(StringInfo str, void *obj);
+static void _outDatum(StringInfo str, Datum value, Oid type);
+static void _outNode(StringInfo str, void *obj);
 
 /*
  * _outIntList -
@@ -55,8 +55,8 @@ static void		_outNode(StringInfo str, void *obj);
 static void
 _outIntList(StringInfo str, List * list)
 {
-	List		   *l;
-	char			buf[500];
+	List	   *l;
+	char		buf[500];
 
 	appendStringInfo(str, "(");
 	foreach(l, list)
@@ -70,7 +70,7 @@ _outIntList(StringInfo str, List * list)
 static void
 _outQuery(StringInfo str, Query * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "QUERY");
 	appendStringInfo(str, buf);
@@ -112,7 +112,7 @@ _outQuery(StringInfo str, Query * node)
 static void
 _outPlanInfo(StringInfo str, Plan * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, " :cost %g", node->cost);
 	appendStringInfo(str, buf);
@@ -144,7 +144,7 @@ _outPlanInfo(StringInfo str, Plan * node)
 static void
 _outPlan(StringInfo str, Plan * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "PLAN");
 	appendStringInfo(str, buf);
@@ -155,7 +155,7 @@ _outPlan(StringInfo str, Plan * node)
 static void
 _outResult(StringInfo str, Result * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "RESULT");
 	appendStringInfo(str, buf);
@@ -173,7 +173,7 @@ _outResult(StringInfo str, Result * node)
 static void
 _outExistential(StringInfo str, Existential * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "EXISTENTIAL");
 	appendStringInfo(str, buf);
@@ -188,7 +188,7 @@ _outExistential(StringInfo str, Existential * node)
 static void
 _outAppend(StringInfo str, Append * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "APPEND");
 	appendStringInfo(str, buf);
@@ -213,7 +213,7 @@ _outAppend(StringInfo str, Append * node)
 static void
 _outJoin(StringInfo str, Join * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "JOIN");
 	appendStringInfo(str, buf);
@@ -227,7 +227,7 @@ _outJoin(StringInfo str, Join * node)
 static void
 _outNestLoop(StringInfo str, NestLoop * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "NESTLOOP");
 	appendStringInfo(str, buf);
@@ -240,7 +240,7 @@ _outNestLoop(StringInfo str, NestLoop * node)
 static void
 _outMergeJoin(StringInfo str, MergeJoin * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "MERGEJOIN");
 	appendStringInfo(str, buf);
@@ -266,7 +266,7 @@ _outMergeJoin(StringInfo str, MergeJoin * node)
 static void
 _outHashJoin(StringInfo str, HashJoin * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "HASHJOIN");
 	appendStringInfo(str, buf);
@@ -294,7 +294,7 @@ _outHashJoin(StringInfo str, HashJoin * node)
 static void
 _outScan(StringInfo str, Scan * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "SCAN");
 	appendStringInfo(str, buf);
@@ -311,7 +311,7 @@ _outScan(StringInfo str, Scan * node)
 static void
 _outSeqScan(StringInfo str, SeqScan * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "SEQSCAN");
 	appendStringInfo(str, buf);
@@ -329,7 +329,7 @@ _outSeqScan(StringInfo str, SeqScan * node)
 static void
 _outIndexScan(StringInfo str, IndexScan * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "INDEXSCAN");
 	appendStringInfo(str, buf);
@@ -354,7 +354,7 @@ _outIndexScan(StringInfo str, IndexScan * node)
 static void
 _outTemp(StringInfo str, Temp * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "TEMP");
 	appendStringInfo(str, buf);
@@ -373,7 +373,7 @@ _outTemp(StringInfo str, Temp * node)
 static void
 _outSort(StringInfo str, Sort * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "SORT");
 	appendStringInfo(str, buf);
@@ -389,7 +389,7 @@ _outSort(StringInfo str, Sort * node)
 static void
 _outAgg(StringInfo str, Agg * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "AGG");
 	appendStringInfo(str, buf);
@@ -403,7 +403,7 @@ _outAgg(StringInfo str, Agg * node)
 static void
 _outGroup(StringInfo str, Group * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "GRP");
 	appendStringInfo(str, buf);
@@ -424,7 +424,7 @@ _outGroup(StringInfo str, Group * node)
 static void
 _outUnique(StringInfo str, Unique * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "UNIQUE");
 	appendStringInfo(str, buf);
@@ -444,7 +444,7 @@ _outUnique(StringInfo str, Unique * node)
 static void
 _outHash(StringInfo str, Hash * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "HASH");
 	appendStringInfo(str, buf);
@@ -465,7 +465,7 @@ _outHash(StringInfo str, Hash * node)
 static void
 _outTee(StringInfo str, Tee * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "TEE");
 	appendStringInfo(str, buf);
@@ -496,7 +496,7 @@ _outTee(StringInfo str, Tee * node)
 static void
 _outResdom(StringInfo str, Resdom * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "RESDOM");
 	appendStringInfo(str, buf);
@@ -521,8 +521,8 @@ _outResdom(StringInfo str, Resdom * node)
 static void
 _outFjoin(StringInfo str, Fjoin * node)
 {
-	char			buf[500];
-	int				i;
+	char		buf[500];
+	int			i;
 
 	sprintf(buf, "FJOIN");
 	appendStringInfo(str, buf);
@@ -552,8 +552,8 @@ _outFjoin(StringInfo str, Fjoin * node)
 static void
 _outExpr(StringInfo str, Expr * node)
 {
-	char			buf[500];
-	char		   *opstr = NULL;
+	char		buf[500];
+	char	   *opstr = NULL;
 
 	sprintf(buf, "EXPR");
 	appendStringInfo(str, buf);
@@ -562,21 +562,21 @@ _outExpr(StringInfo str, Expr * node)
 	appendStringInfo(str, buf);
 	switch (node->opType)
 	{
-	case OP_EXPR:
-		opstr = "op";
-		break;
-	case FUNC_EXPR:
-		opstr = "func";
-		break;
-	case OR_EXPR:
-		opstr = "or";
-		break;
-	case AND_EXPR:
-		opstr = "and";
-		break;
-	case NOT_EXPR:
-		opstr = "not";
-		break;
+		case OP_EXPR:
+			opstr = "op";
+			break;
+		case FUNC_EXPR:
+			opstr = "func";
+			break;
+		case OR_EXPR:
+			opstr = "or";
+			break;
+		case AND_EXPR:
+			opstr = "and";
+			break;
+		case NOT_EXPR:
+			opstr = "not";
+			break;
 	}
 	sprintf(buf, " :opType %s", opstr);
 	appendStringInfo(str, buf);
@@ -594,7 +594,7 @@ _outExpr(StringInfo str, Expr * node)
 static void
 _outVar(StringInfo str, Var * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "VAR");
 	appendStringInfo(str, buf);
@@ -616,7 +616,7 @@ _outVar(StringInfo str, Var * node)
 static void
 _outConst(StringInfo str, Const * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "CONST");
 	appendStringInfo(str, buf);
@@ -648,7 +648,7 @@ _outConst(StringInfo str, Const * node)
 static void
 _outAggreg(StringInfo str, Aggreg * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "AGGREG");
 	appendStringInfo(str, buf);
@@ -672,8 +672,8 @@ _outAggreg(StringInfo str, Aggreg * node)
 static void
 _outArray(StringInfo str, Array * node)
 {
-	char			buf[500];
-	int				i;
+	char		buf[500];
+	int			i;
 
 	sprintf(buf, "ARRAY");
 	appendStringInfo(str, buf);
@@ -709,7 +709,7 @@ _outArray(StringInfo str, Array * node)
 static void
 _outArrayRef(StringInfo str, ArrayRef * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "ARRAYREF");
 	appendStringInfo(str, buf);
@@ -745,7 +745,7 @@ _outArrayRef(StringInfo str, ArrayRef * node)
 static void
 _outFunc(StringInfo str, Func * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "FUNC");
 	appendStringInfo(str, buf);
@@ -774,7 +774,7 @@ _outFunc(StringInfo str, Func * node)
 static void
 _outOper(StringInfo str, Oper * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "OPER");
 	appendStringInfo(str, buf);
@@ -793,7 +793,7 @@ _outOper(StringInfo str, Oper * node)
 static void
 _outParam(StringInfo str, Param * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "PARAM");
 	appendStringInfo(str, buf);
@@ -820,7 +820,7 @@ _outParam(StringInfo str, Param * node)
 static void
 _outEState(StringInfo str, EState * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "ESTATE");
 	appendStringInfo(str, buf);
@@ -843,7 +843,7 @@ _outEState(StringInfo str, EState * node)
 static void
 _outRel(StringInfo str, Rel * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "REL");
 	appendStringInfo(str, buf);
@@ -919,7 +919,7 @@ _outRel(StringInfo str, Rel * node)
 static void
 _outTargetEntry(StringInfo str, TargetEntry * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "TLE");
 	appendStringInfo(str, buf);
@@ -942,7 +942,7 @@ _outTargetEntry(StringInfo str, TargetEntry * node)
 static void
 _outRangeTblEntry(StringInfo str, RangeTblEntry * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "RTE");
 	appendStringInfo(str, buf);
@@ -968,7 +968,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry * node)
 static void
 _outPath(StringInfo str, Path * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "PATH");
 	appendStringInfo(str, buf);
@@ -991,7 +991,7 @@ _outPath(StringInfo str, Path * node)
 static void
 _outIndexPath(StringInfo str, IndexPath * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "INDEXPATH");
 	appendStringInfo(str, buf);
@@ -1032,7 +1032,7 @@ _outIndexPath(StringInfo str, IndexPath * node)
 static void
 _outJoinPath(StringInfo str, JoinPath * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "JOINPATH");
 	appendStringInfo(str, buf);
@@ -1086,7 +1086,7 @@ _outJoinPath(StringInfo str, JoinPath * node)
 static void
 _outMergePath(StringInfo str, MergePath * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "MERGEPATH");
 	appendStringInfo(str, buf);
@@ -1142,7 +1142,7 @@ _outMergePath(StringInfo str, MergePath * node)
 static void
 _outHashPath(StringInfo str, HashPath * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "HASHPATH");
 	appendStringInfo(str, buf);
@@ -1198,7 +1198,7 @@ _outHashPath(StringInfo str, HashPath * node)
 static void
 _outOrderKey(StringInfo str, OrderKey * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "ORDERKEY");
 	appendStringInfo(str, buf);
@@ -1215,7 +1215,7 @@ _outOrderKey(StringInfo str, OrderKey * node)
 static void
 _outJoinKey(StringInfo str, JoinKey * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "JOINKEY");
 	appendStringInfo(str, buf);
@@ -1236,7 +1236,7 @@ _outJoinKey(StringInfo str, JoinKey * node)
 static void
 _outMergeOrder(StringInfo str, MergeOrder * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "MERGEORDER");
 	appendStringInfo(str, buf);
@@ -1260,7 +1260,7 @@ _outMergeOrder(StringInfo str, MergeOrder * node)
 static void
 _outCInfo(StringInfo str, CInfo * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "CINFO");
 	appendStringInfo(str, buf);
@@ -1293,7 +1293,7 @@ _outCInfo(StringInfo str, CInfo * node)
 static void
 _outJoinMethod(StringInfo str, JoinMethod * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "JOINMETHOD");
 	appendStringInfo(str, buf);
@@ -1315,7 +1315,7 @@ _outJoinMethod(StringInfo str, JoinMethod * node)
 static void
 _outHInfo(StringInfo str, HInfo * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "HASHINFO");
 	appendStringInfo(str, buf);
@@ -1341,7 +1341,7 @@ _outHInfo(StringInfo str, HInfo * node)
 static void
 _outJInfo(StringInfo str, JInfo * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	sprintf(buf, "JINFO");
 	appendStringInfo(str, buf);
@@ -1369,12 +1369,12 @@ _outJInfo(StringInfo str, JInfo * node)
 static void
 _outDatum(StringInfo str, Datum value, Oid type)
 {
-	char			buf[500];
-	Size			length,
-					typeLength;
-	bool			byValue;
-	int				i;
-	char		   *s;
+	char		buf[500];
+	Size		length,
+				typeLength;
+	bool		byValue;
+	int			i;
+	char	   *s;
 
 	/*
 	 * find some information about the type and the "real" length of the
@@ -1442,7 +1442,7 @@ _outIter(StringInfo str, Iter * node)
 static void
 _outStream(StringInfo str, Stream * node)
 {
-	char			buf[500];
+	char		buf[500];
 
 	appendStringInfo(str, "STREAM");
 
@@ -1474,24 +1474,24 @@ _outStream(StringInfo str, Stream * node)
 static void
 _outValue(StringInfo str, Value * value)
 {
-	char			buf[500];
+	char		buf[500];
 
 	switch (value->type)
 	{
-	case T_String:
-		sprintf(buf, "\"%s\"", value->val.str);
-		appendStringInfo(str, buf);
-		break;
-	case T_Integer:
-		sprintf(buf, "%ld", value->val.ival);
-		appendStringInfo(str, buf);
-		break;
-	case T_Float:
-		sprintf(buf, "%f", value->val.dval);
-		appendStringInfo(str, buf);
-		break;
-	default:
-		break;
+		case T_String:
+			sprintf(buf, "\"%s\"", value->val.str);
+			appendStringInfo(str, buf);
+			break;
+		case T_Integer:
+			sprintf(buf, "%ld", value->val.ival);
+			appendStringInfo(str, buf);
+			break;
+		case T_Float:
+			sprintf(buf, "%f", value->val.dval);
+			appendStringInfo(str, buf);
+			break;
+		default:
+			break;
 	}
 	return;
 }
@@ -1511,7 +1511,7 @@ _outNode(StringInfo str, void *obj)
 
 	if (nodeTag(obj) == T_List)
 	{
-		List		   *l;
+		List	   *l;
 
 		appendStringInfo(str, "(");
 		foreach(l, (List *) obj)
@@ -1527,159 +1527,159 @@ _outNode(StringInfo str, void *obj)
 		appendStringInfo(str, "{");
 		switch (nodeTag(obj))
 		{
-		case T_Query:
-			_outQuery(str, obj);
-			break;
-		case T_Plan:
-			_outPlan(str, obj);
-			break;
-		case T_Result:
-			_outResult(str, obj);
-			break;
-		case T_Existential:
-			_outExistential(str, obj);
-			break;
-		case T_Append:
-			_outAppend(str, obj);
-			break;
-		case T_Join:
-			_outJoin(str, obj);
-			break;
-		case T_NestLoop:
-			_outNestLoop(str, obj);
-			break;
-		case T_MergeJoin:
-			_outMergeJoin(str, obj);
-			break;
-		case T_HashJoin:
-			_outHashJoin(str, obj);
-			break;
-		case T_Scan:
-			_outScan(str, obj);
-			break;
-		case T_SeqScan:
-			_outSeqScan(str, obj);
-			break;
-		case T_IndexScan:
-			_outIndexScan(str, obj);
-			break;
-		case T_Temp:
-			_outTemp(str, obj);
-			break;
-		case T_Sort:
-			_outSort(str, obj);
-			break;
-		case T_Agg:
-			_outAgg(str, obj);
-			break;
-		case T_Group:
-			_outGroup(str, obj);
-			break;
-		case T_Unique:
-			_outUnique(str, obj);
-			break;
-		case T_Hash:
-			_outHash(str, obj);
-			break;
-		case T_Tee:
-			_outTee(str, obj);
-			break;
-		case T_Resdom:
-			_outResdom(str, obj);
-			break;
-		case T_Fjoin:
-			_outFjoin(str, obj);
-			break;
-		case T_Expr:
-			_outExpr(str, obj);
-			break;
-		case T_Var:
-			_outVar(str, obj);
-			break;
-		case T_Const:
-			_outConst(str, obj);
-			break;
-		case T_Aggreg:
-			_outAggreg(str, obj);
-			break;
-		case T_Array:
-			_outArray(str, obj);
-			break;
-		case T_ArrayRef:
-			_outArrayRef(str, obj);
-			break;
-		case T_Func:
-			_outFunc(str, obj);
-			break;
-		case T_Oper:
-			_outOper(str, obj);
-			break;
-		case T_Param:
-			_outParam(str, obj);
-			break;
-		case T_EState:
-			_outEState(str, obj);
-			break;
-		case T_Rel:
-			_outRel(str, obj);
-			break;
-		case T_TargetEntry:
-			_outTargetEntry(str, obj);
-			break;
-		case T_RangeTblEntry:
-			_outRangeTblEntry(str, obj);
-			break;
-		case T_Path:
-			_outPath(str, obj);
-			break;
-		case T_IndexPath:
-			_outIndexPath(str, obj);
-			break;
-		case T_JoinPath:
-			_outJoinPath(str, obj);
-			break;
-		case T_MergePath:
-			_outMergePath(str, obj);
-			break;
-		case T_HashPath:
-			_outHashPath(str, obj);
-			break;
-		case T_OrderKey:
-			_outOrderKey(str, obj);
-			break;
-		case T_JoinKey:
-			_outJoinKey(str, obj);
-			break;
-		case T_MergeOrder:
-			_outMergeOrder(str, obj);
-			break;
-		case T_CInfo:
-			_outCInfo(str, obj);
-			break;
-		case T_JoinMethod:
-			_outJoinMethod(str, obj);
-			break;
-		case T_HInfo:
-			_outHInfo(str, obj);
-			break;
-		case T_JInfo:
-			_outJInfo(str, obj);
-			break;
-		case T_Iter:
-			_outIter(str, obj);
-			break;
-		case T_Stream:
-			_outStream(str, obj);
-			break;
-		case T_Integer:
-		case T_String:
-		case T_Float:
-			_outValue(str, obj);
-			break;
-		default:
-			elog(NOTICE, "_outNode: don't know how to print type %d",
-				 nodeTag(obj));
-			break;
+			case T_Query:
+				_outQuery(str, obj);
+				break;
+			case T_Plan:
+				_outPlan(str, obj);
+				break;
+			case T_Result:
+				_outResult(str, obj);
+				break;
+			case T_Existential:
+				_outExistential(str, obj);
+				break;
+			case T_Append:
+				_outAppend(str, obj);
+				break;
+			case T_Join:
+				_outJoin(str, obj);
+				break;
+			case T_NestLoop:
+				_outNestLoop(str, obj);
+				break;
+			case T_MergeJoin:
+				_outMergeJoin(str, obj);
+				break;
+			case T_HashJoin:
+				_outHashJoin(str, obj);
+				break;
+			case T_Scan:
+				_outScan(str, obj);
+				break;
+			case T_SeqScan:
+				_outSeqScan(str, obj);
+				break;
+			case T_IndexScan:
+				_outIndexScan(str, obj);
+				break;
+			case T_Temp:
+				_outTemp(str, obj);
+				break;
+			case T_Sort:
+				_outSort(str, obj);
+				break;
+			case T_Agg:
+				_outAgg(str, obj);
+				break;
+			case T_Group:
+				_outGroup(str, obj);
+				break;
+			case T_Unique:
+				_outUnique(str, obj);
+				break;
+			case T_Hash:
+				_outHash(str, obj);
+				break;
+			case T_Tee:
+				_outTee(str, obj);
+				break;
+			case T_Resdom:
+				_outResdom(str, obj);
+				break;
+			case T_Fjoin:
+				_outFjoin(str, obj);
+				break;
+			case T_Expr:
+				_outExpr(str, obj);
+				break;
+			case T_Var:
+				_outVar(str, obj);
+				break;
+			case T_Const:
+				_outConst(str, obj);
+				break;
+			case T_Aggreg:
+				_outAggreg(str, obj);
+				break;
+			case T_Array:
+				_outArray(str, obj);
+				break;
+			case T_ArrayRef:
+				_outArrayRef(str, obj);
+				break;
+			case T_Func:
+				_outFunc(str, obj);
+				break;
+			case T_Oper:
+				_outOper(str, obj);
+				break;
+			case T_Param:
+				_outParam(str, obj);
+				break;
+			case T_EState:
+				_outEState(str, obj);
+				break;
+			case T_Rel:
+				_outRel(str, obj);
+				break;
+			case T_TargetEntry:
+				_outTargetEntry(str, obj);
+				break;
+			case T_RangeTblEntry:
+				_outRangeTblEntry(str, obj);
+				break;
+			case T_Path:
+				_outPath(str, obj);
+				break;
+			case T_IndexPath:
+				_outIndexPath(str, obj);
+				break;
+			case T_JoinPath:
+				_outJoinPath(str, obj);
+				break;
+			case T_MergePath:
+				_outMergePath(str, obj);
+				break;
+			case T_HashPath:
+				_outHashPath(str, obj);
+				break;
+			case T_OrderKey:
+				_outOrderKey(str, obj);
+				break;
+			case T_JoinKey:
+				_outJoinKey(str, obj);
+				break;
+			case T_MergeOrder:
+				_outMergeOrder(str, obj);
+				break;
+			case T_CInfo:
+				_outCInfo(str, obj);
+				break;
+			case T_JoinMethod:
+				_outJoinMethod(str, obj);
+				break;
+			case T_HInfo:
+				_outHInfo(str, obj);
+				break;
+			case T_JInfo:
+				_outJInfo(str, obj);
+				break;
+			case T_Iter:
+				_outIter(str, obj);
+				break;
+			case T_Stream:
+				_outStream(str, obj);
+				break;
+			case T_Integer:
+			case T_String:
+			case T_Float:
+				_outValue(str, obj);
+				break;
+			default:
+				elog(NOTICE, "_outNode: don't know how to print type %d",
+					 nodeTag(obj));
+				break;
 		}
 		appendStringInfo(str, "}");
 	}
@@ -1690,11 +1690,11 @@ _outNode(StringInfo str, void *obj)
  * nodeToString -
  *	   returns the ascii representation of the Node
  */
-char		   *
+char	   *
 nodeToString(void *obj)
 {
-	StringInfo		str;
-	char		   *s;
+	StringInfo	str;
+	char	   *s;
 
 	if (obj == NULL)
 		return "";

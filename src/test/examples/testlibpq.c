@@ -16,22 +16,22 @@ exit_nicely(PGconn * conn)
 
 main()
 {
-	char		   *pghost,
-				   *pgport,
-				   *pgoptions,
-				   *pgtty;
-	char		   *dbName;
-	int				nFields;
-	int				i,
-					j;
+	char	   *pghost,
+			   *pgport,
+			   *pgoptions,
+			   *pgtty;
+	char	   *dbName;
+	int			nFields;
+	int			i,
+				j;
 
 #ifdef DEBUG
-	FILE		   *debug;
+	FILE	   *debug;
 
 #endif							/* DEBUG */
 
-	PGconn		   *conn;
-	PGresult	   *res;
+	PGconn	   *conn;
+	PGresult   *res;
 
 	/*
 	 * begin, by setting the parameters for a backend connection if the

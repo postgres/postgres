@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.4 1997/09/07 04:43:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.5 1997/09/08 02:24:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List    *prune_joinrel(Rel * rel, List * other_rels);
+static List *prune_joinrel(Rel * rel, List * other_rels);
 
 /*
  * prune-joinrels--
@@ -34,10 +34,10 @@ static List    *prune_joinrel(Rel * rel, List * other_rels);
  * Returns the resulting list.
  *
  */
-List		   *
+List	   *
 prune_joinrels(List * rel_list)
 {
-	List		   *temp_list = NIL;
+	List	   *temp_list = NIL;
 
 	if (rel_list != NIL)
 	{
@@ -59,13 +59,13 @@ prune_joinrels(List * rel_list)
  * of 'rel' appropriately.
  *
  */
-static List    *
+static List *
 prune_joinrel(Rel * rel, List * other_rels)
 {
-	List		   *i = NIL;
-	List		   *t_list = NIL;
-	List		   *temp_node = NIL;
-	Rel			   *other_rel = (Rel *) NULL;
+	List	   *i = NIL;
+	List	   *t_list = NIL;
+	List	   *temp_node = NIL;
+	Rel		   *other_rel = (Rel *) NULL;
 
 	foreach(i, other_rels)
 	{
@@ -99,11 +99,11 @@ prune_joinrel(Rel * rel, List * other_rels)
 void
 prune_rel_paths(List * rel_list)
 {
-	List		   *x = NIL;
-	List		   *y = NIL;
-	Path		   *path = NULL;
-	Rel			   *rel = (Rel *) NULL;
-	JoinPath	   *cheapest = (JoinPath *) NULL;
+	List	   *x = NIL;
+	List	   *y = NIL;
+	Path	   *path = NULL;
+	Rel		   *rel = (Rel *) NULL;
+	JoinPath   *cheapest = (JoinPath *) NULL;
 
 	foreach(x, rel_list)
 	{
@@ -139,10 +139,10 @@ prune_rel_paths(List * rel_list)
  * Returns the cheapest path.
  *
  */
-Path		   *
+Path	   *
 prune_rel_path(Rel * rel, Path * unorderedpath)
 {
-	Path		   *cheapest = set_cheapest(rel, rel->pathlist);
+	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 
 	/* don't prune if not pruneable  -- JMH, 11/23/92 */
 	if (unorderedpath != cheapest
@@ -170,14 +170,14 @@ prune_rel_path(Rel * rel, Path * unorderedpath)
  *
  * Returns one pruned rel node list
  */
-List		   *
+List	   *
 merge_joinrels(List * rel_list1, List * rel_list2)
 {
-	List		   *xrel = NIL;
+	List	   *xrel = NIL;
 
 	foreach(xrel, rel_list1)
 	{
-		Rel			   *rel = (Rel *) lfirst(xrel);
+		Rel		   *rel = (Rel *) lfirst(xrel);
 
 		rel_list2 = prune_joinrel(rel, rel_list2);
 	}
@@ -196,12 +196,12 @@ merge_joinrels(List * rel_list1, List * rel_list2)
  *
  * Returns a new list of rel nodes
  */
-List		   *
+List	   *
 prune_oldrels(List * old_rels)
 {
-	Rel			   *rel;
-	List		   *joininfo_list,
-				   *xjoininfo;
+	Rel		   *rel;
+	List	   *joininfo_list,
+			   *xjoininfo;
 
 	if (old_rels == NIL)
 		return (NIL);
@@ -213,7 +213,7 @@ prune_oldrels(List * old_rels)
 
 	foreach(xjoininfo, joininfo_list)
 	{
-		JInfo		   *joininfo = (JInfo *) lfirst(xjoininfo);
+		JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
 
 		if (!joininfo->inactive)
 			return (lcons(rel, prune_oldrels(lnext(old_rels))));

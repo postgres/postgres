@@ -9,10 +9,10 @@ typedef unsigned char slock_t;
 
 #endif
 
-extern long		random(void);
-extern void		srandom(int seed);
-extern int		strcasecmp(char *s1, char *s2);
-extern int		gethostname(char *name, int namelen);
+extern long random(void);
+extern void srandom(int seed);
+extern int	strcasecmp(char *s1, char *s2);
+extern int	gethostname(char *name, int namelen);
 
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321

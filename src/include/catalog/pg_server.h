@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_server.h,v 1.3 1997/09/07 04:57:09 momjian Exp $
+ * $Id: pg_server.h,v 1.4 1997/09/08 02:35:26 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,9 +32,9 @@
  */
 CATALOG(pg_server) BOOTSTRAP
 {
-	NameData		sername;
-	int2			serpid;
-	int2			serport;
+	NameData	sername;
+	int2		serpid;
+	int2		serport;
 } FormData_pg_server;
 
 /* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.16 1997/09/07 04:53:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.17 1997/09/08 02:31:29 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -34,16 +34,16 @@ ExcPrint(Exception * excP, ExcDetail detail, ExcData data,
 /*
  * Global Variables
  */
-static bool		ExceptionHandlingEnabled = false;
+static bool ExceptionHandlingEnabled = false;
 
-char		   *ExcFileName = NULL;
-Index			ExcLineNumber = 0;
+char	   *ExcFileName = NULL;
+Index		ExcLineNumber = 0;
 
-ExcFrame	   *ExcCurFrameP = NULL;
+ExcFrame   *ExcCurFrameP = NULL;
 
 static ExcProc *ExcUnCaughtP = NULL;
 
-extern char    *ProgramName;
+extern char *ProgramName;
 
 /*
  * Exported Functions
@@ -103,8 +103,8 @@ ExcPrint(Exception * excP,
 		 ExcData data,
 		 ExcMessage message)
 {
-	extern int		errno;
-	extern int		sys_nerr;
+	extern int	errno;
+	extern int	sys_nerr;
 
 #ifdef	lint
 	data = data;
@@ -141,7 +141,7 @@ ExcPrint(Exception * excP,
 }
 
 #ifdef NOT_USED
-ExcProc		   *
+ExcProc    *
 ExcGetUnCaught(void)
 {
 	return (ExcUnCaughtP);
@@ -150,10 +150,10 @@ ExcGetUnCaught(void)
 #endif
 
 #ifdef NOT_USED
-ExcProc		   *
+ExcProc    *
 ExcSetUnCaught(ExcProc * newP)
 {
-	ExcProc		   *oldP = ExcUnCaughtP;
+	ExcProc    *oldP = ExcUnCaughtP;
 
 	ExcUnCaughtP = newP;
 

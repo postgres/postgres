@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.19 1997/09/07 04:52:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.20 1997/09/08 02:31:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,9 @@
 struct varlena *
 byteain(char *inputText)
 {
-	register char  *tp;
-	register char  *rp;
-	register int	byte;
+	register char *tp;
+	register char *rp;
+	register int byte;
 	struct varlena *result;
 
 	if (inputText == NULL)
@@ -107,15 +107,15 @@ shove_bytes(unsigned char *stuff, int len)
  *
  *		NULL vlena should be an error--returning string with NULL for now.
  */
-char		   *
+char	   *
 byteaout(struct varlena * vlena)
 {
-	register char  *vp;
-	register char  *rp;
-	register int	val;		/* holds unprintable chars */
-	int				i;
-	int				len;
-	static char    *result;
+	register char *vp;
+	register char *rp;
+	register int val;			/* holds unprintable chars */
+	int			i;
+	int			len;
+	static char *result;
 
 	if (vlena == NULL)
 	{
@@ -168,7 +168,7 @@ struct varlena *
 textin(char *inputText)
 {
 	struct varlena *result;
-	int				len;
+	int			len;
 
 	if (inputText == NULL)
 		return (NULL);
@@ -182,11 +182,11 @@ textin(char *inputText)
 /*
  *		textout			- converts internal representation to "..."
  */
-char		   *
+char	   *
 textout(struct varlena * vlena)
 {
-	int				len;
-	char		   *result;
+	int			len;
+	char	   *result;
 
 	if (vlena == NULL)
 	{
@@ -214,9 +214,9 @@ textout(struct varlena * vlena)
 int
 textlen(text * t)
 {
-	int				i = 0;
-	int				max = VARSIZE(t) - VARHDRSZ;
-	char		   *ptr = VARDATA(t);
+	int			i = 0;
+	int			max = VARSIZE(t) - VARHDRSZ;
+	char	   *ptr = VARDATA(t);
 
 	while (i < max && *ptr++)
 		i++;
@@ -238,14 +238,14 @@ textlen(text * t)
  * Is this OK?
  */
 
-text		   *
+text	   *
 textcat(text * t1, text * t2)
 {
-	int				len1,
-					len2,
-					len;
-	char		   *ptr;
-	text		   *result;
+	int			len1,
+				len2,
+				len;
+	char	   *ptr;
+	text	   *result;
 
 	if (!PointerIsValid(t1) && !PointerIsValid(t2))
 		return (NULL);
@@ -283,13 +283,13 @@ textcat(text * t1, text * t2)
 int32
 textpos(text * t1, text * t2)
 {
-	int				pos;
-	int				px,
-					p;
-	int				len1,
-					len2;
-	char		   *p1,
-				   *p2;
+	int			pos;
+	int			px,
+				p;
+	int			len1,
+				len2;
+	char	   *p1,
+			   *p2;
 
 	if (!PointerIsValid(t1) || !PointerIsValid(t2))
 		return (0);
@@ -322,9 +322,9 @@ textpos(text * t1, text * t2)
 bool
 texteq(struct varlena * arg1, struct varlena * arg2)
 {
-	register int	len;
-	register char  *a1p,
-				   *a2p;
+	register int len;
+	register char *a1p,
+			   *a2p;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) NULL);
@@ -361,15 +361,15 @@ textne(struct varlena * arg1, struct varlena * arg2)
 bool
 text_lt(struct varlena * arg1, struct varlena * arg2)
 {
-	bool			result;
+	bool		result;
 
 #ifdef USE_LOCALE
-	int				cval;
+	int			cval;
 
 #endif
-	int				len;
-	unsigned char  *a1p,
-				   *a2p;
+	int			len;
+	unsigned char *a1p,
+			   *a2p;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) FALSE);
@@ -417,15 +417,15 @@ text_lt(struct varlena * arg1, struct varlena * arg2)
 bool
 text_le(struct varlena * arg1, struct varlena * arg2)
 {
-	bool			result;
+	bool		result;
 
 #ifdef USE_LOCALE
-	int				cval;
+	int			cval;
 
 #endif
-	int				len;
-	unsigned char  *a1p,
-				   *a2p;
+	int			len;
+	unsigned char *a1p,
+			   *a2p;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -484,7 +484,7 @@ text_ge(struct varlena * arg1, struct varlena * arg2)
 int32
 byteaGetSize(struct varlena * v)
 {
-	register int	len;
+	register int len;
 
 	len = v->vl_len - sizeof(v->vl_len);
 
@@ -502,8 +502,8 @@ byteaGetSize(struct varlena * v)
 int32
 byteaGetByte(struct varlena * v, int32 n)
 {
-	int				len;
-	int				byte;
+	int			len;
+	int			byte;
 
 	len = byteaGetSize(v);
 
@@ -530,9 +530,9 @@ byteaGetByte(struct varlena * v, int32 n)
 int32
 byteaGetBit(struct varlena * v, int32 n)
 {
-	int				byteNo,
-					bitNo;
-	int				byte;
+	int			byteNo,
+				bitNo;
+	int			byte;
 
 	byteNo = n / 8;
 	bitNo = n % 8;
@@ -560,7 +560,7 @@ byteaGetBit(struct varlena * v, int32 n)
 struct varlena *
 byteaSetByte(struct varlena * v, int32 n, int32 newByte)
 {
-	int				len;
+	int			len;
 	struct varlena *res;
 
 	len = byteaGetSize(v);
@@ -603,10 +603,10 @@ struct varlena *
 byteaSetBit(struct varlena * v, int32 n, int32 newBit)
 {
 	struct varlena *res;
-	int				oldByte,
-					newByte;
-	int				byteNo,
-					bitNo;
+	int			oldByte,
+				newByte;
+	int			byteNo,
+				bitNo;
 
 	/*
 	 * sanity check!

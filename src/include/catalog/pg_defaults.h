@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_defaults.h,v 1.3 1997/09/07 04:56:44 momjian Exp $
+ * $Id: pg_defaults.h,v 1.4 1997/09/08 02:35:05 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,8 +32,8 @@
  */
 CATALOG(pg_defaults) BOOTSTRAP
 {
-	NameData		defname;
-	NameData		defvalue;
+	NameData	defname;
+	NameData	defvalue;
 } FormData_pg_defaults;
 
 /* ----------------

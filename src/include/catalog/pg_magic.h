@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_magic.h,v 1.3 1997/09/07 04:56:57 momjian Exp $
+ * $Id: pg_magic.h,v 1.4 1997/09/08 02:35:18 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,8 +32,8 @@
  */
 CATALOG(pg_magic) BOOTSTRAP
 {
-	NameData		magname;
-	NameData		magvalue;
+	NameData	magname;
+	NameData	magvalue;
 } FormData_pg_magic;
 
 /* ----------------

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.4 1997/09/07 04:58:57 momjian Exp $
+ * $Id: geqo.h,v 1.5 1997/09/08 02:37:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,12 +52,12 @@
 #define SELECTION_BIAS 2.0		/* selective pressure within population */
  /* should be 1.5 <= SELECTION_BIAS <= 2.0 */
 
-int				PoolSize;
-int				Generations;
+int			PoolSize;
+int			Generations;
 
-long			RandomSeed;		/* defaults to (long) time(NULL) in
+long		RandomSeed;			/* defaults to (long) time(NULL) in
 								 * geqo_params.c */
-double			SelectionBias;
+double		SelectionBias;
 
 /* logarithmic base for rel->size decrease in case of long
    queries that cause an integer overflow; used in geqo_eval.c */
@@ -66,13 +66,13 @@ double			SelectionBias;
  /* ^^^						*/
 
 /* geqo prototypes */
-extern Rel	   *geqo(Query * root);
+extern Rel *geqo(Query * root);
 
-extern void		geqo_params(int string_length);
+extern void geqo_params(int string_length);
 
-extern Cost		geqo_eval(Query * root, Gene * tour, int num_gene);
-double			geqo_log(double x, double b);
-extern Rel	   *gimme_tree(Query * root, Gene * tour, int rel_count, int num_gene, Rel * outer_rel);
+extern Cost geqo_eval(Query * root, Gene * tour, int num_gene);
+double		geqo_log(double x, double b);
+extern Rel *gimme_tree(Query * root, Gene * tour, int rel_count, int num_gene, Rel * outer_rel);
 
 
 #endif							/* GEQO_H */

@@ -6,7 +6,7 @@
 *	 OX1 operator according to Davis
 *	 (Proc Int'l Joint Conf on AI)
 *
-* $Id: geqo_ox1.c,v 1.2 1997/09/07 04:43:14 momjian Exp $
+* $Id: geqo_ox1.c,v 1.3 1997/09/08 02:23:58 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -61,11 +61,11 @@
 void
 ox1(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene, City * city_table)
 {
-	int				left,
-					right,
-					k,
-					p,
-					temp;
+	int			left,
+				right,
+				k,
+				p,
+				temp;
 
 	/* initialize city table */
 	for (k = 1; k <= num_gene; k++)

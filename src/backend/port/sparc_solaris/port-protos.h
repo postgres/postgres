@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.5 1997/09/07 04:46:50 momjian Exp $
+ * $Id: port-protos.h,v 1.6 1997/09/08 02:27:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,17 +36,17 @@
 #define pg_dlerror		dlerror
 
 /* port.c */
-extern long		random(void);
-extern void		srandom(int seed);
+extern long random(void);
+extern void srandom(int seed);
 
 /* inet_aton.c in backend/port directory */
-extern int		inet_aton(const char *cp, struct in_addr * addr);
+extern int	inet_aton(const char *cp, struct in_addr * addr);
 
 /* In system library, but can't find prototype in system library .h files */
-extern int		gethostname(char *name, int namelen);
+extern int	gethostname(char *name, int namelen);
 
 /* In system library, but can't find prototype in system library .h files */
 #include <sys/resource.h>
-extern int		getrusage(int who, struct rusage * rusage);
+extern int	getrusage(int who, struct rusage * rusage);
 
 #endif							/* PORT_PROTOS_H */

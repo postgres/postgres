@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.22 1997/09/07 04:39:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.23 1997/09/08 02:21:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,14 +103,14 @@
 #define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))
 #define FIRST_TYPE_OID 16		/* OID of the first type */
 
-extern int		Int_yyparse(void);
+extern int	Int_yyparse(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
 static AttributeTupleForm AllocateAttribute(void);
-static bool		BootstrapAlreadySeen(Oid id);
-static int		CompHash(char *str, int len);
+static bool BootstrapAlreadySeen(Oid id);
+static int	CompHash(char *str, int len);
 static hashnode *FindStr(char *str, int length, hashnode * mderef);
-static int		gettype(char *type);
-static void		cleanup(void);
+static int	gettype(char *type);
+static void cleanup(void);
 
 /* ----------------
  *		global variables
@@ -134,11 +134,10 @@ static void		cleanup(void);
 #define NUMSQR	529
 #define NUMCUBE 12167
 
-char		   *strtable[STRTABLESIZE];
-hashnode	   *hashtable[HASHTABLESIZE];
+char	   *strtable[STRTABLESIZE];
+hashnode   *hashtable[HASHTABLESIZE];
 
-static int		strtable_end = -1;		/* Tells us last occupied string
-										 * space */
+static int	strtable_end = -1;	/* Tells us last occupied string space */
 
 /*-
  * Basic information associated with each type.  This is used before
@@ -150,12 +149,12 @@ static int		strtable_end = -1;		/* Tells us last occupied string
  */
 struct typinfo
 {
-	char			name[NAMEDATALEN];
-	Oid				oid;
-	Oid				elem;
-	int16			len;
-	Oid				inproc;
-	Oid				outproc;
+	char		name[NAMEDATALEN];
+	Oid			oid;
+	Oid			elem;
+	int16		len;
+	Oid			inproc;
+	Oid			outproc;
 };
 
 static struct typinfo Procid[] = {
@@ -180,29 +179,29 @@ static struct typinfo Procid[] = {
 	{"_aclitem", 1034, 1033, -1, F_ARRAY_IN, F_ARRAY_OUT}
 };
 
-static int		n_types = sizeof(Procid) / sizeof(struct typinfo);
+static int	n_types = sizeof(Procid) / sizeof(struct typinfo);
 
 struct typmap
 {								/* a hack */
-	Oid				am_oid;
+	Oid			am_oid;
 	TypeTupleFormData am_typ;
 };
 
 static struct typmap **Typ = (struct typmap **) NULL;
 static struct typmap *Ap = (struct typmap *) NULL;
 
-static int		Warnings = 0;
-static char		Blanks[MAXATTR];
+static int	Warnings = 0;
+static char Blanks[MAXATTR];
 
-static char    *relname;		/* current relation name */
+static char *relname;			/* current relation name */
 
 AttributeTupleForm attrtypes[MAXATTR];	/* points to attribute info */
-static char    *values[MAXATTR];/* cooresponding attribute values */
-int				numattr;		/* number of attributes for cur. rel */
-extern int		fsyncOff;		/* do not fsync the database */
+static char *values[MAXATTR];	/* cooresponding attribute values */
+int			numattr;			/* number of attributes for cur. rel */
+extern int	fsyncOff;			/* do not fsync the database */
 
 #ifndef HAVE_SIGSETJMP
-static jmp_buf	Warn_restart;
+static jmp_buf Warn_restart;
 
 #define sigsetjmp(x,y)	setjmp(x)
 #define siglongjmp longjmp
@@ -211,12 +210,12 @@ static sigjmp_buf Warn_restart;
 
 #endif
 
-int				DebugMode;
+int			DebugMode;
 static GlobalMemory nogc = (GlobalMemory) NULL; /* special no-gc mem
 												 * context */
 
-extern int		optind;
-extern char    *optarg;
+extern int	optind;
+extern char *optarg;
 
 /*
  *	At bootstrap time, we first declare all the indices to be built, and
@@ -226,20 +225,20 @@ extern char    *optarg;
 
 typedef struct _IndexList
 {
-	char		   *il_heap;
-	char		   *il_ind;
-	int				il_natts;
-	AttrNumber	   *il_attnos;
-	uint16			il_nparams;
-	Datum		   *il_params;
-	FuncIndexInfo  *il_finfo;
-	PredInfo	   *il_predInfo;
+	char	   *il_heap;
+	char	   *il_ind;
+	int			il_natts;
+	AttrNumber *il_attnos;
+	uint16		il_nparams;
+	Datum	   *il_params;
+	FuncIndexInfo *il_finfo;
+	PredInfo   *il_predInfo;
 	struct _IndexList *il_next;
-}				IndexList;
+}			IndexList;
 
 static IndexList *ILHead = (IndexList *) NULL;
 
-typedef void	(*sig_func) ();
+typedef void (*sig_func) ();
 
 
 
@@ -293,15 +292,15 @@ BootstrapMain(int argc, char *argv[])
  * ----------------------------------------------------------------
  */
 {
-	int				i;
-	int				portFd = -1;
-	char		   *dbName;
-	int				flag;
-	int				override = 1;		/* use BootstrapProcessing or
-										 * InitProcessing mode */
+	int			i;
+	int			portFd = -1;
+	char	   *dbName;
+	int			flag;
+	int			override = 1;	/* use BootstrapProcessing or
+								 * InitProcessing mode */
 
-	extern int		optind;
-	extern char    *optarg;
+	extern int	optind;
+	extern char *optarg;
 
 	/* ----------------
 	 *	initialize signal handlers
@@ -335,30 +334,30 @@ BootstrapMain(int argc, char *argv[])
 	{
 		switch (flag)
 		{
-		case 'D':
-			DataDir = optarg;
-			break;
-		case 'd':
-			DebugMode = 1;		/* print out debugging info while parsing */
-			break;
-		case 'C':
-			Noversion = 1;
-			break;
-		case 'F':
-			fsyncOff = 1;
-			break;
-		case 'O':
-			override = true;
-			break;
-		case 'Q':
-			Quiet = 1;
-			break;
-		case 'P':				/* specify port */
-			portFd = atoi(optarg);
-			break;
-		default:
-			usage();
-			break;
+			case 'D':
+				DataDir = optarg;
+				break;
+			case 'd':
+				DebugMode = 1;	/* print out debugging info while parsing */
+				break;
+			case 'C':
+				Noversion = 1;
+				break;
+			case 'F':
+				fsyncOff = 1;
+				break;
+			case 'O':
+				override = true;
+				break;
+			case 'Q':
+				Quiet = 1;
+				break;
+			case 'P':			/* specify port */
+				portFd = atoi(optarg);
+				break;
+			default:
+				usage();
+				break;
 		}
 	}							/* while */
 
@@ -475,11 +474,11 @@ BootstrapMain(int argc, char *argv[])
 void
 boot_openrel(char *relname)
 {
-	int				i;
+	int			i;
 	struct typmap **app;
-	Relation		rdesc;
-	HeapScanDesc	sdesc;
-	HeapTuple		tup;
+	Relation	rdesc;
+	HeapScanDesc sdesc;
+	HeapTuple	tup;
 
 	if (strlen(relname) > 15)
 		relname[15] = '\000';
@@ -603,8 +602,8 @@ closerel(char *name)
 void
 DefineAttr(char *name, char *type, int attnum)
 {
-	int				attlen;
-	int				t;
+	int			attlen;
+	int			t;
 
 	if (reldesc != NULL)
 	{
@@ -646,10 +645,10 @@ DefineAttr(char *name, char *type, int attnum)
 void
 InsertOneTuple(Oid objectid)
 {
-	HeapTuple		tuple;
-	TupleDesc		tupDesc;
+	HeapTuple	tuple;
+	TupleDesc	tupDesc;
 
-	int				i;
+	int			i;
 
 	if (DebugMode)
 	{
@@ -687,8 +686,8 @@ InsertOneTuple(Oid objectid)
 void
 InsertOneValue(Oid objectid, char *value, int i)
 {
-	int				typeindex;
-	char		   *prt;
+	int			typeindex;
+	char	   *prt;
 	struct typmap **app;
 
 	if (DebugMode)
@@ -701,7 +700,7 @@ InsertOneValue(Oid objectid, char *value, int i)
 
 	if (Typ != (struct typmap **) NULL)
 	{
-		struct typmap  *ap;
+		struct typmap *ap;
 
 		if (DebugMode)
 			puts("Typ != NULL");
@@ -767,13 +766,13 @@ InsertOneNull(int i)
 
 #define MORE_THAN_THE_NUMBER_OF_CATALOGS 256
 
-static			bool
+static bool
 BootstrapAlreadySeen(Oid id)
 {
-	static Oid		seenArray[MORE_THAN_THE_NUMBER_OF_CATALOGS];
-	static int		nseen = 0;
-	bool			seenthis;
-	int				i;
+	static Oid	seenArray[MORE_THAN_THE_NUMBER_OF_CATALOGS];
+	static int	nseen = 0;
+	bool		seenthis;
+	int			i;
 
 	seenthis = false;
 
@@ -800,7 +799,7 @@ BootstrapAlreadySeen(Oid id)
 static void
 cleanup()
 {
-	static int		beenhere = 0;
+	static int	beenhere = 0;
 
 	if (!beenhere)
 		beenhere = 1;
@@ -824,10 +823,10 @@ cleanup()
 static int
 gettype(char *type)
 {
-	int				i;
-	Relation		rdesc;
-	HeapScanDesc	sdesc;
-	HeapTuple		tup;
+	int			i;
+	Relation	rdesc;
+	HeapScanDesc sdesc;
+	HeapTuple	tup;
 	struct typmap **app;
 
 	if (Typ != (struct typmap **) NULL)
@@ -885,7 +884,7 @@ gettype(char *type)
  *		AllocateAttribute
  * ----------------
  */
-static			AttributeTupleForm		/* XXX */
+static AttributeTupleForm		/* XXX */
 AllocateAttribute()
 {
 	AttributeTupleForm attribute =
@@ -914,13 +913,13 @@ AllocateAttribute()
  * be freed by the CALLER.
  * ----------------
  */
-char		   *
+char	   *
 MapArrayTypeName(char *s)
 {
-	int				i,
-					j;
-	static char		newStr[NAMEDATALEN];		/* array type names <
-												 * NAMEDATALEN long */
+	int			i,
+				j;
+	static char newStr[NAMEDATALEN];	/* array type names < NAMEDATALEN
+										 * long */
 
 	if (s == NULL || s[0] == '\0')
 		return s;
@@ -944,8 +943,8 @@ MapArrayTypeName(char *s)
 int
 EnterString(char *str)
 {
-	hashnode	   *node;
-	int				len;
+	hashnode   *node;
+	int			len;
 
 	len = strlen(str);
 
@@ -967,7 +966,7 @@ EnterString(char *str)
  *		associated with the idnum
  * ----------------
  */
-char		   *
+char	   *
 LexIDStr(int ident_num)
 {
 	return (strtable[ident_num]);
@@ -986,7 +985,7 @@ LexIDStr(int ident_num)
 static int
 CompHash(char *str, int len)
 {
-	register int	result;
+	register int result;
 
 	result = (NUM * str[0] + NUMSQR * str[len - 1] + NUMCUBE * str[(len - 1) / 2]);
 
@@ -1005,7 +1004,7 @@ CompHash(char *str, int len)
 static hashnode *
 FindStr(char *str, int length, hashnode * mderef)
 {
-	hashnode	   *node;
+	hashnode   *node;
 
 	node = hashtable[CompHash(str, length)];
 	while (node != NULL)
@@ -1040,11 +1039,11 @@ FindStr(char *str, int length, hashnode * mderef)
 static hashnode *
 AddStr(char *str, int strlength, int mderef)
 {
-	hashnode	   *temp,
-				   *trail,
-				   *newnode;
-	int				hashresult;
-	int				len;
+	hashnode   *temp,
+			   *trail,
+			   *newnode;
+	int			hashresult;
+	int			len;
 
 	if (++strtable_end == STRTABLESIZE)
 	{
@@ -1118,10 +1117,10 @@ index_register(char *heap,
 			   FuncIndexInfo * finfo,
 			   PredInfo * predInfo)
 {
-	Datum		   *v;
-	IndexList	   *newind;
-	int				len;
-	MemoryContext	oldcxt;
+	Datum	   *v;
+	IndexList  *newind;
+	int			len;
+	MemoryContext oldcxt;
 
 	/*
 	 * XXX mao 10/31/92 -- don't gc index reldescs, associated info at
@@ -1193,8 +1192,8 @@ index_register(char *heap,
 void
 build_indices()
 {
-	Relation		heap;
-	Relation		ind;
+	Relation	heap;
+	Relation	ind;
 
 	for (; ILHead != (IndexList *) NULL; ILHead = ILHead->il_next)
 	{

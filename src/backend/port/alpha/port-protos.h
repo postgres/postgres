@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.2 1997/09/07 04:45:20 momjian Exp $
+ * $Id: port-protos.h,v 1.3 1997/09/08 02:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,6 @@
 
 /* port.c */
 
-extern void		init_address_fixup(void);
+extern void init_address_fixup(void);
 
 #endif							/* PORT_PROTOS_H */

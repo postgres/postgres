@@ -17,8 +17,8 @@
  * Externals in libc that need prototypes (or at least declarations)
  */
 
-extern char    *ecvt(double, int, int *, int *);
-extern char    *fcvt(double, int, int *, int *);
+extern char *ecvt(double, int, int *, int *);
+extern char *fcvt(double, int, int *, int *);
 
 
 #include "fmgr.h"				/* for func_ptr */

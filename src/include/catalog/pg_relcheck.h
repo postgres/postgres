@@ -28,10 +28,10 @@
  */
 CATALOG(pg_relcheck) BOOTSTRAP
 {
-	Oid				rcrelid;
-	NameData		rcname;
-	text			rcbin;
-	text			rcsrc;
+	Oid			rcrelid;
+	NameData	rcname;
+	text		rcbin;
+	text		rcsrc;
 } FormData_pg_relcheck;
 
 /* ----------------

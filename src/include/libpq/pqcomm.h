@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.11 1997/09/07 04:58:26 momjian Exp $
+ * $Id: pqcomm.h,v 1.12 1997/09/08 02:37:08 momjian Exp $
  *
  * NOTES
  *	  Some of this should move to libpq.h
@@ -62,19 +62,19 @@ typedef enum _MsgType
 
 #define LAST_AUTHENTICATION_TYPE 14
 
-typedef char   *Addr;
-typedef int		PacketLen;		/* packet length */
+typedef char *Addr;
+typedef int PacketLen;			/* packet length */
 
 
 typedef struct StartupInfo
 {
 /*	   PacketHdr		hdr; */
-	char			database[PATH_SIZE];		/* database name */
-	char			user[NAMEDATALEN];	/* user name */
-	char			options[ARGV_SIZE]; /* possible additional args */
-	char			execFile[ARGV_SIZE];		/* possible backend to use */
-	char			tty[PATH_SIZE];		/* possible tty for debug output */
-}				StartupInfo;
+	char		database[PATH_SIZE];	/* database name */
+	char		user[NAMEDATALEN];		/* user name */
+	char		options[ARGV_SIZE];		/* possible additional args */
+	char		execFile[ARGV_SIZE];	/* possible backend to use */
+	char		tty[PATH_SIZE]; /* possible tty for debug output */
+}			StartupInfo;
 
 /* amount of available data in a packet buffer */
 #define MESSAGE_SIZE	sizeof(StartupInfo) + 5 /* why 5? BJM 2/11/97 */
@@ -88,10 +88,10 @@ typedef struct StartupInfo
    Be sure to use htonl() and ntohl() on the len and msgtype fields! */
 typedef struct PacketBuf
 {
-	int				len;
-	MsgType			msgtype;
-	char			data[MESSAGE_SIZE];
-}				PacketBuf;
+	int			len;
+	MsgType		msgtype;
+	char		data[MESSAGE_SIZE];
+}			PacketBuf;
 
 /* update the conversion routines
   StartupInfo2PacketBuf() and PacketBuf2StartupInfo() (decl. below)
@@ -103,18 +103,17 @@ typedef struct PacketBuf
  */
 typedef struct Port
 {
-	int				sock;		/* file descriptor */
-	int				mask;		/* select mask */
-	int				nBytes;		/* nBytes read in so far */
+	int			sock;			/* file descriptor */
+	int			mask;			/* select mask */
+	int			nBytes;			/* nBytes read in so far */
 	struct sockaddr_in laddr;	/* local addr (us) */
 	struct sockaddr_in raddr;	/* remote addr (them) */
 
 	/*
-	 *	   PacketBufId				id;*//* id of packet buf currently in
-	 * use
-	 */
-	PacketBuf		buf;		/* stream implementation (curr pack buf) */
-}				Port;
+	 * PacketBufId				id;
+	 *//* id of packet buf currently in use */
+	PacketBuf	buf;			/* stream implementation (curr pack buf) */
+}			Port;
 
 /* invalid socket descriptor */
 #define INVALID_SOCK	(-1)
@@ -128,33 +127,33 @@ typedef struct Port
 
 #define DEFAULT_STRING			""
 
-extern FILE    *Pfout,
-			   *Pfin;
-extern int		PQAsyncNotifyWaiting;
+extern FILE *Pfout,
+		   *Pfin;
+extern int	PQAsyncNotifyWaiting;
 
 /* in pqcompriv.c */
-int				pqGetShort(int *, FILE *);
-int				pqGetLong(int *, FILE *);
-int				pqGetNBytes(char *, size_t, FILE *);
-int				pqGetString(char *, size_t, FILE *);
-int				pqGetByte(FILE *);
+int			pqGetShort(int *, FILE *);
+int			pqGetLong(int *, FILE *);
+int			pqGetNBytes(char *, size_t, FILE *);
+int			pqGetString(char *, size_t, FILE *);
+int			pqGetByte(FILE *);
 
-int				pqPutShort(int, FILE *);
-int				pqPutLong(int, FILE *);
-int				pqPutNBytes(const char *, size_t, FILE *);
-int				pqPutString(const char *, FILE *);
-int				pqPutByte(int, FILE *);
+int			pqPutShort(int, FILE *);
+int			pqPutLong(int, FILE *);
+int			pqPutNBytes(const char *, size_t, FILE *);
+int			pqPutString(const char *, FILE *);
+int			pqPutByte(int, FILE *);
 
 /*
  * prototypes for functions in pqpacket.c
  */
-extern int		PacketReceive(Port * port, PacketBuf * buf, char nonBlocking);
+extern int	PacketReceive(Port * port, PacketBuf * buf, char nonBlocking);
 extern int
 PacketSend(Port * port, PacketBuf * buf,
 		   PacketLen len, char nonBlocking);
 
 /* extern PacketBuf* StartupInfo2PacketBuf(StartupInfo*); */
 /* extern StartupInfo* PacketBuf2StartupInfo(PacketBuf*); */
-extern char    *name_of_authentication_type(int type);
+extern char *name_of_authentication_type(int type);
 
 #endif							/* PQCOMM_H */

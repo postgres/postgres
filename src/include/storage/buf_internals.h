@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.15 1997/09/07 05:00:52 momjian Exp $
+ * $Id: buf_internals.h,v 1.16 1997/09/08 02:38:57 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -22,11 +22,11 @@
 
 /* Buf Mgr constants */
 /* in bufmgr.c */
-extern int		NBuffers;
-extern int		Data_Descriptors;
-extern int		Free_List_Descriptor;
-extern int		Lookup_List_Descriptor;
-extern int		Num_Descriptors;
+extern int	NBuffers;
+extern int	Data_Descriptors;
+extern int	Free_List_Descriptor;
+extern int	Lookup_List_Descriptor;
+extern int	Num_Descriptors;
 
 /*
  * Flags for buffer descriptors
@@ -40,19 +40,19 @@ extern int		Num_Descriptors;
 #define BM_IO_ERROR				(1 << 6)
 #define BM_JUST_DIRTIED			(1 << 7)
 
-typedef bits16	BufFlags;
+typedef bits16 BufFlags;
 
 typedef struct sbufdesc BufferDesc;
 typedef struct sbufdesc BufferHdr;
 typedef struct buftag BufferTag;
 
 /* long * so alignment will be correct */
-typedef long  **BufferBlock;
+typedef long **BufferBlock;
 
 struct buftag
 {
-	LRelId			relId;
-	BlockNumber		blockNum;	/* blknum relative to begin of reln */
+	LRelId		relId;
+	BlockNumber blockNum;		/* blknum relative to begin of reln */
 };
 
 #define CLEAR_BUFFERTAG(a)\
@@ -110,45 +110,44 @@ struct buftag
 */
 struct sbufdesc_unpadded
 {
-	Buffer			freeNext;
-	Buffer			freePrev;
-	SHMEM_OFFSET	data;
-	BufferTag		tag;
-	int				buf_id;
-	BufFlags		flags;
-	int16			bufsmgr;
-	unsigned		refcount;
+	Buffer		freeNext;
+	Buffer		freePrev;
+	SHMEM_OFFSET data;
+	BufferTag	tag;
+	int			buf_id;
+	BufFlags	flags;
+	int16		bufsmgr;
+	unsigned	refcount;
 #ifdef HAS_TEST_AND_SET
-	slock_t			io_in_progress_lock;
+	slock_t		io_in_progress_lock;
 #endif							/* HAS_TEST_AND_SET */
-	char			sb_dbname[NAMEDATALEN];
+	char		sb_dbname[NAMEDATALEN];
 
 	/* NOTE NO PADDING OF THE MEMBER HERE */
-	char			sb_relname[NAMEDATALEN];
+	char		sb_relname[NAMEDATALEN];
 };
 
 /* THE REAL STRUCTURE - the structure above must match it, minus sb_pad */
 struct sbufdesc
 {
-	Buffer			freeNext;	/* link for freelist chain */
-	Buffer			freePrev;
-	SHMEM_OFFSET	data;		/* pointer to data in buf pool */
+	Buffer		freeNext;		/* link for freelist chain */
+	Buffer		freePrev;
+	SHMEM_OFFSET data;			/* pointer to data in buf pool */
 
 	/* tag and id must be together for table lookup to work */
-	BufferTag		tag;		/* file/block identifier */
-	int				buf_id;		/* maps global desc to local desc */
+	BufferTag	tag;			/* file/block identifier */
+	int			buf_id;			/* maps global desc to local desc */
 
-	BufFlags		flags;		/* described below */
-	int16			bufsmgr;	/* storage manager id for buffer */
-	unsigned		refcount;	/* # of times buffer is pinned */
+	BufFlags	flags;			/* described below */
+	int16		bufsmgr;		/* storage manager id for buffer */
+	unsigned	refcount;		/* # of times buffer is pinned */
 
 #ifdef HAS_TEST_AND_SET
 	/* can afford a dedicated lock if test-and-set locks are available */
-	slock_t			io_in_progress_lock;
+	slock_t		io_in_progress_lock;
 #endif							/* HAS_TEST_AND_SET */
 
-	char			sb_dbname[NAMEDATALEN];		/* name of db in which buf
-												 * belongs */
+	char		sb_dbname[NAMEDATALEN]; /* name of db in which buf belongs */
 
 	/*
 	 * I padded this structure to a power of 2 (PADDED_SBUFDESC_SIZE)
@@ -167,8 +166,8 @@ struct sbufdesc
 	 * something important
 	 */
 
-	char			sb_relname[NAMEDATALEN +	/* name of reln */
-											   PADDED_SBUFDESC_SIZE - sizeof(struct sbufdesc_unpadded)];
+	char		sb_relname[NAMEDATALEN +		/* name of reln */
+				PADDED_SBUFDESC_SIZE - sizeof(struct sbufdesc_unpadded)];
 };
 
 /*
@@ -180,19 +179,19 @@ struct sbufdesc
 
 typedef struct _bmtrace
 {
-	int				bmt_pid;
-	long			bmt_buf;
-	long			bmt_dbid;
-	long			bmt_relid;
-	int				bmt_blkno;
-	int				bmt_op;
+	int			bmt_pid;
+	long		bmt_buf;
+	long		bmt_dbid;
+	long		bmt_relid;
+	int			bmt_blkno;
+	int			bmt_op;
 
 #define BMT_NOTUSED		0
 #define BMT_ALLOCFND	1
 #define BMT_ALLOCNOTFND 2
 #define BMT_DEALLOC		3
 
-}				bmtrace;
+}			bmtrace;
 
 #endif							/* BMTRACE */
 
@@ -204,39 +203,39 @@ typedef struct _bmtrace
 /* Internal routines: only called by buf.c */
 
 /*freelist.c*/
-extern void		AddBufferToFreelist(BufferDesc * bf);
-extern void		PinBuffer(BufferDesc * buf);
-extern void		PinBuffer_Debug(char *file, int line, BufferDesc * buf);
-extern void		UnpinBuffer(BufferDesc * buf);
+extern void AddBufferToFreelist(BufferDesc * bf);
+extern void PinBuffer(BufferDesc * buf);
+extern void PinBuffer_Debug(char *file, int line, BufferDesc * buf);
+extern void UnpinBuffer(BufferDesc * buf);
 extern BufferDesc *GetFreeBuffer(void);
-extern void		InitFreeList(bool init);
+extern void InitFreeList(bool init);
 
 /* buf_table.c */
-extern void		InitBufTable(void);
+extern void InitBufTable(void);
 extern BufferDesc *BufTableLookup(BufferTag * tagPtr);
-extern bool		BufTableDelete(BufferDesc * buf);
-extern bool		BufTableInsert(BufferDesc * buf);
+extern bool BufTableDelete(BufferDesc * buf);
+extern bool BufTableInsert(BufferDesc * buf);
 
 /* bufmgr.c */
 extern BufferDesc *BufferDescriptors;
 extern BufferBlock BufferBlocks;
-extern long    *PrivateRefCount;
-extern long    *LastRefCount;
-extern long    *CommitInfoNeedsSave;
+extern long *PrivateRefCount;
+extern long *LastRefCount;
+extern long *CommitInfoNeedsSave;
 extern SPINLOCK BufMgrLock;
 
 /* localbuf.c */
-extern long    *LocalRefCount;
+extern long *LocalRefCount;
 extern BufferDesc *LocalBufferDescriptors;
-extern int		NLocBuffer;
+extern int	NLocBuffer;
 
 extern BufferDesc *
 LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				 bool * foundPtr);
-extern int		WriteLocalBuffer(Buffer buffer, bool release);
-extern int		FlushLocalBuffer(Buffer buffer, bool release);
-extern void		InitLocalBuffer(void);
-extern void		LocalBufferSync(void);
-extern void		ResetLocalBufferPool(void);
+extern int	WriteLocalBuffer(Buffer buffer, bool release);
+extern int	FlushLocalBuffer(Buffer buffer, bool release);
+extern void InitLocalBuffer(void);
+extern void LocalBufferSync(void);
+extern void ResetLocalBufferPool(void);
 
 #endif							/* BUFMGR_INTERNALS_H */

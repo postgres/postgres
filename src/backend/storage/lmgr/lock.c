@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.12 1997/09/07 04:48:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.13 1997/09/08 02:29:15 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -63,9 +63,9 @@ WaitOnLock(LOCKTAB * ltable, LockTableId tableId, LOCK * lock,
 
 #else							/* LOCK_MGR_DEBUG */
 
-int				lockDebug = 0;
-unsigned int	lock_debug_oid_min = BootstrapObjectIdData;
-static char    *lock_types[] = {
+int			lockDebug = 0;
+unsigned int lock_debug_oid_min = BootstrapObjectIdData;
+static char *lock_types[] = {
 	"NONE",
 	"WRITE",
 	"READ",
@@ -127,19 +127,19 @@ static char    *lock_types[] = {
 
 #endif							/* LOCK_MGR_DEBUG */
 
-SPINLOCK		LockMgrLock;	/* in Shmem or created in
+SPINLOCK	LockMgrLock;		/* in Shmem or created in
 								 * CreateSpinlocks() */
 
 /* This is to simplify/speed up some bit arithmetic */
 
-static MASK		BITS_OFF[MAX_LOCKTYPES];
-static MASK		BITS_ON[MAX_LOCKTYPES];
+static MASK BITS_OFF[MAX_LOCKTYPES];
+static MASK BITS_ON[MAX_LOCKTYPES];
 
 /* -----------------
  * XXX Want to move this to this file
  * -----------------
  */
-static bool		LockingIsDisabled;
+static bool LockingIsDisabled;
 
 /* -------------------
  * map from tableId to the lock table structure
@@ -151,7 +151,7 @@ static LOCKTAB *AllTables[MAX_TABLES];
  * no zero-th table
  * -------------------
  */
-static int		NumTables = 1;
+static int	NumTables = 1;
 
 /* -------------------
  * InitLocks -- Init the lock module.  Create a private data
@@ -161,8 +161,8 @@ static int		NumTables = 1;
 void
 InitLocks()
 {
-	int				i;
-	int				bit;
+	int			i;
+	int			bit;
 
 	bit = 1;
 	/* -------------------
@@ -199,7 +199,7 @@ LockTypeInit(LOCKTAB * ltable,
 			 int *prioP,
 			 int ntypes)
 {
-	int				i;
+	int			i;
 
 	ltable->ctl->nLockTypes = ntypes;
 	ntypes++;
@@ -226,12 +226,12 @@ LockTabInit(char *tabName,
 			int *prioP,
 			int ntypes)
 {
-	LOCKTAB		   *ltable;
-	char		   *shmemName;
-	HASHCTL			info;
-	int				hash_flags;
-	bool			found;
-	int				status = TRUE;
+	LOCKTAB    *ltable;
+	char	   *shmemName;
+	HASHCTL		info;
+	int			hash_flags;
+	bool		found;
+	int			status = TRUE;
 
 	if (ntypes > MAX_LOCKTYPES)
 	{
@@ -378,7 +378,7 @@ LockTabInit(char *tabName,
 LockTableId
 LockTabRename(LockTableId tableId)
 {
-	LockTableId		newTableId;
+	LockTableId newTableId;
 
 	if (NumTables >= MAX_TABLES)
 	{
@@ -454,18 +454,18 @@ LockTabRename(LockTableId tableId)
 bool
 LockAcquire(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
 {
-	XIDLookupEnt   *result,
-					item;
-	HTAB		   *xidTable;
-	bool			found;
-	LOCK		   *lock = NULL;
-	SPINLOCK		masterLock;
-	LOCKTAB		   *ltable;
-	int				status;
-	TransactionId	myXid;
+	XIDLookupEnt *result,
+				item;
+	HTAB	   *xidTable;
+	bool		found;
+	LOCK	   *lock = NULL;
+	SPINLOCK	masterLock;
+	LOCKTAB    *ltable;
+	int			status;
+	TransactionId myXid;
 
 #ifdef USER_LOCKS
-	int				is_user_lock;
+	int			is_user_lock;
 
 	is_user_lock = (tableId == 0);
 	if (is_user_lock)
@@ -661,15 +661,15 @@ LockResolveConflicts(LOCKTAB * ltable,
 					 LOCKT lockt,
 					 TransactionId xid)
 {
-	XIDLookupEnt   *result,
-					item;
-	int			   *myHolders;
-	int				nLockTypes;
-	HTAB		   *xidTable;
-	bool			found;
-	int				bitmask;
-	int				i,
-					tmpMask;
+	XIDLookupEnt *result,
+				item;
+	int		   *myHolders;
+	int			nLockTypes;
+	HTAB	   *xidTable;
+	bool		found;
+	int			bitmask;
+	int			i,
+				tmpMask;
 
 	nLockTypes = ltable->ctl->nLockTypes;
 	xidTable = ltable->xidHash;
@@ -772,9 +772,9 @@ LockResolveConflicts(LOCKTAB * ltable,
 static int
 WaitOnLock(LOCKTAB * ltable, LockTableId tableId, LOCK * lock, LOCKT lockt)
 {
-	PROC_QUEUE	   *waitQueue = &(lock->waitProcs);
+	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 
-	int				prio = ltable->ctl->prio[lockt];
+	int			prio = ltable->ctl->prio[lockt];
 
 	/*
 	 * the waitqueue is ordered by priority. I insert myself according to
@@ -821,17 +821,17 @@ WaitOnLock(LOCKTAB * ltable, LockTableId tableId, LOCK * lock, LOCKT lockt)
 bool
 LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt)
 {
-	LOCK		   *lock = NULL;
-	SPINLOCK		masterLock;
-	bool			found;
-	LOCKTAB		   *ltable;
-	XIDLookupEnt   *result,
-					item;
-	HTAB		   *xidTable;
-	bool			wakeupNeeded = true;
+	LOCK	   *lock = NULL;
+	SPINLOCK	masterLock;
+	bool		found;
+	LOCKTAB    *ltable;
+	XIDLookupEnt *result,
+				item;
+	HTAB	   *xidTable;
+	bool		wakeupNeeded = true;
 
 #ifdef USER_LOCKS
-	int				is_user_lock;
+	int			is_user_lock;
 
 	is_user_lock = (tableId == 0);
 	if (is_user_lock)
@@ -1125,23 +1125,23 @@ GrantLock(LOCK * lock, LOCKT lockt)
 bool
 LockReleaseAll(LockTableId tableId, SHM_QUEUE * lockQueue)
 {
-	PROC_QUEUE	   *waitQueue;
-	int				done;
-	XIDLookupEnt   *xidLook = NULL;
-	XIDLookupEnt   *tmp = NULL;
-	SHMEM_OFFSET	end = MAKE_OFFSET(lockQueue);
-	SPINLOCK		masterLock;
-	LOCKTAB		   *ltable;
-	int				i,
-					nLockTypes;
-	LOCK		   *lock;
-	bool			found;
+	PROC_QUEUE *waitQueue;
+	int			done;
+	XIDLookupEnt *xidLook = NULL;
+	XIDLookupEnt *tmp = NULL;
+	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
+	SPINLOCK	masterLock;
+	LOCKTAB    *ltable;
+	int			i,
+				nLockTypes;
+	LOCK	   *lock;
+	bool		found;
 
 #ifdef USER_LOCKS
-	int				is_user_lock_table,
-					my_pid,
-					count,
-					nskip;
+	int			is_user_lock_table,
+				my_pid,
+				count,
+				nskip;
 
 	is_user_lock_table = (tableId == 0);
 	my_pid = getpid();
@@ -1359,11 +1359,11 @@ next_item:
 int
 LockShmemSize()
 {
-	int				size = 0;
-	int				nLockBuckets,
-					nLockSegs;
-	int				nXidBuckets,
-					nXidSegs;
+	int			size = 0;
+	int			nLockBuckets,
+				nLockSegs;
+	int			nXidBuckets,
+				nXidSegs;
 
 	nLockBuckets = 1 << (int) my_log2((NLOCKENTS - 1) / DEF_FFACTOR + 1);
 	nLockSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
@@ -1409,20 +1409,20 @@ LockingDisabled()
 void
 DumpLocks()
 {
-	SHMEM_OFFSET	location;
-	PROC		   *proc;
-	SHM_QUEUE	   *lockQueue;
-	int				done;
-	XIDLookupEnt   *xidLook = NULL;
-	XIDLookupEnt   *tmp = NULL;
-	SHMEM_OFFSET	end;
-	SPINLOCK		masterLock;
-	int				nLockTypes;
-	LOCK		   *lock;
-	int				pid,
-					count;
-	int				tableId = 1;
-	LOCKTAB		   *ltable;
+	SHMEM_OFFSET location;
+	PROC	   *proc;
+	SHM_QUEUE  *lockQueue;
+	int			done;
+	XIDLookupEnt *xidLook = NULL;
+	XIDLookupEnt *tmp = NULL;
+	SHMEM_OFFSET end;
+	SPINLOCK	masterLock;
+	int			nLockTypes;
+	LOCK	   *lock;
+	int			pid,
+				count;
+	int			tableId = 1;
+	LOCKTAB    *ltable;
 
 	pid = getpid();
 	ShmemPIDLookup(pid, &location);

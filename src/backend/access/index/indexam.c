@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.14 1997/09/07 04:38:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.15 1997/09/08 02:20:37 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -167,7 +167,7 @@ index_insert(Relation relation,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRel)
 {
-	RegProcedure	procedure;
+	RegProcedure procedure;
 	InsertIndexResult specificResult;
 
 	RELATION_CHECKS;
@@ -207,7 +207,7 @@ index_insert(Relation relation,
 void
 index_delete(Relation relation, ItemPointer indexItem)
 {
-	RegProcedure	procedure;
+	RegProcedure procedure;
 
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(delete, amdelete);
@@ -225,8 +225,8 @@ index_beginscan(Relation relation,
 				uint16 numberOfKeys,
 				ScanKey key)
 {
-	IndexScanDesc	scandesc;
-	RegProcedure	procedure;
+	IndexScanDesc scandesc;
+	RegProcedure procedure;
 
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(beginscan, ambeginscan);
@@ -246,7 +246,7 @@ index_beginscan(Relation relation,
 void
 index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key)
 {
-	RegProcedure	procedure;
+	RegProcedure procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(rescan, amrescan);
@@ -261,7 +261,7 @@ index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key)
 void
 index_endscan(IndexScanDesc scan)
 {
-	RegProcedure	procedure;
+	RegProcedure procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(endscan, amendscan);
@@ -279,7 +279,7 @@ index_endscan(IndexScanDesc scan)
 void
 index_markpos(IndexScanDesc scan)
 {
-	RegProcedure	procedure;
+	RegProcedure procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(markpos, ammarkpos);
@@ -297,7 +297,7 @@ index_markpos(IndexScanDesc scan)
 void
 index_restrpos(IndexScanDesc scan)
 {
-	RegProcedure	procedure;
+	RegProcedure procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(restrpos, amrestrpos);
@@ -317,7 +317,7 @@ RetrieveIndexResult
 index_getnext(IndexScanDesc scan,
 			  ScanDirection direction)
 {
-	RegProcedure	procedure;
+	RegProcedure procedure;
 	RetrieveIndexResult result;
 
 	SCAN_CHECKS;
@@ -354,8 +354,8 @@ index_getprocid(Relation irel,
 				AttrNumber attnum,
 				uint16 procnum)
 {
-	RegProcedure   *loc;
-	int				natts;
+	RegProcedure *loc;
+	int			natts;
 
 	natts = irel->rd_rel->relnatts;
 
@@ -375,13 +375,13 @@ GetIndexValue(HeapTuple tuple,
 			  bool * attNull,
 			  Buffer buffer)
 {
-	Datum			returnVal;
-	bool			isNull;
+	Datum		returnVal;
+	bool		isNull;
 
 	if (PointerIsValid(fInfo) && FIgetProcOid(fInfo) != InvalidOid)
 	{
-		int				i;
-		Datum		   *attData = (Datum *) palloc(FIgetnArgs(fInfo) * sizeof(Datum));
+		int			i;
+		Datum	   *attData = (Datum *) palloc(FIgetnArgs(fInfo) * sizeof(Datum));
 
 		for (i = 0; i < FIgetnArgs(fInfo); i++)
 		{

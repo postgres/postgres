@@ -11,18 +11,18 @@
 #include <ctype.h>
 
 /* prototype for soundex function */
-char		   *soundex(char *instr, char *outstr);
+char	   *soundex(char *instr, char *outstr);
 
-text		   *
+text	   *
 text_soundex(text * t)
 {
 	/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-	char		   *table = "01230120022455012623010202";
-	int				count = 0;
-	text		   *new_t;
+	char	   *table = "01230120022455012623010202";
+	int			count = 0;
+	text	   *new_t;
 
-	char			outstr[6 + 1];		/* max length of soundex is 6 */
-	char		   *instr;
+	char		outstr[6 + 1];	/* max length of soundex is 6 */
+	char	   *instr;
 
 	/* make a null-terminated string */
 	instr = palloc(VARSIZE(t) + 1);
@@ -47,11 +47,11 @@ text_soundex(text * t)
 	return (new_t);
 }
 
-char		   *
+char	   *
 soundex(char *instr, char *outstr)
 {								/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-	char		   *table = "01230120022455012623010202";
-	int				count = 0;
+	char	   *table = "01230120022455012623010202";
+	int			count = 0;
 
 	while (!isalpha(instr[0]) && instr[0])
 		++instr;

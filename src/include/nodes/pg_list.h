@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.6 1997/09/07 04:58:45 momjian Exp $
+ * $Id: pg_list.h,v 1.7 1997/09/08 02:37:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,14 +26,14 @@
  */
 typedef struct Value
 {
-	NodeTag			type;		/* tag appropriately (eg. T_String) */
+	NodeTag		type;			/* tag appropriately (eg. T_String) */
 	union ValUnion
 	{
-		char		   *str;	/* string */
-		long			ival;
-		double			dval;
-	}				val;
-}				Value;
+		char	   *str;		/* string */
+		long		ival;
+		double		dval;
+	}			val;
+}			Value;
 
 #define intVal(v)		(((Value *)v)->val.ival)
 #define floatVal(v)		(((Value *)v)->val.dval)
@@ -46,14 +46,14 @@ typedef struct Value
  */
 typedef struct List
 {
-	NodeTag			type;
+	NodeTag		type;
 	union
 	{
-		void		   *ptr_value;
-		int				int_value;
-	}				elem;
-	struct List    *next;
-}				List;
+		void	   *ptr_value;
+		int			int_value;
+	}			elem;
+	struct List *next;
+}			List;
 
 #define    NIL			((List *) NULL)
 
@@ -81,40 +81,40 @@ typedef struct List
 /*
  * function prototypes in nodes/list.c
  */
-extern int		length(List * list);
-extern List    *append(List * list1, List * list2);
-extern List    *nconc(List * list1, List * list2);
-extern List    *lcons(void *datum, List * list);
-extern bool		member(void *foo, List * bar);
-extern Value   *makeInteger(long i);
-extern Value   *makeFloat(double d);
-extern Value   *makeString(char *str);
-extern List    *makeList(void *elem,...);
-extern List    *lappend(List * list, void *obj);
-extern List    *lremove(void *elem, List * list);
-extern void		freeList(List * list);
-extern List    *LispRemove(void *elem, List * list);
+extern int	length(List * list);
+extern List *append(List * list1, List * list2);
+extern List *nconc(List * list1, List * list2);
+extern List *lcons(void *datum, List * list);
+extern bool member(void *foo, List * bar);
+extern Value *makeInteger(long i);
+extern Value *makeFloat(double d);
+extern Value *makeString(char *str);
+extern List *makeList(void *elem,...);
+extern List *lappend(List * list, void *obj);
+extern List *lremove(void *elem, List * list);
+extern void freeList(List * list);
+extern List *LispRemove(void *elem, List * list);
 
-extern void    *nth(int n, List * l);
-extern void		set_nth(List * l, int n, void *elem);
+extern void *nth(int n, List * l);
+extern void set_nth(List * l, int n, void *elem);
 
-List		   *lconsi(int datum, List * list);
-List		   *lappendi(List * list, int datum);
-extern bool		intMember(int, List *);
-extern List    *intAppend(List * list1, List * list2);
+List	   *lconsi(int datum, List * list);
+List	   *lappendi(List * list, int datum);
+extern bool intMember(int, List *);
+extern List *intAppend(List * list1, List * list2);
 
-extern int		nthi(int n, List * l);
+extern int	nthi(int n, List * l);
 
-extern List    *nreverse(List *);
-extern List    *set_difference(List *, List *);
-extern List    *set_differencei(List *, List *);
-extern List    *LispUnion(List * foo, List * bar);
-extern List    *LispUnioni(List * foo, List * bar);
-extern bool		same(List * foo, List * bar);
+extern List *nreverse(List *);
+extern List *set_difference(List *, List *);
+extern List *set_differencei(List *, List *);
+extern List *LispUnion(List * foo, List * bar);
+extern List *LispUnioni(List * foo, List * bar);
+extern bool same(List * foo, List * bar);
 
 /* should be in nodes.h but needs List */
 
 /* in copyfuncs.c */
-extern List    *listCopy(List *);
+extern List *listCopy(List *);
 
 #endif							/* PG_LIST_H */

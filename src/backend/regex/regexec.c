@@ -38,7 +38,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char		sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
+static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 
 #endif							/* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ static char		sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #include <regex/utils.h>
 #include <regex/regex2.h>
 
-static int		nope = 0;		/* for use in asserts; shuts lint up */
+static int	nope = 0;			/* for use in asserts; shuts lint up */
 
 /* macros for manipulating states, small version */
 #define states	long
@@ -156,11 +156,11 @@ static int		nope = 0;		/* for use in asserts; shuts lint up */
  */
 int								/* 0 success, REG_NOMATCH failure */
 pg95_regexec(preg, string, nmatch, pmatch, eflags)
-const regex_t  *preg;
-const char	   *string;
-size_t			nmatch;
-regmatch_t		pmatch[];
-int				eflags;
+const regex_t *preg;
+const char *string;
+size_t		nmatch;
+regmatch_t	pmatch[];
+int			eflags;
 {
 	register struct re_guts *g = preg->re_g;
 

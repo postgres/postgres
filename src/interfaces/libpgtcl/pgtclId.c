@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.4 1997/09/07 05:03:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.5 1997/09/08 02:40:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@
 void
 PgSetConnectionId(Pg_clientData * cd, char *id, PGconn * conn)
 {
-	Tcl_HashEntry  *hent;
+	Tcl_HashEntry *hent;
 	Pg_ConnectionId *connid;
-	int				hnew;
+	int			hnew;
 
 	connid = (Pg_ConnectionId *) ckalloc(sizeof(Pg_ConnectionId));
 	connid->conn = conn;
@@ -49,10 +49,10 @@ PgSetConnectionId(Pg_clientData * cd, char *id, PGconn * conn)
 /*
  * Get back the connection from the Id
  */
-PGconn		   *
+PGconn	   *
 PgGetConnectionId(Pg_clientData * cd, char *id)
 {
-	Tcl_HashEntry  *hent;
+	Tcl_HashEntry *hent;
 	Pg_ConnectionId *connid;
 
 	hent = Tcl_FindHashEntry(&(cd->dbh_hash), id);
@@ -73,12 +73,12 @@ PgGetConnectionId(Pg_clientData * cd, char *id)
 void
 PgDelConnectionId(Pg_clientData * cd, char *id)
 {
-	Tcl_HashEntry  *hent;
-	Tcl_HashEntry  *hent2;
-	Tcl_HashEntry  *hent3;
-	Tcl_HashSearch	hsearch;
+	Tcl_HashEntry *hent;
+	Tcl_HashEntry *hent2;
+	Tcl_HashEntry *hent3;
+	Tcl_HashSearch hsearch;
 	Pg_ConnectionId *connid;
-	Pg_ResultId    *resid;
+	Pg_ResultId *resid;
 
 	hent = Tcl_FindHashEntry(&(cd->dbh_hash), id);
 	if (hent == NULL)
@@ -113,10 +113,10 @@ PgDelConnectionId(Pg_clientData * cd, char *id)
 void
 PgSetResultId(Pg_clientData * cd, char *id, char *connid_c, PGresult * res)
 {
-	Tcl_HashEntry  *hent;
+	Tcl_HashEntry *hent;
 	Pg_ConnectionId *connid;
-	Pg_ResultId    *resid;
-	int				hnew;
+	Pg_ResultId *resid;
+	int			hnew;
 
 	hent = Tcl_FindHashEntry(&(cd->dbh_hash), connid_c);
 	if (hent == NULL)
@@ -148,11 +148,11 @@ PgSetResultId(Pg_clientData * cd, char *id, char *connid_c, PGresult * res)
 /*
  * Get back the result pointer from the Id
  */
-PGresult	   *
+PGresult   *
 PgGetResultId(Pg_clientData * cd, char *id)
 {
-	Tcl_HashEntry  *hent;
-	Pg_ResultId    *resid;
+	Tcl_HashEntry *hent;
+	Pg_ResultId *resid;
 
 	hent = Tcl_FindHashEntry(&(cd->res_hash), id);
 	if (hent == NULL)
@@ -171,9 +171,9 @@ PgGetResultId(Pg_clientData * cd, char *id)
 void
 PgDelResultId(Pg_clientData * cd, char *id)
 {
-	Tcl_HashEntry  *hent;
-	Tcl_HashEntry  *hent2;
-	Pg_ResultId    *resid;
+	Tcl_HashEntry *hent;
+	Tcl_HashEntry *hent2;
+	Pg_ResultId *resid;
 
 	hent = Tcl_FindHashEntry(&(cd->res_hash), id);
 	if (hent == NULL)
@@ -202,8 +202,8 @@ PgDelResultId(Pg_clientData * cd, char *id)
 void
 PgGetConnByResultId(Pg_clientData * cd, char *id, char *resid_c)
 {
-	Tcl_HashEntry  *hent;
-	Pg_ResultId    *resid;
+	Tcl_HashEntry *hent;
+	Pg_ResultId *resid;
 
 	hent = Tcl_FindHashEntry(&(cd->res_hash), id);
 	if (hent == NULL)

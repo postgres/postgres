@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.4 1997/09/07 05:01:39 momjian Exp $
+ * $Id: spin.h,v 1.5 1997/09/08 02:39:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,11 +25,11 @@
  *
  */
 
-typedef int		SPINLOCK;
+typedef int SPINLOCK;
 
-extern bool		CreateSpinlocks(IPCKey key);
-extern bool		InitSpinLocks(int init, IPCKey key);
-extern void		SpinAcquire(SPINLOCK lock);
-extern void		SpinRelease(SPINLOCK lock);
+extern bool CreateSpinlocks(IPCKey key);
+extern bool InitSpinLocks(int init, IPCKey key);
+extern void SpinAcquire(SPINLOCK lock);
+extern void SpinRelease(SPINLOCK lock);
 
 #endif							/* SPIN_H */

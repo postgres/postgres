@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.5 1997/09/07 04:43:17 momjian Exp $
+ * $Id: geqo_paths.c,v 1.6 1997/09/08 02:24:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
 #include "optimizer/geqo_paths.h"
 
 
-static List    *geqo_prune_rel(Rel * rel, List * other_rels);
-static Path    *set_paths(Rel * rel, Path * unorderedpath);
+static List *geqo_prune_rel(Rel * rel, List * other_rels);
+static Path *set_paths(Rel * rel, Path * unorderedpath);
 
 /*
  * geqo-prune-rels--
@@ -39,10 +39,10 @@ static Path    *set_paths(Rel * rel, Path * unorderedpath);
  * Returns the resulting list.
  *
  */
-List		   *
+List	   *
 geqo_prune_rels(List * rel_list)
 {
-	List		   *temp_list = NIL;
+	List	   *temp_list = NIL;
 
 	if (rel_list != NIL)
 	{
@@ -64,13 +64,13 @@ geqo_prune_rels(List * rel_list)
  * of 'rel' appropriately.
  *
  */
-static List    *
+static List *
 geqo_prune_rel(Rel * rel, List * other_rels)
 {
-	List		   *i = NIL;
-	List		   *t_list = NIL;
-	List		   *temp_node = NIL;
-	Rel			   *other_rel = (Rel *) NULL;
+	List	   *i = NIL;
+	List	   *t_list = NIL;
+	List	   *temp_node = NIL;
+	Rel		   *other_rel = (Rel *) NULL;
 
 	foreach(i, other_rels)
 	{
@@ -104,9 +104,9 @@ geqo_prune_rel(Rel * rel, List * other_rels)
 void
 geqo_rel_paths(Rel * rel)
 {
-	List		   *y = NIL;
-	Path		   *path = (Path *) NULL;
-	JoinPath	   *cheapest = (JoinPath *) NULL;
+	List	   *y = NIL;
+	Path	   *path = (Path *) NULL;
+	JoinPath   *cheapest = (JoinPath *) NULL;
 
 	rel->size = 0;
 	foreach(y, rel->pathlist)
@@ -133,10 +133,10 @@ geqo_rel_paths(Rel * rel)
  * Returns the cheapest path.
  *
  */
-static Path    *
+static Path *
 set_paths(Rel * rel, Path * unorderedpath)
 {
-	Path		   *cheapest = set_cheapest(rel, rel->pathlist);
+	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 
 	/* don't prune if not pruneable  -- JMH, 11/23/92 */
 	if (unorderedpath != cheapest

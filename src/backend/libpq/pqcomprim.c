@@ -48,9 +48,9 @@
 int
 pqPutShort(int integer, FILE * f)
 {
-	int				retval = 0;
-	u_short			n,
-					s;
+	int			retval = 0;
+	u_short		n,
+				s;
 
 	s = integer;
 	n = hton_s(s);
@@ -64,8 +64,8 @@ pqPutShort(int integer, FILE * f)
 int
 pqPutLong(int integer, FILE * f)
 {
-	int				retval = 0;
-	u_long			n;
+	int			retval = 0;
+	u_long		n;
 
 	n = hton_l(integer);
 	if (fwrite(&n, sizeof(u_long), 1, f) != 1)
@@ -78,8 +78,8 @@ pqPutLong(int integer, FILE * f)
 int
 pqGetShort(int *result, FILE * f)
 {
-	int				retval = 0;
-	u_short			n;
+	int			retval = 0;
+	u_short		n;
 
 	if (fread(&n, sizeof(u_short), 1, f) != 1)
 		retval = EOF;
@@ -92,8 +92,8 @@ pqGetShort(int *result, FILE * f)
 int
 pqGetLong(int *result, FILE * f)
 {
-	int				retval = 0;
-	u_long			n;
+	int			retval = 0;
+	u_long		n;
 
 	if (fread(&n, sizeof(u_long), 1, f) != 1)
 		retval = EOF;
@@ -109,7 +109,7 @@ pqGetLong(int *result, FILE * f)
 int
 pqGetNBytes(char *s, size_t len, FILE * f)
 {
-	int				cnt;
+	int			cnt;
 
 	if (f == NULL)
 		return EOF;
@@ -138,7 +138,7 @@ pqPutNBytes(const char *s, size_t len, FILE * f)
 int
 pqGetString(char *s, size_t len, FILE * f)
 {
-	int				c;
+	int			c;
 
 	if (f == NULL)
 		return EOF;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.8 1997/09/07 04:56:14 momjian Exp $
+ * $Id: transam.h,v 1.9 1997/09/08 02:34:27 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -85,8 +85,8 @@ typedef unsigned char XidStatus;/* (2 bits) */
  */
 typedef struct LogRelationContentsData
 {
-	int				TransSystemVersion;
-}				LogRelationContentsData;
+	int			TransSystemVersion;
+}			LogRelationContentsData;
 
 typedef LogRelationContentsData *LogRelationContents;
 
@@ -104,8 +104,8 @@ typedef LogRelationContentsData *LogRelationContents;
  */
 typedef struct TimeRelationContentsData
 {
-	int				TransSystemVersion;
-}				TimeRelationContentsData;
+	int			TransSystemVersion;
+}			TimeRelationContentsData;
 
 typedef TimeRelationContentsData *TimeRelationContents;
 
@@ -127,11 +127,11 @@ typedef TimeRelationContentsData *TimeRelationContents;
  */
 typedef struct VariableRelationContentsData
 {
-	int				TransSystemVersion;
-	TransactionId	nextXidData;
-	TransactionId	lastXidData;
-	Oid				nextOid;
-}				VariableRelationContentsData;
+	int			TransSystemVersion;
+	TransactionId nextXidData;
+	TransactionId lastXidData;
+	Oid			nextOid;
+}			VariableRelationContentsData;
 
 typedef VariableRelationContentsData *VariableRelationContents;
 
@@ -144,25 +144,25 @@ typedef VariableRelationContentsData *VariableRelationContents;
  * prototypes for functions in transam/transam.c
  */
 extern AbsoluteTime TransactionIdGetCommitTime(TransactionId transactionId);
-extern void		InitializeTransactionLog(void);
-extern bool		TransactionIdDidCommit(TransactionId transactionId);
-extern bool		TransactionIdDidAbort(TransactionId transactionId);
-extern void		TransactionIdCommit(TransactionId transactionId);
-extern void		TransactionIdAbort(TransactionId transactionId);
+extern void InitializeTransactionLog(void);
+extern bool TransactionIdDidCommit(TransactionId transactionId);
+extern bool TransactionIdDidAbort(TransactionId transactionId);
+extern void TransactionIdCommit(TransactionId transactionId);
+extern void TransactionIdAbort(TransactionId transactionId);
 
 /* in transam/transsup.c */
-extern void		AmiTransactionOverride(bool flag);
+extern void AmiTransactionOverride(bool flag);
 extern void
 TransComputeBlockNumber(Relation relation,
 			 TransactionId transactionId, BlockNumber * blockNumberOutP);
-extern XidStatus
+extern		XidStatus
 TransBlockNumberGetXidStatus(Relation relation,
 			   BlockNumber blockNumber, TransactionId xid, bool * failP);
 extern void
 TransBlockNumberSetXidStatus(Relation relation,
 		   BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
 							 bool * failP);
-extern AbsoluteTime
+extern		AbsoluteTime
 TransBlockNumberGetCommitTime(Relation relation,
 			   BlockNumber blockNumber, TransactionId xid, bool * failP);
 extern void
@@ -171,11 +171,11 @@ TransBlockNumberSetCommitTime(Relation relation,
 							  bool * failP);
 
 /* in transam/varsup.c */
-extern void		VariableRelationPutNextXid(TransactionId xid);
-extern void		GetNewTransactionId(TransactionId * xid);
-extern void		UpdateLastCommittedXid(TransactionId xid);
-extern void		GetNewObjectId(Oid * oid_return);
-extern void		CheckMaxObjectId(Oid assigned_oid);
+extern void VariableRelationPutNextXid(TransactionId xid);
+extern void GetNewTransactionId(TransactionId * xid);
+extern void UpdateLastCommittedXid(TransactionId xid);
+extern void GetNewObjectId(Oid * oid_return);
+extern void CheckMaxObjectId(Oid assigned_oid);
 
 /* ----------------
  *		global variable extern declarations
@@ -196,12 +196,12 @@ extern TransactionId NullTransactionId;
 extern TransactionId AmiTransactionId;
 extern TransactionId FirstTransactionId;
 
-extern int		RecoveryCheckingEnableState;
+extern int	RecoveryCheckingEnableState;
 
 /* in transsup.c */
-extern bool		AMI_OVERRIDE;
+extern bool AMI_OVERRIDE;
 
 /* in varsup.c */
-extern int		OidGenLockId;
+extern int	OidGenLockId;
 
 #endif							/* TRAMSAM_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.7 1997/09/07 04:40:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.8 1997/09/08 02:22:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,26 +50,26 @@ beginRecipe(RecipeStmt * stmt)
 /* structure to keep track of the tee node plans */
 typedef struct _teePlanInfo
 {
-	char		   *tpi_relName;
-	Query		   *tpi_parsetree;
-	Plan		   *tpi_plan;
-}				TeePlanInfo;
+	char	   *tpi_relName;
+	Query	   *tpi_parsetree;
+	Plan	   *tpi_plan;
+}			TeePlanInfo;
 
 typedef struct _teeInfo
 {
-	int				num;
-	TeePlanInfo    *val;
-}				TeeInfo;
+	int			num;
+	TeePlanInfo *val;
+}			TeeInfo;
 
-QueryTreeList  *appendQlist(QueryTreeList * q1, QueryTreeList * q2);
-void			OffsetVarAttno(Node * node, int varno, int offset);
+QueryTreeList *appendQlist(QueryTreeList * q1, QueryTreeList * q2);
+void		OffsetVarAttno(Node * node, int varno, int offset);
 
 static void
 appendTeeQuery(TeeInfo * teeInfo,
 			   QueryTreeList * q,
 			   char *teeNodeName);
 
-static Plan    *
+static Plan *
 replaceTeeScans(Plan * plan,
 				Query * parsetree,
 				TeeInfo * teeInfo);
@@ -83,12 +83,12 @@ static void
 tg_rewriteQuery(TgRecipe * r, TgNode * n,
 				QueryTreeList * q,
 				QueryTreeList * inputQlist);
-static Node    *
+static Node *
 tg_replaceNumberedParam(Node * expression,
 						int pnum,
 						int rt_ind,
 						char *teeRelName);
-static Node    *
+static Node *
 tg_rewriteParamsInExpr(Node * expression,
 					   QueryTreeList * inputQlist);
 static QueryTreeList *
@@ -129,18 +129,18 @@ tg_parseTeeNode(TgRecipe * r,
 void
 beginRecipe(RecipeStmt * stmt)
 {
-	TgRecipe	   *r;
-	int				i;
-	QueryTreeList  *qList;
-	char			portalName[1024];
+	TgRecipe   *r;
+	int			i;
+	QueryTreeList *qList;
+	char		portalName[1024];
 
-	Plan		   *plan;
-	TupleDesc		attinfo;
-	QueryDesc	   *queryDesc;
-	Query		   *parsetree;
+	Plan	   *plan;
+	TupleDesc	attinfo;
+	QueryDesc  *queryDesc;
+	Query	   *parsetree;
 
-	int				numTees;
-	TeeInfo		   *teeInfo;
+	int			numTees;
+	TeeInfo    *teeInfo;
 
 	/*
 	 * retrieveRecipe() reads the recipe from the database and returns a
@@ -177,7 +177,7 @@ beginRecipe(RecipeStmt * stmt)
 	 */
 	for (i = 0; i < r->eyes->num; i++)
 	{
-		TgNodePtr		e;
+		TgNodePtr	e;
 
 		e = r->eyes->val[i];
 		if (e->inNodes->num > 1)
@@ -231,9 +231,9 @@ beginRecipe(RecipeStmt * stmt)
 		 * ---------------------------------------------------------- */
 		if (teeInfo)
 		{
-			int				t;
-			Plan		   *tplan;
-			Tee			   *newplan;
+			int			t;
+			Plan	   *tplan;
+			Tee		   *newplan;
 
 			for (t = 0; t < teeInfo->num; t++)
 			{
@@ -320,12 +320,12 @@ tg_rewriteQuery(TgRecipe * r,
 				QueryTreeList * q,
 				QueryTreeList * inputQlist)
 {
-	Query		   *orig;
-	Query		   *inputQ;
-	int				i;
-	List		   *rtable;
-	List		   *input_rtable;
-	int				rt_length;
+	Query	   *orig;
+	Query	   *inputQ;
+	int			i;
+	List	   *rtable;
+	List	   *input_rtable;
+	int			rt_length;
 
 	/* orig is the original parse tree of the node */
 	orig = q->qtrees[0];
@@ -380,8 +380,8 @@ tg_rewriteQuery(TgRecipe * r,
 	 */
 	if (orig->targetList != NIL)
 	{
-		List		   *tl;
-		TargetEntry    *tle;
+		List	   *tl;
+		TargetEntry *tle;
 
 		foreach(tl, orig->targetList)
 		{
@@ -425,134 +425,134 @@ tg_rewriteQuery(TgRecipe * r,
    it returns a (possibly modified) Node*.
 
 */
-static Node    *
+static Node *
 tg_replaceNumberedParam(Node * expression,
 						int pnum,		/* the number of the parameter */
 						int rt_ind,		/* the range table index */
 						char *teeRelName)		/* the relname of the tee
 												 * table */
 {
-	TargetEntry    *param_tle;
-	Param		   *p;
-	Var			   *newVar,
-				   *oldVar;
+	TargetEntry *param_tle;
+	Param	   *p;
+	Var		   *newVar,
+			   *oldVar;
 
 	if (expression == NULL)
 		return NULL;
 
 	switch (nodeTag(expression))
 	{
-	case T_Param:
-		{
-
-			/*
-			 * the node is a parameter, substitute the entry from the
-			 * target list of the child that corresponds to the parameter
-			 * number
-			 */
-			p = (Param *) expression;
-
-			/* we only deal with the case of numbered parameters */
-			if (p->paramkind == PARAM_NUM && p->paramid == pnum)
+		case T_Param:
 			{
 
-				if (p->param_tlist)
+				/*
+				 * the node is a parameter, substitute the entry from the
+				 * target list of the child that corresponds to the
+				 * parameter number
+				 */
+				p = (Param *) expression;
+
+				/* we only deal with the case of numbered parameters */
+				if (p->paramkind == PARAM_NUM && p->paramid == pnum)
 				{
 
-					/*
-					 * we have a parameter with an attribute like $N.foo
-					 * so replace it with a new var node
-					 */
+					if (p->param_tlist)
+					{
 
-					/* param tlist can only have one entry in them! */
-					param_tle = (TargetEntry *) (lfirst(p->param_tlist));
-					oldVar = (Var *) param_tle->expr;
-					oldVar->varno = rt_ind;
-					oldVar->varnoold = rt_ind;
-					return (Node *) oldVar;
+						/*
+						 * we have a parameter with an attribute like
+						 * $N.foo so replace it with a new var node
+						 */
+
+						/* param tlist can only have one entry in them! */
+						param_tle = (TargetEntry *) (lfirst(p->param_tlist));
+						oldVar = (Var *) param_tle->expr;
+						oldVar->varno = rt_ind;
+						oldVar->varnoold = rt_ind;
+						return (Node *) oldVar;
+					}
+					else
+					{
+						/* we have $N without the .foo */
+						bool		defined;
+						bool		isRel;
+
+						/*
+						 * TODO here, we need to check to see whether the
+						 * type of the tee is a complex type (relation) or
+						 * a simple type
+						 */
+
+						/*
+						 * if it is a simple type, then we need to get the
+						 * "result" attribute from the tee relation
+						 */
+
+						isRel = (typeid_get_relid(p->paramtype) != 0);
+						if (isRel)
+						{
+							newVar = makeVar(rt_ind,
+											 0, /* the whole tuple */
+										   TypeGet(teeRelName, &defined),
+											 rt_ind,
+											 0);
+							return (Node *) newVar;
+						}
+						else
+							newVar = makeVar(rt_ind,
+											 1, /* just the first field,
+												 * which is 'result' */
+										   TypeGet(teeRelName, &defined),
+											 rt_ind,
+											 0);
+						return (Node *) newVar;
+
+					}
 				}
 				else
 				{
-					/* we have $N without the .foo */
-					bool			defined;
-					bool			isRel;
-
-					/*
-					 * TODO here, we need to check to see whether the type
-					 * of the tee is a complex type (relation) or a simple
-					 * type
-					 */
-
-					/*
-					 * if it is a simple type, then we need to get the
-					 * "result" attribute from the tee relation
-					 */
-
-					isRel = (typeid_get_relid(p->paramtype) != 0);
-					if (isRel)
-					{
-						newVar = makeVar(rt_ind,
-										 0,		/* the whole tuple */
-										 TypeGet(teeRelName, &defined),
-										 rt_ind,
-										 0);
-						return (Node *) newVar;
-					}
-					else
-						newVar = makeVar(rt_ind,
-										 1,		/* just the first field,
-												 * which is 'result' */
-										 TypeGet(teeRelName, &defined),
-										 rt_ind,
-										 0);
-					return (Node *) newVar;
-
+					elog(NOTICE, "tg_replaceNumberedParam: unexpected paramkind value of %d", p->paramkind);
 				}
 			}
-			else
+			break;
+		case T_Expr:
 			{
-				elog(NOTICE, "tg_replaceNumberedParam: unexpected paramkind value of %d", p->paramkind);
+
+				/*
+				 * the node is an expression, we need to recursively call
+				 * ourselves until we find parameter nodes
+				 */
+				List	   *l;
+				Expr	   *expr = (Expr *) expression;
+				List	   *newArgs;
+
+				/*
+				 * we have to make a new args lists because Params can be
+				 * replaced by Var nodes in tg_replaceNumberedParam()
+				 */
+				newArgs = NIL;
+
+				/*
+				 * we only care about argument to expressions, it doesn't
+				 * matter when the opType is
+				 */
+				/* recursively rewrite the arguments of this expression */
+				foreach(l, expr->args)
+				{
+					newArgs = lappend(newArgs,
+									  tg_replaceNumberedParam(lfirst(l),
+															  pnum,
+															  rt_ind,
+															teeRelName));
+				}
+				/* change the arguments of the expression */
+				expr->args = newArgs;
 			}
-		}
-		break;
-	case T_Expr:
-		{
-
-			/*
-			 * the node is an expression, we need to recursively call
-			 * ourselves until we find parameter nodes
-			 */
-			List		   *l;
-			Expr		   *expr = (Expr *) expression;
-			List		   *newArgs;
-
-			/*
-			 * we have to make a new args lists because Params can be
-			 * replaced by Var nodes in tg_replaceNumberedParam()
-			 */
-			newArgs = NIL;
-
-			/*
-			 * we only care about argument to expressions, it doesn't
-			 * matter when the opType is
-			 */
-			/* recursively rewrite the arguments of this expression */
-			foreach(l, expr->args)
+			break;
+		default:
 			{
-				newArgs = lappend(newArgs,
-								  tg_replaceNumberedParam(lfirst(l),
-														  pnum,
-														  rt_ind,
-														  teeRelName));
+				/* ignore other expr types */
 			}
-			/* change the arguments of the expression */
-			expr->args = newArgs;
-		}
-		break;
-	default:
-		{
-			/* ignore other expr types */
-		}
 	}
 
 	return expression;
@@ -572,118 +572,118 @@ tg_replaceNumberedParam(Node * expression,
    it returns a (possibly modified) Node*.
 
 */
-static Node    *
+static Node *
 tg_rewriteParamsInExpr(Node * expression, QueryTreeList * inputQlist)
 {
-	List		   *tl;
-	TargetEntry    *param_tle,
-				   *tle;
-	Param		   *p;
-	int				childno;
-	char		   *resname;
+	List	   *tl;
+	TargetEntry *param_tle,
+			   *tle;
+	Param	   *p;
+	int			childno;
+	char	   *resname;
 
 	if (expression == NULL)
 		return NULL;
 
 	switch (nodeTag(expression))
 	{
-	case T_Param:
-		{
-
-			/*
-			 * the node is a parameter, substitute the entry from the
-			 * target list of the child that corresponds to the parameter
-			 * number
-			 */
-			p = (Param *) expression;
-
-			/* we only deal with the case of numbered parameters */
-			if (p->paramkind == PARAM_NUM)
+		case T_Param:
 			{
-				/* paramid's start from 1 */
-				childno = p->paramid - 1;
 
-				if (p->param_tlist)
+				/*
+				 * the node is a parameter, substitute the entry from the
+				 * target list of the child that corresponds to the
+				 * parameter number
+				 */
+				p = (Param *) expression;
+
+				/* we only deal with the case of numbered parameters */
+				if (p->paramkind == PARAM_NUM)
 				{
+					/* paramid's start from 1 */
+					childno = p->paramid - 1;
 
-					/*
-					 * we have a parameter with an attribute like $N.foo
-					 * so match the resname "foo" against the target list
-					 * of the (N-1)th inputQlist
-					 */
-
-					/* param tlist can only have one entry in them! */
-					param_tle = (TargetEntry *) (lfirst(p->param_tlist));
-					resname = param_tle->resdom->resname;
-
-					if (inputQlist->qtrees[childno])
+					if (p->param_tlist)
 					{
-						foreach(tl, inputQlist->qtrees[childno]->targetList)
+
+						/*
+						 * we have a parameter with an attribute like
+						 * $N.foo so match the resname "foo" against the
+						 * target list of the (N-1)th inputQlist
+						 */
+
+						/* param tlist can only have one entry in them! */
+						param_tle = (TargetEntry *) (lfirst(p->param_tlist));
+						resname = param_tle->resdom->resname;
+
+						if (inputQlist->qtrees[childno])
 						{
-							tle = lfirst(tl);
-							if (strcmp(resname, tle->resdom->resname) == 0)
+							foreach(tl, inputQlist->qtrees[childno]->targetList)
 							{
-								return tle->expr;
+								tle = lfirst(tl);
+								if (strcmp(resname, tle->resdom->resname) == 0)
+								{
+									return tle->expr;
+								}
 							}
 						}
+						else
+						{
+							elog(WARN, "tg_rewriteParamsInExpr:can't substitute for parameter %d when that input is unconnected", p->paramid);
+						}
+
 					}
 					else
 					{
-						elog(WARN, "tg_rewriteParamsInExpr:can't substitute for parameter %d when that input is unconnected", p->paramid);
+						/* we have $N without the .foo */
+						/* use the first resdom in the targetlist of the */
+						/* appropriate child query */
+						tl = inputQlist->qtrees[childno]->targetList;
+						tle = lfirst(tl);
+						return tle->expr;
 					}
-
 				}
 				else
 				{
-					/* we have $N without the .foo */
-					/* use the first resdom in the targetlist of the */
-					/* appropriate child query */
-					tl = inputQlist->qtrees[childno]->targetList;
-					tle = lfirst(tl);
-					return tle->expr;
+					elog(NOTICE, "tg_rewriteParamsInExpr: unexpected paramkind value of %d", p->paramkind);
 				}
 			}
-			else
+			break;
+		case T_Expr:
 			{
-				elog(NOTICE, "tg_rewriteParamsInExpr: unexpected paramkind value of %d", p->paramkind);
-			}
-		}
-		break;
-	case T_Expr:
-		{
 
-			/*
-			 * the node is an expression, we need to recursively call
-			 * ourselves until we find parameter nodes
-			 */
-			List		   *l;
-			Expr		   *expr = (Expr *) expression;
-			List		   *newArgs;
+				/*
+				 * the node is an expression, we need to recursively call
+				 * ourselves until we find parameter nodes
+				 */
+				List	   *l;
+				Expr	   *expr = (Expr *) expression;
+				List	   *newArgs;
 
-			/*
-			 * we have to make a new args lists because Params can be
-			 * replaced by Var nodes in tg_rewriteParamsInExpr()
-			 */
-			newArgs = NIL;
+				/*
+				 * we have to make a new args lists because Params can be
+				 * replaced by Var nodes in tg_rewriteParamsInExpr()
+				 */
+				newArgs = NIL;
 
-			/*
-			 * we only care about argument to expressions, it doesn't
-			 * matter when the opType is
-			 */
-			/* recursively rewrite the arguments of this expression */
-			foreach(l, expr->args)
-			{
-				newArgs = lappend(newArgs,
+				/*
+				 * we only care about argument to expressions, it doesn't
+				 * matter when the opType is
+				 */
+				/* recursively rewrite the arguments of this expression */
+				foreach(l, expr->args)
+				{
+					newArgs = lappend(newArgs,
 						  tg_rewriteParamsInExpr(lfirst(l), inputQlist));
+				}
+				/* change the arguments of the expression */
+				expr->args = newArgs;
 			}
-			/* change the arguments of the expression */
-			expr->args = newArgs;
-		}
-		break;
-	default:
-		{
-			/* ignore other expr types */
-		}
+			break;
+		default:
+			{
+				/* ignore other expr types */
+			}
 	}
 
 	return expression;
@@ -703,12 +703,12 @@ static int
 getParamTypes(TgElement * elem, Oid typev[])
 {
 	/* this code is similar to ProcedureDefine() */
-	int16			parameterCount;
-	bool			defined;
-	Oid				toid;
-	char		   *t;
-	int				i,
-					j;
+	int16		parameterCount;
+	bool		defined;
+	Oid			toid;
+	char	   *t;
+	int			i,
+				j;
 
 	parameterCount = 0;
 	for (i = 0; i < 8; i++)
@@ -763,10 +763,10 @@ tg_parseTeeNode(TgRecipe * r,
 				TeeInfo * teeInfo)
 
 {
-	QueryTreeList  *q;
-	char		   *tt;
-	int				rt_ind;
-	Query		   *orig;
+	QueryTreeList *q;
+	char	   *tt;
+	int			rt_ind;
+	Query	   *orig;
 
 	/*
 	 * the input Node is a tee node, so we need to do the following: we
@@ -831,21 +831,21 @@ tg_parseTeeNode(TgRecipe * r,
 static QueryTreeList *
 tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 {
-	TgElement	   *elem;
-	char		   *funcName;
-	Oid				typev[8];	/* eight arguments maximum	*/
-	int				i;
-	int				parameterCount;
+	TgElement  *elem;
+	char	   *funcName;
+	Oid			typev[8];		/* eight arguments maximum	*/
+	int			i;
+	int			parameterCount;
 
-	QueryTreeList  *qList;		/* the parse tree of the nodeElement */
-	QueryTreeList  *inputQlist; /* the list of parse trees for the inputs
+	QueryTreeList *qList;		/* the parse tree of the nodeElement */
+	QueryTreeList *inputQlist;	/* the list of parse trees for the inputs
 								 * to this node */
-	QueryTreeList  *q;
-	Oid				relid;
-	TgNode		   *child;
-	Relation		rel;
-	unsigned int	len;
-	TupleDesc		tupdesc;
+	QueryTreeList *q;
+	Oid			relid;
+	TgNode	   *child;
+	Relation	rel;
+	unsigned int len;
+	TupleDesc	tupdesc;
 
 	qList = NULL;
 
@@ -856,79 +856,79 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 		elem = n->nodeElem;
 		switch (elem->srcLang)
 		{
-		case TG_SQL:
-			{
+			case TG_SQL:
+				{
 
-				/*
-				 * for SQL ingredients, the SQL query is contained in the
-				 * 'src' field
-				 */
+					/*
+					 * for SQL ingredients, the SQL query is contained in
+					 * the 'src' field
+					 */
 
 #ifdef DEBUG_RECIPE
-				elog(NOTICE, "calling parser with %s", elem->src);
+					elog(NOTICE, "calling parser with %s", elem->src);
 #endif							/* DEBUG_RECIPE */
 
-				parameterCount = getParamTypes(elem, typev);
+					parameterCount = getParamTypes(elem, typev);
 
-				qList = parser(elem->src, typev, parameterCount);
+					qList = parser(elem->src, typev, parameterCount);
 
-				if (qList->len > 1)
-				{
-					elog(NOTICE,
-					 "tg_parseSubQuery: parser produced > 1 query tree");
-				}
-			}
-			break;
-		case TG_C:
-			{
-				/* C ingredients are registered functions in postgres */
-
-				/*
-				 * we create a new query string by using the function name
-				 * (found in the 'src' field) and adding parameters to it
-				 * so if the function was FOOBAR and took in two
-				 * arguments, we would create a string select
-				 * FOOBAR($1,$2)
-				 */
-				char			newquery[1000];
-
-				funcName = elem->src;
-				parameterCount = getParamTypes(elem, typev);
-
-				if (parameterCount > 0)
-				{
-					int				i;
-
-					sprintf(newquery, "select %s($1", funcName);
-					for (i = 1; i < parameterCount; i++)
+					if (qList->len > 1)
 					{
-						sprintf(newquery, "%s,$%d", newquery, i);
+						elog(NOTICE,
+							 "tg_parseSubQuery: parser produced > 1 query tree");
 					}
-					sprintf(newquery, "%s)", newquery);
 				}
-				else
-					sprintf(newquery, "select %s()", funcName);
+				break;
+			case TG_C:
+				{
+					/* C ingredients are registered functions in postgres */
+
+					/*
+					 * we create a new query string by using the function
+					 * name (found in the 'src' field) and adding
+					 * parameters to it so if the function was FOOBAR and
+					 * took in two arguments, we would create a string
+					 * select FOOBAR($1,$2)
+					 */
+					char		newquery[1000];
+
+					funcName = elem->src;
+					parameterCount = getParamTypes(elem, typev);
+
+					if (parameterCount > 0)
+					{
+						int			i;
+
+						sprintf(newquery, "select %s($1", funcName);
+						for (i = 1; i < parameterCount; i++)
+						{
+							sprintf(newquery, "%s,$%d", newquery, i);
+						}
+						sprintf(newquery, "%s)", newquery);
+					}
+					else
+						sprintf(newquery, "select %s()", funcName);
 
 #ifdef DEBUG_RECIPE
-				elog(NOTICE, "calling parser with %s", newquery);
+					elog(NOTICE, "calling parser with %s", newquery);
 #endif							/* DEBUG_RECIPE */
 
-				qList = parser(newquery, typev, parameterCount);
-				if (qList->len > 1)
-				{
-					elog(NOTICE,
-					 "tg_parseSubQuery: parser produced > 1 query tree");
+					qList = parser(newquery, typev, parameterCount);
+					if (qList->len > 1)
+					{
+						elog(NOTICE,
+							 "tg_parseSubQuery: parser produced > 1 query tree");
+					}
 				}
-			}
-			break;
-		case TG_RECIPE_GRAPH:
-			elog(NOTICE, "tg_parseSubQuery: can't parse recipe graph ingredients yet!");
-			break;
-		case TG_COMPILED:
-			elog(NOTICE, "tg_parseSubQuery: can't parse compiled ingredients yet!");
-			break;
-		default:
-			elog(NOTICE, "tg_parseSubQuery: unknown srcLang: %d", elem->srcLang);
+				break;
+			case TG_RECIPE_GRAPH:
+				elog(NOTICE, "tg_parseSubQuery: can't parse recipe graph ingredients yet!");
+				break;
+			case TG_COMPILED:
+				elog(NOTICE, "tg_parseSubQuery: can't parse compiled ingredients yet!");
+				break;
+			default:
+				elog(NOTICE, "tg_parseSubQuery: unknown srcLang: %d", elem->srcLang);
 		}
 
 		/* parse each of the subrecipes that are input to this node */
@@ -1110,41 +1110,41 @@ OffsetVarAttno(Node * node, int varno, int offset)
 		return;
 	switch (nodeTag(node))
 	{
-	case T_TargetEntry:
-		{
-			TargetEntry    *tle = (TargetEntry *) node;
-
-			OffsetVarAttno(tle->expr, varno, offset);
-		}
-		break;
-	case T_Expr:
-		{
-			Expr		   *expr = (Expr *) node;
-
-			OffsetVarAttno((Node *) expr->args, varno, offset);
-		}
-		break;
-	case T_Var:
-		{
-			Var			   *var = (Var *) node;
-
-			if (var->varno == varno)
-				var->varattno += offset;
-		}
-		break;
-	case T_List:
-		{
-			List		   *l;
-
-			foreach(l, (List *) node)
+		case T_TargetEntry:
 			{
-				OffsetVarAttno(lfirst(l), varno, offset);
+				TargetEntry *tle = (TargetEntry *) node;
+
+				OffsetVarAttno(tle->expr, varno, offset);
 			}
-		}
-		break;
-	default:
-		/* ignore the others */
-		break;
+			break;
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				OffsetVarAttno((Node *) expr->args, varno, offset);
+			}
+			break;
+		case T_Var:
+			{
+				Var		   *var = (Var *) node;
+
+				if (var->varno == varno)
+					var->varattno += offset;
+			}
+			break;
+		case T_List:
+			{
+				List	   *l;
+
+				foreach(l, (List *) node)
+				{
+					OffsetVarAttno(lfirst(l), varno, offset);
+				}
+			}
+			break;
+		default:
+			/* ignore the others */
+			break;
 	}
 }
 
@@ -1156,13 +1156,13 @@ OffsetVarAttno(Node * node, int varno, int offset)
  *	returns a new querytree list
  */
 
-QueryTreeList  *
+QueryTreeList *
 appendQlist(QueryTreeList * q1, QueryTreeList * q2)
 {
-	QueryTreeList  *newq;
-	int				i,
-					j;
-	int				newlen;
+	QueryTreeList *newq;
+	int			i,
+				j;
+	int			newlen;
 
 	if (q1 == NULL)
 		return q2;
@@ -1191,7 +1191,7 @@ appendQlist(QueryTreeList * q1, QueryTreeList * q2)
 static void
 appendTeeQuery(TeeInfo * teeInfo, QueryTreeList * q, char *teeNodeName)
 {
-	int				i;
+	int			i;
 
 	Assert(teeInfo);
 
@@ -1223,9 +1223,9 @@ static void
 replaceSeqScan(Plan * plan, Plan * parent,
 			   int rt_ind, Plan * tplan)
 {
-	Scan		   *snode;
-	Tee			   *teePlan;
-	Result		   *newPlan;
+	Scan	   *snode;
+	Tee		   *teePlan;
+	Result	   *newPlan;
 
 	if (plan == NULL)
 	{
@@ -1306,16 +1306,16 @@ replaceSeqScan(Plan * plan, Plan * parent,
  *	  places the sequential scans of the Tee table with
  * a connection to the actual tee plan node
  */
-static Plan    *
+static Plan *
 replaceTeeScans(Plan * plan, Query * parsetree, TeeInfo * teeInfo)
 {
 
-	int				i;
-	List		   *rtable;
-	RangeTblEntry  *rte;
-	char			prefix[5];
-	int				rt_ind;
-	Plan		   *tplan;
+	int			i;
+	List	   *rtable;
+	RangeTblEntry *rte;
+	char		prefix[5];
+	int			rt_ind;
+	Plan	   *tplan;
 
 	rtable = parsetree->rtable;
 	if (rtable == NULL)

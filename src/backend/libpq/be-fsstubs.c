@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.13 1997/09/07 04:42:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.14 1997/09/08 02:23:10 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -49,8 +49,8 @@ static LargeObjectDesc *cookies[MAX_LOBJ_FDS];
 static GlobalMemory fscxt = NULL;
 
 
-static int		newLOfd(LargeObjectDesc * lobjCookie);
-static void		deleteLOfd(int fd);
+static int	newLOfd(LargeObjectDesc * lobjCookie);
+static void deleteLOfd(int fd);
 
 
 /*****************************************************************************
@@ -61,8 +61,8 @@ int
 lo_open(Oid lobjId, int mode)
 {
 	LargeObjectDesc *lobjDesc;
-	int				fd;
-	MemoryContext	currentContext;
+	int			fd;
+	MemoryContext currentContext;
 
 #if FSDB
 	elog(NOTICE, "LOopen(%d,%d)", lobjId, mode);
@@ -96,7 +96,7 @@ lo_open(Oid lobjId, int mode)
 int
 lo_close(int fd)
 {
-	MemoryContext	currentContext;
+	MemoryContext currentContext;
 
 	if (fd >= MAX_LOBJ_FDS)
 	{
@@ -145,8 +145,8 @@ lo_write(int fd, char *buf, int len)
 int
 lo_lseek(int fd, int offset, int whence)
 {
-	MemoryContext	currentContext;
-	int				ret;
+	MemoryContext currentContext;
+	int			ret;
 
 	if (fd >= MAX_LOBJ_FDS)
 	{
@@ -167,8 +167,8 @@ Oid
 lo_creat(int mode)
 {
 	LargeObjectDesc *lobjDesc;
-	MemoryContext	currentContext;
-	Oid				lobjId;
+	MemoryContext currentContext;
+	Oid			lobjId;
 
 	if (fscxt == NULL)
 	{
@@ -225,7 +225,7 @@ struct varlena *
 loread(int fd, int len)
 {
 	struct varlena *retval;
-	int				totalread = 0;
+	int			totalread = 0;
 
 	retval = (struct varlena *) palloc(sizeof(int32) + len);
 	totalread = lo_read(fd, VARDATA(retval), len);
@@ -237,8 +237,8 @@ loread(int fd, int len)
 int
 lowrite(int fd, struct varlena * wbuf)
 {
-	int				totalwritten;
-	int				bytestowrite;
+	int			totalwritten;
+	int			bytestowrite;
 
 	bytestowrite = VARSIZE(wbuf) - sizeof(int32);
 	totalwritten = lo_write(fd, VARDATA(wbuf), bytestowrite);
@@ -256,15 +256,15 @@ lowrite(int fd, struct varlena * wbuf)
 Oid
 lo_import(text * filename)
 {
-	int				fd;
-	int				nbytes,
-					tmp;
+	int			fd;
+	int			nbytes,
+				tmp;
 
 #define BUFSIZE		   1024
-	char			buf[BUFSIZE];
-	char			fnamebuf[8192];
+	char		buf[BUFSIZE];
+	char		fnamebuf[8192];
 	LargeObjectDesc *lobj;
-	Oid				lobjOid;
+	Oid			lobjOid;
 
 	/*
 	 * open the file to be read in
@@ -319,15 +319,15 @@ lo_import(text * filename)
 int4
 lo_export(Oid lobjId, text * filename)
 {
-	int				fd;
-	int				nbytes,
-					tmp;
+	int			fd;
+	int			nbytes,
+				tmp;
 
 #define BUFSIZE		   1024
-	char			buf[BUFSIZE];
-	char			fnamebuf[8192];
+	char		buf[BUFSIZE];
+	char		fnamebuf[8192];
 	LargeObjectDesc *lobj;
-	mode_t			oumask;
+	mode_t		oumask;
 
 	/*
 	 * create an inversion "object"
@@ -379,7 +379,7 @@ lo_export(Oid lobjId, text * filename)
 static int
 newLOfd(LargeObjectDesc * lobjCookie)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < MAX_LOBJ_FDS; i++)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.4 1997/09/07 04:53:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.5 1997/09/08 02:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 long
 string_hash(char *key, int keysize)
 {
-	int				h;
+	int			h;
 	register unsigned char *k = (unsigned char *) key;
 
 	h = 0;
@@ -43,7 +43,7 @@ string_hash(char *key, int keysize)
 long
 tag_hash(int *key, int keysize)
 {
-	register long	h = 0;
+	register long h = 0;
 
 	/*
 	 * Convert tag to integer;	Use four byte chunks in a "jump table" to
@@ -53,64 +53,64 @@ tag_hash(int *key, int keysize)
 	 */
 	switch (keysize)
 	{
-	case 6 * sizeof(int):
-		h = h * PRIME1 ^ (*key);
-		key++;
-		/* fall through */
-
-	case 5 * sizeof(int):
-		h = h * PRIME1 ^ (*key);
-		key++;
-		/* fall through */
-
-	case 4 * sizeof(int):
-		h = h * PRIME1 ^ (*key);
-		key++;
-		/* fall through */
-
-	case 3 * sizeof(int):
-		h = h * PRIME1 ^ (*key);
-		key++;
-		/* fall through */
-
-	case 2 * sizeof(int):
-		h = h * PRIME1 ^ (*key);
-		key++;
-		/* fall through */
-
-	case sizeof(int):
-		h = h * PRIME1 ^ (*key);
-		key++;
-		break;
-
-	default:
-		for (; keysize > (sizeof(int) - 1); keysize -= sizeof(int), key++)
+		case 6 * sizeof(int):
 			h = h * PRIME1 ^ (*key);
+			key++;
+			/* fall through */
 
-		/*
-		 * now let's grab the last few bytes of the tag if the tag has
-		 * (size % 4) != 0 (which it sometimes will on a sun3).
-		 */
-		if (keysize)
-		{
-			char		   *keytmp = (char *) key;
+		case 5 * sizeof(int):
+			h = h * PRIME1 ^ (*key);
+			key++;
+			/* fall through */
 
-			switch (keysize)
+		case 4 * sizeof(int):
+			h = h * PRIME1 ^ (*key);
+			key++;
+			/* fall through */
+
+		case 3 * sizeof(int):
+			h = h * PRIME1 ^ (*key);
+			key++;
+			/* fall through */
+
+		case 2 * sizeof(int):
+			h = h * PRIME1 ^ (*key);
+			key++;
+			/* fall through */
+
+		case sizeof(int):
+			h = h * PRIME1 ^ (*key);
+			key++;
+			break;
+
+		default:
+			for (; keysize > (sizeof(int) - 1); keysize -= sizeof(int), key++)
+				h = h * PRIME1 ^ (*key);
+
+			/*
+			 * now let's grab the last few bytes of the tag if the tag has
+			 * (size % 4) != 0 (which it sometimes will on a sun3).
+			 */
+			if (keysize)
 			{
-			case 3:
-				h = h * PRIME1 ^ (*keytmp);
-				keytmp++;
-				/* fall through */
-			case 2:
-				h = h * PRIME1 ^ (*keytmp);
-				keytmp++;
-				/* fall through */
-			case 1:
-				h = h * PRIME1 ^ (*keytmp);
-				break;
+				char	   *keytmp = (char *) key;
+
+				switch (keysize)
+				{
+					case 3:
+						h = h * PRIME1 ^ (*keytmp);
+						keytmp++;
+						/* fall through */
+					case 2:
+						h = h * PRIME1 ^ (*keytmp);
+						keytmp++;
+						/* fall through */
+					case 1:
+						h = h * PRIME1 ^ (*keytmp);
+						break;
+				}
 			}
-		}
-		break;
+			break;
 	}
 
 	h %= PRIME2;
@@ -130,10 +130,10 @@ tag_hash(int *key, int keysize)
 long
 disk_hash(char *key)
 {
-	register int	n = 0;
-	register char  *str = key;
-	register int	len = strlen(key);
-	register int	loop;
+	register int n = 0;
+	register char *str = key;
+	register int len = strlen(key);
+	register int loop;
 
 #define HASHC	n = *str++ + 65599 * n
 
@@ -143,25 +143,25 @@ disk_hash(char *key)
 
 		switch (len & (8 - 1))
 		{
-		case 0:
-			do
-			{					/* All fall throughs */
-				HASHC;
-		case 7:
-				HASHC;
-		case 6:
-				HASHC;
-		case 5:
-				HASHC;
-		case 4:
-				HASHC;
-		case 3:
-				HASHC;
-		case 2:
-				HASHC;
-		case 1:
-				HASHC;
-			} while (--loop);
+			case 0:
+				do
+				{				/* All fall throughs */
+					HASHC;
+			case 7:
+					HASHC;
+			case 6:
+					HASHC;
+			case 5:
+					HASHC;
+			case 4:
+					HASHC;
+			case 3:
+					HASHC;
+			case 2:
+					HASHC;
+			case 1:
+					HASHC;
+				} while (--loop);
 		}
 
 	}

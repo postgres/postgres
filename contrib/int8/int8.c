@@ -26,7 +26,7 @@
 #endif
 
 #ifndef HAVE_64BIT_INTS
-typedef char	[8] int64;
+typedef char[8] int64;
 
 #elif defined(__alpha)
 typedef long int int64;
@@ -44,40 +44,40 @@ typedef long int int64;
 #define INT64_FORMAT "%ld"
 #endif
 
-int64		   *int8in(char *str);
-char		   *int8out(int64 * val);
+int64	   *int8in(char *str);
+char	   *int8out(int64 * val);
 
-bool			int8eq(int64 * val1, int64 * val2);
-bool			int8ne(int64 * val1, int64 * val2);
-bool			int8lt(int64 * val1, int64 * val2);
-bool			int8gt(int64 * val1, int64 * val2);
-bool			int8le(int64 * val1, int64 * val2);
-bool			int8ge(int64 * val1, int64 * val2);
+bool		int8eq(int64 * val1, int64 * val2);
+bool		int8ne(int64 * val1, int64 * val2);
+bool		int8lt(int64 * val1, int64 * val2);
+bool		int8gt(int64 * val1, int64 * val2);
+bool		int8le(int64 * val1, int64 * val2);
+bool		int8ge(int64 * val1, int64 * val2);
 
-bool			int84eq(int64 * val1, int32 val2);
-bool			int84ne(int64 * val1, int32 val2);
-bool			int84lt(int64 * val1, int32 val2);
-bool			int84gt(int64 * val1, int32 val2);
-bool			int84le(int64 * val1, int32 val2);
-bool			int84ge(int64 * val1, int32 val2);
+bool		int84eq(int64 * val1, int32 val2);
+bool		int84ne(int64 * val1, int32 val2);
+bool		int84lt(int64 * val1, int32 val2);
+bool		int84gt(int64 * val1, int32 val2);
+bool		int84le(int64 * val1, int32 val2);
+bool		int84ge(int64 * val1, int32 val2);
 
-int64		   *int8um(int64 * val);
-int64		   *int8pl(int64 * val1, int64 * val2);
-int64		   *int8mi(int64 * val1, int64 * val2);
-int64		   *int8mul(int64 * val1, int64 * val2);
-int64		   *int8div(int64 * val1, int64 * val2);
+int64	   *int8um(int64 * val);
+int64	   *int8pl(int64 * val1, int64 * val2);
+int64	   *int8mi(int64 * val1, int64 * val2);
+int64	   *int8mul(int64 * val1, int64 * val2);
+int64	   *int8div(int64 * val1, int64 * val2);
 
-int64		   *int48(int32 val);
-int32			int84(int64 * val);
+int64	   *int48(int32 val);
+int32		int84(int64 * val);
 
 #if FALSE
-int64		   *int28(int16 val);
-int16			int82(int64 * val);
+int64	   *int28(int16 val);
+int16		int82(int64 * val);
 
 #endif
 
-float64			i8tod(int64 * val);
-int64		   *dtoi8(float64 val);
+float64		i8tod(int64 * val);
+int64	   *dtoi8(float64 val);
 
 #if USE_LOCAL_CODE
 
@@ -103,10 +103,10 @@ int64		   *dtoi8(float64 val);
 
 /* int8in()
  */
-int64		   *
+int64	   *
 int8in(char *str)
 {
-	int64		   *result = PALLOCTYPE(int64);
+	int64	   *result = PALLOCTYPE(int64);
 
 #if HAVE_64BIT_INTS
 	if (!PointerIsValid(str))
@@ -126,13 +126,13 @@ int8in(char *str)
 
 /* int8out()
  */
-char		   *
+char	   *
 int8out(int64 * val)
 {
-	char		   *result;
+	char	   *result;
 
-	int				len;
-	char			buf[MAXINT8LEN + 1];
+	int			len;
+	char		buf[MAXINT8LEN + 1];
 
 #if HAVE_64BIT_INTS
 	if (!PointerIsValid(val))
@@ -242,10 +242,10 @@ int84ge(int64 * val1, int32 val2)
  *	Arithmetic operators on 64-bit integers.
  *---------------------------------------------------------*/
 
-int64		   *
+int64	   *
 int8um(int64 * val)
 {
-	int64		   *result = PALLOCTYPE(int64);
+	int64	   *result = PALLOCTYPE(int64);
 
 	if (!PointerIsValid(val))
 		return NULL;
@@ -255,10 +255,10 @@ int8um(int64 * val)
 	return (result);
 }								/* int8um() */
 
-int64		   *
+int64	   *
 int8pl(int64 * val1, int64 * val2)
 {
-	int64		   *result = PALLOCTYPE(int64);
+	int64	   *result = PALLOCTYPE(int64);
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
@@ -268,10 +268,10 @@ int8pl(int64 * val1, int64 * val2)
 	return (result);
 }								/* int8pl() */
 
-int64		   *
+int64	   *
 int8mi(int64 * val1, int64 * val2)
 {
-	int64		   *result = PALLOCTYPE(int64);
+	int64	   *result = PALLOCTYPE(int64);
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
@@ -281,10 +281,10 @@ int8mi(int64 * val1, int64 * val2)
 	return (result);
 }								/* int8mi() */
 
-int64		   *
+int64	   *
 int8mul(int64 * val1, int64 * val2)
 {
-	int64		   *result = PALLOCTYPE(int64);
+	int64	   *result = PALLOCTYPE(int64);
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
@@ -294,10 +294,10 @@ int8mul(int64 * val1, int64 * val2)
 	return (result);
 }								/* int8mul() */
 
-int64		   *
+int64	   *
 int8div(int64 * val1, int64 * val2)
 {
-	int64		   *result = PALLOCTYPE(int64);
+	int64	   *result = PALLOCTYPE(int64);
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
@@ -312,10 +312,10 @@ int8div(int64 * val1, int64 * val2)
  *	Conversion operators.
  *---------------------------------------------------------*/
 
-int64		   *
+int64	   *
 int48(int32 val)
 {
-	int64		   *result = PALLOCTYPE(int64);
+	int64	   *result = PALLOCTYPE(int64);
 
 	*result = val;
 
@@ -325,7 +325,7 @@ int48(int32 val)
 int32
 int84(int64 * val)
 {
-	int32			result;
+	int32		result;
 
 	if (!PointerIsValid(val))
 		elog(WARN, "Invalid (null) int64, can't convert int8 to int4", NULL);
@@ -339,10 +339,10 @@ int84(int64 * val)
 }								/* int84() */
 
 #if FALSE
-int64		   *
+int64	   *
 int28(int16 val)
 {
-	int64		   *result;
+	int64	   *result;
 
 	if (!PointerIsValid(result = PALLOCTYPE(int64)))
 		elog(WARN, "Memory allocation failed, can't convert int8 to int2", NULL);
@@ -355,7 +355,7 @@ int28(int16 val)
 int16
 int82(int64 * val)
 {
-	int16			result;
+	int16		result;
 
 	if (!PointerIsValid(val))
 		elog(WARN, "Invalid (null) int8, can't convert to int2", NULL);
@@ -370,17 +370,17 @@ int82(int64 * val)
 float64
 i8tod(int64 * val)
 {
-	float64			result = PALLOCTYPE(float64data);
+	float64		result = PALLOCTYPE(float64data);
 
 	*result = *val;
 
 	return (result);
 }								/* i8tod() */
 
-int64		   *
+int64	   *
 dtoi8(float64 val)
 {
-	int64		   *result = PALLOCTYPE(int64);
+	int64	   *result = PALLOCTYPE(int64);
 
 	if ((*val < (-pow(2, 64) + 1)) || (*val > (pow(2, 64) - 1)))
 		elog(WARN, "Floating point conversion to int64 is out of range", NULL);

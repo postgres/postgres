@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.43 1997/09/07 04:41:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.44 1997/09/08 02:22:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,11 +56,11 @@
 
 #include <port-protos.h>
 
-bool			VacuumRunning = false;
+bool		VacuumRunning = false;
 
-static Portal	vc_portal;
+static Portal vc_portal;
 
-static int		MESSAGE_LEVEL;	/* message level */
+static int	MESSAGE_LEVEL;		/* message level */
 
 #define swapLong(a,b)	{long tmp; tmp=a; a=b; b=tmp;}
 #define swapInt(a,b)	{int tmp; tmp=a; a=b; b=tmp;}
@@ -72,46 +72,46 @@ static int		MESSAGE_LEVEL;	/* message level */
 
 
 /* non-export function prototypes */
-static void		vc_init(void);
-static void		vc_shutdown(void);
-static void		vc_vacuum(NameData * VacRelP, bool analyze, List * va_cols);
+static void vc_init(void);
+static void vc_shutdown(void);
+static void vc_vacuum(NameData * VacRelP, bool analyze, List * va_cols);
 static VRelList vc_getrels(NameData * VacRelP);
-static void		vc_vacone(Oid relid, bool analyze, List * va_cols);
-static void		vc_scanheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl);
-static void		vc_rpfheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl, int nindices, Relation * Irel);
-static void		vc_vacheap(VRelStats * vacrelstats, Relation onerel, VPageList vpl);
-static void		vc_vacpage(Page page, VPageDescr vpd, Relation archrel);
-static void		vc_vaconeind(VPageList vpl, Relation indrel, int nhtups);
-static void		vc_scanoneind(Relation indrel, int nhtups);
-static void		vc_attrstats(Relation onerel, VRelStats * vacrelstats, HeapTuple htup);
-static void		vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum * bucket, int16 * bucket_len);
-static void		vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrelstats);
-static void		vc_delhilowstats(Oid relid, int attcnt, int *attnums);
-static void		vc_setpagelock(Relation rel, BlockNumber blkno);
+static void vc_vacone(Oid relid, bool analyze, List * va_cols);
+static void vc_scanheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl);
+static void vc_rpfheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl, int nindices, Relation * Irel);
+static void vc_vacheap(VRelStats * vacrelstats, Relation onerel, VPageList vpl);
+static void vc_vacpage(Page page, VPageDescr vpd, Relation archrel);
+static void vc_vaconeind(VPageList vpl, Relation indrel, int nhtups);
+static void vc_scanoneind(Relation indrel, int nhtups);
+static void vc_attrstats(Relation onerel, VRelStats * vacrelstats, HeapTuple htup);
+static void vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum * bucket, int16 * bucket_len);
+static void vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrelstats);
+static void vc_delhilowstats(Oid relid, int attcnt, int *attnums);
+static void vc_setpagelock(Relation rel, BlockNumber blkno);
 static VPageDescr vc_tidreapped(ItemPointer itemptr, VPageList vpl);
-static void		vc_reappage(VPageList vpl, VPageDescr vpc);
-static void		vc_vpinsert(VPageList vpl, VPageDescr vpnew);
-static void		vc_free(VRelList vrl);
-static void		vc_getindices(Oid relid, int *nindices, Relation ** Irel);
-static void		vc_clsindices(int nindices, Relation * Irel);
+static void vc_reappage(VPageList vpl, VPageDescr vpc);
+static void vc_vpinsert(VPageList vpl, VPageDescr vpnew);
+static void vc_free(VRelList vrl);
+static void vc_getindices(Oid relid, int *nindices, Relation ** Irel);
+static void vc_clsindices(int nindices, Relation * Irel);
 static Relation vc_getarchrel(Relation heaprel);
-static void		vc_archive(Relation archrel, HeapTuple htup);
-static bool		vc_isarchrel(char *rname);
-static void		vc_mkindesc(Relation onerel, int nindices, Relation * Irel, IndDesc ** Idesc);
-static char    *vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, char *));
-static int		vc_cmp_blk(char *left, char *right);
-static int		vc_cmp_offno(char *left, char *right);
-static bool		vc_enough_space(VPageDescr vpd, Size len);
+static void vc_archive(Relation archrel, HeapTuple htup);
+static bool vc_isarchrel(char *rname);
+static void vc_mkindesc(Relation onerel, int nindices, Relation * Irel, IndDesc ** Idesc);
+static char *vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, char *));
+static int	vc_cmp_blk(char *left, char *right);
+static int	vc_cmp_offno(char *left, char *right);
+static bool vc_enough_space(VPageDescr vpd, Size len);
 
 void
 vacuum(char *vacrel, bool verbose, bool analyze, List * va_spec)
 {
-	char		   *pname;
-	MemoryContext	old;
+	char	   *pname;
+	MemoryContext old;
 	PortalVariableMemory pmem;
-	NameData		VacRel;
-	List		   *le;
-	List		   *va_cols = NIL;
+	NameData	VacRel;
+	List	   *le;
+	List	   *va_cols = NIL;
 
 	/*
 	 * Create a portal for safe memory across transctions.	We need to
@@ -139,8 +139,8 @@ vacuum(char *vacrel, bool verbose, bool analyze, List * va_spec)
 	Assert(va_spec == NIL || analyze);
 	foreach(le, va_spec)
 	{
-		char		   *col = (char *) lfirst(le);
-		char		   *dest;
+		char	   *col = (char *) lfirst(le);
+		char	   *dest;
 
 		dest = (char *) palloc(strlen(col) + 1);
 		strcpy(dest, col);
@@ -183,7 +183,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List * va_spec)
 static void
 vc_init()
 {
-	int				fd;
+	int			fd;
 
 	if ((fd = open("pg_vlock", O_CREAT | O_EXCL, 0600)) < 0)
 		elog(WARN, "can't create lock file -- another vacuum cleaner running?");
@@ -238,8 +238,8 @@ vc_abort()
 static void
 vc_vacuum(NameData * VacRelP, bool analyze, List * va_cols)
 {
-	VRelList		vrl,
-					cur;
+	VRelList	vrl,
+				cur;
 
 	/* get list of relations */
 	vrl = vc_getrels(VacRelP);
@@ -254,25 +254,25 @@ vc_vacuum(NameData * VacRelP, bool analyze, List * va_cols)
 	vc_free(vrl);
 }
 
-static			VRelList
+static VRelList
 vc_getrels(NameData * VacRelP)
 {
-	Relation		pgclass;
-	TupleDesc		pgcdesc;
-	HeapScanDesc	pgcscan;
-	HeapTuple		pgctup;
-	Buffer			buf;
+	Relation	pgclass;
+	TupleDesc	pgcdesc;
+	HeapScanDesc pgcscan;
+	HeapTuple	pgctup;
+	Buffer		buf;
 	PortalVariableMemory portalmem;
-	MemoryContext	old;
-	VRelList		vrl,
-					cur;
-	Datum			d;
-	char		   *rname;
-	char			rkind;
-	int16			smgrno;
-	bool			n;
-	ScanKeyData		pgckey;
-	bool			found = false;
+	MemoryContext old;
+	VRelList	vrl,
+				cur;
+	Datum		d;
+	char	   *rname;
+	char		rkind;
+	int16		smgrno;
+	bool		n;
+	ScanKeyData pgckey;
+	bool		found = false;
 
 	StartTransactionCommand();
 
@@ -404,23 +404,23 @@ vc_getrels(NameData * VacRelP)
 static void
 vc_vacone(Oid relid, bool analyze, List * va_cols)
 {
-	Relation		pgclass;
-	TupleDesc		pgcdesc;
-	HeapTuple		pgctup,
-					pgttup;
-	Buffer			pgcbuf;
-	HeapScanDesc	pgcscan;
-	Relation		onerel;
-	ScanKeyData		pgckey;
-	VPageListData	Vvpl;		/* List of pages to vacuum and/or clean
+	Relation	pgclass;
+	TupleDesc	pgcdesc;
+	HeapTuple	pgctup,
+				pgttup;
+	Buffer		pgcbuf;
+	HeapScanDesc pgcscan;
+	Relation	onerel;
+	ScanKeyData pgckey;
+	VPageListData Vvpl;			/* List of pages to vacuum and/or clean
 								 * indices */
-	VPageListData	Fvpl;		/* List of pages with space enough for
+	VPageListData Fvpl;			/* List of pages with space enough for
 								 * re-using */
-	VPageDescr	   *vpp;
-	Relation	   *Irel;
-	int32			nindices,
-					i;
-	VRelStats	   *vacrelstats;
+	VPageDescr *vpp;
+	Relation   *Irel;
+	int32		nindices,
+				i;
+	VRelStats  *vacrelstats;
 
 	StartTransactionCommand();
 
@@ -454,8 +454,8 @@ vc_vacone(Oid relid, bool analyze, List * va_cols)
 	vacrelstats->hasindex = false;
 	if (analyze && !IsSystemRelationName((RelationGetRelationName(onerel))->data))
 	{
-		int				attr_cnt,
-					   *attnums = NULL;
+		int			attr_cnt,
+				   *attnums = NULL;
 		AttributeTupleForm *attr;
 
 		attr_cnt = onerel->rd_att->natts;
@@ -463,8 +463,8 @@ vc_vacone(Oid relid, bool analyze, List * va_cols)
 
 		if (va_cols != NIL)
 		{
-			int				tcnt = 0;
-			List		   *le;
+			int			tcnt = 0;
+			List	   *le;
 
 			if (length(va_cols) > attr_cnt)
 				elog(WARN, "vacuum: too many attributes specified for relation %s",
@@ -472,7 +472,7 @@ vc_vacone(Oid relid, bool analyze, List * va_cols)
 			attnums = (int *) palloc(attr_cnt * sizeof(int));
 			foreach(le, va_cols)
 			{
-				char		   *col = (char *) lfirst(le);
+				char	   *col = (char *) lfirst(le);
 
 				for (i = 0; i < attr_cnt; i++)
 				{
@@ -495,9 +495,9 @@ vc_vacone(Oid relid, bool analyze, List * va_cols)
 
 		for (i = 0; i < attr_cnt; i++)
 		{
-			Operator		func_operator;
+			Operator	func_operator;
 			OperatorTupleForm pgopform;
-			VacAttrStats   *stats;
+			VacAttrStats *stats;
 
 			stats = &vacrelstats->vacattrstats[i];
 			stats->attr = palloc(ATTRIBUTE_TUPLE_SIZE);
@@ -513,7 +513,7 @@ vc_vacone(Oid relid, bool analyze, List * va_cols)
 			func_operator = oper("=", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				int				nargs;
+				int			nargs;
 
 				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
 				fmgr_info(pgopform->oprcode, &(stats->f_cmpeq), &nargs);
@@ -524,7 +524,7 @@ vc_vacone(Oid relid, bool analyze, List * va_cols)
 			func_operator = oper("<", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				int				nargs;
+				int			nargs;
 
 				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
 				fmgr_info(pgopform->oprcode, &(stats->f_cmplt), &nargs);
@@ -535,7 +535,7 @@ vc_vacone(Oid relid, bool analyze, List * va_cols)
 			func_operator = oper(">", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				int				nargs;
+				int			nargs;
 
 				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
 				fmgr_info(pgopform->oprcode, &(stats->f_cmpgt), &nargs);
@@ -642,39 +642,39 @@ static void
 vc_scanheap(VRelStats * vacrelstats, Relation onerel,
 			VPageList Vvpl, VPageList Fvpl)
 {
-	int				nblocks,
-					blkno;
-	ItemId			itemid;
-	ItemPointer		itemptr;
-	HeapTuple		htup;
-	Buffer			buf;
-	Page			page,
-					tempPage = NULL;
-	OffsetNumber	offnum,
-					maxoff;
-	bool			pgchanged,
-					tupgone,
-					dobufrel,
-					notup;
-	char		   *relname;
-	VPageDescr		vpc,
-					vp;
-	uint32			nvac,
-					ntups,
-					nunused,
-					ncrash,
-					nempg,
-					nnepg,
-					nchpg,
-					nemend;
-	Size			frsize,
-					frsusf;
-	Size			min_tlen = MAXTUPLEN;
-	Size			max_tlen = 0;
-	int32			i /* , attr_cnt */ ;
-	struct rusage	ru0,
-					ru1;
-	bool			do_shrinking = true;
+	int			nblocks,
+				blkno;
+	ItemId		itemid;
+	ItemPointer itemptr;
+	HeapTuple	htup;
+	Buffer		buf;
+	Page		page,
+				tempPage = NULL;
+	OffsetNumber offnum,
+				maxoff;
+	bool		pgchanged,
+				tupgone,
+				dobufrel,
+				notup;
+	char	   *relname;
+	VPageDescr	vpc,
+				vp;
+	uint32		nvac,
+				ntups,
+				nunused,
+				ncrash,
+				nempg,
+				nnepg,
+				nchpg,
+				nemend;
+	Size		frsize,
+				frsusf;
+	Size		min_tlen = MAXTUPLEN;
+	Size		max_tlen = 0;
+	int32		i /* , attr_cnt */ ;
+	struct rusage ru0,
+				ru1;
+	bool		do_shrinking = true;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
@@ -844,11 +844,11 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 
 			if (tupgone)
 			{
-				ItemId			lpp;
+				ItemId		lpp;
 
 				if (tempPage == (Page) NULL)
 				{
-					Size			pageSize;
+					Size		pageSize;
 
 					pageSize = PageGetPageSize(page);
 					tempPage = (Page) palloc(pageSize);
@@ -927,7 +927,7 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 	 */
 	if (do_shrinking && Vvpl->vpl_npages - nemend > 0)
 	{
-		int				nusf;	/* blocks usefull for re-using */
+		int			nusf;		/* blocks usefull for re-using */
 
 		nusf = Vvpl->vpl_npages - nemend;
 		if ((Vvpl->vpl_pgdesc[nusf - 1])->vpd_blkno == nblocks - nemend - 1)
@@ -972,50 +972,50 @@ static void
 vc_rpfheap(VRelStats * vacrelstats, Relation onerel,
 		   VPageList Vvpl, VPageList Fvpl, int nindices, Relation * Irel)
 {
-	TransactionId	myXID;
-	CommandId		myCID;
-	AbsoluteTime	myCTM = 0;
-	Buffer			buf,
-					ToBuf;
-	int				nblocks,
-					blkno;
-	Page			page,
-					ToPage = NULL;
-	OffsetNumber	offnum = 0,
-					maxoff = 0,
-					newoff,
-					moff;
-	ItemId			itemid,
-					newitemid;
-	HeapTuple		htup,
-					newtup;
-	TupleDesc		tupdesc = NULL;
-	Datum		   *idatum = NULL;
-	char		   *inulls = NULL;
+	TransactionId myXID;
+	CommandId	myCID;
+	AbsoluteTime myCTM = 0;
+	Buffer		buf,
+				ToBuf;
+	int			nblocks,
+				blkno;
+	Page		page,
+				ToPage = NULL;
+	OffsetNumber offnum = 0,
+				maxoff = 0,
+				newoff,
+				moff;
+	ItemId		itemid,
+				newitemid;
+	HeapTuple	htup,
+				newtup;
+	TupleDesc	tupdesc = NULL;
+	Datum	   *idatum = NULL;
+	char	   *inulls = NULL;
 	InsertIndexResult iresult;
-	VPageListData	Nvpl;
-	VPageDescr		ToVpd = NULL,
-					Fvplast,
-					Vvplast,
-					vpc,
-				   *vpp;
-	int				ToVpI = 0;
-	IndDesc		   *Idesc,
-				   *idcur;
-	int				Fblklast,
-					Vblklast,
-					i;
-	Size			tlen;
-	int				nmoved,
-					Fnpages,
-					Vnpages;
-	int				nchkmvd,
-					ntups;
-	bool			isempty,
-					dowrite;
-	Relation		archrel;
-	struct rusage	ru0,
-					ru1;
+	VPageListData Nvpl;
+	VPageDescr	ToVpd = NULL,
+				Fvplast,
+				Vvplast,
+				vpc,
+			   *vpp;
+	int			ToVpI = 0;
+	IndDesc    *Idesc,
+			   *idcur;
+	int			Fblklast,
+				Vblklast,
+				i;
+	Size		tlen;
+	int			nmoved,
+				Fnpages,
+				Vnpages;
+	int			nchkmvd,
+				ntups;
+	bool		isempty,
+				dowrite;
+	Relation	archrel;
+	struct rusage ru0,
+				ru1;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
@@ -1342,9 +1342,9 @@ Elapsed %u/%u sec.",
 		/* vacuum indices again if needed */
 		if (Irel != (Relation *) NULL)
 		{
-			VPageDescr	   *vpleft,
-						   *vpright,
-							vpsave;
+			VPageDescr *vpleft,
+					   *vpright,
+						vpsave;
 
 			/* re-sort Nvpl.vpl_pgdesc */
 			for (vpleft = Nvpl.vpl_pgdesc,
@@ -1426,12 +1426,12 @@ Elapsed %u/%u sec.",
 static void
 vc_vacheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl)
 {
-	Buffer			buf;
-	Page			page;
-	VPageDescr	   *vpp;
-	Relation		archrel;
-	int				nblocks;
-	int				i;
+	Buffer		buf;
+	Page		page;
+	VPageDescr *vpp;
+	Relation	archrel;
+	int			nblocks;
+	int			i;
 
 	nblocks = Vvpl->vpl_npages;
 	/* if the relation has an archive, open it */
@@ -1486,9 +1486,9 @@ vc_vacheap(VRelStats * vacrelstats, Relation onerel, VPageList Vvpl)
 static void
 vc_vacpage(Page page, VPageDescr vpd, Relation archrel)
 {
-	ItemId			itemid;
-	HeapTuple		htup;
-	int				i;
+	ItemId		itemid;
+	HeapTuple	htup;
+	int			i;
 
 	Assert(vpd->vpd_nusd == 0);
 	for (i = 0; i < vpd->vpd_noff; i++)
@@ -1513,11 +1513,11 @@ static void
 vc_scanoneind(Relation indrel, int nhtups)
 {
 	RetrieveIndexResult res;
-	IndexScanDesc	iscan;
-	int				nitups;
-	int				nipages;
-	struct rusage	ru0,
-					ru1;
+	IndexScanDesc iscan;
+	int			nitups;
+	int			nipages;
+	struct rusage ru0,
+				ru1;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
@@ -1567,14 +1567,14 @@ static void
 vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 {
 	RetrieveIndexResult res;
-	IndexScanDesc	iscan;
-	ItemPointer		heapptr;
-	int				nvac;
-	int				nitups;
-	int				nipages;
-	VPageDescr		vp;
-	struct rusage	ru0,
-					ru1;
+	IndexScanDesc iscan;
+	ItemPointer heapptr;
+	int			nvac;
+	int			nitups;
+	int			nipages;
+	VPageDescr	vp;
+	struct rusage ru0,
+				ru1;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
@@ -1639,14 +1639,14 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
  *
  *		vpl->VPageDescr_array is sorted in right order.
  */
-static			VPageDescr
+static VPageDescr
 vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 {
-	OffsetNumber	ioffno;
-	OffsetNumber   *voff;
-	VPageDescr		vp,
-				   *vpp;
-	VPageDescrData	vpd;
+	OffsetNumber ioffno;
+	OffsetNumber *voff;
+	VPageDescr	vp,
+			   *vpp;
+	VPageDescrData vpd;
 
 	vpd.vpd_blkno = ItemPointerGetBlockNumber(itemptr);
 	ioffno = ItemPointerGetOffsetNumber(itemptr);
@@ -1702,17 +1702,17 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 static void
 vc_attrstats(Relation onerel, VRelStats * vacrelstats, HeapTuple htup)
 {
-	int				i,
-					attr_cnt = vacrelstats->va_natts;
-	VacAttrStats   *vacattrstats = vacrelstats->vacattrstats;
-	TupleDesc		tupDesc = onerel->rd_att;
-	Datum			value;
-	bool			isnull;
+	int			i,
+				attr_cnt = vacrelstats->va_natts;
+	VacAttrStats *vacattrstats = vacrelstats->vacattrstats;
+	TupleDesc	tupDesc = onerel->rd_att;
+	Datum		value;
+	bool		isnull;
 
 	for (i = 0; i < attr_cnt; i++)
 	{
-		VacAttrStats   *stats = &vacattrstats[i];
-		bool			value_hit = true;
+		VacAttrStats *stats = &vacattrstats[i];
+		bool		value_hit = true;
 
 		value = (Datum) heap_getattr(htup, InvalidBuffer,
 								  stats->attr->attnum, tupDesc, &isnull);
@@ -1806,7 +1806,7 @@ vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum * bucket, int16 * bucke
 		*bucket = value;
 	else
 	{
-		int				len = (attr->attlen != -1 ? attr->attlen : VARSIZE(value));
+		int			len = (attr->attlen != -1 ? attr->attlen : VARSIZE(value));
 
 		if (len > *bucket_len)
 		{
@@ -1833,20 +1833,20 @@ vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum * bucket, int16 * bucke
 static void
 vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrelstats)
 {
-	Relation		rd,
-					ad,
-					sd;
-	HeapScanDesc	rsdesc,
-					asdesc;
-	TupleDesc		sdesc;
-	HeapTuple		rtup,
-					atup,
-					stup;
-	Buffer			rbuf,
-					abuf;
-	Form_pg_class	pgcform;
-	ScanKeyData		rskey,
-					askey;
+	Relation	rd,
+				ad,
+				sd;
+	HeapScanDesc rsdesc,
+				asdesc;
+	TupleDesc	sdesc;
+	HeapTuple	rtup,
+				atup,
+				stup;
+	Buffer		rbuf,
+				abuf;
+	Form_pg_class pgcform;
+	ScanKeyData rskey,
+				askey;
 	AttributeTupleForm attp;
 
 	/*
@@ -1872,8 +1872,8 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrels
 
 	if (vacrelstats != NULL && vacrelstats->va_natts > 0)
 	{
-		VacAttrStats   *vacattrstats = vacrelstats->vacattrstats;
-		int				natts = vacrelstats->va_natts;
+		VacAttrStats *vacattrstats = vacrelstats->vacattrstats;
+		int			natts = vacrelstats->va_natts;
 
 		ad = heap_openr(AttributeRelationName);
 		sd = heap_openr(StatisticRelationName);
@@ -1884,12 +1884,12 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrels
 
 		while (HeapTupleIsValid(atup = heap_getnext(asdesc, 0, &abuf)))
 		{
-			int				i;
-			float32data		selratio;	/* average ratio of rows selected
+			int			i;
+			float32data selratio;		/* average ratio of rows selected
 										 * for a random constant */
-			VacAttrStats   *stats;
-			Datum			values[Natts_pg_statistic];
-			char			nulls[Natts_pg_statistic];
+			VacAttrStats *stats;
+			Datum		values[Natts_pg_statistic];
+			char		nulls[Natts_pg_statistic];
 
 			attp = (AttributeTupleForm) GETSTRUCT(atup);
 			if (attp->attnum <= 0)		/* skip system attributes for now, */
@@ -1916,18 +1916,18 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrels
 					selratio = 0;
 				else if (VacAttrStatsLtGtValid(stats) && stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
 				{
-					double			min_cnt_d = stats->min_cnt,
-									max_cnt_d = stats->max_cnt,
-									null_cnt_d = stats->null_cnt,
-									nonnullcnt_d = stats->nonnull_cnt;	/* prevent overflow */
+					double		min_cnt_d = stats->min_cnt,
+								max_cnt_d = stats->max_cnt,
+								null_cnt_d = stats->null_cnt,
+								nonnullcnt_d = stats->nonnull_cnt;		/* prevent overflow */
 
 					selratio = (min_cnt_d * min_cnt_d + max_cnt_d * max_cnt_d + null_cnt_d * null_cnt_d) /
 						(nonnullcnt_d + null_cnt_d) / (nonnullcnt_d + null_cnt_d);
 				}
 				else
 				{
-					double			most = (double) (stats->best_cnt > stats->null_cnt ? stats->best_cnt : stats->null_cnt);
-					double			total = ((double) stats->nonnull_cnt) + ((double) stats->null_cnt);
+					double		most = (double) (stats->best_cnt > stats->null_cnt ? stats->best_cnt : stats->null_cnt);
+					double		total = ((double) stats->nonnull_cnt) + ((double) stats->null_cnt);
 
 					/*
 					 * we assume count of other values are 20% of best
@@ -1948,12 +1948,12 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrels
 				 */
 				if (VacAttrStatsLtGtValid(stats) && stats->initialized	/* &&
 																		 * !IsSystemRelationName(
-																		 * pgcform->relname.data)
-						*/ )
+																		 *
+						pgcform->relname.data) */ )
 				{
-					func_ptr		out_function;
-					char		   *out_string;
-					int				dummy;
+					func_ptr	out_function;
+					char	   *out_string;
+					int			dummy;
 
 					for (i = 0; i < Natts_pg_statistic; ++i)
 						nulls[i] = ' ';
@@ -2016,10 +2016,10 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats * vacrels
 static void
 vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 {
-	Relation		pgstatistic;
-	HeapScanDesc	pgsscan;
-	HeapTuple		pgstup;
-	ScanKeyData		pgskey;
+	Relation	pgstatistic;
+	HeapScanDesc pgsscan;
+	HeapTuple	pgstup;
+	ScanKeyData pgskey;
 
 	pgstatistic = heap_openr(StatisticRelationName);
 
@@ -2038,7 +2038,7 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 		if (attcnt > 0)
 		{
 			Form_pg_statistic pgs = (Form_pg_statistic) GETSTRUCT(pgstup);
-			int				i;
+			int			i;
 
 			for (i = 0; i < attcnt; i++)
 			{
@@ -2075,7 +2075,7 @@ vc_setpagelock(Relation rel, BlockNumber blkno)
 static void
 vc_reappage(VPageList vpl, VPageDescr vpc)
 {
-	VPageDescr		newvpd;
+	VPageDescr	newvpd;
 
 	/* allocate a VPageDescrData entry */
 	newvpd = (VPageDescr) palloc(sizeof(VPageDescrData) + vpc->vpd_noff * sizeof(OffsetNumber));
@@ -2110,8 +2110,8 @@ vc_vpinsert(VPageList vpl, VPageDescr vpnew)
 static void
 vc_free(VRelList vrl)
 {
-	VRelList		p_vrl;
-	MemoryContext	old;
+	VRelList	p_vrl;
+	MemoryContext old;
 	PortalVariableMemory pmem;
 
 	pmem = PortalGetVariableMemory(vc_portal);
@@ -2138,11 +2138,11 @@ vc_free(VRelList vrl)
 
 #define ARCHIVE_PREFIX	"a,"
 
-static			Relation
+static Relation
 vc_getarchrel(Relation heaprel)
 {
-	Relation		archrel;
-	char		   *archrelname;
+	Relation	archrel;
+	char	   *archrelname;
 
 	archrelname = palloc(sizeof(ARCHIVE_PREFIX) + NAMEDATALEN); /* bogus */
 	sprintf(archrelname, "%s%d", ARCHIVE_PREFIX, heaprel->rd_id);
@@ -2165,7 +2165,7 @@ vc_archive(Relation archrel, HeapTuple htup)
 	doinsert(archrel, htup);
 }
 
-static			bool
+static bool
 vc_isarchrel(char *rname)
 {
 	if (strncmp(ARCHIVE_PREFIX, rname, strlen(ARCHIVE_PREFIX)) == 0)
@@ -2174,14 +2174,14 @@ vc_isarchrel(char *rname)
 	return (false);
 }
 
-static char    *
+static char *
 vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, char *))
 {
-	int				res;
-	int				last = nelem - 1;
-	int				celm = nelem / 2;
-	bool			last_move,
-					first_move;
+	int			res;
+	int			last = nelem - 1;
+	int			celm = nelem / 2;
+	bool		last_move,
+				first_move;
 
 	last_move = first_move = true;
 	for (;;)
@@ -2231,8 +2231,8 @@ vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, cha
 static int
 vc_cmp_blk(char *left, char *right)
 {
-	BlockNumber		lblk,
-					rblk;
+	BlockNumber lblk,
+				rblk;
 
 	lblk = (*((VPageDescr *) left))->vpd_blkno;
 	rblk = (*((VPageDescr *) right))->vpd_blkno;
@@ -2261,17 +2261,17 @@ vc_cmp_offno(char *left, char *right)
 static void
 vc_getindices(Oid relid, int *nindices, Relation ** Irel)
 {
-	Relation		pgindex;
-	Relation		irel;
-	TupleDesc		pgidesc;
-	HeapTuple		pgitup;
-	HeapScanDesc	pgiscan;
-	Datum			d;
-	int				i,
-					k;
-	bool			n;
-	ScanKeyData		pgikey;
-	Oid			   *ioid;
+	Relation	pgindex;
+	Relation	irel;
+	TupleDesc	pgidesc;
+	HeapTuple	pgitup;
+	HeapScanDesc pgiscan;
+	Datum		d;
+	int			i,
+				k;
+	bool		n;
+	ScanKeyData pgikey;
+	Oid		   *ioid;
 
 	*nindices = i = 0;
 
@@ -2354,11 +2354,11 @@ vc_clsindices(int nindices, Relation * Irel)
 static void
 vc_mkindesc(Relation onerel, int nindices, Relation * Irel, IndDesc ** Idesc)
 {
-	IndDesc		   *idcur;
-	HeapTuple		pgIndexTup;
-	AttrNumber	   *attnumP;
-	int				natts;
-	int				i;
+	IndDesc    *idcur;
+	HeapTuple	pgIndexTup;
+	AttrNumber *attnumP;
+	int			natts;
+	int			i;
 
 	*Idesc = (IndDesc *) palloc(nindices * sizeof(IndDesc));
 
@@ -2390,7 +2390,7 @@ vc_mkindesc(Relation onerel, int nindices, Relation * Irel, IndDesc ** Idesc)
 }								/* vc_mkindesc */
 
 
-static			bool
+static bool
 vc_enough_space(VPageDescr vpd, Size len)
 {
 

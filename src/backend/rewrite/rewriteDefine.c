@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.4 1997/09/07 04:48:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.5 1997/09/08 02:28:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include "rewrite/rewriteSupport.h"
 #include "tcop/tcopprot.h"
 
-Oid				LastOidProcessed = InvalidOid;
+Oid			LastOidProcessed = InvalidOid;
 
 /*
  * This is too small for many rule plans, but it'll have to do for now.
@@ -43,8 +43,8 @@ Oid				LastOidProcessed = InvalidOid;
 static void
 strcpyq(char *dest, char *source)
 {
-	char		   *current = source,
-				   *destp = dest;
+	char	   *current = source,
+			   *destp = dest;
 
 	for (current = source; *current; current++)
 	{
@@ -75,7 +75,7 @@ strcpyq(char *dest, char *source)
  *				evinstead		-		is an instead rule
  *				actiontree		-		parsetree(s) of rule action
  */
-static			Oid
+static Oid
 InsertRule(char *rulname,
 		   int evtype,
 		   char *evobj,
@@ -84,15 +84,15 @@ InsertRule(char *rulname,
 		   bool evinstead,
 		   char *actiontree)
 {
-	static char		rulebuf[RULE_PLAN_SIZE];
-	static char		actionbuf[RULE_PLAN_SIZE];
-	static char		qualbuf[RULE_PLAN_SIZE];
-	Oid				eventrel_oid = InvalidOid;
-	AttrNumber		evslot_index = InvalidAttrNumber;
-	Relation		eventrel = NULL;
-	char		   *is_instead = "f";
-	extern void		eval_as_new_xact();
-	char		   *template;
+	static char rulebuf[RULE_PLAN_SIZE];
+	static char actionbuf[RULE_PLAN_SIZE];
+	static char qualbuf[RULE_PLAN_SIZE];
+	Oid			eventrel_oid = InvalidOid;
+	AttrNumber	evslot_index = InvalidAttrNumber;
+	Relation	eventrel = NULL;
+	char	   *is_instead = "f";
+	extern void eval_as_new_xact();
+	char	   *template;
 
 	eventrel = heap_openr(evobj);
 	if (eventrel == NULL)
@@ -172,7 +172,7 @@ ValidateRule(int event_type,
 	 */
 	if (is_instead && !*action && eslot_string && event_type == CMD_SELECT)
 	{
-		char		   *temp_buffer = (char *) palloc(strlen(template) + 80);
+		char	   *temp_buffer = (char *) palloc(strlen(template) + 80);
 
 		sprintf(temp_buffer, template, event_attype,
 				get_typlen(event_attype), eslot_string,
@@ -188,19 +188,19 @@ ValidateRule(int event_type,
 void
 DefineQueryRewrite(RuleStmt * stmt)
 {
-	CmdType			event_type = stmt->event;
-	Attr		   *event_obj = stmt->object;
-	Node		   *event_qual = stmt->whereClause;
-	bool			is_instead = stmt->instead;
-	List		   *action = stmt->actions;
-	Relation		event_relation = NULL;
-	Oid				ruleId;
-	Oid				ev_relid = 0;
-	char		   *eslot_string = NULL;
-	int				event_attno = 0;
-	Oid				event_attype = 0;
-	char		   *actionP,
-				   *event_qualP;
+	CmdType		event_type = stmt->event;
+	Attr	   *event_obj = stmt->object;
+	Node	   *event_qual = stmt->whereClause;
+	bool		is_instead = stmt->instead;
+	List	   *action = stmt->actions;
+	Relation	event_relation = NULL;
+	Oid			ruleId;
+	Oid			ev_relid = 0;
+	char	   *eslot_string = NULL;
+	int			event_attno = 0;
+	Oid			event_attype = 0;
+	char	   *actionP,
+			   *event_qualP;
 
 	if (event_obj->attrs)
 		eslot_string = strVal(lfirst(event_obj->attrs));

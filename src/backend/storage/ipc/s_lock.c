@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.22 1997/09/07 04:48:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.23 1997/09/08 02:28:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ S_LOCK_FREE(slock_t * lock)
 	defined(sparc_solaris)
 /* for xxxxx_solaris, this is defined in port/.../tas.s */
 
-static int		tas(slock_t * lock);
+static int	tas(slock_t * lock);
 
 void
 S_LOCK(slock_t * lock)
@@ -227,9 +227,9 @@ S_INIT_LOCK(slock_t * lock)
 * a "set" slock_t has a single word cleared.  a "clear" slock_t has
 * all words set to non-zero.
 */
-static slock_t	clear_lock = {-1, -1, -1, -1};
+static slock_t clear_lock = {-1, -1, -1, -1};
 
-static int		tas(slock_t * lock);
+static int	tas(slock_t * lock);
 
 void
 S_LOCK(slock_t * lock)
@@ -253,7 +253,7 @@ S_INIT_LOCK(slock_t * lock)
 int
 S_LOCK_FREE(slock_t * lock)
 {
-	register int   *lock_word = (int *) (((long) lock + 15) & ~15);
+	register int *lock_word = (int *) (((long) lock + 15) & ~15);
 
 	return (*lock_word != 0);
 }
@@ -266,7 +266,7 @@ S_LOCK_FREE(slock_t * lock)
 
 #if defined(sun3)
 
-static int		tas(slock_t * lock);
+static int	tas(slock_t * lock);
 
 void
 S_LOCK(slock_t * lock)
@@ -320,7 +320,7 @@ tas_dummy()
 #define asm(x)	__asm__(x)
 #endif
 
-static int		tas(slock_t * lock);
+static int	tas(slock_t * lock);
 
 static int
 tas_dummy()
@@ -388,7 +388,7 @@ S_INIT_LOCK(unsigned char *addr)
 void
 S_LOCK(slock_t * lock)
 {
-	slock_t			res;
+	slock_t		res;
 
 	do
 	{
@@ -416,7 +416,7 @@ S_INIT_LOCK(slock_t * lock)
 void
 S_LOCK(slock_t * lock)
 {
-	slock_t			res;
+	slock_t		res;
 
 	do
 	{
@@ -456,7 +456,7 @@ S_INIT_LOCK(slock_t * lock)
 void
 S_LOCK(slock_t * lock)
 {
-	slock_t			res;
+	slock_t		res;
 
 	do
 	{

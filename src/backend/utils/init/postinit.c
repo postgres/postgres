@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.13 1997/09/07 04:53:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.14 1997/09/08 02:31:58 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -70,13 +70,13 @@
 #include "port-protos.h"
 #include "libpq/libpq-be.h"
 
-static void		InitCommunication(void);
-static void		InitMyDatabaseId(void);
-static void		InitStdio(void);
-static void		InitUserid(void);
+static void InitCommunication(void);
+static void InitMyDatabaseId(void);
+static void InitStdio(void);
+static void InitUserid(void);
 
 
-static IPCKey	PostgresIpcKey;
+static IPCKey PostgresIpcKey;
 
 /* ----------------------------------------------------------------
  *						InitPostgres support
@@ -106,15 +106,15 @@ static IPCKey	PostgresIpcKey;
 static void
 InitMyDatabaseId()
 {
-	int				dbfd;
-	int				fileflags;
-	int				nbytes;
-	int				max,
-					i;
-	HeapTuple		tup;
-	Page			pg;
-	PageHeader		ph;
-	char		   *dbfname;
+	int			dbfd;
+	int			fileflags;
+	int			nbytes;
+	int			max,
+				i;
+	HeapTuple	tup;
+	Page		pg;
+	PageHeader	ph;
+	char	   *dbfname;
 	Form_pg_database tup_db;
 
 	/*
@@ -165,7 +165,7 @@ InitMyDatabaseId()
 		/* look at each tuple on the page */
 		for (i = 0; i <= max; i++)
 		{
-			int				offset;
+			int			offset;
 
 			/* if it's a freed tuple, ignore it */
 			if (!(ph->pd_linp[i].lp_flags & LP_USED))
@@ -253,11 +253,11 @@ done:
 static void
 DoChdirAndInitDatabaseNameAndPath(char *name)
 {
-	char		   *reason;
+	char	   *reason;
 
 	/* Failure reason returned by some function.  NULL if no failure */
-	int				fd;
-	char			errormsg[1000];
+	int			fd;
+	char		errormsg[1000];
 
 	if ((fd = open(DataDir, O_RDONLY, 0)) == -1)
 		sprintf(errormsg, "Database system does not exist.  "
@@ -266,8 +266,7 @@ DoChdirAndInitDatabaseNameAndPath(char *name)
 				DataDir);
 	else
 	{
-		char			myPath[MAXPGPATH];		/* DatabasePath points
-												 * here! */
+		char		myPath[MAXPGPATH];	/* DatabasePath points here! */
 
 		close(fd);
 		if (strlen(DataDir) + strlen(name) + 10 > sizeof(myPath))
@@ -317,8 +316,8 @@ DoChdirAndInitDatabaseNameAndPath(char *name)
 						 * The directories and PG_VERSION files are in
 						 * order.
 						 */
-						int				rc;		/* return code from some
-												 * function we call */
+						int			rc; /* return code from some function
+										 * we call */
 
 						SetDatabasePath(myPath);
 						SetDatabaseName(name);
@@ -368,9 +367,9 @@ InitUserid()
 static void
 InitCommunication()
 {
-	char		   *postid;
-	char		   *postport;
-	IPCKey			key = 0;
+	char	   *postid;
+	char	   *postport;
+	IPCKey		key = 0;
 
 	/* ----------------
 	 *	try and get the backend tag from POSTID
@@ -495,8 +494,8 @@ InitStdio()
  *		Be very careful with the order of calls in the InitPostgres function.
  * --------------------------------
  */
-bool			PostgresIsInitialized = false;
-extern int		NBuffers;
+bool		PostgresIsInitialized = false;
+extern int	NBuffers;
 
 /*
  *	this global is used by wei for testing his code, but must be declared
@@ -505,14 +504,14 @@ extern int		NBuffers;
  */
 
 /*int	testFlag = 0;*/
-int				lockingOff = 0;
+int			lockingOff = 0;
 
 /*
  */
 void
 InitPostgres(char *name)		/* database name */
 {
-	bool			bootstrap;	/* true if BootstrapProcessing */
+	bool		bootstrap;		/* true if BootstrapProcessing */
 
 	/* ----------------
 	 *	see if we're running in BootstrapProcessing mode

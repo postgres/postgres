@@ -40,9 +40,9 @@
 /* character-name table */
 static struct cname
 {
-	char		   *name;
-	char			code;
-}				cnames[] =
+	char	   *name;
+	char		code;
+}			cnames[] =
 
 {
 	{

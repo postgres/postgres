@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.18 1997/09/07 04:40:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.19 1997/09/08 02:21:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,16 +86,16 @@
 
 #include <storage/lmgr.h>
 
-static int		notifyFrontEndPending = 0;
-static int		notifyIssued = 0;
-static Dllist  *pendingNotifies = NULL;
+static int	notifyFrontEndPending = 0;
+static int	notifyIssued = 0;
+static Dllist *pendingNotifies = NULL;
 
 
-static int		AsyncExistsPendingNotify(char *);
-static void		ClearPendingNotify(void);
-static void		Async_NotifyFrontEnd(void);
-static void		Async_Unlisten(char *relname, int pid);
-static void		Async_UnlistenOnExit(int code, char *relname);
+static int	AsyncExistsPendingNotify(char *);
+static void ClearPendingNotify(void);
+static void Async_NotifyFrontEnd(void);
+static void Async_Unlisten(char *relname, int pid);
+static void Async_UnlistenOnExit(int code, char *relname);
 
 /*
  *--------------------------------------------------------------
@@ -169,20 +169,20 @@ void
 Async_Notify(char *relname)
 {
 
-	HeapTuple		lTuple,
-					rTuple;
-	Relation		lRel;
-	HeapScanDesc	sRel;
-	TupleDesc		tdesc;
-	ScanKeyData		key;
-	Buffer			b;
-	Datum			d,
-					value[3];
-	bool			isnull;
-	char			repl[3],
-					nulls[3];
+	HeapTuple	lTuple,
+				rTuple;
+	Relation	lRel;
+	HeapScanDesc sRel;
+	TupleDesc	tdesc;
+	ScanKeyData key;
+	Buffer		b;
+	Datum		d,
+				value[3];
+	bool		isnull;
+	char		repl[3],
+				nulls[3];
 
-	char		   *notifyName;
+	char	   *notifyName;
 
 #ifdef ASYNC_DEBUG
 	elog(DEBUG, "Async_Notify: %s", relname);
@@ -256,15 +256,15 @@ Async_Notify(char *relname)
 void
 Async_NotifyAtCommit()
 {
-	HeapTuple		lTuple;
-	Relation		lRel;
-	HeapScanDesc	sRel;
-	TupleDesc		tdesc;
-	ScanKeyData		key;
-	Datum			d;
-	int				ourpid;
-	bool			isnull;
-	Buffer			b;
+	HeapTuple	lTuple;
+	Relation	lRel;
+	HeapScanDesc sRel;
+	TupleDesc	tdesc;
+	ScanKeyData key;
+	Datum		d;
+	int			ourpid;
+	bool		isnull;
+	Buffer		b;
 	extern TransactionState CurrentTransactionState;
 
 	if (!pendingNotifies)
@@ -406,21 +406,21 @@ Async_NotifyAtAbort()
 void
 Async_Listen(char *relname, int pid)
 {
-	Datum			values[Natts_pg_listener];
-	char			nulls[Natts_pg_listener];
-	TupleDesc		tdesc;
-	HeapScanDesc	s;
-	HeapTuple		htup,
-					tup;
-	Relation		lDesc;
-	Buffer			b;
-	Datum			d;
-	int				i;
-	bool			isnull;
-	int				alreadyListener = 0;
-	int				ourPid = getpid();
-	char		   *relnamei;
-	TupleDesc		tupDesc;
+	Datum		values[Natts_pg_listener];
+	char		nulls[Natts_pg_listener];
+	TupleDesc	tdesc;
+	HeapScanDesc s;
+	HeapTuple	htup,
+				tup;
+	Relation	lDesc;
+	Buffer		b;
+	Datum		d;
+	int			i;
+	bool		isnull;
+	int			alreadyListener = 0;
+	int			ourPid = getpid();
+	char	   *relnamei;
+	TupleDesc	tupDesc;
 
 #ifdef ASYNC_DEBUG
 	elog(DEBUG, "Async_Listen: %s", relname);
@@ -513,8 +513,8 @@ Async_Listen(char *relname, int pid)
 static void
 Async_Unlisten(char *relname, int pid)
 {
-	Relation		lDesc;
-	HeapTuple		lTuple;
+	Relation	lDesc;
+	HeapTuple	lTuple;
 
 	lTuple = SearchSysCacheTuple(LISTENREL, PointerGetDatum(relname),
 								 Int32GetDatum(pid),
@@ -560,25 +560,25 @@ Async_UnlistenOnExit(int code,	/* from exitpg */
  *
  * --------------------------------------------------------------
  */
-GlobalMemory	notifyContext = NULL;
+GlobalMemory notifyContext = NULL;
 
 static void
 Async_NotifyFrontEnd()
 {
 	extern CommandDest whereToSendOutput;
-	HeapTuple		lTuple,
-					rTuple;
-	Relation		lRel;
-	HeapScanDesc	sRel;
-	TupleDesc		tdesc;
-	ScanKeyData		key[2];
-	Datum			d,
-					value[3];
-	char			repl[3],
-					nulls[3];
-	Buffer			b;
-	int				ourpid;
-	bool			isnull;
+	HeapTuple	lTuple,
+				rTuple;
+	Relation	lRel;
+	HeapScanDesc sRel;
+	TupleDesc	tdesc;
+	ScanKeyData key[2];
+	Datum		d,
+				value[3];
+	char		repl[3],
+				nulls[3];
+	Buffer		b;
+	int			ourpid;
+	bool		isnull;
 
 	notifyFrontEndPending = 0;
 
@@ -635,7 +635,7 @@ Async_NotifyFrontEnd()
 static int
 AsyncExistsPendingNotify(char *relname)
 {
-	Dlelem		   *p;
+	Dlelem	   *p;
 
 	for (p = DLGetHead(pendingNotifies);
 		 p != NULL;
@@ -652,7 +652,7 @@ AsyncExistsPendingNotify(char *relname)
 static void
 ClearPendingNotify()
 {
-	Dlelem		   *p;
+	Dlelem	   *p;
 
 	while ((p = DLRemHead(pendingNotifies)) != NULL)
 		free(DLE_VAL(p));

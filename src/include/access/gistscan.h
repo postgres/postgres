@@ -16,13 +16,13 @@
 #include <storage/block.h>
 #include <utils/rel.h>
 
-extern IndexScanDesc
+extern		IndexScanDesc
 gistbeginscan(Relation r, bool fromEnd,
 			  uint16 nkeys, ScanKey key);
-extern void		gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key);
-extern void		gistmarkpos(IndexScanDesc s);
-extern void		gistrestrpos(IndexScanDesc s);
-extern void		gistendscan(IndexScanDesc s);
-extern void		gistadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum);
+extern void gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key);
+extern void gistmarkpos(IndexScanDesc s);
+extern void gistrestrpos(IndexScanDesc s);
+extern void gistendscan(IndexScanDesc s);
+extern void gistadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum);
 
 #endif							/* GISTSCAN_H */

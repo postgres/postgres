@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.11 1997/09/07 04:52:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.12 1997/09/08 02:31:09 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -34,15 +34,15 @@
 #include "catalog/pg_type.h"	/* for OID of int28 type */
 #include "lib/dllist.h"
 
-static void		CatCacheRemoveCTup(CatCache * cache, Dlelem * e);
-static Index	CatalogCacheComputeHashIndex(struct catcache * cacheInP);
+static void CatCacheRemoveCTup(CatCache * cache, Dlelem * e);
+static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);
 static Index
 CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 								  Relation relation, HeapTuple tuple);
 static void
 CatalogCacheInitializeCache(struct catcache * cache,
 							Relation relation);
-static long		comphash(long l, char *v);
+static long comphash(long l, char *v);
 
 /* ----------------
  *		variables, macros and other stuff
@@ -68,17 +68,17 @@ static long		comphash(long l, char *v);
 #define CACHE6_elog(a,b,c,d,e,f,g)
 #endif
 
-CatCache	   *Caches = NULL;
-GlobalMemory	CacheCxt;
+CatCache   *Caches = NULL;
+GlobalMemory CacheCxt;
 
-static int		DisableCache;
+static int	DisableCache;
 
 /* ----------------
  *		EQPROC is used in CatalogCacheInitializeCache
  *		XXX this should be replaced by catalog lookups soon
  * ----------------
  */
-static long		eqproc[] = {
+static long eqproc[] = {
 	F_BOOLEQ, 0l, F_CHAREQ, F_CHAR16EQ, 0l,
 	F_INT2EQ, F_KEYFIRSTEQ, F_INT4EQ, 0l, F_TEXTEQ,
 	F_OIDEQ, 0l, 0l, 0l, F_OID8EQ
@@ -120,10 +120,10 @@ static void
 CatalogCacheInitializeCache(struct catcache * cache,
 							Relation relation)
 {
-	MemoryContext	oldcxt;
-	short			didopen = 0;
-	short			i;
-	TupleDesc		tupdesc;
+	MemoryContext oldcxt;
+	short		didopen = 0;
+	short		i;
+	TupleDesc	tupdesc;
 
 	CatalogCacheInitializeCache_DEBUG1;
 
@@ -289,17 +289,17 @@ CatalogCacheSetId(CatCache * cacheInOutP, int id)
 static long
 comphash(long l, register char *v)
 {
-	long			i;
-	NameData		n;
+	long		i;
+	NameData	n;
 
 	CACHE3_elog(DEBUG, "comphash (%d,%x)", l, v);
 
 	switch (l)
 	{
-	case 1:
-	case 2:
-	case 4:
-		return ((long) v);
+		case 1:
+		case 2:
+		case 4:
+			return ((long) v);
 	}
 
 	if (l == NAMEDATALEN)
@@ -329,10 +329,10 @@ comphash(long l, register char *v)
  *		CatalogCacheComputeHashIndex
  * --------------------------------
  */
-static			Index
+static Index
 CatalogCacheComputeHashIndex(struct catcache * cacheInP)
 {
-	Index			hashIndex;
+	Index		hashIndex;
 
 	hashIndex = 0x0;
 	CACHE6_elog(DEBUG, "CatalogCacheComputeHashIndex %s %d %d %d %x",
@@ -344,25 +344,25 @@ CatalogCacheComputeHashIndex(struct catcache * cacheInP)
 
 	switch (cacheInP->cc_nkeys)
 	{
-	case 4:
-		hashIndex ^= comphash(cacheInP->cc_klen[3],
+		case 4:
+			hashIndex ^= comphash(cacheInP->cc_klen[3],
 						 (char *) cacheInP->cc_skey[3].sk_argument) << 9;
-		/* FALLTHROUGH */
-	case 3:
-		hashIndex ^= comphash(cacheInP->cc_klen[2],
+			/* FALLTHROUGH */
+		case 3:
+			hashIndex ^= comphash(cacheInP->cc_klen[2],
 						 (char *) cacheInP->cc_skey[2].sk_argument) << 6;
-		/* FALLTHROUGH */
-	case 2:
-		hashIndex ^= comphash(cacheInP->cc_klen[1],
+			/* FALLTHROUGH */
+		case 2:
+			hashIndex ^= comphash(cacheInP->cc_klen[1],
 						 (char *) cacheInP->cc_skey[1].sk_argument) << 3;
-		/* FALLTHROUGH */
-	case 1:
-		hashIndex ^= comphash(cacheInP->cc_klen[0],
+			/* FALLTHROUGH */
+		case 1:
+			hashIndex ^= comphash(cacheInP->cc_klen[0],
 							  (char *) cacheInP->cc_skey[0].sk_argument);
-		break;
-	default:
-		elog(FATAL, "CCComputeHashIndex: %d cc_nkeys", cacheInP->cc_nkeys);
-		break;
+			break;
+		default:
+			elog(FATAL, "CCComputeHashIndex: %d cc_nkeys", cacheInP->cc_nkeys);
+			break;
 	}
 	hashIndex %= cacheInP->cc_size;
 	return (hashIndex);
@@ -372,62 +372,62 @@ CatalogCacheComputeHashIndex(struct catcache * cacheInP)
  *		CatalogCacheComputeTupleHashIndex
  * --------------------------------
  */
-static			Index
+static Index
 CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 								  Relation relation,
 								  HeapTuple tuple)
 {
-	bool			isNull = '\0';
+	bool		isNull = '\0';
 
 	if (cacheInOutP->relationId == InvalidOid)
 		CatalogCacheInitializeCache(cacheInOutP, relation);
 	switch (cacheInOutP->cc_nkeys)
 	{
-	case 4:
-		cacheInOutP->cc_skey[3].sk_argument =
-			(cacheInOutP->cc_key[3] == ObjectIdAttributeNumber)
-			? (Datum) tuple->t_oid
-			: (Datum) fastgetattr(tuple,
-								  cacheInOutP->cc_key[3],
-								  RelationGetTupleDescriptor(relation),
-								  &isNull);
-		Assert(!isNull);
-		/* FALLTHROUGH */
-	case 3:
-		cacheInOutP->cc_skey[2].sk_argument =
-			(cacheInOutP->cc_key[2] == ObjectIdAttributeNumber)
-			? (Datum) tuple->t_oid
-			: (Datum) fastgetattr(tuple,
-								  cacheInOutP->cc_key[2],
-								  RelationGetTupleDescriptor(relation),
-								  &isNull);
-		Assert(!isNull);
-		/* FALLTHROUGH */
-	case 2:
-		cacheInOutP->cc_skey[1].sk_argument =
-			(cacheInOutP->cc_key[1] == ObjectIdAttributeNumber)
-			? (Datum) tuple->t_oid
-			: (Datum) fastgetattr(tuple,
-								  cacheInOutP->cc_key[1],
-								  RelationGetTupleDescriptor(relation),
-								  &isNull);
-		Assert(!isNull);
-		/* FALLTHROUGH */
-	case 1:
-		cacheInOutP->cc_skey[0].sk_argument =
-			(cacheInOutP->cc_key[0] == ObjectIdAttributeNumber)
-			? (Datum) tuple->t_oid
-			: (Datum) fastgetattr(tuple,
-								  cacheInOutP->cc_key[0],
-								  RelationGetTupleDescriptor(relation),
-								  &isNull);
-		Assert(!isNull);
-		break;
-	default:
-		elog(FATAL, "CCComputeTupleHashIndex: %d cc_nkeys",
-			 cacheInOutP->cc_nkeys
-			);
-		break;
+		case 4:
+			cacheInOutP->cc_skey[3].sk_argument =
+				(cacheInOutP->cc_key[3] == ObjectIdAttributeNumber)
+				? (Datum) tuple->t_oid
+				: (Datum) fastgetattr(tuple,
+									  cacheInOutP->cc_key[3],
+									RelationGetTupleDescriptor(relation),
+									  &isNull);
+			Assert(!isNull);
+			/* FALLTHROUGH */
+		case 3:
+			cacheInOutP->cc_skey[2].sk_argument =
+				(cacheInOutP->cc_key[2] == ObjectIdAttributeNumber)
+				? (Datum) tuple->t_oid
+				: (Datum) fastgetattr(tuple,
+									  cacheInOutP->cc_key[2],
+									RelationGetTupleDescriptor(relation),
+									  &isNull);
+			Assert(!isNull);
+			/* FALLTHROUGH */
+		case 2:
+			cacheInOutP->cc_skey[1].sk_argument =
+				(cacheInOutP->cc_key[1] == ObjectIdAttributeNumber)
+				? (Datum) tuple->t_oid
+				: (Datum) fastgetattr(tuple,
+									  cacheInOutP->cc_key[1],
+									RelationGetTupleDescriptor(relation),
+									  &isNull);
+			Assert(!isNull);
+			/* FALLTHROUGH */
+		case 1:
+			cacheInOutP->cc_skey[0].sk_argument =
+				(cacheInOutP->cc_key[0] == ObjectIdAttributeNumber)
+				? (Datum) tuple->t_oid
+				: (Datum) fastgetattr(tuple,
+									  cacheInOutP->cc_key[0],
+									RelationGetTupleDescriptor(relation),
+									  &isNull);
+			Assert(!isNull);
+			break;
+		default:
+			elog(FATAL, "CCComputeTupleHashIndex: %d cc_nkeys",
+				 cacheInOutP->cc_nkeys
+				);
+			break;
 	}
 
 	return
@@ -441,9 +441,9 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 static void
 CatCacheRemoveCTup(CatCache * cache, Dlelem * elt)
 {
-	CatCTup		   *ct;
-	CatCTup		   *other_ct;
-	Dlelem		   *other_elt;
+	CatCTup    *ct;
+	CatCTup    *other_ct;
+	Dlelem	   *other_elt;
 
 	if (elt)
 		ct = (CatCTup *) DLE_VAL(elt);
@@ -475,10 +475,10 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 						 Index hashIndex,
 						 ItemPointer pointer)
 {
-	CatCache	   *ccp;
-	CatCTup		   *ct;
-	Dlelem		   *elt;
-	MemoryContext	oldcxt;
+	CatCache   *ccp;
+	CatCTup    *ct;
+	Dlelem	   *elt;
+	MemoryContext oldcxt;
 
 	/* ----------------
 	 *	sanity checks
@@ -558,7 +558,7 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 void
 ResetSystemCache()
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 	struct catcache *cache;
 
 	/* ----------------
@@ -593,12 +593,12 @@ ResetSystemCache()
 	 */
 	for (cache = Caches; PointerIsValid(cache); cache = cache->cc_next)
 	{
-		int				hash;
+		int			hash;
 
 		for (hash = 0; hash < NCCBUCK; hash += 1)
 		{
-			Dlelem		   *elt,
-						   *nextelt;
+			Dlelem	   *elt,
+					   *nextelt;
 
 			for (elt = DLGetHead(cache->cc_cache[hash]); elt; elt = nextelt)
 			{
@@ -645,7 +645,7 @@ elog(DEBUG, "InitSysCache: rid=%d id=%d nkeys=%d size=%d\n", \
 #define InitSysCache_DEBUG1
 #endif
 
-CatCache	   *
+CatCache   *
 InitSysCache(char *relname,
 			 char *iname,
 			 int id,
@@ -653,11 +653,11 @@ InitSysCache(char *relname,
 			 int key[],
 			 HeapTuple(*iScanfuncP) ())
 {
-	CatCache	   *cp;
-	register int	i;
-	MemoryContext	oldcxt;
+	CatCache   *cp;
+	register int i;
+	MemoryContext oldcxt;
 
-	char		   *indname;
+	char	   *indname;
 
 	indname = (iname) ? iname : NULL;
 
@@ -691,7 +691,7 @@ InitSysCache(char *relname,
 		 * We could move this to dllist.c, but the way we do this is not
 		 * dynamic/portabl, so why allow other routines to use it.
 		 */
-		Dllist		   *cache_begin = malloc((NCCBUCK + 1) * sizeof(Dllist));
+		Dllist	   *cache_begin = malloc((NCCBUCK + 1) * sizeof(Dllist));
 
 		for (i = 0; i <= NCCBUCK; ++i)
 		{
@@ -798,16 +798,16 @@ SearchSysCache(struct catcache * cache,
 			   Datum v3,
 			   Datum v4)
 {
-	unsigned		hash;
-	CatCTup		   *ct = NULL;
-	CatCTup		   *nct;
-	CatCTup		   *nct2;
-	Dlelem		   *elt;
-	HeapTuple		ntp = 0;
-	Buffer			buffer;
+	unsigned	hash;
+	CatCTup    *ct = NULL;
+	CatCTup    *nct;
+	CatCTup    *nct2;
+	Dlelem	   *elt;
+	HeapTuple	ntp = 0;
+	Buffer		buffer;
 
-	Relation		relation;
-	MemoryContext	oldcxt;
+	Relation	relation;
+	MemoryContext oldcxt;
 
 	/* ----------------
 	 *	sanity checks
@@ -859,7 +859,7 @@ SearchSysCache(struct catcache * cache,
 	 */
 	if (elt)
 	{
-		Dlelem		   *old_lru_elt;
+		Dlelem	   *old_lru_elt;
 
 		old_lru_elt = ((CatCTup *) DLE_VAL(elt))->ct_node;
 		DLRemove(old_lru_elt);
@@ -932,18 +932,18 @@ SearchSysCache(struct catcache * cache,
 		Assert(cache->cc_iscanfunc);
 		switch (cache->cc_nkeys)
 		{
-		case 4:
-			ntp = cache->cc_iscanfunc(relation, v1, v2, v3, v4);
-			break;
-		case 3:
-			ntp = cache->cc_iscanfunc(relation, v1, v2, v3);
-			break;
-		case 2:
-			ntp = cache->cc_iscanfunc(relation, v1, v2);
-			break;
-		case 1:
-			ntp = cache->cc_iscanfunc(relation, v1);
-			break;
+			case 4:
+				ntp = cache->cc_iscanfunc(relation, v1, v2, v3, v4);
+				break;
+			case 3:
+				ntp = cache->cc_iscanfunc(relation, v1, v2, v3);
+				break;
+			case 2:
+				ntp = cache->cc_iscanfunc(relation, v1, v2);
+				break;
+			case 1:
+				ntp = cache->cc_iscanfunc(relation, v1);
+				break;
 		}
 		/* ----------
 		 *	Back to Cache context. If we got a tuple copy it
@@ -959,7 +959,7 @@ SearchSysCache(struct catcache * cache,
 	}
 	else
 	{
-		HeapScanDesc	sd;
+		HeapScanDesc sd;
 
 		/* ----------
 		 *	As above do the lookup in the callers memory
@@ -1004,7 +1004,7 @@ SearchSysCache(struct catcache * cache,
 		 *	to the heap tuple there and initialize the list pointers.
 		 * ----------------
 		 */
-		Dlelem		   *lru_elt;
+		Dlelem	   *lru_elt;
 
 		/*
 		 * this is a little cumbersome here because we want the Dlelem's
@@ -1030,7 +1030,7 @@ SearchSysCache(struct catcache * cache,
 		 */
 		if (++cache->cc_ntup > cache->cc_maxtup)
 		{
-			CatCTup		   *ct;
+			CatCTup    *ct;
 
 			elt = DLGetTail(cache->cc_lrulist);
 			ct = (CatCTup *) DLE_VAL(elt);
@@ -1078,8 +1078,8 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 							  void (*function) (int, Index, ItemPointer))
 {
 	struct catcache *ccp;
-	MemoryContext	oldcxt;
-	Oid				relationId;
+	MemoryContext oldcxt;
+	Oid			relationId;
 
 	/* ----------------
 	 *	sanity checks

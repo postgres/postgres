@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.4 1997/09/07 04:57:17 momjian Exp $
+ * $Id: pg_version.h,v 1.5 1997/09/08 02:35:35 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,9 +32,9 @@
  */
 CATALOG(pg_version)
 {
-	Oid				verrelid;
-	Oid				verbaseid;
-	int4			vertime;	/* really should be some abstime */
+	Oid			verrelid;
+	Oid			verbaseid;
+	int4		vertime;		/* really should be some abstime */
 } FormData_pg_version;
 
 /* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.9 1997/09/07 05:03:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.10 1997/09/08 02:40:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,9 @@
 
 struct authsvc
 {
-	char			name[16];	/* service nickname (for command line) */
-	MsgType			msgtype;	/* startup packet header type */
-	int				allowed;	/* initially allowed (before command line
+	char		name[16];		/* service nickname (for command line) */
+	MsgType		msgtype;		/* startup packet header type */
+	int			allowed;		/* initially allowed (before command line
 								 * option parsing)? */
 };
 
@@ -84,7 +84,7 @@ static struct authsvc authsvcs[] = {
 	{"password", STARTUP_PASSWORD_MSG, 0}
 };
 
-static			n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
+static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
 /*----------------------------------------------------------------
@@ -95,7 +95,7 @@ static			n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 #include "krb.h"
 
 /* for some reason, this is not defined in krb.h ... */
-extern char    *tkt_string(void);
+extern char *tkt_string(void);
 
 /*
  * pg_krb4_init -- initialization performed before any Kerberos calls are made
@@ -107,8 +107,8 @@ extern char    *tkt_string(void);
 static void
 pg_krb4_init()
 {
-	char		   *realm;
-	static			init_done = 0;
+	char	   *realm;
+	static		init_done = 0;
 
 	if (init_done)
 		return;
@@ -120,7 +120,7 @@ pg_krb4_init()
 	 */
 	if (realm = getenv("PGREALM"))
 	{
-		char			tktbuf[MAXPATHLEN];
+		char		tktbuf[MAXPATHLEN];
 
 		(void) sprintf(tktbuf, "%s@%s", tkt_string(), realm);
 		krb_set_tkt_string(tktbuf);
@@ -133,13 +133,13 @@ pg_krb4_init()
  *
  * We obtain this information by digging around in the ticket file.
  */
-static char    *
+static char *
 pg_krb4_authname(char *PQerrormsg)
 {
-	char			instance[INST_SZ];
-	char			realm[REALM_SZ];
-	int				status;
-	static char		name[SNAME_SZ + 1] = "";
+	char		instance[INST_SZ];
+	char		realm[REALM_SZ];
+	int			status;
+	static char name[SNAME_SZ + 1] = "";
 
 	if (name[0])
 		return (name);
@@ -178,11 +178,11 @@ pg_krb4_sendauth(const char *PQerrormsg, int sock,
 				 struct sockaddr_in * raddr,
 				 const char *hostname)
 {
-	long			krbopts = 0;/* one-way authentication */
-	KTEXT_ST		clttkt;
-	int				status;
-	char			hostbuf[MAXHOSTNAMELEN];
-	const char	   *realm = getenv("PGREALM");	/* NULL == current realm */
+	long		krbopts = 0;	/* one-way authentication */
+	KTEXT_ST	clttkt;
+	int			status;
+	char		hostbuf[MAXHOSTNAMELEN];
+	const char *realm = getenv("PGREALM");		/* NULL == current realm */
 
 	if (!hostname || !(*hostname))
 	{
@@ -239,10 +239,10 @@ pg_krb4_sendauth(const char *PQerrormsg, int sock,
  *	   krb5_an_to_ln, except that it punts if multiple components are found,
  *	   and we can't afford to punt.
  */
-static char    *
+static char *
 pg_an_to_ln(const char *aname)
 {
-	char		   *p;
+	char	   *p;
 
 	if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
 		*p = '\0';
@@ -259,13 +259,13 @@ pg_an_to_ln(const char *aname)
  *
  */
 static int
-krb5_ccache
+			krb5_ccache
 pg_krb5_init(void)
 {
 	krb5_error_code code;
-	char		   *realm,
-				   *defname;
-	char			tktbuf[MAXPATHLEN];
+	char	   *realm,
+			   *defname;
+	char		tktbuf[MAXPATHLEN];
 	static krb5_ccache ccache = (krb5_ccache) NULL;
 
 	if (ccache)
@@ -308,10 +308,10 @@ pg_krb5_init(void)
 static const char *
 pg_krb5_authname(const char *PQerrormsg)
 {
-	krb5_ccache		ccache;
-	krb5_principal	principal;
+	krb5_ccache ccache;
+	krb5_principal principal;
 	krb5_error_code code;
-	static char    *authname = (char *) NULL;
+	static char *authname = (char *) NULL;
 
 	if (authname)
 		return (authname);
@@ -360,15 +360,15 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 				 struct sockaddr_in * raddr,
 				 const char *hostname)
 {
-	char			servbuf[MAXHOSTNAMELEN + 1 +
-											sizeof(PG_KRB_SRVNAM)];
-	const char	   *hostp;
-	const char	   *realm;
+	char		servbuf[MAXHOSTNAMELEN + 1 +
+									sizeof(PG_KRB_SRVNAM)];
+	const char *hostp;
+	const char *realm;
 	krb5_error_code code;
-	krb5_principal	client,
-					server;
-	krb5_ccache		ccache;
-	krb5_error	   *error = (krb5_error *) NULL;
+	krb5_principal client,
+				server;
+	krb5_ccache ccache;
+	krb5_error *error = (krb5_error *) NULL;
 
 	ccache = pg_krb5_init();	/* don't free this */
 
@@ -459,8 +459,8 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 static int
 pg_password_sendauth(Port * port, const char *user, const char *password)
 {
-	PacketBuf		buf;
-	char		   *tmp;
+	PacketBuf	buf;
+	char	   *tmp;
 
 	buf.len = htonl(sizeof(PacketBuf));
 	buf.msgtype = STARTUP_PASSWORD_MSG;
@@ -484,36 +484,36 @@ fe_sendauth(MsgType msgtype, Port * port, const char *hostname,
 	switch (msgtype)
 	{
 #ifdef KRB4
-		case STARTUP_KRB4_MSG:
-		if (pg_krb4_sendauth(PQerrormsg, port->sock, &port->laddr,
-							 &port->raddr,
-							 hostname) != STATUS_OK)
-		{
-			(void) sprintf(PQerrormsg,
-						   "fe_sendauth: krb4 authentication failed\n");
+			case STARTUP_KRB4_MSG:
+			if (pg_krb4_sendauth(PQerrormsg, port->sock, &port->laddr,
+								 &port->raddr,
+								 hostname) != STATUS_OK)
+			{
+				(void) sprintf(PQerrormsg,
+							"fe_sendauth: krb4 authentication failed\n");
 /*			fputs(PQerrormsg, stderr); */
-			return (STATUS_ERROR);
-		}
-		break;
+				return (STATUS_ERROR);
+			}
+			break;
 #endif
 #ifdef KRB5
-	case STARTUP_KRB5_MSG:
-		if (pg_krb5_sendauth(PQerrormsg, port->sock, &port->laddr,
-							 &port->raddr,
-							 hostname) != STATUS_OK)
-		{
-			(void) sprintf(PQerrormsg,
-						   "fe_sendauth: krb5 authentication failed\n");
-			return (STATUS_ERROR);
-		}
-		break;
+		case STARTUP_KRB5_MSG:
+			if (pg_krb5_sendauth(PQerrormsg, port->sock, &port->laddr,
+								 &port->raddr,
+								 hostname) != STATUS_OK)
+			{
+				(void) sprintf(PQerrormsg,
+							"fe_sendauth: krb5 authentication failed\n");
+				return (STATUS_ERROR);
+			}
+			break;
 #endif
-	case STARTUP_MSG:
-		break;
-	case STARTUP_PASSWORD_MSG:
-		pg_password_sendauth(port, user, password);
-	default:
-		break;
+		case STARTUP_MSG:
+			break;
+		case STARTUP_PASSWORD_MSG:
+			pg_password_sendauth(port, user, password);
+		default:
+			break;
 	}
 	return (STATUS_OK);
 }
@@ -525,12 +525,12 @@ fe_sendauth(MsgType msgtype, Port * port, const char *hostname,
  * Set/return the authentication service currently selected for use by the
  * frontend. (You can only use one in the frontend, obviously.)
  */
-static			pg_authsvc = -1;
+static pg_authsvc = -1;
 
 void
 fe_setauthsvc(const char *name, char *PQerrormsg)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < n_authsvcs; ++i)
 		if (!strcmp(name, authsvcs[i].name))
@@ -560,39 +560,39 @@ fe_getauthsvc(char *PQerrormsg)
  *					 name the user has authenticated to the system
  * if there is an error, return the error message in PQerrormsg
  */
-char		   *
+char	   *
 fe_getauthname(char *PQerrormsg)
 {
-	char		   *name = (char *) NULL;
-	char		   *authn = (char *) NULL;
-	MsgType			authsvc;
+	char	   *name = (char *) NULL;
+	char	   *authn = (char *) NULL;
+	MsgType		authsvc;
 
 	authsvc = fe_getauthsvc(PQerrormsg);
 	switch ((int) authsvc)
 	{
 #ifdef KRB4
-	case STARTUP_KRB4_MSG:
-		name = pg_krb4_authname(PQerrormsg);
-		break;
+		case STARTUP_KRB4_MSG:
+			name = pg_krb4_authname(PQerrormsg);
+			break;
 #endif
 #ifdef KRB5
-	case STARTUP_KRB5_MSG:
-		name = pg_krb5_authname(PQerrormsg);
-		break;
+		case STARTUP_KRB5_MSG:
+			name = pg_krb5_authname(PQerrormsg);
+			break;
 #endif
-	case STARTUP_MSG:
-		{
-			struct passwd  *pw = getpwuid(geteuid());
+		case STARTUP_MSG:
+			{
+				struct passwd *pw = getpwuid(geteuid());
 
-			if (pw)
-				name = pw->pw_name;
-		}
-		break;
-	default:
-		(void) sprintf(PQerrormsg,
+				if (pw)
+					name = pw->pw_name;
+			}
+			break;
+		default:
+			(void) sprintf(PQerrormsg,
 				   "fe_getauthname: invalid authentication system: %d\n",
-					   authsvc);
-		break;
+						   authsvc);
+			break;
 	}
 
 	if (name && (authn = (char *) malloc(strlen(name) + 1)))

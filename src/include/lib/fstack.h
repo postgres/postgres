@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fstack.h,v 1.3 1997/09/07 04:58:09 momjian Exp $
+ * $Id: fstack.h,v 1.4 1997/09/08 02:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ typedef FixedItemData *FixedItem;
 
 struct FixedItemData
 {
-	FixedItem		next;		/* next item or NULL */
+	FixedItem	next;			/* next item or NULL */
 };
 
 /*
@@ -48,10 +48,10 @@ struct FixedItemData
  */
 typedef struct FixedStackData
 {
-	FixedItem		top;		/* Top item on the stack or NULL */
-	Offset			offset;		/* Offset from struct base to item */
+	FixedItem	top;			/* Top item on the stack or NULL */
+	Offset		offset;			/* Offset from struct base to item */
 	/* this could be signed short int! */
-}				FixedStackData;
+}			FixedStackData;
 
 typedef FixedStackData *FixedStack;
 
@@ -62,7 +62,7 @@ typedef FixedStackData *FixedStack;
  * Exceptions:
  *		BadArg if stack is invalid pointer.
  */
-extern void		FixedStackInit(FixedStack stack, Offset offset);
+extern void FixedStackInit(FixedStack stack, Offset offset);
 
 /*
  * FixedStackPop --
@@ -71,7 +71,7 @@ extern void		FixedStackInit(FixedStack stack, Offset offset);
  * Exceptions:
  *		BadArg if stack is invalid.
  */
-Pointer			FixedStackPop(FixedStack stack);
+Pointer		FixedStackPop(FixedStack stack);
 
 /*
  * FixedStackPush --
@@ -81,7 +81,7 @@ Pointer			FixedStackPop(FixedStack stack);
  *		BadArg if stack is invalid.
  *		BadArg if pointer is invalid.
  */
-extern void		FixedStackPush(FixedStack stack, Pointer pointer);
+extern void FixedStackPush(FixedStack stack, Pointer pointer);
 
 /*
  * FixedStackGetTop --
@@ -94,7 +94,7 @@ extern void		FixedStackPush(FixedStack stack, Pointer pointer);
  * Exceptions:
  *		BadArg if stack is invalid.
  */
-extern Pointer	FixedStackGetTop(FixedStack stack);
+extern Pointer FixedStackGetTop(FixedStack stack);
 
 /*
  * FixedStackGetNext --
@@ -109,6 +109,6 @@ extern Pointer	FixedStackGetTop(FixedStack stack);
  *		BadArg if pointer is invalid.
  *		BadArg if stack does not contain pointer.
  */
-extern Pointer	FixedStackGetNext(FixedStack stack, Pointer pointer);
+extern Pointer FixedStackGetNext(FixedStack stack, Pointer pointer);
 
 #endif							/* FSTACK_H */

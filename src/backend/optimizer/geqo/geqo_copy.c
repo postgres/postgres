@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_copy.c,v 1.2 1997/09/07 04:43:01 momjian Exp $
+ * $Id: geqo_copy.c,v 1.3 1997/09/08 02:23:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@
 void
 geqo_copy(Chromosome * chromo1, Chromosome * chromo2, int string_length)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < string_length; i++)
 		chromo1->string[i] = chromo2->string[i];

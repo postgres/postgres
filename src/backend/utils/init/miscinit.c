@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.7 1997/09/07 04:53:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.8 1997/09/08 02:31:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +44,12 @@
  */
 #define EnableAbortEnvVarName	"POSTGRESABORT"
 
-extern char    *getenv(const char *name);		/* XXX STDLIB */
+extern char *getenv(const char *name);	/* XXX STDLIB */
 
 /*	from globals.c */
-extern char    *DatabaseName;
-extern char    *UserName;
-extern char    *DatabasePath;
+extern char *DatabaseName;
+extern char *UserName;
+extern char *DatabasePath;
 
 
 /*
@@ -105,7 +105,7 @@ ExitPostgres(ExitStatus status)
 void
 AbortPostgres()
 {
-	char		   *abortValue = getenv(EnableAbortEnvVarName);
+	char	   *abortValue = getenv(EnableAbortEnvVarName);
 
 #ifdef	__SABER__
 	saber_stop();
@@ -223,7 +223,7 @@ GetProcessingMode()
  *		Returns path to database.
  *
  */
-char		   *
+char	   *
 GetDatabasePath()
 {
 	return DatabasePath;
@@ -233,7 +233,7 @@ GetDatabasePath()
  * GetDatabaseName --
  *		Returns name of database.
  */
-char		   *
+char	   *
 GetDatabaseName()
 {
 	return DatabaseName;
@@ -269,7 +269,7 @@ SetDatabaseName(char *name)
  *		in pg_proc.h). Define GetPgUserName() as a macro - tgl 97/04/26
  * ----------------
  */
-char		   *
+char	   *
 getpgusername()
 {
 	return UserName;
@@ -279,8 +279,8 @@ void
 SetPgUserName()
 {
 #ifndef NO_SECURITY
-	char		   *p;
-	struct passwd  *pw;
+	char	   *p;
+	struct passwd *pw;
 
 	if (IsUnderPostmaster)
 	{
@@ -306,7 +306,7 @@ SetPgUserName()
  *		GetUserId and SetUserId
  * ----------------------------------------------------------------
  */
-static Oid		UserId = InvalidOid;
+static Oid	UserId = InvalidOid;
 
 Oid
 GetUserId()
@@ -318,8 +318,8 @@ GetUserId()
 void
 SetUserId()
 {
-	HeapTuple		userTup;
-	char		   *userName;
+	HeapTuple	userTup;
+	char	   *userName;
 
 	Assert(!OidIsValid(UserId));/* only once */
 

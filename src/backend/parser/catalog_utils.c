@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.23 1997/09/07 04:44:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.24 1997/09/08 02:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,9 +52,9 @@
 
 struct
 {
-	char		   *field;
-	int				code;
-}				special_attr[] =
+	char	   *field;
+	int			code;
+}			special_attr[] =
 
 {
 	{
@@ -94,7 +94,7 @@ struct
 
 #define SPECIALS (sizeof(special_attr)/sizeof(*special_attr))
 
-static char    *attnum_type[SPECIALS] = {
+static char *attnum_type[SPECIALS] = {
 	"tid",
 	"oid",
 	"xid",
@@ -118,10 +118,10 @@ static char    *attnum_type[SPECIALS] = {
 
 typedef struct _InhPaths
 {
-	int				nsupers;	/* number of superclasses */
-	Oid				self;		/* this class */
-	Oid			   *supervec;	/* vector of superclasses */
-}				InhPaths;
+	int			nsupers;		/* number of superclasses */
+	Oid			self;			/* this class */
+	Oid		   *supervec;		/* vector of superclasses */
+}			InhPaths;
 
 /*
  *	This structure holds a list of possible functions or operators that
@@ -129,16 +129,16 @@ typedef struct _InhPaths
  */
 typedef struct _CandidateList
 {
-	Oid			   *args;
+	Oid		   *args;
 	struct _CandidateList *next;
-}			   *CandidateList;
+}		   *CandidateList;
 
-static Oid	  **argtype_inherit(int nargs, Oid * oid_array);
-static Oid	  **genxprod(InhPaths * arginh, int nargs);
-static int		findsupers(Oid relid, Oid ** supervec);
-static bool		check_typeid(Oid id);
-static char    *instr1(TypeTupleForm tp, char *string, int typlen);
-static void		op_error(char *op, Oid arg1, Oid arg2);
+static Oid **argtype_inherit(int nargs, Oid * oid_array);
+static Oid **genxprod(InhPaths * arginh, int nargs);
+static int	findsupers(Oid relid, Oid ** supervec);
+static bool check_typeid(Oid id);
+static char *instr1(TypeTupleForm tp, char *string, int typlen);
+static void op_error(char *op, Oid arg1, Oid arg2);
 
 /* check to see if a type id is valid,
  * returns true if it is. By using this call before calling
@@ -146,7 +146,7 @@ static void		op_error(char *op, Oid arg1, Oid arg2);
  * can be produced because the caller typically has more context of
  *	what's going on                 - jolly
  */
-static			bool
+static bool
 check_typeid(Oid id)
 {
 	return (SearchSysCacheTuple(TYPOID,
@@ -159,7 +159,7 @@ check_typeid(Oid id)
 Type
 get_id_type(Oid id)
 {
-	HeapTuple		tup;
+	HeapTuple	tup;
 
 	if (!(tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(id),
 									0, 0, 0)))
@@ -171,11 +171,11 @@ get_id_type(Oid id)
 }
 
 /* return a type name, given a typeid */
-char		   *
+char	   *
 get_id_typname(Oid id)
 {
-	HeapTuple		tup;
-	TypeTupleForm	typetuple;
+	HeapTuple	tup;
+	TypeTupleForm typetuple;
 
 	if (!(tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(id),
 									0, 0, 0)))
@@ -191,7 +191,7 @@ get_id_typname(Oid id)
 Type
 type(char *s)
 {
-	HeapTuple		tup;
+	HeapTuple	tup;
 
 	if (s == NULL)
 	{
@@ -245,7 +245,7 @@ typeid(Type tp)
 int16
 tlen(Type t)
 {
-	TypeTupleForm	typ;
+	TypeTupleForm typ;
 
 	typ = (TypeTupleForm) GETSTRUCT(t);
 	return (typ->typlen);
@@ -255,17 +255,17 @@ tlen(Type t)
 bool
 tbyval(Type t)
 {
-	TypeTupleForm	typ;
+	TypeTupleForm typ;
 
 	typ = (TypeTupleForm) GETSTRUCT(t);
 	return (typ->typbyval);
 }
 
 /* given type (as type struct), return the name of type */
-char		   *
+char	   *
 tname(Type t)
 {
-	TypeTupleForm	typ;
+	TypeTupleForm typ;
 
 	typ = (TypeTupleForm) GETSTRUCT(t);
 	return (typ->typname).data;
@@ -275,7 +275,7 @@ tname(Type t)
 int
 tbyvalue(Type t)
 {
-	TypeTupleForm	typ;
+	TypeTupleForm typ;
 
 	typ = (TypeTupleForm) GETSTRUCT(t);
 	return (typ->typbyval);
@@ -285,7 +285,7 @@ tbyvalue(Type t)
 static char
 typetypetype(Type t)
 {
-	TypeTupleForm	typ;
+	TypeTupleForm typ;
 
 	typ = (TypeTupleForm) GETSTRUCT(t);
 	return (typ->typtype);
@@ -310,15 +310,15 @@ binary_oper_get_candidates(char *opname,
 						   Oid rightTypeId,
 						   CandidateList * candidates)
 {
-	CandidateList	current_candidate;
-	Relation		pg_operator_desc;
-	HeapScanDesc	pg_operator_scan;
-	HeapTuple		tup;
+	CandidateList current_candidate;
+	Relation	pg_operator_desc;
+	HeapScanDesc pg_operator_scan;
+	HeapTuple	tup;
 	OperatorTupleForm oper;
-	Buffer			buffer;
-	int				nkeys;
-	int				ncandidates = 0;
-	ScanKeyData		opKey[3];
+	Buffer		buffer;
+	int			nkeys;
+	int			ncandidates = 0;
+	ScanKeyData opKey[3];
 
 	*candidates = NULL;
 
@@ -404,43 +404,43 @@ binary_oper_get_candidates(char *opname,
  *	  the all the candidates operate on the same data types after
  *	  promotion (int2, int4, float4 -> float8).
  */
-static			bool
+static bool
 equivalentOpersAfterPromotion(CandidateList candidates)
 {
-	CandidateList	result;
-	CandidateList	promotedCandidates = NULL;
-	Oid				leftarg,
-					rightarg;
+	CandidateList result;
+	CandidateList promotedCandidates = NULL;
+	Oid			leftarg,
+				rightarg;
 
 	for (result = candidates; result != NULL; result = result->next)
 	{
-		CandidateList	c;
+		CandidateList c;
 
 		c = (CandidateList) palloc(sizeof(*c));
 		c->args = (Oid *) palloc(2 * sizeof(Oid));
 		switch (result->args[0])
 		{
-		case FLOAT4OID:
-		case INT4OID:
-		case INT2OID:
-		case CASHOID:
-			c->args[0] = FLOAT8OID;
-			break;
-		default:
-			c->args[0] = result->args[0];
-			break;
+			case FLOAT4OID:
+			case INT4OID:
+			case INT2OID:
+			case CASHOID:
+				c->args[0] = FLOAT8OID;
+				break;
+			default:
+				c->args[0] = result->args[0];
+				break;
 		}
 		switch (result->args[1])
 		{
-		case FLOAT4OID:
-		case INT4OID:
-		case INT2OID:
-		case CASHOID:
-			c->args[1] = FLOAT8OID;
-			break;
-		default:
-			c->args[1] = result->args[1];
-			break;
+			case FLOAT4OID:
+			case INT4OID:
+			case INT2OID:
+			case CASHOID:
+				c->args[1] = FLOAT8OID;
+				break;
+			default:
+				c->args[1] = result->args[1];
+				break;
 		}
 		c->next = promotedCandidates;
 		promotedCandidates = c;
@@ -478,12 +478,12 @@ equivalentOpersAfterPromotion(CandidateList candidates)
  *	given a choice of argument type pairs for a binary operator,
  *	try to choose a default pair
  */
-static			CandidateList
+static CandidateList
 binary_oper_select_candidate(Oid arg1,
 							 Oid arg2,
 							 CandidateList candidates)
 {
-	CandidateList	result;
+	CandidateList result;
 
 	/*
 	 * if both are "unknown", there is no way to select a candidate
@@ -538,9 +538,9 @@ binary_oper_select_candidate(Oid arg1,
 Operator
 oper(char *op, Oid arg1, Oid arg2, bool noWarnings)
 {
-	HeapTuple		tup;
-	CandidateList	candidates;
-	int				ncandidates;
+	HeapTuple	tup;
+	CandidateList candidates;
+	int			ncandidates;
 
 	if (!arg2)
 		arg2 = arg1;
@@ -596,8 +596,8 @@ oper(char *op, Oid arg1, Oid arg2, bool noWarnings)
 			}
 			else
 			{
-				Type			tp1,
-								tp2;
+				Type		tp1,
+							tp2;
 
 				/* we chose none of them */
 				tp1 = get_id_type(arg1);
@@ -627,13 +627,13 @@ unary_oper_get_candidates(char *op,
 						  CandidateList * candidates,
 						  char rightleft)
 {
-	CandidateList	current_candidate;
-	Relation		pg_operator_desc;
-	HeapScanDesc	pg_operator_scan;
-	HeapTuple		tup;
+	CandidateList current_candidate;
+	Relation	pg_operator_desc;
+	HeapScanDesc pg_operator_scan;
+	HeapTuple	tup;
 	OperatorTupleForm oper;
-	Buffer			buffer;
-	int				ncandidates = 0;
+	Buffer		buffer;
+	int			ncandidates = 0;
 
 	static ScanKeyData opKey[2] = {
 		{0, Anum_pg_operator_oprname, NameEqualRegProcedure},
@@ -697,9 +697,9 @@ unary_oper_get_candidates(char *op,
 Operator
 right_oper(char *op, Oid arg)
 {
-	HeapTuple		tup;
-	CandidateList	candidates;
-	int				ncandidates;
+	HeapTuple	tup;
+	CandidateList candidates;
+	int			ncandidates;
 
 	/*
 	 * if (!OpCache) { init_op_cache(); }
@@ -742,9 +742,9 @@ right_oper(char *op, Oid arg)
 Operator
 left_oper(char *op, Oid arg)
 {
-	HeapTuple		tup;
-	CandidateList	candidates;
-	int				ncandidates;
+	HeapTuple	tup;
+	CandidateList candidates;
+	int			ncandidates;
 
 	/*
 	 * if (!OpCache) { init_op_cache(); }
@@ -787,7 +787,7 @@ left_oper(char *op, Oid arg)
 int
 varattno(Relation rd, char *a)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{
@@ -817,7 +817,7 @@ varattno(Relation rd, char *a)
 bool
 varisset(Relation rd, char *name)
 {
-	int				i;
+	int			i;
 
 	/* First check if this is a system attribute */
 	for (i = 0; i < SPECIALS; i++)
@@ -834,7 +834,7 @@ varisset(Relation rd, char *name)
 int
 nf_varattno(Relation rd, char *a)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{
@@ -856,11 +856,11 @@ nf_varattno(Relation rd, char *a)
 /*-------------
  * given an attribute number and a relation, return its relation name
  */
-char		   *
+char	   *
 getAttrName(Relation rd, int attrno)
 {
-	char		   *name;
-	int				i;
+	char	   *name;
+	int			i;
 
 	if (attrno < 0)
 	{
@@ -896,12 +896,12 @@ getAttrName(Relation rd, int attrno)
 /* Given a typename and value, returns the ascii form of the value */
 
 #ifdef NOT_USED
-char		   *
+char	   *
 outstr(char *typename,			/* Name of type of value */
 	   char *value)				/* Could be of any type */
 {
-	TypeTupleForm	tp;
-	Oid				op;
+	TypeTupleForm tp;
+	Oid			op;
 
 	tp = (TypeTupleForm) GETSTRUCT(type(typename));
 	op = tp->typoutput;
@@ -911,7 +911,7 @@ outstr(char *typename,			/* Name of type of value */
 #endif
 
 /* Given a Type and a string, return the internal form of that string */
-char		   *
+char	   *
 instr2(Type tp, char *string, int typlen)
 {
 	return (instr1((TypeTupleForm) GETSTRUCT(tp), string, typlen));
@@ -919,11 +919,11 @@ instr2(Type tp, char *string, int typlen)
 
 /* Given a type structure and a string, returns the internal form of
    that string */
-static char    *
+static char *
 instr1(TypeTupleForm tp, char *string, int typlen)
 {
-	Oid				op;
-	Oid				typelem;
+	Oid			op;
+	Oid			typelem;
 
 	op = tp->typinput;
 	typelem = tp->typelem;		/* XXX - used for array_in */
@@ -937,8 +937,8 @@ instr1(TypeTupleForm tp, char *string, int typlen)
 Oid
 GetArrayElementType(Oid typearray)
 {
-	HeapTuple		type_tuple;
-	TypeTupleForm	type_struct_array;
+	HeapTuple	type_tuple;
+	TypeTupleForm type_struct_array;
 
 	type_tuple = SearchSysCacheTuple(TYPOID,
 									 ObjectIdGetDatum(typearray),
@@ -963,8 +963,8 @@ GetArrayElementType(Oid typearray)
 Oid
 funcid_get_rettype(Oid funcid)
 {
-	HeapTuple		func_tuple = NULL;
-	Oid				funcrettype = (Oid) 0;
+	HeapTuple	func_tuple = NULL;
+	Oid			funcrettype = (Oid) 0;
 
 	func_tuple = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(funcid),
 									 0, 0, 0);
@@ -982,21 +982,21 @@ funcid_get_rettype(Oid funcid)
  * get a list of all argument type vectors for which a function named
  * funcname taking nargs arguments exists
  */
-static			CandidateList
+static CandidateList
 func_get_candidates(char *funcname, int nargs)
 {
-	Relation		heapRelation;
-	Relation		idesc;
-	ScanKeyData		skey;
-	HeapTuple		tuple;
-	IndexScanDesc	sd;
+	Relation	heapRelation;
+	Relation	idesc;
+	ScanKeyData skey;
+	HeapTuple	tuple;
+	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	Buffer			buffer;
-	Form_pg_proc	pgProcP;
-	bool			bufferUsed = FALSE;
-	CandidateList	candidates = NULL;
-	CandidateList	current_candidate;
-	int				i;
+	Buffer		buffer;
+	Form_pg_proc pgProcP;
+	bool		bufferUsed = FALSE;
+	CandidateList candidates = NULL;
+	CandidateList current_candidate;
+	int			i;
 
 	heapRelation = heap_openr(ProcedureRelationName);
 	ScanKeyEntryInitialize(&skey,
@@ -1021,7 +1021,7 @@ func_get_candidates(char *funcname, int nargs)
 		indexRes = index_getnext(sd, ForwardScanDirection);
 		if (indexRes)
 		{
-			ItemPointer		iptr;
+			ItemPointer iptr;
 
 			iptr = &indexRes->heap_iptr;
 			tuple = heap_fetch(heapRelation, NowTimeQual, iptr, &buffer);
@@ -1060,11 +1060,11 @@ func_get_candidates(char *funcname, int nargs)
 /*
  * can input_typeids be coerced to func_typeids?
  */
-static			bool
+static bool
 can_coerce(int nargs, Oid * input_typeids, Oid * func_typeids)
 {
-	int				i;
-	Type			tp;
+	int			i;
+	Type		tp;
 
 	/*
 	 * right now, we only coerce "unknown", and we cannot coerce it to a
@@ -1105,10 +1105,10 @@ match_argtypes(int nargs,
 			   CandidateList function_typeids,
 			   CandidateList * candidates)		/* return value */
 {
-	CandidateList	current_candidate;
-	CandidateList	matching_candidate;
-	Oid			   *current_typeids;
-	int				ncandidates = 0;
+	CandidateList current_candidate;
+	CandidateList matching_candidate;
+	Oid		   *current_typeids;
+	int			ncandidates = 0;
 
 	*candidates = NULL;
 
@@ -1137,7 +1137,7 @@ match_argtypes(int nargs,
  * returns the selected argtype array if the conflict can be resolved,
  * otherwise returns NULL
  */
-static Oid	   *
+static Oid *
 func_select_candidate(int nargs,
 					  Oid * input_typeids,
 					  CandidateList candidates)
@@ -1155,12 +1155,12 @@ func_get_detail(char *funcname,
 				bool * retset,	/* return value */
 				Oid ** true_typeids)	/* return value */
 {
-	Oid			  **input_typeid_vector;
-	Oid			   *current_input_typeids;
-	CandidateList	function_typeids;
-	CandidateList	current_function_typeids;
-	HeapTuple		ftup;
-	Form_pg_proc	pform;
+	Oid		  **input_typeid_vector;
+	Oid		   *current_input_typeids;
+	CandidateList function_typeids;
+	CandidateList current_function_typeids;
+	HeapTuple	ftup;
+	Form_pg_proc pform;
 
 	/*
 	 * attempt to find named function in the system catalogs with
@@ -1191,7 +1191,7 @@ func_get_detail(char *funcname,
 
 		if (function_typeids != NULL)
 		{
-			int				ncandidates = 0;
+			int			ncandidates = 0;
 
 			input_typeid_vector = argtype_inherit(nargs, oid_array);
 			current_input_typeids = oid_array;
@@ -1244,7 +1244,7 @@ func_get_detail(char *funcname,
 
 	if (!HeapTupleIsValid(ftup))
 	{
-		Type			tp;
+		Type		tp;
 
 		if (nargs == 1)
 		{
@@ -1291,12 +1291,12 @@ func_get_detail(char *funcname,
  *		not defined.  There are lots of these (mostly builtins) in the
  *		catalogs.
  */
-static Oid	  **
+static Oid **
 argtype_inherit(int nargs, Oid * oid_array)
 {
-	Oid				relid;
-	int				i;
-	InhPaths		arginh[MAXFARGS];
+	Oid			relid;
+	int			i;
+	InhPaths	arginh[MAXFARGS];
 
 	for (i = 0; i < MAXFARGS; i++)
 	{
@@ -1327,31 +1327,31 @@ argtype_inherit(int nargs, Oid * oid_array)
 
 typedef struct _SuperQE
 {
-	Oid				sqe_relid;
-}				SuperQE;
+	Oid			sqe_relid;
+}			SuperQE;
 
 static int
 findsupers(Oid relid, Oid ** supervec)
 {
-	Oid			   *relidvec;
-	Relation		inhrel;
-	HeapScanDesc	inhscan;
-	ScanKeyData		skey;
-	HeapTuple		inhtup;
-	TupleDesc		inhtupdesc;
-	int				nvisited;
-	SuperQE		   *qentry,
-				   *vnode;
-	Dllist		   *visited,
-				   *queue;
-	Dlelem		   *qe,
-				   *elt;
+	Oid		   *relidvec;
+	Relation	inhrel;
+	HeapScanDesc inhscan;
+	ScanKeyData skey;
+	HeapTuple	inhtup;
+	TupleDesc	inhtupdesc;
+	int			nvisited;
+	SuperQE    *qentry,
+			   *vnode;
+	Dllist	   *visited,
+			   *queue;
+	Dlelem	   *qe,
+			   *elt;
 
-	Relation		rd;
-	Buffer			buf;
-	Datum			d;
-	bool			newrelid;
-	char			isNull;
+	Relation	rd;
+	Buffer		buf;
+	Datum		d;
+	bool		newrelid;
+	char		isNull;
 
 	nvisited = 0;
 	queue = DLNewList();
@@ -1451,16 +1451,16 @@ findsupers(Oid relid, Oid ** supervec)
 	return (nvisited);
 }
 
-static Oid	  **
+static Oid **
 genxprod(InhPaths * arginh, int nargs)
 {
-	int				nanswers;
-	Oid			  **result,
-				  **iter;
-	Oid			   *oneres;
-	int				i,
-					j;
-	int				cur[MAXFARGS];
+	int			nanswers;
+	Oid		  **result,
+			  **iter;
+	Oid		   *oneres;
+	int			i,
+				j;
+	int			cur[MAXFARGS];
 
 	nanswers = 1;
 	for (i = 0; i < nargs; i++)
@@ -1510,9 +1510,9 @@ genxprod(InhPaths * arginh, int nargs)
 Oid
 typeid_get_retinfunc(Oid type_id)
 {
-	HeapTuple		typeTuple;
-	TypeTupleForm	type;
-	Oid				infunc;
+	HeapTuple	typeTuple;
+	TypeTupleForm type;
+	Oid			infunc;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type_id),
@@ -1531,9 +1531,9 @@ typeid_get_retinfunc(Oid type_id)
 Oid
 typeid_get_retoutfunc(Oid type_id)
 {
-	HeapTuple		typeTuple;
-	TypeTupleForm	type;
-	Oid				outfunc;
+	HeapTuple	typeTuple;
+	TypeTupleForm type;
+	Oid			outfunc;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type_id),
@@ -1551,9 +1551,9 @@ typeid_get_retoutfunc(Oid type_id)
 Oid
 typeid_get_relid(Oid type_id)
 {
-	HeapTuple		typeTuple;
-	TypeTupleForm	type;
-	Oid				infunc;
+	HeapTuple	typeTuple;
+	TypeTupleForm type;
+	Oid			infunc;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(type_id),
@@ -1569,7 +1569,7 @@ typeid_get_relid(Oid type_id)
 Oid
 get_typrelid(Type typ)
 {
-	TypeTupleForm	typtup;
+	TypeTupleForm typtup;
 
 	typtup = (TypeTupleForm) GETSTRUCT(typ);
 
@@ -1579,8 +1579,8 @@ get_typrelid(Type typ)
 Oid
 get_typelem(Oid type_id)
 {
-	HeapTuple		typeTuple;
-	TypeTupleForm	type;
+	HeapTuple	typeTuple;
+	TypeTupleForm type;
 
 	if (!(typeTuple = SearchSysCacheTuple(TYPOID,
 										  ObjectIdGetDatum(type_id),
@@ -1597,9 +1597,9 @@ get_typelem(Oid type_id)
 char
 FindDelimiter(char *typename)
 {
-	char			delim;
-	HeapTuple		typeTuple;
-	TypeTupleForm	type;
+	char		delim;
+	HeapTuple	typeTuple;
+	TypeTupleForm type;
 
 
 	if (!(typeTuple = SearchSysCacheTuple(TYPNAME,
@@ -1623,8 +1623,8 @@ FindDelimiter(char *typename)
 static void
 op_error(char *op, Oid arg1, Oid arg2)
 {
-	Type			tp1 = NULL,
-					tp2 = NULL;
+	Type		tp1 = NULL,
+				tp2 = NULL;
 
 	if (check_typeid(arg1))
 	{
@@ -1659,9 +1659,9 @@ op_error(char *op, Oid arg1, Oid arg2)
 void
 func_error(char *caller, char *funcname, int nargs, Oid * argtypes)
 {
-	char			p[(NAMEDATALEN + 2) * MAXFMGRARGS],
-				   *ptr;
-	int				i;
+	char		p[(NAMEDATALEN + 2) * MAXFMGRARGS],
+			   *ptr;
+	int			i;
 
 	ptr = p;
 	*ptr = '\0';

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.2 1997/09/07 04:43:19 momjian Exp $
+ * $Id: geqo_pool.c,v 1.3 1997/09/08 02:24:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,18 +44,18 @@
 #include "optimizer/geqo_recombination.h"
 
 
-static int		compare(void *arg1, void *arg2);
+static int	compare(void *arg1, void *arg2);
 
 /*
  * alloc-pool--
  *		allocates memory for GA pool
  */
-Pool		   *
+Pool	   *
 alloc_pool(int pool_size, int string_length)
 {
-	Pool		   *new_pool;
-	Chromosome	   *chromo;
-	int				i;
+	Pool	   *new_pool;
+	Chromosome *chromo;
+	int			i;
 
 	/* pool */
 	new_pool = (Pool *) palloc(sizeof(Pool));
@@ -82,8 +82,8 @@ alloc_pool(int pool_size, int string_length)
 void
 free_pool(Pool * pool)
 {
-	Chromosome	   *chromo;
-	int				i;
+	Chromosome *chromo;
+	int			i;
 
 	/* all gene */
 	chromo = (Chromosome *) pool->data; /* vector of all chromos */
@@ -104,14 +104,14 @@ free_pool(Pool * pool)
 void
 random_init_pool(Query * root, Pool * pool, int strt, int stp)
 {
-	Chromosome	   *chromo = (Chromosome *) pool->data;
-	int				i;
+	Chromosome *chromo = (Chromosome *) pool->data;
+	int			i;
 
 	for (i = strt; i < stp; i++)
 	{
 		init_tour(chromo[i].string, pool->string_length);		/* from
 																 * "geqo_recombination.c"
-																 *	*/
+																 * */
 
 		pool->data[i].worth =
 			geqo_eval(root, chromo[i].string, pool->string_length);		/* "from geqo_eval.c" */
@@ -141,8 +141,8 @@ sort_pool(Pool * pool)
 static int
 compare(void *arg1, void *arg2)
 {
-	Chromosome		chromo1 = *(Chromosome *) arg1;
-	Chromosome		chromo2 = *(Chromosome *) arg2;
+	Chromosome	chromo1 = *(Chromosome *) arg1;
+	Chromosome	chromo2 = *(Chromosome *) arg2;
 
 	if (chromo1.worth == chromo2.worth)
 		return (0);
@@ -155,10 +155,10 @@ compare(void *arg1, void *arg2)
 /* alloc_chromo--
  *	  allocates a chromosome and string space
  */
-Chromosome	   *
+Chromosome *
 alloc_chromo(int string_length)
 {
-	Chromosome	   *chromo;
+	Chromosome *chromo;
 
 	chromo = (Chromosome *) palloc(sizeof(Chromosome));
 	chromo->string = (Gene *) palloc((string_length + 1) * sizeof(Gene));
@@ -183,13 +183,13 @@ free_chromo(Chromosome * chromo)
 void
 spread_chromo(Chromosome * chromo, Pool * pool)
 {
-	int				top,
-					mid,
-					bot;
-	int				i,
-					index;
-	Chromosome		swap_chromo,
-					tmp_chromo;
+	int			top,
+				mid,
+				bot;
+	int			i,
+				index;
+	Chromosome	swap_chromo,
+				tmp_chromo;
 
 	/* new chromo is so bad we can't use it */
 	if (chromo->worth > pool->data[pool->size - 1].worth)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.14 1997/09/07 04:40:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.15 1997/09/08 02:22:01 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -46,7 +46,7 @@
  *		This is where the XXXSuperDuperHacky code was. -cim 3/15/90
  * ----------------
  */
-MemoryContext	PortalExecutorHeapMemory = NULL;
+MemoryContext PortalExecutorHeapMemory = NULL;
 
 /* --------------------------------
  *		PortalCleanup
@@ -55,7 +55,7 @@ MemoryContext	PortalExecutorHeapMemory = NULL;
 void
 PortalCleanup(Portal portal)
 {
-	MemoryContext	context;
+	MemoryContext context;
 
 	/* ----------------
 	 *	sanity checks
@@ -97,10 +97,10 @@ PerformPortalFetch(char *name,
 				   char *tag,
 				   CommandDest dest)
 {
-	Portal			portal;
-	int				feature;
-	QueryDesc	   *queryDesc;
-	MemoryContext	context;
+	Portal		portal;
+	int			feature;
+	QueryDesc  *queryDesc;
+	MemoryContext context;
 
 	/* ----------------
 	 *	sanity checks
@@ -151,7 +151,7 @@ PerformPortalFetch(char *name,
 	BeginCommand(name,
 				 queryDesc->operation,
 				 portal->attinfo,		/* QueryDescGetTypeInfo(queryDesc),
-										 *	*/
+										 * */
 				 false,			/* portal fetches don't end up in
 								 * relations */
 				 false,			/* this is a portal fetch, not a "retrieve
@@ -190,7 +190,7 @@ PerformPortalFetch(char *name,
 void
 PerformPortalClose(char *name, CommandDest dest)
 {
-	Portal			portal;
+	Portal		portal;
 
 	/* ----------------
 	 *	sanity checks
@@ -257,22 +257,22 @@ PerformAddAttribute(char *relationName,
 					bool inherits,
 					ColumnDef * colDef)
 {
-	Relation		relrdesc,
-					attrdesc;
-	HeapScanDesc	attsdesc;
-	HeapTuple		reltup;
-	HeapTuple		attributeTuple;
+	Relation	relrdesc,
+				attrdesc;
+	HeapScanDesc attsdesc;
+	HeapTuple	reltup;
+	HeapTuple	attributeTuple;
 	AttributeTupleForm attribute;
 	FormData_pg_attribute attributeD;
-	int				i;
-	int				minattnum,
-					maxatts;
-	HeapTuple		tup;
-	ScanKeyData		key[2];
+	int			i;
+	int			minattnum,
+				maxatts;
+	HeapTuple	tup;
+	ScanKeyData key[2];
 	ItemPointerData oldTID;
-	Relation		idescs[Num_pg_attr_indices];
-	Relation		ridescs[Num_pg_class_indices];
-	bool			hasindex;
+	Relation	idescs[Num_pg_attr_indices];
+	Relation	ridescs[Num_pg_class_indices];
+	bool		hasindex;
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -310,10 +310,10 @@ PerformAddAttribute(char *relationName,
 	{
 		if (inherits)
 		{
-			Oid				myrelid,
-							childrelid;
-			List		   *child,
-						   *children;
+			Oid			myrelid,
+						childrelid;
+			List	   *child,
+					   *children;
 
 			relrdesc = heap_openr(relationName);
 			if (!RelationIsValid(relrdesc))
@@ -418,10 +418,10 @@ PerformAddAttribute(char *relationName,
 	i = 1 + minattnum;
 
 	{
-		HeapTuple		typeTuple;
-		TypeTupleForm	form;
-		char		   *p;
-		int				attnelems;
+		HeapTuple	typeTuple;
+		TypeTupleForm form;
+		char	   *p;
+		int			attnelems;
 
 		/*
 		 * XXX use syscache here as an optimization

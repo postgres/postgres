@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.6 1997/09/07 04:41:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.7 1997/09/08 02:22:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,10 +18,10 @@
 
 #include <lib/dllist.h>
 
-Dllist		   *
+Dllist	   *
 DLNewList(void)
 {
-	Dllist		   *l;
+	Dllist	   *l;
 
 	l = malloc(sizeof(Dllist));
 	l->dll_head = 0;
@@ -34,7 +34,7 @@ DLNewList(void)
 void
 DLFreeList(Dllist * l)
 {
-	Dlelem		   *curr;
+	Dlelem	   *curr;
 
 	while ((curr = DLRemHead(l)) != 0)
 		free(curr);
@@ -42,10 +42,10 @@ DLFreeList(Dllist * l)
 	free(l);
 }
 
-Dlelem		   *
+Dlelem	   *
 DLNewElem(void *val)
 {
-	Dlelem		   *e;
+	Dlelem	   *e;
 
 	e = malloc(sizeof(Dlelem));
 	e->dle_next = 0;
@@ -61,7 +61,7 @@ DLFreeElem(Dlelem * e)
 	free(e);
 }
 
-Dlelem		   *
+Dlelem	   *
 DLGetHead(Dllist * l)
 {
 	return (l ? l->dll_head : 0);
@@ -69,17 +69,17 @@ DLGetHead(Dllist * l)
 
 /* get the value stored in the first element */
 #ifdef NOT_USED
-void		   *
+void	   *
 DLGetHeadVal(Dllist * l)
 {
-	Dlelem		   *e = DLGetHead(l);
+	Dlelem	   *e = DLGetHead(l);
 
 	return (e ? e->dle_val : 0);
 }
 
 #endif
 
-Dlelem		   *
+Dlelem	   *
 DLGetTail(Dllist * l)
 {
 	return (l ? l->dll_tail : 0);
@@ -87,23 +87,23 @@ DLGetTail(Dllist * l)
 
 /* get the value stored in the first element */
 #ifdef NOT_USED
-void		   *
+void	   *
 DLGetTailVal(Dllist * l)
 {
-	Dlelem		   *e = DLGetTail(l);
+	Dlelem	   *e = DLGetTail(l);
 
 	return (e ? e->dle_val : 0);
 }
 
 #endif
 
-Dlelem		   *
+Dlelem	   *
 DLGetPred(Dlelem * e)			/* get predecessor */
 {
 	return (e ? e->dle_prev : 0);
 }
 
-Dlelem		   *
+Dlelem	   *
 DLGetSucc(Dlelem * e)			/* get successor */
 {
 	return (e ? e->dle_next : 0);
@@ -112,7 +112,7 @@ DLGetSucc(Dlelem * e)			/* get successor */
 void
 DLRemove(Dlelem * e)
 {
-	Dllist		   *l;
+	Dllist	   *l;
 
 	if (e->dle_prev)
 		e->dle_prev->dle_next = e->dle_next;
@@ -162,11 +162,11 @@ DLAddTail(Dllist * l, Dlelem * e)
 		l->dll_head = l->dll_tail;
 }
 
-Dlelem		   *
+Dlelem	   *
 DLRemHead(Dllist * l)
 {
 	/* remove and return the head */
-	Dlelem		   *result;
+	Dlelem	   *result;
 
 	if (l->dll_head == 0)
 		return 0;
@@ -188,11 +188,11 @@ DLRemHead(Dllist * l)
 	return result;
 }
 
-Dlelem		   *
+Dlelem	   *
 DLRemTail(Dllist * l)
 {
 	/* remove and return the tail */
-	Dlelem		   *result;
+	Dlelem	   *result;
 
 	if (l->dll_tail == 0)
 		return 0;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.4 1997/09/07 04:42:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.5 1997/09/08 02:23:43 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -28,10 +28,10 @@
  * stringToNode -
  *	  returns a Node with a given legal ascii representation
  */
-void		   *
+void	   *
 stringToNode(char *str)
 {
-	void		   *retval;
+	void	   *retval;
 
 	lsptok(str, NULL);			/* set the string used in lsptok */
 	retval = nodeRead(true);	/* start reading */
@@ -61,10 +61,10 @@ stringToNode(char *str)
  *
  *	  Assumption: the ascii representation is legal
  */
-static			NodeTag
+static NodeTag
 nodeTokenType(char *token, int length)
 {
-	NodeTag			retval = 0;
+	NodeTag		retval = 0;
 
 	/*
 	 * Check if the token is a number (decimal or integer, positive or
@@ -116,11 +116,11 @@ nodeTokenType(char *token, int length)
  * returning a token by calling lsptok with length == NULL.
  *
  */
-char		   *
+char	   *
 lsptok(char *string, int *length)
 {
-	static char    *local_str;
-	char		   *ret_string;
+	static char *local_str;
+	char	   *ret_string;
 
 	if (string != NULL)
 	{
@@ -174,16 +174,16 @@ lsptok(char *string, int *length)
  * Secrets:  He assumes that lsptok already has the string (see below).
  * Any callers should set read_car_only to true.
  */
-void		   *
+void	   *
 nodeRead(bool read_car_only)
 {
-	char		   *token;
-	NodeTag			type;
-	Node		   *this_value = NULL,
-				   *return_value = NULL;
-	int				tok_len;
-	char			tmp;
-	bool			make_dotted_pair_cell = false;
+	char	   *token;
+	NodeTag		type;
+	Node	   *this_value = NULL,
+			   *return_value = NULL;
+	int			tok_len;
+	char		tmp;
+	bool		make_dotted_pair_cell = false;
 
 	token = lsptok(NULL, &tok_len);
 
@@ -194,93 +194,93 @@ nodeRead(bool read_car_only)
 
 	switch (type)
 	{
-	case PLAN_SYM:
-		this_value = parsePlanString();
-		token = lsptok(NULL, &tok_len);
-		if (token[0] != '}')
-			return (NULL);
+		case PLAN_SYM:
+			this_value = parsePlanString();
+			token = lsptok(NULL, &tok_len);
+			if (token[0] != '}')
+				return (NULL);
 
-		if (!read_car_only)
-			make_dotted_pair_cell = true;
-		else
-			make_dotted_pair_cell = false;
-		break;
-	case LEFT_PAREN:
-		if (!read_car_only)
-		{
-			List		   *l = makeNode(List);
-
-			lfirst(l) = nodeRead(false);
-			lnext(l) = nodeRead(false);
-			this_value = (Node *) l;
-		}
-		else
-		{
-			this_value = nodeRead(false);
-		}
-		break;
-	case RIGHT_PAREN:
-		this_value = NULL;
-		break;
-	case AT_SYMBOL:
-		break;
-	case ATOM_TOKEN:
-		if (!strncmp(token, "nil", 3))
-		{
-			this_value = NULL;
-
-			/*
-			 * It might be "nil" but it is an atom!
-			 */
-			if (read_car_only)
-			{
+			if (!read_car_only)
+				make_dotted_pair_cell = true;
+			else
 				make_dotted_pair_cell = false;
+			break;
+		case LEFT_PAREN:
+			if (!read_car_only)
+			{
+				List	   *l = makeNode(List);
+
+				lfirst(l) = nodeRead(false);
+				lnext(l) = nodeRead(false);
+				this_value = (Node *) l;
 			}
 			else
 			{
-				make_dotted_pair_cell = true;
+				this_value = nodeRead(false);
 			}
-		}
-		else
-		{
-			tmp = token[tok_len];
-			token[tok_len] = '\0';
-			this_value = (Node *) pstrdup(token);		/* !attention! not a
+			break;
+		case RIGHT_PAREN:
+			this_value = NULL;
+			break;
+		case AT_SYMBOL:
+			break;
+		case ATOM_TOKEN:
+			if (!strncmp(token, "nil", 3))
+			{
+				this_value = NULL;
+
+				/*
+				 * It might be "nil" but it is an atom!
+				 */
+				if (read_car_only)
+				{
+					make_dotted_pair_cell = false;
+				}
+				else
+				{
+					make_dotted_pair_cell = true;
+				}
+			}
+			else
+			{
+				tmp = token[tok_len];
+				token[tok_len] = '\0';
+				this_value = (Node *) pstrdup(token);	/* !attention! not a
 														 * Node. use with
 														 * caution */
+				token[tok_len] = tmp;
+				make_dotted_pair_cell = true;
+			}
+			break;
+		case T_Float:
+			tmp = token[tok_len];
+			token[tok_len] = '\0';
+			this_value = (Node *) makeFloat(atof(token));
 			token[tok_len] = tmp;
 			make_dotted_pair_cell = true;
-		}
-		break;
-	case T_Float:
-		tmp = token[tok_len];
-		token[tok_len] = '\0';
-		this_value = (Node *) makeFloat(atof(token));
-		token[tok_len] = tmp;
-		make_dotted_pair_cell = true;
-		break;
-	case T_Integer:
-		tmp = token[tok_len];
-		token[tok_len] = '\0';
-		this_value = (Node *) makeInteger(atoi(token));
-		token[tok_len] = tmp;
-		make_dotted_pair_cell = true;
-		break;
-	case T_String:
-		tmp = token[tok_len - 1];
-		token[tok_len - 1] = '\0';
-		token++;
-		this_value = (Node *) makeString(token);		/* !! not strdup'd */
-		token[tok_len - 2] = tmp;
-		make_dotted_pair_cell = true;
-		break;
-	default:
-		elog(WARN, "nodeRead: Bad type %d", type);
-		break;
+			break;
+		case T_Integer:
+			tmp = token[tok_len];
+			token[tok_len] = '\0';
+			this_value = (Node *) makeInteger(atoi(token));
+			token[tok_len] = tmp;
+			make_dotted_pair_cell = true;
+			break;
+		case T_String:
+			tmp = token[tok_len - 1];
+			token[tok_len - 1] = '\0';
+			token++;
+			this_value = (Node *) makeString(token);	/* !! not strdup'd */
+			token[tok_len - 2] = tmp;
+			make_dotted_pair_cell = true;
+			break;
+		default:
+			elog(WARN, "nodeRead: Bad type %d", type);
+			break;
 	}
 	if (make_dotted_pair_cell)
 	{
-		List		   *l = makeNode(List);
+		List	   *l = makeNode(List);
 
 		lfirst(l) = this_value;
 		if (!read_car_only)

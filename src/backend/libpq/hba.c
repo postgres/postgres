@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.20 1997/09/07 04:42:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.21 1997/09/08 02:23:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 /* Some standard C libraries, including GNU, have an isblank() function.
    Others, including Solaris, do not.  So we have our own.
 */
-static			bool
+static bool
 isblank(const char c)
 {
 	return (c == ' ' || c == 9 /* tab */ );
@@ -53,8 +53,8 @@ next_token(FILE * fp, char *buf, const int bufsz)
   string as *buf and position file to beginning of next line or EOF,
   whichever comes first.
 --------------------------------------------------------------------------*/
-	int				c;
-	char		   *eb = buf + (bufsz - 1);
+	int			c;
+	char	   *eb = buf + (bufsz - 1);
 
 	/* Move over inital token-delimiting blanks */
 	while (isblank(c = getc(fp)));
@@ -87,7 +87,7 @@ next_token(FILE * fp, char *buf, const int bufsz)
 static void
 read_through_eol(FILE * file)
 {
-	int				c;
+	int			c;
 
 	do
 		c = getc(file);
@@ -105,9 +105,9 @@ read_hba_entry2(FILE * file, enum Userauth * userauth_p, char usermap_name[],
   and return the interpretation of it as *userauth_p, usermap_name, and
   *error_p.
 ---------------------------------------------------------------------------*/
-	char			buf[MAX_TOKEN];
+	char		buf[MAX_TOKEN];
 
-	bool			userauth_valid;
+	bool		userauth_valid;
 
 	/* Get authentication type token. */
 	next_token(file, buf, sizeof(buf));
@@ -197,7 +197,7 @@ process_hba_record(FILE * file,
   return *error_p true, after issuing a message to stderr.	If no error,
   leave *error_p as it was.
 ---------------------------------------------------------------------------*/
-	char			buf[MAX_TOKEN];		/* A token from the record */
+	char		buf[MAX_TOKEN]; /* A token from the record */
 
 	/* Read the record type field */
 	next_token(file, buf, sizeof(buf));
@@ -233,14 +233,14 @@ process_hba_record(FILE * file,
 						*matches_p = false;
 					else
 					{
-						int				valid;	/* Field is valid dotted
+						int			valid;		/* Field is valid dotted
 												 * decimal */
 
 						/*
 						 * Remember the IP address field and go get mask
 						 * field
 						 */
-						struct in_addr	file_ip_addr;	/* IP address field
+						struct in_addr file_ip_addr;	/* IP address field
 														 * value */
 
 						valid = inet_aton(buf, &file_ip_addr);
@@ -257,7 +257,7 @@ process_hba_record(FILE * file,
 								*matches_p = false;
 							else
 							{
-								struct in_addr	mask;
+								struct in_addr mask;
 
 								/*
 								 * Got mask.  Now see if this record is
@@ -320,13 +320,13 @@ process_open_config_file(FILE * file,
   This function does the same thing as find_hba_entry, only with
   the config file already open on stream descriptor "file".
 ----------------------------------------------------------------------------*/
-	bool			found_entry;
+	bool		found_entry;
 
 	/* We've processed a record that applies to our connection */
-	bool			error;
+	bool		error;
 
 	/* Said record has invalid syntax. */
-	bool			eof;		/* We've reached the end of the file we're
+	bool		eof;			/* We've reached the end of the file we're
 								 * reading */
 
 	found_entry = false;		/* initial value */
@@ -336,7 +336,7 @@ process_open_config_file(FILE * file,
 	{
 		/* Process a line from the config file */
 
-		int				c;		/* a character read from the file */
+		int			c;			/* a character read from the file */
 
 		c = getc(file);
 		ungetc(c, file);
@@ -392,11 +392,11 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
   system.
 
 ---------------------------------------------------------------------------*/
-	int				fd;
+	int			fd;
 
-	FILE		   *file;		/* The config file we have to read */
+	FILE	   *file;			/* The config file we have to read */
 
-	char		   *old_conf_file;
+	char	   *old_conf_file;
 
 	/* The name of old config file that better not exist. */
 
@@ -423,8 +423,8 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 	}
 	else
 	{
-		char		   *conf_file;		/* The name of the config file we
-										 * have to read */
+		char	   *conf_file;	/* The name of the config file we have to
+								 * read */
 
 		/* put together the full pathname to the config file */
 		conf_file = (char *) malloc((strlen(DataDir) +
@@ -469,7 +469,7 @@ interpret_ident_response(char ident_response[],
   *error_p == false and the username as ident_username[].  If it's anything
   else, return *error_p == true and ident_username[] undefined.
 ----------------------------------------------------------------------------*/
-	char		   *cursor;		/* Cursor into ident_response[] */
+	char	   *cursor;			/* Cursor into ident_response[] */
 
 	cursor = &ident_response[0];
 
@@ -491,8 +491,8 @@ interpret_ident_response(char ident_response[],
 		else
 		{
 			/* We're positioned to colon before response type field */
-			char			response_type[80];
-			int				i;	/* Index into response_type[] */
+			char		response_type[80];
+			int			i;		/* Index into response_type[] */
 
 			cursor++;			/* Go over colon */
 			while (isblank(*cursor))
@@ -526,8 +526,7 @@ interpret_ident_response(char ident_response[],
 						*error_p = true;
 					else
 					{
-						int				i;		/* Index into
-												 * ident_username[] */
+						int			i;	/* Index into ident_username[] */
 
 						cursor++;		/* Go over colon */
 						while (isblank(*cursor))
@@ -564,11 +563,11 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
   *ident_failed == true (and ident_username[] undefined).
 ----------------------------------------------------------------------------*/
 
-	int				sock_fd;
+	int			sock_fd;
 
 	/* File descriptor for socket on which we talk to Ident */
 
-	int				rc;			/* Return code from a locally called
+	int			rc;				/* Return code from a locally called
 								 * function */
 
 	sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
@@ -608,7 +607,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 		}
 		else
 		{
-			char			ident_query[80];
+			char		ident_query[80];
 
 			/* The query we send to the Ident server */
 			sprintf(ident_query, "%d,%d\n",
@@ -628,7 +627,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 			}
 			else
 			{
-				char			ident_response[80 + IDENT_USERNAME_MAX];
+				char		ident_response[80 + IDENT_USERNAME_MAX];
 
 				rc = recv(sock_fd, ident_response, sizeof(ident_response) - 1, 0);
 				if (rc < 0)
@@ -647,8 +646,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 				}
 				else
 				{
-					bool			error;		/* response from Ident is
-												 * garbage. */
+					bool		error;	/* response from Ident is garbage. */
 
 					ident_response[rc] = '\0';
 					interpret_ident_response(ident_response, &error, ident_username);
@@ -674,7 +672,7 @@ parse_map_record(FILE * file,
   ones.
 
 ---------------------------------------------------------------------------*/
-	char			buf[MAX_TOKEN];
+	char		buf[MAX_TOKEN];
 
 	/* A token read from the file */
 
@@ -714,9 +712,9 @@ verify_against_open_usermap(FILE * file,
   This function does the same thing as verify_against_usermap,
   only with the config file already open on stream descriptor "file".
 ---------------------------------------------------------------------------*/
-	bool			match;		/* We found a matching entry in the map
+	bool		match;			/* We found a matching entry in the map
 								 * file */
-	bool			eof;		/* We've reached the end of the file we're
+	bool		eof;			/* We've reached the end of the file we're
 								 * reading */
 
 	match = false;				/* initial value */
@@ -725,7 +723,7 @@ verify_against_open_usermap(FILE * file,
 	{
 		/* Process a line from the map file */
 
-		int				c;		/* a character read from the file */
+		int			c;			/* a character read from the file */
 
 		c = getc(file);
 		ungetc(c, file);
@@ -738,9 +736,9 @@ verify_against_open_usermap(FILE * file,
 			else
 			{
 				/* The following are fields read from a record of the file */
-				char			file_map[MAX_TOKEN + 1];
-				char			file_pguser[MAX_TOKEN + 1];
-				char			file_iuser[MAX_TOKEN + 1];
+				char		file_map[MAX_TOKEN + 1];
+				char		file_pguser[MAX_TOKEN + 1];
+				char		file_iuser[MAX_TOKEN + 1];
 
 				parse_map_record(file, file_map, file_pguser, file_iuser);
 				if (strcmp(file_map, usermap_name) == 0 &&
@@ -795,10 +793,10 @@ verify_against_usermap(const char DataDir[],
 	}
 	else
 	{
-		FILE		   *file;	/* The map file we have to read */
+		FILE	   *file;		/* The map file we have to read */
 
-		char		   *map_file;		/* The name of the map file we
-										 * have to read */
+		char	   *map_file;	/* The name of the map file we have to
+								 * read */
 
 		/* put together the full pathname to the map file */
 		map_file = (char *) malloc((strlen(DataDir) +
@@ -850,10 +848,10 @@ authident(const char DataDir[],
 
   Return *authentic_p true iff yes.
 ---------------------------------------------------------------------------*/
-	bool			ident_failed;
+	bool		ident_failed;
 
 	/* We were unable to get ident to give us a username */
-	char			ident_username[IDENT_USERNAME_MAX + 1];
+	char		ident_username[IDENT_USERNAME_MAX + 1];
 
 	/* The username returned by ident */
 
@@ -865,7 +863,7 @@ authident(const char DataDir[],
 		*authentic_p = false;
 	else
 	{
-		bool			checks_out;
+		bool		checks_out;
 
 		verify_against_usermap(DataDir,
 						 postgres_username, ident_username, usermap_name,
@@ -888,25 +886,25 @@ hba_recvauth(const Port * port, const char database[], const char user[],
   allowed to act as user "user" and access database "database".  Return
   STATUS_OK if yes; STATUS_ERROR if not.
 ----------------------------------------------------------------------------*/
-	bool			host_ok;
+	bool		host_ok;
 
 	/*
 	 * There's an entry for this database and remote host in the pg_hba
 	 * file
 	 */
-	char			usermap_name[USERMAP_NAME_SIZE + 1];
+	char		usermap_name[USERMAP_NAME_SIZE + 1];
 
 	/*
 	 * The name of the map pg_hba specifies for this connection (or
 	 * special value "SAMEUSER")
 	 */
-	enum Userauth	userauth;
+	enum Userauth userauth;
 
 	/*
 	 * The type of user authentication pg_hba specifies for this
 	 * connection
 	 */
-	int				retvalue;
+	int			retvalue;
 
 	/* Our eventual return value */
 
@@ -922,31 +920,31 @@ hba_recvauth(const Port * port, const char database[], const char user[],
 	{
 		switch (userauth)
 		{
-		case Trust:
-			retvalue = STATUS_OK;
-			break;
-		case Ident:
-			{
+			case Trust:
+				retvalue = STATUS_OK;
+				break;
+			case Ident:
+				{
 
-				/*
-				 * Here's where we need to call up ident and authenticate
-				 * the user
-				 */
+					/*
+					 * Here's where we need to call up ident and
+					 * authenticate the user
+					 */
 
-				bool			authentic;		/* He is who he says he
+					bool		authentic;		/* He is who he says he
 												 * is. */
 
-				authident(DataDir, *port, user, usermap_name, &authentic);
+					authident(DataDir, *port, user, usermap_name, &authentic);
 
-				if (authentic)
-					retvalue = STATUS_OK;
-				else
-					retvalue = STATUS_ERROR;
-			}
-			break;
-		default:
-			retvalue = STATUS_ERROR;
-			Assert(false);
+					if (authentic)
+						retvalue = STATUS_OK;
+					else
+						retvalue = STATUS_ERROR;
+				}
+				break;
+			default:
+				retvalue = STATUS_ERROR;
+				Assert(false);
 		}
 	}
 	return (retvalue);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.7 1997/09/07 04:41:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.8 1997/09/08 02:22:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,16 +50,16 @@
 TupleTableSlot *				/* result tuple from subplan */
 ExecMaterial(Material * node)
 {
-	EState		   *estate;
-	MaterialState  *matstate;
-	Plan		   *outerNode;
-	ScanDirection	dir;
-	Relation		tempRelation;
-	Relation		currentRelation;
-	HeapScanDesc	currentScanDesc;
-	HeapTuple		heapTuple;
+	EState	   *estate;
+	MaterialState *matstate;
+	Plan	   *outerNode;
+	ScanDirection dir;
+	Relation	tempRelation;
+	Relation	currentRelation;
+	HeapScanDesc currentScanDesc;
+	HeapTuple	heapTuple;
 	TupleTableSlot *slot;
-	Buffer			buffer;
+	Buffer		buffer;
 
 	/* ----------------
 	 *	get state info from node
@@ -190,10 +190,10 @@ ExecMaterial(Material * node)
 bool							/* initialization status */
 ExecInitMaterial(Material * node, EState * estate, Plan * parent)
 {
-	MaterialState  *matstate;
-	Plan		   *outerPlan;
-	TupleDesc		tupType;
-	Relation		tempDesc;
+	MaterialState *matstate;
+	Plan	   *outerPlan;
+	TupleDesc	tupType;
+	Relation	tempDesc;
 
 	/* int						len; */
 
@@ -308,9 +308,9 @@ ExecCountSlotsMaterial(Material * node)
 void
 ExecEndMaterial(Material * node)
 {
-	MaterialState  *matstate;
-	Relation		tempRelation;
-	Plan		   *outerPlan;
+	MaterialState *matstate;
+	Relation	tempRelation;
+	Plan	   *outerPlan;
 
 	/* ----------------
 	 *	get info from the material state
@@ -349,8 +349,8 @@ ExecEndMaterial(Material * node)
 List							/* nothing of interest */
 ExecMaterialMarkPos(Material node)
 {
-	MaterialState	matstate;
-	HeapScanDesc	sdesc;
+	MaterialState matstate;
+	HeapScanDesc sdesc;
 
 	/* ----------------
 	 *	if we haven't materialized yet, just return NIL.
@@ -379,8 +379,8 @@ ExecMaterialMarkPos(Material node)
 void
 ExecMaterialRestrPos(Material node)
 {
-	MaterialState	matstate;
-	HeapScanDesc	sdesc;
+	MaterialState matstate;
+	HeapScanDesc sdesc;
 
 	/* ----------------
 	 *	if we haven't materialized yet, just return.

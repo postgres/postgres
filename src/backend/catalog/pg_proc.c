@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.6 1997/09/07 04:40:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.7 1997/09/08 02:21:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,23 +55,23 @@ ProcedureCreate(char *procedureName,
 				List * argList,
 				CommandDest dest)
 {
-	register		i;
-	Relation		rdesc;
-	HeapTuple		tup;
-	bool			defined;
-	uint16			parameterCount;
-	char			nulls[Natts_pg_proc];
-	Datum			values[Natts_pg_proc];
-	Oid				languageObjectId;
-	Oid				typeObjectId;
-	List		   *x;
-	QueryTreeList  *querytree_list;
-	List		   *plan_list;
-	Oid				typev[8];
-	Oid				relid;
-	Oid				toid;
-	text		   *prosrctext;
-	TupleDesc		tupDesc;
+	register	i;
+	Relation	rdesc;
+	HeapTuple	tup;
+	bool		defined;
+	uint16		parameterCount;
+	char		nulls[Natts_pg_proc];
+	Datum		values[Natts_pg_proc];
+	Oid			languageObjectId;
+	Oid			typeObjectId;
+	List	   *x;
+	QueryTreeList *querytree_list;
+	List	   *plan_list;
+	Oid			typev[8];
+	Oid			relid;
+	Oid			toid;
+	text	   *prosrctext;
+	TupleDesc	tupDesc;
 
 	/* ----------------
 	 *	sanity checks
@@ -84,7 +84,7 @@ ProcedureCreate(char *procedureName,
 	memset(typev, 0, 8 * sizeof(Oid));
 	foreach(x, argList)
 	{
-		Value		   *t = lfirst(x);
+		Value	   *t = lfirst(x);
 
 		if (parameterCount == 8)
 			elog(WARN, "Procedures cannot take more than 8 arguments");
@@ -270,7 +270,7 @@ ProcedureCreate(char *procedureName,
 
 	if (RelationGetRelationTupleForm(rdesc)->relhasindex)
 	{
-		Relation		idescs[Num_pg_proc_indices];
+		Relation	idescs[Num_pg_proc_indices];
 
 		CatalogOpenIndices(Num_pg_proc_indices, Name_pg_proc_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_proc_indices, rdesc, tup);

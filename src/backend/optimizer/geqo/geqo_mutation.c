@@ -4,7 +4,7 @@
 *
 *	 TSP mutation routines
 *
-* $Id: geqo_mutation.c,v 1.2 1997/09/07 04:43:13 momjian Exp $
+* $Id: geqo_mutation.c,v 1.3 1997/09/08 02:23:57 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -53,10 +53,10 @@
 void
 geqo_mutation(Gene * tour, int num_gene)
 {
-	int				swap1;
-	int				swap2;
-	int				num_swaps = geqo_randint(num_gene / 3, 0);
-	Gene			temp;
+	int			swap1;
+	int			swap2;
+	int			num_swaps = geqo_randint(num_gene / 3, 0);
+	Gene		temp;
 
 
 	while (num_swaps > 0)

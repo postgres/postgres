@@ -3,7 +3,7 @@
 * geqo_erx.c--
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.3 1997/09/07 04:43:04 momjian Exp $
+* $Id: geqo_erx.c,v 1.4 1997/09/08 02:23:52 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -52,11 +52,11 @@
 #include "optimizer/geqo_random.h"
 
 
-static int		gimme_edge(Gene gene1, Gene gene2, Edge * edge_table);
-static void		remove_gene(Gene gene, Edge edge, Edge * edge_table);
-static Gene		gimme_gene(Edge edge, Edge * edge_table);
+static int	gimme_edge(Gene gene1, Gene gene2, Edge * edge_table);
+static void remove_gene(Gene gene, Edge edge, Edge * edge_table);
+static Gene gimme_gene(Edge edge, Edge * edge_table);
 
-static Gene		edge_failure(Gene * gene, int index, Edge * edge_table, int num_gene);
+static Gene edge_failure(Gene * gene, int index, Edge * edge_table, int num_gene);
 
 
 /* alloc_edge_table--
@@ -65,10 +65,10 @@ static Gene		edge_failure(Gene * gene, int index, Edge * edge_table, int num_gen
  *
  */
 
-Edge		   *
+Edge	   *
 alloc_edge_table(int num_gene)
 {
-	Edge		   *edge_table;
+	Edge	   *edge_table;
 
 	/*
 	 * palloc one extra location so that nodes numbered 1..n can be
@@ -107,10 +107,10 @@ free_edge_table(Edge * edge_table)
 float
 gimme_edge_table(Gene * tour1, Gene * tour2, int num_gene, Edge * edge_table)
 {
-	int				i,
-					index1,
-					index2;
-	int				edge_total; /* total number of unique edges in two
+	int			i,
+				index1,
+				index2;
+	int			edge_total;		/* total number of unique edges in two
 								 * genes */
 
 	/* at first clear the edge table's old data */
@@ -167,10 +167,10 @@ gimme_edge_table(Gene * tour1, Gene * tour2, int num_gene, Edge * edge_table)
 static int
 gimme_edge(Gene gene1, Gene gene2, Edge * edge_table)
 {
-	int				i;
-	int				edges;
-	int				city1 = (int) gene1;
-	int				city2 = (int) gene2;
+	int			i;
+	int			edges;
+	int			city1 = (int) gene1;
+	int			city2 = (int) gene2;
 
 
 	/* check whether edge city1->city2 already exists */
@@ -209,8 +209,8 @@ gimme_edge(Gene gene1, Gene gene2, Edge * edge_table)
 int
 gimme_tour(Edge * edge_table, Gene * new_gene, int num_gene)
 {
-	int				i;
-	int				edge_failures = 0;
+	int			i;
+	int			edge_failures = 0;
 
 	new_gene[0] = (Gene) geqo_randint(num_gene, 1);		/* choose int between 1
 														 * and num_gene */
@@ -258,10 +258,10 @@ gimme_tour(Edge * edge_table, Gene * new_gene, int num_gene)
 static void
 remove_gene(Gene gene, Edge edge, Edge * edge_table)
 {
-	int				i,
-					j;
-	int				possess_edge;
-	int				genes_remaining;
+	int			i,
+				j;
+	int			possess_edge;
+	int			genes_remaining;
 
 	/*
 	 * do for every gene known to have an edge to input gene (i.e. in
@@ -297,14 +297,14 @@ remove_gene(Gene gene, Edge edge, Edge * edge_table)
  *	  (i.e. edges which both genes possess)
  *
  */
-static			Gene
+static Gene
 gimme_gene(Edge edge, Edge * edge_table)
 {
-	int				i;
-	Gene			friend;
-	int				minimum_edges;
-	int				minimum_count = -1;
-	int				rand_decision;
+	int			i;
+	Gene		friend;
+	int			minimum_edges;
+	int			minimum_count = -1;
+	int			rand_decision;
 
 	/*
 	 * no point has edges to more than 4 other points thus, this contrived
@@ -388,14 +388,14 @@ gimme_gene(Edge edge, Edge * edge_table)
  *	  routine for handling edge failure
  *
  */
-static			Gene
+static Gene
 edge_failure(Gene * gene, int index, Edge * edge_table, int num_gene)
 {
-	int				i;
-	Gene			fail_gene = gene[index];
-	int				remaining_edges = 0;
-	int				four_count = 0;
-	int				rand_decision;
+	int			i;
+	Gene		fail_gene = gene[index];
+	int			remaining_edges = 0;
+	int			four_count = 0;
+	int			rand_decision;
 
 
 	/*

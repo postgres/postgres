@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.7 1997/09/07 04:42:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.8 1997/09/08 02:23:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,12 @@
  *	  this copy function only copies the "lcons-cells" of the list but not
  *	  its contents. (good for list of pointers as well as list of integers).
  */
-List		   *
+List	   *
 listCopy(List * list)
 {
-	List		   *newlist = NIL;
-	List		   *l,
-				   *nl = NIL;
+	List	   *newlist = NIL;
+	List	   *l,
+			   *nl = NIL;
 
 	foreach(l, list)
 	{
@@ -94,10 +94,10 @@ CopyPlanFields(Plan * from, Plan * newnode)
  *		_copyPlan
  * ----------------
  */
-static Plan    *
+static Plan *
 _copyPlan(Plan * from)
 {
-	Plan		   *newnode = makeNode(Plan);
+	Plan	   *newnode = makeNode(Plan);
 
 	/* ----------------
 	 *	copy the node superclass fields
@@ -116,7 +116,7 @@ _copyPlan(Plan * from)
 static Existential *
 _copyExistential(Existential * from)
 {
-	Existential    *newnode = makeNode(Existential);
+	Existential *newnode = makeNode(Existential);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -131,10 +131,10 @@ _copyExistential(Existential * from)
  *		_copyResult
  * ----------------
  */
-static Result  *
+static Result *
 _copyResult(Result * from)
 {
-	Result		   *newnode = makeNode(Result);
+	Result	   *newnode = makeNode(Result);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -156,10 +156,10 @@ _copyResult(Result * from)
  *		_copyAppend
  * ----------------
  */
-static Append  *
+static Append *
 _copyAppend(Append * from)
 {
-	Append		   *newnode = makeNode(Append);
+	Append	   *newnode = makeNode(Append);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -199,10 +199,10 @@ CopyScanFields(Scan * from, Scan * newnode)
  *		_copyScan
  * ----------------
  */
-static Scan    *
+static Scan *
 _copyScan(Scan * from)
 {
-	Scan		   *newnode = makeNode(Scan);
+	Scan	   *newnode = makeNode(Scan);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -221,7 +221,7 @@ _copyScan(Scan * from)
 static SeqScan *
 _copySeqScan(SeqScan * from)
 {
-	SeqScan		   *newnode = makeNode(SeqScan);
+	SeqScan    *newnode = makeNode(SeqScan);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -240,7 +240,7 @@ _copySeqScan(SeqScan * from)
 static IndexScan *
 _copyIndexScan(IndexScan * from)
 {
-	IndexScan	   *newnode = makeNode(IndexScan);
+	IndexScan  *newnode = makeNode(IndexScan);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -279,10 +279,10 @@ CopyJoinFields(Join * from, Join * newnode)
  *		_copyJoin
  * ----------------
  */
-static Join    *
+static Join *
 _copyJoin(Join * from)
 {
-	Join		   *newnode = makeNode(Join);
+	Join	   *newnode = makeNode(Join);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -302,7 +302,7 @@ _copyJoin(Join * from)
 static NestLoop *
 _copyNestLoop(NestLoop * from)
 {
-	NestLoop	   *newnode = makeNode(NestLoop);
+	NestLoop   *newnode = makeNode(NestLoop);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -328,8 +328,8 @@ _copyNestLoop(NestLoop * from)
 static MergeJoin *
 _copyMergeJoin(MergeJoin * from)
 {
-	MergeJoin	   *newnode = makeNode(MergeJoin);
-	List		   *newlist;
+	MergeJoin  *newnode = makeNode(MergeJoin);
+	List	   *newlist;
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -367,7 +367,7 @@ _copyMergeJoin(MergeJoin * from)
 static HashJoin *
 _copyHashJoin(HashJoin * from)
 {
-	HashJoin	   *newnode = makeNode(HashJoin);
+	HashJoin   *newnode = makeNode(HashJoin);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -415,10 +415,10 @@ CopyTempFields(Temp * from, Temp * newnode)
  *		_copyTemp
  * ----------------
  */
-static Temp    *
+static Temp *
 _copyTemp(Temp * from)
 {
-	Temp		   *newnode = makeNode(Temp);
+	Temp	   *newnode = makeNode(Temp);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -437,7 +437,7 @@ _copyTemp(Temp * from)
 static Material *
 _copyMaterial(Material * from)
 {
-	Material	   *newnode = makeNode(Material);
+	Material   *newnode = makeNode(Material);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -460,10 +460,10 @@ _copyMaterial(Material * from)
  *		_copySort
  * ----------------
  */
-static Sort    *
+static Sort *
 _copySort(Sort * from)
 {
-	Sort		   *newnode = makeNode(Sort);
+	Sort	   *newnode = makeNode(Sort);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -485,11 +485,11 @@ _copySort(Sort * from)
  *	_copyAgg
  * --------------
  */
-static Agg	   *
+static Agg *
 _copyAgg(Agg * from)
 {
-	Agg			   *newnode = makeNode(Agg);
-	int				i;
+	Agg		   *newnode = makeNode(Agg);
+	int			i;
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 	CopyTempFields((Temp *) from, (Temp *) newnode);
@@ -511,10 +511,10 @@ _copyAgg(Agg * from)
  *		_copyUnique
  * ----------------
  */
-static Unique  *
+static Unique *
 _copyUnique(Unique * from)
 {
-	Unique		   *newnode = makeNode(Unique);
+	Unique	   *newnode = makeNode(Unique);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -537,10 +537,10 @@ _copyUnique(Unique * from)
  *		_copyHash
  * ----------------
  */
-static Hash    *
+static Hash *
 _copyHash(Hash * from)
 {
-	Hash		   *newnode = makeNode(Hash);
+	Hash	   *newnode = makeNode(Hash);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -571,10 +571,10 @@ _copyHash(Hash * from)
  *		_copyResdom
  * ----------------
  */
-static Resdom  *
+static Resdom *
 _copyResdom(Resdom * from)
 {
-	Resdom		   *newnode = makeNode(Resdom);
+	Resdom	   *newnode = makeNode(Resdom);
 
 	newnode->resno = from->resno;
 	newnode->restype = from->restype;
@@ -595,10 +595,10 @@ _copyResdom(Resdom * from)
 	return newnode;
 }
 
-static Fjoin   *
+static Fjoin *
 _copyFjoin(Fjoin * from)
 {
-	Fjoin		   *newnode = makeNode(Fjoin);
+	Fjoin	   *newnode = makeNode(Fjoin);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -632,10 +632,10 @@ _copyFjoin(Fjoin * from)
  *		_copyExpr
  * ----------------
  */
-static Expr    *
+static Expr *
 _copyExpr(Expr * from)
 {
-	Expr		   *newnode = makeNode(Expr);
+	Expr	   *newnode = makeNode(Expr);
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -654,10 +654,10 @@ _copyExpr(Expr * from)
  *		_copyVar
  * ----------------
  */
-static Var	   *
+static Var *
 _copyVar(Var * from)
 {
-	Var			   *newnode = makeNode(Var);
+	Var		   *newnode = makeNode(Var);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -677,10 +677,10 @@ _copyVar(Var * from)
  *		_copyOper
  * ----------------
  */
-static Oper    *
+static Oper *
 _copyOper(Oper * from)
 {
-	Oper		   *newnode = makeNode(Oper);
+	Oper	   *newnode = makeNode(Oper);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -705,13 +705,13 @@ _copyOper(Oper * from)
  *		_copyConst
  * ----------------
  */
-static Const   *
+static Const *
 _copyConst(Const * from)
 {
-	static Oid		cached_type;
-	static bool		cached_typbyval;
+	static Oid	cached_type;
+	static bool cached_typbyval;
 
-	Const		   *newnode = makeNode(Const);
+	Const	   *newnode = makeNode(Const);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -727,8 +727,8 @@ _copyConst(Const * from)
 	 */
 	if (cached_type != from->consttype)
 	{
-		HeapTuple		typeTuple;
-		TypeTupleForm	typeStruct;
+		HeapTuple	typeTuple;
+		TypeTupleForm typeStruct;
 
 		/* ----------------
 		 *	 get the type tuple corresponding to the paramList->type,
@@ -793,7 +793,7 @@ _copyConst(Const * from)
 				 *	in the first int pointed to by the constval.
 				 * ----------------
 				 */
-				int				length;
+				int			length;
 
 				length = *((int *) from->constvalue);
 				newnode->constvalue = PointerGetDatum(palloc(length));
@@ -816,10 +816,10 @@ _copyConst(Const * from)
  *		_copyParam
  * ----------------
  */
-static Param   *
+static Param *
 _copyParam(Param * from)
 {
-	Param		   *newnode = makeNode(Param);
+	Param	   *newnode = makeNode(Param);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -845,10 +845,10 @@ _copyParam(Param * from)
  *		_copyFunc
  * ----------------
  */
-static Func    *
+static Func *
 _copyFunc(Func * from)
 {
-	Func		   *newnode = makeNode(Func);
+	Func	   *newnode = makeNode(Func);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -869,10 +869,10 @@ _copyFunc(Func * from)
  *		_copyAggreg
  * ----------------
  */
-static Aggreg  *
+static Aggreg *
 _copyAggreg(Aggreg * from)
 {
-	Aggreg		   *newnode = makeNode(Aggreg);
+	Aggreg	   *newnode = makeNode(Aggreg);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -889,10 +889,10 @@ _copyAggreg(Aggreg * from)
 	return newnode;
 }
 
-static Array   *
+static Array *
 _copyArray(Array * from)
 {
-	Array		   *newnode = makeNode(Array);
+	Array	   *newnode = makeNode(Array);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -912,7 +912,7 @@ _copyArray(Array * from)
 static ArrayRef *
 _copyArrayRef(ArrayRef * from)
 {
-	ArrayRef	   *newnode = makeNode(ArrayRef);
+	ArrayRef   *newnode = makeNode(ArrayRef);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -945,12 +945,12 @@ _copyArrayRef(ArrayRef * from)
  ** planner/path/xfunc.c accordingly!!!
  **			-- JMH, 8/2/93
  */
-static Rel	   *
+static Rel *
 _copyRel(Rel * from)
 {
-	Rel			   *newnode = makeNode(Rel);
-	int				i,
-					len;
+	Rel		   *newnode = makeNode(Rel);
+	int			i,
+				len;
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1040,9 +1040,9 @@ CopyPathFields(Path * from, Path * newnode)
 	newnode->p_ordering.ordtype = from->p_ordering.ordtype;
 	if (from->p_ordering.ordtype == SORTOP_ORDER)
 	{
-		int				len,
-						i;
-		Oid			   *ordering = from->p_ordering.ord.sortop;
+		int			len,
+					i;
+		Oid		   *ordering = from->p_ordering.ord.sortop;
 
 		if (ordering)
 		{
@@ -1078,10 +1078,10 @@ CopyPathFields(Path * from, Path * newnode)
  *		_copyPath
  * ----------------
  */
-static Path    *
+static Path *
 _copyPath(Path * from)
 {
-	Path		   *newnode = makeNode(Path);
+	Path	   *newnode = makeNode(Path);
 
 	CopyPathFields(from, newnode);
 
@@ -1095,7 +1095,7 @@ _copyPath(Path * from)
 static IndexPath *
 _copyIndexPath(IndexPath * from)
 {
-	IndexPath	   *newnode = makeNode(IndexPath);
+	IndexPath  *newnode = makeNode(IndexPath);
 
 	/* ----------------
 	 *	copy the node superclass fields
@@ -1112,8 +1112,8 @@ _copyIndexPath(IndexPath * from)
 
 	if (from->indexkeys)
 	{
-		int				i,
-						len;
+		int			i,
+					len;
 
 		for (len = 0; from->indexkeys[len] != 0; len++)
 			;
@@ -1150,7 +1150,7 @@ CopyJoinPathFields(JoinPath * from, JoinPath * newnode)
 static JoinPath *
 _copyJoinPath(JoinPath * from)
 {
-	JoinPath	   *newnode = makeNode(JoinPath);
+	JoinPath   *newnode = makeNode(JoinPath);
 
 	/* ----------------
 	 *	copy the node superclass fields
@@ -1169,7 +1169,7 @@ _copyJoinPath(JoinPath * from)
 static MergePath *
 _copyMergePath(MergePath * from)
 {
-	MergePath	   *newnode = makeNode(MergePath);
+	MergePath  *newnode = makeNode(MergePath);
 
 	/* ----------------
 	 *	copy the node superclass fields
@@ -1196,7 +1196,7 @@ _copyMergePath(MergePath * from)
 static HashPath *
 _copyHashPath(HashPath * from)
 {
-	HashPath	   *newnode = makeNode(HashPath);
+	HashPath   *newnode = makeNode(HashPath);
 
 	/* ----------------
 	 *	copy the node superclass fields
@@ -1223,7 +1223,7 @@ _copyHashPath(HashPath * from)
 static OrderKey *
 _copyOrderKey(OrderKey * from)
 {
-	OrderKey	   *newnode = makeNode(OrderKey);
+	OrderKey   *newnode = makeNode(OrderKey);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1243,7 +1243,7 @@ _copyOrderKey(OrderKey * from)
 static JoinKey *
 _copyJoinKey(JoinKey * from)
 {
-	JoinKey		   *newnode = makeNode(JoinKey);
+	JoinKey    *newnode = makeNode(JoinKey);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1262,7 +1262,7 @@ _copyJoinKey(JoinKey * from)
 static MergeOrder *
 _copyMergeOrder(MergeOrder * from)
 {
-	MergeOrder	   *newnode = makeNode(MergeOrder);
+	MergeOrder *newnode = makeNode(MergeOrder);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1281,10 +1281,10 @@ _copyMergeOrder(MergeOrder * from)
  *		_copyCInfo
  * ----------------
  */
-static CInfo   *
+static CInfo *
 _copyCInfo(CInfo * from)
 {
-	CInfo		   *newnode = makeNode(CInfo);
+	CInfo	   *newnode = makeNode(CInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1325,7 +1325,7 @@ CopyJoinMethodFields(JoinMethod * from, JoinMethod * newnode)
 static JoinMethod *
 _copyJoinMethod(JoinMethod * from)
 {
-	JoinMethod	   *newnode = makeNode(JoinMethod);
+	JoinMethod *newnode = makeNode(JoinMethod);
 
 	CopyJoinMethodFields(from, newnode);
 
@@ -1336,10 +1336,10 @@ _copyJoinMethod(JoinMethod * from)
  *		_copyHInfo
  * ----------------
  */
-static HInfo   *
+static HInfo *
 _copyHInfo(HInfo * from)
 {
-	HInfo		   *newnode = makeNode(HInfo);
+	HInfo	   *newnode = makeNode(HInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1354,10 +1354,10 @@ _copyHInfo(HInfo * from)
  *		_copyMInfo
  * ----------------
  */
-static MInfo   *
+static MInfo *
 _copyMInfo(MInfo * from)
 {
-	MInfo		   *newnode = makeNode(MInfo);
+	MInfo	   *newnode = makeNode(MInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1372,10 +1372,10 @@ _copyMInfo(MInfo * from)
  *		_copyJInfo
  * ----------------
  */
-static JInfo   *
+static JInfo *
 _copyJInfo(JInfo * from)
 {
-	JInfo		   *newnode = makeNode(JInfo);
+	JInfo	   *newnode = makeNode(JInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1391,10 +1391,10 @@ _copyJInfo(JInfo * from)
 	return newnode;
 }
 
-static Iter    *
+static Iter *
 _copyIter(Iter * from)
 {
-	Iter		   *newnode = makeNode(Iter);
+	Iter	   *newnode = makeNode(Iter);
 
 	Node_Copy(from, newnode, iterexpr);
 	newnode->itertype = from->itertype;
@@ -1402,10 +1402,10 @@ _copyIter(Iter * from)
 	return newnode;
 }
 
-static Stream  *
+static Stream *
 _copyStream(Stream * from)
 {
-	Stream		   *newnode = makeNode(Stream);
+	Stream	   *newnode = makeNode(Stream);
 
 	newnode->pathptr = from->pathptr;
 	newnode->cinfo = from->cinfo;
@@ -1430,7 +1430,7 @@ _copyStream(Stream * from)
 static TargetEntry *
 _copyTargetEntry(TargetEntry * from)
 {
-	TargetEntry    *newnode = makeNode(TargetEntry);
+	TargetEntry *newnode = makeNode(TargetEntry);
 
 	Node_Copy(from, newnode, resdom);
 	Node_Copy(from, newnode, fjoin);
@@ -1441,7 +1441,7 @@ _copyTargetEntry(TargetEntry * from)
 static RangeTblEntry *
 _copyRangeTblEntry(RangeTblEntry * from)
 {
-	RangeTblEntry  *newnode = makeNode(RangeTblEntry);
+	RangeTblEntry *newnode = makeNode(RangeTblEntry);
 
 	memcpy(newnode, from, sizeof(RangeTblEntry));
 	if (from->relname)
@@ -1470,7 +1470,7 @@ _copyRangeTblEntry(RangeTblEntry * from)
 static SortClause *
 _copySortClause(SortClause * from)
 {
-	SortClause	   *newnode = makeNode(SortClause);
+	SortClause *newnode = makeNode(SortClause);
 
 	Node_Copy(from, newnode, resdom);
 	newnode->opoid = from->opoid;
@@ -1481,7 +1481,7 @@ _copySortClause(SortClause * from)
 static A_Const *
 _copyAConst(A_Const * from)
 {
-	A_Const		   *newnode = makeNode(A_Const);
+	A_Const    *newnode = makeNode(A_Const);
 
 	newnode->val = *((Value *) (copyObject(&(from->val))));
 	Node_Copy(from, newnode, typename);
@@ -1492,7 +1492,7 @@ _copyAConst(A_Const * from)
 static TypeName *
 _copyTypeName(TypeName * from)
 {
-	TypeName	   *newnode = makeNode(TypeName);
+	TypeName   *newnode = makeNode(TypeName);
 
 	if (from->name)
 	{
@@ -1509,10 +1509,10 @@ _copyTypeName(TypeName * from)
 	return newnode;
 }
 
-static Query   *
+static Query *
 _copyQuery(Query * from)
 {
-	Query		   *newnode = makeNode(Query);
+	Query	   *newnode = makeNode(Query);
 
 	newnode->commandType = from->commandType;
 	newnode->resultRelation = from->resultRelation;
@@ -1530,9 +1530,9 @@ _copyQuery(Query * from)
 	Node_Copy(from, newnode, rtable);
 	if (from->utilityStmt && nodeTag(from->utilityStmt) == T_NotifyStmt)
 	{
-		NotifyStmt	   *from_notify = (NotifyStmt *) from->utilityStmt;
-		NotifyStmt	   *n = makeNode(NotifyStmt);
-		int				length = strlen(from_notify->relname);
+		NotifyStmt *from_notify = (NotifyStmt *) from->utilityStmt;
+		NotifyStmt *n = makeNode(NotifyStmt);
+		int			length = strlen(from_notify->relname);
 
 		n->relname = palloc(length + 1);
 		strcpy(n->relname, from_notify->relname);
@@ -1563,25 +1563,25 @@ _copyQuery(Query * from)
  * ****************************************************************
  */
 
-static Value   *
+static Value *
 _copyValue(Value * from)
 {
-	Value		   *newnode = makeNode(Value);
+	Value	   *newnode = makeNode(Value);
 
 	newnode->type = from->type;
 	switch (from->type)
 	{
-	case T_String:
-		newnode->val.str = pstrdup(from->val.str);
-		break;
-	case T_Integer:
-		newnode->val.ival = from->val.ival;
-		break;
-	case T_Float:
-		newnode->val.dval = from->val.dval;
-		break;
-	default:
-		break;
+		case T_String:
+			newnode->val.str = pstrdup(from->val.str);
+			break;
+		case T_Integer:
+			newnode->val.ival = from->val.ival;
+			break;
+		case T_Float:
+			newnode->val.dval = from->val.dval;
+			break;
+		default:
+			break;
 	}
 	return newnode;
 }
@@ -1591,216 +1591,216 @@ _copyValue(Value * from)
  *		recursively copies its items.
  * ----------------
  */
-void		   *
+void	   *
 copyObject(void *from)
 {
-	void		   *retval;
+	void	   *retval;
 
 	if (from == NULL)
 		return NULL;
 	switch (nodeTag(from))
 	{
 
-		/*
-		 * PLAN NODES
-		 */
-	case T_Plan:
-		retval = _copyPlan(from);
-		break;
-	case T_Existential:
-		retval = _copyExistential(from);
-		break;
-	case T_Result:
-		retval = _copyResult(from);
-		break;
-	case T_Append:
-		retval = _copyAppend(from);
-		break;
-	case T_Scan:
-		retval = _copyScan(from);
-		break;
-	case T_SeqScan:
-		retval = _copySeqScan(from);
-		break;
-	case T_IndexScan:
-		retval = _copyIndexScan(from);
-		break;
-	case T_Join:
-		retval = _copyJoin(from);
-		break;
-	case T_NestLoop:
-		retval = _copyNestLoop(from);
-		break;
-	case T_MergeJoin:
-		retval = _copyMergeJoin(from);
-		break;
-	case T_HashJoin:
-		retval = _copyHashJoin(from);
-		break;
-	case T_Temp:
-		retval = _copyTemp(from);
-		break;
-	case T_Material:
-		retval = _copyMaterial(from);
-		break;
-	case T_Sort:
-		retval = _copySort(from);
-		break;
-	case T_Agg:
-		retval = _copyAgg(from);
-		break;
-	case T_Unique:
-		retval = _copyUnique(from);
-		break;
-	case T_Hash:
-		retval = _copyHash(from);
-		break;
+			/*
+			 * PLAN NODES
+			 */
+		case T_Plan:
+			retval = _copyPlan(from);
+			break;
+		case T_Existential:
+			retval = _copyExistential(from);
+			break;
+		case T_Result:
+			retval = _copyResult(from);
+			break;
+		case T_Append:
+			retval = _copyAppend(from);
+			break;
+		case T_Scan:
+			retval = _copyScan(from);
+			break;
+		case T_SeqScan:
+			retval = _copySeqScan(from);
+			break;
+		case T_IndexScan:
+			retval = _copyIndexScan(from);
+			break;
+		case T_Join:
+			retval = _copyJoin(from);
+			break;
+		case T_NestLoop:
+			retval = _copyNestLoop(from);
+			break;
+		case T_MergeJoin:
+			retval = _copyMergeJoin(from);
+			break;
+		case T_HashJoin:
+			retval = _copyHashJoin(from);
+			break;
+		case T_Temp:
+			retval = _copyTemp(from);
+			break;
+		case T_Material:
+			retval = _copyMaterial(from);
+			break;
+		case T_Sort:
+			retval = _copySort(from);
+			break;
+		case T_Agg:
+			retval = _copyAgg(from);
+			break;
+		case T_Unique:
+			retval = _copyUnique(from);
+			break;
+		case T_Hash:
+			retval = _copyHash(from);
+			break;
 
-		/*
-		 * PRIMITIVE NODES
-		 */
-	case T_Resdom:
-		retval = _copyResdom(from);
-		break;
-	case T_Fjoin:
-		retval = _copyFjoin(from);
-		break;
-	case T_Expr:
-		retval = _copyExpr(from);
-		break;
-	case T_Var:
-		retval = _copyVar(from);
-		break;
-	case T_Oper:
-		retval = _copyOper(from);
-		break;
-	case T_Const:
-		retval = _copyConst(from);
-		break;
-	case T_Param:
-		retval = _copyParam(from);
-		break;
-	case T_Func:
-		retval = _copyFunc(from);
-		break;
-	case T_Array:
-		retval = _copyArray(from);
-		break;
-	case T_ArrayRef:
-		retval = _copyArrayRef(from);
-		break;
-	case T_Aggreg:
-		retval = _copyAggreg(from);
-		break;
+			/*
+			 * PRIMITIVE NODES
+			 */
+		case T_Resdom:
+			retval = _copyResdom(from);
+			break;
+		case T_Fjoin:
+			retval = _copyFjoin(from);
+			break;
+		case T_Expr:
+			retval = _copyExpr(from);
+			break;
+		case T_Var:
+			retval = _copyVar(from);
+			break;
+		case T_Oper:
+			retval = _copyOper(from);
+			break;
+		case T_Const:
+			retval = _copyConst(from);
+			break;
+		case T_Param:
+			retval = _copyParam(from);
+			break;
+		case T_Func:
+			retval = _copyFunc(from);
+			break;
+		case T_Array:
+			retval = _copyArray(from);
+			break;
+		case T_ArrayRef:
+			retval = _copyArrayRef(from);
+			break;
+		case T_Aggreg:
+			retval = _copyAggreg(from);
+			break;
 
-		/*
-		 * RELATION NODES
-		 */
-	case T_Rel:
-		retval = _copyRel(from);
-		break;
-	case T_Path:
-		retval = _copyPath(from);
-		break;
-	case T_IndexPath:
-		retval = _copyIndexPath(from);
-		break;
-	case T_JoinPath:
-		retval = _copyJoinPath(from);
-		break;
-	case T_MergePath:
-		retval = _copyMergePath(from);
-		break;
-	case T_HashPath:
-		retval = _copyHashPath(from);
-		break;
-	case T_OrderKey:
-		retval = _copyOrderKey(from);
-		break;
-	case T_JoinKey:
-		retval = _copyJoinKey(from);
-		break;
-	case T_MergeOrder:
-		retval = _copyMergeOrder(from);
-		break;
-	case T_CInfo:
-		retval = _copyCInfo(from);
-		break;
-	case T_JoinMethod:
-		retval = _copyJoinMethod(from);
-		break;
-	case T_HInfo:
-		retval = _copyHInfo(from);
-		break;
-	case T_MInfo:
-		retval = _copyMInfo(from);
-		break;
-	case T_JInfo:
-		retval = _copyJInfo(from);
-		break;
-	case T_Iter:
-		retval = _copyIter(from);
-		break;
-	case T_Stream:
-		retval = _copyStream(from);
-		break;
+			/*
+			 * RELATION NODES
+			 */
+		case T_Rel:
+			retval = _copyRel(from);
+			break;
+		case T_Path:
+			retval = _copyPath(from);
+			break;
+		case T_IndexPath:
+			retval = _copyIndexPath(from);
+			break;
+		case T_JoinPath:
+			retval = _copyJoinPath(from);
+			break;
+		case T_MergePath:
+			retval = _copyMergePath(from);
+			break;
+		case T_HashPath:
+			retval = _copyHashPath(from);
+			break;
+		case T_OrderKey:
+			retval = _copyOrderKey(from);
+			break;
+		case T_JoinKey:
+			retval = _copyJoinKey(from);
+			break;
+		case T_MergeOrder:
+			retval = _copyMergeOrder(from);
+			break;
+		case T_CInfo:
+			retval = _copyCInfo(from);
+			break;
+		case T_JoinMethod:
+			retval = _copyJoinMethod(from);
+			break;
+		case T_HInfo:
+			retval = _copyHInfo(from);
+			break;
+		case T_MInfo:
+			retval = _copyMInfo(from);
+			break;
+		case T_JInfo:
+			retval = _copyJInfo(from);
+			break;
+		case T_Iter:
+			retval = _copyIter(from);
+			break;
+		case T_Stream:
+			retval = _copyStream(from);
+			break;
 
-		/*
-		 * PARSE NODES
-		 */
-	case T_Query:
-		retval = _copyQuery(from);
-		break;
-	case T_TargetEntry:
-		retval = _copyTargetEntry(from);
-		break;
-	case T_RangeTblEntry:
-		retval = _copyRangeTblEntry(from);
-		break;
-	case T_SortClause:
-		retval = _copySortClause(from);
-		break;
-	case T_A_Const:
-		retval = _copyAConst(from);
-		break;
-	case T_TypeName:
-		retval = _copyTypeName(from);
-		break;
+			/*
+			 * PARSE NODES
+			 */
+		case T_Query:
+			retval = _copyQuery(from);
+			break;
+		case T_TargetEntry:
+			retval = _copyTargetEntry(from);
+			break;
+		case T_RangeTblEntry:
+			retval = _copyRangeTblEntry(from);
+			break;
+		case T_SortClause:
+			retval = _copySortClause(from);
+			break;
+		case T_A_Const:
+			retval = _copyAConst(from);
+			break;
+		case T_TypeName:
+			retval = _copyTypeName(from);
+			break;
 
-		/*
-		 * VALUE NODES
-		 */
-	case T_Integer:
-	case T_String:
-	case T_Float:
-		retval = _copyValue(from);
-		break;
-	case T_List:
-		{
-			List		   *list = from,
+			/*
+			 * VALUE NODES
+			 */
+		case T_Integer:
+		case T_String:
+		case T_Float:
+			retval = _copyValue(from);
+			break;
+		case T_List:
+			{
+				List	   *list = from,
 						   *l;
-			List		   *newlist = NIL,
+				List	   *newlist = NIL,
 						   *nl = NIL;
 
-			foreach(l, list)
-			{
-				if (newlist == NIL)
+				foreach(l, list)
 				{
-					newlist = nl = lcons(copyObject(lfirst(l)), NIL);
+					if (newlist == NIL)
+					{
+						newlist = nl = lcons(copyObject(lfirst(l)), NIL);
+					}
+					else
+					{
+						lnext(nl) = lcons(copyObject(lfirst(l)), NIL);
+						nl = lnext(nl);
+					}
 				}
-				else
-				{
-					lnext(nl) = lcons(copyObject(lfirst(l)), NIL);
-					nl = lnext(nl);
-				}
+				retval = newlist;
 			}
-			retval = newlist;
-		}
-		break;
-	default:
-		elog(NOTICE, "copyObject: don't know how to copy %d", nodeTag(from));
-		retval = from;
-		break;
+			break;
+		default:
+			elog(NOTICE, "copyObject: don't know how to copy %d", nodeTag(from));
+			retval = from;
+			break;
 	}
 	return retval;
 }

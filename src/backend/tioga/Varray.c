@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include "Varray.h"
 
-Varray		   *
+Varray	   *
 NewVarray(size_t nobj, size_t size)
 /*
  * NewVarray -- allocate a Varray to contain an array of val each of which
@@ -18,7 +18,7 @@ NewVarray(size_t nobj, size_t size)
  *				returns NULL otherwise.
  */
 {
-	Varray		   *result;
+	Varray	   *result;
 
 	if (nobj == 0)
 		nobj = VARRAY_INITIAL_SIZE;

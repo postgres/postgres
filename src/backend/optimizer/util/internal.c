@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/internal.c,v 1.4 1997/09/07 04:44:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/internal.c,v 1.5 1997/09/08 02:24:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,17 +38,17 @@
 
 /* the following should probably be moved elsewhere -ay */
 
-TargetEntry    *
+TargetEntry *
 MakeTLE(Resdom * resdom, Node * expr)
 {
-	TargetEntry    *rt = makeNode(TargetEntry);
+	TargetEntry *rt = makeNode(TargetEntry);
 
 	rt->resdom = resdom;
 	rt->expr = expr;
 	return rt;
 }
 
-Var			   *
+Var		   *
 get_expr(TargetEntry * tle)
 {
 	Assert(tle != NULL);

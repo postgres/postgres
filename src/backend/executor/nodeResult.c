@@ -27,7 +27,7 @@
  *				   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.3 1997/09/07 04:41:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.4 1997/09/08 02:22:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,14 +53,14 @@
 TupleTableSlot *
 ExecResult(Result * node)
 {
-	ResultState    *resstate;
+	ResultState *resstate;
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *resultSlot;
-	Plan		   *outerPlan;
-	ExprContext    *econtext;
-	Node		   *qual;
-	bool			qualResult;
-	bool			isDone;
+	Plan	   *outerPlan;
+	ExprContext *econtext;
+	Node	   *qual;
+	bool		qualResult;
+	bool		isDone;
 	ProjectionInfo *projInfo;
 
 	/* ----------------
@@ -191,7 +191,7 @@ ExecResult(Result * node)
 bool
 ExecInitResult(Result * node, EState * estate, Plan * parent)
 {
-	ResultState    *resstate;
+	ResultState *resstate;
 
 	/* ----------------
 	 *	assign execution state to node
@@ -267,7 +267,7 @@ ExecCountSlotsResult(Result * node)
 void
 ExecEndResult(Result * node)
 {
-	ResultState    *resstate;
+	ResultState *resstate;
 
 	resstate = node->resstate;
 

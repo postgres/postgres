@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.4 1997/09/07 04:56:58 momjian Exp $
+ * $Id: pg_opclass.h,v 1.5 1997/09/08 02:35:19 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -33,8 +33,8 @@
 
 CATALOG(pg_opclass)
 {
-	NameData		opcname;
-	Oid				opcdeftype;
+	NameData	opcname;
+	Oid			opcdeftype;
 } FormData_pg_opclass;
 
 /* ----------------

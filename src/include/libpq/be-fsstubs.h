@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: be-fsstubs.h,v 1.3 1997/09/07 04:58:18 momjian Exp $
+ * $Id: be-fsstubs.h,v 1.4 1997/09/08 02:37:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,20 +21,20 @@
 #define LOread(f,l) loread(f,l)
 #define LOwrite(f,b) lowrite(f,b)
 
-extern Oid		lo_import(text * filename);
-extern int4		lo_export(Oid lobjId, text * filename);
+extern Oid	lo_import(text * filename);
+extern int4 lo_export(Oid lobjId, text * filename);
 
-extern Oid		lo_creat(int mode);
+extern Oid	lo_creat(int mode);
 
-extern int		lo_open(Oid lobjId, int mode);
-extern int		lo_close(int fd);
-extern int		lo_read(int fd, char *buf, int len);
-extern int		lo_write(int fd, char *buf, int len);
-extern int		lo_lseek(int fd, int offset, int whence);
-extern int		lo_tell(int fd);
-extern int		lo_unlink(Oid lobjId);
+extern int	lo_open(Oid lobjId, int mode);
+extern int	lo_close(int fd);
+extern int	lo_read(int fd, char *buf, int len);
+extern int	lo_write(int fd, char *buf, int len);
+extern int	lo_lseek(int fd, int offset, int whence);
+extern int	lo_tell(int fd);
+extern int	lo_unlink(Oid lobjId);
 
 extern struct varlena *loread(int fd, int len);
-extern int		lowrite(int fd, struct varlena * wbuf);
+extern int	lowrite(int fd, struct varlena * wbuf);
 
 #endif							/* BE_FSSTUBS_H */

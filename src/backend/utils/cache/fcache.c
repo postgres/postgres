@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.5 1997/09/07 04:52:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.6 1997/09/08 02:31:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 #include <string.h>
 #endif
 
-static Oid		GetDynamicFuncArgType(Var * arg, ExprContext * econtext);
+static Oid	GetDynamicFuncArgType(Var * arg, ExprContext * econtext);
 static FunctionCachePtr
 init_fcache(Oid foid,
 			bool use_syscache,
@@ -55,12 +55,12 @@ init_fcache(Oid foid,
 #define FuncArgTypeIsDynamic(arg) \
 	(IsA(arg,Var) && ((Var*)arg)->varattno == InvalidAttrNumber)
 
-static			Oid
+static Oid
 GetDynamicFuncArgType(Var * arg, ExprContext * econtext)
 {
-	char		   *relname;
-	int				rtid;
-	HeapTuple		tup;
+	char	   *relname;
+	int			rtid;
+	HeapTuple	tup;
 
 	Assert(IsA(arg, Var));
 
@@ -77,19 +77,19 @@ GetDynamicFuncArgType(Var * arg, ExprContext * econtext)
 	return tup->t_oid;
 }
 
-static			FunctionCachePtr
+static FunctionCachePtr
 init_fcache(Oid foid,
 			bool use_syscache,
 			List * argList,
 			ExprContext * econtext)
 {
-	HeapTuple		procedureTuple;
-	HeapTuple		typeTuple;
-	Form_pg_proc	procedureStruct;
-	TypeTupleForm	typeStruct;
+	HeapTuple	procedureTuple;
+	HeapTuple	typeTuple;
+	Form_pg_proc procedureStruct;
+	TypeTupleForm typeStruct;
 	FunctionCachePtr retval;
-	text		   *tmp;
-	int				nargs;
+	text	   *tmp;
+	int			nargs;
 
 	/* ----------------
 	 *	 get the procedure tuple corresponding to the given
@@ -173,9 +173,9 @@ init_fcache(Oid foid,
 		(retval->oneResult) &&
 		!(retval->typbyval))
 	{
-		Form_pg_class	relationStruct;
-		HeapTuple		relationTuple;
-		TupleDesc		td;
+		Form_pg_class relationStruct;
+		HeapTuple	relationTuple;
+		TupleDesc	td;
 		TupleTableSlot *slot;
 
 		slot = makeNode(TupleTableSlot);
@@ -209,14 +209,14 @@ init_fcache(Oid foid,
 
 	if (nargs > 0)
 	{
-		Oid			   *argTypes;
+		Oid		   *argTypes;
 
 		retval->nullVect = (bool *) palloc((retval->nargs) * sizeof(bool));
 
 		if (retval->language == SQLlanguageId)
 		{
-			int				i;
-			List		   *oneArg;
+			int			i;
+			List	   *oneArg;
 
 			retval->argOidVect =
 				(Oid *) palloc(retval->nargs * sizeof(Oid));
@@ -293,8 +293,8 @@ init_fcache(Oid foid,
 void
 setFcache(Node * node, Oid foid, List * argList, ExprContext * econtext)
 {
-	Func		   *fnode;
-	Oper		   *onode;
+	Func	   *fnode;
+	Oper	   *onode;
 	FunctionCachePtr fcache;
 
 	fcache = init_fcache(foid, true, argList, econtext);

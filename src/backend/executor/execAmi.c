@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.6 1997/09/07 04:41:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.7 1997/09/08 02:22:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,8 +74,8 @@ ExecOpenScanR(Oid relOid,
 			  Relation * returnRelation,		/* return */
 			  Pointer * returnScanDesc) /* return */
 {
-	Relation		relation;
-	Pointer			scanDesc;
+	Relation	relation;
+	Pointer		scanDesc;
 
 	/* ----------------
 	 *	note: scanDesc returned by ExecBeginScan can be either
@@ -104,10 +104,10 @@ ExecOpenScanR(Oid relOid,
  *		returns a relation descriptor given an object id.
  * ----------------------------------------------------------------
  */
-static			Relation
+static Relation
 ExecOpenR(Oid relationOid, bool isindex)
 {
-	Relation		relation;
+	Relation	relation;
 
 	relation = (Relation) NULL;
 
@@ -141,7 +141,7 @@ ExecOpenR(Oid relationOid, bool isindex)
  *				-cim 9/14/89
  * ----------------------------------------------------------------
  */
-static			Pointer
+static Pointer
 ExecBeginScan(Relation relation,
 			  int nkeys,
 			  ScanKey skeys,
@@ -149,7 +149,7 @@ ExecBeginScan(Relation relation,
 			  ScanDirection dir,
 			  TimeQual time_range)
 {
-	Pointer			scanDesc;
+	Pointer		scanDesc;
 
 	scanDesc = NULL;
 
@@ -198,8 +198,8 @@ void
 ExecCloseR(Plan * node)
 {
 	CommonScanState *state;
-	Relation		relation;
-	HeapScanDesc	scanDesc;
+	Relation	relation;
+	HeapScanDesc scanDesc;
 
 	/* ----------------
 	 *	shut down the heap scan and close the heap relation
@@ -208,29 +208,29 @@ ExecCloseR(Plan * node)
 	switch (nodeTag(node))
 	{
 
-	case T_SeqScan:
-		state = ((SeqScan *) node)->scanstate;
-		break;
+		case T_SeqScan:
+			state = ((SeqScan *) node)->scanstate;
+			break;
 
-	case T_IndexScan:
-		state = ((IndexScan *) node)->scan.scanstate;
-		break;
+		case T_IndexScan:
+			state = ((IndexScan *) node)->scan.scanstate;
+			break;
 
-	case T_Material:
-		state = &(((Material *) node)->matstate->csstate);
-		break;
+		case T_Material:
+			state = &(((Material *) node)->matstate->csstate);
+			break;
 
-	case T_Sort:
-		state = &(((Sort *) node)->sortstate->csstate);
-		break;
+		case T_Sort:
+			state = &(((Sort *) node)->sortstate->csstate);
+			break;
 
-	case T_Agg:
-		state = &(((Agg *) node)->aggstate->csstate);
-		break;
+		case T_Agg:
+			state = &(((Agg *) node)->aggstate->csstate);
+			break;
 
-	default:
-		elog(DEBUG, "ExecCloseR: not a scan, material, or sort node!");
-		return;
+		default:
+			elog(DEBUG, "ExecCloseR: not a scan, material, or sort node!");
+			return;
 	}
 
 	relation = state->css_currentRelation;
@@ -249,12 +249,12 @@ ExecCloseR(Plan * node)
 	 */
 	if (nodeTag(node) == T_IndexScan)
 	{
-		IndexScan	   *iscan = (IndexScan *) node;
+		IndexScan  *iscan = (IndexScan *) node;
 		IndexScanState *indexstate;
-		int				numIndices;
-		RelationPtr		indexRelationDescs;
+		int			numIndices;
+		RelationPtr indexRelationDescs;
 		IndexScanDescPtr indexScanDescs;
-		int				i;
+		int			i;
 
 		indexstate = iscan->indxstate;
 		numIndices = indexstate->iss_NumIndices;
@@ -292,32 +292,32 @@ ExecReScan(Plan * node, ExprContext * exprCtxt, Plan * parent)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
-		ExecSeqReScan((SeqScan *) node, exprCtxt, parent);
-		return;
+			case T_SeqScan:
+			ExecSeqReScan((SeqScan *) node, exprCtxt, parent);
+			return;
 
-	case T_IndexScan:
-		ExecIndexReScan((IndexScan *) node, exprCtxt, parent);
-		return;
+		case T_IndexScan:
+			ExecIndexReScan((IndexScan *) node, exprCtxt, parent);
+			return;
 
-	case T_Material:
+		case T_Material:
 
-		/*
-		 * the first call to ExecReScan should have no effect because
-		 * everything is initialized properly already.	the following
-		 * calls will be handled by ExecSeqReScan() because the nodes
-		 * below the Material node have already been materialized into a
-		 * temp relation.
-		 */
-		return;
+			/*
+			 * the first call to ExecReScan should have no effect because
+			 * everything is initialized properly already.	the following
+			 * calls will be handled by ExecSeqReScan() because the nodes
+			 * below the Material node have already been materialized into
+			 * a temp relation.
+			 */
+			return;
 
-	case T_Tee:
-		ExecTeeReScan((Tee *) node, exprCtxt, parent);
-		break;
+		case T_Tee:
+			ExecTeeReScan((Tee *) node, exprCtxt, parent);
+			break;
 
-	default:
-		elog(WARN, "ExecReScan: not a seqscan or indexscan node.");
-		return;
+		default:
+			elog(WARN, "ExecReScan: not a seqscan or indexscan node.");
+			return;
 	}
 }
 
@@ -355,21 +355,21 @@ ExecMarkPos(Plan * node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
-		ExecSeqMarkPos((SeqScan *) node);
-		break;
+			case T_SeqScan:
+			ExecSeqMarkPos((SeqScan *) node);
+			break;
 
-	case T_IndexScan:
-		ExecIndexMarkPos((IndexScan *) node);
-		break;
+		case T_IndexScan:
+			ExecIndexMarkPos((IndexScan *) node);
+			break;
 
-	case T_Sort:
-		ExecSortMarkPos((Sort *) node);
-		break;
+		case T_Sort:
+			ExecSortMarkPos((Sort *) node);
+			break;
 
-	default:
-		/* elog(DEBUG, "ExecMarkPos: unsupported node type"); */
-		break;
+		default:
+			/* elog(DEBUG, "ExecMarkPos: unsupported node type"); */
+			break;
 	}
 	return;
 }
@@ -385,21 +385,21 @@ ExecRestrPos(Plan * node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
-		ExecSeqRestrPos((SeqScan *) node);
-		return;
+			case T_SeqScan:
+			ExecSeqRestrPos((SeqScan *) node);
+			return;
 
-	case T_IndexScan:
-		ExecIndexRestrPos((IndexScan *) node);
-		return;
+		case T_IndexScan:
+			ExecIndexRestrPos((IndexScan *) node);
+			return;
 
-	case T_Sort:
-		ExecSortRestrPos((Sort *) node);
-		return;
+		case T_Sort:
+			ExecSortRestrPos((Sort *) node);
+			return;
 
-	default:
-		/* elog(DEBUG, "ExecRestrPos: node type not supported"); */
-		return;
+		default:
+			/* elog(DEBUG, "ExecRestrPos: node type not supported"); */
+			return;
 	}
 }
 
@@ -422,7 +422,7 @@ Relation
 ExecCreatR(TupleDesc tupType,
 		   Oid relationOid)
 {
-	Relation		relDesc;
+	Relation	relDesc;
 
 	EU3_printf("ExecCreatR: %s type=%d oid=%d\n",
 			   "entering: ", tupType, relationOid);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.13 1997/09/07 04:43:06 momjian Exp $
+ * $Id: geqo_eval.c,v 1.14 1997/09/08 02:23:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,13 +50,13 @@
 #include "optimizer/geqo_paths.h"
 
 
-static List    *gimme_clause_joins(Query * root, Rel * outer_rel, Rel * inner_rel);
-static Rel	   *gimme_clauseless_join(Rel * outer_rel, Rel * inner_rel);
-static Rel	   *init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo);
-static List    *new_join_tlist(List * tlist, List * other_relids, int first_resdomno);
-static List    *new_joininfo_list(List * joininfo_list, List * join_relids);
-static void		geqo_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel);
-static Rel	   *geqo_nth(int stop, List * rels);
+static List *gimme_clause_joins(Query * root, Rel * outer_rel, Rel * inner_rel);
+static Rel *gimme_clauseless_join(Rel * outer_rel, Rel * inner_rel);
+static Rel *init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo);
+static List *new_join_tlist(List * tlist, List * other_relids, int first_resdomno);
+static List *new_joininfo_list(List * joininfo_list, List * join_relids);
+static void geqo_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel);
+static Rel *geqo_nth(int stop, List * rels);
 
 /*
  * geqo_eval--
@@ -66,9 +66,9 @@ static Rel	   *geqo_nth(int stop, List * rels);
 Cost
 geqo_eval(Query * root, Gene * tour, int num_gene)
 {
-	Rel			   *joinrel;
-	Cost			fitness;
-	List		   *temp;
+	Rel		   *joinrel;
+	Cost		fitness;
+	List	   *temp;
 
 
 /* remember root->join_relation_list_ ... */
@@ -98,14 +98,14 @@ geqo_eval(Query * root, Gene * tour, int num_gene)
  *
  * Returns a new join relation incorporating all joins in a left-sided tree.
  */
-Rel			   *
+Rel		   *
 gimme_tree(Query * root, Gene * tour, int rel_count, int num_gene, Rel * outer_rel)
 {
-	Rel			   *inner_rel;	/* current relation */
-	int				base_rel_index;
+	Rel		   *inner_rel;		/* current relation */
+	int			base_rel_index;
 
-	List		   *new_rels = NIL;
-	Rel			   *new_rel = NULL;
+	List	   *new_rels = NIL;
+	Rel		   *new_rel = NULL;
 
 	if (rel_count < num_gene)
 	{							/* tree not yet finished */
@@ -190,21 +190,21 @@ gimme_tree(Query * root, Gene * tour, int rel_count, int num_gene, Rel * outer_r
  * Returns a list of new join relations.
  */
 
-static List    *
+static List *
 gimme_clause_joins(Query * root, Rel * outer_rel, Rel * inner_rel)
 {
-	List		   *join_list = NIL;
-	List		   *i = NIL;
-	List		   *joininfo_list = (List *) outer_rel->joininfo;
+	List	   *join_list = NIL;
+	List	   *i = NIL;
+	List	   *joininfo_list = (List *) outer_rel->joininfo;
 
 	foreach(i, joininfo_list)
 	{
-		JInfo		   *joininfo = (JInfo *) lfirst(i);
-		Rel			   *rel = NULL;
+		JInfo	   *joininfo = (JInfo *) lfirst(i);
+		Rel		   *rel = NULL;
 
 		if (!joininfo->inactive)
 		{
-			List		   *other_rels = (List *) joininfo->otherrels;
+			List	   *other_rels = (List *) joininfo->otherrels;
 
 			if (other_rels != NIL)
 			{
@@ -243,7 +243,7 @@ gimme_clause_joins(Query * root, Rel * outer_rel, Rel * inner_rel)
  * Returns a new join relation.
  */
 
-static Rel	   *
+static Rel *
 gimme_clauseless_join(Rel * outer_rel, Rel * inner_rel)
 {
 	return (init_join_rel(outer_rel, inner_rel, (JInfo *) NULL));
@@ -260,13 +260,13 @@ gimme_clauseless_join(Rel * outer_rel, Rel * inner_rel)
  *
  * Returns the new join relation node.
  */
-static Rel	   *
+static Rel *
 init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo)
 {
-	Rel			   *joinrel = makeNode(Rel);
-	List		   *joinrel_joininfo_list = NIL;
-	List		   *new_outer_tlist;
-	List		   *new_inner_tlist;
+	Rel		   *joinrel = makeNode(Rel);
+	List	   *joinrel_joininfo_list = NIL;
+	List	   *new_outer_tlist;
+	List	   *new_inner_tlist;
 
 	/*
 	 * Create a new tlist by removing irrelevant elements from both tlists
@@ -338,18 +338,18 @@ init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo)
  *
  * Returns the new target list.
  */
-static List    *
+static List *
 new_join_tlist(List * tlist,
 			   List * other_relids,
 			   int first_resdomno)
 {
-	int				resdomno = first_resdomno - 1;
-	TargetEntry    *xtl = NULL;
-	List		   *temp_node = NIL;
-	List		   *t_list = NIL;
-	List		   *i = NIL;
-	List		   *join_list = NIL;
-	bool			in_final_tlist = false;
+	int			resdomno = first_resdomno - 1;
+	TargetEntry *xtl = NULL;
+	List	   *temp_node = NIL;
+	List	   *t_list = NIL;
+	List	   *i = NIL;
+	List	   *join_list = NIL;
+	bool		in_final_tlist = false;
 
 
 	foreach(i, tlist)
@@ -388,18 +388,18 @@ new_join_tlist(List * tlist,
  *
  * Returns a list of joininfo nodes, new and old.
  */
-static List    *
+static List *
 new_joininfo_list(List * joininfo_list, List * join_relids)
 {
-	List		   *current_joininfo_list = NIL;
-	List		   *new_otherrels = NIL;
-	JInfo		   *other_joininfo = (JInfo *) NULL;
-	List		   *xjoininfo = NIL;
+	List	   *current_joininfo_list = NIL;
+	List	   *new_otherrels = NIL;
+	JInfo	   *other_joininfo = (JInfo *) NULL;
+	List	   *xjoininfo = NIL;
 
 	foreach(xjoininfo, joininfo_list)
 	{
-		List		   *or;
-		JInfo		   *joininfo = (JInfo *) lfirst(xjoininfo);
+		List	   *or;
+		JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
 
 		new_otherrels = joininfo->otherrels;
 		foreach(or, new_otherrels)
@@ -456,21 +456,21 @@ new_joininfo_list(List * joininfo_list, List * join_relids)
 static void
 geqo_add_new_joininfos(Query * root, List * joinrels, List * outerrels)
 {
-	List		   *xjoinrel = NIL;
-	List		   *xrelid = NIL;
-	List		   *xrel = NIL;
-	List		   *xjoininfo = NIL;
+	List	   *xjoinrel = NIL;
+	List	   *xrelid = NIL;
+	List	   *xrel = NIL;
+	List	   *xjoininfo = NIL;
 
-	Rel			   *rel;
-	List		   *relids;
+	Rel		   *rel;
+	List	   *relids;
 
-	List		   *super_rels;
-	List		   *xsuper_rel = NIL;
-	JInfo		   *new_joininfo;
+	List	   *super_rels;
+	List	   *xsuper_rel = NIL;
+	JInfo	   *new_joininfo;
 
 	foreach(xjoinrel, joinrels)
 	{
-		Rel			   *joinrel = (Rel *) lfirst(xjoinrel);
+		Rel		   *joinrel = (Rel *) lfirst(xjoinrel);
 
 		foreach(xrelid, joinrel->relids)
 		{
@@ -506,15 +506,15 @@ geqo_add_new_joininfos(Query * root, List * joinrels, List * outerrels)
 	}
 	foreach(xjoinrel, joinrels)
 	{
-		Rel			   *joinrel = (Rel *) lfirst(xjoinrel);
+		Rel		   *joinrel = (Rel *) lfirst(xjoinrel);
 
 		foreach(xjoininfo, joinrel->joininfo)
 		{
-			JInfo		   *joininfo = (JInfo *) lfirst(xjoininfo);
-			List		   *other_rels = joininfo->otherrels;
-			List		   *clause_info = joininfo->jinfoclauseinfo;
-			bool			mergesortable = joininfo->mergesortable;
-			bool			hashjoinable = joininfo->hashjoinable;
+			JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
+			List	   *other_rels = joininfo->otherrels;
+			List	   *clause_info = joininfo->jinfoclauseinfo;
+			bool		mergesortable = joininfo->mergesortable;
+			bool		hashjoinable = joininfo->hashjoinable;
 
 			foreach(xrelid, other_rels)
 			{
@@ -553,12 +553,12 @@ geqo_add_new_joininfos(Query * root, List * joinrels, List * outerrels)
 
 				foreach(xsuper_rel, super_rels)
 				{
-					Rel			   *super_rel = (Rel *) lfirst(xsuper_rel);
+					Rel		   *super_rel = (Rel *) lfirst(xsuper_rel);
 
 					if (nonoverlap_rels(super_rel, joinrel))
 					{
-						List		   *new_relids = super_rel->relids;
-						JInfo		   *other_joininfo =
+						List	   *new_relids = super_rel->relids;
+						JInfo	   *other_joininfo =
 						joininfo_member(new_relids,
 										joinrel->joininfo);
 
@@ -570,7 +570,7 @@ geqo_add_new_joininfos(Query * root, List * joinrels, List * outerrels)
 						}
 						else
 						{
-							JInfo		   *new_joininfo = makeNode(JInfo);
+							JInfo	   *new_joininfo = makeNode(JInfo);
 
 							new_joininfo->otherrels = new_relids;
 							new_joininfo->jinfoclauseinfo = clause_info;
@@ -602,12 +602,12 @@ geqo_add_new_joininfos(Query * root, List * joinrels, List * outerrels)
  *
  * Returns the list of final join relations.
  */
-static List    *
+static List *
 geqo_final_join_rels(List * join_rel_list)
 {
-	List		   *xrel = NIL;
-	List		   *temp = NIL;
-	List		   *t_list = NIL;
+	List	   *xrel = NIL;
+	List	   *temp = NIL;
+	List	   *t_list = NIL;
 
 	/*
 	 * find the relations that has no further joins, i.e., its joininfos
@@ -615,13 +615,13 @@ geqo_final_join_rels(List * join_rel_list)
 	 */
 	foreach(xrel, join_rel_list)
 	{
-		Rel			   *rel = (Rel *) lfirst(xrel);
-		List		   *xjoininfo = NIL;
-		bool			final = true;
+		Rel		   *rel = (Rel *) lfirst(xrel);
+		List	   *xjoininfo = NIL;
+		bool		final = true;
 
 		foreach(xjoininfo, rel->joininfo)
 		{
-			JInfo		   *joininfo = (JInfo *) lfirst(xjoininfo);
+			JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
 
 			if (joininfo->otherrels != NIL)
 			{
@@ -663,20 +663,20 @@ add_superrels(Rel * rel, Rel * super_rel)
  *
  * Returns non-nil if rel1 and rel2 do not overlap.
  */
-static			bool
+static bool
 nonoverlap_rels(Rel * rel1, Rel * rel2)
 {
 	return (nonoverlap_sets(rel1->relids, rel2->relids));
 }
 
-static			bool
+static bool
 nonoverlap_sets(List * s1, List * s2)
 {
-	List		   *x = NIL;
+	List	   *x = NIL;
 
 	foreach(x, s1)
 	{
-		int				e = lfirsti(x);
+		int			e = lfirsti(x);
 
 		if (intMember(e, s2))
 			return (false);
@@ -694,8 +694,8 @@ nonoverlap_sets(List * s1, List * s2)
 static void
 geqo_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel)
 {
-	Cost			temp;
-	int				ntuples;
+	Cost		temp;
+	int			ntuples;
 
 	temp = (Cost) inner_rel->tuples * (Cost) outer_rel->tuples; /* cartesian product */
 
@@ -725,11 +725,11 @@ geqo_log(double x, double b)
 	return (log(x) / log(b));
 }
 
-static Rel	   *
+static Rel *
 geqo_nth(int stop, List * rels)
 {
-	List		   *r;
-	int				i = 1;
+	List	   *r;
+	int			i = 1;
 
 	foreach(r, rels)
 	{

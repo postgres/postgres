@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.5 1997/09/07 04:48:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.6 1997/09/08 02:28:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,13 +34,13 @@
 #include "storage/spin.h"
 #include "utils/hsearch.h"
 
-static HTAB    *SharedBufHash;
+static HTAB *SharedBufHash;
 
 typedef struct lookup
 {
-	BufferTag		key;
-	Buffer			id;
-}				LookupEnt;
+	BufferTag	key;
+	Buffer		id;
+}			LookupEnt;
 
 /*
  * Initialize shmem hash table for mapping buffers
@@ -48,8 +48,8 @@ typedef struct lookup
 void
 InitBufTable()
 {
-	HASHCTL			info;
-	int				hash_flags;
+	HASHCTL		info;
+	int			hash_flags;
 
 	/* assume lock is held */
 
@@ -73,11 +73,11 @@ InitBufTable()
 
 }
 
-BufferDesc	   *
+BufferDesc *
 BufTableLookup(BufferTag * tagPtr)
 {
-	LookupEnt	   *result;
-	bool			found;
+	LookupEnt  *result;
+	bool		found;
 
 	if (tagPtr->blockNum == P_NEW)
 		return (NULL);
@@ -103,8 +103,8 @@ BufTableLookup(BufferTag * tagPtr)
 bool
 BufTableDelete(BufferDesc * buf)
 {
-	LookupEnt	   *result;
-	bool			found;
+	LookupEnt  *result;
+	bool		found;
 
 	/*
 	 * buffer not initialized or has been removed from table already.
@@ -132,8 +132,8 @@ BufTableDelete(BufferDesc * buf)
 bool
 BufTableInsert(BufferDesc * buf)
 {
-	LookupEnt	   *result;
-	bool			found;
+	LookupEnt  *result;
+	bool		found;
 
 	/* cannot insert it twice */
 	Assert(buf->flags & BM_DELETED);

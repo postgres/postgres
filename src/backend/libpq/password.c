@@ -13,18 +13,18 @@ int
 verify_password(char *user, char *password, Port * port,
 				char *database, char *DataDir)
 {
-	bool			host_ok;
-	enum Userauth	userauth;
-	char			pw_file_name[PWFILE_NAME_SIZE + 1];
+	bool		host_ok;
+	enum Userauth userauth;
+	char		pw_file_name[PWFILE_NAME_SIZE + 1];
 
-	char		   *pw_file_fullname;
-	FILE		   *pw_file;
+	char	   *pw_file_fullname;
+	FILE	   *pw_file;
 
-	char			pw_file_line[255];
-	char		   *p,
-				   *test_user,
-				   *test_pw;
-	char			salt[3];
+	char		pw_file_line[255];
+	char	   *p,
+			   *test_user,
+			   *test_pw;
+	char		salt[3];
 
 	find_hba_entry(DataDir, port->raddr.sin_addr, database,
 				   &host_ok, &userauth, pw_file_name, true);

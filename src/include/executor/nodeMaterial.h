@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMaterial.h,v 1.2 1997/09/07 04:57:55 momjian Exp $
+ * $Id: nodeMaterial.h,v 1.3 1997/09/08 02:36:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,10 +14,10 @@
 #define NODEMATERIAL_H
 
 extern TupleTableSlot *ExecMaterial(Material * node);
-extern bool		ExecInitMaterial(Material * node, EState * estate, Plan * parent);
-extern int		ExecCountSlotsMaterial(Material * node);
-extern void		ExecEndMaterial(Material * node);
-extern List		ExecMaterialMarkPos(Material * node);
-extern void		ExecMaterialRestrPos(Material * node);
+extern bool ExecInitMaterial(Material * node, EState * estate, Plan * parent);
+extern int	ExecCountSlotsMaterial(Material * node);
+extern void ExecEndMaterial(Material * node);
+extern List ExecMaterialMarkPos(Material * node);
+extern void ExecMaterialRestrPos(Material * node);
 
 #endif							/* NODEMATERIAL_H */

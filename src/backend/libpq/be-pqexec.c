@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.5 1997/09/07 04:42:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.6 1997/09/08 02:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 #include <string.h>
 #endif
 
-static char    *strmake(char *str, int len);
+static char *strmake(char *str, int len);
 
 /* ----------------------------------------------------------------
  *						PQ interface routines
@@ -58,7 +58,7 @@ static char    *strmake(char *str, int len);
  *		This code scavanged from HandleFunctionRequest() in tcop/fastpath.h
  * ----------------
  */
-char		   *
+char	   *
 PQfn(int fnid,
 	 int *result_buf,			/* can't use void, dec compiler barfs */
 	 int result_len,
@@ -66,9 +66,9 @@ PQfn(int fnid,
 	 PQArgBlock * args,
 	 int nargs)
 {
-	char		   *retval;		/* XXX - should be datum, maybe ? */
-	char		   *arg[8];
-	int				i;
+	char	   *retval;			/* XXX - should be datum, maybe ? */
+	char	   *arg[8];
+	int			i;
 
 	/* ----------------
 	 *	fill args[] array
@@ -129,11 +129,11 @@ PQfn(int fnid,
  *		returns because the system longjmp's back to the main loop.
  * ----------------
  */
-char		   *
+char	   *
 PQexec(char *query)
 {
-	PortalEntry    *entry = NULL;
-	char		   *result = NULL;
+	PortalEntry *entry = NULL;
+	char	   *result = NULL;
 
 	/* ----------------
 	 *	create a new portal and put it on top of the portal stack.
@@ -158,7 +158,7 @@ PQexec(char *query)
 	result = entry->result;
 	if (result == NULL)
 	{
-		char		   *PQE = "Cnull PQexec result";
+		char	   *PQE = "Cnull PQexec result";
 
 		result = pstrdup(PQE);
 	}
@@ -191,9 +191,9 @@ PQexec(char *query)
 int
 pqtest_PQexec(char *q)
 {
-	PortalBuffer   *a;
-	char		   *res;
-	int				t;
+	PortalBuffer *a;
+	char	   *res;
+	int			t;
 
 	/* ----------------
 	 *	execute the postgres query
@@ -208,19 +208,19 @@ pqtest_PQexec(char *q)
 	t = 0;
 	switch (res[0])
 	{
-	case 'P':
-		a = PQparray(&res[1]);
-		if (a == NULL)
-			elog(WARN, "pqtest_PQexec: PQparray could not find portal %s",
-				 res);
+		case 'P':
+			a = PQparray(&res[1]);
+			if (a == NULL)
+				elog(WARN, "pqtest_PQexec: PQparray could not find portal %s",
+					 res);
 
-		t = PQntuples(a);
-		break;
-	case 'C':
-		break;
-	default:
-		elog(NOTICE, "pqtest_PQexec: PQexec(%s) returns %s", q, res);
-		break;
+			t = PQntuples(a);
+			break;
+		case 'C':
+			break;
+		default:
+			elog(NOTICE, "pqtest_PQexec: PQexec(%s) returns %s", q, res);
+			break;
 	}
 
 	return t;
@@ -230,10 +230,10 @@ pqtest_PQexec(char *q)
  *		utilities for pqtest_PQfn()
  * ----------------
  */
-static char    *
+static char *
 strmake(char *str, int len)
 {
-	char		   *newstr;
+	char	   *newstr;
 
 	if (str == NULL)
 		return NULL;
@@ -249,18 +249,18 @@ strmake(char *str, int len)
 #define SKIP 0
 #define SCAN 1
 
-static char		spacestr[] = " ";
+static char spacestr[] = " ";
 
 static int
 strparse(char *s, char **fields, int *offsets, int maxfields)
 {
-	int				len = strlen(s);
-	char		   *cp = s,
-				   *end = cp + len,
-				   *ep;
-	int				parsed = 0;
-	int				mode = SKIP,
-					i = 0;
+	int			len = strlen(s);
+	char	   *cp = s,
+			   *end = cp + len,
+			   *ep;
+	int			parsed = 0;
+	int			mode = SKIP,
+				i = 0;
 
 	if (*(end - 1) == '\n')
 		end--;
@@ -318,16 +318,16 @@ strparse(char *s, char **fields, int *offsets, int maxfields)
 int
 pqtest_PQfn(char *q)
 {
-	int				k,
-					j,
-					i,
-					v,
-					f,
-					offsets;
-	char		   *fields[8];
-	PQArgBlock		pqargs[7];
-	int				res;
-	char		   *pqres;
+	int			k,
+				j,
+				i,
+				v,
+				f,
+				offsets;
+	char	   *fields[8];
+	PQArgBlock	pqargs[7];
+	int			res;
+	char	   *pqres;
 
 	/* ----------------
 	 *	parse q into fields
@@ -403,7 +403,7 @@ pqtest_PQfn(char *q)
 int32
 pqtest(struct varlena * vlena)
 {
-	char		   *q;
+	char	   *q;
 
 	/* ----------------
 	 *	get the query
@@ -415,12 +415,12 @@ pqtest(struct varlena * vlena)
 
 	switch (q[0])
 	{
-	case '%':
-		return pqtest_PQfn(&q[1]);
-		break;
-	default:
-		return pqtest_PQexec(q);
-		break;
+		case '%':
+			return pqtest_PQfn(&q[1]);
+			break;
+		default:
+			return pqtest_PQexec(q);
+			break;
 	}
 	return (0);
 }

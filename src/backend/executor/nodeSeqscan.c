@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.5 1997/09/07 04:41:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.6 1997/09/08 02:22:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,13 +49,13 @@ static TupleTableSlot *SeqNext(SeqScan * node);
 static TupleTableSlot *
 SeqNext(SeqScan * node)
 {
-	HeapTuple		tuple;
-	HeapScanDesc	scandesc;
+	HeapTuple	tuple;
+	HeapScanDesc scandesc;
 	CommonScanState *scanstate;
-	EState		   *estate;
-	ScanDirection	direction;
+	EState	   *estate;
+	ScanDirection direction;
 	TupleTableSlot *slot;
-	Buffer			buffer;
+	Buffer		buffer;
 
 	/* ----------------
 	 *	get information from the estate and scan state
@@ -118,7 +118,7 @@ TupleTableSlot *
 ExecSeqScan(SeqScan * node)
 {
 	TupleTableSlot *slot;
-	Plan		   *outerPlan;
+	Plan	   *outerPlan;
 
 	S_printf("ExecSeqScan: scanning node: ");
 	S_nodeDisplay(node);
@@ -150,19 +150,19 @@ ExecSeqScan(SeqScan * node)
  *		subplans of scans.
  * ----------------------------------------------------------------
  */
-static			Oid
+static Oid
 InitScanRelation(SeqScan * node, EState * estate,
 				 CommonScanState * scanstate, Plan * outerPlan)
 {
-	Index			relid;
-	List		   *rangeTable;
-	RangeTblEntry  *rtentry;
-	Oid				reloid;
-	TimeQual		timeQual;
-	ScanDirection	direction;
-	Relation		currentRelation;
-	HeapScanDesc	currentScanDesc;
-	RelationInfo   *resultRelationInfo;
+	Index		relid;
+	List	   *rangeTable;
+	RangeTblEntry *rtentry;
+	Oid			reloid;
+	TimeQual	timeQual;
+	ScanDirection direction;
+	Relation	currentRelation;
+	HeapScanDesc currentScanDesc;
+	RelationInfo *resultRelationInfo;
 
 	if (outerPlan == NULL)
 	{
@@ -239,9 +239,9 @@ bool
 ExecInitSeqScan(SeqScan * node, EState * estate, Plan * parent)
 {
 	CommonScanState *scanstate;
-	Plan		   *outerPlan;
-	Oid				reloid;
-	HeapScanDesc	scandesc;
+	Plan	   *outerPlan;
+	Oid			reloid;
+	HeapScanDesc scandesc;
 
 	/* ----------------
 	 *	assign the node's execution state
@@ -315,7 +315,7 @@ void
 ExecEndSeqScan(SeqScan * node)
 {
 	CommonScanState *scanstate;
-	Plan		   *outerPlan;
+	Plan	   *outerPlan;
 
 	/* ----------------
 	 *	get information from node
@@ -369,11 +369,11 @@ void
 ExecSeqReScan(SeqScan * node, ExprContext * exprCtxt, Plan * parent)
 {
 	CommonScanState *scanstate;
-	EState		   *estate;
-	Plan		   *outerPlan;
-	Relation		rdesc;
-	HeapScanDesc	sdesc;
-	ScanDirection	direction;
+	EState	   *estate;
+	Plan	   *outerPlan;
+	Relation	rdesc;
+	HeapScanDesc sdesc;
+	ScanDirection direction;
 
 	scanstate = node->scanstate;
 	estate = node->plan.state;
@@ -406,8 +406,8 @@ void
 ExecSeqMarkPos(SeqScan * node)
 {
 	CommonScanState *scanstate;
-	Plan		   *outerPlan;
-	HeapScanDesc	sdesc;
+	Plan	   *outerPlan;
+	HeapScanDesc sdesc;
 
 	scanstate = node->scanstate;
 
@@ -445,8 +445,8 @@ void
 ExecSeqRestrPos(SeqScan * node)
 {
 	CommonScanState *scanstate;
-	Plan		   *outerPlan;
-	HeapScanDesc	sdesc;
+	Plan	   *outerPlan;
+	HeapScanDesc sdesc;
 
 	scanstate = node->scanstate;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.3 1997/09/07 04:59:26 momjian Exp $
+ * $Id: xfunc.h,v 1.4 1997/09/08 02:37:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #define XFUNC_JOINPRD 2
 #define XFUNC_UNKNOWN 0
 
-extern int		XfuncMode;		/* defined in tcop/postgres.c */
+extern int	XfuncMode;			/* defined in tcop/postgres.c */
 
 /* defaults for function attributes used for expensive function calculations */
 #define BYTE_PCT 100
@@ -49,42 +49,42 @@ extern int		XfuncMode;		/* defined in tcop/postgres.c */
 #define is_join(pathnode) (length(get_relids(get_parent(pathnode))) > 1 ? 1 : 0)
 
 /* function prototypes from planner/path/xfunc.c */
-extern void		xfunc_trypullup(Rel * rel);
+extern void xfunc_trypullup(Rel * rel);
 extern int
 xfunc_shouldpull(Path * childpath, JoinPath * parentpath,
 				 int whichchild, CInfo * maxcinfopt);
-extern CInfo   *
+extern CInfo *
 xfunc_pullup(Path * childpath, JoinPath * parentpath, CInfo * cinfo,
 			 int whichchild, int clausetype);
-extern Cost		xfunc_rank(Expr * clause);
-extern Cost		xfunc_expense(Query * queryInfo, Expr * clause);
-extern Cost		xfunc_join_expense(JoinPath * path, int whichchild);
-extern Cost		xfunc_local_expense(Expr * clause);
-extern Cost		xfunc_func_expense(Expr * node, List * args);
-extern int		xfunc_width(Expr * clause);
+extern Cost xfunc_rank(Expr * clause);
+extern Cost xfunc_expense(Query * queryInfo, Expr * clause);
+extern Cost xfunc_join_expense(JoinPath * path, int whichchild);
+extern Cost xfunc_local_expense(Expr * clause);
+extern Cost xfunc_func_expense(Expr * node, List * args);
+extern int	xfunc_width(Expr * clause);
 
 /* static, moved to xfunc.c */
 /* extern int xfunc_card_unreferenced(Expr *clause, Relid referenced); */
-extern int		xfunc_card_product(Relid relids);
-extern List    *xfunc_find_references(List * clause);
-extern List    *xfunc_primary_join(JoinPath * pathnode);
-extern Cost		xfunc_get_path_cost(Path * pathnode);
-extern Cost		xfunc_total_path_cost(JoinPath * pathnode);
-extern Cost		xfunc_expense_per_tuple(JoinPath * joinnode, int whichchild);
-extern void		xfunc_fixvars(Expr * clause, Rel * rel, int varno);
-extern int		xfunc_cinfo_compare(void *arg1, void *arg2);
-extern int		xfunc_clause_compare(void *arg1, void *arg2);
-extern void		xfunc_disjunct_sort(List * clause_list);
-extern int		xfunc_disjunct_compare(void *arg1, void *arg2);
-extern int		xfunc_func_width(RegProcedure funcid, List * args);
-extern int		xfunc_tuple_width(Relation rd);
-extern int		xfunc_num_join_clauses(JoinPath * path);
-extern List    *xfunc_LispRemove(List * foo, List * bar);
-extern bool		xfunc_copyrel(Rel * from, Rel ** to);
+extern int	xfunc_card_product(Relid relids);
+extern List *xfunc_find_references(List * clause);
+extern List *xfunc_primary_join(JoinPath * pathnode);
+extern Cost xfunc_get_path_cost(Path * pathnode);
+extern Cost xfunc_total_path_cost(JoinPath * pathnode);
+extern Cost xfunc_expense_per_tuple(JoinPath * joinnode, int whichchild);
+extern void xfunc_fixvars(Expr * clause, Rel * rel, int varno);
+extern int	xfunc_cinfo_compare(void *arg1, void *arg2);
+extern int	xfunc_clause_compare(void *arg1, void *arg2);
+extern void xfunc_disjunct_sort(List * clause_list);
+extern int	xfunc_disjunct_compare(void *arg1, void *arg2);
+extern int	xfunc_func_width(RegProcedure funcid, List * args);
+extern int	xfunc_tuple_width(Relation rd);
+extern int	xfunc_num_join_clauses(JoinPath * path);
+extern List *xfunc_LispRemove(List * foo, List * bar);
+extern bool xfunc_copyrel(Rel * from, Rel ** to);
 
 /*
  * function prototypes for path/predmig.c
  */
-extern bool		xfunc_do_predmig(Path root);
+extern bool xfunc_do_predmig(Path root);
 
 #endif							/* XFUNC_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.20 1997/09/07 04:38:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.21 1997/09/08 02:20:50 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -35,14 +35,14 @@
 
 #ifdef BTREE_BUILD_STATS
 #include <tcop/tcopprot.h>
-extern int		ShowExecutorStats;
+extern int	ShowExecutorStats;
 
 #endif
 
 
-bool			BuildingBtree = false;	/* see comment in btbuild() */
-bool			FastBuild = true;		/* use sort/build instead of
-										 * insertion build */
+bool		BuildingBtree = false;		/* see comment in btbuild() */
+bool		FastBuild = true;	/* use sort/build instead of insertion
+								 * build */
 
 /*
  *	btbuild() -- build a new btree index.
@@ -63,33 +63,33 @@ btbuild(Relation heap,
 		FuncIndexInfo * finfo,
 		PredInfo * predInfo)
 {
-	HeapScanDesc	hscan;
-	Buffer			buffer;
-	HeapTuple		htup;
-	IndexTuple		itup;
-	TupleDesc		htupdesc,
-					itupdesc;
-	Datum		   *attdata;
-	bool		   *nulls;
+	HeapScanDesc hscan;
+	Buffer		buffer;
+	HeapTuple	htup;
+	IndexTuple	itup;
+	TupleDesc	htupdesc,
+				itupdesc;
+	Datum	   *attdata;
+	bool	   *nulls;
 	InsertIndexResult res = 0;
-	int				nhtups,
-					nitups;
-	int				i;
-	BTItem			btitem;
+	int			nhtups,
+				nitups;
+	int			i;
+	BTItem		btitem;
 
 #ifndef OMIT_PARTIAL_INDEX
-	ExprContext    *econtext = (ExprContext *) NULL;
-	TupleTable		tupleTable = (TupleTable) NULL;
+	ExprContext *econtext = (ExprContext *) NULL;
+	TupleTable	tupleTable = (TupleTable) NULL;
 	TupleTableSlot *slot = (TupleTableSlot *) NULL;
 
 #endif
-	Oid				hrelid,
-					irelid;
-	Node		   *pred,
-				   *oldPred;
-	void		   *spool = (void *) NULL;
-	bool			isunique;
-	bool			usefast;
+	Oid			hrelid,
+				irelid;
+	Node	   *pred,
+			   *oldPred;
+	void	   *spool = (void *) NULL;
+	bool		isunique;
+	bool		usefast;
 
 	/* note that this is a new btree */
 	BuildingBtree = true;
@@ -211,8 +211,8 @@ btbuild(Relation heap,
 
 		for (i = 1; i <= natts; i++)
 		{
-			int				attoff;
-			bool			attnull;
+			int			attoff;
+			bool		attnull;
 
 			/*
 			 * Offsets are from the start of the tuple, and are
@@ -358,8 +358,8 @@ btbuild(Relation heap,
 InsertIndexResult
 btinsert(Relation rel, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
 {
-	BTItem			btitem;
-	IndexTuple		itup;
+	BTItem		btitem;
+	IndexTuple	itup;
 	InsertIndexResult res;
 
 	/* generate an index tuple */
@@ -389,7 +389,7 @@ btinsert(Relation rel, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation
 /*
  *	btgettuple() -- Get the next tuple in the scan.
  */
-char		   *
+char	   *
 btgettuple(IndexScanDesc scan, ScanDirection dir)
 {
 	RetrieveIndexResult res;
@@ -411,10 +411,10 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 /*
  *	btbeginscan() -- start a scan on a btree index
  */
-char		   *
+char	   *
 btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
 {
-	IndexScanDesc	scan;
+	IndexScanDesc scan;
 
 	/* get the scan */
 	scan = RelationGetIndexScan(rel, fromEnd, keysz, scankey);
@@ -431,8 +431,8 @@ btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
 void
 btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 {
-	ItemPointer		iptr;
-	BTScanOpaque	so;
+	ItemPointer iptr;
+	BTScanOpaque so;
 
 	so = (BTScanOpaque) scan->opaque;
 
@@ -483,8 +483,8 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 void
 btmovescan(IndexScanDesc scan, Datum v)
 {
-	ItemPointer		iptr;
-	BTScanOpaque	so;
+	ItemPointer iptr;
+	BTScanOpaque so;
 
 	so = (BTScanOpaque) scan->opaque;
 
@@ -506,8 +506,8 @@ btmovescan(IndexScanDesc scan, Datum v)
 void
 btendscan(IndexScanDesc scan)
 {
-	ItemPointer		iptr;
-	BTScanOpaque	so;
+	ItemPointer iptr;
+	BTScanOpaque so;
 
 	so = (BTScanOpaque) scan->opaque;
 
@@ -541,8 +541,8 @@ btendscan(IndexScanDesc scan)
 void
 btmarkpos(IndexScanDesc scan)
 {
-	ItemPointer		iptr;
-	BTScanOpaque	so;
+	ItemPointer iptr;
+	BTScanOpaque so;
 
 	so = (BTScanOpaque) scan->opaque;
 
@@ -570,8 +570,8 @@ btmarkpos(IndexScanDesc scan)
 void
 btrestrpos(IndexScanDesc scan)
 {
-	ItemPointer		iptr;
-	BTScanOpaque	so;
+	ItemPointer iptr;
+	BTScanOpaque so;
 
 	so = (BTScanOpaque) scan->opaque;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.11 1997/09/07 04:49:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.12 1997/09/08 02:29:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@
 
 #include "commands/async.h"
 
-static char		CommandInfo[32] = {0};
+static char CommandInfo[32] = {0};
 
 /* ----------------
  *		output functions
@@ -54,37 +54,37 @@ donothing(HeapTuple tuple, TupleDesc attrdesc)
 {
 }
 
-extern void		spi_printtup(HeapTuple tuple, TupleDesc tupdesc);
+extern void spi_printtup(HeapTuple tuple, TupleDesc tupdesc);
 
-void			(*
-				 DestToFunction(CommandDest dest)) (HeapTuple, TupleDesc)
+void		(*
+			 DestToFunction(CommandDest dest)) (HeapTuple, TupleDesc)
 {
 	switch (dest)
 	{
-		case RemoteInternal:
-		return printtup_internal;
-		break;
+			case RemoteInternal:
+			return printtup_internal;
+			break;
 
-	case Remote:
-		return printtup;
-		break;
+		case Remote:
+			return printtup;
+			break;
 
-	case Local:
-		return be_printtup;
-		break;
+		case Local:
+			return be_printtup;
+			break;
 
-	case Debug:
-		return debugtup;
-		break;
+		case Debug:
+			return debugtup;
+			break;
 
-	case SPI:
-		return spi_printtup;
-		break;
+		case SPI:
+			return spi_printtup;
+			break;
 
-	case None:
-	default:
-		return donothing;
-		break;
+		case None:
+		default:
+			return donothing;
+			break;
 	}
 
 	/*
@@ -101,33 +101,33 @@ void			(*
 void
 EndCommand(char *commandTag, CommandDest dest)
 {
-	char			buf[64];
+	char		buf[64];
 
 	switch (dest)
 	{
-	case RemoteInternal:
-	case Remote:
-		/* ----------------
-		 *		tell the fe that the query is over
-		 * ----------------
-		 */
-		pq_putnchar("C", 1);
-		sprintf(buf, "%s%s", commandTag, CommandInfo);
-		CommandInfo[0] = 0;
-		pq_putstr(buf);
-		pq_flush();
-		break;
+		case RemoteInternal:
+		case Remote:
+			/* ----------------
+			 *		tell the fe that the query is over
+			 * ----------------
+			 */
+			pq_putnchar("C", 1);
+			sprintf(buf, "%s%s", commandTag, CommandInfo);
+			CommandInfo[0] = 0;
+			pq_putstr(buf);
+			pq_flush();
+			break;
 
-	case Local:
-	case Debug:
-		break;
-	case CopyEnd:
-		pq_putnchar("Z", 1);
-		pq_flush();
-		break;
-	case None:
-	default:
-		break;
+		case Local:
+		case Debug:
+			break;
+		case CopyEnd:
+			pq_putnchar("Z", 1);
+			pq_flush();
+			break;
+		case None:
+		default:
+			break;
 	}
 }
 
@@ -168,54 +168,55 @@ NullCommand(CommandDest dest)
 {
 	switch (dest)
 	{
-		case RemoteInternal:
-		case Remote:
-		{
+			case RemoteInternal:
+			case Remote:
+			{
 #if 0
 
-			/*
-			 * Do any asynchronous notification.  If front end wants to
-			 * poll, it can send null queries to call this function.
-			 */
-			PQNotifyList   *nPtr;
-			MemoryContext	orig;
+				/*
+				 * Do any asynchronous notification.  If front end wants
+				 * to poll, it can send null queries to call this
+				 * function.
+				 */
+				PQNotifyList *nPtr;
+				MemoryContext orig;
 
-			if (notifyContext == NULL)
-			{
-				notifyContext = CreateGlobalMemory("notify");
-			}
-			orig = MemoryContextSwitchTo((MemoryContext) notifyContext);
+				if (notifyContext == NULL)
+				{
+					notifyContext = CreateGlobalMemory("notify");
+				}
+				orig = MemoryContextSwitchTo((MemoryContext) notifyContext);
 
-			for (nPtr = PQnotifies();
-				 nPtr != NULL;
-				 nPtr = (PQNotifyList *) SLGetSucc(&nPtr->Node))
-			{
-				pq_putnchar("A", 1);
-				pq_putint(0, 4);
-				pq_putstr(nPtr->relname);
-				pq_putint(nPtr->be_pid, 4);
-				PQremoveNotify(nPtr);
-			}
-			pq_flush();
-			PQcleanNotify();	/* garbage collect */
-			MemoryContextSwitchTo(orig);
+				for (nPtr = PQnotifies();
+					 nPtr != NULL;
+					 nPtr = (PQNotifyList *) SLGetSucc(&nPtr->Node))
+				{
+					pq_putnchar("A", 1);
+					pq_putint(0, 4);
+					pq_putstr(nPtr->relname);
+					pq_putint(nPtr->be_pid, 4);
+					PQremoveNotify(nPtr);
+				}
+				pq_flush();
+				PQcleanNotify();/* garbage collect */
+				MemoryContextSwitchTo(orig);
 #endif
-			/* ----------------
-			 *		tell the fe that the last of the queries has finished
-			 * ----------------
-			 */
+				/* ----------------
+				 *		tell the fe that the last of the queries has finished
+				 * ----------------
+				 */
 /*		pq_putnchar("I", 1);  */
-			pq_putstr("I");
-			/* pq_putint(0, 4); */
-			pq_flush();
-		}
-		break;
+				pq_putstr("I");
+				/* pq_putint(0, 4); */
+				pq_flush();
+			}
+			break;
 
-	case Local:
-	case Debug:
-	case None:
-	default:
-		break;
+		case Local:
+		case Debug:
+		case None:
+		default:
+			break;
 	}
 }
 
@@ -232,103 +233,103 @@ BeginCommand(char *pname,
 			 char *tag,
 			 CommandDest dest)
 {
-	PortalEntry    *entry;
+	PortalEntry *entry;
 	AttributeTupleForm *attrs = tupdesc->attrs;
-	int				natts = tupdesc->natts;
-	int				i;
-	char		   *p;
+	int			natts = tupdesc->natts;
+	int			i;
+	char	   *p;
 
 	switch (dest)
 	{
-	case RemoteInternal:
-	case Remote:
-		/* ----------------
-		 *		if this is a "retrieve portal" query, just return
-		 *		because nothing needs to be sent to the fe.
-		 * ----------------
-		 */
-		CommandInfo[0] = 0;
-		if (isIntoPortal)
-			return;
+		case RemoteInternal:
+		case Remote:
+			/* ----------------
+			 *		if this is a "retrieve portal" query, just return
+			 *		because nothing needs to be sent to the fe.
+			 * ----------------
+			 */
+			CommandInfo[0] = 0;
+			if (isIntoPortal)
+				return;
 
-		/* ----------------
-		 *		if portal name not specified for remote query,
-		 *		use the "blank" portal.
-		 * ----------------
-		 */
-		if (pname == NULL)
-			pname = "blank";
+			/* ----------------
+			 *		if portal name not specified for remote query,
+			 *		use the "blank" portal.
+			 * ----------------
+			 */
+			if (pname == NULL)
+				pname = "blank";
 
-		/* ----------------
-		 *		send fe info on tuples we're about to send
-		 * ----------------
-		 */
-		pq_flush();
-		pq_putnchar("P", 1);	/* new portal.. */
-		pq_putstr(pname);		/* portal name */
+			/* ----------------
+			 *		send fe info on tuples we're about to send
+			 * ----------------
+			 */
+			pq_flush();
+			pq_putnchar("P", 1);/* new portal.. */
+			pq_putstr(pname);	/* portal name */
 
-		/* ----------------
-		 *		if this is a retrieve, then we send back the tuple
-		 *		descriptor of the tuples.  "retrieve into" is an
-		 *		exception because no tuples are returned in that case.
-		 * ----------------
-		 */
-		if (operation == CMD_SELECT && !isIntoRel)
-		{
-			pq_putnchar("T", 1);/* type info to follow.. */
-			pq_putint(natts, 2);/* number of attributes in tuples */
-
-			for (i = 0; i < natts; ++i)
+			/* ----------------
+			 *		if this is a retrieve, then we send back the tuple
+			 *		descriptor of the tuples.  "retrieve into" is an
+			 *		exception because no tuples are returned in that case.
+			 * ----------------
+			 */
+			if (operation == CMD_SELECT && !isIntoRel)
 			{
-				pq_putstr(attrs[i]->attname.data);		/* if 16 char name
+				pq_putnchar("T", 1);	/* type info to follow.. */
+				pq_putint(natts, 2);	/* number of attributes in tuples */
+
+				for (i = 0; i < natts; ++i)
+				{
+					pq_putstr(attrs[i]->attname.data);	/* if 16 char name
 														 * oops.. */
-				pq_putint((int) attrs[i]->atttypid, 4);
-				pq_putint(attrs[i]->attlen, 2);
+					pq_putint((int) attrs[i]->atttypid, 4);
+					pq_putint(attrs[i]->attlen, 2);
+				}
 			}
-		}
-		pq_flush();
-		break;
+			pq_flush();
+			break;
 
-	case Local:
-		/* ----------------
-		 *		prepare local portal buffer for query results
-		 *		and setup result for PQexec()
-		 * ----------------
-		 */
-		entry = be_currentportal();
-		if (pname != NULL)
-			pbuf_setportalinfo(entry, pname);
+		case Local:
+			/* ----------------
+			 *		prepare local portal buffer for query results
+			 *		and setup result for PQexec()
+			 * ----------------
+			 */
+			entry = be_currentportal();
+			if (pname != NULL)
+				pbuf_setportalinfo(entry, pname);
 
-		if (operation == CMD_SELECT && !isIntoRel)
-		{
-			be_typeinit(entry, tupdesc, natts);
-			p = (char *) palloc(strlen(entry->name) + 2);
-			p[0] = 'P';
-			strcpy(p + 1, entry->name);
-		}
-		else
-		{
-			p = (char *) palloc(strlen(tag) + 2);
-			p[0] = 'C';
-			strcpy(p + 1, tag);
-		}
-		entry->result = p;
-		break;
+			if (operation == CMD_SELECT && !isIntoRel)
+			{
+				be_typeinit(entry, tupdesc, natts);
+				p = (char *) palloc(strlen(entry->name) + 2);
+				p[0] = 'P';
+				strcpy(p + 1, entry->name);
+			}
+			else
+			{
+				p = (char *) palloc(strlen(tag) + 2);
+				p[0] = 'C';
+				strcpy(p + 1, tag);
+			}
+			entry->result = p;
+			break;
 
-	case Debug:
-		/* ----------------
-		 *		show the return type of the tuples
-		 * ----------------
-		 */
-		if (pname == NULL)
-			pname = "blank";
+		case Debug:
+			/* ----------------
+			 *		show the return type of the tuples
+			 * ----------------
+			 */
+			if (pname == NULL)
+				pname = "blank";
 
-		showatts(pname, tupdesc);
-		break;
+			showatts(pname, tupdesc);
+			break;
 
-	case None:
-	default:
-		break;
+		case None:
+		default:
+			break;
 	}
 }
 
@@ -337,17 +338,17 @@ UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples)
 {
 	switch (operation)
 	{
-		case CMD_INSERT:
-		if (tuples > 1)
-			lastoid = InvalidOid;
-		sprintf(CommandInfo, " %u %u", lastoid, tuples);
-		break;
-	case CMD_DELETE:
-	case CMD_UPDATE:
-		sprintf(CommandInfo, " %u", tuples);
-		break;
-	default:
-		CommandInfo[0] = 0;
+			case CMD_INSERT:
+			if (tuples > 1)
+				lastoid = InvalidOid;
+			sprintf(CommandInfo, " %u %u", lastoid, tuples);
+			break;
+		case CMD_DELETE:
+		case CMD_UPDATE:
+			sprintf(CommandInfo, " %u", tuples);
+			break;
+		default:
+			CommandInfo[0] = 0;
 	}
 	return;
 }

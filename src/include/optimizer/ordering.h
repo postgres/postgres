@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ordering.h,v 1.4 1997/09/07 04:59:09 momjian Exp $
+ * $Id: ordering.h,v 1.5 1997/09/08 02:37:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,13 @@
 
 #include <nodes/relation.h>
 
-extern bool
+extern		bool
 equal_path_path_ordering(PathOrder * path_ordering1,
 						 PathOrder * path_ordering2);
-extern bool
+extern		bool
 equal_path_merge_ordering(Oid * path_ordering,
 						  MergeOrder * merge_ordering);
-extern bool
+extern		bool
 equal_merge_merge_ordering(MergeOrder * merge_ordering1,
 						   MergeOrder * merge_ordering2);
 

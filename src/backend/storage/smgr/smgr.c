@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.9 1997/09/07 04:49:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.10 1997/09/08 02:29:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,33 +23,33 @@
 #include "utils/rel.h"
 #include "utils/palloc.h"
 
-static void		smgrshutdown(int dummy);
+static void smgrshutdown(int dummy);
 
 typedef struct f_smgr
 {
-	int				(*smgr_init) ();	/* may be NULL */
-	int				(*smgr_shutdown) ();		/* may be NULL */
-	int				(*smgr_create) ();
-	int				(*smgr_unlink) ();
-	int				(*smgr_extend) ();
-	int				(*smgr_open) ();
-	int				(*smgr_close) ();
-	int				(*smgr_read) ();
-	int				(*smgr_write) ();
-	int				(*smgr_flush) ();
-	int				(*smgr_blindwrt) ();
-	int				(*smgr_nblocks) ();
-	int				(*smgr_truncate) ();
-	int				(*smgr_commit) ();	/* may be NULL */
-	int				(*smgr_abort) ();	/* may be NULL */
-}				f_smgr;
+	int			(*smgr_init) ();/* may be NULL */
+	int			(*smgr_shutdown) ();	/* may be NULL */
+	int			(*smgr_create) ();
+	int			(*smgr_unlink) ();
+	int			(*smgr_extend) ();
+	int			(*smgr_open) ();
+	int			(*smgr_close) ();
+	int			(*smgr_read) ();
+	int			(*smgr_write) ();
+	int			(*smgr_flush) ();
+	int			(*smgr_blindwrt) ();
+	int			(*smgr_nblocks) ();
+	int			(*smgr_truncate) ();
+	int			(*smgr_commit) ();		/* may be NULL */
+	int			(*smgr_abort) ();		/* may be NULL */
+}			f_smgr;
 
 /*
  *	The weird placement of commas in this init block is to keep the compiler
  *	happy, regardless of what storage managers we have (or don't have).
  */
 
-static f_smgr	smgrsw[] = {
+static f_smgr smgrsw[] = {
 
 	/* magnetic disk */
 	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
@@ -72,13 +72,13 @@ static f_smgr	smgrsw[] = {
  *	write-once storage managers.
  */
 
-static bool		smgrwo[] = {
+static bool smgrwo[] = {
 	false,						/* magnetic disk */
 #ifdef MAIN_MEMORY
 	false,						/* main memory */
 #endif							/* MAIN_MEMORY */
 };
-static int		NSmgr = lengthof(smgrsw);
+static int	NSmgr = lengthof(smgrsw);
 
 /*
  *	smgrinit(), smgrshutdown() -- Initialize or shut down all storage
@@ -88,7 +88,7 @@ static int		NSmgr = lengthof(smgrsw);
 int
 smgrinit()
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < NSmgr; i++)
 	{
@@ -108,7 +108,7 @@ smgrinit()
 static void
 smgrshutdown(int dummy)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < NSmgr; i++)
 	{
@@ -129,7 +129,7 @@ smgrshutdown(int dummy)
 int
 smgrcreate(int16 which, Relation reln)
 {
-	int				fd;
+	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
 		elog(WARN, "cannot open %s",
@@ -146,7 +146,7 @@ smgrcreate(int16 which, Relation reln)
 int
 smgrunlink(int16 which, Relation reln)
 {
-	int				status;
+	int			status;
 
 	if ((status = (*(smgrsw[which].smgr_unlink)) (reln)) == SM_FAIL)
 		elog(WARN, "cannot unlink %s",
@@ -164,7 +164,7 @@ smgrunlink(int16 which, Relation reln)
 int
 smgrextend(int16 which, Relation reln, char *buffer)
 {
-	int				status;
+	int			status;
 
 	status = (*(smgrsw[which].smgr_extend)) (reln, buffer);
 
@@ -184,7 +184,7 @@ smgrextend(int16 which, Relation reln, char *buffer)
 int
 smgropen(int16 which, Relation reln)
 {
-	int				fd;
+	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
 		elog(WARN, "cannot open %s",
@@ -228,7 +228,7 @@ smgrclose(int16 which, Relation reln)
 int
 smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 {
-	int				status;
+	int			status;
 
 	status = (*(smgrsw[which].smgr_read)) (reln, blocknum, buffer);
 
@@ -250,7 +250,7 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 int
 smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 {
-	int				status;
+	int			status;
 
 	status = (*(smgrsw[which].smgr_write)) (reln, blocknum, buffer);
 
@@ -267,7 +267,7 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 int
 smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 {
-	int				status;
+	int			status;
 
 	status = (*(smgrsw[which].smgr_flush)) (reln, blocknum, buffer);
 
@@ -299,9 +299,9 @@ smgrblindwrt(int16 which,
 			 BlockNumber blkno,
 			 char *buffer)
 {
-	char		   *dbstr;
-	char		   *relstr;
-	int				status;
+	char	   *dbstr;
+	char	   *relstr;
+	int			status;
 
 	dbstr = pstrdup(dbname);
 	relstr = pstrdup(relname);
@@ -329,7 +329,7 @@ smgrblindwrt(int16 which,
 int
 smgrnblocks(int16 which, Relation reln)
 {
-	int				nblocks;
+	int			nblocks;
 
 	if ((nblocks = (*(smgrsw[which].smgr_nblocks)) (reln)) < 0)
 		elog(WARN, "cannot count blocks for %s",
@@ -348,7 +348,7 @@ smgrnblocks(int16 which, Relation reln)
 int
 smgrtruncate(int16 which, Relation reln, int nblocks)
 {
-	int				newblks;
+	int			newblks;
 
 	newblks = nblocks;
 	if (smgrsw[which].smgr_truncate)
@@ -368,7 +368,7 @@ smgrtruncate(int16 which, Relation reln, int nblocks)
 int
 smgrcommit()
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < NSmgr; i++)
 	{
@@ -386,7 +386,7 @@ smgrcommit()
 int
 smgrabort()
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < NSmgr; i++)
 	{

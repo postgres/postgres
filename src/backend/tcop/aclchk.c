@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.14 1997/09/07 04:49:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.15 1997/09/08 02:29:40 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -36,7 +36,7 @@
 #include "parser/catalog_utils.h"
 #include "fmgr.h"
 
-static int32	aclcheck(Acl * acl, AclId id, AclIdType idtype, AclMode mode);
+static int32 aclcheck(Acl * acl, AclId id, AclIdType idtype, AclMode mode);
 
 /*
  * Enable use of user relations in place of real system catalogs.
@@ -60,7 +60,7 @@ static int32	aclcheck(Acl * acl, AclId id, AclIdType idtype, AclMode mode);
 
 /* warning messages, now more explicit. */
 /* should correspond to the order of the ACLCHK_* result codes above. */
-char		   *aclcheck_error_strings[] = {
+char	   *aclcheck_error_strings[] = {
 	"No error.",
 	"Permission denied.",
 	"Table does not exist.",
@@ -72,7 +72,7 @@ static
 dumpacl(Acl * acl)
 {
 	register unsigned i;
-	AclItem		   *aip;
+	AclItem    *aip;
 
 	elog(DEBUG, "acl size = %d, # acls = %d",
 		 ACL_SIZE(acl), ACL_NUM(acl));
@@ -92,21 +92,21 @@ ChangeAcl(char *relname,
 		  unsigned modechg)
 {
 	register unsigned i;
-	Acl			   *old_acl = (Acl *) NULL,
-				   *new_acl;
-	Relation		relation;
+	Acl		   *old_acl = (Acl *) NULL,
+			   *new_acl;
+	Relation	relation;
 	static ScanKeyData relkey[1] = {
 		{0, Anum_pg_class_relname, NameEqualRegProcedure}
 	};
-	HeapScanDesc	hsdp;
-	HeapTuple		htp;
-	Buffer			buffer;
-	Datum			values[Natts_pg_class];
-	char			nulls[Natts_pg_class];
-	char			replaces[Natts_pg_class];
+	HeapScanDesc hsdp;
+	HeapTuple	htp;
+	Buffer		buffer;
+	Datum		values[Natts_pg_class];
+	char		nulls[Natts_pg_class];
+	char		replaces[Natts_pg_class];
 	ItemPointerData tmp_ipd;
-	Relation		idescs[Num_pg_class_indices];
-	int				free_old_acl = 0;
+	Relation	idescs[Num_pg_class_indices];
+	int			free_old_acl = 0;
 
 	/*
 	 * Find the pg_class tuple matching 'relname' and extract the ACL. If
@@ -191,8 +191,8 @@ ChangeAcl(char *relname,
 AclId
 get_grosysid(char *groname)
 {
-	HeapTuple		htp;
-	AclId			id = 0;
+	HeapTuple	htp;
+	AclId		id = 0;
 
 	htp = SearchSysCacheTuple(GRONAME, PointerGetDatum(groname),
 							  0, 0, 0);
@@ -207,11 +207,11 @@ get_grosysid(char *groname)
 	return (id);
 }
 
-char		   *
+char	   *
 get_groname(AclId grosysid)
 {
-	HeapTuple		htp;
-	char		   *name = NULL;
+	HeapTuple	htp;
+	char	   *name = NULL;
 
 	htp = SearchSysCacheTuple(GROSYSID, PointerGetDatum(grosysid),
 							  0, 0, 0);
@@ -226,16 +226,16 @@ get_groname(AclId grosysid)
 	return (name);
 }
 
-static			int32
+static int32
 in_group(AclId uid, AclId gid)
 {
-	Relation		relation;
-	HeapTuple		htp;
-	Acl			   *tmp;
-	unsigned		i,
-					num;
-	AclId		   *aidp;
-	int32			found = 0;
+	Relation	relation;
+	HeapTuple	htp;
+	Acl		   *tmp;
+	unsigned	i,
+				num;
+	AclId	   *aidp;
+	int32		found = 0;
 
 	relation = heap_openr(GroupRelationName);
 	if (!RelationIsValid(relation))
@@ -276,14 +276,14 @@ in_group(AclId uid, AclId gid)
  * Returns 1 if the 'id' of type 'idtype' has ACL entries in 'acl' to satisfy
  * any one of the requirements of 'mode'.  Returns 0 otherwise.
  */
-static			int32
+static int32
 aclcheck(Acl * acl, AclId id, AclIdType idtype, AclMode mode)
 {
 	register unsigned i;
 	register AclItem *aip,
-				   *aidat;
-	unsigned		num,
-					found_group;
+			   *aidat;
+	unsigned	num,
+				found_group;
 
 	/* if no acl is found, use world default */
 	if (!acl)
@@ -309,65 +309,66 @@ aclcheck(Acl * acl, AclId id, AclIdType idtype, AclMode mode)
 
 	switch (idtype)
 	{
-	case ACL_IDTYPE_UID:
-		for (i = 1, aip = aidat + 1;	/* skip world entry */
-			 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
-			 ++i, ++aip)
-		{
-			if (aip->ai_id == id)
+		case ACL_IDTYPE_UID:
+			for (i = 1, aip = aidat + 1;		/* skip world entry */
+				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
+				 ++i, ++aip)
 			{
-#ifdef ACLDEBUG_TRACE
-				elog(DEBUG, "aclcheck: found %d/%d",
-					 aip->ai_id, aip->ai_mode);
-#endif
-				return ((aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
-			}
-		}
-		for (found_group = 0;
-			 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
-			 ++i, ++aip)
-		{
-			if (in_group(id, aip->ai_id))
-			{
-				if (aip->ai_mode & mode)
+				if (aip->ai_id == id)
 				{
-					found_group = 1;
-					break;
+#ifdef ACLDEBUG_TRACE
+					elog(DEBUG, "aclcheck: found %d/%d",
+						 aip->ai_id, aip->ai_mode);
+#endif
+					return ((aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
 				}
 			}
-		}
-		if (found_group)
-		{
-#ifdef ACLDEBUG_TRACE
-			elog(DEBUG, "aclcheck: all groups ok");
-#endif
-			return ACLCHECK_OK;
-		}
-		break;
-	case ACL_IDTYPE_GID:
-		for (i = 1, aip = aidat + 1;	/* skip world entry and UIDs */
-			 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
-			 ++i, ++aip)
-			;
-		for (;
-			 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
-			 ++i, ++aip)
-		{
-			if (aip->ai_id == id)
+			for (found_group = 0;
+				 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
+				 ++i, ++aip)
+			{
+				if (in_group(id, aip->ai_id))
+				{
+					if (aip->ai_mode & mode)
+					{
+						found_group = 1;
+						break;
+					}
+				}
+			}
+			if (found_group)
 			{
 #ifdef ACLDEBUG_TRACE
-				elog(DEBUG, "aclcheck: found %d/%d",
-					 aip->ai_id, aip->ai_mode);
+				elog(DEBUG, "aclcheck: all groups ok");
 #endif
-				return ((aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
+				return ACLCHECK_OK;
 			}
-		}
-		break;
-	case ACL_IDTYPE_WORLD:
-		break;
-	default:
-		elog(WARN, "aclcheck: bogus ACL id type: %d", idtype);
-		break;
+			break;
+		case ACL_IDTYPE_GID:
+			for (i = 1, aip = aidat + 1;		/* skip world entry and
+												 * UIDs */
+				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
+				 ++i, ++aip)
+				;
+			for (;
+				 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
+				 ++i, ++aip)
+			{
+				if (aip->ai_id == id)
+				{
+#ifdef ACLDEBUG_TRACE
+					elog(DEBUG, "aclcheck: found %d/%d",
+						 aip->ai_id, aip->ai_mode);
+#endif
+					return ((aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
+				}
+			}
+			break;
+		case ACL_IDTYPE_WORLD:
+			break;
+		default:
+			elog(WARN, "aclcheck: bogus ACL id type: %d", idtype);
+			break;
 	}
 
 #ifdef ACLDEBUG_TRACE
@@ -379,12 +380,12 @@ aclcheck(Acl * acl, AclId id, AclIdType idtype, AclMode mode)
 int32
 pg_aclcheck(char *relname, char *usename, AclMode mode)
 {
-	HeapTuple		htp;
-	AclId			id;
-	Acl			   *acl = (Acl *) NULL,
-				   *tmp;
-	int32			result;
-	Relation		relation;
+	HeapTuple	htp;
+	AclId		id;
+	Acl		   *acl = (Acl *) NULL,
+			   *tmp;
+	int32		result;
+	Relation	relation;
 
 	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
 							  0, 0, 0);
@@ -463,7 +464,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		 * if the acl is null, by default the owner can do whatever he
 		 * wants to with it
 		 */
-		Oid				ownerId;
+		Oid			ownerId;
 
 		relation = heap_openr(RelationRelationName);
 		ownerId = (Oid) heap_getattr(htp, InvalidBuffer,
@@ -477,7 +478,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		static ScanKeyData relkey[1] = {
 			{0, Anum_pg_class_relname, NameEqualRegProcedure}
 		};
-		HeapScanDesc	hsdp;
+		HeapScanDesc hsdp;
 
 		relation = heap_openr(RelationRelationName);
 		if (!RelationIsValid(relation))
@@ -517,9 +518,9 @@ pg_ownercheck(char *usename,
 			  char *value,
 			  int cacheid)
 {
-	HeapTuple		htp;
-	AclId			user_id,
-					owner_id = 0;
+	HeapTuple	htp;
+	AclId		user_id,
+				owner_id = 0;
 
 	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
 							  0, 0, 0);
@@ -544,34 +545,34 @@ pg_ownercheck(char *usename,
 							  0, 0, 0);
 	switch (cacheid)
 	{
-	case OPROID:
-		if (!HeapTupleIsValid(htp))
-			elog(WARN, "pg_ownercheck: operator %ld not found",
-				 PointerGetDatum(value));
-		owner_id = ((OperatorTupleForm) GETSTRUCT(htp))->oprowner;
-		break;
-	case PRONAME:
-		if (!HeapTupleIsValid(htp))
-			elog(WARN, "pg_ownercheck: function \"%s\" not found",
-				 value);
-		owner_id = ((Form_pg_proc) GETSTRUCT(htp))->proowner;
-		break;
-	case RELNAME:
-		if (!HeapTupleIsValid(htp))
-			elog(WARN, "pg_ownercheck: class \"%s\" not found",
-				 value);
-		owner_id = ((Form_pg_class) GETSTRUCT(htp))->relowner;
-		break;
-	case TYPNAME:
-		if (!HeapTupleIsValid(htp))
-			elog(WARN, "pg_ownercheck: type \"%s\" not found",
-				 value);
-		owner_id = ((TypeTupleForm) GETSTRUCT(htp))->typowner;
-		break;
-	default:
-		elog(WARN, "pg_ownercheck: invalid cache id: %d",
-			 cacheid);
-		break;
+		case OPROID:
+			if (!HeapTupleIsValid(htp))
+				elog(WARN, "pg_ownercheck: operator %ld not found",
+					 PointerGetDatum(value));
+			owner_id = ((OperatorTupleForm) GETSTRUCT(htp))->oprowner;
+			break;
+		case PRONAME:
+			if (!HeapTupleIsValid(htp))
+				elog(WARN, "pg_ownercheck: function \"%s\" not found",
+					 value);
+			owner_id = ((Form_pg_proc) GETSTRUCT(htp))->proowner;
+			break;
+		case RELNAME:
+			if (!HeapTupleIsValid(htp))
+				elog(WARN, "pg_ownercheck: class \"%s\" not found",
+					 value);
+			owner_id = ((Form_pg_class) GETSTRUCT(htp))->relowner;
+			break;
+		case TYPNAME:
+			if (!HeapTupleIsValid(htp))
+				elog(WARN, "pg_ownercheck: type \"%s\" not found",
+					 value);
+			owner_id = ((TypeTupleForm) GETSTRUCT(htp))->typowner;
+			break;
+		default:
+			elog(WARN, "pg_ownercheck: invalid cache id: %d",
+				 cacheid);
+			break;
 	}
 
 	return (user_id == owner_id);
@@ -583,9 +584,9 @@ pg_func_ownercheck(char *usename,
 				   int nargs,
 				   Oid * arglist)
 {
-	HeapTuple		htp;
-	AclId			user_id,
-					owner_id;
+	HeapTuple	htp;
+	AclId		user_id,
+				owner_id;
 
 	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
 							  0, 0, 0);
@@ -624,9 +625,9 @@ pg_aggr_ownercheck(char *usename,
 				   char *aggname,
 				   Oid basetypeID)
 {
-	HeapTuple		htp;
-	AclId			user_id,
-					owner_id;
+	HeapTuple	htp;
+	AclId		user_id,
+				owner_id;
 
 	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
 							  0, 0, 0);

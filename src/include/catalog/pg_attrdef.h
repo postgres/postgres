@@ -28,10 +28,10 @@
  */
 CATALOG(pg_attrdef) BOOTSTRAP
 {
-	Oid				adrelid;
-	int2			adnum;
-	text			adbin;
-	text			adsrc;
+	Oid			adrelid;
+	int2		adnum;
+	text		adbin;
+	text		adsrc;
 } FormData_pg_attrdef;
 
 /* ----------------

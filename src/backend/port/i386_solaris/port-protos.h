@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.2 1997/09/07 04:45:56 momjian Exp $
+ * $Id: port-protos.h,v 1.3 1997/09/08 02:26:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #define pg_dlerror		dlerror
 
 /* port.c */
-extern long		random(void);
-extern void		srandom(int seed);
+extern long random(void);
+extern void srandom(int seed);
 
 #endif							/* PORT_PROTOS_H */

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.3 1997/09/07 04:56:37 momjian Exp $
+ * $Id: pg_am.h,v 1.4 1997/09/08 02:34:55 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -35,28 +35,28 @@
  */
 CATALOG(pg_am)
 {
-	NameData		amname;
-	Oid				amowner;
-	char			amkind;
-	int2			amstrategies;
-	int2			amsupport;
-	regproc			amgettuple;
-	regproc			aminsert;
-	regproc			amdelete;
-	regproc			amgetattr;
-	regproc			amsetlock;
-	regproc			amsettid;
-	regproc			amfreetuple;
-	regproc			ambeginscan;
-	regproc			amrescan;
-	regproc			amendscan;
-	regproc			ammarkpos;
-	regproc			amrestrpos;
-	regproc			amopen;
-	regproc			amclose;
-	regproc			ambuild;
-	regproc			amcreate;
-	regproc			amdestroy;
+	NameData	amname;
+	Oid			amowner;
+	char		amkind;
+	int2		amstrategies;
+	int2		amsupport;
+	regproc		amgettuple;
+	regproc		aminsert;
+	regproc		amdelete;
+	regproc		amgetattr;
+	regproc		amsetlock;
+	regproc		amsettid;
+	regproc		amfreetuple;
+	regproc		ambeginscan;
+	regproc		amrescan;
+	regproc		amendscan;
+	regproc		ammarkpos;
+	regproc		amrestrpos;
+	regproc		amopen;
+	regproc		amclose;
+	regproc		ambuild;
+	regproc		amcreate;
+	regproc		amdestroy;
 } FormData_pg_am;
 
 /* ----------------

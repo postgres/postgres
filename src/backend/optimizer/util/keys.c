@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.3 1997/09/07 04:44:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.4 1997/09/08 02:24:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,8 @@
 #include "optimizer/tlist.h"
 
 
-static Expr    *matching2_tlvar(int var, List * tlist, bool(*test) ());
-static bool		equal_indexkey_var(int index_key, Var * var);
+static Expr *matching2_tlvar(int var, List * tlist, bool(*test) ());
+static bool equal_indexkey_var(int index_key, Var * var);
 
 /*
  * 1. index key
@@ -70,7 +70,7 @@ match_indexkey_operand(int indexkey, Var * operand, Rel * rel)
  *	  fields of var node 'var'.
  *
  */
-static			bool
+static bool
 equal_indexkey_var(int index_key, Var * var)
 {
 	if (index_key == var->varattno)
@@ -85,22 +85,22 @@ equal_indexkey_var(int index_key, Var * var)
  *	 lelation.
  *
  */
-Var			   *
+Var		   *
 extract_subkey(JoinKey * jk, int which_subkey)
 {
-	Var			   *retval;
+	Var		   *retval;
 
 	switch (which_subkey)
 	{
-	case OUTER:
-		retval = jk->outer;
-		break;
-	case INNER:
-		retval = jk->inner;
-		break;
-	default:					/* do nothing */
-		elog(DEBUG, "extract_subkey with neither INNER or OUTER");
-		retval = NULL;
+		case OUTER:
+			retval = jk->outer;
+			break;
+		case INNER:
+			retval = jk->inner;
+			break;
+		default:				/* do nothing */
+			elog(DEBUG, "extract_subkey with neither INNER or OUTER");
+			retval = NULL;
 	}
 	return (retval);
 }
@@ -120,9 +120,9 @@ extract_subkey(JoinKey * jk, int which_subkey)
 bool
 samekeys(List * keys1, List * keys2)
 {
-	bool			allmember = true;
-	List		   *key1,
-				   *key2;
+	bool		allmember = true;
+	List	   *key1,
+			   *key2;
 
 	for (key1 = keys1, key2 = keys2; key1 != NIL && key2 != NIL;
 		 key1 = lnext(key1), key2 = lnext(key2))
@@ -152,14 +152,14 @@ samekeys(List * keys1, List * keys2)
 /* This function is identical to matching_tlvar and tlistentry_member.
  * They should be merged.
  */
-static Expr    *
+static Expr *
 matching2_tlvar(int var, List * tlist, bool(*test) ())
 {
-	TargetEntry    *tlentry = NULL;
+	TargetEntry *tlentry = NULL;
 
 	if (var)
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, tlist)
 		{
@@ -178,16 +178,16 @@ matching2_tlvar(int var, List * tlist, bool(*test) ())
 }
 
 
-List		   *
+List	   *
 collect_index_pathkeys(int *index_keys, List * tlist)
 {
-	List		   *retval = NIL;
+	List	   *retval = NIL;
 
 	Assert(index_keys != NULL);
 
 	while (index_keys[0] != 0)
 	{
-		Expr		   *mvar;
+		Expr	   *mvar;
 
 		mvar = matching2_tlvar(index_keys[0],
 							   tlist,

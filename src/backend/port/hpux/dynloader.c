@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/dynloader.c,v 1.2 1997/09/07 04:45:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/dynloader.c,v 1.3 1997/09/08 02:26:15 momjian Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -24,10 +24,10 @@
 #include "utils/dynamic_loader.h"
 #include "port-protos.h"
 
-void		   *
+void	   *
 pg_dlopen(char *filename)
 {
-	shl_t			handle = shl_load(filename, BIND_DEFERRED, 0);
+	shl_t		handle = shl_load(filename, BIND_DEFERRED, 0);
 
 	return ((void *) handle);
 }
@@ -35,7 +35,7 @@ pg_dlopen(char *filename)
 func_ptr
 pg_dlsym(void *handle, char *funcname)
 {
-	func_ptr		f;
+	func_ptr	f;
 
 	if (shl_findsym((shl_t *) & handle, funcname, TYPE_PROCEDURE, &f) == -1)
 	{
@@ -50,10 +50,10 @@ pg_dlclose(void *handle)
 	shl_unload((shl_t) handle);
 }
 
-char		   *
+char	   *
 pg_dlerror()
 {
-	static char		errmsg[] = "shl_load failed";
+	static char errmsg[] = "shl_load failed";
 
 	return errmsg;
 }

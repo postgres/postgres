@@ -62,19 +62,19 @@ gistgettuple(IndexScanDesc s, ScanDirection dir)
 	return (res);
 }
 
-static			RetrieveIndexResult
+static RetrieveIndexResult
 gistfirst(IndexScanDesc s, ScanDirection dir)
 {
-	Buffer			b;
-	Page			p;
-	OffsetNumber	n;
-	OffsetNumber	maxoff;
+	Buffer		b;
+	Page		p;
+	OffsetNumber n;
+	OffsetNumber maxoff;
 	RetrieveIndexResult res;
-	GISTPageOpaque	po;
-	GISTScanOpaque	so;
-	GISTSTACK	   *stk;
-	BlockNumber		blk;
-	IndexTuple		it;
+	GISTPageOpaque po;
+	GISTScanOpaque so;
+	GISTSTACK  *stk;
+	BlockNumber blk;
+	IndexTuple	it;
 
 	b = ReadBuffer(s->relation, GISTP_ROOT);
 	p = BufferGetPage(b);
@@ -145,19 +145,19 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 	}
 }
 
-static			RetrieveIndexResult
+static RetrieveIndexResult
 gistnext(IndexScanDesc s, ScanDirection dir)
 {
-	Buffer			b;
-	Page			p;
-	OffsetNumber	n;
-	OffsetNumber	maxoff;
+	Buffer		b;
+	Page		p;
+	OffsetNumber n;
+	OffsetNumber maxoff;
 	RetrieveIndexResult res;
-	GISTPageOpaque	po;
-	GISTScanOpaque	so;
-	GISTSTACK	   *stk;
-	BlockNumber		blk;
-	IndexTuple		it;
+	GISTPageOpaque po;
+	GISTScanOpaque so;
+	GISTSTACK  *stk;
+	BlockNumber blk;
+	IndexTuple	it;
 
 	blk = ItemPointerGetBlockNumber(&(s->currentItemData));
 	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
@@ -247,7 +247,7 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 }
 
 /* Similar to index_keytest, but decompresses the key in the IndexTuple */
-static			bool
+static bool
 gistindex_keytest(IndexTuple tuple,
 				  TupleDesc tupdesc,
 				  int scanKeySize,
@@ -257,10 +257,10 @@ gistindex_keytest(IndexTuple tuple,
 				  Page p,
 				  OffsetNumber offset)
 {
-	bool			isNull;
-	Datum			datum;
-	int				test;
-	GISTENTRY		de;
+	bool		isNull;
+	Datum		datum;
+	int			test;
+	GISTENTRY	de;
 
 	IncrIndexProcessed();
 
@@ -308,14 +308,14 @@ gistindex_keytest(IndexTuple tuple,
 }
 
 
-static			OffsetNumber
+static OffsetNumber
 gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 {
-	OffsetNumber	maxoff;
-	char		   *it;
-	GISTPageOpaque	po;
-	GISTScanOpaque	so;
-	GISTSTATE	   *giststate;
+	OffsetNumber maxoff;
+	char	   *it;
+	GISTPageOpaque po;
+	GISTScanOpaque so;
+	GISTSTATE  *giststate;
 
 	maxoff = PageGetMaxOffsetNumber(p);
 	po = (GISTPageOpaque) PageGetSpecialPointer(p);
@@ -355,11 +355,11 @@ gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 	return (n);
 }
 
-static			RetrieveIndexResult
+static RetrieveIndexResult
 gistscancache(IndexScanDesc s, ScanDirection dir)
 {
 	RetrieveIndexResult res;
-	ItemPointer		ip;
+	ItemPointer ip;
 
 	if (!(ScanDirectionIsNoMovement(dir)
 		  && ItemPointerIsValid(&(s->currentItemData))))
@@ -384,14 +384,14 @@ gistscancache(IndexScanDesc s, ScanDirection dir)
  *	gistheapptr returns the item pointer to the tuple in the heap relation
  *	for which itemp is the index relation item pointer.
  */
-static			ItemPointer
+static ItemPointer
 gistheapptr(Relation r, ItemPointer itemp)
 {
-	Buffer			b;
-	Page			p;
-	IndexTuple		it;
-	ItemPointer		ip;
-	OffsetNumber	n;
+	Buffer		b;
+	Page		p;
+	IndexTuple	it;
+	ItemPointer ip;
+	OffsetNumber n;
 
 	ip = (ItemPointer) palloc(sizeof(ItemPointerData));
 	if (ItemPointerIsValid(itemp))

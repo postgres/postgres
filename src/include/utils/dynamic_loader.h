@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.6 1997/09/07 05:02:22 momjian Exp $
+ * $Id: dynamic_loader.h,v 1.7 1997/09/08 02:39:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,16 +29,16 @@
 
 typedef struct df_files
 {
-	char			filename[MAXPATHLEN];		/* Full pathname of file */
-	dev_t			device;		/* Device file is on */
-	ino_t			inode;		/* Inode number of file */
-	void		   *handle;		/* a handle for pg_dl* functions */
+	char		filename[MAXPATHLEN];	/* Full pathname of file */
+	dev_t		device;			/* Device file is on */
+	ino_t		inode;			/* Inode number of file */
+	void	   *handle;			/* a handle for pg_dl* functions */
 	struct df_files *next;
-}				DynamicFileList;
+}			DynamicFileList;
 
-extern void    *pg_dlopen(char *filename);
+extern void *pg_dlopen(char *filename);
 extern func_ptr pg_dlsym(void *handle, char *funcname);
-extern void		pg_dlclose(void *handle);
-extern char    *pg_dlerror(void);
+extern void pg_dlclose(void *handle);
+extern char *pg_dlerror(void);
 
 #endif							/* DYNAMIC_LOADER_H */

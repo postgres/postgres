@@ -40,10 +40,10 @@
 /* character-class table */
 static struct cclass
 {
-	char		   *name;
-	char		   *chars;
-	char		   *multis;
-}				cclasses[] =
+	char	   *name;
+	char	   *chars;
+	char	   *multis;
+}			cclasses[] =
 
 {
 	{

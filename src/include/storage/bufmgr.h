@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.12 1997/09/07 05:01:06 momjian Exp $
+ * $Id: bufmgr.h,v 1.13 1997/09/08 02:38:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +29,13 @@
  */
 #define MAXBLCKSZ		8192
 
-typedef void   *Block;
+typedef void *Block;
 
 
 /* special pageno for bget */
 #define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */
 
-typedef bits16	BufferLock;
+typedef bits16 BufferLock;
 
 /**********************************************************************
 
@@ -60,7 +60,7 @@ typedef bits16	BufferLock;
 #define BufferIsPinned BufferIsValid
 
 
-extern int		ShowPinTrace;
+extern int	ShowPinTrace;
 
 /*
  * BufferWriteModes (settable via SetBufferWriteMode)
@@ -71,38 +71,38 @@ extern int		ShowPinTrace;
 /*
  * prototypes for functions in bufmgr.c
  */
-extern Buffer
+extern		Buffer
 RelationGetBufferWithBuffer(Relation relation,
 							BlockNumber blockNumber, Buffer buffer);
-extern Buffer	ReadBuffer(Relation reln, BlockNumber blockNum);
-extern int		WriteBuffer(Buffer buffer);
-extern int		WriteNoReleaseBuffer(Buffer buffer);
-extern Buffer
+extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
+extern int	WriteBuffer(Buffer buffer);
+extern int	WriteNoReleaseBuffer(Buffer buffer);
+extern		Buffer
 ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 					 BlockNumber blockNum);
 
-extern void		InitBufferPool(IPCKey key);
-extern void		PrintBufferUsage(FILE * statfp);
-extern void		ResetBufferUsage(void);
-extern void		ResetBufferPool(void);
-extern int		BufferPoolCheckLeak(void);
-extern void		FlushBufferPool(int StableMainMemoryFlag);
-extern bool		BufferIsValid(Buffer bufnum);
+extern void InitBufferPool(IPCKey key);
+extern void PrintBufferUsage(FILE * statfp);
+extern void ResetBufferUsage(void);
+extern void ResetBufferPool(void);
+extern int	BufferPoolCheckLeak(void);
+extern void FlushBufferPool(int StableMainMemoryFlag);
+extern bool BufferIsValid(Buffer bufnum);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern Relation BufferGetRelation(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
-extern Block	BufferGetBlock(Buffer buffer);
-extern void		ReleaseRelationBuffers(Relation rdesc);
-extern void		DropBuffers(Oid dbid);
-extern void		PrintBufferDescs(void);
-extern void		PrintPinnedBufs(void);
-extern int		BufferShmemSize(void);
-extern void		IncrBufferRefCount(Buffer buffer);
-extern int		ReleaseBuffer(Buffer buffer);
+extern Block BufferGetBlock(Buffer buffer);
+extern void ReleaseRelationBuffers(Relation rdesc);
+extern void DropBuffers(Oid dbid);
+extern void PrintBufferDescs(void);
+extern void PrintPinnedBufs(void);
+extern int	BufferShmemSize(void);
+extern void IncrBufferRefCount(Buffer buffer);
+extern int	ReleaseBuffer(Buffer buffer);
 
-extern void		BufferRefCountReset(int *refcountsave);
-extern void		BufferRefCountRestore(int *refcountsave);
-extern int		SetBufferWriteMode(int mode);
-extern void		SetBufferCommitInfoNeedsSave(Buffer buffer);
+extern void BufferRefCountReset(int *refcountsave);
+extern void BufferRefCountRestore(int *refcountsave);
+extern int	SetBufferWriteMode(int mode);
+extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 
 #endif							/* !defined(BufMgrIncluded) */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.5 1997/09/07 04:55:45 momjian Exp $
+ * $Id: attnum.h,v 1.6 1997/09/08 02:34:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 /*
  * user defined attribute numbers start at 1.	-ay 2/95
  */
-typedef int16	AttrNumber;
+typedef int16 AttrNumber;
 
 #define InvalidAttrNumber		0
 

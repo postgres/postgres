@@ -39,20 +39,20 @@ exit_nicely(PGconn * conn)
 
 main()
 {
-	char		   *pghost,
-				   *pgport,
-				   *pgoptions,
-				   *pgtty;
-	char		   *dbName;
-	int				nFields;
-	int				i,
-					j;
-	int				i_fnum,
-					d_fnum,
-					p_fnum;
+	char	   *pghost,
+			   *pgport,
+			   *pgoptions,
+			   *pgtty;
+	char	   *dbName;
+	int			nFields;
+	int			i,
+				j;
+	int			i_fnum,
+				d_fnum,
+				p_fnum;
 
-	PGconn		   *conn;
-	PGresult	   *res;
+	PGconn	   *conn;
+	PGresult   *res;
 
 	/*
 	 * begin, by setting the parameters for a backend connection if the
@@ -132,10 +132,10 @@ main()
 	}
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		int			   *ival;
-		float		   *dval;
-		int				plen;
-		POLYGON		   *pval;
+		int		   *ival;
+		float	   *dval;
+		int			plen;
+		POLYGON    *pval;
 
 		/* we hard-wire this to the 3 fields we know about */
 		ival = (int *) PQgetvalue(res, i, i_fnum);

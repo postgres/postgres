@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.41 1997/09/07 04:54:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.42 1997/09/08 02:32:45 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -67,36 +67,36 @@
 
 #include "pg_dump.h"
 
-static void		dumpSequence(FILE * fout, TableInfo tbinfo);
-static char    *checkForQuote(const char *s);
-static void		clearTableInfo(TableInfo *, int);
+static void dumpSequence(FILE * fout, TableInfo tbinfo);
+static char *checkForQuote(const char *s);
+static void clearTableInfo(TableInfo *, int);
 static void
 dumpOneFunc(FILE * fout, FuncInfo * finfo, int i,
 			TypeInfo * tinfo, int numTypes);
-static int		findLastBuiltinOid(void);
-static bool		isViewRule(char *relname);
-static void		setMaxOid(FILE * fout);
+static int	findLastBuiltinOid(void);
+static bool isViewRule(char *relname);
+static void setMaxOid(FILE * fout);
 
-extern char    *optarg;
-extern int		optind,
-				opterr;
+extern char *optarg;
+extern int	optind,
+			opterr;
 
 /* global decls */
-bool			g_verbose;		/* User wants verbose narration of our
+bool		g_verbose;			/* User wants verbose narration of our
 								 * activities. */
-int				g_last_builtin_oid;		/* value of the last builtin oid */
-FILE		   *g_fout;			/* the script file */
-PGconn		   *g_conn;			/* the database connection */
-int				dumpData;		/* dump data using proper insert strings */
-int				attrNames;		/* put attr names into insert strings */
-int				schemaOnly;
-int				dataOnly;
+int			g_last_builtin_oid; /* value of the last builtin oid */
+FILE	   *g_fout;				/* the script file */
+PGconn	   *g_conn;				/* the database connection */
+int			dumpData;			/* dump data using proper insert strings */
+int			attrNames;			/* put attr names into insert strings */
+int			schemaOnly;
+int			dataOnly;
 
-char			g_opaque_type[10];		/* name for the opaque type */
+char		g_opaque_type[10];	/* name for the opaque type */
 
 /* placeholders for the delimiters for comments */
-char			g_comment_start[10];
-char			g_comment_end[10];
+char		g_comment_start[10];
+char		g_comment_end[10];
 
 
 static void
@@ -149,12 +149,12 @@ exit_nicely(PGconn * conn)
  *				Determine if the relation is a VIEW
  *
  */
-static			bool
+static bool
 isViewRule(char *relname)
 {
-	PGresult	   *res;
-	int				ntups;
-	char			query[MAXQUERYLEN];
+	PGresult   *res;
+	int			ntups;
+	char		query[MAXQUERYLEN];
 
 	res = PQexec(g_conn, "begin");
 	if (!res ||
@@ -192,11 +192,11 @@ static void
 dumpClasses_nodumpData(FILE * fout, const char *classname, const bool oids)
 {
 
-	PGresult	   *res;
-	char			query[255];
-	int				ret;
-	bool			copydone;
-	char			copybuf[COPYBUFSIZ];
+	PGresult   *res;
+	char		query[255];
+	int			ret;
+	bool		copydone;
+	char		copybuf[COPYBUFSIZ];
 
 	if (oids)
 	{
@@ -248,14 +248,14 @@ dumpClasses_nodumpData(FILE * fout, const char *classname, const bool oids)
 					fputs(copybuf, fout);
 					switch (ret)
 					{
-					case EOF:
-						copydone = true;
-						/* FALLTHROUGH */
-					case 0:
-						fputc('\n', fout);
-						break;
-					case 1:
-						break;
+						case EOF:
+							copydone = true;
+							/* FALLTHROUGH */
+						case 0:
+							fputc('\n', fout);
+							break;
+						case 1:
+							break;
 					}
 				}
 			}
@@ -286,13 +286,13 @@ dumpClasses_dumpData(FILE * fout, const char *classname,
 					 const TableInfo tblinfo, bool oids)
 {
 
-	PGresult	   *res;
-	char			query[255];
-	int				actual_atts;/* number of attrs in this a table */
-	char			expandbuf[COPYBUFSIZ];
-	char			q[MAXQUERYLEN];
-	int				tuple;
-	int				field;
+	PGresult   *res;
+	char		query[255];
+	int			actual_atts;	/* number of attrs in this a table */
+	char		expandbuf[COPYBUFSIZ];
+	char		q[MAXQUERYLEN];
+	int			tuple;
+	int			field;
 
 	sprintf(query, "select * from %s", classname);
 	res = PQexec(g_conn, query);
@@ -308,7 +308,7 @@ dumpClasses_dumpData(FILE * fout, const char *classname,
 		fprintf(fout, "insert into %s ", classname);
 		if (attrNames)
 		{
-			int				j;
+			int			j;
 
 			actual_atts = 0;
 			sprintf(q, "(");
@@ -338,38 +338,38 @@ dumpClasses_dumpData(FILE * fout, const char *classname,
 			{
 				switch (PQftype(res, field))
 				{
-				case INT2OID:
-				case INT4OID:
-				case OIDOID:	/* int types */
-				case FLOAT4OID:
-				case FLOAT8OID:/* float types */
-					fprintf(fout, "%s",
-							PQgetvalue(res, tuple, field));
-					break;
-				default:
-					{
-						char		   *expsrc,
+					case INT2OID:
+					case INT4OID:
+					case OIDOID:		/* int types */
+					case FLOAT4OID:
+					case FLOAT8OID:		/* float types */
+						fprintf(fout, "%s",
+								PQgetvalue(res, tuple, field));
+						break;
+					default:
+						{
+							char	   *expsrc,
 									   *expdest;
 
-						/*
-						 * Before outputting string value, expand all
-						 * single quotes to twin single quotes - dhb -
-						 * 6/11/96
-						 */
-						expsrc = PQgetvalue(res, tuple, field);
-						expdest = expandbuf;
-						while (*expsrc)
-						{
-							*expdest++ = *expsrc;
-							if (*expsrc == (char) 0x27) /* single quote */
+							/*
+							 * Before outputting string value, expand all
+							 * single quotes to twin single quotes - dhb -
+							 * 6/11/96
+							 */
+							expsrc = PQgetvalue(res, tuple, field);
+							expdest = expandbuf;
+							while (*expsrc)
+							{
 								*expdest++ = *expsrc;
-							expsrc++;
-						}
-						*expdest = *expsrc;		/* null term. */
+								if (*expsrc == (char) 0x27)		/* single quote */
+									*expdest++ = *expsrc;
+								expsrc++;
+							}
+							*expdest = *expsrc; /* null term. */
 
-						fprintf(fout, "'%s'", expandbuf);
-					}
-					break;
+							fprintf(fout, "'%s'", expandbuf);
+						}
+						break;
 				}
 			}
 			field++;
@@ -393,8 +393,8 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE * fout,
 			const char *onlytable, const bool oids)
 {
 
-	int				i;
-	char		   *all_only;
+	int			i;
+	char	   *all_only;
 
 	if (onlytable == NULL)
 		all_only = "all";
@@ -407,7 +407,7 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE * fout,
 
 	for (i = 0; i < numTables; i++)
 	{
-		const char	   *classname = tblinfo[i].relname;
+		const char *classname = tblinfo[i].relname;
 
 		/* Skip VIEW relations */
 		if (isViewRule(tblinfo[i].relname))
@@ -451,17 +451,17 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE * fout,
 int
 main(int argc, char **argv)
 {
-	int				c;
-	const char	   *progname;
-	const char	   *filename = NULL;
-	const char	   *dbname = NULL;
-	const char	   *pghost = NULL;
-	const char	   *pgport = NULL;
-	const char	   *tablename = NULL;
-	int				oids = 0,
-					acls = 0;
-	TableInfo	   *tblinfo;
-	int				numTables;
+	int			c;
+	const char *progname;
+	const char *filename = NULL;
+	const char *dbname = NULL;
+	const char *pghost = NULL;
+	const char *pgport = NULL;
+	const char *tablename = NULL;
+	int			oids = 0,
+				acls = 0;
+	TableInfo  *tblinfo;
+	int			numTables;
 
 	g_verbose = false;
 
@@ -477,44 +477,44 @@ main(int argc, char **argv)
 	{
 		switch (c)
 		{
-		case 'f':				/* output file name */
-			filename = optarg;
-			break;
-		case 'H':				/* server host */
-			pghost = optarg;
-			break;
-		case 'p':				/* server port */
-			pgport = optarg;
-			break;
-		case 'v':				/* verbose */
-			g_verbose = true;
-			break;
-		case 'S':				/* dump schema only */
-			schemaOnly = 1;
-			break;
-		case 'd':				/* dump data as proper insert strings */
-			dumpData = 1;
-			break;
-		case 'D':				/* dump data as proper insert strings with
+			case 'f':			/* output file name */
+				filename = optarg;
+				break;
+			case 'H':			/* server host */
+				pghost = optarg;
+				break;
+			case 'p':			/* server port */
+				pgport = optarg;
+				break;
+			case 'v':			/* verbose */
+				g_verbose = true;
+				break;
+			case 'S':			/* dump schema only */
+				schemaOnly = 1;
+				break;
+			case 'd':			/* dump data as proper insert strings */
+				dumpData = 1;
+				break;
+			case 'D':			/* dump data as proper insert strings with
 								 * attr names */
-			dumpData = 1;
-			attrNames = 1;
-			break;
-		case 't':				/* Dump data for this table only */
-			tablename = optarg;
-			break;
-		case 'a':				/* Dump data only */
-			dataOnly = 1;
-			break;
-		case 'o':				/* Dump oids */
-			oids = 1;
-			break;
-		case 'z':				/* Dump oids */
-			acls = 1;
-			break;
-		default:
-			usage(progname);
-			break;
+				dumpData = 1;
+				attrNames = 1;
+				break;
+			case 't':			/* Dump data for this table only */
+				tablename = optarg;
+				break;
+			case 'a':			/* Dump data only */
+				dataOnly = 1;
+				break;
+			case 'o':			/* Dump oids */
+				oids = 1;
+				break;
+			case 'z':			/* Dump oids */
+				acls = 1;
+				break;
+			default:
+				usage(progname);
+				break;
 		}
 	}
 
@@ -589,30 +589,30 @@ main(int argc, char **argv)
  *	numTypes is set to the number of types read in
  *
  */
-TypeInfo	   *
+TypeInfo   *
 getTypes(int *numTypes)
 {
-	PGresult	   *res;
-	int				ntups;
-	int				i;
-	char			query[MAXQUERYLEN];
-	TypeInfo	   *tinfo;
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	char		query[MAXQUERYLEN];
+	TypeInfo   *tinfo;
 
-	int				i_oid;
-	int				i_typowner;
-	int				i_typname;
-	int				i_typlen;
-	int				i_typprtlen;
-	int				i_typinput;
-	int				i_typoutput;
-	int				i_typreceive;
-	int				i_typsend;
-	int				i_typelem;
-	int				i_typdelim;
-	int				i_typdefault;
-	int				i_typrelid;
-	int				i_typbyval;
-	int				i_usename;
+	int			i_oid;
+	int			i_typowner;
+	int			i_typname;
+	int			i_typlen;
+	int			i_typprtlen;
+	int			i_typinput;
+	int			i_typoutput;
+	int			i_typreceive;
+	int			i_typsend;
+	int			i_typelem;
+	int			i_typdelim;
+	int			i_typdefault;
+	int			i_typrelid;
+	int			i_typbyval;
+	int			i_usename;
 
 	res = PQexec(g_conn, "begin");
 	if (!res ||
@@ -718,30 +718,30 @@ getTypes(int *numTypes)
  *
  *
  */
-OprInfo		   *
+OprInfo    *
 getOperators(int *numOprs)
 {
-	PGresult	   *res;
-	int				ntups;
-	int				i;
-	char			query[MAXQUERYLEN];
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	char		query[MAXQUERYLEN];
 
-	OprInfo		   *oprinfo;
+	OprInfo    *oprinfo;
 
-	int				i_oid;
-	int				i_oprname;
-	int				i_oprkind;
-	int				i_oprcode;
-	int				i_oprleft;
-	int				i_oprright;
-	int				i_oprcom;
-	int				i_oprnegate;
-	int				i_oprrest;
-	int				i_oprjoin;
-	int				i_oprcanhash;
-	int				i_oprlsortop;
-	int				i_oprrsortop;
-	int				i_usename;
+	int			i_oid;
+	int			i_oprname;
+	int			i_oprkind;
+	int			i_oprcode;
+	int			i_oprleft;
+	int			i_oprright;
+	int			i_oprcom;
+	int			i_oprnegate;
+	int			i_oprrest;
+	int			i_oprjoin;
+	int			i_oprcanhash;
+	int			i_oprlsortop;
+	int			i_oprrsortop;
+	int			i_usename;
 
 	/*
 	 * find all operators, including builtin operators, filter out
@@ -818,7 +818,7 @@ getOperators(int *numOprs)
 void
 clearTypeInfo(TypeInfo * tp, int numTypes)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < numTypes; ++i)
 	{
@@ -857,8 +857,8 @@ clearTypeInfo(TypeInfo * tp, int numTypes)
 void
 clearFuncInfo(FuncInfo * fun, int numFuncs)
 {
-	int				i,
-					a;
+	int			i,
+				a;
 
 	if (!fun)
 		return;
@@ -886,8 +886,8 @@ clearFuncInfo(FuncInfo * fun, int numFuncs)
 static void
 clearTableInfo(TableInfo * tblinfo, int numTables)
 {
-	int				i,
-					j;
+	int			i,
+				j;
 
 	for (i = 0; i < numTables; ++i)
 	{
@@ -940,7 +940,7 @@ clearTableInfo(TableInfo * tblinfo, int numTables)
 void
 clearInhInfo(InhInfo * inh, int numInherits)
 {
-	int				i;
+	int			i;
 
 	if (!inh)
 		return;
@@ -957,7 +957,7 @@ clearInhInfo(InhInfo * inh, int numInherits)
 void
 clearOprInfo(OprInfo * opr, int numOprs)
 {
-	int				i;
+	int			i;
 
 	if (!opr)
 		return;
@@ -998,8 +998,8 @@ clearOprInfo(OprInfo * opr, int numOprs)
 void
 clearIndInfo(IndInfo * ind, int numIndices)
 {
-	int				i,
-					a;
+	int			i,
+				a;
 
 	if (!ind)
 		return;
@@ -1029,7 +1029,7 @@ clearIndInfo(IndInfo * ind, int numIndices)
 void
 clearAggInfo(AggInfo * agginfo, int numArgs)
 {
-	int				i;
+	int			i;
 
 	if (!agginfo)
 		return;
@@ -1070,26 +1070,26 @@ clearAggInfo(AggInfo * agginfo, int numArgs)
  *
  *
  */
-AggInfo		   *
+AggInfo    *
 getAggregates(int *numAggs)
 {
-	PGresult	   *res;
-	int				ntups;
-	int				i;
-	char			query[MAXQUERYLEN];
-	AggInfo		   *agginfo;
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	char		query[MAXQUERYLEN];
+	AggInfo    *agginfo;
 
-	int				i_oid;
-	int				i_aggname;
-	int				i_aggtransfn1;
-	int				i_aggtransfn2;
-	int				i_aggfinalfn;
-	int				i_aggtranstype1;
-	int				i_aggbasetype;
-	int				i_aggtranstype2;
-	int				i_agginitval1;
-	int				i_agginitval2;
-	int				i_usename;
+	int			i_oid;
+	int			i_aggname;
+	int			i_aggtransfn1;
+	int			i_aggtransfn2;
+	int			i_aggfinalfn;
+	int			i_aggtranstype1;
+	int			i_aggbasetype;
+	int			i_aggtranstype2;
+	int			i_agginitval1;
+	int			i_agginitval2;
+	int			i_usename;
 
 	/* find all user-defined aggregates */
 
@@ -1164,25 +1164,25 @@ getAggregates(int *numAggs)
  *
  *
  */
-FuncInfo	   *
+FuncInfo   *
 getFuncs(int *numFuncs)
 {
-	PGresult	   *res;
-	int				ntups;
-	int				i;
-	char			query[MAXQUERYLEN];
-	FuncInfo	   *finfo;
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	char		query[MAXQUERYLEN];
+	FuncInfo   *finfo;
 
-	int				i_oid;
-	int				i_proname;
-	int				i_prolang;
-	int				i_pronargs;
-	int				i_proargtypes;
-	int				i_prorettype;
-	int				i_proretset;
-	int				i_prosrc;
-	int				i_probin;
-	int				i_usename;
+	int			i_oid;
+	int			i_proname;
+	int			i_prolang;
+	int			i_pronargs;
+	int			i_proargtypes;
+	int			i_prorettype;
+	int			i_proretset;
+	int			i_prosrc;
+	int			i_probin;
+	int			i_usename;
 
 	/* find all user-defined funcs */
 
@@ -1264,21 +1264,21 @@ getFuncs(int *numFuncs)
  *
  *
  */
-TableInfo	   *
+TableInfo  *
 getTables(int *numTables)
 {
-	PGresult	   *res;
-	int				ntups;
-	int				i;
-	char			query[MAXQUERYLEN];
-	TableInfo	   *tblinfo;
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	char		query[MAXQUERYLEN];
+	TableInfo  *tblinfo;
 
-	int				i_oid;
-	int				i_relname;
-	int				i_relarch;
-	int				i_relkind;
-	int				i_relacl;
-	int				i_usename;
+	int			i_oid;
+	int			i_relname;
+	int			i_relarch;
+	int			i_relkind;
+	int			i_relacl;
+	int			i_usename;
 
 	/*
 	 * find all the user-defined tables (no indices and no catalogs),
@@ -1352,17 +1352,17 @@ getTables(int *numTables)
  *
  *
  */
-InhInfo		   *
+InhInfo    *
 getInherits(int *numInherits)
 {
-	PGresult	   *res;
-	int				ntups;
-	int				i;
-	char			query[MAXQUERYLEN];
-	InhInfo		   *inhinfo;
+	PGresult   *res;
+	int			ntups;
+	int			i;
+	char		query[MAXQUERYLEN];
+	InhInfo    *inhinfo;
 
-	int				i_inhrel;
-	int				i_inhparent;
+	int			i_inhrel;
+	int			i_inhparent;
 
 	/* find all the inheritance information */
 	res = PQexec(g_conn, "begin");
@@ -1418,15 +1418,15 @@ getInherits(int *numInherits)
 void
 getTableAttrs(TableInfo * tblinfo, int numTables)
 {
-	int				i,
-					j;
-	char			q[MAXQUERYLEN];
-	int				i_attname;
-	int				i_typname;
-	int				i_attlen;
-	int				i_attnotnull;
-	PGresult	   *res;
-	int				ntups;
+	int			i,
+				j;
+	char		q[MAXQUERYLEN];
+	int			i_attname;
+	int			i_typname;
+	int			i_attlen;
+	int			i_attnotnull;
+	PGresult   *res;
+	int			ntups;
 
 	for (i = 0; i < numTables; i++)
 	{
@@ -1504,22 +1504,22 @@ getTableAttrs(TableInfo * tblinfo, int numTables)
  *
  *
  */
-IndInfo		   *
+IndInfo    *
 getIndices(int *numIndices)
 {
-	int				i;
-	char			query[MAXQUERYLEN];
-	PGresult	   *res;
-	int				ntups;
-	IndInfo		   *indinfo;
+	int			i;
+	char		query[MAXQUERYLEN];
+	PGresult   *res;
+	int			ntups;
+	IndInfo    *indinfo;
 
-	int				i_indexrelname;
-	int				i_indrelname;
-	int				i_indamname;
-	int				i_indproc;
-	int				i_indkey;
-	int				i_indclass;
-	int				i_indisunique;
+	int			i_indexrelname;
+	int			i_indrelname;
+	int			i_indamname;
+	int			i_indproc;
+	int			i_indkey;
+	int			i_indclass;
+	int			i_indisunique;
 
 	/*
 	 * find all the user-defined indices. We do not handle partial
@@ -1599,9 +1599,9 @@ void
 dumpTypes(FILE * fout, FuncInfo * finfo, int numFuncs,
 		  TypeInfo * tinfo, int numTypes)
 {
-	int				i;
-	char			q[MAXQUERYLEN];
-	int				funcInd;
+	int			i;
+	char		q[MAXQUERYLEN];
+	int			funcInd;
 
 	for (i = 0; i < numTypes; i++)
 	{
@@ -1648,7 +1648,7 @@ dumpTypes(FILE * fout, FuncInfo * finfo, int numFuncs,
 
 		if (tinfo[i].isArray)
 		{
-			char		   *elemType;
+			char	   *elemType;
 
 			elemType = findTypeByOid(tinfo, numTypes, tinfo[i].typelem);
 
@@ -1673,7 +1673,7 @@ void
 dumpFuncs(FILE * fout, FuncInfo * finfo, int numFuncs,
 		  TypeInfo * tinfo, int numTypes)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < numFuncs; i++)
 	{
@@ -1692,8 +1692,8 @@ static void
 dumpOneFunc(FILE * fout, FuncInfo * finfo, int i,
 			TypeInfo * tinfo, int numTypes)
 {
-	char			q[MAXQUERYLEN];
-	int				j;
+	char		q[MAXQUERYLEN];
+	int			j;
 
 	if (finfo[i].dumped)
 		return;
@@ -1705,7 +1705,7 @@ dumpOneFunc(FILE * fout, FuncInfo * finfo, int i,
 	sprintf(q, "CREATE FUNCTION %s (", finfo[i].proname);
 	for (j = 0; j < finfo[i].nargs; j++)
 	{
-		char		   *typname;
+		char	   *typname;
 
 		typname = findTypeByOid(tinfo, numTypes, finfo[i].argtypes[j]);
 		sprintf(q, "%s%s%s",
@@ -1733,15 +1733,15 @@ void
 dumpOprs(FILE * fout, OprInfo * oprinfo, int numOperators,
 		 TypeInfo * tinfo, int numTypes)
 {
-	int				i;
-	char			q[MAXQUERYLEN];
-	char			leftarg[MAXQUERYLEN];
-	char			rightarg[MAXQUERYLEN];
-	char			commutator[MAXQUERYLEN];
-	char			negator[MAXQUERYLEN];
-	char			restrict[MAXQUERYLEN];
-	char			join[MAXQUERYLEN];
-	char			sortop[MAXQUERYLEN];
+	int			i;
+	char		q[MAXQUERYLEN];
+	char		leftarg[MAXQUERYLEN];
+	char		rightarg[MAXQUERYLEN];
+	char		commutator[MAXQUERYLEN];
+	char		negator[MAXQUERYLEN];
+	char		restrict[MAXQUERYLEN];
+	char		join[MAXQUERYLEN];
+	char		sortop[MAXQUERYLEN];
 
 	for (i = 0; i < numOperators; i++)
 	{
@@ -1840,13 +1840,13 @@ void
 dumpAggs(FILE * fout, AggInfo * agginfo, int numAggs,
 		 TypeInfo * tinfo, int numTypes)
 {
-	int				i;
-	char			q[MAXQUERYLEN];
-	char			sfunc1[MAXQUERYLEN];
-	char			sfunc2[MAXQUERYLEN];
-	char			finalfunc[MAXQUERYLEN];
-	char			comma1[2],
-					comma2[2];
+	int			i;
+	char		q[MAXQUERYLEN];
+	char		sfunc1[MAXQUERYLEN];
+	char		sfunc2[MAXQUERYLEN];
+	char		finalfunc[MAXQUERYLEN];
+	char		comma1[2],
+				comma2[2];
 
 	for (i = 0; i < numAggs; i++)
 	{
@@ -1929,14 +1929,14 @@ dumpTables(FILE * fout, TableInfo * tblinfo, int numTables,
 		   TypeInfo * tinfo, int numTypes, const char *tablename,
 		   const bool acls)
 {
-	int				i,
-					j,
-					k;
-	char			q[MAXQUERYLEN];
-	char		  **parentRels; /* list of names of parent relations */
-	int				numParents;
-	int				actual_atts;/* number of attrs in this CREATE statment */
-	const char	   *archiveMode;
+	int			i,
+				j,
+				k;
+	char		q[MAXQUERYLEN];
+	char	  **parentRels;		/* list of names of parent relations */
+	int			numParents;
+	int			actual_atts;	/* number of attrs in this CREATE statment */
+	const char *archiveMode;
 
 	for (i = 0; i < numTables; i++)
 	{
@@ -2031,19 +2031,19 @@ dumpTables(FILE * fout, TableInfo * tblinfo, int numTables,
 
 			switch (tblinfo[i].relarch[0])
 			{
-			case 'n':
-				archiveMode = "none";
-				break;
-			case 'h':
-				archiveMode = "heavy";
-				break;
-			case 'l':
-				archiveMode = "light";
-				break;
-			default:
-				fprintf(stderr, "unknown archive mode\n");
-				archiveMode = "none";
-				break;
+				case 'n':
+					archiveMode = "none";
+					break;
+				case 'h':
+					archiveMode = "heavy";
+					break;
+				case 'l':
+					archiveMode = "light";
+					break;
+				default:
+					fprintf(stderr, "unknown archive mode\n");
+					archiveMode = "none";
+					break;
 			}
 
 			sprintf(q, "%s archive = %s;\n",
@@ -2067,19 +2067,19 @@ void
 dumpIndices(FILE * fout, IndInfo * indinfo, int numIndices,
 			TableInfo * tblinfo, int numTables, const char *tablename)
 {
-	int				i,
-					k;
-	int				tableInd;
-	char			attlist[1000];
-	char		   *classname[INDEX_MAX_KEYS];
-	char		   *funcname;	/* the name of the function to comput the
+	int			i,
+				k;
+	int			tableInd;
+	char		attlist[1000];
+	char	   *classname[INDEX_MAX_KEYS];
+	char	   *funcname;		/* the name of the function to comput the
 								 * index key from */
-	int				indkey,
-					indclass;
-	int				nclass;
+	int			indkey,
+				indclass;
+	int			nclass;
 
-	char			q[MAXQUERYLEN];
-	PGresult	   *res;
+	char		q[MAXQUERYLEN];
+	PGresult   *res;
 
 	for (i = 0; i < numIndices; i++)
 	{
@@ -2145,7 +2145,7 @@ dumpIndices(FILE * fout, IndInfo * indinfo, int numIndices,
 		/* convert attribute numbers into attribute list */
 		for (k = 0, attlist[0] = 0; k < INDEX_MAX_KEYS; k++)
 		{
-			char		   *attname;
+			char	   *attname;
 
 			indkey = atoi(indinfo[i].indkey[k]);
 			if (indkey == 0)
@@ -2214,11 +2214,11 @@ dumpIndices(FILE * fout, IndInfo * indinfo, int numIndices,
 void
 dumpTuples(PGresult * res, FILE * fout, int *attrmap)
 {
-	int				j,
-					k;
-	int				m,
-					n;
-	char		  **outVals = NULL;		/* values to copy out */
+	int			j,
+				k;
+	int			m,
+				n;
+	char	  **outVals = NULL; /* values to copy out */
 
 	n = PQntuples(res);
 	m = PQnfields(res);
@@ -2240,7 +2240,7 @@ dumpTuples(PGresult * res, FILE * fout, int *attrmap)
 			}
 			for (k = 0; k < m; k++)
 			{
-				char		   *pval = outVals[k];
+				char	   *pval = outVals[k];
 
 				if (k != 0)
 					fputc('\t', fout);	/* delimiter for attribute */
@@ -2273,8 +2273,8 @@ dumpTuples(PGresult * res, FILE * fout, int *attrmap)
 static void
 setMaxOid(FILE * fout)
 {
-	PGresult	   *res;
-	Oid				max_oid;
+	PGresult   *res;
+	Oid			max_oid;
 
 	res = PQexec(g_conn, "CREATE TABLE pgdump_oid (dummy int4)");
 	if (!res ||
@@ -2326,9 +2326,9 @@ setMaxOid(FILE * fout)
 static int
 findLastBuiltinOid(void)
 {
-	PGresult	   *res;
-	int				ntups;
-	int				last_oid;
+	PGresult   *res;
+	int			ntups;
+	int			last_oid;
 
 	res = PQexec(g_conn,
 			  "SELECT oid from pg_database where datname = 'template1'");
@@ -2355,14 +2355,14 @@ findLastBuiltinOid(void)
  * checkForQuote:
  *	  checks a string for quote characters and quotes them
  */
-static char    *
+static char *
 checkForQuote(const char *s)
 {
-	char		   *r;
-	char			c;
-	char		   *result;
+	char	   *r;
+	char		c;
+	char	   *result;
 
-	int				j = 0;
+	int			j = 0;
 
 	r = malloc(strlen(s) * 3 + 1);		/* definitely long enough */
 
@@ -2389,16 +2389,16 @@ checkForQuote(const char *s)
 static void
 dumpSequence(FILE * fout, TableInfo tbinfo)
 {
-	PGresult	   *res;
-	int4			last,
-					incby,
-					maxv,
-					minv,
-					cache;
-	char			cycled,
-					called,
-				   *t;
-	char			query[MAXQUERYLEN];
+	PGresult   *res;
+	int4		last,
+				incby,
+				maxv,
+				minv,
+				cache;
+	char		cycled,
+				called,
+			   *t;
+	char		query[MAXQUERYLEN];
 
 	sprintf(query,
 			"SELECT sequence_name, last_value, increment_by, max_value, "

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.16 1997/09/07 04:37:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.17 1997/09/08 02:19:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@
 #include <string.h>
 #endif
 
-static Size		IndexInfoFindDataOffset(unsigned short t_info);
-static char    *
+static Size IndexInfoFindDataOffset(unsigned short t_info);
+static char *
 fastgetiattr(IndexTuple tup, int attnum,
 			 TupleDesc att, bool * isnull);
 
@@ -45,15 +45,15 @@ index_formtuple(TupleDesc tupleDescriptor,
 				Datum value[],
 				char null[])
 {
-	register char  *tp;			/* tuple pointer */
-	IndexTuple		tuple;		/* return tuple */
-	Size			size,
-					hoff;
-	int				i;
-	unsigned short	infomask = 0;
-	bool			hasnull = false;
-	char			tupmask = 0;
-	int				numberOfAttributes = tupleDescriptor->natts;
+	register char *tp;			/* tuple pointer */
+	IndexTuple	tuple;			/* return tuple */
+	Size		size,
+				hoff;
+	int			i;
+	unsigned short infomask = 0;
+	bool		hasnull = false;
+	char		tupmask = 0;
+	int			numberOfAttributes = tupleDescriptor->natts;
 
 	if (numberOfAttributes > MaxIndexAttributeNumber)
 		elog(WARN, "index_formtuple: numberOfAttributes of %d > %d",
@@ -133,16 +133,16 @@ index_formtuple(TupleDesc tupleDescriptor,
  *		the same attribute descriptor will go much quicker. -cim 5/4/91
  * ----------------
  */
-static char    *
+static char *
 fastgetiattr(IndexTuple tup,
 			 int attnum,
 			 TupleDesc tupleDesc,
 			 bool * isnull)
 {
-	register char  *tp;			/* ptr to att in tuple */
-	register char  *bp = NULL;	/* ptr to att in tuple */
-	int				slow;		/* do we have to walk nulls? */
-	register int	data_off;	/* tuple data offset */
+	register char *tp;			/* ptr to att in tuple */
+	register char *bp = NULL;	/* ptr to att in tuple */
+	int			slow;			/* do we have to walk nulls? */
+	register int data_off;		/* tuple data offset */
 	AttributeTupleForm *att = tupleDesc->attrs;
 
 	/* ----------------
@@ -212,11 +212,11 @@ fastgetiattr(IndexTuple tup,
 		 * ----------------
 		 */
 		{
-			register int	i = 0;		/* current offset in bp */
-			register int	mask;		/* bit in byte we're looking at */
-			register char	n;	/* current byte in bp */
-			register int	byte,
-							finalbit;
+			register int i = 0; /* current offset in bp */
+			register int mask;	/* bit in byte we're looking at */
+			register char n;	/* current byte in bp */
+			register int byte,
+						finalbit;
 
 			byte = attnum >> 3;
 			finalbit = attnum & 0x07;
@@ -256,7 +256,7 @@ fastgetiattr(IndexTuple tup,
 		}
 		else if (!IndexTupleAllFixed(tup))
 		{
-			register int	j = 0;
+			register int j = 0;
 
 			for (j = 0; j < attnum && !slow; j++)
 				if (att[j]->attlen < 1)
@@ -272,8 +272,8 @@ fastgetiattr(IndexTuple tup,
 
 	if (!slow)
 	{
-		register int	j = 1;
-		register long	off;
+		register int j = 1;
+		register long off;
 
 		/*
 		 * need to set cache for some atts
@@ -297,26 +297,26 @@ fastgetiattr(IndexTuple tup,
 
 			switch (att[j]->attlen)
 			{
-			case -1:
-				off = (att[j]->attalign == 'd') ?
-					DOUBLEALIGN(off) : INTALIGN(off);
-				break;
-			case sizeof(char):
-				break;
-			case sizeof(short):
-				off = SHORTALIGN(off);
-				break;
-			case sizeof(int32):
-				off = INTALIGN(off);
-				break;
-			default:
-				if (att[j]->attlen > sizeof(int32))
+				case -1:
 					off = (att[j]->attalign == 'd') ?
-						DOUBLEALIGN(off) : LONGALIGN(off);
-				else
-					elog(WARN, "fastgetiattr: attribute %d has len %d",
-						 j, att[j]->attlen);
-				break;
+						DOUBLEALIGN(off) : INTALIGN(off);
+					break;
+				case sizeof(char):
+					break;
+				case sizeof(short):
+					off = SHORTALIGN(off);
+					break;
+				case sizeof(int32):
+					off = INTALIGN(off);
+					break;
+				default:
+					if (att[j]->attlen > sizeof(int32))
+						off = (att[j]->attalign == 'd') ?
+							DOUBLEALIGN(off) : LONGALIGN(off);
+					else
+						elog(WARN, "fastgetiattr: attribute %d has len %d",
+							 j, att[j]->attlen);
+					break;
 
 			}
 
@@ -329,9 +329,9 @@ fastgetiattr(IndexTuple tup,
 	}
 	else
 	{
-		register bool	usecache = true;
-		register int	off = 0;
-		register int	i;
+		register bool usecache = true;
+		register int off = 0;
+		register int i;
 
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.
@@ -361,31 +361,31 @@ fastgetiattr(IndexTuple tup,
 				att[i]->attcacheoff = off;
 			switch (att[i]->attlen)
 			{
-			case sizeof(char):
-				off++;
-				break;
-			case sizeof(short):
-				off = SHORTALIGN(off) +sizeof(short);
-				break;
-			case sizeof(int32):
-				off = INTALIGN(off) + sizeof(int32);
-				break;
-			case -1:
-				usecache = false;
-				off = (att[i]->attalign == 'd') ?
-					DOUBLEALIGN(off) : INTALIGN(off);
-				off += VARSIZE(tp + off);
-				break;
-			default:
-				if (att[i]->attlen > sizeof(int32))
+				case sizeof(char):
+					off++;
+					break;
+				case sizeof(short):
+					off = SHORTALIGN(off) +sizeof(short);
+					break;
+				case sizeof(int32):
+					off = INTALIGN(off) + sizeof(int32);
+					break;
+				case -1:
+					usecache = false;
 					off = (att[i]->attalign == 'd') ?
-						DOUBLEALIGN(off) + att[i]->attlen :
-						LONGALIGN(off) + att[i]->attlen;
-				else
-					elog(WARN, "fastgetiattr2: attribute %d has len %d",
-						 i, att[i]->attlen);
+						DOUBLEALIGN(off) : INTALIGN(off);
+					off += VARSIZE(tp + off);
+					break;
+				default:
+					if (att[i]->attlen > sizeof(int32))
+						off = (att[i]->attalign == 'd') ?
+							DOUBLEALIGN(off) + att[i]->attlen :
+							LONGALIGN(off) + att[i]->attlen;
+					else
+						elog(WARN, "fastgetiattr2: attribute %d has len %d",
+							 i, att[i]->attlen);
 
-				break;
+					break;
 			}
 		}
 
@@ -395,27 +395,27 @@ fastgetiattr(IndexTuple tup,
 		 */
 		switch (att[attnum]->attlen)
 		{
-		case -1:
-			off = (att[attnum]->attalign == 'd') ?
-				DOUBLEALIGN(off) : INTALIGN(off);
-			break;
-		case sizeof(char):
-			break;
-		case sizeof(short):
-			off = SHORTALIGN(off);
-			break;
-		case sizeof(int32):
-			off = INTALIGN(off);
-			break;
-		default:
-			if (att[attnum]->attlen < sizeof(int32))
-				elog(WARN, "fastgetattr3: attribute %d has len %d",
-					 attnum, att[attnum]->attlen);
-			if (att[attnum]->attalign == 'd')
-				off = DOUBLEALIGN(off);
-			else
-				off = LONGALIGN(off);
-			break;
+			case -1:
+				off = (att[attnum]->attalign == 'd') ?
+					DOUBLEALIGN(off) : INTALIGN(off);
+				break;
+			case sizeof(char):
+				break;
+			case sizeof(short):
+				off = SHORTALIGN(off);
+				break;
+			case sizeof(int32):
+				off = INTALIGN(off);
+				break;
+			default:
+				if (att[attnum]->attlen < sizeof(int32))
+					elog(WARN, "fastgetattr3: attribute %d has len %d",
+						 attnum, att[attnum]->attlen);
+				if (att[attnum]->attalign == 'd')
+					off = DOUBLEALIGN(off);
+				else
+					off = LONGALIGN(off);
+				break;
 		}
 
 		return (fetchatt(&att[attnum], tp + off));
@@ -461,14 +461,14 @@ FormRetrieveIndexResult(ItemPointer indexItemPointer,
  *
  * Change me if adding an attribute to IndexTuples!!!!!!!!!!!
  */
-static			Size
+static Size
 IndexInfoFindDataOffset(unsigned short t_info)
 {
 	if (!(t_info & INDEX_NULL_MASK))
 		return ((Size) sizeof(IndexTupleData));
 	else
 	{
-		Size			size = sizeof(IndexTupleData);
+		Size		size = sizeof(IndexTupleData);
 
 		if (t_info & INDEX_NULL_MASK)
 		{
@@ -485,8 +485,8 @@ IndexInfoFindDataOffset(unsigned short t_info)
 void
 CopyIndexTuple(IndexTuple source, IndexTuple * target)
 {
-	Size			size;
-	IndexTuple		ret;
+	Size		size;
+	IndexTuple	ret;
 
 	size = IndexTupleSize(source);
 	if (*target == NULL)

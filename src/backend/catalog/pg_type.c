@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.8 1997/09/07 04:40:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.9 1997/09/08 02:21:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,13 +44,13 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc,
  *		typeName				 -- name of type to be fetched
  *		defined					 -- has the type been defined?
  */
-static			Oid
+static Oid
 TypeGetWithOpenRelation(Relation pg_type_desc,
 						char *typeName,
 						bool * defined)
 {
-	HeapScanDesc	scan;
-	HeapTuple		tup;
+	HeapScanDesc scan;
+	HeapTuple	tup;
 
 	static ScanKeyData typeKey[1] = {
 		{0, Anum_pg_type_typname, NameEqualRegProcedure}
@@ -118,8 +118,8 @@ Oid
 TypeGet(char *typeName,			/* name of type to be fetched */
 		bool * defined)			/* has the type been defined? */
 {
-	Relation		pg_type_desc;
-	Oid				typeoid;
+	Relation	pg_type_desc;
+	Oid			typeoid;
 
 	/* ----------------
 	 *	open the pg_type relation
@@ -150,15 +150,15 @@ TypeGet(char *typeName,			/* name of type to be fetched */
  *
  * ----------------------------------------------------------------
  */
-static			Oid
+static Oid
 TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 {
-	register int	i;
-	HeapTuple		tup;
-	Datum			values[Natts_pg_type];
-	char			nulls[Natts_pg_type];
-	Oid				typoid;
-	TupleDesc		tupDesc;
+	register int i;
+	HeapTuple	tup;
+	Datum		values[Natts_pg_type];
+	char		nulls[Natts_pg_type];
+	Oid			typoid;
+	TupleDesc	tupDesc;
 
 	/* ----------------
 	 *	initialize our nulls[] and values[] arrays
@@ -214,7 +214,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 
 	if (RelationGetRelationTupleForm(pg_type_desc)->relhasindex)
 	{
-		Relation		idescs[Num_pg_type_indices];
+		Relation	idescs[Num_pg_type_indices];
 
 		CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tup);
@@ -246,8 +246,8 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 Oid
 TypeShellMake(char *typeName)
 {
-	Relation		pg_type_desc;
-	Oid				typoid;
+	Relation	pg_type_desc;
+	Oid			typoid;
 
 	Assert(PointerIsValid(typeName));
 
@@ -295,27 +295,27 @@ TypeCreate(char *typeName,
 		   bool passedByValue,
 		   char alignment)
 {
-	register		i,
-					j;
-	Relation		pg_type_desc;
-	HeapScanDesc	pg_type_scan;
+	register	i,
+				j;
+	Relation	pg_type_desc;
+	HeapScanDesc pg_type_scan;
 
-	Oid				typeObjectId;
-	Oid				elementObjectId = InvalidOid;
+	Oid			typeObjectId;
+	Oid			elementObjectId = InvalidOid;
 
-	HeapTuple		tup;
-	char			nulls[Natts_pg_type];
-	char			replaces[Natts_pg_type];
-	Datum			values[Natts_pg_type];
+	HeapTuple	tup;
+	char		nulls[Natts_pg_type];
+	char		replaces[Natts_pg_type];
+	Datum		values[Natts_pg_type];
 
-	Buffer			buffer;
-	char		   *procname;
-	char		   *procs[4];
-	bool			defined;
+	Buffer		buffer;
+	char	   *procname;
+	char	   *procs[4];
+	bool		defined;
 	ItemPointerData itemPointerData;
-	TupleDesc		tupDesc;
+	TupleDesc	tupDesc;
 
-	Oid				argList[8];
+	Oid			argList[8];
 
 
 	static ScanKeyData typeKey[1] = {
@@ -522,7 +522,7 @@ TypeCreate(char *typeName,
 
 	if (RelationGetRelationTupleForm(pg_type_desc)->relhasindex)
 	{
-		Relation		idescs[Num_pg_type_indices];
+		Relation	idescs[Num_pg_type_indices];
 
 		CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tup);
@@ -545,11 +545,11 @@ TypeCreate(char *typeName,
 void
 TypeRename(char *oldTypeName, char *newTypeName)
 {
-	Relation		pg_type_desc;
-	Relation		idescs[Num_pg_type_indices];
-	Oid				type_oid;
-	HeapTuple		tup;
-	bool			defined;
+	Relation	pg_type_desc;
+	Relation	idescs[Num_pg_type_indices];
+	Oid			type_oid;
+	HeapTuple	tup;
+	bool		defined;
 	ItemPointerData itemPointerData;
 
 	/* check that that the new type is not already defined */
@@ -603,10 +603,10 @@ TypeRename(char *oldTypeName, char *newTypeName)
  * the CALLER is responsible for pfreeing the
  */
 
-char		   *
+char	   *
 makeArrayTypeName(char *typeName)
 {
-	char		   *arr;
+	char	   *arr;
 
 	if (!typeName)
 		return NULL;

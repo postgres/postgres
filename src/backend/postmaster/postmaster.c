@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.54 1997/09/07 04:47:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.55 1997/09/08 02:27:53 momjian Exp $
  *
  * NOTES
  *
@@ -111,32 +111,32 @@
  */
 typedef struct bkend
 {
-	int				pid;		/* process id of backend */
-}				Backend;
+	int			pid;			/* process id of backend */
+}			Backend;
 
 /* list of active backends.  For garbage collection only now. */
 
-static Dllist  *BackendList;
+static Dllist *BackendList;
 
 /* list of ports associated with still open, but incomplete connections */
-static Dllist  *PortList;
+static Dllist *PortList;
 
-static short	PostPortName = -1;
-static short	ActiveBackends = FALSE;
-static int		NextBackendId = MAXINT; /* XXX why? */
-static char    *progname = (char *) NULL;
+static short PostPortName = -1;
+static short ActiveBackends = FALSE;
+static int	NextBackendId = MAXINT;		/* XXX why? */
+static char *progname = (char *) NULL;
 
 /*
  * Default Values
  */
-static char		Execfile[MAXPATHLEN] = "";
+static char Execfile[MAXPATHLEN] = "";
 
-static int		ServerSock = INVALID_SOCK;		/* stream socket server */
+static int	ServerSock = INVALID_SOCK;	/* stream socket server */
 
 /*
  * Set by the -o option
  */
-static char		ExtraOptions[ARGV_SIZE] = "";
+static char ExtraOptions[ARGV_SIZE] = "";
 
 /*
  * These globals control the behavior of the postmaster in case some
@@ -145,35 +145,35 @@ static char		ExtraOptions[ARGV_SIZE] = "";
  * the postmaster stop (rather than kill) peers and not reinitialize
  * shared data structures.
  */
-static int		Reinit = 1;
-static int		SendStop = 0;
+static int	Reinit = 1;
+static int	SendStop = 0;
 
-static int		MultiplexedBackends = 0;
-static int		MultiplexedBackendPort;
+static int	MultiplexedBackends = 0;
+static int	MultiplexedBackendPort;
 
 /*
  * postmaster.c - function prototypes
  */
-static void		pmdaemonize(void);
+static void pmdaemonize(void);
 static void
 ConnStartup(Port * port, int *status,
 			char *errormsg, const int errormsg_len);
-static int		ConnCreate(int serverFd, int *newFdP);
-static void		reset_shared(short port);
-static void		pmdie(SIGNAL_ARGS);
-static void		reaper(SIGNAL_ARGS);
-static void		dumpstatus(SIGNAL_ARGS);
-static void		CleanupProc(int pid, int exitstatus);
-static int		DoExec(StartupInfo * packet, int portFd);
-static void		ExitPostmaster(int status);
-static void		usage(const char *);
-static int		ServerLoop(void);
-static int		BackendStartup(StartupInfo * packet, Port * port, int *pidPtr);
-static void		send_error_reply(Port * port, const char *errormsg);
+static int	ConnCreate(int serverFd, int *newFdP);
+static void reset_shared(short port);
+static void pmdie(SIGNAL_ARGS);
+static void reaper(SIGNAL_ARGS);
+static void dumpstatus(SIGNAL_ARGS);
+static void CleanupProc(int pid, int exitstatus);
+static int	DoExec(StartupInfo * packet, int portFd);
+static void ExitPostmaster(int status);
+static void usage(const char *);
+static int	ServerLoop(void);
+static int	BackendStartup(StartupInfo * packet, Port * port, int *pidPtr);
+static void send_error_reply(Port * port, const char *errormsg);
 
-extern char    *optarg;
-extern int		optind,
-				opterr;
+extern char *optarg;
+extern int	optind,
+			opterr;
 
 
 
@@ -191,8 +191,8 @@ checkDataDir(const char *DataDir, bool * DataDirOK)
 	}
 	else
 	{
-		char			path[MAXPATHLEN];
-		FILE		   *fp;
+		char		path[MAXPATHLEN];
+		FILE	   *fp;
 
 		sprintf(path, "%s%cbase%ctemplate1%cpg_class",
 				DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
@@ -208,7 +208,7 @@ checkDataDir(const char *DataDir, bool * DataDirOK)
 		}
 		else
 		{
-			char		   *reason;
+			char	   *reason;
 
 			/* reason ValidatePgVersion failed.  NULL if didn't */
 
@@ -238,14 +238,14 @@ checkDataDir(const char *DataDir, bool * DataDirOK)
 int
 PostmasterMain(int argc, char *argv[])
 {
-	extern int		NBuffers;	/* from buffer/bufmgr.c */
-	extern bool		IsPostmaster;		/* from smgr/mm.c */
-	int				opt;
-	char		   *hostName;
-	int				status;
-	int				silentflag = 0;
-	char			hostbuf[MAXHOSTNAMELEN];
-	bool			DataDirOK;	/* We have a usable PGDATA value */
+	extern int	NBuffers;		/* from buffer/bufmgr.c */
+	extern bool IsPostmaster;	/* from smgr/mm.c */
+	int			opt;
+	char	   *hostName;
+	int			status;
+	int			silentflag = 0;
+	char		hostbuf[MAXHOSTNAMELEN];
+	bool		DataDirOK;		/* We have a usable PGDATA value */
 
 	progname = argv[0];
 
@@ -271,100 +271,103 @@ PostmasterMain(int argc, char *argv[])
 	{
 		switch (opt)
 		{
-		case 'a':
-			/* Set the authentication system. */
-			be_setauthsvc(optarg);
-			break;
-		case 'B':
+			case 'a':
+				/* Set the authentication system. */
+				be_setauthsvc(optarg);
+				break;
+			case 'B':
 
-			/*
-			 * The number of buffers to create.  Setting this option means
-			 * we have to start each backend with a -B # to make sure they
-			 * know how many buffers were allocated.
-			 */
-			NBuffers = atol(optarg);
-			strcat(ExtraOptions, " -B ");
-			strcat(ExtraOptions, optarg);
-			break;
-		case 'b':
-			/* Set the backend executable file to use. */
-			if (!ValidateBackend(optarg))
-				strcpy(Execfile, optarg);
-			else
-			{
-				fprintf(stderr, "%s: invalid backend \"%s\"\n",
-						progname, optarg);
-				exit(2);
-			}
-			break;
-		case 'D':
-			/* Set PGDATA from the command line. */
-			DataDir = optarg;
-			break;
-		case 'd':
+				/*
+				 * The number of buffers to create.  Setting this option
+				 * means we have to start each backend with a -B # to make
+				 * sure they know how many buffers were allocated.
+				 */
+				NBuffers = atol(optarg);
+				strcat(ExtraOptions, " -B ");
+				strcat(ExtraOptions, optarg);
+				break;
+			case 'b':
+				/* Set the backend executable file to use. */
+				if (!ValidateBackend(optarg))
+					strcpy(Execfile, optarg);
+				else
+				{
+					fprintf(stderr, "%s: invalid backend \"%s\"\n",
+							progname, optarg);
+					exit(2);
+				}
+				break;
+			case 'D':
+				/* Set PGDATA from the command line. */
+				DataDir = optarg;
+				break;
+			case 'd':
 
-			/*
-			 * Turn on debugging for the postmaster and the backend
-			 * servers descended from it.
-			 */
-			if ((optind < argc) && *argv[optind] != '-')
-			{
-				DebugLvl = atoi(argv[optind]);
-				optind++;
-			}
-			else
-				DebugLvl = 1;
-			break;
-		case 'm':
-			MultiplexedBackends = 1;
-			MultiplexedBackendPort = atoi(optarg);
-			break;
-		case 'M':
+				/*
+				 * Turn on debugging for the postmaster and the backend
+				 * servers descended from it.
+				 */
+				if ((optind < argc) && *argv[optind] != '-')
+				{
+					DebugLvl = atoi(argv[optind]);
+					optind++;
+				}
+				else
+					DebugLvl = 1;
+				break;
+			case 'm':
+				MultiplexedBackends = 1;
+				MultiplexedBackendPort = atoi(optarg);
+				break;
+			case 'M':
 
-			/*
-			 * ignore this flag.  This may be passed in because the
-			 * program was run as 'postgres -M' instead of 'postmaster'
-			 */
-			break;
-		case 'n':
-			/* Don't reinit shared mem after abnormal exit */
-			Reinit = 0;
-			break;
-		case 'o':
+				/*
+				 * ignore this flag.  This may be passed in because the
+				 * program was run as 'postgres -M' instead of
+				 * 'postmaster'
+				 */
+				break;
+			case 'n':
+				/* Don't reinit shared mem after abnormal exit */
+				Reinit = 0;
+				break;
+			case 'o':
 
-			/*
-			 * Other options to pass to the backend on the command line --
-			 * useful only for debugging.
-			 */
-			strcat(ExtraOptions, " ");
-			strcat(ExtraOptions, optarg);
-			break;
-		case 'p':
-			/* Set PGPORT by hand. */
-			PostPortName = (short) atoi(optarg);
-			break;
-		case 'S':
+				/*
+				 * Other options to pass to the backend on the command
+				 * line -- useful only for debugging.
+				 */
+				strcat(ExtraOptions, " ");
+				strcat(ExtraOptions, optarg);
+				break;
+			case 'p':
+				/* Set PGPORT by hand. */
+				PostPortName = (short) atoi(optarg);
+				break;
+			case 'S':
 
-			/*
-			 * Start in 'S'ilent mode (disassociate from controlling tty).
-			 * You may also think of this as 'S'ysV mode since it's most
-			 * badly needed on SysV-derived systems like SVR4 and HP-UX.
-			 */
-			silentflag = 1;
-			break;
-		case 's':
+				/*
+				 * Start in 'S'ilent mode (disassociate from controlling
+				 * tty). You may also think of this as 'S'ysV mode since
+				 * it's most badly needed on SysV-derived systems like
+				 * SVR4 and HP-UX.
+				 */
+				silentflag = 1;
+				break;
+			case 's':
 
-			/*
-			 * In the event that some backend dumps core, send SIGSTOP,
-			 * rather than SIGUSR1, to all its peers.  This lets the wily
-			 * post_hacker collect core dumps from everyone.
-			 */
-			SendStop = 1;
-			break;
-		default:
-			/* usage() never returns */
-			usage(progname);
-			break;
+				/*
+				 * In the event that some backend dumps core, send
+				 * SIGSTOP, rather than SIGUSR1, to all its peers.	This
+				 * lets the wily post_hacker collect core dumps from
+				 * everyone.
+				 */
+				SendStop = 1;
+				break;
+			default:
+				/* usage() never returns */
+				usage(progname);
+				break;
 		}
 	}
 	if (PostPortName == -1)
@@ -425,7 +428,7 @@ PostmasterMain(int argc, char *argv[])
 static void
 pmdaemonize(void)
 {
-	int				i;
+	int			i;
 
 	if (fork())
 		exit(0);
@@ -468,26 +471,26 @@ usage(const char *progname)
 static int
 ServerLoop(void)
 {
-	int				serverFd = ServerSock;
-	fd_set			rmask,
-					basemask;
-	int				nSockets,
-					nSelected,
-					status,
-					newFd;
-	Dlelem		   *next,
-				   *curr;
+	int			serverFd = ServerSock;
+	fd_set		rmask,
+				basemask;
+	int			nSockets,
+				nSelected,
+				status,
+				newFd;
+	Dlelem	   *next,
+			   *curr;
 
 	/*
 	 * GH: For !HAVE_SIGPROCMASK (NEXTSTEP), TRH implemented an
 	 * alternative interface.
 	 */
 #ifdef HAVE_SIGPROCMASK
-	sigset_t		oldsigmask,
-					newsigmask;
+	sigset_t	oldsigmask,
+				newsigmask;
 
 #else
-	int				orgsigmask = sigblock(0);
+	int			orgsigmask = sigblock(0);
 
 #endif
 
@@ -568,7 +571,7 @@ ServerLoop(void)
 			curr = DLGetHead(PortList);
 			while (curr)
 			{
-				Port		   *port = DLE_VAL(curr);
+				Port	   *port = DLE_VAL(curr);
 
 				fprintf(stderr, "%s: ServerLoop:\t\tport %d%s pending\n",
 						progname, port->sock,
@@ -583,8 +586,8 @@ ServerLoop(void)
 
 		while (curr)
 		{
-			Port		   *port = (Port *) DLE_VAL(curr);
-			int				lastbytes = port->nBytes;
+			Port	   *port = (Port *) DLE_VAL(curr);
+			int			lastbytes = port->nBytes;
 
 			if (FD_ISSET(port->sock, &rmask) && port->sock != newFd)
 			{
@@ -601,59 +604,60 @@ ServerLoop(void)
 				status = PacketReceive(port, &port->buf, NON_BLOCKING);
 				switch (status)
 				{
-				case STATUS_OK:
-					{
-						int				CSstatus;		/* Completion status of
+					case STATUS_OK:
+						{
+							int			CSstatus;		/* Completion status of
 														 * ConnStartup */
-						char			errormsg[200];	/* error msg from
+							char		errormsg[200];	/* error msg from
 														 * ConnStartup */
 
-						ConnStartup(port, &CSstatus, errormsg, sizeof(errormsg));
+							ConnStartup(port, &CSstatus, errormsg, sizeof(errormsg));
 
-						if (CSstatus == STATUS_ERROR)
-							send_error_reply(port, errormsg);
-						ActiveBackends = TRUE;
-					}
-					/* FALLTHROUGH */
-				case STATUS_INVALID:
-					if (DebugLvl)
-						fprintf(stderr, "%s: ServerLoop:\t\tdone with %d\n",
-								progname, port->sock);
-					break;
-				case STATUS_BAD_PACKET:
-
-					/*
-					 * This is a bogus client, kill the connection and
-					 * forget the whole thing.
-					 */
-					if (DebugLvl)
-						fprintf(stderr, "%s: ServerLoop:\t\tbad packet format (reported packet size of %d read on port %d\n", progname, port->nBytes, port->sock);
-					break;
-				case STATUS_NOT_DONE:
-					if (DebugLvl)
-						fprintf(stderr, "%s: ServerLoop:\t\tpartial packet (%d bytes actually read) on %d\n",
-								progname, port->nBytes, port->sock);
-
-					/*
-					 * If we've received at least a PacketHdr's worth of
-					 * data and we're still receiving data each time we
-					 * read, we're ok.  If the client gives us less than a
-					 * PacketHdr at the beginning, just kill the
-					 * connection and forget about the whole thing.
-					 */
-					if (lastbytes < port->nBytes)
-					{
+							if (CSstatus == STATUS_ERROR)
+								send_error_reply(port, errormsg);
+							ActiveBackends = TRUE;
+						}
+						/* FALLTHROUGH */
+					case STATUS_INVALID:
 						if (DebugLvl)
-							fprintf(stderr, "%s: ServerLoop:\t\tpartial packet on %d ok\n",
+							fprintf(stderr, "%s: ServerLoop:\t\tdone with %d\n",
 									progname, port->sock);
-						curr = DLGetSucc(curr);
-						continue;
-					}
-					break;
-				case STATUS_ERROR:		/* system call error - die */
-					fprintf(stderr, "%s: ServerLoop:\t\terror receiving packet\n",
-							progname);
-					return (STATUS_ERROR);
+						break;
+					case STATUS_BAD_PACKET:
+
+						/*
+						 * This is a bogus client, kill the connection and
+						 * forget the whole thing.
+						 */
+						if (DebugLvl)
+							fprintf(stderr, "%s: ServerLoop:\t\tbad packet format (reported packet size of %d read on port %d\n", progname, port->nBytes, port->sock);
+						break;
+					case STATUS_NOT_DONE:
+						if (DebugLvl)
+							fprintf(stderr, "%s: ServerLoop:\t\tpartial packet (%d bytes actually read) on %d\n",
+									progname, port->nBytes, port->sock);
+
+						/*
+						 * If we've received at least a PacketHdr's worth
+						 * of data and we're still receiving data each
+						 * time we read, we're ok.  If the client gives us
+						 * less than a PacketHdr at the beginning, just
+						 * kill the connection and forget about the whole
+						 * thing.
+						 */
+						if (lastbytes < port->nBytes)
+						{
+							if (DebugLvl)
+								fprintf(stderr, "%s: ServerLoop:\t\tpartial packet on %d ok\n",
+										progname, port->sock);
+							curr = DLGetSucc(curr);
+							continue;
+						}
+						break;
+					case STATUS_ERROR:	/* system call error - die */
+						fprintf(stderr, "%s: ServerLoop:\t\terror receiving packet\n",
+								progname);
+						return (STATUS_ERROR);
 				}
 				FD_CLR(port->sock, &basemask);
 				StreamClose(port->sock);
@@ -685,12 +689,12 @@ static void
 ConnStartup(Port * port, int *status,
 			char *errormsg, const int errormsg_len)
 {
-	MsgType			msgType;
-	char			namebuf[NAMEDATALEN];
-	int				pid;
-	PacketBuf	   *p;
-	StartupInfo		sp;
-	char		   *tmp;
+	MsgType		msgType;
+	char		namebuf[NAMEDATALEN];
+	int			pid;
+	PacketBuf  *p;
+	StartupInfo sp;
+	char	   *tmp;
 
 	p = &port->buf;
 
@@ -725,7 +729,7 @@ ConnStartup(Port * port, int *status,
 	{
 		if (be_recvauth(msgType, port, namebuf, &sp) != STATUS_OK)
 		{
-			char			buffer[200 + sizeof(namebuf)];
+			char		buffer[200 + sizeof(namebuf)];
 
 			sprintf(buffer,
 					"Failed to authenticate client as Postgres user '%s' "
@@ -789,8 +793,8 @@ ConnStartup(Port * port, int *status,
 static void
 send_error_reply(Port * port, const char *errormsg)
 {
-	int				rc;			/* return code from sendto */
-	char		   *reply;
+	int			rc;				/* return code from sendto */
+	char	   *reply;
 
 	/*
 	 * The literal reply string we put into the socket.  This is a pointer
@@ -837,8 +841,8 @@ send_error_reply(Port * port, const char *errormsg)
 static int
 ConnCreate(int serverFd, int *newFdP)
 {
-	int				status;
-	Port		   *port;
+	int			status;
+	Port	   *port;
 
 
 	if (!(port = (Port *) calloc(1, sizeof(Port))))
@@ -868,7 +872,7 @@ ConnCreate(int serverFd, int *newFdP)
 static void
 reset_shared(short port)
 {
-	IPCKey			key;
+	IPCKey		key;
 
 	key = SystemPortAddressCreateIPCKey((SystemPortAddress) port);
 	CreateSharedMemoryAndSemaphores(key);
@@ -892,13 +896,13 @@ reaper(SIGNAL_ARGS)
 {
 /* GH: replace waitpid for !HAVE_WAITPID. Does this work ? */
 #ifdef HAVE_WAITPID
-	int				status;		/* backend exit status */
+	int			status;			/* backend exit status */
 
 #else
-	union wait		statusp;	/* backend exit status */
+	union wait	statusp;		/* backend exit status */
 
 #endif
-	int				pid;		/* process id of dead backend */
+	int			pid;			/* process id of dead backend */
 
 	if (DebugLvl)
 		fprintf(stderr, "%s: reaping dead processes...\n",
@@ -929,10 +933,10 @@ static void
 CleanupProc(int pid,
 			int exitstatus)		/* child's exit status. */
 {
-	Dlelem		   *prev,
-				   *curr;
-	Backend		   *bp;
-	int				sig;
+	Dlelem	   *prev,
+			   *curr;
+	Backend    *bp;
+	int			sig;
 
 	if (DebugLvl)
 	{
@@ -1040,10 +1044,10 @@ BackendStartup(StartupInfo * packet,	/* client's startup packet */
 			   Port * port,
 			   int *pidPtr)
 {
-	Backend		   *bn;			/* for backend cleanup */
-	int				pid,
-					i;
-	static char		envEntry[4][2 * ARGV_SIZE];
+	Backend    *bn;				/* for backend cleanup */
+	int			pid,
+				i;
+	static char envEntry[4][2 * ARGV_SIZE];
 
 	for (i = 0; i < 4; ++i)
 	{
@@ -1067,8 +1071,8 @@ BackendStartup(StartupInfo * packet,	/* client's startup packet */
 	}
 	if (DebugLvl > 2)
 	{
-		char		  **p;
-		extern char   **environ;
+		char	  **p;
+		extern char **environ;
 
 		fprintf(stderr, "%s: BackendStartup: environ dump:\n",
 				progname);
@@ -1140,7 +1144,7 @@ BackendStartup(StartupInfo * packet,	/* client's startup packet */
 static void
 split_opts(char **argv, int *argcp, char *s)
 {
-	int				i = *argcp;
+	int			i = *argcp;
 
 	while (s && *s)
 	{
@@ -1171,22 +1175,22 @@ split_opts(char **argv, int *argcp, char *s)
 static int
 DoExec(StartupInfo * packet, int portFd)
 {
-	char			execbuf[MAXPATHLEN];
-	char			portbuf[ARGV_SIZE];
-	char			mbbuf[ARGV_SIZE];
-	char			debugbuf[ARGV_SIZE];
-	char			ttybuf[ARGV_SIZE + 1];
-	char			argbuf[(2 * ARGV_SIZE) + 1];
+	char		execbuf[MAXPATHLEN];
+	char		portbuf[ARGV_SIZE];
+	char		mbbuf[ARGV_SIZE];
+	char		debugbuf[ARGV_SIZE];
+	char		ttybuf[ARGV_SIZE + 1];
+	char		argbuf[(2 * ARGV_SIZE) + 1];
 
 	/*
 	 * each argument takes at least three chars, so we can't have more
 	 * than ARGV_SIZE arguments in (2 * ARGV_SIZE) chars (i.e.,
 	 * packet->options plus ExtraOptions)...
 	 */
-	char		   *av[ARGV_SIZE];
-	char			dbbuf[ARGV_SIZE + 1];
-	int				ac = 0;
-	int				i;
+	char	   *av[ARGV_SIZE];
+	char		dbbuf[ARGV_SIZE + 1];
+	int			ac = 0;
+	int			i;
 
 	strncpy(execbuf, Execfile, MAXPATHLEN - 1);
 	av[ac++] = execbuf;
@@ -1273,11 +1277,11 @@ ExitPostmaster(int status)
 static void
 dumpstatus(SIGNAL_ARGS)
 {
-	Dlelem		   *curr = DLGetHead(PortList);
+	Dlelem	   *curr = DLGetHead(PortList);
 
 	while (curr)
 	{
-		Port		   *port = DLE_VAL(curr);
+		Port	   *port = DLE_VAL(curr);
 
 		fprintf(stderr, "%s: dumpstatus:\n", progname);
 		fprintf(stderr, "\tsock %d: nBytes=%d, laddr=0x%lx, raddr=0x%lx\n",

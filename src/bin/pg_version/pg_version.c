@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.7 1997/09/07 04:54:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.8 1997/09/08 02:33:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,8 @@
 int
 main(int argc, char **argv)
 {
-	int				retcode;	/* our eventual return code */
-	char		   *reason;		/* Reason that SetPgVersion failed, NULL
+	int			retcode;		/* our eventual return code */
+	char	   *reason;			/* Reason that SetPgVersion failed, NULL
 								 * if it didn't. */
 
 	if (argc < 2)

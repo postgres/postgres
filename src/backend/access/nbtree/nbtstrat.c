@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.5 1997/09/07 04:39:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.6 1997/09/08 02:20:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ static StrategyNumber BTNegateCommute[5] = {
 	BTGreaterEqualStrategyNumber
 };
 
-static uint16	BTLessTermData[] = {	/* XXX type clash */
+static uint16 BTLessTermData[] = {		/* XXX type clash */
 	2,
 	BTLessStrategyNumber,
 	SK_NEGATE,
@@ -55,7 +55,7 @@ static uint16	BTLessTermData[] = {	/* XXX type clash */
 	SK_NEGATE | SK_COMMUTE
 };
 
-static uint16	BTLessEqualTermData[] = {		/* XXX type clash */
+static uint16 BTLessEqualTermData[] = { /* XXX type clash */
 	2,
 	BTLessEqualStrategyNumber,
 	0x0,
@@ -63,7 +63,7 @@ static uint16	BTLessEqualTermData[] = {		/* XXX type clash */
 	SK_COMMUTE
 };
 
-static uint16	BTGreaterEqualTermData[] = {	/* XXX type clash */
+static uint16 BTGreaterEqualTermData[] = {		/* XXX type clash */
 	2,
 	BTGreaterEqualStrategyNumber,
 	0x0,
@@ -71,7 +71,7 @@ static uint16	BTGreaterEqualTermData[] = {	/* XXX type clash */
 	SK_COMMUTE
 };
 
-static uint16	BTGreaterTermData[] = { /* XXX type clash */
+static uint16 BTGreaterTermData[] = {	/* XXX type clash */
 	2,
 	BTGreaterStrategyNumber,
 	SK_NEGATE,
@@ -109,7 +109,7 @@ _bt_getstrat(Relation rel,
 			 AttrNumber attno,
 			 RegProcedure proc)
 {
-	StrategyNumber	strat;
+	StrategyNumber strat;
 
 	strat = RelationGetStrategy(rel, attno, &BTEvaluationData, proc);
 

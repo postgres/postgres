@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.15 1997/09/07 04:56:06 momjian Exp $
+ * $Id: nbtree.h,v 1.16 1997/09/08 02:34:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,9 @@
 
 typedef struct BTPageOpaqueData
 {
-	BlockNumber		btpo_prev;
-	BlockNumber		btpo_next;
-	uint16			btpo_flags;
+	BlockNumber btpo_prev;
+	BlockNumber btpo_next;
+	uint16		btpo_flags;
 
 #define BTP_LEAF		(1 << 0)
 #define BTP_ROOT		(1 << 1)
@@ -50,7 +50,7 @@ typedef struct BTPageOpaqueData
 #define BTP_META		(1 << 3)
 #define BTP_CHAIN		(1 << 4)
 
-}				BTPageOpaqueData;
+}			BTPageOpaqueData;
 
 typedef BTPageOpaqueData *BTPageOpaque;
 
@@ -67,14 +67,14 @@ typedef BTPageOpaqueData *BTPageOpaque;
 
 typedef struct BTScanOpaqueData
 {
-	Buffer			btso_curbuf;
-	Buffer			btso_mrkbuf;
-	uint16			qual_ok;	/* 0 for quals like key == 1 && key > 2 */
-	uint16			numberOfKeys;		/* number of keys */
-	uint16			numberOfFirstKeys;	/* number of keys for 1st
+	Buffer		btso_curbuf;
+	Buffer		btso_mrkbuf;
+	uint16		qual_ok;		/* 0 for quals like key == 1 && key > 2 */
+	uint16		numberOfKeys;	/* number of keys */
+	uint16		numberOfFirstKeys;		/* number of keys for 1st
 										 * attribute */
-	ScanKey			keyData;	/* key descriptor */
-}				BTScanOpaqueData;
+	ScanKey		keyData;		/* key descriptor */
+}			BTScanOpaqueData;
 
 typedef BTScanOpaqueData *BTScanOpaque;
 
@@ -99,12 +99,12 @@ typedef BTScanOpaqueData *BTScanOpaque;
 typedef struct BTItemData
 {
 #ifndef BTREE_VERSION_1
-	Oid				bti_oid;
-	int32			bti_dummy;	/* padding to make bti_itup align at
+	Oid			bti_oid;
+	int32		bti_dummy;		/* padding to make bti_itup align at
 								 * 8-byte boundary */
 #endif
-	IndexTupleData	bti_itup;
-}				BTItemData;
+	IndexTupleData bti_itup;
+}			BTItemData;
 
 typedef BTItemData *BTItem;
 
@@ -131,25 +131,25 @@ typedef BTItemData *BTItem;
 
 typedef struct BTStackData
 {
-	BlockNumber		bts_blkno;
-	OffsetNumber	bts_offset;
-	BTItem			bts_btitem;
+	BlockNumber bts_blkno;
+	OffsetNumber bts_offset;
+	BTItem		bts_btitem;
 	struct BTStackData *bts_parent;
-}				BTStackData;
+}			BTStackData;
 
 typedef BTStackData *BTStack;
 
 typedef struct BTPageState
 {
-	Buffer			btps_buf;
-	Page			btps_page;
-	BTItem			btps_lastbti;
-	OffsetNumber	btps_lastoff;
-	OffsetNumber	btps_firstoff;
-	int				btps_level;
-	bool			btps_doupper;
+	Buffer		btps_buf;
+	Page		btps_page;
+	BTItem		btps_lastbti;
+	OffsetNumber btps_lastoff;
+	OffsetNumber btps_firstoff;
+	int			btps_level;
+	bool		btps_doupper;
 	struct BTPageState *btps_next;
-}				BTPageState;
+}			BTPageState;
 
 /*
  *	We need to be able to tell the difference between read and write
@@ -213,105 +213,105 @@ typedef struct BTPageState
 /*
  * prototypes for functions in nbtinsert.c
  */
-extern InsertIndexResult
+extern		InsertIndexResult
 _bt_doinsert(Relation rel, BTItem btitem,
 			 bool index_is_unique, Relation heapRel);
 
  /* default is to allow duplicates */
-extern bool
+extern		bool
 _bt_itemcmp(Relation rel, Size keysz, BTItem item1, BTItem item2,
 			StrategyNumber strat);
 
 /*
  * prototypes for functions in nbtpage.c
  */
-extern void		_bt_metapinit(Relation rel);
-extern Buffer	_bt_getroot(Relation rel, int access);
-extern Buffer	_bt_getbuf(Relation rel, BlockNumber blkno, int access);
-extern void		_bt_relbuf(Relation rel, Buffer buf, int access);
-extern void		_bt_wrtbuf(Relation rel, Buffer buf);
-extern void		_bt_wrtnorelbuf(Relation rel, Buffer buf);
-extern void		_bt_pageinit(Page page, Size size);
-extern void		_bt_metaproot(Relation rel, BlockNumber rootbknum, int level);
-extern Buffer	_bt_getstackbuf(Relation rel, BTStack stack, int access);
-extern void		_bt_pagedel(Relation rel, ItemPointer tid);
+extern void _bt_metapinit(Relation rel);
+extern Buffer _bt_getroot(Relation rel, int access);
+extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);
+extern void _bt_relbuf(Relation rel, Buffer buf, int access);
+extern void _bt_wrtbuf(Relation rel, Buffer buf);
+extern void _bt_wrtnorelbuf(Relation rel, Buffer buf);
+extern void _bt_pageinit(Page page, Size size);
+extern void _bt_metaproot(Relation rel, BlockNumber rootbknum, int level);
+extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
+extern void _bt_pagedel(Relation rel, ItemPointer tid);
 
 /*
  * prototypes for functions in nbtree.c
  */
-extern bool		BuildingBtree;	/* in nbtree.c */
+extern bool BuildingBtree;		/* in nbtree.c */
 
 extern void
 btbuild(Relation heap, Relation index, int natts,
 		AttrNumber * attnum, IndexStrategy istrat, uint16 pcount,
 		Datum * params, FuncIndexInfo * finfo, PredInfo * predInfo);
-extern InsertIndexResult
+extern		InsertIndexResult
 btinsert(Relation rel, Datum * datum, char *nulls,
 		 ItemPointer ht_ctid, Relation heapRel);
-extern char    *btgettuple(IndexScanDesc scan, ScanDirection dir);
-extern char    *
+extern char *btgettuple(IndexScanDesc scan, ScanDirection dir);
+extern char *
 btbeginscan(Relation rel, bool fromEnd, uint16 keysz,
 			ScanKey scankey);
 
-extern void		btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey);
-extern void		btmovescan(IndexScanDesc scan, Datum v);
-extern void		btendscan(IndexScanDesc scan);
-extern void		btmarkpos(IndexScanDesc scan);
-extern void		btrestrpos(IndexScanDesc scan);
-extern void		btdelete(Relation rel, ItemPointer tid);
+extern void btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey);
+extern void btmovescan(IndexScanDesc scan, Datum v);
+extern void btendscan(IndexScanDesc scan);
+extern void btmarkpos(IndexScanDesc scan);
+extern void btrestrpos(IndexScanDesc scan);
+extern void btdelete(Relation rel, ItemPointer tid);
 
 /*
  * prototypes for functions in nbtscan.c
  */
-extern void		_bt_regscan(IndexScanDesc scan);
-extern void		_bt_dropscan(IndexScanDesc scan);
-extern void		_bt_adjscans(Relation rel, ItemPointer tid, int op);
+extern void _bt_regscan(IndexScanDesc scan);
+extern void _bt_dropscan(IndexScanDesc scan);
+extern void _bt_adjscans(Relation rel, ItemPointer tid, int op);
 
 /*
  * prototypes for functions in nbtsearch.c
  */
-extern BTStack
+extern		BTStack
 _bt_search(Relation rel, int keysz, ScanKey scankey,
 		   Buffer * bufP);
-extern Buffer
+extern		Buffer
 _bt_moveright(Relation rel, Buffer buf, int keysz,
 			  ScanKey scankey, int access);
-extern bool
+extern		bool
 _bt_skeycmp(Relation rel, Size keysz, ScanKey scankey,
 			Page page, ItemId itemid, StrategyNumber strat);
-extern OffsetNumber
+extern		OffsetNumber
 _bt_binsrch(Relation rel, Buffer buf, int keysz,
 			ScanKey scankey, int srchtype);
 extern RetrieveIndexResult _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _bt_first(IndexScanDesc scan, ScanDirection dir);
-extern bool		_bt_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir);
+extern bool _bt_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir);
 
 /*
  * prototypes for functions in nbtstrat.c
  */
-extern StrategyNumber
+extern		StrategyNumber
 _bt_getstrat(Relation rel, AttrNumber attno,
 			 RegProcedure proc);
-extern bool
+extern		bool
 _bt_invokestrat(Relation rel, AttrNumber attno,
 				StrategyNumber strat, Datum left, Datum right);
 
 /*
  * prototypes for functions in nbtutils.c
  */
-extern ScanKey	_bt_mkscankey(Relation rel, IndexTuple itup);
-extern void		_bt_freeskey(ScanKey skey);
-extern void		_bt_freestack(BTStack stack);
-extern void		_bt_orderkeys(Relation relation, BTScanOpaque so);
-extern bool		_bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size * keysok);
-extern BTItem	_bt_formitem(IndexTuple itup);
+extern ScanKey _bt_mkscankey(Relation rel, IndexTuple itup);
+extern void _bt_freeskey(ScanKey skey);
+extern void _bt_freestack(BTStack stack);
+extern void _bt_orderkeys(Relation relation, BTScanOpaque so);
+extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size * keysok);
+extern BTItem _bt_formitem(IndexTuple itup);
 
 /*
  * prototypes for functions in nbtsort.c
  */
-extern void    *_bt_spoolinit(Relation index, int ntapes, bool isunique);
-extern void		_bt_spooldestroy(void *spool);
-extern void		_bt_spool(Relation index, BTItem btitem, void *spool);
-extern void		_bt_leafbuild(Relation index, void *spool);
+extern void *_bt_spoolinit(Relation index, int ntapes, bool isunique);
+extern void _bt_spooldestroy(void *spool);
+extern void _bt_spool(Relation index, BTItem btitem, void *spool);
+extern void _bt_leafbuild(Relation index, void *spool);
 
 #endif							/* NBTREE_H */

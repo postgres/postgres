@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.4 1997/09/07 05:02:27 momjian Exp $
+ * $Id: elog.h,v 1.5 1997/09/08 02:39:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +33,10 @@
 /* uncomment the following if you want your elog's to be timestamped */
 /* #define ELOG_TIMESTAMPS */
 
-extern void		elog(int lev, const char *fmt,...);
+extern void elog(int lev, const char *fmt,...);
 
 #ifndef PG_STANDALONE
-int				DebugFileOpen(void);
+int			DebugFileOpen(void);
 
 #endif
 

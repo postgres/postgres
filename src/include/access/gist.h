@@ -51,8 +51,8 @@
 
 typedef struct GISTPageOpaqueData
 {
-	uint32			flags;
-}				GISTPageOpaqueData;
+	uint32		flags;
+}			GISTPageOpaqueData;
 
 typedef GISTPageOpaqueData *GISTPageOpaque;
 
@@ -65,22 +65,22 @@ typedef GISTPageOpaqueData *GISTPageOpaque;
 typedef struct GISTSTACK
 {
 	struct GISTSTACK *gs_parent;
-	OffsetNumber	gs_child;
-	BlockNumber		gs_blk;
-}				GISTSTACK;
+	OffsetNumber gs_child;
+	BlockNumber gs_blk;
+}			GISTSTACK;
 
 typedef struct GISTSTATE
 {
-	func_ptr		consistentFn;
-	func_ptr		unionFn;
-	func_ptr		compressFn;
-	func_ptr		decompressFn;
-	func_ptr		penaltyFn;
-	func_ptr		picksplitFn;
-	func_ptr		equalFn;
-	bool			haskeytype;
-	bool			keytypbyval;
-}				GISTSTATE;
+	func_ptr	consistentFn;
+	func_ptr	unionFn;
+	func_ptr	compressFn;
+	func_ptr	decompressFn;
+	func_ptr	penaltyFn;
+	func_ptr	picksplitFn;
+	func_ptr	equalFn;
+	bool		haskeytype;
+	bool		keytypbyval;
+}			GISTSTATE;
 
 
 /*
@@ -92,9 +92,9 @@ typedef struct GISTScanOpaqueData
 {
 	struct GISTSTACK *s_stack;
 	struct GISTSTACK *s_markstk;
-	uint16			s_flags;
+	uint16		s_flags;
 	struct GISTSTATE *giststate;
-}				GISTScanOpaqueData;
+}			GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
 
@@ -128,13 +128,13 @@ typedef GISTScanOpaqueData *GISTScanOpaque;
 */
 typedef struct GIST_SPLITVEC
 {
-	OffsetNumber   *spl_left;	/* array of entries that go left */
-	int				spl_nleft;	/* size of this array */
-	char		   *spl_ldatum; /* Union of keys in spl_left */
-	OffsetNumber   *spl_right;	/* array of entries that go right */
-	int				spl_nright; /* size of the array */
-	char		   *spl_rdatum; /* Union of keys in spl_right */
-}				GIST_SPLITVEC;
+	OffsetNumber *spl_left;		/* array of entries that go left */
+	int			spl_nleft;		/* size of this array */
+	char	   *spl_ldatum;		/* Union of keys in spl_left */
+	OffsetNumber *spl_right;	/* array of entries that go right */
+	int			spl_nright;		/* size of the array */
+	char	   *spl_rdatum;		/* Union of keys in spl_right */
+}			GIST_SPLITVEC;
 
 /*
 ** An entry on a GiST node.  Contains the key (pred), as well as
@@ -144,13 +144,13 @@ typedef struct GIST_SPLITVEC
 */
 typedef struct GISTENTRY
 {
-	char		   *pred;
-	Relation		rel;
-	Page			page;
-	OffsetNumber	offset;
-	int				bytes;
-	bool			leafkey;
-}				GISTENTRY;
+	char	   *pred;
+	Relation	rel;
+	Page		page;
+	OffsetNumber offset;
+	int			bytes;
+	bool		leafkey;
+}			GISTENTRY;
 
 /*
 ** macro to initialize a GISTENTRY
@@ -169,22 +169,22 @@ typedef struct txtrange
 	 * flag: NINF means that lower is negative infinity; PINF means that *
 	 * upper is positive infinity.	0 means that both are numbers.
 	 */
-	int32			vl_len;
-	int32			flag;
-	char			bytes[2];
-}				TXTRANGE;
+	int32		vl_len;
+	int32		flag;
+	char		bytes[2];
+}			TXTRANGE;
 
 typedef struct intrange
 {
-	int				lower;
-	int				upper;
+	int			lower;
+	int			upper;
 
 	/*
 	 * flag: NINF means that lower is negative infinity; PINF means that *
 	 * upper is positive infinity.	0 means that both are numbers.
 	 */
-	int				flag;
-}				INTRANGE;
+	int			flag;
+}			INTRANGE;
 
 extern void
 gistbuild(Relation heap,
@@ -193,12 +193,12 @@ gistbuild(Relation heap,
 		  uint16 pint, Datum * params,
 		  FuncIndexInfo * finfo,
 		  PredInfo * predInfo);
-extern InsertIndexResult
+extern		InsertIndexResult
 gistinsert(Relation r, Datum * datum,
 		   char *nulls, ItemPointer ht_ctid, Relation heapRel);
-extern void		_gistdump(Relation r);
-extern void		gistfreestack(GISTSTACK * s);
-extern void		initGISTstate(GISTSTATE * giststate, Relation index);
+extern void _gistdump(Relation r);
+extern void gistfreestack(GISTSTACK * s);
+extern void initGISTstate(GISTSTATE * giststate, Relation index);
 extern void
 gistdentryinit(GISTSTATE * giststate, GISTENTRY * e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);

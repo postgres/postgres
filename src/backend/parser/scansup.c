@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.6 1997/09/07 04:44:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.7 1997/09/08 02:25:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,13 +38,13 @@
  * ----------------
  */
 
-char		   *
+char	   *
 scanstr(char *s)
 {
-	static char		newStr[MAX_PARSE_BUFFER];
-	int				len,
-					i,
-					j;
+	static char newStr[MAX_PARSE_BUFFER];
+	int			len,
+				i,
+				j;
 
 	if (s == NULL || s[0] == '\0')
 		return s;
@@ -66,60 +66,60 @@ scanstr(char *s)
 				i = i + 1;
 				switch (s[i])
 				{
-				case '\\':
-					newStr[j] = '\\';
-					break;
-				case 'b':
-					newStr[j] = '\b';
-					break;
-				case 'f':
-					newStr[j] = '\f';
-					break;
-				case 'n':
-					newStr[j] = '\n';
-					break;
-				case 'r':
-					newStr[j] = '\r';
-					break;
-				case 't':
-					newStr[j] = '\t';
-					break;
-				case '"':
-					newStr[j] = '"';
-					break;
-				case '\'':
-					newStr[j] = '\'';
-					break;
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-					{
-						char			octal[4];
-						int				k;
-						long			octVal;
-
-						for (k = 0;
-							 s[i + k] >= '0' && s[i + k] <= '7' && k < 3;
-							 k++)
-							octal[k] = s[i + k];
-						i += k - 1;
-						octal[3] = '\0';
-
-						octVal = strtol(octal, 0, 8);
-/*						elog (NOTICE, "octal = %s octVal = %d, %od", octal, octVal, octVal);*/
-						if (octVal <= 0377)
+					case '\\':
+						newStr[j] = '\\';
+						break;
+					case 'b':
+						newStr[j] = '\b';
+						break;
+					case 'f':
+						newStr[j] = '\f';
+						break;
+					case 'n':
+						newStr[j] = '\n';
+						break;
+					case 'r':
+						newStr[j] = '\r';
+						break;
+					case 't':
+						newStr[j] = '\t';
+						break;
+					case '"':
+						newStr[j] = '"';
+						break;
+					case '\'':
+						newStr[j] = '\'';
+						break;
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
 						{
-							newStr[j] = ((char) octVal);
-							break;
+							char		octal[4];
+							int			k;
+							long		octVal;
+
+							for (k = 0;
+							 s[i + k] >= '0' && s[i + k] <= '7' && k < 3;
+								 k++)
+								octal[k] = s[i + k];
+							i += k - 1;
+							octal[3] = '\0';
+
+							octVal = strtol(octal, 0, 8);
+/*						elog (NOTICE, "octal = %s octVal = %d, %od", octal, octVal, octVal);*/
+							if (octVal <= 0377)
+							{
+								newStr[j] = ((char) octVal);
+								break;
+							}
 						}
-					}
-				default:
-					newStr[j] = s[i];
+					default:
+						newStr[j] = s[i];
 				}				/* switch */
 			}					/* s[i] == '\\' */
 			else

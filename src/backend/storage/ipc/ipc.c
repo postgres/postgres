@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.12 1997/09/07 04:48:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.13 1997/09/08 02:28:44 momjian Exp $
  *
  * NOTES
  *
@@ -44,14 +44,14 @@
 #endif
 
 #if defined(bsd44)
-int				UsePrivateMemory = 1;
+int			UsePrivateMemory = 1;
 
 #else
-int				UsePrivateMemory = 0;
+int			UsePrivateMemory = 0;
 
 #endif
 
-static void		IpcMemoryDetach(int status, char *shmaddr);
+static void IpcMemoryDetach(int status, char *shmaddr);
 
 /* ----------------------------------------------------------------
  *						exit() handling stuff
@@ -62,26 +62,26 @@ static void		IpcMemoryDetach(int status, char *shmaddr);
 
 static struct ONEXIT
 {
-	void			(*function) ();
-	caddr_t			arg;
-}				onexit_list[MAX_ON_EXITS];
+	void		(*function) ();
+	caddr_t		arg;
+}			onexit_list[MAX_ON_EXITS];
 
-static int		onexit_index;
-static void		IpcConfigTip(void);
+static int	onexit_index;
+static void IpcConfigTip(void);
 
 typedef struct _PrivateMemStruct
 {
-	int				id;
-	char		   *memptr;
-}				PrivateMem;
+	int			id;
+	char	   *memptr;
+}			PrivateMem;
 
-PrivateMem		IpcPrivateMem[16];
+PrivateMem	IpcPrivateMem[16];
 
 static int
 PrivateMemoryCreate(IpcMemoryKey memKey,
 					uint32 size)
 {
-	static int		memid = 0;
+	static int	memid = 0;
 
 	UsePrivateMemory = 1;
 
@@ -94,7 +94,7 @@ PrivateMemoryCreate(IpcMemoryKey memKey,
 	return (memid++);
 }
 
-static char    *
+static char *
 PrivateMemoryAttach(IpcMemoryId memid)
 {
 	return (IpcPrivateMem[memid].memptr);
@@ -110,12 +110,12 @@ PrivateMemoryAttach(IpcMemoryId memid)
  *		-cim 2/6/90
  * ----------------------------------------------------------------
  */
-static int		exitpg_inprogress = 0;
+static int	exitpg_inprogress = 0;
 
 void
 exitpg(int code)
 {
-	int				i;
+	int			i;
 
 	/* ----------------
 	 *	if exitpg_inprocess is true, then it means that we
@@ -147,7 +147,7 @@ exitpg(int code)
 void
 quasi_exitpg()
 {
-	int				i;
+	int			i;
 
 	/* ----------------
 	 *	if exitpg_inprocess is true, then it means that we
@@ -179,7 +179,7 @@ quasi_exitpg()
  * ----------------------------------------------------------------
  */
 int
-				on_exitpg(void (*function) (), caddr_t arg)
+			on_exitpg(void (*function) (), caddr_t arg)
 {
 	if (onexit_index >= MAX_ON_EXITS)
 		return (-1);
@@ -200,7 +200,7 @@ static void
 IPCPrivateSemaphoreKill(int status,
 						int semId)		/* caddr_t */
 {
-	union semun		semun;
+	union semun semun;
 
 	semctl(semId, 0, IPC_RMID, semun);
 }
@@ -259,11 +259,11 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 				   int removeOnExit,
 				   int *status)
 {
-	int				i;
-	int				errStatus;
-	int				semId;
-	u_short			array[IPC_NMAXSEM];
-	union semun		semun;
+	int			i;
+	int			errStatus;
+	int			semId;
+	u_short		array[IPC_NMAXSEM];
+	union semun semun;
 
 	/* get a semaphore if non-existent */
 	/* check arguments	*/
@@ -332,13 +332,13 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 /*		note: the xxx_return variables are only used for debugging.			*/
 /****************************************************************************/
 #ifdef NOT_USED
-static int		IpcSemaphoreSet_return;
+static int	IpcSemaphoreSet_return;
 
 void
 IpcSemaphoreSet(int semId, int semno, int value)
 {
-	int				errStatus;
-	union semun		semun;
+	int			errStatus;
+	union semun semun;
 
 	semun.val = value;
 	errStatus = semctl(semId, semno, SETVAL, semun);
@@ -360,8 +360,8 @@ IpcSemaphoreSet(int semId, int semno, int value)
 void
 IpcSemaphoreKill(IpcSemaphoreKey key)
 {
-	int				semId;
-	union semun		semun;
+	int			semId;
+	union semun semun;
 
 	/* kill semaphore if existent */
 
@@ -375,14 +375,14 @@ IpcSemaphoreKill(IpcSemaphoreKey key)
 /*																			*/
 /*		note: the xxx_return variables are only used for debugging.			*/
 /****************************************************************************/
-static int		IpcSemaphoreLock_return;
+static int	IpcSemaphoreLock_return;
 
 void
 IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
 {
-	extern int		errno;
-	int				errStatus;
-	struct sembuf	sops;
+	extern int	errno;
+	int			errStatus;
+	struct sembuf sops;
 
 	sops.sem_op = lock;
 	sops.sem_flg = 0;
@@ -419,14 +419,14 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
 /*																			*/
 /*		note: the xxx_return variables are only used for debugging.			*/
 /****************************************************************************/
-static int		IpcSemaphoreUnlock_return;
+static int	IpcSemaphoreUnlock_return;
 
 void
 IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
 {
-	extern int		errno;
-	int				errStatus;
-	struct sembuf	sops;
+	extern int	errno;
+	int			errStatus;
+	struct sembuf sops;
 
 	sops.sem_op = -lock;
 	sops.sem_flg = 0;
@@ -462,8 +462,8 @@ IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
 int
 IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem)
 {
-	int				semncnt;
-	union semun		dummy;		/* for Solaris */
+	int			semncnt;
+	union semun dummy;			/* for Solaris */
 
 	semncnt = semctl(semId, sem, GETNCNT, dummy);
 	return semncnt;
@@ -472,8 +472,8 @@ IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem)
 int
 IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem)
 {
-	int				semval;
-	union semun		dummy;		/* for Solaris */
+	int			semval;
+	union semun dummy;			/* for Solaris */
 
 	semval = semctl(semId, sem, GETVAL, dummy);
 	return semval;
@@ -489,7 +489,7 @@ IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem)
 IpcMemoryId
 IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 {
-	IpcMemoryId		shmid;
+	IpcMemoryId shmid;
 
 	if (memKey == PrivateIPCKey)
 	{
@@ -523,7 +523,7 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 IpcMemoryId
 IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 {
-	IpcMemoryId		shmid;
+	IpcMemoryId shmid;
 
 	shmid = shmget(memKey, size, 0);
 
@@ -560,10 +560,10 @@ IpcMemoryDetach(int status, char *shmaddr)
 /* CALL IT:  addr = (struct <MemoryStructure> *) IpcMemoryAttach(memId);	*/
 /*																			*/
 /****************************************************************************/
-char		   *
+char	   *
 IpcMemoryAttach(IpcMemoryId memId)
 {
-	char		   *memAddress;
+	char	   *memAddress;
 
 	if (UsePrivateMemory)
 	{
@@ -596,7 +596,7 @@ IpcMemoryAttach(IpcMemoryId memId)
 void
 IpcMemoryKill(IpcMemoryKey memKey)
 {
-	IpcMemoryId		shmid;
+	IpcMemoryId shmid;
 
 	if (!UsePrivateMemory && (shmid = shmget(memKey, 0, 0)) >= 0)
 	{
@@ -615,26 +615,26 @@ IpcMemoryKill(IpcMemoryKey memKey)
  *	supply of locks.
  * ------------------
  */
-static SLock   *SLockArray = NULL;
-static SLock  **FreeSLockPP;
-static int	   *UnusedSLockIP;
+static SLock *SLockArray = NULL;
+static SLock **FreeSLockPP;
+static int *UnusedSLockIP;
 static slock_t *SLockMemoryLock;
 static IpcMemoryId SLockMemoryId = -1;
 
 struct ipcdummy
 {								/* to get alignment/size right */
-	SLock		   *free;
-	int				unused;
-	slock_t			memlock;
-	SLock			slocks[NSLOCKS];
+	SLock	   *free;
+	int			unused;
+	slock_t		memlock;
+	SLock		slocks[NSLOCKS];
 };
-static int		SLockMemorySize = sizeof(struct ipcdummy);
+static int	SLockMemorySize = sizeof(struct ipcdummy);
 
 void
 CreateAndInitSLockMemory(IPCKey key)
 {
-	int				id;
-	SLock		   *slckP;
+	int			id;
+	SLock	   *slckP;
 
 	SLockMemoryId = IpcMemoryCreate(key,
 									SLockMemorySize,
@@ -687,7 +687,7 @@ shlock = %d, exlock =%d)\n", LOCK->locklock, \
 void
 ExclusiveLock(int lockid)
 {
-	SLock		   *slckP;
+	SLock	   *slckP;
 
 	slckP = &(SLockArray[lockid]);
 #ifdef LOCKDEBUG
@@ -699,29 +699,29 @@ ex_try_again:
 	S_LOCK(&(slckP->locklock));
 	switch (slckP->flag)
 	{
-	case NOLOCK:
-		slckP->flag = EXCLUSIVELOCK;
-		S_LOCK(&(slckP->exlock));
-		S_LOCK(&(slckP->shlock));
-		S_UNLOCK(&(slckP->locklock));
+		case NOLOCK:
+			slckP->flag = EXCLUSIVELOCK;
+			S_LOCK(&(slckP->exlock));
+			S_LOCK(&(slckP->shlock));
+			S_UNLOCK(&(slckP->locklock));
 #ifdef LOCKDEBUG
-		printf("OUT: ");
-		PRINT_LOCK(slckP);
+			printf("OUT: ");
+			PRINT_LOCK(slckP);
 #endif
-		return;
-	case SHAREDLOCK:
-	case EXCLUSIVELOCK:
-		S_UNLOCK(&(slckP->locklock));
-		S_LOCK(&(slckP->exlock));
-		S_UNLOCK(&(slckP->exlock));
-		goto ex_try_again;
+			return;
+		case SHAREDLOCK:
+		case EXCLUSIVELOCK:
+			S_UNLOCK(&(slckP->locklock));
+			S_LOCK(&(slckP->exlock));
+			S_UNLOCK(&(slckP->exlock));
+			goto ex_try_again;
 	}
 }
 
 void
 ExclusiveUnlock(int lockid)
 {
-	SLock		   *slckP;
+	SLock	   *slckP;
 
 	slckP = &(SLockArray[lockid]);
 #ifdef LOCKDEBUG

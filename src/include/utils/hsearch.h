@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.4 1997/09/07 05:02:35 momjian Exp $
+ * $Id: hsearch.h,v 1.5 1997/09/08 02:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,9 @@
  */
 typedef struct element
 {
-	unsigned long	next;		/* secret from user		 */
-	long			key;
-}				ELEMENT;
+	unsigned long next;			/* secret from user		 */
+	long		key;
+}			ELEMENT;
 
 typedef unsigned long BUCKET_INDEX;
 
@@ -46,58 +46,58 @@ typedef unsigned long SEG_OFFSET;
 
 typedef struct hashhdr
 {
-	long			bsize;		/* Bucket/Page Size */
-	long			bshift;		/* Bucket shift */
-	long			dsize;		/* Directory Size */
-	long			ssize;		/* Segment Size */
-	long			sshift;		/* Segment shift */
-	long			max_bucket; /* ID of Maximum bucket in use */
-	long			high_mask;	/* Mask to modulo into entire table */
-	long			low_mask;	/* Mask to modulo into lower half of table */
-	long			ffactor;	/* Fill factor */
-	long			nkeys;		/* Number of keys in hash table */
-	long			nsegs;		/* Number of allocated segments */
-	long			keysize;	/* hash key length in bytes */
-	long			datasize;	/* elem data length in bytes */
-	long			max_dsize;	/* 'dsize' limit if directory is fixed
+	long		bsize;			/* Bucket/Page Size */
+	long		bshift;			/* Bucket shift */
+	long		dsize;			/* Directory Size */
+	long		ssize;			/* Segment Size */
+	long		sshift;			/* Segment shift */
+	long		max_bucket;		/* ID of Maximum bucket in use */
+	long		high_mask;		/* Mask to modulo into entire table */
+	long		low_mask;		/* Mask to modulo into lower half of table */
+	long		ffactor;		/* Fill factor */
+	long		nkeys;			/* Number of keys in hash table */
+	long		nsegs;			/* Number of allocated segments */
+	long		keysize;		/* hash key length in bytes */
+	long		datasize;		/* elem data length in bytes */
+	long		max_dsize;		/* 'dsize' limit if directory is fixed
 								 * size */
-	BUCKET_INDEX	freeBucketIndex;
+	BUCKET_INDEX freeBucketIndex;
 	/* index of first free bucket */
 #ifdef HASH_STATISTICS
-	long			accesses;
-	long			collisions;
+	long		accesses;
+	long		collisions;
 #endif
-}				HHDR;
+}			HHDR;
 
 typedef struct htab
 {
-	HHDR		   *hctl;		/* shared control information */
-	long			(*hash) (); /* Hash Function */
-	char		   *segbase;	/* segment base address for calculating
+	HHDR	   *hctl;			/* shared control information */
+	long		(*hash) ();		/* Hash Function */
+	char	   *segbase;		/* segment base address for calculating
 								 * pointer values */
-	SEG_OFFSET	   *dir;		/* 'directory' of segm starts */
-	long		   *(*alloc) ();/* memory allocator (long * for alignment
+	SEG_OFFSET *dir;			/* 'directory' of segm starts */
+	long	   *(*alloc) ();	/* memory allocator (long * for alignment
 								 * reasons) */
 
-}				HTAB;
+}			HTAB;
 
 typedef struct hashctl
 {
-	long			bsize;		/* Bucket Size */
-	long			ssize;		/* Segment Size */
-	long			dsize;		/* Dirsize Size */
-	long			ffactor;	/* Fill factor */
-	long			(*hash) (); /* Hash Function */
-	long			keysize;	/* hash key length in bytes */
-	long			datasize;	/* elem data length in bytes */
-	long			max_size;	/* limit to dsize if directory size is
+	long		bsize;			/* Bucket Size */
+	long		ssize;			/* Segment Size */
+	long		dsize;			/* Dirsize Size */
+	long		ffactor;		/* Fill factor */
+	long		(*hash) ();		/* Hash Function */
+	long		keysize;		/* hash key length in bytes */
+	long		datasize;		/* elem data length in bytes */
+	long		max_size;		/* limit to dsize if directory size is
 								 * limited */
-	long		   *segbase;	/* base for calculating bucket + seg ptrs */
-	long		   *(*alloc) ();/* memory allocation function */
-	long		   *dir;		/* directory if allocated already */
-	long		   *hctl;		/* location of header information in shd
+	long	   *segbase;		/* base for calculating bucket + seg ptrs */
+	long	   *(*alloc) ();	/* memory allocation function */
+	long	   *dir;			/* directory if allocated already */
+	long	   *hctl;			/* location of header information in shd
 								 * mem */
-}				HASHCTL;
+}			HASHCTL;
 
 /* Flags to indicate action for hctl */
 #define HASH_BUCKET		0x001	/* Setting bucket size */
@@ -125,23 +125,23 @@ typedef enum
 	HASH_REMOVE,
 	HASH_FIND_SAVE,
 	HASH_REMOVE_SAVED
-}				HASHACTION;
+}			HASHACTION;
 
 /*
  * prototypes from functions in dynahash.c
  */
-extern HTAB    *hash_create(int nelem, HASHCTL * info, int flags);
-extern void		hash_destroy(HTAB * hashp);
-extern void		hash_stats(char *where, HTAB * hashp);
-extern long    *
+extern HTAB *hash_create(int nelem, HASHCTL * info, int flags);
+extern void hash_destroy(HTAB * hashp);
+extern void hash_stats(char *where, HTAB * hashp);
+extern long *
 hash_search(HTAB * hashp, char *keyPtr, HASHACTION action,
 			bool * foundPtr);
-extern long    *hash_seq(HTAB * hashp);
+extern long *hash_seq(HTAB * hashp);
 
 /*
  * prototypes from functions in hashfn.c
  */
-extern long		string_hash(char *key, int keysize);
-extern long		tag_hash(int *key, int keysize);
+extern long string_hash(char *key, int keysize);
+extern long tag_hash(int *key, int keysize);
 
 #endif							/* HSEARCH_H */

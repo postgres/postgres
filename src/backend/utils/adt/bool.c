@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.5 1997/09/07 04:49:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.6 1997/09/08 02:30:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,10 +35,10 @@ boolin(char *b)
 /*
  *		boolout			- converts 1 or 0 to "t" or "f"
  */
-char		   *
+char	   *
 boolout(long b)
 {
-	char		   *result = (char *) palloc(2);
+	char	   *result = (char *) palloc(2);
 
 	*result = (b) ? 't' : 'f';
 	result[1] = '\0';

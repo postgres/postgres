@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.6 1997/09/07 04:41:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.7 1997/09/08 02:22:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 #include "utils/palloc.h"
 
 static TupleTableSlot *
-				ExecHashJoinOuterGetTuple(Plan * node, Plan * parent, HashJoinState * hjstate);
+			ExecHashJoinOuterGetTuple(Plan * node, Plan * parent, HashJoinState * hjstate);
 
 static TupleTableSlot *
 ExecHashJoinGetSavedTuple(HashJoinState * hjstate, char *buffer,
@@ -43,7 +43,7 @@ static int
 ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable,
 					 int nbatch);
 
-static int		ExecHashJoinNewBatch(HashJoinState * hjstate);
+static int	ExecHashJoinNewBatch(HashJoinState * hjstate);
 
 
 
@@ -59,39 +59,39 @@ static int		ExecHashJoinNewBatch(HashJoinState * hjstate);
 TupleTableSlot *				/* return: a tuple or NULL */
 ExecHashJoin(HashJoin * node)
 {
-	HashJoinState  *hjstate;
-	EState		   *estate;
-	Plan		   *outerNode;
-	Hash		   *hashNode;
-	List		   *hjclauses;
-	Expr		   *clause;
-	List		   *qual;
-	ScanDirection	dir;
+	HashJoinState *hjstate;
+	EState	   *estate;
+	Plan	   *outerNode;
+	Hash	   *hashNode;
+	List	   *hjclauses;
+	Expr	   *clause;
+	List	   *qual;
+	ScanDirection dir;
 	TupleTableSlot *inntuple;
-	Var			   *outerVar;
-	ExprContext    *econtext;
+	Var		   *outerVar;
+	ExprContext *econtext;
 
-	HashJoinTable	hashtable;
-	int				bucketno;
-	HashBucket		bucket;
-	HeapTuple		curtuple;
+	HashJoinTable hashtable;
+	int			bucketno;
+	HashBucket	bucket;
+	HeapTuple	curtuple;
 
-	bool			qualResult;
+	bool		qualResult;
 
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *innerTupleSlot;
-	int				nbatch;
-	int				curbatch;
-	File		   *outerbatches;
-	RelativeAddr   *outerbatchNames;
-	RelativeAddr   *outerbatchPos;
-	Var			   *innerhashkey;
-	int				batch;
-	int				batchno;
-	char		   *buffer;
-	int				i;
-	bool			hashPhaseDone;
-	char		   *pos;
+	int			nbatch;
+	int			curbatch;
+	File	   *outerbatches;
+	RelativeAddr *outerbatchNames;
+	RelativeAddr *outerbatchPos;
+	Var		   *innerhashkey;
+	int			batch;
+	int			batchno;
+	char	   *buffer;
+	int			i;
+	bool		hashPhaseDone;
+	char	   *pos;
 
 	/* ----------------
 	 *	get information from HashJoin node
@@ -125,7 +125,7 @@ ExecHashJoin(HashJoin * node)
 	if (hjstate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
-		bool			isDone;
+		bool		isDone;
 
 		result = ExecProject(hjstate->jstate.cs_ProjInfo, &isDone);
 		if (!isDone)
@@ -322,7 +322,7 @@ ExecHashJoin(HashJoin * node)
 					{
 						ProjectionInfo *projInfo;
 						TupleTableSlot *result;
-						bool			isDone;
+						bool		isDone;
 
 						hjstate->hj_CurBucket = bucket;
 						hjstate->hj_CurTuple = curtuple;
@@ -394,9 +394,9 @@ ExecHashJoin(HashJoin * node)
 bool							/* return: initialization status */
 ExecInitHashJoin(HashJoin * node, EState * estate, Plan * parent)
 {
-	HashJoinState  *hjstate;
-	Plan		   *outerNode;
-	Hash		   *hashNode;
+	HashJoinState *hjstate;
+	Plan	   *outerNode;
+	Hash	   *hashNode;
 
 	/* ----------------
 	 *	assign the node's execution state
@@ -451,7 +451,7 @@ ExecInitHashJoin(HashJoin * node, EState * estate, Plan * parent)
 	 * ----------------
 	 */
 	{
-		HashState	   *hashstate = hashNode->hashstate;
+		HashState  *hashstate = hashNode->hashstate;
 		TupleTableSlot *slot =
 		hashstate->cstate.cs_ResultTupleSlot;
 
@@ -513,7 +513,7 @@ ExecCountSlotsHashJoin(HashJoin * node)
 void
 ExecEndHashJoin(HashJoin * node)
 {
-	HashJoinState  *hjstate;
+	HashJoinState *hjstate;
 
 	/* ----------------
 	 *	get info from the HashJoin state
@@ -572,13 +572,13 @@ static TupleTableSlot *
 ExecHashJoinOuterGetTuple(Plan * node, Plan * parent, HashJoinState * hjstate)
 {
 	TupleTableSlot *slot;
-	HashJoinTable	hashtable;
-	int				curbatch;
-	File		   *outerbatches;
-	char		   *outerreadPos;
-	int				batchno;
-	char		   *outerreadBuf;
-	int				outerreadBlk;
+	HashJoinTable hashtable;
+	int			curbatch;
+	File	   *outerbatches;
+	char	   *outerreadPos;
+	int			batchno;
+	char	   *outerreadBuf;
+	int			outerreadBlk;
 
 	hashtable = hjstate->hj_HashTable;
 	curbatch = hashtable->curbatch;
@@ -626,11 +626,11 @@ ExecHashJoinGetSavedTuple(HashJoinState * hjstate,
 						  int *block,	/* return parameter */
 						  char **position)		/* return parameter */
 {
-	char		   *bufstart;
-	char		   *bufend;
-	int				cc;
-	HeapTuple		heapTuple;
-	HashJoinTable	hashtable;
+	char	   *bufstart;
+	char	   *bufend;
+	int			cc;
+	HeapTuple	heapTuple;
+	HashJoinTable hashtable;
 
 	hashtable = hjstate->hj_HashTable;
 	bufend = buffer + *(long *) buffer;
@@ -666,20 +666,20 @@ ExecHashJoinGetSavedTuple(HashJoinState * hjstate,
 static int
 ExecHashJoinNewBatch(HashJoinState * hjstate)
 {
-	File		   *innerBatches;
-	File		   *outerBatches;
-	int			   *innerBatchSizes;
-	Var			   *innerhashkey;
-	HashJoinTable	hashtable;
-	int				nbatch;
-	char		   *readPos;
-	int				readBlk;
-	char		   *readBuf;
+	File	   *innerBatches;
+	File	   *outerBatches;
+	int		   *innerBatchSizes;
+	Var		   *innerhashkey;
+	HashJoinTable hashtable;
+	int			nbatch;
+	char	   *readPos;
+	int			readBlk;
+	char	   *readBuf;
 	TupleTableSlot *slot;
-	ExprContext    *econtext;
-	int				i;
-	int				cc;
-	int				newbatch;
+	ExprContext *econtext;
+	int			i;
+	int			cc;
+	int			newbatch;
 
 	hashtable = hjstate->hj_HashTable;
 	outerBatches = hjstate->hj_OuterBatches;
@@ -793,7 +793,7 @@ ExecHashJoinNewBatch(HashJoinState * hjstate)
 static int
 ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable, int nbatch)
 {
-	int				b;
+	int			b;
 
 	if (bucketno < hashtable->nbuckets || nbatch == 0)
 		return 0;
@@ -813,16 +813,16 @@ ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable, int nbatch)
  * ----------------------------------------------------------------
  */
 
-char		   *
+char	   *
 ExecHashJoinSaveTuple(HeapTuple heapTuple,
 					  char *buffer,
 					  File file,
 					  char *position)
 {
-	long		   *pageend;
-	char		   *pagestart;
-	char		   *pagebound;
-	int				cc;
+	long	   *pageend;
+	char	   *pagestart;
+	char	   *pagebound;
+	int			cc;
 
 	pageend = (long *) buffer;
 	pagestart = (char *) (buffer + sizeof(long));

@@ -3,8 +3,8 @@
 #define HAS_TEST_AND_SET
 typedef struct
 {
-	int				sem[4];
-}				slock_t;
+	int			sem[4];
+}			slock_t;
 
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321

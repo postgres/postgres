@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.19 1997/09/07 05:02:19 momjian Exp $
+ * $Id: dt.h,v 1.20 1997/09/08 02:39:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,15 +28,15 @@
  *	consisting of a beginning and ending time, not a time span - tgl 97/03/20
  */
 
-typedef double	DateTime;
+typedef double DateTime;
 
 typedef struct
 {
-	double			time;		/* all time units other than months and
+	double		time;			/* all time units other than months and
 								 * years */
-	int4			month;		/* months and years, after time for
+	int4		month;			/* months and years, after time for
 								 * alignment */
-}				TimeSpan;
+}			TimeSpan;
 
 
 /* ----------------------------------------------------------------
@@ -185,13 +185,13 @@ typedef struct
 typedef struct
 {
 #if defined(aix)
-	char		   *token;
+	char	   *token;
 #else
-	char			token[TOKMAXLEN];
+	char		token[TOKMAXLEN];
 #endif							/* aix */
-	char			type;
-	char			value;		/* this may be unsigned, alas */
-}				datetkn;
+	char		type;
+	char		value;			/* this may be unsigned, alas */
+}			datetkn;
 
 #ifdef NAN
 #define DT_INVALID		(NAN)
@@ -223,7 +223,7 @@ typedef struct
 
 #define DATETIME_CURRENT(j)		{j = DT_CURRENT;}
 #if defined(linux) && defined(PPC)
-extern int		datetime_is_current(double j);
+extern int	datetime_is_current(double j);
 
 #define DATETIME_IS_CURRENT(j)	datetime_is_current(j)
 #else
@@ -232,7 +232,7 @@ extern int		datetime_is_current(double j);
 
 #define DATETIME_EPOCH(j)		{j = DT_EPOCH;}
 #if defined(linux) && defined(PPC)
-extern int		datetime_is_epoch(double j);
+extern int	datetime_is_epoch(double j);
 
 #define DATETIME_IS_EPOCH(j)	datetime_is_epoch(j)
 #else
@@ -260,38 +260,38 @@ extern int		datetime_is_epoch(double j);
  */
 
 extern DateTime *datetime_in(char *str);
-extern char    *datetime_out(DateTime * dt);
-extern bool		datetime_eq(DateTime * dt1, DateTime * dt2);
-extern bool		datetime_ne(DateTime * dt1, DateTime * dt2);
-extern bool		datetime_lt(DateTime * dt1, DateTime * dt2);
-extern bool		datetime_le(DateTime * dt1, DateTime * dt2);
-extern bool		datetime_ge(DateTime * dt1, DateTime * dt2);
-extern bool		datetime_gt(DateTime * dt1, DateTime * dt2);
-extern bool		datetime_finite(DateTime * datetime);
-extern int		datetime_cmp(DateTime * dt1, DateTime * dt2);
+extern char *datetime_out(DateTime * dt);
+extern bool datetime_eq(DateTime * dt1, DateTime * dt2);
+extern bool datetime_ne(DateTime * dt1, DateTime * dt2);
+extern bool datetime_lt(DateTime * dt1, DateTime * dt2);
+extern bool datetime_le(DateTime * dt1, DateTime * dt2);
+extern bool datetime_ge(DateTime * dt1, DateTime * dt2);
+extern bool datetime_gt(DateTime * dt1, DateTime * dt2);
+extern bool datetime_finite(DateTime * datetime);
+extern int	datetime_cmp(DateTime * dt1, DateTime * dt2);
 extern DateTime *datetime_smaller(DateTime * dt1, DateTime * dt2);
 extern DateTime *datetime_larger(DateTime * dt1, DateTime * dt2);
 
 extern TimeSpan *timespan_in(char *str);
-extern char    *timespan_out(TimeSpan * span);
-extern bool		timespan_eq(TimeSpan * span1, TimeSpan * span2);
-extern bool		timespan_ne(TimeSpan * span1, TimeSpan * span2);
-extern bool		timespan_lt(TimeSpan * span1, TimeSpan * span2);
-extern bool		timespan_le(TimeSpan * span1, TimeSpan * span2);
-extern bool		timespan_ge(TimeSpan * span1, TimeSpan * span2);
-extern bool		timespan_gt(TimeSpan * span1, TimeSpan * span2);
-extern int		timespan_cmp(TimeSpan * span1, TimeSpan * span2);
+extern char *timespan_out(TimeSpan * span);
+extern bool timespan_eq(TimeSpan * span1, TimeSpan * span2);
+extern bool timespan_ne(TimeSpan * span1, TimeSpan * span2);
+extern bool timespan_lt(TimeSpan * span1, TimeSpan * span2);
+extern bool timespan_le(TimeSpan * span1, TimeSpan * span2);
+extern bool timespan_ge(TimeSpan * span1, TimeSpan * span2);
+extern bool timespan_gt(TimeSpan * span1, TimeSpan * span2);
+extern int	timespan_cmp(TimeSpan * span1, TimeSpan * span2);
 extern TimeSpan *timespan_smaller(TimeSpan * span1, TimeSpan * span2);
 extern TimeSpan *timespan_larger(TimeSpan * span1, TimeSpan * span2);
 
-extern text    *datetime_text(DateTime * datetime);
+extern text *datetime_text(DateTime * datetime);
 extern DateTime *text_datetime(text * str);
-extern text    *timespan_text(TimeSpan * timespan);
+extern text *timespan_text(TimeSpan * timespan);
 extern DateTime *datetime_trunc(text * units, DateTime * datetime);
 extern TimeSpan *timespan_trunc(text * units, TimeSpan * timespan);
-extern float64	datetime_part(text * units, DateTime * datetime);
-extern float64	timespan_part(text * units, TimeSpan * timespan);
-extern text    *datetime_zone(text * zone, DateTime * datetime);
+extern float64 datetime_part(text * units, DateTime * datetime);
+extern float64 timespan_part(text * units, TimeSpan * timespan);
+extern text *datetime_zone(text * zone, DateTime * datetime);
 
 extern TimeSpan *timespan_um(TimeSpan * span);
 extern TimeSpan *timespan_pl(TimeSpan * span1, TimeSpan * span2);
@@ -303,14 +303,14 @@ extern DateTime *datetime_pl_span(DateTime * dt, TimeSpan * span);
 extern DateTime *datetime_mi_span(DateTime * dt, TimeSpan * span);
 extern TimeSpan *datetime_age(DateTime * dt1, DateTime * dt2);
 
-extern void		GetCurrentTime(struct tm * tm);
+extern void GetCurrentTime(struct tm * tm);
 extern DateTime SetDateTime(DateTime datetime);
-extern int		tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime * dt);
+extern int	tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime * dt);
 
-extern void		j2date(int jd, int *year, int *month, int *day);
-extern int		date2j(int year, int month, int day);
+extern void j2date(int jd, int *year, int *month, int *day);
+extern int	date2j(int year, int month, int day);
 
-extern double	time2t(const int hour, const int min, const double sec);
+extern double time2t(const int hour, const int min, const double sec);
 
 extern int
 ParseDateTime(char *timestr, char *lowstr,
@@ -327,9 +327,9 @@ extern int
 DecodeDateDelta(char *field[], int ftype[],
 				int nf, int *dtype, struct tm * tm, double *fsec);
 
-extern int		EncodeDateOnly(struct tm * tm, int style, char *str);
-extern int		EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str);
-extern int		EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str);
-extern int		EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str);
+extern int	EncodeDateOnly(struct tm * tm, int style, char *str);
+extern int	EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str);
+extern int	EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str);
+extern int	EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str);
 
 #endif							/* DT_H */

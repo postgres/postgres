@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.3 1997/09/07 04:43:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.4 1997/09/08 02:24:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,28 +57,28 @@
 static void
 xfunc_predmig(JoinPath pathnode, Stream streamroot,
 			  Stream laststream, bool * progressp);
-static bool		xfunc_series_llel(Stream stream);
-static bool		xfunc_llel_chains(Stream root, Stream bottom);
-static Stream	xfunc_complete_stream(Stream stream);
+static bool xfunc_series_llel(Stream stream);
+static bool xfunc_llel_chains(Stream root, Stream bottom);
+static Stream xfunc_complete_stream(Stream stream);
 static bool
 xfunc_prdmig_pullup(Stream origstream, Stream pullme,
 					JoinPath joinpath);
-static void		xfunc_form_groups(Stream root, Stream bottom);
-static void		xfunc_free_stream(Stream root);
-static Stream	xfunc_add_clauses(Stream current);
-static void		xfunc_setup_group(Stream node, Stream bottom);
+static void xfunc_form_groups(Stream root, Stream bottom);
+static void xfunc_free_stream(Stream root);
+static Stream xfunc_add_clauses(Stream current);
+static void xfunc_setup_group(Stream node, Stream bottom);
 static Stream
 xfunc_streaminsert(CInfo clauseinfo, Stream current,
 				   int clausetype);
-static int		xfunc_num_relids(Stream node);
+static int	xfunc_num_relids(Stream node);
 static StreamPtr xfunc_get_downjoin(Stream node);
 static StreamPtr xfunc_get_upjoin(Stream node);
-static Stream	xfunc_stream_qsort(Stream root, Stream bottom);
-static int		xfunc_stream_compare(void *arg1, void *arg2);
-static bool		xfunc_check_stream(Stream node);
-static bool		xfunc_in_stream(Stream node, Stream stream);
+static Stream xfunc_stream_qsort(Stream root, Stream bottom);
+static int	xfunc_stream_compare(void *arg1, void *arg2);
+static bool xfunc_check_stream(Stream node);
+static bool xfunc_in_stream(Stream node, Stream stream);
 
-/* -----------------		 MAIN FUNCTIONS		  ------------------------ */
+/* -----------------	   MAIN FUNCTIONS		------------------------ */
 /*
 ** xfunc_do_predmig
 **	  wrapper for Predicate Migration.	It calls xfunc_predmig until no
@@ -88,8 +88,8 @@ static bool		xfunc_in_stream(Stream node, Stream stream);
 bool
 xfunc_do_predmig(Path root)
 {
-	bool			progress,
-					changed = false;
+	bool		progress,
+				changed = false;
 
 	if (is_join(root))
 		do
@@ -122,7 +122,7 @@ xfunc_predmig(JoinPath pathnode,/* root of the join tree */
 								 * and the lowest node created so far */
 			  bool * progressp)
 {
-	Stream			newstream;
+	Stream		newstream;
 
 	/*
 	 * * traverse the join tree dfs-style, constructing a stream as you
@@ -153,7 +153,7 @@ xfunc_predmig(JoinPath pathnode,/* root of the join tree */
 	if (!is_join(pathnode))
 	{
 		/* form a fleshed-out copy of the stream */
-		Stream			fullstream = xfunc_complete_stream(streamroot);
+		Stream		fullstream = xfunc_complete_stream(streamroot);
 
 		/* sort it via series-llel */
 		if (xfunc_series_llel(fullstream))
@@ -188,9 +188,9 @@ xfunc_predmig(JoinPath pathnode,/* root of the join tree */
 static bool
 xfunc_series_llel(Stream stream)
 {
-	Stream			temp,
-					next;
-	bool			progress = false;
+	Stream		temp,
+				next;
+	bool		progress = false;
 
 	for (temp = stream; temp != (Stream) NULL; temp = next)
 	{
@@ -219,11 +219,11 @@ xfunc_series_llel(Stream stream)
 static bool
 xfunc_llel_chains(Stream root, Stream bottom)
 {
-	bool			progress = false;
-	Stream			origstream;
-	Stream			tmpstream,
-					pathstream;
-	Stream			rootcopy = root;
+	bool		progress = false;
+	Stream		origstream;
+	Stream		tmpstream,
+				pathstream;
+	Stream		rootcopy = root;
 
 	Assert(xfunc_check_stream(root));
 
@@ -282,9 +282,9 @@ xfunc_llel_chains(Stream root, Stream bottom)
 static Stream
 xfunc_complete_stream(Stream stream)
 {
-	Stream			tmpstream,
-					copystream,
-					curstream = (Stream) NULL;
+	Stream		tmpstream,
+				copystream,
+				curstream = (Stream) NULL;
 
 	copystream = (Stream) copyObject((Node) stream);
 	Assert(xfunc_check_stream(copystream));
@@ -316,15 +316,15 @@ xfunc_complete_stream(Stream stream)
  ** nodes.	We use the original stream to find out what joins are
  ** above the clause.
  */
-static			bool
+static bool
 xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 {
-	CInfo			clauseinfo = get_cinfo(pullme);
-	bool			progress = false;
-	Stream			upjoin,
-					orignode,
-					temp;
-	int				whichchild;
+	CInfo		clauseinfo = get_cinfo(pullme);
+	bool		progress = false;
+	Stream		upjoin,
+				orignode,
+				temp;
+	int			whichchild;
 
 	/* find node in origstream that contains clause */
 	for (orignode = origstream;
@@ -412,12 +412,12 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 static void
 xfunc_form_groups(Query * queryInfo, Stream root, Stream bottom)
 {
-	Stream			temp,
-					parent;
-	int				lowest = xfunc_num_relids((Stream) xfunc_get_upjoin(bottom));
-	bool			progress;
-	LispValue		primjoin;
-	int				whichchild;
+	Stream		temp,
+				parent;
+	int			lowest = xfunc_num_relids((Stream) xfunc_get_upjoin(bottom));
+	bool		progress;
+	LispValue	primjoin;
+	int			whichchild;
 
 	if (!lowest)
 		return;					/* no joins in stream, so no groups */
@@ -495,7 +495,7 @@ xfunc_form_groups(Query * queryInfo, Stream root, Stream bottom)
 }
 
 
-/* -------------------   UTILITY FUNCTIONS	 ------------------------- */
+/* -------------------	 UTILITY FUNCTIONS	   ------------------------- */
 
 /*
  ** xfunc_free_stream --
@@ -504,8 +504,8 @@ xfunc_form_groups(Query * queryInfo, Stream root, Stream bottom)
 static void
 xfunc_free_stream(Stream root)
 {
-	Stream			cur,
-					next;
+	Stream		cur,
+				next;
 
 	Assert(xfunc_check_stream(root));
 
@@ -525,9 +525,9 @@ xfunc_free_stream(Stream root)
 static Stream
 xfunc_add_clauses(Stream current)
 {
-	Stream			topnode = current;
-	LispValue		temp;
-	LispValue		primjoin;
+	Stream		topnode = current;
+	LispValue	temp;
+	LispValue	primjoin;
 
 	/* first add in the local clauses */
 	foreach(temp, get_locclauseinfo((Path) get_pathptr(current)))
@@ -561,7 +561,7 @@ xfunc_add_clauses(Stream current)
 static void
 xfunc_setup_group(Stream node, Stream bottom)
 {
-	Stream			temp;
+	Stream		temp;
 
 	if (node != bottom)
 		/* traverse downwards */
@@ -598,12 +598,12 @@ xfunc_setup_group(Stream node, Stream bottom)
  **    Make a new Stream node to hold clause, and insert it above current.
  ** Return new node.
  */
-static			Stream
+static Stream
 xfunc_streaminsert(CInfo clauseinfo,
 				   Stream current,
 				   int clausetype)		/* XFUNC_LOCPRD or XFUNC_JOINPRD */
 {
-	Stream			newstream = RMakeStream();
+	Stream		newstream = RMakeStream();
 
 	set_upstream(newstream, get_upstream(current));
 	if (get_upstream(current))
@@ -640,7 +640,7 @@ xfunc_num_relids(Stream node)
 static StreamPtr
 xfunc_get_downjoin(Stream node)
 {
-	Stream			temp;
+	Stream		temp;
 
 	if (!is_clause(node))		/* if this is a join */
 		node = (Stream) get_downstream(node);
@@ -658,7 +658,7 @@ xfunc_get_downjoin(Stream node)
 static StreamPtr
 xfunc_get_upjoin(Stream node)
 {
-	Stream			temp;
+	Stream		temp;
 
 	if (!is_clause(node))		/* if this is a join */
 		node = (Stream) get_upstream(node);
@@ -677,11 +677,11 @@ xfunc_get_upjoin(Stream node)
 static Stream
 xfunc_stream_qsort(Stream root, Stream bottom)
 {
-	int				i;
-	size_t			num;
-	Stream		   *nodearray,
-					output;
-	Stream			tmp;
+	int			i;
+	size_t		num;
+	Stream	   *nodearray,
+				output;
+	Stream		tmp;
 
 	/* find size of list */
 	for (num = 0, tmp = root; tmp != bottom;
@@ -725,10 +725,10 @@ xfunc_stream_qsort(Stream root, Stream bottom)
 static int
 xfunc_stream_compare(void *arg1, void *arg2)
 {
-	Stream			stream1 = *(Stream *) arg1;
-	Stream			stream2 = *(Stream *) arg2;
-	Cost			rank1,
-					rank2;
+	Stream		stream1 = *(Stream *) arg1;
+	Stream		stream2 = *(Stream *) arg2;
+	Cost		rank1,
+				rank2;
 
 	rank1 = get_grouprank(stream1);
 	rank2 = get_grouprank(stream2);
@@ -765,7 +765,7 @@ xfunc_stream_compare(void *arg1, void *arg2)
 	}
 }
 
-/* ------------------    DEBUGGING ROUTINES	  ---------------------------- */
+/* ------------------	 DEBUGGING ROUTINES		---------------------------- */
 
 /*
  ** Make sure all pointers in stream make sense.  Make sure no joins are
@@ -774,9 +774,9 @@ xfunc_stream_compare(void *arg1, void *arg2)
 static bool
 xfunc_check_stream(Stream node)
 {
-	Stream			temp;
-	int				numrelids,
-					tmp;
+	Stream		temp;
+	int			numrelids,
+				tmp;
 
 	/* set numrelids higher than max */
 	if (!is_clause(node))
@@ -814,7 +814,7 @@ xfunc_check_stream(Stream node)
 static bool
 xfunc_in_stream(Stream node, Stream stream)
 {
-	Stream			temp;
+	Stream		temp;
 
 	for (temp = stream; temp; temp = (Stream) get_downstream(temp))
 		if (temp == node)

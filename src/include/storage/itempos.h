@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itempos.h,v 1.4 1997/09/07 05:01:20 momjian Exp $
+ * $Id: itempos.h,v 1.5 1997/09/08 02:39:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,11 +18,11 @@
 
 typedef struct ItemSubpositionData
 {
-	Buffer			op_db;
-	ItemId			op_lpp;
-	char		   *op_cp;		/* XXX */
-	uint32			op_len;
-}				ItemSubpositionData;
+	Buffer		op_db;
+	ItemId		op_lpp;
+	char	   *op_cp;			/* XXX */
+	uint32		op_len;
+}			ItemSubpositionData;
 
 typedef ItemSubpositionData *ItemSubposition;
 

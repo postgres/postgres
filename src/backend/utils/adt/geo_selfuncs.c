@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.4 1997/09/07 04:50:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.5 1997/09/08 02:30:44 momjian Exp $
  *
  *		XXX These are totally bogus.
  *
@@ -28,7 +28,7 @@ areasel(Oid opid,
 		char *value,
 		int32 flag)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 4.0;
@@ -42,7 +42,7 @@ areajoinsel(Oid opid,
 			char *value,
 			int32 flag)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 4.0;
@@ -73,7 +73,7 @@ leftsel(Oid opid,
 		char *value,
 		int32 flag)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 6.0;
@@ -90,7 +90,7 @@ leftjoinsel(Oid opid,
 			char *value,
 			int32 flag)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 6.0;
@@ -110,7 +110,7 @@ contsel(Oid opid,
 		char *value,
 		int32 flag)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 10.0;
@@ -127,7 +127,7 @@ contjoinsel(Oid opid,
 			char *value,
 			int32 flag)
 {
-	float64			result;
+	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 10.0;

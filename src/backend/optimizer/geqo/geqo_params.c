@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.6 1997/09/07 04:43:16 momjian Exp $
+* $Id: geqo_params.c,v 1.7 1997/09/08 02:24:00 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -58,9 +58,9 @@
 #define MAX_TOKEN 80			/* Maximum size of one token in the  *
 								 * configuration file				 */
 
-static int		gimme_pool_size(int string_length);
-static int		gimme_number_generations(int pool_size, int effort);
-static int		next_token(FILE *, char *, int);
+static int	gimme_pool_size(int string_length);
+static int	gimme_number_generations(int pool_size, int effort);
+static int	next_token(FILE *, char *, int);
 
 /*
  * geqo_param--
@@ -69,19 +69,19 @@ static int		next_token(FILE *, char *, int);
 void
 geqo_params(int string_length)
 {
-	int				i;
+	int			i;
 
-	char			buf[MAX_TOKEN];
-	FILE		   *file;
+	char		buf[MAX_TOKEN];
+	FILE	   *file;
 
-	char		   *conf_file;
+	char	   *conf_file;
 
 /* these static variables are used to signal that a value has been set */
-	int				pool_size = 0;
-	int				number_trials = 0;
-	int				random_seed = 0;
-	int				selection_bias = 0;
-	int				effort = 0;
+	int			pool_size = 0;
+	int			number_trials = 0;
+	int			random_seed = 0;
+	int			selection_bias = 0;
+	int			effort = 0;
 
 
 	/* put together the full pathname to the config file */
@@ -272,8 +272,8 @@ geqo_params(int string_length)
 static int
 next_token(FILE * fp, char *buf, int bufsz)
 {
-	int				c;
-	char		   *eb = buf + (bufsz - 1);
+	int			c;
+	char	   *eb = buf + (bufsz - 1);
 
 	/* Discard inital whitespace */
 	while (isspace(c = getc(fp)));
@@ -309,8 +309,8 @@ next_token(FILE * fp, char *buf, int bufsz)
 static int
 gimme_pool_size(int string_length)
 {
-	double			exponent;
-	double			size;
+	double		exponent;
+	double		size;
 
 	exponent = (double) string_length + 1.0;
 
@@ -335,7 +335,7 @@ gimme_pool_size(int string_length)
 static int
 gimme_number_generations(int pool_size, int effort)
 {
-	int				number_gens;
+	int			number_gens;
 
 	number_gens = (int) ceil(geqo_log((double) pool_size, 2.0));
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.8 1997/09/07 04:48:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.9 1997/09/08 02:28:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,13 @@
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
 
-extern SISeg   *shmInvalBuffer; /* the shared buffer segment, set by */
+extern SISeg *shmInvalBuffer;	/* the shared buffer segment, set by */
 
  /* SISegmentAttach()			   */
 extern BackendId MyBackendId;
 extern BackendTag MyBackendTag;
 
-SPINLOCK		SInvalLock = (SPINLOCK) NULL;
+SPINLOCK	SInvalLock = (SPINLOCK) NULL;
 
 /****************************************************************************/
 /*	CreateSharedInvalidationState(key)	 Create a buffer segment			*/
@@ -38,7 +38,7 @@ SPINLOCK		SInvalLock = (SPINLOCK) NULL;
 void
 CreateSharedInvalidationState(IPCKey key)
 {
-	int				status;
+	int			status;
 
 	/*
 	 * REMOVED SISyncKill(IPCKeyGetSIBufferMemorySemaphoreKey(key));
@@ -62,7 +62,7 @@ CreateSharedInvalidationState(IPCKey key)
 void
 AttachSharedInvalidationState(IPCKey key)
 {
-	int				status;
+	int			status;
 
 	if (key == PrivateIPCKey)
 	{
@@ -165,8 +165,8 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 /*	should be called by a backend											*/
 /****************************************************************************/
 void
-				InvalidateSharedInvalid(void (*invalFunction) (),
-										void (*resetFunction) ())
+			InvalidateSharedInvalid(void (*invalFunction) (),
+									void (*resetFunction) ())
 {
 	SpinAcquire(SInvalLock);
 	SIReadEntryData(shmInvalBuffer, MyBackendId,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.2 1997/09/07 04:43:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.3 1997/09/08 02:24:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,11 +32,11 @@ match_pathkey_joinkeys(List * pathkey, List * joinkeys,
 static bool
 every_func(List * joinkeys, List * pathkey,
 		   int which_subkey);
-static List    *
+static List *
 new_join_pathkey(List * subkeys,
 				 List * considered_subkeys, List * join_rel_tlist,
 				 List * joinclauses);
-static List    *
+static List *
 new_matching_subkeys(Var * subkey, List * considered_subkeys,
 					 List * join_rel_tlist, List * joinclauses);
 
@@ -73,18 +73,18 @@ new_matching_subkeys(Var * subkey, List * considered_subkeys,
  * Returns a list of matched join keys and a list of matched join clauses
  * in matchedJoinClausesPtr.  - ay 11/94
  */
-List		   *
+List	   *
 match_pathkeys_joinkeys(List * pathkeys,
 						List * joinkeys,
 						List * joinclauses,
 						int which_subkey,
 						List ** matchedJoinClausesPtr)
 {
-	List		   *matched_joinkeys = NIL;
-	List		   *matched_joinclauses = NIL;
-	List		   *pathkey = NIL;
-	List		   *i = NIL;
-	int				matched_joinkey_index = -1;
+	List	   *matched_joinkeys = NIL;
+	List	   *matched_joinclauses = NIL;
+	List	   *pathkey = NIL;
+	List	   *i = NIL;
+	int			matched_joinkey_index = -1;
 
 	foreach(i, pathkeys)
 	{
@@ -94,8 +94,8 @@ match_pathkeys_joinkeys(List * pathkeys,
 
 		if (matched_joinkey_index != -1)
 		{
-			List		   *xjoinkey = nth(matched_joinkey_index, joinkeys);
-			List		   *joinclause = nth(matched_joinkey_index, joinclauses);
+			List	   *xjoinkey = nth(matched_joinkey_index, joinkeys);
+			List	   *joinclause = nth(matched_joinkey_index, joinclauses);
 
 			/* XXX was "push" function */
 			matched_joinkeys = lappend(matched_joinkeys, xjoinkey);
@@ -131,11 +131,11 @@ match_pathkey_joinkeys(List * pathkey,
 					   List * joinkeys,
 					   int which_subkey)
 {
-	Var			   *path_subkey;
-	int				pos;
-	List		   *i = NIL;
-	List		   *x = NIL;
-	JoinKey		   *jk;
+	Var		   *path_subkey;
+	int			pos;
+	List	   *i = NIL;
+	List	   *x = NIL;
+	JoinKey    *jk;
 
 	foreach(i, pathkey)
 	{
@@ -174,15 +174,15 @@ match_pathkey_joinkeys(List * pathkey,
  *
  * Returns the matching path node if one exists, nil otherwise.
  */
-static			bool
+static bool
 every_func(List * joinkeys, List * pathkey, int which_subkey)
 {
-	JoinKey		   *xjoinkey;
-	Var			   *temp;
-	Var			   *tempkey = NULL;
-	bool			found = false;
-	List		   *i = NIL;
-	List		   *j = NIL;
+	JoinKey    *xjoinkey;
+	Var		   *temp;
+	Var		   *tempkey = NULL;
+	bool		found = false;
+	List	   *i = NIL;
+	List	   *j = NIL;
 
 	foreach(i, joinkeys)
 	{
@@ -211,19 +211,19 @@ every_func(List * joinkeys, List * pathkey, int which_subkey)
  * match_paths_joinkeys -
  *	  find the cheapest path that matches the join keys
  */
-Path		   *
+Path	   *
 match_paths_joinkeys(List * joinkeys,
 					 PathOrder * ordering,
 					 List * paths,
 					 int which_subkey)
 {
-	Path		   *matched_path = NULL;
-	bool			key_match = false;
-	List		   *i = NIL;
+	Path	   *matched_path = NULL;
+	bool		key_match = false;
+	List	   *i = NIL;
 
 	foreach(i, paths)
 	{
-		Path		   *path = (Path *) lfirst(i);
+		Path	   *path = (Path *) lfirst(i);
 
 		key_match = every_func(joinkeys, path->keys, which_subkey);
 
@@ -263,20 +263,20 @@ match_paths_joinkeys(List * joinkeys,
  * Returns a list of pathkeys: ((tlvar1)(tlvar2)...(tlvarN)).
  * [I've no idea why they have to be list of lists. Should be fixed. -ay 12/94]
  */
-List		   *
+List	   *
 extract_path_keys(List * joinkeys,
 				  List * tlist,
 				  int which_subkey)
 {
-	List		   *pathkeys = NIL;
-	List		   *jk;
+	List	   *pathkeys = NIL;
+	List	   *jk;
 
 	foreach(jk, joinkeys)
 	{
-		JoinKey		   *jkey = (JoinKey *) lfirst(jk);
-		Var			   *var,
-					   *key;
-		List		   *p;
+		JoinKey    *jkey = (JoinKey *) lfirst(jk);
+		Var		   *var,
+				   *key;
+		List	   *p;
 
 		/*
 		 * find the right Var in the target list for this key
@@ -289,7 +289,7 @@ extract_path_keys(List * joinkeys,
 		 */
 		foreach(p, pathkeys)
 		{
-			Var			   *pkey = lfirst((List *) lfirst(p));	/* XXX fix me */
+			Var		   *pkey = lfirst((List *) lfirst(p));		/* XXX fix me */
 
 			if (key == pkey)
 				break;
@@ -325,15 +325,15 @@ extract_path_keys(List * joinkeys,
  * Returns the list of new path keys.
  *
  */
-List		   *
+List	   *
 new_join_pathkeys(List * outer_pathkeys,
 				  List * join_rel_tlist,
 				  List * joinclauses)
 {
-	List		   *outer_pathkey = NIL;
-	List		   *t_list = NIL;
-	List		   *x;
-	List		   *i = NIL;
+	List	   *outer_pathkey = NIL;
+	List	   *t_list = NIL;
+	List	   *x;
+	List	   *i = NIL;
 
 	foreach(i, outer_pathkeys)
 	{
@@ -365,18 +365,18 @@ new_join_pathkeys(List * outer_pathkeys,
  * Returns a new pathkey(list of subkeys).
  *
  */
-static List    *
+static List *
 new_join_pathkey(List * subkeys,
 				 List * considered_subkeys,
 				 List * join_rel_tlist,
 				 List * joinclauses)
 {
-	List		   *t_list = NIL;
-	Var			   *subkey;
-	List		   *i = NIL;
-	List		   *matched_subkeys = NIL;
-	Expr		   *tlist_key = (Expr *) NULL;
-	List		   *newly_considered_subkeys = NIL;
+	List	   *t_list = NIL;
+	Var		   *subkey;
+	List	   *i = NIL;
+	List	   *matched_subkeys = NIL;
+	Expr	   *tlist_key = (Expr *) NULL;
+	List	   *newly_considered_subkeys = NIL;
 
 	foreach(i, subkeys)
 	{
@@ -425,17 +425,17 @@ new_join_pathkey(List * subkeys,
  * Returns a list of new subkeys.
  *
  */
-static List    *
+static List *
 new_matching_subkeys(Var * subkey,
 					 List * considered_subkeys,
 					 List * join_rel_tlist,
 					 List * joinclauses)
 {
-	Expr		   *joinclause = NULL;
-	List		   *t_list = NIL;
-	List		   *temp = NIL;
-	List		   *i = NIL;
-	Expr		   *tlist_other_var = (Expr *) NULL;
+	Expr	   *joinclause = NULL;
+	List	   *t_list = NIL;
+	List	   *temp = NIL;
+	List	   *i = NIL;
+	Expr	   *tlist_other_var = (Expr *) NULL;
 
 	foreach(i, joinclauses)
 	{

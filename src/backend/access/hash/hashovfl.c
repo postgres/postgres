@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.10 1997/09/07 04:37:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.11 1997/09/08 02:20:17 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -27,7 +27,7 @@
 #endif
 
 static OverflowPageAddress _hash_getovfladdr(Relation rel, Buffer * metabufp);
-static uint32	_hash_firstfreebit(uint32 map);
+static uint32 _hash_firstfreebit(uint32 map);
 
 /*
  *	_hash_addovflpage
@@ -44,13 +44,13 @@ _hash_addovflpage(Relation rel, Buffer * metabufp, Buffer buf)
 {
 
 	OverflowPageAddress oaddr;
-	BlockNumber		ovflblkno;
-	Buffer			ovflbuf;
-	HashMetaPage	metap;
-	HashPageOpaque	ovflopaque;
-	HashPageOpaque	pageopaque;
-	Page			page;
-	Page			ovflpage;
+	BlockNumber ovflblkno;
+	Buffer		ovflbuf;
+	HashMetaPage metap;
+	HashPageOpaque ovflopaque;
+	HashPageOpaque pageopaque;
+	Page		page;
+	Page		ovflpage;
 
 	/* this had better be the last page in a bucket chain */
 	page = BufferGetPage(buf);
@@ -99,24 +99,24 @@ _hash_addovflpage(Relation rel, Buffer * metabufp, Buffer buf)
  *	is exchanged for a read lock.
  *
  */
-static			OverflowPageAddress
+static OverflowPageAddress
 _hash_getovfladdr(Relation rel, Buffer * metabufp)
 {
-	HashMetaPage	metap;
-	Buffer			mapbuf = 0;
-	BlockNumber		blkno;
-	PageOffset		offset;
+	HashMetaPage metap;
+	Buffer		mapbuf = 0;
+	BlockNumber blkno;
+	PageOffset	offset;
 	OverflowPageAddress oaddr;
-	SplitNumber		splitnum;
-	uint32		   *freep = NULL;
-	uint32			max_free;
-	uint32			bit;
-	uint32			first_page;
-	uint32			free_bit;
-	uint32			free_page;
-	uint32			in_use_bits;
-	uint32			i,
-					j;
+	SplitNumber splitnum;
+	uint32	   *freep = NULL;
+	uint32		max_free;
+	uint32		bit;
+	uint32		first_page;
+	uint32		free_bit;
+	uint32		free_page;
+	uint32		in_use_bits;
+	uint32		i,
+				j;
 
 	metap = (HashMetaPage) _hash_chgbufaccess(rel, metabufp, HASH_READ, HASH_WRITE);
 
@@ -130,7 +130,7 @@ _hash_getovfladdr(Relation rel, Buffer * metabufp)
 	first_page = metap->LAST_FREED >> (metap->BSHIFT + BYTE_TO_BIT);
 	for (i = first_page; i <= free_page; i++)
 	{
-		Page			mappage;
+		Page		mappage;
 
 		blkno = metap->hashm_mapp[i];
 		mapbuf = _hash_getbuf(rel, blkno, HASH_WRITE);
@@ -279,11 +279,11 @@ found:
  *	splitnumber.
  *
  */
-static			uint32
+static uint32
 _hash_firstfreebit(uint32 map)
 {
-	uint32			i,
-					mask;
+	uint32		i,
+				mask;
 
 	mask = 0x1;
 	for (i = 0; i < BITS_PER_MAP; i++)
@@ -306,22 +306,22 @@ _hash_firstfreebit(uint32 map)
 Buffer
 _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 {
-	HashMetaPage	metap;
-	Buffer			metabuf;
-	Buffer			mapbuf;
-	BlockNumber		prevblkno;
-	BlockNumber		blkno;
-	BlockNumber		nextblkno;
-	HashPageOpaque	ovflopaque;
-	Page			ovflpage;
-	Page			mappage;
+	HashMetaPage metap;
+	Buffer		metabuf;
+	Buffer		mapbuf;
+	BlockNumber prevblkno;
+	BlockNumber blkno;
+	BlockNumber nextblkno;
+	HashPageOpaque ovflopaque;
+	Page		ovflpage;
+	Page		mappage;
 	OverflowPageAddress addr;
-	SplitNumber		splitnum;
-	uint32		   *freep;
-	uint32			ovflpgno;
-	int32			bitmappage,
-					bitmapbit;
-	Bucket			bucket;
+	SplitNumber splitnum;
+	uint32	   *freep;
+	uint32		ovflpgno;
+	int32		bitmappage,
+				bitmapbit;
+	Bucket		bucket;
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
@@ -348,9 +348,9 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	 */
 	if (BlockNumberIsValid(prevblkno))
 	{
-		Buffer			prevbuf = _hash_getbuf(rel, prevblkno, HASH_WRITE);
-		Page			prevpage = BufferGetPage(prevbuf);
-		HashPageOpaque	prevopaque =
+		Buffer		prevbuf = _hash_getbuf(rel, prevblkno, HASH_WRITE);
+		Page		prevpage = BufferGetPage(prevbuf);
+		HashPageOpaque prevopaque =
 		(HashPageOpaque) PageGetSpecialPointer(prevpage);
 
 		_hash_checkpage(prevpage, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
@@ -360,9 +360,9 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	}
 	if (BlockNumberIsValid(nextblkno))
 	{
-		Buffer			nextbuf = _hash_getbuf(rel, nextblkno, HASH_WRITE);
-		Page			nextpage = BufferGetPage(nextbuf);
-		HashPageOpaque	nextopaque =
+		Buffer		nextbuf = _hash_getbuf(rel, nextblkno, HASH_WRITE);
+		Page		nextpage = BufferGetPage(nextbuf);
+		HashPageOpaque nextopaque =
 		(HashPageOpaque) PageGetSpecialPointer(nextpage);
 
 		_hash_checkpage(nextpage, LH_OVERFLOW_PAGE);
@@ -436,13 +436,13 @@ _hash_initbitmap(Relation rel,
 				 int32 nbits,
 				 int32 ndx)
 {
-	Buffer			buf;
-	BlockNumber		blkno;
-	Page			pg;
-	HashPageOpaque	op;
-	uint32		   *freep;
-	int				clearbytes,
-					clearints;
+	Buffer		buf;
+	BlockNumber blkno;
+	Page		pg;
+	HashPageOpaque op;
+	uint32	   *freep;
+	int			clearbytes,
+				clearints;
 
 	blkno = OADDR_TO_BLKNO(pnum);
 	buf = _hash_getbuf(rel, blkno, HASH_WRITE);
@@ -496,18 +496,18 @@ _hash_squeezebucket(Relation rel,
 					HashMetaPage metap,
 					Bucket bucket)
 {
-	Buffer			wbuf;
-	Buffer			rbuf = 0;
-	BlockNumber		wblkno;
-	BlockNumber		rblkno;
-	Page			wpage;
-	Page			rpage;
-	HashPageOpaque	wopaque;
-	HashPageOpaque	ropaque;
-	OffsetNumber	woffnum;
-	OffsetNumber	roffnum;
-	HashItem		hitem;
-	int				itemsz;
+	Buffer		wbuf;
+	Buffer		rbuf = 0;
+	BlockNumber wblkno;
+	BlockNumber rblkno;
+	Page		wpage;
+	Page		rpage;
+	HashPageOpaque wopaque;
+	HashPageOpaque ropaque;
+	OffsetNumber woffnum;
+	OffsetNumber roffnum;
+	HashItem	hitem;
+	int			itemsz;
 
 /*	  elog(DEBUG, "_hash_squeezebucket: squeezing bucket %d", bucket); */
 

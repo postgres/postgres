@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf.h,v 1.2 1997/09/07 05:00:45 momjian Exp $
+ * $Id: buf.h,v 1.3 1997/09/08 02:38:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #define InvalidBuffer	(0)
 #define UnknownBuffer	(-99999)
 
-typedef long	Buffer;
+typedef long Buffer;
 
 /*
  * BufferIsInvalid --

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.4 1997/09/07 04:48:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.5 1997/09/08 02:28:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,10 @@
 static void
 ApplyRetrieveRule(Query * parsetree, RewriteRule * rule,
 				  int rt_index, int relation_level, int *modified);
-static List    *
+static List *
 fireRules(Query * parsetree, int rt_index, CmdType event,
 		  bool * instead_flag, List * locks, List ** qual_products);
-static List    *deepRewriteQuery(Query * parsetree);
+static List *deepRewriteQuery(Query * parsetree);
 
 /*
  * gatherRewriteMeta -
@@ -51,9 +51,9 @@ gatherRewriteMeta(Query * parsetree,
 				  CmdType event,
 				  bool * instead_flag)
 {
-	RewriteInfo    *info;
-	int				rt_length;
-	int				result_reln;
+	RewriteInfo *info;
+	int			rt_length;
+	int			result_reln;
 
 	info = (RewriteInfo *) palloc(sizeof(RewriteInfo));
 	info->rt_index = rt_index;
@@ -90,18 +90,18 @@ gatherRewriteMeta(Query * parsetree,
 		 */
 		if (info->action != CMD_SELECT)
 		{						/* i.e update XXXXX */
-			int				new_result_reln = 0;
+			int			new_result_reln = 0;
 
 			result_reln = info->rule_action->resultRelation;
 			switch (result_reln)
 			{
-			case PRS2_CURRENT_VARNO:
-				new_result_reln = rt_index;
-				break;
-			case PRS2_NEW_VARNO:		/* XXX */
-			default:
-				new_result_reln = result_reln + rt_length;
-				break;
+				case PRS2_CURRENT_VARNO:
+					new_result_reln = rt_index;
+					break;
+				case PRS2_NEW_VARNO:	/* XXX */
+				default:
+					new_result_reln = result_reln + rt_length;
+					break;
 			}
 			info->rule_action->resultRelation = new_result_reln;
 		}
@@ -109,16 +109,16 @@ gatherRewriteMeta(Query * parsetree,
 	return info;
 }
 
-static List    *
+static List *
 OptimizeRIRRules(List * locks)
 {
-	List		   *attr_level = NIL,
-				   *i;
-	List		   *relation_level = NIL;
+	List	   *attr_level = NIL,
+			   *i;
+	List	   *relation_level = NIL;
 
 	foreach(i, locks)
 	{
-		RewriteRule    *rule_lock = lfirst(i);
+		RewriteRule *rule_lock = lfirst(i);
 
 		if (rule_lock->attrno == -1)
 			relation_level = lappend(relation_level, rule_lock);
@@ -132,16 +132,16 @@ OptimizeRIRRules(List * locks)
  * idea is to put instead rules before regular rules so that
  * excess semantically queasy queries aren't processed
  */
-static List    *
+static List *
 orderRules(List * locks)
 {
-	List		   *regular = NIL,
-				   *i;
-	List		   *instead_rules = NIL;
+	List	   *regular = NIL,
+			   *i;
+	List	   *instead_rules = NIL;
 
 	foreach(i, locks)
 	{
-		RewriteRule    *rule_lock = (RewriteRule *) lfirst(i);
+		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
 
 		if (rule_lock->isInstead)
 			instead_rules = lappend(instead_rules, rule_lock);
@@ -154,11 +154,11 @@ orderRules(List * locks)
 static int
 AllRetrieve(List * actions)
 {
-	List		   *n;
+	List	   *n;
 
 	foreach(n, actions)
 	{
-		Query		   *pt = lfirst(n);
+		Query	   *pt = lfirst(n);
 
 		/*
 		 * in the old postgres code, we check whether command_type is a
@@ -171,17 +171,17 @@ AllRetrieve(List * actions)
 	return true;
 }
 
-static List    *
+static List *
 FireRetrieveRulesAtQuery(Query * parsetree,
 						 int rt_index,
 						 Relation relation,
 						 bool * instead_flag,
 						 int rule_flag)
 {
-	List		   *i,
-				   *locks;
-	RuleLock	   *rt_entry_locks = NULL;
-	List		   *work = NIL;
+	List	   *i,
+			   *locks;
+	RuleLock   *rt_entry_locks = NULL;
+	List	   *work = NIL;
 
 	if ((rt_entry_locks = relation->rd_rules) == NULL)
 		return NIL;
@@ -191,7 +191,7 @@ FireRetrieveRulesAtQuery(Query * parsetree,
 	/* find all retrieve instead */
 	foreach(i, locks)
 	{
-		RewriteRule    *rule_lock = (RewriteRule *) lfirst(i);
+		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
 
 		if (!rule_lock->isInstead)
 			continue;
@@ -202,9 +202,9 @@ FireRetrieveRulesAtQuery(Query * parsetree,
 		work = OptimizeRIRRules(locks);
 		foreach(i, work)
 		{
-			RewriteRule    *rule_lock = lfirst(i);
-			int				relation_level;
-			int				modified = FALSE;
+			RewriteRule *rule_lock = lfirst(i);
+			int			relation_level;
+			int			modified = FALSE;
 
 			relation_level = (rule_lock->attrno == -1);
 			if (rule_lock->actions == NIL)
@@ -248,13 +248,13 @@ ApplyRetrieveRule(Query * parsetree,
 				  int relation_level,
 				  int *modified)
 {
-	Query		   *rule_action = NULL;
-	Node		   *rule_qual;
-	List		   *rtable,
-				   *rt;
-	int				nothing,
-					rt_length;
-	int				badsql = FALSE;
+	Query	   *rule_action = NULL;
+	Node	   *rule_qual;
+	List	   *rtable,
+			   *rt;
+	int			nothing,
+				rt_length;
+	int			badsql = FALSE;
 
 	rule_qual = rule->qual;
 	if (rule->actions)
@@ -274,7 +274,7 @@ ApplyRetrieveRule(Query * parsetree,
 	rtable = copyObject(parsetree->rtable);
 	foreach(rt, rtable)
 	{
-		RangeTblEntry  *rte = lfirst(rt);
+		RangeTblEntry *rte = lfirst(rt);
 
 		/*
 		 * this is to prevent add_missing_vars_to_base_rels() from adding
@@ -309,21 +309,21 @@ ApplyRetrieveRule(Query * parsetree,
 		AddQual(parsetree, rule_action->qual);
 }
 
-static List    *
+static List *
 ProcessRetrieveQuery(Query * parsetree,
 					 List * rtable,
 					 bool * instead_flag,
 					 bool rule)
 {
-	List		   *rt;
-	List		   *product_queries = NIL;
-	int				rt_index = 0;
+	List	   *rt;
+	List	   *product_queries = NIL;
+	int			rt_index = 0;
 
 	foreach(rt, rtable)
 	{
-		RangeTblEntry  *rt_entry = lfirst(rt);
-		Relation		rt_entry_relation = NULL;
-		List		   *result = NIL;
+		RangeTblEntry *rt_entry = lfirst(rt);
+		Relation	rt_entry_relation = NULL;
+		List	   *result = NIL;
 
 		rt_index++;
 		rt_entry_relation = heap_openr(rt_entry->relname);
@@ -346,12 +346,12 @@ ProcessRetrieveQuery(Query * parsetree,
 
 	foreach(rt, rtable)
 	{
-		RangeTblEntry  *rt_entry = lfirst(rt);
-		Relation		rt_entry_relation = NULL;
-		RuleLock	   *rt_entry_locks = NULL;
-		List		   *result = NIL;
-		List		   *locks = NIL;
-		List		   *dummy_products;
+		RangeTblEntry *rt_entry = lfirst(rt);
+		Relation	rt_entry_relation = NULL;
+		RuleLock   *rt_entry_locks = NULL;
+		List	   *result = NIL;
+		List	   *locks = NIL;
+		List	   *dummy_products;
 
 		rt_index++;
 		rt_entry_relation = heap_openr(rt_entry->relname);
@@ -376,16 +376,16 @@ ProcessRetrieveQuery(Query * parsetree,
 	return product_queries;
 }
 
-static Query   *
+static Query *
 CopyAndAddQual(Query * parsetree,
 			   List * actions,
 			   Node * rule_qual,
 			   int rt_index,
 			   CmdType event)
 {
-	Query		   *new_tree = (Query *) copyObject(parsetree);
-	Node		   *new_qual = NULL;
-	Query		   *rule_action = NULL;
+	Query	   *new_tree = (Query *) copyObject(parsetree);
+	Node	   *new_qual = NULL;
+	Query	   *rule_action = NULL;
 
 	if (actions)
 		rule_action = lfirst(actions);
@@ -393,8 +393,8 @@ CopyAndAddQual(Query * parsetree,
 		new_qual = (Node *) copyObject(rule_qual);
 	if (rule_action != NULL)
 	{
-		List		   *rtable;
-		int				rt_length;
+		List	   *rtable;
+		int			rt_length;
 
 		rtable = new_tree->rtable;
 		rt_length = length(rtable);
@@ -418,7 +418,7 @@ CopyAndAddQual(Query * parsetree,
  *	   sensible semantics.	remember: reality is for dead birds -- glass
  *
  */
-static List    *
+static List *
 fireRules(Query * parsetree,
 		  int rt_index,
 		  CmdType event,
@@ -426,9 +426,9 @@ fireRules(Query * parsetree,
 		  List * locks,
 		  List ** qual_products)
 {
-	RewriteInfo    *info;
-	List		   *results = NIL;
-	List		   *i;
+	RewriteInfo *info;
+	List	   *results = NIL;
+	List	   *i;
 
 	/* choose rule to fire from list of rules */
 	if (locks == NIL)
@@ -445,12 +445,12 @@ fireRules(Query * parsetree,
 	locks = orderRules(locks);	/* instead rules first */
 	foreach(i, locks)
 	{
-		RewriteRule    *rule_lock = (RewriteRule *) lfirst(i);
-		Node		   *qual,
-					   *event_qual;
-		List		   *actions;
-		List		   *r;
-		bool			orig_instead_flag = *instead_flag;
+		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
+		Node	   *qual,
+				   *event_qual;
+		List	   *actions;
+		List	   *r;
+		bool		orig_instead_flag = *instead_flag;
 
 		/* multiple rule action time */
 		*instead_flag = rule_lock->isInstead;
@@ -463,8 +463,8 @@ fireRules(Query * parsetree,
 									   rt_index, event));
 		foreach(r, actions)
 		{
-			Query		   *rule_action = lfirst(r);
-			Node		   *rule_qual = copyObject(event_qual);
+			Query	   *rule_action = lfirst(r);
+			Node	   *rule_qual = copyObject(event_qual);
 
 			/*--------------------------------------------------
 			 * Step 1:
@@ -535,12 +535,12 @@ fireRules(Query * parsetree,
 	return results;
 }
 
-static List    *
+static List *
 RewriteQuery(Query * parsetree, bool * instead_flag, List ** qual_products)
 {
-	CmdType			event;
-	List		   *product_queries = NIL;
-	int				result_relation = 0;
+	CmdType		event;
+	List	   *product_queries = NIL;
+	int			result_relation = 0;
 
 	Assert(parsetree != NULL);
 
@@ -565,9 +565,9 @@ RewriteQuery(Query * parsetree, bool * instead_flag, List ** qual_products)
 		/*
 		 * the statement is an update, insert or delete
 		 */
-		RangeTblEntry  *rt_entry;
-		Relation		rt_entry_relation = NULL;
-		RuleLock	   *rt_entry_locks = NULL;
+		RangeTblEntry *rt_entry;
+		Relation	rt_entry_relation = NULL;
+		RuleLock   *rt_entry_locks = NULL;
 
 		rt_entry = rt_fetch(result_relation, parsetree->rtable);
 		rt_entry_relation = heap_openr(rt_entry->relname);
@@ -576,7 +576,7 @@ RewriteQuery(Query * parsetree, bool * instead_flag, List ** qual_products)
 
 		if (rt_entry_locks != NULL)
 		{
-			List		   *locks =
+			List	   *locks =
 			matchLocks(event, rt_entry_locks, result_relation, parsetree);
 
 			product_queries =
@@ -595,7 +595,7 @@ RewriteQuery(Query * parsetree, bool * instead_flag, List ** qual_products)
 		/*
 		 * the statement is a select
 		 */
-		Query		   *other;
+		Query	   *other;
 
 		other = copyObject(parsetree);	/* ApplyRetrieveRule changes the
 										 * range table */
@@ -613,14 +613,14 @@ RewriteQuery(Query * parsetree, bool * instead_flag, List ** qual_products)
 #define REWRITE_INVOKE_MAX		10
 #endif
 
-static int		numQueryRewriteInvoked = 0;
+static int	numQueryRewriteInvoked = 0;
 
 /*
  * QueryRewrite -
  *	  rewrite one query via QueryRewrite system, possibly returning 0, or many
  *	  queries
  */
-List		   *
+List	   *
 QueryRewrite(Query * parsetree)
 {
 	numQueryRewriteInvoked = 0;
@@ -635,14 +635,14 @@ QueryRewrite(Query * parsetree)
  * deepRewriteQuery -
  *	  rewrites the query and apply the rules again on the queries rewritten
  */
-static List    *
+static List *
 deepRewriteQuery(Query * parsetree)
 {
-	List		   *n;
-	List		   *rewritten = NIL;
-	List		   *result = NIL;
-	bool			instead;
-	List		   *qual_products = NIL;
+	List	   *n;
+	List	   *rewritten = NIL;
+	List	   *result = NIL;
+	bool		instead;
+	List	   *qual_products = NIL;
 
 	if (++numQueryRewriteInvoked > REWRITE_INVOKE_MAX)
 	{
@@ -657,8 +657,8 @@ deepRewriteQuery(Query * parsetree)
 
 	foreach(n, result)
 	{
-		Query		   *pt = lfirst(n);
-		List		   *newstuff = NIL;
+		Query	   *pt = lfirst(n);
+		List	   *newstuff = NIL;
 
 		newstuff = deepRewriteQuery(pt);
 		if (newstuff != NIL)

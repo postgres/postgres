@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.13 1997/09/07 04:37:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.14 1997/09/08 02:20:10 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -31,7 +31,7 @@
 #include <string.h>
 #endif
 
-bool			BuildingHash = false;
+bool		BuildingHash = false;
 
 /*
  *	hashbuild() -- build a new hash index.
@@ -52,30 +52,30 @@ hashbuild(Relation heap,
 		  FuncIndexInfo * finfo,
 		  PredInfo * predInfo)
 {
-	HeapScanDesc	hscan;
-	Buffer			buffer;
-	HeapTuple		htup;
-	IndexTuple		itup;
-	TupleDesc		htupdesc,
-					itupdesc;
-	Datum		   *attdata;
-	bool		   *nulls;
+	HeapScanDesc hscan;
+	Buffer		buffer;
+	HeapTuple	htup;
+	IndexTuple	itup;
+	TupleDesc	htupdesc,
+				itupdesc;
+	Datum	   *attdata;
+	bool	   *nulls;
 	InsertIndexResult res;
-	int				nhtups,
-					nitups;
-	int				i;
-	HashItem		hitem;
+	int			nhtups,
+				nitups;
+	int			i;
+	HashItem	hitem;
 
 #ifndef OMIT_PARTIAL_INDEX
-	ExprContext    *econtext;
-	TupleTable		tupleTable;
+	ExprContext *econtext;
+	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 
 #endif
-	Oid				hrelid,
-					irelid;
-	Node		   *pred,
-				   *oldPred;
+	Oid			hrelid,
+				irelid;
+	Node	   *pred,
+			   *oldPred;
 
 	/* note that this is a new btree */
 	BuildingHash = true;
@@ -171,8 +171,8 @@ hashbuild(Relation heap,
 		 */
 		for (i = 1; i <= natts; i++)
 		{
-			int				attoff;
-			bool			attnull;
+			int			attoff;
+			bool		attnull;
 
 			/*
 			 * Offsets are from the start of the tuple, and are
@@ -280,8 +280,8 @@ hashbuild(Relation heap,
 InsertIndexResult
 hashinsert(Relation rel, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
 {
-	HashItem		hitem;
-	IndexTuple		itup;
+	HashItem	hitem;
+	IndexTuple	itup;
 	InsertIndexResult res;
 
 
@@ -306,7 +306,7 @@ hashinsert(Relation rel, Datum * datum, char *nulls, ItemPointer ht_ctid, Relati
 /*
  *	hashgettuple() -- Get the next tuple in the scan.
  */
-char		   *
+char	   *
 hashgettuple(IndexScanDesc scan, ScanDirection dir)
 {
 	RetrieveIndexResult res;
@@ -329,14 +329,14 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 /*
  *	hashbeginscan() -- start a scan on a hash index
  */
-char		   *
+char	   *
 hashbeginscan(Relation rel,
 			  bool fromEnd,
 			  uint16 keysz,
 			  ScanKey scankey)
 {
-	IndexScanDesc	scan;
-	HashScanOpaque	so;
+	IndexScanDesc scan;
+	HashScanOpaque so;
 
 	scan = RelationGetIndexScan(rel, fromEnd, keysz, scankey);
 	so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
@@ -356,8 +356,8 @@ hashbeginscan(Relation rel,
 void
 hashrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 {
-	ItemPointer		iptr;
-	HashScanOpaque	so;
+	ItemPointer iptr;
+	HashScanOpaque so;
 
 	so = (HashScanOpaque) scan->opaque;
 
@@ -391,8 +391,8 @@ void
 hashendscan(IndexScanDesc scan)
 {
 
-	ItemPointer		iptr;
-	HashScanOpaque	so;
+	ItemPointer iptr;
+	HashScanOpaque so;
 
 	so = (HashScanOpaque) scan->opaque;
 
@@ -426,8 +426,8 @@ hashendscan(IndexScanDesc scan)
 void
 hashmarkpos(IndexScanDesc scan)
 {
-	ItemPointer		iptr;
-	HashScanOpaque	so;
+	ItemPointer iptr;
+	HashScanOpaque so;
 
 	/*
 	 * see if we ever call this code. if we do, then so_mrkbuf a useful
@@ -463,8 +463,8 @@ hashmarkpos(IndexScanDesc scan)
 void
 hashrestrpos(IndexScanDesc scan)
 {
-	ItemPointer		iptr;
-	HashScanOpaque	so;
+	ItemPointer iptr;
+	HashScanOpaque so;
 
 	/*
 	 * see if we ever call this code. if we do, then so_mrkbuf a useful

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.10 1997/09/07 04:38:11 momjian Exp $
+ *	  $Id: hio.c,v 1.11 1997/09/08 02:20:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,13 +35,13 @@ RelationPutHeapTuple(Relation relation,
 					 BlockNumber blockIndex,
 					 HeapTuple tuple)
 {
-	Buffer			buffer;
-	Page			pageHeader;
-	BlockNumber		numberOfBlocks;
-	OffsetNumber	offnum;
-	unsigned int	len;
-	ItemId			itemId;
-	Item			item;
+	Buffer		buffer;
+	Page		pageHeader;
+	BlockNumber numberOfBlocks;
+	OffsetNumber offnum;
+	unsigned int len;
+	ItemId		itemId;
+	Item		item;
 
 	/* ----------------
 	 *	increment access statistics
@@ -108,13 +108,13 @@ RelationPutHeapTuple(Relation relation,
 void
 RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 {
-	Buffer			buffer;
-	Page			pageHeader;
-	BlockNumber		lastblock;
-	OffsetNumber	offnum;
-	unsigned int	len;
-	ItemId			itemId;
-	Item			item;
+	Buffer		buffer;
+	Page		pageHeader;
+	BlockNumber lastblock;
+	OffsetNumber offnum;
+	unsigned int len;
+	ItemId		itemId;
+	Item		item;
 
 	Assert(RelationIsValid(relation));
 	Assert(HeapTupleIsValid(tuple));

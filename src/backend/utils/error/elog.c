@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.18 1997/09/07 04:53:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.19 1997/09/08 02:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,11 +29,11 @@
 #include "libpq/libpq.h"
 #include "storage/proc.h"
 
-static int		Debugfile = -1;
-static int		Err_file = -1;
-static int		ElogDebugIndentLevel = 0;
+static int	Debugfile = -1;
+static int	Err_file = -1;
+static int	ElogDebugIndentLevel = 0;
 
-extern char		OutputFileName[];
+extern char OutputFileName[];
 
 /*
  * elog --
@@ -42,24 +42,24 @@ extern char		OutputFileName[];
 void
 elog(int lev, const char *fmt,...)
 {
-	va_list			ap;
-	char			buf[ELOG_MAXLEN],
-					line[ELOG_MAXLEN];
-	register char  *bp;
+	va_list		ap;
+	char		buf[ELOG_MAXLEN],
+				line[ELOG_MAXLEN];
+	register char *bp;
 	register const char *cp;
-	extern int		errno,
-					sys_nerr;
+	extern int	errno,
+				sys_nerr;
 
 #ifndef PG_STANDALONE
-	extern FILE    *Pfout;
+	extern FILE *Pfout;
 
 #endif							/* !PG_STANDALONE */
 #ifdef ELOG_TIMESTAMPS
-	time_t			tim;
+	time_t		tim;
 
 #endif
-	int				len;
-	int				i = 0;
+	int			len;
+	int			i = 0;
 
 	va_start(ap, fmt);
 	if (lev == DEBUG && Debugfile < 0)
@@ -68,31 +68,31 @@ elog(int lev, const char *fmt,...)
 	}
 	switch (lev)
 	{
-	case NOIND:
-		i = ElogDebugIndentLevel - 1;
-		if (i < 0)
-			i = 0;
-		if (i > 30)
-			i = i % 30;
-		cp = "DEBUG:";
-		break;
-	case DEBUG:
-		i = ElogDebugIndentLevel;
-		if (i < 0)
-			i = 0;
-		if (i > 30)
-			i = i % 30;
-		cp = "DEBUG:";
-		break;
-	case NOTICE:
-		cp = "NOTICE:";
-		break;
-	case WARN:
-		cp = "WARN:";
-		break;
-	default:
-		sprintf(line, "FATAL %d:", lev);
-		cp = line;
+		case NOIND:
+			i = ElogDebugIndentLevel - 1;
+			if (i < 0)
+				i = 0;
+			if (i > 30)
+				i = i % 30;
+			cp = "DEBUG:";
+			break;
+		case DEBUG:
+			i = ElogDebugIndentLevel;
+			if (i < 0)
+				i = 0;
+			if (i > 30)
+				i = i % 30;
+			cp = "DEBUG:";
+			break;
+		case NOTICE:
+			cp = "NOTICE:";
+			break;
+		case WARN:
+			cp = "WARN:";
+			break;
+		default:
+			sprintf(line, "FATAL %d:", lev);
+			cp = line;
 	}
 #ifdef ELOG_TIMESTAMPS
 	time(&tim);
@@ -166,7 +166,7 @@ elog(int lev, const char *fmt,...)
 
 	if (lev == WARN)
 	{
-		extern int		InWarn;
+		extern int	InWarn;
 
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (!InWarn)
@@ -209,8 +209,8 @@ elog(int lev, const char *fmt,...)
 int
 DebugFileOpen(void)
 {
-	int				fd,
-					istty;
+	int			fd,
+				istty;
 
 	Err_file = Debugfile = -1;
 	ElogDebugIndentLevel = 0;

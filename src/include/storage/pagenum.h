@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pagenum.h,v 1.4 1997/09/07 05:01:32 momjian Exp $
+ * $Id: pagenum.h,v 1.5 1997/09/08 02:39:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,9 +14,9 @@
 #define PAGENUM_H
 
 
-typedef uint16	PageNumber;
+typedef uint16 PageNumber;
 
-typedef uint32	LogicalPageNumber;
+typedef uint32 LogicalPageNumber;
 
 #define InvalidLogicalPageNumber		0
 

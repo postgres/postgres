@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.6 1997/09/07 04:50:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.7 1997/09/08 02:30:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,12 +33,12 @@
 int32
 regprocin(char *proname)
 {
-	Relation		proc;
-	HeapScanDesc	procscan;
-	HeapTuple		proctup;
-	ScanKeyData		key;
-	RegProcedure	result = (Oid) 0;
-	bool			isnull;
+	Relation	proc;
+	HeapScanDesc procscan;
+	HeapTuple	proctup;
+	ScanKeyData key;
+	RegProcedure result = (Oid) 0;
+	bool		isnull;
 
 	if (proname == NULL)
 		return (0);
@@ -66,21 +66,21 @@ regprocin(char *proname)
 	proctup = heap_getnext(procscan, 0, (Buffer *) NULL);
 	switch (HeapTupleIsValid(proctup))
 	{
-	case 1:
-		result = (RegProcedure) heap_getattr(proctup,
-											 InvalidBuffer,
-											 ObjectIdAttributeNumber,
+		case 1:
+			result = (RegProcedure) heap_getattr(proctup,
+												 InvalidBuffer,
+												 ObjectIdAttributeNumber,
 										RelationGetTupleDescriptor(proc),
-											 &isnull);
-		if (isnull)
-		{
-			elog(FATAL, "regprocin: null procedure %s", proname);
-		}
-		break;
-	case 0:
-		result = (RegProcedure) 0;
+												 &isnull);
+			if (isnull)
+			{
+				elog(FATAL, "regprocin: null procedure %s", proname);
+			}
+			break;
+		case 0:
+			result = (RegProcedure) 0;
 #ifdef	EBUG
-		elog(DEBUG, "regprocin: no such procedure %s", proname);
+			elog(DEBUG, "regprocin: no such procedure %s", proname);
 #endif							/* defined(EBUG) */
 	}
 	heap_endscan(procscan);
@@ -91,14 +91,14 @@ regprocin(char *proname)
 /*
  *		regprocout		- converts proid to "proname"
  */
-char		   *
+char	   *
 regprocout(RegProcedure proid)
 {
-	Relation		proc;
-	HeapScanDesc	procscan;
-	HeapTuple		proctup;
-	char		   *result;
-	ScanKeyData		key;
+	Relation	proc;
+	HeapScanDesc procscan;
+	HeapTuple	proctup;
+	char	   *result;
+	ScanKeyData key;
 
 	result = (char *) palloc(NAMEDATALEN);
 	proc = heap_openr(ProcedureRelationName);
@@ -125,24 +125,24 @@ regprocout(RegProcedure proid)
 	proctup = heap_getnext(procscan, 0, (Buffer *) NULL);
 	switch (HeapTupleIsValid(proctup))
 	{
-		char		   *s;
-		bool			isnull;
+			char	   *s;
+			bool		isnull;
 
-	case 1:
-		s = (char *) heap_getattr(proctup, InvalidBuffer, 1,
+		case 1:
+			s = (char *) heap_getattr(proctup, InvalidBuffer, 1,
 							  RelationGetTupleDescriptor(proc), &isnull);
-		if (!isnull)
-		{
-			strNcpy(result, s, 16);
-			break;
-		}
-		elog(FATAL, "regprocout: null procedure %d", proid);
-		/* FALLTHROUGH */
-	case 0:
-		result[0] = '-';
-		result[1] = '\0';
+			if (!isnull)
+			{
+				strNcpy(result, s, 16);
+				break;
+			}
+			elog(FATAL, "regprocout: null procedure %d", proid);
+			/* FALLTHROUGH */
+		case 0:
+			result[0] = '-';
+			result[1] = '\0';
 #ifdef	EBUG
-		elog(DEBUG, "regprocout: no such procedure %d", proid);
+			elog(DEBUG, "regprocout: no such procedure %d", proid);
 #endif							/* defined(EBUG) */
 	}
 	heap_endscan(procscan);

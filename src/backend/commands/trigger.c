@@ -32,36 +32,36 @@
 #include "utils/syscache.h"
 #endif
 
-TriggerData    *CurrentTriggerData = NULL;
+TriggerData *CurrentTriggerData = NULL;
 
-void			RelationBuildTriggers(Relation relation);
-void			FreeTriggerDesc(Relation relation);
+void		RelationBuildTriggers(Relation relation);
+void		FreeTriggerDesc(Relation relation);
 
-static void		DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger);
+static void DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger);
 
-extern void		fmgr_info(Oid procedureId, func_ptr * function, int *nargs);
+extern void fmgr_info(Oid procedureId, func_ptr * function, int *nargs);
 extern GlobalMemory CacheCxt;
 
 void
 CreateTrigger(CreateTrigStmt * stmt)
 {
-	int16			tgtype;
-	int16			tgattr[8] = {0};
-	Datum			values[Natts_pg_trigger];
-	char			nulls[Natts_pg_trigger];
-	Relation		rel;
-	Relation		tgrel;
-	HeapScanDesc	tgscan;
-	ScanKeyData		key;
-	Relation		relrdesc;
-	HeapTuple		tuple;
+	int16		tgtype;
+	int16		tgattr[8] = {0};
+	Datum		values[Natts_pg_trigger];
+	char		nulls[Natts_pg_trigger];
+	Relation	rel;
+	Relation	tgrel;
+	HeapScanDesc tgscan;
+	ScanKeyData key;
+	Relation	relrdesc;
+	HeapTuple	tuple;
 	ItemPointerData oldTID;
-	Relation		idescs[Num_pg_trigger_indices];
-	Relation		ridescs[Num_pg_class_indices];
-	MemoryContext	oldcxt;
-	Oid				fargtypes[8];
-	int				found = 0;
-	int				i;
+	Relation	idescs[Num_pg_trigger_indices];
+	Relation	ridescs[Num_pg_class_indices];
+	MemoryContext oldcxt;
+	Oid			fargtypes[8];
+	int			found = 0;
+	int			i;
 
 	if (IsSystemRelationName(stmt->relname))
 		elog(WARN, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
@@ -86,24 +86,24 @@ CreateTrigger(CreateTrigStmt * stmt)
 	{
 		switch (stmt->actions[i])
 		{
-		case 'i':
-			if (TRIGGER_FOR_INSERT(tgtype))
-				elog(WARN, "CreateTrigger: double INSERT event specified");
-			TRIGGER_SETT_INSERT(tgtype);
-			break;
-		case 'd':
-			if (TRIGGER_FOR_DELETE(tgtype))
-				elog(WARN, "CreateTrigger: double DELETE event specified");
-			TRIGGER_SETT_DELETE(tgtype);
-			break;
-		case 'u':
-			if (TRIGGER_FOR_UPDATE(tgtype))
-				elog(WARN, "CreateTrigger: double UPDATE event specified");
-			TRIGGER_SETT_UPDATE(tgtype);
-			break;
-		default:
-			elog(WARN, "CreateTrigger: unknown event specified");
-			break;
+			case 'i':
+				if (TRIGGER_FOR_INSERT(tgtype))
+					elog(WARN, "CreateTrigger: double INSERT event specified");
+				TRIGGER_SETT_INSERT(tgtype);
+				break;
+			case 'd':
+				if (TRIGGER_FOR_DELETE(tgtype))
+					elog(WARN, "CreateTrigger: double DELETE event specified");
+				TRIGGER_SETT_DELETE(tgtype);
+				break;
+			case 'u':
+				if (TRIGGER_FOR_UPDATE(tgtype))
+					elog(WARN, "CreateTrigger: double UPDATE event specified");
+				TRIGGER_SETT_UPDATE(tgtype);
+				break;
+			default:
+				elog(WARN, "CreateTrigger: unknown event specified");
+				break;
 		}
 	}
 
@@ -145,14 +145,14 @@ CreateTrigger(CreateTrigStmt * stmt)
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
 	if (stmt->args)
 	{
-		List		   *le;
-		char		   *args;
-		int16			nargs = length(stmt->args);
-		int				len = 0;
+		List	   *le;
+		char	   *args;
+		int16		nargs = length(stmt->args);
+		int			len = 0;
 
 		foreach(le, stmt->args)
 		{
-			char		   *ar = (char *) lfirst(le);
+			char	   *ar = (char *) lfirst(le);
 
 			len += strlen(ar) + 4;
 		}
@@ -213,17 +213,17 @@ CreateTrigger(CreateTrigStmt * stmt)
 void
 DropTrigger(DropTrigStmt * stmt)
 {
-	Relation		rel;
-	Relation		tgrel;
-	HeapScanDesc	tgscan;
-	ScanKeyData		key;
-	Relation		relrdesc;
-	HeapTuple		tuple;
+	Relation	rel;
+	Relation	tgrel;
+	HeapScanDesc tgscan;
+	ScanKeyData key;
+	Relation	relrdesc;
+	HeapTuple	tuple;
 	ItemPointerData oldTID;
-	Relation		ridescs[Num_pg_class_indices];
-	MemoryContext	oldcxt;
-	int				found = 0;
-	int				tgfound = 0;
+	Relation	ridescs[Num_pg_class_indices];
+	MemoryContext oldcxt;
+	int			found = 0;
+	int			tgfound = 0;
 
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetPgUserName(), stmt->relname, RELNAME))
@@ -295,10 +295,10 @@ DropTrigger(DropTrigStmt * stmt)
 void
 RelationRemoveTriggers(Relation rel)
 {
-	Relation		tgrel;
-	HeapScanDesc	tgscan;
-	ScanKeyData		key;
-	HeapTuple		tup;
+	Relation	tgrel;
+	HeapScanDesc tgscan;
+	ScanKeyData key;
+	HeapTuple	tup;
 
 	tgrel = heap_openr(TriggerRelationName);
 	RelationSetLockForWrite(tgrel);
@@ -319,22 +319,22 @@ RelationRemoveTriggers(Relation rel)
 void
 RelationBuildTriggers(Relation relation)
 {
-	TriggerDesc    *trigdesc = (TriggerDesc *) palloc(sizeof(TriggerDesc));
-	int				ntrigs = relation->rd_rel->reltriggers;
-	Trigger		   *triggers = NULL;
-	Trigger		   *build;
-	Relation		tgrel;
+	TriggerDesc *trigdesc = (TriggerDesc *) palloc(sizeof(TriggerDesc));
+	int			ntrigs = relation->rd_rel->reltriggers;
+	Trigger    *triggers = NULL;
+	Trigger    *build;
+	Relation	tgrel;
 	Form_pg_trigger pg_trigger;
-	Relation		irel;
-	ScanKeyData		skey;
-	HeapTuple		tuple;
-	IndexScanDesc	sd;
+	Relation	irel;
+	ScanKeyData skey;
+	HeapTuple	tuple;
+	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	Buffer			buffer;
-	ItemPointer		iptr;
+	Buffer		buffer;
+	ItemPointer iptr;
 	struct varlena *val;
-	bool			isnull;
-	int				found;
+	bool		isnull;
+	int			found;
 
 	memset(trigdesc, 0, sizeof(TriggerDesc));
 
@@ -386,8 +386,8 @@ RelationBuildTriggers(Relation relation)
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 		if (build->tgnargs > 0)
 		{
-			char		   *p;
-			int				i;
+			char	   *p;
+			int			i;
 
 			val = (struct varlena *) fastgetattr(tuple,
 												 Anum_pg_trigger_tgargs,
@@ -437,10 +437,10 @@ RelationBuildTriggers(Relation relation)
 void
 FreeTriggerDesc(Relation relation)
 {
-	TriggerDesc    *trigdesc = relation->trigdesc;
-	Trigger		 ***t;
-	Trigger		   *trigger;
-	int				i;
+	TriggerDesc *trigdesc = relation->trigdesc;
+	Trigger  ***t;
+	Trigger    *trigger;
+	int			i;
 
 	if (trigdesc == NULL)
 		return;
@@ -483,9 +483,9 @@ FreeTriggerDesc(Relation relation)
 static void
 DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger)
 {
-	uint16		   *n;
-	Trigger		 ***t,
-				 ***tp;
+	uint16	   *n;
+	Trigger  ***t,
+			 ***tp;
 
 	if (TRIGGER_FOR_ROW(trigger->tgtype))		/* Is ROW/STATEMENT
 												 * trigger */
@@ -557,11 +557,11 @@ DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger)
 HeapTuple
 ExecBRInsertTriggers(Relation rel, HeapTuple tuple)
 {
-	int				ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT];
-	Trigger		  **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_INSERT];
-	HeapTuple		newtuple = tuple;
-	int				nargs;
-	int				i;
+	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT];
+	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_INSERT];
+	HeapTuple	newtuple = tuple;
+	int			nargs;
+	int			i;
 
 	CurrentTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
 	CurrentTriggerData->tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;

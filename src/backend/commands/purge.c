@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.7 1997/09/07 04:40:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.8 1997/09/08 02:22:11 momjian Exp $
  *
  * Note:
  *		XXX There are many instances of int32 instead of ...Time.  These
@@ -28,7 +28,7 @@
 #include <commands/purge.h>
 #include <utils/builtins.h>		/* for isreltime() */
 
-static char		cmdname[] = "RelationPurge";
+static char cmdname[] = "RelationPurge";
 
 #define RELATIVE		01
 #define ABSOLUTE		02
@@ -38,23 +38,23 @@ RelationPurge(char *relationName,
 			  char *absoluteTimeString,
 			  char *relativeTimeString)
 {
-	register		i;
-	AbsoluteTime	absoluteTime = INVALID_ABSTIME;
-	RelativeTime	relativeTime = INVALID_RELTIME;
-	bits8			dateTag;
-	Relation		relation;
-	HeapScanDesc	scan;
+	register	i;
+	AbsoluteTime absoluteTime = INVALID_ABSTIME;
+	RelativeTime relativeTime = INVALID_RELTIME;
+	bits8		dateTag;
+	Relation	relation;
+	HeapScanDesc scan;
 	static ScanKeyData key[1] = {
 		{0, Anum_pg_class_relname, F_NAMEEQ}
 	};
-	Buffer			buffer;
-	HeapTuple		newTuple,
-					oldTuple;
-	AbsoluteTime	currentTime;
-	char		   *values[Natts_pg_class];
-	char			nulls[Natts_pg_class];
-	char			replace[Natts_pg_class];
-	Relation		idescs[Num_pg_class_indices];
+	Buffer		buffer;
+	HeapTuple	newTuple,
+				oldTuple;
+	AbsoluteTime currentTime;
+	char	   *values[Natts_pg_class];
+	char		nulls[Natts_pg_class];
+	char		replace[Natts_pg_class];
+	Relation	idescs[Num_pg_class_indices];
 
 	/*
 	 * XXX for some reason getmyrelids (in inval.c) barfs when you

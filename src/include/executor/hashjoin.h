@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.4 1997/09/07 04:57:49 momjian Exp $
+ * $Id: hashjoin.h,v 1.5 1997/09/08 02:36:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
  *	because the hashtable may reallocate in difference processes
  * -----------------
  */
-typedef int		RelativeAddr;
+typedef int RelativeAddr;
 
 /* ------------------
  *	the relative addresses are always relative to the head of the
@@ -30,8 +30,8 @@ typedef int		RelativeAddr;
 #define ABSADDR(X)		((X) < 0 ? NULL: (char*)hashtable + X)
 #define RELADDR(X)		(RelativeAddr)((char*)(X) - (char*)hashtable)
 
-typedef char  **charPP;
-typedef int    *intP;
+typedef char **charPP;
+typedef int *intP;
 
 /* ----------------------------------------------------------------
  *				hash-join hash table structures
@@ -39,43 +39,43 @@ typedef int    *intP;
  */
 typedef struct HashTableData
 {
-	int				nbuckets;
-	int				totalbuckets;
-	int				bucketsize;
-	IpcMemoryId		shmid;
-	RelativeAddr	top;		/* char* */
-	RelativeAddr	bottom;		/* char* */
-	RelativeAddr	overflownext;		/* char* */
-	RelativeAddr	batch;		/* char* */
-	RelativeAddr	readbuf;	/* char* */
-	int				nbatch;
-	RelativeAddr	outerbatchNames;	/* RelativeAddr* */
-	RelativeAddr	outerbatchPos;		/* RelativeAddr* */
-	RelativeAddr	innerbatchNames;	/* RelativeAddr* */
-	RelativeAddr	innerbatchPos;		/* RelativeAddr* */
-	RelativeAddr	innerbatchSizes;	/* int* */
-	int				curbatch;
-	int				nprocess;
-	int				pcount;
-}				HashTableData;	/* real hash table follows here */
+	int			nbuckets;
+	int			totalbuckets;
+	int			bucketsize;
+	IpcMemoryId shmid;
+	RelativeAddr top;			/* char* */
+	RelativeAddr bottom;		/* char* */
+	RelativeAddr overflownext;	/* char* */
+	RelativeAddr batch;			/* char* */
+	RelativeAddr readbuf;		/* char* */
+	int			nbatch;
+	RelativeAddr outerbatchNames;		/* RelativeAddr* */
+	RelativeAddr outerbatchPos; /* RelativeAddr* */
+	RelativeAddr innerbatchNames;		/* RelativeAddr* */
+	RelativeAddr innerbatchPos; /* RelativeAddr* */
+	RelativeAddr innerbatchSizes;		/* int* */
+	int			curbatch;
+	int			nprocess;
+	int			pcount;
+}			HashTableData;		/* real hash table follows here */
 
 typedef HashTableData *HashJoinTable;
 
 typedef struct OverflowTupleData
 {
-	RelativeAddr	tuple;		/* HeapTuple */
-	RelativeAddr	next;		/* struct OverflowTupleData * */
-}				OverflowTupleData;		/* real tuple follows here */
+	RelativeAddr tuple;			/* HeapTuple */
+	RelativeAddr next;			/* struct OverflowTupleData * */
+}			OverflowTupleData;	/* real tuple follows here */
 
 typedef OverflowTupleData *OverflowTuple;
 
 typedef struct HashBucketData
 {
-	RelativeAddr	top;		/* HeapTuple */
-	RelativeAddr	bottom;		/* HeapTuple */
-	RelativeAddr	firstotuple;/* OverflowTuple */
-	RelativeAddr	lastotuple; /* OverflowTuple */
-}				HashBucketData; /* real bucket follows here */
+	RelativeAddr top;			/* HeapTuple */
+	RelativeAddr bottom;		/* HeapTuple */
+	RelativeAddr firstotuple;	/* OverflowTuple */
+	RelativeAddr lastotuple;	/* OverflowTuple */
+}			HashBucketData;		/* real bucket follows here */
 
 typedef HashBucketData *HashBucket;
 

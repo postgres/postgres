@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/port.c,v 1.2 1997/09/07 04:45:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/port.c,v 1.3 1997/09/08 02:26:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,10 @@ srandom(int seed)
 int
 getrusage(int who, struct rusage * rusage)
 {
-	struct tms		tms;
-	register int	tick_rate = CLK_TCK;		/* ticks per second */
-	clock_t			u,
-					s;
+	struct tms	tms;
+	register int tick_rate = CLK_TCK;	/* ticks per second */
+	clock_t		u,
+				s;
 
 	if (rusage == (struct rusage *) NULL)
 	{
@@ -48,17 +48,17 @@ getrusage(int who, struct rusage * rusage)
 	}
 	switch (who)
 	{
-	case RUSAGE_SELF:
-		u = tms.tms_utime;
-		s = tms.tms_stime;
-		break;
-	case RUSAGE_CHILDREN:
-		u = tms.tms_cutime;
-		s = tms.tms_cstime;
-		break;
-	default:
-		errno = EINVAL;
-		return (-1);
+		case RUSAGE_SELF:
+			u = tms.tms_utime;
+			s = tms.tms_stime;
+			break;
+		case RUSAGE_CHILDREN:
+			u = tms.tms_cutime;
+			s = tms.tms_cstime;
+			break;
+		default:
+			errno = EINVAL;
+			return (-1);
 	}
 #define TICK_TO_SEC(T, RATE)	((T)/(RATE))
 #define TICK_TO_USEC(T,RATE)	(((T)%(RATE)*1000000)/RATE)

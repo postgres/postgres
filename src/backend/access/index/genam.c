@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.8 1997/09/07 04:38:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.9 1997/09/08 02:20:33 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -98,7 +98,7 @@ RelationGetIndexScan(Relation relation,
 					 uint16 numberOfKeys,
 					 ScanKey key)
 {
-	IndexScanDesc	scan;
+	IndexScanDesc scan;
 
 	if (!RelationIsValid(relation))
 		elog(WARN, "RelationGetIndexScan: relation invalid");

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.10 1997/09/07 04:56:42 momjian Exp $
+ * $Id: pg_class.h,v 1.11 1997/09/08 02:35:03 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -52,33 +52,33 @@
  */
 CATALOG(pg_class) BOOTSTRAP
 {
-	NameData		relname;
-	Oid				reltype;
-	Oid				relowner;
-	Oid				relam;
-	int4			relpages;
-	int4			reltuples;
-	int4			relexpires; /* really used as a abstime, but fudge it
+	NameData	relname;
+	Oid			reltype;
+	Oid			relowner;
+	Oid			relam;
+	int4		relpages;
+	int4		reltuples;
+	int4		relexpires;		/* really used as a abstime, but fudge it
 								 * for now */
-	int4			relpreserved;		/* really used as a reltime, but
-										 * fudge it for now */
-	bool			relhasindex;
-	bool			relisshared;
-	char			relkind;
-	char			relarch;	/* 'h' = heavy, 'l' = light, 'n' = no
+	int4		relpreserved;	/* really used as a reltime, but fudge it
+								 * for now */
+	bool		relhasindex;
+	bool		relisshared;
+	char		relkind;
+	char		relarch;		/* 'h' = heavy, 'l' = light, 'n' = no
 								 * archival */
-	int2			relnatts;
+	int2		relnatts;
 
 	/*
 	 * relnatts is the number of user attributes this class has.  There
 	 * must be exactly this many instances in Class pg_attribute for this
 	 * class which have attnum > 0 (= user attribute).
 	 */
-	int2			relsmgr;
-	int2			relchecks;	/* # of CHECK constraints */
-	int2			reltriggers;/* # of TRIGGERs */
-	bool			relhasrules;
-	aclitem			relacl[1];	/* this is here for the catalog */
+	int2		relsmgr;
+	int2		relchecks;		/* # of CHECK constraints */
+	int2		reltriggers;	/* # of TRIGGERs */
+	bool		relhasrules;
+	aclitem		relacl[1];		/* this is here for the catalog */
 } FormData_pg_class;
 
 #define CLASS_TUPLE_SIZE \

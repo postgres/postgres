@@ -55,7 +55,7 @@ gistSplit(Relation r, Buffer buffer,
 static void
 gistnewroot(GISTSTATE * giststate, Relation r, IndexTuple lt,
 			IndexTuple rt);
-static void		GISTInitBuffer(Buffer b, uint32 f);
+static void GISTInitBuffer(Buffer b, uint32 f);
 static BlockNumber
 gistChooseSubtree(Relation r, IndexTuple itup, int level,
 				  GISTSTATE * giststate,
@@ -63,13 +63,13 @@ gistChooseSubtree(Relation r, IndexTuple itup, int level,
 static OffsetNumber
 gistchoose(Relation r, Page p, IndexTuple it,
 		   GISTSTATE * giststate);
-static int		gistnospace(Page p, IndexTuple it);
-void			gistdelete(Relation r, ItemPointer tid);
+static int	gistnospace(Page p, IndexTuple it);
+void		gistdelete(Relation r, ItemPointer tid);
 static IndexTuple gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t);
 static void
 gistcentryinit(GISTSTATE * giststate, GISTENTRY * e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);
-static char    *int_range_out(INTRANGE * r);
+static char *int_range_out(INTRANGE * r);
 
 /*
 ** routine to build an index.  Basically calls insert over and over
@@ -85,33 +85,33 @@ gistbuild(Relation heap,
 		  FuncIndexInfo * finfo,
 		  PredInfo * predInfo)
 {
-	HeapScanDesc	scan;
-	Buffer			buffer;
-	AttrNumber		i;
-	HeapTuple		htup;
-	IndexTuple		itup;
-	TupleDesc		hd,
-					id;
+	HeapScanDesc scan;
+	Buffer		buffer;
+	AttrNumber	i;
+	HeapTuple	htup;
+	IndexTuple	itup;
+	TupleDesc	hd,
+				id;
 	InsertIndexResult res;
-	Datum		   *d;
-	bool		   *nulls;
-	int				nb,
-					nh,
-					ni;
+	Datum	   *d;
+	bool	   *nulls;
+	int			nb,
+				nh,
+				ni;
 
 #ifndef OMIT_PARTIAL_INDEX
-	ExprContext    *econtext;
-	TupleTable		tupleTable;
+	ExprContext *econtext;
+	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 
 #endif
-	Oid				hrelid,
-					irelid;
-	Node		   *pred,
-				   *oldPred;
-	GISTSTATE		giststate;
-	GISTENTRY		tmpcentry;
-	bool		   *compvec;
+	Oid			hrelid,
+				irelid;
+	Node	   *pred,
+			   *oldPred;
+	GISTSTATE	giststate;
+	GISTENTRY	tmpcentry;
+	bool	   *compvec;
 
 	/* GiSTs only know how to do stupid locking now */
 	RelationSetLockForWrite(index);
@@ -220,8 +220,8 @@ gistbuild(Relation heap,
 
 		for (i = 1; i <= natts; i++)
 		{
-			int				attoff;
-			bool			attnull;
+			int			attoff;
+			bool		attnull;
 
 			/*
 			 * Offsets are from the start of the tuple, and are
@@ -331,11 +331,11 @@ InsertIndexResult
 gistinsert(Relation r, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
 {
 	InsertIndexResult res;
-	IndexTuple		itup;
-	GISTSTATE		giststate;
-	GISTENTRY		tmpentry;
-	int				i;
-	bool		   *compvec;
+	IndexTuple	itup;
+	GISTSTATE	giststate;
+	GISTENTRY	tmpentry;
+	int			i;
+	bool	   *compvec;
 
 	initGISTstate(&giststate, r);
 
@@ -373,7 +373,7 @@ gistinsert(Relation r, Datum * datum, char *nulls, ItemPointer ht_ctid, Relation
 ** that knowledge (some compression routines may want to fish around
 ** on the page, for example, or do something special for leaf nodes.)
 */
-static			OffsetNumber
+static OffsetNumber
 gistPageAddItem(GISTSTATE * giststate,
 				Relation r,
 				Page page,
@@ -384,8 +384,8 @@ gistPageAddItem(GISTSTATE * giststate,
 				GISTENTRY * dentry,
 				IndexTuple * newtup)
 {
-	GISTENTRY		tmpcentry;
-	IndexTuple		itup = (IndexTuple) item;
+	GISTENTRY	tmpcentry;
+	IndexTuple	itup = (IndexTuple) item;
 
 	/*
 	 * recompress the item given that we now know the exact page and
@@ -408,20 +408,20 @@ gistPageAddItem(GISTSTATE * giststate,
 }
 
 
-static			InsertIndexResult
+static InsertIndexResult
 gistdoinsert(Relation r,
 			 IndexTuple itup,	/* itup contains compressed entry */
 			 GISTSTATE * giststate)
 {
-	GISTENTRY		tmpdentry;
+	GISTENTRY	tmpdentry;
 	InsertIndexResult res;
-	OffsetNumber	l;
-	GISTSTACK	   *stack;
-	Buffer			buffer;
-	BlockNumber		blk;
-	Page			page;
-	OffsetNumber	off;
-	IndexTuple		newtup;
+	OffsetNumber l;
+	GISTSTACK  *stack;
+	Buffer		buffer;
+	BlockNumber blk;
+	Page		page;
+	OffsetNumber off;
+	IndexTuple	newtup;
 
 	/* 3rd arg is ignored for now */
 	blk = gistChooseSubtree(r, itup, 0, giststate, &stack, &buffer);
@@ -464,7 +464,7 @@ gistdoinsert(Relation r,
 }
 
 
-static			BlockNumber
+static BlockNumber
 gistChooseSubtree(Relation r, IndexTuple itup,	/* itup has compressed
 												 * entry */
 				  int level,
@@ -472,12 +472,12 @@ gistChooseSubtree(Relation r, IndexTuple itup,	/* itup has compressed
 				  GISTSTACK ** retstack /* out */ ,
 				  Buffer * leafbuf /* out */ )
 {
-	Buffer			buffer;
-	BlockNumber		blk;
-	GISTSTACK	   *stack;
-	Page			page;
-	GISTPageOpaque	opaque;
-	IndexTuple		which;
+	Buffer		buffer;
+	BlockNumber blk;
+	GISTSTACK  *stack;
+	Page		page;
+	GISTPageOpaque opaque;
+	IndexTuple	which;
 
 	blk = GISTP_ROOT;
 	buffer = InvalidBuffer;
@@ -496,8 +496,8 @@ gistChooseSubtree(Relation r, IndexTuple itup,	/* itup has compressed
 		opaque = (GISTPageOpaque) PageGetSpecialPointer(page);
 		if (!(opaque->flags & F_LEAF))
 		{
-			GISTSTACK	   *n;
-			ItemId			iid;
+			GISTSTACK  *n;
+			ItemId		iid;
 
 			n = (GISTSTACK *) palloc(sizeof(GISTSTACK));
 			n->gs_parent = stack;
@@ -526,17 +526,17 @@ gistAdjustKeys(Relation r,
 			   int att_size,
 			   GISTSTATE * giststate)
 {
-	char		   *oldud;
-	Page			p;
-	Buffer			b;
-	bool			result;
-	bytea		   *evec;
-	GISTENTRY		centry,
-				   *ev0p,
-				   *ev1p;
-	int				size,
-					datumsize;
-	IndexTuple		tid;
+	char	   *oldud;
+	Page		p;
+	Buffer		b;
+	bool		result;
+	bytea	   *evec;
+	GISTENTRY	centry,
+			   *ev0p,
+			   *ev1p;
+	int			size,
+				datumsize;
+	IndexTuple	tid;
 
 	if (stk == (GISTSTACK *) NULL)
 		return;
@@ -570,7 +570,7 @@ gistAdjustKeys(Relation r,
 	(giststate->equalFn) (ev0p->pred, datum, &result);
 	if (!result)
 	{
-		TupleDesc		td = RelationGetTupleDescriptor(r);
+		TupleDesc	td = RelationGetTupleDescriptor(r);
 
 		/* compress datum for storage on page */
 		gistcentryinit(giststate, &centry, datum, ev0p->rel, ev0p->page,
@@ -595,10 +595,10 @@ gistAdjustKeys(Relation r,
 			 * delete the old entry and insert the new * one.  Note that
 			 * this may cause a split here!
 			 */
-			IndexTuple		newtup;
+			IndexTuple	newtup;
 			ItemPointerData oldtid;
-			char		   *isnull;
-			TupleDesc		tupDesc;
+			char	   *isnull;
+			TupleDesc	tupDesc;
 			InsertIndexResult res;
 
 			/* delete old tuple */
@@ -641,41 +641,41 @@ gistAdjustKeys(Relation r,
  *	gistSplit -- split a page in the tree.
  *
  */
-static			InsertIndexResult
+static InsertIndexResult
 gistSplit(Relation r,
 		  Buffer buffer,
 		  GISTSTACK * stack,
 		  IndexTuple itup,		/* contains compressed entry */
 		  GISTSTATE * giststate)
 {
-	Page			p;
-	Buffer			leftbuf,
-					rightbuf;
-	Page			left,
-					right;
-	ItemId			itemid;
-	IndexTuple		item;
-	IndexTuple		ltup,
-					rtup,
-					newtup;
-	OffsetNumber	maxoff;
-	OffsetNumber	i;
-	OffsetNumber	leftoff,
-					rightoff;
-	BlockNumber		lbknum,
-					rbknum;
-	BlockNumber		bufblock;
-	GISTPageOpaque	opaque;
-	int				blank;
+	Page		p;
+	Buffer		leftbuf,
+				rightbuf;
+	Page		left,
+				right;
+	ItemId		itemid;
+	IndexTuple	item;
+	IndexTuple	ltup,
+				rtup,
+				newtup;
+	OffsetNumber maxoff;
+	OffsetNumber i;
+	OffsetNumber leftoff,
+				rightoff;
+	BlockNumber lbknum,
+				rbknum;
+	BlockNumber bufblock;
+	GISTPageOpaque opaque;
+	int			blank;
 	InsertIndexResult res;
-	char		   *isnull;
-	GIST_SPLITVEC	v;
-	TupleDesc		tupDesc;
-	bytea		   *entryvec;
-	bool		   *decompvec;
-	IndexTuple		item_1;
-	GISTENTRY		tmpdentry,
-					tmpentry;
+	char	   *isnull;
+	GIST_SPLITVEC v;
+	TupleDesc	tupDesc;
+	bytea	   *entryvec;
+	bool	   *decompvec;
+	IndexTuple	item_1;
+	GISTENTRY	tmpdentry,
+				tmpentry;
 
 	isnull = (char *) palloc(r->rd_rel->relnatts);
 	for (blank = 0; blank < r->rd_rel->relnatts; blank++)
@@ -911,11 +911,11 @@ static void
 gistentryinserttwo(Relation r, GISTSTACK * stk, IndexTuple ltup,
 				   IndexTuple rtup, GISTSTATE * giststate)
 {
-	Buffer			b;
-	Page			p;
+	Buffer		b;
+	Page		p;
 	InsertIndexResult res;
-	GISTENTRY		tmpentry;
-	IndexTuple		newtup;
+	GISTENTRY	tmpentry;
+	IndexTuple	newtup;
 
 	b = ReadBuffer(r, stk->gs_blk);
 	p = BufferGetPage(b);
@@ -949,16 +949,16 @@ gistentryinserttwo(Relation r, GISTSTACK * stk, IndexTuple ltup,
 /*
 ** Insert an entry onto a page
 */
-static			InsertIndexResult
+static InsertIndexResult
 gistentryinsert(Relation r, GISTSTACK * stk, IndexTuple tup,
 				GISTSTATE * giststate)
 {
-	Buffer			b;
-	Page			p;
+	Buffer		b;
+	Page		p;
 	InsertIndexResult res;
-	OffsetNumber	off;
-	GISTENTRY		tmpentry;
-	IndexTuple		newtup;
+	OffsetNumber off;
+	GISTENTRY	tmpentry;
+	IndexTuple	newtup;
 
 	b = ReadBuffer(r, stk->gs_blk);
 	p = BufferGetPage(b);
@@ -992,10 +992,10 @@ gistentryinsert(Relation r, GISTSTACK * stk, IndexTuple tup,
 static void
 gistnewroot(GISTSTATE * giststate, Relation r, IndexTuple lt, IndexTuple rt)
 {
-	Buffer			b;
-	Page			p;
-	GISTENTRY		tmpentry;
-	IndexTuple		newtup;
+	Buffer		b;
+	Page		p;
+	GISTENTRY	tmpentry;
+	IndexTuple	newtup;
 
 	b = ReadBuffer(r, GISTP_ROOT);
 	GISTInitBuffer(b, 0);
@@ -1022,9 +1022,9 @@ gistnewroot(GISTSTATE * giststate, Relation r, IndexTuple lt, IndexTuple rt)
 static void
 GISTInitBuffer(Buffer b, uint32 f)
 {
-	GISTPageOpaque	opaque;
-	Page			page;
-	Size			pageSize;
+	GISTPageOpaque opaque;
+	Page		page;
+	Size		pageSize;
 
 	pageSize = BufferGetPageSize(b);
 
@@ -1040,21 +1040,21 @@ GISTInitBuffer(Buffer b, uint32 f)
 /*
 ** find entry with lowest penalty
 */
-static			OffsetNumber
+static OffsetNumber
 gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		   GISTSTATE * giststate)
 {
-	OffsetNumber	maxoff;
-	OffsetNumber	i;
-	char		   *id;
-	char		   *datum;
-	float			usize;
-	OffsetNumber	which;
-	float			which_grow;
-	GISTENTRY		entry,
-					identry;
-	int				size,
-					idsize;
+	OffsetNumber maxoff;
+	OffsetNumber i;
+	char	   *id;
+	char	   *datum;
+	float		usize;
+	OffsetNumber which;
+	float		which_grow;
+	GISTENTRY	entry,
+				identry;
+	int			size,
+				idsize;
 
 	idsize = IndexTupleSize(it) - sizeof(IndexTupleData);
 	id = ((char *) it) + sizeof(IndexTupleData);
@@ -1097,7 +1097,7 @@ gistnospace(Page p, IndexTuple it)
 void
 gistfreestack(GISTSTACK * s)
 {
-	GISTSTACK	   *p;
+	GISTSTACK  *p;
 
 	while (s != (GISTSTACK *) NULL)
 	{
@@ -1114,10 +1114,10 @@ gistfreestack(GISTSTACK * s)
 void
 gistdelete(Relation r, ItemPointer tid)
 {
-	BlockNumber		blkno;
-	OffsetNumber	offnum;
-	Buffer			buf;
-	Page			page;
+	BlockNumber blkno;
+	OffsetNumber offnum;
+	Buffer		buf;
+	Page		page;
 
 	/* must write-lock on delete */
 	RelationSetLockForWrite(r);
@@ -1142,17 +1142,17 @@ gistdelete(Relation r, ItemPointer tid)
 void
 initGISTstate(GISTSTATE * giststate, Relation index)
 {
-	RegProcedure	consistent_proc,
-					union_proc,
-					compress_proc,
-					decompress_proc;
-	RegProcedure	penalty_proc,
-					picksplit_proc,
-					equal_proc;
-	func_ptr		user_fn;
-	int				pronargs;
-	HeapTuple		htup;
-	IndexTupleForm	itupform;
+	RegProcedure consistent_proc,
+				union_proc,
+				compress_proc,
+				decompress_proc;
+	RegProcedure penalty_proc,
+				picksplit_proc,
+				equal_proc;
+	func_ptr	user_fn;
+	int			pronargs;
+	HeapTuple	htup;
+	IndexTupleForm itupform;
 
 	consistent_proc = index_getprocid(index, 1, GIST_CONSISTENT_PROC);
 	union_proc = index_getprocid(index, 1, GIST_UNION_PROC);
@@ -1209,10 +1209,10 @@ initGISTstate(GISTSTATE * giststate, Relation index)
 ** the key with another key, which may involve generating a new IndexTuple
 ** if the sizes don't match
 */
-static			IndexTuple
+static IndexTuple
 gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 {
-	char		   *datum = (((char *) t) + sizeof(IndexTupleData));
+	char	   *datum = (((char *) t) + sizeof(IndexTupleData));
 
 	/* if new entry fits in index tuple, copy it in */
 	if (entry.bytes < IndexTupleSize(t) - sizeof(IndexTupleData))
@@ -1228,10 +1228,10 @@ gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 	else
 	{
 		/* generate a new index tuple for the compressed entry */
-		TupleDesc		tupDesc = r->rd_att;
-		IndexTuple		newtup;
-		char		   *isnull;
-		int				blank;
+		TupleDesc	tupDesc = r->rd_att;
+		IndexTuple	newtup;
+		char	   *isnull;
+		int			blank;
 
 		isnull = (char *) palloc(r->rd_rel->relnatts);
 		for (blank = 0; blank < r->rd_rel->relnatts; blank++)
@@ -1253,7 +1253,7 @@ void
 gistdentryinit(GISTSTATE * giststate, GISTENTRY * e, char *pr, Relation r,
 			   Page pg, OffsetNumber o, int b, bool l)
 {
-	GISTENTRY	   *dep;
+	GISTENTRY  *dep;
 
 	gistentryinit(*e, pr, r, pg, o, b, l);
 	if (giststate->haskeytype)
@@ -1274,7 +1274,7 @@ static void
 gistcentryinit(GISTSTATE * giststate, GISTENTRY * e, char *pr, Relation r,
 			   Page pg, OffsetNumber o, int b, bool l)
 {
-	GISTENTRY	   *cep;
+	GISTENTRY  *cep;
 
 	gistentryinit(*e, pr, r, pg, o, b, l);
 	if (giststate->haskeytype)
@@ -1299,18 +1299,18 @@ gistcentryinit(GISTSTATE * giststate, GISTENTRY * e, char *pr, Relation r,
 void
 _gistdump(Relation r)
 {
-	Buffer			buf;
-	Page			page;
-	OffsetNumber	offnum,
-					maxoff;
-	BlockNumber		blkno;
-	BlockNumber		nblocks;
-	GISTPageOpaque	po;
-	IndexTuple		itup;
-	BlockNumber		itblkno;
-	OffsetNumber	itoffno;
-	char		   *datum;
-	char		   *itkey;
+	Buffer		buf;
+	Page		page;
+	OffsetNumber offnum,
+				maxoff;
+	BlockNumber blkno;
+	BlockNumber nblocks;
+	GISTPageOpaque po;
+	IndexTuple	itup;
+	BlockNumber itblkno;
+	OffsetNumber itoffno;
+	char	   *datum;
+	char	   *itkey;
 
 	nblocks = RelationGetNumberOfBlocks(r);
 	for (blkno = 0; blkno < nblocks; blkno++)
@@ -1350,12 +1350,12 @@ _gistdump(Relation r)
 }
 
 #ifdef NOT_USED
-static char    *
+static char *
 text_range_out(TXTRANGE * r)
 {
-	char		   *result;
-	char		   *lower,
-				   *upper;
+	char	   *result;
+	char	   *lower,
+			   *upper;
 
 	if (r == NULL)
 		return (NULL);
@@ -1377,10 +1377,10 @@ text_range_out(TXTRANGE * r)
 
 #endif
 
-static char    *
+static char *
 int_range_out(INTRANGE * r)
 {
-	char		   *result;
+	char	   *result;
 
 	if (r == NULL)
 		return (NULL);

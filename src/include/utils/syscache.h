@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.5 1997/09/07 05:03:02 momjian Exp $
+ * $Id: syscache.h,v 1.6 1997/09/08 02:39:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include <access/attnum.h>
 #include <access/htup.h>
 
- /*#define CACHEDEBUG*//* turns DEBUG elogs on */
+ /* #define CACHEDEBUG *//* turns DEBUG elogs on */
 
 
 /*
@@ -66,32 +66,32 @@
  */
 struct cachedesc
 {
-	char		   *name;		/* this is Name * so that we can
+	char	   *name;			/* this is Name * so that we can
 								 * initialize it */
-	int				nkeys;
-	int				key[4];
-	int				size;		/* sizeof(appropriate struct) */
-	char		   *indname;	/* index relation for this cache, if
+	int			nkeys;
+	int			key[4];
+	int			size;			/* sizeof(appropriate struct) */
+	char	   *indname;		/* index relation for this cache, if
 								 * exists */
-					HeapTuple(*iScanFunc) ();	/* function to handle
+				HeapTuple(*iScanFunc) ();		/* function to handle
 												 * index scans */
 };
 
-extern void		zerocaches(void);
-extern void		InitCatalogCache(void);
-extern HeapTuple
+extern void zerocaches(void);
+extern void InitCatalogCache(void);
+extern		HeapTuple
 SearchSysCacheTuple(int cacheId, Datum key1, Datum key2,
 					Datum key3, Datum key4);
-extern int32
+extern		int32
 SearchSysCacheStruct(int cacheId, char *returnStruct,
 					 Datum key1, Datum key2, Datum key3, Datum key4);
-extern void    *
+extern void *
 SearchSysCacheGetAttribute(int cacheId,
 						   AttrNumber attributeNumber,
 						   Datum key1,
 						   Datum key2,
 						   Datum key3,
 						   Datum key4);
-extern void    *TypeDefaultRetrieve(Oid typId);
+extern void *TypeDefaultRetrieve(Oid typId);
 
 #endif							/* SYSCACHE_H */

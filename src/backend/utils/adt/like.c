@@ -22,7 +22,7 @@
 #include "utils/palloc.h"
 #include "utils/builtins.h"		/* where the function declarations go */
 
-static int		like(char *text, char *p);
+static int	like(char *text, char *p);
 
 /*
  *	interface routines called by the function manager
@@ -36,12 +36,12 @@ static int		like(char *text, char *p);
 		 p		   - the pattern
 		 charlen   - the length of the string
 */
-static			bool
+static bool
 fixedlen_like(char *s, struct varlena * p, int charlen)
 {
-	char		   *sterm,
-				   *pterm;
-	int				result;
+	char	   *sterm,
+			   *pterm;
+	int			result;
 
 	if (!s || !p)
 		return FALSE;
@@ -72,7 +72,7 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 bool
 char2like(uint16 arg1, struct varlena * p)
 {
-	char		   *s = (char *) &arg1;
+	char	   *s = (char *) &arg1;
 
 	return (fixedlen_like(s, p, 2));
 }
@@ -86,7 +86,7 @@ char2nlike(uint16 arg1, struct varlena * p)
 bool
 char4like(uint32 arg1, struct varlena * p)
 {
-	char		   *s = (char *) &arg1;
+	char	   *s = (char *) &arg1;
 
 	return (fixedlen_like(s, p, 4));
 }
@@ -150,7 +150,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.7 $
+/*	$Revision: 1.8 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -187,7 +187,7 @@ textnlike(struct varlena * s, struct varlena * p)
 static int
 DoMatch(register char *text, register char *p)
 {
-	register int	matched;
+	register int matched;
 
 	for (; *p; text++, p++)
 	{
@@ -195,28 +195,28 @@ DoMatch(register char *text, register char *p)
 			return LIKE_ABORT;
 		switch (*p)
 		{
-		case '\\':
-			/* Literal match with following character. */
-			p++;
-			/* FALLTHROUGH */
-		default:
-			if (*text != *p)
-				return LIKE_FALSE;
-			continue;
-		case '_':
-			/* Match anything. */
-			continue;
-		case '%':
-			while (*++p == '%')
-				/* Consecutive percents act just like one. */
+			case '\\':
+				/* Literal match with following character. */
+				p++;
+				/* FALLTHROUGH */
+			default:
+				if (*text != *p)
+					return LIKE_FALSE;
 				continue;
-			if (*p == '\0')
-				/* Trailing percent matches everything. */
-				return LIKE_TRUE;
-			while (*text)
-				if ((matched = DoMatch(text++, p)) != LIKE_FALSE)
-					return matched;
-			return LIKE_ABORT;
+			case '_':
+				/* Match anything. */
+				continue;
+			case '%':
+				while (*++p == '%')
+					/* Consecutive percents act just like one. */
+					continue;
+				if (*p == '\0')
+					/* Trailing percent matches everything. */
+					return LIKE_TRUE;
+				while (*text)
+					if ((matched = DoMatch(text++, p)) != LIKE_FALSE)
+						return matched;
+				return LIKE_ABORT;
 		}
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.8 1997/09/07 04:41:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.9 1997/09/08 02:22:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,15 +47,15 @@
  *		same ADT value. -cim
  * ----------------------------------------------------------------
  */
-static			bool			/* true if tuples are identical, false
+static bool				/* true if tuples are identical, false
 								 * otherwise */
 ExecIdenticalTuples(TupleTableSlot * t1, TupleTableSlot * t2)
 {
-	HeapTuple		h1;
-	HeapTuple		h2;
-	char		   *d1;
-	char		   *d2;
-	int				len;
+	HeapTuple	h1;
+	HeapTuple	h2;
+	char	   *d1;
+	char	   *d2;
+	int			len;
 
 	h1 = t1->val;
 	h2 = t2->val;
@@ -110,14 +110,14 @@ ExecIdenticalTuples(TupleTableSlot * t1, TupleTableSlot * t2)
 TupleTableSlot *				/* return: a tuple or NULL */
 ExecUnique(Unique * node)
 {
-	UniqueState    *uniquestate;
+	UniqueState *uniquestate;
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
-	Plan		   *outerPlan;
-	char		   *uniqueAttr;
-	AttrNumber		uniqueAttrNum;
-	TupleDesc		tupDesc;
-	Oid				typoutput;
+	Plan	   *outerPlan;
+	char	   *uniqueAttr;
+	AttrNumber	uniqueAttrNum;
+	TupleDesc	tupDesc;
+	Oid			typoutput;
 
 	/* ----------------
 	 *	get information from the node
@@ -180,12 +180,12 @@ ExecUnique(Unique * node)
 			 * to check equality, we check to see if the typoutput of the
 			 * attributes are equal
 			 */
-			bool			isNull1,
-							isNull2;
-			char		   *attr1,
-						   *attr2;
-			char		   *val1,
-						   *val2;
+			bool		isNull1,
+						isNull2;
+			char	   *attr1,
+					   *attr2;
+			char	   *val1,
+					   *val2;
 
 			attr1 = heap_getattr(slot->val, InvalidBuffer,
 								 uniqueAttrNum, tupDesc, &isNull1);
@@ -245,9 +245,9 @@ ExecUnique(Unique * node)
 bool							/* return: initialization status */
 ExecInitUnique(Unique * node, EState * estate, Plan * parent)
 {
-	UniqueState    *uniquestate;
-	Plan		   *outerPlan;
-	char		   *uniqueAttr;
+	UniqueState *uniquestate;
+	Plan	   *outerPlan;
+	char	   *uniqueAttr;
 
 	/* ----------------
 	 *	assign execution state to node
@@ -299,8 +299,8 @@ ExecInitUnique(Unique * node, EState * estate, Plan * parent)
 
 	if (uniqueAttr)
 	{
-		TupleDesc		tupDesc;
-		int				i = 0;
+		TupleDesc	tupDesc;
+		int			i = 0;
 
 		tupDesc = ExecGetResultType(uniquestate);
 
@@ -340,7 +340,7 @@ ExecCountSlotsUnique(Unique * node)
 void
 ExecEndUnique(Unique * node)
 {
-	UniqueState    *uniquestate;
+	UniqueState *uniquestate;
 
 	uniquestate = node->uniquestate;
 	ExecEndNode(outerPlan((Plan *) node), (Plan *) node);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.11 1997/09/07 05:01:10 momjian Exp $
+ * $Id: bufpage.h,v 1.12 1997/09/08 02:38:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@
  * note that this is actually limited to 2^13 because we have limited
  * ItemIdData.lp_off and ItemIdData.lp_len to 13 bits (see itemid.h).
  */
-typedef uint16	LocationIndex;
+typedef uint16 LocationIndex;
 
 
 /*
@@ -101,8 +101,8 @@ typedef uint16	LocationIndex;
  */
 typedef struct OpaqueData
 {
-	uint16			od_pagesize;
-}				OpaqueData;
+	uint16		od_pagesize;
+}			OpaqueData;
 
 typedef OpaqueData *Opaque;
 
@@ -112,12 +112,12 @@ typedef OpaqueData *Opaque;
  */
 typedef struct PageHeaderData
 {
-	LocationIndex	pd_lower;	/* offset to start of free space */
-	LocationIndex	pd_upper;	/* offset to end of free space */
-	LocationIndex	pd_special; /* offset to start of special space */
-	OpaqueData		pd_opaque;	/* AM-generic information */
-	ItemIdData		pd_linp[1]; /* line pointers */
-}				PageHeaderData;
+	LocationIndex pd_lower;		/* offset to start of free space */
+	LocationIndex pd_upper;		/* offset to end of free space */
+	LocationIndex pd_special;	/* offset to start of special space */
+	OpaqueData	pd_opaque;		/* AM-generic information */
+	ItemIdData	pd_linp[1];		/* line pointers */
+}			PageHeaderData;
 
 typedef PageHeaderData *PageHeader;
 
@@ -125,7 +125,7 @@ typedef enum
 {
 	ShufflePageManagerMode,
 	OverwritePageManagerMode
-}				PageManagerMode;
+}			PageManagerMode;
 
 /* ----------------
  *		misc support macros
@@ -279,17 +279,17 @@ typedef enum
  * ----------------------------------------------------------------
  */
 
-extern void		PageInit(Page page, Size pageSize, Size specialSize);
-extern OffsetNumber
+extern void PageInit(Page page, Size pageSize, Size specialSize);
+extern		OffsetNumber
 PageAddItem(Page page, Item item, Size size,
 			OffsetNumber offsetNumber, ItemIdFlags flags);
-extern Page		PageGetTempPage(Page page, Size specialSize);
-extern void		PageRestoreTempPage(Page tempPage, Page oldPage);
+extern Page PageGetTempPage(Page page, Size specialSize);
+extern void PageRestoreTempPage(Page tempPage, Page oldPage);
 extern OffsetNumber PageGetMaxOffsetNumber(Page page);
-extern void		PageRepairFragmentation(Page page);
-extern Size		PageGetFreeSpace(Page page);
-extern void		PageManagerModeSet(PageManagerMode mode);
-extern void		PageIndexTupleDelete(Page page, OffsetNumber offset);
+extern void PageRepairFragmentation(Page page);
+extern Size PageGetFreeSpace(Page page);
+extern void PageManagerModeSet(PageManagerMode mode);
+extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 
 
 #endif							/* BUFPAGE_H */

@@ -12,31 +12,31 @@
 #include "halt.h"
 #include "pginterface.h"
 
-static void		sig_disconnect();
-static void		set_signals();
+static void sig_disconnect();
+static void set_signals();
 
 #define NUL '\0'
 
 /* GLOBAL VARIABLES */
-static PGconn  *conn;
+static PGconn *conn;
 static PGresult *res = NULL;
 
 #define ON_ERROR_STOP	0
 #define ON_ERROR_CONTINUE		1
 
-static int		on_error_state = ON_ERROR_STOP;
+static int	on_error_state = ON_ERROR_STOP;
 
 /* LOCAL VARIABLES */
 static sigset_t block_sigs,
-				unblock_sigs;
-static int		tuple;
+			unblock_sigs;
+static int	tuple;
 
 /*
 **
 **		connectdb - returns PGconn structure
 **
 */
-PGconn		   *
+PGconn	   *
 connectdb(char *dbName,
 		  char *pghost,
 		  char *pgport,
@@ -68,7 +68,7 @@ disconnectdb()
 **		doquery - returns PGresult structure
 **
 */
-PGresult	   *
+PGresult   *
 doquery(char *query)
 {
 	if (res != NULL)
@@ -104,9 +104,9 @@ doquery(char *query)
 int
 fetch(void *param,...)
 {
-	va_list			ap;
-	int				arg,
-					num_fields;
+	va_list		ap;
+	int			arg,
+				num_fields;
 
 	num_fields = PQnfields(res);
 
@@ -142,9 +142,9 @@ fetch(void *param,...)
 int
 fetchwithnulls(void *param,...)
 {
-	va_list			ap;
-	int				arg,
-					num_fields;
+	va_list		ap;
+	int			arg,
+				num_fields;
 
 	num_fields = PQnfields(res);
 

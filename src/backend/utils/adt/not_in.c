@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.4 1997/09/07 04:50:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.5 1997/09/08 02:30:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "access/relscan.h"
 #include "utils/builtins.h"		/* where function decls go */
 
-static int		my_varattno(Relation rd, char *a);
+static int	my_varattno(Relation rd, char *a);
 
 /* ----------------------------------------------------------------
  *
@@ -38,20 +38,20 @@ static int		my_varattno(Relation rd, char *a);
 bool
 int4notin(int16 not_in_arg, char *relation_and_attr)
 {
-	Relation		relation_to_scan;
-	int				left_side_argument,
-					integer_value;
-	HeapTuple		current_tuple;
-	HeapScanDesc	scan_descriptor;
-	bool			dummy,
-					retval;
-	int				attrid;
-	char		   *relation,
-				   *attribute;
-	char			my_copy[32];
-	Datum			value;
-	NameData		relNameData;
-	ScanKeyData		skeyData;
+	Relation	relation_to_scan;
+	int			left_side_argument,
+				integer_value;
+	HeapTuple	current_tuple;
+	HeapScanDesc scan_descriptor;
+	bool		dummy,
+				retval;
+	int			attrid;
+	char	   *relation,
+			   *attribute;
+	char		my_copy[32];
+	Datum		value;
+	NameData	relNameData;
+	ScanKeyData skeyData;
 
 	strcpy(my_copy, relation_and_attr);
 
@@ -116,7 +116,7 @@ oidnotin(Oid the_oid, char *compare)
 static int
 my_varattno(Relation rd, char *a)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.6 1997/09/07 04:47:24 momjian Exp $
+ * $Id: port-protos.h,v 1.7 1997/09/08 02:27:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
  * Externals in libc that need prototypes (or at least declarations)
  */
 
-extern char    *ecvt(double, int, int *, int *);
-extern char    *fcvt(double, int, int *, int *);
+extern char *ecvt(double, int, int *, int *);
+extern char *fcvt(double, int, int *, int *);
 
 /* dynloader.c */
 /*
@@ -32,16 +32,16 @@ extern char    *fcvt(double, int, int *, int *);
 #define pg_dlsym(h, f)	((func_ptr)dl_sym(h, f))
 #define pg_dlclose(h)	dl_close(h)
 #define pg_dlerror()	dl_error()
-extern int		dl_init(char *);
+extern int	dl_init(char *);
 
 /* port.c */
 
-extern int		syscall();
+extern int	syscall();
 
-extern void		init_address_fixup(void);
+extern void init_address_fixup(void);
 
 /* strdup.c: strdup() is not part of libc on Ultrix */
-extern char    *strdup(char const *);
+extern char *strdup(char const *);
 
 /* inet_aton() is not part of libc on Ultrix.  The following is from
    backend/port/inet_aton.h
@@ -49,6 +49,6 @@ extern char    *strdup(char const *);
 
 struct in_addr;
 int
-				inet_aton(const char *cp, struct in_addr * addr);
+			inet_aton(const char *cp, struct in_addr * addr);
 
 #endif							/* PORT_PORTOS_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hio.h,v 1.4 1997/09/07 04:55:56 momjian Exp $
+ * $Id: hio.h,v 1.5 1997/09/08 02:34:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,6 @@
 extern void
 RelationPutHeapTuple(Relation relation, BlockNumber blockIndex,
 					 HeapTuple tuple);
-extern void		RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple);
+extern void RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple);
 
 #endif							/* HIO_H */

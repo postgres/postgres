@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.4 1997/09/07 04:54:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.5 1997/09/08 02:32:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 /*
  * Global State
  */
-static int		MemoryContextEnableCount = 0;
+static int	MemoryContextEnableCount = 0;
 
 #define MemoryContextEnabled	(MemoryContextEnableCount > 0)
 
@@ -67,22 +67,22 @@ static OrderedSetData ActiveGlobalMemorySetData;		/* uninitialized */
  * CurrentMemoryContext --
  *		Memory context for general global allocations.
  */
-MemoryContext	CurrentMemoryContext = NULL;
+MemoryContext CurrentMemoryContext = NULL;
 
 /*****************************************************************************
  *	  PRIVATE DEFINITIONS													 *
  *****************************************************************************/
 
-static Pointer	GlobalMemoryAlloc(GlobalMemory this, Size size);
-static void		GlobalMemoryFree(GlobalMemory this, Pointer pointer);
+static Pointer GlobalMemoryAlloc(GlobalMemory this, Size size);
+static void GlobalMemoryFree(GlobalMemory this, Pointer pointer);
 static Pointer
 GlobalMemoryRealloc(GlobalMemory this, Pointer pointer,
 					Size size);
-static char    *GlobalMemoryGetName(GlobalMemory this);
-static void		GlobalMemoryDump(GlobalMemory this);
+static char *GlobalMemoryGetName(GlobalMemory this);
+static void GlobalMemoryDump(GlobalMemory this);
 
 #ifdef NOT_USED
-static void		DumpGlobalMemories(void);
+static void DumpGlobalMemories(void);
 
 #endif
 
@@ -121,7 +121,7 @@ static struct GlobalMemory TopGlobalMemoryData = {
  *		allocate something here, you are expected to clean it up when
  *		appropriate.
  */
-MemoryContext	TopMemoryContext = (MemoryContext) & TopGlobalMemoryData;
+MemoryContext TopMemoryContext = (MemoryContext) & TopGlobalMemoryData;
 
 
 
@@ -145,7 +145,7 @@ MemoryContext	TopMemoryContext = (MemoryContext) & TopGlobalMemoryData;
 void
 EnableMemoryContext(bool on)
 {
-	static bool		processing = false;
+	static bool processing = false;
 
 	AssertState(!processing);
 	AssertArg(BoolIsValid(on));
@@ -175,7 +175,7 @@ EnableMemoryContext(bool on)
 	}
 	else
 	{							/* cleanup */
-		GlobalMemory	context;
+		GlobalMemory context;
 
 		/* walk the list of allocations */
 		while (PointerIsValid(context = (GlobalMemory)
@@ -293,7 +293,7 @@ MemoryContextRealloc(MemoryContext context,
  *		BadArgumentsErr if firstTime is true for subsequent calls.
  */
 #ifdef NOT_USED
-char		   *
+char	   *
 MemoryContextGetName(MemoryContext context)
 {
 	AssertState(MemoryContextEnabled);
@@ -341,7 +341,7 @@ PointerGetAllocSize(Pointer pointer)
 MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
-	MemoryContext	old;
+	MemoryContext old;
 
 	AssertState(MemoryContextEnabled);
 	AssertArg(MemoryContextIsValid(context));
@@ -369,8 +369,8 @@ MemoryContextSwitchTo(MemoryContext context)
 GlobalMemory
 CreateGlobalMemory(char *name)			/* XXX MemoryContextName */
 {
-	GlobalMemory	context;
-	MemoryContext	savecxt;
+	GlobalMemory context;
+	MemoryContext savecxt;
 
 	AssertState(MemoryContextEnabled);
 
@@ -423,7 +423,7 @@ GlobalMemoryDestroy(GlobalMemory context)
  * Exceptions:
  *		ExhaustedMemory if allocation fails.
  */
-static			Pointer
+static Pointer
 GlobalMemoryAlloc(GlobalMemory this, Size size)
 {
 	return (AllocSetAlloc(&this->setData, size));
@@ -456,7 +456,7 @@ GlobalMemoryFree(GlobalMemory this,
  *		BadArgumentsErr if pointer is invalid.
  *		NoMoreMemoryErr if allocation fails.
  */
-static			Pointer
+static Pointer
 GlobalMemoryRealloc(GlobalMemory this,
 					Pointer pointer,
 					Size size)
@@ -471,7 +471,7 @@ GlobalMemoryRealloc(GlobalMemory this,
  * Exceptions:
  *		???
  */
-static char    *
+static char *
 GlobalMemoryGetName(GlobalMemory this)
 {
 	return (this->name);
@@ -487,7 +487,7 @@ GlobalMemoryGetName(GlobalMemory this)
 static void
 GlobalMemoryDump(GlobalMemory this)
 {
-	GlobalMemory	context;
+	GlobalMemory context;
 
 	printf("--\n%s:\n", GlobalMemoryGetName(this));
 
@@ -517,7 +517,7 @@ GlobalMemoryDump(GlobalMemory this)
 static void
 DumpGlobalMemories()
 {
-	GlobalMemory	context;
+	GlobalMemory context;
 
 	context = (GlobalMemory) OrderedSetGetHead(&ActiveGlobalMemorySetData);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.15 1997/09/07 04:41:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.16 1997/09/08 02:22:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,13 +67,13 @@ ExecGetIndexKeyInfo(IndexTupleForm indexTuple, int *numAttsOutP,
  *		appended, replaced, deleted.
  * ----------------------------------------------------------------
  */
-int				NTupleProcessed;
-int				NTupleRetrieved;
-int				NTupleReplaced;
-int				NTupleAppended;
-int				NTupleDeleted;
-int				NIndexTupleInserted;
-extern int		NIndexTupleProcessed;	/* have to be defined in the
+int			NTupleProcessed;
+int			NTupleRetrieved;
+int			NTupleReplaced;
+int			NTupleAppended;
+int			NTupleDeleted;
+int			NIndexTupleInserted;
+extern int	NIndexTupleProcessed;		/* have to be defined in the
 										 * access method level so that the
 										 * cinterface.a will link ok. */
 
@@ -159,7 +159,7 @@ DisplayTupleCount(FILE * statfp)
 void
 ExecAssignNodeBaseInfo(EState * estate, CommonState * cstate, Plan * parent)
 {
-	int				baseId;
+	int			baseId;
 
 	baseId = estate->es_BaseId;
 	cstate->cs_base_id = baseId;
@@ -178,9 +178,9 @@ ExecAssignNodeBaseInfo(EState * estate, CommonState * cstate, Plan * parent)
 void
 ExecAssignExprContext(EState * estate, CommonState * commonstate)
 {
-	ExprContext    *econtext;
-	ParamListInfo	paraminfo;
-	List		   *rangeTable;
+	ExprContext *econtext;
+	ParamListInfo paraminfo;
+	List	   *rangeTable;
 
 	paraminfo = estate->es_param_list_info;
 	rangeTable = estate->es_range_table;
@@ -223,8 +223,8 @@ ExecAssignResultType(CommonState * commonstate,
 void
 ExecAssignResultTypeFromOuterPlan(Plan * node, CommonState * commonstate)
 {
-	Plan		   *outerPlan;
-	TupleDesc		tupDesc;
+	Plan	   *outerPlan;
+	TupleDesc	tupDesc;
 
 	outerPlan = outerPlan(node);
 	tupDesc = ExecGetTupType(outerPlan);
@@ -239,13 +239,13 @@ ExecAssignResultTypeFromOuterPlan(Plan * node, CommonState * commonstate)
 void
 ExecAssignResultTypeFromTL(Plan * node, CommonState * commonstate)
 {
-	List		   *targetList;
-	int				i;
-	int				len;
-	List		   *tl;
-	TargetEntry    *tle;
-	List		   *fjtl;
-	TupleDesc		origTupDesc;
+	List	   *targetList;
+	int			i;
+	int			len;
+	List	   *tl;
+	TargetEntry *tle;
+	List	   *fjtl;
+	TupleDesc	origTupDesc;
 
 	targetList = node->targetlist;
 	origTupDesc = ExecTypeFromTL(targetList);
@@ -269,7 +269,7 @@ ExecAssignResultTypeFromTL(Plan * node, CommonState * commonstate)
 #ifdef SETS_FIXED
 		if (!tl_is_resdom(tle))
 		{
-			Fjoin		   *fj = (Fjoin *) lfirst(tle);
+			Fjoin	   *fj = (Fjoin *) lfirst(tle);
 
 			/* it is a FJoin */
 			fjtl = lnext(tle);
@@ -309,7 +309,7 @@ void
 ExecFreeResultType(CommonState * commonstate)
 {
 	TupleTableSlot *slot;
-	TupleDesc		tupType;
+	TupleDesc	tupType;
 
 	slot = commonstate->cs_ResultTupleSlot;
 	tupType = slot->ttc_tupleDescriptor;
@@ -329,8 +329,8 @@ void
 ExecAssignProjectionInfo(Plan * node, CommonState * commonstate)
 {
 	ProjectionInfo *projInfo;
-	List		   *targetList;
-	int				len;
+	List	   *targetList;
+	int			len;
 
 	targetList = node->targetlist;
 	len = ExecTargetListLength(targetList);
@@ -407,7 +407,7 @@ void
 ExecFreeScanType(CommonScanState * csstate)
 {
 	TupleTableSlot *slot;
-	TupleDesc		tupType;
+	TupleDesc	tupType;
 
 	slot = csstate->css_ScanTupleSlot;
 	tupType = slot->ttc_tupleDescriptor;
@@ -439,8 +439,8 @@ ExecAssignScanType(CommonScanState * csstate,
 void
 ExecAssignScanTypeFromOuterPlan(Plan * node, CommonScanState * csstate)
 {
-	Plan		   *outerPlan;
-	TupleDesc		tupDesc;
+	Plan	   *outerPlan;
+	TupleDesc	tupDesc;
 
 	outerPlan = outerPlan(node);
 	tupDesc = ExecGetTupType(outerPlan);
@@ -571,10 +571,10 @@ ExecFreeTypeInfo(TupleDesc typeInfo)
 TupleDesc
 QueryDescGetTypeInfo(QueryDesc * queryDesc)
 {
-	Plan		   *plan;
-	TupleDesc		tupleType;
-	List		   *targetList;
-	AttrInfo	   *attinfo = (AttrInfo *) palloc(sizeof(AttrInfo));
+	Plan	   *plan;
+	TupleDesc	tupleType;
+	List	   *targetList;
+	AttrInfo   *attinfo = (AttrInfo *) palloc(sizeof(AttrInfo));
 
 	plan = queryDesc->plantree;
 	tupleType = (TupleDesc) ExecGetTupType(plan);
@@ -611,9 +611,9 @@ ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
 					AttrNumber ** attsOutP,
 					FuncIndexInfoPtr fInfoP)
 {
-	int				i;
-	int				numKeys;
-	AttrNumber	   *attKeys;
+	int			i;
+	int			numKeys;
+	AttrNumber *attKeys;
 
 	/* ----------------
 	 *	check parameters
@@ -708,32 +708,32 @@ void
 ExecOpenIndices(Oid resultRelationOid,
 				RelationInfo * resultRelationInfo)
 {
-	Relation		indexRd;
-	HeapScanDesc	indexSd;
-	ScanKeyData		key;
-	HeapTuple		tuple;
-	IndexTupleForm	indexStruct;
-	Oid				indexOid;
-	List		   *oidList;
-	List		   *nkeyList;
-	List		   *keyList;
-	List		   *fiList;
-	char		   *predString;
-	List		   *predList;
-	List		   *indexoid;
-	List		   *numkeys;
-	List		   *indexkeys;
-	List		   *indexfuncs;
-	List		   *indexpreds;
-	int				len;
+	Relation	indexRd;
+	HeapScanDesc indexSd;
+	ScanKeyData key;
+	HeapTuple	tuple;
+	IndexTupleForm indexStruct;
+	Oid			indexOid;
+	List	   *oidList;
+	List	   *nkeyList;
+	List	   *keyList;
+	List	   *fiList;
+	char	   *predString;
+	List	   *predList;
+	List	   *indexoid;
+	List	   *numkeys;
+	List	   *indexkeys;
+	List	   *indexfuncs;
+	List	   *indexpreds;
+	int			len;
 
-	RelationPtr		relationDescs;
-	IndexInfo	  **indexInfoArray;
+	RelationPtr relationDescs;
+	IndexInfo **indexInfoArray;
 	FuncIndexInfoPtr fInfoP;
-	int				numKeyAtts;
-	AttrNumber	   *indexKeyAtts;
-	PredInfo	   *predicate;
-	int				i;
+	int			numKeyAtts;
+	AttrNumber *indexKeyAtts;
+	PredInfo   *predicate;
+	int			i;
 
 	/* ----------------
 	 *	open pg_index
@@ -857,7 +857,7 @@ ExecOpenIndices(Oid resultRelationOid,
 
 		for (i = 0; i < len; i++)
 		{
-			IndexInfo	   *ii = makeNode(IndexInfo);
+			IndexInfo  *ii = makeNode(IndexInfo);
 
 			ii->ii_NumKeyAttributes = 0;
 			ii->ii_KeyAttributeNumbers = (AttrNumber *) NULL;
@@ -875,7 +875,7 @@ ExecOpenIndices(Oid resultRelationOid,
 		i = 0;
 		foreach(indexoid, oidList)
 		{
-			Relation		indexDesc;
+			Relation	indexDesc;
 
 			indexOid = lfirsti(indexoid);
 			indexDesc = index_open(indexOid);
@@ -954,9 +954,9 @@ ExecOpenIndices(Oid resultRelationOid,
 void
 ExecCloseIndices(RelationInfo * resultRelationInfo)
 {
-	int				i;
-	int				numIndices;
-	RelationPtr		relationDescs;
+	int			i;
+	int			numIndices;
+	RelationPtr relationDescs;
 
 	numIndices = resultRelationInfo->ri_NumIndices;
 	relationDescs = resultRelationInfo->ri_IndexRelationDescs;
@@ -986,14 +986,14 @@ ExecFormIndexTuple(HeapTuple heapTuple,
 				   Relation indexRelation,
 				   IndexInfo * indexInfo)
 {
-	IndexTuple		indexTuple;
-	TupleDesc		heapDescriptor;
-	TupleDesc		indexDescriptor;
-	Datum		   *datum;
-	char		   *nulls;
+	IndexTuple	indexTuple;
+	TupleDesc	heapDescriptor;
+	TupleDesc	indexDescriptor;
+	Datum	   *datum;
+	char	   *nulls;
 
-	int				numberOfAttributes;
-	AttrNumber	   *keyAttributeNumbers;
+	int			numberOfAttributes;
+	AttrNumber *keyAttributeNumbers;
 	FuncIndexInfoPtr fInfoP;
 
 	/* ----------------
@@ -1075,24 +1075,24 @@ ExecInsertIndexTuples(TupleTableSlot * slot,
 					  EState * estate,
 					  bool is_update)
 {
-	HeapTuple		heapTuple;
-	RelationInfo   *resultRelationInfo;
-	int				i;
-	int				numIndices;
-	RelationPtr		relationDescs;
-	Relation		heapRelation;
-	IndexInfo	  **indexInfoArray;
-	IndexInfo	   *indexInfo;
-	Node		   *predicate;
-	bool			satisfied;
-	ExprContext    *econtext;
+	HeapTuple	heapTuple;
+	RelationInfo *resultRelationInfo;
+	int			i;
+	int			numIndices;
+	RelationPtr relationDescs;
+	Relation	heapRelation;
+	IndexInfo **indexInfoArray;
+	IndexInfo  *indexInfo;
+	Node	   *predicate;
+	bool		satisfied;
+	ExprContext *econtext;
 	InsertIndexResult result;
-	int				numberOfAttributes;
-	AttrNumber	   *keyAttributeNumbers;
+	int			numberOfAttributes;
+	AttrNumber *keyAttributeNumbers;
 	FuncIndexInfoPtr fInfoP;
-	TupleDesc		heapDescriptor;
-	Datum		   *datum;
-	char		   *nulls;
+	TupleDesc	heapDescriptor;
+	Datum	   *datum;
+	char	   *nulls;
 
 	heapTuple = slot->val;
 
@@ -1189,10 +1189,10 @@ void
 setVarAttrLenForCreateTable(TupleDesc tupType, List * targetList,
 							List * rangeTable)
 {
-	List		   *tl;
-	TargetEntry    *tle;
-	Node		   *expr;
-	int				varno;
+	List	   *tl;
+	TargetEntry *tle;
+	Node	   *expr;
+	int			varno;
 
 	tl = targetList;
 
@@ -1206,9 +1206,9 @@ setVarAttrLenForCreateTable(TupleDesc tupType, List * targetList,
 			expr = tle->expr;
 			if (expr && IsA(expr, Var))
 			{
-				Var			   *var;
-				RangeTblEntry  *rtentry;
-				Relation		rd;
+				Var		   *var;
+				RangeTblEntry *rtentry;
+				Relation	rd;
 
 				var = (Var *) expr;
 				rtentry = rt_fetch(var->varnoold, rangeTable);
@@ -1238,7 +1238,7 @@ setVarAttrLenForCreateTable(TupleDesc tupType, List * targetList,
 void
 resetVarAttrLenForCreateTable(TupleDesc tupType)
 {
-	int				varno;
+	int			varno;
 
 	for (varno = 0; varno < tupType->natts; varno++)
 	{

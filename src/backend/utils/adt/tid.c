@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.3 1997/09/07 04:50:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.4 1997/09/08 02:31:03 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -35,13 +35,13 @@
 ItemPointer
 tidin(char *str)
 {
-	char		   *p,
-				   *coord[NTIDARGS];
-	int				i;
-	ItemPointer		result;
+	char	   *p,
+			   *coord[NTIDARGS];
+	int			i;
+	ItemPointer result;
 
-	BlockNumber		blockNumber;
-	OffsetNumber	offsetNumber;
+	BlockNumber blockNumber;
+	OffsetNumber offsetNumber;
 
 	if (str == NULL)
 		return NULL;
@@ -67,14 +67,14 @@ tidin(char *str)
  *		tidout
  * ----------------------------------------------------------------
  */
-char		   *
+char	   *
 tidout(ItemPointer itemPtr)
 {
-	BlockNumber		blockNumber;
-	OffsetNumber	offsetNumber;
-	BlockId			blockId;
-	char			buf[32];
-	char		   *str;
+	BlockNumber blockNumber;
+	OffsetNumber offsetNumber;
+	BlockId		blockId;
+	char		buf[32];
+	char	   *str;
 
 	blockId = &(itemPtr->ip_blkid);
 

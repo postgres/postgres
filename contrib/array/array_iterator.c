@@ -40,21 +40,21 @@
 #include "utils/builtins.h"
 #include "utils/elog.h"
 
-static			int32
+static int32
 array_iterator(Oid elemtype, Oid proc, int and, ArrayType * array, Datum value)
 {
-	HeapTuple		typ_tuple;
-	TypeTupleForm	typ_struct;
-	bool			typbyval;
-	int				typlen;
-	func_ptr		proc_fn;
-	int				pronargs;
-	int				nitems,
-					i,
-					result;
-	int				ndim,
-				   *dim;
-	char		   *p;
+	HeapTuple	typ_tuple;
+	TypeTupleForm typ_struct;
+	bool		typbyval;
+	int			typlen;
+	func_ptr	proc_fn;
+	int			pronargs;
+	int			nitems,
+				i,
+				result;
+	int			ndim,
+			   *dim;
+	char	   *p;
 
 	/* Sanity checks */
 	if ((array == (ArrayType *) NULL)
@@ -101,16 +101,16 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType * array, Datum value)
 		{
 			switch (typlen)
 			{
-			case 1:
-				result = (int) (*proc_fn) (*p, value);
-				break;
-			case 2:
-				result = (int) (*proc_fn) (*(int16 *) p, value);
-				break;
-			case 3:
-			case 4:
-				result = (int) (*proc_fn) (*(int32 *) p, value);
-				break;
+				case 1:
+					result = (int) (*proc_fn) (*p, value);
+					break;
+				case 2:
+					result = (int) (*proc_fn) (*(int16 *) p, value);
+					break;
+				case 3:
+				case 4:
+					result = (int) (*proc_fn) (*(int32 *) p, value);
+					break;
 			}
 			p += typlen;
 		}

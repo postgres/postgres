@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.5 1997/09/07 04:56:27 momjian Exp $
+ * $Id: catname.h,v 1.6 1997/09/08 02:34:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,6 @@
 #define  RelCheckRelationName "pg_relcheck"
 #define  TriggerRelationName "pg_trigger"
 
-extern char    *SharedSystemRelationNames[];
+extern char *SharedSystemRelationNames[];
 
 #endif							/* CATNAME_H */

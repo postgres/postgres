@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.11 1997/09/07 04:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.12 1997/09/08 02:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,12 +42,12 @@
 #include "utils/palloc.h"
 #include "utils/hsearch.h"
 
-extern int		NBuffers;
-static int		HashTBSize;
+extern int	NBuffers;
+static int	HashTBSize;
 
-static void		mk_hj_temp(char *tempname);
-static int		hashFunc(char *key, int len);
-static int		ExecHashPartition(Hash * node);
+static void mk_hj_temp(char *tempname);
+static int	hashFunc(char *key, int len);
+static int	ExecHashPartition(Hash * node);
 static RelativeAddr hashTableAlloc(int size, HashJoinTable hashtable);
 static void
 ExecHashOverflowInsert(HashJoinTable hashtable,
@@ -64,20 +64,20 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 TupleTableSlot *
 ExecHash(Hash * node)
 {
-	EState		   *estate;
-	HashState	   *hashstate;
-	Plan		   *outerNode;
-	Var			   *hashkey;
-	HashJoinTable	hashtable;
+	EState	   *estate;
+	HashState  *hashstate;
+	Plan	   *outerNode;
+	Var		   *hashkey;
+	HashJoinTable hashtable;
 	TupleTableSlot *slot;
-	ExprContext    *econtext;
+	ExprContext *econtext;
 
-	int				nbatch;
-	File		   *batches = NULL;
-	RelativeAddr   *batchPos;
-	int			   *batchSizes;
-	int				i;
-	RelativeAddr   *innerbatchNames;
+	int			nbatch;
+	File	   *batches = NULL;
+	RelativeAddr *batchPos;
+	int		   *batchSizes;
+	int			i;
+	RelativeAddr *innerbatchNames;
 
 	/* ----------------
 	 *	get state info from node
@@ -167,8 +167,8 @@ ExecHash(Hash * node)
 bool
 ExecInitHash(Hash * node, EState * estate, Plan * parent)
 {
-	HashState	   *hashstate;
-	Plan		   *outerPlan;
+	HashState  *hashstate;
+	Plan	   *outerPlan;
 
 	SO1_printf("ExecInitHash: %s\n",
 			   "initializing hash node");
@@ -240,9 +240,9 @@ ExecCountSlotsHash(Hash * node)
 void
 ExecEndHash(Hash * node)
 {
-	HashState	   *hashstate;
-	Plan		   *outerPlan;
-	File		   *batches;
+	HashState  *hashstate;
+	Plan	   *outerPlan;
+	File	   *batches;
 
 	/* ----------------
 	 *	get info from the hash state
@@ -268,10 +268,10 @@ ExecEndHash(Hash * node)
 	ExecEndNode(outerPlan, (Plan *) node);
 }
 
-static			RelativeAddr
+static RelativeAddr
 hashTableAlloc(int size, HashJoinTable hashtable)
 {
-	RelativeAddr	p;
+	RelativeAddr p;
 
 	p = hashtable->top;
 	hashtable->top += size;
@@ -290,23 +290,23 @@ hashTableAlloc(int size, HashJoinTable hashtable)
 HashJoinTable
 ExecHashTableCreate(Hash * node)
 {
-	Plan		   *outerNode;
-	int				nbatch;
-	int				ntuples;
-	int				tupsize;
-	IpcMemoryId		shmid;
-	HashJoinTable	hashtable;
-	HashBucket		bucket;
-	int				nbuckets;
-	int				totalbuckets;
-	int				bucketsize;
-	int				i;
-	RelativeAddr   *outerbatchNames;
-	RelativeAddr   *outerbatchPos;
-	RelativeAddr   *innerbatchNames;
-	RelativeAddr   *innerbatchPos;
-	int			   *innerbatchSizes;
-	RelativeAddr	tempname;
+	Plan	   *outerNode;
+	int			nbatch;
+	int			ntuples;
+	int			tupsize;
+	IpcMemoryId shmid;
+	HashJoinTable hashtable;
+	HashBucket	bucket;
+	int			nbuckets;
+	int			totalbuckets;
+	int			bucketsize;
+	int			i;
+	RelativeAddr *outerbatchNames;
+	RelativeAddr *outerbatchPos;
+	RelativeAddr *innerbatchNames;
+	RelativeAddr *innerbatchPos;
+	int		   *innerbatchSizes;
+	RelativeAddr tempname;
 
 	nbatch = -1;
 	HashTBSize = NBuffers / 2;
@@ -461,15 +461,15 @@ ExecHashTableInsert(HashJoinTable hashtable,
 					File * batches)
 {
 	TupleTableSlot *slot;
-	HeapTuple		heapTuple;
-	HashBucket		bucket;
-	int				bucketno;
-	int				nbatch;
-	int				batchno;
-	char		   *buffer;
-	RelativeAddr   *batchPos;
-	int			   *batchSizes;
-	char		   *pos;
+	HeapTuple	heapTuple;
+	HashBucket	bucket;
+	int			bucketno;
+	int			nbatch;
+	int			batchno;
+	char	   *buffer;
+	RelativeAddr *batchPos;
+	int		   *batchSizes;
+	char	   *pos;
 
 	nbatch = hashtable->nbatch;
 	batchPos = (RelativeAddr *) ABSADDR(hashtable->innerbatchPos);
@@ -551,9 +551,9 @@ ExecHashGetBucket(HashJoinTable hashtable,
 				  ExprContext * econtext,
 				  Var * hashkey)
 {
-	int				bucketno;
-	Datum			keyval;
-	bool			isNull;
+	int			bucketno;
+	Datum		keyval;
+	bool		isNull;
 
 
 	/* ----------------
@@ -606,10 +606,10 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 					   HashBucket bucket,
 					   HeapTuple heapTuple)
 {
-	OverflowTuple	otuple;
-	RelativeAddr	newend;
-	OverflowTuple	firstotuple;
-	OverflowTuple	lastotuple;
+	OverflowTuple otuple;
+	RelativeAddr newend;
+	OverflowTuple firstotuple;
+	OverflowTuple lastotuple;
 
 	firstotuple = (OverflowTuple) ABSADDR(bucket->firstotuple);
 	lastotuple = (OverflowTuple) ABSADDR(bucket->lastotuple);
@@ -687,14 +687,14 @@ ExecScanHashBucket(HashJoinState * hjstate,
 				   List * hjclauses,
 				   ExprContext * econtext)
 {
-	HeapTuple		heapTuple;
-	bool			qualResult;
-	OverflowTuple	otuple = NULL;
-	OverflowTuple	curotuple;
+	HeapTuple	heapTuple;
+	bool		qualResult;
+	OverflowTuple otuple = NULL;
+	OverflowTuple curotuple;
 	TupleTableSlot *inntuple;
-	OverflowTuple	firstotuple;
-	OverflowTuple	lastotuple;
-	HashJoinTable	hashtable;
+	OverflowTuple firstotuple;
+	OverflowTuple lastotuple;
+	HashJoinTable hashtable;
 
 	hashtable = hjstate->hj_HashTable;
 	firstotuple = (OverflowTuple) ABSADDR(bucket->firstotuple);
@@ -785,7 +785,7 @@ static int
 hashFunc(char *key, int len)
 {
 	register unsigned int h;
-	register int	l;
+	register int l;
 	register unsigned char *k;
 
 	/*
@@ -828,11 +828,11 @@ hashFunc(char *key, int len)
 static int
 ExecHashPartition(Hash * node)
 {
-	Plan		   *outerNode;
-	int				b;
-	int				pages;
-	int				ntuples;
-	int				tupsize;
+	Plan	   *outerNode;
+	int			b;
+	int			pages;
+	int			ntuples;
+	int			tupsize;
 
 	/*
 	 * get size information for plan node
@@ -866,8 +866,8 @@ ExecHashPartition(Hash * node)
 void
 ExecHashTableReset(HashJoinTable hashtable, int ntuples)
 {
-	int				i;
-	HashBucket		bucket;
+	int			i;
+	HashBucket	bucket;
 
 	hashtable->nbuckets = hashtable->totalbuckets
 		= ceil((double) ntuples / NTUP_PER_BUCKET);
@@ -886,7 +886,7 @@ ExecHashTableReset(HashJoinTable hashtable, int ntuples)
 	hashtable->pcount = hashtable->nprocess;
 }
 
-static int		hjtmpcnt = 0;
+static int	hjtmpcnt = 0;
 
 static void
 mk_hj_temp(char *tempname)

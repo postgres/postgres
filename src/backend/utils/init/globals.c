@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.11 1997/09/07 04:53:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.12 1997/09/08 02:31:56 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -36,52 +36,52 @@
 
 #include "catalog/catname.h"
 
-int				Portfd = -1;
-int				Noversion = 0;
-int				Quiet = 1;
+int			Portfd = -1;
+int			Noversion = 0;
+int			Quiet = 1;
 
-int				MasterPid;
-char		   *DataDir;
+int			MasterPid;
+char	   *DataDir;
 
  /*
   * The PGDATA directory user says to use, or defaults to via environment
   * variable.  NULL if no option given and no environment variable set
   */
-Relation		reldesc;		/* current relation descriptor */
+Relation	reldesc;			/* current relation descriptor */
 
-char			OutputFileName[MAXPGPATH] = "";
+char		OutputFileName[MAXPGPATH] = "";
 
-BackendId		MyBackendId;
-BackendTag		MyBackendTag;
+BackendId	MyBackendId;
+BackendTag	MyBackendTag;
 
-char		   *UserName = NULL;
-char		   *DatabaseName = NULL;
-char		   *DatabasePath = NULL;
+char	   *UserName = NULL;
+char	   *DatabaseName = NULL;
+char	   *DatabasePath = NULL;
 
-bool			MyDatabaseIdIsInitialized = false;
-Oid				MyDatabaseId = InvalidOid;
-bool			TransactionInitWasProcessed = false;
+bool		MyDatabaseIdIsInitialized = false;
+Oid			MyDatabaseId = InvalidOid;
+bool		TransactionInitWasProcessed = false;
 
-bool			IsUnderPostmaster = false;
-bool			IsPostmaster = false;
+bool		IsUnderPostmaster = false;
+bool		IsPostmaster = false;
 
-short			DebugLvl = 0;
+short		DebugLvl = 0;
 
-int				DateStyle = USE_POSTGRES_DATES;
-bool			EuroDates = false;
-bool			HasCTZSet = false;
-bool			CDayLight = false;
-int				CTimeZone = 0;
-char			CTZName[MAXTZLEN + 1] = "";
+int			DateStyle = USE_POSTGRES_DATES;
+bool		EuroDates = false;
+bool		HasCTZSet = false;
+bool		CDayLight = false;
+int			CTimeZone = 0;
+char		CTZName[MAXTZLEN + 1] = "";
 
-char			DateFormat[20] = "%d-%m-%Y";	/* mjl: sizes! or better
+char		DateFormat[20] = "%d-%m-%Y";		/* mjl: sizes! or better
 												 * malloc? XXX */
-char			FloatFormat[20] = "%f";
+char		FloatFormat[20] = "%f";
 
-int				fsyncOff = 0;
-int				SortMem = 512;
+int			fsyncOff = 0;
+int			SortMem = 512;
 
-char		   *IndexedCatalogNames[] = {
+char	   *IndexedCatalogNames[] = {
 	AttributeRelationName,
 	ProcedureRelationName,
 	TypeRelationName,
@@ -105,7 +105,7 @@ char		   *IndexedCatalogNames[] = {
  *		XXX this is a serious hack which should be fixed -cim 1/26/90
  * ----------------
  */
-char		   *SharedSystemRelationNames[] = {
+char	   *SharedSystemRelationNames[] = {
 	DatabaseRelationName,
 	DefaultsRelationName,
 	DemonRelationName,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: off.h,v 1.3 1997/09/07 05:01:29 momjian Exp $
+ * $Id: off.h,v 1.4 1997/09/08 02:39:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  * this is a 1-based index into the linp (ItemIdData) array in the
  * header of each disk page.
  */
-typedef uint16	OffsetNumber;
+typedef uint16 OffsetNumber;
 
 #define InvalidOffsetNumber		((OffsetNumber) 0)
 #define FirstOffsetNumber		((OffsetNumber) 1)

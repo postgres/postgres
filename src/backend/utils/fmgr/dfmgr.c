@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.10 1997/09/07 04:53:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.11 1997/09/08 02:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,24 +41,24 @@ static DynamicFileList *file_tail = (DynamicFileList *) NULL;
 #define NOT_EQUAL(A, B) (((A).st_ino != (B).inode) \
 					  || ((A).st_dev != (B).device))
 
-static Oid		procedureId_save = -1;
-static int		pronargs_save;
+static Oid	procedureId_save = -1;
+static int	pronargs_save;
 static func_ptr user_fn_save = (func_ptr) NULL;
 static func_ptr handle_load(char *filename, char *funcname);
 
-func_ptr		trigger_dynamic(char *filename, char *funcname);
+func_ptr	trigger_dynamic(char *filename, char *funcname);
 
 func_ptr
 fmgr_dynamic(Oid procedureId, int *pronargs)
 {
-	HeapTuple		procedureTuple;
-	Form_pg_proc	procedureStruct;
-	char		   *proname;
-	char		   *probinattr,
-				   *probinstring;
-	func_ptr		user_fn;
-	Relation		rdesc;
-	bool			isnull;
+	HeapTuple	procedureTuple;
+	Form_pg_proc procedureStruct;
+	char	   *proname;
+	char	   *probinattr,
+			   *probinstring;
+	func_ptr	user_fn;
+	Relation	rdesc;
+	bool		isnull;
 
 	if (procedureId == procedureId_save)
 	{
@@ -118,13 +118,13 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	return (user_fn);
 }
 
-static			func_ptr
+static func_ptr
 handle_load(char *filename, char *funcname)
 {
 	DynamicFileList *file_scanner = (DynamicFileList *) NULL;
-	func_ptr		retval = (func_ptr) NULL;
-	char		   *load_error;
-	struct stat		stat_buf;
+	func_ptr	retval = (func_ptr) NULL;
+	char	   *load_error;
+	struct stat stat_buf;
 
 	/*
 	 * Do this because loading files may screw up the dynamic function
@@ -247,10 +247,10 @@ void
 load_file(char *filename)
 {
 	DynamicFileList *file_scanner,
-				   *p;
-	struct stat		stat_buf;
+			   *p;
+	struct stat stat_buf;
 
-	int				done = 0;
+	int			done = 0;
 
 	if (stat(filename, &stat_buf) == -1)
 	{
@@ -298,7 +298,7 @@ load_file(char *filename)
 func_ptr
 trigger_dynamic(char *filename, char *funcname)
 {
-	func_ptr		trigger_fn;
+	func_ptr	trigger_fn;
 
 	trigger_fn = handle_load(filename, funcname);
 

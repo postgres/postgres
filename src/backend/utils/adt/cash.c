@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.10 1997/09/07 04:49:59 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.11 1997/09/08 02:30:27 momjian Exp $
  */
 
 #include <stdio.h>
@@ -47,22 +47,22 @@ static struct lconv *lconv = NULL;
  *	monetary values returned by localeconv() can be multiple
  *	bytes/characters. This code assumes one byte only. - tgl 97/04/14
  */
-Cash		   *
+Cash	   *
 cash_in(const char *str)
 {
-	Cash		   *result;
+	Cash	   *result;
 
-	Cash			value = 0;
-	Cash			dec = 0;
-	Cash			sgn = 1;
-	int				seen_dot = 0;
-	const char	   *s = str;
-	int				fpoint;
-	char			dsymbol,
-					ssymbol,
-					psymbol,
-					nsymbol,
-					csymbol;
+	Cash		value = 0;
+	Cash		dec = 0;
+	Cash		sgn = 1;
+	int			seen_dot = 0;
+	const char *s = str;
+	int			fpoint;
+	char		dsymbol,
+				ssymbol,
+				psymbol,
+				nsymbol,
+				csymbol;
 
 #ifdef USE_LOCALE
 	if (lconv == NULL)
@@ -164,22 +164,22 @@ cash_in(const char *str)
  * XXX HACK This code appears to assume US conventions for
  *	positive-valued amounts. - tgl 97/04/14
  */
-const char	   *
+const char *
 cash_out(Cash * value)
 {
-	char		   *result;
-	char			buf[CASH_BUFSZ];
-	int				minus = 0;
-	int				count = LAST_DIGIT;
-	int				point_pos;
-	int				comma_position = 0;
-	char			mon_group,
-					comma,
-					points;
-	char			csymbol,
-					dsymbol,
-				   *nsymbol;
-	char			convention;
+	char	   *result;
+	char		buf[CASH_BUFSZ];
+	int			minus = 0;
+	int			count = LAST_DIGIT;
+	int			point_pos;
+	int			comma_position = 0;
+	char		mon_group,
+				comma,
+				points;
+	char		csymbol,
+				dsymbol,
+			   *nsymbol;
+	char		convention;
 
 #ifdef USE_LOCALE
 	if (lconv == NULL)
@@ -328,10 +328,10 @@ cash_ge(Cash * c1, Cash * c2)
 /* cash_pl()
  * Add two cash values.
  */
-Cash		   *
+Cash	   *
 cash_pl(Cash * c1, Cash * c2)
 {
-	Cash		   *result;
+	Cash	   *result;
 
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (NULL);
@@ -348,10 +348,10 @@ cash_pl(Cash * c1, Cash * c2)
 /* cash_mi()
  * Subtract two cash values.
  */
-Cash		   *
+Cash	   *
 cash_mi(Cash * c1, Cash * c2)
 {
-	Cash		   *result;
+	Cash	   *result;
 
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (NULL);
@@ -368,10 +368,10 @@ cash_mi(Cash * c1, Cash * c2)
 /* cash_mul()
  * Multiply cash by floating point number.
  */
-Cash		   *
+Cash	   *
 cash_mul(Cash * c, float8 * f)
 {
-	Cash		   *result;
+	Cash	   *result;
 
 	if (!PointerIsValid(f) || !PointerIsValid(c))
 		return (NULL);
@@ -391,10 +391,10 @@ cash_mul(Cash * c, float8 * f)
  * XXX Don't know if rounding or truncating is correct behavior.
  * Round for now. - tgl 97/04/15
  */
-Cash		   *
+Cash	   *
 cash_div(Cash * c, float8 * f)
 {
-	Cash		   *result;
+	Cash	   *result;
 
 	if (!PointerIsValid(f) || !PointerIsValid(c))
 		return (NULL);
@@ -414,10 +414,10 @@ cash_div(Cash * c, float8 * f)
 /* cashlarger()
  * Return larger of two cash values.
  */
-Cash		   *
+Cash	   *
 cashlarger(Cash * c1, Cash * c2)
 {
-	Cash		   *result;
+	Cash	   *result;
 
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (NULL);
@@ -434,10 +434,10 @@ cashlarger(Cash * c1, Cash * c2)
 /* cashsmaller()
  * Return smaller of two cash values.
  */
-Cash		   *
+Cash	   *
 cashsmaller(Cash * c1, Cash * c2)
 {
-	Cash		   *result;
+	Cash	   *result;
 
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
 		return (NULL);
@@ -455,15 +455,15 @@ cashsmaller(Cash * c1, Cash * c2)
  * This converts a int4 as well but to a representation using words
  * Obviously way North American centric - sorry
  */
-const char	   *
+const char *
 cash_words_out(Cash * value)
 {
-	static char		buf[128];
-	char		   *p = buf;
-	Cash			m0;
-	Cash			m1;
-	Cash			m2;
-	Cash			m3;
+	static char buf[128];
+	char	   *p = buf;
+	Cash		m0;
+	Cash		m1;
+	Cash		m2;
+	Cash		m3;
 
 	/* work with positive numbers */
 	if (*value < 0)
@@ -515,15 +515,15 @@ cash_words_out(Cash * value)
 static const char *
 num_word(Cash value)
 {
-	static char		buf[128];
+	static char buf[128];
 	static const char *small[] = {
 		"zero", "one", "two", "three", "four", "five", "six", "seven",
 		"eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
 		"fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty",
 		"thirty", "fourty", "fifty", "sixty", "seventy", "eighty", "ninety"
 	};
-	const char	  **big = small + 18;
-	int				tu = value % 100;
+	const char **big = small + 18;
+	int			tu = value % 100;
 
 	/* deal with the simple cases first */
 	if (value <= 20)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.8 1997/09/07 05:02:28 momjian Exp $
+ * $Id: exc.h,v 1.9 1997/09/08 02:39:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 
 #include "config.h"
 
-extern char    *ExcFileName;
-extern Index	ExcLineNumber;
+extern char *ExcFileName;
+extern Index ExcLineNumber;
 
 /*
  * ExcMessage and Exception are now defined in c.h
@@ -32,18 +32,18 @@ typedef sigjmp_buf ExcContext;
 #endif
 
 typedef Exception *ExcId;
-typedef long	ExcDetail;
-typedef char   *ExcData;
+typedef long ExcDetail;
+typedef char *ExcData;
 
 typedef struct ExcFrame
 {
 	struct ExcFrame *link;
-	ExcContext		context;
-	ExcId			id;
-	ExcDetail		detail;
-	ExcData			data;
-	ExcMessage		message;
-}				ExcFrame;
+	ExcContext	context;
+	ExcId		id;
+	ExcDetail	detail;
+	ExcData		data;
+	ExcMessage	message;
+}			ExcFrame;
 
 extern ExcFrame *ExcCurFrameP;
 
@@ -71,13 +71,13 @@ extern ExcFrame *ExcCurFrameP;
 #define reraise() \
 		raise4(*exception.id,exception.detail,exception.data,exception.message)
 
-typedef void	ExcProc(Exception *, ExcDetail, ExcData, ExcMessage);
+typedef void ExcProc(Exception *, ExcDetail, ExcData, ExcMessage);
 
 
 /*
  * prototypes for functions in exc.c
  */
-extern void		EnableExceptionHandling(bool on);
+extern void EnableExceptionHandling(bool on);
 extern void
 ExcRaise(Exception * excP,
 		 ExcDetail detail,

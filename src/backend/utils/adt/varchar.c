@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.9 1997/09/07 04:52:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.10 1997/09/08 02:31:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,13 +49,13 @@
  *	  len is the length specified in () plus 4 bytes. (XXX dummy is here
  *	  because we pass typelem as the second argument for array_in.)
  */
-char		   *
+char	   *
 bpcharin(char *s, int dummy, int typlen)
 {
-	char		   *result,
-				   *r;
-	int				len = typlen - 4;
-	int				i;
+	char	   *result,
+			   *r;
+	int			len = typlen - 4;
+	int			i;
 
 	if (s == NULL)
 		return ((char *) NULL);
@@ -90,11 +90,11 @@ bpcharin(char *s, int dummy, int typlen)
 	return (result);
 }
 
-char		   *
+char	   *
 bpcharout(char *s)
 {
-	char		   *result;
-	int				len;
+	char	   *result;
+	int			len;
 
 	if (s == NULL)
 	{
@@ -121,11 +121,11 @@ bpcharout(char *s)
  *	  len is the length specified in () plus 4 bytes. (XXX dummy is here
  *	  because we pass typelem as the second argument for array_in.)
  */
-char		   *
+char	   *
 varcharin(char *s, int dummy, int typlen)
 {
-	char		   *result;
-	int				len = typlen - 4;
+	char	   *result;
+	int			len = typlen - 4;
 
 	if (s == NULL)
 		return ((char *) NULL);
@@ -150,11 +150,11 @@ varcharin(char *s, int dummy, int typlen)
 	return (result);
 }
 
-char		   *
+char	   *
 varcharout(char *s)
 {
-	char		   *result;
-	int				len;
+	char	   *result;
+	int			len;
 
 	if (s == NULL)
 	{
@@ -178,9 +178,9 @@ varcharout(char *s)
 static int
 bcTruelen(char *arg)
 {
-	char		   *s = arg + 4;
-	int				i;
-	int				len;
+	char	   *s = arg + 4;
+	int			i;
+	int			len;
 
 	len = *(int32 *) arg - 4;
 	for (i = len - 1; i >= 0; i--)
@@ -194,8 +194,8 @@ bcTruelen(char *arg)
 bool
 bpchareq(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
+	int			len1,
+				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -211,8 +211,8 @@ bpchareq(char *arg1, char *arg2)
 bool
 bpcharne(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
+	int			len1,
+				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -228,9 +228,9 @@ bpcharne(char *arg1, char *arg2)
 bool
 bpcharlt(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -247,9 +247,9 @@ bpcharlt(char *arg1, char *arg2)
 bool
 bpcharle(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -266,9 +266,9 @@ bpcharle(char *arg1, char *arg2)
 bool
 bpchargt(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -285,9 +285,9 @@ bpchargt(char *arg1, char *arg2)
 bool
 bpcharge(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -304,9 +304,9 @@ bpcharge(char *arg1, char *arg2)
 int32
 bpcharcmp(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
@@ -325,9 +325,9 @@ bpcharcmp(char *arg1, char *arg2)
 static int
 vcTruelen(char *arg)
 {
-	char		   *s = arg + 4;
-	int				i;
-	int				len;
+	char	   *s = arg + 4;
+	int			i;
+	int			len;
 
 	len = *(int32 *) arg - 4;
 	for (i = 0; i < len; i++)
@@ -341,8 +341,8 @@ vcTruelen(char *arg)
 bool
 varchareq(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
+	int			len1,
+				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -358,8 +358,8 @@ varchareq(char *arg1, char *arg2)
 bool
 varcharne(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
+	int			len1,
+				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -375,9 +375,9 @@ varcharne(char *arg1, char *arg2)
 bool
 varcharlt(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -394,9 +394,9 @@ varcharlt(char *arg1, char *arg2)
 bool
 varcharle(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -413,9 +413,9 @@ varcharle(char *arg1, char *arg2)
 bool
 varchargt(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -432,9 +432,9 @@ varchargt(char *arg1, char *arg2)
 bool
 varcharge(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) 0);
@@ -452,9 +452,9 @@ varcharge(char *arg1, char *arg2)
 int32
 varcharcmp(char *arg1, char *arg2)
 {
-	int				len1,
-					len2;
-	int				cmp;
+	int			len1,
+				len2;
+	int			cmp;
 
 	len1 = vcTruelen(arg1);
 	len2 = vcTruelen(arg2);
@@ -472,10 +472,10 @@ varcharcmp(char *arg1, char *arg2)
 uint32
 hashbpchar(struct varlena * key)
 {
-	int				keylen;
-	char		   *keydata;
-	uint32			n;
-	int				loop;
+	int			keylen;
+	char	   *keydata;
+	uint32		n;
+	int			loop;
 
 	keydata = VARDATA(key);
 	keylen = bcTruelen((char *) key);
@@ -489,25 +489,25 @@ hashbpchar(struct varlena * key)
 
 		switch (keylen & (8 - 1))
 		{
-		case 0:
-			do
-			{					/* All fall throughs */
-				HASHC;
-		case 7:
-				HASHC;
-		case 6:
-				HASHC;
-		case 5:
-				HASHC;
-		case 4:
-				HASHC;
-		case 3:
-				HASHC;
-		case 2:
-				HASHC;
-		case 1:
-				HASHC;
-			} while (--loop);
+			case 0:
+				do
+				{				/* All fall throughs */
+					HASHC;
+			case 7:
+					HASHC;
+			case 6:
+					HASHC;
+			case 5:
+					HASHC;
+			case 4:
+					HASHC;
+			case 3:
+					HASHC;
+			case 2:
+					HASHC;
+			case 1:
+					HASHC;
+				} while (--loop);
 		}
 	}
 	return (n);
@@ -516,10 +516,10 @@ hashbpchar(struct varlena * key)
 uint32
 hashvarchar(struct varlena * key)
 {
-	int				keylen;
-	char		   *keydata;
-	uint32			n;
-	int				loop;
+	int			keylen;
+	char	   *keydata;
+	uint32		n;
+	int			loop;
 
 	keydata = VARDATA(key);
 	keylen = vcTruelen((char *) key);
@@ -533,25 +533,25 @@ hashvarchar(struct varlena * key)
 
 		switch (keylen & (8 - 1))
 		{
-		case 0:
-			do
-			{					/* All fall throughs */
-				HASHC;
-		case 7:
-				HASHC;
-		case 6:
-				HASHC;
-		case 5:
-				HASHC;
-		case 4:
-				HASHC;
-		case 3:
-				HASHC;
-		case 2:
-				HASHC;
-		case 1:
-				HASHC;
-			} while (--loop);
+			case 0:
+				do
+				{				/* All fall throughs */
+					HASHC;
+			case 7:
+					HASHC;
+			case 6:
+					HASHC;
+			case 5:
+					HASHC;
+			case 4:
+					HASHC;
+			case 3:
+					HASHC;
+			case 2:
+					HASHC;
+			case 1:
+					HASHC;
+				} while (--loop);
 		}
 	}
 	return (n);

@@ -31,10 +31,10 @@ srandom(int seed)
 int
 getrusage(int who, struct rusage * rusage)
 {
-	struct tms		tms;
-	register int	tick_rate = CLK_TCK;		/* ticks per second */
-	clock_t			u,
-					s;
+	struct tms	tms;
+	register int tick_rate = CLK_TCK;	/* ticks per second */
+	clock_t		u,
+				s;
 
 	if (rusage == (struct rusage *) NULL)
 	{
@@ -48,17 +48,17 @@ getrusage(int who, struct rusage * rusage)
 	}
 	switch (who)
 	{
-	case RUSAGE_SELF:
-		u = tms.tms_utime;
-		s = tms.tms_stime;
-		break;
-	case RUSAGE_CHILDREN:
-		u = tms.tms_cutime;
-		s = tms.tms_cstime;
-		break;
-	default:
-		errno = EINVAL;
-		return (-1);
+		case RUSAGE_SELF:
+			u = tms.tms_utime;
+			s = tms.tms_stime;
+			break;
+		case RUSAGE_CHILDREN:
+			u = tms.tms_cutime;
+			s = tms.tms_cstime;
+			break;
+		default:
+			errno = EINVAL;
+			return (-1);
 	}
 #define TICK_TO_SEC(T, RATE)	((T)/(RATE))
 #define TICK_TO_USEC(T,RATE)	(((T)%(RATE)*1000000)/RATE)
@@ -82,7 +82,7 @@ getrusage(int who, struct rusage * rusage)
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char		sccsid[] = "@(#)strcasecmp.c	5.5 (Berkeley) 11/24/87";
+static char sccsid[] = "@(#)strcasecmp.c	5.5 (Berkeley) 11/24/87";
 
 #endif							/* LIBC_SCCS and not lint */
 
@@ -133,7 +133,7 @@ int
 strcasecmp(char *s1, char *s2)
 {
 	register unsigned char u1,
-					u2;
+				u2;
 
 	for (;;)
 	{

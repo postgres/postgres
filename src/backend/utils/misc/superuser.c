@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.3 1997/09/07 04:53:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.4 1997/09/08 02:32:00 momjian Exp $
  *
  * DESCRIPTION
  *	  See superuser().
@@ -26,9 +26,9 @@ superuser(void)
 	The Postgres user running this command has Postgres superuser
 	privileges.
 --------------------------------------------------------------------------*/
-	extern char    *UserName;	/* defined in global.c */
+	extern char *UserName;		/* defined in global.c */
 
-	HeapTuple		utup;
+	HeapTuple	utup;
 
 	utup = SearchSysCacheTuple(USENAME, PointerGetDatum(UserName),
 							   0, 0, 0);

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char		sccsid[] = "@(#)strtol.c	5.4 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)strtol.c	5.4 (Berkeley) 2/23/91";
 
 #endif							/* LIBC_SCCS and not lint */
 
@@ -51,17 +51,17 @@ static char		sccsid[] = "@(#)strtol.c	5.4 (Berkeley) 2/23/91";
  */
 long
 strtol(nptr, endptr, base)
-const char	   *nptr;
-char		  **endptr;
-register int	base;
+const char *nptr;
+char	  **endptr;
+register int base;
 {
 	register const char *s = nptr;
 	register unsigned long acc;
-	register int	c;
+	register int c;
 	register unsigned long cutoff;
-	register int	neg = 0,
-					any,
-					cutlim;
+	register int neg = 0,
+				any,
+				cutlim;
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any. If base is 0,

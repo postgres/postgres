@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.5 1997/09/07 04:43:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.6 1997/09/08 02:24:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,23 +24,23 @@
 #include "optimizer/pathnode.h"
 
 #ifdef USE_RIGHT_SIDED_PLANS
-bool			_use_right_sided_plans_ = true;
+bool		_use_right_sided_plans_ = true;
 
 #else
-bool			_use_right_sided_plans_ = false;
+bool		_use_right_sided_plans_ = false;
 
 #endif
 
-static List    *find_clause_joins(Query * root, Rel * outer_rel, List * joininfo_list);
-static List    *find_clauseless_joins(Rel * outer_rel, List * inner_rels);
-static Rel	   *init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo);
-static List    *
+static List *find_clause_joins(Query * root, Rel * outer_rel, List * joininfo_list);
+static List *find_clauseless_joins(Rel * outer_rel, List * inner_rels);
+static Rel *init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo);
+static List *
 new_join_tlist(List * tlist, List * other_relids,
 			   int first_resdomno);
-static List    *new_joininfo_list(List * joininfo_list, List * join_relids);
-static void		add_superrels(Rel * rel, Rel * super_rel);
-static bool		nonoverlap_rels(Rel * rel1, Rel * rel2);
-static bool		nonoverlap_sets(List * s1, List * s2);
+static List *new_joininfo_list(List * joininfo_list, List * join_relids);
+static void add_superrels(Rel * rel, Rel * super_rel);
+static bool nonoverlap_rels(Rel * rel1, Rel * rel2);
+static bool nonoverlap_sets(List * s1, List * s2);
 static void
 set_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel,
 				 JInfo * jinfo);
@@ -58,16 +58,16 @@ set_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel,
  *
  * Returns a list of rel nodes corresponding to the new join relations.
  */
-List		   *
+List	   *
 find_join_rels(Query * root, List * outer_rels)
 {
-	List		   *joins = NIL;
-	List		   *join_list = NIL;
-	List		   *r = NIL;
+	List	   *joins = NIL;
+	List	   *join_list = NIL;
+	List	   *r = NIL;
 
 	foreach(r, outer_rels)
 	{
-		Rel			   *outer_rel = (Rel *) lfirst(r);
+		Rel		   *outer_rel = (Rel *) lfirst(r);
 
 		if (!(joins = find_clause_joins(root, outer_rel, outer_rel->joininfo)))
 			if (BushyPlanFlag)
@@ -96,20 +96,20 @@ find_join_rels(Query * root, List * outer_rels)
  *
  * Returns a list of new join relations.
  */
-static List    *
+static List *
 find_clause_joins(Query * root, Rel * outer_rel, List * joininfo_list)
 {
-	List		   *join_list = NIL;
-	List		   *i = NIL;
+	List	   *join_list = NIL;
+	List	   *i = NIL;
 
 	foreach(i, joininfo_list)
 	{
-		JInfo		   *joininfo = (JInfo *) lfirst(i);
-		Rel			   *rel;
+		JInfo	   *joininfo = (JInfo *) lfirst(i);
+		Rel		   *rel;
 
 		if (!joininfo->inactive)
 		{
-			List		   *other_rels = joininfo->otherrels;
+			List	   *other_rels = joininfo->otherrels;
 
 			if (other_rels != NIL)
 			{
@@ -157,13 +157,13 @@ find_clause_joins(Query * root, Rel * outer_rel, List * joininfo_list)
  *
  * Returns a list of new join relations.
  */
-static List    *
+static List *
 find_clauseless_joins(Rel * outer_rel, List * inner_rels)
 {
-	Rel			   *inner_rel;
-	List		   *t_list = NIL;
-	List		   *temp_node = NIL;
-	List		   *i = NIL;
+	Rel		   *inner_rel;
+	List	   *t_list = NIL;
+	List	   *temp_node = NIL;
+	List	   *i = NIL;
 
 	foreach(i, inner_rels)
 	{
@@ -192,13 +192,13 @@ find_clauseless_joins(Rel * outer_rel, List * inner_rels)
  *
  * Returns the new join relation node.
  */
-static Rel	   *
+static Rel *
 init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo)
 {
-	Rel			   *joinrel = makeNode(Rel);
-	List		   *joinrel_joininfo_list = NIL;
-	List		   *new_outer_tlist;
-	List		   *new_inner_tlist;
+	Rel		   *joinrel = makeNode(Rel);
+	List	   *joinrel_joininfo_list = NIL;
+	List	   *new_outer_tlist;
+	List	   *new_inner_tlist;
 
 	/*
 	 * Create a new tlist by removing irrelevant elements from both tlists
@@ -272,18 +272,18 @@ init_join_rel(Rel * outer_rel, Rel * inner_rel, JInfo * joininfo)
  *
  * Returns the new target list.
  */
-static List    *
+static List *
 new_join_tlist(List * tlist,
 			   List * other_relids,
 			   int first_resdomno)
 {
-	int				resdomno = first_resdomno - 1;
-	TargetEntry    *xtl = NULL;
-	List		   *temp_node = NIL;
-	List		   *t_list = NIL;
-	List		   *i = NIL;
-	List		   *join_list = NIL;
-	bool			in_final_tlist = false;
+	int			resdomno = first_resdomno - 1;
+	TargetEntry *xtl = NULL;
+	List	   *temp_node = NIL;
+	List	   *t_list = NIL;
+	List	   *i = NIL;
+	List	   *join_list = NIL;
+	bool		in_final_tlist = false;
 
 
 	foreach(i, tlist)
@@ -322,18 +322,18 @@ new_join_tlist(List * tlist,
  *
  * Returns a list of joininfo nodes, new and old.
  */
-static List    *
+static List *
 new_joininfo_list(List * joininfo_list, List * join_relids)
 {
-	List		   *current_joininfo_list = NIL;
-	List		   *new_otherrels = NIL;
-	JInfo		   *other_joininfo = (JInfo *) NULL;
-	List		   *xjoininfo = NIL;
+	List	   *current_joininfo_list = NIL;
+	List	   *new_otherrels = NIL;
+	JInfo	   *other_joininfo = (JInfo *) NULL;
+	List	   *xjoininfo = NIL;
 
 	foreach(xjoininfo, joininfo_list)
 	{
-		List		   *or;
-		JInfo		   *joininfo = (JInfo *) lfirst(xjoininfo);
+		List	   *or;
+		JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
 
 		new_otherrels = joininfo->otherrels;
 		foreach(or, new_otherrels)
@@ -389,42 +389,42 @@ new_joininfo_list(List * joininfo_list, List * join_relids)
 void
 add_new_joininfos(Query * root, List * joinrels, List * outerrels)
 {
-	List		   *xjoinrel = NIL;
-	List		   *xrelid = NIL;
-	List		   *xrel = NIL;
-	List		   *xjoininfo = NIL;
+	List	   *xjoinrel = NIL;
+	List	   *xrelid = NIL;
+	List	   *xrel = NIL;
+	List	   *xjoininfo = NIL;
 
 	foreach(xjoinrel, joinrels)
 	{
-		Rel			   *joinrel = (Rel *) lfirst(xjoinrel);
+		Rel		   *joinrel = (Rel *) lfirst(xjoinrel);
 
 		foreach(xrelid, joinrel->relids)
 		{
-			Relid			relid = (Relid) lfirst(xrelid);
-			Rel			   *rel = get_join_rel(root, relid);
+			Relid		relid = (Relid) lfirst(xrelid);
+			Rel		   *rel = get_join_rel(root, relid);
 
 			add_superrels(rel, joinrel);
 		}
 	}
 	foreach(xjoinrel, joinrels)
 	{
-		Rel			   *joinrel = (Rel *) lfirst(xjoinrel);
+		Rel		   *joinrel = (Rel *) lfirst(xjoinrel);
 
 		foreach(xjoininfo, joinrel->joininfo)
 		{
-			JInfo		   *joininfo = (JInfo *) lfirst(xjoininfo);
-			List		   *other_rels = joininfo->otherrels;
-			List		   *clause_info = joininfo->jinfoclauseinfo;
-			bool			mergesortable = joininfo->mergesortable;
-			bool			hashjoinable = joininfo->hashjoinable;
+			JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
+			List	   *other_rels = joininfo->otherrels;
+			List	   *clause_info = joininfo->jinfoclauseinfo;
+			bool		mergesortable = joininfo->mergesortable;
+			bool		hashjoinable = joininfo->hashjoinable;
 
 			foreach(xrelid, other_rels)
 			{
-				Relid			relid = (Relid) lfirst(xrelid);
-				Rel			   *rel = get_join_rel(root, relid);
-				List		   *super_rels = rel->superrels;
-				List		   *xsuper_rel = NIL;
-				JInfo		   *new_joininfo = makeNode(JInfo);
+				Relid		relid = (Relid) lfirst(xrelid);
+				Rel		   *rel = get_join_rel(root, relid);
+				List	   *super_rels = rel->superrels;
+				List	   *xsuper_rel = NIL;
+				JInfo	   *new_joininfo = makeNode(JInfo);
 
 				new_joininfo->otherrels = joinrel->relids;
 				new_joininfo->jinfoclauseinfo = clause_info;
@@ -436,12 +436,12 @@ add_new_joininfos(Query * root, List * joinrels, List * outerrels)
 
 				foreach(xsuper_rel, super_rels)
 				{
-					Rel			   *super_rel = (Rel *) lfirst(xsuper_rel);
+					Rel		   *super_rel = (Rel *) lfirst(xsuper_rel);
 
 					if (nonoverlap_rels(super_rel, joinrel))
 					{
-						List		   *new_relids = super_rel->relids;
-						JInfo		   *other_joininfo =
+						List	   *new_relids = super_rel->relids;
+						JInfo	   *other_joininfo =
 						joininfo_member(new_relids,
 										joinrel->joininfo);
 
@@ -453,7 +453,7 @@ add_new_joininfos(Query * root, List * joinrels, List * outerrels)
 						}
 						else
 						{
-							JInfo		   *new_joininfo = makeNode(JInfo);
+							JInfo	   *new_joininfo = makeNode(JInfo);
 
 							new_joininfo->otherrels = new_relids;
 							new_joininfo->jinfoclauseinfo = clause_info;
@@ -471,7 +471,7 @@ add_new_joininfos(Query * root, List * joinrels, List * outerrels)
 	}
 	foreach(xrel, outerrels)
 	{
-		Rel			   *rel = (Rel *) lfirst(xrel);
+		Rel		   *rel = (Rel *) lfirst(xrel);
 
 		rel->superrels = NIL;
 	}
@@ -486,12 +486,12 @@ add_new_joininfos(Query * root, List * joinrels, List * outerrels)
  *
  * Returns the list of final join relations.
  */
-List		   *
+List	   *
 final_join_rels(List * join_rel_list)
 {
-	List		   *xrel = NIL;
-	List		   *temp = NIL;
-	List		   *t_list = NIL;
+	List	   *xrel = NIL;
+	List	   *temp = NIL;
+	List	   *t_list = NIL;
 
 	/*
 	 * find the relations that has no further joins, i.e., its joininfos
@@ -499,13 +499,13 @@ final_join_rels(List * join_rel_list)
 	 */
 	foreach(xrel, join_rel_list)
 	{
-		Rel			   *rel = (Rel *) lfirst(xrel);
-		List		   *xjoininfo = NIL;
-		bool			final = true;
+		Rel		   *rel = (Rel *) lfirst(xrel);
+		List	   *xjoininfo = NIL;
+		bool		final = true;
 
 		foreach(xjoininfo, rel->joininfo)
 		{
-			JInfo		   *joininfo = (JInfo *) lfirst(xjoininfo);
+			JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
 
 			if (joininfo->otherrels != NIL)
 			{
@@ -547,20 +547,20 @@ add_superrels(Rel * rel, Rel * super_rel)
  *
  * Returns non-nil if rel1 and rel2 do not overlap.
  */
-static			bool
+static bool
 nonoverlap_rels(Rel * rel1, Rel * rel2)
 {
 	return (nonoverlap_sets(rel1->relids, rel2->relids));
 }
 
-static			bool
+static bool
 nonoverlap_sets(List * s1, List * s2)
 {
-	List		   *x = NIL;
+	List	   *x = NIL;
 
 	foreach(x, s1)
 	{
-		int				e = lfirsti(x);
+		int			e = lfirsti(x);
 
 		if (intMember(e, s2))
 			return (false);
@@ -571,8 +571,8 @@ nonoverlap_sets(List * s1, List * s2)
 static void
 set_joinrel_size(Rel * joinrel, Rel * outer_rel, Rel * inner_rel, JInfo * jinfo)
 {
-	int				ntuples;
-	float			selec;
+	int			ntuples;
+	float		selec;
 
 	/*
 	 * voodoo magic. but better than a size of 0. I have no idea why we

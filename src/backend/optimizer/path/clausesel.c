@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.2 1997/09/07 04:43:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.3 1997/09/08 02:24:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
 
-static Cost		compute_selec(Query * root, List * clauses, List * or_selectivities);
+static Cost compute_selec(Query * root, List * clauses, List * or_selectivities);
 
 /****************************************************************************
  *		ROUTINES TO SET CLAUSE SELECTIVITIES
@@ -49,9 +49,9 @@ static Cost		compute_selec(Query * root, List * clauses, List * or_selectivities
 void
 set_clause_selectivities(List * clauseinfo_list, Cost new_selectivity)
 {
-	List		   *temp;
-	CInfo		   *clausenode;
-	Cost			cost_clause;
+	List	   *temp;
+	CInfo	   *clausenode;
+	Cost		cost_clause;
 
 	foreach(temp, clauseinfo_list)
 	{
@@ -73,12 +73,12 @@ set_clause_selectivities(List * clauseinfo_list, Cost new_selectivity)
 Cost
 product_selec(List * clauseinfo_list)
 {
-	Cost			result = 1.0;
+	Cost		result = 1.0;
 
 	if (clauseinfo_list != NIL)
 	{
-		List		   *xclausenode = NIL;
-		Cost			temp;
+		List	   *xclausenode = NIL;
+		Cost		temp;
 
 		foreach(xclausenode, clauseinfo_list)
 		{
@@ -101,8 +101,8 @@ product_selec(List * clauseinfo_list)
 void
 set_rest_relselec(Query * root, List * rel_list)
 {
-	Rel			   *rel;
-	List		   *x;
+	Rel		   *rel;
+	List	   *x;
 
 	foreach(x, rel_list)
 	{
@@ -122,9 +122,9 @@ set_rest_relselec(Query * root, List * rel_list)
 void
 set_rest_selec(Query * root, List * clauseinfo_list)
 {
-	List		   *temp = NIL;
-	CInfo		   *clausenode = (CInfo *) NULL;
-	Cost			cost_clause;
+	List	   *temp = NIL;
+	CInfo	   *clausenode = (CInfo *) NULL;
+	Cost		cost_clause;
 
 	foreach(temp, clauseinfo_list)
 	{
@@ -222,11 +222,11 @@ compute_clause_selec(Query * root, Node * clause, List * or_selectivities)
  * Returns the clause selectivity as a flonum.
  *
  */
-static			Cost
+static Cost
 compute_selec(Query * root, List * clauses, List * or_selectivities)
 {
-	Cost			s1 = 0;
-	List		   *clause = lfirst(clauses);
+	Cost		s1 = 0;
+	List	   *clause = lfirst(clauses);
 
 	if (clauses == NULL)
 	{
@@ -243,8 +243,8 @@ compute_selec(Query * root, List * clauses, List * or_selectivities)
 	}
 	else if (IsA(clause, Var))
 	{
-		Oid				relid = getrelid(((Var *) clause)->varno,
-										 root->rtable);
+		Oid			relid = getrelid(((Var *) clause)->varno,
+									 root->rtable);
 
 		/*
 		 * we have a bool Var.	This is exactly equivalent to the clause:
@@ -264,7 +264,7 @@ compute_selec(Query * root, List * clauses, List * or_selectivities)
 	else if (or_selectivities)
 	{
 		/* If s1 has already been assigned by an index, use that value. */
-		List		   *this_sel = lfirst(or_selectivities);
+		List	   *this_sel = lfirst(or_selectivities);
 
 		s1 = floatVal(this_sel);
 	}
@@ -288,13 +288,13 @@ compute_selec(Query * root, List * clauses, List * or_selectivities)
 		 * clause selectivity will be based on the operator selectivity
 		 * and operand values.
 		 */
-		Oid				opno = ((Oper *) ((Expr *) clause)->oper)->opno;
-		RegProcedure	oprrest = get_oprrest(opno);
-		Oid				relid;
-		int				relidx;
-		AttrNumber		attno;
-		Datum			constval;
-		int				flag;
+		Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+		RegProcedure oprrest = get_oprrest(opno);
+		Oid			relid;
+		int			relidx;
+		AttrNumber	attno;
+		Datum		constval;
+		int			flag;
 
 		get_relattval((Node *) clause, &relidx, &attno, &constval, &flag);
 		relid = getrelid(relidx, root->rtable);
@@ -332,12 +332,12 @@ compute_selec(Query * root, List * clauses, List * or_selectivities)
 		 * be based on the relations to be scanned and the attributes they
 		 * are to be joined on.
 		 */
-		Oid				opno = ((Oper *) ((Expr *) clause)->oper)->opno;
-		RegProcedure	oprjoin = get_oprjoin(opno);
-		int				relid1,
-						relid2;
-		AttrNumber		attno1,
-						attno2;
+		Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+		RegProcedure oprjoin = get_oprjoin(opno);
+		int			relid1,
+					relid2;
+		AttrNumber	attno1,
+					attno2;
 
 		get_rels_atts((Node *) clause, &relid1, &attno1, &relid2, &attno2);
 		relid1 = getrelid(relid1, root->rtable);
@@ -372,7 +372,7 @@ compute_selec(Query * root, List * clauses, List * or_selectivities)
 	{
 		/* Compute selectivity of the 'or'ed subclauses. */
 		/* Added check for taking lnext(NIL).  -- JMH 3/9/92 */
-		Cost			s2;
+		Cost		s2;
 
 		if (or_selectivities != NIL)
 			s2 = compute_selec(root, lnext(clauses), lnext(or_selectivities));

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.4 1997/09/07 04:56:47 momjian Exp $
+ * $Id: pg_index.h,v 1.5 1997/09/08 02:35:12 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -41,20 +41,19 @@
  */
 CATALOG(pg_index)
 {
-	Oid				indexrelid;
-	Oid				indrelid;
-	Oid				indproc;	/* registered procedure for functional
+	Oid			indexrelid;
+	Oid			indrelid;
+	Oid			indproc;		/* registered procedure for functional
 								 * index */
-	int28			indkey;
-	oid8			indclass;
-	bool			indisclustered;
-	bool			indisarchived;
-	bool			indislossy; /* do we fetch false tuples (lossy
+	int28		indkey;
+	oid8		indclass;
+	bool		indisclustered;
+	bool		indisarchived;
+	bool		indislossy;		/* do we fetch false tuples (lossy
 								 * compression)? */
-	bool			indhaskeytype;		/* does key type != attribute
-										 * type? */
-	bool			indisunique;/* is this a unique index? */
-	text			indpred;	/* query plan for partial index predicate */
+	bool		indhaskeytype;	/* does key type != attribute type? */
+	bool		indisunique;	/* is this a unique index? */
+	text		indpred;		/* query plan for partial index predicate */
 } FormData_pg_index;
 
 #define INDEX_MAX_KEYS 8		/* maximum number of keys in an index

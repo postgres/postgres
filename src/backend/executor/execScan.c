@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.4 1997/09/07 04:41:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.5 1997/09/08 02:22:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,15 +48,15 @@ ExecScan(Scan * node,
 												 * tuple */
 {
 	CommonScanState *scanstate;
-	EState		   *estate;
-	List		   *qual;
-	bool			isDone;
+	EState	   *estate;
+	List	   *qual;
+	bool		isDone;
 
 	TupleTableSlot *slot;
 	TupleTableSlot *resultSlot;
-	HeapTuple		newTuple;
+	HeapTuple	newTuple;
 
-	ExprContext    *econtext;
+	ExprContext *econtext;
 	ProjectionInfo *projInfo;
 
 

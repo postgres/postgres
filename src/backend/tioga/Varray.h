@@ -11,14 +11,14 @@
 
 typedef struct _varray
 {
-	size_t			nobj;		/* number of objects in this array */
-	size_t			maxObj;		/* max. number of objects in this array */
-	size_t			size;		/* size of each element in the array */
-	void		   *val;		/* array of elements */
-}				Varray;
+	size_t		nobj;			/* number of objects in this array */
+	size_t		maxObj;			/* max. number of objects in this array */
+	size_t		size;			/* size of each element in the array */
+	void	   *val;			/* array of elements */
+}			Varray;
 
 /* type for custom copying function */
-typedef void	(*CopyingFunct) (void *from, void *to);
+typedef void (*CopyingFunct) (void *from, void *to);
 
 #define VARRAY_INITIAL_SIZE 32
 
@@ -40,7 +40,7 @@ typedef void	(*CopyingFunct) (void *from, void *to);
   ((N) < (ARRAY)->nobj ? VARRAY_NTH((ARRAY)->val, (ARRAY)->size, (N)) \
 					   : NULL)
 
-extern Varray  *NewVarray(size_t nobj, size_t size);
-extern int		AppendVarray(Varray * array, void *value, CopyingFunct copy);
+extern Varray *NewVarray(size_t nobj, size_t size);
+extern int	AppendVarray(Varray * array, void *value, CopyingFunct copy);
 
 #endif							/* _VARRAY_H_ */

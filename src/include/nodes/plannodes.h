@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.7 1997/09/07 04:58:46 momjian Exp $
+ * $Id: plannodes.h,v 1.8 1997/09/08 02:37:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,19 +63,19 @@
 
 typedef struct Plan
 {
-	NodeTag			type;
-	Cost			cost;
-	int				plan_size;
-	int				plan_width;
-	int				plan_tupperpage;
-	EState		   *state;		/* at execution time, state's of
+	NodeTag		type;
+	Cost		cost;
+	int			plan_size;
+	int			plan_width;
+	int			plan_tupperpage;
+	EState	   *state;			/* at execution time, state's of
 								 * individual nodes point to one EState
 								 * for the whole top-level plan */
-	List		   *targetlist;
-	List		   *qual;		/* Node* or List* ?? */
-	struct Plan    *lefttree;
-	struct Plan    *righttree;
-}				Plan;
+	List	   *targetlist;
+	List	   *qual;			/* Node* or List* ?? */
+	struct Plan *lefttree;
+	struct Plan *righttree;
+}			Plan;
 
 /* ----------------
  *	these are are defined to avoid confusion problems with "left"
@@ -104,7 +104,7 @@ typedef struct Plan
  *		existential node
  * ----------------
  */
-typedef Plan	Existential;
+typedef Plan Existential;
 
 /* ----------------
  *	 result node -
@@ -113,10 +113,10 @@ typedef Plan	Existential;
  */
 typedef struct Result
 {
-	Plan			plan;
-	Node		   *resconstantqual;
-	ResultState    *resstate;
-}				Result;
+	Plan		plan;
+	Node	   *resconstantqual;
+	ResultState *resstate;
+}			Result;
 
 /* ----------------
  *		append node
@@ -124,12 +124,12 @@ typedef struct Result
  */
 typedef struct Append
 {
-	Plan			plan;
-	List		   *unionplans;
-	Index			unionrelid;
-	List		   *unionrtentries;
-	AppendState    *unionstate;
-}				Append;
+	Plan		plan;
+	List	   *unionplans;
+	Index		unionrelid;
+	List	   *unionrtentries;
+	AppendState *unionstate;
+}			Append;
 
 /*
  * ==========
@@ -138,16 +138,16 @@ typedef struct Append
  */
 typedef struct Scan
 {
-	Plan			plan;
-	Index			scanrelid;	/* relid is index into the range table */
+	Plan		plan;
+	Index		scanrelid;		/* relid is index into the range table */
 	CommonScanState *scanstate;
-}				Scan;
+}			Scan;
 
 /* ----------------
  *		sequential scan node
  * ----------------
  */
-typedef Scan	SeqScan;
+typedef Scan SeqScan;
 
 /* ----------------
  *		index scan node
@@ -155,11 +155,11 @@ typedef Scan	SeqScan;
  */
 typedef struct IndexScan
 {
-	Scan			scan;
-	List		   *indxid;
-	List		   *indxqual;
+	Scan		scan;
+	List	   *indxid;
+	List	   *indxqual;
 	IndexScanState *indxstate;
-}				IndexScan;
+}			IndexScan;
 
 /*
  * ==========
@@ -171,7 +171,7 @@ typedef struct IndexScan
  *		Join node
  * ----------------
  */
-typedef Plan	Join;
+typedef Plan Join;
 
 /* ----------------
  *		nest loop join node
@@ -179,9 +179,9 @@ typedef Plan	Join;
  */
 typedef struct NestLoop
 {
-	Join			join;
-	NestLoopState  *nlstate;
-}				NestLoop;
+	Join		join;
+	NestLoopState *nlstate;
+}			NestLoop;
 
 /* ----------------
  *		merge join node
@@ -189,13 +189,13 @@ typedef struct NestLoop
  */
 typedef struct MergeJoin
 {
-	Join			join;
-	List		   *mergeclauses;
-	Oid				mergesortop;
-	Oid			   *mergerightorder;	/* inner sort operator */
-	Oid			   *mergeleftorder;		/* outer sort operator */
+	Join		join;
+	List	   *mergeclauses;
+	Oid			mergesortop;
+	Oid		   *mergerightorder;/* inner sort operator */
+	Oid		   *mergeleftorder; /* outer sort operator */
 	MergeJoinState *mergestate;
-}				MergeJoin;
+}			MergeJoin;
 
 /* ----------------
  *		hash join (probe) node
@@ -203,15 +203,15 @@ typedef struct MergeJoin
  */
 typedef struct HashJoin
 {
-	Join			join;
-	List		   *hashclauses;
-	Oid				hashjoinop;
-	HashJoinState  *hashjoinstate;
-	HashJoinTable	hashjointable;
-	IpcMemoryKey	hashjointablekey;
-	int				hashjointablesize;
-	bool			hashdone;
-}				HashJoin;
+	Join		join;
+	List	   *hashclauses;
+	Oid			hashjoinop;
+	HashJoinState *hashjoinstate;
+	HashJoinTable hashjointable;
+	IpcMemoryKey hashjointablekey;
+	int			hashjointablesize;
+	bool		hashdone;
+}			HashJoin;
 
 /* ---------------
  *		aggregate node
@@ -219,11 +219,11 @@ typedef struct HashJoin
  */
 typedef struct Agg
 {
-	Plan			plan;
-	int				numAgg;
-	Aggreg		  **aggs;
-	AggState	   *aggstate;
-}				Agg;
+	Plan		plan;
+	int			numAgg;
+	Aggreg	  **aggs;
+	AggState   *aggstate;
+}			Agg;
 
 /* ---------------
  *	 group node -
@@ -237,13 +237,12 @@ typedef struct Agg
  */
 typedef struct Group
 {
-	Plan			plan;
-	bool			tuplePerGroup;		/* what tuples to return (see
-										 * above) */
-	int				numCols;	/* number of group columns */
-	AttrNumber	   *grpColIdx;	/* index into the target list */
-	GroupState	   *grpstate;
-}				Group;
+	Plan		plan;
+	bool		tuplePerGroup;	/* what tuples to return (see above) */
+	int			numCols;		/* number of group columns */
+	AttrNumber *grpColIdx;		/* index into the target list */
+	GroupState *grpstate;
+}			Group;
 
 /*
  * ==========
@@ -252,10 +251,10 @@ typedef struct Group
  */
 typedef struct Temp
 {
-	Plan			plan;
-	Oid				tempid;
-	int				keycount;
-}				Temp;
+	Plan		plan;
+	Oid			tempid;
+	int			keycount;
+}			Temp;
 
 /* ----------------
  *		materialization node
@@ -263,11 +262,11 @@ typedef struct Temp
  */
 typedef struct Material
 {
-	Plan			plan;		/* temp node flattened out */
-	Oid				tempid;
-	int				keycount;
-	MaterialState  *matstate;
-}				Material;
+	Plan		plan;			/* temp node flattened out */
+	Oid			tempid;
+	int			keycount;
+	MaterialState *matstate;
+}			Material;
 
 /* ----------------
  *		sort node
@@ -275,13 +274,13 @@ typedef struct Material
  */
 typedef struct Sort
 {
-	Plan			plan;		/* temp node flattened out */
-	Oid				tempid;
-	int				keycount;
-	SortState	   *sortstate;
-	void		   *psortstate;
-	bool			cleaned;
-}				Sort;
+	Plan		plan;			/* temp node flattened out */
+	Oid			tempid;
+	int			keycount;
+	SortState  *sortstate;
+	void	   *psortstate;
+	bool		cleaned;
+}			Sort;
 
 /* ----------------
  *		unique node
@@ -289,15 +288,15 @@ typedef struct Sort
  */
 typedef struct Unique
 {
-	Plan			plan;		/* temp node flattened out */
-	Oid				tempid;
-	int				keycount;
-	char		   *uniqueAttr; /* NULL if all attrs, or unique attribute
+	Plan		plan;			/* temp node flattened out */
+	Oid			tempid;
+	int			keycount;
+	char	   *uniqueAttr;		/* NULL if all attrs, or unique attribute
 								 * name */
-	AttrNumber		uniqueAttrNum;		/* attribute number of attribute
-										 * to select distinct on */
-	UniqueState    *uniquestate;
-}				Unique;
+	AttrNumber	uniqueAttrNum;	/* attribute number of attribute to select
+								 * distinct on */
+	UniqueState *uniquestate;
+}			Unique;
 
 /* ----------------
  *		hash build node
@@ -305,13 +304,13 @@ typedef struct Unique
  */
 typedef struct Hash
 {
-	Plan			plan;
-	Var			   *hashkey;
-	HashState	   *hashstate;
-	HashJoinTable	hashtable;
-	IpcMemoryKey	hashtablekey;
-	int				hashtablesize;
-}				Hash;
+	Plan		plan;
+	Var		   *hashkey;
+	HashState  *hashstate;
+	HashJoinTable hashtable;
+	IpcMemoryKey hashtablekey;
+	int			hashtablesize;
+}			Hash;
 
 /* ---------------------
  *		choose node
@@ -319,9 +318,9 @@ typedef struct Hash
  */
 typedef struct Choose
 {
-	Plan			plan;
-	List		   *chooseplanlist;
-}				Choose;
+	Plan		plan;
+	List	   *chooseplanlist;
+}			Choose;
 
 /* -------------------
  *		Tee node information
@@ -332,15 +331,15 @@ typedef struct Choose
 */
 typedef struct Tee
 {
-	Plan			plan;
-	Plan		   *leftParent;
-	Plan		   *rightParent;
-	TeeState	   *teestate;
-	char		   *teeTableName;		/* the name of the table to
-										 * materialize the tee into */
-	List		   *rtentries;	/* the range table for the plan below the
+	Plan		plan;
+	Plan	   *leftParent;
+	Plan	   *rightParent;
+	TeeState   *teestate;
+	char	   *teeTableName;	/* the name of the table to materialize
+								 * the tee into */
+	List	   *rtentries;		/* the range table for the plan below the
 								 * Tee may be different than the parent
 								 * plans */
-}				Tee;
+}			Tee;
 
 #endif							/* PLANNODES_H */

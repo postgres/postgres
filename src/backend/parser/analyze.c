@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.39 1997/09/07 04:44:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.40 1997/09/08 02:25:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,54 +44,54 @@
 #include "port-protos.h"		/* strdup() */
 
 /* convert the parse tree into a query tree */
-static Query   *transformStmt(ParseState * pstate, Node * stmt);
+static Query *transformStmt(ParseState * pstate, Node * stmt);
 
-static Query   *transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt);
-static Query   *transformInsertStmt(ParseState * pstate, AppendStmt * stmt);
-static Query   *transformIndexStmt(ParseState * pstate, IndexStmt * stmt);
-static Query   *transformExtendStmt(ParseState * pstate, ExtendStmt * stmt);
-static Query   *transformRuleStmt(ParseState * query, RuleStmt * stmt);
-static Query   *transformSelectStmt(ParseState * pstate, RetrieveStmt * stmt);
-static Query   *transformUpdateStmt(ParseState * pstate, ReplaceStmt * stmt);
-static Query   *transformCursorStmt(ParseState * pstate, CursorStmt * stmt);
-static Node    *handleNestedDots(ParseState * pstate, Attr * attr, int *curr_resno);
+static Query *transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt);
+static Query *transformInsertStmt(ParseState * pstate, AppendStmt * stmt);
+static Query *transformIndexStmt(ParseState * pstate, IndexStmt * stmt);
+static Query *transformExtendStmt(ParseState * pstate, ExtendStmt * stmt);
+static Query *transformRuleStmt(ParseState * query, RuleStmt * stmt);
+static Query *transformSelectStmt(ParseState * pstate, RetrieveStmt * stmt);
+static Query *transformUpdateStmt(ParseState * pstate, ReplaceStmt * stmt);
+static Query *transformCursorStmt(ParseState * pstate, CursorStmt * stmt);
+static Node *handleNestedDots(ParseState * pstate, Attr * attr, int *curr_resno);
 
 #define EXPR_COLUMN_FIRST	 1
 #define EXPR_RELATION_FIRST  2
-static Node    *transformExpr(ParseState * pstate, Node * expr, int precedence);
-static Node    *transformIdent(ParseState * pstate, Node * expr, int precedence);
+static Node *transformExpr(ParseState * pstate, Node * expr, int precedence);
+static Node *transformIdent(ParseState * pstate, Node * expr, int precedence);
 
-static void		makeRangeTable(ParseState * pstate, char *relname, List * frmList);
-static List    *expandAllTables(ParseState * pstate);
-static char    *figureColname(Node * expr, Node * resval);
-static List    *makeTargetNames(ParseState * pstate, List * cols);
-static List    *transformTargetList(ParseState * pstate, List * targetlist);
+static void makeRangeTable(ParseState * pstate, char *relname, List * frmList);
+static List *expandAllTables(ParseState * pstate);
+static char *figureColname(Node * expr, Node * resval);
+static List *makeTargetNames(ParseState * pstate, List * cols);
+static List *transformTargetList(ParseState * pstate, List * targetlist);
 static TargetEntry *
 make_targetlist_expr(ParseState * pstate,
 					 char *colname, Node * expr,
 					 List * arrayRef);
-static bool		inWhereClause = false;
-static Node    *transformWhereClause(ParseState * pstate, Node * a_expr);
-static List    *
+static bool inWhereClause = false;
+static Node *transformWhereClause(ParseState * pstate, Node * a_expr);
+static List *
 transformGroupClause(ParseState * pstate, List * grouplist,
 					 List * targetlist);
-static List    *
+static List *
 transformSortClause(ParseState * pstate,
 					List * orderlist, List * targetlist,
 					char *uniqueFlag);
 
-static void		parseFromClause(ParseState * pstate, List * frmList);
-static Node    *
+static void parseFromClause(ParseState * pstate, List * frmList);
+static Node *
 ParseFunc(ParseState * pstate, char *funcname,
 		  List * fargs, int *curr_resno);
-static List    *setup_tlist(char *attname, Oid relid);
-static List    *setup_base_tlist(Oid typeid);
+static List *setup_tlist(char *attname, Oid relid);
+static List *setup_base_tlist(Oid typeid);
 static void
 make_arguments(int nargs, List * fargs, Oid * input_typeids,
 			   Oid * function_typeids);
-static void		AddAggToParseState(ParseState * pstate, Aggreg * aggreg);
-static void		finalizeAggregates(ParseState * pstate, Query * qry);
-static void		parseCheckAggregates(ParseState * pstate, Query * qry);
+static void AddAggToParseState(ParseState * pstate, Aggreg * aggreg);
+static void finalizeAggregates(ParseState * pstate, Query * qry);
+static void parseCheckAggregates(ParseState * pstate, Query * qry);
 static ParseState *makeParseState(void);
 
 /*****************************************************************************
@@ -108,7 +108,7 @@ static ParseState *makeParseState(void);
 static ParseState *
 makeParseState(void)
 {
-	ParseState	   *pstate;
+	ParseState *pstate;
 
 	pstate = malloc(sizeof(ParseState));
 	pstate->p_last_resno = 1;
@@ -134,12 +134,12 @@ makeParseState(void)
  *
  * CALLER is responsible for freeing the QueryTreeList* returned
  */
-QueryTreeList  *
+QueryTreeList *
 parse_analyze(List * pl)
 {
-	QueryTreeList  *result;
-	ParseState	   *pstate;
-	int				i = 0;
+	QueryTreeList *result;
+	ParseState *pstate;
+	int			i = 0;
 
 	result = malloc(sizeof(QueryTreeList));
 	result->len = length(pl);
@@ -165,102 +165,103 @@ parse_analyze(List * pl)
  *	  transform a Parse tree. If it is an optimizable statement, turn it
  *	  into a Query tree.
  */
-static Query   *
+static Query *
 transformStmt(ParseState * pstate, Node * parseTree)
 {
-	Query		   *result = NULL;
+	Query	   *result = NULL;
 
 	switch (nodeTag(parseTree))
 	{
-		/*------------------------
-		 *	Non-optimizable statements
-		 *------------------------
-		 */
-	case T_IndexStmt:
-		result = transformIndexStmt(pstate, (IndexStmt *) parseTree);
-		break;
-
-	case T_ExtendStmt:
-		result = transformExtendStmt(pstate, (ExtendStmt *) parseTree);
-		break;
-
-	case T_RuleStmt:
-		result = transformRuleStmt(pstate, (RuleStmt *) parseTree);
-		break;
-
-	case T_ViewStmt:
-		{
-			ViewStmt	   *n = (ViewStmt *) parseTree;
-
-			n->query = (Query *) transformStmt(pstate, (Node *) n->query);
-			result = makeNode(Query);
-			result->commandType = CMD_UTILITY;
-			result->utilityStmt = (Node *) n;
-		}
-		break;
-
-	case T_VacuumStmt:
-		{
-			MemoryContext	oldcontext;
-
-			/*
-			 * make sure that this Query is allocated in TopMemory context
-			 * because vacuum spans transactions and we don't want to lose
-			 * the vacuum Query due to end-of-transaction free'ing
+			/*------------------------
+			 *	Non-optimizable statements
+			 *------------------------
 			 */
-			oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-			result = makeNode(Query);
-			result->commandType = CMD_UTILITY;
-			result->utilityStmt = (Node *) parseTree;
-			MemoryContextSwitchTo(oldcontext);
+		case T_IndexStmt:
+			result = transformIndexStmt(pstate, (IndexStmt *) parseTree);
 			break;
 
-		}
-	case T_ExplainStmt:
-		{
-			ExplainStmt    *n = (ExplainStmt *) parseTree;
+		case T_ExtendStmt:
+			result = transformExtendStmt(pstate, (ExtendStmt *) parseTree);
+			break;
 
+		case T_RuleStmt:
+			result = transformRuleStmt(pstate, (RuleStmt *) parseTree);
+			break;
+
+		case T_ViewStmt:
+			{
+				ViewStmt   *n = (ViewStmt *) parseTree;
+
+				n->query = (Query *) transformStmt(pstate, (Node *) n->query);
+				result = makeNode(Query);
+				result->commandType = CMD_UTILITY;
+				result->utilityStmt = (Node *) n;
+			}
+			break;
+
+		case T_VacuumStmt:
+			{
+				MemoryContext oldcontext;
+
+				/*
+				 * make sure that this Query is allocated in TopMemory
+				 * context because vacuum spans transactions and we don't
+				 * want to lose the vacuum Query due to end-of-transaction
+				 * free'ing
+				 */
+				oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+				result = makeNode(Query);
+				result->commandType = CMD_UTILITY;
+				result->utilityStmt = (Node *) parseTree;
+				MemoryContextSwitchTo(oldcontext);
+				break;
+
+			}
+		case T_ExplainStmt:
+			{
+				ExplainStmt *n = (ExplainStmt *) parseTree;
+
+				result = makeNode(Query);
+				result->commandType = CMD_UTILITY;
+				n->query = transformStmt(pstate, (Node *) n->query);
+				result->utilityStmt = (Node *) parseTree;
+			}
+			break;
+
+			/*------------------------
+			 *	Optimizable statements
+			 *------------------------
+			 */
+		case T_AppendStmt:
+			result = transformInsertStmt(pstate, (AppendStmt *) parseTree);
+			break;
+
+		case T_DeleteStmt:
+			result = transformDeleteStmt(pstate, (DeleteStmt *) parseTree);
+			break;
+
+		case T_ReplaceStmt:
+			result = transformUpdateStmt(pstate, (ReplaceStmt *) parseTree);
+			break;
+
+		case T_CursorStmt:
+			result = transformCursorStmt(pstate, (CursorStmt *) parseTree);
+			break;
+
+		case T_RetrieveStmt:
+			result = transformSelectStmt(pstate, (RetrieveStmt *) parseTree);
+			break;
+
+		default:
+
+			/*
+			 * other statments don't require any transformation-- just
+			 * return the original parsetree
+			 */
 			result = makeNode(Query);
 			result->commandType = CMD_UTILITY;
-			n->query = transformStmt(pstate, (Node *) n->query);
 			result->utilityStmt = (Node *) parseTree;
-		}
-		break;
-
-		/*------------------------
-		 *	Optimizable statements
-		 *------------------------
-		 */
-	case T_AppendStmt:
-		result = transformInsertStmt(pstate, (AppendStmt *) parseTree);
-		break;
-
-	case T_DeleteStmt:
-		result = transformDeleteStmt(pstate, (DeleteStmt *) parseTree);
-		break;
-
-	case T_ReplaceStmt:
-		result = transformUpdateStmt(pstate, (ReplaceStmt *) parseTree);
-		break;
-
-	case T_CursorStmt:
-		result = transformCursorStmt(pstate, (CursorStmt *) parseTree);
-		break;
-
-	case T_RetrieveStmt:
-		result = transformSelectStmt(pstate, (RetrieveStmt *) parseTree);
-		break;
-
-	default:
-
-		/*
-		 * other statments don't require any transformation-- just return
-		 * the original parsetree
-		 */
-		result = makeNode(Query);
-		result->commandType = CMD_UTILITY;
-		result->utilityStmt = (Node *) parseTree;
-		break;
+			break;
 	}
 	return result;
 }
@@ -269,10 +270,10 @@ transformStmt(ParseState * pstate, Node * parseTree)
  * transformDeleteStmt -
  *	  transforms a Delete Statement
  */
-static Query   *
+static Query *
 transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt)
 {
-	Query		   *qry = makeNode(Query);
+	Query	   *qry = makeNode(Query);
 
 	qry->commandType = CMD_DELETE;
 
@@ -298,10 +299,10 @@ transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt)
  * transformInsertStmt -
  *	  transform an Insert Statement
  */
-static Query   *
+static Query *
 transformInsertStmt(ParseState * pstate, AppendStmt * stmt)
 {
-	Query		   *qry = makeNode(Query);		/* make a new query tree */
+	Query	   *qry = makeNode(Query);	/* make a new query tree */
 
 	qry->commandType = CMD_INSERT;
 	pstate->p_is_insert = true;
@@ -333,10 +334,10 @@ transformInsertStmt(ParseState * pstate, AppendStmt * stmt)
  * transformIndexStmt -
  *	  transforms the qualification of the index statement
  */
-static Query   *
+static Query *
 transformIndexStmt(ParseState * pstate, IndexStmt * stmt)
 {
-	Query		   *q;
+	Query	   *q;
 
 	q = makeNode(Query);
 	q->commandType = CMD_UTILITY;
@@ -355,10 +356,10 @@ transformIndexStmt(ParseState * pstate, IndexStmt * stmt)
  *	  transform the qualifications of the Extend Index Statement
  *
  */
-static Query   *
+static Query *
 transformExtendStmt(ParseState * pstate, ExtendStmt * stmt)
 {
-	Query		   *q;
+	Query	   *q;
 
 	q = makeNode(Query);
 	q->commandType = CMD_UTILITY;
@@ -376,11 +377,11 @@ transformExtendStmt(ParseState * pstate, ExtendStmt * stmt)
  *	  transform a Create Rule Statement. The actions is a list of parse
  *	  trees which is transformed into a list of query trees.
  */
-static Query   *
+static Query *
 transformRuleStmt(ParseState * pstate, RuleStmt * stmt)
 {
-	Query		   *q;
-	List		   *actions;
+	Query	   *q;
+	List	   *actions;
 
 	q = makeNode(Query);
 	q->commandType = CMD_UTILITY;
@@ -424,10 +425,10 @@ transformRuleStmt(ParseState * pstate, RuleStmt * stmt)
  *	  transforms a Select Statement
  *
  */
-static Query   *
+static Query *
 transformSelectStmt(ParseState * pstate, RetrieveStmt * stmt)
 {
-	Query		   *qry = makeNode(Query);
+	Query	   *qry = makeNode(Query);
 
 	qry->commandType = CMD_SELECT;
 
@@ -476,10 +477,10 @@ transformSelectStmt(ParseState * pstate, RetrieveStmt * stmt)
  *	  transforms an update statement
  *
  */
-static Query   *
+static Query *
 transformUpdateStmt(ParseState * pstate, ReplaceStmt * stmt)
 {
-	Query		   *qry = makeNode(Query);
+	Query	   *qry = makeNode(Query);
 
 	qry->commandType = CMD_UPDATE;
 	pstate->p_is_update = true;
@@ -511,10 +512,10 @@ transformUpdateStmt(ParseState * pstate, ReplaceStmt * stmt)
  *	  transform a Create Cursor Statement
  *
  */
-static Query   *
+static Query *
 transformCursorStmt(ParseState * pstate, CursorStmt * stmt)
 {
-	Query		   *qry = makeNode(Query);
+	Query	   *qry = makeNode(Query);
 
 	/*
 	 * in the old days, a cursor statement is a 'retrieve into portal'; If
@@ -569,239 +570,240 @@ transformCursorStmt(ParseState * pstate, CursorStmt * stmt)
  *	  (raw) expressions collected by the parse tree. Hence the transformation
  *	  here.
  */
-static Node    *
+static Node *
 transformExpr(ParseState * pstate, Node * expr, int precedence)
 {
-	Node		   *result = NULL;
+	Node	   *result = NULL;
 
 	if (expr == NULL)
 		return NULL;
 
 	switch (nodeTag(expr))
 	{
-	case T_Attr:
-		{
-			Attr		   *att = (Attr *) expr;
-			Node		   *temp;
-
-			/* what if att.attrs == "*"?? */
-			temp = handleNestedDots(pstate, att, &pstate->p_last_resno);
-			if (att->indirection != NIL)
+		case T_Attr:
 			{
-				List		   *idx = att->indirection;
+				Attr	   *att = (Attr *) expr;
+				Node	   *temp;
 
-				while (idx != NIL)
+				/* what if att.attrs == "*"?? */
+				temp = handleNestedDots(pstate, att, &pstate->p_last_resno);
+				if (att->indirection != NIL)
 				{
-					A_Indices	   *ai = (A_Indices *) lfirst(idx);
-					Node		   *lexpr = NULL,
+					List	   *idx = att->indirection;
+
+					while (idx != NIL)
+					{
+						A_Indices  *ai = (A_Indices *) lfirst(idx);
+						Node	   *lexpr = NULL,
 								   *uexpr;
 
-					uexpr = transformExpr(pstate, ai->uidx, precedence);		/* must exists */
-					if (exprType(uexpr) != INT4OID)
-						elog(WARN, "array index expressions must be int4's");
-					if (ai->lidx != NULL)
-					{
-						lexpr = transformExpr(pstate, ai->lidx, precedence);
-						if (exprType(lexpr) != INT4OID)
+						uexpr = transformExpr(pstate, ai->uidx, precedence);	/* must exists */
+						if (exprType(uexpr) != INT4OID)
 							elog(WARN, "array index expressions must be int4's");
-					}
+						if (ai->lidx != NULL)
+						{
+							lexpr = transformExpr(pstate, ai->lidx, precedence);
+							if (exprType(lexpr) != INT4OID)
+								elog(WARN, "array index expressions must be int4's");
+						}
 #if 0
-					pfree(ai->uidx);
-					if (ai->lidx != NULL)
-						pfree(ai->lidx);
+						pfree(ai->uidx);
+						if (ai->lidx != NULL)
+							pfree(ai->lidx);
 #endif
-					ai->lidx = lexpr;
-					ai->uidx = uexpr;
+						ai->lidx = lexpr;
+						ai->uidx = uexpr;
 
-					/*
-					 * note we reuse the list of indices, make sure we
-					 * don't free them! Otherwise, make a new list here
-					 */
-					idx = lnext(idx);
+						/*
+						 * note we reuse the list of indices, make sure we
+						 * don't free them! Otherwise, make a new list
+						 * here
+						 */
+						idx = lnext(idx);
+					}
+					result = (Node *) make_array_ref(temp, att->indirection);
 				}
-				result = (Node *) make_array_ref(temp, att->indirection);
-			}
-			else
-			{
-				result = temp;
-			}
-			break;
-		}
-	case T_A_Const:
-		{
-			A_Const		   *con = (A_Const *) expr;
-			Value		   *val = &con->val;
-
-			if (con->typename != NULL)
-			{
-				result = parser_typecast(val, con->typename, -1);
-			}
-			else
-			{
-				result = (Node *) make_const(val);
-			}
-			break;
-		}
-	case T_ParamNo:
-		{
-			ParamNo		   *pno = (ParamNo *) expr;
-			Oid				toid;
-			int				paramno;
-			Param		   *param;
-
-			paramno = pno->number;
-			toid = param_type(paramno);
-			if (!OidIsValid(toid))
-			{
-				elog(WARN, "Parameter '$%d' is out of range",
-					 paramno);
-			}
-			param = makeNode(Param);
-			param->paramkind = PARAM_NUM;
-			param->paramid = (AttrNumber) paramno;
-			param->paramname = "<unnamed>";
-			param->paramtype = (Oid) toid;
-			param->param_tlist = (List *) NULL;
-
-			result = (Node *) param;
-			break;
-		}
-	case T_A_Expr:
-		{
-			A_Expr		   *a = (A_Expr *) expr;
-
-			switch (a->oper)
-			{
-			case OP:
+				else
 				{
-					Node		   *lexpr = transformExpr(pstate, a->lexpr, precedence);
-					Node		   *rexpr = transformExpr(pstate, a->rexpr, precedence);
-
-					result = (Node *) make_op(a->opname, lexpr, rexpr);
+					result = temp;
 				}
 				break;
-			case ISNULL:
-				{
-					Node		   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+			}
+		case T_A_Const:
+			{
+				A_Const    *con = (A_Const *) expr;
+				Value	   *val = &con->val;
 
-					result = ParseFunc(pstate,
-									   "nullvalue", lcons(lexpr, NIL),
-									   &pstate->p_last_resno);
+				if (con->typename != NULL)
+				{
+					result = parser_typecast(val, con->typename, -1);
+				}
+				else
+				{
+					result = (Node *) make_const(val);
 				}
 				break;
-			case NOTNULL:
-				{
-					Node		   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+			}
+		case T_ParamNo:
+			{
+				ParamNo    *pno = (ParamNo *) expr;
+				Oid			toid;
+				int			paramno;
+				Param	   *param;
 
-					result = ParseFunc(pstate,
+				paramno = pno->number;
+				toid = param_type(paramno);
+				if (!OidIsValid(toid))
+				{
+					elog(WARN, "Parameter '$%d' is out of range",
+						 paramno);
+				}
+				param = makeNode(Param);
+				param->paramkind = PARAM_NUM;
+				param->paramid = (AttrNumber) paramno;
+				param->paramname = "<unnamed>";
+				param->paramtype = (Oid) toid;
+				param->param_tlist = (List *) NULL;
+
+				result = (Node *) param;
+				break;
+			}
+		case T_A_Expr:
+			{
+				A_Expr	   *a = (A_Expr *) expr;
+
+				switch (a->oper)
+				{
+					case OP:
+						{
+							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
+
+							result = (Node *) make_op(a->opname, lexpr, rexpr);
+						}
+						break;
+					case ISNULL:
+						{
+							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+
+							result = ParseFunc(pstate,
+										  "nullvalue", lcons(lexpr, NIL),
+											   &pstate->p_last_resno);
+						}
+						break;
+					case NOTNULL:
+						{
+							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+
+							result = ParseFunc(pstate,
 									   "nonnullvalue", lcons(lexpr, NIL),
-									   &pstate->p_last_resno);
-				}
-				break;
-			case AND:
-				{
-					Expr		   *expr = makeNode(Expr);
-					Node		   *lexpr = transformExpr(pstate, a->lexpr, precedence);
-					Node		   *rexpr = transformExpr(pstate, a->rexpr, precedence);
+											   &pstate->p_last_resno);
+						}
+						break;
+					case AND:
+						{
+							Expr	   *expr = makeNode(Expr);
+							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
-					if (exprType(lexpr) != BOOLOID)
-						elog(WARN,
-						  "left-hand side of AND is type '%s', not bool",
-							 tname(get_id_type(exprType(lexpr))));
-					if (exprType(rexpr) != BOOLOID)
-						elog(WARN,
-						 "right-hand side of AND is type '%s', not bool",
-							 tname(get_id_type(exprType(rexpr))));
-					expr->typeOid = BOOLOID;
-					expr->opType = AND_EXPR;
-					expr->args = makeList(lexpr, rexpr, -1);
-					result = (Node *) expr;
-				}
-				break;
-			case OR:
-				{
-					Expr		   *expr = makeNode(Expr);
-					Node		   *lexpr = transformExpr(pstate, a->lexpr, precedence);
-					Node		   *rexpr = transformExpr(pstate, a->rexpr, precedence);
+							if (exprType(lexpr) != BOOLOID)
+								elog(WARN,
+									 "left-hand side of AND is type '%s', not bool",
+									 tname(get_id_type(exprType(lexpr))));
+							if (exprType(rexpr) != BOOLOID)
+								elog(WARN,
+									 "right-hand side of AND is type '%s', not bool",
+									 tname(get_id_type(exprType(rexpr))));
+							expr->typeOid = BOOLOID;
+							expr->opType = AND_EXPR;
+							expr->args = makeList(lexpr, rexpr, -1);
+							result = (Node *) expr;
+						}
+						break;
+					case OR:
+						{
+							Expr	   *expr = makeNode(Expr);
+							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
+							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
-					if (exprType(lexpr) != BOOLOID)
-						elog(WARN,
-						   "left-hand side of OR is type '%s', not bool",
-							 tname(get_id_type(exprType(lexpr))));
-					if (exprType(rexpr) != BOOLOID)
-						elog(WARN,
-						  "right-hand side of OR is type '%s', not bool",
-							 tname(get_id_type(exprType(rexpr))));
-					expr->typeOid = BOOLOID;
-					expr->opType = OR_EXPR;
-					expr->args = makeList(lexpr, rexpr, -1);
-					result = (Node *) expr;
-				}
-				break;
-			case NOT:
-				{
-					Expr		   *expr = makeNode(Expr);
-					Node		   *rexpr = transformExpr(pstate, a->rexpr, precedence);
+							if (exprType(lexpr) != BOOLOID)
+								elog(WARN,
+									 "left-hand side of OR is type '%s', not bool",
+									 tname(get_id_type(exprType(lexpr))));
+							if (exprType(rexpr) != BOOLOID)
+								elog(WARN,
+									 "right-hand side of OR is type '%s', not bool",
+									 tname(get_id_type(exprType(rexpr))));
+							expr->typeOid = BOOLOID;
+							expr->opType = OR_EXPR;
+							expr->args = makeList(lexpr, rexpr, -1);
+							result = (Node *) expr;
+						}
+						break;
+					case NOT:
+						{
+							Expr	   *expr = makeNode(Expr);
+							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
-					if (exprType(rexpr) != BOOLOID)
-						elog(WARN,
-							 "argument to NOT is type '%s', not bool",
-							 tname(get_id_type(exprType(rexpr))));
-					expr->typeOid = BOOLOID;
-					expr->opType = NOT_EXPR;
-					expr->args = makeList(rexpr, -1);
-					result = (Node *) expr;
+							if (exprType(rexpr) != BOOLOID)
+								elog(WARN,
+								"argument to NOT is type '%s', not bool",
+									 tname(get_id_type(exprType(rexpr))));
+							expr->typeOid = BOOLOID;
+							expr->opType = NOT_EXPR;
+							expr->args = makeList(rexpr, -1);
+							result = (Node *) expr;
+						}
+						break;
 				}
 				break;
 			}
-			break;
-		}
-	case T_Ident:
-		{
+		case T_Ident:
+			{
 
-			/*
-			 * look for a column name or a relation name (the default
-			 * behavior)
-			 */
-			result = transformIdent(pstate, expr, precedence);
-			break;
-		}
-	case T_FuncCall:
-		{
-			FuncCall	   *fn = (FuncCall *) expr;
-			List		   *args;
+				/*
+				 * look for a column name or a relation name (the default
+				 * behavior)
+				 */
+				result = transformIdent(pstate, expr, precedence);
+				break;
+			}
+		case T_FuncCall:
+			{
+				FuncCall   *fn = (FuncCall *) expr;
+				List	   *args;
 
-			/* transform the list of arguments */
-			foreach(args, fn->args)
-				lfirst(args) = transformExpr(pstate, (Node *) lfirst(args), precedence);
-			result = ParseFunc(pstate,
+				/* transform the list of arguments */
+				foreach(args, fn->args)
+					lfirst(args) = transformExpr(pstate, (Node *) lfirst(args), precedence);
+				result = ParseFunc(pstate,
 						  fn->funcname, fn->args, &pstate->p_last_resno);
+				break;
+			}
+		default:
+			/* should not reach here */
+			elog(WARN, "transformExpr: does not know how to transform %d\n",
+				 nodeTag(expr));
 			break;
-		}
-	default:
-		/* should not reach here */
-		elog(WARN, "transformExpr: does not know how to transform %d\n",
-			 nodeTag(expr));
-		break;
 	}
 
 	return result;
 }
 
-static Node    *
+static Node *
 transformIdent(ParseState * pstate, Node * expr, int precedence)
 {
-	Ident		   *ident = (Ident *) expr;
-	RangeTblEntry  *rte;
-	Node		   *column_result,
-				   *relation_result,
-				   *result;
+	Ident	   *ident = (Ident *) expr;
+	RangeTblEntry *rte;
+	Node	   *column_result,
+			   *relation_result,
+			   *result;
 
 	column_result = relation_result = result = 0;
 	/* try to find the ident as a column */
 	if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL)
 	{
-		Attr		   *att = makeNode(Attr);
+		Attr	   *att = makeNode(Attr);
 
 		att->relname = rte->refname;
 		att->attrs = lcons(makeString(ident->name), NIL);
@@ -856,15 +858,15 @@ transformIdent(ParseState * pstate, Node * expr, int precedence)
 static void
 parseFromClause(ParseState * pstate, List * frmList)
 {
-	List		   *fl;
+	List	   *fl;
 
 	foreach(fl, frmList)
 	{
-		RangeVar	   *r = lfirst(fl);
-		RelExpr		   *baserel = r->relExpr;
-		char		   *relname = baserel->relname;
-		char		   *refname = r->name;
-		RangeTblEntry  *rte;
+		RangeVar   *r = lfirst(fl);
+		RelExpr    *baserel = r->relExpr;
+		char	   *relname = baserel->relname;
+		char	   *refname = r->name;
+		RangeTblEntry *rte;
 
 		if (refname == NULL)
 			refname = relname;
@@ -893,7 +895,7 @@ parseFromClause(ParseState * pstate, List * frmList)
 static void
 makeRangeTable(ParseState * pstate, char *relname, List * frmList)
 {
-	RangeTblEntry  *rte;
+	RangeTblEntry *rte;
 
 	parseFromClause(pstate, frmList);
 
@@ -919,42 +921,42 @@ makeRangeTable(ParseState * pstate, char *relname, List * frmList)
 Oid
 exprType(Node * expr)
 {
-	Oid				type = (Oid) 0;
+	Oid			type = (Oid) 0;
 
 	switch (nodeTag(expr))
 	{
-	case T_Func:
-		type = ((Func *) expr)->functype;
-		break;
-	case T_Iter:
-		type = ((Iter *) expr)->itertype;
-		break;
-	case T_Var:
-		type = ((Var *) expr)->vartype;
-		break;
-	case T_Expr:
-		type = ((Expr *) expr)->typeOid;
-		break;
-	case T_Const:
-		type = ((Const *) expr)->consttype;
-		break;
-	case T_ArrayRef:
-		type = ((ArrayRef *) expr)->refelemtype;
-		break;
-	case T_Aggreg:
-		type = ((Aggreg *) expr)->aggtype;
-		break;
-	case T_Param:
-		type = ((Param *) expr)->paramtype;
-		break;
-	case T_Ident:
-		/* is this right? */
-		type = UNKNOWNOID;
-		break;
-	default:
-		elog(WARN, "exprType: don't know how to get type for %d node",
-			 nodeTag(expr));
-		break;
+		case T_Func:
+			type = ((Func *) expr)->functype;
+			break;
+		case T_Iter:
+			type = ((Iter *) expr)->itertype;
+			break;
+		case T_Var:
+			type = ((Var *) expr)->vartype;
+			break;
+		case T_Expr:
+			type = ((Expr *) expr)->typeOid;
+			break;
+		case T_Const:
+			type = ((Const *) expr)->consttype;
+			break;
+		case T_ArrayRef:
+			type = ((ArrayRef *) expr)->refelemtype;
+			break;
+		case T_Aggreg:
+			type = ((Aggreg *) expr)->aggtype;
+			break;
+		case T_Param:
+			type = ((Param *) expr)->paramtype;
+			break;
+		case T_Ident:
+			/* is this right? */
+			type = UNKNOWNOID;
+			break;
+		default:
+			elog(WARN, "exprType: don't know how to get type for %d node",
+				 nodeTag(expr));
+			break;
 	}
 	return type;
 }
@@ -964,13 +966,13 @@ exprType(Node * expr)
  *	  turns '*' (in the target list) into a list of attributes (of all
  *	  relations in the range table)
  */
-static List    *
+static List *
 expandAllTables(ParseState * pstate)
 {
-	List		   *target = NIL;
-	List		   *legit_rtable = NIL;
-	List		   *rt,
-				   *rtable;
+	List	   *target = NIL;
+	List	   *legit_rtable = NIL;
+	List	   *rt,
+			   *rtable;
 
 	rtable = pstate->p_rtable;
 	if (pstate->p_is_rule)
@@ -992,7 +994,7 @@ expandAllTables(ParseState * pstate)
 	 */
 	foreach(rt, rtable)
 	{
-		RangeTblEntry  *rte = lfirst(rt);
+		RangeTblEntry *rte = lfirst(rt);
 
 		/*
 		 * we only expand those specify in the from clause. (This will
@@ -1006,8 +1008,8 @@ expandAllTables(ParseState * pstate)
 
 	foreach(rt, legit_rtable)
 	{
-		RangeTblEntry  *rte = lfirst(rt);
-		List		   *temp = target;
+		RangeTblEntry *rte = lfirst(rt);
+		List	   *temp = target;
 
 		if (temp == NIL)
 			target = expandAll(pstate, rte->relname, rte->refname,
@@ -1030,23 +1032,23 @@ expandAllTables(ParseState * pstate)
  *	  list, we have to guess.
  *
  */
-static char    *
+static char *
 figureColname(Node * expr, Node * resval)
 {
 	switch (nodeTag(expr))
 	{
-		case T_Aggreg:
-		return (char *)			/* XXX */
-		((Aggreg *) expr)->aggname;
-	case T_Expr:
-		if (((Expr *) expr)->opType == FUNC_EXPR)
-		{
-			if (nodeTag(resval) == T_FuncCall)
-				return ((FuncCall *) resval)->funcname;
-		}
-		break;
-	default:
-		break;
+			case T_Aggreg:
+			return (char *)		/* XXX */
+			((Aggreg *) expr)->aggname;
+		case T_Expr:
+			if (((Expr *) expr)->opType == FUNC_EXPR)
+			{
+				if (nodeTag(resval) == T_FuncCall)
+					return ((FuncCall *) resval)->funcname;
+			}
+			break;
+		default:
+			break;
 	}
 
 	return "?column?";
@@ -1064,23 +1066,23 @@ figureColname(Node * expr, Node * resval)
  *	  test supplied column names to make sure they are in target table
  *	  (used exclusively for inserts)
  */
-static List    *
+static List *
 makeTargetNames(ParseState * pstate, List * cols)
 {
-	List		   *tl = NULL;
+	List	   *tl = NULL;
 
 	/* Generate ResTarget if not supplied */
 
 	if (cols == NIL)
 	{
-		int				numcol;
-		int				i;
+		int			numcol;
+		int			i;
 		AttributeTupleForm *attr = pstate->p_target_relation->rd_att->attrs;
 
 		numcol = pstate->p_target_relation->rd_rel->relnatts;
 		for (i = 0; i < numcol; i++)
 		{
-			Ident		   *id = makeNode(Ident);
+			Ident	   *id = makeNode(Ident);
 
 			id->name = palloc(NAMEDATALEN);
 			strNcpy(id->name, attr[i]->attname.data, NAMEDATALEN - 1);
@@ -1107,264 +1109,269 @@ makeTargetNames(ParseState * pstate, List * cols)
  * transformTargetList -
  *	  turns a list of ResTarget's into a list of TargetEntry's
  */
-static List    *
+static List *
 transformTargetList(ParseState * pstate, List * targetlist)
 {
-	List		   *p_target = NIL;
-	List		   *tail_p_target = NIL;
+	List	   *p_target = NIL;
+	List	   *tail_p_target = NIL;
 
 	while (targetlist != NIL)
 	{
-		ResTarget	   *res = (ResTarget *) lfirst(targetlist);
-		TargetEntry    *tent = makeNode(TargetEntry);
+		ResTarget  *res = (ResTarget *) lfirst(targetlist);
+		TargetEntry *tent = makeNode(TargetEntry);
 
 		switch (nodeTag(res->val))
 		{
-		case T_Ident:
-			{
-				Node		   *expr;
-				Oid				type_id;
-				int				type_len;
-				char		   *identname;
-				char		   *resname;
-
-				identname = ((Ident *) res->val)->name;
-				handleTargetColname(pstate, &res->name, NULL, identname);
-
-				/*
-				 * here we want to look for column names only, not
-				 * relation
-				 */
-				/* names (even though they can be stored in Ident nodes,	*/
-				/* too)														*/
-				expr = transformIdent(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
-				type_id = exprType(expr);
-				type_len = tlen(get_id_type(type_id));
-				resname = (res->name) ? res->name : identname;
-				tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
-										  (Oid) type_id,
-										  (Size) type_len,
-										  resname,
-										  (Index) 0,
-										  (Oid) 0,
-										  0);
-
-				tent->expr = expr;
-				break;
-			}
-		case T_ParamNo:
-		case T_FuncCall:
-		case T_A_Const:
-		case T_A_Expr:
-			{
-				Node		   *expr = transformExpr(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
-
-				handleTargetColname(pstate, &res->name, NULL, NULL);
-				/* note indirection has not been transformed */
-				if (pstate->p_is_insert && res->indirection != NIL)
+			case T_Ident:
 				{
-					/* this is an array assignment */
-					char		   *val;
-					char		   *str,
-								   *save_str;
-					List		   *elt;
-					int				i = 0,
-									ndims;
-					int				lindx[MAXDIM],
-									uindx[MAXDIM];
-					int				resdomno;
-					Relation		rd;
-					Value		   *constval;
+					Node	   *expr;
+					Oid			type_id;
+					int			type_len;
+					char	   *identname;
+					char	   *resname;
 
-					if (exprType(expr) != UNKNOWNOID ||
-						!IsA(expr, Const))
-						elog(WARN, "yyparse: string constant expected");
+					identname = ((Ident *) res->val)->name;
+					handleTargetColname(pstate, &res->name, NULL, identname);
 
-					val = (char *) textout((struct varlena *)
-										   ((Const *) expr)->constvalue);
-					str = save_str = (char *) palloc(strlen(val) + MAXDIM * 25 + 2);
-					foreach(elt, res->indirection)
+					/*
+					 * here we want to look for column names only, not
+					 * relation
+					 */
+
+					/*
+					 * names (even though they can be stored in Ident
+					 * nodes,
+					 */
+					/* too)														*/
+					expr = transformIdent(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
+					type_id = exprType(expr);
+					type_len = tlen(get_id_type(type_id));
+					resname = (res->name) ? res->name : identname;
+					tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
+											  (Oid) type_id,
+											  (Size) type_len,
+											  resname,
+											  (Index) 0,
+											  (Oid) 0,
+											  0);
+
+					tent->expr = expr;
+					break;
+				}
+			case T_ParamNo:
+			case T_FuncCall:
+			case T_A_Const:
+			case T_A_Expr:
+				{
+					Node	   *expr = transformExpr(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
+
+					handleTargetColname(pstate, &res->name, NULL, NULL);
+					/* note indirection has not been transformed */
+					if (pstate->p_is_insert && res->indirection != NIL)
 					{
-						A_Indices	   *aind = (A_Indices *) lfirst(elt);
+						/* this is an array assignment */
+						char	   *val;
+						char	   *str,
+								   *save_str;
+						List	   *elt;
+						int			i = 0,
+									ndims;
+						int			lindx[MAXDIM],
+									uindx[MAXDIM];
+						int			resdomno;
+						Relation	rd;
+						Value	   *constval;
 
-						aind->uidx = transformExpr(pstate, aind->uidx, EXPR_COLUMN_FIRST);
-						if (!IsA(aind->uidx, Const))
-							elog(WARN,
-								 "Array Index for Append should be a constant");
-						uindx[i] = ((Const *) aind->uidx)->constvalue;
-						if (aind->lidx != NULL)
+						if (exprType(expr) != UNKNOWNOID ||
+							!IsA(expr, Const))
+							elog(WARN, "yyparse: string constant expected");
+
+						val = (char *) textout((struct varlena *)
+										   ((Const *) expr)->constvalue);
+						str = save_str = (char *) palloc(strlen(val) + MAXDIM * 25 + 2);
+						foreach(elt, res->indirection)
 						{
-							aind->lidx = transformExpr(pstate, aind->lidx, EXPR_COLUMN_FIRST);
-							if (!IsA(aind->lidx, Const))
+							A_Indices  *aind = (A_Indices *) lfirst(elt);
+
+							aind->uidx = transformExpr(pstate, aind->uidx, EXPR_COLUMN_FIRST);
+							if (!IsA(aind->uidx, Const))
 								elog(WARN,
 									 "Array Index for Append should be a constant");
-							lindx[i] = ((Const *) aind->lidx)->constvalue;
+							uindx[i] = ((Const *) aind->uidx)->constvalue;
+							if (aind->lidx != NULL)
+							{
+								aind->lidx = transformExpr(pstate, aind->lidx, EXPR_COLUMN_FIRST);
+								if (!IsA(aind->lidx, Const))
+									elog(WARN,
+										 "Array Index for Append should be a constant");
+								lindx[i] = ((Const *) aind->lidx)->constvalue;
+							}
+							else
+							{
+								lindx[i] = 1;
+							}
+							if (lindx[i] > uindx[i])
+								elog(WARN, "yyparse: lower index cannot be greater than upper index");
+							sprintf(str, "[%d:%d]", lindx[i], uindx[i]);
+							str += strlen(str);
+							i++;
 						}
-						else
-						{
-							lindx[i] = 1;
-						}
-						if (lindx[i] > uindx[i])
-							elog(WARN, "yyparse: lower index cannot be greater than upper index");
-						sprintf(str, "[%d:%d]", lindx[i], uindx[i]);
-						str += strlen(str);
-						i++;
-					}
-					sprintf(str, "=%s", val);
-					rd = pstate->p_target_relation;
-					Assert(rd != NULL);
-					resdomno = varattno(rd, res->name);
-					ndims = att_attnelems(rd, resdomno);
-					if (i != ndims)
-						elog(WARN, "yyparse: array dimensions do not match");
-					constval = makeNode(Value);
-					constval->type = T_String;
-					constval->val.str = save_str;
-					tent = make_targetlist_expr(pstate, res->name,
+						sprintf(str, "=%s", val);
+						rd = pstate->p_target_relation;
+						Assert(rd != NULL);
+						resdomno = varattno(rd, res->name);
+						ndims = att_attnelems(rd, resdomno);
+						if (i != ndims)
+							elog(WARN, "yyparse: array dimensions do not match");
+						constval = makeNode(Value);
+						constval->type = T_String;
+						constval->val.str = save_str;
+						tent = make_targetlist_expr(pstate, res->name,
 										   (Node *) make_const(constval),
-												NULL);
-					pfree(save_str);
-				}
-				else
-				{
-					char		   *colname = res->name;
+													NULL);
+						pfree(save_str);
+					}
+					else
+					{
+						char	   *colname = res->name;
 
-					/* this is not an array assignment */
-					if (colname == NULL)
+						/* this is not an array assignment */
+						if (colname == NULL)
+						{
+
+							/*
+							 * if you're wondering why this is here, look
+							 * at the yacc grammar for why a name can be
+							 * missing. -ay
+							 */
+							colname = figureColname(expr, res->val);
+						}
+						if (res->indirection)
+						{
+							List	   *ilist = res->indirection;
+
+							while (ilist != NIL)
+							{
+								A_Indices  *ind = lfirst(ilist);
+
+								ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
+								ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
+								ilist = lnext(ilist);
+							}
+						}
+						res->name = colname;
+						tent = make_targetlist_expr(pstate, res->name, expr,
+													res->indirection);
+					}
+					break;
+				}
+			case T_Attr:
+				{
+					Oid			type_id;
+					int			type_len;
+					Attr	   *att = (Attr *) res->val;
+					Node	   *result;
+					char	   *attrname;
+					char	   *resname;
+					Resdom	   *resnode;
+					List	   *attrs = att->attrs;
+
+					/*
+					 * Target item is a single '*', expand all tables (eg.
+					 * SELECT * FROM emp)
+					 */
+					if (att->relname != NULL && !strcmp(att->relname, "*"))
+					{
+						if (tail_p_target == NIL)
+							p_target = tail_p_target = expandAllTables(pstate);
+						else
+							lnext(tail_p_target) = expandAllTables(pstate);
+
+						while (lnext(tail_p_target) != NIL)
+							/* make sure we point to the last target entry */
+							tail_p_target = lnext(tail_p_target);
+
+						/*
+						 * skip rest of while loop
+						 */
+						targetlist = lnext(targetlist);
+						continue;
+					}
+
+					/*
+					 * Target item is relation.*, expand the table (eg.
+					 * SELECT emp.*, dname FROM emp, dept)
+					 */
+					attrname = strVal(lfirst(att->attrs));
+					if (att->attrs != NIL && !strcmp(attrname, "*"))
 					{
 
 						/*
-						 * if you're wondering why this is here, look at
-						 * the yacc grammar for why a name can be missing.
-						 * -ay
+						 * tail_p_target is the target list we're building
+						 * in the while loop. Make sure we fix it after
+						 * appending more nodes.
 						 */
-						colname = figureColname(expr, res->val);
+						if (tail_p_target == NIL)
+							p_target = tail_p_target = expandAll(pstate, att->relname,
+									att->relname, &pstate->p_last_resno);
+						else
+							lnext(tail_p_target) =
+								expandAll(pstate, att->relname, att->relname,
+										  &pstate->p_last_resno);
+						while (lnext(tail_p_target) != NIL)
+							/* make sure we point to the last target entry */
+							tail_p_target = lnext(tail_p_target);
+
+						/*
+						 * skip the rest of the while loop
+						 */
+						targetlist = lnext(targetlist);
+						continue;
 					}
-					if (res->indirection)
+
+
+					/*
+					 * Target item is fully specified: ie.
+					 * relation.attribute
+					 */
+					result = handleNestedDots(pstate, att, &pstate->p_last_resno);
+					handleTargetColname(pstate, &res->name, att->relname, attrname);
+					if (att->indirection != NIL)
 					{
-						List		   *ilist = res->indirection;
+						List	   *ilist = att->indirection;
 
 						while (ilist != NIL)
 						{
-							A_Indices	   *ind = lfirst(ilist);
+							A_Indices  *ind = lfirst(ilist);
 
 							ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
 							ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
 							ilist = lnext(ilist);
 						}
+						result = (Node *) make_array_ref(result, att->indirection);
 					}
-					res->name = colname;
-					tent = make_targetlist_expr(pstate, res->name, expr,
-												res->indirection);
+					type_id = exprType(result);
+					type_len = tlen(get_id_type(type_id));
+					/* move to last entry */
+					while (lnext(attrs) != NIL)
+						attrs = lnext(attrs);
+					resname = (res->name) ? res->name : strVal(lfirst(attrs));
+					resnode = makeResdom((AttrNumber) pstate->p_last_resno++,
+										 (Oid) type_id,
+										 (Size) type_len,
+										 resname,
+										 (Index) 0,
+										 (Oid) 0,
+										 0);
+					tent->resdom = resnode;
+					tent->expr = result;
+					break;
 				}
+			default:
+				/* internal error */
+				elog(WARN,
+					 "internal error: do not know how to transform targetlist");
 				break;
-			}
-		case T_Attr:
-			{
-				Oid				type_id;
-				int				type_len;
-				Attr		   *att = (Attr *) res->val;
-				Node		   *result;
-				char		   *attrname;
-				char		   *resname;
-				Resdom		   *resnode;
-				List		   *attrs = att->attrs;
-
-				/*
-				 * Target item is a single '*', expand all tables (eg.
-				 * SELECT * FROM emp)
-				 */
-				if (att->relname != NULL && !strcmp(att->relname, "*"))
-				{
-					if (tail_p_target == NIL)
-						p_target = tail_p_target = expandAllTables(pstate);
-					else
-						lnext(tail_p_target) = expandAllTables(pstate);
-
-					while (lnext(tail_p_target) != NIL)
-						/* make sure we point to the last target entry */
-						tail_p_target = lnext(tail_p_target);
-
-					/*
-					 * skip rest of while loop
-					 */
-					targetlist = lnext(targetlist);
-					continue;
-				}
-
-				/*
-				 * Target item is relation.*, expand the table (eg. SELECT
-				 * emp.*, dname FROM emp, dept)
-				 */
-				attrname = strVal(lfirst(att->attrs));
-				if (att->attrs != NIL && !strcmp(attrname, "*"))
-				{
-
-					/*
-					 * tail_p_target is the target list we're building in
-					 * the while loop. Make sure we fix it after appending
-					 * more nodes.
-					 */
-					if (tail_p_target == NIL)
-						p_target = tail_p_target = expandAll(pstate, att->relname,
-									att->relname, &pstate->p_last_resno);
-					else
-						lnext(tail_p_target) =
-							expandAll(pstate, att->relname, att->relname,
-									  &pstate->p_last_resno);
-					while (lnext(tail_p_target) != NIL)
-						/* make sure we point to the last target entry */
-						tail_p_target = lnext(tail_p_target);
-
-					/*
-					 * skip the rest of the while loop
-					 */
-					targetlist = lnext(targetlist);
-					continue;
-				}
-
-
-				/*
-				 * Target item is fully specified: ie. relation.attribute
-				 */
-				result = handleNestedDots(pstate, att, &pstate->p_last_resno);
-				handleTargetColname(pstate, &res->name, att->relname, attrname);
-				if (att->indirection != NIL)
-				{
-					List		   *ilist = att->indirection;
-
-					while (ilist != NIL)
-					{
-						A_Indices	   *ind = lfirst(ilist);
-
-						ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
-						ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
-						ilist = lnext(ilist);
-					}
-					result = (Node *) make_array_ref(result, att->indirection);
-				}
-				type_id = exprType(result);
-				type_len = tlen(get_id_type(type_id));
-				/* move to last entry */
-				while (lnext(attrs) != NIL)
-					attrs = lnext(attrs);
-				resname = (res->name) ? res->name : strVal(lfirst(attrs));
-				resnode = makeResdom((AttrNumber) pstate->p_last_resno++,
-									 (Oid) type_id,
-									 (Size) type_len,
-									 resname,
-									 (Index) 0,
-									 (Oid) 0,
-									 0);
-				tent->resdom = resnode;
-				tent->expr = result;
-				break;
-			}
-		default:
-			/* internal error */
-			elog(WARN,
-			  "internal error: do not know how to transform targetlist");
-			break;
 		}
 
 		if (p_target == NIL)
@@ -1395,15 +1402,15 @@ make_targetlist_expr(ParseState * pstate,
 					 Node * expr,
 					 List * arrayRef)
 {
-	Oid				type_id,
-					attrtype;
-	int				type_len,
-					attrlen;
-	int				resdomno;
-	Relation		rd;
-	bool			attrisset;
-	TargetEntry    *tent;
-	Resdom		   *resnode;
+	Oid			type_id,
+				attrtype;
+	int			type_len,
+				attrlen;
+	int			resdomno;
+	Relation	rd;
+	bool		attrisset;
+	TargetEntry *tent;
+	Resdom	   *resnode;
 
 	if (expr == NULL)
 		elog(WARN, "make_targetlist_expr: invalid use of NULL expression");
@@ -1443,7 +1450,7 @@ make_targetlist_expr(ParseState * pstate,
 #if 0
 		if (Input_is_string && Typecast_ok)
 		{
-			Datum			val;
+			Datum		val;
 
 			if (type_id == typeid(type("unknown")))
 			{
@@ -1505,7 +1512,7 @@ make_targetlist_expr(ParseState * pstate,
 				if (arrayRef && !(((A_Indices *) lfirst(arrayRef))->lidx))
 				{
 					/* updating a single item */
-					Oid				typelem = get_typelem(attrtype);
+					Oid			typelem = get_typelem(attrtype);
 
 					expr = (Node *) parser_typecast2(expr,
 													 type_id,
@@ -1530,11 +1537,11 @@ make_targetlist_expr(ParseState * pstate,
 
 		if (arrayRef != NIL)
 		{
-			Expr		   *target_expr;
-			Attr		   *att = makeNode(Attr);
-			List		   *ar = arrayRef;
-			List		   *upperIndexpr = NIL;
-			List		   *lowerIndexpr = NIL;
+			Expr	   *target_expr;
+			Attr	   *att = makeNode(Attr);
+			List	   *ar = arrayRef;
+			List	   *upperIndexpr = NIL;
+			List	   *lowerIndexpr = NIL;
 
 			att->relname = pstrdup(RelationGetRelationName(rd)->data);
 			att->attrs = lcons(makeString(colname), NIL);
@@ -1542,7 +1549,7 @@ make_targetlist_expr(ParseState * pstate,
 												  &pstate->p_last_resno);
 			while (ar != NIL)
 			{
-				A_Indices	   *ind = lfirst(ar);
+				A_Indices  *ind = lfirst(ar);
 
 				if (lowerIndexpr || (!upperIndexpr && ind->lidx))
 				{
@@ -1599,10 +1606,10 @@ make_targetlist_expr(ParseState * pstate,
  *	  transforms the qualification and make sure it is of type Boolean
  *
  */
-static Node    *
+static Node *
 transformWhereClause(ParseState * pstate, Node * a_expr)
 {
-	Node		   *qual;
+	Node	   *qual;
 
 	if (a_expr == NULL)
 		return (Node *) NULL;	/* no qualifiers */
@@ -1634,10 +1641,10 @@ transformWhereClause(ParseState * pstate, Node * a_expr)
 static TargetEntry *
 find_targetlist_entry(ParseState * pstate, SortGroupBy * sortgroupby, List * tlist)
 {
-	List		   *i;
-	int				real_rtable_pos = 0,
-					target_pos = 0;
-	TargetEntry    *target_result = NULL;
+	List	   *i;
+	int			real_rtable_pos = 0,
+				target_pos = 0;
+	TargetEntry *target_result = NULL;
 
 	if (sortgroupby->range)
 		real_rtable_pos = refnameRangeTablePosn(pstate->p_rtable,
@@ -1645,11 +1652,11 @@ find_targetlist_entry(ParseState * pstate, SortGroupBy * sortgroupby, List * tli
 
 	foreach(i, tlist)
 	{
-		TargetEntry    *target = (TargetEntry *) lfirst(i);
-		Resdom		   *resnode = target->resdom;
-		Var			   *var = (Var *) target->expr;
-		char		   *resname = resnode->resname;
-		int				test_rtable_pos = var->varno;
+		TargetEntry *target = (TargetEntry *) lfirst(i);
+		Resdom	   *resnode = target->resdom;
+		Var		   *var = (Var *) target->expr;
+		char	   *resname = resnode->resname;
+		int			test_rtable_pos = var->varno;
 
 #ifdef PARSEDEBUG
 		printf("find_targetlist_entry- target name is %s, position %d, resno %d\n",
@@ -1691,11 +1698,11 @@ find_targetlist_entry(ParseState * pstate, SortGroupBy * sortgroupby, List * tli
 	return target_result;
 }
 
-static			Oid
+static Oid
 any_ordering_op(int restype)
 {
-	Operator		order_op;
-	Oid				order_opid;
+	Operator	order_op;
+	Oid			order_opid;
 
 	order_op = oper("<", restype, restype, false);
 	order_opid = oprid(order_op);
@@ -1708,17 +1715,17 @@ any_ordering_op(int restype)
  *	  transform a Group By clause
  *
  */
-static List    *
+static List *
 transformGroupClause(ParseState * pstate, List * grouplist, List * targetlist)
 {
-	List		   *glist = NIL,
-				   *gl = NIL;
+	List	   *glist = NIL,
+			   *gl = NIL;
 
 	while (grouplist != NIL)
 	{
-		GroupClause    *grpcl = makeNode(GroupClause);
-		TargetEntry    *restarget;
-		Resdom		   *resdom;
+		GroupClause *grpcl = makeNode(GroupClause);
+		TargetEntry *restarget;
+		Resdom	   *resdom;
 
 		restarget = find_targetlist_entry(pstate, lfirst(grouplist), targetlist);
 
@@ -1748,21 +1755,21 @@ transformGroupClause(ParseState * pstate, List * grouplist, List * targetlist)
  *	  transform an Order By clause
  *
  */
-static List    *
+static List *
 transformSortClause(ParseState * pstate,
 					List * orderlist, List * targetlist,
 					char *uniqueFlag)
 {
-	List		   *sortlist = NIL;
-	List		   *s = NIL,
-				   *i;
+	List	   *sortlist = NIL;
+	List	   *s = NIL,
+			   *i;
 
 	while (orderlist != NIL)
 	{
-		SortGroupBy    *sortby = lfirst(orderlist);
-		SortClause	   *sortcl = makeNode(SortClause);
-		TargetEntry    *restarget;
-		Resdom		   *resdom;
+		SortGroupBy *sortby = lfirst(orderlist);
+		SortClause *sortcl = makeNode(SortClause);
+		TargetEntry *restarget;
+		Resdom	   *resdom;
 
 		restarget = find_targetlist_entry(pstate, sortby, targetlist);
 		if (restarget == NULL)
@@ -1795,12 +1802,12 @@ transformSortClause(ParseState * pstate,
 			 */
 			foreach(i, targetlist)
 			{
-				TargetEntry    *tlelt = (TargetEntry *) lfirst(i);
+				TargetEntry *tlelt = (TargetEntry *) lfirst(i);
 
 				s = sortlist;
 				while (s != NIL)
 				{
-					SortClause	   *sortcl = lfirst(s);
+					SortClause *sortcl = lfirst(s);
 
 					if (sortcl->resdom == tlelt->resdom)
 						break;
@@ -1809,7 +1816,7 @@ transformSortClause(ParseState * pstate,
 				if (s == NIL)
 				{
 					/* not a member of the sortclauses yet */
-					SortClause	   *sortcl = makeNode(SortClause);
+					SortClause *sortcl = makeNode(SortClause);
 
 					sortcl->resdom = tlelt->resdom;
 					sortcl->opoid = any_ordering_op(tlelt->resdom->restype);
@@ -1820,8 +1827,8 @@ transformSortClause(ParseState * pstate,
 		}
 		else
 		{
-			TargetEntry    *tlelt = NULL;
-			char		   *uniqueAttrName = uniqueFlag;
+			TargetEntry *tlelt = NULL;
+			char	   *uniqueAttrName = uniqueFlag;
 
 			/* only create sort clause with the specified unique attribute */
 			foreach(i, targetlist)
@@ -1837,7 +1844,7 @@ transformSortClause(ParseState * pstate,
 			s = sortlist;
 			foreach(s, sortlist)
 			{
-				SortClause	   *sortcl = lfirst(s);
+				SortClause *sortcl = lfirst(s);
 
 				if (sortcl->resdom == tlelt->resdom)
 					break;
@@ -1845,7 +1852,7 @@ transformSortClause(ParseState * pstate,
 			if (s == NIL)
 			{
 				/* not a member of the sortclauses yet */
-				SortClause	   *sortcl = makeNode(SortClause);
+				SortClause *sortcl = makeNode(SortClause);
 
 				sortcl->resdom = tlelt->resdom;
 				sortcl->opoid = any_ordering_op(tlelt->resdom->restype);
@@ -1864,15 +1871,15 @@ transformSortClause(ParseState * pstate,
  **    Given a nested dot expression (i.e. (relation func ... attr), build up
  ** a tree with of Iter and Func nodes.
  */
-static Node    *
+static Node *
 handleNestedDots(ParseState * pstate, Attr * attr, int *curr_resno)
 {
-	List		   *mutator_iter;
-	Node		   *retval = NULL;
+	List	   *mutator_iter;
+	Node	   *retval = NULL;
 
 	if (attr->paramNo != NULL)
 	{
-		Param		   *param = (Param *) transformExpr(pstate, (Node *) attr->paramNo, EXPR_RELATION_FIRST);
+		Param	   *param = (Param *) transformExpr(pstate, (Node *) attr->paramNo, EXPR_RELATION_FIRST);
 
 		retval =
 			ParseFunc(pstate, strVal(lfirst(attr->attrs)),
@@ -1881,7 +1888,7 @@ handleNestedDots(ParseState * pstate, Attr * attr, int *curr_resno)
 	}
 	else
 	{
-		Ident		   *ident = makeNode(Ident);
+		Ident	   *ident = makeNode(Ident);
 
 		ident->name = attr->relname;
 		ident->isRel = TRUE;
@@ -1921,8 +1928,8 @@ make_arguments(int nargs,
 	 * is all we check for.
 	 */
 
-	List		   *current_fargs;
-	int				i;
+	List	   *current_fargs;
+	int			i;
 
 	for (i = 0, current_fargs = fargs;
 		 i < nargs;
@@ -1947,14 +1954,14 @@ make_arguments(int nargs,
  **		on a tuple parameter or return value.  Due to a bug in 4.0,
  **		it's not possible to refer to system attributes in this case.
  */
-static List    *
+static List *
 setup_tlist(char *attname, Oid relid)
 {
-	TargetEntry    *tle;
-	Resdom		   *resnode;
-	Var			   *varnode;
-	Oid				typeid;
-	int				attno;
+	TargetEntry *tle;
+	Resdom	   *resnode;
+	Var		   *varnode;
+	Oid			typeid;
+	int			attno;
 
 	attno = get_attnum(relid, attname);
 	if (attno < 0)
@@ -1981,12 +1988,12 @@ setup_tlist(char *attname, Oid relid)
  **		Build a tlist that extracts a base type from the tuple
  **		returned by the executor.
  */
-static List    *
+static List *
 setup_base_tlist(Oid typeid)
 {
-	TargetEntry    *tle;
-	Resdom		   *resnode;
-	Var			   *varnode;
+	TargetEntry *tle;
+	Resdom	   *resnode;
+	Var		   *varnode;
 
 	resnode = makeResdom(1,
 						 typeid,
@@ -2008,185 +2015,186 @@ setup_base_tlist(Oid typeid)
  *	  handles function calls with a single argument that is of complex type.
  *	  This routine returns NULL if it can't handle the projection (eg. sets).
  */
-static Node    *
+static Node *
 ParseComplexProjection(ParseState * pstate,
 					   char *funcname,
 					   Node * first_arg,
 					   bool * attisset)
 {
-	Oid				argtype;
-	Oid				argrelid;
-	Name			relname;
-	Relation		rd;
-	Oid				relid;
-	int				attnum;
+	Oid			argtype;
+	Oid			argrelid;
+	Name		relname;
+	Relation	rd;
+	Oid			relid;
+	int			attnum;
 
 	switch (nodeTag(first_arg))
 	{
-	case T_Iter:
-		{
-			Func		   *func;
-			Iter		   *iter;
-
-			iter = (Iter *) first_arg;
-			func = (Func *) ((Expr *) iter->iterexpr)->oper;
-			argtype = funcid_get_rettype(func->funcid);
-			argrelid = typeid_get_relid(argtype);
-			if (argrelid &&
-				((attnum = get_attnum(argrelid, funcname))
-				 != InvalidAttrNumber))
+		case T_Iter:
 			{
+				Func	   *func;
+				Iter	   *iter;
+
+				iter = (Iter *) first_arg;
+				func = (Func *) ((Expr *) iter->iterexpr)->oper;
+				argtype = funcid_get_rettype(func->funcid);
+				argrelid = typeid_get_relid(argtype);
+				if (argrelid &&
+					((attnum = get_attnum(argrelid, funcname))
+					 != InvalidAttrNumber))
+				{
+
+					/*
+					 * the argument is a function returning a tuple, so
+					 * funcname may be a projection
+					 */
+
+					/* add a tlist to the func node and return the Iter */
+					rd = heap_openr(tname(get_id_type(argtype)));
+					if (RelationIsValid(rd))
+					{
+						relid = RelationGetRelationId(rd);
+						relname = RelationGetRelationName(rd);
+						heap_close(rd);
+					}
+					if (RelationIsValid(rd))
+					{
+						func->func_tlist =
+							setup_tlist(funcname, argrelid);
+						iter->itertype = att_typeid(rd, attnum);
+						return ((Node *) iter);
+					}
+					else
+					{
+						elog(WARN,
+							 "Function %s has bad returntype %d",
+							 funcname, argtype);
+					}
+				}
+				else
+				{
+					/* drop through */
+					;
+				}
+				break;
+			}
+		case T_Var:
+			{
+
+				/*
+				 * The argument is a set, so this is either a projection
+				 * or a function call on this set.
+				 */
+				*attisset = true;
+				break;
+			}
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) first_arg;
+				Func	   *funcnode;
+
+				if (expr->opType != FUNC_EXPR)
+					break;
+
+				funcnode = (Func *) expr->oper;
+				argtype = funcid_get_rettype(funcnode->funcid);
+				argrelid = typeid_get_relid(argtype);
 
 				/*
 				 * the argument is a function returning a tuple, so
 				 * funcname may be a projection
 				 */
-
-				/* add a tlist to the func node and return the Iter */
-				rd = heap_openr(tname(get_id_type(argtype)));
-				if (RelationIsValid(rd))
+				if (argrelid &&
+					(attnum = get_attnum(argrelid, funcname))
+					!= InvalidAttrNumber)
 				{
-					relid = RelationGetRelationId(rd);
-					relname = RelationGetRelationName(rd);
-					heap_close(rd);
-				}
-				if (RelationIsValid(rd))
-				{
-					func->func_tlist =
-						setup_tlist(funcname, argrelid);
-					iter->itertype = att_typeid(rd, attnum);
-					return ((Node *) iter);
-				}
-				else
-				{
-					elog(WARN,
-						 "Function %s has bad returntype %d",
-						 funcname, argtype);
-				}
-			}
-			else
-			{
-				/* drop through */
-				;
-			}
-			break;
-		}
-	case T_Var:
-		{
 
-			/*
-			 * The argument is a set, so this is either a projection or a
-			 * function call on this set.
-			 */
-			*attisset = true;
-			break;
-		}
-	case T_Expr:
-		{
-			Expr		   *expr = (Expr *) first_arg;
-			Func		   *funcnode;
+					/* add a tlist to the func node */
+					rd = heap_openr(tname(get_id_type(argtype)));
+					if (RelationIsValid(rd))
+					{
+						relid = RelationGetRelationId(rd);
+						relname = RelationGetRelationName(rd);
+						heap_close(rd);
+					}
+					if (RelationIsValid(rd))
+					{
+						Expr	   *newexpr;
 
-			if (expr->opType != FUNC_EXPR)
+						funcnode->func_tlist =
+							setup_tlist(funcname, argrelid);
+						funcnode->functype = att_typeid(rd, attnum);
+
+						newexpr = makeNode(Expr);
+						newexpr->typeOid = funcnode->functype;
+						newexpr->opType = FUNC_EXPR;
+						newexpr->oper = (Node *) funcnode;
+						newexpr->args = lcons(first_arg, NIL);
+
+						return ((Node *) newexpr);
+					}
+
+				}
+
+				elog(WARN, "Function %s has bad returntype %d",
+					 funcname, argtype);
 				break;
-
-			funcnode = (Func *) expr->oper;
-			argtype = funcid_get_rettype(funcnode->funcid);
-			argrelid = typeid_get_relid(argtype);
-
-			/*
-			 * the argument is a function returning a tuple, so funcname
-			 * may be a projection
-			 */
-			if (argrelid &&
-				(attnum = get_attnum(argrelid, funcname))
-				!= InvalidAttrNumber)
+			}
+		case T_Param:
 			{
+				Param	   *param = (Param *) first_arg;
 
-				/* add a tlist to the func node */
-				rd = heap_openr(tname(get_id_type(argtype)));
+				/*
+				 * If the Param is a complex type, this could be a
+				 * projection
+				 */
+				rd = heap_openr(tname(get_id_type(param->paramtype)));
 				if (RelationIsValid(rd))
 				{
 					relid = RelationGetRelationId(rd);
 					relname = RelationGetRelationName(rd);
 					heap_close(rd);
 				}
-				if (RelationIsValid(rd))
+				if (RelationIsValid(rd) &&
+					(attnum = get_attnum(relid, funcname))
+					!= InvalidAttrNumber)
 				{
-					Expr		   *newexpr;
 
-					funcnode->func_tlist =
-						setup_tlist(funcname, argrelid);
-					funcnode->functype = att_typeid(rd, attnum);
-
-					newexpr = makeNode(Expr);
-					newexpr->typeOid = funcnode->functype;
-					newexpr->opType = FUNC_EXPR;
-					newexpr->oper = (Node *) funcnode;
-					newexpr->args = lcons(first_arg, NIL);
-
-					return ((Node *) newexpr);
+					param->paramtype = att_typeid(rd, attnum);
+					param->param_tlist = setup_tlist(funcname, relid);
+					return ((Node *) param);
 				}
-
+				break;
 			}
-
-			elog(WARN, "Function %s has bad returntype %d",
-				 funcname, argtype);
+		default:
 			break;
-		}
-	case T_Param:
-		{
-			Param		   *param = (Param *) first_arg;
-
-			/*
-			 * If the Param is a complex type, this could be a projection
-			 */
-			rd = heap_openr(tname(get_id_type(param->paramtype)));
-			if (RelationIsValid(rd))
-			{
-				relid = RelationGetRelationId(rd);
-				relname = RelationGetRelationName(rd);
-				heap_close(rd);
-			}
-			if (RelationIsValid(rd) &&
-				(attnum = get_attnum(relid, funcname))
-				!= InvalidAttrNumber)
-			{
-
-				param->paramtype = att_typeid(rd, attnum);
-				param->param_tlist = setup_tlist(funcname, relid);
-				return ((Node *) param);
-			}
-			break;
-		}
-	default:
-		break;
 	}
 
 	return NULL;
 }
 
-static Node    *
+static Node *
 ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 {
-	Oid				rettype = (Oid) 0;
-	Oid				argrelid = (Oid) 0;
-	Oid				funcid = (Oid) 0;
-	List		   *i = NIL;
-	Node		   *first_arg = NULL;
-	char		   *relname = NULL;
-	char		   *refname = NULL;
-	Relation		rd;
-	Oid				relid;
-	int				nargs;
-	Func		   *funcnode;
-	Oid				oid_array[8];
-	Oid			   *true_oid_array;
-	Node		   *retval;
-	bool			retset;
-	bool			exists;
-	bool			attisset = false;
-	Oid				toid = (Oid) 0;
-	Expr		   *expr;
+	Oid			rettype = (Oid) 0;
+	Oid			argrelid = (Oid) 0;
+	Oid			funcid = (Oid) 0;
+	List	   *i = NIL;
+	Node	   *first_arg = NULL;
+	char	   *relname = NULL;
+	char	   *refname = NULL;
+	Relation	rd;
+	Oid			relid;
+	int			nargs;
+	Func	   *funcnode;
+	Oid			oid_array[8];
+	Oid		   *true_oid_array;
+	Node	   *retval;
+	bool		retset;
+	bool		exists;
+	bool		attisset = false;
+	Oid			toid = (Oid) 0;
+	Expr	   *expr;
 
 	if (fargs)
 	{
@@ -2205,8 +2213,8 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 
 		if (nodeTag(first_arg) == T_Ident && ((Ident *) first_arg)->isRel)
 		{
-			RangeTblEntry  *rte;
-			Ident		   *ident = (Ident *) first_arg;
+			RangeTblEntry *rte;
+			Ident	   *ident = (Ident *) first_arg;
 
 			/*
 			 * first arg is a relation. This could be a projection.
@@ -2226,7 +2234,7 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 			 */
 			if (get_attnum(relid, funcname) != InvalidAttrNumber)
 			{
-				Oid				dummyTypeId;
+				Oid			dummyTypeId;
 
 				return
 					((Node *) make_var(pstate,
@@ -2287,7 +2295,7 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 			/*
 			 * Parsing aggregates.
 			 */
-			Oid				basetype;
+			Oid			basetype;
 
 			/*
 			 * the aggregate count is a special case, ignore its base
@@ -2302,7 +2310,7 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 									ObjectIdGetDatum(basetype),
 									0, 0))
 			{
-				Aggreg		   *aggreg = ParseAgg(funcname, basetype, lfirst(fargs));
+				Aggreg	   *aggreg = ParseAgg(funcname, basetype, lfirst(fargs));
 
 				AddAggToParseState(pstate, aggreg);
 				return (Node *) aggreg;
@@ -2322,9 +2330,9 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 	nargs = 0;
 	foreach(i, fargs)
 	{
-		int				vnum;
-		RangeTblEntry  *rte;
-		Node		   *pair = lfirst(i);
+		int			vnum;
+		RangeTblEntry *rte;
+		Node	   *pair = lfirst(i);
 
 		if (nodeTag(pair) == T_Ident && ((Ident *) pair)->isRel)
 		{
@@ -2457,9 +2465,9 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 	if (funcid == SeqNextValueRegProcedure ||
 		funcid == SeqCurrValueRegProcedure)
 	{
-		Const		   *seq;
-		char		   *seqrel;
-		int32			aclcheck_result = -1;
+		Const	   *seq;
+		char	   *seqrel;
+		int32		aclcheck_result = -1;
 
 		Assert(length(fargs) == 1);
 		seq = (Const *) lfirst(fargs);
@@ -2495,7 +2503,7 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 
 	if (retset)
 	{
-		Iter		   *iter = makeNode(Iter);
+		Iter	   *iter = makeNode(Iter);
 
 		iter->itertype = rettype;
 		iter->iterexpr = retval;
@@ -2518,8 +2526,8 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
 static void
 AddAggToParseState(ParseState * pstate, Aggreg * aggreg)
 {
-	List		   *ag;
-	int				i;
+	List	   *ag;
+	int			i;
 
 	/*
 	 * see if we have the aggregate already (we only need to record the
@@ -2528,7 +2536,7 @@ AddAggToParseState(ParseState * pstate, Aggreg * aggreg)
 	i = 0;
 	foreach(ag, pstate->p_aggs)
 	{
-		Aggreg		   *a = lfirst(ag);
+		Aggreg	   *a = lfirst(ag);
 
 		if (!strcmp(a->aggname, aggreg->aggname) &&
 			equal(a->target, aggreg->target))
@@ -2556,8 +2564,8 @@ AddAggToParseState(ParseState * pstate, Aggreg * aggreg)
 static void
 finalizeAggregates(ParseState * pstate, Query * qry)
 {
-	List		   *l;
-	int				i;
+	List	   *l;
+	int			i;
 
 	parseCheckAggregates(pstate, qry);
 
@@ -2575,7 +2583,7 @@ finalizeAggregates(ParseState * pstate, Query * qry)
  *
  *	  Returns true if any aggregate found.
  */
-static			bool
+static bool
 contain_agg_clause(Node * clause)
 {
 	if (clause == NULL)
@@ -2588,7 +2596,7 @@ contain_agg_clause(Node * clause)
 		return FALSE;
 	else if (or_clause(clause))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((Expr *) clause)->args)
 			if (contain_agg_clause(lfirst(temp)))
@@ -2597,7 +2605,7 @@ contain_agg_clause(Node * clause)
 	}
 	else if (is_funcclause(clause))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((Expr *) clause)->args)
 			if (contain_agg_clause(lfirst(temp)))
@@ -2606,7 +2614,7 @@ contain_agg_clause(Node * clause)
 	}
 	else if (IsA(clause, ArrayRef))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((ArrayRef *) clause)->refupperindexpr)
 			if (contain_agg_clause(lfirst(temp)))
@@ -2633,10 +2641,10 @@ contain_agg_clause(Node * clause)
  * exprIsAggOrGroupCol -
  *	  returns true if the expression does not contain non-group columns.
  */
-static			bool
+static bool
 exprIsAggOrGroupCol(Node * expr, List * groupClause)
 {
-	List		   *gl;
+	List	   *gl;
 
 	if (expr == NULL || IsA(expr, Const) ||
 		IsA(expr, Param) || IsA(expr, Aggreg))
@@ -2644,7 +2652,7 @@ exprIsAggOrGroupCol(Node * expr, List * groupClause)
 
 	foreach(gl, groupClause)
 	{
-		GroupClause    *grpcl = lfirst(gl);
+		GroupClause *grpcl = lfirst(gl);
 
 		if (equal(expr, grpcl->entry->expr))
 			return TRUE;
@@ -2652,7 +2660,7 @@ exprIsAggOrGroupCol(Node * expr, List * groupClause)
 
 	if (IsA(expr, Expr))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((Expr *) expr)->args)
 			if (!exprIsAggOrGroupCol(lfirst(temp), groupClause))
@@ -2667,18 +2675,18 @@ exprIsAggOrGroupCol(Node * expr, List * groupClause)
  * tleIsAggOrGroupCol -
  *	  returns true if the TargetEntry is Agg or GroupCol.
  */
-static			bool
+static bool
 tleIsAggOrGroupCol(TargetEntry * tle, List * groupClause)
 {
-	Node		   *expr = tle->expr;
-	List		   *gl;
+	Node	   *expr = tle->expr;
+	List	   *gl;
 
 	if (expr == NULL || IsA(expr, Const) || IsA(expr, Param))
 		return TRUE;
 
 	foreach(gl, groupClause)
 	{
-		GroupClause    *grpcl = lfirst(gl);
+		GroupClause *grpcl = lfirst(gl);
 
 		if (tle->resdom->resno == grpcl->entry->resdom->resno)
 		{
@@ -2693,7 +2701,7 @@ tleIsAggOrGroupCol(TargetEntry * tle, List * groupClause)
 
 	if (IsA(expr, Expr))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		foreach(temp, ((Expr *) expr)->args)
 			if (!exprIsAggOrGroupCol(lfirst(temp), groupClause))
@@ -2713,7 +2721,7 @@ tleIsAggOrGroupCol(TargetEntry * tle, List * groupClause)
 static void
 parseCheckAggregates(ParseState * pstate, Query * qry)
 {
-	List		   *tl;
+	List	   *tl;
 
 	Assert(pstate->p_numAgg > 0);
 
@@ -2731,7 +2739,7 @@ parseCheckAggregates(ParseState * pstate, Query * qry)
 	 */
 	foreach(tl, qry->targetList)
 	{
-		TargetEntry    *tle = lfirst(tl);
+		TargetEntry *tle = lfirst(tl);
 
 		if (!tleIsAggOrGroupCol(tle, qry->groupClause))
 			elog(WARN,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.15 1997/09/07 04:40:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.16 1997/09/08 02:22:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@
 static int
 checkAttrExists(char *attributeName,
 				char *attributeType, List * schema);
-static List    *MergeAttributes(List * schema, List * supers, List ** supconstr);
-static void		StoreCatalogInheritance(Oid relationId, List * supers);
+static List *MergeAttributes(List * schema, List * supers, List ** supconstr);
+static void StoreCatalogInheritance(Oid relationId, List * supers);
 
 /* ----------------------------------------------------------------
  *		DefineRelation --
@@ -47,20 +47,20 @@ static void		StoreCatalogInheritance(Oid relationId, List * supers);
 void
 DefineRelation(CreateStmt * stmt)
 {
-	char		   *relname = palloc(NAMEDATALEN);
-	List		   *schema = stmt->tableElts;
-	int				numberOfAttributes;
-	Oid				relationId;
-	char			archChar;
-	List		   *inheritList = NULL;
-	char		   *archiveName = NULL;
-	TupleDesc		descriptor;
-	List		   *constraints;
-	int				heaploc,
-					archloc;
+	char	   *relname = palloc(NAMEDATALEN);
+	List	   *schema = stmt->tableElts;
+	int			numberOfAttributes;
+	Oid			relationId;
+	char		archChar;
+	List	   *inheritList = NULL;
+	char	   *archiveName = NULL;
+	TupleDesc	descriptor;
+	List	   *constraints;
+	int			heaploc,
+				archloc;
 
-	char		   *typename = NULL;	/* the typename of this relation.
-										 * not useod for now */
+	char	   *typename = NULL;/* the typename of this relation. not
+								 * useod for now */
 
 	if (strlen(stmt->relname) >= NAMEDATALEN)
 		elog(WARN, "the relation name %s is >= %d characters long", stmt->relname,
@@ -84,19 +84,19 @@ DefineRelation(CreateStmt * stmt)
 
 	switch (stmt->archiveType)
 	{
-	case ARCH_NONE:
-		archChar = 'n';
-		break;
-	case ARCH_LIGHT:
-		archChar = 'l';
-		break;
-	case ARCH_HEAVY:
-		archChar = 'h';
-		break;
-	default:
-		elog(WARN, "Botched archive mode %d, ignoring",
-			 stmt->archiveType);
-		break;
+		case ARCH_NONE:
+			archChar = 'n';
+			break;
+		case ARCH_LIGHT:
+			archChar = 'l';
+			break;
+		case ARCH_HEAVY:
+			archChar = 'h';
+			break;
+		default:
+			elog(WARN, "Botched archive mode %d, ignoring",
+				 stmt->archiveType);
+			break;
 	}
 
 	if (stmt->location == -1)
@@ -145,15 +145,15 @@ DefineRelation(CreateStmt * stmt)
 
 	if (constraints != NIL)
 	{
-		List		   *entry;
-		int				nconstr = length(constraints);
-		ConstrCheck    *check = (ConstrCheck *) palloc(nconstr * sizeof(ConstrCheck));
-		int				ncheck = 0;
-		int				i;
+		List	   *entry;
+		int			nconstr = length(constraints);
+		ConstrCheck *check = (ConstrCheck *) palloc(nconstr * sizeof(ConstrCheck));
+		int			ncheck = 0;
+		int			i;
 
 		foreach(entry, constraints)
 		{
-			ConstraintDef  *cdef = (ConstraintDef *) lfirst(entry);
+			ConstraintDef *cdef = (ConstraintDef *) lfirst(entry);
 
 			if (cdef->type == CONSTR_CHECK)
 			{
@@ -204,7 +204,7 @@ DefineRelation(CreateStmt * stmt)
 	 */
 	if (archChar != 'n')
 	{
-		TupleDesc		tupdesc;
+		TupleDesc	tupdesc;
 
 		/*
 		 * Need to create an archive relation for this heap relation. We
@@ -279,12 +279,12 @@ RemoveRelation(char *name)
  *							\	 /
  *						   stud_emp {7:percent}
  */
-static List    *
+static List *
 MergeAttributes(List * schema, List * supers, List ** supconstr)
 {
-	List		   *entry;
-	List		   *inhSchema = NIL;
-	List		   *constraints = NIL;
+	List	   *entry;
+	List	   *inhSchema = NIL;
+	List	   *constraints = NIL;
 
 	/*
 	 * Validates that there are no duplications. Validity checking of
@@ -292,8 +292,8 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
 	 */
 	foreach(entry, schema)
 	{
-		List		   *rest;
-		ColumnDef	   *coldef = lfirst(entry);
+		List	   *rest;
+		ColumnDef  *coldef = lfirst(entry);
 
 		foreach(rest, lnext(entry))
 		{
@@ -301,7 +301,7 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
 			/*
 			 * check for duplicated relation names
 			 */
-			ColumnDef	   *restdef = lfirst(rest);
+			ColumnDef  *restdef = lfirst(rest);
 
 			if (!strcmp(coldef->colname, restdef->colname))
 			{
@@ -312,7 +312,7 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
 	}
 	foreach(entry, supers)
 	{
-		List		   *rest;
+		List	   *rest;
 
 		foreach(rest, lnext(entry))
 		{
@@ -329,12 +329,12 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
 	 */
 	foreach(entry, supers)
 	{
-		char		   *name = strVal(lfirst(entry));
-		Relation		relation;
-		List		   *partialResult = NIL;
-		AttrNumber		attrno;
-		TupleDesc		tupleDesc;
-		TupleConstr    *constr;
+		char	   *name = strVal(lfirst(entry));
+		Relation	relation;
+		List	   *partialResult = NIL;
+		AttrNumber	attrno;
+		TupleDesc	tupleDesc;
+		TupleConstr *constr;
 
 		relation = heap_openr(name);
 		if (relation == NULL)
@@ -354,11 +354,11 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
 		for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--)
 		{
 			AttributeTupleForm attribute = tupleDesc->attrs[attrno];
-			char		   *attributeName;
-			char		   *attributeType;
-			HeapTuple		tuple;
-			ColumnDef	   *def;
-			TypeName	   *typename;
+			char	   *attributeName;
+			char	   *attributeType;
+			HeapTuple	tuple;
+			ColumnDef  *def;
+			TypeName   *typename;
 
 			/*
 			 * form name, type and constraints
@@ -398,8 +398,8 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
 			def->defval = NULL;
 			if (attribute->atthasdef)
 			{
-				AttrDefault    *attrdef = constr->defval;
-				int				i;
+				AttrDefault *attrdef = constr->defval;
+				int			i;
 
 				Assert(constr != NULL && constr->num_defval > 0);
 
@@ -417,12 +417,12 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
 
 		if (constr && constr->num_check > 0)
 		{
-			ConstrCheck    *check = constr->check;
-			int				i;
+			ConstrCheck *check = constr->check;
+			int			i;
 
 			for (i = 0; i < constr->num_check; i++)
 			{
-				ConstraintDef  *cdef = (ConstraintDef *) palloc(sizeof(ConstraintDef));
+				ConstraintDef *cdef = (ConstraintDef *) palloc(sizeof(ConstraintDef));
 
 				cdef->type = CONSTR_CHECK;
 				if (check[i].ccname[0] == '$')
@@ -461,12 +461,12 @@ MergeAttributes(List * schema, List * supers, List ** supconstr)
 static void
 StoreCatalogInheritance(Oid relationId, List * supers)
 {
-	Relation		relation;
-	TupleDesc		desc;
-	int16			seqNumber;
-	List		   *entry;
-	List		   *idList;
-	HeapTuple		tuple;
+	Relation	relation;
+	TupleDesc	desc;
+	int16		seqNumber;
+	List	   *entry;
+	List	   *idList;
+	HeapTuple	tuple;
 
 	/* ----------------
 	 *	sanity checks
@@ -488,8 +488,8 @@ StoreCatalogInheritance(Oid relationId, List * supers)
 	idList = NIL;
 	foreach(entry, supers)
 	{
-		Datum			datum[Natts_pg_inherits];
-		char			nullarr[Natts_pg_inherits];
+		Datum		datum[Natts_pg_inherits];
+		char		nullarr[Natts_pg_inherits];
 
 		tuple = SearchSysCacheTuple(RELNAME,
 								  PointerGetDatum(strVal(lfirst(entry))),
@@ -536,11 +536,11 @@ StoreCatalogInheritance(Oid relationId, List * supers)
 	 */
 	foreach(entry, idList)
 	{
-		HeapTuple		tuple;
-		Oid				id;
-		int16			number;
-		List		   *next;
-		List		   *current;
+		HeapTuple	tuple;
+		Oid			id;
+		int16		number;
+		List	   *next;
+		List	   *current;
 
 		id = (Oid) lfirsti(entry);
 		current = entry;
@@ -572,9 +572,9 @@ StoreCatalogInheritance(Oid relationId, List * supers)
 	 */
 	foreach(entry, idList)
 	{
-		Oid				name;
-		List		   *rest;
-		bool			found = false;
+		Oid			name;
+		List	   *rest;
+		bool		found = false;
 
 again:
 		name = lfirsti(entry);
@@ -613,8 +613,8 @@ again:
 
 	foreach(entry, idList)
 	{
-		Datum			datum[Natts_pg_ipl];
-		char			nullarr[Natts_pg_ipl];
+		Datum		datum[Natts_pg_ipl];
+		char		nullarr[Natts_pg_ipl];
 
 		datum[0] = ObjectIdGetDatum(relationId);		/* iplrel */
 		datum[1] = ObjectIdGetDatum(lfirsti(entry));
@@ -642,11 +642,11 @@ again:
 static int
 checkAttrExists(char *attributeName, char *attributeType, List * schema)
 {
-	List		   *s;
+	List	   *s;
 
 	foreach(s, schema)
 	{
-		ColumnDef	   *def = lfirst(s);
+		ColumnDef  *def = lfirst(s);
 
 		if (!strcmp(attributeName, def->colname))
 		{
@@ -672,10 +672,10 @@ checkAttrExists(char *attributeName, char *attributeType, List * schema)
 * the CALLER is responsible for freeing the memory allocated
  */
 
-char		   *
+char	   *
 MakeArchiveName(Oid relationId)
 {
-	char		   *arch;
+	char	   *arch;
 
 	/*
 	 * Archive relations are named a,XXXXX where XXXXX == the OID of the

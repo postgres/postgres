@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.18 1997/09/07 05:01:14 momjian Exp $
+ * $Id: ipc.h,v 1.19 1997/09/08 02:39:01 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -28,15 +28,15 @@
 
 #if defined(HAS_TEST_AND_SET)
 
-extern void		S_LOCK(slock_t * lock);
-extern void		S_UNLOCK(slock_t * lock);
-extern void		S_INIT_LOCK(slock_t * lock);
+extern void S_LOCK(slock_t * lock);
+extern void S_UNLOCK(slock_t * lock);
+extern void S_INIT_LOCK(slock_t * lock);
 
 #if (defined(alpha) && !defined(linuxalpha)) || \
 	defined(hpux) || \
 	defined(irix5) || \
 	defined(nextstep)
-extern int		S_LOCK_FREE(slock_t * lock);
+extern int	S_LOCK_FREE(slock_t * lock);
 
 #else
 #define S_LOCK_FREE(lock)		((*lock) == 0)
@@ -47,14 +47,14 @@ extern int		S_LOCK_FREE(slock_t * lock);
 #ifndef HAVE_UNION_SEMUN
 union semun
 {
-	int				val;
+	int			val;
 	struct semid_ds *buf;
 	unsigned short *array;
 };
 
 #endif
 
-typedef uint16	SystemPortAddress;
+typedef uint16 SystemPortAddress;
 
 /* semaphore definitions */
 
@@ -70,8 +70,8 @@ typedef uint16	SystemPortAddress;
 #define IpcSemIdExist			(-3)
 #define IpcSemIdNotExist		(-4)
 
-typedef uint32	IpcSemaphoreKey;/* semaphore key */
-typedef int		IpcSemaphoreId;
+typedef uint32 IpcSemaphoreKey; /* semaphore key */
+typedef int IpcSemaphoreId;
 
 /* shared memory definitions */
 
@@ -79,37 +79,37 @@ typedef int		IpcSemaphoreId;
 #define IpcMemIdGetFailed		(-2)
 #define IpcMemAttachFailed		0
 
-typedef uint32	IPCKey;
+typedef uint32 IPCKey;
 
 #define PrivateIPCKey	IPC_PRIVATE
 #define DefaultIPCKey	17317
 
-typedef uint32	IpcMemoryKey;	/* shared memory key */
-typedef int		IpcMemoryId;
+typedef uint32 IpcMemoryKey;	/* shared memory key */
+typedef int IpcMemoryId;
 
 
 /* ipc.c */
-extern void		exitpg(int code);
-extern void		quasi_exitpg(void);
-extern int		on_exitpg(void (*function) (), caddr_t arg);
+extern void exitpg(int code);
+extern void quasi_exitpg(void);
+extern int	on_exitpg(void (*function) (), caddr_t arg);
 
-extern IpcSemaphoreId
+extern		IpcSemaphoreId
 IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 				   int semNum, int permission, int semStartValue,
 				   int removeOnExit, int *status);
-extern void		IpcSemaphoreKill(IpcSemaphoreKey key);
-extern void		IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock);
-extern void		IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock);
-extern int		IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem);
-extern int		IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem);
-extern IpcMemoryId
+extern void IpcSemaphoreKill(IpcSemaphoreKey key);
+extern void IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock);
+extern void IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock);
+extern int	IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem);
+extern int	IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem);
+extern		IpcMemoryId
 IpcMemoryCreate(IpcMemoryKey memKey, uint32 size,
 				int permission);
 extern IpcMemoryId IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size);
-extern char    *IpcMemoryAttach(IpcMemoryId memId);
-extern void		IpcMemoryKill(IpcMemoryKey memKey);
-extern void		CreateAndInitSLockMemory(IPCKey key);
-extern void		AttachSLockMemory(IPCKey key);
+extern char *IpcMemoryAttach(IpcMemoryId memId);
+extern void IpcMemoryKill(IpcMemoryKey memKey);
+extern void CreateAndInitSLockMemory(IPCKey key);
+extern void AttachSLockMemory(IPCKey key);
 
 
 #ifdef HAS_TEST_AND_SET
@@ -135,24 +135,24 @@ typedef enum _LockId_
 
 	PROCSTRUCTLOCKID,
 	FIRSTFREELOCKID
-}				_LockId_;
+}			_LockId_;
 
 #define MAX_SPINS		FIRSTFREELOCKID
 
 typedef struct slock
 {
-	slock_t			locklock;
-	unsigned char	flag;
-	short			nshlocks;
-	slock_t			shlock;
-	slock_t			exlock;
-	slock_t			comlock;
-	struct slock   *next;
-}				SLock;
+	slock_t		locklock;
+	unsigned char flag;
+	short		nshlocks;
+	slock_t		shlock;
+	slock_t		exlock;
+	slock_t		comlock;
+	struct slock *next;
+}			SLock;
 
-extern void		ExclusiveLock(int lockid);
-extern void		ExclusiveUnlock(int lockid);
-extern bool		LockIsFree(int lockid);
+extern void ExclusiveLock(int lockid);
+extern void ExclusiveUnlock(int lockid);
+extern bool LockIsFree(int lockid);
 
 #else							/* HAS_TEST_AND_SET */
 
@@ -171,7 +171,7 @@ typedef enum _LockId_
 	PROCSTRUCTLOCKID,
 	OIDGENLOCKID,
 	FIRSTFREELOCKID
-}				_LockId_;
+}			_LockId_;
 
 #define MAX_SPINS		FIRSTFREELOCKID
 
@@ -220,8 +220,8 @@ typedef enum _LockId_
 		((key == PrivateIPCKey) ? key : 14 + (key))
 
 /* ipci.c */
-extern IPCKey	SystemPortAddressCreateIPCKey(SystemPortAddress address);
-extern void		CreateSharedMemoryAndSemaphores(IPCKey key);
-extern void		AttachSharedMemoryAndSemaphores(IPCKey key);
+extern IPCKey SystemPortAddressCreateIPCKey(SystemPortAddress address);
+extern void CreateSharedMemoryAndSemaphores(IPCKey key);
+extern void AttachSharedMemoryAndSemaphores(IPCKey key);
 
 #endif							/* IPC_H */

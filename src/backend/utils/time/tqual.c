@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.5 1997/09/07 04:54:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.6 1997/09/08 02:32:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,18 +29,18 @@
 static AbsoluteTime TimeQualGetEndTime(TimeQual qual);
 static AbsoluteTime TimeQualGetSnapshotTime(TimeQual qual);
 static AbsoluteTime TimeQualGetStartTime(TimeQual qual);
-static bool		TimeQualIncludesNow(TimeQual qual);
-static bool		TimeQualIndicatesDisableValidityChecking(TimeQual qual);
-static bool		TimeQualIsLegal(TimeQual qual);
-static bool		TimeQualIsRanged(TimeQual qual);
-static bool		TimeQualIsSnapshot(TimeQual qual);
-static bool		TimeQualIsValid(TimeQual qual);
+static bool TimeQualIncludesNow(TimeQual qual);
+static bool TimeQualIndicatesDisableValidityChecking(TimeQual qual);
+static bool TimeQualIsLegal(TimeQual qual);
+static bool TimeQualIsRanged(TimeQual qual);
+static bool TimeQualIsSnapshot(TimeQual qual);
+static bool TimeQualIsValid(TimeQual qual);
 
 /*
  * TimeQualMode --
  *		Mode indicator for treatment of time qualifications.
  */
-typedef uint16	TimeQualMode;
+typedef uint16 TimeQualMode;
 
 #define TimeQualAt		0x1
 #define TimeQualNewer	0x2
@@ -55,17 +55,17 @@ typedef uint16	TimeQualMode;
 
 typedef struct TimeQualData
 {
-	AbsoluteTime	start;
-	AbsoluteTime	end;
-	TimeQualMode	mode;
-}				TimeQualData;
+	AbsoluteTime start;
+	AbsoluteTime end;
+	TimeQualMode mode;
+}			TimeQualData;
 
 typedef TimeQualData *InternalTimeQual;
 
 static TimeQualData SelfTimeQualData;
-TimeQual		SelfTimeQual = (Pointer) & SelfTimeQualData;
+TimeQual	SelfTimeQual = (Pointer) & SelfTimeQualData;
 
-extern bool		PostgresIsInitialized;
+extern bool PostgresIsInitialized;
 
 /*
  * XXX Transaction system override hacks start here
@@ -115,8 +115,8 @@ heapisoverride()
  * XXX Transaction system override hacks end here
  */
 
-static bool		HeapTupleSatisfiesItself(HeapTuple tuple);
-static bool		HeapTupleSatisfiesNow(HeapTuple tuple);
+static bool HeapTupleSatisfiesItself(HeapTuple tuple);
+static bool HeapTupleSatisfiesNow(HeapTuple tuple);
 static bool
 HeapTupleSatisfiesSnapshotInternalTimeQual(HeapTuple tuple,
 										   InternalTimeQual qual);
@@ -133,10 +133,10 @@ HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
  * TimeQualIsValid --
  *		True iff time qualification is valid.
  */
-static			bool
+static bool
 TimeQualIsValid(TimeQual qual)
 {
-	bool			hasStartTime;
+	bool		hasStartTime;
 
 	if (!PointerIsValid(qual) || qual == SelfTimeQual)
 	{
@@ -189,7 +189,7 @@ TimeQualIsValid(TimeQual qual)
  * Note:
  *		Assumes time qualification is valid.
  */
-static			bool
+static bool
 TimeQualIsLegal(TimeQual qual)
 {
 	Assert(TimeQualIsValid(qual));
@@ -202,8 +202,8 @@ TimeQualIsLegal(TimeQual qual)
 	/* TimeQualAt */
 	if (((InternalTimeQual) qual)->mode & TimeQualAt)
 	{
-		AbsoluteTime	a,
-						b;
+		AbsoluteTime a,
+					b;
 
 		a = ((InternalTimeQual) qual)->start;
 		b = GetCurrentTransactionStartTime();
@@ -217,8 +217,8 @@ TimeQualIsLegal(TimeQual qual)
 	/* TimeQualOlder or TimeQualRange */
 	if (((InternalTimeQual) qual)->mode & TimeQualOlder)
 	{
-		AbsoluteTime	a,
-						b;
+		AbsoluteTime a,
+					b;
 
 		a = ((InternalTimeQual) qual)->end;
 		b = GetCurrentTransactionStartTime();
@@ -232,8 +232,8 @@ TimeQualIsLegal(TimeQual qual)
 	/* TimeQualNewer */
 	if (((InternalTimeQual) qual)->mode & TimeQualNewer)
 	{
-		AbsoluteTime	a,
-						b;
+		AbsoluteTime a,
+					b;
 
 		a = ((InternalTimeQual) qual)->start;
 		b = GetCurrentTransactionStartTime();
@@ -255,7 +255,7 @@ TimeQualIsLegal(TimeQual qual)
  * Note:
  *		Assumes time qualification is valid.
  */
-static			bool
+static bool
 TimeQualIncludesNow(TimeQual qual)
 {
 	Assert(TimeQualIsValid(qual));
@@ -312,7 +312,7 @@ TimeQualIncludesPast(TimeQual qual)
  * Note:
  *		Assumes time qualification is valid.
  */
-static			bool
+static bool
 TimeQualIsSnapshot(TimeQual qual)
 {
 	Assert(TimeQualIsValid(qual));
@@ -332,7 +332,7 @@ TimeQualIsSnapshot(TimeQual qual)
  * Note:
  *		Assumes time qualification is valid.
  */
-static			bool
+static bool
 TimeQualIsRanged(TimeQual qual)
 {
 	Assert(TimeQualIsValid(qual));
@@ -353,7 +353,7 @@ TimeQualIsRanged(TimeQual qual)
  * Note:
  *		XXX This should not be implemented since this does not make sense.
  */
-static			bool
+static bool
 TimeQualIndicatesDisableValidityChecking(TimeQual qual)
 {
 	Assert(TimeQualIsValid(qual));
@@ -377,7 +377,7 @@ TimeQualIndicatesDisableValidityChecking(TimeQual qual)
  * Note:
  *		Assumes time qual is valid snapshot time qual.
  */
-static			AbsoluteTime
+static AbsoluteTime
 TimeQualGetSnapshotTime(TimeQual qual)
 {
 	Assert(TimeQualIsSnapshot(qual));
@@ -392,7 +392,7 @@ TimeQualGetSnapshotTime(TimeQual qual)
  * Note:
  *		Assumes time qual is valid ranged time qual.
  */
-static			AbsoluteTime
+static AbsoluteTime
 TimeQualGetStartTime(TimeQual qual)
 {
 	Assert(TimeQualIsRanged(qual));
@@ -407,7 +407,7 @@ TimeQualGetStartTime(TimeQual qual)
  * Note:
  *		Assumes time qual is valid ranged time qual.
  */
-static			AbsoluteTime
+static AbsoluteTime
 TimeQualGetEndTime(TimeQual qual)
 {
 	Assert(TimeQualIsRanged(qual));
@@ -550,7 +550,7 @@ HeapTupleSatisfiesTimeQual(HeapTuple tuple, TimeQual qual)
  *			(Xmax != my-transaction &&			the row was deleted by another transaction
  *			 Xmax is not committed)))			that has not been committed
  */
-static			bool
+static bool
 HeapTupleSatisfiesItself(HeapTuple tuple)
 {
 
@@ -647,7 +647,7 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
  *		the serializability guarantees we provide don't extend to xacts
  *		that do catalog accesses.  this is unfortunate, but not critical.
  */
-static			bool
+static bool
 HeapTupleSatisfiesNow(HeapTuple tuple)
 {
 	if (AMI_OVERRIDE)
@@ -755,7 +755,7 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
  *		(Xmax is null || (Xmax is not committed && Xmax != my-transaction) ||
  *				Tmax >= T))
  */
-static			bool
+static bool
 HeapTupleSatisfiesSnapshotInternalTimeQual(HeapTuple tuple,
 										   InternalTimeQual qual)
 {
@@ -816,7 +816,7 @@ HeapTupleSatisfiesSnapshotInternalTimeQual(HeapTuple tuple,
  *		(Xmax is null || (Xmax is not committed && Xmax != my-transaction) ||
  *				T1 is null || Tmax >= T1))
  */
-static			bool
+static bool
 HeapTupleSatisfiesUpperBoundedInternalTimeQual(HeapTuple tuple,
 											   InternalTimeQual qual)
 {
@@ -886,7 +886,7 @@ HeapTupleSatisfiesUpperBoundedInternalTimeQual(HeapTuple tuple,
  *				(Xmax is not committed && Xmax != my-transaction) ||
  *				T1 is null || Tmax >= T1)))
  */
-static			bool
+static bool
 HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
 												 InternalTimeQual qual)
 {

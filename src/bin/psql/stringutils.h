@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringutils.h,v 1.5 1997/09/07 04:55:32 momjian Exp $
+ * $Id: stringutils.h,v 1.6 1997/09/08 02:33:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,10 +27,10 @@
 
 /* removes whitespaces from the left, right and both sides of a string */
 /* MODIFIES the string passed in and returns the head of it */
-extern char    *rightTrim(char *s);
+extern char *rightTrim(char *s);
 
 #ifdef STRINGUTILS_TEST
-extern void		testStringUtils();
+extern void testStringUtils();
 
 #endif
 

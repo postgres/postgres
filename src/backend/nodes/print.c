@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.7 1997/09/07 04:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.8 1997/09/08 02:23:42 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -33,7 +33,7 @@
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 
-static char    *plannode_type(Plan * p);
+static char *plannode_type(Plan * p);
 
 /*
  * print--
@@ -42,7 +42,7 @@ static char    *plannode_type(Plan * p);
 void
 print(void *obj)
 {
-	char		   *s;
+	char	   *s;
 
 	s = nodeToString(obj);
 	printf("%s\n", s);
@@ -56,11 +56,11 @@ print(void *obj)
 void
 pprint(void *obj)
 {
-	char		   *s;
-	int				i;
-	char			line[80];
-	int				indentLev;
-	int				j;
+	char	   *s;
+	int			i;
+	char		line[80];
+	int			indentLev;
+	int			j;
 
 	s = nodeToString(obj);
 
@@ -77,44 +77,44 @@ pprint(void *obj)
 			line[j] = s[i];
 			switch (line[j])
 			{
-			case '}':
-				if (j != indentLev * 3)
-				{
-					line[j] = '\0';
-					printf("%s\n", line);
-					line[indentLev * 3] = '\0';
-					printf("%s}\n", line);
-				}
-				else
-				{
-					line[j] = '\0';
-					printf("%s}\n", line);
-				}
-				indentLev--;
-				j = indentLev * 3 - 1;	/* print the line before : and
-										 * resets */
-				break;
-			case ')':
-				line[j + 1] = '\0';
-				printf("%s\n", line);
-				j = indentLev * 3 - 1;
-				break;
-			case '{':
-				indentLev++;
-				/* !!! FALLS THROUGH */
-			case ':':
-				if (j != 0)
-				{
-					line[j] = '\0';
-					printf("%s\n", line);
-					/* print the line before : and resets */
-					for (j = 0; j < indentLev * 3; j++)
+				case '}':
+					if (j != indentLev * 3)
 					{
-						line[j] = ' ';
+						line[j] = '\0';
+						printf("%s\n", line);
+						line[indentLev * 3] = '\0';
+						printf("%s}\n", line);
 					}
-				}
-				line[j] = s[i];
-				break;
+					else
+					{
+						line[j] = '\0';
+						printf("%s}\n", line);
+					}
+					indentLev--;
+					j = indentLev * 3 - 1;		/* print the line before :
+												 * and resets */
+					break;
+				case ')':
+					line[j + 1] = '\0';
+					printf("%s\n", line);
+					j = indentLev * 3 - 1;
+					break;
+				case '{':
+					indentLev++;
+					/* !!! FALLS THROUGH */
+				case ':':
+					if (j != 0)
+					{
+						line[j] = '\0';
+						printf("%s\n", line);
+						/* print the line before : and resets */
+						for (j = 0; j < indentLev * 3; j++)
+						{
+							line[j] = ' ';
+						}
+					}
+					line[j] = s[i];
+					break;
 			}
 		}
 		line[j] = '\0';
@@ -137,14 +137,14 @@ pprint(void *obj)
 void
 print_rt(List * rtable)
 {
-	List		   *l;
-	int				i = 1;
+	List	   *l;
+	int			i = 1;
 
 	printf("resno\trelname(refname)\trelid\tinFromCl\n");
 	printf("-----\t----------------\t-----\t--------\n");
 	foreach(l, rtable)
 	{
-		RangeTblEntry  *rte = lfirst(l);
+		RangeTblEntry *rte = lfirst(l);
 
 		printf("%d\t%s(%s)\t%d\t%d\t%s\n",
 			   i, rte->relname, rte->refname, rte->relid,
@@ -170,44 +170,44 @@ print_expr(Node * expr, List * rtable)
 
 	if (IsA(expr, Var))
 	{
-		Var			   *var = (Var *) expr;
-		RangeTblEntry  *rt;
-		char		   *relname,
-					   *attname;
+		Var		   *var = (Var *) expr;
+		RangeTblEntry *rt;
+		char	   *relname,
+				   *attname;
 
 		switch (var->varno)
 		{
-		case INNER:
-			relname = "INNER";
-			attname = "?";
-			break;
-		case OUTER:
-			relname = "OUTER";
-			attname = "?";
-			break;
-		default:
-			{
-				Relation		r;
+			case INNER:
+				relname = "INNER";
+				attname = "?";
+				break;
+			case OUTER:
+				relname = "OUTER";
+				attname = "?";
+				break;
+			default:
+				{
+					Relation	r;
 
-				rt = rt_fetch(var->varno, rtable);
-				relname = rt->relname;
-				r = heap_openr(relname);
-				if (rt->refname)
-					relname = rt->refname;		/* table renamed */
-				attname = getAttrName(r, var->varattno);
-				heap_close(r);
-			}
-			break;
+					rt = rt_fetch(var->varno, rtable);
+					relname = rt->relname;
+					r = heap_openr(relname);
+					if (rt->refname)
+						relname = rt->refname;	/* table renamed */
+					attname = getAttrName(r, var->varattno);
+					heap_close(r);
+				}
+				break;
 		}
 		printf("%s.%s", relname, attname);
 	}
 	else if (IsA(expr, Expr))
 	{
-		Expr		   *e = (Expr *) expr;
+		Expr	   *e = (Expr *) expr;
 
 		if (is_opclause(expr))
 		{
-			char		   *opname;
+			char	   *opname;
 
 			print_expr((Node *) get_leftop(e), rtable);
 			opname = get_opname(((Oper *) e->oper)->opno);
@@ -232,12 +232,12 @@ print_expr(Node * expr, List * rtable)
 void
 print_keys(List * keys, List * rtable)
 {
-	List		   *k;
+	List	   *k;
 
 	printf("(");
 	foreach(k, keys)
 	{
-		Node		   *var = lfirst((List *) lfirst(k));
+		Node	   *var = lfirst((List *) lfirst(k));
 
 		print_expr(var, rtable);
 		if (lnext(k))
@@ -253,12 +253,12 @@ print_keys(List * keys, List * rtable)
 void
 print_tl(List * tlist, List * rtable)
 {
-	List		   *tl;
+	List	   *tl;
 
 	printf("(\n");
 	foreach(tl, tlist)
 	{
-		TargetEntry    *tle = lfirst(tl);
+		TargetEntry *tle = lfirst(tl);
 
 		printf("\t%d %s\t", tle->resdom->resno, tle->resdom->resname);
 		if (tle->resdom->reskey != 0)
@@ -296,74 +296,74 @@ print_slot(TupleTableSlot * slot)
 	debugtup(slot->val, slot->ttc_tupleDescriptor);
 }
 
-static char    *
+static char *
 plannode_type(Plan * p)
 {
 	switch (nodeTag(p))
 	{
-		case T_Plan:
-		return "PLAN";
-		break;
-	case T_Existential:
-		return "EXISTENTIAL";
-		break;
-	case T_Result:
-		return "RESULT";
-		break;
-	case T_Append:
-		return "APPEND";
-		break;
-	case T_Scan:
-		return "SCAN";
-		break;
-	case T_SeqScan:
-		return "SEQSCAN";
-		break;
-	case T_IndexScan:
-		return "INDEXSCAN";
-		break;
-	case T_Join:
-		return "JOIN";
-		break;
-	case T_NestLoop:
-		return "NESTLOOP";
-		break;
-	case T_MergeJoin:
-		return "MERGEJOIN";
-		break;
-	case T_HashJoin:
-		return "HASHJOIN";
-		break;
-	case T_Temp:
-		return "TEMP";
-		break;
-	case T_Material:
-		return "MATERIAL";
-		break;
-	case T_Sort:
-		return "SORT";
-		break;
-	case T_Agg:
-		return "AGG";
-		break;
-	case T_Unique:
-		return "UNIQUE";
-		break;
-	case T_Hash:
-		return "HASH";
-		break;
-	case T_Tee:
-		return "TEE";
-		break;
-	case T_Choose:
-		return "CHOOSE";
-		break;
-	case T_Group:
-		return "GROUP";
-		break;
-	default:
-		return "UNKNOWN";
-		break;
+			case T_Plan:
+			return "PLAN";
+			break;
+		case T_Existential:
+			return "EXISTENTIAL";
+			break;
+		case T_Result:
+			return "RESULT";
+			break;
+		case T_Append:
+			return "APPEND";
+			break;
+		case T_Scan:
+			return "SCAN";
+			break;
+		case T_SeqScan:
+			return "SEQSCAN";
+			break;
+		case T_IndexScan:
+			return "INDEXSCAN";
+			break;
+		case T_Join:
+			return "JOIN";
+			break;
+		case T_NestLoop:
+			return "NESTLOOP";
+			break;
+		case T_MergeJoin:
+			return "MERGEJOIN";
+			break;
+		case T_HashJoin:
+			return "HASHJOIN";
+			break;
+		case T_Temp:
+			return "TEMP";
+			break;
+		case T_Material:
+			return "MATERIAL";
+			break;
+		case T_Sort:
+			return "SORT";
+			break;
+		case T_Agg:
+			return "AGG";
+			break;
+		case T_Unique:
+			return "UNIQUE";
+			break;
+		case T_Hash:
+			return "HASH";
+			break;
+		case T_Tee:
+			return "TEE";
+			break;
+		case T_Choose:
+			return "CHOOSE";
+			break;
+		case T_Group:
+			return "GROUP";
+			break;
+		default:
+			return "UNKNOWN";
+			break;
 	}
 }
 
@@ -377,8 +377,8 @@ plannode_type(Plan * p)
 void
 print_plan_recursive(Plan * p, Query * parsetree, int indentLevel, char *label)
 {
-	int				i;
-	char			extraInfo[100];
+	int			i;
+	char		extraInfo[100];
 
 	if (!p)
 		return;
@@ -388,7 +388,7 @@ print_plan_recursive(Plan * p, Query * parsetree, int indentLevel, char *label)
 		   p->cost, p->plan_size, p->plan_width);
 	if (IsA(p, Scan) || IsA(p, SeqScan))
 	{
-		RangeTblEntry  *rte;
+		RangeTblEntry *rte;
 
 		rte = rt_fetch(((Scan *) p)->scanrelid, parsetree->rtable);
 		strNcpy(extraInfo, rte->relname, NAMEDATALEN - 1);

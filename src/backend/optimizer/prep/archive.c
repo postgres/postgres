@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Attic/archive.c,v 1.2 1997/09/07 04:44:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Attic/archive.c,v 1.3 1997/09/08 02:24:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,11 @@
 void
 plan_archive(List * rt)
 {
-	List		   *rtitem;
-	RangeTblEntry  *rte;
-	TimeRange	   *trange;
-	Relation		r;
-	Oid				reloid;
+	List	   *rtitem;
+	RangeTblEntry *rte;
+	TimeRange  *trange;
+	Relation	r;
+	Oid			reloid;
 
 	foreach(rtitem, rt)
 	{
@@ -55,11 +55,11 @@ plan_archive(List * rt)
  *	find_archive_rels -- Given a particular relid, find the archive
  *						 relation's relid.
  */
-List		   *
+List	   *
 find_archive_rels(Oid relid)
 {
-	Relation		arel;
-	char		   *arelName;
+	Relation	arel;
+	char	   *arelName;
 
 	arelName = MakeArchiveName(relid);
 	arel = RelationNameGetRelation(arelName);

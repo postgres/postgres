@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.4 1997/09/07 04:41:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.5 1997/09/08 02:22:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,17 +57,17 @@
 TupleTableSlot *
 ExecNestLoop(NestLoop * node, Plan * parent)
 {
-	NestLoopState  *nlstate;
-	Plan		   *innerPlan;
-	Plan		   *outerPlan;
-	bool			needNewOuterTuple;
+	NestLoopState *nlstate;
+	Plan	   *innerPlan;
+	Plan	   *outerPlan;
+	bool		needNewOuterTuple;
 
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *innerTupleSlot;
 
-	List		   *qual;
-	bool			qualResult;
-	ExprContext    *econtext;
+	List	   *qual;
+	bool		qualResult;
+	ExprContext *econtext;
 
 	/* ----------------
 	 *	get information from the node
@@ -86,7 +86,7 @@ ExecNestLoop(NestLoop * node, Plan * parent)
 	 */
 	econtext = nlstate->jstate.cs_ExprContext;
 
-	/* ----------------	  * get the current outer tuple
+	/* ----------------		* get the current outer tuple
 	 * ----------------
 	 */
 	outerTupleSlot = nlstate->jstate.cs_OuterTupleSlot;
@@ -101,7 +101,7 @@ ExecNestLoop(NestLoop * node, Plan * parent)
 	if (nlstate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
-		bool			isDone;
+		bool		isDone;
 
 		result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
 		if (!isDone)
@@ -238,7 +238,7 @@ ExecNestLoop(NestLoop * node, Plan * parent)
 			 */
 			ProjectionInfo *projInfo;
 			TupleTableSlot *result;
-			bool			isDone;
+			bool		isDone;
 
 			ENL1_printf("qualification succeeded, projecting tuple");
 
@@ -267,7 +267,7 @@ ExecNestLoop(NestLoop * node, Plan * parent)
 bool
 ExecInitNestLoop(NestLoop * node, EState * estate, Plan * parent)
 {
-	NestLoopState  *nlstate;
+	NestLoopState *nlstate;
 
 	NL1_printf("ExecInitNestLoop: %s\n",
 			   "initializing node");
@@ -347,7 +347,7 @@ ExecCountSlotsNestLoop(NestLoop * node)
 void
 ExecEndNestLoop(NestLoop * node)
 {
-	NestLoopState  *nlstate;
+	NestLoopState *nlstate;
 
 	NL1_printf("ExecEndNestLoop: %s\n",
 			   "ending node processing");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.5 1997/09/07 04:42:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.6 1997/09/08 02:22:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,9 @@
 void
 HashTableWalk(HTAB * hashtable, HashtFunc function, int arg)
 {
-	long		   *hashent;
-	long		   *data;
-	int				keysize;
+	long	   *hashent;
+	long	   *data;
+	int			keysize;
 
 	keysize = hashtable->hctl->keysize;
 	hash_seq((HTAB *) NULL);

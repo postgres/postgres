@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.32 1997/09/07 04:50:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.33 1997/09/08 02:30:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,14 +45,14 @@ static AbsoluteTime tm2abstime(struct tm * tm, int tz);
 AbsoluteTime
 GetCurrentAbsoluteTime(void)
 {
-	time_t			now;
+	time_t		now;
 
 #ifdef USE_POSIX_TIME
-	struct tm	   *tm;
+	struct tm  *tm;
 
 	now = time(NULL);
 #else							/* ! USE_POSIX_TIME */
-	struct timeb	tb;			/* the old V7-ism */
+	struct timeb tb;			/* the old V7-ism */
 
 	ftime(&tb);
 	now = tb.time;
@@ -109,7 +109,7 @@ GetCurrentAbsoluteTime(void)
 void
 GetCurrentTime(struct tm * tm)
 {
-	int				tz;
+	int			tz;
 
 	abstime2tm(GetCurrentTransactionStartTime(), &tz, tm, NULL);
 
@@ -121,10 +121,10 @@ void
 abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 {
 #ifdef USE_POSIX_TIME
-	struct tm	   *tx;
+	struct tm  *tx;
 
 #else							/* ! USE_POSIX_TIME */
-	struct timeb	tb;			/* the old V7-ism */
+	struct timeb tb;			/* the old V7-ism */
 
 	ftime(&tb);
 #endif
@@ -198,11 +198,11 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
  * Convert a tm structure to abstime.
  * Note that tm has full year (not 1900-based) and 1-based month.
  */
-static			AbsoluteTime
+static AbsoluteTime
 tm2abstime(struct tm * tm, int tz)
 {
-	int				day,
-					sec;
+	int			day,
+				sec;
 
 	/* validate, before going out of range on some members */
 	if (tm->tm_year < 1901 || tm->tm_year > 2038
@@ -241,18 +241,18 @@ tm2abstime(struct tm * tm, int tz)
 AbsoluteTime
 nabstimein(char *str)
 {
-	AbsoluteTime	result;
+	AbsoluteTime result;
 
-	double			fsec;
-	int				tz = 0;
-	struct tm		date,
-				   *tm = &date;
+	double		fsec;
+	int			tz = 0;
+	struct tm	date,
+			   *tm = &date;
 
-	char		   *field[MAXDATEFIELDS];
-	char			lowstr[MAXDATELEN + 1];
-	int				dtype;
-	int				nf,
-					ftype[MAXDATEFIELDS];
+	char	   *field[MAXDATEFIELDS];
+	char		lowstr[MAXDATELEN + 1];
+	int			dtype;
+	int			nf,
+				ftype[MAXDATEFIELDS];
 
 	if (!PointerIsValid(str))
 		elog(WARN, "Bad (null) abstime external representation", NULL);
@@ -270,34 +270,34 @@ nabstimein(char *str)
 
 	switch (dtype)
 	{
-	case DTK_DATE:
-		result = tm2abstime(tm, tz);
-		break;
+		case DTK_DATE:
+			result = tm2abstime(tm, tz);
+			break;
 
-	case DTK_EPOCH:
-		result = EPOCH_ABSTIME;
-		break;
+		case DTK_EPOCH:
+			result = EPOCH_ABSTIME;
+			break;
 
-	case DTK_CURRENT:
-		result = CURRENT_ABSTIME;
-		break;
+		case DTK_CURRENT:
+			result = CURRENT_ABSTIME;
+			break;
 
-	case DTK_LATE:
-		result = NOEND_ABSTIME;
-		break;
+		case DTK_LATE:
+			result = NOEND_ABSTIME;
+			break;
 
-	case DTK_EARLY:
-		result = NOSTART_ABSTIME;
-		break;
+		case DTK_EARLY:
+			result = NOSTART_ABSTIME;
+			break;
 
-	case DTK_INVALID:
-		result = INVALID_ABSTIME;
-		break;
+		case DTK_INVALID:
+			result = INVALID_ABSTIME;
+			break;
 
-	default:
-		elog(WARN, "Bad abstime (internal coding error) '%s'", str);
-		result = INVALID_ABSTIME;
-		break;
+		default:
+			elog(WARN, "Bad abstime (internal coding error) '%s'", str);
+			result = INVALID_ABSTIME;
+			break;
 	};
 
 	return result;
@@ -307,41 +307,41 @@ nabstimein(char *str)
 /* nabstimeout()
  * Given an AbsoluteTime return the English text version of the date
  */
-char		   *
+char	   *
 nabstimeout(AbsoluteTime time)
 {
-	char		   *result;
-	int				tz;
-	double			fsec = 0;
-	struct tm		tt,
-				   *tm = &tt;
-	char			buf[MAXDATELEN + 1];
-	char			zone[MAXDATELEN + 1],
-				   *tzn = zone;
+	char	   *result;
+	int			tz;
+	double		fsec = 0;
+	struct tm	tt,
+			   *tm = &tt;
+	char		buf[MAXDATELEN + 1];
+	char		zone[MAXDATELEN + 1],
+			   *tzn = zone;
 
 	switch (time)
 	{
-	case EPOCH_ABSTIME:
-		strcpy(buf, EPOCH);
-		break;
-	case INVALID_ABSTIME:
-		strcpy(buf, INVALID);
-		break;
-	case CURRENT_ABSTIME:
-		strcpy(buf, DCURRENT);
-		break;
-	case NOEND_ABSTIME:
-		strcpy(buf, LATE);
-		break;
-	case NOSTART_ABSTIME:
-		strcpy(buf, EARLY);
-		break;
-	default:
-		abstime2tm(time, &tz, tm, tzn);
+		case EPOCH_ABSTIME:
+			strcpy(buf, EPOCH);
+			break;
+		case INVALID_ABSTIME:
+			strcpy(buf, INVALID);
+			break;
+		case CURRENT_ABSTIME:
+			strcpy(buf, DCURRENT);
+			break;
+		case NOEND_ABSTIME:
+			strcpy(buf, LATE);
+			break;
+		case NOSTART_ABSTIME:
+			strcpy(buf, EARLY);
+			break;
+		default:
+			abstime2tm(time, &tz, tm, tzn);
 #if DATEDEBUG
 #endif
-		EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
-		break;
+			EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
+			break;
 	}
 
 	result = PALLOC(strlen(buf) + 1);
@@ -489,11 +489,11 @@ abstimege(AbsoluteTime t1, AbsoluteTime t2)
 AbsoluteTime
 datetime_abstime(DateTime * datetime)
 {
-	AbsoluteTime	result;
+	AbsoluteTime result;
 
-	double			fsec;
-	struct tm		tt,
-				   *tm = &tt;
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
 
 	if (!PointerIsValid(datetime))
 	{
@@ -540,39 +540,39 @@ datetime_abstime(DateTime * datetime)
 /* abstime_datetime()
  * Convert datetime to abstime.
  */
-DateTime	   *
+DateTime   *
 abstime_datetime(AbsoluteTime abstime)
 {
-	DateTime	   *result;
+	DateTime   *result;
 
 	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
 		elog(WARN, "Unable to allocate space to convert abstime to datetime", NULL);
 
 	switch (abstime)
 	{
-	case INVALID_ABSTIME:
-		DATETIME_INVALID(*result);
-		break;
+		case INVALID_ABSTIME:
+			DATETIME_INVALID(*result);
+			break;
 
-	case NOSTART_ABSTIME:
-		DATETIME_NOBEGIN(*result);
-		break;
+		case NOSTART_ABSTIME:
+			DATETIME_NOBEGIN(*result);
+			break;
 
-	case NOEND_ABSTIME:
-		DATETIME_NOEND(*result);
-		break;
+		case NOEND_ABSTIME:
+			DATETIME_NOEND(*result);
+			break;
 
-	case EPOCH_ABSTIME:
-		DATETIME_EPOCH(*result);
-		break;
+		case EPOCH_ABSTIME:
+			DATETIME_EPOCH(*result);
+			break;
 
-	case CURRENT_ABSTIME:
-		DATETIME_CURRENT(*result);
-		break;
+		case CURRENT_ABSTIME:
+			DATETIME_CURRENT(*result);
+			break;
 
-	default:
-		*result = abstime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400);
-		break;
+		default:
+			*result = abstime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400);
+			break;
 	};
 
 	return (result);

@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.12 1997/09/07 04:55:37 momjian Exp $
+ * $Id: miscadmin.h,v 1.13 1997/09/08 02:33:50 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -29,18 +29,18 @@
 /*
  * from postmaster/postmaster.c
  */
-extern int		PostmasterMain(int argc, char *argv[]);
+extern int	PostmasterMain(int argc, char *argv[]);
 
 /*
  * from utils/init/globals.c
  */
-extern int		Portfd;
-extern int		Noversion;
-extern int		MasterPid;
-extern int		Quiet;
-extern char    *DataDir;
+extern int	Portfd;
+extern int	Noversion;
+extern int	MasterPid;
+extern int	Quiet;
+extern char *DataDir;
 
-extern char		OutputFileName[];
+extern char OutputFileName[];
 
 /*
  * done in storage/backendid.h for now.
@@ -48,14 +48,14 @@ extern char		OutputFileName[];
  * extern BackendId    MyBackendId;
  * extern BackendTag   MyBackendTag;
  */
-extern bool		MyDatabaseIdIsInitialized;
-extern Oid		MyDatabaseId;
-extern bool		TransactionInitWasProcessed;
+extern bool MyDatabaseIdIsInitialized;
+extern Oid	MyDatabaseId;
+extern bool TransactionInitWasProcessed;
 
-extern bool		IsUnderPostmaster;
-extern bool		IsPostmaster;
+extern bool IsUnderPostmaster;
+extern bool IsPostmaster;
 
-extern short	DebugLvl;
+extern short DebugLvl;
 
 /* Date/Time Configuration
  *
@@ -79,20 +79,20 @@ extern short	DebugLvl;
 #define USE_ISO_DATES			1
 #define USE_SQL_DATES			2
 
-extern int		DateStyle;
-extern bool		EuroDates;
-extern bool		HasCTZSet;
-extern bool		CDayLight;
-extern int		CTimeZone;
-extern char		CTZName[];
+extern int	DateStyle;
+extern bool EuroDates;
+extern bool HasCTZSet;
+extern bool CDayLight;
+extern int	CTimeZone;
+extern char CTZName[];
 
-extern char		FloatFormat[];
-extern char		DateFormat[];
+extern char FloatFormat[];
+extern char DateFormat[];
 
-extern int		fsyncOff;
-extern int		SortMem;
+extern int	fsyncOff;
+extern int	SortMem;
 
-extern Oid		LastOidProcessed;		/* for query rewrite */
+extern Oid	LastOidProcessed;	/* for query rewrite */
 
 #define MAX_PARSE_BUFFER 8192
 
@@ -108,17 +108,17 @@ extern Oid		LastOidProcessed;		/* for query rewrite */
  *****************************************************************************/
 
 /* now in utils/init/miscinit.c */
-extern char    *GetDatabasePath(void);
-extern char    *GetDatabaseName(void);
-extern void		SetDatabaseName(char *name);
-extern void		SetDatabasePath(char *path);
-extern char    *getpgusername(void);
-extern void		SetPgUserName(void);
-extern Oid		GetUserId(void);
-extern void		SetUserId(void);
-extern int		ValidateBackend(char *path);
-extern int		FindBackend(char *backend, char *argv0);
-extern int		CheckPathAccess(char *path, char *name, int open_mode);
+extern char *GetDatabasePath(void);
+extern char *GetDatabaseName(void);
+extern void SetDatabaseName(char *name);
+extern void SetDatabasePath(char *path);
+extern char *getpgusername(void);
+extern void SetPgUserName(void);
+extern Oid	GetUserId(void);
+extern void SetUserId(void);
+extern int	ValidateBackend(char *path);
+extern int	FindBackend(char *backend, char *argv0);
+extern int	CheckPathAccess(char *path, char *name, int open_mode);
 
 /* lower case version for case-insensitive SQL referenced in pg_proc.h */
 #define GetPgUserName() getpgusername()
@@ -154,7 +154,7 @@ typedef enum ProcessingMode
 	BootstrapProcessing,		/* bootstrap creation of template database */
 	InitProcessing,				/* initializing system */
 	NormalProcessing			/* normal processing */
-}				ProcessingMode;
+}			ProcessingMode;
 
 
 /*****************************************************************************
@@ -166,7 +166,7 @@ typedef enum ProcessingMode
  *		XXX AddExitHandler not defined yet.
  */
 
-typedef int16	ExitStatus;
+typedef int16 ExitStatus;
 
 #define NormalExitStatus		(0)
 #define FatalExitStatus			(127)
@@ -174,20 +174,20 @@ typedef int16	ExitStatus;
 
 /* in utils/init/postinit.c */
 
-extern bool		PostgresIsInitialized;
+extern bool PostgresIsInitialized;
 
-extern void		InitPostgres(char *name);
+extern void InitPostgres(char *name);
 
 /* in miscinit.c */
-extern void		ExitPostgres(ExitStatus status);
-extern void		StatusBackendExit(int status);
-extern void		StatusPostmasterExit(int status);
+extern void ExitPostgres(ExitStatus status);
+extern void StatusBackendExit(int status);
+extern void StatusPostmasterExit(int status);
 
-extern bool		IsNoProcessingMode(void);
-extern bool		IsBootstrapProcessingMode(void);
-extern bool		IsInitProcessingMode(void);
-extern bool		IsNormalProcessingMode(void);
-extern void		SetProcessingMode(ProcessingMode mode);
+extern bool IsNoProcessingMode(void);
+extern bool IsBootstrapProcessingMode(void);
+extern bool IsInitProcessingMode(void);
+extern bool IsNormalProcessingMode(void);
+extern void SetProcessingMode(ProcessingMode mode);
 extern ProcessingMode GetProcessingMode(void);
 
 #endif							/* MISCADMIN_H */

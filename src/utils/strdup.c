@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.3 1997/09/07 05:04:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.4 1997/09/08 02:41:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,10 @@
 #include <stdlib.h>
 #include "strdup.h"
 
-char		   *
+char	   *
 strdup(char const * string)
 {
-	char		   *nstr;
+	char	   *nstr;
 
 	nstr = strcpy((char *) malloc(strlen(string) + 1), string);
 	return nstr;

@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: module.h,v 1.2 1997/09/07 05:02:44 momjian Exp $
+ * $Id: module.h,v 1.3 1997/09/08 02:39:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,6 @@
 /*
  * prototypes for functions in init/enbl.c
  */
-extern bool		BypassEnable(int *enableCountInOutP, bool on);
+extern bool BypassEnable(int *enableCountInOutP, bool on);
 
 #endif							/* MODULE_H */

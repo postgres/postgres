@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.8 1997/09/07 04:38:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.9 1997/09/08 02:20:52 momjian Exp $
  *
  *
  * NOTES
@@ -34,16 +34,16 @@
 
 typedef struct BTScanListData
 {
-	IndexScanDesc	btsl_scan;
+	IndexScanDesc btsl_scan;
 	struct BTScanListData *btsl_next;
-}				BTScanListData;
+}			BTScanListData;
 
 typedef BTScanListData *BTScanList;
 
 static BTScanList BTScans = (BTScanList) NULL;
 
-static void		_bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno);
-static bool		_bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
+static void _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno);
+static bool _bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
 
 /*
  *	_bt_regscan() -- register a new scan.
@@ -51,7 +51,7 @@ static bool		_bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber
 void
 _bt_regscan(IndexScanDesc scan)
 {
-	BTScanList		new_el;
+	BTScanList	new_el;
 
 	new_el = (BTScanList) palloc(sizeof(BTScanListData));
 	new_el->btsl_scan = scan;
@@ -65,8 +65,8 @@ _bt_regscan(IndexScanDesc scan)
 void
 _bt_dropscan(IndexScanDesc scan)
 {
-	BTScanList		chk,
-					last;
+	BTScanList	chk,
+				last;
 
 	last = (BTScanList) NULL;
 	for (chk = BTScans;
@@ -94,8 +94,8 @@ _bt_dropscan(IndexScanDesc scan)
 void
 _bt_adjscans(Relation rel, ItemPointer tid, int op)
 {
-	BTScanList		l;
-	Oid				relid;
+	BTScanList	l;
+	Oid			relid;
 
 	relid = rel->rd_id;
 	for (l = BTScans; l != (BTScanList) NULL; l = l->btsl_next)
@@ -130,9 +130,9 @@ _bt_adjscans(Relation rel, ItemPointer tid, int op)
 static void
 _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 {
-	ItemPointer		current;
-	Buffer			buf;
-	BTScanOpaque	so;
+	ItemPointer current;
+	Buffer		buf;
+	BTScanOpaque so;
 
 	if (!_bt_scantouched(scan, blkno, offno))
 		return;
@@ -147,15 +147,15 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 	{
 		switch (op)
 		{
-		case BT_INSERT:
-			_bt_step(scan, &buf, ForwardScanDirection);
-			break;
-		case BT_DELETE:
-			_bt_step(scan, &buf, BackwardScanDirection);
-			break;
-		default:
-			elog(WARN, "_bt_scandel: bad operation '%d'", op);
-			/* NOTREACHED */
+			case BT_INSERT:
+				_bt_step(scan, &buf, ForwardScanDirection);
+				break;
+			case BT_DELETE:
+				_bt_step(scan, &buf, BackwardScanDirection);
+				break;
+			default:
+				elog(WARN, "_bt_scandel: bad operation '%d'", op);
+				/* NOTREACHED */
 		}
 		so->btso_curbuf = buf;
 	}
@@ -172,15 +172,15 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 		scan->currentItemData = tmp;
 		switch (op)
 		{
-		case BT_INSERT:
-			_bt_step(scan, &buf, ForwardScanDirection);
-			break;
-		case BT_DELETE:
-			_bt_step(scan, &buf, BackwardScanDirection);
-			break;
-		default:
-			elog(WARN, "_bt_scandel: bad operation '%d'", op);
-			/* NOTREACHED */
+			case BT_INSERT:
+				_bt_step(scan, &buf, ForwardScanDirection);
+				break;
+			case BT_DELETE:
+				_bt_step(scan, &buf, BackwardScanDirection);
+				break;
+			default:
+				elog(WARN, "_bt_scandel: bad operation '%d'", op);
+				/* NOTREACHED */
 		}
 		so->btso_mrkbuf = buf;
 		tmp = *current;
@@ -193,10 +193,10 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
  *	_bt_scantouched() -- check to see if a scan is affected by a given
  *						 change to the index
  */
-static			bool
+static bool
 _bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 {
-	ItemPointer		current;
+	ItemPointer current;
 
 	current = &(scan->currentItemData);
 	if (ItemPointerIsValid(current)

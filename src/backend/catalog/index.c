@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.20 1997/09/07 04:40:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.21 1997/09/08 02:21:40 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -66,21 +66,21 @@
 static Oid
 RelationNameGetObjectId(char *relationName, Relation pg_class,
 						bool setHasIndexAttribute);
-static Oid		GetHeapRelationOid(char *heapRelationName, char *indexRelationName);
+static Oid	GetHeapRelationOid(char *heapRelationName, char *indexRelationName);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo * funcInfo);
 static TupleDesc
 ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
 						 List * attributeList,
 						 int numatts, AttrNumber attNums[]);
 
-static void		ConstructIndexReldesc(Relation indexRelation, Oid amoid);
-static Oid		UpdateRelationRelation(Relation indexRelation);
+static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
+static Oid	UpdateRelationRelation(Relation indexRelation);
 static void
 InitializeAttributeOids(Relation indexRelation,
 						int numatts,
 						Oid indexoid);
 static void
-				AppendAttributeTuples(Relation indexRelation, int numatts);
+			AppendAttributeTuples(Relation indexRelation, int numatts);
 static void
 UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					FuncIndexInfo * funcInfo, int natts,
@@ -144,16 +144,16 @@ static FormData_pg_attribute sysatts[] = {
  *		Assumes relation descriptor is valid.
  * ----------------------------------------------------------------
  */
-static			Oid
+static Oid
 RelationNameGetObjectId(char *relationName,
 						Relation pg_class,
 						bool setHasIndexAttribute)
 {
-	HeapScanDesc	pg_class_scan;
-	HeapTuple		pg_class_tuple;
-	Oid				relationObjectId;
-	Buffer			buffer;
-	ScanKeyData		key;
+	HeapScanDesc pg_class_scan;
+	HeapTuple	pg_class_tuple;
+	Oid			relationObjectId;
+	Buffer		buffer;
+	ScanKeyData key;
 
 	/*
 	 * If this isn't bootstrap time, we can use the system catalogs to
@@ -217,12 +217,12 @@ RelationNameGetObjectId(char *relationName,
  *		GetHeapRelationOid
  * ----------------------------------------------------------------
  */
-static			Oid
+static Oid
 GetHeapRelationOid(char *heapRelationName, char *indexRelationName)
 {
-	Relation		pg_class;
-	Oid				indoid;
-	Oid				heapoid;
+	Relation	pg_class;
+	Oid			indoid;
+	Oid			heapoid;
 
 	/* ----------------
 	 *	XXX ADD INDEXING HERE
@@ -268,15 +268,15 @@ GetHeapRelationOid(char *heapRelationName, char *indexRelationName)
 	return heapoid;
 }
 
-static			TupleDesc
+static TupleDesc
 BuildFuncTupleDesc(FuncIndexInfo * funcInfo)
 {
-	HeapTuple		tuple;
-	TupleDesc		funcTupDesc;
-	Oid				retType;
-	char		   *funcname;
-	int4			nargs;
-	Oid			   *argtypes;
+	HeapTuple	tuple;
+	TupleDesc	funcTupDesc;
+	Oid			retType;
+	char	   *funcname;
+	int4		nargs;
+	Oid		   *argtypes;
 
 	/*
 	 * Allocate and zero a tuple descriptor.
@@ -331,23 +331,23 @@ BuildFuncTupleDesc(FuncIndexInfo * funcInfo)
  *		ConstructTupleDescriptor
  * ----------------------------------------------------------------
  */
-static			TupleDesc
+static TupleDesc
 ConstructTupleDescriptor(Oid heapoid,
 						 Relation heapRelation,
 						 List * attributeList,
 						 int numatts,
 						 AttrNumber attNums[])
 {
-	TupleDesc		heapTupDesc;
-	TupleDesc		indexTupDesc;
-	IndexElem	   *IndexKey;
-	TypeName	   *IndexKeyType;
-	AttrNumber		atnum;		/* attributeNumber[attributeOffset] */
-	AttrNumber		atind;
-	int				natts;		/* RelationTupleForm->relnatts */
-	char		   *from;		/* used to simplify memcpy below */
-	char		   *to;			/* used to simplify memcpy below */
-	int				i;
+	TupleDesc	heapTupDesc;
+	TupleDesc	indexTupDesc;
+	IndexElem  *IndexKey;
+	TypeName   *IndexKeyType;
+	AttrNumber	atnum;			/* attributeNumber[attributeOffset] */
+	AttrNumber	atind;
+	int			natts;			/* RelationTupleForm->relnatts */
+	char	   *from;			/* used to simplify memcpy below */
+	char	   *to;				/* used to simplify memcpy below */
+	int			i;
 
 	/* ----------------
 	 *	allocate the new tuple descriptor
@@ -447,7 +447,7 @@ ConstructTupleDescriptor(Oid heapoid,
 		 */
 		if (IndexKeyType != NULL)
 		{
-			HeapTuple		tup;
+			HeapTuple	tup;
 
 			tup = SearchSysCacheTuple(TYPNAME,
 									  PointerGetDatum(IndexKeyType->name),
@@ -491,11 +491,11 @@ ConstructTupleDescriptor(Oid heapoid,
 Form_pg_am
 AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId)
 {
-	Relation		pg_am_desc;
-	HeapScanDesc	pg_am_scan;
-	HeapTuple		pg_am_tuple;
-	ScanKeyData		key;
-	Form_pg_am		form;
+	Relation	pg_am_desc;
+	HeapScanDesc pg_am_scan;
+	HeapTuple	pg_am_tuple;
+	ScanKeyData key;
+	Form_pg_am	form;
 
 	/* ----------------
 	 *	form a scan key for the pg_am relation
@@ -546,7 +546,7 @@ static void
 ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 {
 	extern GlobalMemory CacheCxt;
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 
 	/* ----------------
 	 *	  here we make certain to allocate the access method
@@ -583,13 +583,13 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
  *		UpdateRelationRelation
  * ----------------------------------------------------------------
  */
-static			Oid
+static Oid
 UpdateRelationRelation(Relation indexRelation)
 {
-	Relation		pg_class;
-	HeapTuple		tuple;
-	Oid				tupleOid;
-	Relation		idescs[Num_pg_class_indices];
+	Relation	pg_class;
+	HeapTuple	tuple;
+	Oid			tupleOid;
+	Relation	idescs[Num_pg_class_indices];
 
 	pg_class = heap_openr(RelationRelationName);
 
@@ -637,8 +637,8 @@ InitializeAttributeOids(Relation indexRelation,
 						int numatts,
 						Oid indexoid)
 {
-	TupleDesc		tupleDescriptor;
-	int				i;
+	TupleDesc	tupleDescriptor;
+	int			i;
 
 	tupleDescriptor = RelationGetTupleDescriptor(indexRelation);
 
@@ -655,18 +655,18 @@ InitializeAttributeOids(Relation indexRelation,
 static void
 AppendAttributeTuples(Relation indexRelation, int numatts)
 {
-	Relation		pg_attribute;
-	HeapTuple		tuple;
-	HeapTuple		newtuple;
-	bool			hasind;
-	Relation		idescs[Num_pg_attr_indices];
+	Relation	pg_attribute;
+	HeapTuple	tuple;
+	HeapTuple	newtuple;
+	bool		hasind;
+	Relation	idescs[Num_pg_attr_indices];
 
-	Datum			value[Natts_pg_attribute];
-	char			nullv[Natts_pg_attribute];
-	char			replace[Natts_pg_attribute];
+	Datum		value[Natts_pg_attribute];
+	char		nullv[Natts_pg_attribute];
+	char		replace[Natts_pg_attribute];
 
-	TupleDesc		indexTupDesc;
-	int				i;
+	TupleDesc	indexTupDesc;
+	int			i;
 
 	/* ----------------
 	 *	open the attribute relation
@@ -786,15 +786,15 @@ UpdateIndexRelation(Oid indexoid,
 					bool islossy,
 					bool unique)
 {
-	IndexTupleForm	indexForm;
-	IndexElem	   *IndexKey;
-	char		   *predString;
-	text		   *predText;
-	int				predLen,
-					itupLen;
-	Relation		pg_index;
-	HeapTuple		tuple;
-	int				i;
+	IndexTupleForm indexForm;
+	IndexElem  *IndexKey;
+	char	   *predString;
+	text	   *predText;
+	int			predLen,
+				itupLen;
+	Relation	pg_index;
+	HeapTuple	tuple;
+	int			i;
 
 	/* ----------------
 	 *	allocate an IndexTupleForm big enough to hold the
@@ -903,19 +903,19 @@ UpdateIndexRelation(Oid indexoid,
 void
 UpdateIndexPredicate(Oid indexoid, Node * oldPred, Node * predicate)
 {
-	Node		   *newPred;
-	char		   *predString;
-	text		   *predText;
-	Relation		pg_index;
-	HeapTuple		tuple;
-	HeapTuple		newtup;
-	ScanKeyData		entry;
-	HeapScanDesc	scan;
-	Buffer			buffer;
-	int				i;
-	Datum			values[Natts_pg_index];
-	char			nulls[Natts_pg_index];
-	char			replace[Natts_pg_index];
+	Node	   *newPred;
+	char	   *predString;
+	text	   *predText;
+	Relation	pg_index;
+	HeapTuple	tuple;
+	HeapTuple	newtup;
+	ScanKeyData entry;
+	HeapScanDesc scan;
+	Buffer		buffer;
+	int			i;
+	Datum		values[Natts_pg_index];
+	char		nulls[Natts_pg_index];
+	char		replace[Natts_pg_index];
 
 	/*
 	 * Construct newPred as a CNF expression equivalent to the OR of the
@@ -988,12 +988,12 @@ InitIndexStrategy(int numatts,
 				  Relation indexRelation,
 				  Oid accessMethodObjectId)
 {
-	IndexStrategy	strategy;
-	RegProcedure   *support;
-	uint16			amstrategies;
-	uint16			amsupport;
-	Oid				attrelid;
-	Size			strsize;
+	IndexStrategy strategy;
+	RegProcedure *support;
+	uint16		amstrategies;
+	uint16		amsupport;
+	Oid			attrelid;
+	Size		strsize;
 	extern GlobalMemory CacheCxt;
 
 	/* ----------------
@@ -1077,12 +1077,12 @@ index_create(char *heapRelationName,
 			 bool islossy,
 			 bool unique)
 {
-	Relation		heapRelation;
-	Relation		indexRelation;
-	TupleDesc		indexTupDesc;
-	Oid				heapoid;
-	Oid				indexoid;
-	PredInfo	   *predInfo;
+	Relation	heapRelation;
+	Relation	indexRelation;
+	TupleDesc	indexTupDesc;
+	Oid			heapoid;
+	Oid			indexoid;
+	PredInfo   *predInfo;
 
 	/* ----------------
 	 *	check parameters
@@ -1150,7 +1150,7 @@ index_create(char *heapRelationName,
 
 	if (PointerIsValid(funcInfo))
 	{
-		HeapTuple		proc_tup;
+		HeapTuple	proc_tup;
 
 		proc_tup = SearchSysCacheTuple(PRONAME,
 									PointerGetDatum(FIgetname(funcInfo)),
@@ -1231,11 +1231,11 @@ index_create(char *heapRelationName,
 void
 index_destroy(Oid indexId)
 {
-	Relation		indexRelation;
-	Relation		catalogRelation;
-	HeapTuple		tuple;
-	HeapScanDesc	scan;
-	ScanKeyData		entry;
+	Relation	indexRelation;
+	Relation	catalogRelation;
+	HeapTuple	tuple;
+	HeapScanDesc scan;
+	ScanKeyData entry;
 
 	Assert(OidIsValid(indexId));
 
@@ -1325,9 +1325,9 @@ FormIndexDatum(int numberOfAttributes,
 			   char *nullv,
 			   FuncIndexInfoPtr fInfo)
 {
-	AttrNumber		i;
-	int				offset;
-	bool			isNull;
+	AttrNumber	i;
+	int			offset;
+	bool		isNull;
 
 	/* ----------------
 	 *	for each attribute we need from the heap tuple,
@@ -1361,23 +1361,23 @@ FormIndexDatum(int numberOfAttributes,
 void
 UpdateStats(Oid relid, long reltuples, bool hasindex)
 {
-	Relation		whichRel;
-	Relation		pg_class;
-	HeapScanDesc	pg_class_scan;
-	HeapTuple		htup;
-	HeapTuple		newtup;
-	long			relpages;
-	Buffer			buffer;
-	int				i;
-	Form_pg_class	rd_rel;
-	Relation		idescs[Num_pg_class_indices];
+	Relation	whichRel;
+	Relation	pg_class;
+	HeapScanDesc pg_class_scan;
+	HeapTuple	htup;
+	HeapTuple	newtup;
+	long		relpages;
+	Buffer		buffer;
+	int			i;
+	Form_pg_class rd_rel;
+	Relation	idescs[Num_pg_class_indices];
 
 	static ScanKeyData key[1] = {
 		{0, ObjectIdAttributeNumber, ObjectIdEqualRegProcedure}
 	};
-	Datum			values[Natts_pg_class];
-	char			nulls[Natts_pg_class];
-	char			replace[Natts_pg_class];
+	Datum		values[Natts_pg_class];
+	char		nulls[Natts_pg_class];
+	char		replace[Natts_pg_class];
 
 	fmgr_info(ObjectIdEqualRegProcedure, (func_ptr *) & key[0].sk_func,
 			  &key[0].sk_nargs);
@@ -1534,26 +1534,26 @@ DefaultBuild(Relation heapRelation,
 			 FuncIndexInfoPtr funcInfo,
 			 PredInfo * predInfo)
 {
-	HeapScanDesc	scan;
-	HeapTuple		heapTuple;
-	Buffer			buffer;
+	HeapScanDesc scan;
+	HeapTuple	heapTuple;
+	Buffer		buffer;
 
-	IndexTuple		indexTuple;
-	TupleDesc		heapDescriptor;
-	TupleDesc		indexDescriptor;
-	Datum		   *datum;
-	char		   *nullv;
-	long			reltuples,
-					indtuples;
+	IndexTuple	indexTuple;
+	TupleDesc	heapDescriptor;
+	TupleDesc	indexDescriptor;
+	Datum	   *datum;
+	char	   *nullv;
+	long		reltuples,
+				indtuples;
 
 #ifndef OMIT_PARTIAL_INDEX
-	ExprContext    *econtext;
-	TupleTable		tupleTable;
+	ExprContext *econtext;
+	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 
 #endif
-	Node		   *predicate;
-	Node		   *oldPred;
+	Node	   *predicate;
+	Node	   *oldPred;
 
 	InsertIndexResult insertResult;
 
@@ -1736,7 +1736,7 @@ index_build(Relation heapRelation,
 			FuncIndexInfo * funcInfo,
 			PredInfo * predInfo)
 {
-	RegProcedure	procedure;
+	RegProcedure procedure;
 
 	/* ----------------
 	 *	sanity checks
@@ -1781,8 +1781,8 @@ index_build(Relation heapRelation,
 bool
 IndexIsUnique(Oid indexId)
 {
-	HeapTuple		tuple;
-	IndexTupleForm	index;
+	HeapTuple	tuple;
+	IndexTupleForm index;
 
 	tuple = SearchSysCacheTuple(INDEXRELID,
 								ObjectIdGetDatum(indexId),
@@ -1813,12 +1813,12 @@ IndexIsUnique(Oid indexId)
 bool
 IndexIsUniqueNoCache(Oid indexId)
 {
-	Relation		pg_index;
-	ScanKeyData		skey[1];
-	HeapScanDesc	scandesc;
-	HeapTuple		tuple;
-	IndexTupleForm	index;
-	bool			isunique;
+	Relation	pg_index;
+	ScanKeyData skey[1];
+	HeapScanDesc scandesc;
+	HeapTuple	tuple;
+	IndexTupleForm index;
+	bool		isunique;
 
 	pg_index = heap_openr(IndexRelationName);
 

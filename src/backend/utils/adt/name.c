@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.7 1997/09/07 04:50:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.8 1997/09/08 02:30:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,10 @@
  *				[Old] Currently if strlen(s) < NAMEDATALEN, the extra chars are nulls
  *				Now, always NULL terminated
  */
-NameData	   *
+NameData   *
 namein(char *s)
 {
-	NameData	   *result;
+	NameData   *result;
 
 	if (s == NULL)
 		return (NULL);
@@ -48,7 +48,7 @@ namein(char *s)
 /*
  *		nameout - converts internal reprsentation to "..."
  */
-char		   *
+char	   *
 nameout(NameData * s)
 {
 	if (s == NULL)
@@ -167,9 +167,9 @@ namestrcpy(Name name, char *str)
 int
 namestrcat(Name name, char *str)
 {
-	int				i;
-	char		   *p,
-				   *q;
+	int			i;
+	char	   *p,
+			   *q;
 
 	if (!name || !str)
 		return (-1);
@@ -206,8 +206,8 @@ namestrcmp(Name name, char *str)
 uint32
 NameComputeLength(Name name)
 {
-	char		   *charP;
-	int				length;
+	char	   *charP;
+	int			length;
 
 	for (length = 0, charP = name->data;
 		 length < NAMEDATALEN && *charP != '\0';

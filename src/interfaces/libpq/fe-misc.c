@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.6 1997/09/07 05:03:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.7 1997/09/08 02:40:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 int
 pqGetc(FILE * fin, FILE * debug)
 {
-	int				c;
+	int			c;
 
 	c = getc(fin);
 
@@ -70,7 +70,7 @@ pqPutnchar(const char *s, int len, FILE * f, FILE * debug)
 int
 pqGetnchar(char *s, int len, FILE * f, FILE * debug)
 {
-	int				cnt;
+	int			cnt;
 
 	if (f == NULL)
 		return 1;
@@ -92,8 +92,8 @@ pqGetnchar(char *s, int len, FILE * f, FILE * debug)
 int
 pqGets(char *s, int len, FILE * f, FILE * debug)
 {
-	int				c;
-	const char	   *str = s;
+	int			c;
+	const char *str = s;
 
 	if (f == NULL)
 		return 1;
@@ -118,19 +118,19 @@ pqGets(char *s, int len, FILE * f, FILE * debug)
 int
 pqPutInt(const int integer, int bytes, FILE * f, FILE * debug)
 {
-	int				retval = 0;
+	int			retval = 0;
 
 	switch (bytes)
 	{
-	case 2:
-		retval = pqPutShort(integer, f);
-		break;
-	case 4:
-		retval = pqPutLong(integer, f);
-		break;
-	default:
-		fprintf(stderr, "** int size %d not supported\n", bytes);
-		retval = 1;
+		case 2:
+			retval = pqPutShort(integer, f);
+			break;
+		case 4:
+			retval = pqPutLong(integer, f);
+			break;
+		default:
+			fprintf(stderr, "** int size %d not supported\n", bytes);
+			retval = 1;
 	}
 
 	if (debug)
@@ -148,19 +148,19 @@ pqPutInt(const int integer, int bytes, FILE * f, FILE * debug)
 int
 pqGetInt(int *result, int bytes, FILE * f, FILE * debug)
 {
-	int				retval = 0;
+	int			retval = 0;
 
 	switch (bytes)
 	{
-	case 2:
-		retval = pqGetShort(result, f);
-		break;
-	case 4:
-		retval = pqGetLong(result, f);
-		break;
-	default:
-		fprintf(stderr, "** int size %d not supported\n", bytes);
-		retval = 1;
+		case 2:
+			retval = pqGetShort(result, f);
+			break;
+		case 4:
+			retval = pqGetLong(result, f);
+			break;
+		default:
+			fprintf(stderr, "** int size %d not supported\n", bytes);
+			retval = 1;
 	}
 
 	if (debug)

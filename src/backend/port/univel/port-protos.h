@@ -32,9 +32,9 @@
 #define pg_dlerror		dlerror
 
 /* port.c */
-extern long		random(void);
-extern void		srandom(int seed);
-extern int		strcasecmp(char *s1, char *s2);
-extern int		gethostname(char *name, int namelen);
+extern long random(void);
+extern void srandom(int seed);
+extern int	strcasecmp(char *s1, char *s2);
+extern int	gethostname(char *name, int namelen);
 
 #endif							/* PORT_PROTOS_H */

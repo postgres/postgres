@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.7 1997/09/07 04:44:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.8 1997/09/08 02:24:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,8 @@
 
 #include "executor/executor.h"
 
-static Plan    *make_sortplan(List * tlist, List * sortcls, Plan * plannode);
-static Plan    *init_query_planner(Query * parse);
+static Plan *make_sortplan(List * tlist, List * sortcls, Plan * plannode);
+static Plan *init_query_planner(Query * parse);
 static Existential *make_existential(Plan * left, Plan * right);
 
 /*****************************************************************************
@@ -68,18 +68,18 @@ static Existential *make_existential(Plan * left, Plan * right);
  * Returns a query plan.
  *
  */
-Plan		   *
+Plan	   *
 planner(Query * parse)
 {
-	List		   *tlist = parse->targetList;
-	List		   *rangetable = parse->rtable;
-	char		   *uniqueflag = parse->uniqueFlag;
-	List		   *sortclause = parse->sortClause;
-	Plan		   *special_plans = (Plan *) NULL;
+	List	   *tlist = parse->targetList;
+	List	   *rangetable = parse->rtable;
+	char	   *uniqueflag = parse->uniqueFlag;
+	List	   *sortclause = parse->sortClause;
+	Plan	   *special_plans = (Plan *) NULL;
 
-	Plan		   *result_plan = (Plan *) NULL;
+	Plan	   *result_plan = (Plan *) NULL;
 
-	int				rt_index;
+	int			rt_index;
 
 	/*
 	 * plan inheritance
@@ -119,7 +119,7 @@ planner(Query * parse)
 
 	if (uniqueflag)
 	{
-		Plan		   *sortplan = make_sortplan(tlist, sortclause, result_plan);
+		Plan	   *sortplan = make_sortplan(tlist, sortclause, result_plan);
 
 		return ((Plan *) make_unique(tlist, sortplan, uniqueflag));
 	}
@@ -142,15 +142,15 @@ planner(Query * parse)
  * sortkeys: ( resdom1 resdom2 resdom3 ...)
  * sortops:  (sortop1 sortop2 sortop3 ...)
  */
-static Plan    *
+static Plan *
 make_sortplan(List * tlist, List * sortcls, Plan * plannode)
 {
-	Plan		   *sortplan = (Plan *) NULL;
-	List		   *temp_tlist = NIL;
-	List		   *i = NIL;
-	Resdom		   *resnode = (Resdom *) NULL;
-	Resdom		   *resdom = (Resdom *) NULL;
-	int				keyno = 1;
+	Plan	   *sortplan = (Plan *) NULL;
+	List	   *temp_tlist = NIL;
+	List	   *i = NIL;
+	Resdom	   *resnode = (Resdom *) NULL;
+	Resdom	   *resdom = (Resdom *) NULL;
+	int			keyno = 1;
 
 	/*
 	 * First make a copy of the tlist so that we don't corrupt the the
@@ -161,7 +161,7 @@ make_sortplan(List * tlist, List * sortcls, Plan * plannode)
 
 	foreach(i, sortcls)
 	{
-		SortClause	   *sortcl = (SortClause *) lfirst(i);
+		SortClause *sortcl = (SortClause *) lfirst(i);
 
 		resnode = sortcl->resdom;
 		resdom = tlist_resdom(temp_tlist, resnode);
@@ -203,13 +203,13 @@ make_sortplan(List * tlist, List * sortcls, Plan * plannode)
  * MODIFIES: tlist,qual
  *
  */
-static Plan    *
+static Plan *
 init_query_planner(Query * root)
 {
-	List		   *primary_qual;
-	List		   *existential_qual;
-	Existential    *exist_plan;
-	List		   *tlist = root->targetList;
+	List	   *primary_qual;
+	List	   *existential_qual;
+	Existential *exist_plan;
+	List	   *tlist = root->targetList;
 
 	tlist = preprocess_targetlist(tlist,
 								  root->commandType,
@@ -230,8 +230,8 @@ init_query_planner(Query * root)
 	}
 	else
 	{
-		int				temp = root->commandType;
-		Plan		   *existential_plan;
+		int			temp = root->commandType;
+		Plan	   *existential_plan;
 
 		root->commandType = CMD_SELECT;
 		existential_plan = query_planner(root,
@@ -256,7 +256,7 @@ init_query_planner(Query * root)
 static Existential *
 make_existential(Plan * left, Plan * right)
 {
-	Existential    *node = makeNode(Existential);
+	Existential *node = makeNode(Existential);
 
 	node->lefttree = left;
 	node->righttree = left;
@@ -275,17 +275,17 @@ make_existential(Plan * left, Plan * right)
 void
 pg_checkretval(Oid rettype, QueryTreeList * queryTreeList)
 {
-	Query		   *parse;
-	List		   *tlist;
-	List		   *rt;
-	int				cmd;
-	Type			typ;
-	Resdom		   *resnode;
-	Relation		reln;
-	Oid				relid;
-	Oid				tletype;
-	int				relnatts;
-	int				i;
+	Query	   *parse;
+	List	   *tlist;
+	List	   *rt;
+	int			cmd;
+	Type		typ;
+	Resdom	   *resnode;
+	Relation	reln;
+	Oid			relid;
+	Oid			tletype;
+	int			relnatts;
+	int			i;
 
 	/* find the final query */
 	parse = queryTreeList->qtrees[queryTreeList->len - 1];
@@ -383,8 +383,8 @@ pg_checkretval(Oid rettype, QueryTreeList * queryTreeList)
 	/* expect attributes 1 .. n in order */
 	for (i = 1; i <= relnatts; i++)
 	{
-		TargetEntry    *tle = lfirst(tlist);
-		Node		   *thenode = tle->expr;
+		TargetEntry *tle = lfirst(tlist);
+		Node	   *thenode = tle->expr;
 
 		tlist = lnext(tlist);
 		tletype = exprType(thenode);

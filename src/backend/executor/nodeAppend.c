@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.6 1997/09/07 04:41:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.7 1997/09/08 02:22:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@
 #include "utils/mcxt.h"
 #include "parser/parsetree.h"	/* for rt_store() macro */
 
-static bool		exec_append_initialize_next(Append * node);
+static bool exec_append_initialize_next(Append * node);
 
 /* ----------------------------------------------------------------
  *		exec-append-initialize-next
@@ -75,20 +75,20 @@ static bool		exec_append_initialize_next(Append * node);
  *		Returns t iff there is a "next" scan to process.
  * ----------------------------------------------------------------
  */
-static			bool
+static bool
 exec_append_initialize_next(Append * node)
 {
-	EState		   *estate;
-	AppendState    *unionstate;
+	EState	   *estate;
+	AppendState *unionstate;
 	TupleTableSlot *result_slot;
-	List		   *rangeTable;
+	List	   *rangeTable;
 
-	int				whichplan;
-	int				nplans;
-	List		   *rtentries;
-	ResTarget	   *rtentry;
+	int			whichplan;
+	int			nplans;
+	List	   *rtentries;
+	ResTarget  *rtentry;
 
-	Index			unionrelid;
+	Index		unionrelid;
 
 	/* ----------------
 	 *	get information from the append node
@@ -184,16 +184,16 @@ exec_append_initialize_next(Append * node)
 bool
 ExecInitAppend(Append * node, EState * estate, Plan * parent)
 {
-	AppendState    *unionstate;
-	int				nplans;
-	List		   *resultList = NULL;
-	List		   *rtentries;
-	List		   *unionplans;
-	bool		   *initialized;
-	int				i;
-	Plan		   *initNode;
-	List		   *junkList;
-	RelationInfo   *es_rri = estate->es_result_relation_info;
+	AppendState *unionstate;
+	int			nplans;
+	List	   *resultList = NULL;
+	List	   *rtentries;
+	List	   *unionplans;
+	bool	   *initialized;
+	int			i;
+	Plan	   *initNode;
+	List	   *junkList;
+	RelationInfo *es_rri = estate->es_result_relation_info;
 
 	/* ----------------
 	 *	assign execution state to node and get information
@@ -251,13 +251,13 @@ ExecInitAppend(Append * node, EState * estate, Plan * parent)
 	if ((es_rri != (RelationInfo *) NULL) &&
 		(node->unionrelid == es_rri->ri_RangeTableIndex))
 	{
-		RelationInfo   *rri;
-		List		   *rtentryP;
+		RelationInfo *rri;
+		List	   *rtentryP;
 
 		foreach(rtentryP, rtentries)
 		{
-			Oid				reloid;
-			RangeTblEntry  *rtentry = lfirst(rtentryP);
+			Oid			reloid;
+			RangeTblEntry *rtentry = lfirst(rtentryP);
 
 			reloid = rtentry->relid;
 			rri = makeNode(RelationInfo);
@@ -281,8 +281,8 @@ ExecInitAppend(Append * node, EState * estate, Plan * parent)
 
 	for (i = 0; i < nplans; i++)
 	{
-		JunkFilter	   *j;
-		List		   *targetList;
+		JunkFilter *j;
+		List	   *targetList;
 
 		/* ----------------
 		 *	NOTE: we first modify range table in
@@ -343,9 +343,9 @@ ExecInitAppend(Append * node, EState * estate, Plan * parent)
 int
 ExecCountSlotsAppend(Append * node)
 {
-	List		   *plan;
-	List		   *unionplans = node->unionplans;
-	int				nSlots = 0;
+	List	   *plan;
+	List	   *unionplans = node->unionplans;
+	int			nSlots = 0;
 
 	foreach(plan, unionplans)
 	{
@@ -365,15 +365,15 @@ ExecCountSlotsAppend(Append * node)
 TupleTableSlot *
 ExecProcAppend(Append * node)
 {
-	EState		   *estate;
-	AppendState    *unionstate;
+	EState	   *estate;
+	AppendState *unionstate;
 
-	int				whichplan;
-	List		   *unionplans;
-	Plan		   *subnode;
+	int			whichplan;
+	List	   *unionplans;
+	Plan	   *subnode;
 	TupleTableSlot *result;
 	TupleTableSlot *result_slot;
-	ScanDirection	direction;
+	ScanDirection direction;
 
 	/* ----------------
 	 *	get information from the node
@@ -458,13 +458,13 @@ ExecProcAppend(Append * node)
 void
 ExecEndAppend(Append * node)
 {
-	AppendState    *unionstate;
-	int				nplans;
-	List		   *unionplans;
-	bool		   *initialized;
-	int				i;
-	List		   *resultRelationInfoList;
-	RelationInfo   *resultRelationInfo;
+	AppendState *unionstate;
+	int			nplans;
+	List	   *unionplans;
+	bool	   *initialized;
+	int			i;
+	List	   *resultRelationInfoList;
+	RelationInfo *resultRelationInfo;
 
 	/* ----------------
 	 *	get information from the node
@@ -494,7 +494,7 @@ ExecEndAppend(Append * node)
 	resultRelationInfoList = unionstate->as_result_relation_info_list;
 	while (resultRelationInfoList != NIL)
 	{
-		Relation		resultRelationDesc;
+		Relation	resultRelationDesc;
 
 		resultRelationInfo = (RelationInfo *) lfirst(resultRelationInfoList);
 		resultRelationDesc = resultRelationInfo->ri_RelationDesc;

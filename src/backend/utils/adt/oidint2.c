@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint2.c,v 1.2 1997/09/07 04:50:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint2.c,v 1.3 1997/09/08 02:30:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,8 @@
 OidInt2
 oidint2in(char *o)
 {
-	OidInt2			oi;
-	char		   *p;
+	OidInt2		oi;
+	char	   *p;
 
 	oi = (OidInt2) palloc(sizeof(OidInt2Data));
 
@@ -42,10 +42,10 @@ oidint2in(char *o)
 	return (oi);
 }
 
-char		   *
+char	   *
 oidint2out(OidInt2 o)
 {
-	char		   *r;
+	char	   *r;
 
 	/*
 	 * -2147483647/-32767 0		   1 1234567890123456789
@@ -111,7 +111,7 @@ oidint2cmp(OidInt2 o1, OidInt2 o2)
 OidInt2
 mkoidint2(Oid v_oid, uint16 v_int2)
 {
-	OidInt2			o;
+	OidInt2		o;
 
 	o = (OidInt2) palloc(sizeof(OidInt2Data));
 	o->oi_oid = v_oid;

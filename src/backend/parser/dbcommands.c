@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.7 1997/09/07 04:44:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.8 1997/09/08 02:25:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,14 +39,14 @@ static void
 check_permissions(char *command, char *dbname,
 				  Oid * dbIdP, Oid * userIdP);
 static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
-static void		stop_vacuum(char *dbname);
+static void stop_vacuum(char *dbname);
 
 void
 createdb(char *dbname)
 {
-	Oid				db_id,
-					user_id;
-	char			buf[512];
+	Oid			db_id,
+				user_id;
+	char		buf[512];
 
 	/*
 	 * If this call returns, the database does not exist and we're allowed
@@ -78,9 +78,9 @@ createdb(char *dbname)
 void
 destroydb(char *dbname)
 {
-	Oid				user_id,
-					db_id;
-	char			buf[512];
+	Oid			user_id,
+				db_id;
+	char		buf[512];
 
 	/*
 	 * If this call returns, the database exists and we're allowed to
@@ -115,14 +115,14 @@ destroydb(char *dbname)
 	DropBuffers(db_id);
 }
 
-static			HeapTuple
+static HeapTuple
 get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 {
-	HeapTuple		dbtup;
-	HeapTuple		tup;
-	Buffer			buf;
-	HeapScanDesc	scan;
-	ScanKeyData		scanKey;
+	HeapTuple	dbtup;
+	HeapTuple	tup;
+	Buffer		buf;
+	HeapScanDesc scan;
+	ScanKeyData scanKey;
 
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
 						   NameEqualRegProcedure, NameGetDatum(dbname));
@@ -164,14 +164,14 @@ check_permissions(char *command,
 				  Oid * dbIdP,
 				  Oid * userIdP)
 {
-	Relation		dbrel;
-	HeapTuple		dbtup,
-					utup;
-	Oid				dbowner = (Oid) 0;
-	char			use_createdb;
-	bool			dbfound;
-	bool			use_super;
-	char		   *userName;
+	Relation	dbrel;
+	HeapTuple	dbtup,
+				utup;
+	Oid			dbowner = (Oid) 0;
+	char		use_createdb;
+	bool		dbfound;
+	bool		use_super;
+	char	   *userName;
 
 	userName = GetPgUserName();
 	utup = SearchSysCacheTuple(USENAME, PointerGetDatum(userName),
@@ -268,9 +268,9 @@ check_permissions(char *command,
 static void
 stop_vacuum(char *dbname)
 {
-	char			filename[256];
-	FILE		   *fp;
-	int				pid;
+	char		filename[256];
+	FILE	   *fp;
+	int			pid;
 
 	sprintf(filename, "%s%cbase%c%s%c%s.vacuum", DataDir, SEP_CHAR, SEP_CHAR,
 			dbname, SEP_CHAR, dbname);

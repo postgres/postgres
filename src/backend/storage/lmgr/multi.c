@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.5 1997/09/07 04:49:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.6 1997/09/08 02:29:16 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -43,7 +43,7 @@ MultiRelease(LockTableId tableId, LOCKTAG * tag, LOCKT lockt,
  * WRITE conflict between the tuple's intent lock and the relation's
  * write lock.
  */
-static int		MultiConflicts[] = {
+static int	MultiConflicts[] = {
 	(int) NULL,
 	/* All reads and writes at any level conflict with a write lock */
 	(1 << WRITE_LOCK) | (1 << WRITE_INTENT) | (1 << READ_LOCK) | (1 << READ_INTENT),
@@ -65,7 +65,7 @@ static int		MultiConflicts[] = {
  * write locks have higher priority than read locks and extend locks.  May
  * want to treat INTENT locks differently.
  */
-static int		MultiPrios[] = {
+static int	MultiPrios[] = {
 	(int) NULL,
 	2,
 	1,
@@ -78,8 +78,8 @@ static int		MultiPrios[] = {
  * Lock table identifier for this lock table.  The multi-level
  * lock table is ONE lock table, not three.
  */
-LockTableId		MultiTableId = (LockTableId) NULL;
-LockTableId		ShortTermTableId = (LockTableId) NULL;
+LockTableId MultiTableId = (LockTableId) NULL;
+LockTableId ShortTermTableId = (LockTableId) NULL;
 
 /*
  * Create the lock table described by MultiConflicts and Multiprio.
@@ -87,7 +87,7 @@ LockTableId		ShortTermTableId = (LockTableId) NULL;
 LockTableId
 InitMultiLevelLockm()
 {
-	int				tableId;
+	int			tableId;
 
 	/* -----------------------
 	 * If we're already initialized just return the table id.
@@ -122,7 +122,7 @@ InitMultiLevelLockm()
 bool
 MultiLockReln(LockInfo linfo, LOCKT lockt)
 {
-	LOCKTAG			tag;
+	LOCKTAG		tag;
 
 	/*
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
@@ -145,7 +145,7 @@ MultiLockReln(LockInfo linfo, LOCKT lockt)
 bool
 MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
 {
-	LOCKTAG			tag;
+	LOCKTAG		tag;
 
 	/*
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
@@ -167,7 +167,7 @@ MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
 bool
 MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
 {
-	LOCKTAG			tag;
+	LOCKTAG		tag;
 
 	/*
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
@@ -197,18 +197,18 @@ MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
  * Returns: TRUE if lock is set, FALSE if not
  * Side Effects:
  */
-static			bool
+static bool
 MultiAcquire(LockTableId tableId,
 			 LOCKTAG * tag,
 			 LOCKT lockt,
 			 LOCK_LEVEL level)
 {
-	LOCKT			locks[N_LEVELS];
-	int				i,
-					status;
-	LOCKTAG			xxTag,
-				   *tmpTag = &xxTag;
-	int				retStatus = TRUE;
+	LOCKT		locks[N_LEVELS];
+	int			i,
+				status;
+	LOCKTAG		xxTag,
+			   *tmpTag = &xxTag;
+	int			retStatus = TRUE;
 
 	/*
 	 * Three levels implemented.  If we set a low level (e.g. Tuple) lock,
@@ -221,24 +221,24 @@ MultiAcquire(LockTableId tableId,
 	 */
 	switch (level)
 	{
-	case RELN_LEVEL:
-		locks[0] = lockt;
-		locks[1] = NO_LOCK;
-		locks[2] = NO_LOCK;
-		break;
-	case PAGE_LEVEL:
-		locks[0] = lockt + INTENT;
-		locks[1] = lockt;
-		locks[2] = NO_LOCK;
-		break;
-	case TUPLE_LEVEL:
-		locks[0] = lockt + INTENT;
-		locks[1] = lockt + INTENT;
-		locks[2] = lockt;
-		break;
-	default:
-		elog(WARN, "MultiAcquire: bad lock level");
-		return (FALSE);
+		case RELN_LEVEL:
+			locks[0] = lockt;
+			locks[1] = NO_LOCK;
+			locks[2] = NO_LOCK;
+			break;
+		case PAGE_LEVEL:
+			locks[0] = lockt + INTENT;
+			locks[1] = lockt;
+			locks[2] = NO_LOCK;
+			break;
+		case TUPLE_LEVEL:
+			locks[0] = lockt + INTENT;
+			locks[1] = lockt + INTENT;
+			locks[2] = lockt;
+			break;
+		default:
+			elog(WARN, "MultiAcquire: bad lock level");
+			return (FALSE);
 	}
 
 	/*
@@ -257,30 +257,30 @@ MultiAcquire(LockTableId tableId,
 		{
 			switch (i)
 			{
-			case RELN_LEVEL:
-				/* -------------
-				 * Set the block # and offset to invalid
-				 * -------------
-				 */
-				BlockIdSet(&(tmpTag->tupleId.ip_blkid), InvalidBlockNumber);
-				tmpTag->tupleId.ip_posid = InvalidOffsetNumber;
-				break;
-			case PAGE_LEVEL:
-				/* -------------
-				 * Copy the block #, set the offset to invalid
-				 * -------------
-				 */
-				BlockIdCopy(&(tmpTag->tupleId.ip_blkid),
-							&(tag->tupleId.ip_blkid));
-				tmpTag->tupleId.ip_posid = InvalidOffsetNumber;
-				break;
-			case TUPLE_LEVEL:
-				/* --------------
-				 * Copy the entire tuple id.
-				 * --------------
-				 */
-				ItemPointerCopy(&tmpTag->tupleId, &tag->tupleId);
-				break;
+				case RELN_LEVEL:
+					/* -------------
+					 * Set the block # and offset to invalid
+					 * -------------
+					 */
+					BlockIdSet(&(tmpTag->tupleId.ip_blkid), InvalidBlockNumber);
+					tmpTag->tupleId.ip_posid = InvalidOffsetNumber;
+					break;
+				case PAGE_LEVEL:
+					/* -------------
+					 * Copy the block #, set the offset to invalid
+					 * -------------
+					 */
+					BlockIdCopy(&(tmpTag->tupleId.ip_blkid),
+								&(tag->tupleId.ip_blkid));
+					tmpTag->tupleId.ip_posid = InvalidOffsetNumber;
+					break;
+				case TUPLE_LEVEL:
+					/* --------------
+					 * Copy the entire tuple id.
+					 * --------------
+					 */
+					ItemPointerCopy(&tmpTag->tupleId, &tag->tupleId);
+					break;
 			}
 
 			status = LockAcquire(tableId, tmpTag, locks[i]);
@@ -311,7 +311,7 @@ MultiAcquire(LockTableId tableId,
 bool
 MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
 {
-	LOCKTAG			tag;
+	LOCKTAG		tag;
 
 	/* ------------------
 	 * LOCKTAG has two bytes of padding, unfortunately.  The
@@ -337,7 +337,7 @@ MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt)
 bool
 MultiReleaseReln(LockInfo linfo, LOCKT lockt)
 {
-	LOCKTAG			tag;
+	LOCKTAG		tag;
 
 	/* ------------------
 	 * LOCKTAG has two bytes of padding, unfortunately.  The
@@ -357,40 +357,40 @@ MultiReleaseReln(LockInfo linfo, LOCKT lockt)
  *
  * Returns: TRUE if successful, FALSE otherwise.
  */
-static			bool
+static bool
 MultiRelease(LockTableId tableId,
 			 LOCKTAG * tag,
 			 LOCKT lockt,
 			 LOCK_LEVEL level)
 {
-	LOCKT			locks[N_LEVELS];
-	int				i,
-					status;
-	LOCKTAG			xxTag,
-				   *tmpTag = &xxTag;
+	LOCKT		locks[N_LEVELS];
+	int			i,
+				status;
+	LOCKTAG		xxTag,
+			   *tmpTag = &xxTag;
 
 	/*
 	 * same level scheme as MultiAcquire().
 	 */
 	switch (level)
 	{
-	case RELN_LEVEL:
-		locks[0] = lockt;
-		locks[1] = NO_LOCK;
-		locks[2] = NO_LOCK;
-		break;
-	case PAGE_LEVEL:
-		locks[0] = lockt + INTENT;
-		locks[1] = lockt;
-		locks[2] = NO_LOCK;
-		break;
-	case TUPLE_LEVEL:
-		locks[0] = lockt + INTENT;
-		locks[1] = lockt + INTENT;
-		locks[2] = lockt;
-		break;
-	default:
-		elog(WARN, "MultiRelease: bad lockt");
+		case RELN_LEVEL:
+			locks[0] = lockt;
+			locks[1] = NO_LOCK;
+			locks[2] = NO_LOCK;
+			break;
+		case PAGE_LEVEL:
+			locks[0] = lockt + INTENT;
+			locks[1] = lockt;
+			locks[2] = NO_LOCK;
+			break;
+		case TUPLE_LEVEL:
+			locks[0] = lockt + INTENT;
+			locks[1] = lockt + INTENT;
+			locks[2] = lockt;
+			break;
+		default:
+			elog(WARN, "MultiRelease: bad lockt");
 	}
 
 	/*
@@ -411,26 +411,26 @@ MultiRelease(LockTableId tableId,
 		{
 			switch (i)
 			{
-			case RELN_LEVEL:
-				/* -------------
-				 * Set the block # and offset to invalid
-				 * -------------
-				 */
-				BlockIdSet(&(tmpTag->tupleId.ip_blkid), InvalidBlockNumber);
-				tmpTag->tupleId.ip_posid = InvalidOffsetNumber;
-				break;
-			case PAGE_LEVEL:
-				/* -------------
-				 * Copy the block #, set the offset to invalid
-				 * -------------
-				 */
-				BlockIdCopy(&(tmpTag->tupleId.ip_blkid),
-							&(tag->tupleId.ip_blkid));
-				tmpTag->tupleId.ip_posid = InvalidOffsetNumber;
-				break;
-			case TUPLE_LEVEL:
-				ItemPointerCopy(&tmpTag->tupleId, &tag->tupleId);
-				break;
+				case RELN_LEVEL:
+					/* -------------
+					 * Set the block # and offset to invalid
+					 * -------------
+					 */
+					BlockIdSet(&(tmpTag->tupleId.ip_blkid), InvalidBlockNumber);
+					tmpTag->tupleId.ip_posid = InvalidOffsetNumber;
+					break;
+				case PAGE_LEVEL:
+					/* -------------
+					 * Copy the block #, set the offset to invalid
+					 * -------------
+					 */
+					BlockIdCopy(&(tmpTag->tupleId.ip_blkid),
+								&(tag->tupleId.ip_blkid));
+					tmpTag->tupleId.ip_posid = InvalidOffsetNumber;
+					break;
+				case TUPLE_LEVEL:
+					ItemPointerCopy(&tmpTag->tupleId, &tag->tupleId);
+					break;
 			}
 			status = LockRelease(tableId, tmpTag, locks[i]);
 			if (!status)

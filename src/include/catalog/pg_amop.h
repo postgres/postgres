@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.6 1997/09/07 04:56:37 momjian Exp $
+ * $Id: pg_amop.h,v 1.7 1997/09/08 02:34:56 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -32,12 +32,12 @@
  */
 CATALOG(pg_amop)
 {
-	Oid				amopid;
-	Oid				amopclaid;
-	Oid				amopopr;
-	int2			amopstrategy;
-	regproc			amopselect;
-	regproc			amopnpages;
+	Oid			amopid;
+	Oid			amopclaid;
+	Oid			amopopr;
+	int2		amopstrategy;
+	regproc		amopselect;
+	regproc		amopnpages;
 } FormData_pg_amop;
 
 /* ----------------

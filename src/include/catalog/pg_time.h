@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_time.h,v 1.3 1997/09/07 04:57:10 momjian Exp $
+ * $Id: pg_time.h,v 1.4 1997/09/08 02:35:28 momjian Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code
@@ -29,7 +29,7 @@
 
 CATALOG(pg_time) BOOTSTRAP
 {
-	Oid				timefoo;
+	Oid			timefoo;
 } FormData_pg_time;
 
 typedef FormData_pg_time *Form_pg_time;

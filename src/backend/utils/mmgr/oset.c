@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.4 1997/09/07 04:54:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.5 1997/09/08 02:32:14 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -19,15 +19,15 @@
 
 #include "utils/memutils.h"		/* where declarations of this file goes */
 
-static Pointer	OrderedElemGetBase(OrderedElem elem);
-static void		OrderedElemPush(OrderedElem elem);
-static void		OrderedElemPushHead(OrderedElem elem);
+static Pointer OrderedElemGetBase(OrderedElem elem);
+static void OrderedElemPush(OrderedElem elem);
+static void OrderedElemPushHead(OrderedElem elem);
 
 /*
  * OrderedElemGetBase --
  *		Returns base of enclosing structure.
  */
-static			Pointer
+static Pointer
 OrderedElemGetBase(OrderedElem elem)
 {
 	if (elem == (OrderedElem) NULL)

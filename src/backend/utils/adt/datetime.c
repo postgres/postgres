@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.14 1997/09/07 04:50:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.15 1997/09/08 02:30:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,10 @@
 #include "utils/datetime.h"
 #include "access/xact.h"
 
-static int		date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
+static int	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
 
-static int		day_tab[2][12] = {
+static int	day_tab[2][12] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
 
@@ -59,16 +59,16 @@ static int		day_tab[2][12] = {
 DateADT
 date_in(char *str)
 {
-	DateADT			date;
-	double			fsec;
-	struct tm		tt,
-				   *tm = &tt;
-	int				tzp;
-	int				dtype;
-	int				nf;
-	char		   *field[MAXDATEFIELDS];
-	int				ftype[MAXDATEFIELDS];
-	char			lowstr[MAXDATELEN + 1];
+	DateADT		date;
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tzp;
+	int			dtype;
+	int			nf;
+	char	   *field[MAXDATEFIELDS];
+	int			ftype[MAXDATEFIELDS];
+	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
 		elog(WARN, "Bad (null) date external representation", NULL);
@@ -82,21 +82,21 @@ date_in(char *str)
 
 	switch (dtype)
 	{
-	case DTK_DATE:
-		break;
+		case DTK_DATE:
+			break;
 
-	case DTK_CURRENT:
-		GetCurrentTime(tm);
-		break;
+		case DTK_CURRENT:
+			GetCurrentTime(tm);
+			break;
 
-	case DTK_EPOCH:
-		tm->tm_year = 1970;
-		tm->tm_mon = 1;
-		tm->tm_mday = 1;
-		break;
+		case DTK_EPOCH:
+			tm->tm_year = 1970;
+			tm->tm_mon = 1;
+			tm->tm_mday = 1;
+			break;
 
-	default:
-		elog(WARN, "Unrecognized date external representation %s", str);
+		default:
+			elog(WARN, "Unrecognized date external representation %s", str);
 	}
 
 	if (tm->tm_year < 0 || tm->tm_year > 32767)
@@ -115,18 +115,18 @@ date_in(char *str)
 /* date_out()
  * Given internal format date, convert to text string.
  */
-char		   *
+char	   *
 date_out(DateADT date)
 {
-	char		   *result;
-	struct tm		tt,
-				   *tm = &tt;
-	char			buf[MAXDATELEN + 1];
+	char	   *result;
+	struct tm	tt,
+			   *tm = &tt;
+	char		buf[MAXDATELEN + 1];
 
 #if FALSE
-	int				year,
-					month,
-					day;
+	int			year,
+				month,
+				day;
 
 #endif
 
@@ -237,15 +237,15 @@ date_mii(DateADT dateVal, int4 days)
 /* date_datetime()
  * Convert date to datetime data type.
  */
-DateTime	   *
+DateTime   *
 date_datetime(DateADT dateVal)
 {
-	DateTime	   *result;
-	struct tm		tt,
-				   *tm = &tt;
-	int				tz;
-	double			fsec = 0;
-	char		   *tzn;
+	DateTime   *result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	double		fsec = 0;
+	char	   *tzn;
 
 	result = PALLOCTYPE(DateTime);
 
@@ -270,12 +270,12 @@ date_datetime(DateADT dateVal)
 DateADT
 datetime_date(DateTime * datetime)
 {
-	DateADT			result;
-	struct tm		tt,
-				   *tm = &tt;
-	int				tz;
-	double			fsec;
-	char		   *tzn;
+	DateADT		result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	double		fsec;
+	char	   *tzn;
 
 	if (!PointerIsValid(datetime))
 		elog(WARN, "Unable to convert null datetime to date", NULL);
@@ -311,36 +311,36 @@ datetime_date(DateTime * datetime)
 DateADT
 abstime_date(AbsoluteTime abstime)
 {
-	DateADT			result;
-	struct tm		tt,
-				   *tm = &tt;
-	int				tz;
+	DateADT		result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
 
 	switch (abstime)
 	{
-	case INVALID_ABSTIME:
-	case NOSTART_ABSTIME:
-	case NOEND_ABSTIME:
-		elog(WARN, "Unable to convert reserved abstime value to date", NULL);
+		case INVALID_ABSTIME:
+		case NOSTART_ABSTIME:
+		case NOEND_ABSTIME:
+			elog(WARN, "Unable to convert reserved abstime value to date", NULL);
 
-		/*
-		 * pretend to drop through to make compiler think that result will
-		 * be set
-		 */
+			/*
+			 * pretend to drop through to make compiler think that result
+			 * will be set
+			 */
 
-	case EPOCH_ABSTIME:
-		result = date2j(1970, 1, 1) - date2j(2000, 1, 1);
-		break;
+		case EPOCH_ABSTIME:
+			result = date2j(1970, 1, 1) - date2j(2000, 1, 1);
+			break;
 
-	case CURRENT_ABSTIME:
-		GetCurrentTime(tm);
-		result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
-		break;
+		case CURRENT_ABSTIME:
+			GetCurrentTime(tm);
+			result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+			break;
 
-	default:
-		abstime2tm(abstime, &tz, tm, NULL);
-		result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
-		break;
+		default:
+			abstime2tm(abstime, &tz, tm, NULL);
+			result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+			break;
 	}
 
 	return (result);
@@ -356,8 +356,8 @@ abstime_date(AbsoluteTime abstime)
 static int
 date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 {
-	struct tm	   *tx;
-	time_t			utime;
+	struct tm  *tx;
+	time_t		utime;
 
 	*fsec = 0;
 
@@ -447,20 +447,20 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
  *****************************************************************************/
 
 
-TimeADT		   *
+TimeADT    *
 time_in(char *str)
 {
-	TimeADT		   *time;
+	TimeADT    *time;
 
-	double			fsec;
-	struct tm		tt,
-				   *tm = &tt;
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
 
-	int				nf;
-	char			lowstr[MAXDATELEN + 1];
-	char		   *field[MAXDATEFIELDS];
-	int				dtype;
-	int				ftype[MAXDATEFIELDS];
+	int			nf;
+	char		lowstr[MAXDATELEN + 1];
+	char	   *field[MAXDATEFIELDS];
+	int			dtype;
+	int			ftype[MAXDATEFIELDS];
 
 	if (!PointerIsValid(str))
 		elog(WARN, "Bad (null) time external representation", NULL);
@@ -484,21 +484,21 @@ time_in(char *str)
 }								/* time_in() */
 
 
-char		   *
+char	   *
 time_out(TimeADT * time)
 {
-	char		   *result;
-	struct tm		tt,
-				   *tm = &tt;
+	char	   *result;
+	struct tm	tt,
+			   *tm = &tt;
 
 #if FALSE
-	int				hour,
-					min,
-					sec;
+	int			hour,
+				min,
+				sec;
 
 #endif
-	double			fsec;
-	char			buf[MAXDATELEN + 1];
+	double		fsec;
+	char		buf[MAXDATELEN + 1];
 
 	if (!PointerIsValid(time))
 		return NULL;
@@ -602,10 +602,10 @@ time_cmp(TimeADT * time1, TimeADT * time2)
 /* datetime_datetime()
  * Convert date and time to datetime data type.
  */
-DateTime	   *
+DateTime   *
 datetime_datetime(DateADT date, TimeADT * time)
 {
-	DateTime	   *result;
+	DateTime   *result;
 
 	if (!PointerIsValid(time))
 	{

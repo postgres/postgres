@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.5 1997/09/07 04:57:22 momjian Exp $
+ * $Id: command.h,v 1.6 1997/09/08 02:35:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,9 @@ PerformPortalFetch(char *name, bool forward, int count,
  * PerformPortalClose --
  *		Performs the POSTQUEL function CLOSE.
  */
-extern void		PerformPortalClose(char *name, CommandDest dest);
+extern void PerformPortalClose(char *name, CommandDest dest);
 
-extern void		PortalCleanup(Portal portal);
+extern void PortalCleanup(Portal portal);
 
 /*
  * PerformAddAttribute --

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/alpha/Attic/port.c,v 1.2 1997/09/07 04:45:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/alpha/Attic/port.c,v 1.3 1997/09/08 02:25:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,11 @@ void
 init_address_fixup()
 {
 #ifdef NOFIXADE
-	int				buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
+	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
 
 #endif							/* NOFIXADE */
 #ifdef NOPRINTADE
-	int				buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
+	int			buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
 
 #endif							/* NOPRINTADE */
 

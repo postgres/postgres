@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.9 1997/09/07 05:01:42 momjian Exp $
+ * $Id: dest.h,v 1.10 1997/09/08 02:39:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ typedef enum
 	RemoteInternal,				/* results sent to frontend process in
 								 * internal (binary) form */
 	SPI							/* results sent to SPI manager */
-}				CommandDest;
+}			CommandDest;
 
 
 /* AttrInfo* replaced with TupleDesc, now that TupleDesc also has within it
@@ -65,15 +65,15 @@ typedef struct AttrInfo {
 } AttrInfo;
 */
 
-extern void		(*DestToFunction(CommandDest dest)) ();
-extern void		EndCommand(char *commandTag, CommandDest dest);
-extern void		SendCopyBegin(void);
-extern void		ReceiveCopyBegin(void);
-extern void		NullCommand(CommandDest dest);
+extern void (*DestToFunction(CommandDest dest)) ();
+extern void EndCommand(char *commandTag, CommandDest dest);
+extern void SendCopyBegin(void);
+extern void ReceiveCopyBegin(void);
+extern void NullCommand(CommandDest dest);
 extern void
 BeginCommand(char *pname, int operation, TupleDesc attinfo,
 			 bool isIntoRel, bool isIntoPortal, char *tag,
 			 CommandDest dest);
-extern void		UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples);
+extern void UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples);
 
 #endif							/* DEST_H */

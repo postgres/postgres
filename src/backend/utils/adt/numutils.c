@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.14 1997/09/07 04:50:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.15 1997/09/08 02:30:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@
 int32
 pg_atoi(char *s, int size, int c)
 {
-	long			l;
-	char		   *badp = (char *) NULL;
+	long		l;
+	char	   *badp = (char *) NULL;
 
 	Assert(s);
 
@@ -43,47 +43,47 @@ pg_atoi(char *s, int size, int c)
 
 	switch (size)
 	{
-	case sizeof(int32):
+		case sizeof(int32):
 #ifdef HAS_LONG_LONG
-		/* won't get ERANGE on these with 64-bit longs... */
-		if (l < -0x80000000L)
-		{
-			errno = ERANGE;
-			elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-		}
-		if (l > 0x7fffffffL)
-		{
-			errno = ERANGE;
-			elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-		}
+			/* won't get ERANGE on these with 64-bit longs... */
+			if (l < -0x80000000L)
+			{
+				errno = ERANGE;
+				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+			}
+			if (l > 0x7fffffffL)
+			{
+				errno = ERANGE;
+				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+			}
 #endif							/* HAS_LONG_LONG */
-		break;
-	case sizeof(int16):
-		if (l < -0x8000)
-		{
-			errno = ERANGE;
-			elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-		}
-		if (l > 0x7fff)
-		{
-			errno = ERANGE;
-			elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-		}
-		break;
-	case sizeof(int8):
-		if (l < -0x80)
-		{
-			errno = ERANGE;
-			elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-		}
-		if (l > 0x7f)
-		{
-			errno = ERANGE;
-			elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-		}
-		break;
-	default:
-		elog(WARN, "pg_atoi: invalid result size: %d", size);
+			break;
+		case sizeof(int16):
+			if (l < -0x8000)
+			{
+				errno = ERANGE;
+				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+			}
+			if (l > 0x7fff)
+			{
+				errno = ERANGE;
+				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+			}
+			break;
+		case sizeof(int8):
+			if (l < -0x80)
+			{
+				errno = ERANGE;
+				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+			}
+			if (l > 0x7f)
+			{
+				errno = ERANGE;
+				elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+			}
+			break;
+		default:
+			elog(WARN, "pg_atoi: invalid result size: %d", size);
 	}
 	return ((int32) l);
 }
@@ -146,9 +146,9 @@ int
 ftoa(double value, char *ascii, int width, int prec1, char format)
 {
 #ifndef HAVE_FCVT
-	char			out[256];
-	char			fmt[256];
-	int				ret;
+	char		out[256];
+	char		fmt[256];
+	int			ret;
 
 	sprintf(fmt, "%%%d.%d%c", width, prec1, format);
 	sprintf(out, fmt, value);
@@ -161,14 +161,14 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
 	strcpy(ascii, out);
 	return (ret);
 #else
-	auto int		expon;
-	auto int		sign;
-	register int	avail = 0;
-	register char  *a = NULL;
-	register char  *p = NULL;
-	char			mode;
-	int				lowercase;
-	int				prec;
+	auto int	expon;
+	auto int	sign;
+	register int avail = 0;
+	register char *a = NULL;
+	register char *p = NULL;
+	char		mode;
+	int			lowercase;
+	int			prec;
 
 /*	  extern char		*ecvt(), *fcvt();*/
 
@@ -349,13 +349,13 @@ frac_out:
 int
 atof1(char *str, double *val)
 {
-	register char  *p;
-	double			v;
-	double			fact;
-	int				minus;
-	register char	c;
-	int				expon;
-	register int	gotmant;
+	register char *p;
+	double		v;
+	double		fact;
+	int			minus;
+	register char c;
+	int			expon;
+	register int gotmant;
 
 	v = 0.0;
 	p = str;
@@ -372,11 +372,11 @@ atof1(char *str, double *val)
 	/* handle possible sign */
 	switch (c)
 	{
-	case '-':
-		minus++;
+		case '-':
+			minus++;
 
-	case '+':
-		p++;
+		case '+':
+			p++;
 	}
 
 	/* skip blanks after sign */

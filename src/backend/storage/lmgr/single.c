@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.3 1997/09/07 04:49:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.4 1997/09/08 02:29:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 bool
 SingleLockReln(LockInfo linfo, LOCKT lockt, int action)
 {
-	LOCKTAG			tag;
+	LOCKTAG		tag;
 
 	/*
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function
@@ -66,7 +66,7 @@ SingleLockPage(LockInfo linfo,
 			   LOCKT lockt,
 			   int action)
 {
-	LOCKTAG			tag;
+	LOCKTAG		tag;
 
 	/*
 	 * LOCKTAG has two bytes of padding, unfortunately.  The hash function

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.7 1997/09/07 05:03:00 momjian Exp $
+ * $Id: relcache.h,v 1.8 1997/09/08 02:39:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,17 +22,17 @@ extern Relation RelationIdCacheGetRelation(Oid relationId);
 extern Relation RelationIdGetRelation(Oid relationId);
 extern Relation RelationNameGetRelation(char *relationName);
 
-extern void		RelationClose(Relation relation);
-extern void		RelationForgetRelation(Oid rid);
-extern void		RelationIdInvalidateRelationCacheByRelationId(Oid relationId);
+extern void RelationClose(Relation relation);
+extern void RelationForgetRelation(Oid rid);
+extern void RelationIdInvalidateRelationCacheByRelationId(Oid relationId);
 
 extern void
-				RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId);
+			RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId);
 
-extern void		RelationCacheInvalidate(bool onlyFlushReferenceCountZero);
+extern void RelationCacheInvalidate(bool onlyFlushReferenceCountZero);
 
-extern void		RelationRegisterRelation(Relation relation);
-extern void		RelationPurgeLocalRelation(bool xactComitted);
-extern void		RelationInitialize(void);
+extern void RelationRegisterRelation(Relation relation);
+extern void RelationPurgeLocalRelation(bool xactComitted);
+extern void RelationInitialize(void);
 
 #endif							/* RELCACHE_H */

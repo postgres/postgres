@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.8 1997/09/07 04:50:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.9 1997/09/08 02:30:58 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -47,13 +47,13 @@
 struct cached_re_str
 {
 	struct varlena *cre_text;	/* pattern as a text* */
-	char		   *cre_s;		/* pattern as null-terminated string */
-	int				cre_type;	/* compiled-type: extended,icase etc */
-	regex_t			cre_re;		/* the compiled regular expression */
-	unsigned long	cre_lru;	/* lru tag */
+	char	   *cre_s;			/* pattern as null-terminated string */
+	int			cre_type;		/* compiled-type: extended,icase etc */
+	regex_t		cre_re;			/* the compiled regular expression */
+	unsigned long cre_lru;		/* lru tag */
 };
 
-static int		rec = 0;		/* # of cached re's */
+static int	rec = 0;			/* # of cached re's */
 static struct cached_re_str rev[MAX_CACHED_RES];		/* cached re's */
 static unsigned long lru;		/* system lru tag */
 
@@ -62,11 +62,11 @@ static unsigned long lru;		/* system lru tag */
 static int
 RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 {
-	int				oldest;
-	int				n;
-	int				i;
-	char		   *re;
-	int				regcomp_result;
+	int			oldest;
+	int			n;
+	int			i;
+	char	   *re;
+	int			regcomp_result;
 
 	re = textout(text_re);
 	/* find a previously compiled regular expression */
@@ -151,7 +151,7 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 	}
 	else
 	{
-		char			errMsg[1000];
+		char		errMsg[1000];
 
 		/* re didn't compile */
 		rev[oldest].cre_s = (char *) NULL;
@@ -178,11 +178,11 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 		 p		- the pattern
 		 charlen   - the length of the string
 */
-static			bool
+static bool
 fixedlen_regexeq(char *s, struct varlena * p, int charlen, int cflags)
 {
-	char		   *sterm;
-	int				result;
+	char	   *sterm;
+	int			result;
 
 	if (!s || !p)
 		return FALSE;
@@ -206,7 +206,7 @@ fixedlen_regexeq(char *s, struct varlena * p, int charlen, int cflags)
 bool
 char2regexeq(uint16 arg1, struct varlena * p)
 {
-	char		   *s = (char *) &arg1;
+	char	   *s = (char *) &arg1;
 
 	return (fixedlen_regexeq(s, p, 2, REG_EXTENDED));
 }
@@ -220,7 +220,7 @@ char2regexne(uint16 arg1, struct varlena * p)
 bool
 char4regexeq(uint32 arg1, struct varlena * p)
 {
-	char		   *s = (char *) &arg1;
+	char	   *s = (char *) &arg1;
 
 	return (fixedlen_regexeq(s, p, 4, REG_EXTENDED));
 }
@@ -291,7 +291,7 @@ textregexne(struct varlena * s, struct varlena * p)
 bool
 char2icregexeq(uint16 arg1, struct varlena * p)
 {
-	char		   *s = (char *) &arg1;
+	char	   *s = (char *) &arg1;
 
 	return (fixedlen_regexeq(s, p, 2, REG_ICASE | REG_EXTENDED));
 }
@@ -306,7 +306,7 @@ char2icregexne(uint16 arg1, struct varlena * p)
 bool
 char4icregexeq(uint32 arg1, struct varlena * p)
 {
-	char		   *s = (char *) &arg1;
+	char	   *s = (char *) &arg1;
 
 	return (fixedlen_regexeq(s, p, 4, REG_ICASE | REG_EXTENDED));
 }

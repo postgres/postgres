@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.4 1997/09/07 05:02:16 momjian Exp $
+ * $Id: datetime.h,v 1.5 1997/09/08 02:39:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 
 #include "utils/dt.h"
 
-typedef int32	DateADT;
+typedef int32 DateADT;
 
-typedef float8	TimeADT;
+typedef float8 TimeADT;
 
 #endif							/* DATETIME_H */

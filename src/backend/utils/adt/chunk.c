@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.7 1997/09/07 04:50:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.8 1997/09/08 02:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,8 @@ static CHUNK_INFO cInfo;
 static int
 _FindBestChunk(int size, int dmax[], int dbest[], int dim,
 			   int A[MAXPAT][MAXDIM + 1], int N);
-static int		get_next(int d[], int k, int C, int dmax[]);
-static void		initialize_info(CHUNK_INFO * A, int ndim, int dim[], int chunk[]);
+static int	get_next(int d[], int k, int C, int dmax[]);
+static void initialize_info(CHUNK_INFO * A, int ndim, int dim[], int chunk[]);
 
 #ifdef LOARRAY
 static void
@@ -58,8 +58,8 @@ _ConvertToChunkFile(int n, int baseSize, int dim[], int C[],
 static void
 read_chunk(int chunk_no[], int C[], char a_chunk[], int srcfd,
 		   int n, int baseSize, int PX[], int dist[]);
-static int		write_chunk(struct varlena * a_chunk, int ofile);
-static int		seek_and_read(int pos, int size, char buff[], int fp, int from);
+static int	write_chunk(struct varlena * a_chunk, int ofile);
+static int	seek_and_read(int pos, int size, char buff[], int fp, int from);
 
 #endif
 static int
@@ -75,7 +75,7 @@ GetChunkSize(FILE * fd, int ndim, int dim[MAXDIM], int baseSize,
  *	   information about the chunked file
  *-----------------------------------------------------------------------
  */
-char		   *
+char	   *
 _ChunkArray(int fd,
 			FILE * afd,
 			int ndim,
@@ -85,12 +85,12 @@ _ChunkArray(int fd,
 			char *chunkfile)
 {
 #ifdef LOARRAY
-	int				cfd = 0;
+	int			cfd = 0;
 
 #endif
-	int				chunk[MAXDIM],
-					csize;
-	bool			reorgFlag;
+	int			chunk[MAXDIM],
+				csize;
+	bool		reorgFlag;
 
 	if (chunkfile == NULL)
 		reorgFlag = true;
@@ -136,12 +136,12 @@ GetChunkSize(FILE * fd,
 			 int baseSize,
 			 int d[MAXDIM])
 {
-	int				N,
-					i,
-					j,
-					csize;
-	int				A[MAXPAT][MAXDIM + 1],
-					dmax[MAXDIM];
+	int			N,
+				i,
+				j,
+				csize;
+	int			A[MAXPAT][MAXDIM + 1],
+				dmax[MAXDIM];
 
 	/*
 	 * ----------- read input ------------
@@ -183,9 +183,9 @@ _FindBestChunk(int size,
 			   int A[MAXPAT][MAXDIM + 1],
 			   int N)
 {
-	int				d[MAXDIM];
-	int				tc,
-					mintc = INFTY;
+	int			d[MAXDIM];
+	int			tc,
+				mintc = INFTY;
 
 	d[0] = 0;
 	mintc = INFTY;
@@ -196,9 +196,9 @@ _FindBestChunk(int size,
 		 * compute the number of page fetches for a given chunk size (d[])
 		 * and access pattern (A[][])
 		 */
-		register int	i,
-						j,
-						nc;
+		register int i,
+					j,
+					nc;
 
 		for (i = 0, tc = 0; i < N; i++)
 		{
@@ -229,9 +229,9 @@ _FindBestChunk(int size,
 static int
 get_next(int d[], int k, int C, int dmax[])
 {
-	register int	i,
-					j,
-					temp;
+	register int i,
+				j,
+				temp;
 
 	if (!d[0])
 	{
@@ -271,15 +271,14 @@ get_next(int d[], int k, int C, int dmax[])
 }
 
 #ifdef LOARRAY
-static char		a_chunk[BLCKSZ + 4];	/* 4 since a_chunk is in varlena
-										 * format */
+static char a_chunk[BLCKSZ + 4];/* 4 since a_chunk is in varlena format */
 
 #endif
 
 static void
 initialize_info(CHUNK_INFO * A, int ndim, int dim[], int chunk[])
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < ndim; i++)
 		A->C[i] = chunk[i];
@@ -305,13 +304,13 @@ _ConvertToChunkFile(int n,
 					int srcfd,
 					int destfd)
 {
-	int				max_chunks[MAXDIM],
-					chunk_no[MAXDIM];
-	int				PX[MAXDIM],
-					dist[MAXDIM];
-	int				csize = 1,
-					i,
-					temp;
+	int			max_chunks[MAXDIM],
+				chunk_no[MAXDIM];
+	int			PX[MAXDIM],
+				dist[MAXDIM];
+	int			csize = 1,
+				i,
+				temp;
 
 	for (i = 0; i < n; chunk_no[i++] = 0)
 	{
@@ -349,14 +348,14 @@ read_chunk(int chunk_no[],
 		   int PX[],
 		   int dist[])
 {
-	int				i,
-					j,
-					cp,
-					unit_transfer;
-	int				start_pos,
-					pos[MAXDIM];
-	int				indx[MAXDIM];
-	int				fpOff;
+	int			i,
+				j,
+				cp,
+				unit_transfer;
+	int			start_pos,
+				pos[MAXDIM];
+	int			indx[MAXDIM];
+	int			fpOff;
 
 	for (i = start_pos = 0; i < n; i++)
 	{
@@ -392,7 +391,7 @@ read_chunk(int chunk_no[],
 static int
 write_chunk(struct varlena * a_chunk, int ofile)
 {
-	int				got_n = 0;
+	int			got_n = 0;
 
 #ifdef LOARRAY
 	got_n = LOwrite(ofile, a_chunk);
@@ -444,41 +443,41 @@ _ReadChunkArray(int st[],
 				int isDestLO,
 				bool * isNull)
 {
-	int				i,
-					j,
-					jj;
-	int				n,
-					temp,
-					words_read;
-	int				chunk_span[MAXDIM],
-					chunk_off[MAXDIM];
-	int				chunk_st[MAXDIM],
-					chunk_end[MAXDIM];
-	int				block_seek;
+	int			i,
+				j,
+				jj;
+	int			n,
+				temp,
+				words_read;
+	int			chunk_span[MAXDIM],
+				chunk_off[MAXDIM];
+	int			chunk_st[MAXDIM],
+				chunk_end[MAXDIM];
+	int			block_seek;
 
-	int				bptr,
-				   *C,
-					csize,
-				   *dim,
-				   *lb;
-	int				range_st[MAXDIM],
-					range_end[MAXDIM],
-					range[MAXDIM],
-					array_span[MAXDIM];
-	int				PA[MAXDIM],
-					PCHUNK[MAXDIM],
-					PC[MAXDIM];
-	int				to_read;
-	int				cdist[MAXDIM],
-					adist[MAXDIM];
-	int				dist[MAXDIM],
-					temp_seek;
+	int			bptr,
+			   *C,
+				csize,
+			   *dim,
+			   *lb;
+	int			range_st[MAXDIM],
+				range_end[MAXDIM],
+				range[MAXDIM],
+				array_span[MAXDIM];
+	int			PA[MAXDIM],
+				PCHUNK[MAXDIM],
+				PC[MAXDIM];
+	int			to_read;
+	int			cdist[MAXDIM],
+				adist[MAXDIM];
+	int			dist[MAXDIM],
+				temp_seek;
 
-	int				srcOff;		/* Needed since LO don't understand
+	int			srcOff;			/* Needed since LO don't understand
 								 * SEEK_CUR */
-	char		   *baseDestFp = (char *) destfp;
+	char	   *baseDestFp = (char *) destfp;
 
-	CHUNK_INFO	   *A = (CHUNK_INFO *) ARR_DATA_PTR(array);
+	CHUNK_INFO *A = (CHUNK_INFO *) ARR_DATA_PTR(array);
 
 	n = ARR_NDIM(array);
 	dim = ARR_DIMS(array);
@@ -584,7 +583,7 @@ _ReadChunkArray(int st[],
 			 * compute next tuple in range[]
 			 */
 			{
-				int				x;
+				int			x;
 
 				if (!(i + 1))
 					j = -1;
@@ -641,21 +640,21 @@ _ReadChunkArray1El(int st[],
 				   ArrayType * array,
 				   bool * isNull)
 {
-	int				i,
-					j,
-					n,
-					temp,
-					srcOff;
-	int				chunk_st[MAXDIM];
+	int			i,
+				j,
+				n,
+				temp,
+				srcOff;
+	int			chunk_st[MAXDIM];
 
-	int			   *C,
-					csize,
-				   *dim,
-				   *lb;
-	int				PCHUNK[MAXDIM],
-					PC[MAXDIM];
+	int		   *C,
+				csize,
+			   *dim,
+			   *lb;
+	int			PCHUNK[MAXDIM],
+				PC[MAXDIM];
 
-	CHUNK_INFO	   *A = (CHUNK_INFO *) ARR_DATA_PTR(array);
+	CHUNK_INFO *A = (CHUNK_INFO *) ARR_DATA_PTR(array);
 
 	n = ARR_NDIM(array);
 	lb = ARR_LBOUND(array);

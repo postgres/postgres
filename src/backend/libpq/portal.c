@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.7 1997/09/07 04:42:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.8 1997/09/08 02:23:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,8 +111,8 @@ valid_pointer(char *msg, void *ptr)
 int
 PQnportals(int rule_p)
 {
-	int				i,
-					n = 0;
+	int			i,
+				n = 0;
 
 	for (i = 0; i < portals_array_size; ++i)
 	{
@@ -142,8 +142,8 @@ PQnportals(int rule_p)
 void
 PQpnames(char **pnames, int rule_p)
 {
-	int				i,
-					cur_pname = 0;
+	int			i,
+				cur_pname = 0;
 
 	if (!valid_pointer("PQpnames: invalid name buffer", pnames))
 		return;
@@ -165,10 +165,10 @@ PQpnames(char **pnames, int rule_p)
  *		PQparray - Return the portal buffer given a portal name
  * --------------------------------
  */
-PortalBuffer   *
+PortalBuffer *
 PQparray(char *pname)
 {
-	int				i;
+	int			i;
 
 	if (!valid_pointer("PQparray: invalid name buffer", pname))
 		return NULL;
@@ -230,7 +230,7 @@ PQngroups(PortalBuffer * portal)
 int
 PQntuplesGroup(PortalBuffer * portal, int group_index)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQntuplesGroup: invalid portal pointer", portal) ||
 		!in_range("PQntuplesGroup: group index",
@@ -256,7 +256,7 @@ PQninstancesGroup(PortalBuffer * portal, int group_index)
 int
 PQnfieldsGroup(PortalBuffer * portal, int group_index)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQnfieldsGroup: invalid portal pointer", portal) ||
 		!in_range("PQnfieldsGroup: group index",
@@ -276,7 +276,7 @@ PQnfieldsGroup(PortalBuffer * portal, int group_index)
 int
 PQfnumberGroup(PortalBuffer * portal, int group_index, char *field_name)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQfnumberGroup: invalid portal pointer", portal) ||
 		!valid_pointer("PQfnumberGroup: invalid field name pointer",
@@ -295,10 +295,10 @@ PQfnumberGroup(PortalBuffer * portal, int group_index, char *field_name)
  *						the group index and field index.
  * --------------------------------
  */
-char		   *
+char	   *
 PQfnameGroup(PortalBuffer * portal, int group_index, int field_number)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQfnameGroup: invalid portal pointer", portal) ||
 		!in_range("PQfnameGroup: group index",
@@ -320,7 +320,7 @@ PQfnameGroup(PortalBuffer * portal, int group_index, int field_number)
 int
 PQftypeGroup(PortalBuffer * portal, int group_index, int field_number)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQftypeGroup: invalid portal pointer", portal) ||
 		!in_range("PQftypeGroup: group index",
@@ -341,7 +341,7 @@ PQftypeGroup(PortalBuffer * portal, int group_index, int field_number)
 int
 PQfsizeGroup(PortalBuffer * portal, int group_index, int field_number)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQfsizeGroup: invalid portal pointer", portal) ||
 		!in_range("PQfsizeGroup: tuple index",
@@ -359,11 +359,11 @@ PQfsizeGroup(PortalBuffer * portal, int group_index, int field_number)
  *		PQgroup - Return the tuple group that a particular tuple is in
  * --------------------------------
  */
-GroupBuffer    *
+GroupBuffer *
 PQgroup(PortalBuffer * portal, int tuple_index)
 {
-	GroupBuffer    *gbp;
-	int				tuple_count = 0;
+	GroupBuffer *gbp;
+	int			tuple_count = 0;
 
 	if (!valid_pointer("PQgroup: invalid portal pointer", portal) ||
 		!in_range("PQgroup: tuple index",
@@ -388,9 +388,9 @@ PQgroup(PortalBuffer * portal, int tuple_index)
 int
 PQgetgroup(PortalBuffer * portal, int tuple_index)
 {
-	GroupBuffer    *gbp;
-	int				tuple_count = 0,
-					group_count = 0;
+	GroupBuffer *gbp;
+	int			tuple_count = 0,
+				group_count = 0;
 
 	if (!valid_pointer("PQgetgroup: invalid portal pointer", portal) ||
 		!in_range("PQgetgroup: tuple index",
@@ -414,7 +414,7 @@ PQgetgroup(PortalBuffer * portal, int tuple_index)
 int
 PQnfields(PortalBuffer * portal, int tuple_index)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQnfields: invalid portal pointer", portal) ||
 		!in_range("PQnfields: tuple index",
@@ -434,7 +434,7 @@ PQnfields(PortalBuffer * portal, int tuple_index)
 int
 PQfnumber(PortalBuffer * portal, int tuple_index, char *field_name)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQfnumber: invalid portal pointer", portal) ||
 	!valid_pointer("PQfnumber: invalid field name pointer", field_name) ||
@@ -451,10 +451,10 @@ PQfnumber(PortalBuffer * portal, int tuple_index, char *field_name)
  *		PQfname - Return the name of a field
  * --------------------------------
  */
-char		   *
+char	   *
 PQfname(PortalBuffer * portal, int tuple_index, int field_number)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQfname: invalid portal pointer", portal) ||
 		!in_range("PQfname: tuple index",
@@ -475,7 +475,7 @@ PQfname(PortalBuffer * portal, int tuple_index, int field_number)
 int
 PQftype(PortalBuffer * portal, int tuple_index, int field_number)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQftype: invalid portal pointer", portal) ||
 		!in_range("PQfname: tuple index",
@@ -495,7 +495,7 @@ PQftype(PortalBuffer * portal, int tuple_index, int field_number)
 int
 PQfsize(PortalBuffer * portal, int tuple_index, int field_number)
 {
-	GroupBuffer    *gbp;
+	GroupBuffer *gbp;
 
 	if (!valid_pointer("PQfsize: invalid portal pointer", portal) ||
 		!in_range("PQfsize: tuple index",
@@ -518,8 +518,8 @@ PQfsize(PortalBuffer * portal, int tuple_index, int field_number)
 int
 PQsametype(PortalBuffer * portal, int tuple_index1, int tuple_index2)
 {
-	GroupBuffer    *gbp1,
-				   *gbp2;
+	GroupBuffer *gbp1,
+			   *gbp2;
 
 	if (!valid_pointer("PQsametype: invalid portal pointer", portal) ||
 		!in_range("PQsametype: tuple index 1",
@@ -540,9 +540,9 @@ PQGetTupleBlock(PortalBuffer * portal,
 				int tuple_index,
 				int *tuple_offset)
 {
-	GroupBuffer    *gbp;
-	TupleBlock	   *tbp;
-	int				tuple_count = 0;
+	GroupBuffer *gbp;
+	TupleBlock *tbp;
+	int			tuple_count = 0;
 
 	if (!valid_pointer("PQGetTupleBlock: invalid portal pointer", portal) ||
 		!valid_pointer("PQGetTupleBlock: invalid offset pointer",
@@ -578,13 +578,13 @@ PQGetTupleBlock(PortalBuffer * portal,
  *		PQgetvalue - Return an attribute (field) value
  * --------------------------------
  */
-char		   *
+char	   *
 PQgetvalue(PortalBuffer * portal,
 		   int tuple_index,
 		   int field_number)
 {
-	TupleBlock	   *tbp;
-	int				tuple_offset;
+	TupleBlock *tbp;
+	int			tuple_offset;
 
 	tbp = PQGetTupleBlock(portal, tuple_index, &tuple_offset);
 	if (tbp)
@@ -598,15 +598,15 @@ PQgetvalue(PortalBuffer * portal,
  *		a copy.  The CALLER is responsible for free'ing the data returned.
  * --------------------------------
  */
-char		   *
+char	   *
 PQgetAttr(PortalBuffer * portal,
 		  int tuple_index,
 		  int field_number)
 {
-	TupleBlock	   *tbp;
-	int				tuple_offset;
-	int				len;
-	char		   *result = NULL;
+	TupleBlock *tbp;
+	int			tuple_offset;
+	int			len;
+	char	   *result = NULL;
 
 	tbp = PQGetTupleBlock(portal, tuple_index, &tuple_offset);
 	if (tbp)
@@ -631,8 +631,8 @@ PQgetlength(PortalBuffer * portal,
 			int tuple_index,
 			int field_number)
 {
-	TupleBlock	   *tbp;
-	int				tuple_offset;
+	TupleBlock *tbp;
+	int			tuple_offset;
 
 	tbp = PQGetTupleBlock(portal, tuple_index, &tuple_offset);
 	if (tbp)
@@ -657,15 +657,15 @@ PQclear(char *pname)
  * This is going away with pending rewrite of comm. code...
  */
 /* static SLList pqNotifyList;*/
-static Dllist  *pqNotifyList = NULL;
+static Dllist *pqNotifyList = NULL;
 
 /* remove invalid notifies before returning */
 void
 PQcleanNotify()
 {
-	Dlelem		   *e,
-				   *next;
-	PQNotifyList   *p;
+	Dlelem	   *e,
+			   *next;
+	PQNotifyList *p;
 
 	e = DLGetHead(pqNotifyList);
 
@@ -686,8 +686,8 @@ PQcleanNotify()
 void
 PQnotifies_init()
 {
-	Dlelem		   *e;
-	PQNotifyList   *p;
+	Dlelem	   *e;
+	PQNotifyList *p;
 
 	if (pqNotifyList == NULL)
 	{
@@ -705,10 +705,10 @@ PQnotifies_init()
 	}
 }
 
-PQNotifyList   *
+PQNotifyList *
 PQnotifies()
 {
-	Dlelem		   *e;
+	Dlelem	   *e;
 
 	PQcleanNotify();
 	e = DLGetHead(pqNotifyList);
@@ -724,7 +724,7 @@ PQremoveNotify(PQNotifyList * nPtr)
 void
 PQappendNotify(char *relname, int pid)
 {
-	PQNotifyList   *p;
+	PQNotifyList *p;
 
 	if (pqNotifyList == NULL)
 		pqNotifyList = DLNewList();

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.3 1997/09/07 04:43:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.4 1997/09/08 02:24:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,19 +29,19 @@
 #include "optimizer/cost.h"		/* for _enable_{hashjoin,
 								 * _enable_mergesort} */
 
-static Path    *best_innerjoin(List * join_paths, List * outer_relid);
-static List    *
+static Path *best_innerjoin(List * join_paths, List * outer_relid);
+static List *
 sort_inner_and_outer(Rel * joinrel, Rel * outerrel, Rel * innerrel,
 					 List * mergeinfo_list);
-static List    *
+static List *
 match_unsorted_outer(Rel * joinrel, Rel * outerrel, Rel * innerrel,
 	 List * outerpath_list, Path * cheapest_inner, Path * best_innerjoin,
 					 List * mergeinfo_list);
-static List    *
+static List *
 match_unsorted_inner(Rel * joinrel, Rel * outerrel, Rel * innerrel,
 					 List * innerpath_list, List * mergeinfo_list);
-static bool		EnoughMemoryForHashjoin(Rel * hashrel);
-static List    *
+static bool EnoughMemoryForHashjoin(Rel * hashrel);
+static List *
 hash_inner_and_outer(Rel * joinrel, Rel * outerrel, Rel * innerrel,
 					 List * hashinfo_list);
 
@@ -69,20 +69,20 @@ hash_inner_and_outer(Rel * joinrel, Rel * outerrel, Rel * innerrel,
 void
 find_all_join_paths(Query * root, List * joinrels)
 {
-	List		   *mergeinfo_list = NIL;
-	List		   *hashinfo_list = NIL;
-	List		   *temp_list = NIL;
-	List		   *path = NIL;
+	List	   *mergeinfo_list = NIL;
+	List	   *hashinfo_list = NIL;
+	List	   *temp_list = NIL;
+	List	   *path = NIL;
 
 	while (joinrels != NIL)
 	{
-		Rel			   *joinrel = (Rel *) lfirst(joinrels);
-		List		   *innerrelids;
-		List		   *outerrelids;
-		Rel			   *innerrel;
-		Rel			   *outerrel;
-		Path		   *bestinnerjoin;
-		List		   *pathlist = NIL;
+		Rel		   *joinrel = (Rel *) lfirst(joinrels);
+		List	   *innerrelids;
+		List	   *outerrelids;
+		Rel		   *innerrel;
+		Rel		   *outerrel;
+		Path	   *bestinnerjoin;
+		List	   *pathlist = NIL;
 
 		innerrelids = lsecond(joinrel->relids);
 		outerrelids = lfirst(joinrel->relids);
@@ -205,15 +205,15 @@ find_all_join_paths(Query * root, List * joinrels)
  *
  * Returns the pathnode of the selected path.
  */
-static Path    *
+static Path *
 best_innerjoin(List * join_paths, List * outer_relids)
 {
-	Path		   *cheapest = (Path *) NULL;
-	List		   *join_path;
+	Path	   *cheapest = (Path *) NULL;
+	List	   *join_path;
 
 	foreach(join_path, join_paths)
 	{
-		Path		   *path = (Path *) lfirst(join_path);
+		Path	   *path = (Path *) lfirst(join_path);
 
 		if (intMember(lfirsti(path->joinid), outer_relids)
 			&& ((cheapest == NULL ||
@@ -239,19 +239,19 @@ best_innerjoin(List * join_paths, List * outer_relids)
  *
  * Returns a list of mergesort paths.
  */
-static List    *
+static List *
 sort_inner_and_outer(Rel * joinrel,
 					 Rel * outerrel,
 					 Rel * innerrel,
 					 List * mergeinfo_list)
 {
-	List		   *ms_list = NIL;
-	MInfo		   *xmergeinfo = (MInfo *) NULL;
-	MergePath	   *temp_node = (MergePath *) NULL;
-	List		   *i;
-	List		   *outerkeys = NIL;
-	List		   *innerkeys = NIL;
-	List		   *merge_pathkeys = NIL;
+	List	   *ms_list = NIL;
+	MInfo	   *xmergeinfo = (MInfo *) NULL;
+	MergePath  *temp_node = (MergePath *) NULL;
+	List	   *i;
+	List	   *outerkeys = NIL;
+	List	   *innerkeys = NIL;
+	List	   *merge_pathkeys = NIL;
 
 	foreach(i, mergeinfo_list)
 	{
@@ -317,7 +317,7 @@ sort_inner_and_outer(Rel * joinrel,
  *
  * Returns a list of possible join path nodes.
  */
-static List    *
+static List *
 match_unsorted_outer(Rel * joinrel,
 					 Rel * outerrel,
 					 Rel * innerrel,
@@ -326,21 +326,21 @@ match_unsorted_outer(Rel * joinrel,
 					 Path * best_innerjoin,
 					 List * mergeinfo_list)
 {
-	Path		   *outerpath = (Path *) NULL;
-	List		   *jp_list = NIL;
-	List		   *temp_node = NIL;
-	List		   *merge_pathkeys = NIL;
-	Path		   *nestinnerpath = (Path *) NULL;
-	List		   *paths = NIL;
-	List		   *i = NIL;
-	PathOrder	   *outerpath_ordering = NULL;
+	Path	   *outerpath = (Path *) NULL;
+	List	   *jp_list = NIL;
+	List	   *temp_node = NIL;
+	List	   *merge_pathkeys = NIL;
+	Path	   *nestinnerpath = (Path *) NULL;
+	List	   *paths = NIL;
+	List	   *i = NIL;
+	PathOrder  *outerpath_ordering = NULL;
 
 	foreach(i, outerpath_list)
 	{
-		List		   *clauses = NIL;
-		List		   *matchedJoinKeys = NIL;
-		List		   *matchedJoinClauses = NIL;
-		MInfo		   *xmergeinfo = (MInfo *) NULL;
+		List	   *clauses = NIL;
+		List	   *matchedJoinKeys = NIL;
+		List	   *matchedJoinClauses = NIL;
+		MInfo	   *xmergeinfo = (MInfo *) NULL;
 
 		outerpath = (Path *) lfirst(i);
 
@@ -360,8 +360,8 @@ match_unsorted_outer(Rel * joinrel,
 
 		if (clauses)
 		{
-			List		   *keys = xmergeinfo->jmethod.jmkeys;
-			List		   *clauses = xmergeinfo->jmethod.clauses;
+			List	   *keys = xmergeinfo->jmethod.jmkeys;
+			List	   *clauses = xmergeinfo->jmethod.clauses;
 
 			matchedJoinKeys =
 				match_pathkeys_joinkeys(outerpath->keys,
@@ -397,9 +397,9 @@ match_unsorted_outer(Rel * joinrel,
 
 		if (clauses && matchedJoinKeys)
 		{
-			bool			path_is_cheaper_than_sort;
-			List		   *varkeys = NIL;
-			Path		   *mergeinnerpath =
+			bool		path_is_cheaper_than_sort;
+			List	   *varkeys = NIL;
+			Path	   *mergeinnerpath =
 			match_paths_joinkeys(matchedJoinKeys,
 								 outerpath_ordering,
 								 innerrel->pathlist,
@@ -484,27 +484,27 @@ match_unsorted_outer(Rel * joinrel,
  *
  * Returns a list of possible merge paths.
  */
-static List    *
+static List *
 match_unsorted_inner(Rel * joinrel,
 					 Rel * outerrel,
 					 Rel * innerrel,
 					 List * innerpath_list,
 					 List * mergeinfo_list)
 {
-	Path		   *innerpath = (Path *) NULL;
-	List		   *mp_list = NIL;
-	List		   *temp_node = NIL;
-	PathOrder	   *innerpath_ordering = NULL;
-	Cost			temp1 = 0.0;
-	bool			temp2 = false;
-	List		   *i = NIL;
+	Path	   *innerpath = (Path *) NULL;
+	List	   *mp_list = NIL;
+	List	   *temp_node = NIL;
+	PathOrder  *innerpath_ordering = NULL;
+	Cost		temp1 = 0.0;
+	bool		temp2 = false;
+	List	   *i = NIL;
 
 	foreach(i, innerpath_list)
 	{
-		MInfo		   *xmergeinfo = (MInfo *) NULL;
-		List		   *clauses = NIL;
-		List		   *matchedJoinKeys = NIL;
-		List		   *matchedJoinClauses = NIL;
+		MInfo	   *xmergeinfo = (MInfo *) NULL;
+		List	   *clauses = NIL;
+		List	   *matchedJoinKeys = NIL;
+		List	   *matchedJoinClauses = NIL;
 
 		innerpath = (Path *) lfirst(i);
 
@@ -524,8 +524,8 @@ match_unsorted_inner(Rel * joinrel,
 
 		if (clauses)
 		{
-			List		   *keys = xmergeinfo->jmethod.jmkeys;
-			List		   *cls = xmergeinfo->jmethod.clauses;
+			List	   *keys = xmergeinfo->jmethod.jmkeys;
+			List	   *cls = xmergeinfo->jmethod.clauses;
 
 			matchedJoinKeys =
 				match_pathkeys_joinkeys(innerpath->keys,
@@ -550,11 +550,11 @@ match_unsorted_inner(Rel * joinrel,
 
 			if (temp2)
 			{
-				List		   *outerkeys =
+				List	   *outerkeys =
 				extract_path_keys(matchedJoinKeys,
 								  outerrel->targetlist,
 								  OUTER);
-				List		   *merge_pathkeys =
+				List	   *merge_pathkeys =
 				new_join_pathkeys(outerkeys,
 								  joinrel->targetlist,
 								  clauses);
@@ -582,12 +582,12 @@ match_unsorted_inner(Rel * joinrel,
 
 }
 
-static			bool
+static bool
 EnoughMemoryForHashjoin(Rel * hashrel)
 {
-	int				ntuples;
-	int				tupsize;
-	int				pages;
+	int			ntuples;
+	int			tupsize;
+	int			pages;
 
 	ntuples = hashrel->size;
 	if (ntuples == 0)
@@ -616,19 +616,19 @@ EnoughMemoryForHashjoin(Rel * hashrel)
  *
  * Returns a list of hashjoin paths.
  */
-static List    *
+static List *
 hash_inner_and_outer(Rel * joinrel,
 					 Rel * outerrel,
 					 Rel * innerrel,
 					 List * hashinfo_list)
 {
-	HInfo		   *xhashinfo = (HInfo *) NULL;
-	List		   *hjoin_list = NIL;
-	HashPath	   *temp_node = (HashPath *) NULL;
-	List		   *i = NIL;
-	List		   *outerkeys = NIL;
-	List		   *innerkeys = NIL;
-	List		   *hash_pathkeys = NIL;
+	HInfo	   *xhashinfo = (HInfo *) NULL;
+	List	   *hjoin_list = NIL;
+	HashPath   *temp_node = (HashPath *) NULL;
+	List	   *i = NIL;
+	List	   *outerkeys = NIL;
+	List	   *innerkeys = NIL;
+	List	   *hash_pathkeys = NIL;
 
 	foreach(i, hashinfo_list)
 	{

@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.5 1997/09/07 04:56:39 momjian Exp $
+ * $Id: pg_amproc.h,v 1.6 1997/09/08 02:34:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -34,10 +34,10 @@
  */
 CATALOG(pg_amproc)
 {
-	Oid				amid;
-	Oid				amopclaid;
-	Oid				amproc;
-	int2			amprocnum;
+	Oid			amid;
+	Oid			amopclaid;
+	Oid			amproc;
+	int2		amprocnum;
 } FormData_pg_amproc;
 
 /* ----------------

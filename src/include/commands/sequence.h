@@ -25,9 +25,9 @@
 #define SEQ_COL_FIRSTCOL		SEQ_COL_NAME
 #define SEQ_COL_LASTCOL			SEQ_COL_CALLED
 
-extern void		DefineSequence(CreateSeqStmt * stmt);
-extern int4		nextval(struct varlena * seqname);
-extern int4		currval(struct varlena * seqname);
-extern void		CloseSequences(void);
+extern void DefineSequence(CreateSeqStmt * stmt);
+extern int4 nextval(struct varlena * seqname);
+extern int4 currval(struct varlena * seqname);
+extern void CloseSequences(void);
 
 #endif							/* SEQUENCE_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.6 1997/09/07 05:02:40 momjian Exp $
+ * $Id: mcxt.h,v 1.7 1997/09/08 02:39:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,16 +37,16 @@ extern MemoryContext TopMemoryContext;
 /*
  * prototypes for functions in mcxt.c
  */
-extern void		EnableMemoryContext(bool on);
-extern Pointer	MemoryContextAlloc(MemoryContext context, Size size);
-extern Pointer
+extern void EnableMemoryContext(bool on);
+extern Pointer MemoryContextAlloc(MemoryContext context, Size size);
+extern		Pointer
 MemoryContextRealloc(MemoryContext context,
 					 Pointer pointer,
 					 Size size);
-extern void		MemoryContextFree(MemoryContext context, Pointer pointer);
+extern void MemoryContextFree(MemoryContext context, Pointer pointer);
 extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
 extern GlobalMemory CreateGlobalMemory(char *name);
-extern void		GlobalMemoryDestroy(GlobalMemory context);
+extern void GlobalMemoryDestroy(GlobalMemory context);
 
 
 #endif							/* MCXT_H */

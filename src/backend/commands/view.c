@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.9 1997/09/07 04:41:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.10 1997/09/08 02:22:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,13 +44,13 @@
 static void
 DefineVirtualRelation(char *relname, List * tlist)
 {
-	CreateStmt		createStmt;
-	List		   *attrList,
-				   *t;
-	TargetEntry    *entry;
-	Resdom		   *res;
-	char		   *resname;
-	char		   *restypename;
+	CreateStmt	createStmt;
+	List	   *attrList,
+			   *t;
+	TargetEntry *entry;
+	Resdom	   *res;
+	char	   *resname;
+	char	   *restypename;
 
 	/*
 	 * create a list with one entry per attribute of this relation. Each
@@ -63,8 +63,8 @@ DefineVirtualRelation(char *relname, List * tlist)
 	{
 		foreach(t, tlist)
 		{
-			ColumnDef	   *def = makeNode(ColumnDef);
-			TypeName	   *typename;
+			ColumnDef  *def = makeNode(ColumnDef);
+			TypeName   *typename;
 
 			/*
 			 * find the names of the attribute & its type
@@ -123,7 +123,7 @@ DefineVirtualRelation(char *relname, List * tlist)
  * XXX it also means viewName cannot be 16 chars long! - ay 11/94
  *------------------------------------------------------------------
  */
-char		   *
+char	   *
 MakeRetrieveViewRuleName(char *viewName)
 {
 /*
@@ -135,7 +135,7 @@ MakeRetrieveViewRuleName(char *viewName)
 	namestrcpy(rule_name, buf);
 */
 
-	char		   *buf;
+	char	   *buf;
 
 	buf = palloc(strlen(viewName) + 5);
 	sprintf(buf, "_RET%s", viewName);
@@ -145,9 +145,9 @@ MakeRetrieveViewRuleName(char *viewName)
 static RuleStmt *
 FormViewRetrieveRule(char *viewName, Query * viewParse)
 {
-	RuleStmt	   *rule;
-	char		   *rname;
-	Attr		   *attr;
+	RuleStmt   *rule;
+	char	   *rname;
+	Attr	   *attr;
 
 	/*
 	 * Create a RuleStmt that corresponds to the suitable rewrite rule
@@ -172,12 +172,12 @@ FormViewRetrieveRule(char *viewName, Query * viewParse)
 static void
 DefineViewRules(char *viewName, Query * viewParse)
 {
-	RuleStmt	   *retrieve_rule = NULL;
+	RuleStmt   *retrieve_rule = NULL;
 
 #ifdef NOTYET
-	RuleStmt	   *replace_rule = NULL;
-	RuleStmt	   *append_rule = NULL;
-	RuleStmt	   *delete_rule = NULL;
+	RuleStmt   *replace_rule = NULL;
+	RuleStmt   *append_rule = NULL;
+	RuleStmt   *delete_rule = NULL;
 
 #endif
 
@@ -226,10 +226,10 @@ DefineViewRules(char *viewName, Query * viewParse)
 static void
 UpdateRangeTableOfViewParse(char *viewName, Query * viewParse)
 {
-	List		   *old_rt;
-	List		   *new_rt;
-	RangeTblEntry  *rt_entry1,
-				   *rt_entry2;
+	List	   *old_rt;
+	List	   *new_rt;
+	RangeTblEntry *rt_entry1,
+			   *rt_entry2;
 
 	/*
 	 * first offset all var nodes by 2
@@ -277,7 +277,7 @@ UpdateRangeTableOfViewParse(char *viewName, Query * viewParse)
 void
 DefineView(char *viewName, Query * viewParse)
 {
-	List		   *viewTlist;
+	List	   *viewTlist;
 
 	viewTlist = viewParse->targetList;
 
@@ -313,7 +313,7 @@ DefineView(char *viewName, Query * viewParse)
 void
 RemoveView(char *viewName)
 {
-	char		   *rname;
+	char	   *rname;
 
 	/*
 	 * first remove all the "view" rules... Currently we only have one!

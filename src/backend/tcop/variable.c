@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.14 1997/09/07 04:49:37 momjian Exp $
+ * $Id: variable.c,v 1.15 1997/09/08 02:29:52 momjian Exp $
  *
  */
 
@@ -15,11 +15,11 @@
 #include "utils/builtins.h"
 #include "optimizer/internal.h"
 
-extern Cost		_cpu_page_wight_;
-extern Cost		_cpu_index_page_wight_;
-extern bool		_use_geqo_;
-extern int32	_use_geqo_rels_;
-extern bool		_use_right_sided_plans_;
+extern Cost _cpu_page_wight_;
+extern Cost _cpu_index_page_wight_;
+extern bool _use_geqo_;
+extern int32 _use_geqo_rels_;
+extern bool _use_right_sided_plans_;
 
 /*-----------------------------------------------------------------------*/
 #if USE_EURODATES
@@ -38,8 +38,8 @@ struct PGVariables PGVariables =
 static const char *
 get_token(char **tok, char **val, const char *str)
 {
-	const char	   *start;
-	int				len = 0;
+	const char *start;
+	int			len = 0;
 
 	*tok = NULL;
 	if (val != NULL)
@@ -157,9 +157,9 @@ reset_null(const char *value)
 static bool
 parse_geqo(const char *value)
 {
-	const char	   *rest;
-	char		   *tok,
-				   *val;
+	const char *rest;
+	char	   *tok,
+			   *val;
 
 	rest = get_token(&tok, &val, value);
 	if (tok == NULL)
@@ -170,7 +170,7 @@ parse_geqo(const char *value)
 
 	if (strcasecmp(tok, "on") == 0)
 	{
-		int32			geqo_rels = GEQO_RELS;
+		int32		geqo_rels = GEQO_RELS;
 
 		if (val != NULL)
 		{
@@ -259,7 +259,7 @@ reset_r_plans()
 static bool
 parse_cost_heap(const char *value)
 {
-	float32			res = float4in((char *) value);
+	float32		res = float4in((char *) value);
 
 	_cpu_page_wight_ = *res;
 
@@ -284,7 +284,7 @@ reset_cost_heap()
 static bool
 parse_cost_index(const char *value)
 {
-	float32			res = float4in((char *) value);
+	float32		res = float4in((char *) value);
 
 	_cpu_index_page_wight_ = *res;
 
@@ -309,9 +309,9 @@ reset_cost_index()
 static bool
 parse_date(const char *value)
 {
-	char		   *tok;
-	int				dcnt = 0,
-					ecnt = 0;
+	char	   *tok;
+	int			dcnt = 0,
+				ecnt = 0;
 
 	while ((value = get_token(&tok, NULL, value)) != 0)
 	{
@@ -365,20 +365,20 @@ parse_date(const char *value)
 static bool
 show_date()
 {
-	char			buf[64];
+	char		buf[64];
 
 	strcpy(buf, "DateStyle is ");
 	switch (DateStyle)
 	{
-	case USE_ISO_DATES:
-		strcat(buf, "ISO");
-		break;
-	case USE_SQL_DATES:
-		strcat(buf, "SQL");
-		break;
-	default:
-		strcat(buf, "Postgres");
-		break;
+		case USE_ISO_DATES:
+			strcat(buf, "ISO");
+			break;
+		case USE_SQL_DATES:
+			strcat(buf, "SQL");
+			break;
+		default:
+			strcat(buf, "Postgres");
+			break;
 	};
 	strcat(buf, " with ");
 	strcat(buf, ((EuroDates) ? "European" : "US (NonEuropean)"));
@@ -401,11 +401,11 @@ reset_date()
 /*-----------------------------------------------------------------------*/
 struct VariableParsers
 {
-	const char	   *name;
-					bool(*parser) (const char *);
-					bool(*show) ();
-					bool(*reset) ();
-}				VariableParsers[] =
+	const char *name;
+				bool(*parser) (const char *);
+				bool(*show) ();
+				bool(*reset) ();
+}			VariableParsers[] =
 
 {
 	{

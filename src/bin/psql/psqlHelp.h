@@ -5,16 +5,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.23 1997/09/07 04:55:23 momjian Exp $
+ * $Id: psqlHelp.h,v 1.24 1997/09/08 02:33:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 struct _helpStruct
 {
-	char		   *cmd;		/* the command name */
-	char		   *help;		/* the help associated with it */
-	char		   *syntax;		/* the syntax associated with it */
+	char	   *cmd;			/* the command name */
+	char	   *help;			/* the help associated with it */
+	char	   *syntax;			/* the syntax associated with it */
 };
 
 static struct _helpStruct QL_HELP[] = {

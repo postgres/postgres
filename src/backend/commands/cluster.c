@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.14 1997/09/07 04:40:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.15 1997/09/08 02:21:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,8 @@
 #endif							/* !NO_SECURITY */
 
 static Relation copy_heap(Oid OIDOldHeap);
-static void		copy_index(Oid OIDOldIndex, Oid OIDNewHeap);
-static void		rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
+static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap);
+static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
 /*
  * cluster
@@ -82,18 +82,18 @@ static void		rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 void
 cluster(char oldrelname[], char oldindexname[])
 {
-	Oid				OIDOldHeap,
-					OIDOldIndex,
-					OIDNewHeap;
+	Oid			OIDOldHeap,
+				OIDOldIndex,
+				OIDNewHeap;
 
-	Relation		OldHeap,
-					OldIndex;
-	Relation		NewHeap;
+	Relation	OldHeap,
+				OldIndex;
+	Relation	NewHeap;
 
-	char			NewIndexName[NAMEDATALEN];
-	char			NewHeapName[NAMEDATALEN];
-	char			saveoldrelname[NAMEDATALEN];
-	char			saveoldindexname[NAMEDATALEN];
+	char		NewIndexName[NAMEDATALEN];
+	char		NewHeapName[NAMEDATALEN];
+	char		saveoldrelname[NAMEDATALEN];
+	char		saveoldindexname[NAMEDATALEN];
 
 
 	/*
@@ -189,15 +189,15 @@ cluster(char oldrelname[], char oldindexname[])
 	StartTransactionCommand();
 }
 
-static			Relation
+static Relation
 copy_heap(Oid OIDOldHeap)
 {
-	char			NewName[NAMEDATALEN];
-	TupleDesc		OldHeapDesc,
-					tupdesc;
-	Oid				OIDNewHeap;
-	Relation		NewHeap,
-					OldHeap;
+	char		NewName[NAMEDATALEN];
+	TupleDesc	OldHeapDesc,
+				tupdesc;
+	Oid			OIDNewHeap;
+	Relation	NewHeap,
+				OldHeap;
 
 	/*
 	 * Create a new heap relation with a temporary name, which has the
@@ -235,18 +235,18 @@ copy_heap(Oid OIDOldHeap)
 static void
 copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 {
-	Relation		OldIndex,
-					NewHeap;
-	HeapTuple		Old_pg_index_Tuple,
-					Old_pg_index_relation_Tuple,
-					pg_proc_Tuple;
-	IndexTupleForm	Old_pg_index_Form;
-	Form_pg_class	Old_pg_index_relation_Form;
-	Form_pg_proc	pg_proc_Form;
-	char		   *NewIndexName;
-	AttrNumber	   *attnumP;
-	int				natts;
-	FuncIndexInfo  *finfo;
+	Relation	OldIndex,
+				NewHeap;
+	HeapTuple	Old_pg_index_Tuple,
+				Old_pg_index_relation_Tuple,
+				pg_proc_Tuple;
+	IndexTupleForm Old_pg_index_Form;
+	Form_pg_class Old_pg_index_relation_Form;
+	Form_pg_proc pg_proc_Form;
+	char	   *NewIndexName;
+	AttrNumber *attnumP;
+	int			natts;
+	FuncIndexInfo *finfo;
 
 	NewHeap = heap_open(OIDNewHeap);
 	OldIndex = index_open(OIDOldIndex);
@@ -330,15 +330,15 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 static void
 rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 {
-	Relation		LocalNewHeap,
-					LocalOldHeap,
-					LocalOldIndex;
-	IndexScanDesc	ScanDesc;
+	Relation	LocalNewHeap,
+				LocalOldHeap,
+				LocalOldIndex;
+	IndexScanDesc ScanDesc;
 	RetrieveIndexResult ScanResult;
-	ItemPointer		HeapTid;
-	HeapTuple		LocalHeapTuple;
-	Buffer			LocalBuffer;
-	Oid				OIDNewHeapInsert;
+	ItemPointer HeapTid;
+	HeapTuple	LocalHeapTuple;
+	Buffer		LocalBuffer;
+	Oid			OIDNewHeapInsert;
 
 	/*
 	 * Open the relations I need. Scan through the OldHeap on the OldIndex

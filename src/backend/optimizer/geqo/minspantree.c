@@ -7,7 +7,7 @@
 *
 *
 * IDENTIFICATION
-*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.2 1997/09/07 04:43:25 momjian Exp $
+*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.3 1997/09/08 02:24:09 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -43,35 +43,35 @@
 void
 minspantree(Query * root, List * join_rels, Rel * garel)
 {
-	int				number_of_rels = length(root->base_relation_list_);
-	int				number_of_joins = length(join_rels);
-	int			   *connectto;
+	int			number_of_rels = length(root->base_relation_list_);
+	int			number_of_joins = length(join_rels);
+	int		   *connectto;
 
 	/* connectto[i] = 0, if node i is already connected  */
 	/* to the tree, otherwise connectto[i] is the node	 */
 	/* nearest to i, which is already connected.	   */
 
-	Cost		   *disttoconnect;		/* disttoconnect[i]: distance
-										 * between i and connectto[i] */
+	Cost	   *disttoconnect;	/* disttoconnect[i]: distance between i
+								 * and connectto[i] */
 
-	Cost			dist,		/* temporary */
-					mindist;	/* minimal distance between connected and
+	Cost		dist,			/* temporary */
+				mindist;		/* minimal distance between connected and
 								 * unconnected node */
 
-	Cost			mstlength = 0.0;	/* the total length of the minimum
-										 * spanning tree */
+	Cost		mstlength = 0.0;/* the total length of the minimum
+								 * spanning tree */
 
-	int				count;
-	int				n,			/* newly attached node */
-					nextn,		/* next node to be attached */
-					tempn;
+	int			count;
+	int			n,				/* newly attached node */
+				nextn,			/* next node to be attached */
+				tempn;
 
-	int				i,
-					id1,
-					id2;
-	List		   *r = NIL;
-	Rel			   *joinrel = NULL;
-	Rel			  **tmprel_array;
+	int			i,
+				id1,
+				id2;
+	List	   *r = NIL;
+	Rel		   *joinrel = NULL;
+	Rel		  **tmprel_array;
 
 
 	/* allocate memory for matrix tmprel_array[x][y] */
@@ -113,9 +113,9 @@ minspantree(Query * root, List * join_rels, Rel * garel)
 
 	else if (number_of_joins == 3)
 	{
-		Rel			   *rel12 = (Rel *) & tmprel_array[1][2];
-		Rel			   *rel13 = (Rel *) & tmprel_array[1][3];
-		Rel			   *rel23 = (Rel *) & tmprel_array[2][3];
+		Rel		   *rel12 = (Rel *) & tmprel_array[1][2];
+		Rel		   *rel13 = (Rel *) & tmprel_array[1][3];
+		Rel		   *rel23 = (Rel *) & tmprel_array[2][3];
 
 		if (rel12->cheapestpath->path_cost > rel13->cheapestpath->path_cost)
 		{

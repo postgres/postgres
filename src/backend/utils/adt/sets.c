@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.6 1997/09/07 04:50:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.7 1997/09/08 02:31:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,20 +42,20 @@ extern CommandDest whereToSendOutput;	/* defined in tcop/postgres.c */
 Oid
 SetDefine(char *querystr, char *typename)
 {
-	Oid				setoid;
-	char		   *procname = GENERICSETNAME;
-	char		   *fileName = "-";
-	char			realprocname[16];
-	HeapTuple		tup,
-					newtup = NULL;
-	Form_pg_proc	proc;
-	Relation		procrel;
-	int				i;
-	Datum			replValue[Natts_pg_proc];
-	char			replNull[Natts_pg_proc];
-	char			repl[Natts_pg_proc];
-	HeapScanDesc	pg_proc_scan;
-	Buffer			buffer;
+	Oid			setoid;
+	char	   *procname = GENERICSETNAME;
+	char	   *fileName = "-";
+	char		realprocname[16];
+	HeapTuple	tup,
+				newtup = NULL;
+	Form_pg_proc proc;
+	Relation	procrel;
+	int			i;
+	Datum		replValue[Natts_pg_proc];
+	char		replNull[Natts_pg_proc];
+	char		repl[Natts_pg_proc];
+	HeapScanDesc pg_proc_scan;
+	Buffer		buffer;
 	ItemPointerData ipdata;
 
 	static ScanKeyData oidKey[1] = {
@@ -149,7 +149,7 @@ SetDefine(char *querystr, char *typename)
 
 		if (RelationGetRelationTupleForm(procrel)->relhasindex)
 		{
-			Relation		idescs[Num_pg_proc_indices];
+			Relation	idescs[Num_pg_proc_indices];
 
 			CatalogOpenIndices(Num_pg_proc_indices, Name_pg_proc_indices, idescs);
 			CatalogIndexInsert(idescs, Num_pg_proc_indices, procrel, newtup);

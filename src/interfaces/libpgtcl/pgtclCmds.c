@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.14 1997/09/07 05:03:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.15 1997/09/08 02:40:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +41,9 @@
 static inline char *
 translate_escape(char *p, int isArray)
 {
-	register char	c,
-				   *q,
-				   *s;
+	register char c,
+			   *q,
+			   *s;
 
 #ifdef TCL_ARRAYS_DEBUG_ESCAPE
 	printf("   escape = '%s'\n", p);
@@ -52,81 +52,82 @@ translate_escape(char *p, int isArray)
 	s = p + 2;
 	switch (c = *(p + 1))
 	{
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-		c = DIGIT(c);
-		if (ISOCTAL(*s))
-		{
-			c = (c << 3) + DIGIT(*s++);
-		}
-		if (ISOCTAL(*s))
-		{
-			c = (c << 3) + DIGIT(*s++);
-		}
-		*p = c;
-		break;
-	case 'b':
-		*p = '\b';
-		break;
-	case 'f':
-		*p = '\f';
-		break;
-	case 'n':
-		*p = '\n';
-		break;
-	case 'r':
-		*p = '\r';
-		break;
-	case 't':
-		*p = '\t';
-		break;
-	case 'v':
-		*p = '\v';
-		break;
-	case '\\':
-	case '{':
-	case '}':
-	case '"':
-
-		/*
-		 * Backslahes, curly braces and double-quotes are left escaped if
-		 * they appear inside an array. They will be unescaped by Tcl in
-		 * Tcl_AppendElement. The buffer position is advanced by 1 so that
-		 * the this character is not processed again by the caller.
-		 */
-		if (isArray)
-		{
-			return p + 1;
-		}
-		else
-		{
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+			c = DIGIT(c);
+			if (ISOCTAL(*s))
+			{
+				c = (c << 3) + DIGIT(*s++);
+			}
+			if (ISOCTAL(*s))
+			{
+				c = (c << 3) + DIGIT(*s++);
+			}
 			*p = c;
-		}
-		break;
-	case '\0':
+			break;
+		case 'b':
+			*p = '\b';
+			break;
+		case 'f':
+			*p = '\f';
+			break;
+		case 'n':
+			*p = '\n';
+			break;
+		case 'r':
+			*p = '\r';
+			break;
+		case 't':
+			*p = '\t';
+			break;
+		case 'v':
+			*p = '\v';
+			break;
+		case '\\':
+		case '{':
+		case '}':
+		case '"':
 
-		/*
-		 * This means a backslash at the end of the string. It should
-		 * never happen but in that case replace the \ with a \0 but don't
-		 * shift the rest of the buffer so that the caller can see the end
-		 * of the string and terminate.
-		 */
-		*p = c;
-		return p;
-		break;
-	default:
+			/*
+			 * Backslahes, curly braces and double-quotes are left escaped
+			 * if they appear inside an array. They will be unescaped by
+			 * Tcl in Tcl_AppendElement. The buffer position is advanced
+			 * by 1 so that the this character is not processed again by
+			 * the caller.
+			 */
+			if (isArray)
+			{
+				return p + 1;
+			}
+			else
+			{
+				*p = c;
+			}
+			break;
+		case '\0':
 
-		/*
-		 * Default case, store the escaped character over the backslash
-		 * and shift the buffer over itself.
-		 */
-		*p = c;
+			/*
+			 * This means a backslash at the end of the string. It should
+			 * never happen but in that case replace the \ with a \0 but
+			 * don't shift the rest of the buffer so that the caller can
+			 * see the end of the string and terminate.
+			 */
+			*p = c;
+			return p;
+			break;
+		default:
+
+			/*
+			 * Default case, store the escaped character over the
+			 * backslash and shift the buffer over itself.
+			 */
+			*p = c;
 	}
 	/* Shift the rest of the buffer over itself after the current char */
 	q = p + 1;
@@ -149,12 +150,12 @@ translate_escape(char *p, int isArray)
  * representation of a postgres array.
  */
 
-static char    *
+static char *
 tcl_value(char *value)
 {
-	int				literal,
-					last;
-	register char  *p;
+	int			literal,
+				last;
+	register char *p;
 
 	if (!value)
 	{
@@ -179,12 +180,12 @@ tcl_value(char *value)
 				/* We are at the list level, look for ',' and '"' */
 				switch (*p)
 				{
-				case '"':		/* beginning of literal */
-					literal = 1;
-					break;
-				case ',':		/* replace the ',' with space */
-					*p = ' ';
-					break;
+					case '"':	/* beginning of literal */
+						literal = 1;
+						break;
+					case ',':	/* replace the ',' with space */
+						*p = ' ';
+						break;
 				}
 			}
 			else
@@ -192,16 +193,16 @@ tcl_value(char *value)
 				/* We are inside a C string */
 				switch (*p)
 				{
-				case '"':		/* end of literal */
-					literal = 0;
-					break;
-				case '\\':
+					case '"':	/* end of literal */
+						literal = 0;
+						break;
+					case '\\':
 
-					/*
-					 * escape sequence, translate it
-					 */
-					p = translate_escape(p, 1);
-					break;
+						/*
+						 * escape sequence, translate it
+						 */
+						p = translate_escape(p, 1);
+						break;
 				}
 			}
 			if (!*p)
@@ -255,7 +256,7 @@ int
 Pg_conndefaults(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 {
 	PQconninfoOption *option;
-	char			buf[8192];
+	char		buf[8192];
 
 	Tcl_ResetResult(interp);
 	for (option = PQconndefaults(); option->keyword != NULL; option++)
@@ -292,14 +293,14 @@ Pg_conndefaults(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 int
 Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	char		   *pghost = NULL;
-	char		   *pgtty = NULL;
-	char		   *pgport = NULL;
-	char		   *pgoptions = NULL;
-	char		   *dbName;
-	int				i;
-	PGconn		   *conn;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	char	   *pghost = NULL;
+	char	   *pgtty = NULL;
+	char	   *pgport = NULL;
+	char	   *pgoptions = NULL;
+	char	   *dbName;
+	int			i;
+	PGconn	   *conn;
 
 	if (argc == 1)
 	{
@@ -404,8 +405,8 @@ Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 int
 Pg_disconnect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
 
 	if (argc != 2)
 	{
@@ -439,9 +440,9 @@ Pg_disconnect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 int
 Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	PGresult	   *result;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	PGresult   *result;
 
 	if (argc != 3)
 	{
@@ -507,15 +508,15 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 int
 Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGresult	   *result;
-	char		   *opt;
-	int				i;
-	int				tupno;
-	char			prearrayInd[MAX_MESSAGE_LEN];
-	char			arrayInd[MAX_MESSAGE_LEN];
-	char		   *appendstr;
-	char		   *arrVar;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGresult   *result;
+	char	   *opt;
+	int			i;
+	int			tupno;
+	char		prearrayInd[MAX_MESSAGE_LEN];
+	char		arrayInd[MAX_MESSAGE_LEN];
+	char	   *appendstr;
+	char	   *arrVar;
 
 	if (argc != 3 && argc != 4 && argc != 5)
 	{
@@ -669,7 +670,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	}
 	else if (strcmp(opt, "-lAttributes") == 0)
 	{
-		char			buf[512];
+		char		buf[512];
 
 		Tcl_ResetResult(interp);
 		for (i = 0; i < PQnfields(result); i++)
@@ -726,11 +727,11 @@ Pg_result_errReturn:
 int
 Pg_lo_open(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	int				lobjId;
-	int				mode;
-	int				fd;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	int			lobjId;
+	int			mode;
+	int			fd;
 
 	if (argc != 4)
 	{
@@ -755,33 +756,33 @@ Pg_lo_open(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	}
 	switch (argv[3][0])
 	{
-	case 'r':
-	case 'R':
-		mode = INV_READ;
-		break;
-	case 'w':
-	case 'W':
-		mode = INV_WRITE;
-		break;
-	default:
-		Tcl_AppendResult(interp, "mode argument must be 'r', 'w', or 'rw'", 0);
-		return TCL_ERROR;
+		case 'r':
+		case 'R':
+			mode = INV_READ;
+			break;
+		case 'w':
+		case 'W':
+			mode = INV_WRITE;
+			break;
+		default:
+			Tcl_AppendResult(interp, "mode argument must be 'r', 'w', or 'rw'", 0);
+			return TCL_ERROR;
 	}
 	switch (argv[3][1])
 	{
-	case '\0':
-		break;
-	case 'r':
-	case 'R':
-		mode = mode & INV_READ;
-		break;
-	case 'w':
-	case 'W':
-		mode = mode & INV_WRITE;
-		break;
-	default:
-		Tcl_AppendResult(interp, "mode argument must be 'r', 'w', or 'rw'", 0);
-		return TCL_ERROR;
+		case '\0':
+			break;
+		case 'r':
+		case 'R':
+			mode = mode & INV_READ;
+			break;
+		case 'w':
+		case 'W':
+			mode = mode & INV_WRITE;
+			break;
+		default:
+			Tcl_AppendResult(interp, "mode argument must be 'r', 'w', or 'rw'", 0);
+			return TCL_ERROR;
 	}
 
 	fd = lo_open(conn, lobjId, mode);
@@ -800,9 +801,9 @@ Pg_lo_open(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 int
 Pg_lo_close(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	int				fd;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	int			fd;
 
 	if (argc != 3)
 	{
@@ -837,13 +838,13 @@ Pg_lo_close(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 int
 Pg_lo_read(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	int				fd;
-	int				nbytes = 0;
-	char		   *buf;
-	char		   *bufVar;
-	int				len;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	int			fd;
+	int			nbytes = 0;
+	char	   *buf;
+	char	   *bufVar;
+	int			len;
 
 	if (argc != 5)
 	{
@@ -892,12 +893,12 @@ Pg_lo_write
 int
 Pg_lo_write(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	char		   *buf;
-	int				fd;
-	int				nbytes = 0;
-	int				len;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	char	   *buf;
+	int			fd;
+	int			nbytes = 0;
+	int			len;
 
 	if (argc != 5)
 	{
@@ -943,12 +944,12 @@ whence can be either
 int
 Pg_lo_lseek(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	int				fd;
-	char		   *whenceStr;
-	int				offset,
-					whence;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	int			fd;
+	char	   *whenceStr;
+	int			offset,
+				whence;
 
 	if (argc != 5)
 	{
@@ -1006,11 +1007,11 @@ for now, we don't support any additional storage managers.
 int
 Pg_lo_creat(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	char		   *modeStr;
-	char		   *modeWord;
-	int				mode;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	char	   *modeStr;
+	char	   *modeWord;
+	int			mode;
 
 	if (argc != 3)
 	{
@@ -1086,9 +1087,9 @@ Pg_lo_tell
 int
 Pg_lo_tell(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	int				fd;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	int			fd;
 
 	if (argc != 3)
 	{
@@ -1123,10 +1124,10 @@ Pg_lo_unlink
 int
 Pg_lo_unlink(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	int				lobjId;
-	int				retval;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	int			lobjId;
+	int			retval;
 
 	if (argc != 3)
 	{
@@ -1169,10 +1170,10 @@ Pg_lo_import
 int
 Pg_lo_import(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	char		   *filename;
-	Oid				lobjId;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	char	   *filename;
+	Oid			lobjId;
 
 	if (argc != 3)
 	{
@@ -1212,11 +1213,11 @@ Pg_lo_export
 int
 Pg_lo_export(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	char		   *filename;
-	Oid				lobjId;
-	int				retval;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	char	   *filename;
+	Oid			lobjId;
+	int			retval;
 
 	if (argc != 4)
 	{
@@ -1268,20 +1269,20 @@ Pg_lo_export(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 int
 Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	PGconn		   *conn;
-	PGresult	   *result;
-	int				r;
-	size_t			tupno,
-					column,
-					ncols;
-	Tcl_DString		headers;
-	char			buffer[2048];
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	PGconn	   *conn;
+	PGresult   *result;
+	int			r;
+	size_t		tupno,
+				column,
+				ncols;
+	Tcl_DString headers;
+	char		buffer[2048];
 	struct
 	{
-		char		   *cname;
-		int				change;
-	}			   *info;
+		char	   *cname;
+		int			change;
+	}		   *info;
 
 	if (argc != 5)
 	{
@@ -1343,7 +1344,7 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 
 			if (r == TCL_ERROR)
 			{
-				char			msg[60];
+				char		msg[60];
 
 				sprintf(msg, "\n    (\"pg_select\" body line %d)",
 						interp->errorLine);
@@ -1363,13 +1364,13 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 int
 Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	int				new;
-	char		   *relname;
-	char		   *callback = NULL;
-	Tcl_HashEntry  *entry;
-	PGconn		   *conn;
-	PGresult	   *result;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	int			new;
+	char	   *relname;
+	char	   *callback = NULL;
+	Tcl_HashEntry *entry;
+	PGconn	   *conn;
+	PGresult   *result;
 
 	if ((argc < 3) || (argc > 4))
 	{
@@ -1404,7 +1405,7 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		if (new)
 		{
 			/* New callback, execute a listen command on the relation */
-			char		   *cmd = (char *) ckalloc((unsigned) (strlen(argv[2]) + 8));
+			char	   *cmd = (char *) ckalloc((unsigned) (strlen(argv[2]) + 8));
 
 			sprintf(cmd, "LISTEN %s", relname);
 			result = PQexec(conn, cmd);
@@ -1452,14 +1453,14 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 int
 Pg_notifies(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 {
-	Pg_clientData  *cd = (Pg_clientData *) cData;
-	int				count;
-	char			buff[12];
-	char		   *callback;
-	Tcl_HashEntry  *entry;
-	PGconn		   *conn;
-	PGresult	   *result;
-	PGnotify	   *notify;
+	Pg_clientData *cd = (Pg_clientData *) cData;
+	int			count;
+	char		buff[12];
+	char	   *callback;
+	Tcl_HashEntry *entry;
+	PGconn	   *conn;
+	PGresult   *result;
+	PGnotify   *notify;
 
 	if (argc != 2)
 	{

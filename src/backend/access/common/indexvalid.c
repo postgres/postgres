@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.15 1997/09/07 04:37:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.16 1997/09/08 02:19:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
  *				  index scan key qualification code
  * ----------------------------------------------------------------
  */
-int				NIndexTupleProcessed;
+int			NIndexTupleProcessed;
 
 /* ----------------
  *		index_keytest
@@ -40,9 +40,9 @@ index_keytest(IndexTuple tuple,
 			  int scanKeySize,
 			  ScanKey key)
 {
-	bool			isNull;
-	Datum			datum;
-	int				test;
+	bool		isNull;
+	Datum		datum;
+	int			test;
 
 	IncrIndexProcessed();
 

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.14 1997/09/07 04:57:00 momjian Exp $
+ * $Id: pg_operator.h,v 1.15 1997/09/08 02:35:20 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -35,22 +35,22 @@
  */
 CATALOG(pg_operator)
 {
-	NameData		oprname;
-	Oid				oprowner;
-	int2			oprprec;
-	char			oprkind;
-	bool			oprisleft;
-	bool			oprcanhash;
-	Oid				oprleft;
-	Oid				oprright;
-	Oid				oprresult;
-	Oid				oprcom;
-	Oid				oprnegate;
-	Oid				oprlsortop;
-	Oid				oprrsortop;
-	regproc			oprcode;
-	regproc			oprrest;
-	regproc			oprjoin;
+	NameData	oprname;
+	Oid			oprowner;
+	int2		oprprec;
+	char		oprkind;
+	bool		oprisleft;
+	bool		oprcanhash;
+	Oid			oprleft;
+	Oid			oprright;
+	Oid			oprresult;
+	Oid			oprcom;
+	Oid			oprnegate;
+	Oid			oprlsortop;
+	Oid			oprrsortop;
+	regproc		oprcode;
+	regproc		oprrest;
+	regproc		oprjoin;
 } FormData_pg_operator;
 
 /* ----------------

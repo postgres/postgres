@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.11 1997/09/07 05:02:46 momjian Exp $
+ * $Id: nabstime.h,v 1.12 1997/09/08 02:39:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,14 +23,14 @@
  *
  * ----------------------------------------------------------------
  */
-typedef int32	AbsoluteTime;
-typedef int32	RelativeTime;
+typedef int32 AbsoluteTime;
+typedef int32 RelativeTime;
 
 typedef struct
 {
-	int32			status;
-	AbsoluteTime	data[2];
-}				TimeIntervalData;
+	int32		status;
+	AbsoluteTime data[2];
+}			TimeIntervalData;
 typedef TimeIntervalData *TimeInterval;
 
 /*
@@ -102,22 +102,22 @@ extern AbsoluteTime GetCurrentAbsoluteTime(void);
  * nabstime.c prototypes
  */
 extern AbsoluteTime nabstimein(char *timestr);
-extern char    *nabstimeout(AbsoluteTime time);
+extern char *nabstimeout(AbsoluteTime time);
 
-extern bool		abstimeeq(AbsoluteTime t1, AbsoluteTime t2);
-extern bool		abstimene(AbsoluteTime t1, AbsoluteTime t2);
-extern bool		abstimelt(AbsoluteTime t1, AbsoluteTime t2);
-extern bool		abstimegt(AbsoluteTime t1, AbsoluteTime t2);
-extern bool		abstimele(AbsoluteTime t1, AbsoluteTime t2);
-extern bool		abstimege(AbsoluteTime t1, AbsoluteTime t2);
-extern bool		abstime_finite(AbsoluteTime time);
+extern bool abstimeeq(AbsoluteTime t1, AbsoluteTime t2);
+extern bool abstimene(AbsoluteTime t1, AbsoluteTime t2);
+extern bool abstimelt(AbsoluteTime t1, AbsoluteTime t2);
+extern bool abstimegt(AbsoluteTime t1, AbsoluteTime t2);
+extern bool abstimele(AbsoluteTime t1, AbsoluteTime t2);
+extern bool abstimege(AbsoluteTime t1, AbsoluteTime t2);
+extern bool abstime_finite(AbsoluteTime time);
 
 extern AbsoluteTime datetime_abstime(DateTime * datetime);
 extern DateTime *abstime_datetime(AbsoluteTime abstime);
 
-extern bool		AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2);
-extern bool		AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2);
+extern bool AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2);
+extern bool AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2);
 
-extern void		abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn);
+extern void abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn);
 
 #endif							/* NABSTIME_H */

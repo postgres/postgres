@@ -6,27 +6,27 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.2 1997/09/07 05:01:17 momjian Exp $
+ * $Id: itemid.h,v 1.3 1997/09/08 02:39:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITEMID_H
 #define ITEMID_H
 
-typedef uint16	ItemOffset;
-typedef uint16	ItemLength;
+typedef uint16 ItemOffset;
+typedef uint16 ItemLength;
 
-typedef bits16	ItemIdFlags;
+typedef bits16 ItemIdFlags;
 
 
 
 typedef struct ItemIdData
 {								/* line pointers */
-	unsigned		lp_off:13,	/* offset to find tup */
+	unsigned	lp_off:13,		/* offset to find tup */
 	/* can be reduced by 2 if necc. */
-					lp_flags:6, /* flags on tuple */
-					lp_len:13;	/* length of tuple */
-}				ItemIdData;
+				lp_flags:6,		/* flags on tuple */
+				lp_len:13;		/* length of tuple */
+}			ItemIdData;
 
 typedef struct ItemIdData *ItemId;
 

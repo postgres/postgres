@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.5 1997/09/07 04:42:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.6 1997/09/08 02:23:38 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -29,13 +29,13 @@
 #include "utils/elog.h"
 #include "utils/palloc.h"
 
-List		   *
+List	   *
 makeList(void *elem,...)
 {
-	va_list			args;
-	List		   *retval = NIL;
-	List		   *temp = NIL;
-	List		   *tempcons = NIL;
+	va_list		args;
+	List	   *retval = NIL;
+	List	   *temp = NIL;
+	List	   *tempcons = NIL;
 
 	va_start(args, elem);
 
@@ -57,62 +57,62 @@ makeList(void *elem,...)
 	return (retval);
 }
 
-List		   *
+List	   *
 lcons(void *obj, List * list)
 {
-	List		   *l = makeNode(List);
+	List	   *l = makeNode(List);
 
 	lfirst(l) = obj;
 	lnext(l) = list;
 	return l;
 }
 
-List		   *
+List	   *
 lconsi(int datum, List * list)
 {
-	List		   *l = makeNode(List);
+	List	   *l = makeNode(List);
 
 	lfirsti(l) = datum;
 	lnext(l) = list;
 	return l;
 }
 
-List		   *
+List	   *
 lappend(List * list, void *obj)
 {
 	return nconc(list, lcons(obj, NIL));
 }
 
-List		   *
+List	   *
 lappendi(List * list, int datum)
 {
 	return nconc(list, lconsi(datum, NIL));
 }
 
-Value		   *
+Value	   *
 makeInteger(long i)
 {
-	Value		   *v = makeNode(Value);
+	Value	   *v = makeNode(Value);
 
 	v->type = T_Integer;
 	v->val.ival = i;
 	return v;
 }
 
-Value		   *
+Value	   *
 makeFloat(double d)
 {
-	Value		   *v = makeNode(Value);
+	Value	   *v = makeNode(Value);
 
 	v->type = T_Float;
 	v->val.dval = d;
 	return v;
 }
 
-Value		   *
+Value	   *
 makeString(char *str)
 {
-	Value		   *v = makeNode(Value);
+	Value	   *v = makeNode(Value);
 
 	v->type = T_String;
 	v->val.str = str;
@@ -120,7 +120,7 @@ makeString(char *str)
 }
 
 /* n starts with 0 */
-void		   *
+void	   *
 nth(int n, List * l)
 {
 	/* XXX assume list is long enough */
@@ -161,7 +161,7 @@ set_nth(List * l, int n, void *elem)
 int
 length(List * l)
 {
-	int				i = 0;
+	int			i = 0;
 
 	while (l != NIL)
 	{
@@ -176,7 +176,7 @@ freeList(List * list)
 {
 	while (list != NIL)
 	{
-		List		   *l = list;
+		List	   *l = list;
 
 		list = lnext(list);
 		pfree(l);
@@ -186,12 +186,12 @@ freeList(List * list)
 /*
  * below are for backwards compatibility
  */
-List		   *
+List	   *
 append(List * l1, List * l2)
 {
-	List		   *newlist,
-				   *newlist2,
-				   *p;
+	List	   *newlist,
+			   *newlist2,
+			   *p;
 
 	if (l1 == NIL)
 		return copyObject(l2);
@@ -208,12 +208,12 @@ append(List * l1, List * l2)
 /*
  * below are for backwards compatibility
  */
-List		   *
+List	   *
 intAppend(List * l1, List * l2)
 {
-	List		   *newlist,
-				   *newlist2,
-				   *p;
+	List	   *newlist,
+			   *newlist2,
+			   *p;
 
 	if (l1 == NIL)
 		return listCopy(l2);
@@ -227,10 +227,10 @@ intAppend(List * l1, List * l2)
 	return newlist;
 }
 
-List		   *
+List	   *
 nconc(List * l1, List * l2)
 {
-	List		   *temp;
+	List	   *temp;
 
 	if (l1 == NIL)
 		return l2;
@@ -247,11 +247,11 @@ nconc(List * l1, List * l2)
 }
 
 
-List		   *
+List	   *
 nreverse(List * list)
 {
-	List		   *rlist = NIL;
-	List		   *p = NIL;
+	List	   *rlist = NIL;
+	List	   *p = NIL;
 
 	if (list == NULL)
 		return (NIL);
@@ -280,7 +280,7 @@ nreverse(List * list)
 bool
 same(List * foo, List * bar)
 {
-	List		   *temp = NIL;
+	List	   *temp = NIL;
 
 	if (foo == NULL)
 		return (bar == NULL);
@@ -299,12 +299,12 @@ same(List * foo, List * bar)
 
 }
 
-List		   *
+List	   *
 LispUnion(List * foo, List * bar)
 {
-	List		   *retval = NIL;
-	List		   *i = NIL;
-	List		   *j = NIL;
+	List	   *retval = NIL;
+	List	   *i = NIL;
+	List	   *j = NIL;
 
 	if (foo == NIL)
 		return (bar);			/* XXX - should be copy of bar */
@@ -331,12 +331,12 @@ LispUnion(List * foo, List * bar)
 	return (retval);
 }
 
-List		   *
+List	   *
 LispUnioni(List * foo, List * bar)
 {
-	List		   *retval = NIL;
-	List		   *i = NIL;
-	List		   *j = NIL;
+	List	   *retval = NIL;
+	List	   *i = NIL;
+	List	   *j = NIL;
 
 	if (foo == NIL)
 		return (bar);			/* XXX - should be copy of bar */
@@ -371,7 +371,7 @@ LispUnioni(List * foo, List * bar)
 bool
 member(void *foo, List * bar)
 {
-	List		   *i;
+	List	   *i;
 
 	foreach(i, bar)
 		if (equal((Node *) (lfirst(i)), (Node *) foo))
@@ -382,7 +382,7 @@ member(void *foo, List * bar)
 bool
 intMember(int foo, List * bar)
 {
-	List		   *i;
+	List	   *i;
 
 	foreach(i, bar)
 		if (foo == lfirsti(i))
@@ -394,12 +394,12 @@ intMember(int foo, List * bar)
  * lremove -
  *	  only does pointer comparisons. Removes 'elem' from the the linked list.
  */
-List		   *
+List	   *
 lremove(void *elem, List * list)
 {
-	List		   *l;
-	List		   *prev = NIL;
-	List		   *result = list;
+	List	   *l;
+	List	   *prev = NIL;
+	List	   *result = list;
 
 	foreach(l, list)
 	{
@@ -421,11 +421,11 @@ lremove(void *elem, List * list)
 	return result;
 }
 
-List		   *
+List	   *
 LispRemove(void *elem, List * list)
 {
-	List		   *temp = NIL;
-	List		   *prev = NIL;
+	List	   *temp = NIL;
+	List	   *prev = NIL;
 
 	if (equal(elem, lfirst(list)))
 		return lnext(list);
@@ -446,11 +446,11 @@ LispRemove(void *elem, List * list)
 }
 
 #ifdef NOT_USED
-List		   *
+List	   *
 intLispRemove(int elem, List * list)
 {
-	List		   *temp = NIL;
-	List		   *prev = NIL;
+	List	   *temp = NIL;
+	List	   *prev = NIL;
 
 	if (elem == lfirsti(list))
 		return lnext(list);
@@ -472,11 +472,11 @@ intLispRemove(int elem, List * list)
 
 #endif
 
-List		   *
+List	   *
 set_difference(List * list1, List * list2)
 {
-	List		   *temp1 = NIL;
-	List		   *result = NIL;
+	List	   *temp1 = NIL;
+	List	   *result = NIL;
 
 	if (list2 == NIL)
 		return (list1);
@@ -489,11 +489,11 @@ set_difference(List * list1, List * list2)
 	return (result);
 }
 
-List		   *
+List	   *
 set_differencei(List * list1, List * list2)
 {
-	List		   *temp1 = NIL;
-	List		   *result = NIL;
+	List	   *temp1 = NIL;
+	List	   *result = NIL;
 
 	if (list2 == NIL)
 		return (list1);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.10 1997/09/07 05:02:54 momjian Exp $
+ * $Id: rel.h,v 1.11 1997/09/08 02:39:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,47 +22,47 @@
 
 typedef struct Trigger
 {
-	char		   *tgname;
-	Oid				tgfoid;
-	func_ptr		tgfunc;
-	int16			tgtype;
-	int16			tgnargs;
-	int16			tgattr[8];
-	char		  **tgargs;
-}				Trigger;
+	char	   *tgname;
+	Oid			tgfoid;
+	func_ptr	tgfunc;
+	int16		tgtype;
+	int16		tgnargs;
+	int16		tgattr[8];
+	char	  **tgargs;
+}			Trigger;
 
 typedef struct TriggerDesc
 {
-	uint16			n_before_statement[4];
-	uint16			n_before_row[4];
-	uint16			n_after_row[4];
-	uint16			n_after_statement[4];
-	Trigger		  **tg_before_statement[4];
-	Trigger		  **tg_before_row[4];
-	Trigger		  **tg_after_row[4];
-	Trigger		  **tg_after_statement[4];
-	Trigger		   *triggers;
-}				TriggerDesc;
+	uint16		n_before_statement[4];
+	uint16		n_before_row[4];
+	uint16		n_after_row[4];
+	uint16		n_after_statement[4];
+	Trigger   **tg_before_statement[4];
+	Trigger   **tg_before_row[4];
+	Trigger   **tg_after_row[4];
+	Trigger   **tg_after_statement[4];
+	Trigger    *triggers;
+}			TriggerDesc;
 
 typedef struct RelationData
 {
-	File			rd_fd;		/* open file descriptor */
-	int				rd_nblocks; /* number of blocks in rel */
-	uint16			rd_refcnt;	/* reference count */
-	bool			rd_islocal; /* uses the local buffer mgr */
-	bool			rd_isnailed;/* rel is nailed in cache */
-	bool			rd_istemp;	/* rel is a temp rel */
-	bool			rd_tmpunlinked;		/* temp rel already unlinked */
-	Form_pg_am		rd_am;		/* AM tuple */
-	Form_pg_class	rd_rel;		/* RELATION tuple */
-	Oid				rd_id;		/* relations's object id */
-	Pointer			lockInfo;	/* ptr. to misc. info. */
-	TupleDesc		rd_att;		/* tuple desciptor */
-	RuleLock	   *rd_rules;	/* rewrite rules */
-	IndexStrategy	rd_istrat;
-	RegProcedure   *rd_support;
-	TriggerDesc    *trigdesc;
-}				RelationData;
+	File		rd_fd;			/* open file descriptor */
+	int			rd_nblocks;		/* number of blocks in rel */
+	uint16		rd_refcnt;		/* reference count */
+	bool		rd_islocal;		/* uses the local buffer mgr */
+	bool		rd_isnailed;	/* rel is nailed in cache */
+	bool		rd_istemp;		/* rel is a temp rel */
+	bool		rd_tmpunlinked; /* temp rel already unlinked */
+	Form_pg_am	rd_am;			/* AM tuple */
+	Form_pg_class rd_rel;		/* RELATION tuple */
+	Oid			rd_id;			/* relations's object id */
+	Pointer		lockInfo;		/* ptr. to misc. info. */
+	TupleDesc	rd_att;			/* tuple desciptor */
+	RuleLock   *rd_rules;		/* rewrite rules */
+	IndexStrategy rd_istrat;
+	RegProcedure *rd_support;
+	TriggerDesc *trigdesc;
+}			RelationData;
 
 typedef RelationData *Relation;
 
@@ -76,7 +76,7 @@ typedef Relation *RelationPtr;
 
 #define InvalidRelation ((Relation)NULL)
 
-typedef char	ArchiveMode;
+typedef char ArchiveMode;
 
 /*
  * RelationIsValid --

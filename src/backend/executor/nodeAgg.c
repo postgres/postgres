@@ -36,18 +36,18 @@
  */
 typedef struct AggFuncInfo
 {
-	Oid				xfn1_oid;
-	Oid				xfn2_oid;
-	Oid				finalfn_oid;
-	func_ptr		xfn1;
-	func_ptr		xfn2;
-	func_ptr		finalfn;
-	int				xfn1_nargs;
-	int				xfn2_nargs;
-	int				finalfn_nargs;
-}				AggFuncInfo;
+	Oid			xfn1_oid;
+	Oid			xfn2_oid;
+	Oid			finalfn_oid;
+	func_ptr	xfn1;
+	func_ptr	xfn2;
+	func_ptr	finalfn;
+	int			xfn1_nargs;
+	int			xfn2_nargs;
+	int			finalfn_nargs;
+}			AggFuncInfo;
 
-static Datum	aggGetAttr(TupleTableSlot * tuple, Aggreg * agg, bool * isNull);
+static Datum aggGetAttr(TupleTableSlot * tuple, Aggreg * agg, bool * isNull);
 
 
 /* ---------------------------------------
@@ -90,26 +90,26 @@ static Datum	aggGetAttr(TupleTableSlot * tuple, Aggreg * agg, bool * isNull);
 TupleTableSlot *
 ExecAgg(Agg * node)
 {
-	AggState	   *aggstate;
-	EState		   *estate;
-	Aggreg		  **aggregates;
-	Plan		   *outerPlan;
-	int				i,
-					nagg;
-	Datum		   *value1,
-				   *value2;
-	int			   *noInitValue;
-	AggFuncInfo    *aggFuncInfo;
-	long			nTuplesAgged = 0;
-	ExprContext    *econtext;
+	AggState   *aggstate;
+	EState	   *estate;
+	Aggreg	  **aggregates;
+	Plan	   *outerPlan;
+	int			i,
+				nagg;
+	Datum	   *value1,
+			   *value2;
+	int		   *noInitValue;
+	AggFuncInfo *aggFuncInfo;
+	long		nTuplesAgged = 0;
+	ExprContext *econtext;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
-	HeapTuple		oneTuple;
-	char		   *nulls;
-	bool			isDone;
-	bool			isNull = FALSE,
-					isNull1 = FALSE,
-					isNull2 = FALSE;
+	HeapTuple	oneTuple;
+	char	   *nulls;
+	bool		isDone;
+	bool		isNull = FALSE,
+				isNull1 = FALSE,
+				isNull2 = FALSE;
 
 	/* ---------------------
 	 *	get state info from node
@@ -143,19 +143,19 @@ ExecAgg(Agg * node)
 
 	for (i = 0; i < nagg; i++)
 	{
-		Aggreg		   *agg;
-		char		   *aggname;
-		HeapTuple		aggTuple;
+		Aggreg	   *agg;
+		char	   *aggname;
+		HeapTuple	aggTuple;
 		Form_pg_aggregate aggp;
-		Oid				xfn1_oid,
-						xfn2_oid,
-						finalfn_oid;
-		func_ptr		xfn1_ptr,
-						xfn2_ptr,
-						finalfn_ptr;
-		int				xfn1_nargs,
-						xfn2_nargs,
-						finalfn_nargs;
+		Oid			xfn1_oid,
+					xfn2_oid,
+					finalfn_oid;
+		func_ptr	xfn1_ptr,
+					xfn2_ptr,
+					finalfn_ptr;
+		int			xfn1_nargs,
+					xfn2_nargs,
+					finalfn_nargs;
 
 		agg = aggregates[i];
 
@@ -240,7 +240,7 @@ ExecAgg(Agg * node)
 	 */
 	for (;;)
 	{
-		HeapTuple		outerTuple = NULL;
+		HeapTuple	outerTuple = NULL;
 		TupleTableSlot *outerslot;
 
 		isNull = isNull1 = isNull2 = 0;
@@ -258,9 +258,9 @@ ExecAgg(Agg * node)
 			 */
 			if (nTuplesAgged == 0)
 			{
-				TupleDesc		tupType;
-				Datum		   *tupValue;
-				char		   *null_array;
+				TupleDesc	tupType;
+				Datum	   *tupValue;
+				char	   *null_array;
 
 				tupType = aggstate->csstate.css_ScanTupleSlot->ttc_tupleDescriptor;
 				tupValue = projInfo->pi_tupValue;
@@ -277,29 +277,29 @@ ExecAgg(Agg * node)
 
 		for (i = 0; i < nagg; i++)
 		{
-			AttrNumber		attnum;
-			int2			attlen;
-			Datum			newVal = (Datum) NULL;
-			AggFuncInfo    *aggfns = &aggFuncInfo[i];
-			Datum			args[2];
-			Node		   *tagnode = NULL;
+			AttrNumber	attnum;
+			int2		attlen;
+			Datum		newVal = (Datum) NULL;
+			AggFuncInfo *aggfns = &aggFuncInfo[i];
+			Datum		args[2];
+			Node	   *tagnode = NULL;
 
 			switch (nodeTag(aggregates[i]->target))
 			{
-			case T_Var:
-				tagnode = NULL;
-				newVal = aggGetAttr(outerslot,
-									aggregates[i],
-									&isNull);
-				break;
-			case T_Expr:
-				tagnode = ((Expr *) aggregates[i]->target)->oper;
-				econtext->ecxt_scantuple = outerslot;
-				newVal = ExecEvalExpr(aggregates[i]->target, econtext,
-									  &isNull, NULL);
-				break;
-			default:
-				elog(WARN, "ExecAgg: Bad Agg->Target for Agg %d", i);
+				case T_Var:
+					tagnode = NULL;
+					newVal = aggGetAttr(outerslot,
+										aggregates[i],
+										&isNull);
+					break;
+				case T_Expr:
+					tagnode = ((Expr *) aggregates[i]->target)->oper;
+					econtext->ecxt_scantuple = outerslot;
+					newVal = ExecEvalExpr(aggregates[i]->target, econtext,
+										  &isNull, NULL);
+					break;
+				default:
+					elog(WARN, "ExecAgg: Bad Agg->Target for Agg %d", i);
 			}
 
 			if (isNull)
@@ -309,7 +309,7 @@ ExecAgg(Agg * node)
 			{
 				if (noInitValue[i])
 				{
-					int				byVal;
+					int			byVal;
 
 					/*
 					 * value1 and value2 has not been initialized. This is
@@ -371,7 +371,7 @@ ExecAgg(Agg * node)
 
 			if (aggfns->xfn2)
 			{
-				Datum			xfn2_val = value2[i];
+				Datum		xfn2_val = value2[i];
 
 				value2[i] =
 					(Datum) fmgr_c(aggfns->xfn2, aggfns->xfn2_oid,
@@ -399,8 +399,8 @@ ExecAgg(Agg * node)
 	 */
 	for (i = 0; i < nagg; i++)
 	{
-		char		   *args[2];
-		AggFuncInfo    *aggfns = &aggFuncInfo[i];
+		char	   *args[2];
+		AggFuncInfo *aggfns = &aggFuncInfo[i];
 
 		if (noInitValue[i])
 		{
@@ -490,9 +490,9 @@ ExecAgg(Agg * node)
 bool
 ExecInitAgg(Agg * node, EState * estate, Plan * parent)
 {
-	AggState	   *aggstate;
-	Plan		   *outerPlan;
-	ExprContext    *econtext;
+	AggState   *aggstate;
+	Plan	   *outerPlan;
+	ExprContext *econtext;
 
 	/*
 	 * assign the node's execution state
@@ -566,8 +566,8 @@ ExecCountSlotsAgg(Agg * node)
 void
 ExecEndAgg(Agg * node)
 {
-	AggState	   *aggstate;
-	Plan		   *outerPlan;
+	AggState   *aggstate;
+	Plan	   *outerPlan;
 
 	aggstate = node->aggstate;
 
@@ -590,16 +590,16 @@ ExecEndAgg(Agg * node)
  *	  get the attribute (specified in the Var node in agg) to aggregate
  *	  over from the tuple
  */
-static			Datum
+static Datum
 aggGetAttr(TupleTableSlot * slot,
 		   Aggreg * agg,
 		   bool * isNull)
 {
-	Datum			result;
-	AttrNumber		attnum;
-	HeapTuple		heapTuple;
-	TupleDesc		tuple_type;
-	Buffer			buffer;
+	Datum		result;
+	AttrNumber	attnum;
+	HeapTuple	heapTuple;
+	TupleDesc	tuple_type;
+	Buffer		buffer;
 
 	/* ----------------
 	 *	 extract tuple information from the slot
@@ -619,8 +619,8 @@ aggGetAttr(TupleTableSlot * slot,
 	if (attnum == InvalidAttrNumber)
 	{
 		TupleTableSlot *tempSlot;
-		TupleDesc		td;
-		HeapTuple		tup;
+		TupleDesc	td;
+		HeapTuple	tup;
 
 		tempSlot = makeNode(TupleTableSlot);
 		tempSlot->ttc_shouldFree = false;

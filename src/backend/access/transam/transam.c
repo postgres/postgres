@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.10 1997/09/07 04:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.11 1997/09/08 02:21:14 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -26,9 +26,9 @@
 #include <storage/spin.h>
 #include <commands/vacuum.h>
 
-static int		RecoveryCheckingEnabled(void);
-static void		TransRecover(Relation logRelation);
-static bool		TransactionLogTest(TransactionId transactionId, XidStatus status);
+static int	RecoveryCheckingEnabled(void);
+static void TransRecover(Relation logRelation);
+static bool TransactionLogTest(TransactionId transactionId, XidStatus status);
 static void
 TransactionLogUpdate(TransactionId transactionId,
 					 XidStatus status);
@@ -40,18 +40,18 @@ TransactionLogUpdate(TransactionId transactionId,
  * ----------------
  */
 
-Relation		LogRelation = (Relation) NULL;
-Relation		TimeRelation = (Relation) NULL;
-Relation		VariableRelation = (Relation) NULL;
+Relation	LogRelation = (Relation) NULL;
+Relation	TimeRelation = (Relation) NULL;
+Relation	VariableRelation = (Relation) NULL;
 
 /* ----------------
  *		global variables holding cached transaction id's and statuses.
  * ----------------
  */
-TransactionId	cachedGetCommitTimeXid;
-AbsoluteTime	cachedGetCommitTime;
-TransactionId	cachedTestXid;
-XidStatus		cachedTestXidStatus;
+TransactionId cachedGetCommitTimeXid;
+AbsoluteTime cachedGetCommitTime;
+TransactionId cachedTestXid;
+XidStatus	cachedTestXidStatus;
 
 /* ----------------
  *		transaction system constants
@@ -65,11 +65,11 @@ XidStatus		cachedTestXidStatus;
  *		FirstTransactionId. -cim 3/23/90
  * ----------------------------------------------------------------
  */
-TransactionId	NullTransactionId = (TransactionId) 0;
+TransactionId NullTransactionId = (TransactionId) 0;
 
-TransactionId	AmiTransactionId = (TransactionId) 512;
+TransactionId AmiTransactionId = (TransactionId) 512;
 
-TransactionId	FirstTransactionId = (TransactionId) 514;
+TransactionId FirstTransactionId = (TransactionId) 514;
 
 /* ----------------
  *		transaction recovery state variables
@@ -83,19 +83,19 @@ TransactionId	FirstTransactionId = (TransactionId) 514;
  *		goes from zero to one. -cim 3/21/90
  * ----------------
  */
-int				RecoveryCheckingEnableState = 0;
+int			RecoveryCheckingEnableState = 0;
 
 /* ------------------
  *		spinlock for oid generation
  * -----------------
  */
-extern int		OidGenLockId;
+extern int	OidGenLockId;
 
 /* ----------------
  *		globals that must be reset at abort
  * ----------------
  */
-extern bool		BuildingBtree;
+extern bool BuildingBtree;
 
 
 /* ----------------
@@ -134,14 +134,14 @@ SetRecoveryCheckingEnabled(bool state)
  * --------------------------------
  */
 
-static			bool			/* true/false: does transaction id have
+static bool				/* true/false: does transaction id have
 								 * specified status? */
 TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 				   XidStatus status)	/* transaction status */
 {
-	BlockNumber		blockNumber;
-	XidStatus		xidstatus;	/* recorded status of xid */
-	bool			fail = false;		/* success/failure */
+	BlockNumber blockNumber;
+	XidStatus	xidstatus;		/* recorded status of xid */
+	bool		fail = false;	/* success/failure */
 
 	/* ----------------
 	 *	during initialization consider all transactions
@@ -202,9 +202,9 @@ static void
 TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 					 XidStatus status)	/* new trans status */
 {
-	BlockNumber		blockNumber;
-	bool			fail = false;		/* success/failure */
-	AbsoluteTime	currentTime;/* time of this transaction */
+	BlockNumber blockNumber;
+	bool		fail = false;	/* success/failure */
+	AbsoluteTime currentTime;	/* time of this transaction */
 
 	/* ----------------
 	 *	during initialization we don't record any updates.
@@ -276,9 +276,9 @@ AbsoluteTime					/* commit time of transaction id */
 TransactionIdGetCommitTime(TransactionId transactionId)			/* transaction id to
 																 * test */
 {
-	BlockNumber		blockNumber;
-	AbsoluteTime	commitTime; /* commit time */
-	bool			fail = false;		/* success/failure */
+	BlockNumber blockNumber;
+	AbsoluteTime commitTime;	/* commit time */
+	bool		fail = false;	/* success/failure */
 
 	/* ----------------
 	 *	 return invalid if we aren't running yet...
@@ -471,9 +471,9 @@ TransRecover(Relation logRelation)
 void
 InitializeTransactionLog(void)
 {
-	Relation		logRelation;
-	Relation		timeRelation;
-	MemoryContext	oldContext;
+	Relation	logRelation;
+	Relation	timeRelation;
+	MemoryContext oldContext;
 
 	/* ----------------
 	 *	  don't do anything during bootstrapping

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.21 1997/09/07 04:53:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.22 1997/09/08 02:31:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,8 @@ static void
 RelationFlushRelation(Relation * relationPtr,
 					  bool onlyFlushReferenceCountZero);
 static Relation RelationNameCacheGetRelation(char *relationName);
-static void		init_irels(void);
-static void		write_irels(void);
+static void init_irels(void);
+static void write_irels(void);
 
 /* ----------------
  *		defines
@@ -105,7 +105,7 @@ static void		write_irels(void);
  *		externs
  * ----------------
  */
-extern bool		AMI_OVERRIDE;	/* XXX style */
+extern bool AMI_OVERRIDE;		/* XXX style */
 extern GlobalMemory CacheCxt;	/* from utils/cache/catcache.c */
 
 /* ----------------
@@ -127,8 +127,8 @@ FormData_pg_attribute Desc_pg_time[Natts_pg_time] = {Schema_pg_time};
  *		thus there are two hash tables for referencing them.
  * ----------------
  */
-HTAB		   *RelationNameCache;
-HTAB		   *RelationIdCache;
+HTAB	   *RelationNameCache;
+HTAB	   *RelationIdCache;
 
 /* ----------------
  *		RelationBuildDescInfo exists so code can be shared
@@ -137,27 +137,27 @@ HTAB		   *RelationIdCache;
  */
 typedef struct RelationBuildDescInfo
 {
-	int				infotype;	/* lookup by id or by name */
+	int			infotype;		/* lookup by id or by name */
 #define INFO_RELID 1
 #define INFO_RELNAME 2
 	union
 	{
-		Oid				info_id;/* relation object id */
-		char		   *info_name;		/* relation name */
-	}				i;
-}				RelationBuildDescInfo;
+		Oid			info_id;	/* relation object id */
+		char	   *info_name;	/* relation name */
+	}			i;
+}			RelationBuildDescInfo;
 
 typedef struct relidcacheent
 {
-	Oid				reloid;
-	Relation		reldesc;
-}				RelIdCacheEnt;
+	Oid			reloid;
+	Relation	reldesc;
+}			RelIdCacheEnt;
 
 typedef struct relnamecacheent
 {
-	NameData		relname;
-	Relation		reldesc;
-}				RelNameCacheEnt;
+	NameData	relname;
+	Relation	reldesc;
+}			RelNameCacheEnt;
 
 /* -----------------
  *		macros to manipulate name cache and id cache
@@ -251,7 +251,7 @@ formrdesc(char *relationName, u_int natts,
 		  FormData_pg_attribute att[]);
 
 #if 0							/* See comments at line 1304 */
-static void		RelationFlushIndexes(Relation * r, Oid accessMethodId);
+static void RelationFlushIndexes(Relation * r, Oid accessMethodId);
 
 #endif
 
@@ -269,19 +269,19 @@ static void
 build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
-static void		IndexedAccessMethodInitialize(Relation relation);
-static void		AttrDefaultFetch(Relation relation);
-static void		RelCheckFetch(Relation relation);
+static void IndexedAccessMethodInitialize(Relation relation);
+static void AttrDefaultFetch(Relation relation);
+static void RelCheckFetch(Relation relation);
 
-extern void		RelationBuildTriggers(Relation relation);
-extern void		FreeTriggerDesc(Relation relation);
+extern void RelationBuildTriggers(Relation relation);
+extern void FreeTriggerDesc(Relation relation);
 
 /*
  * newlyCreatedRelns -
  *	  relations created during this transaction. We need to keep track of
  *	  these.
  */
-static List    *newlyCreatedRelns = NULL;
+static List *newlyCreatedRelns = NULL;
 
 /* ----------------------------------------------------------------
  *		RelationIdGetRelation() and RelationNameGetRelation()
@@ -297,20 +297,20 @@ static List    *newlyCreatedRelns = NULL;
  *		the buildinfo passed to it
  * --------------------------------
  */
-static char    *
+static char *
 BuildDescInfoError(RelationBuildDescInfo buildinfo)
 {
-	static char		errBuf[64];
+	static char errBuf[64];
 
 	memset(errBuf, 0, (int) sizeof(errBuf));
 	switch (buildinfo.infotype)
 	{
-	case INFO_RELID:
-		sprintf(errBuf, "(relation id %d)", buildinfo.i.info_id);
-		break;
-	case INFO_RELNAME:
-		sprintf(errBuf, "(relation name %s)", buildinfo.i.info_name);
-		break;
+		case INFO_RELID:
+			sprintf(errBuf, "(relation id %d)", buildinfo.i.info_id);
+			break;
+		case INFO_RELNAME:
+			sprintf(errBuf, "(relation name %s)", buildinfo.i.info_name);
+			break;
 	}
 
 	return errBuf;
@@ -326,7 +326,7 @@ BuildDescInfoError(RelationBuildDescInfo buildinfo)
  *		as specified in buildinfo.
  * --------------------------------
  */
-static			HeapTuple
+static HeapTuple
 ScanPgRelation(RelationBuildDescInfo buildinfo)
 {
 
@@ -342,15 +342,15 @@ ScanPgRelation(RelationBuildDescInfo buildinfo)
 		return (scan_pg_rel_ind(buildinfo));
 }
 
-static			HeapTuple
+static HeapTuple
 scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 {
-	HeapTuple		pg_class_tuple;
-	HeapTuple		return_tuple;
-	Relation		pg_class_desc;
-	HeapScanDesc	pg_class_scan;
-	ScanKeyData		key;
-	Buffer			buf;
+	HeapTuple	pg_class_tuple;
+	HeapTuple	return_tuple;
+	Relation	pg_class_desc;
+	HeapScanDesc pg_class_scan;
+	ScanKeyData key;
+	Buffer		buf;
 
 	/* ----------------
 	 *	form a scan key
@@ -358,23 +358,23 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	 */
 	switch (buildinfo.infotype)
 	{
-	case INFO_RELID:
-		ScanKeyEntryInitialize(&key, 0,
-							   ObjectIdAttributeNumber,
-							   ObjectIdEqualRegProcedure,
-							   ObjectIdGetDatum(buildinfo.i.info_id));
-		break;
+		case INFO_RELID:
+			ScanKeyEntryInitialize(&key, 0,
+								   ObjectIdAttributeNumber,
+								   ObjectIdEqualRegProcedure,
+								   ObjectIdGetDatum(buildinfo.i.info_id));
+			break;
 
-	case INFO_RELNAME:
-		ScanKeyEntryInitialize(&key, 0,
-							   Anum_pg_class_relname,
-							   Character16EqualRegProcedure,
-							   NameGetDatum(buildinfo.i.info_name));
-		break;
+		case INFO_RELNAME:
+			ScanKeyEntryInitialize(&key, 0,
+								   Anum_pg_class_relname,
+								   Character16EqualRegProcedure,
+								   NameGetDatum(buildinfo.i.info_name));
+			break;
 
-	default:
-		elog(WARN, "ScanPgRelation: bad buildinfo");
-		return NULL;
+		default:
+			elog(WARN, "ScanPgRelation: bad buildinfo");
+			return NULL;
 	}
 
 	/* ----------------
@@ -421,11 +421,11 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	return return_tuple;
 }
 
-static			HeapTuple
+static HeapTuple
 scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 {
-	Relation		pg_class_desc;
-	HeapTuple		return_tuple;
+	Relation	pg_class_desc;
+	HeapTuple	return_tuple;
 
 	pg_class_desc = heap_openr(RelationRelationName);
 	if (!IsInitProcessingMode())
@@ -433,23 +433,23 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 
 	switch (buildinfo.infotype)
 	{
-	case INFO_RELID:
-		return_tuple = ClassOidIndexScan(pg_class_desc, buildinfo.i.info_id);
-		break;
+		case INFO_RELID:
+			return_tuple = ClassOidIndexScan(pg_class_desc, buildinfo.i.info_id);
+			break;
 
-	case INFO_RELNAME:
-		return_tuple = ClassNameIndexScan(pg_class_desc,
-										  buildinfo.i.info_name);
-		break;
+		case INFO_RELNAME:
+			return_tuple = ClassNameIndexScan(pg_class_desc,
+											  buildinfo.i.info_name);
+			break;
 
-	default:
-		elog(WARN, "ScanPgRelation: bad buildinfo");
+		default:
+			elog(WARN, "ScanPgRelation: bad buildinfo");
 
-		/*
-		 * XXX I hope this is right.  It seems better than returning an
-		 * uninitialized value
-		 */
-		return_tuple = NULL;
+			/*
+			 * XXX I hope this is right.  It seems better than returning
+			 * an uninitialized value
+			 */
+			return_tuple = NULL;
 	}
 
 	/* all done */
@@ -467,12 +467,12 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
  *		and initialize the rd_rel field.
  * ----------------
  */
-static			Relation
+static Relation
 AllocateRelationDesc(u_int natts, Form_pg_class relp)
 {
-	Relation		relation;
-	Size			len;
-	Form_pg_class	relationTupleForm;
+	Relation	relation;
+	Size		len;
+	Form_pg_class relationTupleForm;
 
 	/* ----------------
 	 *	allocate space for the relation tuple form
@@ -535,12 +535,12 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 				  Relation relation,
 				  u_int natts)
 {
-	HeapTuple		pg_attribute_tuple;
-	Relation		pg_attribute_desc;
-	HeapScanDesc	pg_attribute_scan;
+	HeapTuple	pg_attribute_tuple;
+	Relation	pg_attribute_desc;
+	HeapScanDesc pg_attribute_scan;
 	AttributeTupleForm attp;
-	ScanKeyData		key;
-	int				need;
+	ScanKeyData key;
+	int			need;
 
 	/* ----------------
 	 *	form a scan key
@@ -601,13 +601,13 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 				  Relation relation,
 				  u_int natts)
 {
-	Relation		attrel;
-	HeapTuple		atttup;
+	Relation	attrel;
+	HeapTuple	atttup;
 	AttributeTupleForm attp;
-	TupleConstr    *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
-	AttrDefault    *attrdef = NULL;
-	int				ndef = 0;
-	int				i;
+	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
+	AttrDefault *attrdef = NULL;
+	int			ndef = 0;
+	int			i;
 
 	constr->has_not_null = false;
 
@@ -694,15 +694,15 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 static void
 RelationBuildRuleLock(Relation relation)
 {
-	HeapTuple		pg_rewrite_tuple;
-	Relation		pg_rewrite_desc;
-	TupleDesc		pg_rewrite_tupdesc;
-	HeapScanDesc	pg_rewrite_scan;
-	ScanKeyData		key;
-	RuleLock	   *rulelock;
-	int				numlocks;
-	RewriteRule   **rules;
-	int				maxlocks;
+	HeapTuple	pg_rewrite_tuple;
+	Relation	pg_rewrite_desc;
+	TupleDesc	pg_rewrite_tupdesc;
+	HeapScanDesc pg_rewrite_scan;
+	ScanKeyData key;
+	RuleLock   *rulelock;
+	int			numlocks;
+	RewriteRule **rules;
+	int			maxlocks;
 
 	/* ----------------
 	 *	form an array to hold the rewrite rules (the array is extended if
@@ -739,10 +739,10 @@ RelationBuildRuleLock(Relation relation)
 	while ((pg_rewrite_tuple = heap_getnext(pg_rewrite_scan, 0,
 											(Buffer *) NULL)) != NULL)
 	{
-		bool			isnull;
-		char		   *ruleaction = NULL;
-		char		   *rule_evqual_string;
-		RewriteRule    *rule;
+		bool		isnull;
+		char	   *ruleaction = NULL;
+		char	   *rule_evqual_string;
+		RewriteRule *rule;
 
 		rule = (RewriteRule *) palloc(sizeof(RewriteRule));
 
@@ -828,19 +828,19 @@ RelationBuildRuleLock(Relation relation)
  *		-cim 2/4/91
  * --------------------------------
  */
-static			Relation
+static Relation
 RelationBuildDesc(RelationBuildDescInfo buildinfo)
 {
-	File			fd;
-	Relation		relation;
-	u_int			natts;
-	Oid				relid;
-	Oid				relam;
-	Form_pg_class	relp;
+	File		fd;
+	Relation	relation;
+	u_int		natts;
+	Oid			relid;
+	Oid			relam;
+	Form_pg_class relp;
 
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 
-	HeapTuple		pg_class_tuple;
+	HeapTuple	pg_class_tuple;
 
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
@@ -986,13 +986,13 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 static void
 IndexedAccessMethodInitialize(Relation relation)
 {
-	IndexStrategy	strategy;
-	RegProcedure   *support;
-	int				natts;
-	Size			stratSize;
-	Size			supportSize;
-	uint16			relamstrategies;
-	uint16			relamsupport;
+	IndexStrategy strategy;
+	RegProcedure *support;
+	int			natts;
+	Size		stratSize;
+	Size		supportSize;
+	uint16		relamstrategies;
+	uint16		relamsupport;
 
 	natts = relation->rd_rel->relnatts;
 	relamstrategies = relation->rd_am->amstrategies;
@@ -1033,9 +1033,9 @@ formrdesc(char *relationName,
 		  u_int natts,
 		  FormData_pg_attribute att[])
 {
-	Relation		relation;
-	Size			len;
-	int				i;
+	Relation	relation;
+	Size		len;
+	int			i;
 
 	/* ----------------
 	 *	allocate new relation desc
@@ -1151,7 +1151,7 @@ formrdesc(char *relationName,
 Relation
 RelationIdCacheGetRelation(Oid relationId)
 {
-	Relation		rd;
+	Relation	rd;
 
 	RelationIdCacheLookup(relationId, rd);
 
@@ -1175,11 +1175,11 @@ RelationIdCacheGetRelation(Oid relationId)
  *		RelationNameCacheGetRelation
  * --------------------------------
  */
-static			Relation
+static Relation
 RelationNameCacheGetRelation(char *relationName)
 {
-	Relation		rd;
-	NameData		name;
+	Relation	rd;
+	NameData	name;
 
 	/*
 	 * make sure that the name key used for hash lookup is properly
@@ -1214,7 +1214,7 @@ RelationNameCacheGetRelation(char *relationName)
 Relation
 RelationIdGetRelation(Oid relationId)
 {
-	Relation		rd;
+	Relation	rd;
 	RelationBuildDescInfo buildinfo;
 
 	/* ----------------
@@ -1255,7 +1255,7 @@ RelationIdGetRelation(Oid relationId)
 Relation
 RelationNameGetRelation(char *relationName)
 {
-	Relation		rd;
+	Relation	rd;
 	RelationBuildDescInfo buildinfo;
 
 	/* ----------------
@@ -1332,8 +1332,8 @@ static void
 RelationFlushRelation(Relation * relationPtr,
 					  bool onlyFlushReferenceCountZero)
 {
-	MemoryContext	oldcxt;
-	Relation		relation = *relationPtr;
+	MemoryContext oldcxt;
+	Relation	relation = *relationPtr;
 
 	if (relation->rd_isnailed)
 	{
@@ -1356,7 +1356,7 @@ RelationFlushRelation(Relation * relationPtr,
 #if 0
 		if (relation->rd_rules)
 		{
-			int				j;
+			int			j;
 
 			for (j = 0; j < relation->rd_rules->numLocks; j++)
 			{
@@ -1384,22 +1384,22 @@ RelationFlushRelation(Relation * relationPtr,
 void
 RelationForgetRelation(Oid rid)
 {
-	Relation		relation;
+	Relation	relation;
 
 	RelationIdCacheLookup(rid, relation);
 	Assert(PointerIsValid(relation));
 
 	if (relation->rd_islocal)
 	{
-		MemoryContext	oldcxt;
-		List		   *curr;
-		List		   *prev = NIL;
+		MemoryContext oldcxt;
+		List	   *curr;
+		List	   *prev = NIL;
 
 		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
 		foreach(curr, newlyCreatedRelns)
 		{
-			Relation		reln = lfirst(curr);
+			Relation	reln = lfirst(curr);
 
 			Assert(reln != NULL && reln->rd_islocal);
 			if (reln->rd_id == rid)
@@ -1427,7 +1427,7 @@ RelationForgetRelation(Oid rid)
 void
 RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
 {
-	Relation		relation;
+	Relation	relation;
 
 	RelationIdCacheLookup(relationId, relation);
 
@@ -1462,7 +1462,7 @@ static void
 RelationFlushIndexes(Relation * r,
 					 Oid accessMethodId)
 {
-	Relation		relation = *r;
+	Relation	relation = *r;
 
 	if (!RelationIsValid(relation))
 	{
@@ -1536,7 +1536,7 @@ RelationCacheInvalidate(bool onlyFlushReferenceCountZero)
 void
 RelationRegisterRelation(Relation relation)
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
@@ -1571,7 +1571,7 @@ RelationRegisterRelation(Relation relation)
 void
 RelationPurgeLocalRelation(bool xactCommitted)
 {
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 
 	if (newlyCreatedRelns == NULL)
 		return;
@@ -1580,8 +1580,8 @@ RelationPurgeLocalRelation(bool xactCommitted)
 
 	while (newlyCreatedRelns)
 	{
-		List		   *l = newlyCreatedRelns;
-		Relation		reln = lfirst(l);
+		List	   *l = newlyCreatedRelns;
+		Relation	reln = lfirst(l);
 
 		Assert(reln != NULL && reln->rd_islocal);
 
@@ -1641,8 +1641,8 @@ RelationPurgeLocalRelation(bool xactCommitted)
 void
 RelationInitialize(void)
 {
-	MemoryContext	oldcxt;
-	HASHCTL			ctl;
+	MemoryContext oldcxt;
+	HASHCTL		ctl;
 
 	/* ----------------
 	 *	switch to cache memory context
@@ -1697,21 +1697,21 @@ RelationInitialize(void)
 static void
 AttrDefaultFetch(Relation relation)
 {
-	AttrDefault    *attrdef = relation->rd_att->constr->defval;
-	int				ndef = relation->rd_att->constr->num_defval;
-	Relation		adrel;
-	Relation		irel;
-	ScanKeyData		skey;
-	HeapTuple		tuple;
+	AttrDefault *attrdef = relation->rd_att->constr->defval;
+	int			ndef = relation->rd_att->constr->num_defval;
+	Relation	adrel;
+	Relation	irel;
+	ScanKeyData skey;
+	HeapTuple	tuple;
 	Form_pg_attrdef adform;
-	IndexScanDesc	sd;
+	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	Buffer			buffer;
-	ItemPointer		iptr;
+	Buffer		buffer;
+	ItemPointer iptr;
 	struct varlena *val;
-	bool			isnull;
-	int				found;
-	int				i;
+	bool		isnull;
+	int			found;
+	int			i;
 
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
@@ -1787,20 +1787,20 @@ AttrDefaultFetch(Relation relation)
 static void
 RelCheckFetch(Relation relation)
 {
-	ConstrCheck    *check = relation->rd_att->constr->check;
-	int				ncheck = relation->rd_att->constr->num_check;
-	Relation		rcrel;
-	Relation		irel;
-	ScanKeyData		skey;
-	HeapTuple		tuple;
-	IndexScanDesc	sd;
+	ConstrCheck *check = relation->rd_att->constr->check;
+	int			ncheck = relation->rd_att->constr->num_check;
+	Relation	rcrel;
+	Relation	irel;
+	ScanKeyData skey;
+	HeapTuple	tuple;
+	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	Buffer			buffer;
-	ItemPointer		iptr;
-	Name			rcname;
+	Buffer		buffer;
+	ItemPointer iptr;
+	Name		rcname;
 	struct varlena *val;
-	bool			isnull;
-	int				found;
+	bool		isnull;
+	int			found;
 
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
@@ -1902,17 +1902,17 @@ RelCheckFetch(Relation relation)
 static void
 init_irels(void)
 {
-	Size			len;
-	int				nread;
-	File			fd;
-	Relation		irel[Num_indices_bootstrap];
-	Relation		ird;
-	Form_pg_am		am;
-	Form_pg_class	relform;
-	IndexStrategy	strat;
-	RegProcedure   *support;
-	int				i;
-	int				relno;
+	Size		len;
+	int			nread;
+	File		fd;
+	Relation	irel[Num_indices_bootstrap];
+	Relation	ird;
+	Form_pg_am	am;
+	Form_pg_class relform;
+	IndexStrategy strat;
+	RegProcedure *support;
+	int			i;
+	int			relno;
 
 	if ((fd = FileNameOpenFile(INIT_FILENAME, O_RDONLY, 0600)) < 0)
 	{
@@ -2057,18 +2057,18 @@ init_irels(void)
 static void
 write_irels(void)
 {
-	int				len;
-	int				nwritten;
-	File			fd;
-	Relation		irel[Num_indices_bootstrap];
-	Relation		ird;
-	Form_pg_am		am;
-	Form_pg_class	relform;
-	IndexStrategy	strat;
-	RegProcedure   *support;
-	ProcessingMode	oldmode;
-	int				i;
-	int				relno;
+	int			len;
+	int			nwritten;
+	File		fd;
+	Relation	irel[Num_indices_bootstrap];
+	Relation	ird;
+	Form_pg_am	am;
+	Form_pg_class relform;
+	IndexStrategy strat;
+	RegProcedure *support;
+	ProcessingMode oldmode;
+	int			i;
+	int			relno;
 	RelationBuildDescInfo bi;
 
 	fd = FileNameOpenFile(INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC, 0600);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/dynloader.c,v 1.4 1997/09/07 04:47:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/dynloader.c,v 1.5 1997/09/08 02:27:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,13 @@
 #include "port-protos.h"
 #include "utils/elog.h"
 
-extern char		pg_pathname[];
+extern char pg_pathname[];
 
-void		   *
+void	   *
 pg_dlopen(char *filename)
 {
-	static int		dl_initialized = 0;
-	void		   *handle;
+	static int	dl_initialized = 0;
+	void	   *handle;
 
 	/*
 	 * initializes the dynamic loader with the executable's pathname.
@@ -56,8 +56,8 @@ pg_dlopen(char *filename)
 	 */
 	if ((handle = dl_open(filename, DL_NOW)) == NULL)
 	{
-		int				count;
-		char		  **list = dl_undefinedSymbols(&count);
+		int			count;
+		char	  **list = dl_undefinedSymbols(&count);
 
 		/* list the undefined symbols, if any */
 		if (count)

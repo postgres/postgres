@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.6 1997/09/07 04:54:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.7 1997/09/08 02:32:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,9 @@ struct leftist *
 lmerge(struct leftist * pt, struct leftist * qt, LeftistContext context)
 {
 	register struct leftist *root,
-				   *majorLeftist,
-				   *minorLeftist;
-	int				dist;
+			   *majorLeftist,
+			   *minorLeftist;
+	int			dist;
 
 	if (tuplecmp(pt->lt_tuple, qt->lt_tuple, context))
 	{
@@ -86,7 +86,7 @@ static struct leftist *
 linsert(struct leftist * root, struct leftist * new1, LeftistContext context)
 {
 	register struct leftist *left,
-				   *right;
+			   *right;
 
 	if (!tuplecmp(root->lt_tuple, new1->lt_tuple, context))
 	{
@@ -139,7 +139,7 @@ gettuple(struct leftist ** treep,
 		 LeftistContext context)
 {
 	register struct leftist *tp;
-	HeapTuple		tup;
+	HeapTuple	tup;
 
 	tp = *treep;
 	tup = tp->lt_tuple;
@@ -197,11 +197,11 @@ puttuple(struct leftist ** treep,
 int
 tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 {
-	register char  *lattr,
-				   *rattr;
-	int				nkey = 0;
-	int				result = 0;
-	bool			isnull;
+	register char *lattr,
+			   *rattr;
+	int			nkey = 0;
+	int			result = 0;
+	bool		isnull;
 
 	if (ltup == (HeapTuple) NULL)
 		return (0);
@@ -240,8 +240,8 @@ tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 void
 checktree(struct leftist * tree, LeftistContext context)
 {
-	int				lnodes;
-	int				rnodes;
+	int			lnodes;
+	int			rnodes;
 
 	if (tree == NULL)
 	{
@@ -292,9 +292,9 @@ checktree(struct leftist * tree, LeftistContext context)
 int
 checktreer(struct leftist * tree, int level, LeftistContext context)
 {
-	int				lnodes,
-					rnodes;
-	int				error = 0;
+	int			lnodes,
+				rnodes;
+	int			error = 0;
 
 	if (tree == NULL)
 		return (0);

@@ -21,8 +21,8 @@
  */
 
 #ifdef NEED_MATHERR
-extern int		matherr();
-int			   *tclDummyMathPtr = (int *) matherr;
+extern int	matherr();
+int		   *tclDummyMathPtr = (int *) matherr;
 
 #endif
 

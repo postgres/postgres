@@ -16,7 +16,7 @@
 static const char *
 cpstr(const char *s, char *buf)
 {
-	char			in = 0;
+	char		in = 0;
 
 	while (isspace(*s))
 		s++;
@@ -43,12 +43,12 @@ cpstr(const char *s, char *buf)
 time_t
 timestamp_in(const char *timestamp_str)
 {
-	int4			result;
+	int4		result;
 
 #if FALSE
-	struct tm		input_time;
-	char			buf[18];
-	const char	   *p;
+	struct tm	input_time;
+	char		buf[18];
+	const char *p;
 	static const char *mstr[] = {
 		"january", "february", "march", "april", "may", "june",
 		"july", "august", "september", "october", "november", "december"
@@ -72,7 +72,7 @@ timestamp_in(const char *timestamp_str)
 		}
 		else
 		{
-			int				i;
+			int			i;
 
 			for (i = 0; i < 12; i++)
 				if (strncmp(mstr[i], buf, strlen(buf)) == 0)
@@ -86,7 +86,7 @@ timestamp_in(const char *timestamp_str)
 	else
 /* must be month/dd/yyyy */
 	{
-		int				i;
+		int			i;
 
 		for (i = 0; i < 12; i++)
 			if (strncmp(mstr[i], buf, strlen(buf)) == 0)
@@ -126,17 +126,17 @@ timestamp_in(const char *timestamp_str)
 	return result;
 }
 
-char		   *
+char	   *
 timestamp_out(time_t timestamp)
 {
-	char		   *result;
-	int				tz;
-	double			fsec = 0;
-	struct tm		tt,
-				   *tm = &tt;
-	char			buf[MAXDATELEN + 1];
-	char			zone[MAXDATELEN + 1],
-				   *tzn = zone;
+	char	   *result;
+	int			tz;
+	double		fsec = 0;
+	struct tm	tt,
+			   *tm = &tt;
+	char		buf[MAXDATELEN + 1];
+	char		zone[MAXDATELEN + 1],
+			   *tzn = zone;
 
 #if FALSE
 	time = localtime(&timestamp);
@@ -156,7 +156,7 @@ timestamp_out(time_t timestamp)
 time_t
 now(void)
 {
-	time_t			sec;
+	time_t		sec;
 
 	time(&sec);
 	return (sec);
@@ -198,13 +198,13 @@ timestampge(time_t t1, time_t t2)
 	return difftime(t1, t2) <= 0;
 }
 
-DateTime	   *
+DateTime   *
 timestamp_datetime(time_t timestamp)
 {
-	DateTime	   *result;
+	DateTime   *result;
 
-	double			fsec = 0;
-	struct tm	   *tm;
+	double		fsec = 0;
+	struct tm  *tm;
 
 	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
 		elog(WARN, "Memory allocation failed, can't convert timestamp to datetime", NULL);

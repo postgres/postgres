@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.23 1997/09/07 04:41:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.24 1997/09/08 02:22:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,14 +62,14 @@ ExecCheckPerms(CmdType operation, int resultRelation, List * rangeTable,
 static TupleDesc
 InitPlan(CmdType operation, Query * parseTree,
 		 Plan * plan, EState * estate);
-static void		EndPlan(Plan * plan, EState * estate);
+static void EndPlan(Plan * plan, EState * estate);
 static TupleTableSlot *
 ExecutePlan(EState * estate, Plan * plan,
 			Query * parseTree, CmdType operation,
 			int numberTuples, ScanDirection direction,
 			void (*printfunc) ());
-static void		ExecRetrieve(TupleTableSlot * slot, void (*printfunc) (),
-											 EState * estate);
+static void ExecRetrieve(TupleTableSlot * slot, void (*printfunc) (),
+									 EState * estate);
 static void
 ExecAppend(TupleTableSlot * slot, ItemPointer tupleid,
 		   EState * estate);
@@ -83,7 +83,7 @@ ExecReplace(TupleTableSlot * slot, ItemPointer tupleid,
 /* end of local decls */
 
 #ifdef QUERY_LIMIT
-static int		queryLimit = ALL_TUPLES;
+static int	queryLimit = ALL_TUPLES;
 
 #undef ALL_TUPLES
 #define ALL_TUPLES queryLimit
@@ -112,7 +112,7 @@ ExecutorLimit(int limit)
 TupleDesc
 ExecutorStart(QueryDesc * queryDesc, EState * estate)
 {
-	TupleDesc		result;
+	TupleDesc	result;
 
 	/* sanity checks */
 	Assert(queryDesc != NULL);
@@ -157,12 +157,12 @@ ExecutorStart(QueryDesc * queryDesc, EState * estate)
 TupleTableSlot *
 ExecutorRun(QueryDesc * queryDesc, EState * estate, int feature, int count)
 {
-	CmdType			operation;
-	Query		   *parseTree;
-	Plan		   *plan;
+	CmdType		operation;
+	Query	   *parseTree;
+	Plan	   *plan;
 	TupleTableSlot *result;
-	CommandDest		dest;
-	void			(*destination) ();
+	CommandDest dest;
+	void		(*destination) ();
 
 	/* ----------------
 	 *	sanity checks
@@ -200,7 +200,7 @@ ExecutorRun(QueryDesc * queryDesc, EState * estate, int feature, int count)
 	if ((nodeTag(plan) == T_IndexScan) &&
 		(((IndexScan *) plan)->indxstate->iss_RuntimeKeyInfo != NULL))
 	{
-		ExprContext    *econtext;
+		ExprContext *econtext;
 
 		econtext = ((IndexScan *) plan)->scan.scanstate->cstate.cs_ExprContext;
 		ExecIndexReScan((IndexScan *) plan, econtext, plan);
@@ -211,57 +211,57 @@ ExecutorRun(QueryDesc * queryDesc, EState * estate, int feature, int count)
 	switch (feature)
 	{
 
-	case EXEC_RUN:
-		result = ExecutePlan(estate,
-							 plan,
-							 parseTree,
-							 operation,
-							 ALL_TUPLES,
-							 ForwardScanDirection,
-							 destination);
-		break;
-	case EXEC_FOR:
-		result = ExecutePlan(estate,
-							 plan,
-							 parseTree,
-							 operation,
-							 count,
-							 ForwardScanDirection,
-							 destination);
-		break;
+		case EXEC_RUN:
+			result = ExecutePlan(estate,
+								 plan,
+								 parseTree,
+								 operation,
+								 ALL_TUPLES,
+								 ForwardScanDirection,
+								 destination);
+			break;
+		case EXEC_FOR:
+			result = ExecutePlan(estate,
+								 plan,
+								 parseTree,
+								 operation,
+								 count,
+								 ForwardScanDirection,
+								 destination);
+			break;
 
-		/* ----------------
-		 *		retrieve next n "backward" tuples
-		 * ----------------
-		 */
-	case EXEC_BACK:
-		result = ExecutePlan(estate,
-							 plan,
-							 parseTree,
-							 operation,
-							 count,
-							 BackwardScanDirection,
-							 destination);
-		break;
+			/* ----------------
+			 *		retrieve next n "backward" tuples
+			 * ----------------
+			 */
+		case EXEC_BACK:
+			result = ExecutePlan(estate,
+								 plan,
+								 parseTree,
+								 operation,
+								 count,
+								 BackwardScanDirection,
+								 destination);
+			break;
 
-		/* ----------------
-		 *		return one tuple but don't "retrieve" it.
-		 *		(this is used by the rule manager..) -cim 9/14/89
-		 * ----------------
-		 */
-	case EXEC_RETONE:
-		result = ExecutePlan(estate,
-							 plan,
-							 parseTree,
-							 operation,
-							 ONE_TUPLE,
-							 ForwardScanDirection,
-							 destination);
-		break;
-	default:
-		result = NULL;
-		elog(DEBUG, "ExecutorRun: Unknown feature %d", feature);
-		break;
+			/* ----------------
+			 *		return one tuple but don't "retrieve" it.
+			 *		(this is used by the rule manager..) -cim 9/14/89
+			 * ----------------
+			 */
+		case EXEC_RETONE:
+			result = ExecutePlan(estate,
+								 plan,
+								 parseTree,
+								 operation,
+								 ONE_TUPLE,
+								 ForwardScanDirection,
+								 destination);
+			break;
+		default:
+			result = NULL;
+			elog(DEBUG, "ExecutorRun: Unknown feature %d", feature);
+			break;
 	}
 
 	return result;
@@ -303,17 +303,17 @@ ExecCheckPerms(CmdType operation,
 			   List * rangeTable,
 			   Query * parseTree)
 {
-	int				i = 1;
-	Oid				relid;
-	HeapTuple		htp;
-	List		   *lp;
-	List		   *qvars,
-				   *tvars;
-	int32			ok = 1,
-					aclcheck_result = -1;
-	char		   *opstr;
-	NameData		rname;
-	char		   *userName;
+	int			i = 1;
+	Oid			relid;
+	HeapTuple	htp;
+	List	   *lp;
+	List	   *qvars,
+			   *tvars;
+	int32		ok = 1,
+				aclcheck_result = -1;
+	char	   *opstr;
+	NameData	rname;
+	char	   *userName;
 
 #define CHECK(MODE)		pg_aclcheck(rname.data, userName, MODE)
 
@@ -321,7 +321,7 @@ ExecCheckPerms(CmdType operation,
 
 	foreach(lp, rangeTable)
 	{
-		RangeTblEntry  *rte = lfirst(lp);
+		RangeTblEntry *rte = lfirst(lp);
 
 		relid = rte->relid;
 		htp = SearchSysCacheTuple(RELOID,
@@ -348,20 +348,21 @@ ExecCheckPerms(CmdType operation,
 			}
 			switch (operation)
 			{
-			case CMD_INSERT:
-				ok = ((aclcheck_result = CHECK(ACL_AP)) == ACLCHECK_OK) ||
-					((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
-				opstr = "append";
-				break;
-			case CMD_NOTIFY:	/* what does this mean?? -- jw, 1/6/94 */
-			case CMD_DELETE:
-			case CMD_UPDATE:
-				ok = ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
-				opstr = "write";
-				break;
-			default:
-				elog(WARN, "ExecCheckPerms: bogus operation %d",
-					 operation);
+				case CMD_INSERT:
+					ok = ((aclcheck_result = CHECK(ACL_AP)) == ACLCHECK_OK) ||
+						((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
+					opstr = "append";
+					break;
+				case CMD_NOTIFY:		/* what does this mean?? -- jw,
+										 * 1/6/94 */
+				case CMD_DELETE:
+				case CMD_UPDATE:
+					ok = ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
+					opstr = "write";
+					break;
+				default:
+					elog(WARN, "ExecCheckPerms: bogus operation %d",
+						 operation);
 			}
 		}
 		else
@@ -388,16 +389,16 @@ ExecCheckPerms(CmdType operation,
  *		and start up the rule manager
  * ----------------------------------------------------------------
  */
-static			TupleDesc
+static TupleDesc
 InitPlan(CmdType operation, Query * parseTree, Plan * plan, EState * estate)
 {
-	List		   *rangeTable;
-	int				resultRelation;
-	Relation		intoRelationDesc;
+	List	   *rangeTable;
+	int			resultRelation;
+	Relation	intoRelationDesc;
 
-	TupleDesc		tupType;
-	List		   *targetList;
-	int				len;
+	TupleDesc	tupType;
+	List	   *targetList;
+	int			len;
 
 	/* ----------------
 	 *	get information from query descriptor
@@ -434,11 +435,11 @@ InitPlan(CmdType operation, Query * parseTree, Plan * plan, EState * estate)
 		 *	  initialize the result relation info stuff.
 		 * ----------------
 		 */
-		RelationInfo   *resultRelationInfo;
-		Index			resultRelationIndex;
-		RangeTblEntry  *rtentry;
-		Oid				resultRelationOid;
-		Relation		resultRelationDesc;
+		RelationInfo *resultRelationInfo;
+		Index		resultRelationIndex;
+		RangeTblEntry *rtentry;
+		Oid			resultRelationOid;
+		Relation	resultRelationDesc;
 
 		resultRelationIndex = resultRelation;
 		rtentry = rt_fetch(resultRelationIndex, rangeTable);
@@ -492,8 +493,8 @@ InitPlan(CmdType operation, Query * parseTree, Plan * plan, EState * estate)
 	 * ----------------
 	 */
 	{
-		int				nSlots = ExecCountSlotsNode(plan);
-		TupleTable		tupleTable = ExecCreateTupleTable(nSlots + 10); /* why add ten? - jolly */
+		int			nSlots = ExecCountSlotsNode(plan);
+		TupleTable	tupleTable = ExecCreateTupleTable(nSlots + 10);		/* why add ten? - jolly */
 
 		estate->es_tupleTable = tupleTable;
 	}
@@ -530,7 +531,7 @@ InitPlan(CmdType operation, Query * parseTree, Plan * plan, EState * estate)
 		operation == CMD_INSERT)
 	{
 
-		JunkFilter	   *j = (JunkFilter *) ExecInitJunkFilter(targetList);
+		JunkFilter *j = (JunkFilter *) ExecInitJunkFilter(targetList);
 
 		estate->es_junkFilter = j;
 	}
@@ -545,10 +546,10 @@ InitPlan(CmdType operation, Query * parseTree, Plan * plan, EState * estate)
 
 	if (operation == CMD_SELECT)
 	{
-		char		   *intoName;
-		char			archiveMode;
-		Oid				intoRelationId;
-		TupleDesc		tupdesc;
+		char	   *intoName;
+		char		archiveMode;
+		Oid			intoRelationId;
+		TupleDesc	tupdesc;
 
 		if (!parseTree->isPortal)
 		{
@@ -626,8 +627,8 @@ InitPlan(CmdType operation, Query * parseTree, Plan * plan, EState * estate)
 static void
 EndPlan(Plan * plan, EState * estate)
 {
-	RelationInfo   *resultRelationInfo;
-	Relation		intoRelationDesc;
+	RelationInfo *resultRelationInfo;
+	Relation	intoRelationDesc;
 
 	/* ----------------
 	 *	get information from state
@@ -647,7 +648,7 @@ EndPlan(Plan * plan, EState * estate)
 	 * ----------------
 	 */
 	{
-		TupleTable		tupleTable = (TupleTable) estate->es_tupleTable;
+		TupleTable	tupleTable = (TupleTable) estate->es_tupleTable;
 
 		ExecDestroyTupleTable(tupleTable, true);		/* was missing last arg */
 		estate->es_tupleTable = NULL;
@@ -659,7 +660,7 @@ EndPlan(Plan * plan, EState * estate)
 	 */
 	if (resultRelationInfo != NULL)
 	{
-		Relation		resultRelationDesc;
+		Relation	resultRelationDesc;
 
 		resultRelationDesc = resultRelationInfo->ri_RelationDesc;
 		heap_close(resultRelationDesc);
@@ -706,12 +707,12 @@ ExecutePlan(EState * estate,
 			ScanDirection direction,
 			void (*printfunc) ())
 {
-	JunkFilter	   *junkfilter;
+	JunkFilter *junkfilter;
 
 	TupleTableSlot *slot;
-	ItemPointer		tupleid = NULL;
+	ItemPointer tupleid = NULL;
 	ItemPointerData tuple_ctid;
-	int				current_tuple_count;
+	int			current_tuple_count;
 	TupleTableSlot *result;
 
 	/* ----------------
@@ -770,11 +771,11 @@ ExecutePlan(EState * estate,
 		 */
 		if ((junkfilter = estate->es_junkFilter) != (JunkFilter *) NULL)
 		{
-			Datum			datum;
+			Datum		datum;
 
 /*			NameData	attrName; */
-			HeapTuple		newTuple;
-			bool			isNull;
+			HeapTuple	newTuple;
+			bool		isNull;
 
 			/* ---------------
 			 * extract the 'ctid' junk attribute.
@@ -822,50 +823,50 @@ ExecutePlan(EState * estate,
 
 		switch (operation)
 		{
-		case CMD_SELECT:
-			ExecRetrieve(slot,	/* slot containing tuple */
-						 printfunc,		/* print function */
-						 estate);		/* */
-			result = slot;
-			break;
+			case CMD_SELECT:
+				ExecRetrieve(slot,		/* slot containing tuple */
+							 printfunc, /* print function */
+							 estate);	/* */
+				result = slot;
+				break;
 
-		case CMD_INSERT:
-			ExecAppend(slot, tupleid, estate);
-			result = NULL;
-			break;
-
-		case CMD_DELETE:
-			ExecDelete(slot, tupleid, estate);
-			result = NULL;
-			break;
-
-		case CMD_UPDATE:
-			ExecReplace(slot, tupleid, estate, parseTree);
-			result = NULL;
-			break;
-
-			/*
-			 * Total hack. I'm ignoring any accessor functions for
-			 * Relation, RelationTupleForm, NameData. Assuming that
-			 * NameData.data has offset 0.
-			 */
-		case CMD_NOTIFY:
-			{
-				RelationInfo   *rInfo = estate->es_result_relation_info;
-				Relation		rDesc = rInfo->ri_RelationDesc;
-
-				Async_Notify(rDesc->rd_rel->relname.data);
+			case CMD_INSERT:
+				ExecAppend(slot, tupleid, estate);
 				result = NULL;
-				current_tuple_count = 0;
-				numberTuples = 1;
-				elog(DEBUG, "ExecNotify %s", &rDesc->rd_rel->relname);
-			}
-			break;
+				break;
 
-		default:
-			elog(DEBUG, "ExecutePlan: unknown operation in queryDesc");
-			result = NULL;
-			break;
+			case CMD_DELETE:
+				ExecDelete(slot, tupleid, estate);
+				result = NULL;
+				break;
+
+			case CMD_UPDATE:
+				ExecReplace(slot, tupleid, estate, parseTree);
+				result = NULL;
+				break;
+
+				/*
+				 * Total hack. I'm ignoring any accessor functions for
+				 * Relation, RelationTupleForm, NameData. Assuming that
+				 * NameData.data has offset 0.
+				 */
+			case CMD_NOTIFY:
+				{
+					RelationInfo *rInfo = estate->es_result_relation_info;
+					Relation	rDesc = rInfo->ri_RelationDesc;
+
+					Async_Notify(rDesc->rd_rel->relname.data);
+					result = NULL;
+					current_tuple_count = 0;
+					numberTuples = 1;
+					elog(DEBUG, "ExecNotify %s", &rDesc->rd_rel->relname);
+				}
+				break;
+
+			default:
+				elog(DEBUG, "ExecutePlan: unknown operation in queryDesc");
+				result = NULL;
+				break;
 		}
 		/* ----------------
 		 *		check our tuple count.. if we've returned the
@@ -901,8 +902,8 @@ ExecRetrieve(TupleTableSlot * slot,
 			 void (*printfunc) (),
 			 EState * estate)
 {
-	HeapTuple		tuple;
-	TupleDesc		attrtype;
+	HeapTuple	tuple;
+	TupleDesc	attrtype;
 
 	/* ----------------
 	 *	get the heap tuple out of the tuple table slot
@@ -944,11 +945,11 @@ ExecAppend(TupleTableSlot * slot,
 		   ItemPointer tupleid,
 		   EState * estate)
 {
-	HeapTuple		tuple;
-	RelationInfo   *resultRelationInfo;
-	Relation		resultRelationDesc;
-	int				numIndices;
-	Oid				newId;
+	HeapTuple	tuple;
+	RelationInfo *resultRelationInfo;
+	Relation	resultRelationDesc;
+	int			numIndices;
+	Oid			newId;
 
 	/* ----------------
 	 *	get the heap tuple out of the tuple table slot
@@ -973,7 +974,7 @@ ExecAppend(TupleTableSlot * slot,
 	if (resultRelationDesc->trigdesc &&
 	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 	{
-		HeapTuple		newtuple;
+		HeapTuple	newtuple;
 
 		newtuple = ExecBRInsertTriggers(resultRelationDesc, tuple);
 
@@ -995,7 +996,7 @@ ExecAppend(TupleTableSlot * slot,
 
 	if (resultRelationDesc->rd_att->constr)
 	{
-		HeapTuple		newtuple;
+		HeapTuple	newtuple;
 
 		newtuple = ExecConstraints("ExecAppend", resultRelationDesc, tuple);
 
@@ -1049,8 +1050,8 @@ ExecDelete(TupleTableSlot * slot,
 		   ItemPointer tupleid,
 		   EState * estate)
 {
-	RelationInfo   *resultRelationInfo;
-	Relation		resultRelationDesc;
+	RelationInfo *resultRelationInfo;
+	Relation	resultRelationDesc;
 
 	/* ----------------
 	 *	get the result relation information
@@ -1063,7 +1064,7 @@ ExecDelete(TupleTableSlot * slot,
 	if (resultRelationDesc->trigdesc &&
 	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
 	{
-		bool			dodelete;
+		bool		dodelete;
 
 		dodelete = ExecBRDeleteTriggers(resultRelationDesc, tupleid);
 
@@ -1118,10 +1119,10 @@ ExecReplace(TupleTableSlot * slot,
 			EState * estate,
 			Query * parseTree)
 {
-	HeapTuple		tuple;
-	RelationInfo   *resultRelationInfo;
-	Relation		resultRelationDesc;
-	int				numIndices;
+	HeapTuple	tuple;
+	RelationInfo *resultRelationInfo;
+	Relation	resultRelationDesc;
+	int			numIndices;
 
 	/* ----------------
 	 *	abort the operation if not running transactions
@@ -1158,7 +1159,7 @@ ExecReplace(TupleTableSlot * slot,
 	if (resultRelationDesc->trigdesc &&
 	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
-		HeapTuple		newtuple;
+		HeapTuple	newtuple;
 
 		newtuple = ExecBRUpdateTriggers(resultRelationDesc, tupleid, tuple);
 
@@ -1180,7 +1181,7 @@ ExecReplace(TupleTableSlot * slot,
 
 	if (resultRelationDesc->rd_att->constr)
 	{
-		HeapTuple		newtuple;
+		HeapTuple	newtuple;
 
 		newtuple = ExecConstraints("ExecReplace", resultRelationDesc, tuple);
 
@@ -1244,21 +1245,21 @@ ExecReplace(TupleTableSlot * slot,
 		ExecARUpdateTriggers(resultRelationDesc, tupleid, tuple);
 }
 
-static			HeapTuple
+static HeapTuple
 ExecAttrDefault(Relation rel, HeapTuple tuple)
 {
-	int				ndef = rel->rd_att->constr->num_defval;
-	AttrDefault    *attrdef = rel->rd_att->constr->defval;
-	ExprContext    *econtext = makeNode(ExprContext);
-	HeapTuple		newtuple;
-	Node		   *expr;
-	bool			isnull;
-	bool			isdone;
-	Datum			val;
-	Datum		   *replValue = NULL;
-	char		   *replNull = NULL;
-	char		   *repl = NULL;
-	int				i;
+	int			ndef = rel->rd_att->constr->num_defval;
+	AttrDefault *attrdef = rel->rd_att->constr->defval;
+	ExprContext *econtext = makeNode(ExprContext);
+	HeapTuple	newtuple;
+	Node	   *expr;
+	bool		isnull;
+	bool		isdone;
+	Datum		val;
+	Datum	   *replValue = NULL;
+	char	   *replNull = NULL;
+	char	   *repl = NULL;
+	int			i;
 
 	econtext->ecxt_scantuple = NULL;	/* scan tuple slot */
 	econtext->ecxt_innertuple = NULL;	/* inner tuple slot */
@@ -1309,18 +1310,18 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 
 }
 
-static char    *
+static char *
 ExecRelCheck(Relation rel, HeapTuple tuple)
 {
-	int				ncheck = rel->rd_att->constr->num_check;
-	ConstrCheck    *check = rel->rd_att->constr->check;
-	ExprContext    *econtext = makeNode(ExprContext);
+	int			ncheck = rel->rd_att->constr->num_check;
+	ConstrCheck *check = rel->rd_att->constr->check;
+	ExprContext *econtext = makeNode(ExprContext);
 	TupleTableSlot *slot = makeNode(TupleTableSlot);
-	RangeTblEntry  *rte = makeNode(RangeTblEntry);
-	List		   *rtlist;
-	List		   *qual;
-	bool			res;
-	int				i;
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	List	   *rtlist;
+	List	   *qual;
+	bool		res;
+	int			i;
 
 	slot->val = tuple;
 	slot->ttc_shouldFree = false;
@@ -1370,7 +1371,7 @@ ExecRelCheck(Relation rel, HeapTuple tuple)
 HeapTuple
 ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 {
-	HeapTuple		newtuple = tuple;
+	HeapTuple	newtuple = tuple;
 
 	Assert(rel->rd_att->constr);
 
@@ -1379,7 +1380,7 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 
 	if (rel->rd_att->constr->has_not_null)
 	{
-		int				attrChk;
+		int			attrChk;
 
 		for (attrChk = 1; attrChk <= rel->rd_att->natts; attrChk++)
 		{
@@ -1391,7 +1392,7 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 
 	if (rel->rd_att->constr->num_check > 0)
 	{
-		char		   *failed;
+		char	   *failed;
 
 		if ((failed = ExecRelCheck(rel, tuple)) != NULL)
 			elog(WARN, "%s: rejected due to CHECK constraint %s", caller, failed);

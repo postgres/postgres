@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.10 1997/09/07 04:39:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.11 1997/09/08 02:21:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,18 +20,18 @@
 #include <access/heapam.h>
 #include <catalog/catname.h>
 
-static void		GetNewObjectIdBlock(Oid * oid_return, int oid_block_size);
-static void		VariableRelationGetNextOid(Oid * oid_return);
-static void		VariableRelationGetNextXid(TransactionId * xidP);
-static void		VariableRelationPutLastXid(TransactionId xid);
-static void		VariableRelationPutNextOid(Oid * oidP);
-static void		VariableRelationGetLastXid(TransactionId * xidP);
+static void GetNewObjectIdBlock(Oid * oid_return, int oid_block_size);
+static void VariableRelationGetNextOid(Oid * oid_return);
+static void VariableRelationGetNextXid(TransactionId * xidP);
+static void VariableRelationPutLastXid(TransactionId xid);
+static void VariableRelationPutNextOid(Oid * oidP);
+static void VariableRelationGetLastXid(TransactionId * xidP);
 
 /* ---------------------
  *		spin lock for oid generation
  * ---------------------
  */
-int				OidGenLockId;
+int			OidGenLockId;
 
 /* ----------------------------------------------------------------
  *			  variable relation query/update routines
@@ -45,7 +45,7 @@ int				OidGenLockId;
 static void
 VariableRelationGetNextXid(TransactionId * xidP)
 {
-	Buffer			buf;
+	Buffer		buf;
 	VariableRelationContents var;
 
 	/* ----------------
@@ -87,7 +87,7 @@ VariableRelationGetNextXid(TransactionId * xidP)
 static void
 VariableRelationGetLastXid(TransactionId * xidP)
 {
-	Buffer			buf;
+	Buffer		buf;
 	VariableRelationContents var;
 
 	/* ----------------
@@ -130,9 +130,9 @@ VariableRelationGetLastXid(TransactionId * xidP)
 void
 VariableRelationPutNextXid(TransactionId xid)
 {
-	Buffer			buf;
+	Buffer		buf;
 	VariableRelationContents var;
-	int				flushmode;
+	int			flushmode;
 
 	/* ----------------
 	 * We assume that a spinlock has been acquire to guarantee
@@ -176,7 +176,7 @@ VariableRelationPutNextXid(TransactionId xid)
 static void
 VariableRelationPutLastXid(TransactionId xid)
 {
-	Buffer			buf;
+	Buffer		buf;
 	VariableRelationContents var;
 
 	/* ----------------
@@ -219,7 +219,7 @@ VariableRelationPutLastXid(TransactionId xid)
 static void
 VariableRelationGetNextOid(Oid * oid_return)
 {
-	Buffer			buf;
+	Buffer		buf;
 	VariableRelationContents var;
 
 	/* ----------------
@@ -289,7 +289,7 @@ VariableRelationGetNextOid(Oid * oid_return)
 static void
 VariableRelationPutNextOid(Oid * oidP)
 {
-	Buffer			buf;
+	Buffer		buf;
 	VariableRelationContents var;
 
 	/* ----------------
@@ -383,13 +383,13 @@ VariableRelationPutNextOid(Oid * oidP)
 
 #define VAR_XID_PREFETCH		32
 
-static int		prefetched_xid_count = 0;
+static int	prefetched_xid_count = 0;
 static TransactionId next_prefetched_xid;
 
 void
 GetNewTransactionId(TransactionId * xid)
 {
-	TransactionId	nextid;
+	TransactionId nextid;
 
 	/* ----------------
 	 *	during bootstrap initialization, we return the special
@@ -457,7 +457,7 @@ GetNewTransactionId(TransactionId * xid)
 void
 UpdateLastCommittedXid(TransactionId xid)
 {
-	TransactionId	lastid;
+	TransactionId lastid;
 
 
 	/*
@@ -501,7 +501,7 @@ GetNewObjectIdBlock(Oid * oid_return,	/* place to return the new object
 										 * id */
 					int oid_block_size) /* number of oids desired */
 {
-	Oid				nextoid;
+	Oid			nextoid;
 
 	/* ----------------
 	 *	SOMEDAY obtain exclusive access to the variable relation page
@@ -554,8 +554,8 @@ GetNewObjectIdBlock(Oid * oid_return,	/* place to return the new object
 
 #define VAR_OID_PREFETCH		32
 
-static int		prefetched_oid_count = 0;
-static Oid		next_prefetched_oid;
+static int	prefetched_oid_count = 0;
+static Oid	next_prefetched_oid;
 
 void
 GetNewObjectId(Oid * oid_return)/* place to return the new object id */
@@ -568,7 +568,7 @@ GetNewObjectId(Oid * oid_return)/* place to return the new object id */
 
 	if (prefetched_oid_count == 0)
 	{
-		int				oid_block_size = VAR_OID_PREFETCH;
+		int			oid_block_size = VAR_OID_PREFETCH;
 
 		/* ----------------
 		 *		during bootstrap time, we want to allocate oids
@@ -609,7 +609,7 @@ GetNewObjectId(Oid * oid_return)/* place to return the new object id */
 void
 CheckMaxObjectId(Oid assigned_oid)
 {
-	Oid				pass_oid;
+	Oid			pass_oid;
 
 
 	if (prefetched_oid_count == 0)		/* make sure next/max is set, or

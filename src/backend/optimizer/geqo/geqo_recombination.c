@@ -3,7 +3,7 @@
 * geqo_recombination.c--
 *	 misc recombination procedures
 *
-* $Id: geqo_recombination.c,v 1.2 1997/09/07 04:43:21 momjian Exp $
+* $Id: geqo_recombination.c,v 1.3 1997/09/08 02:24:08 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -53,10 +53,10 @@
 void
 init_tour(Gene * tour, int num_gene)
 {
-	Gene		   *tmp;
-	int				remainder;
-	int				next,
-					i;
+	Gene	   *tmp;
+	int			remainder;
+	int			next,
+				i;
 
 	tmp = (Gene *) palloc(num_gene * sizeof(Gene));
 
@@ -84,10 +84,10 @@ init_tour(Gene * tour, int num_gene)
  *	 allocate memory for city table
  *
  */
-City		   *
+City	   *
 alloc_city_table(int num_gene)
 {
-	City		   *city_table;
+	City	   *city_table;
 
 	/*
 	 * palloc one extra location so that nodes numbered 1..n can be

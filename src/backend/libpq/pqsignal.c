@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.6 1997/09/07 04:42:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.7 1997/09/08 02:23:19 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -50,7 +50,7 @@ pqsignal(int signo, pqsigfunc func)
 	return signal(signo, func);
 #else
 	struct sigaction act,
-					oact;
+				oact;
 
 	act.sa_handler = func;
 	sigemptyset(&act.sa_mask);

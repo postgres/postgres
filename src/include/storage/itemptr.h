@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.5 1997/09/07 05:01:22 momjian Exp $
+ * $Id: itemptr.h,v 1.6 1997/09/08 02:39:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
  */
 typedef struct ItemPointerData
 {
-	BlockIdData		ip_blkid;
-	OffsetNumber	ip_posid;
-}				ItemPointerData;
+	BlockIdData ip_blkid;
+	OffsetNumber ip_posid;
+}			ItemPointerData;
 
 typedef ItemPointerData *ItemPointer;
 
@@ -108,6 +108,6 @@ typedef ItemPointerData *ItemPointer;
  * ----------------
  */
 
-extern bool		ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
+extern bool ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
 
 #endif							/* ITEMPTR_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.6 1997/09/07 04:40:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.7 1997/09/08 02:21:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,21 +64,21 @@ AggregateCreate(char *aggName,
 				char *agginitval1,
 				char *agginitval2)
 {
-	register		i;
-	Relation		aggdesc;
-	HeapTuple		tup;
-	char			nulls[Natts_pg_aggregate];
-	Datum			values[Natts_pg_aggregate];
-	Form_pg_proc	proc;
-	Oid				xfn1 = InvalidOid;
-	Oid				xfn2 = InvalidOid;
-	Oid				ffn = InvalidOid;
-	Oid				xbase = InvalidOid;
-	Oid				xret1 = InvalidOid;
-	Oid				xret2 = InvalidOid;
-	Oid				fret = InvalidOid;
-	Oid				fnArgs[8];
-	TupleDesc		tupDesc;
+	register	i;
+	Relation	aggdesc;
+	HeapTuple	tup;
+	char		nulls[Natts_pg_aggregate];
+	Datum		values[Natts_pg_aggregate];
+	Form_pg_proc proc;
+	Oid			xfn1 = InvalidOid;
+	Oid			xfn2 = InvalidOid;
+	Oid			ffn = InvalidOid;
+	Oid			xbase = InvalidOid;
+	Oid			xret1 = InvalidOid;
+	Oid			xret2 = InvalidOid;
+	Oid			fret = InvalidOid;
+	Oid			fnArgs[8];
+	TupleDesc	tupDesc;
 
 	memset(fnArgs, 0, 8 * sizeof(Oid));
 
@@ -267,16 +267,16 @@ AggregateCreate(char *aggName,
 
 }
 
-char		   *
+char	   *
 AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool * isNull)
 {
-	HeapTuple		tup;
-	Relation		aggRel;
-	int				initValAttno;
-	Oid				transtype;
-	text		   *textInitVal;
-	char		   *strInitVal,
-				   *initVal;
+	HeapTuple	tup;
+	Relation	aggRel;
+	int			initValAttno;
+	Oid			transtype;
+	text	   *textInitVal;
+	char	   *strInitVal,
+			   *initVal;
 
 	Assert(PointerIsValid(aggName));
 	Assert(PointerIsValid(isNull));
@@ -295,7 +295,7 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool * isNull)
 		initValAttno = Anum_pg_aggregate_agginitval1;
 	}
 	else
-		 /* can only be 1 or 2 */
+		/* can only be 1 or 2 */
 	{
 		transtype = ((Form_pg_aggregate) GETSTRUCT(tup))->aggtranstype2;
 		initValAttno = Anum_pg_aggregate_agginitval2;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.14 1997/09/07 04:48:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.15 1997/09/08 02:29:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,12 +67,12 @@ static HeapTuple
 inv_newtuple(LargeObjectDesc * obj_desc, Buffer buffer,
 			 Page page, char *dbuf, int nwrite);
 static HeapTuple inv_fetchtup(LargeObjectDesc * obj_desc, Buffer * bufP);
-static int		inv_wrnew(LargeObjectDesc * obj_desc, char *buf, int nbytes);
+static int	inv_wrnew(LargeObjectDesc * obj_desc, char *buf, int nbytes);
 static int
 inv_wrold(LargeObjectDesc * obj_desc, char *dbuf, int nbytes,
 		  HeapTuple htup, Buffer buffer);
-static void		inv_indextup(LargeObjectDesc * obj_desc, HeapTuple htup);
-static int		_inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln);
+static void inv_indextup(LargeObjectDesc * obj_desc, HeapTuple htup);
+static int	_inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln);
 
 /*
  *	inv_create -- create a new large object.
@@ -86,17 +86,17 @@ static int		_inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln);
 LargeObjectDesc *
 inv_create(int flags)
 {
-	int				file_oid;
+	int			file_oid;
 	LargeObjectDesc *retval;
-	Relation		r;
-	Relation		indr;
-	int				smgr;
-	char			archchar;
-	TupleDesc		tupdesc;
-	AttrNumber		attNums[1];
-	Oid				classObjectId[1];
-	char			objname[NAMEDATALEN];
-	char			indname[NAMEDATALEN];
+	Relation	r;
+	Relation	indr;
+	int			smgr;
+	char		archchar;
+	TupleDesc	tupdesc;
+	AttrNumber	attNums[1];
+	Oid			classObjectId[1];
+	char		objname[NAMEDATALEN];
+	char		indname[NAMEDATALEN];
 
 	/* parse flags */
 	smgr = flags & INV_SMGRMASK;
@@ -217,9 +217,9 @@ LargeObjectDesc *
 inv_open(Oid lobjId, int flags)
 {
 	LargeObjectDesc *retval;
-	Relation		r;
-	char		   *indname;
-	Relation		indrel;
+	Relation	r;
+	char	   *indname;
+	Relation	indrel;
 
 	r = heap_open(lobjId);
 
@@ -288,7 +288,7 @@ inv_close(LargeObjectDesc * obj_desc)
 int
 inv_destroy(Oid lobjId)
 {
-	Relation		r;
+	Relation	r;
 
 	r = (Relation) RelationIdGetRelation(lobjId);
 	if (!RelationIsValid(r) || r->rd_rel->relkind == RELKIND_INDEX)
@@ -348,9 +348,9 @@ inv_stat(LargeObjectDesc * obj_desc, struct pgstat * stbuf)
 int
 inv_seek(LargeObjectDesc * obj_desc, int offset, int whence)
 {
-	int				oldOffset;
-	Datum			d;
-	ScanKeyData		skey;
+	int			oldOffset;
+	Datum		d;
+	ScanKeyData skey;
 
 	Assert(PointerIsValid(obj_desc));
 
@@ -433,14 +433,14 @@ inv_tell(LargeObjectDesc * obj_desc)
 int
 inv_read(LargeObjectDesc * obj_desc, char *buf, int nbytes)
 {
-	HeapTuple		htup;
-	Buffer			b;
-	int				nread;
-	int				off;
-	int				ncopy;
-	Datum			d;
+	HeapTuple	htup;
+	Buffer		b;
+	int			nread;
+	int			off;
+	int			ncopy;
+	Datum		d;
 	struct varlena *fsblock;
-	bool			isNull;
+	bool		isNull;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -497,10 +497,10 @@ inv_read(LargeObjectDesc * obj_desc, char *buf, int nbytes)
 int
 inv_write(LargeObjectDesc * obj_desc, char *buf, int nbytes)
 {
-	HeapTuple		htup;
-	Buffer			b;
-	int				nwritten;
-	int				tuplen;
+	HeapTuple	htup;
+	Buffer		b;
+	int			nwritten;
+	int			tuplen;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -575,16 +575,16 @@ inv_write(LargeObjectDesc * obj_desc, char *buf, int nbytes)
  *				A heap tuple containing the desired block, or NULL if no
  *				such tuple exists.
  */
-static			HeapTuple
+static HeapTuple
 inv_fetchtup(LargeObjectDesc * obj_desc, Buffer * bufP)
 {
-	HeapTuple		htup;
+	HeapTuple	htup;
 	RetrieveIndexResult res;
-	Datum			d;
-	int				firstbyte,
-					lastbyte;
+	Datum		d;
+	int			firstbyte,
+				lastbyte;
 	struct varlena *fsblock;
-	bool			isNull;
+	bool		isNull;
 
 	/*
 	 * If we've exhausted the current block, we need to get the next one.
@@ -601,7 +601,7 @@ inv_fetchtup(LargeObjectDesc * obj_desc, Buffer * bufP)
 		/* initialize scan key if not done */
 		if (obj_desc->iscan == (IndexScanDesc) NULL)
 		{
-			ScanKeyData		skey;
+			ScanKeyData skey;
 
 			ScanKeyEntryInitialize(&skey, 0x0, 1, INT4GE_PROC_OID,
 								   Int32GetDatum(0));
@@ -693,12 +693,12 @@ inv_fetchtup(LargeObjectDesc * obj_desc, Buffer * bufP)
 static int
 inv_wrnew(LargeObjectDesc * obj_desc, char *buf, int nbytes)
 {
-	Relation		hr;
-	HeapTuple		ntup;
-	Buffer			buffer;
-	Page			page;
-	int				nblocks;
-	int				nwritten;
+	Relation	hr;
+	HeapTuple	ntup;
+	Buffer		buffer;
+	Page		page;
+	int			nblocks;
+	int			nwritten;
 
 	hr = obj_desc->heap_r;
 
@@ -768,19 +768,19 @@ inv_wrold(LargeObjectDesc * obj_desc,
 		  HeapTuple htup,
 		  Buffer buffer)
 {
-	Relation		hr;
-	HeapTuple		ntup;
-	Buffer			newbuf;
-	Page			page;
-	Page			newpage;
-	int				tupbytes;
-	Datum			d;
+	Relation	hr;
+	HeapTuple	ntup;
+	Buffer		newbuf;
+	Page		page;
+	Page		newpage;
+	int			tupbytes;
+	Datum		d;
 	struct varlena *fsblock;
-	int				nwritten,
-					nblocks,
-					freespc;
-	bool			isNull;
-	int				keep_offset;
+	int			nwritten,
+				nblocks,
+				freespc;
+	bool		isNull;
+	int			keep_offset;
 
 	/*
 	 * Since we're using a no-overwrite storage manager, the way we
@@ -938,23 +938,23 @@ inv_wrold(LargeObjectDesc * obj_desc,
 	return (nwritten);
 }
 
-static			HeapTuple
+static HeapTuple
 inv_newtuple(LargeObjectDesc * obj_desc,
 			 Buffer buffer,
 			 Page page,
 			 char *dbuf,
 			 int nwrite)
 {
-	HeapTuple		ntup;
-	PageHeader		ph;
-	int				tupsize;
-	int				hoff;
-	Offset			lower;
-	Offset			upper;
-	ItemId			itemId;
-	OffsetNumber	off;
-	OffsetNumber	limit;
-	char		   *attptr;
+	HeapTuple	ntup;
+	PageHeader	ph;
+	int			tupsize;
+	int			hoff;
+	Offset		lower;
+	Offset		upper;
+	ItemId		itemId;
+	OffsetNumber off;
+	OffsetNumber limit;
+	char	   *attptr;
 
 	/* compute tuple size -- no nulls */
 	hoff = sizeof(HeapTupleData) - sizeof(ntup->t_bits);
@@ -1035,7 +1035,7 @@ inv_newtuple(LargeObjectDesc * obj_desc,
 	 * *  mer fixed disk layout of varlenas to get rid of the need for
 	 * this. *
 	 *
-	 *	*((int32 *) attptr) = nwrite + sizeof(int32); *  attptr +=
+	 *((int32 *) attptr) = nwrite + sizeof(int32); *  attptr +=
 	 * sizeof(int32);
 	 */
 
@@ -1064,8 +1064,8 @@ static void
 inv_indextup(LargeObjectDesc * obj_desc, HeapTuple htup)
 {
 	InsertIndexResult res;
-	Datum			v[1];
-	char			n[1];
+	Datum		v[1];
+	char		n[1];
 
 	n[0] = ' ';
 	v[0] = Int32GetDatum(obj_desc->highbyte);
@@ -1173,13 +1173,13 @@ ItemPointerFormExternal(ItemPointer pointer)
 static int
 _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 {
-	IndexScanDesc	iscan;
+	IndexScanDesc iscan;
 	RetrieveIndexResult res;
-	Buffer			buf;
-	HeapTuple		htup;
-	Datum			d;
-	long			size;
-	bool			isNull;
+	Buffer		buf;
+	HeapTuple	htup;
+	Datum		d;
+	long		size;
+	bool		isNull;
 
 	/* scan backwards from end */
 	iscan = index_beginscan(ireln, (bool) 1, 0, (ScanKey) NULL);

@@ -21,33 +21,33 @@
 #define FALSE	0
 #endif
 
-void			halt();
+void		halt();
 
-extern char    *optarg;
-extern int		optind;
+extern char *optarg;
+extern int	optind;
 
 int
 main(argc, argv)
-int				argc;
-char		  **argv;
+int			argc;
+char	  **argv;
 {
-	int				tab_size = 8,
-					min_spaces = 2,
-					protect_quotes = FALSE,
-					del_tabs = FALSE,
-					clip_lines = FALSE,
-					prv_spaces,
-					col_in_tab,
-					escaped,
-					nxt_spaces;
-	char			in_line[BUFSIZ],
-					out_line[BUFSIZ],
-				   *src,
-				   *dst,
-					quote_char,
-					ch,
-				   *cp;
-	FILE		   *in_file;
+	int			tab_size = 8,
+				min_spaces = 2,
+				protect_quotes = FALSE,
+				del_tabs = FALSE,
+				clip_lines = FALSE,
+				prv_spaces,
+				col_in_tab,
+				escaped,
+				nxt_spaces;
+	char		in_line[BUFSIZ],
+				out_line[BUFSIZ],
+			   *src,
+			   *dst,
+				quote_char,
+				ch,
+			   *cp;
+	FILE	   *in_file;
 
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		++cp;
@@ -59,30 +59,30 @@ char		  **argv;
 	while ((ch = getopt(argc, argv, "cdhqs:t:")) != -1)
 		switch (ch)
 		{
-		case 'c':
-			clip_lines = TRUE;
-			break;
-		case 'd':
-			del_tabs = TRUE;
-			break;
-		case 'q':
-			protect_quotes = TRUE;
-			break;
-		case 's':
-			min_spaces = atoi(optarg);
-			break;
-		case 't':
-			tab_size = atoi(optarg);
-			break;
-		case 'h':
-		case '?':
-			halt("USAGE: %s [ -cdqst ] [file ...]\n\
+			case 'c':
+				clip_lines = TRUE;
+				break;
+			case 'd':
+				del_tabs = TRUE;
+				break;
+			case 'q':
+				protect_quotes = TRUE;
+				break;
+			case 's':
+				min_spaces = atoi(optarg);
+				break;
+			case 't':
+				tab_size = atoi(optarg);
+				break;
+			case 'h':
+			case '?':
+				halt("USAGE: %s [ -cdqst ] [file ...]\n\
 	-c (clip trailing whitespace)\n\
 	-d (delete tabs)\n\
 	-q (protect quotes)\n\
 	-s minimum_spaces\n\
 	-t tab_width\n",
-				 cp);
+					 cp);
 		}
 
 	argv += optind;

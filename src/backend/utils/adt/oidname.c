@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.5 1997/09/07 04:50:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.6 1997/09/08 02:30:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,8 @@
 OidName
 oidnamein(char *inStr)
 {
-	OidName			oc;
-	char		   *inptr;
+	OidName		oc;
+	char	   *inptr;
 
 	oc = (OidName) palloc(sizeof(OidNameData));
 
@@ -45,12 +45,12 @@ oidnamein(char *inStr)
 	return oc;
 }
 
-char		   *
+char	   *
 oidnameout(OidName oidname)
 {
-	char			buf[30 + NAMEDATALEN];		/* oidname length + oid
-												 * length + some safety */
-	char		   *res;
+	char		buf[30 + NAMEDATALEN];	/* oidname length + oid length +
+										 * some safety */
+	char	   *res;
 
 	sprintf(buf, "%d,%s", oidname->id, oidname->name.data);
 	res = pstrdup(buf);
@@ -115,7 +115,7 @@ oidnamecmp(OidName o1, OidName o2)
 OidName
 mkoidname(Oid id, char *name)
 {
-	OidName			oidname;
+	OidName		oidname;
 
 	oidname = (OidName) palloc(sizeof(Oid) + NAMEDATALEN);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.11 1997/09/07 04:38:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.12 1997/09/08 02:20:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,9 @@ _hash_search(Relation rel,
 			 Buffer * bufP,
 			 HashMetaPage metap)
 {
-	BlockNumber		blkno;
-	Datum			keyDatum;
-	Bucket			bucket;
+	BlockNumber blkno;
+	Datum		keyDatum;
+	Bucket		bucket;
 
 	if (scankey == (ScanKey) NULL ||
 		(keyDatum = scankey[0].sk_argument) == (Datum) NULL)
@@ -70,16 +70,16 @@ _hash_search(Relation rel,
 RetrieveIndexResult
 _hash_next(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation		rel;
-	Buffer			buf;
-	Buffer			metabuf;
-	Page			page;
-	OffsetNumber	offnum;
+	Relation	rel;
+	Buffer		buf;
+	Buffer		metabuf;
+	Page		page;
+	OffsetNumber offnum;
 	RetrieveIndexResult res;
-	ItemPointer		current;
-	HashItem		hitem;
-	IndexTuple		itup;
-	HashScanOpaque	so;
+	ItemPointer current;
+	HashItem	hitem;
+	IndexTuple	itup;
+	HashScanOpaque so;
 
 	rel = scan->relation;
 	so = (HashScanOpaque) scan->opaque;
@@ -129,7 +129,7 @@ static void
 _hash_readnext(Relation rel,
 			   Buffer * bufp, Page * pagep, HashPageOpaque * opaquep)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = (*opaquep)->hasho_nextblkno;
 	_hash_relbuf(rel, *bufp, HASH_READ);
@@ -148,7 +148,7 @@ static void
 _hash_readprev(Relation rel,
 			   Buffer * bufp, Page * pagep, HashPageOpaque * opaquep)
 {
-	BlockNumber		blkno;
+	BlockNumber blkno;
 
 	blkno = (*opaquep)->hasho_prevblkno;
 	_hash_relbuf(rel, *bufp, HASH_READ);
@@ -180,18 +180,18 @@ _hash_readprev(Relation rel,
 RetrieveIndexResult
 _hash_first(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation		rel;
-	Buffer			buf;
-	Buffer			metabuf;
-	Page			page;
-	HashPageOpaque	opaque;
-	HashMetaPage	metap;
-	HashItem		hitem;
-	IndexTuple		itup;
-	ItemPointer		current;
-	OffsetNumber	offnum;
+	Relation	rel;
+	Buffer		buf;
+	Buffer		metabuf;
+	Page		page;
+	HashPageOpaque opaque;
+	HashMetaPage metap;
+	HashItem	hitem;
+	IndexTuple	itup;
+	ItemPointer current;
+	OffsetNumber offnum;
 	RetrieveIndexResult res;
-	HashScanOpaque	so;
+	HashScanOpaque so;
 
 	rel = scan->relation;
 	so = (HashScanOpaque) scan->opaque;
@@ -286,20 +286,20 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 bool
 _hash_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir, Buffer metabuf)
 {
-	Relation		rel;
-	ItemPointer		current;
-	HashScanOpaque	so;
-	int				allbuckets;
-	HashMetaPage	metap;
-	Buffer			buf;
-	Page			page;
-	HashPageOpaque	opaque;
-	OffsetNumber	maxoff;
-	OffsetNumber	offnum;
-	Bucket			bucket;
-	BlockNumber		blkno;
-	HashItem		hitem;
-	IndexTuple		itup;
+	Relation	rel;
+	ItemPointer current;
+	HashScanOpaque so;
+	int			allbuckets;
+	HashMetaPage metap;
+	Buffer		buf;
+	Page		page;
+	HashPageOpaque opaque;
+	OffsetNumber maxoff;
+	OffsetNumber offnum;
+	Bucket		bucket;
+	BlockNumber blkno;
+	HashItem	hitem;
+	IndexTuple	itup;
 
 	rel = scan->relation;
 	current = &(scan->currentItemData);
@@ -341,107 +341,107 @@ _hash_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir, Buffer metabuf)
 
 		switch (dir)
 		{
-		case ForwardScanDirection:
-			if (offnum != InvalidOffsetNumber)
-			{
-				offnum = OffsetNumberNext(offnum);		/* move forward */
-			}
-			else
-			{
-				offnum = FirstOffsetNumber;		/* new page */
-			}
-			while (offnum > maxoff)
-			{
+			case ForwardScanDirection:
+				if (offnum != InvalidOffsetNumber)
+				{
+					offnum = OffsetNumberNext(offnum);	/* move forward */
+				}
+				else
+				{
+					offnum = FirstOffsetNumber; /* new page */
+				}
+				while (offnum > maxoff)
+				{
 
-				/*
-				 * either this page is empty (maxoff ==
-				 * InvalidOffsetNumber) or we ran off the end.
-				 */
-				_hash_readnext(rel, &buf, &page, &opaque);
-				if (BufferIsInvalid(buf))
-				{				/* end of chain */
-					if (allbuckets && bucket < metap->hashm_maxbucket)
-					{
-						++bucket;
-						blkno = BUCKET_TO_BLKNO(bucket);
-						buf = _hash_getbuf(rel, blkno, HASH_READ);
-						page = BufferGetPage(buf);
-						_hash_checkpage(page, LH_BUCKET_PAGE);
-						opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-						Assert(opaque->hasho_bucket == bucket);
-						while (PageIsEmpty(page) &&
-							 BlockNumberIsValid(opaque->hasho_nextblkno))
+					/*
+					 * either this page is empty (maxoff ==
+					 * InvalidOffsetNumber) or we ran off the end.
+					 */
+					_hash_readnext(rel, &buf, &page, &opaque);
+					if (BufferIsInvalid(buf))
+					{			/* end of chain */
+						if (allbuckets && bucket < metap->hashm_maxbucket)
 						{
-							_hash_readnext(rel, &buf, &page, &opaque);
+							++bucket;
+							blkno = BUCKET_TO_BLKNO(bucket);
+							buf = _hash_getbuf(rel, blkno, HASH_READ);
+							page = BufferGetPage(buf);
+							_hash_checkpage(page, LH_BUCKET_PAGE);
+							opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+							Assert(opaque->hasho_bucket == bucket);
+							while (PageIsEmpty(page) &&
+							 BlockNumberIsValid(opaque->hasho_nextblkno))
+							{
+								_hash_readnext(rel, &buf, &page, &opaque);
+							}
+							maxoff = PageGetMaxOffsetNumber(page);
+							offnum = FirstOffsetNumber;
 						}
+						else
+						{
+							maxoff = offnum = InvalidOffsetNumber;
+							break;		/* while */
+						}
+					}
+					else
+					{
+						/* _hash_readnext never returns an empty page */
 						maxoff = PageGetMaxOffsetNumber(page);
 						offnum = FirstOffsetNumber;
 					}
-					else
-					{
-						maxoff = offnum = InvalidOffsetNumber;
-						break;	/* while */
-					}
+				}
+				break;
+			case BackwardScanDirection:
+				if (offnum != InvalidOffsetNumber)
+				{
+					offnum = OffsetNumberPrev(offnum);	/* move back */
 				}
 				else
 				{
-					/* _hash_readnext never returns an empty page */
-					maxoff = PageGetMaxOffsetNumber(page);
-					offnum = FirstOffsetNumber;
+					offnum = maxoff;	/* new page */
 				}
-			}
-			break;
-		case BackwardScanDirection:
-			if (offnum != InvalidOffsetNumber)
-			{
-				offnum = OffsetNumberPrev(offnum);		/* move back */
-			}
-			else
-			{
-				offnum = maxoff;/* new page */
-			}
-			while (offnum < FirstOffsetNumber)
-			{
+				while (offnum < FirstOffsetNumber)
+				{
 
-				/*
-				 * either this page is empty (offnum ==
-				 * InvalidOffsetNumber) or we ran off the end.
-				 */
-				_hash_readprev(rel, &buf, &page, &opaque);
-				if (BufferIsInvalid(buf))
-				{				/* end of chain */
-					if (allbuckets && bucket > 0)
-					{
-						--bucket;
-						blkno = BUCKET_TO_BLKNO(bucket);
-						buf = _hash_getbuf(rel, blkno, HASH_READ);
-						page = BufferGetPage(buf);
-						_hash_checkpage(page, LH_BUCKET_PAGE);
-						opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-						Assert(opaque->hasho_bucket == bucket);
-						while (BlockNumberIsValid(opaque->hasho_nextblkno))
+					/*
+					 * either this page is empty (offnum ==
+					 * InvalidOffsetNumber) or we ran off the end.
+					 */
+					_hash_readprev(rel, &buf, &page, &opaque);
+					if (BufferIsInvalid(buf))
+					{			/* end of chain */
+						if (allbuckets && bucket > 0)
 						{
-							_hash_readnext(rel, &buf, &page, &opaque);
+							--bucket;
+							blkno = BUCKET_TO_BLKNO(bucket);
+							buf = _hash_getbuf(rel, blkno, HASH_READ);
+							page = BufferGetPage(buf);
+							_hash_checkpage(page, LH_BUCKET_PAGE);
+							opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+							Assert(opaque->hasho_bucket == bucket);
+							while (BlockNumberIsValid(opaque->hasho_nextblkno))
+							{
+								_hash_readnext(rel, &buf, &page, &opaque);
+							}
+							maxoff = offnum = PageGetMaxOffsetNumber(page);
 						}
+						else
+						{
+							maxoff = offnum = InvalidOffsetNumber;
+							break;		/* while */
+						}
+					}
+					else
+					{
+						/* _hash_readprev never returns an empty page */
 						maxoff = offnum = PageGetMaxOffsetNumber(page);
 					}
-					else
-					{
-						maxoff = offnum = InvalidOffsetNumber;
-						break;	/* while */
-					}
 				}
-				else
-				{
-					/* _hash_readprev never returns an empty page */
-					maxoff = offnum = PageGetMaxOffsetNumber(page);
-				}
-			}
-			break;
-		default:
-			/* NoMovementScanDirection */
-			/* this should not be reached */
-			break;
+				break;
+			default:
+				/* NoMovementScanDirection */
+				/* this should not be reached */
+				break;
 		}
 
 		/* we ran off the end of the world without finding a match */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.6 1997/09/07 04:54:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.7 1997/09/08 02:32:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,11 +91,11 @@
 
 #include "utils/portal.h"
 
-static void		CollectNamedPortals(Portal * portalP, int destroy);
-static Portal	PortalHeapMemoryGetPortal(PortalHeapMemory context);
+static void CollectNamedPortals(Portal * portalP, int destroy);
+static Portal PortalHeapMemoryGetPortal(PortalHeapMemory context);
 static PortalVariableMemory PortalHeapMemoryGetVariableMemory(PortalHeapMemory context);
-static void		PortalResetHeapMemory(Portal portal);
-static Portal	PortalVariableMemoryGetPortal(PortalVariableMemory context);
+static void PortalResetHeapMemory(Portal portal);
+static Portal PortalVariableMemoryGetPortal(PortalVariableMemory context);
 
 /* ----------------
  *		ALLOCFREE_ERROR_ABORT
@@ -110,19 +110,19 @@ static Portal	PortalVariableMemoryGetPortal(PortalVariableMemory context);
  * ----------------
  */
 
-static int		PortalManagerEnableCount = 0;
+static int	PortalManagerEnableCount = 0;
 
 #define MAX_PORTALNAME_LEN		64		/* XXX LONGALIGNable value */
 
 typedef struct portalhashent
 {
-	char			portalname[MAX_PORTALNAME_LEN];
-	Portal			portal;
-}				PortalHashEnt;
+	char		portalname[MAX_PORTALNAME_LEN];
+	Portal		portal;
+}			PortalHashEnt;
 
 #define PortalManagerEnabled	(PortalManagerEnableCount >= 1)
 
-static HTAB    *PortalHashTable = NULL;
+static HTAB *PortalHashTable = NULL;
 
 #define PortalHashTableLookup(NAME, PORTAL) \
 	{	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
@@ -162,9 +162,9 @@ static HTAB    *PortalHashTable = NULL;
 	}
 
 static GlobalMemory PortalMemory = NULL;
-static char		PortalMemoryName[] = "Portal";
+static char PortalMemoryName[] = "Portal";
 
-static Portal	BlankPortal = NULL;
+static Portal BlankPortal = NULL;
 
 /* ----------------
  *		Internal class definitions
@@ -172,9 +172,9 @@ static Portal	BlankPortal = NULL;
  */
 typedef struct HeapMemoryBlockData
 {
-	AllocSetData	setData;
-	FixedItemData	itemData;
-}				HeapMemoryBlockData;
+	AllocSetData setData;
+	FixedItemData itemData;
+}			HeapMemoryBlockData;
 
 typedef HeapMemoryBlockData *HeapMemoryBlock;
 
@@ -189,7 +189,7 @@ typedef HeapMemoryBlockData *HeapMemoryBlock;
  *		PortalVariableMemoryAlloc
  * ----------------
  */
-static			Pointer
+static Pointer
 PortalVariableMemoryAlloc(PortalVariableMemory this,
 						  Size size)
 {
@@ -211,7 +211,7 @@ PortalVariableMemoryFree(PortalVariableMemory this,
  *		PortalVariableMemoryRealloc
  * ----------------
  */
-static			Pointer
+static Pointer
 PortalVariableMemoryRealloc(PortalVariableMemory this,
 							Pointer pointer,
 							Size size)
@@ -223,7 +223,7 @@ PortalVariableMemoryRealloc(PortalVariableMemory this,
  *		PortalVariableMemoryGetName
  * ----------------
  */
-static char    *
+static char *
 PortalVariableMemoryGetName(PortalVariableMemory this)
 {
 	return (form("%s-var", PortalVariableMemoryGetPortal(this)->name));
@@ -245,7 +245,7 @@ PortalVariableMemoryDump(PortalVariableMemory this)
  *		PortalHeapMemoryAlloc
  * ----------------
  */
-static			Pointer
+static Pointer
 PortalHeapMemoryAlloc(PortalHeapMemory this,
 					  Size size)
 {
@@ -285,7 +285,7 @@ PortalHeapMemoryFree(PortalHeapMemory this,
  *		PortalHeapMemoryRealloc
  * ----------------
  */
-static			Pointer
+static Pointer
 PortalHeapMemoryRealloc(PortalHeapMemory this,
 						Pointer pointer,
 						Size size)
@@ -301,7 +301,7 @@ PortalHeapMemoryRealloc(PortalHeapMemory this,
  *		PortalHeapMemoryGetName
  * ----------------
  */
-static char    *
+static char *
 PortalHeapMemoryGetName(PortalHeapMemory this)
 {
 	return (form("%s-heap", PortalHeapMemoryGetPortal(this)->name));
@@ -366,7 +366,7 @@ static struct MemoryContextMethodsData PortalHeapContextMethodsData = {
 static void
 CreateNewBlankPortal()
 {
-	Portal			portal;
+	Portal		portal;
 
 	AssertState(!PortalIsValid(BlankPortal));
 
@@ -428,16 +428,16 @@ PortalNameIsSpecial(char *pname)
 static void
 CollectNamedPortals(Portal * portalP, int destroy)
 {
-	static Portal  *portalList = (Portal *) NULL;
-	static int		listIndex = 0;
-	static int		maxIndex = 9;
+	static Portal *portalList = (Portal *) NULL;
+	static int	listIndex = 0;
+	static int	maxIndex = 9;
 
 	if (portalList == (Portal *) NULL)
 		portalList = (Portal *) malloc(10 * sizeof(Portal));
 
 	if (destroy != 0)
 	{
-		int				i;
+		int			i;
 
 		for (i = 0; i < listIndex; i++)
 			PortalDestroy(&portalList[i]);
@@ -515,8 +515,8 @@ DumpPortals()
 void
 EnablePortalManager(bool on)
 {
-	static bool		processing = false;
-	HASHCTL			ctl;
+	static bool processing = false;
+	HASHCTL		ctl;
 
 	AssertState(!processing);
 	AssertArg(BoolIsValid(on));
@@ -581,7 +581,7 @@ EnablePortalManager(bool on)
 Portal
 GetPortalByName(char *name)
 {
-	Portal			portal;
+	Portal		portal;
 
 	AssertState(PortalManagerEnabled);
 
@@ -615,8 +615,8 @@ GetPortalByName(char *name)
 Portal
 BlankPortalAssignName(char *name)		/* XXX PortalName */
 {
-	Portal			portal;
-	uint16			length;
+	Portal		portal;
+	uint16		length;
 
 	AssertState(PortalManagerEnabled);
 	AssertState(PortalIsValid(BlankPortal));
@@ -687,7 +687,7 @@ PortalSetQuery(Portal portal,
  *		BadState if called when disabled.
  *		BadArg if portal is invalid.
  */
-QueryDesc	   *
+QueryDesc  *
 PortalGetQueryDesc(Portal portal)
 {
 	AssertState(PortalManagerEnabled);
@@ -704,7 +704,7 @@ PortalGetQueryDesc(Portal portal)
  *		BadState if called when disabled.
  *		BadArg if portal is invalid.
  */
-EState		   *
+EState	   *
 PortalGetState(Portal portal)
 {
 	AssertState(PortalManagerEnabled);
@@ -729,8 +729,8 @@ PortalGetState(Portal portal)
 Portal
 CreatePortal(char *name)		/* XXX PortalName */
 {
-	Portal			portal;
-	uint16			length;
+	Portal		portal;
+	uint16		length;
 
 	AssertState(PortalManagerEnabled);
 	AssertArg(PointerIsValid(name));	/* XXX PortalName */
@@ -788,7 +788,7 @@ CreatePortal(char *name)		/* XXX PortalName */
 void
 PortalDestroy(Portal * portalP)
 {
-	Portal			portal = *portalP;
+	Portal		portal = *portalP;
 
 	AssertState(PortalManagerEnabled);
 	AssertArg(PortalIsValid(portal));
@@ -828,7 +828,7 @@ static void
 PortalResetHeapMemory(Portal portal)
 {
 	PortalHeapMemory context;
-	MemoryContext	currentContext;
+	MemoryContext currentContext;
 
 	context = PortalGetHeapMemory(portal);
 
@@ -955,7 +955,7 @@ PortalGetHeapMemory(Portal portal)
  *		BadState if called when disabled.
  *		BadArg if context is invalid.
  */
-static			Portal
+static Portal
 PortalVariableMemoryGetPortal(PortalVariableMemory context)
 {
 	return ((Portal) ((char *) context - offsetof(PortalD, variable)));
@@ -969,7 +969,7 @@ PortalVariableMemoryGetPortal(PortalVariableMemory context)
  *		BadState if called when disabled.
  *		BadArg if context is invalid.
  */
-static			Portal
+static Portal
 PortalHeapMemoryGetPortal(PortalHeapMemory context)
 {
 	return ((Portal) ((char *) context - offsetof(PortalD, heap)));
@@ -1002,7 +1002,7 @@ PortalVariableMemoryGetHeapMemory(PortalVariableMemory context)
  *		BadState if called when disabled.
  *		BadArg if context is invalid.
  */
-static			PortalVariableMemory
+static PortalVariableMemory
 PortalHeapMemoryGetVariableMemory(PortalHeapMemory context)
 {
 	return ((PortalVariableMemory) ((char *) context

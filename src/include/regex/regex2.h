@@ -78,7 +78,7 @@
  * immediately *preceding* "execution" of that operator.
  */
 typedef unsigned long sop;		/* strip operator */
-typedef long	sopno;
+typedef long sopno;
 
 #define OPRMASK 0xf8000000
 #define OPDMASK 0x07ffffff
@@ -125,12 +125,12 @@ typedef long	sopno;
  */
 typedef struct
 {
-	uch			   *ptr;		/* -> uch [csetsize] */
-	uch				mask;		/* bit within array */
-	uch				hash;		/* hash code */
-	size_t			smultis;
-	char		   *multis;		/* -> char[smulti]	ab\0cd\0ef\0\0 */
-}				cset;
+	uch		   *ptr;			/* -> uch [csetsize] */
+	uch			mask;			/* bit within array */
+	uch			hash;			/* hash code */
+	size_t		smultis;
+	char	   *multis;			/* -> char[smulti]	ab\0cd\0ef\0\0 */
+}			cset;
 
 /* note that CHadd and CHsub are unsafe, and CHIN doesn't yield 0/1 */
 #define CHadd(cs, c)	((cs)->ptr[(uch)(c)] |= (cs)->mask, (cs)->hash += (c))
@@ -149,32 +149,32 @@ typedef unsigned char cat_t;
  */
 struct re_guts
 {
-	int				magic;
+	int			magic;
 #define  MAGIC2  ((('R'^0200)<<8)|'E')
-	sop			   *strip;		/* malloced area for strip */
-	int				csetsize;	/* number of bits in a cset vector */
-	int				ncsets;		/* number of csets in use */
-	cset		   *sets;		/* -> cset [ncsets] */
-	uch			   *setbits;	/* -> uch[csetsize][ncsets/CHAR_BIT] */
-	int				cflags;		/* copy of regcomp() cflags argument */
-	sopno			nstates;	/* = number of sops */
-	sopno			firststate; /* the initial OEND (normally 0) */
-	sopno			laststate;	/* the final OEND */
-	int				iflags;		/* internal flags */
+	sop		   *strip;			/* malloced area for strip */
+	int			csetsize;		/* number of bits in a cset vector */
+	int			ncsets;			/* number of csets in use */
+	cset	   *sets;			/* -> cset [ncsets] */
+	uch		   *setbits;		/* -> uch[csetsize][ncsets/CHAR_BIT] */
+	int			cflags;			/* copy of regcomp() cflags argument */
+	sopno		nstates;		/* = number of sops */
+	sopno		firststate;		/* the initial OEND (normally 0) */
+	sopno		laststate;		/* the final OEND */
+	int			iflags;			/* internal flags */
 #define  USEBOL  01				/* used ^ */
 #define  USEEOL  02				/* used $ */
 #define  BAD	 04				/* something wrong */
-	int				nbol;		/* number of ^ used */
-	int				neol;		/* number of $ used */
-	int				ncategories;/* how many character categories */
-	cat_t		   *categories; /* ->catspace[-CHAR_MIN] */
-	char		   *must;		/* match must contain this string */
-	int				mlen;		/* length of must */
-	size_t			nsub;		/* copy of re_nsub */
-	int				backrefs;	/* does it use back references? */
-	sopno			nplus;		/* how deep does it nest +s? */
+	int			nbol;			/* number of ^ used */
+	int			neol;			/* number of $ used */
+	int			ncategories;	/* how many character categories */
+	cat_t	   *categories;		/* ->catspace[-CHAR_MIN] */
+	char	   *must;			/* match must contain this string */
+	int			mlen;			/* length of must */
+	size_t		nsub;			/* copy of re_nsub */
+	int			backrefs;		/* does it use back references? */
+	sopno		nplus;			/* how deep does it nest +s? */
 	/* catspace must be last */
-	cat_t			catspace[1];/* actually [NC] */
+	cat_t		catspace[1];	/* actually [NC] */
 };
 
 /* misc utilities */

@@ -24,10 +24,10 @@ void
 halt(va_alist)
 va_dcl
 {
-	va_list			arg_ptr;
-	char		   *format,
-				   *pstr;
-	void			(*sig_func) ();
+	va_list		arg_ptr;
+	char	   *format,
+			   *pstr;
+	void		(*sig_func) ();
 
 	va_start(arg_ptr);
 	format = va_arg(arg_ptr, char *);

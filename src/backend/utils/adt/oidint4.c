@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint4.c,v 1.2 1997/09/07 04:50:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidint4.c,v 1.3 1997/09/08 02:30:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,8 @@
 OidInt4
 oidint4in(char *o)
 {
-	OidInt4			oi;
-	char		   *p;
+	OidInt4		oi;
+	char	   *p;
 
 	oi = (OidInt4) palloc(sizeof(OidInt4Data));
 
@@ -41,10 +41,10 @@ oidint4in(char *o)
 	return (oi);
 }
 
-char		   *
+char	   *
 oidint4out(OidInt4 o)
 {
-	char		   *r;
+	char	   *r;
 
 	/*
 	 * -2147483647/-2147483647 0		1		  2
@@ -60,8 +60,8 @@ bool
 oidint4lt(OidInt4 o1, OidInt4 o2)
 {
 	return
-	((bool) (o1->oi_oid < o2->oi_oid ||
-			 (o1->oi_oid == o2->oi_oid && o1->oi_int4 < o2->oi_int4)));
+		((bool) (o1->oi_oid < o2->oi_oid ||
+			   (o1->oi_oid == o2->oi_oid && o1->oi_int4 < o2->oi_int4)));
 }
 
 bool
@@ -111,7 +111,7 @@ oidint4cmp(OidInt4 o1, OidInt4 o2)
 OidInt4
 mkoidint4(Oid v_oid, uint32 v_int4)
 {
-	OidInt4			o;
+	OidInt4		o;
 
 	o = (OidInt4) palloc(sizeof(OidInt4Data));
 	o->oi_oid = v_oid;

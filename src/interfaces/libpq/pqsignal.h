@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqsignal.h,v 1.3 1997/09/07 05:03:39 momjian Exp $
+ * $Id: pqsignal.h,v 1.4 1997/09/08 02:40:38 momjian Exp $
  *
  * NOTES
  *	  This shouldn't be in libpq, but the monitor and some other
@@ -19,7 +19,7 @@
 
 #include "c.h"
 
-typedef void	(*pqsigfunc) (int);
+typedef void (*pqsigfunc) (int);
 
 extern pqsigfunc pqsignal(int signo, pqsigfunc func);
 

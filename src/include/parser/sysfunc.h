@@ -6,4 +6,4 @@
  * -------------------------------------------------------------------------
  */
 
-extern char    *SystemFunctionHandler(char *funct);
+extern char *SystemFunctionHandler(char *funct);

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.9 1997/09/07 04:48:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.10 1997/09/08 02:28:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,11 +50,11 @@
 
 extern long int LocalBufferFlushCount;
 
-int				NLocBuffer = 64;
-BufferDesc	   *LocalBufferDescriptors = NULL;
-long		   *LocalRefCount = NULL;
+int			NLocBuffer = 64;
+BufferDesc *LocalBufferDescriptors = NULL;
+long	   *LocalRefCount = NULL;
 
-static int		nextFreeLocalBuf = 0;
+static int	nextFreeLocalBuf = 0;
 
 /*#define LBDEBUG*/
 
@@ -62,11 +62,11 @@ static int		nextFreeLocalBuf = 0;
  * LocalBufferAlloc -
  *	  allocate a local buffer. We do round robin allocation for now.
  */
-BufferDesc	   *
+BufferDesc *
 LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool * foundPtr)
 {
-	int				i;
-	BufferDesc	   *bufHdr = (BufferDesc *) NULL;
+	int			i;
+	BufferDesc *bufHdr = (BufferDesc *) NULL;
 
 	if (blockNum == P_NEW)
 	{
@@ -99,7 +99,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool * foundPtr)
 	/* need to get a new buffer (round robin for now) */
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		int				b = (nextFreeLocalBuf + i) % NLocBuffer;
+		int			b = (nextFreeLocalBuf + i) % NLocBuffer;
 
 		if (LocalRefCount[b] == 0)
 		{
@@ -119,7 +119,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool * foundPtr)
 	 */
 	if (bufHdr->flags & BM_DIRTY)
 	{
-		Relation		bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
+		Relation	bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
 
 		Assert(bufrel != NULL);
 
@@ -142,7 +142,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool * foundPtr)
 	 */
 	if (bufHdr->data == (SHMEM_OFFSET) 0)
 	{
-		char		   *data = (char *) malloc(BLCKSZ);
+		char	   *data = (char *) malloc(BLCKSZ);
 
 		bufHdr->data = MAKE_OFFSET(data);
 	}
@@ -158,7 +158,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool * foundPtr)
 int
 WriteLocalBuffer(Buffer buffer, bool release)
 {
-	int				bufid;
+	int			bufid;
 
 	Assert(BufferIsLocal(buffer));
 
@@ -185,9 +185,9 @@ WriteLocalBuffer(Buffer buffer, bool release)
 int
 FlushLocalBuffer(Buffer buffer, bool release)
 {
-	int				bufid;
-	Relation		bufrel;
-	BufferDesc	   *bufHdr;
+	int			bufid;
+	Relation	bufrel;
+	BufferDesc *bufHdr;
 
 	Assert(BufferIsLocal(buffer));
 
@@ -221,7 +221,7 @@ FlushLocalBuffer(Buffer buffer, bool release)
 void
 InitLocalBuffer(void)
 {
-	int				i;
+	int			i;
 
 	/*
 	 * these aren't going away. I'm not gonna use palloc.
@@ -233,7 +233,7 @@ InitLocalBuffer(void)
 
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		BufferDesc	   *buf = &LocalBufferDescriptors[i];
+		BufferDesc *buf = &LocalBufferDescriptors[i];
 
 		/*
 		 * negative to indicate local buffer. This is tricky: shared
@@ -258,12 +258,12 @@ InitLocalBuffer(void)
 void
 LocalBufferSync(void)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		BufferDesc	   *buf = &LocalBufferDescriptors[i];
-		Relation		bufrel;
+		BufferDesc *buf = &LocalBufferDescriptors[i];
+		Relation	bufrel;
 
 		if (buf->flags & BM_DIRTY)
 		{
@@ -290,11 +290,11 @@ LocalBufferSync(void)
 void
 ResetLocalBufferPool(void)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		BufferDesc	   *buf = &LocalBufferDescriptors[i];
+		BufferDesc *buf = &LocalBufferDescriptors[i];
 
 		buf->tag.relId.relId = InvalidOid;
 		buf->flags &= ~BM_DIRTY;

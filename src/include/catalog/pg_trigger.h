@@ -28,14 +28,14 @@
  */
 CATALOG(pg_trigger) BOOTSTRAP
 {
-	Oid				tgrelid;	/* triggered relation */
-	NameData		tgname;		/* trigger' name */
-	Oid				tgfoid;		/* OID of function to be called */
-	int2			tgtype;		/* BEFORE/AFTER UPDATE/DELETE/INSERT
+	Oid			tgrelid;		/* triggered relation */
+	NameData	tgname;			/* trigger' name */
+	Oid			tgfoid;			/* OID of function to be called */
+	int2		tgtype;			/* BEFORE/AFTER UPDATE/DELETE/INSERT
 								 * ROW/STATEMENT */
-	int2			tgnargs;	/* # of extra arguments in tgargs */
-	int28			tgattr;		/* UPDATE of attr1, attr2 ... (NI) */
-	bytea			tgargs;		/* first\000second\000tgnargs\000 */
+	int2		tgnargs;		/* # of extra arguments in tgargs */
+	int28		tgattr;			/* UPDATE of attr1, attr2 ... (NI) */
+	bytea		tgargs;			/* first\000second\000tgnargs\000 */
 } FormData_pg_trigger;
 
 /* ----------------

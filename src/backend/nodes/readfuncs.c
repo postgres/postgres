@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.7 1997/09/07 04:42:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.8 1997/09/08 02:23:45 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -51,12 +51,12 @@
  * ----------------
  */
 
-static Datum	readDatum(Oid type);
+static Datum readDatum(Oid type);
 
-static List    *
+static List *
 toIntList(List * list)
 {
-	List		   *l;
+	List	   *l;
 
 	foreach(l, list)
 	{
@@ -70,12 +70,12 @@ toIntList(List * list)
  *		_readQuery
  * ----------------
  */
-static Query   *
+static Query *
 _readQuery()
 {
-	Query		   *local_node;
-	char		   *token;
-	int				length;
+	Query	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Query);
 
@@ -89,7 +89,7 @@ _readQuery()
 		local_node->utilityStmt = NULL;
 	else
 	{
-		NotifyStmt	   *n = makeNode(NotifyStmt);
+		NotifyStmt *n = makeNode(NotifyStmt);
 
 		n->relname = palloc(length + 1);
 		strNcpy(n->relname, token, length);
@@ -130,8 +130,8 @@ _readQuery()
 static void
 _getPlan(Plan * node)
 {
-	char		   *token;
-	int				length;
+	char	   *token;
+	int			length;
 
 	token = lsptok(NULL, &length);		/* first token is :cost */
 	token = lsptok(NULL, &length);		/* next is the actual cost */
@@ -181,10 +181,10 @@ _getPlan(Plan * node)
  *		_readPlan
  * ----------------
  */
-static Plan    *
+static Plan *
 _readPlan()
 {
-	Plan		   *local_node;
+	Plan	   *local_node;
 
 	local_node = makeNode(Plan);
 
@@ -200,12 +200,12 @@ _readPlan()
  *		sizes of things.
  * ----------------
  */
-static Result  *
+static Result *
 _readResult()
 {
-	Result		   *local_node;
-	char		   *token;
-	int				length;
+	Result	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Result);
 
@@ -226,7 +226,7 @@ _readResult()
 static Existential *
 _readExistential()
 {
-	Existential    *local_node;
+	Existential *local_node;
 
 	local_node = makeNode(Existential);
 
@@ -242,12 +242,12 @@ _readExistential()
  * ----------------
  */
 
-static Append  *
+static Append *
 _readAppend()
 {
-	Append		   *local_node;
-	char		   *token;
-	int				length;
+	Append	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Append);
 
@@ -285,10 +285,10 @@ _getJoin(Join * node)
  *	Join is a subclass of Plan
  * ----------------
  */
-static Join    *
+static Join *
 _readJoin()
 {
-	Join		   *local_node;
+	Join	   *local_node;
 
 	local_node = makeNode(Join);
 
@@ -307,7 +307,7 @@ _readJoin()
 static NestLoop *
 _readNestLoop()
 {
-	NestLoop	   *local_node;
+	NestLoop   *local_node;
 
 	local_node = makeNode(NestLoop);
 
@@ -325,9 +325,9 @@ _readNestLoop()
 static MergeJoin *
 _readMergeJoin()
 {
-	MergeJoin	   *local_node;
-	char		   *token;
-	int				length;
+	MergeJoin  *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(MergeJoin);
 
@@ -351,9 +351,9 @@ _readMergeJoin()
 static HashJoin *
 _readHashJoin()
 {
-	HashJoin	   *local_node;
-	char		   *token;
-	int				length;
+	HashJoin   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(HashJoin);
 
@@ -398,8 +398,8 @@ _readHashJoin()
 static void
 _getScan(Scan * node)
 {
-	char		   *token;
-	int				length;
+	char	   *token;
+	int			length;
 
 	_getPlan((Plan *) node);
 
@@ -414,10 +414,10 @@ _getScan(Scan * node)
  * Scan is a subclass of Plan (Not Node, see above).
  * ----------------
  */
-static Scan    *
+static Scan *
 _readScan()
 {
-	Scan		   *local_node;
+	Scan	   *local_node;
 
 	local_node = makeNode(Scan);
 
@@ -435,7 +435,7 @@ _readScan()
 static SeqScan *
 _readSeqScan()
 {
-	SeqScan		   *local_node;
+	SeqScan    *local_node;
 
 	local_node = makeNode(SeqScan);
 
@@ -453,9 +453,9 @@ _readSeqScan()
 static IndexScan *
 _readIndexScan()
 {
-	IndexScan	   *local_node;
-	char		   *token;
-	int				length;
+	IndexScan  *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(IndexScan);
 
@@ -477,12 +477,12 @@ _readIndexScan()
  *	Temp is a subclass of Plan
  * ----------------
  */
-static Temp    *
+static Temp *
 _readTemp()
 {
-	Temp		   *local_node;
-	char		   *token;
-	int				length;
+	Temp	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Temp);
 
@@ -505,12 +505,12 @@ _readTemp()
  *	Sort is a subclass of Temp
  * ----------------
  */
-static Sort    *
+static Sort *
 _readSort()
 {
-	Sort		   *local_node;
-	char		   *token;
-	int				length;
+	Sort	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Sort);
 
@@ -527,12 +527,12 @@ _readSort()
 	return (local_node);
 }
 
-static Agg	   *
+static Agg *
 _readAgg()
 {
-	Agg			   *local_node;
-	char		   *token;
-	int				length;
+	Agg		   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Agg);
 	_getPlan((Plan *) local_node);
@@ -549,12 +549,12 @@ _readAgg()
  *
  * For some reason, unique is a subclass of Temp.
  */
-static Unique  *
+static Unique *
 _readUnique()
 {
-	Unique		   *local_node;
-	char		   *token;
-	int				length;
+	Unique	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Unique);
 
@@ -577,12 +577,12 @@ _readUnique()
  *	Hash is a subclass of Temp
  * ----------------
  */
-static Hash    *
+static Hash *
 _readHash()
 {
-	Hash		   *local_node;
-	char		   *token;
-	int				length;
+	Hash	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Hash);
 
@@ -616,12 +616,12 @@ _readHash()
  *	Resdom is a subclass of Node
  * ----------------
  */
-static Resdom  *
+static Resdom *
 _readResdom()
 {
-	Resdom		   *local_node;
-	char		   *token;
-	int				length;
+	Resdom	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Resdom);
 
@@ -680,12 +680,12 @@ _readResdom()
  *	Expr is a subclass of Node
  * ----------------
  */
-static Expr    *
+static Expr *
 _readExpr()
 {
-	Expr		   *local_node;
-	char		   *token;
-	int				length;
+	Expr	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Expr);
 
@@ -731,12 +731,12 @@ _readExpr()
  *	Var is a subclass of Expr
  * ----------------
  */
-static Var	   *
+static Var *
 _readVar()
 {
-	Var			   *local_node;
-	char		   *token;
-	int				length;
+	Var		   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Var);
 
@@ -769,12 +769,12 @@ _readVar()
  * Array is a subclass of Expr
  * ----------------
  */
-static Array   *
+static Array *
 _readArray()
 {
-	Array		   *local_node;
-	char		   *token;
-	int				length;
+	Array	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Array);
 
@@ -814,9 +814,9 @@ _readArray()
 static ArrayRef *
 _readArrayRef()
 {
-	ArrayRef	   *local_node;
-	char		   *token;
-	int				length;
+	ArrayRef   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(ArrayRef);
 
@@ -857,12 +857,12 @@ _readArrayRef()
  *	Const is a subclass of Expr
  * ----------------
  */
-static Const   *
+static Const *
 _readConst()
 {
-	Const		   *local_node;
-	char		   *token;
-	int				length;
+	Const	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Const);
 
@@ -924,12 +924,12 @@ _readConst()
  *	Func is a subclass of Expr
  * ----------------
  */
-static Func    *
+static Func *
 _readFunc()
 {
-	Func		   *local_node;
-	char		   *token;
-	int				length;
+	Func	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Func);
 
@@ -978,12 +978,12 @@ _readFunc()
  *	Oper is a subclass of Expr
  * ----------------
  */
-static Oper    *
+static Oper *
 _readOper()
 {
-	Oper		   *local_node;
-	char		   *token;
-	int				length;
+	Oper	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Oper);
 
@@ -1014,12 +1014,12 @@ _readOper()
  *	Param is a subclass of Expr
  * ----------------
  */
-static Param   *
+static Param *
 _readParam()
 {
-	Param		   *local_node;
-	char		   *token;
-	int				length;
+	Param	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Param);
 
@@ -1055,12 +1055,12 @@ _readParam()
  *	Aggreg is a subclass of Node
  * ----------------
  */
-static Aggreg  *
+static Aggreg *
 _readAggreg()
 {
-	Aggreg		   *local_node;
-	char		   *token;
-	int				length;
+	Aggreg	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Aggreg);
 
@@ -1097,12 +1097,12 @@ _readAggreg()
  *	EState is a subclass of Node.
  * ----------------
  */
-static EState  *
+static EState *
 _readEState()
 {
-	EState		   *local_node;
-	char		   *token;
-	int				length;
+	EState	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(EState);
 
@@ -1132,12 +1132,12 @@ _readEState()
  *		_readRel
  * ----------------
  */
-static Rel	   *
+static Rel *
 _readRel()
 {
-	Rel			   *local_node;
-	char		   *token;
-	int				length;
+	Rel		   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Rel);
 
@@ -1217,9 +1217,9 @@ _readRel()
 static TargetEntry *
 _readTargetEntry()
 {
-	TargetEntry    *local_node;
-	char		   *token;
-	int				length;
+	TargetEntry *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(TargetEntry);
 
@@ -1239,9 +1239,9 @@ _readTargetEntry()
 static RangeTblEntry *
 _readRangeTblEntry()
 {
-	RangeTblEntry  *local_node;
-	char		   *token;
-	int				length;
+	RangeTblEntry *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(RangeTblEntry);
 
@@ -1303,12 +1303,12 @@ _readRangeTblEntry()
  *	Path is a subclass of Node.
  * ----------------
  */
-static Path    *
+static Path *
 _readPath()
 {
-	Path		   *local_node;
-	char		   *token;
-	int				length;
+	Path	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Path);
 
@@ -1341,9 +1341,9 @@ _readPath()
 static IndexPath *
 _readIndexPath()
 {
-	IndexPath	   *local_node;
-	char		   *token;
-	int				length;
+	IndexPath  *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(IndexPath);
 
@@ -1382,9 +1382,9 @@ _readIndexPath()
 static JoinPath *
 _readJoinPath()
 {
-	JoinPath	   *local_node;
-	char		   *token;
-	int				length;
+	JoinPath   *local_node;
+	char	   *token;
+	int			length;
 
 
 	local_node = makeNode(JoinPath);
@@ -1449,9 +1449,9 @@ _readJoinPath()
 static MergePath *
 _readMergePath()
 {
-	MergePath	   *local_node;
-	char		   *token;
-	int				length;
+	MergePath  *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(MergePath);
 
@@ -1526,9 +1526,9 @@ _readMergePath()
 static HashPath *
 _readHashPath()
 {
-	HashPath	   *local_node;
-	char		   *token;
-	int				length;
+	HashPath   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(HashPath);
 
@@ -1603,9 +1603,9 @@ _readHashPath()
 static OrderKey *
 _readOrderKey()
 {
-	OrderKey	   *local_node;
-	char		   *token;
-	int				length;
+	OrderKey   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(OrderKey);
 
@@ -1631,9 +1631,9 @@ _readOrderKey()
 static JoinKey *
 _readJoinKey()
 {
-	JoinKey		   *local_node;
-	char		   *token;
-	int				length;
+	JoinKey    *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(JoinKey);
 
@@ -1655,9 +1655,9 @@ _readJoinKey()
 static MergeOrder *
 _readMergeOrder()
 {
-	MergeOrder	   *local_node;
-	char		   *token;
-	int				length;
+	MergeOrder *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(MergeOrder);
 	token = lsptok(NULL, &length);		/* get :join_operator */
@@ -1694,12 +1694,12 @@ _readMergeOrder()
  *	CInfo is a subclass of Node.
  * ----------------
  */
-static CInfo   *
+static CInfo *
 _readCInfo()
 {
-	CInfo		   *local_node;
-	char		   *token;
-	int				length;
+	CInfo	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(CInfo);
 
@@ -1746,9 +1746,9 @@ _readCInfo()
 static JoinMethod *
 _readJoinMethod()
 {
-	JoinMethod	   *local_node;
-	char		   *token;
-	int				length;
+	JoinMethod *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(JoinMethod);
 
@@ -1767,12 +1767,12 @@ _readJoinMethod()
  * HInfo is a subclass of JoinMethod.
  * ----------------
  */
-static HInfo   *
+static HInfo *
 _readHInfo()
 {
-	HInfo		   *local_node;
-	char		   *token;
-	int				length;
+	HInfo	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(HInfo);
 
@@ -1796,12 +1796,12 @@ _readHInfo()
  *	JInfo is a subclass of Node.
  * ----------------
  */
-static JInfo   *
+static JInfo *
 _readJInfo()
 {
-	JInfo		   *local_node;
-	char		   *token;
-	int				length;
+	JInfo	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(JInfo);
 
@@ -1842,12 +1842,12 @@ _readJInfo()
  *
  * ----------------
  */
-static Iter    *
+static Iter *
 _readIter()
 {
-	Iter		   *local_node;
-	char		   *token;
-	int				length;
+	Iter	   *local_node;
+	char	   *token;
+	int			length;
 
 	local_node = makeNode(Iter);
 
@@ -1867,12 +1867,12 @@ _readIter()
  * The string passed to parsePlanString must be null-terminated.
  * ----------------
  */
-Node		   *
+Node	   *
 parsePlanString(void)
 {
-	char		   *token;
-	int				length;
-	void		   *return_value = NULL;
+	char	   *token;
+	int			length;
+	void	   *return_value = NULL;
 
 	token = lsptok(NULL, &length);
 
@@ -2070,16 +2070,16 @@ parsePlanString(void)
  * create the appropriate Datum
  * ----------------
  */
-static			Datum
+static Datum
 readDatum(Oid type)
 {
-	int				length;
-	int				tokenLength;
-	char		   *token;
-	bool			byValue;
-	Datum			res;
-	char		   *s;
-	int				i;
+	int			length;
+	int			tokenLength;
+	char	   *token;
+	bool		byValue;
+	Datum		res;
+	char	   *s;
+	int			i;
 
 	byValue = get_typbyval(type);
 

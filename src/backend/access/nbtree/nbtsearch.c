@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.24 1997/09/07 04:38:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.25 1997/09/08 02:20:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,19 +28,19 @@
 #endif
 
 
-static			BTStack
+static BTStack
 _bt_searchr(Relation rel, int keysz, ScanKey scankey,
 			Buffer * bufP, BTStack stack_in);
-static			OffsetNumber
+static OffsetNumber
 _bt_firsteq(Relation rel, TupleDesc itupdesc, Page page,
 			Size keysz, ScanKey scankey, OffsetNumber offnum);
 static int
 _bt_compare(Relation rel, TupleDesc itupdesc, Page page,
 			int keysz, ScanKey scankey, OffsetNumber offnum);
-static			bool
-				_bt_twostep(IndexScanDesc scan, Buffer * bufP, ScanDirection dir);
-static			RetrieveIndexResult
-				_bt_endpoint(IndexScanDesc scan, ScanDirection dir);
+static bool
+			_bt_twostep(IndexScanDesc scan, Buffer * bufP, ScanDirection dir);
+static RetrieveIndexResult
+			_bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 
 /*
  *	_bt_search() -- Search for a scan key in the index.
@@ -58,24 +58,24 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, Buffer * bufP)
 /*
  *	_bt_searchr() -- Search the tree recursively for a particular scankey.
  */
-static			BTStack
+static BTStack
 _bt_searchr(Relation rel,
 			int keysz,
 			ScanKey scankey,
 			Buffer * bufP,
 			BTStack stack_in)
 {
-	BTStack			stack;
-	OffsetNumber	offnum;
-	Page			page;
-	BTPageOpaque	opaque;
-	BlockNumber		par_blkno;
-	BlockNumber		blkno;
-	ItemId			itemid;
-	BTItem			btitem;
-	BTItem			item_save;
-	int				item_nbytes;
-	IndexTuple		itup;
+	BTStack		stack;
+	OffsetNumber offnum;
+	Page		page;
+	BTPageOpaque opaque;
+	BlockNumber par_blkno;
+	BlockNumber blkno;
+	ItemId		itemid;
+	BTItem		btitem;
+	BTItem		item_save;
+	int			item_nbytes;
+	IndexTuple	itup;
 
 	/* if this is a leaf page, we're done */
 	page = BufferGetPage(*bufP);
@@ -155,11 +155,11 @@ _bt_moveright(Relation rel,
 			  ScanKey scankey,
 			  int access)
 {
-	Page			page;
-	BTPageOpaque	opaque;
-	ItemId			hikey;
-	BlockNumber		rblkno;
-	int				natts = rel->rd_rel->relnatts;
+	Page		page;
+	BTPageOpaque opaque;
+	ItemId		hikey;
+	BlockNumber rblkno;
+	int			natts = rel->rd_rel->relnatts;
 
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -183,7 +183,7 @@ _bt_moveright(Relation rel,
 		/* move right as long as we need to */
 		do
 		{
-			OffsetNumber	offmax = PageGetMaxOffsetNumber(page);
+			OffsetNumber offmax = PageGetMaxOffsetNumber(page);
 
 			/*
 			 * If this page consists of all duplicate keys (hikey and
@@ -197,8 +197,8 @@ _bt_moveright(Relation rel,
 			 * if number of attrs > keysize. Example: (2,0) - last items
 			 * on this page, (2,1) - first item on next page (hikey), our
 			 * scankey is x = 2. Scankey == (2,1) because of we compare
-			 * first attrs only, but we shouldn't to move right of here.
-			 * - vadim 04/15/97
+			 * first attrs only, but we shouldn't to move right of here. -
+			 * vadim 04/15/97
 			 */
 
 			if (_bt_skeycmp(rel, keysz, scankey, page, hikey,
@@ -268,17 +268,17 @@ _bt_skeycmp(Relation rel,
 			ItemId itemid,
 			StrategyNumber strat)
 {
-	BTItem			item;
-	IndexTuple		indexTuple;
-	TupleDesc		tupDes;
-	ScanKey			entry;
-	int				i;
-	Datum			attrDatum;
-	Datum			keyDatum;
-	bool			compare;
-	bool			isNull;
-	bool			useEqual = false;
-	bool			keyNull;
+	BTItem		item;
+	IndexTuple	indexTuple;
+	TupleDesc	tupDes;
+	ScanKey		entry;
+	int			i;
+	Datum		attrDatum;
+	Datum		keyDatum;
+	bool		compare;
+	bool		isNull;
+	bool		useEqual = false;
+	bool		keyNull;
 
 	if (strat == BTLessEqualStrategyNumber)
 	{
@@ -382,14 +382,14 @@ _bt_binsrch(Relation rel,
 			ScanKey scankey,
 			int srchtype)
 {
-	TupleDesc		itupdesc;
-	Page			page;
-	BTPageOpaque	opaque;
-	OffsetNumber	low,
-					mid,
-					high;
-	int				natts = rel->rd_rel->relnatts;
-	int				result;
+	TupleDesc	itupdesc;
+	Page		page;
+	BTPageOpaque opaque;
+	OffsetNumber low,
+				mid,
+				high;
+	int			natts = rel->rd_rel->relnatts;
+	int			result;
 
 	itupdesc = RelationGetTupleDescriptor(rel);
 	page = BufferGetPage(buf);
@@ -515,7 +515,7 @@ _bt_binsrch(Relation rel,
 	}
 }
 
-static			OffsetNumber
+static OffsetNumber
 _bt_firsteq(Relation rel,
 			TupleDesc itupdesc,
 			Page page,
@@ -523,8 +523,8 @@ _bt_firsteq(Relation rel,
 			ScanKey scankey,
 			OffsetNumber offnum)
 {
-	BTPageOpaque	opaque;
-	OffsetNumber	limit;
+	BTPageOpaque opaque;
+	OffsetNumber limit;
 
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -572,16 +572,16 @@ _bt_compare(Relation rel,
 			ScanKey scankey,
 			OffsetNumber offnum)
 {
-	Datum			datum;
-	BTItem			btitem;
-	ItemId			itemid;
-	IndexTuple		itup;
-	BTPageOpaque	opaque;
-	ScanKey			entry;
-	AttrNumber		attno;
-	int				result;
-	int				i;
-	bool			null;
+	Datum		datum;
+	BTItem		btitem;
+	ItemId		itemid;
+	IndexTuple	itup;
+	BTPageOpaque opaque;
+	ScanKey		entry;
+	AttrNumber	attno;
+	int			result;
+	int			i;
+	bool		null;
 
 	/*
 	 * If this is a leftmost internal page, and if our comparison is with
@@ -650,7 +650,7 @@ _bt_compare(Relation rel,
 
 	for (i = 1; i <= keysz; i++)
 	{
-		long			tmpres;
+		long		tmpres;
 
 		entry = &scankey[i - 1];
 		attno = entry->sk_attno;
@@ -697,16 +697,16 @@ _bt_compare(Relation rel,
 RetrieveIndexResult
 _bt_next(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation		rel;
-	Buffer			buf;
-	Page			page;
-	OffsetNumber	offnum;
+	Relation	rel;
+	Buffer		buf;
+	Page		page;
+	OffsetNumber offnum;
 	RetrieveIndexResult res;
-	ItemPointer		current;
-	BTItem			btitem;
-	IndexTuple		itup;
-	BTScanOpaque	so;
-	Size			keysok;
+	ItemPointer current;
+	BTItem		btitem;
+	IndexTuple	itup;
+	BTScanOpaque so;
+	Size		keysok;
 
 	rel = scan->relation;
 	so = (BTScanOpaque) scan->opaque;
@@ -769,26 +769,26 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 RetrieveIndexResult
 _bt_first(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation		rel;
-	TupleDesc		itupdesc;
-	Buffer			buf;
-	Page			page;
-	BTPageOpaque	pop;
-	BTStack			stack;
-	OffsetNumber	offnum,
-					maxoff;
-	bool			offGmax = false;
-	BTItem			btitem;
-	IndexTuple		itup;
-	ItemPointer		current;
-	BlockNumber		blkno;
-	StrategyNumber	strat;
+	Relation	rel;
+	TupleDesc	itupdesc;
+	Buffer		buf;
+	Page		page;
+	BTPageOpaque pop;
+	BTStack		stack;
+	OffsetNumber offnum,
+				maxoff;
+	bool		offGmax = false;
+	BTItem		btitem;
+	IndexTuple	itup;
+	ItemPointer current;
+	BlockNumber blkno;
+	StrategyNumber strat;
 	RetrieveIndexResult res;
-	RegProcedure	proc;
-	int				result;
-	BTScanOpaque	so;
-	ScanKeyData		skdata;
-	Size			keysok;
+	RegProcedure proc;
+	int			result;
+	BTScanOpaque so;
+	ScanKeyData skdata;
+	Size		keysok;
 
 	rel = scan->relation;
 	so = (BTScanOpaque) scan->opaque;
@@ -915,69 +915,69 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	switch (strat)
 	{
-	case BTLessStrategyNumber:
-		if (result <= 0)
-		{
-			do
+		case BTLessStrategyNumber:
+			if (result <= 0)
 			{
-				if (!_bt_twostep(scan, &buf, BackwardScanDirection))
-					break;
-
-				offnum = ItemPointerGetOffsetNumber(current);
-				page = BufferGetPage(buf);
-				result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
-			} while (result <= 0);
-
-			/* if this is true, the key we just looked at is gone */
-			if (result > 0)
-				_bt_twostep(scan, &buf, ForwardScanDirection);
-		}
-		break;
-
-	case BTLessEqualStrategyNumber:
-		if (result >= 0)
-		{
-			do
-			{
-				if (!_bt_twostep(scan, &buf, ForwardScanDirection))
-					break;
-
-				offnum = ItemPointerGetOffsetNumber(current);
-				page = BufferGetPage(buf);
-				result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
-			} while (result >= 0);
-
-			if (result < 0)
-				_bt_twostep(scan, &buf, BackwardScanDirection);
-		}
-		break;
-
-	case BTEqualStrategyNumber:
-		if (result != 0)
-		{
-			_bt_relbuf(scan->relation, buf, BT_READ);
-			so->btso_curbuf = InvalidBuffer;
-			ItemPointerSetInvalid(&(scan->currentItemData));
-			return ((RetrieveIndexResult) NULL);
-		}
-		break;
-
-	case BTGreaterEqualStrategyNumber:
-		if (offGmax)
-		{
-			if (result < 0)
-			{
-				Assert(!P_RIGHTMOST(pop) && maxoff == P_HIKEY);
-				if (!_bt_step(scan, &buf, ForwardScanDirection))
+				do
 				{
-					_bt_relbuf(scan->relation, buf, BT_READ);
-					so->btso_curbuf = InvalidBuffer;
-					ItemPointerSetInvalid(&(scan->currentItemData));
-					return ((RetrieveIndexResult) NULL);
-				}
+					if (!_bt_twostep(scan, &buf, BackwardScanDirection))
+						break;
+
+					offnum = ItemPointerGetOffsetNumber(current);
+					page = BufferGetPage(buf);
+					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+				} while (result <= 0);
+
+				/* if this is true, the key we just looked at is gone */
+				if (result > 0)
+					_bt_twostep(scan, &buf, ForwardScanDirection);
 			}
-			else if (result > 0)
-			{					/* Just remember:  _bt_binsrch() returns
+			break;
+
+		case BTLessEqualStrategyNumber:
+			if (result >= 0)
+			{
+				do
+				{
+					if (!_bt_twostep(scan, &buf, ForwardScanDirection))
+						break;
+
+					offnum = ItemPointerGetOffsetNumber(current);
+					page = BufferGetPage(buf);
+					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+				} while (result >= 0);
+
+				if (result < 0)
+					_bt_twostep(scan, &buf, BackwardScanDirection);
+			}
+			break;
+
+		case BTEqualStrategyNumber:
+			if (result != 0)
+			{
+				_bt_relbuf(scan->relation, buf, BT_READ);
+				so->btso_curbuf = InvalidBuffer;
+				ItemPointerSetInvalid(&(scan->currentItemData));
+				return ((RetrieveIndexResult) NULL);
+			}
+			break;
+
+		case BTGreaterEqualStrategyNumber:
+			if (offGmax)
+			{
+				if (result < 0)
+				{
+					Assert(!P_RIGHTMOST(pop) && maxoff == P_HIKEY);
+					if (!_bt_step(scan, &buf, ForwardScanDirection))
+					{
+						_bt_relbuf(scan->relation, buf, BT_READ);
+						so->btso_curbuf = InvalidBuffer;
+						ItemPointerSetInvalid(&(scan->currentItemData));
+						return ((RetrieveIndexResult) NULL);
+					}
+				}
+				else if (result > 0)
+				{				/* Just remember:  _bt_binsrch() returns
 								 * the OffsetNumber of the first matching
 								 * key on the page, or the OffsetNumber at
 								 * which the matching key WOULD APPEAR IF
@@ -985,41 +985,41 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 								 * page, but offnum from _bt_binsrch()
 								 * greater maxoff - have to move right. -
 								 * vadim 12/06/96 */
-				_bt_twostep(scan, &buf, ForwardScanDirection);
+					_bt_twostep(scan, &buf, ForwardScanDirection);
+				}
 			}
-		}
-		else if (result < 0)
-		{
-			do
+			else if (result < 0)
 			{
-				if (!_bt_twostep(scan, &buf, BackwardScanDirection))
-					break;
+				do
+				{
+					if (!_bt_twostep(scan, &buf, BackwardScanDirection))
+						break;
 
-				page = BufferGetPage(buf);
-				offnum = ItemPointerGetOffsetNumber(current);
-				result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
-			} while (result < 0);
+					page = BufferGetPage(buf);
+					offnum = ItemPointerGetOffsetNumber(current);
+					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+				} while (result < 0);
 
-			if (result > 0)
-				_bt_twostep(scan, &buf, ForwardScanDirection);
-		}
-		break;
+				if (result > 0)
+					_bt_twostep(scan, &buf, ForwardScanDirection);
+			}
+			break;
 
-	case BTGreaterStrategyNumber:
-		/* offGmax helps as above */
-		if (result >= 0 || offGmax)
-		{
-			do
+		case BTGreaterStrategyNumber:
+			/* offGmax helps as above */
+			if (result >= 0 || offGmax)
 			{
-				if (!_bt_twostep(scan, &buf, ForwardScanDirection))
-					break;
+				do
+				{
+					if (!_bt_twostep(scan, &buf, ForwardScanDirection))
+						break;
 
-				offnum = ItemPointerGetOffsetNumber(current);
-				page = BufferGetPage(buf);
-				result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
-			} while (result >= 0);
-		}
-		break;
+					offnum = ItemPointerGetOffsetNumber(current);
+					page = BufferGetPage(buf);
+					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+				} while (result >= 0);
+			}
+			break;
 	}
 
 	/* okay, current item pointer for the scan is right */
@@ -1062,16 +1062,16 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 bool
 _bt_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir)
 {
-	Page			page;
-	BTPageOpaque	opaque;
-	OffsetNumber	offnum,
-					maxoff;
-	OffsetNumber	start;
-	BlockNumber		blkno;
-	BlockNumber		obknum;
-	BTScanOpaque	so;
-	ItemPointer		current;
-	Relation		rel;
+	Page		page;
+	BTPageOpaque opaque;
+	OffsetNumber offnum,
+				maxoff;
+	OffsetNumber start;
+	BlockNumber blkno;
+	BlockNumber obknum;
+	BTScanOpaque so;
+	ItemPointer current;
+	Relation	rel;
 
 	rel = scan->relation;
 	current = &(scan->currentItemData);
@@ -1235,20 +1235,20 @@ _bt_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir)
  *		proper state and acquires a lock and pin on *bufP.	If the twostep
  *		succeeded, we return true; otherwise, we return false.
  */
-static			bool
+static bool
 _bt_twostep(IndexScanDesc scan, Buffer * bufP, ScanDirection dir)
 {
-	Page			page;
-	BTPageOpaque	opaque;
-	OffsetNumber	offnum,
-					maxoff;
-	OffsetNumber	start;
-	ItemPointer		current;
-	ItemId			itemid;
-	int				itemsz;
-	BTItem			btitem;
-	BTItem			svitem;
-	BlockNumber		blkno;
+	Page		page;
+	BTPageOpaque opaque;
+	OffsetNumber offnum,
+				maxoff;
+	OffsetNumber start;
+	ItemPointer current;
+	ItemId		itemid;
+	int			itemsz;
+	BTItem		btitem;
+	BTItem		svitem;
+	BlockNumber blkno;
 
 	blkno = BufferGetBlockNumber(*bufP);
 	page = BufferGetPage(*bufP);
@@ -1333,23 +1333,23 @@ _bt_twostep(IndexScanDesc scan, Buffer * bufP, ScanDirection dir)
 /*
  *	_bt_endpoint() -- Find the first or last key in the index.
  */
-static			RetrieveIndexResult
+static RetrieveIndexResult
 _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation		rel;
-	Buffer			buf;
-	Page			page;
-	BTPageOpaque	opaque;
-	ItemPointer		current;
-	OffsetNumber	offnum,
-					maxoff;
-	OffsetNumber	start = 0;
-	BlockNumber		blkno;
-	BTItem			btitem;
-	IndexTuple		itup;
-	BTScanOpaque	so;
+	Relation	rel;
+	Buffer		buf;
+	Page		page;
+	BTPageOpaque opaque;
+	ItemPointer current;
+	OffsetNumber offnum,
+				maxoff;
+	OffsetNumber start = 0;
+	BlockNumber blkno;
+	BTItem		btitem;
+	IndexTuple	itup;
+	BTScanOpaque so;
 	RetrieveIndexResult res;
-	Size			keysok;
+	Size		keysok;
 
 	rel = scan->relation;
 	current = &(scan->currentItemData);

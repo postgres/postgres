@@ -14,34 +14,34 @@
 
 typedef struct Complex
 {
-	double			x;
-	double			y;
-}				Complex;
+	double		x;
+	double		y;
+}			Complex;
 
 /* These prototypes declare the requirements that Postgres places on these
    user written functions.
 */
-Complex		   *complex_in(char *str);
-char		   *complex_out(Complex * complex);
-Complex		   *complex_add(Complex * a, Complex * b);
-bool			complex_abs_lt(Complex * a, Complex * b);
-bool			complex_abs_le(Complex * a, Complex * b);
-bool			complex_abs_eq(Complex * a, Complex * b);
-bool			complex_abs_ge(Complex * a, Complex * b);
-bool			complex_abs_gt(Complex * a, Complex * b);
-int4			complex_abs_cmp(Complex * a, Complex * b);
+Complex    *complex_in(char *str);
+char	   *complex_out(Complex * complex);
+Complex    *complex_add(Complex * a, Complex * b);
+bool		complex_abs_lt(Complex * a, Complex * b);
+bool		complex_abs_le(Complex * a, Complex * b);
+bool		complex_abs_eq(Complex * a, Complex * b);
+bool		complex_abs_ge(Complex * a, Complex * b);
+bool		complex_abs_gt(Complex * a, Complex * b);
+int4		complex_abs_cmp(Complex * a, Complex * b);
 
 
 /*****************************************************************************
  * Input/Output functions
  *****************************************************************************/
 
-Complex		   *
+Complex    *
 complex_in(char *str)
 {
-	double			x,
-					y;
-	Complex		   *result;
+	double		x,
+				y;
+	Complex    *result;
 
 	if (sscanf(str, " ( %lf , %lf )", &x, &y) != 2)
 	{
@@ -62,10 +62,10 @@ complex_in(char *str)
  * pointer. POSTGRES thinks all output functions are:
  *	   char *out_func(char *);
  */
-char		   *
+char	   *
 complex_out(Complex * complex)
 {
-	char		   *result;
+	char	   *result;
 
 	if (complex == NULL)
 		return (NULL);
@@ -79,10 +79,10 @@ complex_out(Complex * complex)
  * New Operators
  *****************************************************************************/
 
-Complex		   *
+Complex    *
 complex_add(Complex * a, Complex * b)
 {
-	Complex		   *result;
+	Complex    *result;
 
 	result = (Complex *) palloc(sizeof(Complex));
 	result->x = a->x + b->x;
@@ -100,8 +100,8 @@ complex_add(Complex * a, Complex * b)
 bool
 complex_abs_lt(Complex * a, Complex * b)
 {
-	double			amag = Mag(a),
-					bmag = Mag(b);
+	double		amag = Mag(a),
+				bmag = Mag(b);
 
 	return (amag < bmag);
 }
@@ -109,8 +109,8 @@ complex_abs_lt(Complex * a, Complex * b)
 bool
 complex_abs_le(Complex * a, Complex * b)
 {
-	double			amag = Mag(a),
-					bmag = Mag(b);
+	double		amag = Mag(a),
+				bmag = Mag(b);
 
 	return (amag <= bmag);
 }
@@ -118,8 +118,8 @@ complex_abs_le(Complex * a, Complex * b)
 bool
 complex_abs_eq(Complex * a, Complex * b)
 {
-	double			amag = Mag(a),
-					bmag = Mag(b);
+	double		amag = Mag(a),
+				bmag = Mag(b);
 
 	return (amag == bmag);
 }
@@ -127,8 +127,8 @@ complex_abs_eq(Complex * a, Complex * b)
 bool
 complex_abs_ge(Complex * a, Complex * b)
 {
-	double			amag = Mag(a),
-					bmag = Mag(b);
+	double		amag = Mag(a),
+				bmag = Mag(b);
 
 	return (amag >= bmag);
 }
@@ -136,8 +136,8 @@ complex_abs_ge(Complex * a, Complex * b)
 bool
 complex_abs_gt(Complex * a, Complex * b)
 {
-	double			amag = Mag(a),
-					bmag = Mag(b);
+	double		amag = Mag(a),
+				bmag = Mag(b);
 
 	return (amag > bmag);
 }
@@ -145,8 +145,8 @@ complex_abs_gt(Complex * a, Complex * b)
 int4
 complex_abs_cmp(Complex * a, Complex * b)
 {
-	double			amag = Mag(a),
-					bmag = Mag(b);
+	double		amag = Mag(a),
+				bmag = Mag(b);
 
 	if (amag < bmag)
 		return -1;
@@ -166,12 +166,12 @@ complex_abs_cmp(Complex * a, Complex * b)
  * POSTGRES crashing, it is impossible to tell whether the bug is in your
  * code or POSTGRES's.
  */
-void			test_main(void);
+void		test_main(void);
 void
 test_main()
 {
-	Complex		   *a;
-	Complex		   *b;
+	Complex    *a;
+	Complex    *b;
 
 	a = complex_in("(4.01, 3.77 )");
 	printf("a = %s\n", complex_out(a));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.6 1997/09/07 04:48:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.7 1997/09/08 02:28:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ SystemPortAddressCreateIPCKey(SystemPortAddress address)
 void
 CreateSharedMemoryAndSemaphores(IPCKey key)
 {
-	int				size;
+	int			size;
 
 #ifdef HAS_TEST_AND_SET
 	/* ---------------
@@ -114,7 +114,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 void
 AttachSharedMemoryAndSemaphores(IPCKey key)
 {
-	int				size;
+	int			size;
 
 	/* ----------------
 	 *	create rather than attach if using private key

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.5 1997/09/07 04:58:35 momjian Exp $
+ * $Id: memnodes.h,v 1.6 1997/09/08 02:37:19 momjian Exp $
  *
  * XXX the typedefs in this file are different from the other ???nodes.h;
  *	  they are pointers to structures instead of the structures themselves.
@@ -49,46 +49,46 @@
 typedef struct MemoryContextMethodsData
 {
 	Pointer(*alloc) ();
-	void			(*free_p) ();		/* need to use free as a #define,
-										 * so can't use free */
-					Pointer(*realloc) ();
-	char		   *(*getName) ();
-	void			(*dump) ();
-}			   *MemoryContextMethods;
+	void		(*free_p) ();	/* need to use free as a #define, so can't
+								 * use free */
+				Pointer(*realloc) ();
+	char	   *(*getName) ();
+	void		(*dump) ();
+}		   *MemoryContextMethods;
 
 typedef struct MemoryContext
 {
-	NodeTag			type;
+	NodeTag		type;
 	MemoryContextMethods method;
-}			   *MemoryContext;
+}		   *MemoryContext;
 
 /* think about doing this right some time but we'll have explicit fields
    for now -ay 10/94 */
 typedef struct GlobalMemory
 {
-	NodeTag			type;
+	NodeTag		type;
 	MemoryContextMethods method;
-	AllocSetData	setData;
-	char		   *name;
+	AllocSetData setData;
+	char	   *name;
 	OrderedElemData elemData;
-}			   *GlobalMemory;
+}		   *GlobalMemory;
 
 typedef MemoryContext *PortalMemoryContext;
 
 typedef struct PortalVariableMemory
 {
-	NodeTag			type;
+	NodeTag		type;
 	MemoryContextMethods method;
-	AllocSetData	setData;
-}			   *PortalVariableMemory;
+	AllocSetData setData;
+}		   *PortalVariableMemory;
 
 typedef struct PortalHeapMemory
 {
-	NodeTag			type;
+	NodeTag		type;
 	MemoryContextMethods method;
-	Pointer			block;
-	FixedStackData	stackData;
-}			   *PortalHeapMemory;
+	Pointer		block;
+	FixedStackData stackData;
+}		   *PortalHeapMemory;
 
 /*
  * MemoryContextIsValid --

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pos.h,v 1.3 1997/09/07 05:01:33 momjian Exp $
+ * $Id: pos.h,v 1.4 1997/09/08 02:39:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
  * pointer array contained on every page that store (heap or index)
  * tuples.
  */
-typedef bits16	PositionIdData;
+typedef bits16 PositionIdData;
 typedef PositionIdData *PositionId;
 
 /* ----------------

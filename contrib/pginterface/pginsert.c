@@ -13,17 +13,17 @@
 int
 main(int argc, char **argv)
 {
-	char			query[4000];
-	int				row = 1;
-	int				aint;
-	float			afloat;
-	double			adouble;
-	char			achar[11],
-					achar16[17],
-					abpchar[11],
-					avarchar[51],
-					atext[51];
-	time_t			aabstime;
+	char		query[4000];
+	int			row = 1;
+	int			aint;
+	float		afloat;
+	double		adouble;
+	char		achar[11],
+				achar16[17],
+				abpchar[11],
+				avarchar[51],
+				atext[51];
+	time_t		aabstime;
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);

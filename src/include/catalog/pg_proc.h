@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.28 1997/09/07 04:57:03 momjian Exp $
+ * $Id: pg_proc.h,v 1.29 1997/09/08 02:35:23 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -38,22 +38,22 @@
  */
 CATALOG(pg_proc) BOOTSTRAP
 {
-	NameData		proname;
-	Oid				proowner;
-	Oid				prolang;
-	bool			proisinh;
-	bool			proistrusted;
-	bool			proiscachable;
-	int2			pronargs;
-	bool			proretset;
-	Oid				prorettype;
-	oid8			proargtypes;
-	int4			probyte_pct;
-	int4			properbyte_cpu;
-	int4			propercall_cpu;
-	int4			prooutin_ratio;
-	text			prosrc;		/* VARIABLE LENGTH FIELD */
-	bytea			probin;		/* VARIABLE LENGTH FIELD */
+	NameData	proname;
+	Oid			proowner;
+	Oid			prolang;
+	bool		proisinh;
+	bool		proistrusted;
+	bool		proiscachable;
+	int2		pronargs;
+	bool		proretset;
+	Oid			prorettype;
+	oid8		proargtypes;
+	int4		probyte_pct;
+	int4		properbyte_cpu;
+	int4		propercall_cpu;
+	int4		prooutin_ratio;
+	text		prosrc;			/* VARIABLE LENGTH FIELD */
+	bytea		probin;			/* VARIABLE LENGTH FIELD */
 } FormData_pg_proc;
 
 /* ----------------
@@ -1103,7 +1103,7 @@ DATA(insert OID =  1319 (  currval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  fo
 /*
  * prototypes for functions pg_proc.c
  */
-extern Oid
+extern		Oid
 ProcedureCreate(char *procedureName,
 				bool returnsSet,
 				char *returnTypeName,

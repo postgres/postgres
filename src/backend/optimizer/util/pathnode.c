@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.4 1997/09/07 04:44:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.5 1997/09/08 02:24:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 
 #include "parser/parsetree.h"	/* for getrelid() */
 
-static Path    *better_path(Path * new_path, List * unique_paths, bool * noOther);
+static Path *better_path(Path * new_path, List * unique_paths, bool * noOther);
 
 
 /*****************************************************************************
@@ -44,8 +44,8 @@ static Path    *better_path(Path * new_path, List * unique_paths, bool * noOther
 bool
 path_is_cheaper(Path * path1, Path * path2)
 {
-	Cost			cost1 = path1->path_cost;
-	Cost			cost2 = path2->path_cost;
+	Cost		cost1 = path1->path_cost;
+	Cost		cost2 = path2->path_cost;
 
 	return ((bool) (cost1 < cost2));
 }
@@ -61,11 +61,11 @@ path_is_cheaper(Path * path1, Path * path2)
  * is minimum.
  *
  */
-Path		   *
+Path	   *
 set_cheapest(Rel * parent_rel, List * pathlist)
 {
-	List		   *p;
-	Path		   *cheapest_so_far;
+	List	   *p;
+	Path	   *cheapest_so_far;
 
 	Assert(pathlist != NIL);
 	Assert(IsA(parent_rel, Rel));
@@ -74,7 +74,7 @@ set_cheapest(Rel * parent_rel, List * pathlist)
 
 	foreach(p, lnext(pathlist))
 	{
-		Path		   *path = (Path *) lfirst(p);
+		Path	   *path = (Path *) lfirst(p);
 
 		if (path_is_cheaper(path, cheapest_so_far))
 		{
@@ -100,13 +100,13 @@ set_cheapest(Rel * parent_rel, List * pathlist)
  * Returns the list of unique pathnodes.
  *
  */
-List		   *
+List	   *
 add_pathlist(Rel * parent_rel, List * unique_paths, List * new_paths)
 {
-	List		   *x;
-	Path		   *new_path;
-	Path		   *old_path;
-	bool			noOther;
+	List	   *x;
+	Path	   *new_path;
+	Path	   *old_path;
+	bool		noOther;
 
 	foreach(x, new_paths)
 	{
@@ -153,13 +153,13 @@ add_pathlist(Rel * parent_rel, List * unique_paths, List * new_paths)
  *	  t - if there is no path in the list with the same ordering and keys
  *
  */
-static Path    *
+static Path *
 better_path(Path * new_path, List * unique_paths, bool * noOther)
 {
-	Path		   *old_path = (Path *) NULL;
-	Path		   *path = (Path *) NULL;
-	List		   *temp = NIL;
-	Path		   *retval = NULL;
+	Path	   *old_path = (Path *) NULL;
+	Path	   *path = (Path *) NULL;
+	List	   *temp = NIL;
+	Path	   *retval = NULL;
 
 	/*
 	 * XXX - added the following two lines which weren't int the lisp
@@ -207,12 +207,12 @@ better_path(Path * new_path, List * unique_paths, bool * noOther)
  *	  pathnode.
  *
  */
-Path		   *
+Path	   *
 create_seqscan_path(Rel * rel)
 {
-	int				relid = 0;
+	int			relid = 0;
 
-	Path		   *pathnode = makeNode(Path);
+	Path	   *pathnode = makeNode(Path);
 
 	pathnode->pathtype = T_SeqScan;
 	pathnode->parent = rel;
@@ -257,14 +257,14 @@ create_seqscan_path(Rel * rel)
  * Returns the new path node.
  *
  */
-IndexPath	   *
+IndexPath  *
 create_index_path(Query * root,
 				  Rel * rel,
 				  Rel * index,
 				  List * restriction_clauses,
 				  bool is_join_scan)
 {
-	IndexPath	   *pathnode = makeNode(IndexPath);
+	IndexPath  *pathnode = makeNode(IndexPath);
 
 	pathnode->path.pathtype = T_IndexScan;
 	pathnode->path.parent = rel;
@@ -344,12 +344,12 @@ create_index_path(Query * root,
 		 * Compute scan cost for the case when 'index' is used with a
 		 * restriction clause.
 		 */
-		List		   *attnos;
-		List		   *values;
-		List		   *flags;
-		float			npages;
-		float			selec;
-		Cost			clausesel;
+		List	   *attnos;
+		List	   *values;
+		List	   *flags;
+		float		npages;
+		float		selec;
+		Cost		clausesel;
 
 		get_relattvals(restriction_clauses,
 					   &attnos,
@@ -417,14 +417,14 @@ create_index_path(Query * root,
  * Returns the resulting path node.
  *
  */
-JoinPath	   *
+JoinPath   *
 create_nestloop_path(Rel * joinrel,
 					 Rel * outer_rel,
 					 Path * outer_path,
 					 Path * inner_path,
 					 List * keys)
 {
-	JoinPath	   *pathnode = makeNode(JoinPath);
+	JoinPath   *pathnode = makeNode(JoinPath);
 
 	pathnode->path.pathtype = T_NestLoop;
 	pathnode->path.parent = joinrel;
@@ -494,7 +494,7 @@ create_nestloop_path(Rel * joinrel,
  * 'innersortkeys' are the sort varkeys for the inner relation
  *
  */
-MergePath	   *
+MergePath  *
 create_mergesort_path(Rel * joinrel,
 					  int outersize,
 					  int innersize,
@@ -508,7 +508,7 @@ create_mergesort_path(Rel * joinrel,
 					  List * outersortkeys,
 					  List * innersortkeys)
 {
-	MergePath	   *pathnode = makeNode(MergePath);
+	MergePath  *pathnode = makeNode(MergePath);
 
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;
@@ -560,7 +560,7 @@ create_mergesort_path(Rel * joinrel,
  * 'innerkeys' are the sort varkeys for the inner relation
  *
  */
-HashPath	   *
+HashPath   *
 create_hashjoin_path(Rel * joinrel,
 					 int outersize,
 					 int innersize,
@@ -574,7 +574,7 @@ create_hashjoin_path(Rel * joinrel,
 					 List * outerkeys,
 					 List * innerkeys)
 {
-	HashPath	   *pathnode = makeNode(HashPath);
+	HashPath   *pathnode = makeNode(HashPath);
 
 	pathnode->jpath.path.pathtype = T_HashJoin;
 	pathnode->jpath.path.parent = joinrel;

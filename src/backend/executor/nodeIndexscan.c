@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.8 1997/09/07 04:41:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.9 1997/09/08 02:22:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,19 +82,19 @@ static TupleTableSlot *IndexNext(IndexScan * node);
 static TupleTableSlot *
 IndexNext(IndexScan * node)
 {
-	EState		   *estate;
+	EState	   *estate;
 	CommonScanState *scanstate;
 	IndexScanState *indexstate;
-	ScanDirection	direction;
-	int				indexPtr;
+	ScanDirection direction;
+	int			indexPtr;
 	IndexScanDescPtr scanDescs;
-	IndexScanDesc	scandesc;
-	Relation		heapRelation;
+	IndexScanDesc scandesc;
+	Relation	heapRelation;
 	RetrieveIndexResult result;
-	ItemPointer		iptr;
-	HeapTuple		tuple;
+	ItemPointer iptr;
+	HeapTuple	tuple;
 	TupleTableSlot *slot;
-	Buffer			buffer = InvalidBuffer;
+	Buffer		buffer = InvalidBuffer;
 
 	/* ----------------
 	 *	extract necessary information from index scan node
@@ -219,30 +219,30 @@ ExecIndexScan(IndexScan * node)
 void
 ExecIndexReScan(IndexScan * node, ExprContext * exprCtxt, Plan * parent)
 {
-	EState		   *estate;
+	EState	   *estate;
 	IndexScanState *indexstate;
-	ScanDirection	direction;
+	ScanDirection direction;
 	IndexScanDescPtr scanDescs;
-	ScanKey		   *scanKeys;
-	IndexScanDesc	sdesc;
-	ScanKey			skey;
-	int				numIndices;
-	int				i;
+	ScanKey    *scanKeys;
+	IndexScanDesc sdesc;
+	ScanKey		skey;
+	int			numIndices;
+	int			i;
 
-	Pointer		   *runtimeKeyInfo;
-	int				indexPtr;
-	int			   *numScanKeys;
-	List		   *indxqual;
-	List		   *qual;
-	int				n_keys;
-	ScanKey			scan_keys;
-	int			   *run_keys;
-	int				j;
-	Expr		   *clause;
-	Node		   *scanexpr;
-	Datum			scanvalue;
-	bool			isNull;
-	bool			isDone;
+	Pointer    *runtimeKeyInfo;
+	int			indexPtr;
+	int		   *numScanKeys;
+	List	   *indxqual;
+	List	   *qual;
+	int			n_keys;
+	ScanKey		scan_keys;
+	int		   *run_keys;
+	int			j;
+	Expr	   *clause;
+	Node	   *scanexpr;
+	Datum		scanvalue;
+	bool		isNull;
+	bool		isDone;
 
 	indexstate = node->indxstate;
 	estate = node->scan.plan.state;
@@ -335,9 +335,9 @@ ExecEndIndexScan(IndexScan * node)
 {
 	CommonScanState *scanstate;
 	IndexScanState *indexstate;
-	ScanKey		   *scanKeys;
-	int				numIndices;
-	int				i;
+	ScanKey    *scanKeys;
+	int			numIndices;
+	int			i;
 
 	scanstate = node->scan.scanstate;
 	indexstate = node->indxstate;
@@ -399,8 +399,8 @@ ExecIndexMarkPos(IndexScan * node)
 {
 	IndexScanState *indexstate;
 	IndexScanDescPtr indexScanDescs;
-	IndexScanDesc	scanDesc;
-	int				indexPtr;
+	IndexScanDesc scanDesc;
+	int			indexPtr;
 
 	indexstate = node->indxstate;
 	indexPtr = indexstate->iss_IndexPtr;
@@ -430,8 +430,8 @@ ExecIndexRestrPos(IndexScan * node)
 {
 	IndexScanState *indexstate;
 	IndexScanDescPtr indexScanDescs;
-	IndexScanDesc	scanDesc;
-	int				indexPtr;
+	IndexScanDesc scanDesc;
+	int			indexPtr;
 
 	indexstate = node->indxstate;
 	indexPtr = indexstate->iss_IndexPtr;
@@ -465,27 +465,27 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 {
 	IndexScanState *indexstate;
 	CommonScanState *scanstate;
-	List		   *indxqual;
-	List		   *indxid;
-	int				i;
-	int				numIndices;
-	int				indexPtr;
-	ScanKey		   *scanKeys;
-	int			   *numScanKeys;
-	RelationPtr		relationDescs;
+	List	   *indxqual;
+	List	   *indxid;
+	int			i;
+	int			numIndices;
+	int			indexPtr;
+	ScanKey    *scanKeys;
+	int		   *numScanKeys;
+	RelationPtr relationDescs;
 	IndexScanDescPtr scanDescs;
-	Pointer		   *runtimeKeyInfo;
-	bool			have_runtime_keys;
-	List		   *rangeTable;
-	RangeTblEntry  *rtentry;
-	Index			relid;
-	Oid				reloid;
-	TimeQual		timeQual;
+	Pointer    *runtimeKeyInfo;
+	bool		have_runtime_keys;
+	List	   *rangeTable;
+	RangeTblEntry *rtentry;
+	Index		relid;
+	Oid			reloid;
+	TimeQual	timeQual;
 
-	Relation		currentRelation;
-	HeapScanDesc	currentScanDesc;
-	ScanDirection	direction;
-	int				baseid;
+	Relation	currentRelation;
+	HeapScanDesc currentScanDesc;
+	ScanDirection direction;
+	int			baseid;
 
 	/* ----------------
 	 *	assign execution state to node
@@ -600,11 +600,11 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
-		int				j;
-		List		   *qual;
-		int				n_keys;
-		ScanKey			scan_keys;
-		int			   *run_keys;
+		int			j;
+		List	   *qual;
+		int			n_keys;
+		ScanKey		scan_keys;
+		int		   *run_keys;
 
 		qual = nth(i, indxqual);
 		n_keys = length(qual);
@@ -623,17 +623,16 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 		 */
 		for (j = 0; j < n_keys; j++)
 		{
-			Expr		   *clause;		/* one part of index qual */
-			Oper		   *op; /* operator used in scan.. */
-			Node		   *leftop;		/* expr on lhs of operator */
-			Node		   *rightop;	/* expr on rhs ... */
-			bits16			flags = 0;
+			Expr	   *clause; /* one part of index qual */
+			Oper	   *op;		/* operator used in scan.. */
+			Node	   *leftop; /* expr on lhs of operator */
+			Node	   *rightop;/* expr on rhs ... */
+			bits16		flags = 0;
 
-			int				scanvar;	/* which var identifies varattno */
-			AttrNumber		varattno = 0;		/* att number used in scan */
-			Oid				opid;		/* operator id used in scan */
-			Datum			scanvalue = 0;		/* value used in scan (if
-												 * const) */
+			int			scanvar;/* which var identifies varattno */
+			AttrNumber	varattno = 0;	/* att number used in scan */
+			Oid			opid;	/* operator id used in scan */
+			Datum		scanvalue = 0;	/* value used in scan (if const) */
 
 			/* ----------------
 			 *	extract clause information from the qualification
@@ -702,7 +701,7 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 			}
 			else if (IsA(leftop, Param))
 			{
-				bool			isnull;
+				bool		isnull;
 
 				/* ----------------
 				 *	if the leftop is a Param node then it means
@@ -785,7 +784,7 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 			}
 			else if (IsA(rightop, Param))
 			{
-				bool			isnull;
+				bool		isnull;
 
 				/* ----------------
 				 *	if the rightop is a Param node then it means
@@ -885,8 +884,8 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 		indexstate->iss_RuntimeKeyInfo = NULL;
 		for (i = 0; i < numIndices; i++)
 		{
-			List		   *qual;
-			int				n_keys;
+			List	   *qual;
+			int			n_keys;
 
 			qual = nth(i, indxqual);
 			n_keys = length(qual);
@@ -947,7 +946,7 @@ ExecInitIndexScan(IndexScan * node, EState * estate, Plan * parent)
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
-		Oid				indexOid;
+		Oid			indexOid;
 
 		indexOid = (Oid) nthi(i, indxid);
 

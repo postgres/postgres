@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.38 1997/09/07 04:50:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.39 1997/09/08 02:30:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,38 +31,38 @@
 #endif
 #include "utils/builtins.h"
 
-static int		DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
+static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static int
 DecodeNumber(int flen, char *field,
 			 int fmask, int *tmask, struct tm * tm, double *fsec);
 static int
 DecodeNumberField(int len, char *str,
 				  int fmask, int *tmask, struct tm * tm, double *fsec);
-static int		DecodeSpecial(int field, char *lowtoken, int *val);
+static int	DecodeSpecial(int field, char *lowtoken, int *val);
 static int
 DecodeTime(char *str, int fmask, int *tmask,
 		   struct tm * tm, double *fsec);
-static int		DecodeTimezone(char *str, int *tzp);
-static int		DecodeUnits(int field, char *lowtoken, int *val);
-static int		EncodeSpecialDateTime(DateTime dt, char *str);
+static int	DecodeTimezone(char *str, int *tzp);
+static int	DecodeUnits(int field, char *lowtoken, int *val);
+static int	EncodeSpecialDateTime(DateTime dt, char *str);
 static datetkn *datebsearch(char *key, datetkn * base, unsigned int nel);
 static DateTime dt2local(DateTime dt, int timezone);
-static void		dt2time(DateTime dt, int *hour, int *min, double *sec);
-static int		j2day(int jd);
-static int		timespan2tm(TimeSpan span, struct tm * tm, float8 * fsec);
-static int		tm2timespan(struct tm * tm, double fsec, TimeSpan * span);
+static void dt2time(DateTime dt, int *hour, int *min, double *sec);
+static int	j2day(int jd);
+static int	timespan2tm(TimeSpan span, struct tm * tm, float8 * fsec);
+static int	tm2timespan(struct tm * tm, double fsec, TimeSpan * span);
 
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
 
 #define isleap(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
 
-int				mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+int			mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
-char		   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
-char		   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
+char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 "Thursday", "Friday", "Saturday", NULL};
 
 /* TMODULO()
@@ -71,7 +71,7 @@ char		   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 #define TMODULO(t,q,u) {q = ((t < 0)? ceil(t / u): floor(t / u)); \
 						if (q != 0) t -= rint(q * u);}
 
-static void		GetEpochTime(struct tm * tm);
+static void GetEpochTime(struct tm * tm);
 
 #define UTIME_MINYEAR (1901)
 #define UTIME_MINMONTH (12)
@@ -95,20 +95,20 @@ static void		GetEpochTime(struct tm * tm);
 /* datetime_in()
  * Convert a string to internal form.
  */
-DateTime	   *
+DateTime   *
 datetime_in(char *str)
 {
-	DateTime	   *result;
+	DateTime   *result;
 
-	double			fsec;
-	struct tm		tt,
-				   *tm = &tt;
-	int				tz;
-	int				dtype;
-	int				nf;
-	char		   *field[MAXDATEFIELDS];
-	int				ftype[MAXDATEFIELDS];
-	char			lowstr[MAXDATELEN + 1];
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	int			dtype;
+	int			nf;
+	char	   *field[MAXDATEFIELDS];
+	int			ftype[MAXDATEFIELDS];
+	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
 		elog(WARN, "Bad (null) datetime external representation", NULL);
@@ -121,38 +121,38 @@ datetime_in(char *str)
 
 	switch (dtype)
 	{
-	case DTK_DATE:
-		if (tm2datetime(tm, fsec, &tz, result) != 0)
-			elog(WARN, "Datetime out of range %s", str);
+		case DTK_DATE:
+			if (tm2datetime(tm, fsec, &tz, result) != 0)
+				elog(WARN, "Datetime out of range %s", str);
 
 #ifdef DATEDEBUG
-		printf("datetime_in- date is %f\n", *result);
+			printf("datetime_in- date is %f\n", *result);
 #endif
 
-		break;
+			break;
 
-	case DTK_EPOCH:
-		DATETIME_EPOCH(*result);
-		break;
+		case DTK_EPOCH:
+			DATETIME_EPOCH(*result);
+			break;
 
-	case DTK_CURRENT:
-		DATETIME_CURRENT(*result);
-		break;
+		case DTK_CURRENT:
+			DATETIME_CURRENT(*result);
+			break;
 
-	case DTK_LATE:
-		DATETIME_NOEND(*result);
-		break;
+		case DTK_LATE:
+			DATETIME_NOEND(*result);
+			break;
 
-	case DTK_EARLY:
-		DATETIME_NOBEGIN(*result);
-		break;
+		case DTK_EARLY:
+			DATETIME_NOBEGIN(*result);
+			break;
 
-	case DTK_INVALID:
-		DATETIME_INVALID(*result);
-		break;
+		case DTK_INVALID:
+			DATETIME_INVALID(*result);
+			break;
 
-	default:
-		elog(WARN, "Internal coding error, can't input datetime '%s'", str);
+		default:
+			elog(WARN, "Internal coding error, can't input datetime '%s'", str);
 	}
 
 	return (result);
@@ -161,16 +161,16 @@ datetime_in(char *str)
 /* datetime_out()
  * Convert a datetime to external form.
  */
-char		   *
+char	   *
 datetime_out(DateTime * dt)
 {
-	char		   *result;
-	int				tz;
-	struct tm		tt,
-				   *tm = &tt;
-	double			fsec;
-	char		   *tzn;
-	char			buf[MAXDATELEN + 1];
+	char	   *result;
+	int			tz;
+	struct tm	tt,
+			   *tm = &tt;
+	double		fsec;
+	char	   *tzn;
+	char		buf[MAXDATELEN + 1];
 
 	if (!PointerIsValid(dt))
 		return (NULL);
@@ -204,19 +204,19 @@ datetime_out(DateTime * dt)
  * External format(s):
  *	Uses the generic date/time parsing and decoding routines.
  */
-TimeSpan	   *
+TimeSpan   *
 timespan_in(char *str)
 {
-	TimeSpan	   *span;
+	TimeSpan   *span;
 
-	double			fsec;
-	struct tm		tt,
-				   *tm = &tt;
-	int				dtype;
-	int				nf;
-	char		   *field[MAXDATEFIELDS];
-	int				ftype[MAXDATEFIELDS];
-	char			lowstr[MAXDATELEN + 1];
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
+	int			dtype;
+	int			nf;
+	char	   *field[MAXDATEFIELDS];
+	int			ftype[MAXDATEFIELDS];
+	char		lowstr[MAXDATELEN + 1];
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -237,18 +237,18 @@ timespan_in(char *str)
 
 	switch (dtype)
 	{
-	case DTK_DELTA:
-		if (tm2timespan(tm, fsec, span) != 0)
-		{
+		case DTK_DELTA:
+			if (tm2timespan(tm, fsec, span) != 0)
+			{
 #if FALSE
-			TIMESPAN_INVALID(span);
+				TIMESPAN_INVALID(span);
 #endif
-			elog(WARN, "Bad timespan external representation %s", str);
-		}
-		break;
+				elog(WARN, "Bad timespan external representation %s", str);
+			}
+			break;
 
-	default:
-		elog(WARN, "Internal coding error, can't input timespan '%s'", str);
+		default:
+			elog(WARN, "Internal coding error, can't input timespan '%s'", str);
 	}
 
 	return (span);
@@ -257,15 +257,15 @@ timespan_in(char *str)
 /* timespan_out()
  * Convert a time span to external form.
  */
-char		   *
+char	   *
 timespan_out(TimeSpan * span)
 {
-	char		   *result;
+	char	   *result;
 
-	struct tm		tt,
-				   *tm = &tt;
-	double			fsec;
-	char			buf[MAXDATELEN + 1];
+	struct tm	tt,
+			   *tm = &tt;
+	double		fsec;
+	char		buf[MAXDATELEN + 1];
 
 	if (!PointerIsValid(span))
 		return (NULL);
@@ -317,8 +317,8 @@ timespan_finite(TimeSpan * timespan)
 static void
 GetEpochTime(struct tm * tm)
 {
-	struct tm	   *t0;
-	time_t			epoch = 0;
+	struct tm  *t0;
+	time_t		epoch = 0;
 
 	t0 = gmtime(&epoch);
 
@@ -344,7 +344,7 @@ GetEpochTime(struct tm * tm)
 DateTime
 SetDateTime(DateTime dt)
 {
-	struct tm		tt;
+	struct tm	tt;
 
 	if (DATETIME_IS_CURRENT(dt))
 	{
@@ -373,8 +373,8 @@ SetDateTime(DateTime dt)
 bool
 datetime_eq(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return FALSE;
@@ -396,8 +396,8 @@ datetime_eq(DateTime * datetime1, DateTime * datetime2)
 bool
 datetime_ne(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return FALSE;
@@ -419,8 +419,8 @@ datetime_ne(DateTime * datetime1, DateTime * datetime2)
 bool
 datetime_lt(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return FALSE;
@@ -442,8 +442,8 @@ datetime_lt(DateTime * datetime1, DateTime * datetime2)
 bool
 datetime_gt(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return FALSE;
@@ -468,8 +468,8 @@ datetime_gt(DateTime * datetime1, DateTime * datetime2)
 bool
 datetime_le(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return FALSE;
@@ -491,8 +491,8 @@ datetime_le(DateTime * datetime1, DateTime * datetime2)
 bool
 datetime_ge(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return FALSE;
@@ -518,8 +518,8 @@ datetime_ge(DateTime * datetime1, DateTime * datetime2)
 int
 datetime_cmp(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return 0;
@@ -580,8 +580,8 @@ timespan_ne(TimeSpan * timespan1, TimeSpan * timespan2)
 bool
 timespan_lt(TimeSpan * timespan1, TimeSpan * timespan2)
 {
-	double			span1,
-					span2;
+	double		span1,
+				span2;
 
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return FALSE;
@@ -602,8 +602,8 @@ timespan_lt(TimeSpan * timespan1, TimeSpan * timespan2)
 bool
 timespan_gt(TimeSpan * timespan1, TimeSpan * timespan2)
 {
-	double			span1,
-					span2;
+	double		span1,
+				span2;
 
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return FALSE;
@@ -624,8 +624,8 @@ timespan_gt(TimeSpan * timespan1, TimeSpan * timespan2)
 bool
 timespan_le(TimeSpan * timespan1, TimeSpan * timespan2)
 {
-	double			span1,
-					span2;
+	double		span1,
+				span2;
 
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return FALSE;
@@ -646,8 +646,8 @@ timespan_le(TimeSpan * timespan1, TimeSpan * timespan2)
 bool
 timespan_ge(TimeSpan * timespan1, TimeSpan * timespan2)
 {
-	double			span1,
-					span2;
+	double		span1,
+				span2;
 
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return FALSE;
@@ -671,8 +671,8 @@ timespan_ge(TimeSpan * timespan1, TimeSpan * timespan2)
 int
 timespan_cmp(TimeSpan * timespan1, TimeSpan * timespan2)
 {
-	double			span1,
-					span2;
+	double		span1,
+				span2;
 
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return 0;
@@ -706,13 +706,13 @@ timespan_cmp(TimeSpan * timespan1, TimeSpan * timespan2)
  *						actual value.
  *---------------------------------------------------------*/
 
-DateTime	   *
+DateTime   *
 datetime_smaller(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime	   *result;
+	DateTime   *result;
 
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return NULL;
@@ -743,13 +743,13 @@ datetime_smaller(DateTime * datetime1, DateTime * datetime2)
 	return (result);
 }								/* datetime_smaller() */
 
-DateTime	   *
+DateTime   *
 datetime_larger(DateTime * datetime1, DateTime * datetime2)
 {
-	DateTime	   *result;
+	DateTime   *result;
 
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return NULL;
@@ -781,13 +781,13 @@ datetime_larger(DateTime * datetime1, DateTime * datetime2)
 }								/* datetime_larger() */
 
 
-TimeSpan	   *
+TimeSpan   *
 datetime_mi(DateTime * datetime1, DateTime * datetime2)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
-	DateTime		dt1,
-					dt2;
+	DateTime	dt1,
+				dt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return NULL;
@@ -830,13 +830,13 @@ datetime_mi(DateTime * datetime1, DateTime * datetime2)
  * Then, if the next month has fewer days, set the day of month
  *	to the last day of month.
  */
-DateTime	   *
+DateTime   *
 datetime_pl_span(DateTime * datetime, TimeSpan * span)
 {
-	DateTime	   *result;
-	DateTime		dt;
-	int				tz;
-	char		   *tzn;
+	DateTime   *result;
+	DateTime	dt;
+	int			tz;
+	char	   *tzn;
 
 	if ((!PointerIsValid(datetime)) || (!PointerIsValid(span)))
 		return NULL;
@@ -869,9 +869,9 @@ datetime_pl_span(DateTime * datetime, TimeSpan * span)
 
 		if (span->month != 0)
 		{
-			struct tm		tt,
-						   *tm = &tt;
-			double			fsec;
+			struct tm	tt,
+					   *tm = &tt;
+			double		fsec;
 
 			if (datetime2tm(dt, &tz, tm, &fsec, &tzn) == 0)
 			{
@@ -924,11 +924,11 @@ datetime_pl_span(DateTime * datetime, TimeSpan * span)
 	return (result);
 }								/* datetime_pl_span() */
 
-DateTime	   *
+DateTime   *
 datetime_mi_span(DateTime * datetime, TimeSpan * span)
 {
-	DateTime	   *result;
-	TimeSpan		tspan;
+	DateTime   *result;
+	TimeSpan	tspan;
 
 	if (!PointerIsValid(datetime) || !PointerIsValid(span))
 		return NULL;
@@ -942,10 +942,10 @@ datetime_mi_span(DateTime * datetime, TimeSpan * span)
 }								/* datetime_mi_span() */
 
 
-TimeSpan	   *
+TimeSpan   *
 timespan_um(TimeSpan * timespan)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
 	if (!PointerIsValid(timespan))
 		return NULL;
@@ -959,13 +959,13 @@ timespan_um(TimeSpan * timespan)
 }								/* timespan_um() */
 
 
-TimeSpan	   *
+TimeSpan   *
 timespan_smaller(TimeSpan * timespan1, TimeSpan * timespan2)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
-	double			span1,
-					span2;
+	double		span1,
+				span2;
 
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return NULL;
@@ -1014,13 +1014,13 @@ timespan_smaller(TimeSpan * timespan1, TimeSpan * timespan2)
 	return (result);
 }								/* timespan_smaller() */
 
-TimeSpan	   *
+TimeSpan   *
 timespan_larger(TimeSpan * timespan1, TimeSpan * timespan2)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
-	double			span1,
-					span2;
+	double		span1,
+				span2;
 
 	if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
 		return NULL;
@@ -1070,10 +1070,10 @@ timespan_larger(TimeSpan * timespan1, TimeSpan * timespan2)
 }								/* timespan_larger() */
 
 
-TimeSpan	   *
+TimeSpan   *
 timespan_pl(TimeSpan * span1, TimeSpan * span2)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
 	if ((!PointerIsValid(span1)) || (!PointerIsValid(span2)))
 		return NULL;
@@ -1086,10 +1086,10 @@ timespan_pl(TimeSpan * span1, TimeSpan * span2)
 	return (result);
 }								/* timespan_pl() */
 
-TimeSpan	   *
+TimeSpan   *
 timespan_mi(TimeSpan * span1, TimeSpan * span2)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
 	if ((!PointerIsValid(span1)) || (!PointerIsValid(span2)))
 		return NULL;
@@ -1102,10 +1102,10 @@ timespan_mi(TimeSpan * span1, TimeSpan * span2)
 	return (result);
 }								/* timespan_mi() */
 
-TimeSpan	   *
+TimeSpan   *
 timespan_div(TimeSpan * span1, float8 * arg2)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
 	if ((!PointerIsValid(span1)) || (!PointerIsValid(arg2)))
 		return NULL;
@@ -1128,22 +1128,22 @@ timespan_div(TimeSpan * span1, float8 * arg2)
  *	since year and month are out of context once the arithmetic
  *	is done.
  */
-TimeSpan	   *
+TimeSpan   *
 datetime_age(DateTime * datetime1, DateTime * datetime2)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
-	DateTime		dt1,
-					dt2;
-	double			fsec,
-					fsec1,
-					fsec2;
-	struct tm		tt,
-				   *tm = &tt;
-	struct tm		tt1,
-				   *tm1 = &tt1;
-	struct tm		tt2,
-				   *tm2 = &tt2;
+	DateTime	dt1,
+				dt2;
+	double		fsec,
+				fsec1,
+				fsec2;
+	struct tm	tt,
+			   *tm = &tt;
+	struct tm	tt1,
+			   *tm1 = &tt1;
+	struct tm	tt2,
+			   *tm2 = &tt2;
 
 	if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
 		return NULL;
@@ -1275,12 +1275,12 @@ datetime_age(DateTime * datetime1, DateTime * datetime2)
 /* datetime_text()
  * Convert datetime to text data type.
  */
-text		   *
+text	   *
 datetime_text(DateTime * datetime)
 {
-	text		   *result;
-	char		   *str;
-	int				len;
+	text	   *result;
+	char	   *str;
+	int			len;
 
 	if (!PointerIsValid(datetime))
 		return NULL;
@@ -1308,14 +1308,14 @@ datetime_text(DateTime * datetime)
  * Text type is not null terminated, so use temporary string
  *	then call the standard input routine.
  */
-DateTime	   *
+DateTime   *
 text_datetime(text * str)
 {
-	DateTime	   *result;
-	int				i;
-	char		   *sp,
-				   *dp,
-					dstr[MAXDATELEN + 1];
+	DateTime   *result;
+	int			i;
+	char	   *sp,
+			   *dp,
+				dstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
 		return NULL;
@@ -1335,12 +1335,12 @@ text_datetime(text * str)
 /* timespan_text()
  * Convert timespan to text data type.
  */
-text		   *
+text	   *
 timespan_text(TimeSpan * timespan)
 {
-	text		   *result;
-	char		   *str;
-	int				len;
+	text	   *result;
+	char	   *str;
+	int			len;
 
 	if (!PointerIsValid(timespan))
 		return NULL;
@@ -1369,14 +1369,14 @@ timespan_text(TimeSpan * timespan)
  *	then call the standard input routine.
  */
 #ifdef NOT_USED
-TimeSpan	   *
+TimeSpan   *
 text_timespan(text * str)
 {
-	TimeSpan	   *result;
-	int				i;
-	char		   *sp,
-				   *dp,
-					dstr[MAXDATELEN + 1];
+	TimeSpan   *result;
+	int			i;
+	char	   *sp,
+			   *dp,
+				dstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
 		return NULL;
@@ -1397,23 +1397,23 @@ text_timespan(text * str)
 /* datetime_trunc()
  * Extract specified field from datetime.
  */
-DateTime	   *
+DateTime   *
 datetime_trunc(text * units, DateTime * datetime)
 {
-	DateTime	   *result;
+	DateTime   *result;
 
-	DateTime		dt;
-	int				tz;
-	int				type,
-					val;
-	int				i;
-	char		   *up,
-				   *lp,
-					lowunits[MAXDATELEN + 1];
-	double			fsec;
-	char		   *tzn;
-	struct tm		tt,
-				   *tm = &tt;
+	DateTime	dt;
+	int			tz;
+	int			type,
+				val;
+	int			i;
+	char	   *up,
+			   *lp,
+				lowunits[MAXDATELEN + 1];
+	double		fsec;
+	char	   *tzn;
+	struct tm	tt,
+			   *tm = &tt;
 
 	if ((!PointerIsValid(units)) || (!PointerIsValid(datetime)))
 		return NULL;
@@ -1457,39 +1457,39 @@ datetime_trunc(text * units, DateTime * datetime)
 		{
 			switch (val)
 			{
-			case DTK_MILLENIUM:
-				tm->tm_year = (tm->tm_year / 1000) * 1000;
-			case DTK_CENTURY:
-				tm->tm_year = (tm->tm_year / 100) * 100;
-			case DTK_DECADE:
-				tm->tm_year = (tm->tm_year / 10) * 10;
-			case DTK_YEAR:
-				tm->tm_mon = 1;
-			case DTK_QUARTER:
-				tm->tm_mon = (3 * (tm->tm_mon / 4)) + 1;
-			case DTK_MONTH:
-				tm->tm_mday = 1;
-			case DTK_DAY:
-				tm->tm_hour = 0;
-			case DTK_HOUR:
-				tm->tm_min = 0;
-			case DTK_MINUTE:
-				tm->tm_sec = 0;
-			case DTK_SECOND:
-				fsec = 0;
-				break;
+				case DTK_MILLENIUM:
+					tm->tm_year = (tm->tm_year / 1000) * 1000;
+				case DTK_CENTURY:
+					tm->tm_year = (tm->tm_year / 100) * 100;
+				case DTK_DECADE:
+					tm->tm_year = (tm->tm_year / 10) * 10;
+				case DTK_YEAR:
+					tm->tm_mon = 1;
+				case DTK_QUARTER:
+					tm->tm_mon = (3 * (tm->tm_mon / 4)) + 1;
+				case DTK_MONTH:
+					tm->tm_mday = 1;
+				case DTK_DAY:
+					tm->tm_hour = 0;
+				case DTK_HOUR:
+					tm->tm_min = 0;
+				case DTK_MINUTE:
+					tm->tm_sec = 0;
+				case DTK_SECOND:
+					fsec = 0;
+					break;
 
-			case DTK_MILLISEC:
-				fsec = rint(fsec * 1000) / 1000;
-				break;
+				case DTK_MILLISEC:
+					fsec = rint(fsec * 1000) / 1000;
+					break;
 
-			case DTK_MICROSEC:
-				fsec = rint(fsec * 1000) / 1000;
-				break;
+				case DTK_MICROSEC:
+					fsec = rint(fsec * 1000) / 1000;
+					break;
 
-			default:
-				elog(WARN, "Datetime units %s not supported", lowunits);
-				result = NULL;
+				default:
+					elog(WARN, "Datetime units %s not supported", lowunits);
+					result = NULL;
 			}
 
 			if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
@@ -1545,20 +1545,20 @@ datetime_trunc(text * units, DateTime * datetime)
 /* timespan_trunc()
  * Extract specified field from timespan.
  */
-TimeSpan	   *
+TimeSpan   *
 timespan_trunc(text * units, TimeSpan * timespan)
 {
-	TimeSpan	   *result;
+	TimeSpan   *result;
 
-	int				type,
-					val;
-	int				i;
-	char		   *up,
-				   *lp,
-					lowunits[MAXDATELEN + 1];
-	double			fsec;
-	struct tm		tt,
-				   *tm = &tt;
+	int			type,
+				val;
+	int			i;
+	char	   *up,
+			   *lp,
+				lowunits[MAXDATELEN + 1];
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
 
 	if ((!PointerIsValid(units)) || (!PointerIsValid(timespan)))
 		return NULL;
@@ -1600,39 +1600,39 @@ timespan_trunc(text * units, TimeSpan * timespan)
 		{
 			switch (val)
 			{
-			case DTK_MILLENIUM:
-				tm->tm_year = (tm->tm_year / 1000) * 1000;
-			case DTK_CENTURY:
-				tm->tm_year = (tm->tm_year / 100) * 100;
-			case DTK_DECADE:
-				tm->tm_year = (tm->tm_year / 10) * 10;
-			case DTK_YEAR:
-				tm->tm_mon = 0;
-			case DTK_QUARTER:
-				tm->tm_mon = (3 * (tm->tm_mon / 4));
-			case DTK_MONTH:
-				tm->tm_mday = 0;
-			case DTK_DAY:
-				tm->tm_hour = 0;
-			case DTK_HOUR:
-				tm->tm_min = 0;
-			case DTK_MINUTE:
-				tm->tm_sec = 0;
-			case DTK_SECOND:
-				fsec = 0;
-				break;
+				case DTK_MILLENIUM:
+					tm->tm_year = (tm->tm_year / 1000) * 1000;
+				case DTK_CENTURY:
+					tm->tm_year = (tm->tm_year / 100) * 100;
+				case DTK_DECADE:
+					tm->tm_year = (tm->tm_year / 10) * 10;
+				case DTK_YEAR:
+					tm->tm_mon = 0;
+				case DTK_QUARTER:
+					tm->tm_mon = (3 * (tm->tm_mon / 4));
+				case DTK_MONTH:
+					tm->tm_mday = 0;
+				case DTK_DAY:
+					tm->tm_hour = 0;
+				case DTK_HOUR:
+					tm->tm_min = 0;
+				case DTK_MINUTE:
+					tm->tm_sec = 0;
+				case DTK_SECOND:
+					fsec = 0;
+					break;
 
-			case DTK_MILLISEC:
-				fsec = rint(fsec * 1000) / 1000;
-				break;
+				case DTK_MILLISEC:
+					fsec = rint(fsec * 1000) / 1000;
+					break;
 
-			case DTK_MICROSEC:
-				fsec = rint(fsec * 1000) / 1000;
-				break;
+				case DTK_MICROSEC:
+					fsec = rint(fsec * 1000) / 1000;
+					break;
 
-			default:
-				elog(WARN, "Timespan units %s not supported", lowunits);
-				result = NULL;
+				default:
+					elog(WARN, "Timespan units %s not supported", lowunits);
+					result = NULL;
 			}
 
 			if (tm2timespan(tm, fsec, result) != 0)
@@ -1674,20 +1674,20 @@ timespan_trunc(text * units, TimeSpan * timespan)
 float64
 datetime_part(text * units, DateTime * datetime)
 {
-	float64			result;
+	float64		result;
 
-	DateTime		dt;
-	int				tz;
-	int				type,
-					val;
-	int				i;
-	char		   *up,
-				   *lp,
-					lowunits[MAXDATELEN + 1];
-	double			fsec;
-	char		   *tzn;
-	struct tm		tt,
-				   *tm = &tt;
+	DateTime	dt;
+	int			tz;
+	int			type,
+				val;
+	int			i;
+	char	   *up,
+			   *lp,
+				lowunits[MAXDATELEN + 1];
+	double		fsec;
+	char	   *tzn;
+	struct tm	tt,
+			   *tm = &tt;
 
 	if ((!PointerIsValid(units)) || (!PointerIsValid(datetime)))
 		return NULL;
@@ -1729,61 +1729,61 @@ datetime_part(text * units, DateTime * datetime)
 		{
 			switch (val)
 			{
-			case DTK_TZ:
-				*result = tz;
-				break;
+				case DTK_TZ:
+					*result = tz;
+					break;
 
-			case DTK_MICROSEC:
-				*result = (fsec * 1000000);
-				break;
+				case DTK_MICROSEC:
+					*result = (fsec * 1000000);
+					break;
 
-			case DTK_MILLISEC:
-				*result = (fsec * 1000);
-				break;
+				case DTK_MILLISEC:
+					*result = (fsec * 1000);
+					break;
 
-			case DTK_SECOND:
-				*result = (tm->tm_sec + fsec);
-				break;
+				case DTK_SECOND:
+					*result = (tm->tm_sec + fsec);
+					break;
 
-			case DTK_MINUTE:
-				*result = tm->tm_min;
-				break;
+				case DTK_MINUTE:
+					*result = tm->tm_min;
+					break;
 
-			case DTK_HOUR:
-				*result = tm->tm_hour;
-				break;
+				case DTK_HOUR:
+					*result = tm->tm_hour;
+					break;
 
-			case DTK_DAY:
-				*result = tm->tm_mday;
-				break;
+				case DTK_DAY:
+					*result = tm->tm_mday;
+					break;
 
-			case DTK_MONTH:
-				*result = tm->tm_mon;
-				break;
+				case DTK_MONTH:
+					*result = tm->tm_mon;
+					break;
 
-			case DTK_QUARTER:
-				*result = (tm->tm_mon / 4) + 1;
-				break;
+				case DTK_QUARTER:
+					*result = (tm->tm_mon / 4) + 1;
+					break;
 
-			case DTK_YEAR:
-				*result = tm->tm_year;
-				break;
+				case DTK_YEAR:
+					*result = tm->tm_year;
+					break;
 
-			case DTK_DECADE:
-				*result = (tm->tm_year / 10) + 1;
-				break;
+				case DTK_DECADE:
+					*result = (tm->tm_year / 10) + 1;
+					break;
 
-			case DTK_CENTURY:
-				*result = (tm->tm_year / 100) + 1;
-				break;
+				case DTK_CENTURY:
+					*result = (tm->tm_year / 100) + 1;
+					break;
 
-			case DTK_MILLENIUM:
-				*result = (tm->tm_year / 1000) + 1;
-				break;
+				case DTK_MILLENIUM:
+					*result = (tm->tm_year / 1000) + 1;
+					break;
 
-			default:
-				elog(WARN, "Datetime units %s not supported", lowunits);
-				*result = 0;
+				default:
+					elog(WARN, "Datetime units %s not supported", lowunits);
+					*result = 0;
 			}
 
 		}
@@ -1791,21 +1791,21 @@ datetime_part(text * units, DateTime * datetime)
 		{
 			switch (val)
 			{
-			case DTK_EPOCH:
-				DATETIME_EPOCH(*result);
-				*result = dt - SetDateTime(*result);
-				break;
+				case DTK_EPOCH:
+					DATETIME_EPOCH(*result);
+					*result = dt - SetDateTime(*result);
+					break;
 
-			case DTK_DOW:
-				if (datetime2tm(dt, &tz, tm, &fsec, &tzn) != 0)
-					elog(WARN, "Unable to encode datetime", NULL);
+				case DTK_DOW:
+					if (datetime2tm(dt, &tz, tm, &fsec, &tzn) != 0)
+						elog(WARN, "Unable to encode datetime", NULL);
 
-				*result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
-				break;
+					*result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
+					break;
 
-			default:
-				elog(WARN, "Datetime units %s not supported", lowunits);
-				*result = 0;
+				default:
+					elog(WARN, "Datetime units %s not supported", lowunits);
+					*result = 0;
 			}
 
 		}
@@ -1826,17 +1826,17 @@ datetime_part(text * units, DateTime * datetime)
 float64
 timespan_part(text * units, TimeSpan * timespan)
 {
-	float64			result;
+	float64		result;
 
-	int				type,
-					val;
-	int				i;
-	char		   *up,
-				   *lp,
-					lowunits[MAXDATELEN + 1];
-	double			fsec;
-	struct tm		tt,
-				   *tm = &tt;
+	int			type,
+				val;
+	int			i;
+	char	   *up,
+			   *lp,
+				lowunits[MAXDATELEN + 1];
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
 
 	if ((!PointerIsValid(units)) || (!PointerIsValid(timespan)))
 		return NULL;
@@ -1876,57 +1876,57 @@ timespan_part(text * units, TimeSpan * timespan)
 		{
 			switch (val)
 			{
-			case DTK_MICROSEC:
-				*result = (fsec * 1000000);
-				break;
+				case DTK_MICROSEC:
+					*result = (fsec * 1000000);
+					break;
 
-			case DTK_MILLISEC:
-				*result = (fsec * 1000);
-				break;
+				case DTK_MILLISEC:
+					*result = (fsec * 1000);
+					break;
 
-			case DTK_SECOND:
-				*result = (tm->tm_sec + fsec);
-				break;
+				case DTK_SECOND:
+					*result = (tm->tm_sec + fsec);
+					break;
 
-			case DTK_MINUTE:
-				*result = tm->tm_min;
-				break;
+				case DTK_MINUTE:
+					*result = tm->tm_min;
+					break;
 
-			case DTK_HOUR:
-				*result = tm->tm_hour;
-				break;
+				case DTK_HOUR:
+					*result = tm->tm_hour;
+					break;
 
-			case DTK_DAY:
-				*result = tm->tm_mday;
-				break;
+				case DTK_DAY:
+					*result = tm->tm_mday;
+					break;
 
-			case DTK_MONTH:
-				*result = tm->tm_mon;
-				break;
+				case DTK_MONTH:
+					*result = tm->tm_mon;
+					break;
 
-			case DTK_QUARTER:
-				*result = (tm->tm_mon / 4) + 1;
-				break;
+				case DTK_QUARTER:
+					*result = (tm->tm_mon / 4) + 1;
+					break;
 
-			case DTK_YEAR:
-				*result = tm->tm_year;
-				break;
+				case DTK_YEAR:
+					*result = tm->tm_year;
+					break;
 
-			case DTK_DECADE:
-				*result = (tm->tm_year / 10) + 1;
-				break;
+				case DTK_DECADE:
+					*result = (tm->tm_year / 10) + 1;
+					break;
 
-			case DTK_CENTURY:
-				*result = (tm->tm_year / 100) + 1;
-				break;
+				case DTK_CENTURY:
+					*result = (tm->tm_year / 100) + 1;
+					break;
 
-			case DTK_MILLENIUM:
-				*result = (tm->tm_year / 1000) + 1;
-				break;
+				case DTK_MILLENIUM:
+					*result = (tm->tm_year / 1000) + 1;
+					break;
 
-			default:
-				elog(WARN, "Timespan units %s not yet supported", units);
-				result = NULL;
+				default:
+					elog(WARN, "Timespan units %s not yet supported", units);
+					result = NULL;
 			}
 
 		}
@@ -1960,26 +1960,26 @@ timespan_part(text * units, TimeSpan * timespan)
 /* datetime_zone()
  * Encode datetime type with specified time zone.
  */
-text		   *
+text	   *
 datetime_zone(text * zone, DateTime * datetime)
 {
-	text		   *result;
+	text	   *result;
 
-	DateTime		dt;
-	int				tz;
-	int				type,
-					val;
-	int				i;
-	char		   *up,
-				   *lp,
-					lowzone[MAXDATELEN + 1];
-	char		   *tzn,
-					upzone[MAXDATELEN + 1];
-	double			fsec;
-	struct tm		tt,
-				   *tm = &tt;
-	char			buf[MAXDATELEN + 1];
-	int				len;
+	DateTime	dt;
+	int			tz;
+	int			type,
+				val;
+	int			i;
+	char	   *up,
+			   *lp,
+				lowzone[MAXDATELEN + 1];
+	char	   *tzn,
+				upzone[MAXDATELEN + 1];
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
+	char		buf[MAXDATELEN + 1];
+	int			len;
 
 	if ((!PointerIsValid(zone)) || (!PointerIsValid(datetime)))
 		return NULL;
@@ -2064,7 +2064,7 @@ datetime_zone(text * zone, DateTime * datetime)
  * entries by 10 and truncate the text field at MAXTOKLEN characters.
  * the text field is not guaranteed to be NULL-terminated.
  */
-static datetkn	datetktbl[] = {
+static datetkn datetktbl[] = {
 /*		text			token	lexval */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
 	{"acsst", DTZ, 63},			/* Cent. Australia */
@@ -2218,7 +2218,7 @@ static datetkn	datetktbl[] = {
 
 static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
-static datetkn	deltatktbl[] = {
+static datetkn deltatktbl[] = {
 /*		text			token	lexval */
 	{"@", IGNORE, 0},			/* postgres relative time prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
@@ -2302,9 +2302,9 @@ static datetkn	deltatktbl[] = {
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
 #if USE_DATE_CACHE
-datetkn		   *datecache[MAXDATEFIELDS] = {NULL};
+datetkn    *datecache[MAXDATEFIELDS] = {NULL};
 
-datetkn		   *deltacache[MAXDATEFIELDS] = {NULL};
+datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
 
 #endif
 
@@ -2341,7 +2341,7 @@ datetkn		   *deltacache[MAXDATEFIELDS] = {NULL};
 int
 date2j(int y, int m, int d)
 {
-	int				m12 = (m - 14) / 12;
+	int			m12 = (m - 14) / 12;
 
 	return ((1461 * (y + 4800 + m12)) / 4 + (367 * (m - 2 - 12 * (m12))) / 12
 			- (3 * ((y + 4900 + m12) / 100)) / 4 + d - 32075);
@@ -2350,14 +2350,14 @@ date2j(int y, int m, int d)
 void
 j2date(int jd, int *year, int *month, int *day)
 {
-	int				j,
-					y,
-					m,
-					d;
+	int			j,
+				y,
+				m,
+				d;
 
-	int				i,
-					l,
-					n;
+	int			i,
+				l,
+				n;
 
 	l = jd + 68569;
 	n = (4 * l) / 146097;
@@ -2379,7 +2379,7 @@ j2date(int jd, int *year, int *month, int *day)
 static int
 j2day(int date)
 {
-	int				day;
+	int			day;
 
 	day = (date + 1) % 7;
 
@@ -2401,14 +2401,14 @@ j2day(int date)
 int
 datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 {
-	double			date,
-					date0,
-					time,
-					sec;
-	time_t			utime;
+	double		date,
+				date0,
+				time,
+				sec;
+	time_t		utime;
 
 #ifdef USE_POSIX_TIME
-	struct tm	   *tx;
+	struct tm  *tx;
 
 #endif
 
@@ -2556,8 +2556,8 @@ int
 tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime * result)
 {
 
-	double			date,
-					time;
+	double		date,
+				time;
 
 	/* Julian day routines are not correct for negative Julian days */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
@@ -2583,7 +2583,7 @@ tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime * result)
 static int
 timespan2tm(TimeSpan span, struct tm * tm, float8 * fsec)
 {
-	double			time;
+	double		time;
 
 	if (span.month != 0)
 	{
@@ -2633,7 +2633,7 @@ tm2timespan(struct tm * tm, double fsec, TimeSpan * span)
 }								/* tm2timespan() */
 
 
-static			DateTime
+static DateTime
 dt2local(DateTime dt, int tz)
 {
 	dt -= tz;
@@ -2650,7 +2650,7 @@ time2t(const int hour, const int min, const double sec)
 static void
 dt2time(DateTime jd, int *hour, int *min, double *sec)
 {
-	double			time;
+	double		time;
 
 	time = jd;
 
@@ -2677,9 +2677,9 @@ int
 ParseDateTime(char *timestr, char *lowstr,
 			  char *field[], int ftype[], int maxfields, int *numfields)
 {
-	int				nf = 0;
-	char		   *cp = timestr;
-	char		   *lp = lowstr;
+	int			nf = 0;
+	char	   *cp = timestr;
+	char	   *lp = lowstr;
 
 #ifdef DATEDEBUG
 	printf("ParseDateTime- input string is %s\n", timestr);
@@ -2833,14 +2833,14 @@ int
 DecodeDateTime(char *field[], int ftype[], int nf,
 			   int *dtype, struct tm * tm, double *fsec, int *tzp)
 {
-	int				fmask = 0,
-					tmask,
-					type;
-	int				i;
-	int				flen,
-					val;
-	int				mer = HR24;
-	int				bc = FALSE;
+	int			fmask = 0,
+				tmask,
+				type;
+	int			i;
+	int			flen,
+				val;
+	int			mer = HR24;
+	int			bc = FALSE;
 
 	*dtype = DTK_DATE;
 	tm->tm_hour = 0;
@@ -2859,181 +2859,181 @@ DecodeDateTime(char *field[], int ftype[], int nf,
 #endif
 		switch (ftype[i])
 		{
-		case DTK_DATE:
-			if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
-				return -1;
-			break;
+			case DTK_DATE:
+				if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
+					return -1;
+				break;
 
-		case DTK_TIME:
-			if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
-				return -1;
-
-			/*
-			 * check upper limit on hours; other limits checked in
-			 * DecodeTime()
-			 */
-			if (tm->tm_hour > 23)
-				return -1;
-			break;
-
-		case DTK_TZ:
-			if (tzp == NULL)
-				return -1;
-			if (DecodeTimezone(field[i], tzp) != 0)
-				return -1;
-			tmask = DTK_M(TZ);
-			break;
-
-		case DTK_NUMBER:
-			flen = strlen(field[i]);
-
-			if (flen > 4)
-			{
-				if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec) != 0)
+			case DTK_TIME:
+				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
 					return -1;
 
-			}
-			else
-			{
-				if (DecodeNumber(flen, field[i], fmask, &tmask, tm, fsec) != 0)
+				/*
+				 * check upper limit on hours; other limits checked in
+				 * DecodeTime()
+				 */
+				if (tm->tm_hour > 23)
 					return -1;
-			}
-			break;
+				break;
 
-		case DTK_STRING:
-		case DTK_SPECIAL:
-			type = DecodeSpecial(i, field[i], &val);
-#ifdef DATEDEBUG
-			printf("DecodeDateTime- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
-#endif
-			if (type == IGNORE)
-				continue;
+			case DTK_TZ:
+				if (tzp == NULL)
+					return -1;
+				if (DecodeTimezone(field[i], tzp) != 0)
+					return -1;
+				tmask = DTK_M(TZ);
+				break;
 
-			tmask = DTK_M(type);
-			switch (type)
-			{
-			case RESERV:
-#ifdef DATEDEBUG
-				printf("DecodeDateTime- RESERV field %s value is %d\n", field[i], val);
-#endif
-				switch (val)
+			case DTK_NUMBER:
+				flen = strlen(field[i]);
+
+				if (flen > 4)
 				{
-				case DTK_NOW:
-					tmask = (DTK_DATE_M | DTK_TIME_M | DTK_M(TZ));
-					*dtype = DTK_DATE;
-					GetCurrentTime(tm);
-					if (tzp != NULL)
-						*tzp = CTimeZone;
-					break;
+					if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec) != 0)
+						return -1;
 
-				case DTK_YESTERDAY:
-					tmask = DTK_DATE_M;
-					*dtype = DTK_DATE;
-					GetCurrentTime(tm);
-					j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1),
-						   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-					tm->tm_hour = 0;
-					tm->tm_min = 0;
-					tm->tm_sec = 0;
-					break;
-
-				case DTK_TODAY:
-					tmask = DTK_DATE_M;
-					*dtype = DTK_DATE;
-					GetCurrentTime(tm);
-					tm->tm_hour = 0;
-					tm->tm_min = 0;
-					tm->tm_sec = 0;
-					break;
-
-				case DTK_TOMORROW:
-					tmask = DTK_DATE_M;
-					*dtype = DTK_DATE;
-					GetCurrentTime(tm);
-					j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1),
-						   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-					tm->tm_hour = 0;
-					tm->tm_min = 0;
-					tm->tm_sec = 0;
-					break;
-
-				case DTK_ZULU:
-					tmask = (DTK_TIME_M | DTK_M(TZ));
-					*dtype = DTK_DATE;
-					tm->tm_hour = 0;
-					tm->tm_min = 0;
-					tm->tm_sec = 0;
-					if (tzp != NULL)
-						*tzp = 0;
-					break;
-
-				default:
-					*dtype = val;
 				}
-
+				else
+				{
+					if (DecodeNumber(flen, field[i], fmask, &tmask, tm, fsec) != 0)
+						return -1;
+				}
 				break;
 
-			case MONTH:
+			case DTK_STRING:
+			case DTK_SPECIAL:
+				type = DecodeSpecial(i, field[i], &val);
 #ifdef DATEDEBUG
-				printf("DecodeDateTime- month field %s value is %d\n", field[i], val);
+				printf("DecodeDateTime- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
 #endif
-				tm->tm_mon = val;
-				break;
+				if (type == IGNORE)
+					continue;
 
-				/*
-				 * daylight savings time modifier (solves "MET DST"
-				 * syntax)
-				 */
-			case DTZMOD:
-				tmask |= DTK_M(DTZ);
-				tm->tm_isdst = 1;
-				if (tzp == NULL)
-					return -1;
-				*tzp += val * 60;
-				break;
+				tmask = DTK_M(type);
+				switch (type)
+				{
+					case RESERV:
+#ifdef DATEDEBUG
+						printf("DecodeDateTime- RESERV field %s value is %d\n", field[i], val);
+#endif
+						switch (val)
+						{
+							case DTK_NOW:
+								tmask = (DTK_DATE_M | DTK_TIME_M | DTK_M(TZ));
+								*dtype = DTK_DATE;
+								GetCurrentTime(tm);
+								if (tzp != NULL)
+									*tzp = CTimeZone;
+								break;
 
-			case DTZ:
+							case DTK_YESTERDAY:
+								tmask = DTK_DATE_M;
+								*dtype = DTK_DATE;
+								GetCurrentTime(tm);
+								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1),
+								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+								tm->tm_hour = 0;
+								tm->tm_min = 0;
+								tm->tm_sec = 0;
+								break;
 
-				/*
-				 * set mask for TZ here _or_ check for DTZ later when
-				 * getting default timezone
-				 */
-				tmask |= DTK_M(TZ);
-				tm->tm_isdst = 1;
-				if (tzp == NULL)
-					return -1;
-				*tzp = val * 60;
-				break;
+							case DTK_TODAY:
+								tmask = DTK_DATE_M;
+								*dtype = DTK_DATE;
+								GetCurrentTime(tm);
+								tm->tm_hour = 0;
+								tm->tm_min = 0;
+								tm->tm_sec = 0;
+								break;
 
-			case TZ:
-				tm->tm_isdst = 0;
-				if (tzp == NULL)
-					return -1;
-				*tzp = val * 60;
-				break;
+							case DTK_TOMORROW:
+								tmask = DTK_DATE_M;
+								*dtype = DTK_DATE;
+								GetCurrentTime(tm);
+								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1),
+								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+								tm->tm_hour = 0;
+								tm->tm_min = 0;
+								tm->tm_sec = 0;
+								break;
 
-			case IGNORE:
-				break;
+							case DTK_ZULU:
+								tmask = (DTK_TIME_M | DTK_M(TZ));
+								*dtype = DTK_DATE;
+								tm->tm_hour = 0;
+								tm->tm_min = 0;
+								tm->tm_sec = 0;
+								if (tzp != NULL)
+									*tzp = 0;
+								break;
 
-			case AMPM:
-				mer = val;
-				break;
+							default:
+								*dtype = val;
+						}
 
-			case ADBC:
-				bc = (val == BC);
-				break;
+						break;
 
-			case DOW:
-				tm->tm_wday = val;
+					case MONTH:
+#ifdef DATEDEBUG
+						printf("DecodeDateTime- month field %s value is %d\n", field[i], val);
+#endif
+						tm->tm_mon = val;
+						break;
+
+						/*
+						 * daylight savings time modifier (solves "MET
+						 * DST" syntax)
+						 */
+					case DTZMOD:
+						tmask |= DTK_M(DTZ);
+						tm->tm_isdst = 1;
+						if (tzp == NULL)
+							return -1;
+						*tzp += val * 60;
+						break;
+
+					case DTZ:
+
+						/*
+						 * set mask for TZ here _or_ check for DTZ later
+						 * when getting default timezone
+						 */
+						tmask |= DTK_M(TZ);
+						tm->tm_isdst = 1;
+						if (tzp == NULL)
+							return -1;
+						*tzp = val * 60;
+						break;
+
+					case TZ:
+						tm->tm_isdst = 0;
+						if (tzp == NULL)
+							return -1;
+						*tzp = val * 60;
+						break;
+
+					case IGNORE:
+						break;
+
+					case AMPM:
+						mer = val;
+						break;
+
+					case ADBC:
+						bc = (val == BC);
+						break;
+
+					case DOW:
+						tm->tm_wday = val;
+						break;
+
+					default:
+						return -1;
+				}
 				break;
 
 			default:
 				return -1;
-			}
-			break;
-
-		default:
-			return -1;
 		}
 
 #ifdef DATEDEBUG
@@ -3114,13 +3114,13 @@ DecodeDateTime(char *field[], int ftype[], int nf,
 int
 DecodeTimeOnly(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, double *fsec)
 {
-	int				fmask,
-					tmask,
-					type;
-	int				i;
-	int				flen,
-					val;
-	int				mer = HR24;
+	int			fmask,
+				tmask,
+				type;
+	int			i;
+	int			flen,
+				val;
+	int			mer = HR24;
 
 	*dtype = DTK_TIME;
 	tm->tm_hour = 0;
@@ -3138,71 +3138,71 @@ DecodeTimeOnly(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, d
 #endif
 		switch (ftype[i])
 		{
-		case DTK_TIME:
-			if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
-				return -1;
-			break;
-
-		case DTK_NUMBER:
-			flen = strlen(field[i]);
-
-			if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec) != 0)
-				return -1;
-			break;
-
-		case DTK_STRING:
-		case DTK_SPECIAL:
-			type = DecodeSpecial(i, field[i], &val);
-#ifdef DATEDEBUG
-			printf("DecodeTimeOnly- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
-#endif
-			if (type == IGNORE)
-				continue;
-
-			tmask = DTK_M(type);
-			switch (type)
-			{
-			case RESERV:
-#ifdef DATEDEBUG
-				printf("DecodeTimeOnly- RESERV field %s value is %d\n", field[i], val);
-#endif
-				switch (val)
-				{
-				case DTK_NOW:
-					tmask = DTK_TIME_M;
-					*dtype = DTK_TIME;
-					GetCurrentTime(tm);
-					break;
-
-				case DTK_ZULU:
-					tmask = (DTK_TIME_M | DTK_M(TZ));
-					*dtype = DTK_TIME;
-					tm->tm_hour = 0;
-					tm->tm_min = 0;
-					tm->tm_sec = 0;
-					tm->tm_isdst = 0;
-					break;
-
-				default:
+			case DTK_TIME:
+				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
 					return -1;
+				break;
+
+			case DTK_NUMBER:
+				flen = strlen(field[i]);
+
+				if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec) != 0)
+					return -1;
+				break;
+
+			case DTK_STRING:
+			case DTK_SPECIAL:
+				type = DecodeSpecial(i, field[i], &val);
+#ifdef DATEDEBUG
+				printf("DecodeTimeOnly- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
+#endif
+				if (type == IGNORE)
+					continue;
+
+				tmask = DTK_M(type);
+				switch (type)
+				{
+					case RESERV:
+#ifdef DATEDEBUG
+						printf("DecodeTimeOnly- RESERV field %s value is %d\n", field[i], val);
+#endif
+						switch (val)
+						{
+							case DTK_NOW:
+								tmask = DTK_TIME_M;
+								*dtype = DTK_TIME;
+								GetCurrentTime(tm);
+								break;
+
+							case DTK_ZULU:
+								tmask = (DTK_TIME_M | DTK_M(TZ));
+								*dtype = DTK_TIME;
+								tm->tm_hour = 0;
+								tm->tm_min = 0;
+								tm->tm_sec = 0;
+								tm->tm_isdst = 0;
+								break;
+
+							default:
+								return -1;
+						}
+
+						break;
+
+					case IGNORE:
+						break;
+
+					case AMPM:
+						mer = val;
+						break;
+
+					default:
+						return -1;
 				}
-
-				break;
-
-			case IGNORE:
-				break;
-
-			case AMPM:
-				mer = val;
 				break;
 
 			default:
 				return -1;
-			}
-			break;
-
-		default:
-			return -1;
 		}
 
 		if (tmask & fmask)
@@ -3238,15 +3238,15 @@ DecodeTimeOnly(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, d
 static int
 DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 {
-	double			fsec;
+	double		fsec;
 
-	int				nf = 0;
-	int				i,
-					len;
-	int				type,
-					val,
-					dmask = 0;
-	char		   *field[MAXDATEFIELDS];
+	int			nf = 0;
+	int			i,
+				len;
+	int			type,
+				val,
+				dmask = 0;
+	char	   *field[MAXDATEFIELDS];
 
 	/* parse this string... */
 	while ((*str != '\0') && (nf < MAXDATEFIELDS))
@@ -3290,18 +3290,18 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 			dmask = DTK_M(type);
 			switch (type)
 			{
-			case MONTH:
+				case MONTH:
 #ifdef DATEDEBUG
-				printf("DecodeDate- month field %s value is %d\n", field[i], val);
+					printf("DecodeDate- month field %s value is %d\n", field[i], val);
 #endif
-				tm->tm_mon = val;
-				break;
+					tm->tm_mon = val;
+					break;
 
-			default:
+				default:
 #ifdef DATEDEBUG
-				printf("DecodeDate- illegal field %s value is %d\n", field[i], val);
+					printf("DecodeDate- illegal field %s value is %d\n", field[i], val);
 #endif
-				return -1;
+					return -1;
 			}
 			if (fmask & dmask)
 				return -1;
@@ -3345,7 +3345,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 static int
 DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 {
-	char		   *cp;
+	char	   *cp;
 
 	*tmask = DTK_TIME_M;
 
@@ -3402,8 +3402,8 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 static int
 DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 {
-	int				val;
-	char		   *cp;
+	int			val;
+	char	   *cp;
 
 	*tmask = 0;
 
@@ -3531,7 +3531,7 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 static int
 DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 {
-	char		   *cp;
+	char	   *cp;
 
 	/* yyyymmdd? */
 	if (len == 8)
@@ -3616,11 +3616,11 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 static int
 DecodeTimezone(char *str, int *tzp)
 {
-	int				tz;
-	int				hr,
-					min;
-	char		   *cp;
-	int				len;
+	int			tz;
+	int			hr,
+				min;
+	char	   *cp;
+	int			len;
 
 	/* assume leading character is "+" or "-" */
 	hr = strtol((str + 1), &cp, 10);
@@ -3661,8 +3661,8 @@ DecodeTimezone(char *str, int *tzp)
 static int
 DecodeSpecial(int field, char *lowtoken, int *val)
 {
-	int				type;
-	datetkn		   *tp;
+	int			type;
+	datetkn    *tp;
 
 #if USE_DATE_CACHE
 	if ((datecache[field] != NULL)
@@ -3688,15 +3688,15 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 		type = tp->type;
 		switch (type)
 		{
-		case TZ:
-		case DTZ:
-		case DTZMOD:
-			*val = FROMVAL(tp);
-			break;
+			case TZ:
+			case DTZ:
+			case DTZMOD:
+				*val = FROMVAL(tp);
+				break;
 
-		default:
-			*val = tp->value;
-			break;
+			default:
+				*val = tp->value;
+				break;
 		}
 	}
 
@@ -3715,22 +3715,22 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 int
 DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, double *fsec)
 {
-	int				is_before = FALSE;
+	int			is_before = FALSE;
 
 #if READ_FORWARD
-	int				is_neg = FALSE;
+	int			is_neg = FALSE;
 
 #endif
 
-	int				fmask = 0,
-					tmask,
-					type;
-	int				i,
-					ii;
-	int				flen,
-					val;
-	char		   *cp;
-	double			sec;
+	int			fmask = 0,
+				tmask,
+				type;
+	int			i,
+				ii;
+	int			flen,
+				val;
+	char	   *cp;
+	double		sec;
 
 	*dtype = DTK_DELTA;
 
@@ -3773,137 +3773,137 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 #endif
 		switch (ftype[i])
 		{
-		case DTK_TIME:
-			/* already read in forward-scan above so return error */
+			case DTK_TIME:
+				/* already read in forward-scan above so return error */
 #if FALSE
-			if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
-				return -1;
+				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
+					return -1;
 #endif
-			return -1;
-			break;
+				return -1;
+				break;
 
-		case DTK_TZ:			/* timezone is a token with a leading sign
+			case DTK_TZ:		/* timezone is a token with a leading sign
 								 * character */
 #if READ_FORWARD
-			is_neg = (*field[i] == '-');
+				is_neg = (*field[i] == '-');
 #endif
 
-		case DTK_NUMBER:
-			val = strtol(field[i], &cp, 10);
+			case DTK_NUMBER:
+				val = strtol(field[i], &cp, 10);
 #if READ_FORWARD
-			if (is_neg && (val > 0))
-				val = -val;
+				if (is_neg && (val > 0))
+					val = -val;
 #endif
-			if (*cp == '.')
-			{
-				*fsec = strtod(cp, NULL);
-				if (val < 0)
-					*fsec = -(*fsec);
-			}
-			flen = strlen(field[i]);
-			tmask = 0;			/* DTK_M(type); */
+				if (*cp == '.')
+				{
+					*fsec = strtod(cp, NULL);
+					if (val < 0)
+						*fsec = -(*fsec);
+				}
+				flen = strlen(field[i]);
+				tmask = 0;		/* DTK_M(type); */
 
-			switch (type)
-			{
-			case DTK_MICROSEC:
-				*fsec += (val * 1e-6);
+				switch (type)
+				{
+					case DTK_MICROSEC:
+						*fsec += (val * 1e-6);
+						break;
+
+					case DTK_MILLISEC:
+						*fsec += (val * 1e-3);
+						break;
+
+					case DTK_SECOND:
+						tm->tm_sec += val;
+						tmask = DTK_M(SECOND);
+						break;
+
+					case DTK_MINUTE:
+						tm->tm_min += val;
+						tmask = DTK_M(MINUTE);
+						break;
+
+					case DTK_HOUR:
+						tm->tm_hour += val;
+						tmask = DTK_M(HOUR);
+						break;
+
+					case DTK_DAY:
+						tm->tm_mday += val;
+						tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
+						break;
+
+					case DTK_WEEK:
+						tm->tm_mday += val * 7;
+						tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
+						break;
+
+					case DTK_MONTH:
+						tm->tm_mon += val;
+						tmask = DTK_M(MONTH);
+						break;
+
+					case DTK_YEAR:
+						tm->tm_year += val;
+						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+						break;
+
+					case DTK_DECADE:
+						tm->tm_year += val * 10;
+						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+						break;
+
+					case DTK_CENTURY:
+						tm->tm_year += val * 100;
+						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+						break;
+
+					case DTK_MILLENIUM:
+						tm->tm_year += val * 1000;
+						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+						break;
+
+					default:
+						return -1;
+				}
 				break;
 
-			case DTK_MILLISEC:
-				*fsec += (val * 1e-3);
-				break;
+			case DTK_STRING:
+			case DTK_SPECIAL:
+				type = DecodeUnits(i, field[i], &val);
+#ifdef DATEDEBUG
+				printf("DecodeDateDelta- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
+#endif
+				if (type == IGNORE)
+					continue;
 
-			case DTK_SECOND:
-				tm->tm_sec += val;
-				tmask = DTK_M(SECOND);
-				break;
+				tmask = 0;		/* DTK_M(type); */
+				switch (type)
+				{
+					case UNITS:
+#ifdef DATEDEBUG
+						printf("DecodeDateDelta- UNITS field %s value is %d\n", field[i], val);
+#endif
+						type = val;
+						break;
 
-			case DTK_MINUTE:
-				tm->tm_min += val;
-				tmask = DTK_M(MINUTE);
-				break;
+					case AGO:
+						is_before = TRUE;
+						type = val;
+						break;
 
-			case DTK_HOUR:
-				tm->tm_hour += val;
-				tmask = DTK_M(HOUR);
-				break;
+					case RESERV:
+						tmask = (DTK_DATE_M || DTK_TIME_M);
+						*dtype = val;
+						break;
 
-			case DTK_DAY:
-				tm->tm_mday += val;
-				tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
-				break;
-
-			case DTK_WEEK:
-				tm->tm_mday += val * 7;
-				tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
-				break;
-
-			case DTK_MONTH:
-				tm->tm_mon += val;
-				tmask = DTK_M(MONTH);
-				break;
-
-			case DTK_YEAR:
-				tm->tm_year += val;
-				tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
-				break;
-
-			case DTK_DECADE:
-				tm->tm_year += val * 10;
-				tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
-				break;
-
-			case DTK_CENTURY:
-				tm->tm_year += val * 100;
-				tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
-				break;
-
-			case DTK_MILLENIUM:
-				tm->tm_year += val * 1000;
-				tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+					default:
+						return -1;
+				}
 				break;
 
 			default:
 				return -1;
-			}
-			break;
-
-		case DTK_STRING:
-		case DTK_SPECIAL:
-			type = DecodeUnits(i, field[i], &val);
-#ifdef DATEDEBUG
-			printf("DecodeDateDelta- special field[%d] %s type=%d value=%d\n", i, field[i], type, val);
-#endif
-			if (type == IGNORE)
-				continue;
-
-			tmask = 0;			/* DTK_M(type); */
-			switch (type)
-			{
-			case UNITS:
-#ifdef DATEDEBUG
-				printf("DecodeDateDelta- UNITS field %s value is %d\n", field[i], val);
-#endif
-				type = val;
-				break;
-
-			case AGO:
-				is_before = TRUE;
-				type = val;
-				break;
-
-			case RESERV:
-				tmask = (DTK_DATE_M || DTK_TIME_M);
-				*dtype = val;
-				break;
-
-			default:
-				return -1;
-			}
-			break;
-
-		default:
-			return -1;
 		}
 
 #ifdef DATEDEBUG
@@ -3951,8 +3951,8 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 static int
 DecodeUnits(int field, char *lowtoken, int *val)
 {
-	int				type;
-	datetkn		   *tp;
+	int			type;
+	datetkn    *tp;
 
 #if USE_DATE_CACHE
 	if ((deltacache[field] != NULL)
@@ -3998,8 +3998,8 @@ static datetkn *
 datebsearch(char *key, datetkn * base, unsigned int nel)
 {
 	register datetkn *last = base + nel - 1,
-				   *position;
-	register int	result;
+			   *position;
+	register int result;
 
 	while (last >= base)
 	{
@@ -4074,7 +4074,7 @@ int
 EncodeDateOnly(struct tm * tm, int style, char *str)
 {
 #if FALSE
-	int				day;
+	int			day;
 
 #endif
 
@@ -4186,7 +4186,7 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
 int
 EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str)
 {
-	double			sec;
+	double		sec;
 
 	if ((tm->tm_hour < 0) || (tm->tm_hour > 24))
 		return -1;
@@ -4210,10 +4210,10 @@ EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str)
 int
 EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str)
 {
-	int				day,
-					hour,
-					min;
-	double			sec;
+	int			day,
+				hour,
+				min;
+	double		sec;
 
 	if ((tm->tm_mon < 1) || (tm->tm_mon > 12))
 		return -1;
@@ -4372,9 +4372,9 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 int
 EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 {
-	int				is_before = FALSE;
-	int				is_nonzero = FALSE;
-	char		   *cp;
+	int			is_before = FALSE;
+	int			is_nonzero = FALSE;
+	char	   *cp;
 
 	strcpy(str, "@");
 	cp = str + strlen(str);
@@ -4465,9 +4465,9 @@ datetime_is_epoch(double j)
 {
 	static union
 	{
-		double			epoch;
-		unsigned char	c[8];
-	}				u;
+		double		epoch;
+		unsigned char c[8];
+	}			u;
 
 	u.c[0] = 0x80;				/* sign bit */
 	u.c[1] = 0x10;				/* DBL_MIN */
@@ -4479,9 +4479,9 @@ datetime_is_current(double j)
 {
 	static union
 	{
-		double			current;
-		unsigned char	c[8];
-	}				u;
+		double		current;
+		unsigned char c[8];
+	}			u;
 
 	u.c[1] = 0x10;				/* DBL_MIN */
 

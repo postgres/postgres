@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.20 1997/09/07 04:48:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.21 1997/09/08 02:28:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,14 +77,14 @@ extern long int LocalBufferHitCount;
 extern long int BufferFlushCount;
 extern long int LocalBufferFlushCount;
 
-static int		WriteMode = BUFFER_LATE_WRITE;	/* Delayed write is
+static int	WriteMode = BUFFER_LATE_WRITE;		/* Delayed write is
 												 * default */
 
-static void		WaitIO(BufferDesc * buf, SPINLOCK spinlock);
+static void WaitIO(BufferDesc * buf, SPINLOCK spinlock);
 
 #ifndef HAS_TEST_AND_SET
-static void		SignalIO(BufferDesc * buf);
-extern long    *NWaitIOBackendP;/* defined in buf_init.c */
+static void SignalIO(BufferDesc * buf);
+extern long *NWaitIOBackendP;	/* defined in buf_init.c */
 
 #endif							/* HAS_TEST_AND_SET */
 
@@ -94,9 +94,9 @@ ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
 static BufferDesc *
 BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool * foundPtr, bool bufferLockHeld);
-static int		FlushBuffer(Buffer buffer, bool release);
-static void		BufferSync(void);
-static int		BufferReplace(BufferDesc * bufHdr, bool bufferLockHeld);
+static int	FlushBuffer(Buffer buffer, bool release);
+static void BufferSync(void);
+static int	BufferReplace(BufferDesc * bufHdr, bool bufferLockHeld);
 
 /* ---------------------------------------------------
  * RelationGetBufferWithBuffer
@@ -109,8 +109,8 @@ RelationGetBufferWithBuffer(Relation relation,
 							BlockNumber blockNumber,
 							Buffer buffer)
 {
-	BufferDesc	   *bufHdr;
-	LRelId			lrelId;
+	BufferDesc *bufHdr;
+	LRelId		lrelId;
 
 	if (BufferIsValid(buffer))
 	{
@@ -154,7 +154,7 @@ RelationGetBufferWithBuffer(Relation relation,
  *		opened already.
  */
 
-extern int		ShowPinTrace;
+extern int	ShowPinTrace;
 
 
 #undef ReadBuffer				/* conflicts with macro when BUFMGR_DEBUG
@@ -176,10 +176,10 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  * XXX caller must have already acquired BufMgrLock
  */
 #ifdef NOT_USED
-static			bool
+static bool
 is_userbuffer(Buffer buffer)
 {
-	BufferDesc	   *buf = &BufferDescriptors[buffer - 1];
+	BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
 	if (IsSystemRelationName(buf->sb_relname))
 		return false;
@@ -195,12 +195,12 @@ ReadBuffer_Debug(char *file,
 				 Relation reln,
 				 BlockNumber blockNum)
 {
-	Buffer			buffer;
+	Buffer		buffer;
 
 	buffer = ReadBufferWithBufferLock(reln, blockNum, false);
 	if (ShowPinTrace && !BufferIsLocal(buffer) && is_userbuffer(buffer))
 	{
-		BufferDesc	   *buf = &BufferDescriptors[buffer - 1];
+		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
 		fprintf(stderr, "PIN(RD) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
@@ -219,16 +219,16 @@ refcount = %ld, file: %s, line: %d\n",
  *		is yet another effort to reduce the number of
  *		semops in the system.
  */
-static			Buffer
+static Buffer
 ReadBufferWithBufferLock(Relation reln,
 						 BlockNumber blockNum,
 						 bool bufferLockHeld)
 {
-	BufferDesc	   *bufHdr;
-	int				extend;		/* extending the file by one block */
-	int				status;
-	bool			found;
-	bool			isLocalBuf;
+	BufferDesc *bufHdr;
+	int			extend;			/* extending the file by one block */
+	int			status;
+	bool		found;
+	bool		isLocalBuf;
 
 	extend = (blockNum == P_NEW);
 	isLocalBuf = reln->rd_islocal;
@@ -357,11 +357,11 @@ BufferAlloc(Relation reln,
 			bool * foundPtr,
 			bool bufferLockHeld)
 {
-	BufferDesc	   *buf,
-				   *buf2;
-	BufferTag		newTag;		/* identity of requested block */
-	bool			inProgress; /* buffer undergoing IO */
-	bool			newblock = FALSE;
+	BufferDesc *buf,
+			   *buf2;
+	BufferTag	newTag;			/* identity of requested block */
+	bool		inProgress;		/* buffer undergoing IO */
+	bool		newblock = FALSE;
 
 	/* create a new tag so we can lookup the buffer */
 	/* assume that the relation is already open */
@@ -458,7 +458,7 @@ BufferAlloc(Relation reln,
 
 		if (buf->flags & BM_DIRTY)
 		{
-			bool			smok;
+			bool		smok;
 
 			/*
 			 * Set BM_IO_IN_PROGRESS to keep anyone from doing anything
@@ -693,7 +693,7 @@ BufferAlloc(Relation reln,
 int
 WriteBuffer(Buffer buffer)
 {
-	BufferDesc	   *bufHdr;
+	BufferDesc *bufHdr;
 
 	if (WriteMode == BUFFER_FLUSH_WRITE)
 	{
@@ -727,7 +727,7 @@ WriteBuffer_Debug(char *file, int line, Buffer buffer)
 	WriteBuffer(buffer);
 	if (ShowPinTrace && BufferIsLocal(buffer) && is_userbuffer(buffer))
 	{
-		BufferDesc	   *buf;
+		BufferDesc *buf;
 
 		buf = &BufferDescriptors[buffer - 1];
 		fprintf(stderr, "UNPIN(WR) %ld relname = %s, blockNum = %d, \
@@ -761,8 +761,8 @@ refcount = %ld, file: %s, line: %d\n",
 void
 DirtyBufferCopy(Oid dbid, Oid relid, BlockNumber blkno, char *dest)
 {
-	BufferDesc	   *buf;
-	BufferTag		btag;
+	BufferDesc *buf;
+	BufferTag	btag;
 
 	btag.relId.relId = relid;
 	btag.relId.dbId = dbid;
@@ -803,10 +803,10 @@ DirtyBufferCopy(Oid dbid, Oid relid, BlockNumber blkno, char *dest)
 static int
 FlushBuffer(Buffer buffer, bool release)
 {
-	BufferDesc	   *bufHdr;
-	Oid				bufdb;
-	Relation		bufrel;
-	int				status;
+	BufferDesc *bufHdr;
+	Oid			bufdb;
+	Relation	bufrel;
+	int			status;
 
 	if (BufferIsLocal(buffer))
 		return FlushLocalBuffer(buffer, release);
@@ -871,7 +871,7 @@ FlushBuffer(Buffer buffer, bool release)
 int
 WriteNoReleaseBuffer(Buffer buffer)
 {
-	BufferDesc	   *bufHdr;
+	BufferDesc *bufHdr;
 
 	if (WriteMode == BUFFER_FLUSH_WRITE)
 	{
@@ -908,8 +908,8 @@ ReleaseAndReadBuffer(Buffer buffer,
 					 Relation relation,
 					 BlockNumber blockNum)
 {
-	BufferDesc	   *bufHdr;
-	Buffer			retbuf;
+	BufferDesc *bufHdr;
+	Buffer		retbuf;
 
 	if (BufferIsLocal(buffer))
 	{
@@ -972,12 +972,12 @@ ReleaseAndReadBuffer(Buffer buffer,
 static void
 BufferSync()
 {
-	int				i;
-	Oid				bufdb;
-	Oid				bufrel;
-	Relation		reln;
-	BufferDesc	   *bufHdr;
-	int				status;
+	int			i;
+	Oid			bufdb;
+	Oid			bufrel;
+	Relation	reln;
+	BufferDesc *bufHdr;
+	int			status;
 
 	SpinAcquire(BufMgrLock);
 	for (i = 0, bufHdr = BufferDescriptors; i < NBuffers; i++, bufHdr++)
@@ -1114,12 +1114,12 @@ WaitIO(BufferDesc * buf, SPINLOCK spinlock)
 }
 
 #else							/* HAS_TEST_AND_SET */
-IpcSemaphoreId	WaitIOSemId;
+IpcSemaphoreId WaitIOSemId;
 
 static void
 WaitIO(BufferDesc * buf, SPINLOCK spinlock)
 {
-	bool			inProgress;
+	bool		inProgress;
 
 	for (;;)
 	{
@@ -1149,16 +1149,15 @@ SignalIO(BufferDesc * buf)
 
 #endif							/* HAS_TEST_AND_SET */
 
-long			NDirectFileRead;/* some I/O's are direct file access.
+long		NDirectFileRead;	/* some I/O's are direct file access.
 								 * bypass bufmgr */
-long			NDirectFileWrite;		/* e.g., I/O in psort and
-										 * hashjoin.				 */
+long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin.					*/
 
 void
 PrintBufferUsage(FILE * statfp)
 {
-	float			hitrate;
-	float			localhitrate;
+	float		hitrate;
+	float		localhitrate;
 
 	if (ReadBufferCount == 0)
 		hitrate = 0.0;
@@ -1202,7 +1201,7 @@ ResetBufferUsage()
 void
 ResetBufferPool()
 {
-	register int	i;
+	register int i;
 
 	for (i = 1; i <= NBuffers; i++)
 	{
@@ -1230,8 +1229,8 @@ ResetBufferPool()
 int
 BufferPoolCheckLeak()
 {
-	register int	i;
-	int				error = 0;
+	register int i;
+	int			error = 0;
 
 	for (i = 1; i <= NBuffers; i++)
 	{
@@ -1315,8 +1314,8 @@ BufferGetBlockNumber(Buffer buffer)
 Relation
 BufferGetRelation(Buffer buffer)
 {
-	Relation		relation;
-	Oid				relid;
+	Relation	relation;
+	Oid			relid;
 
 	Assert(BufferIsValid(buffer));
 	Assert(!BufferIsLocal(buffer));		/* not supported for local buffers */
@@ -1349,10 +1348,10 @@ BufferGetRelation(Buffer buffer)
 static int
 BufferReplace(BufferDesc * bufHdr, bool bufferLockHeld)
 {
-	Relation		reln;
-	Oid				bufdb,
-					bufrel;
-	int				status;
+	Relation	reln;
+	Oid			bufdb,
+				bufrel;
+	int			status;
 
 	if (!bufferLockHeld)
 		SpinAcquire(BufMgrLock);
@@ -1446,9 +1445,9 @@ BufferGetBlock(Buffer buffer)
 void
 ReleaseRelationBuffers(Relation rdesc)
 {
-	register int	i;
-	int				holding = 0;
-	BufferDesc	   *buf;
+	register int i;
+	int			holding = 0;
+	BufferDesc *buf;
 
 	if (rdesc->rd_islocal)
 	{
@@ -1503,8 +1502,8 @@ ReleaseRelationBuffers(Relation rdesc)
 void
 DropBuffers(Oid dbid)
 {
-	register int	i;
-	BufferDesc	   *buf;
+	register int i;
+	BufferDesc *buf;
 
 	SpinAcquire(BufMgrLock);
 	for (i = 1; i <= NBuffers; i++)
@@ -1528,8 +1527,8 @@ DropBuffers(Oid dbid)
 void
 PrintBufferDescs()
 {
-	int				i;
-	BufferDesc	   *buf = BufferDescriptors;
+	int			i;
+	BufferDesc *buf = BufferDescriptors;
 
 	if (IsUnderPostmaster)
 	{
@@ -1559,8 +1558,8 @@ blockNum=%d, flags=0x%x, refcount=%d %d)",
 void
 PrintPinnedBufs()
 {
-	int				i;
-	BufferDesc	   *buf = BufferDescriptors;
+	int			i;
+	BufferDesc *buf = BufferDescriptors;
 
 	SpinAcquire(BufMgrLock);
 	for (i = 0; i < NBuffers; ++i, ++buf)
@@ -1587,7 +1586,7 @@ blockNum=%d, flags=0x%x, refcount=%d %d)\n",
 void
 BufferPoolBlowaway()
 {
-	register int	i;
+	register int i;
 
 	BufferSync();
 	for (i = 1; i <= NBuffers; i++)
@@ -1630,7 +1629,7 @@ IncrBufferRefCount(Buffer buffer)
 int
 ReleaseBuffer(Buffer buffer)
 {
-	BufferDesc	   *bufHdr;
+	BufferDesc *bufHdr;
 
 	if (BufferIsLocal(buffer))
 	{
@@ -1678,7 +1677,7 @@ IncrBufferRefCount_Debug(char *file, int line, Buffer buffer)
 	IncrBufferRefCount(buffer);
 	if (ShowPinTrace && !BufferIsLocal(buffer) && is_userbuffer(buffer))
 	{
-		BufferDesc	   *buf = &BufferDescriptors[buffer - 1];
+		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
 		fprintf(stderr, "PIN(Incr) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
@@ -1696,7 +1695,7 @@ ReleaseBuffer_Debug(char *file, int line, Buffer buffer)
 	ReleaseBuffer(buffer);
 	if (ShowPinTrace && !BufferIsLocal(buffer) && is_userbuffer(buffer))
 	{
-		BufferDesc	   *buf = &BufferDescriptors[buffer - 1];
+		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
 		fprintf(stderr, "UNPIN(Rel) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
@@ -1715,15 +1714,15 @@ ReleaseAndReadBuffer_Debug(char *file,
 						   Relation relation,
 						   BlockNumber blockNum)
 {
-	bool			bufferValid;
-	Buffer			b;
+	bool		bufferValid;
+	Buffer		b;
 
 	bufferValid = BufferIsValid(buffer);
 	b = ReleaseAndReadBuffer(buffer, relation, blockNum);
 	if (ShowPinTrace && bufferValid && BufferIsLocal(buffer)
 		&& is_userbuffer(buffer))
 	{
-		BufferDesc	   *buf = &BufferDescriptors[buffer - 1];
+		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
 		fprintf(stderr, "UNPIN(Rel&Rd) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
@@ -1732,7 +1731,7 @@ refcount = %ld, file: %s, line: %d\n",
 	}
 	if (ShowPinTrace && BufferIsLocal(buffer) && is_userbuffer(buffer))
 	{
-		BufferDesc	   *buf = &BufferDescriptors[b - 1];
+		BufferDesc *buf = &BufferDescriptors[b - 1];
 
 		fprintf(stderr, "PIN(Rel&Rd) %ld relname = %s, blockNum = %d, \
 refcount = %ld, file: %s, line: %d\n",
@@ -1754,10 +1753,10 @@ refcount = %ld, file: %s, line: %d\n",
 
 _bm_trace(Oid dbId, Oid relId, int blkNo, int bufNo, int allocType)
 {
-	static int		mypid = 0;
-	long			start,
-					cur;
-	bmtrace		   *tb;
+	static int	mypid = 0;
+	long		start,
+				cur;
+	bmtrace    *tb;
 
 	if (mypid == 0)
 		mypid = getpid();
@@ -1810,9 +1809,9 @@ okay:
 _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 		int allocType, long start, long cur)
 {
-	FILE		   *fp;
-	bmtrace		   *tb;
-	int				i;
+	FILE	   *fp;
+	bmtrace    *tb;
+	int			i;
 
 	tb = &TraceBuf[cur];
 
@@ -1839,21 +1838,21 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 
 			switch (tb->bmt_op)
 			{
-			case BMT_ALLOCFND:
-				fprintf(fp, "allocate (found)\n");
-				break;
+				case BMT_ALLOCFND:
+					fprintf(fp, "allocate (found)\n");
+					break;
 
-			case BMT_ALLOCNOTFND:
-				fprintf(fp, "allocate (not found)\n");
-				break;
+				case BMT_ALLOCNOTFND:
+					fprintf(fp, "allocate (not found)\n");
+					break;
 
-			case BMT_DEALLOC:
-				fprintf(fp, "deallocate\n");
-				break;
+				case BMT_DEALLOC:
+					fprintf(fp, "deallocate\n");
+					break;
 
-			default:
-				fprintf(fp, "unknown op type %d\n", tb->bmt_op);
-				break;
+				default:
+					fprintf(fp, "unknown op type %d\n", tb->bmt_op);
+					break;
 			}
 		}
 
@@ -1868,21 +1867,21 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 
 	switch (allocType)
 	{
-	case BMT_ALLOCFND:
-		fprintf(fp, "allocate (found)\n");
-		break;
+		case BMT_ALLOCFND:
+			fprintf(fp, "allocate (found)\n");
+			break;
 
-	case BMT_ALLOCNOTFND:
-		fprintf(fp, "allocate (not found)\n");
-		break;
+		case BMT_ALLOCNOTFND:
+			fprintf(fp, "allocate (not found)\n");
+			break;
 
-	case BMT_DEALLOC:
-		fprintf(fp, "deallocate\n");
-		break;
+		case BMT_DEALLOC:
+			fprintf(fp, "deallocate\n");
+			break;
 
-	default:
-		fprintf(fp, "unknown op type %d\n", allocType);
-		break;
+		default:
+			fprintf(fp, "unknown op type %d\n", allocType);
+			break;
 	}
 
 	FreeFile(fp);
@@ -1895,7 +1894,7 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 void
 BufferRefCountReset(int *refcountsave)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < NBuffers; i++)
 	{
@@ -1908,7 +1907,7 @@ BufferRefCountReset(int *refcountsave)
 void
 BufferRefCountRestore(int *refcountsave)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < NBuffers; i++)
 	{
@@ -1921,7 +1920,7 @@ BufferRefCountRestore(int *refcountsave)
 int
 SetBufferWriteMode(int mode)
 {
-	int				old;
+	int			old;
 
 	old = WriteMode;
 	WriteMode = mode;

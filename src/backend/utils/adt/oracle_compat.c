@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.8 1997/09/07 04:50:38 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.9 1997/09/08 02:30:57 momjian Exp $
  *
  */
 
@@ -10,16 +10,16 @@
 #include "postgres.h"
 
 
-text		   *lower(text * string);
-text		   *upper(text * string);
-text		   *initcap(text * string);
-text		   *lpad(text * string1, int4 len, text * string2);
-text		   *rpad(text * string1, int4 len, text * string2);
-text		   *btrim(text * string, text * set);
-text		   *ltrim(text * string, text * set);
-text		   *rtrim(text * string, text * set);
-text		   *substr(text * string, int4 m, int4 n);
-text		   *translate(text * string, char from, char to);
+text	   *lower(text * string);
+text	   *upper(text * string);
+text	   *initcap(text * string);
+text	   *lpad(text * string1, int4 len, text * string2);
+text	   *rpad(text * string1, int4 len, text * string2);
+text	   *btrim(text * string, text * set);
+text	   *ltrim(text * string, text * set);
+text	   *rtrim(text * string, text * set);
+text	   *substr(text * string, int4 m, int4 n);
+text	   *translate(text * string, char from, char to);
 
 
 /********************************************************************
@@ -36,13 +36,13 @@ text		   *translate(text * string, char from, char to);
  *
  ********************************************************************/
 
-text		   *
+text	   *
 lower(text * string)
 {
-	text		   *ret;
-	char		   *ptr,
-				   *ptr_ret;
-	int				m;
+	text	   *ret;
+	char	   *ptr,
+			   *ptr_ret;
+	int			m;
 
 	if ((string == (text *) NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
 		return string;
@@ -76,13 +76,13 @@ lower(text * string)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 upper(text * string)
 {
-	text		   *ret;
-	char		   *ptr,
-				   *ptr_ret;
-	int				m;
+	text	   *ret;
+	char	   *ptr,
+			   *ptr_ret;
+	int			m;
 
 	if ((string == (text *) NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
 		return string;
@@ -118,13 +118,13 @@ upper(text * string)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 initcap(text * string)
 {
-	text		   *ret;
-	char		   *ptr,
-				   *ptr_ret;
-	int				m;
+	text	   *ret;
+	char	   *ptr,
+			   *ptr_ret;
+	int			m;
 
 	if ((string == (text *) NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
 		return string;
@@ -169,15 +169,15 @@ initcap(text * string)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 lpad(text * string1, int4 len, text * string2)
 {
-	text		   *ret;
-	char		   *ptr1,
-				   *ptr2,
-				   *ptr_ret;
-	int				m,
-					n;
+	text	   *ret;
+	char	   *ptr1,
+			   *ptr2,
+			   *ptr_ret;
+	int			m,
+				n;
 
 	if ((string1 == (text *) NULL) ||
 		(len <= (VARSIZE(string1) - VARHDRSZ)) ||
@@ -225,15 +225,15 @@ lpad(text * string1, int4 len, text * string2)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 rpad(text * string1, int4 len, text * string2)
 {
-	text		   *ret;
-	char		   *ptr1,
-				   *ptr2,
-				   *ptr_ret;
-	int				m,
-					n;
+	text	   *ret;
+	char	   *ptr1,
+			   *ptr2,
+			   *ptr_ret;
+	int			m,
+				n;
 
 	if ((string1 == (text *) NULL) ||
 		(len <= (VARSIZE(string1) - VARHDRSZ)) ||
@@ -281,15 +281,15 @@ rpad(text * string1, int4 len, text * string2)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 btrim(text * string, text * set)
 {
-	text		   *ret;
-	char		   *ptr,
-				   *end,
-				   *ptr2,
-				   *end2;
-	int				m;
+	text	   *ret;
+	char	   *ptr,
+			   *end,
+			   *ptr2,
+			   *end2;
+	int			m;
 
 	if ((string == (text *) NULL) ||
 		((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
@@ -367,14 +367,14 @@ btrim(text * string, text * set)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 ltrim(text * string, text * set)
 {
-	text		   *ret;
-	char		   *ptr,
-				   *ptr2,
-				   *end2;
-	int				m;
+	text	   *ret;
+	char	   *ptr,
+			   *ptr2,
+			   *end2;
+	int			m;
 
 	if ((string == (text *) NULL) ||
 		((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
@@ -430,15 +430,15 @@ ltrim(text * string, text * set)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 rtrim(text * string, text * set)
 {
-	text		   *ret;
-	char		   *ptr,
-				   *ptr2,
-				   *end2,
-				   *ptr_ret;
-	int				m;
+	text	   *ret;
+	char	   *ptr,
+			   *ptr2,
+			   *end2,
+			   *ptr_ret;
+	int			m;
 
 	if ((string == (text *) NULL) ||
 		((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
@@ -502,13 +502,13 @@ rtrim(text * string, text * set)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 substr(text * string, int4 m, int4 n)
 {
-	text		   *ret;
-	char		   *ptr,
-				   *ptr_ret;
-	int				len;
+	text	   *ret;
+	char	   *ptr,
+			   *ptr_ret;
+	int			len;
 
 	if ((string == (text *) NULL) ||
 		(m <= 0) || (n <= 0) ||
@@ -548,13 +548,13 @@ substr(text * string, int4 m, int4 n)
  *
  ********************************************************************/
 
-text		   *
+text	   *
 translate(text * string, char from, char to)
 {
-	text		   *ret;
-	char		   *ptr,
-				   *ptr_ret;
-	int				m;
+	text	   *ret;
+	char	   *ptr,
+			   *ptr_ret;
+	int			m;
 
 	if ((string == (text *) NULL) ||
 		((m = VARSIZE(string) - VARHDRSZ) <= 0))

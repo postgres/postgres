@@ -12,12 +12,12 @@
 #include		<errno.h>
 
 extern const char *const sys_errlist[];
-extern int		sys_nerr;
+extern int	sys_nerr;
 
-const char	   *
+const char *
 strerror(int errnum)
 {
-	static char		buf[24];
+	static char buf[24];
 
 	if (errnum < 0 || errnum > sys_nerr)
 	{

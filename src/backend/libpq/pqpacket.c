@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.6 1997/09/07 04:42:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.7 1997/09/08 02:23:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,14 +61,14 @@ PacketReceive(Port * port,		/* receive port */
 			  PacketBuf * buf,	/* MAX_PACKET_SIZE-worth of buffer space */
 			  bool nonBlocking) /* NON_BLOCKING or BLOCKING i/o */
 {
-	PacketLen		max_size = sizeof(PacketBuf);
-	PacketLen		cc;			/* character count -- bytes recvd */
-	PacketLen		packetLen;	/* remaining packet chars to read */
-	Addr			tmp;		/* curr recv buf pointer */
-	int				addrLen = sizeof(struct sockaddr_in);
-	int				hdrLen;
-	int				flag;
-	int				decr;
+	PacketLen	max_size = sizeof(PacketBuf);
+	PacketLen	cc;				/* character count -- bytes recvd */
+	PacketLen	packetLen;		/* remaining packet chars to read */
+	Addr		tmp;			/* curr recv buf pointer */
+	int			addrLen = sizeof(struct sockaddr_in);
+	int			hdrLen;
+	int			flag;
+	int			decr;
 
 	hdrLen = sizeof(buf->len);
 
@@ -224,8 +224,8 @@ PacketSend(Port * port,
 		   PacketLen len,
 		   bool nonBlocking)
 {
-	PacketLen		totalLen;
-	int				addrLen = sizeof(struct sockaddr_in);
+	PacketLen	totalLen;
+	int			addrLen = sizeof(struct sockaddr_in);
 
 	Assert(!nonBlocking);
 	Assert(buf);

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_user.h,v 1.4 1997/09/07 04:57:13 momjian Exp $
+ * $Id: pg_user.h,v 1.5 1997/09/08 02:35:34 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -21,7 +21,7 @@
 
 /* Prototype required for superuser() from superuser.c */
 
-bool			superuser(void);
+bool		superuser(void);
 
 /* ----------------
  *		pg_user definition.  cpp turns this into
@@ -30,12 +30,12 @@ bool			superuser(void);
  */
 CATALOG(pg_user) BOOTSTRAP
 {
-	NameData		usename;
-	int4			usesysid;
-	bool			usecreatedb;
-	bool			usetrace;
-	bool			usesuper;
-	bool			usecatupd;
+	NameData	usename;
+	int4		usesysid;
+	bool		usecreatedb;
+	bool		usetrace;
+	bool		usesuper;
+	bool		usecatupd;
 } FormData_pg_user;
 
 /* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.16 1997/09/07 04:49:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.17 1997/09/08 02:30:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,15 +42,15 @@
  */
 
 /*-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-*/
-static int		_ArrayCount(char *str, int dim[], int typdelim);
-static char    *
+static int	_ArrayCount(char *str, int dim[], int typdelim);
+static char *
 _ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
 			  func_ptr inputproc, Oid typelem, char typdelim,
 			  int typlen, bool typbyval, char typalign,
 			  int *nbytes);
 
 #ifdef LOARRAY
-static char    *
+static char *
 _ReadLOArray(char *str, int *nbytes, int *fd, bool * chunkFlag,
 			 int ndim, int dim[], int baseSize);
 
@@ -62,26 +62,26 @@ static void
 system_cache_lookup(Oid element_type, bool input, int *typlen,
 			  bool * typbyval, char *typdelim, Oid * typelem, Oid * proc,
 					char *typalign);
-static Datum	_ArrayCast(char *value, bool byval, int len);
+static Datum _ArrayCast(char *value, bool byval, int len);
 
 #ifdef LOARRAY
-static char    *_AdvanceBy1word(char *str, char **word);
+static char *_AdvanceBy1word(char *str, char **word);
 
 #endif
 static void
 _ArrayRange(int st[], int endp[], int bsize, char *destPtr,
 			ArrayType * array, int from);
-static int		_ArrayClipCount(int stI[], int endpI[], ArrayType * array);
+static int	_ArrayClipCount(int stI[], int endpI[], ArrayType * array);
 static void
 _LOArrayRange(int st[], int endp[], int bsize, int srcfd,
 			  int destfd, ArrayType * array, int isSrcLO, bool * isNull);
 static void
 _ReadArray(int st[], int endp[], int bsize, int srcfd, int destfd,
 		   ArrayType * array, int isDestLO, bool * isNull);
-static			ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
-static			SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[]);
-static int		array_read(char *destptr, int eltsize, int nitems, char *srcptr);
-static char    *array_seek(char *ptr, int eltsize, int nitems);
+static ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
+static SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[]);
+static int	array_read(char *destptr, int eltsize, int nitems, char *srcptr);
+static char *array_seek(char *ptr, int eltsize, int nitems);
 
 /*---------------------------------------------------------------------
  * array_in :
@@ -91,31 +91,31 @@ static char    *array_seek(char *ptr, int eltsize, int nitems);
  *		  the internal representation of the input array
  *--------------------------------------------------------------------
  */
-char		   *
+char	   *
 array_in(char *string,			/* input array in external form */
 		 Oid element_type)		/* type OID of an array element */
 {
-	int				typlen;
-	bool			typbyval,
-					done;
-	char			typdelim;
-	Oid				typinput;
-	Oid				typelem;
-	char		   *string_save,
-				   *p,
-				   *q,
-				   *r;
-	func_ptr		inputproc;
-	int				i,
-					nitems,
-					dummy;
-	int32			nbytes;
-	char		   *dataPtr;
-	ArrayType	   *retval = NULL;
-	int				ndim,
-					dim[MAXDIM],
-					lBound[MAXDIM];
-	char			typalign;
+	int			typlen;
+	bool		typbyval,
+				done;
+	char		typdelim;
+	Oid			typinput;
+	Oid			typelem;
+	char	   *string_save,
+			   *p,
+			   *q,
+			   *r;
+	func_ptr	inputproc;
+	int			i,
+				nitems,
+				dummy;
+	int32		nbytes;
+	char	   *dataPtr;
+	ArrayType  *retval = NULL;
+	int			ndim,
+				dim[MAXDIM],
+				lBound[MAXDIM];
+	char		typalign;
 
 	system_cache_lookup(element_type, true, &typlen, &typbyval, &typdelim,
 						&typelem, &typinput, &typalign);
@@ -125,7 +125,7 @@ array_in(char *string,			/* input array in external form */
 	string_save = (char *) palloc(strlen(string) + 3);
 	strcpy(string_save, string);
 
-	/* --- read array dimensions	---------- */
+	/* --- read array dimensions  ---------- */
 	p = q = string_save;
 	done = false;
 	for (ndim = 0; !done;)
@@ -197,7 +197,7 @@ array_in(char *string,			/* input array in external form */
 	nitems = getNitems(ndim, dim);
 	if (nitems == 0)
 	{
-		char		   *emptyArray = palloc(sizeof(ArrayType));
+		char	   *emptyArray = palloc(sizeof(ArrayType));
 
 		memset(emptyArray, 0, sizeof(ArrayType));
 		*(int32 *) emptyArray = sizeof(ArrayType);
@@ -232,9 +232,9 @@ array_in(char *string,			/* input array in external form */
 	else
 	{
 #ifdef LOARRAY
-		int				dummy,
-						bytes;
-		bool			chunked = false;
+		int			dummy,
+					bytes;
+		bool		chunked = false;
 
 		dataPtr = _ReadLOArray(p, &bytes, &dummy, &chunked, ndim,
 							   dim, typlen);
@@ -264,13 +264,13 @@ array_in(char *string,			/* input array in external form */
 static int
 _ArrayCount(char *str, int dim[], int typdelim)
 {
-	int				nest_level = 0,
-					i;
-	int				ndim = 0,
-					temp[MAXDIM];
-	bool			scanning_string = false;
-	bool			eoArray = false;
-	char		   *q;
+	int			nest_level = 0,
+				i;
+	int			ndim = 0,
+				temp[MAXDIM];
+	bool		scanning_string = false;
+	bool		eoArray = false;
+	char	   *q;
 
 	for (i = 0; i < MAXDIM; ++i)
 	{
@@ -283,51 +283,55 @@ _ArrayCount(char *str, int dim[], int typdelim)
 	q = str;
 	while (eoArray != true)
 	{
-		bool			done = false;
+		bool		done = false;
 
 		while (!done)
 		{
 			switch (*q)
 			{
-			case '\\':
-				/* skip escaped characters (\ and ") inside strings */
-				if (scanning_string && *(q + 1))
-				{
-					q++;
-				}
-				break;
-			case '\0':
-				/* Signal a premature end of the string.  DZ - 2-9-1996 */
-				elog(WARN, "malformed array constant: %s", str);
-				break;
-			case '\"':
-				scanning_string = !scanning_string;
-				break;
-			case '{':
-				if (!scanning_string)
-				{
-					temp[nest_level] = 0;
-					nest_level++;
-				}
-				break;
-			case '}':
-				if (!scanning_string)
-				{
+				case '\\':
+					/* skip escaped characters (\ and ") inside strings */
+					if (scanning_string && *(q + 1))
+					{
+						q++;
+					}
+					break;
+				case '\0':
+
+					/*
+					 * Signal a premature end of the string.  DZ -
+					 * 2-9-1996
+					 */
+					elog(WARN, "malformed array constant: %s", str);
+					break;
+				case '\"':
+					scanning_string = !scanning_string;
+					break;
+				case '{':
+					if (!scanning_string)
+					{
+						temp[nest_level] = 0;
+						nest_level++;
+					}
+					break;
+				case '}':
+					if (!scanning_string)
+					{
+						if (!ndim)
+							ndim = nest_level;
+						nest_level--;
+						if (nest_level)
+							temp[nest_level - 1]++;
+						if (nest_level == 0)
+							eoArray = done = true;
+					}
+					break;
+				default:
 					if (!ndim)
 						ndim = nest_level;
-					nest_level--;
-					if (nest_level)
-						temp[nest_level - 1]++;
-					if (nest_level == 0)
-						eoArray = done = true;
-				}
-				break;
-			default:
-				if (!ndim)
-					ndim = nest_level;
-				if (*q == typdelim && !scanning_string)
-					done = true;
-				break;
+					if (*q == typdelim && !scanning_string)
+						done = true;
+					break;
 			}
 			if (!done)
 				q++;
@@ -358,7 +362,7 @@ _ArrayCount(char *str, int dim[], int typdelim)
  *	 nbytes is set to the size of the array in its internal representation.
  *---------------------------------------------------------------------------
  */
-static char    *
+static char *
 _ReadArrayStr(char *arrayStr,
 			  int nitems,
 			  int ndim,
@@ -372,16 +376,16 @@ _ReadArrayStr(char *arrayStr,
 			  char typalign,
 			  int *nbytes)
 {
-	int				i,
-					nest_level = 0;
-	char		   *p,
-				   *q,
-				   *r,
-				  **values;
-	bool			scanning_string = false;
-	int				indx[MAXDIM],
-					prod[MAXDIM];
-	bool			eoArray = false;
+	int			i,
+				nest_level = 0;
+	char	   *p,
+			   *q,
+			   *r,
+			  **values;
+	bool		scanning_string = false;
+	int			indx[MAXDIM],
+				prod[MAXDIM];
+	bool		eoArray = false;
 
 	mda_get_prod(ndim, dim, prod);
 	for (i = 0; i < ndim; indx[i++] = 0);
@@ -392,64 +396,64 @@ _ReadArrayStr(char *arrayStr,
 
 	while (!eoArray)
 	{
-		bool			done = false;
-		int				i = -1;
+		bool		done = false;
+		int			i = -1;
 
 		while (!done)
 		{
 			switch (*q)
 			{
-			case '\\':
-				/* Crunch the string on top of the backslash. */
-				for (r = q; *r != '\0'; r++)
-					*r = *(r + 1);
-				break;
-			case '\"':
-				if (!scanning_string)
-				{
-					while (p != q)
-						p++;
-					p++;		/* get p past first doublequote */
-				}
-				else
-					*q = '\0';
-				scanning_string = !scanning_string;
-				break;
-			case '{':
-				if (!scanning_string)
-				{
-					p++;
-					nest_level++;
-					if (nest_level > ndim)
-						elog(WARN, "array_in: illformed array constant");
-					indx[nest_level - 1] = 0;
-					indx[ndim - 1] = 0;
-				}
-				break;
-			case '}':
-				if (!scanning_string)
-				{
-					if (i == -1)
-						i = tuple2linear(ndim, indx, prod);
-					nest_level--;
-					if (nest_level == 0)
-						eoArray = done = true;
-					else
+				case '\\':
+					/* Crunch the string on top of the backslash. */
+					for (r = q; *r != '\0'; r++)
+						*r = *(r + 1);
+					break;
+				case '\"':
+					if (!scanning_string)
 					{
-						*q = '\0';
-						indx[nest_level - 1]++;
+						while (p != q)
+							p++;
+						p++;	/* get p past first doublequote */
 					}
-				}
-				break;
-			default:
-				if (*q == typdelim && !scanning_string)
-				{
-					if (i == -1)
-						i = tuple2linear(ndim, indx, prod);
-					done = true;
-					indx[ndim - 1]++;
-				}
-				break;
+					else
+						*q = '\0';
+					scanning_string = !scanning_string;
+					break;
+				case '{':
+					if (!scanning_string)
+					{
+						p++;
+						nest_level++;
+						if (nest_level > ndim)
+							elog(WARN, "array_in: illformed array constant");
+						indx[nest_level - 1] = 0;
+						indx[ndim - 1] = 0;
+					}
+					break;
+				case '}':
+					if (!scanning_string)
+					{
+						if (i == -1)
+							i = tuple2linear(ndim, indx, prod);
+						nest_level--;
+						if (nest_level == 0)
+							eoArray = done = true;
+						else
+						{
+							*q = '\0';
+							indx[nest_level - 1]++;
+						}
+					}
+					break;
+				default:
+					if (*q == typdelim && !scanning_string)
+					{
+						if (i == -1)
+							i = tuple2linear(ndim, indx, prod);
+						done = true;
+						indx[ndim - 1]++;
+					}
+					break;
 			}
 			if (!done)
 				q++;
@@ -513,7 +517,7 @@ _ReadArrayStr(char *arrayStr,
  *----------------------------------------------------------------------------
  */
 #ifdef LOARRAY
-static char    *
+static char *
 _ReadLOArray(char *str,
 			 int *nbytes,
 			 int *fd,
@@ -522,18 +526,18 @@ _ReadLOArray(char *str,
 			 int dim[],
 			 int baseSize)
 {
-	char		   *inputfile,
-				   *accessfile = NULL,
-				   *chunkfile = NULL;
-	char		   *retStr,
-				   *_AdvanceBy1word();
-	Oid				lobjId;
+	char	   *inputfile,
+			   *accessfile = NULL,
+			   *chunkfile = NULL;
+	char	   *retStr,
+			   *_AdvanceBy1word();
+	Oid			lobjId;
 
 	str = _AdvanceBy1word(str, &inputfile);
 
 	while (str != NULL)
 	{
-		char		   *word;
+		char	   *word;
 
 		str = _AdvanceBy1word(str, &word);
 
@@ -566,7 +570,7 @@ _ReadLOArray(char *str,
 
 	if (accessfile)
 	{
-		FILE		   *afd;
+		FILE	   *afd;
 
 		if ((afd = AllocateFile(accessfile, "r")) == NULL)
 			elog(WARN, "unable to open access pattern file");
@@ -588,11 +592,11 @@ _CopyArrayEls(char **values,
 			  char typalign,
 			  bool typbyval)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < nitems; i++)
 	{
-		int				inc;
+		int			inc;
 
 		inc = ArrayCastAndSet(values[i], typbyval, typlen, p);
 		p += inc;
@@ -608,40 +612,40 @@ _CopyArrayEls(char **values,
  *		  containing the array in its external format.
  *-------------------------------------------------------------------------
  */
-char		   *
+char	   *
 array_out(ArrayType * v, Oid element_type)
 {
-	int				typlen;
-	bool			typbyval;
-	char			typdelim;
-	Oid				typoutput,
-					typelem;
-	func_ptr		outputproc;
-	char			typalign;
+	int			typlen;
+	bool		typbyval;
+	char		typdelim;
+	Oid			typoutput,
+				typelem;
+	func_ptr	outputproc;
+	char		typalign;
 
-	char		   *p,
-				   *retval,
-				  **values,
-					delim[2];
-	int				nitems,
-					overall_length,
-					i,
-					j,
-					k,
-					indx[MAXDIM];
-	bool			dummy_bool;
-	int				dummy_int;
-	int				ndim,
-				   *dim;
+	char	   *p,
+			   *retval,
+			  **values,
+				delim[2];
+	int			nitems,
+				overall_length,
+				i,
+				j,
+				k,
+				indx[MAXDIM];
+	bool		dummy_bool;
+	int			dummy_int;
+	int			ndim,
+			   *dim;
 
 	if (v == (ArrayType *) NULL)
 		return ((char *) NULL);
 
 	if (ARR_IS_LO(v) == true)
 	{
-		char		   *p,
-					   *save_p;
-		int				nbytes;
+		char	   *p,
+				   *save_p;
+		int			nbytes;
 
 		/* get a wide string to print to */
 		p = array_dims(v, &dummy_bool);
@@ -666,7 +670,7 @@ array_out(ArrayType * v, Oid element_type)
 
 	if (nitems == 0)
 	{
-		char		   *emptyArray = palloc(3);
+		char	   *emptyArray = palloc(3);
 
 		emptyArray[0] = '{';
 		emptyArray[1] = '}';
@@ -683,16 +687,16 @@ array_out(ArrayType * v, Oid element_type)
 		{
 			switch (typlen)
 			{
-			case 1:
-				values[i] = (*outputproc) (*p, typelem);
-				break;
-			case 2:
-				values[i] = (*outputproc) (*(int16 *) p, typelem);
-				break;
-			case 3:
-			case 4:
-				values[i] = (*outputproc) (*(int32 *) p, typelem);
-				break;
+				case 1:
+					values[i] = (*outputproc) (*p, typelem);
+					break;
+				case 2:
+					values[i] = (*outputproc) (*(int16 *) p, typelem);
+					break;
+				case 3:
+				case 4:
+					values[i] = (*outputproc) (*(int32 *) p, typelem);
+					break;
 			}
 			p += typlen;
 		}
@@ -766,15 +770,15 @@ array_out(ArrayType * v, Oid element_type)
  *		  returns the dimension of the array pointed to by "v"
  *----------------------------------------------------------------------------
  */
-char		   *
+char	   *
 array_dims(ArrayType * v, bool * isNull)
 {
-	char		   *p,
-				   *save_p;
-	int				nbytes,
-					i;
-	int			   *dimv,
-				   *lb;
+	char	   *p,
+			   *save_p;
+	int			nbytes,
+				i;
+	int		   *dimv,
+			   *lb;
 
 	if (v == (ArrayType *) NULL)
 		RETURN_NULL;
@@ -814,14 +818,14 @@ array_ref(ArrayType * array,
 		  int arraylen,
 		  bool * isNull)
 {
-	int				i,
-					ndim,
-				   *dim,
-				   *lb,
-					offset,
-					nbytes;
+	int			i,
+				ndim,
+			   *dim,
+			   *lb,
+				offset,
+				nbytes;
 	struct varlena *v = NULL;
-	char		   *retval = NULL;
+	char	   *retval = NULL;
 
 	if (array == (ArrayType *) NULL)
 		RETURN_NULL;
@@ -848,8 +852,8 @@ array_ref(ArrayType * array,
 
 	if (ARR_IS_LO(array))
 	{
-		char		   *lo_name;
-		int				fd = 0;
+		char	   *lo_name;
+		int			fd = 0;
 
 		/* We are assuming fixed element lengths here */
 		offset *= elmlen;
@@ -876,7 +880,7 @@ array_ref(ArrayType * array,
 		retval = (char *) _ArrayCast((char *) VARDATA(v), reftype, elmlen);
 		if (reftype == 0)
 		{						/* not by value */
-			char		   *tempdata = palloc(elmlen);
+			char	   *tempdata = palloc(elmlen);
 
 			memmove(tempdata, retval, elmlen);
 			retval = tempdata;
@@ -896,9 +900,9 @@ array_ref(ArrayType * array,
 	}
 	else
 	{
-		bool			done = false;
-		char		   *temp;
-		int				bytes = nbytes;
+		bool		done = false;
+		char	   *temp;
+		int			bytes = nbytes;
 
 		temp = ARR_DATA_PTR(array);
 		i = 0;
@@ -935,14 +939,14 @@ array_clip(ArrayType * array,
 		   int len,
 		   bool * isNull)
 {
-	int				i,
-					ndim,
-				   *dim,
-				   *lb,
-					nbytes;
-	ArrayType	   *newArr;
-	int				bytes,
-					span[MAXDIM];
+	int			i,
+				ndim,
+			   *dim,
+			   *lb,
+				nbytes;
+	ArrayType  *newArr;
+	int			bytes,
+				span[MAXDIM];
 
 	/* timer_start(); */
 	if (array == (ArrayType *) NULL)
@@ -966,14 +970,14 @@ array_clip(ArrayType * array,
 	if (ARR_IS_LO(array))
 	{
 #ifdef LOARRAY
-		char		   *lo_name;
+		char	   *lo_name;
 
 #endif
-		char		   *newname = NULL;
-		int				fd = 0,
-						newfd = 0,
-						isDestLO = true,
-						rsize;
+		char	   *newname = NULL;
+		int			fd = 0,
+					newfd = 0,
+					isDestLO = true,
+					rsize;
 
 		if (len < 0)
 			elog(WARN, "array_clip: array of variable length objects not supported");
@@ -994,7 +998,7 @@ array_clip(ArrayType * array,
 		rsize = compute_size(lowerIndx, upperIndx, n, len);
 		if (rsize < MAX_BUFF_SIZE)
 		{
-			char		   *buff;
+			char	   *buff;
 
 			rsize += 4;
 			buff = palloc(rsize);
@@ -1068,7 +1072,7 @@ array_clip(ArrayType * array,
  *		  returns a pointer to the modified array.
  *-----------------------------------------------------------------------------
  */
-char		   *
+char	   *
 array_set(ArrayType * array,
 		  int n,
 		  int indx[],
@@ -1078,12 +1082,12 @@ array_set(ArrayType * array,
 		  int arraylen,
 		  bool * isNull)
 {
-	int				ndim,
-				   *dim,
-				   *lb,
-					offset,
-					nbytes;
-	char		   *pos;
+	int			ndim,
+			   *dim,
+			   *lb,
+				offset,
+				nbytes;
+	char	   *pos;
 
 	if (array == (ArrayType *) NULL)
 		RETURN_NULL;
@@ -1113,13 +1117,13 @@ array_set(ArrayType * array,
 
 	if (ARR_IS_LO(array))
 	{
-		int				fd = 0;
+		int			fd = 0;
 		struct varlena *v;
 
 		/* We are assuming fixed element lengths here */
 		offset *= elmlen;
 #ifdef LOARRAY
-		char		   *lo_name;
+		char	   *lo_name;
 
 		lo_name = ARR_DATA_PTR(array);
 		if ((fd = LOopen(lo_name, ARR_IS_INV(array) ? INV_WRITE : O_WRONLY)) < 0)
@@ -1151,15 +1155,15 @@ array_set(ArrayType * array,
 	}
 	else
 	{
-		ArrayType	   *newarray;
-		char		   *elt_ptr;
-		int				oldsize,
-						newsize,
-						oldlen,
-						newlen,
-						lth0,
-						lth1,
-						lth2;
+		ArrayType  *newarray;
+		char	   *elt_ptr;
+		int			oldsize,
+					newsize,
+					oldlen,
+					newlen,
+					lth0,
+					lth1,
+					lth2;
 
 		elt_ptr = array_seek(ARR_DATA_PTR(array), -1, offset);
 		oldlen = INTALIGN(*(int32 *) elt_ptr);
@@ -1203,7 +1207,7 @@ array_set(ArrayType * array,
  *		  returns a pointer to the modified array.
  *----------------------------------------------------------------------------
  */
-char		   *
+char	   *
 array_assgn(ArrayType * array,
 			int n,
 			int upperIndx[],
@@ -1213,10 +1217,10 @@ array_assgn(ArrayType * array,
 			int len,
 			bool * isNull)
 {
-	int				i,
-					ndim,
-				   *dim,
-				   *lb;
+	int			i,
+				ndim,
+			   *dim,
+			   *lb;
 
 	if (array == (ArrayType *) NULL)
 		RETURN_NULL;
@@ -1239,11 +1243,11 @@ array_assgn(ArrayType * array,
 
 	if (ARR_IS_LO(array))
 	{
-		int				fd = 0,
-						newfd = 0;
+		int			fd = 0,
+					newfd = 0;
 
 #ifdef LOARRAY
-		char		   *lo_name;
+		char	   *lo_name;
 
 		lo_name = (char *) ARR_DATA_PTR(array);
 		if ((fd = LOopen(lo_name, ARR_IS_INV(array) ? INV_WRITE : O_WRONLY)) < 0)
@@ -1303,8 +1307,8 @@ system_cache_lookup(Oid element_type,
 					Oid * proc,
 					char *typalign)
 {
-	HeapTuple		typeTuple;
-	TypeTupleForm	typeStruct;
+	HeapTuple	typeTuple;
+	TypeTupleForm typeStruct;
 
 	typeTuple = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(element_type),
 									0, 0, 0);
@@ -1331,23 +1335,23 @@ system_cache_lookup(Oid element_type,
 	}
 }
 
-static			Datum
+static Datum
 _ArrayCast(char *value, bool byval, int len)
 {
 	if (byval)
 	{
 		switch (len)
 		{
-			case 1:
-			return ((Datum) * value);
-		case 2:
-			return ((Datum) * (int16 *) value);
-		case 3:
-		case 4:
-			return ((Datum) * (int32 *) value);
-		default:
-			elog(WARN, "array_ref: byval and elt len > 4!");
-			break;
+				case 1:
+				return ((Datum) * value);
+			case 2:
+				return ((Datum) * (int16 *) value);
+			case 3:
+			case 4:
+				return ((Datum) * (int32 *) value);
+			default:
+				elog(WARN, "array_ref: byval and elt len > 4!");
+				break;
 		}
 	}
 	else
@@ -1364,7 +1368,7 @@ ArrayCastAndSet(char *src,
 				int typlen,
 				char *dest)
 {
-	int				inc;
+	int			inc;
 
 	if (typlen > 0)
 	{
@@ -1372,15 +1376,15 @@ ArrayCastAndSet(char *src,
 		{
 			switch (typlen)
 			{
-			case 1:
-				*dest = DatumGetChar(src);
-				break;
-			case 2:
-				*(int16 *) dest = DatumGetInt16(src);
-				break;
-			case 4:
-				*(int32 *) dest = (int32) src;
-				break;
+				case 1:
+					*dest = DatumGetChar(src);
+					break;
+				case 2:
+					*(int16 *) dest = DatumGetInt16(src);
+					break;
+				case 4:
+					*(int32 *) dest = (int32) src;
+					break;
 			}
 		}
 		else
@@ -1398,11 +1402,11 @@ ArrayCastAndSet(char *src,
 }
 
 #ifdef LOARRAY
-static char    *
+static char *
 _AdvanceBy1word(char *str, char **word)
 {
-	char		   *retstr,
-				   *space;
+	char	   *retstr,
+			   *space;
 
 	*word = NULL;
 	if (str == NULL)
@@ -1425,7 +1429,7 @@ _AdvanceBy1word(char *str, char **word)
 static int
 SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[])
 {
-	int				i;
+	int			i;
 
 	/* Do Sanity check on input */
 	if (n != ndim)
@@ -1444,18 +1448,18 @@ _ArrayRange(int st[],
 			ArrayType * array,
 			int from)
 {
-	int				n,
-				   *dim,
-				   *lb,
-					st_pos,
-					prod[MAXDIM];
-	int				span[MAXDIM],
-					dist[MAXDIM],
-					indx[MAXDIM];
-	int				i,
-					j,
-					inc;
-	char		   *srcPtr;
+	int			n,
+			   *dim,
+			   *lb,
+				st_pos,
+				prod[MAXDIM];
+	int			span[MAXDIM],
+				dist[MAXDIM],
+				indx[MAXDIM];
+	int			i,
+				j,
+				inc;
+	char	   *srcPtr;
 
 	n = ARR_NDIM(array);
 	dim = ARR_DIMS(array);
@@ -1485,21 +1489,21 @@ _ArrayRange(int st[],
 static int
 _ArrayClipCount(int stI[], int endpI[], ArrayType * array)
 {
-	int				n,
-				   *dim,
-				   *lb,
-					st_pos,
-					prod[MAXDIM];
-	int				span[MAXDIM],
-					dist[MAXDIM],
-					indx[MAXDIM];
-	int				i,
-					j,
-					inc,
-					st[MAXDIM],
-					endp[MAXDIM];
-	int				count = 0;
-	char		   *ptr;
+	int			n,
+			   *dim,
+			   *lb,
+				st_pos,
+				prod[MAXDIM];
+	int			span[MAXDIM],
+				dist[MAXDIM],
+				indx[MAXDIM];
+	int			i,
+				j,
+				inc,
+				st[MAXDIM],
+				endp[MAXDIM];
+	int			count = 0;
+	char	   *ptr;
 
 	n = ARR_NDIM(array);
 	dim = ARR_DIMS(array);
@@ -1523,10 +1527,10 @@ _ArrayClipCount(int stI[], int endpI[], ArrayType * array)
 	return count;
 }
 
-static char    *
+static char *
 array_seek(char *ptr, int eltsize, int nitems)
 {
-	int				i;
+	int			i;
 
 	if (eltsize > 0)
 		return (ptr + eltsize * nitems);
@@ -1538,9 +1542,9 @@ array_seek(char *ptr, int eltsize, int nitems)
 static int
 array_read(char *destptr, int eltsize, int nitems, char *srcptr)
 {
-	int				i,
-					inc,
-					tmp;
+	int			i,
+				inc,
+				tmp;
 
 	if (eltsize > 0)
 	{
@@ -1568,19 +1572,19 @@ _LOArrayRange(int st[],
 			  int isSrcLO,
 			  bool * isNull)
 {
-	int				n,
-				   *dim,
-					st_pos,
-					prod[MAXDIM];
-	int				span[MAXDIM],
-					dist[MAXDIM],
-					indx[MAXDIM];
-	int				i,
-					j,
-					inc,
-					tmp,
-				   *lb,
-					offset;
+	int			n,
+			   *dim,
+				st_pos,
+				prod[MAXDIM];
+	int			span[MAXDIM],
+				dist[MAXDIM],
+				indx[MAXDIM];
+	int			i,
+				j,
+				inc,
+				tmp,
+			   *lb,
+				offset;
 
 	n = ARR_NDIM(array);
 	dim = ARR_DIMS(array);
@@ -1622,19 +1626,19 @@ _ReadArray(int st[],
 		   int isDestLO,
 		   bool * isNull)
 {
-	int				n,
-				   *dim,
-					st_pos,
-					prod[MAXDIM];
-	int				span[MAXDIM],
-					dist[MAXDIM],
-					indx[MAXDIM];
-	int				i,
-					j,
-					inc,
-					tmp,
-				   *lb,
-					offset;
+	int			n,
+			   *dim,
+				st_pos,
+				prod[MAXDIM];
+	int			span[MAXDIM],
+				dist[MAXDIM],
+				indx[MAXDIM];
+	int			i,
+				j,
+				inc,
+				tmp,
+			   *lb,
+				offset;
 
 	n = ARR_NDIM(array);
 	dim = ARR_DIMS(array);
@@ -1677,9 +1681,9 @@ _LOtransfer(char **destfd,
 #define MAX_READ (512 * 1024)
 #define min(a, b) (a < b ? a : b)
 	struct varlena *v = NULL;
-	int				tmp,
-					inc,
-					resid;
+	int			tmp,
+				inc,
+				resid;
 
 	inc = nitems * size;
 	if (isSrcLO && isDestLO && inc > 0)
@@ -1719,11 +1723,11 @@ _LOtransfer(char **destfd,
 #undef MAX_READ
 }
 
-char		   *
+char	   *
 _array_newLO(int *fd, int flag)
 {
-	char		   *p;
-	char			saveName[NAME_LEN];
+	char	   *p;
+	char		saveName[NAME_LEN];
 
 	p = (char *) palloc(NAME_LEN);
 	sprintf(p, "/Arry.%d", newoid());

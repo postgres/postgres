@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.8 1997/09/07 04:39:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.9 1997/09/08 02:21:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,19 +57,19 @@ rtgettuple(IndexScanDesc s, ScanDirection dir)
 	return (res);
 }
 
-static			RetrieveIndexResult
+static RetrieveIndexResult
 rtfirst(IndexScanDesc s, ScanDirection dir)
 {
-	Buffer			b;
-	Page			p;
-	OffsetNumber	n;
-	OffsetNumber	maxoff;
+	Buffer		b;
+	Page		p;
+	OffsetNumber n;
+	OffsetNumber maxoff;
 	RetrieveIndexResult res;
 	RTreePageOpaque po;
 	RTreeScanOpaque so;
-	RTSTACK		   *stk;
-	BlockNumber		blk;
-	IndexTuple		it;
+	RTSTACK    *stk;
+	BlockNumber blk;
+	IndexTuple	it;
 
 	b = ReadBuffer(s->relation, P_ROOT);
 	p = BufferGetPage(b);
@@ -140,19 +140,19 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
 	}
 }
 
-static			RetrieveIndexResult
+static RetrieveIndexResult
 rtnext(IndexScanDesc s, ScanDirection dir)
 {
-	Buffer			b;
-	Page			p;
-	OffsetNumber	n;
-	OffsetNumber	maxoff;
+	Buffer		b;
+	Page		p;
+	OffsetNumber n;
+	OffsetNumber maxoff;
 	RetrieveIndexResult res;
 	RTreePageOpaque po;
 	RTreeScanOpaque so;
-	RTSTACK		   *stk;
-	BlockNumber		blk;
-	IndexTuple		it;
+	RTSTACK    *stk;
+	BlockNumber blk;
+	IndexTuple	it;
 
 	blk = ItemPointerGetBlockNumber(&(s->currentItemData));
 	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
@@ -241,11 +241,11 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 	}
 }
 
-static			OffsetNumber
+static OffsetNumber
 findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 {
-	OffsetNumber	maxoff;
-	IndexTuple		it;
+	OffsetNumber maxoff;
+	IndexTuple	it;
 	RTreePageOpaque po;
 	RTreeScanOpaque so;
 
@@ -295,11 +295,11 @@ findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 	return (n);
 }
 
-static			RetrieveIndexResult
+static RetrieveIndexResult
 rtscancache(IndexScanDesc s, ScanDirection dir)
 {
 	RetrieveIndexResult res;
-	ItemPointer		ip;
+	ItemPointer ip;
 
 	if (!(ScanDirectionIsNoMovement(dir)
 		  && ItemPointerIsValid(&(s->currentItemData))))
@@ -324,14 +324,14 @@ rtscancache(IndexScanDesc s, ScanDirection dir)
  *	rtheapptr returns the item pointer to the tuple in the heap relation
  *	for which itemp is the index relation item pointer.
  */
-static			ItemPointer
+static ItemPointer
 rtheapptr(Relation r, ItemPointer itemp)
 {
-	Buffer			b;
-	Page			p;
-	IndexTuple		it;
-	ItemPointer		ip;
-	OffsetNumber	n;
+	Buffer		b;
+	Page		p;
+	IndexTuple	it;
+	ItemPointer ip;
+	OffsetNumber n;
 
 	ip = (ItemPointer) palloc(sizeof(ItemPointerData));
 	if (ItemPointerIsValid(itemp))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.8 1997/09/07 04:44:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.9 1997/09/08 02:24:52 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -34,16 +34,16 @@
 #include "optimizer/internal.h"
 #include "optimizer/var.h"
 
-static bool		agg_clause(Node * clause);
+static bool agg_clause(Node * clause);
 
 
-Expr		   *
+Expr	   *
 make_clause(int type, Node * oper, List * args)
 {
 	if (type == AND_EXPR || type == OR_EXPR || type == NOT_EXPR ||
 		type == OP_EXPR || type == FUNC_EXPR)
 	{
-		Expr		   *expr = makeNode(Expr);
+		Expr	   *expr = makeNode(Expr);
 
 		/*
 		 * assume type checking already done and we don't need the type of
@@ -92,10 +92,10 @@ is_opclause(Node * clause)
  *	  operand (if it is non-null).
  *
  */
-Expr		   *
+Expr	   *
 make_opclause(Oper * op, Var * leftop, Var * rightop)
 {
-	Expr		   *expr = makeNode(Expr);
+	Expr	   *expr = makeNode(Expr);
 
 	expr->typeOid = InvalidOid; /* assume type checking done */
 	expr->opType = OP_EXPR;
@@ -111,7 +111,7 @@ make_opclause(Oper * op, Var * leftop, Var * rightop)
  *		or (op expr)
  * NB: it is assumed (for now) that all expr must be Var nodes
  */
-Var			   *
+Var		   *
 get_leftop(Expr * clause)
 {
 	if (clause->args != NULL)
@@ -126,7 +126,7 @@ get_leftop(Expr * clause)
  * Returns the right operand in a clause of the form (op expr expr).
  *
  */
-Var			   *
+Var		   *
 get_rightop(Expr * clause)
 {
 	if (clause->args != NULL && lnext(clause->args) != NULL)
@@ -139,7 +139,7 @@ get_rightop(Expr * clause)
  *		AGG clause functions
  *****************************************************************************/
 
-static			bool
+static bool
 agg_clause(Node * clause)
 {
 	return
@@ -171,10 +171,10 @@ is_funcclause(Node * clause)
  * arguments.
  *
  */
-Expr		   *
+Expr	   *
 make_funcclause(Func * func, List * funcargs)
 {
-	Expr		   *expr = makeNode(Expr);
+	Expr	   *expr = makeNode(Expr);
 
 	expr->typeOid = InvalidOid; /* assume type checking done */
 	expr->opType = FUNC_EXPR;
@@ -207,10 +207,10 @@ or_clause(Node * clause)
  * Creates an 'or' clause given a list of its subclauses.
  *
  */
-Expr		   *
+Expr	   *
 make_orclause(List * orclauses)
 {
-	Expr		   *expr = makeNode(Expr);
+	Expr	   *expr = makeNode(Expr);
 
 	expr->typeOid = InvalidOid; /* assume type checking done */
 	expr->opType = OR_EXPR;
@@ -243,10 +243,10 @@ not_clause(Node * clause)
  * Create a 'not' clause given the expression to be negated.
  *
  */
-Expr		   *
+Expr	   *
 make_notclause(Expr * notclause)
 {
-	Expr		   *expr = makeNode(Expr);
+	Expr	   *expr = makeNode(Expr);
 
 	expr->typeOid = InvalidOid; /* assume type checking done */
 	expr->opType = NOT_EXPR;
@@ -261,7 +261,7 @@ make_notclause(Expr * notclause)
  * Retrieve the clause within a 'not' clause
  *
  */
-Expr		   *
+Expr	   *
 get_notclausearg(Expr * notclause)
 {
 	return (lfirst(notclause->args));
@@ -292,10 +292,10 @@ and_clause(Node * clause)
  * Create an 'and' clause given its arguments in a list.
  *
  */
-Expr		   *
+Expr	   *
 make_andclause(List * andclauses)
 {
-	Expr		   *expr = makeNode(Expr);
+	Expr	   *expr = makeNode(Expr);
 
 	expr->typeOid = InvalidOid; /* assume type checking done */
 	expr->opType = AND_EXPR;
@@ -320,12 +320,12 @@ make_andclause(List * andclauses)
  * quals as the return value.
  *
  */
-List		   *
+List	   *
 pull_constant_clauses(List * quals, List ** constantQual)
 {
-	List		   *q;
-	List		   *constqual = NIL;
-	List		   *restqual = NIL;
+	List	   *q;
+	List	   *constqual = NIL;
+	List	   *restqual = NIL;
 
 	foreach(q, quals)
 	{
@@ -358,15 +358,15 @@ pull_constant_clauses(List * quals, List ** constantQual)
 void
 clause_relids_vars(Node * clause, List ** relids, List ** vars)
 {
-	List		   *clvars = pull_var_clause(clause);
-	List		   *var_list = NIL;
-	List		   *varno_list = NIL;
-	List		   *i = NIL;
+	List	   *clvars = pull_var_clause(clause);
+	List	   *var_list = NIL;
+	List	   *varno_list = NIL;
+	List	   *i = NIL;
 
 	foreach(i, clvars)
 	{
-		Var			   *var = (Var *) lfirst(i);
-		List		   *vi;
+		Var		   *var = (Var *) lfirst(i);
+		List	   *vi;
 
 		if (!intMember(var->varno, varno_list))
 		{
@@ -374,7 +374,7 @@ clause_relids_vars(Node * clause, List ** relids, List ** vars)
 		}
 		foreach(vi, var_list)
 		{
-			Var			   *in_list = (Var *) lfirst(vi);
+			Var		   *in_list = (Var *) lfirst(vi);
 
 			if (in_list->varno == var->varno &&
 				in_list->varattno == var->varattno)
@@ -398,13 +398,13 @@ clause_relids_vars(Node * clause, List ** relids, List ** vars)
 int
 NumRelids(Node * clause)
 {
-	List		   *vars = pull_var_clause(clause);
-	List		   *i = NIL;
-	List		   *var_list = NIL;
+	List	   *vars = pull_var_clause(clause);
+	List	   *i = NIL;
+	List	   *var_list = NIL;
 
 	foreach(i, vars)
 	{
-		Var			   *var = (Var *) lfirst(i);
+		Var		   *var = (Var *) lfirst(i);
 
 		if (!intMember(var->varno, var_list))
 		{
@@ -433,7 +433,7 @@ contains_not(Node * clause)
 
 	if (or_clause(clause))
 	{
-		List		   *a;
+		List	   *a;
 
 		foreach(a, ((Expr *) clause)->args)
 		{
@@ -454,8 +454,8 @@ contains_not(Node * clause)
 bool
 join_clause_p(Node * clause)
 {
-	Node		   *leftop,
-				   *rightop;
+	Node	   *leftop,
+			   *rightop;
 
 	if (!is_opclause(clause))
 		return false;
@@ -528,7 +528,7 @@ fix_opid(Node * clause)
 	}
 	else if (IsA(clause, ArrayRef))
 	{
-		ArrayRef	   *aref = (ArrayRef *) clause;
+		ArrayRef   *aref = (ArrayRef *) clause;
 
 		fix_opids(aref->refupperindexpr);
 		fix_opids(aref->reflowerindexpr);
@@ -559,10 +559,10 @@ fix_opid(Node * clause)
  * Returns its argument.
  *
  */
-List		   *
+List	   *
 fix_opids(List * clauses)
 {
-	List		   *clause;
+	List	   *clause;
 
 	foreach(clause, clauses)
 		fix_opid(lfirst(clause));
@@ -601,8 +601,8 @@ get_relattval(Node * clause,
 			  Datum * constval,
 			  int *flag)
 {
-	Var			   *left = get_leftop((Expr *) clause);
-	Var			   *right = get_rightop((Expr *) clause);
+	Var		   *left = get_leftop((Expr *) clause);
+	Var		   *right = get_rightop((Expr *) clause);
 
 	if (is_opclause(clause) && IsA(left, Var) &&
 		IsA(right, Const))
@@ -641,7 +641,7 @@ get_relattval(Node * clause,
 			 is_funcclause((Node *) left) &&
 			 IsA(right, Const))
 	{
-		List		   *args = ((Expr *) left)->args;
+		List	   *args = ((Expr *) left)->args;
 
 
 		*relid = ((Var *) lfirst(args))->varno;
@@ -662,7 +662,7 @@ get_relattval(Node * clause,
 			 is_funcclause((Node *) right) &&
 			 IsA(left, Const))
 	{
-		List		   *args = ((Expr *) right)->args;
+		List	   *args = ((Expr *) right)->args;
 
 		*relid = ((Var *) lfirst(args))->varno;
 		*attno = InvalidAttrNumber;
@@ -732,13 +732,13 @@ get_rels_atts(Node * clause,
 			  int *relid2,
 			  AttrNumber * attno2)
 {
-	Var			   *left = get_leftop((Expr *) clause);
-	Var			   *right = get_rightop((Expr *) clause);
-	bool			var_left = (IsA(left, Var));
-	bool			var_right = (IsA(right, Var));
-	bool			varexpr_left = (bool) ((IsA(left, Func) || IsA(left, Oper)) &&
-									  contain_var_clause((Node *) left));
-	bool			varexpr_right = (bool) ((IsA(right, Func) || IsA(right, Oper)) &&
+	Var		   *left = get_leftop((Expr *) clause);
+	Var		   *right = get_rightop((Expr *) clause);
+	bool		var_left = (IsA(left, Var));
+	bool		var_right = (IsA(right, Var));
+	bool		varexpr_left = (bool) ((IsA(left, Func) || IsA(left, Oper)) &&
+									   contain_var_clause((Node *) left));
+	bool		varexpr_right = (bool) ((IsA(right, Func) || IsA(right, Oper)) &&
 									 contain_var_clause((Node *) right));
 
 	if (is_opclause(clause))
@@ -782,10 +782,10 @@ get_rels_atts(Node * clause,
 void
 CommuteClause(Node * clause)
 {
-	Node		   *temp;
-	Oper		   *commu;
+	Node	   *temp;
+	Oper	   *commu;
 	OperatorTupleForm commuTup;
-	HeapTuple		heapTup;
+	HeapTuple	heapTup;
 
 	if (!is_opclause(clause))
 		return;

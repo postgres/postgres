@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.3 1997/09/07 04:43:10 momjian Exp $
+ * $Id: geqo_misc.c,v 1.4 1997/09/08 02:23:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_misc.h"
 
-static float	avg_pool(Pool * pool);
+static float avg_pool(Pool * pool);
 
 /* avg_pool--
  *
@@ -49,8 +49,8 @@ static float	avg_pool(Pool * pool);
 static float
 avg_pool(Pool * pool)
 {
-	int				i;
-	double			cumulative = 0.0;
+	int			i;
+	double		cumulative = 0.0;
 
 	if (pool->size == 0)
 		elog(WARN, "avg_pool: pool_size of zero");
@@ -66,8 +66,8 @@ avg_pool(Pool * pool)
 void
 print_pool(FILE * fp, Pool * pool, int start, int stop)
 {
-	int				i,
-					j;
+	int			i,
+				j;
 
 	/* be extra careful that start and stop are valid inputs */
 
@@ -99,7 +99,7 @@ print_pool(FILE * fp, Pool * pool, int start, int stop)
 void
 print_gen(FILE * fp, Pool * pool, int generation)
 {
-	int				lowest;
+	int			lowest;
 
 	/* Get index to lowest ranking gene in poplulation. */
 	/* Use 2nd to last since last is buffer. */
@@ -118,8 +118,8 @@ print_gen(FILE * fp, Pool * pool, int generation)
 void
 print_edge_table(FILE * fp, Edge * edge_table, int num_gene)
 {
-	int				i,
-					j;
+	int			i,
+				j;
 
 	fprintf(fp, "\nEDGE TABLE\n");
 
@@ -141,12 +141,12 @@ print_edge_table(FILE * fp, Edge * edge_table, int num_gene)
 void
 geqo_print_joinclauses(Query * root, List * clauses)
 {
-	List		   *l;
-	extern void		print_expr(Node * expr, List * rtable);		/* in print.c */
+	List	   *l;
+	extern void print_expr(Node * expr, List * rtable); /* in print.c */
 
 	foreach(l, clauses)
 	{
-		CInfo		   *c = lfirst(l);
+		CInfo	   *c = lfirst(l);
 
 		print_expr((Node *) c->clause, root->rtable);
 		if (lnext(l))
@@ -157,88 +157,88 @@ geqo_print_joinclauses(Query * root, List * clauses)
 void
 geqo_print_path(Query * root, Path * path, int indent)
 {
-	char		   *ptype = NULL;
-	JoinPath	   *jp;
-	bool			join = false;
-	int				i;
+	char	   *ptype = NULL;
+	JoinPath   *jp;
+	bool		join = false;
+	int			i;
 
 	for (i = 0; i < indent; i++)
 		printf("\t");
 
 	switch (nodeTag(path))
 	{
-	case T_Path:
-		ptype = "SeqScan";
-		join = false;
-		break;
-	case T_IndexPath:
-		ptype = "IdxScan";
-		join = false;
-		break;
-	case T_JoinPath:
-		ptype = "Nestloop";
-		join = true;
-		break;
-	case T_MergePath:
-		ptype = "MergeJoin";
-		join = true;
-		break;
-	case T_HashPath:
-		ptype = "HashJoin";
-		join = true;
-		break;
-	default:
-		break;
+		case T_Path:
+			ptype = "SeqScan";
+			join = false;
+			break;
+		case T_IndexPath:
+			ptype = "IdxScan";
+			join = false;
+			break;
+		case T_JoinPath:
+			ptype = "Nestloop";
+			join = true;
+			break;
+		case T_MergePath:
+			ptype = "MergeJoin";
+			join = true;
+			break;
+		case T_HashPath:
+			ptype = "HashJoin";
+			join = true;
+			break;
+		default:
+			break;
 	}
 	if (join)
 	{
-		int				size = path->parent->size;
+		int			size = path->parent->size;
 
 		jp = (JoinPath *) path;
 		printf("%s size=%d cost=%f\n", ptype, size, path->path_cost);
 		switch (nodeTag(path))
 		{
-		case T_MergePath:
-		case T_HashPath:
-			for (i = 0; i < indent + 1; i++)
-				printf("\t");
-			printf("   clauses=(");
-			geqo_print_joinclauses(root,
-								   ((JoinPath *) path)->pathclauseinfo);
-			printf(")\n");
+			case T_MergePath:
+			case T_HashPath:
+				for (i = 0; i < indent + 1; i++)
+					printf("\t");
+				printf("   clauses=(");
+				geqo_print_joinclauses(root,
+									((JoinPath *) path)->pathclauseinfo);
+				printf(")\n");
 
-			if (nodeTag(path) == T_MergePath)
-			{
-				MergePath	   *mp = (MergePath *) path;
-
-				if (mp->outersortkeys || mp->innersortkeys)
+				if (nodeTag(path) == T_MergePath)
 				{
-					for (i = 0; i < indent + 1; i++)
-						printf("\t");
-					printf("   sortouter=%d sortinner=%d\n",
-						   ((mp->outersortkeys) ? 1 : 0),
-						   ((mp->innersortkeys) ? 1 : 0));
+					MergePath  *mp = (MergePath *) path;
+
+					if (mp->outersortkeys || mp->innersortkeys)
+					{
+						for (i = 0; i < indent + 1; i++)
+							printf("\t");
+						printf("   sortouter=%d sortinner=%d\n",
+							   ((mp->outersortkeys) ? 1 : 0),
+							   ((mp->innersortkeys) ? 1 : 0));
+					}
 				}
-			}
-			break;
-		default:
-			break;
+				break;
+			default:
+				break;
 		}
 		geqo_print_path(root, jp->outerjoinpath, indent + 1);
 		geqo_print_path(root, jp->innerjoinpath, indent + 1);
 	}
 	else
 	{
-		int				size = path->parent->size;
-		int				relid = lfirsti(path->parent->relids);
+		int			size = path->parent->size;
+		int			relid = lfirsti(path->parent->relids);
 
 		printf("%s(%d) size=%d cost=%f",
 			   ptype, relid, size, path->path_cost);
 
 		if (nodeTag(path) == T_IndexPath)
 		{
-			List		   *k,
-						   *l;
+			List	   *k,
+					   *l;
 
 			printf(" keys=");
 			foreach(k, path->keys)
@@ -246,7 +246,7 @@ geqo_print_path(Query * root, Path * path, int indent)
 				printf("(");
 				foreach(l, lfirst(k))
 				{
-					Var			   *var = lfirst(l);
+					Var		   *var = lfirst(l);
 
 					printf("%d.%d", var->varnoold, var->varoattno);
 					if (lnext(l))
@@ -264,7 +264,7 @@ geqo_print_path(Query * root, Path * path, int indent)
 void
 geqo_print_rel(Query * root, Rel * rel)
 {
-	List		   *l;
+	List	   *l;
 
 	printf("______________________________\n");
 	printf("(");

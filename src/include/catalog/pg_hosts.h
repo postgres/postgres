@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_hosts.h,v 1.3 1997/09/07 04:56:46 momjian Exp $
+ * $Id: pg_hosts.h,v 1.4 1997/09/08 02:35:09 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -30,9 +30,9 @@
 
 CATALOG(pg_hosts) BOOTSTRAP
 {
-	NameData		dbName;
-	text			address;
-	text			mask;
+	NameData	dbName;
+	text		address;
+	text		mask;
 } FormData_pg_hosts;
 
 typedef FormData_pg_hosts *Form_pg_hosts;

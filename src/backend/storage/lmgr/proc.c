@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.19 1997/09/07 04:49:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.20 1997/09/08 02:29:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.19 1997/09/07 04:49:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.20 1997/09/08 02:29:17 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -76,8 +76,8 @@
 #include "storage/spin.h"
 #include "storage/proc.h"
 
-static void		HandleDeadLock(int sig);
-static PROC    *ProcWakeup(PROC * proc, int errType);
+static void HandleDeadLock(int sig);
+static PROC *ProcWakeup(PROC * proc, int errType);
 
 /*
  * timeout (in seconds) for resolving possible deadlock
@@ -93,21 +93,21 @@ static PROC    *ProcWakeup(PROC * proc, int errType);
  * memory. -mer 17 July 1991
  * --------------------
  */
-SPINLOCK		ProcStructLock;
+SPINLOCK	ProcStructLock;
 
 /*
  * For cleanup routines.  Don't cleanup if the initialization
  * has not happened.
  */
-static bool		ProcInitialized = FALSE;
+static bool ProcInitialized = FALSE;
 
 static PROC_HDR *ProcGlobal = NULL;
 
-PROC		   *MyProc = NULL;
+PROC	   *MyProc = NULL;
 
-static void		ProcKill(int exitStatus, int pid);
-static void		ProcGetNewSemKeyAndNum(IPCKey * key, int *semNum);
-static void		ProcFreeSem(IpcSemaphoreKey semKey, int semNum);
+static void ProcKill(int exitStatus, int pid);
+static void ProcGetNewSemKeyAndNum(IPCKey * key, int *semNum);
+static void ProcFreeSem(IpcSemaphoreKey semKey, int semNum);
 
 /*
  * InitProcGlobal -
@@ -120,7 +120,7 @@ static void		ProcFreeSem(IpcSemaphoreKey semKey, int semNum);
 void
 InitProcGlobal(IPCKey key)
 {
-	bool			found = false;
+	bool		found = false;
 
 	/* attach to the free list */
 	ProcGlobal = (PROC_HDR *)
@@ -132,7 +132,7 @@ InitProcGlobal(IPCKey key)
 	 */
 	if (!found)
 	{
-		int				i;
+		int			i;
 
 		ProcGlobal->numProcs = 0;
 		ProcGlobal->freeProcs = INVALID_OFFSET;
@@ -150,11 +150,11 @@ InitProcGlobal(IPCKey key)
 void
 InitProcess(IPCKey key)
 {
-	bool			found = false;
-	int				pid;
-	int				semstat;
-	unsigned long	location,
-					myOffset;
+	bool		found = false;
+	int			pid;
+	int			semstat;
+	unsigned long location,
+				myOffset;
 
 	/* ------------------
 	 * Routine called if deadlock timer goes off. See ProcSleep()
@@ -223,10 +223,10 @@ InitProcess(IPCKey key)
 
 	if (IsUnderPostmaster)
 	{
-		IPCKey			semKey;
-		int				semNum;
-		int				semId;
-		union semun		semun;
+		IPCKey		semKey;
+		int			semNum;
+		int			semId;
+		union semun semun;
 
 		ProcGetNewSemKeyAndNum(&semKey, &semNum);
 
@@ -318,8 +318,8 @@ ProcReleaseLocks()
 bool
 ProcRemove(int pid)
 {
-	SHMEM_OFFSET	location;
-	PROC		   *proc;
+	SHMEM_OFFSET location;
+	PROC	   *proc;
 
 	location = INVALID_OFFSET;
 
@@ -347,8 +347,8 @@ ProcRemove(int pid)
 static void
 ProcKill(int exitStatus, int pid)
 {
-	PROC		   *proc;
-	SHMEM_OFFSET	location;
+	PROC	   *proc;
+	SHMEM_OFFSET location;
 
 	/* --------------------
 	 * If this is a FATAL exit the postmaster will have to kill all the
@@ -417,11 +417,11 @@ ProcKill(int exitStatus, int pid)
  * Side Effects: Initializes the queue if we allocated one
  */
 #ifdef NOT_USED
-PROC_QUEUE	   *
+PROC_QUEUE *
 ProcQueueAlloc(char *name)
 {
-	bool			found;
-	PROC_QUEUE	   *queue = (PROC_QUEUE *)
+	bool		found;
+	PROC_QUEUE *queue = (PROC_QUEUE *)
 	ShmemInitStruct(name, (unsigned) sizeof(PROC_QUEUE), &found);
 
 	if (!queue)
@@ -468,10 +468,10 @@ ProcSleep(PROC_QUEUE * queue,
 		  int prio,
 		  LOCK * lock)
 {
-	int				i;
-	PROC		   *proc;
+	int			i;
+	PROC	   *proc;
 	struct itimerval timeval,
-					dummy;
+				dummy;
 
 	proc = (PROC *) MAKE_PTR(queue->links.prev);
 	for (i = 0; i < queue->size; i++)
@@ -555,10 +555,10 @@ ProcSleep(PROC_QUEUE * queue,
  *	 remove the process from the wait queue and set its links invalid.
  *	 RETURN: the next process in the wait queue.
  */
-static PROC    *
+static PROC *
 ProcWakeup(PROC * proc, int errType)
 {
-	PROC		   *retProc;
+	PROC	   *retProc;
 
 	/* assume that spinlock has been acquired */
 
@@ -599,8 +599,8 @@ ProcGetId()
 int
 ProcLockWakeup(PROC_QUEUE * queue, char *ltable, char *lock)
 {
-	PROC		   *proc;
-	int				count;
+	PROC	   *proc;
+	int			count;
 
 	if (!queue->size)
 		return (STATUS_NOT_FOUND);
@@ -659,8 +659,8 @@ ProcAddLock(SHM_QUEUE * elem)
 static void
 HandleDeadLock(int sig)
 {
-	LOCK		   *lock;
-	int				size;
+	LOCK	   *lock;
+	int			size;
 
 	LockLockTable();
 
@@ -743,7 +743,7 @@ HandleDeadLock(int sig)
 void
 ProcReleaseSpins(PROC * proc)
 {
-	int				i;
+	int			i;
 
 	if (!proc)
 		proc = MyProc;
@@ -774,9 +774,9 @@ ProcReleaseSpins(PROC * proc)
 static void
 ProcGetNewSemKeyAndNum(IPCKey * key, int *semNum)
 {
-	int				i;
-	int32		   *freeSemMap = ProcGlobal->freeSemMap;
-	unsigned int	fullmask;
+	int			i;
+	int32	   *freeSemMap = ProcGlobal->freeSemMap;
+	unsigned int fullmask;
 
 	/*
 	 * we hold ProcStructLock when entering this routine. We scan through
@@ -785,8 +785,8 @@ ProcGetNewSemKeyAndNum(IPCKey * key, int *semNum)
 	fullmask = ~0 >> (32 - PROC_NSEMS_PER_SET);
 	for (i = 0; i < MAX_PROC_SEMS / PROC_NSEMS_PER_SET; i++)
 	{
-		int				mask = 1;
-		int				j;
+		int			mask = 1;
+		int			j;
 
 		if (freeSemMap[i] == fullmask)
 			continue;			/* none free for this set */
@@ -821,9 +821,9 @@ ProcGetNewSemKeyAndNum(IPCKey * key, int *semNum)
 static void
 ProcFreeSem(IpcSemaphoreKey semKey, int semNum)
 {
-	int				mask;
-	int				i;
-	int32		   *freeSemMap = ProcGlobal->freeSemMap;
+	int			mask;
+	int			i;
+	int32	   *freeSemMap = ProcGlobal->freeSemMap;
 
 	i = semKey - ProcGlobal->currKey;
 	mask = ~(1 << semNum);
@@ -841,8 +841,8 @@ ProcFreeSem(IpcSemaphoreKey semKey, int semNum)
 void
 ProcFreeAllSemaphores()
 {
-	int				i;
-	int32		   *freeSemMap = ProcGlobal->freeSemMap;
+	int			i;
+	int32	   *freeSemMap = ProcGlobal->freeSemMap;
 
 	for (i = 0; i < MAX_PROC_SEMS / PROC_NSEMS_PER_SET; i++)
 	{

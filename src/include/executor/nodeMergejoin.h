@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMergejoin.h,v 1.4 1997/09/07 04:57:56 momjian Exp $
+ * $Id: nodeMergejoin.h,v 1.5 1997/09/08 02:36:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,10 @@
 
 extern TupleTableSlot *ExecMergeJoin(MergeJoin * node);
 
-extern bool		ExecInitMergeJoin(MergeJoin * node, EState * estate, Plan * parent);
+extern bool ExecInitMergeJoin(MergeJoin * node, EState * estate, Plan * parent);
 
-extern int		ExecCountSlotsMergeJoin(MergeJoin * node);
+extern int	ExecCountSlotsMergeJoin(MergeJoin * node);
 
-extern void		ExecEndMergeJoin(MergeJoin * node);
+extern void ExecEndMergeJoin(MergeJoin * node);
 
 #endif							/* NODEMERGEJOIN_H; */

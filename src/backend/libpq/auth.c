@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.15 1997/09/07 04:42:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.16 1997/09/08 02:23:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@
 #include <libpq/hba.h>
 #include <libpq/password.h>
 
-static int		be_getauthsvc(MsgType msgtype);
+static int	be_getauthsvc(MsgType msgtype);
 
 /*----------------------------------------------------------------
  * common definitions for generic fe/be routines
@@ -81,9 +81,9 @@ static int		be_getauthsvc(MsgType msgtype);
 
 struct authsvc
 {
-	char			name[16];	/* service nickname (for command line) */
-	MsgType			msgtype;	/* startup packet header type */
-	int				allowed;	/* initially allowed (before command line
+	char		name[16];		/* service nickname (for command line) */
+	MsgType		msgtype;		/* startup packet header type */
+	int			allowed;		/* initially allowed (before command line
 								 * option parsing)? */
 };
 
@@ -99,10 +99,10 @@ struct authsvc
  */
 
 #if defined(HBA)
-static int		useHostBasedAuth = 1;
+static int	useHostBasedAuth = 1;
 
 #else
-static int		useHostBasedAuth = 0;
+static int	useHostBasedAuth = 0;
 
 #endif
 
@@ -125,7 +125,7 @@ static struct authsvc authsvcs[] = {
 	{"password", STARTUP_PASSWORD_MSG, 1}
 };
 
-static			n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
+static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
 /* This has to be ifdef'd out because krb.h does exist.  This needs
@@ -157,13 +157,13 @@ pg_krb4_recvauth(int sock,
 				 struct sockaddr_in * raddr,
 				 char *username)
 {
-	long			krbopts = 0;/* one-way authentication */
-	KTEXT_ST		clttkt;
-	char			instance[INST_SZ];
-	AUTH_DAT		auth_data;
-	Key_schedule	key_sched;
-	char			version[KRB_SENDAUTH_VLEN];
-	int				status;
+	long		krbopts = 0;	/* one-way authentication */
+	KTEXT_ST	clttkt;
+	char		instance[INST_SZ];
+	AUTH_DAT	auth_data;
+	Key_schedule key_sched;
+	char		version[KRB_SENDAUTH_VLEN];
+	int			status;
 
 	strcpy(instance, "*");		/* don't care, but arg gets expanded
 								 * anyway */
@@ -255,10 +255,10 @@ pg_krb4_recvauth(int sock,
  *	   krb5_an_to_ln, except that it punts if multiple components are found,
  *	   and we can't afford to punt.
  */
-static char    *
+static char *
 pg_an_to_ln(char *aname)
 {
-	char		   *p;
+	char	   *p;
 
 	if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
 		*p = '\0';
@@ -297,16 +297,16 @@ pg_krb5_recvauth(int sock,
 				 struct sockaddr_in * raddr,
 				 char *username)
 {
-	char			servbuf[MAXHOSTNAMELEN + 1 +
-											sizeof(PG_KRB_SRVNAM)];
-	char		   *hostp,
-				   *kusername = (char *) NULL;
+	char		servbuf[MAXHOSTNAMELEN + 1 +
+									sizeof(PG_KRB_SRVNAM)];
+	char	   *hostp,
+			   *kusername = (char *) NULL;
 	krb5_error_code code;
-	krb5_principal	client,
-					server;
-	krb5_address	sender_addr;
+	krb5_principal client,
+				server;
+	krb5_address sender_addr;
 	krb5_rdreq_key_proc keyproc = (krb5_rdreq_key_proc) NULL;
-	krb5_pointer	keyprocarg = (krb5_pointer) NULL;
+	krb5_pointer keyprocarg = (krb5_pointer) NULL;
 
 	/*
 	 * Set up server side -- since we have no ticket file to make this
@@ -426,9 +426,9 @@ pg_krb5_recvauth(int sock,
 static int
 pg_password_recvauth(Port * port, char *database, char *DataDir)
 {
-	PacketBuf		buf;
-	char		   *user,
-				   *password;
+	PacketBuf	buf;
+	char	   *user,
+			   *password;
 
 	if (PacketReceive(port, &buf, BLOCKING) != STATUS_OK)
 	{
@@ -451,7 +451,7 @@ pg_password_recvauth(Port * port, char *database, char *DataDir)
 int
 be_recvauth(MsgType msgtype_arg, Port * port, char *username, StartupInfo * sp)
 {
-	MsgType			msgtype;
+	MsgType		msgtype;
 
 	/*
 	 * A message type of STARTUP_MSG (which once upon a time was the only
@@ -489,93 +489,93 @@ be_recvauth(MsgType msgtype_arg, Port * port, char *username, StartupInfo * sp)
 
 	switch (msgtype)
 	{
-	case STARTUP_KRB4_MSG:
-		if (!be_getauthsvc(msgtype))
-		{
-			sprintf(PQerrormsg,
-					"be_recvauth: krb4 authentication disallowed\n");
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
-		}
-		if (pg_krb4_recvauth(port->sock, &port->laddr, &port->raddr,
-							 username) != STATUS_OK)
-		{
-			sprintf(PQerrormsg,
-					"be_recvauth: krb4 authentication failed\n");
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
-		}
-		break;
-	case STARTUP_KRB5_MSG:
-		if (!be_getauthsvc(msgtype))
-		{
-			sprintf(PQerrormsg,
-					"be_recvauth: krb5 authentication disallowed\n");
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
-		}
-		if (pg_krb5_recvauth(port->sock, &port->laddr, &port->raddr,
-							 username) != STATUS_OK)
-		{
-			sprintf(PQerrormsg,
-					"be_recvauth: krb5 authentication failed\n");
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
-		}
-		break;
-	case STARTUP_UNAUTH_MSG:
-		if (!be_getauthsvc(msgtype))
-		{
-			sprintf(PQerrormsg,
-					"be_recvauth: "
-					"unauthenticated connections disallowed\n");
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
-		}
-		break;
-	case STARTUP_HBA_MSG:
-		if (hba_recvauth(port, sp->database, sp->user, DataDir) != STATUS_OK)
-		{
-			sprintf(PQerrormsg,
-					"be_recvauth: host-based authentication failed\n");
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
-		}
-		break;
-	case STARTUP_PASSWORD_MSG:
-		if (!be_getauthsvc(msgtype))
-		{
-			sprintf(PQerrormsg,
-					"be_recvauth: "
-					"plaintext password authentication disallowed\n");
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
-		}
-		if (pg_password_recvauth(port, sp->database, DataDir) != STATUS_OK)
-		{
+		case STARTUP_KRB4_MSG:
+			if (!be_getauthsvc(msgtype))
+			{
+				sprintf(PQerrormsg,
+						"be_recvauth: krb4 authentication disallowed\n");
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return (STATUS_ERROR);
+			}
+			if (pg_krb4_recvauth(port->sock, &port->laddr, &port->raddr,
+								 username) != STATUS_OK)
+			{
+				sprintf(PQerrormsg,
+						"be_recvauth: krb4 authentication failed\n");
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return (STATUS_ERROR);
+			}
+			break;
+		case STARTUP_KRB5_MSG:
+			if (!be_getauthsvc(msgtype))
+			{
+				sprintf(PQerrormsg,
+						"be_recvauth: krb5 authentication disallowed\n");
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return (STATUS_ERROR);
+			}
+			if (pg_krb5_recvauth(port->sock, &port->laddr, &port->raddr,
+								 username) != STATUS_OK)
+			{
+				sprintf(PQerrormsg,
+						"be_recvauth: krb5 authentication failed\n");
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return (STATUS_ERROR);
+			}
+			break;
+		case STARTUP_UNAUTH_MSG:
+			if (!be_getauthsvc(msgtype))
+			{
+				sprintf(PQerrormsg,
+						"be_recvauth: "
+						"unauthenticated connections disallowed\n");
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return (STATUS_ERROR);
+			}
+			break;
+		case STARTUP_HBA_MSG:
+			if (hba_recvauth(port, sp->database, sp->user, DataDir) != STATUS_OK)
+			{
+				sprintf(PQerrormsg,
+					  "be_recvauth: host-based authentication failed\n");
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return (STATUS_ERROR);
+			}
+			break;
+		case STARTUP_PASSWORD_MSG:
+			if (!be_getauthsvc(msgtype))
+			{
+				sprintf(PQerrormsg,
+						"be_recvauth: "
+						"plaintext password authentication disallowed\n");
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return (STATUS_ERROR);
+			}
+			if (pg_password_recvauth(port, sp->database, DataDir) != STATUS_OK)
+			{
 
-			/*
-			 * pg_password_recvauth or lower-level routines have already
-			 * set
-			 */
-			/* the error message											 */
+				/*
+				 * pg_password_recvauth or lower-level routines have
+				 * already set
+				 */
+				/* the error message											 */
+				return (STATUS_ERROR);
+			}
+			break;
+		default:
+			sprintf(PQerrormsg,
+					"be_recvauth: unrecognized message type: %d\n",
+					msgtype);
+			fputs(PQerrormsg, stderr);
+			pqdebug("%s", PQerrormsg);
 			return (STATUS_ERROR);
-		}
-		break;
-	default:
-		sprintf(PQerrormsg,
-				"be_recvauth: unrecognized message type: %d\n",
-				msgtype);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
 	}
 	return (STATUS_OK);
 }
@@ -596,9 +596,9 @@ be_recvauth(MsgType msgtype_arg, Port * port, char *username, StartupInfo * sp)
 void
 be_setauthsvc(char *name)
 {
-	int				i,
-					j;
-	int				turnon = 1;
+	int			i,
+				j;
+	int			turnon = 1;
 
 	if (!name)
 		return;
@@ -631,7 +631,7 @@ be_setauthsvc(char *name)
 static int
 be_getauthsvc(MsgType msgtype)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < n_authsvcs; ++i)
 		if (msgtype == authsvcs[i].msgtype)

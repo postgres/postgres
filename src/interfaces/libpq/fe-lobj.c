@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.8 1997/09/07 05:03:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.9 1997/09/08 02:40:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 
 #define LO_BUFSIZE		  1024
 
-static int		lo_initialize(PGconn * conn);
+static int	lo_initialize(PGconn * conn);
 
 /*
  * lo_open
@@ -35,10 +35,10 @@ static int		lo_initialize(PGconn * conn);
 int
 lo_open(PGconn * conn, Oid lobjId, int mode)
 {
-	int				fd;
-	int				result_len;
-	PQArgBlock		argv[2];
-	PGresult	   *res;
+	int			fd;
+	int			result_len;
+	PQArgBlock	argv[2];
+	PGresult   *res;
 
 	argv[0].isint = 1;
 	argv[0].len = 4;
@@ -81,10 +81,10 @@ lo_open(PGconn * conn, Oid lobjId, int mode)
 int
 lo_close(PGconn * conn, int fd)
 {
-	PQArgBlock		argv[1];
-	PGresult	   *res;
-	int				retval;
-	int				result_len;
+	PQArgBlock	argv[1];
+	PGresult   *res;
+	int			retval;
+	int			result_len;
 
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
@@ -119,9 +119,9 @@ lo_close(PGconn * conn, int fd)
 int
 lo_read(PGconn * conn, int fd, char *buf, int len)
 {
-	PQArgBlock		argv[2];
-	PGresult	   *res;
-	int				result_len;
+	PQArgBlock	argv[2];
+	PGresult   *res;
+	int			result_len;
 
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
@@ -158,10 +158,10 @@ lo_read(PGconn * conn, int fd, char *buf, int len)
 int
 lo_write(PGconn * conn, int fd, char *buf, int len)
 {
-	PQArgBlock		argv[2];
-	PGresult	   *res;
-	int				result_len;
-	int				retval;
+	PQArgBlock	argv[2];
+	PGresult   *res;
+	int			result_len;
+	int			retval;
 
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
@@ -203,10 +203,10 @@ lo_write(PGconn * conn, int fd, char *buf, int len)
 int
 lo_lseek(PGconn * conn, int fd, int offset, int whence)
 {
-	PQArgBlock		argv[3];
-	PGresult	   *res;
-	int				retval;
-	int				result_len;
+	PQArgBlock	argv[3];
+	PGresult   *res;
+	int			retval;
+	int			result_len;
 
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
@@ -251,10 +251,10 @@ lo_lseek(PGconn * conn, int fd, int offset, int whence)
 Oid
 lo_creat(PGconn * conn, int mode)
 {
-	PQArgBlock		argv[1];
-	PGresult	   *res;
-	int				retval;
-	int				result_len;
+	PQArgBlock	argv[1];
+	PGresult   *res;
+	int			retval;
+	int			result_len;
 
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
@@ -288,10 +288,10 @@ lo_creat(PGconn * conn, int mode)
 int
 lo_tell(PGconn * conn, int fd)
 {
-	int				retval;
-	PQArgBlock		argv[1];
-	PGresult	   *res;
-	int				result_len;
+	int			retval;
+	PQArgBlock	argv[1];
+	PGresult   *res;
+	int			result_len;
 
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
@@ -325,10 +325,10 @@ lo_tell(PGconn * conn, int fd)
 int
 lo_unlink(PGconn * conn, Oid lobjId)
 {
-	PQArgBlock		argv[1];
-	PGresult	   *res;
-	int				result_len;
-	int				retval;
+	PQArgBlock	argv[1];
+	PGresult   *res;
+	int			result_len;
+	int			retval;
 
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
@@ -364,12 +364,12 @@ lo_unlink(PGconn * conn, Oid lobjId)
 Oid
 lo_import(PGconn * conn, char *filename)
 {
-	int				fd;
-	int				nbytes,
-					tmp;
-	char			buf[LO_BUFSIZE];
-	Oid				lobjOid;
-	int				lobj;
+	int			fd;
+	int			nbytes,
+				tmp;
+	char		buf[LO_BUFSIZE];
+	Oid			lobjOid;
+	int			lobj;
 
 	/*
 	 * open the file to be read in
@@ -429,11 +429,11 @@ lo_import(PGconn * conn, char *filename)
 int
 lo_export(PGconn * conn, Oid lobjId, char *filename)
 {
-	int				fd;
-	int				nbytes,
-					tmp;
-	char			buf[LO_BUFSIZE];
-	int				lobj;
+	int			fd;
+	int			nbytes,
+				tmp;
+	char		buf[LO_BUFSIZE];
+	int			lobj;
 
 	/*
 	 * create an inversion "object"
@@ -490,11 +490,11 @@ lo_export(PGconn * conn, Oid lobjId, char *filename)
 static int
 lo_initialize(PGconn * conn)
 {
-	PGresult	   *res;
-	PGlobjfuncs    *lobjfuncs;
-	int				n;
-	char		   *fname;
-	Oid				foid;
+	PGresult   *res;
+	PGlobjfuncs *lobjfuncs;
+	int			n;
+	char	   *fname;
+	Oid			foid;
 
 	/* ----------------
 	 * Allocate the structure to hold the functions OID's

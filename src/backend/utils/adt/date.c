@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.15 1997/09/07 04:50:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.16 1997/09/08 02:30:32 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -74,7 +74,7 @@
 #define ABSTIMEMAX(t1, t2) abstimelt((t1),(t2)) ? (t2) : (t1)
 
 #if FALSE
-static char    *unit_tab[] = {
+static char *unit_tab[] = {
 	"second", "seconds", "minute", "minutes",
 	"hour", "hours", "day", "days", "week", "weeks",
 "month", "months", "year", "years"};
@@ -83,7 +83,7 @@ static char    *unit_tab[] = {
 #define NUNITS 14				/* number of different units */
 
 /* table of seconds per unit (month = 30 days, year = 365 days)  */
-static int		sec_tab[] = {
+static int	sec_tab[] = {
 	1, 1, 60, 60,
 	3600, 3600, 86400, 86400, 604800, 604800,
 2592000, 2592000, 31536000, 31536000};
@@ -94,11 +94,11 @@ static int		sec_tab[] = {
  * Function prototypes -- internal to this file only
  */
 
-static void		reltime2tm(int32 time, struct tm * tm);
+static void reltime2tm(int32 time, struct tm * tm);
 
 #if FALSE
-static int		correct_unit(char unit[], int *unptr);
-static int		correct_dir(char direction[], int *signptr);
+static int	correct_unit(char unit[], int *unptr);
+static int	correct_dir(char direction[], int *signptr);
 
 #endif
 
@@ -117,16 +117,16 @@ istinterval(char *i_string,
 RelativeTime
 reltimein(char *str)
 {
-	RelativeTime	result;
+	RelativeTime result;
 
-	struct tm		tt,
-				   *tm = &tt;
-	double			fsec;
-	int				dtype;
-	char		   *field[MAXDATEFIELDS];
-	int				nf,
-					ftype[MAXDATEFIELDS];
-	char			lowstr[MAXDATELEN + 1];
+	struct tm	tt,
+			   *tm = &tt;
+	double		fsec;
+	int			dtype;
+	char	   *field[MAXDATEFIELDS];
+	int			nf,
+				ftype[MAXDATEFIELDS];
+	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
 		elog(WARN, "Bad (null) date external representation", NULL);
@@ -144,13 +144,13 @@ reltimein(char *str)
 
 	switch (dtype)
 	{
-	case DTK_DELTA:
-		result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
-		result += (((tm->tm_year * 365) + (tm->tm_mon * 30) + tm->tm_mday) * (24 * 60 * 60));
-		return (result);
+		case DTK_DELTA:
+			result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
+			result += (((tm->tm_year * 365) + (tm->tm_mon * 30) + tm->tm_mday) * (24 * 60 * 60));
+			return (result);
 
-	default:
-		return (INVALID_RELTIME);
+		default:
+			return (INVALID_RELTIME);
 	}
 
 	elog(WARN, "Bad reltime (internal coding error) '%s'", str);
@@ -161,13 +161,13 @@ reltimein(char *str)
 /*
  *		reltimeout		- converts the internal format to a reltime string
  */
-char		   *
+char	   *
 reltimeout(int32 time)
 {
-	char		   *result;
-	struct tm		tt,
-				   *tm = &tt;
-	char			buf[MAXDATELEN + 1];
+	char	   *result;
+	struct tm	tt,
+			   *tm = &tt;
+	char		buf[MAXDATELEN + 1];
 
 	if (time == INVALID_RELTIME)
 	{
@@ -204,10 +204,10 @@ reltime2tm(int32 time, struct tm * tm)
 }								/* reltime2tm() */
 
 #if FALSE
-char		   *timestring;
-long			quantity;
-register int	i;
-int				unitnr;
+char	   *timestring;
+long		quantity;
+register int i;
+int			unitnr;
 
 timestring = (char *) palloc(Max(strlen(INVALID_RELTIME_STR),
 								 UNITMAXLEN) + 1);
@@ -245,12 +245,12 @@ return (timestring);
 TimeInterval
 tintervalin(char *intervalstr)
 {
-	int				error;
-	AbsoluteTime	i_start,
-					i_end,
-					t1,
-					t2;
-	TimeInterval	interval;
+	int			error;
+	AbsoluteTime i_start,
+				i_end,
+				t1,
+				t2;
+	TimeInterval interval;
 
 	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 	error = istinterval(intervalstr, &t1, &t2);
@@ -274,11 +274,11 @@ tintervalin(char *intervalstr)
  *		tintervalout	- converts an internal interval format to a string
  *
  */
-char		   *
+char	   *
 tintervalout(TimeInterval interval)
 {
-	char		   *i_str,
-				   *p;
+	char	   *i_str,
+			   *p;
 
 	i_str = (char *) palloc(T_INTERVAL_LEN);	/* ['...' '...'] */
 	strcpy(i_str, "[\"");
@@ -306,10 +306,10 @@ tintervalout(TimeInterval interval)
 RelativeTime
 timespan_reltime(TimeSpan * timespan)
 {
-	RelativeTime	time;
-	int				year,
-					month;
-	double			span;
+	RelativeTime time;
+	int			year,
+				month;
+	double		span;
 
 	if (!PointerIsValid(timespan))
 		time = INVALID_RELTIME;
@@ -353,28 +353,28 @@ timespan_reltime(TimeSpan * timespan)
 }								/* timespan_reltime() */
 
 
-TimeSpan	   *
+TimeSpan   *
 reltime_timespan(RelativeTime reltime)
 {
-	TimeSpan	   *result;
-	int				year,
-					month;
+	TimeSpan   *result;
+	int			year,
+				month;
 
 	if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
 		elog(WARN, "Memory allocation failed, can't convert reltime to timespan", NULL);
 
 	switch (reltime)
 	{
-	case INVALID_RELTIME:
-		TIMESPAN_INVALID(*result);
-		break;
+		case INVALID_RELTIME:
+			TIMESPAN_INVALID(*result);
+			break;
 
-	default:
-		TMODULO(reltime, year, 31536000);
-		TMODULO(reltime, month, 2592000);
+		default:
+			TMODULO(reltime, year, 31536000);
+			TMODULO(reltime, month, 2592000);
 
-		result->time = reltime;
-		result->month = ((12 * year) + month);
+			result->time = reltime;
+			result->month = ((12 * year) + month);
 	}
 
 	return (result);
@@ -387,9 +387,9 @@ reltime_timespan(RelativeTime reltime)
 TimeInterval
 mktinterval(AbsoluteTime t1, AbsoluteTime t2)
 {
-	AbsoluteTime	tstart = ABSTIMEMIN(t1, t2),
-					tend = ABSTIMEMAX(t1, t2);
-	TimeInterval	interval;
+	AbsoluteTime tstart = ABSTIMEMIN(t1, t2),
+				tend = ABSTIMEMAX(t1, t2);
+	TimeInterval interval;
 
 	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
@@ -500,7 +500,7 @@ intervalrel(TimeInterval interval)
 AbsoluteTime
 timenow()
 {
-	time_t			sec;
+	time_t		sec;
 
 	if (time(&sec) < 0)
 		return (INVALID_ABSTIME);
@@ -583,7 +583,7 @@ intervaleq(TimeInterval i1, TimeInterval i2)
 bool
 intervalleneq(TimeInterval i, RelativeTime t)
 {
-	RelativeTime	rt;
+	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
 		return (0);
@@ -598,7 +598,7 @@ intervalleneq(TimeInterval i, RelativeTime t)
 bool
 intervallenne(TimeInterval i, RelativeTime t)
 {
-	RelativeTime	rt;
+	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
 		return (0);
@@ -613,7 +613,7 @@ intervallenne(TimeInterval i, RelativeTime t)
 bool
 intervallenlt(TimeInterval i, RelativeTime t)
 {
-	RelativeTime	rt;
+	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
 		return (0);
@@ -628,7 +628,7 @@ intervallenlt(TimeInterval i, RelativeTime t)
 bool
 intervallengt(TimeInterval i, RelativeTime t)
 {
-	RelativeTime	rt;
+	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
 		return (0);
@@ -643,7 +643,7 @@ intervallengt(TimeInterval i, RelativeTime t)
 bool
 intervallenle(TimeInterval i, RelativeTime t)
 {
-	RelativeTime	rt;
+	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
 		return (0);
@@ -658,7 +658,7 @@ intervallenle(TimeInterval i, RelativeTime t)
 bool
 intervallenge(TimeInterval i, RelativeTime t)
 {
-	RelativeTime	rt;
+	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
 		return (0);
@@ -727,14 +727,14 @@ intervalend(TimeInterval i)
 int
 isreltime(char *str)
 {
-	struct tm		tt,
-				   *tm = &tt;
-	double			fsec;
-	int				dtype;
-	char		   *field[MAXDATEFIELDS];
-	int				nf,
-					ftype[MAXDATEFIELDS];
-	char			lowstr[MAXDATELEN + 1];
+	struct tm	tt,
+			   *tm = &tt;
+	double		fsec;
+	int			dtype;
+	char	   *field[MAXDATEFIELDS];
+	int			nf,
+				ftype[MAXDATEFIELDS];
+	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
 		return 0;
@@ -748,31 +748,31 @@ isreltime(char *str)
 
 	switch (dtype)
 	{
-	case (DTK_DELTA):
-		return ((abs(tm->tm_year) <= 68) ? 1 : 0);
-		break;
+		case (DTK_DELTA):
+			return ((abs(tm->tm_year) <= 68) ? 1 : 0);
+			break;
 
-	case (DTK_INVALID):
-		return 2;
-		break;
+		case (DTK_INVALID):
+			return 2;
+			break;
 
-	default:
-		return 0;
-		break;
+		default:
+			return 0;
+			break;
 	}
 
 	return 0;
 }								/* isreltime() */
 
 #if FALSE
-register char  *p;
-register char	c;
-int				i;
-char			unit[UNITMAXLEN];
-char			direction[DIRMAXLEN];
-int				localSign;
-int				localUnitNumber;
-long			localQuantity;
+register char *p;
+register char c;
+int			i;
+char		unit[UNITMAXLEN];
+char		direction[DIRMAXLEN];
+int			localSign;
+int			localUnitNumber;
+long		localQuantity;
 
 if (!PointerIsValid(sign))
 {
@@ -897,7 +897,7 @@ return (1);
 static int
 correct_unit(char unit[], int *unptr)
 {
-	int				j = 0;
+	int			j = 0;
 
 	while (j < NUNITS)
 	{
@@ -955,9 +955,9 @@ istinterval(char *i_string,
 			AbsoluteTime * i_start,
 			AbsoluteTime * i_end)
 {
-	register char  *p,
-				   *p1;
-	register char	c;
+	register char *p,
+			   *p1;
+	register char c;
 
 	p = i_string;
 	/* skip leading blanks up to '[' */
@@ -1058,16 +1058,16 @@ istinterval(char *i_string,
  *	   the Wisconsin benchmark with Illustra whose TimeNow() shows current
  *	   time with precision up to microsecs.)			  - ay 3/95
  */
-text		   *
+text	   *
 timeofday(void)
 {
 
-	struct timeval	tp;
+	struct timeval tp;
 	struct timezone tpz;
-	char			templ[500];
-	char			buf[500];
-	text		   *tm;
-	int				len = 0;
+	char		templ[500];
+	char		buf[500];
+	text	   *tm;
+	int			len = 0;
 
 	gettimeofday(&tp, &tpz);
 	strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%d %Y %Z",

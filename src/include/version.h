@@ -4,7 +4,7 @@
  *	  this file contains the interface to version.c.
  *	  Also some parameters.
  *
- * $Id: version.h,v 1.3 1997/09/07 04:55:43 momjian Exp $
+ * $Id: version.h,v 1.4 1997/09/08 02:33:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -12,10 +12,10 @@
 #define VERSION_H
 
 void
-				ValidatePgVersion(const char *path, char **reason_p);
+			ValidatePgVersion(const char *path, char **reason_p);
 
 void
-				SetPgVersion(const char *path, char **reason_p);
+			SetPgVersion(const char *path, char **reason_p);
 
 #define PG_RELEASE		6
 #define PG_VERSION		1

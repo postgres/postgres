@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.4 1997/09/07 04:53:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.5 1997/09/08 02:31:14 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -67,11 +67,11 @@ op_class(Oid opno, int32 opclass, Oid amopid)
  *		return the "attname" field from the attribute relation.
  *
  */
-char		   *
+char	   *
 get_attname(Oid relid, AttrNumber attnum)
 {
 	FormData_pg_attribute att_tup;
-	char		   *retval;
+	char	   *retval;
 
 	if (SearchSysCacheStruct(ATTNUM,
 							 (char *) &att_tup,
@@ -137,8 +137,8 @@ get_atttype(Oid relid, AttrNumber attnum)
 bool
 get_attisset(Oid relid, char *attname)
 {
-	HeapTuple		htup;
-	AttrNumber		attno;
+	HeapTuple	htup;
+	AttrNumber	attno;
 	AttributeTupleForm att_tup;
 
 	attno = get_attnum(relid, attname);
@@ -192,7 +192,7 @@ get_opcode(Oid opno)
  *
  * Note: return the struct so that it gets copied.
  */
-char		   *
+char	   *
 get_opname(Oid opno)
 {
 	FormData_pg_operator optup;
@@ -284,7 +284,7 @@ get_commutator(Oid opno)
 HeapTuple
 get_operator_tuple(Oid opno)
 {
-	HeapTuple		optup;
+	HeapTuple	optup;
 
 	if ((optup = SearchSysCacheTuple(OPROID,
 									 ObjectIdGetDatum(opno),
@@ -378,7 +378,7 @@ get_relnatts(Oid relid)
  *		Returns the name of a given relation.
  *
  */
-char		   *
+char	   *
 get_rel_name(Oid relid)
 {
 	FormData_pg_class reltup;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.22 1997/09/07 04:37:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.23 1997/09/08 02:19:47 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -53,9 +53,9 @@ ComputeDataSize(TupleDesc tupleDesc,
 				Datum value[],
 				char nulls[])
 {
-	uint32			data_length;
-	int				i;
-	int				numberOfAttributes = tupleDesc->natts;
+	uint32		data_length;
+	int			i;
+	int			numberOfAttributes = tupleDesc->natts;
 	AttributeTupleForm *att = tupleDesc->attrs;
 
 	for (data_length = 0, i = 0; i < numberOfAttributes; i++)
@@ -65,41 +65,41 @@ ComputeDataSize(TupleDesc tupleDesc,
 
 		switch (att[i]->attlen)
 		{
-		case -1:
+			case -1:
 
-			/*
-			 * This is the size of the disk representation and so must
-			 * include the additional sizeof long.
-			 */
-			if (att[i]->attalign == 'd')
-			{
-				data_length = DOUBLEALIGN(data_length)
-					+ VARSIZE(DatumGetPointer(value[i]));
-			}
-			else
-			{
-				data_length = INTALIGN(data_length)
-					+ VARSIZE(DatumGetPointer(value[i]));
-			}
-			break;
-		case sizeof(char):
-			data_length++;
-			break;
-		case sizeof(short):
-			data_length = SHORTALIGN(data_length + sizeof(short));
-			break;
-		case sizeof(int32):
-			data_length = INTALIGN(data_length + sizeof(int32));
-			break;
-		default:
-			if (att[i]->attlen < sizeof(int32))
-				elog(WARN, "ComputeDataSize: attribute %d has len %d",
-					 i, att[i]->attlen);
-			if (att[i]->attalign == 'd')
-				data_length = DOUBLEALIGN(data_length) + att[i]->attlen;
-			else
-				data_length = LONGALIGN(data_length) + att[i]->attlen;
-			break;
+				/*
+				 * This is the size of the disk representation and so must
+				 * include the additional sizeof long.
+				 */
+				if (att[i]->attalign == 'd')
+				{
+					data_length = DOUBLEALIGN(data_length)
+						+ VARSIZE(DatumGetPointer(value[i]));
+				}
+				else
+				{
+					data_length = INTALIGN(data_length)
+						+ VARSIZE(DatumGetPointer(value[i]));
+				}
+				break;
+			case sizeof(char):
+				data_length++;
+				break;
+			case sizeof(short):
+				data_length = SHORTALIGN(data_length + sizeof(short));
+				break;
+			case sizeof(int32):
+				data_length = INTALIGN(data_length + sizeof(int32));
+				break;
+			default:
+				if (att[i]->attlen < sizeof(int32))
+					elog(WARN, "ComputeDataSize: attribute %d has len %d",
+						 i, att[i]->attlen);
+				if (att[i]->attalign == 'd')
+					data_length = DOUBLEALIGN(data_length) + att[i]->attlen;
+				else
+					data_length = LONGALIGN(data_length) + att[i]->attlen;
+				break;
 		}
 	}
 
@@ -118,11 +118,11 @@ DataFill(char *data,
 		 char *infomask,
 		 bits8 * bit)
 {
-	bits8		   *bitP = 0;
-	int				bitmask = 0;
-	uint32			data_length;
-	int				i;
-	int				numberOfAttributes = tupleDesc->natts;
+	bits8	   *bitP = 0;
+	int			bitmask = 0;
+	uint32		data_length;
+	int			i;
+	int			numberOfAttributes = tupleDesc->natts;
 	AttributeTupleForm *att = tupleDesc->attrs;
 
 	if (bit != NULL)
@@ -159,58 +159,58 @@ DataFill(char *data,
 
 		switch (att[i]->attlen)
 		{
-		case -1:
-			*infomask |= HEAP_HASVARLENA;
-			if (att[i]->attalign == 'd')
-			{
-				data = (char *) DOUBLEALIGN(data);
-			}
-			else
-			{
+			case -1:
+				*infomask |= HEAP_HASVARLENA;
+				if (att[i]->attalign == 'd')
+				{
+					data = (char *) DOUBLEALIGN(data);
+				}
+				else
+				{
+					data = (char *) INTALIGN(data);
+				}
+				data_length = VARSIZE(DatumGetPointer(value[i]));
+				memmove(data, DatumGetPointer(value[i]), data_length);
+				data += data_length;
+				break;
+			case sizeof(char):
+				*data = att[i]->attbyval ?
+					DatumGetChar(value[i]) : *((char *) value[i]);
+				data += sizeof(char);
+				break;
+			case sizeof(int16):
+				data = (char *) SHORTALIGN(data);
+				*(short *) data = (att[i]->attbyval ?
+								   DatumGetInt16(value[i]) :
+								   *((short *) value[i]));
+				data += sizeof(short);
+				break;
+			case sizeof(int32):
 				data = (char *) INTALIGN(data);
-			}
-			data_length = VARSIZE(DatumGetPointer(value[i]));
-			memmove(data, DatumGetPointer(value[i]), data_length);
-			data += data_length;
-			break;
-		case sizeof(char):
-			*data = att[i]->attbyval ?
-				DatumGetChar(value[i]) : *((char *) value[i]);
-			data += sizeof(char);
-			break;
-		case sizeof(int16):
-			data = (char *) SHORTALIGN(data);
-			*(short *) data = (att[i]->attbyval ?
-							   DatumGetInt16(value[i]) :
-							   *((short *) value[i]));
-			data += sizeof(short);
-			break;
-		case sizeof(int32):
-			data = (char *) INTALIGN(data);
-			*(int32 *) data = (att[i]->attbyval ?
-							   DatumGetInt32(value[i]) :
-							   *((int32 *) value[i]));
-			data += sizeof(int32);
-			break;
-		default:
-			if (att[i]->attlen < sizeof(int32))
-				elog(WARN, "DataFill: attribute %d has len %d",
-					 i, att[i]->attlen);
-			if (att[i]->attalign == 'd')
-			{
-				data = (char *) DOUBLEALIGN(data);
-				memmove(data, DatumGetPointer(value[i]),
-						att[i]->attlen);
-				data += att[i]->attlen;
-			}
-			else
-			{
-				data = (char *) LONGALIGN(data);
-				memmove(data, DatumGetPointer(value[i]),
-						att[i]->attlen);
-				data += att[i]->attlen;
-			}
-			break;
+				*(int32 *) data = (att[i]->attbyval ?
+								   DatumGetInt32(value[i]) :
+								   *((int32 *) value[i]));
+				data += sizeof(int32);
+				break;
+			default:
+				if (att[i]->attlen < sizeof(int32))
+					elog(WARN, "DataFill: attribute %d has len %d",
+						 i, att[i]->attlen);
+				if (att[i]->attalign == 'd')
+				{
+					data = (char *) DOUBLEALIGN(data);
+					memmove(data, DatumGetPointer(value[i]),
+							att[i]->attlen);
+					data += att[i]->attlen;
+				}
+				else
+				{
+					data = (char *) LONGALIGN(data);
+					memmove(data, DatumGetPointer(value[i]),
+							att[i]->attlen);
+					data += att[i]->attlen;
+				}
+				break;
 		}
 	}
 }
@@ -240,24 +240,24 @@ heap_attisnull(HeapTuple tup, int attnum)
 	else
 		switch (attnum)
 		{
-		case SelfItemPointerAttributeNumber:
-		case ObjectIdAttributeNumber:
-		case MinTransactionIdAttributeNumber:
-		case MinCommandIdAttributeNumber:
-		case MaxTransactionIdAttributeNumber:
-		case MaxCommandIdAttributeNumber:
-		case ChainItemPointerAttributeNumber:
-		case AnchorItemPointerAttributeNumber:
-		case MinAbsoluteTimeAttributeNumber:
-		case MaxAbsoluteTimeAttributeNumber:
-		case VersionTypeAttributeNumber:
-			break;
+			case SelfItemPointerAttributeNumber:
+			case ObjectIdAttributeNumber:
+			case MinTransactionIdAttributeNumber:
+			case MinCommandIdAttributeNumber:
+			case MaxTransactionIdAttributeNumber:
+			case MaxCommandIdAttributeNumber:
+			case ChainItemPointerAttributeNumber:
+			case AnchorItemPointerAttributeNumber:
+			case MinAbsoluteTimeAttributeNumber:
+			case MaxAbsoluteTimeAttributeNumber:
+			case VersionTypeAttributeNumber:
+				break;
 
-		case 0:
-			elog(WARN, "heap_attisnull: zero attnum disallowed");
+			case 0:
+				elog(WARN, "heap_attisnull: zero attnum disallowed");
 
-		default:
-			elog(WARN, "heap_attisnull: undefined negative attnum");
+			default:
+				elog(WARN, "heap_attisnull: undefined negative attnum");
 		}
 
 	return (0);
@@ -277,38 +277,38 @@ heap_attisnull(HeapTuple tup, int attnum)
 int
 heap_sysattrlen(AttrNumber attno)
 {
-	HeapTupleData  *f = NULL;
+	HeapTupleData *f = NULL;
 
 	switch (attno)
 	{
-	case SelfItemPointerAttributeNumber:
-		return sizeof f->t_ctid;
-	case ObjectIdAttributeNumber:
-		return sizeof f->t_oid;
-	case MinTransactionIdAttributeNumber:
-		return sizeof f->t_xmin;
-	case MinCommandIdAttributeNumber:
-		return sizeof f->t_cmin;
-	case MaxTransactionIdAttributeNumber:
-		return sizeof f->t_xmax;
-	case MaxCommandIdAttributeNumber:
-		return sizeof f->t_cmax;
-	case ChainItemPointerAttributeNumber:
-		return sizeof f->t_chain;
-	case MinAbsoluteTimeAttributeNumber:
-		return sizeof f->t_tmin;
-	case MaxAbsoluteTimeAttributeNumber:
-		return sizeof f->t_tmax;
-	case VersionTypeAttributeNumber:
-		return sizeof f->t_vtype;
+		case SelfItemPointerAttributeNumber:
+			return sizeof f->t_ctid;
+		case ObjectIdAttributeNumber:
+			return sizeof f->t_oid;
+		case MinTransactionIdAttributeNumber:
+			return sizeof f->t_xmin;
+		case MinCommandIdAttributeNumber:
+			return sizeof f->t_cmin;
+		case MaxTransactionIdAttributeNumber:
+			return sizeof f->t_xmax;
+		case MaxCommandIdAttributeNumber:
+			return sizeof f->t_cmax;
+		case ChainItemPointerAttributeNumber:
+			return sizeof f->t_chain;
+		case MinAbsoluteTimeAttributeNumber:
+			return sizeof f->t_tmin;
+		case MaxAbsoluteTimeAttributeNumber:
+			return sizeof f->t_tmax;
+		case VersionTypeAttributeNumber:
+			return sizeof f->t_vtype;
 
-	case AnchorItemPointerAttributeNumber:
-		elog(WARN, "heap_sysattrlen: field t_anchor does not exist!");
-		return 0;
+		case AnchorItemPointerAttributeNumber:
+			elog(WARN, "heap_sysattrlen: field t_anchor does not exist!");
+			return 0;
 
-	default:
-		elog(WARN, "sysattrlen: System attribute number %d unknown.", attno);
-		return 0;
+		default:
+			elog(WARN, "sysattrlen: System attribute number %d unknown.", attno);
+			return 0;
 	}
 }
 
@@ -321,48 +321,48 @@ heap_sysattrlen(AttrNumber attno)
 bool
 heap_sysattrbyval(AttrNumber attno)
 {
-	bool			byval;
+	bool		byval;
 
 	switch (attno)
 	{
-	case SelfItemPointerAttributeNumber:
-		byval = false;
-		break;
-	case ObjectIdAttributeNumber:
-		byval = true;
-		break;
-	case MinTransactionIdAttributeNumber:
-		byval = true;
-		break;
-	case MinCommandIdAttributeNumber:
-		byval = true;
-		break;
-	case MaxTransactionIdAttributeNumber:
-		byval = true;
-		break;
-	case MaxCommandIdAttributeNumber:
-		byval = true;
-		break;
-	case ChainItemPointerAttributeNumber:
-		byval = false;
-		break;
-	case AnchorItemPointerAttributeNumber:
-		byval = false;
-		break;
-	case MinAbsoluteTimeAttributeNumber:
-		byval = true;
-		break;
-	case MaxAbsoluteTimeAttributeNumber:
-		byval = true;
-		break;
-	case VersionTypeAttributeNumber:
-		byval = true;
-		break;
-	default:
-		byval = true;
-		elog(WARN, "sysattrbyval: System attribute number %d unknown.",
-			 attno);
-		break;
+		case SelfItemPointerAttributeNumber:
+			byval = false;
+			break;
+		case ObjectIdAttributeNumber:
+			byval = true;
+			break;
+		case MinTransactionIdAttributeNumber:
+			byval = true;
+			break;
+		case MinCommandIdAttributeNumber:
+			byval = true;
+			break;
+		case MaxTransactionIdAttributeNumber:
+			byval = true;
+			break;
+		case MaxCommandIdAttributeNumber:
+			byval = true;
+			break;
+		case ChainItemPointerAttributeNumber:
+			byval = false;
+			break;
+		case AnchorItemPointerAttributeNumber:
+			byval = false;
+			break;
+		case MinAbsoluteTimeAttributeNumber:
+			byval = true;
+			break;
+		case MaxAbsoluteTimeAttributeNumber:
+			byval = true;
+			break;
+		case VersionTypeAttributeNumber:
+			byval = true;
+			break;
+		default:
+			byval = true;
+			elog(WARN, "sysattrbyval: System attribute number %d unknown.",
+				 attno);
+			break;
 	}
 
 	return byval;
@@ -372,57 +372,57 @@ heap_sysattrbyval(AttrNumber attno)
  *		heap_getsysattr
  * ----------------
  */
-char		   *
+char	   *
 heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 {
 	switch (attnum)
 	{
-		case SelfItemPointerAttributeNumber:
-		return ((char *) &tup->t_ctid);
-	case ObjectIdAttributeNumber:
-		return ((char *) (long) tup->t_oid);
-	case MinTransactionIdAttributeNumber:
-		return ((char *) (long) tup->t_xmin);
-	case MinCommandIdAttributeNumber:
-		return ((char *) (long) tup->t_cmin);
-	case MaxTransactionIdAttributeNumber:
-		return ((char *) (long) tup->t_xmax);
-	case MaxCommandIdAttributeNumber:
-		return ((char *) (long) tup->t_cmax);
-	case ChainItemPointerAttributeNumber:
-		return ((char *) &tup->t_chain);
-	case AnchorItemPointerAttributeNumber:
-		elog(WARN, "heap_getsysattr: t_anchor does not exist!");
-		break;
+			case SelfItemPointerAttributeNumber:
+			return ((char *) &tup->t_ctid);
+		case ObjectIdAttributeNumber:
+			return ((char *) (long) tup->t_oid);
+		case MinTransactionIdAttributeNumber:
+			return ((char *) (long) tup->t_xmin);
+		case MinCommandIdAttributeNumber:
+			return ((char *) (long) tup->t_cmin);
+		case MaxTransactionIdAttributeNumber:
+			return ((char *) (long) tup->t_xmax);
+		case MaxCommandIdAttributeNumber:
+			return ((char *) (long) tup->t_cmax);
+		case ChainItemPointerAttributeNumber:
+			return ((char *) &tup->t_chain);
+		case AnchorItemPointerAttributeNumber:
+			elog(WARN, "heap_getsysattr: t_anchor does not exist!");
+			break;
 
-		/*
-		 * For tmin and tmax, we need to do some extra work.  These don't
-		 * get filled in until the vacuum cleaner runs (or we manage to
-		 * flush a page after setting the value correctly below).  If the
-		 * vacuum cleaner hasn't run yet, then the times stored in the
-		 * tuple are wrong, and we need to look up the commit time of the
-		 * transaction. We cache this value in the tuple to avoid doing
-		 * the work more than once.
-		 */
+			/*
+			 * For tmin and tmax, we need to do some extra work.  These
+			 * don't get filled in until the vacuum cleaner runs (or we
+			 * manage to flush a page after setting the value correctly
+			 * below).	If the vacuum cleaner hasn't run yet, then the
+			 * times stored in the tuple are wrong, and we need to look up
+			 * the commit time of the transaction. We cache this value in
+			 * the tuple to avoid doing the work more than once.
+			 */
 
-	case MinAbsoluteTimeAttributeNumber:
-		if (!AbsoluteTimeIsBackwardCompatiblyValid(tup->t_tmin) &&
-			TransactionIdDidCommit(tup->t_xmin))
-			tup->t_tmin = TransactionIdGetCommitTime(tup->t_xmin);
-		return ((char *) (long) tup->t_tmin);
-	case MaxAbsoluteTimeAttributeNumber:
-		if (!AbsoluteTimeIsBackwardCompatiblyReal(tup->t_tmax))
-		{
-			if (TransactionIdDidCommit(tup->t_xmax))
-				tup->t_tmax = TransactionIdGetCommitTime(tup->t_xmax);
-			else
-				tup->t_tmax = CURRENT_ABSTIME;
-		}
-		return ((char *) (long) tup->t_tmax);
-	case VersionTypeAttributeNumber:
-		return ((char *) (long) tup->t_vtype);
-	default:
-		elog(WARN, "heap_getsysattr: undefined attnum %d", attnum);
+		case MinAbsoluteTimeAttributeNumber:
+			if (!AbsoluteTimeIsBackwardCompatiblyValid(tup->t_tmin) &&
+				TransactionIdDidCommit(tup->t_xmin))
+				tup->t_tmin = TransactionIdGetCommitTime(tup->t_xmin);
+			return ((char *) (long) tup->t_tmin);
+		case MaxAbsoluteTimeAttributeNumber:
+			if (!AbsoluteTimeIsBackwardCompatiblyReal(tup->t_tmax))
+			{
+				if (TransactionIdDidCommit(tup->t_xmax))
+					tup->t_tmax = TransactionIdGetCommitTime(tup->t_xmax);
+				else
+					tup->t_tmax = CURRENT_ABSTIME;
+			}
+			return ((char *) (long) tup->t_tmax);
+		case VersionTypeAttributeNumber:
+			return ((char *) (long) tup->t_vtype);
+		default:
+			elog(WARN, "heap_getsysattr: undefined attnum %d", attnum);
 	}
 	return (NULL);
 }
@@ -444,15 +444,15 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
  *		the same attribute descriptor will go much quicker. -cim 5/4/91
  * ----------------
  */
-char		   *
+char	   *
 fastgetattr(HeapTuple tup,
 			int attnum,
 			TupleDesc tupleDesc,
 			bool * isnull)
 {
-	char		   *tp;			/* ptr to att in tuple */
-	bits8		   *bp = NULL;	/* ptr to att in tuple */
-	int				slow;		/* do we have to walk nulls? */
+	char	   *tp;				/* ptr to att in tuple */
+	bits8	   *bp = NULL;		/* ptr to att in tuple */
+	int			slow;			/* do we have to walk nulls? */
 	AttributeTupleForm *att = tupleDesc->attrs;
 
 	/* ----------------
@@ -526,7 +526,7 @@ fastgetattr(HeapTuple tup,
 		 */
 
 		{
-			register int	i = 0;		/* current offset in bp */
+			register int i = 0; /* current offset in bp */
 
 			for (i = 0; i < attnum && !slow; i++)
 			{
@@ -554,7 +554,7 @@ fastgetattr(HeapTuple tup,
 		}
 		else if (!HeapTupleAllFixed(tup))
 		{
-			register int	j = 0;
+			register int j = 0;
 
 			for (j = 0; j < attnum && !slow; j++)
 				if (att[j]->attlen < 1)
@@ -569,8 +569,8 @@ fastgetattr(HeapTuple tup,
 	 */
 	if (!slow)
 	{
-		register int	j = 1;
-		register long	off;
+		register int j = 1;
+		register long off;
 
 		/*
 		 * need to set cache for some atts
@@ -587,30 +587,30 @@ fastgetattr(HeapTuple tup,
 		{
 			switch (att[j]->attlen)
 			{
-			case -1:
-				off = (att[j]->attalign == 'd') ?
-					DOUBLEALIGN(off) : INTALIGN(off);
-				break;
-			case sizeof(char):
-				break;
-			case sizeof(short):
-				off = SHORTALIGN(off);
-				break;
-			case sizeof(int32):
-				off = INTALIGN(off);
-				break;
-			default:
-				if (att[j]->attlen < sizeof(int32))
-				{
-					elog(WARN,
-						 "fastgetattr: attribute %d has len %d",
-						 j, att[j]->attlen);
-				}
-				if (att[j]->attalign == 'd')
-					off = DOUBLEALIGN(off);
-				else
-					off = LONGALIGN(off);
-				break;
+				case -1:
+					off = (att[j]->attalign == 'd') ?
+						DOUBLEALIGN(off) : INTALIGN(off);
+					break;
+				case sizeof(char):
+					break;
+				case sizeof(short):
+					off = SHORTALIGN(off);
+					break;
+				case sizeof(int32):
+					off = INTALIGN(off);
+					break;
+				default:
+					if (att[j]->attlen < sizeof(int32))
+					{
+						elog(WARN,
+							 "fastgetattr: attribute %d has len %d",
+							 j, att[j]->attlen);
+					}
+					if (att[j]->attalign == 'd')
+						off = DOUBLEALIGN(off);
+					else
+						off = LONGALIGN(off);
+					break;
 			}
 
 			att[j]->attcacheoff = off;
@@ -622,9 +622,9 @@ fastgetattr(HeapTuple tup,
 	}
 	else
 	{
-		register bool	usecache = true;
-		register int	off = 0;
-		register int	i;
+		register bool usecache = true;
+		register int off = 0;
+		register int i;
 
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.
@@ -648,28 +648,28 @@ fastgetattr(HeapTuple tup,
 			}
 			switch (att[i]->attlen)
 			{
-			case -1:
-				off = (att[i]->attalign == 'd') ?
-					DOUBLEALIGN(off) : INTALIGN(off);
-				break;
-			case sizeof(char):
-				break;
-			case sizeof(short):
-				off = SHORTALIGN(off);
-				break;
-			case sizeof(int32):
-				off = INTALIGN(off);
-				break;
-			default:
-				if (att[i]->attlen < sizeof(int32))
-					elog(WARN,
-						 "fastgetattr2: attribute %d has len %d",
-						 i, att[i]->attlen);
-				if (att[i]->attalign == 'd')
-					off = DOUBLEALIGN(off);
-				else
-					off = LONGALIGN(off);
-				break;
+				case -1:
+					off = (att[i]->attalign == 'd') ?
+						DOUBLEALIGN(off) : INTALIGN(off);
+					break;
+				case sizeof(char):
+					break;
+				case sizeof(short):
+					off = SHORTALIGN(off);
+					break;
+				case sizeof(int32):
+					off = INTALIGN(off);
+					break;
+				default:
+					if (att[i]->attlen < sizeof(int32))
+						elog(WARN,
+							 "fastgetattr2: attribute %d has len %d",
+							 i, att[i]->attlen);
+					if (att[i]->attalign == 'd')
+						off = DOUBLEALIGN(off);
+					else
+						off = LONGALIGN(off);
+					break;
 			}
 			if (usecache && att[i]->attcacheoff > 0)
 			{
@@ -687,47 +687,47 @@ fastgetattr(HeapTuple tup,
 
 			switch (att[i]->attlen)
 			{
-			case sizeof(char):
-				off++;
-				break;
-			case sizeof(int16):
-				off += sizeof(int16);
-				break;
-			case sizeof(int32):
-				off += sizeof(int32);
-				break;
-			case -1:
-				usecache = false;
-				off += VARSIZE(tp + off);
-				break;
-			default:
-				off += att[i]->attlen;
-				break;
+				case sizeof(char):
+					off++;
+					break;
+				case sizeof(int16):
+					off += sizeof(int16);
+					break;
+				case sizeof(int32):
+					off += sizeof(int32);
+					break;
+				case -1:
+					usecache = false;
+					off += VARSIZE(tp + off);
+					break;
+				default:
+					off += att[i]->attlen;
+					break;
 			}
 		}
 		switch (att[attnum]->attlen)
 		{
-		case -1:
-			off = (att[attnum]->attalign == 'd') ?
-				DOUBLEALIGN(off) : INTALIGN(off);
-			break;
-		case sizeof(char):
-			break;
-		case sizeof(short):
-			off = SHORTALIGN(off);
-			break;
-		case sizeof(int32):
-			off = INTALIGN(off);
-			break;
-		default:
-			if (att[attnum]->attlen < sizeof(int32))
-				elog(WARN, "fastgetattr3: attribute %d has len %d",
-					 attnum, att[attnum]->attlen);
-			if (att[attnum]->attalign == 'd')
-				off = DOUBLEALIGN(off);
-			else
-				off = LONGALIGN(off);
-			break;
+			case -1:
+				off = (att[attnum]->attalign == 'd') ?
+					DOUBLEALIGN(off) : INTALIGN(off);
+				break;
+			case sizeof(char):
+				break;
+			case sizeof(short):
+				off = SHORTALIGN(off);
+				break;
+			case sizeof(int32):
+				off = INTALIGN(off);
+				break;
+			default:
+				if (att[attnum]->attlen < sizeof(int32))
+					elog(WARN, "fastgetattr3: attribute %d has len %d",
+						 attnum, att[attnum]->attlen);
+				if (att[attnum]->attalign == 'd')
+					off = DOUBLEALIGN(off);
+				else
+					off = LONGALIGN(off);
+				break;
 		}
 		return ((char *) fetchatt(&(att[attnum]), tp + off));
 	}
@@ -742,7 +742,7 @@ fastgetattr(HeapTuple tup,
 HeapTuple
 heap_copytuple(HeapTuple tuple)
 {
-	HeapTuple		newTuple;
+	HeapTuple	newTuple;
 
 	if (!HeapTupleIsValid(tuple))
 		return (NULL);
@@ -772,15 +772,15 @@ heap_deformtuple(HeapTuple tuple,
 				 Datum values[],
 				 char nulls[])
 {
-	int				i;
-	int				natts;
+	int			i;
+	int			natts;
 
 	Assert(HeapTupleIsValid(tuple));
 
 	natts = tuple->t_natts;
 	for (i = 0; i < natts; i++)
 	{
-		bool			isnull;
+		bool		isnull;
 
 		values[i] = (Datum) heap_getattr(tuple,
 										 InvalidBuffer,
@@ -819,14 +819,14 @@ heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum value[],
 			   char nulls[])
 {
-	char		   *tp;			/* tuple pointer */
-	HeapTuple		tuple;		/* return tuple */
-	int				bitmaplen;
-	long			len;
-	int				hoff;
-	bool			hasnull = false;
-	int				i;
-	int				numberOfAttributes = tupleDescriptor->natts;
+	char	   *tp;				/* tuple pointer */
+	HeapTuple	tuple;			/* return tuple */
+	int			bitmaplen;
+	long		len;
+	int			hoff;
+	bool		hasnull = false;
+	int			i;
+	int			numberOfAttributes = tupleDescriptor->natts;
 
 	len = sizeof *tuple - sizeof tuple->t_bits;
 
@@ -885,14 +885,14 @@ heap_modifytuple(HeapTuple tuple,
 				 char replNull[],
 				 char repl[])
 {
-	int				attoff;
-	int				numberOfAttributes;
-	Datum		   *value;
-	char		   *nulls;
-	bool			isNull;
-	HeapTuple		newTuple;
-	int				madecopy;
-	uint8			infomask;
+	int			attoff;
+	int			numberOfAttributes;
+	Datum	   *value;
+	char	   *nulls;
+	bool		isNull;
+	HeapTuple	newTuple;
+	int			madecopy;
+	uint8		infomask;
 
 	/* ----------------
 	 *	sanity checks
@@ -936,7 +936,7 @@ heap_modifytuple(HeapTuple tuple,
 
 		if (repl[attoff] == ' ')
 		{
-			char		   *attr;
+			char	   *attr;
 
 			attr =
 				heap_getattr(tuple,
@@ -1001,10 +1001,10 @@ heap_addheader(uint32 natts,	/* max domain index */
 			   int structlen,	/* its length */
 			   char *structure) /* pointer to the struct */
 {
-	register char  *tp;			/* tuple data pointer */
-	HeapTuple		tup;
-	long			len;
-	int				hoff;
+	register char *tp;			/* tuple data pointer */
+	HeapTuple	tup;
+	long		len;
+	int			hoff;
 
 	AssertArg(natts > 0);
 

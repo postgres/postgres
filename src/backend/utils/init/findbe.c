@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.6 1997/09/07 04:53:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.7 1997/09/08 02:31:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,14 +43,14 @@
 int
 ValidateBackend(char *path)
 {
-	struct stat		buf;
-	uid_t			euid;
-	struct group   *gp;
-	struct passwd  *pwp;
-	int				i;
-	int				is_r = 0;
-	int				is_x = 0;
-	int				in_grp = 0;
+	struct stat buf;
+	uid_t		euid;
+	struct group *gp;
+	struct passwd *pwp;
+	int			i;
+	int			is_r = 0;
+	int			is_x = 0;
+	int			in_grp = 0;
 
 	/*
 	 * Ensure that the file exists and is a regular file.
@@ -153,12 +153,12 @@ ValidateBackend(char *path)
 int
 FindBackend(char *backend, char *argv0)
 {
-	char			buf[MAXPGPATH + 2];
-	char		   *p;
-	char		   *path,
-				   *startp,
-				   *endp;
-	int				pathlen;
+	char		buf[MAXPGPATH + 2];
+	char	   *p;
+	char	   *path,
+			   *startp,
+			   *endp;
+	int			pathlen;
 
 	/*
 	 * for the postmaster: First try: use the backend that's located in
@@ -222,20 +222,20 @@ FindBackend(char *backend, char *argv0)
 			strcat(buf, "/postgres");
 			switch (ValidateBackend(buf))
 			{
-			case 0:				/* found ok */
-				strncpy(backend, buf, MAXPGPATH);
-				if (DebugLvl)
-					fprintf(stderr, "FindBackend: found \"%s\" using PATH\n",
-							backend);
-				free(path);
-				return (0);
-			case -1:			/* wasn't even a candidate, keep looking */
-				break;
-			case -2:			/* found but disqualified */
-				fprintf(stderr, "FindBackend: could not read backend \"%s\"\n",
-						buf);
-				free(path);
-				return (-1);
+				case 0: /* found ok */
+					strncpy(backend, buf, MAXPGPATH);
+					if (DebugLvl)
+						fprintf(stderr, "FindBackend: found \"%s\" using PATH\n",
+								backend);
+					free(path);
+					return (0);
+				case -1:		/* wasn't even a candidate, keep looking */
+					break;
+				case -2:		/* found but disqualified */
+					fprintf(stderr, "FindBackend: could not read backend \"%s\"\n",
+							buf);
+					free(path);
+					return (-1);
 			}
 			if (!endp)			/* last one */
 				break;

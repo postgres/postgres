@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.3 1997/09/07 04:59:29 momjian Exp $
+ * $Id: dbcommands.h,v 1.4 1997/09/08 02:38:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #define SIGKILLDAEMON1	SIGINT
 #define SIGKILLDAEMON2	SIGTERM
 
-extern void		createdb(char *dbname);
-extern void		destroydb(char *dbname);
+extern void createdb(char *dbname);
+extern void destroydb(char *dbname);
 
 #endif							/* DBCOMMANDS_H */

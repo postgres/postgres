@@ -22,10 +22,10 @@
 
 struct rusage
 {
-	struct timeval	ru_utime;	/* user time used */
-	struct timeval	ru_stime;	/* system time used */
+	struct timeval ru_utime;	/* user time used */
+	struct timeval ru_stime;	/* system time used */
 };
 
-extern int		getrusage(int who, struct rusage * rusage);
+extern int	getrusage(int who, struct rusage * rusage);
 
 #endif							/* RUSAGESTUB_H */

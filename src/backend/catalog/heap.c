@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.25 1997/09/07 04:40:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.26 1997/09/08 02:21:37 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -61,17 +61,17 @@
 static void
 AddPgRelationTuple(Relation pg_class_desc,
 	   Relation new_rel_desc, Oid new_rel_oid, int arch, unsigned natts);
-static void		AddToTempRelList(Relation r);
-static void		DeletePgAttributeTuples(Relation rdesc);
-static void		DeletePgRelationTuple(Relation rdesc);
-static void		DeletePgTypeTuple(Relation rdesc);
-static int		RelationAlreadyExists(Relation pg_class_desc, char relname[]);
-static void		RelationRemoveIndexes(Relation relation);
-static void		RelationRemoveInheritance(Relation relation);
-static void		RemoveFromTempRelList(Relation r);
-static void		addNewRelationType(char *typeName, Oid new_rel_oid);
-static void		StoreConstraints(Relation rel);
-static void		RemoveConstraints(Relation rel);
+static void AddToTempRelList(Relation r);
+static void DeletePgAttributeTuples(Relation rdesc);
+static void DeletePgRelationTuple(Relation rdesc);
+static void DeletePgTypeTuple(Relation rdesc);
+static int	RelationAlreadyExists(Relation pg_class_desc, char relname[]);
+static void RelationRemoveIndexes(Relation relation);
+static void RelationRemoveInheritance(Relation relation);
+static void RemoveFromTempRelList(Relation r);
+static void addNewRelationType(char *typeName, Oid new_rel_oid);
+static void StoreConstraints(Relation rel);
+static void RemoveConstraints(Relation rel);
 
 
 /* ----------------------------------------------------------------
@@ -160,11 +160,11 @@ static AttributeTupleForm HeapAtt[] =
 */
 typedef struct tempRelList
 {
-	Relation	   *rels;		/* array of relation descriptors */
-	int				num;		/* number of temporary relations */
-	int				size;		/* size of space allocated for the rels
+	Relation   *rels;			/* array of relation descriptors */
+	int			num;			/* number of temporary relations */
+	int			size;			/* size of space allocated for the rels
 								 * array */
-}				TempRelList;
+}			TempRelList;
 
 #define TEMP_REL_LIST_SIZE	32
 
@@ -194,19 +194,19 @@ heap_creatr(char *name,
 			TupleDesc tupDesc)
 {
 	register unsigned i;
-	Oid				relid;
-	Relation		rdesc;
-	int				len;
-	bool			nailme = false;
-	char		   *relname = name;
-	char			tempname[40];
-	int				isTemp = 0;
-	int				natts = tupDesc->natts;
+	Oid			relid;
+	Relation	rdesc;
+	int			len;
+	bool		nailme = false;
+	char	   *relname = name;
+	char		tempname[40];
+	int			isTemp = 0;
+	int			natts = tupDesc->natts;
 
 /*	  AttributeTupleForm *att = tupDesc->attrs; */
 
 	extern GlobalMemory CacheCxt;
-	MemoryContext	oldcxt;
+	MemoryContext oldcxt;
 
 	/* ----------------
 	 *	sanity checks
@@ -425,9 +425,9 @@ heap_creatr(char *name,
 static void
 CheckAttributeNames(TupleDesc tupdesc)
 {
-	unsigned		i;
-	unsigned		j;
-	int				natts = tupdesc->natts;
+	unsigned	i;
+	unsigned	j;
+	int			natts = tupdesc->natts;
 
 	/* ----------------
 	 *	first check for collision with system attribute names
@@ -487,9 +487,9 @@ CheckAttributeNames(TupleDesc tupdesc)
 static int
 RelationAlreadyExists(Relation pg_class_desc, char relname[])
 {
-	ScanKeyData		key;
-	HeapScanDesc	pg_class_scan;
-	HeapTuple		tup;
+	ScanKeyData key;
+	HeapScanDesc pg_class_scan;
+	HeapTuple	tup;
 
 	/*
 	 * If this is not bootstrap (initdb) time, use the catalog index on
@@ -558,12 +558,12 @@ AddNewAttributeTuples(Oid new_rel_oid,
 					  TupleDesc tupdesc)
 {
 	AttributeTupleForm *dpp;
-	unsigned		i;
-	HeapTuple		tup;
-	Relation		rdesc;
-	bool			hasindex;
-	Relation		idescs[Num_pg_attr_indices];
-	int				natts = tupdesc->natts;
+	unsigned	i;
+	HeapTuple	tup;
+	Relation	rdesc;
+	bool		hasindex;
+	Relation	idescs[Num_pg_attr_indices];
+	int			natts = tupdesc->natts;
 
 	/* ----------------
 	 *	open pg_attribute
@@ -659,12 +659,12 @@ AddPgRelationTuple(Relation pg_class_desc,
 				   int arch,
 				   unsigned natts)
 {
-	Form_pg_class	new_rel_reltup;
-	HeapTuple		tup;
-	Relation		idescs[Num_pg_class_indices];
-	bool			isBootstrap;
-	extern bool		ItsSequenceCreation;		/* It's hack, I know... -
-												 * vadim 03/28/97	  */
+	Form_pg_class new_rel_reltup;
+	HeapTuple	tup;
+	Relation	idescs[Num_pg_class_indices];
+	bool		isBootstrap;
+	extern bool ItsSequenceCreation;	/* It's hack, I know... - vadim
+										 * 03/28/97		*/
 
 	/* ----------------
 	 *	first we munge some of the information in our
@@ -737,7 +737,7 @@ AddPgRelationTuple(Relation pg_class_desc,
 static void
 addNewRelationType(char *typeName, Oid new_rel_oid)
 {
-	Oid				new_type_oid;
+	Oid			new_type_oid;
 
 	/*
 	 * The sizes are set to oid size because it makes implementing sets
@@ -778,12 +778,12 @@ heap_create(char relname[],
 			unsigned smgr,
 			TupleDesc tupdesc)
 {
-	Relation		pg_class_desc;
-	Relation		new_rel_desc;
-	Oid				new_rel_oid;
+	Relation	pg_class_desc;
+	Relation	new_rel_desc;
+	Oid			new_rel_oid;
 
 /*	  NameData			  typeNameData; */
-	int				natts = tupdesc->natts;
+	int			natts = tupdesc->natts;
 
 	/* ----------------
 	 *	sanity checks
@@ -906,10 +906,10 @@ heap_create(char relname[],
 static void
 RelationRemoveInheritance(Relation relation)
 {
-	Relation		catalogRelation;
-	HeapTuple		tuple;
-	HeapScanDesc	scan;
-	ScanKeyData		entry;
+	Relation	catalogRelation;
+	HeapTuple	tuple;
+	HeapScanDesc scan;
+	ScanKeyData entry;
 
 	/* ----------------
 	 *	open pg_inherits
@@ -1010,10 +1010,10 @@ RelationRemoveInheritance(Relation relation)
 static void
 RelationRemoveIndexes(Relation relation)
 {
-	Relation		indexRelation;
-	HeapTuple		tuple;
-	HeapScanDesc	scan;
-	ScanKeyData		entry;
+	Relation	indexRelation;
+	HeapTuple	tuple;
+	HeapScanDesc scan;
+	ScanKeyData entry;
 
 	indexRelation = heap_openr(IndexRelationName);
 
@@ -1050,10 +1050,10 @@ RelationRemoveIndexes(Relation relation)
 static void
 DeletePgRelationTuple(Relation rdesc)
 {
-	Relation		pg_class_desc;
-	HeapScanDesc	pg_class_scan;
-	ScanKeyData		key;
-	HeapTuple		tup;
+	Relation	pg_class_desc;
+	HeapScanDesc pg_class_scan;
+	ScanKeyData key;
+	HeapTuple	tup;
 
 	/* ----------------
 	 *	open pg_class
@@ -1108,10 +1108,10 @@ DeletePgRelationTuple(Relation rdesc)
 static void
 DeletePgAttributeTuples(Relation rdesc)
 {
-	Relation		pg_attribute_desc;
-	HeapScanDesc	pg_attribute_scan;
-	ScanKeyData		key;
-	HeapTuple		tup;
+	Relation	pg_attribute_desc;
+	HeapScanDesc pg_attribute_scan;
+	ScanKeyData key;
+	HeapTuple	tup;
 
 	/* ----------------
 	 *	open pg_attribute
@@ -1178,15 +1178,15 @@ DeletePgAttributeTuples(Relation rdesc)
 static void
 DeletePgTypeTuple(Relation rdesc)
 {
-	Relation		pg_type_desc;
-	HeapScanDesc	pg_type_scan;
-	Relation		pg_attribute_desc;
-	HeapScanDesc	pg_attribute_scan;
-	ScanKeyData		key;
-	ScanKeyData		attkey;
-	HeapTuple		tup;
-	HeapTuple		atttup;
-	Oid				typoid;
+	Relation	pg_type_desc;
+	HeapScanDesc pg_type_scan;
+	Relation	pg_attribute_desc;
+	HeapScanDesc pg_attribute_scan;
+	ScanKeyData key;
+	ScanKeyData attkey;
+	HeapTuple	tup;
+	HeapTuple	atttup;
+	Oid			typoid;
 
 	/* ----------------
 	 *	open pg_type
@@ -1254,7 +1254,7 @@ DeletePgTypeTuple(Relation rdesc)
 
 	if (PointerIsValid(atttup))
 	{
-		Oid				relid = ((AttributeTupleForm) GETSTRUCT(atttup))->attrelid;
+		Oid			relid = ((AttributeTupleForm) GETSTRUCT(atttup))->attrelid;
 
 		heap_endscan(pg_type_scan);
 		heap_close(pg_type_desc);
@@ -1287,8 +1287,8 @@ DeletePgTypeTuple(Relation rdesc)
 void
 heap_destroy(char *relname)
 {
-	Relation		rdesc;
-	Oid				rid;
+	Relation	rdesc;
+	Oid			rid;
 
 	/* ----------------
 	 *	first open the relation.  if the relation does exist,
@@ -1458,7 +1458,7 @@ InitTempRelList(void)
 static void
 RemoveFromTempRelList(Relation r)
 {
-	int				i;
+	int			i;
 
 	if (!tempRels)
 		return;
@@ -1500,8 +1500,8 @@ AddToTempRelList(Relation r)
 void
 DestroyTempRels(void)
 {
-	int				i;
-	Relation		rdesc;
+	int			i;
+	Relation	rdesc;
 
 	if (!tempRels)
 		return;
@@ -1518,30 +1518,30 @@ DestroyTempRels(void)
 	tempRels = NULL;
 }
 
-extern List    *flatten_tlist(List * tlist);
-extern List    *
+extern List *flatten_tlist(List * tlist);
+extern List *
 pg_plan(char *query_string, Oid * typev, int nargs,
 		QueryTreeList ** queryListP, CommandDest dest);
 
 static void
 StoreAttrDefault(Relation rel, AttrDefault * attrdef)
 {
-	char			str[MAX_PARSE_BUFFER];
-	char			cast[2 * NAMEDATALEN] = {0};
+	char		str[MAX_PARSE_BUFFER];
+	char		cast[2 * NAMEDATALEN] = {0};
 	AttributeTupleForm atp = rel->rd_att->attrs[attrdef->adnum - 1];
-	QueryTreeList  *queryTree_list;
-	Query		   *query;
-	List		   *planTree_list;
-	TargetEntry    *te;
-	Resdom		   *resdom;
-	Node		   *expr;
-	char		   *adbin;
-	MemoryContext	oldcxt;
-	Relation		adrel;
-	Relation		idescs[Num_pg_attrdef_indices];
-	HeapTuple		tuple;
-	Datum			values[4];
-	char			nulls[4] = {' ', ' ', ' ', ' '};
+	QueryTreeList *queryTree_list;
+	Query	   *query;
+	List	   *planTree_list;
+	TargetEntry *te;
+	Resdom	   *resdom;
+	Node	   *expr;
+	char	   *adbin;
+	MemoryContext oldcxt;
+	Relation	adrel;
+	Relation	idescs[Num_pg_attrdef_indices];
+	HeapTuple	tuple;
+	Datum		values[4];
+	char		nulls[4] = {' ', ' ', ' ', ' '};
 	extern GlobalMemory CacheCxt;
 
 start:;
@@ -1600,19 +1600,19 @@ start:;
 static void
 StoreRelCheck(Relation rel, ConstrCheck * check)
 {
-	char			str[MAX_PARSE_BUFFER];
-	QueryTreeList  *queryTree_list;
-	Query		   *query;
-	List		   *planTree_list;
-	Plan		   *plan;
-	List		   *qual;
-	char		   *ccbin;
-	MemoryContext	oldcxt;
-	Relation		rcrel;
-	Relation		idescs[Num_pg_relcheck_indices];
-	HeapTuple		tuple;
-	Datum			values[4];
-	char			nulls[4] = {' ', ' ', ' ', ' '};
+	char		str[MAX_PARSE_BUFFER];
+	QueryTreeList *queryTree_list;
+	Query	   *query;
+	List	   *planTree_list;
+	Plan	   *plan;
+	List	   *qual;
+	char	   *ccbin;
+	MemoryContext oldcxt;
+	Relation	rcrel;
+	Relation	idescs[Num_pg_relcheck_indices];
+	HeapTuple	tuple;
+	Datum		values[4];
+	char		nulls[4] = {' ', ' ', ' ', ' '};
 	extern GlobalMemory CacheCxt;
 
 	sprintf(str, "select 1 from %.*s where %s",
@@ -1659,8 +1659,8 @@ StoreRelCheck(Relation rel, ConstrCheck * check)
 static void
 StoreConstraints(Relation rel)
 {
-	TupleConstr    *constr = rel->rd_att->constr;
-	int				i;
+	TupleConstr *constr = rel->rd_att->constr;
+	int			i;
 
 	if (!constr)
 		return;
@@ -1683,10 +1683,10 @@ StoreConstraints(Relation rel)
 static void
 RemoveAttrDefault(Relation rel)
 {
-	Relation		adrel;
-	HeapScanDesc	adscan;
-	ScanKeyData		key;
-	HeapTuple		tup;
+	Relation	adrel;
+	HeapScanDesc adscan;
+	ScanKeyData key;
+	HeapTuple	tup;
 
 	adrel = heap_openr(AttrDefaultRelationName);
 
@@ -1710,10 +1710,10 @@ RemoveAttrDefault(Relation rel)
 static void
 RemoveRelCheck(Relation rel)
 {
-	Relation		rcrel;
-	HeapScanDesc	rcscan;
-	ScanKeyData		key;
-	HeapTuple		tup;
+	Relation	rcrel;
+	HeapScanDesc rcscan;
+	ScanKeyData key;
+	HeapTuple	tup;
 
 	rcrel = heap_openr(RelCheckRelationName);
 
@@ -1737,7 +1737,7 @@ RemoveRelCheck(Relation rel)
 static void
 RemoveConstraints(Relation rel)
 {
-	TupleConstr    *constr = rel->rd_att->constr;
+	TupleConstr *constr = rel->rd_att->constr;
 
 	if (!constr)
 		return;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.19 1997/09/07 04:49:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.20 1997/09/08 02:29:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,17 +43,17 @@
 
 typedef struct _MdfdVec
 {
-	int				mdfd_vfd;	/* fd number in vfd pool */
-	uint16			mdfd_flags; /* clean, dirty, free */
-	int				mdfd_lstbcnt;		/* most recent block count */
-	int				mdfd_nextFree;		/* next free vector */
+	int			mdfd_vfd;		/* fd number in vfd pool */
+	uint16		mdfd_flags;		/* clean, dirty, free */
+	int			mdfd_lstbcnt;	/* most recent block count */
+	int			mdfd_nextFree;	/* next free vector */
 	struct _MdfdVec *mdfd_chain;/* for large relations */
-}				MdfdVec;
+}			MdfdVec;
 
-static int		Nfds = 100;
+static int	Nfds = 100;
 static MdfdVec *Md_fdvec = (MdfdVec *) NULL;
-static int		Md_Free = -1;
-static int		CurFd = 0;
+static int	Md_Free = -1;
+static int	CurFd = 0;
 static MemoryContext MdCxt;
 
 #define MDFD_DIRTY		(uint16) 0x01
@@ -64,8 +64,8 @@ static MemoryContext MdCxt;
 /* routines declared here */
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
 static MdfdVec *_mdfd_getseg(Relation reln, int blkno, int oflag);
-static int		_fdvec_alloc(void);
-static void		_fdvec_free(int);
+static int	_fdvec_alloc(void);
+static void _fdvec_free(int);
 static BlockNumber _mdnblocks(File file, Size blcksz);
 
 /*
@@ -82,8 +82,8 @@ static BlockNumber _mdnblocks(File file, Size blcksz);
 int
 mdinit()
 {
-	MemoryContext	oldcxt;
-	int				i;
+	MemoryContext oldcxt;
+	int			i;
 
 	MdCxt = (MemoryContext) CreateGlobalMemory("MdSmgr");
 	if (MdCxt == (MemoryContext) NULL)
@@ -113,9 +113,9 @@ mdinit()
 int
 mdcreate(Relation reln)
 {
-	int				fd,
-					vfd;
-	char		   *path;
+	int			fd,
+				vfd;
+	char	   *path;
 
 	path = relpath(&(reln->rd_rel->relname.data[0]));
 	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
@@ -158,13 +158,13 @@ mdcreate(Relation reln)
 int
 mdunlink(Relation reln)
 {
-	int				fd;
-	int				i;
-	MdfdVec		   *v,
-				   *ov;
-	MemoryContext	oldcxt;
-	char			fname[NAMEDATALEN];
-	char			tname[NAMEDATALEN + 10];	/* leave room for overflow
+	int			fd;
+	int			i;
+	MdfdVec    *v,
+			   *ov;
+	MemoryContext oldcxt;
+	char		fname[NAMEDATALEN];
+	char		tname[NAMEDATALEN + 10];		/* leave room for overflow
 												 * suffixes */
 
 	/*
@@ -215,9 +215,9 @@ mdunlink(Relation reln)
 int
 mdextend(Relation reln, char *buffer)
 {
-	long			pos;
-	int				nblocks;
-	MdfdVec		   *v;
+	long		pos;
+	int			nblocks;
+	MdfdVec    *v;
 
 	nblocks = mdnblocks(reln);
 	v = _mdfd_getseg(reln, nblocks, O_CREAT);
@@ -250,9 +250,9 @@ mdextend(Relation reln, char *buffer)
 int
 mdopen(Relation reln)
 {
-	char		   *path;
-	int				fd;
-	int				vfd;
+	char	   *path;
+	int			fd;
+	int			vfd;
 
 	path = relpath(&(reln->rd_rel->relname.data[0]));
 
@@ -290,10 +290,10 @@ mdopen(Relation reln)
 int
 mdclose(Relation reln)
 {
-	int				fd;
-	MdfdVec		   *v,
-				   *ov;
-	MemoryContext	oldcxt;
+	int			fd;
+	MdfdVec    *v,
+			   *ov;
+	MemoryContext oldcxt;
 
 	fd = RelationGetFile(reln);
 
@@ -338,10 +338,10 @@ mdclose(Relation reln)
 int
 mdread(Relation reln, BlockNumber blocknum, char *buffer)
 {
-	int				status;
-	long			seekpos;
-	int				nbytes;
-	MdfdVec		   *v;
+	int			status;
+	long		seekpos;
+	int			nbytes;
+	MdfdVec    *v;
 
 	v = _mdfd_getseg(reln, blocknum, 0);
 
@@ -381,9 +381,9 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 int
 mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 {
-	int				status;
-	long			seekpos;
-	MdfdVec		   *v;
+	int			status;
+	long		seekpos;
+	MdfdVec    *v;
 
 	v = _mdfd_getseg(reln, blocknum, 0);
 
@@ -416,9 +416,9 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 int
 mdflush(Relation reln, BlockNumber blocknum, char *buffer)
 {
-	int				status;
-	long			seekpos;
-	MdfdVec		   *v;
+	int			status;
+	long		seekpos;
+	MdfdVec    *v;
 
 	v = _mdfd_getseg(reln, blocknum, 0);
 
@@ -465,12 +465,12 @@ mdblindwrt(char *dbstr,
 		   BlockNumber blkno,
 		   char *buffer)
 {
-	int				fd;
-	int				segno;
-	long			seekpos;
-	int				status;
-	char		   *path;
-	int				nchars;
+	int			fd;
+	int			segno;
+	long		seekpos;
+	int			status;
+	char	   *path;
+	int			nchars;
 
 	/* be sure we have enough space for the '.segno', if any */
 	segno = blkno / RELSEG_SIZE;
@@ -532,10 +532,10 @@ mdblindwrt(char *dbstr,
 int
 mdnblocks(Relation reln)
 {
-	int				fd;
-	MdfdVec		   *v;
-	int				nblocks;
-	int				segno;
+	int			fd;
+	MdfdVec    *v;
+	int			nblocks;
+	int			segno;
 
 	fd = RelationGetFile(reln);
 	v = &Md_fdvec[fd];
@@ -580,9 +580,9 @@ mdnblocks(Relation reln)
 int
 mdtruncate(Relation reln, int nblocks)
 {
-	int				fd;
-	MdfdVec		   *v;
-	int				curnblk;
+	int			fd;
+	MdfdVec    *v;
+	int			curnblk;
 
 	curnblk = mdnblocks(reln);
 	if (curnblk / RELSEG_SIZE > 0)
@@ -615,8 +615,8 @@ mdtruncate(Relation reln, int nblocks)
 int
 mdcommit()
 {
-	int				i;
-	MdfdVec		   *v;
+	int			i;
+	MdfdVec    *v;
 
 	for (i = 0; i < CurFd; i++)
 	{
@@ -644,8 +644,8 @@ mdcommit()
 int
 mdabort()
 {
-	int				i;
-	MdfdVec		   *v;
+	int			i;
+	MdfdVec    *v;
 
 	for (i = 0; i < CurFd; i++)
 	{
@@ -666,10 +666,10 @@ static
 int
 _fdvec_alloc()
 {
-	MdfdVec		   *nvec;
-	int				fdvec,
-					i;
-	MemoryContext	oldcxt;
+	MdfdVec    *nvec;
+	int			fdvec,
+				i;
+	MemoryContext oldcxt;
 
 	if (Md_Free >= 0)			/* get from free list */
 	{
@@ -738,12 +738,12 @@ _fdvec_free(int fdvec)
 static MdfdVec *
 _mdfd_openseg(Relation reln, int segno, int oflags)
 {
-	MemoryContext	oldcxt;
-	MdfdVec		   *v;
-	int				fd;
-	bool			dofree;
-	char		   *path,
-				   *fullpath;
+	MemoryContext oldcxt;
+	MdfdVec    *v;
+	int			fd;
+	bool		dofree;
+	char	   *path,
+			   *fullpath;
 
 	/* be sure we have enough space for the '.segno', if any */
 	path = relpath(RelationGetRelationName(reln)->data);
@@ -790,10 +790,10 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 static MdfdVec *
 _mdfd_getseg(Relation reln, int blkno, int oflag)
 {
-	MdfdVec		   *v;
-	int				segno;
-	int				fd;
-	int				i;
+	MdfdVec    *v;
+	int			segno;
+	int			fd;
+	int			i;
 
 	fd = RelationGetFile(reln);
 	if (fd < 0)
@@ -823,10 +823,10 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 	return (v);
 }
 
-static			BlockNumber
+static BlockNumber
 _mdnblocks(File file, Size blcksz)
 {
-	long			len;
+	long		len;
 
 	len = FileSeek(file, 0L, SEEK_END) - 1;
 	return ((BlockNumber) ((len < 0) ? 0 : 1 + len / blcksz));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.14 1997/09/07 04:39:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.15 1997/09/08 02:21:22 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -151,20 +151,20 @@
 #include <commands/async.h>
 #include <commands/sequence.h>
 
-static void		AbortTransaction(void);
-static void		AtAbort_Cache(void);
-static void		AtAbort_Locks(void);
-static void		AtAbort_Memory(void);
-static void		AtCommit_Cache(void);
-static void		AtCommit_Locks(void);
-static void		AtCommit_Memory(void);
-static void		AtStart_Cache(void);
-static void		AtStart_Locks(void);
-static void		AtStart_Memory(void);
-static void		CommitTransaction(void);
-static void		RecordTransactionAbort(void);
-static void		RecordTransactionCommit(void);
-static void		StartTransaction(void);
+static void AbortTransaction(void);
+static void AtAbort_Cache(void);
+static void AtAbort_Locks(void);
+static void AtAbort_Memory(void);
+static void AtCommit_Cache(void);
+static void AtCommit_Locks(void);
+static void AtCommit_Memory(void);
+static void AtStart_Cache(void);
+static void AtStart_Locks(void);
+static void AtStart_Memory(void);
+static void CommitTransaction(void);
+static void RecordTransactionAbort(void);
+static void RecordTransactionCommit(void);
+static void StartTransaction(void);
 
 /* ----------------
  *		global variables holding the current transaction state.
@@ -202,17 +202,17 @@ TransactionState CurrentTransactionState =
  *			   V1 transaction system.  -cim 3/18/90
  * ----------------
  */
-TransactionId	DisabledTransactionId = (TransactionId) - 1;
+TransactionId DisabledTransactionId = (TransactionId) - 1;
 
-CommandId		DisabledCommandId = (CommandId) - 1;
+CommandId	DisabledCommandId = (CommandId) - 1;
 
-AbsoluteTime	DisabledStartTime = (AbsoluteTime) BIG_ABSTIME; /* 1073741823; */
+AbsoluteTime DisabledStartTime = (AbsoluteTime) BIG_ABSTIME;	/* 1073741823; */
 
 /* ----------------
  *		overflow flag
  * ----------------
  */
-bool			CommandIdCounterOverflowFlag;
+bool		CommandIdCounterOverflowFlag;
 
 /* ----------------
  *		catalog creation transaction bootstrapping flag.
@@ -220,7 +220,7 @@ bool			CommandIdCounterOverflowFlag;
  *		state stuff.  -cim 3/19/90
  * ----------------
  */
-bool			AMI_OVERRIDE = false;
+bool		AMI_OVERRIDE = false;
 
 /* ----------------------------------------------------------------
  *					 transaction state accessors
@@ -239,7 +239,7 @@ bool			AMI_OVERRIDE = false;
  *		only do writes as necessary.
  * --------------------------------
  */
-static int		TransactionFlushState = 1;
+static int	TransactionFlushState = 1;
 
 int
 TransactionFlushEnabled(void)
@@ -270,18 +270,18 @@ IsTransactionState(void)
 
 	switch (s->state)
 	{
-	case TRANS_DEFAULT:
-		return false;
-	case TRANS_START:
-		return true;
-	case TRANS_INPROGRESS:
-		return true;
-	case TRANS_COMMIT:
-		return true;
-	case TRANS_ABORT:
-		return true;
-	case TRANS_DISABLED:
-		return false;
+		case TRANS_DEFAULT:
+			return false;
+		case TRANS_START:
+			return true;
+		case TRANS_INPROGRESS:
+			return true;
+		case TRANS_COMMIT:
+			return true;
+		case TRANS_ABORT:
+			return true;
+		case TRANS_DISABLED:
+			return false;
 	}
 
 	/*
@@ -317,7 +317,7 @@ IsAbortedTransactionBlockState()
  *		themselves.
  * --------------------------------
  */
-int				SavedTransactionState;
+int			SavedTransactionState;
 
 void
 OverrideTransactionSystem(bool flag)
@@ -564,8 +564,8 @@ AtStart_Locks()
 static void
 AtStart_Memory()
 {
-	Portal			portal;
-	MemoryContext	portalContext;
+	Portal		portal;
+	MemoryContext portalContext;
 
 	/* ----------------
 	 *	get the blank portal and its memory context
@@ -601,8 +601,8 @@ AtStart_Memory()
 static void
 RecordTransactionCommit()
 {
-	TransactionId	xid;
-	int				leak;
+	TransactionId xid;
+	int			leak;
 
 	/* ----------------
 	 *	get the current transaction id
@@ -701,7 +701,7 @@ AtCommit_Memory()
 static void
 RecordTransactionAbort()
 {
-	TransactionId	xid;
+	TransactionId xid;
 
 	/* ----------------
 	 *	get the current transaction id
@@ -994,73 +994,73 @@ StartTransactionCommand()
 
 	switch (s->blockState)
 	{
-		/* ----------------
-		 *		if we aren't in a transaction block, we
-		 *		just do our usual start transaction.
-		 * ----------------
-		 */
-	case TBLOCK_DEFAULT:
-		StartTransaction();
-		break;
+			/* ----------------
+			 *		if we aren't in a transaction block, we
+			 *		just do our usual start transaction.
+			 * ----------------
+			 */
+		case TBLOCK_DEFAULT:
+			StartTransaction();
+			break;
 
-		/* ----------------
-		 *		We should never experience this -- if we do it
-		 *		means the BEGIN state was not changed in the previous
-		 *		CommitTransactionCommand().  If we get it, we print
-		 *		a warning and change to the in-progress state.
-		 * ----------------
-		 */
-	case TBLOCK_BEGIN:
-		elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_BEGIN");
-		s->blockState = TBLOCK_INPROGRESS;
-		break;
+			/* ----------------
+			 *		We should never experience this -- if we do it
+			 *		means the BEGIN state was not changed in the previous
+			 *		CommitTransactionCommand().  If we get it, we print
+			 *		a warning and change to the in-progress state.
+			 * ----------------
+			 */
+		case TBLOCK_BEGIN:
+			elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_BEGIN");
+			s->blockState = TBLOCK_INPROGRESS;
+			break;
 
-		/* ----------------
-		 *		This is the case when are somewhere in a transaction
-		 *		block and about to start a new command.  For now we
-		 *		do nothing but someday we may do command-local resource
-		 *		initialization.
-		 * ----------------
-		 */
-	case TBLOCK_INPROGRESS:
-		break;
+			/* ----------------
+			 *		This is the case when are somewhere in a transaction
+			 *		block and about to start a new command.  For now we
+			 *		do nothing but someday we may do command-local resource
+			 *		initialization.
+			 * ----------------
+			 */
+		case TBLOCK_INPROGRESS:
+			break;
 
-		/* ----------------
-		 *		As with BEGIN, we should never experience this --
-		 *		if we do it means the END state was not changed in the
-		 *		previous CommitTransactionCommand().  If we get it, we
-		 *		print a warning, commit the transaction, start a new
-		 *		transaction and change to the default state.
-		 * ----------------
-		 */
-	case TBLOCK_END:
-		elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_END");
-		s->blockState = TBLOCK_DEFAULT;
-		CommitTransaction();
-		StartTransaction();
-		break;
+			/* ----------------
+			 *		As with BEGIN, we should never experience this --
+			 *		if we do it means the END state was not changed in the
+			 *		previous CommitTransactionCommand().  If we get it, we
+			 *		print a warning, commit the transaction, start a new
+			 *		transaction and change to the default state.
+			 * ----------------
+			 */
+		case TBLOCK_END:
+			elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_END");
+			s->blockState = TBLOCK_DEFAULT;
+			CommitTransaction();
+			StartTransaction();
+			break;
 
-		/* ----------------
-		 *		Here we are in the middle of a transaction block but
-		 *		one of the commands caused an abort so we do nothing
-		 *		but remain in the abort state.	Eventually we will get
-		 *		to the "END TRANSACTION" which will set things straight.
-		 * ----------------
-		 */
-	case TBLOCK_ABORT:
-		break;
+			/* ----------------
+			 *		Here we are in the middle of a transaction block but
+			 *		one of the commands caused an abort so we do nothing
+			 *		but remain in the abort state.	Eventually we will get
+			 *		to the "END TRANSACTION" which will set things straight.
+			 * ----------------
+			 */
+		case TBLOCK_ABORT:
+			break;
 
-		/* ----------------
-		 *		This means we somehow aborted and the last call to
-		 *		CommitTransactionCommand() didn't clear the state so
-		 *		we remain in the ENDABORT state and mabey next time
-		 *		we get to CommitTransactionCommand() the state will
-		 *		get reset to default.
-		 * ----------------
-		 */
-	case TBLOCK_ENDABORT:
-		elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_ENDABORT");
-		break;
+			/* ----------------
+			 *		This means we somehow aborted and the last call to
+			 *		CommitTransactionCommand() didn't clear the state so
+			 *		we remain in the ENDABORT state and mabey next time
+			 *		we get to CommitTransactionCommand() the state will
+			 *		get reset to default.
+			 * ----------------
+			 */
+		case TBLOCK_ENDABORT:
+			elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_ENDABORT");
+			break;
 	}
 }
 
@@ -1075,75 +1075,75 @@ CommitTransactionCommand()
 
 	switch (s->blockState)
 	{
-		/* ----------------
-		 *		if we aren't in a transaction block, we
-		 *		just do our usual transaction commit
-		 * ----------------
-		 */
-	case TBLOCK_DEFAULT:
-		CommitTransaction();
-		break;
+			/* ----------------
+			 *		if we aren't in a transaction block, we
+			 *		just do our usual transaction commit
+			 * ----------------
+			 */
+		case TBLOCK_DEFAULT:
+			CommitTransaction();
+			break;
 
-		/* ----------------
-		 *		This is the case right after we get a "BEGIN TRANSACTION"
-		 *		command, but the user hasn't done anything else yet, so
-		 *		we change to the "transaction block in progress" state
-		 *		and return.
-		 * ----------------
-		 */
-	case TBLOCK_BEGIN:
-		s->blockState = TBLOCK_INPROGRESS;
-		break;
+			/* ----------------
+			 *		This is the case right after we get a "BEGIN TRANSACTION"
+			 *		command, but the user hasn't done anything else yet, so
+			 *		we change to the "transaction block in progress" state
+			 *		and return.
+			 * ----------------
+			 */
+		case TBLOCK_BEGIN:
+			s->blockState = TBLOCK_INPROGRESS;
+			break;
 
-		/* ----------------
-		 *		This is the case when we have finished executing a command
-		 *		someplace within a transaction block.  We increment the
-		 *		command counter and return.  Someday we may free resources
-		 *		local to the command.
-		 *
-		 *		That someday is today, at least for memory allocated by
-		 *		command in the BlankPortal' HeapMemory context.
-		 *				- vadim 03/25/97
-		 * ----------------
-		 */
-	case TBLOCK_INPROGRESS:
-		CommandCounterIncrement();
+			/* ----------------
+			 *		This is the case when we have finished executing a command
+			 *		someplace within a transaction block.  We increment the
+			 *		command counter and return.  Someday we may free resources
+			 *		local to the command.
+			 *
+			 *		That someday is today, at least for memory allocated by
+			 *		command in the BlankPortal' HeapMemory context.
+			 *				- vadim 03/25/97
+			 * ----------------
+			 */
+		case TBLOCK_INPROGRESS:
+			CommandCounterIncrement();
 #ifdef TBL_FREE_CMD_MEMORY
-		EndPortalAllocMode();
-		StartPortalAllocMode(DefaultAllocMode, 0);
+			EndPortalAllocMode();
+			StartPortalAllocMode(DefaultAllocMode, 0);
 #endif
-		break;
+			break;
 
-		/* ----------------
-		 *		This is the case when we just got the "END TRANSACTION"
-		 *		statement, so we go back to the default state and
-		 *		commit the transaction.
-		 * ----------------
-		 */
-	case TBLOCK_END:
-		s->blockState = TBLOCK_DEFAULT;
-		CommitTransaction();
-		break;
+			/* ----------------
+			 *		This is the case when we just got the "END TRANSACTION"
+			 *		statement, so we go back to the default state and
+			 *		commit the transaction.
+			 * ----------------
+			 */
+		case TBLOCK_END:
+			s->blockState = TBLOCK_DEFAULT;
+			CommitTransaction();
+			break;
 
-		/* ----------------
-		 *		Here we are in the middle of a transaction block but
-		 *		one of the commands caused an abort so we do nothing
-		 *		but remain in the abort state.	Eventually we will get
-		 *		to the "END TRANSACTION" which will set things straight.
-		 * ----------------
-		 */
-	case TBLOCK_ABORT:
-		break;
+			/* ----------------
+			 *		Here we are in the middle of a transaction block but
+			 *		one of the commands caused an abort so we do nothing
+			 *		but remain in the abort state.	Eventually we will get
+			 *		to the "END TRANSACTION" which will set things straight.
+			 * ----------------
+			 */
+		case TBLOCK_ABORT:
+			break;
 
-		/* ----------------
-		 *		Here we were in an aborted transaction block which
-		 *		just processed the "END TRANSACTION" command from the
-		 *		user, so now we return the to default state.
-		 * ----------------
-		 */
-	case TBLOCK_ENDABORT:
-		s->blockState = TBLOCK_DEFAULT;
-		break;
+			/* ----------------
+			 *		Here we were in an aborted transaction block which
+			 *		just processed the "END TRANSACTION" command from the
+			 *		user, so now we return the to default state.
+			 * ----------------
+			 */
+		case TBLOCK_ENDABORT:
+			s->blockState = TBLOCK_DEFAULT;
+			break;
 	}
 }
 
@@ -1158,71 +1158,71 @@ AbortCurrentTransaction()
 
 	switch (s->blockState)
 	{
-		/* ----------------
-		 *		if we aren't in a transaction block, we
-		 *		just do our usual abort transaction.
-		 * ----------------
-		 */
-	case TBLOCK_DEFAULT:
-		AbortTransaction();
-		break;
+			/* ----------------
+			 *		if we aren't in a transaction block, we
+			 *		just do our usual abort transaction.
+			 * ----------------
+			 */
+		case TBLOCK_DEFAULT:
+			AbortTransaction();
+			break;
 
-		/* ----------------
-		 *		If we are in the TBLOCK_BEGIN it means something
-		 *		screwed up right after reading "BEGIN TRANSACTION"
-		 *		so we enter the abort state.  Eventually an "END
-		 *		TRANSACTION" will fix things.
-		 * ----------------
-		 */
-	case TBLOCK_BEGIN:
-		s->blockState = TBLOCK_ABORT;
-		AbortTransaction();
-		break;
+			/* ----------------
+			 *		If we are in the TBLOCK_BEGIN it means something
+			 *		screwed up right after reading "BEGIN TRANSACTION"
+			 *		so we enter the abort state.  Eventually an "END
+			 *		TRANSACTION" will fix things.
+			 * ----------------
+			 */
+		case TBLOCK_BEGIN:
+			s->blockState = TBLOCK_ABORT;
+			AbortTransaction();
+			break;
 
-		/* ----------------
-		 *		This is the case when are somewhere in a transaction
-		 *		block which aborted so we abort the transaction and
-		 *		set the ABORT state.  Eventually an "END TRANSACTION"
-		 *		will fix things and restore us to a normal state.
-		 * ----------------
-		 */
-	case TBLOCK_INPROGRESS:
-		s->blockState = TBLOCK_ABORT;
-		AbortTransaction();
-		break;
+			/* ----------------
+			 *		This is the case when are somewhere in a transaction
+			 *		block which aborted so we abort the transaction and
+			 *		set the ABORT state.  Eventually an "END TRANSACTION"
+			 *		will fix things and restore us to a normal state.
+			 * ----------------
+			 */
+		case TBLOCK_INPROGRESS:
+			s->blockState = TBLOCK_ABORT;
+			AbortTransaction();
+			break;
 
-		/* ----------------
-		 *		Here, the system was fouled up just after the
-		 *		user wanted to end the transaction block so we
-		 *		abort the transaction and put us back into the
-		 *		default state.
-		 * ----------------
-		 */
-	case TBLOCK_END:
-		s->blockState = TBLOCK_DEFAULT;
-		AbortTransaction();
-		break;
+			/* ----------------
+			 *		Here, the system was fouled up just after the
+			 *		user wanted to end the transaction block so we
+			 *		abort the transaction and put us back into the
+			 *		default state.
+			 * ----------------
+			 */
+		case TBLOCK_END:
+			s->blockState = TBLOCK_DEFAULT;
+			AbortTransaction();
+			break;
 
-		/* ----------------
-		 *		Here, we are already in an aborted transaction
-		 *		state and are waiting for an "END TRANSACTION" to
-		 *		come along and lo and behold, we abort again!
-		 *		So we just remain in the abort state.
-		 * ----------------
-		 */
-	case TBLOCK_ABORT:
-		break;
+			/* ----------------
+			 *		Here, we are already in an aborted transaction
+			 *		state and are waiting for an "END TRANSACTION" to
+			 *		come along and lo and behold, we abort again!
+			 *		So we just remain in the abort state.
+			 * ----------------
+			 */
+		case TBLOCK_ABORT:
+			break;
 
-		/* ----------------
-		 *		Here we were in an aborted transaction block which
-		 *		just processed the "END TRANSACTION" command but somehow
-		 *		aborted again.. since we must have done the abort
-		 *		processing, we return to the default state.
-		 * ----------------
-		 */
-	case TBLOCK_ENDABORT:
-		s->blockState = TBLOCK_DEFAULT;
-		break;
+			/* ----------------
+			 *		Here we were in an aborted transaction block which
+			 *		just processed the "END TRANSACTION" command but somehow
+			 *		aborted again.. since we must have done the abort
+			 *		processing, we return to the default state.
+			 * ----------------
+			 */
+		case TBLOCK_ENDABORT:
+			s->blockState = TBLOCK_DEFAULT;
+			break;
 	}
 }
 

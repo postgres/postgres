@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hasht.h,v 1.3 1997/09/07 04:58:11 momjian Exp $
+ * $Id: hasht.h,v 1.4 1997/09/08 02:36:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,8 @@
 
 #include <utils/hsearch.h>
 
-typedef void	(*HashtFunc) ();
+typedef void (*HashtFunc) ();
 
-extern void		HashTableWalk(HTAB * hashtable, HashtFunc function, int arg);
+extern void HashTableWalk(HTAB * hashtable, HashtFunc function, int arg);
 
 #endif							/* HASHT_H */

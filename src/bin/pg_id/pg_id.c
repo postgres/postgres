@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.4 1997/09/07 04:54:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.5 1997/09/08 02:32:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,17 +23,17 @@
 int
 main(int argc, char **argv)
 {
-	struct passwd  *pw;
-	int				ch;
-	extern int		optind;
+	struct passwd *pw;
+	int			ch;
+	extern int	optind;
 
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch (ch)
 		{
-		case '?':
-		default:
-			fprintf(stderr, "usage: pg_id [login]\n");
-			exit(1);
+			case '?':
+			default:
+				fprintf(stderr, "usage: pg_id [login]\n");
+				exit(1);
 		}
 	argc -= optind;
 	argv += optind;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.15 1997/09/07 04:44:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.16 1997/09/08 02:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,13 +180,13 @@ static ScanKeyword ScanKeywords[] = {
 	{"zone", ZONE},
 };
 
-ScanKeyword    *
+ScanKeyword *
 ScanKeywordLookup(char *text)
 {
-	ScanKeyword    *low = &ScanKeywords[0];
-	ScanKeyword    *high = endof(ScanKeywords) - 1;
-	ScanKeyword    *middle;
-	int				difference;
+	ScanKeyword *low = &ScanKeywords[0];
+	ScanKeyword *high = endof(ScanKeywords) - 1;
+	ScanKeyword *middle;
+	int			difference;
 
 	while (low <= high)
 	{
@@ -204,13 +204,13 @@ ScanKeywordLookup(char *text)
 }
 
 #ifdef NOT_USED
-char		   *
+char	   *
 AtomValueGetString(int atomval)
 {
-	ScanKeyword    *low = &ScanKeywords[0];
-	ScanKeyword    *high = endof(ScanKeywords) - 1;
-	int				keyword_list_length = (high - low);
-	int				i;
+	ScanKeyword *low = &ScanKeywords[0];
+	ScanKeyword *high = endof(ScanKeywords) - 1;
+	int			keyword_list_length = (high - low);
+	int			i;
 
 	for (i = 0; i < keyword_list_length; i++)
 		if (ScanKeywords[i].value == atomval)

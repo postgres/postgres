@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.6 1997/09/07 05:01:35 momjian Exp $
+ * $Id: shmem.h,v 1.7 1997/09/08 02:39:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,28 +54,28 @@ extern SPINLOCK BindingLock;
 /* shmemqueue.c */
 typedef struct SHM_QUEUE
 {
-	SHMEM_OFFSET	prev;
-	SHMEM_OFFSET	next;
-}				SHM_QUEUE;
+	SHMEM_OFFSET prev;
+	SHMEM_OFFSET next;
+}			SHM_QUEUE;
 
 /* shmem.c */
-extern void		ShmemBindingTabReset(void);
-extern void		ShmemCreate(unsigned int key, unsigned int size);
-extern int		InitShmem(unsigned int key, unsigned int size);
-extern long    *ShmemAlloc(unsigned long size);
-extern int		ShmemIsValid(unsigned long addr);
-extern HTAB    *
+extern void ShmemBindingTabReset(void);
+extern void ShmemCreate(unsigned int key, unsigned int size);
+extern int	InitShmem(unsigned int key, unsigned int size);
+extern long *ShmemAlloc(unsigned long size);
+extern int	ShmemIsValid(unsigned long addr);
+extern HTAB *
 ShmemInitHash(char *name, long init_size, long max_size,
 			  HASHCTL * infoP, int hash_flags);
-extern bool		ShmemPIDLookup(int pid, SHMEM_OFFSET * locationPtr);
+extern bool ShmemPIDLookup(int pid, SHMEM_OFFSET * locationPtr);
 extern SHMEM_OFFSET ShmemPIDDestroy(int pid);
-extern long    *
+extern long *
 ShmemInitStruct(char *name, unsigned long size,
 				bool * foundPtr);
-extern bool		TransactionIdIsInProgress(TransactionId xid);
+extern bool TransactionIdIsInProgress(TransactionId xid);
 
 
-typedef int		TableID;
+typedef int TableID;
 
 /* size constants for the binding table */
  /* max size of data structure string name */
@@ -88,21 +88,21 @@ typedef int		TableID;
 /* this is a hash bucket in the binding table */
 typedef struct
 {
-	char			key[BTABLE_KEYSIZE];		/* string name */
-	unsigned long	location;	/* location in shared mem */
-	unsigned long	size;		/* numbytes allocated for the structure */
-}				BindingEnt;
+	char		key[BTABLE_KEYSIZE];	/* string name */
+	unsigned long location;		/* location in shared mem */
+	unsigned long size;			/* numbytes allocated for the structure */
+}			BindingEnt;
 
 /*
  * prototypes for functions in shmqueue.c
  */
-extern void		SHMQueueInit(SHM_QUEUE * queue);
-extern void		SHMQueueElemInit(SHM_QUEUE * queue);
-extern void		SHMQueueDelete(SHM_QUEUE * queue);
-extern void		SHMQueueInsertTL(SHM_QUEUE * queue, SHM_QUEUE * elem);
+extern void SHMQueueInit(SHM_QUEUE * queue);
+extern void SHMQueueElemInit(SHM_QUEUE * queue);
+extern void SHMQueueDelete(SHM_QUEUE * queue);
+extern void SHMQueueInsertTL(SHM_QUEUE * queue, SHM_QUEUE * elem);
 extern void
 SHMQueueFirst(SHM_QUEUE * queue, Pointer * nextPtrPtr,
 			  SHM_QUEUE * nextQueue);
-extern bool		SHMQueueEmpty(SHM_QUEUE * queue);
+extern bool SHMQueueEmpty(SHM_QUEUE * queue);
 
 #endif							/* SHMEM_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.4 1997/09/07 04:44:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.5 1997/09/08 02:24:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +44,12 @@ valid_or_clause(CInfo * clauseinfo)
  * Returns a list containing the clauses from 'clauseinfo-list'.
  *
  */
-List		   *
+List	   *
 get_actual_clauses(List * clauseinfo_list)
 {
-	List		   *temp = NIL;
-	List		   *result = NIL;
-	CInfo		   *clause = (CInfo *) NULL;
+	List	   *temp = NIL;
+	List	   *result = NIL;
+	CInfo	   *clause = (CInfo *) NULL;
 
 	foreach(temp, clauseinfo_list)
 	{
@@ -90,18 +90,18 @@ get_relattvals(List * clauseinfo_list,
 			   List ** values,
 			   List ** flags)
 {
-	List		   *result1 = NIL;
-	List		   *result2 = NIL;
-	List		   *result3 = NIL;
-	CInfo		   *temp = (CInfo *) NULL;
-	List		   *i = NIL;
+	List	   *result1 = NIL;
+	List	   *result2 = NIL;
+	List	   *result3 = NIL;
+	CInfo	   *temp = (CInfo *) NULL;
+	List	   *i = NIL;
 
 	foreach(i, clauseinfo_list)
 	{
-		int				dummy;
-		AttrNumber		attno;
-		Datum			constval;
-		int				flag;
+		int			dummy;
+		AttrNumber	attno;
+		Datum		constval;
+		int			flag;
 
 		temp = (CInfo *) lfirst(i);
 		get_relattval((Node *) temp->clause, &dummy, &attno, &constval, &flag);
@@ -137,15 +137,15 @@ get_joinvars(Oid relid,
 			 List ** values,
 			 List ** flags)
 {
-	List		   *result1 = NIL;
-	List		   *result2 = NIL;
-	List		   *result3 = NIL;
-	List		   *temp;
+	List	   *result1 = NIL;
+	List	   *result2 = NIL;
+	List	   *result3 = NIL;
+	List	   *temp;
 
 	foreach(temp, clauseinfo_list)
 	{
-		CInfo		   *clauseinfo = lfirst(temp);
-		Expr		   *clause = clauseinfo->clause;
+		CInfo	   *clauseinfo = lfirst(temp);
+		Expr	   *clause = clauseinfo->clause;
 
 		if (IsA(get_leftop(clause), Var) &&
 			(relid == (get_leftop(clause))->varno))
@@ -173,12 +173,12 @@ get_joinvars(Oid relid,
  *	  of a list of clauseinfo nodes to be used with an index.
  *
  */
-List		   *
+List	   *
 get_opnos(List * clauseinfo_list)
 {
-	CInfo		   *temp = (CInfo *) NULL;
-	List		   *result = NIL;
-	List		   *i = NIL;
+	CInfo	   *temp = (CInfo *) NULL;
+	List	   *result = NIL;
+	List	   *i = NIL;
 
 	foreach(i, clauseinfo_list)
 	{

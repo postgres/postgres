@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.8 1997/09/07 04:50:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.9 1997/09/08 02:30:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ nonnullvalue(Datum value, bool * isNull)
 bool
 oidrand(Oid o, int32 X)
 {
-	bool			result;
+	bool		result;
 
 	if (X == 0)
 		return true;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.9 1997/09/07 04:56:16 momjian Exp $
+ * $Id: tupdesc.h,v 1.10 1997/09/08 02:34:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,27 +20,27 @@
 
 typedef struct attrDefault
 {
-	AttrNumber		adnum;
-	char		   *adbin;
-	char		   *adsrc;
-}				AttrDefault;
+	AttrNumber	adnum;
+	char	   *adbin;
+	char	   *adsrc;
+}			AttrDefault;
 
 typedef struct constrCheck
 {
-	char		   *ccname;
-	char		   *ccbin;
-	char		   *ccsrc;
-}				ConstrCheck;
+	char	   *ccname;
+	char	   *ccbin;
+	char	   *ccsrc;
+}			ConstrCheck;
 
 /* This structure contains constraints of a tuple */
 typedef struct tupleConstr
 {
-	AttrDefault    *defval;
-	ConstrCheck    *check;
-	uint16			num_defval;
-	uint16			num_check;
-	bool			has_not_null;
-}				TupleConstr;
+	AttrDefault *defval;
+	ConstrCheck *check;
+	uint16		num_defval;
+	uint16		num_check;
+	bool		has_not_null;
+}			TupleConstr;
 
 /*
  * This structure contains all information (i.e. from Classes
@@ -48,12 +48,12 @@ typedef struct tupleConstr
  */
 typedef struct tupleDesc
 {
-	int				natts;
+	int			natts;
 	/* Number of attributes in the tuple */
 	AttributeTupleForm *attrs;
 	/* attrs[N] is a pointer to the description of Attribute Number N+1.  */
-	TupleConstr    *constr;
-}			   *TupleDesc;
+	TupleConstr *constr;
+}		   *TupleDesc;
 
 extern TupleDesc CreateTemplateTupleDesc(int natts);
 
@@ -63,9 +63,9 @@ extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
 
 extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 
-extern void		FreeTupleDesc(TupleDesc tupdesc);
+extern void FreeTupleDesc(TupleDesc tupdesc);
 
-extern bool
+extern		bool
 TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,

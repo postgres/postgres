@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.3 1997/09/07 05:00:42 momjian Exp $
+ * $Id: block.h,v 1.4 1997/09/08 02:38:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
  * more or less the only pieces of code that should be accessing disk
  * blocks directly.
  */
-typedef uint32	BlockNumber;
+typedef uint32 BlockNumber;
 
 #define InvalidBlockNumber		((BlockNumber) 0xFFFFFFFF)
 
@@ -49,9 +49,9 @@ typedef uint32	BlockNumber;
  */
 typedef struct BlockIdData
 {
-	uint16			bi_hi;
-	uint16			bi_lo;
-}				BlockIdData;
+	uint16		bi_hi;
+	uint16		bi_lo;
+}			BlockIdData;
 
 typedef BlockIdData *BlockId;	/* block identifier */
 

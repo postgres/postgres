@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.20 1997/09/07 04:42:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.21 1997/09/08 02:23:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,10 +63,10 @@
  *		declarations
  * ----------------
  */
-FILE		   *Pfout,
-			   *Pfin;
-FILE		   *Pfdebug;		/* debugging libpq */
-int				PQAsyncNotifyWaiting;	/* for async. notification */
+FILE	   *Pfout,
+		   *Pfin;
+FILE	   *Pfdebug;			/* debugging libpq */
+int			PQAsyncNotifyWaiting;		/* for async. notification */
 
 /* --------------------------------
  *		pq_init - open portal file descriptors
@@ -102,7 +102,7 @@ pq_init(int fd)
 static int
 pq_getc(FILE * fin)
 {
-	int				c;
+	int			c;
 
 	c = getc(fin);
 	if (Pfdebug && c != EOF)
@@ -127,7 +127,7 @@ pq_gettty(char *tp)
 int
 pq_getport()
 {
-	char		   *envport = getenv("PGPORT");
+	char	   *envport = getenv("PGPORT");
 
 	if (envport)
 		return (atoi(envport));
@@ -174,7 +174,7 @@ pq_flush()
 int
 pq_getstr(char *s, int maxlen)
 {
-	int				c = '\0';
+	int			c = '\0';
 
 	if (Pfin == (FILE *) NULL)
 	{
@@ -268,7 +268,7 @@ pq_getnchar(char *s, int off, int maxlen)
 	return pqGetNBytes(s + off, maxlen, Pfin);
 
 #if 0
-	int				c = '\0';
+	int			c = '\0';
 
 	if (Pfin == (FILE *) NULL)
 	{
@@ -300,8 +300,8 @@ pq_getnchar(char *s, int off, int maxlen)
 int
 pq_getint(int b)
 {
-	int				n,
-					status = 1;
+	int			n,
+				status = 1;
 
 	if (!Pfin)
 		return EOF;
@@ -313,17 +313,17 @@ pq_getint(int b)
 
 	switch (b)
 	{
-	case 1:
-		status = ((n = fgetc(Pfin)) == EOF);
-		break;
-	case 2:
-		status = pqGetShort(&n, Pfin);
-		break;
-	case 4:
-		status = pqGetLong(&n, Pfin);
-		break;
-	default:
-		fprintf(stderr, "** Unsupported size %d\n", b);
+		case 1:
+			status = ((n = fgetc(Pfin)) == EOF);
+			break;
+		case 2:
+			status = pqGetShort(&n, Pfin);
+			break;
+		case 4:
+			status = pqGetLong(&n, Pfin);
+			break;
+		default:
+			fprintf(stderr, "** Unsupported size %d\n", b);
 	}
 
 	if (status)
@@ -381,7 +381,7 @@ pq_putnchar(char *s, int n)
 void
 pq_putint(int i, int b)
 {
-	int				status;
+	int			status;
 
 	if (!Pfout)
 		return;
@@ -389,17 +389,17 @@ pq_putint(int i, int b)
 	status = 1;
 	switch (b)
 	{
-	case 1:
-		status = (fputc(i, Pfout) == EOF);
-		break;
-	case 2:
-		status = pqPutShort(i, Pfout);
-		break;
-	case 4:
-		status = pqPutLong(i, Pfout);
-		break;
-	default:
-		fprintf(stderr, "** Unsupported size %d\n", b);
+		case 1:
+			status = (fputc(i, Pfout) == EOF);
+			break;
+		case 2:
+			status = pqPutShort(i, Pfout);
+			break;
+		case 4:
+			status = pqPutLong(i, Pfout);
+			break;
+		default:
+			fprintf(stderr, "** Unsupported size %d\n", b);
 	}
 
 	if (status)
@@ -421,7 +421,7 @@ pq_putint(int i, int b)
 int
 pq_sendoob(char *msg, int len)
 {
-	int				fd = fileno(Pfout);
+	int			fd = fileno(Pfout);
 
 	return (send(fd, msg, len, MSG_OOB));
 }
@@ -429,8 +429,8 @@ pq_sendoob(char *msg, int len)
 int
 pq_recvoob(char *msgPtr, int *lenPtr)
 {
-	int				fd = fileno(Pfout);
-	int				len = 0;
+	int			fd = fileno(Pfout);
+	int			len = 0;
 
 	len = recv(fd, msgPtr + len, *lenPtr, MSG_OOB);
 	*lenPtr = len;
@@ -510,7 +510,7 @@ pq_getinserv(struct sockaddr_in * sin, char *host, char *serv)
 void
 pq_regoob(void (*fptr) ())
 {
-	int				fd = fileno(Pfout);
+	int			fd = fileno(Pfout);
 
 #if defined(hpux)
 	ioctl(fd, FIOSSAIOOWN, getpid());
@@ -532,10 +532,10 @@ pq_unregoob()
 void
 pq_async_notify()
 {
-	char			msg[20];
+	char		msg[20];
 
 	/* int len = sizeof(msg); */
-	int				len = 20;
+	int			len = 20;
 
 	if (pq_recvoob(msg, &len) >= 0)
 	{
@@ -546,7 +546,7 @@ pq_async_notify()
 	}
 	else
 	{
-		extern int		errno;
+		extern int	errno;
 
 		printf("SIGURG but no data: len = %d, err=%d\n", len, errno);
 	}
@@ -575,8 +575,8 @@ int
 StreamServerPort(char *hostName, short portName, int *fdP)
 {
 	struct sockaddr_in sin;
-	int				fd;
-	int				one = 1;
+	int			fd;
+	int			one = 1;
 
 
 	if (!hostName)
@@ -645,7 +645,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 int
 StreamConnection(int server_fd, Port * port)
 {
-	int				addrlen;
+	int			addrlen;
 
 	/* accept connection (and fill in the client (remote) address) */
 	addrlen = sizeof(struct sockaddr_in);
@@ -667,7 +667,7 @@ StreamConnection(int server_fd, Port * port)
 	}
 	{
 		struct protoent *pe;
-		int				on = 1;
+		int			on = 1;
 
 		pe = getprotobyname("TCP");
 		if (pe == NULL)
@@ -715,8 +715,8 @@ int
 StreamOpen(char *hostName, short portName, Port * port)
 {
 	struct hostent *hp;
-	int				laddrlen = sizeof(struct sockaddr_in);
-	extern int		errno;
+	int			laddrlen = sizeof(struct sockaddr_in);
+	extern int	errno;
 
 	if (!hostName)
 		hostName = "localhost";
@@ -774,7 +774,7 @@ StreamOpen(char *hostName, short portName, Port * port)
 	return (STATUS_OK);
 }
 
-static char    *authentication_type_name[] = {
+static char *authentication_type_name[] = {
 	0, 0, 0, 0, 0, 0, 0,
 	"the default authentication type",
 	0, 0,
@@ -785,10 +785,10 @@ static char    *authentication_type_name[] = {
 	"plaintext password authentication"
 };
 
-char		   *
+char	   *
 name_of_authentication_type(int type)
 {
-	char		   *result = 0;
+	char	   *result = 0;
 
 	if (type >= 1 && type <= LAST_AUTHENTICATION_TYPE)
 	{

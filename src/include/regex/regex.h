@@ -43,21 +43,21 @@
 #include <sys/types.h>
 
 /* types */
-typedef off_t	regoff_t;
+typedef off_t regoff_t;
 
 typedef struct
 {
-	int				re_magic;
-	size_t			re_nsub;	/* number of parenthesized subexpressions */
-	const char	   *re_endp;	/* end pointer for REG_PEND */
+	int			re_magic;
+	size_t		re_nsub;		/* number of parenthesized subexpressions */
+	const char *re_endp;		/* end pointer for REG_PEND */
 	struct re_guts *re_g;		/* none of your business :-) */
-}				regex_t;
+}			regex_t;
 
 typedef struct
 {
-	regoff_t		rm_so;		/* start of match */
-	regoff_t		rm_eo;		/* end of match */
-}				regmatch_t;
+	regoff_t	rm_so;			/* start of match */
+	regoff_t	rm_eo;			/* end of match */
+}			regmatch_t;
 
 /* regcomp() flags */
 #define REG_BASIC		0000
@@ -97,11 +97,11 @@ typedef struct
 #define REG_LARGE		01000	/* force large representation */
 #define REG_BACKR		02000	/* force use of backref code */
 
-int				pg95_regcomp(regex_t *, const char *, int);
-size_t			pg95_regerror(int, const regex_t *, char *, size_t);
+int			pg95_regcomp(regex_t *, const char *, int);
+size_t		pg95_regerror(int, const regex_t *, char *, size_t);
 int
 pg95_regexec(const regex_t *,
 			 const char *, size_t, regmatch_t[], int);
-void			pg95_regfree(regex_t *);
+void		pg95_regfree(regex_t *);
 
 #endif							/* !_REGEX_H_ */

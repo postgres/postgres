@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.6 1997/09/07 04:41:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.7 1997/09/08 02:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,17 +66,17 @@ ExecGroup(Group * node)
 static TupleTableSlot *
 ExecGroupEveryTuple(Group * node)
 {
-	GroupState	   *grpstate;
-	EState		   *estate;
-	ExprContext    *econtext;
+	GroupState *grpstate;
+	EState	   *estate;
+	ExprContext *econtext;
 
-	HeapTuple		outerTuple = NULL;
+	HeapTuple	outerTuple = NULL;
 	TupleTableSlot *outerslot,
-				   *lastslot;
+			   *lastslot;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
 
-	bool			isDone;
+	bool		isDone;
 
 	/* ---------------------
 	 *	get state info from node
@@ -167,17 +167,17 @@ ExecGroupEveryTuple(Group * node)
 static TupleTableSlot *
 ExecGroupOneTuple(Group * node)
 {
-	GroupState	   *grpstate;
-	EState		   *estate;
-	ExprContext    *econtext;
+	GroupState *grpstate;
+	EState	   *estate;
+	ExprContext *econtext;
 
-	HeapTuple		outerTuple = NULL;
+	HeapTuple	outerTuple = NULL;
 	TupleTableSlot *outerslot,
-				   *lastslot;
+			   *lastslot;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
 
-	bool			isDone;
+	bool		isDone;
 
 	/* ---------------------
 	 *	get state info from node
@@ -291,8 +291,8 @@ ExecGroupOneTuple(Group * node)
 bool
 ExecInitGroup(Group * node, EState * estate, Plan * parent)
 {
-	GroupState	   *grpstate;
-	Plan		   *outerPlan;
+	GroupState *grpstate;
+	Plan	   *outerPlan;
 
 	/*
 	 * assign the node's execution state
@@ -358,8 +358,8 @@ ExecCountSlotsGroup(Group * node)
 void
 ExecEndGroup(Group * node)
 {
-	GroupState	   *grpstate;
-	Plan		   *outerPlan;
+	GroupState *grpstate;
+	Plan	   *outerPlan;
 
 	grpstate = node->grpstate;
 
@@ -379,22 +379,22 @@ ExecEndGroup(Group * node)
 /*
  * code swiped from nodeUnique.c
  */
-static			bool
+static bool
 sameGroup(TupleTableSlot * oldslot,
 		  TupleTableSlot * newslot,
 		  int numCols,
 		  AttrNumber * grpColIdx,
 		  TupleDesc tupdesc)
 {
-	bool			isNull1,
-					isNull2;
-	char		   *attr1,
-				   *attr2;
-	char		   *val1,
-				   *val2;
-	int				i;
-	AttrNumber		att;
-	Oid				typoutput;
+	bool		isNull1,
+				isNull2;
+	char	   *attr1,
+			   *attr2;
+	char	   *val1,
+			   *val2;
+	int			i;
+	AttrNumber	att;
+	Oid			typoutput;
 
 	for (i = 0; i < numCols; i++)
 	{

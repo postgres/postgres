@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.39 1997/09/07 05:03:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.40 1997/09/08 02:40:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,12 +41,12 @@
 /* use a local version instead of the one found in pqpacket.c */
 static ConnStatusType connectDB(PGconn * conn);
 
-static void		startup2PacketBuf(StartupInfo * s, PacketBuf * res);
-static void		freePGconn(PGconn * conn);
-static void		closePGconn(PGconn * conn);
-static int		conninfo_parse(const char *conninfo, char *errorMessage);
-static char    *conninfo_getval(char *keyword);
-static void		conninfo_free(void);
+static void startup2PacketBuf(StartupInfo * s, PacketBuf * res);
+static void freePGconn(PGconn * conn);
+static void closePGconn(PGconn * conn);
+static int	conninfo_parse(const char *conninfo, char *errorMessage);
+static char *conninfo_getval(char *keyword);
+static void conninfo_free(void);
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
@@ -104,9 +104,9 @@ static PQconninfoOption PQconninfoOptions[] = {
 
 struct EnvironmentOptions
 {
-	const char	   *envName,
-				   *pgName;
-}				EnvironmentOptions[] =
+	const char *envName,
+			   *pgName;
+}			EnvironmentOptions[] =
 
 {
 	{
@@ -136,12 +136,12 @@ struct EnvironmentOptions
  * then some fields may be null'ed out instead of having valid values
  * ----------------
  */
-PGconn		   *
+PGconn	   *
 PQconnectdb(const char *conninfo)
 {
-	PGconn		   *conn;
+	PGconn	   *conn;
 	PQconninfoOption *option;
-	char			errorMessage[ERROR_MSG_LENGTH];
+	char		errorMessage[ERROR_MSG_LENGTH];
 
 	/* ----------
 	 * Allocate memory for the conn structure
@@ -240,7 +240,7 @@ PQconnectdb(const char *conninfo)
 	conn->status = connectDB(conn);
 	if (conn->status == CONNECTION_OK)
 	{
-		PGresult	   *res;
+		PGresult   *res;
 
 		/*
 		 * Send a blank query to make sure everything works; in
@@ -270,7 +270,7 @@ PQconnectdb(const char *conninfo)
 PQconninfoOption *
 PQconndefaults(void)
 {
-	char			errorMessage[ERROR_MSG_LENGTH];
+	char		errorMessage[ERROR_MSG_LENGTH];
 
 	conninfo_parse("", errorMessage);
 	return PQconninfoOptions;
@@ -311,18 +311,18 @@ PQconndefaults(void)
  *
  * ----------------
  */
-PGconn		   *
+PGconn	   *
 PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const char *pgtty, const char *dbName)
 {
-	PGconn		   *conn;
-	char		   *tmp;
-	char			errorMessage[ERROR_MSG_LENGTH];
+	PGconn	   *conn;
+	char	   *tmp;
+	char		errorMessage[ERROR_MSG_LENGTH];
 
 	/* An error message from some service we call. */
-	bool			error;
+	bool		error;
 
 	/* We encountered an error that prevents successful completion */
-	int				i;
+	int			i;
 
 	conn = (PGconn *) malloc(sizeof(PGconn));
 
@@ -436,7 +436,7 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 			/* Puts message in conn->errorMessage */
 			if (conn->status == CONNECTION_OK)
 			{
-				PGresult	   *res;
+				PGresult   *res;
 
 				/*
 				 * Send a blank query to make sure everything works; in
@@ -462,18 +462,18 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
  * return CONNECTION_OK if successful, CONNECTION_BAD if not.
  *
  */
-static			ConnStatusType
+static ConnStatusType
 connectDB(PGconn * conn)
 {
 	struct hostent *hp;
 
-	StartupInfo		startup;
-	PacketBuf		pacBuf;
-	int				status;
-	MsgType			msgtype;
-	int				laddrlen = sizeof(struct sockaddr);
-	Port		   *port = conn->port;
-	int				portno;
+	StartupInfo startup;
+	PacketBuf	pacBuf;
+	int			status;
+	MsgType		msgtype;
+	int			laddrlen = sizeof(struct sockaddr);
+	Port	   *port = conn->port;
+	int			portno;
 
 	/*
 	 * Initialize the startup packet.
@@ -534,7 +534,7 @@ connectDB(PGconn * conn)
 	}
 	{
 		struct protoent *pe;
-		int				on = 1;
+		int			on = 1;
 
 		pe = getprotobyname("TCP");
 		if (pe == NULL)
@@ -609,15 +609,15 @@ connectDB(PGconn * conn)
 
 	{
 		struct EnvironmentOptions *eo;
-		char			setQuery[80];	/* mjl: size okay? XXX */
+		char		setQuery[80];		/* mjl: size okay? XXX */
 
 		for (eo = EnvironmentOptions; eo->envName; eo++)
 		{
-			const char	   *val;
+			const char *val;
 
 			if ((val = getenv(eo->envName)))
 			{
-				PGresult	   *res;
+				PGresult   *res;
 
 				sprintf(setQuery, "SET %s TO '%.60s'", eo->pgName, val);
 				res = PQexec(conn, setQuery);
@@ -699,7 +699,7 @@ closePGconn(PGconn * conn)
 	fflush(conn->Pfout);
 	sigaction(SIGPIPE, &oldaction, NULL);
 #else
-					signal(SIGPIPE, SIG_IGN);
+				signal(SIGPIPE, SIG_IGN);
 	fputs("X\0", conn->Pfout);
 	fflush(conn->Pfout);
 	signal(SIGPIPE, SIG_DFL);
@@ -773,8 +773,8 @@ packetSend(Port * port,
 		   PacketLen len,
 		   bool nonBlocking)
 {
-	PacketLen		totalLen;
-	int				addrLen = sizeof(struct sockaddr_in);
+	PacketLen	totalLen;
+	int			addrLen = sizeof(struct sockaddr_in);
 
 	totalLen = len;
 
@@ -800,7 +800,7 @@ packetSend(Port * port,
 static void
 startup2PacketBuf(StartupInfo * s, PacketBuf * res)
 {
-	char		   *tmp;
+	char	   *tmp;
 
 /*	res = (PacketBuf*)malloc(sizeof(PacketBuf)); */
 	res->len = htonl(sizeof(PacketBuf));
@@ -827,14 +827,14 @@ startup2PacketBuf(StartupInfo * s, PacketBuf * res)
 static int
 conninfo_parse(const char *conninfo, char *errorMessage)
 {
-	char		   *pname;
-	char		   *pval;
-	char		   *buf;
-	char		   *tmp;
-	char		   *cp;
-	char		   *cp2;
+	char	   *pname;
+	char	   *pval;
+	char	   *buf;
+	char	   *tmp;
+	char	   *cp;
+	char	   *cp2;
 	PQconninfoOption *option;
-	char			errortmp[ERROR_MSG_LENGTH];
+	char		errortmp[ERROR_MSG_LENGTH];
 
 	conninfo_free();
 
@@ -1054,7 +1054,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 }
 
 
-static char    *
+static char *
 conninfo_getval(char *keyword)
 {
 	PQconninfoOption *option;
@@ -1087,7 +1087,7 @@ conninfo_free()
 }
 
 /* =========== accessor functions for PGconn ========= */
-char		   *
+char	   *
 PQdb(PGconn * conn)
 {
 	if (!conn)
@@ -1098,7 +1098,7 @@ PQdb(PGconn * conn)
 	return conn->dbName;
 }
 
-char		   *
+char	   *
 PQuser(PGconn * conn)
 {
 	if (!conn)
@@ -1109,7 +1109,7 @@ PQuser(PGconn * conn)
 	return conn->pguser;
 }
 
-char		   *
+char	   *
 PQhost(PGconn * conn)
 {
 	if (!conn)
@@ -1121,7 +1121,7 @@ PQhost(PGconn * conn)
 	return conn->pghost;
 }
 
-char		   *
+char	   *
 PQoptions(PGconn * conn)
 {
 	if (!conn)
@@ -1132,7 +1132,7 @@ PQoptions(PGconn * conn)
 	return conn->pgoptions;
 }
 
-char		   *
+char	   *
 PQtty(PGconn * conn)
 {
 	if (!conn)
@@ -1143,7 +1143,7 @@ PQtty(PGconn * conn)
 	return conn->pgtty;
 }
 
-char		   *
+char	   *
 PQport(PGconn * conn)
 {
 	if (!conn)
@@ -1165,7 +1165,7 @@ PQstatus(PGconn * conn)
 	return conn->status;
 }
 
-char		   *
+char	   *
 PQerrorMessage(PGconn * conn)
 {
 	if (!conn)

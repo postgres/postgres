@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.23 1997/09/07 04:44:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.24 1997/09/08 02:25:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,20 +36,20 @@
 #include "access/heapam.h"
 #include "optimizer/clauses.h"
 
-void			init_io();		/* from scan.l */
-void			parser_init(Oid * typev, int nargs);	/* from gram.y */
-int				yyparse();		/* from gram.c */
+void		init_io();			/* from scan.l */
+void		parser_init(Oid * typev, int nargs);		/* from gram.y */
+int			yyparse();			/* from gram.c */
 
-char		   *parseString;	/* the char* which holds the string to be
+char	   *parseString;		/* the char* which holds the string to be
 								 * parsed */
-char		   *parseCh;		/* a pointer used during parsing to walk
+char	   *parseCh;			/* a pointer used during parsing to walk
 								 * down ParseString */
 
-List		   *parsetree = NIL;
+List	   *parsetree = NIL;
 
 #ifdef SETS_FIXED
-static void		fixupsets();
-static void		define_sets();
+static void fixupsets();
+static void define_sets();
 
 #endif
 /*
@@ -57,14 +57,14 @@ static void		define_sets();
  *
  *	CALLER is responsible for free'ing the list returned
  */
-QueryTreeList  *
+QueryTreeList *
 parser(char *str, Oid * typev, int nargs)
 {
-	QueryTreeList  *queryList;
-	int				yyresult;
+	QueryTreeList *queryList;
+	int			yyresult;
 
 #if defined(FLEX_SCANNER)
-	extern void		DeleteBuffer(void);
+	extern void DeleteBuffer(void);
 
 #endif							/* FLEX_SCANNER */
 
@@ -131,11 +131,11 @@ fixupsets(Query * parse)
 static void
 define_sets(Node * clause)
 {
-	Oid				setoid;
-	Type			t = type("oid");
-	Oid				typeoid = typeid(t);
-	Size			oidsize = tlen(t);
-	bool			oidbyval = tbyval(t);
+	Oid			setoid;
+	Type		t = type("oid");
+	Oid			typeoid = typeid(t);
+	Size		oidsize = tlen(t);
+	bool		oidbyval = tbyval(t);
 
 	if (clause == NULL)
 	{
@@ -170,7 +170,7 @@ define_sets(Node * clause)
 	}
 	else if (or_clause(clause))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		/* mapcan */
 		foreach(temp, ((Expr *) clause)->args)
@@ -180,7 +180,7 @@ define_sets(Node * clause)
 	}
 	else if (is_funcclause(clause))
 	{
-		List		   *temp;
+		List	   *temp;
 
 		/* mapcan */
 		foreach(temp, ((Expr *) clause)->args)
@@ -209,33 +209,33 @@ define_sets(Node * clause)
 #define    PSIZE(PTR)	   (*((int32 *)(PTR) - 1))
 */
 
-Node		   *
+Node	   *
 parser_typecast(Value * expr, TypeName * typename, int typlen)
 {
 	/* check for passing non-ints */
-	Const		   *adt;
-	Datum			lcp;
-	Type			tp;
-	char			type_string[16];
-	int32			len;
-	char		   *cp = NULL;
-	char		   *const_string = NULL;
-	bool			string_palloced = false;
+	Const	   *adt;
+	Datum		lcp;
+	Type		tp;
+	char		type_string[16];
+	int32		len;
+	char	   *cp = NULL;
+	char	   *const_string = NULL;
+	bool		string_palloced = false;
 
 	switch (nodeTag(expr))
 	{
-	case T_String:
-		const_string = DatumGetPointer(expr->val.str);
-		break;
-	case T_Integer:
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%d", expr->val.ival);
-		break;
-	default:
-		elog(WARN,
-		   "parser_typecast: cannot cast this expression to type \"%s\"",
-			 typename->name);
+		case T_String:
+			const_string = DatumGetPointer(expr->val.str);
+			break;
+		case T_Integer:
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%d", expr->val.ival);
+			break;
+		default:
+			elog(WARN,
+			"parser_typecast: cannot cast this expression to type \"%s\"",
+				 typename->name);
 	}
 
 	if (typename->arrayBounds != NIL)
@@ -253,49 +253,49 @@ parser_typecast(Value * expr, TypeName * typename, int typlen)
 #if 0							/* fix me */
 	switch (CInteger(lfirst(expr)))
 	{
-	case INT4OID:				/* int4 */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%d", ((Const *) lnext(expr))->constvalue);
-		break;
+		case INT4OID:			/* int4 */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%d", ((Const *) lnext(expr))->constvalue);
+			break;
 
-	case NAMEOID:				/* char16 */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%s", ((Const *) lnext(expr))->constvalue);
-		break;
+		case NAMEOID:			/* char16 */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%s", ((Const *) lnext(expr))->constvalue);
+			break;
 
-	case CHAROID:				/* char */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%c", ((Const) lnext(expr))->constvalue);
-		break;
+		case CHAROID:			/* char */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%c", ((Const) lnext(expr))->constvalue);
+			break;
 
-	case FLOAT8OID:				/* float8 */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%f", ((Const) lnext(expr))->constvalue);
-		break;
+		case FLOAT8OID: /* float8 */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%f", ((Const) lnext(expr))->constvalue);
+			break;
 
-	case CASHOID:				/* money */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%d",
-				(int) ((Const *) expr)->constvalue);
-		break;
+		case CASHOID:			/* money */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%d",
+					(int) ((Const *) expr)->constvalue);
+			break;
 
-	case TEXTOID:				/* text */
-		const_string = DatumGetPointer(((Const) lnext(expr))->constvalue);
-		const_string = (char *) textout((struct varlena *) const_string);
-		break;
+		case TEXTOID:			/* text */
+			const_string = DatumGetPointer(((Const) lnext(expr))->constvalue);
+			const_string = (char *) textout((struct varlena *) const_string);
+			break;
 
-	case UNKNOWNOID:			/* unknown */
-		const_string = DatumGetPointer(((Const) lnext(expr))->constvalue);
-		const_string = (char *) textout((struct varlena *) const_string);
-		break;
+		case UNKNOWNOID:		/* unknown */
+			const_string = DatumGetPointer(((Const) lnext(expr))->constvalue);
+			const_string = (char *) textout((struct varlena *) const_string);
+			break;
 
-	default:
-		elog(WARN, "unknown type %d", CInteger(lfirst(expr)));
+		default:
+			elog(WARN, "unknown type %d", CInteger(lfirst(expr)));
 	}
 #endif
 
@@ -317,18 +317,18 @@ parser_typecast(Value * expr, TypeName * typename, int typlen)
 	{
 		switch (len)
 		{
-		case 1:
-			lcp = Int8GetDatum(cp);
-			break;
-		case 2:
-			lcp = Int16GetDatum(cp);
-			break;
-		case 4:
-			lcp = Int32GetDatum(cp);
-			break;
-		default:
-			lcp = PointerGetDatum(cp);
-			break;
+			case 1:
+				lcp = Int8GetDatum(cp);
+				break;
+			case 2:
+				lcp = Int16GetDatum(cp);
+				break;
+			case 4:
+				lcp = Int32GetDatum(cp);
+				break;
+			default:
+				lcp = PointerGetDatum(cp);
+				break;
 		}
 	}
 
@@ -346,80 +346,80 @@ parser_typecast(Value * expr, TypeName * typename, int typlen)
 	return (Node *) adt;
 }
 
-Node		   *
+Node	   *
 parser_typecast2(Node * expr, Oid exprType, Type tp, int typlen)
 {
 	/* check for passing non-ints */
-	Const		   *adt;
-	Datum			lcp;
-	int32			len = tlen(tp);
-	char		   *cp = NULL;
+	Const	   *adt;
+	Datum		lcp;
+	int32		len = tlen(tp);
+	char	   *cp = NULL;
 
-	char		   *const_string = NULL;
-	bool			string_palloced = false;
+	char	   *const_string = NULL;
+	bool		string_palloced = false;
 
 	Assert(IsA(expr, Const));
 
 	switch (exprType)
 	{
-	case 0:						/* NULL */
-		break;
-	case INT4OID:				/* int4 */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%d",
-				(int) ((Const *) expr)->constvalue);
-		break;
-	case NAMEOID:				/* char16 */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%s",
-				(char *) ((Const *) expr)->constvalue);
-		break;
-	case CHAROID:				/* char */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%c",
-				(char) ((Const *) expr)->constvalue);
-		break;
-	case FLOAT4OID:				/* float4 */
-		{
-			float32			floatVal =
-			DatumGetFloat32(((Const *) expr)->constvalue);
-
+		case 0:			/* NULL */
+			break;
+		case INT4OID:			/* int4 */
 			const_string = (char *) palloc(256);
 			string_palloced = true;
-			sprintf(const_string, "%f", *floatVal);
+			sprintf(const_string, "%d",
+					(int) ((Const *) expr)->constvalue);
 			break;
-		}
-	case FLOAT8OID:				/* float8 */
-		{
-			float64			floatVal =
-			DatumGetFloat64(((Const *) expr)->constvalue);
-
+		case NAMEOID:			/* char16 */
 			const_string = (char *) palloc(256);
 			string_palloced = true;
-			sprintf(const_string, "%f", *floatVal);
+			sprintf(const_string, "%s",
+					(char *) ((Const *) expr)->constvalue);
 			break;
-		}
-	case CASHOID:				/* money */
-		const_string = (char *) palloc(256);
-		string_palloced = true;
-		sprintf(const_string, "%d",
-				(long) ((Const *) expr)->constvalue);
-		break;
-	case TEXTOID:				/* text */
-		const_string =
-			DatumGetPointer(((Const *) expr)->constvalue);
-		const_string = (char *) textout((struct varlena *) const_string);
-		break;
-	case UNKNOWNOID:			/* unknown */
-		const_string =
-			DatumGetPointer(((Const *) expr)->constvalue);
-		const_string = (char *) textout((struct varlena *) const_string);
-		break;
-	default:
-		elog(WARN, "unknown type %u ", exprType);
+		case CHAROID:			/* char */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%c",
+					(char) ((Const *) expr)->constvalue);
+			break;
+		case FLOAT4OID: /* float4 */
+			{
+				float32		floatVal =
+				DatumGetFloat32(((Const *) expr)->constvalue);
+
+				const_string = (char *) palloc(256);
+				string_palloced = true;
+				sprintf(const_string, "%f", *floatVal);
+				break;
+			}
+		case FLOAT8OID: /* float8 */
+			{
+				float64		floatVal =
+				DatumGetFloat64(((Const *) expr)->constvalue);
+
+				const_string = (char *) palloc(256);
+				string_palloced = true;
+				sprintf(const_string, "%f", *floatVal);
+				break;
+			}
+		case CASHOID:			/* money */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%d",
+					(long) ((Const *) expr)->constvalue);
+			break;
+		case TEXTOID:			/* text */
+			const_string =
+				DatumGetPointer(((Const *) expr)->constvalue);
+			const_string = (char *) textout((struct varlena *) const_string);
+			break;
+		case UNKNOWNOID:		/* unknown */
+			const_string =
+				DatumGetPointer(((Const *) expr)->constvalue);
+			const_string = (char *) textout((struct varlena *) const_string);
+			break;
+		default:
+			elog(WARN, "unknown type %u ", exprType);
 	}
 
 	if (!exprType)
@@ -453,18 +453,18 @@ parser_typecast2(Node * expr, Oid exprType, Type tp, int typlen)
 	{
 		switch (len)
 		{
-		case 1:
-			lcp = Int8GetDatum(cp);
-			break;
-		case 2:
-			lcp = Int16GetDatum(cp);
-			break;
-		case 4:
-			lcp = Int32GetDatum(cp);
-			break;
-		default:
-			lcp = PointerGetDatum(cp);
-			break;
+			case 1:
+				lcp = Int8GetDatum(cp);
+				break;
+			case 2:
+				lcp = Int16GetDatum(cp);
+				break;
+			case 4:
+				lcp = Int32GetDatum(cp);
+				break;
+			default:
+				lcp = PointerGetDatum(cp);
+				break;
 		}
 	}
 
@@ -485,15 +485,15 @@ parser_typecast2(Node * expr, Oid exprType, Type tp, int typlen)
 	return ((Node *) adt);
 }
 
-Aggreg		   *
+Aggreg	   *
 ParseAgg(char *aggname, Oid basetype, Node * target)
 {
-	Oid				fintype;
-	Oid				vartype;
-	Oid				xfn1;
+	Oid			fintype;
+	Oid			vartype;
+	Oid			xfn1;
 	Form_pg_aggregate aggform;
-	Aggreg		   *aggreg;
-	HeapTuple		theAggTuple;
+	Aggreg	   *aggreg;
+	HeapTuple	theAggTuple;
 
 	theAggTuple = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggname),
 									  ObjectIdGetDatum(basetype),
@@ -521,8 +521,8 @@ ParseAgg(char *aggname, Oid basetype, Node * target)
 
 		if (basetype != vartype)
 		{
-			Type			tp1,
-							tp2;
+			Type		tp1,
+						tp2;
 
 			tp1 = get_id_type(basetype);
 			tp2 = get_id_type(vartype);

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char		sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 
 #endif							/* LIBC_SCCS and not lint */
 
@@ -46,26 +46,26 @@ static char		sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 
 #include "port-protos.h"
 
-static char		error_message[BUFSIZ];
+static char error_message[BUFSIZ];
 
-char		   *
+char	   *
 BSD44_derived_dlerror(void)
 {
-	static char		ret[BUFSIZ];
+	static char ret[BUFSIZ];
 
 	strcpy(ret, error_message);
 	error_message[0] = 0;
 	return ((ret[0] == 0) ? (char *) NULL : ret);
 }
 
-void		   *
+void	   *
 BSD44_derived_dlopen(const char *file, int num)
 {
 #ifdef __mips__
 	sprintf(error_message, "dlopen (%s) not supported", file);
 	return NULL;
 #else
-	void		   *vp;
+	void	   *vp;
 
 	if ((vp = dlopen((char *) file, num)) == (void *) NULL)
 	{
@@ -75,15 +75,15 @@ BSD44_derived_dlopen(const char *file, int num)
 #endif
 }
 
-void		   *
+void	   *
 BSD44_derived_dlsym(void *handle, const char *name)
 {
 #ifdef __mips__
 	sprintf(error_message, "dlsym (%s) failed", name);
 	return NULL;
 #else
-	void		   *vp;
-	char			buf[BUFSIZ];
+	void	   *vp;
+	char		buf[BUFSIZ];
 
 	if (*name != '_')
 	{

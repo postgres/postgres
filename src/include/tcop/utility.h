@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: utility.h,v 1.3 1997/09/07 05:01:58 momjian Exp $
+ * $Id: utility.h,v 1.4 1997/09/08 02:39:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,6 @@
 
 #include <executor/execdesc.h>
 
-extern void		ProcessUtility(Node * parsetree, CommandDest dest);
+extern void ProcessUtility(Node * parsetree, CommandDest dest);
 
 #endif							/* UTILITY_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.8 1997/09/07 05:02:53 momjian Exp $
+ * $Id: psort.h,v 1.9 1997/09/08 02:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,17 +24,17 @@
 
 struct tape
 {
-	int				tp_dummy;	/* (D) */
-	int				tp_fib;		/* (A) */
-	FILE		   *tp_file;	/* (TAPE) */
-	struct tape    *tp_prev;
+	int			tp_dummy;		/* (D) */
+	int			tp_fib;			/* (A) */
+	FILE	   *tp_file;		/* (TAPE) */
+	struct tape *tp_prev;
 };
 
 struct cmplist
 {
-	int				cp_attn;	/* attribute number */
-	int				cp_num;		/* comparison function code */
-	int				cp_rev;		/* invert comparison flag */
+	int			cp_attn;		/* attribute number */
+	int			cp_num;			/* comparison function code */
+	int			cp_rev;			/* invert comparison flag */
 	struct cmplist *cp_next;	/* next in chain */
 };
 
@@ -47,25 +47,24 @@ typedef struct Psortstate
 {
 	LeftistContextData treeContext;
 
-	int				TapeRange;
-	int				Level;
-	int				TotalDummy;
-	struct tape		Tape[MAXTAPES];
+	int			TapeRange;
+	int			Level;
+	int			TotalDummy;
+	struct tape Tape[MAXTAPES];
 
-	int				BytesRead;
-	int				BytesWritten;
-	int				tupcount;
+	int			BytesRead;
+	int			BytesWritten;
+	int			tupcount;
 
 	struct leftist *Tuples;
 
-	FILE		   *psort_grab_file;
-	long			psort_current;		/* could be file offset, or array
-										 * index */
-	long			psort_saved;/* could be file offset, or array index */
-	bool			using_tape_files;
+	FILE	   *psort_grab_file;
+	long		psort_current;	/* could be file offset, or array index */
+	long		psort_saved;	/* could be file offset, or array index */
+	bool		using_tape_files;
 
-	HeapTuple	   *memtuples;
-}				Psortstate;
+	HeapTuple  *memtuples;
+}			Psortstate;
 
 #ifdef	EBUG
 #include <stdio.h>
@@ -99,10 +98,10 @@ if (1) CODE; else
 #endif
 
 /* psort.c */
-extern bool		psort_begin(Sort * node, int nkeys, ScanKey key);
+extern bool psort_begin(Sort * node, int nkeys, ScanKey key);
 extern HeapTuple psort_grabtuple(Sort * node);
-extern void		psort_markpos(Sort * node);
-extern void		psort_restorepos(Sort * node);
-extern void		psort_end(Sort * node);
+extern void psort_markpos(Sort * node);
+extern void psort_restorepos(Sort * node);
+extern void psort_end(Sort * node);
 
 #endif							/* PSORT_H */

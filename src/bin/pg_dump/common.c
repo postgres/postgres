@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.14 1997/09/07 04:54:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.15 1997/09/08 02:32:37 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -35,16 +35,16 @@
 
 #include "pg_dump.h"
 
-static char   **
+static char **
 findParentsByOid(TableInfo * tbinfo, int numTables,
 				 InhInfo * inhinfo, int numInherits,
 				 const char *oid,
 				 int *numParents);
-static int		findTableByOid(TableInfo * tbinfo, int numTables, const char *oid);
+static int	findTableByOid(TableInfo * tbinfo, int numTables, const char *oid);
 static void
 flagInhAttrs(TableInfo * tbinfo, int numTables,
 			 InhInfo * inhinfo, int numInherits);
-static int		strInArray(const char *pattern, char **arr, int arr_size);
+static int	strInArray(const char *pattern, char **arr, int arr_size);
 
 /*
  * findTypeByOid
@@ -55,10 +55,10 @@ static int		strInArray(const char *pattern, char **arr, int arr_size);
  * NOTE:  should hash this, but just do linear search for now
  */
 
-char		   *
+char	   *
 findTypeByOid(TypeInfo * tinfo, int numTypes, const char *oid)
 {
-	int				i;
+	int			i;
 
 	if (strcmp(oid, "0") == 0)
 		return g_opaque_type;
@@ -83,10 +83,10 @@ findTypeByOid(TypeInfo * tinfo, int numTypes, const char *oid)
  * NOTE:  should hash this, but just do linear search for now
  *
  */
-char		   *
+char	   *
 findOprByOid(OprInfo * oprinfo, int numOprs, const char *oid)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < numOprs; i++)
 	{
@@ -110,16 +110,16 @@ findOprByOid(OprInfo * oprinfo, int numOprs, const char *oid)
  * returns NULL if none
  */
 
-static char   **
+static char **
 findParentsByOid(TableInfo * tblinfo, int numTables,
 				 InhInfo * inhinfo, int numInherits, const char *oid,
 				 int *numParentsPtr)
 {
-	int				i,
-					j;
-	int				parentInd;
-	char		  **result;
-	int				numParents;
+	int			i,
+				j;
+	int			parentInd;
+	char	  **result;
+	int			numParents;
 
 	numParents = 0;
 	for (i = 0; i < numInherits; i++)
@@ -160,10 +160,10 @@ findParentsByOid(TableInfo * tblinfo, int numTables,
 void
 parseArgTypes(char **argtypes, const char *str)
 {
-	int				j,
-					argNum;
-	char			temp[100];
-	char			s;
+	int			j,
+				argNum;
+	char		temp[100];
+	char		s;
 
 	argNum = 0;
 	j = 0;
@@ -203,7 +203,7 @@ parseArgTypes(char **argtypes, const char *str)
 static int
 strInArray(const char *pattern, char **arr, int arr_size)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < arr_size; i++)
 	{
@@ -220,24 +220,24 @@ strInArray(const char *pattern, char **arr, int arr_size)
  *
  */
 
-TableInfo	   *
+TableInfo  *
 dumpSchema(FILE * fout,
 		   int *numTablesPtr,
 		   const char *tablename,
 		   const bool acls)
 {
-	int				numTypes;
-	int				numFuncs;
-	int				numTables;
-	int				numInherits;
-	int				numAggregates;
-	int				numOperators;
-	TypeInfo	   *tinfo = NULL;
-	FuncInfo	   *finfo = NULL;
-	AggInfo		   *agginfo = NULL;
-	TableInfo	   *tblinfo = NULL;
-	InhInfo		   *inhinfo = NULL;
-	OprInfo		   *oprinfo = NULL;
+	int			numTypes;
+	int			numFuncs;
+	int			numTables;
+	int			numInherits;
+	int			numAggregates;
+	int			numOperators;
+	TypeInfo   *tinfo = NULL;
+	FuncInfo   *finfo = NULL;
+	AggInfo    *agginfo = NULL;
+	TableInfo  *tblinfo = NULL;
+	InhInfo    *inhinfo = NULL;
+	OprInfo    *oprinfo = NULL;
 
 	if (g_verbose)
 		fprintf(stderr, "%s reading user-defined types %s\n",
@@ -339,8 +339,8 @@ extern void
 dumpSchemaIdx(FILE * fout, int *numTablesPtr, const char *tablename,
 			  TableInfo * tblinfo, int numTables)
 {
-	int				numIndices;
-	IndInfo		   *indinfo;
+	int			numIndices;
+	IndInfo    *indinfo;
 
 	if (g_verbose)
 		fprintf(stderr, "%s reading indices information %s\n",
@@ -370,10 +370,10 @@ static void
 flagInhAttrs(TableInfo * tblinfo, int numTables,
 			 InhInfo * inhinfo, int numInherits)
 {
-	int				i,
-					j,
-					k;
-	int				parentInd;
+	int			i,
+				j,
+				k;
+	int			parentInd;
 
 	/*
 	 * we go backwards because the tables in tblinfo are in OID order,
@@ -415,7 +415,7 @@ flagInhAttrs(TableInfo * tblinfo, int numTables,
 int
 findTableByName(TableInfo * tblinfo, int numTables, const char *relname)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < numTables; i++)
 	{
@@ -436,7 +436,7 @@ findTableByName(TableInfo * tblinfo, int numTables, const char *relname)
 static int
 findTableByOid(TableInfo * tblinfo, int numTables, const char *oid)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < numTables; i++)
 	{
@@ -458,7 +458,7 @@ findTableByOid(TableInfo * tblinfo, int numTables, const char *oid)
 int
 findFuncByName(FuncInfo * finfo, int numFuncs, const char *name)
 {
-	int				i;
+	int			i;
 
 	for (i = 0; i < numFuncs; i++)
 	{

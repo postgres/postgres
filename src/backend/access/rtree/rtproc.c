@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.8 1997/09/07 04:39:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.9 1997/09/08 02:21:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 BOX
 * rt_box_union(BOX * a, BOX * b)
 {
-	BOX			   *n;
+	BOX		   *n;
 
 	if ((n = (BOX *) palloc(sizeof(*n))) == (BOX *) NULL)
 		elog(WARN, "Cannot allocate box for union");
@@ -38,10 +38,10 @@ BOX
 	return (n);
 }
 
-BOX			   *
+BOX		   *
 rt_box_inter(BOX * a, BOX * b)
 {
-	BOX			   *n;
+	BOX		   *n;
 
 	if ((n = (BOX *) palloc(sizeof(*n))) == (BOX *) NULL)
 		elog(WARN, "Cannot allocate box for union");
@@ -85,10 +85,10 @@ rt_bigbox_size(BOX * a, float *size)
 	rt_box_size(a, size);
 }
 
-POLYGON		   *
+POLYGON    *
 rt_poly_union(POLYGON * a, POLYGON * b)
 {
-	POLYGON		   *p;
+	POLYGON    *p;
 
 	p = (POLYGON *) PALLOCTYPE(POLYGON);
 
@@ -108,8 +108,8 @@ rt_poly_union(POLYGON * a, POLYGON * b)
 void
 rt_poly_size(POLYGON * a, float *size)
 {
-	double			xdim,
-					ydim;
+	double		xdim,
+				ydim;
 
 	size = (float *) palloc(sizeof(float));
 	if (a == (POLYGON *) NULL ||
@@ -127,10 +127,10 @@ rt_poly_size(POLYGON * a, float *size)
 	return;
 }
 
-POLYGON		   *
+POLYGON    *
 rt_poly_inter(POLYGON * a, POLYGON * b)
 {
-	POLYGON		   *p;
+	POLYGON    *p;
 
 	p = (POLYGON *) PALLOCTYPE(POLYGON);
 

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.5 1997/09/07 04:56:32 momjian Exp $
+ * $Id: indexing.h,v 1.6 1997/09/08 02:34:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,41 +46,41 @@
 #define RelCheckIndex	   "pg_relcheckind"
 #define TriggerRelidIndex  "pg_trigrelidind"
 
-extern char    *Name_pg_attr_indices[];
-extern char    *Name_pg_proc_indices[];
-extern char    *Name_pg_type_indices[];
-extern char    *Name_pg_class_indices[];
-extern char    *Name_pg_attrdef_indices[];
-extern char    *Name_pg_relcheck_indices[];
-extern char    *Name_pg_trigger_indices[];
+extern char *Name_pg_attr_indices[];
+extern char *Name_pg_proc_indices[];
+extern char *Name_pg_type_indices[];
+extern char *Name_pg_class_indices[];
+extern char *Name_pg_attrdef_indices[];
+extern char *Name_pg_relcheck_indices[];
+extern char *Name_pg_trigger_indices[];
 
-extern char    *IndexedCatalogNames[];
+extern char *IndexedCatalogNames[];
 
 /*
  * indexing.c prototypes
  *
  * Functions for each index to perform the necessary scan on a cache miss.
  */
-extern void		CatalogOpenIndices(int nIndices, char *names[], Relation idescs[]);
-extern void		CatalogCloseIndices(int nIndices, Relation * idescs);
+extern void CatalogOpenIndices(int nIndices, char *names[], Relation idescs[]);
+extern void CatalogCloseIndices(int nIndices, Relation * idescs);
 extern void
 CatalogIndexInsert(Relation * idescs,
 				   int nIndices,
 				   Relation heapRelation,
 				   HeapTuple heapTuple);
-extern bool		CatalogHasIndex(char *catName, Oid catId);
+extern bool CatalogHasIndex(char *catName, Oid catId);
 
-extern HeapTuple
+extern		HeapTuple
 AttributeNameIndexScan(Relation heapRelation,
 					   Oid relid,
 					   char *attname);
 
-extern HeapTuple
+extern		HeapTuple
 AttributeNumIndexScan(Relation heapRelation,
 					  Oid relid,
 					  AttrNumber attnum);
 extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Oid procId);
-extern HeapTuple
+extern		HeapTuple
 ProcedureNameIndexScan(Relation heapRelation,
 					   char *procName, int nargs, Oid * argTypes);
 extern HeapTuple ProcedureSrcIndexScan(Relation heapRelation, text * procSrc);

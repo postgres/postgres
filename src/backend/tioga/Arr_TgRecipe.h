@@ -33,11 +33,11 @@
 
 typedef struct Arr_TgString
 {
-	size_t			num;
-	size_t			size;
-	size_t			valSize;
-	TgString	   *val;
-}				Arr_TgString;
+	size_t		num;
+	size_t		size;
+	size_t		valSize;
+	TgString   *val;
+}			Arr_TgString;
 
 #define newArr_TgString() \
   (Arr_TgString *) NewVarray(ARR_TgString_INITIAL_SIZE, sizeof(TgString))
@@ -69,11 +69,11 @@ typedef struct Arr_TgString
 
 typedef struct Arr_TgElementPtr
 {
-	size_t			num;
-	size_t			size;
-	size_t			valSize;
-	TgElementPtr   *val;
-}				Arr_TgElementPtr;
+	size_t		num;
+	size_t		size;
+	size_t		valSize;
+	TgElementPtr *val;
+}			Arr_TgElementPtr;
 
 #define newArr_TgElementPtr() \
   (Arr_TgElementPtr *) NewVarray(ARR_TgElementPtr_INITIAL_SIZE, sizeof(TgElementPtr))
@@ -105,11 +105,11 @@ typedef struct Arr_TgElementPtr
 
 typedef struct Arr_TgNodePtr
 {
-	size_t			num;
-	size_t			size;
-	size_t			valSize;
-	TgNodePtr	   *val;
-}				Arr_TgNodePtr;
+	size_t		num;
+	size_t		size;
+	size_t		valSize;
+	TgNodePtr  *val;
+}			Arr_TgNodePtr;
 
 #define newArr_TgNodePtr() \
   (Arr_TgNodePtr *) NewVarray(ARR_TgNodePtr_INITIAL_SIZE, sizeof(TgNodePtr))

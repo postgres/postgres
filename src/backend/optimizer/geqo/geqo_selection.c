@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.c,v 1.2 1997/09/07 04:43:24 momjian Exp $
+ * $Id: geqo_selection.c,v 1.3 1997/09/08 02:24:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_random.h"
 
-static int		linear(int max, double bias);
+static int	linear(int max, double bias);
 
 /* geqo_selection--
  *
@@ -65,8 +65,8 @@ static int		linear(int max, double bias);
 void
 geqo_selection(Chromosome * momma, Chromosome * daddy, Pool * pool, double bias)
 {
-	int				first,
-					second;
+	int			first,
+				second;
 
 	first = (int) linear(pool->size, bias);
 	second = (int) linear(pool->size, bias);
@@ -94,8 +94,8 @@ static int
 linear(int pool_size, double bias)		/* bias is y-intercept of linear
 										 * distribution */
 {
-	double			index;		/* index between 0 and pop_size */
-	double			max = (double) pool_size;
+	double		index;			/* index between 0 and pop_size */
+	double		max = (double) pool_size;
 
 	index =
 		max * (bias - sqrt((bias * bias) - 4.0 * (bias - 1.0) * geqo_rand()))

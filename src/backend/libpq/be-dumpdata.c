@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.6 1997/09/07 04:42:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.7 1997/09/08 02:23:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
  *		backend portal stack for recursive PQexec calls
  * ----------------
  */
-static Dllist  *be_portalstack;
+static Dllist *be_portalstack;
 
 /* ----------------
  *		be_portalinit - initialize backend portal administration
@@ -84,11 +84,11 @@ be_portalpush(PortalEntry * entry)
  *		used by PQexec()
  * ----------------
  */
-PortalEntry    *
+PortalEntry *
 be_portalpop(void)
 {
-	PortalEntry    *p;
-	Dlelem		   *elt;
+	PortalEntry *p;
+	Dlelem	   *elt;
 
 	elt = DLRemTail(be_portalstack);
 
@@ -105,10 +105,10 @@ be_portalpop(void)
  *		used by be_printtup()
  * ----------------
  */
-PortalEntry    *
+PortalEntry *
 be_currentportal(void)
 {
-	Dlelem		   *elt;
+	Dlelem	   *elt;
 
 	elt = DLGetTail(be_portalstack);
 	return (elt ? (PortalEntry *) DLE_VAL(elt) : NULL);
@@ -126,14 +126,14 @@ be_currentportal(void)
  * ----------------
  */
 
-static Oid		be_portaloid;
-static u_int	be_portalcnt = 0;
+static Oid	be_portaloid;
+static u_int be_portalcnt = 0;
 
-PortalEntry    *
+PortalEntry *
 be_newportal(void)
 {
-	PortalEntry    *entry;
-	char			buf[PortalNameLength];
+	PortalEntry *entry;
+	char		buf[PortalNameLength];
 
 	/* ----------------
 	 *	generate a new name
@@ -170,9 +170,9 @@ be_typeinit(PortalEntry * entry,
 			TupleDesc tupDesc,
 			int natts)
 {
-	PortalBuffer   *portal;
-	GroupBuffer    *group;
-	int				i;
+	PortalBuffer *portal;
+	GroupBuffer *group;
+	int			i;
 	AttributeTupleForm *attrs = tupDesc->attrs;
 
 	/* ----------------
@@ -212,19 +212,19 @@ be_typeinit(PortalEntry * entry,
 void
 be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 {
-	int				i;
-	char		   *attr;
-	bool			isnull;
-	Oid				typoutput;
+	int			i;
+	char	   *attr;
+	bool		isnull;
+	Oid			typoutput;
 
-	PortalEntry    *entry = NULL;
-	PortalBuffer   *portal = NULL;
-	GroupBuffer    *group = NULL;
-	TupleBlock	   *tuples = NULL;
-	char		  **values;
-	int			   *lengths;
+	PortalEntry *entry = NULL;
+	PortalBuffer *portal = NULL;
+	GroupBuffer *group = NULL;
+	TupleBlock *tuples = NULL;
+	char	  **values;
+	int		   *lengths;
 
-	MemoryContext	savecxt;
+	MemoryContext savecxt;
 
 	/* ----------------
 	 *	get the current portal and group

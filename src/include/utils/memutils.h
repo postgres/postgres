@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.9 1997/09/07 05:02:42 momjian Exp $
+ * $Id: memutils.h,v 1.10 1997/09/08 02:39:50 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -107,27 +107,27 @@ typedef OrderedSetData *OrderedSet;
 
 struct OrderedElemData
 {
-	OrderedElem		next;		/* Next elem or &this->set->dummy		*/
-	OrderedElem		prev;		/* Previous elem or &this->set->head	*/
-	OrderedSet		set;		/* Parent set							*/
+	OrderedElem next;			/* Next elem or &this->set->dummy		*/
+	OrderedElem prev;			/* Previous elem or &this->set->head	*/
+	OrderedSet	set;			/* Parent set							*/
 };
 
 struct OrderedSetData
 {
-	OrderedElem		head;		/* First elem or &this->dummy			*/
-	OrderedElem		dummy;		/* (hack) Terminator == NULL			*/
-	OrderedElem		tail;		/* Last elem or &this->head				*/
-	Offset			offset;		/* Offset from struct base to elem		*/
+	OrderedElem head;			/* First elem or &this->dummy			*/
+	OrderedElem dummy;			/* (hack) Terminator == NULL			*/
+	OrderedElem tail;			/* Last elem or &this->head				*/
+	Offset		offset;			/* Offset from struct base to elem		*/
 	/* this could be signed short int! */
 };
 
-extern void		OrderedSetInit(OrderedSet set, Offset offset);
-extern bool		OrderedSetContains(OrderedSet set, OrderedElem elem);
-extern Pointer	OrderedSetGetHead(OrderedSet set);
-extern Pointer	OrderedElemGetPredecessor(OrderedElem elem);
-extern Pointer	OrderedElemGetSuccessor(OrderedElem elem);
-extern void		OrderedElemPop(OrderedElem elem);
-extern void		OrderedElemPushInto(OrderedElem elem, OrderedSet Set);
+extern void OrderedSetInit(OrderedSet set, Offset offset);
+extern bool OrderedSetContains(OrderedSet set, OrderedElem elem);
+extern Pointer OrderedSetGetHead(OrderedSet set);
+extern Pointer OrderedElemGetPredecessor(OrderedElem elem);
+extern Pointer OrderedElemGetSuccessor(OrderedElem elem);
+extern void OrderedElemPop(OrderedElem elem);
+extern void OrderedElemPushInto(OrderedElem elem, OrderedSet Set);
 
 /*****************************************************************************
  *	  aset.h --			Allocation set definitions.							 *
@@ -193,7 +193,7 @@ typedef enum AllocMode
 	StaticAllocMode,			/* always "statically" allocate */
 	TunableAllocMode,			/* allocations are "tuned" */
 	BoundedAllocMode			/* allocations bounded to fixed usage */
-}				AllocMode;
+}			AllocMode;
 
 #define DefaultAllocMode		DynamicAllocMode
 
@@ -203,9 +203,9 @@ typedef enum AllocMode
  */
 typedef struct AllocSetData
 {
-	OrderedSetData	setData;
+	OrderedSetData setData;
 	/* Note: this will change in the future to support other modes */
-}				AllocSetData;
+}			AllocSetData;
 
 typedef AllocSetData *AllocSet;
 
@@ -221,18 +221,18 @@ typedef AllocSetData *AllocSet;
  */
 #define AllocSetIsValid(set) PointerIsValid(set)
 
-extern void		AllocSetInit(AllocSet set, AllocMode mode, Size limit);
+extern void AllocSetInit(AllocSet set, AllocMode mode, Size limit);
 
-extern void		AllocSetReset(AllocSet set);
+extern void AllocSetReset(AllocSet set);
 
-extern bool		AllocSetContains(AllocSet set, AllocPointer pointer);
+extern bool AllocSetContains(AllocSet set, AllocPointer pointer);
 extern AllocPointer AllocSetAlloc(AllocSet set, Size size);
-extern void		AllocSetFree(AllocSet set, AllocPointer pointer);
-extern AllocPointer
+extern void AllocSetFree(AllocSet set, AllocPointer pointer);
+extern		AllocPointer
 AllocSetRealloc(AllocSet set, AllocPointer pointer,
 				Size size);
 
-extern void		AllocSetDump(AllocSet set);
+extern void AllocSetDump(AllocSet set);
 
 /*****************************************************************************
  *	  clib.h --			Standard C library definitions						 *
@@ -247,7 +247,7 @@ extern void		AllocSetDump(AllocSet set);
  *		LibCCopyLength is only used within this file. -cim 6/12/90
  *
  */
-typedef int		LibCCopyLength;
+typedef int LibCCopyLength;
 
 /*
  * MemoryCopy --
@@ -262,7 +262,7 @@ typedef int		LibCCopyLength;
 
 #define MaxBitsPerByte	8
 
-typedef uint32	AttributeSize;	/* XXX should be defined elsewhere */
+typedef uint32 AttributeSize;	/* XXX should be defined elsewhere */
 
 #define MaxHeapTupleSize		0x7fffffff
 #define MaxAttributeSize		0x7fffffff

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.10 1997/09/07 04:38:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.11 1997/09/08 02:20:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,12 +52,12 @@ static StrategyEvaluationData HTEvaluationData = {
  */
 
 #ifdef NOT_USED
-static			StrategyNumber
+static StrategyNumber
 _hash_getstrat(Relation rel,
 			   AttrNumber attno,
 			   RegProcedure proc)
 {
-	StrategyNumber	strat;
+	StrategyNumber strat;
 
 	strat = RelationGetStrategy(rel, attno, &HTEvaluationData, proc);
 
@@ -69,7 +69,7 @@ _hash_getstrat(Relation rel,
 #endif
 
 #ifdef NOT_USED
-static			bool
+static bool
 _hash_invokestrat(Relation rel,
 				  AttrNumber attno,
 				  StrategyNumber strat,

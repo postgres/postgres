@@ -13,16 +13,16 @@
 #include "access/htup.h"
 #include "utils/rel.h"
 
-typedef uint32	TriggerEvent;
+typedef uint32 TriggerEvent;
 
 typedef struct TriggerData
 {
-	TriggerEvent	tg_event;
-	Relation		tg_relation;
-	HeapTuple		tg_trigtuple;
-	HeapTuple		tg_newtuple;
-	Trigger		   *tg_trigger;
-}				TriggerData;
+	TriggerEvent tg_event;
+	Relation	tg_relation;
+	HeapTuple	tg_trigtuple;
+	HeapTuple	tg_newtuple;
+	Trigger    *tg_trigger;
+}			TriggerData;
 
 extern TriggerData *CurrentTriggerData;
 
@@ -58,15 +58,15 @@ extern TriggerData *CurrentTriggerData;
 		(!TRIGGER_FIRED_BEFORE (event))
 
 
-extern void		CreateTrigger(CreateTrigStmt * stmt);
-extern void		DropTrigger(DropTrigStmt * stmt);
-extern void		RelationRemoveTriggers(Relation rel);
+extern void CreateTrigger(CreateTrigStmt * stmt);
+extern void DropTrigger(DropTrigStmt * stmt);
+extern void RelationRemoveTriggers(Relation rel);
 
 extern HeapTuple ExecBRInsertTriggers(Relation rel, HeapTuple tuple);
-extern void		ExecARInsertTriggers(Relation rel, HeapTuple tuple);
-extern bool		ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid);
-extern void		ExecARDeleteTriggers(Relation rel, ItemPointer tupleid);
+extern void ExecARInsertTriggers(Relation rel, HeapTuple tuple);
+extern bool ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid);
+extern void ExecARDeleteTriggers(Relation rel, ItemPointer tupleid);
 extern HeapTuple ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple);
-extern void		ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple);
+extern void ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple);
 
 #endif							/* TRIGGER_H */

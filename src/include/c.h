@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.17 1997/09/07 04:55:35 momjian Exp $
+ * $Id: c.h,v 1.18 1997/09/08 02:33:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,10 @@
 #define false	((char) 0)
 #define true	((char) 1)
 #ifndef __cplusplus
-typedef char	bool;
+typedef char bool;
 
 #endif							/* not C++ */
-typedef bool   *BoolPtr;
+typedef bool *BoolPtr;
 
 #ifndef TRUE
 #define TRUE	1
@@ -94,7 +94,7 @@ typedef bool   *BoolPtr;
  *		XXX Pointer arithmetic is done with this, so it can't be void *
  *		under "true" ANSI compilers.
  */
-typedef char   *Pointer;
+typedef char *Pointer;
 
 #ifndef NULL
 /*
@@ -116,7 +116,7 @@ typedef char   *Pointer;
  * Pointer --
  *		Variable containing address of any memory resident object.
  */
-typedef char   *Pointer;
+typedef char *Pointer;
 
 #ifndef NULL
 /*
@@ -228,35 +228,35 @@ typedef unsigned int uint32;	/* >= 32 bits */
  *		Since sizeof(floatN) may be > sizeof(char *), always pass
  *		floatN by reference.
  */
-typedef float	float32data;
-typedef double	float64data;
-typedef float  *float32;
+typedef float float32data;
+typedef double float64data;
+typedef float *float32;
 typedef double *float64;
 
 /*
  * boolN --
  *		Boolean value, AT LEAST N BITS IN SIZE.
  */
-typedef uint8	bool8;			/* >= 8 bits */
-typedef uint16	bool16;			/* >= 16 bits */
-typedef uint32	bool32;			/* >= 32 bits */
+typedef uint8 bool8;			/* >= 8 bits */
+typedef uint16 bool16;			/* >= 16 bits */
+typedef uint32 bool32;			/* >= 32 bits */
 
 /*
  * bitsN --
  *		Unit of bitwise operation, AT LEAST N BITS IN SIZE.
  */
-typedef uint8	bits8;			/* >= 8 bits */
-typedef uint16	bits16;			/* >= 16 bits */
-typedef uint32	bits32;			/* >= 32 bits */
+typedef uint8 bits8;			/* >= 8 bits */
+typedef uint16 bits16;			/* >= 16 bits */
+typedef uint32 bits32;			/* >= 32 bits */
 
 /*
  * wordN --
  *		Unit of storage, AT LEAST N BITS IN SIZE,
  *		used to fetch/store data.
  */
-typedef uint8	word8;			/* >= 8 bits */
-typedef uint16	word16;			/* >= 16 bits */
-typedef uint32	word32;			/* >= 32 bits */
+typedef uint8 word8;			/* >= 8 bits */
+typedef uint16 word16;			/* >= 16 bits */
+typedef uint32 word32;			/* >= 32 bits */
 
 /*
  * Size --
@@ -276,8 +276,8 @@ typedef unsigned int Index;
 #define MAXDIM 6
 typedef struct
 {
-	int				indx[MAXDIM];
-}				IntArray;
+	int			indx[MAXDIM];
+}			IntArray;
 
 /*
  * Offset --
@@ -319,7 +319,7 @@ typedef signed int Offset;
  */
 
 typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
-typedef Datum  *DatumPtr;
+typedef Datum *DatumPtr;
 
 #define GET_1_BYTE(datum)	(((Datum) (datum)) & 0x000000ff)
 #define GET_2_BYTES(datum)	(((Datum) (datum)) & 0x0000ffff)
@@ -564,11 +564,11 @@ typedef Datum  *DatumPtr;
  * Exception Handling definitions
  */
 
-typedef char   *ExcMessage;
+typedef char *ExcMessage;
 typedef struct Exception
 {
-	ExcMessage		message;
-}				Exception;
+	ExcMessage	message;
+}			Exception;
 
 /*
  * NO_ASSERT_CHECKING, if defined, turns off all the assertions.
@@ -712,7 +712,7 @@ ExceptionalCondition(char *conditionName,
  *		form is used by assert and the exception handling stuff
  * ----------------
  */
-extern char    *form(const char *fmt,...);
+extern char *form(const char *fmt,...);
 
 
 

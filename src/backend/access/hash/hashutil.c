@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.10 1997/09/07 04:38:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.11 1997/09/08 02:20:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +28,13 @@
 ScanKey
 _hash_mkscankey(Relation rel, IndexTuple itup, HashMetaPage metap)
 {
-	ScanKey			skey;
-	TupleDesc		itupdesc;
-	int				natts;
-	AttrNumber		i;
-	Datum			arg;
-	RegProcedure	proc;
-	bool			null;
+	ScanKey		skey;
+	TupleDesc	itupdesc;
+	int			natts;
+	AttrNumber	i;
+	Datum		arg;
+	RegProcedure proc;
+	bool		null;
 
 	natts = rel->rd_rel->relnatts;
 	itupdesc = RelationGetTupleDescriptor(rel);
@@ -73,9 +73,9 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 HashItem
 _hash_formitem(IndexTuple itup)
 {
-	int				nbytes_hitem;
-	HashItem		hitem;
-	Size			tuplen;
+	int			nbytes_hitem;
+	HashItem	hitem;
+	Size		tuplen;
 
 	/* disallow nulls in hash keys */
 	if (itup->t_info & INDEX_NULL_MASK)
@@ -95,9 +95,9 @@ _hash_formitem(IndexTuple itup)
 Bucket
 _hash_call(Relation rel, HashMetaPage metap, Datum key)
 {
-	uint32			n;
-	Bucket			bucket;
-	RegProcedure	proc;
+	uint32		n;
+	Bucket		bucket;
+	RegProcedure proc;
 
 	proc = metap->hashm_procid;
 	n = (uint32) fmgr(proc, key);
@@ -113,8 +113,8 @@ _hash_call(Relation rel, HashMetaPage metap, Datum key)
 uint32
 _hash_log2(uint32 num)
 {
-	uint32			i,
-					limit;
+	uint32		i,
+				limit;
 
 	limit = 1;
 	for (i = 0; limit < num; limit = limit << 1, i++)
@@ -128,7 +128,7 @@ _hash_log2(uint32 num)
 void
 _hash_checkpage(Page page, int flags)
 {
-	HashPageOpaque	opaque;
+	HashPageOpaque opaque;
 
 	Assert(page);
 	Assert(((PageHeader) (page))->pd_lower >= (sizeof(PageHeaderData) - sizeof(ItemIdData)));

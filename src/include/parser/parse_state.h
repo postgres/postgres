@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_state.h,v 1.6 1997/09/07 04:59:37 momjian Exp $
+ * $Id: parse_state.h,v 1.7 1997/09/08 02:38:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,17 +18,17 @@
 /* state information used during parse analysis */
 typedef struct ParseState
 {
-	int				p_last_resno;
-	List		   *p_rtable;
-	int				p_numAgg;
-	List		   *p_aggs;
-	bool			p_is_insert;
-	List		   *p_insert_columns;
-	bool			p_is_update;
-	bool			p_is_rule;
-	Relation		p_target_relation;
-	RangeTblEntry  *p_target_rangetblentry;
-}				ParseState;
+	int			p_last_resno;
+	List	   *p_rtable;
+	int			p_numAgg;
+	List	   *p_aggs;
+	bool		p_is_insert;
+	List	   *p_insert_columns;
+	bool		p_is_update;
+	bool		p_is_rule;
+	Relation	p_target_relation;
+	RangeTblEntry *p_target_rangetblentry;
+}			ParseState;
 
 
 #endif							/* PARSE_QUERY_H */

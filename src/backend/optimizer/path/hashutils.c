@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.2 1997/09/07 04:43:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.3 1997/09/08 02:24:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "optimizer/clauses.h"
 
 
-static HInfo   *match_hashop_hashinfo(Oid hashop, List * hashinfo_list);
+static HInfo *match_hashop_hashinfo(Oid hashop, List * hashinfo_list);
 
 /*
  * group-clauses-by-hashop--
@@ -34,14 +34,14 @@ static HInfo   *match_hashop_hashinfo(Oid hashop, List * hashinfo_list);
  * Returns the new list of hashinfo nodes.
  *
  */
-List		   *
+List	   *
 group_clauses_by_hashop(List * clauseinfo_list,
 						int inner_relid)
 {
-	List		   *hashinfo_list = NIL;
-	CInfo		   *clauseinfo = (CInfo *) NULL;
-	List		   *i = NIL;
-	Oid				hashjoinop = 0;
+	List	   *hashinfo_list = NIL;
+	CInfo	   *clauseinfo = (CInfo *) NULL;
+	List	   *i = NIL;
+	Oid			hashjoinop = 0;
 
 	foreach(i, clauseinfo_list)
 	{
@@ -54,11 +54,11 @@ group_clauses_by_hashop(List * clauseinfo_list,
 		 */
 		if (hashjoinop)
 		{
-			HInfo		   *xhashinfo = (HInfo *) NULL;
-			Expr		   *clause = clauseinfo->clause;
-			Var			   *leftop = get_leftop(clause);
-			Var			   *rightop = get_rightop(clause);
-			JoinKey		   *keys = (JoinKey *) NULL;
+			HInfo	   *xhashinfo = (HInfo *) NULL;
+			Expr	   *clause = clauseinfo->clause;
+			Var		   *leftop = get_leftop(clause);
+			Var		   *rightop = get_rightop(clause);
+			JoinKey    *keys = (JoinKey *) NULL;
 
 			xhashinfo =
 				match_hashop_hashinfo(hashjoinop, hashinfo_list);
@@ -108,12 +108,12 @@ group_clauses_by_hashop(List * clauseinfo_list,
  * Returns the node if it exists.
  *
  */
-static HInfo   *
+static HInfo *
 match_hashop_hashinfo(Oid hashop, List * hashinfo_list)
 {
-	Oid				key = 0;
-	HInfo		   *xhashinfo = (HInfo *) NULL;
-	List		   *i = NIL;
+	Oid			key = 0;
+	HInfo	   *xhashinfo = (HInfo *) NULL;
+	List	   *i = NIL;
 
 	foreach(i, hashinfo_list)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.7 1997/09/07 04:41:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.8 1997/09/08 02:22:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,17 +32,17 @@
  *		Returns an array of ScanKeyData.
  * ----------------------------------------------------------------
  */
-static			ScanKey
+static ScanKey
 FormSortKeys(Sort * sortnode)
 {
-	ScanKey			sortkeys;
-	List		   *targetList;
-	List		   *tl;
-	int				keycount;
-	Resdom		   *resdom;
-	AttrNumber		resno;
-	Index			reskey;
-	Oid				reskeyop;
+	ScanKey		sortkeys;
+	List	   *targetList;
+	List	   *tl;
+	int			keycount;
+	Resdom	   *resdom;
+	AttrNumber	resno;
+	Index		reskey;
+	Oid			reskeyop;
 
 	/* ----------------
 	 *	get information from the node
@@ -65,7 +65,7 @@ FormSortKeys(Sort * sortnode)
 	 */
 	foreach(tl, targetList)
 	{
-		TargetEntry    *target = (TargetEntry *) lfirst(tl);
+		TargetEntry *target = (TargetEntry *) lfirst(tl);
 
 		resdom = target->resdom;
 		resno = resdom->resno;
@@ -104,13 +104,13 @@ FormSortKeys(Sort * sortnode)
 TupleTableSlot *
 ExecSort(Sort * node)
 {
-	EState		   *estate;
-	SortState	   *sortstate;
-	Plan		   *outerNode;
-	ScanDirection	dir;
-	int				keycount;
-	ScanKey			sortkeys;
-	HeapTuple		heapTuple;
+	EState	   *estate;
+	SortState  *sortstate;
+	Plan	   *outerNode;
+	ScanDirection dir;
+	int			keycount;
+	ScanKey		sortkeys;
+	HeapTuple	heapTuple;
 	TupleTableSlot *slot;
 
 	/* ----------------
@@ -231,9 +231,9 @@ ExecSort(Sort * node)
 bool
 ExecInitSort(Sort * node, EState * estate, Plan * parent)
 {
-	SortState	   *sortstate;
-	Plan		   *outerPlan;
-	ScanKey			sortkeys;
+	SortState  *sortstate;
+	Plan	   *outerPlan;
+	ScanKey		sortkeys;
 
 	SO1_printf("ExecInitSort: %s\n",
 			   "initializing sort node");
@@ -330,8 +330,8 @@ ExecCountSlotsSort(Sort * node)
 void
 ExecEndSort(Sort * node)
 {
-	SortState	   *sortstate;
-	Plan		   *outerPlan;
+	SortState  *sortstate;
+	Plan	   *outerPlan;
 
 	/* ----------------
 	 *	get info from the sort state
@@ -371,7 +371,7 @@ ExecEndSort(Sort * node)
 void
 ExecSortMarkPos(Sort * node)
 {
-	SortState	   *sortstate;
+	SortState  *sortstate;
 
 	/* ----------------
 	 *	if we haven't sorted yet, just return
@@ -395,7 +395,7 @@ ExecSortMarkPos(Sort * node)
 void
 ExecSortRestrPos(Sort * node)
 {
-	SortState	   *sortstate;
+	SortState  *sortstate;
 
 	/* ----------------
 	 *	if we haven't sorted yet, just return.

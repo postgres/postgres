@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.3 1997/09/07 04:58:14 momjian Exp $
+ * $Id: stringinfo.h,v 1.4 1997/09/08 02:36:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,10 @@
  */
 typedef struct StringInfoData
 {
-	char		   *data;
-	int				maxlen;
-	int				len;
-}				StringInfoData;
+	char	   *data;
+	int			maxlen;
+	int			len;
+}			StringInfoData;
 
 typedef StringInfoData *StringInfo;
 
@@ -42,6 +42,6 @@ extern StringInfo makeStringInfo(void);
  * appendStringInfo
  * similar to 'strcat' but reallocates more space if necessary...
  */
-extern void		appendStringInfo(StringInfo str, char *buffer);
+extern void appendStringInfo(StringInfo str, char *buffer);
 
 #endif							/* STRINGINFO_H */

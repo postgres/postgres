@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.9 1997/09/07 04:38:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.10 1997/09/08 02:20:20 momjian Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we
@@ -31,14 +31,14 @@
 
 #include <access/hash.h>
 
-static void		_hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
-static bool		_hash_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
+static void _hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
+static bool _hash_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
 
 typedef struct HashScanListData
 {
-	IndexScanDesc	hashsl_scan;
+	IndexScanDesc hashsl_scan;
 	struct HashScanListData *hashsl_next;
-}				HashScanListData;
+}			HashScanListData;
 
 typedef HashScanListData *HashScanList;
 
@@ -50,7 +50,7 @@ static HashScanList HashScans = (HashScanList) NULL;
 void
 _hash_regscan(IndexScanDesc scan)
 {
-	HashScanList	new_el;
+	HashScanList new_el;
 
 	new_el = (HashScanList) palloc(sizeof(HashScanListData));
 	new_el->hashsl_scan = scan;
@@ -64,8 +64,8 @@ _hash_regscan(IndexScanDesc scan)
 void
 _hash_dropscan(IndexScanDesc scan)
 {
-	HashScanList	chk,
-					last;
+	HashScanList chk,
+				last;
 
 	last = (HashScanList) NULL;
 	for (chk = HashScans;
@@ -89,8 +89,8 @@ _hash_dropscan(IndexScanDesc scan)
 void
 _hash_adjscans(Relation rel, ItemPointer tid)
 {
-	HashScanList	l;
-	Oid				relid;
+	HashScanList l;
+	Oid			relid;
 
 	relid = rel->rd_id;
 	for (l = HashScans; l != (HashScanList) NULL; l = l->hashsl_next)
@@ -104,10 +104,10 @@ _hash_adjscans(Relation rel, ItemPointer tid)
 static void
 _hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 {
-	ItemPointer		current;
-	Buffer			buf;
-	Buffer			metabuf;
-	HashScanOpaque	so;
+	ItemPointer current;
+	Buffer		buf;
+	Buffer		metabuf;
+	HashScanOpaque so;
 
 	if (!_hash_scantouched(scan, blkno, offno))
 		return;
@@ -144,12 +144,12 @@ _hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 	}
 }
 
-static			bool
+static bool
 _hash_scantouched(IndexScanDesc scan,
 				  BlockNumber blkno,
 				  OffsetNumber offno)
 {
-	ItemPointer		current;
+	ItemPointer current;
 
 	current = &(scan->currentItemData);
 	if (ItemPointerIsValid(current)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.8 1997/09/07 04:39:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.9 1997/09/08 02:21:24 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -50,11 +50,11 @@ xidin(char *representation)
 }
 
 /* XXX char16 name for catalogs */
-char		   *
+char	   *
 xidout(TransactionId transactionId)
 {
 /*	  return(TransactionIdFormString(transactionId)); */
-	char		   *representation;
+	char	   *representation;
 
 	/* maximum 32 bit unsigned integer representation takes 10 chars */
 	representation = palloc(11);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.11 1997/09/07 04:38:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.12 1997/09/08 02:20:44 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -134,13 +134,13 @@ btnamecmp(NameData * a, NameData * b)
 int32
 bttextcmp(struct varlena * a, struct varlena * b)
 {
-	int				res;
-	unsigned char  *ap,
-				   *bp;
+	int			res;
+	unsigned char *ap,
+			   *bp;
 
 #ifdef USE_LOCALE
-	int				la = VARSIZE(a) - VARHDRSZ;
-	int				lb = VARSIZE(b) - VARHDRSZ;
+	int			la = VARSIZE(a) - VARHDRSZ;
+	int			lb = VARSIZE(b) - VARHDRSZ;
 
 	ap = (unsigned char *) palloc(la + 1);
 	bp = (unsigned char *) palloc(lb + 1);
@@ -156,7 +156,7 @@ bttextcmp(struct varlena * a, struct varlena * b)
 	pfree(bp);
 
 #else
-	int				len = VARSIZE(a);
+	int			len = VARSIZE(a);
 
 	/* len is the length of the shorter of the two strings */
 	if (len > VARSIZE(b))

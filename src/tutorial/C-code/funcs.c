@@ -17,9 +17,10 @@
    Postgres in his CREATE FUNCTION statement.
 */
 
-int				add_one(int arg);
-char16		   *concat16(char16 * arg1, char16 * arg2);
-text		   *copytext(text * t);
+int			add_one(int arg);
+char16	   *concat16(char16 * arg1, char16 * arg2);
+text	   *copytext(text * t);
+
 bool
 c_overpaid(TUPLE t,				/* the current instance of EMP */
 		   int4 limit);
@@ -32,24 +33,24 @@ add_one(int arg)
 	return (arg + 1);
 }
 
-char16		   *
+char16	   *
 concat16(char16 * arg1, char16 * arg2)
 {
-	char16		   *new_c16 = (char16 *) palloc(sizeof(char16));
+	char16	   *new_c16 = (char16 *) palloc(sizeof(char16));
 
 	memset(new_c16, 0, sizeof(char16));
 	strncpy((char *) new_c16, (char *) arg1, 16);
 	return (char16 *) (strncat((char *) new_c16, (char *) arg2, 16));
 }
 
-text		   *
+text	   *
 copytext(text * t)
 {
 
 	/*
 	 * VARSIZE is the total size of the struct in bytes.
 	 */
-	text		   *new_t = (text *) palloc(VARSIZE(t));
+	text	   *new_t = (text *) palloc(VARSIZE(t));
 
 	memset(new_t, 0, VARSIZE(t));
 
@@ -69,8 +70,8 @@ bool
 c_overpaid(TUPLE t,				/* the current instance of EMP */
 		   int4 limit)
 {
-	bool			isnull = false;
-	int4			salary;
+	bool		isnull = false;
+	int4		salary;
 
 	salary = (int4) GetAttributeByName(t, "salary", &isnull);
 

@@ -32,21 +32,21 @@ check_conn(PGconn * conn)
 
 main()
 {
-	char		   *pghost,
-				   *pgport,
-				   *pgoptions,
-				   *pgtty;
-	char		   *dbName1,
-					dbName2;
-	char		   *tblName;
-	int				nFields;
-	int				i,
-					j;
+	char	   *pghost,
+			   *pgport,
+			   *pgoptions,
+			   *pgtty;
+	char	   *dbName1,
+				dbName2;
+	char	   *tblName;
+	int			nFields;
+	int			i,
+				j;
 
-	PGconn		   *conn1,
-					conn2;
-	PGresult	   *res1,
-					res2;
+	PGconn	   *conn1,
+				conn2;
+	PGresult   *res1,
+				res2;
 
 	if (argc != 4)
 	{

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.3 1997/09/07 04:57:44 momjian Exp $
+ * $Id: execdebug.h,v 1.4 1997/09/08 02:36:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,13 +176,13 @@
  * ----------------
  */
 #ifdef EXEC_TUPLECOUNT
-extern int		NTupleProcessed;
-extern int		NTupleRetrieved;
-extern int		NTupleReplaced;
-extern int		NTupleAppended;
-extern int		NTupleDeleted;
-extern int		NIndexTupleProcessed;
-extern int		NIndexTupleInserted;
+extern int	NTupleProcessed;
+extern int	NTupleRetrieved;
+extern int	NTupleReplaced;
+extern int	NTupleAppended;
+extern int	NTupleDeleted;
+extern int	NIndexTupleProcessed;
+extern int	NIndexTupleInserted;
 
 #define IncrRetrieved()			NTupleRetrieved++
 #define IncrAppended()			NTupleAppended++
@@ -377,7 +377,7 @@ extern int		NIndexTupleInserted;
  */
 #undef NOTYET
 
-extern long		NDirectFileRead;
-extern long		NDirectFileWrite;
+extern long NDirectFileRead;
+extern long NDirectFileWrite;
 
 #endif							/* ExecDebugIncluded */

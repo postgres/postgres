@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.7 1997/09/07 04:48:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.8 1997/09/08 02:28:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,18 +37,18 @@
  *	   list of parsetrees for the rule (in parseTrees)
  */
 #ifdef NOT_USED
-static Node    *
+static Node *
 RuleIdGetActionInfo(Oid ruleoid, bool * instead_flag, Query ** parseTrees)
 {
-	HeapTuple		ruletuple;
-	char		   *ruleaction = NULL;
-	bool			action_is_null = false;
-	bool			instead_is_null = false;
-	Relation		ruleRelation = NULL;
-	TupleDesc		ruleTupdesc = NULL;
-	Query		   *ruleparse = NULL;
-	char		   *rule_evqual_string = NULL;
-	Node		   *rule_evqual = NULL;
+	HeapTuple	ruletuple;
+	char	   *ruleaction = NULL;
+	bool		action_is_null = false;
+	bool		instead_is_null = false;
+	Relation	ruleRelation = NULL;
+	TupleDesc	ruleTupdesc = NULL;
+	Query	   *ruleparse = NULL;
+	char	   *rule_evqual_string = NULL;
+	Node	   *rule_evqual = NULL;
 
 	ruleRelation = heap_openr(RewriteRelationName);
 	ruleTupdesc = RelationGetTupleDescriptor(ruleRelation);
@@ -92,10 +92,10 @@ RuleIdGetActionInfo(Oid ruleoid, bool * instead_flag, Query ** parseTrees)
 int
 IsDefinedRewriteRule(char *ruleName)
 {
-	Relation		RewriteRelation = NULL;
-	HeapScanDesc	scanDesc = NULL;
-	ScanKeyData		scanKey;
-	HeapTuple		tuple = NULL;
+	Relation	RewriteRelation = NULL;
+	HeapScanDesc scanDesc = NULL;
+	ScanKeyData scanKey;
+	HeapTuple	tuple = NULL;
 
 
 	/*
@@ -124,11 +124,11 @@ IsDefinedRewriteRule(char *ruleName)
 static void
 setRelhasrulesInRelation(Oid relationId, bool relhasrules)
 {
-	Relation		relationRelation;
-	HeapTuple		tuple;
-	HeapTuple		newTuple;
-	Relation		idescs[Num_pg_class_indices];
-	Form_pg_class	relp;
+	Relation	relationRelation;
+	HeapTuple	tuple;
+	HeapTuple	newTuple;
+	Relation	idescs[Num_pg_class_indices];
+	Form_pg_class relp;
 
 	/*
 	 * Lock a relation given its Oid. Go to the RelationRelation (i.e.
@@ -172,10 +172,10 @@ prs2_addToRelation(Oid relid,
 				   Node * qual,
 				   List * actions)
 {
-	Relation		relation;
-	RewriteRule    *thisRule;
-	RuleLock	   *rulelock;
-	MemoryContext	oldcxt;
+	Relation	relation;
+	RewriteRule *thisRule;
+	RuleLock   *rulelock;
+	MemoryContext oldcxt;
 
 	/*
 	 * create an in memory RewriteRule data structure which is cached by
@@ -217,7 +217,7 @@ prs2_addToRelation(Oid relid,
 	}
 	else
 	{
-		int				numlock;
+		int			numlock;
 
 		rulelock = relation->rd_rules;
 		numlock = rulelock->numLocks;
@@ -239,11 +239,11 @@ prs2_addToRelation(Oid relid,
 void
 prs2_deleteFromRelation(Oid relid, Oid ruleId)
 {
-	RuleLock	   *rulelock;
-	Relation		relation;
-	int				numlock;
-	int				i;
-	MemoryContext	oldcxt;
+	RuleLock   *rulelock;
+	Relation	relation;
+	int			numlock;
+	int			i;
+	MemoryContext oldcxt;
 
 	relation = heap_open(relid);
 	rulelock = relation->rd_rules;

@@ -24,37 +24,37 @@
 #define SEQ_MAXVALUE	((int4)0x7FFFFFFF)
 #define SEQ_MINVALUE	-(SEQ_MAXVALUE)
 
-bool			ItsSequenceCreation = false;
+bool		ItsSequenceCreation = false;
 
 typedef struct FormData_pg_sequence
 {
-	NameData		sequence_name;
-	int4			last_value;
-	int4			increment_by;
-	int4			max_value;
-	int4			min_value;
-	int4			cache_value;
-	char			is_cycled;
-	char			is_called;
-}				FormData_pg_sequence;
+	NameData	sequence_name;
+	int4		last_value;
+	int4		increment_by;
+	int4		max_value;
+	int4		min_value;
+	int4		cache_value;
+	char		is_cycled;
+	char		is_called;
+}			FormData_pg_sequence;
 
 typedef FormData_pg_sequence *SequenceTupleForm;
 
 typedef struct sequence_magic
 {
-	uint32			magic;
-}				sequence_magic;
+	uint32		magic;
+}			sequence_magic;
 
 typedef struct SeqTableData
 {
-	char		   *name;
-	Oid				relid;
-	Relation		rel;
-	int4			cached;
-	int4			last;
-	int4			increment;
+	char	   *name;
+	Oid			relid;
+	Relation	rel;
+	int4		cached;
+	int4		last;
+	int4		increment;
 	struct SeqTableData *next;
-}				SeqTableData;
+}			SeqTableData;
 
 typedef SeqTableData *SeqTable;
 
@@ -62,8 +62,8 @@ static SeqTable seqtab = NULL;
 
 static SeqTable init_sequence(char *caller, char *name);
 static SequenceTupleForm read_info(char *caller, SeqTable elm, Buffer * buf);
-static void		init_params(CreateSeqStmt * seq, SequenceTupleForm new);
-static int		get_param(DefElem * def);
+static void init_params(CreateSeqStmt * seq, SequenceTupleForm new);
+static int	get_param(DefElem * def);
 
 /*
  * DefineSequence --
@@ -73,18 +73,18 @@ void
 DefineSequence(CreateSeqStmt * seq)
 {
 	FormData_pg_sequence new;
-	CreateStmt	   *stmt = makeNode(CreateStmt);
-	ColumnDef	   *coldef;
-	TypeName	   *typnam;
-	Relation		rel;
-	Buffer			buf;
-	PageHeader		page;
+	CreateStmt *stmt = makeNode(CreateStmt);
+	ColumnDef  *coldef;
+	TypeName   *typnam;
+	Relation	rel;
+	Buffer		buf;
+	PageHeader	page;
 	sequence_magic *sm;
-	HeapTuple		tuple;
-	TupleDesc		tupDesc;
-	Datum			value[SEQ_COL_LASTCOL];
-	char			null[SEQ_COL_LASTCOL];
-	int				i;
+	HeapTuple	tuple;
+	TupleDesc	tupDesc;
+	Datum		value[SEQ_COL_LASTCOL];
+	char		null[SEQ_COL_LASTCOL];
+	int			i;
 
 	/* Check and set values */
 	init_params(seq, &new);
@@ -106,46 +106,46 @@ DefineSequence(CreateSeqStmt * seq)
 
 		switch (i)
 		{
-		case SEQ_COL_NAME:
-			typnam->name = "name";
-			coldef->colname = "sequence_name";
-			value[i - 1] = PointerGetDatum(seq->seqname);
-			break;
-		case SEQ_COL_LASTVAL:
-			typnam->name = "int4";
-			coldef->colname = "last_value";
-			value[i - 1] = Int32GetDatum(new.last_value);
-			break;
-		case SEQ_COL_INCBY:
-			typnam->name = "int4";
-			coldef->colname = "increment_by";
-			value[i - 1] = Int32GetDatum(new.increment_by);
-			break;
-		case SEQ_COL_MAXVALUE:
-			typnam->name = "int4";
-			coldef->colname = "max_value";
-			value[i - 1] = Int32GetDatum(new.max_value);
-			break;
-		case SEQ_COL_MINVALUE:
-			typnam->name = "int4";
-			coldef->colname = "min_value";
-			value[i - 1] = Int32GetDatum(new.min_value);
-			break;
-		case SEQ_COL_CACHE:
-			typnam->name = "int4";
-			coldef->colname = "cache_value";
-			value[i - 1] = Int32GetDatum(new.cache_value);
-			break;
-		case SEQ_COL_CYCLE:
-			typnam->name = "char";
-			coldef->colname = "is_cycled";
-			value[i - 1] = CharGetDatum(new.is_cycled);
-			break;
-		case SEQ_COL_CALLED:
-			typnam->name = "char";
-			coldef->colname = "is_called";
-			value[i - 1] = CharGetDatum('f');
-			break;
+			case SEQ_COL_NAME:
+				typnam->name = "name";
+				coldef->colname = "sequence_name";
+				value[i - 1] = PointerGetDatum(seq->seqname);
+				break;
+			case SEQ_COL_LASTVAL:
+				typnam->name = "int4";
+				coldef->colname = "last_value";
+				value[i - 1] = Int32GetDatum(new.last_value);
+				break;
+			case SEQ_COL_INCBY:
+				typnam->name = "int4";
+				coldef->colname = "increment_by";
+				value[i - 1] = Int32GetDatum(new.increment_by);
+				break;
+			case SEQ_COL_MAXVALUE:
+				typnam->name = "int4";
+				coldef->colname = "max_value";
+				value[i - 1] = Int32GetDatum(new.max_value);
+				break;
+			case SEQ_COL_MINVALUE:
+				typnam->name = "int4";
+				coldef->colname = "min_value";
+				value[i - 1] = Int32GetDatum(new.min_value);
+				break;
+			case SEQ_COL_CACHE:
+				typnam->name = "int4";
+				coldef->colname = "cache_value";
+				value[i - 1] = Int32GetDatum(new.cache_value);
+				break;
+			case SEQ_COL_CYCLE:
+				typnam->name = "char";
+				coldef->colname = "is_cycled";
+				value[i - 1] = CharGetDatum(new.is_cycled);
+				break;
+			case SEQ_COL_CALLED:
+				typnam->name = "char";
+				coldef->colname = "is_called";
+				value[i - 1] = CharGetDatum('f');
+				break;
 		}
 		stmt->tableElts = lappend(stmt->tableElts, coldef);
 	}
@@ -203,18 +203,18 @@ DefineSequence(CreateSeqStmt * seq)
 int4
 nextval(struct varlena * seqin)
 {
-	char		   *seqname = textout(seqin);
-	SeqTable		elm;
-	Buffer			buf;
+	char	   *seqname = textout(seqin);
+	SeqTable	elm;
+	Buffer		buf;
 	SequenceTupleForm seq;
 	ItemPointerData iptr;
-	int4			incby,
-					maxv,
-					minv,
-					cache;
-	int4			result,
-					next,
-					rescnt = 0;
+	int4		incby,
+				maxv,
+				minv,
+				cache;
+	int4		result,
+				next,
+				rescnt = 0;
 
 	/* open and WIntentLock sequence */
 	elm = init_sequence("nextval", seqname);
@@ -303,9 +303,9 @@ nextval(struct varlena * seqin)
 int4
 currval(struct varlena * seqin)
 {
-	char		   *seqname = textout(seqin);
-	SeqTable		elm;
-	int4			result;
+	char	   *seqname = textout(seqin);
+	SeqTable	elm;
+	int4		result;
 
 	/* open and WIntentLock sequence */
 	elm = init_sequence("currval", seqname);
@@ -322,13 +322,13 @@ currval(struct varlena * seqin)
 
 }
 
-static			SequenceTupleForm
+static SequenceTupleForm
 read_info(char *caller, SeqTable elm, Buffer * buf)
 {
 	ItemPointerData iptr;
-	PageHeader		page;
-	ItemId			lp;
-	HeapTuple		tuple;
+	PageHeader	page;
+	ItemId		lp;
+	HeapTuple	tuple;
 	sequence_magic *sm;
 	SequenceTupleForm seq;
 
@@ -362,12 +362,12 @@ read_info(char *caller, SeqTable elm, Buffer * buf)
 }
 
 
-static			SeqTable
+static SeqTable
 init_sequence(char *caller, char *name)
 {
-	SeqTable		elm,
-					priv = (SeqTable) NULL;
-	SeqTable		temp;
+	SeqTable	elm,
+				priv = (SeqTable) NULL;
+	SeqTable	temp;
 
 	for (elm = seqtab; elm != (SeqTable) NULL;)
 	{
@@ -436,8 +436,8 @@ init_sequence(char *caller, char *name)
 void
 CloseSequences(void)
 {
-	SeqTable		elm;
-	Relation		rel;
+	SeqTable	elm;
+	Relation	rel;
 
 	ItsSequenceCreation = false;
 
@@ -461,17 +461,17 @@ CloseSequences(void)
 static void
 init_params(CreateSeqStmt * seq, SequenceTupleForm new)
 {
-	DefElem		   *last_value = NULL;
-	DefElem		   *increment_by = NULL;
-	DefElem		   *max_value = NULL;
-	DefElem		   *min_value = NULL;
-	DefElem		   *cache_value = NULL;
-	List		   *option;
+	DefElem    *last_value = NULL;
+	DefElem    *increment_by = NULL;
+	DefElem    *max_value = NULL;
+	DefElem    *min_value = NULL;
+	DefElem    *cache_value = NULL;
+	List	   *option;
 
 	new->is_cycled = 'f';
 	foreach(option, seq->options)
 	{
-		DefElem		   *defel = (DefElem *) lfirst(option);
+		DefElem    *defel = (DefElem *) lfirst(option);
 
 		if (!strcasecmp(defel->defname, "increment"))
 			increment_by = defel;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fs.h,v 1.4 1997/09/07 04:58:22 momjian Exp $
+ * $Id: libpq-fs.h,v 1.5 1997/09/08 02:37:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,9 @@
 
 struct pgdirent
 {
-	unsigned long	d_ino;
-	unsigned short	d_namlen;
-	char			d_name[MAXNAMLEN + 1];
+	unsigned long d_ino;
+	unsigned short d_namlen;
+	char		d_name[MAXNAMLEN + 1];
 };
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.8 1997/09/07 04:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.9 1997/09/08 02:21:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,10 @@
  * relpath				- path to the relation
  *		Perhaps this should be in-line code in relopen().
  */
-char		   *
+char	   *
 relpath(char relname[])
 {
-	char		   *path;
+	char	   *path;
 
 	if (IsSharedSystemRelationName(relname))
 	{
@@ -91,7 +91,7 @@ IsSystemRelationName(char *relname)
 bool
 IsSharedSystemRelationName(char *relname)
 {
-	int				i;
+	int			i;
 
 	/*
 	 * Quick out: if it's not a system relation, it can't be a shared
@@ -128,7 +128,7 @@ IsSharedSystemRelationName(char *relname)
 Oid
 newoid()
 {
-	Oid				lastoid;
+	Oid			lastoid;
 
 	GetNewObjectId(&lastoid);
 	if (!OidIsValid(lastoid))
@@ -156,9 +156,9 @@ fillatt(TupleDesc tupleDesc)
 {
 	AttributeTupleForm *attributeP;
 	register TypeTupleForm typp;
-	HeapTuple		tuple;
-	int				i;
-	int				natts = tupleDesc->natts;
+	HeapTuple	tuple;
+	int			i;
+	int			natts = tupleDesc->natts;
 	AttributeTupleForm *att = tupleDesc->attrs;
 
 	if (natts < 0 || natts > MaxHeapAttributeNumber)

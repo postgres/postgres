@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/strdup.c,v 1.3 1997/09/07 04:47:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/strdup.c,v 1.4 1997/09/08 02:27:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,10 @@
 
 #include "port-protos.h"
 
-char		   *
+char	   *
 strdup(char const * string)
 {
-	char		   *nstr;
+	char	   *nstr;
 
 	nstr = strcpy((char *) palloc(strlen(string) + 1), string);
 	return nstr;

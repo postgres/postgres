@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.8 1997/09/07 04:57:25 momjian Exp $
+ * $Id: defrem.h,v 1.9 1997/09/08 02:35:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,25 +32,25 @@ extern void
 ExtendIndex(char *indexRelationName,
 			Expr * predicate,
 			List * rangetable);
-extern void		RemoveIndex(char *name);
+extern void RemoveIndex(char *name);
 
 /*
  * prototypes in define.c
  */
-extern void		CreateFunction(ProcedureStmt * stmt, CommandDest dest);
-extern void		DefineOperator(char *name, List * parameters);
-extern void		DefineAggregate(char *name, List * parameters);
-extern void		DefineType(char *name, List * parameters);
-extern void		CreateFunction(ProcedureStmt * stmt, CommandDest dest);
+extern void CreateFunction(ProcedureStmt * stmt, CommandDest dest);
+extern void DefineOperator(char *name, List * parameters);
+extern void DefineAggregate(char *name, List * parameters);
+extern void DefineType(char *name, List * parameters);
+extern void CreateFunction(ProcedureStmt * stmt, CommandDest dest);
 
 /*
  * prototypes in remove.c
  */
-extern void		RemoveFunction(char *functionName, int nargs, List * argNameList);
+extern void RemoveFunction(char *functionName, int nargs, List * argNameList);
 extern void
 RemoveOperator(char *operatorName,
 			   char *typeName1, char *typeName2);
-extern void		RemoveType(char *typeName);
-extern void		RemoveAggregate(char *aggName, char *aggType);
+extern void RemoveType(char *typeName);
+extern void RemoveAggregate(char *aggName, char *aggType);
 
 #endif							/* DEFREM_H */

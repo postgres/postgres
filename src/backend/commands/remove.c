@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.11 1997/09/07 04:40:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.12 1997/09/08 02:22:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,16 +48,16 @@ RemoveOperator(char *operatorName,		/* operator name */
 			   char *typeName1, /* first type name */
 			   char *typeName2) /* optional second type name */
 {
-	Relation		relation;
-	HeapScanDesc	scan;
-	HeapTuple		tup;
-	Oid				typeId1 = InvalidOid;
-	Oid				typeId2 = InvalidOid;
-	bool			defined;
+	Relation	relation;
+	HeapScanDesc scan;
+	HeapTuple	tup;
+	Oid			typeId1 = InvalidOid;
+	Oid			typeId2 = InvalidOid;
+	bool		defined;
 	ItemPointerData itemPointerData;
-	Buffer			buffer;
-	ScanKeyData		operatorKey[3];
-	char		   *userName;
+	Buffer		buffer;
+	ScanKeyData operatorKey[3];
+	char	   *userName;
 
 	if (typeName1)
 	{
@@ -148,14 +148,14 @@ RemoveOperator(char *operatorName,		/* operator name */
 static void
 SingleOpOperatorRemove(Oid typeOid)
 {
-	Relation		rdesc;
-	ScanKeyData		key[3];
-	HeapScanDesc	sdesc;
-	HeapTuple		tup;
+	Relation	rdesc;
+	ScanKeyData key[3];
+	HeapScanDesc sdesc;
+	HeapTuple	tup;
 	ItemPointerData itemPointerData;
-	Buffer			buffer;
-	static			attnums[3] = {7, 8, 9};		/* left, right, return */
-	register		i;
+	Buffer		buffer;
+	static		attnums[3] = {7, 8, 9}; /* left, right, return */
+	register	i;
 
 	ScanKeyEntryInitialize(&key[0],
 					   0, 0, ObjectIdEqualRegProcedure, (Datum) typeOid);
@@ -186,17 +186,17 @@ AttributeAndRelationRemove(Oid typeOid)
 {
 	struct oidlist
 	{
-		Oid				reloid;
+		Oid			reloid;
 		struct oidlist *next;
 	};
 	struct oidlist *oidptr,
-				   *optr;
-	Relation		rdesc;
-	ScanKeyData		key[1];
-	HeapScanDesc	sdesc;
-	HeapTuple		tup;
+			   *optr;
+	Relation	rdesc;
+	ScanKeyData key[1];
+	HeapScanDesc sdesc;
+	HeapTuple	tup;
 	ItemPointerData itemPointerData;
-	Buffer			buffer;
+	Buffer		buffer;
 
 	/*
 	 * Get the oid's of the relations to be removed by scanning the entire
@@ -237,7 +237,7 @@ AttributeAndRelationRemove(Oid typeOid)
 		tup = heap_getnext(sdesc, 0, &buffer);
 		if (PointerIsValid(tup))
 		{
-			char		   *name;
+			char	   *name;
 
 			name = (((Form_pg_class) GETSTRUCT(tup))->relname).data;
 			heap_destroy(name);
@@ -257,16 +257,16 @@ AttributeAndRelationRemove(Oid typeOid)
 void
 RemoveType(char *typeName)		/* type name to be removed */
 {
-	Relation		relation;
-	HeapScanDesc	scan;
-	HeapTuple		tup;
-	Oid				typeOid;
+	Relation	relation;
+	HeapScanDesc scan;
+	HeapTuple	tup;
+	Oid			typeOid;
 	ItemPointerData itemPointerData;
 	static ScanKeyData typeKey[1] = {
 		{0, Anum_pg_type_typname, NameEqualRegProcedure}
 	};
-	char		   *shadow_type;
-	char		   *userName;
+	char	   *shadow_type;
+	char	   *userName;
 
 #ifndef NO_SECURITY
 	userName = GetPgUserName();
@@ -332,20 +332,20 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 			   int nargs,
 			   List * argNameList /* list of TypeNames */ )
 {
-	Relation		relation;
-	HeapScanDesc	scan;
-	HeapTuple		tup;
-	Buffer			buffer = InvalidBuffer;
-	bool			bufferUsed = FALSE;
-	Oid				argList[8];
-	Form_pg_proc	the_proc = NULL;
+	Relation	relation;
+	HeapScanDesc scan;
+	HeapTuple	tup;
+	Buffer		buffer = InvalidBuffer;
+	bool		bufferUsed = FALSE;
+	Oid			argList[8];
+	Form_pg_proc the_proc = NULL;
 	ItemPointerData itemPointerData;
 	static ScanKeyData key[3] = {
 		{0, Anum_pg_proc_proname, NameEqualRegProcedure}
 	};
-	char		   *userName;
-	char		   *typename;
-	int				i;
+	char	   *userName;
+	char	   *typename;
+	int			i;
 
 	memset(argList, 0, 8 * sizeof(Oid));
 	for (i = 0; i < nargs; i++)
@@ -431,14 +431,14 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 void
 RemoveAggregate(char *aggName, char *aggType)
 {
-	Relation		relation;
-	HeapScanDesc	scan;
-	HeapTuple		tup;
+	Relation	relation;
+	HeapScanDesc scan;
+	HeapTuple	tup;
 	ItemPointerData itemPointerData;
-	char		   *userName;
-	Oid				basetypeID = InvalidOid;
-	bool			defined;
-	ScanKeyData		aggregateKey[3];
+	char	   *userName;
+	Oid			basetypeID = InvalidOid;
+	bool		defined;
+	ScanKeyData aggregateKey[3];
 
 
 	/*
