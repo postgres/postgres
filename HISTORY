@@ -1,8 +1,12 @@
-PostgreSQL 6.4.2             Tue Dec 29 00:07:28 EST 1998
+PostgreSQL 6.4.2             Sat Jan  2 11:04:05 EST 1999
 =========================================================
 
-This is just a repackaging of release 6.4.1.
+A dump/restore is NOT required for those running 6.4.*.
 
+Changes
+-------
+Repackaged release to fix packaging problem of 6.4.1.
+Fix for date/time constants
 
 
 PostgreSQL 6.4.1             Fri Dec 18 00:29:11 EST 1998
