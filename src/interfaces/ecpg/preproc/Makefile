@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.100 2004/04/23 18:15:55 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.101 2004/04/25 20:57:32 momjian Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -8,7 +8,7 @@ MAJOR_VERSION=3
 MINOR_VERSION=2
 PATCHLEVEL=0
 
-override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) $(PTHREAD_CFLAGS) \
+override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) \
 	-DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	-DINCLUDEDIR=\"$(includedir)\" \
@@ -17,6 +17,7 @@ override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) $(PTHREAD_CF
 ifeq ($(GCC), yes)
 override CFLAGS += -Wno-error
 endif
+override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS=preproc.o type.o ecpg.o ecpg_keywords.o output.o\
     keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o

@@ -13465,9 +13465,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 	# set thread flags
 
-# ACX_PTHREAD sets PTHREAD_CFLAGS that should be used for linking too
-PTHREAD_LIBS="$PTHREAD_CFLAGS $PTHREAD_LIBS"
-
 # At this point, we don't want to muck with the compiler name for threading.
 # Let's see who fails, perhaps AIX.  2004-04-23
 if test "$PTHREAD_CC" != "$CC"; then

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.326 2004/04/24 03:09:35 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.327 2004/04/25 20:57:32 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -958,9 +958,6 @@ AC_FUNC_FSEEKO
 #
 if test "$enable_thread_safety" = yes; then
 ACX_PTHREAD	# set thread flags
-
-# ACX_PTHREAD sets PTHREAD_CFLAGS that should be used for linking too
-PTHREAD_LIBS="$PTHREAD_CFLAGS $PTHREAD_LIBS"
 
 # At this point, we don't want to muck with the compiler name for threading.
 # Let's see who fails, perhaps AIX.  2004-04-23
