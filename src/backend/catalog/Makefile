@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.43 2002/12/14 00:24:24 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.44 2003/01/13 20:37:18 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ postgres.bki postgres.description: genbki.sh $(POSTGRES_BKI_SRCS) \
 install-data: $(BKIFILES) installdirs
 	$(INSTALL_DATA) postgres.bki         $(DESTDIR)$(datadir)/postgres.bki
 	$(INSTALL_DATA) postgres.description $(DESTDIR)$(datadir)/postgres.description
-	$(INSTALL_DATA) information_schema.sql $(DESTDIR)$(datadir)/information_schema.sql
+	$(INSTALL_DATA) $(srcdir)/information_schema.sql $(DESTDIR)$(datadir)/information_schema.sql
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(datadir)
