@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.26 1998/09/01 04:32:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.27 1998/10/12 04:07:44 momjian Exp $
  */
 
 #include <stdio.h>
@@ -672,7 +672,7 @@ cashsmaller(Cash *c1, Cash *c2)
  * This converts a int4 as well but to a representation using words
  * Obviously way North American centric - sorry
  */
-const char *
+text *
 cash_words_out(Cash *value)
 {
 	static char buf[128];
@@ -681,7 +681,8 @@ cash_words_out(Cash *value)
 	Cash		m1;
 	Cash		m2;
 	Cash		m3;
-
+	text		*result;
+	
 	/* work with positive numbers */
 	if (*value < 0)
 	{
@@ -718,8 +719,16 @@ cash_words_out(Cash *value)
 	strcat(buf, (int) (*value / 100) == 1 ? " dollar and " : " dollars and ");
 	strcat(buf, num_word(m0));
 	strcat(buf, m0 == 1 ? " cent" : " cents");
+
+	/* capitalize output */
 	*buf = toupper(*buf);
-	return buf;
+
+	/* make a text type for output */
+	result = (text *) palloc(strlen(buf) + VARHDRSZ);
+	VARSIZE(result) = strlen(buf) + VARHDRSZ;
+	StrNCpy(VARDATA(result), buf, strlen(buf));
+
+	return result;
 }	/* cash_words_out() */
 
 

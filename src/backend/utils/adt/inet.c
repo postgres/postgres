@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: inet.c,v 1.2 1998/10/08 02:08:44 momjian Exp $
+ *	$Id: inet.c,v 1.3 1998/10/12 04:07:46 momjian Exp $
  */
 
 #include <sys/types.h>
@@ -57,7 +57,9 @@ inet_in(char *src)
 	}
 	/* First, try for an IP V4 address: */
 	ip_family(dst) = AF_INET;
-	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst), ip_addrsize(dst));
+#ifdef BAD
+	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst), ip_addrsize(dst), NULL);
+#endif
 	if ((bits < 0) || (bits > 32))
 	{
 		/* Go for an IPV6 address here, before faulting out: */
@@ -84,13 +86,15 @@ inet_out(inet *src)
 
 	if (ip_family(src) == AF_INET)
 	{
+#ifdef BAD
 		/* It's an IP V4 address: */
-		if (inet_net_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
+		if (inet_net_ntop(AF_INET, &ip_v4addr(src), 4, ip_bits(src),
 						  tmp, sizeof(tmp)) < 0)
 		{
 			elog(ERROR, "unable to print address (%s)", strerror(errno));
 			return (NULL);
 		}
+#endif
 	}
 	else
 	{
@@ -265,6 +269,194 @@ inet_cmp(inet *a1, inet *a2)
 	return 0;
 }
 
+text *
+inet_netmask(inet *ip)
+{
+	char	   *dst,
+				tmp[sizeof("255.255.255.255/32")];
+
+	if (ip_family(ip) == AF_INET)
+	{
+		/* It's an IP V4 address: */
+		int addr = -1 << (32 - ip_bits(ip));
+
+		/* a little wasteful by why reinvent the wheel? */
+#ifdef BAD
+		if (inet_cidr_ntop(AF_INET, &addr, 4, -1, tmp, sizeof(tmp)) < 0)
+		{
+			elog(ERROR, "unable to print netmask (%s)", strerror(errno));
+			return (NULL);
+		}
+#endif
+	}
+	else
+	{
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+		return (NULL);
+	}
+	dst = palloc(strlen(tmp) + 1);
+	if (dst == NULL)
+	{
+		elog(ERROR, "unable to allocate memory in inet_netmask()");
+		return (NULL);
+	}
+	strcpy(dst, tmp);
+	return (dst);
+	
+}
+
+int4
+inet_masklen(inet *ip)
+{
+	return ip_bits(ip);
+}
+
+text *
+inet_host(inet *ip)
+{
+	char	   *dst,
+				tmp[sizeof("255.255.255.255/32")];
+
+	if (ip_family(ip) == AF_INET)
+	{
+#ifdef BAD
+		/* It's an IP V4 address: */
+		if (inet_cidr_ntop(AF_INET, &ip_v4addr(ip), 4, -1,
+						  tmp, sizeof(tmp)) < 0)
+		{
+			elog(ERROR, "unable to print host (%s)", strerror(errno));
+			return (NULL);
+		}
+#endif
+	}
+	else
+	{
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+		return (NULL);
+	}
+	dst = palloc(strlen(tmp) + 1);
+	if (dst == NULL)
+	{
+		elog(ERROR, "unable to allocate memory in inet_out()");
+		return (NULL);
+	}
+	strcpy(dst, tmp);
+	return (dst);
+	
+}
+
+text *
+inet_network_without_bits(inet *ip)
+{
+	char	   *dst,
+				tmp[sizeof("255.255.255.255/32")];
+
+	if (ip_family(ip) == AF_INET)
+	{
+		/* It's an IP V4 address: */
+		int addr = ip_v4addr(ip) & (-1 << (32 - ip_bits(ip)));
+#ifdef BAD
+
+		if (inet_cidr_ntop(AF_INET, &addr, (int)(ip_bits(ip)/8), -1,
+						  tmp, sizeof(tmp)) < 0)
+		{
+			elog(ERROR, "unable to print address (%s)", strerror(errno));
+			return (NULL);
+		}
+#endif
+	}
+	else
+	{
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+		return (NULL);
+	}
+	dst = palloc(strlen(tmp) + 1);
+	if (dst == NULL)
+	{
+		elog(ERROR, "unable to allocate memory in inet_out()");
+		return (NULL);
+	}
+	strcpy(dst, tmp);
+	return (dst);
+	
+}
+
+text *
+inet_network_with_bits(inet *ip)
+{
+	char	   *dst,
+				tmp[sizeof("255.255.255.255/32")];
+
+	if (ip_family(ip) == AF_INET)
+	{
+		/* It's an IP V4 address: */
+		int addr = ip_v4addr(ip) & (-1 << (32 - ip_bits(ip)));
+#ifdef BAD
+
+		if (inet_cidr_ntop(AF_INET, &addr, (int)(ip_bits(ip)/8),
+						  ip_bits(ip), tmp, sizeof(tmp)) < 0)
+		{
+			elog(ERROR, "unable to print address (%s)", strerror(errno));
+			return (NULL);
+		}
+#endif
+	}
+	else
+	{
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+		return (NULL);
+	}
+	dst = palloc(strlen(tmp) + 1);
+	if (dst == NULL)
+	{
+		elog(ERROR, "unable to allocate memory in inet_out()");
+		return (NULL);
+	}
+	strcpy(dst, tmp);
+	return (dst);
+	
+}
+
+text *
+inet_broadcast(inet *ip)
+{
+	char	   *dst,
+				tmp[sizeof("255.255.255.255/32")];
+
+	if (ip_family(ip) == AF_INET)
+	{
+		/* It's an IP V4 address: */
+		int addr = ip_v4addr(ip) | ~(-1 << (32 - ip_bits(ip)));
+#ifdef BAD
+
+		if (inet_cidr_ntop(AF_INET,&addr,4,ip_bits(ip),tmp,sizeof(tmp)) < 0)
+		{
+			elog(ERROR, "unable to print address (%s)", strerror(errno));
+			return (NULL);
+		}
+#endif
+	}
+	else
+	{
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+		return (NULL);
+	}
+	dst = palloc(strlen(tmp) + 1);
+	if (dst == NULL)
+	{
+		elog(ERROR, "unable to allocate memory in inet_out()");
+		return (NULL);
+	}
+	strcpy(dst, tmp);
+	return (dst);
+	
+}
+
 /*
  *	Bitwise comparison for V4 addresses.  Add V6 implementation!
  */
@@ -285,3 +477,4 @@ v4bitncmp(unsigned int a1, unsigned int a2, int bits)
 		return (1);
 	return (0);
 }
+
