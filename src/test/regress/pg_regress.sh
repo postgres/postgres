@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.16 2001/01/02 02:13:48 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.17 2001/01/13 03:25:48 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -296,6 +296,15 @@ then
     fi
     export LD_LIBRARY_PATH
 
+    # ----------
+    # Windows needs shared libraries in PATH. (Only those linked into
+    # executables, not dlopen'ed ones)
+    # ----------
+    case $host_platform in *-*-cygwin*)
+        PATH=$libdir:$PATH
+        export PATH
+        ;;
+    esac
 
     if [ -d "$temp_install" ]; then
         message "removing existing temp installation"
