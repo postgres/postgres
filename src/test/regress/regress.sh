@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.47 2000/03/31 14:14:34 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.48 2000/03/31 22:03:52 petere Exp $
 #
 if [ $# -eq 0 ]; then
 	echo "Syntax: $0 <hostname> [extra-tests]"
@@ -11,7 +11,7 @@ shift
 extratests="$*"
 
 case $hostname in
-	i*86-pc-cygwin* | i386-qnx-qnx4)
+	i*86-pc-cygwin* | i386-*-qnx*)
  		HOSTLOC="-h localhost"
 		;;
  	*)
@@ -82,7 +82,7 @@ if [ $? -ne 0 ]; then
      exit 1
 fi
 
-if [ "x$hostname" != "xi386-qnx-qnx4" ]; then
+if [ "x$hostname" != "xi386-pc-qnx" ]; then
 echo "=============== installing languages...               ================="
 $ECHO_N "installing PL/pgSQL .. " $ECHO_C
 createlang $HOSTLOC plpgsql regression
@@ -97,7 +97,7 @@ fi
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
 
-if [ "x$hostname" = "xi386-qnx-qnx4" ]; then
+if [ "x$hostname" = "xi386-pc-qnx" ]; then
 	DIFFOPT="-b"
 else
 	DIFFOPT="-w"
