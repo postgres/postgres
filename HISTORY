@@ -1,25 +1,82 @@
-PostgreSQL 6.1                   Wed Feb 19 09:15:57 AST 1997
+PostgreSQL 6.1                   Wed May 14 15:59:24 EDT 1997
 -------------------------------------------------------------
 
-Major contributors:
--------------------
-        Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
-        Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
-        Dan is Dan McGuirk <mcguirk@indirect.com>
-        Darren is Darren King <darrenk@insightdist.com>
-        Edmund is Edmund Mergl <E.Mergl@bawue.de>
-        Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
-        Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
-	Marc is "The Hermit Hacker" <scrappy@hub.org>
-        Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>  
-        Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
-        Vivek is Vivek Khera <khera@kci.kciLink.com> 
+A dump/restore is required for those wishing to migrate data from
+previous releases of PostgreSQL.
+
+Bug Fixes
+---------
+packet length checking in library routines
+lock manager priority patch
+check for under/over flow of float8(Bruce)
+multi-table join fix(Vadim)
+SIGPIPE crash fix(Darren)
+large object fixes(Sven)
+allow btree indexes to handle NULLs(Vadim)
+timezone fixes(D'Arcy)
+internal optimizer, executor bug fixes(Vadim)
+fix problem where inner loop in < or <= has no rows(Vadim)
+prevent re-commuting join index clauses(Vadim)
+fix join clauses for multiple tables(Vadim)
+fix hash, hashjoin for arrays(Vadim)
+fix btree for abstime type(Vadim)
+large object fixes(Raymond)
 
 Enhancements
 ------------
+attribute optimization statistics(Bruce)
+much faster new btree bulk load code(Paul)
+BTREE UNIQUE added to bulk load code(Vadim) 
+new lock debug code(Massimo)
+massive changes to libpg++(Leo)
+new GEQO optimizer speeds table multi-table optimization(Martin)
+new WARN message for non-unique insert into unique key(Marc)
+update x=-3, no spaces, now valid(Bruce)
+remove case-sensitive identifier handling(Bruce,Thomas,Dan)
+debug backend now pretty-prints tree(Darren)
+new Oracle character functions(Edmund)
+new plaintext password functions(Dan)
+no such class or insufficient privilege changed to distinct messages(Dan)
+new ANSI timestamp function(Dan)
+new ANSI Time and Date types (Thomas)
+move large chunks of data in backend(Martin)
+multi-column btree indexes(Vadim)
+new SET var TO value command(Martin)
+auto-udpate transaction status on reads(Dan)
+new locale settings for character types(Oleg)
+new SEQUENCE serial number generator(Vadim)
+select SUM(x) can return NULL on no rows(Thomas)
+GROUP BY function now possible(Vadim)
+re-organize regression test(Thomas,Marc)
+new optimizer operation weights(Vadim)
+new psql \z grant/permit option(Marc)
+new MONEY data type(D'Arcy)
+tcp socket communication speed improved(Vadim)
+new VACUUM option for attribute statistics, and for certain columns (Vadim)
+many geometric type improvements(Thomas,Keith)
+additional regression tests(Thomas)
+new datestyle variable(Thomas)
+more comparison operators for sorting types(Thomas)
+new conversion functions(Thomas)
+new more compact btree format(Vadim)
+allow pg_dumpall to preserve database ownership(Bruce)
 
-autoconf configuration(Marc)
-Genetic Query Optimization(Martin)
+Source tree changes
+-------------------
+new configuration script(Marc)
+readline configuration option added(Marc)
+OS-specific configuration options removed(Marc)
+new OS-specific template files(Marc)
+no more need to edit Makefile.global(Marc)
+re-arrange include files(Marc)
+nextstep patches (Gregor Hoffleit)
+removed WIN32-specific code(Bruce)
+removed postmaster -e option, now only postgres -e option (Bruce)
+merge duplicate library code in front/backends(Martin)
+now works with eBones, international Kerberos(Jun)
+more shared library support
+c++ include file cleanup(Bruce)
+warn about buggy flex(Bruce)
 
 
 PostgreSQL 6.0                   Wed Jan 29 00:19:54 EST 1997

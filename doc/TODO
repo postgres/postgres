@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Tue May 13 23:16:50 EDT 1997
+last updated:		Wed May 14 16:15:37 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -179,62 +179,54 @@ Change c.h "Index" and "bool" so they do not conflict with c++
 
                       CHANGES IN THE 6.1 RELEASE
 
-new configuration script(Marc)
-readline configuration option added(Marc)
-OS-specific configuration options removed(Marc)
-new OS-specific template files(Marc)
-no more need to edit Makefile.global(Marc)
-attribute optimization statistics(Bruce)
-re-arrange include files(Marc)
-much faster new btree bulk load code(Paul)
-BTREE UNIQUE added to bulk load code(Vadim) 
-new lock debug code(Massimo)
+Bug Fixes
+---------
 packet length checking in library routines
 lock manager priority patch
-massing changes to libpg++(Leo)
-nextstep patches (Gregor Hoffleit)
-removed WIN32-specific code(Bruce)
-new GEQO optimizer speeds table multi-table optimization(Martin)
-removed postmaster -e option, now only postgres -e option (Bruce)
 check for under/over flow of float8(Bruce)
 multi-table join fix(Vadim)
-new WARN message for non-unique insert into unique key(Marc)
-update x=-3, no spaces, now valid(Bruce)
-remove case-sensitive identifier handling(Bruce,Thomas,Dan)
 SIGPIPE crash fix(Darren)
-debug backend now pretty-prints tree(Darren)
-new Oracle character functions(Edmund)
-new plaintext password functions(Dan)
-no such class or insufficient privilege changed to distinct messages(Dan)
-new ANSI timestamp function(Dan)
-new ANSI Time and Date types (Thomas)
-merge duplicate library code in front/backends(Martin)
-move large chunks of data in backend(Martin)
-multi-column btree indexes(Vadim)
-new SET var TO value command(Martin)
-now works with eBones, international Kerberos(Jun)
 large object fixes(Sven)
 allow btree indexes to handle NULLs(Vadim)
 timezone fixes(D'Arcy)
-more shared library support
-auto-udpate transaction status on reads(Dan)
-new locale settings for character types(Oleg)
-new SEQUENCE serial number generator(Vadim)
-select SUM(x) can return NULL on no rows(Thomas)
 internal optimizer, executor bug fixes(Vadim)
 fix problem where inner loop in < or <= has no rows(Vadim)
 prevent re-commuting join index clauses(Vadim)
 fix join clauses for multiple tables(Vadim)
 fix hash, hashjoin for arrays(Vadim)
 fix btree for abstime type(Vadim)
+large object fixes(Raymond)
+
+Enhancements
+------------
+attribute optimization statistics(Bruce)
+much faster new btree bulk load code(Paul)
+BTREE UNIQUE added to bulk load code(Vadim) 
+new lock debug code(Massimo)
+massive changes to libpg++(Leo)
+new GEQO optimizer speeds table multi-table optimization(Martin)
+new WARN message for non-unique insert into unique key(Marc)
+update x=-3, no spaces, now valid(Bruce)
+remove case-sensitive identifier handling(Bruce,Thomas,Dan)
+debug backend now pretty-prints tree(Darren)
+new Oracle character functions(Edmund)
+new plaintext password functions(Dan)
+no such class or insufficient privilege changed to distinct messages(Dan)
+new ANSI timestamp function(Dan)
+new ANSI Time and Date types (Thomas)
+move large chunks of data in backend(Martin)
+multi-column btree indexes(Vadim)
+new SET var TO value command(Martin)
+auto-udpate transaction status on reads(Dan)
+new locale settings for character types(Oleg)
+new SEQUENCE serial number generator(Vadim)
+select SUM(x) can return NULL on no rows(Thomas)
 GROUP BY function now possible(Vadim)
 re-organize regression test(Thomas,Marc)
 new optimizer operation weights(Vadim)
 new psql \z grant/permit option(Marc)
 new MONEY data type(D'Arcy)
-c++ include file cleanup(Bruce)
 tcp socket communication speed improved(Vadim)
-large object fixes(Raymond)
 new VACUUM option for attribute statistics, and for certain columns (Vadim)
 many geometric type improvements(Thomas,Keith)
 additional regression tests(Thomas)
@@ -242,4 +234,21 @@ new datestyle variable(Thomas)
 more comparison operators for sorting types(Thomas)
 new conversion functions(Thomas)
 new more compact btree format(Vadim)
+allow pg_dumpall to preserve database ownership(Bruce)
 
+Source tree changes
+-------------------
+new configuration script(Marc)
+readline configuration option added(Marc)
+OS-specific configuration options removed(Marc)
+new OS-specific template files(Marc)
+no more need to edit Makefile.global(Marc)
+re-arrange include files(Marc)
+nextstep patches (Gregor Hoffleit)
+removed WIN32-specific code(Bruce)
+removed postmaster -e option, now only postgres -e option (Bruce)
+merge duplicate library code in front/backends(Martin)
+now works with eBones, international Kerberos(Jun)
+more shared library support
+c++ include file cleanup(Bruce)
+warn about buggy flex(Bruce)
