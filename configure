@@ -15569,17 +15569,12 @@ fi
 
 
     . "$TCL_CONFIG_SH"
+eval TCL_INCLUDE_SPEC=\"$TCL_INCLUDE_SPEC\"
 eval TCL_LIB_FILE=\"$TCL_LIB_FILE\"
 eval TCL_LIBS=\"$TCL_LIBS\"
 eval TCL_LIB_SPEC=\"$TCL_LIB_SPEC\"
 eval TCL_SHARED_BUILD=\"$TCL_SHARED_BUILD\"
 
-        # TCL_INCLUDE_SPEC is only provided in Tcl 8.4 and later
-    if test "${TCL_INCLUDE_SPEC+set}" = set; then
-	eval TCL_INCLUDE_SPEC=\"$TCL_INCLUDE_SPEC\"
-    else
-	TCL_INCLUDE_SPEC=''
-    fi
     fi
 
 # Check for Tk configuration script tkConfig.sh
@@ -16594,12 +16589,12 @@ s,@XGETTEXT@,$XGETTEXT,;t t
 s,@localedir@,$localedir,;t t
 s,@TCLSH@,$TCLSH,;t t
 s,@TCL_CONFIG_SH@,$TCL_CONFIG_SH,;t t
+s,@TCL_INCLUDE_SPEC@,$TCL_INCLUDE_SPEC,;t t
 s,@TCL_LIB_FILE@,$TCL_LIB_FILE,;t t
 s,@TCL_LIBS@,$TCL_LIBS,;t t
 s,@TCL_LIB_SPEC@,$TCL_LIB_SPEC,;t t
 s,@TCL_SHARED_BUILD@,$TCL_SHARED_BUILD,;t t
 s,@TCL_SHLIB_LD_LIBS@,$TCL_SHLIB_LD_LIBS,;t t
-s,@TCL_INCLUDE_SPEC@,$TCL_INCLUDE_SPEC,;t t
 s,@TK_CONFIG_SH@,$TK_CONFIG_SH,;t t
 s,@TK_LIBS@,$TK_LIBS,;t t
 s,@TK_LIB_SPEC@,$TK_LIB_SPEC,;t t
