@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.3 1996/11/08 06:02:28 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.4 1996/11/11 12:16:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include "postgres.h"
 #include "libpq-fe.h"
-#include "fmgr.h" 
 #include "libpq/libpq-fs.h"
 
 #ifndef MAXPATHLEN
@@ -26,6 +25,8 @@
 #endif
 
 #define LO_BUFSIZE        1024
+
+static int lo_initialize(PGconn *conn);
 
 /*
  * lo_open
@@ -49,8 +50,14 @@ lo_open(PGconn* conn, Oid lobjId, int mode)
     argv[1].isint = 1;
     argv[1].len = 4;
     argv[1].u.integer = mode;
+
+    if(conn->lobjfuncs == (PGlobjfuncs *)NULL) {
+        if(lo_initialize(conn) < 0) {
+	    return -1;
+	}
+    }
     
-    res = PQfn(conn, F_LO_OPEN,&fd,&result_len,1,argv,2); 
+    res = PQfn(conn, conn->lobjfuncs->fn_lo_open,&fd,&result_len,1,argv,2); 
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
 	PQclear(res);
 
@@ -78,10 +85,17 @@ lo_close(PGconn *conn, int fd)
     int retval;
     int result_len;
 
+    if(conn->lobjfuncs == (PGlobjfuncs *)NULL) {
+        if(lo_initialize(conn) < 0) {
+	    return -1;
+	}
+    }
+    
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = fd;
-    res = PQfn(conn, F_LO_CLOSE,&retval,&result_len,1,argv,1);
+    res = PQfn(conn, conn->lobjfuncs->fn_lo_close,
+    		&retval,&result_len,1,argv,1);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
 	PQclear(res);
 	return retval;
@@ -104,6 +118,12 @@ lo_read(PGconn *conn, int fd, char *buf, int len)
     PGresult *res;
     int result_len;
 
+    if(conn->lobjfuncs == (PGlobjfuncs *)NULL) {
+        if(lo_initialize(conn) < 0) {
+	    return -1;
+	}
+    }
+    
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = fd;
@@ -112,7 +132,8 @@ lo_read(PGconn *conn, int fd, char *buf, int len)
     argv[1].len = 4;
     argv[1].u.integer = len;
 
-    res = PQfn(conn, F_LOREAD,(int*)buf,&result_len,0,argv,2);
+    res = PQfn(conn, conn->lobjfuncs->fn_lo_read,
+    		(int*)buf,&result_len,0,argv,2);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
 	PQclear(res);
 	return result_len;
@@ -133,6 +154,12 @@ lo_write(PGconn *conn, int fd, char *buf, int len)
     int result_len;
     int retval;
 
+    if(conn->lobjfuncs == (PGlobjfuncs *)NULL) {
+        if(lo_initialize(conn) < 0) {
+	    return -1;
+	}
+    }
+    
     if (len <= 0)
 	return 0;
 
@@ -144,7 +171,8 @@ lo_write(PGconn *conn, int fd, char *buf, int len)
     argv[1].len = len;
     argv[1].u.ptr = (int*)buf;
 
-    res = PQfn(conn, F_LOWRITE,&retval,&result_len,1,argv,2);
+    res = PQfn(conn, conn->lobjfuncs->fn_lo_write,
+    		&retval,&result_len,1,argv,2);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
 	PQclear(res);
 	return retval;
@@ -167,6 +195,12 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
     int retval; 
     int result_len;
     
+    if(conn->lobjfuncs == (PGlobjfuncs *)NULL) {
+        if(lo_initialize(conn) < 0) {
+	    return -1;
+	}
+    }
+    
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = fd;
@@ -179,7 +213,8 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
     argv[2].len = 4;
     argv[2].u.integer = whence;
 
-    res = PQfn(conn, F_LO_LSEEK,&retval,&result_len,1,argv,3);
+    res = PQfn(conn, conn->lobjfuncs->fn_lo_lseek,
+    		&retval,&result_len,1,argv,3);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
 	PQclear(res);
 	return retval;
@@ -204,10 +239,17 @@ lo_creat(PGconn *conn, int mode)
     int retval;
     int result_len;
 
+    if(conn->lobjfuncs == (PGlobjfuncs *)NULL) {
+        if(lo_initialize(conn) < 0) {
+	    return -1;
+	}
+    }
+    
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = mode;
-    res  = PQfn(conn, F_LO_CREAT,&retval,&result_len,1,argv,1);
+    res  = PQfn(conn, conn->lobjfuncs->fn_lo_creat,
+    		&retval,&result_len,1,argv,1);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
 	PQclear(res);
 	return (Oid)retval;
@@ -230,11 +272,18 @@ lo_tell(PGconn *conn, int fd)
     PGresult *res;
     int result_len;
 
+    if(conn->lobjfuncs == (PGlobjfuncs *)NULL) {
+        if(lo_initialize(conn) < 0) {
+	    return -1;
+	}
+    }
+    
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = fd;
 
-    res = PQfn(conn, F_LO_TELL,&retval,&result_len,1,argv,1);
+    res = PQfn(conn, conn->lobjfuncs->fn_lo_tell,
+    		&retval,&result_len,1,argv,1);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
 	PQclear(res);
 	return retval;
@@ -256,11 +305,18 @@ lo_unlink(PGconn *conn, Oid lobjId)
     int result_len;
     int retval;
 
+    if(conn->lobjfuncs == (PGlobjfuncs *)NULL) {
+        if(lo_initialize(conn) < 0) {
+	    return -1;
+	}
+    }
+    
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = lobjId;
 
-    res = PQfn(conn, F_LO_UNLINK,&retval,&result_len,1,argv,1);
+    res = PQfn(conn, conn->lobjfuncs->fn_lo_unlink,
+    		&retval,&result_len,1,argv,1);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
 	PQclear(res);
 	return retval;
@@ -380,3 +436,157 @@ lo_export(PGconn *conn, Oid lobjId, char *filename)
 
     return 1;
 }
+
+
+/* ----------------
+ * lo_initialize
+ *
+ * Initialize the large object interface for an existing connection.
+ * We ask the backend about the functions OID's in pg_proc for all
+ * functions that are required for large object operations.
+ * ----------------
+ */
+static int lo_initialize(PGconn *conn)
+{
+    PGresult	*res;
+    PGlobjfuncs *lobjfuncs;
+    int		n;
+    char	*fname;
+    Oid		foid;
+
+    /* ----------------
+     * Allocate the structure to hold the functions OID's
+     * ----------------
+     */
+    lobjfuncs = (PGlobjfuncs *)malloc(sizeof(PGlobjfuncs));
+    if (lobjfuncs == (PGlobjfuncs *)NULL) {
+        strcpy(conn->errorMessage, 
+	    "FATAL: malloc() failed in lo_initialize()\n");
+        return -1;
+    }
+    memset((char *)lobjfuncs, 0, sizeof(PGlobjfuncs));
+
+    /* ----------------
+     * Execute the query to get all the functions at once
+     * ----------------
+     */
+    res = PQexec(conn, "select proname, oid from pg_proc	\
+    		where proname = 'lo_open'	\
+		   or proname = 'lo_close'	\
+		   or proname = 'lo_creat'	\
+		   or proname = 'lo_unlink'	\
+		   or proname = 'lo_lseek'	\
+		   or proname = 'lo_tell'	\
+		   or proname = 'LOread'	\
+		   or proname = 'LOwrite'");
+    if (res == (PGresult *)NULL) {
+	free(lobjfuncs);
+        return -1;
+    }
+
+    if (res->resultStatus != PGRES_TUPLES_OK) {
+        free(lobjfuncs);
+	PQclear(res);
+	strcpy(conn->errorMessage,
+	    "ERROR: SELECT didn't return data in lo_initialize()\n");
+	return -1;
+    }
+
+    /* ----------------
+     * Examine the result and put the OID's into the struct
+     * ----------------
+     */
+    for(n = 0; n < PQntuples(res); n++) {
+        fname = PQgetvalue(res, n, 0);
+	foid  = (Oid)atoi(PQgetvalue(res, n, 1));
+	if(!strcmp(fname, "lo_open")) {
+	    lobjfuncs->fn_lo_open = foid;
+	} else
+	if(!strcmp(fname, "lo_close")) {
+	    lobjfuncs->fn_lo_close = foid;
+	} else
+	if(!strcmp(fname, "lo_creat")) {
+	    lobjfuncs->fn_lo_creat = foid;
+	} else
+	if(!strcmp(fname, "lo_unlink")) {
+	    lobjfuncs->fn_lo_unlink = foid;
+	} else
+	if(!strcmp(fname, "lo_lseek")) {
+	    lobjfuncs->fn_lo_lseek = foid;
+	} else
+	if(!strcmp(fname, "lo_tell")) {
+	    lobjfuncs->fn_lo_tell = foid;
+	} else
+	if(!strcmp(fname, "LOread")) {
+	    lobjfuncs->fn_lo_read = foid;
+	} else
+	if(!strcmp(fname, "LOwrite")) {
+	    lobjfuncs->fn_lo_write = foid;
+	}
+    }
+
+    PQclear(res);
+
+    /* ----------------
+     * Finally check that we really got all large object
+     * interface functions.
+     * ----------------
+     */
+    if(lobjfuncs->fn_lo_open == 0) {
+        strcpy(conn->errorMessage,
+	    "ERROR: Cannot determine OID for function lo_open\n");
+	free(lobjfuncs);
+	return -1;
+    }
+    if(lobjfuncs->fn_lo_close == 0) {
+        strcpy(conn->errorMessage,
+	    "ERROR: Cannot determine OID for function lo_close\n");
+	free(lobjfuncs);
+	return -1;
+    }
+    if(lobjfuncs->fn_lo_creat == 0) {
+        strcpy(conn->errorMessage,
+	    "ERROR: Cannot determine OID for function lo_creat\n");
+	free(lobjfuncs);
+	return -1;
+    }
+    if(lobjfuncs->fn_lo_unlink == 0) {
+        strcpy(conn->errorMessage,
+	    "ERROR: Cannot determine OID for function lo_unlink\n");
+	free(lobjfuncs);
+	return -1;
+    }
+    if(lobjfuncs->fn_lo_lseek == 0) {
+        strcpy(conn->errorMessage,
+	    "ERROR: Cannot determine OID for function lo_lseek\n");
+	free(lobjfuncs);
+	return -1;
+    }
+    if(lobjfuncs->fn_lo_tell == 0) {
+        strcpy(conn->errorMessage,
+	    "ERROR: Cannot determine OID for function lo_tell\n");
+	free(lobjfuncs);
+	return -1;
+    }
+    if(lobjfuncs->fn_lo_read == 0) {
+        strcpy(conn->errorMessage,
+	    "ERROR: Cannot determine OID for function LOread\n");
+	free(lobjfuncs);
+	return -1;
+    }
+    if(lobjfuncs->fn_lo_write == 0) {
+        strcpy(conn->errorMessage,
+	    "ERROR: Cannot determine OID for function LOwrite\n");
+	free(lobjfuncs);
+	return -1;
+    }
+
+    /* ----------------
+     * Put the structure into the connection control
+     * ----------------
+     */
+    conn->lobjfuncs = lobjfuncs;
+    return 0;
+}
+
+

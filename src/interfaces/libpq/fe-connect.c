@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.17 1996/11/10 03:06:36 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.18 1996/11/11 12:16:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,6 +192,7 @@ PQconnectdb(const char *conninfo)
     conn->Pfdebug = NULL;
     conn->port = NULL;
     conn->notifyList = DLNewList();
+    conn->lobjfuncs = NULL;
 
     conn->pghost    = strdup(conninfo_getval("host"));
     conn->pgport    = strdup(conninfo_getval("port"));
@@ -299,6 +300,7 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
     conn->Pfdebug = NULL;
     conn->port = NULL;
     conn->notifyList = DLNewList();
+    conn->lobjfuncs = NULL;
     
     if (!pghost || pghost[0] == '\0') {
       if (!(tmp = getenv("PGHOST"))) {
@@ -519,6 +521,7 @@ freePGconn(PGconn *conn)
   if (conn->dbName) free(conn->dbName);
   if (conn->pguser) free(conn->pguser);
   if (conn->notifyList) DLFreeList(conn->notifyList);
+  if (conn->lobjfuncs) free(conn->lobjfuncs);
   free(conn);
 }
 

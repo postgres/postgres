@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.11 1996/11/10 03:06:38 momjian Exp $
+ * $Id: libpq-fe.h,v 1.12 1996/11/11 12:16:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,17 @@ typedef struct pgNotify {
     int be_pid;			/* process id of backend */
 } PGnotify;
 
+typedef struct pgLobjfuncs {
+    Oid fn_lo_open;		/* OID of backend function lo_open	*/
+    Oid fn_lo_close;		/* OID of backend function lo_close	*/
+    Oid fn_lo_creat;		/* OID of backend function lo_creat	*/
+    Oid fn_lo_unlink;		/* OID of backend function lo_unlink	*/
+    Oid fn_lo_lseek;		/* OID of backend function lo_lseek	*/
+    Oid fn_lo_tell;		/* OID of backend function lo_tell	*/
+    Oid fn_lo_read;		/* OID of backend function LOread	*/
+    Oid fn_lo_write;		/* OID of backend function LOwrite	*/
+} PGlobjfuncs;
+
 /* PGconn encapsulates a connection to the backend */
 typedef struct pg_conn{
   char *pghost; /* the machine on which the server is running */
@@ -113,6 +124,7 @@ typedef struct pg_conn{
   int asyncNotifyWaiting;
   Dllist* notifyList;
   char *pguser;  /* Postgres username of user who is connected */
+  PGlobjfuncs *lobjfuncs; /* Backend function OID's for large object access */
 } PGconn;
 
 #define CMDSTATUS_LEN 40
