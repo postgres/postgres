@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.35 2000/10/21 18:41:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.36 2000/10/22 05:14:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ GetDatabasePath(Oid tblNode)
 bool
 IsSystemRelationName(const char *relname)
 {
-	if (relname && relname[0] && relname[1] && relname[2])
+	if (relname[0] && relname[1] && relname[2])
 		return (relname[0] == 'p' &&
 				relname[1] == 'g' &&
 				relname[2] == '_');
