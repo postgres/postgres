@@ -1,16 +1,15 @@
 # "pg_controldata" translation to Brazilian Portuguese Language.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003, 2004.
+# Euler Taveira de Oliveira <eulerto@yahoo.com.br>, 2003, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-27 13:07-0300\n"
+"POT-Creation-Date: 2004-12-08 15:33-0200\n"
 "PO-Revision-Date: 2004-09-28 14:10-0300\n"
-"Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <pgsql-dev@lists.querencialivre.rs.gov."
-"br>\n"
+"Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
+"Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas.postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -195,7 +194,7 @@ msgstr "Hora do último ponto de controle:            %s\n"
 #: pg_controldata.c:171
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "Tamanho do bloco de banco de dados:   %u\n"
+msgstr "Tamanho do bloco do banco de dados:   %u\n"
 
 #: pg_controldata.c:172
 #, c-format

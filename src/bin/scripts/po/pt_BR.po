@@ -1,14 +1,13 @@
 # "pgscripts" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003, 2004.
+# Euler Taveira de Oliveira <eulerto@yahoo.com.br>, 2003, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-27 13:07-0300\n"
-"PO-Revision-Date: 2004-10-27 18:36-0300\n"
-"Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov."
-"br>\n"
+"POT-Creation-Date: 2004-12-08 15:33-0200\n"
+"PO-Revision-Date: 2004-11-13 19:30-0300\n"
+"Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
+"Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas.postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -187,7 +186,7 @@ msgid ""
 "Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and "
 "plpythonu.\n"
 msgstr ""
-"Linguagens suportadas são plpgsql, pltcl, pltclu, plperl, plperlu, and "
+"Linguagens suportadas são plpgsql, pltcl, pltclu, plperl, plperlu e "
 "plpythonu.\n"
 
 #: createlang.c:226
@@ -357,8 +356,8 @@ msgstr "  -q, --quiet               não exibe nenhuma mensagem\n"
 msgid ""
 "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr ""
-"  -U, --username=USUÁRIO    nome do usuário para se conectar (não é o usuário "
-"a ser criado)\n"
+"  -U, --username=USUÁRIO    nome do usuário para se conectar (não é o "
+"usuário a ser criado)\n"
 
 #: createuser.c:259 dropuser.c:156
 msgid "  -W, --password            prompt for password to connect\n"
@@ -625,36 +624,46 @@ msgstr ""
 "\n"
 "Leia a descrição do comando SQL VACUUM para obter mais detalhes.\n"
 
-#: common.c:87 common.c:113
+#: common.c:33
+#, c-format
+msgid "%s: could not obtain information about current user: %s"
+msgstr "%s: não pôde obter informação sobre usuário atual: %s"
+
+#: common.c:44
+#, c-format
+msgid "%s: could not get current user name: %s"
+msgstr "%s: não pôde obter nome de usuário atual: %s"
+
+#: common.c:89 common.c:115
 msgid "Password: "
 msgstr "Senha: "
 
-#: common.c:100
+#: common.c:102
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: não pôde conectar ao banco de dados %s\n"
 
-#: common.c:123
+#: common.c:125
 #, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: não pôde conectar ao banco de dados %s: %s"
 
-#: common.c:147
+#: common.c:149
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: consulta falhou: %s"
 
-#: common.c:148
+#: common.c:150
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: consulta foi: %s\n"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:162
+#: common.c:164
 msgid "y"
 msgstr "s"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:164
+#: common.c:166
 msgid "n"
 msgstr "n"

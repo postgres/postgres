@@ -1,14 +1,13 @@
 # "pg_config" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2004.
+# Euler Taveira de Oliveira <eulerto@yahoo.com.br>, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-19 00:39-0300\n"
+"POT-Creation-Date: 2004-12-08 15:33-0200\n"
 "PO-Revision-Date: 2004-10-19 00:44-0300\n"
-"Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <pgsql-dev@lists.querencialivre.rs.gov."
-"br>\n"
+"Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
+"Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas.postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -52,7 +51,7 @@ msgid ""
 msgstr ""
 "  --includedir          mostra local dos arquivos de cabeçalho das "
 "interfaces\n"
-"                        do cliente\n"
+"                        com cliente\n"
 
 #: pg_config.c:43
 msgid ""
@@ -78,7 +77,8 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           mostra opções informadas ao script \"configure\" quando\n"
+"  --configure           mostra opções informadas ao script \"configure\" "
+"quando\n"
 "                        o PostgreSQL foi gerado\n"
 
 #: pg_config.c:49
@@ -120,3 +120,33 @@ msgstr "%s: argumento inválido: %s\n"
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: não pôde encontrar o próprio executável\n"
+
+#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "não pôde identificar diretório atual: %s"
+
+#: ../../port/exec.c:323 ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "não pôde mudar diretório para \"%s\""
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "não pôde ler link simbólico \"%s\""
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "processo filho terminou com código de saída %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "processo filho foi terminado pelo sinal %d"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "processo filho terminou com status inesperado %d"
