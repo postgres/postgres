@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.14 2000/10/05 19:48:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.15 2000/12/08 20:06:58 tgl Exp $
 Postgres documentation
 -->
 
@@ -77,9 +77,9 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT
       <term><replaceable class="parameter">maxvalue</replaceable></term>
       <listitem>
        <para>
-	Use the optional clause <option>MAXVALUE
-	 <replaceable class="parameter">maxvalue</replaceable></option> to
-	determine the maximum
+	The optional clause <option>MAXVALUE
+	 <replaceable class="parameter">maxvalue</replaceable></option>
+	determines the maximum
 	value for the sequence. The defaults are 2147483647 and -1 for
 	ascending and descending sequences, respectively.
        </para>
@@ -120,15 +120,15 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT
       <listitem>
        <para>
 	The optional CYCLE keyword may be used to enable the sequence
-	to continue when the
+	to wrap around when the
 	<replaceable class="parameter">maxvalue</replaceable> or
 	<replaceable class="parameter">minvalue</replaceable> has been
 	reached by
 	an ascending or descending sequence respectively. If the limit is
-	reached, the next number generated will be whatever the
+	reached, the next number generated will be the
 	<replaceable class="parameter">minvalue</replaceable> or
-	<replaceable class="parameter">maxvalue</replaceable> is,
-	as appropriate.
+	<replaceable class="parameter">maxvalue</replaceable>,
+	respectively.
        </para>
       </listitem>
      </varlistentry>
@@ -192,7 +192,7 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
        </computeroutput></term>
       <listitem>
        <para>
-	If the minimum and maximum values are inconsistant.
+	If the minimum and maximum values are inconsistent.
        </para>
       </listitem>
      </varlistentry>
@@ -213,24 +213,24 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
    into the current data base. This involves creating and initializing a
    new single-row
    table with the name <replaceable class="parameter">seqname</replaceable>.
-   The generator will be "owned" by the user issuing the command.
+   The generator will be owned by the user issuing the command.
   </para>
 
   <para>
    After a sequence is created, you may use the function
-   <function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
+   <function>nextval('<replaceable class="parameter">seqname</replaceable>')</function>
    to get a new number from the sequence.
    The function
    <function>currval('<replaceable class="parameter">seqname</replaceable>')</function>
    may be used to determine the number returned by the last call to
-   <function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
+   <function>nextval('<replaceable class="parameter">seqname</replaceable>')</function>
    for the specified sequence in the current session.
    The function
    <function>setval('<replaceable class="parameter">seqname</replaceable>',
     <replaceable class="parameter">newvalue</replaceable>)</function>
    may be used to set the current value of the specified sequence.
    The next call to 
-   <function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
+   <function>nextval('<replaceable class="parameter">seqname</replaceable>')</function>
    will return the given value plus the sequence increment.
   </para>
 
@@ -241,7 +241,7 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
 SELECT * FROM <replaceable>seqname</replaceable>;
    </programlisting>
 
-   to get the parameters of a sequence.
+   to examine the parameters of a sequence.
 
    As an alternative to fetching the
    parameters from the original definition as above, you can use
@@ -254,8 +254,13 @@ SELECT last_value FROM <replaceable>seqname</replaceable>;
   </para>
 
   <para>
-   Low-level locking is used to enable multiple simultaneous
-   calls to a generator.
+   To avoid blocking of concurrent transactions
+   that obtain numbers from the same sequence, a nextval operation
+   is never rolled back; that is, once a value has been fetched it is
+   considered used, even if the transaction that did the nextval later
+   aborts.  This means that aborted transactions may leave unused "holes"
+   in the sequence of assigned values.  setval operations are never
+   rolled back, either.
   </para>
 
   <caution>
@@ -279,6 +284,9 @@ SELECT last_value FROM <replaceable>seqname</replaceable>;
     are all distinct, not that they are generated purely sequentially.
     Also, last_value will reflect the latest value reserved by any backend,
     whether or not it has yet been returned by nextval.
+    Another consideration is that a setval executed on such a sequence
+    will not be noticed by other backends until they have used up any
+    preallocated values they have cached.
    </para>
   </caution>
 
@@ -293,7 +301,7 @@ SELECT last_value FROM <replaceable>seqname</replaceable>;
     Use <command>DROP SEQUENCE</command> to remove a sequence.
    </para>
    <para>
-    Each backend uses its own cache to store allocated numbers.
+    Each backend uses its own cache to store preallocated numbers.
     Numbers that are cached but not used in the current session will be
     lost, resulting in "holes" in the sequence.
    </para>

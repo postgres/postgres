@@ -257,7 +257,7 @@ nextval(PG_FUNCTION_ARGS)
 				if (rescnt > 0)
 					break;		/* stop fetching */
 				if (seq->is_cycled != 't')
-					elog(ERROR, "%s.nextval: got MAXVALUE (%d)",
+					elog(ERROR, "%s.nextval: reached MAXVALUE (%d)",
 						 elm->name, maxv);
 				next = minv;
 			}
@@ -273,7 +273,7 @@ nextval(PG_FUNCTION_ARGS)
 				if (rescnt > 0)
 					break;		/* stop fetching */
 				if (seq->is_cycled != 't')
-					elog(ERROR, "%s.nextval: got MINVALUE (%d)",
+					elog(ERROR, "%s.nextval: reached MINVALUE (%d)",
 						 elm->name, minv);
 				next = maxv;
 			}
@@ -371,21 +371,13 @@ do_setval(char *seqname, int32 next, bool iscalled)
 	seq = read_info("setval", elm, &buf);		/* lock page' buffer and
 												 * read tuple */
 
-	if (seq->cache_value != 1)
-	{
-		elog(ERROR, "%s.setval: can't set value of sequence %s, cache != 1",
-			 seqname, seqname);
-	}
-
 	if ((next < seq->min_value) || (next > seq->max_value))
-	{
-		elog(ERROR, "%s.setval: value %d is of of bounds (%d,%d)",
+		elog(ERROR, "%s.setval: value %d is out of bounds (%d,%d)",
 			 seqname, next, seq->min_value, seq->max_value);
-	}
 
 	/* save info in local cache */
 	elm->last = next;			/* last returned number */
-	elm->cached = next;			/* last cached number */
+	elm->cached = next;			/* last cached number (forget cached values) */
 
 	/* save info in sequence relation */
 	START_CRIT_CODE;
@@ -540,7 +532,7 @@ init_sequence(char *caller, char *name)
 	/* Else open and check it */
 	seqrel = heap_openr(name, AccessShareLock);
 	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
-		elog(ERROR, "%s.%s: %s is not sequence !", name, caller, name);
+		elog(ERROR, "%s.%s: %s is not a sequence", name, caller, name);
 
 	if (elm != (SeqTable) NULL)
 	{
@@ -704,7 +696,7 @@ get_param(DefElem *def)
 	if (nodeTag(def->arg) == T_Integer)
 		return intVal(def->arg);
 
-	elog(ERROR, "DefineSequence: \"%s\" is to be integer", def->defname);
+	elog(ERROR, "DefineSequence: \"%s\" value must be integer", def->defname);
 	return -1;
 }
 
