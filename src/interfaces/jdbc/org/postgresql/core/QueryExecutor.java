@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.27 2003/09/17 08:21:36 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.27.2.1 2004/02/03 05:43:22 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,8 +129,10 @@ public class QueryExecutor
 				switch (c)
 				{
 					case 'A':	// Asynchronous Notify
-						int pid = pgStream.ReceiveInteger(4);
+						int msglen = pgStream.ReceiveIntegerR(4);
+						int pid = pgStream.ReceiveIntegerR(4);
 						String msg = pgStream.ReceiveString(connection.getEncoding());
+						String param = pgStream.ReceiveString(connection.getEncoding());
 						connection.addNotification(new org.postgresql.core.Notification(msg, pid));
 						break;
 					case 'B':	// Binary Data Transfer
@@ -237,7 +239,7 @@ public class QueryExecutor
 				switch (c)
 				{
 					case 'A':	// Asynchronous Notify
-						int pid = pgStream.ReceiveInteger(4);
+						int pid = pgStream.ReceiveIntegerR(4);
 						String msg = pgStream.ReceiveString(connection.getEncoding());
 						connection.addNotification(new org.postgresql.core.Notification(msg, pid));
 						break;

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.16.2.2 2003/12/18 03:29:12 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.16.2.3 2004/02/03 05:43:22 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,8 +118,10 @@ public class Fastpath
 				switch (c)
 				{
 					case 'A':	// Asynchronous Notify
-						int pid = stream.ReceiveInteger(4);
+						int msglen = stream.ReceiveIntegerR(4);
+						int pid = stream.ReceiveIntegerR(4);
 						String msg = stream.ReceiveString(conn.getEncoding());
+						String param = stream.ReceiveString(conn.getEncoding());
 						conn.addNotification(new org.postgresql.core.Notification(msg, pid));
 						break;
 						//------------------------------
@@ -233,8 +235,9 @@ public class Fastpath
 				{
 					case 'A':	// Asynchronous Notify
 						//TODO: do something with this
-						int pid = stream.ReceiveInteger(4);
+						int pid = stream.ReceiveIntegerR(4);
 						String msg = stream.ReceiveString(conn.getEncoding());
+						conn.addNotification(new org.postgresql.core.Notification(msg, pid));
 						break;
 
 						//------------------------------
