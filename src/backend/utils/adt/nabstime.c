@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.8 1996/12/15 09:05:35 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.9 1996/12/16 03:34:52 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <sys/timeb.h>
 #include <sys/types.h>
+#include <sys/timeb.h>
 #include "postgres.h"
 #include "access/xact.h"
 #include "utils/palloc.h"
