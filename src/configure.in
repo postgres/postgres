@@ -259,8 +259,8 @@ AC_ARG_WITH(
    [  --with-perl             use perl ],
    [
 	case "$withval" in
-	y | ye | yes)		USE_PERL=true; AC_MSG_RESULT(enabled) ;;
-	*)			USE_PERL=false; AC_MSG_RESULT(disabled) ;;
+	y | ye | yes)	USE_PERL=true; AC_MSG_RESULT(enabled) ;;
+	*)		USE_PERL=false; AC_MSG_RESULT(disabled) ;;
 	esac
    ],
    [ USE_PERL=false; AC_MSG_RESULT(disabled) ]
@@ -268,13 +268,13 @@ AC_ARG_WITH(
 
 #dnl Verify that postgres is already installed
 #dnl per instructions for perl interface installation
-#if test "$USE_PERL" = "true"
-#then
-#	if test ! -x "$prefix"/bin/postgres -a ! -x "$ac_default_prefix"/bin/postgres
-#	then	AC_MSG_WARN(perl support disabled; postgres not previously installed)
-#		USE_PERL=
-#	fi
-#fi
+if test "$USE_PERL" = "true"
+then
+	if test "$WHOAMI" != "root"
+	then	AC_MSG_WARN(perl support disabled; must be root to install)
+		USE_PERL=
+	fi
+fi
 export USE_PERL
 
 dnl We include odbc support unless we disable it with --with-odbc=false

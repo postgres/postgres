@@ -889,8 +889,8 @@ if test "${with_perl+set}" = set; then
   withval="$with_perl"
   
 	case "$withval" in
-	y | ye | yes)		USE_PERL=true; echo "$ac_t""enabled" 1>&6 ;;
-	*)			USE_PERL=false; echo "$ac_t""disabled" 1>&6 ;;
+	y | ye | yes)	USE_PERL=true; echo "$ac_t""enabled" 1>&6 ;;
+	*)		USE_PERL=false; echo "$ac_t""disabled" 1>&6 ;;
 	esac
    
 else
@@ -901,13 +901,13 @@ fi
 
 #dnl Verify that postgres is already installed
 #dnl per instructions for perl interface installation
-#if test "$USE_PERL" = "true"
-#then
-#	if test ! -x "$prefix"/bin/postgres -a ! -x "$ac_default_prefix"/bin/postgres
-#	then	AC_MSG_WARN(perl support disabled; postgres not previously installed)
-#		USE_PERL=
-#	fi
-#fi
+if test "$USE_PERL" = "true"
+then
+	if test "$WHOAMI" != "root"
+	then	echo "configure: warning: perl support disabled; must be root to install" 1>&2
+		USE_PERL=
+	fi
+fi
 export USE_PERL
 
 echo $ac_n "checking setting USE_ODBC""... $ac_c" 1>&6
