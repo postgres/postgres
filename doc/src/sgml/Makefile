@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.62 2003/12/15 22:24:59 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.63 2004/01/13 18:45:19 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -195,6 +195,20 @@ regress_README.html: regress.sgml
 	  cat $< ) >tempfile_regress_README.sgml
 	$(JADE.text) -V nochunks tempfile_regress_README.sgml >$@
 	rm tempfile_regress_README.sgml
+
+
+##
+## Experimental XML stuff
+##
+
+OSX = osx # (may be called sx or sgml2xml on some systems)
+XSLTPROC = xsltproc
+
+postgres.xml: postgres.sgml $(GENERATED_SGML)
+	$(OSX) -x lower $< >$@
+
+testxml: stylesheet.xsl postgres.xml
+	$(XSLTPROC) $^
 
 
 ##
