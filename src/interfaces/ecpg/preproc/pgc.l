@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.88 2002/03/15 21:46:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.89 2002/03/24 18:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,10 +338,10 @@ cppline			{space}*#(.*\\{space})*.*
 						errno = 0;
 						val = strtol(literalbuf, &endptr, 16);
 						if (*endptr != '\0' || errno == ERANGE
-	#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_INT_64
 							/* if long > 32 bits, check for overflow of int4 */
 							|| val != (long) ((int32) val)
-	#endif
+#endif
 							)
 							mmerror(PARSE_ERROR, ET_ERROR, "Bad hexadecimal integer input");
 						yylval.ival = val;
