@@ -167,19 +167,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   /**
    * What is the version of this database product.
    *
-   * <p>Note that PostgreSQL 6.3 has a system catalog called pg_version - 
-   * however, select * from pg_version on any database retrieves
-   * no rows.
-   *
-   * <p>For now, we will return the version 6.3 (in the hope that we change
-   * this driver as often as we change the database)
-   *
    * @return the database version
    * @exception SQLException if a database access error occurs
    */
   public String getDatabaseProductVersion() throws SQLException
   {
-      return connection.this_driver.getVersion();
+	java.sql.ResultSet resultSet = connection.ExecSQL("select version()");
+	resultSet.next();
+
+	StringTokenizer versionParts = new StringTokenizer(resultSet.getString(1));
+	versionParts.nextToken(); /* "PostgreSQL" */
+	String versionNumber = versionParts.nextToken(); /* "X.Y.Z" */
+
+	return versionNumber;
   }
   
   /**
