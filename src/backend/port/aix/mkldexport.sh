@@ -46,7 +46,7 @@ else
 	echo '#!' $2/$OBJNAME
 fi
 $NM -Bg $1 | \
-	egrep ' [TD] ' | \
+	egrep ' [TDB] ' | \
 	sed -e 's/.* //' | \
 	egrep -v '\$' | \
 	sed -e 's/^[.]//' | \
