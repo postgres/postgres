@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.275 2001/11/16 04:08:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.276 2001/12/09 04:39:39 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -888,16 +888,26 @@ zone_value:  Sconst
 			{
 				A_Const *n = (A_Const *) makeStringConst($2, $1);
 				if ($3 != -1)
-					n->typename->typmod = (($3 << 16) | 0xFFFF);
+				{
+					if (($3 & ~(MASK(HOUR) | MASK(MINUTE))) != 0)
+						elog(ERROR, "Time zone interval must be HOUR or HOUR TO MINUTE");
+					n->typename->typmod = ((($3 & 0x7FFF) << 16) | 0xFFFF);
+				}
 				$$ = (Node *)n;
 			}
 		| ConstInterval '(' Iconst ')' Sconst opt_interval
 			{
 				A_Const *n = (A_Const *) makeStringConst($5, $1);
 				if ($6 != -1)
-					n->typename->typmod = (($6 << 16) | $3);
+				{
+					if (($6 & ~(MASK(HOUR) | MASK(MINUTE))) != 0)
+						elog(ERROR, "Time zone interval must be HOUR or HOUR TO MINUTE");
+					n->typename->typmod = ((($6 & 0x7FFF) << 16) | $3);
+				}
 				else
+				{
 					n->typename->typmod = ((0x7FFF << 16) | $3);
+				}
 
 				$$ = (Node *)n;
 			}
@@ -4328,10 +4338,14 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $2;
-					/* SQL99 specified a default precision of six.
-					 * - thomas 2001-09-30
+					/* SQL99 specified a default precision of six
+					 * for schema definitions. But for timestamp
+					 * literals we don't want to throw away precision
+					 * so leave this as unspecified for now.
+					 * Later, we may want a different production
+					 * for schemas. - thomas 2001-12-07
 					 */
-					$$->typmod = 6;
+					$$->typmod = -1;
 				}
 		| TIME '(' Iconst ')' opt_timezone
 				{
@@ -4353,9 +4367,10 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 					else
 						$$->name = xlateSqlType("time");
 					/* SQL99 specified a default precision of zero.
-					 * - thomas 2001-09-30
+					 * See comments for timestamp above on why we will
+					 * leave this unspecified for now. - thomas 2001-12-07
 					 */
-					$$->typmod = 0;
+					$$->typmod = -1;
 				}
 		;
 
@@ -5009,7 +5024,12 @@ c_expr:  attr
 
 					d->name = xlateSqlType("timetz");
 					d->setof = FALSE;
-					d->typmod = 0;
+					/* SQL99 mandates a default precision of zero for TIME
+					 * fields in schemas. However, for CURRENT_TIME
+					 * let's preserve the microsecond precision we
+					 * might see from the system clock. - thomas 2001-12-07
+					 */
+					d->typmod = 6;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -5058,11 +5078,13 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					/* SQL99 mandates a default precision of 6
-					 * for timestamp. - thomas 2001-10-04
-					 */
 					d->name = xlateSqlType("timestamptz");
 					d->setof = FALSE;
+					/* SQL99 mandates a default precision of 6 for timestamp.
+					 * Also, that is about as precise as we will get since
+					 * we are using a microsecond time interface.
+					 * - thomas 2001-12-07
+					 */
 					d->typmod = 6;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
