@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.73 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.74 2003/11/12 04:08:07 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -439,7 +439,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>RESTRICT</literal></term>
         <listitem>
          <para>
-          Same as <literal>NO ACTION</literal>.
+          Same as <literal>NO ACTION</literal> except that this action
+          will not be deferred even if the rest of the constraint is
+          deferrable and deferred.
          </para>
         </listitem>
        </varlistentry>
