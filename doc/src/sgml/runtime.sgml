@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.234 2004/01/25 03:30:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.235 2004/01/27 16:51:43 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1462,11 +1462,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>from_collapse_limit</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        The planner will merge sub-queries into upper queries if the resulting
-        FROM list would have no more than this many items.  Smaller values
-        reduce planning time but may yield inferior query plans.
-        The default is 8.  It is usually wise to keep this less than
-        <varname>geqo_threshold</varname>.
+        The planner will merge sub-queries into upper queries if the
+        resulting <literal>FROM</literal> list would have no more than
+        this many items.  Smaller values reduce planning time but may
+        yield inferior query plans.  The default is 8.  It is usually
+        wise to keep this less than <varname>geqo_threshold</varname>.
        </para>
       </listitem>
      </varlistentry>
@@ -1475,14 +1475,48 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>join_collapse_limit</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        The planner will flatten explicit inner <literal>JOIN</> constructs
-        into lists of <literal>FROM</> items whenever a list of no more than
-        this many items would result.  Usually this is set the same as
-        <varname>from_collapse_limit</>.  Setting it to 1 prevents any
-        flattening of inner <literal>JOIN</>s, allowing explicit
-        <literal>JOIN</> syntax to be used to control the join order.
-        Intermediate values might be useful to trade off planning time
-        against quality of plan.
+        The planner will rewrite explicit inner <literal>JOIN</>
+        constructs into lists of <literal>FROM</> items whenever a
+        list of no more than this many items in total would
+        result. Prior to <productname>PostgreSQL</> 7.4, joins
+        specified via the <literal>JOIN</literal> construct would
+        never be reordered by the query planner. The query planner has
+        subsequently been improved so that inner joins written in this
+        form can be reordered; this configuration variable controls
+        the extent to which this reordering is performed.
+        <note>
+         <para>
+          At present, the order of outer joins specified via the
+          <literal>JOIN</> construct is never adjusted by the query
+          planner; therefore, <varname>join_collapse_limit</> has no
+          effect on this behavior. The planner may be improved to
+          reorder some classes of outer joins in a future release of
+          <productname>PostgreSQL</productname>.
+         </para>
+        </note>
+       </para>
+
+       <para>
+        By default, this variable is set to
+        <varname>from_collapse_limit</varname>, which is appropriate
+        for most uses. Setting it to 1 prevents any reordering of
+        inner <literal>JOIN</>s. Thus, the explicit join order
+        specified in the query will be the actual order in which the
+        relations are joined. The query planner does not always choose
+        the optimal join order; advanced users may elect to
+        temporarily set this variable to 1, and then specify the join
+        order they desire explicitly. Another consequence of setting
+        this variable to 1 is that the query planner will behave more
+        like the <productname>PostgreSQL</productname> 7.3 query
+        planner, which some users might find useful for backward
+        compatibility reasons.
+       </para>
+
+       <para>
+        Setting this variable to a value between 1 and
+        <varname>from_collapse_limit</varname> might be useful to
+        trade off planning time against the quality of the chosen plan
+        (higher values produce better plans).
        </para>
       </listitem>
      </varlistentry>
@@ -2583,9 +2617,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <term><varname>max_identifier_length</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Shows the maximum identifier length. It is determined as one less than
-        the value of <literal>NAMEDATALEN</> when building the server. The
-        default value of NAMEDATALEN is 64; therefore the default
+        Shows the maximum identifier length. It is determined as one
+        less than the value of <literal>NAMEDATALEN</> when building
+        the server. The default value of <literal>NAMEDATALEN</> is
+        64; therefore the default
         <varname>max_identifier_length</varname> is 63.
        </para>
       </listitem>
