@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.29 2000/01/26 05:56:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.30 2000/03/02 04:06:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ ExecMaterial(Material *node)
 		estate->es_direction = ForwardScanDirection;
 
 		/* ----------------
-		 *	 if we couldn't create the temp or current relations then
+		 *	 if we couldn't create the temp relation then
 		 *	 we print a warning and return NULL.
 		 * ----------------
 		 */
@@ -94,13 +94,6 @@ ExecMaterial(Material *node)
 		if (tempRelation == NULL)
 		{
 			elog(DEBUG, "ExecMaterial: temp relation is NULL! aborting...");
-			return NULL;
-		}
-
-		currentRelation = matstate->csstate.css_currentRelation;
-		if (currentRelation == NULL)
-		{
-			elog(DEBUG, "ExecMaterial: current relation is NULL! aborting...");
 			return NULL;
 		}
 
@@ -121,7 +114,6 @@ ExecMaterial(Material *node)
 
 			ExecClearTuple(slot);
 		}
-		currentRelation = tempRelation;
 
 		/* ----------------
 		 *	 restore to user specified direction
@@ -134,6 +126,7 @@ ExecMaterial(Material *node)
 		 *	 sorted relation and update the sortstate information
 		 * ----------------
 		 */
+		currentRelation = tempRelation;
 		currentScanDesc = heap_beginscan(currentRelation,		/* relation */
 										 ScanDirectionIsBackward(dir),
 										 SnapshotSelf,	/* seeself */
@@ -265,7 +258,6 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	 *	create the temporary relation
 	 * ----------------
 	 */
-/*	  len = ExecTargetListLength(node->plan.targetlist); */
 	tempDesc = ExecCreatR(tupType, _NONAME_RELATION_ID_);
 
 	/* ----------------
@@ -273,7 +265,7 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 	matstate->mat_TempRelation = tempDesc;
-	matstate->csstate.css_currentRelation = tempDesc;
+	matstate->csstate.css_currentRelation = NULL;
 
 	/* ----------------
 	 *	return relation oid of temporary relation in a list
@@ -312,12 +304,11 @@ ExecEndMaterial(Material *node)
 	matstate = node->matstate;
 	tempRelation = matstate->mat_TempRelation;
 
-	heap_drop(tempRelation);
-
 	/* ----------------
-	 *	close the temp relation and shut down the scan.
+	 *	shut down the scan, but don't close the temp relation
 	 * ----------------
 	 */
+	matstate->csstate.css_currentRelation = NULL;
 	ExecCloseR((Plan *) node);
 
 	/* ----------------
@@ -332,6 +323,13 @@ ExecEndMaterial(Material *node)
 	 * ----------------
 	 */
 	ExecClearTuple(matstate->csstate.css_ScanTupleSlot);
+
+	/* ----------------
+	 *	delete the temp relation
+	 * ----------------
+	 */
+	if (tempRelation != NULL)
+		heap_drop(tempRelation);
 }
 
 /* ----------------------------------------------------------------
