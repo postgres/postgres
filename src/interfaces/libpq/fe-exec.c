@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.66 1998/09/03 02:10:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.67 1998/09/04 05:03:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1489,12 +1489,15 @@ PQoidStatus(PGresult *res)
 		return "";
 
 	/*
-	 * The cmdStatus string looks like INSERT oid count\0 In order to be
-	 * able to return an ordinary C string without damaging the result for
-	 * PQcmdStatus or PQcmdTuples, we copy the oid part of the string to
-	 * just after the null, so that cmdStatus looks like INSERT oid
-	 * count\0oid\0 ^ our return value points here Pretty klugy eh?  This
-	 * routine should've just returned an Oid value.
+	 * The cmdStatus string looks like
+	 *     INSERT oid count\0
+	 * In order to be able to return an ordinary C string without
+	 * damaging the result for PQcmdStatus or PQcmdTuples, we copy
+	 * the oid part of the string to just after the null, so that
+	 * cmdStatus looks like
+	 *     INSERT oid count\0oid\0
+	 *                       ^ our return value points here
+	 * Pretty klugy eh?  This routine should've just returned an Oid value.
 	 */
 
 	slen = strlen(res->cmdStatus);

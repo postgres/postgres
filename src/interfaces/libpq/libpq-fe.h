@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.41 1998/09/03 02:10:51 momjian Exp $
+ * $Id: libpq-fe.h,v 1.42 1998/09/04 05:03:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,6 @@ typedef void (*PQnoticeProcessor) (void * arg, const char * message);
 	extern char *PQoptions(PGconn *conn);
 	extern ConnStatusType PQstatus(PGconn *conn);
 	extern char *PQerrorMessage(PGconn *conn);
-	extern int	PQsocket(PGconn *conn);
 	extern int	PQsocket(PGconn *conn);
 	extern int	PQbackendPID(PGconn *conn);
 

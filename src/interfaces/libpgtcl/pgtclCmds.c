@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.33 1998/09/03 05:08:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.34 1998/09/04 05:02:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -616,8 +616,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 			for (i = 1; i < PQnfields(result); i++)
 			{
 				sprintf(workspace, "%s,%.200s%s", field0, PQfname(result,i),
-					appendstr);
-				sprintf(workspace, "%s,%.200s", field0, PQfname(result,i));
+						appendstr);
 				if (Tcl_SetVar2(interp, arrVar, workspace,
 								PQgetvalue(result, tupno, i),
 								TCL_LEAVE_ERR_MSG) == NULL)
