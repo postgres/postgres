@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.10 2001/10/09 18:46:00 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.11 2001/11/08 23:40:40 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -118,11 +118,12 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
      <varlistentry>
       <term>CROSS JOIN</term>
 
+      <indexterm>
+       <primary>joins</primary>
+       <secondary>cross</secondary>
+      </indexterm>
+
       <listitem>
-       <indexterm>
-        <primary>joins</primary>
-	<secondary>cross</secondary>
-       </indexterm>
 <synopsis>
 <replaceable>T1</replaceable> CROSS JOIN <replaceable>T2</replaceable>
 </synopsis>
@@ -151,13 +152,13 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
      <varlistentry>
       <term>Qualified joins</term>
+
+      <indexterm>
+       <primary>joins</primary>
+       <secondary>outer</secondary>
+      </indexterm>
+
       <listitem>
-
-       <indexterm>
-        <primary>joins</primary>
-	<secondary>outer</secondary>
-       </indexterm>
-
 <synopsis>
 <replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> ON <replaceable>boolean_expression</replaceable>
 <replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> USING ( <replaceable>join column list</replaceable> )
@@ -229,12 +230,12 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         <varlistentry>
          <term>LEFT OUTER JOIN</term>
 
-         <listitem>
-	  <indexterm>
-	   <primary>joins</primary>
-	   <secondary>left</secondary>
-	  </indexterm>
+         <indexterm>
+          <primary>joins</primary>
+          <secondary>left</secondary>
+         </indexterm>
 
+         <listitem>
           <para>
            First, an INNER JOIN is performed.  Then, for each row in T1
            that does not satisfy the join condition with any row in
