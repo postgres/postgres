@@ -6,6 +6,7 @@ text
 strings
 int2
 int4
+int8
 oid
 oidint2
 oidint4
@@ -45,6 +46,7 @@ select
 select_into
 select_distinct
 select_distinct_on
+select_having
 subselect
 union
 aggregates

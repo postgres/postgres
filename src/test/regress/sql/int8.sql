@@ -1,0 +1,27 @@
+--
+-- Test int8 64-bit integers.
+--
+CREATE TABLE INT8_TBL(q1 int8, q2 int8);
+
+INSERT INTO INT8_TBL VALUES('123','456');
+INSERT INTO INT8_TBL VALUES('123','4567890123456789');
+INSERT INTO INT8_TBL VALUES('4567890123456789','123');
+INSERT INTO INT8_TBL VALUES('4567890123456789','4567890123456789');
+INSERT INTO INT8_TBL VALUES('4567890123456789','-4567890123456789');
+
+SELECT * FROM INT8_TBL;
+
+SELECT '' AS five, q1 AS plus, -q1 AS minus FROM INT8_TBL;
+
+SELECT '' AS five, q1, q2, q1 + q2 AS plus FROM INT8_TBL;
+SELECT '' AS five, q1, q2, q1 - q2 AS minus FROM INT8_TBL;
+SELECT '' AS three, q1, q2, q1 * q2 AS multiply FROM INT8_TBL
+ WHERE q1 < 1000 or (q2 > 0 and q2 < 1000);
+SELECT '' AS five, q1, q2, q1 / q2 AS divide FROM INT8_TBL;
+
+SELECT '' AS five, q1, float8(q1) FROM INT8_TBL;
+SELECT '' AS five, q2, float8(q2) FROM INT8_TBL;
+SELECT '' AS five, q1, int8(float8(q1)) AS "two coercions" FROM INT8_TBL;
+
+SELECT '' AS five, 2 * q1 AS "twice int4" FROM INT8_TBL;
+SELECT '' AS five, q1 * 2 AS "twice int4" FROM INT8_TBL;
