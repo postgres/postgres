@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.17 1996/11/23 09:51:57 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.18 1997/01/05 21:17:21 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ endif
 all: postgres $(EXP) global1.bki.source local1_template1.bki.source
 
 postgres: postgres_group1 postgres_group2 postgres_group3 postgres_group4 
-	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LDADD)
+	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LD_ADD)
 
 postgres_group1:
 	$(MAKE) -C access     all   
@@ -98,7 +98,7 @@ global1.bki.source local1_template1.bki.source:
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.
 postgres.o: $(OBJS)
-	$(CC) $(LDFLAGS) -r -o postgres.o $(OBJS) $(LDADD)
+	$(CC) $(LDFLAGS) -r -o postgres.o $(OBJS) $(LD_ADD)
 
 
 ############################################################################
@@ -208,7 +208,7 @@ $(BINDIR) $(LIBDIR) $(HEADERDIR):
 # are up to date.  It saves the time of doing all the submakes.
 .PHONY: quick
 quick: $(OBJS)
-	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LDADD)
+	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LD_ADD)
 
 #
 # Build the file, "./ID", used by the "gid" (grep-for-identifier) tool

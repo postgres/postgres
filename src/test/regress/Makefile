@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.11 1996/12/02 06:31:08 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.12 1997/01/05 21:17:36 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,8 +16,6 @@ include ../../Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR) -I../../include
 
-LDADD+= -L$(LIBPQDIR) -lpq
-        
 #
 # DLOBJS is the dynamically-loaded object file.  The regression test uses 
 # this when it does a CREATE FUNCTION ... LANGUAGE 'C').

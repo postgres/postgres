@@ -4,7 +4,7 @@
 #    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.4 1996/11/18 06:07:52 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.5 1997/01/05 21:17:45 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,6 @@ include ../Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR) -I../../include
 
-LDADD+= -L$(LIBPQDIR) -lpq
-        
 #
 # DLOBJS is the dynamically-loaded object files.  The "funcs" queries
 # include CREATE FUNCTIONs that load routines from these files.
