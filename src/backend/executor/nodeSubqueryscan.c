@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.7 2001/05/08 19:47:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.8 2001/05/15 16:11:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,28 +61,11 @@ SubqueryNext(SubqueryScan *node)
 	estate = node->scan.plan.state;
 	subquerystate = (SubqueryScanState *) node->scan.scanstate;
 	direction = estate->es_direction;
-	slot = subquerystate->csstate.css_ScanTupleSlot;
 
 	/*
-	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle SubqueryScan -->
-	 * NewNode switching in Init/ReScan plan...
+	 * We need not support EvalPlanQual here, since we are not scanning
+	 * a real relation.
 	 */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
-	{
-		ExecClearTuple(slot);
-		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
-			return slot;		/* return empty slot */
-
-		ExecStoreTuple(estate->es_evTuple[node->scan.scanrelid - 1],
-					   slot, InvalidBuffer, false);
-
-		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[node->scan.scanrelid - 1] = true;
-		return (slot);
-	}
 
 	/*
 	 * get the next tuple from the sub-query
@@ -234,12 +217,16 @@ ExecEndSubqueryScan(SubqueryScan *node)
 	 */
 	ExecEndNode(node->subplan, node->subplan);
 
-	/* XXX we seem to be leaking the sub-EState and tuple table... */
-
+	/*
+	 * clean up subquery's tuple table
+	 */
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
+	ExecDropTupleTable(subquerystate->sss_SubEState->es_tupleTable, true);
+
+	/* XXX we seem to be leaking the sub-EState... */
 
 	/*
-	 * clean out the tuple table
+	 * clean out the upper tuple table
 	 */
 	ExecClearTuple(subquerystate->csstate.cstate.cs_ResultTupleSlot);
 }
@@ -258,14 +245,6 @@ ExecSubqueryReScan(SubqueryScan *node, ExprContext *exprCtxt, Plan *parent)
 
 	subquerystate = (SubqueryScanState *) node->scan.scanstate;
 	estate = node->scan.plan.state;
-
-	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
-	{
-		estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
-		return;
-	}
 
 	/*
 	 * ExecReScan doesn't know about my subplan, so I have to do
