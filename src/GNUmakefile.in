@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.18 1997/10/30 04:46:37 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.19 1997/11/07 06:22:36 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ install:
 ifneq ($(wildcard man), )
 	$(MAKE) -C man install
 endif
-	more ../register.txt
+	cat ../register.txt
 
 clean:
 	@if test $(PORTNAME) = UNDEFINED; then \
