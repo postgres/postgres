@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.27 2004/06/26 07:11:31 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.28 2004/06/26 07:19:16 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-06-26 09:09+0200\n"
-"PO-Revision-Date: 2004-06-25 13:21+0200\n"
+"PO-Revision-Date: 2004-06-26 09:18+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1477,22 +1477,24 @@ msgid "change the definition of an aggregate function"
 msgstr "ändra definitionen av en aggregatfunktion"
 
 #: sql_help.h:30
-#, fuzzy
 msgid ""
 "ALTER AGGREGATE name ( type ) RENAME TO newname\n"
 "ALTER AGGREGATE name ( type ) OWNER TO newowner"
-msgstr "ALTER AGGREGATE namn ( typ ) RENAME TO nyttnamn"
+msgstr ""
+"ALTER AGGREGATE namn ( typ ) RENAME TO nytt_namn\n"
+"ALTER AGGREGATE name ( typ ) OWNER TO ny_ägare"
 
 #: sql_help.h:33
 msgid "change the definition of a conversion"
 msgstr "ändra definitionen av en konvertering"
 
 #: sql_help.h:34
-#, fuzzy
 msgid ""
 "ALTER CONVERSION name RENAME TO newname\n"
 "ALTER CONVERSION name OWNER TO newowner"
-msgstr "ALTER CONVERSION namn RENAME TO nyttnamn"
+msgstr ""
+"ALTER CONVERSION namn RENAME TO nytt_namn\n"
+"ALTER CONVERSION namn OWNER TO ny_ägare"
 
 #: sql_help.h:37
 msgid "change a database"
@@ -1547,11 +1549,12 @@ msgid "change the definition of a function"
 msgstr "ändra definitionen av en funktion"
 
 #: sql_help.h:46
-#, fuzzy
 msgid ""
 "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname\n"
 "ALTER FUNCTION name ( [ type [, ...] ] ) OWNER TO newowner"
-msgstr "ALTER FUNCTION namn ( [ typ [, ...] ] ) RENAME TO nyttnamn"
+msgstr ""
+"ALTER FUNCTION namn ( [ typ [, ...] ] ) RENAME TO nytt_namn\n"
+"ALTER FUNCTION namn ( [ typ [, ...] ] ) OWNER TO ny_ägare"
 
 #: sql_help.h:49
 msgid "change a user group"
@@ -1582,36 +1585,34 @@ msgid "change the definition of an operator class"
 msgstr "ändra definitionen av en operatorklass"
 
 #: sql_help.h:58
-#, fuzzy
 msgid ""
 "ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
 "ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
-msgstr "ALTER OPERATOR CLASS namn USING indexmetod RENAME TO nyttnamn"
+msgstr ""
+"ALTER OPERATOR CLASS namn USING index_metod RENAME TO nytt_namn\n"
+"ALTER OPERATOR CLASS namn USING index_metod OWNER TO ny_ägare"
 
 #: sql_help.h:61
-#, fuzzy
 msgid "change the definition of an operator"
-msgstr "ändra definitionen av en operatorklass"
+msgstr "ändra definitionen av en operator"
 
 #: sql_help.h:62
-#, fuzzy
 msgid ""
 "ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
 "newowner"
-msgstr ""
-"DROP OPERATOR namn ( vänster typ | NONE , höger typ | NONE ) [ CASCADE | "
-"RESTRICT ]"
+msgstr "ALTER OPERATOR namn ( { vänster_typ | NONE }, { höger_typ | NONE } ) OWNER TO ny_ägare"
 
 #: sql_help.h:65
 msgid "change the definition of a schema"
 msgstr "ändra definitionen av ett schema"
 
 #: sql_help.h:66
-#, fuzzy
 msgid ""
 "ALTER SCHEMA name RENAME TO newname\n"
 "ALTER SCHEMA name OWNER TO newowner"
-msgstr "ALTER SCHEMA namn RENAME TO nyttnamn"
+msgstr ""
+"ALTER SCHEMA namn RENAME TO nytt_namn\n"
+"ALTER SCHEMA namn OWNER TO ny_ägare"
 
 #: sql_help.h:69
 msgid "alter the definition of a sequence generator"
@@ -1684,15 +1685,16 @@ msgstr ""
 "    SET WITHOUT CLUSTER"
 
 #: sql_help.h:77
-#, fuzzy
 msgid "change the definition of a tablespace"
-msgstr "ändra definitionen av en tabell"
+msgstr "ändra definitionen av ett tabellutrymme"
 
 #: sql_help.h:78
 msgid ""
 "ALTER TABLESPACE name RENAME TO newname\n"
 "ALTER TABLESPACE name OWNER TO newowner"
 msgstr ""
+"ALTER TABLESPACE namn RENAME TO nytt_namn\n"
+"ALTER TABLESPACE namn OWNER TO ny_ägare"
 
 #: sql_help.h:81
 msgid "change the definition of a trigger"
@@ -1703,14 +1705,12 @@ msgid "ALTER TRIGGER name ON table RENAME TO newname"
 msgstr "ALTER TRIGGER namb ON tabell RENAME TO nyttnamn"
 
 #: sql_help.h:85
-#, fuzzy
 msgid "change the definition of a type"
-msgstr "ändra definitionen av en tabell"
+msgstr "ändra definitionen av en typ"
 
 #: sql_help.h:86
-#, fuzzy
 msgid "ALTER TYPE name OWNER TO new_owner"
-msgstr "ALTER SCHEMA namn RENAME TO nyttnamn"
+msgstr "ALTER TYPE namn OWNER TO ny_ägare"
 
 #: sql_help.h:89
 msgid "change a database user account"
@@ -2503,13 +2503,10 @@ msgid "remove an operator"
 msgstr "ta bort en operator"
 
 #: sql_help.h:266
-#, fuzzy
 msgid ""
 "DROP OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE "
 "| RESTRICT ]"
-msgstr ""
-"DROP OPERATOR namn ( vänster typ | NONE , höger typ | NONE ) [ CASCADE | "
-"RESTRICT ]"
+msgstr "DROP OPERATOR namn ( { vänster_typ | NONE } , { höger_typ | NONE } ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:269
 msgid "remove a rewrite rule"
