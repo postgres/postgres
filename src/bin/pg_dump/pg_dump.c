@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.163 2000/08/07 12:32:54 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.164 2000/09/12 04:15:58 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -256,12 +256,22 @@ isViewRule(char *relname)
 {
 	PGresult   *res;
 	int			ntups;
+	char       rulename[NAMEDATALEN + 5];
 	PQExpBuffer query = createPQExpBuffer();
 
 	appendPQExpBuffer(query, "select relname from pg_class, pg_rewrite ");
 	appendPQExpBuffer(query, "where pg_class.oid = ev_class ");
 	appendPQExpBuffer(query, "and pg_rewrite.ev_type = '1' ");
-	appendPQExpBuffer(query, "and rulename = '_RET%s'", relname);
+	snprintf(rulename,NAMEDATALEN + 5,"_RET%s",relname);
+#ifdef MULTIBYTE
+	int len;
+	len = pg_mbcliplen(rulename,strlen(rulename),NAMEDATALEN-1);
+	rulename[len] = '\0';
+#else
+	rulename[NAMEDATALEN-1] = '\0';
+#endif
+
+	appendPQExpBuffer(query, "and rulename = '%s'", rulename);
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||

@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.59 2000/08/12 04:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.60 2000/09/12 04:15:58 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -51,6 +51,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
+#include "commands/view.h"
 
 
 /* ----------
@@ -79,7 +80,7 @@ static char *rulename = NULL;
 static void *plan_getrule = NULL;
 static char *query_getrule = "SELECT * FROM pg_rewrite WHERE rulename = $1";
 static void *plan_getview = NULL;
-static char *query_getview = "SELECT * FROM pg_rewrite WHERE rulename = $1 or rulename = $2";
+static char *query_getview = "SELECT * FROM pg_rewrite WHERE rulename = $1";
 static void *plan_getam = NULL;
 static char *query_getam = "SELECT * FROM pg_am WHERE oid = $1";
 static void *plan_getopclass = NULL;
@@ -138,7 +139,7 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	int			len;
 
 	/* ----------
-	 * We need the rules name somewhere deep down
+	 * We need the rules name somewhere deep down: rulename is global
 	 * ----------
 	 */
 	rulename = pstrdup(NameStr(*rname));
@@ -226,23 +227,22 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 Datum
 pg_get_viewdef(PG_FUNCTION_ARGS)
 {
-	Name		rname = PG_GETARG_NAME(0);
+	Name		vname = PG_GETARG_NAME(0);
 	text	   *ruledef;
-	Datum		args[2];
-	char		nulls[3];
+	Datum		args[1];
+	char		nulls[2];
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
 	StringInfoData buf;
 	int			len;
-	char		name1[NAMEDATALEN + 5];
-	char		name2[NAMEDATALEN + 5];
+	char		*name;
 
 	/* ----------
-	 * We need the rules name somewhere deep down
+	 * We need the view name somewhere deep down
 	 * ----------
 	 */
-	rulename = pstrdup(NameStr(*rname));
+	rulename = pstrdup(NameStr(*vname));
 
 	/* ----------
 	 * Connect to SPI manager
@@ -259,28 +259,24 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	 */
 	if (plan_getview == NULL)
 	{
-		Oid			argtypes[2];
+		Oid			argtypes[1];
 		void	   *plan;
 
 		argtypes[0] = NAMEOID;
-		argtypes[1] = NAMEOID;
-		plan = SPI_prepare(query_getview, 2, argtypes);
+		plan = SPI_prepare(query_getview, 1, argtypes);
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getview);
 		plan_getview = SPI_saveplan(plan);
 	}
 
 	/* ----------
-	 * Get the pg_rewrite tuple for this rule
+	 * Get the pg_rewrite tuple for this rule: rulename is actually viewname here
 	 * ----------
 	 */
-	sprintf(name1, "_RET%s", rulename);
-	sprintf(name2, "_ret%s", rulename);
-	args[0] = PointerGetDatum(name1);
-	args[1] = PointerGetDatum(name2);
+	name = MakeRetrieveViewRuleName(rulename);
+	args[0] = PointerGetDatum(name);
 	nulls[0] = ' ';
-	nulls[1] = ' ';
-	nulls[2] = '\0';
+	nulls[1] = '\0';
 	spirc = SPI_execp(plan_getview, args, nulls, 1);
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for view %s", rulename);
@@ -302,6 +298,7 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(ruledef) = len;
 	memcpy(VARDATA(ruledef), buf.data, buf.len);
 	pfree(buf.data);
+	pfree(name);
 
 	/* ----------
 	 * Disconnect from SPI manager

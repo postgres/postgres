@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.45 2000/07/04 06:11:30 tgl Exp $
+ *	$Id: view.c,v 1.46 2000/09/12 04:15:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,14 @@ MakeRetrieveViewRuleName(char *viewName)
 
 	buf = palloc(strlen(viewName) + 5);
 	snprintf(buf, strlen(viewName) + 5, "_RET%s", viewName);
+
+#ifdef MULTIBYTE
+	int len;
+	len = pg_mbcliplen(buf,strlen(buf),NAMEDATALEN-1);
+	buf[len] = '\0';
+#else
+	buf[NAMEDATALEN-1] = '\0';
+#endif
 
 	return buf;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.49 2000/07/30 22:13:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.50 2000/09/12 04:15:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteSupport.h"
+#include "commands/view.h"
 
 
 /*
@@ -218,7 +219,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		Form_pg_attribute attr;
 		char	   *attname;
 		int			i;
-		char		expected_name[NAMEDATALEN + 5];
+		char		*expected_name;
 
 		/*
 		 * So there cannot be INSTEAD NOTHING, ...
@@ -305,12 +306,14 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * ... and finally the rule must be named _RETviewname.
 		 */
-		sprintf(expected_name, "_RET%s", event_obj->relname);
+
+		expected_name = MakeRetrieveViewRuleName(event_obj->relname);
 		if (strcmp(expected_name, stmt->rulename) != 0)
 		{
 			elog(ERROR, "view rule for %s must be named %s",
 				 event_obj->relname, expected_name);
 		}
+		pfree(expected_name);
 	}
 
 	/*
