@@ -90,7 +90,7 @@ E121	Basic cursor support			NO
 E121	Basic cursor supoprt	01	DECLARE CURSOR	YES	
 E121	Basic cursor support	02	ORDER BY columns need not be in select list	YES	
 E121	Basic cursor support	03	Value expressions in ORDER BY clause	YES	
-E121	Basic cursor support	04	OPEN statement	NO	
+E121	Basic cursor support	04	OPEN statement	YES	
 E121	Basic cursor support	06	Positioned UPDATE statement	NO	
 E121	Basic cursor support	07	Positioned DELETE statement	NO	
 E121	Basic cursor support	08	CLOSE statement	YES	
@@ -114,7 +114,7 @@ E152	Basic SET TRANSACTION statement	01	SET TRANSACTION statement: ISOLATION LEV
 E152	Basic SET TRANSACTION statement	02	SET TRANSACTION statement: READ ONLY and READ WRITE clauses	YES	
 E153	Updatable queries with subqueries			NO	
 E161	SQL comments using leading double minus			YES	
-E171	SQLSTATE support			NO	
+E171	SQLSTATE support			YES	
 E182	Module language			NO	
 F021	Basic information schema			YES	
 F021	Basic information schema	01	COLUMNS view	YES	
@@ -275,7 +275,7 @@ S043	Enhanced reference types			NO
 S051	Create table of type			NO	
 S071	SQL paths in function and type name resolution			YES	
 S081	Subtables			NO	
-S091	Basic array support			NO	PostgreSQL arrays are different
+S091	Basic array support			NO	
 S091	Basic array support	01	Arrays of built-in data types	NO	
 S091	Basic array support	02	Arrays of distinct types	NO	
 S091	Basic array support	03	Array expressions	NO	
