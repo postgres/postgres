@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 25 13:48:22 EST 2002
+Last updated:		Mon Feb 25 15:29:56 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -471,7 +471,7 @@ SOURCE CODE
 * Clarify use of 'application' and 'command' tags in SGML docs
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
-
+* Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
 
 ---------------------------------------------------------------------------
 
