@@ -138,7 +138,7 @@ CREATE TABLE weather (
 
     <ProgramListing>
 INSERT INTO weather
-    VALUES ('San Francisco', 46, 50, 0.25, '11/27/1994')
+    VALUES ('San Francisco', 46, 50, 0.25, '11/27/1994');
     </ProgramListing>
    </Para>
 
