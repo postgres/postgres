@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.6 1996/11/10 02:59:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.7 1996/11/27 07:10:59 vadim Exp $
  *
  * NOTES
  *    This file contains the high level access-method interface to the
@@ -594,6 +594,11 @@ TransactionIdDidAbort(TransactionId transactionId)
 	TransactionLogTest(transactionId, XID_ABORT);
 }
 
+#ifdef 0
+/* 
+ * Now this func in shmem.c and gives quality answer by scanning
+ * PROC structures of all running backend. - vadim 11/26/96
+ */
 bool	/* true if given transaction neither committed nor aborted */
 TransactionIdIsInProgress(TransactionId transactionId)
 {
@@ -603,6 +608,7 @@ TransactionIdIsInProgress(TransactionId transactionId)
     return
 	TransactionLogTest(transactionId, XID_INPROGRESS);
 }
+#endif
 
 /* --------------------------------
  *	TransactionId Commit
