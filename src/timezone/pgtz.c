@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.6 2004/05/01 22:07:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.7 2004/05/02 03:12:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,10 +39,9 @@ pg_TZDIR(void)
 		return NULL;
 	else
 		*p = '\0';
-	strcat(tzdir, "/../share/timezone");
+	strcat(tzdir, "/../share");
 #endif
 	strcat(tzdir, "/timezone");
-
 
 	done_tzdir = 1;
 	return tzdir;
