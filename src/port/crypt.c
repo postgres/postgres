@@ -825,7 +825,7 @@ init_des()
 	int			tableno;
 	static unsigned char perm[64],
 				tmp32[32];		/* "static" for speed */
-	static volatile long init_start = 0;
+/*	static volatile long init_start = 0; not used */
 
 	/*
 	 * table that converts chars "./0-9A-Za-z"to integers 0-63.
