@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.27 1998/01/13 04:04:31 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.28 1998/02/23 13:58:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,22 +503,35 @@ mdblindwrt(char *dbstr,
 			sprintf(path, "%s/%s.%d", DataDir, relstr, segno);
 	}
 	/* user table? then put in user database area... */
-	else
+	else if (dbid == MyDatabaseId)
 	{
-#if FALSE
-		path = (char *) palloc(strlen(DataDir) + strlen("/base/") + 2 * sizeof(NameData) + 2 + nchars);
+		extern char	   *DatabasePath;
+		
+		path = (char *) palloc(strlen(DatabasePath) + 2 * sizeof(NameData) + 2 + nchars);
 		if (segno == 0)
-			sprintf(path, "%s/base/%s/%s", DataDir,
-					dbstr, relstr);
+			sprintf(path, "%s%c%s", DatabasePath, SEP_CHAR, relstr);
 		else
-			sprintf(path, "%s/base/%s/%s.%d", DataDir, dbstr,
-					relstr, segno);
-#endif
-		path = (char *) palloc(strlen(GetDatabasePath()) + 2 * sizeof(NameData) + 2 + nchars);
+			sprintf(path, "%s%c%s.%d", DatabasePath, SEP_CHAR, relstr, segno);
+	}
+	else	/* this is work arround only !!! */
+	{
+		char	dbpath[MAXPGPATH+1];
+		Oid		owner, id;
+		char   *tmpPath;
+		
+		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath);
+		
+		if (id != dbid)
+			elog (FATAL, "mdblindwrt: oid of db %s is not %u", dbstr, dbid);
+		tmpPath = ExpandDatabasePath(dbpath);
+		if (tmpPath == NULL)
+			elog (FATAL, "mdblindwrt: can't expand path for db %s", dbstr);
+		path = (char *) palloc(strlen(tmpPath) + 2 * sizeof(NameData) + 2 + nchars);
 		if (segno == 0)
-			sprintf(path, "%s%c%s", GetDatabasePath(), SEP_CHAR, relstr);
+			sprintf(path, "%s%c%s", tmpPath, SEP_CHAR, relstr);
 		else
-			sprintf(path, "%s%c%s.%d", GetDatabasePath(), SEP_CHAR, relstr, segno);
+			sprintf(path, "%s%c%s.%d", tmpPath, SEP_CHAR, relstr, segno);
+		pfree (tmpPath);
 	}
 
 	if ((fd = open(path, O_RDWR, 0600)) < 0)
