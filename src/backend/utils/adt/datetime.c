@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.26 1998/12/31 16:30:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.27 1999/01/20 16:29:39 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,13 @@
 
 static int	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
-
+#if 0
 static int	day_tab[2][12] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
 
 #define isleap(y) (((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0)
+#endif
 
 #define UTIME_MINYEAR (1901)
 #define UTIME_MINMONTH (12)
@@ -99,10 +100,12 @@ date_in(char *str)
 			elog(ERROR, "Unrecognized date external representation %s", str);
 	}
 
+#if 0
 	if (tm->tm_year < 0 || tm->tm_year > 32767)
 		elog(ERROR, "date_in: year must be limited to values 0 through 32767 in '%s'", str);
 	if (tm->tm_mon < 1 || tm->tm_mon > 12)
 		elog(ERROR, "date_in: month must be limited to values 1 through 12 in '%s'", str);
+#endif
 	if (tm->tm_mday < 1 || tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 		elog(ERROR, "date_in: day must be limited to values 1 through %d in '%s'",
 			 day_tab[isleap(tm->tm_year)][tm->tm_mon - 1], str);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.61 1999/01/10 17:20:54 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.62 1999/01/20 16:29:39 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,11 +31,12 @@
 #endif
 #include "utils/builtins.h"
 
+
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static int DecodeNumber(int flen, char *field,
-			 int fmask, int *tmask, struct tm * tm, double *fsec);
+			 int fmask, int *tmask, struct tm * tm, double *fsec, int *is2digits);
 static int DecodeNumberField(int len, char *str,
-				  int fmask, int *tmask, struct tm * tm, double *fsec);
+				  int fmask, int *tmask, struct tm * tm, double *fsec, int *is2digits);
 static int	DecodeSpecial(int field, char *lowtoken, int *val);
 static int DecodeTime(char *str, int fmask, int *tmask,
 		   struct tm * tm, double *fsec);
@@ -50,12 +51,20 @@ static double time2t(const int hour, const int min, const double sec);
 static int	timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec);
 static int	tm2timespan(struct tm * tm, double fsec, TimeSpan *span);
 
+
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
 
+#if 0
 #define isleap(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
 
 int			mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+#endif
+
+int	day_tab[2][13] = {
+	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
+	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
+
 
 char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
@@ -873,6 +882,7 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 				}
 
 				/* adjust for end of month boundary problems... */
+#if 0
 				if (tm->tm_mday > mdays[tm->tm_mon - 1])
 				{
 					if ((tm->tm_mon == 2) && isleap(tm->tm_year))
@@ -880,6 +890,9 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 					else
 						tm->tm_mday = mdays[tm->tm_mon - 1];
 				}
+#endif
+				if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
+					tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
 #ifdef DATEDEBUG
 				printf("datetime_pl_span- date becomes %04d-%02d-%02d %02d:%02d:%02d\n",
@@ -1184,16 +1197,22 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 		{
 			if (dt1 < dt2)
 			{
+#if 0
 				tm->tm_mday += mdays[tm1->tm_mon - 1];
 				if (isleap(tm1->tm_year) && (tm1->tm_mon == 2))
 					tm->tm_mday++;
+#endif
+				tm->tm_mday += day_tab[isleap(tm1->tm_year)][tm1->tm_mon - 1];
 				tm->tm_mon--;
 			}
 			else
 			{
+#if 0
 				tm->tm_mday += mdays[tm2->tm_mon - 1];
 				if (isleap(tm2->tm_year) && (tm2->tm_mon == 2))
 					tm->tm_mday++;
+#endif
+				tm->tm_mday += day_tab[isleap(tm2->tm_year)][tm2->tm_mon - 1];
 				tm->tm_mon--;
 			}
 		}
@@ -2036,7 +2055,7 @@ static datetkn datetktbl[] = {
 	{"adt", DTZ, NEG(18)},		/* Atlantic Daylight Time */
 	{"aesst", DTZ, 66},			/* E. Australia */
 	{"aest", TZ, 60},			/* Australia Eastern Std Time */
-	{"ahst", TZ, 60},			/* Alaska-Hawaii Std Time */
+	{"ahst", TZ, NEG(60)},		/* Alaska-Hawaii Std Time */
 	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
 	{"am", AMPM, AM},
 	{"apr", MONTH, 4},
@@ -2087,12 +2106,12 @@ static datetkn datetktbl[] = {
 	{"hmt", DTZ, 18},			/* Hellas ? ? */
 	{"hst", TZ, NEG(60)},		/* Hawaii Std Time */
 	{"idle", TZ, 72},			/* Intl. Date Line, East */
-	{"idlw", TZ, NEG(72)},		/* Intl. Date Line,,	est */
+	{"idlw", TZ, NEG(72)},		/* Intl. Date Line, West */
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
-	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for invalid
-										 * time */
+	{INVALID, RESERV, DTK_INVALID},
+								/* "invalid" reserved for invalid time */
 	{"ist", TZ, 12},			/* Israel */
-	{"it", TZ, 22},				/* Iran Time */
+	{"it", TZ, 21},				/* Iran Time */
 	{"jan", MONTH, 1},
 	{"january", MONTH, 1},
 	{"jst", TZ, 54},			/* Japan Std Time,USSR Zone 8 */
@@ -2283,6 +2302,8 @@ datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
  * These routines will be used by other date/time packages - tgl 97/02/25
  */
 
+#if 0
+XXX moved to dt.h - thomas 1999-01-15
 /* Set the minimum year to one greater than the year of the first valid day
  *	to avoid having to check year and day both. - tgl 97/05/08
  */
@@ -2294,6 +2315,7 @@ datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
 #define IS_VALID_JULIAN(y,m,d) ((y > JULIAN_MINYEAR) \
  || ((y == JULIAN_MINYEAR) && ((m > JULIAN_MINMONTH) \
   || ((m == JULIAN_MINMONTH) && (d >= JULIAN_MINDAY)))))
+#endif
 
 int
 date2j(int y, int m, int d)
@@ -2792,6 +2814,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			flen,
 				val;
 	int			mer = HR24;
+	int			is2digits = FALSE;
 	int			bc = FALSE;
 
 	*dtype = DTK_DATE;
@@ -2843,14 +2866,14 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				 * then interpret as a concatenated date or time... */
 				if ((flen > 4) && !((fmask & DTK_DATE_M) && (fmask & DTK_TIME_M)))
 				{
-					if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec) != 0)
+					if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec, &is2digits) != 0)
 						return -1;
 
 				}
 				/* otherwise it is a single date/time field... */
 				else
 				{
-					if (DecodeNumber(flen, field[i], fmask, &tmask, tm, fsec) != 0)
+					if (DecodeNumber(flen, field[i], fmask, &tmask, tm, fsec, &is2digits) != 0)
 						return -1;
 				}
 				break;
@@ -3009,6 +3032,13 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		else
 			elog(ERROR,"Inconsistant use of year %04d and 'BC'", tm->tm_year);
 	}
+	else if (is2digits)
+	{
+		if (tm->tm_year < 70)
+			tm->tm_year += 2000;
+		else if (tm->tm_year < 100)
+			tm->tm_year += 1900;
+	}
 
 	if ((mer != HR24) && (tm->tm_hour > 12))
 		return -1;
@@ -3083,6 +3113,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 	int			i;
 	int			flen,
 				val;
+	int			is2digits = FALSE;
 	int			mer = HR24;
 
 	*dtype = DTK_TIME;
@@ -3110,7 +3141,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 			case DTK_NUMBER:
 				flen = strlen(field[i]);
 
-				if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec) != 0)
+				if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec, &is2digits) != 0)
 					return -1;
 				break;
 
@@ -3209,6 +3240,8 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 	int			nf = 0;
 	int			i,
 				len;
+	int			bc = FALSE;
+	int			is2digits = FALSE;
 	int			type,
 				val,
 				dmask = 0;
@@ -3238,9 +3271,11 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 		nf++;
 	}
 
+#if 0
 	/* don't allow too many fields */
 	if (nf > 3)
 		return -1;
+#endif
 
 	*tmask = 0;
 
@@ -3261,6 +3296,10 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 					printf("DecodeDate- month field %s value is %d\n", field[i], val);
 #endif
 					tm->tm_mon = val;
+					break;
+
+				case ADBC:
+					bc = (val == BC);
 					break;
 
 				default:
@@ -3289,7 +3328,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 		if ((len = strlen(field[i])) <= 0)
 			return -1;
 
-		if (DecodeNumber(len, field[i], fmask, &dmask, tm, &fsec) != 0)
+		if (DecodeNumber(len, field[i], fmask, &dmask, tm, &fsec, &is2digits) != 0)
 			return -1;
 
 		if (fmask & dmask)
@@ -3297,6 +3336,25 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 
 		fmask |= dmask;
 		*tmask |= dmask;
+	}
+
+	if ((fmask & ~(DTK_M(DOY) | DTK_M(TZ))) != DTK_DATE_M)
+		return -1;
+
+	/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
+	if (bc)
+	{
+		if (tm->tm_year > 0)
+			tm->tm_year = -(tm->tm_year - 1);
+		else
+			elog(ERROR,"Inconsistant use of year %04d and 'BC'", tm->tm_year);
+	}
+	else if (is2digits)
+	{
+		if (tm->tm_year < 70)
+			tm->tm_year += 2000;
+		else if (tm->tm_year < 100)
+			tm->tm_year += 1900;
 	}
 
 	return 0;
@@ -3362,7 +3420,8 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
  * Interpret numeric field as a date value in context.
  */
 static int
-DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
+DecodeNumber(int flen, char *str, int fmask,
+			 int *tmask, struct tm * tm, double *fsec, int *is2digits)
 {
 	int			val;
 	char	   *cp;
@@ -3475,6 +3534,7 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 		tm->tm_year = val;
 
 		/* adjust ONLY if exactly two digits... */
+#if 0
 		if (flen == 2)
 		{
 			if (tm->tm_year < 70)
@@ -3482,6 +3542,8 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 			else if (tm->tm_year < 100)
 				tm->tm_year += 1900;
 		}
+#endif
+		*is2digits = (flen == 2);
 
 	}
 	else
@@ -3495,7 +3557,8 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
  * Interpret numeric string as a concatenated date field.
  */
 static int
-DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
+DecodeNumberField(int len, char *str, int fmask,
+				  int *tmask, struct tm * tm, double *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -3546,10 +3609,13 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 			*(str + 2) = '\0';
 			tm->tm_year = atoi(str + 0);
 
+#if 0
 			if (tm->tm_year < 70)
 				tm->tm_year += 2000;
 			else if (tm->tm_year < 100)
 				tm->tm_year += 1900;
+#endif
+			*is2digits = TRUE;
 		}
 
 	}
@@ -3564,10 +3630,13 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 		tm->tm_mon = 1;
 		tm->tm_year = atoi(str + 0);
 
+#if 0
 		if (tm->tm_year < 70)
 			tm->tm_year += 2000;
 		else if (tm->tm_year < 100)
 			tm->tm_year += 1900;
+#endif
+		*is2digits = TRUE;
 	}
 	else if (strchr(str, '.') != NULL)
 	{
