@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -371,7 +371,7 @@ Date: Tue, 19 Oct 1999 10:09:15 -0400
 Message-ID: <9036.940342155@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
 Sender: owner-pgsql-hackers@postgreSQL.org
-Status: OR
+Status: RO
 
 "Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
 > 1. shared cache holds committed system tuples.
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -487,7 +487,7 @@ X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
 X-Mimeole: Produced By Microsoft MimeOLE V4.72.2106.4
 Importance: Normal
 Sender: owner-pgsql-hackers@postgreSQL.org
-Status: ORr
+Status: RO
 
 > -----Original Message-----
 > From: Hiroshi Inoue [mailto:Inoue@tpf.co.jp]
@@ -573,7 +573,7 @@ From: Tom Lane <tgl@sss.pgh.pa.us>
 X-Mailing-List: pgsql-hackers@postgresql.org
 Precedence: bulk
 Sender: pgsql-hackers-owner@hub.org
-Status: ORr
+Status: RO
 
 Those of you with long memories may recall a benchmark that Edmund Mergl
 drew our attention to back in May '99.  That test showed extremely slow
@@ -648,7 +648,7 @@ Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 User-Agent: Mutt/1.2i
 In-Reply-To: <200101191703.MAA25873@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Fri, Jan 19, 2001 at 12:03:58PM -0500
-Status: OR
+Status: RO
 
 On Fri, Jan 19, 2001 at 12:03:58PM -0500, Bruce Momjian wrote:
 > 
@@ -722,7 +722,7 @@ Content-Type: text/plain;
 	charset="iso-8859-1"
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 > > Tom, did we ever test this?  I think we did and found that 
 > > it was the same or worse, right?
@@ -760,7 +760,7 @@ Subject: Re: 7.2 items
 References: <200106071503.f57F32n03924@candle.pha.pa.us>
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Status: OR
+Status: RO
 
 Bruce Momjian wrote:
 
@@ -829,7 +829,7 @@ X-Mailer: Microsoft Internet E-mail/MAPI - 8.0.0.4211
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Status: OR
+Status: RO
 
 And in addition,
 
@@ -930,7 +930,7 @@ In-Reply-To: <3B1FC9CB.57C72AD6@mohawksoft.com>
 Message-ID: <Pine.GSO.4.33.0106072234120.6015-100000@ra.sai.msu.su>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 I think it's possible to implement bitmap indexes with a little
 effort using GiST. at least I know one implementation
@@ -1001,62 +1001,4 @@ Sternberg Astronomical Institute, Moscow University (Russia)
 Internet: oleg@sai.msu.su, http://www.sai.msu.su/~megera/
 phone: +007(095)939-16-83, +007(095)939-23-83
 
-
-From pgsql-hackers-owner+M11649@postgresql.org Wed Aug  1 15:22:46 2001
-Return-path: <pgsql-hackers-owner+M11649@postgresql.org>
-Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
-	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f71JMjN09768
-	for <pgman@candle.pha.pa.us>; Wed, 1 Aug 2001 15:22:45 -0400 (EDT)
-Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
-	by postgresql.org (8.11.3/8.11.1) with SMTP id f71JMUf62338;
-	Wed, 1 Aug 2001 15:22:30 -0400 (EDT)
-	(envelope-from pgsql-hackers-owner+M11649@postgresql.org)
-Received: from sectorbase2.sectorbase.com (sectorbase2.sectorbase.com [63.88.121.62] (may be forged))
-	by postgresql.org (8.11.3/8.11.1) with SMTP id f71J4df57086
-	for <pgsql-hackers@postgresql.org>; Wed, 1 Aug 2001 15:04:40 -0400 (EDT)
-	(envelope-from vmikheev@SECTORBASE.COM)
-Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2653.19)
-	id <PG1LSSPZ>; Wed, 1 Aug 2001 12:04:31 -0700
-Message-ID: <3705826352029646A3E91C53F7189E32016705@sectorbase2.sectorbase.com>
-From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
-To: "'pgsql-hackers@postgresql.org'" <pgsql-hackers@postgresql.org>
-Subject: [HACKERS] Using POSIX mutex-es
-Date: Wed, 1 Aug 2001 12:04:24 -0700 
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2653.19)
-Content-Type: text/plain;
-	charset="koi8-r"
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
-
-1. Just changed
-	TAS(lock) to pthread_mutex_trylock(lock)
-	S_LOCK(lock) to pthread_mutex_lock(lock)
-	S_UNLOCK(lock) to pthread_mutex_unlock(lock)
-(and S_INIT_LOCK to share mutex-es between processes).
-
-2. pgbench was initialized with scale 10.
-   SUN WS 10 (512Mb), Solaris 2.6 (I'm unable to test on E4500 -:()
-   -B 16384, wal_files 8, wal_buffers 256,
-   checkpoint_segments 64, checkpoint_timeout 3600
-   50 clients x 100 transactions
-   (after initialization DB dir was saved and before each test
-    copyed back and vacuum-ed).
-
-3. No difference.
-   Mutex version maybe 0.5-1 % faster (eg: 37.264238 tps vs 37.083339 tps).
-
-So - no gain, but no performance loss "from using pthread library"
-(I've also run tests with 1 client), at least on Solaris.
-
-And so - looks like we can use POSIX mutex-es and conditional variables
-(not semaphores; man pthread_cond_wait) and should implement light lmgr,
-probably with priority locking.
-
-Vadim
-
----------------------------(end of broadcast)---------------------------
-TIP 2: you can get off all lists at once with the unregister command
-    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
 
