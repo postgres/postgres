@@ -1,12 +1,12 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/copy.l,v 1.1.1.1 1996/08/18 22:14:21 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/copy.l,v 1.2 1996/09/19 20:08:09 scrappy Exp $
 .TH COPY SQL 11/05/95 Postgres95 Postgres95
 .SH NAME
 copy \(em copy data to or from a class from or to a Unix file.
 .SH SYNOPSIS
 .nf
-\fBcopy\fP [\fBbinary\fP] [\fBnonulls\fP] classname 
+\fBcopy\fP [\fBbinary\fP] classname 
 	\fBto\fP|\fBfrom\fP "filename"|\fBstdin\fR|\fBstdout\fR
 	[\fBUSING DELIMITERS\fP delim]
 .fi
