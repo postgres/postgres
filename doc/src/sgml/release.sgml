@@ -1,9 +1,1347 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.267 2004/06/12 19:30:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.268 2004/07/24 09:36:53 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+ <sect1 id="release-7-5">
+  <title>Release 7.5</title>
+
+  <note>
+   <title>Release date</title>
+   <simpara>2003-??-??, current as of 2004-07-22</simpara>
+  </note>
+
+  <sect2>
+   <title>Overview</title>
+
+   <para>
+    Major changes in this release:
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       Native Win32 Server
+      </term>
+
+      <listitem>
+       <para>
+        This is the first PostgreSQL release to natively support Microsoft
+        Windows as a server. It can run as a service and a separate
+        installer project has been created to ease installation, <ulink
+        url="http://pgfoundry.org/projects/pginstaller">
+	http://pgfoundry.org/projects/pginstaller</ulink>
+       </para>
+       <para>
+        Previous releases required the Unix emulation toolkit Cygwin for
+        Win32 support. PostgreSQl has always supported clients on Win32.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Tablespaces Simplify Disk Layout
+      </term>
+
+      <listitem>
+       <para>
+        This release introduces tablespaces which allows administrators
+        to control the file system used for storage of databases,
+        schemas, tables, or indexes. This improves performance and
+        control over disk space usage. Prior releases used the inferior
+        <literal>initlocation</> and custom symlinks for such tasks.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Savepoints Improve Transaction Control
+      </term>
+
+      <listitem>
+       <para>
+        Savepoints allow specific parts of a transaction to be aborted
+        without affecting the remainder of the transaction. Prior
+        release had no such capability; there was no way to recover from
+        a statement failure in a transation. This feature is valuable
+        for application writers that required complex transaction control.
+        Future releases will add similar exception handling to server-side
+        languages.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Point-In-Time Recovery Increases Reliability
+      </term>
+
+      <listitem>
+       <para>
+        Though PostgreSQL is very reliable, in previous releases there
+        was no way to recover from disk drive failure except to restore
+        from a previous backup or use a standby replication server.
+	Point-in-time recovery allows continuous backup of the server.
+	You can recover either to the point of failure or to some
+	transaction in the past.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Migration to version 7.5</title>
+                                      
+   <para>
+    A dump/restore using <application>pg_dump</application> is
+    required for those wishing to migrate data from any previous
+    release.
+   </para>
+   
+   <para>
+    Observe the following incompatibilities:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       GUC parameters SortMem and VacuumMem have been renamed to 
+        work_mem and maintenance_work_mem to better reflect their use.
+        The original names still supported.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       GUC parameters log_pid, log_timestamp, and log_source_port have been
+       removed now that a more flexible log_line_prefix has been added.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       GUC parameters virtual_host and tcpip_socket have been replaced
+       with a more general listen_addresses.  Also, the server now 
+       listens on localhost by default, which eliminates the need for 
+       the -i postmaster switch in many scenarios.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       GUC parameter syslog has been removed and replaced with a more
+       logical log_destination variable to control the log output
+       destination.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       GUC parameter log_statement has been changed so it can restrict
+       logging of just database modification or data definition
+       statements.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       GUC parameter max_expr_depth parameter has been replaced with
+       max_stack_depth which measures the stack size rather than the
+       number of stack levels used. This helps prevent session
+       termination due to stack overflow caused by recursive functions.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When matching GROUP BY names, prefer local FROM columns first, then SELECT
+        aliases, and FROM columns in upper subqueries.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       EXECUTE now returns a completion tag that matches the executed
+       statement.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The length() function no longer measures trailing spaces in
+       CHAR() values.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The server now warns of empty strings passed to oid/float4/float8
+       data types. In the next major release, doing this will generate an
+       error.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Function to_char() now returns the proper year for BC dates. It
+       previously returned one less than the current year. The function
+       now also returns the proper millennium and century.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       psql \copy now reads from the query stdin/stdout, rather than
+       psql's stdin/stdout. The previous behavior can be accessed via new
+       pstdin/pstdout parameters.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para> The JDBC client interface has been removed and is now
+      hosted at <ulink url=
+      "http://jdbc.postgresql.org">http://jdbc.postgresql.org</ulink>.
+      The TCL client interface has also been removed. There are several
+      now hosted at <ulink url=
+      "http://gborg.postgresql.org">http://gborg.postgresql.org</ulink>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The server now uses its own time zone database, rather than the
+       one supplied by the operating system. This should not change 
+       the time zone behavior.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The configure threading option no longer requires users to run
+       tests or edit configuration files; threading options are now detected
+       automatically.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Now that tablespaces have been implemented, initlocation has been
+       removed.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <para>
+    Below you will find a detailed account of the changes between
+    release 7.5 and the previous major release.
+   </para>
+
+  <sect3>
+   <title>Performance Improvements</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Support cross-data-type index usage (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New buffer replacement strategy that improves caching (Jan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add subprocess to write dirty buffers periodically to reduce checkpoint writes (Jan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Subquery fixes (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve btree index performance for duplicate keys (Dmitry Tkach, Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Many optimizer improvements (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improved index usage with OR clauses (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve matching of partial index clauses (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve load speed for C functions (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance of the GEQO optimizer (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add ability to prolong vacuum to reduce performance impact (Jan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add type-specific ANALYZE statistics capability (Mark Cave-Ayland)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow collection of ANALYZE statistics for expression indexes (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Sort duplicate btree items by file offset during creation (Manfred Koizar)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New two-stage sampling method for ANALYZE (Manfred Koizar)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Optimize prepared queries only when first executed so constants can be used
+       for statistics (unnamed?) (Oliver Jowett)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix hash joins and aggregates of INET and CIDR data types (Tom)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>Server Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Add tablespace so admins can control disk layout (Gavin)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Point-in-time recovery (Simon Riggs)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add new read-only GUC variables to query server compile-time setting
+       func_max_args, index_max_keys, namedatalen, blcksz,
+       have_int64_timestamp (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make quoting of "sameuser", "samegroup", and "all" remove
+       special meaning of these terms in pg_hba.conf (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use clearer IPv6 name ::1/128 for localhost (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Rename GUC parameters SortMem and VacuumMem to work_mem and
+       maintenance_work_mem (Old names still supported) (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow logging of session disconnections using GUC log_disconnections (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add new GUC parameter to report useful information at the start of each
+       log line (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove GUC log_pid, log_timestamp, log_source_port;
+       functionality superseded by log_line_prefix (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Replace the virtual_host and tcpip_socket parameters with a unified
+       listen_addresses parameter (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Listen on localhost by default, which eliminates the need for the -i
+       postmaster switch in many scenarios (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove 'syslog' GUC variable, and add more logical 'log_destination'
+       variable to control log output location (Magnus)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change GUC log_statement to take values "all, mod, ddl, none" which
+       controls the queries output (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow backends to be safely terminated with SIGTERM (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow configuration files to be placed outside the data directory using
+       GUC variables (mlw)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>Query Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Add savepoints (and nested transactions) (Alvaro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Unsupported isolation levels are now accepted and promoted to the
+       spec-compliant level supported (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow BEGIN WORK to specify transaction isolation level like START
+       TRANSACTION (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      More flexible rule/view permission checking (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Implement dollar quoting to simplify single-quote usage (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make CASE val WHEN compval1 THEN evaluate 'val' only once (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Replace max_expr_depth parameter with max_stack_depth parameter
+       (measured in kilobytes of stack size)  (This gives us a fairly
+       bulletproof defense against crashing due to runaway recursive functions
+       (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow LIKE/ILIKE to appear in more places in a query (?) (Fabien Coelho)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      When matching GROUP BY names, prefer local FROM columns first, then SELECT
+       aliases, and then outer FROM columns (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change EXECUTE to return a completion tag matching the executed statement
+       (Kris Jurka)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow NATURAL CROSS JOIN (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow arbitrary row expressions (Tom)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>Object Manipulation Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Add COMMENT ON casts, conversions, languages, operator classes, and
+       large objects (Christopher)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add new GUC default_with_oids to control the oid default during table
+       creation (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add WITH / WITHOID OIDS clause to CREATE TABLE AS (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow ALTER TABLE DROP COLUMN to drop an OID column
+       (ALTER TABLE SET WITHOUT OIDS still works) (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allowing composite types as table columns (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow ALTER ... ADD COLUMN with defaults and NOT NULL constraints works per SQL
+       spec (Rod)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add ALTER COLUMN TYPE to change column's type (Rod)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow multiple ALTER actions in a single ALTER TABLE command (Rod)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow ALTER DATABASE ... OWNER (Euler Taveira de Oliveira)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow temporary object creation to be limited to SECURITY DEFINER
+       functions (Sean Chittenden)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add ALTER TABLE ... SET WITHOUT CLUSTER (Christopher)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Constraint/Index/SERIAL names are now table_column_type with numbers
+       appended to guarantee uniqueness within the schema (Spec compliance) (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow ALTER TABLE to add SERIAL columns (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add pg_get_serial_sequence() to return the serial columns
+       sequence name(Christopher Kings-Lynne)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow changing the owners of aggregates, conversions, functions, 
+       operators, operator classes, schemas, types, and tablespaces
+       (Christopher)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Warn of primary/foreign key mismatch requires costly lookup
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>Utility Command Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Allow CREATE SCHEMA to create triggers, indexes, and sequences (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add ALSO keyword to CREATE RULE (Fabien Coelho)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add NOWAIT option to LOCK command (Tatsuo)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Generate error if the COPY delimiter and NULL string conflict (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow COPY to read comma-separated-value (CSV) files (Andrew, Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Erase MD5 user passwords when a user is renamed (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New pg_ctl 'kill' option for Win32 (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Information schema improvements
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add --pwfile option to initdb so the passwords can be set by GUI tools
+       (Magnus)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Detect locale/encoding mismatch in initdb (Peter)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>Data Type and Function Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Accept YYYY-monthname-DD as a date string (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make netmask() and hostmask() functions return maximum-length
+       masklen (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change factorial function to NUMERIC (Gavin)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      to_char/to_date date conversion improvements (Kurt Roeckx)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make length() disregard trailing spaces in CHAR() (Gavin)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Warn of empty string being passes to oid/float4/float8 data types; 7.6
+       will throw an error instead (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add "week" to date_trunc(Robert Creager)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow int2/int4/int8/float4/float8 input routines to have leading
+       or trailing whitespace (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix to_char for 1 BC (previously it returned 1 AD) (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix to_char(year) for BC dates (previously it returned one less than
+       the current year) (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix date_part() to return the proper millennium and century (With the previous version, 
+       the centuries and millennium had a wrong
+       number and started the wrong year. Moreover century number 0, which does
+       not exist in reality, lasted 200 years. Also, millennium number 0 lasted
+       2000 years) Fabien Coelho)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add ceiling() as an alias for ceil(), and power() as an alias for pow()
+       for standards compliance (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change ln(), log(), power(), and sqrt() to emit the correct SQLSTATE
+       error codes for certain error conditions, as specified by SQL2003
+       (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix upper/lower() to work with multibyte encodings (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add boolean and bitwise integer AND/OR aggregates (Fabien Coelho)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New inet_* functions to return network addresses for client
+       and server (Sean Chittenden)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add function to determine the area of a closed path (Sean Chittenden)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add function to send cancel and terminate to other backends (Magnus
+       Hagander)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow interval plus datetime expressions (Tom)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>Server-Side Language Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Allow plpgsql parameter names to be referenced inside the function body (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Do minimal syntax checking of plpgsql functions at creation time (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New plperl server-side language (Command Prompt, Andrew Dunstan)
+        o persistent, shared area
+        o triggers
+        o return records (hash references)
+        o array of records
+        o SPI
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>psql Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Improve psql information display about database objects (Christopher)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow psql to display group membership in \du and \dg (Markus Bertheau)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent psql \dn from showing temporary schemas (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow psql to handle tilde user expansion for file names (Zach Irmen)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow psql to display fancy prompts via readline (Reece Hart, Chet Ramey)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Have psql \copy match COPY syntax (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow psql to show the location of syntax errors (Fabien Coelho, Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add CLUSTER information to psql \d display (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change psql \copy stdin/stdout to read from command input/output (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add pstdin/pstdout to read from psql's stdin/stdout (Mark Feit)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add global psql config file, psqlrc.sample (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Have psql \d+ indicate if the table has an oid column (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use binary file mode in psql when reading files so control-z is not seen
+       as end-of-file
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Have \dn+ show permissions and description for schemas (Dennis
+       Bjorklund)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>pg_dump Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Use dependency information to improve the reliability of pg_dump (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Have pg_dump output objects in alphabetical order if possible (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow pg_restore to ignore some SQL errors (Fabien Coelho)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New start/end of dump markers in pg_dump (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add start/stop times for pg_dump/pg_dumpall in verbose mode (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow most pg_dump options in pg_dumpall (Christopher)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Have pg_dump use ALTER OWNER rather than SET SESSION AUTHORIZATION 
+       by default (Christopher)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>libpq Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Make libpq SIGPIPE thread-safe (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add PQmbdsplen() which returns the "display length" of a character (Tatsuo)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add thread locking to SSL and Kerberos connections (Manfred Spraul)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow PQoidValue(), PQcmdTuples(), and PQoidStatus() to work
+       on EXECUTE commands (Neil)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>Source Code Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Allow the database server to run natively on Win32 (Claudio, Magnus, Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Shell script commands converted to C versions for Win32 support (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use --with-docdir to choose installation location of documentation; also
+       allow --infodir (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add --without-docdir to prevent installation of documentation (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Upgrade to DocBook V4.2 SGML (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New "PostgreSQL" CVS tag (Marc)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Clarify locking code (Manfred Koizar)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Buffer manager cleanup (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove pg_id client program (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Decouple platform tests from cpu spinlock code (Bruce, Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add inlined test-and-set code on PA-RISC for gcc (ViSolve,Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improved i386 spinlock code (Manfred Spraul)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove JDBC from source tree, now a separate project
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      More accurately estimate memory and file descriptor usage (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improvements to the MAC OS-X startup scripts (Ray A.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New fsync test program (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Major documentation improvements (Neil, Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove the libpgtcl client interface
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove pg_encoding;  not needed anymore
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Auto detect thread flags (no more manual testing) (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      use Olson's public domain timezone library (Magnus)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow relocatable installs (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      With threading enabled, use thread flags on Unixware for 
+       backend executables too (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New linked list data structure implementation (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow external interfaces to create their own GUC variables (Thomas
+       Hallgren)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove sync() call during checkpoint and do separate fsyncs() (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New Brazilian version of FAQ (Euler Taveira de Oliveira)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove alternate database locations using initlocation (Tom)
+       (fix dbsize and oidname)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New pgevent for Win32 logging
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New Czech FAQ (Pavel Stehule)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make libpq and ecpg build as proper OS X shard libraries (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add French FAQ (Guillaume Lelarge)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+
+  <sect3>
+   <title>Contrib Changes</title>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Many ecpg fixes (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Overhaul of /contrib/dblink (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      /contrib/dbmirror improvements
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New /contrib/xml2 (John Gray, Torchbox)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update /contrib/mysql
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New version of /contrib/btree_gist (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New /contrib/trgm, trigram matching for PostgreSQL (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Many /contrib/tsearch2 improvements (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add double metaphone to /contrib/fuzzystrmatch (Andrew)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
+
+  </sect2>
+ </sect1>
 
   <sect1 id="release-7-4-3">
    <title>Release 7.4.3</title>
