@@ -128,7 +128,7 @@ PGconn *PQsetdb(char *pghost,
 <ListItem>
 <Para>
 <Function>PQconndefaults</Function>  
-         Returns the database name of the connection.
+         Returns the default connection options.
 <ProgramListing>
 PQconninfoOption *PQconndefaults(void)
 
@@ -244,7 +244,7 @@ void PQfinish(PGconn *conn)
           Reset the communication  port  with  the  backend.
           This function will close the IPC socket connection
           to the backend and attempt to  reestablish  a  new
-          connection to the same backend.
+          connection to the same postmaster.
 <ProgramListing>
 void PQreset(PGconn *conn)
 </ProgramListing>
@@ -287,11 +287,12 @@ void PQuntrace(PGconn *conn);
 <Para>
 <Function>PQexec</Function>
           Submit a query to <ProductName>Postgres</ProductName>.   Returns  a  PGresult
-          pointer if the query was successful or a NULL otherwise.  If a NULL is returned, PQerrorMessage can
-          be used to get more information about the error.
+          pointer or possibly a NULL pointer.  If a NULL is returned, it
+	  should be treated like a PGRES_FATAL_ERROR result: use
+	  PQerrorMessage to get more information about the error.
 <ProgramListing>
 PGresult *PQexec(PGconn *conn,
-                 char *query);
+                 const char *query);
 </ProgramListing>
           The  <Function>PGresult</Function>  structure  encapsulates  the  query
           result returned by the backend.  <Function>libpq</Function> programmers
@@ -310,7 +311,7 @@ PGresult *PQexec(PGconn *conn,
           Returns the result status of the query.  PQresultStatus can return one of the following values:
 <ProgramListing>
 PGRES_EMPTY_QUERY,
-PGRES_COMMAND_OK,  /* the query was a command */
+PGRES_COMMAND_OK,  /* the query was a command returning no data */
 PGRES_TUPLES_OK,  /* the query successfully returned tuples */
 PGRES_COPY_OUT,
 PGRES_COPY_IN,
@@ -391,7 +392,20 @@ Oid PQftype(PGresult *res,
           returned  is  -1,  the  field is a variable length
           field.  Field indices start at 0.
 <ProgramListing>
-int2 PQfsize(PGresult *res,
+short PQfsize(PGresult *res,
+              int field_index);
+</ProgramListing>
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+<Function>PQfmod</Function>
+          Returns  the type-specific modification data of the field
+          associated with the given field index.
+          Field indices start at 0.
+<ProgramListing>
+short PQfmod(PGresult *res,
              int field_index);
 </ProgramListing>
 </Para>
@@ -521,7 +535,6 @@ struct _PQprintOpt
 <Function>PQprintTuples</Function>
           Prints out all the  tuples  and,  optionally,  the
           attribute  names  to  the specified output stream.
-          The programs psql and monitor  both  use  PQprintTuples for output.
 <ProgramListing>
 void PQprintTuples(PGresult* res,
                    FILE* fout,      /* output stream */
@@ -564,6 +577,207 @@ void PQclear(PQresult *res);
 </ListItem>
 </ItemizedList>
 </Para>
+</Sect1>
+
+<Sect1>
+<Title>Asynchronous Query Processing</Title>
+
+<Para>
+The PQexec function is adequate for submitting queries in simple synchronous
+applications.  It has a couple of major deficiencies however:
+
+<Para>
+<ItemizedList>
+<ListItem>
+<Para>
+PQexec waits for the query to be completed.  The application may have other
+work to do (such as maintaining a user interface), in which case it won't
+want to block waiting for the response.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+Since control is buried inside PQexec, there is no way for the frontend
+to decide it would like to try to cancel the ongoing query.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+PQexec can return only one PGresult structure.  If the submitted query
+string contains multiple SQL commands, all but the last PGresult are
+discarded by PQexec.
+</Para>
+</ListItem>
+</ItemizedList>
+</Para>
+
+<Para>
+Applications that do not like these limitations can instead use the
+underlying functions that PQexec is built from: PQsendQuery and
+PQgetResult.
+
+<Para>
+<ItemizedList>
+<ListItem>
+<Para>
+<Function>PQsendQuery</Function>
+          Submit a query to <ProductName>Postgres</ProductName> without
+	  waiting for the result(s).  TRUE is returned if the query was
+	  successfully dispatched, FALSE if not (in which case, use
+	  PQerrorMessage to get more information about the failure).
+<ProgramListing>
+int PQsendQuery(PGconn *conn,
+                const char *query);
+</ProgramListing>
+	  After successfully calling PQsendQuery, call PQgetResult one or more
+	  times to obtain the query results.  PQsendQuery may not be called
+	  again (on the same connection) until PQgetResult has returned NULL,
+	  indicating that the query is done.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+<Function>PQgetResult</Function>
+          Wait for the next result from a prior PQsendQuery,
+	  and return it.  NULL is returned when the query is complete
+	  and there will be no more results.
+<ProgramListing>
+PGresult *PQgetResult(PGconn *conn);
+</ProgramListing>
+	  PQgetResult must be called repeatedly until it returns NULL,
+	  indicating that the query is done.  (If called when no query is
+	  active, PQgetResult will just return NULL at once.)
+	  Each non-null result from PQgetResult should be processed using
+	  the same PGresult accessor functions previously described.
+	  Don't forget to free each result object with PQclear when done with it.
+	  Note that PQgetResult will block only if a query is active and the
+	  necessary response data has not yet been read by PQconsumeInput.
+</Para>
+</ListItem>
+
+</ItemizedList>
+</Para>
+
+<Para>
+Using PQsendQuery and PQgetResult solves one of PQexec's problems:
+if a query string contains multiple SQL commands, the results of those
+commands can be obtained individually.  (This allows a simple form of
+overlapped processing, by the way: the frontend can be handling the
+results of one query while the backend is still working on later
+queries in the same query string.)  However, calling PQgetResult will
+still cause the frontend to block until the backend completes the
+next SQL command.  This can be avoided by proper use of three more
+functions:
+
+<Para>
+<ItemizedList>
+<ListItem>
+<Para>
+<Function>PQconsumeInput</Function>
+	  If input is available from the backend, consume it.
+<ProgramListing>
+void PQconsumeInput(PGconn *conn);
+</ProgramListing>
+	  No direct return value is available from PQconsumeInput, but
+	  after calling it, the application may check PQisBusy and/or
+	  PQnotifies to see if their state has changed.
+	  PQconsumeInput may be called even if the application is not
+	  prepared to deal with a result or notification just yet.
+	  It will read available data and save it in a buffer, thereby
+	  causing a select(2) read-ready indication to go away.  The
+	  application can thus use PQconsumeInput to clear the select
+	  condition immediately, and then examine the results at leisure.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+<Function>PQisBusy</Function>
+	  Returns TRUE if a query is busy, that is, PQgetResult would block
+	  waiting for input.  A FALSE return indicates that PQgetResult can
+	  be called with assurance of not blocking.
+<ProgramListing>
+int PQisBusy(PGconn *conn);
+</ProgramListing>
+	  PQisBusy will not itself attempt to read data from the backend;
+	  therefore PQconsumeInput must be invoked first, or the busy
+	  state will never end.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+<Function>PQsocket</Function>
+	  Obtain the file descriptor number for the backend connection socket.
+	  A valid descriptor will be >= 0; a result of -1 indicates that
+	  no backend connection is currently open.
+<ProgramListing>
+int PQsocket(PGconn *conn);
+</ProgramListing>
+	  PQsocket should be used to obtain the backend socket descriptor
+	  in preparation for executing select(2).  This allows an application
+	  to wait for either backend responses or other conditions.
+	  If the result of select(2) indicates that data can be read from
+	  the backend socket, then PQconsumeInput should be called to read the
+	  data; after which, PQisBusy, PQgetResult, and/or PQnotifies can be
+	  used to process the response.
+</Para>
+</ListItem>
+
+</ItemizedList>
+</Para>
+
+<Para>
+A typical frontend using these functions will have a main loop that uses
+select(2) to wait for all the conditions that it must respond to.  One of
+the conditions will be input available from the backend, which in select's
+terms is readable data on the file descriptor identified by PQsocket.
+When the main loop detects input ready, it should call PQconsumeInput
+to read the input.  It can then call PQisBusy, followed by PQgetResult
+if PQisBusy returns FALSE.  It can also call PQnotifies to detect NOTIFY
+messages (see "Asynchronous Notification", below).  An example is given
+in the sample programs section.
+
+<Para>
+A frontend that uses PQsendQuery/PQgetResult can also attempt to cancel
+a query that is still being processed by the backend.
+
+<Para>
+<ItemizedList>
+<ListItem>
+<Para>
+<Function>PQrequestCancel</Function>
+	  Request that <ProductName>Postgres</ProductName> abandon
+	  processing of the current query.
+<ProgramListing>
+int PQrequestCancel(PGconn *conn);
+</ProgramListing>
+	  The return value is TRUE if the cancel request was successfully
+	  dispatched, FALSE if not.  (If not, PQerrorMessage tells why not.)
+	  Successful dispatch is no guarantee that the request will have any
+	  effect, however.  Regardless of the return value of PQrequestCancel,
+	  the application must continue with the normal result-reading
+	  sequence using PQgetResult.  If the cancellation
+	  is effective, the current query will terminate early and return
+	  an error result.  If the cancellation fails (say because the
+	  backend was already done processing the query), then there will
+	  be no visible result at all.
+</Para>
+</ListItem>
+</ItemizedList>
+</Para>
+
+<Para>
+Note that if the current query is part of a transaction, cancellation
+will abort the whole transaction.
+
+<Para>
+The current implementation of cancel requests uses "out of band" messages.
+This feature is supported only on TCP/IP connections.  If the backend
+communication is being done through a Unix socket, PQrequestCancel will
+always fail.
+
 </Sect1>
 
 <Sect1>
@@ -617,46 +831,58 @@ typedef struct {
 <Title>Asynchronous Notification</Title>
 
 <Para>
-     <ProductName>Postgres</ProductName>  supports  asynchronous  notification  via the
-     LISTEN and NOTIFY commands.  A  backend  registers  its
-     interest  in a particular relation with the LISTEN command.  All backends listening on a particular  relation
-     will  be  notified asynchronously when a NOTIFY of that
-     relation name  is  executed  by  another  backend.   No
-     additional  information  is passed from the notifier to
-     the listener.  Thus, typically, any  actual  data  that
-     needs  to  be  communicated  is transferred through the
-     relation.
-     <FileName>libpq</FileName> applications are notified  whenever  a  connected
-     backend  has  received  an  asynchronous  notification.
-     However, the communication  from  the  backend  to  the
-     frontend   is  not  asynchronous.   Notification  comes
-     piggy-backed on other query results.  Thus, an application  must submit queries, even empty ones, in order to
-     receive notice of backend notification.  In effect, the
-     <FileName>libpq</FileName> application must poll the backend to see if there
-     is any pending  notification  information.   After  the
-     execution of a query, a frontend may call PQNotifies to
-     see if any notification  data  is  available  from  the
-     backend.
-</Para>
+<ProductName>Postgres</ProductName> supports asynchronous notification via the
+LISTEN and NOTIFY commands.  A backend registers its interest in a particular
+notification condition with the LISTEN command.  All backends listening on a
+particular condition will be notified asynchronously when a NOTIFY of that
+condition name is executed by any backend.  No additional information is
+passed from the notifier to the listener.  Thus, typically, any actual data
+that needs to be communicated is transferred through a database relation.
+Commonly the condition name is the same as the associated relation, but it is
+not necessary for there to be any associated relation.
+
+<Para>
+<FileName>libpq</FileName> applications submit LISTEN commands as ordinary
+SQL queries.  Subsequently, arrival of NOTIFY messages can be detected by
+calling PQnotifies().
 
 <Para>
 <ItemizedList>
 <ListItem>
 <Para>
-<Function>PQNotifies</Function>
-          returns  the notification from a list of unhandled
-          notifications from the backend.  Returns  NULL  if
-          there  are no pending notifications from the backend.  PQNotifies behaves like  the  popping  of  a
-          stack.  Once a notification is returned from PQnotifies, it  is  considered  handled  and  will  be
-          removed from the list of notifications.
+<Function>PQnotifies</Function>
+          Returns  the next notification from a list of unhandled
+          notification messages received from the backend.  Returns NULL if
+          there are no pending notifications.  PQnotifies behaves like the
+	  popping of a stack.  Once a notification is returned from
+	  PQnotifies, it is considered handled and will be removed from the
+	  list of notifications.
 <ProgramListing>
-PGnotify* PQNotifies(PGconn *conn);
+PGnotify* PQnotifies(PGconn *conn);
 </ProgramListing>
-     The  second  sample program gives an example of the use
-     of asynchronous notification.
+	  After processing a PGnotify object returned by PQnotifies,
+	  be sure to free it with free() to avoid a memory leak.
+	  The  second  sample program gives an example of the use
+	  of asynchronous notification.
 </Para>
 </ListItem>
 </ItemizedList>
+</Para>
+
+<Para>
+PQnotifies() does not actually read backend data; it just returns messages
+previously absorbed by another <FileName>libpq</FileName> function.  In prior
+releases of <FileName>libpq</FileName>, the only way to ensure timely receipt
+of NOTIFY messages was to constantly submit queries, even empty ones, and then
+check PQnotifies() after each PQexec().  While this still works, it is
+deprecated as a waste of processing power.  A better way to check for NOTIFY
+messages when you have no useful queries to make is to call PQconsumeInput(),
+then check PQnotifies().  You can use select(2) to wait for backend data to
+arrive, thereby using no CPU power unless there is something to do.  Note that
+this will work OK whether you use PQsendQuery/PQgetResult or plain old PQexec
+for queries.  You should, however, remember to check PQnotifies() after each
+PQgetResult or PQexec to see if any notifications came in during the
+processing of the query.
 </Para>
 
 </Sect1>
@@ -669,6 +895,11 @@ PGnotify* PQNotifies(PGconn *conn);
      or  write  to  the  network  connection  used by <FileName>libpq</FileName>.
      Therefore, functions are necessary to access this  network  connection directly so applications may take full
      advantage of this capability.
+</Para>
+
+<Para>
+     These functions should be executed only after obtaining a PGRES_COPY_OUT
+     or PGRES_COPY_IN result object from PQexec or PQgetResult.
 </Para>
 
 <Para>
@@ -685,7 +916,7 @@ PGnotify* PQNotifies(PGconn *conn);
           has been read, and 1 if the buffer is full but the
           terminating newline has not yet been read.
           Notice that the application must check to see if a
-          new line consists of  the  single  character  ".",
+          new line consists of  the  two characters  "\.",
           which  indicates  that the backend server has finished sending the results  of  the  copy  command.
           Therefore,  if  the  application  ever  expects to
           receive lines that are more than length-1  characters  long,  the application must be sure to check
@@ -708,8 +939,8 @@ int PQgetline(PGconn *conn,
 <Function>PQputline</Function>
           Sends  a  null-terminated  string  to  the backend
           server.
-          The application must explicitly  send  the  single
-          character  "."  to indicate to the backend that it
+          The application must explicitly  send  the  two
+          characters  "\." on a final line  to indicate to the backend that it
           has finished sending its data.
 <ProgramListing>
 void PQputline(PGconn *conn,
@@ -736,18 +967,35 @@ void PQputline(PGconn *conn,
 int PQendcopy(PGconn *conn);
 </ProgramListing>
 <ProgramListing>
-PQexec(conn, "create table foo (a int4, b text, d float8)");
+PQexec(conn, "create table foo (a int4, b char16, d float8)");
 PQexec(conn, "copy foo from stdin");
 PQputline(conn, "3&lt;TAB&gt;hello world&lt;TAB&gt;4.5\n");
 PQputline(conn,"4&lt;TAB&gt;goodbye world&lt;TAB&gt;7.11\n");
 ...
-PQputline(conn,".\n");
+PQputline(conn,"\\.\n");
 PQendcopy(conn);
 </ProgramListing>
 </Para>
 </ListItem>
 </ItemizedList>
 </Para>
+
+<Para>
+When using PQgetResult, the application should respond to
+a PGRES_COPY_OUT result by executing PQgetline repeatedly,
+followed by PQendcopy after the terminator line is seen.
+It should then return to the PQgetResult loop until PQgetResult
+returns NULL.  Similarly a PGRES_COPY_IN result is processed
+by a series of PQputline calls followed by PQendcopy, then
+return to the PQgetResult loop.  This arrangement will ensure that
+a copy in or copy out command embedded in a series of SQL commands
+will be executed correctly.
+Older applications are likely to submit a copy in or copy out
+via PQexec and assume that the transaction is done after PQendcopy.
+This will work correctly only if the copy in/out is the only
+SQL command in the query string.
+</Para>
+
 </Sect1>
 
 <Sect1>
@@ -833,7 +1081,7 @@ void fe_setauthsvc(char *name,
 
 <Para>
      The  query  buffer is 8192 bytes long, and queries over
-     that length will be silently truncated.
+     that length will be rejected.
 </Para>
 </Sect1>
 
@@ -888,7 +1136,7 @@ void fe_setauthsvc(char *name,
 
            /* check to see that the backend connection was successfully made */
            if (PQstatus(conn) == CONNECTION_BAD) {
-             fprintf(stderr,"Connection to database '&percnt;s' failed.0, dbName);
+             fprintf(stderr,"Connection to database '&percnt;s' failed.\n", dbName);
              fprintf(stderr,"&percnt;s",PQerrorMessage(conn));
              exit_nicely(conn);
            }
@@ -900,7 +1148,7 @@ void fe_setauthsvc(char *name,
 
            res = PQexec(conn,"BEGIN");
            if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-             fprintf(stderr,"BEGIN command failed0);
+             fprintf(stderr,"BEGIN command failed\n");
              PQclear(res);
              exit_nicely(conn);
            }
@@ -911,7 +1159,7 @@ void fe_setauthsvc(char *name,
            /* fetch instances from the pg_database, the system catalog of databases*/
            res = PQexec(conn,"DECLARE myportal CURSOR FOR select * from pg_database");
            if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-             fprintf(stderr,"DECLARE CURSOR command failed0);
+             fprintf(stderr,"DECLARE CURSOR command failed\n");
              PQclear(res);
              exit_nicely(conn);
            }
@@ -919,7 +1167,7 @@ void fe_setauthsvc(char *name,
 
            res = PQexec(conn,"FETCH ALL in myportal");
            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-             fprintf(stderr,"FETCH ALL command didn't return tuples properly0);
+             fprintf(stderr,"FETCH ALL command didn't return tuples properly\n");
              PQclear(res);
              exit_nicely(conn);
            }
@@ -929,14 +1177,14 @@ void fe_setauthsvc(char *name,
            for (i=0; i &lt; nFields; i++) {
              printf("&percnt;-15s",PQfname(res,i));
            }
-           printf("0);
+           printf("\n");
 
            /* next, print out the instances */
            for (i=0; i &lt; PQntuples(res); i++) {
              for (j=0  ; j &lt; nFields; j++) {
                printf("&percnt;-15s", PQgetvalue(res,i,j));
              }
-             printf("0);
+             printf("\n");
            }
 
            PQclear(res);
@@ -1018,14 +1266,14 @@ void fe_setauthsvc(char *name,
 
            /* check to see that the backend connection was successfully made */
            if (PQstatus(conn) == CONNECTION_BAD) {
-             fprintf(stderr,"Connection to database '&percnt;s' failed.0, dbName);
+             fprintf(stderr,"Connection to database '&percnt;s' failed.\n", dbName);
              fprintf(stderr,"&percnt;s",PQerrorMessage(conn));
              exit_nicely(conn);
            }
 
            res = PQexec(conn, "LISTEN TBL2");
            if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-             fprintf(stderr,"LISTEN command failed0);
+             fprintf(stderr,"LISTEN command failed\n");
              PQclear(res);
              exit_nicely(conn);
            }
@@ -1034,20 +1282,19 @@ void fe_setauthsvc(char *name,
            PQclear(res);
 
            while (1) {
-               /* async notification only come back as a result of a query*/
-               /* we can send empty queries */
-               res = PQexec(conn, " ");
-         /*      printf("res-&gt;status = &percnt;s0, pgresStatus[PQresultStatus(res)]); */
-               /* check for asynchronous returns */
-               notify = PQnotifies(conn);
-               if (notify) {
+	       /* wait a little bit between checks;
+	        * waiting with select() would be more efficient.
+	        */
+	       sleep(1);
+	       /* collect any asynchronous backend messages */
+	       PQconsumeInput(conn);
+               /* check for asynchronous notify messages */
+               while ((notify = PQnotifies(conn)) != NULL) {
                 fprintf(stderr,
-                     "ASYNC NOTIFY of '&percnt;s' from backend pid '&percnt;d' received0,
+                     "ASYNC NOTIFY of '&percnt;s' from backend pid '&percnt;d' received\n",
                      notify-&gt;relname, notify-&gt;be_pid);
                 free(notify);
-                break;
                }
-               PQclear(res);
            }
 
            /* close the connection to the database and cleanup */
@@ -1128,7 +1375,7 @@ void fe_setauthsvc(char *name,
 
            /* check to see that the backend connection was successfully made */
            if (PQstatus(conn) == CONNECTION_BAD) {
-             fprintf(stderr,"Connection to database '&percnt;s' failed.0, dbName);
+             fprintf(stderr,"Connection to database '&percnt;s' failed.\n", dbName);
              fprintf(stderr,"&percnt;s",PQerrorMessage(conn));
              exit_nicely(conn);
            }
@@ -1136,7 +1383,7 @@ void fe_setauthsvc(char *name,
            /* start a transaction block */
            res = PQexec(conn,"BEGIN");
            if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-             fprintf(stderr,"BEGIN command failed0);
+             fprintf(stderr,"BEGIN command failed\n");
              PQclear(res);
              exit_nicely(conn);
            }
@@ -1147,7 +1394,7 @@ void fe_setauthsvc(char *name,
            /* fetch instances from the pg_database, the system catalog of databases*/
            res = PQexec(conn,"DECLARE mycursor BINARY CURSOR FOR select * from test1");
            if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-             fprintf(stderr,"DECLARE CURSOR command failed0);
+             fprintf(stderr,"DECLARE CURSOR command failed\n");
              PQclear(res);
              exit_nicely(conn);
            }
@@ -1155,7 +1402,7 @@ void fe_setauthsvc(char *name,
 
            res = PQexec(conn,"FETCH ALL in mycursor");
            if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-             fprintf(stderr,"FETCH ALL command didn't return tuples properly0);
+             fprintf(stderr,"FETCH ALL command didn't return tuples properly\n");
              PQclear(res);
              exit_nicely(conn);
            }
@@ -1165,7 +1412,7 @@ void fe_setauthsvc(char *name,
            p_fnum = PQfnumber(res,"p");
 
            for (i=0;i&lt;3;i++) {
-               printf("type[&percnt;d] = &percnt;d, size[&percnt;d] = &percnt;d0,
+               printf("type[&percnt;d] = &percnt;d, size[&percnt;d] = &percnt;d\n",
                    i, PQftype(res,i),
                    i, PQfsize(res,i));
            }
@@ -1183,12 +1430,12 @@ void fe_setauthsvc(char *name,
              pval = (POLYGON*) malloc(plen + VARHDRSZ);
              pval-&gt;size = plen;
              memmove((char*)&amp;pval-&gt;npts, PQgetvalue(res,i,p_fnum), plen);
-             printf("tuple &percnt;d: got0, i);
-             printf(" i = (&percnt;d bytes) &percnt;d,0,
+             printf("tuple &percnt;d: got\n", i);
+             printf(" i = (&percnt;d bytes) &percnt;d,\n",
                  PQgetlength(res,i,i_fnum), *ival);
-             printf(" d = (&percnt;d bytes) &percnt;f,0,
+             printf(" d = (&percnt;d bytes) &percnt;f,\n",
                  PQgetlength(res,i,d_fnum), *dval);
-             printf(" p = (&percnt;d bytes) &percnt;d points boundbox = (hi=&percnt;f/&percnt;f, lo = &percnt;f,&percnt;f)0,
+             printf(" p = (&percnt;d bytes) &percnt;d points boundbox = (hi=&percnt;f/&percnt;f, lo = &percnt;f,&percnt;f)\n",
                  PQgetlength(res,i,d_fnum),
                  pval-&gt;npts,
                  pval-&gt;boundbox.xh,

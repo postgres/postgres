@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.67 1998/02/26 04:36:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.68 1998/05/06 23:50:19 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1302,7 +1302,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.67 $ $Date: 1998/02/26 04:36:31 $");
+		puts("$Revision: 1.68 $ $Date: 1998/05/06 23:50:19 $");
 	}
 
 	/* ----------------
@@ -1316,6 +1316,12 @@ PostgresMain(int argc, char *argv[])
 
 	for (;;)
 	{
+		/* ----------------
+		 *	 (0) tell the frontend we're ready for a new query.
+		 * ----------------
+		 */
+		ReadyForQuery(Remote);
+
 		/* ----------------
 		 *	 (1) read a command.
 		 * ----------------
@@ -1391,8 +1397,8 @@ PostgresMain(int argc, char *argv[])
 				 * ----------------
 				 */
 			case 'X':
-				IsEmptyQuery = true;
 				pq_close();
+				exitpg(0);
 				break;
 
 			default:

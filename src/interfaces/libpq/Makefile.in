@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.16 1998/04/27 14:55:46 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.17 1998/05/06 23:51:06 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,14 +25,13 @@ ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
-OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-lobj.o \
-      dllist.o pqsignal.o pqcomprim.o
+OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
+      dllist.o pqsignal.o
 
 # Shared library stuff
 shlib := 
 install-shlib-dep :=
 ifeq ($(PORTNAME), linux)
-  LINUX_ELF=@LINUX_ELF@
   ifdef LINUX_ELF
     install-shlib-dep := install-shlib
     shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
@@ -83,9 +82,6 @@ fe-lobj.o: $(SRCDIR)/backend/fmgr.h
 # so we can't use the object in $(SRCDIR)/backend
 dllist.c:	$(SRCDIR)/backend/lib/dllist.c
 	-ln -s $(SRCDIR)/backend/lib/dllist.c .
-
-pqcomprim.c:	    $(SRCDIR)/backend/libpq/pqcomprim.c
-	-ln -s $(SRCDIR)/backend/libpq/pqcomprim.c .
 
 # The following rules cause dependencies in the backend directory to 
 # get made if they don't exist, but don't cause them to get remade if they
@@ -183,7 +179,7 @@ depend dep:
 
 .PHONY: clean
 clean:
-	rm -f libpq.a $(shlib) $(OBJS) c.h dllist.c pqcomprim.c libpq.so
+	rm -f libpq.a $(shlib) $(OBJS) c.h dllist.c libpq.so
 
 ifeq (depend,$(wildcard depend))
 include depend

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.24 1998/03/02 05:42:15 scrappy Exp $
+ * $Id: pqcomm.h,v 1.25 1998/05/06 23:50:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ typedef union SockAddr
 /* The earliest and latest frontend/backend protocol version supported. */
 
 #define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(0,0)
-#define PG_PROTOCOL_LATEST	PG_PROTOCOL(1,0)
+#define PG_PROTOCOL_LATEST	PG_PROTOCOL(2,0)
 
 /*
  * All packets sent to the postmaster start with the length.  This is omitted

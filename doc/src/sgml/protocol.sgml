@@ -4,14 +4,15 @@
 <FirstName>Phil</FirstName>
 <Surname>Thompson</Surname>
 </Author>
-<Date>1998-02-02</Date>
+<Date>1998-05-04</Date>
 </DocInfo>
 <Title>Frontend/Backend Protocol</Title>
 
 <Para>
 <Note>
 <Para>
-Written by <ULink url="mailto:phil@river-bank.demon.co.uk">Phil Thompson</ULink>
+Written by <ULink url="mailto:phil@river-bank.demon.co.uk">Phil Thompson</ULink>.
+Updates for protocol 2.0 by <ULink url="mailto:tgl@sss.pgh.pa.us">Tom Lane</ULink>.
 </Para>
 </Note>
 
@@ -24,7 +25,7 @@ a way as to still allow connections from earlier versions of frontends, but
 this document does not cover the protocol used by those earlier versions.
 
 <Para>
-This document describes the initial version-numbered protocol, designated v1.0.
+This document describes version 2.0 of the protocol.
 Higher level features built on this protocol (for example, how <FileName>libpq</FileName> passes
 certain environment variables after the connection is established)
 are covered elsewhere.
@@ -47,7 +48,9 @@ and responds to the frontend accordingly.
 <Para>
 The frontend then sends any required authentication information.  Once the
 postmaster validates this it responds to the frontend that it is authenticated
-and hands over to a backend.
+and hands over the connection to a backend.  The backend then sends a message
+indicating successful startup (normal case) or failure (for example, an
+invalid database name).
 
 <Para>
 Subsequent communications are query and result packets exchanged between the
@@ -60,7 +63,7 @@ closes the connection without waiting for a response for the backend.
 
 <Para>
 Packets are sent as a data stream.  The first byte determines what should be
-expected in the rest of the packet.  The exception is packets send from a
+expected in the rest of the packet.  The exception is packets sent from a
 frontend to the postmaster, which comprise a packet length then the packet
 itself.  The difference is historical.
 
@@ -70,15 +73,22 @@ itself.  The difference is historical.
 <Para>
 This section describes the message flow.  There are four different types of
 flows depending on the state of the connection:
- authentication, query, function call, and termination.
+startup, query, function call, and termination.
+There are also special provisions for notification responses and command
+cancellation, which can occur at any time after the startup phase.
+
 
 <Sect2>
-<Title>Authentication</Title>
+<Title>Startup</Title>
 
 <Para>
-The frontend sends a StartupPacket.  The postmaster uses this and the contents
-of the pg_hba.conf(5) file to determine what authentication method the frontend
-must use.  The postmaster then responds with one of the following messages:
+Startup is divided into an authentication phase and a backend startup phase.
+
+<Para>
+Initially, the frontend sends a StartupPacket.  The postmaster uses this info
+and the contents of the pg_hba.conf(5) file to determine what authentication
+method the frontend must use.  The postmaster then responds with one of the
+following messages:
 
 <Para>
 <VariableList>
@@ -162,13 +172,65 @@ must use.  The postmaster then responds with one of the following messages:
 If the frontend does not support the authentication method requested by the
 postmaster, then it should immediately close the connection.
 
+<Para>
+After sending AuthenticationOk, the postmaster attempts to launch a backend
+process.  Since this might fail, or the backend might encounter a failure
+during startup, the frontend must wait for the backend to acknowledge
+successful startup.  The frontend should send no messages at this point.
+The possible messages from the backend during this phase are:
+
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+	ReadyForQuery
+</Term>
+<ListItem>
+<Para>
+		Backend startup is successful.  The frontend may now issue
+		query or function call messages.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	ErrorResponse
+</Term>
+<ListItem>
+<Para>
+		Backend startup failed.  The connection is closed after
+		sending this message.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	NoticeResponse
+</Term>
+<ListItem>
+<Para>
+		A warning message has been issued.  The frontend should
+		display the message but continue listening for ReadyForQuery
+		or ErrorResponse.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+
+
 <Sect2>
 <Title>Query</Title>
 
 <Para>
-The frontend sends a Query message to the backend.  The response sent by the
-backend depends on the contents of the query.  The possible responses are as
-follows.
+A Query cycle is initiated by the frontend sending a Query message to the
+backend.  The backend then sends one or more response messages depending
+on the contents of the query command string, and finally a ReadyForQuery
+response message.  ReadyForQuery informs the frontend that it may safely
+send a new query or function call.
+
+<Para>
+The possible response messages from the backend are:
 
 <Para>
 <VariableList>
@@ -178,7 +240,7 @@ follows.
 </Term>
 <ListItem>
 <Para>
-		The query completed normally.
+		An SQL command completed normally.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -240,7 +302,7 @@ follows.
 <Para>
 		For a fetch(l) or select(l) command, the backend sends a
 		RowDescription message.  This is then followed by an AsciiRow
-		or BinaryRow message (depending on if a binary cursor was
+		or BinaryRow message (depending on whether a binary cursor was
 		specified) for each row being returned to the frontend.
 		Finally, the backend sends a CompletedResponse message with a
 		tag of "SELECT".
@@ -253,7 +315,8 @@ follows.
 </Term>
 <ListItem>
 <Para>
-		The query was empty.
+		An empty query string was recognized.  (The need to specially
+		distinguish this case is historical.)
 </Para>
 </ListItem>
 </VarListEntry>
@@ -269,26 +332,28 @@ follows.
 </VarListEntry>
 <VarListEntry>
 <Term>
+	ReadyForQuery
+</Term>
+<ListItem>
+<Para>
+		Processing of the query string is complete.  A separate
+		message is sent to indicate this because the query string
+		may contain multiple SQL commands.  (CompletedResponse marks
+		the end of processing one SQL command, not the whole string.)
+		ReadyForQuery will always be sent, whether processing
+		terminates successfully or with an error.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
 	NoticeResponse
 </Term>
 <ListItem>
 <Para>
 		A warning message has been issued in relation to the query.
 		Notices are in addition to other responses, ie. the backend
-		will send another response message immediately afterwards.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-	NotificationResponse
-</Term>
-<ListItem>
-<Para>
-		A notify(l) command has been executed for a relation for
-		which a previous listen(l) command was executed.  Notifications
-		are in addition to other responses, ie. the backend will send
-		another response message immediately afterwards.
+		will continue processing the command.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -297,15 +362,23 @@ follows.
 
 <Para>
 A frontend must be prepared to accept ErrorResponse and NoticeResponse
-messages whenever it is expecting any other type of message.
+messages whenever it is expecting any other type of message.  Also,
+if it issues any listen(l) commands then it must be prepared to accept
+NotificationResponse messages at any time; see below.
+
 
 <Sect2>
 <Title>Function Call</Title>
 
 <Para>
-The frontend sends a FunctionCall message to the backend.  The response sent by
-the backend depends on the result of the function call.  The possible responses
-are as follows.
+A Function Call cycle is initiated by the frontend sending a FunctionCall
+message to the backend.  The backend then sends one or more response messages
+depending on the results of the function call, and finally a ReadyForQuery
+response message.  ReadyForQuery informs the frontend that it may safely send
+a new query or function call.
+
+<Para>
+The possible response messages from the backend are:
 
 <Para>
 <VariableList>
@@ -341,14 +414,26 @@ are as follows.
 </VarListEntry>
 <VarListEntry>
 <Term>
+	ReadyForQuery
+</Term>
+<ListItem>
+<Para>
+		Processing of the function call is complete.
+		ReadyForQuery will always be sent, whether processing
+		terminates successfully or with an error.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
 	NoticeResponse
 </Term>
 <ListItem>
 <Para>
 		A warning message has been issued in relation to the function
-		call.  Notices are in addition to other responses, ie. the
-		backend will send another response message immediately
-		afterwards.
+		call.
+		Notices are in addition to other responses, ie. the backend
+		will continue processing the command.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -357,7 +442,58 @@ are as follows.
 
 <Para>
 A frontend must be prepared to accept ErrorResponse and NoticeResponse
-messages whenever it is expecting any other type of message.
+messages whenever it is expecting any other type of message.  Also,
+if it issues any listen(l) commands then it must be prepared to accept
+NotificationResponse messages at any time; see below.
+
+
+<Sect2>
+<Title>Notification Responses</Title>
+
+<Para>
+If a frontend issues a listen(l) command, then the backend will send a
+NotificationResponse message (not to be confused with NoticeResponse!)
+whenever a notify(l) command is executed for the same relation name.
+
+<Para>
+Notification responses are permitted at any point in the protocol (after
+startup), except within another backend message.  Thus, the frontend
+must be prepared to recognize a NotificationResponse message whenever it is
+expecting any message.  Indeed, it should be able to handle
+NotificationResponse messages even when it is not engaged in a query.
+
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+	NotificationResponse
+</Term>
+<ListItem>
+<Para>
+		A notify(l) command has been executed for a relation for
+		which a previous listen(l) command was executed.  Notifications
+		may be sent at any time.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+
+
+<Sect2>
+<Title>Cancelling Requests in Progress</Title>
+
+<Para>
+During the processing of a query, the frontend may request cancellation of the
+query by sending a single byte of OOB (out-of-band) data.  The contents of the
+data byte should be zero (although the backend does not currently check this).
+If the cancellation is effective, it results in the current command being
+terminated with an error message.  Note that the backend makes no specific
+reply to the cancel request itself.  If the cancel request is ineffective
+(say, because it arrived after processing was complete) then it will have
+no visible effect at all.  Thus, the frontend must continue with its normal
+processing of query cycle responses after issuing a cancel request.
+
 
 <Sect2>
 <Title>Termination</Title>
@@ -409,7 +545,7 @@ This section describes the base data types used in messages.
 <Para>
 		A conventional C '\0' terminated string with no length
 		limitation.  A frontend should always read the full string
-		even though it may have to discard characters if it's buffers
+		even though it may have to discard characters if its buffers
 		aren't big enough.
 <Note>
 <Para>
@@ -458,8 +594,9 @@ AsciiRow (B)
 </Term>
 <ListItem>
 <Para>
-		Identifies the message, in the context in which it is sent (see
-		CopyInResponse), as an <Acronym>ASCII</Acronym> row.
+		Identifies the message as an <Acronym>ASCII</Acronym> data row.
+		(A prior RowDescription message defines the number of
+		fields in the row and their data types.)
 </Para>
 </ListItem>
 </VarListEntry>
@@ -704,8 +841,9 @@ BinaryRow (B)
 </Term>
 <ListItem>
 <Para>
-		Identifies the message, in the context in which it is sent (see
-		CopyOutResponse), as a binary row.
+		Identifies the message as a binary data row.
+		(A prior RowDescription message defines the number of
+		fields in the row and their data types.)
 </Para>
 </ListItem>
 </VarListEntry>
@@ -814,12 +952,12 @@ CopyInResponse (B)
 <VariableList>
 <VarListEntry>
 <Term>
-	Byte1('D')
+	Byte1('G')
 </Term>
 <ListItem>
 <Para>
-		Identifies the message, in the context in which it is sent (see
-		AsciiRow), as a copy in started response.
+		Identifies the message as a Start Copy In response.
+		The frontend must now send a CopyDataRows message.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -839,12 +977,12 @@ CopyOutResponse (B)
 <VariableList>
 <VarListEntry>
 <Term>
-	Byte1('B')
+	Byte1('H')
 </Term>
 <ListItem>
 <Para>
-		Identifies the message, in the context in which it is sent (see
-		BinaryRow), as a copy out started response.
+		Identifies the message as a Start Copy Out response.
+		This message will be followed by a CopyDataRows message.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -903,7 +1041,7 @@ EmptyQueryResponse (B)
 </Term>
 <ListItem>
 <Para>
-		Identifies the message as an empty query response.
+		Identifies the message as a response to an empty query string.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -948,6 +1086,31 @@ EncryptedPasswordPacket (F)
 <ListItem>
 <Para>
 		The encrypted (using crypt()) password.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+ReadyForQuery (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('Z')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message type.  ReadyForQuery is sent
+		whenever the backend is ready for a new query cycle.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1099,7 +1262,7 @@ FunctionResultResponse (B)
 </Term>
 <ListItem>
 <Para>
-		Specifies that an actual result was returned.
+		Specifies that a nonempty result was returned.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1167,7 +1330,7 @@ FunctionVoidResponse (B)
 </Term>
 <ListItem>
 <Para>
-		Specifies that no actual result was returned.
+		Specifies that an empty result was returned.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1269,7 +1432,7 @@ Query (F)
 </Term>
 <ListItem>
 <Para>
-		Identifies the message as query.
+		Identifies the message as a query.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1279,7 +1442,7 @@ Query (F)
 </Term>
 <ListItem>
 <Para>
-		The query itself.
+		The query string itself.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1345,6 +1508,16 @@ RowDescription (B)
 <ListItem>
 <Para>
 			Specifies the type size.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+		Int16
+</Term>
+<ListItem>
+<Para>
+			Specifies the type modifier.
 </Para>
 </ListItem>
 </VarListEntry>

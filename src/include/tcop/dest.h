@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.13 1998/02/26 04:43:39 momjian Exp $
+ * $Id: dest.h,v 1.14 1998/05/06 23:50:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,6 @@ typedef enum
 	Debug,						/* results go to debugging output */
 	Local,						/* results go in local portal buffer */
 	Remote,						/* results sent to frontend process */
-	CopyBegin,					/* results sent to frontend process but
-								 * are strings */
-	CopyEnd,					/* results sent to frontend process but
-								 * are strings */
 	RemoteInternal,				/* results sent to frontend process in
 								 * internal (binary) form */
 	SPI							/* results sent to SPI manager */
@@ -70,6 +66,7 @@ extern void EndCommand(char *commandTag, CommandDest dest);
 extern void SendCopyBegin(void);
 extern void ReceiveCopyBegin(void);
 extern void NullCommand(CommandDest dest);
+extern void ReadyForQuery(CommandDest dest);
 extern void
 BeginCommand(char *pname, int operation, TupleDesc attinfo,
 			 bool isIntoRel, bool isIntoPortal, char *tag,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.65 1998/04/21 04:00:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.66 1998/05/06 23:51:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,14 +41,14 @@
 #endif
 
 
-/* use a local version instead of the one found in pqpacket.c */
 static ConnStatusType connectDB(PGconn *conn);
-
+static PGconn *makeEmptyPGconn(void);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static int	conninfo_parse(const char *conninfo, char *errorMessage);
 static char *conninfo_getval(char *keyword);
 static void conninfo_free(void);
+/* XXX Why is this not static? */
 void		PQsetenv(PGconn *conn);
 
 #define NOTIFYLIST_INITIAL_SIZE 10
@@ -162,44 +162,30 @@ PGconn *
 PQconnectdb(const char *conninfo)
 {
 	PGconn	   *conn;
-	char		errorMessage[ERROR_MSG_LENGTH];
 	char	   *tmp;
 
 	/* ----------
 	 * Allocate memory for the conn structure
 	 * ----------
 	 */
-	conn = (PGconn *) malloc(sizeof(PGconn));
+	conn = makeEmptyPGconn();
 	if (conn == NULL)
 	{
 		fprintf(stderr,
-		   "FATAL: PQsetdb() -- unable to allocate memory for a PGconn");
+		   "FATAL: PQconnectdb() -- unable to allocate memory for a PGconn");
 		return (PGconn *) NULL;
 	}
-	MemSet((char *) conn, 0, sizeof(PGconn));
 
 	/* ----------
-	 * Parse the conninfo string and get the fallback resources
+	 * Parse the conninfo string and save settings in conn structure
 	 * ----------
 	 */
-	if (conninfo_parse(conninfo, errorMessage) < 0)
+	if (conninfo_parse(conninfo, conn->errorMessage) < 0)
 	{
 		conn->status = CONNECTION_BAD;
-		strcpy(conn->errorMessage, errorMessage);
 		conninfo_free();
 		return conn;
 	}
-
-	/* ----------
-	 * Setup the conn structure
-	 * ----------
-	 */
-	conn->lobjfuncs = (PGlobjfuncs *) NULL;
-	conn->Pfout = NULL;
-	conn->Pfin = NULL;
-	conn->Pfdebug = NULL;
-	conn->notifyList = DLNewList();
-
 	tmp = conninfo_getval("host");
 	conn->pghost = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("port");
@@ -208,12 +194,12 @@ PQconnectdb(const char *conninfo)
 	conn->pgtty = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("options");
 	conn->pgoptions = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval("dbname");
+	conn->dbName = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("user");
 	conn->pguser = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval("password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("dbname");
-	conn->dbName = tmp ? strdup(tmp) : NULL;
 
 	/* ----------
 	 * Free the connection info - all is in conn now
@@ -226,24 +212,6 @@ PQconnectdb(const char *conninfo)
 	 * ----------
 	 */
 	conn->status = connectDB(conn);
-	if (conn->status == CONNECTION_OK)
-	{
-		PGresult   *res;
-
-		/*
-		 * Send a blank query to make sure everything works; in
-		 * particular, that the database exists.
-		 */
-		res = PQexec(conn, " ");
-		if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY)
-		{
-			/* PQexec has put error message in conn->errorMessage */
-			closePGconn(conn);
-		}
-		PQclear(res);
-	}
-
-	PQsetenv(conn);
 
 	return conn;
 }
@@ -311,150 +279,119 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 {
 	PGconn	   *conn;
 	char	   *tmp;
-	char		errorMessage[ERROR_MSG_LENGTH];
-
 	/* An error message from some service we call. */
-	bool		error;
-
+	bool		error = FALSE;
 	/* We encountered an error that prevents successful completion */
 	int			i;
 
-	conn = (PGconn *) malloc(sizeof(PGconn));
-
+	conn = makeEmptyPGconn();
 	if (conn == NULL)
+	{
 		fprintf(stderr,
-		   "FATAL: PQsetdb() -- unable to allocate memory for a PGconn");
+		   "FATAL: PQsetdbLogin() -- unable to allocate memory for a PGconn");
+		return (PGconn *) NULL;
+	}
+
+	if ((pghost == NULL) || pghost[0] == '\0')
+	{
+		if ((tmp = getenv("PGHOST")) != NULL)
+			conn->pghost = strdup(tmp);
+	}
+	else
+		conn->pghost = strdup(pghost);
+
+	if ((pgport == NULL) || pgport[0] == '\0')
+	{
+		if ((tmp = getenv("PGPORT")) == NULL)
+			tmp = DEF_PGPORT;
+		conn->pgport = strdup(tmp);
+	}
+	else
+		conn->pgport = strdup(pgport);
+
+	if ((pgtty == NULL) || pgtty[0] == '\0')
+	{
+		if ((tmp = getenv("PGTTY")) == NULL)
+			tmp = DefaultTty;
+		conn->pgtty = strdup(tmp);
+	}
+	else
+		conn->pgtty = strdup(pgtty);
+
+	if ((pgoptions == NULL) || pgoptions[0] == '\0')
+	{
+		if ((tmp = getenv("PGOPTIONS")) == NULL)
+			tmp = DefaultOption;
+		conn->pgoptions = strdup(tmp);
+	}
+	else
+		conn->pgoptions = strdup(pgoptions);
+
+	if (login)
+	{
+		conn->pguser = strdup(login);
+	}
+	else if ((tmp = getenv("PGUSER")) != NULL)
+	{
+		conn->pguser = strdup(tmp);
+	}
 	else
 	{
-		conn->lobjfuncs = (PGlobjfuncs *) NULL;
-		conn->Pfout = NULL;
-		conn->Pfin = NULL;
-		conn->Pfdebug = NULL;
-		conn->notifyList = DLNewList();
-
-		if ((pghost == NULL) || pghost[0] == '\0')
-		{
-			conn->pghost = NULL;
-			if ((tmp = getenv("PGHOST")) != NULL)
-				conn->pghost = strdup(tmp);
-		}
-		else
-			conn->pghost = strdup(pghost);
-
-		if ((pgport == NULL) || pgport[0] == '\0')
-		{
-			if ((tmp = getenv("PGPORT")) == NULL)
-				tmp = DEF_PGPORT;
-			conn->pgport = strdup(tmp);
-		}
-		else
-			conn->pgport = strdup(pgport);
-
-		if ((pgtty == NULL) || pgtty[0] == '\0')
-		{
-			if ((tmp = getenv("PGTTY")) == NULL)
-				tmp = DefaultTty;
-			conn->pgtty = strdup(tmp);
-		}
-		else
-			conn->pgtty = strdup(pgtty);
-
-		if ((pgoptions == NULL) || pgoptions[0] == '\0')
-		{
-			if ((tmp = getenv("PGOPTIONS")) == NULL)
-				tmp = DefaultOption;
-			conn->pgoptions = strdup(tmp);
-		}
-		else
-			conn->pgoptions = strdup(pgoptions);
-
-		if (login)
-		{
-			error = FALSE;
-			conn->pguser = strdup(login);
-		}
-		else if ((tmp = getenv("PGUSER")) != NULL)
-		{
-			error = FALSE;
-			conn->pguser = strdup(tmp);
-		}
-		else
-		{
-			tmp = fe_getauthname(errorMessage);
-			if (tmp == 0)
-			{
-				error = TRUE;
-				sprintf(conn->errorMessage,
-						"FATAL: PQsetdb: Unable to determine a Postgres username!\n");
-			}
-			else
-			{
-				error = FALSE;
-				conn->pguser = tmp;
-			}
-		}
-
-		if (pwd)
-		{
-			conn->pgpass = strdup(pwd);
-		}
-		else if ((tmp = getenv("PGPASSWORD")) != NULL)
-		{
-			conn->pgpass = strdup(tmp);
-		}
-		else
-			conn->pgpass = strdup(DefaultPassword);
-
-		if (!error)
-		{
-			if ((((tmp = (char *) dbName) != NULL) && (dbName[0] != '\0'))
-				|| ((tmp = getenv("PGDATABASE"))))
-				conn->dbName = strdup(tmp);
-			else
-				conn->dbName = strdup(conn->pguser);
-
-			/*
-			 * if the database name is surrounded by double-quotes, then
-			 * don't convert case
-			 */
-			if (*conn->dbName == '"')
-			{
-				strcpy(conn->dbName, conn->dbName + 1);
-				*(conn->dbName + strlen(conn->dbName) - 1) = '\0';
-			}
-			else
-				for (i = 0; conn->dbName[i]; i++)
-					if (isupper(conn->dbName[i]))
-						conn->dbName[i] = tolower(conn->dbName[i]);
-		}
-		else
-			conn->dbName = NULL;
-
-		if (error)
-			conn->status = CONNECTION_BAD;
-		else
-		{
-			conn->status = connectDB(conn);
-			/* Puts message in conn->errorMessage */
-			if (conn->status == CONNECTION_OK)
-			{
-				PGresult   *res;
-
-				/*
-				 * Send a blank query to make sure everything works; in
-				 * particular, that the database exists.
-				 */
-				res = PQexec(conn, " ");
-				if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY)
-				{
-					/* PQexec has put error message in conn->errorMessage */
-					closePGconn(conn);
-				}
-				PQclear(res);
-			}
-			PQsetenv(conn);
-		}
+		conn->pguser = fe_getauthname(conn->errorMessage);
 	}
+
+	if (conn->pguser == NULL)
+	{
+		error = TRUE;
+		sprintf(conn->errorMessage,
+				"FATAL: PQsetdbLogin(): Unable to determine a Postgres username!\n");
+	}
+
+	if (pwd)
+	{
+		conn->pgpass = strdup(pwd);
+	}
+	else if ((tmp = getenv("PGPASSWORD")) != NULL)
+	{
+		conn->pgpass = strdup(tmp);
+	}
+	else
+	{
+		conn->pgpass = strdup(DefaultPassword);
+	}
+
+	if ((dbName == NULL) || dbName[0] == '\0')
+	{
+		if ((tmp = getenv("PGDATABASE")) != NULL)
+			conn->dbName = strdup(tmp);
+		else if (conn->pguser)
+			conn->dbName = strdup(conn->pguser);
+	}
+	else
+		conn->dbName = strdup(dbName);
+
+	if (conn->dbName)
+	{
+		/*
+		 * if the database name is surrounded by double-quotes, then
+		 * don't convert case
+		 */
+		if (*conn->dbName == '"')
+		{
+			strcpy(conn->dbName, conn->dbName + 1);
+			conn->dbName[strlen(conn->dbName) - 1] = '\0';
+		}
+		else
+			for (i = 0; conn->dbName[i]; i++)
+				if (isupper(conn->dbName[i]))
+					conn->dbName[i] = tolower(conn->dbName[i]);
+	}
+
+	if (error)
+		conn->status = CONNECTION_BAD;
+	else
+		conn->status = connectDB(conn);
+
 	return conn;
 }
 
@@ -468,6 +405,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 static ConnStatusType
 connectDB(PGconn *conn)
 {
+	PGresult   *res;
 	struct hostent *hp;
 
 	StartupPacket sp;
@@ -476,6 +414,7 @@ connectDB(PGconn *conn)
 	int			portno,
 				family,
 				len;
+	char		beresp;
 
 	/*
 	 * Initialize the startup packet.
@@ -506,16 +445,17 @@ connectDB(PGconn *conn)
 						   conn->pghost);
 			goto connect_errReturn;
 		}
+		family = AF_INET;
 	}
-	else
+	else {
 		hp = NULL;
+		family = AF_UNIX;
+	}
 
-#if FALSE
-	MemSet((char *) &port->raddr, 0, sizeof(port->raddr));
-#endif
-	portno = atoi(conn->pgport);
-	family = (conn->pghost != NULL) ? AF_INET : AF_UNIX;
+	MemSet((char *) &conn->raddr, 0, sizeof(conn->raddr));
 	conn->raddr.sa.sa_family = family;
+
+	portno = atoi(conn->pgport);
 	if (family == AF_INET)
 	{
 		memmove((char *) &(conn->raddr.in.sin_addr),
@@ -528,7 +468,8 @@ connectDB(PGconn *conn)
 	{
 		len = UNIXSOCK_PATH(conn->raddr.un, portno);
 	}
-	/* connect to the server  */
+
+	/* Connect to the server  */
 	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
@@ -545,6 +486,20 @@ connectDB(PGconn *conn)
 					   conn->pgport);
 		goto connect_errReturn;
 	}
+
+	/*
+	 * Set the right options.
+	 * We need nonblocking I/O, and we don't want delay of outgoing data.
+	 */
+
+	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
+	{
+		(void) sprintf(conn->errorMessage,
+					   "connectDB() -- fcntl() failed: errno=%d\n%s\n",
+					   errno, strerror(errno));
+		goto connect_errReturn;
+	}
+
 	if (family == AF_INET)
 	{
 		struct protoent *pe;
@@ -561,109 +516,155 @@ connectDB(PGconn *conn)
 					   &on, sizeof(on)) < 0)
 		{
 			(void) sprintf(conn->errorMessage,
-						   "connectDB(): setsockopt failed\n");
+						   "connectDB() -- setsockopt failed: errno=%d\n%s\n",
+						   errno, strerror(errno));
 			goto connect_errReturn;
 		}
 	}
 
-	/* fill in the client address */
+	/* Fill in the client address */
 	if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
-				   "connectDB() -- getsockname() failed: errno=%d\n%s\n",
+					   "connectDB() -- getsockname() failed: errno=%d\n%s\n",
 					   errno, strerror(errno));
 		goto connect_errReturn;
 	}
 
-	/* set up the socket file descriptors */
-	conn->Pfout = fdopen(conn->sock, "w");
-	conn->Pfin = fdopen(dup(conn->sock), "r");
-	if ((conn->Pfout == NULL) || (conn->Pfin == NULL))
-	{
-		(void) sprintf(conn->errorMessage,
-					   "connectDB() -- fdopen() failed: errno=%d\n%s\n",
-					   errno, strerror(errno));
-		goto connect_errReturn;
-	}
+	/* Ensure our buffers are empty */
+	conn->inStart = conn->inCursor = conn->inEnd = 0;
+	conn->outCount = 0;
 
 	/* Send the startup packet. */
 
 	if (packetSend(conn, (char *) &sp, sizeof(StartupPacket)) != STATUS_OK)
 	{
 		sprintf(conn->errorMessage,
-				"connectDB() --  couldn't send complete packet: errno=%d\n%s\n", errno, strerror(errno));
+				"connectDB() --  couldn't send startup packet: errno=%d\n%s\n",
+				errno, strerror(errno));
 		goto connect_errReturn;
 	}
 
 	/*
-	 * Get the response from the backend, either an error message or an
-	 * authentication request.
+	 * Perform the authentication exchange:
+	 * wait for backend messages and respond as necessary.
+	 * We fall out of this loop when done talking to the postmaster.
 	 */
 
-	do
+	for (;;)
 	{
-		int			beresp;
-
-		if ((beresp = pqGetc(conn->Pfin, conn->Pfdebug)) == EOF)
-		{
-			(void) sprintf(conn->errorMessage,
-				"connectDB() -- error getting authentication request\n");
-
+		/* Wait for some data to arrive (or for the channel to close) */
+		if (pqWait(TRUE, FALSE, conn))
 			goto connect_errReturn;
-		}
+		/* Load data, or detect EOF */
+		if (pqReadData(conn) < 0)
+			goto connect_errReturn;
+		/* Scan the message.
+		 * If we run out of data, loop around to try again.
+		 */
+		conn->inCursor = conn->inStart;
+
+		if (pqGetc(&beresp, conn))
+			continue;			/* no data yet */
 
 		/* Handle errors. */
-
 		if (beresp == 'E')
 		{
-			pqGets(conn->errorMessage, sizeof(conn->errorMessage),
-				   conn->Pfin, conn->Pfdebug);
-
+			if (pqGets(conn->errorMessage, sizeof(conn->errorMessage), conn))
+				continue;
 			goto connect_errReturn;
 		}
 
-		/* Check it was an authentication request. */
-
+		/* Otherwise it should be an authentication request. */
 		if (beresp != 'R')
 		{
 			(void) sprintf(conn->errorMessage,
-					 "connectDB() -- expected authentication request\n");
-
+						   "connectDB() -- expected authentication request\n");
 			goto connect_errReturn;
 		}
 
 		/* Get the type of request. */
-
-		if (pqGetInt((int *) &areq, 4, conn->Pfin, conn->Pfdebug))
-		{
-			(void) sprintf(conn->errorMessage,
-			"connectDB() -- error getting authentication request type\n");
-
-			goto connect_errReturn;
-		}
+		if (pqGetInt((int *) &areq, 4, conn))
+			continue;
 
 		/* Get the password salt if there is one. */
-
-		if (areq == AUTH_REQ_CRYPT &&
-			pqGetnchar(conn->salt, sizeof(conn->salt),
-					   conn->Pfin, conn->Pfdebug))
+		if (areq == AUTH_REQ_CRYPT)
 		{
-			(void) sprintf(conn->errorMessage,
-						 "connectDB() -- error getting password salt\n");
-
-			goto connect_errReturn;
+			if (pqGetnchar(conn->salt, sizeof(conn->salt), conn))
+				continue;
 		}
 
+		/* OK, we successfully read the message; mark data consumed */
+		conn->inStart = conn->inCursor;
 
-		/* Respond to the request. */
-
+		/* Respond to the request if necessary. */
 		if (fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
 						conn->errorMessage) != STATUS_OK)
 			goto connect_errReturn;
-	}
-	while (areq != AUTH_REQ_OK);
+		if (pqFlush(conn))
+			goto connect_errReturn;
 
-	/* free the password so it's not hanging out in memory forever */
+		/* Are we done? */
+		if (areq == AUTH_REQ_OK)
+			break;
+	}
+
+	/*
+	 * Now we expect to hear from the backend.
+	 * A ReadyForQuery message indicates that startup is successful,
+	 * but we might also get an Error message indicating failure.
+	 * (Notice messages indicating nonfatal warnings are also allowed
+	 * by the protocol.)
+	 * Easiest way to handle this is to let PQgetResult() read the messages.
+	 * We just have to fake it out about the state of the connection.
+	 */
+
+	conn->status = CONNECTION_OK;
+	conn->asyncStatus = PGASYNC_BUSY;
+	res = PQgetResult(conn);
+	/* NULL return indicating we have gone to IDLE state is expected */
+	if (res) {
+		if (res->resultStatus != PGRES_FATAL_ERROR)
+			sprintf(conn->errorMessage,
+					"connectDB() -- unexpected message during startup\n");
+		PQclear(res);
+		goto connect_errReturn;
+	}
+
+	/* Given the new protocol that sends a ReadyForQuery message
+	 * after successful backend startup, it should no longer be
+	 * necessary to send an empty query to test for startup.
+	 */
+
+#if 0
+
+	/*
+	 * Send a blank query to make sure everything works; in
+	 * particular, that the database exists.
+	 */
+	res = PQexec(conn, " ");
+	if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY)
+	{
+		/* PQexec has put error message in conn->errorMessage */
+		closePGconn(conn);
+		PQclear(res);
+		goto connect_errReturn;
+	}
+	PQclear(res);
+
+#endif
+
+	/* Post-connection housekeeping.
+	 * Send environment variables to server
+	 */
+
+	PQsetenv(conn);
+
+	/* Free the password so it's not hanging out in memory forever */
+	/* XXX Is this *really* a good idea?  The security gain is marginal
+	 * if not totally illusory, and it breaks PQreset() for databases
+	 * that use passwords.
+	 */
 	if (conn->pgpass != NULL)
 	{
 		free(conn->pgpass);
@@ -673,6 +674,11 @@ connectDB(PGconn *conn)
 	return CONNECTION_OK;
 
 connect_errReturn:
+	if (conn->sock >= 0)
+	{
+		close(conn->sock);
+		conn->sock = -1;
+	}
 	return CONNECTION_BAD;
 
 }
@@ -705,6 +711,36 @@ PQsetenv(PGconn *conn)
 }	/* PQsetenv() */
 
 /*
+ * makeEmptyPGconn
+ *   - create a PGconn data structure with (as yet) no interesting data
+ */
+static PGconn *
+makeEmptyPGconn(void)
+{
+	PGconn	*conn = (PGconn *) malloc(sizeof(PGconn));
+	if (conn == NULL)
+		return conn;
+
+	/* Zero all pointers */
+	MemSet((char *) conn, 0, sizeof(PGconn));
+
+	conn->status = CONNECTION_BAD;
+	conn->asyncStatus = PGASYNC_IDLE;
+	conn->notifyList = DLNewList();
+	conn->sock = -1;
+	conn->inBufSize = 8192;
+	conn->inBuffer = (char *) malloc(conn->inBufSize);
+	conn->outBufSize = 8192;
+	conn->outBuffer = (char *) malloc(conn->outBufSize);
+	if (conn->inBuffer == NULL || conn->outBuffer == NULL)
+	{
+		freePGconn(conn);
+		conn = NULL;
+	}
+	return conn;
+}
+
+/*
  * freePGconn
  *	 - free the PGconn data structure
  *
@@ -714,22 +750,32 @@ freePGconn(PGconn *conn)
 {
 	if (!conn)
 		return;
+	PQclearAsyncResult(conn);	/* deallocate result and curTuple */
+	if (conn->sock >= 0)
+		close(conn->sock);		/* shouldn't happen, but... */
 	if (conn->pghost)
 		free(conn->pghost);
+	if (conn->pgport)
+		free(conn->pgport);
 	if (conn->pgtty)
 		free(conn->pgtty);
 	if (conn->pgoptions)
 		free(conn->pgoptions);
-	if (conn->pgport)
-		free(conn->pgport);
 	if (conn->dbName)
 		free(conn->dbName);
 	if (conn->pguser)
 		free(conn->pguser);
 	if (conn->pgpass)
 		free(conn->pgpass);
+	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
+	if (conn->lobjfuncs)
+		free(conn->lobjfuncs);
+	if (conn->inBuffer)
+		free(conn->inBuffer);
+	if (conn->outBuffer)
+		free(conn->outBuffer);
 	free(conn);
 }
 
@@ -740,42 +786,54 @@ freePGconn(PGconn *conn)
 static void
 closePGconn(PGconn *conn)
 {
-/* GH: What to do for !USE_POSIX_SIGNALS ? */
+	if (conn->sock >= 0)
+	{
+		/*
+		 * Try to send close message.
+		 * If connection is already gone, that's cool.  No reason for kernel
+		 * to kill us when we try to write to it.  So ignore SIGPIPE signals.
+		 */
 #if defined(USE_POSIX_SIGNALS)
-	struct sigaction ignore_action;
+		struct sigaction ignore_action;
+		struct sigaction oldaction;
 
-	/*
-	 * This is used as a constant, but not declared as such because the
-	 * sigaction structure is defined differently on different systems
-	 */
-	struct sigaction oldaction;
+		ignore_action.sa_handler = SIG_IGN;
+		sigemptyset(&ignore_action.sa_mask);
+		ignore_action.sa_flags = 0;
+		sigaction(SIGPIPE, (struct sigaction *) & ignore_action, &oldaction);
 
-	/*
-	 * If connection is already gone, that's cool.  No reason for kernel
-	 * to kill us when we try to write to it.  So ignore SIGPIPE signals.
-	 */
-	ignore_action.sa_handler = SIG_IGN;
-	sigemptyset(&ignore_action.sa_mask);
-	ignore_action.sa_flags = 0;
-	sigaction(SIGPIPE, (struct sigaction *) & ignore_action, &oldaction);
+		(void) pqPuts("X", conn);
+		(void) pqFlush(conn);
 
-	fputs("X\0", conn->Pfout);
-	fflush(conn->Pfout);
-	sigaction(SIGPIPE, &oldaction, NULL);
+		sigaction(SIGPIPE, &oldaction, NULL);
 #else
-				signal(SIGPIPE, SIG_IGN);
-	fputs("X\0", conn->Pfout);
-	fflush(conn->Pfout);
-	signal(SIGPIPE, SIG_DFL);
+		void (*oldsignal)(int);
+
+		oldsignal = signal(SIGPIPE, SIG_IGN);
+
+		(void) pqPuts("X", conn);
+		(void) pqFlush(conn);
+
+		signal(SIGPIPE, oldsignal);
 #endif
-	if (conn->Pfout)
-		fclose(conn->Pfout);
-	if (conn->Pfin)
-		fclose(conn->Pfin);
-	if (conn->Pfdebug)
-		fclose(conn->Pfdebug);
+	}
+
+	/*
+	 * Close the connection, reset all transient state, flush I/O buffers.
+	 */
+	if (conn->sock >= 0)
+		close(conn->sock);
+	conn->sock = -1;
 	conn->status = CONNECTION_BAD;		/* Well, not really _bad_ - just
 										 * absent */
+	conn->asyncStatus = PGASYNC_IDLE;
+	PQclearAsyncResult(conn);	/* deallocate result and curTuple */
+	if (conn->lobjfuncs)
+		free(conn->lobjfuncs);
+	conn->lobjfuncs = NULL;
+	conn->inStart = conn->inCursor = conn->inEnd = 0;
+	conn->outCount = 0;
+
 }
 
 /*
@@ -793,8 +851,7 @@ PQfinish(PGconn *conn)
 	}
 	else
 	{
-		if (conn->status == CONNECTION_OK)
-			closePGconn(conn);
+		closePGconn(conn);
 		freePGconn(conn);
 	}
 }
@@ -818,12 +875,8 @@ PQreset(PGconn *conn)
 }
 
 /*
- * PacketSend()
- *
- this is just like PacketSend(), defined in backend/libpq/pqpacket.c
- but we define it here to avoid linking in all of libpq.a
-
- * packetSend -- send a single-packet message.
+ * PacketSend() -- send a single-packet message.
+ * this is like PacketSend(), defined in backend/libpq/pqpacket.c
  *
  * RETURNS: STATUS_ERROR if the write fails, STATUS_OK otherwise.
  * SIDE_EFFECTS: may block.
@@ -833,15 +886,16 @@ packetSend(PGconn *conn, const char *buf, size_t len)
 {
 	/* Send the total packet size. */
 
-	if (pqPutInt(4 + len, 4, conn->Pfout, conn->Pfdebug))
+	if (pqPutInt(4 + len, 4, conn))
 		return STATUS_ERROR;
 
 	/* Send the packet itself. */
 
-	if (pqPutnchar(buf, len, conn->Pfout, conn->Pfdebug))
+	if (pqPutnchar(buf, len, conn))
 		return STATUS_ERROR;
 
-	pqFlush(conn->Pfout, conn->Pfdebug);
+	if (pqFlush(conn))
+		return STATUS_ERROR;
 
 	return STATUS_OK;
 }
@@ -1203,6 +1257,17 @@ PQerrorMessage(PGconn *conn)
 	return conn->errorMessage;
 }
 
+int
+PQsocket(PGconn *conn)
+{
+	if (!conn)
+	{
+		fprintf(stderr, "PQsocket() -- pointer to PGconn is null\n");
+		return -1;
+	}
+	return conn->sock;
+}
+
 void
 PQtrace(PGconn *conn, FILE *debug_port)
 {
@@ -1218,8 +1283,8 @@ PQtrace(PGconn *conn, FILE *debug_port)
 void
 PQuntrace(PGconn *conn)
 {
-	if (conn == NULL ||
-		conn->status == CONNECTION_BAD)
+	/* note: better allow untrace even when connection bad */
+	if (conn == NULL)
 	{
 		return;
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.17 1998/02/26 04:36:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.18 1998/05/06 23:49:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,8 @@
  *	 INTERFACE ROUTINES
  *		BeginCommand - prepare destination for tuples of the given type
  *		EndCommand - tell destination that no more tuples will arrive
- *		NullCommand - tell dest that the last of a query sequence was processed
+ *		NullCommand - tell dest that an empty query string was recognized
+ *		ReadyForQuery - tell dest that we are ready for a new query
  *
  *	 NOTES
  *		These routines do the appropriate work before and after
@@ -115,16 +116,10 @@ EndCommand(char *commandTag, CommandDest dest)
 			sprintf(buf, "%s%s", commandTag, CommandInfo);
 			CommandInfo[0] = 0;
 			pq_putstr(buf);
-			pq_flush();
 			break;
 
 		case Local:
 		case Debug:
-			break;
-		case CopyEnd:
-			pq_putnchar("Z", 1);
-			pq_flush();
-			break;
 		case None:
 		default:
 			break;
@@ -139,28 +134,37 @@ EndCommand(char *commandTag, CommandDest dest)
  *
  * COPY rel FROM stdin
  *
+ * NOTE: the message code letters are changed at protocol version 2.0
+ * to eliminate possible confusion with data tuple messages.
  */
 void
 SendCopyBegin(void)
 {
-	pq_putnchar("B", 1);
-/*	  pq_putint(0, 4); */
-	pq_flush();
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+		pq_putnchar("H", 1);	/* new way */
+	else
+		pq_putnchar("B", 1);	/* old way */
 }
 
 void
 ReceiveCopyBegin(void)
 {
-	pq_putnchar("D", 1);
-/*	  pq_putint(0, 4); */
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+		pq_putnchar("G", 1);	/* new way */
+	else
+		pq_putnchar("D", 1);	/* old way */
+	/* We *must* flush here to ensure FE knows it can send. */
 	pq_flush();
 }
 
 /* ----------------
- *		NullCommand - tell dest that the last of a query sequence was processed
+ *		NullCommand - tell dest that an empty query string was recognized
  *
- *		Necessary to implement the hacky FE/BE interface to handle
- *		multiple-return queries.
+ *		In FE/BE protocol version 1.0, this hack is necessary to support
+ *		libpq's crufty way of determining whether a multiple-command
+ *		query string is done.  In protocol 2.0 it's probably not really
+ *		necessary to distinguish empty queries anymore, but we still do it
+ *		for backwards compatibility with 1.0.
  * ----------------
  */
 void
@@ -168,46 +172,46 @@ NullCommand(CommandDest dest)
 {
 	switch (dest)
 	{
-			case RemoteInternal:
-			case Remote:
+		case RemoteInternal:
+		case Remote:
 			{
-#if 0
-
-				/*
-				 * Do any asynchronous notification.  If front end wants
-				 * to poll, it can send null queries to call this
-				 * function.
-				 */
-				PQNotifyList *nPtr;
-				MemoryContext orig;
-
-				if (notifyContext == NULL)
-				{
-					notifyContext = CreateGlobalMemory("notify");
-				}
-				orig = MemoryContextSwitchTo((MemoryContext) notifyContext);
-
-				for (nPtr = PQnotifies();
-					 nPtr != NULL;
-					 nPtr = (PQNotifyList *) SLGetSucc(&nPtr->Node))
-				{
-					pq_putnchar("A", 1);
-					pq_putint(0, sizeof(int4));
-					pq_putstr(nPtr->relname);
-					pq_putint(nPtr->be_pid, sizeof(nPtr->be_pid));
-					PQremoveNotify(nPtr);
-				}
-				pq_flush();
-				PQcleanNotify();/* garbage collect */
-				MemoryContextSwitchTo(orig);
-#endif
 				/* ----------------
-				 *		tell the fe that the last of the queries has finished
+				 *		tell the fe that we saw an empty query string
 				 * ----------------
 				 */
-/*		pq_putnchar("I", 1);  */
 				pq_putstr("I");
-				/* pq_putint(0, 4); */
+			}
+			break;
+
+		case Local:
+		case Debug:
+		case None:
+		default:
+			break;
+	}
+}
+
+/* ----------------
+ *		ReadyForQuery - tell dest that we are ready for a new query
+ *
+ *		The ReadyForQuery message is sent in protocol versions 2.0 and up
+ *		so that the FE can tell when we are done processing a query string.
+ *
+ *		Note that by flushing the stdio buffer here, we can avoid doing it
+ *		most other places and thus reduce the number of separate packets sent.
+ * ----------------
+ */
+void
+ReadyForQuery(CommandDest dest)
+{
+	switch (dest)
+	{
+		case RemoteInternal:
+		case Remote:
+			{
+				if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+					pq_putnchar("Z", 1);
+				/* Flush output at end of cycle in any case. */
 				pq_flush();
 			}
 			break;
@@ -264,7 +268,6 @@ BeginCommand(char *pname,
 			 *		send fe info on tuples we're about to send
 			 * ----------------
 			 */
-			pq_flush();
 			pq_putnchar("P", 1);/* new portal.. */
 			pq_putstr(pname);	/* portal name */
 

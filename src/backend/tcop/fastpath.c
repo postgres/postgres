@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.16 1998/04/26 04:07:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.17 1998/05/06 23:50:10 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -113,7 +113,6 @@ SendFunctionResult(Oid fid,		/* function id */
 	}
 
 	pq_putnchar("0", 1);
-	pq_flush();
 }
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.31 1998/04/27 04:05:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.32 1998/05/06 23:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,7 @@
  *	  end of commit),
  *	  2.a  If the process is the same as the backend process that issued
  *		   notification (we are notifying something that we are listening),
- *		   signal the corresponding frontend over the comm channel using the
- *		   out-of-band channel.
+ *		   signal the corresponding frontend over the comm channel.
  *	  2.b  For all other listening processes, we send kill(2) to wake up
  *		   the listening backend.
  * 3. Upon receiving a kill(2) signal from another backend process notifying
@@ -30,7 +29,7 @@
  *	  3.a  We are sleeping, wake up and signal our frontend.
  *	  3.b  We are in middle of another transaction, wait until the end of
  *		   of the current transaction and signal our frontend.
- * 4. Each frontend receives this notification and prcesses accordingly.
+ * 4. Each frontend receives this notification and processes accordingly.
  *
  * -- jw, 12/28/93
  *
@@ -546,12 +545,6 @@ Async_UnlistenOnExit(int code,	/* from exitpg */
  *
  * Results:
  *		XXX
- *
- * Side effects:
- *
- *		We make use of the out-of-band channel to transmit the
- *		notification to the front end.	The actual data transfer takes
- *		place at the front end's request.
  *
  * --------------------------------------------------------------
  */

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.8 1998/03/15 08:03:00 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.9 1998/05/06 23:51:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ int PgInputProc(DRIVER_INPUT_PROTO)
 {
     Pg_ConnectionId	*connid;
     PGconn		*conn;
-    int			c;
+    char		c;
     int			avail;
 
     connid = (Pg_ConnectionId *)cData;
@@ -64,13 +64,24 @@ int PgInputProc(DRIVER_INPUT_PROTO)
 	return PgEndCopy(connid, errorCodePtr);
     }
 
+    /* Try to load any newly arrived data */
+    errno = 0;
+
+    if (pqReadData(conn) < 0) {
+      *errorCodePtr = errno ? errno : EIO;
+      return -1;
+    }
+
+    /* Move data from libpq's buffer to tcl's */
+
+    conn->inCursor = conn->inStart;
+
     avail = bufSize;
     while (avail > 0 &&
-	    (c = pqGetc(conn->Pfin, conn->Pfdebug)) != EOF) {
-	/* fprintf(stderr, "%d: got char %c\n", bufSize-avail, c); */
+	   pqGetc(&c, conn) == 0) {
 	*buf++ = c;
 	--avail;
-	if (c == '\n' && bufSize-avail > 3) {
+	if (c == '\n' && bufSize-avail >= 3) {
 	    if ((bufSize-avail == 3 || buf[-4] == '\n') &&
 		    buf[-3] == '\\' && buf[-2] == '.') {
 		avail += 3;
@@ -79,6 +90,8 @@ int PgInputProc(DRIVER_INPUT_PROTO)
 	    }
 	}
     }
+    /* Accept the data permanently */
+    conn->inStart = conn->inCursor;
     /* fprintf(stderr, "returning %d chars\n", bufSize - avail); */
     return bufSize - avail;
 }
@@ -100,16 +113,15 @@ int PgOutputProc(DRIVER_OUTPUT_PROTO)
 	return -1;
     }
 
-    /*
-    fprintf(stderr, "PgOutputProc called: bufSize=%d: atend:%d <", bufSize,
-	strncmp(buf, "\\.\n", 3));
-    fwrite(buf, 1, bufSize, stderr);
-    fputs(">\n", stderr);
-    */
-    fwrite(buf, 1, bufSize, conn->Pfout);
-    if (bufSize > 2 && strncmp(&buf[bufSize-3], "\\.\n", 3) == 0) {
-	/* fprintf(stderr,"checking closure\n"); */
-	fflush(conn->Pfout);
+    errno = 0;
+
+    if (pqPutnchar(buf, bufSize, conn)) {
+      *errorCodePtr = errno ? errno : EIO;
+      return -1;
+    }
+
+    if (bufSize >= 3 && strncmp(&buf[bufSize-3], "\\.\n", 3) == 0) {
+	(void) pqFlush(conn);
 	if (PgEndCopy(connid, errorCodePtr) == -1)
 	    return -1;
     }
@@ -156,10 +168,10 @@ PgSetConnectionId(Tcl_Interp *interp, PGconn *conn)
     for (i = 0; i < RES_START; i++) connid->results[i] = NULL;
     Tcl_InitHashTable(&connid->notify_hash, TCL_STRING_KEYS);
 
-    sprintf(connid->id, "pgsql%d", fileno(conn->Pfout));
+    sprintf(connid->id, "pgsql%d", PQsocket(conn));
 
 #if TCL_MAJOR_VERSION == 7 && TCL_MINOR_VERSION == 5
-    conn_chan = Tcl_CreateChannel(&Pg_ConnType, connid->id, conn->Pfin, conn->Pfout, (ClientData)connid);
+    conn_chan = Tcl_CreateChannel(&Pg_ConnType, connid->id, NULL, NULL, (ClientData)connid);
 #else
     conn_chan = Tcl_CreateChannel(&Pg_ConnType, connid->id, (ClientData)connid,
 	TCL_READABLE | TCL_WRITABLE);

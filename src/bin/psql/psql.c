@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.139 1998/05/04 02:02:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.140 1998/05/06 23:50:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,6 +282,38 @@ PSQLexec(PsqlSettings *pset, char *query)
 	}
 	return NULL;
 }
+
+/*
+ * Code to support command cancellation.
+ * If interactive, we enable a SIGINT signal catcher that sends
+ * a cancel request to the backend.
+ * Note that sending the cancel directly from the signal handler
+ * is safe only because the cancel is sent as an OOB message.
+ * If it were inline data, then we'd risk inserting it into the
+ * middle of a normal data message by doing this.
+ * (It's probably not too cool to write on stderr, for that matter...
+ *  but for debugging purposes we'll risk that.)
+ */
+
+static PGconn * cancelConn = NULL; /* connection to try cancel on */
+
+static void
+handle_sigint (SIGNAL_ARGS)
+{
+	if (cancelConn == NULL)
+		exit(1);				/* accept signal if no connection */
+	/* Try to send cancel request */
+	if (PQrequestCancel(cancelConn))
+	{
+		fprintf(stderr, "\nCANCEL request sent\n");
+	}
+	else
+	{
+		fprintf(stderr, "\nCannot send cancel request:\n%s\n",
+				PQerrorMessage(cancelConn));
+	}
+}
+
 
 /*
  * listAllDbs
@@ -1099,8 +1131,7 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 			exit(2);			/* we are out'ta here */
 		}
 		/* check for asynchronous returns */
-		notify = PQnotifies(pset->db);
-		if (notify)
+		while ((notify = PQnotifies(pset->db)) != NULL)
 		{
 			fprintf(stderr,
 				 "ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
@@ -1416,6 +1447,7 @@ do_connect(const char *new_dbname,
 		}
 		else
 		{
+			cancelConn = pset->db; /* redirect sigint's loving attentions */
 			PQfinish(olddb);
 			free(pset->prompt);
 			pset->prompt = malloc(strlen(PQdb(pset->db)) + 10);
@@ -2462,11 +2494,18 @@ main(int argc, char **argv)
 	settings.opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
 	settings.opt.pager = 1;
 	if (!isatty(0) || !isatty(1))
+	{
+		/* Noninteractive defaults */
 		settings.notty = 1;
-#ifdef USE_READLINE
+	}
 	else
+	{
+		/* Interactive defaults */
+		pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
+#ifdef USE_READLINE
 		settings.useReadline = 1;
 #endif
+	}
 #ifdef PSQL_ALWAYS_GET_PASSWORDS
 	settings.getPassword = 1;
 #else
@@ -2580,6 +2619,9 @@ main(int argc, char **argv)
 		PQfinish(settings.db);
 		exit(1);
 	}
+
+	cancelConn = settings.db;	/* enable SIGINT to send cancel */
+
 	if (listDatabases)
 	{
 		exit(listAllDbs(&settings));
