@@ -30,14 +30,14 @@ exec sql declare cur cursor for
                 ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect to tcp:postgresql://localhost:5432/mm; 
+	exec sql connect to unix:postgresql://localhost:5432/mm; 
 
 	strcpy(msg, "create");
 	exec sql create table meskes(name char(8), born integer, age smallint, married char(8));
 
 	strcpy(msg, "insert");
-	exec sql insert into meskes(name, born, age, married) values ('Petra', 19661202, 31, '19900404');
-	exec sql insert into meskes(name, born, age, married) values ('Michael', 19660117, 32, '19900404');
+	exec sql insert into meskes(name, born, age, married) values ('Petra', 19661202, 32, '19900404');
+	exec sql insert into meskes(name, born, age, married) values ('Michael', 19660117, 33, '19900404');
 	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 7);
 	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 4);
 	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 0);

@@ -1,4 +1,4 @@
-#include <c.h>
+#include <postgres.h>
 
 #ifdef __cplusplus
 extern		"C"

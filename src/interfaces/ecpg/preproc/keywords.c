@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.7 1998/12/22 18:50:55 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.8 1999/01/18 17:17:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"else", ELSE},
 	{"encoding", ENCODING},
 	{"end", END_TRANS},
+	/***S*I***/
+	{"except", EXCEPT},
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
 	{"explain", EXPLAIN},
@@ -121,16 +123,20 @@ static ScanKeyword ScanKeywords[] = {
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
+	/***S*I***/
+	{"intersect", INTERSECT},
 	{"interval", INTERVAL},
 	{"into", INTO},
 	{"is", IS},
 	{"isnull", ISNULL},
+	{"isolation", ISOLATION},
 	{"join", JOIN},
 	{"key", KEY},
 	{"lancompiler", LANCOMPILER},
 	{"language", LANGUAGE},
 	{"leading", LEADING},
 	{"left", LEFT},
+	{"level", LEVEL},
 	{"like", LIKE},
 	{"listen", LISTEN},
 	{"load", LOAD},

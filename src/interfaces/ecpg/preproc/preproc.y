@@ -20,7 +20,7 @@
  */
 static int	struct_level = 0;
 static char	errortext[128];
-static int      QueryIsRule = 0;
+static int      QueryIsRule = 0, ForUpdateNotAllowed = 0;
 static enum ECPGttype actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
 
@@ -536,11 +536,11 @@ output_statement(char * stmt, int mode)
                 CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
                 CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
                 DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
-                ELSE, END_TRANS, EXECUTE, EXISTS, EXTRACT,
+                ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
                 FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
                 GRANT, GROUP, HAVING, HOUR_P,
-                IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS, ISOLATION,
-                JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
+                IN, INNER_P, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO, IS,
+                ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
                 MATCH, MINUTE_P, MONTH_P, NAMES,
                 NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
                 OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
@@ -608,7 +608,7 @@ output_statement(char * stmt, int mode)
 %left		'.'
 %left		'[' ']'
 %nonassoc	TYPECAST
-%left		UNION
+%left		UNION INTERSECT EXCEPT
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
@@ -630,7 +630,7 @@ output_statement(char * stmt, int mode)
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
 %type  <str>	numeric a_expr_or_null row_expr row_descriptor row_list
-%type  <str>	SelectStmt union_clause select_list SubSelect result
+%type  <str>	SelectStmt SubSelect result
 %type  <str>	opt_table opt_union opt_unique sort_clause sortby_list
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause c_list 
@@ -638,7 +638,7 @@ output_statement(char * stmt, int mode)
 %type  <str> 	join_using where_clause relation_expr row_op sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
-%type  <str>    NotifyStmt columnElem copy_dirn SubUnion c_expr UnlistenStmt
+%type  <str>    NotifyStmt columnElem copy_dirn c_expr UnlistenStmt
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
 %type  <str>    ClosePortalStmt DestroyStmt VacuumStmt opt_verbose
@@ -666,6 +666,7 @@ output_statement(char * stmt, int mode)
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	cursor_clause opt_cursor opt_readonly opt_of opt_lmode
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
+%type  <str>    select_w_o_sort 
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen open_opts
 %type  <str>	indicator ECPGExecute ecpg_expr dotext
@@ -2121,7 +2122,10 @@ RuleStmt:  CREATE RULE name AS
 OptStmtList:  NOTHING					{ $$ = make1_str("nothing"); }
 		| OptimizableStmt			{ $$ = $1; }
 		| '[' OptStmtBlock ']'			{ $$ = cat3_str(make1_str("["), $2, make1_str("]")); }
-		| '(' OptStmtBlock ')'			{ $$ = cat3_str(make1_str("("), $2, make1_str(")")); }
+/***S*I*D***/
+/* We comment this out because it produces a shift / reduce conflict 
+ * with the select_w_o_sort rule */
+/*		| '(' OptStmtBlock ')'			{ $$ = cat3_str(make1_str("("), $2, make1_str(")")); }*/
 		;
 
 OptStmtBlock:  OptStmtMulti
@@ -2132,8 +2136,13 @@ OptStmtBlock:  OptStmtMulti
 
 OptStmtMulti:  OptStmtMulti OptimizableStmt ';'
 				{  $$ = cat3_str($1, $2, make1_str(";")); }
-		| OptStmtMulti OptimizableStmt
-				{  $$ = cat2_str($1, $2); }
+/***S*I***/
+/* We comment the next rule because it seems to be redundant
+ * and produces 16 shift/reduce conflicts with the new SelectStmt rule
+ * needed for EXCEPT and INTERSECT. So far I did not notice any
+ * violations by removing the rule! */
+/*		| OptStmtMulti OptimizableStmt
+				{  $$ = cat2_str($1, $2); }*/
 		| OptimizableStmt ';'
 				{ $$ = cat2_str($1, make1_str(";")); }
 		;
@@ -2389,9 +2398,15 @@ OptimizableStmt:  SelectStmt
  *
  *****************************************************************************/
 
-InsertStmt:  INSERT INTO relation_name opt_column_list insert_rest
+/***S*I***/
+/* This rule used 'opt_column_list' between 'relation_name' and 'insert_rest'
+ * originally. When the second rule of 'insert_rest' was changed to use
+ * the new 'SelectStmt' rule (for INTERSECT and EXCEPT) it produced a shift/red uce
+ * conflict. So I just changed the rules 'InsertStmt' and 'insert_rest' to accept
+ * the same statements without any shift/reduce conflicts */
+InsertStmt:  INSERT INTO relation_name insert_rest
 				{
-					$$ = cat4_str(make1_str("insert into"), $3, $4, $5);
+					$$ = cat3_str(make1_str("insert into"), $3, $4);
 				}
 		;
 
@@ -2403,12 +2418,17 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 				{
 					$$ = make1_str("default values");
 				}
-		| SELECT opt_unique res_target_list2
-			 from_clause where_clause
-			 group_clause having_clause
-			 union_clause
+		| SelectStmt
 				{
-					$$ = cat4_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8);
+					$$ = $1
+				}
+		| '(' columnList ')' VALUES '(' res_target_list2 ')'
+				{
+					$$ = make5_str(make1_str("("), $2, make1_str(") values ("), $6, make1_str(")"));
+				}
+		| '(' columnList ')' SelectStmt
+				{
+					$$ = make4_str(make1_str("("), $2, make1_str(")"), $4);
 				}
 		;
 
@@ -2546,12 +2566,7 @@ UpdateStmt:  UPDATE relation_name
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-CursorStmt:  DECLARE name opt_cursor CURSOR FOR
- 			 SELECT opt_unique res_target_list2
-			 from_clause where_clause
-			 group_clause having_clause
-			 union_clause sort_clause
-			 cursor_clause
+CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt cursor_clause
 				{
 					struct cursor *ptr, *this;
 	
@@ -2570,7 +2585,7 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR
 			        	/* initial definition */
 				        this->next = cur;
 				        this->name = $2;
-				        this->command = cat4_str(cat5_str(cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for select"), $7), $8, $9, $10, $11), $12, $13, $14);
+				        this->command =  cat2_str(cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for"), $6), $7);
 					this->argsinsert = argsinsert;
 					this->argsresult = argsresult;
 					argsinsert = argsresult = NULL;
@@ -2609,54 +2624,60 @@ opt_of:  OF columnList { $$ = make2_str(make1_str("of"), $2); }
  *
  *****************************************************************************/
 
-SelectStmt:  SELECT opt_unique res_target_list2
-			 result from_clause where_clause
-			 group_clause having_clause
-			 union_clause sort_clause for_update_clause
+/***S*I***/
+/* The new 'SelectStmt' rule adapted for the optional use of INTERSECT EXCEPT a nd UNION
+ * accepts the use of '(' and ')' to select an order of set operations.
+ */
+SelectStmt:  select_w_o_sort sort_clause for_update_clause
 				{
-					$$ = cat3_str(cat5_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8, $9), $10, $11);
-					if (strlen($11) > 0)
-					{
-						if (strlen($9) > 0)
-							yyerror("SELECT FOR UPDATE is not allowed with UNION clause");
-						if (strlen($7) > 0)
-							yyerror("SELECT FOR UPDATE is not allowed with GROUP BY clause");
-						if (strlen($6) > 0)
-							yyerror("SELECT FOR UPDATE is not allowed with HAVING clause");
-					}
+					if (strlen($3) > 0 && ForUpdateNotAllowed != 0)
+							yyerror("SELECT FOR UPDATE is not allowed in this context");
+
+					ForUpdateNotAllowed = 0;
+					$$ = cat3_str($1, $2, $3);
 				}
+
+/***S*I***/ 
+/* This rule parses Select statements including UNION INTERSECT and EXCEPT.
+ * '(' and ')' can be used to specify the order of the operations 
+ * (UNION EXCEPT INTERSECT). Without the use of '(' and ')' we want the
+ * operations to be left associative.
+ *
+ *  The sort_clause is not handled here!
+ */
+select_w_o_sort: '(' select_w_o_sort ')'
+                        {
+                               $$ = make3_str(make1_str("("), $2, make1_str(")")); 
+                        }
+                | SubSelect
+                        {
+                               $$ = $1; 
+                        }
+                | select_w_o_sort EXCEPT select_w_o_sort
+			{
+				$$ = cat3_str($1, make1_str("except"), $3);
+				ForUpdateNotAllowed = 1;
+			}
+		| select_w_o_sort UNION opt_union select_w_o_sort
+			{
+				$$ = cat3_str($1, make1_str("union"), $3);
+				ForUpdateNotAllowed = 1;
+			}
+		| select_w_o_sort INTERSECT opt_union select_w_o_sort
+			{
+				$$ = cat3_str($1, make1_str("intersect"), $3);
+				ForUpdateNotAllowed = 1;
+			}
 		;
 
-SubSelect:  SELECT opt_unique res_target_list2
-                        from_clause where_clause
-                        group_clause having_clause
-                        union_clause
-                               {
-					$$ =cat4_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8);
-                               }
-               ;
-
-union_clause:  UNION opt_union select_list
+/***S*I***/
+SubSelect:     SELECT opt_unique res_target_list2
+                         result from_clause where_clause
+                         group_clause having_clause
 				{
-					$$ = cat3_str(make1_str("union"), $2, $3);
-				}
-		| /*EMPTY*/
-				{ $$ = make1_str(""); }
-		;
-
-select_list:  select_list UNION opt_union SubUnion
-				{
-					$$ = cat4_str($1, make1_str("union"), $3, $4);
-				}
-		| SubUnion
-				{ $$ = $1; }
-		;
-
-SubUnion:	SELECT opt_unique res_target_list2
-			 from_clause where_clause
-			 group_clause having_clause
-				{
-					$$ = cat3_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7);
+					$$ = cat4_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8);
+					if (strlen($7) > 0 || strlen($8) > 0)
+						ForUpdateNotAllowed = 1;
 				}
 		;
 
@@ -4416,9 +4437,9 @@ connection_target: database_name opt_server opt_port
 		    yyerror(errortext);
 		  }
 
-		  if (strncmp($1, "unix", 4) == 0 && strncmp($2, "localhost", 9) != 0)
+		  if (strncmp($1, "unix", 4) == 0 && strncmp($2 + 3, "localhost", 9) != 0)
 		  {
-		    sprintf(errortext, "unix domain sockets only work on 'localhost'");
+		    sprintf(errortext, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $2);
                     yyerror(errortext);
 		  }
 

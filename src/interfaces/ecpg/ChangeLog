@@ -371,4 +371,9 @@ Tue Jan  7 15:19:34 CET 1999
 
 	- Synced preproc.y with gram.y for for-update clause and changes in
 	  handling of numerics
+
+Mon Jan 18 11:22:44 CET 1999
+
+	- Added INTERSECT, EXCEPT and UNION for Select statements
+	- Put keywords.c in sync again after forgettimg it the last time.
 	- Set version to 2.4.6

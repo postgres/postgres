@@ -1,18 +1,18 @@
 all: test1 test2 perftest
 
-LDFLAGS=-g -I ../include -I ../../libpq -L../lib -lecpg -L../../libpq -lpq -lcrypt
+LDFLAGS=-g -I /usr/local/pgsql/include -L/usr/local/pgsql/lib -lecpg -lpq -lcrypt
 
 test1: test1.c
 test1.c: test1.pgc
-	../preproc/ecpg $?
+	/usr/local/pgsql/bin/ecpg $?
 
 test2: test2.c
 test2.c: test2.pgc
-	../preproc/ecpg $?
+	/usr/local/pgsql/bin/ecpg $?
 
 perftest: perftest.c
 perftest.c:perftest.pgc
-	../preproc/ecpg $?
+	/usr/local/pgsql/bin/ecpg $?
 
 clean:
 	/bin/rm test1 test2 perftest *.c log
