@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Sep  4 18:09:28 EDT 2002
+Last updated:		Thu Sep  5 00:58:20 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -268,7 +268,7 @@ Commands
 	o Allow array declarations and other data types in PL/PgSQl DECLARE
 	o Add PL/PgSQL PROCEDURES that can return multiple values
 	o Add table function support to pltcl, plperl, plpython
-
+	o Make PL/PgSQL %TYPE schema-aware 
 
 Clients
 =======
@@ -318,7 +318,7 @@ Referential Integrity
 * Add deferred trigger queue file (Jan)
 * -Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
-* Make triggers refer to columns by number, not name
+* -Make triggers refer to columns by number, not name
 * Enforce referential integrity for system tables
 * -Allow user to control trigger firing order (Tom)
 * -Add ALTER TRIGGER ... RENAME
