@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.27 1998/06/15 19:29:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.28 1998/06/26 01:58:45 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -18,7 +18,7 @@
  *
  *	Interface:
  *
- *	LockAcquire(), LockRelease(), LockTabInit().
+ *	LockAcquire(), LockRelease(), LockTableInit().
  *
  *	LockReplace() is called only within this module and by the
  *		lkchain module.  It releases a lock without looking
@@ -213,7 +213,7 @@ LockTypeInit(LOCKTAB *ltable,
 }
 
 /*
- * LockTabInit -- initialize a lock table structure
+ * LockTableInit -- initialize a lock table structure
  *
  * Notes:
  *		(a) a lock table has four separate entries in the binding
@@ -223,7 +223,7 @@ LockTypeInit(LOCKTAB *ltable,
  *
  */
 LockTableId
-LockTabInit(char *tabName,
+LockTableInit(char *tabName,
 			MASK *conflictsP,
 			int *prioP,
 			int ntypes)
@@ -237,7 +237,7 @@ LockTabInit(char *tabName,
 
 	if (ntypes > MAX_LOCKTYPES)
 	{
-		elog(NOTICE, "LockTabInit: too many lock types %d greater than %d",
+		elog(NOTICE, "LockTableInit: too many lock types %d greater than %d",
 			 ntypes, MAX_LOCKTYPES);
 		return (INVALID_TABLEID);
 	}
@@ -245,7 +245,7 @@ LockTabInit(char *tabName,
 	if (NumTables > MAX_TABLES)
 	{
 		elog(NOTICE,
-			 "LockTabInit: system limit of MAX_TABLES (%d) lock tables",
+			 "LockTableInit: system limit of MAX_TABLES (%d) lock tables",
 			 MAX_TABLES);
 		return (INVALID_TABLEID);
 	}
@@ -254,7 +254,7 @@ LockTabInit(char *tabName,
 	shmemName = (char *) palloc((unsigned) (strlen(tabName) + 32));
 	if (!shmemName)
 	{
-		elog(NOTICE, "LockTabInit: couldn't malloc string %s \n", tabName);
+		elog(NOTICE, "LockTableInit: couldn't malloc string %s \n", tabName);
 		return (INVALID_TABLEID);
 	}
 
@@ -262,7 +262,7 @@ LockTabInit(char *tabName,
 	ltable = (LOCKTAB *) palloc((unsigned) sizeof(LOCKTAB));
 	if (!ltable)
 	{
-		elog(NOTICE, "LockTabInit: couldn't malloc lock table %s\n", tabName);
+		elog(NOTICE, "LockTableInit: couldn't malloc lock table %s\n", tabName);
 		pfree(shmemName);
 		return (INVALID_TABLEID);
 	}
@@ -285,7 +285,7 @@ LockTabInit(char *tabName,
 
 	if (!ltable->ctl)
 	{
-		elog(FATAL, "LockTabInit: couldn't initialize %s", tabName);
+		elog(FATAL, "LockTableInit: couldn't initialize %s", tabName);
 		status = FALSE;
 	}
 
@@ -326,7 +326,7 @@ LockTabInit(char *tabName,
 	Assert(ltable->lockHash->hash == tag_hash);
 	if (!ltable->lockHash)
 	{
-		elog(FATAL, "LockTabInit: couldn't initialize %s", tabName);
+		elog(FATAL, "LockTableInit: couldn't initialize %s", tabName);
 		status = FALSE;
 	}
 
@@ -347,7 +347,7 @@ LockTabInit(char *tabName,
 
 	if (!ltable->xidHash)
 	{
-		elog(FATAL, "LockTabInit: couldn't initialize %s", tabName);
+		elog(FATAL, "LockTableInit: couldn't initialize %s", tabName);
 		status = FALSE;
 	}
 
@@ -365,7 +365,7 @@ LockTabInit(char *tabName,
 }
 
 /*
- * LockTabRename -- allocate another tableId to the same
+ * LockTableRename -- allocate another tableId to the same
  *		lock table.
  *
  * NOTES: Both the lock module and the lock chain (lchain.c)
@@ -378,7 +378,7 @@ LockTabInit(char *tabName,
  */
 #ifdef NOT_USED
 LockTableId
-LockTabRename(LockTableId tableId)
+LockTableRename(LockTableId tableId)
 {
 	LockTableId newTableId;
 
