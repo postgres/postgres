@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.14 1997/08/20 01:50:06 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.15 1997/09/01 05:51:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,42 @@ void unput(char);
 #endif /* FLEX_SCANNER */
 
 extern YYSTYPE yylval;
+
+int llen;
+char literal[MAX_PARSE_BUFFER];
+
 %}
+    /* OK, here is a short description of lex/flex rules behavior.
+     * The longest pattern which matches an input string is always chosen.
+     * For equal-length patterns, the first occurring in the rules list is chosen.
+     * INITIAL is the starting condition, to which all non-conditional rules apply.
+     * <xc> is an exclusive condition to allow embedded C-style comments.
+     * When in an exclusive condition, only those rules defined for that condition apply.
+     * So, when in condition <xc>, only strings which would terminate the "extended comment"
+     *  trigger any action other than "ignore".
+     * The "extended comment" syntax closely resembles allowable operator syntax.
+     * Therefore, be sure to match _any_ candidate comment, including those with appended
+     *  operator-like symbols. - thomas 1997-07-14
+     */
+
+    /* define an exclusive condition to allow extended C-style comments - tgl 1997-07-12 */
+%x xc
+    /* define an exclusive condition for quoted strings - tgl 1997-07-30 */
+%x xq
+
+    /* We used to allow double-quoted strings, but SQL doesn't so we won't either */
+quote           '
+xqstart		{quote}
+xqstop		{quote}
+xqdouble	{quote}{quote}
+xqinside	[^\']*
+xqliteral	[\\].
+
+xcline		[\/][\*].*[\*][\/]{space}*\n*
+xcstart		[\/][\*]{op_and_self}*
+xcstop		{op_and_self}*[\*][\/]({space}*|\n)
+xcinside	[^*]*
+xcstar		[^/]
 
 digit		[0-9]
 letter		[_A-Za-z]
@@ -69,15 +104,15 @@ sysfunc		SYS_{letter}{letter_or_digit}*
 
 identifier	{letter}{letter_or_digit}*
 
-self		[,()\[\].;$\:\+\-\*\/\<\>\=\|]
-op_and_self	[\~\!\@\#\%\^\&\|\`\?\$\:\+\-\*\/\<\>\=]
-op_and_self2	[\~\!\@\#\%\^\&\|\`\?\$\:\*\/\<\>\=]
-op_only		[\~\!\@\#\%\^\&\`\?]
+typecast	"::"
 
-operator	({op_and_self}{op_and_self2}+)|{op_only}+
-    /* we used to allow double-quoted strings, but SQL doesn't */
-    /* so we won't either*/
-quote           '
+self		[,()\[\].;$\:\+\-\*\/\<\>\=\|]
+selfm		{self}[\-][\.0-9]
+
+op_and_self	[\~\!\@\#\%\^\&\|\`\?\$\:\+\-\*\/\<\>\=]
+
+operator	{op_and_self}+
+operatorm	{op_and_self}+[\-][\.0-9]
 
 integer		-?{digit}+
 real		-?{digit}+\.{digit}+([Ee][-+]?{digit}+)?
@@ -97,10 +132,57 @@ other		.
 
 {comment}	{ /* ignore */	}
 
-"::"		{ return TYPECAST;	}
+    /* allow extended comments using C-style delimiters - tgl 1997-07-12 */
+{xcline}	{ /* ignore */ }
 
-{self}		{ return (yytext[0]);	}
+<xc>{xcstar}	|
+{xcstart}	{ BEGIN(xc); }
 
+<xc>{xcstop}	{ BEGIN(INITIAL); }
+
+<xc>{xcinside}	{ /* ignore */ }
+
+{xqstart}		{
+			BEGIN(xq);
+			llen = 0;
+			*literal = '\0';
+		}
+<xq>{xqstop}	{
+			BEGIN(INITIAL);
+			yylval.str = pstrdup(scanstr(literal));
+			return (SCONST); 
+		}
+<xq>{xqdouble}	|
+<xq>{xqinside}	{
+			if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1)) {
+			    elog(WARN,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+			    /* not reached */
+			}
+			memcpy(literal+llen, yytext, yyleng+1);
+			llen += yyleng;
+		}
+<xq>{xqliteral}	{
+			if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1)) {
+			    elog(WARN,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+			    /* not reached */
+			}
+			memcpy(literal+llen, yytext+1, yyleng);
+			llen += yyleng-1;
+		}
+
+{typecast}	{ return TYPECAST; }
+
+{selfm}		{
+			yyless(yyleng-2);
+			return (yytext[0]);
+		}
+{self}		{ return (yytext[0]); }
+
+{operatorm}	{
+			yyless(yyleng-2);
+			yylval.str = pstrdup((char*)yytext);
+			return (Op);
+		}
 {operator}	{
 			if (strcmp((char*)yytext,"!=") == 0)
 			    yylval.str = pstrdup("<>"); /* compatability */
@@ -124,49 +206,6 @@ other		.
 		CheckFloat8Val(yylval.dval);
 		return (FCONST);
 		}
-{quote}	        {       
-                        char literal[MAX_PARSE_BUFFER];
-                        int i = 0;
-                        int c = 0;
-                        /* quote_seen can be either \ or ' because
-                           we handle both cases of \' and '' for
-                           quoting quotes*/
-                        int quote_seen = 0; 
-                                             
-                        while (i < MAX_PARSE_BUFFER - 1) {
-                            c = input();
-                            if (quote_seen != 0) {
-                                 if (quote_seen == '\'' &&
-                                     c != '\'') {
-                                    /* a non-quote follows a single quote */
-                                    /* so we've hit the end of the literal */
-                                    if (c != '\0' && c != EOF)
-                                      unput(c); /* put back the extra char we read*/
-                                    i = i - 1;
-                                    break; /* break out of the while loop */
-                                 }  
-                                 /* if we reach here, we're still in */
-                                 /* the string literal */
-                                 literal[i++] = c;
-                                 quote_seen = 0;
-                                 continue;
-                            }
-                            if (c == '\0' || c == EOF) {
-                               elog(WARN,"unterminated quoted string literal");
-                               /* not reached */
-                            }
-                            literal[i++] = c;
-                            if (c == '\'' || c == '\\')
-                               quote_seen = c;
-                        }
-                        if ( i == MAX_PARSE_BUFFER - 1) {
-                           elog (WARN, "unterminated quote string.  parse buffer of %d chars exceeded", MAX_PARSE_BUFFER);
-                           /* not reached */
-		       }
-                        literal[i] = '\0';
-			yylval.str = pstrdup(scanstr(literal));
-	                return (SCONST); 
-		    }
 {identifier}	{
 			int i;
 			ScanKeyword	*keyword;
@@ -177,19 +216,25 @@ other		.
 			
 			keyword = ScanKeywordLookup((char*)yytext);
 			if (keyword != NULL) {
-				if ( keyword->value == DEFAULT )
+				if ( keyword->value == DEFAULT ) {
 					DefaultStartPosition = CurScanPosition () + yyleng + 1;
-				else if ( keyword->value == CHECK )
+printf( "default offset is %d\n", DefaultStartPosition);
+
+				} else if ( keyword->value == CHECK ) {
 					CheckStartPosition = CurScanPosition () + yyleng + 1;
+printf( "check offset is %d\n", CheckStartPosition);
+
+				};
+
 				return (keyword->value);
 			} else {
 				yylval.str = pstrdup((char*)yytext);
 				return (IDENT);
 			}
 		}
-{space}		{ /* ignore */		}
+{space}		{ /* ignore */ }
 
-{other}		{ return (yytext[0]);	}
+{other}		{ return (yytext[0]); }
 
 %%
 
@@ -282,7 +327,12 @@ myinput(char* buf, int max)
 int
 CurScanPosition(void)
 {
+printf( "current position is %d\n", yy_c_buf_p - yy_current_buffer->yy_ch_buf - yyleng);
+
+    return (parseCh - parseString - yyleng - 1);
+#if FALSE
     return (yy_c_buf_p - yy_current_buffer->yy_ch_buf - yyleng);
+#endif
 }
 
 #endif /* FLEX_SCANNER */
