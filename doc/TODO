@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep 23 10:52:15 EDT 2002
+Last updated:		Thu Oct  3 12:38:57 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -282,6 +282,7 @@ Clients
 * Allow psql to show transaction status if backend protocol changes made
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * -Have pg_dump use ADD PRIMARY KEY after COPY, for performance (Neil Conway)
+* Add schema, cast, and conversion backslash commands to psql
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
