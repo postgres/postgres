@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.19 2003/05/30 22:55:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.20 2003/05/30 23:55:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ static char *findPgDump(const char *argv0);
 char	   *pgdumploc;
 PQExpBuffer pgdumpopts;
 bool		output_clean = false;
+bool		skip_acls = false;
 bool		verbose = false;
 int			server_version;
 
@@ -72,11 +73,14 @@ main(int argc, char *argv[])
 	char	   *pgport = NULL;
 	char	   *pguser = NULL;
 	bool		force_password = false;
+	bool		data_only = false;
 	bool		globals_only = false;
+	bool		schema_only = false;
 	PGconn	   *conn;
 	int			c;
 
 	static struct option long_options[] = {
+		{"data-only", no_argument, NULL, 'a'},
 		{"clean", no_argument, NULL, 'c'},
 		{"inserts", no_argument, NULL, 'd'},
 		{"attribute-inserts", no_argument, NULL, 'D'},
@@ -87,8 +91,11 @@ main(int argc, char *argv[])
 		{"oids", no_argument, NULL, 'o'},
 		{"port", required_argument, NULL, 'p'},
 		{"password", no_argument, NULL, 'W'},
+		{"schema-only", no_argument, NULL, 's'},
 		{"username", required_argument, NULL, 'U'},
 		{"verbose", no_argument, NULL, 'v'},
+		{"no-privileges", no_argument, NULL, 'x'},
+		{"no-acl", no_argument, NULL, 'x'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -119,10 +126,15 @@ main(int argc, char *argv[])
 	pgdumploc = findPgDump(argv[0]);
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "cdDgh:iop:U:vW", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDgh:iop:sU:vWx", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
+			case 'a':
+				data_only = true;
+				appendPQExpBuffer(pgdumpopts, " -a");
+				break;
+
 			case 'c':
 				output_clean = true;
 				break;
@@ -151,6 +163,11 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(pgdumpopts, " -p '%s'", pgport);
 				break;
 
+			case 's':
+				schema_only = true;
+				appendPQExpBuffer(pgdumpopts, " -s");
+				break;
+
 			case 'U':
 				pguser = optarg;
 				appendPQExpBuffer(pgdumpopts, " -U '%s'", pguser);
@@ -164,6 +181,11 @@ main(int argc, char *argv[])
 			case 'W':
 				force_password = true;
 				appendPQExpBuffer(pgdumpopts, " -W");
+				break;
+
+			case 'x':
+				skip_acls = true;
+				appendPQExpBuffer(pgdumpopts, " -x");
 				break;
 
 			default:
@@ -189,16 +211,19 @@ main(int argc, char *argv[])
 	printf("--\n\n");
 	printf("\\connect \"template1\"\n\n");
 
-	dumpUsers(conn);
-	dumpGroups(conn);
+	if (!data_only)
+	{
+		dumpUsers(conn);
+		dumpGroups(conn);
+	}
 
-	if (globals_only)
-		goto end;
+	if (!globals_only)
+	{
+		if (!data_only)
+			dumpCreateDB(conn);
+		dumpDatabases(conn);
+	}
 
-	dumpCreateDB(conn);
-	dumpDatabases(conn);
-
-end:
 	PQfinish(conn);
 	exit(0);
 }
@@ -213,14 +238,17 @@ help(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 
 	printf(_("\nOptions:\n"));
+	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
 	printf(_("  -c, --clean              clean (drop) databases prior to create\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
 	printf(_("  -g, --globals-only       dump only global objects, no databases\n"));
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
+	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
+	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
 	printf(_("  --help                   show this help, then exit\n"));
 	printf(_("  --version                output version information, then exit\n"));
 
@@ -462,7 +490,8 @@ dumpCreateDB(PGconn *conn)
 			appendPQExpBuffer(buf, ";\n");
 		}
 
-		if (!buildACLCommands(fdbname, "DATABASE", dbacl, dbowner,
+		if (!skip_acls &&
+			!buildACLCommands(fdbname, "DATABASE", dbacl, dbowner,
 							  server_version, buf))
 		{
 			fprintf(stderr, _("%s: could not parse ACL list (%s) for database %s\n"),

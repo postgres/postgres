@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.38 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.39 2003/05/30 23:55:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,8 +35,8 @@ PostgreSQL documentation
    <application>pg_dumpall</application> also dumps global objects
    that are common to all databases.
    (<application>pg_dump</application> does not save these objects.)
-   This currently includes the information about database users and
-   groups.
+   This currently includes information about database users and
+   groups, and access permissions that apply to databases as a whole.
   </para>
 
   <para>
@@ -75,9 +75,20 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
-    The following command-line options are used to control the output format.
+    The following command-line options are used to control the content and
+    format of the output.
 
     <variablelist>
+     <varlistentry>
+      <term><option>-a</></term>
+      <term><option>--data-only</></term>
+      <listitem>
+       <para>
+	Dump only the data, not the schema (data definitions).
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><option>-c</option></term>
       <term><option>--clean</option></term>
@@ -162,6 +173,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-s</option></term>
+      <term><option>--schema-only</option></term>
+      <listitem>
+       <para>
+	Dump only the schema (data definitions), no data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-v</></term>
       <term><option>--verbose</></term>
       <listitem>
@@ -169,6 +190,17 @@ PostgreSQL documentation
 	Specifies verbose mode.  This will cause
 	<application>pg_dumpall</application> to print progress
 	messages to standard error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-x</></term>
+      <term><option>--no-privileges</></term>
+      <term><option>--no-acl</></term>
+      <listitem>
+       <para>
+	Prevent dumping of access privileges (grant/revoke commands).
        </para>
       </listitem>
      </varlistentry>
