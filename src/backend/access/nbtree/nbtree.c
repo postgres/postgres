@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.75 2001/01/24 19:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.76 2001/01/26 01:24:31 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,13 +26,18 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
-
+#include "access/xlogutils.h"
 
 bool		BuildingBtree = false;		/* see comment in btbuild() */
-bool		FastBuild = true;	/* use sort/build instead of insertion
-								 * build */
+bool		FastBuild = true;	/* use sort/build instead */
+								/* of insertion build */
 
-#include "access/xlogutils.h"
+
+/*
+ * TEMPORARY FLAG FOR TESTING NEW FIX TREE
+ * CODE WITHOUT AFFECTING ANYONE ELSE
+ */
+bool		FixBTree = false;
 
 static void _bt_restscan(IndexScanDesc scan);
 

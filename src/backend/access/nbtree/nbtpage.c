@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.47 2001/01/24 19:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.48 2001/01/26 01:24:31 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -28,6 +28,8 @@
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 
+extern bool FixBTree;	/* comments in nbtree.c */
+extern Buffer _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release);
 
 /*
  *	We use high-concurrency locking on btrees.	There are two cases in
@@ -237,7 +239,58 @@ _bt_getroot(Relation rel, int access)
 
 	if (! P_ISROOT(rootopaque))
 	{
-		/* it happened, try again */
+		/*
+		 * It happened, but if root page splitter failed to create
+		 * new root page then we'll go in loop trying to call
+		 * _bt_getroot again and again.
+		 */
+		if (FixBTree)
+		{
+			Buffer	newrootbuf;
+
+check_parent:;
+			if (rootopaque->btpo_parent == BTREE_METAPAGE)	/* unupdated! */
+			{
+				LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
+				LockBuffer(rootbuf, BT_WRITE);
+
+				/* handle concurrent fix of root page */
+				if (rootopaque->btpo_parent == BTREE_METAPAGE)	/* unupdated! */
+				{
+					newrootbuf = _bt_fixroot(rel, rootbuf, true);
+					LockBuffer(newrootbuf, BUFFER_LOCK_UNLOCK);
+					LockBuffer(newrootbuf, BT_READ);
+					rootbuf = newrootbuf;
+					rootpage = BufferGetPage(rootbuf);
+					rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
+					/* New root might be splitted while changing lock */
+					if (P_ISROOT(rootopaque))
+						return(rootbuf);
+					/* rootbuf is read locked */
+					goto check_parent;
+				}
+				else	/* someone else already fixed root */
+				{
+					LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
+					LockBuffer(rootbuf, BT_READ);
+				}
+			}
+			/*
+			 * Ok, here we have old root page with btpo_parent pointing
+			 * to upper level - check parent page because of there is
+			 * good chance that parent is root page.
+			 */
+			newrootbuf = _bt_getbuf(rel, rootopaque->btpo_parent, BT_READ);
+			_bt_relbuf(rel, rootbuf, BT_READ);
+			rootbuf = newrootbuf;
+			rootpage = BufferGetPage(rootbuf);
+			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
+			if (P_ISROOT(rootopaque))
+				return(rootbuf);
+			/* no luck -:( */
+		}
+
+		/* try again */
 		_bt_relbuf(rel, rootbuf, BT_READ);
 		return _bt_getroot(rel, access);
 	}
