@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.9 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.10 2003/06/18 12:19:11 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -41,16 +41,13 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>clusterdb</application> is a shell script wrapper around the
-   backend command
-   <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title"> via
-   the <productname>PostgreSQL</productname> interactive terminal
-   <xref linkend="APP-PSQL">. There is no effective
-   difference between clustering databases via this or other methods.
-   <application>psql</application> must be found by the script and
-   a database server must be running at the targeted host. Also, any default
-   settings and environment variables available to <application>psql</application>
-   and the <application>libpq</application> front-end library do apply.
+   <application>clusterdb</application> is a wrapper around the SQL
+   command <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">.
+   There is no effective difference between clustering databases via
+   this or other methods.  The database server must be running at the
+   targeted host.  Also, any default settings and environment
+   variables used by the <application>libpq</application> front-end
+   library will apply.
   </para>
 
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.22 2003/03/25 16:15:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.23 2003/06/18 12:19:11 petere Exp $
 -->
 
 <chapter id="maintenance">
@@ -136,7 +136,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.22 2003/03/25 16:15:37
     <command>VACUUM</> once a day at a low-usage time of day, supplemented
     by more frequent vacuuming of heavily-updated tables if necessary.
     (If you have multiple databases in a cluster, don't forget to
-    vacuum each one; the <filename>vacuumdb</> script may be helpful.)
+    vacuum each one; the program <filename>vacuumdb</> may be helpful.)
     Use plain <command>VACUUM</>, not <command>VACUUM FULL</>, for routine
     vacuuming for space recovery.
    </para>

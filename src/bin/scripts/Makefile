@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.20 2003/04/16 05:23:55 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.21 2003/06/18 12:19:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,7 @@ subdir = src/bin/scripts
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-SCRIPTS := vacuumdb clusterdb
-PROGRAMS = createdb createlang createuser dropdb droplang dropuser
+PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vacuumdb
 
 override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
 
@@ -30,6 +29,8 @@ createuser: createuser.o common.o dumputils.o sprompt.o $(top_builddir)/src/back
 dropdb: dropdb.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
 droplang: droplang.o common.o sprompt.o print.o mbprint.o
 dropuser: dropuser.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
+clusterdb: clusterdb.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
+vacuumdb: vacuumdb.o common.o sprompt.o
 
 dumputils.c sprompt.c : % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
@@ -49,14 +50,14 @@ install: all installdirs
 	$(INSTALL_PROGRAM) droplang$(X)   $(DESTDIR)$(bindir)/droplang$(X)
 	$(INSTALL_PROGRAM) createuser$(X) $(DESTDIR)$(bindir)/createuser$(X)
 	$(INSTALL_PROGRAM) dropuser$(X)   $(DESTDIR)$(bindir)/dropuser$(X)
-	$(INSTALL_SCRIPT) $(srcdir)/clusterdb $(DESTDIR)$(bindir)/clusterdb
-	$(INSTALL_SCRIPT) $(srcdir)/vacuumdb  $(DESTDIR)$(bindir)/vacuumdb
+	$(INSTALL_PROGRAM) clusterdb$(X)  $(DESTDIR)$(bindir)/clusterdb$(X)
+	$(INSTALL_PROGRAM) vacuumdb$(X)   $(DESTDIR)$(bindir)/vacuumdb$(X)
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
 uninstall:
-	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(SCRIPTS) $(addsuffix $(X), $(PROGRAMS)))
+	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(addsuffix $(X), $(PROGRAMS)))
 
 
 clean distclean maintainer-clean:
