@@ -903,8 +903,7 @@ if test x"${enable_multibyte+set}" = xset; then
   UNICODE, MULE_INTERNAL,
   LATIN1, LATIN2, LATIN3, LATIN4, LATIN5,
   LATIN6, LATIN7, LATIN8, LATIN9, LATIN10,
-  WIN1256, TCVN, WIN874,
-  KOI8, WIN, ALT,
+  WIN1256, TCVN, WIN874, KOI8, WIN, ALT,
   ISO_8859_5, ISO_8859_6, ISO_8859_7, ISO_8859_8
 Or do not specify an argument to the option to use the default." 1>&2; exit 1; };;
   esac
@@ -9152,6 +9151,7 @@ s%@WANTED_LANGUAGES@%$WANTED_LANGUAGES%g
 s%@default_port@%$default_port%g
 s%@enable_shared@%$enable_shared%g
 s%@enable_rpath@%$enable_rpath%g
+s%@enable_debug@%$enable_debug%g
 s%@CC@%$CC%g
 s%@EXEEXT@%$EXEEXT%g
 s%@CPP@%$CPP%g
