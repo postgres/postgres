@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.56 1997/12/04 01:31:27 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.57 1997/12/05 01:04:25 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2221,7 +2221,7 @@ ACL *ParseACL(const char *acls,int *count)
 	ParsedAcl=(ACL *)calloc(AclLen,sizeof(ACL));
 	if (!ParsedAcl) {
 		fprintf(stderr,"Could not allocate space for ACLS!\n");
-		return (ACL *)NULL;
+		exit_nicely(g_conn);
 	}
 
 	s=strdup(acls);
