@@ -367,3 +367,10 @@ INT4
 UNIQUE 
 NOT 
 NULL);
+
+-- Check that stack depth detection mechanism works and
+-- max_stack_depth is not set too high
+create function infinite_recurse() returns int as
+'select infinite_recurse()' language sql;
+\set VERBOSITY terse
+select infinite_recurse();
