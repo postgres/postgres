@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.81 2002/01/09 00:06:38 tgl Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.82 2002/02/23 04:16:04 petere Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -12,6 +12,10 @@ override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) \
 	-DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	-DINCLUDE_PATH=\"$(includedir)\" 
+
+ifeq ($(GCC), yes)
+override CFLAGS += -Wno-error
+endif
 
 OBJS=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o output.o\
     keywords.o c_keywords.o ../lib/typename.o descriptor.o variable.o
