@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.91 2003/11/29 19:51:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.92 2004/01/14 23:01:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 
 
 static void setRuleCheckAsUser(Query *qry, AclId userid);
-static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
+static bool setRuleCheckAsUser_walker(Node *node, AclId *context);
 
 
 /*
@@ -494,8 +494,8 @@ DefineQueryRewrite(RuleStmt *stmt)
  * Note: for a view (ON SELECT rule), the checkAsUser field of the *OLD*
  * RTE entry will be overridden when the view rule is expanded, and the
  * checkAsUser field of the *NEW* entry is irrelevant because that entry's
- * checkFor bits will never be set.  However, for other types of rules it's
- * important to set these fields to match the rule owner.  So we just set
+ * requiredPerms bits will always be zero.  However, for other types of rules
+ * it's important to set these fields to match the rule owner.  So we just set
  * them always.
  */
 static void
@@ -528,7 +528,7 @@ setRuleCheckAsUser(Query *qry, AclId userid)
  * Expression-tree walker to find sublink queries
  */
 static bool
-setRuleCheckAsUser_walker(Node *node, Oid *context)
+setRuleCheckAsUser_walker(Node *node, AclId *context)
 {
 	if (node == NULL)
 		return false;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.252 2004/01/10 23:28:45 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.253 2004/01/14 23:01:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,32 @@ typedef enum QuerySource
 	QSRC_QUAL_INSTEAD_RULE,		/* added by conditional INSTEAD rule */
 	QSRC_NON_INSTEAD_RULE		/* added by non-INSTEAD rule */
 } QuerySource;
+
+/*
+ * Grantable rights are encoded so that we can OR them together in a bitmask.
+ * The present representation of AclItem limits us to 15 distinct rights,
+ * even though AclMode is defined as uint32.  See utils/acl.h.
+ *
+ * Caution: changing these codes breaks stored ACLs, hence forces initdb.
+ */
+typedef uint32 AclMode;			/* a bitmask of privilege bits */
+
+#define ACL_INSERT		(1<<0)	/* for relations */
+#define ACL_SELECT		(1<<1)
+#define ACL_UPDATE		(1<<2)
+#define ACL_DELETE		(1<<3)
+#define ACL_RULE		(1<<4)
+#define ACL_REFERENCES	(1<<5)
+#define ACL_TRIGGER		(1<<6)
+#define ACL_EXECUTE		(1<<7)	/* for functions */
+#define ACL_USAGE		(1<<8)	/* for languages and namespaces */
+#define ACL_CREATE		(1<<9)	/* for namespaces and databases */
+#define ACL_CREATE_TEMP (1<<10) /* for databases */
+#define N_ACL_RIGHTS	11		/* 1 plus the last 1<<x */
+#define ACL_ALL_RIGHTS	(-1)	/* all-privileges marker in GRANT list */
+#define ACL_NO_RIGHTS	0
+/* Currently, SELECT ... FOR UPDATE requires UPDATE privileges */
+#define ACL_SELECT_FOR_UPDATE	ACL_UPDATE
 
 
 /*****************************************************************************
@@ -425,12 +451,13 @@ typedef struct DefElem
  *	  column names processed later, and it also shouldn't affect the
  *	  expansion of '*'.
  *
- *	  checkForRead, checkForWrite, and checkAsUser control run-time access
- *	  permissions checks.  A rel will be checked for read or write access
- *	  (or both, or neither) per checkForRead and checkForWrite.  If
- *	  checkAsUser is not InvalidOid, then do the permissions checks using
- *	  the access rights of that user, not the current effective user ID.
- *	  (This allows rules to act as setuid gateways.)
+ *	  requiredPerms and checkAsUser specify run-time access permissions
+ *	  checks to be performed at query startup.  The user must have *all*
+ *	  of the permissions that are OR'd together in requiredPerms (zero
+ *	  indicates no permissions checking).  If checkAsUser is not zero,
+ *	  then do the permissions checks using the access rights of that user,
+ *	  not the current effective user ID.  (This allows rules to act as
+ *	  setuid gateways.)
  *--------------------
  */
 typedef enum RTEKind
@@ -490,9 +517,8 @@ typedef struct RangeTblEntry
 	Alias	   *eref;			/* expanded reference names */
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause */
-	bool		checkForRead;	/* check rel for read access */
-	bool		checkForWrite;	/* check rel for write access */
-	Oid			checkAsUser;	/* if not zero, check access as this user */
+	AclMode		requiredPerms;	/* bitmask of required access permissions */
+	AclId		checkAsUser;	/* if not zero, check access as this user */
 } RangeTblEntry;
 
 /*
@@ -808,26 +834,6 @@ typedef enum GrantObjectType
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
 	ACL_OBJECT_NAMESPACE		/* namespace */
 } GrantObjectType;
-
-/*
- * Grantable rights are encoded so that we can OR them together in a bitmask.
- * The present representation of AclItem limits us to 15 distinct rights.
- * Caution: changing these codes breaks stored ACLs, hence forces initdb.
- */
-#define ACL_INSERT		(1<<0)	/* for relations */
-#define ACL_SELECT		(1<<1)
-#define ACL_UPDATE		(1<<2)
-#define ACL_DELETE		(1<<3)
-#define ACL_RULE		(1<<4)
-#define ACL_REFERENCES	(1<<5)
-#define ACL_TRIGGER		(1<<6)
-#define ACL_EXECUTE		(1<<7)	/* for functions */
-#define ACL_USAGE		(1<<8)	/* for languages and namespaces */
-#define ACL_CREATE		(1<<9)	/* for namespaces and databases */
-#define ACL_CREATE_TEMP (1<<10) /* for databases */
-#define N_ACL_RIGHTS	11		/* 1 plus the last 1<<x */
-#define ACL_ALL_RIGHTS	(-1)	/* all-privileges marker in GRANT list */
-#define ACL_NO_RIGHTS	0
 
 typedef struct GrantStmt
 {

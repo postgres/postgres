@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.295 2004/01/11 04:58:17 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.296 2004/01/14 23:01:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,7 +472,8 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	/* set up range table with just the result rel */
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 							  interpretInhOption(stmt->relation->inhOpt),
-										 true);
+										 true,
+										 ACL_DELETE);
 
 	qry->distinctClause = NIL;
 
@@ -539,7 +540,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 * table is not added to the joinlist or namespace.
 	 */
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
-										 false, false);
+										 false, false, ACL_INSERT);
 
 	/*
 	 * Is it INSERT ... SELECT or INSERT ... VALUES?
@@ -1721,8 +1722,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 								makeAlias("*NEW*", NIL),
 								false, true);
 	/* Must override addRangeTableEntry's default access-check flags */
-	oldrte->checkForRead = false;
-	newrte->checkForRead = false;
+	oldrte->requiredPerms = 0;
+	newrte->requiredPerms = 0;
 
 	/*
 	 * They must be in the namespace too for lookup purposes, but only add
@@ -1820,8 +1821,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			newrte = addRangeTableEntry(sub_pstate, stmt->relation,
 										makeAlias("*NEW*", NIL),
 										false, false);
-			oldrte->checkForRead = false;
-			newrte->checkForRead = false;
+			oldrte->requiredPerms = 0;
+			newrte->requiredPerms = 0;
 			addRTEtoQuery(sub_pstate, oldrte, false, true);
 			addRTEtoQuery(sub_pstate, newrte, false, true);
 
@@ -2493,7 +2494,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 							  interpretInhOption(stmt->relation->inhOpt),
-										 true);
+										 true,
+										 ACL_UPDATE);
 
 	/*
 	 * the FROM clause is non-standard SQL syntax. We used to be able to
@@ -2880,7 +2882,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 				case RTE_RELATION:
 					if (!intMember(i, rowMarks))	/* avoid duplicates */
 						rowMarks = lappendi(rowMarks, i);
-					rte->checkForWrite = true;
+					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
 					/*
@@ -2915,7 +2917,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 						case RTE_RELATION:
 							if (!intMember(i, rowMarks)) /* avoid duplicates */
 								rowMarks = lappendi(rowMarks, i);
-							rte->checkForWrite = true;
+							rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 							break;
 						case RTE_SUBQUERY:
 							/*

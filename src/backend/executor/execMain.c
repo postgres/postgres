@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.226 2004/01/10 23:28:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.227 2004/01/14 23:01:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,8 @@ static void ExecUpdate(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
-static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
-static void ExecCheckXactReadOnly(Query *parsetree, CmdType operation);
+static void ExecCheckRTEPerms(RangeTblEntry *rte);
+static void ExecCheckXactReadOnly(Query *parsetree);
 static void EvalPlanQualStart(evalPlanQual *epq, EState *estate,
 				  evalPlanQual *priorepq);
 static void EvalPlanQualStop(evalPlanQual *epq);
@@ -136,8 +136,8 @@ ExecutorStart(QueryDesc *queryDesc, bool useCurrentSnapshot, bool explainOnly)
 	 * If the transaction is read-only, we need to check if any writes are
 	 * planned to non-temporary tables.
 	 */
-	if (!explainOnly)
-		ExecCheckXactReadOnly(queryDesc->parsetree, queryDesc->operation);
+	if (XactReadOnly && !explainOnly)
+		ExecCheckXactReadOnly(queryDesc->parsetree);
 
 	/*
 	 * Build EState, switch into per-query memory context for startup.
@@ -351,7 +351,7 @@ ExecutorRewind(QueryDesc *queryDesc)
  *		Check access permissions for all relations listed in a range table.
  */
 void
-ExecCheckRTPerms(List *rangeTable, CmdType operation)
+ExecCheckRTPerms(List *rangeTable)
 {
 	List	   *lp;
 
@@ -359,7 +359,7 @@ ExecCheckRTPerms(List *rangeTable, CmdType operation)
 	{
 		RangeTblEntry *rte = lfirst(lp);
 
-		ExecCheckRTEPerms(rte, operation);
+		ExecCheckRTEPerms(rte);
 	}
 }
 
@@ -368,18 +368,18 @@ ExecCheckRTPerms(List *rangeTable, CmdType operation)
  *		Check access permissions for a single RTE.
  */
 static void
-ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
+ExecCheckRTEPerms(RangeTblEntry *rte)
 {
+	AclMode		requiredPerms;
 	Oid			relOid;
 	AclId		userid;
-	AclResult	aclcheck_result;
 
 	/*
 	 * If it's a subquery, recursively examine its rangetable.
 	 */
 	if (rte->rtekind == RTE_SUBQUERY)
 	{
-		ExecCheckRTPerms(rte->subquery->rtable, operation);
+		ExecCheckRTPerms(rte->subquery->rtable);
 		return;
 	}
 
@@ -389,6 +389,13 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	 * prepared for execution. Join and special RTEs need no checks.
 	 */
 	if (rte->rtekind != RTE_RELATION)
+		return;
+
+	/*
+	 * No work if requiredPerms is empty.
+	 */
+	requiredPerms = rte->requiredPerms;
+	if (requiredPerms == 0)
 		return;
 
 	relOid = rte->relid;
@@ -404,77 +411,68 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	 */
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
-#define CHECK(MODE)		pg_class_aclcheck(relOid, userid, MODE)
+	/*
+	 * For each bit in requiredPerms, apply the required check.  (We can't
+	 * do this in one aclcheck call because aclcheck treats multiple bits
+	 * as OR semantics, when we want AND.)
+	 *
+	 * We use a well-known cute trick for isolating the rightmost one-bit
+	 * in a nonzero word.  See nodes/bitmapset.c for commentary.
+	 */
+#define RIGHTMOST_ONE(x) ((int32) (x) & -((int32) (x)))
 
-	if (rte->checkForRead)
+	while (requiredPerms != 0)
 	{
-		aclcheck_result = CHECK(ACL_SELECT);
-		if (aclcheck_result != ACLCHECK_OK)
-			aclcheck_error(aclcheck_result, ACL_KIND_CLASS,
-						   get_rel_name(relOid));
-	}
+		AclMode		thisPerm;
+		AclResult	aclcheck_result;
 
-	if (rte->checkForWrite)
-	{
-		/*
-		 * Note: write access in a SELECT context means SELECT FOR UPDATE.
-		 * Right now we don't distinguish that from true update as far as
-		 * permissions checks are concerned.
-		 */
-		switch (operation)
-		{
-			case CMD_INSERT:
-				aclcheck_result = CHECK(ACL_INSERT);
-				break;
-			case CMD_SELECT:
-			case CMD_UPDATE:
-				aclcheck_result = CHECK(ACL_UPDATE);
-				break;
-			case CMD_DELETE:
-				aclcheck_result = CHECK(ACL_DELETE);
-				break;
-			default:
-				elog(ERROR, "unrecognized operation code: %d",
-					 (int) operation);
-				aclcheck_result = ACLCHECK_OK;	/* keep compiler quiet */
-				break;
-		}
+		thisPerm = RIGHTMOST_ONE(requiredPerms);
+		requiredPerms &= ~thisPerm;
+
+		aclcheck_result = pg_class_aclcheck(relOid, userid, thisPerm);
 		if (aclcheck_result != ACLCHECK_OK)
 			aclcheck_error(aclcheck_result, ACL_KIND_CLASS,
 						   get_rel_name(relOid));
 	}
 }
 
+/*
+ * Check that the query does not imply any writes to non-temp tables.
+ */
 static void
-ExecCheckXactReadOnly(Query *parsetree, CmdType operation)
+ExecCheckXactReadOnly(Query *parsetree)
 {
-	if (!XactReadOnly)
-		return;
+	List	   *lp;
 
-	/* CREATE TABLE AS or SELECT INTO */
-	if (operation == CMD_SELECT && parsetree->into != NULL)
+	/*
+	 * CREATE TABLE AS or SELECT INTO?
+	 *
+	 * XXX should we allow this if the destination is temp?
+	 */
+	if (parsetree->into != NULL)
 		goto fail;
 
-	if (operation == CMD_DELETE || operation == CMD_INSERT
-		|| operation == CMD_UPDATE)
+	/* Fail if write permissions are requested on any non-temp table */
+	foreach(lp, parsetree->rtable)
 	{
-		List	   *lp;
+		RangeTblEntry *rte = lfirst(lp);
 
-		foreach(lp, parsetree->rtable)
+		if (rte->rtekind == RTE_SUBQUERY)
 		{
-			RangeTblEntry *rte = lfirst(lp);
-
-			if (rte->rtekind != RTE_RELATION)
-				continue;
-
-			if (!rte->checkForWrite)
-				continue;
-
-			if (isTempNamespace(get_rel_namespace(rte->relid)))
-				continue;
-
-			goto fail;
+			ExecCheckXactReadOnly(rte->subquery);
+			continue;
 		}
+
+		if (rte->rtekind != RTE_RELATION)
+			continue;
+
+		if ((rte->requiredPerms & (~ACL_SELECT)) == 0)
+			continue;
+
+		if (isTempNamespace(get_rel_namespace(rte->relid)))
+			continue;
+
+		goto fail;
 	}
 
 	return;
@@ -511,7 +509,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	 * rangetable here --- subplan RTEs will be checked during
 	 * ExecInitSubPlan().
 	 */
-	ExecCheckRTPerms(parseTree->rtable, operation);
+	ExecCheckRTPerms(parseTree->rtable);
 
 	/*
 	 * get information from query descriptor

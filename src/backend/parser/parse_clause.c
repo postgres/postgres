@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.125 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.126 2004/01/14 23:01:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,11 +116,14 @@ transformFromClause(ParseState *pstate, List *frmList)
  *	  to check for namespace conflict; we assume that the namespace was
  *	  initially empty in these cases.)
  *
+ *	  Finally, we mark the relation as requiring the permissions specified
+ *	  by requiredPerms.
+ *
  *	  Returns the rangetable index of the target relation.
  */
 int
 setTargetTable(ParseState *pstate, RangeVar *relation,
-			   bool inh, bool alsoSource)
+			   bool inh, bool alsoSource, AclMode requiredPerms)
 {
 	RangeTblEntry *rte;
 	int			rtindex;
@@ -149,16 +152,15 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 
 	/*
-	 * Override addRangeTableEntry's default checkForRead, and instead
-	 * mark target table as requiring write access.
+	 * Override addRangeTableEntry's default ACL_SELECT permissions check,
+	 * and instead mark target table as requiring exactly the specified
+	 * permissions.
 	 *
 	 * If we find an explicit reference to the rel later during parse
-	 * analysis, scanRTEForColumn will change checkForRead to 'true'
-	 * again.  That can't happen for INSERT but it is possible for UPDATE
-	 * and DELETE.
+	 * analysis, scanRTEForColumn will add the ACL_SELECT bit back again.
+	 * That can't happen for INSERT but it is possible for UPDATE and DELETE.
 	 */
-	rte->checkForRead = false;
-	rte->checkForWrite = true;
+	rte->requiredPerms = requiredPerms;
 
 	/*
 	 * If UPDATE/DELETE, add table to joinlist and namespace.

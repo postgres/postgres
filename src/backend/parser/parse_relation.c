@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.91 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.92 2004/01/14 23:01:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,7 +437,7 @@ RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
  * nothing.  It might seem that we need to propagate the mark to all the
  * contained RTEs, but that is not necessary.  This is so because a join
  * expression can only appear in a FROM clause, and any table named in
- * FROM will be marked checkForRead from the beginning.
+ * FROM will be marked as requiring read access from the beginning.
  */
 static Node *
 scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
@@ -477,7 +477,8 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 						 errmsg("column reference \"%s\" is ambiguous",
 								colname)));
 			result = (Node *) make_var(pstate, rte, attnum);
-			rte->checkForRead = true;
+			/* Require read access */
+			rte->requiredPerms |= ACL_SELECT;
 		}
 	}
 
@@ -504,7 +505,8 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 									 0, 0))
 			{
 				result = (Node *) make_var(pstate, rte, attnum);
-				rte->checkForRead = true;
+				/* Require read access */
+				rte->requiredPerms |= ACL_SELECT;
 			}
 		}
 	}
@@ -689,7 +691,7 @@ addRangeTableEntry(ParseState *pstate,
 	 * Flags:
 	 * - this RTE should be expanded to include descendant tables,
 	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for read/write access rights.
+	 * - this RTE should be checked for appropriate access rights.
 	 *
 	 * The initial default on access checks is always check-for-READ-access,
 	 * which is the right thing for all except target tables.
@@ -697,10 +699,9 @@ addRangeTableEntry(ParseState *pstate,
 	 */
 	rte->inh = inh;
 	rte->inFromCl = inFromCl;
-	rte->checkForRead = true;
-	rte->checkForWrite = false;
 
-	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
+	rte->requiredPerms = ACL_SELECT;
+	rte->checkAsUser = 0;			/* not set-uid by default, either */
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -784,7 +785,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	 * Flags:
 	 * - this RTE should be expanded to include descendant tables,
 	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for read/write access rights.
+	 * - this RTE should be checked for appropriate access rights.
 	 *
 	 * The initial default on access checks is always check-for-READ-access,
 	 * which is the right thing for all except target tables.
@@ -792,10 +793,9 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	 */
 	rte->inh = inh;
 	rte->inFromCl = inFromCl;
-	rte->checkForRead = true;
-	rte->checkForWrite = false;
 
-	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
+	rte->requiredPerms = ACL_SELECT;
+	rte->checkAsUser = 0;			/* not set-uid by default, either */
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -864,17 +864,16 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	 * Flags:
 	 * - this RTE should be expanded to include descendant tables,
 	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for read/write access rights.
+	 * - this RTE should be checked for appropriate access rights.
 	 *
 	 * Subqueries are never checked for access rights.
 	 *----------
 	 */
 	rte->inh = false;			/* never true for subqueries */
 	rte->inFromCl = inFromCl;
-	rte->checkForRead = false;
-	rte->checkForWrite = false;
 
-	rte->checkAsUser = InvalidOid;
+	rte->requiredPerms = 0;
+	rte->checkAsUser = 0;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -1034,15 +1033,17 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	 * Flags:
 	 * - this RTE should be expanded to include descendant tables,
 	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for read/write access rights.
+	 * - this RTE should be checked for appropriate access rights.
+	 *
+	 * Functions are never checked for access rights (at least, not by
+	 * the RTE permissions mechanism).
 	 *----------
 	 */
 	rte->inh = false;			/* never true for functions */
 	rte->inFromCl = inFromCl;
-	rte->checkForRead = true;
-	rte->checkForWrite = false;
 
-	rte->checkAsUser = InvalidOid;
+	rte->requiredPerms = 0;
+	rte->checkAsUser = 0;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -1095,17 +1096,16 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	 * Flags:
 	 * - this RTE should be expanded to include descendant tables,
 	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for read/write access rights.
+	 * - this RTE should be checked for appropriate access rights.
 	 *
 	 * Joins are never checked for access rights.
 	 *----------
 	 */
 	rte->inh = false;			/* never true for joins */
 	rte->inFromCl = inFromCl;
-	rte->checkForRead = false;
-	rte->checkForWrite = false;
 
-	rte->checkAsUser = InvalidOid;
+	rte->requiredPerms = 0;
+	rte->checkAsUser = 0;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.132 2004/01/14 03:39:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.133 2004/01/14 23:01:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -655,13 +655,11 @@ ApplyRetrieveRule(Query *parsetree,
 	 */
 	subrte = rt_fetch(PRS2_OLD_VARNO, rule_action->rtable);
 	Assert(subrte->relid == relation->rd_id);
-	subrte->checkForRead = rte->checkForRead;
-	subrte->checkForWrite = rte->checkForWrite;
+	subrte->requiredPerms = rte->requiredPerms;
 	subrte->checkAsUser = rte->checkAsUser;
 
-	rte->checkForRead = false;	/* no permission check on subquery itself */
-	rte->checkForWrite = false;
-	rte->checkAsUser = InvalidOid;
+	rte->requiredPerms = 0;		/* no permission check on subquery itself */
+	rte->checkAsUser = 0;
 
 	/*
 	 * FOR UPDATE of view?
@@ -713,7 +711,7 @@ markQueryForUpdate(Query *qry, bool skipOldNew)
 		{
 			if (!intMember(rti, qry->rowMarks))
 				qry->rowMarks = lappendi(qry->rowMarks, rti);
-			rte->checkForWrite = true;
+			rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{

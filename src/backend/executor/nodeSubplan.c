@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.59 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.60 2004/01/14 23:01:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -670,10 +670,9 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 	MemoryContext oldcontext;
 
 	/*
-	 * Do access checking on the rangetable entries in the subquery. Here,
-	 * we assume the subquery is a SELECT.
+	 * Do access checking on the rangetable entries in the subquery.
 	 */
-	ExecCheckRTPerms(subplan->rtable, CMD_SELECT);
+	ExecCheckRTPerms(subplan->rtable);
 
 	/*
 	 * initialize my state

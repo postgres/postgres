@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.229 2004/01/06 04:31:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.230 2004/01/14 23:01:55 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1358,9 +1358,8 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 
 	WRITE_BOOL_FIELD(inh);
 	WRITE_BOOL_FIELD(inFromCl);
-	WRITE_BOOL_FIELD(checkForRead);
-	WRITE_BOOL_FIELD(checkForWrite);
-	WRITE_OID_FIELD(checkAsUser);
+	WRITE_UINT_FIELD(requiredPerms);
+	WRITE_UINT_FIELD(checkAsUser);
 }
 
 static void
