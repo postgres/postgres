@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.140 1998/05/06 23:50:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.141 1998/05/12 23:04:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1746,8 +1746,14 @@ HandleSlashCmds(PsqlSettings *pset,
 			break;
 		case 'c':
 			{
-				if (strncmp(cmd, "copy ", strlen("copy ")) == 0)
+				if (strncmp(cmd, "copy ", strlen("copy ")) == 0 ||
+				    strncmp(cmd, "copy	", strlen("copy	")) == 0)
 					do_copy(optarg2, pset);
+				else if (strcmp(cmd, "copy") == 0)
+				{
+					fprintf(stderr, "See \\? for help\n");
+					break;
+				}
 				else if (strncmp(cmd, "connect ", strlen("connect ")) == 0 ||
 				  strcmp(cmd, "connect") == 0 /* issue error message */ )
 				{
