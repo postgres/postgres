@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 29 21:21:25 EST 2005
+   Last updated: Sat Jan 29 22:51:43 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -30,10 +30,9 @@
    
                            User Client Questions
                                       
-   2.1) Are there ODBC drivers for PostgreSQL?
+   2.1) What interfaces are available for PostgreSQL?
    2.2) What tools are available for using PostgreSQL with Web pages?
    2.3) Does PostgreSQL have a graphical user interface?
-   2.4) What languages are available to communicate with PostgreSQL?
    
                           Administrative Questions
                                       
@@ -378,21 +377,17 @@
    
                            User Client Questions
                                       
-    2.1) Are there ODBC drivers for PostgreSQL?
+    2.1) What interfaces are available for PostgreSQL?
     
-   There are two ODBC drivers available, PsqlODBC and OpenLink ODBC.
+   The PostgreSQL install includes only the C and embedded C interfaces.
+   All other interfaces are independent projects that are downloaded
+   separately; being separate allows them to have their own release
+   schedule and development teams.
    
-   You can download PsqlODBC from
-   http://gborg.postgresql.org/project/psqlodbc/projdisplay.php.
-   
-   OpenLink ODBC can be gotten from http://www.openlinksw.com. It works
-   with their standard ODBC client software so you'll have PostgreSQL
-   ODBC available on every client platform they support (Win, Mac, Unix,
-   VMS).
-   
-   They will probably be selling this product to people who need
-   commercial-quality support, but a freeware version will always be
-   available. Please send questions to postgres95@openlink.co.uk.
+   Some programming languages like PHP include an interface to
+   PostgreSQL. Interfaces for languages like Perl, TCL, Python, and many
+   others are available at http://gborg.postgresql.org in the
+   Drivers/Interfaces section and via Internet search.
    
     2.2) What tools are available for using PostgreSQL with Web pages?
     
@@ -416,21 +411,6 @@
    
    See http://techdocs.postgresql.org/guides/GUITools for a more detailed
    list.
-   
-    2.4) What languages are able to communicate with PostgreSQL?
-    
-   Most popular programming languages contain an interface to PostgreSQL.
-   Check your programming language's list of extension modules.
-   
-   The following interfaces are included in the PostgreSQL distribution:
-     * C (libpq)
-     * Embedded C (ecpg)
-     * Java (jdbc)
-     * Python (PyGreSQL)
-     * TCL (libpgtcl)
-       
-   Additional interfaces are available at http://gborg.postgresql.org in
-   the Drivers/Interfaces section.
      _________________________________________________________________
    
                           Administrative Questions

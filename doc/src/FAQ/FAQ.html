@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Jan 29 21:21:25 EST 2005</P>
+    <P>Last updated: Sat Jan 29 22:51:43 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -45,14 +45,12 @@
      
 
     <H2 align="center">User Client Questions</H2>
-    <A href="#2.1">2.1</A>) Are there <SMALL>ODBC</SMALL> drivers for
+    <A href="#2.1">2.1</A>) What interfaces are available for
     PostgreSQL?<BR>
      <A href="#2.2">2.2</A>) What tools are available for using
     PostgreSQL with Web pages?<BR>
      <A href="#2.3">2.3</A>) Does PostgreSQL have a graphical user
     interface?<BR>
-     <A href="#2.4">2.4</A>) What languages are available to
-    communicate with PostgreSQL?<BR>
      
 
     <H2 align="center">Administrative Questions</H2>
@@ -492,26 +490,20 @@
 
     <H2 align="center">User Client Questions</H2>
 
-    <H4><A name="2.1">2.1</A>) Are there <SMALL>ODBC</SMALL> drivers
-    for PostgreSQL?</H4>
+    <H4><A name="2.1">2.1</A>) What interfaces are available for
+    PostgreSQL?</H4>
 
-    <P>There are two <SMALL>ODBC</SMALL> drivers available, PsqlODBC
-    and OpenLink <SMALL>ODBC</SMALL>.</P>
+    <P>The PostgreSQL install includes only the <SMALL>C</SMALL> and embedded
+    <SMALL>C</SMALL> interfaces.  All other interfaces are independent projects
+    that are downloaded separately;  being separate allows them to have their
+    own release schedule and development teams.</P>
 
-    <P>You can download PsqlODBC from <A href=
-    "http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">
-    http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</A>.</P>
-
-    <P>OpenLink <SMALL>ODBC</SMALL> can be gotten from <A href=
-    "http://www.openlinksw.com/">http://www.openlinksw.com</A>. It
-    works with their standard <SMALL>ODBC</SMALL> client software so
-    you'll have PostgreSQL <SMALL>ODBC</SMALL> available on every
-    client platform they support (Win, Mac, Unix, VMS).</P>
-
-    <P>They will probably be selling this product to people who need
-    commercial-quality support, but a freeware version will always be
-    available. Please send questions to <A href=
-    "mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>.</P>
+    <P>Some programming languages like <SMALL>PHP</SMALL> include an
+    interface to PostgreSQL. Interfaces for languages like Perl,
+    <SMALL>TCL</SMALL>, Python, and many others are available at
+    <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</A>
+    in the <I>Drivers/Interfaces</I> section and via Internet search.
+    </P>
 
     <H4><A name="2.2">2.2</A>) What tools are available for using
     PostgreSQL with Web pages?</H4>
@@ -541,33 +533,8 @@
 
     <P>See <a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a> for a more detailed list.</P>
 
-    <H4><A name="2.4">2.4</A>) What languages are able to communicate with 
-    PostgreSQL?</H4>
-
-    <P>Most popular programming languages contain an interface to
-    PostgreSQL. Check your programming language's list of extension
-    modules.</P>
-
-    <P>The following interfaces are included in the PostgreSQL
-    distribution:</P>
-
-    <UL>
-      <LI>C (libpq)</LI>
-
-      <LI>Embedded C (ecpg)</LI>
-
-      <LI>Java (jdbc)</LI>
-
-      <LI>Python (PyGreSQL)</LI>
-
-      <LI>TCL (libpgtcl)</LI>
-
-    </UL>
-    <P>Additional interfaces are available at 
-    <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</A>
-    in the <I>Drivers/Interfaces</I> section.
-    </P>
     <HR>
+
 
     <H2 align="center">Administrative Questions</H2>
 
