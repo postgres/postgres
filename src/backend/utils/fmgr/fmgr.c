@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.51 2001/03/22 03:59:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.52 2001/05/19 09:28:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@ typedef struct
 } Oldstyle_fnextra;
 
 
-static void fmgr_info_C_lang(FmgrInfo *finfo, HeapTuple procedureTuple);
-static void fmgr_info_other_lang(FmgrInfo *finfo, HeapTuple procedureTuple);
+static void fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
+static void fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
 static Datum fmgr_untrusted(PG_FUNCTION_ARGS);
 
@@ -123,7 +123,11 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	Form_pg_proc procedureStruct;
 	char	   *prosrc;
 
-	finfo->fn_oid = functionId;
+	/*
+	 * fn_oid *must* be filled in last.  Code may assume that is fn_oid is valid,
+	 * the whole struct is valid.  Some FmgrInfo struct's do survive elogs.
+	 */
+	finfo->fn_oid = InvalidOid;
 	finfo->fn_extra = NULL;
 	finfo->fn_mcxt = CurrentMemoryContext;
 
@@ -138,6 +142,7 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 		finfo->fn_strict = fbp->strict;
 		finfo->fn_retset = fbp->retset;
 		finfo->fn_addr = fbp->func;
+		finfo->fn_oid = functionId;
 		return;
 	}
 
@@ -158,6 +163,7 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 	{
 		/* This isn't really supported anymore... */
 		finfo->fn_addr = fmgr_untrusted;
+		finfo->fn_oid = functionId;
 		ReleaseSysCache(procedureTuple);
 		return;
 	}
@@ -187,7 +193,7 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 			break;
 
 		case ClanguageId:
-			fmgr_info_C_lang(finfo, procedureTuple);
+			fmgr_info_C_lang(functionId, finfo, procedureTuple);
 			break;
 
 		case SQLlanguageId:
@@ -195,18 +201,20 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 			break;
 
 		default:
-			fmgr_info_other_lang(finfo, procedureTuple);
+			fmgr_info_other_lang(functionId, finfo, procedureTuple);
 			break;
 	}
 
+	finfo->fn_oid = functionId;
 	ReleaseSysCache(procedureTuple);
 }
 
 /*
- * Special fmgr_info processing for C-language functions
+ * Special fmgr_info processing for C-language functions.  Note that
+ * finfo->fn_oid is not valid yet.
  */
 static void
-fmgr_info_C_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
+fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 {
 	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 	Datum		prosrcattr,
@@ -224,14 +232,14 @@ fmgr_info_C_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
 								 Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
 		elog(ERROR, "fmgr: Could not extract prosrc for %u from pg_proc",
-			 finfo->fn_oid);
+			 functionId);
 	prosrcstring = DatumGetCString(DirectFunctionCall1(textout, prosrcattr));
 
 	probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
 								 Anum_pg_proc_probin, &isnull);
 	if (isnull)
 		elog(ERROR, "fmgr: Could not extract probin for %u from pg_proc",
-			 finfo->fn_oid);
+			 functionId);
 	probinstring = DatumGetCString(DirectFunctionCall1(textout, probinattr));
 
 	/* Look up the function itself */
@@ -276,10 +284,11 @@ fmgr_info_C_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
 }
 
 /*
- * Special fmgr_info processing for other-language functions
+ * Special fmgr_info processing for other-language functions.  Note
+ * that finfo->fn_oid is not valid yet.
  */
 static void
-fmgr_info_other_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
+fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 {
 	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 	Oid			language = procedureStruct->prolang;
@@ -312,7 +321,7 @@ fmgr_info_other_lang(FmgrInfo *finfo, HeapTuple procedureTuple)
 	else
 	{
 		elog(ERROR, "fmgr_info: function %u: unsupported language %u",
-			 finfo->fn_oid, language);
+			 functionId, language);
 	}
 	ReleaseSysCache(languageTuple);
 }
