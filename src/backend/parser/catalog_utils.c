@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.21 1997/08/19 21:32:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.22 1997/08/22 00:02:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,6 +373,7 @@ equivalentOpersAfterPromotion(CandidateList candidates)
 	case FLOAT4OID:
 	case INT4OID:
 	case INT2OID:
+	case CASHOID:
 	    c->args[0] = FLOAT8OID;
 	    break;
 	default:
@@ -383,6 +384,7 @@ equivalentOpersAfterPromotion(CandidateList candidates)
 	case FLOAT4OID:
 	case INT4OID:
 	case INT2OID:
+	case CASHOID:
 	    c->args[1] = FLOAT8OID;
 	    break;
 	default:
@@ -570,6 +572,7 @@ unary_oper_get_candidates(char *op,
     opKey[1].sk_argument = CharGetDatum(rightleft);
     
     /* currently, only "unknown" can be coerced */
+    /* but we should allow types that are internally the same to be "coerced" */
     if (typeId != UNKNOWNOID) {
         return 0;
     }
@@ -956,7 +959,14 @@ can_coerce(int nargs, Oid *input_typeids, Oid *func_typeids)
      */
     for (i=0; i<nargs; i++) {
 	if (input_typeids[i] != func_typeids[i]) {
-	    if (input_typeids[i] != UNKNOWNOID || func_typeids[i] == 0)
+	    if ((input_typeids[i] == BPCHAROID && func_typeids[i] == TEXTOID) ||
+	        (input_typeids[i] == BPCHAROID && func_typeids[i] == VARCHAROID) ||
+	        (input_typeids[i] == VARCHAROID && func_typeids[i] == TEXTOID) ||
+	        (input_typeids[i] == VARCHAROID && func_typeids[i] == BPCHAROID) ||
+	        (input_typeids[i] == CASHOID && func_typeids[i] == INT4OID) ||
+	        (input_typeids[i] == INT4OID && func_typeids[i] == CASHOID))
+	       ; /* these are OK */
+	    else if (input_typeids[i] != UNKNOWNOID || func_typeids[i] == 0)
 		return false;
 	    
 	    tp = get_id_type(input_typeids[i]);

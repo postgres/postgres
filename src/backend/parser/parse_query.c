@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.17 1997/08/19 21:32:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.18 1997/08/22 00:02:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,7 +378,8 @@ make_op(char *opname, Node *ltree, Node *rtree)
 				(t) == INT4OID || \
 				(t) == OIDOID || \
 				(t) == FLOAT4OID || \
-				(t) == FLOAT8OID)
+				(t) == FLOAT8OID || \
+				(t) == CASHOID)
 	
 	/* binary operator */
 	ltypeId = (ltree==NULL) ? UNKNOWNOID : exprType(ltree);

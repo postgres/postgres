@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.20 1997/08/03 02:28:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.21 1997/08/22 00:02:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,6 +238,13 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
 	string_palloced = true;
 	sprintf(const_string,"%f", ((Const)lnext(expr))->constvalue);
 	break;
+
+    case CASHOID: /* money */
+	const_string = (char *) palloc(256);
+	string_palloced = true;
+	sprintf(const_string,"%ld",
+		(int) ((Const*)expr)->constvalue);
+	break;
 	
     case TEXTOID: /* text */
 	const_string = DatumGetPointer(((Const)lnext(expr))->constvalue);
@@ -350,6 +357,12 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
 	    sprintf(const_string,"%f", *floatVal);
 	    break;
 	}
+    case CASHOID: /* money */
+	const_string = (char *) palloc(256);
+	string_palloced = true;
+	sprintf(const_string,"%ld",
+		(long) ((Const*)expr)->constvalue);
+	break;
     case TEXTOID: /* text */
 	const_string = 
 	    DatumGetPointer(((Const*)expr)->constvalue );

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.14 1997/08/21 01:37:55 vadim Exp $
+ * $Id: pg_type.h,v 1.15 1997/08/22 00:02:19 momjian Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -242,6 +242,7 @@ DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout
 DATA(insert OID = 718 (  circle    PGUID  24 47 f b t \054 0    0 circle_in circle_out circle_in circle_out d _null_ ));
 DATA(insert OID = 719 (  _circle   PGUID  -1 -1 f b t \054 0  718 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 790 (  money     PGUID   4 24 f b t \054 0    0 cash_in cash_out cash_in cash_out i _null_ ));
+#define CASHOID 790
 DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i _null_ ));
 
 /* OIDS 800 - 899 */
