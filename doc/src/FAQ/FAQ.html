@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Oct 11 00:59:31 EDT 2002</P>
+    <P>Last updated: Fri Oct 11 13:54:56 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1378,7 +1378,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 
     <H4><A name="4.27">4.27</A>) What replication options are available?
     </H4>
-    <P>There are several master/slave replication solutions available.
+    <P>There are several master/slave replication options available.
     These allow only the master to make database changes and the slave
     can only do database reads. The bottom of <a
     href="http://gborg.postgresql.org/genpage?replication_research">
@@ -1397,6 +1397,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <LI>Database user passwords are automatically encrypted when stored
     in version 7.3. In previous versions, you must enable
     <I>password_encryption</I> in <I>postgresql.conf</I>.</LI>
+    <LI>The server can run using an encrypted file system.</LI>
     </UL>
 
     <HR>

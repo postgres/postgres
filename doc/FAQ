@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 11 00:59:31 EDT 2002
+   Last updated: Fri Oct 11 13:54:56 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -1076,7 +1076,7 @@ SELECT *
    
     4.27) What replication options are available?
     
-   There are several master/slave replication solutions available. These
+   There are several master/slave replication options available. These
    allow only the master to make database changes and the slave can only
    do database reads. The bottom of
    http://gborg.postgresql.org/genpage?replication_research lists them. A
@@ -1092,6 +1092,7 @@ SELECT *
      * Database user passwords are automatically encrypted when stored in
        version 7.3. In previous versions, you must enable
        password_encryption in postgresql.conf.
+     * The server can run using an encrypted file system.
      _________________________________________________________________
    
                             Extending PostgreSQL
