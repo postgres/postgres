@@ -182,9 +182,6 @@ PGconn *PQconnectdb(const char *conninfo)
    The return value is a pointer to an abstract struct
    representing the connection to the backend.
    </para>
-   <para>
-    This function is not thread-safe.
-   </para>
   </listitem>
 
   <listitem>
@@ -203,9 +200,6 @@ PGconn *PQsetdbLogin(const char *pghost,
 
    This is the predecessor of <function>PQconnectdb</function> with a fixed number
    of parameters but the same functionality.   
-   </para>
-   <para>
-    This function is not thread-safe.
    </para>
   </listitem>
 
@@ -380,9 +374,6 @@ PostgresPollingStatusType *PQconnectPoll(PQconn *conn)
    These functions leave the socket in a non-blocking state as if 
    <function>PQsetnonblocking</function> had been called.
   </para>
-  <para>
-   These functions are not thread-safe.
-  </para>
  </listitem>
 
   <listitem>
@@ -396,18 +387,17 @@ struct PQconninfoOption
     char   *keyword;   /* The keyword of the option */
     char   *envvar;    /* Fallback environment variable name */
     char   *compiled;  /* Fallback compiled in default value */
-    char   *val;       /* Option's value */
+    char   *val;       /* Option's current value, or NULL */
     char   *label;     /* Label for field in connect dialog */
     char   *dispchar;  /* Character to display for this field
                           in a connect dialog. Values are:
                           ""        Display entered value as is
                           "*"       Password field - hide value
-                          "D"       Debug options - don't
-                                    create a field by default */
+                          "D"       Debug option - don't show by default */
     int     dispsize;  /* Field size in characters for dialog */
 }
 </synopsis>
-   Returns the address of the connection options structure.  This may
+   Returns a connection options array.  This may
    be used to determine all possible PQconnectdb options and their
    current default values.  The return value points to an array of
    PQconninfoOption structs, which ends with an entry having a NULL
@@ -416,7 +406,14 @@ struct PQconninfoOption
    Callers must treat the connection options data as read-only.
    </para>
    <para>
-    This function is not thread-safe.
+    After processing the options array, free it by passing it to
+    PQconninfoFree().  If this is not done, a small amount of memory
+    is leaked for each call to PQconndefaults().
+   </para>
+   <para>
+    In PostgreSQL versions before 7.0, PQconndefaults() returned a pointer
+    to a static array, rather than a dynamically allocated array.  That
+    wasn't thread-safe, so the behavior has been changed.
    </para>
   </listitem>
 
@@ -674,9 +671,6 @@ void PQsetenvAbort(PGsetenvHandle handle)
 
       <para>
        The procedure may be aborted at any time by calling PQsetenvAbort(handle).
-      </para>
-      <para>
-       These functions are not thread-safe.
       </para>
      </listitem>
 
@@ -1019,7 +1013,7 @@ char * PQcmdTuples(const PGresult *res);
 <synopsis>
 Oid PQoidValue(const PGresult *res);
 </synopsis>
-          The type <type>Oid</type> and the constant <literal>Invalid</literal>
+          The type <type>Oid</type> and the constant <literal>InvalidOid</literal>
           will be defined if you include the <application>libpq</application>
           header file. They will both be some integer type.
 </para>
@@ -1034,7 +1028,7 @@ Oid PQoidValue(const PGresult *res);
 <synopsis>
 char * PQoidStatus(const PGresult *res);
 </synopsis>
-The function is deprecated in favor of <function>PQoidValue</function>
+This function is deprecated in favor of <function>PQoidValue</function>
 and is not thread-safe.
 </para>
 </listitem>
@@ -1773,13 +1767,14 @@ PQsetNoticeProcessor(PGconn *conn,
 </para>
 
 <para>
-By default, <application>libpq</application> prints <quote>notice</quote> messages
-from the backend as well as a few error messages that it generates by itself
-on <filename>stderr</filename>.
+By default, <application>libpq</application> prints <quote>notice</quote>
+messages from the backend on <filename>stderr</filename>,
+as well as a few error messages that it generates by itself.
 This behavior can be overridden by supplying a callback function that
 does something else with the messages.  The callback function is passed
 the text of the error message (which includes a trailing newline), plus
-a void pointer that is the same one passed to <function>PQsetNoticeProcessor</function>.
+a void pointer that is the same one passed to
+<function>PQsetNoticeProcessor</function>.
 (This pointer can be used to access application-specific state if needed.)
 The default notice processor is simply
 <programlisting>
@@ -1789,13 +1784,23 @@ defaultNoticeProcessor(void * arg, const char * message)
     fprintf(stderr, "%s", message);
 }
 </programlisting>
-To use a special notice processor, call <function>PQsetNoticeProcessor</function> just after
+To use a special notice processor, call
+<function>PQsetNoticeProcessor</function> just after
 creation of a new PGconn object.
 </para>
 
 <para>
-The return value is the pointer to the previous notice processor. If you supply a callback
-function pointer of NULL, no action is taken, but the current pointer is returned.
+The return value is the pointer to the previous notice processor.
+If you supply a callback function pointer of NULL, no action is taken,
+but the current pointer is returned.
+</para>
+
+<para>
+Once you have set a notice processor, you should expect that that function
+could be called as long as either the PGconn object or PGresult objects
+made from it exist.  At creation of a PGresult, the PGconn's current
+notice processor pointer is copied into the PGresult for possible use by
+routines like <function>PQgetvalue</function>.
 </para>
 
 </sect1>
@@ -1886,6 +1891,13 @@ sets the default style of date/time representation.
 sets the default time zone.
 </para>
 </listitem>
+<listitem>
+<para>
+<envar>PGCLIENTENCODING</envar>
+sets the default client encoding (if MULTIBYTE support was selected
+when configuring Postgres).
+</para>
+</listitem>
 </itemizedlist>
 </para>
 
@@ -1906,6 +1918,33 @@ sets the default mode for the genetic optimizer.
 <para>
 Refer to the <command>SET</command> <acronym>SQL</acronym> command
 for information on correct values for these environment variables.
+</para>
+
+</sect1>
+
+<sect1 id="libpq-threading">
+<title>Threading Behavior</title>
+
+<para>
+<filename>libpq</filename> is thread-safe as of
+<productname>PostgreSQL</productname> 7.0, so long as no two threads
+attempt to manipulate the same PGconn object at the same time.  In particular,
+you can't issue concurrent queries from different threads through the same
+connection object.  (If you need to run concurrent queries, start up multiple
+connections.)
+</para>
+
+<para>
+PGresult objects are read-only after creation, and so can be passed around
+freely between threads.
+</para>
+
+<para>
+The deprecated functions <function>PQoidStatus</function> and
+<function>fe_setauthsvc</function> are not thread-safe and should not be
+used in multi-thread programs.  <function>PQoidStatus</function> can be
+replaced by <function>PQoidValue</function>.  There is no good reason to
+call <function>fe_setauthsvc</function> at all.
 </para>
 
 </sect1>
