@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.114 1997/11/24 13:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.115 1997/11/24 14:05:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1717,7 +1717,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					SELECT	t.typname as return_type, \
 							p.proname as function, \
 							oid8types(p.proargtypes) as arguments, \
-							obj_description(p.oid) \
+							substr(obj_description(p.oid),1,23) \
 					FROM 	pg_proc p, pg_type t \
 					WHERE 	p.prorettype = t.oid and \
 							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
@@ -1725,15 +1725,15 @@ HandleSlashCmds(PsqlSettings *pset,
 					ORDER BY return_type, function;",
 					false, false, 0);
 				SendQuery(&success, pset,"\
-					SELECT	t.typname as return_type, \
+					SELECT	t.typname as rets, \
 							p.proname as function, \
 							oid8types(p.proargtypes) as arguments, \
-							obj_description(p.oid) \
+							substr(obj_description(p.oid),1,34) \
 					FROM pg_proc p, pg_type t \
 					WHERE p.prorettype = t.oid and \
 							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
 							t.typname = 'bool' \
-					ORDER BY return_type, function;",
+					ORDER BY rets, function;",
 					false, false, 0);
 			}
 			else if (strncmp(cmd, "di", 2) == 0)
