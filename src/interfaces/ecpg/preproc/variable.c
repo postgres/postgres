@@ -560,7 +560,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 					 * changed later on when the variable is defined
 					 */
 					*length = make_str("1");
-				else if (atoi(*dimension) == 0)
+				else if (strcmp(*dimension, "0") == 0)
 					*length = make_str("-1");
 				else
 					*length = *dimension;

@@ -1877,6 +1877,11 @@ Mon Oct 18 15:34:51 CEST 2004
 Wed Nov 10 14:43:50 CET 2004
 
 	- List VALUE as a keyword.
+	
+Mon Dec  6 21:27:34 CET 2004
+	
+	- Fixed bug in parsing of typedef'ed array sizes.
+	- Synced parser.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
 	- Set ecpg library version to 4.2.

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.301 2004/11/10 13:48:10 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.302 2004/12/06 20:35:35 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -208,16 +208,16 @@ static char *
 adjust_informix(struct arguments *list)
 {
 	/* Informix accepts DECLARE with variables that are out of scope when OPEN is called.
-     * for instance you can declare variables in a function, and then subsequently use them
-     * { 
-     *      declare_vars();
-     *      exec sql ... which uses vars declared in the above function
-     *
+ 	 * for instance you can declare variables in a function, and then subsequently use them
+	 * { 
+	 *      declare_vars();
+	 *      exec sql ... which uses vars declared in the above function
+	 *
 	 * This breaks standard and leads to some very dangerous programming. 
 	 * Since they do, we have to work around and accept their syntax as well.
 	 * But we will do so ONLY in Informix mode.
 	 * We have to change the variables to our own struct and just store the pointer instead of the variable 
-    */
+	 */
 
 	 struct arguments *ptr;
 	 char *result = make_str("");
@@ -1955,12 +1955,8 @@ any_name: ColId        { $$ = $1; }
 	| ColId attrs  { $$ = cat2_str($1, $2); }
         ;
 
-/*
- * The slightly convoluted way of writing this production avoids reduce/reduce
- * errors against indirection_el.
- */
 attrs: '.' attr_name		{ $$ = cat2_str(make_str("."), $2); }
-	| '.' attr_name attrs	{ $$ = cat_str(3, make_str("."), $2, $3); }
+	| attrs '.' attr_name 	{ $$ = cat_str(3, $1, make_str("."), $3); }
 	;
 
 /*****************************************************************************
@@ -4167,7 +4163,7 @@ qualified_name_list:  qualified_name
 
 qualified_name: relation_name
 		{ $$ = $1; }
-		| relation_name attrs
+		| relation_name indirection
 		{ $$ = cat2_str($1, $2); }
 		;
 

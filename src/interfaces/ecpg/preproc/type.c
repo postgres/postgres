@@ -365,7 +365,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				else
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
-				sprintf(offset, "%s*sizeof(char)", strcmp(varcharsize, "0") == 0 ? "1" : varcharsize);
+				sprintf(offset, "(%s)*sizeof(char)", strcmp(varcharsize, "0") == 0 ? "1" : varcharsize);
 				break;
 			case ECPGt_numeric:
 
