@@ -72,12 +72,24 @@ typedef XLogPageHeaderData *XLogPageHeader;
 
 #define XLP_FIRST_IS_SUBRECORD	0x0001
 
+#define XLByteLT(left, right)		\
+			(right.xlogid > left.xlogid || \
+			(right.xlogid == left.xlogid && right.xrecoff > left.xrecoff))
+
+#define XLByteLE(left, right)		\
+			(right.xlogid > left.xlogid || \
+			(right.xlogid == left.xlogid && right.xrecoff >=  left.xrecoff))
+
+#define XLByteEQ(left, right)		\
+			(right.xlogid == left.xlogid && right.xrecoff ==  left.xrecoff)
+
 /*
  * StartUpID (SUI) - system startups counter.
  * It's to allow removing pg_log after shutdown.
  */
 typedef	uint32		StartUpID;
 extern	StartUpID	ThisStartUpID;
+extern	bool		InRecovery;
 
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, 
 			char *hdr, uint32 hdrlen,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.40 2000/08/07 20:15:50 tgl Exp $
+ * $Id: bufmgr.h,v 1.41 2000/10/20 11:01:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,17 @@ extern int	ShowPinTrace;
 #define BUFFER_LOCK_SHARE		1
 #define BUFFER_LOCK_EXCLUSIVE	2
 
+#define UnlockAndReleaseBuffer(buffer)	\
+( \
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK), \
+	ReleaseBuffer(buffer) \
+)
+
+#define UnlockAndWriteBuffer(buffer)	\
+( \
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK), \
+	WriteBuffer(buffer) \
+)
 
 /*
  * BufferIsValid
@@ -162,5 +173,8 @@ extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 extern void UnlockBuffers(void);
 extern void LockBuffer(Buffer buffer, int mode);
 extern void AbortBufferIO(void);
+
+extern bool BufferIsUpdatable(Buffer buffer);
+extern void MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc)(Buffer));
 
 #endif

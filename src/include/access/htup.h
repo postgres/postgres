@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.35 2000/09/07 09:58:35 vadim Exp $
+ * $Id: htup.h,v 1.36 2000/10/20 11:01:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ typedef struct xl_heap_delete
 	xl_heaptid			target;		/* deleted tuple id */
 } xl_heap_delete;
 
-#define	SizeOfHeapDelete	(offsetof(xl_heaptid, tid) + SizeOfIptrData))
+#define	SizeOfHeapDelete	(offsetof(xl_heaptid, tid) + SizeOfIptrData)
 
 /* This is what we need to know about insert - 26 + data */
 typedef struct xl_heap_insert
@@ -111,12 +111,13 @@ typedef struct xl_heap_insert
 
 #define SizeOfHeapInsert	(offsetof(xl_heap_insert, mask) + sizeof(uint8))
 
-/* This is what we need to know about update - 28 + data */
+/* This is what we need to know about update - 32 + data */
 typedef struct xl_heap_update
 {
 	xl_heaptid			target;		/* deleted tuple id */
 	ItemPointerData		newtid;		/* new inserted tuple id */
 	/* something from header of new tuple version */
+	Oid					t_oid;
 	int16				t_natts;
 	uint8				t_hoff;
 	uint8				mask;		/* low 8 bits of t_infomask */

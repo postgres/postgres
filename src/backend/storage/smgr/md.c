@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.75 2000/10/16 14:52:12 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.76 2000/10/20 11:01:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -875,12 +875,6 @@ mdtruncate(Relation reln, int nblocks)
 int
 mdcommit()
 {
-#ifdef XLOG
-	sync();
-	sleep(1);
-	sync();
-	return SM_SUCCESS;
-#else
 	int			i;
 	MdfdVec    *v;
 
@@ -902,7 +896,6 @@ mdcommit()
 	}
 
 	return SM_SUCCESS;
-#endif	 /* XLOG */
 }
 
 /*

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.65 2000/10/13 12:05:20 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.66 2000/10/20 11:01:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1261,44 +1261,40 @@ _bt_del_item(Relation reln, Buffer buffer, BTItem btitem, bool insert,
 	}
 
 	lp = PageGetItemId(page, offno);
-	if (ItemIdDeleted(lp))	/* marked for deletion */
-	{
-		if (!InRecovery)
-			elog(STOP, "btree_%s_undo: deleted target tuple in rollback",
-				(insert) ? "insert" : "split");
-	}
-	else if (InRecovery)	/* check heap tuple */
-	{
-		int			result;
-		CommandId	cid;
-		RelFileNode	hnode;
-		Size		hsize = (insert) ? SizeOfBtreeInsert : SizeOfBtreeSplit;
 
-		memcpy(&cid, (char*)xlrec + hsize, sizeof(CommandId));
-		memcpy(&hnode, (char*)xlrec + hsize + sizeof(CommandId), sizeof(RelFileNode));
-		result = XLogIsOwnerOfTuple(hnode, &(btitem->bti_itup.t_tid),
-					record->xl_xid, cid);
-		if (result < 0)	/* not owner */
-		{
-			UnlockAndReleaseBuffer(buffer);
-			return;
-		}
-	}
-	else if (! BufferIsUpdatable(buffer))	/* normal rollback */
+	if (InRecovery)					/* check heap tuple */
 	{
-		lp->lp_flags |= LP_DELETE;
-		MarkBufferForCleanup(buffer, IndexPageCleanup);
+		if (!ItemIdDeleted(lp))
+		{
+			int			result;
+			CommandId	cid;
+			RelFileNode	hnode;
+			Size		hsize = (insert) ? SizeOfBtreeInsert : SizeOfBtreeSplit;
+
+			memcpy(&cid, (char*)xlrec + hsize, sizeof(CommandId));
+			memcpy(&hnode, (char*)xlrec + hsize + sizeof(CommandId), sizeof(RelFileNode));
+			result = XLogIsOwnerOfTuple(hnode, &(btitem->bti_itup.t_tid),
+						record->xl_xid, cid);
+			if (result < 0)	/* not owner */
+			{
+				UnlockAndReleaseBuffer(buffer);
+				return;
+			}
+		}
+		PageIndexTupleDelete(page, offno);
+		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+		pageop->btpo_flags |= BTP_REORDER;
+		UnlockAndWriteBuffer(buffer);
 		return;
 	}
 
-	PageIndexTupleDelete(page, offno);
-	if (InRecovery)
-	{
-		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-		pageop->btpo_flags |= BTP_REORDER;
-	}
-	UnlockAndWriteBuffer(buffer);
+	/* normal rollback */
+	if (ItemIdDeleted(lp))	/* marked for deletion ?! */
+		elog(STOP, "btree_%s_undo: deleted target tuple in rollback",
+			(insert) ? "insert" : "split");
 
+	lp->lp_flags |= LP_DELETE;
+	MarkBufferForCleanup(buffer, IndexPageCleanup);
 	return;
 }
 

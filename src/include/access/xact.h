@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.27 2000/07/28 01:04:40 tgl Exp $
+ * $Id: xact.h,v 1.28 2000/10/20 11:01:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,35 @@ typedef TransactionStateData *TransactionState;
 	(*((TransactionId*) (dest)) = NullTransactionId)
 
 
+#ifdef XLOG
+
+/*
+ * XLOG allows to store some information in high 4 bits of log
+ * record xl_info field
+ */
+#define XLOG_XACT_COMMIT    0x00
+#define XLOG_XACT_ABORT     0x20
+
+typedef struct xl_xact_commit
+{
+	time_t		xtime;
+	/*
+	 * Array of RelFileNode-s to drop may follow
+	 * at the end of struct
+	 */
+} xl_xact_commit;
+
+#define SizeOfXactCommit	((offsetof(xl_xact_commit, xtime) + sizeof(time_t)))
+
+typedef struct xl_xact_abort
+{
+	time_t		xtime;
+} xl_xact_abort;
+
+#define SizeOfXactAbort	((offsetof(xl_xact_abort, xtime) + sizeof(time_t)))
+
+#endif
+
 /* ----------------
  *		extern definitions
  * ----------------
@@ -107,6 +136,9 @@ extern void UserAbortTransactionBlock(void);
 extern void AbortOutOfAnyTransaction(void);
 
 extern TransactionId DisabledTransactionId;
+
+extern void XactPushRollback(void (*func) (void *), void* data);
+extern void XactPopRollback(void);
 
 /* defined in xid.c */
 extern Datum xidin(PG_FUNCTION_ARGS);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.32 2000/09/07 09:58:36 vadim Exp $
+ * $Id: bufpage.h,v 1.33 2000/10/20 11:01:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "storage/itemid.h"
 #include "storage/off.h"
 #include "storage/page.h"
+#include "access/xlog.h"
 
 /*
  * a postgres disk page is an abstraction layered on top of a postgres

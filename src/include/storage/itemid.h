@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.12 2000/09/07 09:58:36 vadim Exp $
+ * $Id: itemid.h,v 1.13 2000/10/20 11:01:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,12 @@ typedef ItemIdData *ItemId;
 	(((itemId)->lp_flags & LP_DELETE) != 0)
 
 #endif
+
+/*
+ * This bit may be passed to PageAddItem together with
+ * LP_USED & LP_DELETED bits to specify overwrite mode
+ */
+#define	OverwritePageMode	0x10
 
 /*
  * Item offsets, lengths, and flags are represented by these types when

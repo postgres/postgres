@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.10 2000/10/16 14:52:26 vadim Exp $
+ * $Id: pg_database.h,v 1.11 2000/10/20 11:01:17 vadim Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -60,5 +60,13 @@ DATA(insert OID = 1 (  template1 PGUID ENCODING template1 ));
 DESCR("");
 
 #define TemplateDbOid			1
+
+/* Just to mark OID as used for unused_oid script -:) */
+#define DATAMARKOID(x)
+
+DATAMARKOID( = 2)
+#define RecoveryDb	2
+
+#undef DATAMARKOID
 
 #endif	 /* PG_DATABASE_H */

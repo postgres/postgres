@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.72 2000/10/11 21:28:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.73 2000/10/20 11:01:04 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -154,6 +154,8 @@
  */
 #include "postgres.h"
 
+#include <sys/time.h>
+
 #include "access/nbtree.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -214,6 +216,19 @@ TransactionState CurrentTransactionState = &CurrentTransactionStateData;
 
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
+
+#ifdef XLOG
+#include "access/xlogutils.h"
+
+int			CommitDelay;
+
+void		xact_redo(XLogRecPtr lsn, XLogRecord *record);
+void		xact_undo(XLogRecPtr lsn, XLogRecord *record);
+
+static void (*_RollbackFunc)(void*) = NULL;
+static void *_RollbackData = NULL;
+
+#endif
 
 /* ----------------
  *		info returned when the system is disabled
@@ -676,6 +691,28 @@ RecordTransactionCommit()
 		 */
 		TransactionIdCommit(xid);
 
+#ifdef XLOG
+		{
+			xl_xact_commit	xlrec;
+			struct timeval	delay;
+			XLogRecPtr		recptr;
+
+			xlrec.xtime = time(NULL);
+			/*
+			 * MUST SAVE ARRAY OF RELFILENODE-s TO DROP
+			 */
+			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT,
+				(char*) &xlrec, SizeOfXactCommit, NULL, 0);
+
+			/* 
+			 * Sleep before commit! So we can flush more than one
+			 * commit records per single fsync.
+			 */
+			delay.tv_sec = 0;
+			delay.tv_usec = CommitDelay;
+			(void) select(0, NULL, NULL, NULL, &delay);
+		}
+#endif
 		/*
 		 * Now write the log info to the disk too.
 		 */
@@ -784,6 +821,18 @@ RecordTransactionAbort()
 	 */
 	if (SharedBufferChanged && !TransactionIdDidCommit(xid))
 		TransactionIdAbort(xid);
+
+#ifdef XLOG
+	if (SharedBufferChanged)
+	{
+		xl_xact_abort	xlrec;
+		XLogRecPtr		recptr;
+
+		xlrec.xtime = time(NULL);
+		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT,
+			(char*) &xlrec, SizeOfXactAbort, NULL, 0);
+	}
+#endif
 
 	/*
 	 * Tell bufmgr and smgr to release resources.
@@ -1123,9 +1172,12 @@ AbortTransaction()
 	AtEOXact_SPI();
 	AtEOXact_nbtree();
 	AtAbort_Cache();
-	AtAbort_Locks();
 	AtAbort_Memory();
 	AtEOXact_Files();
+
+	/* Here we'll rollback xaction changes */
+
+	AtAbort_Locks();
 
 	SharedBufferChanged = false; /* safest place to do it */
 
@@ -1663,3 +1715,54 @@ IsTransactionBlock()
 
 	return false;
 }
+
+#ifdef XLOG
+
+void
+xact_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_XACT_COMMIT)
+	{
+		xl_xact_commit	*xlrec = (xl_xact_commit*) XLogRecGetData(record);
+
+		XLogMarkCommitted(record->xl_xid);
+		/* MUST REMOVE FILES OF ALL DROPPED RELATIONS */
+	}
+	else if (info == XLOG_XACT_ABORT)
+	{
+		XLogMarkAborted(record->xl_xid);
+	}
+	else
+		elog(STOP, "xact_redo: unknown op code %u", info);
+}
+
+void
+xact_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_XACT_COMMIT)	/* shouldn't be called by XLOG */
+		elog(STOP, "xact_undo: can't undo committed xaction");
+	else if (info != XLOG_XACT_ABORT)
+		elog(STOP, "xact_redo: unknown op code %u", info);
+}
+
+void
+XactPushRollback(void (*func) (void *), void* data)
+{
+	if (_RollbackFunc != NULL)
+		elog(STOP, "XactPushRollback: already installed");
+
+	_RollbackFunc = func;
+	_RollbackData = data;
+}
+
+void
+XactPopRollback(void)
+{
+	_RollbackFunc = NULL;
+}
+
+#endif

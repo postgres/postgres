@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.17 2000/07/04 01:49:43 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.18 2000/10/20 11:01:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@ char		ControlFilePath[MAXPGPATH];
 uint32		XLOGbuffers = 0;
 XLogRecPtr	MyLastRecPtr = {0, 0};
 bool		StopIfError = false;
+bool		InRecovery = false;
 
 SPINLOCK	ControlFileLockId;
 SPINLOCK	XidGenLockId;
@@ -162,17 +163,6 @@ typedef struct CheckPoint
 
 #define NextBufIdx(curridx)		\
 		((curridx == XLogCtl->XLogCacheBlck) ? 0 : (curridx + 1))
-
-#define XLByteLT(left, right)		\
-			(right.xlogid > left.xlogid || \
-			(right.xlogid == left.xlogid && right.xrecoff > left.xrecoff))
-
-#define XLByteLE(left, right)		\
-			(right.xlogid > left.xlogid || \
-			(right.xlogid == left.xlogid && right.xrecoff >=  left.xrecoff))
-
-#define XLByteEQ(left, right)		\
-			(right.xlogid == left.xlogid && right.xrecoff ==  left.xrecoff)
 
 #define InitXLBuffer(curridx)	(\
 				XLogCtl->xlblocks[curridx].xrecoff = \
