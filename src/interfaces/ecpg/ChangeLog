@@ -1705,6 +1705,10 @@ Thu Oct 30 11:12:37 CET 2003
 Fri Oct 31 15:09:22 CET 2003
 
 	- If EOF is found inside a string/comment/etc. stop parsing.
+	
+Mon Nov  3 15:43:19 CET 2003
+
+	- Fixed a potentially uncleared allocation in compatlib.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
