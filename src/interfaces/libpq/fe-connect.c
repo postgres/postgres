@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.278 2004/07/12 14:23:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.279 2004/08/11 18:06:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2870,6 +2870,16 @@ PQprotocolVersion(const PGconn *conn)
 	if (conn->status == CONNECTION_BAD)
 		return 0;
 	return PG_PROTOCOL_MAJOR(conn->pversion);
+}
+
+int
+PQserverVersion(const PGconn *conn)
+{
+	if (!conn)
+		return 0;
+	if (conn->status == CONNECTION_BAD)
+		return 0;
+	return conn->sversion;
 }
 
 char *

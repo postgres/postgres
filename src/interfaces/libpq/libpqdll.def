@@ -114,3 +114,4 @@ EXPORTS
     PQexecPrepared          @ 110
     PQsendQueryPrepared     @ 111
     PQdsplen                @ 112
+    PQserverVersion         @ 113

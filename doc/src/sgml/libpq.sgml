@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.157 2004/06/08 13:49:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.158 2004/08/11 18:06:00 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -890,6 +890,24 @@ startup is complete, but it could theoretically change during a reset.
 The 3.0 protocol will normally be used when communicating with
 <productname>PostgreSQL</> 7.4 or later servers; pre-7.4 servers support
 only protocol 2.0.  (Protocol 1.0 is obsolete and not supported by <application>libpq</application>.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQserverVersion</function><indexterm><primary>PQserverVersion</></></term>
+<listitem>
+<para>
+         Returns an integer representing the backend version.
+<synopsis>
+int PQserverVersion(const PGconn *conn);
+</synopsis>
+Applications may use this to determine the version of the database server they
+are connected to. The number is formed by converting the major, minor, and
+revision numbers into two digit numbers and appending them together. For
+example, version 7.4.2 will be returned as 70402, and version 8.1 will be
+returned as 80100 (leading zeroes are not shown).  Zero is returned if the
+connection is bad.
 </para>
 </listitem>
 </varlistentry>
