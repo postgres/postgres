@@ -11,3 +11,4 @@ clean distclean maintainer-clean:
 	-$(MAKE) -C include $@
 	-$(MAKE) -C lib $@
 	-$(MAKE) -C preproc $@
+	-$(MAKE) -C test clean
