@@ -67,9 +67,12 @@ SELECT DISTINCT f1 AS two FROM TEMP_GROUP;
 
 SELECT f1 AS two, max(f3) AS max_float, min(f3) as min_float
   FROM TEMP_GROUP
-  GROUP BY two
+  GROUP BY f1
   ORDER BY two, max_float, min_float;
 
+-- Postgres used to accept this, but it is clearly against SQL92 to
+-- interpret GROUP BY arguments as result column names; they should
+-- be source column names *only*.  An error is expected.
 SELECT f1 AS two, max(f3) AS max_float, min(f3) AS min_float
   FROM TEMP_GROUP
   GROUP BY two
@@ -77,12 +80,14 @@ SELECT f1 AS two, max(f3) AS max_float, min(f3) AS min_float
 
 SELECT f1 AS two, (max(f3) + 1) AS max_plus_1, (min(f3) - 1) AS min_minus_1
   FROM TEMP_GROUP
-  GROUP BY two
+  GROUP BY f1
   ORDER BY two, min_minus_1;
 
-SELECT f1 AS two, (max(f3) + 1) AS max_plus_1, (min(f3) - 1) AS min_minus_1
+SELECT f1 AS two,
+       max(f2) + min(f2) AS max_plus_min,
+       min(f3) - 1 AS min_minus_1
   FROM TEMP_GROUP
-  GROUP BY two
+  GROUP BY f1
   ORDER BY two, min_minus_1;
 
 DROP TABLE TEMP_INT2;

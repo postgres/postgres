@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.54 2000/02/15 23:09:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.55 2000/02/19 23:45:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,7 +721,7 @@ parseFromClause(ParseState *pstate, List *frmList)
  * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
  * tlist	the existing target list (NB: this cannot be NIL, which is a
  *			good thing since we'd be unable to append to it...)
- * clause	identifies clause type for error messages.
+ * clause	identifies clause type (mainly for error messages).
  */
 static TargetEntry *
 findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
@@ -733,7 +733,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	/*----------
 	 * Handle two special cases as mandated by the SQL92 spec:
 	 *
-	 * 1. ORDER/GROUP BY ColumnName
+	 * 1. ORDER BY ColumnName
 	 *    For a bare identifier, we search for a matching column name
 	 *	  in the existing target list.  Multiple matches are an error
 	 *	  unless they refer to identical values; for example,
@@ -741,17 +741,26 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 *	  but not   SELECT a AS b, b FROM table ORDER BY b
 	 *	  If no match is found, we fall through and treat the identifier
 	 *	  as an expression.
+	 *	  We do NOT attempt this match for GROUP BY, since it is clearly
+	 *	  contrary to the spec to use an output column name in preference
+	 *	  to an underlying column name in GROUP BY.  DISTINCT ON isn't in
+	 *	  the standard, so we can do what we like there; we choose to make
+	 *	  it work like GROUP BY.
 	 *
-	 * 2. ORDER/GROUP BY IntegerConstant
+	 * 2. ORDER BY/GROUP BY/DISTINCT ON IntegerConstant
 	 *	  This means to use the n'th item in the existing target list.
-	 *	  Note that it would make no sense to order/group by an actual
-	 *	  constant, so this does not create a conflict with our extension
-	 *	  to order/group by an expression.
+	 *	  Note that it would make no sense to order/group/distinct by an
+	 *	  actual constant, so this does not create a conflict with our
+	 *	  extension to order/group by an expression.
+	 *	  I believe that GROUP BY column-number is not sanctioned by SQL92,
+	 *	  but since the standard has no other behavior defined for this
+	 *	  syntax, we may as well continue to support our past behavior.
 	 *
 	 * Note that pre-existing resjunk targets must not be used in either case.
 	 *----------
 	 */
-	if (IsA(node, Ident) && ((Ident *) node)->indirection == NIL)
+	if (clause == ORDER_CLAUSE &&
+		IsA(node, Ident) && ((Ident *) node)->indirection == NIL)
 	{
 		char	   *name = ((Ident *) node)->name;
 		foreach(tl, tlist)
