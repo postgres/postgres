@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.45 2002/09/28 20:00:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.46 2002/10/19 02:09:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1643,22 +1643,53 @@ AlterTableAddColumn(Oid myrelid,
 		colDefChild->inhcount = 1;
 		colDefChild->is_local = false;
 
-		/* this routine is actually in the planner */
-		children = find_all_inheritors(myrelid);
+		/* we only need direct inheritors */
+		children = find_inheritance_children(myrelid);
 
 		/*
-		 * find_all_inheritors does the recursive search of the
-		 * inheritance hierarchy, so all we have to do is process all of
-		 * the relids in the list that it returns.
+		 * If the child has a column with same name and type,
+		 * increment its attinhcount and continue.  If it has
+		 * different type, abort.  If it doesn't have a column
+		 * with the same name, add it.
 		 */
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirsti(child);
+			HeapTuple	tuple;
+			Form_pg_attribute childatt;
 
 			if (childrelid == myrelid)
 				continue;
 
-			AlterTableAddColumn(childrelid, false, true, colDefChild);
+			attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
+			tuple = SearchSysCacheCopyAttName(childrelid, colDef->colname);
+			if (!HeapTupleIsValid(tuple))
+			{
+				heap_close(attrdesc, RowExclusiveLock);
+				AlterTableAddColumn(childrelid, false, true, colDefChild);
+				continue;
+			}
+			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
+
+			typeTuple = typenameType(colDef->typename);
+			tform = (Form_pg_type) GETSTRUCT(typeTuple);
+
+			if (HeapTupleGetOid(typeTuple) != childatt->atttypid ||
+					colDef->typename->typemod != childatt->atttypmod)
+				elog(ERROR, "ALTER TABLE: child table %u has different "
+						"type for column \"%s\"",
+						childrelid, colDef->colname);
+
+			childatt->attinhcount++;
+			simple_heap_update(attrdesc, &tuple->t_self, tuple);
+			CatalogUpdateIndexes(attrdesc, tuple);
+			
+			elog(NOTICE, "ALTER TABLE: merging definition of column "
+					"\"%s\" for child %u", colDef->colname, childrelid);
+
+			heap_close(attrdesc, RowExclusiveLock);
+			heap_freetuple(tuple);
+			ReleaseSysCache(typeTuple);
 		}
 	}
 	else
