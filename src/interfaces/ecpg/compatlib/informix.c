@@ -4,6 +4,7 @@
 #include <math.h>
 #include <ctype.h>
 
+#include <ecpgtype.h>
 #include <ecpg_informix.h>
 #include <pgtypes_error.h>
 #include <pgtypes_date.h>
@@ -646,18 +647,6 @@ rgetmsg(int msgnum, char *s, int maxsize)
 }
 
 int
-risnull(int vtype, char *pcvar)
-{
-	return 0;
-}
-
-int
-rsetnull(int vtype, char *pcvar)
-{
-	return 0;
-}
-
-int
 rtypalign(int offset, int type)
 {
 	return 0;
@@ -681,30 +670,6 @@ dtcvfmtasc (char *inbuf, char *fmtstr, dtime_t *dtvalue)
 	return 0;
 }
 
-bool
-ECPGconnect_informix(int lineno, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
-{
-        char *informix_name = (char *)name, *envname;
-
-        /* Informix uses an environment variable DBPATH that overrides
-	 * the connection parameters given here.
-	 * We do the same with PG_DBPATH as the syntax is different. */
-        envname = getenv("PG_DBPATH");
-        if (envname)
-                informix_name = envname;
-	        return (ECPGconnect(lineno, informix_name, user, passwd, connection_name , autocommit));
-}
-
-bool
-ECPGdeallocate_informix(int lineno, char *name)
-{
-	ECPGdeallocate_one(lineno, name);
-
-	/* Just ignore all errors since we do not know the list of cursors we
-	 * are allowed to free. We have to trust that the software. */
-	return true;
-}
-	
 static struct var_list
 {
 	int number;
@@ -742,5 +707,16 @@ ECPG_informix_get_var(int number)
 
 	for (ptr = ivlist; ptr != NULL && ptr->number != number; ptr = ptr->next);
 	return (ptr) ? ptr->pointer : NULL;
+}
+
+int rsetnull(int t, char *ptr)
+{
+	ECPGset_informix_null(t, ptr);
+	return 0;
+}
+
+int risnull(int t, char *ptr)
+{
+	return(ECPGis_informix_null(t, ptr));
 }
 

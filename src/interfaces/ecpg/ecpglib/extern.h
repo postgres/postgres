@@ -5,6 +5,8 @@
 #include "libpq-fe.h"
 #include "sqlca.h"
 
+enum COMPAT_MODE { ECPG_COMPAT_PGSQL = 0, ECPG_COMPAT_INFORMIX};
+
 /* Here are some methods used by the lib. */
 
 /* Stores the backend error message for client access */
@@ -18,7 +20,7 @@ char *ECPGerrmsg(void);
 void		ECPGadd_mem(void *ptr, int lineno);
 
 bool ECPGget_data(const PGresult *, int, int, int, enum ECPGttype type,
-			 enum ECPGttype, char *, char *, long, long, long, bool);
+			 enum ECPGttype, char *, char *, long, long, long, bool, enum COMPAT_MODE, bool);
 struct connection *ECPGget_connection(const char *);
 char	   *ECPGalloc(long, int);
 char	   *ECPGrealloc(void *, long, int);
@@ -54,6 +56,8 @@ struct statement
 	int			lineno;
 	char	   *command;
 	struct connection *connection;
+	enum COMPAT_MODE compat;
+	bool force_indicator;
 	struct variable *inlist;
 	struct variable *outlist;
 };

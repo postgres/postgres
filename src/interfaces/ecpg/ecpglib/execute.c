@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.11 2003/06/20 12:00:59 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.12 2003/06/25 10:44:21 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -88,7 +88,7 @@ quote_postgres(char *arg, int lineno)
  * ind_offset - indicator offset
  */
 static bool
-create_statement(int lineno, struct connection * connection, struct statement ** stmt, char *query, va_list ap)
+create_statement(int lineno, int compat, int force_indicator, struct connection * connection, struct statement ** stmt, char *query, va_list ap)
 {
 	struct variable **list = &((*stmt)->inlist);
 	enum ECPGttype type;
@@ -99,6 +99,8 @@ create_statement(int lineno, struct connection * connection, struct statement **
 	(*stmt)->command = query;
 	(*stmt)->connection = connection;
 	(*stmt)->lineno = lineno;
+	(*stmt)->compat = compat;
+	(*stmt)->force_indicator = force_indicator;
 
 	list = &((*stmt)->inlist);
 
@@ -428,7 +430,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 
 			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
 						 var->type, var->ind_type, current_data_location,
-							  var->ind_value, len, 0, 0, isarray))
+							  var->ind_value, len, 0, 0, isarray, stmt->compat, stmt->force_indicator))
 				status = false;
 			else
 			{
@@ -447,7 +449,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 		{
 			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
 							  var->type, var->ind_type, var->value,
-							  var->ind_value, var->varcharsize, var->offset, var->ind_offset, isarray))
+							  var->ind_value, var->varcharsize, var->offset, var->ind_offset, isarray, stmt->compat, stmt->force_indicator))
 				status = false;
 		}
 	}
@@ -505,10 +507,16 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				*tobeinserted_p = "null";
 			break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
+		case ECPGt_NO_INDICATOR:
+			if (stmt->force_indicator == false && stmt->compat == ECPG_COMPAT_INFORMIX)
+			{
+				if (ECPGis_informix_null(var->type, var->value))
+					*tobeinserted_p = "null";
+			}
+			break;
 		default:
 			break;
 	}
-
 	if (**tobeinserted_p == '\0')
 	{
 		switch (var->type)
@@ -1222,7 +1230,7 @@ ECPGexecute(struct statement * stmt)
 }
 
 bool
-ECPGdo(int lineno, const char *connection_name, char *query,...)
+ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name, char *query,...)
 {
 	va_list		args;
 	struct statement *stmt;
@@ -1244,7 +1252,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 
 	/* construct statement in our own structure */
 	va_start(args, query);
-	if (create_statement(lineno, con, &stmt, query, args) == false)
+	if (create_statement(lineno, compat, force_indicator, con, &stmt, query, args) == false)
 	{
 		setlocale(LC_NUMERIC, oldlocale);
 		ECPGfree(oldlocale);
@@ -1280,7 +1288,8 @@ bool
 ECPGdo_descriptor(int line, const char *connection,
 				  const char *descriptor, const char *query)
 {
-	return ECPGdo(line, connection, (char *) query, ECPGt_EOIT,
+	return ECPGdo(line, ECPG_COMPAT_PGSQL, true, connection, (char *) query, ECPGt_EOIT,
 				  ECPGt_descriptor, descriptor, 0L, 0L, 0L,
 				  ECPGt_NO_INDICATOR, NULL, 0L, 0L, 0L, ECPGt_EORT);
 }
+

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.7 2003/06/22 11:00:48 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.8 2003/06/25 10:44:21 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -20,7 +20,7 @@ bool
 ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 			 enum ECPGttype type, enum ECPGttype ind_type,
 			 char *var, char *ind, long varcharsize, long offset,
-			 long ind_offset, bool isarray)
+			 long ind_offset, bool isarray, enum COMPAT_MODE compat, bool force_indicator)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	char	   *pval = (char *) PQgetvalue(results, act_tuple, act_field);
@@ -55,44 +55,48 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	/*
 	 * check for null value and set indicator accordingly
 	 */
-	switch (ind_type)
+	if (PQgetisnull(results, act_tuple, act_field))
 	{
-		case ECPGt_short:
-		case ECPGt_unsigned_short:
-/*			((short *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);*/
-			*((short *) (ind + ind_offset * act_tuple)) = -PQgetisnull(results, act_tuple, act_field);
-			break;
-		case ECPGt_int:
-		case ECPGt_unsigned_int:
-/*			((int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);*/
-			*((int *) (ind + ind_offset * act_tuple)) = -PQgetisnull(results, act_tuple, act_field);
-			break;
-		case ECPGt_long:
-		case ECPGt_unsigned_long:
-/*			((long *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);*/
-			*((long *) (ind + ind_offset * act_tuple)) = -PQgetisnull(results, act_tuple, act_field);
-			break;
+		switch (ind_type)
+		{
+			case ECPGt_short:
+			case ECPGt_unsigned_short:
+				*((short *) (ind + ind_offset * act_tuple)) = -1;
+				break;
+			case ECPGt_int:
+			case ECPGt_unsigned_int:
+				*((int *) (ind + ind_offset * act_tuple)) = -1;
+				break;
+			case ECPGt_long:
+			case ECPGt_unsigned_long:
+				*((long *) (ind + ind_offset * act_tuple)) = -1;
+				break;
 #ifdef HAVE_LONG_LONG_INT_64
-		case ECPGt_long_long:
-		case ECPGt_unsigned_long_long:
-/*			((long long int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);*/
-			*((long long int *) (ind + ind_offset * act_tuple)) = -PQgetisnull(results, act_tuple, act_field);
-			break;
-/*		case ECPGt_unsigned_long_long:
-			((unsigned long long int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
-			break;*/
+			case ECPGt_long_long:
+			case ECPGt_unsigned_long_long:
+				*((long long int *) (ind + ind_offset * act_tuple)) = -1;
+				break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
-		case ECPGt_NO_INDICATOR:
-			if (PQgetisnull(results, act_tuple, act_field))
-			{
-				ECPGraise(lineno, ECPG_MISSING_INDICATOR, NULL);
+			case ECPGt_NO_INDICATOR:
+				if (force_indicator == false && compat == ECPG_COMPAT_INFORMIX)
+				{
+					/* Informix has an additional way to specify NULLs
+					 * note that this uses special values to denote NULL */
+					ECPGset_informix_null(type, var + offset * act_tuple);
+				}
+				else
+				{
+					ECPGraise(lineno, ECPG_MISSING_INDICATOR, NULL);
+					return (false);
+				}
+				break;
+			default:
+				ECPGraise(lineno, ECPG_UNSUPPORTED, ECPGtype_name(ind_type));
 				return (false);
-			}
-			break;
-		default:
-			ECPGraise(lineno, ECPG_UNSUPPORTED, ECPGtype_name(ind_type));
-			return (false);
-			break;
+				break;
+		}
+
+		return (true);
 	}
 
 	do

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.58 2003/05/23 15:19:34 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.59 2003/06/25 10:44:21 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,6 +100,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"decimal", DECIMAL_P},
 	{"declare", DECLARE},
 	{"default", DEFAULT},
+	{"defaults", DEFAULTS},
 	{"deferrable", DEFERRABLE},
 	{"deferred", DEFERRED},
 	{"definer", DEFINER},
@@ -119,6 +120,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"end", END_P},
 	{"escape", ESCAPE},
 	{"except", EXCEPT},
+	{"excluding", EXCLUDING},
 	{"exclusive", EXCLUSIVE},
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
@@ -150,6 +152,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"immutable", IMMUTABLE},
 	{"implicit", IMPLICIT_P},
 	{"in", IN_P},
+	{"including", INCLUDING},
 	{"increment", INCREMENT},
 	{"index", INDEX},
 	{"inherits", INHERITS},

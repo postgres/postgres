@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.4 2003/06/15 04:56:45 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.5 2003/06/25 10:44:21 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -12,6 +12,10 @@
 #include "ecpgerrno.h"
 #include "extern.h"
 #include "sqlca.h"
+#include "pgtypes_numeric.h"
+#include "pgtypes_date.h"
+#include "pgtypes_timestamp.h"
+#include "pgtypes_interval.h"
 
 static struct sqlca_t sqlca_init =
 {
@@ -237,4 +241,115 @@ ECPGlog(const char *format,...)
 #ifdef USE_THREADS
 	pthread_mutex_unlock(&debug_mutex);
 #endif
+}
+
+void
+ECPGset_informix_null(enum ECPGttype type, void *ptr)
+{
+	switch (type)
+	{
+		case ECPGt_char: 
+		case ECPGt_unsigned_char:
+			*((char *) ptr) = 0x00;
+			break;
+		case ECPGt_short:
+		case ECPGt_unsigned_short:
+			*((short int *) ptr) = SHRT_MIN;
+			break;
+		case ECPGt_int:
+		case ECPGt_unsigned_int:
+			*((int *) ptr) = INT_MIN;
+			break;
+		case ECPGt_long:
+		case ECPGt_unsigned_long:
+		case ECPGt_date:
+			*((long *) ptr) = LONG_MIN;
+			break;
+#ifdef HAVE_LONG_LONG_INT_64
+		case ECPGt_long_long:
+		case ECPGt_unsigned_long_long:
+			*((long long *) ptr) = LONG_LONG_MIN;
+			break;
+#endif   /* HAVE_LONG_LONG_INT_64 */
+		case ECPGt_float:
+			memset((char *) ptr, 0xff, sizeof(float));
+			break;
+		case ECPGt_double:
+			memset((char *) ptr, 0xff, sizeof(double));
+			break;
+		case ECPGt_varchar:
+			*(((struct ECPGgeneric_varchar *) ptr)->arr) = 0x00;
+			break;
+		case ECPGt_numeric:
+			((Numeric *) ptr)->sign = NUMERIC_NAN;
+			break;
+		case ECPGt_interval:
+			memset((char *) ptr, 0xff, sizeof(Interval));
+			break;
+		case ECPGt_timestamp:
+			memset((char *) ptr, 0xff, sizeof(Timestamp));
+			break;
+		default:
+			break;
+	}
+}
+
+static bool _check(unsigned char *ptr, int length)
+{
+	for (;ptr[length] == 0xff && length >= 0; length --);
+	if (length < 0) return true;
+	return false;
+}
+
+bool
+ECPGis_informix_null(enum ECPGttype type, void *ptr)
+{
+	switch (type)
+	{
+		case ECPGt_char: 
+		case ECPGt_unsigned_char:
+			if (*((char *)ptr) == 0x00) return true;
+			break;
+		case ECPGt_short:
+		case ECPGt_unsigned_short:
+			if (*((short int *) ptr) == SHRT_MIN) return true;
+			break;
+		case ECPGt_int:
+		case ECPGt_unsigned_int:
+			if (*((int *) ptr) == INT_MIN) return true;
+			break;
+		case ECPGt_long:
+		case ECPGt_unsigned_long:
+		case ECPGt_date:
+			if (*((long *) ptr) == LONG_MIN) return true;
+			break;
+#ifdef HAVE_LONG_LONG_INT_64
+		case ECPGt_long_long:
+		case ECPGt_unsigned_long_long:
+			if (*((long long *) ptr) == LONG_LONG_MIN) return true;
+			break;
+#endif   /* HAVE_LONG_LONG_INT_64 */
+		case ECPGt_float:
+			return(_check(ptr, sizeof(float)));
+			break;
+		case ECPGt_double:
+			return(_check(ptr, sizeof(double)));
+			break;
+		case ECPGt_varchar:
+			if (*(((struct ECPGgeneric_varchar *) ptr)->arr) == 0x00) return true;
+			break;
+		case ECPGt_numeric:
+			if (((Numeric *) ptr)->sign == NUMERIC_NAN) return true;
+			break;
+		case ECPGt_interval:
+			return(_check(ptr, sizeof(Interval)));
+			break;
+		case ECPGt_timestamp:
+			return(_check(ptr, sizeof(Timestamp)));
+			break;
+		default:
+			break;
+	}
+
+	return false;
 }

@@ -16,6 +16,7 @@ extern int	braces_open,
 			autocommit,
 			auto_create_c,
 			system_includes,
+			force_indicator,
 			ret_value,
 			struct_level,
 			ecpg_informix_var;

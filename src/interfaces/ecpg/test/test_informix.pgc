@@ -1,0 +1,49 @@
+#include "sqltypes.h"
+
+void openit(void);
+
+int main()
+{
+	$int i = 14; 
+	$int j;
+	FILE *dbgs;
+
+	if ((dbgs = fopen("log", "w")) != NULL)
+		ECPGdebug(1, dbgs);
+	
+	$connect to mm;
+
+	$create table test(i int primary key, j int);
+
+	rsetnull(CINTTYPE, (char *)&j);
+	$insert into test (i, j) values (7, :j);
+	$insert into test (i, j) values (:i, 1);
+
+	$declare c cursor for select * from test where i <= :i;
+	openit();
+
+	j=0;
+	while (1)
+	{
+		$fetch in c into :i, :j;
+		if (sqlca.sqlcode == 100) break;
+		else if (sqlca.sqlcode != 0) printf ("Error: %ld\n", sqlca.sqlcode);
+
+		if (risnull(CINTTYPE, (char *)&j))
+			printf("%d\n", i);
+		else
+			printf("%d %d\n", i, j);
+	}
+	
+	$drop table test;
+
+	$disconnect;
+
+	return 0;
+}
+
+void openit(void)
+{
+	$open c;
+}
+

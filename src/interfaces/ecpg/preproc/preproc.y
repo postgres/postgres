@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.237 2003/06/24 23:14:49 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.238 2003/06/25 10:44:21 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -275,10 +275,10 @@ adjust_informix(struct arguments *list)
         CREATE CREATEDB CREATEUSER CROSS CURRENT_DATE CURRENT_TIME
         CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
-        DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT
+        DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
 	DESC DISTINCT DO DOMAIN_P DOUBLE_P DROP
-        EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUSIVE
+        EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUSIVE EXCLUDING
         EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
         FALSE_P FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD FREEZE FROM
@@ -287,9 +287,10 @@ adjust_informix(struct arguments *list)
 	GET GLOBAL GRANT GROUP_P
         HANDLER HAVING HOLD HOUR_P
 
-	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCREMENT INDEX INHERITS
-        INITIALLY INNER_P INOUT INPUT_P INSENSITIVE INSERT INSTEAD INT_P
-        INTEGER INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
+	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
+	INDEX INHERITS INITIALLY INNER_P INOUT INPUT_P
+	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
+	INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
         JOIN
 
@@ -397,7 +398,7 @@ adjust_informix(struct arguments *list)
 %type  <str>	columnList DeleteStmt LockStmt UpdateStmt DeclareCursorStmt
 %type  <str>	NotifyStmt columnElem UnlistenStmt TableElement rowdefinition
 %type  <str>	copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
-%type  <str>	FetchStmt from_in CreateOpClassStmt
+%type  <str>	FetchStmt from_in CreateOpClassStmt like_including_defaults
 %type  <str>	ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
 %type  <str>	opt_full func_arg OptWithOids opt_freeze 
 %type  <str>	analyze_keyword opt_name_list ExplainStmt index_params
@@ -615,10 +616,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 			if (connection)
 				mmerror(PARSE_ERROR, ET_ERROR, "no at option for connect statement.\n");
 
-			if (compat == ECPG_COMPAT_INFORMIX)
-				fprintf(yyout, "{ ECPGconnect_informix(__LINE__, %s, %d); ", $1, autocommit);
-			else
-				fprintf(yyout, "{ ECPGconnect(__LINE__, %s, %d); ", $1, autocommit);
+			fprintf(yyout, "{ ECPGconnect(__LINE__, %d, %s, %d); ", compat, $1, autocommit);
 			reset_variables();
 			whenever_action(2);
 			free($1);
@@ -674,10 +672,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		}
 		| ECPGFree
 		{
-			if (compat == ECPG_COMPAT_INFORMIX)
-				fprintf(yyout, "{ ECPGdeallocate_informix(__LINE__, \"%s\");", $1);
-			else
-				fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
+			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, \"%s\");", compat, $1);
 
 			whenever_action(2);
 			free($1);
@@ -1311,12 +1306,17 @@ ConstraintAttr: DEFERRABLE		{ $$ = make_str("deferrable"); }
 		| INITIALLY IMMEDIATE	{ $$ = make_str("initially immediate"); }
 		;
 
-TableLikeClause:  LIKE any_name
-	                {
-				mmerror(PARSE_ERROR, ET_ERROR, "LIKE in table definitions not yet supported");
-				$$ = cat2_str(make_str("like"), $2);
-			}
+TableLikeClause:  LIKE qualified_name like_including_defaults
+		{
+			$$ = cat_str(3, make_str("like"), $2, $3);
+		}
 		;
+
+like_including_defaults:
+		INCLUDING DEFAULTS      { $$ = make_str("including defaults"); }
+              | EXCLUDING DEFAULTS	{ $$ = make_str("excluding defaults"); }
+              | /* EMPTY */		{ $$ = EMPTY; } 
+	      ;
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
  *	a column definition. ColConstraintElem specifies the embedded form.
@@ -3476,6 +3476,8 @@ a_expr:  c_expr
 			{ $$ = cat_str(3, $1, make_str("not in"), $4); }
 		| a_expr qual_all_Op sub_type select_with_parens %prec Op
 			{ $$ = cat_str(4, $1, $2, $3, $4); }
+		| a_expr qual_all_Op sub_type '(' a_expr ')' %prec Op
+			{ $$ = cat_str(6, $1, $2, $3, make_str("("), $5, make_str(")")); }
 		| UNIQUE select_with_parens %prec Op
 			{ $$ = cat2_str(make_str("unique"), $2); }
 		| r_expr
@@ -3881,6 +3883,8 @@ inf_val_list: a_expr
 
 update_target_el:  ColId opt_indirection '=' a_expr
 			{ $$ = cat_str(4, $1, $2, make_str("="), $4); }
+		| ColId opt_indirection '=' DEFAULT
+			{ $$ = cat_str(3, $1, $2, make_str("= default")); }
 		;
 
 insert_target_list:  insert_target_list ',' insert_target_el
@@ -5744,6 +5748,7 @@ unreserved_keyword:
 		| DAY_P				{ $$ = make_str("day"); }
 		| DEALLOCATE			{ $$ = make_str("deallocate"); }
 		| DECLARE			{ $$ = make_str("declare"); }
+		| DEFAULTS			{ $$ = make_str("defaults"); }
 		| DEFERRED			{ $$ = make_str("deferred"); }
 		| DELETE_P			{ $$ = make_str("delete"); }
 		| DELIMITER			{ $$ = make_str("delimiter"); }
@@ -5755,6 +5760,7 @@ unreserved_keyword:
 		| ENCODING			{ $$ = make_str("encoding"); }
 		| ENCRYPTED			{ $$ = make_str("encrypted"); }
 		| ESCAPE			{ $$ = make_str("escape"); }
+		| EXCLUDING			{ $$ = make_str("excluding"); }
 		| EXCLUSIVE			{ $$ = make_str("exclusive"); }
 		| EXECUTE			{ $$ = make_str("execute"); }
 		| EXPLAIN			{ $$ = make_str("explain"); }
@@ -5770,6 +5776,7 @@ unreserved_keyword:
 		| IMMEDIATE			{ $$ = make_str("immediate"); }
 		| IMMUTABLE			{ $$ = make_str("immutable"); }
 		| IMPLICIT_P			{ $$ = make_str("implicit"); }
+		| INCLUDING			{ $$ = make_str("including"); }
 		| INCREMENT			{ $$ = make_str("increment"); }
 		| INDEX				{ $$ = make_str("index"); }
 		| INHERITS			{ $$ = make_str("inherits"); }

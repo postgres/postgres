@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.3 2003/06/20 13:36:34 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.4 2003/06/25 10:44:21 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -64,7 +64,7 @@ ECPGprepare(int lineno, char *name, char *variable)
 	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);
 	if (this)
 	{
-		bool		b = ECPGdeallocate(lineno, name);
+		bool b = ECPGdeallocate(lineno, ECPG_COMPAT_PGSQL, name);
 
 		if (!b)
 			return false;
@@ -105,15 +105,22 @@ ECPGprepare(int lineno, char *name, char *variable)
 
 /* handle the EXEC SQL DEALLOCATE PREPARE statement */
 bool
-ECPGdeallocate(int lineno, char *name)
+ECPGdeallocate(int lineno, int c, char *name)
 {
 	bool ret = ECPGdeallocate_one(lineno, name);
+	enum COMPAT_MODE compat = c;
 
+	if (compat == ECPG_COMPAT_INFORMIX)
+	{
+		/* Just ignore all errors since we do not know the list of cursors we
+		 * are allowed to free. We have to trust that the software. */
+	        return true;
+	}
+	
 	if (!ret) 
 		ECPGraise(lineno, ECPG_INVALID_STMT, name);
 
 	return ret;
-		
 }
 
 bool
@@ -147,7 +154,7 @@ ECPGdeallocate_all(int lineno)
 	/* deallocate all prepared statements */
 	while (prep_stmts != NULL)
 	{
-		bool		b = ECPGdeallocate(lineno, prep_stmts->name);
+		bool	b = ECPGdeallocate(lineno, ECPG_COMPAT_PGSQL, prep_stmts->name);
 
 		if (!b)
 			return false;

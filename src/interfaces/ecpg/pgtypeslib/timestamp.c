@@ -464,15 +464,19 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					break;
 				case 'g':
 					/* XXX: fall back to strftime */
-					tm->tm_mon -= 1;
-					i = strftime(q, *pstr_len, "%g", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
-						q++;
-						(*pstr_len)--;
+					{
+						char *fmt = "%g"; /* Keep compiler quiet about 2-digit year */
+	
+						tm->tm_mon -= 1;
+						i = strftime(q, *pstr_len, fmt, tm);
+						if (i == 0) { return -1; }
+						while (*q) {
+							q++;
+							(*pstr_len)--;
+						}
+						tm->tm_mon += 1;
+						replace_type = PGTYPES_REPLACE_NOTHING;
 					}
-					tm->tm_mon += 1;
-					replace_type = PGTYPES_REPLACE_NOTHING;
 					break;
 				case 'H':
 					replace_val.replace_uint = tm->tm_hour;
@@ -602,15 +606,19 @@ dttofmtasc_replace (Timestamp *ts, Date dDate, int dow, struct tm* tm,
 					break;
 				case 'x':
 					/* XXX: fall back to strftime */
-					tm->tm_mon -= 1;
-					i = strftime(q, *pstr_len, "%x", tm);
-					if (i == 0) { return -1; }
-					while (*q) {
-						q++;
-						(*pstr_len)--;
+					{
+						char *fmt = "%x"; /* Keep compiler quiet about 2-digit year */
+
+						tm->tm_mon -= 1;
+						i = strftime(q, *pstr_len, fmt, tm);
+						if (i == 0) { return -1; }
+						while (*q) {
+							q++;
+							(*pstr_len)--;
+						}
+						tm->tm_mon += 1;
+						replace_type = PGTYPES_REPLACE_NOTHING;
 					}
-					tm->tm_mon += 1;
-					replace_type = PGTYPES_REPLACE_NOTHING;
 					break;
 				case 'X':
 					/* XXX: fall back to strftime */

@@ -45,12 +45,12 @@ void		ECPGdebug(int, FILE *);
 bool		ECPGstatus(int, const char *);
 bool		ECPGsetcommit(int, const char *, const char *);
 bool		ECPGsetconn(int, const char *);
-bool		ECPGconnect(int, const char *, const char *, const char *, const char *, int);
-bool		ECPGdo(int, const char *, char *,...);
+bool		ECPGconnect(int, int, const char *, const char *, const char *, const char *, int);
+bool		ECPGdo(int, int, int, const char *, char *,...);
 bool		ECPGtrans(int, const char *, const char *);
 bool		ECPGdisconnect(int, const char *);
 bool		ECPGprepare(int, char *, char *);
-bool		ECPGdeallocate(int, char *);
+bool		ECPGdeallocate(int, int, char *);
 bool		ECPGdeallocate_one(int, char *);
 bool		ECPGdeallocate_all(int);
 char	   *ECPGprepared_statement(char *);
@@ -75,12 +75,12 @@ void		ECPGraise(int line, int code, const char *str);
 bool		ECPGget_desc_header(int, char *, int *);
 bool		ECPGget_desc(int, char *, int,...);
 
+void		ECPGset_informix_null(enum ECPGttype, void *);
+bool		ECPGis_informix_null(enum ECPGttype, void *);
 bool		ECPGdescribe(int, bool, const char *, ...);
 
 /* dynamic result allocation */
 void		ECPGfree_auto_mem(void);
-
-enum COMPAT_MODE { ECPG_COMPAT_PGSQL = 0, ECPG_COMPAT_INFORMIX};
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.7 2003/06/15 04:07:58 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.8 2003/06/25 10:44:21 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -173,7 +173,7 @@ ECPGnoticeProcessor(void *arg, const char *message)
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	/* these notices raise an error */
-	if (strncmp(message, "WARNING: ", 9))
+	if (strncmp(message, "WARNING: ", 9) && strncmp(message, "NOTICE: ", 8))
 	{
 		ECPGlog("ECPGnoticeProcessor: strange warning '%s'\n", message);
 		ECPGnoticeProcessor_raise(ECPG_WARNING_UNRECOGNIZED, message);
@@ -290,9 +290,10 @@ ECPGnoticeProcessor(void *arg, const char *message)
 
 /* this contains some quick hacks, needs to be cleaned up, but it works */
 bool
-ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
+ECPGconnect(int lineno, int c, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
+	enum COMPAT_MODE compat = c;
 	struct connection *this;
 	char	   *dbname = strdup(name),
 			   *host = NULL,
@@ -302,6 +303,22 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 			   *options = NULL;
 
 	ECPGinit_sqlca(sqlca);
+	
+	if (compat == ECPG_COMPAT_INFORMIX)
+	{
+		char *envname;
+		
+		/* Informix uses an environment variable DBPATH that overrides
+		 * the connection parameters given here.
+		 * We do the same with PG_DBPATH as the syntax is different. */
+		envname = getenv("PG_DBPATH");
+		if (envname)
+		{
+			free(dbname);
+			dbname = envname;
+		}
+					
+	}
 
 	if ((this = (struct connection *) ECPGalloc(sizeof(struct connection), lineno)) == NULL)
 		return false;
@@ -358,7 +375,7 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 				*tmp = '\0';
 			}
 
-			tmp = last_path_separator(dbname + offset); 
+			tmp = last_path_separator(dbname + offset);
 			if (tmp != NULL)	/* database name given */
 			{
 				realname = strdup(tmp + 1);

@@ -109,7 +109,7 @@ output_statement(char *stmt, int mode, char *con)
 	int			i,
 				j = strlen(stmt);
 
-	fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", con ? con : "NULL");
+	fprintf(yyout, "{ ECPGdo(__LINE__, %d, %d, %s, \"", compat, force_indicator, con ? con : "NULL");
 
 	/* output this char by char as we have to filter '\"' */
 	for (i = 0; i < j; i++)
