@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.10 2001/10/28 06:25:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.11 2002/01/06 00:37:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,6 +229,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					tupgone,
 					hastup;
 		int			prev_dead_count;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * If we are close to overrunning the available space for
@@ -463,6 +465,8 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		BlockNumber tblk;
 		Buffer		buf;
 		Page		page;
+
+		CHECK_FOR_INTERRUPTS();
 
 		tblk = ItemPointerGetBlockNumber(&vacrelstats->dead_tuples[tupindex]);
 		buf = ReadBuffer(onerel, tblk);
@@ -769,6 +773,8 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 		bool		pgchanged,
 					tupgone,
 					hastup;
+
+		CHECK_FOR_INTERRUPTS();
 
 		blkno--;
 

@@ -12,17 +12,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.18 2001/10/25 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.19 2002/01/06 00:37:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
 
 #include <sys/types.h>
 #include <sys/file.h>
 
-#include "postgres.h"
-
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "utils/memutils.h"
 
 
@@ -91,6 +91,8 @@ ExecScan(Scan *node,
 	for (;;)
 	{
 		TupleTableSlot *slot;
+
+		CHECK_FOR_INTERRUPTS();
 
 		slot = (*accessMtd) (node);
 

@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.21 2001/11/11 22:00:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.22 2002/01/06 00:37:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1233,6 +1233,7 @@ mergeonerun(Tuplesortstate *state)
 	 */
 	while (state->memtupcount > 0)
 	{
+		CHECK_FOR_INTERRUPTS();
 		/* write the tuple to destTape */
 		priorAvail = state->availMem;
 		srcTape = state->memtupindex[0];

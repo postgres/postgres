@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.86 2001/11/23 23:41:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.87 2002/01/06 00:37:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -595,6 +595,8 @@ btbulkdelete(PG_FUNCTION_ARGS)
 			BTPageOpaque opaque;
 			IndexTuple	itup;
 			ItemPointer htup;
+
+			CHECK_FOR_INTERRUPTS();
 
 			/* current is the next index tuple */
 			blkno = ItemPointerGetBlockNumber(current);

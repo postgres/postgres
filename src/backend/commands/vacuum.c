@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.212 2001/11/05 17:46:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.213 2002/01/06 00:37:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -992,6 +992,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		bool		do_reap,
 					do_frag;
 
+		CHECK_FOR_INTERRUPTS();
+
 		buf = ReadBuffer(onerel, blkno);
 		page = BufferGetPage(buf);
 
@@ -1415,6 +1417,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 blkno > last_move_dest_block;
 		 blkno--)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		/*
 		 * Forget fraged_pages pages at or after this one; they're no
 		 * longer useful as move targets, since we only want to move down.
@@ -2127,6 +2131,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 i < vacuumed_pages;
 		 i++, curpage++)
 	{
+		CHECK_FOR_INTERRUPTS();
 		Assert((*curpage)->blkno < blkno);
 		if ((*curpage)->offsets_used == 0)
 		{
@@ -2157,6 +2162,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 i < num_fraged_pages;
 		 i++, curpage++)
 	{
+		CHECK_FOR_INTERRUPTS();
 		Assert((*curpage)->blkno < blkno);
 		if ((*curpage)->blkno > last_move_dest_block)
 			break;				/* no need to scan any further */
@@ -2342,6 +2348,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 
 	for (i = 0, vacpage = vacuum_pages->pagedesc; i < nblocks; i++, vacpage++)
 	{
+		CHECK_FOR_INTERRUPTS();
 		if ((*vacpage)->offsets_free > 0)
 		{
 			buf = ReadBuffer(onerel, (*vacpage)->blkno);

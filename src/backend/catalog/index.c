@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.170 2001/11/20 02:46:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.171 2002/01/06 00:37:44 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1678,6 +1678,8 @@ IndexBuildHeapScan(Relation heapRelation,
 	while (HeapTupleIsValid(heapTuple = heap_getnext(scan, 0)))
 	{
 		bool		tupleIsAlive;
+
+		CHECK_FOR_INTERRUPTS();
 
 		if (snapshot == SnapshotAny)
 		{
