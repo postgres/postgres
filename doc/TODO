@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 28 00:44:46 EST 2001
+Last updated:		Wed Nov 28 15:18:30 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -232,6 +232,8 @@ CLIENTS
 * -Fix libpq to properly handle socket failures under native MS Win32
 * -Add MD5 to ODBC (Bruce)
 * Add documentation for perl, including mention of DBI/DBD perl location
+* Add PGPASSWORDFILE password file capability to libpq and psql flag, remove
+  PGPASSWORD because it is insecure
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
