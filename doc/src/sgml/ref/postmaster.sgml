@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.20 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.21 2001/11/25 00:15:30 momjian Exp $
 Postgres documentation
 -->
 
@@ -119,9 +119,8 @@ Postgres documentation
        </para>
 
        <para>
-        On some systems it is also possible to equivalently use
-        GNU-style long options in the form
-        <literal>--name=value</literal>.
+        These options may also be specified using the GNU-style long option
+        format, <term>--<replaceable>name</replaceable>=<replaceable>value</replaceable></term>.
        </para>
       </listitem>
      </varlistentry>
