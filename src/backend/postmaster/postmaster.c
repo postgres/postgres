@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.136 2000/02/18 09:28:44 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.137 2000/03/17 02:36:18 tgl Exp $
  *
  * NOTES
  *
@@ -1262,7 +1262,7 @@ ConnCreate(int serverFd)
 /*
  * ConnFree -- cree a local connection data structure
  */
-void
+static void
 ConnFree(Port *conn) 
 {
 #ifdef USE_SSL

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.19 2000/01/26 05:55:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.20 2000/03/17 02:36:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ _hash_insertonpg(Relation rel,
 	Page		page;
 	BlockNumber itup_blkno;
 	OffsetNumber itup_off;
-	int			itemsz;
+	Size		itemsz;
 	HashPageOpaque pageopaque;
 	bool		do_expand = false;
 	Buffer		ovflbuf;

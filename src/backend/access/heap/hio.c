@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.29 2000/01/26 05:55:56 momjian Exp $
+ *	  $Id: hio.c,v 1.30 2000/03/17 02:36:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ RelationPutHeapTuple(Relation relation,
 {
 	Page		pageHeader;
 	OffsetNumber offnum;
-	unsigned int len;
+	Size		len;
 	ItemId		itemId;
 	Item		item;
 
@@ -51,8 +51,8 @@ RelationPutHeapTuple(Relation relation,
 	IncrHeapAccessStat(global_RelationPutHeapTuple);
 
 	pageHeader = (Page) BufferGetPage(buffer);
-	len = (unsigned) MAXALIGN(tuple->t_len); /* be conservative */
-	Assert((int) len <= PageGetFreeSpace(pageHeader));
+	len = MAXALIGN(tuple->t_len); /* be conservative */
+	Assert(len <= PageGetFreeSpace(pageHeader));
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
@@ -104,18 +104,18 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	Page		pageHeader;
 	BlockNumber lastblock;
 	OffsetNumber offnum;
-	unsigned int len;
+	Size		len;
 	ItemId		itemId;
 	Item		item;
 
-	len = (unsigned) MAXALIGN(tuple->t_len); /* be conservative */
+	len = MAXALIGN(tuple->t_len); /* be conservative */
 
 	/*
 	 * If we're gonna fail for oversize tuple, do it right away...
 	 * this code should go away eventually.
 	 */
 	if (len > MaxTupleSize)
-		elog(ERROR, "Tuple is too big: size %d, max size %ld",
+		elog(ERROR, "Tuple is too big: size %u, max size %ld",
 			 len, MaxTupleSize);
 
 	/*
@@ -175,7 +175,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 			 * test at the top of the routine, and the whole deal should
 			 * go away when we implement tuple splitting anyway...
 			 */
-			elog(ERROR, "Tuple is too big: size %d", len);
+			elog(ERROR, "Tuple is too big: size %u", len);
 		}
 	}
 

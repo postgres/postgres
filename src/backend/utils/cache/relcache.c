@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.92 2000/03/09 05:00:25 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.93 2000/03/17 02:36:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1046,7 +1046,7 @@ formrdesc(char *relationName,
 {
 	Relation	relation;
 	Size		len;
-	int			i;
+	u_int		i;
 
 	/* ----------------
 	 *	allocate new relation desc

@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.46 2000/03/15 23:42:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.47 2000/03/17 02:36:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1555,21 +1555,21 @@ get_func_expr(Expr *expr, deparse_context *context)
 		 */
 		if (strcmp(proname, "bpchar") == 0)
 		{
-			if (coercedTypmod > VARHDRSZ)
+			if (coercedTypmod > (int32) VARHDRSZ)
 				appendStringInfo(buf, "char(%d)", coercedTypmod - VARHDRSZ);
 			else
 				appendStringInfo(buf, "char");
 		}
 		else if (strcmp(proname, "varchar") == 0)
 		{
-			if (coercedTypmod > VARHDRSZ)
+			if (coercedTypmod > (int32) VARHDRSZ)
 				appendStringInfo(buf, "varchar(%d)", coercedTypmod - VARHDRSZ);
 			else
 				appendStringInfo(buf, "varchar");
 		}
 		else if (strcmp(proname, "numeric") == 0)
 		{
-			if (coercedTypmod >= VARHDRSZ)
+			if (coercedTypmod >= (int32) VARHDRSZ)
 				appendStringInfo(buf, "numeric(%d,%d)",
 								 ((coercedTypmod - VARHDRSZ) >> 16) & 0xffff,
 								 (coercedTypmod - VARHDRSZ) & 0xffff);

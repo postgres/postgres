@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.57 2000/02/18 06:32:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.58 2000/03/17 02:36:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,7 +272,7 @@ _bt_skeycmp(Relation rel,
 
 	tupDes = RelationGetDescr(rel);
 
-	for (i = 1; i <= keysz; i++)
+	for (i = 1; i <= (int) keysz; i++)
 	{
 		ScanKey		entry = &scankey[i - 1];
 		Datum		attrDatum;
@@ -658,7 +658,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 		}
 
 	} while (keysok >= so->numberOfFirstKeys ||
-			 (keysok == -1 && ScanDirectionIsBackward(dir)));
+			 (keysok == ((Size) -1) && ScanDirectionIsBackward(dir)));
 
 	ItemPointerSetInvalid(current);
 	so->btso_curbuf = InvalidBuffer;
@@ -1026,7 +1026,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		so->btso_curbuf = buf;
 		return _bt_next(scan, dir);
 	}
-	else if (keysok == -1 && ScanDirectionIsBackward(dir))
+	else if (keysok == ((Size) -1) && ScanDirectionIsBackward(dir))
 	{
 		so->btso_curbuf = buf;
 		return _bt_next(scan, dir);
@@ -1501,7 +1501,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		so->btso_curbuf = buf;
 		return _bt_next(scan, dir);
 	}
-	else if (keysok == -1 && ScanDirectionIsBackward(dir))
+	else if (keysok == ((Size) -1) && ScanDirectionIsBackward(dir))
 	{
 		so->btso_curbuf = buf;
 		return _bt_next(scan, dir);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.61 2000/02/18 09:30:20 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.62 2000/03/17 02:36:05 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -190,6 +190,7 @@ static void StartTransaction(void);
 TransactionStateData CurrentTransactionStateData = {
 	0,							/* transaction id */
 	FirstCommandId,				/* command id */
+	0,							/* scan command id */
 	0x0,						/* start time */
 	TRANS_DEFAULT,				/* transaction state */
 	TBLOCK_DEFAULT				/* transaction block state */

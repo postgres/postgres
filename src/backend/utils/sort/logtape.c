@@ -64,7 +64,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.3 2000/01/26 05:57:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.4 2000/03/17 02:36:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@
  * Block indexes are "long"s, so we can fit this many per indirect block.
  * NB: we assume this is an exact fit!
  */
-#define BLOCKS_PER_INDIR_BLOCK  (BLCKSZ / sizeof(long))
+#define BLOCKS_PER_INDIR_BLOCK  ((int) (BLCKSZ / sizeof(long)))
 
 /*
  * We use a struct like this for each active indirection level of each

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.30 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.31 2000/03/17 02:36:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,7 +340,7 @@ clause_selectivity(Query *root,
 		 */
 		Index	varno = ((Var *) clause)->varno;
 
-		if (varRelid == 0 || varRelid == varno)
+		if (varRelid == 0 || varRelid == (int) varno)
 			s1 = restriction_selectivity(F_EQSEL,
 										 BooleanEqualOperator,
 										 getrelid(varno, root->rtable),

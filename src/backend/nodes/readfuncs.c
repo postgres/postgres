@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.85 2000/02/20 21:32:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.86 2000/03/17 02:36:12 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1952,11 +1952,11 @@ readDatum(Oid type)
 
 	if (byValue)
 	{
-		if (length > sizeof(Datum))
+		if ((Size) length > sizeof(Datum))
 			elog(ERROR, "readValue: byval & length = %d", length);
 		res = (Datum) 0;
 		s = (char *) (&res);
-		for (i = 0; i < sizeof(Datum); i++)
+		for (i = 0; i < (int) sizeof(Datum); i++)
 		{
 			token = lsptok(NULL, &tokenLength);
 			s[i] = (char) atoi(token);

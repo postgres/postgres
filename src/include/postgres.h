@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.36 2000/01/26 05:57:46 momjian Exp $
+ * $Id: postgres.h,v 1.37 2000/03/17 02:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ struct varlena
 
 #define VARSIZE(PTR)	(((struct varlena *)(PTR))->vl_len)
 #define VARDATA(PTR)	(((struct varlena *)(PTR))->vl_dat)
-#define VARHDRSZ		sizeof(int32)
+#define VARHDRSZ		((int32) sizeof(int32))
 
 typedef struct varlena bytea;
 typedef struct varlena text;

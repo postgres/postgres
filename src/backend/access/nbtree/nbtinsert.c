@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.55 2000/02/18 06:32:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.56 2000/03/17 02:36:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,7 @@ _bt_insertonpg(Relation rel,
 	BlockNumber itup_blkno;
 	OffsetNumber itup_off;
 	OffsetNumber firstright = InvalidOffsetNumber;
-	int			itemsz;
+	Size		itemsz;
 	bool		do_split = false;
 	bool		keys_equal = false;
 
@@ -279,7 +279,7 @@ _bt_insertonpg(Relation rel,
 	 * Note that at this point, itemsz doesn't include the ItemId.
 	 */
 	if (itemsz > (PageGetPageSize(page)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData))
-		elog(ERROR, "btree: index item size %d exceeds maximum %ld",
+		elog(ERROR, "btree: index item size %u exceeds maximum %lu",
 			 itemsz,
 			 (PageGetPageSize(page)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData));
 
@@ -1374,7 +1374,7 @@ _bt_tuplecompare(Relation rel,
 
 	tupDes = RelationGetDescr(rel);
 
-	for (i = 1; i <= keysz; i++)
+	for (i = 1; i <= (int) keysz; i++)
 	{
 		ScanKey		entry = &scankey[i - 1];
 		Datum		attrDatum1,

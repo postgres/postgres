@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.26 2000/01/26 05:55:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.27 2000/03/17 02:36:02 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -171,7 +171,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	}
 
 	/* Check if we need to allocate a new bitmap page */
-	if (free_bit == BMPGSZ_BIT(metap) - 1)
+	if (free_bit == (uint32) (BMPGSZ_BIT(metap) - 1))
 	{
 		/* won't be needing old map page */
 
@@ -478,7 +478,7 @@ _hash_squeezebucket(Relation rel,
 	OffsetNumber woffnum;
 	OffsetNumber roffnum;
 	HashItem	hitem;
-	int			itemsz;
+	Size		itemsz;
 
 /*	  elog(DEBUG, "_hash_squeezebucket: squeezing bucket %d", bucket); */
 

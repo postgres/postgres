@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.143 2000/03/09 05:00:23 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.144 2000/03/17 02:36:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,7 +671,7 @@ static void
 vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			VPageList vacuum_pages, VPageList fraged_pages)
 {
-	int			nblocks,
+	BlockNumber	nblocks,
 				blkno;
 	ItemId		itemid;
 	Buffer		buf;
@@ -1194,8 +1194,8 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 				last_vacuum_block = -1;
 			}
 			if (num_fraged_pages > 0 &&
-				blkno ==
-			 fraged_pages->vpl_pagedesc[num_fraged_pages - 1]->vpd_blkno)
+				fraged_pages->vpl_pagedesc[num_fraged_pages - 1]->vpd_blkno ==
+				(BlockNumber) blkno)
 			{
 				/* page is in fraged_pages too; remove it */
 				--num_fraged_pages;
@@ -1820,7 +1820,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	checked_moved = 0;
 	for (i = 0, vpp = vacuum_pages->vpl_pagedesc; i < vacuumed_pages; i++, vpp++)
 	{
-		Assert((*vpp)->vpd_blkno < blkno);
+		Assert((*vpp)->vpd_blkno < (BlockNumber) blkno);
 		buf = ReadBuffer(onerel, (*vpp)->vpd_blkno);
 		page = BufferGetPage(buf);
 		if ((*vpp)->vpd_offsets_used == 0)		/* this page was not used */
@@ -1894,7 +1894,8 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 		}
 
 		/* clean moved tuples from last page in Nvpl list */
-		if (vpc->vpd_blkno == blkno - 1 && vpc->vpd_offsets_free > 0)
+		if (vpc->vpd_blkno == (BlockNumber) (blkno - 1) &&
+			vpc->vpd_offsets_free > 0)
 		{
 			buf = ReadBuffer(onerel, vpc->vpd_blkno);
 			page = BufferGetPage(buf);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.31 2000/03/14 02:23:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.32 2000/03/17 02:36:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include "utils/lsyscache.h"
 
 
-int			PlannerQueryLevel;	/* level of current query */
+Index		PlannerQueryLevel;	/* level of current query */
 List	   *PlannerInitPlan;	/* init subplans for current query */
 List	   *PlannerParamVar;	/* to get Var from Param->paramid */
 int			PlannerPlanId;		/* to assign unique ID to subquery plans */
@@ -55,7 +55,7 @@ int			PlannerPlanId;		/* to assign unique ID to subquery plans */
  * is set from the absolute level value given by varlevel.
  */
 static int
-new_param(Var *var, int varlevel)
+new_param(Var *var, Index varlevel)
 {
 	Var		   *paramVar = (Var *) copyObject(var);
 
@@ -75,7 +75,7 @@ replace_var(Var *var)
 {
 	List	   *ppv;
 	Param	   *retval;
-	int			varlevel;
+	Index		varlevel;
 	int			i;
 
 	Assert(var->varlevelsup > 0 && var->varlevelsup < PlannerQueryLevel);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.34 2000/01/31 04:35:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.35 2000/03/17 02:36:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ do { \
 } while(0)
 
 #define PortalHashTableDelete(PORTAL) \
-{ \
+do { \
 	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \

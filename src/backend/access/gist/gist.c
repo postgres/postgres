@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.51 2000/03/01 05:39:20 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.52 2000/03/17 02:36:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1193,7 +1193,7 @@ gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 	char	   *datum = (((char *) t) + sizeof(IndexTupleData));
 
 	/* if new entry fits in index tuple, copy it in */
-	if (entry.bytes < IndexTupleSize(t) - sizeof(IndexTupleData))
+	if ((Size) entry.bytes < IndexTupleSize(t) - sizeof(IndexTupleData))
 	{
 		memcpy(datum, entry.pred, entry.bytes);
 		/* clear out old size */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.35 2000/03/14 23:06:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.36 2000/03/17 02:36:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ check_ungrouped_columns_walker(Node *node,
 			return false;		/* outer-level Var is acceptable */
 		/* Found an ungrouped local variable; generate error message */
 		Assert(var->varno > 0 &&
-			   var->varno <= length(context->pstate->p_rtable));
+			   (int) var->varno <= length(context->pstate->p_rtable));
 		rte = rt_fetch(var->varno, context->pstate->p_rtable);
 		attname = get_attname(rte->relid, var->varattno);
 		if (! attname)

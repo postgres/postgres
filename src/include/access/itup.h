@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.23 2000/01/26 05:57:50 momjian Exp $
+ * $Id: itup.h,v 1.24 2000/03/17 02:36:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,8 +82,8 @@ typedef struct PredInfo
 #define INDEX_NULL_MASK 0x8000
 #define INDEX_VAR_MASK	0x4000
 
-#define IndexTupleSize(itup)	   (((IndexTuple) (itup))->t_info & 0x1FFF)
-#define IndexTupleDSize(itup)					   ((itup).t_info & 0x1FFF)
+#define IndexTupleSize(itup)	((Size) (((IndexTuple) (itup))->t_info & 0x1FFF))
+#define IndexTupleDSize(itup)				  ((Size) ((itup).t_info & 0x1FFF))
 #define IndexTupleNoNulls(itup)  (!(((IndexTuple) (itup))->t_info & 0x8000))
 #define IndexTupleAllFixed(itup) (!(((IndexTuple) (itup))->t_info & 0x4000))
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.110 2000/02/21 18:47:00 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.111 2000/03/17 02:36:12 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1179,7 +1179,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 	{
 		s = (char *) (&value);
 		appendStringInfo(str, " %d [ ", length);
-		for (i = 0; i < sizeof(Datum); i++)
+		for (i = 0; i < (int) sizeof(Datum); i++)
 			appendStringInfo(str, "%d ", (int) (s[i]));
 		appendStringInfo(str, "] ");
 	}
@@ -1198,7 +1198,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 			if (((int) length) <= -1)
 				length = VARSIZE(s);
 			appendStringInfo(str, " %d [ ", length);
-			for (i = 0; i < length; i++)
+			for (i = 0; i < (int) length; i++)
 				appendStringInfo(str, "%d ", (int) (s[i]));
 			appendStringInfo(str, "] ");
 		}

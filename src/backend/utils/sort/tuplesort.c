@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.7 2000/03/01 17:14:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.8 2000/03/17 02:36:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1751,7 +1751,7 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 	IndexTuple	tuple1 = (IndexTuple) a;
 	IndexTuple	tuple2 = (IndexTuple) b;
 	Relation	rel = state->indexRel;
-	Size		keysz = RelationGetNumberOfAttributes(rel);
+	int			keysz = RelationGetNumberOfAttributes(rel);
 	ScanKey		scankey = state->indexScanKey;
 	TupleDesc	tupDes;
 	int			i;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.13 2000/01/26 05:57:51 momjian Exp $
+ * $Id: tupmacs.h,v 1.14 2000/03/17 02:36:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,13 +50,13 @@
 ( \
 	(*(A))->attbyval && (*(A))->attlen != -1 ? \
 	( \
-		(*(A))->attlen > sizeof(int16) ? \
+		(*(A))->attlen > (int) sizeof(int16) ? \
 		( \
 			(char *) (long) *((int32 *)(T)) \
 		) \
 		: \
 		( \
-			(*(A))->attlen < sizeof(int16) ? \
+			(*(A))->attlen < (int) sizeof(int16) ? \
 				(char *) (long) *((char *)(T)) \
 			: \
 				(char *) (long) *((int16 *)(T))) \

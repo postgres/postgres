@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: portal.c,v 1.29 2000/01/26 05:56:29 momjian Exp $
+ *	$Id: portal.c,v 1.30 2000/03/17 02:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ PQnportals(int rule_p)
 	int			i,
 				n = 0;
 
-	for (i = 0; i < portals_array_size; ++i)
+	for (i = 0; i < (int) portals_array_size; ++i)
 	{
 		if (portals[i] && portals[i]->portal)
 		{
@@ -138,7 +138,7 @@ PQpnames(char **pnames, int rule_p)
 	if (!valid_pointer("PQpnames: invalid name buffer", pnames))
 		return;
 
-	for (i = 0; i < portals_array_size; ++i)
+	for (i = 0; i < (int) portals_array_size; ++i)
 	{
 		if (portals[i] && portals[i]->portal)
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.37 2000/03/14 23:06:33 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.38 2000/03/17 02:36:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static struct
 	},
 };
 
-#define SPECIALS (sizeof(special_attr)/sizeof(*special_attr))
+#define SPECIALS ((int) (sizeof(special_attr)/sizeof(*special_attr)))
 
 static char *attnum_type[SPECIALS] = {
 	"tid",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.123 2000/03/14 23:06:06 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.124 2000/03/17 02:36:05 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -184,7 +184,7 @@ heap_create(char *relname,
 			bool istemp,
 			bool storage_create)
 {
-	unsigned	i;
+	int			i;
 	Oid			relid;
 	Relation	rel;
 	int			len;
@@ -425,8 +425,8 @@ heap_storage_create(Relation rel)
 static void
 CheckAttributeNames(TupleDesc tupdesc)
 {
-	unsigned	i;
-	unsigned	j;
+	int			i;
+	int			j;
 	int			natts = tupdesc->natts;
 
 	/* ----------------
@@ -437,9 +437,9 @@ CheckAttributeNames(TupleDesc tupdesc)
 	 *	 an unknown typid  (usually as a result of a 'retrieve into'
 	 *	  - jolly
 	 */
-	for (i = 0; i < natts; i += 1)
+	for (i = 0; i < natts; i++)
 	{
-		for (j = 0; j < sizeof HeapAtt / sizeof HeapAtt[0]; j += 1)
+		for (j = 0; j < (int) (sizeof(HeapAtt) / sizeof(HeapAtt[0])); j++)
 		{
 			if (nameeq(&(HeapAtt[j]->attname),
 					   &(tupdesc->attrs[i]->attname)))
@@ -461,9 +461,9 @@ CheckAttributeNames(TupleDesc tupdesc)
 	 *	next check for repeated attribute names
 	 * ----------------
 	 */
-	for (i = 1; i < natts; i += 1)
+	for (i = 1; i < natts; i++)
 	{
-		for (j = 0; j < i; j += 1)
+		for (j = 0; j < i; j++)
 		{
 			if (nameeq(&(tupdesc->attrs[j]->attname),
 					   &(tupdesc->attrs[i]->attname)))
@@ -561,7 +561,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 					  TupleDesc tupdesc)
 {
 	Form_pg_attribute *dpp;
-	unsigned	i;
+	int			i;
 	HeapTuple	tup;
 	Relation	rel;
 	bool		hasindex;

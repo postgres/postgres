@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.28 2000/01/26 05:56:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.29 2000/03/17 02:36:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,8 +143,8 @@ SISegInit(SISeg *segP, int maxBackends)
 int
 SIBackendInit(SISeg *segP)
 {
-	Index		index;
-	ProcState  *stateP = NULL;
+	int		index;
+	ProcState      *stateP = NULL;
 
 	Assert(MyBackendTag > 0);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.11 2000/01/26 05:57:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.12 2000/03/17 02:36:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ tag_hash(int *key, int keysize)
 			break;
 
 		default:
-			for (; keysize > (sizeof(int) - 1); keysize -= sizeof(int), key++)
+			for (; keysize >= (int) sizeof(int); keysize -= sizeof(int), key++)
 				h = h * PRIME1 ^ (*key);
 
 			/*

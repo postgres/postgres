@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.29 2000/02/26 05:25:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.30 2000/03/17 02:36:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,7 +701,7 @@ hash_search(HTAB *hashp,
 long *
 hash_seq(HTAB *hashp)
 {
-	static uint32 curBucket = 0;
+	static long	curBucket = 0;
 	static BUCKET_INDEX curIndex;
 	ELEMENT    *curElem;
 	long		segment_num;
@@ -848,7 +848,7 @@ expand_table(HTAB *hashp)
 	{
 		chain = GET_BUCKET(hashp, chainIndex);
 		nextIndex = chain->next;
-		if (call_hash(hashp, (char *) &(chain->key)) == old_bucket)
+		if ((long) call_hash(hashp, (char *) &(chain->key)) == old_bucket)
 		{
 			*old = chainIndex;
 			old = &chain->next;

@@ -9,7 +9,7 @@
 
 #include "nodes/plannodes.h"
 
-extern int	PlannerQueryLevel;	/* level of current query */
+extern Index PlannerQueryLevel;	/* level of current query */
 extern List *PlannerInitPlan;	/* init subplans for current query */
 extern List *PlannerParamVar;	/* to get Var from Param->paramid */
 extern int	PlannerPlanId;		/* to assign unique ID to subquery plans */

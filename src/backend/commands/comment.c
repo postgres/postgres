@@ -256,7 +256,7 @@ void DeleteComments(Oid oid) {
  *------------------------------------------------------------------
 */
 
-void CommentRelation(int reltype, char *relname, char *comment) {
+static void CommentRelation(int reltype, char *relname, char *comment) {
 
   HeapTuple reltuple;
   Oid oid;
@@ -325,7 +325,7 @@ void CommentRelation(int reltype, char *relname, char *comment) {
  *------------------------------------------------------------------
 */
 
-void CommentAttribute(char *relname, char *attrname, char *comment) {
+static void CommentAttribute(char *relname, char *attrname, char *comment) {
 
   Relation relation;
   HeapTuple attrtuple;
@@ -371,7 +371,7 @@ void CommentAttribute(char *relname, char *attrname, char *comment) {
  *------------------------------------------------------------------
 */
 
-void CommentDatabase(char *database, char *comment) {
+static void CommentDatabase(char *database, char *comment) {
 
   Relation pg_database;
   HeapTuple dbtuple, usertuple;
@@ -439,7 +439,7 @@ void CommentDatabase(char *database, char *comment) {
  *------------------------------------------------------------------
 */
 
-void CommentRewrite(char *rule, char *comment) {
+static void CommentRewrite(char *rule, char *comment) {
 
   HeapTuple rewritetuple;
   Oid oid;
@@ -485,7 +485,7 @@ void CommentRewrite(char *rule, char *comment) {
  *------------------------------------------------------------------
 */
 
-void CommentType(char *type, char *comment) {
+static void CommentType(char *type, char *comment) {
 
   HeapTuple typetuple;
   Oid oid;
@@ -527,7 +527,7 @@ void CommentType(char *type, char *comment) {
  *------------------------------------------------------------------
 */
 
-void CommentAggregate(char *aggregate, char *argument, char *comment) {
+static void CommentAggregate(char *aggregate, char *argument, char *comment) {
 
   HeapTuple aggtuple;
   Oid baseoid, oid;
@@ -592,7 +592,7 @@ void CommentAggregate(char *aggregate, char *argument, char *comment) {
  *------------------------------------------------------------------
 */
 
-void CommentProc(char *function, List *arguments, char *comment)
+static void CommentProc(char *function, List *arguments, char *comment)
 {
 	HeapTuple argtuple, functuple;
 	Oid oid, argoids[FUNC_MAX_ARGS];
@@ -663,7 +663,7 @@ void CommentProc(char *function, List *arguments, char *comment)
  *------------------------------------------------------------------
 */
 
-void CommentOperator(char *opername, List *arguments, char *comment) {
+static void CommentOperator(char *opername, List *arguments, char *comment) {
 
   Form_pg_operator data;
   HeapTuple optuple;
@@ -752,7 +752,7 @@ void CommentOperator(char *opername, List *arguments, char *comment) {
  *------------------------------------------------------------------
 */
 
-void CommentTrigger(char *trigger, char *relname, char *comment) {
+static void CommentTrigger(char *trigger, char *relname, char *comment) {
 
   Form_pg_trigger data;
   Relation pg_trigger, relation;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.30 2000/01/26 05:56:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.31 2000/03/17 02:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ PQfn(int fnid,
 	{
 		if (args[i].len == VAR_LENGTH_ARG)
 			arg[i] = (char *) args[i].u.ptr;
-		else if (args[i].len > sizeof(int4))
+		else if ((Size) args[i].len > sizeof(int4))
 			elog(ERROR, "arg_length of argument %d too long", i);
 		else
 			arg[i] = (char *) args[i].u.integer;

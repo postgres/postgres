@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.49 1999/10/23 03:13:21 tgl Exp $
+ *	$Id: hba.c,v 1.50 2000/03/17 02:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,7 +487,7 @@ interpret_ident_response(char *ident_response,
 				cursor++;		/* skip blanks */
 			i = 0;
 			while (*cursor != ':' && *cursor != '\r' && !isblank(*cursor)
-				   && i < sizeof(response_type) - 1)
+				   && i < (int) (sizeof(response_type) - 1))
 				response_type[i++] = *cursor++;
 			response_type[i] = '\0';
 			while (isblank(*cursor))

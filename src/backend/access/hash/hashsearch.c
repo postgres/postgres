@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.22 2000/01/26 05:55:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.23 2000/03/17 02:36:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,7 +351,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 							opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 							Assert(opaque->hasho_bucket == bucket);
 							while (PageIsEmpty(page) &&
-							 BlockNumberIsValid(opaque->hasho_nextblkno))
+								   BlockNumberIsValid(opaque->hasho_nextblkno))
 								_hash_readnext(rel, &buf, &page, &opaque);
 							maxoff = PageGetMaxOffsetNumber(page);
 							offnum = FirstOffsetNumber;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.53 2000/02/28 08:51:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.54 2000/03/17 02:36:19 tgl Exp $
  *
  * NOTES:
  *
@@ -91,7 +91,7 @@
 #define VFD_CLOSED (-1)
 
 #define FileIsValid(file) \
-	((file) > 0 && (file) < SizeVfdCache && VfdCache[file].fileName != NULL)
+	((file) > 0 && (file) < (int) SizeVfdCache && VfdCache[file].fileName != NULL)
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.26 2000/01/26 05:55:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.27 2000/03/17 02:36:02 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -464,7 +464,7 @@ _hash_splitpage(Relation rel,
 	HashPageOpaque nopaque;
 	HashMetaPage metap;
 	IndexTuple	itup;
-	int			itemsz;
+	Size		itemsz;
 	OffsetNumber ooffnum;
 	OffsetNumber noffnum;
 	OffsetNumber omaxoffnum;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.10 2000/01/26 05:58:32 momjian Exp $
+ * $Id: block.h,v 1.11 2000/03/17 02:36:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ typedef BlockIdData *BlockId;	/* block identifier */
  *		True iff blockNumber is valid.
  */
 #define BlockNumberIsValid(blockNumber) \
-	((bool) ((int32) (blockNumber) != InvalidBlockNumber))
+	((bool) ((BlockNumber) (blockNumber) != InvalidBlockNumber))
 
 /*
  * BlockIdIsValid
