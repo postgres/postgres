@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_user.sgml,v 1.35 2005/01/05 14:22:39 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user.sgml,v 1.36 2005/01/06 00:11:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -25,10 +25,10 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
 where <replaceable class="PARAMETER">option</replaceable> can be:
     
       SYSID <replaceable class="PARAMETER">uid</replaceable> 
-    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | CREATEDB | NOCREATEDB
     | CREATEUSER | NOCREATEUSER
     | IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...]
+    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>' 
 </synopsis>
  </refsynopsisdiv>

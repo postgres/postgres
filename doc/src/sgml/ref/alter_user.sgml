@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.36 2005/01/05 14:22:39 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.37 2005/01/06 00:11:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,9 +24,9 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
 
 where <replaceable class="PARAMETER">option</replaceable> can be:
 
-    [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
-    | CREATEDB | NOCREATEDB
+    CREATEDB | NOCREATEDB
     | CREATEUSER | NOCREATEUSER 
+    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
     | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>'
 
 ALTER USER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
