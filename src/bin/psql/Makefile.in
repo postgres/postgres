@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.13 1998/07/26 04:31:20 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.13.2.1 1998/11/30 00:31:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ ifdef MULTIBYTE
 CFLAGS+= $(MBFLAGS)
 endif
 
-OBJS= psql.o stringutils.o @STRDUP@ 
+OBJS= psql.o stringutils.o @STRDUP@ @STRERROR2@
 
 all: submake psql
 

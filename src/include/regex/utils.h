@@ -58,6 +58,6 @@ typedef unsigned char uch;
 #endif
 
 /* for old systems with bcopy() but no memmove() */
-#if !defined(HAVE_MEMMOVE)
+#if !defined(HAVE_MEMMOVE) && !defined(memmove)
 #define memmove(d, s, c)		bcopy(s, d, c)
 #endif
