@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.16 1997/05/30 18:35:40 vadim Exp $
+ *    $Id: nbtsort.c,v 1.17 1997/06/06 03:11:46 vadim Exp $
  *
  * NOTES
  *
@@ -938,8 +938,9 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 	     o <= last_off;
 	     o = OffsetNumberNext(o), n = OffsetNumberNext(n)) {
 	    ii = PageGetItemId(opage, o);
-	    (void) PageAddItem(npage, PageGetItem(opage, ii),
-			       ii->lp_len, n, LP_USED);
+	    if ( PageAddItem(npage, PageGetItem(opage, ii),
+			       ii->lp_len, n, LP_USED) == InvalidOffsetNumber )
+		elog (FATAL, "btree: failed to add item to the page in _bt_sort (1)");
 #if 0
 #if defined(FASTBUILD_DEBUG) && defined(FASTBUILD_MERGE)
 	    {
@@ -1021,7 +1022,8 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
      * new chain of duplicates.
      */
     off = OffsetNumberNext(last_off);
-    (void) PageAddItem(npage, (Item) bti, btisz, off, LP_USED);
+    if ( PageAddItem(npage, (Item) bti, btisz, off, LP_USED) == InvalidOffsetNumber )
+	elog (FATAL, "btree: failed to add item to the page in _bt_sort (2)");
 #if 0
 #if defined(FASTBUILD_DEBUG) && defined(FASTBUILD_MERGE)
     {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.14 1997/05/31 06:35:56 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.15 1997/06/06 03:11:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -488,7 +488,8 @@ _bt_insertonpg(Relation rel,
 		    upditem_offset = P_FIRSTKEY;
 		if ( !P_LEFTMOST(lpageop) || 
 			stack->bts_offset != upditem_offset )
-		    elog (FATAL, "btree: items are out of order");
+		    elog (FATAL, "btree: items are out of order (leftmost %d, stack %u, update %u)",
+		    	P_LEFTMOST(lpageop), stack->bts_offset, upditem_offset);
 	    }
 	    /*
 	     * There was bug caused by deletion all minimum keys (K1) from 
@@ -682,7 +683,8 @@ _bt_split(Relation rel, Buffer buf, BTItem hiRightItem)
 			+ (sizeof(BTItemData) - sizeof(IndexTupleData));
     	    itemsz = DOUBLEALIGN(itemsz);
 	}
-	(void) PageAddItem(rightpage, (Item) item, itemsz, P_HIKEY, LP_USED);
+	if ( PageAddItem(rightpage, (Item) item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber )
+	    elog (FATAL, "btree: failed to add hikey to the right sibling");
 	rightoff = P_FIRSTKEY;
     } else {
 	/* splitting a rightmost page, "high key" is the first data item */
@@ -702,12 +704,14 @@ _bt_split(Relation rel, Buffer buf, BTItem hiRightItem)
 	
 	/* decide which page to put it on */
 	if (i < firstright) {
-	    (void) PageAddItem(leftpage, (Item) item, itemsz, leftoff,
-			       LP_USED);
+	    if ( PageAddItem(leftpage, (Item) item, itemsz, leftoff, 
+			       LP_USED) == InvalidOffsetNumber )
+		elog (FATAL, "btree: failed to add item to the left sibling");
 	    leftoff = OffsetNumberNext(leftoff);
 	} else {
-	    (void) PageAddItem(rightpage, (Item) item, itemsz, rightoff,
-			       LP_USED);
+	    if ( PageAddItem(rightpage, (Item) item, itemsz, rightoff,
+			       LP_USED) == InvalidOffsetNumber )
+		elog (FATAL, "btree: failed to add item to the right sibling");
 	    rightoff = OffsetNumberNext(rightoff);
 	}
     }
@@ -735,7 +739,8 @@ _bt_split(Relation rel, Buffer buf, BTItem hiRightItem)
      */
     
     PageManagerModeSet(OverwritePageManagerMode);
-    (void) PageAddItem(leftpage, (Item) item, itemsz, P_HIKEY, LP_USED);
+    if ( PageAddItem(leftpage, (Item) item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber )
+    	elog (FATAL, "btree: failed to add hikey to the left sibling");
     PageManagerModeSet(ShufflePageManagerMode);
     
     /*
@@ -913,7 +918,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
      * page is the rightmost page on its level so the "high key" item
      * is the first data item.
      */
-    (void) PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED);
+    if ( PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber )
+    	elog (FATAL, "btree: failed to add leftkey to new root page");
     pfree(new_item);
     
     /*
@@ -929,7 +935,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
     /*
      * insert the right page pointer into the new root page.
      */
-    (void) PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY, LP_USED);
+    if ( PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY, LP_USED) == InvalidOffsetNumber )
+    	elog (FATAL, "btree: failed to add rightkey to new root page");
     pfree(new_item);
     
     /* write and let go of the root buffer */
@@ -981,7 +988,8 @@ _bt_pgaddtup(Relation rel,
 	} while ( ! BTItemSame (chkitem, afteritem) );
     }
 
-    (void) PageAddItem(page, (Item) btitem, itemsize, itup_off, LP_USED);
+    if ( PageAddItem(page, (Item) btitem, itemsize, itup_off, LP_USED) == InvalidOffsetNumber )
+    	elog (FATAL, "btree: failed to add item to the page");
     
     /* write the buffer, but hold our lock */
     _bt_wrtnorelbuf(rel, buf);
@@ -1325,14 +1333,16 @@ _bt_shift (Relation rel, Buffer buf, BTStack stack, int keysz,
     itemsz = IndexTupleDSize(hikey->bti_itup)
 	+ (sizeof(BTItemData) - sizeof(IndexTupleData));
     itemsz = DOUBLEALIGN(itemsz);
-    (void) PageAddItem(page, (Item) hikey, itemsz, P_HIKEY, LP_USED);
+    if ( PageAddItem(page, (Item) hikey, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber )
+    	elog (FATAL, "btree: failed to add hikey in _bt_shift");
     pfree (hikey);
 
     /* add btitem */
     itemsz = IndexTupleDSize(btitem->bti_itup)
 	+ (sizeof(BTItemData) - sizeof(IndexTupleData));
     itemsz = DOUBLEALIGN(itemsz);
-    (void) PageAddItem(page, (Item) btitem, itemsz, P_FIRSTKEY, LP_USED);
+    if ( PageAddItem(page, (Item) btitem, itemsz, P_FIRSTKEY, LP_USED) == InvalidOffsetNumber )
+    	elog (FATAL, "btree: failed to add firstkey in _bt_shift");
     pfree (btitem);
     nitem = (BTItem) PageGetItem(page, PageGetItemId(page, P_FIRSTKEY));
     btitem = _bt_formitem(&(nitem->bti_itup));
