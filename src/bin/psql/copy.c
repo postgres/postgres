@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.21 2002/04/24 05:24:00 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.22 2002/04/24 21:00:10 petere Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -330,7 +330,7 @@ do_copy(const char *args)
 }
 
 
-#define COPYBUFSIZ BLCKSZ
+#define COPYBUFSIZ 8192			/* size doesn't matter */
 
 
 /*
