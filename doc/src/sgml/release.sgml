@@ -248,6 +248,8 @@ Fixes for GROUP BY in special cases(Tom, Jan)
 Fix for memory leak in failed queries(Tom)
 DEFAULT now supports mixed-case identifiers(Tom)
 Fix for multi-segment uses of DROP/RENAME table, indexes(Ole Gjerde)
+Disable use of pg_dump with both -o and -d options(Bruce)
+Allow pg_dump to properly dump GROUP permissions(Bruce)
 
 Enhancements
 ------------
@@ -323,6 +325,11 @@ Better handling of non-default block sizes(Massimo)
 Improve GEQO optimizer memory consumption(Tom)
 UNION now suppports ORDER BY of columns not in target list(Jan)
 Major libpq++ improvements(Vince Vielhaber)
+pg_dump now uses -z(ACL's) as default(Bruce)
+backend cache, memory speedups(Tom)
+have pg_dump do everything in one snapshot transaction(Vadim)
+fix for large object memory leakage, fix for pg_dumping(Tom)
+INET type now respects netmask for comparisons
 
 Source Tree Changes
 -------------------
