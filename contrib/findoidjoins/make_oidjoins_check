@@ -11,7 +11,6 @@
 AWK=${AWK:-awk}
 
 TMP="/tmp/$$"
-trap "rm -rf $TMP" 0 1 2 3 15
 
 # Create a temporary directory with the proper permissions so no one can
 # intercept our temporary files and cause a security breach.
@@ -23,6 +22,8 @@ then	echo "Can't create temporary directory $TMP." 1>&2
 fi
 umask "$OMASK"
 unset OMASK
+
+trap "rm -rf $TMP" 0 1 2 3 15
 
 INPUTFILE="$TMP/a"
 DUPSFILE="$TMP/b"
