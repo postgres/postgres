@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.49 2000/01/26 05:56:13 momjian Exp $
+ * $Id: user.c,v 1.50 2000/02/15 18:17:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -855,6 +855,7 @@ AlterGroup(AlterGroupStmt *stmt, const char * tag)
         foreach(item, stmt->listUsers)
         {
             Value *v;
+
             if (strcmp(tag, "ALTER GROUP")==0)
             {
                 /* Get the uid of the proposed user to add. */
@@ -875,7 +876,10 @@ AlterGroup(AlterGroupStmt *stmt, const char * tag)
                 v = lfirst(item);
             }
             else
+			{
                 elog(ERROR, "AlterGroup: unknown tag %s", tag);
+				v = NULL;		/* keep compiler quiet */
+			}
 
             if (!member(v, newlist))
                 newlist = lcons(v, newlist);
