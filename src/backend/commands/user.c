@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.39 1999/11/30 03:57:23 momjian Exp $
+ * $Id: user.c,v 1.40 1999/11/30 04:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,7 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	}
 
     /* look for duplicate sysid */
-	tuple = SearchSysCacheTuple(USESYSID,
+	tuple = SearchSysCacheTuple(SHADOWSYSID,
 								Int32GetDatum(stmt->sysid),
 								0, 0, 0);
     if (HeapTupleIsValid(tuple))

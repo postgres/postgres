@@ -24,7 +24,7 @@ static struct _helpStruct QL_HELP[] = {
 
     { "ALTER USER",
       "Modifies user account information",
-      "ALTER USER username [ WITH PASSWORD password ]\n    [ CREATEDB | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]\n    [ IN GROUP groupname [, ...] ]\n    [ VALID UNTIL 'abstime' ]" },
+      "ALTER USER username\n    [ WITH\n     [ SYSID uid ]\n     [ PASSWORD password ] ]\n    [ CREATEDB | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]\n    [ IN GROUP groupname [, ...] ]\n    [ VALID UNTIL 'abstime' ]" },
 
     { "BEGIN",
       "Begins a transaction in chained mode",
@@ -100,7 +100,7 @@ static struct _helpStruct QL_HELP[] = {
 
     { "CREATE USER",
       "Creates account information for a new user",
-      "CREATE USER username\n    [ WITH PASSWORD password ]\n    [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]\n    [ IN GROUP     groupname [, ...] ]\n    [ VALID UNTIL  'abstime' ]" },
+      "CREATE USER username\n    [ WITH\n     [ SYSID uid ]\n     [ PASSWORD password ] ]\n    [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]\n    [ IN GROUP     groupname [, ...] ]\n    [ VALID UNTIL  'abstime' ]" },
 
     { "CREATE VIEW",
       "Constructs a virtual table",
