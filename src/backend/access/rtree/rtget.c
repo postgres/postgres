@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.6 1996/11/05 10:54:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.7 1996/11/21 06:13:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,6 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
     RTSTACK *stk;
     BlockNumber blk;
     IndexTuple it;
-    ItemPointer ip;
     
     b = ReadBuffer(s->relation, P_ROOT);
     p = BufferGetPage(b);
@@ -106,13 +105,10 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
 	    ItemPointerSet(&(s->currentItemData), BufferGetBlockNumber(b), n);
 	    
 	    it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-	    ip = (ItemPointer) palloc(sizeof(ItemPointerData));
-	    memmove((char *) ip, (char *) &(it->t_tid),
-		    sizeof(ItemPointerData));
+	    
+	    res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
+	    
 	    ReleaseBuffer(b);
-	    
-	    res = FormRetrieveIndexResult(&(s->currentItemData), ip);
-	    
 	    return (res);
 	} else {
 	    stk = (RTSTACK *) palloc(sizeof(RTSTACK));
@@ -145,7 +141,6 @@ rtnext(IndexScanDesc s, ScanDirection dir)
     RTSTACK *stk;
     BlockNumber blk;
     IndexTuple it;
-    ItemPointer ip;
     
     blk = ItemPointerGetBlockNumber(&(s->currentItemData));
     n = ItemPointerGetOffsetNumber(&(s->currentItemData));
@@ -191,13 +186,10 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 	    ItemPointerSet(&(s->currentItemData), BufferGetBlockNumber(b), n);
 	    
 	    it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-	    ip = (ItemPointer) palloc(sizeof(ItemPointerData));
-	    memmove((char *) ip, (char *) &(it->t_tid),
-		    sizeof(ItemPointerData));
+	    
+	    res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
+	    
 	    ReleaseBuffer(b);
-	    
-	    res = FormRetrieveIndexResult(&(s->currentItemData), ip);
-	    
 	    return (res);
 	} else {
 	    stk = (RTSTACK *) palloc(sizeof(RTSTACK));
@@ -288,6 +280,8 @@ rtscancache(IndexScanDesc s, ScanDirection dir)
     else
 	res = (RetrieveIndexResult) NULL;
     
+    pfree (ip);
+
     return (res);
 }
 

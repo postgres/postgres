@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.9 1996/11/13 20:47:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.10 1996/11/21 06:10:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -535,7 +535,6 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
     RetrieveIndexResult res;
     BlockNumber blkno;
     ItemPointer current;
-    ItemPointer iptr;
     BTItem btitem;
     IndexTuple itup;
     BTScanOpaque so;
@@ -569,10 +568,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
     itup = &btitem->bti_itup;
     
     if (_bt_checkqual(scan, itup)) {
-	iptr = (ItemPointer) palloc(sizeof(ItemPointerData));
-	memmove((char *) iptr, (char *) &(itup->t_tid),
-		sizeof(ItemPointerData));
-	res = FormRetrieveIndexResult(current, iptr);
+	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
 	/* remember which buffer we have pinned and locked */
 	so->btso_curbuf = buf;
@@ -608,7 +604,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     BTItem btitem;
     IndexTuple itup;
     ItemPointer current;
-    ItemPointer iptr;
     BlockNumber blkno;
     StrategyNumber strat;
     RetrieveIndexResult res;
@@ -764,11 +759,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     itup = &btitem->bti_itup;
     
     if (_bt_checkqual(scan, itup)) {
-	iptr = (ItemPointer) palloc(sizeof(ItemPointerData));
-	memmove((char *) iptr, (char *) &(itup->t_tid),
-		sizeof(ItemPointerData));
-	res = FormRetrieveIndexResult(current, iptr);
-	pfree(iptr);
+	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
 	/* remember which buffer we have pinned */
 	so->btso_curbuf = buf;
@@ -1035,7 +1026,6 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
     Page page;
     BTPageOpaque opaque;
     ItemPointer current;
-    ItemPointer iptr;
     OffsetNumber offnum, maxoff;
     OffsetNumber start = 0;
     BlockNumber blkno;
@@ -1132,10 +1122,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
     
     /* see if we picked a winner */
     if (_bt_checkqual(scan, itup)) {
-	iptr = (ItemPointer) palloc(sizeof(ItemPointerData));
-	memmove((char *) iptr, (char *) &(itup->t_tid),
-		sizeof(ItemPointerData));
-	res = FormRetrieveIndexResult(current, iptr);
+	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
 	/* remember which buffer we have pinned */
 	so = (BTScanOpaque) scan->opaque;
