@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.15 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.16 2000/04/04 05:22:45 tgl Exp $
 Postgres documentation
 -->
 
@@ -26,7 +26,7 @@ Postgres documentation
 pg_dump [ <replaceable class="parameter">dbname</replaceable> ]
 pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
     [ -t <replaceable class="parameter">table</replaceable> ]
-    [ -a ] [ -c ] [ -d ] [ -D ] [ -n ] [ -N ]
+    [ -a ] [ -c ] [ -d ] [ -D ] [ -i ] [ -n ] [ -N ]
     [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
     [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
@@ -88,6 +88,22 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceab
       <listitem>
        <para>
 	Dump data as inserts with attribute names
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-i</term>
+      <listitem>
+       <para>
+        Ignore version mismatch between <application>pg_dump</application>
+	and the database server.  Since <application>pg_dump</application>
+	knows a great deal about system catalogs, any given version of
+	<application>pg_dump</application> is only intended to work with
+	the corresponding release of the database server.  Use this option
+	if you need to override the version check (and if
+	<application>pg_dump</application> then fails, don't
+	say you weren't warned).
        </para>
       </listitem>
      </varlistentry>

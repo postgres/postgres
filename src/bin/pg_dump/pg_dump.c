@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.144 2000/02/07 16:30:58 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.145 2000/04/04 05:22:46 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -139,6 +139,7 @@ help(const char *progname)
         "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
         "  -D, --attribute-inserts  dump data as INSERT commands with attribute names\n"
         "  -h, --host <hostname>    server host name\n"
+        "  -i, --ignore-version     proceed when database version != pg_dump version\n"
         "  -n, --no-quotes          suppress most quotes around identifiers\n"
         "  -N, --quotes             enable most quotes around identifiers\n"
         "  -o, --oids               dump object ids (oids)\n"
@@ -156,6 +157,7 @@ help(const char *progname)
         "  -d                       dump data as INSERT, rather than COPY, commands\n"
         "  -D                       dump data as INSERT commands with attribute names\n"
         "  -h <hostname>            server host name\n"
+        "  -i                       proceed when database version != pg_dump version\n"
         "  -n                       suppress most quotes around identifiers\n"
         "  -N                       enable most quotes around identifiers\n"
         "  -o                       dump object ids (oids)\n"
@@ -533,6 +535,42 @@ prompt_for_password(char *username, char *password)
 }
 
 
+static void
+check_database_version (bool ignoreVersion)
+{
+	PGresult	*res;
+	const char	*dbversion;
+	const char	*myversion = "PostgreSQL " PG_RELEASE "." PG_VERSION;
+	int			 myversionlen = strlen(myversion);
+
+	res = PQexec(g_conn, "SELECT version()");
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK ||
+		PQntuples(res) != 1)
+	{
+		fprintf(stderr, "check_database_version(): command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+		exit_nicely(g_conn);
+	}
+	dbversion = PQgetvalue(res, 0, 0);
+	if (strncmp(dbversion, myversion, myversionlen) != 0)
+	{
+		fprintf(stderr, "Database version: %s\npg_dump version: %s\n",
+				dbversion,  PG_RELEASE "." PG_VERSION);
+		if (ignoreVersion)
+		{
+			fprintf(stderr, "Proceeding despite version mismatch.\n");
+		}
+		else
+		{
+			fprintf(stderr, "Aborting because of version mismatch.\n"
+					"Use --ignore-version if you think it's safe to proceed anyway.\n");
+			exit_nicely(g_conn);
+		}
+	}
+	PQclear(res);
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -551,6 +589,7 @@ main(int argc, char **argv)
 	char		username[100];
 	char		password[100];
 	bool		use_password = false;
+	bool		ignore_version = false;
 
 #ifdef HAVE_GETOPT_LONG
 	static struct option long_options[] = {
@@ -559,6 +598,7 @@ main(int argc, char **argv)
 		{"inserts",no_argument, NULL, 'd'},
 		{"attribute-inserts", no_argument, NULL, 'D'},
 		{"host", required_argument, NULL, 'h'},
+		{"ignore-version", no_argument, NULL, 'i'},
 		{"no-quotes", no_argument, NULL, 'n'},
 		{"quotes", no_argument, NULL, 'N'},
 		{"oids", no_argument, NULL, 'o'},
@@ -591,9 +631,9 @@ main(int argc, char **argv)
 
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acdDf:h:nNop:st:uvxzV?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDf:h:inNop:st:uvxzV?", long_options, &optindex)) != -1)
 #else
-    while ((c = getopt(argc, argv, "acdDf:h:nNop:st:uvxzV?-")) != -1)
+    while ((c = getopt(argc, argv, "acdDf:h:inNop:st:uvxzV?-")) != -1)
 #endif
 	{
 		switch (c)
@@ -614,10 +654,13 @@ main(int argc, char **argv)
 				attrNames = true;
 				break;
             case 'f':
-		filename = optarg;
-		break;
+				filename = optarg;
+				break;
 			case 'h':			/* server host */
 				pghost = optarg;
+				break;
+			case 'i':			/* ignore database version mismatch */
+				ignore_version = true;
 				break;
 			case 'n':			/* Do not force double-quotes on
 								 * identifiers */
@@ -772,6 +815,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
+
+	/* check for version mismatch */
+	check_database_version(ignore_version);
 
 	/*
 	 * Start serializable transaction to dump consistent data
