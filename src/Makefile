@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3.2.1 1996/08/19 18:35:17 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3.2.2 1996/08/20 04:10:35 scrappy Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
@@ -17,19 +17,6 @@
 MKDIR=./mk
 -include $(MKDIR)/../Makefile.global
 
-SUBDIR= backend libpq 
-
-ifeq ($(USE_TCL), true)
-SUBDIR += libpgtcl
-endif
-
-SUBDIR+= bin 
-
-DOC= $(shell ls -ld ../doc)
-ifeq ($(DOC), ../doc)
-SUBDIR+= ../doc
-endif
-
 FIND = find
 # assuming gnu tar and split here
 TAR  = tar
@@ -38,7 +25,17 @@ SPLIT = split
 ETAGS = etags
 XARGS = xargs
 
-include mk/postgres.subdir.mk
+.DEFAULT all:
+	$(MAKE) -C backend $@
+	$(MAKE) -C libpq $@
+ifeq ($(USE_TCL), true)
+	$(MAKE) -C libpgtcl $@
+endif
+	$(MAKE) -C bin $@
+ifeq (../doc, $(wildcard ../doc))
+	$(MAKE) -C ../doc $@
+endif
+	@echo All of Postgres95 is successfully made.  Ready to install.
 
 TAGS:
 	rm -f TAGS; \
