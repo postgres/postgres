@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.148 1998/07/18 18:34:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.149 1998/07/26 01:18:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1575,7 +1575,7 @@ do_help(PsqlSettings *pset, const char *topic)
 		help_found = false;		/* Haven't found it yet */
 		for (i = 0; QL_HELP[i].cmd; i++)
 		{
-			if (strcmp(QL_HELP[i].cmd, topic) == 0 ||
+			if (strcasecmp(QL_HELP[i].cmd, topic) == 0 ||
 				strcmp(topic, "*") == 0)
 			{
 				help_found = true;

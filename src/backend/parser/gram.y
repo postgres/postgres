@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.17 1998/07/25 00:17:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.18 1998/07/26 01:18:04 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -125,7 +125,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		ProcedureStmt, 	RecipeStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
-		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
+		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect, SubUnion,
 		UpdateStmt, InsertStmt, SelectStmt, NotifyStmt, DeleteStmt, ClusterStmt,
 		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt
@@ -339,7 +339,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %left		'.'
 %left		'[' ']'
 %nonassoc	TYPECAST
-%nonassoc	REDUCE
 %left		UNION
 %%
 
@@ -2027,9 +2026,9 @@ TransactionStmt: ABORT_TRANS opt_trans
 				}
 		;
 
-opt_trans:  WORK								{ $$ = NULL; }
-		|	TRANSACTION							{ $$ = NULL: }
-		|  /*EMPTY*/							{ $$ = NULL; }
+opt_trans: WORK									{ $$ = TRUE; }
+		| TRANSACTION							{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
 
@@ -2438,6 +2437,23 @@ SelectStmt:  SELECT opt_unique res_target_list2
 				}
 		;
 
+SubSelect:  SELECT opt_unique res_target_list2
+			 from_clause where_clause
+			 group_clause having_clause
+			 union_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->unique = $2;
+					n->targetList = $3;
+					n->fromClause = $4;
+					n->whereClause = $5;
+					n->groupClause = $6;
+					n->havingClause = $7;
+					n->unionClause = $8;
+					$$ = (Node *)n;
+				}
+		;
+
 union_clause:  UNION opt_union select_list
 				{
 					SelectStmt *n = (SelectStmt *)lfirst($3);
@@ -2448,20 +2464,19 @@ union_clause:  UNION opt_union select_list
 				{ $$ = NIL; }
 		;
 
-select_list:  select_list UNION opt_union SubSelect
+select_list:  select_list UNION opt_union SubUnion
 				{
 					SelectStmt *n = (SelectStmt *)$4;
 					n->unionall = $3;
 					$$ = lappend($1, $4);
 				}
-		| SubSelect
+		| SubUnion
 				{ $$ = lcons($1, NIL); }
 		;
 
-SubSelect:	SELECT opt_unique res_target_list2
+SubUnion:	SELECT opt_unique res_target_list2
 			 from_clause where_clause
 			 group_clause having_clause
-			 union_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = $2;
@@ -2471,7 +2486,6 @@ SubSelect:	SELECT opt_unique res_target_list2
 					n->whereClause = $5;
 					n->groupClause = $6;
 					n->havingClause = $7;
-					n->unionClause = $8;
 					$$ = (Node *)n;
 				}
 		;

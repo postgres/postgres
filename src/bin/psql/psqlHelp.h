@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.48 1998/07/25 00:17:29 momjian Exp $
+ * $Id: psqlHelp.h,v 1.49 1998/07/26 01:18:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,20 +18,20 @@ struct _helpStruct
 };
 
 static struct _helpStruct QL_HELP[] = {
-	{"abort",
-		"abort the current transaction",
-	"abort [transaction];"},
 	{"abort transaction",
 		"abort the current transaction",
-	"abort [transaction];"},
+    "\
+\tabort [transaction|work];"},
 	{"alter table",
 		"add/rename attributes, rename tables",
-	"\tALTER TABLE class_name [*] ADD COLUMN attr type\n\
+	"\
+\tALTER TABLE class_name [*] ADD COLUMN attr type\n\
 \tALTER TABLE class_name [*] RENAME [COLUMN] attr1 TO attr2\n\
 \tALTER TABLE class_name1 RENAME TO class_name2"},
 	{"alter user",
 		"alter system information for a user",
-	"ALTER USER user_name\n\
+	"\
+\tALTER USER user_name\n\
 \t[WITH PASSWORD password]\n\
 \t[CREATEDB | NOCCREATEDB]\n\
 \t[CREATEUSER | NOCREATEUSER]\n\
@@ -39,23 +39,29 @@ static struct _helpStruct QL_HELP[] = {
 \t[VALID UNTIL 'abstime'];"},
 	{"begin work",
 		"begin a new transaction",
-	"BEGIN [TRANSACTION|WORK];"},
+	"\
+\tBEGIN [WORK|TRANSACTION];"},
 	{"cluster",
 		"create a clustered index (from an existing index)",
-	"CLUSTER index_name ON relation_name"},
+	"\
+\tCLUSTER index_name ON relation_name"},
 	{"close",
 		"close an existing cursor (cursor)",
-	"CLOSE cursorname;"},
+	"\
+\tCLOSE cursorname;"},
 	{"commit work",
 		"commit a transaction",
-	"COMMIT [TRANSACTION|WORK]"},
+	"\
+\tCOMMIT [WORK|TRANSACTION]"},
 	{"copy",
 		"copy data to and from a table",
-	"COPY [BINARY] class_name [WITH OIDS]\n\
+	"\
+\tCOPY [BINARY] class_name [WITH OIDS]\n\
 \tTO|FROM filename|STDIN|STDOUT [USING DELIMITERS 'delim'];"},
 	{"create",
 		"Please be more specific:",
-	"\tcreate aggregate\n\
+	"\
+\tcreate aggregate\n\
 \tcreate database\n\
 \tcreate function\n\
 \tcreate index\n\
@@ -68,26 +74,31 @@ static struct _helpStruct QL_HELP[] = {
 \tcreate view"},
 	{"create aggregate",
 		"define an aggregate function",
-	"CREATE AGGREGATE agg_name [AS] (BASETYPE = data_type, \n\
+	"\
+\tCREATE AGGREGATE agg_name [AS] (BASETYPE = data_type, \n\
 \t[SFUNC1 = sfunc_1, STYPE1 = sfunc1_return_type]\n\
 \t[SFUNC2 = sfunc_2, STYPE2 = sfunc2_return_type]\n\
 \t[,FINALFUNC = final-function]\n\
 \t[,INITCOND1 = initial-cond1][,INITCOND2 = initial-cond2]);"},
 	{"create database",
 		"create a database",
-	"CREATE DATABASE dbname [WITH LOCATION = 'dbpath']"},
+	"\
+\tCREATE DATABASE dbname [WITH LOCATION = 'dbpath']"},
 	{"create function",
 		"create a user-defined function",
-	"CREATE FUNCTION function_name ([type1, ...typeN]) RETURNS return_type\n\
+	"\
+\tCREATE FUNCTION function_name ([type1, ...typeN]) RETURNS return_type\n\
 \tAS 'object_filename'|'sql-queries'\n\
 \tLANGUAGE 'c'|'sql'|'internal';"},
 	{"create index",
 		"construct an index",
-	"CREATE [UNIQUE] INDEX indexname ON class_name [USING access_method]\n\
+	"\
+\tCREATE [UNIQUE] INDEX indexname ON class_name [USING access_method]\n\
 ( attr1 [type_class1], ...attrN | funcname(attr1, ...) [type_class] );"},
 	{"create operator",
 		"create a user-defined operator",
-	"CREATE OPERATOR operator_name (\n\
+	"\
+\tCREATE OPERATOR operator_name (\n\
 \t[LEFTARG = type1][,RIGHTARG = type2]\n\
 \t,PROCEDURE = func_name,\n\
 \t[,COMMUTATOR = com_op][,NEGATOR = neg_op]\n\
@@ -95,13 +106,15 @@ static struct _helpStruct QL_HELP[] = {
 \t[,JOIN = join_proc][,SORT = sort_op1...sort_opN]);"},
 	{"create rule",
 		"define a new rule",
-	"CREATE RULE rule_name AS ON\n\
+	"\
+\tCREATE RULE rule_name AS ON\n\
 \t[SELECT|UPDATE|DELETE|INSERT]\n\
 \tTO object [WHERE qual]\n\
 \tDO [INSTEAD] [action|NOTHING|[actions]];"},
 	{"create sequence",
 		"create a new sequence number generator",
-	"CREATE SEQUENCE sequence_name\n\
+	"\
+\tCREATE SEQUENCE sequence_name\n\
 \t[INCREMENT number]\n\
 \t[START number]\n\
 \t[MINVALUE number]\n\
@@ -110,21 +123,24 @@ static struct _helpStruct QL_HELP[] = {
 \t[CYCLE];"},
 	{"create table",
 		"create a new table",
-	"CREATE TABLE class_name\n\
+	"\
+\tCREATE TABLE class_name\n\
 \t(attr1 type1 [DEFAULT expression] [NOT NULL], ...attrN)\n\
 \t[INHERITS (class_name1, ...class_nameN)\n\
 \t[[CONSTRAINT name] CHECK condition1, ...conditionN] ]\n\
 ;"},
 	{"create trigger",
 		"create a new trigger",
-	"CREATE TRIGGER trigger_name AFTER|BEFORE event1 [OR event2 [OR event3] ]\n\
+	"\
+\tCREATE TRIGGER trigger_name AFTER|BEFORE event1 [OR event2 [OR event3] ]\n\
 \tON class_name FOR EACH ROW|STATEMENT\n\
 \tEXECUTE PROCEDURE func_name ([arguments])\n\
 \n\
 \teventX is one of INSERT, DELETE, UPDATE"},
 	{"create type",
 		"create a new user-defined base data type",
-	"CREATE TYPE typename (\n\
+	"\
+\tCREATE TYPE typename (\n\
 \tINTERNALLENGTH = (number|VARIABLE),\n\
 \t[EXTERNALLENGTH = (number|VARIABLE),]\n\
 \tINPUT = input_function, OUTPUT = output_function\n\
@@ -132,7 +148,8 @@ static struct _helpStruct QL_HELP[] = {
 \t[,SEND = send_function][,RECEIVE = receive_function][,PASSEDBYVALUE]);"},
 	{"create user",
 		"create a new user",
-	"CREATE USER user_name\n\
+	"\
+\tCREATE USER user_name\n\
 \t[WITH PASSWORD password]\n\
 \t[CREATEDB | NOCREATEDB]\n\
 \t[CREATEUSER | NOCREATEUSER]\n\
@@ -140,7 +157,8 @@ static struct _helpStruct QL_HELP[] = {
 \t[VALID UNTIL 'abstime'];"},
 	{"create view",
 		"create a view",
-	"CREATE VIEW view_name AS\n\
+	"\
+\tCREATE VIEW view_name AS\n\
 \tSELECT [DISTINCT [ON attrN]]\n\
 \texpr1 [AS attr1], ...exprN\n\
 \t[FROM from_list]\n\
@@ -148,7 +166,8 @@ static struct _helpStruct QL_HELP[] = {
 \t[GROUP BY group_list];"},
 	{"declare",
 		"set up a cursor",
-	"DECLARE cursorname [BINARY] CURSOR FOR\n\
+	"\
+\tDECLARE cursorname [BINARY] CURSOR FOR\n\
 \tSELECT [DISTINCT [ON attrN]]\n\
 \texpr1 [AS attr1], ...exprN\n\
 \t[FROM from_list]\n\
@@ -159,10 +178,12 @@ static struct _helpStruct QL_HELP[] = {
 \t[UNION [ALL] SELECT ...];"},
 	{"delete",
 		"delete tuples",
-	"DELETE FROM class_name [WHERE qual];"},
+	"\
+\tDELETE FROM class_name [WHERE qual];"},
 	{"drop",
 		"Please be more specific:",
-	"\tdrop aggregate\n\
+	"\
+\tdrop aggregate\n\
 \tdrop database\n\
 \tdrop function\n\
 \tdrop index\n\
@@ -175,57 +196,74 @@ static struct _helpStruct QL_HELP[] = {
 \tdrop view"},
 	{"drop aggregate",
 		"remove an aggregate function",
-	"DROP AGGREGATE agg_name agg_type|*;"},
+	"\
+\tDROP AGGREGATE agg_name agg_type|*;"},
 	{"drop database",
 		"remove a database",
-	"DROP DATABASE dbname"},
+	"\
+\tDROP DATABASE dbname"},
 	{"drop function",
 		"remove a user-defined function",
-	"DROP FUNCTION funcname ([type1, ...typeN]);"},
+	"\
+\tDROP FUNCTION funcname ([type1, ...typeN]);"},
 	{"drop index",
 		"remove an existing index",
-	"DROP INDEX indexname;"},
+	"\
+\tDROP INDEX indexname;"},
 	{"drop operator",
 		"remove a user-defined operator",
-	"DROP OPERATOR operator_name ([ltype|NONE],[RTYPE|none]);"},
+	"\
+\tDROP OPERATOR operator_name ([ltype|NONE],[RTYPE|none]);"},
 	{"drop rule",
 		"remove a rule",
-	"DROP RULE rulename;"},
+	"\
+\tDROP RULE rulename;"},
 	{"drop sequence",
 		"remove a sequence number generator",
-	"DROP SEQUENCE sequence_name[, ...sequence_nameN];"},
+	"\
+\tDROP SEQUENCE sequence_name[, ...sequence_nameN];"},
 	{"drop table",
 		"remove a table",
-	"DROP TABLE class_name1, ...class_nameN;"},
+	"\
+\tDROP TABLE class_name1, ...class_nameN;"},
 	{"drop trigger",
 		"remove a trigger",
-	"DROP TRIGGER trigger_name ON class_name;"},
+	"\
+\tDROP TRIGGER trigger_name ON class_name;"},
 	{"drop type",
 		"remove a user-defined base type",
-	"DROP TYPE typename;"},
+	"\
+\tDROP TYPE typename;"},
 	{"drop user",
 		"remove a user from the system",
-	"DROP USER user_name;"},
+	"\
+\tDROP USER user_name;"},
 	{"drop view",
 		"remove a view",
-	"DROP VIEW view_name"},
-	{"end transaction",
+	"\
+\tDROP VIEW view_name"},
+	{"end work",
 		"end the current transaction",
-	"END [TRANSACTION|WORK];"},
+	"\
+\tEND [WORK|TRANSACTION];"},
 	{"explain",
 		"explain the query execution plan",
-	"EXPLAIN [VERBOSE] query"},
+	"\
+\tEXPLAIN [VERBOSE] query"},
 	{"fetch",
 		"retrieve tuples from a cursor",
-	"FETCH [FORWARD|BACKWARD] [number|ALL] [IN cursorname];"},
+	"\
+\tFETCH [FORWARD|BACKWARD] [number|ALL] [IN cursorname];"},
 	{"grant",
 		"grant access control to a user or group",
-	"GRANT privilege1, ...privilegeN ON rel1, ...relN TO \n\
+	"\
+\tGRANT privilege1, ...privilegeN ON rel1, ...relN TO \n\
 [PUBLIC|GROUP group|username]\n\
 \t privilege is ALL|SELECT|INSERT|UPDATE|DELETE|RULE"},
 	{"insert",
 		"insert tuples",
-	"INSERT INTO class_name [(attr1, ...attrN)]\n\
+	"\
+\tINSERT INTO class_name [(attr1, ...attrN)]\n\
 \tVALUES (expr1,..exprN) |\n\
 \tSELECT [DISTINCT [ON attrN]]\n\
 \texpr1, ...exprN\n\
@@ -236,37 +274,47 @@ static struct _helpStruct QL_HELP[] = {
 \t[UNION [ALL] SELECT ...];"},
 	{"listen",
 		"listen for notification on a relation",
-	"LISTEN class_name"},
+	"\
+\tLISTEN class_name"},
 	{"load",
 		"dynamically load a module",
-	"LOAD 'filename';"},
+	"\
+\tLOAD 'filename';"},
 	{"lock",
 		"exclusive lock a table inside a transaction",
-	"LOCK [TABLE] class_name;"},
+	"\
+\tLOCK [TABLE] class_name;"},
 	{"move",
 		"move an cursor position",
-	"MOVE [FORWARD|BACKWARD] [number|ALL] [IN cursorname];"},
+	"\
+\tMOVE [FORWARD|BACKWARD] [number|ALL] [IN cursorname];"},
 	{"notify",
 		"signal all frontends and backends listening on a relation",
-	"NOTIFY class_name"},
+	"\
+\tNOTIFY class_name"},
 	{"reset",
 		"set run-time environment back to default",
 #ifdef MULTIBYTE
-	"RESET DateStyle|GEQO|R_PLANS|CLIENT_ENCODING"},
+	"\
+\tRESET DateStyle|GEQO|R_PLANS|CLIENT_ENCODING"},
 #else
-	"RESET DateStyle|GEQO|R_PLANS"},
+	"\
+\tRESET DateStyle|GEQO|R_PLANS"},
 #endif
 	{"revoke",
 		"revoke access control from a user or group",
-	"REVOKE privilege1, ...privilegeN ON rel1, ...relN FROM \n\
+	"\
+\tREVOKE privilege1, ...privilegeN ON rel1, ...relN FROM \n\
 [PUBLIC|GROUP group|username]\n\
 \t privilege is ALL|SELECT|INSERT|UPDATE|DELETE|RULE"},
-	{"rollback",
+	{"rollback work",
 		"abort a transaction",
-	"ROLLBACK [TRANSACTION|WORK]"},
+	"\
+\tROLLBACK [WORK|TRANSACTION]"},
 	{"select",
 		"retrieve tuples",
-	"SELECT [DISTINCT [ON attrN]] expr1 [AS attr1], ...exprN\n\
+	"\
+\tSELECT [DISTINCT [ON attrN]] expr1 [AS attr1], ...exprN\n\
 \t[INTO [TABLE] class_name]\n\
 \t[FROM from_list]\n\
 \t[WHERE qual]\n\
@@ -277,32 +325,38 @@ static struct _helpStruct QL_HELP[] = {
 	{"set",
 		"set run-time environment",
 #ifdef MULTIBYTE
-	"SET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
+	"\
+\tSET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
 set GEQO TO 'ON[=#]'|'OFF'\n\
 set R_PLANS TO 'ON'|'OFF'\n\
 set CLIENT_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'"},
 #else
-	"SET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
+	"\
+\tSET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
 set GEQO TO 'ON[=#]'|'OFF'\n\
 set R_PLANS TO 'ON'| 'OFF'"},
 #endif
 	{"show",
 		"show current run-time environment",
 #ifdef MULTIBYTE
-	"SHOW DateStyle|GEQO|R_PLANS|CLIENT_ENCODING"},
+	"\
+\tSHOW DateStyle|GEQO|R_PLANS|CLIENT_ENCODING"},
 #else
-	"SHOW DateStyle|GEQO|R_PLANS"},
+	"\
+\tSHOW DateStyle|GEQO|R_PLANS"},
 #endif
 	{"UPDATE",
 		"update tuples",
-	"UPDATE class_name SET attr1 = expr1, ...attrN = exprN\n\
+	"\
+\tUPDATE class_name SET attr1 = expr1, ...attrN = exprN\n\
 \t [FROM from_clause]\n\
 \t[WHERE qual];"},
 	{"vacuum",
 		"vacuum the database, i.e. cleans out deleted records, updates statistics",
-	"VACUUM [VERBOSE] [ANALYZE] [table]\n\
+	"\
+\tVACUUM [VERBOSE] [ANALYZE] [table]\n\
 \tor\n\
-VACUUM [VERBOSE]  ANALYZE  [table [(attr1, ...attrN)]];"},
+\tVACUUM [VERBOSE]  ANALYZE  [table [(attr1, ...attrN)]];"},
 	{NULL, NULL, NULL}			/* important to keep a NULL terminator
 								 * here! */
 };
