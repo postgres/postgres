@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.42 2004/08/01 17:32:11 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.43 2004/08/07 19:53:48 tgl Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -123,7 +123,7 @@ INSERT INTO weather VALUES ('Berkeley', 45, 53, 0.0, '1994-11-28');
 </programlisting>
 
 <screen>
-ERROR:  insert or update on table "weather" violates foreign key constraint "$1"
+ERROR:  insert or update on table "weather" violates foreign key constraint "weather_city_fkey"
 DETAIL:  Key (city)=(Berkeley) is not present in table "cities".
 </screen>
    </para>
@@ -290,6 +290,7 @@ COMMIT;
     Remembering the bank database, suppose we debit $100.00 from Alice's
     account, and credit Bob's account, only to find later that we should
     have credited Wally's account.  We could do it using savepoints like
+    this:
 
 <programlisting>
 BEGIN;

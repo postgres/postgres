@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.27 2004/08/03 20:32:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.28 2004/08/07 19:53:48 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1971,7 +1971,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 <screen>
 DROP TABLE products;
 
-NOTICE:  constraint $1 on table orders depends on table products
+NOTICE:  constraint orders_product_no_fkey on table orders depends on table products
 ERROR:  cannot drop table products because other objects depend on it
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 </screen>
