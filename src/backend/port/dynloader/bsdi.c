@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  /usr/local/devel/pglite/cvs/src/backend/port/linux/dynloader.c,v 1.1.1.1 1994/11/07 05:19:37 andrew Exp
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/bsdi.c,v 1.15 2001/05/30 18:32:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
