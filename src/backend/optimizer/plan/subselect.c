@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.65 2003/01/13 00:29:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.66 2003/01/13 18:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ static List *convert_sublink_opers(List *lefthand, List *operOids,
 								   List *targetlist, List **paramIds);
 static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static Node *replace_correlation_vars_mutator(Node *node, void *context);
-static Node *process_sublinks_mutator(Node *node, void *context);
+static Node *process_sublinks_mutator(Node *node, bool *isTopQual);
 static bool finalize_primnode(Node *node, finalize_primnode_results *results);
 
 
@@ -159,7 +159,8 @@ generate_new_param(Oid paramtype, int32 paramtypmod)
  * Convert a bare SubLink (as created by the parser) into a SubPlan.
  *
  * We are given the raw SubLink and the already-processed lefthand argument
- * list (use this instead of the SubLink's own field).
+ * list (use this instead of the SubLink's own field).  We are also told if
+ * this expression appears at top level of a WHERE/HAVING qual.
  *
  * The result is whatever we need to substitute in place of the SubLink
  * node in the executable expression.  This will be either the SubPlan
@@ -168,7 +169,7 @@ generate_new_param(Oid paramtype, int32 paramtypmod)
  * containing InitPlan Param nodes.
  */
 static Node *
-make_subplan(SubLink *slink, List *lefthand)
+make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 {
 	SubPlan	   *node = makeNode(SubPlan);
 	Query	   *subquery = (Query *) (slink->subselect);
@@ -232,7 +233,8 @@ make_subplan(SubLink *slink, List *lefthand)
 	node->exprs = NIL;
 	node->paramIds = NIL;
 	node->useHashTable = false;
-	node->unknownEqFalse = false;
+	/* At top level of a qual, can treat UNKNOWN the same as FALSE */
+	node->unknownEqFalse = isTopQual;
 	node->setParam = NIL;
 	node->parParam = NIL;
 	node->args = NIL;
@@ -589,17 +591,23 @@ replace_correlation_vars_mutator(Node *node, void *context)
 
 /*
  * Expand SubLinks to SubPlans in the given expression.
+ *
+ * The isQual argument tells whether or not this expression is a WHERE/HAVING
+ * qualifier expression.  If it is, any sublinks appearing at top level need
+ * not distinguish FALSE from UNKNOWN return values.
  */
 Node *
-SS_process_sublinks(Node *expr)
+SS_process_sublinks(Node *expr, bool isQual)
 {
-	/* No setup needed for tree walk, so away we go */
-	return process_sublinks_mutator(expr, NULL);
+	/* The only context needed is the initial are-we-in-a-qual flag */
+	return process_sublinks_mutator(expr, &isQual);
 }
 
 static Node *
-process_sublinks_mutator(Node *node, void *context)
+process_sublinks_mutator(Node *node, bool *isTopQual)
 {
+	bool	locTopQual;
+
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, SubLink))
@@ -610,12 +618,13 @@ process_sublinks_mutator(Node *node, void *context)
 		/*
 		 * First, recursively process the lefthand-side expressions, if any.
 		 */
+		locTopQual = false;
 		lefthand = (List *)
-			process_sublinks_mutator((Node *) sublink->lefthand, context);
+			process_sublinks_mutator((Node *) sublink->lefthand, &locTopQual);
 		/*
 		 * Now build the SubPlan node and make the expr to return.
 		 */
-		return make_subplan(sublink, lefthand);
+		return make_subplan(sublink, lefthand, *isTopQual);
 	}
 
 	/*
@@ -626,9 +635,18 @@ process_sublinks_mutator(Node *node, void *context)
 	 */
 	Assert(!is_subplan(node));
 
+	/*
+	 * If we recurse down through anything other than a List node, we are
+	 * definitely not at top qual level anymore.
+	 */
+	if (IsA(node, List))
+		locTopQual = *isTopQual;
+	else
+		locTopQual = false;
+
 	return expression_tree_mutator(node,
 								   process_sublinks_mutator,
-								   context);
+								   (void *) &locTopQual);
 }
 
 /*

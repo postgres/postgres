@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.137 2003/01/13 00:29:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.138 2003/01/13 18:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -777,7 +777,7 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 
 	/* Expand SubLinks to SubPlans */
 	if (parse->hasSubLinks)
-		expr = SS_process_sublinks(expr);
+		expr = SS_process_sublinks(expr, (kind != EXPRKIND_TARGET));
 
 	/* Replace uplevel vars with Param nodes */
 	if (PlannerQueryLevel > 1)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.87 2003/01/10 21:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.88 2003/01/13 18:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@ typedef struct
 
 static void fix_expr_references(Plan *plan, Node *node);
 static bool fix_expr_references_walker(Node *node, void *context);
-static void mark_qual_expressions(List *quals);
 static void set_join_references(Join *join, List *rtable);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static Node *join_references_mutator(Node *node,
@@ -89,12 +88,10 @@ set_plan_references(Plan *plan, List *rtable)
 		case T_SeqScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			mark_qual_expressions(plan->qual);
 			break;
 		case T_IndexScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			mark_qual_expressions(plan->qual);
 			fix_expr_references(plan,
 								(Node *) ((IndexScan *) plan)->indxqual);
 			fix_expr_references(plan,
@@ -103,7 +100,6 @@ set_plan_references(Plan *plan, List *rtable)
 		case T_TidScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			mark_qual_expressions(plan->qual);
 			fix_expr_references(plan,
 								(Node *) ((TidScan *) plan)->tideval);
 			break;
@@ -118,7 +114,6 @@ set_plan_references(Plan *plan, List *rtable)
 				 */
 				fix_expr_references(plan, (Node *) plan->targetlist);
 				fix_expr_references(plan, (Node *) plan->qual);
-				mark_qual_expressions(plan->qual);
 
 				/* Recurse into subplan too */
 				rte = rt_fetch(((SubqueryScan *) plan)->scan.scanrelid,
@@ -134,7 +129,6 @@ set_plan_references(Plan *plan, List *rtable)
 
 				fix_expr_references(plan, (Node *) plan->targetlist);
 				fix_expr_references(plan, (Node *) plan->qual);
-				mark_qual_expressions(plan->qual);
 				rte = rt_fetch(((FunctionScan *) plan)->scan.scanrelid,
 							   rtable);
 				Assert(rte->rtekind == RTE_FUNCTION);
@@ -145,17 +139,13 @@ set_plan_references(Plan *plan, List *rtable)
 			set_join_references((Join *) plan, rtable);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			mark_qual_expressions(plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
-			mark_qual_expressions(((Join *) plan)->joinqual);
 			break;
 		case T_MergeJoin:
 			set_join_references((Join *) plan, rtable);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			mark_qual_expressions(plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
-			mark_qual_expressions(((Join *) plan)->joinqual);
 			fix_expr_references(plan,
 							(Node *) ((MergeJoin *) plan)->mergeclauses);
 			break;
@@ -163,9 +153,7 @@ set_plan_references(Plan *plan, List *rtable)
 			set_join_references((Join *) plan, rtable);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			mark_qual_expressions(plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
-			mark_qual_expressions(((Join *) plan)->joinqual);
 			fix_expr_references(plan,
 							  (Node *) ((HashJoin *) plan)->hashclauses);
 			break;
@@ -192,7 +180,6 @@ set_plan_references(Plan *plan, List *rtable)
 			set_uppernode_references(plan, (Index) 0);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			mark_qual_expressions(plan->qual);
 			break;
 		case T_Result:
 
@@ -206,9 +193,7 @@ set_plan_references(Plan *plan, List *rtable)
 				set_uppernode_references(plan, (Index) OUTER);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			mark_qual_expressions(plan->qual);
 			fix_expr_references(plan, ((Result *) plan)->resconstantqual);
-			mark_qual_expressions((List *) ((Result *) plan)->resconstantqual);
 			break;
 		case T_Append:
 
@@ -281,28 +266,6 @@ fix_expr_references_walker(Node *node, void *context)
 		set_plan_references(sp->plan, sp->rtable);
 	}
 	return expression_tree_walker(node, fix_expr_references_walker, context);
-}
-
-/*
- * mark_qual_expressions
- *	  Do final cleanup on qualifier expressions (not targetlists!)
- *
- * SubPlans appearing at the top level of a qual expression are marked
- * to indicate that they need not distinguish UNKNOWN (null) from FALSE
- * results; this can save processing time in some cases.
- */
-static void
-mark_qual_expressions(List *quals)
-{
-	List   *qual;
-
-	foreach(qual, quals)
-	{
-		Node   *node = lfirst(qual);
-
-		if (IsA(node, SubPlan))
-			((SubPlan *) node)->unknownEqFalse = true;
-	}
 }
 
 /*
