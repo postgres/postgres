@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.96.2.5 2003/05/04 04:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.96.2.6 2003/08/05 17:39:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1128,7 +1128,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								if (*cp != '\0')
 									return -1;
 #ifdef HAVE_INT64_TIMESTAMP
-								*fsec = frac * 1000000;
+								*fsec = rint(frac * 1000000);
 #else
 								*fsec = frac;
 #endif
@@ -1158,9 +1158,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time * 86400000000), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * 86400000000),
+										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
-								dt2time((time * 86400), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * 86400),
+										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
 							break;
@@ -1835,9 +1837,16 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							tmask = DTK_M(SECOND);
 							if (*cp == '.')
 							{
-								*fsec = strtod(cp, &cp);
+								double		frac;
+
+								frac = strtod(cp, &cp);
 								if (*cp != '\0')
 									return -1;
+#ifdef HAVE_INT64_TIMESTAMP
+								*fsec = rint(frac * 1000000);
+#else
+								*fsec = frac;
+#endif
 							}
 							break;
 
@@ -1863,9 +1872,11 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time * 86400000000), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * 86400000000),
+										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
-								dt2time((time * 86400), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * 86400),
+										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
 							break;
@@ -2268,24 +2279,17 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 			*fsec = 0;
 		else if (*cp == '.')
 		{
-#ifdef HAVE_INT64_TIMESTAMP
-			char		fstr[MAXDATELEN + 1];
+			double		frac;
 
-			/*
-			 * OK, we have at most six digits to work with. Let's
-			 * construct a string and then do the conversion to an
-			 * integer.
-			 */
-			strncpy(fstr, (cp + 1), 7);
-			strcpy((fstr + strlen(fstr)), "000000");
-			*(fstr + 6) = '\0';
-			*fsec = strtol(fstr, &cp, 10);
-#else
 			str = cp;
-			*fsec = strtod(str, &cp);
-#endif
+			frac = strtod(str, &cp);
 			if (*cp != '\0')
 				return -1;
+#ifdef HAVE_INT64_TIMESTAMP
+			*fsec = rint(frac * 1000000);
+#else
+			*fsec = frac;
+#endif
 		}
 		else
 			return -1;
@@ -2328,6 +2332,8 @@ DecodeNumber(int flen, char *str, int fmask,
 
 	if (*cp == '.')
 	{
+		double	frac;
+
 		/*
 		 * More than two digits? Then could be a date or a run-together
 		 * time: 2001.360 20011225 040506.789
@@ -2336,9 +2342,14 @@ DecodeNumber(int flen, char *str, int fmask,
 			return DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
 									 tmask, tm, fsec, is2digits);
 
-		*fsec = strtod(cp, &cp);
+		frac = strtod(cp, &cp);
 		if (*cp != '\0')
 			return -1;
+#ifdef HAVE_INT64_TIMESTAMP
+		*fsec = rint(frac * 1000000);
+#else
+		*fsec = frac;
+#endif
 	}
 	else if (*cp != '\0')
 		return -1;
@@ -2441,19 +2452,13 @@ DecodeNumberField(int len, char *str, int fmask,
 	 */
 	if ((cp = strchr(str, '.')) != NULL)
 	{
-#ifdef HAVE_INT64_TIMESTAMP
-		char		fstr[MAXDATELEN + 1];
+		double		frac;
 
-		/*
-		 * OK, we have at most six digits to care about. Let's construct a
-		 * string and then do the conversion to an integer.
-		 */
-		strcpy(fstr, (cp + 1));
-		strcpy((fstr + strlen(fstr)), "000000");
-		*(fstr + 6) = '\0';
-		*fsec = strtol(fstr, NULL, 10);
+		frac = strtod(cp, NULL);
+#ifdef HAVE_INT64_TIMESTAMP
+		*fsec = rint(frac * 1000000);
 #else
-		*fsec = strtod(cp, NULL);
+		*fsec = frac;
 #endif
 		*cp = '\0';
 		len = strlen(str);
