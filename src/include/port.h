@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.25 2004/04/19 17:42:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.26 2004/04/30 04:14:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,4 +176,38 @@ extern int pqGethostbyname(const char *name,
 #define WIFEXITED(w)    (((w) & 0xff) == 0)
 #define WIFSIGNALED(w)  (((w) & 0x7f) > 0 && (((w) & 0x7f) < 0x7f))
 #define WTERMSIG(w)     ((w) & 0x7f)
+#endif
+
+/*
+ * Internal timezone library 
+ */
+#ifdef USE_PGTZ
+#ifndef FRONTEND
+#undef localtime
+#undef gmtime
+#undef asctime
+#undef ctime
+#undef difftime
+#undef mktime
+#undef tzset
+
+#define localtime(timep) pg_localtime(timep)
+#define gmtime(timep) pg_gmtime(timep)
+#define asctime(timep) pg_asctime(timep)
+#define ctime(timep) pg_ctime(timep)
+#define difftime(t1,t2) pg_difftime(t1,t2)
+#define mktime(tm) pg_mktime(tm)
+#define tzset pg_tzset
+
+
+extern struct tm *pg_localtime(const time_t *);
+extern struct tm *gg_gmtime(const time_t *);
+extern char *pg_asctime(const struct tm *);
+extern char *pg_ctime(const time_t *);
+extern double pg_difftime(const time_t, const time_t);
+extern time_t pg_mktime(struct tm *);
+extern void pg_tzset(void);
+extern time_t pg_timezone;
+
+#endif
 #endif

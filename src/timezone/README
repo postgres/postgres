@@ -1,7 +1,7 @@
 This is a PostgreSQL adapted version of the timezone library
 from:
-ftp://elsie.nci.nih.gov/pub/tz*.tar.gz
 
+	ftp://elsie.nci.nih.gov/pub/tz*.tar.gz
 
 The interface is used when USE_PGTZ is defined at the top level. This
 will cause the following functions to be redefined:

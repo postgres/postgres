@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.46 2004/04/25 20:57:32 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.47 2004/04/30 04:14:06 momjian Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -9,7 +9,8 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 
 ECPG = ../preproc/ecpg -I$(srcdir)/../include
 
-TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init testdynalloc num_test dt_test test_informix
+TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice \
+	test_code100 test_init testdynalloc num_test dt_test test_informix
 ifeq ($(enable_thread_safety), yes)
 TESTS += test_thread test_thread_implicit
 endif
